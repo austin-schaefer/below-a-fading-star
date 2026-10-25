@@ -48,7 +48,7 @@ blocks: [14]          # optional: issue numbers waiting on this question
 - Any design discussion goes through the `design-partner` skill. Austin decides; agents widen options and recommend.
 - "Inbox this" means a new file in `inbox/`, in Austin's words, with `author: me`.
 - This repo has no `CLAUDE.md`. Don't add one, and don't add `CLAUDE.local.md`: either would stop Claude Code from reading this file.
-- Verify by running things, not by reading. A test command that reports zero tests is a failure to investigate.
+- Verify by running things, not by reading. A test command that reports zero tests is a failure to investigate. For anything visual, look at it: the Playwright MCP server in `.mcp.json` (headless, screenshots to the gitignored `.playwright-mcp/`) or `npx playwright screenshot`. Austin doesn't use the Chrome extension.
 - Keep docs in the present tense. Describe what is, delete what no longer holds; git keeps the history.
 
 ## Architecture (Phase 1, decided now)
