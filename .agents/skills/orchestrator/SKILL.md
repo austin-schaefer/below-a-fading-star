@@ -69,7 +69,7 @@ When a subagent reports done:
 1. Read its report. If it found design gaps, make sure the question files exist.
 2. Run the checks yourself in the worktree (`npm test`, typecheck, validators). "Tests pass" in a report is a claim, not evidence. A run that reports zero tests is a failure to investigate.
 3. Skim the diff for scope creep, invented game content, and edits under `design/`. For architecture, the rules engine, or anything risky, dispatch a review subagent that sees the diff and the issue but not the author's reasoning.
-4. If everything's good: `gh pr create --fill --body "Closes #<n> ..."` from the branch, wait for CI (`gh pr checks <pr> --watch`), then `gh pr merge <pr> --squash --delete-branch`, then `tools/worktree.sh rm <n>`. Close the issue with a two- or three-line comment if the merge didn't close it.
+4. If everything's good: `gh pr create --fill --body "Closes #<n> ..."` from the branch, wait for CI (`gh pr checks <pr> --watch`; if it says "no checks reported", the workflow hasn't registered yet: wait 30 seconds and run it again, never merge on that message), then `gh pr merge <pr> --squash --delete-branch`, then `tools/worktree.sh rm <n>`. Close the issue with a two- or three-line comment if the merge didn't close it.
 5. If not: send it back with specific feedback, or re-brief a fresh subagent, possibly on a stronger model.
 
 ## Working with the designer
