@@ -60,7 +60,9 @@ Report back: under 150 words. What changed, how you verified it (exact commands 
 
 **Model choice:** mid-tier (sonnet-level) by default. Use a stronger model (opus-level) for architecture, the rules engine, concurrency or state-machine logic, cross-cutting bugs, or anything a mid-tier subagent has already failed at once.
 
-**Parallelism:** run independent issues in parallel, each in its own worktree. 
+**Parallelism:** run independent issues in parallel, each in its own worktree. Tell each subagent which shared files the others are likely to touch (route registration, `App.tsx`, `main.tsx`, `README.md`) so it keeps its edits there to a line or two and puts new code in new files. Give each a distinct dev-server port pair (`WIKI_CLIENT_PORT`/`WIKI_API_PORT`) so they don't collide with each other or with the designer's running wiki on 7300.
+
+**Bringing a branch up to date:** merge `origin/main` into the branch; never rebase a pushed branch (force-push is denied). If the merge conflicts in more than a line or two, hand it back to the author with the conflict list rather than resolving it yourself.
 
 ## Checking and merging
 
