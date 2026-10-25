@@ -31,4 +31,4 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 
 ## Commands
 
-- Wiki: `tools/wiki.sh` · tests: `cd wiki && npm test` · worktrees: `tools/worktree.sh new|rm|list` · fresh clone: `tools/ensure-hooks.sh` · new skill: `tools/link-skills.sh`
+- Wiki: `tools/wiki.sh` (or as a login service: `tools/wiki-service.sh install|status|restart|logs`) · tests: `cd wiki && npm test` · worktrees: `tools/worktree.sh new|rm|list` · fresh clone: `tools/ensure-hooks.sh` · new skill: `tools/link-skills.sh`
