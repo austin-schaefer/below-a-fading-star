@@ -4,7 +4,7 @@
 
 Fading Planet: a roguelike card battler. Slay the Spire's combat and run length, Heroes of Might and Magic's overworld and growing-sorcerer fantasy, Jack Vance's Dying Earth for the fiction. The designer is Austin; he calls himself "I" in `design/`.
 
-**Current phase: Phase 0, harness + design wiki.** No game code, no Godot project, no `game/` or `art/` folders yet.
+What's being built right now lives in GitHub Issues: open epics and their milestones are the status, this file isn't. There is no game code until the M0 epics open.
 
 ## Where things live
 
@@ -13,7 +13,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat and run length,
 - `proposals/`: agent speculation, analyses, sim findings, and questions for Austin. Agents write here.
 - `wiki/`: the local web app that browses and edits the three folders above. Markdown on disk is the only source of truth; the wiki is a view and an editor, never a store.
 - GitHub Issues: everything agents build. Epics carry the `epic` label; work hangs off them as native sub-issues.
-- `.agents/skills/`: skills, in the Agent Skills format. `.claude/skills/` holds per-skill symlinks into it (run `tools/link-skills.sh` after adding one).
+- `.agents/skills/`: skills, in the Agent Skills format. Load `wiki-maintenance` before any change under `wiki/`. `.claude/skills/` holds per-skill symlinks into it (run `tools/link-skills.sh` after adding one).
 - `tools/`: repo scripts. `docs/archive/`: retired docs.
 - `game/`, `art/`: Phase 1. Don't create them.
 
@@ -48,7 +48,7 @@ blocks: [14]          # optional: issue numbers waiting on this question
 - Any design discussion goes through the `design-partner` skill. Austin decides; agents widen options and recommend.
 - "Inbox this" means a new file in `inbox/`, in Austin's words, with `author: me`.
 - This repo has no `CLAUDE.md`. Don't add one, and don't add `CLAUDE.local.md`: either would stop Claude Code from reading this file.
-- Verify by running things, not by reading. A test command that reports zero tests is a failure to investigate. For anything visual, look at it: the Playwright MCP server in `.mcp.json` (headless, screenshots to the gitignored `.playwright-mcp/`) or `npx playwright screenshot`. Austin doesn't use the Chrome extension.
+- Verify by running things, not by reading. A test command that reports zero tests is a failure to investigate. For anything visual, look at it: `cd wiki && npm run shot -- <url> <out.png> [w] [h] [light|dark]` renders a page headlessly and reports console errors and whether the app rendered; the Playwright MCP server in `.mcp.json` is there for driving a page. Austin doesn't use the Chrome extension.
 - Keep docs in the present tense. Describe what is, delete what no longer holds; git keeps the history.
 
 ## Architecture (Phase 1, decided now)
