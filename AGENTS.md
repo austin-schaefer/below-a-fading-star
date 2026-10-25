@@ -22,7 +22,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 
 ## Hard rules
 
-- `design/` is Austin's. Edit it when he asks, and only then; commit with `DESIGN_EDIT=1` (the pre-commit hook rejects agent commits to `design/` without it). Never `--no-verify`.
+- `design/` is Austin's. Edit it when he asks (an instruction in the design chat counts), and only then; commit with `DESIGN_EDIT=1` (the pre-commit hook rejects agent commits to `design/` without it). Never `--no-verify`.
 - Never invent game content. Build only `[Decided]` and `[Working]` rules.
 - Design discussion goes through the `design-partner` skill. Austin decides.
 - Verify by running things. Zero tests reported is a failure. Anything visual: `cd wiki && npm run shot -- <url> <out.png>`; Austin doesn't use the Chrome extension.
