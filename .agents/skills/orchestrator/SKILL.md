@@ -28,7 +28,7 @@ The wiki (`design/`, `inbox/`, `proposals/`) is upstream. Issues are downstream.
    - **Content spec changed** (Phase 1): queue re-transcription of the affected entries.
    - **Question answered:** remove the block on any issues in its `blocks:` field.
 3. Ignore `[Proposed]` and `[Open]` items. They're not buildable.
-4. Write the new HEAD commit to `.orchestrator/last-sync`, and commit it on `main` along with the sync.
+4. Write the new HEAD commit to `.orchestrator/last-sync` and commit it in a throwaway worktree branched from `origin/main` (`tools/worktree.sh new sync <date>`), then push it straight to main (`git push origin HEAD:main`) and remove the worktree. Never commit in the main checkout: an unpushed commit there blocks Austin's promote.
 5. If a change is ambiguous, meaning you can't tell whether it should change the build, ask the designer rather than guessing.
 
 **Phase 0:** nothing is downstream of the design yet, so the sync is a read and a report: new or changed files in `inbox/` and `proposals/`, and anything in `design/` that moved to `[Decided]` or `[Working]`. Don't create game issues before Phase 1.
@@ -63,6 +63,8 @@ Report back: under 150 words. What changed, how you verified it (exact commands 
 **Parallelism:** run independent issues in parallel, each in its own worktree. Tell each subagent which shared files the others are likely to touch (route registration, `App.tsx`, `main.tsx`, `README.md`) so it keeps its edits there to a line or two and puts new code in new files. Give each a distinct dev-server port pair (`WIKI_CLIENT_PORT`/`WIKI_API_PORT`) so they don't collide with each other or with the designer's running wiki on 7300.
 
 **Bringing a branch up to date:** merge `origin/main` into the branch; never rebase a pushed branch (force-push is denied). If the merge conflicts in more than a line or two, hand it back to the author with the conflict list rather than resolving it yourself.
+
+**The main checkout is Austin's live wiki.** His login service runs the built wiki from `/Users/user/dev/fading-planet`, and his unsaved edits and chat turns live in it. Never pull, check out, build or restart there; worktrees branch from `origin/main` (`tools/worktree.sh new` fetches first), so you never need the main checkout to be current. Promotion is Austin's: he runs `tools/wiki-service.sh promote` or pulls main himself.
 
 ## Checking and merging
 
