@@ -6,6 +6,7 @@ Skills live here, one folder per skill with a `SKILL.md`, in the [Agent Skills](
 |---|---|
 | `orchestrator` | The main session, at the start of every session |
 | `design-partner` | Anyone discussing design with Austin or writing a question for him |
+| `namer` | Anyone naming a mechanic, card, unit, or place; `design-partner` loads it when a name comes up |
 | `wiki-maintenance` | Anyone changing code under `wiki/` |
 
 Phase 1 adds vendored Godot skills; their sources go in `SOURCES.md` here.
