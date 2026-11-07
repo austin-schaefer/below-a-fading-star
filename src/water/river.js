@@ -125,8 +125,8 @@ const RIBBON_FRAG = /* glsl */`
     float streak = mask(vec2(d * 0.9, (s - sp * t) * 0.11)) * 0.55 + mask(vec2(d * 2.3 + 0.4, (s - sp * 1.15 * t) * 0.3)) * 0.45;
     float churn = mask(vec2(d * 0.6 + t * 0.03, (s - sp * t) * 0.35)) * 0.5 + mask(vec2(d * 1.7, (s - sp * 1.4 * t) * 0.9)) * 0.5;
     float foam = smoothstep(0.72 - rough * 0.55, 0.92 - rough * 0.45, churn) * smoothstep(0.02, 0.25, rough);
-    float edgeLine = (1.0 - smoothstep(0.0, 0.35, dep)) * smoothstep(0.6, 2.2, sp);
-    foam = max(foam, edgeLine * smoothstep(0.45, 0.75, streak) * 0.8);
+    float edgeLine = (1.0 - smoothstep(0.0, 0.22, dep)) * smoothstep(1.0, 3.0, sp);
+    foam = max(foam, edgeLine * smoothstep(0.6, 0.8, streak) * 0.6);
     float wakes = 0.0;
     for (int i = 0; i < ${MAX_ROCKS}; i++) {
       vec4 rk = uRocks[i];
@@ -136,12 +136,12 @@ const RIBBON_FRAG = /* glsl */`
       float rr = length(vec2(ds, dd));
       float cushion = exp(-pow((rr - r * 0.95) / (0.18 + r * 0.12), 2.0)) * smoothstep(-r * 1.4, -r * 0.2, -ds + r * 0.3);
       float spread = r * (0.7 + max(ds, 0.0) * 0.09);
-      float wake = exp(-pow(dd / spread, 2.0)) * exp(-max(ds, 0.0) / (3.5 + r * 3.0)) * step(0.0, ds);
+      float wake = exp(-pow(dd / spread, 2.0)) * exp(-max(ds, 0.0) / (1.5 + r * 1.5)) * step(0.0, ds);
       // the wake splits into two trailing lines
-      float lines = exp(-pow((abs(dd) - spread * 0.75) / (0.25 + spread * 0.2), 2.0)) * exp(-max(ds, 0.0) / (6.0 + r * 4.0)) * step(0.0, ds);
-      wakes = max(wakes, max(cushion, max(wake * 0.8, lines * 0.7)));
+      float lines = exp(-pow((abs(dd) - spread * 0.75) / (0.12 + spread * 0.12), 2.0)) * exp(-max(ds, 0.0) / (3.0 + r * 3.0)) * step(0.0, ds);
+      wakes = max(wakes, max(cushion, max(wake * 0.7, lines * 0.6)));
     }
-    foam = max(foam, wakes * smoothstep(0.3, 0.7, streak + 0.25));
+    foam = max(foam, wakes * smoothstep(0.5, 0.78, streak + 0.1));
     foam *= edge;
     vec3 foamCol = uFoam * (0.3 + 0.7 * uFlicker) * (0.75 + 0.25 * N.y);
     col = mix(col, foamCol, foam * 0.9);
@@ -321,6 +321,22 @@ export function buildRiver(ctx, tex) {
     const p = at(line, s), tg = tangent(line, s, 1);
     rocks.push({ s, d, r, x: p.x + tg.tz * d, z: p.z - tg.tx * d, y: W(s) });
   }
+  // outcrops and fallen blocks along the canyon's walls, half sunk in them: they break the long smooth
+  // faces the heightfield makes and drop talus at the wall's foot (same mesh as the stream's boulders)
+  const wallRocks = [];
+  for (let s = 6; s < 84; s += high ? 2.2 : 3.2) {
+    for (const side of [-1, 1]) {
+      if (rng() < 0.3) continue;
+      const bw = RV.bankWidths(s), hw = RV.halfWidthAt(s);
+      const edge = hw + (side > 0 ? bw.bl : bw.br);
+      const up = rng() < 0.45 ? 1.5 + rng() * 3 : 0;   // some higher up the face
+      const d = side * (edge + 0.6 + up + rng() * 0.8);
+      const p = at(line, s + (rng() - 0.5) * 2), tg = tangent(line, s, 1);
+      const x = p.x + tg.tz * d, z = p.z - tg.tx * d;
+      const r = (up ? 0.9 : 0.7) + rng() * (up ? 1.6 : 1.2);
+      wallRocks.push({ x, z, r, y: terrain.heightAt(x, z) - r * 0.25 });
+    }
+  }
   const rockUniform = Array.from({ length: MAX_ROCKS }, (_, i) => {
     const k = rocks[i];
     return k ? new THREE.Vector4(k.s, k.d, k.r, 1) : new THREE.Vector4(0, 0, 0, 0);
@@ -331,7 +347,7 @@ export function buildRiver(ctx, tex) {
       uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 },
       uSunDir: { value: sunDir.clone() }, uSunCore: { value: C(palette.sunCore) }, uSunLight: { value: C(palette.sunLight) },
       uHorizonSun: { value: C(palette.skyHorizonSun) }, uHorizonAway: { value: C(palette.skyHorizonAway) }, uZenith: { value: C(palette.skyZenith) },
-      uWater: { value: C('#120d0a') }, uFoam: { value: C('#b8a89c') },
+      uWater: { value: C('#0b0807') }, uFoam: { value: C('#a89a90') },
       uPool: { value: new THREE.Vector3(RV.pool.x, RV.pool.z, RV.poolR) },
       uFen: { value: new THREE.Vector3(ctx.water.fen.x, ctx.water.fen.z, ctx.water.fen.r) },
       uRocks: { value: rockUniform },
@@ -355,7 +371,7 @@ export function buildRiver(ctx, tex) {
     }
     g.computeVertexNormals();
     const m = new THREE.MeshStandardMaterial({ color: C('#2e2a27'), roughness: 0.42, metalness: 0 });
-    const im = new THREE.InstancedMesh(g, m, rocks.length);
+    const im = new THREE.InstancedMesh(g, m, rocks.length + wallRocks.length);
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), pp = new THREE.Vector3();
     rocks.forEach((k, i) => {
       e.set((rng() - 0.5) * 0.4, rng() * 6.28, (rng() - 0.5) * 0.4);
@@ -365,6 +381,14 @@ export function buildRiver(ctx, tex) {
       M.compose(pp, q, sc);
       im.setMatrixAt(i, M);
       if (k.r > 0.75) ctx.addCollider({ x: k.x, z: k.z, r: k.r * 0.85 });
+    });
+    wallRocks.forEach((k, j) => {
+      e.set((rng() - 0.5) * 0.8, rng() * 6.28, (rng() - 0.5) * 0.8);
+      q.setFromEuler(e);
+      sc.set(k.r * (1 + rng() * 0.6), k.r * (0.7 + rng() * 0.6), k.r * (1 + rng() * 0.6));
+      pp.set(k.x, k.y, k.z);
+      M.compose(pp, q, sc);
+      im.setMatrixAt(rocks.length + j, M);
     });
     im.castShadow = true; im.receiveShadow = true; im.name = 'river-rocks';
     im.instanceMatrix.needsUpdate = true;

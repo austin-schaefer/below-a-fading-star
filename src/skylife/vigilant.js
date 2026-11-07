@@ -38,9 +38,14 @@ export function buildVigilant(ctx, rng) {
   const hi = ctx.quality === 'high';
   
   // seat and facing
-  const b = VIGILANT.bearing * D2R;
-  const seat = new THREE.Vector3(Math.sin(b) * VIGILANT.r, 0, -Math.cos(b) * VIGILANT.r);
-  seat.y = terrain.heightAt(seat.x, seat.z) - 4;
+  // it sits on the highest point of the crest near its bearing, so its shoulders and head stand
+  // against the sky from the moor below
+  const seat = new THREE.Vector3(0, -1e9, 0);
+  for (let db = -2.5; db <= 2.5; db += 0.5) for (let r = VIGILANT.r - 16; r <= VIGILANT.r + 16; r += 4) {
+    const bb = (VIGILANT.bearing + db) * D2R, x = Math.sin(bb) * r, z = -Math.cos(bb) * r, h = terrain.heightAt(x, z);
+    if (h > seat.y) seat.set(x, h, z);
+  }
+  seat.y -= 3;
   const theta = Math.atan2(VIGILANT.face.x - seat.x, VIGILANT.face.z - seat.z);
   const cs = Math.cos(theta), sn = Math.sin(theta);
   const toWorldXZ = (x, z) => [seat.x + cs * x + sn * z, seat.z - sn * x + cs * z];
@@ -49,7 +54,7 @@ export function buildVigilant(ctx, rng) {
   // the parts, in the figure's frame (+z forward, y up from the ledge), as signed-distance shapes
   // melted together; the skin is found by shooting rays in from outside toward a centre, so it is
   // one continuous eroded mass rather than a heap of balls
-  const SC = 1.15; // seated height (ledge to crown) about 78 m
+  const SC = 1.25; // seated height (ledge to crown) about 85 m
   const parts = [];
   const blob = (c, r, opt = {}) => {
     const q = opt.rotX ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -opt.rotX) : null;

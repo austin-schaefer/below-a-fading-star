@@ -593,7 +593,10 @@ export function buildTerrain(ctx) {
           float rocky = smoothstep(0.75, 0.45, vTNormal.y);
           // strata bands alias into streaks at distance, so fade them out past 80 m
           float strataFade = 1.0 - smoothstep(60.0, 160.0, length(vTPos - cameraPosition));
-          float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * 0.12 * rocky * strataFade;
+          // sheer faces (cliffs, canyon walls) show their bedding harder
+          float sheer = smoothstep(0.5, 0.15, vTNormal.y);
+          float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * (0.12 + 0.2 * sheer) * rocky * strataFade
+                       + smoothstep(0.42, 0.5, abs(fract(vTPos.y * 0.55 + d1.g * 0.8) - 0.5)) * 0.25 * sheer * strataFade;
           diffuseColor.rgb *= 1.0 + grain - strata;
           // far strata: broad bedding planes on the mountain walls, anti-aliased by their own screen
           // derivative so they fade instead of shimmering, plus darker bands of harder rock

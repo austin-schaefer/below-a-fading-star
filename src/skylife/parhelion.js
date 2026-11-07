@@ -133,13 +133,13 @@ function paintAtlas(rng) {
       const h = env * Math.pow(R(0.25, 1), 1.3);
       if (h < 0.6) continue;
       const w = R(0.2, 0.55) * wsc * (0.6 + 0.4 * Math.min(1, h / 5));
-      const lean = rng() < 0.18 ? R(-0.16, 0.16) : R(-0.02, 0.02);
+      const lean = rng() < 0.3 ? R(-0.22, 0.22) : R(-0.03, 0.03);
       const base = BASE + R(0.1, 0.9) * scale;
       towers.push({ b, h, w, lean, base });
       const tip = base + h;
       const sh = (e) => (e - base) * lean; // shear as it rises
       const style = rng();
-      if (style < 0.12 && h < 3.5) {
+      if ((style < 0.12 && h < 4) || (style < 0.45 && envelope(b) < 5 && h < 4)) {
         // a dome on a drum
         const dw = w * R(2.2, 3.2), drum = base + h * 0.45;
         poly([[b - dw / 2, base], [b + dw / 2, base], [b + dw / 2, drum], [b - dw / 2, drum]]);
@@ -181,7 +181,7 @@ function paintAtlas(rng) {
     for (let i = 0; i < towers.length - 1; i++) {
       const A = towers[i], Bt = towers[i + 1];
       const span = Bt.b - A.b;
-      if (span < 0.35 * wsc || span > 2.4 * wsc || Math.min(A.h, Bt.h) < 2 * scale || rng() > 0.45) continue;
+      if (span < 0.35 * wsc || span > 2.4 * wsc || Math.min(A.h, Bt.h) < 1.6 * scale || rng() > 0.7) continue;
       const e = Math.min(A.base, Bt.base) + Math.min(A.h, Bt.h) * R(0.3, 0.6);
       const th = R(0.07, 0.14) * scale;
       const xa = A.b + (e - A.base) * A.lean, xb = Bt.b + (e - Bt.base) * Bt.lean;
