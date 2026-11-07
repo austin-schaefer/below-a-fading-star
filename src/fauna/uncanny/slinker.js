@@ -16,7 +16,7 @@ function slinkerGeometry(low) {
     const z = z0 + (k / n) * (z1 - z0);
     let w, h;
     if (z < -1.2) { const f = (z - z0) / 1.5; w = 0.015 + f * f * 0.22; h = 0.012 + f * f * 0.12; }
-    else if (z < 1.4) { w = 0.24; h = 0.13; }
+    else if (z < 1.4) { w = 0.3 + 0.04 * Math.sin(z * 2.1); h = 0.14; }
     else { const f = (z - 1.4) / 0.6; w = 0.24 * (1 - f * 0.75); h = 0.13 * (1 - f * 0.8) + Math.sin(f * Math.PI) * 0.03; }
     const joint = z > -1.8 && z < 1.5 ? 0.84 + 0.16 * Math.abs(Math.sin(z * Math.PI / 0.21)) : 1;
     pts.push([0, 0.36 - (z > 1.4 ? (z - 1.4) * 0.28 : 0) - (z < -1.2 ? (-1.2 - z) * 0.14 : 0), z]);
@@ -75,6 +75,9 @@ export function buildSlinker(ctx, U) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uFade;\n' + DITHER_GLSL)
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (fpIGN(gl_FragCoord.xy) > uFade) discard;');
+    // an oily sheen along its edges, so it is a shape against the turf and not a hole in it
+    if (sh.fragmentShader.includes('#include <emissivemap_fragment>')) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      { float fr = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 3.0); totalEmissiveRadiance += vec3(0.2, 0.16, 0.26) * fr; }`);
   };
   const mat = new THREE.MeshStandardMaterial({ color: 0x040306, roughness: 0.36, metalness: 0.3 });
   mat.onBeforeCompile = patch;
