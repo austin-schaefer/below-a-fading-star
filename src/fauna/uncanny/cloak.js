@@ -13,16 +13,16 @@ const table = (tab, v) => {
   }
   return tab[tab.length - 1][1];
 };
-const WIDTH = [[0, 0.56], [0.16, 0.46], [0.5, 0.4], [0.8, 0.4], [0.9, 0.43], [0.96, 0.32], [1, 0.13]];
-const HOOD_R = [[0, 0.21], [0.18, 0.29], [0.5, 0.3], [0.75, 0.22], [0.9, 0.12], [1, 0.015]];
-const TOP = 2.48;
+const WIDTH = [[0, 0.5], [0.14, 0.4], [0.5, 0.31], [0.8, 0.28], [0.9, 0.29], [0.96, 0.2], [1, 0.1]];
+const HOOD_R = [[0, 0.17], [0.18, 0.23], [0.5, 0.235], [0.75, 0.18], [0.9, 0.1], [1, 0.012]];
+const TOP = 2.7;
 
 function cloakPt(n2, u, v, o) {
   const a = u * TAU;
   const hem = 0.02 + 0.09 * (0.5 + 0.5 * n2(Math.cos(a) * 1.7, Math.sin(a) * 1.7));
   const y = lerp(hem, TOP, v) + 0.05 * Math.cos(a) * smoothstep(0.8, 1, v);
   const w = table(WIDTH, v);
-  const fold = 1 + (0.1 * (1 - v) + 0.018) * Math.sin(a * 8 + 0.8 * Math.sin(a * 3)) + 0.04 * (1 - v) * n2(a * 2.1, v * 3);
+  const fold = 1 + (0.14 * (1 - v) + 0.025) * Math.pow(Math.abs(Math.sin(a * 6 + 0.8 * Math.sin(a * 3))), 0.6) - 0.06 * (1 - v) + 0.04 * (1 - v) * n2(a * 2.1, v * 3);
   const dz = lerp(0.68, 0.56, smoothstep(0.7, 0.95, v));
   o[0] = Math.cos(a) * w * fold;
   o[1] = y;
@@ -32,7 +32,7 @@ function cloakPt(n2, u, v, o) {
 // hood: m is the face cavity mask at this point
 function hoodPt(u, v, o) {
   const a = u * TAU;
-  const cy = TOP - 0.14 + v * 0.95, cz = 0.13 + 0.09 * Math.sin(Math.PI * v) - 0.3 * Math.pow(v, 2.5);
+  const cy = TOP - 0.1 + v * 0.82, cz = 0.16 + 0.12 * Math.sin(Math.PI * v) - 0.26 * Math.pow(v, 2.5);
   const r = table(HOOD_R, v);
   const front = Math.sin(a);
   const m = smoothstep(0.5, 0.82, front) * smoothstep(0.12, 0.26, v) * (1 - smoothstep(0.56, 0.7, v));
@@ -53,26 +53,28 @@ function eyeMaterial() {
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec3 aGaze; attribute float aLid; attribute float aKind;
-        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind;`)
+        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind; varying vec3 vEN;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-        vEP = position; vGz = aGaze; vLid = aLid; vKind = aKind;`);
+        vEP = position; vGz = aGaze; vLid = aLid; vKind = aKind;`)
+      .replace('#include <defaultnormal_vertex>', `#include <defaultnormal_vertex>
+        vEN = normalize(transformedNormal);`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind; uniform float uGlow;
+        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind; varying vec3 vEN; uniform float uGlow;
         float ehash(float n) { return fract(sin(n * 91.345) * 43758.5453); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
-        float fpR = 0.25; float fpGlow = 0.0;
+        float fpR = 0.25; float fpGlow = 0.0; float fpSpec = 0.0;
         {
           vec3 p = normalize(vEP);
           float ap = mix(0.6, -0.1, vLid);
           float shape = 1.0 - 0.6 * p.x * p.x;
           float up = ap * shape, lo = -ap * 0.78 * shape;
           float lidD = max(p.y - up, lo - p.y);
-          vec3 flesh = vec3(0.16, 0.095, 0.1);
+          vec3 flesh = vec3(0.03, 0.022, 0.024);
           if (lidD > 0.0 || p.z < 0.05) {
             // lid: the cloak's own stuff, sore and dark at the rim
             float rim = 1.0 - smoothstep(0.0, 0.08, lidD);
-            diffuseColor.rgb = mix(flesh, vec3(0.22, 0.05, 0.06), rim * 0.7);
+            diffuseColor.rgb = mix(flesh, vec3(0.16, 0.03, 0.035), rim * 0.8);
             fpR = mix(0.75, 0.35, rim);
           } else {
             vec3 g = normalize(vGz);
@@ -104,10 +106,14 @@ function eyeMaterial() {
             col *= mix(0.55, 1.0, smoothstep(0.0, 0.18, up - p.y));
             diffuseColor.rgb = col;
             fpR = 0.12; fpGlow = 1.0;
+            // a wet point of light, always on the side toward you and a little above
+            vec3 hl = normalize(vec3(-0.35, 0.45, 0.82));
+            float spec = pow(max(dot(normalize(vEN), hl), 0.0), 90.0);
+            fpSpec = spec;
           }
         }`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = fpR;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * fpGlow * uGlow;');
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * fpGlow * uGlow + vec3(1.0, 0.97, 0.9) * fpSpec * 1.6;');
   };
   return m;
 }
@@ -125,48 +131,54 @@ export function buildCloak(ctx, U) {
   let sx = -86, sz = -48;
   for (const [x, z] of cands) if (U.rules.okStatic(x, z) && terrain.causewayDistance(x, z) > 30) { sx = x; sz = z; break; }
 
-  // ---- body: cloak and hood
-  const P = new Painter();
-  const cloth = '#16101a', voidc = '#000000';
-  P.paint(cloth, 0, 0.9);
-  P.grid(low ? 28 : 40, low ? 22 : 30, (u, v, o) => cloakPt(n2, u, v, o), true, false);
+  // ---- body: cloak, hood, sleeves. Coal-black, matte; only the eyes catch light.
+  const P = new Painter(['aSway']);
+  const cloth = '#0b090a', voidc = '#000000';
+  P.paint(cloth, 0, 0.96);
+  P.grid(low ? 36 : 54, low ? 24 : 32, (u, v, o) => { P.set('aSway', smoothstep(0.25, 0, v)); cloakPt(n2, u, v, o); }, true, false);
+  P.set('aSway', 0);
   const h4 = [0, 0, 0, 0];
   P.grid(low ? 20 : 28, 18, (u, v, o) => {
     hoodPt(u, v, h4);
-    P.paint(h4[3] > 0.3 ? voidc : cloth, 0, 0.9);
+    P.paint(h4[3] > 0.3 ? voidc : cloth, 0, 0.96);
     o[0] = h4[0]; o[1] = h4[1]; o[2] = h4[2];
   }, true, true);
-  // hands: pale, folded at the waist, the fingers far too long and laced together
-  P.paint('#9c8f80', 0, 0.6);
+  // sleeves: hanging past the knee, wide at the cuff, nothing inside them
+  const SLV = (sd, t) => { // centre and radius along the sleeve, t 0 shoulder .. 1 cuff
+    const y = 2.6 - t * 1.75;
+    return [sd * (0.27 + 0.06 * t), y, 0.03 + 0.11 * t, 0.075 + 0.075 * t * t];
+  };
   for (const sd of [-1, 1]) {
-    P.loft([[sd * 0.1, 1.42, 0.24], [sd * 0.07, 1.36, 0.33], [sd * 0.045, 1.3, 0.36]], [0.03, 0.026, 0.028], 6);
-    P.blob(sd * 0.04, 1.27, 0.365, 0.034, 0.016, 0.045, 6, 4);
-    for (let f = 0; f < 4; f++) {
-      const x = sd * (0.008 + f * 0.017) + sd * 0.004;
-      const curl = f * 0.01;
-      P.loft([[x, 1.25, 0.375], [x - sd * 0.02, 1.15, 0.395], [x - sd * 0.035, 1.04, 0.39 - curl], [x - sd * 0.04, 0.95, 0.37 - curl], [x - sd * 0.035, 0.9, 0.345 - curl]],
-        [0.0105, 0.0095, 0.0085, 0.007, 0.0035], 5);
-    }
-    P.loft([[sd * 0.06, 1.28, 0.38], [sd * 0.03, 1.35, 0.4], [sd * 0.01, 1.4, 0.395]], [0.011, 0.009, 0.005], 5);
+    P.paint(cloth, 0, 0.96);
+    P.grid(low ? 10 : 14, 10, (u, v, o) => {
+      const c = SLV(sd, v), a = u * TAU, rib = 1 + 0.12 * Math.abs(Math.sin(a * 4));
+      P.set('aSway', smoothstep(0.6, 1, v) * 0.7);
+      o[0] = c[0] + Math.cos(a) * c[3] * rib; o[1] = c[1] + (v > 0.95 ? Math.sin(a + 1) * 0.03 : 0); o[2] = c[2] + Math.sin(a) * c[3] * rib;
+    }, true, false);
+    P.set('aSway', 0.7); P.paint(voidc, 0, 1);
+    const c = SLV(sd, 0.99); P.blob(c[0], c[1] + 0.01, c[2], c[3] * 0.92, 0.02, c[3] * 0.92, 10, 3);
+    P.set('aSway', 0);
   }
-  const bodyMat = paintedMaterial();
+  const bodyMat = paintedMaterial({}, undefined, true);
   const body = new THREE.Mesh(P.geometry(), bodyMat);
   body.castShadow = true; body.receiveShadow = true; body.name = 'uncanny-cloak';
 
   // ---- eyes: sockets over the cloak, and a knot of them inside the hood where a face should be
   const sockets = [];
   const tmp = [0, 0, 0], a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0], d = [0, 0, 0];
-  const nEyes = low ? 96 : 136, nHood = 9;
+  const nEyes = low ? 150 : 230, nHood = 9, nSleeve = Math.round(nEyes * 0.24);
+  const fits = (p, r) => { for (const s of sockets) if (Math.hypot(s.p[0] - p[0], s.p[1] - p[1], s.p[2] - p[2]) < (s.r + r) * 1.08) return false; return true; };
+  const eyeR = () => (rng() > 0.97 ? 0.05 + rng() * 0.02 : 0.019 + Math.pow(rng(), 2.4) * 0.028);
+  // clustered: a noise field decides where they crowd, and they crowd most on his back
+  const crowd = (u, v) => 0.5 + 0.5 * n2(Math.cos(u * TAU) * 2.2 + 7, Math.sin(u * TAU) * 2.2 + v * 4.5);
   let tries = 0;
-  while (sockets.length < nEyes - nHood && tries++ < 6000) {
-    const u = rng(), v = 0.05 + rng() * 0.86;
-    if (rng() > table(WIDTH, v) / 0.6) continue; // area-uniform-ish
-    const big = rng();
-    const r = big > 0.975 ? 0.12 + rng() * 0.04 : 0.036 + Math.pow(rng(), 2.2) * 0.065;
+  while (sockets.length < nEyes - nHood - nSleeve && tries++ < 20000) {
+    const u = rng(), v = 0.2 + rng() * 0.72;
+    const back = Math.sin(u * TAU) < 0 ? 1 : 0.3;
+    if (rng() > back * smoothstep(0.25, 0.75, crowd(u, v))) continue;
+    const r = eyeR();
     cloakPt(n2, u, v, tmp);
-    let clash = false;
-    for (const s of sockets) if (Math.hypot(s.p[0] - tmp[0], s.p[1] - tmp[1], s.p[2] - tmp[2]) < (s.r + r) * 1.12) { clash = true; break; }
-    if (clash) continue;
+    if (!fits(tmp, r)) continue;
     const du = 0.004, dv = 0.006;
     cloakPt(n2, u + du, v, a); cloakPt(n2, u - du, v, b); cloakPt(n2, u, v + dv, c); cloakPt(n2, u, v - dv, d);
     const tu = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], tv = [c[0] - d[0], c[1] - d[1], c[2] - d[2]];
@@ -175,10 +187,21 @@ export function buildCloak(ctx, U) {
     if (nx * tmp[0] + nz * (tmp[2] - 0.1 * v * v) < 0) { nx = -nx; ny = -ny; nz = -nz; }
     sockets.push({ p: [tmp[0], tmp[1], tmp[2]], n: [nx, ny, nz], r });
   }
+  tries = 0;
+  const target = sockets.length + nSleeve;
+  while (sockets.length < target && tries++ < 8000) {
+    const sd = rng() < 0.5 ? -1 : 1, t = 0.08 + rng() * 0.86, an = rng() * TAU;
+    if (Math.cos(an) * sd < -0.2) continue; // not on the inner face against the body
+    const cc = SLV(sd, t), r = eyeR() * 0.85;
+    const nx = Math.cos(an), nz = Math.sin(an);
+    const p = [cc[0] + nx * cc[3] * 1.06, cc[1], cc[2] + nz * cc[3] * 1.06];
+    if (!fits(p, r)) continue;
+    sockets.push({ p, n: [nx, 0, nz], r });
+  }
   for (let k = 0; k < nHood; k++) {
-    const u = 0.25 + (rng() - 0.5) * 0.09, v = 0.28 + rng() * 0.26;
+    const u = 0.25 + (rng() - 0.5) * 0.08, v = 0.3 + rng() * 0.22;
     hoodPt(u, v, h4);
-    const r = 0.03 + rng() * 0.025;
+    const r = 0.022 + rng() * 0.02;
     let clash = false;
     for (const s of sockets) if (Math.hypot(s.p[0] - h4[0], s.p[1] - h4[1], s.p[2] - h4[2]) < (s.r + r) * 1.05) { clash = true; break; }
     if (clash && k > 2) continue;
@@ -187,7 +210,7 @@ export function buildCloak(ctx, U) {
     sockets.push({ p: [h4[0], h4[1], h4[2] + r * 0.4], n: [nx / nl, ny / nl, nz / nl], r, hood: true });
   }
   const N = sockets.length;
-  const eyeGeo = new THREE.SphereGeometry(1, low ? 10 : 14, low ? 8 : 10);
+  const eyeGeo = new THREE.SphereGeometry(1, low ? 8 : 10, low ? 6 : 8);
   const gazeA = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
   const lidA = new THREE.InstancedBufferAttribute(new Float32Array(N), 1);
   const kindA = new THREE.InstancedBufferAttribute(new Float32Array(N), 1);
@@ -232,6 +255,7 @@ export function buildCloak(ctx, U) {
   const cam = camera.position;
   let closedPrev = false;
   function update(dt, t) {
+    bodyMat.userData.uT.value = t;
     const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = Math.hypot(dx, dz);
     state.distance = dist;
     // the figure: toward the sun, or toward you when you are near; never quickly
