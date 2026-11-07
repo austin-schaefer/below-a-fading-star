@@ -88,8 +88,10 @@ const RIBBON_FRAG = /* glsl */`
     vec2 c = slope2(vec2(d * 0.85 + 0.7, (s - sp * 0.85 * t) * 0.47));
     // a slow cross-swirl so slow water still breathes
     vec2 sw = slope2(vec2(P.x * 0.05 + t * 0.006, P.z * 0.05 - t * 0.004));
-    float amp = 0.018 + 0.026 * sp + rough * 0.12;
-    vec2 sl = (a * 0.5 + b * 0.35 + c * 0.3 * far) * amp + sw * 0.02;
+    float amp = 0.035 + 0.045 * sp + rough * 0.16;
+    vec2 sl = (a * 0.5 + b * 0.4 + c * 0.35 * far) * amp + sw * 0.025;
+    // standing waves over the stones of the bed where it runs fast
+    sl.y += sin(s * 2.1 + d * 0.7 + mask(vec2(d * 0.3, s * 0.05)) * 6.0) * 0.03 * smoothstep(1.0, 3.0, sp);
     vec3 T = vec3(vTan.x, 0.0, vTan.y), B = vec3(vTan.y, 0.0, -vTan.x);
     vec3 N = normalize(vec3(0.0, 1.0, 0.0) - B * sl.x - T * sl.y);
 

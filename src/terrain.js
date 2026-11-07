@@ -180,7 +180,13 @@ function riverSection(x, z, out = _cs) {
     let c;
     if (dd < hw) c = W - 0.1 - D * (1 - (dd / hw) ** 2) + bedN;
     else if (dd < hw + Bc) c = W - 0.1 + (dd - hw) * 0.15 + bedN * 0.5;
-    else c = W - 0.1 + Bc * 0.15 + (dd - hw - Bc) * k * (1 + SX.noise2(x * 0.09, z * 0.09) * 0.25);
+    else {
+      // the wall: buttresses and gullies along it, and ledges of harder rock across it
+      const into = dd - hw - Bc + SX.noise2(x * 0.11, z * 0.11) * 1.3 + SX.noise2(x * 0.37 + 5, z * 0.37) * 0.45;
+      c = W - 0.1 + Bc * 0.15 + Math.max(0, into) * k * (1 + SX.noise2(x * 0.09, z * 0.09) * 0.3);
+      const above = c - W;
+      c += Math.sin(above * 1.3 + SX.noise2(x * 0.05, z * 0.05) * 2) * 0.35 * smoothstep(1, 3, above);
+    }
     out.cut = c;
     out.s = s; out.d = d; out.W = W; out.hw = hw; out.bank = hw + Bc;
     out.inRiver = dd < hw + Bc + 0.6;

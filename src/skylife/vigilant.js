@@ -1,4 +1,4 @@
-// The Vigilant: a crouched, hill-sized figure seated on a ledge of the east-north-east wall,
+// The Vigilant: a crouched, hill-sized figure seated on the crest of the east-north-east wall,
 // knees drawn up, forearms on its knees, head a little forward. It is made of the wall's own rock
 // (the terrain's material, so the same strata, rime and haze) and reads as a crag until you see the
 // shoulders and the head. The head is never seen to move: each time it leaves your view it turns
@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 
 const D2R = Math.PI / 180;
-export const VIGILANT = { bearing: 68, r: 440, face: { x: 40, z: 30 } }; // seat on the wall; looks toward the keep
+export const VIGILANT = { bearing: 72, r: 476, face: { x: 40, z: 30 } }; // seated on the crest; looks toward the keep
 const HEAD_LIMIT = 35 * D2R;
 const PIVOT = new THREE.Vector3(0, 52, 10);
 const EYES = [new THREE.Vector3(-3.4, 58.6, 21.4), new THREE.Vector3(3.4, 58.6, 21.4)];
@@ -36,93 +36,128 @@ const EYE_FS = /* glsl */`
 export function buildVigilant(ctx, rng) {
   const { terrain, noise } = ctx;
   const hi = ctx.quality === 'high';
-  const WS = hi ? 24 : 14, HS = hi ? 16 : 10;
-
+  
   // seat and facing
   const b = VIGILANT.bearing * D2R;
   const seat = new THREE.Vector3(Math.sin(b) * VIGILANT.r, 0, -Math.cos(b) * VIGILANT.r);
-  seat.y = terrain.heightAt(seat.x, seat.z) - 2;
+  seat.y = terrain.heightAt(seat.x, seat.z) - 4;
   const theta = Math.atan2(VIGILANT.face.x - seat.x, VIGILANT.face.z - seat.z);
   const cs = Math.cos(theta), sn = Math.sin(theta);
   const toWorldXZ = (x, z) => [seat.x + cs * x + sn * z, seat.z - sn * x + cs * z];
   const groundLocal = (x, z) => { const [wx, wz] = toWorldXZ(x, z); return terrain.heightAt(wx, wz) - seat.y; };
 
-  // the parts, in the figure's frame: +z forward, y up from the ledge
+  // the parts, in the figure's frame (+z forward, y up from the ledge), as signed-distance shapes
+  // melted together; the skin is found by shooting rays in from outside toward a centre, so it is
+  // one continuous eroded mass rather than a heap of balls
+  const SC = 1.15; // seated height (ledge to crown) about 78 m
   const parts = [];
-  const blob = (c, r, opt = {}) => parts.push({ c: new THREE.Vector3(...c), r: new THREE.Vector3(...r), ...opt });
-  const limb = (a, b2, rad, opt = {}) => {
-    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b2);
-    const c = A.clone().add(B).multiplyScalar(0.5), len = A.distanceTo(B);
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
-    parts.push({ c, r: new THREE.Vector3(rad, len / 2 + rad * 0.6, rad), q, ...opt });
+  const blob = (c, r, opt = {}) => {
+    const q = opt.rotX ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -opt.rotX) : null;
+    parts.push({ kind: 0, c: new THREE.Vector3(...c), r: new THREE.Vector3(...r), qi: q, head: !!opt.head });
   };
-  blob([0, -16, -8], [38, 22, 32], { rock: 0.22 });          // the talus it sits in
-  blob([0, 7, -4], [25, 13, 19], { rock: 0.16 });            // haunches
-  blob([0, 26, -3], [19, 20, 14], { rotX: 0.3, rock: 0.14 }); // torso, leaning forward
-  blob([0, 40, 0], [23, 12, 15], { rotX: 0.35, rock: 0.12 }); // the hunch of the back
-  for (const s of [-1, 1]) {
-    blob([20 * s, 44, 4], [11, 9, 11], { rock: 0.1 });        // shoulders
-    limb([23 * s, 42, 5], [22 * s, 22, 19], 7, { rock: 0.12 });   // upper arms
-    limb([22 * s, 22, 19], [9 * s, 23, 33], 6, { rock: 0.12 });   // forearms across the knees
-    blob([7 * s, 20, 36], [6, 6.5, 6], { rock: 0.14 });       // hands, hanging
-    limb([12 * s, 5, 4], [13 * s, 17, 27], 10, { rock: 0.12 });   // thighs drawn up
-    blob([13 * s, 17, 28], [9.5, 9, 9], { rock: 0.1 });       // knees
+  const limb = (a, b2, rad, opt = {}) => parts.push({ kind: 1, a: new THREE.Vector3(...a), b: new THREE.Vector3(...b2), rad, head: !!opt.head });
+  blob([0, -16, -8], [40, 22, 34]);              // the talus it sits in
+  blob([0, 7, -4], [25, 13, 19]);                // haunches
+  blob([0, 26, -3], [19, 20, 14], { rotX: 0.3 }); // torso, leaning forward
+  blob([0, 40, 0], [24, 12, 15], { rotX: 0.35 }); // the hunch of the back
+  for (const s2 of [-1, 1]) {
+    blob([20 * s2, 44, 3], [11, 9, 11]);                  // shoulders
+    limb([23 * s2, 42, 4], [23 * s2, 22, 18], 7);         // upper arms
+    limb([23 * s2, 22, 18], [9 * s2, 24, 33], 6);         // forearms across the knees
+    blob([7 * s2, 19, 36], [5.5, 7, 5.5]);                // hands, hanging
+    limb([12 * s2, 5, 4], [13 * s2, 17, 26], 10);         // thighs drawn up
+    blob([13 * s2, 17, 28], [9.5, 9, 9]);                 // knees
     // the shins reach down the slope to wherever the ground is
-    const fy = Math.min(-6, groundLocal(15 * s, 34) + 2);
-    limb([13 * s, 14, 30], [15 * s, fy, 34], 7.5, { rock: 0.14 });
-    blob([15 * s, fy - 2, 37], [8, 5, 11], { rock: 0.2 });    // feet
+    const fy = Math.min(-6, groundLocal(15 * s2 * SC, 34 * SC) / SC + 2);
+    limb([13 * s2, 14, 30], [15 * s2, fy, 34], 7.5);
+    blob([15 * s2, fy - 2, 37], [8, 5, 11]);              // feet
   }
-  limb([0, 46, 6], [0, 53, 11], 7.5, { rock: 0.1 });          // neck
-  const headStart = parts.length;
-  blob([0, 58, 12], [9, 10, 9.5], { rock: 0.06, head: true });   // skull
-  blob([0, 60.2, 19], [8.5, 2.8, 3.6], { rock: 0.05, head: true }); // brow
-  blob([0, 52.5, 15], [7, 4.5, 7], { rock: 0.06, head: true });  // jaw
-  blob([0, 66.5, 10], [3, 2.6, 7.5], { rock: 0.08, head: true }); // a worn crest
-  void headStart;
+  limb([0, 45, 5], [0, 53, 11], 7.5);                     // neck
+  blob([0, 58, 12], [9, 10, 9.5], { head: true });        // skull
+  blob([0, 60.4, 18.6], [8.6, 2.8, 3.6], { head: true }); // brow
+  blob([0, 52.8, 15], [7, 4.5, 7], { head: true });       // jaw
+  blob([0, 66.4, 10], [3, 2.6, 7.5], { head: true });     // a worn crest
 
-  // build: displaced, smooth-shaded ellipsoids merged into one indexed geometry
-  const P = [], N = [], C = [], I = [], IDX = [];
-  let headV0 = -1, headV1 = -1;
-  const v = new THREE.Vector3(), n = new THREE.Vector3(), w = new THREE.Vector3();
+  const q = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3();
+  function sdPart(p, P2) {
+    if (P2.kind === 0) {
+      q.subVectors(p, P2.c); if (P2.qi) q.applyQuaternion(P2.qi);
+      const k0 = Math.hypot(q.x / P2.r.x, q.y / P2.r.y, q.z / P2.r.z);
+      const k1 = Math.hypot(q.x / (P2.r.x * P2.r.x), q.y / (P2.r.y * P2.r.y), q.z / (P2.r.z * P2.r.z));
+      return k1 > 1e-6 ? k0 * (k0 - 1) / k1 : -Math.min(P2.r.x, P2.r.y, P2.r.z);
+    }
+    t1.subVectors(p, P2.a); t2.subVectors(P2.b, P2.a);
+    const h = THREE.MathUtils.clamp(t1.dot(t2) / t2.lengthSq(), 0, 1);
+    return t1.addScaledVector(t2, -h).length() - P2.rad;
+  }
+  const smin = (a, b2, k) => { const h = Math.max(k - Math.abs(a - b2), 0) / k; return Math.min(a, b2) - h * h * k * 0.25; };
+  const sdf = (p, head) => {
+    let d = 1e9;
+    for (const P2 of parts) if (P2.head === head) d = smin(d, sdPart(p, P2), head ? 2.5 : 6);
+    return d;
+  };
+
+  // build: one wrapped grid per star-shaped skin (body, head), displaced, smooth-shaded
+  const P = [], N = [], C = [], IDX = [];
+  const v = new THREE.Vector3(), n = new THREE.Vector3(), u = new THREE.Vector3();
   const cRock = new THREE.Color('#3c3838'), cRockD = new THREE.Color('#1f1c20'), cScree = new THREE.Color('#4a4644'), col = new THREE.Color();
   const ss = THREE.MathUtils.smoothstep;
-  const rq = new THREE.Quaternion();
-  for (const p of parts) {
-    const g = new THREE.SphereGeometry(1, WS, HS);
-    const pos = g.attributes.position;
-    if (p.rotX) rq.setFromAxisAngle(new THREE.Vector3(1, 0, 0), p.rotX); else if (p.q) rq.copy(p.q); else rq.identity();
-    const minR = Math.min(p.r.x, p.r.y, p.r.z);
+  function skin(centre, head, NU, NV, tMax, rough) {
+    const base = P.length / 3;
+    const pts = [];
+    for (let j = 0; j <= NV; j++) {
+      const ph = Math.PI * j / NV;
+      for (let i = 0; i < NU; i++) {
+        const th = Math.PI * 2 * i / NU;
+        u.set(Math.sin(ph) * Math.sin(th), Math.cos(ph), Math.sin(ph) * Math.cos(th));
+        let t = tMax;
+        for (let k = 0; k < 90 && t > 0; k++) {
+          v.copy(centre).addScaledVector(u, t);
+          const d = sdf(v, head);
+          if (d < 0.05) break;
+          t -= Math.max(d * 0.9, 0.2);
+        }
+        v.copy(centre).addScaledVector(u, Math.max(t, 0.5));
+        pts.push(v.x, v.y, v.z);
+      }
+    }
+    const idx = [];
+    for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+      const a = j * NU + i, b2 = j * NU + (i + 1) % NU, c = a + NU, d = b2 + NU;
+      idx.push(a, c, b2, b2, c, d);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); g.setIndex(idx);
+    g.computeVertexNormals();
+    // erode: vertical gullies like the wall's, crags, a finer grain
+    const pos = g.attributes.position, nr = g.attributes.normal;
     for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i);
-      n.set(v.x / p.r.x, v.y / p.r.y, v.z / p.r.z).normalize().applyQuaternion(rq);
-      v.multiply(p.r).applyQuaternion(rq).add(p.c);
-      // crags and slabs: a ridged lump field plus finer grain, in the figure's own frame
-      const f = 0.045;
-      const big = noise.ridged2(v.x * f + v.y * 0.6 * f, v.z * f - v.y * 0.5 * f, 4);
-      const fine = noise.fbm2(v.x * 0.17 + v.y * 0.11, v.z * 0.17 - v.y * 0.13, 3);
-      const d = minR * p.rock * (big - 0.45) * 1.6 + fine * minR * p.rock * 0.5;
-      v.addScaledVector(n, d);
+      v.fromBufferAttribute(pos, i); n.fromBufferAttribute(nr, i);
+      const gully = noise.ridged2(v.x * 0.11 + v.z * 0.09, v.y * 0.016 + v.x * 0.004, 4);
+      const crag = noise.fbm2(v.x * 0.05 + v.y * 0.04, v.z * 0.05 - v.y * 0.03, 3);
+      const fine = noise.fbm2(v.x * 0.21 + v.y * 0.13, v.z * 0.21 - v.y * 0.17, 2);
+      v.addScaledVector(n, rough * ((gully - 0.5) * 2.4 + crag * 1.8 + fine * 0.6));
       pos.setXYZ(i, v.x, v.y, v.z);
     }
     g.computeVertexNormals();
-    const base = P.length / 3;
-    if (p.head && headV0 < 0) headV0 = base;
-    const nrm = g.attributes.normal;
     for (let i = 0; i < pos.count; i++) {
       P.push(pos.getX(i), pos.getY(i), pos.getZ(i));
-      N.push(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
-      // the wall's colours by height, darker under overhangs, a little mottled
-      const wy = pos.getY(i) + seat.y;
+      N.push(nr.getX(i), nr.getY(i), nr.getZ(i));
+      // the wall's colours by height, darker in the hollows and under the overhangs, mottled
+      const wy = pos.getY(i) * SC + seat.y;
       col.copy(cScree).lerp(cRock, ss(wy, 10, 60)).lerp(cRockD, ss(wy, 60, 160));
-      const under = THREE.MathUtils.clamp(-nrm.getY(i), 0, 1);
+      const under = THREE.MathUtils.clamp(-nr.getY(i), 0, 1);
       const mott = 0.9 + 0.2 * noise.noise2(pos.getX(i) * 0.08, pos.getZ(i) * 0.08 + pos.getY(i) * 0.05);
-      col.multiplyScalar((1 - 0.4 * under) * mott);
+      col.multiplyScalar((1 - 0.3 * under) * mott);
       C.push(col.r, col.g, col.b);
     }
-    for (let i = 0; i < g.index.count; i++) IDX.push(base + g.index.getX(i));
-    if (p.head) headV1 = P.length / 3;
+    for (const k of idx) IDX.push(base + k);
     g.dispose();
+    return [base, P.length / 3];
   }
+  skin(new THREE.Vector3(0, 24, 6), false, hi ? 84 : 48, hi ? 56 : 32, 100, 1.6);
+  const [headV0, headV1] = skin(new THREE.Vector3(0, 59, 13), true, hi ? 40 : 24, hi ? 28 : 16, 20, 0.45);
+
   const geo = new THREE.BufferGeometry();
   const posAttr = new THREE.Float32BufferAttribute(P, 3), nrmAttr = new THREE.Float32BufferAttribute(N, 3);
   geo.setAttribute('position', posAttr);
@@ -140,6 +175,7 @@ export function buildVigilant(ctx, rng) {
   mesh.name = 'vigilant';
   mesh.position.copy(seat);
   mesh.rotation.y = theta;
+  mesh.scale.setScalar(SC);
   mesh.castShadow = false; mesh.receiveShadow = false;
   ctx.scene.add(mesh);
   mesh.updateMatrixWorld(true);
