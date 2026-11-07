@@ -431,7 +431,8 @@ export async function build(ctx) {
     pedlars.push(p);
     aPh.setXYZW(i, p.ph, p.rate, 1, 0);
   }
-  ctx.pedlars = { count: N, positions: pedlars.map((p) => p.pos), hold: false, list: pedlars };
+  // hold: freezes their wandering (for renders); list, stones: their state, for tools
+  ctx.pedlars = { count: N, positions: pedlars.map((p) => p.pos), hold: false, list: pedlars, stones };
 
   // a place to go: over the water (kind 0), over a stone (1) or over the bank (2), in river coordinates
   function pickTarget(p, retreat, plS = 0, plD = 0) {
