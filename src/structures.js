@@ -15,6 +15,9 @@ import { buildCourt } from './structures/court.js';
 import { buildByre } from './structures/byre.js';
 import { buildMarkers } from './structures/markers.js';
 import { buildScatter } from './structures/scatter.js';
+import { buildTaverna, TAVERNA } from './structures/taverna.js';
+import { buildArches, ARCHES } from './structures/arches.js';
+import { buildBridge, BRIDGE } from './structures/bridge.js';
 
 export async function build(ctx) {
   const t0 = performance.now();
@@ -55,12 +58,17 @@ export async function build(ctx) {
 
   const env = { ctx, ground, tints, rust, banners, notes, addPaver, rng: null };
   const sites = {};
+  // debugging aid: ?sskip=scatter,bridge leaves those sites out
+  const sskip = (new URL(location.href).searchParams.get('sskip') || '').split(',');
   const site = (name, salt, fn) => {
     const ts = performance.now();
+    if (sskip.includes(name)) fn = () => null;
     const B = new Builder(ctx.noise);
     env.rng = ctx.makeRng(salt);
-    const extra = fn(ctx, B, env);
-    sites[name] = { B, ms: performance.now() - ts, extra };
+    let extra = null;
+    try { extra = fn(ctx, B, env); }
+    catch (e) { console.error(`[fp] structures: ${name} failed:`, e?.stack || e); }
+    sites[name] = { B, ms: performance.now() - ts, extra, tris: B.triangles };
     return B;
   };
   site('keep', 1101, buildKeep);
@@ -69,6 +77,12 @@ export async function build(ctx) {
   site('stones', 1404, buildStones);
   site('court', 1505, buildCourt);
   site('byre', 1606, buildByre);
+  site('taverna', 1909, buildTaverna);
+  site('arches', 2010, buildArches);
+  site('bridge', 2111, buildBridge);
+  // keep the scatter off the newer landmarks too
+  env.taken = [[TAVERNA.x, TAVERNA.z, 26], [ARCHES.x, ARCHES.z, 26], [BRIDGE.a.x, BRIDGE.a.z, 14], [BRIDGE.b.x, BRIDGE.b.z, 14],
+    [(BRIDGE.a.x + BRIDGE.b.x) / 2, (BRIDGE.a.z + BRIDGE.b.z) / 2, 26]];
   site('markers', 1707, buildMarkers);
   site('scatter', 1808, buildScatter);
 
@@ -76,7 +90,7 @@ export async function build(ctx) {
   let tris = 0, draws = 0;
   const meshes = [];
   // causeway and markers geometry is sparse; fold them in with the scatter to save draw calls
-  const merged = { keep: ['keep'], tower: ['tower'], stones: ['stones'], court: ['court'], byre: ['byre'], wide: ['causeway', 'markers', 'scatter'] };
+  const merged = { keep: ['keep'], tower: ['tower'], stones: ['stones'], court: ['court'], byre: ['byre'], taverna: ['taverna'], arches: ['arches'], bridge: ['bridge'], wide: ['causeway', 'markers', 'scatter'] };
   for (const [name, parts] of Object.entries(merged)) {
     let B = sites[parts[0]].B;
     for (let i = 1; i < parts.length; i++) {
@@ -97,7 +111,7 @@ export async function build(ctx) {
   // pavers: one instanced hex prism with a carved ring, moss in the joints
   {
     const r = HEX_R * 0.9;
-    const prof = [[r, -0.2], [r, 0.02], [r - 0.03, 0.055], [r * 0.5, 0.068], [0.0, 0.062]];
+    const prof = [[r, -0.16], [r, 0.02], [r - 0.035, 0.06], [0.0, 0.068]];
     let g = new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 6, Math.PI / 6 * 0);
     g = g.toNonIndexed();
     g.computeVertexNormals();
@@ -161,9 +175,10 @@ export async function build(ctx) {
   });
 
   const ms = performance.now() - t0;
-  const per = Object.entries(sites).map(([k, v]) => `${k} ${v.ms.toFixed(0)}`).join(', ');
+  const per = Object.entries(sites).map(([k, v]) => `${k} ${v.ms.toFixed(0)}ms/${(v.tris / 1000).toFixed(0)}k`).join(', ');
   ctx.log(`structures: ${draws} draw calls, ${(tris / 1000).toFixed(0)}k tris, ${paverMats.length} pavers, built in ${ms.toFixed(0)}ms (${per})`);
   if (notes.keep) ctx.log('structures: gate', JSON.stringify(notes.keep.gate), 'courtyard', JSON.stringify(notes.keep.courtyard));
   if (notes.byre) ctx.log('structures: byre door', JSON.stringify(notes.byre));
+  for (const k of ['taverna', 'arches', 'bridge', 'shrine', 'graveyard', 'gibbet']) if (notes[k]) ctx.log(`structures: ${k}`, JSON.stringify(notes[k]));
   ctx.structures = { notes };
 }

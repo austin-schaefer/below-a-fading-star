@@ -107,7 +107,7 @@ export function buildLattice(ctx, ground, shared) {
     uTime: shared.time, uCrys: crysGain, uOrigin: { value: new THREE.Vector2(G.x, G.z) },
     uDeep: { value: new THREE.Color(ctx.palette.crystalDeep) }, uPale: { value: new THREE.Color(ctx.palette.crystal) },
   };
-  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#2a5a78'), roughness: 0.14, metalness: 0.05, flatShading: true });
+  const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#3a7898'), roughness: 0.08, metalness: 0.2, flatShading: true });
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uni);
     shader.vertexShader = shader.vertexShader
@@ -129,7 +129,9 @@ export function buildLattice(ctx, ground, shared) {
           pulse *= pulse;
           float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.5);
           float core = smoothstep(-0.25, 1.0, vCrH);
-          totalEmissiveRadiance += (uDeep * (0.12 + 0.75 * pulse) * (0.3 + 0.7 * core * core) + uPale * fres * (0.18 + 0.4 * pulse)) * uCrys;
+          // a band of light climbing slowly through each crystal
+          float band = smoothstep(0.82, 1.0, sin(vCrH * 7.0 - uTime * 0.9 - fpD * 0.11) * 0.5 + 0.5);
+          totalEmissiveRadiance += (uDeep * (0.15 + 0.8 * pulse) * (0.3 + 0.7 * core * core) + uPale * (fres * (0.35 + 0.5 * pulse) + band * 0.55 * core)) * uCrys;
         }`);
     fogBatchFix(shader);
   };
@@ -197,7 +199,7 @@ export function buildLattice(ctx, ground, shared) {
     }
     ribbon(pts);
   };
-  const nStarts = low ? 70 : 140;
+  const nStarts = low ? 130 : 260;
   for (let k = 0; k < nStarts; k++) {
     const c = hexCells[Math.floor(rng() * hexCells.length)];
     if (!c || c.w < 0.3) continue;

@@ -80,7 +80,7 @@ export function buildByre(ctx, B, env) {
   // ---- the roof ----
   const pitch = Math.atan2(peak - eave, hw + 0.25);
   const slopeLen = Math.hypot(peak - eave, hw + 0.25) + 0.35;
-  const roofY = (lx, s) => peak + 0.08 - s * Math.sin(pitch) + sag(lx) * (0.6 + 0.4 * s / slopeLen) - 0.28 * Math.sin(Math.PI * Math.min(1, (lx + hl) / len)) * Math.sin(Math.PI * s / slopeLen);
+  const roofY = (lx, s) => gAvg + peak + 0.08 - s * Math.sin(pitch) + sag(lx) * (0.6 + 0.4 * s / slopeLen) - 0.28 * Math.sin(Math.PI * Math.min(1, (lx + hl) / len)) * Math.sin(Math.PI * s / slopeLen);
   const slateC = tints.slate;
   for (const side of [-1, 1]) {
     // rafters
@@ -102,13 +102,13 @@ export function buildByre(ctx, B, env) {
         const y = roofY(lx, s) + 0.02;
         const slip = rng() < 0.06 ? 0.15 : 0;
         B.add(B.box(0.3, 0.025, 0.42), M(lx + (rng() - 0.5) * 0.03, y - slip * Math.sin(pitch), lz + side * slip * Math.cos(pitch), side * pitch + (rng() - 0.5) * 0.05, (rng() - 0.5) * 0.08, (rng() - 0.5) * 0.06), {
-          color: vary(slateC, rng, 0.16), moss: 0.85, ground: gAvg - 3.0, disp: 0,
+          color: vary(slateC, rng, 0.16), moss: 0.85, ground: gAvg, disp: 0,
         });
       }
     }
   }
   // ridge stones over the part that stands
-  for (let lx = 0.2; lx < hl + 0.2; lx += 0.5) B.add(B.box(0.52, 0.16, 0.42, { chip: 0.03 }), M(lx, roofY(lx, 0) + 0.06, 0, Math.PI / 4, 0, 0), { color: vary(tints.old, rng, 0.07), moss: 0.9, ground: gAvg - 3 });
+  for (let lx = 0.2; lx < hl + 0.2; lx += 0.5) B.add(B.box(0.52, 0.16, 0.42, { chip: 0.03 }), M(lx, roofY(lx, 0) + 0.06, 0, Math.PI / 4, 0, 0), { color: vary(tints.old, rng, 0.07), moss: 0.9, ground: gAvg });
   // the fallen half inside: a heap of slates and stone
   for (let i = 0; i < 70; i++) {
     const lx = collapsedSide * (0.8 + rng() * (hl - 1.6)), lz = (rng() - 0.5) * (wid - 1.8);

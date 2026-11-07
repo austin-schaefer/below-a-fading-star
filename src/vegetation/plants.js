@@ -56,12 +56,12 @@ function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, t
 // it reads as three variants: fine tussock + bent broad blades, fine + seed stalks, or all.
 function grassGeo(rng) {
   const pg = new PlantGeo();
-  for (let k = 0; k < 9; k++) { // fine
+  for (let k = 0; k < 7; k++) { // fine
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
     blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, 0.03 + rng() * 0.014, 0.28 + rng() * 0.28, 0.18 + rng() * 0.3, 2, 0);
   }
   const seed = [1.25, 0.72, 0.5];
-  for (let k = 0; k < 3; k++) { // tall seed stalks with a small head
+  for (let k = 0; k < 2; k++) { // tall seed stalks with a small head
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.14;
     const h = 0.62 + rng() * 0.3, lean = 0.08 + rng() * 0.15;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
@@ -70,7 +70,7 @@ function grassGeo(rng) {
     const t0 = 0.74, t1 = 1.04;
     const at = (t) => [x0 + bl.dx * lean * h * t * t, h * t, z0 + bl.dz * lean * h * t * t];
     const p0 = at(t0), p1 = at((t0 + t1) / 2), p2 = at(t1);
-    const wx = -bl.dz * 0.022, wz = bl.dx * 0.022;
+    const wx = -bl.dz * 0.014, wz = bl.dx * 0.014;
     const rnd = rng();
     const i0 = pg.v(p0[0], p0[1], p0[2], bl.dx, 0.6, bl.dz, seed, t0, 1, rnd, 1);
     const i1 = pg.v(p1[0] - wx, p1[1], p1[2] - wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
@@ -78,7 +78,7 @@ function grassGeo(rng) {
     const i3 = pg.v(p2[0], p2[1], p2[2], bl.dx, 0.6, bl.dz, seed, 1, 1, rnd, 1);
     pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
   }
-  for (let k = 0; k < 3; k++) { // broad, bent over
+  for (let k = 0; k < 2; k++) { // broad, bent over
     const a = rng() * Math.PI * 2, r = 0.06 + rng() * 0.14;
     blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.05 + rng() * 0.02, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, 2, 2);
   }
@@ -89,7 +89,7 @@ function grassGeo(rng) {
 function heatherGeo(rng) {
   const pg = new PlantGeo();
   const wood = [0.55, 0.45, 0.36], bloom = [1, 1, 1];
-  for (let k = 0; k < 22; k++) {
+  for (let k = 0; k < 16; k++) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.16;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
     const h = (0.36 - r * 1.1) * (0.8 + rng() * 0.4), lean = 0.35 + r * 2.5 + rng() * 0.2; // taller in the middle: a dome
@@ -170,15 +170,15 @@ function flowerGeo(rng) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.12;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r, h = 0.9 + rng() * 0.7, lean = 0.05 + rng() * 0.1;
     const bl = blade(pg, rng, x0, z0, a, 0.016, h, lean, 2, 0, stemC, 0);
-    const n = 9;
+    const n = 12;
     for (let i = 0; i < n; i++) {
-      const t = 0.5 + 0.5 * (i / (n - 1));
+      const t = 0.55 + 0.45 * (i / (n - 1));
       const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
-      const fa = i * 2.4 + rng(), fs = 0.045 * (1.15 - 0.6 * (i / n));
+      const fa = i * 2.4 + rng(), fs = 0.026 * (1.2 - 0.6 * (i / n));
       const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
       const rnd = rng();
       const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
-      const i1 = pg.v(cx + ox * 1.6, cy + fs * 0.3, cz + oz * 1.6, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
+      const i1 = pg.v(cx + ox * 1.1, cy + fs * 0.2, cz + oz * 1.1, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i2 = pg.v(cx - oz, cy + fs * 0.8, cz + ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i3 = pg.v(cx + oz, cy + fs * 0.8, cz - ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       pg.tri(i0, i1, i2); pg.tri(i0, i3, i1);
@@ -225,19 +225,19 @@ function makePlantMaterial(ctx, shared, o) {
   const u = {
     uTime: shared.time, uR0: { value: o.r0 }, uFade0: { value: o.fade0 }, uFade1: { value: o.fade1 },
     uWind: { value: o.wind }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
-    uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 },
+    uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 }, uExp: { value: o.exp ?? 1 },
   };
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec4 aBlade; attribute vec4 iPos; attribute vec4 iShape; attribute vec4 iTint;
-        uniform float uTime, uR0, uFade0, uFade1, uWind, uComp; uniform vec3 uTip, uBase;
+        uniform float uTime, uR0, uFade0, uFade1, uWind, uComp, uExp; uniform vec3 uTip, uBase;
         varying float vFpT; varying vec3 vFpW;
         ${GLSL_WIND}`)
       .replace('#include <color_vertex>', `
         float fpDist = distance(cameraPosition.xz, iPos.xz);
-        float fpDens = min(1.0, uR0 / max(fpDist, 0.001)) * (1.0 - smoothstep(uFade0, uFade1, fpDist));
+        float fpDens = pow(min(1.0, uR0 / max(fpDist, 0.001)), uExp) * (1.0 - smoothstep(uFade0, uFade1, fpDist));
         float fpKeep = clamp((fpDens - iShape.z) / 0.1, 0.0, 1.0);
         float fpVar = floor(iShape.w); float fpSeed = fract(iShape.w);
         float fam = aBlade.y;
@@ -248,12 +248,12 @@ function makePlantMaterial(ctx, shared, o) {
         float fpBh = 0.75 + 0.5 * fract(sin((aBlade.z + fpSeed) * 91.7) * 437.5);
         float fpC = cos(iPos.w), fpS = sin(iPos.w);
         vColor = color * mix(uBase, iTint.rgb, aBlade.w);
-        vColor = mix(vColor, uTip * (0.7 + 0.6 * fpSeed), smoothstep(0.45, 1.0, aBlade.x) * iTint.w * step(fam, 1.5));
+        vColor = mix(vColor, uTip * (0.7 + 0.6 * fpSeed), smoothstep(0.6, 1.0, aBlade.x) * iTint.w * step(fam, 1.5));
         vColor *= mix(0.62, 1.0, smoothstep(0.0, 0.7, aBlade.x)) * (0.85 + 0.3 * fpBh - 0.15);
         vFpT = aBlade.x * aBlade.w;`)
       .replace('#include <beginnormal_vertex>', `
         vec3 objectNormal = vec3(normal.x * fpC - normal.z * fpS, normal.y, normal.x * fpS + normal.z * fpC);
-        objectNormal = normalize(mix(objectNormal, vec3(0.0, 1.0, 0.0), 0.35));`)
+        objectNormal = normalize(mix(objectNormal, vec3(0.0, 1.0, 0.0), 0.6));`)
       .replace('#include <begin_vertex>', `
         vec3 fpL = position;
         fpL.xz *= iShape.x * fpComp;
@@ -284,74 +284,69 @@ function makePlantMaterial(ctx, shared, o) {
 }
 
 // ---------- the chunked store ----------
+// Chunks are generated on demand (each from its own rng stream, so order does not matter) and
+// freed when far away; every frame the visible ones are packed into one instanced buffer.
 class Kind {
-  constructor(name, geo, mat, o) {
+  constructor(name, geo, mat, o, cap) {
     this.name = name; this.geo = geo; this.mat = mat; this.o = o;
-    this.tmp = new Array(CN * CN); // per chunk: plain arrays while generating
-    this.total = 0;
+    this.chunks = new Array(CN * CN).fill(null);
+    this.scratch = []; this.total = 0; this.drawn = 0; this.sig = -1;
+    this.cap = cap;
+    this.aPos = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aShape = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aTint = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('iPos', this.aPos); geo.setAttribute('iShape', this.aShape); geo.setAttribute('iTint', this.aTint);
+    geo.instanceCount = 0;
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.frustumCulled = false; // culled per chunk below
+    this.mesh.receiveShadow = true; this.mesh.castShadow = false;
+    this.mesh.name = `veg-${name}`;
+    this.order = new Int32Array(CN * CN);
   }
   add(x, y, z, rot, sx, sy, variant, seed, r, g, b, rust) {
-    const ci = clamp(Math.floor((x - CMIN) / CHUNK), 0, CN - 1), cj = clamp(Math.floor((z - CMIN) / CHUNK), 0, CN - 1);
-    const k = cj * CN + ci;
-    let a = this.tmp[k]; if (!a) a = this.tmp[k] = [];
-    a.push(x, y, z, rot, sx, sy, 0, variant + seed * 0.999, r, g, b, rust);
-    this.total++;
+    this.scratch.push(x, y, z, rot, sx, sy, 0, variant + seed * 0.999, r, g, b, rust);
   }
-  // Pack chunks into flat arrays, shuffle each chunk, store rank in iShape.z.
-  finish(rng, cap) {
-    const n = this.total;
-    this.pos = new Float32Array(n * 4); this.shape = new Float32Array(n * 4); this.tint = new Float32Array(n * 4);
-    this.chunks = [];
-    let off = 0;
-    for (let k = 0; k < CN * CN; k++) {
-      const a = this.tmp[k]; if (!a) continue;
-      const m = a.length / 12;
+  // Seal the scratch list as chunk k: shuffle, store rank in iShape.z.
+  commit(k, rng) {
+    const a = this.scratch, m = a.length / 12;
+    const ci = k % CN, cj = Math.floor(k / CN), x0 = CMIN + ci * CHUNK, z0 = CMIN + cj * CHUNK;
+    const ch = { n: m, x0, z0, x1: x0 + CHUNK, z1: z0 + CHUNK, d: 0, q: 0, pos: null, shape: null, tint: null, box: null };
+    if (m) {
+      const pos = new Float32Array(m * 4), shape = new Float32Array(m * 4), tint = new Float32Array(m * 4);
       const order = new Uint32Array(m); for (let i = 0; i < m; i++) order[i] = i;
       for (let i = m - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
       let y0 = Infinity, y1 = -Infinity;
       for (let i = 0; i < m; i++) {
-        const s = order[i] * 12, d = (off + i) * 4;
-        this.pos[d] = a[s]; this.pos[d + 1] = a[s + 1]; this.pos[d + 2] = a[s + 2]; this.pos[d + 3] = a[s + 3];
-        this.shape[d] = a[s + 4]; this.shape[d + 1] = a[s + 5]; this.shape[d + 2] = (i + 0.5) / m; this.shape[d + 3] = a[s + 7];
-        this.tint[d] = a[s + 8]; this.tint[d + 1] = a[s + 9]; this.tint[d + 2] = a[s + 10]; this.tint[d + 3] = a[s + 11];
-        y0 = Math.min(y0, a[s + 1]); y1 = Math.max(y1, a[s + 1]);
+        const s = order[i] * 12, d = i * 4;
+        pos[d] = a[s]; pos[d + 1] = a[s + 1]; pos[d + 2] = a[s + 2]; pos[d + 3] = a[s + 3];
+        shape[d] = a[s + 4]; shape[d + 1] = a[s + 5]; shape[d + 2] = (i + 0.5) / m; shape[d + 3] = a[s + 7];
+        tint[d] = a[s + 8]; tint[d + 1] = a[s + 9]; tint[d + 2] = a[s + 10]; tint[d + 3] = a[s + 11];
+        if (a[s + 1] < y0) y0 = a[s + 1]; if (a[s + 1] > y1) y1 = a[s + 1];
       }
-      const ci = k % CN, cj = Math.floor(k / CN);
-      const x0 = CMIN + ci * CHUNK, z0 = CMIN + cj * CHUNK;
-      this.chunks.push({ off, n: m, x0, z0, x1: x0 + CHUNK, z1: z0 + CHUNK, box: new THREE.Box3(new THREE.Vector3(x0 - 1, y0 - 0.5, z0 - 1), new THREE.Vector3(x0 + CHUNK + 1, y1 + this.o.height, z0 + CHUNK + 1)), d: 0, q: 0 });
-      off += m;
+      ch.pos = pos; ch.shape = shape; ch.tint = tint;
+      ch.box = new THREE.Box3(new THREE.Vector3(x0 - 1, y0 - 0.5, z0 - 1), new THREE.Vector3(x0 + CHUNK + 1, y1 + this.o.height, z0 + CHUNK + 1));
     }
-    this.tmp = null;
-    // the drawn buffer
-    this.cap = Math.min(n, cap);
-    const g = this.geo;
-    this.aPos = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    this.aShape = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    this.aTint = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
-    g.setAttribute('iPos', this.aPos); g.setAttribute('iShape', this.aShape); g.setAttribute('iTint', this.aTint);
-    g.instanceCount = 0;
-    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-    this.mesh = new THREE.Mesh(g, this.mat);
-    this.mesh.frustumCulled = false; // we cull per chunk ourselves
-    this.mesh.receiveShadow = true; this.mesh.castShadow = false;
-    this.mesh.name = `veg-${this.name}`;
-    this.order = new Int32Array(this.chunks.length);
-    this.sig = -1; this.drawn = 0;
+    this.chunks[k] = ch; this.total += m;
+    a.length = 0;
   }
+  free(k) { const ch = this.chunks[k]; if (ch) { this.total -= ch.n; this.chunks[k] = null; } }
   // Pick visible chunks and how much of each to draw; repack only when that changes.
-  update(px, pz, frustum) {
-    const { r0, fade0, fade1 } = this.o;
-    let nv = 0, sig = 0;
+  update(px, pz, frustum, genCount) {
+    const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
+    let nv = 0, sig = genCount | 0;
     for (let c = 0; c < this.chunks.length; c++) {
       const ch = this.chunks[c];
+      if (!ch || !ch.n) continue;
       const dx = Math.max(ch.x0 - px, 0, px - ch.x1), dz = Math.max(ch.z0 - pz, 0, pz - ch.z1);
-      const d = Math.hypot(dx, dz);
+      const d = Math.sqrt(dx * dx + dz * dz);
       if (d > fade1 || !frustum.intersectsBox(ch.box)) continue;
-      const dens = Math.min(1, r0 / Math.max(d, 0.001)) * (1 - smoothstep(fade0, fade1, d));
-      const q = Math.min(32, Math.ceil((dens + 0.1) * 32)); // in 1/32 steps, rounded up
+      const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
+      if (dens <= 0) continue;
+      const q = Math.min(64, Math.ceil(dens * 64 + 0.5)); // in 1/64 steps, rounded up
       ch.q = q; ch.d = d;
       this.order[nv++] = c;
-      sig = (Math.imul(sig, 31) + c * 64 + q) | 0;
+      sig = (Math.imul(sig, 31) + c * 128 + q) | 0;
     }
     sig = (Math.imul(sig, 31) + nv) | 0;
     if (sig === this.sig) return;
@@ -363,11 +358,11 @@ class Kind {
     const P = this.aPos.array, S = this.aShape.array, T = this.aTint.array;
     for (let i = 0; i < nv; i++) {
       const ch = this.chunks[ord[i]];
-      let m = Math.ceil(ch.n * ch.q / 32);
+      let m = Math.ceil(ch.n * ch.q / 64);
       if (w + m > this.cap) m = this.cap - w;
       if (m <= 0) break;
-      const s = ch.off * 4, e = (ch.off + m) * 4;
-      P.set(this.pos.subarray(s, e), w * 4); S.set(this.shape.subarray(s, e), w * 4); T.set(this.tint.subarray(s, e), w * 4);
+      const e = m * 4;
+      P.set(ch.pos.subarray(0, e), w * 4); S.set(ch.shape.subarray(0, e), w * 4); T.set(ch.tint.subarray(0, e), w * 4);
       w += m;
     }
     for (const a of [this.aPos, this.aShape, this.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, w * 4); a.needsUpdate = true; }
@@ -381,41 +376,50 @@ export function buildPlants(ctx, ground, shared) {
   const { landmarks: L, quality, noise } = ctx;
   const low = quality === 'low';
   const half = low ? 0.5 : 1;
-  const rng = ctx.makeRng(3301);
+  let rng = null; // per chunk, see genChunk
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
-  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 9, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 2.6 }), { r0: 9, fade0: 85, fade1: 125, height: 1.6 });
-  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 14, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 2.2 }), { r0: 14, fade0: 100, fade1: 150, height: 1 });
-  const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 });
-  const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 });
-  const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 });
-  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: low ? 18 : 26, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 1.4 }), { r0: low ? 18 : 26, fade0: 100, fade1: 145, height: 3 });
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 8, exp: 2.0, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.0 }), { r0: 8, exp: 2.0, fade0: 85, fade1: 125, height: 2 }, low ? 30000 : 60000);
+  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 14, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 2.2 }), { r0: 14, fade0: 100, fade1: 150, height: 1 }, low ? 12000 : 24000);
+  const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 }, low ? 8000 : 16000);
+  const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 }, low ? 6000 : 12000);
+  const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 }, low ? 3000 : 6000);
+  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: low ? 18 : 26, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 1.4 }), { r0: low ? 18 : 26, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
 
   // grass colours: dry, tawny, rust-tipped
-  const cTawny = C('#a08048'), cDry = C('#b89660'), cOchre = C('#8a6a34'), cHeathG = C('#7a5a4a'), cWoodG = C('#4a4a2c'), cMarsh = C('#7e7a42'), cBleach = C('#8c9294'), cOrch = C('#9a7a40');
+  const cTawny = C('#b8a060'), cDry = C('#d0bc80'), cOchre = C('#9a8440'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#a89048');
   const cSedge = C('#6a6a3a'), cSedge2 = C('#857a48');
-  const cHeath = [C('#6e3c5a'), C('#7a4a64'), C('#5a3a40'), C('#6a4430')]; // bloom, bloom, faded, dead-rust
+  const cHeath = [C('#6a4058'), C('#7a5068'), C('#5a4044'), C('#6a4a34')]; // bloom, bloom, faded, dead-rust
   const cReed = C('#8a7a4a'), cReed2 = C('#6a6a38');
-  const cBone = C('#c8b890'), cBrk = [C('#8a4420'), C('#6e3a1c'), C('#5a4a24')], cBrkWood = C('#2e3a1e');
+  const cBone = C('#e0d6b4'), cBrk = [C('#8a4420'), C('#6e3a1c'), C('#5a4a24')], cBrkWood = C('#2e3a1e');
   const cFlw = [C('#e0dcd0'), C('#a090c4'), C('#d0c0a0'), C('#c8b8d8')];
-  const cFlesh = C('#24341e'), cFlesh2 = C('#2c2c1c');
+  const cFlesh = C('#2a4024'), cFlesh2 = C('#303a20');
   const tint = [0, 0, 0];
   const mixInto = (a, b2, t) => { tint[0] = lerp(tint[0], b2[0], t); tint[1] = lerp(tint[1], b2[1], t); tint[2] = lerp(tint[2], b2[2], t); };
   const setT = (a) => { tint[0] = a[0]; tint[1] = a[1]; tint[2] = a[2]; };
 
   const D_BRACKEN = 0.6 * half, D_FLOWER = 0.6 * half, D_FLESH = 0.16 * half;
-  const D_GRASS = 4.5 * half, D_HEATH = 0.8 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
+  const D_GRASS = 6.5 * half, D_HEATH = 0.8 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
   const CELL = 2;
   const b = {};
-  const tStart = performance.now();
-  for (let cz = -318; cz < 318; cz += CELL) for (let cx = -318; cx < 318; cx += CELL) {
+  const kinds = [grass, heather, bracken, flowers, fleshy, reeds];
+  // Generate chunk k: every 2 m cell inside it, for every kind.
+  function genChunk(k) {
+    rng = ctx.makeRng(33000 + k);
+    const ci = k % CN, cj = Math.floor(k / CN);
+    const X0 = CMIN + ci * CHUNK, Z0 = CMIN + cj * CHUNK;
+    for (let cz = Z0; cz < Z0 + CHUNK; cz += CELL) for (let cx = X0; cx < X0 + CHUNK; cx += CELL) cell(cx, cz);
+    const sr = ctx.makeRng(34000 + k);
+    for (const kd of kinds) kd.commit(k, sr);
+  }
+  function cell(cx, cz) {
     const mx = cx + 1, mz = cz + 1;
-    if (mx * mx + mz * mz > 318 * 318) continue;
+    if (mx * mx + mz * mz > 318 * 318) return;
     ground.biomeAt(mx, mz, b);
-    if (b.rock > 0.6 || b.ice > 0.5) continue;
+    if (b.rock > 0.6 || b.ice > 0.5) return;
     const cd = ground.causewayDistance(mx, mz);
     // cheap cell-level keep-outs (exact ones per plant below where it matters)
-    if (ground.excluded(mx, mz, -1.5, { wet: 1.0 })) continue;
+    if (ground.excluded(mx, mz, -1.5, { wet: 1.0 })) return;
     const patch = noise.fbm2(mx * 0.045, mz * 0.045, 3) * 0.5 + 0.5; // tussocks and bare ground
     const dry = noise.warped2(mx * 0.012 + 3, mz * 0.012 + 1, 3) * 0.5 + 0.5;
     // people walk the causeway, the keep's skirts and the stones: denser, shorter grass there
@@ -448,8 +452,8 @@ export function buildPlants(ctx, ground, shared) {
       mixInto(null, cWoodG, smoothstep(0.2, 0.8, b.wood)); mixInto(null, cMarsh, marshW * 0.9); mixInto(null, cBleach, crysW * 0.9);
       const br = 0.8 + rng() * 0.35; tint[0] *= br; tint[1] *= br; tint[2] *= br;
       const tus = rng() < tussock * 0.5;
-      const sy = (0.75 + rng() * 0.5) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.7 + rng() * 0.6 : 1);
-      grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.9 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.3 + 0.7 * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
+      const sy = (0.75 + rng() * 0.5) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
+      grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.3 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.1 + 0.55 * rng() * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
     }
     // sedge: taller, olive, in the fen and on the tarn shore
     const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8) * (0.4 + 0.8 * patch);
@@ -499,11 +503,11 @@ export function buildPlants(ctx, ground, shared) {
     const nl = Math.floor(dl * CELL * CELL + rng());
     for (let i = 0; i < nl; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
-      if (nearCd && ground.causewayDistance(x, z) < 5) continue;
+      if (cd < 9) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.05) continue;
       setT(cFlesh); mixInto(null, cFlesh2, rng());
-      const s = 0.9 + Math.pow(rng(), 1.5) * 1.6;
+      const s = 0.7 + Math.pow(rng(), 2) * 1.0;
       fleshy.add(x, y - 0.05, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // heather
@@ -539,16 +543,40 @@ export function buildPlants(ctx, ground, shared) {
       }
     }
   }
+  // Streaming: chunks within reach are built, nearest first; far ones are freed.
+  const gen = new Uint8Array(CN * CN);
+  const REACH = 175, FREE = 260;
+  let genCount = 0;
+  const chunkDist = (k, px, pz) => {
+    const x0 = CMIN + (k % CN) * CHUNK, z0 = CMIN + Math.floor(k / CN) * CHUNK;
+    const dx = Math.max(x0 - px, 0, px - x0 - CHUNK), dz = Math.max(z0 - pz, 0, pz - z0 - CHUNK);
+    return Math.sqrt(dx * dx + dz * dz);
+  };
+  function stream(px, pz, budget) {
+    for (let n = 0; n < budget; n++) {
+      let best = -1, bd = REACH;
+      for (let k = 0; k < CN * CN; k++) {
+        if (gen[k]) { if (chunkDist(k, px, pz) > FREE) { gen[k] = 0; for (const kd of kinds) kd.free(k); } continue; }
+        const d = chunkDist(k, px, pz);
+        if (d < bd) { bd = d; best = k; }
+      }
+      if (best < 0) return;
+      genChunk(best); gen[best] = 1; genCount++;
+    }
+  }
+  const tStart = performance.now();
+  for (const k of kinds) ctx.scene.add(k.mesh);
+  stream(ctx.player.pos.x, ctx.player.pos.z, CN * CN);
   const genMs = performance.now() - tStart;
-  const kinds = [grass, heather, bracken, flowers, fleshy, reeds];
-  const caps = { grass: low ? 60000 : 110000, heather: low ? 15000 : 30000, bracken: low ? 10000 : 20000, flowers: low ? 6000 : 12000, fleshy: low ? 3000 : 6000, reeds: low ? 12000 : 24000 };
-  for (const k of kinds) { k.finish(rng, caps[k.name]); ctx.scene.add(k.mesh); }
 
-  function update(px, pz, frustum) { for (const k of kinds) k.update(px, pz, frustum); }
+  function update(px, pz, frustum) {
+    stream(px, pz, 1);
+    for (const k of kinds) k.update(px, pz, frustum, genCount);
+  }
   const tris = (k) => k.geo.index.count / 3;
   return {
     kinds, update,
-    stats: () => Object.fromEntries(kinds.map((k) => [k.name, { total: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
+    stats: () => Object.fromEntries(kinds.map((k) => [k.name, { stored: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
     genMs,
   };
 }

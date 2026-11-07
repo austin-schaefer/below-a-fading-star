@@ -56,7 +56,7 @@ const GradeShader = {
 
       // grade: lift shadows violet, warm the highlights, gently crush
       float l = lum(col);
-      vec3 shadowTint = vec3(0.09, 0.05, 0.13);
+      vec3 shadowTint = vec3(0.05, 0.06, 0.14);
       col = col + shadowTint * (1.0 - smoothstep(0.0, 0.35, l)) * 0.3;
       col = mix(col, col * vec3(1.06, 0.98, 0.9), smoothstep(0.3, 1.0, l) * 0.6);
       col = pow(max(col, 0.0), vec3(1.04));

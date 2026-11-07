@@ -34,7 +34,7 @@ export function installAtmosphere() {
       #endif
       const vec3 FP_SUN_DIR = ${sunDir};
       const vec3 FP_SUN_GLOW = vec3(${hexToVec(PALETTE.sunLight)});
-      const vec3 FP_HAZE_AWAY = vec3(${hexToVec('#2a1e2e')});
+      const vec3 FP_HAZE_AWAY = vec3(${hexToVec('#2a2638')});
       // Height fog: denser near the ground, pooling in the low places.
       float fpHeightFog(vec3 ro, vec3 rd, float dist) {
         float base = 0.0038;  // density at y=0
@@ -61,7 +61,7 @@ export function installAtmosphere() {
       vec3 haze = mix(FP_HAZE_AWAY, fogColor, 0.55 + 0.45 * sunAmt);
       haze += FP_SUN_GLOW * pow(sunAmt, 10.0) * 0.9 * fogFactor;
       haze += FP_SUN_GLOW * pow(sunAmt, 2.0) * 0.12;
-      vec3 lowMist = mix(fogColor, vec3(0.42, 0.32, 0.36), 0.45) + FP_SUN_GLOW * pow(sunAmt, 3.0) * 0.25;
+      vec3 lowMist = mix(fogColor, vec3(0.36, 0.34, 0.42), 0.45) + FP_SUN_GLOW * pow(sunAmt, 3.0) * 0.22;
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.85 );
       gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
     #endif`;

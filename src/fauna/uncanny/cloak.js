@@ -1,0 +1,287 @@
+// The man in the cloak of eyes: a tall hooded figure standing on the open moor, his cloak sewn thick with
+// eyes. Every eye follows you, each with its own lag and its own small restlessness; they blink in waves
+// that climb from hem to hood. He faces the sun until you come within 40 m, then turns, slowly, to you.
+// When the sun gutters every eye shuts at once. He never moves from his spot.
+import * as THREE from 'three';
+import { clamp, lerp, smoothstep } from '../geo.js';
+import { Painter, paintedMaterial, makeGround, approach, turnToward, angDiff } from './kit.js';
+
+const TAU = Math.PI * 2;
+const table = (tab, v) => {
+  for (let k = 0; k < tab.length - 1; k++) {
+    if (v <= tab[k + 1][0]) { const t = (v - tab[k][0]) / (tab[k + 1][0] - tab[k][0]); return lerp(tab[k][1], tab[k + 1][1], smoothstep(0, 1, t)); }
+  }
+  return tab[tab.length - 1][1];
+};
+const WIDTH = [[0, 0.56], [0.16, 0.46], [0.5, 0.4], [0.8, 0.4], [0.9, 0.43], [0.96, 0.32], [1, 0.13]];
+const HOOD_R = [[0, 0.21], [0.18, 0.29], [0.5, 0.3], [0.75, 0.22], [0.9, 0.12], [1, 0.015]];
+const TOP = 2.48;
+
+function cloakPt(n2, u, v, o) {
+  const a = u * TAU;
+  const hem = 0.02 + 0.09 * (0.5 + 0.5 * n2(Math.cos(a) * 1.7, Math.sin(a) * 1.7));
+  const y = lerp(hem, TOP, v) + 0.05 * Math.cos(a) * smoothstep(0.8, 1, v);
+  const w = table(WIDTH, v);
+  const fold = 1 + (0.1 * (1 - v) + 0.018) * Math.sin(a * 8 + 0.8 * Math.sin(a * 3)) + 0.04 * (1 - v) * n2(a * 2.1, v * 3);
+  const dz = lerp(0.68, 0.56, smoothstep(0.7, 0.95, v));
+  o[0] = Math.cos(a) * w * fold;
+  o[1] = y;
+  o[2] = Math.sin(a) * w * dz * fold + 0.1 * v * v;
+  return o;
+}
+// hood: m is the face cavity mask at this point
+function hoodPt(u, v, o) {
+  const a = u * TAU;
+  const cy = TOP - 0.14 + v * 0.95, cz = 0.13 + 0.09 * Math.sin(Math.PI * v) - 0.3 * Math.pow(v, 2.5);
+  const r = table(HOOD_R, v);
+  const front = Math.sin(a);
+  const m = smoothstep(0.5, 0.82, front) * smoothstep(0.12, 0.26, v) * (1 - smoothstep(0.56, 0.7, v));
+  const rr = r * (1 - 0.82 * m);
+  o[0] = Math.cos(a) * rr * 1.0;
+  o[1] = cy;
+  o[2] = cz + front * rr * 1.08;
+  o[3] = m;
+  return o;
+}
+
+function eyeMaterial() {
+  const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0 });
+  const uGlow = { value: 0.32 };
+  m.userData.uGlow = uGlow;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uGlow = uGlow;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', `#include <common>
+        attribute vec3 aGaze; attribute float aLid; attribute float aKind;
+        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        vEP = position; vGz = aGaze; vLid = aLid; vKind = aKind;`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vEP; varying vec3 vGz; varying float vLid; varying float vKind; uniform float uGlow;
+        float ehash(float n) { return fract(sin(n * 91.345) * 43758.5453); }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        float fpR = 0.25; float fpGlow = 0.0;
+        {
+          vec3 p = normalize(vEP);
+          float ap = mix(0.6, -0.1, vLid);
+          float shape = 1.0 - 0.6 * p.x * p.x;
+          float up = ap * shape, lo = -ap * 0.78 * shape;
+          float lidD = max(p.y - up, lo - p.y);
+          vec3 flesh = vec3(0.16, 0.095, 0.1);
+          if (lidD > 0.0 || p.z < 0.05) {
+            // lid: the cloak's own stuff, sore and dark at the rim
+            float rim = 1.0 - smoothstep(0.0, 0.08, lidD);
+            diffuseColor.rgb = mix(flesh, vec3(0.22, 0.05, 0.06), rim * 0.7);
+            fpR = mix(0.75, 0.35, rim);
+          } else {
+            vec3 g = normalize(vGz);
+            float d = dot(p, g);
+            vec3 e1 = normalize(cross(vec3(0.0, 1.0, 0.0), g) + vec3(1e-4, 0.0, 0.0));
+            vec3 e2 = cross(g, e1);
+            vec3 q = p - g * d;
+            float qx = dot(q, e1), qy = dot(q, e2), ql = length(q);
+            // sclera: yellowed bone, veined toward the lids
+            vec3 scl = vec3(0.7, 0.64, 0.5);
+            float vein = smoothstep(0.55, 0.0, -lidD) * 0.0 + smoothstep(0.75, 0.2, d);
+            float fine = smoothstep(0.82, 0.95, sin(atan(p.y, p.x) * 23.0 + p.z * 31.0 + vKind * 40.0) * 0.5 + 0.5);
+            scl = mix(scl, vec3(0.55, 0.16, 0.12), clamp(vein * 0.6 + fine * (0.25 + vein) * 0.7, 0.0, 0.9));
+            vec3 col = scl;
+            if (d > 0.0 && ql < 0.44) {
+              float k = ehash(vKind * 7.0 + 1.0);
+              vec3 iris = k < 0.35 ? vec3(0.62, 0.72, 0.78) : k < 0.6 ? vec3(0.8, 0.62, 0.3) : k < 0.85 ? vec3(0.55, 0.62, 0.5) : vec3(0.85, 0.85, 0.82);
+              float ang = atan(qy, qx);
+              float streak = 0.75 + 0.25 * sin(ang * 31.0 + vKind * 13.0) * sin(ang * 7.0 - vKind * 5.0);
+              iris *= streak * mix(1.0, 0.45, smoothstep(0.3, 0.44, ql));
+              col = iris;
+              bool pupil;
+              if (vKind < 0.55) pupil = ql < 0.16;
+              else if (vKind < 0.85) pupil = (qx * qx) / (0.33 * 0.33) + (qy * qy) / (0.06 * 0.06) < 1.0;
+              else pupil = (qx * qx) / (0.05 * 0.05) + (qy * qy) / (0.3 * 0.3) < 1.0;
+              if (pupil) col = vec3(0.01, 0.008, 0.01);
+            }
+            // shadow cast by the upper lid
+            col *= mix(0.55, 1.0, smoothstep(0.0, 0.18, up - p.y));
+            diffuseColor.rgb = col;
+            fpR = 0.12; fpGlow = 1.0;
+          }
+        }`)
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = fpR;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * fpGlow * uGlow;');
+  };
+  return m;
+}
+
+export function buildCloak(ctx, U) {
+  const { scene, camera, sky, terrain, noise } = ctx;
+  const rng = ctx.makeRng(9101);
+  const ground = makeGround(ctx);
+  const n2 = noise.noise2;
+  const low = ctx.quality === 'low';
+
+  // the spot: on a rise of open moor ~45 m north of the causeway, seen against the sky from the road
+  const cands = [[-70, -38], [-75, -40], [-55, -30], [-100, -55]];
+  let sx = -70, sz = -38;
+  for (const [x, z] of cands) if (U.rules.okStatic(x, z) && terrain.causewayDistance(x, z) > 30) { sx = x; sz = z; break; }
+
+  // ---- body: cloak and hood
+  const P = new Painter();
+  const cloth = '#16101a', voidc = '#000000';
+  P.paint(cloth, 0, 0.9);
+  P.grid(low ? 28 : 40, low ? 22 : 30, (u, v, o) => cloakPt(n2, u, v, o), true, false);
+  const h4 = [0, 0, 0, 0];
+  P.grid(low ? 20 : 28, 18, (u, v, o) => {
+    hoodPt(u, v, h4);
+    P.paint(h4[3] > 0.3 ? voidc : cloth, 0, 0.9);
+    o[0] = h4[0]; o[1] = h4[1]; o[2] = h4[2];
+  }, true, true);
+  // hands: pale, folded at the waist, the fingers far too long and laced together
+  P.paint('#9c8f80', 0, 0.6);
+  for (const sd of [-1, 1]) {
+    P.loft([[sd * 0.1, 1.42, 0.24], [sd * 0.07, 1.36, 0.33], [sd * 0.045, 1.3, 0.36]], [0.03, 0.026, 0.028], 6);
+    P.blob(sd * 0.04, 1.27, 0.365, 0.034, 0.016, 0.045, 6, 4);
+    for (let f = 0; f < 4; f++) {
+      const x = sd * (0.008 + f * 0.017) + sd * 0.004;
+      const curl = f * 0.01;
+      P.loft([[x, 1.25, 0.375], [x - sd * 0.02, 1.15, 0.395], [x - sd * 0.035, 1.04, 0.39 - curl], [x - sd * 0.04, 0.95, 0.37 - curl], [x - sd * 0.035, 0.9, 0.345 - curl]],
+        [0.0105, 0.0095, 0.0085, 0.007, 0.0035], 5);
+    }
+    P.loft([[sd * 0.06, 1.28, 0.38], [sd * 0.03, 1.35, 0.4], [sd * 0.01, 1.4, 0.395]], [0.011, 0.009, 0.005], 5);
+  }
+  const bodyMat = paintedMaterial();
+  const body = new THREE.Mesh(P.geometry(), bodyMat);
+  body.castShadow = true; body.receiveShadow = true; body.name = 'uncanny-cloak';
+
+  // ---- eyes: sockets over the cloak, and a knot of them inside the hood where a face should be
+  const sockets = [];
+  const tmp = [0, 0, 0], a = [0, 0, 0], b = [0, 0, 0], c = [0, 0, 0], d = [0, 0, 0];
+  const nEyes = low ? 96 : 136, nHood = 9;
+  let tries = 0;
+  while (sockets.length < nEyes - nHood && tries++ < 6000) {
+    const u = rng(), v = 0.05 + rng() * 0.86;
+    if (rng() > table(WIDTH, v) / 0.6) continue; // area-uniform-ish
+    const big = rng();
+    const r = big > 0.975 ? 0.12 + rng() * 0.04 : 0.036 + Math.pow(rng(), 2.2) * 0.065;
+    cloakPt(n2, u, v, tmp);
+    let clash = false;
+    for (const s of sockets) if (Math.hypot(s.p[0] - tmp[0], s.p[1] - tmp[1], s.p[2] - tmp[2]) < (s.r + r) * 1.12) { clash = true; break; }
+    if (clash) continue;
+    const du = 0.004, dv = 0.006;
+    cloakPt(n2, u + du, v, a); cloakPt(n2, u - du, v, b); cloakPt(n2, u, v + dv, c); cloakPt(n2, u, v - dv, d);
+    const tu = [a[0] - b[0], a[1] - b[1], a[2] - b[2]], tv = [c[0] - d[0], c[1] - d[1], c[2] - d[2]];
+    let nx = tv[1] * tu[2] - tv[2] * tu[1], ny = tv[2] * tu[0] - tv[0] * tu[2], nz = tv[0] * tu[1] - tv[1] * tu[0];
+    const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+    if (nx * tmp[0] + nz * (tmp[2] - 0.1 * v * v) < 0) { nx = -nx; ny = -ny; nz = -nz; }
+    sockets.push({ p: [tmp[0], tmp[1], tmp[2]], n: [nx, ny, nz], r });
+  }
+  for (let k = 0; k < nHood; k++) {
+    const u = 0.25 + (rng() - 0.5) * 0.09, v = 0.28 + rng() * 0.26;
+    hoodPt(u, v, h4);
+    const r = 0.03 + rng() * 0.025;
+    let clash = false;
+    for (const s of sockets) if (Math.hypot(s.p[0] - h4[0], s.p[1] - h4[1], s.p[2] - h4[2]) < (s.r + r) * 1.05) { clash = true; break; }
+    if (clash && k > 2) continue;
+    const nx = (rng() - 0.5) * 0.3, ny = (rng() - 0.5) * 0.2, nz = 1;
+    const nl = Math.hypot(nx, ny, nz);
+    sockets.push({ p: [h4[0], h4[1], h4[2] + r * 0.4], n: [nx / nl, ny / nl, nz / nl], r, hood: true });
+  }
+  const N = sockets.length;
+  const eyeGeo = new THREE.SphereGeometry(1, low ? 10 : 14, low ? 8 : 10);
+  const gazeA = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
+  const lidA = new THREE.InstancedBufferAttribute(new Float32Array(N), 1);
+  const kindA = new THREE.InstancedBufferAttribute(new Float32Array(N), 1);
+  gazeA.setUsage(THREE.DynamicDrawUsage); lidA.setUsage(THREE.DynamicDrawUsage);
+  eyeGeo.setAttribute('aGaze', gazeA); eyeGeo.setAttribute('aLid', lidA); eyeGeo.setAttribute('aKind', kindA);
+  const eyeMat = eyeMaterial();
+  const eyes = new THREE.InstancedMesh(eyeGeo, eyeMat, N);
+  eyes.name = 'uncanny-cloak-eyes'; eyes.receiveShadow = true;
+  // per-eye state: socket basis (X, Y, Z), position, gaze, lag rate, saccade
+  const S = new Float32Array(N * 12), G = new Float32Array(N * 3), rate = new Float32Array(N), sac = new Float32Array(N * 3), lid = new Float32Array(N), lidT = new Float32Array(N);
+  const m4 = new THREE.Matrix4();
+  for (let i = 0; i < N; i++) {
+    const s = sockets[i];
+    const [nx, ny, nz] = s.n;
+    // Y: world up projected onto the tangent plane; X = Y x Z
+    let yx = -nx * ny, yy = 1 - ny * ny, yz = -nz * ny;
+    const yl = Math.hypot(yx, yy, yz) || 1; yx /= yl; yy /= yl; yz /= yl;
+    const xx = yy * nz - yz * ny, xy = yz * nx - yx * nz, xz = yx * ny - yy * nx;
+    const px = s.p[0] - nx * s.r * 0.32, py = s.p[1] - ny * s.r * 0.32, pz = s.p[2] - nz * s.r * 0.32;
+    S.set([xx, xy, xz, yx, yy, yz, nx, ny, nz, px, py, pz], i * 12);
+    m4.set(xx * s.r, yx * s.r, nx * s.r, px, xy * s.r, yy * s.r, ny * s.r, py, xz * s.r, yz * s.r, nz * s.r, pz, 0, 0, 0, 1);
+    eyes.setMatrixAt(i, m4);
+    G[i * 3 + 2] = 1;
+    gazeA.array[i * 3 + 2] = 1;
+    rate[i] = rng() < 0.12 ? 0.5 + rng() * 0.6 : 2 + rng() * 6;
+    sac[i * 3 + 2] = rng() * 3;
+    kindA.array[i] = s.hood ? 0.6 + rng() * 0.25 : rng();
+    lidT[i] = 3 + rng() * 20;
+  }
+  eyes.computeBoundingSphere();
+
+  const g = new THREE.Group();
+  g.add(body, eyes);
+  const gy = ground.at(sx, sz) - 0.04;
+  g.position.set(sx, gy, sz);
+  const sunYaw = Math.atan2(ctx.sun.dir.x, ctx.sun.dir.z);
+  g.rotation.y = sunYaw;
+  scene.add(g);
+  ctx.addCollider({ x: sx, z: sz, r: 0.65 });
+
+  const state = { position: g.position, closed: false, distance: 99, facingPlayer: false };
+  const cam = camera.position;
+  let closedPrev = false;
+  function update(dt, t) {
+    const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = Math.hypot(dx, dz);
+    state.distance = dist;
+    // the figure: toward the sun, or toward you when you are near; never quickly
+    const near = dist < 40;
+    state.facingPlayer = near;
+    g.rotation.y = turnToward(g.rotation.y, near ? Math.atan2(dx, dz) : sunYaw, (near ? 0.14 : 0.06) * dt);
+    if (dist > 160) return;
+    const yaw = g.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const wx = cam.x - g.position.x, wy = cam.y - g.position.y, wz = cam.z - g.position.z;
+    const lx = wx * cy - wz * sy, ly = wy, lz = wx * sy + wz * cy;
+    const gutter = sky.flicker.value < 0.62;
+    state.closed = gutter;
+    if (gutter !== closedPrev) { ctx.audio?.cue?.(gutter ? 'eyes-close' : 'eyes-open', g.position); closedPrev = gutter; }
+    const ga = gazeA.array;
+    for (let i = 0; i < N; i++) {
+      const o = i * 12;
+      // gaze: toward the camera in socket space, plus a restless offset that jumps every second or two
+      const vx = lx - S[o + 9], vy = ly - S[o + 10], vz = lz - S[o + 11];
+      let tx = vx * S[o] + vy * S[o + 1] + vz * S[o + 2];
+      let ty = vx * S[o + 3] + vy * S[o + 4] + vz * S[o + 5];
+      let tz = vx * S[o + 6] + vy * S[o + 7] + vz * S[o + 8];
+      let tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+      sac[i * 3 + 2] -= dt;
+      if (sac[i * 3 + 2] <= 0) { sac[i * 3] = (rng() - 0.5) * 0.16; sac[i * 3 + 1] = (rng() - 0.5) * 0.12; sac[i * 3 + 2] = 0.4 + rng() * 2.6; }
+      tx += sac[i * 3]; ty += sac[i * 3 + 1];
+      // strain: an eye on the far side of the cloak rolls as far round toward you as it can
+      if (tz < 0.42) { const k = Math.sqrt((1 - 0.42 * 0.42) / Math.max(1e-6, tx * tx + ty * ty)); tx *= k; ty *= k; tz = 0.42; }
+      tl = Math.hypot(tx, ty, tz); tx /= tl; ty /= tl; tz /= tl;
+      const k = 1 - Math.exp(-rate[i] * dt);
+      let gx = G[i * 3] + (tx - G[i * 3]) * k, gyy = G[i * 3 + 1] + (ty - G[i * 3 + 1]) * k, gz = G[i * 3 + 2] + (tz - G[i * 3 + 2]) * k;
+      const gl = Math.hypot(gx, gyy, gz) || 1; gx /= gl; gyy /= gl; gz /= gl;
+      G[i * 3] = gx; G[i * 3 + 1] = gyy; G[i * 3 + 2] = gz;
+      ga[i * 3] = gx; ga[i * 3 + 1] = gyy; ga[i * 3 + 2] = gz;
+      // lids: a wave climbing from hem to hood, another running round the cloak, and each eye's own blink
+      const ey = S[o + 10], az = Math.atan2(S[o + 11], S[o + 9]);
+      const w1 = ((t / 5.3 - ey * 0.19) % 1 + 1) % 1, w2 = ((t / 8.9 - az / TAU) % 1 + 1) % 1;
+      lidT[i] -= dt;
+      if (lidT[i] < -0.16) lidT[i] = 4 + rng() * 22;
+      let target = (w1 < 0.032 || w2 < 0.022 || lidT[i] < 0) ? 1 : 0;
+      if (gutter) target = 1;
+      lid[i] = approach(lid[i], target, target > lid[i] ? 38 : 11, dt);
+      lidA.array[i] = lid[i];
+    }
+    gazeA.needsUpdate = true; lidA.needsUpdate = true;
+  }
+  ctx.registerUpdate(update);
+
+  U.cloak = Object.assign(state, {
+    group: g,
+    // test hook: snap the figure's yaw and every eye's gaze to the current camera
+    settle() { for (let i = 0; i < 40; i++) update(0.25, ctx.time.t); },
+  });
+  return { drawCalls: 2, tris: (P.i.length / 3) + N * eyeGeo.index.count / 3 };
+}

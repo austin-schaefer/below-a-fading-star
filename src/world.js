@@ -49,11 +49,11 @@ export const SPAWN = { x: 6, z: 36, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks d
 // Shared palette (hex strings) so modules agree on the world's colours.
 export const PALETTE = {
   sunCore: '#ff7030',
-  sunLight: '#ff7a48',
-  skyHorizonSun: '#8a1e12',
-  skyHorizonAway: '#4a2a3a',
-  skyZenith: '#120b1e',
-  haze: '#4e2c38',
+  sunLight: '#ffa868',
+  skyHorizonSun: '#8a2a16',
+  skyHorizonAway: '#3c3456',
+  skyZenith: '#0e0c22',
+  haze: '#4a3c52',
   moorGrass: '#55582e',
   moorDry: '#8c7a48',
   heather: '#4e3450',

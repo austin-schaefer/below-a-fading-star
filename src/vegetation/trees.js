@@ -686,7 +686,7 @@ function toadstoolGeo() {
   const pts = [{ x: 0, y: -0.05, z: 0, r: 0.07 }, { x: 0.02, y: 0.4, z: 0, r: 0.06 }, { x: 0.05, y: 0.82, z: 0, r: 0.05 }];
   tube(gb, pts, 5, (i) => mixc(stem, [0.3, 0.25, 0.2], i === 0 ? 0.5 : 0), { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0.1 } });
   // cap: dome rings
-  const R = 0.32, top = 0.98, base = 0.8, segs = 8;
+  const R = 0.32, top = 0.98, base = 0.8, segs = 6;
   const ringAt = (rr, y, col, glow, ny) => {
     const out = [];
     for (let s = 0; s < segs; s++) {

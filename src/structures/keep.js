@@ -50,7 +50,7 @@ export function buildKeep(ctx, B, env) {
       const tm = t + step / 2;
       if (k === gateSide && tm > towerT0 - 0.2 && tm < towerT1 + 0.2) continue;
       const cx = a.x + tx * tm, cz = a.z + tz * tm;
-      let h = 5.0 + 0.55 * N2(tm * 0.11 + k * 7, 1.3) + (rng() - 0.5) * 0.3;
+      let h = 4.9 + 0.9 * N2(tm * 0.09 + k * 7, 1.3) + 0.5 * N2(tm * 0.37 + k, 5.1) + (rng() - 0.5) * 0.35 - (rng() < 0.12 ? 0.9 + rng() : 0);
       let fallen = 0;
       if (br) {
         const edge = Math.min(tm - br[0], br[1] - tm);
@@ -70,7 +70,7 @@ export function buildKeep(ctx, B, env) {
         color: vary(wallTint, rng, 0.06), course: COURSE, moss: 0.75, ground: gm, disp: 0.045, dispScale: 1.4,
       });
       // merlons on the outer parapet where the wall still stands to full height
-      if (h > 4.5 && fallen < 0.1 && rng() > 0.3 && Math.floor(t / step) % 2 === 0) {
+      if (h > 4.6 && fallen < 0.1 && rng() > 0.45 && Math.floor(t / step) % 2 === 0) {
         const mh = 0.7 + rng() * 0.35;
         const ox = cx - nx * (K.thick / 2 - 0.3), oz = cz - nz * (K.thick / 2 - 0.3);
         const gm2 = B.box(1.05, mh, 0.6, { chip: 0.12, seed: t * 3 + k });
@@ -177,12 +177,13 @@ export function buildKeep(ctx, B, env) {
   {
     const gm = ground.groundAt(g.innerX - 0.6, g.z1);
     const leafW = gw / 2 + 0.2, leafH = 3.6;
-    const hx = g.innerX - 0.6, hz = g.z1 - 0.12;
-    const open = 1.75; // radians swung inward
-    const m = mat(hx + Math.cos(open) * leafW / 2 * 0 + Math.sin(open) * leafW / 2, gm + leafH / 2 + 0.05, hz - Math.cos(open) * leafW / 2, 0, open, 0.02);
-    B.add(B.box(0.14, leafH, leafW, { seg: 0.4 }), m, { color: vary(tints.wood, rng, 0.1), moss: 0.2, ground: gm, disp: 0.02, dispScale: 3 });
+    // flung back against the south wall of the passage, a hand's breadth ajar
+    const hx = g.innerX - 0.25, hz = g.z1 - 0.12;
+    const open = Math.PI / 2 + 0.22;
+    const lm = mat(hx - Math.sin(open) * leafW / 2, gm + leafH / 2 + 0.05, hz - Math.cos(open) * leafW / 2, 0, open, 0.02);
+    B.add(B.box(0.14, leafH, leafW, { seg: 0.4 }), lm, { color: vary(tints.wood, rng, 0.1), moss: 0.2, ground: gm, disp: 0.02, dispScale: 3 });
     for (const y of [0.5, 1.8, 3.1]) {
-      const mb = mat(hx + Math.sin(open) * leafW / 2 - 0.09 * Math.cos(open), gm + y, hz - Math.cos(open) * leafW / 2 - 0.09 * Math.sin(open), 0, open, 0);
+      const mb = lm.clone().multiply(mat(-0.09, y - leafH / 2 - 0.05, 0));
       B.add(B.box(0.04, 0.13, leafW + 0.02), mb, { color: tints.iron, iron: 1, moss: 0, ground: gm });
     }
     // fallen leaf, half in the passage
@@ -201,7 +202,7 @@ export function buildKeep(ctx, B, env) {
   {
     const breachA = Math.atan2(36 - D.z, 6 - D.x); // toward the spawn: the break shows from the gate
     ringTower(B, env, D.x, D.z, D.rOut, D.rIn, 16.5, 28, {
-      ragged: 0.9, breachAt: breachA + 0.25, breach: 6.5, breachWidth: 0.95, seed: 77, slits: true,
+      ragged: 1.8, breachAt: breachA + 0.25, breach: 9.5, breachWidth: 1.25, tintVar: 0.02, seed: 77, slits: true,
       door: Math.PI + 0.12, windows: [[0.6, 7.4, 8.9], [2.4, 11.2, 12.8], [4.1, 7.6, 9.0], [5.3, 12.0, 13.4], [-0.4, 3.6, 4.6]],
       corbels: 14.2, sockets: [6.2, 10.6], plinth: true, course: COURSE,
     });
@@ -402,7 +403,7 @@ export function ringTower(B, env, x, z, rOut, rIn, H, sectors, o = {}) {
     if (o.breach) {
       const w = o.breachWidth || 0.8;
       const d = angDiff(am, o.breachAt);
-      if (d < w) h -= o.breach * (1 - d / w) * (0.75 + 0.25 * rng());
+      if (d < w) h -= o.breach * Math.pow(1 - d / w, 0.7) * (0.6 + 0.4 * rng());
     }
     h = Math.max(1.2, Math.round(h / course) * course);
     // openings: [y0, y1] gaps in this sector
@@ -416,7 +417,7 @@ export function ringTower(B, env, x, z, rOut, rIn, H, sectors, o = {}) {
     for (const [y0, y1] of segs) {
       if (y1 - y0 < 0.05) continue;
       const wg = B.wedge(a0 - 0.002, a1 + 0.002, rIn, rOut, y0, y1, 2, Math.max(1, Math.ceil((y1 - y0) / 1.2)));
-      B.add(wg, mat(x, gm, z), { color: vary(tint, rng, 0.05), course, moss: 0.75, ground: gm, disp: 0.045, dispScale: 1.3 });
+      B.add(wg, mat(x, gm, z), { color: vary(tint, rng, o.tintVar ?? 0.03), course, moss: 0.75, ground: gm, disp: 0.045, dispScale: 1.3 });
     }
     // a lintel over each opening, and a sill
     for (const [y0, y1] of gaps) {
