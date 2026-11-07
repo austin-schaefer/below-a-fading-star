@@ -416,8 +416,8 @@ export function ringTower(B, env, x, z, rOut, rIn, H, sectors, o = {}) {
     segs.push([y, h]);
     for (const [y0, y1] of segs) {
       if (y1 - y0 < 0.05) continue;
-      const wg = B.wedge(a0 - 0.002, a1 + 0.002, rIn, rOut, y0, y1, 2, Math.max(1, Math.ceil((y1 - y0) / 1.2)));
-      B.add(wg, mat(x, gm, z), { color: vary(tint, rng, o.tintVar ?? 0.03), course, moss: 0.75, ground: gm, disp: 0.045, dispScale: 1.3 });
+      const wg = B.wedge(a0, a1, rIn, rOut, y0, y1, 2, Math.max(1, Math.ceil((y1 - y0) / 1.2)));
+      B.add(wg, mat(x, gm, z), { color: vary(tint, rng, o.tintVar ?? 0.03), course, moss: 0.75, ground: gm });
     }
     // a lintel over each opening, and a sill
     for (const [y0, y1] of gaps) {

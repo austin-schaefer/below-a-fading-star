@@ -33,12 +33,12 @@ export function buildTower(ctx, B, env) {
     if (sw === 0) gaps.push([winY0, winY1]);
     let y = 2.6;
     for (const [y0, y1] of gaps) {
-      B.add(B.wedge(a0 - 0.002, a1 + 0.002, rIn, rOut, y, y0, 2, Math.ceil((y0 - y) / 1.4)), mat(x, gm, z), { color: vary(tint, rng, 0.04), course, moss: 0.65, ground: gm, disp: 0.035 });
+      B.add(B.wedge(a0, a1, rIn, rOut, y, y0, 2, Math.ceil((y0 - y) / 1.4)), mat(x, gm, z), { color: vary(tint, rng, 0.04), course, moss: 0.65, ground: gm });
       B.add(B.wedge(a0 - 0.04, a1 + 0.04, rIn, rOut + 0.07, y1, y1 + 0.32, 2, 1), mat(x, gm, z), { color: vary(tints.old, rng, 0.05), moss: 0.4, ground: gm });
       B.add(B.wedge(a0 - 0.03, a1 + 0.03, rIn, rOut + 0.12, y0 - 0.12, y0, 2, 1), mat(x, gm, z), { color: vary(tints.old, rng, 0.05), moss: 0.4, ground: gm });
       y = y1 + 0.32;
     }
-    B.add(B.wedge(a0 - 0.002, a1 + 0.002, rIn, rOut, y, shaftTop, 2, Math.ceil((shaftTop - y) / 1.4)), mat(x, gm, z), { color: vary(tint, rng, 0.04), course, moss: 0.6, ground: gm, disp: 0.035 });
+    B.add(B.wedge(a0, a1, rIn, rOut, y, shaftTop, 2, Math.ceil((shaftTop - y) / 1.4)), mat(x, gm, z), { color: vary(tint, rng, 0.04), course, moss: 0.6, ground: gm });
     // arrow slits climbing the shaft in a loose spiral
     for (let k = 0; k < 3; k++) {
       const sy = 6 + ((s * 5 + k * 7) % 13) * 0.95;

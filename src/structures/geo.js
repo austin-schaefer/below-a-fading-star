@@ -161,7 +161,8 @@ export class Builder {
     const muv = new Float32Array(pos.count * 2);
     for (let i = 0; i < pos.count; i++) {
       const lx = pos.getX(i) + 0.5, ly = pos.getY(i) + 0.5, lz = pos.getZ(i) + 0.5;
-      const a = a0 + lx * (a1 - a0), r = rIn + lz * (rOut - rIn), y = y0 + ly * (y1 - y0);
+      // angle runs backwards along local x so the mapping keeps the box's winding (tangent, up, radial is left-handed)
+      const a = a1 - lx * (a1 - a0), r = rIn + lz * (rOut - rIn), y = y0 + ly * (y1 - y0);
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       pos.setXYZ(i, x, y, z);
       const ny = Math.abs(nrm.getY(i)), nz = Math.abs(nrm.getZ(i));
@@ -251,6 +252,37 @@ export class Builder {
     else for (let i = 0; i < pos.count; i++) this.I.push(base + i);
     this.count += pos.count;
     g.dispose();
+  }
+
+  // Average normals of coincident vertices whose normals already nearly agree, so curved walls built
+  // from separate blocks shade as one surface while real edges stay hard.
+  weldNormals(cosMin = 0.82) {
+    const P = this.P, N = this.Nn, n = this.count;
+    const map = new Map();
+    const q = (v) => Math.round(v * 400);
+    for (let i = 0; i < n; i++) {
+      const k = q(P[i * 3]) + ',' + q(P[i * 3 + 1]) + ',' + q(P[i * 3 + 2]);
+      let l = map.get(k);
+      if (!l) { l = []; map.set(k, l); }
+      l.push(i);
+    }
+    const acc = new Float32Array(3);
+    for (const l of map.values()) {
+      if (l.length < 2) continue;
+      for (const i of l) {
+        acc[0] = 0; acc[1] = 0; acc[2] = 0;
+        for (const j of l) {
+          const d = N[i * 3] * N[j * 3] + N[i * 3 + 1] * N[j * 3 + 1] + N[i * 3 + 2] * N[j * 3 + 2];
+          if (d >= cosMin) { acc[0] += N[j * 3]; acc[1] += N[j * 3 + 1]; acc[2] += N[j * 3 + 2]; }
+        }
+        const len = Math.hypot(acc[0], acc[1], acc[2]) || 1;
+        this._w = this._w || [];
+        this._w.push(i, acc[0] / len, acc[1] / len, acc[2] / len);
+      }
+    }
+    const w = this._w || [];
+    for (let k = 0; k < w.length; k += 4) { const i = w[k]; N[i * 3] = w[k + 1]; N[i * 3 + 1] = w[k + 2]; N[i * 3 + 2] = w[k + 3]; }
+    this._w = null;
   }
 
   build() {

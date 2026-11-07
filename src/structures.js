@@ -101,6 +101,7 @@ export async function build(ctx) {
       B.count += o.count;
     }
     if (!B.count) continue;
+    if (name === 'keep' || name === 'tower' || name === 'taverna') B.weldNormals(0.8);
     const m = new THREE.Mesh(B.build(), stone.mat);
     m.name = 'structures-' + name;
     m.castShadow = true; m.receiveShadow = true;

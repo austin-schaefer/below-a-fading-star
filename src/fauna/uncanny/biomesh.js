@@ -184,7 +184,7 @@ export function buildBiomesh(ctx, U) {
   // ---- 1. the Lattice carpet: clumps all about the seed, and trails running out from it like ants
   const M = L.moraine;
   {
-    const C = colony('lattice', Math.round(1000 * q), M, 70);
+    const C = colony('lattice', Math.round(960 * q), M, 70);
     const trailN = Math.round(C.n * 0.3);
     for (let s = 0; s < 7; s++) {
       let a = Math.PI / 2 + (rng() - 0.5) * 2.6, x = M.x + Math.cos(a) * 8, z = M.z + Math.sin(a) * 8;
@@ -224,7 +224,7 @@ export function buildBiomesh(ctx, U) {
   // ---- 3. a boulder beside the causeway, climbed; 4. two columns of the Sunken Court, climbed.
   // Both need the rocks and structures modules' meshes, which may finish building after us: set up later.
   const boulderC = colony('boulder', Math.round(120 * q), { x: -112, z: -12 }, 8);
-  const courtC = colony('court', Math.round(180 * q), { x: L.court.x, z: L.court.z }, 30);
+  const courtC = colony('court', Math.round(220 * q), { x: L.court.x, z: L.court.z }, 30);
   const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3(), hits = [];
   const colliders = ctx.controls?.state?.colliders || [];
   function castDown(objs, x, z, top) {
@@ -281,9 +281,11 @@ export function buildBiomesh(ctx, U) {
       const top = meshes.length ? castDown(meshes, c.x, c.z, 40) : null;
       if (top !== null && top - ground.at(c.x, c.z) > 6) found.push({ x: c.x, z: c.z, top });
     }
-    // two standing columns nearest the south-west, toward the causeway
-    found.sort((a, b) => (a.x + a.z * 0.3) - (b.x + b.z * 0.3));
-    let picks = found.slice(0, 1).concat(found.length > 3 ? [found[Math.floor(found.length / 2)]] : found.slice(1, 2));
+    // two standing columns at the end you come in by from the causeway (largest z), one from each colonnade
+    found.sort((a, b) => b.z - a.z);
+    let picks = found.length ? [found[0]] : [];
+    const other = found.find((f) => Math.abs(f.x - found[0].x) > 5);
+    if (other) picks.push(other);
     if (picks.length < 2) picks = [{ x: K.x - 11, z: K.z - 18 + 4 * 36 / 7, top: null }, { x: K.x + 11, z: K.z - 18 + 2 * 36 / 7, top: null }];
     for (const p of picks) {
       const g = ground.at(p.x, p.z);
@@ -292,7 +294,7 @@ export function buildBiomesh(ctx, U) {
     // up each column: a streak climbing one flank, densest low down, ragged at its upper edge
     const perCol = Math.floor(C.n / C.cols.length);
     C.cols.forEach((c, ci) => {
-      const face = Math.atan2(K.z - c.z, K.x - c.x) + Math.PI + (rng() - 0.5) * 1.2;
+      const face = Math.PI / 2 + (ci ? 0.5 : -0.5) + (rng() - 0.5) * 0.5; // toward the causeway side, where you come from
       const hTop = Math.min(c.top - c.base - 0.3, 2.8 + rng() * 2.5);
       let n = Math.round(perCol * 0.72);
       for (let k = 0; n > 0 && k < 4000; k++) {

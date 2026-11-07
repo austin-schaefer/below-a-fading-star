@@ -199,7 +199,7 @@ function meshSkeleton(sk, detail, colors, rng) {
     if (!sides) continue;
     if (detail !== 'hi' && limb.root && sk.trunkR < 1) continue;
     let pts = limb.pts;
-    const stride = detail === 'hi' ? 1 : detail === 'lo' ? (limb.level >= 2 ? 3 : 2) : 3;
+    const stride = detail === 'hi' ? (limb.level >= 3 ? 2 : 1) : detail === 'lo' ? (limb.level >= 2 ? 3 : 2) : 3;
     if (stride > 1 && pts.length > 3) pts = pts.filter((_, i) => i % stride === 0 || i === pts.length - 1);
     const H = Math.max(sk.height, 1);
     tube(gb, pts, sides, (i, t) => {
@@ -650,14 +650,14 @@ export function buildTrees(ctx, ground, mats) {
     col.setRGB(t.tint, t.tint * (0.95 + 0.05 * t.tint), t.tint * 0.95);
     batch.setColorAt(t.id, col);
     // LOD distance scale: big things keep detail further out, small things drop it sooner
-    t.lodK = t.kind === 'giant' ? 3 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
+    t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
   }
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-trees';
   ctx.scene.add(batch);
 
   // LOD by distance with hysteresis: 0 far, 1 mid, 2 near. No allocation.
-  const HI = low ? 30 : 38, MID = low ? 85 : 110, HYS = 5;
+  const HI = low ? 18 : 24, MID = low ? 55 : 72, HYS = 4;
   function update(px, pz) {
     for (let i = 0; i < trees.length; i++) {
       const t = trees[i];
