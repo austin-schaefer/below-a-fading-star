@@ -35,6 +35,7 @@ A **waterfall and river**: a fall from the boundary mountains that runs swift th
 ## Order of work
 
 1. **Landscape and water first**, one agent, serially: carve the river channel and canyon, the fall, and the pool in `terrain.js`; extend `water.js` with flowing water, foam and the fall; re-run the walk test. Everything else depends on where the river ends up.
-2. **Then the rest in parallel**, one subagent each, against the updated map: R + E (sky and far silhouette), A (flora), N + Q + L + Z (ruins and causeway), H + I + AB (inhabitants and the menology), G + V (river life and the wrong colour), with the audio hooks each needs listed in their briefs.
+2. **Then a placement plan**, before any agent is briefed: with the river in place, the orchestrator assigns every v2 item a site on the map (centre, radius, which existing landmarks and the river it sits near), writes them into `LANDMARKS` in `world.js` with [Proposed] names, renders a top-down or a few overview shots to check nothing crowds anything else, and shows Austin the plan. Each parallel brief then quotes its item's site and radius and says what sits next door, so agents place inside their footprint and avoid each other's.
+3. **Then the rest in parallel**, one subagent each, against the updated map and the placement plan: R + E (sky and far silhouette), A (flora), N + Q + L + Z (ruins and causeway), H + I + AB (inhabitants and the menology), G + V (river life and the wrong colour), with the audio hooks each needs listed in their briefs.
 
 Austin's note on process: let the v1 subagents finish, look at the whole, then pick this up, so it doesn't get insanely complex.
