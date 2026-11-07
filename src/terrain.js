@@ -292,7 +292,9 @@ export function buildTerrain(ctx) {
           diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.72, 0.6, 0.5), bare * 0.6);
           // rock faces get stratified streaks
           float rocky = smoothstep(0.75, 0.45, vTNormal.y);
-          float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * 0.12 * rocky;
+          // strata bands alias into streaks at distance, so fade them out past 80 m
+          float strataFade = 1.0 - smoothstep(60.0, 160.0, length(vTPos - cameraPosition));
+          float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * 0.12 * rocky * strataFade;
           diffuseColor.rgb *= 1.0 + grain - strata;
           // dampness darkens low ground
           float wet = smoothstep(-1.0, -3.2, vTPos.y);
