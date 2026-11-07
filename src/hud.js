@@ -12,7 +12,13 @@ export function buildHud(ctx) {
   const begin = document.getElementById('begin');
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
-  ctx.events.addEventListener('begin', () => { card.classList.add('hidden'); hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 9000); });
+  let hinted = false; // the opening hint shows once per visit, not on every return from the paused card
+  ctx.events.addEventListener('begin', () => {
+    card.classList.add('hidden');
+    if (hinted) return;
+    hinted = true;
+    hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 7000);
+  });
   ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
   ctx.events.addEventListener('lockfail', () => {
     if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) return;
