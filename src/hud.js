@@ -13,7 +13,12 @@ export function buildHud(ctx) {
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
   ctx.events.addEventListener('begin', () => { card.classList.add('hidden'); hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 9000); });
-  ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
+  ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
+  ctx.events.addEventListener('lockfail', () => {
+    if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) return;
+    hint.textContent = 'The mouse cannot be captured in this window. Hold the left button and drag to look.';
+    hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 9000);
+  });
 
   const debug = buildDebug(ctx);
   let current = null, timer = 0;

@@ -17,7 +17,7 @@ export function buildControls(ctx) {
     pos: new THREE.Vector3(SPAWN.x, 0, SPAWN.z),
     vel: new THREE.Vector3(),
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
-    locked: false, enabled: false, moving: false, stepPhase: 0,
+    locked: false, everLocked: false, lockFailed: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
     onStep: null,
   };
@@ -46,10 +46,26 @@ export function buildControls(ctx) {
 
   document.addEventListener('pointerlockchange', () => {
     state.locked = document.pointerLockElement === el;
+    if (state.locked) state.everLocked = true;
     ctx.events.dispatchEvent(new CustomEvent('lock', { detail: state.locked }));
   });
+  // Pointer lock can be refused (an embedding iframe without the permission, some browsers). Then
+  // the mouse looks by dragging on the canvas instead, and the page says so once.
+  let dragging = false;
+  function onLockFail() {
+    if (state.lockFailed) return;
+    state.lockFailed = true;
+    ctx.events.dispatchEvent(new CustomEvent('lockfail'));
+  }
+  document.addEventListener('pointerlockerror', onLockFail);
+  el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || state.locked) return;
+    if (state.enabled && state.lockFailed) { dragging = true; e.preventDefault(); }
+    else if (state.enabled && !document.pointerLockElement) lock();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
   document.addEventListener('mousemove', (e) => {
-    if (!state.locked) return;
+    if (!state.locked && !dragging) return;
     state.yaw -= e.movementX * 0.0021;
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
@@ -179,7 +195,14 @@ export function buildControls(ctx) {
     return { x, z };
   }
 
-  function lock() { el.requestPointerLock?.(); }
+  function lock() {
+    if (state.lockFailed || !el.requestPointerLock) { if (!el.requestPointerLock) onLockFail(); return; }
+    let r;
+    try { r = el.requestPointerLock(); } catch (e) { onLockFail(); return; }
+    if (r && typeof r.catch === 'function') r.catch(onLockFail);
+    // No change event within a moment means the request was quietly dropped: fall back.
+    setTimeout(() => { if (!state.locked && !state.everLocked) onLockFail(); }, 1500);
+  }
 
   // --- colliders: {x, z, r} cylinders (infinite height) or {x, z, r, y, h} capped
   function addCollider(c) { state.colliders.push(c); }
