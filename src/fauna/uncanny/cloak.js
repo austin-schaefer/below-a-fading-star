@@ -15,7 +15,7 @@ const table = (tab, v) => {
 };
 // Profile of a tall man under heavy cloth: the hem spreads, the waist narrows, then real shoulders
 // (wider than the waist, squared off) so from behind and from the side he reads as a man, not a pillar.
-const WIDTH = [[0, 0.5], [0.14, 0.4], [0.5, 0.3], [0.74, 0.31], [0.86, 0.38], [0.92, 0.385], [0.96, 0.33], [1, 0.12]];
+const WIDTH = [[0, 0.45], [0.14, 0.37], [0.5, 0.3], [0.74, 0.315], [0.86, 0.395], [0.92, 0.4], [0.96, 0.34], [1, 0.12]];
 const HOOD_R = [[0, 0.17], [0.18, 0.23], [0.5, 0.235], [0.75, 0.18], [0.9, 0.1], [1, 0.012]];
 const TOP = 2.7;
 

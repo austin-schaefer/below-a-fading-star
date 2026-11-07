@@ -86,7 +86,8 @@ function snapPerches(scene, terrain) {
   PERCH_CANDIDATES.forEach((p, i) => {
     o.set(p[0], 80, p[2]); rc.set(o, d); rc.far = 120;
     const hit = rc.intersectObject(keep, false)[0];
-    const gy = terrain.heightAt(p[0], p[2]);
+    // the turf at the foot of the wall: the higher of the courtyard side and the wall line itself
+    const gy = Math.max(terrain.heightAt(p[0], p[2]), terrain.heightAt(p[0] + (KEEP.cx - p[0]) * 0.1, p[2] + (KEEP.cz - p[2]) * 0.1));
     // a wall top well above the turf: a perch; anything lower is rubble or a fallen stretch
     if (hit && hit.point.y > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hit.point.y, p[2]]);
   });

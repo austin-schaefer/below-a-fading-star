@@ -3,6 +3,10 @@
 // come from a coarse grid of terrain.biomeAt() (it is too slow to call per blade of grass).
 import { clamp } from './util.js';
 
+// Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
+// stands alone on the moor, so no tree may grow on him. [x, z, radius]
+const CLEARINGS = [[-86, -48, 7]];
+
 const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
 
 export function makeGround(ctx) {
@@ -80,6 +84,8 @@ export function makeGround(ctx) {
   // opts.wet: allow shallow water down to that depth (reeds).
   function excluded(x, z, margin = 0, opts = null) {
     if (x * x + z * z > 318 * 318) return true;
+    // trees and shrubs (margin >= 0) keep out of the clearings; ground cover still grows there
+    if (margin >= 0) for (const c of CLEARINGS) if ((x - c[0]) ** 2 + (z - c[1]) ** 2 < (c[2] + margin) ** 2) return true;
     if (d2(x, z, L.castle) < (31 + margin * 1.6) ** 2) return true; // the keep's hexagon has apothem ~29; trees (margin) stay further out
     if (d2(x, z, L.tower) < (12 + margin) ** 2) return true;
     if (d2(x, z, L.stones) < (10 + margin) ** 2) return true;

@@ -135,11 +135,11 @@ export function buildLattice(ctx, ground, shared) {
           // with the eye (sampled further along the view ray); grazing faces go pale; roughness varies per face
           float facing = clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0);
           vec3 Vw = normalize(vCrW - cameraPosition);
-          vec3 q = vCrW * 1.1 + Vw * 0.9;
+          vec3 q = vCrW * vec3(1.5, 0.4, 1.5) + Vw * 0.9; // veils drawn out along the growth axis, like fracture planes
           fpVeil = fpN3(q) * 0.6 + fpN3(q * 2.6 + 3.1) * 0.4;
           float core = smoothstep(-0.25, 1.0, vCrH);
           vec3 inner = mix(uDeep * 0.18, uDeep * 0.75 + uPale * 0.08, smoothstep(0.35, 0.8, fpVeil) * (0.35 + 0.65 * core));
-          diffuseColor.rgb = mix(uPale * 0.42, inner, smoothstep(0.05, 0.75, facing));
+          diffuseColor.rgb = mix(uPale * 0.24, inner, smoothstep(0.05, 0.75, facing));
           vec3 nW = normalize(cross(dFdx(vCrW), dFdy(vCrW)));
           float fh = fract(sin(dot(floor(nW * 7.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
           roughnessFactor = mix(0.04, 0.42, fh * 0.7 + fpVeil * 0.3);
@@ -149,13 +149,15 @@ export function buildLattice(ctx, ground, shared) {
           float fpD = length(vCrW.xz - uOrigin);
           float pulse = 0.5 + 0.5 * sin(uTime * 0.5 - fpD * 0.06);
           pulse *= pulse;
-          float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.5);
+          float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 4.0);
           float core = smoothstep(-0.25, 1.0, vCrH);
           // a band of light climbing slowly through each crystal
           float band = smoothstep(0.82, 1.0, sin(vCrH * 7.0 - uTime * 0.9 - fpD * 0.11) * 0.5 + 0.5);
-          totalEmissiveRadiance += (uDeep * (0.05 + 0.32 * pulse) * (0.3 + 0.7 * core * core) * (0.5 + fpVeil) + uPale * (fres * (0.45 + 0.4 * pulse) + band * 0.5 * core)) * uCrys;
+          totalEmissiveRadiance += (uDeep * (0.05 + 0.32 * pulse) * (0.3 + 0.7 * core * core) * (0.5 + fpVeil) + uPale * (fres * (0.3 + 0.3 * pulse) * (0.5 + 0.9 * fpVeil) + band * 0.4 * core * (0.4 + fpVeil))) * uCrys;
           // a faint glow from inside the veils that swells while the sun gutters (uCrys > 1)
           totalEmissiveRadiance += uPale * smoothstep(0.45, 0.85, fpVeil) * core * (0.1 + 0.6 * (uCrys - 1.0));
+          // light caught in the veils: the inside of the glass is lit unevenly, so it never reads as paint
+          totalEmissiveRadiance += uDeep * smoothstep(0.3, 0.85, fpVeil) * (0.12 + 0.2 * core) * (1.0 - fres) * uCrys;
         }`);
     fogBatchFix(shader);
   };

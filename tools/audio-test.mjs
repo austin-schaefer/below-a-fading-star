@@ -27,10 +27,16 @@ const res = await page.evaluate(async (CUES) => {
   const pos = { x: fp.camera.position.x + 3, y: fp.camera.position.y, z: fp.camera.position.z - 3 };
   for (const name of CUES) {
     const an = name === 'strike' ? a.analyser : a.cueAnalyser;
-    const bed = await rms(250, an);
-    let err = null;
-    try { a.cue(name, name === 'strike' ? 1 : pos); } catch (e) { err = String(e); }
-    const peak = await rms(name === 'tarn-hum' || name === 'rumble' ? 1500 : 800, an);
+    let bed = 0, peak = 0, err = null;
+    // a starved software renderer can run the audio thread late enough that a very short cue's envelope
+    // has finished before it plays; try such a cue up to three times before calling it silent
+    for (let attempt = 0; attempt < 3 && !err; attempt++) {
+      bed = await rms(250, an);
+      try { a.cue(name, name === 'strike' ? 1 : pos); } catch (e) { err = String(e); }
+      peak = await rms(name === 'tarn-hum' || name === 'rumble' ? 1500 : 800, an);
+      if (peak > bed * 1.06 || name === 'strike') break;
+      await sleep(1500);
+    }
     out.push({ name, err, bed: +bed.toFixed(5), cue: +peak.toFixed(5), gainDb: +(20 * Math.log10(Math.max(peak, 1e-7) / Math.max(bed, 1e-6))).toFixed(1) });
     await sleep(name === 'tarn-hum' || name === 'rumble' ? 6000 : 2500); // let the tail die before the next
   }
@@ -38,7 +44,8 @@ const res = await page.evaluate(async (CUES) => {
 }, CUES);
 console.log('AudioContext', res.state);
 let bad = 0;
-for (const r of res.out) { const ok = !r.err && (r.gainDb > 0.5 || r.name === 'strike'); // strike rings at the stones, far off: checked for errors only if (!ok) bad++; console.log(ok ? 'PASS' : 'FAIL', r.name.padEnd(16), `bed ${r.bed} cue ${r.cue} (+${r.gainDb} dB)`, r.err || ''); }
+// strike rings at the stones, far off: it is checked for errors only
+for (const r of res.out) { const ok = !r.err && (r.gainDb > 0.5 || r.name === 'strike'); if (!ok) bad++; console.log(ok ? 'PASS' : 'FAIL', r.name.padEnd(16), `bed ${r.bed} cue ${r.cue} (+${r.gainDb} dB)`, r.err || ''); }
 if (errors.length) { console.log('page errors:', errors.join('\n')); bad++; }
 console.log(bad ? `${bad} problem(s)` : 'all cues sound');
 await browser.close();
