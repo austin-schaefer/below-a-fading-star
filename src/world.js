@@ -38,6 +38,13 @@ export const LANDMARKS = {
   graveyard:{ x: 198,  z: -130, r: 14,  y: null, name: 'The Leaning Yard',     line: 'The stones lean the way the wind goes. So, in time, do the dead.' },
   speculum: { x: 208,  z: 258,  r: 10,  y: 3.5, name: 'The Speculum',          line: 'It remembers a sun that was young. It will not remember you.' },
   river:    { x: 168,  z: 236,  r: 30,  y: null, name: 'The Tumbling Water',   line: 'The last thing here in a hurry. Do not ask it where.' },
+  // v2 sites from the placement plan (wilderness-v2-placement.md). Built by the stage C agents; names [Proposed].
+  sward:    { x: -45,  z: 45,   r: 26,  y: null, name: 'The Heliotrope Sward', line: 'They face the sun because they remember when it was worth facing.' },
+  menology: { x: -15,  z: 255,  r: 24,  y: null, name: 'The Menology',         line: 'Thirty-six stones, one for each month. The last is not yet carved.' },
+  hypogeum: { x: 226,  z: -112, r: 12,  y: null, name: 'The Hypogeum',         line: 'The door is bronze and the lintel keeps changing its mind.' },
+  gradine:  { x: 282,  z: -172, r: 14,  y: null, name: 'The Gradine',          line: 'Steps worn hollow by feet that climbed into the haze and did not come down.' },
+  cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: 'The Cutting',          line: 'Stone, black glass, lattice, stone. The ages lie flat here, like strata of mistakes.' },
+  eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: 'The Wrong Colour',     line: 'The reeds around it have gone grey. You will not be able to say what colour it is.' },
 };
 
 // The causeway: hex-paved road from the castle gate out to the tower hill, passing the stones.

@@ -163,7 +163,7 @@ export function buildOmens(ctx, group, U, rng) {
     const big = i === 7 ? 7.5 : 2.0 + Math.pow(rng(), 5) * 3.0;
     BS.a.aSize.setX(i, big * pr);
     BS.a.aSeed.setX(i, rng());
-    beltI[i] = (i === 7 ? 1.2 : 0.45 + Math.pow(rng(), 3) * 1.1) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
+    beltI[i] = (i === 7 ? 1.0 : 0.32 + Math.pow(rng(), 3) * 0.8) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
   }
   const beltDir = pv.copy(A).applyAxisAngle(bAxis, span * 0.45).clone();
   let beltShown = 0;

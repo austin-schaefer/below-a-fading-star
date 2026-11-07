@@ -20,6 +20,11 @@ const MODULES = [
   ['fauna', () => import('./fauna.js')],
   ['audio', () => import('./audio.js')],
   ['skylife', () => import('./skylife.js')],
+  // v2 stage C modules, one per agent, so parallel work never shares a file
+  ['flora2', () => import('./v2/flora.js')],
+  ['ruins2', () => import('./v2/ruins.js')],
+  ['inhabitants2', () => import('./v2/inhabitants.js')],
+  ['riverlife2', () => import('./v2/riverlife.js')],
 ];
 
 async function start() {

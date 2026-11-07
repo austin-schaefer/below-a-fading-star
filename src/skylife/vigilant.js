@@ -12,7 +12,7 @@ const D2R = Math.PI / 180;
 export const VIGILANT = { bearing: 72, r: 476, face: { x: 40, z: 30 } }; // seated on the crest; looks toward the keep
 const HEAD_LIMIT = 35 * D2R;
 const PIVOT = new THREE.Vector3(0, 52, 10);
-const EYES = [new THREE.Vector3(-3.4, 58.6, 21.4), new THREE.Vector3(3.4, 58.6, 21.4)];
+const EYES = [new THREE.Vector3(-4.2, 57.6, 24.5), new THREE.Vector3(4.2, 57.6, 24.5)];
 
 const EYE_VS = /* glsl */`
   uniform float uSize;
@@ -20,7 +20,7 @@ const EYE_VS = /* glsl */`
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     float d = -mv.z;
-    vFog = exp(-pow(0.0022 * d, 2.0)) * 0.8 + 0.2 * exp(-d * 0.002);
+    vFog = 0.35 + 0.65 * exp(-pow(0.0022 * d, 2.0));
     gl_PointSize = uSize;
     gl_Position = projectionMatrix * mv;
   }`;
@@ -79,8 +79,10 @@ export function buildVigilant(ctx, rng) {
   }
   limb([0, 46, 5], [0, 52, 11], 6);                       // neck
   blob([0, 58, 12], [9.5, 10.5, 10], { head: true });    // skull
-  blob([0, 60.4, 18.6], [8.6, 2.8, 3.6], { head: true }); // brow
-  blob([0, 52.8, 15], [7, 4.5, 7], { head: true });       // jaw
+  blob([0, 60.4, 19], [8.6, 3, 4], { head: true });       // a heavy brow
+  blob([0, 55.5, 22.5], [3.2, 6, 5], { head: true });     // a long nose, jutting: it shows which way it looks
+  blob([0, 51.5, 18], [6.5, 4.5, 8], { head: true });     // the jaw, thrust forward
+  blob([0, 64, 3.5], [6.5, 6.5, 6.5], { head: true });    // the back of the skull, hooded
   blob([0, 66.4, 10], [3, 2.6, 7.5], { head: true });     // a worn crest
 
   const q = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3();
@@ -109,7 +111,7 @@ export function buildVigilant(ctx, rng) {
   const ss = THREE.MathUtils.smoothstep;
   function skin(centre, head, NU, NV, tMax, rough) {
     const base = P.length / 3;
-    const pts = [];
+    const pts = [], rays = [];
     for (let j = 0; j <= NV; j++) {
       const ph = Math.PI * j / NV;
       for (let i = 0; i < NU; i++) {
@@ -123,7 +125,7 @@ export function buildVigilant(ctx, rng) {
           t -= Math.max(d * 0.9, 0.2);
         }
         v.copy(centre).addScaledVector(u, Math.max(t, 0.5));
-        pts.push(v.x, v.y, v.z);
+        pts.push(v.x, v.y, v.z); rays.push(u.x, u.y, u.z);
       }
     }
     const idx = [];
@@ -153,7 +155,10 @@ export function buildVigilant(ctx, rng) {
       col.copy(cScree).lerp(cRock, ss(wy, 10, 60)).lerp(cRockD, ss(wy, 60, 160));
       const under = THREE.MathUtils.clamp(-nr.getY(i), 0, 1);
       const mott = 0.9 + 0.2 * noise.noise2(pos.getX(i) * 0.08, pos.getZ(i) * 0.08 + pos.getY(i) * 0.05);
-      col.multiplyScalar((1 - 0.3 * under) * mott);
+      // where neighbouring rays struck different limbs the skin hangs like a curtain between them,
+      // edge-on to the centre: those are clefts in shadow, not lit faces
+      const facing = nr.getX(i) * rays[i * 3] + nr.getY(i) * rays[i * 3 + 1] + nr.getZ(i) * rays[i * 3 + 2];
+      col.multiplyScalar((1 - 0.3 * under) * mott * (0.35 + 0.65 * ss(facing, 0.05, 0.45)));
       C.push(col.r, col.g, col.b);
     }
     for (const k of idx) IDX.push(base + k);
@@ -161,7 +166,7 @@ export function buildVigilant(ctx, rng) {
     return [base, P.length / 3];
   }
   skin(new THREE.Vector3(0, 24, 6), false, hi ? 84 : 48, hi ? 56 : 32, 100, 1.25);
-  const [headV0, headV1] = skin(new THREE.Vector3(0, 59, 13), true, hi ? 40 : 24, hi ? 28 : 16, 20, 0.45);
+  const [headV0, headV1] = skin(new THREE.Vector3(0, 58, 13), true, hi ? 44 : 26, hi ? 30 : 18, 24, 0.45);
 
   const geo = new THREE.BufferGeometry();
   const posAttr = new THREE.Float32BufferAttribute(P, 3), nrmAttr = new THREE.Float32BufferAttribute(N, 3);
@@ -191,7 +196,7 @@ export function buildVigilant(ctx, rng) {
   const eyeAttr = new THREE.BufferAttribute(eyePos, 3);
   eg.setAttribute('position', eyeAttr);
   const eyeMat = new THREE.ShaderMaterial({
-    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(2.2) }, uGlint: { value: 0 }, uSize: { value: 3.2 * ctx.renderer.getPixelRatio() } },
+    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(4.0) }, uGlint: { value: 0 }, uSize: { value: 4.5 * ctx.renderer.getPixelRatio() } },
     vertexShader: EYE_VS, fragmentShader: EYE_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
   const eyes = new THREE.Points(eg, eyeMat);
