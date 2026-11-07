@@ -85,49 +85,32 @@ function grassGeo(rng) {
   return pg.build();
 }
 
-// Heather (ling): a dark woody mound with wiry stalks, the upper half of each a spike of bloom.
+// Heather (ling): a dome of wiry woody stalks, the upper half of each a spike of bloom.
 function heatherGeo(rng) {
   const pg = new PlantGeo();
-  const core = [0.9, 0.85, 0.75];
-  const seg = 7, R0 = 0.27, R1 = 0.17;
-  const ring0 = [], ring1 = [];
-  for (let s = 0; s < seg; s++) {
-    const a = (s / seg) * Math.PI * 2, j = 0.85 + rng() * 0.3;
-    ring0.push(pg.v(Math.cos(a) * R0 * j, -0.02, Math.sin(a) * R0 * j, Math.cos(a) * 0.7, 0.6, Math.sin(a) * 0.7, core, 0, 0, 0.3, 0.25));
-    ring1.push(pg.v(Math.cos(a + 0.4) * R1 * j, 0.12 + rng() * 0.04, Math.sin(a + 0.4) * R1 * j, Math.cos(a) * 0.4, 0.9, Math.sin(a) * 0.4, core, 0.55, 0, 0.3, 0.4));
-  }
-  const top = pg.v(0, 0.19, 0, 0, 1, 0, core, 0.7, 0, 0.3, 0.5);
-  for (let s = 0; s < seg; s++) {
-    const s1 = (s + 1) % seg;
-    pg.tri(ring0[s], ring1[s1], ring1[s]); pg.tri(ring0[s], ring0[s1], ring1[s1]);
-    pg.tri(ring1[s], ring1[s1], top);
-  }
-  const wood = [0.42, 0.34, 0.28], bloom = [1, 1, 1];
-  for (let k = 0; k < 16; k++) {
-    const a = rng() * Math.PI * 2, r = 0.04 + rng() * 0.2;
+  const wood = [0.55, 0.45, 0.36], bloom = [1, 1, 1];
+  for (let k = 0; k < 22; k++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.16;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
-    const h = 0.2 + rng() * 0.2, lean = 0.3 + rng() * 0.35;
+    const h = (0.36 - r * 1.1) * (0.8 + rng() * 0.4), lean = 0.35 + r * 2.5 + rng() * 0.2; // taller in the middle: a dome
     const dx = Math.cos(a), dz = Math.sin(a);
-    const at = (t) => [x0 + dx * lean * h * t, 0.08 + h * t, z0 + dz * lean * h * t];
+    const at = (t) => [x0 + dx * lean * h * t, h * t, z0 + dz * lean * h * t];
     const rnd = rng();
-    // wiry stalk
-    const b0 = at(0), b1 = at(1);
-    const wx = -dz * 0.012, wz = dx * 0.012;
-    const s0 = pg.v(b0[0] - wx, b0[1], b0[2] - wz, dx * 0.5, 0.8, dz * 0.5, wood, 0.2, 0, rnd, 0.3);
-    const s1 = pg.v(b0[0] + wx, b0[1], b0[2] + wz, dx * 0.5, 0.8, dz * 0.5, wood, 0.2, 0, rnd, 0.3);
-    const s2 = pg.v(b1[0], b1[1], b1[2], dx * 0.5, 0.8, dz * 0.5, wood, 1, 0, rnd, 0.3);
+    const b0 = at(0), b1 = at(0.75);
+    const wx = -dz * 0.016, wz = dx * 0.016;
+    const nx = dx * 0.5, nz = dz * 0.5;
+    const s0 = pg.v(b0[0] - wx, b0[1] - 0.02, b0[2] - wz, nx, 0.8, nz, wood, 0.1, 0, rnd, 0.25);
+    const s1 = pg.v(b0[0] + wx, b0[1] - 0.02, b0[2] + wz, nx, 0.8, nz, wood, 0.1, 0, rnd, 0.25);
+    const s2 = pg.v(b1[0], b1[1], b1[2], nx, 0.8, nz, wood, 0.75, 0, rnd, 0.25);
     pg.tri(s0, s1, s2);
-    // bloom spike along the upper half: a crossed pair of narrow diamonds
-    const m0 = at(0.4), m1 = at(0.7), m2 = at(1.02);
-    for (let c = 0; c < 1; c++) {
-      const ca = a + rng() * 1.5;
-      const ox = -Math.sin(ca) * 0.024, oz = Math.cos(ca) * 0.024;
-      const i0 = pg.v(m0[0], m0[1], m0[2], dx * 0.5, 0.8, dz * 0.5, bloom, 0.4, 1, rnd, 1);
-      const i1 = pg.v(m1[0] - ox, m1[1], m1[2] - oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
-      const i2 = pg.v(m1[0] + ox, m1[1], m1[2] + oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
-      const i3 = pg.v(m2[0], m2[1], m2[2], dx * 0.5, 0.8, dz * 0.5, bloom, 1, 1, rnd, 1);
-      pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
-    }
+    const m0 = at(0.4), m1 = at(0.72), m2 = at(1.04);
+    const ca = a + Math.PI / 2 + (rng() - 0.5);
+    const ox = Math.cos(ca) * 0.03, oz = Math.sin(ca) * 0.03;
+    const i0 = pg.v(m0[0], m0[1], m0[2], nx, 0.8, nz, bloom, 0.4, 1, rnd, 1);
+    const i1 = pg.v(m1[0] - ox, m1[1], m1[2] - oz, nx, 0.8, nz, bloom, 0.72, 1, rnd, 1);
+    const i2 = pg.v(m1[0] + ox, m1[1], m1[2] + oz, nx, 0.8, nz, bloom, 0.72, 1, rnd, 1);
+    const i3 = pg.v(m2[0], m2[1], m2[2], nx, 0.8, nz, bloom, 1, 1, rnd, 1);
+    pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
   }
   return pg.build();
 }
@@ -266,7 +249,7 @@ function makePlantMaterial(ctx, shared, o) {
         float fpC = cos(iPos.w), fpS = sin(iPos.w);
         vColor = color * mix(uBase, iTint.rgb, aBlade.w);
         vColor = mix(vColor, uTip * (0.7 + 0.6 * fpSeed), smoothstep(0.45, 1.0, aBlade.x) * iTint.w * step(fam, 1.5));
-        vColor *= mix(0.42, 1.0, smoothstep(0.0, 0.7, aBlade.x)) * (0.85 + 0.3 * fpBh - 0.15);
+        vColor *= mix(0.62, 1.0, smoothstep(0.0, 0.7, aBlade.x)) * (0.85 + 0.3 * fpBh - 0.15);
         vFpT = aBlade.x * aBlade.w;`)
       .replace('#include <beginnormal_vertex>', `
         vec3 objectNormal = vec3(normal.x * fpC - normal.z * fpS, normal.y, normal.x * fpS + normal.z * fpC);
@@ -274,7 +257,7 @@ function makePlantMaterial(ctx, shared, o) {
       .replace('#include <begin_vertex>', `
         vec3 fpL = position;
         fpL.xz *= iShape.x * fpComp;
-        fpL.y *= iShape.y * fpBh * mix(1.0, 1.15, fpComp - 1.0);
+        fpL.y *= iShape.y * fpBh * mix(1.0, 1.35, (fpComp - 1.0) / max(uComp - 1.0, 0.01));
         vec3 transformed = iPos.xyz + vec3(fpL.x * fpC - fpL.z * fpS, fpL.y, fpL.x * fpS + fpL.z * fpC);
         vec2 fpWv = fpWind(transformed.xz + fpSeed * 3.0, uTime) * uWind;
         float fpBend = aBlade.x * aBlade.x;
@@ -401,8 +384,8 @@ export function buildPlants(ctx, ground, shared) {
   const rng = ctx.makeRng(3301);
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
-  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: low ? 11 : 15, fade0: 80, fade1: 120, wind: 1.0, tip: '#8a3418', trans: 1.6 }), { r0: low ? 11 : 15, fade0: 80, fade1: 120, height: 1.2 });
-  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 85, fade1: 125, wind: 0.22, base: '#5a4630', trans: 0.6, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 85, fade1: 125, height: 0.8 });
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 9, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 2.6 }), { r0: 9, fade0: 85, fade1: 125, height: 1.6 });
+  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 14, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 2.2 }), { r0: 14, fade0: 100, fade1: 150, height: 1 });
   const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 });
   const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 });
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 });
@@ -420,8 +403,8 @@ export function buildPlants(ctx, ground, shared) {
   const mixInto = (a, b2, t) => { tint[0] = lerp(tint[0], b2[0], t); tint[1] = lerp(tint[1], b2[1], t); tint[2] = lerp(tint[2], b2[2], t); };
   const setT = (a) => { tint[0] = a[0]; tint[1] = a[1]; tint[2] = a[2]; };
 
-  const D_BRACKEN = 0.5 * half, D_FLOWER = 0.35 * half, D_FLESH = 0.16 * half;
-  const D_GRASS = 3.0 * half, D_HEATH = 0.5 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
+  const D_BRACKEN = 0.6 * half, D_FLOWER = 0.6 * half, D_FLESH = 0.16 * half;
+  const D_GRASS = 4.5 * half, D_HEATH = 0.8 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
   const CELL = 2;
   const b = {};
   const tStart = performance.now();
@@ -495,7 +478,7 @@ export function buildPlants(ctx, ground, shared) {
       bracken.add(x, y - 0.03, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0.5 * rng() * (1 - b.wood));
     }
     // pale flower spikes in drifts; one colour per drift
-    const drift = smoothstep(0.62, 0.8, noise.fbm2(mx * 0.025 - 90, mz * 0.025 + 33, 3) * 0.5 + 0.5);
+    const drift = smoothstep(0.56, 0.74, noise.fbm2(mx * 0.025 - 90, mz * 0.025 + 33, 3) * 0.5 + 0.5);
     const df = D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5);
     const nf = Math.floor(df * CELL * CELL + rng());
     if (nf) {
