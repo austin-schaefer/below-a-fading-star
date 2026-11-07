@@ -96,15 +96,18 @@ export class Painter extends Mesher {
 
 // MeshStandardMaterial reading per-vertex metalness/roughness/emission (aMRE). uEmit scales the emission
 // (tie it to the lantern or the sun's guttering). `patch(shader)` may further modify the shader.
-export function paintedMaterial(params = {}, patch) {
+// With wind: true, geometry may carry an aSway attribute (0 still .. 1 free hem) and the cloth stirs by uT.
+export function paintedMaterial(params = {}, patch, wind = false) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 1, ...params });
-  const uEmit = { value: 1 };
-  m.userData.uEmit = uEmit;
+  const uEmit = { value: 1 }, uT = { value: 0 };
+  m.userData.uEmit = uEmit; m.userData.uT = uT;
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uEmit = uEmit;
+    sh.uniforms.uEmit = uEmit; sh.uniforms.uT = uT;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec3 aMRE; varying vec3 vMRE;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvMRE = aMRE;');
+      .replace('#include <common>', '#include <common>\nattribute vec3 aMRE; varying vec3 vMRE;' + (wind ? '\nattribute float aSway; uniform float uT;' : ''))
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvMRE = aMRE;' + (wind ? `
+        { float ph = uT * 0.9 + position.y * 2.3 + position.x * 1.7;
+          transformed += aSway * vec3(sin(ph) * 0.022 + sin(ph * 2.7 + 1.3) * 0.008, 0.0, cos(ph * 0.8 + position.z * 3.1) * 0.018); }` : ''));
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vMRE; uniform float uEmit;')
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = vMRE.y;')
@@ -112,6 +115,7 @@ export function paintedMaterial(params = {}, patch) {
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vMRE.z * uEmit;');
     if (patch) patch(sh);
   };
+  m.customProgramCacheKey = () => (wind ? 'fp-painted-wind' : 'fp-painted') + (patch ? patch.toString().length : '');
   return m;
 }
 

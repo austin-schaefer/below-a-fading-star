@@ -1,0 +1,3 @@
+# Work-in-progress screenshots
+
+Every render the build agents took while making v1, in the order the files were named, saved from the session scratchpad so the process isn't lost. JPEG at 1280 wide. Prefixes: `core`/`shot` (the bare terrain and sky), `rocks`, `wp` (water and particles), `veg` (vegetation), `fauna`, `unc` (uncanny inhabitants, including the first derpy humans), `sky` (sky life), and the structures agent's own names (`spawn`, `gate`, `yard`, `stones`, `tower`, `court`, `byre`, `bridge`, `tav`, `arch`, `statue`...). `dbg-*` is the hunt for a rectangle on the ground that turned out to be the camera standing inside a boulder.
