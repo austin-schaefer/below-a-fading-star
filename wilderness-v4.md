@@ -31,3 +31,29 @@ The brief here is not more things but **scale contrast, long sightlines and silh
 - Nothing cute, nothing symmetrical for its own sake; everything looks built by people who were better than us and are gone.
 
 Renders required at each step, before and after, from spawn, from the causeway, from the Span's deck, and from the tarn's shore.
+
+## Austin's picks from IDEAS-v4.md (2026-11-07)
+
+**Tone note for everything in v4:** nothing medieval. This is Vancian far future, not generic fantasy: the works are machines, instruments and civic architecture of a late age, built by people with better science than ours, not castles and chapels. Materials: dressed stone, bronze, black glass, lattice; no timber beams, no Gothic tracery, no heraldry. Letters refer to `IDEAS-v4.md`; anything not listed is dropped.
+
+- **AK. The Annals.** Yes.
+- **AL. The Galleries of Durance.** Yes, and make the whole thing active: no figures seen, but machinery turns, chains move up and down, gantries shift, animation with no visible animating force.
+- **AM. The Acephalous Thrones.** Yes, but the two colossi are not seated: both are crawling on hands and knees, flanking the sun's saddle.
+- **AO. The Escarpment Lamps.** Yes, multi-coloured lights, not all warm.
+- **AP. The Battlemented Ridge.** Yes, placed on a stretch of wall that is currently dull; the regularity is the point.
+- **AQ. The Cincture.** Yes, emphatically.
+- **AR. The Occultation.** Yes, but the shadow band sweeps a couple of hundred metres up, through the air and across the walls, a weather event, not along the floor.
+- **AW. The Plinth Road.** Yes, with no human feet: bird feet, pigs' hooves, reptilian feet, all emerging from robes, so it reads as a row of robed half-human figures that are gone.
+- **BA. The Hawser.** Yes, emphatically.
+- **BD. The Foundered Nave.** Yes, as a smaller feature, with life at the bottom: indistinct shapes swimming and splashing in water below.
+- **BG. The Postern.** One or two, no more.
+- **BI. The Recession of Ranges.** Yes, and treat it as a larger note: the mountains read as a first fractal mountain range. v4 reworks the walls: layered ranges in depth with fog tiers, distinct silhouettes (crests, buttresses, a few named peaks), strata and scree that follow the structure, and the carved works above sitting in that structure rather than on noise.
+
+Plus, from before: **W. The Great Span** with its two sealed gates, and the awe audit.
+
+### How v4 is staffed
+
+1. Placement plan for the picks (orchestrator), shown to Austin.
+2. One **systems agent** (Opus) first: the shared kit under `src/v4/kit/`: cyclopean masonry materials and weathering in the far-future register, a stair generator (worn treads, diminishing courses), colossal-scale helpers (measure figures, rook wheels, fog tiers), the mountain rework for BI, and the `ctx` hooks the features need. Nothing else starts until it lands.
+3. **One agent per wonder**, each owning one file under `src/v4/` and one landmark, briefed with its site, its neighbours, the kit's API, its budget, the tone note and the rules of awe. Sonnet for the simple ones (AO, AP, BG), Opus for the rest; the Great Span is its own Opus agent. Batches of three or four at a time for the render load.
+4. A **coherence agent** at the end renders every wonder from the same four viewpoints and flags style drift, then the audio pass.
