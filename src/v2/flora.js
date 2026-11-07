@@ -287,7 +287,7 @@ export async function build(ctx) {
     turned[j] = turned[--nTurned];
   }
 
-  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false };
+  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false, positions: pos }; // positions: x, y, z, stem height per flower (tools)
   const cue = (name, p) => ctx.audio?.cue?.(name, p);
   const whimperPos = new THREE.Vector3();
   const trng = ctx.makeRng(5102);

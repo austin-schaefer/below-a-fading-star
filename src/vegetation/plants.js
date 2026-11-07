@@ -392,6 +392,8 @@ class Kind {
 export function buildPlants(ctx, ground, shared) {
   const { landmarks: L, quality, noise } = ctx;
   const low = quality === 'low';
+  const eddy = L.eddy;
+  shared.grey = { value: new THREE.Vector4(eddy ? eddy.x : 0, eddy ? eddy.z : 0, 8, eddy ? 1 : 0) };
   const half = low ? 0.5 : 1;
   let rng = null; // per chunk, see genChunk
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
@@ -600,9 +602,11 @@ export function buildPlants(ctx, ground, shared) {
     for (const k of kinds) k.update(px, pz, frustum, genCount);
   }
   const tris = (k) => k.geo.index.count / 3;
-  return {
+  const api = {
     kinds, update,
     stats: () => Object.fromEntries(kinds.map((k) => [k.name, { stored: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
     genMs,
   };
+  window.__vegPlants = api; // for tools/grass-flicker-test.mjs
+  return api;
 }
