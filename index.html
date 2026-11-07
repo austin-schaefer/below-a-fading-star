@@ -36,6 +36,24 @@
   #error { position: fixed; left: 12px; top: 12px; right: 12px; white-space: pre-wrap; color: #ff9a5c; font-family: ui-monospace, monospace; font-size: 12px; z-index: 20; pointer-events: none; }
   #reticle { position: fixed; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: rgba(255,233,219,0.35); z-index: 5; pointer-events: none; opacity: 0; transition: opacity 1s; }
   body.ready #card.hidden ~ #reticle { opacity: 1; }
+  /* touch thumbstick: hairline ring, bone colour, no glow */
+  #stick { position: fixed; left: calc(max(20px, env(safe-area-inset-left, 0px)) + 8px); bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 16px); width: 120px; height: 120px; box-sizing: border-box; border-radius: 50%;
+    border: 1px solid rgba(217, 205, 180, 0.25); opacity: 0; pointer-events: none; transition: opacity 1.2s ease; z-index: 6; display: none; touch-action: none; }
+  body.touch #stick { display: block; }
+  body.touch.begun #stick { opacity: 1; }
+  #stick-knob { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: rgba(217, 205, 180, 0.18); border: 1px solid rgba(217, 205, 180, 0.4); box-sizing: border-box; }
+  #stick.active { border-color: rgba(217, 205, 180, 0.32); }
+  #stick.active #stick-knob { background: rgba(217, 205, 180, 0.28); }
+  /* debug */
+  #dbg-btn { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); width: 32px; height: 32px; padding: 0; display: none; align-items: center; justify-content: center; font: inherit; font-size: 16px; line-height: 1; color: #d9cdb4; background: rgba(11, 6, 9, 0.35); border: 1px solid rgba(217, 205, 180, 0.3); border-radius: 50%; z-index: 12; cursor: pointer; }
+  #dbg-btn.shown { display: flex; }
+  #dbg { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(48px + env(safe-area-inset-right, 0px)); width: min(300px, calc(100vw - 72px)); max-height: 40vh; display: none; flex-direction: column; box-sizing: border-box; background: rgba(11, 6, 9, 0.78); border: 1px solid rgba(217, 205, 180, 0.25); border-radius: 2px; color: #d9cdb4; font-size: 0.9rem; z-index: 12; pointer-events: auto; }
+  #dbg.shown { display: flex; }
+  #dbg-live { padding: 6px 10px; font-family: ui-monospace, monospace; font-size: 0.68rem; color: rgba(217, 205, 180, 0.7); border-bottom: 1px solid rgba(217, 205, 180, 0.15); }
+  #dbg-list { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #dbg-list button { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 5px 10px; font: inherit; color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }
+  #dbg-list button:hover, #dbg-list button:active { background: rgba(217, 205, 180, 0.12); }
+  #dbg-list kbd { flex: none; min-width: 1.1em; text-align: center; font-family: ui-monospace, monospace; font-size: 0.72rem; color: rgba(217, 205, 180, 0.6); border: 1px solid rgba(217, 205, 180, 0.3); border-radius: 2px; padding: 0 0.3em; margin: 0; }
   @media (max-width: 700px) { #card .keys { display: none; } #fps { display: none; } }
 </style>
 </head>
@@ -47,12 +65,15 @@
   <p class="intro">You wake at the gate of a keep that has outlived its name. The sun is swollen, red and guttering; it will not rise any higher than this. Below you a region of moor and fen lies open, bounded by mountains nothing crosses. Walk it.</p>
   <p class="paused-note">Paused. Click to return to the moor.</p>
   <button id="begin">Go out</button>
-  <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>Esc</kbd> pause. On a phone: left thumb walks, right thumb looks.</div>
+  <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>Esc</kbd> pause. On a phone: the thumbstick at bottom left walks (pull it far to hurry), drag anywhere else to look.</div>
 </div>
 <div id="hint">The causeway runs west from the gate. The lights in the fen are not for you.</div>
 <div id="place"><div id="place-name"></div><div id="place-line"></div></div>
 <div id="reticle"></div>
 <div id="fps"></div>
+<div id="stick"><div id="stick-knob"></div></div>
+<button id="dbg-btn" type="button" aria-label="debug">&#10022;</button>
+<div id="dbg"><div id="dbg-live"></div><div id="dbg-list"></div></div>
 <pre id="error"></pre>
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/" } }

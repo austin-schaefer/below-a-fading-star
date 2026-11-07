@@ -4,6 +4,11 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { SPAWN, WORLD } from './world.js';
 
+const WALK = 4.2, HURRY = 7.6;      // m/s
+const STEPS_WALK = 1.9, STEPS_HURRY = 2.6; // footsteps per second at full speed
+const LOOK_SENS = 0.005;            // rad per css px of touch drag
+const AUTO_HURRY = 0.8;             // stick pulled past this fraction hurries
+
 export function buildControls(ctx) {
   const { camera, renderer, terrain } = ctx;
   const el = renderer.domElement;
@@ -17,6 +22,7 @@ export function buildControls(ctx) {
     onStep: null,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
+  state.hurrying = false;
 
   const url = new URL(location.href);
   if (url.searchParams.get('pos')) {
@@ -24,6 +30,7 @@ export function buildControls(ctx) {
     state.pos.set(x, terrain.heightAt(x, z) + state.eye, z);
   }
   if (url.searchParams.get('yaw')) state.yaw = Number(url.searchParams.get('yaw'));
+  const speedMul = Number(url.searchParams.get('speed')) > 0 ? Number(url.searchParams.get('speed')) : 1;
   if (url.searchParams.get('pitch')) state.pitch = Number(url.searchParams.get('pitch'));
 
   // --- input
@@ -47,25 +54,80 @@ export function buildControls(ctx) {
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
 
-  // Touch: left half = move stick, right half = look
-  let moveTouch = null, lookTouch = null;
-  const moveVec = { x: 0, y: 0 };
+  // --- touch: a drawn thumbstick in the bottom-left zone, look from any other touch
+  const stickEl = document.getElementById('stick');
+  const knobEl = document.getElementById('stick-knob');
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const RING_R = 60;                       // css px (ring is 120 wide)
+  const moveVec = { x: 0, y: 0, mag: 0 }; // y positive = pulled down
+  let moveTouch = null, lookTouch = null, cornerTimer = 0;
+  let ringX = 0, ringY = 0;                // current ring centre, css px
+  let homeSet = false;
+  const lookVel = { x: 0, y: 0 };          // rad/s inertia after release
+  let lastLookT = 0;
+
+  function ringHome() {
+    // measure the home position the CSS gives the ring (safe-area aware)
+    stickEl.style.left = ''; stickEl.style.top = ''; stickEl.style.bottom = ''; stickEl.style.transform = 'none';
+    const r = stickEl.getBoundingClientRect();
+    ringX = r.left + r.width / 2; ringY = r.top + r.height / 2; homeSet = true;
+    placeRing(ringX, ringY, false);
+  }
+  function placeRing(cx, cy, custom) {
+    stickEl.style.bottom = 'auto';
+    stickEl.style.left = (cx - RING_R) + 'px'; stickEl.style.top = (cy - RING_R) + 'px';
+    ringX = cx; ringY = cy;
+  }
+  function setKnob(dx, dy) { knobEl.style.transform = `translate(${dx}px, ${dy}px)`; }
+  function inStickZone(x, y) { return x < innerWidth * 0.4 && y > innerHeight * 0.55; }
+  function inCorner(x, y) { return x > innerWidth - 72 && y < 72; }
+  if (isTouch) document.body.classList.add('touch');
+  ctx.events.addEventListener('begin', () => { if (isTouch) { document.body.classList.add('begun'); if (stickEl) ringHome(); } });
+  addEventListener('resize', () => { if (isTouch && stickEl && !moveTouch) ringHome(); });
+
   el.addEventListener('touchstart', (e) => {
+    if (!isTouch) { document.body.classList.add('touch'); }
     for (const t of e.changedTouches) {
-      if (t.clientX < innerWidth / 2 && !moveTouch) moveTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
-      else if (!lookTouch) lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
+      if (!moveTouch && inStickZone(t.clientX, t.clientY) && stickEl) {
+        if (!homeSet) ringHome();
+        if (Math.hypot(t.clientX - ringX, t.clientY - ringY) > RING_R) {
+          placeRing(clamp(t.clientX, RING_R, innerWidth - RING_R), clamp(t.clientY, RING_R, innerHeight - RING_R), true);
+        }
+        moveTouch = { id: t.identifier };
+        stickEl.classList.add('active');
+        updateStick(t.clientX, t.clientY);
+      } else if (!lookTouch) {
+        lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY };
+        lookVel.x = lookVel.y = 0; lastLookT = performance.now();
+        if (inCorner(t.clientX, t.clientY)) {
+          clearTimeout(cornerTimer);
+          cornerTimer = setTimeout(() => { if (lookTouch && lookTouch.corner) { ctx.debug?.reveal(); lookTouch = null; } }, 1200);
+          lookTouch.corner = true;
+        }
+      }
     }
     if (!state.enabled) ctx.events.dispatchEvent(new CustomEvent('begin'));
     e.preventDefault();
   }, { passive: false });
+  function updateStick(cx, cy) {
+    let dx = cx - ringX, dy = cy - ringY;
+    const d = Math.hypot(dx, dy);
+    if (d > RING_R) { dx *= RING_R / d; dy *= RING_R / d; }
+    setKnob(dx, dy);
+    moveVec.x = dx / RING_R; moveVec.y = dy / RING_R; moveVec.mag = Math.min(1, d / RING_R);
+  }
   el.addEventListener('touchmove', (e) => {
     for (const t of e.changedTouches) {
-      if (moveTouch && t.identifier === moveTouch.id) {
-        moveVec.x = clamp((t.clientX - moveTouch.x) / 60, -1, 1);
-        moveVec.y = clamp((t.clientY - moveTouch.y) / 60, -1, 1);
-      } else if (lookTouch && t.identifier === lookTouch.id) {
-        state.yaw -= (t.clientX - lookTouch.x) * 0.005;
-        state.pitch = clamp(state.pitch - (t.clientY - lookTouch.y) * 0.005, -1.45, 1.45);
+      if (moveTouch && t.identifier === moveTouch.id) updateStick(t.clientX, t.clientY);
+      else if (lookTouch && t.identifier === lookTouch.id) {
+        const dxp = t.clientX - lookTouch.x, dyp = t.clientY - lookTouch.y;
+        if (lookTouch.corner && Math.hypot(t.clientX - lookTouch.sx, t.clientY - lookTouch.sy) > 14) { lookTouch.corner = false; clearTimeout(cornerTimer); }
+        const dYaw = -dxp * LOOK_SENS, dPitch = -dyp * LOOK_SENS;
+        state.yaw += dYaw;
+        state.pitch = clamp(state.pitch + dPitch, -1.45, 1.45);
+        const now = performance.now(), dtm = Math.max(1, now - lastLookT) / 1000;
+        lookVel.x += (dYaw / dtm - lookVel.x) * 0.5; lookVel.y += (dPitch / dtm - lookVel.y) * 0.5;
+        lastLookT = now;
         lookTouch.x = t.clientX; lookTouch.y = t.clientY;
       }
     }
@@ -73,11 +135,49 @@ export function buildControls(ctx) {
   }, { passive: false });
   const endTouch = (e) => {
     for (const t of e.changedTouches) {
-      if (moveTouch && t.identifier === moveTouch.id) { moveTouch = null; moveVec.x = moveVec.y = 0; }
-      if (lookTouch && t.identifier === lookTouch.id) lookTouch = null;
+      if (moveTouch && t.identifier === moveTouch.id) {
+        moveTouch = null; moveVec.x = moveVec.y = moveVec.mag = 0; setKnob(0, 0);
+        stickEl.classList.remove('active'); ringHome();
+      }
+      if (lookTouch && t.identifier === lookTouch.id) {
+        clearTimeout(cornerTimer);
+        if (performance.now() - lastLookT > 80) lookVel.x = lookVel.y = 0; // held still: no fling
+        lookTouch = null;
+      }
     }
   };
   el.addEventListener('touchend', endTouch); el.addEventListener('touchcancel', endTouch);
+
+  // --- walkable floors: fn(x, z) -> world y of a floor, or null
+  const walkables = [];
+  function addWalkable(fn) { walkables.push(fn); }
+  ctx.addWalkable = addWalkable;
+
+  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders.
+  function placeAt(x, z) {
+    const limit = WORLD.regionRadius + 48;
+    for (let iter = 0; iter < 8; iter++) {
+      let moved = false;
+      const rr = Math.hypot(x, z);
+      if (rr > limit) { x *= limit / rr; z *= limit / rr; moved = true; }
+      for (const c of state.colliders) {
+        const dx = x - c.x, dz = z - c.z, rad = c.r + 0.6;
+        const d = Math.hypot(dx, dz);
+        if (d < rad) {
+          if (c.h !== undefined && c.y + c.h < terrain.heightAt(x, z)) continue;
+          const nx = d > 1e-4 ? dx / d : 1, nz = d > 1e-4 ? dz / d : 0;
+          x = c.x + nx * rad; z = c.z + nz * rad; moved = true;
+        }
+      }
+      if (!moved) break;
+    }
+    const g = terrain.heightAt(x, z), wl = terrain.waterLevelAt(x, z);
+    let floor = g;
+    if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
+    state.pos.set(x, floor + state.eye, z);
+    state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true;
+    return { x, z };
+  }
 
   function lock() { el.requestPointerLock?.(); }
 
@@ -96,8 +196,16 @@ export function buildControls(ctx) {
       if (k.has('KeyD') || k.has('ArrowRight')) mx += 1;
       mx += moveVec.x; mz -= moveVec.y;
     }
-    const hurry = k.has('ShiftLeft') || k.has('ShiftRight');
-    const maxSpeed = hurry ? 6.2 : 3.1;
+    // touch look inertia
+    if (!lookTouch && (lookVel.x || lookVel.y)) {
+      state.yaw += lookVel.x * dt; state.pitch = clamp(state.pitch + lookVel.y * dt, -1.45, 1.45);
+      const decay = Math.exp(-dt / 0.08);
+      lookVel.x *= decay; lookVel.y *= decay;
+      if (Math.abs(lookVel.x) + Math.abs(lookVel.y) < 0.01) lookVel.x = lookVel.y = 0;
+    }
+    const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.mag > AUTO_HURRY;
+    state.hurrying = hurry;
+    const maxSpeed = (hurry ? HURRY : WALK) * speedMul;
     fwd.set(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
     right.set(Math.cos(state.yaw), 0, -Math.sin(state.yaw));
     wish.set(0, 0, 0).addScaledVector(fwd, mz).addScaledVector(right, mx);
@@ -142,18 +250,26 @@ export function buildControls(ctx) {
     const wl = terrain.waterLevelAt(state.pos.x, state.pos.z);
     let floorY = groundY;
     if (wl !== null && groundY < wl) floorY = Math.max(groundY, wl - 1.1); // wade, don't sink
+    // walkable floors (decks, ramps): within 1.2 m below the feet or 0.6 m above
+    const feet0 = state.pos.y - state.eye;
+    for (const fn of walkables) {
+      const h = fn(state.pos.x, state.pos.z);
+      if (h !== null && h !== undefined && h <= feet0 + 0.6 && h >= feet0 - 1.2 && h > floorY) floorY = h;
+    }
     state.vy -= 12 * dt;
     let feet = state.pos.y - state.eye + state.vy * dt;
+    // stick to ground going downhill (faster speeds out-run gravity on slopes)
+    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.35) feet = floorY;
     if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; } else state.onGround = false;
     // smooth the ground-follow a touch when walking
     const speed = Math.hypot(state.vel.x, state.vel.z);
     state.speed = speed;
     if (state.onGround) {
-      state.bob += dt * (hurry ? 11 : 7.5) * (speed / maxSpeed);
+      // |sin(bob)| has one bump per footstep, so bob advances pi per step
+      state.bob += dt * Math.PI * (hurry ? STEPS_HURRY : STEPS_WALK) * (speed / maxSpeed);
       state.bobAmt += ((speed > 0.3 ? 1 : 0) - state.bobAmt) * Math.min(1, dt * 6);
-      const phase = Math.sin(state.bob);
-      if (phase < -0.98 && state.stepPhase >= 0) { state.stepPhase = -1; state.onStep?.(hurry); }
-      if (phase > 0) state.stepPhase = 0;
+      const stepNo = Math.floor(state.bob / Math.PI);
+      if (stepNo !== state.stepPhase) { state.stepPhase = stepNo; if (state.bobAmt > 0.3) state.onStep?.(hurry); }
     }
     const bobY = Math.abs(Math.sin(state.bob)) * 0.06 * state.bobAmt;
     const bobX = Math.sin(state.bob * 0.5) * 0.035 * state.bobAmt;
@@ -166,5 +282,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider };
+  return { state, update, lock, addCollider, addWalkable, placeAt };
 }

@@ -1,5 +1,6 @@
 // HUD: the title card, a landmark name that fades in when you draw near, a hint line, fps.
 import { LANDMARKS } from './world.js';
+import { buildDebug } from './debug.js';
 
 export function buildHud(ctx) {
   const card = document.getElementById('card');
@@ -14,8 +15,10 @@ export function buildHud(ctx) {
   ctx.events.addEventListener('begin', () => { card.classList.add('hidden'); hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 9000); });
   ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
 
+  const debug = buildDebug(ctx);
   let current = null, timer = 0;
   function update(dt) {
+    debug.update(dt);
     const p = ctx.player.pos;
     let best = null, bestD = Infinity;
     for (const [key, L] of Object.entries(LANDMARKS)) {

@@ -47,7 +47,7 @@ const results = await page.evaluate(() => {
 await page.waitForTimeout(1500);
 await browser.close();
 const checks = [
-  ['walked 25-35m in 10s', results.walked > 25 && results.walked < 35],
+  ['walked 38-46m in 10s (4.2 m/s)', results.walked > 38 && results.walked < 46],
   ['stays on the ground', results.onGround && Math.abs(results.feetAboveGround) < 0.05],
   ['boundary holds (< 352m)', results.boundaryRadius < 352],
   ['collider stops the player (~2.45m)', results.colliderStop > 2.3 && results.colliderStop < 2.7],
