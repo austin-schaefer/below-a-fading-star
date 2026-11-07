@@ -146,7 +146,7 @@ export function buildCloak(ctx, U) {
   // sleeves: hanging past the knee, wide at the cuff, nothing inside them
   const SLV = (sd, t) => { // centre and radius along the sleeve, t 0 shoulder .. 1 cuff
     const y = 2.6 - t * 1.75;
-    return [sd * (0.27 + 0.06 * t), y, 0.03 + 0.11 * t, 0.075 + 0.075 * t * t];
+    return [sd * (0.27 + 0.17 * t * t), y, 0.03 + 0.1 * t, 0.07 + 0.07 * t * t];
   };
   for (const sd of [-1, 1]) {
     P.paint(cloth, 0, 0.96);

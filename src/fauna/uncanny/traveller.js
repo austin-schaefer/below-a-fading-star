@@ -87,9 +87,9 @@ function travellerParts(low) {
   const Hd = new Painter(['aSway']);
   Hd.paint(VEIL, 0, 0.96);
   Hd.grid(low ? 16 : 22, 12, (u, v, o) => {
-    const a = u * TAU, y = 0.34 - v * 0.95;
+    const a = u * TAU, y = 0.4 - v * 1.05;
     const head = Math.sin(Math.min(1, v / 0.28) * Math.PI * 0.5);
-    const r = v < 0.28 ? 0.105 * head : 0.105 + 0.21 * smoothstep(0.28, 1, v);
+    const r = v < 0.28 ? 0.1 * head : 0.1 + 0.13 * smoothstep(0.28, 1, v);
     const fold = 1 + 0.1 * v * Math.abs(Math.sin(a * 5));
     Hd.set('aSway', smoothstep(0.35, 1, v));
     o[0] = Math.cos(a) * r * fold; o[1] = y; o[2] = 0.05 + 0.1 * v + Math.sin(a) * r * fold * 1.1;
@@ -353,7 +353,7 @@ export function buildTraveller(ctx, U) {
     const want = lookAt ? clamp(angDiff(Math.atan2(dx, dz), S.yawT), -1.5, 1.5) : 0;
     S.headYaw = approach(S.headYaw, want, 2.2, dt);
     headPivot.rotation.set(0.12, S.headYaw, 0, 'YXZ');
-    armPivot.rotation.set(-2.2 * S.arm, -0.5 * S.arm, 0.15 * S.arm, 'XYZ');
+    armPivot.rotation.set(-2.4 * S.arm, 0, -0.5 * S.arm, 'ZYX');
     // wheels turn though they touch nothing
     S.spin += (S.speed / 0.48) * dt;
     for (let i = 0; i < 4; i++) {
