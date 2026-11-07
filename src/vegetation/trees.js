@@ -193,13 +193,13 @@ function addShelves(sk, rng, count, yRange) {
 function meshSkeleton(sk, detail, colors, rng) {
   const gb = new GeoBuilder(['glow']);
   const ex0 = { glow: 0 };
-  const sidesFor = detail === 'hi' ? [9, 6, 4, 3, 3] : detail === 'lo' ? [6, 4, 3, 0, 0] : [4, 3, 0, 0, 0];
+  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 4, 3, 0, 0] : [4, 3, 0, 0, 0];
   for (const limb of sk.limbs) {
     const sides = sidesFor[Math.min(limb.level, 4)];
     if (!sides) continue;
     if (detail !== 'hi' && limb.root && sk.trunkR < 1) continue;
     let pts = limb.pts;
-    const stride = detail === 'hi' ? 1 : detail === 'lo' ? 2 : 3;
+    const stride = detail === 'hi' ? 1 : detail === 'lo' ? (limb.level >= 2 ? 3 : 2) : 3;
     if (stride > 1 && pts.length > 3) pts = pts.filter((_, i) => i % stride === 0 || i === pts.length - 1);
     const H = Math.max(sk.height, 1);
     tube(gb, pts, sides, (i, t) => {
@@ -209,11 +209,12 @@ function meshSkeleton(sk, detail, colors, rng) {
     }, { capTip: limb.level > 0, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
   }
   // foliage cards: two crossed quads per cluster, normals bent outward from the crown
-  for (let i = 0; i < sk.leaves.length; i++) {
+  const leafStep = detail === 'far' ? 2 : 1;
+  for (let i = 0; i < sk.leaves.length; i += leafStep) {
     const L = sk.leaves[i];
     const col = mixc(colors.leaf, colors.leafAlt, (i * 0.618) % 1);
     const [u0, v0, u1, v1] = leafUV(L.tile);
-    const s = L.s * (detail === 'hi' ? 1 : detail === 'lo' ? 1.15 : 1.3);
+    const s = L.s * (detail === 'hi' ? 1 : detail === 'lo' ? 1.1 : 1.45);
     for (let q = 0; q < 2; q++) {
       const ang = L.spin + q * Math.PI / 2;
       const ax = V(Math.cos(ang), 0, Math.sin(ang));

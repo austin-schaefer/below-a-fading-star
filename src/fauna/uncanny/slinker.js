@@ -9,36 +9,39 @@ import { Painter, makeGround, approach, turnToward, DITHER_GLSL } from './kit.js
 function slinkerGeometry(low) {
   const P = new Painter(['aPh']);
   P.paint('#050406', 0.3, 0.38);
-  // spine: blunt head, a long jointed trunk, a whip of a tail. Lofted along +z.
+  // the trunk: a long boneless smear, jointed like a spine with too many vertebrae, no head to speak of
   const pts = [], rad = [];
-  const n = low ? 46 : 64;
+  const n = low ? 50 : 70, z0 = -2.7, z1 = 2.0;
   for (let k = 0; k <= n; k++) {
-    const z = -2.1 + (k / n) * 3.65;
+    const z = z0 + (k / n) * (z1 - z0);
     let w, h;
-    if (z < -0.8) { const f = (z + 2.1) / 1.3; w = 0.012 + f * f * 0.13; h = 0.01 + f * f * 0.08; }
-    else if (z < 1.15) { w = 0.15; h = 0.085; }
-    else { const f = (z - 1.15) / 0.4; w = 0.15 - f * 0.09; h = 0.085 + Math.sin(f * Math.PI) * 0.03 - f * 0.04; }
-    const joint = z > -1.4 && z < 1.15 ? 0.82 + 0.18 * Math.abs(Math.sin(z * Math.PI / 0.17)) : 1;
-    pts.push([0, 0.24 + (z > 1.15 ? -(z - 1.15) * 0.15 : 0), z]);
+    if (z < -1.2) { const f = (z - z0) / 1.5; w = 0.015 + f * f * 0.22; h = 0.012 + f * f * 0.12; }
+    else if (z < 1.4) { w = 0.24; h = 0.13; }
+    else { const f = (z - 1.4) / 0.6; w = 0.24 * (1 - f * 0.75); h = 0.13 * (1 - f * 0.8) + Math.sin(f * Math.PI) * 0.03; }
+    const joint = z > -1.8 && z < 1.5 ? 0.84 + 0.16 * Math.abs(Math.sin(z * Math.PI / 0.21)) : 1;
+    pts.push([0, 0.36 - (z > 1.4 ? (z - 1.4) * 0.28 : 0) - (z < -1.2 ? (-1.2 - z) * 0.14 : 0), z]);
     rad.push([w * joint, h * joint]);
   }
-  P.loft(pts, rad, low ? 6 : 8, 0);
-  // legs: fourteen pairs, each three-jointed, knees well above the back
-  const pairs = low ? 11 : 14;
+  P.loft(pts, rad, low ? 7 : 9, 0);
+  // arms, not legs: long and human, elbows hoisted high, hands splayed flat on the ground
+  const pairs = low ? 7 : 9;
   for (let i = 0; i < pairs; i++) {
-    const z = -0.75 + (i / (pairs - 1)) * 1.85;
+    const z = -1.1 + (i / (pairs - 1)) * 2.4;
     for (const s of [-1, 1]) {
-      P.set('aPh', i * 0.9 + (s > 0 ? Math.PI : 0));
-      const spread = 1 + 0.15 * Math.sin(i * 1.7);
-      const L = [[s * 0.1, 0.24, z], [s * 0.3 * spread, 0.6, z + 0.04], [s * 0.36 * spread, 0.62, z + 0.05], [s * 0.6 * spread, 0.4, z + 0.09], [s * 0.74 * spread, 0.0, z + 0.05]];
-      const R = [0.024, 0.017, 0.02, 0.012, 0.004];
-      P.loft(L, R, 4, (p) => clamp((Math.abs(p[0]) - 0.1) / 0.64, 0, 1));
+      P.set('aPh', i * 1.15 + (s > 0 ? Math.PI : 0));
+      const sp = 1 + 0.12 * Math.sin(i * 2.3 + s), lean = 0.12 * Math.sin(i * 1.3);
+      const sh = [s * 0.16, 0.38, z], el = [s * 0.52 * sp, 1.0 + lean, z - 0.1], el2 = [s * 0.56 * sp, 0.98 + lean, z - 0.08];
+      const wr = [s * 0.86 * sp, 0.07, z + 0.08], pa = [s * 0.9 * sp, 0.025, z + 0.16];
+      const wf = (p) => clamp((Math.abs(p[0]) - 0.16) / 0.74, 0, 1);
+      P.loft([sh, [s * 0.34 * sp, 0.74, z - 0.05], el, el2, [s * 0.72 * sp, 0.52, z], wr, pa], [0.045, 0.034, 0.03, 0.03, 0.024, 0.02, 0.026], 5, wf);
+      // fingers: four long ones spread forward and out, and a thumb inward
+      for (let f = 0; f < 5; f++) {
+        const a = (f === 4 ? -0.9 : (f - 1.5) * 0.32) * s + (s > 0 ? 0.25 : -0.25);
+        const L = f === 4 ? 0.11 : 0.2 + (f === 1 || f === 2 ? 0.04 : 0);
+        const dx = Math.sin(a), dz = Math.cos(a);
+        P.loft([pa, [pa[0] + dx * L * 0.5, 0.035, pa[2] + dz * L * 0.5], [pa[0] + dx * L, 0.006, pa[2] + dz * L]], [0.014, 0.01, 0.004], 4, wf);
+      }
     }
-  }
-  // feelers at the head, long as fingers, tapping
-  for (const s of [-1, 0, 1]) {
-    P.set('aPh', 2 + s * 1.3);
-    P.loft([[s * 0.04, 0.2, 1.48], [s * 0.12, 0.3, 1.8], [s * 0.18, 0.04, 2.15]], [0.014, 0.01, 0.003], 4, (p) => clamp((p[2] - 1.48) / 0.67, 0, 1));
   }
   return P.geometry();
 }
@@ -49,13 +52,13 @@ const VERT_PARS = `
 const VERT = `
   {
     float zz = position.z;
-    float lat = sin(zz * 2.3 - uPhase * 1.1) * (0.06 + 0.16 * uMove) * smoothstep(1.9, 0.4, zz);
+    float lat = sin(zz * 1.7 - uPhase * 1.1) * (0.08 + 0.2 * uMove) * smoothstep(2.2, 0.6, zz);
     transformed.x += lat;
     transformed.y += sin(zz * 6.0 - uPhase * 2.3) * 0.022 * (1.0 - aW);
-    float st = uPhase * 3.1 + aPh;
+    float st = uPhase * 2.2 + aPh;
     float lift = max(0.0, sin(st));
-    transformed.y += aW * (lift * 0.15 * uMove + max(0.0, sin(uTime * 9.0 + aPh * 5.0)) * 0.02 * (1.0 - uMove));
-    transformed.z += aW * cos(st) * 0.13 * uMove;
+    transformed.y += aW * (lift * 0.22 * uMove + max(0.0, sin(uTime * 7.0 + aPh * 5.0)) * 0.03 * (1.0 - uMove));
+    transformed.z += aW * cos(st) * 0.2 * uMove;
     transformed.y *= mix(1.0, 0.06, uFlat);
     transformed.x *= 1.0 + uFlat * 0.55;
   }`;
@@ -204,10 +207,10 @@ export function buildSlinker(ctx, U) {
     state: S,
     // test hook: put it at a bearing (degrees, + to the left of view) and distance from the camera, and hold it
     stage(deg, d, o = {}) {
-      camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize(); camBearing = Math.atan2(-fwd.x, -fwd.z);
-      at((deg * Math.PI) / 180, d, pt);
+      const pp = ctx.player.pos; camBearing = ctx.player.yaw;
+      const b = camBearing + (deg * Math.PI) / 180; pt[0] = pp.x - Math.sin(b) * d; pt[1] = pp.z - Math.cos(b) * d;
       S.x = pt[0]; S.z = pt[1]; S.hold = true; S.mode = 'lurk'; S.fade = o.fade ?? 1; S.flat = o.flat ?? 0;
-      S.heading = o.heading ?? Math.atan2(cam.x - S.x, cam.z - S.z) + Math.PI / 2; S.speed = o.speed ?? 2.2;
+      S.heading = o.heading ?? Math.atan2(pp.x - S.x, pp.z - S.z) + Math.PI / 2; S.speed = o.speed ?? 2.2;
       return { x: S.x, z: S.z, ok: ok(S.x, S.z) };
     },
     release() { S.hold = false; },

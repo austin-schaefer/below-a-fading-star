@@ -86,7 +86,7 @@ export function buildScatter(ctx, B, env) {
   }
 
   // ---------- fallen dressed stone everywhere: ashlars and column drums in loose clusters ----------
-  for (let c = 0; c < 46; c++) {
+  for (let c = 0; c < 95; c++) {
     const p = findSpot(env, { slope: 0.45, sep: 8, size: 3, causeway: 5 });
     if (!p) continue;
     const n = 3 + Math.floor(rng() * 7);
@@ -101,8 +101,8 @@ export function buildScatter(ctx, B, env) {
   }
 
   // ---------- house foundations: low wall outlines, a doorway, a hearthstone ----------
-  for (let i = 0; i < 16; i++) {
-    const p = findSpot(env, { slope: 0.3, sep: 14, size: 6 });
+  for (let i = 0; i < 26; i++) {
+    const p = findSpot(env, { slope: 0.3, sep: 12, size: 6 });
     if (!p) continue;
     const w = 5 + rng() * 5, d = 4 + rng() * 3.5, yaw = rng() * Math.PI;
     const ca = Math.cos(yaw), sa = Math.sin(yaw);

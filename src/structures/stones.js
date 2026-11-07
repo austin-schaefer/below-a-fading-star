@@ -45,7 +45,7 @@ export function buildStones(ctx, B, env) {
     const tint = vary(tints.old, rng, 0.04).multiplyScalar(0.8);
     B.add(g, m, { color: tint, moss: 0.95, ground: gm + bury * 0, disp: 0.07, dispScale: 0.9 });
     // the glyph band: carved strokes, glowing in the element's colour
-    const glow = new THREE.Color(c.col).multiplyScalar(2.2);
+    const glow = new THREE.Color(c.col).multiplyScalar(3.0);
     const emit = [glow.r, glow.g, glow.b, 0];
     const bandY = bury + c.h * 0.6;
     const tp = taper(bandY);
@@ -56,7 +56,7 @@ export function buildStones(ctx, B, env) {
     const carve = new THREE.Color(0.02, 0.016, 0.014);
     for (const f of faces) {
       const face = new THREE.Matrix4().makeRotationY(f.rotY);
-      const stroke = (x0, y0, x1, y1, th = 0.04) => {
+      const stroke = (x0, y0, x1, y1, th = 0.055) => {
         const len = Math.hypot(x1 - x0, y1 - y0) + th;
         const a = Math.atan2(y1 - y0, x1 - x0);
         const lm = new THREE.Matrix4().compose(
