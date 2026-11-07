@@ -249,11 +249,37 @@ function carveRiver(h, x, z) {
     h = dh > k ? r.raise : h + (dh + k) * (dh + k) / (4 * k);
   }
   if (r.cut < h) h = r.cut;
+  h = carveEddy(h, x, z); // v2 riverlife: the eddy basin (hook)
   return h;
 }
 
+// --- v2 riverlife: the eddy basin (begin)
+// The Wrong Colour's basin: a still bowl 4 m across scooped into the bank beside LANDMARKS.eddy, on the side
+// the landmark lies, open to the channel along its river edge so the river feeds it but does not run through
+// it. Its water stands at the river's level there; waterLevelAt, waterDepthAt and riverAt report it as water.
+const EDDY = (() => {
+  const E = LANDMARKS.eddy, q = project(RIVER_LINE, E.x, E.z, 40, { hit: false });
+  const side = Math.sign(q.d) || 1, d = side * (R_HW(q.s) + 1.6); // centre 1.6 m into the bank
+  // (ox, oz): from the basin's centre toward the channel; the bowl is drawn out that way into a mouth
+  return { x: E.x + q.tz * (d - q.d), z: E.z - q.tx * (d - q.d), y: R_W(q.s), r: 2.0, depth: 1.3, s: q.s, ox: -q.tz * side, oz: q.tx * side };
+})();
+function eddyR(x, z) { return Math.hypot(x - EDDY.x, z - EDDY.z); }
+function carveEddy(h, x, z) {
+  const dx = x - EDDY.x, dz = z - EDDY.z;
+  if (dx * dx + dz * dz > 81) return h;
+  const along = dx * EDDY.ox + dz * EDDY.oz, across = dx * EDDY.oz - dz * EDDY.ox;
+  const R = EDDY.r, r = Math.hypot(along > 0 ? along * 0.6 : along, across) + SX.noise2(x * 0.7, z * 0.7) * 0.18;
+  // the bowl, then a narrow wet shelf, then the cut face of the bank climbing back into the wall
+  const bowl = EDDY.y - 0.1 - EDDY.depth * Math.pow(Math.max(0, 1 - (r / R) ** 2), 0.7);
+  const rim = EDDY.y - 0.1 + smoothstep(R, R + 0.8, r) * 0.3 + Math.max(0, r - R - 0.8) * 2.4;
+  return Math.min(h, r < R ? bowl : rim);
+}
+function inEddy(x, z) { return eddyR(x, z) < EDDY.r; }
+// --- v2 riverlife: the eddy basin (end)
+
 // Water level of the river or the ravine at a point (null when off it).
 function riverLevelAt(x, z) {
+  if (inEddy(x, z)) return EDDY.y; // v2 riverlife: the eddy basin (hook)
   const r = riverSection(x, z, _cs2);
   if (r.gully) return GULLY_BED(r.gs) + 0.25;
   if (r.inRiver && !(Math.hypot(x - POOL.x, z - POOL.z) < 6.8)) return r.W;
@@ -269,6 +295,7 @@ export function riverAt(x, z, out = _ri) {
   out.s = q.s; out.d = q.d; out.y = R_W(q.s); out.hw = R_HW(q.s); out.tx = q.tx; out.tz = q.tz;
   out.speed = riverSpeed(q.s);
   out.inWater = Math.abs(q.d) < out.hw;
+  if (inEddy(x, z)) { out.y = EDDY.y; out.speed = 0; out.inWater = true; } // v2 riverlife: the eddy basin (hook)
   return out;
 }
 export function riverSpeed(s) {
@@ -281,6 +308,7 @@ export const RIVER = {
   line: RIVER_LINE, gully: GULLY_LINE, pool: POOL, poolR: POOL_R, lip: LIP, lipR: LIP_RP, impact: IMPACT, back: BACK, fallDrop: FALL_DROP,
   levelAt: R_W, speedAt: riverSpeed, halfWidthAt: R_HW, rimAt: R_RIM, gullyLevelAt: (u) => GULLY_BED(u) + 0.25, bankWidths: (s) => bankWidths(s, { bl: 0, br: 0 }),
   section: (x, z) => ({ ...riverSection(x, z, { ..._cs }) }),
+  eddy: EDDY, // v2 riverlife: the eddy basin (hook)
   fenEnter: 95,
 };
 
