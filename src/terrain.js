@@ -212,9 +212,11 @@ export function buildTerrain(ctx) {
   const colors = new Float32Array(pos.count * 3);
   const iceArr = new Float32Array(pos.count);
   const col = new THREE.Color();
-  const cMoor = C(PALETTE.moorGrass), cDry = C(PALETTE.moorDry), cHeath = C(PALETTE.heather), cMud = C(PALETTE.mud);
-  const cRock = C(PALETTE.rock), cRockD = C(PALETTE.rockDark), cScree = C(PALETTE.scree), cIce = C(PALETTE.ice);
-  const cWood = C('#2e3420'), cShore = C('#45403a'), cOrch = C('#5a4a2c'), cCrys = C('#5a7a86'), cRoad = C('#6a5e55'), cPeat = C('#1e1a16'), cMoss = C('#3e5a30');
+  // Ground reads olive, peat and moss under the red sun, not rust dust: the dry grass is dun-olive, not tan,
+  // and the mountain rock is cool slate so the haze can layer the ridges against each other.
+  const cMoor = C('#4a5329'), cDry = C('#6b6a3c'), cHeath = C(PALETTE.heather), cMud = C(PALETTE.mud);
+  const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
+  const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
@@ -239,8 +241,10 @@ export function buildTerrain(ctx) {
     const rockMix = clamp(b.rock, 0, 1);
     tmp.copy(cScree).lerp(cRock, smoothstep(10, 60, y)).lerp(cRockD, smoothstep(60, 160, y));
     col.lerp(tmp, rockMix);
-    col.lerp(cIce, b.ice);
-    iceArr[i] = b.ice;
+    // ice lies on the glacier floor, not plastered up the notch's cliff walls
+    const ice = b.ice * (1 - smoothstep(0.35, 0.75, b.slope));
+    col.lerp(cIce, ice);
+    iceArr[i] = ice;
     // causeway paving colour
     const cd = causewayDistance(x, z);
     col.lerp(cRoad, 1 - smoothstep(2.6, 4.2, cd));
@@ -248,6 +252,23 @@ export function buildTerrain(ctx) {
     const v = SX.noise2(x * 0.11, z * 0.11) * 0.06;
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
     colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
+  }
+  // Crevices and ridges on the mountains: grid curvature darkens gullies and lifts crests, so the wall
+  // reads as folded rock from a distance instead of a smooth dune.
+  {
+    const n = segs + 1, cell = size / segs;
+    for (let j = 1; j < segs; j++) for (let i = 1; i < segs; i++) {
+      const k = j * n + i;
+      const x = pos.getX(k), z = pos.getZ(k);
+      const r = Math.hypot(x, z);
+      const m = smoothstep(WORLD.regionRadius - 20, WORLD.regionRadius + 40, r) * (1 - iceArr[k]);
+      if (m <= 0) continue;
+      const lap = (pos.getY(k - 1) + pos.getY(k + 1) + pos.getY(k - n) + pos.getY(k + n) - 4 * pos.getY(k)) / (cell * cell);
+      // lap > 0: concave (gully), < 0: convex (crest)
+      const crev = clamp(lap * 1.6, -0.6, 1);
+      const f = crev > 0 ? 1 - 0.72 * crev * m : 1 - crev * 0.45 * m;
+      colors[k * 3] *= f; colors[k * 3 + 1] *= f; colors[k * 3 + 2] *= f;
+    }
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('aIce', new THREE.BufferAttribute(iceArr, 1));
@@ -289,19 +310,33 @@ export function buildTerrain(ctx) {
           float grain = (d1.r - 0.5) * 0.55 + (d2.g - 0.5) * 0.4 + (d3.b - 0.4) * 0.25;
           // bare earth patches where the detail noise is low on flat ground
           float bare = smoothstep(0.62, 0.78, d2.r) * smoothstep(0.6, 0.9, vTNormal.y);
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.72, 0.6, 0.5), bare * 0.6);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.7, 0.64, 0.56), bare * 0.6);
           // rock faces get stratified streaks
           float rocky = smoothstep(0.75, 0.45, vTNormal.y);
           // strata bands alias into streaks at distance, so fade them out past 80 m
           float strataFade = 1.0 - smoothstep(60.0, 160.0, length(vTPos - cameraPosition));
           float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * 0.12 * rocky * strataFade;
           diffuseColor.rgb *= 1.0 + grain - strata;
+          // far strata: broad bedding planes on the mountain walls, anti-aliased by their own screen
+          // derivative so they fade instead of shimmering, plus darker bands of harder rock
+          float camDist = length(vTPos - cameraPosition);
+          float mtn = smoothstep(280.0, 340.0, length(vTPos.xz)) * (1.0 - vIce);
+          float sy = vTPos.y * 0.14 + d2.r * 2.5 + vTPos.x * 0.01;
+          float aa = clamp(fwidth(sy) * 1.5, 0.0, 1.0);
+          float bed = (smoothstep(0.35, 0.5, abs(fract(sy) - 0.5)) - 0.5) * (1.0 - aa);
+          float hard = smoothstep(0.55, 0.75, sin(vTPos.y * 0.035 + d2.g * 3.0) * 0.5 + 0.5);
+          diffuseColor.rgb *= 1.0 - mtn * (bed * 0.4 + hard * 0.4 * rocky);
+          // snow and rime on the high ground, holding on ledges and shadowed north-facing faces
+          float snowH = smoothstep(90.0, 160.0, vTPos.y + (d2.r - 0.5) * 50.0);
+          float holds = smoothstep(0.42, 0.7, vTNormal.y + max(-vTNormal.z, 0.0) * 0.35);
+          float snow = snowH * holds * mtn * smoothstep(0.35, 0.55, d1.g + 0.2 * snowH);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.58, 0.6, 0.68) * (0.85 + 0.15 * d3.b), snow * 0.85);
           // dampness darkens low ground
           float wet = smoothstep(-1.0, -3.2, vTPos.y);
           diffuseColor.rgb *= 1.0 - wet * 0.35;
           // glacier ice: pale, faintly blue from within, with dark crevasse lines
           float crev = smoothstep(0.48, 0.5, abs(fract(vTPos.x * 0.07 + d2.r * 3.0 + vTPos.z * 0.015) - 0.5));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.72, 0.84) * (0.75 + 0.25 * d1.g) * (1.0 - crev * 0.6), vIce * 0.9);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.4, 0.46, 0.55) * (0.7 + 0.3 * d1.g) * (1.0 - crev * 0.7), vIce * 0.9);
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(roughnessFactor, 0.6, smoothstep(-1.0, -3.2, vTPos.y));
@@ -314,7 +349,7 @@ export function buildTerrain(ctx) {
           normal = normalize(mat3(viewMatrix) * nW);
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-        totalEmissiveRadiance += vec3(0.05, 0.09, 0.14) * vIce;`);
+        totalEmissiveRadiance += vec3(0.02, 0.04, 0.07) * vIce;`);
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;

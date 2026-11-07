@@ -60,9 +60,10 @@ export function installAtmosphere() {
       float sunAmt = max(dot(fpDir, FP_SUN_DIR), 0.0);
       vec3 haze = mix(FP_HAZE_AWAY, fogColor, 0.55 + 0.45 * sunAmt);
       haze += FP_SUN_GLOW * pow(sunAmt, 10.0) * 0.9 * fogFactor;
-      haze += FP_SUN_GLOW * pow(sunAmt, 2.0) * 0.12;
-      vec3 lowMist = mix(fogColor, vec3(0.36, 0.34, 0.42), 0.45) + FP_SUN_GLOW * pow(sunAmt, 3.0) * 0.22;
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.85 );
+      haze += FP_SUN_GLOW * pow(sunAmt, 2.0) * 0.08;
+      // ground mist: cold violet-grey, warmed only close to the sun's line, so the low ground does not go to peach dust
+      vec3 lowMist = mix(fogColor, vec3(0.28, 0.29, 0.38), 0.5) + FP_SUN_GLOW * pow(sunAmt, 4.0) * 0.16;
+      gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
       gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
     #endif`;
 }

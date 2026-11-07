@@ -116,6 +116,9 @@ function heatherGeo(rng) {
 }
 
 // Reeds and bulrushes: tall thin stems, arching strap leaves, a couple of brown cattail heads.
+// Reed-free gaps on the tarn shore: the north shore facing the woman in the water, and the north-east bank.
+const OPEN_SHORE = [[-90, 52], [-49, 69]];
+
 function reedGeo(rng) {
   const pg = new PlantGeo();
   const stems = [];
@@ -129,12 +132,13 @@ function reedGeo(rng) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
     blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a, 0.05, 0.9 + rng() * 0.5, 0.55 + rng() * 0.3, 3, 1, [0.9, 0.95, 0.8], 1, 0);
   }
+  // one slender seed head per clump, long and narrow, riding high on the tallest stem
   const head = [0.2, 0.11, 0.06];
   stems.sort((p, q) => q.h - p.h);
-  for (let k = 0; k < 2; k++) {
+  for (let k = 0; k < 1; k++) {
     const s = stems[k];
     const at = (t) => [s.x0 + s.dx * s.lean * s.h * t * t, s.h * t * (1 - s.lean * s.lean * 0.35 * t), s.z0 + s.dz * s.lean * s.h * t * t];
-    const t0 = 0.7, t1 = 0.83, rr = 0.036, sides = 5;
+    const t0 = 0.72, t1 = 0.9, rr = 0.017, sides = 5;
     const rnd = rng();
     const ringAt = (t) => {
       const c = at(t), out = [];
@@ -386,8 +390,8 @@ export function buildPlants(ctx, ground, shared) {
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 }, low ? 3000 : 6000);
   const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: 20, exp: 1.4, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 2.0 }), { r0: 20, exp: 1.4, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
 
-  // grass colours: dry, tawny, rust-tipped
-  const cTawny = C('#b8a060'), cDry = C('#d0bc80'), cOchre = C('#9a8440'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#a89048');
+  // grass colours: dun-olive, sere, rust-tipped (olive rather than straw, so the moor is not desert under the red sun)
+  const cTawny = C('#8e8c56'), cDry = C('#aaa478'), cOchre = C('#7c7a40'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#948a4c');
   const cSedge = C('#6a6a3a'), cSedge2 = C('#857a48');
   const cHeath = [C('#6a4058'), C('#7a5068'), C('#5a4044'), C('#6a4a34')]; // bloom, bloom, faded, dead-rust
   const cReed = C('#8a7a4a'), cReed2 = C('#6a6a38');
@@ -537,6 +541,8 @@ export function buildPlants(ctx, ground, shared) {
           const dep = wn.dep;
           if (dep < -1.1 || dep > (wn.rim < 7 ? 1.7 : 0.55)) continue;
           if (ground.causewayDistance(x, z) < 4) continue;
+          // two open stretches of Lees Tarn's shore, so the black water (and whoever stands in it) can be seen
+          if (Math.hypot(x - OPEN_SHORE[0][0], z - OPEN_SHORE[0][1]) < 11 || Math.hypot(x - OPEN_SHORE[1][0], z - OPEN_SHORE[1][1]) < 10) continue;
           setT(cReed); mixInto(null, cReed2, rng());
           const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
           const sy = (0.75 + rng() * 0.45) * (1 - 0.3 * smoothstep(-0.2, -1.1, dep)) * (1 + Math.max(dep, 0) * 0.45);

@@ -56,11 +56,14 @@ const GradeShader = {
 
       // grade: lift shadows violet, warm the highlights, gently crush
       float l = lum(col);
-      vec3 shadowTint = vec3(0.05, 0.06, 0.14);
-      col = col + shadowTint * (1.0 - smoothstep(0.0, 0.35, l)) * 0.3;
-      col = mix(col, col * vec3(1.06, 0.98, 0.9), smoothstep(0.3, 1.0, l) * 0.6);
-      col = pow(max(col, 0.0), vec3(1.04));
-      col = mix(col, vec3(lum(col)), 0.1);
+      vec3 shadowTint = vec3(0.06, 0.05, 0.15);
+      col = col + shadowTint * (1.0 - smoothstep(0.0, 0.3, l)) * 0.36;
+      // mid-tones: pull orange toward a sullen crimson-olive split (less red-planet dust)
+      float mid = smoothstep(0.05, 0.25, l) * (1.0 - smoothstep(0.45, 0.9, l));
+      col = mix(col, col * vec3(0.97, 1.02, 0.98), mid * 0.5);
+      col = mix(col, col * vec3(1.06, 0.98, 0.9), smoothstep(0.35, 1.0, l) * 0.5);
+      col = pow(max(col, 0.0), vec3(1.05));
+      col = mix(col, vec3(lum(col)), 0.2);
 
       // wading tint
       col = mix(col, col * vec3(0.5, 0.65, 0.6), uWade * 0.5);
@@ -84,7 +87,7 @@ export function buildPost(ctx) {
   composer.setPixelRatio(renderer.getPixelRatio());
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
-  const bloom = new UnrealBloomPass(size.clone(), 0.42, 0.75, 0.82);
+  const bloom = new UnrealBloomPass(size.clone(), 0.38, 0.55, 0.9);
   composer.addPass(bloom);
   const grade = new ShaderPass(GradeShader);
   composer.addPass(grade);
@@ -104,7 +107,7 @@ export function buildPost(ctx) {
     const inView = !behind && Math.abs(proj.x) < 1.6 && Math.abs(proj.y) < 1.6;
     const vis = inView ? 1 - THREE.MathUtils.smoothstep(Math.max(Math.abs(proj.x), Math.abs(proj.y)), 1.0, 1.6) : 0;
     grade.uniforms.uSunVisible.value += (vis - grade.uniforms.uSunVisible.value) * Math.min(1, dt * 6);
-    bloom.strength = 0.42 * (0.8 + 0.2 * ctx.sky.flicker.value);
+    bloom.strength = 0.38 * (0.8 + 0.2 * ctx.sky.flicker.value);
   }
   function resize(w, h) {
     size.set(w, h);

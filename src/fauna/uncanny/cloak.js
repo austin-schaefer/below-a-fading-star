@@ -13,7 +13,9 @@ const table = (tab, v) => {
   }
   return tab[tab.length - 1][1];
 };
-const WIDTH = [[0, 0.5], [0.14, 0.4], [0.5, 0.31], [0.8, 0.28], [0.9, 0.29], [0.96, 0.2], [1, 0.1]];
+// Profile of a tall man under heavy cloth: the hem spreads, the waist narrows, then real shoulders
+// (wider than the waist, squared off) so from behind and from the side he reads as a man, not a pillar.
+const WIDTH = [[0, 0.5], [0.14, 0.4], [0.5, 0.3], [0.74, 0.31], [0.86, 0.38], [0.92, 0.385], [0.96, 0.33], [1, 0.12]];
 const HOOD_R = [[0, 0.17], [0.18, 0.23], [0.5, 0.235], [0.75, 0.18], [0.9, 0.1], [1, 0.012]];
 const TOP = 2.7;
 
@@ -30,16 +32,23 @@ function cloakPt(n2, u, v, o) {
   return o;
 }
 // hood: m is the face cavity mask at this point
+// The hood is bowed: tilted forward about the nape so it overhangs the face, its peak falling back a little.
+const HOOD_TILT = 0.26, NAPE_Y = TOP - 0.12, NAPE_Z = 0.04;
+const HC = Math.cos(HOOD_TILT), HS = Math.sin(HOOD_TILT);
 function hoodPt(u, v, o) {
   const a = u * TAU;
-  const cy = TOP - 0.1 + v * 0.82, cz = 0.16 + 0.12 * Math.sin(Math.PI * v) - 0.26 * Math.pow(v, 2.5);
+  const cy = TOP - 0.1 + v * 0.8, cz = 0.14 + 0.13 * Math.sin(Math.PI * v) - 0.2 * Math.pow(v, 2.5);
   const r = table(HOOD_R, v);
   const front = Math.sin(a);
   const m = smoothstep(0.5, 0.82, front) * smoothstep(0.12, 0.26, v) * (1 - smoothstep(0.56, 0.7, v));
   const rr = r * (1 - 0.82 * m);
-  o[0] = Math.cos(a) * rr * 1.0;
-  o[1] = cy;
-  o[2] = cz + front * rr * 1.08;
+  const x = Math.cos(a) * rr, y = cy, z = cz + front * rr * 1.08;
+  // tilt grows with height so the hood still sits on the shoulders at its base
+  const k = smoothstep(0, 0.35, v);
+  const dy = y - NAPE_Y, dz = z - NAPE_Z;
+  o[0] = x;
+  o[1] = lerp(y, NAPE_Y + dy * HC - dz * HS, k);
+  o[2] = lerp(z, NAPE_Z + dz * HC + dy * HS, k);
   o[3] = m;
   return o;
 }
@@ -145,8 +154,9 @@ export function buildCloak(ctx, U) {
   }, true, true);
   // sleeves: hanging past the knee, wide at the cuff, nothing inside them
   const SLV = (sd, t) => { // centre and radius along the sleeve, t 0 shoulder .. 1 cuff
-    const y = 2.6 - t * 1.75;
-    return [sd * (0.27 + 0.17 * t * t), y, 0.03 + 0.1 * t, 0.07 + 0.07 * t * t];
+    // from the shoulder point, splaying a little from the body so the arms read at a distance
+    const y = 2.5 - t * 1.66;
+    return [sd * (0.31 + 0.2 * Math.pow(t, 1.4)), y, 0.03 + 0.11 * t, 0.075 + 0.07 * t * t];
   };
   for (const sd of [-1, 1]) {
     P.paint(cloth, 0, 0.96);

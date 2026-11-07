@@ -80,7 +80,15 @@ export async function build(ctx) {
   const low = ctx.quality === 'low';
   const mat = makeRockMaterial(palette);
   // detail by use: boulders get the finest facets, pebbles the coarsest
-  const variants = [2, 2, 1, 1, 1, 0, 0].map((d, i) => makeRockGeometry(rng, noise, d, i + 1));
+  // each variant also gets a coarse twin of the same shape (same squash, same noise) for far boulders
+  const twins = [];
+  const variants = [2, 2, 1, 1, 1, 0, 0].map((d, i) => {
+    const r3 = [rng(), rng(), rng()];
+    let k = 0; const replay = () => r3[k++ % 3];
+    const g = makeRockGeometry(replay, noise, d, i + 1);
+    k = 0; twins.push(d > 1 ? makeRockGeometry(replay, noise, d - 1, i + 1) : g);
+    return g;
+  });
   const variantFor = { boulder: [0, 1, 2], stone: [2, 3, 4], pebble: [5, 6] };
 
   // Where rocks may not go
@@ -136,6 +144,15 @@ export async function build(ctx) {
     }
   }
 
+  // Draw distance by size class: pebbles vanish into the turf past ~75 m and stones past ~170 m (a few pixels
+  // by then); boulders and tors are kept everywhere, they are what the eye finds on the far slopes.
+  // Each mesh keeps every matrix in its own array and packs the ones in reach into the instance buffer
+  // whenever the player has moved a few metres (no allocation, a few thousand distance tests).
+  const REACH = { pebble: low ? 60 : 75, stone: low ? 150 : 170, boulder: Infinity };
+  // fine boulders swap to their coarse twin past this distance, and stop casting shadows (the shadow map
+  // only reaches ~100 m round the player anyway)
+  const BOULDER_NEAR = low ? 110 : 140;
+  const packs = [];
   let drawCalls = 0, tris = 0;
   for (const [cls, list] of Object.entries(classes)) {
     // split by variant
@@ -145,7 +162,8 @@ export async function build(ctx) {
       const mesh = new T.InstancedMesh(variants[vi], mat, items.length);
       mesh.castShadow = cls !== 'pebble';
       mesh.receiveShadow = true;
-      mesh.frustumCulled = false; // many small meshes over a wide area: cull per-chunk would be better; cheap enough
+      mesh.frustumCulled = false; // spread over the whole region; distance packing below does the culling
+      const all = new Float32Array(items.length * 16), xz = new Float32Array(items.length * 2);
       items.forEach((it, idx) => {
         e.set(it.tilt + it.nz * 0.6, it.rot, -it.nx * 0.6);
         q.setFromEuler(e);
@@ -153,14 +171,51 @@ export async function build(ctx) {
         p.set(it.x, it.y, it.z);
         m.compose(p, q, s);
         mesh.setMatrixAt(idx, m);
+        m.toArray(all, idx * 16); xz[idx * 2] = it.x; xz[idx * 2 + 1] = it.z;
         if (cls === 'boulder' && it.size > 0.9) ctx.addCollider({ x: it.x, z: it.z, r: it.size * 0.75 });
       });
       mesh.instanceMatrix.needsUpdate = true;
       mesh.name = `rocks-${cls}-${vi}`;
       scene.add(mesh);
+      if (REACH[cls] < Infinity) packs.push({ mesh, all, xz, r2: REACH[cls] * REACH[cls], n: items.length });
+      else if (twins[vi] !== variants[vi]) {
+        const far = new T.InstancedMesh(twins[vi], mat, items.length);
+        far.castShadow = false; far.receiveShadow = true; far.frustumCulled = false;
+        far.instanceMatrix.array.set(all); far.instanceMatrix.needsUpdate = true;
+        far.name = `rocks-${cls}-${vi}-far`;
+        scene.add(far);
+        packs.push({ mesh, all, xz, r2: BOULDER_NEAR * BOULDER_NEAR, n: items.length, far });
+        drawCalls++;
+      }
       drawCalls++;
       tris += items.length * variants[vi].attributes.position.count / 3;
     }
   }
+  const last = { x: Infinity, z: Infinity };
+  function pack(px, pz) {
+    for (const P of packs) {
+      const dst = P.mesh.instanceMatrix.array;
+      const fdst = P.far ? P.far.instanceMatrix.array : null;
+      let c = 0, f = 0;
+      for (let i = 0; i < P.n; i++) {
+        const dx = P.xz[i * 2] - px, dz = P.xz[i * 2 + 1] - pz;
+        if (dx * dx + dz * dz > P.r2) {
+          if (fdst) { if (f !== i) fdst.set(P.all.subarray(i * 16, i * 16 + 16), f * 16); f++; }
+          continue;
+        }
+        if (c !== i) dst.set(P.all.subarray(i * 16, i * 16 + 16), c * 16);
+        c++;
+      }
+      P.mesh.count = c;
+      P.mesh.instanceMatrix.needsUpdate = true;
+      if (P.far) { P.far.count = f; P.far.instanceMatrix.needsUpdate = true; }
+    }
+  }
+  ctx.registerUpdate(() => {
+    const cp = ctx.camera.position;
+    if ((cp.x - last.x) ** 2 + (cp.z - last.z) ** 2 < 36) return;
+    last.x = cp.x; last.z = cp.z;
+    pack(cp.x, cp.z);
+  });
   ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }

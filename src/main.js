@@ -63,7 +63,7 @@ async function start() {
 
   // Lights: the dying sun, a cold sky, warm ground bounce
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
-  const sunLight = new THREE.DirectionalLight(new THREE.Color(PALETTE.sunLight), 3.2);
+  const sunLight = new THREE.DirectionalLight(new THREE.Color('#ffb084'), 2.7);
   sunLight.castShadow = true;
   const sm = quality === 'high' ? 4096 : 2048;
   sunLight.shadow.mapSize.set(sm, sm);
@@ -73,7 +73,7 @@ async function start() {
   sunLight.shadow.bias = -0.0006; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
   sunLight.shadow.camera.updateProjectionMatrix();
   scene.add(sunLight); scene.add(sunLight.target);
-  const hemi = new THREE.HemisphereLight(new THREE.Color('#5a4e92'), new THREE.Color('#1e1a14'), 1.4);
+  const hemi = new THREE.HemisphereLight(new THREE.Color('#564e94'), new THREE.Color('#1a1c14'), 1.4);
   scene.add(hemi);
   const ambient = new THREE.AmbientLight(new THREE.Color('#2c2a48'), 0.6);
   scene.add(ambient);
@@ -133,7 +133,7 @@ async function start() {
     sunLight.target.position.copy(shadowTarget);
     sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     const f = ctx.sky.flicker.value;
-    sunLight.intensity = 3.2 * f;
+    sunLight.intensity = 2.7 * f;
     hemi.intensity = 1.4 * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
     for (const u of updates) u(dt, t);

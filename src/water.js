@@ -123,12 +123,22 @@ const FRAG = /* glsl */`
 
     vec3 N = normalize(vec3(-s.x, 1.0, -s.y));
     float NV = max(dot(N, V), 0.0);
-    float fres = 0.025 + 0.975 * pow(1.0 - NV, 4.0);
+    float fres = 0.04 + 0.96 * pow(1.0 - NV, 4.0);
     fres = clamp(fres * 1.1, 0.0, 1.0);
 
     vec3 R = reflect(-V, N);
     R.y = abs(R.y);
-    vec3 refl = skyCol(R) * 0.7;
+    vec3 refl = skyCol(R) * 0.8;
+    // the ring of mountains mirrored as a black band low in the reflection, ragged along its top,
+    // open only where the sun sits in the western saddle: this is what makes the tarn read as black water
+    {
+      float az = atan(R.z, R.x);
+      float crest = 0.13 + 0.07 * sin(az * 7.0 + 1.3) + 0.04 * sin(az * 19.0 + 0.4) + 0.025 * sin(az * 41.0);
+      vec2 rh = normalize(R.xz + 1e-4), sh = normalize(uSunDir.xz);
+      crest *= 1.0 - 0.75 * pow(max(dot(rh, sh), 0.0), 40.0);
+      float mtn = 1.0 - smoothstep(crest - 0.02, crest + 0.02, R.y);
+      refl = mix(refl, vec3(0.010, 0.008, 0.014) + uHorizonAway * 0.05, mtn * 0.9);
+    }
     // the sun's disc, broken by the ripples into a path of glitter
     float sd = dot(R, uSunDir);
     float disc = smoothstep(0.9948, 0.9972, sd);
@@ -137,7 +147,7 @@ const FRAG = /* glsl */`
     refl += uSunLight * pow(max(sd, 0.0), 220.0) * 0.8 * uFlicker;
 
     // body: near black, slightly lifted toward the sky tint in deep water
-    vec3 body = uWater * (1.0 + 0.5 * NV) + vec3(0.004, 0.003, 0.006);
+    vec3 body = uWater * (0.7 + 0.3 * NV) + vec3(0.002, 0.0015, 0.004);
     vec3 col = mix(body, refl, fres);
 
     // methane sheen on the fen: oily hue by view angle
@@ -187,7 +197,10 @@ const FRAG = /* glsl */`
 
     alpha = max(alpha, weed * shore);
     gl_FragColor = vec4(col, alpha);
+    vec3 preFog = gl_FragColor.rgb;
     #include <fog_fragment>
+    // still water swallows some of the low mist that lies over the land, so it stays black under haze
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, preFog, 0.4 * (1.0 - smoothstep(40.0, 260.0, dist)) * (1.0 - uFen * 0.5));
   }`;
 
 export async function build(ctx) {

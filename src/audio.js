@@ -212,9 +212,13 @@ export async function build(ctx) {
     }
 
     // ================================================================ calls (one-shots)
+    // one-shots share a bus with its own analyser tap, so tests can hear a cue apart from the wind and drone
+    const cueBus = ac.createGain(); cueBus.connect(master);
+    const cueAnalyser = ac.createAnalyser(); cueAnalyser.fftSize = 2048; cueBus.connect(cueAnalyser);
+    audio.cueAnalyser = cueAnalyser;
     function oneShotPanner(position, ref = 10, roll = 1) {
       const p = panner('equalpower', ref, roll); setPos(p, position.x, position.y, position.z);
-      p.connect(master); return p;
+      p.connect(cueBus); return p;
     }
     function cry(pos) {
       const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos, 50, 1.1);
@@ -265,6 +269,116 @@ export async function build(ctx) {
       s.connect(f); f.connect(ng); ng.connect(p);
       setTimeout(() => p.disconnect(), 3000);
     }
+    // ---- sky and uncanny cues: all quiet, all placed where they happen
+    const later = (p, sec) => setTimeout(() => p.disconnect(), sec * 1000);
+    const near = (pos, d = 4) => pos || { x: camera.position.x + d, y: camera.position.y, z: camera.position.z };
+    // a short band of noise: the stuff of clicks, ticks and sloshes
+    const burstAt = (buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at, rng() * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+    function nTick(out, at, f, q, peak, dec, buf = white) {
+      const s = burstAt(buf, at, dec + 0.02), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+      const g = ac.createGain(); env(g, at, peak, 0.001, dec); s.connect(bp); bp.connect(g); g.connect(out);
+    }
+    // a fireball's report, arriving late: a long low roll that grumbles away
+    function rumble(pos) {
+      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x + 200, y: 80, z: camera.position.z }, 120, 1); send(p, 0.7);
+      const s = burst(brown, 6), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(260, t0); lp.frequency.exponentialRampToValueAtTime(70, t0 + 5.5);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.5, t0 + 0.35);
+      for (let k = 1; k < 7; k++) g.gain.linearRampToValueAtTime(0.5 * (1 - k / 7) * (0.55 + 0.45 * rng()), t0 + 0.35 + k * 0.75);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 6);
+      s.connect(lp); lp.connect(g); g.connect(p); later(p, 9);
+    }
+    // the four-winged flier, very far: one long falling call, half of it reverb
+    function farcry(pos) {
+      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x - 200, y: 120, z: camera.position.z - 200 }, 90, 1); send(p, 1.3);
+      const o = ac.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(520, t0); o.frequency.linearRampToValueAtTime(610, t0 + 0.5); o.frequency.exponentialRampToValueAtTime(260, t0 + 2.4);
+      const v = ac.createOscillator(); v.frequency.value = 6.5; const vg = ac.createGain(); vg.gain.value = 9; v.connect(vg); vg.connect(o.frequency);
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.9;
+      const g = ac.createGain(); env(g, t0, 0.07, 0.35, 2.1);
+      o.connect(bp); bp.connect(g); g.connect(p); o.start(t0); v.start(t0); o.stop(t0 + 2.6); v.stop(t0 + 2.6); later(p, 7);
+    }
+    // the iron worm flexing in the sky: an iron groan, slow-beating partials and a grinding edge
+    function skycreak(pos) {
+      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x, y: 200, z: camera.position.z - 250 }, 90, 1); send(p, 1.0);
+      const dur = 2.2 + rng() * 1.2, f0 = 48 + rng() * 20;
+      for (const [r, a] of [[1, 1], [2.03, 0.5], [3.11, 0.3]]) {
+        const o = ac.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(f0 * r, t0); o.frequency.linearRampToValueAtTime(f0 * r * 1.12, t0 + dur * 0.6); o.frequency.linearRampToValueAtTime(f0 * r * 0.94, t0 + dur);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 340 * r; bp.Q.value = 6;
+        const g = ac.createGain(); env(g, t0, 0.09 * a, 0.4, dur);
+        o.connect(bp); bp.connect(g); g.connect(p); o.start(t0); o.stop(t0 + dur + 0.6);
+      }
+      // stick-slip grinding: ticks clustered in bursts
+      for (let k = 0, at = t0 + 0.2; at < t0 + dur; k++) { nTick(p, at, 700 + rng() * 500, 4, 0.05, 0.03); at += 0.02 + rng() * rng() * 0.25; }
+      later(p, dur + 6);
+    }
+    // a cloak of eyes closing all at once: many wet lid-clicks in a crowded rush; opening is slower and stickier
+    function lids(pos, opening) {
+      const p = oneShotPanner(near(pos), 3, 1.4); send(p, 0.25);
+      const n = opening ? 46 : 60, span = opening ? 0.9 : 0.32;
+      const t0 = ac.currentTime + 0.02;
+      for (let k = 0; k < n; k++) {
+        const at = t0 + Math.pow(rng(), opening ? 1.0 : 1.6) * span;
+        nTick(p, at, 1500 + rng() * 2200, 3 + rng() * 4, 0.035 + rng() * 0.03, 0.012 + rng() * 0.02);
+        // the wet part: a tiny falling pop under each click
+        const o = ac.createOscillator(); o.type = 'sine'; const f = 600 + rng() * 700;
+        o.frequency.setValueAtTime(opening ? f * 0.7 : f, at); o.frequency.exponentialRampToValueAtTime(opening ? f : f * 0.55, at + 0.025);
+        const g = ac.createGain(); env(g, at, 0.02, 0.002, 0.03); o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.05);
+      }
+      later(p, span + 3);
+    }
+    // the slinker noticed: a dry rattle of many fingertips on stone, close and unreverberant
+    function rattle(pos, leaving) {
+      const p = oneShotPanner(near(pos), 4, 1.3); send(p, leaving ? 0.12 : 0.05);
+      const t0 = ac.currentTime + 0.02, span = leaving ? 1.4 : 0.6;
+      let at = t0;
+      while (at < t0 + span) {
+        const fade = leaving ? 1 - (at - t0) / span : 1 - 0.4 * (at - t0) / span;
+        nTick(p, at, 2600 + rng() * 2400, 6 + rng() * 6, 0.13 * fade + 0.01, 0.006 + rng() * 0.006);
+        at += (leaving ? 0.025 + (at - t0) * 0.08 : 0.008) + rng() * 0.022;
+      }
+      later(p, span + 2);
+    }
+    // the traveller lifts his hand: a small cracked bell on the wagon, and a warm two-note hum
+    function greet(pos) {
+      const t0 = ac.currentTime + 0.02, p = oneShotPanner(near(pos, 6), 6, 1.1); send(p, 0.4);
+      [[880, 0.025, 1.6], [1318.5, 0.015, 1.2], [2213, 0.006, 0.7]].forEach(([f, a, d], i) => {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f * (1 + (rng() - 0.5) * 0.004);
+        const g = ac.createGain(); env(g, t0 + i * 0.004, a, 0.004, d); o.connect(g); g.connect(p); o.start(t0); o.stop(t0 + d + 0.2);
+      });
+      [[146.8, 0.35], [196, 0.75]].forEach(([f, at]) => {
+        const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * 0.97, t0 + at); o.frequency.linearRampToValueAtTime(f, t0 + at + 0.12);
+        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 2;
+        const g = ac.createGain(); env(g, t0 + at, 0.025, 0.06, 0.45); o.connect(lp); lp.connect(g); g.connect(p); o.start(t0 + at); o.stop(t0 + at + 0.6);
+      });
+      later(p, 4);
+    }
+    // the woman in the tarn: a wordless low hum through closed lips, drifting between two notes
+    function tarnHum(pos) {
+      const t0 = ac.currentTime + 0.05, p = oneShotPanner(pos || { x: -90, y: -3, z: 72 }, 10, 1.1); send(p, 0.8);
+      const dur = 4.5 + rng() * 2, f0 = 196 * (rng() < 0.5 ? 1 : 0.89);
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0, t0); o.frequency.linearRampToValueAtTime(f0 * 1.122, t0 + dur * 0.4); o.frequency.linearRampToValueAtTime(f0 * 0.944, t0 + dur);
+      const v = ac.createOscillator(); v.frequency.value = 4.8; const vg = ac.createGain(); vg.gain.value = 1.6; v.connect(vg); vg.connect(o.frequency);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.05, t0 + 1.0); g.gain.linearRampToValueAtTime(0.035, t0 + dur - 1); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
+      for (const [f, q, a] of [[260, 5, 1], [1100, 8, 0.25]]) { // nasal "mm" formants
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; const ag = ac.createGain(); ag.gain.value = a;
+        o.connect(bp); bp.connect(ag); ag.connect(lp);
+      }
+      lp.connect(g); g.connect(p); o.start(t0); v.start(t0); o.stop(t0 + dur + 0.1); v.stop(t0 + dur + 0.1);
+      later(p, dur + 5);
+    }
+    // she has moved: one soft slosh of water round a body
+    function slosh(pos) {
+      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: -90, y: -4.6, z: 80 }, 6, 1.2); send(p, 0.4);
+      const s = burst(pink, 0.8), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+      bp.frequency.setValueAtTime(900, t0); bp.frequency.exponentialRampToValueAtTime(260, t0 + 0.6);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.11, t0 + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75);
+      s.connect(bp); bp.connect(g); g.connect(p);
+      for (let k = 0; k < 4; k++) nTick(p, t0 + 0.25 + rng() * 0.4, 1800 + rng() * 1500, 5, 0.012, 0.03, pink); // drips
+      later(p, 3);
+    }
     audio.cue = (name, position) => {
       if (ac.state === 'closed') return;
       try {
@@ -273,7 +387,17 @@ export async function build(ctx) {
         else if (name === 'flush') flush(position || camera.position);
         else if (name === 'plop') plop(position || { x: -90, y: -4.6, z: 110 });
         else if (name === 'strike') strike(stones[(position | 0) % 4]);
-      } catch (e) { /* ignore */ }
+        else if (name === 'rumble') rumble(position);
+        else if (name === 'farcry') farcry(position);
+        else if (name === 'skycreak') skycreak(position);
+        else if (name === 'eyes-close') lids(position, false);
+        else if (name === 'eyes-open') lids(position, true);
+        else if (name === 'slinker-seen') rattle(position, false);
+        else if (name === 'slinker-gone') rattle(position, true);
+        else if (name === 'traveller-greet') greet(position);
+        else if (name === 'tarn-hum') tarnHum(position);
+        else if (name === 'tarn-step') slosh(position);
+      } catch (e) { if (audio.debug) throw e; }
     };
 
 

@@ -200,7 +200,9 @@ export async function build(ctx) {
     const mat = bind(mkMat(vs, fs, { uWisp: { value: C(palette.wisp) }, uBoost: { value: 1 } }, { additive: true }));
     pointsOf(geo, mat, 30);
 
-    const nl = 4;
+    // two lights, not four: every point light in the scene costs every lit fragment of every material,
+    // whatever its intensity, and the nearest two wisps are the ones that read on the ground
+    const nl = 2;
     for (let i = 0; i < nl; i++) {
       const light = new THREE.PointLight(C(palette.wisp), 0, 18, 2);
       light.userData = { w: -1, k: 0 };
@@ -243,13 +245,13 @@ export async function build(ctx) {
         pos[i * 6 + 3] = w.x; pos[i * 6 + 4] = 2 * wh - w.y; pos[i * 6 + 5] = w.z;
       }
       posAttr.needsUpdate = true;
-      // lights follow the nearest four, handing over through a fade
+      // lights follow the nearest two, handing over through a fade
       const lights = wisps.lights;
       for (let k = 0; k < lights.length; k++) {
         const li = lights[k], ud = li.userData;
         let rank = 99;
         if (ud.w >= 0) { rank = 0; const dw = W[ud.w].dist; for (let j = 0; j < n; j++) if (W[j].dist < dw) rank++; }
-        const want = rank < 4 && W[ud.w] && W[ud.w].dist < 36 ? 1 : 0;
+        const want = rank < nl && W[ud.w] && W[ud.w].dist < 36 ? 1 : 0;
         ud.k += (want - ud.k) * Math.min(1, dt * 3);
         if (want === 0 && ud.k < 0.03) {
           // pick the nearest wisp not already carrying a light

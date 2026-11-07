@@ -121,7 +121,29 @@ export function buildLattice(ctx, ground, shared) {
         vCrH = position.y;`);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uTime, uCrys; uniform vec2 uOrigin; uniform vec3 uDeep, uPale; varying vec3 vCrW; varying float vCrH;`)
+        uniform float uTime, uCrys; uniform vec2 uOrigin; uniform vec3 uDeep, uPale; varying vec3 vCrW; varying float vCrH;
+        float fpH3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+        float fpN3(vec3 p) {
+          vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+          return mix(mix(mix(fpH3(i), fpH3(i + vec3(1,0,0)), f.x), mix(fpH3(i + vec3(0,1,0)), fpH3(i + vec3(1,1,0)), f.x), f.y),
+                     mix(mix(fpH3(i + vec3(0,0,1)), fpH3(i + vec3(1,0,1)), f.x), mix(fpH3(i + vec3(0,1,1)), fpH3(i + vec3(1,1,1)), f.x), f.y), f.z);
+        }
+        float fpVeil = 0.0;`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        {
+          // glass with depth: faces seen square-on look down into dark blue with fracture veils that shift
+          // with the eye (sampled further along the view ray); grazing faces go pale; roughness varies per face
+          float facing = clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0);
+          vec3 Vw = normalize(vCrW - cameraPosition);
+          vec3 q = vCrW * 1.1 + Vw * 0.9;
+          fpVeil = fpN3(q) * 0.6 + fpN3(q * 2.6 + 3.1) * 0.4;
+          float core = smoothstep(-0.25, 1.0, vCrH);
+          vec3 inner = mix(uDeep * 0.18, uDeep * 0.75 + uPale * 0.08, smoothstep(0.35, 0.8, fpVeil) * (0.35 + 0.65 * core));
+          diffuseColor.rgb = mix(uPale * 0.42, inner, smoothstep(0.05, 0.75, facing));
+          vec3 nW = normalize(cross(dFdx(vCrW), dFdy(vCrW)));
+          float fh = fract(sin(dot(floor(nW * 7.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+          roughnessFactor = mix(0.04, 0.42, fh * 0.7 + fpVeil * 0.3);
+        }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         {
           float fpD = length(vCrW.xz - uOrigin);
@@ -131,7 +153,9 @@ export function buildLattice(ctx, ground, shared) {
           float core = smoothstep(-0.25, 1.0, vCrH);
           // a band of light climbing slowly through each crystal
           float band = smoothstep(0.82, 1.0, sin(vCrH * 7.0 - uTime * 0.9 - fpD * 0.11) * 0.5 + 0.5);
-          totalEmissiveRadiance += (uDeep * (0.15 + 0.8 * pulse) * (0.3 + 0.7 * core * core) + uPale * (fres * (0.35 + 0.5 * pulse) + band * 0.55 * core)) * uCrys;
+          totalEmissiveRadiance += (uDeep * (0.05 + 0.32 * pulse) * (0.3 + 0.7 * core * core) * (0.5 + fpVeil) + uPale * (fres * (0.45 + 0.4 * pulse) + band * 0.5 * core)) * uCrys;
+          // a faint glow from inside the veils that swells while the sun gutters (uCrys > 1)
+          totalEmissiveRadiance += uPale * smoothstep(0.45, 0.85, fpVeil) * core * (0.1 + 0.6 * (uCrys - 1.0));
         }`);
     fogBatchFix(shader);
   };

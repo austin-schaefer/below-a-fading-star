@@ -46,6 +46,8 @@ const STREAK_FS = /* glsl */`
     float sputter = 0.7 + 0.3 * sin(vQ.y * 37.0 - uT * 41.0 + vShape.z * 17.0);
     vec3 c = vCol.rgb * along * ac * sputter + mix(vCol.rgb, vec3(1.0), vShape.y) * head * core * 1.6;
     c *= env * vCol.a * sl_trans(d, 0.06);
+    // a hot spark, not a floodlight: cap the HDR so bloom cannot spread it over a quarter of the frame
+    c = min(c, vec3(2.2));
     gl_FragColor = vec4(c, 1.0);
   }`;
 
@@ -191,7 +193,7 @@ export function buildMeteors(ctx, group, U, rng) {
     if (m.e.y < 0.02) { m.e.y = 0.02; m.e.normalize(); }
     const len = fire ? 0.45 + rng() * 0.2 : 0.2 + rng() * 0.45;
     m.w = fire ? 15 + rng() * 5 : 3.5 + rng() * rng() * 7;
-    m.bright = fire ? 5.5 : (0.7 + rng() * rng() * 2.6) * (kind === 4 ? 0.8 : 1);
+    m.bright = fire ? 3.2 : (0.7 + rng() * rng() * 2.6) * (kind === 4 ? 0.8 : 1);
     m.flare = fire ? 2.4 : rng() * rng() * 1.8;
     m.smoke = fire || (m.bright > 1.5 && rng() < 0.4);
     m.t0 = now - (opts.at ?? 0) * m.dur;
@@ -255,7 +257,7 @@ export function buildMeteors(ctx, group, U, rng) {
       }
       if (p >= 1) { m.done = true; if (m.smoke) startTrain(m); }
     }
-    flash.intensity = fl * 1.6;
+    flash.intensity = fl * 1.0; // a pale wash across the moor, not daylight
     if (t >= rumble.t) { rumble.t = Infinity; ctx.audio?.cue?.('rumble', rumble.pos); }
   }
 

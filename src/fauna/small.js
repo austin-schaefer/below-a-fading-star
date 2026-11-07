@@ -1,6 +1,7 @@
 // Small life: moths at the tower window, crows on the keep, rings of fish rising on the tarn.
 import * as THREE from 'three';
 import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep } from './geo.js';
+import { KEEP } from '../structures/keep.js';
 
 // ---------------------------------------------------------------- moths
 export function buildMoths(ctx) {
@@ -60,13 +61,39 @@ export function buildMoths(ctx) {
 }
 
 // ---------------------------------------------------------------- crows
-// Perches are the broken donjon top and some points on the walls. Edit here if the keep's geometry moves.
-const PERCHES = (() => {
-  const P = [];
-  for (let k = 0; k < 8; k++) { const a = k * 0.8 + 0.3; P.push([65 + Math.cos(a) * 3.4, 18 + 16, 30 + Math.sin(a) * 3.4]); }
-  for (let k = 0; k < 10; k++) { const a = k * 0.63 + 0.2; P.push([40 + Math.cos(a) * 33, 18 + 9, 30 + Math.sin(a) * 33]); }
+// Perches are the broken donjon top and points along the curtain wall, laid out from the keep's own plan
+// (KEEP). Their heights start as estimates and are snapped onto the real masonry by a downward ray once the
+// structures module has built the keep; candidates where the wall has fallen are dropped.
+const PERCH_CANDIDATES = (() => {
+  const P = [], K = KEEP, D = K.donjon, rMid = (D.rOut + D.rIn) / 2;
+  for (let k = 0; k < 12; k++) { const a = k * (Math.PI * 2 / 12) + 0.2; P.push([D.x + Math.cos(a) * rMid, 18 + 15.5, D.z + Math.sin(a) * rMid]); }
+  const R = K.apothem / Math.cos(Math.PI / 6), V = [];
+  for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; V.push([K.cx + Math.cos(a) * R, K.cz + Math.sin(a) * R]); }
+  for (let k = 0; k < 6; k++) {
+    if (k === 2) continue; // the gate side
+    const a = V[k], b = V[(k + 1) % 6], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    for (let t = 4.5; t < L - 4; t += 5.5) P.push([a[0] + (b[0] - a[0]) * t / L, 18 + 5, a[1] + (b[1] - a[1]) * t / L]);
+  }
   return P;
 })();
+const PERCHES = PERCH_CANDIDATES.slice(0, 8).concat(PERCH_CANDIDATES.slice(12, 22)).map((p) => p.slice());
+// Snap perches onto the keep mesh: returns true once done (or once it is clear there is no keep to sit on).
+function snapPerches(scene, terrain) {
+  const keep = scene.getObjectByName('structures-keep');
+  if (!keep) return false;
+  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3(0, -1, 0);
+  const good = { donjon: [], wall: [] };
+  PERCH_CANDIDATES.forEach((p, i) => {
+    o.set(p[0], 80, p[2]); rc.set(o, d); rc.far = 120;
+    const hit = rc.intersectObject(keep, false)[0];
+    const gy = terrain.heightAt(p[0], p[2]);
+    // a wall top well above the turf: a perch; anything lower is rubble or a fallen stretch
+    if (hit && hit.point.y > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hit.point.y, p[2]]);
+  });
+  const list = good.donjon.slice(0, 8).concat(good.wall.slice(0, 10));
+  if (list.length >= 6) { PERCHES.length = 0; PERCHES.push(...list); }
+  return true;
+}
 
 export function crowGeometry() {
   const M = new Mesher();
@@ -129,8 +156,14 @@ export function buildCrows(ctx) {
       o.c.set((o.p0.x + o.p1.x) / 2 + dx / dl * (6 + rng() * 10) + (-dz / dl) * side * 12, Math.max(o.p0.y, o.p1.y) + 10 + rng() * 14, (o.p0.z + o.p1.z) / 2 + dz / dl * (6 + rng() * 10) + (dx / dl) * side * 12);
     }
   }
-  ctx.crows = { takeoff };
+  ctx.crows = { takeoff, perches: PERCHES };
+  let snapped = false, snapT = 0;
   function update(dt, t) {
+    if (!snapped && (snapT -= dt) <= 0) {
+      snapT = 1;
+      snapped = snapPerches(ctx.scene, ctx.terrain);
+      if (snapped) for (const o of crows) { if (o.perch >= PERCHES.length) o.perch = o.perch % PERCHES.length; if (o.mode === 0) o.pos.set(...PERCHES[o.perch]); }
+    }
     cooldown -= dt;
     if (cooldown <= 0) {
       for (const o of crows) if (o.mode === 0 && Math.hypot(o.pos.x - cam.x, o.pos.z - cam.z) < 15 && Math.abs(o.pos.y - cam.y) < 25) { takeoff(); break; }
