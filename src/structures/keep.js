@@ -8,7 +8,7 @@ export const KEEP = {
   cx: 40, cz: 30,
   apothem: 30,
   thick: 1.7,
-  gate: { x: 10, z0: 30.75, z1: 36.25, zc: 33.5, outerX: 7.0, innerX: 12.5 },
+  gate: { x: 10, z0: 31.0, z1: 37.6, zc: 34.3, outerX: 7.0, innerX: 12.5 },
   donjon: { x: 60, z: 26, rOut: 5.6, rIn: 3.9 },
   well: { x: 33, z: 41 },
   plinth: { x: 41, z: 16.5 },

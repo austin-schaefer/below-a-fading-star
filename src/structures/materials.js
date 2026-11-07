@@ -56,7 +56,7 @@ export function makeStoneMaterial(ctx) {
         float sDist = length(vViewPosition);
         float sNear = 1.0 - smoothstep(18.0, 70.0, sDist);
         float g1 = fpFbm(sP * 2.3);
-        float g2 = fpVn(sP * 13.0);
+        float g2 = fpVn(sP * 13.0) * 0.6 + fpVn(sP * 37.0) * 0.4;
         float gBig = fpFbm(sP * 0.21 + 4.0);
         float mortar = 0.0, blockTone = 0.0, chipEdge = 0.0;
         if (vSA.x > 0.0) {
@@ -76,12 +76,14 @@ export function makeStoneMaterial(ctx) {
           vec2 q = abs(vSU);
           float hd = max(q.x, q.x * 0.5 + q.y * 0.866);
           float rr = -vSA.x;
-          mortar = (1.0 - smoothstep(0.012, 0.03, abs(hd - rr))) * smoothstep(0.6, 0.9, sN.y) * (0.5 + 0.5 * fpVn(sP * 3.0));
+          vec2 tileC = floor((sP.xz - vSU) * 1.5 + 0.5);
+          float carved = step(0.62, fpH12(tileC));
+          mortar = carved * (1.0 - smoothstep(0.012, 0.03, abs(hd - rr))) * smoothstep(0.6, 0.9, sN.y) * (0.5 + 0.5 * fpVn(sP * 3.0));
         }
         float iron = vSA.z;
         vec3 sc = diffuseColor.rgb;
         sc *= 1.0 + blockTone * 0.22 + (g1 - 0.5) * 0.5 + (gBig - 0.5) * 0.3 + (g2 - 0.5) * 0.12;
-        sc *= mix(1.0, 0.5, mortar);
+        sc *= mix(1.0, 0.62, mortar);
         // weather: sun-bleached tops, damp feet
         float sUp = smoothstep(0.55, 0.95, sN.y);
         float sNorth = smoothstep(0.15, -0.85, sN.z);
@@ -132,7 +134,7 @@ export function makeStoneMaterial(ctx) {
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         {
           // relief from grain and mortar so the low sun rakes across the courses
-          float bh = sHeight * 0.028 * sNear;
+          float bh = sHeight * 0.014 * sNear;
           vec3 vp = -vViewPosition;
           vec3 dpx = dFdx(vp), dpy = dFdy(vp);
           float dhx = dFdx(bh), dhy = dFdy(bh);

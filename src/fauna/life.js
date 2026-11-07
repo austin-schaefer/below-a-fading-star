@@ -210,7 +210,7 @@ export function buildEel(ctx) {
     e.x = best[0]; e.z = best[1]; e.yaw = rng() * 6.28; e.u = 0; e.on = true; e.dur = 10 + rng() * 4;
     ctx.fauna?.fishRing?.(e.x, e.z);
   }
-  ctx.fauna = Object.assign(ctx.fauna || {}, { eel: begin });
+  ctx.fauna = Object.assign(ctx.fauna || {}, { eel: begin }); ctx.eelState = e;
   function update(dt, t) {
     if (!e.on) { e.next -= dt; if (e.next <= 0) { e.next = 28 + rng() * 30; begin(); } return; }
     e.u += dt / e.dur;

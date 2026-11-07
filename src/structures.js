@@ -41,15 +41,15 @@ export async function build(ctx) {
     ground.groundNormal(x, z, _n, 0.55);
     const tilt = o.tilt ?? 0.05;
     _q.setFromUnitVectors(UP, _n);
-    _e.set((pRng() - 0.5) * tilt, (pRng() - 0.5) * 0.06, (pRng() - 0.5) * tilt);
+    _e.set((pRng() - 0.5) * tilt, (pRng() - 0.5) * 0.12, (pRng() - 0.5) * tilt);
     _q.multiply(_qt.setFromEuler(_e));
     const sink = o.sink ?? 0.03;
     _p.set(x + (pRng() - 0.5) * 0.04, gy + 0.04 - 0.065 - sink * 0.4 + 0.012, z + (pRng() - 0.5) * 0.04);
-    const sc = 0.94 + pRng() * 0.08;
+    const sc = 0.82 + pRng() * 0.16;
     _s.set(sc, 1, sc);
     paverMats.push(new THREE.Matrix4().compose(_p, _q, _s));
     const base = pRng() < 0.2 ? tints.old : tints.stone;
-    paverCols.push(vary(base, pRng, 0.16).multiplyScalar(o.dark ? 0.8 : 1));
+    paverCols.push(vary(base, pRng, 0.22).multiplyScalar((o.dark ? 0.75 : 0.9) * (0.75 + pRng() * 0.3)));
     return true;
   }
 
@@ -97,7 +97,7 @@ export async function build(ctx) {
   // pavers: one instanced hex prism with a carved ring, moss in the joints
   {
     const r = HEX_R * 0.9;
-    const prof = [[r, -0.2], [r, 0.0], [r - 0.06, 0.06], [0.0, 0.068]];
+    const prof = [[r, -0.2], [r, 0.02], [r - 0.03, 0.055], [r * 0.5, 0.068], [0.0, 0.062]];
     let g = new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 6, Math.PI / 6 * 0);
     g = g.toNonIndexed();
     g.computeVertexNormals();
