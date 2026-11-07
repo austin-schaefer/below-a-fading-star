@@ -43,3 +43,22 @@ A **waterfall and river**: a fall from the boundary mountains that runs swift th
 3. **Then the rest in parallel**, one subagent each, against the updated map and the placement plan: R + E (sky and far silhouette), A (flora), N + Q + L + Z (ruins and causeway), H + I + AB (inhabitants and the menology), G + V (river life and the wrong colour), with the audio hooks each needs listed in their briefs.
 
 Austin's note on process: let the v1 subagents finish, look at the whole, then pick this up, so it doesn't get insanely complex.
+
+## Amendments after Austin walked v1 (2026-11-07)
+
+1. **Creatures tie to visible points of interest.** Every inhabitant, old or new, lives at or patrols between named landmarks, so meeting one tells you where you are. Nothing roams featureless ground. The placement plan assigns each creature its landmark.
+2. **More life overall.** A notch more creatures and small life everywhere, not a crowd. The biomesh in particular: more chips, and the spread must be visible while you watch: colonies send out visible runners and new tiles appear at the edge every few seconds, not centimetres per minute.
+3. **Walking is a hair too slow, above all on phone.** Raise the walk and hurry speeds. Touch controls become a virtual thumbstick drawn at the bottom of the screen (drag anywhere in its zone, stick follows the thumb) with look from a touch anywhere else on the screen.
+4. **Debug teleport.** A debug mode (URL `?debug=1`, and a key on desktop, a small corner button on phone) that lists every landmark and teleports the player to it, facing its centre. Also shows position and frame rate.
+5. **A bit more in the sky.** Not a lot more. R (the Parhelion City) and E (the Vigilant) plus two or three further small sky events, in the same restrained register as v1.
+
+### Revised order of work
+
+Stage A, in parallel now, no placement conflicts between them:
+- **Landscape and water** (`terrain.js`, `water.js`, `structures/bridge.js`): river, canyon, fall, pool; bridge ramps and walkable deck registration through `ctx.addWalkable?.()`.
+- **Controls and debug** (`controls.js`, `hud.js`, `index.html`): speeds, thumbstick, `ctx.addWalkable(fn)` hook, debug teleport.
+- **Sky** (`skylife/`, `sky.js`): R, E, and the small extra events.
+
+Stage B: the placement plan (every v2 item and every creature gets a landmark), shown to Austin.
+
+Stage C, in parallel against the plan: A (flora), N + Q + L + Z (ruins and causeway), H + I + AB (inhabitants and the menology), G + V (river life and the wrong colour), plus a "more life" pass that ties v1 creatures to landmarks and makes the biomesh spread visibly.
