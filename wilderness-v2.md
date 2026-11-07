@@ -32,8 +32,9 @@ A **waterfall and river**: a fall from the boundary mountains that runs swift th
 
 - **R. The Parhelion City:** a city of spires on the western horizon against the sun, very dim and translucent at all times, solid while the sun gutters.
 
-## Order of work (proposed)
+## Order of work
 
-1. River, canyon, fall, and the pool (terrain + water). 2. R and E (cheap, large effect). 3. A, N, Q, L, Z. 4. H, I, AB. 5. G and V along the river.
+1. **Landscape and water first**, one agent, serially: carve the river channel and canyon, the fall, and the pool in `terrain.js`; extend `water.js` with flowing water, foam and the fall; re-run the walk test. Everything else depends on where the river ends up.
+2. **Then the rest in parallel**, one subagent each, against the updated map: R + E (sky and far silhouette), A (flora), N + Q + L + Z (ruins and causeway), H + I + AB (inhabitants and the menology), G + V (river life and the wrong colour), with the audio hooks each needs listed in their briefs.
 
 Austin's note on process: let the v1 subagents finish, look at the whole, then pick this up, so it doesn't get insanely complex.
