@@ -42,11 +42,11 @@ function hairGeometry(low) {
   for (const sz of [-1, 1]) {
     P.sheet(low ? 8 : 12, low ? 12 : 18, (u, v, o) => {
       const y = 0.72 - v * 0.74;
-      const w = 0.07 + 0.13 * smoothstep(0.0, 0.6, v);
+      const w = 0.05 + 0.045 * smoothstep(0.0, 0.5, v) - 0.02 * smoothstep(0.7, 1.0, v);
       const x = (u - 0.5) * 2 * w;
       // hugs the skull, then the neck and back
       const zHead = Math.sqrt(Math.max(0, 1 - ((y - 0.645) / 0.125) ** 2 - (x / 0.1) ** 2)) * 0.112;
-      const zBack = 0.115 + 0.012 * Math.sin(u * 17);
+      const zBack = 0.124 + 0.006 * Math.sin(u * 17);
       const z = y > 0.55 ? Math.max(zHead, 0.06) + 0.004 : zBack * smoothstep(0.55, 0.3, y) + 0.065 * smoothstep(0.3, 0.55, y);
       o[0] = x; o[1] = y; o[2] = sz * Math.max(z, 0.05);
     });
@@ -146,7 +146,7 @@ export function buildTarnWoman(ctx, U) {
     // her back to you, always, but she turns slowly
     if (!S.gone) S.yaw = turnToward(S.yaw, Math.atan2(dx, dz) + Math.PI, 0.32 * dt);
     const bob = Math.sin(t * 1.05) * 0.012;
-    g.position.set(S.x, W.y + bob - 0.02, S.z);
+    g.position.set(S.x, W.y + bob + 0.1, S.z);
     g.rotation.y = S.yaw;
     if ((S.humT -= dt) <= 0) { S.humT = 18 + rng() * 14; if (dist < 70 && !S.gone) ctx.audio?.cue?.('tarn-hum', g.position); }
     // rings: three, spreading and fading in turn

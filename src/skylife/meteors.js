@@ -54,7 +54,7 @@ const TRAIN_VS = /* glsl */`
   attribute vec4 iTime;       // t0, life, start half-width, growth (m/s)
   attribute vec3 iDrift;      // drift (m/s)
   attribute vec4 iCol;        // glow rgb, seed
-  varying vec2 vQ; varying float vA; varying vec4 vCol; varying vec3 vW;
+  varying vec2 vQ; varying float vA, vAge; varying vec4 vCol; varying vec3 vW;
   uniform float uT;
   void main() {
     float age = uT - iTime.x, a = age / iTime.y;
@@ -69,12 +69,12 @@ const TRAIN_VS = /* glsl */`
     float w = iTime.z + iTime.w * age;
     P += across * position.x * w;
     vec4 wp = modelMatrix * vec4(P, 1.0);
-    vW = wp.xyz; vQ = position.xy; vA = a; vCol = iCol;
+    vW = wp.xyz; vQ = position.xy; vA = a; vAge = age; vCol = iCol;
     gl_Position = projectionMatrix * viewMatrix * wp;
   }`;
 const TRAIN_FS = /* glsl */`
   ${SKY_GLSL}
-  varying vec2 vQ; varying float vA; varying vec4 vCol; varying vec3 vW;
+  varying vec2 vQ; varying float vA, vAge; varying vec4 vCol; varying vec3 vW;
   void main() {
     vec3 d = normalize(vW - cameraPosition);
     float age = vA;
@@ -84,7 +84,7 @@ const TRAIN_FS = /* glsl */`
     float ends = smoothstep(0.0, 0.12, vQ.y) * smoothstep(1.0, 0.75, vQ.y);
     float alpha = ac * keep * ends * (1.0 - age) * smoothstep(0.0, 0.03, age) * 0.55;
     vec3 smoke = mix(vec3(0.035, 0.03, 0.045), uSunLight * 0.06, 0.5 + 0.5 * max(dot(d, uSunDir), 0.0));
-    vec3 glow = vCol.rgb * exp(-age * 18.0) * 1.5;
+    vec3 glow = vCol.rgb * exp(-vAge * 1.1) * 0.5;
     vec3 c = sl_air(smoke + glow, d, 0.05);
     gl_FragColor = vec4(c, alpha);
   }`;

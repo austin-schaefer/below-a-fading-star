@@ -152,7 +152,7 @@ const THREAD_VS = /* glsl */`
   void main() {
     float f = position.y;
     vec3 P = uBase + vec3(0.0, mix(uH0, uH1, f), 0.0);
-    P += uSide * position.x * length(P) * 0.0011;
+    P += uSide * position.x * length(P) * 0.0006;
     vec4 wp = modelMatrix * vec4(P, 1.0);
     vF = f; vW = wp.xyz;
     gl_Position = projectionMatrix * viewMatrix * wp;
@@ -163,7 +163,7 @@ const THREAD_FS = /* glsl */`
   varying float vF; varying vec3 vW;
   void main() {
     vec3 d = normalize(vW - cameraPosition);
-    float a = smoothstep(0.0, 0.08, vF) * (1.0 - smoothstep(0.35, 1.0, vF));
+    float a = smoothstep(0.02, 0.22, vF) * (1.0 - smoothstep(0.3, 0.95, vF));
     float run = 0.82 + 0.18 * sin(vF * 140.0 - uT * 0.9) * sin(vF * 23.0 + uT * 0.13);
     float lit = 0.75 + 0.25 * uFlicker;
     gl_FragColor = vec4(uCol * a * run * lit * sl_trans(d, 0.07), 1.0);
@@ -344,7 +344,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
   { const pos = [], idx = []; const n = 40; for (let k = 0; k <= n; k++) pos.push(-1, k / n, 0, 1, k / n, 0); for (let k = 0; k < n; k++) { const a = k * 2; idx.push(a, a + 1, a + 3, a, a + 3, a + 2); } tgeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tgeo.setIndex(idx); }
   const H0 = -250, H1 = 2150;
   const thread = new THREE.Mesh(tgeo, new THREE.ShaderMaterial({
-    uniforms: withSky(U, { uBase: { value: threadBase }, uSide: { value: tside }, uH0: { value: H0 }, uH1: { value: H1 }, uCol: { value: new THREE.Color('#ffe0b0').multiplyScalar(0.55) } }),
+    uniforms: withSky(U, { uBase: { value: threadBase }, uSide: { value: tside }, uH0: { value: H0 }, uH1: { value: H1 }, uCol: { value: new THREE.Color('#ffe0b0').multiplyScalar(0.3) } }),
     vertexShader: THREAD_VS, fragmentShader: THREAD_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide,
   }));
   thread.frustumCulled = false; thread.name = 'skylife-thread'; thread.renderOrder = 2;

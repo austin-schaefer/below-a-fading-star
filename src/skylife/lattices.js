@@ -178,7 +178,8 @@ export function buildLattices(ctx, group, U, rng, skyline) {
     const q0 = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir.clone().negate());
     const lean = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize(), s.tilt * (0.5 + rng()));
     q0.multiply(lean);
-    const axis = new THREE.Vector3(0, 0, 1).applyQuaternion(lean).normalize().lerp(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5), s.tilt * 0.4).normalize();
+    // spin axis in the lattice's own frame: about its face normal, wandering off it for the 3-D ones
+    const axis = new THREE.Vector3(0, 0, 1).lerp(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5), s.tilt * 0.4).normalize();
     info.push({ ...s, dir, pos: dir.clone().multiplyScalar(s.R), q0, axis, phase: rng() * Math.PI * 2, nodes, M: new THREE.Matrix4(), q: new THREE.Quaternion(), qs: new THREE.Quaternion() });
   });
 
@@ -198,8 +199,8 @@ export function buildLattices(ctx, group, U, rng, skyline) {
   const uM = { value: [] }; for (let i = 0; i < MAXS; i++) uM.value.push(new THREE.Matrix4());
   const own = {
     uM,
-    uBase: { value: new THREE.Color('#2a2224') },
-    uAmb: { value: new THREE.Color('#2e2a4a').multiplyScalar(0.5) },
+    uBase: { value: new THREE.Color('#3a2e2c') },
+    uAmb: { value: new THREE.Color('#2e2a4a').multiplyScalar(0.9) },
     uGlow: { value: new THREE.Color('#ff6a2a').multiplyScalar(0.06) },
   };
   const smat = new THREE.ShaderMaterial({ uniforms: withSky(U, own), vertexShader: STRUT_VS, fragmentShader: STRUT_FS, fog: false });
@@ -231,7 +232,7 @@ export function buildLattices(ctx, group, U, rng, skyline) {
       const L = info[i];
       const a = L.phase + t * L.spin[0];
       L.qs.setFromAxisAngle(L.axis, a);
-      L.q.copy(L.qs).multiply(L.q0);
+      L.q.copy(L.q0).multiply(L.qs);
       L.M.compose(L.pos, L.q, one);
       uM.value[i].copy(L.M);
     }
