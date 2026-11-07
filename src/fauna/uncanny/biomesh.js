@@ -51,7 +51,7 @@ function tileMaterial(ctx, center) {
             tr *= 1.0 - die;
             float camD = length(vWP - cameraPosition);
             tr = mix(tr, 0.22, smoothstep(5.0, 22.0, camD));
-            fpTrace = max(tr, edge * 0.5);
+            fpTrace = max(tr, edge * 0.22);
             diffuseColor.rgb *= mix(1.0, 0.45, die);
             fpRough = mix(0.32, 0.12, die);
           } else if (abs(vN0.z) > 0.5) {
@@ -185,7 +185,7 @@ export function buildBiomesh(ctx, U) {
   const M = L.moraine;
   {
     const C = colony('lattice', Math.round(1000 * q), M, 70);
-    const trailN = Math.round(C.n * 0.26);
+    const trailN = Math.round(C.n * 0.3);
     for (let s = 0; s < 7; s++) {
       let a = Math.PI / 2 + (rng() - 0.5) * 2.6, x = M.x + Math.cos(a) * 8, z = M.z + Math.sin(a) * 8;
       const per = Math.floor(trailN / 7);
@@ -198,10 +198,10 @@ export function buildBiomesh(ctx, U) {
     }
     let guard = 0;
     while (C.count < C.n && guard++ < 400) {
-      const a = rng() * TAU, d = 3 + Math.pow(rng(), 0.8) * 52;
-      const x = M.x + Math.cos(a) * d, z = M.z + Math.sin(a) * d * 0.85 + 6;
-      const r = 0.8 + rng() * 2.2 * (1 - d / 70);
-      patch(C, x, z, r, Math.round(r * r * (7 + rng() * 6)));
+      const a = rng() * TAU, d = 2 + Math.pow(rng(), 1.5) * 38;
+      const x = M.x + Math.cos(a) * d, z = M.z + Math.sin(a) * d * 0.85 + 5;
+      const r = 0.7 + rng() * 1.6 * (1 - d / 50);
+      patch(C, x, z, r, Math.round(r * r * (16 + rng() * 10)));
     }
     finish(C);
   }
