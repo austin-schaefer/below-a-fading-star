@@ -39,6 +39,15 @@ export function makeGround(ctx) {
     out.x = nx / l; out.y = ny / l; out.z = nz / l;
     return out;
   }
+  // The terrain's wet band (river margins, the spray round the fall), bilinear from its aWet attribute.
+  const WET = geo.attributes.aWet ? geo.attributes.aWet.array : null;
+  function wetAt(x, z) {
+    if (!WET) return 0;
+    const gx = clamp((x + half) / step, 0, segs - 1e-4), gz = clamp((z + half) / step, 0, segs - 1e-4);
+    const ix = gx | 0, iz = gz | 0, fx = gx - ix, fz = gz - iz;
+    const i00 = iz * row + ix, i01 = i00 + row;
+    return (WET[i00] * (1 - fx) + WET[i00 + 1] * fx) * (1 - fz) + (WET[i01] * (1 - fx) + WET[i01 + 1] * fx) * fz;
+  }
   const _n = { x: 0, y: 1, z: 0 };
   const slopeAt = (x, z) => Math.acos(clamp(normalAt(x, z, _n).y, -1, 1));
 
@@ -104,5 +113,5 @@ export function makeGround(ctx) {
     return false;
   }
 
-  return { heightAt, normalAt, slopeAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance };
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance };
 }

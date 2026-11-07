@@ -11,7 +11,8 @@ import { buildLattice } from './vegetation/lattice.js';
 export async function build(ctx) {
   const T = [performance.now()];
   const lap = () => { T.push(performance.now()); return (T[T.length - 1] - T[T.length - 2]).toFixed(0); };
-  const shared = { time: { value: 0 } };
+  const eddy = ctx.landmarks.eddy;
+  const shared = { time: { value: 0 }, grey: { value: new THREE.Vector4(eddy ? eddy.x : 0, eddy ? eddy.z : 0, 8, eddy ? 1 : 0) } };
 
   const ground = makeGround(ctx);
   const tGround = lap();
@@ -57,5 +58,6 @@ export async function build(ctx) {
   ctx.log('vegetation lattice:', JSON.stringify(lattice.stats));
   ctx.log('vegetation plants:', JSON.stringify(plants.stats()));
   // for the screenshot tool and the console
+  window.__vegPlants = plants; // for tools/grass-flicker-test.mjs
   window.__vegStats = () => ({ plants: plants.stats(), trees: trees.stats, lattice: lattice.stats, fungi: { toadstools: fungi.count, pods: fungi.pods } });
 }

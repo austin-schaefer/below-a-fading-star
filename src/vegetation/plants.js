@@ -230,13 +230,15 @@ function makePlantMaterial(ctx, shared, o) {
     uTime: shared.time, uR0: { value: o.r0 }, uFade0: { value: o.fade0 }, uFade1: { value: o.fade1 },
     uWind: { value: o.wind }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
     uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 }, uExp: { value: o.exp ?? 1 },
+    // The Wrong Colour [Proposed]: within 8 m of the eddy everything low is bleached grey-brown
+    uGrey: shared.grey,
   };
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute vec4 aBlade; attribute vec4 iPos; attribute vec4 iShape; attribute vec4 iTint;
-        uniform float uTime, uR0, uFade0, uFade1, uWind, uComp, uExp; uniform vec3 uTip, uBase;
+        uniform float uTime, uR0, uFade0, uFade1, uWind, uComp, uExp; uniform vec3 uTip, uBase; uniform vec4 uGrey;
         varying float vFpT; varying vec3 vFpW;
         ${GLSL_WIND}`)
       .replace('#include <color_vertex>', `
@@ -254,6 +256,11 @@ function makePlantMaterial(ctx, shared, o) {
         vColor = color * mix(uBase, iTint.rgb, aBlade.w);
         vColor = mix(vColor, uTip * (0.7 + 0.6 * fpSeed), smoothstep(0.6, 1.0, aBlade.x) * iTint.w * step(fam, 1.5));
         vColor *= mix(0.62, 1.0, smoothstep(0.0, 0.7, aBlade.x)) * (0.85 + 0.3 * fpBh - 0.15);
+        {
+          float fpG = (1.0 - smoothstep(uGrey.z * 0.6, uGrey.z, distance(iPos.xz, uGrey.xy))) * uGrey.w;
+          float fpLum = dot(vColor, vec3(0.3, 0.59, 0.11));
+          vColor = mix(vColor, vec3(fpLum) * vec3(1.06, 1.0, 0.9) * 1.08, fpG);
+        }
         vFpT = aBlade.x * aBlade.w;`)
       .replace('#include <beginnormal_vertex>', `
         vec3 objectNormal = vec3(normal.x * fpC - normal.z * fpS, normal.y, normal.x * fpS + normal.z * fpC);
@@ -315,7 +322,7 @@ class Kind {
   commit(k, rng) {
     const a = this.scratch, m = a.length / 12;
     const ci = k % CN, cj = Math.floor(k / CN), x0 = CMIN + ci * CHUNK, z0 = CMIN + cj * CHUNK;
-    const ch = { n: m, x0, z0, x1: x0 + CHUNK, z1: z0 + CHUNK, d: 0, q: 0, pos: null, shape: null, tint: null, box: null };
+    const ch = { n: m, x0, z0, x1: x0 + CHUNK, z1: z0 + CHUNK, d: 0, q: 0, pos: null, shape: null, tint: null, box: null, sphere: null };
     if (m) {
       const pos = new Float32Array(m * 4), shape = new Float32Array(m * 4), tint = new Float32Array(m * 4);
       const order = new Uint32Array(m); for (let i = 0; i < m; i++) order[i] = i;
@@ -330,6 +337,7 @@ class Kind {
       }
       ch.pos = pos; ch.shape = shape; ch.tint = tint;
       ch.box = new THREE.Box3(new THREE.Vector3(x0 - 1, y0 - 0.5, z0 - 1), new THREE.Vector3(x0 + CHUNK + 1, y1 + this.o.height, z0 + CHUNK + 1));
+      ch.sphere = new THREE.Sphere(new THREE.Vector3(x0 + CHUNK / 2, (y0 + y1) / 2, z0 + CHUNK / 2), CHUNK * 0.7072 + 2.5 + (y1 - y0 + this.o.height) / 2);
     }
     this.chunks[k] = ch; this.total += m;
     a.length = 0;
@@ -339,12 +347,17 @@ class Kind {
   update(px, pz, frustum, genCount) {
     const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
     let nv = 0, sig = genCount | 0;
+    const pci = Math.floor((px - CMIN) / CHUNK), pcj = Math.floor((pz - CMIN) / CHUNK);
     for (let c = 0; c < this.chunks.length; c++) {
       const ch = this.chunks[c];
       if (!ch || !ch.n) continue;
       const dx = Math.max(ch.x0 - px, 0, px - ch.x1), dz = Math.max(ch.z0 - pz, 0, pz - ch.z1);
       const d = Math.sqrt(dx * dx + dz * dz);
-      if (d > fade1 || !frustum.intersectsBox(ch.box)) continue;
+      if (d > fade1) continue;
+      // the chunk underfoot and its eight neighbours are always drawn; the rest are tested as
+      // spheres (half-diagonal plus room for sway and the far-distance widening) against the frustum
+      const near = Math.abs((c % CN) - pci) <= 1 && Math.abs(Math.floor(c / CN) - pcj) <= 1;
+      if (!near && !frustum.intersectsSphere(ch.sphere)) continue;
       const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
       if (dens <= 0) continue;
       const q = Math.min(64, Math.ceil(dens * 64 + 0.5)); // in 1/64 steps, rounded up
@@ -357,7 +370,7 @@ class Kind {
     this.sig = sig;
     // nearest first so that if the cap is hit it is the far chunks that lose out
     const ord = this.order.subarray(0, nv);
-    ord.sort((a, b) => this.chunks[a].d - this.chunks[b].d);
+    ord.sort((a, b) => (this.chunks[a].d - this.chunks[b].d) || (a - b)); // ties broken by index: a stable order
     let w = 0;
     const P = this.aPos.array, S = this.aShape.array, T = this.aTint.array;
     for (let i = 0; i < nv; i++) {
@@ -438,10 +451,13 @@ export function buildPlants(ctx, ground, shared) {
     const tussock = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.06 - 30, mz * 0.06 + 12, 2) * 0.5 + 0.5) * (1 - path);
     const hc = ground.heightAt(mx, mz);
     const hollow = smoothstep(0.25, 1.1, (ground.heightAt(mx + 7, mz) + ground.heightAt(mx - 7, mz) + ground.heightAt(mx, mz + 7) + ground.heightAt(mx, mz - 7)) / 4 - hc);
+    // the Heliotrope Sward [Proposed] (v2/flora.js): short, thin turf so the snowdrops stand clear of it
+    const swardW = L.sward ? 1 - smoothstep(L.sward.r * 0.7, L.sward.r * 1.1, Math.hypot(mx - L.sward.x, mz - L.sward.z)) : 0;
     const wetEdge = (() => { const dep = ground.waterDepth(mx, mz, hc); return dep === -Infinity ? 0 : smoothstep(-2.0, -0.6, dep) * (1 - smoothstep(-0.2, 0.1, dep)); })();
 
     // grass + sedge
     let dg = D_GRASS * (0.6 + 0.6 * path + 0.4 * land) * (0.35 + 1.0 * smoothstep(0.2, 0.75, patch));
+    dg *= (1 - 0.55 * swardW);
     dg *= (1 - 0.6 * heathW) * (1 - 0.6 * b.wood) * (1 - 0.92 * crysW) * (1 - b.rock) * (1 - 0.6 * b.ice) * (1 - 0.7 * marshW);
     const ng = Math.floor(dg * CELL * CELL + rng());
     for (let i = 0; i < ng; i++) {
@@ -456,7 +472,7 @@ export function buildPlants(ctx, ground, shared) {
       mixInto(null, cWoodG, smoothstep(0.2, 0.8, b.wood)); mixInto(null, cMarsh, marshW * 0.9); mixInto(null, cBleach, crysW * 0.9);
       const br = 0.8 + rng() * 0.35; tint[0] *= br; tint[1] *= br; tint[2] *= br;
       const tus = rng() < tussock * 0.5;
-      const sy = (0.75 + rng() * 0.5) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
+      const sy = (0.75 + rng() * 0.5) * (1 - 0.35 * swardW) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
       grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.3 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.1 + 0.55 * rng() * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
     }
     // sedge: taller, olive, in the fen and on the tarn shore
@@ -473,7 +489,7 @@ export function buildPlants(ctx, ground, shared) {
     }
     // bracken: rust patches on the moor, dark undergrowth in the wood
     const bpatch = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.035 + 11, mz * 0.035 + 50, 3) * 0.5 + 0.5);
-    const db = D_BRACKEN * (bpatch * b.moor * (1 - heathW * 0.5) * (1 - marshW) + 1.3 * smoothstep(0.3, 0.8, b.wood) * (0.4 + 0.6 * patch)) * (1 - crysW) * (1 - path * 0.8);
+    const db = D_BRACKEN * (bpatch * b.moor * (1 - heathW * 0.5) * (1 - marshW) + 1.3 * smoothstep(0.3, 0.8, b.wood) * (0.4 + 0.6 * patch)) * (1 - crysW) * (1 - path * 0.8) * (1 - swardW);
     const nb = Math.floor(db * CELL * CELL + rng());
     for (let i = 0; i < nb; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
@@ -487,7 +503,7 @@ export function buildPlants(ctx, ground, shared) {
     }
     // pale flower spikes in drifts; one colour per drift
     const drift = smoothstep(0.56, 0.74, noise.fbm2(mx * 0.025 - 90, mz * 0.025 + 33, 3) * 0.5 + 0.5);
-    const df = D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5);
+    const df = D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5) * (1 - swardW);
     const nf = Math.floor(df * CELL * CELL + rng());
     if (nf) {
       const hueN = noise.noise2(mx * 0.01 + 5, mz * 0.01 - 5) * 0.5 + 0.5;
@@ -503,11 +519,13 @@ export function buildPlants(ctx, ground, shared) {
       }
     }
     // black-green fleshy leaves in the hollows, along the water, and in the wood's wet places
-    const dl = D_FLESH * Math.max(hollow * (1 - b.rock), wetEdge * 1.4, b.wood * hollow * 1.5) * (1 - crysW);
+    const dl = D_FLESH * Math.max(hollow * (1 - b.rock), wetEdge * 1.4, b.wood * hollow * 1.5) * (1 - crysW) * (1 - swardW);
     const nl = Math.floor(dl * CELL * CELL + rng());
     for (let i = 0; i < nl; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (cd < 9) continue;
+      // a rosette laid on steep ground reads as a flat black disc: keep them to gentle ground off the river's wet band
+      if (ground.slopeAt(x, z) > 0.6 || ground.wetAt(x, z) > 0.3) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.05) continue;
       setT(cFlesh); mixInto(null, cFlesh2, rng());
@@ -515,7 +533,7 @@ export function buildPlants(ctx, ground, shared) {
       fleshy.add(x, y - 0.05, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // heather
-    const dh = D_HEATH * (heathW * (0.5 + patch) + 0.03 * b.moor * (1 - b.wood)) * (1 - crysW) * (1 - marshW);
+    const dh = D_HEATH * (heathW * (0.5 + patch) + 0.03 * b.moor * (1 - b.wood)) * (1 - crysW) * (1 - marshW) * (1 - 0.7 * swardW);
     const nh = Math.floor(dh * CELL * CELL + rng());
     for (let i = 0; i < nh; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
