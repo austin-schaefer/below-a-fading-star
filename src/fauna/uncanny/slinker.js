@@ -30,10 +30,10 @@ function slinkerGeometry(low) {
     for (const s of [-1, 1]) {
       P.set('aPh', i * 1.15 + (s > 0 ? Math.PI : 0));
       const sp = 1 + 0.12 * Math.sin(i * 2.3 + s), lean = 0.12 * Math.sin(i * 1.3);
-      const sh = [s * 0.16, 0.38, z], el = [s * 0.52 * sp, 1.0 + lean, z - 0.1], el2 = [s * 0.56 * sp, 0.98 + lean, z - 0.08];
-      const wr = [s * 0.86 * sp, 0.07, z + 0.08], pa = [s * 0.9 * sp, 0.025, z + 0.16];
-      const wf = (p) => clamp((Math.abs(p[0]) - 0.16) / 0.74, 0, 1);
-      P.loft([sh, [s * 0.34 * sp, 0.74, z - 0.05], el, el2, [s * 0.72 * sp, 0.52, z], wr, pa], [0.045, 0.034, 0.03, 0.03, 0.024, 0.02, 0.026], 5, wf);
+      const sh = [s * 0.16, 0.38, z], el = [s * 0.64 * sp, 0.94 + lean, z - 0.12], el2 = [s * 0.68 * sp, 0.92 + lean, z - 0.1];
+      const wr = [s * 1.06 * sp, 0.07, z + 0.06], pa = [s * 1.11 * sp, 0.025, z + 0.14];
+      const wf = (p) => clamp((Math.abs(p[0]) - 0.16) / 0.95, 0, 1);
+      P.loft([sh, [s * 0.4 * sp, 0.72, z - 0.06], el, el2, [s * 0.9 * sp, 0.5, z - 0.02], wr, pa], [0.045, 0.034, 0.03, 0.03, 0.024, 0.02, 0.026], 5, wf);
       // fingers: four long ones spread forward and out, and a thumb inward
       for (let f = 0; f < 5; f++) {
         const a = (f === 4 ? -0.9 : (f - 1.5) * 0.32) * s + (s > 0 ? 0.25 : -0.25);
@@ -87,6 +87,7 @@ export function buildSlinker(ctx, U) {
   mesh.name = 'uncanny-slinker';
   mesh.frustumCulled = false;
   mesh.visible = false;
+  mesh.scale.setScalar(1.35);
   scene.add(mesh);
 
   const cam = camera.position, fwd = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), nrm = new THREE.Vector3();
