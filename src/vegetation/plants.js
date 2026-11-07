@@ -419,7 +419,7 @@ export function buildPlants(ctx, ground, shared) {
     if (b.rock > 0.6 || b.ice > 0.5) return;
     const cd = ground.causewayDistance(mx, mz);
     // cheap cell-level keep-outs (exact ones per plant below where it matters)
-    if (ground.excluded(mx, mz, -1.5, { wet: 1.0 })) return;
+    if (ground.excluded(mx, mz, -1.5, { wet: 1.8 })) return;
     const patch = noise.fbm2(mx * 0.045, mz * 0.045, 3) * 0.5 + 0.5; // tussocks and bare ground
     const dry = noise.warped2(mx * 0.012 + 3, mz * 0.012 + 1, 3) * 0.5 + 0.5;
     // people walk the causeway, the keep's skirts and the stones: denser, shorter grass there
@@ -532,12 +532,14 @@ export function buildPlants(ctx, ground, shared) {
         for (let i = 0; i < nr; i++) {
           const x = cx + rng() * CELL, z = cz + rng() * CELL;
           const y = ground.heightAt(x, z);
-          const dep = ground.waterDepth(x, z, y);
-          if (dep === -Infinity || dep > 0.55 || dep < -1.1) continue;
+          const wn = ground.waterNear(x, z, y, 8);
+          if (!wn) continue;
+          const dep = wn.dep;
+          if (dep < -1.1 || dep > (wn.rim < 7 ? 1.7 : 0.55)) continue;
           if (ground.causewayDistance(x, z) < 4) continue;
           setT(cReed); mixInto(null, cReed2, rng());
           const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
-          const sy = (0.75 + rng() * 0.45) * (1 - 0.3 * smoothstep(-0.2, -1.1, dep));
+          const sy = (0.75 + rng() * 0.45) * (1 - 0.3 * smoothstep(-0.2, -1.1, dep)) * (1 + Math.max(dep, 0) * 0.45);
           reeds.add(x, y - 0.05, z, rng() * 6.283, 0.8 + rng() * 0.5, sy, 2, rng(), tint[0], tint[1], tint[2], 0.4 + 0.6 * rng());
         }
       }

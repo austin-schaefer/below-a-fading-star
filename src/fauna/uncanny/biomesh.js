@@ -296,12 +296,12 @@ export function buildBiomesh(ctx, U) {
     C.cols.forEach((c, ci) => {
       const face = Math.PI / 2 + (ci ? 0.5 : -0.5) + (rng() - 0.5) * 0.5; // toward the causeway side, where you come from
       const hTop = Math.min(c.top - c.base - 0.3, 2.8 + rng() * 2.5);
-      let n = Math.round(perCol * 0.72);
+      let n = Math.round(perCol * 0.8);
       for (let k = 0; n > 0 && k < 4000; k++) {
-        const th = face + (rng() - 0.5) * 1.9, h = Math.pow(rng(), 1.5) * hTop;
+        const th = face + (rng() - 0.5) * 1.5, h = Math.pow(rng(), 1.4) * hTop;
         const edge = hTop * (0.55 + 0.45 * (0.5 + 0.5 * noise.noise2(th * 2.3 + ci * 7, 0.5)));
         if (h > edge) continue;
-        if (addTile(C, th * c.r, h, 1, ci, hTop)) n--;
+        if (addTile(C, th * c.r, h, 1, ci, hTop)) { n--; const j = C.count - 1; C.sx[j] *= 1.3; C.sz[j] *= 1.3; }
       }
       // and a pool of them on the floor at its foot, spilling out from under the plinth
       for (let k = 0; C.count < perCol * (ci + 1) && k < 800; k++) {

@@ -149,11 +149,17 @@ export function buildTaverna(ctx, B, env) {
   for (const l of lattice) {
     const h = 2.1;
     const ca = Math.cos(l.yaw), sa = -Math.sin(l.yaw);
-    for (let k = -5; k <= 5; k++) {
+    // diagonal slats clipped to the frame: each is the chord of the rectangle along a 45° line
+    const hw = l.w / 2 - 0.05, hh = h / 2 - 0.05;
+    for (let k = -9; k <= 9; k++) {
       for (const dir of [1, -1]) {
-        const off = k * 0.22;
-        const lenS = Math.min(h, l.w) * 1.3;
-        B.add(B.box(0.035, lenS, 0.03), mat(l.x + ca * off, l.g + 0.3 + h / 2, l.z + sa * off, 0, l.yaw, dir * 0.785), { color: vary(tints.wood, rng, 0.1), moss: 0.1, ground: l.g });
+        const off = k * 0.2;
+        // points (off + t, dir * t) inside |x| <= hw, |y| <= hh
+        const t0 = Math.max(-hw - off, -hh), t1 = Math.min(hw - off, hh);
+        if (t1 - t0 < 0.08) continue;
+        const tm = (t0 + t1) / 2, lenS = (t1 - t0) * Math.SQRT2;
+        const lx = off + tm, ly = dir * tm;
+        B.add(B.box(0.035, lenS, 0.03), mat(l.x + ca * lx, l.g + 0.3 + h / 2 + ly, l.z + sa * lx, 0, l.yaw, -dir * 0.785), { color: vary(tints.wood, rng, 0.1), moss: 0.1, ground: l.g });
       }
     }
     // the frame hides the slat ends

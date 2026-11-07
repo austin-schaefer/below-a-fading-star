@@ -193,7 +193,7 @@ function addShelves(sk, rng, count, yRange) {
 function meshSkeleton(sk, detail, colors, rng) {
   const gb = new GeoBuilder(['glow']);
   const ex0 = { glow: 0 };
-  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 4, 3, 0, 0] : [4, 3, 0, 0, 0];
+  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 3, 0, 0, 0] : [4, 0, 0, 0, 0];
   for (const limb of sk.limbs) {
     const sides = sidesFor[Math.min(limb.level, 4)];
     if (!sides) continue;
@@ -536,7 +536,7 @@ export function buildTrees(ctx, ground, mats) {
     const v = fallenV[fallenSpots.length % 3], len = variants[v].len;
     const rot = rng() * 6.28, dx = Math.cos(rot), dz = -Math.sin(rot); // object +x after rotation about y
     let ok = b.wood > 0.4;
-    for (let t = 0; ok && t <= 1; t += 0.25) { const px = x + dx * len * t, pz = z + dz * len * t; if (ground.excluded(px, pz, 1) || ground.slopeAt(px, pz) > 0.3 || near(px, pz, 2.5)) ok = false; }
+    for (let t = 0; ok && t <= 1; t += 0.25) { const px = x + dx * len * t, pz = z + dz * len * t; if (ground.excluded(px, pz, 1) || ground.slopeAt(px, pz) > 0.35 || near(px, pz, 0.6)) ok = false; }
     if (!ok) continue;
     const t = place(x, z, v, 1, 0, rot, 0.85 + rng() * 0.2, 'fallen', false);
     t.fullTilt = true;

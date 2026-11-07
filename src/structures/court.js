@@ -156,7 +156,7 @@ export function buildCourt(ctx, B, env) {
   quad.receiveShadow = false; quad.castShadow = false;
   (env.extraMeshes ||= []).push({ mesh: quad, tris: 2 });
   (env.updates ||= []).push((dt, t) => pm.update(dt, t));
-  // the kerb: heavy coping blocks round three sides; the stair side opens flush with the floor
+  // the kerb: heavy coping blocks round three sides; the stair's north side opens flush with the floor
   const kerbH = 0.5, kw = 0.85;
   const kerb = (x, z, len, alongX, i) => {
     if (rng() < 0.1) return;
@@ -167,7 +167,7 @@ export function buildCourt(ctx, B, env) {
     });
   };
   let ki = 0;
-  for (let x = pit.x0 - kw; x < pit.x1 + kw - 0.01; x += 1.4) kerb(x + 0.7, pit.z0 - kw / 2, 1.42, true, ki++);
+  for (let x = pit.x0 - kw; x < pit.x1 + kw - 0.01; x += 1.4) kerb(x + 0.7, pit.z1 + kw / 2, 1.42, true, ki++);
   for (let z = pit.z0; z < pit.z1 - 0.01; z += 1.4) {
     const len = Math.min(1.42, pit.z1 - z);
     kerb(pit.x0 - kw / 2, z + len / 2, len, false, ki++);
@@ -175,12 +175,12 @@ export function buildCourt(ctx, B, env) {
   }
   // the stair's lip: a threshold of worn slabs level with the floor, and newel blocks at its ends
   for (let x = pit.x0; x < pit.x1 - 0.01; x += 1.25) {
-    const gb = ground.minGround(x + 0.62, pit.z1 + 0.6, 0.6) - 0.2;
-    B.add(B.box(1.24, top - gb + 0.02, 1.2, { chip: 0.05, chipTop: true, seed: x }), mat(x + 0.62, (top + 0.02 + gb) / 2, pit.z1 + 0.6), { color: vary(tint, rng, 0.07), moss: 0.6, ground: top, disp: 0.015 });
+    const gb = ground.minGround(x + 0.62, pit.z0 - 0.6, 0.6) - 0.2;
+    B.add(B.box(1.24, top - gb + 0.02, 1.2, { chip: 0.05, chipTop: true, seed: x }), mat(x + 0.62, (top + 0.02 + gb) / 2, pit.z0 - 0.6), { color: vary(tint, rng, 0.07), moss: 0.6, ground: top, disp: 0.015 });
   }
   for (const sx of [pit.x0 - kw / 2, pit.x1 + kw / 2]) {
-    const gb = ground.minGround(sx, pit.z1 + 0.6, 0.6) - 0.2;
-    B.add(B.box(kw + 0.2, top + 1.1 - gb, 1.3, { chip: 0.12, seed: sx }), mat(sx, (top + 1.1 + gb) / 2, pit.z1 + 0.6), { color: vary(tint, rng, 0.05), moss: 0.85, ground: top, disp: 0.03 });
+    const gb = ground.minGround(sx, pit.z0 - 0.6, 0.6) - 0.2;
+    B.add(B.box(kw + 0.2, top + 1.1 - gb, 1.3, { chip: 0.12, seed: sx }), mat(sx, (top + 1.1 + gb) / 2, pit.z0 - 0.6), { color: vary(tint, rng, 0.05), moss: 0.85, ground: top, disp: 0.03 });
   }
   // nobody walks onto the water
   colliderChain(ctx, pit.x0 + 0.2, pit.z0 + 0.2, pit.x1 - 0.2, pit.z0 + 0.2, 0.45, 1.0);

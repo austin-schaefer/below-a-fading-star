@@ -66,6 +66,15 @@ export function makeGround(ctx) {
     for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r) return w.y - y;
     return -Infinity;
   }
+  // Nearest water body within `extra` metres of its rim: depth (water level - ground) and how far inside the rim.
+  const _wn = { dep: 0, rim: 0 };
+  function waterNear(x, z, y, extra = 10) {
+    for (const w of waters) {
+      const d = Math.hypot(x - w.x, z - w.z);
+      if (d < w.r + extra) { _wn.dep = w.y - y; _wn.rim = w.r - d; return _wn; }
+    }
+    return null;
+  }
   const d2 = (x, z, p) => (x - p.x) ** 2 + (z - p.z) ** 2;
   // The shared placement rules from the brief. `margin` widens every keep-out (trees use it).
   // opts.wet: allow shallow water down to that depth (reeds).
@@ -84,5 +93,5 @@ export function makeGround(ctx) {
     return false;
   }
 
-  return { heightAt, normalAt, slopeAt, biomeAt, waterDepth, excluded, causewayDistance: terrain.causewayDistance };
+  return { heightAt, normalAt, slopeAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance };
 }

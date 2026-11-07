@@ -310,23 +310,18 @@ export function makePitMaterial(ctx, box) {
         if (rd.z > 0.0) { float t = (uMax.z - P.z) / rd.z; if (t < tB) { tB = t; nB = vec3(0.0, 0.0, -1.0); } }
         else if (rd.z < 0.0) { float t = (uMin.z - P.z) / rd.z; if (t < tB) { tB = t; nB = vec3(0.0, 0.0, 1.0); } }
         if (rd.y < 0.0) { float t = (uMin.y - P.y) / rd.y; if (t < tB) { tB = t; nB = vec3(0.0, 1.0, 0.0); kind = 1.0; } }
-        // the broad stair down from the south lip, step by step until it drowns
+        // the broad stair down from the north lip, its risers facing the approach from the south
         for (int k = 0; k < 14; k++) {
           float yk = uMax.y - float(k + 1) * uRise;
           if (yk < uMin.y) break;
-          float za = uMax.z - float(k + 1) * uTread, zb = uMax.z - float(k) * uTread;
+          float za = uMin.z + float(k) * uTread, zb = uMin.z + float(k + 1) * uTread;
           if (rd.y < 0.0) {
             float t = (yk - P.y) / rd.y; vec3 h = P + rd * t;
             if (t > 0.0 && t < tB && h.z >= za && h.z <= zb && h.x >= uStairX.x && h.x <= uStairX.y) { tB = t; nB = vec3(0.0, 1.0, 0.0); kind = 2.0; }
           }
-          if (rd.z > 0.0) {
-            float t = (za - P.z) / rd.z; vec3 h = P + rd * t;
-            if (t > 0.0 && t < tB && h.y <= yk + uRise && h.y >= yk && h.x >= uStairX.x && h.x <= uStairX.y) { tB = t; nB = vec3(0.0, 0.0, -1.0); kind = 2.0; }
-          }
-          // the stair's open side, if it does not span the whole shaft
-          if (rd.x > 0.0 && uStairX.x > uMin.x + 0.01) {
-            float t = (uStairX.x - P.x) / rd.x; vec3 h = P + rd * t;
-            if (t > 0.0 && t < tB && h.y <= yk && h.z >= za && h.z <= zb) { tB = t; nB = vec3(-1.0, 0.0, 0.0); kind = 2.0; }
+          if (rd.z < 0.0) {
+            float t = (zb - P.z) / rd.z; vec3 h = P + rd * t;
+            if (t > 0.0 && t < tB && h.y <= yk + uRise && h.y >= yk && h.x >= uStairX.x && h.x <= uStairX.y) { tB = t; nB = vec3(0.0, 0.0, 1.0); kind = 2.0; }
           }
         }
         vec3 H = P + rd * tB;
@@ -343,7 +338,12 @@ export function makePitMaterial(ctx, box) {
         float mortar = 1.0 - smoothstep(0.02, 0.05, e);
         float g = fpFbm(H * 2.0);
         vec3 alb = vec3(0.11, 0.095, 0.085) * (0.75 + 0.5 * fpH12(vec2(floor(cx), row))) * (0.7 + 0.6 * g) * mix(1.0, 0.45, mortar);
-        if (kind > 1.5) alb *= 1.15;
+        if (kind > 1.5) {
+          // the stair: paler worn treads, a lighter nosing on each step's edge
+          alb *= 2.0;
+          float into = 1.0 - fract((H.z - uMin.z) / uTread);
+          if (nB.y > 0.5) alb *= 1.0 + 0.8 * smoothstep(0.82, 0.98, into);
+        }
         // slime and the tide line
         float aboveW = H.y - uMin.y;
         float slime = 1.0 - smoothstep(0.0, 1.4 + 0.6 * g, aboveW);
@@ -354,7 +354,7 @@ export function makePitMaterial(ctx, box) {
         if (uSunDir.y > 0.0) { float t = (uMax.y - H.y) / uSunDir.y; vec3 Q = H + uSunDir * t; lit = inside(Q, -0.02); }
         float ndl = max(dot(nB, uSunDir), 0.0);
         vec3 hemi = mix(uGround, uSky, nB.y * 0.5 + 0.5);
-        float ao = mix(0.22, 1.0, pow(1.0 - depth01, 1.5));
+        float ao = mix(0.45, 1.6, pow(1.0 - depth01, 1.3));
         vec3 col = alb * RECIPROCAL_PI * (uSunCol * ndl * lit + (hemi + uAmb) * ao);
         if (kind > 0.5 && kind < 1.5) {
           // black water: a faint sky in it where the reflected ray clears the lip

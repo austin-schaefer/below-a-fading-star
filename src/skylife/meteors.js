@@ -116,7 +116,7 @@ export function buildMeteors(ctx, group, U, rng) {
   for (let i = 0; i < N; i++) S.time.setXYZW(i, -1e6, 1, 0.3, 1);
   const smat = new THREE.ShaderMaterial({
     uniforms: withSky(U, {}), vertexShader: STREAK_VS, fragmentShader: STREAK_FS,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide,
   });
   const streaks = new THREE.Mesh(sg, smat);
   streaks.frustumCulled = false; streaks.name = 'skylife-meteors'; streaks.renderOrder = 5;
@@ -128,7 +128,7 @@ export function buildMeteors(ctx, group, U, rng) {
   for (let i = 0; i < NT; i++) T.time.setXYZW(i, -1e6, 1, 1, 0);
   const tmat = new THREE.ShaderMaterial({
     uniforms: withSky(U, {}), vertexShader: TRAIN_VS, fragmentShader: TRAIN_FS,
-    transparent: true, depthWrite: false, fog: false,
+    transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
   });
   const trains = new THREE.Mesh(tg, tmat);
   trains.frustumCulled = false; trains.name = 'skylife-trains'; trains.renderOrder = 4;

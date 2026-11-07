@@ -13,14 +13,14 @@ const SOLID_VS = /* glsl */`
     attribute float aWing;
     uniform vec2 uFlap;
   #endif
-  varying vec3 vN, vW;
+  varying vec3 vN, vW, vTint;
   void main() {
     vec3 p = position;
     #ifdef FLAP
       if (aWing > 0.5) {
         float th = aWing < 1.5 ? uFlap.x : uFlap.y;
         float s = sign(p.x), ax = abs(p.x);
-        float tt = th * (1.0 + ax * 0.012);
+        float tt = th * (1.0 + ax * 0.007);
         p.x = s * ax * cos(tt); p.y += ax * sin(tt);
       }
     #endif
@@ -30,17 +30,22 @@ const SOLID_VS = /* glsl */`
     #endif
     vec4 wp = modelMatrix * lp;
     vN = mat3(modelMatrix) * n; vW = wp.xyz;
+    #ifdef USE_INSTANCING_COLOR
+      vTint = instanceColor;
+    #else
+      vTint = vec3(1.0);
+    #endif
     gl_Position = projectionMatrix * viewMatrix * wp;
   }`;
 const SOLID_FS = /* glsl */`
   ${SKY_GLSL}
   uniform vec3 uBase, uAmb; uniform float uPolish, uK;
-  varying vec3 vN, vW;
+  varying vec3 vN, vW, vTint;
   void main() {
     vec3 d = normalize(vW - cameraPosition);
     vec3 n = normalize(vN); if (dot(n, d) > 0.0) n = -n;
     float diff = max(dot(n, uSunDir), 0.0);
-    vec3 col = uBase * (uAmb + uSunLight * diff * 1.6 * uFlicker);
+    vec3 col = uBase * vTint * (uAmb + uSunLight * diff * 1.6 * uFlicker);
     float rs = max(dot(reflect(d, n), uSunDir), 0.0);
     col += uSunLight * (pow(rs, 700.0) * 10.0 + pow(rs, 60.0) * 0.08) * uPolish * uFlicker;
     gl_FragColor = vec4(sl_air(col, d, uK), 1.0);
@@ -105,7 +110,7 @@ function beam(S, a, b, w) {
 }
 function hullGeometry(rng) {
   const S = new Soup();
-  const NR = 11, LEN = 120;
+  const NR = 12, LEN = 170;
   const ribPts = [];
   for (let k = 0; k < NR; k++) {
     const z = -LEN / 2 + 12 + k * (LEN - 24) / (NR - 1);
@@ -190,7 +195,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
 
   // ---------- flier
   const flierMat = solidMaterial(U, '#0a080c', { flap: true, k: 0.075, amb: 0.25 });
-  const flier = new THREE.Mesh(flierGeometry(), flierMat);
+  const flier = new THREE.Mesh(flierGeometry().scale(1.8, 1.8, 1.8), flierMat);
   flier.matrixAutoUpdate = false; flier.frustumCulled = false; flier.name = 'skylife-flier'; flier.renderOrder = 3;
   flier.visible = false;
   group.add(flier);
@@ -249,13 +254,14 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
 
   // ---------- worm on the great lattice
   const A = lat.info[0];
-  const NSEG = 18, L = 130;
+  const NSEG = 20, L = 175;
   const top = A.ny * A.cell[1] / 2, front = A.nz * A.cell[2] / 2;
   const x0 = -A.nx * A.cell[0] / 2 + 24, x1 = A.nx * A.cell[0] / 2 - 24;
   const box = new THREE.BoxGeometry(1, 1, 1);
-  const wormMat = solidMaterial(U, '#1c1614', { polish: 0.6, k: 0.085, amb: 0.4 });
+  const wormMat = solidMaterial(U, '#2a201c', { polish: 0.6, k: 0.085, amb: 0.4 });
   const worm = new THREE.InstancedMesh(box, wormMat, NSEG + 2);
   worm.frustumCulled = false; worm.name = 'skylife-worm'; worm.renderOrder = 3;
+  { const c = new THREE.Color(); for (let s = 0; s < NSEG + 2; s++) worm.setColorAt(s, c.setScalar(s >= NSEG ? 0.6 : s % 2 ? 0.55 : 1.25)); }
   group.add(worm);
   const W = { head: x0 + L, tail: x0, dirn: 1, phase: 0, pt: 0, d: L, pending: false };
   const GAIT = [3.6, 2.8, 2.4, 0.85]; // pause extended, draw up the tail, pause arched, lunge
@@ -290,25 +296,25 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
     else W.head = W.tail + W.dirn * d;
     W.d = d;
     const amp = wormShape(d);
-    const thick = 7.5;
+    const thick = 11;
     for (let s = 0; s < NSEG; s++) {
       const u0 = s / NSEG, u1 = (s + 1) / NSEG, um = (u0 + u1) / 2;
       const xa = W.tail + W.dirn * d * u0, xb = W.tail + W.dirn * d * u1;
       const ya = amp * Math.sin(Math.PI * u0), yb = amp * Math.sin(Math.PI * u1);
-      const dx = xb - xa, dy = yb - ya, len = Math.hypot(dx, dy) * 1.18;
+      const dx = xb - xa, dy = yb - ya, len = Math.hypot(dx, dy) * (s % 2 ? 1.12 : 0.9);
       const ang = Math.atan2(dy, dx);
       const fat = s === NSEG - 1 ? 1.5 : (1 + 0.25 * Math.sin(um * Math.PI * 9)) * (s < 2 ? 1.2 : 1);
       rm.makeRotationZ(ang);
       lm.makeScale(len, thick * fat, thick * 0.9 * fat).premultiply(rm);
-      lm.setPosition((xa + xb) / 2, top + 5 + thick * 0.5 + (ya + yb) / 2, front);
+      lm.setPosition((xa + xb) / 2, top + 5 + thick * 0.5 + (ya + yb) / 2, front + 9);
       lm.premultiply(A.M);
       worm.setMatrixAt(s, lm);
-      if (s === NSEG - 1) headLocal.set(xb + W.dirn * 5, top + 5 + thick * 0.6 + yb, front + 2);
+      if (s === NSEG - 1) headLocal.set(xb + W.dirn * 6, top + 5 + thick * 0.6 + yb, front + 14);
     }
     // claspers where it grips the spar, fore and aft
     for (let c = 0; c < 2; c++) {
       const x = c ? W.head : W.tail;
-      lm.makeScale(5, 9, 10).setPosition(x, top + 4, front);
+      lm.makeScale(6, 12, 14).setPosition(x, top + 4, front + 9);
       lm.premultiply(A.M);
       worm.setMatrixAt(NSEG + c, lm);
     }
@@ -320,7 +326,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
   const hull = new THREE.Mesh(hullGeometry(rng), solidMaterial(U, '#3a302a', { polish: 1, k: 0.08, amb: 0.45 }));
   hull.name = 'skylife-hull'; hull.frustumCulled = false; hull.renderOrder = 3;
   const hullDir = dirFrom(132, 36);
-  hull.position.copy(hullDir).multiplyScalar(2100);
+  hull.position.copy(hullDir).multiplyScalar(1750);
   const hullAxis = new THREE.Vector3(0.35, 0.8, 0.5).normalize(), hullAxis2 = new THREE.Vector3(1, 0.1, -0.3).normalize();
   const hq0 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0.2, 1, 0.1).normalize(), rng() * 6), hq1 = new THREE.Quaternion();
   group.add(hull);
@@ -339,7 +345,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
   const H0 = -250, H1 = 2150;
   const thread = new THREE.Mesh(tgeo, new THREE.ShaderMaterial({
     uniforms: withSky(U, { uBase: { value: threadBase }, uSide: { value: tside }, uH0: { value: H0 }, uH1: { value: H1 }, uCol: { value: new THREE.Color('#ffe0b0').multiplyScalar(0.55) } }),
-    vertexShader: THREAD_VS, fragmentShader: THREAD_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    vertexShader: THREAD_VS, fragmentShader: THREAD_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide,
   }));
   thread.frustumCulled = false; thread.name = 'skylife-thread'; thread.renderOrder = 2;
   group.add(thread);

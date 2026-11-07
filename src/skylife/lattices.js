@@ -68,7 +68,7 @@ const WEB_FS = /* glsl */`
     col += uSunLight * glint * 0.5 * uFlicker;
     float gut = clamp((0.88 - uFlicker) / 0.5, 0.0, 1.0);
     col += uGlow * gut * 0.6;
-    gl_FragColor = vec4(sl_air(col, d, 0.085), 0.5 + glint * 0.4);
+    gl_FragColor = vec4(sl_air(col, d, 0.085), 0.6 + glint * 0.4);
   }`;
 
 // One lattice's struts and webs in its own frame (metres, centred on the origin).
@@ -160,13 +160,13 @@ export function buildLattices(ctx, group, U, rng, skyline) {
     { name: 'great', bearing: 92, elev: aElev, R: 2150, nx: 10, ny: 5, nz: 1, cell: [50, 50, 30], thick: [6.5, 4.2], pBreak: 0.1, pWeb: 0.55, rings: 2, spars: 3, webAxis: 2,
       keep: (i, j) => j === 4 || !((i === 6 && j < 2) || (i === 7 && j === 0) || (i === 1 && j === 1) || (i === 3 && j === 2)),
       protect: (ax, n) => ax === 0 && n[1] === 5 && n[2] === 1, spin: [0.004, 0.0012], tilt: 0.12 },
-    { name: 'cube', bearing: 318, elev: 50, R: 2250, nx: 3, ny: 3, nz: 3, cell: [36, 36, 36], thick: [5, 3.6], pBreak: 0.12, pWeb: 0.35, rings: 2, spars: 2,
+    { name: 'cube', bearing: 318, elev: 52, R: 2250, nx: 3, ny: 3, nz: 3, cell: [54, 54, 54], thick: [6, 4], pBreak: 0.12, pWeb: 0.35, rings: 2, spars: 2,
       keep: (i, j, k) => !(i === 1 && j === 1) && !(i === 2 && j === 2 && k === 0), spin: [0.013, 0.006], tilt: 0.6 },
-    { name: 'spar', bearing: 198, elev: 29, R: 2150, nx: 12, ny: 1, nz: 1, cell: [26, 26, 26], thick: [4.5, 3.5], pBreak: 0.08, pWeb: 0.5, rings: 2, spars: 2,
+    { name: 'spar', bearing: 198, elev: 41, R: 2150, nx: 12, ny: 1, nz: 1, cell: [32, 32, 32], thick: [5, 3.8], pBreak: 0.08, pWeb: 0.5, rings: 2, spars: 2,
       keep: (i) => i !== 8, spin: [0.009, 0.002], tilt: 0.9 },
-    { name: 'cross', bearing: 34, elev: 21, R: 2350, nx: 5, ny: 5, nz: 1, cell: [32, 32, 20], thick: [5, 3.6], pBreak: 0.14, pWeb: 0.45, rings: 2, spars: 1, webAxis: 2,
+    { name: 'cross', bearing: 30, elev: 35, R: 2350, nx: 5, ny: 5, nz: 1, cell: [42, 42, 24], thick: [5, 3.6], pBreak: 0.14, pWeb: 0.45, rings: 2, spars: 1, webAxis: 2,
       keep: (i, j) => i === 2 || j === 2 || (i === 3 && j === 1), spin: [0.006, 0.0025], tilt: 0.35 },
-    { name: 'mote', bearing: 247, elev: 36, R: 2250, nx: 4, ny: 3, nz: 1, cell: [24, 24, 24], thick: [4, 3.4], pBreak: 0.1, pWeb: 0.6, rings: 2, spars: 1, webAxis: 2,
+    { name: 'mote', bearing: 244, elev: 43, R: 2250, nx: 4, ny: 3, nz: 1, cell: [30, 30, 30], thick: [4.5, 3.6], pBreak: 0.1, pWeb: 0.6, rings: 2, spars: 1, webAxis: 2,
       keep: () => true, spin: [0.011, 0.004], tilt: 0.5 },
   ].slice(0, high ? 5 : 4);
 
@@ -218,7 +218,7 @@ export function buildLattices(ctx, group, U, rng, skyline) {
   wg.setAttribute('position', new THREE.BufferAttribute(wp, 3));
   wg.setAttribute('aMeta', new THREE.BufferAttribute(wm, 2));
   const wmat = new THREE.ShaderMaterial({
-    uniforms: withSky(U, { uM, uBase: { value: new THREE.Color('#3a3034') }, uAmb: own.uAmb, uGlow: { value: new THREE.Color('#ff7a3a').multiplyScalar(0.035) } }),
+    uniforms: withSky(U, { uM, uBase: { value: new THREE.Color('#8a7470') }, uAmb: own.uAmb, uGlow: { value: new THREE.Color('#ff7a3a').multiplyScalar(0.035) } }),
     vertexShader: WEB_VS, fragmentShader: WEB_FS, transparent: true, depthWrite: false, fog: false,
   });
   const webMesh = new THREE.LineSegments(wg, wmat);
