@@ -19,6 +19,7 @@ const MODULES = [
   ['particles', () => import('./particles.js')],
   ['fauna', () => import('./fauna.js')],
   ['audio', () => import('./audio.js')],
+  ['skylife', () => import('./skylife.js')],
 ];
 
 async function start() {

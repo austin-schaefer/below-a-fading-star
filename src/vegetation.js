@@ -35,6 +35,7 @@ export async function build(ctx) {
     const px = ctx.player.pos.x, pz = ctx.player.pos.z;
     plants.update(px, pz, frustum);
     trees.update(px, pz);
+    fungi.update(px, pz);
     const f = ctx.sky.flicker.value;
     mats.glow.value = 0.08 + 1.5 * Math.max(0, 1 - f);
     lattice.update(f);
@@ -46,6 +47,7 @@ export async function build(ctx) {
     frustum.setFromProjectionMatrix(pv);
     plants.update(ctx.player.pos.x, ctx.player.pos.z, frustum);
     trees.update(ctx.player.pos.x, ctx.player.pos.z);
+    fungi.update(ctx.player.pos.x, ctx.player.pos.z);
   }
 
   const total = (T[T.length - 1] - T[0]).toFixed(0);

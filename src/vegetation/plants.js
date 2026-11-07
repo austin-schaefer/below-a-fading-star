@@ -379,12 +379,12 @@ export function buildPlants(ctx, ground, shared) {
   let rng = null; // per chunk, see genChunk
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
-  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 8, exp: 2.0, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.0 }), { r0: 8, exp: 2.0, fade0: 85, fade1: 125, height: 2 }, low ? 30000 : 60000);
-  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 14, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 2.2 }), { r0: 14, fade0: 100, fade1: 150, height: 1 }, low ? 12000 : 24000);
-  const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 }, low ? 8000 : 16000);
-  const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 }, low ? 6000 : 12000);
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 6.5, exp: 2.0, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.5 }), { r0: 6.5, exp: 2.0, fade0: 85, fade1: 125, height: 2 }, low ? 30000 : 60000);
+  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 10, exp: 1.6, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 3.2 }), { r0: 10, exp: 1.6, fade0: 100, fade1: 150, height: 1 }, low ? 12000 : 24000);
+  const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: 14, exp: 1.5, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 2.4 }), { r0: 14, exp: 1.5, fade0: 90, fade1: 140, height: 1.4 }, low ? 8000 : 16000);
+  const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: 15, exp: 1.5, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 2.0 }), { r0: 15, exp: 1.5, fade0: 100, fade1: 150, height: 2 }, low ? 6000 : 12000);
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 }, low ? 3000 : 6000);
-  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: low ? 18 : 26, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 1.4 }), { r0: low ? 18 : 26, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
+  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: 20, exp: 1.4, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 2.0 }), { r0: 20, exp: 1.4, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
 
   // grass colours: dry, tawny, rust-tipped
   const cTawny = C('#b8a060'), cDry = C('#d0bc80'), cOchre = C('#9a8440'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#a89048');
@@ -399,7 +399,7 @@ export function buildPlants(ctx, ground, shared) {
   const setT = (a) => { tint[0] = a[0]; tint[1] = a[1]; tint[2] = a[2]; };
 
   const D_BRACKEN = 0.6 * half, D_FLOWER = 0.6 * half, D_FLESH = 0.16 * half;
-  const D_GRASS = 6.5 * half, D_HEATH = 0.8 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
+  const D_GRASS = 6.0 * half, D_HEATH = 0.8 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
   const CELL = 2;
   const b = {};
   const kinds = [grass, heather, bracken, flowers, fleshy, reeds];

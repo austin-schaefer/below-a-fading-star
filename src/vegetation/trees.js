@@ -657,7 +657,7 @@ export function buildTrees(ctx, ground, mats) {
   ctx.scene.add(batch);
 
   // LOD by distance with hysteresis: 0 far, 1 mid, 2 near. No allocation.
-  const HI = low ? 34 : 46, MID = low ? 95 : 130, HYS = 6;
+  const HI = low ? 30 : 38, MID = low ? 85 : 110, HYS = 5;
   function update(px, pz) {
     for (let i = 0; i < trees.length; i++) {
       const t = trees[i];
@@ -685,7 +685,7 @@ function toadstoolGeo() {
   const gb = new GeoBuilder(['glow']);
   const stem = lin('#c8bca0'), cap = lin('#8a6a48'), gill = lin('#d8e0c0');
   const pts = [{ x: 0, y: -0.05, z: 0, r: 0.07 }, { x: 0.02, y: 0.4, z: 0, r: 0.06 }, { x: 0.05, y: 0.82, z: 0, r: 0.05 }];
-  tube(gb, pts, 5, (i) => mixc(stem, [0.3, 0.25, 0.2], i === 0 ? 0.5 : 0), { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0.1 } });
+  tube(gb, [pts[0], pts[2]], 5, (i) => mixc(stem, [0.3, 0.25, 0.2], i === 0 ? 0.5 : 0), { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0.1 } });
   // cap: dome rings
   const R = 0.32, top = 0.98, base = 0.8, segs = 6;
   const ringAt = (rr, y, col, glow, ny) => {
@@ -716,9 +716,9 @@ function podGeo() {
   const stem = lin('#3a3a24'), pod = lin('#c8d890');
   const pts = [];
   for (let i = 0; i <= 4; i++) { const t = i / 4; pts.push({ x: Math.sin(t * 2.2) * 0.25, y: t, z: 0, r: 0.025 * (1 - 0.6 * t) }); }
-  tube(gb, pts, 4, () => stem, { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0 } });
-  for (let k = 0; k < 5; k++) {
-    const t = 0.55 + k * 0.1, px = Math.sin(t * 2.2) * 0.25 + (k % 2 ? 0.07 : -0.07), py = t - 0.08, pz = (k % 3 - 1) * 0.06;
+  tube(gb, pts.filter((_, i) => i % 2 === 0), 3, () => stem, { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0 } });
+  for (let k = 0; k < 4; k++) {
+    const t = 0.6 + k * 0.11, px = Math.sin(t * 2.2) * 0.25 + (k % 2 ? 0.07 : -0.07), py = t - 0.08, pz = (k % 3 - 1) * 0.06;
     const r = 0.035 + 0.012 * (k % 3);
     const v = [[r, 0, 0], [-r, 0, 0], [0, r * 0.9, 0], [0, -r * 2, 0], [0, 0, r], [0, 0, -r]].map(([x, y, z]) => {
       const l = Math.hypot(x, y, z);
@@ -727,6 +727,26 @@ function podGeo() {
     for (const [a, b, c] of [[0, 2, 4], [4, 2, 1], [1, 2, 5], [5, 2, 0], [4, 3, 0], [1, 3, 4], [5, 3, 1], [0, 3, 5]]) gb.tri(v[a], v[b], v[c]);
   }
   return gb.build();
+}
+
+// Split small instanced things into 100 m grid groups so far groups are skipped.
+const GROUP = 100;
+function instGroups(ctx, geo, mat, items, fill, name) {
+  const by = new Map();
+  for (const it of items) { const k = `${Math.floor(it.x / GROUP)},${Math.floor(it.z / GROUP)}`; if (!by.has(k)) by.set(k, []); by.get(k).push(it); }
+  const groups = [];
+  const m4 = new THREE.Matrix4(), col = new THREE.Color();
+  for (const [k, list] of by) {
+    const mesh = new THREE.InstancedMesh(geo, mat, list.length);
+    list.forEach((it, i) => { fill(it, m4, col); mesh.setMatrixAt(i, m4); mesh.setColorAt(i, col); });
+    mesh.computeBoundingSphere();
+    mesh.receiveShadow = true; mesh.castShadow = false;
+    mesh.name = name;
+    const [gx, gz] = k.split(',').map(Number);
+    groups.push({ mesh, x0: gx * GROUP, z0: gz * GROUP });
+    ctx.scene.add(mesh);
+  }
+  return groups;
 }
 
 export function buildToadstools(ctx, ground, mats, trees) {
@@ -760,25 +780,20 @@ export function buildToadstools(ctx, ground, mats, trees) {
     }
   }
   const geo = toadstoolGeo();
-  const mesh = new THREE.InstancedMesh(geo, mats.fungus, spots.length);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), sc = new THREE.Vector3(), col = new THREE.Color();
+  const q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), sc = new THREE.Vector3();
   const tints = [lin('#e0d0b0'), lin('#c8a860'), lin('#9a5a3a'), lin('#d8d8c0')];
-  spots.forEach((s, i) => {
+  const groups = instGroups(ctx, geo, mats.fungus, spots, (s, m4, col) => {
     pos.set(s.x, ground.heightAt(s.x, s.z), s.z);
     e.set(s.tilt, s.rot, s.tilt * 0.5); q.setFromEuler(e);
     sc.set(s.s * (0.8 + s.hue * 0.4), s.s, s.s * (0.8 + s.hue * 0.4));
-    m4.compose(pos, q, sc); mesh.setMatrixAt(i, m4);
-    const t = tints[Math.floor(s.hue * 4) % 4]; col.setRGB(t[0], t[1], t[2]); mesh.setColorAt(i, col);
-  });
-  mesh.computeBoundingSphere();
-  mesh.receiveShadow = true; mesh.castShadow = false;
-  mesh.name = 'veg-toadstools';
-  ctx.scene.add(mesh);
+    m4.compose(pos, q, sc);
+    const t = tints[Math.floor(s.hue * 4) % 4]; col.setRGB(t[0], t[1], t[2]);
+  }, 'veg-toadstools');
 
   // seed-pods: stands of glowing pods in the wood, by fallen trunks, on the fen edge and around mounds
   const pods = [];
   const mounds = trees.trees.filter((t) => t.kind === 'mound');
-  const nPod = quality === 'low' ? 70 : 140;
+  const nPod = quality === 'low' ? 50 : 95;
   for (let k = 0; k < nPod; k++) {
     let cx, cz; const r = rng();
     if (r < 0.4) { const a = rng() * 6.28, d = Math.sqrt(rng()) * L.wood.r; cx = L.wood.x + Math.cos(a) * d; cz = L.wood.z + Math.sin(a) * d; }
@@ -794,19 +809,21 @@ export function buildToadstools(ctx, ground, mats, trees) {
     }
   }
   const pg = podGeo();
-  const podMesh = new THREE.InstancedMesh(pg, mats.fungus, pods.length);
   const podT = [lin('#d0e0a0'), lin('#a0d0c0'), lin('#e0c890')];
-  pods.forEach((s, i) => {
+  groups.push(...instGroups(ctx, pg, mats.fungus, pods, (s, m4, col) => {
     pos.set(s.x, ground.heightAt(s.x, s.z) - 0.02, s.z);
     e.set(s.tilt, s.rot, -s.tilt); q.setFromEuler(e); sc.setScalar(s.s);
-    m4.compose(pos, q, sc); podMesh.setMatrixAt(i, m4);
-    const t = podT[Math.floor(s.hue * 3) % 3]; col.setRGB(t[0], t[1], t[2]); podMesh.setColorAt(i, col);
-  });
-  podMesh.computeBoundingSphere();
-  podMesh.receiveShadow = true;
-  podMesh.name = 'veg-pods';
-  ctx.scene.add(podMesh);
-  return { mesh, podMesh, count: spots.length, pods: pods.length, tris: geo.index.count / 3 * spots.length + pg.index.count / 3 * pods.length };
+    m4.compose(pos, q, sc);
+    const t = podT[Math.floor(s.hue * 3) % 3]; col.setRGB(t[0], t[1], t[2]);
+  }, 'veg-pods'));
+  const VIS = 90;
+  function update(px, pz) {
+    for (const g of groups) {
+      const dx = Math.max(g.x0 - px, 0, px - g.x0 - GROUP), dz = Math.max(g.z0 - pz, 0, pz - g.z0 - GROUP);
+      g.mesh.visible = dx * dx + dz * dz < VIS * VIS;
+    }
+  }
+  return { update, groups: groups.length, count: spots.length, pods: pods.length, tris: geo.index.count / 3 * spots.length + pg.index.count / 3 * pods.length };
 }
 
 // ---------- Materials ----------
