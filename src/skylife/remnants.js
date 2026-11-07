@@ -265,7 +265,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
   group.add(worm);
   const W = { head: x0 + L, tail: x0, dirn: 1, phase: 0, pt: 0, d: L, pending: false };
   const GAIT = [3.6, 2.8, 2.4, 0.85]; // pause extended, draw up the tail, pause arched, lunge
-  const DMIN = 0.42 * L;
+  const DMIN = 0.34 * L;
   const lm = new THREE.Matrix4(), rm = new THREE.Matrix4(), headLocal = new THREE.Vector3(), headWorld = new THREE.Vector3();
   function wormShape(d) {
     // amplitude for a sine arch of span d whose length is L
@@ -296,7 +296,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
     else W.head = W.tail + W.dirn * d;
     W.d = d;
     const amp = wormShape(d);
-    const thick = 11;
+    const thick = 15;
     for (let s = 0; s < NSEG; s++) {
       const u0 = s / NSEG, u1 = (s + 1) / NSEG, um = (u0 + u1) / 2;
       const xa = W.tail + W.dirn * d * u0, xb = W.tail + W.dirn * d * u1;

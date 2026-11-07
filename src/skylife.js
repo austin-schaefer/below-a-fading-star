@@ -67,7 +67,8 @@ export async function build(ctx) {
       if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y += 0.12; }
       return met.spawn(colourIndex ?? 0, { at, dir });
     },
-    showerNow: () => met.shower(),
+    showerNow: (dir = null, still = false) => { if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); } met.shower(T, dir, still); },
+    state: () => met.state(),
     teleportBirdInView: () => { camera.getWorldDirection(viewDir); rem.api.startFlight(T, viewDir.clone().normalize()); },
     pause: (p = true) => { paused = p; },
     setFlicker: (v) => { forceFlicker = v; },

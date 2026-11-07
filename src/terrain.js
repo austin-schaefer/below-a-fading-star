@@ -60,10 +60,11 @@ export function heightAt(x, z) {
   h = flatten(h, x, z, L.court.x, L.court.z, 34, 26, L.court.y + SX.noise2(x * 0.1, z * 0.1) * 0.2);
   // Tarn basin: flatten then dish
   {
+    // A shelving shore: the floor crosses the water level (-4.6) at about r 58, then deepens to -12.5
     const d = Math.hypot(x - L.tarn.x, z - L.tarn.z);
-    h = flatten(h, x, z, L.tarn.x, L.tarn.z, 60, 34, L.tarn.y);
-    const bowl = 1 - smoothstep(0, 56, d);
-    h -= bowl * bowl * 7.5 + SX.noise2(x * 0.03, z * 0.03) * 0.6 * (1 - smoothstep(40, 70, d));
+    h = flatten(h, x, z, L.tarn.x, L.tarn.z, 62, 34, -4.0 + SX.noise2(x * 0.05, z * 0.05) * 0.25);
+    const bowl = 1 - smoothstep(36, 60, d);
+    h -= bowl * 8.5 + SX.noise2(x * 0.03, z * 0.03) * 0.5 * (1 - smoothstep(40, 70, d));
   }
   // Fen: broad, flat, pocked with pools
   {

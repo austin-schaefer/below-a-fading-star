@@ -104,9 +104,12 @@ export function buildSlinker(ctx, U) {
   // a point at bearing (radians from camera forward, + is to the camera's left) and distance
   const at = (off, d, out) => { const b = camBearing + off; out[0] = cam.x - Math.sin(b) * d; out[1] = cam.z - Math.cos(b) * d; return out; };
   const pt = [0, 0];
+  const TRY = [[0, 32], [0, 28], [0.1, 34], [0, 25], [0.2, 39]];
   function lurkTarget() {
-    for (const [o, d] of [[1.05, 32], [0.9, 30], [1.2, 34], [0.95, 26], [1.15, 39]]) {
-      at(S.side * o, d, pt);
+    // just inside the edge of the frame, but never nearer the middle than 50 degrees or farther out than 70
+    const e = clamp(hHalf - 0.05, 0.87, 1.22);
+    for (let k = 0; k < TRY.length; k++) {
+      at(S.side * (e + TRY[k][0]), TRY[k][1], pt);
       if (ok(pt[0], pt[1])) { S.tx = pt[0]; S.tz = pt[1]; return true; }
     }
     return false;
@@ -218,6 +221,7 @@ export function buildSlinker(ctx, U) {
       return { x: S.x, z: S.z, ok: ok(S.x, S.z) };
     },
     release() { S.hold = false; },
+    tick: update,
   });
   return { drawCalls: 1, tris: geo.index.count / 3 };
 }

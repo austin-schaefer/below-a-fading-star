@@ -82,9 +82,9 @@ const TRAIN_FS = /* glsl */`
     float n = sl_vnoise(vec2(vQ.y * 26.0 + vCol.a * 50.0, uT * 0.18 + vCol.a)) * 0.65 + sl_vnoise(vec2(vQ.y * 70.0, vQ.x * 2.0 + uT * 0.3)) * 0.35;
     float keep = smoothstep(age * 1.05 - 0.05, age * 1.05 + 0.25, n);
     float ends = smoothstep(0.0, 0.12, vQ.y) * smoothstep(1.0, 0.75, vQ.y);
-    float alpha = ac * keep * ends * (1.0 - age) * smoothstep(0.0, 0.03, age) * 0.55;
-    vec3 smoke = mix(vec3(0.035, 0.03, 0.045), uSunLight * 0.06, 0.5 + 0.5 * max(dot(d, uSunDir), 0.0));
-    vec3 glow = vCol.rgb * exp(-vAge * 1.1) * 0.5;
+    float alpha = ac * keep * ends * (1.0 - age) * smoothstep(0.0, 0.03, age) * 0.75;
+    vec3 smoke = vec3(0.07, 0.06, 0.085) + uSunLight * (0.07 + 0.1 * max(dot(d, uSunDir), 0.0)) * uFlicker;
+    vec3 glow = vCol.rgb * (exp(-vAge * 1.2) * 0.8 + exp(-vAge * 0.25) * 0.12);
     vec3 c = sl_air(smoke + glow, d, 0.05);
     gl_FragColor = vec4(c, alpha);
   }`;
@@ -219,12 +219,15 @@ export function buildMeteors(ctx, group, U, rng) {
     for (const a2 of Object.values(T)) a2.needsUpdate = true;
   }
 
-  function shower(t = U.uT.value) {
-    randomDir(radiant, 35, 75);
-    const n = 5 + ((rng() * 4) | 0), kind = pickKind() === FIREBALL ? 0 : pickKind();
+  // now: put the whole shower in the sky at once, mid-flight (for staging a still)
+  function shower(t = U.uT.value, dir = null, now = false) {
+    if (dir) radiant.copy(dir).normalize(); else randomDir(radiant, 35, 75);
+    const n = 5 + ((rng() * 4) | 0);
+    let kind = pickKind(); if (kind === FIREBALL) kind = 0;
+    if (now) { for (let k = 0; k < n; k++) spawn(rng() < 0.6 ? kind : 0, { fromRadiant: true, at: 0.3 + rng() * 0.5 }); return; }
     for (let k = 0; k < n && k < pending.length; k++) {
       pending[k].t = t + (k === 0 ? 0 : rng() * 3.5);
-      pending[k].kind = rng() < 0.6 ? (kind === FIREBALL ? 0 : kind) : 0;
+      pending[k].kind = rng() < 0.6 ? kind : 0;
     }
   }
 
@@ -250,9 +253,10 @@ export function buildMeteors(ctx, group, U, rng) {
       }
       if (p >= 1) { m.done = true; if (m.smoke) startTrain(m); }
     }
-    flash.intensity = fl * 0.55;
+    flash.intensity = fl * 1.6;
     if (t >= rumble.t) { rumble.t = Infinity; ctx.audio?.cue?.('rumble', rumble.pos); }
   }
 
-  return { update, spawn, shower: (t) => { shower(t); }, streaks, trains, flash, count: N };
+  const state = () => ({ T: U.uT.value, flash: flash.intensity, live: live.filter((m) => !m.done).map((m) => ({ k: m.kind, p: +((U.uT.value - m.t0) / m.dur).toFixed(3), s: m.s.toArray().map((v) => +v.toFixed(2)) })) });
+  return { update, spawn, state, shower, streaks, trains, flash, count: N };
 }

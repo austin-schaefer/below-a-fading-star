@@ -425,7 +425,7 @@ export function buildPlants(ctx, ground, shared) {
     // people walk the causeway, the keep's skirts and the stones: denser, shorter grass there
     const path = 1 - smoothstep(4, 28, cd);
     const dCastle = Math.hypot(mx - L.castle.x, mz - L.castle.z), dStones = Math.hypot(mx - L.stones.x, mz - L.stones.z);
-    const land = Math.max(1 - smoothstep(44, 90, dCastle), 1 - smoothstep(10, 40, dStones), 1 - smoothstep(16, 40, Math.hypot(mx - L.byre.x, mz - L.byre.z)));
+    const land = Math.max(1 - smoothstep(31, 80, dCastle), 1 - smoothstep(10, 40, dStones), 1 - smoothstep(16, 40, Math.hypot(mx - L.byre.x, mz - L.byre.z)));
     const heathW = smoothstep(0.35, 0.8, b.heath) * b.moor * (1 - b.wood);
     const marshW = smoothstep(0.25, 0.7, b.marsh);
     const crysW = smoothstep(0.15, 0.7, b.crystal);

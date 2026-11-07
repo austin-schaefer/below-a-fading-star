@@ -343,10 +343,9 @@ export function buildTraveller(ctx, U) {
     armPivot.rotation.set(-2.5 * S.arm, 0.3 * S.arm, 0.28 * S.arm, 'XYZ');
     // wheels turn though they touch nothing
     S.spin += (S.speed / 0.48) * dt;
-    let i = 0;
-    for (const x of [-1.16, 1.16]) for (const z of [-0.85, 0.85]) {
-      e.set(S.spin + i * 0.7, 0, 0); q.setFromEuler(e); pv.set(x, 0.35, z);
-      m4.compose(pv, q, sc); wheels.setMatrixAt(i++, m4);
+    for (let i = 0; i < 4; i++) {
+      e.set(S.spin + i * 0.7, 0, 0); q.setFromEuler(e); pv.set(i < 2 ? -1.16 : 1.16, 0.35, i % 2 ? 0.85 : -0.85);
+      m4.compose(pv, q, sc); wheels.setMatrixAt(i, m4);
     }
     wheels.instanceMatrix.needsUpdate = true;
     // lantern: a pendulum, kicked by the bobbing

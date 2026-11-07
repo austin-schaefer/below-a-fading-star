@@ -14,20 +14,20 @@ function bodyGeometry(low) {
   const sides = low ? 12 : 16;
   P.paint(SKIN, 0, 0.5, 0.06);
   // torso, front and back alike: two spines, four shoulder blades
-  P.grid(sides, 10, (u, v, o) => {
-    const a = u * Math.PI * 2, y = -1.05 + v * 1.4;
-    const w = 0.15 + 0.05 * smoothstep(-0.4, 0.25, y) - 0.03 * smoothstep(0.25, 0.35, y);
-    const d = 0.1 + 0.012 * smoothstep(-0.3, 0.2, y);
+  P.grid(sides, 16, (u, v, o) => {
+    const a = u * Math.PI * 2, y = -1.05 + v * 1.5;
+    const w = 0.15 + 0.055 * smoothstep(-0.4, 0.16, y) - 0.15 * smoothstep(0.17, 0.45, y);
+    const d = 0.1 + 0.014 * smoothstep(-0.3, 0.12, y) - 0.06 * smoothstep(0.2, 0.45, y);
     const groove = 1 - 0.07 * Math.exp(-((Math.cos(a)) ** 2) / 0.02) * smoothstep(-0.6, 0.2, y);
     o[0] = Math.cos(a) * w; o[1] = y; o[2] = Math.sin(a) * d * groove;
   }, true, true);
   for (const sx of [-1, 1]) {
-    P.blob(sx * 0.17, 0.3, 0, 0.075, 0.06, 0.08, 8, 6);                                  // shoulders
-    for (const sz of [-1, 1]) P.blob(sx * 0.085, 0.17, sz * 0.09, 0.055, 0.075, 0.03, 8, 5); // blades, both sides
-    P.loft([[sx * 0.2, 0.3, 0], [sx * 0.235, 0.0, 0.0], [sx * 0.24, -0.35, 0.0]], [0.048, 0.042, 0.036], 8); // arms, down into the water
+    P.blob(sx * 0.185, 0.2, 0, 0.068, 0.07, 0.075, 8, 6);                                 // shoulders
+    for (const sz of [-1, 1]) P.blob(sx * 0.085, 0.1, sz * 0.095, 0.055, 0.075, 0.03, 8, 5); // blades, both sides
+    P.loft([[sx * 0.2, 0.2, 0], [sx * 0.235, -0.1, 0.0], [sx * 0.24, -0.45, 0.0]], [0.05, 0.043, 0.036], 8); // arms, down into the water
   }
   // a neck a little too long
-  P.loft([[0, 0.3, 0], [0, 0.42, 0], [0, 0.53, 0]], [0.058, 0.05, 0.05], 10);
+  P.loft([[0, 0.36, 0], [0, 0.45, 0], [0, 0.55, 0]], [0.056, 0.048, 0.048], 10);
   P.blob(0, 0.63, 0, 0.083, 0.108, 0.098, 12, 8);
   return P.geometry();
 }
