@@ -111,8 +111,8 @@ const FRAG = /* glsl */`
     // foam where the fall strikes, churning outward
     float ang = atan(di.y, di.x);
     float churn = texture2D(uTex, vec2(ang * 0.32 + uTime * 0.02, ri * 0.45 - uTime * 0.35)).a * 0.6 + texture2D(uTex, p * 0.9 + vec2(0.0, -uTime * 0.2)).a * 0.4;
-    float foam = (1.0 - smoothstep(0.6, 2.6, ri)) * smoothstep(0.35, 0.6, churn + 0.25 * (1.0 - smoothstep(0.0, 1.2, ri)));
-    col = mix(col, vec3(0.78, 0.72, 0.68) * (0.35 + 0.65 * uFlicker), foam * 0.85);
+    float foam = (1.0 - smoothstep(0.4, 2.4, ri)) * smoothstep(0.2, 0.75, churn + 0.3 * (1.0 - smoothstep(0.0, 1.0, ri)));
+    col = mix(col, vec3(0.62, 0.58, 0.56) * (0.35 + 0.65 * uFlicker), foam * 0.7);
     // the rim of the pool softens into its beach
     float rimFade = 1.0 - smoothstep(uCenter.z - 0.7, uCenter.z, distance(p, uCenter.xy));
     col = mix(col, body * 0.6, (1.0 - rimFade) * 0.5);

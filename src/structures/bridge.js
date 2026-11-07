@@ -141,7 +141,7 @@ export function buildBridge(ctx, B, env) {
     const m = mat(q.x, gy + h * 0.25, q.z, rx, ry, rz);
     B.add(B.box(w, h, d, { seg: 1.0, chip: 0.4, seed: k * 5 }), m, { color: vary(tint, rng, 0.05), course: COURSE, moss: 0.95, ground: gy, disp: 0.1, dispScale: 0.8 });
     if (k % 2 === 0) sierp(m.clone().multiply(new THREE.Matrix4().makeTranslation(0, -h * 0.35, d / 2 + 0.01)), 0, 0, Math.min(w, h) * 0.8, 2);
-    ctx.addCollider({ x: q.x, z: q.z, r: Math.min(w, d) * 0.5 + 0.3 });
+    ctx.addCollider({ x: q.x, z: q.z, r: Math.min(w, d) * 0.5 + 0.3, y: gy - 0.5, h: h + 0.5 }); // capped: the deck passes over
   }
   rubblePile(B, env, P((gapS0 + gapS1) / 2).x, P((gapS0 + gapS1) / 2).z, 9, 70, { height: 1.2, size: 0.9, tint, blocks: 0.5 });
 

@@ -65,11 +65,11 @@ export function buildOmens(ctx, group, U, rng) {
   const pc = new THREE.Color('#f2d8ae');
   for (let i = 0; i < NP; i++) {
     PS.a.aCol.setXYZ(i, pc.r * 0.85, pc.g * 0.85, pc.b * 0.85);
-    PS.a.aSize.setX(i, (i === 0 ? 4.4 : 3.6) * pr);
+    PS.a.aSize.setX(i, (i === 0 ? 5.6 : 4.6) * pr);
     PS.a.aSeed.setX(i, rng());
   }
   const sc = new THREE.Color('#dfe6ff');
-  PS.a.aCol.setXYZ(NP, sc.r, sc.g, sc.b); PS.a.aSize.setX(NP, 3.0 * pr); PS.a.aSeed.setX(NP, 0.5);
+  PS.a.aCol.setXYZ(NP, sc.r, sc.g, sc.b); PS.a.aSize.setX(NP, 4.0 * pr); PS.a.aSeed.setX(NP, 0.5);
 
   const pro = { t0: -1e6, dur: 150, next: 100 + rng() * 80, a: new THREE.Vector3(), axis: new THREE.Vector3(), angle: 2, gap: 1.1 * Math.PI / 180, out: new Float32Array(NP) };
   const pv = new THREE.Vector3(), pb = new THREE.Vector3();
@@ -107,7 +107,7 @@ export function buildOmens(ctx, group, U, rng) {
         pv.copy(pro.a).applyAxisAngle(pro.axis, pro.angle * fi).multiplyScalar(R);
         PS.a.position.setXYZ(i, pv.x, pv.y, pv.z);
       }
-      PS.a.aI.setX(i, I * 0.85);
+      PS.a.aI.setX(i, I * 1.5);
     }
   }
 
@@ -134,7 +134,7 @@ export function buildOmens(ctx, group, U, rng) {
     }
     pv.copy(star.dir).multiplyScalar(2300);
     PS.a.position.setXYZ(NP, pv.x, pv.y, pv.z);
-    PS.a.aI.setX(NP, 0.55 + 0.12 * Math.sin(t * 2.3) * Math.sin(t * 0.7));
+    PS.a.aI.setX(NP, 1.0 + 0.15 * Math.sin(t * 2.3) * Math.sin(t * 0.7));
   }
 
   // ---------- the shard belt: only while the sun gutters
@@ -160,10 +160,10 @@ export function buildOmens(ctx, group, U, rng) {
     BS.a.position.setXYZ(i, pv.x * RB, pv.y * RB, pv.z * RB);
     tc.copy(bc).lerp(bc2, rng());
     BS.a.aCol.setXYZ(i, tc.r, tc.g, tc.b);
-    const big = i === 7 ? 6.5 : 1.3 + Math.pow(rng(), 6) * 2.4;
+    const big = i === 7 ? 7.5 : 2.0 + Math.pow(rng(), 5) * 3.0;
     BS.a.aSize.setX(i, big * pr);
     BS.a.aSeed.setX(i, rng());
-    beltI[i] = (i === 7 ? 0.5 : 0.18 + Math.pow(rng(), 3) * 0.5) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
+    beltI[i] = (i === 7 ? 1.2 : 0.45 + Math.pow(rng(), 3) * 1.1) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
   }
   const beltDir = pv.copy(A).applyAxisAngle(bAxis, span * 0.45).clone();
   let beltShown = 0;
