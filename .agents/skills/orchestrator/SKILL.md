@@ -76,6 +76,14 @@ When a subagent reports done:
 4. If everything's good: `gh pr create --fill --body "Closes #<n> ..."` from the branch, wait for CI (`gh pr checks <pr> --watch`; if it says "no checks reported", the workflow hasn't registered yet: wait 30 seconds and run it again, never merge on that message), then `gh pr merge <pr> --squash --delete-branch`, then `tools/worktree.sh rm <n>`. Close the issue with a two- or three-line comment if the merge didn't close it.
 5. If not: send it back with specific feedback, or re-brief a fresh subagent, possibly on a stronger model.
 
+## Visual prototypes: screenshots are the record
+
+For anything visual under `prototypes/` (the wilderness scene is the first), Austin storytells from the build, so renders are part of the deliverable and are curated, not dumped. The full rule lives in `prototypes/wilderness/README.md` ("Screenshots are part of the record") and the reusable curation brief in `prototypes/wilderness/tools/curate-shots.md`. The short form:
+
+- Every subagent writes every render it takes into `shots/wip/` named `<module>-<stage>-<view>.png`, never only its scratchpad. Nothing is deleted by the agent that made it.
+- The orchestrator copies the best of each hand-back into `shots/` and commits after every hand-back, so a crash loses nothing.
+- Before every merge to `main`, the orchestrator dispatches the curation brief to a mid-tier subagent: it looks at every image, keeps roughly one in five (each subject's best view, every before/after that shows a decision, the first render of each module, a few good failures), moves keepers into the flat `shots/` folder under the `NN-subject-view[-before|after]` scheme, deletes the rest with `git rm` so history keeps them, and updates `shots/README.md`, the captioned index. Files agents are still producing are left alone.
+
 ## Working with the designer
 
 - Keep updates short. The designer wants outcomes, not narration.
