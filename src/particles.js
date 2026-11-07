@@ -1,4 +1,4 @@
-// Particles: seven GPU-driven systems, seven draw calls.
+// Particles: seven GPU-driven systems, eleven draw calls.
 //   dust motes (box around camera)      ash and embers (box around camera)
 //   corpse-candles (CPU wander, 4 real point lights)
 //   fireflies (Deodand Wood)            ground mist (instanced billboards)
@@ -133,15 +133,22 @@ export async function build(ctx) {
   const wisps = { count: 0, list: [], lights: [] }; // exposed as ctx.wisps for audio and others
   {
     const fen = ctx.water.fen, wy = fen.y;
-    const n = Math.round(14 * (high ? 1 : 0.75));
+    const n = Math.round(20 * (high ? 1 : 0.75)), nOut = Math.round(n * 0.2);
     const rng = ctx.makeRng(8301);
     // homes over pools: prefer points where the terrain is below the water, spread by rejection
     const homes = [];
-    for (let tries = 0; tries < 4000 && homes.length < n; tries++) {
+    for (let tries = 0; tries < 4000 && homes.length < n - nOut; tries++) {
       const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 62;
       const x = fen.x + Math.cos(a) * r, z = fen.z + Math.sin(a) * r;
       if (terrain.heightAt(x, z) > wy - 0.25 && tries < 3000) continue;
       if (homes.some((h) => Math.hypot(h.x - x, h.z - z) < 9)) continue;
+      homes.push({ x, z });
+    }
+    // a few stray lights beyond the fen's edge, over the wet moor
+    for (let tries = 0; tries < 400 && homes.length < n; tries++) {
+      const a = rng() * Math.PI * 2, r = 86 + rng() * 26;
+      const x = fen.x + Math.cos(a) * r, z = fen.z + Math.sin(a) * r;
+      if (Math.hypot(x, z) > ctx.world.regionRadius - 20 || terrain.heightAt(x, z) > 6) continue;
       homes.push({ x, z });
     }
     while (homes.length < n) homes.push({ x: fen.x + (rng() - 0.5) * 80, z: fen.z + (rng() - 0.5) * 80 });
@@ -319,7 +326,7 @@ export async function build(ctx) {
       homes.push(x, y, z, rng());
       dims.push(w, h, 0.010 + rng() * 0.008, rng() * 10);
     };
-    const nFen = Math.round(26 * q), nTarn = Math.round(14 * q), nHollow = Math.round(16 * q);
+    const nFen = Math.round(26 * q), nTarn = Math.round(14 * q), nHollow = Math.round(44 * q);
     const fen = ctx.water.fen, tarn = ctx.water.tarn;
     for (let i = 0; i < nFen; i++) {
       const a = rng() * 6.283, r = Math.sqrt(rng()) * 72;
@@ -330,10 +337,12 @@ export async function build(ctx) {
       const a = rng() * 6.283, r = Math.sqrt(rng()) * 52;
       add(tarn.x + Math.cos(a) * r, tarn.y + 0.3, tarn.z + Math.sin(a) * r, 26 + rng() * 22, 3 + rng() * 2);
     }
-    for (let tries = 0, got = 0; tries < 3000 && got < nHollow; tries++) {
+    for (let tries = 0, got = 0; tries < 8000 && got < nHollow; tries++) {
       const a = rng() * 6.283, r = Math.sqrt(rng()) * 270;
       const x = Math.cos(a) * r, z = Math.sin(a) * r, h = terrain.heightAt(x, z);
-      if (h >= -1 || h < -9) continue;
+      if (h < -9) continue;
+      const nb = (terrain.heightAt(x + 14, z) + terrain.heightAt(x - 14, z) + terrain.heightAt(x, z + 14) + terrain.heightAt(x, z - 14)) * 0.25;
+      if (h >= -1 && h > nb - 0.7) continue;     // a hollow: low, or lower than its surroundings
       if (Math.hypot(x - fen.x, z - fen.z) < fen.r + 10 || Math.hypot(x - tarn.x, z - tarn.z) < tarn.r + 10) continue;
       add(x, h + 0.2, z, 18 + rng() * 16, 2.5 + rng() * 2); got++;
     }
@@ -373,7 +382,7 @@ export async function build(ctx) {
         vec2 uv = vUv;
         float n = texture2D(uTex, uv * vec2(1.3, 0.55) + vOff + vec2(uTime * 0.004, 0.0)).r * 0.6
                 + texture2D(uTex, uv * vec2(3.1, 1.2) + vOff * 1.7 - vec2(uTime * 0.007, 0.0)).r * 0.4;
-        float edge = smoothstep(0.0, 0.42, uv.x) * smoothstep(1.0, 0.58, uv.x);
+        float edge = smoothstep(0.0, 0.42, uv.x) * (1.0 - smoothstep(0.58, 1.0, uv.x));
         float prof = pow(sin(3.14159 * clamp(uv.y, 0.0, 1.0)), 1.4);
         float a = smoothstep(0.34, 0.78, n) * edge * prof * vLife * 0.30;
         ${fogAtten}
@@ -501,6 +510,191 @@ export async function build(ctx) {
     });
   }
 
+
+  // ------------------------------------------------------------------ 8. midges over the fen and the water's edge
+  {
+    const rng = ctx.makeRng(8801), n = Math.round(700 * q);
+    const pos = [], seed = [];
+    const fen = ctx.water.fen, tarn = ctx.water.tarn;
+    for (let i = 0; i < n; i++) {
+      const onFen = rng() < 0.7, b = onFen ? fen : tarn;
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * (onFen ? 84 : 70);
+      const x = b.x + Math.cos(a) * r, z = b.z + Math.sin(a) * r;
+      pos.push(x, Math.max(terrain.heightAt(x, z), b.y) + 0.4 + rng() * 2.4, z);
+      seed.push(rng(), rng(), rng(), rng());
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
+    const vs = /* glsl */`
+      uniform float uTime, uScale, uFlicker; uniform vec3 uSun;
+      attribute vec4 aSeed; varying float vA; varying float vFw;
+      #include <fog_pars_vertex>
+      void main() {
+        float t = uTime * (0.8 + aSeed.w);
+        vec3 transformed = position + vec3(sin(t * 1.3 + aSeed.x * 50.0) * 1.1 + sin(t * 0.31 + aSeed.y * 9.0) * 2.0,
+                                           sin(t * 1.7 + aSeed.y * 40.0) * 0.45,
+                                           cos(t * 1.1 + aSeed.z * 50.0) * 1.1 + cos(t * 0.27 + aSeed.x * 9.0) * 2.0);
+        vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        float depth = -mvPosition.z;
+        vec3 dir = normalize(transformed - cameraPosition);
+        vFw = pow(max(dot(dir, uSun), 0.0), 3.0);
+        vA = (1.0 - smoothstep(18.0, 55.0, depth)) * smoothstep(0.8, 3.0, depth) * (0.5 + 0.5 * sin(uTime * 9.0 + aSeed.x * 99.0));
+        gl_PointSize = clamp(max(1.5, 0.028 * uScale / max(depth, 0.1)), 1.5, 8.0);
+        #include <fog_vertex>
+      }`;
+    const fs = /* glsl */`
+      uniform vec3 uWarm; varying float vA; varying float vFw;
+      ${fogPars}
+      ${softDot}
+      void main() {
+        float s = softDot(gl_PointCoord);
+        vec3 col = vec3(0.16, 0.14, 0.17) + uWarm * vFw * 0.9;
+        gl_FragColor = vec4(col, s * vA * 0.7);
+        #include <fog_fragment>
+      }`;
+    pointsOf(geo, bind(mkMat(vs, fs, { uWarm: { value: C(palette.sunLight) } })), 26);
+  }
+
+  // ------------------------------------------------------------------ 9. moths in the Deodand Wood
+  {
+    const wood = L.wood, rng = ctx.makeRng(8901), want = Math.round(48 * q);
+    const pos = [], seed = [];
+    for (let tries = 0; tries < 2000 && pos.length / 3 < want; tries++) {
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * (wood.r - 10);
+      const x = wood.x + Math.cos(a) * r, z = wood.z + Math.sin(a) * r;
+      const h = terrain.heightAt(x, z), wl = terrain.waterLevelAt(x, z);
+      if (wl !== null && h < wl + 0.6) continue;
+      pos.push(x, h + 1.2 + rng() * 3.5, z); seed.push(rng(), rng(), rng(), rng());
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
+    const vs = /* glsl */`
+      uniform float uTime, uScale, uFlicker; uniform vec3 uSun;
+      attribute vec4 aSeed; varying float vA; varying float vFw; varying float vWing;
+      #include <fog_pars_vertex>
+      void main() {
+        float t = uTime * (0.12 + aSeed.w * 0.1);
+        vec3 transformed = position + vec3(sin(t * 3.1 + aSeed.x * 60.0) * 4.0 + sin(t * 7.3 + aSeed.z * 20.0) * 0.8,
+                                           sin(t * 2.3 + aSeed.y * 60.0) * 1.2 + sin(uTime * 4.0 + aSeed.x * 30.0) * 0.12,
+                                           cos(t * 2.7 + aSeed.z * 60.0) * 4.0);
+        vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        float depth = -mvPosition.z;
+        vFw = pow(max(dot(normalize(transformed - cameraPosition), uSun), 0.0), 2.0);
+        vWing = 0.55 + 0.45 * sin(uTime * (14.0 + aSeed.y * 6.0) + aSeed.x * 90.0);
+        vA = (1.0 - smoothstep(30.0, 70.0, depth)) * smoothstep(1.0, 3.0, depth);
+        gl_PointSize = clamp(max(2.0, 0.17 * uScale / max(depth, 0.1)), 2.0, 22.0);
+        #include <fog_vertex>
+      }`;
+    const fs = /* glsl */`
+      uniform vec3 uWarm; varying float vA; varying float vFw; varying float vWing;
+      ${fogPars}
+      void main() {
+        vec2 c = (gl_PointCoord - 0.5) * 2.0;
+        c.y *= 1.0 + 0.8 * vWing;                         // wings open and shut
+        float s = 1.0 - smoothstep(0.3, 0.9, length(vec2(c.x * 0.8, c.y)));
+        vec3 col = vec3(0.30, 0.27, 0.24) + uWarm * vFw * 0.7;
+        gl_FragColor = vec4(col, s * vA * 0.75);
+        #include <fog_fragment>
+      }`;
+    pointsOf(geo, bind(mkMat(vs, fs, { uWarm: { value: C(palette.sunLight) } })), 26);
+  }
+
+  // ------------------------------------------------------------------ 10. bubbles rising in the fen, popping in rings
+  {
+    const fen = ctx.water.fen, rng = ctx.makeRng(9001), want = Math.round(70 * q);
+    const pos = [], seed = [];
+    for (let tries = 0; tries < 6000 && pos.length / 3 < want; tries++) {
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * 74;
+      const x = fen.x + Math.cos(a) * r, z = fen.z + Math.sin(a) * r;
+      if (terrain.heightAt(x, z) > fen.y - 0.5) continue;
+      pos.push(x, fen.y, z); seed.push(rng(), rng(), rng(), rng());
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
+    const vs = /* glsl */`
+      uniform float uTime, uScale, uFlicker;
+      attribute vec4 aSeed; varying float vC; varying float vA;
+      #include <fog_pars_vertex>
+      void main() {
+        float c = fract(uTime * (0.045 + aSeed.w * 0.05) + aSeed.x * 7.0);  // 0..0.55 rising, then a ring
+        vec3 transformed = position;
+        float rise = min(c / 0.55, 1.0);
+        transformed.y -= (1.0 - rise) * 0.9;
+        transformed.y += step(0.55, c) * 0.03;
+        vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        float depth = -mvPosition.z;
+        float ring = clamp((c - 0.55) / 0.45, 0.0, 1.0);
+        vC = c < 0.55 ? -1.0 : ring;
+        vA = c < 0.55 ? 0.35 * rise : (1.0 - ring);
+        float sz = c < 0.55 ? 0.12 : 0.25 + ring * 0.9;
+        vA *= 1.0 - smoothstep(25.0, 70.0, depth);
+        gl_PointSize = clamp(sz * uScale / max(depth, 0.1), 2.0, 70.0);
+        #include <fog_vertex>
+      }`;
+    const fs = /* glsl */`
+      varying float vC; varying float vA;
+      ${fogPars}
+      void main() {
+        vec2 c = (gl_PointCoord - 0.5) * 2.0; float r = length(c);
+        float a = vC < 0.0 ? exp(-r * r * 12.0) : exp(-pow((r - 0.8) / 0.12, 2.0)) * 0.7;
+        gl_FragColor = vec4(vec3(0.42, 0.40, 0.36), a * vA);
+        #include <fog_fragment>
+      }`;
+    pointsOf(geo, bind(mkMat(vs, fs, {})), 21);
+  }
+
+  // ------------------------------------------------------------------ 11. leaf litter and petals drifting on the tarn
+  {
+    const tarn = ctx.water.tarn, rng = ctx.makeRng(9101), n = Math.round(120 * q);
+    const pos = [], seed = [];
+    for (let i = 0; i < n; i++) {
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * 48;
+      pos.push(tarn.x + Math.cos(a) * r, tarn.y + 0.02, tarn.z + Math.sin(a) * r);
+      seed.push(rng(), rng(), rng(), rng());
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
+    const vs = /* glsl */`
+      uniform float uTime, uScale; uniform vec3 uA, uB, uC;
+      attribute vec4 aSeed; varying vec3 vCol; varying float vRot; varying float vA;
+      #include <fog_pars_vertex>
+      void main() {
+        vec3 transformed = position;
+        transformed.x += sin(uTime * 0.05 + aSeed.x * 40.0) * 4.0 + uTime * 0.02;
+        transformed.z += cos(uTime * 0.04 + aSeed.y * 40.0) * 4.0;
+        transformed.y += sin(uTime * 0.8 + aSeed.z * 50.0) * 0.015;
+        vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        float depth = -mvPosition.z;
+        float k = fract(aSeed.w * 7.1 + aSeed.x * 3.3);
+        vCol = k < 0.55 ? uA : (k < 0.8 ? uB : uC);
+        vRot = aSeed.z * 6.28 + sin(uTime * 0.1 + aSeed.x * 30.0) * 0.6;
+        vA = 1.0 - smoothstep(40.0, 90.0, depth);
+        gl_PointSize = clamp(max(2.0, (0.16 + 0.2 * aSeed.w) * uScale / max(depth, 0.1)), 2.0, 22.0);
+        #include <fog_vertex>
+      }`;
+    const fs = /* glsl */`
+      varying vec3 vCol; varying float vRot; varying float vA;
+      ${fogPars}
+      void main() {
+        vec2 c = (gl_PointCoord - 0.5) * 2.0;
+        float cs = cos(vRot), sn = sin(vRot);
+        c = vec2(cs * c.x - sn * c.y, sn * c.x + cs * c.y);
+        c.y *= 1.9;                                          // flattened to lie on the surface
+        float a = 1.0 - smoothstep(0.6, 0.9, length(c * vec2(1.0, 0.6)));
+        gl_FragColor = vec4(vCol, a * vA * 0.9);
+        #include <fog_fragment>
+      }`;
+    pointsOf(geo, bind(mkMat(vs, fs, { uA: { value: C('#4a2a14') }, uB: { value: C('#6a4a22') }, uC: { value: C('#8a7a76') } })), 21);
+  }
+
   // ------------------------------------------------------------------ frame: shared uniforms
   const tmpSize = new THREE.Vector2();
   ctx.registerUpdate((dt, t) => {
@@ -509,5 +703,5 @@ export async function build(ctx) {
     ctx.renderer.getDrawingBufferSize(tmpSize);
     U.uScale.value = tmpSize.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) * 0.5));
   });
-  ctx.log('particles: 7 systems');
+  ctx.log('particles: 11 systems');
 }

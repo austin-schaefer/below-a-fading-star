@@ -68,7 +68,7 @@ const PERCHES = (() => {
   return P;
 })();
 
-function crowGeometry() {
+export function crowGeometry() {
   const M = new Mesher();
   const W = (x) => clamp((Math.abs(x) - 0.03) / 0.55, 0, 1);
   M.loft([[0, 0.02, -0.2], [0, 0.03, 0], [0, 0.05, 0.14]], [[0.03, 0.035], [0.065, 0.07], [0.05, 0.055]], 6);
@@ -193,7 +193,7 @@ export function buildFishRings(ctx) {
     const count = 3;
     for (let k = 0; k < count; k++) {
       const r = rings[cursor++ % NR];
-      r.on = true; r.age = 0; r.delay = k * 0.45; r.x = x; r.z = z; r.dur = 3.4 - k * 0.3; r.max = 2.4 + k * 0.5;
+      r.on = true; r.age = 0; r.delay = k * 0.45; r.x = x; r.z = z; r.dur = 3.4 - k * 0.3; r.max = 3.6 + k * 0.8;
     }
     tp.set(x, y, z);
     ctx.audio?.cue?.('plop', tp);
@@ -225,7 +225,7 @@ export function buildFishRings(ctx) {
       const u = r.age / r.dur;
       if (u >= 1) { r.on = false; continue; }
       const s = 0.1 + r.max * (1 - Math.pow(1 - u, 2.2));
-      const fade = Math.pow(1 - u, 1.6) * smoothstep(0, 0.06, u) * 0.9;
+      const fade = Math.pow(1 - u, 1.3) * smoothstep(0, 0.06, u) * 1.6;
       sc.set(s, 1, s); pos.set(r.x, y, r.z); M4.compose(pos, q, sc);
       mesh.setMatrixAt(i, M4);
       mesh.setColorAt(i, col.copy(base).multiplyScalar(fade));

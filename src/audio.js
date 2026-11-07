@@ -71,7 +71,7 @@ export async function build(ctx) {
     // ================================================================ wind
     const windBus = ac.createGain(); windBus.gain.value = 0; windBus.connect(master); send(windBus, 0.12);
     const windLayers = [];
-    [[260, 0.9, 0.5], [640, 1.3, 0.35], [1500, 1.8, 0.16]].forEach(([f, q, lvl], i) => {
+    [[260, 0.9, 1.0], [640, 1.3, 0.7], [1500, 1.8, 0.32]].forEach(([f, q, lvl], i) => {
       const g = ac.createGain(); g.gain.value = 0; g.connect(windBus);
       const filters = [];
       for (const side of [-1, 1]) {
@@ -270,10 +270,71 @@ export async function build(ctx) {
       try {
         if (name === 'cry') cry(position || { x: camera.position.x + 120, y: 80, z: camera.position.z - 100 });
         else if (name === 'crows') crows(position);
+        else if (name === 'flush') flush(position || camera.position);
         else if (name === 'plop') plop(position || { x: -90, y: -4.6, z: 110 });
         else if (name === 'strike') strike(stones[(position | 0) % 4]);
       } catch (e) { /* ignore */ }
     };
+
+
+    // ================================================================ insects, frogs, distant calls
+    const insBus = ac.createGain(); insBus.gain.value = 0; insBus.connect(master); send(insBus, 0.08);
+    [[4700, 24, -0.6, 0.5], [6100, 31, 0.6, 0.4], [3600, 17, 0.1, 0.35]].forEach(([f, rate, pan, lvl], i) => {
+      const src = loopSrc(white, rng()), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 9;
+      const g = ac.createGain(); g.gain.value = 0.5;
+      const lfo = ac.createOscillator(); lfo.type = 'square'; lfo.frequency.value = rate; const lg = ac.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+      const slow = ac.createOscillator(); slow.frequency.value = 0.2 + 0.13 * i; const sg = ac.createGain(); sg.gain.value = 0.0; slow.start();
+      const out = ac.createGain(); out.gain.value = lvl * 0.5;
+      const gate = ac.createOscillator(); gate.type = 'sine'; gate.frequency.value = 0.35 + 0.17 * i; const gg = ac.createGain(); gg.gain.value = lvl * 0.45; gate.connect(gg); gg.connect(out.gain); gate.start();
+      const pn = ac.createStereoPanner(); pn.pan.value = pan;
+      src.connect(bp); bp.connect(g); g.connect(out); out.connect(pn); pn.connect(insBus);
+    });
+    const frogBus = ac.createGain(); frogBus.gain.value = 1; frogBus.connect(master); send(frogBus, 0.3);
+    const frogPan = panner('equalpower', 6, 1.2); frogPan.connect(frogBus);
+    let frogT = 0;
+    function frog() {
+      const t0 = ac.currentTime + 0.01, base = rng() < 0.6 ? 150 + rng() * 80 : 1700 + rng() * 500;
+      const pulses = base > 1000 ? 2 : 3 + ((rng() * 3) | 0), gap = base > 1000 ? 0.09 : 0.07;
+      for (let k = 0; k < pulses; k++) {
+        const tt = t0 + k * gap;
+        const o = ac.createOscillator(); o.type = base > 1000 ? 'sine' : 'square'; o.frequency.setValueAtTime(base, tt); o.frequency.exponentialRampToValueAtTime(base * (base > 1000 ? 1.25 : 0.8), tt + 0.05);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = base * 2; bp.Q.value = 2;
+        const g = ac.createGain(); env(g, tt, base > 1000 ? 0.025 : 0.05, 0.005, 0.045);
+        o.connect(bp); bp.connect(g); g.connect(frogPan); o.start(tt); o.stop(tt + 0.08);
+      }
+    }
+    let callT = 6 + rng() * 6;
+    function distantCall(kind, x, z) {
+      const p = panner('equalpower', 40, 1.0); setPos(p, x, camera.position.y + 10, z); p.connect(master); send(p, 0.9);
+      let at = ac.currentTime + 0.02;
+      if (kind === 0) { // hoot
+        for (let k = 0; k < 2; k++) {
+          const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(330, at); o.frequency.exponentialRampToValueAtTime(250, at + 0.7);
+          const g = ac.createGain(); env(g, at, 0.1, 0.12, 0.7); o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.9); at += 1.0;
+        }
+      } else if (kind === 1) { // yelps
+        for (let k = 0; k < 3; k++) {
+          const f = 800 + rng() * 300; const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f, at); o.frequency.exponentialRampToValueAtTime(f * 0.55, at + 0.16);
+          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 1.5;
+          const g = ac.createGain(); env(g, at, 0.1, 0.01, 0.15); o.connect(bp); bp.connect(g); g.connect(p); o.start(at); o.stop(at + 0.25); at += 0.22 + rng() * 0.1;
+        }
+      } else { // a long wavering moan
+        const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(180, at); o.frequency.linearRampToValueAtTime(240, at + 1.2); o.frequency.linearRampToValueAtTime(140, at + 2.8);
+        const v = ac.createOscillator(); v.frequency.value = 5; const vg = ac.createGain(); vg.gain.value = 8; v.connect(vg); vg.connect(o.frequency);
+        const g = ac.createGain(); env(g, at, 0.09, 0.8, 2.2); o.connect(g); g.connect(p); o.start(at); v.start(at); o.stop(at + 3.2); v.stop(at + 3.2); at += 3;
+      }
+      setTimeout(() => p.disconnect(), (at - ac.currentTime + 5) * 1000);
+    }
+    function flush(pos) {
+      const p = oneShotPanner(pos, 6, 1.1); const t0 = ac.currentTime + 0.01;
+      const s = burst(white, 0.6), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2200; f.Q.value = 0.8;
+      const g = ac.createGain(); env(g, t0, 0.14, 0.02, 0.5);
+      // a rattle of wingbeats
+      const am = ac.createOscillator(); am.frequency.value = 22; const ag = ac.createGain(); ag.gain.value = 0.5; const base = ac.createGain(); base.gain.value = 0.5; am.connect(ag); ag.connect(base.gain);
+      s.connect(f); f.connect(base); base.connect(g); g.connect(p); am.start(t0); am.stop(t0 + 0.7);
+      for (let k = 0; k < 3; k++) { const o = ac.createOscillator(); o.type = 'sawtooth'; const tt = t0 + 0.1 + k * 0.12 + rng() * 0.06; o.frequency.setValueAtTime(3000, tt); o.frequency.exponentialRampToValueAtTime(2200, tt + 0.05); const og = ac.createGain(); env(og, tt, 0.02, 0.003, 0.05); o.connect(og); og.connect(p); o.start(tt); o.stop(tt + 0.08); }
+      setTimeout(() => p.disconnect(), 3000);
+    }
 
     // ================================================================ deodand click
     const clickPan = panner('HRTF', 3, 1.4);
@@ -321,7 +382,7 @@ export async function build(ctx) {
       const fl = ctx.sky?.flicker?.value ?? 1;
       const target = clamp((1 - fl) / 0.78, 0, 1);
       swellSm += (target - swellSm) * (target > swellSm ? 0.25 : 0.04);
-      droneBus.gain.setTargetAtTime(0.07 + 0.3 * swellSm, now, 0.4);
+      droneBus.gain.setTargetAtTime(0.1 + 0.4 * swellSm, now, 0.4);
       for (const o of droneOsc) o.detune.setTargetAtTime(-260 * swellSm, now, 0.6);
       shim.gain.setTargetAtTime(0.004 + 0.016 * swellSm, now, 0.5);
       droneLP.frequency.setTargetAtTime(360 + 500 * swellSm, now, 0.5);
@@ -355,6 +416,27 @@ export async function build(ctx) {
         s.cool -= step;
         if (s.armed && d < 20 && s.cool <= 0) { strike(s, 0.5 + 0.5 * (1 - d / 20)); s.armed = false; s.cool = 20; }
         if (!s.armed && d > 28) s.armed = true;
+      }
+
+      // --- insects by ground
+      const grassy = clamp(b.moor + b.heath * 0.6 + b.orchard * 0.5, 0, 1) * (1 - 0.8 * wood) * (1 - b.rock) * (1 - 0.8 * inKeep) * (1 - swellSm * 0.9);
+      insBus.gain.setTargetAtTime(0.045 * grassy, now, 0.6);
+      // --- frogs
+      if (fd < F.r + 30) {
+        frogT -= step;
+        if (frogT <= 0) {
+          frogT = 0.2 + rng() * 1.3;
+          const a = rng() * 6.283, r = 4 + rng() * 40, x = px + Math.cos(a) * r, z = pz + Math.sin(a) * r;
+          if (Math.hypot(x - F.x, z - F.z) < F.r) { setPos(frogPan, x, -2.3, z); frog(); }
+        }
+      }
+      // --- distant calls from all around, so the quiet is never empty
+      callT -= step;
+      if (callT <= 0) {
+        callT = 8 + rng() * 14;
+        const a = rng() * 6.283, r = 140 + rng() * 160, kind = (rng() * 4) | 0;
+        if (kind === 3) audio.cue('cry', { x: px + Math.cos(a) * r, y: 70, z: pz + Math.sin(a) * r });
+        else distantCall(kind, px + Math.cos(a) * r, pz + Math.sin(a) * r);
       }
       // --- deodand click
       const D = ctx.deodand;

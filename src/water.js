@@ -72,6 +72,11 @@ const FRAG = /* glsl */`
     sky += uSunLight * glow * uFlicker * (0.6 + 0.4 * (1.0 - smoothstep(0.0, 0.35, up)));
     return sky;
   }
+  vec3 hash3(vec2 p) {
+    vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+    q += dot(q, q.yxz + 33.33);
+    return fract((q.xxy + q.yzz) * q.zyx);
+  }
   vec2 slopeAt(vec2 p, float scale, vec2 vel) {
     return (texture2D(uTex, p * scale + vel * uTime).rg - 0.5) * 2.0;
   }
@@ -140,9 +145,39 @@ const FRAG = /* glsl */`
     vec3 sheen = 0.5 + 0.5 * cos(6.2832 * (vec3(0.0, 0.33, 0.67) + (1.0 - NV) * 1.6 + oil * 1.5));
     col += uFen * sheen * vec3(0.02, 0.018, 0.028) * (0.2 + fres) * smoothstep(0.45, 0.75, oil);
 
+    float alpha = shore * mix(0.93, 1.0, fres);
+
     // duckweed: sickly green-brown, opaque
     vec3 weedCol = mix(vec3(0.02, 0.03, 0.01), vec3(0.05, 0.04, 0.015), texture2D(uTex, p * 0.8).a);
     col = mix(col, weedCol, weed * 0.85);
+
+    // lily-like pads on the fen pools: dark discs with a notch, now and then a pale bloom
+    float pads = 0.0, bloom = 0.0;
+    if (uFen > 0.5) {
+      vec2 cell = floor(p / 3.2);
+      for (int ix = -1; ix <= 1; ix++) {
+        for (int iy = -1; iy <= 1; iy++) {
+          vec2 id = cell + vec2(float(ix), float(iy));
+          vec3 h = hash3(id);
+          float on = step(0.45, h.x);
+          vec2 ctr = (id + 0.2 + 0.6 * h.yz) * 3.2;
+          vec2 dv = p - ctr;
+          float rr = length(dv);
+          float rad = 0.3 + 0.3 * fract(h.x * 13.7);
+          float ang = atan(dv.y, dv.x + 1e-4);
+          float da = abs(mod(ang - h.y * 6.28 + 3.14159, 6.28318) - 3.14159);
+          float notch = (1.0 - smoothstep(0.0, 0.14, da)) * step(0.08, rr);
+          float disc = (1.0 - smoothstep(rad - 0.06, rad, rr)) * (1.0 - notch);
+          pads = max(pads, on * disc);
+          bloom = max(bloom, on * step(0.93, fract(h.x * 31.0)) * (1.0 - smoothstep(0.05, 0.09, rr)));
+        }
+      }
+      pads *= smoothstep(0.5, 0.9, d);
+    }
+    vec3 padCol = mix(vec3(0.02, 0.04, 0.015), vec3(0.05, 0.07, 0.025), texture2D(uTex, p * 1.3).a);
+    col = mix(col, padCol, pads * 0.9);
+    col = mix(col, vec3(0.5, 0.42, 0.42), bloom * pads);
+    alpha = max(alpha, pads * shore);
 
     // pale scum line at the water's edge
     float line = smoothstep(0.0, 0.05, d) * (1.0 - smoothstep(0.08, 0.2, d));
@@ -150,7 +185,6 @@ const FRAG = /* glsl */`
     col = mix(col, vec3(0.22, 0.19, 0.17), line * smoothstep(0.35, 0.65, scumN) * 0.55);
     col += vec3(0.05, 0.045, 0.045) * ringShade * 0.3 * (1.0 - fres);
 
-    float alpha = shore * mix(0.93, 1.0, fres);
     alpha = max(alpha, weed * shore);
     gl_FragColor = vec4(col, alpha);
     #include <fog_fragment>

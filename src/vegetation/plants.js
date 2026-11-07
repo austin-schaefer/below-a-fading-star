@@ -1,0 +1,571 @@
+// Low plants: grass and sedge, heather, reeds. Each kind is generated into 24 m chunks and stored
+// once; every frame the chunks inside the view frustum and draw distance are packed, nearest
+// first, into one instanced buffer per kind, so each kind costs one draw call. Inside a chunk the
+// instances are shuffled and carry their rank, so a prefix is a uniform subsample: far chunks copy
+// only a prefix, and the vertex shader thins and shrinks each instance by its own distance.
+import * as THREE from 'three';
+import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
+
+const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
+
+// ---------- geometry ----------
+// Plant geometry carries position, normal, color and aBlade = (t: height fraction, family, rand, tintWeight).
+class PlantGeo {
+  constructor() { this.p = []; this.n = []; this.c = []; this.a = []; this.i = []; }
+  v(x, y, z, nx, ny, nz, c, t, fam, rnd, tw) {
+    this.p.push(x, y, z); this.n.push(nx, ny, nz); this.c.push(c[0], c[1], c[2]); this.a.push(t, fam, rnd, tw);
+    return this.p.length / 3 - 1;
+  }
+  tri(a, b, c) { this.i.push(a, b, c); }
+  build() {
+    const g = new THREE.InstancedBufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
+    g.setAttribute('aBlade', new THREE.Float32BufferAttribute(this.a, 4));
+    g.setIndex(this.i);
+    return g;
+  }
+}
+const ONE = [1, 1, 1];
+// A tapered, curving blade: base width w, height h, leaning along (dx,dz) by `lean` of its height.
+function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, tipW = 0) {
+  const dx = Math.cos(ang), dz = Math.sin(ang);
+  const px = -dz, pz = dx; // width axis
+  const rnd = rng();
+  const nx = dx * 0.55, ny = 0.8, nz = dz * 0.55;
+  const L = [], R = [];
+  for (let s = 0; s <= segs; s++) {
+    const t = s / segs;
+    const off = lean * h * t * t;
+    const y = h * t * (1 - lean * lean * 0.35 * t);
+    const ww = lerp(w, tipW, Math.pow(t, 1.3)) * 0.5;
+    const cx = x0 + dx * off, cz = z0 + dz * off;
+    if (s === segs && tipW === 0) { L.push(pg.v(cx, y, cz, nx, ny, nz, col, t, fam, rnd, tw)); break; }
+    L.push(pg.v(cx - px * ww, y, cz - pz * ww, nx, ny, nz, col, t, fam, rnd, tw));
+    R.push(pg.v(cx + px * ww, y, cz + pz * ww, nx, ny, nz, col, t, fam, rnd, tw));
+  }
+  for (let s = 0; s < segs; s++) {
+    if (s === segs - 1 && tipW === 0) { pg.tri(L[s], R[s], L[s + 1]); break; }
+    pg.tri(L[s], R[s], R[s + 1]); pg.tri(L[s], R[s + 1], L[s + 1]);
+  }
+  return { dx, dz, lean, h };
+}
+
+// Grass cluster: three families in one geometry. The shader shows family sets per instance, so
+// it reads as three variants: fine tussock + bent broad blades, fine + seed stalks, or all.
+function grassGeo(rng) {
+  const pg = new PlantGeo();
+  for (let k = 0; k < 6; k++) { // fine
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.11;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, 0.022 + rng() * 0.01, 0.3 + rng() * 0.25, 0.15 + rng() * 0.25, 2, 0);
+  }
+  const seed = [1.25, 0.72, 0.5];
+  for (let k = 0; k < 3; k++) { // tall seed stalks with a small head
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.07;
+    const h = 0.62 + rng() * 0.3, lean = 0.08 + rng() * 0.15;
+    const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
+    const bl = blade(pg, rng, x0, z0, a, 0.011, h, lean, 2, 1);
+    // head: a narrow diamond hugging the top 22% of the stalk, following its lean
+    const t0 = 0.74, t1 = 1.04;
+    const at = (t) => [x0 + bl.dx * lean * h * t * t, h * t, z0 + bl.dz * lean * h * t * t];
+    const p0 = at(t0), p1 = at((t0 + t1) / 2), p2 = at(t1);
+    const wx = -bl.dz * 0.022, wz = bl.dx * 0.022;
+    const rnd = rng();
+    const i0 = pg.v(p0[0], p0[1], p0[2], bl.dx, 0.6, bl.dz, seed, t0, 1, rnd, 1);
+    const i1 = pg.v(p1[0] - wx, p1[1], p1[2] - wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
+    const i2 = pg.v(p1[0] + wx, p1[1], p1[2] + wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
+    const i3 = pg.v(p2[0], p2[1], p2[2], bl.dx, 0.6, bl.dz, seed, 1, 1, rnd, 1);
+    pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
+  }
+  for (let k = 0; k < 3; k++) { // broad, bent over
+    const a = rng() * Math.PI * 2, r = 0.04 + rng() * 0.08;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.04 + rng() * 0.015, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, 2, 2);
+  }
+  return pg.build();
+}
+
+// Heather (ling): a dark woody mound with wiry stalks, the upper half of each a spike of bloom.
+function heatherGeo(rng) {
+  const pg = new PlantGeo();
+  const core = [0.55, 0.5, 0.42];
+  const seg = 7, R0 = 0.34, R1 = 0.22;
+  const ring0 = [], ring1 = [];
+  for (let s = 0; s < seg; s++) {
+    const a = (s / seg) * Math.PI * 2, j = 0.85 + rng() * 0.3;
+    ring0.push(pg.v(Math.cos(a) * R0 * j, -0.02, Math.sin(a) * R0 * j, Math.cos(a) * 0.7, 0.6, Math.sin(a) * 0.7, core, 0, 0, 0.3, 0.25));
+    ring1.push(pg.v(Math.cos(a + 0.4) * R1 * j, 0.17 + rng() * 0.05, Math.sin(a + 0.4) * R1 * j, Math.cos(a) * 0.4, 0.9, Math.sin(a) * 0.4, core, 0.55, 0, 0.3, 0.4));
+  }
+  const top = pg.v(0, 0.27, 0, 0, 1, 0, core, 0.7, 0, 0.3, 0.5);
+  for (let s = 0; s < seg; s++) {
+    const s1 = (s + 1) % seg;
+    pg.tri(ring0[s], ring1[s1], ring1[s]); pg.tri(ring0[s], ring0[s1], ring1[s1]);
+    pg.tri(ring1[s], ring1[s1], top);
+  }
+  const wood = [0.42, 0.34, 0.28], bloom = [1, 1, 1];
+  for (let k = 0; k < 10; k++) {
+    const a = rng() * Math.PI * 2, r = 0.05 + rng() * 0.16;
+    const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
+    const h = 0.28 + rng() * 0.22, lean = 0.25 + rng() * 0.3;
+    const dx = Math.cos(a), dz = Math.sin(a);
+    const at = (t) => [x0 + dx * lean * h * t, 0.08 + h * t, z0 + dz * lean * h * t];
+    const rnd = rng();
+    // wiry stalk
+    const b0 = at(0), b1 = at(1);
+    const wx = -dz * 0.012, wz = dx * 0.012;
+    const s0 = pg.v(b0[0] - wx, b0[1], b0[2] - wz, dx * 0.5, 0.8, dz * 0.5, wood, 0.2, 0, rnd, 0.3);
+    const s1 = pg.v(b0[0] + wx, b0[1], b0[2] + wz, dx * 0.5, 0.8, dz * 0.5, wood, 0.2, 0, rnd, 0.3);
+    const s2 = pg.v(b1[0], b1[1], b1[2], dx * 0.5, 0.8, dz * 0.5, wood, 1, 0, rnd, 0.3);
+    pg.tri(s0, s1, s2);
+    // bloom spike along the upper half: a crossed pair of narrow diamonds
+    const m0 = at(0.4), m1 = at(0.7), m2 = at(1.02);
+    for (let c = 0; c < 2; c++) {
+      const ca = a + (c ? Math.PI / 2 : 0);
+      const ox = -Math.sin(ca) * 0.035, oz = Math.cos(ca) * 0.035;
+      const i0 = pg.v(m0[0], m0[1], m0[2], dx * 0.5, 0.8, dz * 0.5, bloom, 0.4, 1, rnd, 1);
+      const i1 = pg.v(m1[0] - ox, m1[1], m1[2] - oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
+      const i2 = pg.v(m1[0] + ox, m1[1], m1[2] + oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
+      const i3 = pg.v(m2[0], m2[1], m2[2], dx * 0.5, 0.8, dz * 0.5, bloom, 1, 1, rnd, 1);
+      pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
+    }
+  }
+  return pg.build();
+}
+
+// Reeds and bulrushes: tall thin stems, arching strap leaves, a couple of brown cattail heads.
+function reedGeo(rng) {
+  const pg = new PlantGeo();
+  const stems = [];
+  for (let k = 0; k < 7; k++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.28;
+    const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
+    const h = 1.5 + rng() * 1.0, lean = 0.04 + rng() * 0.1;
+    stems.push({ x0, z0, a, h, lean, ...blade(pg, rng, x0, z0, a, 0.026, h, lean, 3, 0, ONE, 1, 0) });
+  }
+  for (let k = 0; k < 4; k++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a, 0.05, 0.9 + rng() * 0.5, 0.55 + rng() * 0.3, 3, 1, [0.9, 0.95, 0.8], 1, 0);
+  }
+  const head = [0.2, 0.11, 0.06];
+  stems.sort((p, q) => q.h - p.h);
+  for (let k = 0; k < 2; k++) {
+    const s = stems[k];
+    const at = (t) => [s.x0 + s.dx * s.lean * s.h * t * t, s.h * t * (1 - s.lean * s.lean * 0.35 * t), s.z0 + s.dz * s.lean * s.h * t * t];
+    const t0 = 0.7, t1 = 0.83, rr = 0.036, sides = 5;
+    const rnd = rng();
+    const ringAt = (t) => {
+      const c = at(t), out = [];
+      for (let j = 0; j < sides; j++) {
+        const an = (j / sides) * Math.PI * 2;
+        out.push(pg.v(c[0] + Math.cos(an) * rr, c[1], c[2] + Math.sin(an) * rr, Math.cos(an), 0.2, Math.sin(an), head, t, 2, rnd, 0));
+      }
+      return out;
+    };
+    const A = ringAt(t0), B = ringAt(t1);
+    for (let j = 0; j < sides; j++) { const j1 = (j + 1) % sides; pg.tri(A[j], B[j], B[j1]); pg.tri(A[j], B[j1], A[j1]); }
+    const ct = at(t1 + 0.01), cb = at(t0 - 0.01);
+    const it = pg.v(ct[0], ct[1], ct[2], 0, 1, 0, head, t1, 2, rnd, 0), ib = pg.v(cb[0], cb[1], cb[2], 0, -1, 0, head, t0, 2, rnd, 0);
+    for (let j = 0; j < sides; j++) { const j1 = (j + 1) % sides; pg.tri(B[j], it, B[j1]); pg.tri(A[j1], ib, A[j]); }
+  }
+  return pg.build();
+}
+
+// Bracken: broad arching fronds, rust and dying.
+function brackenGeo(rng) {
+  const pg = new PlantGeo();
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + rng() * 0.6, r = rng() * 0.12;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a, 0.2 + rng() * 0.08, 0.65 + rng() * 0.35, 0.75 + rng() * 0.25, 4, 0, [1, 1, 1], 1, 0);
+  }
+  return pg.build();
+}
+// Pale flower spikes: three stems in a clump, florets up the top half, a few strap leaves.
+function flowerGeo(rng) {
+  const pg = new PlantGeo();
+  const stemC = [0.16, 0.2, 0.1], leafC = [0.14, 0.18, 0.1];
+  for (let k = 0; k < 3; k++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.12;
+    const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r, h = 0.9 + rng() * 0.7, lean = 0.05 + rng() * 0.1;
+    const bl = blade(pg, rng, x0, z0, a, 0.016, h, lean, 2, 0, stemC, 0);
+    const n = 9;
+    for (let i = 0; i < n; i++) {
+      const t = 0.5 + 0.5 * (i / (n - 1));
+      const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
+      const fa = i * 2.4 + rng(), fs = 0.045 * (1.15 - 0.6 * (i / n));
+      const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
+      const rnd = rng();
+      const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
+      const i1 = pg.v(cx + ox * 1.6, cy + fs * 0.3, cz + oz * 1.6, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
+      const i2 = pg.v(cx - oz, cy + fs * 0.8, cz + ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
+      const i3 = pg.v(cx + oz, cy + fs * 0.8, cz - ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
+      pg.tri(i0, i1, i2); pg.tri(i0, i3, i1);
+    }
+  }
+  for (let k = 0; k < 4; k++) { const a = rng() * Math.PI * 2; blade(pg, rng, 0, 0, a, 0.05, 0.35 + rng() * 0.2, 0.6, 2, 2, leafC, 0); }
+  return pg.build();
+}
+// Broad black-green fleshy leaves, cycad or giant hosta: a creased rosette.
+function fleshyGeo(rng) {
+  const pg = new PlantGeo();
+  const nL = 7, segs = 4;
+  for (let k = 0; k < nL; k++) {
+    const a = (k / nL) * Math.PI * 2 + rng() * 0.5;
+    const dx = Math.cos(a), dz = Math.sin(a), px = -dz, pz = dx;
+    const len = 0.8 + rng() * 0.45, W = 0.22 + rng() * 0.1, rise = 0.5 + rng() * 0.35;
+    const rows = [];
+    const rnd = rng();
+    for (let s = 0; s <= segs; s++) {
+      const t = s / segs;
+      const out = len * t, y = rise * Math.sin(t * Math.PI * 0.8) * (1 - 0.4 * t) + 0.02;
+      const w = W * Math.sin(Math.min(1, t * 1.15) * Math.PI) * 0.5 + 0.01;
+      const cx = dx * out, cz = dz * out;
+      const crease = 0.05 * Math.sin(t * Math.PI);
+      const n0 = [dx * 0.3, 0.9, dz * 0.3];
+      rows.push([
+        pg.v(cx - px * w, y - crease, cz - pz * w, n0[0] - px * 0.4, n0[1], n0[2] - pz * 0.4, [1, 1, 1], t, 0, rnd, 1),
+        pg.v(cx, y + crease * 0.4, cz, n0[0], n0[1], n0[2], [1.9, 2.0, 1.6], t, 0, rnd, 1),
+        pg.v(cx + px * w, y - crease, cz + pz * w, n0[0] + px * 0.4, n0[1], n0[2] + pz * 0.4, [1, 1, 1], t, 0, rnd, 1),
+      ]);
+    }
+    for (let s = 0; s < segs; s++) {
+      const A = rows[s], B = rows[s + 1];
+      pg.tri(A[0], A[1], B[1]); pg.tri(A[0], B[1], B[0]);
+      pg.tri(A[1], A[2], B[2]); pg.tri(A[1], B[2], B[1]);
+    }
+  }
+  return pg.build();
+}
+
+// ---------- material ----------
+function makePlantMaterial(ctx, shared, o) {
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  const u = {
+    uTime: shared.time, uR0: { value: o.r0 }, uFade0: { value: o.fade0 }, uFade1: { value: o.fade1 },
+    uWind: { value: o.wind }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
+    uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 },
+  };
+  mat.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, u);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', `#include <common>
+        attribute vec4 aBlade; attribute vec4 iPos; attribute vec4 iShape; attribute vec4 iTint;
+        uniform float uTime, uR0, uFade0, uFade1, uWind, uComp; uniform vec3 uTip, uBase;
+        varying float vFpT; varying vec3 vFpW;
+        ${GLSL_WIND}`)
+      .replace('#include <color_vertex>', `
+        float fpDist = distance(cameraPosition.xz, iPos.xz);
+        float fpDens = min(1.0, uR0 / max(fpDist, 0.001)) * (1.0 - smoothstep(uFade0, uFade1, fpDist));
+        float fpKeep = clamp((fpDens - iShape.z) / 0.1, 0.0, 1.0);
+        float fpVar = floor(iShape.w); float fpSeed = fract(iShape.w);
+        float fam = aBlade.y;
+        float fpShow = 1.0;
+        if (fpVar < 0.5 && fam > 0.5 && fam < 1.5) fpShow = 0.0;
+        if (fpVar > 0.5 && fpVar < 1.5 && fam > 1.5) fpShow = 0.0;
+        float fpComp = clamp(inversesqrt(max(fpDens, 0.04)), 1.0, uComp);
+        float fpBh = 0.75 + 0.5 * fract(sin((aBlade.z + fpSeed) * 91.7) * 437.5);
+        float fpC = cos(iPos.w), fpS = sin(iPos.w);
+        vColor = color * mix(uBase, iTint.rgb, aBlade.w);
+        vColor = mix(vColor, uTip * (0.7 + 0.6 * fpSeed), smoothstep(0.45, 1.0, aBlade.x) * iTint.w * step(fam, 1.5));
+        vColor *= mix(0.42, 1.0, smoothstep(0.0, 0.7, aBlade.x)) * (0.85 + 0.3 * fpBh - 0.15);
+        vFpT = aBlade.x * aBlade.w;`)
+      .replace('#include <beginnormal_vertex>', `
+        vec3 objectNormal = vec3(normal.x * fpC - normal.z * fpS, normal.y, normal.x * fpS + normal.z * fpC);
+        objectNormal = normalize(mix(objectNormal, vec3(0.0, 1.0, 0.0), 0.35));`)
+      .replace('#include <begin_vertex>', `
+        vec3 fpL = position;
+        fpL.xz *= iShape.x * fpComp;
+        fpL.y *= iShape.y * fpBh * mix(1.0, 1.15, fpComp - 1.0);
+        vec3 transformed = iPos.xyz + vec3(fpL.x * fpC - fpL.z * fpS, fpL.y, fpL.x * fpS + fpL.z * fpC);
+        vec2 fpWv = fpWind(transformed.xz + fpSeed * 3.0, uTime) * uWind;
+        float fpBend = aBlade.x * aBlade.x;
+        vec2 fpD = fpWv * fpBend * fpL.y;
+        transformed.xz += fpD;
+        transformed.y -= dot(fpD, fpD) * 0.6 / max(fpL.y, 0.05);
+        transformed = mix(iPos.xyz, transformed, fpKeep * fpShow);
+        vFpW = transformed;`);
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+        uniform float uTrans; uniform vec3 uSunDir; varying float vFpT; varying vec3 vFpW;`)
+      .replace('#include <opaque_fragment>', `
+        {
+          vec3 fpV = normalize(vFpW - cameraPosition);
+          float fpBack = pow(max(dot(fpV, uSunDir), 0.0), 3.0);
+          // the low sun shines through the tips: borrow the (already shadowed) direct light
+          outgoingLight += reflectedLight.directDiffuse * (0.6 + fpBack * uTrans * 3.0) * vFpT;
+        }
+        #include <opaque_fragment>`);
+    unflipNormals(shader);
+  };
+  mat.customProgramCacheKey = () => 'fp-veg-plant';
+  return mat;
+}
+
+// ---------- the chunked store ----------
+class Kind {
+  constructor(name, geo, mat, o) {
+    this.name = name; this.geo = geo; this.mat = mat; this.o = o;
+    this.tmp = new Array(CN * CN); // per chunk: plain arrays while generating
+    this.total = 0;
+  }
+  add(x, y, z, rot, sx, sy, variant, seed, r, g, b, rust) {
+    const ci = clamp(Math.floor((x - CMIN) / CHUNK), 0, CN - 1), cj = clamp(Math.floor((z - CMIN) / CHUNK), 0, CN - 1);
+    const k = cj * CN + ci;
+    let a = this.tmp[k]; if (!a) a = this.tmp[k] = [];
+    a.push(x, y, z, rot, sx, sy, 0, variant + seed * 0.999, r, g, b, rust);
+    this.total++;
+  }
+  // Pack chunks into flat arrays, shuffle each chunk, store rank in iShape.z.
+  finish(rng, cap) {
+    const n = this.total;
+    this.pos = new Float32Array(n * 4); this.shape = new Float32Array(n * 4); this.tint = new Float32Array(n * 4);
+    this.chunks = [];
+    let off = 0;
+    for (let k = 0; k < CN * CN; k++) {
+      const a = this.tmp[k]; if (!a) continue;
+      const m = a.length / 12;
+      const order = new Uint32Array(m); for (let i = 0; i < m; i++) order[i] = i;
+      for (let i = m - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const t = order[i]; order[i] = order[j]; order[j] = t; }
+      let y0 = Infinity, y1 = -Infinity;
+      for (let i = 0; i < m; i++) {
+        const s = order[i] * 12, d = (off + i) * 4;
+        this.pos[d] = a[s]; this.pos[d + 1] = a[s + 1]; this.pos[d + 2] = a[s + 2]; this.pos[d + 3] = a[s + 3];
+        this.shape[d] = a[s + 4]; this.shape[d + 1] = a[s + 5]; this.shape[d + 2] = (i + 0.5) / m; this.shape[d + 3] = a[s + 7];
+        this.tint[d] = a[s + 8]; this.tint[d + 1] = a[s + 9]; this.tint[d + 2] = a[s + 10]; this.tint[d + 3] = a[s + 11];
+        y0 = Math.min(y0, a[s + 1]); y1 = Math.max(y1, a[s + 1]);
+      }
+      const ci = k % CN, cj = Math.floor(k / CN);
+      const x0 = CMIN + ci * CHUNK, z0 = CMIN + cj * CHUNK;
+      this.chunks.push({ off, n: m, x0, z0, x1: x0 + CHUNK, z1: z0 + CHUNK, box: new THREE.Box3(new THREE.Vector3(x0 - 1, y0 - 0.5, z0 - 1), new THREE.Vector3(x0 + CHUNK + 1, y1 + this.o.height, z0 + CHUNK + 1)), d: 0, q: 0 });
+      off += m;
+    }
+    this.tmp = null;
+    // the drawn buffer
+    this.cap = Math.min(n, cap);
+    const g = this.geo;
+    this.aPos = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aShape = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.aTint = new THREE.InstancedBufferAttribute(new Float32Array(this.cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('iPos', this.aPos); g.setAttribute('iShape', this.aShape); g.setAttribute('iTint', this.aTint);
+    g.instanceCount = 0;
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    this.mesh = new THREE.Mesh(g, this.mat);
+    this.mesh.frustumCulled = false; // we cull per chunk ourselves
+    this.mesh.receiveShadow = true; this.mesh.castShadow = false;
+    this.mesh.name = `veg-${this.name}`;
+    this.order = new Int32Array(this.chunks.length);
+    this.sig = -1; this.drawn = 0;
+  }
+  // Pick visible chunks and how much of each to draw; repack only when that changes.
+  update(px, pz, frustum) {
+    const { r0, fade0, fade1 } = this.o;
+    let nv = 0, sig = 0;
+    for (let c = 0; c < this.chunks.length; c++) {
+      const ch = this.chunks[c];
+      const dx = Math.max(ch.x0 - px, 0, px - ch.x1), dz = Math.max(ch.z0 - pz, 0, pz - ch.z1);
+      const d = Math.hypot(dx, dz);
+      if (d > fade1 || !frustum.intersectsBox(ch.box)) continue;
+      const dens = Math.min(1, r0 / Math.max(d, 0.001)) * (1 - smoothstep(fade0, fade1, d));
+      const q = Math.min(32, Math.ceil((dens + 0.1) * 32)); // in 1/32 steps, rounded up
+      ch.q = q; ch.d = d;
+      this.order[nv++] = c;
+      sig = (Math.imul(sig, 31) + c * 64 + q) | 0;
+    }
+    sig = (Math.imul(sig, 31) + nv) | 0;
+    if (sig === this.sig) return;
+    this.sig = sig;
+    // nearest first so that if the cap is hit it is the far chunks that lose out
+    const ord = this.order.subarray(0, nv);
+    ord.sort((a, b) => this.chunks[a].d - this.chunks[b].d);
+    let w = 0;
+    const P = this.aPos.array, S = this.aShape.array, T = this.aTint.array;
+    for (let i = 0; i < nv; i++) {
+      const ch = this.chunks[ord[i]];
+      let m = Math.ceil(ch.n * ch.q / 32);
+      if (w + m > this.cap) m = this.cap - w;
+      if (m <= 0) break;
+      const s = ch.off * 4, e = (ch.off + m) * 4;
+      P.set(this.pos.subarray(s, e), w * 4); S.set(this.shape.subarray(s, e), w * 4); T.set(this.tint.subarray(s, e), w * 4);
+      w += m;
+    }
+    for (const a of [this.aPos, this.aShape, this.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, w * 4); a.needsUpdate = true; }
+    this.geo.instanceCount = w;
+    this.drawn = w;
+  }
+}
+
+// ---------- placement ----------
+export function buildPlants(ctx, ground, shared) {
+  const { landmarks: L, quality, noise } = ctx;
+  const low = quality === 'low';
+  const half = low ? 0.5 : 1;
+  const rng = ctx.makeRng(3301);
+  const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: low ? 11 : 15, fade0: 80, fade1: 120, wind: 1.0, tip: '#8a3418', trans: 1.6 }), { r0: low ? 11 : 15, fade0: 80, fade1: 120, height: 1.2 });
+  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 85, fade1: 125, wind: 0.22, base: '#3a3020', trans: 0.6, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 85, fade1: 125, height: 0.8 });
+  const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 });
+  const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 });
+  const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 });
+  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: low ? 18 : 26, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 1.4 }), { r0: low ? 18 : 26, fade0: 100, fade1: 145, height: 3 });
+
+  // grass colours: dry, tawny, rust-tipped
+  const cTawny = C('#a08048'), cDry = C('#b89660'), cOchre = C('#8a6a34'), cHeathG = C('#7a5a4a'), cWoodG = C('#4a4a2c'), cMarsh = C('#7e7a42'), cBleach = C('#8c9294'), cOrch = C('#9a7a40');
+  const cSedge = C('#6a6a3a'), cSedge2 = C('#857a48');
+  const cHeath = [C('#6e3c5a'), C('#7a4a64'), C('#5a3a40'), C('#6a4430')]; // bloom, bloom, faded, dead-rust
+  const cReed = C('#8a7a4a'), cReed2 = C('#6a6a38');
+  const cBone = C('#c8b890'), cBrk = [C('#8a4420'), C('#6e3a1c'), C('#5a4a24')], cBrkWood = C('#2e3a1e');
+  const cFlw = [C('#e0dcd0'), C('#a090c4'), C('#d0c0a0'), C('#c8b8d8')];
+  const cFlesh = C('#121a10'), cFlesh2 = C('#1a1a14');
+  const tint = [0, 0, 0];
+  const mixInto = (a, b2, t) => { tint[0] = lerp(tint[0], b2[0], t); tint[1] = lerp(tint[1], b2[1], t); tint[2] = lerp(tint[2], b2[2], t); };
+  const setT = (a) => { tint[0] = a[0]; tint[1] = a[1]; tint[2] = a[2]; };
+
+  const D_BRACKEN = 0.5 * half, D_FLOWER = 0.35 * half, D_FLESH = 0.16 * half;
+  const D_GRASS = 2.4 * half, D_HEATH = 0.5 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
+  const CELL = 2;
+  const b = {};
+  const tStart = performance.now();
+  for (let cz = -318; cz < 318; cz += CELL) for (let cx = -318; cx < 318; cx += CELL) {
+    const mx = cx + 1, mz = cz + 1;
+    if (mx * mx + mz * mz > 318 * 318) continue;
+    ground.biomeAt(mx, mz, b);
+    if (b.rock > 0.6 || b.ice > 0.5) continue;
+    const cd = ground.causewayDistance(mx, mz);
+    // cheap cell-level keep-outs (exact ones per plant below where it matters)
+    if (ground.excluded(mx, mz, -1.5, { wet: 1.0 })) continue;
+    const patch = noise.fbm2(mx * 0.045, mz * 0.045, 3) * 0.5 + 0.5; // tussocks and bare ground
+    const dry = noise.warped2(mx * 0.012 + 3, mz * 0.012 + 1, 3) * 0.5 + 0.5;
+    // people walk the causeway, the keep's skirts and the stones: denser, shorter grass there
+    const path = 1 - smoothstep(4, 28, cd);
+    const dCastle = Math.hypot(mx - L.castle.x, mz - L.castle.z), dStones = Math.hypot(mx - L.stones.x, mz - L.stones.z);
+    const land = Math.max(1 - smoothstep(44, 90, dCastle), 1 - smoothstep(10, 40, dStones), 1 - smoothstep(16, 40, Math.hypot(mx - L.byre.x, mz - L.byre.z)));
+    const heathW = smoothstep(0.35, 0.8, b.heath) * b.moor * (1 - b.wood);
+    const marshW = smoothstep(0.25, 0.7, b.marsh);
+    const crysW = smoothstep(0.15, 0.7, b.crystal);
+    const nearCd = cd < 7;
+    const bleach = smoothstep(0.58, 0.78, noise.fbm2(mx * 0.02 + 70, mz * 0.02 - 20, 3) * 0.5 + 0.5);
+    const tussock = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.06 - 30, mz * 0.06 + 12, 2) * 0.5 + 0.5) * (1 - path);
+    const hc = ground.heightAt(mx, mz);
+    const hollow = smoothstep(0.25, 1.1, (ground.heightAt(mx + 7, mz) + ground.heightAt(mx - 7, mz) + ground.heightAt(mx, mz + 7) + ground.heightAt(mx, mz - 7)) / 4 - hc);
+    const wetEdge = (() => { const dep = ground.waterDepth(mx, mz, hc); return dep === -Infinity ? 0 : smoothstep(-2.0, -0.6, dep) * (1 - smoothstep(-0.2, 0.1, dep)); })();
+
+    // grass + sedge
+    let dg = D_GRASS * (0.6 + 0.6 * path + 0.4 * land) * (0.35 + 1.0 * smoothstep(0.2, 0.75, patch));
+    dg *= (1 - 0.6 * heathW) * (1 - 0.6 * b.wood) * (1 - 0.92 * crysW) * (1 - b.rock) * (1 - 0.6 * b.ice) * (1 - 0.7 * marshW);
+    const ng = Math.floor(dg * CELL * CELL + rng());
+    for (let i = 0; i < ng; i++) {
+      const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (nearCd && ground.causewayDistance(x, z) < 4) continue;
+      const y = ground.heightAt(x, z);
+      if (ground.waterDepth(x, z, y) > -0.05) continue;
+      const v = rng() < 0.4 ? 0 : rng() < 0.6 ? 1 : 2;
+      setT(cTawny); mixInto(null, cDry, dry * 0.8); mixInto(null, cOchre, rng() * 0.4);
+      mixInto(null, cHeathG, heathW * 0.6); mixInto(null, cOrch, b.orchard * 0.5);
+      mixInto(null, cBone, bleach * 0.75 * (1 - b.wood));
+      mixInto(null, cWoodG, smoothstep(0.2, 0.8, b.wood)); mixInto(null, cMarsh, marshW * 0.9); mixInto(null, cBleach, crysW * 0.9);
+      const br = 0.8 + rng() * 0.35; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+      const tus = rng() < tussock * 0.5;
+      const sy = (0.75 + rng() * 0.5) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.7 + rng() * 0.6 : 1);
+      grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.9 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.3 + 0.7 * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
+    }
+    // sedge: taller, olive, in the fen and on the tarn shore
+    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8) * (0.4 + 0.8 * patch);
+    const ns = Math.floor(ds * CELL * CELL + rng());
+    for (let i = 0; i < ns; i++) {
+      const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      const y = ground.heightAt(x, z);
+      const dep = ground.waterDepth(x, z, y);
+      if (dep > 0.15) continue;
+      setT(cSedge); mixInto(null, cSedge2, rng());
+      const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+      grass.add(x, y - 0.03, z, rng() * 6.283, 0.9 + rng() * 0.4, 1.35 + rng() * 0.7, rng() < 0.5 ? 1 : 2, rng(), tint[0], tint[1], tint[2], 0.25 * rng());
+    }
+    // bracken: rust patches on the moor, dark undergrowth in the wood
+    const bpatch = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.035 + 11, mz * 0.035 + 50, 3) * 0.5 + 0.5);
+    const db = D_BRACKEN * (bpatch * b.moor * (1 - heathW * 0.5) * (1 - marshW) + 1.3 * smoothstep(0.3, 0.8, b.wood) * (0.4 + 0.6 * patch)) * (1 - crysW) * (1 - path * 0.8);
+    const nb = Math.floor(db * CELL * CELL + rng());
+    for (let i = 0; i < nb; i++) {
+      const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      const y = ground.heightAt(x, z);
+      if (ground.waterDepth(x, z, y) > -0.1) continue;
+      setT(cBrk[Math.floor(rng() * 3)]); mixInto(null, cBrkWood, smoothstep(0.3, 0.8, b.wood) * 0.85);
+      const br = 0.75 + rng() * 0.4; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+      const s = (0.8 + rng() * 0.6) * (1 + 0.4 * b.wood);
+      bracken.add(x, y - 0.03, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0.5 * rng() * (1 - b.wood));
+    }
+    // pale flower spikes in drifts; one colour per drift
+    const drift = smoothstep(0.62, 0.8, noise.fbm2(mx * 0.025 - 90, mz * 0.025 + 33, 3) * 0.5 + 0.5);
+    const df = D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5);
+    const nf = Math.floor(df * CELL * CELL + rng());
+    if (nf) {
+      const hueN = noise.noise2(mx * 0.01 + 5, mz * 0.01 - 5) * 0.5 + 0.5;
+      const fc = cFlw[Math.min(3, Math.floor(hueN * 4))];
+      for (let i = 0; i < nf; i++) {
+        const x = cx + rng() * CELL, z = cz + rng() * CELL;
+        if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+        const y = ground.heightAt(x, z);
+        if (ground.waterDepth(x, z, y) > -0.05) continue;
+        setT(fc); const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+        const s = 0.8 + rng() * 0.5;
+        flowers.add(x, y - 0.03, z, rng() * 6.283, s, s * (0.75 + rng() * 0.5), 2, rng(), tint[0], tint[1], tint[2], 0);
+      }
+    }
+    // black-green fleshy leaves in the hollows, along the water, and in the wood's wet places
+    const dl = D_FLESH * Math.max(hollow * (1 - b.rock), wetEdge * 1.4, b.wood * hollow * 1.5) * (1 - crysW);
+    const nl = Math.floor(dl * CELL * CELL + rng());
+    for (let i = 0; i < nl; i++) {
+      const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (nearCd && ground.causewayDistance(x, z) < 5) continue;
+      const y = ground.heightAt(x, z);
+      if (ground.waterDepth(x, z, y) > -0.05) continue;
+      setT(cFlesh); mixInto(null, cFlesh2, rng());
+      const s = 0.9 + Math.pow(rng(), 1.5) * 1.6;
+      fleshy.add(x, y - 0.05, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
+    }
+    // heather
+    const dh = D_HEATH * (heathW * (0.5 + patch) + 0.03 * b.moor * (1 - b.wood)) * (1 - crysW) * (1 - marshW);
+    const nh = Math.floor(dh * CELL * CELL + rng());
+    for (let i = 0; i < nh; i++) {
+      const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      const y = ground.heightAt(x, z);
+      if (ground.waterDepth(x, z, y) > -0.1) continue;
+      const pick = rng();
+      setT(cHeath[pick < 0.4 ? 0 : pick < 0.65 ? 1 : pick < 0.85 ? 2 : 3]);
+      const br = 0.75 + rng() * 0.4; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+      const s = 0.75 + rng() * 0.7;
+      heather.add(x, y - 0.04, z, rng() * 6.283, s * (0.9 + rng() * 0.3), s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
+    }
+    // reeds: in stands along the water's edge, standing in the shallows
+    if (b.marsh > 0.15 || b.shore > 0.05) {
+      const stand = smoothstep(0.35, 0.65, noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5);
+      if (stand > 0) {
+        const nr = Math.floor(D_REED * stand * CELL * CELL * 1.2 + rng());
+        for (let i = 0; i < nr; i++) {
+          const x = cx + rng() * CELL, z = cz + rng() * CELL;
+          const y = ground.heightAt(x, z);
+          const dep = ground.waterDepth(x, z, y);
+          if (dep === -Infinity || dep > 0.55 || dep < -1.1) continue;
+          if (ground.causewayDistance(x, z) < 4) continue;
+          setT(cReed); mixInto(null, cReed2, rng());
+          const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+          const sy = (0.75 + rng() * 0.45) * (1 - 0.3 * smoothstep(-0.2, -1.1, dep));
+          reeds.add(x, y - 0.05, z, rng() * 6.283, 0.8 + rng() * 0.5, sy, 2, rng(), tint[0], tint[1], tint[2], 0.4 + 0.6 * rng());
+        }
+      }
+    }
+  }
+  const genMs = performance.now() - tStart;
+  const kinds = [grass, heather, bracken, flowers, fleshy, reeds];
+  const caps = { grass: low ? 60000 : 110000, heather: low ? 15000 : 30000, bracken: low ? 10000 : 20000, flowers: low ? 6000 : 12000, fleshy: low ? 3000 : 6000, reeds: low ? 12000 : 24000 };
+  for (const k of kinds) { k.finish(rng, caps[k.name]); ctx.scene.add(k.mesh); }
+
+  function update(px, pz, frustum) { for (const k of kinds) k.update(px, pz, frustum); }
+  const tris = (k) => k.geo.index.count / 3;
+  return {
+    kinds, update,
+    stats: () => Object.fromEntries(kinds.map((k) => [k.name, { total: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
+    genMs,
+  };
+}

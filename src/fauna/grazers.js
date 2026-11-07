@@ -37,10 +37,10 @@ function legGeometry(len, r0, r1) {
   return M.geometry();
 }
 
-export function buildGrazers(ctx) {
+export function buildGrazers(ctx, opts = {}) {
   const { scene, terrain, camera } = ctx;
-  const rng = ctx.makeRng(202);
-  const N = 6;
+  const rng = ctx.makeRng(opts.salt ?? 202);
+  const N = opts.n ?? 6;
   const mat = new THREE.MeshStandardMaterial({ color: 0x8d8c92, roughness: 0.95, metalness: 0 });
   const mk = (g, n) => { const m = new THREE.InstancedMesh(g, mat, n); m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); return m; };
   const bodies = mk(bodyGeometry(), N), heads = mk(headGeometry(), N);
@@ -62,7 +62,7 @@ export function buildGrazers(ctx) {
     return true;
   };
 
-  const HX = -60, HZ = -40;
+  const [HX, HZ] = opts.home ?? [-60, -40];
   const herd = { x: HX, z: HZ, mode: 'graze', alertT: 0, calmT: 0 };
   const A = [];
   let tries = 0;
@@ -77,7 +77,8 @@ export function buildGrazers(ctx) {
     });
   }
   const n = A.length;
-  ctx.grazers = { animals: A, herd };
+  (ctx.herds = ctx.herds || []).push({ animals: A, herd });
+  ctx.grazers = ctx.grazers || { animals: A, herd };
 
   const M = new THREE.Matrix4(), Mh = new THREE.Matrix4(), Mu = new THREE.Matrix4(), Ml = new THREE.Matrix4(), T = new THREE.Matrix4(), R = new THREE.Matrix4();
   const cam = camera.position;
