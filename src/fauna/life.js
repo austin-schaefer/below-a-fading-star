@@ -133,12 +133,15 @@ export function buildWader(ctx) {
   const { scene, terrain, landmarks, water } = ctx;
   const rng = ctx.makeRng(909);
   const F = landmarks.fen, wy = water.fen.y;
-  const shallow = (x, z) => { const h = terrain.heightAt(x, z); return h < wy - 0.12 && h > wy - 0.9; };
-  let x0 = 0, z0 = 0, found = false;
-  for (let k = 0; k < 400 && !found; k++) {
-    const a = rng() * 6.28, r = 12 + rng() * 45; x0 = F.x + Math.cos(a) * r; z0 = F.z + Math.sin(a) * r;
-    found = shallow(x0, z0) && shallow(x0 + 2, z0) && shallow(x0, z0 + 2) && shallow(x0 - 2, z0) && shallow(x0, z0 - 2);
+  const shallow = (x, z) => { const h = terrain.heightAt(x, z); return h < wy - 0.05 && h > wy - 1.2; };
+  let x0 = 0, z0 = 0, found = false, bestN = -1;
+  for (let k = 0; k < 800; k++) {
+    const a = rng() * 6.28, r = 8 + rng() * 55, x = F.x + Math.cos(a) * r, z = F.z + Math.sin(a) * r;
+    if (!shallow(x, z)) continue;
+    let n = 0; for (let j = 0; j < 8; j++) if (shallow(x + Math.cos(j * 0.785) * 1.6, z + Math.sin(j * 0.785) * 1.6)) n++;
+    if (n > bestN) { bestN = n; x0 = x; z0 = z; }
   }
+  found = bestN >= 3;
   if (!found) { ctx.log('fauna: no shallow spot for the wader'); return; }
   const M = new Mesher();
   M.loft([[0, 1.02, -0.4], [0, 1.1, 0], [0, 1.18, 0.3]], [[0.07, 0.1], [0.13, 0.17], [0.07, 0.09]], 7); // body
