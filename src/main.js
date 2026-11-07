@@ -123,7 +123,11 @@ async function start() {
   renderer.info.autoReset = false;
   const clock = new THREE.Clock();
   let t = 0, frames = 0, fpsT = 0;
-  const shadowTarget = new THREE.Vector3();
+  const shadowTarget = new THREE.Vector3(), fwdTmp = new THREE.Vector3();
+  // A fixed light-space frame for texel snapping: the sun never moves.
+  const lightView = new THREE.Matrix4().lookAt(sunDir, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
+  const lightViewInv = lightView.clone().invert();
+  const shadowTexel = (2 * sb) / sm;
   function frame() {
     requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), 0.1);
@@ -131,10 +135,15 @@ async function start() {
     ctx.time.t = t; ctx.time.dt = dt;
     ctx.controls.update(dt);
     ctx.sky.update(dt, t);
-    // shadow camera rides along with the player, snapped to texel-ish steps to reduce swim
-    const fwd = new THREE.Vector3(-Math.sin(ctx.player.yaw), 0, -Math.cos(ctx.player.yaw));
-    shadowTarget.copy(camera.position).addScaledVector(fwd, 40);
-    shadowTarget.x = Math.round(shadowTarget.x / 2) * 2; shadowTarget.z = Math.round(shadowTarget.z / 2) * 2; shadowTarget.y = Math.round(shadowTarget.y / 2) * 2;
+    // The shadow camera rides along with the player. Its centre is snapped to whole shadow-map
+    // texels in the light's own frame, so moving does not re-rasterise every shadow edge (that
+    // was the shimmer in the wood); snapping in world units did not align with the light's grid.
+    fwdTmp.set(-Math.sin(ctx.player.yaw), 0, -Math.cos(ctx.player.yaw));
+    shadowTarget.copy(camera.position).addScaledVector(fwdTmp, 40);
+    shadowTarget.applyMatrix4(lightView);
+    shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
+    shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
+    shadowTarget.applyMatrix4(lightViewInv);
     sunLight.target.position.copy(shadowTarget);
     sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     const f = ctx.sky.flicker.value;
