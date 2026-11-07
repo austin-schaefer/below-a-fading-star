@@ -42,7 +42,7 @@ const STRUT_FS = /* glsl */`
     float gut = clamp((0.88 - uFlicker) / 0.5, 0.0, 1.0);
     float crawl = 0.5 + 0.5 * sin(vAlong * 0.09 - uT * 2.6 + vSeed * 6.283);
     col += uGlow * gut * (0.25 + 0.75 * crawl * crawl);
-    gl_FragColor = vec4(sl_air(col, d, 0.085), 1.0);
+    gl_FragColor = vec4(sl_air(col, d, 0.13), 1.0);
   }`;
 const WEB_VS = /* glsl */`
   #define MAXS ${MAXS}
@@ -68,7 +68,7 @@ const WEB_FS = /* glsl */`
     col += uSunLight * glint * 0.5 * uFlicker;
     float gut = clamp((0.88 - uFlicker) / 0.5, 0.0, 1.0);
     col += uGlow * gut * 0.6;
-    gl_FragColor = vec4(sl_air(col, d, 0.085), 0.6 + glint * 0.4);
+    gl_FragColor = vec4(sl_air(col, d, 0.13), 0.6 + glint * 0.4);
   }`;
 
 // One lattice's struts and webs in its own frame (metres, centred on the origin).
