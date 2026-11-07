@@ -115,3 +115,36 @@ export function hexCellsIn(x0, z0, x1, z1, fn) {
     for (let i = i0; i <= i1; i++) fn(i * HX + off, j * HZ, i, j);
   }
 }
+
+// A deterministic spot on open ground: off the water, the causeway, steep slopes and the landmarks.
+export function findSpot(env, o = {}) {
+  const { ctx, rng } = env;
+  const T = ctx.terrain;
+  const rMax = o.rMax ?? 265, rMin = o.rMin ?? 0;
+  const slopeMax = o.slope ?? 0.8, cwMin = o.causeway ?? 7, lmPad = o.landmarkPad ?? 8;
+  const taken = env.taken || (env.taken = []);
+  for (let tries = 0; tries < 400; tries++) {
+    let x, z;
+    if (o.near) { const a = rng() * Math.PI * 2, d = (o.nearMin ?? 0) + rng() * (o.near.r - (o.nearMin ?? 0)); x = o.near.x + Math.cos(a) * d; z = o.near.z + Math.sin(a) * d; }
+    else { const a = rng() * Math.PI * 2, d = rMin + Math.sqrt(rng()) * (rMax - rMin); x = Math.cos(a) * d; z = Math.sin(a) * d; }
+    if (Math.hypot(x, z) > 285) continue;
+    if (T.causewayDistance(x, z) < cwMin) continue;
+    if (T.slopeAt(x, z) > slopeMax) continue;
+    let bad = false;
+    for (const w of Object.values(ctx.water)) if (Math.hypot(x - w.x, z - w.z) < w.r + (o.waterPad ?? 6)) { bad = true; break; }
+    if (bad) continue;
+    if (T.heightAt(x, z) < -2.2) continue; // low wet ground: the fen's and tarn's margins
+    for (const [k, L] of Object.entries(ctx.landmarks)) {
+      if (o.allow && o.allow.includes(k)) continue;
+      const pad = k === 'wood' ? (o.inWood ? -1e9 : -30) : lmPad;
+      if (Math.hypot(x - L.x, z - L.z) < L.r + pad) { bad = true; break; }
+    }
+    if (bad) continue;
+    const sep = o.sep ?? 6;
+    for (const t of taken) if (Math.hypot(x - t[0], z - t[1]) < sep + t[2]) { bad = true; break; }
+    if (bad) continue;
+    taken.push([x, z, o.size ?? 2]);
+    return { x, z };
+  }
+  return null;
+}

@@ -67,15 +67,21 @@ export function makeStoneMaterial(ctx) {
           float id = floor(cx);
           vec2 f = vec2(fract(cx) * bl, fract(cu.y));
           float e = min(min(f.x, bl - f.x), min(f.y, 1.0 - f.y));
-          float mw = 0.055 + 0.05 * g2 + 0.04 * g1;
-          mortar = 1.0 - smoothstep(mw, mw + 0.06, e);
-          chipEdge = 1.0 - smoothstep(mw + 0.04, mw + 0.2, e);
+          float mw = 0.02 + 0.05 * g2 * g2 + 0.05 * smoothstep(0.55, 0.8, g1);
+          mortar = (1.0 - smoothstep(mw, mw + 0.035, e)) * (0.55 + 0.45 * fpVn(sP * 4.0));
+          chipEdge = 1.0 - smoothstep(mw + 0.02, mw + 0.16, e);
           blockTone = fpH12(vec2(id, row) + 0.37) - 0.5;
+        } else if (vSA.x < 0.0) {
+          // paving stone: a carved hexagonal ring on its face, worn shallow
+          vec2 q = abs(vSU);
+          float hd = max(q.x, q.x * 0.5 + q.y * 0.866);
+          float rr = -vSA.x;
+          mortar = (1.0 - smoothstep(0.012, 0.03, abs(hd - rr))) * smoothstep(0.6, 0.9, sN.y) * (0.5 + 0.5 * fpVn(sP * 3.0));
         }
         float iron = vSA.z;
         vec3 sc = diffuseColor.rgb;
-        sc *= 1.0 + blockTone * 0.34 + (g1 - 0.5) * 0.42 + (gBig - 0.5) * 0.3 + (g2 - 0.5) * 0.12;
-        sc *= mix(1.0, 0.42, mortar);
+        sc *= 1.0 + blockTone * 0.22 + (g1 - 0.5) * 0.5 + (gBig - 0.5) * 0.3 + (g2 - 0.5) * 0.12;
+        sc *= mix(1.0, 0.5, mortar);
         // weather: sun-bleached tops, damp feet
         float sUp = smoothstep(0.55, 0.95, sN.y);
         float sNorth = smoothstep(0.15, -0.85, sN.z);
@@ -116,7 +122,7 @@ export function makeStoneMaterial(ctx) {
         // wet stone: dark and glossy
         sc *= 1.0 - vSA.w * 0.55;
         diffuseColor.rgb = sc;
-        float sHeight = g1 * 0.55 + g2 * 0.18 - mortar * 0.9 - chipEdge * 0.25 + moss * 0.3;`)
+        float sHeight = g1 * 0.7 + g2 * 0.22 - mortar * 0.6 - chipEdge * 0.3 + moss * 0.3;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(roughnessFactor, 0.32, vSA.w);
         roughnessFactor = mix(roughnessFactor, 0.6, iron);

@@ -154,7 +154,7 @@ export function buildWader(ctx) {
   const legs = [0, 1].map((k) => { const m = new THREE.Mesh(legGeo, mat); m.position.set(k ? -0.09 : 0.09, 1.04, 0); m.castShadow = true; g.add(m); return m; });
   scene.add(g);
   const st = { x: x0, z: z0, yaw: rng() * 6.28, wait: 4, leg: 0, u: -1, sx: 0, sz: 0, tx: 0, tz: 0 };
-  const sink = 0.2; // feet are in the mud
+  ctx.wader = st;
   function place() { g.position.set(st.x, terrain.heightAt(st.x, st.z) - 0.0, st.z); g.rotation.y = st.yaw; }
   place();
   function update(dt, t) {

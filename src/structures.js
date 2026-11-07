@@ -97,11 +97,11 @@ export async function build(ctx) {
   // pavers: one instanced hex prism with a carved ring, moss in the joints
   {
     const r = HEX_R * 0.9;
-    const prof = [[r, -0.2], [r, 0.0], [r - 0.05, 0.06], [r * 0.66, 0.065], [r * 0.62, 0.05], [r * 0.57, 0.065], [0.0, 0.07]];
+    const prof = [[r, -0.2], [r, 0.0], [r - 0.06, 0.06], [0.0, 0.068]];
     let g = new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 6, Math.PI / 6 * 0);
     g = g.toNonIndexed();
     g.computeVertexNormals();
-    decorate(g, { moss: 0.3, mossFn: (x, y, z) => (y < 0.05 ? 1.0 : (Math.hypot(x, z) > r * 0.55 && Math.hypot(x, z) < r * 0.68 ? 0.7 : 0.28)), low: 0.6 });
+    decorate(g, { course: -r * 0.6, moss: 0.3, mossFn: (x, y, z) => (y < 0.05 ? 1.0 : 0.3), low: 0.6 });
     const im = new THREE.InstancedMesh(g, stone.mat, paverMats.length);
     for (let i = 0; i < paverMats.length; i++) { im.setMatrixAt(i, paverMats[i]); im.setColorAt(i, paverCols[i]); }
     im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;

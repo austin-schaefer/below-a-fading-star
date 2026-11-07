@@ -44,7 +44,7 @@ export function buildGrazers(ctx, opts = {}) {
   const mat = new THREE.MeshStandardMaterial({ color: 0x8d8c92, roughness: 0.95, metalness: 0 });
   const mk = (g, n) => { const m = new THREE.InstancedMesh(g, mat, n); m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); return m; };
   const bodies = mk(bodyGeometry(), N), heads = mk(headGeometry(), N);
-  const uppers = mk(legGeometry(UP_LEN, 0.05, 0.034), N * 4), lowers = mk(legGeometry(LO_LEN, 0.03, 0.016), N * 4);
+  const uppers = mk(legGeometry(UP_LEN, 0.065, 0.04), N * 4), lowers = mk(legGeometry(LO_LEN, 0.038, 0.022), N * 4);
   const col = new THREE.Color();
   for (let i = 0; i < N; i++) {
     col.setHSL(0.72, 0.05, 0.62 + rng() * 0.2);
@@ -215,6 +215,6 @@ export function buildGrazers(ctx, opts = {}) {
     }
     bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = uppers.instanceMatrix.needsUpdate = lowers.instanceMatrix.needsUpdate = true;
   }
-  for (const m of [bodies, heads, uppers, lowers]) m.count = n;
+  bodies.count = heads.count = n; uppers.count = lowers.count = n * 4;
   ctx.registerUpdate(update);
 }

@@ -102,9 +102,9 @@ export function buildSky(ctx) {
         // High cloud: slow, thin, lit from the sun side
         vec2 cuv = d.xz / max(d.y, 0.05);
         float cloud = fbm(cuv * 0.9 + vec2(uTime * 0.004, uTime * 0.0015));
-        cloud = smoothstep(0.52, 0.8, cloud) * smoothstep(0.02, 0.18, up) * (1.0 - smoothstep(0.35, 0.8, up));
+        cloud = smoothstep(0.58, 0.86, cloud) * smoothstep(0.02, 0.18, up) * (1.0 - smoothstep(0.35, 0.8, up));
         vec3 cloudCol = mix(vec3(0.12, 0.08, 0.12), uSunLight * 0.9, pow(toSun, 2.5)) ;
-        sky = mix(sky, cloudCol, cloud * 0.6);
+        sky = mix(sky, cloudCol, cloud * 0.42);
 
         // The sun: a huge dim disc with limb darkening, mottled, and a seething rim
         float sunRadius = 0.072; // angular size (cos-space approx): about 4 degrees across

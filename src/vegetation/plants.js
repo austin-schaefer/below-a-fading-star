@@ -56,13 +56,13 @@ function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, t
 // it reads as three variants: fine tussock + bent broad blades, fine + seed stalks, or all.
 function grassGeo(rng) {
   const pg = new PlantGeo();
-  for (let k = 0; k < 6; k++) { // fine
-    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.11;
-    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, 0.022 + rng() * 0.01, 0.3 + rng() * 0.25, 0.15 + rng() * 0.25, 2, 0);
+  for (let k = 0; k < 9; k++) { // fine
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, 0.03 + rng() * 0.014, 0.28 + rng() * 0.28, 0.18 + rng() * 0.3, 2, 0);
   }
   const seed = [1.25, 0.72, 0.5];
   for (let k = 0; k < 3; k++) { // tall seed stalks with a small head
-    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.07;
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.14;
     const h = 0.62 + rng() * 0.3, lean = 0.08 + rng() * 0.15;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
     const bl = blade(pg, rng, x0, z0, a, 0.011, h, lean, 2, 1);
@@ -79,8 +79,8 @@ function grassGeo(rng) {
     pg.tri(i0, i2, i1); pg.tri(i1, i2, i3);
   }
   for (let k = 0; k < 3; k++) { // broad, bent over
-    const a = rng() * Math.PI * 2, r = 0.04 + rng() * 0.08;
-    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.04 + rng() * 0.015, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, 2, 2);
+    const a = rng() * Math.PI * 2, r = 0.06 + rng() * 0.14;
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.05 + rng() * 0.02, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, 2, 2);
   }
   return pg.build();
 }
@@ -88,25 +88,25 @@ function grassGeo(rng) {
 // Heather (ling): a dark woody mound with wiry stalks, the upper half of each a spike of bloom.
 function heatherGeo(rng) {
   const pg = new PlantGeo();
-  const core = [0.55, 0.5, 0.42];
-  const seg = 7, R0 = 0.34, R1 = 0.22;
+  const core = [0.9, 0.85, 0.75];
+  const seg = 7, R0 = 0.27, R1 = 0.17;
   const ring0 = [], ring1 = [];
   for (let s = 0; s < seg; s++) {
     const a = (s / seg) * Math.PI * 2, j = 0.85 + rng() * 0.3;
     ring0.push(pg.v(Math.cos(a) * R0 * j, -0.02, Math.sin(a) * R0 * j, Math.cos(a) * 0.7, 0.6, Math.sin(a) * 0.7, core, 0, 0, 0.3, 0.25));
-    ring1.push(pg.v(Math.cos(a + 0.4) * R1 * j, 0.17 + rng() * 0.05, Math.sin(a + 0.4) * R1 * j, Math.cos(a) * 0.4, 0.9, Math.sin(a) * 0.4, core, 0.55, 0, 0.3, 0.4));
+    ring1.push(pg.v(Math.cos(a + 0.4) * R1 * j, 0.12 + rng() * 0.04, Math.sin(a + 0.4) * R1 * j, Math.cos(a) * 0.4, 0.9, Math.sin(a) * 0.4, core, 0.55, 0, 0.3, 0.4));
   }
-  const top = pg.v(0, 0.27, 0, 0, 1, 0, core, 0.7, 0, 0.3, 0.5);
+  const top = pg.v(0, 0.19, 0, 0, 1, 0, core, 0.7, 0, 0.3, 0.5);
   for (let s = 0; s < seg; s++) {
     const s1 = (s + 1) % seg;
     pg.tri(ring0[s], ring1[s1], ring1[s]); pg.tri(ring0[s], ring0[s1], ring1[s1]);
     pg.tri(ring1[s], ring1[s1], top);
   }
   const wood = [0.42, 0.34, 0.28], bloom = [1, 1, 1];
-  for (let k = 0; k < 10; k++) {
-    const a = rng() * Math.PI * 2, r = 0.05 + rng() * 0.16;
+  for (let k = 0; k < 16; k++) {
+    const a = rng() * Math.PI * 2, r = 0.04 + rng() * 0.2;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
-    const h = 0.28 + rng() * 0.22, lean = 0.25 + rng() * 0.3;
+    const h = 0.2 + rng() * 0.2, lean = 0.3 + rng() * 0.35;
     const dx = Math.cos(a), dz = Math.sin(a);
     const at = (t) => [x0 + dx * lean * h * t, 0.08 + h * t, z0 + dz * lean * h * t];
     const rnd = rng();
@@ -119,9 +119,9 @@ function heatherGeo(rng) {
     pg.tri(s0, s1, s2);
     // bloom spike along the upper half: a crossed pair of narrow diamonds
     const m0 = at(0.4), m1 = at(0.7), m2 = at(1.02);
-    for (let c = 0; c < 2; c++) {
-      const ca = a + (c ? Math.PI / 2 : 0);
-      const ox = -Math.sin(ca) * 0.035, oz = Math.cos(ca) * 0.035;
+    for (let c = 0; c < 1; c++) {
+      const ca = a + rng() * 1.5;
+      const ox = -Math.sin(ca) * 0.024, oz = Math.cos(ca) * 0.024;
       const i0 = pg.v(m0[0], m0[1], m0[2], dx * 0.5, 0.8, dz * 0.5, bloom, 0.4, 1, rnd, 1);
       const i1 = pg.v(m1[0] - ox, m1[1], m1[2] - oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
       const i2 = pg.v(m1[0] + ox, m1[1], m1[2] + oz, dx * 0.5, 0.8, dz * 0.5, bloom, 0.7, 1, rnd, 1);
@@ -223,7 +223,7 @@ function fleshyGeo(rng) {
       const n0 = [dx * 0.3, 0.9, dz * 0.3];
       rows.push([
         pg.v(cx - px * w, y - crease, cz - pz * w, n0[0] - px * 0.4, n0[1], n0[2] - pz * 0.4, [1, 1, 1], t, 0, rnd, 1),
-        pg.v(cx, y + crease * 0.4, cz, n0[0], n0[1], n0[2], [1.9, 2.0, 1.6], t, 0, rnd, 1),
+        pg.v(cx, y + crease * 0.4, cz, n0[0], n0[1], n0[2], [2.2, 2.2, 1.7], t, 0, rnd, 1),
         pg.v(cx + px * w, y - crease, cz + pz * w, n0[0] + px * 0.4, n0[1], n0[2] + pz * 0.4, [1, 1, 1], t, 0, rnd, 1),
       ]);
     }
@@ -291,7 +291,7 @@ function makePlantMaterial(ctx, shared, o) {
           vec3 fpV = normalize(vFpW - cameraPosition);
           float fpBack = pow(max(dot(fpV, uSunDir), 0.0), 3.0);
           // the low sun shines through the tips: borrow the (already shadowed) direct light
-          outgoingLight += reflectedLight.directDiffuse * (0.6 + fpBack * uTrans * 3.0) * vFpT;
+          outgoingLight += reflectedLight.directDiffuse * (0.5 + fpBack * uTrans * 1.8) * vFpT;
         }
         #include <opaque_fragment>`);
     unflipNormals(shader);
@@ -402,7 +402,7 @@ export function buildPlants(ctx, ground, shared) {
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
   const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: low ? 11 : 15, fade0: 80, fade1: 120, wind: 1.0, tip: '#8a3418', trans: 1.6 }), { r0: low ? 11 : 15, fade0: 80, fade1: 120, height: 1.2 });
-  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 85, fade1: 125, wind: 0.22, base: '#3a3020', trans: 0.6, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 85, fade1: 125, height: 0.8 });
+  const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 85, fade1: 125, wind: 0.22, base: '#5a4630', trans: 0.6, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 85, fade1: 125, height: 0.8 });
   const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: low ? 14 : 20, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 1.5 }), { r0: low ? 14 : 20, fade0: 90, fade1: 140, height: 1.4 });
   const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: low ? 16 : 22, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 1.4 }), { r0: low ? 16 : 22, fade0: 100, fade1: 150, height: 2 });
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 });
@@ -415,13 +415,13 @@ export function buildPlants(ctx, ground, shared) {
   const cReed = C('#8a7a4a'), cReed2 = C('#6a6a38');
   const cBone = C('#c8b890'), cBrk = [C('#8a4420'), C('#6e3a1c'), C('#5a4a24')], cBrkWood = C('#2e3a1e');
   const cFlw = [C('#e0dcd0'), C('#a090c4'), C('#d0c0a0'), C('#c8b8d8')];
-  const cFlesh = C('#121a10'), cFlesh2 = C('#1a1a14');
+  const cFlesh = C('#24341e'), cFlesh2 = C('#2c2c1c');
   const tint = [0, 0, 0];
   const mixInto = (a, b2, t) => { tint[0] = lerp(tint[0], b2[0], t); tint[1] = lerp(tint[1], b2[1], t); tint[2] = lerp(tint[2], b2[2], t); };
   const setT = (a) => { tint[0] = a[0]; tint[1] = a[1]; tint[2] = a[2]; };
 
   const D_BRACKEN = 0.5 * half, D_FLOWER = 0.35 * half, D_FLESH = 0.16 * half;
-  const D_GRASS = 2.4 * half, D_HEATH = 0.5 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
+  const D_GRASS = 3.0 * half, D_HEATH = 0.5 * half, D_REED = 1.6 * half, D_SEDGE = 1.5 * half;
   const CELL = 2;
   const b = {};
   const tStart = performance.now();

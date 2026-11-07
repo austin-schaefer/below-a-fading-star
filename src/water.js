@@ -174,9 +174,9 @@ const FRAG = /* glsl */`
       }
       pads *= smoothstep(0.5, 0.9, d);
     }
-    vec3 padCol = mix(vec3(0.02, 0.04, 0.015), vec3(0.05, 0.07, 0.025), texture2D(uTex, p * 1.3).a);
+    vec3 padCol = mix(vec3(0.006, 0.011, 0.005), vec3(0.016, 0.02, 0.008), texture2D(uTex, p * 1.3).a);
     col = mix(col, padCol, pads * 0.9);
-    col = mix(col, vec3(0.5, 0.42, 0.42), bloom * pads);
+    col = mix(col, vec3(0.3, 0.25, 0.26), bloom * pads);
     alpha = max(alpha, pads * shore);
 
     // pale scum line at the water's edge
