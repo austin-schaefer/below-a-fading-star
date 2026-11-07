@@ -213,7 +213,7 @@ export function buildTerrain(ctx) {
   const col = new THREE.Color();
   const cMoor = C(PALETTE.moorGrass), cDry = C(PALETTE.moorDry), cHeath = C(PALETTE.heather), cMud = C(PALETTE.mud);
   const cRock = C(PALETTE.rock), cRockD = C(PALETTE.rockDark), cScree = C(PALETTE.scree), cIce = C(PALETTE.ice);
-  const cWood = C('#3a3522'), cShore = C('#4a3f30'), cOrch = C('#5a4425'), cCrys = C('#5a7a86'), cRoad = C('#6a5e55');
+  const cWood = C('#2e3420'), cShore = C('#45403a'), cOrch = C('#5a4a2c'), cCrys = C('#5a7a86'), cRoad = C('#6a5e55'), cPeat = C('#1e1a16'), cMoss = C('#3e5a30');
   const tmp = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
@@ -224,6 +224,11 @@ export function buildTerrain(ctx) {
     const dry = SX.warped2(x * 0.01 + 3, z * 0.01 + 1, 3) * 0.5 + 0.5;
     col.copy(cMoor).lerp(cDry, dry);
     col.lerp(cHeath, b.heath * 0.55 * b.moor);
+    // peat hags and moss cushions break up the moor
+    const peat = smoothstep(0.35, 0.6, SX.warped2(x * 0.02 + 70, z * 0.02 + 33, 3));
+    col.lerp(cPeat, peat * 0.7 * b.moor);
+    const moss = smoothstep(0.3, 0.55, SX.warped2(x * 0.05 - 40, z * 0.05 + 12, 3)) * smoothstep(2, -2, y);
+    col.lerp(cMoss, moss * 0.5);
     col.lerp(cWood, b.wood * 0.8);
     col.lerp(cOrch, b.orchard * 0.5);
     col.lerp(cMud, b.marsh * 0.85);
