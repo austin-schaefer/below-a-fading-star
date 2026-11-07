@@ -12,6 +12,7 @@ import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.
 import { buildHud } from './hud.js';
 
 const MODULES = [
+  ['rocks', () => import('./rocks.js')],
   ['vegetation', () => import('./vegetation.js')],
   ['structures', () => import('./structures.js')],
   ['water', () => import('./water.js')],

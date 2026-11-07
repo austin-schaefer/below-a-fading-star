@@ -265,7 +265,7 @@ export function buildTerrain(ctx) {
         float fpHeight(vec3 p, vec3 n) {
           vec3 a = triplanar(uDetail, p, n, 0.3);
           vec3 b = triplanar(uDetail, p, n, 1.6);
-          return a.r * 0.6 + b.g * 0.3 + a.b * 0.25;
+          return a.r * 0.3 + b.g * 0.6 + a.b * 0.2;
         }
         // Perturb the world-space normal from the detail height so grazing light picks out the ground
         vec3 fpBumpWorld(vec3 p, vec3 n, float strength) {
@@ -301,7 +301,7 @@ export function buildTerrain(ctx) {
       .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
         {
           float camD = length(vTPos - cameraPosition);
-          float bumpStrength = 0.11 * (1.0 - smoothstep(30.0, 140.0, camD));
+          float bumpStrength = 0.07 * (1.0 - smoothstep(10.0, 60.0, camD));
           vec3 nW = fpBumpWorld(vTPos, normalize(vTNormal), bumpStrength);
           normal = normalize(mat3(viewMatrix) * nW);
         }`)
