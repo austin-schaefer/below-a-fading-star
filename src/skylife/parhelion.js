@@ -53,7 +53,7 @@ const FS = /* glsl */`
     // each layer has its own air: the far ones are paler and thinner
     float far = vLayer < 0.5 ? 1.0 : vLayer < 1.5 ? 0.55 : 0.2;
     vec3 sky = sl_sky(d);
-    float ghostA = mix(0.2, 0.12, far);
+    float ghostA = mix(0.26, 0.14, far);
     float solidA = mix(0.96, 0.62, far);
     float a = cover * mix(ghostA, solidA, uSolid);
     vec3 col = mix(sky * 0.62, mix(uDark, sky, 0.12 + 0.45 * far), uSolid);
@@ -68,7 +68,7 @@ const FS = /* glsl */`
     a = max(a, lit * 0.9);
     // never over the sun's disc (radius 0.072 rad) or its seething rim
     float ang = acos(clamp(dot(d, uSunDir), -1.0, 1.0));
-    a *= smoothstep(0.079, 0.092, ang);
+    a *= smoothstep(0.074, 0.083, ang);
     gl_FragColor = vec4(col, a);
   }`;
 
@@ -87,13 +87,13 @@ function paintAtlas(rng) {
   // how tall the city stands along the horizon: low under the sun, tallest just right of it,
   // a few needles squeezed in left of it
   function envelope(b) {
-    if (b < 242.5) return 2.6;
-    if (b < 246.4) return 8.5;
-    if (b < 253.6) return 3.4;
-    if (b < 256) return 6.5;
-    if (b < 263.5) return 11.5;
-    if (b < 268) return 7.0;
-    return 3.5;
+    if (b < 242.5) return 4.0;
+    if (b < 246.4) return 10.0;
+    if (b < 253.8) return 4.2;
+    if (b < 256) return 8.5;
+    if (b < 263.5) return 13.5;
+    if (b < 268) return 9.0;
+    return 5.0;
   }
 
   for (let L = 0; L < 3; L++) {
@@ -111,7 +111,7 @@ function paintAtlas(rng) {
       let b = B0;
       while (b < B1) {
         const w = R(0.15, 0.7) * wsc;
-        const h = BASE + Math.min(envelope(b) * 0.18, R(0.3, 1.3)) * scale;
+        const h = BASE + Math.min(envelope(b) * 0.3, R(0.8, 2.3)) * scale;
         pts.push([b, h]);
         if (rng() < 0.3) { pts.push([b + w * 0.4, h + R(0.1, 0.4) * scale]); pts.push([b + w * 0.6, h]); }
         pts.push([b + w, h]);
@@ -123,17 +123,18 @@ function paintAtlas(rng) {
 
     // towers
     const towers = [];
-    const n = [75, 48, 30][L];
+    const n = [90, 60, 38][L];
     for (let i = 0; i < n; i++) {
       // more of them where the envelope is high
-      let b = R(B0 + 0.5, B1 - 0.5);
-      for (let k = 0; k < 2 && envelope(b) < 6; k++) b = R(B0 + 0.5, B1 - 0.5);
+      // crowded into the saddle, thinning out to either side where the walls hide it anyway
+      let b = rng() < 0.7 ? 255 + (rng() + rng() + rng() - 1.5) * 9 : R(B0 + 0.5, B1 - 0.5);
+      b = Math.min(B1 - 0.5, Math.max(B0 + 0.5, b));
       const env = envelope(b) * scale;
       const h = env * Math.pow(R(0.25, 1), 1.3);
       if (h < 0.6) continue;
-      const w = R(0.12, 0.32) * wsc * (0.6 + 0.4 * Math.min(1, h / 5));
+      const w = R(0.2, 0.55) * wsc * (0.6 + 0.4 * Math.min(1, h / 5));
       const lean = rng() < 0.18 ? R(-0.16, 0.16) : R(-0.02, 0.02);
-      const base = BASE + R(0.1, 0.6) * scale;
+      const base = BASE + R(0.1, 0.9) * scale;
       towers.push({ b, h, w, lean, base });
       const tip = base + h;
       const sh = (e) => (e - base) * lean; // shear as it rises

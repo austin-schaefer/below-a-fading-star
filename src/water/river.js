@@ -386,7 +386,7 @@ export function buildRiver(ctx, tex) {
       const v = r / ROWS, tt = v * tFall;
       const h = vx * tt - (layer ? 0.35 : 0);      // the back layer hugs closer to the rock
       const y = lip.y + 0.25 - 0.5 * g * tt * tt;
-      const w = (1.5 + 1.6 * v + v * v * 0.8) * (layer ? 0.85 : 1);
+      const w = (1.7 + 0.7 * v + v * v * 0.5) * (layer ? 0.85 : 1);
       for (let c = 0; c <= COLS; c++) {
         const u = (c / COLS) * 2 - 1;
         const bow = (1 - u * u) * 0.25;              // a faint outward belly across the sheet
