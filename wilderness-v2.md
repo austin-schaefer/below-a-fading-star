@@ -32,6 +32,10 @@ A **waterfall and river**: a fall from the boundary mountains that runs swift th
 
 - **R. The Parhelion City:** a city of spires on the western horizon against the sun, very dim and translucent at all times, solid while the sun gutters.
 
+## Carried over from v1
+
+- **Walkable bridge deck.** The Trigon Span's deck (y 15.5 from (-60,200) to (-130,230), gap between (-90.8,213.2) and (-100.6,217.4)) is visual only: the controls take height from the terrain alone. Add a walkable-surface hook in `controls.js` (`ctx.addWalkable(fn)` returning a floor height or null) and build rubble ramps up both abutments in `structures/bridge.js` so the deck can be reached and the gap looked down into.
+
 ## Order of work
 
 1. **Landscape and water first**, one agent, serially: carve the river channel and canyon, the fall, and the pool in `terrain.js`; extend `water.js` with flowing water, foam and the fall; re-run the walk test. Everything else depends on where the river ends up.
