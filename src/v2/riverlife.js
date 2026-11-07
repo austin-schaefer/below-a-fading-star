@@ -263,10 +263,10 @@ const WC_FRAG = /* glsl */`
     float sw = sin(p.x * 2.1 + sin(p.y * 1.7 + t * 0.21) * 1.6 + t * 0.13)
              + sin(p.y * 2.6 - sin(p.x * 1.3 - t * 0.17) * 1.4 - t * 0.11)
              + sin((p.x + p.y) * 3.7 + t * 0.29) * 0.5;
-    float k = smoothstep(0.6, 2.0, sw);
+    float k = smoothstep(-0.2, 2.4, sw);
     float h = uHue + sw * 0.035;
     vec3 a = hsv2rgb(vec3(h, 0.92, 1.0)), b = hsv2rgb(vec3(h + 0.5, 0.92, 1.0));
-    vec3 c = mix(a, b, k * 0.65);
+    vec3 c = mix(a, b, k * 0.5);
     // the glow comes up from under the water: strongest over the deepest part, a slow breathing in it
     float glow = exp(-r * r * 0.55) * (0.8 + 0.2 * sin(t * 0.37 + r * 2.3)) + 0.18 * exp(-r * r * 0.12);
     float lum = 0.55 * uBright;
@@ -300,13 +300,14 @@ const HALO_FRAG = /* glsl */`
   #include <fog_pars_fragment>
   ${HSV}
   void main() {
-    vec2 q = vUv * 2.0;
-    q.y = q.y > 0.0 ? q.y * 0.75 : q.y * 2.2;   // it hangs low over the water, rising a little
+    vec2 q0 = vUv * 2.0, q = q0;
+    q.y = q.y > 0.0 ? q.y * 0.9 : q.y * 2.2;    // it hangs low over the water, rising a little
     float r2 = dot(q, q);
-    float a = exp(-r2 * 3.2) * 0.85 + exp(-r2 * 9.0) * 0.6;
+    float a = exp(-r2 * 4.5) * 0.8 + exp(-r2 * 12.0) * 0.5;
+    a *= (1.0 - smoothstep(0.5, 1.0, abs(q0.x))) * (1.0 - smoothstep(0.5, 1.0, abs(q0.y)));
     vec3 c = hsv2rgb(vec3(uHue + vUv.y * 0.06 + sin(uTime * 0.2) * 0.02, 0.85, 1.0));
     ${FOG_ATTEN}
-    gl_FragColor = vec4(c * a * 0.11 * uBright * fogAtten, 1.0);
+    gl_FragColor = vec4(c * a * 0.07 * uBright * fogAtten, 1.0);
   }`;
 
 // ---------------------------------------------------------------- the fall's spray
