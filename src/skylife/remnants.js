@@ -423,7 +423,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
       worm: () => headWorld.clone().normalize(), lamp: () => wan.cur.clone().normalize(),
       flier: () => fPos.clone().normalize(),
     },
-    tris: 0,
+    tris: (flier.geometry.attributes.position.count + hull.geometry.attributes.position.count) / 3 + (NSEG + 2) * 12 + 80,
   };
   return { update, api };
 }

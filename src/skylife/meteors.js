@@ -113,6 +113,7 @@ export function buildMeteors(ctx, group, U, rng) {
   // streaks
   const sg = quadStrip(1); sg.instanceCount = N;
   const S = { s: inst(sg, 'iS', 3, N), e: inst(sg, 'iE', 3, N), time: inst(sg, 'iTime', 4, N), col: inst(sg, 'iCol', 4, N), shape: inst(sg, 'iShape', 4, N) };
+  const SA = Object.values(S);
   for (let i = 0; i < N; i++) S.time.setXYZW(i, -1e6, 1, 0.3, 1);
   const smat = new THREE.ShaderMaterial({
     uniforms: withSky(U, {}), vertexShader: STREAK_VS, fragmentShader: STREAK_FS,
@@ -125,6 +126,7 @@ export function buildMeteors(ctx, group, U, rng) {
   // trains
   const tg = quadStrip(28); tg.instanceCount = NT;
   const T = { s: inst(tg, 'iS', 3, NT), e: inst(tg, 'iE', 3, NT), time: inst(tg, 'iTime', 4, NT), drift: inst(tg, 'iDrift', 3, NT), col: inst(tg, 'iCol', 4, NT) };
+  const TA = Object.values(T);
   for (let i = 0; i < NT; i++) T.time.setXYZW(i, -1e6, 1, 1, 0);
   const tmat = new THREE.ShaderMaterial({
     uniforms: withSky(U, {}), vertexShader: TRAIN_VS, fragmentShader: TRAIN_FS,
@@ -198,7 +200,7 @@ export function buildMeteors(ctx, group, U, rng) {
     S.time.setXYZW(i, m.t0, m.dur, len, m.w);
     S.col.setXYZW(i, c.r, c.g, c.b, m.bright);
     S.shape.setXYZW(i, m.flare, fire ? 0.75 : 0.2 + rng() * 0.4, rng(), 0);
-    for (const a of Object.values(S)) a.needsUpdate = true;
+    for (let k = 0; k < SA.length; k++) SA[k].needsUpdate = true;
     if (fire) { rumble.t = m.t0 + m.dur + 3.5 + rng() * 3; rumble.pos.copy(m.e).multiplyScalar(300).add(ctx.camera.position); }
     return m;
   }
@@ -216,7 +218,7 @@ export function buildMeteors(ctx, group, U, rng) {
     tmp.copy(ve).multiplyScalar(Math.cos(a) * sp).addScaledVector(vn, Math.sin(a) * sp * 0.5);
     T.drift.setXYZ(i, tmp.x, tmp.y, tmp.z);
     T.col.setXYZW(i, c.r, c.g, c.b, rng());
-    for (const a2 of Object.values(T)) a2.needsUpdate = true;
+    for (let k = 0; k < TA.length; k++) TA[k].needsUpdate = true;
   }
 
   // now: put the whole shower in the sky at once, mid-flight (for staging a still)
@@ -258,5 +260,5 @@ export function buildMeteors(ctx, group, U, rng) {
   }
 
   const state = () => ({ T: U.uT.value, flash: flash.intensity, live: live.filter((m) => !m.done).map((m) => ({ k: m.kind, p: +((U.uT.value - m.t0) / m.dur).toFixed(3), s: m.s.toArray().map((v) => +v.toFixed(2)) })) });
-  return { update, spawn, state, shower, streaks, trains, flash, count: N };
+  return { update, spawn, state, tris: N * 2 + NT * 56, shower, streaks, trains, flash, count: N };
 }

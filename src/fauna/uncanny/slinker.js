@@ -77,7 +77,7 @@ export function buildSlinker(ctx, U) {
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (fpIGN(gl_FragCoord.xy) > uFade) discard;');
     // an oily sheen along its edges, so it is a shape against the turf and not a hole in it
     if (sh.fragmentShader.includes('#include <emissivemap_fragment>')) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-      { float fr = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 3.0); totalEmissiveRadiance += vec3(0.2, 0.16, 0.26) * fr; }`);
+      { float fr = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 3.0); totalEmissiveRadiance += vec3(0.09, 0.07, 0.12) * fr * fr; }`);
   };
   const mat = new THREE.MeshStandardMaterial({ color: 0x040306, roughness: 0.36, metalness: 0.3 });
   mat.onBeforeCompile = patch;

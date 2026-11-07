@@ -62,7 +62,7 @@ export async function build(ctx) {
   };
   ctx.skylife = {
     group, uniforms: U, lattices: lat.info, colours: METEOR_COLOURS.map(([h]) => h),
-    drawCalls: 9, triangles: lat.tris + 0,
+    drawCalls: group.children.length, triangles: lat.tris + met.tris + rem.api.tris, webSegments: lat.webs,
     spawnMeteor: (colourIndex, at = 0.6, dir = null) => {
       if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y += 0.12; }
       return met.spawn(colourIndex ?? 0, { at, dir });
@@ -77,5 +77,5 @@ export async function build(ctx) {
     dirOf, lookAt: (name, pitchBias = 0) => { const d = dirOf(name); if (d) lookAt(d, pitchBias); return d; },
     advance: (sec) => { for (let k = 0; k < sec * 20; k++) update(0.05, ctx.time.t); },
   };
-  ctx.log(`skylife: ${lat.info.length} lattices, ${lat.struts} struts (${lat.tris} tris), ${lat.webs} web strands, ${met.count} meteor slots`);
+  ctx.log(`skylife: ${group.children.length} draws, ${ctx.skylife.triangles} tris; ${lat.info.length} lattices, ${lat.struts} struts, ${lat.webs} web strands, ${met.count} meteor slots`);
 }

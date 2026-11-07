@@ -119,9 +119,10 @@ export function buildCloak(ctx, U) {
   const n2 = noise.noise2;
   const low = ctx.quality === 'low';
 
-  // the spot: on a rise of open moor ~45 m north of the causeway, seen against the sky from the road
-  const cands = [[-70, -38], [-75, -40], [-55, -30], [-100, -55]];
-  let sx = -70, sz = -38;
+  // the spot: a rise of open moor ~45 m north of the causeway, in sight from nearly every step of the road
+  // between the castle and the stones (checked by line of sight from causeway points within 110 m)
+  const cands = [[-86, -48], [-80, -54], [-86, -42], [-70, -38]];
+  let sx = -86, sz = -48;
   for (const [x, z] of cands) if (U.rules.okStatic(x, z) && terrain.causewayDistance(x, z) > 30) { sx = x; sz = z; break; }
 
   // ---- body: cloak and hood
