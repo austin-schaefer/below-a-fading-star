@@ -7,81 +7,94 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, angDiff } from './kit.js';
 
-const GOLD = '#b8893a', GOLD_D = '#8a6428', ROBE = '#36152e', VELVET = '#6a1822', SKIN = '#a99a86', SAFFRON = '#94662a', WOOD = '#3a2416';
+const GOLD = '#8a6a30', GOLD_D = '#5e4622', ROBE = '#0f0c0e', VEIL = '#151113', VELVET = '#3a1416', CANOPY = '#17201d', WOOD = '#1c130d', GLOVE = '#070606';
+const TAU = Math.PI * 2;
 
 function travellerParts(low) {
-  const sides = low ? 8 : 12;
-  // ---- body: cushion, crossed legs, robe, left arm
-  const B = new Painter();
-  B.paint(VELVET, 0, 0.72);
+  const sides = low ? 10 : 14;
+  // ---- body: cushion, a hunched robed mound, sleeves joined in front, a canopy on four poles
+  const B = new Painter(['aSway']);
+  B.paint(VELVET, 0, 0.92);
   B.lathe(0, 0, 0, [[0.0, 0], [0.5, 0.0], [0.62, 0.05], [0.66, 0.15], [0.62, 0.26], [0.5, 0.3], [0.0, 0.31]], low ? 18 : 24);
-  B.paint(GOLD, 0.85, 0.35);
-  B.ring(0, 0.15, 0, 0.665, 0.018, low ? 24 : 32, 5);
+  B.paint(GOLD_D, 0.7, 0.5);
+  B.ring(0, 0.15, 0, 0.665, 0.012, low ? 24 : 32, 4);
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2, x = Math.cos(a) * 0.66, z = Math.sin(a) * 0.66;
-    B.loft([[x, 0.15, z], [x * 1.02, 0.03, z * 1.02], [x * 1.03, -0.07, z * 1.03]], [0.008, 0.008, 0.008], 4);
-    B.blob(x * 1.03, -0.085, z * 1.03, 0.026, 0.026, 0.026, 6, 4);
-    B.lathe(x * 1.03, -0.1, z * 1.03, [[0.0, -0.17], [0.05, -0.15], [0.03, -0.02], [0.018, 0]], 8);
+    B.set('aSway', 0.4);
+    B.loft([[x, 0.15, z], [x * 1.02, 0.03, z * 1.02], [x * 1.03, -0.07, z * 1.03]], [0.006, 0.006, 0.006], 4);
+    B.set('aSway', 1);
+    B.lathe(x * 1.03, -0.1, z * 1.03, [[0.0, -0.17], [0.04, -0.15], [0.025, -0.02], [0.012, 0]], 6);
+    B.set('aSway', 0);
   }
-  B.paint(ROBE, 0, 0.8);
-  B.loft([[-0.44, 0.37, 0.06], [-0.26, 0.41, 0.22], [0, 0.39, 0.27], [0.26, 0.41, 0.22], [0.44, 0.37, 0.06]], [0.11, 0.13, 0.12, 0.13, 0.11], sides);
-  B.paint('#20120c', 0.1, 0.5);
-  for (const s of [-1, 1]) B.loft([[s * 0.13, 0.37, 0.3], [s * 0.2, 0.36, 0.4], [s * 0.24, 0.38, 0.46], [s * 0.23, 0.42, 0.47]], [0.04, 0.035, 0.015, 0.004], 6);
-  B.paint(ROBE, 0, 0.8);
-  B.lathe(0, 0.3, 0, [[0.43, 0], [0.4, 0.12], [0.3, 0.24], [0.22, 0.32], [0.0, 0.33]], sides + 4);
-  B.loft([[0, 0.58, 0], [0, 0.8, 0.02], [0, 1.0, 0.03], [0, 1.1, 0.02]], [[0.22, 0.17], [0.2, 0.15], [0.25, 0.15], [0.14, 0.11]], sides);
-  B.paint(SAFFRON, 0, 0.75);
-  B.lathe(0, 0.95, 0.015, [[0.3, 0], [0.26, 0.07], [0.17, 0.14], [0.0, 0.16]], sides + 4); // capelet
-  B.paint(GOLD, 0.85, 0.35);
-  B.ring(0, 0.32, 0, 0.42, 0.022, 28, 5);
-  B.ring(0, 0.95, 0.015, 0.3, 0.016, 24, 5);
-  B.ring(0, 1.1, 0.02, 0.13, 0.026, 18, 5);
-  B.paint(ROBE, 0, 0.8);
-  B.loft([[-0.24, 1.04, 0], [-0.33, 0.82, 0.06], [-0.36, 0.62, 0.18], [-0.34, 0.5, 0.28]], [0.06, 0.07, 0.085, 0.1], sides);
-  B.paint(SKIN, 0, 0.55);
-  B.blob(-0.33, 0.46, 0.33, 0.035, 0.022, 0.06, 6, 4);
+  // the robe: pools on the cushion, rises narrow, and bows forward at the top; heavy vertical folds
+  B.paint(ROBE, 0, 0.97);
+  B.grid(low ? 28 : 40, 16, (u, v, o) => {
+    const a = u * TAU, y = 0.28 + v * 1.02;
+    const r = (0.5 - 0.3 * smoothstep(0, 0.35, v) - 0.08 * smoothstep(0.5, 0.92, v) - 0.06 * smoothstep(0.92, 1, v));
+    const fold = 1 + (0.12 * (1 - v) + 0.04) * Math.pow(Math.abs(Math.sin(a * 5 + 0.6 * Math.sin(a * 2))), 0.6) - 0.05;
+    const cz = 0.04 + 0.2 * v * v;
+    B.set('aSway', smoothstep(0.25, 0, v) * 0.5);
+    o[0] = Math.cos(a) * r * fold * 0.95; o[1] = y + (v < 0.02 ? 0.01 * Math.sin(a * 7) : 0); o[2] = cz + Math.sin(a) * r * fold * 0.85;
+  }, true, true);
+  B.set('aSway', 0);
+  // the left sleeve, long, laid across to meet the right in front; nothing shows at the cuffs
+  B.loft([[-0.17, 1.2, 0.2], [-0.25, 0.95, 0.32], [-0.18, 0.72, 0.46], [-0.02, 0.66, 0.52]], [0.07, 0.085, 0.1, 0.12], sides);
+  // the canopy: four black poles with tarnished finials, a sagging verdigris-black cloth, a ragged valance
+  B.paint('#0d0b0a', 0.2, 0.8);
+  const C = 0.55, H = 2.45;
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2, x = Math.cos(a) * 0.62, z = Math.sin(a) * 0.62;
+    B.loft([[x, 0.2, z], [x, H, z]], [0.018, 0.015], 5);
+  }
+  B.paint(GOLD_D, 0.7, 0.45);
+  for (let k = 0; k < 4; k++) { const a = Math.PI / 4 + (k * Math.PI) / 2; B.blob(Math.cos(a) * 0.62, H + 0.05, Math.sin(a) * 0.62, 0.03, 0.05, 0.03, 6, 4); }
+  B.paint(CANOPY, 0, 0.95);
+  const ext = 0.44 / 0.62 * 0.62 / Math.SQRT2 * 1.42;
+  B.sheet(10, 10, (u, v, o) => {
+    const x = (u - 0.5) * 2 * ext, z = (v - 0.5) * 2 * ext;
+    o[0] = x; o[1] = H - 0.12 * (1 - (2 * u - 1) ** 2) * (1 - (2 * v - 1) ** 2) + 0.01; o[2] = z;
+  });
+  const edges = [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]];
+  for (const [x0, z0, x1, z1] of edges) {
+    B.sheet(16, 3, (u, v, o) => {
+      B.set('aSway', v * 1.2);
+      o[0] = (x0 + (x1 - x0) * u) * ext; o[2] = (z0 + (z1 - z0) * u) * ext;
+      o[1] = H + 0.01 - v * (0.26 + 0.07 * Math.sin(u * 23 + x0 * 3) + 0.04 * Math.sin(u * 51));
+    });
+  }
+  B.set('aSway', 0);
   const body = B.geometry();
 
-  // ---- right arm, about the shoulder (pivot at origin)
+  // ---- right arm, about the shoulder: a long sleeve; inside it a black-gloved hand, too long, ringed
   const A = new Painter();
-  A.paint(ROBE, 0, 0.8);
-  A.loft([[0, 0, 0], [0.09, -0.22, 0.06], [0.12, -0.42, 0.18], [0.1, -0.54, 0.28]], [0.06, 0.07, 0.085, 0.1], sides);
-  A.paint(GOLD, 0.85, 0.35);
-  A.loft([[0.12, -0.5, 0.24], [0.1, -0.56, 0.3]], [0.1, 0.1], sides, 0, false);
-  A.paint(SKIN, 0, 0.55);
-  const hc = [0.09, -0.6, 0.33], d = [-0.08, -0.6, 0.55];
-  A.blob(hc[0], hc[1], hc[2], 0.04, 0.05, 0.022, 6, 4);
+  A.paint(ROBE, 0, 0.97);
+  A.loft([[0, 0, 0], [0.08, -0.25, 0.12], [0.01, -0.48, 0.26], [-0.15, -0.54, 0.32]], [0.07, 0.085, 0.1, 0.12], sides);
+  A.paint(GLOVE, 0.15, 0.55);
+  const hc = [-0.2, -0.55, 0.34], d = [-0.85, -0.1, 0.5];
+  A.loft([[-0.1, -0.53, 0.31], hc], [0.03, 0.028], 6);
   for (let f = 0; f < 4; f++) {
-    const ox = (f - 1.5) * 0.017;
-    A.loft([[hc[0] + ox, hc[1] - 0.03, hc[2] + 0.02], [hc[0] + ox * 1.2 + d[0] * 0.07, hc[1] + d[1] * 0.11, hc[2] + d[2] * 0.09], [hc[0] + ox * 1.4 + d[0] * 0.13, hc[1] + d[1] * 0.2, hc[2] + d[2] * 0.16]], [0.009, 0.008, 0.004], 4);
+    const off = (f - 1.5) * 0.02;
+    const b0 = [hc[0], hc[1] + off * 0.3, hc[2] + off];
+    A.loft([b0, [b0[0] + d[0] * 0.08, b0[1] + d[1] * 0.08 - 0.01, b0[2] + d[2] * 0.08], [b0[0] + d[0] * 0.17, b0[1] + d[1] * 0.17 - 0.03, b0[2] + d[2] * 0.17], [b0[0] + d[0] * 0.24, b0[1] + d[1] * 0.24 - 0.06, b0[2] + d[2] * 0.24]], [0.009, 0.008, 0.007, 0.003], 4);
   }
-  A.loft([[hc[0] - 0.03, hc[1], hc[2]], [hc[0] - 0.06, hc[1] - 0.04, hc[2] + 0.04]], [0.01, 0.005], 4);
+  A.paint('#c8a050', 0.95, 0.18, 0.5);
+  { const b0 = [hc[0], hc[1] - 0.005, hc[2] - 0.01]; const r = [b0[0] + d[0] * 0.09, b0[1] + d[1] * 0.09 - 0.01, b0[2] + d[2] * 0.09];
+    A.xf(new THREE.Matrix4().makeTranslation(r[0], r[1], r[2]).multiply(new THREE.Matrix4().makeRotationY(Math.atan2(d[0], d[2]))).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)));
+    A.ring(0, 0, 0, 0.012, 0.0045, 10, 4); A.xf(null); }
   const arm = A.geometry();
 
-  // ---- head, about the neck: a gilt mask with a fixed small smile, and a towering wrapped headdress
-  const H = new Painter();
-  H.paint(SKIN, 0, 0.6);
-  H.loft([[0, -0.02, 0], [0, 0.09, 0.01]], [0.05, 0.05], 8);
-  H.blob(0, 0.19, 0.0, 0.095, 0.12, 0.11, 10, 8);
-  H.paint('#c49a44', 0.92, 0.22);
-  H.blob(0, 0.19, 0.05, 0.088, 0.118, 0.075, 12, 8);
-  H.loft([[0, 0.24, 0.118], [0, 0.17, 0.135], [0, 0.155, 0.128]], [0.012, 0.016, 0.01], 6);
-  H.loft([[-0.07, 0.235, 0.1], [0, 0.245, 0.118], [0.07, 0.235, 0.1]], [0.01, 0.012, 0.01], 5); // brow
-  H.paint('#050304', 0, 0.9);
-  for (const s of [-1, 1]) H.blob(s * 0.036, 0.205, 0.117, 0.017, 0.006, 0.006, 6, 3);
-  H.loft([[-0.03, 0.128, 0.112], [-0.012, 0.122, 0.12], [0.012, 0.122, 0.12], [0.03, 0.128, 0.112]], [0.004, 0.005, 0.005, 0.004], 4);
-  for (let k = 0; k < 8; k++) {
-    H.paint(k % 2 ? SAFFRON : '#7a4c1e', 0, 0.8);
-    const y = 0.27 + k * 0.062, R = 0.11 - k * 0.0095, cz = -0.015 - k * 0.014;
-    H.ring(0, y, cz, R, 0.036 - k * 0.0022, 18, 6);
-  }
-  H.paint(SAFFRON, 0, 0.8);
-  H.lathe(0, 0.27, -0.02, [[0.1, 0], [0.0, 0.5]], 12);
-  H.paint(GOLD, 0.85, 0.35);
-  H.blob(0, 0.79, -0.13, 0.03, 0.03, 0.03, 6, 4);
-  H.paint('#c02030', 0.2, 0.2, 0.9);
-  H.blob(0, 0.3, 0.115, 0.022, 0.03, 0.016, 6, 4);
-  const head = H.geometry();
+  // ---- head, on a neck too long, bowed: a narrow veiled shape, the veil falling to the chest. No face.
+  const Hd = new Painter(['aSway']);
+  Hd.paint(VEIL, 0, 0.96);
+  Hd.grid(low ? 16 : 22, 12, (u, v, o) => {
+    const a = u * TAU, y = 0.34 - v * 0.95;
+    const head = Math.sin(Math.min(1, v / 0.28) * Math.PI * 0.5);
+    const r = v < 0.28 ? 0.105 * head : 0.105 + 0.21 * smoothstep(0.28, 1, v);
+    const fold = 1 + 0.1 * v * Math.abs(Math.sin(a * 5));
+    Hd.set('aSway', smoothstep(0.35, 1, v));
+    o[0] = Math.cos(a) * r * fold; o[1] = y; o[2] = 0.05 + 0.1 * v + Math.sin(a) * r * fold * 1.1;
+  }, true, false);
+  const head = Hd.geometry();
   return { body, arm, head };
 }
 
@@ -89,7 +102,7 @@ function wagonParts(low, noise) {
   const W = new Painter();
   const sides = low ? 12 : 18;
   // cushion: an elliptical pillow
-  W.paint('#5a1820', 0, 0.75);
+  W.paint(VELVET, 0, 0.92);
   const pts = [], rad = [];
   for (let k = 0; k <= 12; k++) {
     const z = -1.84 + (k / 12) * 3.68, e = Math.sqrt(Math.max(0.001, 1 - (z / 1.85) ** 2));
@@ -107,7 +120,7 @@ function wagonParts(low, noise) {
   // bed
   W.paint(WOOD, 0, 0.82);
   W.box(0, 0.42, 0, 1.3, 0.4, 2.6);
-  W.paint('#2a1a10', 0, 0.85);
+  W.paint('#100a06', 0, 0.9);
   for (const s of [-1, 1]) for (let k = 0; k < 3; k++) W.box(s * 0.655, 0.29 + k * 0.13, 0, 0.012, 0.02, 2.5);
   W.paint(GOLD, 0.85, 0.35);
   for (const s of [-1, 1]) { W.box(s * 0.665, 0.625, 0, 0.04, 0.05, 2.64); W.box(0, 0.625, s * 1.32, 1.36, 0.05, 0.04); }
@@ -129,9 +142,9 @@ function wagonParts(low, noise) {
     o[0] = x; o[1] = 0.63 + h - drape; o[2] = z;
     return o;
   };
-  W.paint('#4a4434', 0, 0.9);
+  W.paint('#221f1a', 0, 0.95);
   W.sheet(low ? 18 : 26, low ? 24 : 34, tarp);
-  W.paint('#2a2014', 0, 0.9);
+  W.paint('#120e0a', 0, 0.95);
   const tp = [0, 0, 0];
   for (const vz of [0.18, 0.42, 0.62, 0.84]) {
     const rp = [], rr = [];
@@ -139,7 +152,7 @@ function wagonParts(low, noise) {
     W.loft(rp, rr, 4, 0, false);
   }
   // what pokes out from under it: a rolled carpet, the gilt corner of a frame
-  W.paint('#5a1428', 0, 0.85);
+  W.paint('#2a0e12', 0, 0.9);
   W.loft([[-0.78, 0.76, -1.24], [0.92, 0.8, -1.28]], [0.095, 0.095], 10);
   W.paint(GOLD, 0.85, 0.35);
   W.box(0.55, 0.95, -1.36, 0.46, 0.38, 0.05, 0.35);
@@ -147,12 +160,12 @@ function wagonParts(low, noise) {
   W.box(0.55, 0.95, -1.385, 0.36, 0.28, 0.01, 0.35);
   // spilled on the cushion: a chalice on its side, a jewelled box with its lid ajar, a long case, coins
   const m = new THREE.Matrix4(), r = new THREE.Matrix4();
-  W.paint('#c49a44', 0.92, 0.24);
+  W.paint('#a07a38', 0.9, 0.32);
   W.xf(m.makeTranslation(0.88, 0.16, 0.45).multiply(r.makeRotationZ(1.45)).multiply(new THREE.Matrix4().makeRotationY(0.6)));
   W.lathe(0, -0.12, 0, [[0.055, 0], [0.018, 0.025], [0.014, 0.11], [0.03, 0.13], [0.065, 0.19], [0.072, 0.25], [0.05, 0.24]], 12);
   W.xf(null);
   for (let k = 0; k < 6; k++) W.lathe(0.75 + Math.sin(k * 2.3) * 0.12, 0.2 + k * 0.004, 0.68 + Math.cos(k * 1.7) * 0.14, [[0.022, 0], [0.022, 0.006]], 8);
-  W.paint('#4a0e1a', 0.3, 0.4);
+  W.paint('#24080c', 0.3, 0.6);
   W.box(-0.88, 0.25, -0.55, 0.22, 0.12, 0.16, 0.4);
   W.xf(m.makeTranslation(-0.88, 0.33, -0.55).multiply(r.makeRotationY(0.4)).multiply(new THREE.Matrix4().makeRotationX(-0.5)).multiply(new THREE.Matrix4().makeTranslation(0, 0.02, -0.07)));
   W.box(0, 0, 0, 0.23, 0.04, 0.17);
@@ -160,10 +173,10 @@ function wagonParts(low, noise) {
   W.paint(GOLD, 0.85, 0.35);
   W.box(-0.88, 0.315, -0.55, 0.235, 0.012, 0.172, 0.4);
   for (const [col, ox] of [['#ff2040', -0.06], ['#30ff90', 0], ['#4080ff', 0.06]]) {
-    W.paint(col, 0.2, 0.15, 1.2);
+    W.paint(col, 0.2, 0.15, 0.5);
     W.blob(-0.88 + Math.cos(0.4) * ox + Math.sin(0.4) * 0.082, 0.25, -0.55 - Math.sin(0.4) * ox + Math.cos(0.4) * 0.082, 0.014, 0.014, 0.01, 6, 3);
   }
-  W.paint('#3a1612', 0.1, 0.55);
+  W.paint('#1c0e0b', 0.1, 0.8);
   W.box(0.42, 0.2, 1.5, 0.17, 0.12, 1.1, 0.55);
   W.paint(GOLD, 0.85, 0.35);
   for (const o of [-0.3, 0.3]) W.box(0.42 + Math.sin(0.55) * o, 0.2, 1.5 + Math.cos(0.55) * o, 0.18, 0.125, 0.04, 0.55);
@@ -202,7 +215,7 @@ function wagonParts(low, noise) {
   Lt.lathe(0, -0.2, 0, [[0.1, 0], [0.04, 0.06], [0.015, 0.09], [0.0, 0.1]], 8);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) Lt.box(sx * 0.068, -0.31, sz * 0.068, 0.018, 0.22, 0.018);
   Lt.box(0, -0.43, 0, 0.17, 0.03, 0.17);
-  Lt.paint('#ffb466', 0, 0.3, 2.4);
+  Lt.paint('#ffb466', 0, 0.3, 3.2);
   Lt.box(0, -0.31, 0, 0.12, 0.2, 0.12);
   const lantern = Lt.geometry();
   return { wagon, wheel, lantern };
@@ -213,15 +226,15 @@ export function buildTraveller(ctx, U) {
   const ground = makeGround(ctx);
   const low = ctx.quality === 'low';
   const T = travellerParts(low), Wg = wagonParts(low, noise);
-  const mat = paintedMaterial();
-  const matD = paintedMaterial({ side: THREE.DoubleSide });
+  const mat = paintedMaterial({ side: THREE.DoubleSide }, undefined, true);
+  const matD = paintedMaterial({ side: THREE.DoubleSide }, undefined, true);
   const matL = paintedMaterial();
   const mk = (g, m, name, shadow = true) => { const o = new THREE.Mesh(g, m); o.name = name; o.castShadow = shadow; o.receiveShadow = true; return o; };
 
   const trav = new THREE.Group();
   trav.add(mk(T.body, mat, 'uncanny-traveller'));
-  const headPivot = new THREE.Group(); headPivot.position.set(0, 1.1, 0.02); headPivot.add(mk(T.head, mat, 'uncanny-traveller-head'));
-  const armPivot = new THREE.Group(); armPivot.position.set(0.24, 1.04, 0); armPivot.add(mk(T.arm, mat, 'uncanny-traveller-arm'));
+  const headPivot = new THREE.Group(); headPivot.position.set(0, 1.5, 0.32); headPivot.add(mk(T.head, mat, 'uncanny-traveller-head'));
+  const armPivot = new THREE.Group(); armPivot.position.set(0.17, 1.2, 0.2); armPivot.add(mk(T.arm, mat, 'uncanny-traveller-arm'));
   trav.add(headPivot, armPivot);
   const wagon = new THREE.Group();
   wagon.add(mk(Wg.wagon, matD, 'uncanny-wagon'));
@@ -234,7 +247,6 @@ export function buildTraveller(ctx, U) {
   light.position.set(0, -0.31, 0);
   lanternPivot.add(light);
   wagon.add(lanternPivot);
-  trav.scale.setScalar(1.18);
   scene.add(trav, wagon);
 
   // the rope: a tube rebuilt in place every frame
@@ -306,9 +318,9 @@ export function buildTraveller(ctx, U) {
   function place(dt, t) {
     routeAt(S.s, tmp);
     const gT = ground.at(tmp.x, tmp.z);
-    trav.position.set(tmp.x, gT + 1.02 + Math.sin(t * 0.9) * 0.06, tmp.z);
+    trav.position.set(tmp.x, gT + 1.02 + Math.sin(t * 0.6) * 0.035, tmp.z);
     S.yawT += angDiff(headingAt(S.s), S.yawT) * Math.min(1, dt * 1.5);
-    trav.rotation.set(Math.sin(t * 0.7) * 0.025, S.yawT, Math.sin(t * 0.55 + 1) * 0.03);
+    trav.rotation.set(0, S.yawT, 0);
     routeAt(S.s - GAP, tmp);
     const gW = ground.at(tmp.x, tmp.z);
     wagon.position.set(tmp.x, gW + 0.98 + Math.sin(t * 0.7 + 1.3) * 0.07, tmp.z);
@@ -325,6 +337,7 @@ export function buildTraveller(ctx, U) {
     const ahead = (dx * Math.sin(S.yawT) + dz * Math.cos(S.yawT));
     const blocked = dist < 2.6 && ahead > 0;
     const target = S.hold || blocked ? 0 : 0.8;
+    mat.userData.uT.value = t; matD.userData.uT.value = t;
     S.speed = approach(S.speed, target, 1.2, dt);
     S.s += S.speed * dt;
     place(dt, t);
@@ -339,8 +352,8 @@ export function buildTraveller(ctx, U) {
     pub.greeting = S.greet !== 'idle';
     const want = lookAt ? clamp(angDiff(Math.atan2(dx, dz), S.yawT), -1.5, 1.5) : 0;
     S.headYaw = approach(S.headYaw, want, 2.2, dt);
-    headPivot.rotation.set(lookAt ? -0.08 : 0, S.headYaw, 0, 'YXZ');
-    armPivot.rotation.set(-2.5 * S.arm, 0.3 * S.arm, 0.28 * S.arm, 'XYZ');
+    headPivot.rotation.set(0.12, S.headYaw, 0, 'YXZ');
+    armPivot.rotation.set(-2.2 * S.arm, -0.5 * S.arm, 0.15 * S.arm, 'XYZ');
     // wheels turn though they touch nothing
     S.spin += (S.speed / 0.48) * dt;
     for (let i = 0; i < 4; i++) {
