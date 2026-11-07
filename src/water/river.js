@@ -329,12 +329,12 @@ export function buildRiver(ctx, tex) {
       if (rng() < 0.3) continue;
       const bw = RV.bankWidths(s), hw = RV.halfWidthAt(s);
       const edge = hw + (side > 0 ? bw.bl : bw.br);
-      const up = rng() < 0.45 ? 1.5 + rng() * 3 : 0;   // some higher up the face
+      const up = rng() < 0.2 ? 0.8 + rng() * 1.5 : 0;  // a few a little way up the face
       const d = side * (edge + 0.6 + up + rng() * 0.8);
       const p = at(line, s + (rng() - 0.5) * 2), tg = tangent(line, s, 1);
       const x = p.x + tg.tz * d, z = p.z - tg.tx * d;
       const r = (up ? 0.9 : 0.7) + rng() * (up ? 1.6 : 1.2);
-      wallRocks.push({ x, z, r, y: terrain.heightAt(x, z) - r * 0.25 });
+      wallRocks.push({ x, z, r, y: terrain.heightAt(x, z) - r * 0.45 });
     }
   }
   const rockUniform = Array.from({ length: MAX_ROCKS }, (_, i) => {
@@ -370,7 +370,8 @@ export function buildRiver(ctx, tex) {
       p.setXYZ(i, v.x, v.y, v.z);
     }
     g.computeVertexNormals();
-    const m = new THREE.MeshStandardMaterial({ color: C('#2e2a27'), roughness: 0.42, metalness: 0 });
+    const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, metalness: 0 });
+    const cWet = C('#26221f'), cDry = C('#4a4440');
     const im = new THREE.InstancedMesh(g, m, rocks.length + wallRocks.length);
     const M = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), pp = new THREE.Vector3();
     rocks.forEach((k, i) => {
@@ -380,6 +381,7 @@ export function buildRiver(ctx, tex) {
       pp.set(k.x, Math.min(k.y - k.r * 0.15, terrain.heightAt(k.x, k.z) + k.r * 0.55), k.z);
       M.compose(pp, q, sc);
       im.setMatrixAt(i, M);
+      im.setColorAt(i, cWet);
       if (k.r > 0.75) ctx.addCollider({ x: k.x, z: k.z, r: k.r * 0.85 });
     });
     wallRocks.forEach((k, j) => {
@@ -389,6 +391,7 @@ export function buildRiver(ctx, tex) {
       pp.set(k.x, k.y, k.z);
       M.compose(pp, q, sc);
       im.setMatrixAt(rocks.length + j, M);
+      im.setColorAt(rocks.length + j, cDry.clone().multiplyScalar(0.8 + rng() * 0.35));
     });
     im.castShadow = true; im.receiveShadow = true; im.name = 'river-rocks';
     im.instanceMatrix.needsUpdate = true;

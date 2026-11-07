@@ -64,21 +64,21 @@ export function buildVigilant(ctx, rng) {
   blob([0, -16, -8], [40, 22, 34]);              // the talus it sits in
   blob([0, 7, -4], [25, 13, 19]);                // haunches
   blob([0, 26, -3], [19, 20, 14], { rotX: 0.3 }); // torso, leaning forward
-  blob([0, 40, 0], [24, 12, 15], { rotX: 0.35 }); // the hunch of the back
+  blob([0, 41, -1], [25, 12, 15], { rotX: 0.35 }); // the hunch of the back
   for (const s2 of [-1, 1]) {
-    blob([20 * s2, 44, 3], [11, 9, 11]);                  // shoulders
-    limb([23 * s2, 42, 4], [23 * s2, 22, 18], 7);         // upper arms
-    limb([23 * s2, 22, 18], [9 * s2, 24, 33], 6);         // forearms across the knees
-    blob([7 * s2, 19, 36], [5.5, 7, 5.5]);                // hands, hanging
-    limb([12 * s2, 5, 4], [13 * s2, 17, 26], 10);         // thighs drawn up
-    blob([13 * s2, 17, 28], [9.5, 9, 9]);                 // knees
+    blob([22 * s2, 47, 2], [12, 9, 11]);                  // shoulders, high and hunched
+    limb([25 * s2, 44, 3], [24 * s2, 26, 16], 7);         // upper arms
+    limb([24 * s2, 26, 16], [8 * s2, 30, 31], 6);         // forearms laid across the knees
+    blob([6 * s2, 26, 35], [5.5, 7, 5.5]);                // hands, hanging
+    limb([12 * s2, 5, 4], [13 * s2, 24, 24], 10);         // thighs drawn up
+    blob([13 * s2, 25, 25], [9.5, 9.5, 9]);               // knees
     // the shins reach down the slope to wherever the ground is
     const fy = Math.min(-6, groundLocal(15 * s2 * SC, 34 * SC) / SC + 2);
-    limb([13 * s2, 14, 30], [15 * s2, fy, 34], 7.5);
+    limb([13 * s2, 22, 28], [15 * s2, fy, 34], 7.5);
     blob([15 * s2, fy - 2, 37], [8, 5, 11]);              // feet
   }
-  limb([0, 45, 5], [0, 53, 11], 7.5);                     // neck
-  blob([0, 58, 12], [9, 10, 9.5], { head: true });        // skull
+  limb([0, 46, 5], [0, 52, 11], 6);                       // neck
+  blob([0, 58, 12], [9.5, 10.5, 10], { head: true });    // skull
   blob([0, 60.4, 18.6], [8.6, 2.8, 3.6], { head: true }); // brow
   blob([0, 52.8, 15], [7, 4.5, 7], { head: true });       // jaw
   blob([0, 66.4, 10], [3, 2.6, 7.5], { head: true });     // a worn crest
@@ -98,7 +98,7 @@ export function buildVigilant(ctx, rng) {
   const smin = (a, b2, k) => { const h = Math.max(k - Math.abs(a - b2), 0) / k; return Math.min(a, b2) - h * h * k * 0.25; };
   const sdf = (p, head) => {
     let d = 1e9;
-    for (const P2 of parts) if (P2.head === head) d = smin(d, sdPart(p, P2), head ? 2.5 : 6);
+    for (const P2 of parts) if (P2.head === head) d = smin(d, sdPart(p, P2), head ? 2.5 : 4);
     return d;
   };
 
@@ -160,7 +160,7 @@ export function buildVigilant(ctx, rng) {
     g.dispose();
     return [base, P.length / 3];
   }
-  skin(new THREE.Vector3(0, 24, 6), false, hi ? 84 : 48, hi ? 56 : 32, 100, 1.6);
+  skin(new THREE.Vector3(0, 24, 6), false, hi ? 84 : 48, hi ? 56 : 32, 100, 1.25);
   const [headV0, headV1] = skin(new THREE.Vector3(0, 59, 13), true, hi ? 40 : 24, hi ? 28 : 16, 20, 0.45);
 
   const geo = new THREE.BufferGeometry();

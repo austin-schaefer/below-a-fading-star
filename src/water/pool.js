@@ -36,7 +36,7 @@ const FRAG = /* glsl */`
   }
   // pale stones on the floor: a cell pattern with dark joints between rounded stones
   vec3 stones(vec2 p) {
-    vec2 g = p / 0.34, i = floor(g), f = fract(g);
+    vec2 g = p / 0.16, i = floor(g), f = fract(g);
     float d1 = 8.0, d2 = 8.0; vec2 id = vec2(0.0);
     for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
       vec2 o = vec2(float(x), float(y));
@@ -45,11 +45,14 @@ const FRAG = /* glsl */`
       float d = dot(r, r);
       if (d < d1) { d2 = d1; d1 = d; id = i + o; } else if (d < d2) d2 = d;
     }
-    float joint = smoothstep(0.02, 0.22, sqrt(d2) - sqrt(d1));
+    float joint = smoothstep(0.0, 0.35, sqrt(d2) - sqrt(d1));
     vec2 h = hash2(id * 1.7 + 3.1);
-    vec3 c = mix(vec3(0.50, 0.47, 0.42), vec3(0.66, 0.63, 0.57), h.x);
-    c = mix(c, vec3(0.42, 0.44, 0.43), step(0.8, h.y) * 0.7);
-    return c * (0.25 + 0.75 * joint);
+    vec3 c = mix(vec3(0.42, 0.40, 0.36), vec3(0.62, 0.60, 0.55), h.x * h.x);
+    c = mix(c, vec3(0.30, 0.32, 0.31), step(0.75, h.y) * 0.8);
+    // silt in the hollows, dimming toward the middle of the pool
+    float silt = texture2D(uTex, p * 0.21).a;
+    c *= 0.55 + 0.45 * joint;
+    return mix(c, vec3(0.16, 0.15, 0.13), smoothstep(0.45, 0.75, silt) * 0.6);
   }
   // the lost sky: blue, a young sun, a few slow white clouds over a low blue-green horizon
   vec3 lostSky(vec3 R) {
@@ -90,7 +93,7 @@ const FRAG = /* glsl */`
     sl += (texture2D(uTex, p * 0.3 + vec2(uTime * 0.004, -uTime * 0.003)).rg - 0.5) * 0.006;
     vec3 N = normalize(vec3(-sl.x, 1.0, -sl.y));
     float NV = max(dot(N, V), 0.0);
-    float F = 0.025 + 0.975 * pow(1.0 - NV, 3.2);
+    float F = 0.02 + 0.98 * pow(1.0 - NV, 3.6);
 
     vec3 R = reflect(-V, N); R.y = abs(R.y);
     vec3 refl = lostSky(R);
@@ -100,8 +103,8 @@ const FRAG = /* glsl */`
     float path = dep / max(-rd.y, 0.25);
     vec2 bed = p + rd.xz * path;
     vec3 st = stones(bed);
-    vec3 absorb = exp(-path * vec3(0.55, 0.16, 0.11));
-    float light = 0.16 + 0.22 * uFlicker;
+    vec3 absorb = exp(-path * vec3(0.9, 0.38, 0.3));
+    float light = 0.09 + 0.13 * uFlicker;
     vec3 body = st * absorb * light * vec3(1.0, 0.82, 0.72) + vec3(0.002, 0.006, 0.008) * (1.0 - absorb.g);
 
     vec3 col = mix(body, refl, F);
@@ -110,7 +113,10 @@ const FRAG = /* glsl */`
     float churn = texture2D(uTex, vec2(ang * 0.32 + uTime * 0.02, ri * 0.45 - uTime * 0.35)).a * 0.6 + texture2D(uTex, p * 0.9 + vec2(0.0, -uTime * 0.2)).a * 0.4;
     float foam = (1.0 - smoothstep(0.6, 2.6, ri)) * smoothstep(0.35, 0.6, churn + 0.25 * (1.0 - smoothstep(0.0, 1.2, ri)));
     col = mix(col, vec3(0.78, 0.72, 0.68) * (0.35 + 0.65 * uFlicker), foam * 0.85);
-    float alpha = edge;
+    // the rim of the pool softens into its beach
+    float rimFade = 1.0 - smoothstep(uCenter.z - 0.7, uCenter.z, distance(p, uCenter.xy));
+    col = mix(col, body * 0.6, (1.0 - rimFade) * 0.5);
+    float alpha = edge * mix(0.55, 1.0, rimFade);
     gl_FragColor = vec4(col, alpha);
     vec3 preFog = gl_FragColor.rgb;
     #include <fog_fragment>
