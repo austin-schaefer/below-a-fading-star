@@ -66,9 +66,12 @@ export function makeGround(ctx) {
   }
 
   const waters = Object.values(water);
+  // The river and the ravine above the fall are paths with a width, not discs: terrain.waterLevelAt knows them.
+  const riverLevel = (x, z) => terrain.waterLevelAt(x, z);
   function waterDepth(x, z, y = heightAt(x, z)) {
     for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r) return w.y - y;
-    return -Infinity;
+    const rl = riverLevel(x, z);
+    return rl === null ? -Infinity : rl - y;
   }
   // Nearest water body within `extra` metres of its rim: depth (water level - ground) and how far inside the rim.
   const _wn = { dep: 0, rim: 0 };
@@ -77,6 +80,8 @@ export function makeGround(ctx) {
       const d = Math.hypot(x - w.x, z - w.z);
       if (d < w.r + extra) { _wn.dep = w.y - y; _wn.rim = w.r - d; return _wn; }
     }
+    const r = terrain.riverAt ? terrain.riverAt(x, z) : null;
+    if (r && Math.abs(r.d) < r.hw + extra) { _wn.dep = r.y - y; _wn.rim = r.hw - Math.abs(r.d); return _wn; }
     return null;
   }
   const d2 = (x, z, p) => (x - p.x) ** 2 + (z - p.z) ** 2;

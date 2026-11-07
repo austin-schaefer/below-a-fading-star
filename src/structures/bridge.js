@@ -1,6 +1,7 @@
 // The etched bridge: a huge crumbling bridge striding over the dry bed south of the tarn. Tall piers
 // with cutwaters, arched spans, a broken deck with a gap in the middle, and great fallen chunks on the
-// earth beneath. Parapets, piers and fallen chunks are cut with recursive triangle motifs.
+// earth beneath. Parapets, piers and fallen chunks are cut with recursive triangle motifs. Rubble ramps
+// climb to both abutments and the deck is walkable (ctx.addWalkable), open to the drop over the gap.
 import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, rubblePile } from './common.js';
@@ -62,13 +63,12 @@ export function buildBridge(ctx, B, env) {
         const fm = mat(p.x + nx * side * ((width + 0.6) / 2 + 0.01), gm + 6.5, p.z + nz * side * ((width + 0.6) / 2 + 0.01), 0, yawX + (side > 0 ? 0 : Math.PI), 0);
         sierp(fm, 0, 0, 2.6, i % 2 ? 3 : 2);
       }
-      ctx.addCollider({ x: p.x, z: p.z, r: 2.4 });
-      for (const side of [-1, 1]) { const q = P(s, side * 3.6); ctx.addCollider({ x: q.x, z: q.z, r: 2.0 }); }
-    } else {
-      for (const side of [-1, 1]) for (const k of [-1, 0, 1]) { const q = P(s + k * 2, side * 2.4); ctx.addCollider({ x: q.x, z: q.z, r: 1.8 }); }
-      // a slope of rubble falling from the abutment toward the land (it cannot be climbed)
-      const out = i === 0 ? -1 : 1;
-      rubblePile(B, env, p.x + dx * out * 6, p.z + dz * out * 6, 6, 60, { height: 3.5, size: 1.0, tint, blocks: 0.55 });
+      // capped below the deck, so they stop you on the ground and not when you walk over them
+      const under = { y: gb, h: deckY - 2.2 - gb };
+      ctx.addCollider({ x: p.x, z: p.z, r: 2.4, ...under });
+      for (const side of [-1, 1]) { const q = P(s, side * 3.6); ctx.addCollider({ x: q.x, z: q.z, r: 2.0, ...under }); }
+      // the deck carried over the pier's head (the spans stop short of it)
+      B.add(B.box(pw + 0.1, 1.45, width, { chip: 0.12, chipTop: true, seed: i * 5 }), mat(p.x, deckY - 0.2 - 0.725, p.z, 0, yawX, 0), { color: vary(tint, rng, 0.04), course: COURSE, moss: 0.7, ground: deckY - 2, disp: 0.03 });
     }
     tops.push(deckY - 1.6);
   }
@@ -144,5 +144,101 @@ export function buildBridge(ctx, B, env) {
     ctx.addCollider({ x: q.x, z: q.z, r: Math.min(w, d) * 0.5 + 0.3 });
   }
   rubblePile(B, env, P((gapS0 + gapS1) / 2).x, P((gapS0 + gapS1) / 2).z, 9, 70, { height: 1.2, size: 0.9, tint, blocks: 0.5 });
-  env.notes.bridge = { a, b, deckY, gap: [P(gapS0), P(gapS1)] };
+
+  // ---- the ramps: a long spill of fallen masonry up to each abutment, packed enough to climb.
+  // Walkable surface: y = deck - u * GRADE, u metres down the ramp from where it meets the deck.
+  const deckTop = deckY - 0.2;
+  const GRADE = 0.5;                        // 26.6°, well under the walking limit
+  const deckS0 = 3, deckS1 = L - 3;         // the abutments' inner faces: the deck proper runs between
+  const gapE0 = gapS0 - 1 + 1.8, gapE1 = gapS1 + 1 - 1.8; // the broken ends (the gap-side faces of the piers)
+  const ramps = [];
+  for (const [sTop, out] of [[deckS0, -1], [deckS1, 1]]) {
+    // walk down until the ramp meets the ground
+    let u = 0;
+    while (u < 60) { const q = P(sTop + out * u); if (deckTop - u * GRADE <= ground.groundAt(q.x, q.z) + 0.15) break; u += 0.5; }
+    ramps.push({ sTop, out, len: u });
+  }
+  const rampHalf = (u, len) => 2.7 + 1.5 * Math.min(1, u / Math.max(1, len));
+  const rampTint = vary(tint, rng, 0.03).multiplyScalar(0.92);
+  for (const R of ramps) {
+    // the core: sloping slabs, one per 1.6 m, each tilted to the grade and sunk to the ground
+    const pitch = Math.atan(GRADE);
+    for (let u = 0.2; u < R.len + 0.8; u += 1.6) {
+      const uc = u + 0.8, sc = R.sTop + R.out * uc, c = P(sc);
+      const yTop = deckTop - uc * GRADE;
+      const gmin = ground.minGround(c.x, c.z, 3.5);
+      const hw = rampHalf(uc, R.len);
+      const h = Math.max(1.2, yTop - gmin + 1.0);
+      const len = 1.9 / Math.cos(pitch);
+      const m = mat(c.x, yTop - h / 2 - 0.08, c.z, 0, yawX, -R.out * pitch);
+      B.add(B.box(len, h, hw * 2 + (rng() - 0.5) * 0.6, { seg: 1.0, chip: 0.25, chipTop: true, seed: u * 7 + R.out }), m, { color: vary(rampTint, rng, 0.06), course: COURSE, moss: 0.85, ground: gmin, disp: 0.12, dispScale: 0.8 });
+      // fallen blocks along both flanks, spilling outward and down
+      for (const side of [-1, 1]) {
+        if (rng() < 0.25) continue;
+        const o = side * (hw + 0.4 + rng() * 1.2), q = P(sc + (rng() - 0.5) * 1.2, o);
+        const gy = ground.groundAt(q.x, q.z);
+        const top = yTop - 0.4 - rng() * 1.2;
+        const bh = Math.max(0.8, top - gy);
+        const bw = 1.2 + rng() * 1.4;
+        B.add(B.box(bw, bh, 1.0 + rng() * 1.0, { chip: 0.3, seed: u * 13 + side }), mat(q.x, gy + bh / 2 - 0.2, q.z, (rng() - 0.5) * 0.2, yawX + (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.25), { color: vary(rampTint, rng, 0.07), course: COURSE, moss: 0.9, ground: gy, disp: 0.1, dispScale: 0.9 });
+      }
+      // loose stones on the tread, low enough to walk over
+      for (let k = 0; k < 2; k++) {
+        if (rng() < 0.4) continue;
+        const q = P(sc + (rng() - 0.5) * 1.6, (rng() - 0.5) * hw * 1.6);
+        const st = 0.25 + rng() * 0.35;
+        B.add(B.rock(st, 0, 1.2, 0.5, 1), mat(q.x, deckTop - (uc + (rng() - 0.5)) * GRADE + 0.02, q.z, rng(), rng() * 6, rng()), { color: vary(rampTint, rng, 0.15), moss: 0.9, ground: gmin, flat: true });
+      }
+      // the flanks are a wall from the ground: stop walkers below, not those on the tread
+      for (const side of [-1, 1]) {
+        const q = P(sc, side * (hw + 0.3));
+        const gy = ground.groundAt(q.x, q.z);
+        if (yTop - gy > 1.6) ctx.addCollider({ x: q.x, z: q.z, r: 0.9, y: gy - 1, h: yTop - gy - 0.6 });
+      }
+    }
+    // a skirt of rubble round the foot
+    const foot = P(R.sTop + R.out * (R.len + 1.5));
+    rubblePile(B, env, foot.x, foot.z, 4.5, 26, { height: 0.6, size: 0.7, tint, blocks: 0.5, dirX: dx * R.out, dirZ: dz * R.out });
+  }
+  // parapet colliders on the deck (capped to the deck level), open over the gap
+  let parapetColliders = 0;
+  for (const side of [-1, 1]) {
+    for (let s = 0.4; s < L - 0.4; s += 0.8) {
+      if (s > gapE0 - 0.2 && s < gapE1 + 0.2) continue;
+      const q = P(s, side * (width / 2 - 0.3));
+      ctx.addCollider({ x: q.x, z: q.z, r: 0.45, y: deckTop, h: 1.6 });
+      parapetColliders++;
+    }
+  }
+
+  // The walkable surface: the deck between the parapets, null over the gap (you fall to the bed below),
+  // and the two ramps. Returns a floor height or null.
+  const walkDeckHalf = width / 2 - 0.25;
+  function bridgeFloor(x, z) {
+    const px = x - a.x, pz = z - a.z;
+    const s = px * dx + pz * dz, o = px * nx + pz * nz;
+    const ao = Math.abs(o);
+    if (ao > 4.6 || s < -ramps[0].len - 1 || s > L + ramps[1].len + 1) return null;
+    if (s >= deckS0 && s <= deckS1) {
+      if (ao > walkDeckHalf || (s > gapE0 && s < gapE1)) return null;
+      return deckTop;
+    }
+    const R = s < deckS0 ? ramps[0] : ramps[1];
+    const u = s < deckS0 ? deckS0 - s : s - deckS1;
+    if (u > R.len + 0.5 || ao > rampHalf(u, R.len)) return null;
+    const y = deckTop - u * GRADE;
+    return y > ctx.terrain.heightAt(x, z) ? y : null;
+  }
+  if (ctx.addWalkable) ctx.addWalkable(bridgeFloor);
+  else {
+    // TODO(controls): ctx.addWalkable is not there yet. Wire bridgeFloor (src/structures/bridge.js) once it
+    // lands: ctx.addWalkable(bridgeFloor). Until then it waits in ctx.walkables.
+    (ctx.walkables || (ctx.walkables = [])).push(bridgeFloor);
+  }
+  ctx.bridgeFloor = bridgeFloor;
+  env.notes.bridge = {
+    a, b, deckY: deckTop, gap: [P(gapE0), P(gapE1)],
+    ramps: ramps.map((R) => ({ top: P(R.sTop), foot: P(R.sTop + R.out * R.len), len: +R.len.toFixed(1) })),
+    walkable: !!ctx.addWalkable, parapetColliders,
+  };
 }

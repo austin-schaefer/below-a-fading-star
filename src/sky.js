@@ -147,7 +147,8 @@ export function buildSky(ctx) {
   scene.add(dome);
 
   // Guttering: the sun falters now and then, as if about to go out.
-  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0 };
+  // flicker.hold (null normally) pins the value, for renders and tests of the gutter.
+  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, hold: null };
   function update(dt, t) {
     uniforms.uTime.value = t;
     flicker.next -= dt;
@@ -161,6 +162,7 @@ export function buildSky(ctx) {
       target = Math.min(1, Math.max(0.22, target));
     }
     flicker.value += (target - flicker.value) * Math.min(1, dt * 9);
+    if (flicker.hold != null) flicker.value = flicker.hold;
     uniforms.uFlicker.value = flicker.value;
     dome.position.copy(ctx.camera.position);
   }

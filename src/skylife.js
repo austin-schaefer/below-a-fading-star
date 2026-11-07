@@ -9,11 +9,18 @@
 // Draw calls: meteors, trains, lattice struts, webbing, flier, worm, hull, thread, lamps (9).
 // Audio cues: 'rumble' (a few seconds after a fireball), 'farcry' (the flier, sometimes),
 // 'skycreak' (the worm's lunge, sometimes); each gets a world position 300 m out in its direction.
+// Also here, outside the camera group: the Parhelion City in the sun's saddle (skylife/parhelion.js,
+// ctx.parhelion), the Vigilant seated on the east-north-east wall (skylife/vigilant.js,
+// ctx.vigilant; 'rumble' at its head, rarely, when it turns unseen), and three omens in the group
+// (skylife/omens.js: the procession, the shard belt, the still star). Those add 5 draw calls.
 import * as THREE from 'three';
 import { makeSkyUniforms, skylineElevation } from './skylife/common.js';
 import { buildMeteors, METEOR_COLOURS } from './skylife/meteors.js';
 import { buildLattices } from './skylife/lattices.js';
 import { buildRemnants } from './skylife/remnants.js';
+import { buildParhelion } from './skylife/parhelion.js';
+import { buildVigilant } from './skylife/vigilant.js';
+import { buildOmens } from './skylife/omens.js';
 
 export async function build(ctx) {
   const { scene, camera } = ctx;
@@ -34,6 +41,12 @@ export async function build(ctx) {
   const lat = buildLattices(ctx, group, U, ctx.makeRng(7101), skyline);
   const met = buildMeteors(ctx, group, U, ctx.makeRng(7102));
   const rem = buildRemnants(ctx, group, U, ctx.makeRng(7103), lat, skyline);
+  const baseDraws = group.children.length;
+  const city = buildParhelion(ctx, U, ctx.makeRng(7104));
+  const vig = buildVigilant(ctx, ctx.makeRng(7105));
+  const om = buildOmens(ctx, group, U, ctx.makeRng(7106));
+  ctx.parhelion = city.state;
+  ctx.vigilant = vig.api;
 
   let T = 0, paused = false, forceFlicker = null;
   function update(dt, t) {
@@ -45,6 +58,9 @@ export async function build(ctx) {
     lat.update(dt, T);
     met.update(paused ? 0 : dt);
     rem.update(paused ? 0 : dt, T);
+    city.update(dt);
+    vig.update(dt, U.uFlicker.value);
+    om.update(paused ? 0 : dt, T);
   }
   ctx.registerUpdate(update);
   update(0, 0);
@@ -58,11 +74,13 @@ export async function build(ctx) {
   const dirOf = (name) => {
     const L = lat.info.find((l) => l.name === name);
     if (L) return L.dir.clone();
-    return rem.api.dirs[name]?.();
+    return rem.api.dirs[name]?.() ?? om.api.dirs[name]?.();
   };
   ctx.skylife = {
     group, uniforms: U, lattices: lat.info, colours: METEOR_COLOURS.map(([h]) => h),
-    drawCalls: group.children.length, triangles: lat.tris + met.tris + rem.api.tris, webSegments: lat.webs,
+    drawCalls: group.children.length + 3, triangles: lat.tris + met.tris + rem.api.tris + city.tris + vig.tris, webSegments: lat.webs,
+    added: { drawCalls: group.children.length - baseDraws + 3, triangles: city.tris + vig.tris, points: om.api.points },
+    omens: om.api, startProcession: (dir = null) => { if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y = Math.max(dir.y, 0.6); dir.normalize(); } om.api.startProcession(T, dir); },
     spawnMeteor: (colourIndex, at = 0.6, dir = null) => {
       if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y += 0.12; }
       return met.spawn(colourIndex ?? 0, { at, dir });
@@ -77,5 +95,6 @@ export async function build(ctx) {
     dirOf, lookAt: (name, pitchBias = 0) => { const d = dirOf(name); if (d) lookAt(d, pitchBias); return d; },
     advance: (sec) => { for (let k = 0; k < sec * 20; k++) update(0.05, ctx.time.t); },
   };
-  ctx.log(`skylife: ${group.children.length} draws, ${ctx.skylife.triangles} tris; ${lat.info.length} lattices, ${lat.struts} struts, ${lat.webs} web strands, ${met.count} meteor slots`);
+  ctx.log(`skylife: parhelion ${city.tris} tris, ${city.windows} windows; vigilant ${vig.tris} tris; omens ${om.api.points} points`);
+  ctx.log(`skylife: ${group.children.length + 3} draws, ${ctx.skylife.triangles} tris; ${lat.info.length} lattices, ${lat.struts} struts, ${lat.webs} web strands, ${met.count} meteor slots`);
 }

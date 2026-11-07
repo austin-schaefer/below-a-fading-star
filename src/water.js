@@ -1,10 +1,14 @@
-// Water: Lees Tarn and Corpse-Candle Fen as two subdivided discs with a custom shader.
+// Water: Lees Tarn and Corpse-Candle Fen as two subdivided discs with a custom shader, and the Tumbling
+// Water (water/river.js: the ravine, the fall, the river down to the fen) with The Speculum at the fall's
+// foot (water/pool.js). Exposes ctx.waterSurface and ctx.river.
 // Near-black body, fresnel-weighted analytic reflection of the sky (same gradient as sky.js),
 // the sun's disc reflected through animated normals (so it breaks into a glittering path),
 // shore fade from a per-vertex depth attribute, scum line, ripple rings, and on the fen duckweed
 // and a faint methane sheen. Two draw calls. Exposes ctx.waterSurface.
 import * as THREE from 'three';
 import { makeWaterTexture } from './water/textures.js';
+import { buildRiver } from './water/river.js';
+import { buildPool } from './water/pool.js';
 
 const MAX_RIPPLES = 6;
 
@@ -213,6 +217,7 @@ export async function build(ctx) {
   const bodies = [];
 
   for (const [name, body] of Object.entries(ctx.water)) {
+    if (name === 'pool') continue; // The Speculum has its own surface
     const fen = name === 'fen';
     const geo = discGeometry(ctx, body, high ? (fen ? 150 : 130) : 90, high ? 260 : 180);
     const mat = new THREE.ShaderMaterial({
@@ -251,6 +256,55 @@ export async function build(ctx) {
     }
   });
 
+  // the river, the fall and the pool
+  const river = buildRiver(ctx, tex);
+  const pool = buildPool(ctx, tex, river.impact);
+  ctx.registerUpdate((dt, t) => { river.update(dt, t); pool.update(dt, t); });
+  const RV = terrain.river;
+  // Downstream from the top of the ravine to where the river gives itself to the fen. Each point:
+  // { x, y (water level), z, w (water width), t (0..1 along the whole path), part: ravine|fall|pool|river }
+  const pathPoints = [];
+  {
+    const at = (L, s) => { let i = 0; while (i < L.n - 2 && L.S[i + 1] < s) i++; const f = Math.max(0, Math.min(1, (s - L.S[i]) / (L.S[i + 1] - L.S[i]))); return { x: L.X[i] + (L.X[i + 1] - L.X[i]) * f, z: L.Z[i] + (L.Z[i + 1] - L.Z[i]) * f }; };
+    for (let u = RV.gully.length; u > 0.5; u -= 3) { const q = at(RV.gully, u); pathPoints.push({ x: q.x, y: RV.gullyLevelAt(u), z: q.z, w: 2.5, part: 'ravine' }); }
+    pathPoints.push({ x: RV.lip.x, y: RV.lip.y + 0.25, z: RV.lip.z, w: 3, part: 'fall' });
+    pathPoints.push({ x: river.impact.x, y: RV.pool.y, z: river.impact.z, w: 5, part: 'fall' });
+    pathPoints.push({ x: RV.pool.x, y: RV.pool.y, z: RV.pool.z, w: RV.poolR * 2, part: 'pool' });
+    for (let s = 6; s <= RV.fenEnter + 0.01; s += 4) { const q = at(RV.line, s); pathPoints.push({ x: q.x, y: RV.levelAt(s), z: q.z, w: RV.halfWidthAt(s) * 2, part: 'river' }); }
+    let acc = 0;
+    pathPoints.forEach((p, i) => { if (i) acc += Math.hypot(p.x - pathPoints[i - 1].x, p.y - pathPoints[i - 1].y, p.z - pathPoints[i - 1].z); p.t = acc; });
+    for (const p of pathPoints) p.t /= acc;
+  }
+  const pool0 = RV.pool;
+  ctx.river = {
+    // the fall: x, z, y at its middle (the rumble's centre), lip and foot, drop, rumbleRadius (for 'fall-rumble')
+    fall: river.fall,
+    pool: { x: pool0.x, z: pool0.z, r: RV.poolR, y: pool0.y, youngSun: pool.youngSun },
+    pathPoints,
+    mouth: { ...pathPoints[pathPoints.length - 1] },
+    rocks: river.rocks.map((k) => ({ x: k.x, z: k.z, r: k.r })),
+    // full water width at t along pathPoints
+    widthAt(t) {
+      const P = pathPoints;
+      if (t <= 0) return P[0].w;
+      for (let i = 1; i < P.length; i++) if (t <= P[i].t) { const f = (t - P[i - 1].t) / (P[i].t - P[i - 1].t); return P[i - 1].w + (P[i].w - P[i - 1].w) * f; }
+      return P[P.length - 1].w;
+    },
+    // surface current at a point on the river (zero off it, in the still pool, and on the fen)
+    flowAt(x, z, out = { vx: 0, vz: 0, speed: 0 }) {
+      out.vx = out.vz = out.speed = 0;
+      const r = terrain.riverAt(x, z);
+      if (!r || !r.inWater || terrain.waterLevelAt(x, z) !== r.y) return out;
+      const edge = 1 - Math.pow(Math.abs(r.d) / r.hw, 2);
+      out.speed = r.speed * (0.35 + 0.65 * edge);
+      out.vx = r.tx * out.speed; out.vz = r.tz * out.speed;
+      return out;
+    },
+    // level of any water (discs, river, ravine) and its depth over the ground
+    levelAt: terrain.waterLevelAt,
+    depthAt: terrain.waterDepthAt,
+  };
+
   // A tiny surface API for other modules (the level plus a faint swell).
   ctx.waterSurface = {
     heightAt(x, z, t = ctx.time.t) {
@@ -259,5 +313,5 @@ export async function build(ctx) {
     },
     bodies: ctx.water,
   };
-  ctx.log('water: 2 bodies');
+  ctx.log(`water: tarn, fen, river (${pathPoints.length} path points, ${river.rocks.length} rocks in the stream), the Speculum`);
 }

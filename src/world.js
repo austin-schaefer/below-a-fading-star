@@ -36,6 +36,8 @@ export const LANDMARKS = {
   bridge:   { x: -95,  z: 215,  r: 40,  y: null, name: 'The Trigon Span',      line: 'Each triangle holds three more. Count them and you will not reach the far side.' },
   shrine:   { x: -108, z: -128, r: 8,   y: null, name: 'The Wayside Shrine',   line: 'Whoever is carved here has been prayed smooth.' },
   graveyard:{ x: 198,  z: -130, r: 14,  y: null, name: 'The Leaning Yard',     line: 'The stones lean the way the wind goes. So, in time, do the dead.' },
+  speculum: { x: 208,  z: 258,  r: 10,  y: 3.5, name: 'The Speculum',          line: 'It remembers a sun that was young. It will not remember you.' },
+  river:    { x: 168,  z: 236,  r: 30,  y: null, name: 'The Tumbling Water',   line: 'The last thing here in a hurry. Do not ask it where.' },
 };
 
 // The causeway: hex-paved road from the castle gate out to the tower hill, passing the stones.
@@ -47,6 +49,9 @@ export const CAUSEWAY = [
 export const WATER = {
   tarn: { x: -90, z: 110, r: 60, y: -4.6 },
   fen:  { x: 70, z: 160, r: 80, y: -2.45 },
+  // the pool at the fall's foot (The Speculum): the disc takes in its pale-stone beach; the river itself
+  // is not a disc, see terrain.js (RIVER, riverAt, waterDepthAt)
+  pool: { x: 208, z: 258, r: 6.8, y: 3.5 },
 };
 
 export const SPAWN = { x: 6, z: 36, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks down -z; PI/2 looks down -x (west)
