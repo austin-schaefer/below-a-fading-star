@@ -1,0 +1,14 @@
+# Netlify config for the wilderness prototype, one of possibly several Netlify sites in this repo.
+# It lives in the site's base directory so it applies to this site only: the site's base directory
+# (Netlify: Build & deploy → Build settings) is prototypes/wilderness, and Netlify reads netlify.toml from there.
+# Paths here are relative to that folder.
+[build]
+  publish = "."
+  # The screenshots are part of the repo's record, not of the site; keep them out of the deploy.
+  command = "rm -rf shots dist"
+
+# A prototype, not for search engines.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

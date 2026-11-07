@@ -4,9 +4,10 @@ The prototype is a static site: one `index.html`, ES modules under `src/`, a ven
 
 ## The site
 
-- Netlify site `below-a-fading-star` (team `austin-schaefer`): https://below-a-fading-star.netlify.app
-- Linked to GitHub `austin-schaefer/fading-planet` through the Netlify GitHub App. Production branch: `claude/intelligent-mendel-ca020e` (switch to `main` after merge, under Site configuration → Build & deploy → Branches and deploy contexts).
-- To deploy, push to the production branch, from a local checkout or from a Claude Code on the web session. Netlify builds and publishes on every push. Pushes that don't touch `prototypes/wilderness/` skip the build.
+- Netlify site `below-a-fading-star` (team `austin-schaefer`): https://below-a-fading-star.netlify.app. A prototype, not the main event: the repo can host other Netlify sites alongside it.
+- Linked to GitHub `austin-schaefer/fading-planet` through the Netlify GitHub App. Base directory (set on the site, Build & deploy → Build settings): `prototypes/wilderness`. Production branch: `main`.
+- Branch deploys are on for `claude/intelligent-mendel-ca020e` only, served at https://claude-intelligent-mendel-ca020e--below-a-fading-star.netlify.app. Add or remove branches under Branches and deploy contexts.
+- To deploy, push to `main` or to an allowed branch, from a local checkout or a Claude Code on the web session. Pushes that don't touch `prototypes/wilderness/` skip the build.
 - Not indexed: `netlify.toml` sends `X-Robots-Tag: noindex, nofollow` on every path, and `index.html` carries a robots meta tag.
 
 ## What ships
@@ -15,20 +16,11 @@ The prototype is a static site: one `index.html`, ES modules under `src/`, a ven
 - Excluded: `shots/` (about 300 MB of PNG renders, part of the repo's record, not of the site) and `dist/` (artifact build output, gitignored).
 - The page loads Three.js from `./vendor/three/` through an import map in `index.html`; nothing is fetched from a CDN. The only external request is Google Fonts (Alegreya), which degrades to a serif fallback if blocked.
 
-`netlify.toml` at the repository root carries the settings:
-
-```toml
-[build]
-  base = "prototypes/wilderness"
-  publish = "."
-  command = "rm -rf shots dist"
-```
-
-`base` makes Netlify treat the prototype folder as the project, `publish = "."` is relative to `base`, and the command deletes the two excluded folders from the build's checkout before upload. The dashboard's build command and publish directory stay blank so the file wins.
+`prototypes/wilderness/netlify.toml` carries the build settings and the noindex header. It sits in the base directory, not the repository root, so it applies to this site alone; another Netlify site in the repo gets its own base directory and its own `netlify.toml`, and the repository root stays free of one. Paths in the file are relative to the base directory: `publish = "."` is the prototype folder, and the build command deletes the two excluded folders from the build's checkout before upload. The dashboard's build command and publish directory stay blank so the file wins.
 
 ## Manual deploy (CLI)
 
-A manual deploy uploads the directory as given and ignores the build command and `netlify.toml` headers, so stage a copy and run the CLI outside the repository (inside it, the CLI reads `netlify.toml` and fails on `base`):
+A manual deploy uploads the directory as given and ignores the build command and the `netlify.toml` headers, so stage a copy and run the CLI from it:
 
 ```sh
 S=$(mktemp -d)/site
