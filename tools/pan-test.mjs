@@ -6,7 +6,9 @@
 // and asserts, per station, that no turning frame's CPU is over MAX× the median of the still frames' CPU
 // (headless timings are not a laptop's; the ratio is what holds), that no shader program is compiled and no
 // geometry or texture uploaded while turning (main.js compiles every program and warmup.js uploads every
-// buffer and texture behind the title card; a first-draw compile or upload held a frame for tens of ms).
+// buffer and texture behind the title card; a first-draw compile or upload held a frame for tens of ms), and,
+// with the adaptive pixel ratio on (no adapt=0 in the url), that the ratio does not step while turning
+// (tier.js holds a step for a steady frame: a reallocation mid-turn is the worst-placed hitch).
 // Two stations, in one browser, one after the other:
 //   A  (-190, 165) facing north, two 360° turns over 6 s each;
 //   B  (-195, 128) in the Deodand Wood facing north, turning at 1.2 rad/s to yaw 3.9: the Great Span and
@@ -86,16 +88,20 @@ for (const st of STATIONS) {
     const gpu = {}, mem = {};
     await wait(3000); mode = 'still'; await wait(4000); gpu.still = fp.perf.report().gpu;
     mem.before = snap();
+    const panAt = [];
     for (let i = 0; i < turns.length; i++) {
       mode = i ? 'pan' + (i + 1) : 'pan'; turn = turns[i]; t0 = performance.now(); yaw0 = fp.player.yaw;
       await wait(turn.ms + 200); gpu[mode] = fp.perf.report().gpu;
+      panAt.push([t0, t0 + turn.ms]);
     }
+    const tier = fp.tier.stats();
+    const stepsInTurn = tier.steps.filter((s) => panAt.some(([a, b]) => s.at >= a && s.at <= b));
     turn = null; mode = 'done';
     mem.after = snap();
-    return { rec, gpu, mem, timer: fp.perf.gpuTimer, warmup: fp.warmup || null };
+    return { rec, gpu, mem, timer: fp.perf.gpuTimer, warmup: fp.warmup || null, tier: { adapt: tier.adapt, dpr: tier.dpr, base: tier.base, steps: tier.steps, stalls: tier.stalls }, stepsInTurn };
   }, st.turns);
   await page.close();
-  const { rec: res, gpu, mem, timer, warmup } = out;
+  const { rec: res, gpu, mem, timer, warmup, tier, stepsInTurn } = out;
   const still = res.filter((f) => f.mode === 'still'), turning = res.filter((f) => f.mode.startsWith('pan')), pan = res.filter((f) => f.mode === 'pan'), pan2 = res.filter((f) => f.mode === 'pan2');
   const m = { stillCpu: med(still.map((f) => f.cpu)), panCpu: med(pan.map((f) => f.cpu)), stillIv: med(still.map((f) => f.interval)), panIv: med(pan.map((f) => f.interval)) };
   const shadowFrac = (a) => (a.filter((f) => f.shadow).length / Math.max(1, a.length)).toFixed(2);
@@ -117,10 +123,11 @@ for (const st of STATIONS) {
   console.log(`while turning: ${up.prog} programs compiled (${[...new Set(compiled)].join(', ')}), ${up.geo} geometries and ${up.tex} textures uploaded (renderer.info ${JSON.stringify(mem.before)} → ${JSON.stringify(mem.after)})`);
   const worstRatio = worst.length ? worst[0].cpu / m.stillCpu : 0;
   console.log(`worst turning frame ×${worstRatio.toFixed(2)} the still median (max ×${MAX}); pan median ×${(m.panCpu / m.stillCpu).toFixed(2)}`);
+  console.log(`pixel ratio: adaptive ${tier.adapt}, ${tier.base} -> ${tier.dpr}, steps ${JSON.stringify(tier.steps)}, stalls left out ${tier.stalls}; steps while turning: ${stepsInTurn.length}`);
   if (errors.length) console.log('page errors:', errors.slice(0, 5));
   const over2 = pan.filter((f) => f.cpu > 2 * m.panCpu).length;
   console.log(`pan frames over 2× the pan median: ${over2} of ${pan.length}`);
-  const ok = turning.length > 30 && worstRatio <= MAX && !up.prog && !up.geo && !up.tex && !compiled.length && !errors.length;
+  const ok = turning.length > 30 && worstRatio <= MAX && !up.prog && !up.geo && !up.tex && !compiled.length && !errors.length && !stepsInTurn.length;
   console.log(`station ${st.name}: ${ok ? 'PASS' : 'FAIL'}`);
   allOk &&= ok;
   dump.push({ station: st.name, url: st.url, m, mem, warmup, res });
