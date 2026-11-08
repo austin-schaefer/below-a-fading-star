@@ -1,0 +1,7 @@
+[
+ { "name": "span-spawn", "x": 6, "z": 36, "yaw": 2.75, "pitch": 0.04 },
+ { "name": "span-causeway-start", "x": -344, "z": 126, "yaw": 3.75, "pitch": 0.08 },
+ { "name": "span-causeway", "x": -65, "z": 12, "yaw": 3.05, "pitch": 0.05 },
+ { "name": "span-bather", "x": 165, "z": 215, "yaw": 1.45, "pitch": 0.5 },
+ { "name": "span-west-foot", "x": -186, "z": 186, "yaw": 1.75, "pitch": 0.22 }
+]
