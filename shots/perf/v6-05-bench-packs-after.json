@@ -1,0 +1,36 @@
+{
+ "bench": {
+  "frames": 1887,
+  "plantRepacks": 554,
+  "plantRepackFrames": 554,
+  "plantTwoKindFrames": 0,
+  "rockPacks": 832,
+  "rockPackFrames": 832,
+  "rockMultiFrames": 0,
+  "plantsAndRocksFrames": 0,
+  "uploadBytesTotal": 3224768,
+  "uploadBytesPerPack": 3876,
+  "uploadBytesPerPackFrame": 3876,
+  "cpuMedianOther": 5.7,
+  "cpuMedianPlantRepack": 6.9,
+  "cpuMedianRockPack": 6.8,
+  "peaks": {
+   "grass": {
+    "near": 10514,
+    "cap": 60000,
+    "far": 3176,
+    "farCap": 16000
+   },
+   "reeds": {
+    "near": 3669,
+    "cap": 20000,
+    "far": 1939,
+    "farCap": 10000
+   }
+  }
+ },
+ "rest": [
+  159,
+  2306440
+ ]
+}

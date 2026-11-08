@@ -1,0 +1,279 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-05-before-flags",
+ "date": "2026-11-08T20:48:19.308Z",
+ "base": "http://localhost:8176/index.html?plantfade=0&rockfade=0&packstep=6&q=medium&x=",
+ "q": "medium",
+ "only": [
+  "plants",
+  "rocks"
+ ],
+ "runSecs": 153,
+ "rows": [
+  {
+   "id": "plants.grass-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "40 changed (frame 23 of 23) vs baseline 44: 0.9x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 44,
+    "largest": 40,
+    "ratio": 0.91,
+    "stepsOver100": 0,
+    "watchBefore": "13390",
+    "watchAfter": "14565",
+    "switched": true
+   }
+  },
+  {
+   "id": "plants.reeds-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "64 changed (frame 23 of 23) vs baseline 151: 0.4x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 151,
+    "largest": 64,
+    "ratio": 0.42,
+    "stepsOver100": 0,
+    "watchBefore": "12910",
+    "watchAfter": "14973",
+    "switched": true
+   }
+  },
+  {
+   "id": "rocks.rocks",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "25 changed (frame 9 of 23) vs baseline 14: 1.8x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 14,
+    "largest": 25,
+    "ratio": 1.79,
+    "stepsOver100": 0,
+    "watchBefore": "24504",
+    "watchAfter": "27508",
+    "switched": true
+   }
+  }
+ ],
+ "routes": {},
+ "seqs": {
+  "grass-far": {
+   "from": [
+    -20,
+    18
+   ],
+   "to": [
+    -70,
+    14
+   ],
+   "switchStep": 3,
+   "at": [
+    -22.941176470588236,
+    17.764705882352942
+   ],
+   "baseline": [
+    2,
+    31,
+    44,
+    5,
+    3,
+    36,
+    3,
+    6,
+    35,
+    10,
+    6,
+    6,
+    4,
+    3,
+    3,
+    6,
+    4,
+    5,
+    4,
+    3,
+    5,
+    4,
+    8
+   ],
+   "switch": [
+    5,
+    2,
+    3,
+    3,
+    5,
+    2,
+    5,
+    4,
+    6,
+    9,
+    9,
+    8,
+    9,
+    8,
+    7,
+    4,
+    2,
+    3,
+    3,
+    14,
+    3,
+    26,
+    40
+   ]
+  },
+  "reeds-far": {
+   "from": [
+    70,
+    40
+   ],
+   "to": [
+    70,
+    110
+   ],
+   "switchStep": 5,
+   "at": [
+    70,
+    45
+   ],
+   "baseline": [
+    125,
+    143,
+    140,
+    151,
+    129,
+    121,
+    103,
+    70,
+    41,
+    15,
+    8,
+    13,
+    30,
+    54,
+    68,
+    83,
+    96,
+    93,
+    107,
+    99,
+    109,
+    91,
+    79
+   ],
+   "switch": [
+    5,
+    8,
+    9,
+    8,
+    6,
+    5,
+    5,
+    8,
+    6,
+    8,
+    8,
+    7,
+    8,
+    9,
+    17,
+    16,
+    21,
+    27,
+    29,
+    36,
+    46,
+    54,
+    64
+   ]
+  },
+  "rocks": {
+   "from": [
+    230,
+    -20
+   ],
+   "to": [
+    250,
+    -40
+   ],
+   "switchStep": 7,
+   "at": [
+    234.82758620689654,
+    -24.82758620689655
+   ],
+   "baseline": [
+    7,
+    6,
+    6,
+    6,
+    5,
+    5,
+    6,
+    6,
+    7,
+    6,
+    6,
+    6,
+    7,
+    7,
+    6,
+    6,
+    7,
+    9,
+    11,
+    13,
+    12,
+    14,
+    11
+   ],
+   "switch": [
+    14,
+    14,
+    19,
+    22,
+    24,
+    22,
+    22,
+    24,
+    25,
+    25,
+    24,
+    22,
+    21,
+    21,
+    19,
+    18,
+    17,
+    17,
+    19,
+    17,
+    15,
+    15,
+    14
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}

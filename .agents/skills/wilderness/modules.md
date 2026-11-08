@@ -13,14 +13,14 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `controls.js` | first-person movement, colliders, touch stick, look and hop |
 | `post.js` | the chain after the scene: bloom to its composite (no blend), the crepuscular rays at a quarter size while the sun is in view, and one full-size finish pass to the canvas (bloom added, rays, FXAA, grade, wade, vignette, grain, tone mapping, sRGB); `?post=v3` the three passes as before |
 | `hud.js` | title card, landmark names, the title card's loading bar (fed by `ctx.progress(label, fraction)`; "Go out" enables on `body.ready`) |
-| `vegetation.js` | grass, heather, reeds, trees, fungi, crystal lattice and its mother crystal (`vegetation/mother.js`); trees cross-fade between LOD levels through spare instances and fungi fade by distance (v6-04, `fade.js`) |
+| `vegetation.js` | grass, heather, reeds, trees, fungi, crystal lattice and its mother crystal (`vegetation/mother.js`); `vegetation/plants.js` packs 24 m chunks lazily into one buffer per kind, and grass and reeds cross to their far clumps over 8 m round 60 m and 50 m (`?plantfade=0`), one kind's repack a frame by `ctx.packToken` (`?packstep=6`); trees cross-fade between LOD levels through spare instances and fungi fade by distance (v6-04, `fade.js`) |
 | `structures.js` | keep, tower, stones, causeway paving, court ruins, byre, cairns; `structures/keep.js` the v5 recast of Carcanet Keep, `structures/keep/v2.js` the v4 keep (`?keep=v2`); `structures/court.js` the v5 recast of the Sunken Court, `structures/court/v2.js` the v4 court (`?court=v2`); `structures/arches.js` the v5 recast of the Arcature (a stone armillary), `structures/arches/v2.js` the earlier arch-nest (`?arcature=v2`) |
 | `water.js` | tarn and fen surfaces |
 | `particles.js` | dust, ash, corpse-candles, fireflies, mist wisps |
 | `fauna.js` | things that move: wings, the deodand, lesser creatures |
 | `audio.js` | procedural wind, drone, footsteps, calls; the mute button |
 | `skylife.js` | sky events: the Parhelion City, the Vigilant, omens (procession, shard belt, still star) |
-| `rocks.js` | pebbles, stones, boulders, tors |
+| `rocks.js` | pebbles, stones, boulders, tors; pebbles and stones fade over their reach's last 15% and fine boulders cross to their coarse twin over 132-140 m (the fade kit; `?rockfade=0`); each mesh repacks after 2 m, one a frame when `ctx.packToken` is free, uploading only the changed range (`?packstep=6`) |
 | `debug.js` | teleport panel, live position, on/off rows |
 | `perf.js` | profiler overlay, bench path, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |

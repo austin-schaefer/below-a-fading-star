@@ -5,6 +5,7 @@
 // only a prefix, and the vertex shader thins and shrinks each instance by its own distance.
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
+import { withFade } from '../fade.js';
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
 const PARAMS = new URL(location.href).searchParams;
@@ -15,6 +16,18 @@ const _wide = new THREE.Sphere();
 const GRASS_TIERS = { high: [85, 125], medium: [75, 110], low: [65, 100] };
 // chunks whose nearest edge is past these distances draw the cheap far clumps
 const FAR_GRASS = 60, FAR_REEDS = 50;
+// v6: a chunk within BAND m of the far switch is packed into both meshes and crosses by the fade kit's dither,
+// the near clumps fading out and the far ones in by the chunk's distance (?plantfade=0: the hard switch).
+// SLACK: the packed band reaches this far past the drawn one, so walking does not outrun the lazy repack.
+const FADE = PARAMS.get('plantfade') !== '0';
+const BAND = 4, SLACK = 2;
+// v6: a repack sorts and copies without allocating and takes the frame's pack token (ctx.packToken, shared
+// with rocks.js), so no frame repacks two kinds, or plants and rocks (?packstep=6: the closure sort, the
+// subarray copies and no token)
+const OLD_PACK = PARAMS.get('packstep') === '6';
+let token = null;
+// ?wind= scales the plants' sway too (wind=0 holds them still, as pop-test's pinned sequences need)
+const WIND = PARAMS.has('wind') && Number(PARAMS.get('wind')) >= 0 ? Number(PARAMS.get('wind')) : 1;
 
 // ---------- geometry ----------
 // Plant geometry carries position, normal, color and aBlade = (t: height fraction, family, rand, tintWeight).
@@ -246,7 +259,7 @@ function makePlantMaterial(ctx, shared, o) {
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
   const u = {
     uTime: shared.time, uR0: { value: o.r0 }, uFade0: { value: o.fade0 }, uFade1: { value: o.fade1 },
-    uWind: { value: o.wind }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
+    uWind: { value: o.wind * WIND }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
     uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 }, uExp: { value: o.exp ?? 1 },
     // The Wrong Colour [Proposed]: within 8 m of the eddy everything low is bleached grey-brown
     uGrey: shared.grey,
@@ -311,6 +324,19 @@ function makePlantMaterial(ctx, shared, o) {
   mat.customProgramCacheKey = () => 'fp-veg-plant';
   return mat;
 }
+// The far-switch fade (v6) on a kind with a far mesh: f, the far mesh's share, is a smoothstep of the
+// instance's chunk's nearest-edge distance to the eye (the chunk found from iPos on the CHUNK grid, the
+// distance the pack measures), so every instance of a chunk crosses together and a chunk the pack put in one
+// mesh only is drawn whole by it. The near mesh draws side 1 (the other 1 - f), the far side 0. The eye is the
+// camera's position, held by the uniform.
+function fadePlant(mat, eye, dist, side) {
+  const u = { uFpEye: { value: eye }, uFpBand: { value: new THREE.Vector2(dist - BAND, dist + BAND) }, uFpSide: { value: side } };
+  const g = (v) => v.toFixed(1), c0 = `(${g(CMIN)} + floor((iPos.xz - ${g(CMIN)}) / ${g(CHUNK)}) * ${g(CHUNK)})`;
+  return withFade(mat, {
+    key: 'plants', uniforms: u, head: 'uniform vec3 uFpEye; uniform vec2 uFpBand; uniform float uFpSide;',
+    vertex: `vec2(smoothstep(uFpBand.x, uFpBand.y, length(max(max(${c0} - uFpEye.xz, 0.0), uFpEye.xz - ${c0} - ${g(CHUNK)}))), uFpSide)`,
+  });
+}
 
 // ---------- the chunked store ----------
 // Chunks are generated on demand (each from its own rng stream, so order does not matter) and
@@ -334,11 +360,15 @@ class Kind {
     this.mesh.name = `veg-${name}`;
     this.order = new Int32Array(CN * CN);
     this.packedQ = new Uint8Array(CN * CN); this.repacks = 0; this.packNeed = 0;
-    this.packedFar = new Uint8Array(CN * CN); this.far = null;
+    this.packedIn = new Uint8Array(CN * CN); this.far = null; // which buffers hold a chunk: 1 near, 2 far
+    this.dist = new Float32Array(CN * CN); // each chunk's distance at the scan, the pack's sort key
+    this.lastX = Infinity; this.lastZ = Infinity;
+    this.peak = { near: 0, far: 0 }; // the most instances a repack wanted in each buffer before its cap
   }
   // A cheaper geometry for the chunks whose nearest edge is past `dist` m (v3 stage 3): a second mesh
-  // with its own instance buffers and the same material, packed from the same chunks.
-  setFar(geo, dist, cap) {
+  // with its own instance buffers, packed from the same chunks. Its material is the near one's, or with the
+  // v6 fade a second one with the same program that draws the other side of the dither.
+  setFar(geo, dist, cap, mat = this.mat) {
     const f = { geo, dist, cap, drawn: 0 };
     f.aPos = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
     f.aShape = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
@@ -346,7 +376,7 @@ class Kind {
     geo.setAttribute('iPos', f.aPos); geo.setAttribute('iShape', f.aShape); geo.setAttribute('iTint', f.aTint);
     geo.instanceCount = 0;
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-    f.mesh = new THREE.Mesh(geo, this.mat);
+    f.mesh = new THREE.Mesh(geo, mat);
     f.mesh.frustumCulled = false; f.mesh.receiveShadow = true; f.mesh.castShadow = false;
     f.mesh.name = `veg-${this.name}-far`;
     this.far = f;
@@ -401,7 +431,7 @@ class Kind {
       const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
       if (dens <= 0) continue;
       const q = Math.min(64, Math.ceil(dens * 64 + 0.5)); // in 1/64 steps, rounded up
-      ch.q = q; ch.d = d;
+      ch.q = q; ch.d = d; this.dist[c] = d;
       this.order[nv++] = c;
       sig = (Math.imul(sig, 31) + c * 128 + q) | 0;
     }
@@ -423,7 +453,10 @@ class Kind {
     const ci0 = Math.max(0, Math.floor((px - fade1 - CMIN) / CHUNK)), ci1 = Math.min(CN - 1, Math.floor((px + fade1 - CMIN) / CHUNK));
     const cj0 = Math.max(0, Math.floor((pz - fade1 - CMIN) / CHUNK)), cj1 = Math.min(CN - 1, Math.floor((pz + fade1 - CMIN) / CHUNK));
     const PQ = this.packedQ, wide = _wide;
-    let nv = 0, need = 0, ok = true;
+    // a jump (a teleport, a test placing the camera) of more than half a chunk since the last frame
+    const jump = (px - this.lastX) ** 2 + (pz - this.lastZ) ** 2 > (CHUNK / 2) ** 2;
+    this.lastX = px; this.lastZ = pz;
+    let nv = 0, need = 0, ok = true, hole = false;
     for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) {
       const c = cj * CN + ci;
       const ch = this.chunks[c];
@@ -437,15 +470,23 @@ class Kind {
       const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
       const q = dens > 0 ? Math.min(64, Math.ceil(dens * 64 + 0.5)) : 0;
       // a candidate for the next repack (with its margin), and needed now if it passes the strict test
-      ch.d = d; ch.q = q;
+      ch.d = d; ch.q = q; this.dist[c] = d;
       this.order[nv++] = c;
       if (q > 0 && (near || frustum.intersectsSphere(ch.sphere))) {
         need += Math.ceil(ch.n * q / 64);
-        if (PQ[c] < q) ok = false;
-        else if (this.packedFar[c] && d < this.far.dist - 8) ok = false; // packed cheap, now near: re-pack it full
+        if (PQ[c] < q) { ok = false; if (jump && !PQ[c] && ci === pci && cj === pcj) hole = true; }
+        else if (this.far) {
+          const m = this.packedIn[c];
+          if (FADE) { if ((d < this.far.dist + BAND && !(m & 1)) || (d > this.far.dist - BAND && !(m & 2))) ok = false; } // in the band, or crossing it, without the buffer it needs
+          else if ((m & 2) && d < this.far.dist - 8) ok = false; // packed cheap, now near: re-pack it full
+        }
       }
     }
     if (ok && need * 1.6 + 256 >= this.packNeed) return;
+    // one repack a frame across the kinds and the rocks; the first fill (before the first frame, t = 0), and a jump that lands on a chunk with
+    // nothing packed, take no token. A kind that waits holds the rocks off for the next frames (hold), so
+    // plants, which show their shortfall, go first.
+    if (!OLD_PACK && token && !hole && token.now() > 0) { if (token.t === token.now()) { token.hold = 2; return; } token.t = token.now(); }
     this.packNeed = need;
     // repack: the candidates with a prefix a quarter longer; those just beyond fade1 get the one they will need
     let n = 0;
@@ -453,48 +494,77 @@ class Kind {
       const c = this.order[i], ch = this.chunks[c];
       const q = ch.q > 0 ? ch.q : Math.ceil(64 * Math.pow(Math.min(1, r0 / fade1), ex) * (1 - smoothstep(fade0, fade1, fade1 - MARGIN * 0.5)) + 0.5);
       ch.q = Math.min(64, Math.ceil(q * 1.25) + 1);
-      if (perf?.active && this.far && PQ[c] && (this.packedFar[c] === 1) !== (ch.d > this.far.dist)) perf.count('plants.farSwitches'); // a packed chunk crossing the far switch
+      if (perf?.active && this.far && PQ[c] && ((this.packedIn[c] & 2) !== 0) !== (ch.d > this.far.dist)) perf.count('plants.farSwitches'); // a packed chunk crossing the far switch
       this.order[n++] = c;
     }
-    PQ.fill(0); this.packedFar.fill(0);
+    PQ.fill(0); this.packedIn.fill(0);
     this.pack(n, PQ);
   }
-  // Copy the chosen chunks' prefixes into the instanced buffer, nearest first, so that if the cap is
-  // hit it is the far chunks that lose out (and the near ones draw first: front to back).
+  // Copy the chosen chunks' prefixes into the instanced buffers, nearest first, so that if a cap is hit it
+  // is the far chunks that lose out (and the near ones draw first: front to back). A chunk goes to the near
+  // buffer inside the far switch and to the far one past it; with the v6 fade, a chunk within BAND + SLACK
+  // of the switch goes to both. The sort is an insertion sort over the scan's distances (ties by index: a
+  // stable order), and the copies are typed-array sets of whole chunks or index loops over a prefix: no
+  // closure, no subarray. ?packstep=6: the closure sort and the subarray copies.
   pack(nv, PQ) {
-    const ord = this.order.subarray(0, nv);
-    ord.sort((a, b) => (this.chunks[a].d - this.chunks[b].d) || (a - b)); // ties broken by index: a stable order
-    let w = 0, wf = 0;
-    const P = this.aPos.array, S = this.aShape.array, T = this.aTint.array;
-    const f = this.far;
-    for (let i = 0; i < nv; i++) {
-      const ch = this.chunks[ord[i]];
-      const isFar = !!f && ch.d > f.dist;
-      const cap = isFar ? f.cap : this.cap, at = isFar ? wf : w;
-      let m = Math.ceil(ch.n * ch.q / 64);
-      if (at + m > cap) m = cap - at;
-      if (m <= 0) { if (isFar) continue; else break; }
-      const e = m * 4;
-      if (isFar) { f.aPos.array.set(ch.pos.subarray(0, e), at * 4); f.aShape.array.set(ch.shape.subarray(0, e), at * 4); f.aTint.array.set(ch.tint.subarray(0, e), at * 4); wf += m; }
-      else { P.set(ch.pos.subarray(0, e), at * 4); S.set(ch.shape.subarray(0, e), at * 4); T.set(ch.tint.subarray(0, e), at * 4); w += m; }
-      if (PQ) { PQ[ord[i]] = ch.q; this.packedFar[ord[i]] = isFar ? 1 : 0; } // a chunk cut short by the cap counts as packed: nothing better is possible
+    const ord = this.order;
+    if (OLD_PACK) {
+      for (let i = 0; i < nv; i++) this.dist[ord[i]] = this.chunks[ord[i]].d;
+      ord.subarray(0, nv).sort((a, b) => (this.chunks[a].d - this.chunks[b].d) || (a - b));
+    } else {
+      const D = this.dist;
+      for (let i = 1; i < nv; i++) {
+        const c = ord[i], d = D[c];
+        let j = i - 1;
+        while (j >= 0 && (D[ord[j]] > d || (D[ord[j]] === d && ord[j] > c))) { ord[j + 1] = ord[j]; j--; }
+        ord[j + 1] = c;
+      }
     }
-    for (const a of [this.aPos, this.aShape, this.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, w * 4); a.needsUpdate = true; }
+    let w = 0, wf = 0, wantN = 0, wantF = 0;
+    const f = this.far;
+    const nearTo = !f ? Infinity : FADE ? f.dist + BAND + SLACK : f.dist, farFrom = !f ? Infinity : FADE ? f.dist - BAND - SLACK : f.dist;
+    for (let i = 0; i < nv; i++) {
+      const c = ord[i], ch = this.chunks[c], d = this.dist[c];
+      const m = Math.ceil(ch.n * ch.q / 64);
+      let inN = 0;
+      if (d <= nearTo) { wantN += m; const k = Math.min(m, this.cap - w); if (k > 0) { copyPrefix(ch, k, this.aPos.array, this.aShape.array, this.aTint.array, w); w += k; inN = 1; } }
+      if (d > farFrom) { wantF += m; const k = Math.min(m, f.cap - wf); if (k > 0) { copyPrefix(ch, k, f.aPos.array, f.aShape.array, f.aTint.array, wf); wf += k; inN |= 2; } }
+      if (PQ && inN) { PQ[c] = ch.q; this.packedIn[c] = inN; } // a chunk cut short by a cap counts as packed: nothing better is possible
+    }
+    if (wantN > this.peak.near) this.peak.near = wantN;
+    if (wantF > this.peak.far) this.peak.far = wantF;
+    setRange(this.aPos, w); setRange(this.aShape, w); setRange(this.aTint, w);
     this.geo.instanceCount = w;
     this.drawn = w;
     if (f) {
-      for (const a of [f.aPos, f.aShape, f.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, wf * 4); a.needsUpdate = true; }
+      setRange(f.aPos, wf); setRange(f.aShape, wf); setRange(f.aTint, wf);
       f.geo.instanceCount = wf; f.drawn = wf;
     }
     this.repacks++;
     perf?.count('plants.repacks');
   }
 }
+// the upload range, one object per attribute reused (three's addUpdateRange allocates one a call)
+function setRange(a, n) {
+  if (OLD_PACK) { a.clearUpdateRanges(); a.addUpdateRange(0, n * 4); a.needsUpdate = true; return; }
+  const r = a.fpRange || (a.fpRange = { start: 0, count: 0 });
+  r.start = 0; r.count = n * 4; a.updateRanges.length = 0; a.updateRanges.push(r); a.needsUpdate = true;
+}
+// a chunk's first k instances (4 floats of each attribute apiece) into the buffers at instance `at`
+function copyPrefix(ch, k, P, S, T, at) {
+  const e = k * 4, o = at * 4;
+  if (OLD_PACK) { P.set(ch.pos.subarray(0, e), o); S.set(ch.shape.subarray(0, e), o); T.set(ch.tint.subarray(0, e), o); return; }
+  if (k === ch.n) { P.set(ch.pos, o); S.set(ch.shape, o); T.set(ch.tint, o); return; }
+  const p = ch.pos, s = ch.shape, t = ch.tint;
+  for (let j = 0; j < e; j++) { P[o + j] = p[j]; S[o + j] = s[j]; T[o + j] = t[j]; }
+}
 
 // ---------- placement ----------
 export function buildPlants(ctx, ground, shared) {
   const { landmarks: L, quality, noise } = ctx;
   perf = ctx.perf;
+  token = ctx.packToken ||= { t: -1, hold: 0 };
+  token.now ||= () => ctx.time.t;
   const low = quality === 'low';
   const eddy = L.eddy;
   shared.grey = { value: new THREE.Vector4(eddy ? eddy.x : 0, eddy ? eddy.z : 0, 8, eddy ? 1 : 0) };
@@ -507,16 +577,24 @@ export function buildPlants(ctx, ground, shared) {
 
   // grass draw distance by tier (v3 stage 3; ?grasstier=0 keeps high's everywhere): fade0, fade1 in metres
   const gt = PARAMS.get('grasstier') === '0' ? GRASS_TIERS.high : GRASS_TIERS[quality] || GRASS_TIERS.high;
-  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.5 }), { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], height: 2 }, low ? 30000 : 60000);
+  const grassMo = { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.5 };
+  const reedsMo = { r0: 20, exp: 1.4, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 2.0 };
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, grassMo), { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], height: 2 }, low ? 30000 : 60000);
   const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 10, exp: 1.6, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 3.2 }), { r0: 10, exp: 1.6, fade0: 100, fade1: 150, height: 1 }, low ? 12000 : 24000);
   const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: 14, exp: 1.5, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 2.4 }), { r0: 14, exp: 1.5, fade0: 90, fade1: 140, height: 1.4 }, low ? 8000 : 16000);
   const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: 15, exp: 1.5, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 2.0 }), { r0: 15, exp: 1.5, fade0: 100, fade1: 150, height: 2 }, low ? 6000 : 12000);
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 }, low ? 3000 : 6000);
-  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: 20, exp: 1.4, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 2.0 }), { r0: 20, exp: 1.4, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
+  const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, reedsMo), { r0: 20, exp: 1.4, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
 
   // cheaper far geometry (v3 stage 3): ?fargrass=0, ?reedlod=0 draw the full clumps at every distance
-  if (PARAMS.get('fargrass') !== '0') grass.setFar(grassGeo(ctx.makeRng(3302), true), FAR_GRASS, low ? 8000 : 16000);
-  if (PARAMS.get('reedlod') !== '0') reeds.setFar(reedGeo(ctx.makeRng(3304), true), FAR_REEDS, low ? 5000 : 10000);
+  // v6 fade: the far mesh draws with a second material (same options, same program) on the dither's other side
+  const farMat = (kd, dist) => {
+    if (!FADE) return kd.mat;
+    fadePlant(kd.mat, ctx.camera.position, dist, 1);
+    return fadePlant(makePlantMaterial(ctx, shared, kd === grass ? grassMo : reedsMo), ctx.camera.position, dist, 0);
+  };
+  if (PARAMS.get('fargrass') !== '0') grass.setFar(grassGeo(ctx.makeRng(3302), true), FAR_GRASS, low ? 8000 : 16000, farMat(grass, FAR_GRASS));
+  if (PARAMS.get('reedlod') !== '0') reeds.setFar(reedGeo(ctx.makeRng(3304), true), FAR_REEDS, low ? 5000 : 10000, farMat(reeds, FAR_REEDS));
 
   // grass colours: dun-olive, sere, rust-tipped (olive rather than straw, so the moor is not desert under the red sun)
   const cTawny = C('#8e8c56'), cDry = C('#aaa478'), cOchre = C('#7c7a40'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#948a4c');

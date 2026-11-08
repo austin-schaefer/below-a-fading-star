@@ -207,7 +207,7 @@ if (needBench) {
   extra.routes.bench = res;
   if (want('uploads')) row('uploads.bench', 'v6-01', 'programs, geometries, first-sight textures after the card = 0', upValue(C), sumUploads(C) === 0, true, { texData: C['uploads.texData'], dataTextures: res.dataTextures });
   if (want('pacing')) row('pacing.bench', 'orchestrator', 'frames over 2x the median <= 2, all in the first second', `${res.over2x} over 2x (${res.over2xAfter1s} after 1 s), max ${res.maxIvRatio}x`, res.over2x <= 2 && res.over2xAfter1s === 0, false);
-  if (want('plants')) row('plants.bench-repack-spread', 'v6-05', 'no frame packs two kinds', `${C['plants.repacks']} repacks, ${res.repackTwoKindFrames} frames with 2+`, res.repackTwoKindFrames === 0, false);
+  if (want('plants')) row('plants.bench-repack-spread', 'v6-05', 'no frame packs two kinds', `${C['plants.repacks']} repacks, ${res.repackTwoKindFrames} frames with 2+`, res.repackTwoKindFrames === 0, true);
   extra.routes.benchCounters = res.counters;
 }
 
@@ -236,7 +236,7 @@ if (needWalk || needSeq) {
         if (want('uploads')) row('uploads.pan', 'v6-01', 'programs, geometries, first-sight textures after the card = 0', upValue(C), sumUploads(C) === 0, true, { texData: C['uploads.texData'], dataTextures: r.dataTextures });
         if (want('shadow')) row('shadow.pan-redraws', 'v6-03', 'a turn at 1.2 rad/s redraws <= 4/s', `${r.shadowRedrawsPerSec.toFixed(1)}/s (${C['shadow.redraws.move']} move, ${C['shadow.redraws.clock']} clock, ${C['shadow.redraws.dynamic']} dynamic, ${C['shadow.redraws.turn']} turn)`, r.shadowRedrawsPerSec <= 4, false);
       }
-      if (n === 'wood' && want('plants')) row('plants.wood-repack-spread', 'v6-05', 'no frame packs two kinds', `${C['plants.repacks']} repacks in ${r.repackFrames} frames, ${r.repackTwoKindFrames} with 2+`, r.repackTwoKindFrames === 0, false);
+      if (n === 'wood' && want('plants')) row('plants.wood-repack-spread', 'v6-05', 'no frame packs two kinds', `${C['plants.repacks']} repacks in ${r.repackFrames} frames, ${r.repackTwoKindFrames} with 2+`, r.repackTwoKindFrames === 0, true);
       if (want('trees') && n === 'wood') row('trees.wood-switches', 'v6-04', 'reported (the switches per route)', `${C['trees.lodSwitches']} switches, at most ${r.lodFramesMax} in a frame`, true, false);
     }
   }
@@ -248,9 +248,9 @@ if (needWalk || needSeq) {
       { id: 'tree-near', group: 'trees', owner: 'v6-04', gate: true, tree: [-125.8, -44, 'lone'], rel: [[44, 0], [14, 0]], yaw: W, step: 0.5 },
       { id: 'tree-far', group: 'trees', owner: 'v6-04', gate: true, tree: [-125.8, -44, 'lone'], rel: [[130, 0], [50, 0]], yaw: W, step: 1 },
       { id: 'tree-wood', group: 'trees', owner: 'v6-04', gate: true, tree: [-142.2, 140.9, 'wood'], rel: [[34, 0], [14, 0]], yaw: W, step: 0.5 },
-      { id: 'grass-far', group: 'plants', owner: 'v6-05', from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
-      { id: 'reeds-far', group: 'plants', owner: 'v6-05', cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
-      { id: 'rocks', group: 'rocks', owner: 'v6-05', from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
+      { id: 'grass-far', group: 'plants', owner: 'v6-05', gate: true, from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
+      { id: 'reeds-far', group: 'plants', owner: 'v6-05', gate: true, cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
+      { id: 'rocks', group: 'rocks', owner: 'v6-05', gate: false /* noise-bound: a slow drift against a 10-48 px baseline; the repack-spread rows are the gate */, from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
       { id: 'fungi', group: 'fungi', owner: 'v6-04', gate: true, from: [-68, 142], to: [-160, 132], yaw: W, step: 1, watch: { vis: 'veg-(toadstools|pods)' } },
     ];
     const FR = 24;
@@ -271,7 +271,7 @@ if (needWalk || needSeq) {
         i = await page.evaluate((s) => window.__pt.locate(s), sp);
         if (i) break;
       }
-      if (!i) { row(`${sp0.group}.${sp0.id}`, sp0.owner, 'largest step <= 2x baseline', 'no switch found along the line', false, false); continue; }
+      if (!i) { row(`${sp0.group}.${sp0.id}`, sp0.owner, 'largest step <= 2x baseline', 'no switch found along the line', false, !!sp0.gate); continue; }
       const pin = await page.evaluate(([s, k]) => window.__pt.approach(s, k), [sp, i]);
       const base = save(sp0.id, 'base', await page.evaluate(([p, n]) => window.__pt.grabRun(p, null, n), [pin, FR]));
       if (args.includes('--save-baseline') && !savedBaseline) { // the noise floor through this path: first and last baseline frame, and their diff, into shots/wip

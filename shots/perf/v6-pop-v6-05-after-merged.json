@@ -1,0 +1,480 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-05-after-merged",
+ "date": "2026-11-08T21:42:19.199Z",
+ "base": "http://localhost:8176",
+ "q": "medium",
+ "only": [
+  "plants",
+  "rocks",
+  "uploads"
+ ],
+ "runSecs": 231,
+ "rows": [
+  {
+   "id": "uploads.bench",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 3398,
+    "dataTextures": {
+     "33x33": 2530,
+     "52x52": 868
+    }
+   }
+  },
+  {
+   "id": "plants.bench-repack-spread",
+   "owner": "v6-05",
+   "target": "no frame packs two kinds",
+   "value": "559 repacks, 0 frames with 2+",
+   "pass": true,
+   "gate": true
+  },
+  {
+   "id": "uploads.wood",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 4087,
+    "dataTextures": {
+     "33x33": 4087
+    }
+   }
+  },
+  {
+   "id": "plants.wood-repack-spread",
+   "owner": "v6-05",
+   "target": "no frame packs two kinds",
+   "value": "179 repacks in 175 frames, 0 with 2+",
+   "pass": true,
+   "gate": true
+  },
+  {
+   "id": "uploads.pan",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 1099,
+    "dataTextures": {
+     "33x33": 843,
+     "52x52": 256
+    }
+   }
+  },
+  {
+   "id": "plants.grass-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "12 changed (frame 18 of 23) vs baseline 16: 0.8x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 16,
+    "largest": 12,
+    "ratio": 0.75,
+    "stepsOver100": 0,
+    "watchBefore": "119279",
+    "watchAfter": "120540",
+    "switched": true
+   }
+  },
+  {
+   "id": "plants.reeds-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "13 changed (frame 3 of 23) vs baseline 12: 1.1x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 12,
+    "largest": 13,
+    "ratio": 1.08,
+    "stepsOver100": 0,
+    "watchBefore": "55990",
+    "watchAfter": "58060",
+    "switched": true
+   }
+  },
+  {
+   "id": "rocks.rocks",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "10 changed (frame 23 of 23) vs baseline 17: 0.6x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 17,
+    "largest": 10,
+    "ratio": 0.59,
+    "stepsOver100": 0,
+    "watchBefore": "243516",
+    "watchAfter": "243516",
+    "switched": false
+   }
+  }
+ ],
+ "routes": {
+  "bench": {
+   "frames": 1915,
+   "medianIv": 16.6,
+   "medianCpu": 2.5,
+   "over2x": 2,
+   "over2xAfter1s": 1,
+   "maxIvRatio": 3.36,
+   "counters": {
+    "plants.farSwitches": 401,
+    "plants.repacks": 559,
+    "shadow.redraws.move": 80,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 3398,
+    "shadow.redraws.clock": 4,
+    "trees.lodSwitches": 81,
+    "rocks.uploadBytes": 3192896,
+    "rocks.packs": 838,
+    "shadow.redraws.dynamic": 527,
+    "fungi.groupFlips": 24,
+    "lights.handovers": 12
+   },
+   "repackTwoKindFrames": 0,
+   "dataTextures": {
+    "33x33": 2530,
+    "52x52": 868
+   },
+   "bench": 60
+  },
+  "benchCounters": {
+   "plants.farSwitches": 401,
+   "plants.repacks": 559,
+   "shadow.redraws.move": 80,
+   "uploads.programs": 0,
+   "uploads.geometries": 0,
+   "uploads.textures": 0,
+   "uploads.texFirst": 0,
+   "uploads.texData": 3398,
+   "shadow.redraws.clock": 4,
+   "trees.lodSwitches": 81,
+   "rocks.uploadBytes": 3192896,
+   "rocks.packs": 838,
+   "shadow.redraws.dynamic": 527,
+   "fungi.groupFlips": 24,
+   "lights.handovers": 12
+  },
+  "wood": {
+   "frames": 2955,
+   "wallSecs": 49.3,
+   "complete": true,
+   "medianIv": 16.7,
+   "medianCpu": 1.9,
+   "over2x": 1,
+   "over2xAfter1s": 1,
+   "maxIvRatio": 2.01,
+   "calls": [
+    124,
+    146,
+    182
+   ],
+   "tris": [
+    1841032,
+    2099997,
+    2646206
+   ],
+   "counters": {
+    "trees.lodSwitches": 602,
+    "fungi.groupFlips": 13,
+    "plants.repacks": 179,
+    "plants.farSwitches": 163,
+    "rocks.packs": 501,
+    "shadow.redraws.move": 2,
+    "shadow.redraws.clock": 7,
+    "shadow.redraws.dynamic": 1119,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 4087
+   },
+   "lodFramesMax": 4,
+   "repackFrames": 175,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 22.9,
+   "dataTextures": {
+    "33x33": 4087
+   }
+  },
+  "woodpan": {
+   "frames": 726,
+   "wallSecs": 12.1,
+   "complete": true,
+   "medianIv": 16.7,
+   "medianCpu": 2.2,
+   "over2x": 0,
+   "over2xAfter1s": 0,
+   "maxIvRatio": 1.19,
+   "calls": [
+    116,
+    151,
+    269
+   ],
+   "tris": [
+    1677132,
+    2319431,
+    3988676
+   ],
+   "counters": {
+    "trees.lodSwitches": 0,
+    "fungi.groupFlips": 0,
+    "plants.repacks": 345,
+    "plants.farSwitches": 141,
+    "rocks.packs": 0,
+    "shadow.redraws.move": 112,
+    "shadow.redraws.clock": 1,
+    "shadow.redraws.dynamic": 0,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 1099
+   },
+   "lodFramesMax": 0,
+   "repackFrames": 345,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 9.34,
+   "dataTextures": {
+    "33x33": 843,
+    "52x52": 256
+   }
+  }
+ },
+ "seqs": {
+  "grass-far": {
+   "from": [
+    -20,
+    18
+   ],
+   "to": [
+    -70,
+    14
+   ],
+   "switchStep": 3,
+   "at": [
+    -22.941176470588236,
+    17.764705882352942
+   ],
+   "baseline": [
+    1,
+    1,
+    6,
+    1,
+    16,
+    1,
+    3,
+    1,
+    1,
+    1,
+    2,
+    8,
+    4,
+    2,
+    5,
+    3,
+    5,
+    2,
+    2,
+    3,
+    2,
+    3,
+    2
+   ],
+   "switch": [
+    3,
+    2,
+    3,
+    2,
+    3,
+    3,
+    10,
+    7,
+    10,
+    11,
+    9,
+    11,
+    9,
+    9,
+    8,
+    10,
+    11,
+    12,
+    12,
+    11,
+    12,
+    12,
+    12
+   ]
+  },
+  "reeds-far": {
+   "from": [
+    70,
+    40
+   ],
+   "to": [
+    70,
+    110
+   ],
+   "switchStep": 8,
+   "at": [
+    70,
+    48
+   ],
+   "baseline": [
+    4,
+    3,
+    3,
+    3,
+    2,
+    2,
+    12,
+    3,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "switch": [
+    0,
+    0,
+    13,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "rocks": {
+   "from": [
+    230,
+    -20
+   ],
+   "to": [
+    250,
+    -40
+   ],
+   "switchStep": 6,
+   "at": [
+    234.13793103448276,
+    -24.137931034482758
+   ],
+   "baseline": [
+    0,
+    10,
+    16,
+    15,
+    13,
+    13,
+    14,
+    14,
+    15,
+    14,
+    16,
+    14,
+    13,
+    14,
+    13,
+    12,
+    13,
+    14,
+    15,
+    15,
+    16,
+    17,
+    17
+   ],
+   "switch": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    5,
+    6,
+    7,
+    7,
+    6,
+    7,
+    7,
+    8,
+    8,
+    8,
+    9,
+    10
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}
