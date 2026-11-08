@@ -47,6 +47,17 @@ export const LANDMARKS = {
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: 'The Wrong Colour',     line: 'The reeds around it have gone grey. You will not be able to say what colour it is.' },
 };
 
+// v4 systems (BI): named peaks on the main crest of the walls. Bearings are compass degrees from the bowl's
+// centre (0 north, 90 east); h is metres above the crest round it, w the half-width in degrees; a twin peak has
+// two horns, a table peak a flat top. Names are [Proposed] placeholders; Austin decides names.
+export const PEAKS = {
+  tierce:  { bearing: 348, h: 125, w: 4.5, name: 'The Tierce' },
+  mitre:   { bearing: 92,  h: 95,  w: 6,   twin: true,  name: 'The Mitre' },
+  horn:    { bearing: 162, h: 135, w: 3.5, name: 'The Ossuary Horn' },
+  abbess:  { bearing: 200, h: 110, w: 5,   name: 'The Abbess' },
+  lectern: { bearing: 306, h: 95,  w: 7,   table: true, name: 'The Lectern' },
+};
+
 // The causeway: hex-paved road from the castle gate out to the tower hill, passing the stones.
 export const CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },

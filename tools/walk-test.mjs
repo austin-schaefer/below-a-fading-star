@@ -28,6 +28,10 @@ const results = await page.evaluate(() => {
   p.pos.set(-330, fp.terrain.heightAt(-330, 0) + p.eye, 0); p.yaw = Math.PI / 2; p.keys.add('ShiftLeft');
   for (let i = 0; i < 400; i++) fp.controls.update(0.05);
   out.boundaryRadius = Math.hypot(p.pos.x, p.pos.z);
+  // the saddle's wedge (v4): walking toward the sun along the road's line reaches the road's start, r 366
+  p.pos.set(-300, fp.terrain.heightAt(-300, 109) + p.eye, 109); p.yaw = 1.92; p.vel.set(0, 0, 0);
+  for (let i = 0; i < 400; i++) fp.controls.update(0.05);
+  out.saddleRadius = Math.hypot(p.pos.x, p.pos.z);
   p.keys.delete('ShiftLeft');
   // colliders: walk into a test collider
   fp.addCollider({ x: -100, z: 0, r: 2 });
@@ -50,6 +54,7 @@ const checks = [
   ['walked 32-40m in 10s (3.6 m/s)', results.walked > 32 && results.walked < 40],
   ['stays on the ground', results.onGround && Math.abs(results.feetAboveGround) < 0.05],
   ['boundary holds (< 352m)', results.boundaryRadius < 352],
+  ['the saddle lets you out to the road start (364-376m)', results.saddleRadius > 364 && results.saddleRadius < 376],
   ['collider stops the player (~2.45m)', results.colliderStop > 2.3 && results.colliderStop < 2.7],
   ['landmark card shows at the stones', results.placeShown && /Cardinal/.test(results.placeName)],
   ['no page errors', errors.length === 0],

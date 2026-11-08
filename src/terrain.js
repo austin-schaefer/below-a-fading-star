@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
 import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
+import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -363,24 +364,17 @@ export function heightAt(x, z) {
     }
   }
 
-  // Bounding mountains, with a glacier notch in the north
+  // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: layered ranges, buttresses,
+  // talus, bedding ledges, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
+  // notch cuts through them as before.
   const r = Math.hypot(x, z);
   const ramp = smoothstep(WORLD.regionRadius - 10, WORLD.mountainRadius, r);
-  if (ramp > 0) {
-    const ridge = SX.ridged2(x * 0.006 + 2.3, z * 0.006 - 1.1, 5);
-    const ridge2 = SY.ridged2(x * 0.02, z * 0.02, 4);
-    let mtn = ramp * ramp * 150 + ramp * (ridge * 90 + ridge2 * 25);
-    // A saddle in the western wall where the sun sits
-    const ang = Math.atan2(z, x);
-    let dAng = Math.abs(ang - SUN.azimuth); if (dAng > Math.PI) dAng = Math.PI * 2 - dAng;
-    const saddle = 1 - smoothstep(0.1, 0.3, dAng);
-    mtn = lerp(mtn, ramp * ramp * 55 + ramp * (ridge * 20 + ridge2 * 10), saddle);
+  if (r > M_START) {
     const g = glacierMask(x, z);
-    // glacier: a smoother, lower tongue riding up into the pass
-    const glacierH = ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp;
-    mtn = lerp(mtn, glacierH, g);
-    h += mtn;
+    const glacierH = g > 0 ? ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp : 0;
+    h = applyMountains(h, x, z, r, g, glacierH);
   }
+  // --- v4 systems: the mountains (end)
   // Glacier tongue below the ramp too: ice spills a little way onto the moor
   {
     const g = glacierMask(x, z) * smoothstep(-215, -265, z) * (1 - ramp);

@@ -1,0 +1,114 @@
+[
+ {
+  "name": "spawn",
+  "x": 6,
+  "z": 36,
+  "yaw": 1.72,
+  "pitch": 0
+ },
+ {
+  "name": "causeway",
+  "x": -60,
+  "z": 14,
+  "yaw": 1.75,
+  "pitch": -0.02
+ },
+ {
+  "name": "tarn",
+  "x": -30,
+  "z": 70,
+  "yaw": 2.11,
+  "pitch": -0.03
+ },
+ {
+  "name": "fen",
+  "x": 70,
+  "z": 72,
+  "yaw": 3.14,
+  "pitch": -0.04
+ },
+ {
+  "name": "sun",
+  "x": -90,
+  "z": 2,
+  "yaw": 1.92,
+  "pitch": 0.12
+ },
+ {
+  "name": "saddle",
+  "x": -150,
+  "z": 40,
+  "yaw": 1.92,
+  "pitch": 0.12
+ },
+ {
+  "name": "saddle-foot",
+  "x": -305,
+  "z": 110,
+  "yaw": 1.92,
+  "pitch": 0.14
+ },
+ {
+  "name": "wall-north",
+  "x": 6,
+  "z": 36,
+  "yaw": 0.55,
+  "pitch": 0.08
+ },
+ {
+  "name": "wall-east",
+  "x": 0,
+  "z": -60,
+  "yaw": -1.35,
+  "pitch": 0.06
+ },
+ {
+  "name": "wall-south",
+  "x": -40,
+  "z": 40,
+  "yaw": 3.0,
+  "pitch": 0.05
+ },
+ {
+  "name": "wood",
+  "x": -210,
+  "z": 130,
+  "yaw": 1.2,
+  "pitch": 0
+ },
+ {
+  "name": "wood-deep",
+  "x": -228,
+  "z": 148,
+  "yaw": 2.6,
+  "pitch": -0.12
+ },
+ {
+  "name": "arcature",
+  "x": 160,
+  "z": 60,
+  "yaw": -0.6,
+  "pitch": 0.05
+ },
+ {
+  "name": "court",
+  "x": -40,
+  "z": -165,
+  "yaw": 0.4,
+  "pitch": -0.15
+ },
+ {
+  "name": "keep-yard",
+  "x": 40,
+  "z": 30,
+  "yaw": -2.4,
+  "pitch": -0.05
+ },
+ {
+  "name": "tower-foot",
+  "x": -248,
+  "z": -112,
+  "yaw": 0.2,
+  "pitch": -0.05
+ }
+]

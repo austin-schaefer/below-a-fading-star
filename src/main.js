@@ -15,6 +15,7 @@ import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
+import { buildMountains } from './v4/mountains.js';
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -107,6 +108,8 @@ async function start() {
 
   // Terrain
   ctx.terrain = buildTerrain(ctx);
+  // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
+  ctx.mountains = buildMountains(ctx);
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce
