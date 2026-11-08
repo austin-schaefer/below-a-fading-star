@@ -9,7 +9,7 @@ import { Painter, paintedMaterial, makeGround, angDiff } from '../../fauna/uncan
 import { smoothstep, clamp } from '../../fauna/geo.js';
 
 const TAU = Math.PI * 2;
-const STONE = new THREE.Color('#25221f'), STONE_FACE = new THREE.Color('#2f2b27'), STONE_RAW = new THREE.Color('#2b2722');
+const STONE = new THREE.Color('#1d1b19'), STONE_FACE = new THREE.Color('#2a2724'), STONE_RAW = new THREE.Color('#24211d');
 const LICHEN = new THREE.Color('#6f6c4c'), LICHEN_D = new THREE.Color('#4e5238'), RUST = new THREE.Color('#5a4630');
 
 // ---------------------------------------------------------------- the stones
@@ -31,20 +31,24 @@ function layout(C, rng) {
 // The stone's outer surface, shared by the mesh and by the lizards that sit on it:
 // local frame: +z is the dressed face (toward the spiral's centre), x across, y up from the ground.
 function stoneShape(st, noise) {
-  const { w, d, h, seed, unfinished } = st;
+  const { w, d, h, seed, unfinished, taperK } = st;
   return (a, y, out) => {
     // a: angle about the stone's axis, 0 = +x, pi/2 = +z (the face)
     const v = clamp(y / h, 0, 1);
     const ca = Math.cos(a), sa = Math.sin(a);
     // a rounded slab: superellipse section, narrowing and thinning toward a blunt, uneven top
-    const taper = 1 - 0.28 * v * v - (unfinished ? 0.0 : 0.06 * v);
+    const taper = 1 - taperK * v * v - (unfinished ? 0.0 : 0.06 * v);
     const pw = 2.6, sx = Math.sign(ca) * Math.pow(Math.abs(ca), 2 / pw), sz = Math.sign(sa) * Math.pow(Math.abs(sa), 2 / pw);
     let x = sx * w * 0.5 * taper, z = sz * d * 0.5 * taper;
     // dressed face: flat, the noise mostly planed off; the rest rough, in big flakes and small pits
     const face = smoothstep(0.35, 0.8, sa) * (unfinished ? 0.0 : 1);
     const n1 = noise.noise2(seed + a * 1.3 + y * 0.9, seed * 0.7 + y * 1.6 + a * 0.2);
     const n2 = noise.noise2(seed * 1.9 + a * 4.1, y * 5.3 - seed);
-    const rough = (n1 * 0.06 + n2 * 0.018) * (1 - 0.85 * face);
+    const n3 = noise.noise2(seed * 0.37 + a * 2.2, y * 2.4 + seed * 0.5);
+    // flakes: ridged noise gives the broken, faceted look of stone split along its grain
+    // and a vertical grain: shallow flutes where the stone was split
+    const grain = Math.sin(a * 5 + seed + n1 * 2) * 0.012;
+    const rough = (n1 * 0.07 + (0.35 - Math.abs(n3)) * 0.08 + n2 * 0.03 + grain) * (1 - 0.85 * face);
     // the unfinished stone keeps quarry steps on its flanks
     const step = unfinished ? 0.05 * Math.round(Math.sin(y * 6 + seed) * 1.5) / 1.5 : 0;
     const k = 1 + (rough + step) / Math.max(0.15, Math.hypot(x, z));
@@ -63,7 +67,7 @@ function buildStones(ctx, C, ground, rng, low) {
   const spots = layout(C, rng);
   const stones = [];
   const tmp = [0, 0, 0], tmpA = [0, 0, 0], tmpB = [0, 0, 0];
-  const NU = low ? 10 : 14, NV = low ? 6 : 9;
+  const NU = low ? 10 : 16, NV = low ? 6 : 10;
   for (const sp of spots) {
     const unfinished = sp.i === 35;
     const h = unfinished ? 0.78 + rng() * 0.08 : 1.1 + 0.7 * Math.pow(rng(), 0.8) * (0.75 + 0.25 * (1 - sp.i / 35));
@@ -71,7 +75,11 @@ function buildStones(ctx, C, ground, rng, low) {
       ...sp, h, unfinished, seed: sp.i * 7.31 + 3.1,
       w: (unfinished ? 0.95 : 0.62 + rng() * 0.22) * (0.9 + 0.1 * h), d: unfinished ? 0.72 : 0.34 + rng() * 0.12,
       lean: (rng() - 0.5) * 0.08, roll: (rng() - 0.5) * 0.06,
+      taperK: 0.12 + rng() * 0.3, tiltA: (rng() - 0.5) * 0.7, tiltB: (rng() - 0.5) * 0.35,
     };
+    if (unfinished) { st.tiltA = 0.04; st.tiltB = 0; }
+    // the top, broken across at a slant
+    st.topY = (a) => st.h + st.sink + st.tiltA * Math.cos(a) * st.w * 0.5 + st.tiltB * Math.sin(a) * st.d * 0.5;
     // face the spiral's centre (with a little error, as if set by eye)
     st.yaw = Math.atan2(C.x - sp.x, C.z - sp.z) + (rng() - 0.5) * 0.18;
     st.gy = ground.at(sp.x, sp.z);
@@ -95,8 +103,8 @@ function buildStones(ctx, C, ground, rng, low) {
         // the top: pulled in and rounded; on the unfinished stone a flat quarry bed
         let yy = tmp[1];
         if (j === NV) {
-          const dome = unfinished ? 0.02 : 0.12 + 0.05 * noise.noise2(st.seed + a, 3.3);
-          yy += dome * 0.4; tmp[0] *= 0.82; tmp[2] *= 0.82;
+          const dome = unfinished ? 0.02 : 0.1 + 0.06 * noise.noise2(st.seed + a, 3.3);
+          yy = st.topY(a) + dome * 0.4; tmp[0] *= 0.84; tmp[2] *= 0.84;
         }
         // colour: dark stone; the dressed face a shade lighter and smoother; lichen on the sun side, low and on the top
         const ca = Math.cos(a), sa = Math.sin(a);
@@ -123,7 +131,7 @@ function buildStones(ctx, C, ground, rng, low) {
     // top cap
     let cx = 0, cz = 0;
     for (let i2 = 0; i2 < NU; i2++) { st.shape((i2 / NU) * TAU + 0.11, top, tmpA); cx += tmpA[0] * 0.82; cz += tmpA[2] * 0.82; }
-    const capY = top + (unfinished ? 0.02 : 0.1);
+    const capY = top + (unfinished ? 0.02 : 0.08);
     const cTop = P.col.slice();
     P.col = [LICHEN_D.r * 0.8 + STONE.r * 0.2, LICHEN_D.g * 0.8 + STONE.g * 0.2, LICHEN_D.b * 0.8 + STONE.b * 0.2];
     if (unfinished) P.col = [STONE_RAW.r, STONE_RAW.g, STONE_RAW.b];
@@ -368,7 +376,7 @@ export function buildMenology(ctx) {
         if (L.top) {
           // on top: flat, facing the sun
           st.shape(L.a, st.h + st.sink, tmp);
-          v3.set(tmp[0] * 0.55, tmp[1] + 0.085, tmp[2] * 0.55).applyMatrix4(st.m);
+          v3.set(tmp[0] * 0.5, st.topY(L.a) * 0.5 + (st.h + st.sink) * 0.5 + 0.06, tmp[2] * 0.5).applyMatrix4(st.m);
           up.set(0, 1, 0); fw.set(-sunX, 0, -sunZ);
         } else {
           // flat against the face, head up

@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { Painter, paintedMaterial } from '../../fauna/uncanny/kit.js';
 import { smoothstep, clamp } from '../../fauna/geo.js';
 
-const ROBE = '#0b080b', ROBE_D = '#070507', MANTLE = '#0e0a0d', WIMPLE = '#5e574d', WIMPLE_D = '#4a443c', VOID = '#010101';
+const ROBE = '#0b080b', ROBE_D = '#070507', MANTLE = '#0e0a0d', WIMPLE = '#8c8476', WIMPLE_D = '#6e675b', VOID = '#010101';
 const TAU = Math.PI * 2;
 
 // Courtyard geometry from src/structures/taverna.js (not ours to import from): the compound is a square
@@ -71,13 +71,13 @@ function guestGeometry(low) {
     const r = 0.2 + 0.035 * smoothstep(0.2, 0.7, v) + 0.006;
     const y = 1.5 - v * 0.34 - 0.03 * Math.cos((u - 0.5) * Math.PI) * v;
     P.set('aSway', smoothstep(0.35, 1, v) * 1.6);
-    if (v > 0.8) P.paint(WIMPLE_D, 0, 0.94, 0.05); else P.paint(WIMPLE, 0, 0.92, 0.07);
+    if (v > 0.8) P.paint(WIMPLE_D, 0, 0.94, 0.16); else P.paint(WIMPLE, 0, 0.92, 0.22);
     o[0] = Math.sin(a) * r; o[1] = y; o[2] = Math.cos(a) * r * 0.82 + 0.02;
   });
   P.set('aSway', 0);
   // the wimple's veil-band across the brow, inside the hood
   P.xf(bow);
-  P.paint(WIMPLE_D, 0, 0.94);
+  P.paint(WIMPLE_D, 0, 0.94, 0.16);
   P.sheet(10, 2, (u, v, o) => {
     const a = (u - 0.5) * 2.2;
     o[0] = Math.sin(a) * 0.112; o[1] = 1.79 - v * 0.045; o[2] = Math.cos(a) * 0.105 + 0.02;
