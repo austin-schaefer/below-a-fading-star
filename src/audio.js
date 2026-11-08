@@ -27,6 +27,7 @@
 //   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
 //   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
 //   lamp-tick (a Leerie standard lighting, v5/lights.js): a click and the flame's breath, 0.8 s
+//   kept-fire (hearth pos, { flare?, strength? }): a fire's crackle, 1.8 s, pops and a hiss: 70 m; flare: a roar swelling under thick crackle and a low whump, 3.4 s: 130 m
 //   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
 import { hyp } from './noise.js';
@@ -793,6 +794,28 @@ export async function build(ctx) {
       }
     }
 
+    // ---- the Kept Fire (src/v5/keptfire.js): flames are a hiss of pink noise under sparse dry pops (grains of high
+    // bandpassed noise, a few with a wooden knock); the flare is a roar swelling in brown noise with a low whump.
+    function keptFire(pos, opts) {
+      const flare = !!opts?.flare, k = opts?.strength ?? 1;
+      const v = voice(pos, { ref: flare ? 5 : 2.5, roll: 1.1, range: flare ? 130 : 70, dur: flare ? 3.4 : 1.8, verb: 0.2, air: 160 });
+      if (!v) return;
+      const t0 = v.t0, dur = flare ? 3.0 : 1.5, hg = ac.createGain();
+      swell(hg, t0, (flare ? 0.05 : 0.014) * k, flare ? 0.3 : 0.4, t0 + dur);
+      chain(vNoise(v, pink, t0, dur), filt('bandpass', 1500, 0.6), hg, v.in);
+      if (flare) {
+        const rg = ac.createGain(); swell(rg, t0, 0.2, 0.3, t0 + 2.8);
+        chain(vNoise(v, brown, t0, 2.8), filt('lowpass', 300, 0.7), rg, v.in);
+        const th = vOsc(v, 'sine', 80, t0, t0 + 0.7), tg = ac.createGain(); th.frequency.exponentialRampToValueAtTime(42, t0 + 0.6); env(tg, t0, 0.2, 0.03, 0.55); chain(th, tg, v.in);
+      }
+      const n = flare ? 46 : 5 + ((rng() * 5) | 0);
+      for (let i = 0; i < n; i++) {
+        const at = t0 + Math.pow(rng(), flare ? 1.6 : 1) * dur;
+        grain(v, v.in, at, 1800 + rng() * 4200, 2 + rng() * 6, (flare ? 0.1 : 0.07) * k * (0.3 + rng() * 0.7), 0.003 + rng() * 0.015);
+        if (rng() < 0.25) grain(v, v.in, at, 420 + rng() * 300, 5, 0.06 * k, 0.03);
+      }
+    }
+
     // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
     // ctx.river.rumble is above zero), its gain follows that rumble at 10 Hz; on leaving it fades over 2 s and
     // is torn down. Low brown rumble, a mid roar, a hiss of spray, a slow wander in all three.
@@ -895,6 +918,7 @@ export async function build(ctx) {
         else if (name === 'biomesh-settle') biomeshSettle(position);
         else if (name === 'hawser-groan') hawserGroan(position);
         else if (name === 'lamp-tick') lampTick(position);
+        else if (name === 'kept-fire') keptFire(position, opts);
         else regionSnd?.cue(name, position, opts);
       } catch (e) { if (audio.debug) throw e; }
     };

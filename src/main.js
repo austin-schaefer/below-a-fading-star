@@ -13,6 +13,7 @@ import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
+import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
 import { buildMountains } from './v4/mountains.js';
@@ -52,7 +53,9 @@ const MODULES = [
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
   ['occultation', () => import('./v5/occultation.js')], // v5 wonders: AR the Occultation (the passes and the hush; the shading is in the fog, terrain and sky shaders)
+  ['dressing5', () => import('./v5/dressing.js')], // v5: CY the Collation, DE the Slipper, DF the Unfinished Prospect
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
+  ['keptfire', () => import('./v5/keptfire.js')], // v5 wonders: DN the Kept Fire (a tended hearth on the Outwash; one point light, ?keptfire=0)
   ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
@@ -235,6 +238,12 @@ async function start() {
     sunLight.shadow.mapSize.set(sm, sm); sunLight.shadow.map?.dispose(); sunLight.shadow.map = null;
     ctx.shadowCadence.setTexel(shadowTexel); renderer.shadowMap.needsUpdate = true;
   };
+  // Every geometry and texture goes to the GPU here, behind the title card (warmup.js); ?warmup=0 leaves
+  // each to its first draw. ?perf=1 logs what it uploaded and what it cost.
+  if (url.searchParams.get('warmup') !== '0') {
+    const w = warmUp(ctx);
+    if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
+  }
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
