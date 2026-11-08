@@ -7,6 +7,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 - `design/`: the canon, Austin's. Status tags (`[Decided]`, `[Working]`, `[Proposed]`, `[Open]`) are defined in `design/index.md`.
 - `inbox/`: raw ideas, one file each. `proposals/`: agent speculation and questions for Austin. Frontmatter schema in the `design-partner` skill.
 - `wiki/`: the local app that browses and edits those folders. Load the `wiki-maintenance` skill before changing it.
+- `prototypes/wilderness/`: the walk prototype; load the `wilderness` skill before working in it.
 - GitHub Issues: everything agents build. `.agents/skills/`: skills (mirrored into `.claude/skills/`). `tools/`: repo scripts. `docs/`: architecture notes and archived docs.
 
 ## Roles
@@ -27,6 +28,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 - Design discussion goes through the `design-partner` skill. Austin decides.
 - Verify by running things. Zero tests reported is a failure. Anything visual: `cd wiki && npm run shot -- <url> <out.png>`; Austin doesn't use the Chrome extension.
 - Docs in the present tense. Delete what no longer holds; git keeps history.
+- Never write to Claude Code's auto-memory (the per-user memory folder). Everything an agent needs to remember lives in this repo: README, the milestone docs, the skills, git history.
 - No `CLAUDE.md` or `CLAUDE.local.md` in this repo; either would stop Claude Code reading this file.
 
 ## Commands
