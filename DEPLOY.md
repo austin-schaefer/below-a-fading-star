@@ -13,7 +13,7 @@ The prototype is a static site: one `index.html`, ES modules under `src/`, a ven
 ## What ships
 
 - Site root: `prototypes/wilderness/`, served as-is; `index.html` is the entry.
-- Excluded: `shots/` (about 300 MB of PNG renders, part of the repo's record, not of the site) and `dist/` (artifact build output, gitignored).
+- Excluded: `shots/` (the curated WebP renders, part of the repo's record, not of the site) and `dist/` (artifact build output, gitignored).
 - The page loads Three.js from `./vendor/three/` through an import map in `index.html`; nothing is fetched from a CDN. The only external request is Google Fonts (Alegreya), which degrades to a serif fallback if blocked.
 
 `prototypes/wilderness/netlify.toml` carries the build settings and the noindex header. It sits in the base directory, not the repository root, so it applies to this site alone; another Netlify site in the repo gets its own base directory and its own `netlify.toml`, and the repository root stays free of one. Paths in the file are relative to the base directory: `publish = "."` is the prototype folder, and the build command deletes the two excluded folders from the build's checkout before upload. The dashboard's build command and publish directory stay blank so the file wins.

@@ -28,6 +28,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 - Design discussion goes through the `design-partner` skill. Austin decides.
 - Verify by running things. Zero tests reported is a failure. Anything visual: `cd wiki && npm run shot -- <url> <out.png>`; Austin doesn't use the Chrome extension.
 - Docs in the present tense. Delete what no longer holds; git keeps history.
+- Renders never enter the repository except curated WebP keepers under `prototypes/wilderness/shots/`, committed by the curator. `prototypes/wilderness/shots/wip/` is gitignored.
 - Never write to Claude Code's auto-memory (the per-user memory folder). Everything an agent needs to remember lives in this repo: README, the milestone docs, the skills, git history.
 - No `CLAUDE.md` or `CLAUDE.local.md` in this repo; either would stop Claude Code reading this file.
 
