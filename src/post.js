@@ -2,11 +2,13 @@
 // violet lift in the shadows, vignette, grain and a whisper of chromatic aberration.
 //
 // The chain (v6-02): the scene pass draws into the composer's readBuffer; bloom runs its bright pass, mips and
-// composite and stops there (no blend back into the scene); the finish pass, the one full-size pass after the
-// scene, adds the bloom composite to the scene where the grade reads it, marches the rays, grades, and tone maps
+// composite and stops there (no blend back into the scene); the rays pass marches toward the sun into a target
+// at RAYS_RES of the render, only while the sun is in view; the finish pass, the one full-size pass after the
+// scene, adds the bloom composite to the scene where the grade reads it, adds the rays, grades, and tone maps
 // to sRGB on the canvas. It does in one fragment what bloom's full-size blend, the grade pass and OutputPass did
 // in three. ?post=v3 restores the three passes (bloom's blend, the grade into the writeBuffer, OutputPass);
-// ?postclock=0 pins the grain's and the rays' clock, so two loads draw the same noise (render pairs).
+// ?rays=full marches the rays at every pixel inside the grade or the finish, as before; ?postclock=0 pins the
+// grain's and the rays' clock, so two loads draw the same noise (render pairs).
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -17,9 +19,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const params = new URL(location.href).searchParams;
 const POST_V3 = params.get('post') === 'v3';
+const RAYS_FULL = params.get('rays') === 'full';
 const POST_CLOCK = params.get('postclock') !== '0';
+// the rays' target per axis, as a fraction of the render (chosen against the sun pair's tolerance)
+const RAYS_RES = 0.25;
 
-// The pieces the grade and the finish share. src() is the picture the grade reads: the scene with
+// The pieces the grade, the finish and the rays pass share. src() is the picture the grade reads: the scene with
 // bloom added (ADD_BLOOM: bloom's composite, scaled by its alpha as the additive blend's SRC_ALPHA did), or a
 // target that already holds the sum (?post=v3).
 const SHARED = `
@@ -51,7 +56,7 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn;`;
 
 // the grade (and, with FINISH, the tone mapping and sRGB transfer OutputPass did)
 const GRADE_MAIN = `
@@ -67,7 +72,11 @@ const GRADE_MAIN = `
     col.b = src(uv + ca).b;
 
     if (uSunVisible > 0.001) {
+    #ifdef RAYS_TEX
+      float illum = texture2D(tRays, uv).r;
+    #else
       float illum = rays(uv);
+    #endif
       col += vec3(1.0, 0.42, 0.18) * illum * uSunVisible * uFlicker * 0.38;
     }
 
@@ -123,7 +132,7 @@ const FRAG = (head, main) => `precision highp float;\n${head}\n${UNIFORMS}\n${SH
 
 function makeUniforms() {
   return {
-    tDiffuse: { value: null }, tBloom: { value: null },
+    tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
     uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uBloomOn: { value: 1 },
     uResolution: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
@@ -173,6 +182,31 @@ class BloomComposite extends UnrealBloomPass {
     renderer.setClearColor(this._oldClearColor, this.oldClearAlpha);
     renderer.autoClear = oldAutoClear;
   }
+}
+
+// the rays at RAYS_RES of the render into their own target. It draws only while the sun is in view (`active`),
+// and once on the first frame (behind the title card) so its program is built before the sun is first seen.
+class RaysPass extends Pass {
+  constructor(material, scale) {
+    super();
+    this.material = material;
+    this.fsQuad = new FullScreenQuad(material);
+    this.scale = scale;
+    this.target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
+    this.target.texture.name = 'post.rays';
+    this.needsSwap = false;
+    this.active = false;
+    this.drawn = false;
+  }
+  setSize(w, h) { this.target.setSize(Math.max(1, Math.round(w * this.scale)), Math.max(1, Math.round(h * this.scale))); }
+  render(renderer, writeBuffer, readBuffer) {
+    if (!this.active && this.drawn) return;
+    this.drawn = true;
+    this.material.uniforms.tDiffuse.value = readBuffer.texture;
+    renderer.setRenderTarget(this.target);
+    this.fsQuad.render(renderer);
+  }
+  dispose() { this.target.dispose(); this.material.dispose(); this.fsQuad.dispose(); }
 }
 
 // the finish: the last pass, to the canvas. needsSwap is false: the composer's pair never swaps, so the scene
@@ -244,8 +278,8 @@ export function buildPost(ctx) {
   // Target hygiene (v3 stage 3; ?lean=0 as before): only the target the scene is drawn into needs a depth buffer.
   // The RenderPass draws into the composer's readBuffer (renderTarget2). With ?post=v3 the grade and output passes
   // swap twice a frame, so the pair is back in place for the next frame, and the writeBuffer takes the grade's
-  // output; with the finish nothing swaps and the writeBuffer is never drawn to. Bloom's eleven targets only ever take
-  // full-screen quads.
+  // output; with the finish nothing swaps and the writeBuffer is never drawn to. Bloom's eleven targets and the
+  // rays' only ever take full-screen quads.
   if (params.get('lean') !== '0') {
     composer.writeBuffer.depthBuffer = false;
     for (const t of [bloom.renderTargetBright, ...bloom.renderTargetsHorizontal, ...bloom.renderTargetsVertical]) t.depthBuffer = false;
@@ -253,13 +287,23 @@ export function buildPost(ctx) {
 
   const u = makeUniforms();
   u.tBloom.value = bloom.renderTargetsHorizontal[0].texture;
-  let grade = null, finish = null;
+  const lowRays = !RAYS_FULL;
+  let rays = null, grade = null, finish = null;
+  if (lowRays) {
+    // the rays pass shares the grade's uniforms (the sun, the clock, the resolution); its own tDiffuse
+    const ru = { ...u, tDiffuse: { value: null } };
+    const defines = POST_V3 ? {} : { ADD_BLOOM: '' };
+    rays = new RaysPass(new THREE.ShaderMaterial({ name: 'post.rays', uniforms: ru, defines, vertexShader: VERT, fragmentShader: FRAG('', 'varying vec2 vUv; void main(){ gl_FragColor = vec4(rays(vUv), 0.0, 0.0, 1.0); }'), depthTest: false, depthWrite: false }), RAYS_RES);
+    composer.addPass(rays);
+    u.tRays.value = rays.target.texture;
+  }
   if (POST_V3) {
-    grade = new ShaderPass(new THREE.ShaderMaterial({ name: 'post.grade', uniforms: u, vertexShader: VERT, fragmentShader: FRAG('', GRADE_MAIN) }));
+    const defines = lowRays ? { RAYS_TEX: '' } : {};
+    grade = new ShaderPass(new THREE.ShaderMaterial({ name: 'post.grade', uniforms: u, defines, vertexShader: VERT, fragmentShader: FRAG('', GRADE_MAIN) }));
     composer.addPass(grade);
     composer.addPass(new OutputPass());
   } else {
-    const defines = { ADD_BLOOM: '', FINISH: '' };
+    const defines = { ADD_BLOOM: '', FINISH: '', ...(lowRays ? { RAYS_TEX: '' } : {}) };
     finish = new FinishPass(new THREE.RawShaderMaterial({
       name: 'post.finish', uniforms: u, defines, vertexShader: VERT_RAW,
       fragmentShader: FRAG(`${THREE.ShaderChunk.tonemapping_pars_fragment}\n${THREE.ShaderChunk.colorspace_pars_fragment}`, GRADE_MAIN),
@@ -289,11 +333,12 @@ export function buildPost(ctx) {
     const inView = !behind && Math.abs(proj.x) < 1.6 && Math.abs(proj.y) < 1.6;
     const vis = inView ? 1 - THREE.MathUtils.smoothstep(Math.max(Math.abs(proj.x), Math.abs(proj.y)), 1.0, 1.6) : 0;
     u.uSunVisible.value += (vis - u.uSunVisible.value) * Math.min(1, dt * 6);
+    if (rays) rays.active = u.uSunVisible.value > 0.001;
     bloom.strength = tune.strength * (0.8 + 0.2 * ctx.sky.flicker.value);
   }
   function resize(w, h) {
     size.set(w, h);
     composer.setSize(w, h);
   }
-  return { composer, bloom, grade, finish, uniforms: u, update, resize };
+  return { composer, bloom, rays, grade, finish, uniforms: u, update, resize };
 }
