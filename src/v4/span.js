@@ -16,6 +16,8 @@ import { SPAN, BOT, deckAt } from './span/plan.js';
 import { mergeGeometries } from './kit/merge.js';
 import { etch } from './span/etch.js';
 import { buildDeck } from './span/deck.js';
+import { buildGates, boulderGeometry } from './span/gates.js';
+import { buildStairs } from './span/stairs.js';
 
 const Y = SPAN.deckY;
 
@@ -66,7 +68,9 @@ export async function build(ctx) {
   await ctx.progress?.('raising the span', 0.1);
   buildDeck(K);
   await ctx.progress?.('raising the span', 0.3);
+  buildGates(K);
   await ctx.progress?.('raising the span', 0.45);
+  buildStairs(K);
   await ctx.progress?.('raising the span', 0.6);
   await ctx.progress?.('raising the span', 0.85);
   const { boulders = [], stairInfo = {}, walkParts = [], partY = () => null, slabInfo = [] } = K;
@@ -100,7 +104,7 @@ export async function build(ctx) {
     scene.add(m); meshes.push(m);
     return m;
   };
-  const bg = new THREE.IcosahedronGeometry(1, 1);
+  const bg = boulderGeometry(ctx, hi);
   inst(bg, rockMat, boulders, 'span-rockfall', true);
   inst(new THREE.BoxGeometry(1, 1, 1), stone.mat, rubble, 'span-rubble', hi);
   // measure: one at the west stair's foot, one on the west deck
