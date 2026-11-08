@@ -7,6 +7,10 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
+const PARAMS = new URL(location.href).searchParams;
+const SCAN = PARAMS.get('vegscan') !== '0'; // v3 stage 3: lazy repacking and sliced chunk generation
+const MARGIN = 12; // metres of slack round the view when a lazy repack picks its chunks
+const _wide = new THREE.Sphere();
 
 // ---------- geometry ----------
 // Plant geometry carries position, normal, color and aBlade = (t: height fraction, family, rand, tintWeight).
@@ -316,6 +320,7 @@ class Kind {
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     this.mesh.name = `veg-${name}`;
     this.order = new Int32Array(CN * CN);
+    this.packedQ = new Uint8Array(CN * CN); this.repacks = 0; this.packNeed = 0;
   }
   add(x, y, z, rot, sx, sy, variant, seed, r, g, b, rust) {
     this.scratch.push(x, y, z, rot, sx, sy, 0, variant + seed * 0.999, r, g, b, rust);
@@ -345,8 +350,11 @@ class Kind {
     a.length = 0;
   }
   free(k) { const ch = this.chunks[k]; if (ch) { this.total -= ch.n; this.chunks[k] = null; } }
-  // Pick visible chunks and how much of each to draw; repack only when that changes.
+  // Pick visible chunks and how much of each to draw; repack only when that changes (the old rule,
+  // ?vegscan=0: walking changed some chunk's 1/64 step, or which chunks were in view, nearly every
+  // frame, and every kind re-sorted and re-uploaded its whole buffer).
   update(px, pz, frustum, genCount) {
+    if (SCAN) return this.lazyUpdate(px, pz, frustum);
     const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
     let nv = 0, sig = genCount | 0;
     const pci = Math.floor((px - CMIN) / CHUNK), pcj = Math.floor((pz - CMIN) / CHUNK);
@@ -370,7 +378,58 @@ class Kind {
     sig = (Math.imul(sig, 31) + nv) | 0;
     if (sig === this.sig) return;
     this.sig = sig;
-    // nearest first so that if the cap is hit it is the far chunks that lose out
+    this.pack(nv, null);
+  }
+  // v3 stage 3: repack only when the buffer cannot draw what is needed. Each frame finds the chunks
+  // in view (the same test as above) and the prefix each needs; if every one is already packed with at
+  // least that prefix, nothing is touched. The shader thins every instance by its own distance, so a
+  // longer prefix than needed draws the same picture, and a packed chunk out of view is clipped. When a
+  // repack is due it packs with room to spare: chunks a margin outside the view, prefixes a quarter
+  // longer, so turning and walking are absorbed for a while. It repacks too when the buffer holds more
+  // than 1.6 times what was needed when it was packed. Only chunks within fade1 of the player are scanned.
+  lazyUpdate(px, pz, frustum) {
+    const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
+    const pci = Math.floor((px - CMIN) / CHUNK), pcj = Math.floor((pz - CMIN) / CHUNK);
+    const ci0 = Math.max(0, Math.floor((px - fade1 - CMIN) / CHUNK)), ci1 = Math.min(CN - 1, Math.floor((px + fade1 - CMIN) / CHUNK));
+    const cj0 = Math.max(0, Math.floor((pz - fade1 - CMIN) / CHUNK)), cj1 = Math.min(CN - 1, Math.floor((pz + fade1 - CMIN) / CHUNK));
+    const PQ = this.packedQ, wide = _wide;
+    let nv = 0, need = 0, ok = true;
+    for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) {
+      const c = cj * CN + ci;
+      const ch = this.chunks[c];
+      if (!ch || !ch.n) continue;
+      const dx = Math.max(ch.x0 - px, 0, px - ch.x1), dz = Math.max(ch.z0 - pz, 0, pz - ch.z1);
+      const d = Math.sqrt(dx * dx + dz * dz);
+      if (d > fade1 + MARGIN) continue;
+      const near = Math.abs(ci - pci) <= 1 && Math.abs(cj - pcj) <= 1;
+      wide.center.copy(ch.sphere.center); wide.radius = ch.sphere.radius + MARGIN;
+      if (!near && !frustum.intersectsSphere(wide)) continue;
+      const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
+      const q = dens > 0 ? Math.min(64, Math.ceil(dens * 64 + 0.5)) : 0;
+      // a candidate for the next repack (with its margin), and needed now if it passes the strict test
+      ch.d = d; ch.q = q;
+      this.order[nv++] = c;
+      if (q > 0 && (near || frustum.intersectsSphere(ch.sphere))) {
+        need += Math.ceil(ch.n * q / 64);
+        if (PQ[c] < q) ok = false;
+      }
+    }
+    if (ok && need * 1.6 + 256 >= this.packNeed) return;
+    this.packNeed = need;
+    // repack: the candidates with a prefix a quarter longer; those just beyond fade1 get the one they will need
+    let n = 0;
+    for (let i = 0; i < nv; i++) {
+      const c = this.order[i], ch = this.chunks[c];
+      const q = ch.q > 0 ? ch.q : Math.ceil(64 * Math.pow(Math.min(1, r0 / fade1), ex) * (1 - smoothstep(fade0, fade1, fade1 - MARGIN * 0.5)) + 0.5);
+      ch.q = Math.min(64, Math.ceil(q * 1.25) + 1);
+      this.order[n++] = c;
+    }
+    PQ.fill(0);
+    this.pack(n, PQ);
+  }
+  // Copy the chosen chunks' prefixes into the instanced buffer, nearest first, so that if the cap is
+  // hit it is the far chunks that lose out (and the near ones draw first: front to back).
+  pack(nv, PQ) {
     const ord = this.order.subarray(0, nv);
     ord.sort((a, b) => (this.chunks[a].d - this.chunks[b].d) || (a - b)); // ties broken by index: a stable order
     let w = 0;
@@ -382,11 +441,13 @@ class Kind {
       if (m <= 0) break;
       const e = m * 4;
       P.set(ch.pos.subarray(0, e), w * 4); S.set(ch.shape.subarray(0, e), w * 4); T.set(ch.tint.subarray(0, e), w * 4);
+      if (PQ) PQ[ord[i]] = ch.q; // a chunk cut short by the cap counts as packed: nothing better is possible
       w += m;
     }
     for (const a of [this.aPos, this.aShape, this.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, w * 4); a.needsUpdate = true; }
     this.geo.instanceCount = w;
     this.drawn = w;
+    this.repacks++;
   }
 }
 
@@ -424,14 +485,20 @@ export function buildPlants(ctx, ground, shared) {
   const CELL = 2;
   const b = {};
   const kinds = [grass, heather, bracken, flowers, fleshy, reeds];
-  // Generate chunk k: every 2 m cell inside it, for every kind.
-  function genChunk(k) {
-    rng = ctx.makeRng(33000 + k);
+  // Generate chunk k: every 2 m cell inside it, for every kind. With ?vegscan on, streaming spreads a
+  // chunk over a few frames (GEN_SLICE cells a frame; one chunk is ~3 ms of placement): the same cells
+  // in the same order from the same rng, so the same plants, without the hitch.
+  const GEN_SLICE = 36, CELLS = (CHUNK / 2) * (CHUNK / 2);
+  let job = null; // { k, i } a chunk part-way through generation
+  function genChunk(k, from = 0, to = CELLS) {
+    if (from === 0) rng = ctx.makeRng(33000 + k);
     const ci = k % CN, cj = Math.floor(k / CN);
-    const X0 = CMIN + ci * CHUNK, Z0 = CMIN + cj * CHUNK;
-    for (let cz = Z0; cz < Z0 + CHUNK; cz += CELL) for (let cx = X0; cx < X0 + CHUNK; cx += CELL) cell(cx, cz);
+    const X0 = CMIN + ci * CHUNK, Z0 = CMIN + cj * CHUNK, row = CHUNK / 2;
+    for (let i = from; i < to; i++) cell(X0 + (i % row) * 2, Z0 + Math.floor(i / row) * 2);
+    if (to < CELLS) return false;
     const sr = ctx.makeRng(34000 + k);
     for (const kd of kinds) kd.commit(k, sr);
+    return true;
   }
   function cell(cx, cz) {
     const mx = cx + 1, mz = cz + 1;
@@ -584,15 +651,28 @@ export function buildPlants(ctx, ground, shared) {
     const dx = Math.max(x0 - px, 0, px - x0 - CHUNK), dz = Math.max(z0 - pz, 0, pz - z0 - CHUNK);
     return Math.sqrt(dx * dx + dz * dz);
   };
+  let lastX = Infinity, lastZ = Infinity, settled = false;
   function stream(px, pz, budget) {
+    if (SCAN && budget < CN * CN) {
+      if (job) { // carry on with the chunk in hand
+        const to = Math.min(CELLS, job.i + GEN_SLICE);
+        if (genChunk(job.k, job.i, to)) { gen[job.k] = 1; genCount++; job = null; } else job.i = to;
+        return;
+      }
+      // nothing to build and the player has not moved: skip the 729-chunk search
+      if (settled && Math.abs(px - lastX) < 2 && Math.abs(pz - lastZ) < 2) return;
+    }
     for (let n = 0; n < budget; n++) {
       let best = -1, bd = REACH;
       for (let k = 0; k < CN * CN; k++) {
         if (gen[k]) { if (chunkDist(k, px, pz) > FREE) { gen[k] = 0; for (const kd of kinds) kd.free(k); } continue; }
+        if (job && job.k === k) continue;
         const d = chunkDist(k, px, pz);
         if (d < bd) { bd = d; best = k; }
       }
+      lastX = px; lastZ = pz; settled = best < 0;
       if (best < 0) return;
+      if (SCAN && budget < CN * CN) { job = { k: best, i: 0 }; return; }
       genChunk(best); gen[best] = 1; genCount++;
     }
   }
