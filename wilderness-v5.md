@@ -1,5 +1,7 @@
 # Wilderness v5: diversity, life and detail
 
+> **Sequencing (2026-11-08):** the three releases below became layers across versions instead: the land (bioregions, tarn, glacier, Tinctures, gutter, terrain set-dressing) ships in **v4** with v4's own terrain work; the built things in **v5**; the people and small life in **v6**. See `wilderness-run.md`.
+
 Austin, 2026-11-08, after walking v2.1. Runs after v4. Austin picked from `IDEAS-v5.md` on 2026-11-08 (below); the placement plan follows when v5's turn comes.
 
 "If v4 is about improving high-level map nuance, v5 should be about more diversity, more little characters hiding out there, a few more humanoids in particular." Ideas are brainstormed in `IDEAS-v5.md`; Austin picks.
