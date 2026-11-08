@@ -27,6 +27,12 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 12 | River and the Speculum |
 | 13 | v2 stage C: ruins, flora, river life, sky, inhabitants, more life |
 | 14 | v3 stage 1: the loading bar, the profiler and the bench |
+| 15 | v3 stage 2: the cheap wins (bloom at half size, pixel ratio by tier, the rejected hard PCF, instanced trees on Firefox) |
+| 16 | The flickering spars: seed heads and florets that floated off their stems, and the fix |
+| 17 | v3 stage 3: the medium tier (before = high, after = medium) and the lean canvas |
+| 18 | The v4 master placement plan: every site for v4, v5 and v6 on the map, and the regions alone |
+| 19 | v3 stage 3: vegetation and materials (terrain bands, far grass and reed LOD, the water band, the chunk scan, grass by tier) |
+| 20 | v2.2: the phone controls, a hop button and a mute button (renumbered from 15 when v3 merged) |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -193,6 +199,58 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `14-loading-card-ready.png` | The same card once the world is built: bar gone, Go out lit, the keep behind the glass. |
 | `14-perf-overlay-spawn.png` | The profiler overlay (`?perf=1`) at spawn: frame time, CPU by module, calls, tris, lights, render size; the debug panel open beside it. |
 | `14-perf-bench-summary.png` | The bench's summary card after a short headless run, with GPU time per pass in the overlay above it. |
-| `15-touch-phone-controls.png` | A phone (390×844) after Go out: the thumbstick ring at bottom right, the hop ring left of and below it, the mute glyph faint at top right. |
-| `15-touch-phone-muted-hop-held.png` | The same view with sound muted (the glyph struck through) and the hop ring held. |
+| `15-perf-all-spawn-after.png` | After: the same view with every stage 2 default on; indistinguishable, which was the point. |
+| `15-perf-all-spawn-before.png` | Before stage 2: the spawn view on the untouched tree, the baseline for every cheap win at once. |
+| `15-perf-batch-wood-after.png` | The wood with the instanced-tree fallback (Firefox) in place of the BatchedMesh: the same picture. |
+| `15-perf-bloom-lattice-after.png` | Bloom at half size: the filaments lose a little crispness, the one place the saving shows; kept for Austin's call. |
+| `15-perf-bloom-lattice-before.png` | Bloom at full size on the Lattice: the filaments' tight glow, crisp. |
+| `15-perf-bloom-sun-after.png` | Bloom at half size: the sun's rim a touch wider and about 3 levels brighter; the change Austin was asked to judge. |
+| `15-perf-bloom-sun-before.png` | Bloom at full size on the sun: the bright rim, the reference for the half-size pair. |
+| `15-perf-bloom-wrongcolour-after.png` | Bloom at half size: the close glow is a touch softer; the other view the decision turned on. |
+| `15-perf-bloom-wrongcolour-before.png` | Bloom at full size on the Wrong Colour: violet light spilling on the reeds and the canyon wall. |
+| `15-perf-dpr-spawn-after.png` | Pixel ratio 1.25 (1600x900): slightly softer foliage edges and keep silhouette, the HUD unaffected. |
+| `15-perf-dpr-spawn-before.png` | Pixel ratio 1.5 at q=high on a 2x display (1920x1080). |
+| `15-perf-pcf-wood-after.png` | Hard PCF: the dapples band and reshape; the saving was only arithmetic, so the change was rejected. |
+| `15-perf-pcf-wood-before.png` | Soft PCF shadows on the wood floor: smooth dappled light, the default that stayed. |
+| `15-perf-shadows-wood-after.png` | Shadow cadence and the 40 m cut: the same dappled floor, so the saving costs nothing visible. |
+| `15-perf-shadows-wood-before.png` | Every-frame shadows with far creatures casting, in the Deodand Wood. |
+| `16-flicker-austin-report.webp` | Austin's own capture of the wood's spars flickering, the report that started the hunt. |
+| `16-flicker-byre-dark-fail.png` | A candidate camera by the Byre that saw nothing but night; a dead end in the search for a reproducible view. Failure. |
+| `16-flicker-fen-east-after.png` | After: the same edge, heads fixed to their stems. |
+| `16-flicker-fen-east-before.png` | Before: the fen's east edge with reed heads floating off their stems. |
+| `16-flicker-fen-east-from-ne.png` | The fen's east edge from the north-east, the best of the angles tried: reed heads against the sun glow. |
+| `16-flicker-florets-after.png` | After: florets riding their stems. |
+| `16-flicker-florets-before.png` | Before: flower florets drifting off the stems. |
+| `16-flicker-grass-heads-after.png` | After: the same grass heads riding their stems. |
+| `16-flicker-grass-heads-before.png` | Grass seed heads before the fix: the heads sit apart from their stems. |
+| `16-flicker-reed-heads-closeup-before-after.png` | Reed heads close up, before (left) and after (right) the fix. |
+| `16-flicker-walk-frozen-wind.png` | A diagnostic frame from the walk sequence with the wind frozen, to separate the sway from where the heads sat. |
+| `16-flicker-walk-mask.png` | The diagnostic: floating heads painted red (left) against the fixed build (right), side by side while walking. |
+| `16-flicker-wood-first-before.png` | The first render of the flicker hunt: the stump among the reeds, seed heads and florets visible before the fix. |
+| `17-tier-lattice-after.png` | The Lattice at q=medium: the largest difference of the ten views, still at the noise floor. |
+| `17-tier-lattice-before.png` | The Lattice at q=high. |
+| `17-tier-lean-sun-after.png` | With lean targets (256 down to 70 MB at medium): differences below the noise floor. |
+| `17-tier-lean-sun-before.png` | The sun at q=high with full-size render targets, before the lean canvas. |
+| `17-tier-spawn-after.png` | Spawn at q=medium: high at a glance (mean difference 5.73 against 5.80 grain alone). |
+| `17-tier-spawn-before.png` | Spawn at q=high, the reference for the medium tier. |
+| `17-tier-sun-after.png` | The sun at q=medium: high at a glance. |
+| `17-tier-sun-before.png` | The sun at q=high, reference for the medium tier. |
+| `17-tier-wood-after.png` | The wood at q=medium: the same dappled floor. |
+| `17-tier-wood-before.png` | The wood at q=high. |
+| `18-placement-v4-map-all-sites.png` | The v4 master placement plan: every site for v4, v5 and v6 on the terrain map. |
+| `18-placement-v4-map-regions.png` | The regions alone, without the sites, the frame the placement plan hangs on. |
+| `19-veg-bands-spawn-after.png` | The bump skipped past 60 m and the finest layer faded out: the same spawn, 24 fewer texture reads a fragment far away. |
+| `19-veg-bands-spawn-before.png` | Terrain bump and detail layers at every distance, the reference for the band change. |
+| `19-veg-bands-sun-after.png` | After: banded terrain under the sun; the far ground is unchanged to the eye. |
+| `19-veg-bands-sun-before.png` | The sun in the saddle with the terrain at full detail, before the bands. |
+| `19-veg-lod-fen-after.png` | Far grass and reeds drawn as single-triangle blades past 50-60 m: 190k fewer triangles, nothing visible. |
+| `19-veg-lod-fen-before.png` | The fen with full-blade grass and reeds out to the horizon. |
+| `19-veg-scan-fen-after.png` | After: repacking only when needed; the same fen, worst frame down from 8-11 ms to 2-3. |
+| `19-veg-scan-fen-before.png` | The fen before the chunk repack fix, the reference render. |
+| `19-veg-tier-low-spawn-after.png` | At q=low the grass fades from 65-100 m; saves little there but is built for medium. |
+| `19-veg-tier-low-spawn-before.png` | Spawn at q=low with the high-tier grass distance. |
+| `19-veg-water-tarn-after.png` | The water band: far octaves and twinkle faded past 100-120 m; the black far water reads the same. |
+| `19-veg-water-tarn-before.png` | The tarn with the full water shader at distance. |
+| `20-touch-phone-controls.png` | A phone (390×844) after Go out: the thumbstick ring at bottom right, the hop ring left of and below it, the mute glyph faint at top right. |
+| `20-touch-phone-muted-hop-held.png` | The same view with sound muted (the glyph struck through) and the hop ring held. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |

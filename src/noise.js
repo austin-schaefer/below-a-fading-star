@@ -87,6 +87,8 @@ export function makeSimplex(seed = 1) {
   return { noise2, fbm2, ridged2, warped2 };
 }
 
+// sqrt(x² + y²): V8's Math.hypot allocates a backing array per call and is ~20x slower; use this in per-frame code
+export const hyp = (x, y) => Math.sqrt(x * x + y * y);
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };

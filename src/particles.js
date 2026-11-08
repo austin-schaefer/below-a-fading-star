@@ -8,12 +8,13 @@
 import * as THREE from 'three';
 import { fogPars, fogAtten, softDot } from './particles/shaderParts.js';
 import { makeMistTexture } from './particles/mistTexture.js';
+import { hyp } from './noise.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 export async function build(ctx) {
   const { scene, terrain, palette, camera } = ctx;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const q = high ? 1 : 0.5;
   const C = (h) => new THREE.Color(h);
   const L = ctx.landmarks;
@@ -221,9 +222,9 @@ export async function build(ctx) {
         const tz = w.hz + ctx.noise.noise2(t * w.speed + w.s2, w.s1 + 17.0) * w.wander * 1.6;
         let gx = tx, gz = tz;
         // retreat: never nearer than 6m, eased out to 10m
-        let dx = gx - px, dz = gz - pz, d = Math.hypot(dx, dz);
+        let dx = gx - px, dz = gz - pz, d = hyp(dx, dz);
         if (d < 10) {
-          if (d < 1e-3) { dx = w.x - px; dz = w.z - pz; d = Math.hypot(dx, dz) || 1; }
+          if (d < 1e-3) { dx = w.x - px; dz = w.z - pz; d = hyp(dx, dz) || 1; }
           const nd = 6 + 0.4 * d, k = nd / d;
           gx = px + dx * k; gz = pz + dz * k;
         }
@@ -231,7 +232,7 @@ export async function build(ctx) {
         const e = 1 - Math.exp(-dt * (d < 10 ? 5.0 : 1.5));
         w.x += (gx - w.x) * e; w.z += (gz - w.z) * e;
         // hard floor on distance after easing
-        dx = w.x - px; dz = w.z - pz; d = Math.hypot(dx, dz);
+        dx = w.x - px; dz = w.z - pz; d = hyp(dx, dz);
         if (d < 6) { const k = 6 / Math.max(d, 1e-3); w.x = px + dx * k; w.z = pz + dz * k; d = 6; }
         w.dist = d;
         const ground = Math.max(terrain.heightAt(w.x, w.z), wy);
@@ -271,7 +272,7 @@ export async function build(ctx) {
         } else li.intensity = 0;
       }
     };
-    ctx.registerUpdate(step);
+    ctx.registerUpdate(step, { pos: L.fen, r: L.fen.r, near: 120, hz: 5 }); // v3: the candles drift at 5 Hz from far off
     ctx.wisps = wisps;
   }
 
@@ -504,9 +505,9 @@ export async function build(ctx) {
       windD += dt * (1.2 + gust * 10);
       const px = camera.position.x, pz = camera.position.z;
       const open = 1 - Math.max(
-        1 - smooth(wood.r - 30, wood.r + 10, Math.hypot(px - wood.x, pz - wood.z)),
-        1 - smooth(fen.r - 20, fen.r + 20, Math.hypot(px - fen.x, pz - fen.z)),
-        1 - smooth(tarn.r - 20, tarn.r + 20, Math.hypot(px - tarn.x, pz - tarn.z)));
+        1 - smooth(wood.r - 30, wood.r + 10, hyp(px - wood.x, pz - wood.z)),
+        1 - smooth(fen.r - 20, fen.r + 20, hyp(px - fen.x, pz - fen.z)),
+        1 - smooth(tarn.r - 20, tarn.r + 20, hyp(px - tarn.x, pz - tarn.z)));
       mat.uniforms.uWindD.value = windD;
       mat.uniforms.uGust.value = gust * open;
     });

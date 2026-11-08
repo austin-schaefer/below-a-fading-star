@@ -4,6 +4,7 @@
 // near the seed. One BatchedMesh for all crystal shapes, one mesh for every filament.
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep, fogBatchFix } from './util.js';
+import { makeBatch } from './batch.js';
 
 const SQ3 = Math.sqrt(3);
 
@@ -165,7 +166,7 @@ export function buildLattice(ctx, ground, shared) {
 
   let vtx = 0;
   for (const k in geos) vtx += geos[k].attributes.position.count;
-  const batch = new THREE.BatchedMesh(shards.length, vtx, 0, mat);
+  const batch = makeBatch(ctx, shards.length, vtx, 0, mat); // instanced stand-in without multi-draw (batch.js)
   const gid = {}; for (const k in geos) gid[k] = batch.addGeometry(geos[k]);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(), yq = new THREE.Quaternion(), col = new THREE.Color();
   const cDeep = new THREE.Color('#1c4a6a'), cPale = new THREE.Color('#5aa8d0'), cIce = new THREE.Color('#9ab8cc');
@@ -185,6 +186,7 @@ export function buildLattice(ctx, ground, shared) {
   }
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-lattice';
+  batch.build?.();
   ctx.scene.add(batch);
 
   // ---------- Biomesh filaments ----------

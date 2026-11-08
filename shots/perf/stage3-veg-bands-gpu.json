@@ -1,0 +1,93 @@
+{
+ "extra": "",
+ "before": "const u=__fp.terrain.mesh.material.userData.shader.uniforms; u.uBumpFar.value=1e9; u.uFineBand.value.set(1e9,2e9);",
+ "after": "const u=__fp.terrain.mesh.material.userData.shader.uniforms; u.uBumpFar.value=60; u.uFineBand.value.set(90,120);",
+ "method": "same page, alternating every 2.3 s, 6 samples each, median of the 2 s rolling GPU pass time (render minus shadow = main pass); calls and tris from renderer.info for the last frame",
+ "date": "2026-11-08T06:51:06.327Z",
+ "views": {
+  "spawn": {
+   "before": {
+    "mainMs": 9.68,
+    "renderMs": 11.105,
+    "calls": 112,
+    "tris": 1805366
+   },
+   "after": {
+    "mainMs": 9.67,
+    "renderMs": 11.21,
+    "calls": 113,
+    "tris": 1805464
+   }
+  },
+  "causeway": {
+   "before": {
+    "mainMs": 9.31,
+    "renderMs": 10.525,
+    "calls": 136,
+    "tris": 2020399
+   },
+   "after": {
+    "mainMs": 9.365,
+    "renderMs": 10.61,
+    "calls": 112,
+    "tris": 1708628
+   }
+  },
+  "tarn": {
+   "before": {
+    "mainMs": 7.83,
+    "renderMs": 9.565,
+    "calls": 100,
+    "tris": 1619651
+   },
+   "after": {
+    "mainMs": 7.93,
+    "renderMs": 9.77,
+    "calls": 119,
+    "tris": 1983609
+   }
+  },
+  "wood": {
+   "before": {
+    "mainMs": 8.16,
+    "renderMs": 9.27,
+    "calls": 87,
+    "tris": 1463824
+   },
+   "after": {
+    "mainMs": 7.995,
+    "renderMs": 9.21,
+    "calls": 87,
+    "tris": 1463824
+   }
+  },
+  "sun": {
+   "before": {
+    "mainMs": 8.855,
+    "renderMs": 9,
+    "calls": 101,
+    "tris": 1703175
+   },
+   "after": {
+    "mainMs": 8.555,
+    "renderMs": 8.7,
+    "calls": 101,
+    "tris": 1703187
+   }
+  },
+  "lattice": {
+   "before": {
+    "mainMs": 9.07,
+    "renderMs": 9.795,
+    "calls": 88,
+    "tris": 1219351
+   },
+   "after": {
+    "mainMs": 8.785,
+    "renderMs": 9.32,
+    "calls": 88,
+    "tris": 1219359
+   }
+  }
+ }
+}

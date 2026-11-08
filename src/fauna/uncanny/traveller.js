@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, angDiff } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const GOLD = '#8a6a30', GOLD_D = '#5e4622', ROBE = '#0f0c0e', VEIL = '#151113', VELVET = '#3a1416', CANOPY = '#17201d', WOOD = '#1c130d', GLOVE = '#070606';
 const TAU = Math.PI * 2;
@@ -339,11 +340,12 @@ export function buildTraveller(ctx, U) {
     let x = 0, z = 0; for (const c of caps) { x += c.x; z += c.z; }
     return { x: x / caps.length, z: z / caps.length };
   }
+  const ROPE_NEAR = 60;
   function update(dt, t) {
-    const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = Math.hypot(dx, dz);
+    const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = hyp(dx, dz);
     if (!flags && (flagsT -= dt) <= 0) { flagsT = 2; flags = flagsCentre(); }
     if (flags) {
-      const fd = Math.hypot(trav.position.x - flags.x, trav.position.z - flags.z);
+      const fd = hyp(trav.position.x - flags.x, trav.position.z - flags.z);
       if (fd > 14) pausedHere = false;
       else if (!pausedHere && fd < 1.6) { pausedHere = true; pauseT = 3.2; }
     }
@@ -381,7 +383,10 @@ export function buildTraveller(ctx, U) {
     lanternPivot.rotation.set(Math.sin(t * 1.9) * 0.16 * (0.4 + S.speed) + Math.sin(t * 0.7) * 0.05, 0, Math.sin(t * 1.33 + 1) * 0.08);
     const fl = 0.92 + 0.08 * Math.sin(t * 13.1) * Math.sin(t * 7.7);
     light.intensity = 2.6 * fl; matL.userData.uEmit.value = fl;
-    // rope: from the back of his cushion to the tip of the wagon's shaft, sagging as the gap closes
+    // rope: from the back of his cushion to the tip of the wagon's shaft, sagging as the gap closes. A 3 cm
+    // rope is under a pixel past 60 m: there it is hidden and not rebuilt (v3 stage 2; ?throttle=0 keeps it)
+    rope.visible = dist < ROPE_NEAR || ctx.throttle === false;
+    if (!rope.visible) return;
     trav.updateMatrixWorld(); wagon.updateMatrixWorld();
     A.set(0, 0.13, -0.6).applyMatrix4(trav.matrixWorld); // (scaled with him)
     Bv.set(0, 0.34, 2.6).applyMatrix4(wagon.matrixWorld);
@@ -390,7 +395,7 @@ export function buildTraveller(ctx, U) {
       const u = k / RS;
       Pm.lerpVectors(A, Bv, u); Pm.y -= sag * 4 * u * (1 - u);
       // tangent-free ring: the rope is thin, a ring in the plane perpendicular to the span is close enough
-      const tx = Bv.x - A.x, tz = Bv.z - A.z, tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl;
+      const tx = Bv.x - A.x, tz = Bv.z - A.z, tl = hyp(tx, tz) || 1, nx = -tz / tl, nz = tx / tl;
       for (let s2 = 0; s2 < RD; s2++) {
         const an = (s2 / RD) * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), o = (k * RD + s2) * 3;
         rnor[o] = nx * c; rnor[o + 1] = sn; rnor[o + 2] = nz * c;
@@ -400,7 +405,7 @@ export function buildTraveller(ctx, U) {
     ropeGeo.attributes.position.needsUpdate = true; ropeGeo.attributes.normal.needsUpdate = true;
   }
   place(0, 0);
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => trav.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.traveller = Object.assign(pub, {
     state: S, route, length: L,

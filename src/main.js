@@ -11,6 +11,10 @@ import { makeSimplex, mulberry32 } from './noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
+import { makeLightSlots } from './lights.js';
+import { makeShadowCadence } from './shadows.js';
+import { chooseTier, makeTier } from './tier.js';
+import { installGpuMem } from './gpumem.js';
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -30,7 +34,9 @@ const MODULES = [
 
 async function start() {
   const url = new URL(location.href);
-  const quality = url.searchParams.get('q') || (navigator.hardwareConcurrency <= 4 || /Mobi|Android/i.test(navigator.userAgent) ? 'low' : 'high');
+  // Quality tier (tier.js, v3 stage 3): 'high' | 'medium' | 'low', from ?q= / ?tier=, the debug panel's pin, or the device
+  const tierChoice = await chooseTier(url);
+  const quality = tierChoice.name;
   const only = url.searchParams.get('only'); // comma list of modules to load (for testing)
   const skip = (url.searchParams.get('skip') || '').split(',').filter(Boolean);
 
@@ -48,11 +54,27 @@ async function start() {
   await progress('shaping the moor', 0);
 
   const canvas = document.getElementById('scene');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: quality === 'high', powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, quality === 'high' ? 1.5 : 1));
+  // Target hygiene (v3 stage 3): the canvas only ever receives the composer's last full-screen pass (the scene is
+  // drawn into the composer's targets, which have no MSAA), so it needs neither antialiasing nor a depth buffer;
+  // high's antialias only bought a multisampled back buffer that changed no pixel. ?lean=0: as before.
+  const lean = url.searchParams.get('lean') !== '0';
+  const canvasAA = !lean && quality === 'high';
+  // ?multidraw=0 hides WEBGL_multi_draw, as Firefox does: a BatchedMesh then draws once per instance
+  let context;
+  if (url.searchParams.get('multidraw') === '0') {
+    context = canvas.getContext('webgl2', { alpha: false, depth: !lean, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: canvasAA, powerPreference: 'high-performance' });
+    const get = context.getExtension.bind(context);
+    context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
+  }
+  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: canvasAA, depth: !lean, powerPreference: 'high-performance' });
+  // texture and target bytes for the profiler: the GL hooks only when it is on from the start (perf.js installs them late otherwise)
+  const gpumem = url.searchParams.get('perf') === '1' || url.searchParams.get('bench') != null ? installGpuMem(renderer.getContext(), canvas) : null;
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands
+  // the dappled light in the wood (shots/wip/perf-02-pcf-wood-*), for a saving of a few multiplies a tap.
+  const pcf = url.searchParams.get('pcf') || 'soft';
+  renderer.shadowMap.type = pcf === 'hard' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -69,12 +91,17 @@ async function start() {
     noise: makeSimplex(WORLD.seed + 1),
     rng: mulberry32(WORLD.seed + 2),
     time: { t: 0, dt: 0 },
-    registerUpdate: (fn) => updates.push(fn),
+    // meta (optional, v3 stage 2): { pos | at(): {x,z}, near: m, hz: rate beyond near (0 holds still), r: m }
+    registerUpdate: (fn, meta) => updates.push({ fn, meta: meta || null, acc: 0, held: false }),
     log: (...a) => console.log('[fp]', ...a),
     progress,
+    throttle: url.searchParams.get('throttle') !== '0', // distance throttling (v3 stage 2); modules read it for their own gates
   };
   // Global helper for stable per-module RNG streams
   ctx.makeRng = (salt) => mulberry32(WORLD.seed ^ (salt * 2654435761 >>> 0));
+  ctx.gpumem = gpumem;
+  // Pixel ratio by tier, and its adaptive step (tier.js; was high 1.5, low 1 before v3): the HUD is DOM and stays crisp
+  ctx.tier = makeTier(ctx, url, tierChoice);
   // Profiler, bench and toggles (perf.js): wraps registerUpdate so each callback is timed per module
   ctx.perf = createPerf(ctx);
 
@@ -86,7 +113,7 @@ async function start() {
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
   const sunLight = new THREE.DirectionalLight(new THREE.Color('#ffb084'), 2.7);
   sunLight.castShadow = true;
-  const sm = quality === 'high' ? 4096 : 2048;
+  let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
   sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 420;
   const sb = 95;
@@ -124,6 +151,10 @@ async function start() {
 
   // Post
   ctx.post = buildPost(ctx);
+  // Point lights: a fixed number of slots copy the nearest sources (lights.js). ?lights=off: every light live.
+  const lightsParam = url.searchParams.get('lights');
+  ctx.tier.attach(); // the debug panel's quality rows, above perf's measure rows
+  ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
 
   // Resize
@@ -145,9 +176,78 @@ async function start() {
   // A fixed light-space frame for texel snapping: the sun never moves.
   const lightView = new THREE.Matrix4().lookAt(sunDir, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
   const lightViewInv = lightView.clone().invert();
-  const shadowTexel = (2 * sb) / sm;
+  let shadowTexel = (2 * sb) / sm;
+  // Shadow cadence (shadows.js): the map is redrawn when the shadow camera has moved, on a slow clock, or
+  // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
+  ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
+  // a tier change at runtime resizes the shadow map (three re-creates it at the new size on the next draw)
+  ctx.setShadowMapSize = (n) => {
+    if (n === sm) return;
+    sm = n; shadowTexel = (2 * sb) / sm;
+    sunLight.shadow.mapSize.set(sm, sm); sunLight.shadow.map?.dispose(); sunLight.shadow.map = null;
+    ctx.shadowCadence.setTexel(shadowTexel); renderer.shadowMap.needsUpdate = true;
+  };
+
+  // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
+  // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
+  // skipped as its dt so motion covers the same ground. On resuming after holding still it gets one
+  // ordinary frame's dt. ?throttle=0 runs everything every frame.
+  const throttle = ctx.throttle;
+  const P = () => ctx.player.pos;
+  function runUpdates(dt, t) {
+    const p = P();
+    for (const u of updates) {
+      const m = u.meta;
+      if (!m || !throttle) { u.fn(dt, t); continue; }
+      u.acc += dt;
+      const q = m.at ? m.at() : m.pos;
+      const ex = q.x - p.x, ez = q.z - p.z, d = Math.sqrt(ex * ex + ez * ez) - (m.r || 0); // Math.hypot allocates
+      if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
+      else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
+      else u.held = true;
+    }
+  }
+
+  // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
+  // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
+  // been unfocused for 3 s; nothing while the tab is hidden. Time and the updates run once per rendered
+  // frame with the real (clamped) dt, so the world and the audio mix keep going at the slower rate.
+  // ?idle=0 keeps the full rate under the cards and when unfocused.
+  const capParam = url.searchParams.get('cap');
+  let cap = capParam != null && isFinite(+capParam) ? Math.max(0, +capParam) : 60;
+  if (capParam == null && quality === 'low' && typeof navigator.getBattery === 'function') {
+    navigator.getBattery().then((b) => { const f = () => { cap = b.charging ? 60 : 30; }; f(); b.addEventListener('chargingchange', f); }).catch(() => {});
+  }
+  const idle = url.searchParams.get('idle') !== '0';
+  const IDLE_FPS = 10, UNFOCUSED_MS = 3000;
+  const cardEl = document.getElementById('card');
+  let blurredAt = document.hasFocus() ? null : performance.now();
+  addEventListener('blur', () => { blurredAt = performance.now(); });
+  addEventListener('focus', () => { blurredAt = null; });
+  const pacing = { get cap() { return cap; }, fps: 0, idle: false };
+  function targetFps(now) {
+    const benching = ctx.perf.bench && !ctx.perf.bench.done;
+    pacing.idle = idle && !benching && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
+    return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
+  }
+  ctx.pacing = pacing;
+  const render = url.searchParams.get('render') !== '0';
+  let due = 0;
+  document.addEventListener('visibilitychange', () => { due = 0; });
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (document.hidden) return;
+    const fps = pacing.fps = targetFps(now);
+    if (fps > 0) {
+      const iv = 1000 / fps;
+      if (now < due - 1) return; // 1 ms early is on time: rAF stamps jitter around the vsync
+      due = now - due > iv ? now + iv : due + iv; // keep the cadence; after a stall start afresh
+    }
+    frame();
+  }
+
   function frame() {
-    requestAnimationFrame(frame);
+    ctx.tier.frame(); // frame-time window for the adaptive pixel ratio
     const dt = Math.min(clock.getDelta(), 0.1);
     t += dt;
     ctx.time.t = t; ctx.time.dt = dt;
@@ -163,25 +263,30 @@ async function start() {
     shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
     shadowTarget.applyMatrix4(lightViewInv);
-    sunLight.target.position.copy(shadowTarget);
-    sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     const f = ctx.sky.flicker.value;
     sunLight.intensity = 2.7 * f;
     hemi.intensity = 1.4 * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
     ctx.perf.cpu('frame');
-    for (const u of updates) u(dt, t);
+    runUpdates(dt, t);
     ctx.perf.mark();
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
+    // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
+    if (ctx.shadowCadence.update(dt, shadowTarget)) {
+      sunLight.target.position.copy(shadowTarget);
+      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
+    }
+    ctx.lightSlots?.update();
     ctx.perf.cpu('frame');
     renderer.info.reset();
-    ctx.post.composer.render();
+    if (render) ctx.post.composer.render();
+    else scene.updateMatrixWorld(); // ?render=0: the updates alone, for measuring their CPU headlessly
     ctx.perf.frameEnd();
     frames++; fpsT += dt;
     if (fpsT >= 1) { ctx.hud.setFps(frames / fpsT); frames = 0; fpsT = 0; }
   }
-  frame();
+  requestAnimationFrame(loop);
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
 }

@@ -2,6 +2,7 @@
 // can see it; when unseen it comes a few metres closer along the tree line. Within 9 m it is simply gone.
 import * as THREE from 'three';
 import { Mesher, clamp } from './geo.js';
+import { hyp } from '../noise.js';
 
 function figureGeometry() {
   const M = new Mesher();
@@ -48,11 +49,12 @@ export function buildDeodand(ctx) {
 
   const state = ctx.deodand = { position: g.position, visible: true, inView: false, distance: 99 };
 
-  // wood-edge helpers
+  // wood-edge helpers (terrain.slopeAt's sums with a scratch normal: slopeAt allocates per call)
+  const nTmp = new THREE.Vector3();
   const ok = (x, z) => {
     const wl = terrain.waterLevelAt(x, z);
     if (wl !== null && terrain.heightAt(x, z) < wl + 0.5) return false;
-    return terrain.slopeAt(x, z) < 0.85;
+    return Math.acos(clamp(terrain.normalAt(x, z, nTmp).y, -1, 1)) < 0.85;
   };
   // start: the tree line at r~88, a little way round from the byre so it is not inside the building
   const a0 = Math.atan2(byre.z - wood.z, byre.x - wood.x) - 0.3;
@@ -88,7 +90,7 @@ export function buildDeodand(ctx) {
   function update(dt, t) {
     camera.getWorldDirection(fwd);
     const dx = cam.x - g.position.x, dz = cam.z - g.position.z;
-    const dist = Math.hypot(dx, dz);
+    const dist = hyp(dx, dz);
     state.distance = dist;
     const f = sky.flicker.value;
     // eyes: pale glints, flaring when the sun gutters
@@ -115,7 +117,7 @@ export function buildDeodand(ctx) {
       const step = 3 + rng() * 3.5, target = Math.max(18, dist - step);
       const c = placeCandidates(16, 0.22, (d) => Math.abs(d - target) + (d < 18 ? 50 : 0));
       if (c && Math.abs(c.score) < 40) {
-        const nd = Math.hypot(c.x - cam.x, c.z - cam.z);
+        const nd = hyp(c.x - cam.x, c.z - cam.z);
         // only ever come closer, never retreat out of the tree-line band
         if (nd < dist - 0.5 || dist > 90) {
           ang = c.a; rad = c.r;
@@ -125,5 +127,5 @@ export function buildDeodand(ctx) {
       }
     }
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => g.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }

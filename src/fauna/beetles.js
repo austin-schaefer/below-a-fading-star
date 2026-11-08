@@ -5,6 +5,7 @@
 // ctx.hypogeum.door (ruins2, which may build after fauna: looked for each second until it appears). No audio.
 import * as THREE from 'three';
 import { Mesher, clamp, smoothstep } from './geo.js';
+import { hyp } from '../noise.js';
 
 function beetleGeometry() {
   const M = new Mesher();
@@ -90,7 +91,7 @@ export function buildBeetles(ctx) {
       lookT = 1;
       if (ctx.hypogeum?.door) setup(ctx.hypogeum.door); else return;
     }
-    const dd = Math.hypot(cam.x - F.fx, cam.z - F.zc);
+    const dd = hyp(cam.x - F.fx, cam.z - F.zc);
     if (dd > 80) { mesh.visible = false; return; }
     mesh.visible = true;
     frozen = Math.hypot(cam.x - F.fx, cam.y - (F.y0 + 1.2), cam.z - F.zc) < 2.0 || (dd < 2.0);
@@ -112,7 +113,7 @@ export function buildBeetles(ctx) {
           else {
             // random walk, drawn toward the nearer ring when out in the open, dawdling when close to one
             const r = Math.abs(b.s - F.rings[0][0]) < Math.abs(b.s - F.rings[1][0]) ? F.rings[0] : F.rings[1];
-            const rx = r[0] - b.s, ry = r[1] - b.h, rd = Math.hypot(rx, ry);
+            const rx = r[0] - b.s, ry = r[1] - b.h, rd = hyp(rx, ry);
             b.head += (rng() - 0.5) * 2.4 * dt * 3;
             if (rd > 0.22) { const want = Math.atan2(rx, ry); let d = want - b.head; d = Math.atan2(Math.sin(d), Math.cos(d)); b.head += d * dt * 0.9; }
             const v = b.speed * (rd < 0.22 ? 0.35 : 1);

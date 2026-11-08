@@ -1,0 +1,933 @@
+[
+{
+"key": "region-bletting",
+"x": 130,
+"z": -90,
+"r": 100,
+"label": "Bletting [v4]"
+},
+{
+"key": "region-saltings",
+"x": 168,
+"z": 130,
+"r": 20,
+"label": "Saltings [v4]"
+},
+{
+"key": "saltings-0",
+"x": 168,
+"z": 130,
+"r": 20,
+"label": "Saltings spine 0 [v4]"
+},
+{
+"key": "saltings-1",
+"x": 192,
+"z": 158,
+"r": 25,
+"label": "Saltings spine 1 [v4]"
+},
+{
+"key": "saltings-2",
+"x": 178,
+"z": 192,
+"r": 18,
+"label": "Saltings spine 2 [v4]"
+},
+{
+"key": "saltings-3",
+"x": 140,
+"z": 200,
+"r": 12,
+"label": "Saltings spine 3 [v4]"
+},
+{
+"key": "saltings-4",
+"x": 118,
+"z": 222,
+"r": 12,
+"label": "Saltings spine 4 [v4]"
+},
+{
+"key": "saltings-5",
+"x": 85,
+"z": 246,
+"r": 10,
+"label": "Saltings spine 5 [v4]"
+},
+{
+"key": "saltings-6",
+"x": 45,
+"z": 246,
+"r": 10,
+"label": "Saltings spine 6 [v4]"
+},
+{
+"key": "saltings-7",
+"x": 12,
+"z": 228,
+"r": 12,
+"label": "Saltings spine 7 [v4]"
+},
+{
+"key": "saltings-8",
+"x": -18,
+"z": 200,
+"r": 12,
+"label": "Saltings spine 8 [v4]"
+},
+{
+"key": "saltings-9",
+"x": -30,
+"z": 180,
+"r": 10,
+"label": "Saltings spine 9 [v4]"
+},
+{
+"key": "region-outwash",
+"x": 25,
+"z": -195,
+"r": 85,
+"label": "Outwash [v4]"
+},
+{
+"key": "region-high-ling",
+"x": 262,
+"z": -45,
+"r": 45,
+"label": "High Ling [v4]"
+},
+{
+"key": "high-ling-0",
+"x": 228,
+"z": 10,
+"r": 3,
+"label": "High Ling vertex 0 [v4]"
+},
+{
+"key": "high-ling-1",
+"x": 236,
+"z": -105,
+"r": 3,
+"label": "High Ling vertex 1 [v4]"
+},
+{
+"key": "high-ling-2",
+"x": 276,
+"z": -105,
+"r": 3,
+"label": "High Ling vertex 2 [v4]"
+},
+{
+"key": "high-ling-3",
+"x": 293,
+"z": -40,
+"r": 3,
+"label": "High Ling vertex 3 [v4]"
+},
+{
+"key": "high-ling-4",
+"x": 293,
+"z": 10,
+"r": 3,
+"label": "High Ling vertex 4 [v4]"
+},
+{
+"key": "region-demesne",
+"x": 40,
+"z": 30,
+"r": 85,
+"label": "Demesne [v4]"
+},
+{
+"key": "region-lynchets",
+"x": -197,
+"z": -108,
+"r": 40,
+"label": "Lynchets [v4]"
+},
+{
+"key": "lynchets-0",
+"x": -228,
+"z": -115,
+"r": 3,
+"label": "Lynchets vertex 0 [v4]"
+},
+{
+"key": "lynchets-1",
+"x": -200,
+"z": -150,
+"r": 3,
+"label": "Lynchets vertex 1 [v4]"
+},
+{
+"key": "lynchets-2",
+"x": -160,
+"z": -115,
+"r": 3,
+"label": "Lynchets vertex 2 [v4]"
+},
+{
+"key": "lynchets-3",
+"x": -182,
+"z": -78,
+"r": 3,
+"label": "Lynchets vertex 3 [v4]"
+},
+{
+"key": "lynchets-4",
+"x": -215,
+"z": -85,
+"r": 3,
+"label": "Lynchets vertex 4 [v4]"
+},
+{
+"key": "region-strandline",
+"x": -79,
+"z": 166,
+"r": 49,
+"label": "Strandline [v4]"
+},
+{
+"key": "strandline-bay",
+"x": -95,
+"z": 185,
+"r": 15,
+"label": "Tarn south bay [v4]"
+},
+{
+"key": "strandline-spit-0",
+"x": -42,
+"z": 152,
+"r": 3,
+"label": "Shingle spit root [v4]"
+},
+{
+"key": "strandline-spit-1",
+"x": -68,
+"z": 142,
+"r": 3,
+"label": "Shingle spit tip [v4]"
+},
+{
+"key": "tarn-new",
+"x": -90,
+"z": 110,
+"r": 92,
+"label": "Tarn grown [v4]"
+},
+{
+"key": "region-adust",
+"x": -273,
+"z": -15,
+"r": 55,
+"label": "Adust [v4]"
+},
+{
+"key": "adust-0",
+"x": -255,
+"z": -70,
+"r": 3,
+"label": "Adust vertex 0 [v4]"
+},
+{
+"key": "adust-1",
+"x": -290,
+"z": -72,
+"r": 3,
+"label": "Adust vertex 1 [v4]"
+},
+{
+"key": "adust-2",
+"x": -297,
+"z": 40,
+"r": 3,
+"label": "Adust vertex 2 [v4]"
+},
+{
+"key": "adust-3",
+"x": -252,
+"z": 40,
+"r": 3,
+"label": "Adust vertex 3 [v4]"
+},
+{
+"key": "span-west-end",
+"x": -257,
+"z": 215,
+"r": 12,
+"label": "Great Span west abutment and gate [v4]"
+},
+{
+"key": "span-east-end",
+"x": 257,
+"z": 215,
+"r": 12,
+"label": "Great Span east abutment and gate [v4]"
+},
+{
+"key": "span-centre",
+"x": 0,
+"z": 215,
+"r": 270,
+"label": "Great Span (bridge key) [v4]"
+},
+{
+"key": "span-west-stair-foot",
+"x": -205,
+"z": 200,
+"r": 8,
+"label": "West stair foot [v4]"
+},
+{
+"key": "span-west-landing",
+"x": -245,
+"z": 212,
+"r": 6,
+"label": "West stair landing [v4]"
+},
+{
+"key": "span-east-stair-foot",
+"x": 225,
+"z": 165,
+"r": 8,
+"label": "East stair foot [v4]"
+},
+{
+"key": "span-east-landing",
+"x": 245,
+"z": 212,
+"r": 6,
+"label": "East stair landing [v4]"
+},
+{
+"key": "postern",
+"x": -254,
+"z": 212,
+"r": 4,
+"label": "Postern [v4]"
+},
+{
+"key": "span-gap",
+"x": -45,
+"z": 215,
+"r": 3,
+"label": "Jumpable gap [v4]"
+},
+{
+"key": "causeway-0",
+"x": -344,
+"z": 126,
+"r": 3,
+"label": "Causeway 0 [v4]"
+},
+{
+"key": "causeway-1",
+"x": -302,
+"z": 106,
+"r": 3,
+"label": "Causeway 1 [v4]"
+},
+{
+"key": "causeway-2",
+"x": -286,
+"z": 60,
+"r": 3,
+"label": "Causeway 2 [v4]"
+},
+{
+"key": "causeway-3",
+"x": -272,
+"z": 0,
+"r": 3,
+"label": "Causeway 3 [v4]"
+},
+{
+"key": "causeway-4",
+"x": -262,
+"z": -60,
+"r": 3,
+"label": "Causeway 4 [v4]"
+},
+{
+"key": "causeway-5",
+"x": -254,
+"z": -108,
+"r": 3,
+"label": "Causeway 5 [v4]"
+},
+{
+"key": "causeway-6",
+"x": -222,
+"z": -110,
+"r": 3,
+"label": "Causeway 6 [v4]"
+},
+{
+"key": "causeway-7",
+"x": -185,
+"z": -72,
+"r": 3,
+"label": "Causeway 7 [v4]"
+},
+{
+"key": "causeway-8",
+"x": -140,
+"z": -30,
+"r": 3,
+"label": "Causeway 8 [v4]"
+},
+{
+"key": "causeway-9",
+"x": -90,
+"z": 2,
+"r": 3,
+"label": "Causeway 9 [v4]"
+},
+{
+"key": "causeway-10",
+"x": -40,
+"z": 22,
+"r": 3,
+"label": "Causeway 10 [v4]"
+},
+{
+"key": "causeway-11",
+"x": 8,
+"z": 30,
+"r": 3,
+"label": "Causeway 11 [v4]"
+},
+{
+"key": "causeway-12",
+"x": 0,
+"z": 5,
+"r": 3,
+"label": "Causeway 12 [v4]"
+},
+{
+"key": "causeway-13",
+"x": 12,
+"z": -18,
+"r": 3,
+"label": "Causeway 13 [v4]"
+},
+{
+"key": "causeway-14",
+"x": 45,
+"z": -22,
+"r": 3,
+"label": "Causeway 14 [v4]"
+},
+{
+"key": "causeway-15",
+"x": 80,
+"z": -8,
+"r": 3,
+"label": "Causeway 15 [v4]"
+},
+{
+"key": "causeway-16",
+"x": 98,
+"z": 25,
+"r": 3,
+"label": "Causeway 16 [v4]"
+},
+{
+"key": "causeway-17",
+"x": 122,
+"z": 55,
+"r": 3,
+"label": "Causeway 17 [v4]"
+},
+{
+"key": "causeway-18",
+"x": 148,
+"z": 95,
+"r": 3,
+"label": "Causeway 18 [v4]"
+},
+{
+"key": "causeway-19",
+"x": 172,
+"z": 135,
+"r": 3,
+"label": "Causeway 19 [v4]"
+},
+{
+"key": "causeway-20",
+"x": 192,
+"z": 168,
+"r": 3,
+"label": "Causeway 20 [v4]"
+},
+{
+"key": "causeway-21",
+"x": 200,
+"z": 185,
+"r": 14,
+"label": "Causeway 21 [v4]"
+},
+{
+"key": "pit",
+"x": 200,
+"z": 185,
+"r": 14,
+"label": "Pit [v4]"
+},
+{
+"key": "fall-lip",
+"x": 214,
+"z": 266,
+"r": 20,
+"label": "Taller Tumbling Water lip [v4]"
+},
+{
+"key": "fall-pool",
+"x": 208,
+"z": 258,
+"r": 6.8,
+"label": "Speculum pool [v4]"
+},
+{
+"key": "long-figure",
+"x": 292,
+"z": 70,
+"r": 45,
+"label": "Long Figure [v4]"
+},
+{
+"key": "track-0",
+"x": 170,
+"z": 150,
+"r": 2,
+"label": "Discontinued Track start [v4]"
+},
+{
+"key": "track-1",
+"x": 215,
+"z": 160,
+"r": 2,
+"label": "Discontinued Track end [v4]"
+},
+{
+"key": "pegs-north",
+"x": -80,
+"z": -285,
+"r": 1,
+"label": "Surveyor's Pegs north end [v4]"
+},
+{
+"key": "pegs-cap-200",
+"x": -80,
+"z": -200,
+"r": 1,
+"label": "Surveyor's Pegs cap z -200 [v4]"
+},
+{
+"key": "pegs-cap-100",
+"x": -80,
+"z": -100,
+"r": 1,
+"label": "Surveyor's Pegs cap z -100 [v4]"
+},
+{
+"key": "pegs-cap0",
+"x": -80,
+"z": 0,
+"r": 1,
+"label": "Surveyor's Pegs cap z 0 [v4]"
+},
+{
+"key": "pegs-cap100",
+"x": -80,
+"z": 100,
+"r": 1,
+"label": "Surveyor's Pegs cap z 100 [v4]"
+},
+{
+"key": "pegs-cap200",
+"x": -80,
+"z": 200,
+"r": 1,
+"label": "Surveyor's Pegs cap z 200 [v4]"
+},
+{
+"key": "pegs-south",
+"x": -80,
+"z": 285,
+"r": 1,
+"label": "Surveyor's Pegs south end [v4]"
+},
+{
+"key": "galleries",
+"x": -390,
+"z": -80,
+"r": 70,
+"label": "Galleries of Durance [v5]"
+},
+{
+"key": "thrones-0",
+"x": -420,
+"z": 100,
+"r": 80,
+"label": "Acephalous Throne [v5]"
+},
+{
+"key": "thrones-1",
+"x": -400,
+"z": 200,
+"r": 80,
+"label": "Acephalous Throne [v5]"
+},
+{
+"key": "lamps",
+"x": -300,
+"z": -330,
+"r": 40,
+"label": "Escarpment Lamps [v5]"
+},
+{
+"key": "plinths-0",
+"x": 130,
+"z": -150,
+"r": 30,
+"label": "Plinth Road foot [v5]"
+},
+{
+"key": "plinths-1",
+"x": 165,
+"z": -290,
+"r": 30,
+"label": "Plinth Road end [v5]"
+},
+{
+"key": "hawser-0",
+"x": -120,
+"z": -380,
+"r": 20,
+"label": "Hawser anchor [v5]"
+},
+{
+"key": "hawser-1",
+"x": -40,
+"z": -165,
+"r": 20,
+"label": "Hawser foot [v5]"
+},
+{
+"key": "nave",
+"x": 255,
+"z": 40,
+"r": 25,
+"label": "Foundered Nave [v5]"
+},
+{
+"key": "castle",
+"x": 40,
+"z": 30,
+"r": 42,
+"label": "Carcanet Keep recast [v5]"
+},
+{
+"key": "tower",
+"x": -250,
+"z": -135,
+"r": 24,
+"label": "Armiger's Tower recast [v5]"
+},
+{
+"key": "court",
+"x": -40,
+"z": -165,
+"r": 40,
+"label": "Sunken Court recast [v5]"
+},
+{
+"key": "arcature",
+"x": 160,
+"z": 60,
+"r": 22,
+"label": "Arcature recast [v5]"
+},
+{
+"key": "moraine",
+"x": 40,
+"z": -265,
+"r": 50,
+"label": "Lattice mother crystal [v5]"
+},
+{
+"key": "gradine",
+"x": 282,
+"z": -172,
+"r": 14,
+"label": "Gradine extended [v5]"
+},
+{
+"key": "lightMoss",
+"x": -205,
+"z": 140,
+"r": 8,
+"label": "Bioluminescent moss [v5]"
+},
+{
+"key": "lightEmbers",
+"x": 160,
+"z": 60,
+"r": 6,
+"label": "Embers [v5]"
+},
+{
+"key": "lightPost",
+"x": -140,
+"z": -30,
+"r": 3,
+"label": "Lamp on a post [v5]"
+},
+{
+"key": "lightDoor",
+"x": -250,
+"z": -120,
+"r": 4,
+"label": "Lit doorway [v5]"
+},
+{
+"key": "leerie-0",
+"x": 110,
+"z": -25,
+"r": 6,
+"label": "Leerie standards west end [v5]"
+},
+{
+"key": "leerie-1",
+"x": 145,
+"z": 35,
+"r": 6,
+"label": "Leerie standards east end [v5]"
+},
+{
+"key": "keptFire",
+"x": 10,
+"z": -190,
+"r": 6,
+"label": "Kept Fire [v5]"
+},
+{
+"key": "collation",
+"x": 150,
+"z": -70,
+"r": 10,
+"label": "Collation [v5]"
+},
+{
+"key": "slipper",
+"x": -20,
+"z": 26,
+"r": 1,
+"label": "Slipper [v5]"
+},
+{
+"key": "prospect",
+"x": 238,
+"z": -30,
+"r": 4,
+"label": "Unfinished Prospect [v5]"
+},
+{
+"key": "view-spawn",
+"x": 6,
+"z": 36,
+"r": 3,
+"label": "Viewpoint spawn [v5]"
+},
+{
+"key": "view-causeway",
+"x": -65,
+"z": 12,
+"r": 3,
+"label": "Viewpoint causeway [v5]"
+},
+{
+"key": "view-deck",
+"x": -200,
+"z": 215,
+"r": 3,
+"label": "Viewpoint Span deck [v5]"
+},
+{
+"key": "view-spit",
+"x": -55,
+"z": 148,
+"r": 3,
+"label": "Viewpoint spit [v5]"
+},
+{
+"key": "view-arcature",
+"x": -40,
+"z": 22,
+"r": 3,
+"label": "Viewpoint Arcature sightline [v5]"
+},
+{
+"key": "view-bather-rim",
+"x": 165,
+"z": 215,
+"r": 4,
+"label": "Bather rim viewpoint [v6]"
+},
+{
+"key": "taker",
+"x": -255,
+"z": 10,
+"r": 4,
+"label": "Taker of Altitudes [v6]"
+},
+{
+"key": "coheirs",
+"x": -45,
+"z": 160,
+"r": 6,
+"label": "Coheirs [v6]"
+},
+{
+"key": "sleeper",
+"x": 180,
+"z": -40,
+"r": 6,
+"label": "Long Sleeper [v6]"
+},
+{
+"key": "thurifer-0",
+"x": -108,
+"z": -128,
+"r": 3,
+"label": "Little Thurifer shrine end [v6]"
+},
+{
+"key": "thurifer-1",
+"x": -170,
+"z": -50,
+"r": 3,
+"label": "Little Thurifer stones end [v6]"
+},
+{
+"key": "bather",
+"x": 158,
+"z": 228,
+"r": 10,
+"label": "Bather [v6]"
+},
+{
+"key": "sexton",
+"x": 55,
+"z": 272,
+"r": 18,
+"label": "Sexton of No One [v6]"
+},
+{
+"key": "stylite",
+"x": 268,
+"z": -80,
+"r": 8,
+"label": "Stylite [v6]"
+},
+{
+"key": "accrescent",
+"x": 60,
+"z": -180,
+"r": 3,
+"label": "Accrescent [v6]"
+},
+{
+"key": "indistinct-0",
+"x": 40,
+"z": -55,
+"r": 3,
+"label": "Indistinct ditch start [v6]"
+},
+{
+"key": "indistinct-1",
+"x": 125,
+"z": 30,
+"r": 3,
+"label": "Indistinct ditch end [v6]"
+},
+{
+"key": "repetend",
+"x": -170,
+"z": -97,
+"r": 3,
+"label": "Repetend [v6]"
+},
+{
+"key": "scriveners",
+"x": -100,
+"z": 58,
+"r": 8,
+"label": "Scriveners [v6]"
+},
+{
+"key": "simulacrum",
+"x": 20,
+"z": -205,
+"r": 5,
+"label": "Simulacrum [v6]"
+},
+{
+"key": "moles",
+"x": 75,
+"z": 0,
+"r": 12,
+"label": "Tesserine Moles [v6]"
+},
+{
+"key": "toadstone",
+"x": 180,
+"z": 230,
+"r": 2,
+"label": "Toadstone [v6]"
+},
+{
+"key": "glyph-door",
+"x": 226,
+"z": -112,
+"r": 1,
+"label": "Glyph at Hypogeum door [v6]"
+},
+{
+"key": "glyph-tessera",
+"x": 75,
+"z": 0,
+"r": 1,
+"label": "Glyph tessera [v6]"
+},
+{
+"key": "glyph-erratic",
+"x": 75,
+"z": -200,
+"r": 1,
+"label": "Glyph erratic [v6]"
+},
+{
+"key": "linkboy",
+"x": -165,
+"z": -105,
+"r": 3,
+"label": "Link-Boy [v6]"
+},
+{
+"key": "reach-0",
+"x": 208,
+"z": 258,
+"r": 3,
+"label": "Luminous Reach source [v6]"
+},
+{
+"key": "reach-1",
+"x": 134,
+"z": 211,
+"r": 3,
+"label": "Luminous Reach mouth [v6]"
+}
+]

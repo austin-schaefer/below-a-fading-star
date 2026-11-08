@@ -144,7 +144,7 @@ export function buildOmens(ctx, group, U, rng) {
   }
 
   // ---------- the shard belt: only while the sun gutters
-  const NB = ctx.quality === 'high' ? 1100 : 480, RB = 2150;
+  const NB = ctx.quality !== 'low' ? 1100 : 480, RB = 2150;
   const BS = pointsMesh(U, NB, 1);
   BS.m.name = 'skylife-shards'; BS.m.renderOrder = 5;
   group.add(BS.m);

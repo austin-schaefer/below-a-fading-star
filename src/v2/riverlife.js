@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { Mesher } from '../fauna/geo.js';
 import { meshHeightSampler } from '../water/river.js';
+import { hyp } from '../noise.js';
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -388,7 +389,7 @@ const SPRAY_FRAG = /* glsl */`
 export async function build(ctx) {
   const { scene, terrain, camera } = ctx;
   const RV = terrain.river;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const cam = camera.position;
   const flick = ctx.sky && ctx.sky.flicker ? ctx.sky.flicker : { value: 1 };
   const cue = (name, pos) => ctx.audio?.cue?.(name, pos);
@@ -583,7 +584,7 @@ export async function build(ctx) {
     const hold = ctx.pedlars.hold;
     for (let i = 0; i < N; i++) {
       const p = pedlars[i];
-      const dx = p.pos.x - cam.x, dz = p.pos.z - cam.z, dh = Math.hypot(dx, dz);
+      const dx = p.pos.x - cam.x, dz = p.pos.z - cam.z, dh = hyp(dx, dz);
       if (!hold) {
         // retreat when the player comes within four metres: off along the river or over the water, not in panic
         if (dh < 4 && (p.mode === 0 || p.u > 0.85)) startDart(p, true, plS, plD);
@@ -611,7 +612,7 @@ export async function build(ctx) {
           if (p.held > 1.2 && Math.sin(t * 0.7 + p.w1) > 0.995) p.yawGoal += 0.6;
         }
         // never nearer than three metres, whatever the dart: eased out along the line from the player
-        { const ex = p.pos.x - cam.x, ez = p.pos.z - cam.z, e = Math.hypot(ex, ez);
+        { const ex = p.pos.x - cam.x, ez = p.pos.z - cam.z, e = hyp(ex, ez);
           if (e < 3) { const k = 3 / Math.max(e, 1e-3); p.pos.x = cam.x + ex * k; p.pos.z = cam.z + ez * k; if (p.mode === 0) { p.anchor.x = p.pos.x; p.anchor.z = p.pos.z; } } }
         let dy = p.yawGoal - p.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
         const turn = dy * Math.min(1, dt * 9);
@@ -711,7 +712,7 @@ export async function build(ctx) {
     wcLight.color.setHSL(h, 0.95, 0.5);
     const lc = wcLight.color, luma = 0.2126 * lc.r + 0.7152 * lc.g + 0.0722 * lc.b;
     wcLight.intensity = 32 * clamp(0.4 / Math.max(luma, 1e-3), 1, 3) * (1 + g * 0.8) * (0.92 + 0.08 * Math.sin(t * 0.37));
-    const d = Math.hypot(cam.x - wcPos.x, cam.z - wcPos.z);
+    const d = hyp(cam.x - wcPos.x, cam.z - wcPos.z);
     if (d < 6 && !wcVisited) { wcVisited = true; cue('wrong-colour-near', wcPos); }
     else if (d > 25) wcVisited = false;
   });
@@ -740,7 +741,7 @@ export async function build(ctx) {
       // the same slow gusting as the moor's wind-borne seeds, so the spray leans the way they blow
       const gu = Math.max(0, Math.sin(t * 0.11 + 1.3) * 0.6 + Math.sin(t * 0.047 + 0.4) * 0.5 + 0.05);
       windD += dt * (0.5 + smooth(0.25, 0.85, gu) * 2.2);
-      const df = Math.hypot(cam.x - foot.x, cam.z - foot.z);
+      const df = hyp(cam.x - foot.x, cam.z - foot.z);
       spray.visible = df < 40;
       mat.uniforms.uWindD.value = windD; mat.uniforms.uFlicker.value = flick.value;
       mat.uniforms.uOn.value = 1 - smooth(18, 34, df);

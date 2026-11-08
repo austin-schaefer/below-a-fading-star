@@ -59,7 +59,7 @@ const VERT = /* glsl */`
 const FRAG = /* glsl */`
   precision highp float;
   uniform sampler2D uTex;
-  uniform float uTime, uFlicker, uFen;
+  uniform float uTime, uFlicker, uFen; uniform vec2 uFar; uniform vec4 uTexMean;
   uniform vec3 uSunDir, uSunCore, uSunLight, uHorizonSun, uHorizonAway, uZenith, uWater, uWisp;
   uniform vec4 uRipples[${MAX_RIPPLES}];
   varying float vDepth;
@@ -100,12 +100,17 @@ const FRAG = /* glsl */`
 
     // animated normal: three scrolling octaves, a slow swell, and ripple rings
     float far = 1.0 / (1.0 + dist * 0.004);
-    vec2 s = slopeAt(p, 0.060, vec2(0.012, 0.007)) * 0.085
-           + slopeAt(p, 0.19, vec2(-0.021, 0.015)) * 0.060
-           + slopeAt(p, 0.57, vec2(0.034, -0.05)) * 0.040 * far;
-    s += vec2(sin(p.x * 0.11 + uTime * 0.31), sin(p.y * 0.09 - uTime * 0.23)) * 0.02;
-    // ripples
+    // distance band (v3 stage 3, ?waterfar=0 off): past uFar.y the two finer octaves are already
+    // mip-averaged to the texture's mean, and the ripple rings are under a pixel; they fade to that
+    // between uFar.x and uFar.y and are not computed beyond
+    float nearW = 1.0 - smoothstep(uFar.x, uFar.y, dist);
+    vec2 meanS = (uTexMean.rg - 0.5) * 2.0;
+    vec2 s = slopeAt(p, 0.060, vec2(0.012, 0.007)) * 0.085 + meanS * (0.060 + 0.040 * far);
     float ringShade = 0.0;
+    if (nearW > 0.0) {
+      vec2 fine = slopeAt(p, 0.19, vec2(-0.021, 0.015)) * 0.060
+                + slopeAt(p, 0.57, vec2(0.034, -0.05)) * 0.040 * far;
+      s += (fine - meanS * (0.060 + 0.040 * far)) * nearW;
     for (int i = 0; i < ${MAX_RIPPLES}; i++) {
       vec4 rp = uRipples[i];
       float age = uTime - rp.z;
@@ -114,10 +119,12 @@ const FRAG = /* glsl */`
         float front = age * 0.55;
         float env = exp(-pow((r - front) / (0.9 + age * 0.25), 2.0)) * (1.0 - age / 9.0) * rp.w;
         float w = sin((r - front) * 5.5) * env;
-        s += dv / max(r, 0.01) * w * 0.05;
-        ringShade += abs(w);
+        s += dv / max(r, 0.01) * w * 0.05 * nearW;
+        ringShade += abs(w) * nearW;
       }
     }
+    }
+    s += vec2(sin(p.x * 0.11 + uTime * 0.31), sin(p.y * 0.09 - uTime * 0.23)) * 0.02;
 
     // duckweed on the fen
     float weedN = texture2D(uTex, p * 0.045 + 3.7).a * 0.45 + texture2D(uTex, p * 0.21 + 1.3).a * 0.55;
@@ -146,7 +153,9 @@ const FRAG = /* glsl */`
     // the sun's disc, broken by the ripples into a path of glitter
     float sd = dot(R, uSunDir);
     float disc = smoothstep(0.9948, 0.9972, sd);
-    float tw = 0.55 + 0.45 * texture2D(uTex, p * 0.9 + vec2(uTime * 0.05, -uTime * 0.03)).a * 2.0;
+    float twA = uTexMean.a;
+    if (nearW > 0.0) twA = mix(twA, texture2D(uTex, p * 0.9 + vec2(uTime * 0.05, -uTime * 0.03)).a, nearW);
+    float tw = 0.55 + 0.45 * twA * 2.0;
     refl += uSunCore * disc * 3.2 * uFlicker * tw;
     refl += uSunLight * pow(max(sd, 0.0), 220.0) * 0.8 * uFlicker;
 
@@ -212,7 +221,10 @@ export async function build(ctx) {
   await ctx.progress?.('filling the tarn', 0.1);
   const rng = ctx.makeRng(7001);
   const tex = makeWaterTexture(rng, 256);
-  const high = ctx.quality === 'high';
+  const FAR = new URL(location.href).searchParams.get('waterfar') !== '0';
+  const texMean = [0, 0, 0, 0]; { const d = tex.image.data; for (let i = 0; i < d.length; i++) texMean[i & 3] += d[i]; }
+  const uTexMean = new THREE.Vector4(...texMean.map((m) => m / (255 * 256 * 256)));
+  const high = ctx.quality !== 'low';
   const C = (h) => new THREE.Color(h);
   const meshes = [];
   const bodies = [];
@@ -224,6 +236,7 @@ export async function build(ctx) {
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },
+        uFar: { value: new THREE.Vector2(FAR ? 100 : 1e9, FAR ? 120 : 2e9) }, uTexMean: { value: uTexMean },
         uSunDir: { value: new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z) },
         uSunCore: { value: C(palette.sunCore) }, uSunLight: { value: C(palette.sunLight) },
         uHorizonSun: { value: C(palette.skyHorizonSun) }, uHorizonAway: { value: C(palette.skyHorizonAway) },

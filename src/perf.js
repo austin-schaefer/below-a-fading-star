@@ -11,6 +11,7 @@
 // registerUpdate callbacks and the objects it adds to the scene. Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, CAUSEWAY, WATER } from './world.js';
+import { installGpuMem } from './gpumem.js';
 
 const BLOCK_MS = 500; // one sample block
 const WINDOW = 4;     // blocks in the rolling window (~2 s)
@@ -42,23 +43,37 @@ export function createPerf(ctx) {
     return m;
   }
   const rawRegister = ctx.registerUpdate;
+  // Each callback is also timed on its own, labelled by the file:line that registered it, so the report
+  // can say which callback inside a module costs what (report().callbacks, the bench's cpuCallbacks).
+  const cbs = [];
+  function site() {
+    const lines = (new Error().stack || '').split('\n').slice(1);
+    for (const l of lines) {
+      const m = l.match(/\/src\/([^?#)]+?\.js)(?:\?[^:)]*)?:(\d+)/);
+      if (m && !/^(perf|main)\.js$/.test(m[1])) return `${m[1]}:${m[2]}`;
+    }
+    return '?';
+  }
   function wrapUpdate(m, fn) {
     m.updates++;
+    const cb = { label: `${m.name} ${site()}`, cpu: 0 };
+    cbs.push(cb);
     return (dt, t) => {
       if (!m.enabled) return;
       if (!api.active) { fn(dt, t); return; }
       const t0 = performance.now();
       fn(dt, t);
-      m.cpu += performance.now() - t0;
+      const d = performance.now() - t0;
+      m.cpu += d; cb.cpu += d;
     };
   }
   // updates registered outside a module build (terrain, sky, controls...) count as 'core'
   const core = mod('core');
-  ctx.registerUpdate = (fn) => rawRegister(wrapUpdate(core, fn));
+  ctx.registerUpdate = (fn, meta) => rawRegister(wrapUpdate(core, fn), meta);
 
   function forModule(name) {
     const m = mod(name); m.world = true;
-    const register = (fn) => rawRegister(wrapUpdate(m, fn));
+    const register = (fn, meta) => rawRegister(wrapUpdate(m, fn), meta);
     const add = (...objs) => { for (const o of objs) m.objects.add(o); scene.add(...objs); return scene; };
     const sceneProxy = new Proxy(scene, {
       get(target, prop) {
@@ -144,7 +159,8 @@ export function createPerf(ctx) {
   }
 
   // --- sampling: frames accumulate into 500 ms blocks; the overlay and report read the last WINDOW
-  const newBlock = (t0) => ({ t0, frameMs: [], gpu: {}, gpuFrames: 0, calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], cpu: {} });
+  const newBlock = (t0) => ({ t0, frameMs: [], gpu: {}, gpuFrames: 0, calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], cpu: {}, cb: {} });
+  let firstBlock = null; // the first sampled block's per-callback ms (first-frame setup shows here)
   let block = newBlock(performance.now());
   let win = [];
   const last = { calls: 0, tris: 0, points: 0, lines: 0 };
@@ -162,6 +178,7 @@ export function createPerf(ctx) {
   function cpu(name) { if (!api.active) return; const now = performance.now(); mod(name).cpu += now - mark; mark = now; }
   function markNow() { if (api.active) mark = performance.now(); }
   function frameEnd() {
+    ctx.gpumem?.frame();
     if (!api.active) return;
     gpuEndFrame();
     const r = renderer.info.render;
@@ -175,6 +192,8 @@ export function createPerf(ctx) {
   }
   function closeBlock(now) {
     for (const m of mods.values()) { block.cpu[m.name] = m.cpu; m.cpu = 0; }
+    for (const c of cbs) { if (c.cpu) block.cb[c.label] = (block.cb[c.label] || 0) + c.cpu; c.cpu = 0; }
+    if (!firstBlock) firstBlock = { frames: block.frameMs.length, cb: { ...block.cb } };
     win.push(block); if (win.length > WINDOW) win.shift();
     if (bench) bench.add(block);
     block = newBlock(now);
@@ -182,16 +201,17 @@ export function createPerf(ctx) {
     if (bench) bench.sample(current);
     if (overlay && overlay.classList.contains('shown')) draw();
   }
-  function resetWindow() { win = []; block = newBlock(performance.now()); for (const m of mods.values()) m.cpu = 0; lastStart = 0; current = null; }
+  function resetWindow() { win = []; block = newBlock(performance.now()); for (const m of mods.values()) m.cpu = 0; for (const c of cbs) c.cpu = 0; lastStart = 0; current = null; }
 
   function summarise(blocks) {
-    const ms = []; let gpuFrames = 0; const g = {}, c = {};
+    const ms = []; let gpuFrames = 0; const g = {}, c = {}, cb = {};
     let calls = [Infinity, -Infinity], tris = [Infinity, -Infinity];
     for (const b of blocks) {
       for (const v of b.frameMs) ms.push(v);
       gpuFrames += b.gpuFrames;
       for (const k in b.gpu) g[k] = (g[k] || 0) + b.gpu[k];
       for (const k in b.cpu) c[k] = (c[k] || 0) + b.cpu[k];
+      for (const k in b.cb) cb[k] = (cb[k] || 0) + b.cb[k];
       calls = [Math.min(calls[0], b.calls[0]), Math.max(calls[1], b.calls[1])];
       tris = [Math.min(tris[0], b.tris[0]), Math.max(tris[1], b.tris[1])];
     }
@@ -200,10 +220,16 @@ export function createPerf(ctx) {
     const cpuOut = {}; let cpuTotal = 0;
     for (const k of Object.keys(c).sort((a, b) => c[b] - c[a])) { cpuOut[k] = r2(c[k] / n); cpuTotal += c[k] / n; }
     return {
-      frame, cpu: { totalMs: r2(cpuTotal), modules: cpuOut },
+      frame, cpu: { totalMs: r2(cpuTotal), modules: cpuOut, callbacks: topCallbacks(cb, n) },
       gpu: gpuOut(g, gpuFrames),
       calls: isFinite(calls[0]) ? calls : null, tris: isFinite(tris[0]) ? tris : null,
     };
+  }
+  // the heaviest callbacks, ms per frame, those under 0.01 ms dropped
+  function topCallbacks(cb, n, k = 12) {
+    const out = {};
+    for (const [label, v] of Object.entries(cb).sort((a, b) => b[1] - a[1]).slice(0, k)) if (v / n >= 0.01) out[label] = r2(v / n);
+    return out;
   }
   function gpuOut(g, frames) {
     if (!gpu.ok) return { available: false };
@@ -223,7 +249,7 @@ export function createPerf(ctx) {
     scene.traverse((o) => {
       if (!o.isLight) return;
       const e = out[o.type] ||= { count: 0, visible: 0, shadow: 0 };
-      e.count++; if (o.visible) e.visible++; if (o.castShadow) e.shadow++;
+      e.count++; if (o.visible && o.layers.test(ctx.camera.layers)) e.visible++; if (o.castShadow) e.shadow++; // sources on lights.js's hidden layer count as not visible
     });
     return out;
   }
@@ -251,11 +277,18 @@ export function createPerf(ctx) {
     }
     lines.push(`${last.calls} calls · ${(last.tris / 1000).toFixed(0)}k tris · ${mem.geometries} geometries · ${mem.textures} textures · ${renderer.info.programs?.length ?? '?'} programs`);
     lines.push('lights ' + (Object.entries(lights).map(([k, v]) => `${k.replace('Light', '')} ${v.visible}/${v.count}`).join(' · ') || 'none'));
-    lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}`);
+    lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}${ctx.tier ? ` (${ctx.tier.state.source}${ctx.tier.state.adapt ? ', adaptive' : ''})` : ''}`);
+    const gm = ctx.gpumem?.stats();
+    if (gm) lines.push(`gpu memory${gm.late ? ' (allocated since the profiler came on)' : ''} ${gm.totalMB} MB: textures ${gm.textureMB} · renderbuffers ${gm.renderbufferMB} · canvas ${gm.backbufferMB} · uploads ${gm.uploadsLastFrame}/frame`);
+    const st = settings();
+    lines.push(`cap ${st.cap || 'off'}${st.idle ? ' (idle ' + st.targetFps + ')' : ''} · shadow redraws ${st.shadows ? (st.shadows.every ? 'every frame' : st.shadows.redraws) : '–'} · point slots ${typeof st.lightSlots === 'object' ? st.lightSlots.active + '/' + st.lightSlots.slots : 'off'} · bloom ×${st.bloomRes} · throttle ${st.throttle ? 'on' : 'off'}`);
     overlay.textContent = lines.join('\n');
   }
   function setActive(on) {
     api.active = on;
+    // the GL memory hooks cost a little on every texture call, so they go in only once the profiler is on; turned
+    // on late (the panel's row), they count what is allocated from then on and the overlay says so
+    if (on && !ctx.gpumem) ctx.gpumem = installGpuMem(renderer.getContext(), renderer.domElement, { late: true });
     overlay?.classList.toggle('shown', on);
     if (on) { resetWindow(); draw(); }
     else { gpuEnd(); gpu.frame = null; }
@@ -266,6 +299,13 @@ export function createPerf(ctx) {
   const toggles = {};
   function setBloom(on) { if (ctx.post) ctx.post.bloom.enabled = on; }
   function setShadows(on) { for (const l of shadowLights) l.castShadow = on; } // light hash changes; three recompiles
+  // The bench files itself: the commit from commit.json (written by the Netlify build and build-artifact.mjs;
+  // not looked for on localhost, where there is none), and the machine from ?machine=, remembered per browser.
+  let machine = url.searchParams.get('machine');
+  try { if (machine) localStorage.setItem('fp-machine', machine); else machine = localStorage.getItem('fp-machine'); } catch { /* storage blocked */ }
+  if (!window.__fp_commit && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) {
+    fetch(new URL('commit.json', document.baseURI)).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.commit) window.__fp_commit = j.commit; }).catch(() => {});
+  }
   function attach() {
     overlay = document.getElementById('perf');
     instrumentPost(ctx.post);
@@ -320,7 +360,7 @@ export function createPerf(ctx) {
     const duration = param > 1 ? param : 45;
     const warm = Math.min(2, duration * 0.1); // held at spawn first, unrecorded, while shaders settle
     const path = benchPath();
-    const b = { duration, warm, length: path.length, phase: 'warm', t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, result: null, done: false };
+    const b = { duration, warm, length: path.length, phase: 'warm', t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, cb: {}, result: null, done: false };
     const p = ctx.player, here = { x: 0, z: 0 }, ahead = { x: 0, z: 0 };
     let prevHold = null, runStart = 0, lastNow = 0;
     b.drive = (now) => {
@@ -348,6 +388,7 @@ export function createPerf(ctx) {
     b.add = (blk) => {
       if (b.phase !== 'run') return;
       b.cpuN += blk.frameMs.length; for (const k in blk.cpu) b.cpu[k] = (b.cpu[k] || 0) + blk.cpu[k];
+      for (const k in blk.cb) b.cb[k] = (b.cb[k] || 0) + blk.cb[k];
       b.gpuN += blk.gpuFrames; for (const k in blk.gpu) b.gpu[k] = (b.gpu[k] || 0) + blk.gpu[k];
     };
     b.sample = (s) => {
@@ -366,13 +407,16 @@ export function createPerf(ctx) {
       b.result = {
         kind: 'fading-planet-bench', date: new Date().toISOString(),
         ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
-        userAgent: navigator.userAgent, quality: ctx.quality, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
+        ...(machine ? { machine } : {}),
+        settings: settings(),
+        userAgent: navigator.userAgent, quality: ctx.quality, tier: ctx.tier?.stats() ?? null, gpuMemory: ctx.gpumem?.stats() ?? null, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
         renderSize: size, url: location.search, duration, warmup: warm, pathMetres: Math.round(path.length),
         gpuTimer: gpu.ok, toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
         summary: {
           avgFps: f.fps, low1Fps: f.low1Fps, avgFrameMs: f.avgMs, low1FrameMs: f.low1Ms, frames: f.frames,
           gpuMs: gpu.ok ? (b.gpuN ? gpuOut(b.gpu, b.gpuN) : null) : 'n/a',
           cpuMs: avg(b.cpu, b.cpuN),
+          cpuCallbacks: topCallbacks(b.cb, Math.max(1, b.cpuN), 20),
           calls: isFinite(b.calls[0]) ? b.calls : null, tris: isFinite(b.tris[0]) ? b.tris : null,
         },
         samples: b.samples,
@@ -401,7 +445,8 @@ export function createPerf(ctx) {
       else if (a === 'dl') {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
-        link.download = `bench-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}.json`;
+        const slug = res.machine ? '-' + res.machine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '';
+        link.download = `bench-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}${slug}.json`;
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(link.href), 5000);
       } else if (a === 'copy') {
@@ -411,6 +456,16 @@ export function createPerf(ctx) {
     document.body.appendChild(el);
   }
 
+  // what the v3 stage 2 switches are doing (frame cap, shadow cadence, light slots, bloom size, throttling)
+  function settings() {
+    const sc = ctx.shadowCadence, ls = ctx.lightSlots;
+    return {
+      cap: ctx.pacing?.cap ?? null, targetFps: ctx.pacing?.fps ?? null, idle: ctx.pacing?.idle ?? null,
+      shadows: sc ? { ...sc.settings, redraws: sc.stats.redraws, dynamicRedraws: sc.stats.dynamic, nearCasters: sc.stats.near, pcf: renderer.shadowMap.type === ctx.THREE.PCFShadowMap ? 'hard' : 'soft' } : null,
+      lightSlots: ls ? { slots: ls.slots.length, sources: ls.sources.length, active: ls.active() } : 'off',
+      bloomRes: ctx.post?.bloom?.resScale ?? 1, throttle: ctx.throttle !== false,
+    };
+  }
   function report() {
     const live = renderer.info.render, mem = renderer.info.memory;
     const r = api.active ? last : { calls: live.calls, tris: live.triangles, points: live.points, lines: live.lines };
@@ -418,9 +473,12 @@ export function createPerf(ctx) {
       date: new Date().toISOString(), active: api.active,
       ...(current || summarise(win.length ? win : [block])),
       render: { calls: r.calls, triangles: r.tris, points: r.points, lines: r.lines },
-      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null },
+      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null, gpu: ctx.gpumem?.stats() ?? null },
+      tier: ctx.tier?.stats() ?? null,
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
+      settings: settings(), ...(machine ? { machine } : {}),
       gpuTimer: gpu.ok,
+      firstBlock: firstBlock && { frames: firstBlock.frames, callbacks: topCallbacks(firstBlock.cb, 1) },
       modules: Object.fromEntries([...mods.values()].map((m) => [m.name, { world: m.world, enabled: m.enabled, updates: m.updates, objects: m.objects.size }])),
       toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
       bench: bench ? (bench.result || { phase: bench.phase, samples: bench.samples.length }) : null,
@@ -429,7 +487,7 @@ export function createPerf(ctx) {
 
   const api = {
     active: false, gpuTimer: gpu.ok, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
-    setModule, setBloom, setShadows, setActive, toggles,
+    setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
     get bench() { return bench; },
   };
   return api;

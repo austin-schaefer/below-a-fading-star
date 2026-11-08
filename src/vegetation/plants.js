@@ -7,6 +7,14 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
+const PARAMS = new URL(location.href).searchParams;
+const SCAN = PARAMS.get('vegscan') !== '0'; // v3 stage 3: lazy repacking and sliced chunk generation
+const MARGIN = 12; // metres of slack round the view when a lazy repack picks its chunks
+const _wide = new THREE.Sphere();
+// grass fade0/fade1 by quality tier; unknown tiers draw as high
+const GRASS_TIERS = { high: [85, 125], medium: [75, 110], low: [65, 100] };
+// chunks whose nearest edge is past these distances draw the cheap far clumps
+const FAR_GRASS = 60, FAR_REEDS = 50;
 
 // ---------- geometry ----------
 // Plant geometry carries position, normal, color and aBlade = (t: height fraction, family, rand, tintWeight).
@@ -49,29 +57,34 @@ function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, t
     if (s === segs - 1 && tipW === 0) { pg.tri(L[s], R[s], L[s + 1]); break; }
     pg.tri(L[s], R[s], R[s + 1]); pg.tri(L[s], R[s + 1], L[s + 1]);
   }
-  return { dx, dz, lean, h };
+  return { dx, dz, lean, h, rnd };
 }
 
 // Grass cluster: three families in one geometry. The shader shows family sets per instance, so
 // it reads as three variants: fine tussock + bent broad blades, fine + seed stalks, or all.
-function grassGeo(rng) {
-  const pg = new PlantGeo();
+// far = true (v3 stage 3, past FAR_GRASS m): the same rng stream and so the same blades in the same
+// places, but 4 of the 7 fine blades (half as wide again, so the clump covers as much), one seed stalk
+// without its head, and every blade a single triangle: 7 triangles instead of 37.
+function grassGeo(rng, far = false) {
+  const pg = new PlantGeo(), sink = new PlantGeo();
   for (let k = 0; k < 7; k++) { // fine
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
-    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, 0.03 + rng() * 0.014, 0.28 + rng() * 0.28, 0.18 + rng() * 0.3, 2, 0);
+    const keep = !far || k < 4;
+    blade(keep ? pg : sink, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 1.2, (0.03 + rng() * 0.014) * (far ? 1.6 : 1), 0.28 + rng() * 0.28, 0.18 + rng() * 0.3, far ? 1 : 2, 0);
   }
   const seed = [1.25, 0.72, 0.5];
   for (let k = 0; k < 2; k++) { // tall seed stalks with a small head
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.14;
     const h = 0.62 + rng() * 0.3, lean = 0.08 + rng() * 0.15;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
-    const bl = blade(pg, rng, x0, z0, a, 0.011, h, lean, 2, 1);
+    const bl = blade(far && k > 0 ? sink : pg, rng, x0, z0, a, 0.011 * (far ? 1.6 : 1), h, lean, far ? 1 : 2, 1);
+    if (far) { rng(); continue; } // the head's draw, kept so the stream stays in step
     // head: a narrow diamond hugging the top 22% of the stalk, following its lean
     const t0 = 0.74, t1 = 1.04;
     const at = (t) => [x0 + bl.dx * lean * h * t * t, h * t, z0 + bl.dz * lean * h * t * t];
     const p0 = at(t0), p1 = at((t0 + t1) / 2), p2 = at(t1);
     const wx = -bl.dz * 0.014, wz = bl.dx * 0.014;
-    const rnd = rng();
+    rng(); const rnd = bl.rnd; // the head shares its stalk's rand so the shader scales them together (the draw keeps the stream)
     const i0 = pg.v(p0[0], p0[1], p0[2], bl.dx, 0.6, bl.dz, seed, t0, 1, rnd, 1);
     const i1 = pg.v(p1[0] - wx, p1[1], p1[2] - wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
     const i2 = pg.v(p1[0] + wx, p1[1], p1[2] + wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
@@ -80,7 +93,7 @@ function grassGeo(rng) {
   }
   for (let k = 0; k < 2; k++) { // broad, bent over
     const a = rng() * Math.PI * 2, r = 0.06 + rng() * 0.14;
-    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.05 + rng() * 0.02, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, 2, 2);
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a + (rng() - 0.5) * 0.6, 0.05 + rng() * 0.02, 0.4 + rng() * 0.22, 0.45 + rng() * 0.25, far ? 1 : 2, 2);
   }
   return pg.build();
 }
@@ -119,18 +132,20 @@ function heatherGeo(rng) {
 // Reed-free gaps on the tarn shore: the north shore facing the woman in the water, and the north-east bank.
 const OPEN_SHORE = [[-90, 52], [-49, 69]];
 
-function reedGeo(rng) {
+// far = true (v3 stage 3, past FAR_REEDS m): the same stems and leaves from the same stream, each a
+// single triangle (the near stems are 3 segments), and a three-sided head without caps: 17 triangles, not 75.
+function reedGeo(rng, far = false) {
   const pg = new PlantGeo();
-  const stems = [];
+  const stems = [], sg = far ? 1 : 3;
   for (let k = 0; k < 7; k++) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.28;
     const x0 = Math.cos(a) * r, z0 = Math.sin(a) * r;
     const h = 1.5 + rng() * 1.0, lean = 0.04 + rng() * 0.1;
-    stems.push({ x0, z0, a, h, lean, ...blade(pg, rng, x0, z0, a, 0.026, h, lean, 3, 0, ONE, 1, 0) });
+    stems.push({ x0, z0, a, h, lean, ...blade(pg, rng, x0, z0, a, 0.026, h, lean, sg, 0, ONE, 1, 0) });
   }
   for (let k = 0; k < 4; k++) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.2;
-    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a, 0.05, 0.9 + rng() * 0.5, 0.55 + rng() * 0.3, 3, 1, [0.9, 0.95, 0.8], 1, 0);
+    blade(pg, rng, Math.cos(a) * r, Math.sin(a) * r, a, 0.05, 0.9 + rng() * 0.5, 0.55 + rng() * 0.3, sg, 1, [0.9, 0.95, 0.8], 1, 0);
   }
   // one slender seed head per clump, long and narrow, riding high on the tallest stem
   const head = [0.2, 0.11, 0.06];
@@ -138,8 +153,10 @@ function reedGeo(rng) {
   for (let k = 0; k < 1; k++) {
     const s = stems[k];
     const at = (t) => [s.x0 + s.dx * s.lean * s.h * t * t, s.h * t * (1 - s.lean * s.lean * 0.35 * t), s.z0 + s.dz * s.lean * s.h * t * t];
-    const t0 = 0.72, t1 = 0.9, rr = 0.017, sides = 5;
-    const rnd = rng();
+    const t0 = 0.72, t1 = 0.9, rr = far ? 0.022 : 0.017, sides = far ? 3 : 5;
+    // the head shares its stem's rand: the shader scales each blade's height (and so its wind bend)
+    // by a hash of it, and a head with its own rand floated off the stem and swung on its own
+    const rnd = s.rnd;
     const ringAt = (t) => {
       const c = at(t), out = [];
       for (let j = 0; j < sides; j++) {
@@ -150,6 +167,7 @@ function reedGeo(rng) {
     };
     const A = ringAt(t0), B = ringAt(t1);
     for (let j = 0; j < sides; j++) { const j1 = (j + 1) % sides; pg.tri(A[j], B[j], B[j1]); pg.tri(A[j], B[j1], A[j1]); }
+    if (far) continue;
     const ct = at(t1 + 0.01), cb = at(t0 - 0.01);
     const it = pg.v(ct[0], ct[1], ct[2], 0, 1, 0, head, t1, 2, rnd, 0), ib = pg.v(cb[0], cb[1], cb[2], 0, -1, 0, head, t0, 2, rnd, 0);
     for (let j = 0; j < sides; j++) { const j1 = (j + 1) % sides; pg.tri(B[j], it, B[j1]); pg.tri(A[j1], ib, A[j]); }
@@ -180,7 +198,7 @@ function flowerGeo(rng) {
       const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
       const fa = i * 2.4 + rng(), fs = 0.026 * (1.2 - 0.6 * (i / n));
       const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
-      const rnd = rng();
+      rng(); const rnd = bl.rnd; // florets share their stem's rand so the shader scales them together (the draw keeps the stream)
       const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i1 = pg.v(cx + ox * 1.1, cy + fs * 0.2, cz + oz * 1.1, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i2 = pg.v(cx - oz, cy + fs * 0.8, cz + ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
@@ -314,6 +332,24 @@ class Kind {
     this.mesh.receiveShadow = true; this.mesh.castShadow = false;
     this.mesh.name = `veg-${name}`;
     this.order = new Int32Array(CN * CN);
+    this.packedQ = new Uint8Array(CN * CN); this.repacks = 0; this.packNeed = 0;
+    this.packedFar = new Uint8Array(CN * CN); this.far = null;
+  }
+  // A cheaper geometry for the chunks whose nearest edge is past `dist` m (v3 stage 3): a second mesh
+  // with its own instance buffers and the same material, packed from the same chunks.
+  setFar(geo, dist, cap) {
+    const f = { geo, dist, cap, drawn: 0 };
+    f.aPos = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    f.aShape = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    f.aTint = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('iPos', f.aPos); geo.setAttribute('iShape', f.aShape); geo.setAttribute('iTint', f.aTint);
+    geo.instanceCount = 0;
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
+    f.mesh = new THREE.Mesh(geo, this.mat);
+    f.mesh.frustumCulled = false; f.mesh.receiveShadow = true; f.mesh.castShadow = false;
+    f.mesh.name = `veg-${this.name}-far`;
+    this.far = f;
+    return this;
   }
   add(x, y, z, rot, sx, sy, variant, seed, r, g, b, rust) {
     this.scratch.push(x, y, z, rot, sx, sy, 0, variant + seed * 0.999, r, g, b, rust);
@@ -343,8 +379,11 @@ class Kind {
     a.length = 0;
   }
   free(k) { const ch = this.chunks[k]; if (ch) { this.total -= ch.n; this.chunks[k] = null; } }
-  // Pick visible chunks and how much of each to draw; repack only when that changes.
+  // Pick visible chunks and how much of each to draw; repack only when that changes (the old rule,
+  // ?vegscan=0: walking changed some chunk's 1/64 step, or which chunks were in view, nearly every
+  // frame, and every kind re-sorted and re-uploaded its whole buffer).
   update(px, pz, frustum, genCount) {
+    if (SCAN) return this.lazyUpdate(px, pz, frustum);
     const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
     let nv = 0, sig = genCount | 0;
     const pci = Math.floor((px - CMIN) / CHUNK), pcj = Math.floor((pz - CMIN) / CHUNK);
@@ -368,23 +407,84 @@ class Kind {
     sig = (Math.imul(sig, 31) + nv) | 0;
     if (sig === this.sig) return;
     this.sig = sig;
-    // nearest first so that if the cap is hit it is the far chunks that lose out
+    this.pack(nv, null);
+  }
+  // v3 stage 3: repack only when the buffer cannot draw what is needed. Each frame finds the chunks
+  // in view (the same test as above) and the prefix each needs; if every one is already packed with at
+  // least that prefix, nothing is touched. The shader thins every instance by its own distance, so a
+  // longer prefix than needed draws the same picture, and a packed chunk out of view is clipped. When a
+  // repack is due it packs with room to spare: chunks a margin outside the view, prefixes a quarter
+  // longer, so turning and walking are absorbed for a while. It repacks too when the buffer holds more
+  // than 1.6 times what was needed when it was packed. Only chunks within fade1 of the player are scanned.
+  lazyUpdate(px, pz, frustum) {
+    const { r0, fade0, fade1 } = this.o, ex = this.o.exp || 1;
+    const pci = Math.floor((px - CMIN) / CHUNK), pcj = Math.floor((pz - CMIN) / CHUNK);
+    const ci0 = Math.max(0, Math.floor((px - fade1 - CMIN) / CHUNK)), ci1 = Math.min(CN - 1, Math.floor((px + fade1 - CMIN) / CHUNK));
+    const cj0 = Math.max(0, Math.floor((pz - fade1 - CMIN) / CHUNK)), cj1 = Math.min(CN - 1, Math.floor((pz + fade1 - CMIN) / CHUNK));
+    const PQ = this.packedQ, wide = _wide;
+    let nv = 0, need = 0, ok = true;
+    for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) {
+      const c = cj * CN + ci;
+      const ch = this.chunks[c];
+      if (!ch || !ch.n) continue;
+      const dx = Math.max(ch.x0 - px, 0, px - ch.x1), dz = Math.max(ch.z0 - pz, 0, pz - ch.z1);
+      const d = Math.sqrt(dx * dx + dz * dz);
+      if (d > fade1 + MARGIN) continue;
+      const near = Math.abs(ci - pci) <= 1 && Math.abs(cj - pcj) <= 1;
+      wide.center.copy(ch.sphere.center); wide.radius = ch.sphere.radius + MARGIN;
+      if (!near && !frustum.intersectsSphere(wide)) continue;
+      const dens = Math.pow(Math.min(1, r0 / Math.max(d, 0.001)), ex) * (1 - smoothstep(fade0, fade1, d));
+      const q = dens > 0 ? Math.min(64, Math.ceil(dens * 64 + 0.5)) : 0;
+      // a candidate for the next repack (with its margin), and needed now if it passes the strict test
+      ch.d = d; ch.q = q;
+      this.order[nv++] = c;
+      if (q > 0 && (near || frustum.intersectsSphere(ch.sphere))) {
+        need += Math.ceil(ch.n * q / 64);
+        if (PQ[c] < q) ok = false;
+        else if (this.packedFar[c] && d < this.far.dist - 8) ok = false; // packed cheap, now near: re-pack it full
+      }
+    }
+    if (ok && need * 1.6 + 256 >= this.packNeed) return;
+    this.packNeed = need;
+    // repack: the candidates with a prefix a quarter longer; those just beyond fade1 get the one they will need
+    let n = 0;
+    for (let i = 0; i < nv; i++) {
+      const c = this.order[i], ch = this.chunks[c];
+      const q = ch.q > 0 ? ch.q : Math.ceil(64 * Math.pow(Math.min(1, r0 / fade1), ex) * (1 - smoothstep(fade0, fade1, fade1 - MARGIN * 0.5)) + 0.5);
+      ch.q = Math.min(64, Math.ceil(q * 1.25) + 1);
+      this.order[n++] = c;
+    }
+    PQ.fill(0); this.packedFar.fill(0);
+    this.pack(n, PQ);
+  }
+  // Copy the chosen chunks' prefixes into the instanced buffer, nearest first, so that if the cap is
+  // hit it is the far chunks that lose out (and the near ones draw first: front to back).
+  pack(nv, PQ) {
     const ord = this.order.subarray(0, nv);
     ord.sort((a, b) => (this.chunks[a].d - this.chunks[b].d) || (a - b)); // ties broken by index: a stable order
-    let w = 0;
+    let w = 0, wf = 0;
     const P = this.aPos.array, S = this.aShape.array, T = this.aTint.array;
+    const f = this.far;
     for (let i = 0; i < nv; i++) {
       const ch = this.chunks[ord[i]];
+      const isFar = !!f && ch.d > f.dist;
+      const cap = isFar ? f.cap : this.cap, at = isFar ? wf : w;
       let m = Math.ceil(ch.n * ch.q / 64);
-      if (w + m > this.cap) m = this.cap - w;
-      if (m <= 0) break;
+      if (at + m > cap) m = cap - at;
+      if (m <= 0) { if (isFar) continue; else break; }
       const e = m * 4;
-      P.set(ch.pos.subarray(0, e), w * 4); S.set(ch.shape.subarray(0, e), w * 4); T.set(ch.tint.subarray(0, e), w * 4);
-      w += m;
+      if (isFar) { f.aPos.array.set(ch.pos.subarray(0, e), at * 4); f.aShape.array.set(ch.shape.subarray(0, e), at * 4); f.aTint.array.set(ch.tint.subarray(0, e), at * 4); wf += m; }
+      else { P.set(ch.pos.subarray(0, e), at * 4); S.set(ch.shape.subarray(0, e), at * 4); T.set(ch.tint.subarray(0, e), at * 4); w += m; }
+      if (PQ) { PQ[ord[i]] = ch.q; this.packedFar[ord[i]] = isFar ? 1 : 0; } // a chunk cut short by the cap counts as packed: nothing better is possible
     }
     for (const a of [this.aPos, this.aShape, this.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, w * 4); a.needsUpdate = true; }
     this.geo.instanceCount = w;
     this.drawn = w;
+    if (f) {
+      for (const a of [f.aPos, f.aShape, f.aTint]) { a.clearUpdateRanges(); a.addUpdateRange(0, wf * 4); a.needsUpdate = true; }
+      f.geo.instanceCount = wf; f.drawn = wf;
+    }
+    this.repacks++;
   }
 }
 
@@ -398,12 +498,18 @@ export function buildPlants(ctx, ground, shared) {
   let rng = null; // per chunk, see genChunk
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 
-  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 6.5, exp: 2.0, fade0: 85, fade1: 125, wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.5 }), { r0: 6.5, exp: 2.0, fade0: 85, fade1: 125, height: 2 }, low ? 30000 : 60000);
+  // grass draw distance by tier (v3 stage 3; ?grasstier=0 keeps high's everywhere): fade0, fade1 in metres
+  const gt = PARAMS.get('grasstier') === '0' ? GRASS_TIERS.high : GRASS_TIERS[quality] || GRASS_TIERS.high;
+  const grass = new Kind('grass', grassGeo(ctx.makeRng(3302)), makePlantMaterial(ctx, shared, { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], wind: 1.0, tip: '#8a3418', trans: 1.6, comp: 4.5 }), { r0: 6.5, exp: 2.0, fade0: gt[0], fade1: gt[1], height: 2 }, low ? 30000 : 60000);
   const heather = new Kind('heather', heatherGeo(ctx.makeRng(3303)), makePlantMaterial(ctx, shared, { r0: 10, exp: 1.6, fade0: 100, fade1: 150, wind: 0.22, base: '#a08868', trans: 0.6, comp: 3.2 }), { r0: 10, exp: 1.6, fade0: 100, fade1: 150, height: 1 }, low ? 12000 : 24000);
   const bracken = new Kind('bracken', brackenGeo(ctx.makeRng(3305)), makePlantMaterial(ctx, shared, { r0: 14, exp: 1.5, fade0: 90, fade1: 140, wind: 0.35, tip: '#6a2a12', trans: 1.4, comp: 2.4 }), { r0: 14, exp: 1.5, fade0: 90, fade1: 140, height: 1.4 }, low ? 8000 : 16000);
   const flowers = new Kind('flowers', flowerGeo(ctx.makeRng(3306)), makePlantMaterial(ctx, shared, { r0: 15, exp: 1.5, fade0: 100, fade1: 150, wind: 0.6, trans: 0.8, comp: 2.0 }), { r0: 15, exp: 1.5, fade0: 100, fade1: 150, height: 2 }, low ? 6000 : 12000);
   const fleshy = new Kind('fleshy', fleshyGeo(ctx.makeRng(3307)), makePlantMaterial(ctx, shared, { r0: low ? 20 : 28, fade0: 110, fade1: 160, wind: 0.12, trans: 0.5, comp: 1.2 }), { r0: low ? 20 : 28, fade0: 110, fade1: 160, height: 2 }, low ? 3000 : 6000);
   const reeds = new Kind('reeds', reedGeo(ctx.makeRng(3304)), makePlantMaterial(ctx, shared, { r0: 20, exp: 1.4, fade0: 100, fade1: 145, wind: 0.75, tip: '#7a4a22', trans: 1.2, comp: 2.0 }), { r0: 20, exp: 1.4, fade0: 100, fade1: 145, height: 3 }, low ? 10000 : 20000);
+
+  // cheaper far geometry (v3 stage 3): ?fargrass=0, ?reedlod=0 draw the full clumps at every distance
+  if (PARAMS.get('fargrass') !== '0') grass.setFar(grassGeo(ctx.makeRng(3302), true), FAR_GRASS, low ? 8000 : 16000);
+  if (PARAMS.get('reedlod') !== '0') reeds.setFar(reedGeo(ctx.makeRng(3304), true), FAR_REEDS, low ? 5000 : 10000);
 
   // grass colours: dun-olive, sere, rust-tipped (olive rather than straw, so the moor is not desert under the red sun)
   const cTawny = C('#8e8c56'), cDry = C('#aaa478'), cOchre = C('#7c7a40'), cHeathG = C('#8a7058'), cWoodG = C('#4e5030'), cMarsh = C('#8a8a48'), cBleach = C('#a0a8a8'), cOrch = C('#948a4c');
@@ -422,14 +528,20 @@ export function buildPlants(ctx, ground, shared) {
   const CELL = 2;
   const b = {};
   const kinds = [grass, heather, bracken, flowers, fleshy, reeds];
-  // Generate chunk k: every 2 m cell inside it, for every kind.
-  function genChunk(k) {
-    rng = ctx.makeRng(33000 + k);
+  // Generate chunk k: every 2 m cell inside it, for every kind. With ?vegscan on, streaming spreads a
+  // chunk over a few frames (GEN_SLICE cells a frame; one chunk is ~3 ms of placement): the same cells
+  // in the same order from the same rng, so the same plants, without the hitch.
+  const GEN_SLICE = 36, CELLS = (CHUNK / 2) * (CHUNK / 2);
+  let job = null; // { k, i } a chunk part-way through generation
+  function genChunk(k, from = 0, to = CELLS) {
+    if (from === 0) rng = ctx.makeRng(33000 + k);
     const ci = k % CN, cj = Math.floor(k / CN);
-    const X0 = CMIN + ci * CHUNK, Z0 = CMIN + cj * CHUNK;
-    for (let cz = Z0; cz < Z0 + CHUNK; cz += CELL) for (let cx = X0; cx < X0 + CHUNK; cx += CELL) cell(cx, cz);
+    const X0 = CMIN + ci * CHUNK, Z0 = CMIN + cj * CHUNK, row = CHUNK / 2;
+    for (let i = from; i < to; i++) cell(X0 + (i % row) * 2, Z0 + Math.floor(i / row) * 2);
+    if (to < CELLS) return false;
     const sr = ctx.makeRng(34000 + k);
     for (const kd of kinds) kd.commit(k, sr);
+    return true;
   }
   function cell(cx, cz) {
     const mx = cx + 1, mz = cz + 1;
@@ -582,20 +694,33 @@ export function buildPlants(ctx, ground, shared) {
     const dx = Math.max(x0 - px, 0, px - x0 - CHUNK), dz = Math.max(z0 - pz, 0, pz - z0 - CHUNK);
     return Math.sqrt(dx * dx + dz * dz);
   };
+  let lastX = Infinity, lastZ = Infinity, settled = false;
   function stream(px, pz, budget) {
+    if (SCAN && budget < CN * CN) {
+      if (job) { // carry on with the chunk in hand
+        const to = Math.min(CELLS, job.i + GEN_SLICE);
+        if (genChunk(job.k, job.i, to)) { gen[job.k] = 1; genCount++; job = null; } else job.i = to;
+        return;
+      }
+      // nothing to build and the player has not moved: skip the 729-chunk search
+      if (settled && Math.abs(px - lastX) < 2 && Math.abs(pz - lastZ) < 2) return;
+    }
     for (let n = 0; n < budget; n++) {
       let best = -1, bd = REACH;
       for (let k = 0; k < CN * CN; k++) {
         if (gen[k]) { if (chunkDist(k, px, pz) > FREE) { gen[k] = 0; for (const kd of kinds) kd.free(k); } continue; }
+        if (job && job.k === k) continue;
         const d = chunkDist(k, px, pz);
         if (d < bd) { bd = d; best = k; }
       }
+      lastX = px; lastZ = pz; settled = best < 0;
       if (best < 0) return;
+      if (SCAN && budget < CN * CN) { job = { k: best, i: 0 }; return; }
       genChunk(best); gen[best] = 1; genCount++;
     }
   }
   const tStart = performance.now();
-  for (const k of kinds) ctx.scene.add(k.mesh);
+  for (const k of kinds) { ctx.scene.add(k.mesh); if (k.far) ctx.scene.add(k.far.mesh); }
   stream(ctx.player.pos.x, ctx.player.pos.z, CN * CN);
   const genMs = performance.now() - tStart;
 
@@ -606,7 +731,7 @@ export function buildPlants(ctx, ground, shared) {
   const tris = (k) => k.geo.index.count / 3;
   const api = {
     kinds, update, grey: shared.grey,
-    stats: () => Object.fromEntries(kinds.map((k) => [k.name, { stored: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
+    stats: () => Object.fromEntries(kinds.map((k) => [k.name, { stored: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k), ...(k.far ? { drawnFar: k.far.drawn, trisFar: k.far.geo.index.count / 3, drawnTrisFar: k.far.drawn * k.far.geo.index.count / 3 } : {}) }])),
     genMs,
   };
   window.__vegPlants = api; // for tools/grass-flicker-test.mjs

@@ -1,6 +1,7 @@
 // HUD: the title card, a landmark name that fades in when you draw near, a hint line, fps.
 import { LANDMARKS } from './world.js';
 import { buildDebug } from './debug.js';
+import { hyp } from './noise.js';
 
 // The title card's loading bar: a hairline that fills as the world builds, with the current step's name
 // under it. Built before anything else so the terrain's own steps show. Enables "Go out" once body.ready.
@@ -56,6 +57,13 @@ export function buildHud(ctx) {
     const label = () => { dragBtn.textContent = ctx.player.dragLook ? 'Mouse look by dragging is on. Switch back to captured mouse' : 'Mouse trouble? Look by dragging instead (no mouse capture)'; };
     ctx.events.addEventListener('draglook', label); label();
   }
+  ctx.events.addEventListener('contextlost', () => {
+    card.classList.remove('hidden'); card.classList.add('paused');
+    hint.textContent = 'The graphics driver reset and the moor went dark. Reload the page to go back out.';
+    hint.classList.add('shown');
+    const err = document.getElementById('error');
+    if (err) err.textContent = 'WebGL context lost (the GPU reset). Reload to continue; if it repeats, try ?q=low.';
+  });
   ctx.events.addEventListener('lockfail', () => {
     if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) return;
     hint.textContent = 'The mouse cannot be captured in this window. Hold the left button and drag to look.';
@@ -63,13 +71,14 @@ export function buildHud(ctx) {
   });
 
   const debug = buildDebug(ctx);
+  const landmarkList = Object.entries(LANDMARKS);
   let current = null, timer = 0;
   function update(dt) {
     debug.update(dt);
     const p = ctx.player.pos;
     let best = null, bestD = Infinity;
-    for (const [key, L] of Object.entries(LANDMARKS)) {
-      const d = Math.hypot(p.x - L.x, p.z - L.z) - L.r;
+    for (const [key, L] of landmarkList) {
+      const d = hyp(p.x - L.x, p.z - L.z) - L.r;
       if (d < bestD) { bestD = d; best = key; }
     }
     const near = bestD < 6 ? best : null;

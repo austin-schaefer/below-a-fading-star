@@ -127,20 +127,22 @@ export function makeGround(ctx) {
   const segs = geo.parameters?.widthSegments ?? Math.round(Math.sqrt(geo.attributes.position.count)) - 1;
   const half = size / 2, cell = size / segs, row = segs + 1;
   const H = (ix, iy) => pos[(ix + row * iy) * 3 + 1];
+  const cellAt = new Float64Array(4); // locate's result, reused (at and normal run per frame)
   const locate = (x, z) => {
     let gx = (x + half) / cell, gy = (z + half) / cell; // PlaneGeometry rows run +y..-y, i.e. -z..+z after rotateX(-90)
     gx = clamp(gx, 0, segs - 1e-4); gy = clamp(gy, 0, segs - 1e-4);
     const ix = Math.floor(gx), iy = Math.floor(gy);
-    return [ix, iy, gx - ix, gy - iy];
+    cellAt[0] = ix; cellAt[1] = iy; cellAt[2] = gx - ix; cellAt[3] = gy - iy;
+    return cellAt;
   };
   function at(x, z) {
-    const [ix, iy, fx, fy] = locate(x, z);
+    const c = locate(x, z), ix = c[0], iy = c[1], fx = c[2], fy = c[3];
     const ha = H(ix, iy), hb = H(ix, iy + 1), hc = H(ix + 1, iy + 1), hd = H(ix + 1, iy);
     if (fx + fy <= 1) return ha + (hd - ha) * fx + (hb - ha) * fy;
     return hc + (hb - hc) * (1 - fx) + (hd - hc) * (1 - fy);
   }
   function normal(x, z, out) {
-    const [ix, iy, fx, fy] = locate(x, z);
+    const c = locate(x, z), ix = c[0], iy = c[1], fx = c[2], fy = c[3];
     const ha = H(ix, iy), hb = H(ix, iy + 1), hc = H(ix + 1, iy + 1), hd = H(ix + 1, iy);
     // gradient in (gx, gy) cell units; gx runs with +x and gy with +z
     let dgx, dgy;

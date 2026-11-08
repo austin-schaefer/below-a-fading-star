@@ -1,5 +1,7 @@
 # Wilderness v4: the Great Span and the scale pass
 
+> **Sequencing (2026-11-08):** this brief is the spec, but it ships across two releases. The land (mountain rework, light floor, fog tiers, paths, the causeway route and pit, the taller fall) and the Great Span go in **v4** together with the v5 bioregions; the other wonders, the awe-audit recasts and the local lights go in **v5**. See `wilderness-run.md`.
+
 Austin, after walking v2 stage A. Runs after v3 (performance), so the biggest thing in the world is built on a renderer that can afford it.
 
 "I love the crumbling causeway but wish it was HUGE: the width of the valley, from one side of the mountain bowl to the other, with stairs up either side. In general I'm digging the vibe but I'm not always getting the woah, epic, awe-inspiring ancient wonders thing."
@@ -21,9 +23,9 @@ One Opus agent. Owns `src/structures/bridge.js` (rewritten), new files under `sr
 
 The brief here is not more things but **scale contrast, long sightlines and silhouettes against the sky**. Austin judges each from renders before it lands.
 
-- **Carcanet Keep:** the donjon one and a half times taller, one curtain tower fallen outward in a fan of blocks; a 30 m banner pole on the keep.
+- **Carcanet Keep:** taller, and recast (see "Height, and which architecture works" below): not a donjon with curtain towers but the far-future thing it should have been, one great piece of it fallen outward in a fan of blocks; a 30 m pole or needle on it.
 - **The Arcature:** nest of arches grown to cathedral height (40 m), its outermost arches breaking the skyline from the causeway.
-- **The Sunken Court:** two or three columns raised to 35 m, the rest stumps, so the court reads as the floor of something vast.
+- **The Sunken Court:** two or three uprights raised to 35 m, the rest stumps, so the court reads as the floor of something vast; the uprights are not classical columns (see below) but fluted bronze-shod piers or lens frames.
 - **The Lattice:** one mother crystal 60 m tall at the moraine's heart, the small ones its litter.
 - **The Gradine:** check it climbs out of sight into the haze; if the ruins agent's stair stops short, extend it.
 - **Sightlines:** from spawn the Great Span, the Arcature's top and the Lattice's mother crystal should all be visible; from the Span's deck, everything.
@@ -50,6 +52,18 @@ Renders required at each step, before and after, from spawn, from the causeway, 
 - **BI. The Recession of Ranges.** Yes, and treat it as a larger note: the mountains read as a first fractal mountain range. v4 reworks the walls: layered ranges in depth with fog tiers, distinct silhouettes (crests, buttresses, a few named peaks), strata and scree that follow the structure, and the carved works above sitting in that structure rather than on noise.
 
 Plus, from before: **W. The Great Span** with its two sealed gates, and the awe audit.
+
+### Height, and which architecture works (Austin, 2026-11-08)
+
+- **Use the height.** Few points of interest can be seen from any distance; the bowl reads flat until you are on top of something. v4 should put things up: tall things on the floor (the Great Span's deck and gates, the Lattice's mother crystal, the taller fall, the Gradine climbing out of sight), things on the walls at heights that catch the sun (the wonders), and places the walker can climb to look back over everything (the Span's stairs, the Gradine, a wall gallery). From spawn and from the causeway a walker should be able to count five or six destinations against the sky. The placement plan marks, for every POI, the furthest point it is visible from.
+- **The architecture that works.** The arabesque caravan, the Trigon Span and the other pieces with an architectural point of view of their own are far more compelling than the medieval towers and the Greco-Roman pillars. So the awe audit does not simply enlarge Carcanet Keep, the Armiger's Tower and the Sunken Court: it recasts them in the register that works. Curved and cantilevered forms, inlay and fretwork at a giant's scale, bronze and black glass set in dressed stone, instruments and machines rather than battlements and colonnades; nothing with crenellations, nothing with a Doric column. Where a tower must stay a tower, it becomes something a late and better civilisation would have raised: a gnomon, a beacon frame, a lens mount. Before any of the three is rebuilt the agent shows Austin a render of the new form beside the old.
+- **Layers, not a house style.** Do not take the caravanserai and stamp it everywhere. The point is that the land shows layers of architecture from eon upon eon of history: different ages built here, each with its own strong idea, and they overlap and reuse one another. Draw on many inspirations and make each one strong and distinct rather than blending them. Examples only, not a spec: the keep with an almost Star Wars Old Republic monumentality (vast plain planes, deep-set openings, a few enormous details); the Armiger's Tower slender and fluted like a modern spire; the Span's cyclopean engineering; the taverna's arabesque; the Court's piers from an older, heavier age again. Each landmark names its age and its idea in one line in the placement plan, so a walker can feel that this was built by one people and that by another, long before or long after.
+
+### Map structure (Austin, 2026-11-08, after walking v2.1)
+
+- **Ways between the places.** It is easy to lose the thread between points of interest. Add subtle leads from one to the next: worn paths and sheep-tracks in the grass, little rivulets and runnels that run downhill toward the next thing, lines of stones or old kerbs, a gap in the reeds. Nothing signposted; the land should simply tend to lead you on, the way a real moor does along its drainage. This is terrain and ground-cover work (`terrain.js` wear and wet masks, `vegetation/ground.js`, the causeway module) and belongs to the systems agent with the placement plan, which should draw the lead lines between POIs first.
+- **The causeway goes somewhere.** Today it runs west from the gate and stops. In v4 it is one road with a beginning and an end: it starts at the feet of the two crawling colossi that frame the sun's saddle (AM, the west wall), comes down and east to the Armiger's Tower, on to Carcanet Keep at the centre, then winds round the back of the keep and east across the moor toward the Tumbling Water, where it ends abruptly in a pit with a fractal, ragged edge that has swallowed the end of the road: paving slabs tilt into it, the last few hang over nothing, and the fall's spray drifts across the gap. The road's grade and paving stay what they are (worn, broken, half-sunk in places), so the eye follows it rather than the feet needing it; the pit is a landmark in its own right (name [Proposed]). This replaces the current `CAUSEWAY` polyline in `world.js` and seats in the terrain (wear mask, the pit's cut) in marked blocks; it is the spine the "ways between the places" hang off. Owner: the systems agent with the placement plan, renders from the saddle, the tower, spawn and the pit's lip before anything else lands.
+- **The Tumbling Water, two or three times taller.** The fall from the eastern wall should be a landmark you can see from a good distance, not a thing you find. Raise the lip two to three times higher, widen the spray and the mist column to match, carry its rumble further, and check the sightlines from spawn, the causeway and the Span's deck. Owner: the Great Span agent or a river agent, after the mountain rework (BI) sets the wall it falls from.
 
 ### Light (Austin, 2026-11-08)
 
