@@ -67,7 +67,8 @@ async function start() {
     context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
   }
   const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: canvasAA, depth: !lean, powerPreference: 'high-performance' });
-  const gpumem = installGpuMem(renderer.getContext(), canvas); // texture and target bytes for the profiler
+  // texture and target bytes for the profiler: the GL hooks only when it is on from the start (perf.js installs them late otherwise)
+  const gpumem = url.searchParams.get('perf') === '1' || url.searchParams.get('bench') != null ? installGpuMem(renderer.getContext(), canvas) : null;
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands

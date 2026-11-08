@@ -176,7 +176,10 @@ export function makeTier(ctx, url, choice) {
       const w = windowFrames();
       ring[head] = dt; head = (head + 1) % w; if (n < w) n++;
       if (choice.probe && probeT < PROBE_MS) {
-        probeT += dt; probeSum += dt; probeN++;
+        // A stall is not a slow GPU: right after "Go out" the first frames compile shaders and upload textures
+        // (100-900 ms each), which would drag the mean past the threshold on a fast machine. Frames over 250 ms
+        // are left out of the probe, so it measures 3 s of ordinary frames.
+        if (dt <= 250) { probeT += dt; probeSum += dt; probeN++; }
         if (probeT >= PROBE_MS) {
           state.probeMs = Math.round(probeSum / probeN * 10) / 10;
           const cap = ctx.pacing?.cap || 0, slow = cap > 0 ? 1.15 * 1000 / cap : 20;
@@ -214,7 +217,7 @@ export function makeTier(ctx, url, choice) {
   }
 
   function heading() {
-    const src = state.pinned ? 'pinned' : state.source === 'url' ? 'url' : `auto: ${state.source}`;
+    const src = state.source === 'url' ? (state.pinned ? 'url, over the pin' : 'url') : state.pinned ? 'pinned' : `auto: ${state.source}`; // the source that won
     return `quality · ${state.name} (${src}) · dpr ${state.dpr.toFixed(2)}${state.adapt ? '' : ' fixed'}`;
   }
   // the debug panel's quality rows: the heading shows the tier and the live pixel ratio; one row per choice

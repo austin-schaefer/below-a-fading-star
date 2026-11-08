@@ -11,6 +11,7 @@
 // registerUpdate callbacks and the objects it adds to the scene. Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, CAUSEWAY, WATER } from './world.js';
+import { installGpuMem } from './gpumem.js';
 
 const BLOCK_MS = 500; // one sample block
 const WINDOW = 4;     // blocks in the rolling window (~2 s)
@@ -278,13 +279,16 @@ export function createPerf(ctx) {
     lines.push('lights ' + (Object.entries(lights).map(([k, v]) => `${k.replace('Light', '')} ${v.visible}/${v.count}`).join(' · ') || 'none'));
     lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}${ctx.tier ? ` (${ctx.tier.state.source}${ctx.tier.state.adapt ? ', adaptive' : ''})` : ''}`);
     const gm = ctx.gpumem?.stats();
-    if (gm) lines.push(`gpu memory ${gm.totalMB} MB: textures ${gm.textureMB} · renderbuffers ${gm.renderbufferMB} · canvas ${gm.backbufferMB} · uploads ${gm.uploadsLastFrame}/frame`);
+    if (gm) lines.push(`gpu memory${gm.late ? ' (allocated since the profiler came on)' : ''} ${gm.totalMB} MB: textures ${gm.textureMB} · renderbuffers ${gm.renderbufferMB} · canvas ${gm.backbufferMB} · uploads ${gm.uploadsLastFrame}/frame`);
     const st = settings();
     lines.push(`cap ${st.cap || 'off'}${st.idle ? ' (idle ' + st.targetFps + ')' : ''} · shadow redraws ${st.shadows ? (st.shadows.every ? 'every frame' : st.shadows.redraws) : '–'} · point slots ${typeof st.lightSlots === 'object' ? st.lightSlots.active + '/' + st.lightSlots.slots : 'off'} · bloom ×${st.bloomRes} · throttle ${st.throttle ? 'on' : 'off'}`);
     overlay.textContent = lines.join('\n');
   }
   function setActive(on) {
     api.active = on;
+    // the GL memory hooks cost a little on every texture call, so they go in only once the profiler is on; turned
+    // on late (the panel's row), they count what is allocated from then on and the overlay says so
+    if (on && !ctx.gpumem) ctx.gpumem = installGpuMem(renderer.getContext(), renderer.domElement, { late: true });
     overlay?.classList.toggle('shown', on);
     if (on) { resetWindow(); draw(); }
     else { gpuEnd(); gpu.frame = null; }
