@@ -238,6 +238,80 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
   - `tower-foot-20s` is rendered with `ctx.galleries.offset = 20`. Against `tower-foot`, chain ends have risen and dropped and the great wheel has stepped.
 - **Renders:** `shots/wip/v5-04-galleries-<view>-<before|after>.png` for `spawn`, `causeway-65`, `causeway-40`, `tower-foot`, `tower-foot-20s`, `w140`, `stones`, `span-deck` and `under` (`tools/views-v5-galleries.json`). `v5-04-galleries-sheet.png` puts the causeway (−65, 12) pair side by side. The `-draft*` renders are the iterations. Draft 1 is six sparse tiers that read as a building's front. Draft 2 is a rectangle of tiers. `-draft4b` is the first full set.
 
+### AW. The Plinth Road (`src/v5/plinths.js`; `?plinths=0` leaves it out)
+
+**Idea:** a processional way of paired 20 m plinths runs north-north-east from the Bletting's hedge to the north-east wall's foot; on every plinth only the feet of a robed figure remain, and none of them are human.
+
+- **Count and spacing:** twelve pairs, 11 m apart along the line from (130, −150) to (165, −290). The first pair stands 22 m up from the hedge's gap, at (124.7, −174.0) and (146.0, −168.7). The last pair stands at the plan's end, 143 m up, on the talus. Across the road the two plinths of a pair are 22 m apart, centre to centre. Each plinth is in the kit's masonry, 2.2 m courses with a bronze channel in a few: a footing 7 m square, a step, a battered die, a flaring cornice and a crown slab 6 m square, 20 m in all. The paving between the rows is 13 m wide, in 2.2 m slabs worn through and grassed over in patches. It frays out toward the hedge and runs on past the last pair up the talus to 158 m, where the wall goes up sheer, as if the road went on into it. From the foot, five or six plinths a side read as separate before the rows close into one wall. The haze greys the last pairs against the rock but does not take them.
+- **The feet:** every figure faced across the road and is broken off above the hem. What is left is the hem's robe, 1.7–2.5 m of it, cut unevenly, with deep folds. The legs and feet come out under its lifted front edge. Eleven kinds, dealt so neither row repeats a kind next to itself, each two or three times, every figure with its own sizes and stance:
+  - raptor's talons hooked over the crown's edge
+  - a wader's long splayed toes
+  - a ratite's two toes
+  - webbed toes
+  - a parrot's two forward and two back
+  - a pig's cloven trotters with their dewclaws
+  - a solid hoof
+  - a lizard's splayed claws
+  - a crocodile's webbed feet
+  - a tortoise's columns with their nails
+  - a beast's clawed paws
+
+  The feet are 2–4 m long. Claws, hooves and nails are darker. Most figures are in the plinths' stone, paler where they broke. Seven are black bronze gone to verdigris. Each figure is one distance field polygonised once at build by surface nets (0.30 m cells at high, 0.40 at low), all in one mesh.
+- **What fell:** six of the 24 plinths:
+  - The third pair's east plinth, the eighth pair's west and the tenth pair's east fell. Each footing still stands. The die lies in the grass in three or four blocks along its fall, with the cornice beyond. The eighth pair's west plinth fell inward across the west half of the road, and its webbed feet lie on the paving between the eighth and ninth pairs.
+  - The fifth pair's west plinth (9 m), the seventh pair's east (13 m) and the eleventh pair's west (5.5 m) are broken off. Their top courses lie at their feet.
+  - Each fallen figure's feet lie in the grass beside its plinth, either on their back with the toes in the air or on their side with the soles turned away from the road.
+  - Three kit measure figures stand on the paving at the first pair's west footing, by the fifth pair's raptor feet in the grass, and far up the road at 104 m.
+- **Kept:**
+  - P7 and the Bletting's gap at (130, −150): the paving starts 1.5 m north of the gap, frayed. The hedge and the `GAPS` are unchanged. The first west plinth's centre is 7.8 m from P7's traced line, its footing 3–4 m clear of it. `paths-test` passes 43/43.
+  - The Outwash's gravel: nothing stands west of x 120 north of z −200. The nearest thing there is the fifth pair's raptor feet in the grass, at about x 123.
+  - The walk limit (r 348): every plinth is inside it, the last pair at r 329 and r 335. The paving stops 1.6 m inside the limit.
+  - Rocks and trees stay out of the corridor (15 m either side of the line, `SITES.plinths.r`) and off every fall. The clearances are applied after the draws, in `rocks.js` (the moor's stones and the tor at (120, −180)) and in `hiddenAt` (`vegetation/ground.js`). Ground cover keeps off the paving's middle. With `?plinths=0` the clearances go too.
+  - The ground the road crosses is unchanged: a hollow to −2 m at 16–32 m up the line, flat to 112 m, then the talus rising 20 m to the last pair. The plinths stand on it as it lies, their footings sunk to the lowest corner.
+- **Colliders:** every footing (a ring of five), every fallen block and cornice, the broken plinths' larger fallen blocks, every pair of feet in the grass, and the measure figures. Nothing moves and nothing registers an update.
+- **Cost at high:** 3 draw calls (the masonry, the feet and the measure figures), each with a shadow pass, and 59.7k triangles: 5.0k of masonry, 54.1k of feet and the figures. At low it is 34.7k. Built in about 3 s at high. Before, 0. From the foot (130, −150), the frame goes from 144 to 150 calls (main and shadow passes) and from 2.438M to 2.493M triangles.
+- **Sightlines** (`tools/views-v5-plinths.json`; before is `?plinths=0`):
+
+  | from | what shows |
+  |---|---|
+  | the road's foot (130, −150), looking north up the line | the two rows close into a corridor up to the wall. The tor and the copse that stood in the corridor are gone. |
+  | Medlar Close (130, −90) | the first pairs as a short colonnade over the rank grass, left of centre, with the wall behind |
+  | the Pomegranate House (110, −25) | hidden: the house's own wall and the rise toward the close |
+  | (116, −42), 18 m north of the house | the first plinths just show over the orchard (`pomegranate-n`) |
+  | the Outwash's east end (100, −195), looking east | the west row broadside, the robe stumps on the crowns against the sky, a broken plinth among them |
+  | the Span's deck (−200, 215), y 56 | not seen: 560 m off, behind the keep's hill and lost in the haze |
+  | close (`close`, from (118.7, −224.5)) | the fifth pair's raptor feet on their side in the grass, legs out of the robe and talons toward the measure figure, the broken stump behind |
+  | up at the first west plinth from the paving (`first-up`) | its raptor's talons hanging over the crown's edge against the sky |
+  | the end (`end`, on the talus at (166.4, −295.5)) | only the wall's rock filling the view |
+  | the end (`end-road`, from 90 m up the line) | the road climbing between the last pairs to the rock, the eighth pair's fallen die and its feet on the paving in front |
+- **Renders:** `shots/wip/v5-05-plinths-<view>-<before|after>.png` for `foot`, `medlar`, `pomegranate`, `pomegranate-n`, `outwash`, `span-deck`, `close`, `first-up`, `end` and `end-road`. `v5-05-plinths-sheet.png` puts the foot pair side by side. The iterations:
+  - `-draft1` to `-draft4`: the first feet were too small and set back, so nothing showed from below.
+  - `-dbg*`: views from crown height and of the feet in the grass. In `dbg`, robes 3–4 m tall hid the feet. `dbg2`/`dbg3` show the talons over the edge. `dbg4`/`dbg5` show the lying feet.
+
+### BA. The Hawser (`src/v5/hawser.js`; `?hawser=0` leaves it out)
+
+**Idea:** one chain of 15 m links runs taut from high on the north wall down across the north-west floor into the Sunken Court's paving and goes into the ground; once in a long while whatever is below takes one more link.
+
+- **The line:** straight, not a catenary. The chain is under a tension that takes out the sag, and a straight line lets the shift be one translation. The anchor is on the bearing of (−120, −380) (342.5°), where `faceAt` finds the face at **y 100**: (−119.7, −379.2), r 398, on the main wall's cliff (82°). That is 43 m above the front range's crest on the line (y 57 at (−104, −342)) and in bare rock, as answer 3 has it. The low end is `COURT.hawser` (−40, −189) at the paving's top (y −0.78). The chain is 229.5 m long and falls at 26°. It clears the front range by 28 m at its axis, and the floor by at least 9 m (the envelope's underside) until the last 30 m. It crosses the Outwash's west edge at about (−45, −200), 5 m up, and the Pegs' line (x −80) at z −284, 42 m up, over the last peg.
+- **The links:** stud links of dressed iron after an anchor cable's proportions: 15 m long, 9 m wide, a 2.5 m octagonal bar (flat facets), a 10 m pitch, the stud banded in bronze. One `InstancedMesh` of **27 links**, 23 of them in the open and the rest in the rock behind the collar and the ground below the paving. Each lies along the line, turned 90° from the one before (and rolled 8° more, the same for every pair). The iron is rust where water runs and worn bright inside the bends where links bear. Dust lies on whichever faces are up, which the shader reads in world space. That pale line on the tops is what makes the chain read against the dark wall from far off.
+- **The anchor:** a bronze hawse collar, 24 m across, flared at the lip and going black down its throat, set through an octagonal boss of dressed iron let into the face. The chain goes into the collar. The anchor and collar are one mesh. A first draft also had four bronze straps across the face. They caught the sun out of the shadow box and read as a pale tablet from the causeway (`-draft5`), so they were cut and the boss darkened.
+- **At the court:** nothing changed in `court.js`. The court's whole paving within 7 m of the point and the clear approach (no pier on the z −30 row) were already there. The links cut into the whole slabs and carry on into the ground. Nothing else stands on the ground. Height-capped colliders (r 3.2, every 2 m) run along the line over the first 12.5 m out from the paving, where the links come within a body's height of the floor, so a walker comes up against the iron. Beyond that the chain passes overhead. **The measure** is one kit figure under the line 15 m out, with the links passing about 2 m over its head. The court's north upright stands 20 m behind it.
+- **The shift:** the interval is 90–240 s from a private rng (8811). The first falls within 60 s (15–60 s) of first coming within 160 m of the line, if it was due later. `?hawser=shift` forces one 3 s after the frames start, and `__fp.hawser.shift(at)` forces one posed `at` seconds in. The whole chain jerks one pitch (10 m) toward the court as a damped spring from rest: it overshoots about 2 m at 0.45 s and has settled by 2 s. Meanwhile it bows across itself (0.55 m at the middle, nothing at the ends, a uniform in the vertex shader) and dies away over a second. The travel is the mesh's position along the line, kept modulo two pitches, because the pattern repeats every two links. There is no per-link CPU work and no per-frame allocation. The shadow map is redrawn each frame of the jerk while the walker is within 220 m of the line. The update is registered with `{ pos: midpoint, r: 115, near: 600, hz: 4 }`, so from anywhere in the bowl it runs at frame rate.
+- **The groan:** `hawser-groan` in `src/audio.js`, at the chain's midpoint (−79.9, 49.6, −284.1). Three low saws at 38, 57 and 76.5 Hz sag in pitch and catch (stick-slip in their gain) over a brown grind. The settle's thud comes at 0.42 s. Then the iron rings out on four inharmonic partials (113–747 Hz) over 2–5 s. Its inverse falloff runs from a 160 m reference with a 3 km range and heavy reverb, so it is still a third of its level 500 m off and the whole bowl hears it. `tools/audio-test.mjs` fires it 200 m off (one more firing, so 42 checks).
+- **The dust:** one `Points` draw, only while it falls (6.5 s). It has 2600 motes at high and 1100 at low along the whole line, shaken outward, then falling and drifting downwind. The shiver runs up the line from the paving in half a second. Each mote is gone in 4–6 s and is faded near the eye.
+- **Cost at high:** 3 draw calls in the main pass (links, anchor, figure), +1 (the dust) during a shift, and +2 in the shadow pass near it. 16.6k triangles (links 16.0k, anchor 0.5k, figure 0.2k), 10.2k at low. In the renders: the court floor 139 → 144 calls, 2.09M → 2.13M triangles (with the shadow pass); the moraine 145 → 150, +33k; the causeway and the Span's deck +3 calls and +17k (beyond the shadow box). The chain casts shadows: the box (190 m) takes the low end and its shadow across the court whenever you are near, and its upper links throw their shadow on the cliff.
+- **Sightlines** (renders, before is `?hawser=0`):
+
+  | from | what reads |
+  |---|---|
+  | the court's floor (−57, −188), looking up the line | the links recede in sunlit pairs toward the wall, the figure under them; past about 100 m they go into the haze against the shadowed cliff, and the collar is not seen |
+  | the Outwash's moraine (15, −178), north-west | the lower two-thirds whole, climbing from behind the moraine's west end to the wall, against the cliff; the top third and the anchor are taken by the haze |
+  | the Wayside Shrine (−102, −134), north | the best view: one diagonal of links from the boss in the shadowed wall down to the court beside the mother crystal; the dusty tops catch the light the whole way |
+  | the causeway (−40, 22), north | 420–600 m off: a faint diagonal thread of links on the north wall, from the boss down behind the court's north upright; the dusty tops are what make it read |
+  | the Span's deck (−200, 215) y 56, north | not seen: the low end is behind the parapet and the rest, 520–600 m off, is in the haze's cap against the wall; before and after match |
+
+- **Renders:** `shots/wip/v5-05-hawser-<view>-<before|after>.png` for `floor`, `court` (−47, −190: a first floor view standing nearly on the line, the near links end-on), `moraine`, `shrine`, `causeway-40`, `span-deck` and `measure` (−22, −200: the low links against the glow, the lens mount beyond) (`tools/views-v5-hawser.json`). The mid-shift renders are `v5-05-hawser-floor-shift.png` (0.5 s in: the links half a pitch on and overshooting, dust coming off the near links), `-court-shift.png` and `-moraine-shift.png` (1.6 s: dust down the whole length) (`tools/views-v5-hawser-shift.json`). `v5-05-hawser-sheet.png` puts the floor pair side by side. The `-draft*` renders are the iterations: draft 1 has the plate and straps; `-draft5after` is the first full set, with the pale tablet; `-noanchor-draft5` is the diagnosis.
+
 ### AK. The Annals (`src/v5/annals.js`; `?annals=0` compiles it out)
 
 **Idea:** a frieze runs round the bowl 110–130 m up, a procession of figures each 40 m tall, worn almost smooth, which reads only in raking light and seems to walk the other way while the sun gutters.

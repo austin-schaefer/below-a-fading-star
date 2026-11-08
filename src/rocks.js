@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
+import { plinthsClear } from './v5/plinths.js';
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -146,6 +147,7 @@ export async function build(ctx) {
     if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
     if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
     if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
+    if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
@@ -158,7 +160,8 @@ export async function build(ctx) {
       const x = tx + Math.cos(ang) * d, z = tz + Math.sin(ang) * d;
       const size = 1.6 + rng() * 3.4;
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
-      classes.boulder.push({ x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 });
+      const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
+      if (!plinthsClear(x, z)) classes.boulder.push(it); // after the draws, as above
     }
   }
 

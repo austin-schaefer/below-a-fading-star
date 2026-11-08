@@ -1,0 +1,12 @@
+[
+ {"name": "plinths-foot", "x": 130, "z": -150, "yaw": -0.245, "pitch": 0.3},
+ {"name": "plinths-medlar", "x": 130, "z": -90, "yaw": -0.2, "pitch": 0.1},
+ {"name": "plinths-pomegranate", "x": 110, "z": -25, "yaw": -0.192, "pitch": 0.08},
+ {"name": "plinths-pomegranate-n", "x": 116, "z": -42, "yaw": -0.15, "pitch": 0.06},
+ {"name": "plinths-outwash", "x": 100, "z": -195, "yaw": -1.5708, "pitch": 0.14},
+ {"name": "plinths-span-deck", "x": -200, "z": 215, "dy": 56.54, "yaw": -0.675, "pitch": 0.02},
+ {"name": "plinths-close", "x": 118.7, "z": -224.5, "yaw": -1.555, "pitch": 0.02},
+ {"name": "plinths-first-up", "x": 131, "z": -162, "yaw": 0.487, "pitch": 0.55},
+ {"name": "plinths-end", "x": 166.4, "z": -295.5, "yaw": -0.245, "pitch": 0.25},
+ {"name": "plinths-end-road", "x": 149.9, "z": -237.8, "yaw": -0.245, "pitch": 0.2}
+]
