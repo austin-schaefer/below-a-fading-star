@@ -117,6 +117,18 @@ export function hexCellsIn(x0, z0, x1, z1, fn) {
 }
 
 // A deterministic spot on open ground: off the water, the causeway, steep slopes and the landmarks.
+// Place a feature at its own landmark's coordinates if the ground there is fit (slope under
+// o.slope, not in water), else fall back to a findSpot search with the landmark allowed.
+export function pinSpot(env, L, size, o = {}) {
+  const T = env.ctx.terrain;
+  const taken = env.taken || (env.taken = []);
+  if (L && T.slopeAt(L.x, L.z) <= (o.slope ?? 0.8) && T.heightAt(L.x, L.z) >= -2.2) {
+    taken.push([L.x, L.z, size]);
+    return { x: L.x, z: L.z };
+  }
+  return findSpot(env, o);
+}
+
 export function findSpot(env, o = {}) {
   const { ctx, rng } = env;
   const T = ctx.terrain;
