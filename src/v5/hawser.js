@@ -38,6 +38,7 @@ export async function build(ctx) {
   const site = SITES.hawser;
   const bearing = ((Math.atan2(site.from[1], site.from[0]) * 180) / Math.PI + 90 + 360) % 360;
   const F = ctx.mountains.faceAt(bearing, HAWSER.anchorY);
+  if (!F) { console.warn('hawser: the wall has no face at bearing', bearing.toFixed(0), 'and height', HAWSER.anchorY, 'm; the chain is left out'); ctx.hawser = null; return; }
   const E = new THREE.Vector3(HAWSER.entry.x, terrain.heightAt(HAWSER.entry.x, HAWSER.entry.z) + 0.12, HAWSER.entry.z);
   const A = new THREE.Vector3(F.x, HAWSER.anchorY, F.z);
   const u = new THREE.Vector3().subVectors(E, A);
@@ -325,7 +326,6 @@ export async function build(ctx) {
     DU.uT.value = el;
   }
   function begin(el0 = 0) {
-    if (S.active) { S.base = (S.base + P) % (2 * P); }
     S.active = true; S.el = el0; S.count++;
     dustPts.visible = true;
     ctx.renderer.getDrawingBufferSize(size);

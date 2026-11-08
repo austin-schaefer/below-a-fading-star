@@ -26,7 +26,7 @@
 //   bats-out (tower window pos, { count }): a soft high fluttering rush and many tiny chirps, 3-4 s: 160 m
 //   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
 //   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
-//   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7 s: the whole bowl
+//   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
 import { hyp } from './noise.js';
 
