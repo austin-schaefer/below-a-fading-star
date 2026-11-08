@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 430 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 470 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -53,6 +53,10 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 38 | v5 coherence: the four circles, the protected frames before (v4 wall) and after (massifs), the fixes |
 | 39 | v5 morning fixes: tree LOD, stair hop, wood hitch, shadow cadence, the record panel |
 | 40 | v5 light: the Escarpment Lamps on the west massif |
+| 41 | v6 harness and survey: the pop survey's pairs and the pop-test noise floor |
+| 42 | v6 lights: bloom's squares on WebKit and Firefox, found and capped |
+| 43 | v6 post: the finish pass, FXAA and the grain |
+| 44 | v6 ground: plant and rock cross-fades |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -415,17 +419,21 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `32-ridge-sheet.png` | The Battlemented Ridge from the causeway, without and with the merlons. |
 | `33-cincture-gutter-causeway-after.png` | After: the Cincture's broken hoop, its rim red and bright in a gutter, from the causeway. |
 | `33-cincture-sheet.png` | The Cincture from the Lattice: the sky without and with the hoop. |
+| `33-occultation-paint-tarn-fail.png` | The Occultation's paint test over the tarn: the whole frame flooded acid green. Funny failure. |
 | `33-occultation-saddle-after.png` | After: the Occultation's band of shadow over the saddle, the sun's disc darkened. |
 | `33-occultation-saddle-before.png` | Before: the same saddle with no pass. |
 | `33-occultation-sheet.png` | The Occultation from the causeway, without and during the pass; a faint darkening by design. |
 | `34-nave-sheet.png` | The Foundered Nave: the turf, then the hole over the buried hall. |
 | `34-nave-south-after.png` | After: the Nave from the south rim, the hole over the 43 columns, black water below. |
+| `34-nave-south-first.png` | First Nave: the hall of columns seen from the south, before the rim, the water and the grass. |
 | `34-nave-west-after.png` | After: the hole from the west lip, the columns' capitals 3-5 m below the eye. |
 | `34-spawn-lattice-after.png` | After: spawn at (2, 35), the mother crystal whole at the keep's edge. |
 | `34-spawn-lattice-before.png` | Before: spawn at (6, 36), the crystal clipped by the keep. |
 | `35-keptfire-flare-after.png` | After: the Kept Fire flaring as you come within 12 m, sparks and a warm pool on the shingle. |
 | `35-keptfire-sheet.png` | The Kept Fire on the Outwash: ring of twelve stones, tripod and pot, then the flare. |
 | `35-lights-arcature-sheet.png` | The local lights at the Arcature, without and with. |
+| `35-lights-door-20m-after.png` | After: the same door from 20 m, ajar with a lit slit. |
+| `35-lights-door-20m-before.png` | Before: the lens mount's door from 20 m, dark. |
 | `35-lights-door-westleg-after.png` | After: the lens mount's door ajar and lit, from the saddle's west leg. |
 | `35-lights-embers-close-after.png` | After: the embers close, a pulsing bed and the odd spark. |
 | `35-lights-leerie-cages-after.png` | After: the Leerie's row restyled as iron lamp-cages on a kerb, lit by the gutter wave. |
@@ -433,9 +441,14 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `35-lights-leerie-cages-sheet.png` | The restyle in six frames: standards (top) against cages (bottom), unlit, lit and from the house. |
 | `35-lights-leerie-standards-before-sheet.png` | The first Leerie standards from the Arcature end, unlit and lit in a gutter (the cross-arm lanterns the coherence pass rejected). |
 | `35-lights-moss-rim-after.png` | After: the cold moss in the Deodand Wood's hollow from its rim. |
+| `35-lights-moss-rim-before.png` | Before: the Deodand Wood's hollow from its rim with no moss light. |
 | `35-lights-post-road-after.png` | After: the lamp on its post by the causeway, the tower's hill and the massif behind. |
+| `35-lights-post-road-before.png` | Before: the same causeway view with no lamp on its post. |
 | `36-collation-end-after.png` | After: the Collation, an 11 m table laid for twelve, from its end. |
+| `36-collation-side-after.png` | After: the Collation from its side, the long table across the grass. |
+| `36-collation-side-before.png` | Before: the same field without the Collation. |
 | `36-dressing-sheet.png` | The set-dressing: the Collation, the Slipper and the Prospect in one sheet. |
+| `36-prospect-bake-mask.png` | The Prospect's bake: the black silhouette mask the canvas sky is painted behind. |
 | `36-prospect-canvas.png` | The Unfinished Prospect's canvas, the one blue sky in the world, painted from the view with the v4 wall; not re-baked for the massifs. |
 | `36-prospect-shoulder-after.png` | After: the easel's canvas beside the real red sun, with the massif behind. |
 | `36-prospect-shoulder-before.png` | The same frame against the v4 wall, the original shot. |
@@ -446,6 +459,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `37-mountains-hung-gradine-landing-sheet.png` | The Gradine's landing, v4 wall beside the massifs. |
 | `37-mountains-hung-hawser-floor-sheet.png` | The Hawser from the floor, v4 wall beside the massifs. |
 | `37-mountains-hung-ridge-outwash-sheet.png` | The Ridge's merlons from the Outwash, v4 wall beside the massifs. |
+| `37-mountains-hung-span-abut-east-sheet.png` | The Span's east abutment, v4 wall beside the massifs. |
 | `37-mountains-hung-vigilant-moor-sheet.png` | The Vigilant on the sky from the moor, v4 wall beside the massifs. |
 | `37-mountains-massifs-causeway-north-sheet.png` | From the causeway to the north: the v4 wall, the massifs as landed, then with the rock pass. |
 | `37-mountains-massifs-causeway-sun-after.png` | After: the sun in its saddle between massifs after the col was raised. |
@@ -499,4 +513,44 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `40-lamps-outwash-after.png` | After: from the Outwash looking west, the Galleries' lit rooms and the Lamps as dust on the rock. |
 | `40-lamps-outwash-before.png` | Before: the same view without the Lamps. |
 | `40-lamps-rows-after.png` | After: from the walk limit looking up, the lamps in long diagonals across the buttresses. |
+| `41-poptest-baseline-a.png` | `pop-test` baseline, frame a: a pose with the sky pinned, grabbed once. |
+| `41-poptest-baseline-b.png` | `pop-test` baseline, frame b: the same pose grabbed again. |
+| `41-poptest-baseline-diff.png` | The baseline's diff: a few red specks of drift, the floor a switch must clear to count as a pop. |
+| `41-survey-baseline-diff.png` | The survey's noise floor: the same pose grabbed twice in the Deodand Wood, 69 changed pixels marked red. |
+| `41-survey-tree-far-after.png` | Survey pair, after: the same pose a step later. |
+| `41-survey-tree-far-before.png` | Survey pair, before: the pose pinned at the step where the far-tree watch changes; flower spars on the left. |
+| `41-survey-tree-far-diff.png` | What changed between the pair, in red: the spars and the sun's glow; the survey's method for finding each pop. |
+| `42-bloom-mosspoint-medium-cap0.png` | An injected 2000-bright point at the moss hollow in WebKit, bloom uncapped (`?bloomcap=0`): five nested soft squares, the fault Austin saw. |
+| `42-bloom-mosspoint-medium-cap16.png` | The same point with the bright pass capped at 16: a small dot; `src/bloomfix.js` ships capped. |
+| `42-bloom-mosspoint-phone-cap0.png` | The injected point in WebKit at the phone's size (390x844 at 3x, low tier), uncapped: the squares fill the screen. |
+| `42-bloom-mosspoint-phone-cap16.png` | The same phone view capped at 16: the square is gone. |
+| `42-squares-leerie-chromium.png` | The Leerie row and the post lamp in Chromium: round lights. |
+| `42-squares-leerie-firefox.png` | The same view in Firefox: round, with bloom's mips on; the squares were not reproduced here. |
+| `42-squares-leerie-webkit.png` | The same view in WebKit: round. |
+| `42-squares-moss-firefox.png` | The moss hollow in Firefox: round lights, no squares. |
+| `42-squares-moss-webkit.png` | The moss hollow in WebKit: round lights, no squares. |
+| `43-fxaa-lattice-off.png` | The Lattice with `?aa=off`: stair-stepped edges on the crystals and the ley lines. |
+| `43-fxaa-lattice-on.png` | After: FXAA in the finish pass at every tier, the same edges smoothed. |
+| `43-fxaa-sun-off.png` | The sun's saddle with `?aa=off`: hard edges on the Thrones and the span. |
+| `43-fxaa-sun-on.png` | After: FXAA on; the edges soften. |
+| `43-grain-fog-g0.5.png` | The grain at half amplitude (`?grain=0.5`) in the fog view, laptop tier. |
+| `43-grain-fog-g0.6-default.png` | The grain at 0.6, the default Austin chose from this set, in the fog view. |
+| `43-grain-fog-g1.png` | The grain at 1, v5's amplitude, in the fog view: the one Austin found too grainy. |
+| `43-grain-moss-g0.5.png` | The grain at 0.5 in the moss hollow. |
+| `43-grain-moss-g1.png` | The grain at 1 in the moss hollow. |
+| `43-grain-phone-g0.5.png` | The grain at 0.5 on the low tier at the phone's 331x717 buffer. |
+| `43-grain-phone-g1.png` | The grain at 1 on the phone's buffer: coarse, most of what Austin saw. |
+| `43-post-spawn-after.png` | After the finish pass: bloom, grade and output in one full-size pass, the rays at a quarter size; the spawn view reads the same. |
+| `43-post-spawn-before.png` | Before the finish pass: three full-size passes after the scene. |
+| `43-post-spawn-diff.png` | The finish pass's diff at spawn: a handful of red pixels in the grass, the picture unchanged. |
+| `43-post-sun-after.png` | After: the sun's saddle through the finish pass. |
+| `43-post-sun-before.png` | Before: the same saddle with the old chain. |
+| `43-rays-sun-quarter.png` | The sun's rays at a quarter size: the saddle reads the same, the decision that cut the pass's cost. |
+| `44-grass-still-diff.png` | With `?wind=0` holding the plants still, the grass switch's diff is a scatter of specks: the cross-fade leaves nothing to catch. |
+| `44-grass-switch-after.png` | After: the grass chunks cross over 8 m at the 60 m switch, the near and far meshes dithering through each other. |
+| `44-grass-switch-before.png` | Before (`?plantfade=0`): the grass switch at 60 m, a chunk changing mesh whole. |
+| `44-reeds-switch-after.png` | After: the reeds fading from near mesh to far at 50 m. |
+| `44-reeds-switch-before.png` | Before: the reed chunk's hard switch at 50 m. |
+| `44-rocks-ling-after.png` | After: the High Ling's boulders crossing from fine to coarse twin over 132-140 m (`?rockfade`), shadow fading with them. |
+| `44-rocks-ling-before.png` | Before (`?rockfade=0`): the same view with the fine boulders ending in a ring. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
