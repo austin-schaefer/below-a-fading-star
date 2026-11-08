@@ -137,7 +137,9 @@ export async function build(ctx) {
     if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
     const y = terrain.heightAt(x, z);
     terrain.normalAt(x, z, n);
-    classes[cls].push({ x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z });
+    const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
+    if (Math.hypot(x - L.court.x, z - L.court.z) < 40) continue; // v5: the court's piers reach 39 m (after the draws, so rocks elsewhere keep their places)
+    classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
   const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];

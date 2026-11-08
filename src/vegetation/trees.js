@@ -490,12 +490,12 @@ export function buildTrees(ctx, ground, mats) {
   };
   const place = (x, z, v, s, gap, rot, tint, kind, collide = true) => {
     const y = ground.heightAt(x, z);
-    const t = { x, y, z, v, s, gap, rot, tint, kind };
+    const t = { x, y, z, v, s, gap, rot, tint, kind, hidden: ground.underPiers(x, z) };
     trees.push(t);
     const k = key(Math.floor(x / 8), Math.floor(z / 8));
     if (!occ.has(k)) occ.set(k, []);
     occ.get(k).push(t);
-    if (collide) ctx.addCollider({ x, z, r: variants[v].trunkR * s * 1.25 });
+    if (collide && !t.hidden) ctx.addCollider({ x, z, r: variants[v].trunkR * s * 1.25 });
     return t;
   };
   const b = {};
@@ -542,7 +542,7 @@ export function buildTrees(ctx, ground, mats) {
     if (!ok) continue;
     const t = place(x, z, v, 1, 0, rot, 0.85 + rng() * 0.2, 'fallen', false);
     t.fullTilt = true;
-    for (let s = 0; s <= len; s += 1.6) ctx.addCollider({ x: x + dx * s, z: z + dz * s, r: variants[v].trunkR * 1.1, y: t.y - 1, h: variants[v].trunkR * 2 + 1 });
+    if (!t.hidden) for (let s = 0; s <= len; s += 1.6) ctx.addCollider({ x: x + dx * s, z: z + dz * s, r: variants[v].trunkR * 1.1, y: t.y - 1, h: variants[v].trunkR * 2 + 1 });
     fallenSpots.push(t);
   }
   // (b) lone wind-bent trees on the open moor, all leaning east
@@ -600,7 +600,7 @@ export function buildTrees(ctx, ground, mats) {
       const s = 0.6 + Math.pow(rng(), 1.5) * 2.2;
       const t = place(x, z, moundV[Math.floor(rng() * 3)], s, 2, rng() * 6.28, 0.8 + rng() * 0.3, 'mound', false);
       t.sy = s * (0.5 + rng() * 0.6); t.fullTilt = true;
-      if (s > 1.3) ctx.addCollider({ x, z, r: s * 0.75, y: t.y - 1, h: t.sy * 0.45 + 1 });
+      if (s > 1.3 && !t.hidden) ctx.addCollider({ x, z, r: s * 0.75, y: t.y - 1, h: t.sy * 0.45 + 1 });
       mounds++;
     }
   }
@@ -646,6 +646,7 @@ export function buildTrees(ctx, ground, mats) {
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), col = new THREE.Color();
   const nrm = { x: 0, y: 1, z: 0 }, up = new THREE.Vector3(0, 1, 0), tilt = new THREE.Quaternion(), yawQ = new THREE.Quaternion();
   for (const t of trees) {
+    if (t.hidden) continue;
     ground.normalAt(t.x, t.z, nrm);
     // trees grow up, not along the slope: only a slight tilt toward the ground normal (logs and mounds lie on it)
     const k = t.fullTilt ? 1 : 0.25;
@@ -673,6 +674,7 @@ export function buildTrees(ctx, ground, mats) {
     batch.sortFrom?.(px, pz);
     for (let i = 0; i < trees.length; i++) {
       const t = trees[i];
+      if (t.hidden) continue;
       const d = Math.sqrt((t.x - px) ** 2 + (t.z - pz) ** 2) / t.lodK;
       let want = d < HI ? 2 : d < MID ? 1 : 0;
       if (want < t.lod) { if (t.lod === 2 && d < HI + HYS) want = 2; else if (d < MID + HYS) want = Math.max(want, 1); }

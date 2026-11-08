@@ -126,5 +126,8 @@ export function makeGround(ctx) {
     return false;
   }
 
-  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
+  // v5: the Sunken Court's piers reach 39 m; a tree placed there is kept (so the placement's rng and spacing stay as
+  // they were everywhere else) but not drawn and not collided (trees.js)
+  const underPiers = (x, z) => d2(x, z, L.court) < 39 * 39;
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, underPiers, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
 }
