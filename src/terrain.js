@@ -480,8 +480,18 @@ function makeDetailTexture(size = 256) {
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.generateMipmaps = true; tex.needsUpdate = true;
+  // the texture's mean (its last mip level): what the finest detail averages to at a distance
+  const mean = [0, 0, 0];
+  for (let i = 0; i < data.length; i += 4) { mean[0] += data[i]; mean[1] += data[i + 1]; mean[2] += data[i + 2]; }
+  tex.userData.mean = mean.map((m) => m / (255 * size * size));
   return tex;
 }
+
+// Distance bands (v3 stage 3; ?bands=0 computes everything everywhere, as before): the bump's 24
+// texture reads are skipped past 60 m, where its strength is already 0, and the finest detail layer
+// (2.1 cycles a metre, already mip-averaged to its mean on open ground past ~30 m) fades to that mean
+// between 90 and 120 m and is not sampled beyond.
+const BANDS = new URL(location.href).searchParams.get('bands') !== '0';
 
 const C = (hex) => new THREE.Color(hex);
 
@@ -585,12 +595,16 @@ export function buildTerrain(ctx) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0.0 });
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uDetail = { value: detail };
+    shader.uniforms.uBumpFar = { value: BANDS ? 60 : 1e9 };
+    shader.uniforms.uFineBand = { value: new THREE.Vector2(BANDS ? 90 : 1e9, BANDS ? 120 : 2e9) };
+    shader.uniforms.uFineMean = { value: new THREE.Vector3(...detail.userData.mean) };
+    mat.userData.shader = shader; // the bands' uniforms, for A/B timing from the console
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform sampler2D uDetail; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet;
+        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet;
         vec3 triplanar(sampler2D t, vec3 p, vec3 n, float s) {
           vec3 w = abs(n); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z);
           return texture2D(t, p.yz * s).rgb * w.x + texture2D(t, p.xz * s).rgb * w.y + texture2D(t, p.xy * s).rgb * w.z;
@@ -612,7 +626,9 @@ export function buildTerrain(ctx) {
         {
           vec3 d1 = triplanar(uDetail, vTPos, vTNormal, 0.35);
           vec3 d2 = triplanar(uDetail, vTPos, vTNormal, 0.045);
-          vec3 d3 = triplanar(uDetail, vTPos, vTNormal, 2.1);
+          vec3 d3 = uFineMean;
+          float fineW = 1.0 - smoothstep(uFineBand.x, uFineBand.y, length(vTPos - cameraPosition));
+          if (fineW > 0.0) d3 = mix(uFineMean, triplanar(uDetail, vTPos, vTNormal, 2.1), fineW);
           float grain = (d1.r - 0.5) * 0.55 + (d2.g - 0.5) * 0.4 + (d3.b - 0.4) * 0.25;
           // bare earth patches where the detail noise is low on flat ground
           float bare = smoothstep(0.62, 0.78, d2.r) * smoothstep(0.6, 0.9, vTNormal.y);
@@ -655,7 +671,8 @@ export function buildTerrain(ctx) {
         {
           float camD = length(vTPos - cameraPosition);
           float bumpStrength = 0.07 * (1.0 - smoothstep(10.0, 60.0, camD));
-          vec3 nW = fpBumpWorld(vTPos, normalize(vTNormal), bumpStrength);
+          vec3 nW = normalize(vTNormal);
+          if (camD < uBumpFar) nW = fpBumpWorld(vTPos, nW, bumpStrength);
           normal = normalize(mat3(viewMatrix) * nW);
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
