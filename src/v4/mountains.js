@@ -432,12 +432,27 @@ function applyCandidate(h, x, z, r, g, glacierH) {
 }
 // the far ranges behind the massifs: the crest's smoothed elevation, scaled down (CAND.far, per tier), so each range
 // stands below the massifs in the picture and above the cols
+// Each far range rolls in massifs and cols of its own, not the near crest smoothed: [bearing, half-width] lobes; the
+// nearer ring sets a massif behind each near col (112, 180, 328), so a second, paler line of the same form stands in
+// each gap, its own cols hidden behind the near massifs; the farthest ring's lobes fall between the nearer's.
+const FAR_LOBES = {
+  far: [[30, 16], [74, 13], [112, 14], [150, 14], [180, 11], [214, 14], [292, 15], [328, 12], [356, 10]],
+  farthest: [[8, 14], [52, 15], [94, 13], [132, 14], [198, 15], [282, 13], [310, 12], [344, 13]],
+};
+function farLobe(T, b) {
+  let w = 0;
+  for (const [lb, lw] of FAR_LOBES[T.name]) {
+    let d = Math.abs(b - lb); if (d > 180) d = 360 - d;
+    if (d < lw) w = Math.max(w, Math.pow(Math.cos((d / lw) * Math.PI / 2), 1.2)); // broad-shouldered, not cones
+  }
+  return w;
+}
 function farCrestCand(T, az, out) {
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
   const fe = T_FE[i] + (T_FE[i + 1] - T_FE[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
   const k = CAND.far[T.name === 'far' ? 0 : 1];
-  const elev = (fe * k + 1.2 * ring(az, 2.3, T.seed + 3)) * D2R;
+  const elev = (fe * k * (0.55 + 0.6 * farLobe(T, bearingOf(az))) + 1.2 * ring(az, 2.3, T.seed + 3)) * D2R;
   let hc = Math.tan(elev) * rc;
   const d = Math.abs(angDiff(az, SADDLE.azimuth));
   hc = lerp(T.floor, hc, smoothstep(T.full * D2R, T.wall * D2R, d));
@@ -477,7 +492,7 @@ function farHeight(T, az, r) {
   const x = Math.cos(az) * r, z = Math.sin(az) * r;
   // broad massifs, then a little crest texture (ridged noise alone hangs from the sky like stalactites)
   y += S.fbm2(x * 0.0032 + T.seed, z * 0.0032, 4) * hc * 0.16 * smoothstep(0.25, 1, u);
-  y += (S.ridged2(x * 0.011 - T.seed, z * 0.011, 3) - 0.45) * hc * 0.045 * smoothstep(0.2, 1, u);
+  y += (S.ridged2(x * 0.011 - T.seed, z * 0.011, 3) - 0.45) * hc * (CAND ? 0.08 : 0.045) * smoothstep(0.2, 1, u); // the massifs: more crest silhouette, as the far ranges stand in the open through the cols
   return y - 30 * (1 - smoothstep(T.r0, T.r0 + 80, r)); // the inner edge tucks below the floor, out of sight
 }
 function buildRing(ctx, T) {
