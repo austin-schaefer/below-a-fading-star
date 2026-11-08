@@ -228,7 +228,7 @@ export async function build(ctx) {
   const yews = buildYews(ctx, rng, low);
   meshes.push(...yews.meshes);
 
-  // ---- the fallen curtain tower's dressed blocks, in a fan on bearings 30-60 from the keep
+  // ---- the dressed blocks of the keep's fallen north-east corner, in a fan on bearings 30-60 (structures/keep.js lays the fall's near end, r 27-47)
   const blocks = buildBlocks(ctx, rng, low);
   meshes.push(blocks.mesh);
 
