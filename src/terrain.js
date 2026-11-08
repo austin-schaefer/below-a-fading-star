@@ -10,6 +10,7 @@ import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the 
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
+import { injectOccultation } from './v5/occultation.js'; // v5 wonders: AR the Occultation's shadow on the walls
 import { injectAnnals } from './v5/annals.js'; // v5 wonders: AK the Annals, a frieze in this material's fragment shader
 
 const SX = makeSimplex(WORLD.seed);
@@ -696,6 +697,7 @@ export function buildTerrain(ctx) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         totalEmissiveRadiance += vec3(0.02, 0.04, 0.07) * vIce;`);
     injectAnnals(shader); // v5 wonders: AK the Annals round the wall, 110-130 m up (src/v5/annals.js)
+    injectOccultation(shader); // v5 wonders: AR the Occultation's shadow across the walls (src/v5/occultation.js)
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
