@@ -25,8 +25,8 @@ const RAYS_FULL = params.get('rays') === 'full';
 const POST_CLOCK = params.get('postclock') !== '0';
 // FXAA inside the finish, at every tier (v6-08 Q1's default, pulled forward); ?aa=off draws without it
 const FXAA = params.get('aa') !== 'off';
-// ?grain=<multiplier> scales the film grain's 0.02 (1, the default, as before; 0 none)
-const GRAIN = (() => { const g = parseFloat(params.get('grain')); return g >= 0 ? g : 1; })();
+// ?grain=<multiplier> scales the film grain's 0.02 (0.6 is the default, chosen by Austin from the v6-02 compare set; 1 is the old amount; 0 none)
+const GRAIN = (() => { const g = parseFloat(params.get('grain')); return g >= 0 ? g : 0.6; })();
 // the rays' target per axis, as a fraction of the render (chosen against the sun pair's tolerance)
 const RAYS_RES = 0.25;
 

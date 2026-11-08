@@ -98,7 +98,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `postclock=0` pins post's clock, so the grain and the rays' jitter are the same between loads (render pairs) (v6-02)
 - `bloommips=1..5` blurs only the first n of bloom's five mips (default 5; the finish chain only) (v6-02)
 - `aa=off` draws without the FXAA folded into the finish pass (on at every tier) (v6-02, v6-08 Q1)
-- `grain=<multiplier>` scales the film grain (1 = the 0.02 as before, the default; 0 = none) (v6-02)
+- `grain=<multiplier>` scales the film grain (0.6 = the default, Austin's pick from the v6-02 compare set; 1 = the old 0.02; 0 = none) (v6-02)
 
 ### The walls
 
