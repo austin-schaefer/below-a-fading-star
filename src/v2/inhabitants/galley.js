@@ -147,7 +147,7 @@ function wakeMesh(K, waterY) {
       void main(){ float e = 1.0 - abs(vU); gl_FragColor = vec4(uCol, vA * e * e);
         #include <fog_fragment>
       }`,
-    transparent: true, depthWrite: false, fog: true,
+    transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide,
   });
   const mesh = new THREE.Mesh(g, mat);
   mesh.frustumCulled = false; mesh.renderOrder = 11;   // over the water surface (renderOrder 10) mesh.name = 'inhabitants-galley-wake';

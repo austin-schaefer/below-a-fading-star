@@ -10,7 +10,7 @@ import { smoothstep, clamp } from '../../fauna/geo.js';
 
 const TAU = Math.PI * 2;
 const STONE = new THREE.Color('#1d1b19'), STONE_FACE = new THREE.Color('#2a2724'), STONE_RAW = new THREE.Color('#24211d');
-const LICHEN = new THREE.Color('#9b9670'), LICHEN_D = new THREE.Color('#68704a'), RUST = new THREE.Color('#5a4630');
+const LICHEN = new THREE.Color('#a3a77e'), LICHEN_D = new THREE.Color('#68704a'), RUST = new THREE.Color('#5a4630');
 
 // ---------------------------------------------------------------- the stones
 function layout(C, rng) {
@@ -156,10 +156,10 @@ function buildStones(ctx, C, ground, rng, low) {
 function lizardGeometry() {
   // nose along +z, back up +y, belly at y = 0; about 22 cm nose to tail tip.  ~40 triangles.
   const P = new Painter(['aTail']);
-  const BACK = '#4a4c3c', THROAT = '#8a8670';
+  const BACK = '#585b46', THROAT = '#8a8670';
   // body: a flattened four-sided tube, snout to tail root; the throat and belly pale
-  const body = [[0, 0.012, 0.085], [0, 0.017, 0.045], [0, 0.016, -0.005], [0, 0.011, -0.045]];
-  const brad = [[0.009, 0.006], [0.021, 0.011], [0.022, 0.011], [0.011, 0.007]];
+  const body = [[0, 0.012, 0.08], [0, 0.017, 0.045], [0, 0.016, -0.01], [0, 0.011, -0.05]];
+  const brad = [[0.013, 0.007], [0.027, 0.013], [0.029, 0.013], [0.014, 0.008]];
   const sides = 4;
   const rings = [];
   for (let k = 0; k < body.length; k++) {
@@ -178,7 +178,7 @@ function lizardGeometry() {
   const nose = P.v(0, 0.011, 0.1);
   for (let s = 0; s < sides; s++) P.tri(rings[0][(s + 1) % sides], rings[0][s], nose);
   // tail: a flat tapering ribbon (aTail = distance down the tail, for the swish); the material is two-sided
-  const tail = [[-0.08, 0.004], [-0.115, 0.002], [-0.15, 0.0006]];
+  const tail = [[-0.085, 0.006], [-0.125, 0.0035], [-0.165, 0.0008]];
   let prev = [rings[3][1], rings[3][3]];
   for (let k = 0; k < tail.length; k++) {
     const [z, w] = tail[k];
@@ -187,11 +187,13 @@ function lizardGeometry() {
     P.tri(prev[0], a, b); P.tri(prev[0], b, prev[1]);
     prev = [a, b];
   }
-  // four splayed legs, each a single flat triangle
   P.set('aTail', 0);
-  for (const [sx, z] of [[-1, 0.045], [1, 0.045], [-1, -0.03], [1, -0.03]]) {
-    const r = P.v(sx * 0.016, 0.008, z), f = P.v(sx * 0.05, 0.001, z + 0.02), b = P.v(sx * 0.044, 0.001, z - 0.012);
-    P.tri(r, f, b);
+  // four splayed legs, each bent at the knee: a thigh out to the side, a foot turned forward (front) or back (hind)
+  for (const [sx, z, fz] of [[-1, 0.045, 1], [1, 0.045, 1], [-1, -0.035, -1], [1, -0.035, -1]]) {
+    const hA = P.v(sx * 0.02, 0.008, z + 0.009), hB = P.v(sx * 0.02, 0.008, z - 0.009), k = P.v(sx * 0.052, 0.004, z - fz * 0.004);
+    P.tri(hA, hB, k);
+    const kA = P.v(sx * 0.049, 0.004, z + fz * 0.004), f = P.v(sx * 0.058, 0.001, z + fz * 0.032);
+    P.tri(k, kA, f);
   }
   const g = P.geometry();
   return g;
@@ -249,13 +251,22 @@ export function buildMenology(ctx) {
     // outward check
     if (outN.x * outP.x + outN.z * outP.z < 0) outN.negate();
     outP.applyMatrix4(st.m); outN.transformDirection(st.m);
-    outP.addScaledVector(outN, 0.006);
+    outP.addScaledVector(outN, 0.012);
   }
   const sunAngleFor = (st) => {
     // the stone-local angle that faces the sun
     const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw);
     const lx = sunX * cy - sunZ * sy, lz = sunX * sy + sunZ * cy;
     return Math.atan2(lz, lx);
+  };
+  // the middle of whichever of the stone's four faces looks most toward the sun, where the stone is flattest
+  const sunFaceFor = (st) => {
+    const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw);
+    const lx = sunX * cy - sunZ * sy, lz = sunX * sy + sunZ * cy;
+    let best = 0, bd = -2;
+    for (const a of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) { const d = Math.cos(a) * lx + Math.sin(a) * lz; if (d > bd) { bd = d; best = a; } }
+    const broad = Math.abs(Math.sin(best)) > 0.5;
+    return best + (rng() - 0.5) * (broad ? 0.5 : 0.2);
   };
   const nearestStone = (x, z) => { let best = 0, bd = 1e9; for (let i = 0; i < stones.length; i++) { const d = Math.hypot(stones[i].x - x, stones[i].z - z); if (d < bd) { bd = d; best = i; } } return best; };
   const inside = (x, z) => Math.hypot(x - C.x, z - C.z) < R - 0.6;
@@ -266,7 +277,7 @@ export function buildMenology(ctx) {
   function pickBask(L, st) {
     // somewhere warm: the sun face of this stone, the ground at its sunny foot, or its top
     const r = rng();
-    if (r < 0.55) { L.stone = st.i; L.a = sunAngleFor(st) + (rng() - 0.5) * 1.3; L.y = 0.15 + rng() * (st.h - 0.35); }
+    if (r < 0.55) { L.stone = st.i; L.a = sunFaceFor(st); L.y = 0.15 + rng() * (st.h - 0.4); }
     else if (r < 0.75) { L.stone = st.i; L.a = sunAngleFor(st) + (rng() - 0.5) * 2.0; L.y = st.h - 0.04; L.top = true; }
     else {
       L.stone = -1; L.top = false;

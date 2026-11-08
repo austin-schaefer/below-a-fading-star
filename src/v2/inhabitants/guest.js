@@ -67,11 +67,11 @@ function guestGeometry(low) {
   }, false, false);
   P.xf(null);
   P.sheet(low ? 9 : 12, low ? 6 : 8, (u, v, o) => {
-    const w = 0.12 + 0.08 * v, a = (u - 0.5) * 2 * w / 0.24; // across the chest
-    const r = 0.22 + 0.05 * smoothstep(0.2, 0.7, v) + 0.012;
-    const y = 1.5 - v * 0.4 - 0.04 * Math.cos((u - 0.5) * Math.PI) * v;
+    const w = 0.11 + 0.05 * v, a = (u - 0.5) * 2 * w / 0.23; // across the chest
+    const r = 0.21 + 0.045 * smoothstep(0.2, 0.7, v) + 0.012;
+    const y = 1.5 - v * 0.3 - 0.05 * Math.cos((u - 0.5) * Math.PI) * v;
     P.set('aSway', smoothstep(0.35, 1, v) * 1.6);
-    if (v > 0.8) P.paint(WIMPLE_D, 0, 0.94, 0.16); else P.paint(WIMPLE, 0, 0.92, 0.22);
+    if (v > 0.75) P.paint(WIMPLE_D, 0, 0.94, 0.1); else P.paint(WIMPLE, 0, 0.92, 0.15);
     o[0] = Math.sin(a) * r; o[1] = y; o[2] = Math.cos(a) * r * 0.82 + 0.02;
   });
   P.set('aSway', 0);
