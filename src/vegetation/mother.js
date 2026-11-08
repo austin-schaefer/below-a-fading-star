@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 
 export const MOTHER_H = 60; // metres from the ice at its foot to its apex
+export const MOTHER_FOOT = 9; // metres from the seed to the outside of the trunk and its twins: rocks and trees keep off
 export const K = 20;        // metres per shard unit (the instance's scale)
 const TAU = Math.PI * 2;
 
@@ -116,7 +117,7 @@ export function motherCrystal(ctx, ground, M) {
     const br = RA * 0.55;
     const base = [Math.cos(phi) * br, hb, Math.sin(phi) * br];
     tris += crystal(pieces.shoots, rng, { base, dir, len, r: len * (0.13 + rng() * 0.05), sink: 2, steps: low ? 2 : 4, term: 0.22, taper: 0.9, skew: 0.2 });
-    if (hb < 6) lowShoots.push({ phi, hb, th, len });
+    if (hb < 1.7) lowShoots.push({ phi, hb, th, len }); // only a shoot that leaves the trunk below head height is walked into
   }
   // the druse at the foot: crystals of 2-9 m leaning out of the ice round the trunk, thinning outward into the litter
   const nDruse = low ? 22 : 40;
