@@ -150,7 +150,7 @@ The Tinctures (DI) and three pieces of terrain set-dressing (DG, DC, DH), built 
 - **Budget** (`__fp.dressing.stats()`): 6 draw calls and 12k triangles at high. `ctx.dressing = { figure, track, pegs, stats }`; `?skip=dressing` leaves all three out.
 - **Not done, or for Austin:** the pegs are thin and sit in tall grass, so they read only close up or against the water (taller pegs are a number in `pegs.js`); the cap at z 100 is in the tarn's deep and is not shown; `wind` has no shared value to read, so the ribbons carry their own gentle east wind.
 
-### v4 polish
+## v4 polish
 
 Renders: `shots/wip/v4-06-polish-<item>-<view>-before|after.png` (views in `tools/views-v4-polish.json`).
 
