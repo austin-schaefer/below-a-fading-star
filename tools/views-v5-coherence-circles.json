@@ -1,0 +1,274 @@
+[
+ {
+  "name": "spawn-000",
+  "x": 2,
+  "z": 35,
+  "yaw": 0.0,
+  "pitch": 0.04,
+  "settle": 8000
+ },
+ {
+  "name": "spawn-045",
+  "x": 2,
+  "z": 35,
+  "yaw": 0.7854,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-090",
+  "x": 2,
+  "z": 35,
+  "yaw": 1.5708,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-135",
+  "x": 2,
+  "z": 35,
+  "yaw": 2.3562,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-180",
+  "x": 2,
+  "z": 35,
+  "yaw": 3.1416,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-225",
+  "x": 2,
+  "z": 35,
+  "yaw": 3.927,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-270",
+  "x": 2,
+  "z": 35,
+  "yaw": 4.7124,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spawn-315",
+  "x": 2,
+  "z": 35,
+  "yaw": 5.4978,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-000",
+  "x": -65,
+  "z": 12,
+  "yaw": 0.0,
+  "pitch": 0.04,
+  "settle": 8000
+ },
+ {
+  "name": "causeway-045",
+  "x": -65,
+  "z": 12,
+  "yaw": 0.7854,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-090",
+  "x": -65,
+  "z": 12,
+  "yaw": 1.5708,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-135",
+  "x": -65,
+  "z": 12,
+  "yaw": 2.3562,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-180",
+  "x": -65,
+  "z": 12,
+  "yaw": 3.1416,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-225",
+  "x": -65,
+  "z": 12,
+  "yaw": 3.927,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-270",
+  "x": -65,
+  "z": 12,
+  "yaw": 4.7124,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "causeway-315",
+  "x": -65,
+  "z": 12,
+  "yaw": 5.4978,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "deck-000",
+  "x": -200,
+  "z": 215,
+  "yaw": 0.0,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 8000
+ },
+ {
+  "name": "deck-045",
+  "x": -200,
+  "z": 215,
+  "yaw": 0.7854,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-090",
+  "x": -200,
+  "z": 215,
+  "yaw": 1.5708,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-135",
+  "x": -200,
+  "z": 215,
+  "yaw": 2.3562,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-180",
+  "x": -200,
+  "z": 215,
+  "yaw": 3.1416,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-225",
+  "x": -200,
+  "z": 215,
+  "yaw": 3.927,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-270",
+  "x": -200,
+  "z": 215,
+  "yaw": 4.7124,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "deck-315",
+  "x": -200,
+  "z": 215,
+  "yaw": 5.4978,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 2500
+ },
+ {
+  "name": "spit-000",
+  "x": -55,
+  "z": 148,
+  "yaw": 0.0,
+  "pitch": 0.04,
+  "settle": 8000
+ },
+ {
+  "name": "spit-045",
+  "x": -55,
+  "z": 148,
+  "yaw": 0.7854,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-090",
+  "x": -55,
+  "z": 148,
+  "yaw": 1.5708,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-135",
+  "x": -55,
+  "z": 148,
+  "yaw": 2.3562,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-180",
+  "x": -55,
+  "z": 148,
+  "yaw": 3.1416,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-225",
+  "x": -55,
+  "z": 148,
+  "yaw": 3.927,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-270",
+  "x": -55,
+  "z": 148,
+  "yaw": 4.7124,
+  "pitch": 0.04,
+  "settle": 2500
+ },
+ {
+  "name": "spit-315",
+  "x": -55,
+  "z": 148,
+  "yaw": 5.4978,
+  "pitch": 0.04,
+  "settle": 2500
+ }
+]

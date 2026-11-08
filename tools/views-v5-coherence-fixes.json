@@ -1,0 +1,5 @@
+[
+ {"name": "fix-galleries", "x": -65, "z": 12, "yaw": 1.295, "pitch": 0.2, "settle": 8000},
+ {"name": "fix-galleries-spit", "x": -55, "z": 148, "yaw": 0.785, "pitch": 0.04, "settle": 6000},
+ {"name": "fix-leerie", "x": 110.5, "z": -30.5, "yaw": -2.62, "pitch": 0.02, "settle": 6000, "js": "__fp.sky.flicker.hold = 0.3"}
+]
