@@ -295,7 +295,7 @@ export function buildControls(ctx) {
     if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
     state.pos.set(x, floor + state.eye, z);
     state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true;
-    eyeOff = eyeVel = 0; lastY = null;
+    eyeOff = 0; lastY = null;
     return { x, z };
   }
 
@@ -311,8 +311,8 @@ export function buildControls(ctx) {
   // --- colliders: {x, z, r} cylinders (infinite height) or {x, z, r, y, h} capped
   function addCollider(c) { state.colliders.push(c); }
 
-  const EYE_TAU = 0.08; // s
-  let eyeOff = 0, eyeVel = 0, lastY = null; // the eye's height less the feet's, and its rate
+  const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
+  let eyeOff = 0, lastY = null; // the eye's height less the feet's
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
     syncLock();
@@ -410,8 +410,7 @@ export function buildControls(ctx) {
     // the feet follow the floor; the eye follows the feet, damped, for steps under 0.7 m
     const step = state.pos.y - (lastY ?? state.pos.y);
     if (wasOnGround && state.onGround && Math.abs(step) < 0.7) eyeOff -= step;
-    const e = Math.exp(-dt / EYE_TAU), w = 1 / EYE_TAU, b = (eyeVel + w * eyeOff) * dt;
-    eyeOff = (eyeOff + b) * e; eyeVel = (eyeVel - w * b) * e; // critically damped, exact for any dt
+    eyeOff = clamp(eyeOff * Math.exp(-dt / EYE_TAU), -EYE_LAG, EYE_LAG); // first-order; never more than a riser and a bit behind
     lastY = state.pos.y;
     state.eyeY = state.pos.y + eyeOff;
 

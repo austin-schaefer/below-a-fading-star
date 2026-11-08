@@ -20,19 +20,19 @@ const R = await page.evaluate(() => {
   // walk the waypoints; record the eye per tick while the feet are inside [lo, hi] (the stair)
   const walk = (pts, lo, hi) => {
     p.keys.clear(); p.keys.add('KeyW');
-    let i = 0, prev = eyeY(), maxDy = 0, fell = 0, ticks = 0;
+    let i = 0, prev = eyeY(), maxDy = 0, fell = 0, ticks = 0, maxLag = 0, sumLag = 0, y0 = null, y1 = 0, n = 0;
     for (let t = 0; t < 20000 && i < pts.length; t++) {
       const [tx, tz] = pts[i], dx = tx - p.pos.x, dz = tz - p.pos.z;
       if (Math.hypot(dx, dz) < 0.5) { i++; continue; }
       p.yaw = Math.atan2(-dx, -dz);
       fp.controls.update(DT);
       const e = eyeY(), f = p.pos.y - p.eye;
-      if (f > lo && f < hi) { maxDy = Math.max(maxDy, Math.abs(e - prev)); if (!p.onGround) fell++; ticks++; }
+      if (f > lo && f < hi) { maxDy = Math.max(maxDy, Math.abs(e - prev)); maxLag = Math.max(maxLag, Math.abs(e - p.pos.y)); sumLag += Math.abs(e - p.pos.y); if (!p.onGround) fell++; ticks++; y0 ??= f; y1 = f; n++; }
       prev = e;
     }
     p.keys.clear();
     for (let t = 0; t < 30; t++) fp.controls.update(DT); // settle
-    return { done: i === pts.length, maxDy: +maxDy.toFixed(3), airTicks: fell, ticks, feet: { x: +p.pos.x.toFixed(2), y: +(p.pos.y - p.eye).toFixed(3), z: +p.pos.z.toFixed(2) } };
+    return { done: i === pts.length, maxDy: +maxDy.toFixed(3), maxLag: +maxLag.toFixed(3), meanLag: +(sumLag / Math.max(1, n)).toFixed(3), vy: +(Math.abs(y1 - y0) / (n * DT)).toFixed(2), airTicks: fell, ticks, feet: { x: +p.pos.x.toFixed(2), y: +(p.pos.y - p.eye).toFixed(3), z: +p.pos.z.toFixed(2) } };
   };
   const out = {};
   if (fp.span) {
