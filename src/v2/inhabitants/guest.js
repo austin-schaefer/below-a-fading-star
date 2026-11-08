@@ -36,13 +36,13 @@ function guestGeometry(low) {
   for (const sx of [-1, 1]) {
     P.paint(ROBE, 0, 0.95);
     P.set('aSway', 0.1);
-    P.loft([[sx * 0.2, 1.4, 0.0], [sx * 0.25, 1.17, 0.05], [sx * 0.2, 0.98, 0.17], [sx * 0.07, 0.9, 0.25], [sx * 0.01, 0.89, 0.27]],
-      [0.06, 0.07, 0.085, 0.11, 0.12], low ? 8 : 10, 0, false);
+    P.loft([[sx * 0.2, 1.4, 0.0], [sx * 0.24, 1.17, 0.03], [sx * 0.19, 0.99, 0.12], [sx * 0.08, 0.92, 0.19], [sx * 0.01, 0.91, 0.205]],
+      [0.055, 0.062, 0.07, 0.08, 0.085], low ? 8 : 10, 0, false);
     // the cuff hangs open below the wrists
     P.set('aSway', 0.5);
     P.sheet(6, 3, (u, v, o) => {
       const a = Math.PI * (0.15 + 0.7 * u);
-      o[0] = sx * (0.06 - 0.05 * u) + Math.cos(a) * 0.11 * sx * 0.3; o[1] = 0.88 - v * 0.2 - 0.04 * Math.sin(u * Math.PI); o[2] = 0.26 + Math.sin(a) * 0.08 - v * 0.02;
+      o[0] = sx * (0.07 - 0.06 * u); o[1] = 0.9 - v * 0.2 - 0.03 * Math.sin(u * Math.PI); o[2] = 0.2 + Math.sin(a) * 0.06 - v * 0.015;
     });
   }
   P.set('aSway', 0);
@@ -56,23 +56,27 @@ function guestGeometry(low) {
     o[0] = Math.cos(a) * r * 1.05; o[1] = y; o[2] = Math.sin(a) * r * 0.86 + 0.0;
   });
   P.set('aSway', 0);
+  const bow = new THREE.Matrix4().makeTranslation(0, 1.48, 0).multiply(new THREE.Matrix4().makeRotationX(0.2)).multiply(new THREE.Matrix4().makeTranslation(0, -1.48, 0));
   // ---- the wimple: a gorget wrapped about the throat and chin, and a bib falling over the breast
-  P.paint(WIMPLE, 0, 0.92);
+  P.paint(WIMPLE, 0, 0.92, 0.07);
+  P.xf(bow);
   P.grid(low ? 14 : 18, 4, (u, v, o) => {
     const a = u * TAU, y = 1.46 + v * 0.2;
     const r = 0.1 + 0.025 * (1 - v) + 0.012 * Math.sin(a * 6);
     o[0] = Math.cos(a) * r; o[1] = y; o[2] = Math.sin(a) * r * 0.95 + 0.02;
   }, false, false);
+  P.xf(null);
   P.sheet(low ? 9 : 12, low ? 6 : 8, (u, v, o) => {
     const w = 0.12 + 0.06 * v, a = (u - 0.5) * 2 * w / 0.22; // across the chest
     const r = 0.2 + 0.035 * smoothstep(0.2, 0.7, v) + 0.006;
     const y = 1.5 - v * 0.34 - 0.03 * Math.cos((u - 0.5) * Math.PI) * v;
     P.set('aSway', smoothstep(0.35, 1, v) * 1.6);
-    if (v > 0.8) P.paint(WIMPLE_D, 0, 0.94); else P.paint(WIMPLE, 0, 0.92);
+    if (v > 0.8) P.paint(WIMPLE_D, 0, 0.94, 0.05); else P.paint(WIMPLE, 0, 0.92, 0.07);
     o[0] = Math.sin(a) * r; o[1] = y; o[2] = Math.cos(a) * r * 0.82 + 0.02;
   });
   P.set('aSway', 0);
   // the wimple's veil-band across the brow, inside the hood
+  P.xf(bow);
   P.paint(WIMPLE_D, 0, 0.94);
   P.sheet(10, 2, (u, v, o) => {
     const a = (u - 0.5) * 2.2;
@@ -88,13 +92,14 @@ function guestGeometry(low) {
     const open = 0.62 - 0.36 * smoothstep(0.55, 1.0, v);                 // half-angle of the face window
     const a = Math.PI / 2 + open + u * (TAU - 2 * open);                   // +pi/2 is the front (+z)
     const y = 1.52 + v * 0.42;
-    const r = (0.2 - 0.07 * smoothstep(0.0, 0.35, v)) * Math.sqrt(Math.max(0.02, 1 - Math.pow(smoothstep(0.55, 1.0, v), 2) * 0.96));
+    const r = (0.2 - 0.07 * smoothstep(0.0, 0.35, v)) * Math.sqrt(Math.max(0.0, 1 - Math.pow(smoothstep(0.45, 1.0, v), 1.6)));
     const edge = Math.min(u, 1 - u);                                       // 0 at the window's rim
     const lip = smoothstep(0.08, 0.0, edge);                               // the rim rolls forward
-    const peak = smoothstep(0.6, 1.0, v) * 0.07;                           // the crown peaks forward
+    const peak = smoothstep(0.7, 1.0, v) * 0.03;                           // the crown peaks forward
     P.set('aSway', 0.05);
-    o[0] = Math.cos(a) * r * (1 + 0.04 * lip); o[1] = y; o[2] = Math.sin(a) * r * 1.08 + 0.02 + lip * 0.05 + peak;
+    o[0] = Math.cos(a) * r * (1 + 0.04 * lip); o[1] = y; o[2] = Math.sin(a) * r * 1.08 + 0.02 + lip * 0.04 + peak;
   });
+  P.xf(null);
   return P.geometry();
 }
 
@@ -204,6 +209,7 @@ export function buildGuest(ctx) {
     api: {
       position: body.position, yaw, state: S, mesh: body,
       // test hooks: aim the camera at her breast, or away
+      tick: (dt, t) => update(dt, t),
       lookAt() { const p = ctx.player; to.copy(chest).sub(p.pos); p.yaw = Math.atan2(-to.x, -to.z); p.pitch = Math.atan2(to.y, Math.hypot(to.x, to.z)); },
     },
     drawCalls: 2, tris: tri + 2,

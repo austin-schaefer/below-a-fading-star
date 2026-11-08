@@ -259,7 +259,7 @@ function makePlantMaterial(ctx, shared, o) {
         {
           float fpG = (1.0 - smoothstep(uGrey.z * 0.6, uGrey.z, distance(iPos.xz, uGrey.xy))) * uGrey.w;
           float fpLum = dot(vColor, vec3(0.3, 0.59, 0.11));
-          vColor = mix(vColor, vec3(fpLum) * vec3(1.06, 1.0, 0.9) * 1.08, fpG);
+          vColor = mix(vColor, vec3(fpLum) * vec3(1.06, 1.0, 0.9) * 1.35, fpG); // bleached: grey-brown and paler
         }
         vFpT = aBlade.x * aBlade.w;`)
       .replace('#include <beginnormal_vertex>', `
@@ -435,7 +435,9 @@ export function buildPlants(ctx, ground, shared) {
     const mx = cx + 1, mz = cz + 1;
     if (mx * mx + mz * mz > 318 * 318) return;
     ground.biomeAt(mx, mz, b);
-    if (b.rock > 0.6 || b.ice > 0.5) return;
+    // the Wrong Colour's eddy sits in the rocky canyon: give it a reed stand (which its uGrey ring bleaches)
+    const nearEddy = L.eddy ? Math.hypot(mx - L.eddy.x, mz - L.eddy.z) < 9 : false;
+    if ((b.rock > 0.6 || b.ice > 0.5) && !nearEddy) return;
     const cd = ground.causewayDistance(mx, mz);
     // cheap cell-level keep-outs (exact ones per plant below where it matters)
     if (ground.excluded(mx, mz, -1.5, { wet: 1.8 })) return;
@@ -478,7 +480,7 @@ export function buildPlants(ctx, ground, shared) {
       grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.3 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.1 + 0.55 * rng() * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
     }
     // sedge: taller, olive, in the fen and on the tarn shore
-    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8) * (0.4 + 0.8 * patch);
+    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8, nearEddy ? 0.7 : 0) * (0.4 + 0.8 * patch);
     const ns = Math.floor(ds * CELL * CELL + rng());
     for (let i = 0; i < ns; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
@@ -549,8 +551,8 @@ export function buildPlants(ctx, ground, shared) {
       heather.add(x, y - 0.04, z, rng() * 6.283, s * (0.9 + rng() * 0.3), s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // reeds: in stands along the water's edge, standing in the shallows
-    if (b.marsh > 0.15 || b.shore > 0.05) {
-      const stand = smoothstep(0.35, 0.65, noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5);
+    if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy) {
+      const stand = Math.max(smoothstep(0.35, 0.65, noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5), nearEddy ? 0.9 : 0);
       if (stand > 0) {
         const nr = Math.floor(D_REED * stand * CELL * CELL * 1.2 + rng());
         for (let i = 0; i < nr; i++) {

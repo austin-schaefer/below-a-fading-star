@@ -140,16 +140,35 @@ export function buildCloak(ctx, U) {
   // after us: until its note appears we place him against the landmark's centre and move him once it does.
   const SH = ctx.landmarks.shrine;
   const sunYaw = Math.atan2(ctx.sun.dir.x, ctx.sun.dir.z);
+  const colliders = ctx.controls?.state?.colliders || [];
+  let self = null;
+  // clear ground: nothing solid within a couple of metres, and nothing big between him and the open moor
+  // behind him (so walking up you see him, not the boulder he stands behind)
+  const clear = (x, z, ax, az) => {
+    for (const c of colliders) {
+      if (c === self || c.h !== undefined) continue;
+      const dx = c.x - x, dz = c.z - z;
+      if (Math.hypot(dx, dz) < c.r + 1.6) return false;
+      if (c.r < 0.9) continue;
+      const along = dx * ax + dz * az;
+      if (along > 0 && along < 30 && Math.abs(dx * az - dz * ax) < c.r + 0.8) return false;
+    }
+    return true;
+  };
   const spot = (cx, cz) => {
     // the niche sits 4.2 m east and 1.2 m south of the cell's centre; try a fan of points round "away from the sun"
     const nx = cx + 4.2, nz = cz + 1.2;
     const away = sunYaw + Math.PI;
-    for (const da of [0, -0.3, 0.3, -0.6, 0.6, -0.9, 0.9]) for (const d of [6, 6.6, 5.6, 7.2]) {
-      const x = nx + Math.sin(away + da) * d, z = nz + Math.cos(away + da) * d;
+    let fallback = null;
+    for (const da of [0, -0.35, 0.35, -0.7, 0.7, -1.05, 1.05, -1.4, 1.4]) for (const d of [6, 6.8, 5.5, 7.6]) {
+      const ax = Math.sin(away + da), az = Math.cos(away + da);
+      const x = nx + ax * d, z = nz + az * d;
       if (Math.hypot(x - cx, z - cz) < 5.5) continue; // clear of the cell's ring
-      if (U.rules.okFoot(x, z)) return [x, z];
+      if (!U.rules.okFoot(x, z)) continue;
+      if (clear(x, z, ax, az)) return [x, z];
+      fallback ||= [x, z];
     }
-    return [nx + Math.sin(away) * 6, nz + Math.cos(away) * 6];
+    return fallback || [nx + Math.sin(away) * 6, nz + Math.cos(away) * 6];
   };
   const shrineNote = () => ctx.structures?.notes?.shrine || null;
   let placedFrom = shrineNote();
@@ -272,9 +291,9 @@ export function buildCloak(ctx, U) {
   g.position.set(sx, ground.at(sx, sz) - 0.04, sz);
   g.rotation.y = sunYaw;
   scene.add(g);
-  const collider = { x: sx, z: sz, r: 0.65 };
+  const collider = self = { x: sx, z: sz, r: 0.65 };
   ctx.addCollider(collider);
-  let lookT = 0;
+  let lookT = 0, settled = false;
   function moveTo(x, z) { g.position.set(x, ground.at(x, z) - 0.04, z); collider.x = x; collider.z = z; }
 
   const state = { position: g.position, closed: false, distance: 99, facingPlayer: false };
@@ -283,10 +302,12 @@ export function buildCloak(ctx, U) {
   function update(dt, t) {
     bodyMat.userData.uT.value = t;
     // the shrine's own position, once the structures module has built it (looked for during the first minute)
-    if (!placedFrom && t < 60 && (lookT -= dt) <= 0) {
+    // (and once more when the rocks' colliders are surely in, to stand clear of them)
+    if ((!placedFrom || !settled) && t < 60 && (lookT -= dt) <= 0) {
       lookT = 1;
       const n = shrineNote();
-      if (n) { placedFrom = n; const p = spot(n.x, n.z); moveTo(p[0], p[1]); }
+      if (n && (!placedFrom || t > 2)) { placedFrom = n; settled = t > 2; const p = spot(n.x, n.z); moveTo(p[0], p[1]); }
+      else if (!n && t > 8) { settled = true; const p = spot(SH.x - 4.2, SH.z - 1.2); moveTo(p[0], p[1]); }
     }
     const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = Math.hypot(dx, dz);
     state.distance = dist;

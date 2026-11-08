@@ -276,6 +276,7 @@ export function buildGalley(ctx) {
       mesh: hull, state: S, path,
       check: { bedMax: worst, nearestShore: nearShore, length: path.length },
       // test hook: put it at a point of the loop (0..1)
+      tick: (dt, t) => update(dt, t),
       setU(u) { S.u = u; sample(u, S); H.n = 0; },
     },
     drawCalls: 2, tris: geo.index.count / 3 + (K - 1) * 3 * 4,

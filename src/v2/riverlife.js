@@ -224,7 +224,7 @@ const GLINT_VERT = /* glsl */`
     // the fleck catches the light as the eye moves: twinkle by view angle as much as by time
     vec3 v = normalize(cameraPosition - transformed);
     vTw = 0.45 + 0.55 * pow(abs(sin(aSeed * 91.0 + v.x * 23.0 + v.z * 17.0 + uTime * (0.7 + aSeed))), 6.0);
-    gl_PointSize = clamp(0.035 * uScale / max(depth, 0.1), 2.2, 14.0);
+    gl_PointSize = clamp(0.055 * uScale / max(depth, 0.1), 2.6, 18.0);
     vKind = aKind;
     if (aKind > 0.5) {
       // what the eye catches of a pedlar at twenty paces: the blur of its wings in the low light
@@ -253,7 +253,7 @@ const GLINT_FRAG = /* glsl */`
                 + (1.0 - smoothstep(0.0, 0.12, abs(c.y))) * (1.0 - smoothstep(0.3, 1.0, abs(c.x)));
     float a = (core + cross * 0.55 * vTw) * vA * (0.6 + 0.4 * vTw);
     ${FOG_ATTEN}
-    gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * a * fogAtten * (0.75 + 0.25 * uFlicker), 1.0);
+    gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * a * 1.4 * fogAtten * (0.75 + 0.25 * uFlicker), 1.0);
   }`;
 
 // ---------------------------------------------------------------- V: the surface of the Wrong Colour

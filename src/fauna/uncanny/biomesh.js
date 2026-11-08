@@ -621,7 +621,7 @@ export function buildBiomesh(ctx, U) {
     ceiling: () => colonies.reduce((a, C) => a + C.n, 0),
     activeRunners: () => runners.filter((r) => r.on).length,
     // test hook: run the creep forward without rendering (seconds)
-    advance(sec) { for (let s = 0; s < sec; s += 0.5) update(0.5, ctx.time.t + s); },
+    advance(sec, step = 0.1) { for (let s = 0; s < sec; s += step) update(step, ctx.time.t + s); },
     // test hook: start a runner from colony `name` now
     sprout(name = 'lattice') { const C = colonies.find((c) => c.name === name); return C && C.ready ? startRunner(C) : false; },
   };

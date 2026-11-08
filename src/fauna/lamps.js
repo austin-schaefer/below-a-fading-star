@@ -55,7 +55,7 @@ export function buildLampMoths(ctx) {
       }
     }
     mesh.count = moths.length;
-    ctx.lampMoths = { lamps: lamps.map((l) => l.pos), count: moths.length, moths };
+    ctx.lampMoths = { lamps: lamps.map((l) => l.pos), count: moths.length, moths, advance: (sec, step = 0.03) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); } };
   }
   const cam = camera.position;
   const q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), M4 = new THREE.Matrix4(), tmp = new THREE.Vector3();

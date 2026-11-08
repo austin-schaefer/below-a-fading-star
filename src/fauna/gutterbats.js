@@ -101,4 +101,5 @@ export function buildGutterBats(ctx) {
   ctx.registerUpdate(update);
   // test hook: let them out now, regardless of the sun
   st.pour = pour;
+  st.advance = (sec, step = 0.05) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
 }

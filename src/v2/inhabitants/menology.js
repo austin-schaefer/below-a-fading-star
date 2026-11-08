@@ -395,7 +395,7 @@ export function buildMenology(ctx) {
 
   const tri = (g) => g.index.count / 3;
   return {
-    api: { stones, lizards: Z, state: S, mesh, lizardMesh: liz, centre: C },
+    api: { tick: (dt, t) => update(dt, t), stones, lizards: Z, state: S, mesh, lizardMesh: liz, centre: C },
     drawCalls: 2, tris: tri(mesh.geometry) + tri(lgeo) * N, lizardTris: tri(lgeo),
   };
 }

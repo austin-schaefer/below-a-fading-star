@@ -200,7 +200,7 @@ export function buildVigilant(ctx, rng) {
     vertexShader: EYE_VS, fragmentShader: EYE_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
   const eyes = new THREE.Points(eg, eyeMat);
-  eyes.name = 'vigilant-eyes'; eyes.frustumCulled = false; eyes.renderOrder = 5;
+  eyes.name = 'vigilant-eyes'; eyes.renderOrder = 5;
   ctx.scene.add(eyes);
 
   // ---- turning the head (CPU, only when it changes: it is never seen to move)
@@ -228,6 +228,7 @@ export function buildVigilant(ctx, rng) {
       eyePos[k * 3] = e3.x; eyePos[k * 3 + 1] = e3.y; eyePos[k * 3 + 2] = e3.z;
     });
     eyeAttr.needsUpdate = true;
+    eg.computeBoundingSphere(); // only when the head turns; lets the eyes cull when it is behind you
     headWorld.set(0, 59, 13); mesh.localToWorld(headWorld);
   }
   poseHead();
