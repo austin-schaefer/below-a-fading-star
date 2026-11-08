@@ -1,0 +1,8 @@
+[
+ { "name": "high-south", "x": 0, "z": 0, "yaw": 3.1416, "pitch": -0.02, "dy": 70 },
+ { "name": "high-northwest", "x": 0, "z": 0, "yaw": 0.56, "pitch": -0.02, "dy": 70 },
+ { "name": "high-north", "x": 0, "z": 0, "yaw": 0, "pitch": -0.02, "dy": 70 },
+ { "name": "high-east", "x": 0, "z": 0, "yaw": -1.75, "pitch": -0.02, "dy": 70 },
+ { "name": "high-west", "x": 0, "z": 0, "yaw": 1.92, "pitch": -0.02, "dy": 70 },
+ { "name": "foreland-up", "x": 60, "z": -230, "yaw": -0.785, "pitch": 0.32 }
+]

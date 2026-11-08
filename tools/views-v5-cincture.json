@@ -1,0 +1,9 @@
+[
+ {"name": "cincture-spawn", "x": 6, "z": 36, "yaw": -1.75, "pitch": 1.05},
+ {"name": "cincture-lattice", "x": 40, "z": -250, "yaw": -2.62, "pitch": 0.55},
+ {"name": "cincture-lattice-east", "x": 40, "z": -250, "yaw": -1.57, "pitch": 0.6},
+ {"name": "cincture-causeway", "x": -40, "z": 22, "yaw": -1.257, "pitch": 0.45},
+ {"name": "cincture-vigilant", "x": 130, "z": -30, "yaw": -1.2, "pitch": 0.45},
+ {"name": "cincture-span-deck", "x": -200, "z": 215, "dy": 56.54, "yaw": -0.785, "pitch": 0.35},
+ {"name": "cincture-spit", "x": -55, "z": 148, "yaw": 0, "pitch": 0.3}
+]

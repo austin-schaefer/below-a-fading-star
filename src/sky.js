@@ -3,6 +3,8 @@
 // occasional guttering, which main() reads to dim the lights.
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
+import { cinctureGLSL } from './v5/cincture.js'; // v5: AQ the Cincture, a chunk of the dome's shader
+import { injectOccultSky } from './v5/occultation.js'; // v5 wonders: AR the Occultation's bite on the disc
 
 // Gutter timings, seconds: total length [min, max] and gap between gutters [min, max]. v4: 12-16 s in all
 // (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter is at 25-55 s.
@@ -113,6 +115,7 @@ export function buildSky(ctx) {
         float starFade = smoothstep(-0.02, 0.2, up) * (1.0 - smoothstep(0.75, 0.995, toSun));
         sky += vec3(0.85, 0.88, 1.0) * s * starFade * 1.4;
 
+        ${cinctureGLSL()}
         // High cloud: slow, thin, lit from the sun side
         vec2 cuv = d.xz / max(d.y, 0.05);
         float cloud = fbm(cuv * 0.9 + vec2(uTime * 0.004, uTime * 0.0015));
@@ -153,6 +156,7 @@ export function buildSky(ctx) {
         gl_FragColor = vec4(sky, 1.0);
       }`,
   });
+  injectOccultSky(mat); // v5 wonders: AR the Occultation, the disc's bite and the band in the sky (src/v5/occultation.js)
   const geo = new THREE.SphereGeometry(10, 48, 24);
   const dome = new THREE.Mesh(geo, mat);
   dome.frustumCulled = false;

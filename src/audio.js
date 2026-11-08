@@ -852,10 +852,11 @@ export async function build(ctx) {
     }
 
     // v4 regions: each region's sound hook (src/v4/regions/<key>.js), its bed ticked below, its cues in the table
-    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng });
+    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng, hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
     audio.regionCues = regionSnd?.cueNames || [];
     audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
+      if (ctx.hush?.cue(name, position || camera.position)) return; // v5: AR the Occultation hushes the birds under its band
       try {
         if (name === 'cry') cry(position || { x: camera.position.x + 120, y: 80, z: camera.position.z - 100 });
         else if (name === 'crows') crows(position);
