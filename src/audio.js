@@ -97,9 +97,13 @@ export async function build(ctx) {
     const send = (node, amt) => { const g = ac.createGain(); g.gain.value = amt; (node._v ? node._v.gate : node).connect(g); g.connect(verbIn); return g; };
 
     // ================================================================ wind
+    // Austin found the first mix over the top: the bus now sits at 0.55 (was 1), the hiss layer is quieter, gusts
+    // swing less and the filters sweep less, so it reads as weather rather than a gale. ?wind=0.3 scales it for tuning.
+    const windMul = (() => { try { const v = Number(new URL(location.href).searchParams.get('wind')); return v > 0 ? v : 1; } catch (e) { return 1; } })();
+    const WIND_BUS = 0.55 * windMul;
     const windBus = ac.createGain(); windBus.gain.value = 0; windBus.connect(master); send(windBus, 0.12);
     const windLayers = [];
-    [[260, 0.9, 1.0], [640, 1.3, 0.7], [1500, 1.8, 0.32]].forEach(([f, q, lvl], i) => {
+    [[260, 0.9, 1.0], [640, 1.3, 0.6], [1500, 1.8, 0.18]].forEach(([f, q, lvl], i) => {
       const g = ac.createGain(); g.gain.value = 0; g.connect(windBus);
       const filters = [];
       for (const side of [-1, 1]) {
@@ -700,7 +704,7 @@ export async function build(ctx) {
     // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
     // ctx.river.rumble is above zero), its gain follows that rumble at 10 Hz; on leaving it fades over 2 s and
     // is torn down. Low brown rumble, a mid roar, a hiss of spray, a slow wander in all three.
-    const fall = audio.fall = { running: false, gain: null, pos: null, left: false, quietSince: -1, parts: null };
+    const fall = audio.fall = { running: false, gain: null, pos: null, left: false, quietSince: -1, parts: null, leaveTimer: null };
     function fallLevel() {
       const R = ctx.river;
       if (R && typeof R.rumble === 'number') { if (R.rumble > 0) fall.left = false; return R.rumble; }
@@ -747,8 +751,15 @@ export async function build(ctx) {
     function fallCue(pos, entering) {
       if (pos && typeof pos.x === 'number') fall.pos = pos;
       fall.left = !entering;
-      if (entering) { fall.quietSince = -1; fallStart(); }
-      // leaving: fallLevel() reads zero from here, the tick eases the gain down (tau 0.5 s) and stops it at 2.2 s
+      if (fall.leaveTimer) { clearTimeout(fall.leaveTimer); fall.leaveTimer = null; }
+      if (entering) { fall.quietSince = -1; fallStart(); return; }
+      // leaving: fallLevel() reads zero from here. The fade starts now on the audio clock and a timer
+      // stops the loop at 2.2 s, so neither waits for a frame (frames can be seconds apart under load).
+      if (!fall.running || !fall.parts) return;
+      const now = ac.currentTime;
+      fall.parts.out.gain.setTargetAtTime(0.0001, now, 0.5);
+      if (fall.quietSince < 0) fall.quietSince = now;
+      fall.leaveTimer = setTimeout(() => { fall.leaveTimer = null; if (fall.running && fall.left && fallLevel() <= 0.001) fallStop(); }, 2200);
     }
 
     audio.cue = (name, position, opts) => {
@@ -866,7 +877,15 @@ export async function build(ctx) {
     let tick = 0, windSm = 0.5, swellSm = 0, wood = 0, rockH = 0;
     let gustT = 0;
     const g1 = { v: 0 };
+    // The fall follows the river on its own clock as well as on frames: under load frames can be
+    // seconds apart, and a loop that waits for one starts late or stays up after the player has left.
+    let lastFrame = performance.now();
+    const fallTimer = setInterval(() => {
+      if (ac.state === 'closed') { clearInterval(fallTimer); return; }
+      if (performance.now() - lastFrame > 250) fallTick(0.1, performance.now() / 1000, ac.currentTime);
+    }, 100);
     function update(dt, t) {
+      lastFrame = performance.now();
       if (ac.state === 'suspended') ac.resume?.();
       setListener();
       const now = ac.currentTime;
@@ -885,17 +904,17 @@ export async function build(ctx) {
       const c = landmarks.castle, ground = cam.y - 1.72;
       const inKeep = Math.hypot(px - c.x, pz - c.z) < 40 && ground < 20 ? 1 : 0;
       const high = smoothstep(6, 30, b.h);
-      const openness = (0.55 + 0.45 * clamp(b.moor + b.heath * 0.5, 0, 1)) * (1 + 0.7 * high) * (1 - 0.7 * wood) * (1 - 0.6 * inKeep);
+      const openness = (0.55 + 0.45 * clamp(b.moor + b.heath * 0.5, 0, 1)) * (1 + 0.4 * high) * (1 - 0.7 * wood) * (1 - 0.6 * inKeep);
       for (let i = 0; i < windLayers.length; i++) {
         const w = windLayers[i];
         const gust = 0.5 + 0.5 * ctx.noise.fbm2(t * 0.09 + w.ph, i * 3.7, 2);
         const gust2 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.31 + w.ph * 2, i);
-        const lvl = w.lvl * openness * (0.25 + 0.75 * clamp(gust * 1.3, 0, 1)) * (0.8 + 0.4 * gust2);
+        const lvl = w.lvl * openness * (0.4 + 0.6 * clamp(gust * 1.3, 0, 1)) * (0.85 + 0.3 * gust2);
         w.g.gain.setTargetAtTime(lvl * 0.9, now, 0.25);
-        const fr = w.f * (0.75 + 0.7 * gust) * (1 + 0.15 * high);
+        const fr = w.f * (0.85 + 0.4 * gust) * (1 + 0.1 * high);
         for (const f of w.filters) f.frequency.setTargetAtTime(fr, now, 0.3);
       }
-      windBus.gain.setTargetAtTime(1, now, 1.5);
+      windBus.gain.setTargetAtTime(WIND_BUS, now, 1.5);
       // --- drone swell with the guttering sun
       const fl = ctx.sky?.flicker?.value ?? 1;
       const target = clamp((1 - fl) / 0.78, 0, 1);
@@ -904,7 +923,7 @@ export async function build(ctx) {
       for (const o of droneOsc) o.detune.setTargetAtTime(-260 * swellSm, now, 0.6);
       shim.gain.setTargetAtTime(0.004 + 0.016 * swellSm, now, 0.5);
       droneLP.frequency.setTargetAtTime(360 + 500 * swellSm, now, 0.5);
-      windBus.gain.setTargetAtTime(1 - 0.35 * swellSm, now, 0.5);
+      windBus.gain.setTargetAtTime(WIND_BUS * (1 - 0.35 * swellSm), now, 0.5);
       // --- tarn lapping
       const T = landmarks.tarn, td = Math.hypot(px - T.x, pz - T.z), edge = 52;
       const toEdge = Math.abs(td - edge);
