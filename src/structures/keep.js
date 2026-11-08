@@ -11,15 +11,15 @@
 import * as THREE from 'three';
 import { mergeGeometries } from '../v4/kit/merge.js';
 import { hexCellsIn } from './common.js';
-import { CAUSEWAY_V4 } from '../world.js';
+import { CAUSEWAY_V4, LANDMARKS } from '../world.js';
 import { KEEP_V2, buildKeepV2, ringTower, ringColliders } from './keep/v2.js';
 
 export { ringTower, ringColliders };
 
 const V2 = typeof location !== 'undefined' && new URLSearchParams(location.search).get('keep') === 'v2';
 
-const BASE = 18; // the hill's crown (terrain.js flattens it to LANDMARKS.castle.y)
-const C = { x: 40, z: 30 }; // LANDMARKS.castle
+const BASE = LANDMARKS.castle.y; // the hill's crown (terrain.js flattens it to this)
+const C = LANDMARKS.castle; // the hill's centre (x, z)
 const GATE = KEEP_V2.gate; // the passage keeps the old gate's line: z 31-37.6, its mouth at x 7
 const NEEDLE = { x: 28, z: 50.5, h: 30 };
 const SLAB = { b: 30, r0: 27, Ls: 17, W: 13, T: 3, yHi: BASE + 6.5 }; // the fallen face: bearing, near end, slant length
