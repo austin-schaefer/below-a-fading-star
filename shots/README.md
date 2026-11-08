@@ -129,4 +129,12 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-flora-eddy-grey-after.png` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
 | `13-flora-ovals-before.png` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
 | `13-flora-ovals-after.png` | After: stones kept off steep and spray-wet walls; the wall is clean. |
+| `13-riverlife-pedlars-slow-reach.png` | Salt-Pedlars over the slow reach from the bank: pale riders on dragonflies at 6–8 m, the fen's lights beyond. |
+| `13-riverlife-pedlar-close.png` | One Salt-Pedlar at 2 m: hooded salt-white rider, goad, veined wings. |
+| `13-riverlife-salt-on-stone.png` | A white salt fleck left on a bank stone where a pedlar paused. |
+| `13-riverlife-wrong-colour-before.png` | The Wrong Colour's first pass: a dim teal smear on the far bank. |
+| `13-riverlife-wrong-colour-after.png` | After the visibility pass: violet light on the grey reeds, bank and canyon wall. |
+| `13-riverlife-wrong-colour-gutter.png` | The Wrong Colour brightening while the sun gutters. |
+| `13-riverlife-wrong-colour-from-cutting.png` | From the Cutting's foot: the basin is round the bend but its green light is not. |
+| `13-riverlife-fall-spray.png` | Spray drifting off the fall into the Speculum's bowl. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
