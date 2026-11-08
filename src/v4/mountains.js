@@ -49,9 +49,9 @@ export function walkLimit(x, z) {
 }
 
 // --- v4 systems: AM's seats (begin). Two flat benches cut into the saddle's flanks for the crawling colossi
-// (AM, built in v5), one under each throne site in the placement plan, (-420, 100) and (-400, 200): each a
-// radial strip from r 380 (a plinth's edge 8 m above the road's start, their feet) to r 505, 48 m wide, at
-// y 22. The colossi crawl toward the sun with their soles to the bowl; the road starts between their feet.
+// (AM, src/v5/thrones.js), one under each throne site in the placement plan, (-420, 100) and (-400, 200): each a
+// radial strip from r 380 (a plinth's edge 8 m above the road's start, their hands) to r 505, 48 m wide, at
+// y 22. The colossi crawl out of the wall toward the bowl; the road starts between their hands.
 export const SEATS = [[-420, 100], [-400, 200]].map(([x, z]) => {
   const az = Math.atan2(z, x);
   return { x, z, az, cx: Math.cos(az), cz: Math.sin(az), r0: 380, r1: 505, half: 24, y: 22 };
