@@ -24,6 +24,8 @@ Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and
 
 **Deferred, briefs on disk:** v6-03 shadow box, v6-06 fauna, v6-07 slots and dt, v6-08 AA and the image (antialiasing is not wanted before v7 is out), v6-09 the hardware table. They come back as a polish batch after v7, or sooner if a visitor names one. The survey and catalogue below stay as the record for that.
 
+**The Span's invisible poles: fixed, pre-existing (since v4).** Austin, walking the deck's west half (2026-11-08): invisible poles on the Great Span. The moor's boulders (`rocks.js`) and trees (`vegetation/trees.js`) in the hollow under the deck, and the Saltings' stumps under its east half, registered colliders without a height, and an uncapped collider is an infinite vertical cylinder, so it stopped the walker 50 m above it: 5 boulders and 3 trees on the west half (80 blocked steps over three lines in `walk-test`), 2 stumps east of the crack. v6 changed neither the colliders nor the placement. Each is now capped at its own height (a boulder at twice its size, a tree at its height, a stump at its own, each from a metre or half a metre below its foot). A raised floor more than a metre above the ground is also level for the slope rule in `controls.js`, which read the terrain's slope under the deck and slowed the walker over the hollow's steep sides. Colliders carry the module that registered them (`c.mod`, through `perf.forModule`). The deck's colliders left are the Span's own: the parapets and the east gate's rockfall.
+
 **Known rough edges** from v5, none blocking: `wilderness-v5.md` "Known rough edges".
 
 ## How the survey was done
