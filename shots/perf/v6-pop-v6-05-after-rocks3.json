@@ -1,0 +1,114 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-05-after-rocks3",
+ "date": "2026-11-08T21:35:40.065Z",
+ "base": "http://localhost:8176",
+ "q": "medium",
+ "only": [
+  "rocks"
+ ],
+ "runSecs": 49,
+ "rows": [
+  {
+   "id": "rocks.rocks",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "56 changed (frame 1 of 23) vs baseline 48: 1.2x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 48,
+    "largest": 56,
+    "ratio": 1.17,
+    "stepsOver100": 0,
+    "watchBefore": "10514",
+    "watchAfter": "10514",
+    "switched": false
+   }
+  }
+ ],
+ "routes": {},
+ "seqs": {
+  "rocks": {
+   "from": [
+    230,
+    -20
+   ],
+   "to": [
+    250,
+    -40
+   ],
+   "switchStep": 16,
+   "at": [
+    241.0344827586207,
+    -31.03448275862069
+   ],
+   "baseline": [
+    7,
+    6,
+    6,
+    9,
+    48,
+    7,
+    4,
+    4,
+    5,
+    2,
+    2,
+    2,
+    3,
+    3,
+    4,
+    7,
+    10,
+    10,
+    11,
+    14,
+    11,
+    7,
+    14
+   ],
+   "switch": [
+    56,
+    38,
+    25,
+    14,
+    17,
+    32,
+    30,
+    17,
+    22,
+    26,
+    24,
+    26,
+    27,
+    21,
+    19,
+    16,
+    14,
+    15,
+    13,
+    16,
+    17,
+    17,
+    19
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}

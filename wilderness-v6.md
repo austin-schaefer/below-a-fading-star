@@ -73,12 +73,12 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
    - *Cause:* `vegetation/trees.js` `update()` → `batch.setGeometryIdAt`. Since the tree LOD fix the levels share one skeleton, so a swap changes card density, not shape.
    - *Measured:* the lone tree at (−125.8, −44) switches to near detail at 36.5 m and to mid at 109 m. The wood tree at (−142, 141) switches at 24.4 m.
    - *Pictures:* `v6-00-survey-tree-near-{a,b,diff}` (`pos=-89.3,-44&yaw=1.571`: the crown's leaf cards rearrange), `v6-00-survey-tree-far-*`, `v6-00-survey-tree-wood-*` (the tree's shadow on the water shifts).
-2. **Plant chunks change mesh in 24 m blocks.** **[structural]**
+2. **Plant chunks change mesh in 24 m blocks.** **[done in v6]** (v6-05: the chunks cross over 8 m; `### v6-05 ground` in Results)
    - *What:* past 60 m (grass) and 50 m (reeds) a chunk is packed into the cheap far mesh: fewer blades, wider, one-triangle stems. The vertex shader thins and fades every instance smoothly, but the switch between meshes is per chunk and instant.
    - *Where:* the repacks themselves are frequent. Lazy packing keeps them to 15–20% of frames on the bench (798 repacks in 430 of 2147 frames) and 162 of 3592 frames on the wood route.
    - *Cause:* `vegetation/plants.js` `lazyUpdate` and `pack`, with `FAR_GRASS` and `FAR_REEDS`.
    - *Pictures:* `v6-00-survey-grass-far-*` (`pos=-22,17.8&yaw=1.571`, one repack: the marks in the diff are blades changing in the mid-ground).
-3. **Rocks pop in rings every 6 m.** **[cheap]**
+3. **Rocks pop in rings every 6 m.** **[done in v6]** (v6-05: the reach's last 15% fades, the boulder twin crosses over 132-140 m, 2 m packs)
    - *What:* pebbles are cut at 75 m and stones at 170 m, with no fade. Each class is repacked only after the camera has moved 6 m, so a whole ring of stones appears or vanishes at once on that step. Fine boulders swap to their coarse twin at 140 m and stop casting there.
    - *Cause:* `rocks.js` `pack`, `REACH` and `BOULDER_NEAR`.
    - *Measured:* 4086 changed pixels against a baseline of 69.
@@ -108,10 +108,10 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
 
 ### Chunk and streaming
 
-8. **Plant chunk generation and repacks.** **[cheap]**
+8. **Plant chunk generation and repacks.** **[done in v6]** (v6-05: the sort and copies allocate nothing, one kind a frame)
    - Chunks generate on demand and are sliced (v3 stage 3). Repack frames cost about the median: CPU on repack frames 1.9–3.9 ms against 1.8–8.1 ms otherwise.
    - Their visible part is item 2. Their cost part is the `order.sort` closure and the per-chunk `subarray` in `vegetation/plants.js` `pack`.
-9. **Rock repacks.** Same as item 3: all classes on one frame every 6 m. **[cheap]**
+9. **Rock repacks.** Same as item 3: all classes on one frame every 6 m. **[done in v6]** (v6-05: one mesh a frame after 2 m, the changed range uploaded)
 10. **Terrain and water have no streaming seams.** The terrain is one mesh with no LOD and skirts. The fine ground skins (`v4/regions/skin.js`) are built once. Nothing to plan.
 
 ### Lighting
@@ -156,8 +156,8 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
     - *Pictures:* `v6-00-survey-wood-pan-{a,b}` (`pos=-195,128`, yaw 3.4 → 3.7: what comes into view).
     - `tools/pan-test.mjs` stands at (−190, 165), facing north, and misses it.
 21. **Allocation bursts.** **[cheap]** The steady state is 2.2 THREE objects a frame (v3 stage 3). The bursts are what is left:
-    - the rocks' per-instance `subarray` every 6 m;
-    - the plant pack's sort closure;
+    - the rocks' per-instance `subarray` every 6 m; **[done in v6]** (v6-05)
+    - the plant pack's sort closure; **[done in v6]** (v6-05)
     - `lights.js`'s `near.sort` (no closure, fine).
     - The alloc audit samples steady windows and does not see bursts.
 22. **The loading screen's hand-off.** The first frames after "Go out" cost ×6–28 the median: 38 and 17 ms of CPU on the bench's first two frames, at spawn. That is buffers and textures for the spawn view uploaded on the first full-rate frame. Item 20's fix covers it.
@@ -377,3 +377,27 @@ The picture rows are noise-limited headless: with the sky pinned, the baseline o
 **Uploads while panning:** no first-sight upload is left. The textures that upload every frame are BatchedMesh data textures: `veg-trees._colorsTexture` (33x33) every frame the tree batch draws (about 4000 on the 50 s wood walk), and `veg-lattice._colorsTexture` (52x52) near the Lattice; the matrices and indirect textures upload far less. Expected today; `pop-test` reports them as `texData` with their sizes (`dataTextures`, named in the JSON's `dataTextureNames`).
 
 **The uncapped wood pan** (`shots/perf/v6-01-uncapped-medium.json`: `?q=medium&record=6&pos=-190,165&cap=0&adapt=0`, headless Chrome with `--disable-frame-rate-limit --disable-gpu-vsync`, 189 fps): GPU timers per frame render 13.0 ms (shadow 0.4), bloom 3.5, grade 3.0, output 3.1, total 22.7, so the post chain is 9.7 of 22.7 = 43%. The timers sum to four times the 5.3 ms frame: they overlap on this GPU and are shares, not costs. The vsync-held run (`v6-01-uncapped-medium-vsynced.json`, `?cap=0` alone, 60 fps) reads bloom 5.2, grade 5.3, output 5.4 of 28.0 = 57%. Both are over the 40% line for v6-02; Austin's laptop numbers are what settle it.
+
+### v6-05 ground
+
+**Built:** `?plantfade=0`, `?rockfade=0`, `?packstep=6` restore the old behaviour (before = all three).
+- **Plants** (`vegetation/plants.js`): a grass or reed chunk whose nearest edge is within 4 m of `FAR_GRASS` (60) or `FAR_REEDS` (50), plus 2 m of slack, is packed into both meshes. The near mesh draws one side of the fade kit's dither and the far mesh the other, with f a smoothstep over 56-64 m (46-54 m) of the chunk's nearest-edge distance to the eye. The shader finds that distance from `iPos` on the 24 m grid, so a whole chunk crosses together and a chunk packed into one mesh only is drawn whole by it. The lazy repack fires when a chunk in view lacks a mesh its distance needs. The far mesh's material is a second one with the same program.
+- **Rocks** (`rocks.js`): pebbles fade over 63.75-75 m and stones over 144.5-170 m (low: 51-60, 127.5-150). Fine boulders fade out over 132-140 m (low 102-110) while the coarse twin fades in, and the fine boulder's shadow fades with it (`fadeDepthMaterial`). Each class has its own material; all share one program. Packs reach 3 m past the band.
+- **Packs:** each rock mesh repacks after 2 m, one mesh a frame in turn. It copies with a 16-float loop into slots that hold a different instance, and uploads only from the first changed slot. The plant pack uses an insertion sort over a `Float32Array` of chunk distances, whole-chunk `set`s and index loops for prefixes, and reused upload-range objects. `ctx.packToken` lets one pack run a frame across the plant kinds and the rocks. A plant kind kept waiting holds the rocks off for two frames. Only the first fill (before the first frame) and a jump of more than 12 m onto an unpacked chunk skip the token.
+
+**Measured** (medium, headless Metal; before = the three flags):
+
+| | before | after |
+|---|---|---|
+| `plants.grass-far` largest step / baseline (two runs after) | 36 / 35 | 20 / 13, 13 / 10 |
+| `plants.reeds-far` | 13 / 12 | 14 / 17, 33 / 414 |
+| `rocks.rocks` (three runs after) | 52 / 27 | 22 / 10 (fails, 2.2x), 12 / 35, 56 / 48 |
+| bench plant repacks, frames, frames with 2+ kinds | 612 in 436, 114 | 554 in 554, 0 |
+| bench rock packs (frames), frames with plants and rocks | 50 (50), 9 | 832 (832), 0 |
+| upload bytes per rock pack | 754,624 (all 8 meshes' whole buffers) | 3,876 (one mesh's changed range) |
+| CPU median: plant-repack frames / rock-pack frames / the rest | 3.3 / 3.5 / 3.2 ms | 3.1 / 3.0 / 3.1 ms (a noisier run: 6.9 / 6.8 / 5.7) |
+| alloc-audit steady state: THREE objects a frame; src heap bytes a frame | 2.06; the pack's sort closure 806 B, `rocks.js` 104 B | 1.93; neither (`setRange` gone too after reusing the range objects) |
+| draw calls, triangles at rest (`pos=-60,20&yaw=1.9`) | 159, 2,297,809 | 159, 2,306,440 (+0.4%: the band's chunks in both meshes) |
+
+The picture rows are noise-limited, as v6-01 found. `?wind=0` (pop-test's) used to quiet only the audio; the plants kept swaying, and the reeds pose's steps tracked the near flowers' sway, from 9 to 1411 changed pixels. `?wind=` now scales the plants' sway too, so `wind=0` holds them still (`plants.js`), and the rows above are with still plants. Even so the old switches pass ≤ 2× baseline: headless, a far chunk's mesh change is a few pixels. The rocks row's after runs never catch a stone repack inside the 24 grabbed frames (the watch is unchanged; packs are lazy per mesh). What they measure is a slow drift after the 1 m step, 7 to 56 pixels a frame, present before too, so on a 10-pixel baseline it fails about one run in three. **Caps:** the bench's peak demand is grass 10,514 of 60,000 near and 3,256 of 16,000 far, and reeds 3,669 of 20,000 and 1,939 of 10,000. The band fits with no cut. **Stills** (before against after, `views.mjs`, the gutter held): keep 187, grass 12, High Ling 30 changed pixels against a baseline pair of 571 (`v6-05-still-*-diff.png`, `v6-05-baseline-diff.png`). **Files:** `shots/perf/v6-pop-v6-05-{before-flags,before-still,after-still1,after-still2,after-rocks3}.json`, `v6-05-alloc-{before,after}.json`, `v6-05-bench-packs-{before,after}.json` (a per-frame count of plant repacks, rock packs, upload bytes and CPU on the bench, and calls and triangles at rest). **Not built:** the `alloc-burst` row (`alloc-audit` has no burst window since v6-01's trim). **Renders:** `shots/wip/v6-05-{grass-far,reeds-far,rocks,boulder-twin-ling}-{1,2,3}-{before,after}.png` (three steps across each switch), `v6-05-rocks-ling-low-after.png` (low, no gap). `v6-05-boulder-twin-{1,2,3}-*` stand inside the keep's wall and show nothing.
+
