@@ -373,6 +373,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `27-keep-fan-after.png` | After: the keep's fallen north-east corner, a fan of rubble you can climb, with the massifs behind it. |
 | `27-keep-spawn-gate-after.png` | After: the keep's gate wall from the spawn side, the slots dark and the planes sheer. |
 | `27-keep-spawn-gate-before.png` | Before: the same gate in the v4 keep. |
+| `27-tower-doorway-after.png` | After: the Armiger's Tower's doorway from the moor, a black slot in the fluted foot. |
 | `27-tower-sheet.png` | The Armiger's Tower, v4 beside v5: the 70 m fluted spire holding the ring and the lens. |
 | `27-tower-terraces-after.png` | After: the tower from the Lynchets' terraces, the lens mount against the west massif with the Galleries and the Lamps on its face. |
 | `27-tower-terraces-before.png` | Before (`?tower=v2`): the same view with the v4 tower. |
@@ -380,30 +381,38 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `28-arcature-high-ling-before.png` | Before: the same view with the v4 arcature. |
 | `28-arcature-k1-end-after.png` | After: the Arcature at the end of kerb K1, the armillary close. |
 | `28-arcature-sheet.png` | The Arcature, v4 beside v5, from the causeway. |
+| `28-arcature-under-after.png` | After: standing under the Arcature's leaning spars, the sun in the saddle beyond. |
 | `28-court-moraine-after.png` | After: the Sunken Court's two piers, 35 m high, reaching for an arch never closed, with the Hawser's links at right and the Galleries on the massif; the strongest frame of the night it was made. |
 | `28-court-moraine-before.png` | Before (`?court=v2`): the same moraine view with the v4 court's columns. |
 | `28-court-sheet.png` | The Sunken Court, v4 beside v5, from the shrine. |
 | `29-gradine-landing-after.png` | After: the Gradine's first landing at (287.8, -192.6), looking back over the bowl; the treads climb the massif's face. |
 | `29-gradine-p8-after.png` | After: the eighth tread, the stair running up the north-east massif toward its gully. |
 | `29-mother-court-sheet.png` | The Lattice's mother crystal, 60 m, from the court: v4 beside v5. |
+| `29-mother-measure-after.png` | After: the mother crystal close, the sun caught in a facet and ley lines running to its foot. |
 | `29-mother-moraine-after.png` | After: the mother crystal at (40, -265) over the Lattice's field, from the moraine, with the massif's crest behind. |
 | `29-mother-moraine-before.png` | Before (`?lattice=v2`): the same view without the mother. |
 | `30-galleries-causeway-sheet.png` | The Galleries of Durance from the causeway: the west wall without and with the eleven tiers of ironwork. |
+| `30-galleries-stones-after.png` | After: the Galleries' lit ironwork over the Cardinal Stones against the sun's glow. |
 | `30-galleries-tower-foot-after.png` | After: the Galleries from the tower's foot, hung on the new massif face; the lens mount's mast still crosses them. |
 | `30-thrones-gutter-spawn-after.png` | After: the Acephalous Thrones from the spawn side in the gutter, the red rim of the saddle against the massifs. |
+| `30-thrones-spawn-rim-test.png` | A rim-light test: the swollen sun in the saddle with a red rim and lightning at its edge, one of three attempts. |
 | `30-thrones-spawn-sheet.png` | The Thrones from spawn: the saddle empty, then with the two headless colossi either side of the sun. |
 | `30-thrones-start-up-after.png` | After: looking up between the Thrones from the causeway's start, the sun low and swollen in the saddle. |
 | `31-hawser-floor-sheet.png` | The Hawser from the floor: the Lattice's foot without the chain, then with its end crossing the frame. |
 | `31-hawser-floor-shift.png` | After: a link taken up in the foreground in the Hawser's shift, the chain's end across the frame and the Lattice's field behind. |
+| `31-hawser-measure-after.png` | After: a link of the Hawser's chain at human scale in front of the sun. |
 | `31-hawser-shrine-after.png` | After: the chain from the shrine, its links larger than a person, running up to the bronze collar on the north wall. |
 | `31-plinths-foot-after.png` | After: the Plinth Road's first pair, the robed figures' feet on 20 m plinths, the road ending under the wall. |
 | `31-plinths-sheet.png` | The Plinth Road from its foot: bare road, then the twelve pairs of plinths. |
 | `32-annals-air-after.png` | After: the Annals' band on the massif's face from the air, in raking light. |
 | `32-annals-air-gutter-after.png` | After: the same band while the sun gutters, the figures seeming to turn. |
+| `32-annals-arcature-after.png` | After: an Annals figure seen between the Arcature's leaning spars. |
 | `32-annals-causeway-after.png` | After: the Annals from the causeway; the honest frame, the band barely reads from the floor. |
+| `32-annals-scarp-after.png` | After: an Annals figure, pale and spidery, on the scarp beside the sandbag-like boulders. |
 | `32-ridge-45-causeway-after.png` | After: the Battlemented Ridge with its merlons raised to 45 m so they carry from the causeway (the legibility pass). |
 | `32-ridge-outwash-after.png` | After: the seven merlons along the north-east crest from the Outwash. |
 | `32-ridge-outwash-before.png` | Before (`?ridge=0`): the same crest without the merlons. |
+| `32-ridge-sheet.png` | The Battlemented Ridge from the causeway, without and with the merlons. |
 | `33-cincture-gutter-causeway-after.png` | After: the Cincture's broken hoop, its rim red and bright in a gutter, from the causeway. |
 | `33-cincture-sheet.png` | The Cincture from the Lattice: the sky without and with the hoop. |
 | `33-occultation-saddle-after.png` | After: the Occultation's band of shadow over the saddle, the sun's disc darkened. |
