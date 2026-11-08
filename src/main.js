@@ -17,6 +17,7 @@ import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
 import { buildMountains } from './v4/mountains.js';
 import { installKit } from './v4/kit/index.js';
+import { makeRegions, REGION_FILES } from './v4/regions.js';
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -38,6 +39,8 @@ const MODULES = [
   ['ruins2', () => import('./v2/ruins.js')],
   ['inhabitants2', () => import('./v2/inhabitants.js')],
   ['riverlife2', () => import('./v2/riverlife.js')],
+  // v4 systems: one module per bioregion (src/v4/regions/<file>.js), filled by the region agents
+  ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
   // v4 systems: the kit's test scene, only when named (?only=kit)
   ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
 ];
@@ -122,6 +125,7 @@ async function start() {
   ctx.terrain = buildTerrain(ctx);
   // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
   ctx.mountains = buildMountains(ctx);
+  ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   settled = 1; await progress('lighting the sun', 0);
 

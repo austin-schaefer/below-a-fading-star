@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
 import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
 import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
+import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -364,6 +365,8 @@ export function heightAt(x, z) {
     }
   }
 
+  // --- v4 systems: the regions' heightfield hooks (one line; each region's block is its own module's height())
+  h = regionsHeight(h, x, z);
   // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: layered ranges, buttresses,
   // talus, bedding ledges, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
   // notch cuts through them as before.
@@ -547,6 +550,7 @@ export function buildTerrain(ctx) {
     // causeway paving colour
     const cd = causewayDistance(x, z);
     col.lerp(cRoad, 1 - smoothstep(2.6, 4.2, cd));
+    regionsGround(col, x, z, b); // v4 systems: the regions' ground hooks (and the ?regions=1 tint)
     // a little per-vertex variation so the moor isn't flat
     const v = SX.noise2(x * 0.11, z * 0.11) * 0.06;
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
