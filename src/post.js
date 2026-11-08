@@ -6,6 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { capBloom } from './bloomfix.js';
 
 const GradeShader = {
   uniforms: {
@@ -103,7 +104,7 @@ export function buildPost(ctx) {
   const bloomParam = parseFloat(new URL(location.href).searchParams.get('bloomres'));
   const bloomRes = bloomParam > 0 ? Math.min(1, bloomParam) : 0.5;
   const tune = bloomRes < 1 ? BLOOM_HALF : BLOOM_FULL;
-  const bloom = new UnrealBloomPass(size.clone(), tune.strength, tune.radius, tune.threshold);
+  const bloom = capBloom(new UnrealBloomPass(size.clone(), tune.strength, tune.radius, tune.threshold));
   const bloomSetSize = bloom.setSize.bind(bloom);
   bloom.setSize = (w, h) => bloomSetSize(Math.max(2, Math.round(w * bloomRes)), Math.max(2, Math.round(h * bloomRes)));
   bloom.resScale = bloomRes;
