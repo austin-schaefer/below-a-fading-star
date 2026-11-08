@@ -111,4 +111,14 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `12-river-speculum-cracked-tiles.png` | The Speculum pool tiled like cracked paving. |
 | `12-river-speculum-first-flat-ellipse.png` | The first Speculum: a flat white ellipse in a black void. Funny failure. |
 | `12-river-speculum-young-sun.png` | The Speculum from the pool's edge with cloud reflections. |
+| `13-ruins-carillon-caps-close.png` | The Carillon Flags: bronze caps set in the causeway hexes, studs counting down the notes. |
+| `13-ruins-carillon-walk.png` | The Carillon Flags along the causeway crown, the Armiger's Tower beyond. |
+| `13-ruins-cutting-bank.png` | The Cutting on the canyon bank: courses, black glass, rusted lattice, soil. Still reads as a lens, not a slump. |
+| `13-ruins-gradine-base.png` | The Gradine's foot: the first tread above head height, the flight climbing into haze. |
+| `13-ruins-gradine-yard.png` | The Gradine from the Leaning Yard, a pale thread up the east wall. Too thin and too dark; a v4 note. |
+| `13-ruins-hypogeum-door.png` | The Hypogeum's bronze door, verdigris and scrapes, glyphs on the lintel. |
+| `13-ruins-hypogeum-into-cut.png` | Looking down into the Hypogeum's cut from the kerb. |
+| `13-ruins-hypogeum-stair-from-floor.png` | From the Hypogeum's floor, the stair climbing to the sun. |
+| `13-ruins-lintel-before.png` | Before a gutter: the glyph row on the lintel. |
+| `13-ruins-lintel-after.png` | After the gutter: the row has slid one place; the last glyph came round to the front. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
