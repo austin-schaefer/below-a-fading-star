@@ -1,6 +1,6 @@
 # Continuance: Below a Fading Star, after v5
 
-Written 11:04 PST on 2026-11-08, for a fresh orchestrator session. Read with AGENTS.md (repo root) and HANDOFF.md (the run's rules; binding). Delete this file, HANDOFF.md and wilderness-run.md when v7 ships.
+Written 11:04 PST on 2026-11-08 and updated 11:14 PST after Austin's measurement and his phone and Firefox checks, for a fresh orchestrator session. Read with AGENTS.md (repo root) and HANDOFF.md (the run's rules; binding). Delete this file, HANDOFF.md and wilderness-run.md when v7 ships.
 
 ## Where things stand
 
@@ -12,14 +12,14 @@ Written 11:04 PST on 2026-11-08, for a fresh orchestrator session. Read with AGE
 - Nothing is in flight. Worktree `.claude/worktrees/v6-harness` (branch `v6-harness`, Playwright installed) is prepared for v6-01 and is at the working branch's head.
 - The hourly check-in cron was deleted with the old session; recreate it (below).
 
-## First: Austin's clean measurement
+## Austin's clean measurement: done, and what it changed
 
-Austin was asked, after v5 shipped and with no agent browser on his GPU, to run `http://localhost:8123/?q=medium&record=25&pos=-190,165` (Go out, pan two slow circles, Download JSON), and optionally `?record=25` with no `q=`. When the file arrives: commit it as `shots/perf/laptop-wood-pan-clean-2026-11-08.json` (a `note` field saying the conditions), log the headline numbers in MORNING.md (p99 and worst frame, pixel-ratio steps, shadow redraws per second while turning, GPU total and the post chain's share standing still), and weigh them against the share-ready bar in `briefs/v6/index.md`. If the post chain is still about half the GPU, v6-02 stays second; if the shadow pass dominates while turning, move v6-03 up to run alongside v6-02 only if their files stay disjoint (they do not share `src/post.js`; v6-03 owns `src/shadows.js`). The earlier, contaminated samples are `shots/perf/laptop-wood-{idle,pan}-2026-11-08.json`.
+Committed as `shots/perf/laptop-wood-pan-clean-2026-11-08.json` (medium pinned, 1920×1117 at pixel ratio 1.0, Chrome, no agent browser): 1500 frames at 60 fps, median 16.7 ms, p95 17.3, p99 17.5, worst 33.3, 0 frames over 2× the median, 0 pixel-ratio steps, 3 dynamic shadow redraws in 25 s, programs steady at 159. The hitching is fixed; share-ready bar items 1 and 2 are met. The GPU timers are not a cost breakdown here (they sum to 29.8 ms a frame at a steady 16.7 ms frame; the output pass likely carries the vsync wait), so the post chain's real cost is unknown until v6-01 measures it with the cap off. Austin then walked production on an iPhone ("phone performance seems fine") and found **light sources drawn as flat squares**, then saw the same on desktop Firefox; Chrome is clean. That is v6-00, first in line. Austin: "i don't wanna have a gigantic long milestone if performance is basically fine" → **v6 is cut to three batches** (below).
 
 ## v6: the plan and the briefs
 
 - Plan: `wilderness-v6.md` (survey, catalogue, targets, six stages; stage 4's pixel-ratio and shadow-cadence parts already landed in `fix-dpr-steps`). Briefs: `briefs/v6/index.md` (dispatch order, batches, shared-file hot spots, the share-ready bar, the open questions decided at their defaults: log each default in MORNING.md when its brief merges) and `briefs/v6/brief-v6-01 … 09`. `briefs/v6/pairs.mjs` is the survey's pinned-pair script that v6-01 turns into a tool.
-- Order: **batch 1** v6-01 harness alone (Sonnet; port 8172 is written into its brief); **batch 2** v6-02 finish pass alone (Opus; it also writes `src/fade.js`); **batch 3** v6-03 shadow, v6-04 trees, v6-05 ground (three Opus); the share-ready bar should be met here, then ask Austin for a laptop run and, if met, release what has landed as **v6a** so he can share; **batch 4** v6-06 fauna, v6-07 slots; **batch 5** v6-08 image alone; **v6-09** table (read-only); curate, `RELEASES.md`, release **v6**.
+- Order (slim v6, `briefs/v6/index.md` "Slim v6"): **batch 1** v6-00 square lights (Sonnet, new brief, port 8173, worktree `v6-square-lights` to make) and v6-01 harness trimmed to `pop-test`, `pair-diff` and the uncapped GPU measurement (Sonnet, port 8172, worktree `v6-harness` ready); **batch 2** v6-04 trees and v6-05 ground (two Opus), time-boxed to the near switches; **batch 3, only if v6-01's uncapped run shows the post chain ≥ 40% of a GPU-bound frame**, v6-02 finish pass; then curate, `RELEASES.md`, merge to main as **v6**, and v7 begins. v6-03, 06, 07, 08, 09 are deferred with their briefs on disk.
 - Every brief has its port to fill (`PORT`) except v6-01; give each agent a distinct port from 8172 upward and a worktree made with `git worktree add -q -b <name> .claude/worktrees/<name> HEAD` from the deploy worktree, then `npm install --no-save --silent playwright@1.63.0` in its `prototypes/wilderness` (no package.json; keep it that way).
 
 ## How each hand-back is handled (what worked today)
@@ -32,6 +32,7 @@ Austin was asked, after v5 shipped and with no agent browser on his GPU, to run 
 
 ## Open for Austin's eye (none blocking; all logged in MORNING.md)
 
+- **Light sources draw as flat squares in Firefox, Safari and iOS Safari** (production, v5): v6-00, batch 1. Austin confirms on the phone after the fix merges.
 - The massifs' bedding ledges read strong and even from the high east view (a quarry face); a number in `src/terrain.js`'s marked block lowers the amplitude or varies the spacing.
 - The Battlemented Ridge's regularity is its stated idea and was left; the Armiger's Tower's mast still crosses the Galleries from the Lynchets (−165, −105).
 - The causeway's post lamp keeps a glass box under a pyramid cap (the Leerie's standards were restyled to lamp-cages; the post lamp was not).
@@ -47,4 +48,4 @@ Austin was asked, after v5 shipped and with no agent browser on his GPU, to run 
 1. Load the `orchestrator` skill; read AGENTS.md, HANDOFF.md, this file, MORNING.md's top ten entries, `wilderness-run.md`, `wilderness-v6.md`, `briefs/v6/index.md`.
 2. `cd .claude/worktrees/wilderness-deploy && git fetch && git status`; confirm 8123 serves (restart if not).
 3. Recreate the hourly check-in: `/loop 1h` with the text: "Hourly check-in for the Below a Fading Star run (prototypes/wilderness, working branch claude/intelligent-mendel-ca020e in worktree .claude/worktrees/wilderness-deploy). If agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step in prototypes/wilderness/CONTINUANCE.md then wilderness-run.md (v6 performance, then v7 the living). If blocked, write a 'Needs you' entry in prototypes/wilderness/MORNING.md once and continue with anything that is not blocked. Pace rules from HANDOFF.md are binding: at most four implementation agents, one headless browser each, renders and suites in sequence, wip renders at 1280x720, nice -n 10 and SHOT_ANGLE=metal on every node tools/ call. Stop the loop when v7, the living, has shipped or Austin says stop."
-4. Handle Austin's measurement if it has arrived (above), then dispatch v6-01.
+4. Make the `v6-square-lights` worktree, fill `PORT` (8173) in `briefs/v6/brief-v6-00-square-lights.md`, then dispatch batch 1: v6-00 and v6-01 together.

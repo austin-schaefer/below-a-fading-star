@@ -1,5 +1,19 @@
 # v6, nothing pops: the briefs
 
+## Slim v6 (decided 11:14 PST, 2026-11-08, after Austin's clean measurement)
+
+Austin's clean wood pan (`shots/perf/laptop-wood-pan-clean-2026-11-08.json`: laptop, Chrome, medium, 1920×1117 at pixel ratio 1.0, no agent on the GPU) is a steady 60 fps: 1500 frames, median 16.7 ms, p99 17.5, one 33 ms frame, 0 frames over 2× the median, 0 pixel-ratio steps, 3 dynamic shadow redraws in 25 s. Bar items 1 and 2 are met before v6 starts, and the phone (iPhone, Safari, production) "seems fine". Austin: "i don't wanna have a gigantic long milestone if performance is basically fine". So v6 is cut to what a visitor would notice, and the rest of this file is kept as the catalogue for later:
+
+| Batch | Brief | Model | Why it stays |
+|---|---|---|---|
+| 1 | **v6-00** `brief-v6-00-square-lights.md` (new) | Sonnet; Opus if it fails once | Light sources draw as flat squares in Firefox, Safari and iOS Safari, in production today. Chrome alone is fine. First because it is the one thing wrong on a shared link. |
+| 1 | **v6-01** harness, trimmed | Sonnet | Only `pop-test`'s switch gate and `pair-diff` (bar item 4's measure), plus one question: run the wood pan with the frame cap off (`?cap=0` if `src/perf.js` has it; otherwise `bench=1`) so the GPU timers are read against a real GPU-bound frame. The clean sample's GPU timers sum to 29.8 ms a frame at a steady 16.7 ms frame, so the pass figures (output 7.7, grade 7.5, bloom 5.4, render 8.8 median) are shares, not costs; the output pass almost certainly carries the vsync wait. Drop the per-module counters and `alloc-audit` unless they fall out for free. |
+| 2 | **v6-04** trees and **v6-05** ground | Opus, together | The near switches a walker sees in the first minute from spawn (tree near switch at 24–36 m, grass at 60 m, reeds at 50 m): the pops the milestone is named for. Time-boxed to the switches in bar item 4. |
+| 3, conditional | **v6-02** finish pass | Opus | Only if v6-01's uncapped run shows the post chain at 40% or more of a GPU-bound frame. If it is under, skip it and say so in MORNING.md. |
+| release | `RELEASES.md` v6 entry, curate `shots/wip`, merge to main | | Then v7, the living. |
+
+Deferred, not dropped (their briefs stay on disk): v6-03 shadow box and cadence (the pan showed 3 dynamic redraws in 25 s and no swim complaint), v6-06 fauna, v6-07 slots and dt, v6-08 AA / the step's reallocation / bloom shimmer / banding, v6-09 the hardware table. They come back as a polish batch after v7 if Austin wants them, or sooner if a visitor names one.
+
 Written 2026-11-08 from `wilderness-v6.md` (the survey, 35 pictures in `shots/wip/v6-00-survey-*`, targets, six stages, rules, open questions), `wilderness-run.md` item 4 (Austin, 14:50: "i want to share with folks but currently performance is too poor to share"; open calls at the defaults, logged), `wilderness-v3.md`, `README.md`, `HANDOFF.md`, `MORNING.md` 12:05–15:10, the laptop samples in `shots/perf/laptop-wood-*.json`, and the code at `aaa42e1` (deploy worktree) plus `fix-dpr-steps` at `0a5a739`. Ordered so what Austin feels most on his laptop lands first: the post chain (bloom 6.5 + grade 3.1 + output 3.2 = 12.8 of 26.7 ms GPU), the shadow pass during turns, the LOD and chunk pops, then the rest.
 
 ## What is already done and not re-briefed

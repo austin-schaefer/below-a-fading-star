@@ -2,6 +2,10 @@
 
 Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). The milestones were numbered the other way round until 10:04 on 2026-11-08; MORNING.md entries before then used the old numbers and were renumbered. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
 
+## Status
+
+**11:14 PST, 2026-11-08: cut to a short milestone.** Austin's clean measurement after v5 shipped (`shots/perf/laptop-wood-pan-clean-2026-11-08.json`, the wood pan at medium, 1920×1117, pixel ratio 1.0) holds a steady 60 fps (p99 17.5 ms, worst 33.3 ms, 0 pixel-ratio steps, 3 dynamic shadow redraws in 25 s) and the phone runs fine in production, so the hitching this milestone was opened for is gone before it starts. What remains visible: light sources draw as flat squares in Firefox, Safari and iOS Safari (new, v6-00), and the near LOD switches (stages 2 and 3). The dispatch order and what is deferred are in `briefs/v6/index.md` under "Slim v6"; the survey and catalogue below stay as the record for later polish.
+
 Three of the artefacts Austin reported this morning are already fixed and merged, so v6 does not plan them again:
 
 - trees that turned as you approached them (fixed by `fix-tree-lod`, `tools/tree-lod-test.mjs`);
