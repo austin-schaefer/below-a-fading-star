@@ -202,10 +202,10 @@ function pedlarMaterial(uTime) {
           // holding a little of the light, so they show against dark water and dark bank
           float fres = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 2.0);
           if (vPart > 0.5 && vPart < 1.5) {
-            totalEmissiveRadiance += vec3(0.78, 0.8, 0.82) * (0.12 + 0.45 * fres);
-            diffuseColor.a = min(1.0, diffuseColor.a + 0.12 * pow(back, 8.0) + 0.25 * fres);
+            totalEmissiveRadiance += vec3(0.78, 0.8, 0.82) * (0.04 + 0.28 * fres);
+            diffuseColor.a = min(1.0, diffuseColor.a + 0.12 * pow(back, 8.0) + 0.15 * fres);
           } else if (vPart > 1.5) {
-            totalEmissiveRadiance += diffuseColor.rgb * (0.22 + 0.35 * fres);
+            totalEmissiveRadiance += diffuseColor.rgb * (0.5 + 0.4 * fres);
           } else {
             totalEmissiveRadiance += vec3(0.35, 0.42, 0.3) * 0.3 * fres;
           }
@@ -710,7 +710,7 @@ export async function build(ctx) {
     haloMat.uniforms.uHue.value = h; haloMat.uniforms.uBright.value = bright;
     wcLight.color.setHSL(h, 0.95, 0.5);
     const lc = wcLight.color, luma = 0.2126 * lc.r + 0.7152 * lc.g + 0.0722 * lc.b;
-    wcLight.intensity = 32 * clamp(0.4 / Math.max(luma, 1e-3), 1, 3) * bright * (0.92 + 0.08 * Math.sin(t * 0.37));
+    wcLight.intensity = 32 * clamp(0.4 / Math.max(luma, 1e-3), 1, 3) * (1 + g * 0.8) * (0.92 + 0.08 * Math.sin(t * 0.37));
     const d = Math.hypot(cam.x - wcPos.x, cam.z - wcPos.z);
     if (d < 6 && !wcVisited) { wcVisited = true; cue('wrong-colour-near', wcPos); }
     else if (d > 25) wcVisited = false;

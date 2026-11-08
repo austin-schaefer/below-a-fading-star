@@ -97,13 +97,14 @@ function galleyGeometry(low) {
 // as you see her from the causeway side; the far western end lies in the bank's shadow by the reeds,
 // where it waits; the southern leg brings it back.
 function makePath(T) {
-  const C = { x: -92, z: 104 }, a = 37, bN = 25, bS = 20;
+  const C = { x: -92, z: 104 }, a = 37, aW = 40, bN = 25, bS = 20;   // the west end reaches nearer the reeds
   const pts = [];
   const N = 16;
   for (let k = 0; k < N; k++) {
     const ph = -(k / N) * Math.PI * 2;               // east, then north, west, south
     const sn = Math.sin(ph);
-    pts.push(new THREE.Vector3(C.x + Math.cos(ph) * a, T.y, C.z + sn * (sn < 0 ? bN : bS)));
+    const cs = Math.cos(ph);
+    pts.push(new THREE.Vector3(C.x + cs * (cs < 0 ? aW : a), T.y, C.z + sn * (sn < 0 ? bN : bS)));
   }
   const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
   // a lookup table at even arc length
