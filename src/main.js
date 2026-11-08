@@ -47,6 +47,7 @@ const MODULES = [
   ['dressing', () => import('./v4/dressing.js')], // v4: the Long Figure, the Discontinued Track, the Surveyor's Pegs
   ['span', () => import('./v4/span.js')], // v4: the Great Span (W) and the Postern (BG)
   ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
+  ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
 ];
 
 async function start() {

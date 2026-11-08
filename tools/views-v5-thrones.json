@@ -1,0 +1,11 @@
+[
+ {"name": "thrones-spawn", "x": 6, "z": 36, "yaw": 1.92, "pitch": 0.1},
+ {"name": "thrones-start-west", "x": -344, "z": 126, "yaw": 1.92, "pitch": 0.32},
+ {"name": "thrones-start-east", "x": -344, "z": 126, "yaw": -1.222, "pitch": -0.02},
+ {"name": "thrones-start-up", "x": -338.3, "z": 123.1, "yaw": 1.09, "pitch": 0.45},
+ {"name": "thrones-measure", "x": -318, "z": 116, "yaw": 1.92, "pitch": 0.16},
+ {"name": "thrones-causeway-65", "x": -65, "z": 12, "yaw": 1.92, "pitch": 0.1},
+ {"name": "thrones-span-deck", "x": -200, "z": 215, "dy": 56.54, "yaw": 1.35, "pitch": 0.04},
+ {"name": "thrones-span-deck-mid", "x": -120, "z": 215, "dy": 56.54, "yaw": 1.35, "pitch": 0.04},
+ {"name": "thrones-gutter-spawn", "x": 6, "z": 36, "yaw": 1.92, "pitch": 0.1, "js": "window.__fp.sky.flicker.next = 0", "settle": 3600}
+]
