@@ -48,7 +48,14 @@ async function start() {
   await progress('shaping the moor', 0);
 
   const canvas = document.getElementById('scene');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: quality === 'high', powerPreference: 'high-performance' });
+  // ?multidraw=0 hides WEBGL_multi_draw, as Firefox does: a BatchedMesh then draws once per instance
+  let context;
+  if (url.searchParams.get('multidraw') === '0') {
+    context = canvas.getContext('webgl2', { alpha: false, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: quality === 'high', powerPreference: 'high-performance' });
+    const get = context.getExtension.bind(context);
+    context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
+  }
+  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: quality === 'high', powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, quality === 'high' ? 1.5 : 1));
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
