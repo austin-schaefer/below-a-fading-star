@@ -107,7 +107,7 @@ export const SITES = {
   pit:        { x: 200, z: 185, r: 14, name: 'the pit', block: [182, 218, 167, 203] },
   thrones:    { x: -410, z: 150, r: 80, name: 'The Acephalous Thrones', at: [[-420, 100], [-400, 200]] },
   galleries:  { x: -390, z: -80, r: 70, name: 'The Galleries of Durance', y: [60, 260] },
-  lamps:      { x: -300, z: -330, r: 60, name: 'The Escarpment Lamps', bearings: [300, 335], y: [60, 250] },
+  lamps:      { x: -330, z: -268, r: 60, name: 'The Escarpment Lamps', bearings: [300, 318], y: [60, 220] }, // off the 328° col: the west massif's face that remains
   ridge:      { x: 270, z: -380, r: 60, name: 'The Battlemented Ridge', bearings: [20, 45] },
   annals:     { x: 0, z: 0, r: 0, name: 'The Annals', band: [110, 130], bearings: [60, 120] },
   plinths:    { x: 148, z: -220, r: 15, name: 'The Plinth Road', from: [130, -150], to: [165, -290] },
