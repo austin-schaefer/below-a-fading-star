@@ -299,5 +299,5 @@ export function makeTier(ctx, url, choice) {
     steadyLow1Ms: (() => { const l = low1(ringS, nS); return l == null ? null : Math.round(l * 10) / 10; })(),
     stalls, pending: pending ? { ...pending } : null, probeMs: state.probeMs, steps: state.steps.slice(), shadowMap: shadowMapSize(),
   });
-  return { state, frame, apply, pin, attach, stats, setPixelRatio, shadowMapSize };
+  return { state, frame, apply, pin, attach, stats, setPixelRatio, shadowMapSize, budget };
 }

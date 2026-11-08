@@ -1,24 +1,31 @@
 // Shadow cadence (v3 stage 2). The sun never moves and most casters never move, so the shadow map is not
 // redrawn every frame (renderer.shadowMap.autoUpdate off). It is redrawn when
 // - the shadow camera's (texel-snapped) centre has moved more than 3 m: walking, or turning, since the
-//   centre sits 40 m ahead of you; the light only moves on a redraw, so the old map stays right meanwhile;
+//   centre sits 40 m ahead of you; the light only moves on a redraw, so the old map stays right meanwhile.
+//   These redraws come at most at the turning cadence (?shadowdyn=, default 15 a second; 10 on a GPU without
+//   its own memory, tier.js's 'integrated' or 'apple'), and only after a frame within the tier's budget
+//   (tier.js budget()): after an over-budget frame the redraw waits for the next frame, but never more
+//   than 0.25 s (4 a second), so the box never visibly lags. Texel snapping keeps the shadows still between
+//   redraws, so a slower cadence moves no shadow edge;
 // - 1/shadowhz seconds have passed (?shadowhz=, default 2; 0 redraws every frame, the old behaviour);
 // - a dynamic caster within 40 m of you has moved more than one shadow-map texel (4.6 cm at q=high, 9.3 at
 //   low) since the last redraw: then at once, so no creature's shadow ever lags its feet by more than a
 //   texel; a grazer ambling at 0.75 m/s redraws ~16 times a second at high, a fleeing one every frame;
-// - a near caster has only turned or changed pose, at up to ?shadowdyn= per second (default 15; 0 = every
-//   frame). Dynamic casters are the shadow-casting meshes of the fauna and inhabitants2 modules (creatures,
+// - a near caster has only turned or changed pose, at up to the same cadence (0 = every frame). Dynamic casters are the shadow-casting meshes of the fauna and inhabitants2 modules (creatures,
 //   the traveller and his wagon, the galley, the guest) and the vertex-animated banners.
 // Beyond 40 m a dynamic caster stops casting (?shadowcull=0 keeps them), so a creature's shadow never
 // steps at the slow clock. What a module writes to castShadow is kept and still obeyed within 40 m.
 import * as THREE from 'three';
 
-const NEAR = 40, MOVE = 3;
+const NEAR = 40, MOVE = 3, MIN_HZ = 4, SHARED_HZ = 10;
 
 export function makeShadowCadence(ctx, url, texel = 0.05) {
   const { renderer, camera } = ctx;
   const num = (k, d) => { const v = url.searchParams.get(k); return v != null && isFinite(+v) ? +v : d; };
-  const hz = num('shadowhz', 2), dynHz = num('shadowdyn', 15), cull = url.searchParams.get('shadowcull') !== '0';
+  const hz = num('shadowhz', 2), cull = url.searchParams.get('shadowcull') !== '0';
+  const shared = ['integrated', 'apple'].includes(ctx.tier?.state.gpu?.kind);
+  let dynHz = num('shadowdyn', 15);
+  if (shared && !(dynHz > 0 && dynHz <= SHARED_HZ)) dynHz = SHARED_HZ;
   const every = !(hz > 0);
   renderer.shadowMap.autoUpdate = every;
   renderer.shadowMap.needsUpdate = true;
@@ -54,7 +61,7 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
   const p = new THREE.Vector3(), last = new THREE.Vector3(Infinity, 0, 0);
   let since = Infinity, sig = 0, maxMove = 0;
   let T2 = texel * texel;
-  const stats = { redraws: 0, dynamic: 0, casters: casters.length, near: 0 };
+  const stats = { redraws: 0, dynamic: 0, moves: 0, deferred: 0, casters: casters.length, near: 0 };
   // a cheap signature of every near caster's placement; it changes when one moves, turns or shows/hides
   function scan() {
     const c0 = camera.position;
@@ -114,12 +121,15 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
     since += dt;
     const dyn = scan();
     if (every) return true;
-    const moved = target.distanceToSquared(last) > MOVE * MOVE;
-    const dynDue = (dyn && (!(dynHz > 0) || since >= 1 / dynHz - 1e-4)) || maxMove > T2;
+    const cadence = !(dynHz > 0) || since >= 1 / dynHz - 1e-4;
+    // the box follows the view at the cadence, after a frame within budget (dt is the last frame's interval)
+    let moved = target.distanceToSquared(last) > MOVE * MOVE && cadence;
+    if (moved && since < 1 / MIN_HZ && ctx.tier && dt * 1000 > ctx.tier.budget()) { moved = false; stats.deferred++; }
+    const dynDue = (dyn && cadence) || maxMove > T2;
     if (moved || since >= 1 / hz || dynDue) {
       renderer.shadowMap.needsUpdate = true;
       since = 0; last.copy(target); stamp();
-      stats.redraws++; if (dynDue && !moved) stats.dynamic++;
+      stats.redraws++; if (moved) stats.moves++; else if (dynDue) stats.dynamic++;
       return true;
     }
     return false;
