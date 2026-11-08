@@ -29,6 +29,8 @@ const CUES = [
   ['rooks-lift', { dx: 20, dy: 6, dz: -25 }, { count: 12 }, 1500, 2000], ['crows', { dx: 10, dy: 4, dz: -8 }, { count: 3 }],
   ['bats-out', { dx: 40, dy: 25, dz: -50 }, { count: 20 }, 2000, 3000],
   ['wader-gone', { dx: 6, dz: -8 }, { quiet: true }], ['biomesh-settle', { dx: 2, dy: -1.5, dz: -3 }, { quiet: true }],
+  // v4 regions: the regions' own cues (src/v4/regions/<key>.js sound.cues)
+  ['grouse-flush', { dx: 3, dy: -1.2, dz: -3 }], ['stonechat', { dx: 4, dy: -0.5, dz: -4 }],
   // the fall last: its loop is on the cue bus. enter must sound; leave must fade it (checked separately below)
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];

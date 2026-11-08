@@ -18,7 +18,7 @@
 //                               out) -> bool, cues?: { name: (pos, opts) => void } } }, started by audio.js)
 //   cover (v4 regions)          { density: { grass, sedge, heather, bracken, flowers, fleshy, reeds, trees }, scale:
 //                               { grass, heather, ... }, floor: { heather, ... }, tint: { grass: '#hex', ... },
-//                               tintAmt, trees(ground, rng) -> [{ x, z, kind: 'medlar'|'thorn'|'dead'|'crooked', s }] }:
+//                               tintAmt, trees(ground, rng, regionAt) -> [{ x, z, kind: 'medlar'|'thorn'|'dead'|'crooked', s, gap?, rot? }] }:
 //                               multipliers (1 = as the moor), read by vegetation through coverAt() and treesFor()
 //   stone (v4 regions)          { density, tors: bool }: how many of rocks.js's shared stones lie here (stoneAt());
 //                               a region's own stone is built in its module
@@ -268,7 +268,7 @@ export function stoneAt(x, z, out = _st) {
 // trees a region plants itself (placed by vegetation/trees.js with its own variants, so they batch with the rest)
 export function treesFor(ground, makeRng) {
   const out = [];
-  REGION_KEYS.forEach((k, i) => { const f = HOOKS[k].cover?.trees; if (typeof f === 'function') for (const t of f(ground, makeRng(5100 + i))) out.push(t); });
+  REGION_KEYS.forEach((k, i) => { const f = HOOKS[k].cover?.trees; if (typeof f === 'function') for (const t of f(ground, makeRng(5100 + i), regionAt)) out.push(t); });
   return out;
 }
 // sound: audio.js starts every region's sound hook once with its kit; each ticks at 10 Hz with its soundAt weight
