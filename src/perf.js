@@ -5,6 +5,11 @@
 // - Bench (?bench=1 for 45 s, ?bench=<seconds> for a shorter run of the same path): a fixed camera path,
 //   spawn → causeway → the tarn's shore → the fen's edge → spawn, controls off, the gutter held off,
 //   sampled every 500 ms, then a summary with the JSON to download. ctx.perf.report() returns it all.
+// - Recorder (?record=<seconds>, or ctx.perf.record(seconds) from the console; implies ?perf=1): once the walker
+//   is out (the card hidden, the pointer locked or drag-look or touch engaged) it records every frame's duration,
+//   timestamp and yaw into preallocated typed arrays, and every 250 ms a sample (GPU passes, draw calls, pixel
+//   ratio, tier steps, shadow redraws, camera, memory counts, uploads, CPU per module). Idle time is not counted.
+//   At the end it releases the pointer lock and shows the bench's panel with a summary and the record as JSON.
 // - Toggles (debug panel): each world module on/off (its scene objects hidden, its updates skipped),
 //   bloom and shadows. Also ?bloom=0 and ?shadows=0.
 // Modules are attributed by building each against forModule(name), a Proxy of ctx that tags its
@@ -21,7 +26,7 @@ import { installGpuMem } from './gpumem.js';
 
 const BLOCK_MS = 500; // one sample block
 const WINDOW = 4;     // blocks in the rolling window (~2 s)
-const PASSES = ['render', 'shadow', 'bloom', 'grade', 'output'];
+const SAMPLE_MS = 250; // the recorder's sample length
 
 const r1 = (v) => (v == null || !isFinite(v) ? null : Math.round(v * 10) / 10);
 const r2 = (v) => (v == null || !isFinite(v) ? null : Math.round(v * 100) / 100);
@@ -45,7 +50,7 @@ export function createPerf(ctx) {
   const mods = new Map();
   function mod(name) {
     let m = mods.get(name);
-    if (!m) { m = { name, cpu: 0, enabled: true, world: false, updates: 0, objects: new Set(), hidden: null }; mods.set(name, m); }
+    if (!m) { m = { name, cpu: 0, tot: 0, enabled: true, world: false, updates: 0, objects: new Set(), hidden: null }; mods.set(name, m); }
     return m;
   }
   const rawRegister = ctx.registerUpdate;
@@ -70,7 +75,7 @@ export function createPerf(ctx) {
       const t0 = performance.now();
       fn(dt, t);
       const d = performance.now() - t0;
-      m.cpu += d; cb.cpu += d;
+      m.cpu += d; m.tot += d; cb.cpu += d;
     };
   }
   // updates registered outside a module build (terrain, sky, controls...) count as 'core'
@@ -141,8 +146,12 @@ export function createPerf(ctx) {
       if (!disjoint && !gl.getQueryParameter(f[f.length - 1].q, gl.QUERY_RESULT_AVAILABLE)) break;
       gpu.pending.shift();
       if (!disjoint) {
-        for (const e of f) block.gpu[e.label] = (block.gpu[e.label] || 0) + gl.getQueryParameter(e.q, gl.QUERY_RESULT) / 1e6;
-        block.gpuFrames++;
+        for (const e of f) {
+          const ms = gl.getQueryParameter(e.q, gl.QUERY_RESULT) / 1e6;
+          block.gpu[e.label] = (block.gpu[e.label] || 0) + ms;
+          if (rec) rec.gpu[e.label] = (rec.gpu[e.label] || 0) + ms;
+        }
+        block.gpuFrames++; if (rec) rec.gpuFrames++;
       }
       for (const e of f) gpu.free.push(e.q);
     }
@@ -172,6 +181,7 @@ export function createPerf(ctx) {
   const last = { calls: 0, tris: 0, points: 0, lines: 0 };
   let lastStart = 0, mark = 0;
   let current = null; // rolling summary, rebuilt at each block close
+  let rec = null, lastRec = null; // the recorder's live state; the last finished record
 
   function frameBegin() {
     const now = performance.now();
@@ -180,8 +190,9 @@ export function createPerf(ctx) {
     if (lastStart) block.frameMs.push(now - lastStart);
     lastStart = now; mark = now;
     gpuPoll();
+    if (rec) recBegin(now);
   }
-  function cpu(name) { if (!api.active) return; const now = performance.now(); mod(name).cpu += now - mark; mark = now; }
+  function cpu(name) { if (!api.active) return; const now = performance.now(), m = mod(name), d = now - mark; m.cpu += d; m.tot += d; mark = now; }
   function markNow() { if (api.active) mark = performance.now(); }
   function frameEnd() {
     ctx.gpumem?.frame();
@@ -194,6 +205,7 @@ export function createPerf(ctx) {
     if (r.triangles < block.tris[0]) block.tris[0] = r.triangles;
     if (r.triangles > block.tris[1]) block.tris[1] = r.triangles;
     const now = performance.now();
+    if (rec?.on && rec.prev) recEnd(r);
     if (now - block.t0 >= BLOCK_MS) closeBlock(now);
   }
   function closeBlock(now) {
@@ -288,6 +300,7 @@ export function createPerf(ctx) {
     if (gm) lines.push(`gpu memory${gm.late ? ' (allocated since the profiler came on)' : ''} ${gm.totalMB} MB: textures ${gm.textureMB} · renderbuffers ${gm.renderbufferMB} · canvas ${gm.backbufferMB} · uploads ${gm.uploadsLastFrame}/frame`);
     const st = settings();
     lines.push(`cap ${st.cap || 'off'}${st.idle ? ' (idle ' + st.targetFps + ')' : ''} · shadow redraws ${st.shadows ? (st.shadows.every ? 'every frame' : st.shadows.redraws) : '–'} · point slots ${typeof st.lightSlots === 'object' ? st.lightSlots.active + '/' + st.lightSlots.slots : 'off'} · bloom ×${st.bloomRes} · throttle ${st.throttle ? 'on' : 'off'}`);
+    if (rec) lines.unshift(rec.on ? `recording ${(rec.el / 1000).toFixed(1)} / ${rec.seconds} s` : `record armed: ${rec.seconds} s, starts when the walker is out`);
     overlay.textContent = lines.join('\n');
   }
   function setActive(on) {
@@ -297,7 +310,7 @@ export function createPerf(ctx) {
     if (on && !ctx.gpumem) ctx.gpumem = installGpuMem(renderer.getContext(), renderer.domElement, { late: true });
     overlay?.classList.toggle('shown', on);
     if (on) { resetWindow(); draw(); }
-    else { gpuEnd(); gpu.frame = null; }
+    else { gpuEnd(); gpu.frame = null; rec = null; }
   }
 
   // --- toggles
@@ -326,8 +339,10 @@ export function createPerf(ctx) {
       ctx.debug.addHeading?.('measure');
       for (const [name, t] of Object.entries(toggles)) ctx.debug.addToggle(name, t.get, t.set);
     }
-    if (url.searchParams.get('perf') === '1' || benchParam != null) setActive(true);
+    const recordParam = Number(url.searchParams.get('record'));
+    if (url.searchParams.get('perf') === '1' || benchParam != null || recordParam > 0) setActive(true);
     if (benchParam != null) bench = makeBench(Number(benchParam));
+    else if (recordParam > 0) record(recordParam);
   }
 
   // --- bench
@@ -431,28 +446,154 @@ export function createPerf(ctx) {
     }
     return b;
   }
-  function showSummary(res) {
-    const s = res.summary, el = document.createElement('div');
-    el.id = 'perf-bench';
+  // --- recorder
+  // The walker is out: the card is hidden (pacing.idle is false) and the view is steered, by the locked pointer,
+  // drag-look (the lock refused or ?lock=0) or touch. A recording counts only these frames.
+  function walking() {
+    const p = ctx.player;
+    return !!p && p.enabled && !ctx.pacing?.idle && (p.locked || p.lockFailed || p.dragLook || document.body.classList.contains('touch'));
+  }
+  function record(seconds) {
+    seconds = Math.max(1, Math.min(600, Number(seconds) || 10));
+    if (!api.active) setActive(true);
+    const cap = Math.ceil(seconds * 120);
+    rec = {
+      seconds, cap, on: false, n: 0, el: 0, prev: 0, wall0: 0,
+      ms: new Float32Array(cap), t: new Float32Array(cap), yaw: new Float32Array(cap), // per frame: duration, offset in recorded time, view yaw
+      samples: [], sampleAt: 0, sampleN: 0, gpu: {}, gpuFrames: 0, calls: 0, tris: 0,
+      tot: new Map(), uploads: 0, redraws: 0, dynamic: 0, idleFrames: 0,
+    };
+    draw();
+    return rec.seconds;
+  }
+  function recBegin(now) {
+    const walk = walking();
+    if (!rec.on) {
+      if (!walk) return;
+      rec.on = true; rec.wall0 = now; rec.prev = 0;
+      for (const m of mods.values()) rec.tot.set(m, m.tot);
+      rec.uploads = ctx.gpumem?.stats().uploads ?? 0;
+      rec.redraws = ctx.shadowCadence?.stats.redraws ?? 0; rec.dynamic = ctx.shadowCadence?.stats.dynamic ?? 0;
+      rec.gpu = {}; rec.gpuFrames = 0;
+    }
+    if (!walk) { rec.prev = 0; return; } // paused: the next frame has no interval to count
+    if (rec.prev) {
+      const i = rec.n++, dt = now - rec.prev;
+      rec.ms[i] = dt; rec.el += dt; rec.t[i] = rec.el; rec.yaw[i] = ctx.player.yaw;
+    }
+    rec.prev = now;
+  }
+  function recEnd(r) {
+    if (r.calls > rec.calls) rec.calls = r.calls;
+    if (r.triangles > rec.tris) rec.tris = r.triangles;
+    if (rec.el - rec.sampleAt >= SAMPLE_MS) recSample();
+    if (rec.el >= rec.seconds * 1000 || rec.n >= rec.cap) recFinish();
+  }
+  // one 250 ms sample, closed at the frame that crosses it: everything summed or maxed over its frames
+  function recSample() {
+    const frames = rec.n - rec.sampleN;
+    if (!frames) return;
+    const cpu = {};
+    for (const m of mods.values()) { const d = m.tot - (rec.tot.get(m) || 0); rec.tot.set(m, m.tot); if (d / frames >= 0.005) cpu[m.name] = r2(d / frames); }
+    const gm = ctx.gpumem?.stats(), sc = ctx.shadowCadence?.stats, mem = renderer.info.memory, p = ctx.player, cam = ctx.camera.position;
+    const size = renderSize();
+    const g = !gpu.ok ? 'n/a' : rec.gpuFrames ? gpuOut(rec.gpu, rec.gpuFrames) : null;
+    const uploads = gm ? gm.uploads : 0;
+    rec.samples.push({
+      t: r1(rec.sampleAt), frames, avgMs: r2((rec.el - rec.sampleAt) / frames),
+      gpu: g && g !== 'n/a' ? { frames: g.frames, render: g.render, shadow: g.shadow ?? null, bloom: g.bloom ?? null, grade: g.grade ?? null, output: g.output ?? null, total: g.total } : g,
+      calls: rec.calls, tris: rec.tris, dpr: renderer.getPixelRatio(), buffer: size.buffer,
+      tierSteps: ctx.tier ? ctx.tier.state.steps.length : 0,
+      shadowRedraws: sc ? sc.redraws : null, shadowDynamic: sc ? sc.dynamic : null,
+      x: r1(cam.x), y: r1(cam.y), z: r1(cam.z), yaw: r2(p.yaw),
+      geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null,
+      uploads: uploads - rec.uploads, cpuMs: cpu,
+    });
+    rec.uploads = uploads;
+    rec.sampleAt = rec.el; rec.sampleN = rec.n; rec.gpu = {}; rec.gpuFrames = 0; rec.calls = 0; rec.tris = 0;
+  }
+  function recFinish() {
+    recSample();
+    const R = rec; rec = null;
+    const n = R.n, ms = R.ms.subarray(0, n), sorted = Float32Array.from(ms).sort();
+    const q = (f) => (n ? sorted[Math.min(n - 1, Math.floor(f * n))] : null);
+    const med = q(0.5) ?? 0;
+    let over2 = 0, over3 = 0; for (let i = 0; i < n; i++) { if (ms[i] > 2 * med) over2++; if (ms[i] > 3 * med) over3++; }
+    const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => ms[b] - ms[a]).slice(0, 10);
+    const sampleOf = (t) => { let k = 0; while (k < R.samples.length - 1 && R.samples[k + 1].t <= t) k++; return k; };
+    const worst = order.map((i, rank) => {
+      const k = sampleOf(R.t[i] - R.ms[i]), s = R.samples[k], before = R.samples[k - 1];
+      return {
+        rank: rank + 1, ms: r1(ms[i]), t: r1(R.t[i]), yaw: r2(R.yaw[i]), sample: k,
+        around: s && {
+          gpu: s.gpu, uploads: s.uploads, dpr: s.dpr, calls: s.calls, tris: s.tris, x: s.x, z: s.z,
+          shadowRedraws: s.shadowRedraws == null ? null : s.shadowRedraws - (before ? before.shadowRedraws : 0),
+          shadowDynamic: s.shadowDynamic == null ? null : s.shadowDynamic - (before ? before.shadowDynamic : 0),
+          tierSteps: s.tierSteps,
+        },
+      };
+    });
+    const wall = performance.now() - R.wall0, steps = (ctx.tier?.state.steps || []).filter((s) => s.at >= R.wall0);
+    const size = renderSize();
+    const res = {
+      kind: 'fading-planet-record', date: new Date().toISOString(),
+      ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
+      ...(machine ? { machine } : {}),
+      settings: settings(), userAgent: navigator.userAgent, quality: ctx.quality, tier: ctx.tier?.stats() ?? null,
+      dpr: renderer.getPixelRatio(), devicePixelRatio, renderSize: size, url: location.search, gpuTimer: gpu.ok,
+      requestedSeconds: R.seconds, recordedSeconds: r2(R.el / 1000), idleSeconds: r2(Math.max(0, wall - R.el) / 1000),
+      summary: {
+        frames: n, fps: r1(n ? n / (R.el / 1000) : null), medianMs: r2(med), p95Ms: r2(q(0.95)), p99Ms: r2(q(0.99)), worstMs: r2(n ? sorted[n - 1] : null),
+        over2xMedian: over2, over3xMedian: over3, worst, tierStepsDuring: steps,
+      },
+      samples: R.samples,
+      frames: { note: 'per frame: ms = duration, t = offset in recorded time (ms, idle excluded), yaw = view yaw (rad)', ms: Array.from(ms, r2), t: Array.from(R.t.subarray(0, n), r1), yaw: Array.from(R.yaw.subarray(0, n), (v) => Math.round(v * 1000) / 1000) },
+    };
+    lastRec = res;
+    if (document.pointerLockElement) { try { document.exitPointerLock(); } catch { /* ignore */ } } // so the panel can be clicked
+    showSummary(res, recordView(res));
+    if (overlay && overlay.classList.contains('shown')) draw();
+  }
+  function recordView(res) {
+    const s = res.summary, gp = (g) => (g === 'n/a' ? 'gpu n/a' : g ? `gpu ${g.total} (render ${g.render}, shadow ${g.shadow ?? '–'}, bloom ${g.bloom ?? '–'}, grade ${g.grade ?? '–'}, output ${g.output ?? '–'})` : 'gpu no results');
+    const lines = [
+      `recorded ${res.recordedSeconds} s of ${res.requestedSeconds} s asked${res.idleSeconds > 0.05 ? ` (${res.idleSeconds} s idle, not counted)` : ''} · ${s.frames} frames · ${s.fps ?? '–'} fps · q=${res.quality} · dpr ${res.dpr} · ${res.renderSize.buffer.join('×')} px`,
+      `median ${s.medianMs} ms · 95th ${s.p95Ms} · 99th ${s.p99Ms} · worst ${s.worstMs} · over 2× median ${s.over2xMedian} · over 3× ${s.over3xMedian}`,
+      `tier steps during: ${s.tierStepsDuring.length ? s.tierStepsDuring.map((t) => `${t.from}→${t.to}`).join(', ') : 'none'}`,
+      'worst ten (ms at t s, yaw; the 250 ms sample around it):',
+      ...s.worst.map((w) => `${w.rank}. ${w.ms} ms at ${(w.t / 1000).toFixed(2)} s, yaw ${w.yaw} · ${w.around ? `${gp(w.around.gpu)} · uploads ${w.around.uploads} · shadow redraws ${w.around.shadowRedraws ?? '–'} (${w.around.shadowDynamic ?? '–'} dynamic) · dpr ${w.around.dpr}` : ''}`),
+    ];
+    return { title: 'Recording done', prefix: 'record', unhide: false, text: lines.join('\n') };
+  }
+
+  function benchView(res) {
+    const s = res.summary;
     const g = s.gpuMs === 'n/a' ? 'n/a (no timer query in this browser)' : s.gpuMs ? Object.entries(s.gpuMs).filter(([k]) => k !== 'available' && k !== 'frames').map(([k, v]) => `${k} ${v}`).join(' · ') + ` ms (${s.gpuMs.frames} frames timed)` : 'no results';
     const rng = (a, k = 1) => (a ? `${Math.round(a[0] / k)}–${Math.round(a[1] / k)}` : '–');
-    el.innerHTML = '<h2>Bench done</h2><pre></pre><div class="row"><button type="button" data-a="dl">Download JSON</button><button type="button" data-a="copy">Copy JSON</button><button type="button" data-a="close">Close</button></div>';
-    el.querySelector('pre').textContent = [
+    return { title: 'Bench done', prefix: 'bench', unhide: true, text: [
       `${res.duration} s · ${res.pathMetres} m · q=${res.quality} · dpr ${res.dpr} · ${res.renderSize.buffer.join('×')} px`,
       `avg ${s.avgFps ?? '–'} fps (${s.avgFrameMs ?? '–'} ms) · 1% low ${s.low1Fps ?? '–'} fps (${s.low1FrameMs ?? '–'} ms) · ${s.frames} frames`,
       `gpu ${g}`,
       `calls ${rng(s.calls)} · tris ${rng(s.tris, 1000)}k`,
       'or paste the output of __fp.perf.report() from the console',
-    ].join('\n');
+    ].join('\n') };
+  }
+  // The panel for a finished bench or record: the summary as text, the result as JSON to download or copy.
+  function showSummary(res, view = benchView(res)) {
+    const el = document.createElement('div');
+    el.id = 'perf-bench';
+    el.innerHTML = '<h2></h2><pre></pre><div class="row"><button type="button" data-a="dl">Download JSON</button><button type="button" data-a="copy">Copy JSON</button><button type="button" data-a="close">Close</button></div>';
+    el.querySelector('h2').textContent = view.title;
+    el.querySelector('pre').textContent = view.text;
     const json = () => JSON.stringify(res, null, 1);
     el.addEventListener('click', async (e) => {
       const a = e.target?.dataset?.a;
-      if (a === 'close') { el.remove(); document.getElementById('card')?.classList.remove('hidden'); }
+      if (a === 'close') { el.remove(); if (view.unhide) document.getElementById('card')?.classList.remove('hidden'); }
       else if (a === 'dl') {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
         const slug = res.machine ? '-' + res.machine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '';
-        link.download = `bench-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}${slug}.json`;
+        link.download = `${view.prefix}-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}${slug}.json`;
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(link.href), 5000);
       } else if (a === 'copy') {
@@ -493,7 +634,7 @@ export function createPerf(ctx) {
 
   const api = {
     active: false, gpuTimer: gpu.ok, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
-    setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
+    record, lastRecord: () => lastRec, get recording() { return !!rec; }, setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
     get bench() { return bench; },
   };
   return api;
