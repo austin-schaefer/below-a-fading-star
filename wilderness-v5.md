@@ -89,3 +89,20 @@ If Austin wakes between releases, what has shipped is the version and the rest i
 ## Not in v5
 
 Performance is v3; the wonders, the light and the paths between places are v4. v5 is the land between them.
+
+## v5 recasts
+
+### Carcanet Keep (`src/structures/keep.js`; the v4 keep is `keep/v2.js`, behind `?keep=v2`)
+
+**Age and idea:** the age of plain mass: sheer unornamented planes 24 to 36 m high round a court, cut by deep-set slots too tall for any door, with a few enormous details (a cracked lintel over the gate, a 12 m bronze ring on the court's south wall, a 30 m needle).
+
+- **What fell:** the north-east corner. The north range breaks off at x 38–50 and the east range at z 33–21, both stepped down in ragged courses. One slab of the north face, 13 m wide, lies on its back toward bearing 30. Its near end rests 6.5 m up on the corner's rubble at r 27. Its far end is in the turf at r 43, so a walker can climb it (`ctx.addWalkable`, with height-capped colliders along its sides). A chunk of the corner lies tumbled at (65.5, 12.5), bearing 57. Blocks run out on bearings 30–60 to r 47 and get smaller as they go. The Demesne's own blocks start at r 46 and continue the same fall down the hill, so the two meet and `demesne.js` only had a comment line changed. The keep's blocks keep 4.5 m off the road and 8 m off the moles' reserved lawn at (75, 0).
+- **The needle:** bronze, on the south-west block's roof at (28, 50.5), its top at y 84. It catches the sun from the west and stands black against the glow from the Demesne.
+- **Kept:** spawn (6, 36) at the gate. The passage stays on the old gate's line (z 31–37.6, its mouth at x 7), now a 22 m slot set in a 24.5 m frame. `notes.keep.gate` still feeds the causeway's apron. The keep has no footprint on `CAUSEWAY_V4`. The peafowl perch on the Demesne's blocks, which are untouched. The rooks: `KEEP`'s `donjon` ring and hexagon now fall on the roofs, so `fauna/small.js` snaps its perches onto the `structures-keep` mesh unchanged. The landmark key `castle` and its [Proposed] name are unchanged.
+- **Cost at high:** 5 draw calls (stone, slot backs, bronze, instanced blocks, 3 measure figures) and 8.6k triangles. The v4 keep was about 60k triangles, merged into the structures' one stone call. The recast uses the kit's masonry with diminishing courses and the kit's measure figures (one at the passage's court end, one by the break, one at the slab's foot).
+- **Sightlines** (ray and terrain checks, before and after):
+  - From the causeway at (−40, 22): the Span's deck, the Lattice's crystal at a planned 60 m, and the needle are visible.
+  - From the causeway at (−65, 12): the same three are visible.
+  - **The Arcature's top is hidden from both, before and after, by the castle hill itself.** From (−40, 22) the hill's brow at (−17, 26) needs the Arcature's top at y 62 to clear it; from (−65, 12) the brow needs y 49. Its planned 40 m top stands at y 43. The keep, old or new, then hides it further. Answer 7 in the placement plan does not hold for either keep; the Arcature's recast would need about 60 m, or the check needs another viewpoint.
+  - From spawn the recast now hides a 40 m Arcature, which the v4 keep did not; the check moved off spawn for that reason.
+- **Renders:** `shots/wip/v5-01-keep-<view>-<before|after>.png` for `spawn-gate`, `causeway-40`, `causeway-40-up`, `causeway-65`, `span-deck`, `tarn-spit`, `fan` and `close-measure` (`tools/views-v5-keep.json`). `v5-01-keep-sheet.png` puts the two causeway (−40, 22) renders side by side. The `-draft1` to `-draft4` renders are the iterations.
