@@ -34,6 +34,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `pcf=soft|hard`
 - `bloomres=0.5` (`1` full size)
 - `bloomtune=strength,radius,threshold`
+- `bloomcap=16`: the ceiling on bloom's bright pass (brightest channel; NaN and Inf drop to black), `src/bloomfix.js`; `0` is three's uncapped pass, which turns one extreme pixel into nested squares
 - `lights=3` (slot count; `off` keeps every point light live)
 - `throttle=0` (every update every frame)
 - `light=v3` (v3's light rig)
