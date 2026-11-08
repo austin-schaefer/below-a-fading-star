@@ -2,7 +2,9 @@
 // v4 Tinctures and set-dressing check: the air at a Saltings point has the rose-white hue and the tint at spawn is neutral,
 // the tint keeps the fog's luminance; the Discontinued Track's footprints (count, ends, spacing, none on the causeway, all on
 // the crust); the Surveyor's Pegs (count, spacing, the caps, none in deep water, all on x = -80); the Long Figure (80 m
-// long on the ground, its centre on the wall's face, hugging the terrain); and the four items' draw calls and triangles.
+// long on the ground, its centre on the wall's face, hugging the terrain); and the four items' draw calls and triangles;
+// and v5's story set-dressing: the Collation (twelve places, twelve chairs one of them down, clear of every tree, level, collided),
+// the Slipper (25 cm, on a slab, no collider) and the Unfinished Prospect (the canvas facing the painter, 512 x 384, under 200 KB).
 // Usage: node tools/dressing-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -17,7 +19,7 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 400)); });
 await page.goto(`${base}/?q=high`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
-const r = await page.evaluate(() => {
+const r = await page.evaluate(async () => {
   const fp = window.__fp, T = fp.terrain, out = {};
   const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
   // the Tinctures
@@ -51,6 +53,25 @@ const r = await page.evaluate(() => {
   let arc = 0, last = null; const a = Math.atan2(70, 292); for (let r = fg.radii[0]; r <= fg.radii[1]; r += 0.5) { const x = Math.cos(a) * r, z = Math.sin(a) * r, h = T.heightAt(x, z); if (last !== null) arc += Math.hypot(0.5, h - last); last = h; }
   out.fig.arc = arc;
   out.stats = fp.dressing.stats();
+  // v5: the Collation
+  {
+    const d = fp.dressing5, cy = d.collation, A = cy.axis, ca = Math.cos(A.angle), sa = Math.sin(A.angle), trees = window.__vegParts.trees.trees.filter((t) => !t.hidden);
+    let minTree = Infinity, lo = Infinity, hi = -Infinity;
+    for (const t of trees) { const dx = t.x - A.x, dz = t.z - A.z, u = dx * ca + dz * sa, v = -dx * sa + dz * ca; minTree = Math.min(minTree, Math.hypot(Math.max(Math.abs(u) - A.length / 2, 0), Math.max(Math.abs(v) - A.width / 2, 0))); }
+    for (let u = -5.5; u <= 5.5; u += 0.5) { const h = T.heightAt(A.x + u * ca, A.z + u * sa); lo = Math.min(lo, h); hi = Math.max(hi, h); }
+    const near = fp.controls.state.colliders.filter((c) => Math.hypot(c.x - A.x, c.z - A.z) < 8).length, f = cy.chairs.filter((c) => c.fallen);
+    out.cy = { places: cy.places, plates: cy.plates, medlars: cy.medlars, glasses: cy.glasses, chairs: cy.chairs.length, fallen: f.length, fallenLow: f[0] && f[0].rise < 1.1, minTree, level: hi - lo, off: Math.hypot(A.x - 150, A.z + 70), bletting: fp.regions.regionAt(A.x, A.z, {}).bletting, near, calls: cy.meshes.length, len: A.length, tris: cy.mesh.geometry.attributes.position.count / 3 };
+    // the Slipper
+    const sl = d.slipper.mesh, bb = new fp.THREE.Box3().setFromObject(sl), cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2, pav = fp.scene.getObjectByName('structures-pavers');
+    const ray = new fp.THREE.Raycaster(); ray.set(new fp.THREE.Vector3(cx, bb.max.y + 5, cz), new fp.THREE.Vector3(0, -1, 0)); const hit = ray.intersectObject(pav, false)[0];
+    out.sl = { len: Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z), height: bb.max.y - bb.min.y, slab: hit ? bb.min.y - hit.point.y : null, off: Math.hypot(cx + 20, cz - 26), colliders: fp.controls.state.colliders.filter((c) => Math.hypot(c.x - cx, c.z - cz) < 1.5).length, fromSpawn: Math.hypot(cx - fp.spawn.x, cz - fp.spawn.z), lights: sl.children.length, emissive: sl.material.emissive.getHex(), tris: sl.geometry.index.count / 3 };
+    // the Unfinished Prospect
+    const pr = d.prospect, n = new fp.THREE.Vector3(0, 0, 1).transformDirection(pr.plane.matrixWorld), wc = new fp.THREE.Vector3().setFromMatrixPosition(pr.plane.matrixWorld), img = pr.map && pr.map.image;
+    const toPainter = new fp.THREE.Vector3(Math.sin(1.74), 0, Math.cos(1.74));
+    const size = await fetch(new URL('src/v5/dressing/prospect-canvas.png', location.href)).then((r) => r.blob()).then((b) => b.size).catch(() => -1);
+    out.pr = { img: img ? [img.width, img.height] : null, size, facing: n.dot(toPainter), drop: n.y, off: Math.hypot(wc.x - 238, wc.z + 30), above: wc.y - T.heightAt(wc.x, wc.z), colliders: fp.controls.state.colliders.filter((c) => Math.hypot(c.x - 238, c.z + 30) < 1).length, region: fp.regions.regionAt(238, -30, {}).highLing, tris: pr.furniture.geometry.attributes.position.count / 3 + 2 };
+    out.d5 = d.stats();
+  }
   return out;
 });
 await browser.close();
@@ -78,6 +99,10 @@ check(Math.abs(f.arc - 80) < 4, 'the figure is 80 m long on the ground', `${f.ar
 check(f.slope > 20 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}`);
 check(f.minLift > 0 && f.maxLift < 1.2 && !f.castShadow, 'it hugs the ground and casts no shadow', `lift ${f.minLift.toFixed(2)} to ${f.maxLift.toFixed(2)}`);
 check(r.stats.calls <= 8 && r.stats.tris <= 60000, 'draw calls and triangles within the budget', `${r.stats.calls} calls, ${r.stats.tris} tris`);
+const cy = r.cy, sl = r.sl, pr = r.pr;
+check(cy.places === 12 && cy.plates === 12 && cy.medlars === 12 && cy.glasses === 12 && cy.chairs === 12 && cy.fallen === 1 && cy.fallenLow && cy.len >= 10 && cy.len <= 12 && cy.near >= 23 && cy.minTree >= 1 && cy.level < 0.3 && cy.bletting > 0.9 && cy.off < 15 && cy.calls === 1 && r.d5.calls <= 4 && r.d5.tris <= 12000, 'the Collation: an 11 m table laid for twelve, twelve chairs and one down, clear of every tree, level, collided; with the Slipper and the Prospect at most 4 draws and 12k triangles', `plates ${cy.plates} medlars ${cy.medlars} glasses ${cy.glasses} chairs ${cy.chairs} (${cy.fallen} down), ${cy.near} colliders, trees ${cy.minTree.toFixed(1)} m off, bletting ${cy.bletting.toFixed(2)}, fall ${cy.level.toFixed(2)} m, ${cy.off.toFixed(0)} m from the plan, ${Math.round(cy.tris)} tris; the three: ${r.d5.calls} calls, ${r.d5.tris} tris`);
+check(sl.len > 0.2 && sl.len < 0.27 && sl.height < 0.1 && sl.slab !== null && Math.abs(sl.slab) < 0.06 && sl.off < 1 && sl.colliders === 0 && sl.lights === 0 && sl.emissive === 0 && sl.fromSpawn > 15 && sl.fromSpawn < 35, 'the Slipper: 25 cm, on a slab on the first walk, no collider, no light, no emissive', `${(sl.len * 100).toFixed(0)} cm long, ${(sl.height * 100).toFixed(0)} cm high, ${sl.slab === null ? 'no slab' : (sl.slab * 100).toFixed(1) + ' cm off the slab'}, ${sl.off.toFixed(2)} m from (-20, 26), ${sl.fromSpawn.toFixed(0)} m from spawn, ${Math.round(sl.tris)} tris`);
+check(pr.img && pr.img[0] === 512 && pr.img[1] === 384 && pr.size > 0 && pr.size < 200000 && pr.facing > 0.95 && Math.abs(pr.drop) < 0.2 && pr.off < 4 && pr.above > 1 && pr.above < 2 && pr.colliders === 1 && pr.region > 0.9, 'the Unfinished Prospect: the baked canvas (512 x 384, under 200 KB) faces the painter at the brow, one collider', `canvas ${pr.img}, ${pr.size} bytes, facing ${pr.facing.toFixed(2)}, ${pr.off.toFixed(1)} m from the site, ${pr.above.toFixed(2)} m up, ${pr.colliders} collider`);
 check(errors.length === 0, 'no page errors', errors.slice(0, 3).join(' | '));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

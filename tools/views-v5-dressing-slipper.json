@@ -1,0 +1,38 @@
+[
+ {
+  "name": "slipper-3m",
+  "x": -17.6,
+  "z": 25.74,
+  "yaw": 1.571,
+  "pitch": 0.0
+ },
+ {
+  "name": "slipper-3m-glance",
+  "x": -17.6,
+  "z": 25.74,
+  "yaw": 1.571,
+  "pitch": -0.3
+ },
+ {
+  "name": "slipper-detour",
+  "x": -20.6,
+  "z": 27.74,
+  "yaw": 0.0,
+  "pitch": -0.5
+ },
+ {
+  "name": "slipper-crouch",
+  "x": -19.8,
+  "z": 25.9,
+  "dy": -1.15,
+  "yaw": 1.373,
+  "pitch": -0.35
+ },
+ {
+  "name": "slipper-walk",
+  "x": 2,
+  "z": 35,
+  "yaw": 1.9,
+  "pitch": -0.05
+ }
+]
