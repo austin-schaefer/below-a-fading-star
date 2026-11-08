@@ -700,13 +700,15 @@ export function buildTrees(ctx, ground, mats) {
     t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
     t.fade = -1;
   }
-  // spare instances, hidden until a switch shows one: { tree, spare id, f, dir } (dir +1 fades toward the main
-  // instance's level, -1 back to the spare's)
-  const slots = [], free = [];
+  // spare instances, hidden until a switch shows one: { tree, spare id, geo, dir } (dir +1 fades toward the main
+  // instance's level, -1 back to the spare's) and its fade value in ff[k]. The doubles that change every frame
+  // live in typed arrays (ff, and clock[0] the last update's world time): a double stored in an object field or a
+  // closure variable is boxed anew on every write.
+  const slots = [], free = [], ff = new Float64Array(SPARES), clock = new Float64Array([-1]);
   for (let k = 0; k < SPARES; k++) {
     const id = batch.addInstance(gid[0][0]);
     batch.setMatrixAt(id, m4); batch.setColorAt(id, col); batch.setVisibleAt(id, false);
-    slots.push({ k, tree: null, spare: id, geo: -1, f: 0, dir: 1 }); free.push(k);
+    slots.push({ k, tree: null, spare: id, geo: -1, dir: 1 }); free.push(k);
   }
   const fade = { spares: SPARES, spareIds: slots.map((s) => s.spare), inFlight: 0, peak: 0, starts: 0, overflow: 0, snaps: 0, ms: 400 };
   batch.castShadow = true; batch.receiveShadow = true;
@@ -726,19 +728,19 @@ export function buildTrees(ctx, ground, mats) {
     t.fade = -1; s.tree = null; free.push(s.k);
     fade.inFlight--;
   };
-  let lastT = -1;
+  const time = ctx.time, perf = ctx.perf; // read once: ctx is a Proxy, whose trap costs on every read
   function update(px, pz) {
     batch.sortFrom?.(px, pz);
-    const now = ctx.time.t, dt = lastT < 0 ? 0 : Math.max(0, now - lastT), primed = lastT >= 0;
-    lastT = now;
+    const now = time.t, last = clock[0], dt = last < 0 ? 0 : Math.max(0, now - last), primed = last >= 0;
+    clock[0] = now;
     if (fade.inFlight) {
       for (let k = 0; k < slots.length; k++) {
         const s = slots[k];
         if (!s.tree) continue;
-        s.f += s.dir * dt / FADE_S;
-        if (s.f >= 1) endFade(s, true);
-        else if (s.f <= 0) endFade(s, false);
-        else { setFadeAt(batch, s.tree.id, s.f, 0); setFadeAt(batch, s.spare, s.f, 1); }
+        const f = (ff[k] += s.dir * dt / FADE_S);
+        if (f >= 1) endFade(s, true);
+        else if (f <= 0) endFade(s, false);
+        else { setFadeAt(batch, s.tree.id, f, 0); setFadeAt(batch, s.spare, f, 1); }
       }
     }
     for (let i = 0; i < trees.length; i++) {
@@ -765,13 +767,13 @@ export function buildTrees(ctx, ground, mats) {
         batch.setGeometryIdAt(t.id, to); continue;
       }
       const s = slots[k];
-      s.tree = t; s.geo = from; s.f = 0; s.dir = 1; t.fade = k;
+      s.tree = t; s.geo = from; ff[k] = 0; s.dir = 1; t.fade = k;
       batch.setGeometryIdAt(t.id, to);
       setFadeAt(batch, t.id, 0, 0); setFadeAt(batch, s.spare, 0, 1);
       fade.starts++;
       if (++fade.inFlight > fade.peak) fade.peak = fade.inFlight;
     }
-    if (fade.inFlight) ctx.perf?.count('trees.fades', fade.inFlight);
+    if (fade.inFlight) perf?.count('trees.fades', fade.inFlight);
   }
 
   const tris = (g) => g.index.count / 3;
