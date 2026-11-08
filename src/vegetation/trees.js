@@ -510,7 +510,8 @@ export function buildTrees(ctx, ground, mats) {
     const k = key(Math.floor(x / 8), Math.floor(z / 8));
     if (!occ.has(k)) occ.set(k, []);
     occ.get(k).push(t);
-    if (collide && !t.hidden) ctx.addCollider({ x, z, r: variants[v].trunkR * s * 1.25 });
+    // capped at the tree's height, so one in the hollow under the Span does not block the deck above it
+    if (collide && !t.hidden) ctx.addCollider({ x, z, r: variants[v].trunkR * s * 1.25, y: y - 1, h: variants[v].height * s + 1 });
     return t;
   };
   const b = {};

@@ -13,7 +13,7 @@
 // - Toggles (debug panel): each world module on/off (its scene objects hidden, its updates skipped),
 //   bloom and shadows. Also ?bloom=0 and ?shadows=0.
 // Modules are attributed by building each against forModule(name), a Proxy of ctx that tags its
-// registerUpdate callbacks and the objects it adds to the scene. Objects a module parents elsewhere
+// registerUpdate callbacks, the objects it adds to the scene and its colliders (c.mod). Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, WATER } from './world.js';
 
@@ -86,6 +86,8 @@ export function createPerf(ctx) {
     const m = mod(name); m.world = true;
     const register = (fn, meta) => rawRegister(wrapUpdate(m, fn), meta);
     const add = (...objs) => { for (const o of objs) m.objects.add(o); scene.add(...objs); return scene; };
+    // each collider carries the module that registered it (c.mod), so a block can be traced to its owner
+    const addCollider = (c) => { if (c && c.mod === undefined) c.mod = name; return ctx.addCollider(c); };
     const sceneProxy = new Proxy(scene, {
       get(target, prop) {
         if (prop === 'add') return add;
@@ -98,6 +100,7 @@ export function createPerf(ctx) {
       get(target, prop) {
         if (prop === 'registerUpdate') return register;
         if (prop === 'scene') return sceneProxy;
+        if (prop === 'addCollider' && target.addCollider) return addCollider;
         return Reflect.get(target, prop, target);
       },
       set(target, prop, value) { target[prop] = value; return true; },

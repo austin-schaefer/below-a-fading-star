@@ -227,7 +227,8 @@ export async function build(ctx) {
         m.compose(p, q, s);
         mesh.setMatrixAt(idx, m);
         m.toArray(all, idx * 16); xz[idx * 2] = it.x; xz[idx * 2 + 1] = it.z;
-        if (cls === 'boulder' && it.size > 0.9) ctx.addCollider({ x: it.x, z: it.z, r: it.size * 0.75 });
+        // capped at the boulder's height, so one in the hollow under the Span does not block the deck above it
+        if (cls === 'boulder' && it.size > 0.9) ctx.addCollider({ x: it.x, z: it.z, r: it.size * 0.75, y: it.y - 1, h: it.size * 2 + 1 });
       });
       mesh.instanceMatrix.needsUpdate = true;
       mesh.name = `rocks-${cls}-${vi}`;
