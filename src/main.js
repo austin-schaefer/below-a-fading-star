@@ -13,6 +13,8 @@ import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
+import { chooseTier, makeTier } from './tier.js';
+import { installGpuMem } from './gpumem.js';
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -32,7 +34,9 @@ const MODULES = [
 
 async function start() {
   const url = new URL(location.href);
-  const quality = url.searchParams.get('q') || (navigator.hardwareConcurrency <= 4 || /Mobi|Android/i.test(navigator.userAgent) ? 'low' : 'high');
+  // Quality tier (tier.js, v3 stage 3): 'high' | 'medium' | 'low', from ?q= / ?tier=, the debug panel's pin, or the device
+  const tierChoice = await chooseTier(url);
+  const quality = tierChoice.name;
   const only = url.searchParams.get('only'); // comma list of modules to load (for testing)
   const skip = (url.searchParams.get('skip') || '').split(',').filter(Boolean);
 
@@ -50,18 +54,20 @@ async function start() {
   await progress('shaping the moor', 0);
 
   const canvas = document.getElementById('scene');
+  // Target hygiene (v3 stage 3): the canvas only ever receives the composer's last full-screen pass (the scene is
+  // drawn into the composer's targets, which have no MSAA), so it needs neither antialiasing nor a depth buffer;
+  // high's antialias only bought a multisampled back buffer that changed no pixel. ?lean=0: as before.
+  const lean = url.searchParams.get('lean') !== '0';
+  const canvasAA = !lean && quality === 'high';
   // ?multidraw=0 hides WEBGL_multi_draw, as Firefox does: a BatchedMesh then draws once per instance
   let context;
   if (url.searchParams.get('multidraw') === '0') {
-    context = canvas.getContext('webgl2', { alpha: false, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: quality === 'high', powerPreference: 'high-performance' });
+    context = canvas.getContext('webgl2', { alpha: false, depth: !lean, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: canvasAA, powerPreference: 'high-performance' });
     const get = context.getExtension.bind(context);
     context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
   }
-  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: quality === 'high', powerPreference: 'high-performance' });
-  // Pixel ratio by quality (v3 stage 2; was high 1.5, low 1): the HUD is DOM and stays crisp. ?dpr= overrides.
-  const DPR = { high: 1.25, medium: 1, low: 0.85 };
-  const dprParam = parseFloat(url.searchParams.get('dpr'));
-  renderer.setPixelRatio(dprParam > 0 ? dprParam : Math.min(devicePixelRatio, DPR[quality] ?? 1));
+  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: canvasAA, depth: !lean, powerPreference: 'high-performance' });
+  const gpumem = installGpuMem(renderer.getContext(), canvas); // texture and target bytes for the profiler
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands
@@ -92,6 +98,9 @@ async function start() {
   };
   // Global helper for stable per-module RNG streams
   ctx.makeRng = (salt) => mulberry32(WORLD.seed ^ (salt * 2654435761 >>> 0));
+  ctx.gpumem = gpumem;
+  // Pixel ratio by tier, and its adaptive step (tier.js; was high 1.5, low 1 before v3): the HUD is DOM and stays crisp
+  ctx.tier = makeTier(ctx, url, tierChoice);
   // Profiler, bench and toggles (perf.js): wraps registerUpdate so each callback is timed per module
   ctx.perf = createPerf(ctx);
 
@@ -103,7 +112,7 @@ async function start() {
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
   const sunLight = new THREE.DirectionalLight(new THREE.Color('#ffb084'), 2.7);
   sunLight.castShadow = true;
-  const sm = quality === 'high' ? 4096 : 2048;
+  let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
   sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 420;
   const sb = 95;
@@ -143,6 +152,7 @@ async function start() {
   ctx.post = buildPost(ctx);
   // Point lights: a fixed number of slots copy the nearest sources (lights.js). ?lights=off: every light live.
   const lightsParam = url.searchParams.get('lights');
+  ctx.tier.attach(); // the debug panel's quality rows, above perf's measure rows
   ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
 
@@ -165,10 +175,17 @@ async function start() {
   // A fixed light-space frame for texel snapping: the sun never moves.
   const lightView = new THREE.Matrix4().lookAt(sunDir, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
   const lightViewInv = lightView.clone().invert();
-  const shadowTexel = (2 * sb) / sm;
+  let shadowTexel = (2 * sb) / sm;
   // Shadow cadence (shadows.js): the map is redrawn when the shadow camera has moved, on a slow clock, or
   // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
   ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
+  // a tier change at runtime resizes the shadow map (three re-creates it at the new size on the next draw)
+  ctx.setShadowMapSize = (n) => {
+    if (n === sm) return;
+    sm = n; shadowTexel = (2 * sb) / sm;
+    sunLight.shadow.mapSize.set(sm, sm); sunLight.shadow.map?.dispose(); sunLight.shadow.map = null;
+    ctx.shadowCadence.setTexel(shadowTexel); renderer.shadowMap.needsUpdate = true;
+  };
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
@@ -183,7 +200,7 @@ async function start() {
       if (!m || !throttle) { u.fn(dt, t); continue; }
       u.acc += dt;
       const q = m.at ? m.at() : m.pos;
-      const d = Math.hypot(q.x - p.x, q.z - p.z) - (m.r || 0);
+      const ex = q.x - p.x, ez = q.z - p.z, d = Math.sqrt(ex * ex + ez * ez) - (m.r || 0); // Math.hypot allocates
       if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
       else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
       else u.held = true;
@@ -229,6 +246,7 @@ async function start() {
   }
 
   function frame() {
+    ctx.tier.frame(); // frame-time window for the adaptive pixel ratio
     const dt = Math.min(clock.getDelta(), 0.1);
     t += dt;
     ctx.time.t = t; ctx.time.dt = dt;

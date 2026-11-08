@@ -108,12 +108,26 @@ export function buildPost(ctx) {
   bloom.setSize = (w, h) => bloomSetSize(Math.max(2, Math.round(w * bloomRes)), Math.max(2, Math.round(h * bloomRes)));
   bloom.resScale = bloomRes;
   composer.addPass(bloom);
+  // Target hygiene (v3 stage 3; ?lean=0 as before): only the target the scene is drawn into needs a depth buffer.
+  // The RenderPass draws into the composer's readBuffer (renderTarget2): the grade and output passes swap twice a
+  // frame, so the pair is back in place for the next frame. The writeBuffer (grade's output) and bloom's eleven
+  // targets only ever take full-screen quads.
+  if (new URL(location.href).searchParams.get('lean') !== '0') {
+    composer.writeBuffer.depthBuffer = false;
+    for (const t of [bloom.renderTargetBright, ...bloom.renderTargetsHorizontal, ...bloom.renderTargetsVertical]) t.depthBuffer = false;
+  }
   const grade = new ShaderPass(GradeShader);
   composer.addPass(grade);
   composer.addPass(new OutputPass());
 
   const sunWorld = new THREE.Vector3(), proj = new THREE.Vector3();
   function update(dt, t) {
+    // guard for the lean targets: if a pass list with an odd number of swaps ever hands the RenderPass the
+    // depthless target, give both targets depth again rather than draw the scene without a depth test
+    if (!composer.readBuffer.depthBuffer) {
+      for (const rt of [composer.renderTarget1, composer.renderTarget2]) { rt.depthBuffer = true; rt.dispose(); }
+      console.warn('[fp] post: the scene target had no depth buffer; both composer targets have one now');
+    }
     grade.uniforms.uTime.value = t;
     grade.uniforms.uFlicker.value = ctx.sky.flicker.value;
     grade.uniforms.uWade.value = ctx.controls.state.wading || 0;

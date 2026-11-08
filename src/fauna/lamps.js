@@ -5,6 +5,7 @@
 // (looked for until they appear: structures may build after fauna). No audio.
 import * as THREE from 'three';
 import { clamp, smoothstep } from './geo.js';
+import { hyp } from '../noise.js';
 
 const LAMP_COLOUR = 'ff9a4a';
 
@@ -69,7 +70,7 @@ export function buildLampMoths(ctx) {
       else return;
     }
     if (!moths.length) return;
-    const far = Math.hypot(cam.x - T.x, cam.z - T.z) > 140;
+    const far = hyp(cam.x - T.x, cam.z - T.z) > 140;
     mesh.visible = !far;
     if (far) return;
     for (let i = 0; i < moths.length; i++) {

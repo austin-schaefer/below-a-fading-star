@@ -106,6 +106,53 @@ All in `shots/wip/`, rendered with `tools/views.mjs` (gutter held) at q=low, 128
 4. **Texture and target hygiene.** Render targets at the right size after resize (no leftover full-size targets), half-float only where needed, mipmaps on the procedural textures, no `needsUpdate` on static textures.
 5. **GC and allocation audit.** A 60-second allocation profile in a desktop Chrome session (Austin runs it, or the agent uses the profiler's per-module CPU numbers): zero per-frame `new Vector3`/`Color`/arrays in update paths; pool what is left.
 
+### Stage 3: tiers, targets and allocations
+
+Items 1, 4 and 5 (one agent; items 2 and 3 are the vegetation and material agent's). Benches are `tools/bench-report.mjs "…/?bench=12&q=medium"` on Austin's laptop, headless with ANGLE on Metal (`SHOT_ANGLE=metal`): frames are real GPU frames there but the machine is shared, so CPU per module and the counts are what compare. Files in `shots/perf/stage3-tier-*.json`.
+
+**Tiers** (`src/tier.js`; the table is in `README.md`). `ctx.quality` is `'high'|'medium'|'low'`. Medium builds exactly what high builds: the twelve `quality === 'high'` tests in ten files (particles, water, river, flora, riverlife, omens, meteors, parhelion, vigilant, lattices) now read `!== 'low'`, so nothing silently drops to low. Medium is high with a pixel ratio of 1 and a 2048² shadow map (texel 9.3 cm, as low; high's is 4.6 cm). Without `?q=` the tier comes from the debug panel's pin, else the device: phones and ≤ 4 cores stay low; the WebGL renderer name (or WebGPU's adapter info when WebGL masks it) says discrete → high, integrated → medium, software → low; Apple silicon, Safari's "Apple GPU" and masked names start high and the first 3 s of full-rate frames decide (an average over 1.15 frame intervals of the cap drops to medium, live). Headless on the laptop the name is "ANGLE Metal Renderer: Apple Silicon", the probe measured 18.9 ms against 19.2 and stayed high.
+
+Pinning: the debug panel's `quality` heading shows the tier, how it was chosen and the live pixel ratio; rows `auto`, `high`, `medium`, `low` pin one (localStorage `fp-tier`). High and medium switch live (pixel ratio, shadow map re-created at its new size, the cadence's texel rule follows); to or from low reloads, since low builds fewer things.
+
+Adaptive step: the 1% low over the last 2 s (as the profiler computes it, from a fixed ring of frame times, no allocation) is checked every 500 ms against the tier's budget (or 1.25 frame intervals of the cap if that is longer: 30 fps on battery is not "slow"). Over budget for 5 s: pixel ratio −0.1, down to the floor, and the window starts afresh at the new size. Under 0.6 of the budget for 20 s: +0.05, back toward the tier's ratio, never to a ratio that failed in the last 60 s. Cards, hidden tabs, stalls over 1 s and the bench (unless `?adapt=1`) are not counted. `?budget=1` forces it: in `perf-test.mjs` the ratio stepped 1 → 0.9 after 5 s, and the canvas and the composer's targets were 576 px wide at 640 css; left running, 1 → 0.9 → 0.8 → 0.75 (the floor), 5 s apart.
+
+Bench, `?q=medium` (`stage3-tier-medium-before.json` is the old tree, where medium was an unlisted mix of high and low builds; `-after` builds as high): CPU in the update loop 1.27 → 1.16 ms/frame (noise: vegetation 0.64 → 0.60), triangles 1.35–2.64M → 1.45–2.80M (medium now builds high's counts).
+
+Render pairs `shots/wip/perf-03-tier-<view>-before.png` (q=high) against `-after.png` (q=medium), all ten views of `tools/views-perf.json`, 1280×720, device pixel ratio 1 (so both render at ratio 1 and the pair shows the shadow map; medium's lower ratio is stage 2's `perf-02-dpr-*` pair). Mean absolute difference per pixel against a second q=high render (`perf-03-noise-<view>-again.png`, the grain, wind and particles alone): spawn 5.80 vs 5.73, wood 7.63 vs 7.62, sun 6.92 vs 6.85, lattice 8.78 vs 8.31 (the largest), the rest within 0.15. Medium is high at a glance at spawn, the wood and the sun.
+
+**Targets and textures.** `src/gpumem.js` wraps the WebGL calls that allocate texture and renderbuffer storage and keeps each one's bytes (mip chains included), so the profiler reports megabytes, not just `renderer.info.memory`'s counts; the canvas's drawing buffer is estimated from its context attributes. What it found, at q=high and 1280×720:
+
+- The canvas had MSAA at high, but the scene is drawn into the composer's targets (no MSAA) and the canvas only takes OutputPass's full-screen triangle: a 4× multisampled colour and depth buffer that changed no pixel (31.6 MB at 1280×720, 69.5 MB at a 1440×900 retina window). The canvas now has no antialias and no depth buffer. If high should be antialiased, it needs MSAA samples on the composer's scene target or an FXAA/SMAA pass: a look decision for Austin, not made here.
+- All eleven bloom targets and the composer's second target carried depth renderbuffers for full-screen quads. Only the scene target (the composer's readBuffer, where RenderPass draws) keeps one; post.js restores depth on both composer targets if a future pass list ever hands RenderPass the other one. Renderbuffers 14 → 2.
+- Half float stays where it is needed: the composer pair and the bloom chain carry HDR values (the sun, lanterns, the Lattice) into OutputPass's tone mapping. The shadow map is RGBA8 with a depth renderbuffer, three r170's packing (4096²: 128 MB at high; 2048²: 32 MB at medium and low, which is most of medium's saving).
+- Resizing is clean: after a window resize from 1280×720 to 800×600, and after the adaptive step to 0.75, every target matches a fresh load at that size byte for byte (50.3 MB and 51.3 MB at medium); bloom's chain follows (240, 120, 60, 30, 15 px wide at 960 px).
+- The procedural textures (terrain, water, mist, the trees' atlas, the Hypogeum's walls, the Parhelion City) are all mipmapped with trilinear minification, and none is re-uploaded: over 60 frames no texture's version moved except three's own BatchedMesh indirect texture (4 KB, rewritten per draw for its per-camera culling), which is the 1–3 uploads a frame the profiler shows.
+
+GPU memory (textures + renderbuffers + canvas), before → after the target changes:
+
+| tier | 1280×720, device ratio 1 | 1440×900, device ratio 2 (a 13" retina laptop) |
+|---|---:|---:|
+| high | 189.7 → 157.2 MB | 255.7 → 184.4 MB |
+| medium | 69.0 → 61.2 MB | 81.5 → 70.4 MB |
+| low | 60.6 → 54.9 MB | 69.5 → 61.6 MB |
+
+So a laptop that drops from high to medium goes from 256 to 70 MB of render memory. Bench pair `stage3-tier-targets-before.json` (`&lean=0`) and `-after.json`: same frames, calls and triangles; CPU 1.43 vs 1.25 ms (noise). Render pair `shots/wip/perf-03-tier-lean-<spawn|wood|sun>-before|after.png` at q=high: differences below the noise floor (spawn 5.71 against 5.73 between two identical renders, wood 7.53 against 7.62, sun 6.09 against 6.85).
+
+**Allocations.** `tools/alloc-audit.mjs` runs `?bench=30&q=medium` and measures two 10 s windows of rendered frames (~600 frames each): THREE math objects constructed by `src/` (Vector2/3/4, Color, Matrix3/4, Quaternion, Euler, Box3, Sphere, Ray, Plane, …), counted through a wrapper module that re-exports `three` with counting subclasses and attributed to the first `src/` file:line and its caller in another file; and every JS allocation per frame by the `src/` function that made it, from V8's sampling heap profiler with collected objects included. JSON: `shots/perf/stage3-tier-alloc-before.json` and `-after.json`.
+
+| per rendered frame | before | after |
+|---|---:|---:|
+| THREE objects from src/, all | 5.89 | 2.20 |
+| … from files outside vegetation, terrain and water | 3.65 (grazers via `terrain.slopeAt` 2.63, controls 1.0) | 0 |
+| JS bytes allocated by src/ functions | 329 KB | 257 KB |
+| … by functions outside vegetation, terrain, water and noise.js | 106 KB | 35 KB |
+
+The big one was V8's `Math.hypot`: it allocates a backing store on every call and is ~24× slower than `Math.sqrt(x * x + y * y)` (8 M calls in node: 36 ms and 314 scavenges, against 1.5 ms). The player's collider loop called it once per collider per frame: 65 KB a frame in `controls.update`, now 0.16 KB, with a box test before the square root. `noise.js` exports `hyp(x, z)`, and every per-frame update outside the other agent's files uses it (the update functions of 24 files, plus main.js's throttle; build-time placement keeps `Math.hypot`, so the world is laid out bit for bit as before). Also: `terrain.slopeAt` allocates a Vector3 per call, so the grazers' and the deodand's wander checks take the same sums with a scratch normal; the controls no longer clone a vector a frame; the fauna kit's terrain lookup no longer returns a new array per call; the HUD no longer builds `Object.entries(LANDMARKS)` a frame; the Vigilant's eyes loop without a closure. The bench's CPU is unchanged within noise (`stage3-tier-gc-before.json` → `-after.json`: total 1.25 → 1.18 ms/frame, main.js's own work, which includes the controls, 0.24 → 0.20).
+
+What is left is mostly V8 boxing doubles (a number returned from a function that is not inlined, or written to a closure's `let`): `terrain.heightAt` 37 KB a frame, `noise2` 31 KB, `warped2` 16 KB, `riverSection`, `project`, `flatten`, `causewayDistance` 8–15 KB each, all called from the vegetation and terrain lookups; the Menology's update 8 KB. Not objects anyone wrote, and short-lived; the cure would be fewer calls (caching per chunk), not pooling.
+
+For the vegetation, terrain and water agent (their files; listed, not changed): `vegetation/plants.js:339–340` constructs a Vector3, a Box3, a Vector3 and a Sphere (0.88, 0.44, 0.44, 0.44 a frame, called from `vegetation.js:40`): pool them; `vegetation/plants.js:434 cell` 29 KB a frame and `plants.js:373` 10 KB; `vegetation/ground.js:81 waterDepth` 11 KB; `terrain.js:401 slopeAt` allocates `new Vector3` per call (pass a module scratch, as `normalAt` does); `terrain.js` and `noise.js` boxing above; `Math.hypot` remains in `terrain.js` (26 calls; `causewayDistance` and the river lookups run per frame), `vegetation/plants.js`, `vegetation/trees.js`, `vegetation/lattice.js`, `vegetation/ground.js` and `water/river.js`: worth `hyp` wherever it runs per frame. The one-token `=== 'high'` → `!== 'low'` changes in `water.js` and `water/river.js` are the tier's.
+
 ## Stage 4: verify on hardware and write it down
 
 - Austin runs `?bench=1` on his PC at high, his laptop (if any) at medium, and his phone at low, before stage 2 and after stage 3. The agent records the JSON in `shots/perf/` with dates and the commit hash, and a short table in this file.

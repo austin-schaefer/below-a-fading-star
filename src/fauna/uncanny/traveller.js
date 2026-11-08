@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, angDiff } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const GOLD = '#8a6a30', GOLD_D = '#5e4622', ROBE = '#0f0c0e', VEIL = '#151113', VELVET = '#3a1416', CANOPY = '#17201d', WOOD = '#1c130d', GLOVE = '#070606';
 const TAU = Math.PI * 2;
@@ -341,10 +342,10 @@ export function buildTraveller(ctx, U) {
   }
   const ROPE_NEAR = 60;
   function update(dt, t) {
-    const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = Math.hypot(dx, dz);
+    const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = hyp(dx, dz);
     if (!flags && (flagsT -= dt) <= 0) { flagsT = 2; flags = flagsCentre(); }
     if (flags) {
-      const fd = Math.hypot(trav.position.x - flags.x, trav.position.z - flags.z);
+      const fd = hyp(trav.position.x - flags.x, trav.position.z - flags.z);
       if (fd > 14) pausedHere = false;
       else if (!pausedHere && fd < 1.6) { pausedHere = true; pauseT = 3.2; }
     }
@@ -394,7 +395,7 @@ export function buildTraveller(ctx, U) {
       const u = k / RS;
       Pm.lerpVectors(A, Bv, u); Pm.y -= sag * 4 * u * (1 - u);
       // tangent-free ring: the rope is thin, a ring in the plane perpendicular to the span is close enough
-      const tx = Bv.x - A.x, tz = Bv.z - A.z, tl = Math.hypot(tx, tz) || 1, nx = -tz / tl, nz = tx / tl;
+      const tx = Bv.x - A.x, tz = Bv.z - A.z, tl = hyp(tx, tz) || 1, nx = -tz / tl, nz = tx / tl;
       for (let s2 = 0; s2 < RD; s2++) {
         const an = (s2 / RD) * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an), o = (k * RD + s2) * 3;
         rnor[o] = nx * c; rnor[o + 1] = sn; rnor[o + 2] = nz * c;

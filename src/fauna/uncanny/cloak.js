@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, turnToward, angDiff } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const TAU = Math.PI * 2;
 const table = (tab, v) => {
@@ -309,7 +310,7 @@ export function buildCloak(ctx, U) {
       if (n && (!placedFrom || t > 2)) { placedFrom = n; settled = t > 2; const p = spot(n.x, n.z); moveTo(p[0], p[1]); }
       else if (!n && t > 8) { settled = true; const p = spot(SH.x - 4.2, SH.z - 1.2); moveTo(p[0], p[1]); }
     }
-    const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = Math.hypot(dx, dz);
+    const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = hyp(dx, dz);
     state.distance = dist;
     // the figure: toward the sun, or toward you when you are near; never quickly
     const near = dist < 40;

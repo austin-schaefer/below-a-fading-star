@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, approach, turnToward, angDiff } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const SKIN = '#bdb3aa';
 
@@ -142,7 +143,7 @@ export function buildTarnWoman(ctx, U) {
     if (!gutter && S.wasGutter) S.gone = false;
     S.wasGutter = gutter;
     g.visible = !S.gone; pub.visible = !S.gone;
-    const dx = cam.x - S.x, dz = cam.z - S.z, dist = Math.hypot(dx, dz);
+    const dx = cam.x - S.x, dz = cam.z - S.z, dist = hyp(dx, dz);
     // her back to you, always, but she turns slowly
     if (!S.gone) S.yaw = turnToward(S.yaw, Math.atan2(dx, dz) + Math.PI, 0.32 * dt);
     const bob = Math.sin(t * 1.05) * 0.012;

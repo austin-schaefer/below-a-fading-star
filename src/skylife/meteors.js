@@ -108,7 +108,7 @@ function inst(g, name, size, n) {
 }
 
 export function buildMeteors(ctx, group, U, rng) {
-  const N = ctx.quality === 'high' ? 16 : 10, NT = ctx.quality === 'high' ? 10 : 6;
+  const N = ctx.quality !== 'low' ? 16 : 10, NT = ctx.quality !== 'low' ? 10 : 6;
   const cols = METEOR_COLOURS.map(([h]) => new THREE.Color(h));
   const wsum = METEOR_COLOURS.reduce((s, [, w]) => s + w, 0);
 

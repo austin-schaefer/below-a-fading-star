@@ -4,6 +4,7 @@
 // Four instanced meshes (bodies, heads+antlers, upper legs, lower legs); poses are composed per frame from matrices.
 import * as THREE from 'three';
 import { Mesher, clamp, lerp } from './geo.js';
+import { hyp } from '../noise.js';
 
 const HIP_Y = 1.18, SHOULDER = [0, 1.42, 0.8], LEG_X = 0.13, FRONT_Z = 0.55, BACK_Z = -0.58, UP_LEN = 0.6, LO_LEN = 0.58;
 
@@ -55,6 +56,9 @@ export function buildGrazers(ctx, opts = {}) {
   }
 
   const slopeLimit = 0.7;
+  // terrain.slopeAt's own sums with a scratch normal (slopeAt allocates a Vector3 per call; this runs per frame)
+  const nTmp = new THREE.Vector3();
+  const slopeAt = (x, z) => Math.acos(clamp(terrain.normalAt(x, z, nTmp).y, -1, 1));
   const valid = (x, z) => {
     if (Math.hypot(x, z) > 280) return false;
     const K = ctx.landmarks.castle;
@@ -62,7 +66,7 @@ export function buildGrazers(ctx, opts = {}) {
     if (terrain.causewayDistance(x, z) < 5.5) return false;
     const wl = terrain.waterLevelAt(x, z);
     if (wl !== null && terrain.heightAt(x, z) < wl + 1.2) return false;
-    if (terrain.slopeAt(x, z) > slopeLimit) return false;
+    if (slopeAt(x, z) > slopeLimit) return false;
     return true;
   };
 
@@ -105,13 +109,13 @@ export function buildGrazers(ctx, opts = {}) {
   function update(dt, t) {
     // herd-level awareness
     let dmin = 1e9, cx = 0, cz = 0;
-    for (let i = 0; i < n; i++) { const a = A[i]; dmin = Math.min(dmin, Math.hypot(cam.x - a.x, cam.z - a.z)); cx += a.x; cz += a.z; }
+    for (let i = 0; i < n; i++) { const a = A[i]; dmin = Math.min(dmin, hyp(cam.x - a.x, cam.z - a.z)); cx += a.x; cz += a.z; }
     cx /= n; cz /= n; herd.x = cx; herd.z = cz;
     if (herd.mode !== 'flee') {
       if (dmin < 14) {
         herd.mode = 'flee';
         for (const a of A) {
-          const dx = a.x - cam.x, dz = a.z - cam.z, l = Math.hypot(dx, dz) || 1;
+          const dx = a.x - cam.x, dz = a.z - cam.z, l = hyp(dx, dz) || 1;
           const ang = Math.atan2(dx / l, dz / l) + a.off * 1.2;
           a.fx = Math.sin(ang); a.fz = Math.cos(ang); a.flee = 38 + rng() * 6; a.state = 'flee'; a.delayT = a.delay * 0.4;
         }
@@ -148,7 +152,7 @@ export function buildGrazers(ctx, opts = {}) {
         a.timer -= dt;
         if (a.timer <= 0) {
           // amble a few metres, kept near the herd's home
-          const hx = HX - a.x, hz = HZ - a.z, hl = Math.hypot(hx, hz);
+          const hx = HX - a.x, hz = HZ - a.z, hl = hyp(hx, hz);
           const bias = clamp((hl - 8) / 10, 0, 1);
           const ang0 = rng() * 6.28;
           const dx = lerp(Math.sin(ang0), hx / (hl || 1), bias), dz = lerp(Math.cos(ang0), hz / (hl || 1), bias);
@@ -158,7 +162,7 @@ export function buildGrazers(ctx, opts = {}) {
         }
       } else if (a.state === 'amble') {
         a.liftGoal = 0.25;
-        const dx = a.wx - a.x, dz = a.wz - a.z, d = Math.hypot(dx, dz);
+        const dx = a.wx - a.x, dz = a.wz - a.z, d = hyp(dx, dz);
         const ang = steer(a, dx, dz, 1.5);
         if (d < 0.5 || ang === null) { a.state = 'graze'; a.timer = 3 + rng() * 8; }
         else { turnTo(a, ang, 1.2, dt); goalSpeed = 0.75; gaitStride = 1.1; }

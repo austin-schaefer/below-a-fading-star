@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Painter, paintedMaterial, approach } from '../../fauna/uncanny/kit.js';
 import { smoothstep, clamp } from '../../fauna/geo.js';
+import { hyp } from '../../noise.js';
 
 const HULL = '#030304', TRIM = '#060506', DECK = '#08070a', IRON = '#0b0a0a', GLASS = '#0d0b08';
 const LEN = 20;           // hull length between the posts' feet; the posts carry it to about 22 m overall
@@ -229,7 +230,7 @@ export function buildGalley(ctx) {
 
     // ---- the drum, slow and muffled, while you are within earshot
     const cam = camera.position;
-    const dist = Math.hypot(cam.x - S.x, cam.z - S.z);
+    const dist = hyp(cam.x - S.x, cam.z - S.z);
     if ((S.drumT -= dt) <= 0) {
       S.drumT += 2.4;
       if (dist < 120) ctx.audio?.cue?.('galley-drum', hull.position, { distance: dist });
@@ -266,7 +267,7 @@ export function buildGalley(ctx) {
         a *= clamp(v / SPEED, 0, 1);
         // across the strip: perpendicular to the strip's own direction (the V arms angle outward)
         let ax = nx, az = nz;
-        if (s < 2) { const side = s === 0 ? -1 : 1, sl = 0.42 * Math.max(v, 0.3); ax = nx - tx * side * sl * 0.6; az = nz - tz * side * sl * 0.6; const l = Math.hypot(ax, az); ax /= l; az /= l; }
+        if (s < 2) { const side = s === 0 ? -1 : 1, sl = 0.42 * Math.max(v, 0.3); ax = nx - tx * side * sl * 0.6; az = nz - tz * side * sl * 0.6; const l = hyp(ax, az); ax /= l; az /= l; }
         for (let j = 0; j < 3; j++) {
           const i = (s * K + k) * 3 + j;
           pos[i * 3] = cx + ax * (j - 1) * half; pos[i * 3 + 2] = cz + az * (j - 1) * half;

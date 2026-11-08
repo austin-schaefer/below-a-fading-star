@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { flapMaterial, flapInstanced, lerp, makeDownCaster } from './geo.js';
 import { crowGeometry } from './small.js';
+import { hyp } from '../noise.js';
 
 const rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), o = new THREE.Vector3(), hits = [];
 const cast = (objs, x, z) => { o.set(x, 80, z); rc.set(o, down); rc.far = 160; hits.length = 0; rc.intersectObjects(objs, false, hits); return hits.length ? hits[0].point.y : null; };
@@ -142,12 +143,12 @@ function buildFlock(ctx, opts) {
       B.forEach((b, i) => seat(b, i, farthestFree(false)));
       mesh.visible = true;
     }
-    const far = Math.hypot(cam.x - yard.x, cam.z - yard.z) > 260;
+    const far = hyp(cam.x - yard.x, cam.z - yard.z) > 260;
     mesh.visible = !far;
     if (far) return;
     cool -= dt;
     if (flightT <= 0 && cool <= 0) {
-      for (const b of B) if (b.mode === 0 && Math.hypot(b.pos.x - cam.x, b.pos.z - cam.z) < opts.liftR && Math.abs(b.pos.y - cam.y) < 10) { lift(); break; }
+      for (const b of B) if (b.mode === 0 && hyp(b.pos.x - cam.x, b.pos.z - cam.z) < opts.liftR && Math.abs(b.pos.y - cam.y) < 10) { lift(); break; }
     }
     if (flightT > 0) {
       flightT -= dt;
