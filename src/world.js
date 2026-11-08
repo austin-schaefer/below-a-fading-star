@@ -30,7 +30,7 @@ export const LANDMARKS = {
   orchard:  { x: 130,  z: -90,  r: 52,  y: null, name: 'Medlar Close',        line: 'The fruit is only eaten rotten. It has been ready a long while.' },
   court:    { x: -40,  z: -165, r: 40,  y: -1,  name: 'The Sunken Court',     line: 'Whatever held court here ruled by weight of stone alone.' },
   moraine:  { x: 40,   z: -265, r: 80,  y: null, name: 'The Lattice',         line: 'A mote of dust found its seed crystal. It is still unspooling.' },
-  tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: 'The banner still flies. Nobody has seen who raises it.' },
+  tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: 'A lens mount, still turned to the sun. Nobody has seen who turned it.' },
   arcature: { x: 160,  z: 60,   r: 22,  y: null, name: 'The Arcature',         line: 'It was built to think. Nobody can say whether it has stopped.' },
   taverna:  { x: 95,   z: -45,  r: 20,  y: null, name: 'The Pomegranate House', line: 'The last stopping place. The lamps are kept for no one you will meet.' },
   // v4: the Great Span (W) along z 215, gate to gate; axis: the landmark is that line (landmarkDistance), at: where the debug panel lands you
