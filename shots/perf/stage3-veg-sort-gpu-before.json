@@ -1,0 +1,34 @@
+{
+ "extra": "&batch=instanced&sort=0",
+ "date": "2026-11-08T07:03:01.719Z",
+ "views": {
+  "spawn": {
+   "render": 12.55,
+   "shadow": 2.967,
+   "mainOnly": 9.582,
+   "total": 28.767,
+   "calls": [
+    244,
+    430
+   ],
+   "tris": [
+    1719112,
+    2188232
+   ]
+  },
+  "wood": {
+   "render": 9.92,
+   "shadow": 1.725,
+   "mainOnly": 8.195,
+   "total": 25.925,
+   "calls": [
+    183,
+    338
+   ],
+   "tris": [
+    1541520,
+    2070713
+   ]
+  }
+ }
+}
