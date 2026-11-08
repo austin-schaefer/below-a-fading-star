@@ -24,6 +24,8 @@ const RAYS_FULL = params.get('rays') === 'full';
 const POST_CLOCK = params.get('postclock') !== '0';
 // FXAA inside the finish, at every tier (v6-08 Q1's default, pulled forward); ?aa=off draws without it
 const FXAA = params.get('aa') !== 'off';
+// ?grain=<multiplier> scales the film grain's 0.02 (1, the default, as before; 0 none)
+const GRAIN = (() => { const g = parseFloat(params.get('grain')); return g >= 0 ? g : 1; })();
 // the rays' target per axis, as a fraction of the render (chosen against the sun pair's tolerance)
 const RAYS_RES = 0.25;
 
@@ -59,7 +61,7 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn; uniform vec2 uTexel;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel;`;
 
 // FXAA (three's FXAAShader, r170, after Catlike Coding's; written for GLSL ES 1.00, which the finish's raw
 // material compiles as): the edge search runs on the scene's luminance (the exposure applied, square-rooted
@@ -147,7 +149,7 @@ const GRADE_MAIN = `
 
     // grain
     float g = hash(vUv * uResolution + fract(uTime * 7.0) * 100.0) - 0.5; // the pixel's own uv: FXAA does not move the grain
-    col += g * 0.02 * (1.0 - smoothstep(0.0, 0.6, l) * 0.6);
+    col += g * 0.02 * uGrain * (1.0 - smoothstep(0.0, 0.6, l) * 0.6);
 
     gl_FragColor = vec4(col, 1.0);
   #ifdef FINISH
@@ -181,7 +183,7 @@ function makeUniforms() {
   return {
     tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
-    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uBloomOn: { value: 1 },
+    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
     uResolution: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
   };
 }
