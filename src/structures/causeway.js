@@ -46,10 +46,14 @@ export function buildCauseway(ctx, B, env) {
     if (pitEdge(x, z) < PIT_PAVE) return; // v4 map: the slabs tilting into the pit and hanging over it are v4/paths.js's
     // ~15% missing, in clusters, more at the ragged edges
     const miss = N2(x * 0.21 + 9, z * 0.21 - 4) * 0.5 + 0.5;
-    if (miss > 0.86 || rng() < 0.06 + Math.max(0, d - 1.1) * 0.12) return;
-    // v4 map: on the Saltings' lobe the paving sinks half into the crust, canted as it settled
-    const salt = ctx.regions ? ctx.regions.regionAt(x, z).saltings : 0;
-    env.addPaver(x, z, i, j, { sink: 0.02 + rng() * 0.05 + salt * 0.09, tilt: 0.07 + salt * 0.1 });
+    const gone = miss > 0.86 || rng() < 0.06 + Math.max(0, d - 1.1) * 0.12;
+    // v4 map: on the Saltings' lobe the paving runs on unbroken into the crust, each slab standing a hand proud with
+    // the crust lapping up its sides (the crust's lip round each is drawn by regions/saltings.js), canted a little as
+    // it settled
+    const salt = ctx.regions ? ctx.regions.regionAt(x, z).saltings : 0, sk = Math.min(1, Math.max(0, (salt - 0.2) / 0.4));
+    if (gone && sk < 0.5) return;
+    const r = rng();
+    env.addPaver(x, z, i, j, { sink: (0.02 + r * 0.05) * (1 - sk) + (-0.1 + r * 0.05) * sk, tilt: 0.07 + sk * 0.05 });
   });
 
   // waymarkers every ~40 m: a short hexagonal pillar with a worn carving

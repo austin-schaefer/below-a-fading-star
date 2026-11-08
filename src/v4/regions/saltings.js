@@ -15,6 +15,9 @@ import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { groundOf, instanced, airMotes, meshStats, compose } from './common.js';
 
 const KEY = 'saltings';
+// the slabs' distance field (set by build): the crust raises its lip round them, and the stone material
+// (structures/materials.js) keeps moss off their tops, salt-bleached, where they lie on the crust
+export const CRUST_PAVE = { uPave: { value: null }, uPaveBox: { value: new THREE.Vector4(0, 0, 0, 0) } };
 const SPINE = REGIONS.saltings.shape.strip;
 const FEN = LANDMARKS.fen;
 const SN = makeSimplex(8811);
@@ -144,12 +147,56 @@ export async function build(ctx) {
     g.computeBoundingSphere();
     return g;
   })();
+  // the road's slabs on the lobe (laid by structures/causeway.js, which builds alongside the regions, so this waits
+  // for the first frames): a distance field to the nearest slab's edge, so the crust can raise a lip round each one
+  // where it laps up its sides
+  const pavedField = (im) => {
+    if (!im) return null;
+    const M = new THREE.Matrix4(), Inv = new THREE.Matrix4(), v = new THREE.Vector3(), list = [];
+    for (let i = 0; i < im.count; i++) {
+      im.getMatrixAt(i, M); v.setFromMatrixPosition(M);
+      if (wAt(v.x, v.z) > 0.15) list.push({ x: v.x, y: v.y, z: v.z, inv: Inv.copy(M).invert().clone() });
+    }
+    if (!list.length) return null;
+    const TX = 0.1, R = 0.66 * 0.9, AP = R * Math.cos(Math.PI / 6), FAR = 0.3, PAD = 1;
+    let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
+    for (const q of list) { bx0 = Math.min(bx0, q.x - PAD); bx1 = Math.max(bx1, q.x + PAD); bz0 = Math.min(bz0, q.z - PAD); bz1 = Math.max(bz1, q.z + PAD); }
+    const w = Math.ceil((bx1 - bx0) / TX) + 1, h = Math.ceil((bz1 - bz0) / TX) + 1, data = new Uint8Array(w * h).fill(255);
+    const NX = [0.5, 1, 0.5], NZ = [0.866, 0, -0.866]; // the lathe's hexagon: a corner on +z, its edges' normals
+    for (const q of list) {
+      const i0 = Math.max(0, Math.floor((q.x - PAD - bx0) / TX)), i1 = Math.min(w - 1, Math.ceil((q.x + PAD - bx0) / TX));
+      const j0 = Math.max(0, Math.floor((q.z - PAD - bz0) / TX)), j1 = Math.min(h - 1, Math.ceil((q.z + PAD - bz0) / TX));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        v.set(bx0 + i * TX, q.y, bz0 + j * TX).applyMatrix4(q.inv); // at the slab's own height (its tilt)
+        let d = -Infinity;
+        for (let k = 0; k < 3; k++) d = Math.max(d, Math.abs(v.x * NX[k] + v.z * NZ[k]));
+        const b = Math.round(clamp((d - AP) / FAR, 0, 1) * 255), o = j * w + i;
+        if (b < data[o]) data[o] = b;
+      }
+    }
+    const tex = new THREE.DataTexture(data, w, h, THREE.RedFormat, THREE.UnsignedByteType);
+    tex.magFilter = tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true;
+    return { tex, box: new THREE.Vector4(bx0, bz0, 1 / (w * TX), 1 / (h * TX)), n: list.length };
+  };
+  const { uPave, uPaveBox } = CRUST_PAVE;
+  uPaveBox.value.set(0, 0, 0, 0);
+  let paveTries = 0;
+  ctx.registerUpdate(() => {
+    if (paveTries < 0 || paveTries++ > 30) return; // done, or no road (?only=, ?skip=structures)
+    const im = ctx.scene.getObjectByName('structures-pavers');
+    if (!im) return;
+    paveTries = -1;
+    const pave = pavedField(im);
+    if (pave) { uPave.value = pave.tex; uPaveBox.value.copy(pave.box); }
+  });
   const crustMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.82, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
   crustMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uPave = uPave; sh.uniforms.uPaveBox = uPaveBox;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aSalt; varying float vSalt; varying vec3 vSP;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSalt = aSalt; vSP = (modelMatrix * vec4(position, 1.0)).xyz;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
       varying float vSalt; varying vec3 vSP;
+      uniform sampler2D uPave; uniform vec4 uPaveBox;
       vec2 sHash2(vec2 p) { p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p) * 43758.5453); }
       float sNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         return mix(mix(sHash2(i).x, sHash2(i + vec2(1.0, 0.0)).x, f.x), mix(sHash2(i + vec2(0.0, 1.0)).x, sHash2(i + vec2(1.0)).x, f.x), f.y); }
@@ -217,6 +264,14 @@ export async function build(ctx) {
           float rn = 1.0 - smoothstep(0.05, 0.22, ${RUNNEL_GLSL});
           crust = mix(crust, vec3(0.32, 0.24, 0.22), rn * 0.6);                    // damp along the runnels
           sH *= 1.0 - rn;
+          // round the road's slabs the crust rises in a lip up their sides, white and unbroken
+          vec2 pu = (p - uPaveBox.xy) * uPaveBox.zw;
+          if (uPaveBox.z > 0.0 && pu.x > 0.0 && pu.y > 0.0 && pu.x < 1.0 && pu.y < 1.0) {
+            float pd = texture2D(uPave, pu).r * 0.3;                              // metres to the nearest slab's edge
+            float lip = smoothstep(0.12, 0.0, pd);
+            sH = mix(sH, 0.05 * smoothstep(0.12, 0.01, pd), lip);
+            crust = mix(crust, vec3(0.88, 0.86, 0.84) * (0.95 + 0.1 * grain), lip * 0.85);
+          }
           crust *= 0.93 + 0.1 * sHash2(floor(p * 0.25)).x;                        // brighter where it dried last
           diffuseColor.rgb = crust;
         }`)
