@@ -1,0 +1,76 @@
+[
+ {
+  "x": -40,
+  "z": 22,
+  "yaw": -1.0,
+  "pitch": 0.2,
+  "name": "east",
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(200)"
+ },
+ {
+  "x": -20,
+  "z": 26,
+  "yaw": 1.92,
+  "pitch": 0.2,
+  "name": "saddle",
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(45)"
+ },
+ {
+  "x": -200,
+  "z": 215,
+  "yaw": 0,
+  "pitch": 0.45,
+  "pre": "var fp = window.__fp; fp.player.pos.y = 56 + fp.player.eye; fp.camera.position.y = fp.player.pos.y",
+  "name": "deck",
+  "settle": 2500,
+  "js": "var fp = window.__fp; fp.player.pos.y = 56 + fp.player.eye; fp.camera.position.y = fp.player.pos.y; window.__fp.occultation.pass(60)"
+ },
+ {
+  "x": 60,
+  "z": -230,
+  "yaw": 3.1416,
+  "pitch": 0.12,
+  "name": "outwash",
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(180)"
+ },
+ {
+  "x": 6,
+  "z": 36,
+  "yaw": 1.92,
+  "pitch": 1.0,
+  "name": "spawn-up",
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(120)"
+ },
+ {
+  "x": -150,
+  "z": 0,
+  "dy": 60,
+  "yaw": -1.5708,
+  "pitch": 0.12,
+  "name": "air-east",
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(200)"
+ },
+ {
+  "name": "motion-t170",
+  "x": -40,
+  "z": 22,
+  "yaw": -1.0,
+  "pitch": 0.2,
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(170)"
+ },
+ {
+  "name": "motion-t230",
+  "x": -40,
+  "z": 22,
+  "yaw": -1.0,
+  "pitch": 0.2,
+  "settle": 2500,
+  "js": "window.__fp.occultation.pass(230)"
+ }
+]

@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
 import { FOG_TIER_GLSL, FOG_CAP } from './v4/kit/fog.js';
+import { injectOccultFog } from './v5/occultation.js'; // v5 wonders: AR the Occultation's band in the haze
 
 export function installAtmosphere() {
   const d = SUN.dir;
@@ -94,6 +95,7 @@ export function installAtmosphere() {
         gl_FragColor.rgb = min(gl_FragColor.rgb, max(fpSkyBehind(fpDir, fpFl) * 0.88, FP_HAZE * 1.4));
       }
     #endif`;
+  injectOccultFog(THREE); // v5 wonders: AR the Occultation, the band of shadow in the haze (src/v5/occultation.js)
 }
 
 function hexToVec(hex) {

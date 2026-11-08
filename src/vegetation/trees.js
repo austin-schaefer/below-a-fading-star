@@ -1,7 +1,7 @@
 // Trees and fungi. Every tree (the Deodand Wood, the wind-bent moor trees, Medlar Close, the dead
 // hollow trunks) lives in one BatchedMesh: one draw call and one shadow call for the lot. Each
 // variant is grown as a skeleton once, then meshed twice (near and far detail); trees swap
-// geometry by distance. Shelf fungi are baked into the bark geometry with a glow attribute;
+// geometry by distance. Every LOD of a variant is meshed from the same skeleton and placed with the same matrix. Shelf fungi are baked into the bark geometry with a glow attribute;
 // toadstools are a separate InstancedMesh. Both glow brighter when the sun gutters.
 import * as THREE from 'three';
 import { GeoBuilder, tube, clamp, lerp, smoothstep, unflipNormals, fogBatchFix } from './util.js';
@@ -194,7 +194,9 @@ function addShelves(sk, rng, count, yRange) {
 function meshSkeleton(sk, detail, colors, rng) {
   const gb = new GeoBuilder(['glow']);
   const ex0 = { glow: 0 };
-  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 3, 0, 0, 0] : [4, 0, 0, 0, 0];
+  // a bare crown (fewer than two leaf clusters per limb, as the medlars') is its limbs: the far mesh keeps them
+  const primaries = sk.limbs.reduce((n, l) => n + (l.level === 1 ? 1 : 0), 0), bare = sk.leaves.length < 2 * primaries;
+  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 3, bare ? 3 : 0, 0, 0] : [4, bare ? 3 : 0, bare ? 3 : 0, 0, 0];
   for (const limb of sk.limbs) {
     const sides = sidesFor[Math.min(limb.level, 4)];
     if (!sides) continue;
@@ -209,14 +211,15 @@ function meshSkeleton(sk, detail, colors, rng) {
       return mixc(mixc(colors.bark, colors.barkTop, clamp(y / H, 0, 1)), colors.mossCol, moss);
     }, { capTip: limb.level > 0, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
   }
-  // foliage cards: two crossed quads per cluster, normals bent outward from the crown
-  const leafStep = detail === 'far' ? 2 : 1;
-  for (let i = 0; i < sk.leaves.length; i += leafStep) {
+  // foliage cards: two crossed quads per cluster, normals bent outward from the crown. The far mesh keeps
+  // every cluster with one of its two cards (alternating), so the crown's mass stays where the near one has it.
+  for (let i = 0; i < sk.leaves.length; i++) {
     const L = sk.leaves[i];
     const col = mixc(colors.leaf, colors.leafAlt, (i * 0.618) % 1);
     const [u0, v0, u1, v1] = leafUV(L.tile);
     const s = L.s * (detail === 'hi' ? 1 : detail === 'lo' ? 1.1 : 1.45);
     for (let q = 0; q < 2; q++) {
+      if (detail === 'far' && q !== i % 2) continue;
       const ang = L.spin + q * Math.PI / 2;
       const ax = V(Math.cos(ang), 0, Math.sin(ang));
       const up = V(0, 1, 0).applyAxisAngle(ax, (q ? 0.9 : 0.25)); // second card lies flatter
@@ -276,13 +279,36 @@ function meshSkeleton(sk, detail, colors, rng) {
   return gb.build();
 }
 
-// A broken, hollow snag: outer wall with a jagged lip, an inner wall, a dark floor.
-function meshHollow(rng, colors, detail) {
+// A broken, hollow snag: outer wall with a jagged lip, an inner wall, a dark floor. Its shape (height, lip,
+// lean, snapped limbs, shelves) is drawn once by growHollow; meshHollow meshes that one shape at either detail.
+const HOLLOW_LIP = 11; // lip heights drawn per snag; the coarse mesh samples them round the rim
+function growHollow(rng) {
+  const H = 2.6 + rng() * 3.8, R = 0.55 + rng() * 0.45;
+  const lip = []; for (let s = 0; s < HOLLOW_LIP; s++) lip.push(H - rng() * 1.3 * (0.4 + 0.6 * Math.abs(Math.sin(s * 1.7))));
+  const lean = V((rng() - 0.5) * 0.25, 0, (rng() - 0.5) * 0.25);
+  // one or two snapped limbs
+  const limbs = [];
+  for (let k = 0; k < 1 + Math.floor(rng() * 2); k++) {
+    const a = rng() * Math.PI * 2, y0 = H * (0.35 + rng() * 0.3), el = 0.2 + rng() * 0.6, l = 0.8 + rng() * 1.8;
+    const d = V(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
+    const pts = [];
+    for (let i = 0; i <= 3; i++) pts.push({ x: lean.x * y0 + d.x * l * i / 3 + Math.cos(a) * R * 0.5, y: y0 + d.y * l * i / 3, z: lean.z * y0 + d.z * l * i / 3 + Math.sin(a) * R * 0.5, r: R * 0.32 * (1 - 0.5 * i / 3) });
+    limbs.push(pts);
+  }
+  // many tiers of shelf fungus
+  const sk = { limbs: [], leaves: [], shelves: [], fruits: [], moss: [], height: H, trunkR: R };
+  const spine = [];
+  for (let i = 0; i <= 8; i++) { const y = -0.5 + (H + 0.5) * i / 8; spine.push({ x: lean.x * y, y, z: lean.z * y, r: R * (1 + 0.5 * Math.exp(-Math.max(y, 0) * 1.5)) * 1.04 }); }
+  sk.limbs.push({ pts: spine, level: 0 });
+  addShelves(sk, rng, 3 + Math.floor(rng() * 4), [0.3, H * 0.75]);
+  sk.limbs.length = 0;
+  return { H, R, lip, lean, limbs, sk };
+}
+function meshHollow(hw, colors, detail) {
   const gb = new GeoBuilder(['glow']);
   const ex0 = { glow: 0 };
-  const H = 2.6 + rng() * 3.8, R = 0.55 + rng() * 0.45, sides = detail === 'hi' ? 11 : 7, rings = detail === 'hi' ? 7 : 3;
-  const lip = []; for (let s = 0; s < sides; s++) lip.push(H - rng() * 1.3 * (0.4 + 0.6 * Math.abs(Math.sin(s * 1.7))));
-  const lean = V((rng() - 0.5) * 0.25, 0, (rng() - 0.5) * 0.25);
+  const { H, R, lean } = hw, sides = detail === 'hi' ? 11 : 7, rings = detail === 'hi' ? 7 : 3;
+  const lip = []; for (let s = 0; s < sides; s++) { const u = s * HOLLOW_LIP / sides, i = Math.floor(u); lip.push(lerp(hw.lip[i], hw.lip[(i + 1) % HOLLOW_LIP], u - i)); }
   const ring = (j, inner) => {
     const out = [];
     const t = j / rings;
@@ -291,7 +317,7 @@ function meshHollow(rng, colors, detail) {
       const yTop = lip[s];
       const y = inner ? lerp(yTop, yTop * 0.45, t) : lerp(-0.5, yTop, t);
       const flare = inner ? 1 : 1 + 0.5 * Math.exp(-Math.max(y, 0) * 1.5);
-      const rr = R * flare * (inner ? 0.72 : 1) * (1 + 0.12 * Math.sin(a * 3 + j));
+      const rr = R * flare * (inner ? 0.72 : 1) * (1 + 0.12 * Math.sin(a * 3 + j * 7 / rings));
       const nx = Math.cos(a), nz = Math.sin(a);
       const x = nx * rr + lean.x * y, z = nz * rr + lean.z * y;
       const col = inner ? colors.inner : mixc(colors.bark, colors.mossCol, (1 - smoothstep(0, H * 0.4, y)) * colors.moss);
@@ -314,22 +340,8 @@ function meshHollow(rng, colors, detail) {
   const cy = fl.reduce((a, i) => a + gb.p[i * 3 + 1], 0) / sides;
   const c = gb.vert(lean.x * cy, cy, lean.z * cy, 0, 1, 0, colors.inner[0] * 0.5, colors.inner[1] * 0.5, colors.inner[2] * 0.5, 0.2, 0.2, ex0);
   for (let s = 0; s < sides; s++) gb.tri(c, fl[(s + 1) % sides], fl[s]);
-  // one or two snapped limbs
-  const sk = { limbs: [], leaves: [], shelves: [], fruits: [], moss: [], height: H, trunkR: R };
-  for (let k = 0; k < 1 + Math.floor(rng() * 2); k++) {
-    const a = rng() * Math.PI * 2, y0 = H * (0.35 + rng() * 0.3), el = 0.2 + rng() * 0.6, l = 0.8 + rng() * 1.8;
-    const d = V(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
-    const pts = [];
-    for (let i = 0; i <= 3; i++) pts.push({ x: lean.x * y0 + d.x * l * i / 3 + Math.cos(a) * R * 0.5, y: y0 + d.y * l * i / 3, z: lean.z * y0 + d.z * l * i / 3 + Math.sin(a) * R * 0.5, r: R * 0.32 * (1 - 0.5 * i / 3) });
-    tube(gb, pts, detail === 'hi' ? 5 : 3, () => colors.bark, { capTip: true, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
-  }
-  // many tiers of shelf fungus
-  const spine = [];
-  for (let i = 0; i <= 8; i++) { const y = -0.5 + (H + 0.5) * i / 8; spine.push({ x: lean.x * y, y, z: lean.z * y, r: R * (1 + 0.5 * Math.exp(-Math.max(y, 0) * 1.5)) * 1.04 }); }
-  sk.limbs.push({ pts: spine, level: 0 });
-  addShelves(sk, rng, 3 + Math.floor(rng() * 4), [0.3, H * 0.75]);
-  sk.limbs.length = 0;
-  const g2 = meshSkeleton(sk, 'hi', colors, rng);
+  for (const pts of hw.limbs) tube(gb, pts, detail === 'hi' ? 5 : 3, () => colors.bark, { capTip: true, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
+  const g2 = meshSkeleton(hw.sk, 'hi', colors);
   return { geo: mergeGeos([gb.build(), g2]), height: H, trunkR: R * 1.15 };
 }
 
@@ -461,8 +473,8 @@ export function buildTrees(ctx, ground, mats) {
   const woodV = make('deodand', 4), loneV = make('lone', 3), crookV = make('crooked', 3), thornV = make('thorn', 3), medV = make('medlar', 3), giantV = make('giant', 2);
   const deadV = [];
   for (let v = 0; v < 3; v++) {
-    const h = meshHollow(ctx.makeRng(6100 + v), colorsFor.dead, 'hi');
-    const l = meshHollow(ctx.makeRng(6100 + v), colorsFor.dead, 'lo');
+    const hw = growHollow(ctx.makeRng(6100 + v));
+    const h = meshHollow(hw, colorsFor.dead, 'hi'), l = meshHollow(hw, colorsFor.dead, 'lo');
     deadV.push(variants.length); variants.push({ hi: h.geo, lo: l.geo, far: l.geo, height: h.height, trunkR: h.trunkR });
   }
   const fallenV = [];
@@ -475,6 +487,9 @@ export function buildTrees(ctx, ground, mats) {
   }
   const moundV = [];
   for (let v = 0; v < 3; v++) { const lo = meshMound(ctx.makeRng(6300 + v), 'lo'); moundV.push(variants.length); variants.push({ hi: meshMound(ctx.makeRng(6300 + v), 'hi'), lo, far: lo, height: 0.5, trunkR: 0.8 }); }
+
+  const variantNames = [];
+  for (const [nm, ids] of Object.entries({ deodand: woodV, lone: loneV, crooked: crookV, thorn: thornV, medlar: medV, giant: giantV, dead: deadV, fallen: fallenV, mound: moundV })) ids.forEach((v, i) => { variantNames[v] = `${nm}${i}`; });
 
   // Placement ------------------------------------------------------------
   const trees = []; // {x,y,z, rot, s, v, tint, kind}
@@ -691,7 +706,7 @@ export function buildTrees(ctx, ground, mats) {
     woodNearestByre: { d: +nearestByre.d.toFixed(1), x: +nearestByre.x.toFixed(1), z: +nearestByre.z.toFixed(1) },
     giantsAt: giants.map((g) => `${g.x.toFixed(0)},${g.z.toFixed(0)}`).join(' '),
   };
-  return { trees, batch, update, stats, deadSpots, fallenSpots, giants };
+  return { trees, batch, update, stats, deadSpots, fallenSpots, giants, variantNames };
 }
 
 // ---------- Toadstools ----------
