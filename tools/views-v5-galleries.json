@@ -1,0 +1,67 @@
+[
+ {
+  "name": "spawn",
+  "x": 6,
+  "z": 36,
+  "yaw": 1.286,
+  "pitch": 0.16
+ },
+ {
+  "name": "causeway-65",
+  "x": -65,
+  "z": 12,
+  "yaw": 1.295,
+  "pitch": 0.2
+ },
+ {
+  "name": "causeway-40",
+  "x": -40,
+  "z": 22,
+  "yaw": 1.287,
+  "pitch": 0.18
+ },
+ {
+  "name": "tower-foot",
+  "x": -262,
+  "z": -118,
+  "yaw": 1.859,
+  "pitch": 0.5
+ },
+ {
+  "name": "w140",
+  "x": -140,
+  "z": -30,
+  "yaw": 1.373,
+  "pitch": 0.3
+ },
+ {
+  "name": "stones",
+  "x": -170,
+  "z": -50,
+  "yaw": 1.435,
+  "pitch": 0.32
+ },
+ {
+  "name": "span-deck",
+  "x": -200,
+  "z": 215,
+  "dy": 56.54,
+  "yaw": 0.572,
+  "pitch": 0.12
+ },
+ {
+  "name": "under",
+  "x": -305,
+  "z": -62,
+  "yaw": 1.362,
+  "pitch": 0.75
+ },
+ {
+  "name": "tower-foot-20s",
+  "x": -262,
+  "z": -118,
+  "yaw": 1.859,
+  "pitch": 0.5,
+  "js": "window.__fp.galleries && (window.__fp.galleries.offset = 20)"
+ }
+]
