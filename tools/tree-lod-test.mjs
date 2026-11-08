@@ -5,6 +5,7 @@
 // finds the turn about the vertical that best aligns each LOD's area-weighted azimuth profile (world space, about
 // the base) with the near one's, compares the direction of each LOD's lean (its height-weighted horizontal centroid),
 // and checks every LOD is drawn with the same matrix. It also prints a placement digest (x, z, rot of every tree) so placement can be compared across changes.
+// With the cross-fade on (not ?xfade=0) it checks one switch's fade (the spare, 0.4 s, gone after) and a wood walk's spares.
 // Usage: node tools/tree-lod-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -70,7 +71,55 @@ for (const mode of ['instanced', 'batched']) {
     for (const t of T.trees) { const s = `${fmt(t.x)},${fmt(t.z)},${fmt(t.rot)},${t.v};`; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; }
     return { out, digest: h.toString(16), n: T.trees.length, first: T.trees.slice(0, 4).map((t) => [t.x.toFixed(3), t.z.toFixed(3), t.rot.toFixed(4)]), lat: lat && [lat.x, lat.z] };
   });
+  // the cross-fade (v6-04): one switch fades in 0.4 s of world time and its spare hides after; a walk through the
+  // wood at 3 m/s leaves no spare showing and none run out
+  const fz = await page.evaluate(async () => {
+    const fp = window.__fp, T = window.__vegParts.trees, b = T.batch, F = T.fade, p = fp.player;
+    if (!F?.spares) return null;
+    const frames = (n) => new Promise((res) => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+    const shown = (id) => (b.isInstancedBatch ? b.inst[id].slot >= 0 : b.getVisibleAt(id));
+    const spareShown = () => F.spareIds.filter(shown).length;
+    const pose = (x, z) => { p.enabled = false; p.pos.x = x; p.pos.z = z; p.pos.y = fp.terrain.heightAt(x, z) + p.eye; };
+    const geoOf = (id) => (b.isInstancedBatch ? b.inst[id].geo : b.getGeometryIdAt(id));
+    const HI = fp.quality === 'low' ? 18 : 24;
+    const t = T.trees.find((q) => !q.hidden && q.kind === 'wood');
+    pose(t.x + HI + 8, t.z); await frames(60);
+    const g0 = geoOf(t.id), idle = spareShown();
+    pose(t.x + HI - 4, t.z);
+    let t0 = null, mid = null;
+    for (let k = 0; k < 600 && t0 === null; k++) { await frames(1); if (t.fade >= 0) t0 = fp.time.t; }
+    await frames(3);
+    if (t.fade >= 0) mid = { inFlight: F.inFlight, own: shown(F.spareIds[t.fade]), main: geoOf(t.id), spareGeo: geoOf(F.spareIds[t.fade]) };
+    let t1 = null;
+    for (let k = 0; k < 600 && t1 === null; k++) { await frames(1); if (t.fade < 0) t1 = fp.time.t; }
+    await frames(30);
+    const one = { t0, t1, secs: t1 - t0, dt: fp.time.dt, g0, mid, after: spareShown(), afterGeo: geoOf(t.id), idle };
+    // the wood walk
+    const rt = [[-68, 142], [-120, 136], [-170, 130], [-215, 128]];
+    const segs = []; let L = 0; for (let i = 1; i < rt.length; i++) { const l = Math.hypot(rt[i][0] - rt[i - 1][0], rt[i][1] - rt[i - 1][1]); segs.push({ a: rt[i - 1], b: rt[i], L0: L, l }); L += l; }
+    pose(rt[0][0], rt[0][1]); await frames(40);
+    const st0 = F.starts, ov0 = F.overflow; F.peak = 0;
+    let maxShown = 0;
+    const w0 = fp.time.t;
+    for (;;) {
+      const s = Math.min(L, (fp.time.t - w0) * 3);
+      let g = segs[segs.length - 1]; for (const q of segs) if (s <= q.L0 + q.l) { g = q; break; }
+      const u = (s - g.L0) / g.l; pose(g.a[0] + (g.b[0] - g.a[0]) * u, g.a[1] + (g.b[1] - g.a[1]) * u);
+      await frames(1);
+      maxShown = Math.max(maxShown, spareShown());
+      if (s >= L) break;
+    }
+    await frames(40);
+    return { one, walk: { starts: F.starts - st0, overflow: F.overflow - ov0, peak: F.peak, maxShown, inFlight: F.inFlight, shownAfter: spareShown(), spares: F.spares } };
+  });
   await page.close();
+  if (fz) {
+    const o = fz.one, w = fz.walk;
+    check(o.t0 !== null && o.mid && o.mid.own && o.mid.spareGeo === o.g0 && o.mid.main !== o.g0, `${mode}: a switch shows the old level as a spare while the new one fades in`, JSON.stringify(o.mid));
+    check(o.t1 !== null && o.secs >= 0.4 - 1e-6 && o.secs <= 0.4 + 0.1 + 1e-6, `${mode}: the fade completes in 0.4 s of world time`, `${o.secs?.toFixed(3)} s (frames of up to 0.1 s)`);
+    check(o.after === o.idle && o.afterGeo !== o.g0, `${mode}: the spare is gone after the fade`, `spares shown ${o.after}, before ${o.idle}`);
+    check(w.inFlight === 0 && w.shownAfter === 0 && w.overflow === 0, `${mode}: no spare leaks or runs out over the wood walk`, `${w.starts} fades, at most ${w.peak} in flight of ${w.spares} spares, ${w.overflow} hard for want of one, ${w.shownAfter} shown after`);
+  }
   console.log(`-- ${mode}: ${r.n} trees, placement digest ${r.digest}, first ${JSON.stringify(r.first)}`);
   digests.push(r.digest);
   check(!errors.length, `${mode}: no page errors`, errors.slice(0, 2).join(' | '));

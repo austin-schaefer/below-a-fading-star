@@ -245,9 +245,9 @@ if (needWalk || needSeq) {
     const pose = (x, z) => [x, z];
     const SEQ = [
       // a tree, found by kind nearest a spot (the survey's lone tree at (-125.8, -44) is gone: v5 moved the trees), and the line to walk as offsets from it
-      { id: 'tree-near', group: 'trees', owner: 'v6-04', tree: [-125.8, -44, 'lone'], rel: [[44, 0], [14, 0]], yaw: W, step: 0.5 },
-      { id: 'tree-far', group: 'trees', owner: 'v6-04', tree: [-125.8, -44, 'lone'], rel: [[130, 0], [50, 0]], yaw: W, step: 1 },
-      { id: 'tree-wood', group: 'trees', owner: 'v6-04', tree: [-142.2, 140.9, 'wood'], rel: [[34, 0], [14, 0]], yaw: W, step: 0.5 },
+      { id: 'tree-near', group: 'trees', owner: 'v6-04', gate: true, tree: [-125.8, -44, 'lone'], rel: [[44, 0], [14, 0]], yaw: W, step: 0.5 },
+      { id: 'tree-far', group: 'trees', owner: 'v6-04', gate: true, tree: [-125.8, -44, 'lone'], rel: [[130, 0], [50, 0]], yaw: W, step: 1 },
+      { id: 'tree-wood', group: 'trees', owner: 'v6-04', gate: true, tree: [-142.2, 140.9, 'wood'], rel: [[34, 0], [14, 0]], yaw: W, step: 0.5 },
       { id: 'grass-far', group: 'plants', owner: 'v6-05', from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
       { id: 'reeds-far', group: 'plants', owner: 'v6-05', cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
       { id: 'rocks', group: 'rocks', owner: 'v6-05', from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
@@ -289,7 +289,7 @@ if (needWalk || needSeq) {
       const bmax = Math.max(...bs), smax = Math.max(...ss), floor = Math.max(bmax, 1);
       const at = ss.indexOf(smax);
       extra.seqs[sp0.id] = { from: sp.from, to: sp.to, tree: sp.treeAt, switchStep: i, at: [ax, az], baseline: bs, switch: ss };
-      row(`${sp0.group}.${sp0.id}`, sp0.owner, 'largest step <= 2x baseline', `${smax} changed (frame ${at + 1} of ${ss.length}) vs baseline ${bmax}: ${(smax / floor).toFixed(1)}x`, smax <= 2 * floor, false, { baseline: bmax, largest: smax, ratio: +(smax / floor).toFixed(2), stepsOver100: ss.filter((c) => c > 100).length, watchBefore: w0.slice(0, 40), watchAfter: w1.slice(0, 40), switched: w0 !== w1 });
+      row(`${sp0.group}.${sp0.id}`, sp0.owner, 'largest step <= 2x baseline', `${smax} changed (frame ${at + 1} of ${ss.length}) vs baseline ${bmax}: ${(smax / floor).toFixed(1)}x`, smax <= 2 * floor, !!sp0.gate, { baseline: bmax, largest: smax, ratio: +(smax / floor).toFixed(2), stepsOver100: ss.filter((c) => c > 100).length, watchBefore: w0.slice(0, 40), watchAfter: w1.slice(0, 40), switched: w0 !== w1 });
       console.log('  watch', sp0.id, w0.slice(0, 30), '->', w1.slice(0, 30), 'steps', ss.join(','));
     }
     if (want('aliasing')) {

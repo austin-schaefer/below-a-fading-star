@@ -1,11 +1,14 @@
 // Trees and fungi. Every tree (the Deodand Wood, the wind-bent moor trees, Medlar Close, the dead
 // hollow trunks) lives in one BatchedMesh: one draw call and one shadow call for the lot. Each
 // variant is grown as a skeleton once, then meshed twice (near and far detail); trees swap
-// geometry by distance. Every LOD of a variant is meshed from the same skeleton and placed with the same matrix. Shelf fungi are baked into the bark geometry with a glow attribute;
+// geometry by distance. Every LOD of a variant is meshed from the same skeleton and placed with the same matrix.
+// A switch closer than 120 m cross-fades (v6): the old level stays as a spare instance for 0.4 s while the two
+// dither against one fade value (fade.js), shadows included; ?xfade=0 switches hard. Shelf fungi are baked into the bark geometry with a glow attribute;
 // toadstools are a separate InstancedMesh. Both glow brighter when the sun gutters.
 import * as THREE from 'three';
 import { GeoBuilder, tube, clamp, lerp, smoothstep, unflipNormals, fogBatchFix } from './util.js';
-import { makeBatch } from './batch.js';
+import { makeBatch, setFadeAt, cloneInstance, BATCH_FADE_HEAD } from './batch.js';
+import { withFade, fadeDepthMaterial } from '../fade.js';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const lin = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
@@ -654,7 +657,17 @@ export function buildTrees(ctx, ground, mats) {
   // BatchedMesh -------------------------------------------------------------
   let vtx = 0, idx = 0;
   for (const v of variants) for (const g of new Set([v.hi, v.lo, v.far])) { vtx += g.attributes.position.count; idx += g.index.count; }
-  const batch = makeBatch(ctx, trees.length + 8, vtx, idx, mats.tree); // instanced stand-in without multi-draw (batch.js)
+  // The cross-fade's spare instances: the most fades in flight on the wood walk at 3 m/s is 16 to 17 (5 on
+  // average); three times that, so a hurry keeps its fades too. Run out and a switch is hard (trees.fadeOverflow).
+  const XFADE = new URL(location.href).searchParams.get('xfade') !== '0';
+  const SPARES = XFADE ? 48 : 0;
+  const batch = makeBatch(ctx, trees.length + 8 + SPARES, vtx, idx, mats.tree); // instanced stand-in without multi-draw (batch.js)
+  if (XFADE) { // both passes dither: the leaf pattern of the shadow cross-fades with the crown
+    const fo = batch.isInstancedBatch ? { attribute: 'aFade', key: 'trees-i' } : { head: BATCH_FADE_HEAD, vertex: 'FP_BATCH_FADE', key: 'trees-b' };
+    withFade(mats.tree, fo);
+    const depth = fadeDepthMaterial(fo);
+    if (batch.isInstancedBatch) batch.enableFade(depth, 4); else batch.customDepthMaterial = depth;
+  }
   const gid = variants.map((v) => { const hi = batch.addGeometry(v.hi), lo = batch.addGeometry(v.lo); return [v.far === v.lo ? lo : batch.addGeometry(v.far), lo, hi]; });
   const lodSet = []; for (const g of gid) for (const k of g) lodSet[k] = g;
   batch.lodSets = (k) => lodSet[k];
@@ -677,7 +690,17 @@ export function buildTrees(ctx, ground, mats) {
     batch.setColorAt(t.id, col);
     // LOD distance scale: big things keep detail further out, small things drop it sooner
     t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
+    t.fade = -1;
   }
+  // spare instances, hidden until a switch shows one: { tree, spare id, f, dir } (dir +1 fades toward the main
+  // instance's level, -1 back to the spare's)
+  const slots = [], free = [];
+  for (let k = 0; k < SPARES; k++) {
+    const id = batch.addInstance(gid[0][0]);
+    batch.setMatrixAt(id, m4); batch.setColorAt(id, col); batch.setVisibleAt(id, false);
+    slots.push({ k, tree: null, spare: id, geo: -1, f: 0, dir: 1 }); free.push(k);
+  }
+  const fade = { spares: SPARES, spareIds: slots.map((s) => s.spare), inFlight: 0, peak: 0, starts: 0, overflow: 0, snaps: 0, ms: 400 };
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-trees';
   batch.build?.();
@@ -685,16 +708,62 @@ export function buildTrees(ctx, ground, mats) {
 
   // LOD by distance with hysteresis: 0 far, 1 mid, 2 near. No allocation.
   const HI = low ? 18 : 24, MID = low ? 55 : 72, HYS = 4;
+  const FADE_S = fade.ms / 1000, FADE_R = 120; // the cross-fade's length (world time) and reach
+  // A fade ends: the main instance draws in full at the level it ends on, the spare hides.
+  const endFade = (s, toMain) => {
+    const t = s.tree;
+    if (!toMain) batch.setGeometryIdAt(t.id, s.geo);
+    setFadeAt(batch, t.id, 1, 0);
+    batch.setVisibleAt(s.spare, false);
+    t.fade = -1; s.tree = null; free.push(s.k);
+    fade.inFlight--;
+  };
+  let lastT = -1;
   function update(px, pz) {
     batch.sortFrom?.(px, pz);
+    const now = ctx.time.t, dt = lastT < 0 ? 0 : Math.max(0, now - lastT), primed = lastT >= 0;
+    lastT = now;
+    if (fade.inFlight) {
+      for (let k = 0; k < slots.length; k++) {
+        const s = slots[k];
+        if (!s.tree) continue;
+        s.f += s.dir * dt / FADE_S;
+        if (s.f >= 1) endFade(s, true);
+        else if (s.f <= 0) endFade(s, false);
+        else { setFadeAt(batch, s.tree.id, s.f, 0); setFadeAt(batch, s.spare, s.f, 1); }
+      }
+    }
     for (let i = 0; i < trees.length; i++) {
       const t = trees[i];
       if (t.hidden) continue;
-      const d = Math.sqrt((t.x - px) ** 2 + (t.z - pz) ** 2) / t.lodK;
+      const dw = Math.sqrt((t.x - px) ** 2 + (t.z - pz) ** 2), d = dw / t.lodK;
       let want = d < HI ? 2 : d < MID ? 1 : 0;
       if (want < t.lod) { if (t.lod === 2 && d < HI + HYS) want = 2; else if (d < MID + HYS) want = Math.max(want, 1); }
-      if (want !== t.lod) { t.lod = want; batch.setGeometryIdAt(t.id, gid[t.v][want]); ctx.perf?.count('trees.lodSwitches'); }
+      if (want === t.lod) continue;
+      const from = gid[t.v][t.lod], to = gid[t.v][want];
+      t.lod = want;
+      ctx.perf?.count('trees.lodSwitches');
+      if (t.fade >= 0) { // a switch while it fades: turn the fade round, or end it and start afresh
+        const s = slots[t.fade];
+        if (to === s.geo) { s.dir = -1; continue; }
+        if (to === batch.getGeometryIdAt(t.id)) { s.dir = 1; continue; }
+        endFade(s, s.dir > 0); fade.snaps++; // ends on the level it was fading to (`from`)
+      }
+      if (!XFADE || !primed || dw >= FADE_R || from === to) { batch.setGeometryIdAt(t.id, to); continue; }
+      const k = free.length ? free.pop() : -1;
+      if (k < 0 || !cloneInstance(batch, slots[k].spare, t.id, from)) {
+        if (k >= 0) free.push(k);
+        fade.overflow++; ctx.perf?.count('trees.fadeOverflow');
+        batch.setGeometryIdAt(t.id, to); continue;
+      }
+      const s = slots[k];
+      s.tree = t; s.geo = from; s.f = 0; s.dir = 1; t.fade = k;
+      batch.setGeometryIdAt(t.id, to);
+      setFadeAt(batch, t.id, 0, 0); setFadeAt(batch, s.spare, 0, 1);
+      fade.starts++;
+      if (++fade.inFlight > fade.peak) fade.peak = fade.inFlight;
     }
+    if (fade.inFlight) ctx.perf?.count('trees.fades', fade.inFlight);
   }
 
   const tris = (g) => g.index.count / 3;
@@ -706,7 +775,7 @@ export function buildTrees(ctx, ground, mats) {
     woodNearestByre: { d: +nearestByre.d.toFixed(1), x: +nearestByre.x.toFixed(1), z: +nearestByre.z.toFixed(1) },
     giantsAt: giants.map((g) => `${g.x.toFixed(0)},${g.z.toFixed(0)}`).join(' '),
   };
-  return { trees, batch, update, stats, deadSpots, fallenSpots, giants, variantNames };
+  return { trees, batch, update, stats, fade, deadSpots, fallenSpots, giants, variantNames };
 }
 
 // ---------- Toadstools ----------

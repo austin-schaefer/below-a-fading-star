@@ -6,6 +6,12 @@
 // geometry, matrices and colours, so the same picture, in a few hundred calls. Cells keep coarse
 // frustum culling; instances are not culled one by one, so a few more triangles reach the GPU.
 // ?batch=instanced|batched forces either path (default: batched where WEBGL_multi_draw exists).
+//
+// The fade (v6, trees.js's LOD cross-fade): each instance carries (f, side) for fade.js's dither. On a
+// BatchedMesh it rides in the alpha channel of three's colour texture (r170's setColorAt writes rgb and leaves
+// the alpha it fills with 1): side 0 stores f, side 1 stores 2 + f, so the default 1 draws in full. The
+// instanced stand-in keeps it in an `aFade` vec2 instance attribute on each of its meshes (enableFade).
+// setFadeAt and cloneInstance are the two calls trees.js makes on either path.
 import * as THREE from 'three';
 
 const CELL = 100;
@@ -23,6 +29,35 @@ export function makeBatch(ctx, maxInstances, maxVertices, maxIndices, material) 
 
 const _m = new THREE.Matrix4(), _c = new THREE.Color(), _p = new THREE.Vector3();
 
+// The GLSL a fading BatchedMesh's materials need (withFade's head and vertex): the alpha decoded to (f, side).
+export const BATCH_FADE_HEAD = /* glsl */ `
+vec2 fpBatchFade(float a) { return a > 1.5 ? vec2(a - 2.0, 1.0) : vec2(a, 0.0); }
+#ifdef USE_BATCHING_COLOR
+#define FP_BATCH_FADE fpBatchFade(texelFetch(batchingColorTexture, ivec2(int(getIndirectIndex(gl_DrawID)) % textureSize(batchingColorTexture, 0).x, int(getIndirectIndex(gl_DrawID)) / textureSize(batchingColorTexture, 0).x), 0).a)
+#else
+#define FP_BATCH_FADE vec2(1.0, 0.0)
+#endif
+`;
+
+// (f, side) of instance id: side 0 draws a share f of its pixels, side 1 the other 1 - f (fade.js)
+export function setFadeAt(b, id, f, side) {
+  if (b.isInstancedBatch) return b.setFadeAt(id, f, side);
+  const t = b._colorsTexture;
+  t.image.data[id * 4 + 3] = side ? 2 + f : f;
+  t.needsUpdate = true;
+}
+
+// Show instance dst (a hidden spare) as a copy of src (same matrix, same colour) with geometry geo. False when
+// the instanced stand-in's cell has no room left for it.
+export function cloneInstance(b, dst, src, geo) {
+  if (b.isInstancedBatch) return b.cloneInstance(dst, src, geo);
+  b.getMatrixAt(src, _m); b.setMatrixAt(dst, _m);
+  b.getColorAt(src, _c); b.setColorAt(dst, _c);
+  b.setGeometryIdAt(dst, geo);
+  b.setVisibleAt(dst, true);
+  return true;
+}
+
 class InstancedBatch extends THREE.Group {
   constructor(material) {
     super();
@@ -32,16 +67,47 @@ class InstancedBatch extends THREE.Group {
     this.inst = [];   // instance id -> { geo, cell, slot, matrix, color }
     this.meshes = new Map(); // `${geo}|${cell}` -> InstancedMesh
     this.built = false; this.sortOn = true; this._sx = Infinity; this._sz = Infinity;
+    this.fadeDepth = null; this.reserve = 0; // enableFade
     let cast = false, receive = false;
     Object.defineProperty(this, 'castShadow', { get: () => cast, set: (v) => { cast = v; for (const m of this.children) m.castShadow = v; } });
     Object.defineProperty(this, 'receiveShadow', { get: () => receive, set: (v) => { receive = v; for (const m of this.children) m.receiveShadow = v; } });
   }
   addGeometry(geo) { this.geos.push(geo); if (!geo.boundingSphere) geo.computeBoundingSphere(); return this.geos.length - 1; }
-  addInstance(geo) { this.inst.push({ geo, cell: null, slot: -1, matrix: new THREE.Matrix4(), color: new THREE.Color(1, 1, 1) }); return this.inst.length - 1; }
+  addInstance(geo) { this.inst.push({ geo, cell: null, slot: -1, matrix: new THREE.Matrix4(), color: new THREE.Color(1, 1, 1), fade: [1, 0], on: true }); return this.inst.length - 1; }
+  // Before build: every mesh gets an aFade instance attribute, the fade's depth material, and `reserve` slots
+  // over its count for the spare instances cross-fades show (at most as many as the mesh's own count).
+  enableFade(depth, reserve) { this.fadeDepth = depth; this.reserve = reserve; }
+  setFadeAt(id, f, side) {
+    const it = this.inst[id];
+    it.fade[0] = f; it.fade[1] = side;
+    if (it.slot < 0) return;
+    const a = this.meshes.get(`${it.geo}|${it.cell}`).geometry.attributes.aFade;
+    a.array[it.slot * 2] = f; a.array[it.slot * 2 + 1] = side; a.needsUpdate = true;
+  }
+  getMatrixAt(id, m) { return m.copy(this.inst[id].matrix); }
+  getColorAt(id, c) { return c.copy(this.inst[id].color); }
+  // a hidden instance hides from build on (spares); shown again it goes back into its cell's mesh
+  setVisibleAt(id, v) {
+    const it = this.inst[id];
+    if (it.on === v) return this;
+    it.on = v;
+    if (!this.built) return this;
+    if (v) this._append(it, id); else this._remove(it);
+    return this;
+  }
+  cloneInstance(dst, src, geo) {
+    const d = this.inst[dst], s = this.inst[src];
+    if (d.on) this.setVisibleAt(dst, false);
+    const mesh = this.meshes.get(`${geo}|${s.cell}`);
+    if (!mesh || mesh.count >= mesh.instanceMatrix.count) return false;
+    d.matrix.copy(s.matrix); d.color.copy(s.color); d.cell = s.cell; d.geo = geo;
+    this.setVisibleAt(dst, true);
+    return true;
+  }
   setMatrixAt(id, m) {
     const it = this.inst[id];
     it.matrix.copy(m);
-    if (!this.built) return this;
+    if (!this.built || it.slot < 0) return this;
     const mesh = this.meshes.get(`${it.geo}|${it.cell}`);
     mesh.setMatrixAt(it.slot, m); mesh.instanceMatrix.needsUpdate = true;
     return this;
@@ -49,14 +115,14 @@ class InstancedBatch extends THREE.Group {
   setColorAt(id, c) {
     const it = this.inst[id];
     it.color.copy(c);
-    if (!this.built) return this;
+    if (!this.built || it.slot < 0) return this;
     const mesh = this.meshes.get(`${it.geo}|${it.cell}`);
     mesh.setColorAt(it.slot, c); mesh.instanceColor.needsUpdate = true;
     return this;
   }
   setGeometryIdAt(id, geo) {
     const it = this.inst[id];
-    if (!this.built) { it.geo = geo; return this; }
+    if (!this.built || it.slot < 0) { it.geo = geo; return this; }
     if (geo === it.geo) return this;
     this._remove(it); it.geo = geo; this._append(it, id);
     return this;
@@ -69,6 +135,7 @@ class InstancedBatch extends THREE.Group {
     const cells = new Map(); // cell -> { ids, geos: Set }
     for (let i = 0; i < this.inst.length; i++) {
       const it = this.inst[i];
+      if (!it.on) continue; // a spare: its cell is its source's, set when it is shown
       _p.setFromMatrixPosition(it.matrix);
       it.cell = `${Math.floor(_p.x / CELL)},${Math.floor(_p.z / CELL)}`;
       let c = cells.get(it.cell);
@@ -87,8 +154,19 @@ class InstancedBatch extends THREE.Group {
         box.expandByPoint(_p.clone().addScalar(s)); box.expandByPoint(_p.clone().addScalar(-s));
       }
       const sphere = box.getBoundingSphere(new THREE.Sphere());
-      for (const [g, cap] of c.geos) {
-        const mesh = new THREE.InstancedMesh(this.geos[g], this.material, cap);
+      for (const [g, n] of c.geos) {
+        const cap = n + Math.min(n, this.reserve);
+        let geo = this.geos[g];
+        if (this.fadeDepth) { // its own geometry over the shared buffers, for its own aFade
+          const src = geo; geo = new THREE.BufferGeometry();
+          geo.setIndex(src.index);
+          for (const k in src.attributes) geo.setAttribute(k, src.attributes[k]);
+          geo.boundingSphere = src.boundingSphere;
+          const fa = new Float32Array(cap * 2); for (let s = 0; s < cap; s++) fa[s * 2] = 1;
+          geo.setAttribute('aFade', new THREE.InstancedBufferAttribute(fa, 2).setUsage(THREE.DynamicDrawUsage));
+        }
+        const mesh = new THREE.InstancedMesh(geo, this.material, cap);
+        if (this.fadeDepth) mesh.customDepthMaterial = this.fadeDepth;
         mesh.count = 0;
         mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         mesh.setColorAt(0, _c.setRGB(1, 1, 1));
@@ -100,7 +178,7 @@ class InstancedBatch extends THREE.Group {
         this.add(mesh);
       }
     }
-    for (let i = 0; i < this.inst.length; i++) this._append(this.inst[i], i);
+    for (let i = 0; i < this.inst.length; i++) if (this.inst[i].on) this._append(this.inst[i], i);
   }
   // Front to back inside each cell (v3 stage 3): three sorts the cells' meshes by distance but draws
   // each one's instances in build order, so near trees can be drawn after the far ones they hide and
@@ -109,7 +187,7 @@ class InstancedBatch extends THREE.Group {
   sortFrom(px, pz) {
     if (!this.sortOn || !this.built || (px - this._sx) ** 2 + (pz - this._sz) ** 2 < SORT_STEP * SORT_STEP) return;
     this._sx = px; this._sz = pz;
-    const tmpM = this._tmpM ||= new Float32Array(16 * 4096), tmpC = this._tmpC ||= new Float32Array(3 * 4096);
+    const tmpM = this._tmpM ||= new Float32Array(16 * 4096), tmpC = this._tmpC ||= new Float32Array(3 * 4096), tmpF = this._tmpF ||= new Float32Array(2 * 4096);
     for (const mesh of this.children) {
       const n = mesh.count;
       if (n < 2 || n > 4096) continue;
@@ -122,15 +200,17 @@ class InstancedBatch extends THREE.Group {
       sub.sort((a, b) => key[a] - key[b]);
       let same = true; for (let s = 0; s < n; s++) if (sub[s] !== s) { same = false; break; }
       if (same) continue;
-      const M = mesh.instanceMatrix.array, C = mesh.instanceColor.array, ids = mesh.ids;
-      tmpM.set(M.subarray(0, n * 16)); tmpC.set(C.subarray(0, n * 3));
+      const M = mesh.instanceMatrix.array, C = mesh.instanceColor.array, ids = mesh.ids, FA = mesh.geometry.attributes.aFade, F = FA?.array;
+      tmpM.set(M.subarray(0, n * 16)); tmpC.set(C.subarray(0, n * 3)); if (F) tmpF.set(F.subarray(0, n * 2));
       const idsOld = this._ids ||= new Int32Array(4096); idsOld.set(ids.subarray(0, n));
       for (let s = 0; s < n; s++) {
         const from = sub[s];
         M.set(tmpM.subarray(from * 16, from * 16 + 16), s * 16); C.set(tmpC.subarray(from * 3, from * 3 + 3), s * 3);
+        if (F) { F[s * 2] = tmpF[from * 2]; F[s * 2 + 1] = tmpF[from * 2 + 1]; }
         ids[s] = idsOld[from]; this.inst[ids[s]].slot = s;
       }
       mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+      if (FA) FA.needsUpdate = true;
     }
   }
   _append(it, id) {
@@ -139,6 +219,8 @@ class InstancedBatch extends THREE.Group {
     it.slot = s; mesh.ids[s] = id;
     mesh.setMatrixAt(s, it.matrix); mesh.setColorAt(s, it.color);
     mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+    const fa = mesh.geometry.attributes.aFade;
+    if (fa) { fa.array[s * 2] = it.fade[0]; fa.array[s * 2 + 1] = it.fade[1]; fa.needsUpdate = true; }
     mesh.visible = mesh.count > 0;
   }
   _remove(it) {
@@ -148,6 +230,8 @@ class InstancedBatch extends THREE.Group {
       const mid = mesh.ids[last], moved = this.inst[mid];
       mesh.getMatrixAt(last, _m); mesh.setMatrixAt(it.slot, _m);
       mesh.getColorAt(last, _c); mesh.setColorAt(it.slot, _c);
+      const fa = mesh.geometry.attributes.aFade;
+      if (fa) { fa.array[it.slot * 2] = fa.array[last * 2]; fa.array[it.slot * 2 + 1] = fa.array[last * 2 + 1]; fa.needsUpdate = true; }
       mesh.ids[it.slot] = mid; moved.slot = it.slot;
     }
     mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
