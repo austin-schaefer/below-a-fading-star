@@ -1,14 +1,25 @@
 # Wilderness v6: performance and visible artefacts
 
-Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). The milestones were numbered the other way round until 10:04 on 2026-11-08; MORNING.md entries before then used the old numbers and were renumbered. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
+Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
 
-Three of the artefacts Austin reported this morning are already fixed and merged, so v6 does not plan them again:
+## Status
 
-- trees that turned as you approached them (fixed by `fix-tree-lod`, `tools/tree-lod-test.mjs`);
-- the hop on stairs (fixed by `fix-stair-hop`, `tools/stair-test.mjs`);
-- the jumpy camera when panning in the Deodand Wood, caused by first-sight shader compiles (fixed by `fix-wood-hitch`: `compileAsync` behind the title card, `tools/pan-test.mjs`).
+**Landed** (before v6 opened, all on `main` with v5): the pixel-ratio and shadow-cadence fix (`fix-dpr-steps`: integrated GPUs at 1.0, steps only on steady frames, the shadow cap while turning), the tree LOD turning fix (`tools/tree-lod-test.mjs`), the stair hop (`tools/stair-test.mjs`), the Deodand Wood's first-sight compiles and uploads (`compileAsync` and `src/warmup.js` behind the title card, `tools/pan-test.mjs`), and `?record=<s>`.
 
-The mountains study is a design choice, not an artefact.
+**The measurement that cut v6 short.** Austin's clean wood pan after v5 shipped (`shots/perf/laptop-wood-pan-clean-2026-11-08.json`: medium, 1920×1117, pixel ratio 1.0, no agent on the GPU) holds a steady 60 fps: median 16.7 ms, p99 17.5, worst 33.3, 0 pixel-ratio steps, 3 dynamic shadow redraws in 25 s; the phone runs fine in production. The hitching v6 was opened for is gone, so bar items 1 and 2 of `briefs/v6/index.md` are met. The GPU pass timers in that run sum to 29.8 ms at a 16.7 ms frame, so they are shares, not costs (the output pass likely carries the vsync wait); the post chain's real cost is unknown until v6-01 measures it with the cap off. Austin: "i don't wanna have a gigantic long milestone if performance is basically fine".
+
+**Next: three batches, then release.**
+
+| Batch | Briefs | Model | What and why |
+|---|---|---|---|
+| 1 | v6-00 square lights (worktree `v6-square-lights`, port 8173), v6-01 harness trimmed (worktree `v6-harness`, port 8172) | Sonnet each; v6-00 to Opus if it fails once | Light sources draw as flat squares in Firefox, Safari and iOS Safari (Chrome is clean): the one thing wrong on a shared link. v6-01 builds only `pop-test`'s switch gate, `pair-diff` and the wood pan with the frame cap off. |
+| 2 | v6-04 trees, v6-05 ground | Opus, together | The near switches a walker sees in the first minute (trees at 24–36 m, grass at 60 m, reeds at 50 m), time-boxed to bar item 4. |
+| 3, only if earned | v6-02 finish pass | Opus | Only if v6-01's uncapped run puts the post chain at 40% or more of a GPU-bound frame; if not, it is skipped and this line says so. |
+| release | curate `shots/wip`, `RELEASES.md` v6 entry, merge to `main` | | Then v7, the living. |
+
+**Deferred, briefs on disk:** v6-03 shadow box, v6-06 fauna, v6-07 slots and dt, v6-08 AA and the image (antialiasing is not wanted before v7 is out), v6-09 the hardware table. They come back as a polish batch after v7, or sooner if a visitor names one. The survey and catalogue below stay as the record for that.
+
+**Known rough edges** from v5, none blocking: `wilderness-v5.md` "Known rough edges".
 
 ## How the survey was done
 
@@ -123,7 +134,7 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
 
 ### Temporal artefacts
 
-15. **Grass flicker at your feet.** Fixed in v3 (`HANDOFF-flicker.md`, `tools/grass-flicker-test.mjs`) and still green. Nothing to plan.
+15. **Grass flicker at your feet.** Fixed in v3 (commits `7bcafe7` and `b4d8318`, `tools/grass-flicker-test.mjs`) and still green. Nothing to plan.
 16. **Bloom shimmer on small bright points.** **[needs Austin's eye]** Bloom runs at half resolution (`post.js`, `bloomres` 0.5). Sub-pixel bright points crawl and pulse in the bloom as they move across half-size texels: the candles, the Galleries' 32 lamps, the lamps at the Pomegranate House, the deodand's eyes. Not measured headless.
 17. **Fog and sky banding.** **[needs Austin's eye]** The height fog and the haze are 8-bit gradients after the grade. The film grain dithers them, so banding shows only where the grade lifts the shadows. Not measured.
 18. **The dt clamps disagree.** **[cheap]** `main.js` clamps dt at 0.1 s and `controls.js` at 0.05 s. A 100 ms stall therefore advances the world 100 ms but the walker 50 ms, while the mouse look integrates the whole stall's travel. Since the shader fix this needs a real stall to show.
@@ -279,12 +290,7 @@ Acceptance: every target above green in `pop-test`, the hardware frames-over-2×
 
 ## Rules for the v6 agents
 
-- **Pace** (`HANDOFF.md`):
-  - one headless browser per agent, renders and tests in sequence;
-  - `nice -n 10` on every `node tools/...`;
-  - wip renders at 1280×720;
-  - at most four agents at once;
-  - the tests that cover the change plus walk, perf, loading, `pan-test`, `pop-test` and the artifact build before pushing.
+- **Pace:** the `wilderness` skill's pace rules, and `pan-test` and `pop-test` join the tests run before pushing.
 - **Never lower a quality setting as a fix.** No shorter draw distances, fewer trees, a smaller shadow map or a lower pixel ratio to hide a pop. A pop is fixed by a transition, not by removing what pops.
 - **A pinned before/after pair for every change** in `shots/wip/v6-NN-<artefact>-<view>-{before,after}.png`, with its diff. Austin judges the pairs.
 - **A flag for every change** (`?xfade=0`, `?shadowslide=0`, `?aa=off`, …), so a regression bisects from the URL. This follows v3's rule.

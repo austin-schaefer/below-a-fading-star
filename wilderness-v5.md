@@ -1,6 +1,6 @@
 # Wilderness v5: diversity, life and detail
 
-> **Sequencing (2026-11-08):** the three releases below became layers across versions instead: the land (bioregions, tarn, glacier, Tinctures, gutter, terrain set-dressing) ships in **v4** with v4's own terrain work; the built things in **v5**; the people and small life in **v7**. See `wilderness-run.md`.
+> **Sequencing (2026-11-08):** the three releases below became layers across versions instead: the land (bioregions, tarn, glacier, Tinctures, gutter, terrain set-dressing) ships in **v4** with v4's own terrain work; the built things in **v5**; the people and small life in **v7**.
 
 Austin, 2026-11-08, after walking v2.1. Runs after v4. Austin picked from `IDEAS-v5.md` on 2026-11-08 (below); the placement plan follows when v5's turn comes.
 
@@ -551,3 +551,13 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
   - **The doorway from the brief's (−200, −60):** **not visible.** The tower hill's brow hides the fin's foot, and the door faces south, away from there. The causeway's leg from the saddle north to the tower (x −344 to −262) looks straight at it (within 12° of the door's normal, 73–260 m; ray-checked against the terrain), so `door-westleg` is (−266, −40), 81 m. From there the lit slot shows at the top of the hill's brow as a small warm vertical slit in the dark fin, with the hill hiding its lower part. From 14 m (−252, −106) the slit, the lit jamb and the wedge read clearly.
   - **The Leerie's standards**: from the Pomegranate House's north-east corner (110.5, −30.5), looking along K1 (the brief's (95, −45) is inside the courtyard's walls), from the Arcature end (149, 42) looking back, and from (108, 6) across the row. Unlit (`-after2`), the standards are dark iron against the dusk. In the gutter pose (`-gutter-after`, flicker held at 0.3), all twelve burn and run back under the tree toward the house, each with its pool on the turf. `leerie-flare-gutter-after` catches the wave 0.3 s in, with the six nearest at the peak of their flare. `leerie-flare-end-gutter-after` is 1 s after the gutter ends: every mantle is going out together. The first `leerie-*-after` renders show the earlier approach rule and are superseded.
 - **Renders:** `shots/wip/v5-09-lights-<thing>-<view>-<before|after>.png` for `moss-far`, `moss-rim`, `embers-far`, `embers-close`, `post-far`, `post-road`, `post-westleg`, `post-close`, `door-brief`, `door-westleg`, `door-20m`, `leerie-house`, `leerie-arcature` and `leerie-flare` (`tools/views-v5-lights.json`). `35-lights-arcature-sheet.png` puts the Arcature-end pair side by side (the earlier rule). The Leerie under the gutter rule: `v5-09-lights-leerie-<view>-after2.png` (unlit) and `-gutter-after.png` (`tools/views-v5-leerie-gutter.json`). `35-lights-leerie-standards-before-sheet.png` puts the unlit and gutter Arcature-end views side by side.
+
+## Known rough edges
+
+None blocking; each is a look for Austin's eye.
+
+- Light sources draw as flat squares in Firefox, Safari and iOS Safari (Chrome is clean); v6-00 fixes it, and Austin confirms on the phone after it merges.
+- The massifs' bedding ledges read strong and even from the high east view, close to a quarry face; a number in `src/terrain.js`'s marked block lowers their amplitude or varies their spacing.
+- The Battlemented Ridge's regularity is its stated idea and stays; the Armiger's Tower's mast still crosses the Galleries from the Lynchets (−165, −105).
+- The causeway's post lamp keeps a glass box under a pyramid cap; the Leerie's standards became lamp-cages, the post lamp did not.
+- The Annals' band is absent over bearings 0–14, 105–119, 174–186, 239–261 and 324–331 (the face is not at 110–130 m there); nothing floats.
