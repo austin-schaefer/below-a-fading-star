@@ -41,7 +41,7 @@ Put `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...` call.
 
 - `node tools/walk-test.mjs "$B/?q=low"` (9/9)
 - `node tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"` (17/17)
-- `node tools/loading-test.mjs "$B/?q=low"` (7/7); it rewrites `shots/wip/loading-01-card-*.png`, so `git checkout -- shots/wip/loading-01-card-*.png` after
+- `node tools/loading-test.mjs "$B/?q=low"` (7/7); its card renders go to the gitignored `shots/wip/`
 - `node tools/grass-flicker-test.mjs low $B` (3/3)
 - `node tools/build-artifact.mjs` (builds the single-file artifact and `commit.json`)
 - `node tools/pop-test.mjs http://localhost:PORT --label=<name>` (v6; `--only=<group,...>`; exits 1 only on gated rows) and `node tools/pair-diff.mjs a.png b.png [diff.png]` (picture difference in the survey's numbers)
@@ -57,13 +57,13 @@ The rest (stair, audio, gutter, tree-lod, regions, touch, paths, dressing, bench
 
 - **At most four implementation agents at once**, each in its own worktree on its own port. A read-only planning, review or curation agent with no browser does not count.
 - **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. `nice -n 10` and `SHOT_ANGLE=metal` on every `node tools/...` call. No `--trace` on Playwright runs.
-- **Wip renders at 1280×720** into `shots/wip/`, named `<module>-<stage>-<view>.png`; full size only for renders that go into `shots/`. Never delete or overwrite a render; the curator decides.
-- **Tests before pushing:** the test for what you touched plus `walk-test`, `perf-test`, `loading-test` (then restore the card renders), `grass-flicker-test` and `build-artifact`.
+- **Wip renders at 1280×720** into `shots/wip/`, named `<module>-<stage>-<view>.png`. `shots/wip/` is gitignored and never committed: only the curator commits, as WebP keepers into `shots/`, and a pre-commit hook rejects any staged PNG under `shots/` (so `git add -f` fails) and any image over 1.25 MB. Ignored files die with their worktree, so `tools/worktree.sh rm` first moves a worktree's `shots/wip/` files into the deploy worktree's (`.claude/worktrees/wilderness-deploy`), which is where the curator reads them; it refuses if the deploy worktree is missing. Never delete or overwrite a render; the curator decides.
+- **Tests before pushing:** the test for what you touched plus `walk-test`, `perf-test`, `loading-test`, `grass-flicker-test` and `build-artifact`.
 
 ## Hand-back
 
 - **Implementer:** commit by part with conventional messages (`feat(wilderness): …`); `git fetch origin && git merge origin/claude/intelligent-mendel-ca020e`; push your branch; no merge, no PR; kill your server. Report in under 200 words: what changed, the exact test commands and their counts, the renders to look at, any default you took.
-- **Orchestrator:** a second agent reviews `git diff HEAD...origin/<branch>` cold and read-only against the brief; blockers go back to the author. Merge into the deploy worktree with `git merge --no-edit origin/<branch>`, push, remove the agent's worktree. Run the suite once per batch. Before each merge to `main`: curate `shots/wip/` (`tools/curate-shots.md`), add the `RELEASES.md` entry (what a visitor notices, what changed underneath, which shot stages) in the same PR, `gh pr checks` until nothing is pending or failing ("no checks reported" means wait), then `gh pr merge --merge`, and merge `origin/main` back into the working branch.
+- **Orchestrator:** a second agent reviews `git diff HEAD...origin/<branch>` cold and read-only against the brief; blockers go back to the author. Merge into the deploy worktree with `git merge --no-edit origin/<branch>`, push, remove the agent's worktree. Run the suite once per batch. Before each merge to `main`: curate the deploy worktree's `shots/wip/` into WebP keepers in `shots/` (`tools/curate-shots.md`), add the `RELEASES.md` entry (what a visitor notices, what changed underneath, which shot stages) in the same PR, `gh pr checks` until nothing is pending or failing ("no checks reported" means wait), then `gh pr merge --merge`, and merge `origin/main` back into the working branch.
 
 ## Rules
 

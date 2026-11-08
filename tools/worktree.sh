@@ -2,7 +2,7 @@
 # One worktree per issue.
 #
 #   tools/worktree.sh new <issue> <slug>   .claude/worktrees/issue-<n>-<slug>, branch issue-<n>-<slug> from origin/main
-#   tools/worktree.sh rm <issue>           remove that worktree; delete the branch if it's merged
+#   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged
 #   tools/worktree.sh list
 #
 # Works from the main checkout or from inside another worktree.
@@ -34,6 +34,20 @@ case "${1:-}" in
     matches=("$wt_root"/issue-"$n"-*)
     [ -d "${matches[0]}" ] || { echo "no worktree for issue $n" >&2; exit 1; }
     dir="${matches[0]}"; name="$(basename "$dir")"
+    # Ignored files die with the worktree: rescue the wip renders into the deploy worktree first.
+    wip=prototypes/wilderness/shots/wip
+    moved=0
+    if [ -d "$dir/$wip" ] && [ -n "$(find "$dir/$wip" -type f -print -quit)" ]; then
+      deploy="$wt_root/wilderness-deploy"
+      [ -d "$deploy" ] || { echo "refusing: $deploy is missing, so $name's wip renders have nowhere to go" >&2; exit 1; }
+      mkdir -p "$deploy/$wip"
+      while IFS= read -r -d '' f; do
+        rel="${f#"$dir/$wip/"}"
+        mkdir -p "$deploy/$wip/$(dirname "$rel")"
+        [ -e "$deploy/$wip/$rel" ] || { mv "$f" "$deploy/$wip/$rel" && moved=$((moved + 1)); }
+      done < <(find "$dir/$wip" -type f -print0)
+      echo "moved $moved wip file(s) into $deploy/$wip"
+    fi
     git -C "$main_root" worktree remove "$dir"
     git -C "$main_root" branch -d "$name" 2>/dev/null || echo "branch $name kept (not merged)"
     echo "removed $name"

@@ -84,8 +84,8 @@ Each merge of a visual prototype to `main` is a release. Before opening the PR, 
 
 For anything visual under `prototypes/` (the wilderness scene is the first), Austin storytells from the build, so renders are part of the deliverable and are curated, not dumped. The full rule lives in the `wilderness` skill (Pace, and `tools/curate-shots.md`).md` ("Screenshots are part of the record") and the reusable curation brief in `prototypes/wilderness/tools/curate-shots.md`. The short form:
 
-- Every subagent writes every render it takes into `shots/wip/` named `<module>-<stage>-<view>.png`, never only its scratchpad. Nothing is deleted by the agent that made it.
-- The orchestrator copies the best of each hand-back into `shots/` and commits after every hand-back, so a crash loses nothing.
+- Every subagent writes every render it takes into `shots/wip/` (gitignored, never committed) named `<module>-<stage>-<view>.png`, never only its scratchpad. Nothing is deleted by the agent that made it. `tools/worktree.sh rm` moves a removed worktree's wip files into the deploy worktree's `shots/wip/` (`.claude/worktrees/wilderness-deploy`), where the curator works; it refuses if that worktree is missing.
+- Renders enter the repository only as curated WebP keepers under `shots/`, committed by the curator; a pre-commit hook rejects staged PNGs there and images over 1 MB.
 - Before every merge to `main`, the orchestrator dispatches the curation brief to a mid-tier subagent: it looks at every image, keeps roughly one in five (each subject's best view, every before/after that shows a decision, the first render of each module, a few good failures), moves keepers into the flat `shots/` folder under the `NN-subject-view[-before|after]` scheme, deletes the rest with `git rm` so history keeps them, and updates `shots/README.md`, the captioned index. Files agents are still producing are left alone.
 
 ## Working with the designer

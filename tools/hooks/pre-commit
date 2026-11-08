@@ -6,10 +6,34 @@
 #   CLAUDE_CODE_CHILD_SESSION=1   set by Claude Code in every Bash tool subprocess
 #   AI_AGENT=1                    set it yourself in any other harness
 #
+# Guard on renders (humans and agents alike): no staged added/modified .png under
+# prototypes/wilderness/shots/, and no staged image over 1.25 MB anywhere. Keepers are
+# WebP, committed by the curator; work-in-progress renders live in the gitignored shots/wip/.
+# Deletions pass. The cap is 1.25 MB (contact sheets run about 500 KB as WebP).
+#
 # Installed by tools/ensure-hooks.sh (git config core.hooksPath tools/hooks).
 # Phase 1 adds game-data validation here.
 
 set -euo pipefail
+
+bad=""
+while IFS= read -r -d '' f; do
+  case "$f" in
+    prototypes/wilderness/shots/*.png|prototypes/wilderness/shots/*.PNG)
+      bad="$bad
+  $f: PNG under prototypes/wilderness/shots/ (keepers are WebP; shots/wip/ is gitignored)" ;;
+  esac
+  case "$(printf '%s' "$f" | tr 'A-Z' 'a-z')" in
+    *.png|*.jpg|*.jpeg|*.webp|*.gif)
+      size=$(git cat-file -s ":$f")
+      [ "$size" -gt 1310720 ] && bad="$bad
+  $f: image is $((size / 1024)) KB, over the 1.25 MB cap" ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=AMCR -z)
+if [ -n "$bad" ]; then
+  printf 'pre-commit: renders do not belong in the repository:%s\n\nWork-in-progress renders go to shots/wip/, which is gitignored (do not git add -f). The curator converts keepers to WebP under prototypes/wilderness/shots/ (magick in.png -quality 85 out.webp). Unstage with: git rm --cached <file>\n' "$bad" >&2
+  exit 1
+fi
 
 staged=$(git diff --cached --name-only -- design/)
 [ -z "$staged" ] && exit 0
