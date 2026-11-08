@@ -1,0 +1,86 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-02-pacing",
+ "date": "2026-11-08T21:01:48.469Z",
+ "base": "http://localhost:8177",
+ "q": "medium",
+ "only": [
+  "pacing"
+ ],
+ "runSecs": 44,
+ "rows": [
+  {
+   "id": "pacing.bench",
+   "owner": "orchestrator",
+   "target": "frames over 2x the median <= 2, all in the first second",
+   "value": "2 over 2x (1 after 1 s), max 3.4x",
+   "pass": false,
+   "gate": false
+  }
+ ],
+ "routes": {
+  "bench": {
+   "frames": 1915,
+   "medianIv": 16.7,
+   "medianCpu": 3.2,
+   "over2x": 2,
+   "over2xAfter1s": 1,
+   "maxIvRatio": 3.4,
+   "counters": {
+    "rocks.packs": 50,
+    "plants.repacks": 613,
+    "shadow.redraws.move": 81,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 3413,
+    "shadow.redraws.clock": 3,
+    "plants.farSwitches": 102,
+    "trees.lodSwitches": 81,
+    "shadow.redraws.dynamic": 542,
+    "fungi.groupFlips": 24,
+    "lights.handovers": 12
+   },
+   "repackTwoKindFrames": 114,
+   "dataTextures": {
+    "33x33": 2545,
+    "52x52": 868
+   },
+   "bench": 60
+  },
+  "benchCounters": {
+   "rocks.packs": 50,
+   "plants.repacks": 613,
+   "shadow.redraws.move": 81,
+   "uploads.programs": 0,
+   "uploads.geometries": 0,
+   "uploads.textures": 0,
+   "uploads.texFirst": 0,
+   "uploads.texData": 3413,
+   "shadow.redraws.clock": 3,
+   "plants.farSwitches": 102,
+   "trees.lodSwitches": 81,
+   "shadow.redraws.dynamic": 542,
+   "fungi.groupFlips": 24,
+   "lights.handovers": 12
+  }
+ },
+ "seqs": {},
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}
