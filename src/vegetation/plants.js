@@ -603,7 +603,7 @@ export function buildPlants(ctx, ground, shared) {
   }
   const tris = (k) => k.geo.index.count / 3;
   const api = {
-    kinds, update,
+    kinds, update, grey: shared.grey,
     stats: () => Object.fromEntries(kinds.map((k) => [k.name, { stored: k.total, drawn: k.drawn, tris: tris(k), drawnTris: k.drawn * tris(k) }])),
     genMs,
   };
