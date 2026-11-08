@@ -150,7 +150,7 @@ function wakeMesh(K, waterY) {
     transparent: true, depthWrite: false, fog: true,
   });
   const mesh = new THREE.Mesh(g, mat);
-  mesh.frustumCulled = false; mesh.renderOrder = 3; mesh.name = 'inhabitants-galley-wake';
+  mesh.frustumCulled = false; mesh.renderOrder = 11;   // over the water surface (renderOrder 10) mesh.name = 'inhabitants-galley-wake';
   return { mesh, pos, al, pa, aa, strips, across };
 }
 
@@ -183,7 +183,7 @@ export function buildGalley(ctx) {
   if (worst > W.y - 1.5) ctx.log(`galley: path grounds at ${worstAt} (bed ${worst.toFixed(2)})`);
 
   const K = 34, HIST_DT = 0.45;
-  const wake = wakeMesh(K, W.y + 0.035);
+  const wake = wakeMesh(K, W.y + 0.04);
   scene.add(wake.mesh);
   // history of the hull's centre, heading and speed, sampled every HIST_DT
   const H = { x: new Float32Array(K), z: new Float32Array(K), tx: new Float32Array(K), tz: new Float32Array(K), v: new Float32Array(K), t: new Float32Array(K), head: 0, n: 0, acc: 0 };
@@ -253,10 +253,10 @@ export function buildGalley(ctx) {
           const spread = 0.35 + 0.42 * age * Math.max(v, 0.3);
           const back = age * 0.25;                   // the arms trail a little behind where the prow was
           cx = x + tx * (LEN / 2 - 0.4 - back) + nx * side * spread; cz = z + tz * (LEN / 2 - 0.4 - back) + nz * side * spread;
-          half = 0.22 + 0.06 * age; a = 0.22 * life * life * smoothstep(0, 0.8, age + 0.2);
+          half = 0.22 + 0.06 * age; a = 0.3 * life * life * smoothstep(0, 0.8, age + 0.2);
         } else {
           cx = x - tx * (LEN / 2 - 1.2); cz = z - tz * (LEN / 2 - 1.2);
-          half = 0.6 + 0.12 * age; a = 0.1 * life * life;
+          half = 0.6 + 0.12 * age; a = 0.14 * life * life;
         }
         a *= clamp(v / SPEED, 0, 1);
         // across the strip: perpendicular to the strip's own direction (the V arms angle outward)
