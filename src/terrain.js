@@ -710,23 +710,27 @@ export function buildTerrain(ctx) {
           // v4/mountains.js, the heightfield's own ledges); each ledge's tread is a pale line, catching the low sun
           // where the face turns to it, with the riser's shadow below the next; snow lies on the treads high up and
           // on the flat of the shoulders, not in blotches over the faces
-          vec3 mb = fpMassifBed(vTPos.xz);
-          float qb = (vTPos.y + dot(vTPos.xz, mb.xy)) / mb.z + (d2.r - 0.5) * 0.12;
-          float aab = clamp(fwidth(qb) * 1.2, 0.0, 1.0);
-          float tb = fract(qb);
-          // each ledge its own strength (a third stand out, the rest faint), and broken along its run
-          float qi = floor(qb), az = atan(vTPos.z, vTPos.x);
-          float prom = 0.5 + 0.5 * smoothstep(0.45, 0.75, fract(sin(qi * 12.9898) * 43758.5453));
-          float run = smoothstep(-0.35, 0.35, sin(az * 41.0 + qi * 2.3 + d2.g * 2.0) * 0.6 + sin(az * 97.0 + qi * 5.1) * 0.4 + 0.75);
-          float tread = (1.0 - smoothstep(0.0, 0.09 + aab, tb)) * (1.0 - aab) * prom * run;
-          float under = smoothstep(0.7, 1.0, tb) * (1.0 - aab) * (0.4 + 0.6 * prom);
-          float sunward = smoothstep(-0.15, 0.45, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
-          float ledge = mtn * smoothstep(0.85, 0.5, vTNormal.y);
-          diffuseColor.rgb *= 1.0 - mtn * (bed * 0.12 + hard * 0.3 * rocky) - ledge * under * (0.18 + 0.22 * sunward);
-          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.6 + vec3(0.035, 0.03, 0.03), ledge * tread * (0.25 + 0.5 * sunward));
+          float ledgeSnow = 0.0;
+          if (mtn > 0.0) { // the floor (mtn 0 inside r 280) pays nothing for the bands
+            vec3 mb = fpMassifBed(vTPos.xz);
+            float qb = (vTPos.y + dot(vTPos.xz, mb.xy)) / mb.z + (d2.r - 0.5) * 0.12;
+            float aab = clamp(fwidth(qb) * 1.2, 0.0, 1.0);
+            float tb = fract(qb);
+            // each ledge its own strength (a third stand out, the rest faint), and broken along its run
+            float qi = floor(qb), az = atan(vTPos.z, vTPos.x);
+            float prom = 0.5 + 0.5 * smoothstep(0.45, 0.75, fract(sin(qi * 12.9898) * 43758.5453));
+            float run = smoothstep(-0.35, 0.35, sin(az * 41.0 + qi * 2.3 + d2.g * 2.0) * 0.6 + sin(az * 97.0 + qi * 5.1) * 0.4 + 0.75);
+            float tread = (1.0 - smoothstep(0.0, 0.09 + aab, tb)) * (1.0 - aab) * prom * run;
+            float under = smoothstep(0.7, 1.0, tb) * (1.0 - aab) * (0.4 + 0.6 * prom);
+            float sunward = smoothstep(-0.15, 0.45, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
+            float ledge = mtn * smoothstep(0.85, 0.5, vTNormal.y);
+            diffuseColor.rgb *= 1.0 - mtn * (bed * 0.12 + hard * 0.3 * rocky) - ledge * under * (0.18 + 0.22 * sunward);
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.6 + vec3(0.035, 0.03, 0.03), ledge * tread * (0.25 + 0.5 * sunward));
+            ledgeSnow = ledge * tread * smoothstep(120.0, 220.0, vTPos.y) * 0.6;
+          }
           float snowH = smoothstep(160.0, 250.0, vTPos.y + (d2.r - 0.5) * 30.0);
           float holds = smoothstep(0.6, 0.85, vTNormal.y + max(-vTNormal.z, 0.0) * 0.15);
-          float snow = max(snowH * holds * mtn * smoothstep(0.2, 0.35, d1.g + 0.3 * snowH), ledge * tread * smoothstep(120.0, 220.0, vTPos.y) * 0.6);
+          float snow = max(snowH * holds * mtn * smoothstep(0.2, 0.35, d1.g + 0.3 * snowH), ledgeSnow);
           // --- the massifs' bands (end)
           #else
           diffuseColor.rgb *= 1.0 - mtn * (bed * 0.4 + hard * 0.4 * rocky);
