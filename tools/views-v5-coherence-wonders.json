@@ -1,0 +1,216 @@
+[
+ {
+  "name": "keep",
+  "x": -40,
+  "z": 22,
+  "yaw": -1.671,
+  "pitch": 0.12,
+  "settle": 6000
+ },
+ {
+  "name": "tower",
+  "x": -170,
+  "z": -110,
+  "yaw": 1.267,
+  "pitch": 0.36,
+  "settle": 6000
+ },
+ {
+  "name": "court",
+  "x": -102,
+  "z": -134,
+  "yaw": -1.107,
+  "pitch": 0.1,
+  "settle": 6000
+ },
+ {
+  "name": "arcature",
+  "x": 95,
+  "z": 5,
+  "yaw": -2.27,
+  "pitch": 0.24,
+  "settle": 6000
+ },
+ {
+  "name": "mother",
+  "x": 15,
+  "z": -178,
+  "yaw": -0.279,
+  "pitch": 0.28,
+  "settle": 6000
+ },
+ {
+  "name": "gradine",
+  "x": 278.3,
+  "z": -166.7,
+  "yaw": -0.6,
+  "pitch": 0.55,
+  "settle": 6000
+ },
+ {
+  "name": "thrones",
+  "x": -344,
+  "z": 126,
+  "yaw": 1.92,
+  "pitch": 0.32,
+  "settle": 6000
+ },
+ {
+  "name": "galleries",
+  "x": -140,
+  "z": -30,
+  "yaw": 1.373,
+  "pitch": 0.3,
+  "settle": 6000
+ },
+ {
+  "name": "hawser",
+  "x": 15,
+  "z": -178,
+  "yaw": 0.62,
+  "pitch": 0.16,
+  "settle": 6000
+ },
+ {
+  "name": "plinths",
+  "x": 130,
+  "z": -150,
+  "yaw": -0.245,
+  "pitch": 0.3,
+  "settle": 6000
+ },
+ {
+  "name": "ridge",
+  "x": 60,
+  "z": -230,
+  "yaw": -0.87,
+  "pitch": 0.42,
+  "settle": 6000
+ },
+ {
+  "name": "annals",
+  "x": 160,
+  "z": 60,
+  "yaw": -1.571,
+  "pitch": 0.42,
+  "settle": 6000
+ },
+ {
+  "name": "cincture",
+  "x": 40,
+  "z": -250,
+  "yaw": -1.57,
+  "pitch": 0.6,
+  "settle": 6000
+ },
+ {
+  "name": "nave",
+  "x": 255,
+  "z": 52.6,
+  "yaw": 0.0,
+  "pitch": -0.35,
+  "settle": 6000
+ },
+ {
+  "name": "keptfire",
+  "x": 15.5,
+  "z": -187,
+  "yaw": 0.983,
+  "pitch": -0.1,
+  "settle": 5500,
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)"
+ },
+ {
+  "name": "collation",
+  "x": 138.1,
+  "z": -70.2,
+  "yaw": -2.45,
+  "pitch": -0.05,
+  "settle": 6000
+ },
+ {
+  "name": "slipper",
+  "x": -19.8,
+  "z": 25.9,
+  "yaw": 1.373,
+  "pitch": -0.35,
+  "settle": 6000,
+  "dy": -1.15
+ },
+ {
+  "name": "prospect",
+  "x": 242.9,
+  "z": -30.8,
+  "yaw": 1.74,
+  "pitch": 0.0,
+  "settle": 6000
+ },
+ {
+  "name": "moss",
+  "x": -198,
+  "z": 145,
+  "yaw": 1.06,
+  "pitch": -0.3,
+  "settle": 6000
+ },
+ {
+  "name": "embers",
+  "x": 156,
+  "z": 63,
+  "yaw": -0.88,
+  "pitch": -0.45,
+  "settle": 6000
+ },
+ {
+  "name": "post",
+  "x": -115,
+  "z": -14,
+  "yaw": 0.927,
+  "pitch": 0.04,
+  "settle": 6000
+ },
+ {
+  "name": "door",
+  "x": -266,
+  "z": -40,
+  "yaw": -0.194,
+  "pitch": 0.06,
+  "settle": 6000
+ },
+ {
+  "name": "door-near",
+  "x": -252,
+  "z": -106,
+  "yaw": -0.15,
+  "pitch": 0.14,
+  "settle": 6000
+ },
+ {
+  "name": "leerie",
+  "x": 110.5,
+  "z": -30.5,
+  "yaw": -2.62,
+  "pitch": 0.02,
+  "settle": 3000,
+  "js": "__fp.sky.flicker.hold = 0.3"
+ },
+ {
+  "name": "gutter",
+  "x": 80,
+  "z": -8,
+  "yaw": -1.83,
+  "pitch": 0.3,
+  "settle": 3500,
+  "js": "__fp.sky.flicker.hold = 0.3"
+ },
+ {
+  "name": "occultation",
+  "x": -150,
+  "z": 0,
+  "yaw": -1.5708,
+  "pitch": 0.12,
+  "settle": 3000,
+  "dy": 60,
+  "js": "__fp.sky.flicker.hold = 1; window.__fp.occultation.pass(200)"
+ }
+]

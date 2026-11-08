@@ -844,160 +844,160 @@
 "x": 165,
 "z": 215,
 "r": 4,
-"label": "Bather rim viewpoint [v6]"
+"label": "Bather rim viewpoint [v7]"
 },
 {
 "key": "taker",
 "x": -255,
 "z": 10,
 "r": 4,
-"label": "Taker of Altitudes [v6]"
+"label": "Taker of Altitudes [v7]"
 },
 {
 "key": "coheirs",
 "x": -45,
 "z": 160,
 "r": 6,
-"label": "Coheirs [v6]"
+"label": "Coheirs [v7]"
 },
 {
 "key": "sleeper",
 "x": 180,
 "z": -40,
 "r": 6,
-"label": "Long Sleeper [v6]"
+"label": "Long Sleeper [v7]"
 },
 {
 "key": "thurifer-0",
 "x": -108,
 "z": -128,
 "r": 3,
-"label": "Little Thurifer shrine end [v6]"
+"label": "Little Thurifer shrine end [v7]"
 },
 {
 "key": "thurifer-1",
 "x": -170,
 "z": -50,
 "r": 3,
-"label": "Little Thurifer stones end [v6]"
+"label": "Little Thurifer stones end [v7]"
 },
 {
 "key": "bather",
 "x": 158,
 "z": 228,
 "r": 10,
-"label": "Bather [v6]"
+"label": "Bather [v7]"
 },
 {
 "key": "sexton",
 "x": 55,
 "z": 272,
 "r": 18,
-"label": "Sexton of No One [v6]"
+"label": "Sexton of No One [v7]"
 },
 {
 "key": "stylite",
 "x": 268,
 "z": -80,
 "r": 8,
-"label": "Stylite [v6]"
+"label": "Stylite [v7]"
 },
 {
 "key": "accrescent",
 "x": 60,
 "z": -180,
 "r": 3,
-"label": "Accrescent [v6]"
+"label": "Accrescent [v7]"
 },
 {
 "key": "indistinct-0",
 "x": 40,
 "z": -55,
 "r": 3,
-"label": "Indistinct ditch start [v6]"
+"label": "Indistinct ditch start [v7]"
 },
 {
 "key": "indistinct-1",
 "x": 125,
 "z": 30,
 "r": 3,
-"label": "Indistinct ditch end [v6]"
+"label": "Indistinct ditch end [v7]"
 },
 {
 "key": "repetend",
 "x": -170,
 "z": -97,
 "r": 3,
-"label": "Repetend [v6]"
+"label": "Repetend [v7]"
 },
 {
 "key": "scriveners",
 "x": -100,
 "z": 58,
 "r": 8,
-"label": "Scriveners [v6]"
+"label": "Scriveners [v7]"
 },
 {
 "key": "simulacrum",
 "x": 20,
 "z": -205,
 "r": 5,
-"label": "Simulacrum [v6]"
+"label": "Simulacrum [v7]"
 },
 {
 "key": "moles",
 "x": 75,
 "z": 0,
 "r": 12,
-"label": "Tesserine Moles [v6]"
+"label": "Tesserine Moles [v7]"
 },
 {
 "key": "toadstone",
 "x": 180,
 "z": 230,
 "r": 2,
-"label": "Toadstone [v6]"
+"label": "Toadstone [v7]"
 },
 {
 "key": "glyph-door",
 "x": 226,
 "z": -112,
 "r": 1,
-"label": "Glyph at Hypogeum door [v6]"
+"label": "Glyph at Hypogeum door [v7]"
 },
 {
 "key": "glyph-tessera",
 "x": 75,
 "z": 0,
 "r": 1,
-"label": "Glyph tessera [v6]"
+"label": "Glyph tessera [v7]"
 },
 {
 "key": "glyph-erratic",
 "x": 75,
 "z": -200,
 "r": 1,
-"label": "Glyph erratic [v6]"
+"label": "Glyph erratic [v7]"
 },
 {
 "key": "linkboy",
 "x": -165,
 "z": -105,
 "r": 3,
-"label": "Link-Boy [v6]"
+"label": "Link-Boy [v7]"
 },
 {
 "key": "reach-0",
 "x": 208,
 "z": 258,
 "r": 3,
-"label": "Luminous Reach source [v6]"
+"label": "Luminous Reach source [v7]"
 },
 {
 "key": "reach-1",
 "x": 134,
 "z": 211,
 "r": 3,
-"label": "Luminous Reach mouth [v6]"
+"label": "Luminous Reach mouth [v7]"
 }
 ]

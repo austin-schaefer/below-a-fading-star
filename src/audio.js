@@ -26,6 +26,9 @@
 //   bats-out (tower window pos, { count }): a soft high fluttering rush and many tiny chirps, 3-4 s: 160 m
 //   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
 //   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
+//   lamp-tick (a Leerie standard lighting, v5/lights.js): a click and the flame's breath, 0.8 s
+//   kept-fire (hearth pos, { flare?, strength? }): a fire's crackle, 1.8 s, pops and a hiss: 70 m; flare: a roar swelling under thick crackle and a low whump, 3.4 s: 130 m
+//   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
 import { hyp } from './noise.js';
 
@@ -760,6 +763,59 @@ export async function build(ctx) {
       grain(v, v.in, t0, 7000, 3, 0.008, 0.006);
     }
 
+    // ---- the Hawser (src/v5/hawser.js): the chain drawn one link toward the court. Three low saws a fifth apart
+    // sag in pitch and catch (stick-slip in their gain) as the links drag, under a brown grind; the settle's thud at
+    // the end of the jerk; then the iron rings out on a few inharmonic partials. Inverse falloff from a 160 m
+    // reference: still a third its level 500 m off, so the whole bowl hears it.
+    // the Leerie's standards (v5/lights.js): a lantern catching, a small click and the soft breath of the flame
+    function lampTick(pos) { const v = voice(pos, { ref: 6, roll: 1.2, range: 70, verb: 0.35, dur: 0.6, air: 400 }); if (!v) return; grain(v, v.in, v.t0, 3400, 7, 0.16, 0.022); grain(v, v.in, v.t0 + 0.014, 1500, 3, 0.07, 0.05); const g = ac.createGain(); swell(g, v.t0 + 0.03, 0.05, 0.07, v.t0 + 0.75); chain(vNoise(v, pink, v.t0 + 0.03, 0.75), filt('lowpass', 560, 0.7), g, v.in); }
+    function hawserGroan(pos) {
+      const v = voice(pos, { ref: 160, roll: 1, range: 3000, verb: 1.1, dur: 7.4, air: 700 });
+      if (!v) return;
+      const t0 = v.t0, lp = filt('lowpass', 700, 0.6); lp.connect(v.in);
+      for (const [f, a] of [[38, 0.2], [57, 0.12], [76.5, 0.06]]) {
+        const o = vOsc(v, 'sawtooth', f * 1.05, t0, t0 + 4.8);
+        o.frequency.setValueAtTime(f * 1.05, t0); o.frequency.exponentialRampToValueAtTime(f * 0.84, t0 + 1.2);
+        o.frequency.linearRampToValueAtTime(f * 0.92, t0 + 2.0); o.frequency.exponentialRampToValueAtTime(f * 0.78, t0 + 4.6);
+        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(a, t0 + 0.2);
+        for (let tt = t0 + 0.32; tt < t0 + 3.8; tt += 0.05 + rng() * 0.13) g.gain.linearRampToValueAtTime(a * (0.4 + 0.6 * rng()), tt);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7);
+        chain(o, filt('lowpass', f * 4, 0.9), g, lp);
+      }
+      const gg = ac.createGain(); swell(gg, t0, 0.22, 0.3, t0 + 3.6);
+      const gb = filt('bandpass', 190, 1.1); gb.frequency.setValueAtTime(190, t0); gb.frequency.exponentialRampToValueAtTime(85, t0 + 3.2);
+      chain(vNoise(v, brown, t0, 3.6), gb, gg, lp);
+      const th = vOsc(v, 'sine', 52, t0 + 0.42, t0 + 1.6), tg = ac.createGain();
+      th.frequency.setValueAtTime(52, t0 + 0.42); th.frequency.exponentialRampToValueAtTime(27, t0 + 1.4);
+      env(tg, t0 + 0.42, 0.36, 0.01, 1.0); chain(th, tg, v.in);
+      for (const [f, a, d] of [[113, 0.05, 5.5], [271, 0.035, 4.2], [489, 0.02, 3.0], [747, 0.012, 2.2]]) {
+        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.45); g.gain.linearRampToValueAtTime(a, t0 + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45 + d);
+        chain(vOsc(v, 'sine', f * (1 + (rng() - 0.5) * 0.01), t0 + 0.45, t0 + 0.5 + d), g, v.in);
+      }
+    }
+
+    // ---- the Kept Fire (src/v5/keptfire.js): flames are a hiss of pink noise under sparse dry pops (grains of high
+    // bandpassed noise, a few with a wooden knock); the flare is a roar swelling in brown noise with a low whump.
+    function keptFire(pos, opts) {
+      const flare = !!opts?.flare, k = opts?.strength ?? 1;
+      const v = voice(pos, { ref: flare ? 5 : 2.5, roll: 1.1, range: flare ? 130 : 70, dur: flare ? 3.4 : 1.8, verb: 0.2, air: 160 });
+      if (!v) return;
+      const t0 = v.t0, dur = flare ? 3.0 : 1.5, hg = ac.createGain();
+      swell(hg, t0, (flare ? 0.05 : 0.014) * k, flare ? 0.3 : 0.4, t0 + dur);
+      chain(vNoise(v, pink, t0, dur), filt('bandpass', 1500, 0.6), hg, v.in);
+      if (flare) {
+        const rg = ac.createGain(); swell(rg, t0, 0.2, 0.3, t0 + 2.8);
+        chain(vNoise(v, brown, t0, 2.8), filt('lowpass', 300, 0.7), rg, v.in);
+        const th = vOsc(v, 'sine', 80, t0, t0 + 0.7), tg = ac.createGain(); th.frequency.exponentialRampToValueAtTime(42, t0 + 0.6); env(tg, t0, 0.2, 0.03, 0.55); chain(th, tg, v.in);
+      }
+      const n = flare ? 46 : 5 + ((rng() * 5) | 0);
+      for (let i = 0; i < n; i++) {
+        const at = t0 + Math.pow(rng(), flare ? 1.6 : 1) * dur;
+        grain(v, v.in, at, 1800 + rng() * 4200, 2 + rng() * 6, (flare ? 0.1 : 0.07) * k * (0.3 + rng() * 0.7), 0.003 + rng() * 0.015);
+        if (rng() < 0.25) grain(v, v.in, at, 420 + rng() * 300, 5, 0.06 * k, 0.03);
+      }
+    }
+
     // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
     // ctx.river.rumble is above zero), its gain follows that rumble at 10 Hz; on leaving it fades over 2 s and
     // is torn down. Low brown rumble, a mid roar, a hiss of spray, a slow wander in all three.
@@ -822,10 +878,11 @@ export async function build(ctx) {
     }
 
     // v4 regions: each region's sound hook (src/v4/regions/<key>.js), its bed ticked below, its cues in the table
-    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng });
+    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng, hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
     audio.regionCues = regionSnd?.cueNames || [];
     audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
+      if (ctx.hush?.cue(name, position || camera.position)) return; // v5: AR the Occultation hushes the birds under its band
       try {
         if (name === 'cry') cry(position || { x: camera.position.x + 120, y: 80, z: camera.position.z - 100 });
         else if (name === 'crows') crows(position);
@@ -859,6 +916,9 @@ export async function build(ctx) {
         else if (name === 'bats-out') batsOut(position, opts);
         else if (name === 'wader-gone') waderGone(position);
         else if (name === 'biomesh-settle') biomeshSettle(position);
+        else if (name === 'hawser-groan') hawserGroan(position);
+        else if (name === 'lamp-tick') lampTick(position);
+        else if (name === 'kept-fire') keptFire(position, opts);
         else regionSnd?.cue(name, position, opts);
       } catch (e) { if (audio.debug) throw e; }
     };

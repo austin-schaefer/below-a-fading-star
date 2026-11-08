@@ -2,6 +2,9 @@
 // Faceted procedural stones with lichen on their upper faces; instanced in a few size classes.
 import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
+import { MOTHER_FOOT } from './vegetation/mother.js';
+import { plinthsClear } from './v5/plinths.js';
+import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -95,7 +98,8 @@ export async function build(ctx) {
   const L = landmarks;
   const avoid = [
     [L.castle.x, L.castle.z, 46], [L.tower.x, L.tower.z, 14], [L.stones.x, L.stones.z, 14], [L.byre.x, L.byre.z, 14],
-    [L.court.x, L.court.z, 24], [L.orchard.x, L.orchard.z, 30],
+    [L.court.x, L.court.z, 24], [L.orchard.x, L.orchard.z, 30], // the court's and the tower's wider v5 clearances are applied after the draws, below
+
     // v2 sites: the Speculum's pale beach, the Menology's spiral, the Hypogeum's forecourt
     [L.speculum.x, L.speculum.z, 10], [L.menology.x, L.menology.z, 26], [L.hypogeum.x, L.hypogeum.z, 12],
   ];
@@ -137,7 +141,16 @@ export async function build(ctx) {
     if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
     const y = terrain.heightAt(x, z);
     terrain.normalAt(x, z, n);
-    classes[cls].push({ x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z });
+    const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
+    // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
+    // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
+    if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
+    if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
+    if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
+    if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
+    if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
+    if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
+    classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
   const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
@@ -149,7 +162,8 @@ export async function build(ctx) {
       const x = tx + Math.cos(ang) * d, z = tz + Math.sin(ang) * d;
       const size = 1.6 + rng() * 3.4;
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
-      classes.boulder.push({ x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 });
+      const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
+      if (!plinthsClear(x, z) && !naveClear(x, z)) classes.boulder.push(it); // after the draws, as above
     }
   }
 

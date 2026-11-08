@@ -1,0 +1,10 @@
+[
+ {"name": "keep-spawn-gate", "x": 6, "z": 36, "yaw": -1.5708, "pitch": 0.5},
+ {"name": "keep-causeway-40", "x": -40, "z": 22, "yaw": -1.671, "pitch": 0.12},
+ {"name": "keep-causeway-40-up", "x": -40, "z": 22, "yaw": -1.671, "pitch": 0.34},
+ {"name": "keep-causeway-65", "x": -65, "z": 12, "yaw": -1.741, "pitch": 0.08},
+ {"name": "keep-span-deck", "x": -200, "z": 215, "dy": 56.54, "yaw": -0.914, "pitch": -0.06},
+ {"name": "keep-tarn-spit", "x": -55, "z": 148, "yaw": -0.678, "pitch": 0.04},
+ {"name": "keep-fan", "x": 66, "z": -15, "yaw": 2.616, "pitch": 0.2},
+ {"name": "keep-close-measure", "x": 70, "z": -13, "yaw": 2.55, "pitch": 0.15}
+]

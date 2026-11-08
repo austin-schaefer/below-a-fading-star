@@ -295,6 +295,7 @@ export function buildControls(ctx) {
     if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
     state.pos.set(x, floor + state.eye, z);
     state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true;
+    eyeOff = 0; lastY = null;
     return { x, z };
   }
 
@@ -310,6 +311,8 @@ export function buildControls(ctx) {
   // --- colliders: {x, z, r} cylinders (infinite height) or {x, z, r, y, h} capped
   function addCollider(c) { state.colliders.push(c); }
 
+  const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
+  let eyeOff = 0, lastY = null; // the eye's height less the feet's
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
     syncLock();
@@ -384,10 +387,11 @@ export function buildControls(ctx) {
       const h = fn(state.pos.x, state.pos.z);
       if (h !== null && h !== undefined && h <= feet0 + 0.6 && h >= feet0 - 1.2 && h > floorY) floorY = h;
     }
+    const wasOnGround = state.onGround;
     state.vy -= 12 * dt;
     let feet = state.pos.y - state.eye + state.vy * dt;
-    // stick to ground going downhill (faster speeds out-run gravity on slopes)
-    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.35) feet = floorY;
+    // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too
+    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6) feet = floorY;
     if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; } else state.onGround = false;
     // smooth the ground-follow a touch when walking
     const speed = hyp(state.vel.x, state.vel.z);
@@ -403,8 +407,14 @@ export function buildControls(ctx) {
     const bobX = Math.sin(state.bob * 0.5) * 0.035 * state.bobAmt;
     const wading = wl !== null && groundY < wl ? smoothstep(0, 1.1, wl - groundY) : 0;
     state.pos.y = feet + state.eye;
+    // the feet follow the floor; the eye follows the feet, damped, for steps under 0.7 m
+    const step = state.pos.y - (lastY ?? state.pos.y);
+    if (wasOnGround && state.onGround && Math.abs(step) < 0.7) eyeOff -= step;
+    eyeOff = clamp(eyeOff * Math.exp(-dt / EYE_TAU), -EYE_LAG, EYE_LAG); // first-order; never more than a riser and a bit behind
+    lastY = state.pos.y;
+    state.eyeY = state.pos.y + eyeOff;
 
-    camera.position.set(state.pos.x + right.x * bobX, state.pos.y + bobY - wading * 0.15, state.pos.z + right.z * bobX);
+    camera.position.set(state.pos.x + right.x * bobX, state.eyeY + bobY - wading * 0.15, state.pos.z + right.z * bobX);
     camera.rotation.order = 'YXZ';
     camera.rotation.set(state.pitch, state.yaw, Math.sin(state.bob * 0.5) * 0.004 * state.bobAmt);
     state.wading = wading;

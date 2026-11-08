@@ -4,8 +4,13 @@
 import { clamp } from './util.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
+import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
+import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
+import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
+import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
+import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
@@ -122,8 +127,17 @@ export function makeGround(ctx) {
     if (depth > (opts && opts.wet ? opts.wet : 0)) return true;
     if (terrain.causewayDistance(x, z) < 4 + margin) return true;
     if (margin >= 0 && wornAt(x, z) > 0.05) return true; // v4 map: nothing woody grows on a lead
+    if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
+    if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
+    if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
     return false;
   }
 
-  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
+  // v5: the Sunken Court's piers reach 39 m; a tree placed there is kept (so the placement's rng and spacing stay as
+  // they were everywhere else) but not drawn and not collided (trees.js)
+  // Trees placed here are neither drawn nor collided, but keep their place in the placement rng so that every other tree
+  // stays where it is: under the court's piers (39 m), inside the lens mount's fins (17 m; 12 when ?tower=v2) the armillary (LANDMARKS.arcature.r) and the mother crystal's foot (MOTHER_FOOT).
+  const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
+  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z);
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
 }

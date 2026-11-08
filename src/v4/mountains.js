@@ -1,12 +1,16 @@
-// The walls (v4 systems, BI: the Recession of Ranges). The bowl's mountains as ranges in depth instead of one
-// fractal wall:
-//   tier 0, the front range: a broken line of lower ridges at r ~362, dark and sharp, standing in front of
-//   tier 1, the main wall: a steep face from r ~320 to a crest at r ~430-475, its foot pushed out along
-//          buttresses (arêtes every ~6°) with gullies between, talus fans at the gullies' mouths, bedding
-//          ledges that dip gently east-north-east across the faces, and the named peaks (PEAKS in world.js)
-//          on the crest; both live in the heightfield (terrain.js calls applyMountains in a marked block);
-//   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~820 and ~1380) that
-//          rise above the main crest, each paler under the fog tiers (kit/fog.js), the last nearly the sky.
+// The walls: the bowl's mountains as five massifs with deep cols between them (wilderness-v5.md, "The massifs"):
+//   tier 1, the massifs, in the heightfield (terrain.js calls applyMountains in a marked block): the north-east
+//          (20-100°, to 300 m: the Ridge, the Vigilant), the south-east (125-172°, the Horn to 335 m), the south
+//          (190-235°, ~300 m), the west (265-318°, to 320 m: the Galleries) and the Tierce (336-356°, 300 m); the
+//          cols at 112° (61 m), 180° (41 m) and 328° (73 m), the glacier's notch (354-20°) and the sun's saddle
+//          (250°, 22 m, the lowest). The crest runs through a periodic spline over bearing, rounded within a massif,
+//          the named peaks (PEAKS) broad crowns on it. Each face has three sizes of structure: a scree apron at 33°,
+//          a steep rock band behind it, a convex shoulder into the crest, and corries; ledges along each massif's
+//          tilted bedding plane, a few gullies crest to apron, buttresses where the face is steep; creased facets.
+//   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~800 and ~1350), each rolling
+//          in massifs of its own set behind the near cols, lower in the picture and paler under the fog tiers.
+// ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
+// bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
 // a walkable wedge (±4.5°) out to the road's start at r 366 and two flat seats for AM's colossi on its flanks
 // (the marked block below). Every range dips in the saddle, below the line from the gate over the col, so
@@ -49,9 +53,9 @@ export function walkLimit(x, z) {
 }
 
 // --- v4 systems: AM's seats (begin). Two flat benches cut into the saddle's flanks for the crawling colossi
-// (AM, built in v5), one under each throne site in the placement plan, (-420, 100) and (-400, 200): each a
-// radial strip from r 380 (a plinth's edge 8 m above the road's start, their feet) to r 505, 48 m wide, at
-// y 22. The colossi crawl toward the sun with their soles to the bowl; the road starts between their feet.
+// (AM, src/v5/thrones.js), one under each throne site in the placement plan, (-420, 100) and (-400, 200): each a
+// radial strip from r 380 (a plinth's edge 8 m above the road's start, their hands) to r 505, 48 m wide, at
+// y 22. The colossi crawl out of the wall toward the bowl; the road starts between their hands.
 export const SEATS = [[-420, 100], [-400, 200]].map(([x, z]) => {
   const az = Math.atan2(z, x);
   return { x, z, az, cx: Math.cos(az), cz: Math.sin(az), r0: 380, r1: 505, half: 24, y: 22 };
@@ -68,6 +72,21 @@ function seatHeights(h, x, z) {
   return h;
 }
 // --- v4 systems: AM's seats (end)
+
+// --- v5 wonders: AP the Battlemented Ridge (begin). The north-east crest, bearings 9-57 (the full run 12-54 with
+// 3 degrees of taper at each end; 60-85 stays the Vigilant's), is cut into a run of merlons and embrasures: a
+// square wave in bearing, period 7.6 degrees (62 m at r 470), a merlon 0.54 of it (4.1 degrees, 34 m), an
+// embrasure the rest (28 m). Each merlon's top is flat at the natural crest's height at its centre plus 45 m, less
+// 0-2 m of wear; two are broken to half. The embrasure floor is the natural crest, with its pinnacles damped, so
+// the notches read as cut and the tops as raised (raising a clean block off a damped crest reads as masonry;
+// lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
+// in r (full height from the crest's r - 6 to + 4, ramping out to r - 10 and + 8), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
+// ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
+const RIDGE_ON = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('ridge') === '0');
+const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 45, kMin: 0, kMax: 6, broken: [2, 5] };
+export const RIDGE = { bearings: [RG.lo + RG.taper, RG.hi - RG.taper], merlons: [] };
+const ridgeEnv = (b) => smoothstep(RG.lo, RG.lo + RG.taper, b) * (1 - smoothstep(RG.hi - RG.taper, RG.hi, b));
+// --- v5 wonders: AP the Battlemented Ridge (end)
 
 // ---------------------------------------------------------------- per-bearing tables
 // Everything that varies only with bearing is tabulated once (0.1° steps) and interpolated.
@@ -110,6 +129,74 @@ for (let i = 0; i <= N; i++) {
   T_PH[i] = ((az + Math.PI) / TAU) * SPURS + 0.8 * ring(az, 3.0, 31.7);
   T_SW[i] = saddleWeight(az);
 }
+// --- the massifs (begin). The main wall's form: five massifs with deep cols between them (the header). ?mountains=v4
+// builds the v4 wall instead (applyMountains' body and farCrest's below), for comparison. The crest rolls between
+// massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
+// it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
+export const PROFILE = (() => {
+  const v = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mountains') : null;
+  return v === 'v4' ? 'v4' : 'c';
+})();
+const CAND = PROFILE === 'c' ? {
+  // [bearing, crest height above the floor]; the saddle's gate (237-263) is the saddle's own. The cols: 112° (east),
+  // 180° (south-east), 328° (north-west); the sun's saddle at 250° stays the lowest point of the circuit.
+  crest: [[8, 190], [20, 210], [45, 255], [72, 270], [94, 240], [104, 140], [112, 52], [120, 140], [132, 225], [150, 275],
+    [165, 285], [173, 150], [180, 50], [187, 150], [200, 270], [218, 250], [236, 170], [250, 150], [264, 180], [278, 285], [292, 300], [308, 270],
+    [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
+  peaks: 0.35, slope: [28, 52], far: [0.6, 0.7],
+} : null;
+// a periodic Catmull-Rom spline through [bearing, value] points
+function splineAt(pts, b) {
+  const n = pts.length;
+  let i = n - 1;
+  for (let k = 0; k < n; k++) if (pts[k][0] > b) { i = k - 1; break; }
+  const P = (k) => { const j = ((k % n) + n) % n, w = Math.floor(k / n); return [pts[j][0] + 360 * w, pts[j][1]]; };
+  const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+  let bb = b; if (bb < p1[0]) bb += 360;
+  const t = (bb - p1[0]) / (p2[0] - p1[0]);
+  // non-uniform tangents, scaled to the segment so uneven spacing does not overshoot
+  const m1 = ((p2[1] - p0[1]) / (p2[0] - p0[0])) * (p2[0] - p1[0]), m2 = ((p3[1] - p1[1]) / (p3[0] - p1[0])) * (p2[0] - p1[0]);
+  const t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * p1[1] + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p2[1] + (t3 - t2) * m2;
+}
+// the named peaks as broad crowns on the massifs (no new peaks: the same PEAKS, flattened and widened)
+function crownAt(bearing, k) {
+  let add = 0;
+  for (const p of Object.values(PEAKS)) {
+    let d = Math.abs(bearing - p.bearing); if (d > 180) d = 360 - d;
+    const w = p.w * 2.6;
+    if (d < w) add += p.h * k * Math.pow(Math.cos((d / w) * Math.PI / 2), 2);
+  }
+  return add;
+}
+const T_FE = new Float32Array(N + 1); // the massifs: the far ranges' elevation (degrees from the centre), the crest's smoothed
+if (CAND) {
+  const el = new Float32Array(N + 1);
+  for (let i = 0; i <= N; i++) {
+    const az = -Math.PI + (TAU * i) / N, b = bearingOf(az);
+    const vig = 1 - smoothstep(4, 11, Math.min(Math.abs(b - 72), 360 - Math.abs(b - 72)));
+    T_CS[i] = splineAt(CAND.crest, b) + 9 * ring(az, 1.4, 41.3) + 4 * ring(az, 4.0, 43.9);
+    T_CH[i] = T_CS[i] + crownAt(b, CAND.peaks);
+    // the crest stands out where it is high, so the high massifs keep a long face; held inside the terrain's square
+    const edge = 500 / Math.max(Math.abs(Math.cos(az)), Math.abs(Math.sin(az)));
+    T_CR[i] = lerp(clamp(452 + 0.3 * (T_CH[i] - 150) + 12 * ring(az, 1.6, 3.1), 440, edge - 22), 476, vig);
+    T_FH[i] = 0; // no front range before the massifs
+    el[i] = Math.atan2(T_CS[i], T_CR[i]) / D2R;
+  }
+  // the far ranges see the crest smoothed over ±24°: the same rolls, without the cols
+  const W = 240, acc = new Float64Array(N + 1);
+  for (let i = 0; i <= N; i++) { let s = 0; for (let k = -W; k <= W; k += 4) s += el[((i + k) % N + N) % N] * (1 - Math.abs(k) / (W + 4)); acc[i] = s; }
+  let norm = 0; for (let k = -W; k <= W; k += 4) norm += 1 - Math.abs(k) / (W + 4);
+  for (let i = 0; i <= N; i++) T_FE[i] = acc[i] / norm;
+}
+// --- the massifs (end; applyMassifs and the far ranges' hook below)
+// --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 45 m, less wear)
+for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
+  const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
+  const wear = RG.broken.includes(k) ? 0.5 : 1 - 0.06 * hash2(k + 40, 77); // 0-2 m of wear; two broken to half
+  RIDGE.merlons.push({ k, bearing: bc, top: T_CH[i] + RG.height * wear * ridgeEnv(bc) });
+}
+// --- v5 wonders: AP (end)
 const _b = { cr: 0, ch: 0, fr: 0, fh: 0, ph: 0, sw: 0 };
 function sampleBearing(az) {
   const u = ((az + Math.PI) / TAU) * N;
@@ -138,6 +225,7 @@ const FALL_AZ = Math.atan2(258, 208);
 // mask and its own surface, from terrain.js) cuts through every tier of the walls as before.
 export function applyMountains(h, x, z, r, g, glacierH) {
   if (r < M_START) return h;
+  if (CAND) return applyMassifs(h, x, z, r, g, glacierH); // the massifs; below, the v4 wall (?mountains=v4)
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
@@ -151,7 +239,7 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   let foot = Math.max(318, Rc - 125 - 60 * sp);
   foot = lerp(foot, Math.max(foot, B.fr + 16 - 20 * sp), smoothstep(12, 32, B.fh));
   const span = Rc - foot;
-  // the profile: a concave lower slope up to a bench (the Annals' band, 110-130 m, rides the cliff above it),
+  // the profile: a concave lower slope up to a bench (the Annals' band, 100-140 m, rides the cliff above it),
   // then the upper cliff to the crest; behind the crest it falls away out of sight
   const yb = Math.min(108, 0.6 * Hc) + 5 * S.noise2(az * 4.0, 1.7);
   const rb = foot + span * 0.4, rb2 = rb + span * 0.1;
@@ -165,7 +253,8 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   // arêtes and pinnacles on the upper face and the crest, sharper than the far ranges carry
   const up = smoothstep(0.45, 1.0, u);
   // (pinnacles rise from the crest line; the troughs between stay broad, not a saw)
-  m += (Math.max(0, S.ridged2(x * 0.011 + 3.1, z * 0.011 - 7.7, 4) - 0.32) * 52 - 5 + S.fbm2(x * 0.006, z * 0.006, 3) * 14) * up;
+  const rEnv = RIDGE_ON ? ridgeEnv(bearingOf(az)) : 0; // v5 wonders: AP (the run's weight)
+  m += (Math.max(0, S.ridged2(x * 0.011 + 3.1, z * 0.011 - 7.7, 4) - 0.32) * 52 - 5 + S.fbm2(x * 0.006, z * 0.006, 3) * 14) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
   m += S.noise2(x * 0.08, z * 0.08) * 2.2 * u;
   // bedding: ledges every 11 m that dip gently east-north-east, so strata run across the faces and the
   // buttresses alike instead of following the noise
@@ -189,6 +278,17 @@ export function applyMountains(h, x, z, r, g, glacierH) {
     const da = Math.abs(angDiff(az, FALL_AZ));
     if (da < 0.16) m = smax(m, 76 * smoothstep(340, 356, r) * (1 - smoothstep(0.07, 0.16, da)), 4);
   }
+  // --- v5 wonders: AP the Battlemented Ridge (begin): the merlons, raised off the damped crest (see the head block)
+  if (rEnv > 0) {
+    const t = (bearingOf(az) - RG.b0) / RG.period, k = Math.floor(t), f = t - k;
+    const rm = smoothstep(Rc - 10, Rc - 6, r) * (1 - smoothstep(Rc + 4, Rc + 8, r));
+    const bm = smoothstep(0, RG.edge, f) * (1 - smoothstep(RG.merlon - RG.edge, RG.merlon, f));
+    if (rm * bm > 0) {
+      const M = RIDGE.merlons[k - (RG.kMin - 1)];
+      if (M) m = lerp(m, Math.max(m, M.top + S.noise2(x * 0.15, z * 0.15) * 0.5), rm * bm);
+    }
+  }
+  // --- v5 wonders: AP (end)
   m *= smoothstep(M_START, M_START + 18, r); // no seam where the walls begin
   // the saddle: a flat-floored gate; the moor's roll damps out across its floor
   if (sw > 0) {
@@ -200,6 +300,175 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   return seatHeights(h + m, x, z);
 }
 
+// --- the massifs (begin): the heightfield (see the tables' block). The face: from a foot set by the crest's height
+// and the mean slope that height asks for (CAND.slope, from the cols' to the massifs'), a long concave toe, a steeper middle and a convex shoulder rounding over the crest.
+// The face's structure at three sizes:
+//   the big form: a scree apron at 33° from the foot (lighter, smooth), a steep rock band standing behind it (a
+//     clear break of slope where they meet), a convex shoulder rounding over into the crest; corries (CORRIES)
+//     scooped high in the north- and east-facing faces, a lip below and a headwall under the crest;
+//   the middle: bedding, ledges every 13-17 m along a plane tilted 4-7° (MASSIFS: one dip per massif, another
+//     across the next col), a few deep gullies from the crest to the apron (GULLIES), each with a heavier scree fan
+//     at its mouth, and the buttress rhythm only where the face's mean slope passes ~50°;
+//   the small: creased facets (ridged noise, ~45 m) so the low sun picks out planes, and the old noise octaves low.
+const TAN_SCREE = Math.tan(33 * D2R);
+// [first bearing, last bearing, dip (dy/dx, dy/dz), ledge step (m)]; the cols between blend from one to the next
+export const MASSIFS = [[20, 100, 0.07, -0.06, 15], [125, 172, -0.05, -0.08, 17], [190, 235, 0.09, 0.03, 14], [264, 318, -0.04, 0.1, 16], [336, 356, 0.08, 0.05, 13]];
+// [bearing, half-width at the crest (m), depth (m)]: clear of the Gradine (54), the Vigilant (72), the Span (130,
+// 230), the fall (133-145), the Galleries (268-296), the Hawser (342) and the glacier (354-20)
+const GULLIES = [[40, 14, 20], [88, 12, 16], [153, 13, 18], [166, 11, 14], [199, 14, 20], [214, 12, 16], [305, 13, 18], [314, 11, 15]];
+// [bearing, half-width (degrees), push back (fraction of the face's run)]: the south massif's north face, the
+// south-east massif's north-west face, the west massif's east face north of the Galleries
+const CORRIES = [[158, 6.5, 0.22], [207, 8, 0.26], [308, 6.5, 0.22]];
+const T_DX = new Float32Array(N + 1), T_DZ = new Float32Array(N + 1), T_ST = new Float32Array(N + 1);
+if (CAND) {
+  const bd = (a, b) => ((a - b) % 360 + 540) % 360 - 180;
+  for (let i = 0; i <= N; i++) {
+    const b = bearingOf(-Math.PI + (TAU * i) / N);
+    // the massif this bearing belongs to (or the two a col lies between, blended across it)
+    let best = 0, w = 0, dx = 0, dz = 0, st = 0;
+    for (const [b0, b1, mx, mz, ms] of MASSIFS) {
+      const mid = (b0 + b1) / 2, half = (b1 - b0) / 2;
+      const d = Math.abs(bd(b, mid));
+      const k = Math.pow(Math.max(1e-3, 1 - smoothstep(half, half + 14, d)), 2) + 1e-6 / (1 + d);
+      dx += mx * k; dz += mz * k; st += ms * k; w += k; best = Math.max(best, k);
+    }
+    T_DX[i] = dx / w; T_DZ[i] = dz / w; T_ST[i] = st / w;
+  }
+}
+function applyMassifs(h, x, z, r, g, glacierH) {
+  const az = Math.atan2(z, x);
+  const B = sampleBearing(az);
+  const Rc = B.cr, Hc = B.ch, sw = B.sw;
+  const b = bearingOf(az);
+  const slope = lerp(CAND.slope[0], CAND.slope[1], smoothstep(70, 280, Hc)) * D2R;
+  const foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3)); // the apron's toe
+  const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
+  const span = Rc - foot;
+  const u = clamp((r - foot) / span, 0, 1);
+  // buttresses, only where the face is steep: they push the rock band out over the apron
+  const ph = B.ph + 0.22 * S.noise2(r * 0.012, az * 3.0);
+  const fl = Math.floor(ph), s = Math.abs(ph - fl - 0.5) * 2;
+  const spA = 0.4 + 0.6 * hash2(((fl % SPURS) + SPURS) % SPURS, 913);
+  const sp = (1 - Math.pow(s, 0.75)) * spA * steep;
+  // the gullies: across-distance (m) from each one's line, which wanders as it climbs
+  let gul = 0, fan = 0;
+  for (const [gb, gw, gd] of GULLIES) {
+    const w = gw * (0.55 + 0.45 * u);
+    let db = b - gb; if (db > 180) db -= 360; if (db < -180) db += 360;
+    if ((Math.abs(db) - 1.6) * D2R * r >= w * 2.2) continue; // out of reach even at the line's widest wander (±1.6°)
+    db -= 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
+    const d = Math.abs(db) * D2R * r;
+    if (d < w * 2.2) {
+      const v = Math.max(0, 1 - d / w);
+      gul = Math.max(gul, gd * Math.pow(v, 1.4) * (0.4 + 0.6 * steep));
+      fan = Math.max(fan, (1 - smoothstep(w * 0.6, w * 2.2, d)) * (0.4 + 0.6 * steep));
+    }
+  }
+  // corries: the face pushed back in a bowl high on the face, so a lip stands below and a headwall above
+  let push = 0;
+  for (const [cb, cw, ck] of CORRIES) {
+    let db = Math.abs(b - cb); if (db > 180) db = 360 - db;
+    if (db < cw) push = Math.max(push, ck * span * Math.pow(Math.cos((db / cw) * Math.PI / 2), 2));
+  }
+  const re = r - push * smoothstep(0.22, 0.55, u) * (1 - smoothstep(0.78, 0.96, u));
+  // the apron: scree at 33° from the foot up to Ha, heavier under the steep faces and at the gullies' mouths
+  const Ha = Hc * (0.1 + 0.1 * steep) * (0.8 + 0.25 * fan + 0.25 * S.noise2(az * 9.0, 2.9));
+  const r0 = foot + 0.75 * Ha / TAN_SCREE; // the rock band's foot, behind the apron's top
+  const H0 = 0.55 * Ha;
+  // the profile along the run: easy faces a concave toe into a convex shoulder; steep ones a band steepest at its
+  // foot, rounding over into the crest; past the crest the shoulder rounds over, then falls away
+  const P = (q) => {
+    if (q > Rc) { const d = q - Rc; return Math.max(Hc * 0.6, Hc - 0.5 * Math.min(d, 30) - 1.1 * Math.max(0, d - 30)); }
+    if (q < r0) return H0 - (r0 - q) * 3;
+    const v = (q - r0) / (Rc - r0);
+    return H0 + (Hc - H0) * lerp(lerp(Math.pow(v, 1.7), v * v * (3 - 2 * v), 0.6), lerp(v, 1 - Math.pow(1 - v, 2.4), 0.55), steep);
+  };
+  const face = smoothstep(0.08, 0.3, u) * (1 - smoothstep(0.94, 1, u)); // the rock face, not the crest's rounding
+  // The face's relief moves it in and out (r), not up and down, so a steep face keeps its planes instead of taking
+  // noise stretched down its height; the relief's noise runs in the face's own chart (along the arc, up the face).
+  const up0 = P(re), along = az * Rc;
+  let dr = 9 * sp - 4 * Math.pow(s, 1.5) * steep * smoothstep(0.15, 0.6, u); // the buttresses and their gullies
+  dr -= gul * smoothstep(0.05, 0.25, u) * (1 - smoothstep(0.93, 1.02, u)); // the gullies, crest to apron
+  dr += (S.ridged2(along * 0.018 + 7.1, up0 * 0.04 - 3.3, 2) - 0.55) * 8 * face * (0.4 + 0.6 * steep); // facets, wider than tall
+  dr += S.fbm2(along * 0.011 + 1.3, up0 * 0.011 - 2.1, 3) * 14 * face; // ribs and bays
+  let m = P(re + dr);
+  // the small: the old pinnacles at a quarter of v4's height and twice its wavelength, on the crest only (it stays
+  // rounded); the broad roll and the fine noise, low
+  const up = smoothstep(0.6, 1.0, u);
+  const rEnv = RIDGE_ON ? ridgeEnv(b) : 0; // AP's run, as in applyMountains
+  m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
+  m += S.noise2(x * 0.06, z * 0.06) * 1.2 * u + S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
+  m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  // bedding: treads and risers along the massif's tilted plane, on the rock (the apron covers their feet)
+  const bed = face * (1 - sw) * (0.3 + 0.7 * steep);
+  if (bed > 0) {
+    const ui = Math.min(N - 1, Math.max(0, Math.floor(((az + Math.PI) / TAU) * N)));
+    const dip = x * T_DX[ui] + z * T_DZ[ui], st = T_ST[ui];
+    const q = (m + dip) / st, qf = Math.floor(q), t = q - qf;
+    m = lerp(m, (qf + Math.pow(t, 4)) * st - dip, 0.6 * bed);
+  }
+  // the apron meets the band in a crease, its top soft
+  if (r > foot - 6) {
+    const cone = (r - foot) * TAN_SCREE * (1 + 0.06 * S.noise2(x * 0.05, z * 0.05));
+    m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
+  }
+  m = Math.max(m, 0);
+  // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
+  m = smax(m, 9 * smoothstep(290, 350, r), 3);
+  {
+    const da = Math.abs(angDiff(az, FALL_AZ));
+    if (da < 0.16) m = smax(m, 76 * smoothstep(340, 356, r) * (1 - smoothstep(0.07, 0.16, da)), 4);
+  }
+  if (rEnv > 0) {
+    const t = (bearingOf(az) - RG.b0) / RG.period, k = Math.floor(t), f = t - k;
+    const rm = smoothstep(Rc - 10, Rc - 6, r) * (1 - smoothstep(Rc + 4, Rc + 8, r));
+    const bm = smoothstep(0, RG.edge, f) * (1 - smoothstep(RG.merlon - RG.edge, RG.merlon, f));
+    if (rm * bm > 0) {
+      const M = RIDGE.merlons[k - (RG.kMin - 1)];
+      if (M) m = lerp(m, Math.max(m, M.top + S.noise2(x * 0.15, z * 0.15) * 0.5), rm * bm);
+    }
+  }
+  m *= smoothstep(M_START, M_START + 18, r);
+  if (sw > 0) {
+    const hs = saddleFloor(r) + S.noise2(x * 0.025, z * 0.025) * 2 * smoothstep(330, 420, r);
+    m = lerp(m, hs, sw);
+    h *= 1 - 0.65 * sw * smoothstep(296, 340, r);
+  }
+  if (g > 0) m = lerp(m, glacierH, g);
+  return seatHeights(h + m, x, z);
+}
+// the far ranges behind the massifs: the crest's smoothed elevation, scaled down (CAND.far, per tier), so each range
+// stands below the massifs in the picture and above the cols
+// Each far range rolls in massifs and cols of its own, not the near crest smoothed: [bearing, half-width] lobes; the
+// nearer ring sets a massif behind each near col (112, 180, 328), so a second, paler line of the same form stands in
+// each gap, its own cols hidden behind the near massifs; the farthest ring's lobes fall between the nearer's.
+const FAR_LOBES = {
+  far: [[30, 16], [74, 13], [112, 14], [150, 14], [180, 11], [214, 14], [292, 15], [328, 12], [356, 10]],
+  farthest: [[8, 14], [52, 15], [94, 13], [132, 14], [198, 15], [282, 13], [310, 12], [344, 13]],
+};
+function farLobe(T, b) {
+  let w = 0;
+  for (const [lb, lw] of FAR_LOBES[T.name]) {
+    let d = Math.abs(b - lb); if (d > 180) d = 360 - d;
+    if (d < lw) w = Math.max(w, Math.pow(Math.cos((d / lw) * Math.PI / 2), 1.2)); // broad-shouldered, not cones
+  }
+  return w;
+}
+function farCrestMassifs(T, az, out) {
+  const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
+  const fe = T_FE[i] + (T_FE[i + 1] - T_FE[i]) * f;
+  const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
+  const k = CAND.far[T.name === 'far' ? 0 : 1];
+  const elev = (fe * k * (0.55 + 0.6 * farLobe(T, bearingOf(az))) + 1.2 * ring(az, 2.3, T.seed + 3)) * D2R;
+  let hc = Math.tan(elev) * rc;
+  const d = Math.abs(angDiff(az, SADDLE.azimuth));
+  hc = lerp(T.floor, hc, smoothstep(T.full * D2R, T.wall * D2R, d));
+  out.rc = rc; out.hc = hc;
+  return out;
+}
+const FAR_PALE = new THREE.Color('#8e8a99'); // the far ranges paled toward the haze
+// --- the massifs (end)
+
 // ---------------------------------------------------------------- the far ranges (tiers 2 and 3)
 // Each far range stands a few degrees higher, seen from the bowl's centre, than the main crest in front of it
 // (its peaks left out), so it shows as a band above it: lift is that margin in degrees, with its spread.
@@ -210,6 +479,7 @@ const FAR = [
   { name: 'farthest', rc: 1350, rcv: 80, lift: 5.4, liftv: 2.2, r0: 1080, r1: 1740, floor: 95, full: 11, wall: 22, seed: 67, rows: 30 },
 ];
 function farCrest(T, az, out) {
+  if (CAND) return farCrestMassifs(T, az, out); // the massifs; below, the v4 far crest
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
   const hs = T_CS[i] + (T_CS[i + 1] - T_CS[i]) * f, rs = T_CR[i] + (T_CR[i + 1] - T_CR[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
@@ -229,7 +499,7 @@ function farHeight(T, az, r) {
   const x = Math.cos(az) * r, z = Math.sin(az) * r;
   // broad massifs, then a little crest texture (ridged noise alone hangs from the sky like stalactites)
   y += S.fbm2(x * 0.0032 + T.seed, z * 0.0032, 4) * hc * 0.16 * smoothstep(0.25, 1, u);
-  y += (S.ridged2(x * 0.011 - T.seed, z * 0.011, 3) - 0.45) * hc * 0.045 * smoothstep(0.2, 1, u);
+  y += (S.ridged2(x * 0.011 - T.seed, z * 0.011, 3) - 0.45) * hc * (CAND ? 0.08 : 0.045) * smoothstep(0.2, 1, u); // the massifs: more crest silhouette, as the far ranges stand in the open through the cols
   return y - 30 * (1 - smoothstep(T.r0, T.r0 + 80, r)); // the inner edge tucks below the floor, out of sight
 }
 function buildRing(ctx, T) {
@@ -248,6 +518,7 @@ function buildRing(ctx, T) {
       const hc = farCrest(T, az, _fc).hc;
       c.copy(cRock).lerp(cHigh, smoothstep(hc * 0.35, hc * 0.8, y));
       c.lerp(cSnow, smoothstep(hc * 0.85, hc * 1.02, y + 0.08 * hc * S.noise2(pos[k] * 0.01, pos[k + 2] * 0.01)) * (T.name === 'farthest' ? 0.8 : 0.4));
+      if (CAND) c.lerp(FAR_PALE, T.name === 'far' ? 0.3 : 0.5); // the massifs' far ranges, paler
       col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
       k += 3;
     }
@@ -278,7 +549,7 @@ export function buildMountains(ctx) {
   const terrain = ctx.terrain;
   const azOf = (bearing) => (bearing - 90) * D2R;
   return {
-    saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR,
+    saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR, profile: PROFILE,
     walkLimit, saddleWeight, saddleFloor,
     // the main crest along a compass bearing: its radius and the ground's height there
     crestAt(bearing, out = { x: 0, z: 0, r: 0, y: 0 }) {

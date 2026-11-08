@@ -1,0 +1,9 @@
+[
+ {"name": "arcature-causeway-40", "x": -40, "z": 22, "yaw": -1.758, "pitch": 0.06},
+ {"name": "arcature-demesne", "x": 95, "z": 5, "yaw": -2.27, "pitch": 0.24},
+ {"name": "arcature-k1", "x": 110, "z": -25, "yaw": -2.61, "pitch": 0.16},
+ {"name": "arcature-k1-end", "x": 136, "z": 19, "yaw": -2.61, "pitch": 0.42},
+ {"name": "arcature-under", "x": 163.5, "z": 56.5, "yaw": 2.356, "pitch": 0.4},
+ {"name": "arcature-span-deck", "x": -200, "z": 208.5, "dy": 58.52, "yaw": -1.164, "pitch": -0.04},
+ {"name": "arcature-high-ling", "x": 250, "z": 5, "yaw": 2.119, "pitch": 0.1}
+]

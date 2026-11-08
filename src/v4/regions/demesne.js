@@ -162,7 +162,7 @@ export const sound = {
         // the rooks are heard round the keep and well beyond the park
         const d = Math.hypot(x - K.x, z - K.z), near = Math.max(w, 1 - smoothstep(60, 170, d));
         lvl += (near - lvl) * 0.2;
-        bus.gain.setTargetAtTime(lvl * 0.55, now, 0.5);
+        bus.gain.setTargetAtTime(lvl * 0.55 * (1 - (k.hush?.(top) ?? 0)), now, 0.5); // v5: hushed under the Occultation's band
         if (lvl > 0.02) {
           next -= step;
           if (next <= 0) {
@@ -228,7 +228,7 @@ export async function build(ctx) {
   const yews = buildYews(ctx, rng, low);
   meshes.push(...yews.meshes);
 
-  // ---- the fallen curtain tower's dressed blocks, in a fan on bearings 30-60 from the keep
+  // ---- the dressed blocks of the keep's fallen north-east corner, in a fan on bearings 30-60 (structures/keep.js lays the fall's near end, r 27-47)
   const blocks = buildBlocks(ctx, rng, low);
   meshes.push(blocks.mesh);
 

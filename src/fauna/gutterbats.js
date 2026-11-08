@@ -1,5 +1,5 @@
 // Bats out of the Armiger's Tower at every gutter. When the sun's flicker drops below 0.5 a flight of them
-// pours out of the lit window and from between the merlons just below the banner, wheels over the tower
+// pours out of the lit window and from under the lens mount's collar (v5; the old tower's merlons with ?tower=v2), wheels over the tower
 // hill, and goes back in as the sun recovers (but not before about fifteen seconds of flight). One
 // 'bats-out' cue per gutter, at the window. Tiny: one InstancedMesh of the life.js bat, hidden between gutters.
 import * as THREE from 'three';
@@ -15,7 +15,8 @@ export function buildGutterBats(ctx) {
   const { mesh, flap, fold } = flapInstanced(batGeometry(), mat, N);
   mesh.name = 'gutter-bats'; mesh.visible = false; scene.add(mesh);
   const TW = landmarks.tower, gm = terrain.heightAt(TW.x, TW.z);
-  // ways out: the lit window (the structures note, when it exists) and the gaps of the parapet (shaft top 21 m)
+  // ways out: the lit window (the structures note, when it exists) and the gaps of the parapet (shaft top 21 m;
+  // the v5 lens mount notes its own, towerTop)
   const exits = [];
   const winGuess = new THREE.Vector3(TW.x + 3.4, gm + 19, TW.z);
   function setExits() {
@@ -27,7 +28,8 @@ export function buildGutterBats(ctx) {
     for (let k = 0; k < 6; k++) {
       const a = (k / 6) * Math.PI * 2 + 0.4;
       const o = new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
-      exits.push({ p: new THREE.Vector3(TW.x + o.x * 2.9, gm + 21.8, TW.z + o.z * 2.9), out: o, w: 0.5 / 6 });
+      const top = ctx.structures?.notes?.towerTop || { y: 21.8, r: 2.9 }; // v5: under the lens mount's collar
+      exits.push({ p: new THREE.Vector3(TW.x + o.x * top.r, gm + top.y, TW.z + o.z * top.r), out: o, w: 0.5 / 6 });
     }
   }
   setExits();

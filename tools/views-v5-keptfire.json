@@ -1,0 +1,46 @@
+[
+ {
+  "name": "p6",
+  "x": -17,
+  "z": -163,
+  "yaw": -0.697,
+  "pitch": 0.02,
+  "dy": 0,
+  "js": "",
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)",
+  "settle": 5500
+ },
+ {
+  "name": "moraine",
+  "x": -10,
+  "z": -240,
+  "yaw": -2.769,
+  "pitch": 0.0,
+  "dy": 0,
+  "js": "",
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)",
+  "settle": 5500
+ },
+ {
+  "name": "lattice",
+  "x": 40,
+  "z": -215,
+  "yaw": 2.173,
+  "pitch": 0.0,
+  "dy": 0,
+  "js": "",
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)",
+  "settle": 5500
+ },
+ {
+  "name": "close",
+  "x": 15.5,
+  "z": -187,
+  "yaw": 0.983,
+  "pitch": -0.1,
+  "dy": 0,
+  "js": "",
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)",
+  "settle": 5500
+ }
+]

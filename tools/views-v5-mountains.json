@@ -1,0 +1,10 @@
+[
+ { "name": "spawn", "x": 2, "z": 35, "yaw": 1.84, "pitch": 0.03 },
+ { "name": "causeway-east", "x": -40, "z": 22, "yaw": -1.5708, "pitch": 0.03 },
+ { "name": "causeway-north", "x": -40, "z": 22, "yaw": 0, "pitch": 0.03 },
+ { "name": "causeway-sun", "x": -65, "z": 12, "yaw": 1.86, "pitch": 0.02 },
+ { "name": "roadstart", "x": -344, "z": 125, "yaw": 1.92, "pitch": 0.03 },
+ { "name": "foreland", "x": 60, "z": -230, "yaw": -0.785, "pitch": 0.04 },
+ { "name": "span", "x": -200, "z": 215, "yaw": 0, "pitch": -0.04, "dy": 56 },
+ { "name": "highling", "x": 250, "z": 5, "yaw": 1.5708, "pitch": 0.02 }
+]

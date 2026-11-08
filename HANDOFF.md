@@ -39,8 +39,9 @@ If the render is a real picture, export `SHOT_ANGLE=metal` for every tool call f
 
 Austin: "ensure it doesn't torch my computer doing too many things at once." Binding:
 
-- **At most two implementation agents at once**, each told it is one of two and that the other is rendering too.
-- **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. The orchestrator runs no renders or suites while two agents are rendering.
+- **After v5 ships:** fire a native macOS notification with sound (`osascript -e 'display notification "v5 is on main" with title "Below a Fading Star" sound name "Glass"'`), then hold all rendering agents for up to 30 minutes so Austin can take one clean `?record=25` measurement with no other browser on his GPU (read-only work may continue), then go straight on to **v6** (performance and artefacts; Austin swapped it ahead of v7 at 09:44 on 2026-11-08 because he wants to share the build and performance is too poor to share). v7 follows v6. Open design calls are decided at the briefs' defaults and logged; Austin changes them later if he wants (09:44).
+- **At most four implementation agents at once** (Austin raised it from two at 07:25 and, after a five-agent stretch at 07:50–08:15 that held up with one load-dependent test flake at load average 28, the orchestrator settled it at four on 2026-11-08; a read-only planning or review agent with no browser does not count). Each runs one headless browser on its own port.
+- **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. Agents run only the tests that cover their change plus walk, perf, loading and the artifact build before pushing; the orchestrator runs the full suite once per batch, not per merge (Austin, 07:25).
 - **Wip renders at half size** (1280×720); full size only for the few that go into `shots/`. No `--trace` on Playwright runs.
 - **`nice -n 10`** in front of every `node tools/...` call, so the Mac stays usable if Austin wakes early.
 - Curation and review agents are Sonnet and render nothing new.

@@ -14,7 +14,7 @@ export function buildLampMoths(ctx) {
   const rng = ctx.makeRng(1414);
   const T = landmarks.taverna;
   const PER = ctx.quality === 'low' ? [8, 10] : [10, 14];
-  const MAXN = 2 * PER[1] + 4;
+  const MAXN = 2 * PER[1] + 4 + 60; // and room for the Leerie's standards (v5/lights.js mothLamps)
   // a moth: two wings, each one triangle, hinged on the body line (z); the flap squeezes x
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute([
@@ -40,11 +40,11 @@ export function buildLampMoths(ctx) {
       o.getWorldPosition(wp);
       if (Math.hypot(wp.x - T.x, wp.z - T.z) < T.r + 8) found.push({ light: o, pos: wp.clone(), base: o.intensity || 3 });
     });
-    return found;
+    return found.concat(ctx.localLights?.mothLamps || []); // v5: the Leerie's standards, moths only while lit
   }
   function populate() {
     for (const L of lamps) {
-      const n = PER[0] + ((rng() * (PER[1] - PER[0] + 1)) | 0);
+      const per = L.per || PER, n = per[0] + ((rng() * (per[1] - per[0] + 1)) | 0);
       for (let k = 0; k < n && moths.length < MAXN; k++) {
         moths.push({
           L, a: rng() * 6.28, w: (0.7 + rng() * 1.1) * (rng() < 0.5 ? -1 : 1), r0: 0.3 + rng() * 0.9, ph: [rng() * 6.28, rng() * 6.28, rng() * 6.28],
@@ -75,7 +75,7 @@ export function buildLampMoths(ctx) {
     if (far) return;
     for (let i = 0; i < moths.length; i++) {
       const m = moths[i], L = m.L.pos;
-      const lit = clamp((m.L.light.intensity || 0) / m.L.base, 0.2, 1.3);
+      const lit = clamp((m.L.light.intensity || 0) / m.L.base, m.L.min ?? 0.2, 1.3);
       m.prev.copy(m.pos);
       let flapAmt = 1;
       if (m.mode === 0) {
@@ -119,7 +119,7 @@ export function buildLampMoths(ctx) {
         open = 0.18 + 0.82 * Math.abs(Math.sin(t * m.flapW + m.flapPh)) * flapAmt + (1 - flapAmt) * 0.6;
       }
       q.setFromEuler(e);
-      sc.set(m.sz * open, m.sz, m.sz);
+      const sz = lit > 0 ? m.sz : 0; sc.set(sz * open, sz, sz);
       M4.compose(m.pos, q, sc);
       mesh.setMatrixAt(i, M4);
       // pale where the flame lights them, ash-grey farther out

@@ -1,0 +1,38 @@
+[
+{
+"name": "lights-leerie-house",
+"x": 110.5,
+"z": -30.5,
+"yaw": -2.62,
+"pitch": 0.02,
+"settle": 3000,
+"js": "__fp.sky.flicker.hold = 0.3"
+},
+{
+"name": "lights-leerie-arcature",
+"x": 149,
+"z": 42,
+"yaw": 0.527,
+"pitch": 0.02,
+"settle": 3000,
+"js": "__fp.sky.flicker.hold = 0.3"
+},
+{
+"name": "lights-leerie-flare",
+"x": 108,
+"z": 6,
+"yaw": -1.01,
+"pitch": 0.1,
+"settle": 3000,
+"js": "setTimeout(() => { __fp.sky.flicker.hold = 0.3; }, 2700)"
+},
+{
+"name": "lights-leerie-flare-end",
+"x": 108,
+"z": 6,
+"yaw": -1.01,
+"pitch": 0.1,
+"settle": 3000,
+"js": "__fp.sky.flicker.hold = 0.3; setTimeout(() => { __fp.sky.flicker.hold = 1; }, 2000)"
+}
+]

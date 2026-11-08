@@ -30,8 +30,8 @@ export const LANDMARKS = {
   orchard:  { x: 130,  z: -90,  r: 52,  y: null, name: 'Medlar Close',        line: 'The fruit is only eaten rotten. It has been ready a long while.' },
   court:    { x: -40,  z: -165, r: 40,  y: -1,  name: 'The Sunken Court',     line: 'Whatever held court here ruled by weight of stone alone.' },
   moraine:  { x: 40,   z: -265, r: 80,  y: null, name: 'The Lattice',         line: 'A mote of dust found its seed crystal. It is still unspooling.' },
-  tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: 'The banner still flies. Nobody has seen who raises it.' },
-  arcature: { x: 160,  z: 60,   r: 22,  y: null, name: 'The Arcature',         line: 'It was built to think. Nobody can say whether it has stopped.' },
+  tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: 'A lens mount, still turned to the sun. Nobody has seen who turned it.' },
+  arcature: { x: 160,  z: 60,   r: 23,  y: null, name: 'The Arcature',         line: 'It was built to think. Nobody can say whether it has stopped.' },
   taverna:  { x: 95,   z: -45,  r: 20,  y: null, name: 'The Pomegranate House', line: 'The last stopping place. The lamps are kept for no one you will meet.' },
   // v4: the Great Span (W) along z 215, gate to gate; axis: the landmark is that line (landmarkDistance), at: where the debug panel lands you
   bridge:   { x: 0,    z: 215,  r: 270, y: null, name: 'The Trigon Span',      line: 'Each triangle holds three more. Count them and you will not reach the far side.',
@@ -101,13 +101,13 @@ export const REGIONS = {
                 yields: [] },
 };
 
-// v4–v6 reserved sites (wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
+// v4–v7 reserved sites (wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
 // placed twice. Not landmarks yet (the HUD and the scatter ignore them); a module claims its site when it builds.
 export const SITES = {
   pit:        { x: 200, z: 185, r: 14, name: 'the pit', block: [182, 218, 167, 203] },
   thrones:    { x: -410, z: 150, r: 80, name: 'The Acephalous Thrones', at: [[-420, 100], [-400, 200]] },
   galleries:  { x: -390, z: -80, r: 70, name: 'The Galleries of Durance', y: [60, 260] },
-  lamps:      { x: -300, z: -330, r: 60, name: 'The Escarpment Lamps', bearings: [300, 335], y: [60, 250] },
+  lamps:      { x: -330, z: -268, r: 60, name: 'The Escarpment Lamps', bearings: [300, 318], y: [60, 220] }, // off the 328° col: the west massif's face that remains
   ridge:      { x: 270, z: -380, r: 60, name: 'The Battlemented Ridge', bearings: [20, 45] },
   annals:     { x: 0, z: 0, r: 0, name: 'The Annals', band: [110, 130], bearings: [60, 120] },
   plinths:    { x: 148, z: -220, r: 15, name: 'The Plinth Road', from: [130, -150], to: [165, -290] },
@@ -151,7 +151,7 @@ export const WATER = {
   pool: { x: 208, z: 258, r: 6.8, y: 3.5 },
 };
 
-export const SPAWN = { x: 6, z: 36, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks down -z; PI/2 looks down -x (west)
+export const SPAWN = { x: 2, z: 35, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks down -z; PI/2 looks down -x (west)
 
 // Shared palette (hex strings) so modules agree on the world's colours.
 export const PALETTE = {

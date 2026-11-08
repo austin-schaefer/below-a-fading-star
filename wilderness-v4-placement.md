@@ -1,8 +1,8 @@
-# Wilderness v4–v6 placement plan
+# Wilderness v4–v7 placement plan
 
 Maps: `shots/18-placement-v4-map-regions.png` (the eight regions, the road, the Span, the pit) and `shots/18-placement-v4-map-all-sites.png` (every site in this plan, from `tools/sites-v4.json`; `SHOT_ANGLE=metal node tools/map.mjs out.png tools/sites-v4.json` redraws it).
 
-One plan fixes the site of everything in v4 (the land and the Great Span), v5 (the built) and v6 (the living), so v4's paths and rivulets run to sites already reserved and nothing is placed twice. The specs are `wilderness-v4.md` and `wilderness-v5.md`; the sequence is `wilderness-run.md`. Coordinates are `(x, z)` in metres as in `src/world.js`: x east, z south, y up. **Bearings** are compass degrees from the bowl's centre (0, 0), clockwise from north (−z), as in `src/skylife/common.js`; a world.js sun azimuth α is bearing 90° + α. Names are the briefs' names and stay **[Proposed]**. The map render is added by the orchestrator (`shots/plan-v4-placement-map.png`).
+One plan fixes the site of everything in v4 (the land and the Great Span), v5 (the built) and v7 (the living), so v4's paths and rivulets run to sites already reserved and nothing is placed twice. The specs are `wilderness-v4.md` and `wilderness-v5.md`; the sequence is `wilderness-run.md`. Coordinates are `(x, z)` in metres as in `src/world.js`: x east, z south, y up. **Bearings** are compass degrees from the bowl's centre (0, 0), clockwise from north (−z), as in `src/skylife/common.js`; a world.js sun azimuth α is bearing 90° + α. Names are the briefs' names and stay **[Proposed]**. The map render is added by the orchestrator (`shots/plan-v4-placement-map.png`).
 
 The systems agent adds the new keys in this plan (`REGIONS`, the reserved `LANDMARKS`, the new `CAUSEWAY`) to `world.js` in one commit before the region agents start; after that nobody edits `world.js` but the map-structure agent.
 
@@ -194,7 +194,7 @@ The road runs north from the saddle, not east (see section 6). The pit is 30 m n
 | R4 | Lynchets (−182, −78) → Stones' shelf → Byre → tarn north-west shore (−130, 75) | runnel, field-stone then moor |
 | R5 | Carillon Flags (−65, 12) → tarn north-east shore (−50, 70) | runnel, moor |
 
-The Adust gets no rivulet ("dry"); the Link-Boy (v6) walks P1–P17.
+The Adust gets no rivulet ("dry"); the Link-Boy (v7) walks P1–P17.
 
 ### The taller Tumbling Water
 
@@ -223,7 +223,7 @@ The regions kit carries each region's air hue (listed in section 2), blended ove
 | AK The Annals | `annals` | a band 110–130 m up round the whole wall; clearest on bearings 60–120° (the east wall, facing the sun) | the band | walls | "clearest on the east wall, which faces the sun"; the Gradine and the colossi break it |
 | AL The Galleries of Durance | `galleries` | (−390, −80), 60–260 m up | r 70 | W wall | "north of the sun's saddle … above and behind the Armiger's Tower"; black against the glow from the causeway |
 | AM The Acephalous Thrones | `thrones` | (−420, 100) and (−400, 200), crawling, on the saddle's flanks at bearings 257° and 243° | r 80 each | W wall | BI widens the saddle to ±8° (242–258° full) and leaves these two flank masses; the causeway starts between their feet |
-| AO The Escarpment Lamps | `lamps` | NW wall face at bearings 300–335°, r 420–470, 60–250 m up, about (−300, −330) | the face | NW wall | "the part the sun never reaches"; read from the east half of the floor |
+| AO The Escarpment Lamps | `lamps` | NW wall face at bearings 300–318°, r 375–480, 60–220 m up, about (−330, −268) (moved off the massifs' 328° col, v5; was 300–335°, 60–250 m, (−300, −330)) | the face | NW wall | "the part the sun never reaches"; read from the east half of the floor |
 | AP The Battlemented Ridge | `ridge` | NE crest at bearings 20–45°, r ≈ 470 | the crest | NE wall | "between the Lattice's and the Gradine's lines of sight", a dull stretch; clear of the Vigilant (72°) |
 | AQ The Cincture | — | sky arc from bearing 140° at the horizon, highest (about 55°) near bearing 70°, down to bearing 350° | sky | sky | "from the south-east horizon to the north … arching over the Lattice"; the agent checks it against the sky lattices at 30° and 92° and the Vigilant |
 | AR The Occultation | — | a band about 400 m long sweeping west to east about 200 m up, from the saddle to the east wall | none on the floor | all | "through the air and across the walls, a weather event"; it passes over the Span's deck |
@@ -248,7 +248,7 @@ The regions kit carries each region's air hue (listed in section 2), blended ove
 
 Coherence agent viewpoints: spawn (6, 36); the causeway at (−65, 12); the Span's deck at (−200, 215, y 56); the tarn's shore on the spit at (−55, 148).
 
-### v6, the living
+### v7, the living
 
 | Item | Site | Reserve | Region | Why there |
 |---|---|---|---|---|
@@ -315,7 +315,7 @@ Of the contradictions: the road follows the geometry (north from the saddle, the
 
 ## 7. Sector check
 
-| Sector | v4 (the land) | v5 (the built) | v6 (the living) |
+| Sector | v4 (the land) | v5 (the built) | v7 (the living) |
 |---|---|---|---|
 | Centre | Demesne (ha-ha, parterres, fallen fan); causeway round the keep; peafowl | keep recast; the Slipper | the Indistinct; the moles |
 | N | Outwash; glacier rebuilt; R1; P6; grouse | the Lattice's mother crystal; court recast; the Hawser; the Kept Fire | the Accrescent; the Simulacrum; the glyph erratic |
@@ -327,4 +327,4 @@ Of the contradictions: the road follows the geometry (north from the saddle, the
 | W | Adust; causeway from the saddle; the wider saddle; the Pegs' line; beetles | the Thrones; the Galleries; the post lamp | the Taker of Altitudes; the Thurifer (south end) |
 | NW | Lynchets; causeway across them; P3–P4; R4; stoats | tower recast; lit doorway; the Escarpment Lamps | the Repetend; the Link-Boy's post; the Thurifer (north end) |
 
-SE and S get nothing new on the floor in v5; the v5 work there is the Cincture's rise and the Annals' band on the walls. Every sector has a region in v4 and life in v6.
+SE and S get nothing new on the floor in v5; the v5 work there is the Cincture's rise and the Annals' band on the walls. Every sector has a region in v4 and life in v7.

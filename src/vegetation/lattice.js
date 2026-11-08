@@ -1,10 +1,15 @@
 // The Lattice: F9AC's crystal growth below the glacier. Faceted shards grow in clusters on a hex
 // grid (the overworld showing through), a few giants stand 10-15 m, and thin glowing filaments
 // of biomesh creep over the ground away from the ice like frost veins, closing into hex cells
-// near the seed. One BatchedMesh for all crystal shapes, one mesh for every filament.
+// near the seed. At the seed stands the mother crystal, 60 m tall, the litter round it its children (mother.js;
+// ?lattice=v2 builds the Lattice without it, as it stood to v4). One BatchedMesh for every crystal shape and the
+// mother's pieces, one mesh for every filament, and the mother's measure figure.
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep, fogBatchFix } from './util.js';
 import { makeBatch } from './batch.js';
+import { motherCrystal } from './mother.js';
+
+const V2 = typeof location !== 'undefined' && new URLSearchParams(location.search).get('lattice') === 'v2';
 
 const SQ3 = Math.sqrt(3);
 
@@ -102,6 +107,15 @@ export function buildLattice(ctx, ground, shared) {
     }
   }
 
+  // The mother crystal, from its own rng stream; the litter's shards whose foot it stands on are not drawn (they are
+  // placed first, so every other shard keeps its place)
+  const mother = V2 ? null : motherCrystal(ctx, ground, M);
+  const drawn = mother ? shards.filter((s) => !mother.inside(s.x, s.z)) : shards;
+  if (mother) {
+    for (const k in mother.geos) geos['mother-' + k] = mother.geos[k];
+    for (const c of mother.colliders) ctx.addCollider(c);
+  }
+
   // Crystal material: dark glassy body, slow inner pulse, rim light; brighter while the sun gutters
   const crysGain = { value: 1 };
   const uni = {
@@ -112,17 +126,23 @@ export function buildLattice(ctx, ground, shared) {
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uni);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vCrW; varying float vCrH;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vCrW; varying float vCrH; varying float vCrBig;')
       .replace('#include <project_vertex>', `#include <project_vertex>
         #ifdef USE_BATCHING
           vCrW = (modelMatrix * batchingMatrix * vec4(transformed, 1.0)).xyz;
+          vCrBig = step(10.0, length(batchingMatrix[0].xyz));
         #else
           vCrW = (modelMatrix * vec4(transformed, 1.0)).xyz;
+          #ifdef USE_INSTANCING
+            vCrBig = step(10.0, length(instanceMatrix[0].xyz));
+          #else
+            vCrBig = 0.0;
+          #endif
         #endif
         vCrH = position.y;`);
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uTime, uCrys; uniform vec2 uOrigin; uniform vec3 uDeep, uPale; varying vec3 vCrW; varying float vCrH;
+        uniform float uTime, uCrys; uniform vec2 uOrigin; uniform vec3 uDeep, uPale; varying vec3 vCrW; varying float vCrH; varying float vCrBig;
         float fpH3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
         float fpN3(vec3 p) {
           vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -136,14 +156,15 @@ export function buildLattice(ctx, ground, shared) {
           // with the eye (sampled further along the view ray); grazing faces go pale; roughness varies per face
           float facing = clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0);
           vec3 Vw = normalize(vCrW - cameraPosition);
-          vec3 q = vCrW * vec3(1.5, 0.4, 1.5) + Vw * 0.9; // veils drawn out along the growth axis, like fracture planes
+          // veils drawn out along the growth axis, like fracture planes; in the mother crystal (vCrBig) twice as large
+          vec3 q = vCrW * vec3(1.5, 0.4, 1.5) * mix(1.0, 0.5, vCrBig) + Vw * 0.9;
           fpVeil = fpN3(q) * 0.6 + fpN3(q * 2.6 + 3.1) * 0.4;
           float core = smoothstep(-0.25, 1.0, vCrH);
-          vec3 inner = mix(uDeep * 0.18, uDeep * 0.75 + uPale * 0.08, smoothstep(0.35, 0.8, fpVeil) * (0.35 + 0.65 * core));
+          vec3 inner = mix(uDeep * 0.18, uDeep * 0.75 + uPale * 0.08, smoothstep(0.35, 0.8, fpVeil) * (0.35 + 0.65 * core) * mix(1.0, 0.7, vCrBig));
           diffuseColor.rgb = mix(uPale * 0.24, inner, smoothstep(0.05, 0.75, facing));
           vec3 nW = normalize(cross(dFdx(vCrW), dFdy(vCrW)));
           float fh = fract(sin(dot(floor(nW * 7.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
-          roughnessFactor = mix(0.04, 0.42, fh * 0.7 + fpVeil * 0.3);
+          roughnessFactor = mix(0.04, 0.42, fh * 0.7 + fpVeil * 0.3) + 0.14 * vCrBig; // the mother's facets are big mirrors otherwise
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         {
@@ -153,25 +174,35 @@ export function buildLattice(ctx, ground, shared) {
           float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 4.0);
           float core = smoothstep(-0.25, 1.0, vCrH);
           // a band of light climbing slowly through each crystal
-          float band = smoothstep(0.82, 1.0, sin(vCrH * 7.0 - uTime * 0.9 - fpD * 0.11) * 0.5 + 0.5);
+          // (in the mother crystal narrower and fainter: three bands a few metres deep, 18 m apart)
+          float band = smoothstep(mix(0.82, 0.94, vCrBig), 1.0, sin(vCrH * 7.0 - uTime * 0.9 - fpD * 0.11) * 0.5 + 0.5) * mix(1.0, 0.6, vCrBig);
           totalEmissiveRadiance += (uDeep * (0.05 + 0.32 * pulse) * (0.3 + 0.7 * core * core) * (0.5 + fpVeil) + uPale * (fres * (0.3 + 0.3 * pulse) * (0.5 + 0.9 * fpVeil) + band * 0.4 * core * (0.4 + fpVeil))) * uCrys;
           // a faint glow from inside the veils that swells while the sun gutters (uCrys > 1)
           totalEmissiveRadiance += uPale * smoothstep(0.45, 0.85, fpVeil) * core * (0.1 + 0.6 * (uCrys - 1.0));
           // light caught in the veils: the inside of the glass is lit unevenly, so it never reads as paint
           totalEmissiveRadiance += uDeep * smoothstep(0.3, 0.85, fpVeil) * (0.12 + 0.2 * core) * (1.0 - fres) * uCrys;
         }`);
+    // the mother crystal's top 20 m (position.y past 2; no shard reaches 1) go into the far haze (the fog's own colour), so its
+    // apex is never seen whole
+    shader.fragmentShader = shader.fragmentShader.replace('#include <fog_fragment>', `#include <fog_fragment>
+      #ifdef USE_FOG
+      {
+        float fpLost = smoothstep(2.0, 3.0, vCrH) * 0.92;
+        if (fpLost > 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, haze, fpLost);
+      }
+      #endif`);
     fogBatchFix(shader);
   };
-  mat.customProgramCacheKey = () => 'fp-veg-crystal';
+  mat.customProgramCacheKey = () => 'fp-veg-crystal-v5';
 
   let vtx = 0;
   for (const k in geos) vtx += geos[k].attributes.position.count;
-  const batch = makeBatch(ctx, shards.length, vtx, 0, mat); // instanced stand-in without multi-draw (batch.js)
+  const batch = makeBatch(ctx, drawn.length + (mother ? 4 : 0), vtx, 0, mat); // instanced stand-in without multi-draw (batch.js)
   const gid = {}; for (const k in geos) gid[k] = batch.addGeometry(geos[k]);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pos = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(), yq = new THREE.Quaternion(), col = new THREE.Color();
   const cDeep = new THREE.Color('#1c4a6a'), cPale = new THREE.Color('#5aa8d0'), cIce = new THREE.Color('#9ab8cc');
   let tris = 0;
-  for (const s of shards) {
+  for (const s of drawn) {
     const y = ground.heightAt(s.x, s.z);
     dir.set(s.tx, 1, s.tz).normalize();
     q.setFromUnitVectors(up, dir); yq.setFromAxisAngle(up, s.rot); q.multiply(yq);
@@ -183,6 +214,15 @@ export function buildLattice(ctx, ground, shared) {
     if (s.c > 0.9) col.lerp(cIce, 0.6);
     batch.setColorAt(id, col);
     tris += geos[s.g].attributes.position.count / 3;
+  }
+  if (mother) {
+    // its four pieces share one origin (the foot) and one scale, so the band climbs through them as one crystal
+    const shade = { trunk: 0.5, twins: 0.32, shoots: 0.62, druse: 0.44 };
+    for (const k in mother.geos) {
+      const id = batch.addInstance(gid['mother-' + k]);
+      batch.setMatrixAt(id, mother.matrix);
+      batch.setColorAt(id, col.copy(cDeep).lerp(cPale, shade[k] * 0.7));
+    }
   }
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-lattice';
@@ -254,6 +294,15 @@ export function buildLattice(ctx, ground, shared) {
       ribbon(pts);
     }
   }
+  // the mother crystal is still unspooling: thicker filaments run out from its foot down the ice and into the litter
+  if (mother) {
+    const n = low ? 10 : 18;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + (rng() - 0.5) * 0.3, d = mother.foot + 1.2 + rng() * 1.5;
+      const x = M.x + Math.cos(a) * d, z = M.z + Math.sin(a) * d;
+      if (okGround(x, z)) walk(x, z, a + (rng() - 0.5) * 0.4, 30 + rng() * 45, 0.11 + rng() * 0.05, 0);
+    }
+  }
   const fg = new THREE.BufferGeometry();
   fg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
   fg.setAttribute('aAlong', new THREE.Float32BufferAttribute(A, 1));
@@ -285,9 +334,17 @@ export function buildLattice(ctx, ground, shared) {
   filaments.renderOrder = 2;
   ctx.scene.add(filaments);
 
+  // the measure at the mother's foot (kit/scale.js): one robed figure
+  let figure = null;
+  if (mother) {
+    figure = ctx.kit.measureFigures([mother.measure], { name: 'veg-lattice-measure' }, ctx);
+    ctx.scene.add(figure);
+  }
+
   function update(flicker) {
     const g = 1 + 0.9 * (1 - flicker);
     crysGain.value = g; filGain.value = g;
   }
-  return { batch, filaments, update, stats: { shards: shards.length, giants: giants.length, crystalTris: tris, filaments: fil, filamentTris: P.length / 9, hexCells: hexCells.length } };
+  const motherStats = mother ? { motherTris: mother.tris, motherTop: +mother.top.toFixed(1), litterHidden: shards.length - drawn.length } : {};
+  return { batch, filaments, figure, update, stats: { shards: drawn.length, giants: giants.length, crystalTris: tris + (mother ? mother.tris : 0), filaments: fil, filamentTris: P.length / 9, hexCells: hexCells.length, ...motherStats } };
 }

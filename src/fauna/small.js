@@ -215,6 +215,8 @@ export function buildFishRings(ctx) {
   const mesh = new THREE.InstancedMesh(geo, mat, NR);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false; mesh.renderOrder = 6; mesh.name = 'fishrings';
+  // the per-ring colour exists from the start, so its program is compiled behind the title card with the rest
+  mesh.setColorAt(0, new THREE.Color(0, 0, 0)); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
   const base = new THREE.Color(0x9a90a8), col = new THREE.Color();
   scene.add(mesh);
   const y = water.tarn.y + 0.05;
