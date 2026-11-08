@@ -53,13 +53,13 @@ export const LEADS = [
 ];
 
 // ---------------------------------------------------------------- what the leads keep off
-// Landmarks' walls (not their grounds), every reserved floor site of the plan's section 5 (v5 and v6), the blocks
+// Landmarks' walls (not their grounds), every reserved floor site of the plan's section 5 (v5 and v7), the blocks
 // other agents own. A lead may come to a site it is led to (one within reach of its own points) but no other.
 const AVOID = [
   ...[['castle', 36] /* v5: the keep's corners reach 35 m */, ['tower', 17] /* v5: the lens mount's fins */, ['stones', 10], ['byre', 13], ['court', LANDMARKS.court.r] /* v5: the piers' shoes reach 39 m */, ['taverna', 14], ['graveyard', 11], ['hypogeum', 9], ['arcature', LANDMARKS.arcature.r] /* v5: the armillary's trunnions */, ['cutting', 8], ['eddy', 5], ['gradine', 12]]
     .map(([k, r]) => ({ x: LANDMARKS[k].x, z: LANDMARKS[k].z, r })),
   ...['keptFire', 'collation', 'prospect', 'tallestTor', 'lightPost', 'lightDoor', 'lightMoss', 'lightEmbers', 'nave', 'postern'].map((k) => ({ x: SITES[k].x, z: SITES[k].z, r: SITES[k].r })),
-  // v6 (section 5): the Taker, the Coheirs, the Long Sleeper, the Bather's pool, the Sexton's graves, the Accrescent,
+  // v7 (section 5): the Taker, the Coheirs, the Long Sleeper, the Bather's pool, the Sexton's graves, the Accrescent,
   // the moles, the Scriveners, the Simulacrum, the Toadstone
   { x: -255, z: 10, r: 4 }, { x: -45, z: 160, r: 6 }, { x: 180, z: -40, r: 6 }, { x: 158, z: 228, r: 10 }, { x: 55, z: 274, r: 18 },
   { x: 60, z: -180, r: 3 }, { x: 75, z: 0, r: 12 }, { x: -100, z: 58, r: 8 }, { x: 20, z: -205, r: 5 }, { x: 180, z: 230, r: 2 },
