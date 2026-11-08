@@ -12,6 +12,7 @@ Austin, 2026-11-08, after walking v2.1. Runs after v4. Initial scope only; the p
 - v5 divides the bowl into named bioregions, each with its own ground cover and flowers, its own stone (colour, shape, how it lies: scree, pavement, tors, boulders), its own trees or absence of them, its own small life and sounds, and its own weather in the air (dust, seed, mist, ash). A visitor should know which region they are in with the HUD off, and crossing a boundary should feel like something.
 - Candidates to grow from what exists: the orchard country round Medlar Close; the salt and grey reeds of the Wrong Colour spreading into a real salt-flat; the glacier's foreland and moraine; the high heath under the eastern wall; the river's canyon; the keep's home moor. Each gets a one-line character and a palette before anything is built.
 - The rule from v2 holds: creatures tied to places. Each bioregion gets at least one thing that lives only there.
+- **Light and illumination** (Austin): v4 raises the floor and adds a few local lights; v5 treats light as part of a place's character and as life: each bioregion's own quality of light and afterglow, lights that are tended or carried by someone, lights that move or answer, and the shadows they throw.
 
 ## Not in v5
 
