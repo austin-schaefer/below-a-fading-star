@@ -1,6 +1,6 @@
 # The running order: v3 → v4 → v5, unattended
 
-Austin, 2026-11-08, going to bed: "when v3 is finished, compact, then pick up v4; v4 runs for however many hours, then compact, then v5; set it up so it just continues autonomously." This file is the orchestrator's standing instructions for that run. It survives context compaction and session restarts; the scheduled check-in (hourly, at 23 past, firing into the orchestrator's session) points here. Delete it when the run is over.
+Austin, 2026-11-08, going to bed: "when v3 is finished, compact, then pick up v4; v4 runs for however many hours, then compact, then v5; set it up so it just continues autonomously." This file is the orchestrator's standing instructions for that run. It survives context compaction and session restarts. The run moved from the cloud to Austin's Mac at about 06:00 UTC (see `HANDOFF.md`: setup, GPU rendering, the pace rules that protect the Mac, and what replaces the cloud's scheduled task and phone notifications). Delete both files when the run is over.
 
 ## Sequence
 
@@ -19,7 +19,7 @@ Austin (2026-11-08, last thing): "check the sequence of v4 and v5 and see if it 
 
 4. **v6, the living.** The nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif, then the audio pass over everything new. Three or four figures per agent. Release as **v6**.
 
-Between stages: curate `shots/wip/` (the curation brief), write the `RELEASES.md` entry, PR, CI green, merge, publish the artifact, reset the branch to main, send a phone notification with the release line. If Austin wakes mid-stage, what has landed ships as that version's stage A.
+Between stages: curate `shots/wip/` (the curation brief), write the `RELEASES.md` entry, PR, CI green, merge, publish the artifact if the session has the tool, reset the branch to main, and log the release line in `MORNING.md` (a phone notification too where the session can send one). If Austin wakes mid-stage, what has landed ships as that version's stage A.
 
 ## Standing decisions (Austin's calls, made in advance for the night)
 
@@ -27,16 +27,16 @@ Between stages: curate `shots/wip/` (the curation brief), write the `RELEASES.md
 - Merge to `main` at each stage end after CI, as the v2 and v2.1 releases did. Netlify deploys main; the live site changes while he sleeps, which is intended.
 - Nothing touches `design/`. No GitHub issues are created for this prototype; the `wilderness-v*.md` files are the briefs.
 - Budgets and the tone notes in each brief are binding. When a brief and a render disagree, the render is re-done, not the brief.
-- Stop and notify (phone, once) rather than push on when: an agent fails the same task twice; CI is red for a reason outside the diff; anything would delete or rewrite history; the live site is broken after a merge (roll forward with a fix, never force-push).
+- Stop and notify (a **Needs you** entry in `MORNING.md`; the phone too where possible, once) rather than push on when: an agent fails the same task twice; CI is red for a reason outside the diff; anything would delete or rewrite history; the live site is broken after a merge (roll forward with a fix, never force-push).
 
-## Pace: the container is the bottleneck
+## Pace
 
-The cloud container has four CPUs and renders WebGL in software. One render takes minutes, a test suite ten to fifty, and every parallel headless browser slows the others, so hand-backs run one to two hours each. Rules for the night: at most two implementation agents at once; wip renders at half size (`--scale 0.5` or 1280×720), full size only for the renders that go into `shots/`; an agent runs the test for the module it touched and the orchestrator runs the full suite once per merge, not per agent; the orchestrator does not run its own renders or suites while two agents are rendering.
+On the Mac the binding rules are in `HANDOFF.md` (two agents at most, one browser each, half-size wip renders, `nice`). On the cloud container (four CPUs, software WebGL) a render took minutes and a suite ten to fifty, so hand-backs ran one to two hours; the same rules applied: at most two implementation agents at once; wip renders at half size (`--scale 0.5` or 1280×720), full size only for the renders that go into `shots/`; an agent runs the test for the module it touched and the orchestrator runs the full suite once per merge, not per agent; the orchestrator does not run its own renders or suites while two agents are rendering.
 
 ## Protocol per hand-back
 
 Read the report; run the checks yourself (walk 6/6, audio 39/39, perf, loading 7/7, grass-flicker 3/3, artifact build); look at the renders; copy the best into `shots/`; commit. Same-tree agents never commit; worktree agents commit on their branch and the orchestrator merges.
 
-## Check-in behaviour (the scheduled task)
+## Check-in behaviour (the hourly check-in: `/loop 1h` on the Mac, a scheduled task on the cloud)
 
 Every hour: if agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step above. If blocked, notify once and continue with anything that is not blocked. Disable the check-in when v5 has shipped or when Austin says stop.

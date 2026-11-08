@@ -6,7 +6,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low';
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 await page.addInitScript(() => {
   window.__samples = [];

@@ -32,7 +32,7 @@ const CUES = [
   // the fall last: its loop is on the cue bus. enter must sound; leave must fade it (checked separately below)
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
