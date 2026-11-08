@@ -213,6 +213,7 @@ async function start() {
     return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
   }
   ctx.pacing = pacing;
+  const render = url.searchParams.get('render') !== '0';
   let due = 0;
   document.addEventListener('visibilitychange', () => { due = 0; });
   function loop(now) {
@@ -260,7 +261,8 @@ async function start() {
     ctx.lightSlots?.update();
     ctx.perf.cpu('frame');
     renderer.info.reset();
-    ctx.post.composer.render();
+    if (render) ctx.post.composer.render();
+    else scene.updateMatrixWorld(); // ?render=0: the updates alone, for measuring their CPU headlessly
     ctx.perf.frameEnd();
     frames++; fpsT += dt;
     if (fpsT >= 1) { ctx.hud.setFps(frames / fpsT); frames = 0; fpsT = 0; }

@@ -12,7 +12,8 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const [vf, outDir, prefix, q = 'low', w = '1280', h = '720', extra = ''] = process.argv.slice(2);
 const views = JSON.parse(readFileSync(vf, 'utf8'));
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-// FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs)
+// FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs);
+// FP_SUFFIX goes after the view's name (perf-02-bloom-sun-before.png)
 const base = process.env.FP_BASE || 'http://localhost:8123';
 const page = await browser.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: +(process.env.FP_DSF || 1) });
 page.setDefaultTimeout(600000);
@@ -40,7 +41,7 @@ for (const v of views) {
     const i = fp.renderer.info.render;
     return { url: document.getElementById('scene').toDataURL('image/png'), calls: i.calls, tris: i.triangles };
   }, v);
-  const out = `${outDir}/${prefix}-${v.name}.png`;
+  const out = `${outDir}/${prefix}-${v.name}${process.env.FP_SUFFIX || ''}.png`; // FP_SUFFIX: e.g. -before
   writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
   console.log(`[saved] ${out} calls=${r.calls} tris=${r.tris}`);
 }

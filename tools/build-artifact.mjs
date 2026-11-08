@@ -49,6 +49,12 @@ for (const rel of files) {
   if (text !== before) rewritten++;
   writeFileSync(dstPath, text);
 }
+// the short commit hash, so a bench run from the artifact names its commit (perf.js reads commit.json)
+try {
+  const { execSync } = await import('node:child_process');
+  const commit = execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim();
+  writeFileSync(join(dist, 'commit.json'), JSON.stringify({ commit }));
+} catch { /* not a git checkout */ }
 const left = files.filter((f) => f.endsWith('.js') && /(from|import)\s*['"]three/.test(readFileSync(join(dist, f), 'utf8')));
 if (left.length) { console.error('bare three imports remain in', left); process.exit(1); }
 console.log(`wrote dist/artifact.html (${out.length} bytes) and ${files.length} files, ${rewritten} with imports rewritten`);

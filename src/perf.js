@@ -247,7 +247,7 @@ export function createPerf(ctx) {
     scene.traverse((o) => {
       if (!o.isLight) return;
       const e = out[o.type] ||= { count: 0, visible: 0, shadow: 0 };
-      e.count++; if (o.visible) e.visible++; if (o.castShadow) e.shadow++;
+      e.count++; if (o.visible && o.layers.test(ctx.camera.layers)) e.visible++; if (o.castShadow) e.shadow++; // sources on lights.js's hidden layer count as not visible
     });
     return out;
   }
@@ -276,6 +276,8 @@ export function createPerf(ctx) {
     lines.push(`${last.calls} calls · ${(last.tris / 1000).toFixed(0)}k tris · ${mem.geometries} geometries · ${mem.textures} textures · ${renderer.info.programs?.length ?? '?'} programs`);
     lines.push('lights ' + (Object.entries(lights).map(([k, v]) => `${k.replace('Light', '')} ${v.visible}/${v.count}`).join(' · ') || 'none'));
     lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}`);
+    const st = settings();
+    lines.push(`cap ${st.cap || 'off'}${st.idle ? ' (idle ' + st.targetFps + ')' : ''} · shadow redraws ${st.shadows ? (st.shadows.every ? 'every frame' : st.shadows.redraws) : '–'} · point slots ${typeof st.lightSlots === 'object' ? st.lightSlots.active + '/' + st.lightSlots.slots : 'off'} · bloom ×${st.bloomRes} · throttle ${st.throttle ? 'on' : 'off'}`);
     overlay.textContent = lines.join('\n');
   }
   function setActive(on) {
@@ -290,6 +292,13 @@ export function createPerf(ctx) {
   const toggles = {};
   function setBloom(on) { if (ctx.post) ctx.post.bloom.enabled = on; }
   function setShadows(on) { for (const l of shadowLights) l.castShadow = on; } // light hash changes; three recompiles
+  // The bench files itself: the commit from commit.json (written by the Netlify build and build-artifact.mjs;
+  // not looked for on localhost, where there is none), and the machine from ?machine=, remembered per browser.
+  let machine = url.searchParams.get('machine');
+  try { if (machine) localStorage.setItem('fp-machine', machine); else machine = localStorage.getItem('fp-machine'); } catch { /* storage blocked */ }
+  if (!window.__fp_commit && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) {
+    fetch(new URL('commit.json', document.baseURI)).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.commit) window.__fp_commit = j.commit; }).catch(() => {});
+  }
   function attach() {
     overlay = document.getElementById('perf');
     instrumentPost(ctx.post);
@@ -391,6 +400,8 @@ export function createPerf(ctx) {
       b.result = {
         kind: 'fading-planet-bench', date: new Date().toISOString(),
         ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
+        ...(machine ? { machine } : {}),
+        settings: settings(),
         userAgent: navigator.userAgent, quality: ctx.quality, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
         renderSize: size, url: location.search, duration, warmup: warm, pathMetres: Math.round(path.length),
         gpuTimer: gpu.ok, toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
@@ -427,7 +438,8 @@ export function createPerf(ctx) {
       else if (a === 'dl') {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
-        link.download = `bench-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}.json`;
+        const slug = res.machine ? '-' + res.machine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '';
+        link.download = `bench-${res.date.slice(0, 10)}-${res.commit ? res.commit.slice(0, 7) + '-' : ''}${res.quality}${slug}.json`;
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(link.href), 5000);
       } else if (a === 'copy') {
@@ -437,6 +449,16 @@ export function createPerf(ctx) {
     document.body.appendChild(el);
   }
 
+  // what the v3 stage 2 switches are doing (frame cap, shadow cadence, light slots, bloom size, throttling)
+  function settings() {
+    const sc = ctx.shadowCadence, ls = ctx.lightSlots;
+    return {
+      cap: ctx.pacing?.cap ?? null, targetFps: ctx.pacing?.fps ?? null, idle: ctx.pacing?.idle ?? null,
+      shadows: sc ? { ...sc.settings, redraws: sc.stats.redraws, dynamicRedraws: sc.stats.dynamic, nearCasters: sc.stats.near, pcf: renderer.shadowMap.type === ctx.THREE.PCFShadowMap ? 'hard' : 'soft' } : null,
+      lightSlots: ls ? { slots: ls.slots.length, sources: ls.sources.length, active: ls.active() } : 'off',
+      bloomRes: ctx.post?.bloom?.resScale ?? 1, throttle: ctx.throttle !== false,
+    };
+  }
   function report() {
     const live = renderer.info.render, mem = renderer.info.memory;
     const r = api.active ? last : { calls: live.calls, tris: live.triangles, points: live.points, lines: live.lines };
@@ -446,6 +468,7 @@ export function createPerf(ctx) {
       render: { calls: r.calls, triangles: r.tris, points: r.points, lines: r.lines },
       memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null },
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
+      settings: settings(), ...(machine ? { machine } : {}),
       gpuTimer: gpu.ok,
       firstBlock: firstBlock && { frames: firstBlock.frames, callbacks: topCallbacks(firstBlock.cb, 1) },
       modules: Object.fromEntries([...mods.values()].map((m) => [m.name, { world: m.world, enabled: m.enabled, updates: m.updates, objects: m.objects.size }])),

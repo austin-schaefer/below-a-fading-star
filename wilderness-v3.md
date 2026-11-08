@@ -44,6 +44,60 @@ Each change behind a flag until measured; renders before and after at the same v
 5. **Pixel ratio by quality**: high 1.25 (was 1.5), medium 1, low 0.85 with the HUD crisp (HUD is DOM, unaffected). Add a `?dpr=` override.
 6. **Update throttling by distance.** Each `registerUpdate` consumer declares a position and a tick rate; far things update at 10 Hz or less, near things every frame. Eyes track only within 40 m (already partly true), biomesh tiles beyond 60 m hold still, fauna beyond 120 m steer at 5 Hz, particle systems beyond their visible range pause.
 
+### Stage 2: what each flag does
+
+Every switch defaults to the new behaviour; the old one is one URL parameter away, so a regression bisects from the URL.
+
+- `?cap=` frames per second, default 60 (30 at q=low on battery where `navigator.getBattery` exists; Firefox has none); `0` is uncapped, as before. Paced with `requestAnimationFrame` and a due time, never `setTimeout`. `?idle=0` turns off the rest: about 10 fps under the title and paused cards and after 3 s unfocused, and nothing while the tab is hidden. Time and every update run once per rendered frame with the real dt, clamped to 0.1 s as before, so the world and the audio mix carry on at the slower rate. The bench ignores the idle rules but keeps the cap.
+- `?dpr=` pixel ratio, default high 1.25 (was 1.5), medium 1, low 0.85 (was 1). The HUD is DOM and stays sharp.
+- `?shadowhz=` (default 2): the shadow map is no longer drawn every frame (`shadowMap.autoUpdate` off). It is redrawn when the texel-snapped shadow camera has moved 3 m (walking, or turning, since it sits 40 m ahead of you; the light only moves on a redraw, so the old map stays right meanwhile), twice a second regardless, at once when a creature within 40 m has moved more than one shadow texel (4.6 cm at high, 9.3 at low) since the last redraw, and at `?shadowdyn=` (default 15 Hz) when a near one has only turned or changed pose. The texel rule is the one that keeps creature shadows smooth: a shadow never lags its caster by more than a texel, so an ambling grazer (0.75 m/s) redraws ~16 times a second at high and a fleeing one (6.8 m/s) every frame, while a fixed rate either lagged a running animal or redrew for an idle one. `?shadowhz=0` redraws every frame. `?shadowcull=0` keeps far creatures' shadows: by default the fauna's and inhabitants' casters (grazers, the deodand, the heron, the uncanny, the traveller and wagon, the galley, the guest) stop casting beyond 40 m, so none of them steps at the slow clock. The banners count as always moving within 40 m.
+- `?pcf=soft|hard` the shadow filter. PCFSoft and PCF both take 17 compare taps in three r170; soft adds a bilinear weight per tap, so hard saves arithmetic, not fetches. Soft stays the default everywhere: hard (with the light's radius of 2) bands and reshapes the dappled light on the wood's floor (`perf-02-pcf-wood-before.png` soft against `-after.png` hard), which is not worth a few multiplies a tap.
+- `?bloomres=` bloom size as a fraction of the render, default 0.5 (UnrealBloom halves again inside, so its bright pass is a quarter of the render: a quarter of the bloom's fill). `1` is as before. Its blurs are fixed in texels, so at half size each mip spreads twice as far and the tightest glow is gone; the half-size settings are strength 0.52, radius 0.15, threshold 0.88 (were 0.38, 0.55, 0.9), chosen against full-size renders of the sun, the Lattice, the Wrong Colour and the taverna lantern. `?bloomtune=strength,radius,threshold` tries others.
+- `?lights=` point-light slots, default 3. After the modules build, every PointLight becomes a source on a layer the camera does not see (three skips such lights, and their world matrices still update, so the wagon's lantern keeps tracking); 3 slot lights copy position, colour, intensity, distance and decay from the nearest live sources within distance + 20 m each frame, intensity 0 when there are none. The scene's light count never changes, so nothing recompiles, and every lit fragment evaluates 3 point lights instead of 7. `?lights=off` leaves every light as it was.
+- `?throttle=0` runs every update every frame. Otherwise `ctx.registerUpdate(fn, { pos | at(), near, hz, r })` runs a callback every frame within `near` m of the player and at `hz` beyond (held still at 0), handing it the skipped time as dt so motion covers the same ground. Applied: grazers, deodand, slinker, wader, the tarn woman, the traveller, rooks and gibbet crows, the keep's crows, the tower moths and the corpse-candles at 5 Hz beyond 120 m; the cloak at 5 Hz beyond 40 m, so its 225 eyes track every frame only within 40 m; the Menology's lizards held still beyond R + 140 m (their 48 matrices are no longer rewritten there). Inside modules: biomesh tiles more than 60 m away hold still and a colony beyond radius + 70 m is skipped (was + 110); the galley's wake strip is rebuilt only within 160 m; the traveller's 3 cm rope is hidden and not rebuilt beyond 60 m, where it is under a pixel.
+- `?batch=instanced|batched` and `?multidraw=0`: see the draw calls below.
+
+### Stage 2: draw calls on Firefox
+
+Austin's Firefox/Mac bench (`shots/perf/2026-11-08-631683e-austin-firefox-mac-high.json`) drew 522 to 3948 calls, against ~160 headless. Firefox has no `WEBGL_multi_draw`, and without it three.js draws a `BatchedMesh` once per visible instance: the trees (and the Lattice's crystals) are one `BatchedMesh`, so every tree in view and every tree in the shadow camera's box cost a call. Reproduced headlessly with `?multidraw=0`, which hides the extension: 3992 calls at q=high at (1, 112) looking north, 162 with it. Where the extension is missing, `vegetation/batch.js` now draws the same geometry, matrices and colours as one `InstancedMesh` per geometry per 100 m cell: 538 calls at the same spot (the trees are ~470 of them, about half in the shadow pass). Cells are frustum-culled as wholes, so a few more tree triangles reach the GPU than with per-instance culling. For stage 3: the trees have ~70 geometries (variants × 3 LODs), so the fallback's cost is geometries × visible cells; fewer variants per LOD, larger far cells or the far LOD as impostors would bring it nearer to the 160 the multi-draw path gets.
+
+Austin's first bench sample also showed 11.8 ms of fauna CPU per frame. It was the perch searches: the gibbet crows cast 900 rays straight down onto the merged structure meshes, and the keep's crows and the rooks a few dozen more, each testing every triangle; headless the first half second spent 3 s in it. `fauna/geo.js` `makeDownCaster` bins the triangles by xz once and runs three's own triangle test on the few under each ray: the perches found are identical (checked against the old code), and the first half second's fauna time is 70 ms headless instead of 3.2 s.
+
+### Stage 2 results (headless CPU)
+
+CPU per frame inside the update loop, by module, over `?bench=12&q=low` (spawn, the causeway, the tarn's shore, the fen's edge, home), from `ctx.perf.report()`. JS time is real even under SwiftShader; frame and GPU numbers are not.
+
+The spec'd run renders, and headless a rendered frame takes 0.5–1.9 s, so a 12 s bench is 9–28 frames and the CPU numbers are dominated by one-off setup (the biomesh's first placement, the perch searches) and by whatever else the shared machine was rendering: `shots/perf/headless-before.json` (untouched tree, 806f909, alone on the machine) and `headless-after.json` (contended: 9 frames) are kept, but not compared. The comparison is the same bench with `?render=0` (a measuring switch: the updates run, the composer does not), capped at 60 fps, so ~680 frames per run: before is `?throttle=0` on the new tree (every update every frame, the modules' own distance gates off), after the defaults. Means of 4 runs before and 3 after (`headless-cpu-before.json`, `headless-cpu-after.json` are one of each).
+
+| module | before ms/frame | after | change | rendered run before | after (contended) |
+|---|---:|---:|---:|---:|---:|
+| vegetation | 0.73 | 0.90 | noise (0.67–0.78 before, 0.77–1.10 after) | 2.56 | 2.79 |
+| fauna | 0.53 | 0.24 | −54% | 4.06 | 16.94 |
+| frame (main.js) | 0.28 | 0.30 | +0.02 (light slots, shadow scan) | 0.45 | 1.01 |
+| particles | 0.07 | 0.09 | noise | 0.13 | 0.11 |
+| inhabitants2 | 0.07 | 0.04 | −48% | 0.22 | 0.33 |
+| skylife | 0.04 | 0.05 | – | 0.14 | 0.14 |
+| riverlife2 | 0.03 | 0.11 | one run at 0.27, others 0.03–0.04 | 0.09 | 0.07 |
+| structures, water, rocks, ruins2, flora2 | 0.05 | 0.05 | – | 0.14 | 1.33 |
+| **total** | **1.80** | **1.78** | vegetation's noise hides the rest | 7.79 | 22.72 |
+
+By callback: the biomesh 0.225 → 0.003 ms, the Menology 0.050 → 0.027, the grazers 0.163 → 0.130, the traveller 0.033 → 0.020, the rooks 0.013 → 0. On the causeway stretch where Austin's bench showed 1.4–1.8 ms of fauna (x −26 → −55), fauna is 0.76–1.11 ms per frame before and 0.21–0.29 after. What is left is vegetation's own callback (the plant-chunk scan over all 729 chunks every frame, tree LOD, fungi): stage 3's vegetation work.
+
+The first half second (`report().firstBlock`): the perch searches cost 3032 ms (rooks and gibbet crows) and 162 ms (keep crows) headless before, 70–87 ms and 12–22 ms after.
+
+### Stage 2 render pairs
+
+All in `shots/wip/`, rendered with `tools/views.mjs` (gutter held) at q=low, 1280×720, `?dpr=1` unless noted, views in `tools/views-perf.json`. Each pair changes one switch; grain, wind, the corpse-candles, the Wrong Colour's pulse and the lanterns' flicker move between any two renders, so a pair is judged on what the switch could touch.
+
+- `perf-02-all-<view>-before/after` (10 views): the untouched tree (806f909) against every default (pcf soft). The whole of stage 2 at once.
+- `perf-02-bloom-<view>-before/after` (10 views): `?bloomres=1` against half size. **For Austin's eye:** the sun's bright rim is a touch wider and ~3 levels brighter at half size (`perf-02-bloom-sun-*`); the Wrong Colour's close glow and the Lattice filaments' tight glow lose a little crispness. The others read the same.
+- `perf-02-pcf-<view>-before/after` (wood, spawn, herd): soft against hard. Hard bands the dappled light on the wood's floor; rejected, soft stays the default.
+- `perf-02-shadows-<view>-before/after` (herd, spawn, wood): every-frame shadows, far creatures casting, against the cadence and the 40 m cut. Static shadows are identical (the map is redrawn before each render by the tool, so this pair shows the cut, not the cadence).
+- `perf-02-lights-<view>-before/after` (taverna, fen, Wrong Colour): every light live against 3 slots. Same within the lights' own flicker; the slots were checked in the page to carry the two taverna lanterns at the courtyard.
+- `perf-02-throttle-<view>-before/after` (herd, Lattice): `?throttle=0` against throttling. Same picture.
+- `perf-02-batch-<view>-after` (wood, Lattice, sun) against `perf-02-all-<view>-after`: the instanced fallback against the BatchedMesh. Same picture.
+- `perf-02-dpr-spawn-before/after`: q=high at a 2× display, pixel ratio 1.5 (1920×1080) against 1.25 (1600×900). **For Austin's eye:** slightly softer edges on foliage and the keep's silhouette at high; the HUD is unaffected.
+
 ## Stage 3: the structural work (one or two agents, Opus)
 
 1. **A medium quality tier** between high and low, chosen by default on laptops (no discrete GPU hint: `navigator.gpu`/`WEBGL_debug_renderer_info` where available, else by the first 3 s of measured frame time), and an **adaptive step**: if the 1%-low frame time stays above budget for 5 s, step pixel ratio down by 0.1 to a floor; step back up slowly when there is headroom. The quality menu in the debug panel shows which tier is active and lets Austin pin one; the choice persists in localStorage.
