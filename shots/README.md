@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 80 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 150 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -33,6 +33,11 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 18 | The v4 master placement plan: every site for v4, v5 and v6 on the map, and the regions alone |
 | 19 | v3 stage 3: vegetation and materials (terrain bands, far grass and reed LOD, the water band, the chunk scan, grass by tier) |
 | 20 | v2.2: the phone controls, a hop button and a mute button (renumbered from 15 when v3 merged) |
+| 21 | v4 systems: the longer sun-gutter, the four-layer mountain wall and the sun's saddle, the light floor, the cyclopean kit, the regions kit |
+| 22 | v4 regions: the eight bioregions and their creatures, the glacier rebuilt, the tarn's south bay and spit |
+| 23 | v4 the Great Span: deck, piers, stairs, gates, the fallen bays, the Postern |
+| 24 | v4 map structure: the causeway's new route, the pit, the leads, the Tumbling Water 2.5× taller |
+| 25 | v4 Tinctures and set-dressing: the regions' air, the Long Figure, the Discontinued Track, the Surveyor's Pegs |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -253,4 +258,80 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `19-veg-water-tarn-before.png` | The tarn with the full water shader at distance. |
 | `20-touch-phone-controls.png` | A phone (390×844) after Go out: the thumbstick ring at bottom right, the hop ring left of and below it, the mute glyph faint at top right. |
 | `20-touch-phone-muted-hop-held.png` | The same view with sound muted (the glyph struck through) and the hop ring held. |
+| `21-systems-gradine-after.png` | After: the same mountain face as a layered range with its talus fans and gullies, the old Span's arch at its foot. |
+| `21-systems-gradine-before.png` | Before: the Gradine's mountain face as v3 drew it, one blank slope behind the grass. |
+| `21-systems-kit-demo.png` | The kit's test scene north of the keep: a tower on a stepped cyclopean base beside a windowed block, a measure figure at its foot; the first render of the masonry kit. |
+| `21-systems-kit-pier.png` | A kit tower and its retaining wall close up: courses that diminish as they rise, worn arrises and cut joints. |
+| `21-systems-kit-stair.png` | The kit's base and windowed block with a cloaked measure figure beside it for scale. |
+| `21-systems-regions-above.png` | The regions kit's first render, looking straight down with the ground tinted by region: a smeared, blurred mess. Funny failure. |
+| `21-systems-saddle-after.png` | After: the longer gutter from the spawn, with the flat-floored saddle and the sun clear of the col, far ranges paler behind. |
+| `21-systems-saddle-before.png` | Before: v3's jagged V of a notch, the sun low in it. |
+| `21-systems-saddle-foot-after.png` | After: the saddle's foot, the sun low in the flat-floored gate between two dark berms. |
+| `21-systems-saddle-foot-before.png` | Before: the same ground with the gate absent, only a dark dune and a dim horizon. |
+| `21-systems-sun-after.png` | After: the sun in the new gate, the four-layer wall hazing paler range by range on both sides. |
+| `21-systems-sun-before.png` | Before: v3's V-shaped notch with a single dark wall, the sun inside it. |
+| `21-systems-wall-north-after.png` | After: the north wall as ranges behind ranges, each paler than the one before, under a starred sky. |
+| `21-systems-wall-north-before.png` | Before: the north wall with a pink-lit sky and one range of peaks behind the court. |
+| `21-systems-wood-deep-light-after.png` | After the light floor (exposure 1.25, hemisphere 2.7, ambient 1.6): the deep wood's trunks and a fence now read. |
+| `21-systems-wood-deep-light-before.png` | Before the light floor: the deep wood almost black, a lamp glint the only thing visible. |
+| `22-adust-beetles.png` | The Adust's beetles in rows on the jointed sandstone pavements, standing on their heads facing the sun. |
+| `22-adust-north-after.png` | After: the Adust's crazed hexagonal clay, red drifts and the black pavements under a dust-red sky. |
+| `22-adust-north-before.png` | Before: the same ground as moor, grass and a boulder under a tree. |
+| `22-bletting-boundary.png` | The Bletting's edge: rank gold-green grass, knapweed and the close's arcade beyond. |
+| `22-bletting-creature.png` | The Bletting's creature, a snail glowing a small orange lantern in the long grass. |
+| `22-demesne-peafowl.png` | The Demesne's white peafowl standing on a block, by the lawn's earthwork. |
+| `22-glacier-above.png` | The rebuilt glacier from above: the convex tongue of blue-grey ice with crevasse arcs and the Lattice's crystals scattered across it. |
+| `22-glacier-snout.png` | The glacier's snout at the low end, the ice lifting to a lobed face of about five metres, a boulder before it. |
+| `22-high-ling-boundary.png` | The High Ling's edge: the scarp, deep heather and pink granite tors against the wall. |
+| `22-high-ling-creature.png` | The High Ling's creature, a stonechat, among heather and gorse on the shelf. |
+| `22-lynchets-stoat-close.png` | A piebald stoat on a Lynchets path between a wall and a rail fence, the creature's best view (an earlier iteration). |
+| `22-lynchets-stoat.png` | The Lynchets' stoat's final view: thistle-down hanging in a dark frame, the stoat out of shot. |
+| `22-outwash-boundary.png` | The Outwash's edge: gravel, an erratic, trees, and the Lattice's crystal litter in the distance. |
+| `22-outwash-creature.png` | The Outwash's grouse, a white bird on bare gravel with a snout-shaded bank behind. |
+| `22-outwash-ridge-after.png` | After: the terminal moraine's ridge in grey gravel, the glacier's lights beyond. |
+| `22-outwash-ridge-before.png` | Before: the same view as moor, grass and heather. |
+| `22-saltings-boundary.png` | The Saltings' edge: cracked white crust running into red glasswort beds under a low sun. |
+| `22-saltings-creature.png` | The Saltings' halite crab among glasswort and bleached stumps. |
+| `22-saltings-rim-after.png` | After: the Saltings' crust, plates with curled rims and cracks, the tideline reeds along the edge. |
+| `22-saltings-rim-before.png` | Before: the same shore as grass. |
+| `22-strandline-sandpipers.png` | One of the Strandline's sandpipers on the flint shingle at the lap's front. |
+| `22-strandline-shore-after.png` | After: the south shingle in bands of stones with a storm berm and the tarn's reflection of the sun. |
+| `22-strandline-shore-before.png` | Before: the same shore with grass down to the water. |
+| `22-tarn-spit-after.png` | After: the tarn's shingle spit running out, the water's sun path and the Span's ruined arches beyond. |
+| `22-tarn-spit-before.png` | Before: the same view with the old round shore. |
+| `23-span-above-west.png` | Above the Great Span's west end: a gate's crag and abutment against the wall. |
+| `23-span-bather-after.png` | After: a Span pier and gate crag rise against the glow over the canyon, a drone and kite-like fliers above. |
+| `23-span-bather-before.png` | Before: the same canyon view with nothing built, the saddle glowing at the end. |
+| `23-span-bay-canyon.png` | The 61 m canyon bay's pier foot standing on the Saltings' pale crust. |
+| `23-span-bay-fen.png` | A pier in the fen's south bay, etched triangles on its face and fallen pieces in the grass. |
+| `23-span-bay-hollow-ground-after.png` | Two piers of the hollow bay with a fallen crown piece between them, rubble at their feet. |
+| `23-span-deck-bowl.png` | From the deck at the parapet: the bowl, the Lattice and the glacier's icefall, the north wall. |
+| `23-span-east-gate.png` | The east gate hidden behind a fall of rock heaped against its doors. |
+| `23-span-east-stair.png` | The east stair's top: a curbed landing onto the deck above the fen. |
+| `23-span-map.png` | The debug map with the Span's ten piers laid out along z 215. |
+| `23-span-postern.png` | The Postern: a small paler-stone door in the foot of the west gate's north leaf, its leaf swung inward. |
+| `23-span-spawn-after.png` | After: from spawn the Span's west half and gate crag read across the south, arches dark against the hazed wall. |
+| `23-span-spawn-before.png` | Before: the same spawn view with the old Trigon Span. |
+| `24-map-causeway-fall-after.png` | After: the causeway at (-40, 22) with the taller fall's sightline blocked by the keep hill's skirt. |
+| `24-map-causeway-fall-before.png` | Before: the same blocked view with the old route. |
+| `24-map-lead-kerb.png` | The Leerie's kerb, K1: a row of pale dressed kerbstones sunk in the long grass, a few heaved. |
+| `24-map-lead-path.png` | A path lead worn into the Saltings' crust, pitted with prints, the Lattice's crystals at the horizon. |
+| `24-map-lead-rivulet.png` | A rivulet's course cut as a shallow trench through the grass beside a leaning post. |
+| `24-map-pit-across.png` | The pit seen across the Saltings' lobe: a dark hole in the crust at the road's end. |
+| `24-map-pit-lip-after.png` | After: standing at the pit's lip, the throat dropping sheer, rock ledges jutting and the last slabs tilting in. |
+| `24-map-pit-lip-before.png` | Before: the same spot, unbroken crust. |
+| `24-map-pool-after.png` | After: the Tumbling Water 2.5 times taller, a long sheet falling from a lip high in the ravine into the mist. |
+| `24-map-pool-before.png` | Before: v2's fall, a short drop to the same pool. |
+| `25-dress-figure-deck-after.png` | After: the Long Figure, a person with six-fold arms cut in chalk on the north wall's slope, seen from the Span's deck. |
+| `25-dress-figure-deck-before.png` | Before: the same view, the slope bare. |
+| `25-dress-figure-span-west-after.png` | After: the Long Figure from the west of the Span, tall above the fen. |
+| `25-dress-figure-span-west-before.png` | Before: the same view without it. |
+| `25-dress-pegs-tarn-after.png` | After: a Surveyor's peg standing thin in the grass on x = -80, to the left of the tarn's near shore; barely there. |
+| `25-dress-pegs-tarn-before.png` | Before: the same shore without the pegs. |
+| `25-dress-tinct-saltings-after.png` | After: the Saltings' rose-white air tints the haze and ground; subtle, about 3% of the frame's colour. |
+| `25-dress-tinct-saltings-before.png` | Before (`?tinct=0`): the same crust edge in the neutral haze. |
+| `25-dress-track-along-after.png` | After: the Discontinued Track's bare footprints crossing the Saltings' crust, the Long Figure's arms above. |
+| `25-dress-track-along-before.png` | Before: the same crust with no prints. |
+| `25-dress-track-end-after.png` | After: the prints' last stretch in the crust, in step to the final one, then nothing. |
+| `25-dress-track-end-before.png` | Before: the same crust with no prints. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
