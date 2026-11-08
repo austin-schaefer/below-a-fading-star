@@ -4,6 +4,20 @@
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
 
+// Gutter timings, seconds: total length [min, max] and gap between gutters [min, max]. v4: 12-16 s in all
+// (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter is at 25-55 s.
+// ?gutter=<len>,<every> pins both (a single length and interval); ?gutter=v3 is the old 6.5-9 s every 70-150 s.
+export const GUTTER_V4 = { len: [12, 16], every: [60, 110] };
+export const GUTTER_V3 = { len: [6.5, 9], every: [70, 150] };
+export const GUTTER = (() => {
+  let q = '';
+  try { q = new URLSearchParams(location.search).get('gutter') || ''; } catch { /* not in a browser */ }
+  if (q === 'v3') return GUTTER_V3;
+  const m = q.split(',').map(Number);
+  if (m.length === 2 && m.every((n) => Number.isFinite(n) && n > 0)) return { len: [m[0], m[0]], every: [m[1], m[1]], pinned: true };
+  return GUTTER_V4;
+})();
+
 export function buildSky(ctx) {
   const { scene } = ctx;
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
@@ -149,13 +163,15 @@ export function buildSky(ctx) {
   // Guttering: the sun falters now and then, as if about to go out.
   // flicker.hold (null normally) pins the value, for renders and tests of the gutter.
   // A gutter is a vast thing failing, not a light switch: it fades in over ~1.4 s, holds a dim,
-  // shuddering floor of ~0.3 for a few seconds, and comes back over ~2.5 s with a slight overshoot.
+  // shuddering floor of ~0.3 for about 8 s, and comes back over ~2.5 s with a slight overshoot.
   // Austin found the first version (a third of a second to the floor) too abrupt.
-  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, len: 0, hold: null };
+  // Timings come from GUTTER (below) so everything that wants them reads one place; ?gutter=<len>,<every> overrides, ?gutter=v3 restores the old ones.
+  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, len: 0, hold: null, timing: GUTTER };
+  if (GUTTER.pinned) flicker.next = Math.min(flicker.next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
   function update(dt, t) {
     uniforms.uTime.value = t;
     flicker.next -= dt;
-    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = 6.5 + Math.random() * 2.5; flicker.next = 70 + Math.random() * 80; }
+    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + Math.random() * (GUTTER.len[1] - GUTTER.len[0]); flicker.next = GUTTER.every[0] + Math.random() * (GUTTER.every[1] - GUTTER.every[0]); }
     let target = 1.0;
     if (flicker.phase > 0) {
       flicker.phase -= dt;
