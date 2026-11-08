@@ -1,0 +1,20 @@
+[
+ {
+  "name": "fix-leerie-row-lit",
+  "x": 110.5,
+  "z": -30.5,
+  "yaw": -2.62,
+  "pitch": 0.02,
+  "settle": 3000,
+  "js": "__fp.leerie.light(true)"
+ },
+ {
+  "name": "fix-leerie-one-lit",
+  "x": 123.3,
+  "z": -9.1,
+  "yaw": 1.57,
+  "pitch": 0.22,
+  "settle": 3000,
+  "js": "__fp.leerie.light(true)"
+ }
+]

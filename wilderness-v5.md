@@ -88,7 +88,7 @@ If Austin wakes between releases, what has shipped is the version and the rest i
 
 ## Not in v5
 
-Performance is v3; the wonders, the light and the paths between places are v4. v5 is the land between them.
+v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing and the massifs. Performance and visible artefacts are **v6** (`wilderness-v6.md`); the living (the figures, the small characters, the Link-Boy, the Luminous Reach and the glyph motif) is **v7**.
 
 ## v5 recasts
 
@@ -162,7 +162,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 
   | from | distance, top's elevation | seen | against |
   |---|---|---|---|
-  | spawn (6, 36) | 303 m, 10° | **hidden at every height** by the keep's west front (x 7–8, z 6–29), 2–25 m from the eye | |
+  | spawn (2, 35) | 303 m, 10° | **hidden at every height** by the keep's west front (x 7–8, z 6–29), 2–25 m from the eye | |
   | 2 m west of spawn (4, 36) / 4 m west (2, 36) | | top 18 m / whole | the icefall in the notch |
   | causeway (−40, 22) | 298 m, 12° | down to 2 m | the icefall, beside the court's uprights |
   | causeway (−65, 12) | 296 m, 13° | down to 4 m | the icefall |
@@ -240,7 +240,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 
   | from | sun | nearest colossus to the sun's centre |
   |---|---|---|
-  | spawn (6, 36) | clear, between them, low over the southern one's shoulder | 3.1° |
+  | spawn (2, 35) | clear, between them, low over the southern one's shoulder | 3.1° |
   | the road's start (−344, 126) | clear, in the gap | more than 12° |
   | causeway (−40, 22) | clear | 4.0° |
   | causeway (−65, 12) | clear, between them | 3.2° |
@@ -269,7 +269,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 - **Lights:** 32 lamps hung from lintels at high (19 at low), the lift's cage lamp, and two furnace mouths in the rock behind the lowest tier and the fourth. All are emissive, with an additive halo for the bloom. They breathe slowly and come up to 2.4× while the sun gutters. There is one real point light (`galleries-furnace`, distance 85) at the lower furnace mouth. `lights.js` slots it within about 105 m, so it warms the ironwork and rock round the furnace for a walker near the wall's foot (`under` against `under-draft6-nolight`). Seen from the bowl, the ironwork is dark bronze in shade and holds back 25% of the fog's haze, so it stays darker than the hazed wall without reading nearer than it (lowered from 45% by the coherence pass, `wilderness-v5-coherence.md`).
 - **Cost at high:** 5 draw calls (struts, links, wheels, halos, stays) and 66.4k triangles (45.2k at low). From the causeway (−65, 12) the frame goes from 181 to 186 calls and from 2.414M to 2.481M triangles. No shadows: the wall they hang on casts none. No colliders. No sound.
 - **Sightlines** (renders, before `?galleries=0`):
-  - From spawn (6, 36): 410 m off, left of centre, just right of the glow.
+  - From spawn (2, 35): 410 m off, left of centre, just right of the glow.
   - From the causeway (−65, 12) and (−40, 22): a black lattice against the hazed face, its south edge in the glow. The towers and the mast break the crest against the sky. The lens mount stands about 20° to the right, its silhouette clear.
   - From the tower's foot (−262, −118): 150 m off, the bays repeat across the frame and up into the haze, black against the glow to the south, with the chains hanging past.
   - The brief's (−140, −30) (`w140`; the lens mount stands at (−250, −135)) and the Cardinal Stones (−170, −50): the whole works, with the towers against the glow.
@@ -385,7 +385,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
   |---|---|
   | the causeway (-40, 22), north-east | the crest across the middle of the frame becomes a row of square stumps over the front range, roughly 4 degrees across each; they read as battlements, not as bumps, but the haze softens them, and only 4-5 are in the frame |
   | the Outwash's foreland (60, -230) | the best view: five or six merlons along the skyline, flat-topped, the faces catching the light; clearly built |
-  | spawn (6, 36) | the same row seen over the Court's wall; reads as a squared crest |
+  | spawn (2, 35) | the same row seen over the Court's wall; reads as a squared crest |
   | the Span's deck (-200, 215) y 56 | merlons at the edge of the haze; a row of teeth on the right of the crest |
   | the High Ling scarp (250, 5), north | the near end of the run on the left of a rugged crest; reads as a few rectangular blocks on the skyline; the run is foreshortened |
 
@@ -430,7 +430,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 
   | from | what reads |
   |---|---|
-  | spawn (6, 36) | the keep stands round spawn on the east, so the rise is hidden. Looking up past it (`spawn`, bearing 100°, 60° up), the band crosses the slot between the keep's walls and shows over its top |
+  | spawn (2, 35) | the keep stands round spawn on the east, so the rise is hidden. Looking up past it (`spawn`, bearing 100°, 60° up), the band crosses the slot between the keep's walls and shows over its top |
   | the Lattice (40, −250), south and up | the south-eastern leg comes up past the crystals at the left edge, with the moon low beside it |
   | the Lattice, east and up (`lattice-east`) | the clearest view: the arc arches over the Lattice from the north-east to the south-east, the great lattice under it, the Vigilant on the crest below, and the lower gap before the moon |
   | the causeway (−40, 22), east | the top of the arc across the head of the frame, broken by the top gap. The keep stands in front of the Vigilant from here (bearings 60–110°) |
@@ -534,7 +534,8 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
   - **Embers under the Arcature** (`lightEmbers`, (160, 60), r 6): one live fire-ring 0.8 m off the centre and three dead ones within the armillary's bare r 6, each a ring of stones round an ash disc with charred sticks. The live bed pulses slowly; a travelling noise in the vertex shader breaks it into coals. The sticks' inner ends glow, a thread of smoke rises lit from below, and a spark rises now and then and goes out. **One real light, r 12**, with the ember flicker.
   - **A guttering lamp on a post** (`lightPost`, (−140, −30), r 3): 3.3 m off the causeway on P3's side. It is a plain square stone post 3.6 m tall with a bronze bracket over the road, and a lantern hangs from the bracket. The lamp keeps its own rhythm, independent of the sun's gutter: a slow uneven flame, a sag and flutter every 7–18 s, and every 60–120 s it goes out for about a second and sputters back. **One real light, r 10.**
   - **A lit doorway** (`lightDoor`, the lens mount's door in the south fin's end at (−250, −120)): the door stands ajar. A slit of warm light 7.5 cm wide shows at the leaf's west edge. The light falls across onto the east jamb's inner face, on the reveal's floor, and in a wedge on the ground outside that leans south-east. Nothing is beyond. `structures/tower.js` is untouched: the slit sits 2 cm in front of its black-glass leaf. **One real light, r 8**, just inside the opening.
-  - **The Leerie's twelve standards** (`leerie`, beside kerb K1 from (110, −25) to (145, 35)): twelve iron standards 5.6 m tall, one every 6.3 m, 1 m east of the kerb. Each has a stone foot, a collar, a ladder-bar and a glass lantern under a pyramid cap. They stand unlit except while the sun gutters. Lit heads are emissive, with a glow sprite and a faint pool beneath. **Two real lights, r 12**, stand at the row's quarter points (between standards 3 and 4, and 9 and 10), and they are on only while the row is lit.
+  - **The Leerie's twelve standards** (`leerie`, beside kerb K1 from (110, −25) to (145, 35)): twelve iron standards, one every 6.3 m, 1 m east of the kerb. Each is a square-section shaft that tapers (0.22 m at the foot to 0.11 m at the head) on a small stone foot, 2.4 to 3.3 m tall (2.85 m, plus or minus 15 %) with a forged collar a third of the way up, and its head bends over the kerb in a crook from which an open cage of six to eight iron ribs, 0.34 m tall, hangs on a short chain around the mantle: no glass, no box, no cap. They are pitted, rust-brown toward the foot, a few with a lichen patch, each leaning 0 to 4 degrees; every other one may have a rib missing, and the eighth hangs askew. They stand unlit except while the sun gutters. Lit heads are emissive, with a glow sprite and a faint pool beneath. The mantle colour is `#ffbc72` (it was `#ffd690`, the whitest light in the bowl, until the coherence pass). **Two real lights, r 12**, stand at the row's quarter points (between standards 3 and 4, and 9 and 10), and they are on only while the row is lit.
+  - The coherence pass and the restyle: `wilderness-v5-coherence.md`; the sheet is `shots/wip/fix-leerie-sheet.png`.
 - **The Leerie's rule** (IDEAS-v5.md CG, with Austin's change above): the lamplighter walks the row touching each wick, and none lights. Only when the sun gutters does the whole row light at once. It lights as a wave from the house's end over half a second, each standard with a flare (the head and halo swell to about 3.8 times over 0.12 s and settle over a second) and one `lamp-tick`. When the gutter ends, all twelve go out together, and the mantles glow on for 2 s. The gutter is read from the sun's flicker (`ctx.sky.flicker.value`, which `uFlicker` carries), with a hysteresis: the row lights under 0.6 and goes out over 0.85. So a held flicker poses it (`__fp.sky.flicker.hold = 0.3`, or `?gutter=12,20` for real ones). `__fp.leerie.light(true | false)` overrides it, for renders and for v7's lamplighter, who is not built; `light(null)` gives it back to the gutter. Moths come to the standards while they are lit, three to five each, through `fauna/lamps.js`'s existing mesh (`mothLamps`), and are hidden while a standard is dark.
 - **Light budget:** five point lights in all (embers r 12, post r 10, door r 8, and the Leerie's two r 12, which are lit only in a gutter). On a 4 m grid of the bowl, with every one of them on and the Kept Fire's included, no point has more than three sources within reach + 20 m. So the slots never switch between sources (wilderness-v6.md item 11). The moss has none.
 - **Cost (high):**

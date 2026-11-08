@@ -143,7 +143,7 @@ const CAND = PROFILE === 'c' ? {
   crest: [[8, 190], [20, 210], [45, 255], [72, 270], [94, 240], [104, 140], [112, 52], [120, 140], [132, 225], [150, 275],
     [165, 285], [173, 150], [180, 50], [187, 150], [200, 270], [218, 250], [236, 170], [250, 150], [264, 180], [278, 285], [292, 300], [308, 270],
     [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
-  peaks: 0.35, slope: [28, 52], talus: 18, far: [0.6, 0.7],
+  peaks: 0.35, slope: [28, 52], far: [0.6, 0.7],
 } : null;
 // a periodic Catmull-Rom spline through [bearing, value] points
 function splineAt(pts, b) {
@@ -306,7 +306,7 @@ export function applyMountains(h, x, z, r, g, glacierH) {
 //   the big form: a scree apron at 33° from the foot (lighter, smooth), a steep rock band standing behind it (a
 //     clear break of slope where they meet), a convex shoulder rounding over into the crest; corries (CORRIES)
 //     scooped high in the north- and east-facing faces, a lip below and a headwall under the crest;
-//   the middle: bedding, ledges every 13-18 m along a plane tilted 4-7° (MASSIFS: one dip per massif, another
+//   the middle: bedding, ledges every 13-17 m along a plane tilted 4-7° (MASSIFS: one dip per massif, another
 //     across the next col), a few deep gullies from the crest to the apron (GULLIES), each with a heavier scree fan
 //     at its mouth, and the buttress rhythm only where the face's mean slope passes ~50°;
 //   the small: creased facets (ridged noise, ~45 m) so the low sun picks out planes, and the old noise octaves low.
@@ -353,8 +353,11 @@ function applyMassifs(h, x, z, r, g, glacierH) {
   // the gullies: across-distance (m) from each one's line, which wanders as it climbs
   let gul = 0, fan = 0;
   for (const [gb, gw, gd] of GULLIES) {
-    let db = b - gb - 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
-    const d = Math.abs(db) * D2R * r, w = gw * (0.55 + 0.45 * u);
+    const w = gw * (0.55 + 0.45 * u);
+    let db = b - gb; if (db > 180) db -= 360; if (db < -180) db += 360;
+    if ((Math.abs(db) - 1.6) * D2R * r >= w * 2.2) continue; // out of reach even at the line's widest wander (±1.6°)
+    db -= 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
+    const d = Math.abs(db) * D2R * r;
     if (d < w * 2.2) {
       const v = Math.max(0, 1 - d / w);
       gul = Math.max(gul, gd * Math.pow(v, 1.4) * (0.4 + 0.6 * steep));
