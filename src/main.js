@@ -200,7 +200,7 @@ async function start() {
       if (!m || !throttle) { u.fn(dt, t); continue; }
       u.acc += dt;
       const q = m.at ? m.at() : m.pos;
-      const d = Math.hypot(q.x - p.x, q.z - p.z) - (m.r || 0);
+      const ex = q.x - p.x, ez = q.z - p.z, d = Math.sqrt(ex * ex + ez * ez) - (m.r || 0); // Math.hypot allocates
       if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
       else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
       else u.held = true;

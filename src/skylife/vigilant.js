@@ -221,12 +221,12 @@ export function buildVigilant(ctx, rng) {
     posAttr.clearUpdateRanges?.(); nrmAttr.clearUpdateRanges?.();
     posAttr.addUpdateRange?.(headV0 * 3, head0P.length); nrmAttr.addUpdateRange?.(headV0 * 3, head0N.length);
     posAttr.needsUpdate = true; nrmAttr.needsUpdate = true;
-    EYES.forEach((E, k) => {
-      const x = E.x - PIVOT.x, z = E.z - PIVOT.z;
+    for (let k = 0; k < EYES.length; k++) {
+      const E = EYES[k], x = E.x - PIVOT.x, z = E.z - PIVOT.z;
       e3.set(PIVOT.x + c * x + s * z, E.y, PIVOT.z - s * x + c * z);
       mesh.localToWorld(e3);
       eyePos[k * 3] = e3.x; eyePos[k * 3 + 1] = e3.y; eyePos[k * 3 + 2] = e3.z;
-    });
+    }
     eyeAttr.needsUpdate = true;
     eg.computeBoundingSphere(); // only when the head turns; lets the eyes cull when it is behind you
     headWorld.set(0, 59, 13); mesh.localToWorld(headWorld);

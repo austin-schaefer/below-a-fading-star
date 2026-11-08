@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { makeGround, approach } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const TAU = Math.PI * 2;
 
@@ -556,7 +557,7 @@ export function buildBiomesh(ctx, U) {
     for (const C of colonies) {
       C.mat.userData.u.uTime.value = t; C.mat.userData.u.uGlow.value = glow;
       if (!C.count || !C.ready) continue;
-      const cd = Math.hypot(cam.x - C.center.x, cam.z - C.center.z);
+      const cd = hyp(cam.x - C.center.x, cam.z - C.center.z);
       // v3 stage 2: tiles more than 60 m away hold still (the creep is too slow to see there); a colony
       // wholly beyond that and past where runners start is skipped. ?throttle=0: the old 110 m.
       const hold = ctx.throttle !== false;
@@ -590,7 +591,7 @@ export function buildBiomesh(ctx, U) {
         // creep: a slow flow field, breathing in waves out from the colony's heart, tethered to home
         const u = C.u[i], v = C.v[i];
         const ang = noise.noise2(u * 0.07 + t * 0.006, v * 0.07 - t * 0.0045 + C.col[i] * 9) * TAU * 1.3;
-        const breath = 0.35 + 0.65 * Math.max(0, Math.sin(t * 0.45 - Math.hypot(C.au[i] - C.center.x * (C.mode[i] ? 0 : 1), C.av[i] - C.center.z * (C.mode[i] ? 0 : 1)) * 0.35 + C.seed.array[i] * 0.02));
+        const breath = 0.35 + 0.65 * Math.max(0, Math.sin(t * 0.45 - hyp(C.au[i] - C.center.x * (C.mode[i] ? 0 : 1), C.av[i] - C.center.z * (C.mode[i] ? 0 : 1)) * 0.35 + C.seed.array[i] * 0.02));
         let du = Math.cos(ang) * C.spd[i] * breath + (C.au[i] - u) * 0.012;
         let dv = Math.sin(ang) * C.spd[i] * breath + (C.av[i] - v) * 0.012;
         if (C.mode[i] === 1) dv += 0.006;

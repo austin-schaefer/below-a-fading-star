@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep } from './geo.js';
 import { crowGeometry } from './small.js';
+import { hyp } from '../noise.js';
 
 const up = new THREE.Vector3(0, 1, 0);
 
@@ -72,7 +73,7 @@ export function buildFlush(ctx) {
       mesh.setMatrixAt(i, m4);
     }
     mesh.instanceMatrix.needsUpdate = flap.needsUpdate = fold.needsUpdate = true;
-    if (allDown) { hideT += dt; if (hideT > 20 || Math.hypot(cam.x - B[0].pos.x, cam.z - B[0].pos.z) > 70) { mesh.visible = false; mode = 0; } }
+    if (allDown) { hideT += dt; if (hideT > 20 || hyp(cam.x - B[0].pos.x, cam.z - B[0].pos.z) > 70) { mesh.visible = false; mode = 0; } }
   }
   ctx.registerUpdate(update);
 }
@@ -107,7 +108,7 @@ export function buildBats(ctx) {
     let vis = false;
     for (let i = 0; i < N; i++) {
       const o = bats[i], r = o.r;
-      if (Math.hypot(cam.x - r.x, cam.z - r.z) < 330) vis = true;
+      if (hyp(cam.x - r.x, cam.z - r.z) < 330) vis = true;
       o.a += dt * o.w;
       const R = r.R * (0.55 + 0.4 * Math.sin(t * 0.21 + o.p[0])) + 3 * Math.sin(t * 0.9 + o.p[1]);
       o.prev.copy(o.pos);
@@ -167,7 +168,7 @@ export function buildWader(ctx) {
       if (st.wait <= 0) {
         const ny = st.yaw + (rng() - 0.5) * 1.0, d = 0.5 + rng() * 0.4;
         const tx = st.x + Math.sin(ny) * d, tz = st.z + Math.cos(ny) * d;
-        if (shallow(tx, tz) && Math.hypot(tx - F.x, tz - F.z) < 66) { st.u = 0; st.yaw = ny; st.sx = st.x; st.sz = st.z; st.tx = tx; st.tz = tz; st.leg ^= 1; }
+        if (shallow(tx, tz) && hyp(tx - F.x, tz - F.z) < 66) { st.u = 0; st.yaw = ny; st.sx = st.x; st.sz = st.z; st.tx = tx; st.tz = tz; st.leg ^= 1; }
         else { st.yaw += 0.8; st.wait = 2; }
       }
     } else {

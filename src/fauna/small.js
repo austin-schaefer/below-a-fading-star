@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep, makeDownCaster } from './geo.js';
 import { KEEP } from '../structures/keep.js';
+import { hyp } from '../noise.js';
 
 // ---------------------------------------------------------------- moths
 export function buildMoths(ctx) {
@@ -36,7 +37,7 @@ export function buildMoths(ctx) {
   const pts = m.map(() => new THREE.Vector3());
   function update(dt, t) {
     if (!found) { lookT -= dt; if (lookT <= 0) { lookT = 1.5; findWindow(); } }
-    const far = Math.hypot(cam.x - centre.x, cam.z - centre.z) > 260;
+    const far = hyp(cam.x - centre.x, cam.z - centre.z) > 260;
     mesh.visible = !far;
     if (far) return;
     for (let i = 0; i < N; i++) {
@@ -166,7 +167,7 @@ export function buildCrows(ctx) {
     }
     cooldown -= dt;
     if (cooldown <= 0) {
-      for (const o of crows) if (o.mode === 0 && Math.hypot(o.pos.x - cam.x, o.pos.z - cam.z) < 15 && Math.abs(o.pos.y - cam.y) < 25) { takeoff(); break; }
+      for (const o of crows) if (o.mode === 0 && hyp(o.pos.x - cam.x, o.pos.z - cam.z) < 15 && Math.abs(o.pos.y - cam.y) < 25) { takeoff(); break; }
     }
     for (let i = 0; i < N; i++) {
       const o = crows[i];
@@ -243,7 +244,7 @@ export function buildFishRings(ctx) {
         for (let k = 0; k < 10; k++) {
           const a = rng() * 6.28, r = 6 + rng() * 40, x = T.x + Math.cos(a) * r, z = T.z + Math.sin(a) * r;
           if (terrain.heightAt(x, z) > y - 0.8) continue;
-          const dx = x - cam.x, dz = z - cam.z, d = Math.hypot(dx, dz);
+          const dx = x - cam.x, dz = z - cam.z, d = hyp(dx, dz);
           const s = (fwd.x * dx + fwd.z * dz) / (d || 1) - d * 0.003;
           if (s > bs) { bs = s; best = [x, z]; }
         }

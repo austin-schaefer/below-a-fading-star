@@ -138,6 +138,21 @@ GPU memory (textures + renderbuffers + canvas), before → after the target chan
 
 So a laptop that drops from high to medium goes from 256 to 70 MB of render memory. Bench pair `stage3-tier-targets-before.json` (`&lean=0`) and `-after.json`: same frames, calls and triangles; CPU 1.43 vs 1.25 ms (noise). Render pair `shots/wip/perf-03-tier-lean-<spawn|wood|sun>-before|after.png` at q=high: differences below the noise floor (spawn 5.71 against 5.73 between two identical renders, wood 7.53 against 7.62, sun 6.09 against 6.85).
 
+**Allocations.** `tools/alloc-audit.mjs` runs `?bench=30&q=medium` and measures two 10 s windows of rendered frames (~600 frames each): THREE math objects constructed by `src/` (Vector2/3/4, Color, Matrix3/4, Quaternion, Euler, Box3, Sphere, Ray, Plane, …), counted through a wrapper module that re-exports `three` with counting subclasses and attributed to the first `src/` file:line and its caller in another file; and every JS allocation per frame by the `src/` function that made it, from V8's sampling heap profiler with collected objects included. JSON: `shots/perf/stage3-tier-alloc-before.json` and `-after.json`.
+
+| per rendered frame | before | after |
+|---|---:|---:|
+| THREE objects from src/, all | 5.89 | 2.20 |
+| … from files outside vegetation, terrain and water | 3.65 (grazers via `terrain.slopeAt` 2.63, controls 1.0) | 0 |
+| JS bytes allocated by src/ functions | 329 KB | 257 KB |
+| … by functions outside vegetation, terrain, water and noise.js | 106 KB | 35 KB |
+
+The big one was V8's `Math.hypot`: it allocates a backing store on every call and is ~24× slower than `Math.sqrt(x * x + y * y)` (8 M calls in node: 36 ms and 314 scavenges, against 1.5 ms). The player's collider loop called it once per collider per frame: 65 KB a frame in `controls.update`, now 0.16 KB, with a box test before the square root. `noise.js` exports `hyp(x, z)`, and every per-frame update outside the other agent's files uses it (the update functions of 24 files, plus main.js's throttle; build-time placement keeps `Math.hypot`, so the world is laid out bit for bit as before). Also: `terrain.slopeAt` allocates a Vector3 per call, so the grazers' and the deodand's wander checks take the same sums with a scratch normal; the controls no longer clone a vector a frame; the fauna kit's terrain lookup no longer returns a new array per call; the HUD no longer builds `Object.entries(LANDMARKS)` a frame; the Vigilant's eyes loop without a closure. The bench's CPU is unchanged within noise (`stage3-tier-gc-before.json` → `-after.json`: total 1.25 → 1.18 ms/frame, main.js's own work, which includes the controls, 0.24 → 0.20).
+
+What is left is mostly V8 boxing doubles (a number returned from a function that is not inlined, or written to a closure's `let`): `terrain.heightAt` 37 KB a frame, `noise2` 31 KB, `warped2` 16 KB, `riverSection`, `project`, `flatten`, `causewayDistance` 8–15 KB each, all called from the vegetation and terrain lookups; the Menology's update 8 KB. Not objects anyone wrote, and short-lived; the cure would be fewer calls (caching per chunk), not pooling.
+
+For the vegetation, terrain and water agent (their files; listed, not changed): `vegetation/plants.js:339–340` constructs a Vector3, a Box3, a Vector3 and a Sphere (0.88, 0.44, 0.44, 0.44 a frame, called from `vegetation.js:40`): pool them; `vegetation/plants.js:434 cell` 29 KB a frame and `plants.js:373` 10 KB; `vegetation/ground.js:81 waterDepth` 11 KB; `terrain.js:401 slopeAt` allocates `new Vector3` per call (pass a module scratch, as `normalAt` does); `terrain.js` and `noise.js` boxing above; `Math.hypot` remains in `terrain.js` (26 calls; `causewayDistance` and the river lookups run per frame), `vegetation/plants.js`, `vegetation/trees.js`, `vegetation/lattice.js`, `vegetation/ground.js` and `water/river.js`: worth `hyp` wherever it runs per frame. The one-token `=== 'high'` → `!== 'low'` changes in `water.js` and `water/river.js` are the tier's.
+
 ## Stage 4: verify on hardware and write it down
 
 - Austin runs `?bench=1` on his PC at high, his laptop (if any) at medium, and his phone at low, before stage 2 and after stage 3. The agent records the JSON in `shots/perf/` with dates and the commit hash, and a short table in this file.

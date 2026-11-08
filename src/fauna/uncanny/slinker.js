@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, makeGround, approach, turnToward, DITHER_GLSL } from './kit.js';
+import { hyp } from '../../noise.js';
 
 function slinkerGeometry(low) {
   const P = new Painter(['aPh']);
@@ -195,20 +196,20 @@ export function buildSlinker(ctx, U) {
       if (S.mode === 'gone') {
         if (S.timer > 0 && appear()) S.timer = 0; else if (S.timer > 0) S.timer = -1;
       } else {
-        const ang = viewAngle(S.x, S.z), dist = Math.hypot(S.x - cam.x, S.z - cam.z);
+        const ang = viewAngle(S.x, S.z), dist = hyp(S.x - cam.x, S.z - cam.z);
         if (S.mode === 'enter') {
           S.fade = Math.min(1, S.fade + dt / 2.5); S.flat = Math.max(0, S.flat - dt / 2);
           if (lurkTarget()) move(dt, 1.2, 2);
           if (S.fade >= 1) S.mode = 'lurk';
           if (ang < 0.6) flee();
-          else if (Math.hypot(cam.x - site.x, cam.z - site.z) > REACH) leave();
+          else if (hyp(cam.x - site.x, cam.z - site.z) > REACH) leave();
         } else if (S.mode === 'lurk') {
           S.flat = approach(S.flat, 0, 3, dt);
           if (!lurkTarget()) S.side = -S.side;
           move(dt, dist > 50 ? 7 : 3.4, 1.6);
           if (ang < 0.52 && dist < 75) flee();
           else if (dist > 90) { S.mode = 'gone'; S.timer = -2; S.fade = 0; }
-          else if (Math.hypot(cam.x - site.x, cam.z - site.z) > REACH) leave();
+          else if (hyp(cam.x - site.x, cam.z - site.z) > REACH) leave();
         } else if (S.mode === 'flee') {
           move(dt, 6.5, 5);
           S.flat = Math.min(1, S.flat + dt / 0.5);
@@ -220,7 +221,7 @@ export function buildSlinker(ctx, U) {
     pub.mode = S.mode; pub.fade = S.fade;
     const vis = S.mode !== 'gone' && S.fade > 0.01;
     mesh.visible = vis;
-    pub.seen = vis && viewAngle(S.x, S.z) < hHalf + 0.05 && Math.hypot(S.x - cam.x, S.z - cam.z) < 90;
+    pub.seen = vis && viewAngle(S.x, S.z) < hHalf + 0.05 && hyp(S.x - cam.x, S.z - cam.z) < 90;
     if (!vis) return;
     uni.uPhase.value += dt * (0.35 + S.speed * 2.2);
     uni.uMove.value = approach(uni.uMove.value, clamp(S.speed / 2.5, 0, 1), 4, dt);

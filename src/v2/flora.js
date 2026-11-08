@@ -12,6 +12,7 @@
 // centre), 'sward-whimper' (at the nearest turned flower).
 import * as THREE from 'three';
 import { clamp, smoothstep, GLSL_WIND, unflipNormals } from '../vegetation/util.js';
+import { hyp } from '../noise.js';
 
 const CLOSE_D = 0.6;   // seconds for one flower to shut
 const WAVE = 0.9;      // seconds for the closing wave to cross the sward
@@ -344,9 +345,9 @@ export async function build(ctx) {
       const px = ctx.player.pos.x, pz = ctx.player.pos.z;
       for (let j = nTurned - 1; j >= 0; j--) {
         const o = turned[j];
-        if (Math.hypot(pos[o * 4] - px, pos[o * 4 + 2] - pz) > FAR) turnBack(j, t);
+        if (hyp(pos[o * 4] - px, pos[o * 4 + 2] - pz) > FAR) turnBack(j, t);
       }
-      if (Math.hypot(px - S.x, pz - S.z) < R + FAR + 1) {
+      if (hyp(px - S.x, pz - S.z) < R + FAR + 1) {
         const c0 = clamp(Math.floor((px - NEAR - GX0) / CELL), 0, GN - 1), c1 = clamp(Math.floor((px + NEAR - GX0) / CELL), 0, GN - 1);
         const r0 = clamp(Math.floor((pz - NEAR - GZ0) / CELL), 0, GN - 1), r1 = clamp(Math.floor((pz + NEAR - GZ0) / CELL), 0, GN - 1);
         for (let rr = r0; rr <= r1; rr++) for (let cc = c0; cc <= c1; cc++) {
@@ -354,7 +355,7 @@ export async function build(ctx) {
           for (let q = cellStart[c]; q < cellStart[c + 1]; q++) {
             const o = cellItems[q];
             if (state[o * 4 + 3] > 0.5) continue;
-            const d = Math.hypot(pos[o * 4] - px, pos[o * 4 + 2] - pz);
+            const d = hyp(pos[o * 4] - px, pos[o * 4 + 2] - pz);
             if (d < NEAR) turnTo(o, t, d);
           }
         }
@@ -369,7 +370,7 @@ export async function build(ctx) {
         whimperT -= 0.1;
         if (whimperT <= 0) {
           let best = -1, bd = Infinity;
-          for (let j = 0; j < nTurned; j++) { const o = turned[j], d = Math.hypot(pos[o * 4] - px, pos[o * 4 + 2] - pz); if (d < bd) { bd = d; best = o; } }
+          for (let j = 0; j < nTurned; j++) { const o = turned[j], d = hyp(pos[o * 4] - px, pos[o * 4 + 2] - pz); if (d < bd) { bd = d; best = o; } }
           whimperPos.set(pos[best * 4], pos[best * 4 + 1] + pos[best * 4 + 3] * 0.9, pos[best * 4 + 2]);
           cue('sward-whimper', whimperPos);
           whimperT = 4 + trng() * 5;

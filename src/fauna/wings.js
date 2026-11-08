@@ -2,6 +2,7 @@
 // Steered toward a drifting point on an orbit, so circles are slightly irregular; one breaks off to cross the sun.
 import * as THREE from 'three';
 import { Mesher, flapMaterial, flapInstanced, clamp, lerp } from './geo.js';
+import { hyp } from '../noise.js';
 
 const SPAN = 4.9;
 
@@ -108,14 +109,14 @@ export function buildWings(ctx) {
         w.tgt.set(c.x + Math.cos(a) * R, y, c.z + Math.sin(a) * R);
       } else if (w.mode === 1) {
         w.tgt.copy(w.way[w.step]);
-        if (Math.hypot(w.pos.x - w.tgt.x, w.pos.z - w.tgt.z) < 30) {
+        if (hyp(w.pos.x - w.tgt.x, w.pos.z - w.tgt.z) < 30) {
           w.step++;
           if (w.step > 1) { w.mode = 2; w.step = 0; }
         }
       } else {
         const a = Math.atan2(w.pos.z - c.z, w.pos.x - c.x) + w.dir * 0.5;
         w.tgt.set(c.x + Math.cos(a) * c.R, c.y0, c.z + Math.sin(a) * c.R);
-        if (Math.hypot(w.pos.x - c.x, w.pos.z - c.z) < c.R + 45 && Math.abs(w.pos.y - c.y0) < 25) w.mode = 0;
+        if (hyp(w.pos.x - c.x, w.pos.z - c.z) < c.R + 45 && Math.abs(w.pos.y - c.y0) < 25) w.mode = 0;
       }
       // steer
       const kTurn = w.mode === 0 ? 0.9 : 0.75;
