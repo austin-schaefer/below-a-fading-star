@@ -109,7 +109,7 @@ export const SITES = {
   galleries:  { x: -390, z: -80, r: 70, name: 'The Galleries of Durance', y: [60, 260] },
   lamps:      { x: -300, z: -330, r: 60, name: 'The Escarpment Lamps', bearings: [300, 335], y: [60, 250] },
   ridge:      { x: 270, z: -380, r: 60, name: 'The Battlemented Ridge', bearings: [20, 45] },
-  annals:     { x: 0, z: 0, r: 0, name: 'The Annals', band: [110, 130], bearings: [60, 120] },
+  annals:     { x: 0, z: 0, r: 0, name: 'The Annals', band: [100, 140], bearings: [60, 120] },
   plinths:    { x: 148, z: -220, r: 15, name: 'The Plinth Road', from: [130, -150], to: [165, -290] },
   hawser:     { x: -80, z: -272, r: 10, name: 'The Hawser', from: [-120, -380], to: [-40, -165] },
   nave:       { x: 255, z: 40, r: 25, name: 'The Foundered Nave', block: [230, 280, 15, 65] },
