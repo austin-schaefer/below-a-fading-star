@@ -49,7 +49,8 @@ const r = await page.evaluate(async () => {
   const ray = new fp.THREE.Raycaster(), dir = new fp.THREE.Vector3(0, -1, 0), org = new fp.THREE.Vector3(); fp.terrain.mesh.updateMatrixWorld();
   const nV = pos.length / 3, stepV = Math.floor(nV / 28);
   for (let v = 0; v < nV; v += stepV) { org.set(pos[v * 3], 700, pos[v * 3 + 2]); ray.set(org, dir); const hit = ray.intersectObject(fp.terrain.mesh, false)[0]; if (!hit) continue; const l = pos[v * 3 + 1] - hit.point.y; maxLift = Math.max(maxLift, l); minLift = Math.min(minLift, l); }
-  out.fig = { centre: c, slope: T.slopeAt(c.x, c.z) * 57.3, groundY: T.heightAt(c.x, c.z), dy: c.y - T.heightAt(c.x, c.z), r: Math.hypot(c.x, c.z), foot: fg.foot, head: fg.head, maxLift, minLift, castShadow: fg.mesh.castShadow };
+  // dy: the centre against the rendered triangles: the massifs' face carries relief finer than the mesh, so the analytic height can stand a few centimetres off it
+  out.fig = { centre: c, slope: T.slopeAt(c.x, c.z) * 57.3, groundY: T.heightAt(c.x, c.z), dy: (() => { org.set(c.x, 700, c.z); ray.set(org, dir); const hit = ray.intersectObject(fp.terrain.mesh, false)[0]; return hit ? c.y - hit.point.y : NaN; })(), dyAnalytic: c.y - T.heightAt(c.x, c.z), r: Math.hypot(c.x, c.z), foot: fg.foot, head: fg.head, maxLift, minLift, castShadow: fg.mesh.castShadow };
   let arc = 0, last = null; const a = Math.atan2(70, 292); for (let r = fg.radii[0]; r <= fg.radii[1]; r += 0.5) { const x = Math.cos(a) * r, z = Math.sin(a) * r, h = T.heightAt(x, z); if (last !== null) arc += Math.hypot(0.5, h - last); last = h; }
   out.fig.arc = arc;
   out.stats = fp.dressing.stats();
@@ -96,7 +97,7 @@ check(p.minGap >= 5.5 && p.over <= 4, 'spaced 6 to 10 m (longer only across the 
 check(p.caps.length >= 4 && p.caps.every((z) => [-200, -100, 0, 100, 200].includes(z)), 'brass caps only at the five z values (the one in the tarn\'s deep is absent)', `caps at ${p.caps}`);
 const f = r.fig;
 check(Math.abs(f.arc - 80) < 4, 'the figure is 80 m long on the ground', `${f.arc.toFixed(1)} m`);
-check(f.slope > 20 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}`);
+check(f.slope > 20 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}, dy ${f.dy.toFixed(3)} (analytic ${f.dyAnalytic.toFixed(2)})`);
 check(f.minLift > 0 && f.maxLift < 1.2 && !f.castShadow, 'it hugs the ground and casts no shadow', `lift ${f.minLift.toFixed(2)} to ${f.maxLift.toFixed(2)}`);
 check(r.stats.calls <= 8 && r.stats.tris <= 60000, 'draw calls and triangles within the budget', `${r.stats.calls} calls, ${r.stats.tris} tris`);
 const cy = r.cy, sl = r.sl, pr = r.pr;

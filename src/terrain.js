@@ -6,7 +6,7 @@ import { tarnHeight, tarnWet } from './v4/tarn.js'; // v4 regions: Lees Tarn's s
 import { setRegionsCoarse } from './v4/regions.js'; // v4 regions: the mesh's coarse pass
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4, PALETTE, SUN } from './world.js';
 import { mapHeight, prepareMap } from './v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
-import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
+import { applyMountains, M_START, PROFILE as MTN_PROFILE, MASSIFS } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
@@ -177,6 +177,29 @@ for (let i = 0; i < RIVER_LINE.n; i++) {
 }
 const _rq = { hit: false }, _gq = { hit: false }, _bw = { bl: 0, br: 0 };
 const FEN = LANDMARKS.fen;
+// --- the massifs' bands (begin): the shader's copy of the massifs' bedding planes (MASSIFS in v4/mountains.js,
+// blended across the cols the same way) and the sun's direction across the ground, for the ledges' lines. Empty
+// under ?mountains=v4, whose bands are as they were.
+function massifGLSL() {
+  if (MTN_PROFILE === 'v4') return '';
+  const f = (v) => v.toFixed(4);
+  const terms = MASSIFS.map(([b0, b1, dx, dz, st]) => `fpMassifAdd(acc, b, ${f((b0 + b1) / 2)}, ${f((b1 - b0) / 2)}, vec3(${f(dx)}, ${f(dz)}, ${f(st)}));`).join(' ');
+  return `#define FP_MASSIFS 1
+        const vec2 FP_SUN_XZ = vec2(${f(Math.cos(SUN.azimuth))}, ${f(Math.sin(SUN.azimuth))});
+        void fpMassifAdd(inout vec4 acc, float b, float mid, float hw, vec3 v) {
+          float d = abs(mod(b - mid + 540.0, 360.0) - 180.0);
+          float k = pow(max(1e-3, 1.0 - smoothstep(hw, hw + 14.0, d)), 2.0) + 1e-6 / (1.0 + d);
+          acc += vec4(v * k, k);
+        }
+        vec3 fpMassifBed(vec2 p) {
+          float b = mod(degrees(atan(p.y, p.x)) + 450.0, 360.0);
+          vec4 acc = vec4(0.0);
+          ${terms}
+          return acc.xyz / acc.w;
+        }`;
+}
+// --- the massifs' bands (end)
+
 // The river's cross-section at a point: carved height of the channel (Infinity where nothing is cut)
 // and the raised spur the canyon runs through (-Infinity where nothing is raised).
 const _cs = { cut: Infinity, raise: -Infinity, s: 0, d: 0, W: 0, hw: 0, bank: 0, inRiver: false, gully: false, shingle: 0, slow: 0 };
@@ -521,6 +544,7 @@ export function buildTerrain(ctx) {
   const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
+  const MASSIF_BANDS = MTN_PROFILE !== 'v4', cScreeL = C('#5c5752'), tmp2 = new THREE.Color(); // the massifs' bands
   prepareMap(); // v4 map: trace the leads before the mesh, so it carries the runnels' cuts
   setRegionsCoarse(size / segs); // v4 regions: the mesh takes fine relief's lower envelope (regions.js)
   for (let i = 0; i < pos.count; i++) {
@@ -545,6 +569,16 @@ export function buildTerrain(ctx) {
     // slope → rock; height → scree then dark rock
     const rockMix = clamp(b.rock, 0, 1);
     tmp.copy(cScree).lerp(cRock, smoothstep(10, 60, y)).lerp(cRockD, smoothstep(60, 160, y));
+    // --- the massifs' bands (begin): on the walls (not ?mountains=v4) the band goes by slope before height: pale
+    // scree on the 30-35° aprons, bare rock on the steep bands, darker rock only where the band is steep and high
+    if (MASSIF_BANDS) {
+      const mm = smoothstep(300, 334, Math.hypot(x, z));
+      if (mm > 0) {
+        tmp2.copy(cScreeL).lerp(cRock, smoothstep(0.66, 0.9, b.slope)).lerp(cRockD, smoothstep(0.85, 1.15, b.slope) * smoothstep(60, 220, y) * 0.8);
+        tmp.lerp(tmp2, mm);
+      }
+    }
+    // --- the massifs' bands (end)
     col.lerp(tmp, rockMix);
     // ice lies on the glacier floor, not plastered up the notch's cliff walls
     const ice = glacierFloorIce(b.ice, b.slope, x, z); // v4 regions: ice holds on the snout's face too
@@ -629,6 +663,7 @@ export function buildTerrain(ctx) {
           vec3 w = abs(n); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z);
           return texture2D(t, p.yz * s).rgb * w.x + texture2D(t, p.xz * s).rgb * w.y + texture2D(t, p.xy * s).rgb * w.z;
         }
+        ${massifGLSL()}
         float fpHeight(vec3 p, vec3 n) {
           vec3 a = triplanar(uDetail, p, n, 0.3);
           vec3 b = triplanar(uDetail, p, n, 1.6);
@@ -670,11 +705,36 @@ export function buildTerrain(ctx) {
           float aa = clamp(fwidth(sy) * 1.5, 0.0, 1.0);
           float bed = (smoothstep(0.35, 0.5, abs(fract(sy) - 0.5)) - 0.5) * (1.0 - aa);
           float hard = smoothstep(0.55, 0.75, sin(vTPos.y * 0.035 + d2.g * 3.0) * 0.5 + 0.5);
+          #ifdef FP_MASSIFS
+          // --- the massifs' bands (begin): the bedding follows each massif's tilted plane (MASSIFS in
+          // v4/mountains.js, the heightfield's own ledges); each ledge's tread is a pale line, catching the low sun
+          // where the face turns to it, with the riser's shadow below the next; snow lies on the treads high up and
+          // on the flat of the shoulders, not in blotches over the faces
+          vec3 mb = fpMassifBed(vTPos.xz);
+          float qb = (vTPos.y + dot(vTPos.xz, mb.xy)) / mb.z + (d2.r - 0.5) * 0.12;
+          float aab = clamp(fwidth(qb) * 1.2, 0.0, 1.0);
+          float tb = fract(qb);
+          // each ledge its own strength (a third stand out, the rest faint), and broken along its run
+          float qi = floor(qb), az = atan(vTPos.z, vTPos.x);
+          float prom = 0.5 + 0.5 * smoothstep(0.45, 0.75, fract(sin(qi * 12.9898) * 43758.5453));
+          float run = smoothstep(-0.35, 0.35, sin(az * 41.0 + qi * 2.3 + d2.g * 2.0) * 0.6 + sin(az * 97.0 + qi * 5.1) * 0.4 + 0.75);
+          float tread = (1.0 - smoothstep(0.0, 0.09 + aab, tb)) * (1.0 - aab) * prom * run;
+          float under = smoothstep(0.7, 1.0, tb) * (1.0 - aab) * (0.4 + 0.6 * prom);
+          float sunward = smoothstep(-0.15, 0.45, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
+          float ledge = mtn * smoothstep(0.85, 0.5, vTNormal.y);
+          diffuseColor.rgb *= 1.0 - mtn * (bed * 0.12 + hard * 0.3 * rocky) - ledge * under * (0.18 + 0.22 * sunward);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.6 + vec3(0.035, 0.03, 0.03), ledge * tread * (0.25 + 0.5 * sunward));
+          float snowH = smoothstep(160.0, 250.0, vTPos.y + (d2.r - 0.5) * 30.0);
+          float holds = smoothstep(0.6, 0.85, vTNormal.y + max(-vTNormal.z, 0.0) * 0.15);
+          float snow = max(snowH * holds * mtn * smoothstep(0.2, 0.35, d1.g + 0.3 * snowH), ledge * tread * smoothstep(120.0, 220.0, vTPos.y) * 0.6);
+          // --- the massifs' bands (end)
+          #else
           diffuseColor.rgb *= 1.0 - mtn * (bed * 0.4 + hard * 0.4 * rocky);
           // snow and rime on the high ground, holding on ledges and shadowed north-facing faces
           float snowH = smoothstep(90.0, 160.0, vTPos.y + (d2.r - 0.5) * 50.0);
           float holds = smoothstep(0.42, 0.7, vTNormal.y + max(-vTNormal.z, 0.0) * 0.35);
           float snow = snowH * holds * mtn * smoothstep(0.35, 0.55, d1.g + 0.2 * snowH);
+          #endif
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.58, 0.6, 0.68) * (0.85 + 0.15 * d3.b), snow * 0.85);
           // dampness darkens low ground
           float wet = max(smoothstep(-1.0, -3.2, vTPos.y), vWet * (0.75 + 0.5 * d1.g));

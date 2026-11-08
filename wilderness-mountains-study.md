@@ -1,5 +1,7 @@
 # The mountains study
 
+**Austin chose C, the massifs; it is the wall now** (no flag; `?mountains=v4` builds the old wall, and A and B are gone from the code; the study below stands as written, and git holds its code). Landing raised the north-west col at 328° to 69 m; see `wilderness-v5.md`, "The massifs (the walls recast)".
+
 Austin, after walking v4/v5:
 
 > really not a fan of the reworked mountains. they now have a shape like: aggressively vertical wall; random-ass fractals above that; even more random-ass fractal walls behind them. what i want is a feeling of an organic mountain barrier. undulating, stooping almost to valley floor perhaps in places. so not 'this is a videogame wall to keep you in' but 'this valley happens to be surrounded by mountains'.
