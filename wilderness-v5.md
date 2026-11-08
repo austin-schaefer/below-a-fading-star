@@ -162,7 +162,7 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
 
   | from | distance, top's elevation | seen | against |
   |---|---|---|---|
-  | spawn (6, 36) | 303 m, 10° | **hidden at every height** by the keep's west front (x 7–8, z 6–29), 2–25 m from the eye | |
+  | spawn (2, 35) | 303 m, 10° | **hidden at every height** by the keep's west front (x 7–8, z 6–29), 2–25 m from the eye | |
   | 2 m west of spawn (4, 36) / 4 m west (2, 36) | | top 18 m / whole | the icefall in the notch |
   | causeway (−40, 22) | 298 m, 12° | down to 2 m | the icefall, beside the court's uprights |
   | causeway (−65, 12) | 296 m, 13° | down to 4 m | the icefall |
@@ -240,7 +240,7 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
 
   | from | sun | nearest colossus to the sun's centre |
   |---|---|---|
-  | spawn (6, 36) | clear, between them, low over the southern one's shoulder | 3.1° |
+  | spawn (2, 35) | clear, between them, low over the southern one's shoulder | 3.1° |
   | the road's start (−344, 126) | clear, in the gap | more than 12° |
   | causeway (−40, 22) | clear | 4.0° |
   | causeway (−65, 12) | clear, between them | 3.2° |
@@ -269,7 +269,7 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
 - **Lights:** 32 lamps hung from lintels at high (19 at low), the lift's cage lamp, and two furnace mouths in the rock behind the lowest tier and the fourth. All are emissive, with an additive halo for the bloom. They breathe slowly and come up to 2.4× while the sun gutters. There is one real point light (`galleries-furnace`, distance 85) at the lower furnace mouth. `lights.js` slots it within about 105 m, so it warms the ironwork and rock round the furnace for a walker near the wall's foot (`under` against `under-draft6-nolight`). Seen from the bowl, the ironwork is dark bronze in shade and holds back 25% of the fog's haze, so it stays darker than the hazed wall without reading nearer than it (lowered from 45% by the coherence pass, `wilderness-v5-coherence.md`).
 - **Cost at high:** 5 draw calls (struts, links, wheels, halos, stays) and 66.4k triangles (45.2k at low). From the causeway (−65, 12) the frame goes from 181 to 186 calls and from 2.414M to 2.481M triangles. No shadows: the wall they hang on casts none. No colliders. No sound.
 - **Sightlines** (renders, before `?galleries=0`):
-  - From spawn (6, 36): 410 m off, left of centre, just right of the glow.
+  - From spawn (2, 35): 410 m off, left of centre, just right of the glow.
   - From the causeway (−65, 12) and (−40, 22): a black lattice against the hazed face, its south edge in the glow. The towers and the mast break the crest against the sky. The lens mount stands about 20° to the right, its silhouette clear.
   - From the tower's foot (−262, −118): 150 m off, the bays repeat across the frame and up into the haze, black against the glow to the south, with the chains hanging past.
   - The brief's (−140, −30) (`w140`; the lens mount stands at (−250, −135)) and the Cardinal Stones (−170, −50): the whole works, with the towers against the glow.
@@ -367,7 +367,7 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
   |---|---|
   | the causeway (-40, 22), north-east | the crest across the middle of the frame becomes a row of square stumps over the front range, roughly 4 degrees across each; they read as battlements, not as bumps, but the haze softens them, and only 4-5 are in the frame |
   | the Outwash's foreland (60, -230) | the best view: five or six merlons along the skyline, flat-topped, the faces catching the light; clearly built |
-  | spawn (6, 36) | the same row seen over the Court's wall; reads as a squared crest |
+  | spawn (2, 35) | the same row seen over the Court's wall; reads as a squared crest |
   | the Span's deck (-200, 215) y 56 | merlons at the edge of the haze; a row of teeth on the right of the crest |
   | the High Ling scarp (250, 5), north | the near end of the run on the left of a rugged crest; reads as a few rectangular blocks on the skyline; the run is foreshortened |
 
@@ -412,7 +412,7 @@ v5 holds the recasts, the wonders, the local lights, the Kept Fire, the dressing
 
   | from | what reads |
   |---|---|
-  | spawn (6, 36) | the keep stands round spawn on the east, so the rise is hidden. Looking up past it (`spawn`, bearing 100°, 60° up), the band crosses the slot between the keep's walls and shows over its top |
+  | spawn (2, 35) | the keep stands round spawn on the east, so the rise is hidden. Looking up past it (`spawn`, bearing 100°, 60° up), the band crosses the slot between the keep's walls and shows over its top |
   | the Lattice (40, −250), south and up | the south-eastern leg comes up past the crystals at the left edge, with the moon low beside it |
   | the Lattice, east and up (`lattice-east`) | the clearest view: the arc arches over the Lattice from the north-east to the south-east, the great lattice under it, the Vigilant on the crest below, and the lower gap before the moon |
   | the causeway (−40, 22), east | the top of the arc across the head of the frame, broken by the top gap. The keep stands in front of the Vigilant from here (bearings 60–110°) |
