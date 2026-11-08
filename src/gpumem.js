@@ -21,7 +21,7 @@ function bpp(internal, format, type) {
 }
 const CUBE = 0x8513, CUBE_X = 0x8515, CUBE_NZ = 0x851a;
 
-export function installGpuMem(gl, canvas) {
+export function installGpuMem(gl, canvas, { late = false } = {}) {
   const tex = new Map(); // WebGLTexture -> Map(face:level -> bytes)
   const rbs = new Map(); // WebGLRenderbuffer -> bytes
   const bound = new Map(); // unit*65536 + target -> texture
@@ -29,10 +29,12 @@ export function installGpuMem(gl, canvas) {
   let uploads = 0, uploadsFrame = 0, perFrame = 0, frames = 0;
   const key = (target) => unit * 65536 + (target >= CUBE_X && target <= CUBE_NZ ? CUBE : target);
   const levels = (t) => { let m = tex.get(t); if (!m) { m = new Map(); tex.set(t, m); } return m; };
+  // Installed only while profiling (main.js with ?perf=1 or ?bench, else perf.js when the profiler comes on).
+  // Fixed-arity wrappers that pass `arguments` through, so a call allocates nothing beyond what it did before.
   const wrap = (name, after) => {
     const orig = gl[name];
     if (typeof orig !== 'function') return;
-    gl[name] = function (...a) { const r = orig.apply(gl, a); after(a, r); return r; };
+    gl[name] = function () { const r = orig.apply(gl, arguments); after(arguments, r); return r; };
   };
   wrap('activeTexture', (a) => { unit = a[0] - gl.TEXTURE0; });
   wrap('bindTexture', (a) => { bound.set(key(a[0]), a[1]); });
@@ -67,7 +69,7 @@ export function installGpuMem(gl, canvas) {
     let base = 0; for (const [k, v] of m) if (k.endsWith(':0')) base += v;
     m.set('mips', Math.round(base / 3));
   });
-  wrap('deleteTexture', (a) => { tex.delete(a[0]); });
+  wrap('deleteTexture', (a) => { tex.delete(a[0]); for (const [k, t] of bound) if (t === a[0]) bound.delete(k); });
   wrap('bindRenderbuffer', (a) => { rb = a[1]; });
   wrap('renderbufferStorage', (a) => { if (rb) rbs.set(rb, a[2] * a[3] * bpp(a[1])); });
   wrap('renderbufferStorageMultisample', (a) => { if (rb) rbs.set(rb, a[3] * a[4] * bpp(a[2]) * Math.max(1, a[1])); });
@@ -89,7 +91,7 @@ export function installGpuMem(gl, canvas) {
       let t = 0; for (const k of tex.keys()) t += bytesOf(k);
       let r = 0; for (const v of rbs.values()) r += v;
       const bb = backbuffer();
-      return { textureMB: MB(t), renderbufferMB: MB(r), backbufferMB: MB(bb), totalMB: MB(t + r + bb), textures: tex.size, renderbuffers: rbs.size, uploads, uploadsLastFrame: perFrame };
+      return { late, textureMB: MB(t), renderbufferMB: MB(r), backbufferMB: MB(bb), totalMB: MB(t + r + bb), textures: tex.size, renderbuffers: rbs.size, uploads, uploadsLastFrame: perFrame };
     },
   };
 }
