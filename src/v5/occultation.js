@@ -4,49 +4,54 @@
 // west to the east wall at a walking pace, as if something vast were passing between the bowl and the sun. Nothing is
 // drawn: look up and there is only haze, and the sun's disc dims along one edge. Birds under it go quiet.
 //
-// The slab: a horizontal band at y 200 (its body 185-215), 400 m long north-south (full within 180 m of its middle,
-// gone by 220 m), 60-90 m thick east-west with edges soft over 20 m. Its middle starts at x -340 (over the saddle's
-// mouth) and travels east at 2 m/s to x 400 (the east wall's face at that height): 740 m in a little over six
-// minutes, fading in and out over 25 s at the ends. Its north-south middle is z 50 +-20, so the Span's deck (z 215)
-// and the causeway are under it and the Outwash (z -230) looks at it from beyond its northern end.
+// The body: 400 m long north-south (full within 180 m of its middle, gone by 220 m), 60-90 m thick east-west (per
+// pass), 170-230 m up (OCCULT.body), every edge soft over 20 m. Its middle runs from x -340 (over the saddle's mouth)
+// to x 400 (the east wall's face at that height) at 2 m/s: 740 m in about 6 min 10 s, fading in and out over 25 s at
+// the ends. Its north-south middle is z 50 +-20, so the Span's deck (z 215), the causeway and spawn lie under it and
+// the Outwash (z -230) looks at it from past its northern end. The first pass comes 40-90 s after the frames start,
+// then 180-420 s after each one ends, from its own ctx.makeRng stream.
 //
-// Everything is derived from the sun (SUN.dir): a point q is in the band's shadow when the ray from q toward the sun
-// crosses y 200 inside the slab's footprint. That is a shear: p(q) = q.xz + (200 - q.y) / S.y * S.xz.
-//   the walls (terrain.js calls injectOccultation): the terrain's direct light (the sun is the only directional
-//     light) is cut by 72% where p(vTPos) falls in the footprint, for fragments 120-215 m up (faded over 115-135) and
-//     inside r 500. Above the slab nothing is in its shadow; below 120 m the term is clamped off, so the floor never
-//     darkens. With the sun 13.5 degrees up, the shadow of a slab 200 m up lands 4.2 m east for every metre it falls:
-//     on the floor it would land 830 m east of the slab, past the east wall, so the clamp loses nothing true on the
-//     floor; at the saddle, where the sun is lowest over the ground, the slab's shadow falls east onto the floor
-//     of the bowl and is clamped away, and the saddle's own flanks face away from the sun.
-//   the air (atmosphere.js calls injectOccultFog; every fogged material): the sheared prism of points in the
-//     shadow between 120-150 m (its soft floor) and 215 m is intersected with the camera's ray to the fragment (three
-//     slab intervals, done for an inner and an outer box and averaged, which softens every edge); the haze along the
-//     ray loses up to 45% of its light by the length inside. The sky dome (sky.js calls injectOccultSky) takes the
-//     same term to infinity at up to 25%, so the band shows crossing the bowl where no wall stands behind it.
+// Everything is derived from the sun (SUN.dir, 13.5 degrees up): a point is in the band's shadow when its ray toward
+// the sun passes through the body.
+//   the walls (terrain.js calls injectOccultation, after lights_fragment_end): the ray from vTPos toward the sun is
+//     intersected with the body (an inner and an outer box, averaged; soft over the last 40 m of its run through
+//     them), and the terrain loses 80% of its direct light (the sun is the only directional light) and 30% of its
+//     indirect, for fragments from the bench's brow up (faded over 108-122 m) and inside r 500. Above the body nothing
+//     is in its shadow. The shadow of a body 200 m up lands 4.2 m east for every metre it falls, so on the floor it
+//     would land about 830 m east, past the east wall: the clamp loses nothing true. Under the saddle, where the sun
+//     is lowest over the ground, the body's shadow falls east onto the bowl's floor and is clamped away, and the
+//     saddle's flanks face away from the sun. The wall term goes on to the fog through a global (fpOccWallAmt).
+//   the air (atmosphere.js calls injectOccultFog; every fogged material, ShaderLib's and those built from
+//     UniformsLib.fog): the camera's ray to the fragment is intersected with the body itself (the same two boxes,
+//     unsheared), and the haze and the low mist lose up to 50% of their light by the length inside (63% of that at
+//     60 m); in front of a shadowed wall fragment they lose a further 45% of the wall term. The sky dome (sky.js calls
+//     injectOccultSky) takes the air term to infinity at up to 45%, so the band shows crossing the bowl where no wall
+//     stands behind it.
 //   the disc: the thing is always above the sun's line from the bowl (from the floor the line to the sun only
 //     reaches 200 m 750 m west, past the saddle), so the bite is on the disc's upper limb, its eastern one: a soft
-//     chord darkened by 20% whose inner edge starts 0.15 radii above the middle and recedes off the limb as the band
-//     goes east, gone by the time it reaches the east wall.
+//     chord darkened by 22% whose inner edge starts 0.15 radii above the middle and recedes off the limb as the band
+//     goes east, gone by the time it reaches the east wall. The rim on that limb dims with it.
 //
-// The hush: ctx.hush = { level(x, z), cue(name, pos) }. level is 1 within the slab's ground footprint (straight
-// below it) plus 100 m and 0 beyond (soft over 20 m), times the pass's envelope; cue(name, pos) drops a bird's cue
-// (crows, rooks-lift, flush, stonechat, grouse-flush, wader-gone) with probability 0.97 * level at its position.
-// audio.js asks ctx.hush.cue first thing in ctx.audio.cue and hands its region kit a hush(pos); the Demesne's
-// rooks, the one bird voice that is a bed rather than a cue, scale their gain by 1 - hush. The sandpipers do not call.
+// The hush: ctx.hush = { level(x, z), cue(name, pos) }. level is the pass's envelope within the body's ground
+// footprint (straight below it) plus 100 m, soft over 20 m, and 0 beyond; cue(name, pos) drops a bird's cue (crows,
+// rooks-lift, flush, stonechat, grouse-flush, wader-gone) with probability 0.97 * level at its position, drawing from
+// a stream of its own. audio.js asks ctx.hush.cue first thing in ctx.audio.cue and hands its region kit a hush(pos);
+// the Demesne's rooks, the one bird voice that is a bed rather than a cue, scale their gain by 1 - hush. The
+// sandpipers do not call. Nothing sounds.
 //
-// Cost: one vec4 uniform, uOccult (x the pass's envelope, y and z the slab's middle, w its half-thickness), the same
+// Cost: one vec4 uniform, uOccult (x the pass's envelope, y and z the body's middle, w its half-thickness), the same
 // plain object in every program (cloneUniforms copies a value without isVector4 by reference), written once a frame;
 // no draw calls, no allocation. With no pass running uOccult.x is 0 and every chunk is one compare. During a pass a
-// wall fragment 115-220 m up adds about 20 instructions; a fogged fragment about 60 (two boxes of three intervals).
-// ?occult=0 compiles it all out; ?occult=now starts a pass 3 s in; __fp.occultation.pass(at) poses one `at` seconds
-// in and holds it (pass(at, false) lets it run on; pass(null) clears it).
+// wall fragment 108-230 m up adds two ray-box intersections (about 40 instructions), every fogged fragment two more,
+// the dome two. ?occult=0 compiles it all out; ?occult=now starts a pass 3 s in; ?occult=mask sets every term to
+// full; ?occult=paint paints the wall term red, the air green, the sky blue; __fp.occultation.pass(at) poses one
+// `at` seconds in and holds it (pass(at, false) lets it run on; pass(null) clears it).
 import { SUN } from '../world.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('occult') : null;
 const OFF = Q === '0';
-const MASK = Q === 'mask';
-const PAINT = Q === 'paint'; // ?occult=paint: the wall term red, the air's green (the sky's blue), to find them // ?occult=mask: every term at full strength, to find them
+const MASK = Q === 'mask'; // ?occult=mask: every term at full strength, to find them
+const PAINT = Q === 'paint'; // ?occult=paint: the wall term red, the air's green (the sky's blue), to find them
 
 export const OCCULT = {
   y: 200, body: [170, 230],  // the body's middle and its bottom and top
@@ -118,6 +123,9 @@ export function injectOccultFog(THREE) {
   C.fog_pars_fragment = `${COMMON}\n${C.fog_pars_fragment}`;
   C.fog_fragment = C.fog_fragment.replace(FOG_AT, `${FOG}${FOG_AT}`);
   for (const lib of Object.values(THREE.ShaderLib)) if (lib.uniforms?.fogDensity) lib.uniforms.uOccult = { value: OCC };
+  // the ShaderMaterials that build their uniforms from UniformsLib.fog (water, river, pool, particles, paths, the
+  // regions' and the v2 and v5 modules' own) merge or clone it at build time, after this, and keep the same object
+  THREE.UniformsLib.fog.uOccult = { value: OCC };
 }
 
 // ---------------------------------------------------------------- the walls: the terrain's fragment shader
@@ -176,7 +184,8 @@ const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
 
 export async function build(ctx) {
   if (OFF) { ctx.occultation = { off: true }; return; }
-  const rng = ctx.makeRng(9241);
+  const rng = ctx.makeRng(9241);    // the schedule: when a pass starts, its thickness and its middle
+  const hushRng = ctx.makeRng(9242); // the hush's draws, so the birds never move the schedule
   const span = (r) => r[0] + rng() * (r[1] - r[0]);
   const dur = (X1 - X0) / OCCULT.speed;
   // one pass: e seconds in, its half-thickness and middle north-south; held passes do not advance
@@ -202,7 +211,7 @@ export async function build(ctx) {
     cue(name, pos) {
       if (!BIRDS.has(name) || !pos || typeof pos.x !== 'number') return false;
       const h = level(pos.x, pos.z);
-      return h > 0 && rng() < 0.97 * h;
+      return h > 0 && hushRng() < 0.97 * h;
     },
   };
   ctx.registerUpdate((dt) => {
