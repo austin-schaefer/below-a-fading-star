@@ -75,7 +75,20 @@ export function withFade(material, o) {
 }
 
 // The shadow pass hands a caster's map, alphaTest and side to its customDepthMaterial, so one depth material
-// serves every caster with the same fade source.
+// serves every caster with the same fade source (alpha-tested ones included: three r170 draws a caster's
+// customDepthMaterial itself and clones only its own default for a caster with a map and alphaTest). A clone
+// still has to fade, and Material.copy carries neither onBeforeCompile nor customProgramCacheKey:
+// FadeDepthMaterial's copy does, so a clone keeps the fade and any patch the caller chained before it.
+class FadeDepthMaterial extends THREE.MeshDepthMaterial {
+  copy(source) {
+    super.copy(source);
+    const own = (k) => Object.prototype.hasOwnProperty.call(source, k);
+    if (own('onBeforeCompile')) this.onBeforeCompile = source.onBeforeCompile;
+    if (own('customProgramCacheKey')) this.customProgramCacheKey = source.customProgramCacheKey;
+    return this;
+  }
+}
+
 export function fadeDepthMaterial(o, params = {}) {
-  return withFade(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, ...params }), o);
+  return withFade(new FadeDepthMaterial({ depthPacking: THREE.RGBADepthPacking, ...params }), o);
 }

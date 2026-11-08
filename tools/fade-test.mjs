@@ -4,7 +4,8 @@
 // black (a hole) and none yellow (an overlap). Run for both ways a fade arrives (a uniform fadeExpr on two
 // meshes, a per-instance vec2 attribute on one InstancedMesh of two, and a vertex expression). Then the shadow path: the
 // fadeDepthMaterial of a half-faded quad, rendered to a target, must cover exactly the pixels the colour pass
-// does, and a caster with it must build its fade depth program in a real shadow pass.
+// does, and a caster with it must build its fade depth program in a real shadow pass. A clone of the depth
+// material covers the same pixels, and an alpha-tested caster shades a share f of a receiver at f = 0, 0.5, 1.
 // pop-test's `fade` group calls this. Usage: node tools/fade-test.mjs [base]   (or FP_BASE=http://localhost:8174)
 import { createRequire } from 'node:module';
 let chromium;
@@ -76,12 +77,18 @@ colour.add(new THREE.Mesh(quad, withFade(new THREE.MeshBasicMaterial({ color: 0x
 const cmask = draw(colour, 0x000000).map((v, i) => (i % 4 === 0 ? (v > 127 ? 1 : 0) : 0));
 const dmat = fadeDepthMaterial({ key: 't-depth', uniforms: { uF }, head: 'uniform float uF;', fadeExpr: 'uF' });
 const depth = new THREE.Scene(); depth.add(new THREE.Mesh(quad, dmat));
-const dpx = draw(depth, 0xffffff); // packed depth 1.0 is white; the quad sits at mid depth
+const dpx = draw(depth, 0xffffff).slice(); // packed depth 1.0 is white; the quad sits at mid depth
 let same = 0, differ = 0, covered = 0;
 for (let i = 0; i < dpx.length; i += 4) {
   const d = (dpx[i] !== 255 || dpx[i + 1] !== 255 || dpx[i + 2] !== 255 || dpx[i + 3] !== 255) ? 1 : 0;
   covered += d; if (d === cmask[i]) same++; else differ++;
 }
+// a clone of it (three r170 draws a caster's customDepthMaterial as it is, but a caller or a later three may
+// clone one) covers the same pixels
+depth.children[0].material = dmat.clone();
+const kpx = draw(depth, 0xffffff);
+let cloneDiffer = 0;
+for (let i = 0; i < kpx.length; i++) if (kpx[i] !== dpx[i]) cloneDiffer++;
 // and a real shadow pass with the depth material as a caster's customDepthMaterial
 const sh = new THREE.Scene();
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -91,7 +98,31 @@ caster.customDepthMaterial = fadeDepthMaterial({ key: 't-shadow', uniforms: { uF
 sh.add(caster);
 draw(sh, 0x000000);
 const progs = renderer.info.programs.map((p) => p.cacheKey);
-out.shadow = { covered, same, differ, total: W * H, shadowProgram: progs.some((k) => k.includes('fp-fade:t-shadow')) };
+out.shadow = { cloneDiffer, covered, same, differ, total: W * H, shadowProgram: progs.some((k) => k.includes('fp-fade:t-shadow')) };
+// 5. an alpha-tested caster (map + alphaTest > 0: the shadow pass hands it the caster's map and alphaTest)
+// over a receiver: the share of the receiver in shadow follows f. The caster writes no colour or depth, so the
+// camera sees the receiver alone; BasicShadowMap so no filter blurs the count.
+renderer.shadowMap.type = THREE.BasicShadowMap; renderer.shadowMap.needsUpdate = true;
+const at = new THREE.Scene();
+const sun2 = new THREE.DirectionalLight(0xffffff, 3); sun2.position.set(0, 0, 5); sun2.castShadow = true;
+sun2.shadow.camera.left = sun2.shadow.camera.bottom = -1.2; sun2.shadow.camera.right = sun2.shadow.camera.top = 1.2;
+sun2.shadow.mapSize.set(512, 512); sun2.shadow.bias = -0.002;
+at.add(sun2);
+const white = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+const aCaster = new THREE.Mesh(quad, new THREE.MeshBasicMaterial({ map: white, alphaTest: 0.5, side: THREE.DoubleSide, colorWrite: false, depthWrite: false }));
+aCaster.position.z = 1; aCaster.castShadow = true;
+aCaster.customDepthMaterial = fadeDepthMaterial({ key: 't-alpha', uniforms: { uF }, head: 'uniform float uF;', fadeExpr: 'uF' });
+const recv = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+recv.position.z = -1; recv.receiveShadow = true;
+at.add(aCaster, recv);
+out.alpha = [];
+for (const f of [0, 0.5, 1]) {
+  uF.value = f; renderer.shadowMap.needsUpdate = true;
+  const px = draw(at, 0x000000);
+  let dark = 0; for (let i = 0; i < px.length; i += 4) if (px[i] < 127) dark++;
+  out.alpha.push({ f, shadow: dark / (W * H) });
+}
+out.alphaCloned = renderer.info.programs.filter((p) => p.cacheKey.includes('fp-fade:t-alpha')).length;
 window.__fade = out;
 </script>` }));
 await page.goto(`${base}/__fade-test.html`, { waitUntil: 'load' });
@@ -108,6 +139,9 @@ for (const way of ['uniform', 'attribute', 'vertex']) for (const c of r[way]) {
 const s = r.shadow;
 line(s.differ === 0 && Math.abs(s.covered / s.total - 0.5) < 0.02,
   `depth material at f=0.5 covers ${s.covered}/${s.total} px, ${s.differ} differ from the colour pass`);
+for (const a of r.alpha) line(Math.abs(a.shadow - a.f) < 0.05, `alpha-tested caster f=${a.f}: ${(a.shadow * 100).toFixed(1)}% of the receiver in shadow`);
+line(r.alphaCloned > 0, `the alpha-tested caster's depth material draws with its fade program`);
+line(s.cloneDiffer === 0, `a clone of the depth material covers the same pixels (${s.cloneDiffer} bytes differ)`);
 line(s.shadowProgram, 'a caster\'s fadeDepthMaterial builds its program in the shadow pass');
 line(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
 console.log(fails ? `${fails} failed` : 'all passed');
