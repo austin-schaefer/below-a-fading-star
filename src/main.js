@@ -56,7 +56,10 @@ async function start() {
     context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
   }
   const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: quality === 'high', powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, quality === 'high' ? 1.5 : 1));
+  // Pixel ratio by quality (v3 stage 2; was high 1.5, low 1): the HUD is DOM and stays crisp. ?dpr= overrides.
+  const DPR = { high: 1.25, medium: 1, low: 0.85 };
+  const dprParam = parseFloat(url.searchParams.get('dpr'));
+  renderer.setPixelRatio(dprParam > 0 ? dprParam : Math.min(devicePixelRatio, DPR[quality] ?? 1));
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
