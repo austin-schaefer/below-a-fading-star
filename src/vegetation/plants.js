@@ -71,7 +71,7 @@ function grassGeo(rng) {
     const at = (t) => [x0 + bl.dx * lean * h * t * t, h * t, z0 + bl.dz * lean * h * t * t];
     const p0 = at(t0), p1 = at((t0 + t1) / 2), p2 = at(t1);
     const wx = -bl.dz * 0.014, wz = bl.dx * 0.014;
-    const rnd = rng();
+    rng(); const rnd = bl.rnd; // the head shares its stalk's rand so the shader scales them together (the draw keeps the stream)
     const i0 = pg.v(p0[0], p0[1], p0[2], bl.dx, 0.6, bl.dz, seed, t0, 1, rnd, 1);
     const i1 = pg.v(p1[0] - wx, p1[1], p1[2] - wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
     const i2 = pg.v(p1[0] + wx, p1[1], p1[2] + wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
@@ -182,7 +182,7 @@ function flowerGeo(rng) {
       const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
       const fa = i * 2.4 + rng(), fs = 0.026 * (1.2 - 0.6 * (i / n));
       const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
-      const rnd = rng();
+      rng(); const rnd = bl.rnd; // florets share their stem's rand so the shader scales them together (the draw keeps the stream)
       const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i1 = pg.v(cx + ox * 1.1, cy + fs * 0.2, cz + oz * 1.1, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i2 = pg.v(cx - oz, cy + fs * 0.8, cz + ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
