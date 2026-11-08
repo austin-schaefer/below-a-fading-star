@@ -129,7 +129,7 @@ for (let i = 0; i <= N; i++) {
 // builds the v4 wall instead (applyV4 and the far ranges' v4 crest below), for comparison. The crest rolls between
 // massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
 // it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
-const PROFILE = (() => {
+export const PROFILE = (() => {
   const v = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mountains') : null;
   return v === 'v4' ? 'v4' : 'c';
 })();
@@ -298,45 +298,114 @@ export function applyMountains(h, x, z, r, g, glacierH) {
 
 // --- the massifs (begin): the heightfield (see the tables' block). The face: from a foot set by the crest's height
 // and the mean slope that height asks for (CAND.slope, from the cols' to the massifs'), a long concave toe, a steeper middle and a convex shoulder rounding over the crest.
+// The face's structure at three sizes:
+//   the big form: a scree apron at 33° from the foot (lighter, smooth), a steep rock band standing behind it (a
+//     clear break of slope where they meet), a convex shoulder rounding over into the crest; corries (CORRIES)
+//     scooped high in the north- and east-facing faces, a lip below and a headwall under the crest;
+//   the middle: bedding, ledges every 13-18 m along a plane tilted 4-7° (MASSIFS: one dip per massif, another
+//     across the next col), a few deep gullies from the crest to the apron (GULLIES), each with a heavier scree fan
+//     at its mouth, and the buttress rhythm only where the face's mean slope passes ~50°;
+//   the small: creased facets (ridged noise, ~45 m) so the low sun picks out planes, and the old noise octaves low.
+const TAN_SCREE = Math.tan(33 * D2R);
+// [first bearing, last bearing, dip (dy/dx, dy/dz), ledge step (m)]; the cols between blend from one to the next
+export const MASSIFS = [[20, 100, 0.07, -0.06, 15], [125, 172, -0.05, -0.08, 17], [190, 235, 0.09, 0.03, 14], [264, 318, -0.04, 0.1, 16], [336, 356, 0.08, 0.05, 13]];
+// [bearing, half-width at the crest (m), depth (m)]: clear of the Gradine (54), the Vigilant (72), the Span (130,
+// 230), the fall (133-145), the Galleries (268-296), the Hawser (342) and the glacier (354-20)
+const GULLIES = [[40, 14, 20], [88, 12, 16], [153, 13, 18], [166, 11, 14], [199, 14, 20], [214, 12, 16], [305, 13, 18], [314, 11, 15]];
+// [bearing, half-width (degrees), push back (fraction of the face's run)]: the south massif's north face, the
+// south-east massif's north-west face, the west massif's east face north of the Galleries
+const CORRIES = [[158, 6.5, 0.22], [207, 8, 0.26], [308, 6.5, 0.22]];
+const T_DX = new Float32Array(N + 1), T_DZ = new Float32Array(N + 1), T_ST = new Float32Array(N + 1);
+if (CAND) {
+  const bd = (a, b) => ((a - b) % 360 + 540) % 360 - 180;
+  for (let i = 0; i <= N; i++) {
+    const b = bearingOf(-Math.PI + (TAU * i) / N);
+    // the massif this bearing belongs to (or the two a col lies between, blended across it)
+    let best = 0, w = 0, dx = 0, dz = 0, st = 0;
+    for (const [b0, b1, mx, mz, ms] of MASSIFS) {
+      const mid = (b0 + b1) / 2, half = (b1 - b0) / 2;
+      const d = Math.abs(bd(b, mid));
+      const k = Math.pow(Math.max(1e-3, 1 - smoothstep(half, half + 14, d)), 2) + 1e-6 / (1 + d);
+      dx += mx * k; dz += mz * k; st += ms * k; w += k; best = Math.max(best, k);
+    }
+    T_DX[i] = dx / w; T_DZ[i] = dz / w; T_ST[i] = st / w;
+  }
+}
 function applyCandidate(h, x, z, r, g, glacierH) {
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
+  const b = bearingOf(az);
   const slope = lerp(CAND.slope[0], CAND.slope[1], smoothstep(70, 280, Hc)) * D2R;
-  let foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3));
-  const steep = smoothstep(46, 60, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
-  // buttresses, only where the face is steep
+  const foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3)); // the apron's toe
+  const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
+  const span = Rc - foot;
+  const u = clamp((r - foot) / span, 0, 1);
+  // buttresses, only where the face is steep: they push the rock band out over the apron
   const ph = B.ph + 0.22 * S.noise2(r * 0.012, az * 3.0);
   const fl = Math.floor(ph), s = Math.abs(ph - fl - 0.5) * 2;
   const spA = 0.4 + 0.6 * hash2(((fl % SPURS) + SPURS) % SPURS, 913);
   const sp = (1 - Math.pow(s, 0.75)) * spA * steep;
-  foot = Math.max(296, foot - 26 * sp);
-  const span = Rc - foot;
-  const u = clamp((r - foot) / span, 0, 1);
-  let m;
-  if (r <= foot) m = 0;
-  else if (r <= Rc) {
-    // concave toe into a convex shoulder: a smoothstep leaned toward the toe
-    const p = lerp(Math.pow(u, 1.7), u * u * (3 - 2 * u), 0.6);
-    m = Hc * p;
-  } else { const d = r - Rc; m = Math.max(Hc * 0.6, Hc - 0.5 * Math.min(d, 30) - 1.1 * Math.max(0, d - 30)); } // the shoulder rounds over, then falls away
-  // the gullies between the buttresses, where steep
-  m -= 9 * Math.pow(s, 1.5) * steep * smoothstep(0.15, 0.6, u) * (1 - smoothstep(0.9, 1, u));
-  // texture: the old pinnacles at under half their height and twice their wavelength, the crest's broad roll
-  const up = smoothstep(0.55, 1.0, u);
-  const rEnv = RIDGE_ON ? ridgeEnv(bearingOf(az)) : 0; // AP's run, as in applyMountains
-  m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 22 - 2 + S.fbm2(x * 0.004, z * 0.004, 3) * 10) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
-  m += S.noise2(x * 0.06, z * 0.06) * 2.0 * u + S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 5 * u;
-  m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 18 * u * (1 - 0.6 * u); // lumps on the shoulders, so no face is a cone
-  // bedding: the same ledges as the main wall's, only where a face is steep
-  const face = smoothstep(0.1, 0.35, u) * (1 - sw) * steep;
-  if (face > 0) {
-    const dip = x * 0.045 - z * 0.02, st = 11;
-    const q = (m + dip) / st, qf = Math.floor(q), t = q - qf;
-    m = lerp(m, (qf + t * t * t) * st - dip, 0.4 * face);
+  // the gullies: across-distance (m) from each one's line, which wanders as it climbs
+  let gul = 0, fan = 0;
+  for (const [gb, gw, gd] of GULLIES) {
+    let db = b - gb - 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
+    const d = Math.abs(db) * D2R * r, w = gw * (0.55 + 0.45 * u);
+    if (d < w * 2.2) {
+      const v = Math.max(0, 1 - d / w);
+      gul = Math.max(gul, gd * Math.pow(v, 1.4) * (0.4 + 0.6 * steep));
+      fan = Math.max(fan, (1 - smoothstep(w * 0.6, w * 2.2, d)) * (0.4 + 0.6 * steep));
+    }
   }
-  // talus: scree at the foot, heavier under the steep faces
-  m = smax(m, CAND.talus * (0.4 + 0.6 * steep) * (0.6 + 0.4 * S.fbm2(x * 0.03, z * 0.03, 2)) * smoothstep(foot - 40, foot + 20, r) * (1 - smoothstep(foot + 30, foot + 70, r)), 5);
+  // corries: the face pushed back in a bowl high on the face, so a lip stands below and a headwall above
+  let push = 0;
+  for (const [cb, cw, ck] of CORRIES) {
+    let db = Math.abs(b - cb); if (db > 180) db = 360 - db;
+    if (db < cw) push = Math.max(push, ck * span * Math.pow(Math.cos((db / cw) * Math.PI / 2), 2));
+  }
+  const re = r - push * smoothstep(0.22, 0.55, u) * (1 - smoothstep(0.78, 0.96, u));
+  // the apron: scree at 33° from the foot up to Ha, heavier under the steep faces and at the gullies' mouths
+  const Ha = Hc * (0.1 + 0.1 * steep) * (0.8 + 0.25 * fan + 0.25 * S.noise2(az * 9.0, 2.9));
+  const r0 = foot + 0.75 * Ha / TAN_SCREE; // the rock band's foot, behind the apron's top
+  const H0 = 0.55 * Ha;
+  // the profile along the run: easy faces a concave toe into a convex shoulder; steep ones a band steepest at its
+  // foot, rounding over into the crest; past the crest the shoulder rounds over, then falls away
+  const P = (q) => {
+    if (q > Rc) { const d = q - Rc; return Math.max(Hc * 0.6, Hc - 0.5 * Math.min(d, 30) - 1.1 * Math.max(0, d - 30)); }
+    if (q < r0) return H0 - (r0 - q) * 3;
+    const v = (q - r0) / (Rc - r0);
+    return H0 + (Hc - H0) * lerp(lerp(Math.pow(v, 1.7), v * v * (3 - 2 * v), 0.6), lerp(v, 1 - Math.pow(1 - v, 2.4), 0.55), steep);
+  };
+  const face = smoothstep(0.08, 0.3, u) * (1 - smoothstep(0.94, 1, u)); // the rock face, not the crest's rounding
+  // The face's relief moves it in and out (r), not up and down, so a steep face keeps its planes instead of taking
+  // noise stretched down its height; the relief's noise runs in the face's own chart (along the arc, up the face).
+  const up0 = P(re), along = az * Rc;
+  let dr = 9 * sp - 4 * Math.pow(s, 1.5) * steep * smoothstep(0.15, 0.6, u); // the buttresses and their gullies
+  dr -= gul * smoothstep(0.05, 0.25, u) * (1 - smoothstep(0.93, 1.02, u)); // the gullies, crest to apron
+  dr += (S.ridged2(along * 0.018 + 7.1, up0 * 0.04 - 3.3, 2) - 0.55) * 8 * face * (0.4 + 0.6 * steep); // facets, wider than tall
+  dr += S.fbm2(along * 0.011 + 1.3, up0 * 0.011 - 2.1, 3) * 14 * face; // ribs and bays
+  let m = P(re + dr);
+  // the small: the old pinnacles at a quarter of v4's height and twice its wavelength, on the crest only (it stays
+  // rounded); the broad roll and the fine noise, low
+  const up = smoothstep(0.6, 1.0, u);
+  const rEnv = RIDGE_ON ? ridgeEnv(b) : 0; // AP's run, as in applyMountains
+  m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
+  m += S.noise2(x * 0.06, z * 0.06) * 1.2 * u + S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
+  m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  // bedding: treads and risers along the massif's tilted plane, on the rock (the apron covers their feet)
+  const bed = face * (1 - sw) * (0.3 + 0.7 * steep);
+  if (bed > 0) {
+    const ui = Math.min(N - 1, Math.max(0, Math.floor(((az + Math.PI) / TAU) * N)));
+    const dip = x * T_DX[ui] + z * T_DZ[ui], st = T_ST[ui];
+    const q = (m + dip) / st, qf = Math.floor(q), t = q - qf;
+    m = lerp(m, (qf + Math.pow(t, 4)) * st - dip, 0.6 * bed);
+  }
+  // the apron meets the band in a crease, its top soft
+  if (r > foot - 6) {
+    const cone = (r - foot) * TAN_SCREE * (1 + 0.06 * S.noise2(x * 0.05, z * 0.05));
+    m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
+  }
+  m = Math.max(m, 0);
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {
