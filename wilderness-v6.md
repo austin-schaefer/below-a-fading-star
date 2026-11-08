@@ -176,7 +176,7 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
 | Pixel ratio | a step changes the ratio over ≥ 1 s (or happens only behind a still frame) and allocates no targets on the step | `?budget=1` forced step: the probe sees no frame over 2× and no new targets |
 | Aliasing | the 5 cm sideways pair in the wood changes ≤ 2× the baseline's pixels (today 6.8×) | pop-test `aliasing` pair |
 
-## Stage 1: the measurement harness (one agent, Sonnet, small)
+## Stage 1: the measurement harness (one agent, Sonnet, small) (done, trimmed: `### v6-01 harness` in Results)
 
 `tools/pop-probe.mjs` exists (it made this survey). Stage 1 turns it into a gate.
 
@@ -327,3 +327,51 @@ Only the questions that change which work gets done.
 - Bloom shimmer and banding, which need a real display and Austin's eye.
 - The far creatures' 5 Hz stepping as motion. It needs a position trace or a video.
 - The shadow box's edge on open ground at dusk. In the dark wood it did not show above the noise.
+
+## Results
+
+### v6-01 harness
+
+**Built (trimmed brief):** `tools/pop-test.mjs` with its switch gate, `tools/pair-diff.mjs`, the counters, and one measurement. Not built, by the trim: the per-module fauna counters, `alloc-audit`'s burst window and the `alloc-burst` row, the `shadow-edge`, `creature-shadow`, `dpr-step`, `lights` and `grazer-trace` sequences. Their groups (`fauna`, `lights`, `dpr`) are absent from `pop-test` until their owners bring them back; the counters `lights.handovers`, `tier.steps` and `shadow.redraws.*` exist.
+
+**Counters** (`ctx.perf.count(key, n)`; `report().counters`; every 250 ms record sample's `counters`): `trees.lodSwitches`, `fungi.groupFlips`, `plants.repacks`, `plants.farSwitches` (a packed chunk crossing the far switch at a repack), `rocks.packs`, `shadow.redraws.move|clock|dynamic|turn`, `lights.handovers` (a slot whose source changes), `tier.steps`, `uploads.programs|geometries|textures` (`renderer.info` growth per frame) and `uploads.texFirst|texData` (`gpumem.js`: texture uploads by whether that texture was uploaded before).
+
+**Checks** (`pop-test`; owner flips its rows to gated when it lands; `uploads` is gated now):
+
+| Row | Owner | Target | Gate |
+|---|---|---|---|
+| `uploads.bench`, `uploads.wood`, `uploads.pan` | v6-01 | programs, geometries, first-sight textures after the card = 0 | yes |
+| `pacing.bench` | orchestrator | frames over 2x the median <= 2, all in the first second | no |
+| `trees.tree-near`, `tree-far`, `tree-wood`; `fungi.fungi` | v6-04 | largest consecutive-frame change <= 2x baseline | no |
+| `plants.grass-far`, `plants.reeds-far`, `rocks.rocks` | v6-05 | the same | no |
+| `plants.bench-repack-spread`, `plants.wood-repack-spread` | v6-05 | no frame packs two kinds | no |
+| `shadow.pan-redraws` | v6-03 | a turn at 1.2 rad/s redraws <= 4/s | no |
+| `aliasing.step-5cm` | v6-08 | a 5 cm sideways step <= 2x baseline | no |
+| `trees.wood-switches` | v6-04 | reported only | no |
+
+**Before numbers** (`shots/perf/v6-before.json`, medium, headless Metal, 550 s for the full run, about two minutes for `--only=uploads`):
+
+| Row | Value |
+|---|---|
+| `uploads.*` (all three) | 0 programs, 0 geometries, 0 textures, 0 first-sight uploads: the warm-up holds |
+| `pacing.bench` | 2 frames over 2x the median, 1 of them after the first second (max 3.6x) |
+| `plants.bench-repack-spread` | 611 repacks, 113 frames with two or more |
+| `plants.wood-repack-spread` | 177 repacks in 164 frames, 7 with two or more |
+| `trees.wood-switches` | 602 switches on the wood walk, at most 4 in a frame |
+| `shadow.pan-redraws` | 9.3/s (111 move, 1 clock) |
+| `trees.tree-near` | the switch's largest step 36 changed pixels against a baseline of 197 |
+| `trees.tree-far` | 87 against 348 |
+| `trees.tree-wood` | 8 against 2 |
+| `plants.grass-far` | 7 against 16 |
+| `plants.reeds-far` | 90 against 52 |
+| `rocks.rocks` | 8 against 9 |
+| `fungi.fungi` | 12 against 3 |
+| `aliasing.step-5cm` | 137 against 30 |
+
+The picture rows are noise-limited headless: with the sky pinned, the baseline of the same pose still moves by 2 to 350 changed pixels between runs (creatures, drifting motes, the sky's events), so a ratio near 1 means the pop is under the scene's own motion and a ratio above 2 on a baseline of a few pixels (`tree-wood`, `fungi`) is a few pixels. Read the absolute step and run twice. The survey's 4086 for the rocks pair was the sky dome and the sun's rays following the camera (the diff picture is one red cloud over the sun), not rocks: with the dome and the rays pinned the repack is 8 changed pixels. The survey's lone tree at (-125.8, -44) is gone (v5 moved the trees); `pop-test` finds the nearest `lone` tree to that spot (now at (-97.4, -92.7)) and walks a line toward it. `shots/wip/v6-01-baseline-{a,b,diff}.png` is the noise floor through the pinned path (first and last of 24 frames, 785 changed; consecutive frames are 2 to 200).
+
+**Against the survey** (`v6-survey-probe.json`; the survey counted with monkey-patches, `pop-test` with counters): tree switches 602 wood (588), 81 bench (126; the bench walks 30 s here, the survey's 36), 262 span (271); plant repacks 611 bench (798, counted as buffer version bumps, far buffers included), 177 wood (232); fungi group flips 24 bench (the survey's 53 visibility flips counted every object); shadow redraws 22.9/s wood walk (21.7), 9.3/s wood pan (14.9; the pan here turns 12 s of simulated time in one browser, the survey's in a fresh one), bench about 20/s (25); handovers 12 bench, 0 wood, 1 lattice, 0 keep, 1 causeway (survey 12, 0, 0, 0 to 1, 2).
+
+**Uploads while panning:** no first-sight upload is left. The textures that upload every frame are BatchedMesh data textures: `veg-trees._colorsTexture` (33x33) every frame the tree batch draws (about 4000 on the 50 s wood walk), and `veg-lattice._colorsTexture` (52x52) near the Lattice; the matrices and indirect textures upload far less. Expected today; `pop-test` reports them as `texData` with their sizes (`dataTextures`, named in the JSON's `dataTextureNames`).
+
+**The uncapped wood pan** (`shots/perf/v6-01-uncapped-medium.json`: `?q=medium&record=6&pos=-190,165&cap=0&adapt=0`, headless Chrome with `--disable-frame-rate-limit --disable-gpu-vsync`, 189 fps): GPU timers per frame render 13.0 ms (shadow 0.4), bloom 3.5, grade 3.0, output 3.1, total 22.7, so the post chain is 9.7 of 22.7 = 43%. The timers sum to four times the 5.3 ms frame: they overlap on this GPU and are shares, not costs. The vsync-held run (`v6-01-uncapped-medium-vsynced.json`, `?cap=0` alone, 60 fps) reads bloom 5.2, grade 5.3, output 5.4 of 28.0 = 57%. Both are over the 40% line for v6-02; Austin's laptop numbers are what settle it.

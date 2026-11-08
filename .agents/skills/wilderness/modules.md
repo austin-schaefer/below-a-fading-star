@@ -22,7 +22,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `skylife.js` | sky events: the Parhelion City, the Vigilant, omens (procession, shard belt, still star) |
 | `rocks.js` | pebbles, stones, boulders, tors |
 | `debug.js` | teleport panel, live position, on/off rows |
-| `perf.js` | profiler overlay, bench path, runtime toggles, `ctx.perf` |
+| `perf.js` | profiler overlay, bench path, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |
 | `shadows.js` | shadow-map cadence and the far cut-off for creatures' shadows |
 | `tier.js` | quality tier choice, the adaptive pixel ratio, the debug panel's quality rows |
