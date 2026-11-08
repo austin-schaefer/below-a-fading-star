@@ -1,6 +1,8 @@
-# Wilderness v5: bioregions
+# Wilderness v5: diversity, life and detail
 
 Austin, 2026-11-08, after walking v2.1. Runs after v4. Initial scope only; the plan comes later.
+
+"If v4 is about improving high-level map nuance, v5 should be about more diversity, more little characters hiding out there, a few more humanoids in particular." Ideas are brainstormed in `IDEAS-v5.md`; Austin picks.
 
 "More variation around the map. The same stones and plants occur everywhere. It would be more powerful if we had more distinct bioregions. The forest, the fens and the blue crystal area do this well. Need more sense that areas have personality: their own flora, fauna, even geology."
 
