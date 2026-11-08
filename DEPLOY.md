@@ -35,7 +35,7 @@ cd "$S" && netlify deploy --prod --no-build --dir . --site below-a-fading-star
 - `curl -sI https://below-a-fading-star.netlify.app/ | grep -i x-robots-tag` shows `noindex, nofollow`.
 - The upload is under 5 MB, about 90 files; `/shots/…` returns 404.
 - The page shows the dark title card "Below a Fading Star", the line "the moor is loading…" fades out after a few seconds, then "Go out" enters the scene. `?debug=1` adds a landmark teleport panel. Any load error prints in orange at the top-left.
-- On a phone: a thin ring bottom-left is the thumbstick, drag anywhere else to look. On desktop the page asks for pointer lock on "Go out"; Esc pauses.
+- On a phone: a thin ring bottom-right is the thumbstick, drag anywhere else to look. On desktop the page asks for pointer lock on "Go out"; Esc pauses.
 
 ## Optional
 

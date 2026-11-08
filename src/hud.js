@@ -20,6 +20,23 @@ export function buildHud(ctx) {
     hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 7000);
   });
   ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
+  // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
+  ctx.events.addEventListener('pausetoggle', () => {
+    if (card.classList.contains('hidden')) { card.classList.remove('hidden'); card.classList.add('paused'); }
+    else card.classList.add('hidden');
+  });
+  const dragBtn = document.getElementById('draglook');
+  if (dragBtn) {
+    dragBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const on = !ctx.player.dragLook;
+      ctx.controls.setDragLook(on);
+      if (on && !ctx.player.enabled) return; // they chose it before going out; begin as usual
+      if (on) ctx.events.dispatchEvent(new CustomEvent('begin'));
+    });
+    const label = () => { dragBtn.textContent = ctx.player.dragLook ? 'Mouse look by dragging is on. Switch back to captured mouse' : 'Mouse trouble? Look by dragging instead (no mouse capture)'; };
+    ctx.events.addEventListener('draglook', label); label();
+  }
   ctx.events.addEventListener('lockfail', () => {
     if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) return;
     hint.textContent = 'The mouse cannot be captured in this window. Hold the left button and drag to look.';
