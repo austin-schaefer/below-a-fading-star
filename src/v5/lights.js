@@ -26,7 +26,7 @@ const PARAM = typeof location !== 'undefined' ? new URLSearchParams(location.sea
 const ALL = ['moss', 'embers', 'post', 'door', 'leerie'];
 export const LEERIE = { n: 12, height: 5.6, side: 1.0 };
 const CH = { moss: 0, embers: 1, post: 2, door: 3, leerie: 4 }; // leerie: 4..15, one per standard
-const COL = { moss: '#46e8c8', ember: '#ff4a12', post: '#ff8a3a', door: '#ffae5c', leerie: '#ffd690' };
+const COL = { moss: '#46e8c8', ember: '#ff4a12', post: '#ff8a3a', door: '#ffae5c', leerie: '#ffbc72' };
 
 export async function build(ctx) {
   const want = PARAM === null ? ALL : PARAM === '0' ? [] : PARAM.split(',').filter((k) => ALL.includes(k));
