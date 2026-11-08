@@ -1,0 +1,13 @@
+[
+ {"name": "causeway", "x": -40, "z": 22, "yaw": -0.95, "pitch": 0.1},
+ {"name": "causeway-se", "x": -40, "z": 22, "yaw": -2.2, "pitch": 0.1},
+ {"name": "arcature", "x": 160, "z": 60, "yaw": -1.571, "pitch": 0.42},
+ {"name": "scarp", "x": 250, "z": 5, "yaw": -1.571, "pitch": 0.62},
+ {"name": "landing", "x": 287.8, "z": -192.6, "yaw": -0.755, "pitch": 0.85, "pre": "var fp = window.__fp; fp.player.pos.y = 34.2 + fp.player.eye; fp.camera.position.y = fp.player.pos.y"},
+ {"name": "spawn-west", "x": 6, "z": 36, "yaw": 1.92, "pitch": 0.12},
+ {"name": "air", "x": 150, "z": 0, "dy": 90, "yaw": -1.571, "pitch": 0.08},
+ {"name": "air-gradine", "x": 300, "z": -200, "dy": 100, "yaw": -0.68, "pitch": 0.0},
+ {"name": "air-gutter", "x": 150, "z": 0, "dy": 90, "yaw": -1.571, "pitch": 0.08, "js": "window.__fp.sky.flicker.hold = 0.3; window.__fp.annals.flipHold = 1", "settle": 1500},
+ {"name": "gutter-a", "x": -40, "z": 22, "yaw": -0.95, "pitch": 0.1, "js": "window.__fp.sky.flicker.hold = null; window.__fp.annals.flipHold = null; window.__fp.sky.flicker.next = 0", "settle": 200, "pre": "console.warn('annals flicker', window.__fp.sky.flicker.value.toFixed(2), 'flip', window.__fp.annals.uniforms.uAnnFlip.value.toFixed(2))"},
+ {"name": "gutter-b", "x": -40, "z": 22, "yaw": -0.95, "pitch": 0.1, "settle": 2000, "pre": "console.warn('annals flicker', window.__fp.sky.flicker.value.toFixed(2), 'flip', window.__fp.annals.uniforms.uAnnFlip.value.toFixed(2))"}
+]
