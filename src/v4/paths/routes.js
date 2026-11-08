@@ -56,7 +56,7 @@ export const LEADS = [
 // Landmarks' walls (not their grounds), every reserved floor site of the plan's section 5 (v5 and v6), the blocks
 // other agents own. A lead may come to a site it is led to (one within reach of its own points) but no other.
 const AVOID = [
-  ...[['castle', 36] /* v5: the keep's corners reach 35 m */, ['tower', 17] /* v5: the lens mount's fins */, ['stones', 10], ['byre', 13], ['court', 34], ['taverna', 14], ['graveyard', 11], ['hypogeum', 9], ['arcature', 23] /* v5: the armillary's outer trunnions reach 22.5 m */, ['cutting', 8], ['eddy', 5], ['gradine', 12]]
+  ...[['castle', 36] /* v5: the keep's corners reach 35 m */, ['tower', 17] /* v5: the lens mount's fins */, ['stones', 10], ['byre', 13], ['court', LANDMARKS.court.r] /* v5: the piers' shoes reach 39 m */, ['taverna', 14], ['graveyard', 11], ['hypogeum', 9], ['arcature', LANDMARKS.arcature.r] /* v5: the armillary's trunnions */, ['cutting', 8], ['eddy', 5], ['gradine', 12]]
     .map(([k, r]) => ({ x: LANDMARKS[k].x, z: LANDMARKS[k].z, r })),
   ...['keptFire', 'collation', 'prospect', 'tallestTor', 'lightPost', 'lightDoor', 'lightMoss', 'lightEmbers', 'nave', 'postern'].map((k) => ({ x: SITES[k].x, z: SITES[k].z, r: SITES[k].r })),
   // v6 (section 5): the Taker, the Coheirs, the Long Sleeper, the Bather's pool, the Sexton's graves, the Accrescent,

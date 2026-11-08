@@ -150,10 +150,12 @@ export function buildBiomesh(ctx, U) {
   // surface point P, normal N and a tangent T0 at surface coords (u, v): ground x, z; or a column's arc, height
   function mapUV(C, mode, col, u, v) {
     if (mode === 1) {
-      const c = C.cols[col], R = c.r, th = u / R;
-      const cs = Math.cos(th), sn = Math.sin(th);
+      const c = C.cols[col], th = u / c.r;
+      // a round column; or a polygonal pier (sides, rot: the first face's normal), r its apothem, tiles flat on each face
+      const w = c.sides ? TAU / c.sides : 0, f = w ? ((((th - c.rot) % w) + w) % w) - w / 2 : 0, R = c.r / Math.cos(f);
+      const cs = Math.cos(th), sn = Math.sin(th), fc = Math.cos(th - f), fs = Math.sin(th - f);
       P[0] = c.x + R * cs; P[1] = c.base + v; P[2] = c.z + R * sn;
-      N[0] = cs; N[1] = 0; N[2] = sn; T0[0] = -sn; T0[1] = 0; T0[2] = cs;
+      N[0] = fc; N[1] = 0; N[2] = fs; T0[0] = -fs; T0[1] = 0; T0[2] = fc;
       return;
     }
     const x = u, z = v;
@@ -310,6 +312,12 @@ export function buildBiomesh(ctx, U) {
   }
   function setupCourt() {
     const C = courtC, K = L.court;
+    const piers = ctx.structures?.notes?.court?.piers; // the v5 court publishes the piers it lets the colony climb
+    if (piers) for (const p of piers) C.cols.push({ ...p });
+    else setupColumns(C, K);
+    climbCourt(C);
+  }
+  function setupColumns(C, K) {
     let cols = colliders.filter((c) => c.h === undefined && Math.abs(c.r - 1.25) < 0.06 && Math.hypot(c.x - K.x, c.z - K.z) < 28);
     const meshes = []; scene.traverse((o) => { if (/^structures-court/.test(o.name) && !/pit/.test(o.name)) meshes.push(o); });
     let found = [];
@@ -327,6 +335,8 @@ export function buildBiomesh(ctx, U) {
       const g = ground.at(p.x, p.z);
       C.cols.push({ x: p.x, z: p.z, r: 1.08, base: g + 1.1, top: p.top ?? g + 11.6 });
     }
+  }
+  function climbCourt(C) {
     // up each column: a streak climbing one flank, densest low down, ragged at its upper edge
     const perCol = Math.floor(C.limit / C.cols.length);
     C.cols.forEach((c, ci) => {
@@ -342,9 +352,9 @@ export function buildBiomesh(ctx, U) {
       }
       // and a pool of them on the floor at its foot, spilling out from under the plinth
       for (let k = 0; C.count < perCol * (ci + 1) && k < 1600; k++) {
-        const a = face + (rng() - 0.5) * 1.5, d = 2.1 + Math.pow(rng(), 1.4) * 2.6;
+        const a = face + (rng() - 0.5) * 1.5, d = (c.reach ?? 2.1) + Math.pow(rng(), 1.4) * 2.6;
         const x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d;
-        if (okG(x, z) && Math.max(Math.abs(x - c.x), Math.abs(z - c.z)) > 1.55) addTile(C, x, z, 0, ci);
+        if (okG(x, z) && Math.max(Math.abs(x - c.x), Math.abs(z - c.z)) > (c.half ?? 1.55)) addTile(C, x, z, 0, ci);
       }
     });
     C.kind = 'court'; C.every = [2.2, 4.2];
@@ -365,7 +375,7 @@ export function buildBiomesh(ctx, U) {
       case 'hf': return Math.hypot(u - C.center.x, v - C.center.z) < C.growR;
       case 'court': {
         const c = C.cols[col], ex = Math.max(Math.abs(u - c.x), Math.abs(v - c.z));
-        return ex > 1.6 && Math.hypot(u - c.x, v - c.z) < 6.8 && okG(u, v);
+        return ex > (c.half ?? 1.55) + 0.05 && Math.hypot(u - c.x, v - c.z) < (c.reach ?? 2.1) + 4.7 && okG(u, v);
       }
       default: return Math.hypot(u - C.center.x, v - C.center.z) < C.growR && okG(u, v);
     }
@@ -547,7 +557,7 @@ export function buildBiomesh(ctx, U) {
     if (!setupDone) {
       deferred += dt;
       // wait for the rocks and structures to be built (or for long enough that they are not coming)
-      const haveRocks = !!scene.getObjectByName('rocks-boulder-0'), haveCourt = colliders.some((c) => Math.abs(c.r - 1.25) < 0.06);
+      const haveRocks = !!scene.getObjectByName('rocks-boulder-0'), haveCourt = !!ctx.structures?.notes?.court?.piers || colliders.some((c) => Math.abs(c.r - 1.25) < 0.06);
       if ((haveRocks && haveCourt && deferred > 0.5) || deferred > 6) {
         setupDone = true;
         try { setupBoulder(); } catch (e) { console.error('[fp] uncanny.biomesh boulder:', e); }
