@@ -79,6 +79,25 @@ const results = await page.evaluate(() => {
     };
     out.crackRun = jump(true);
     out.crackWalk = jump(false);
+    // the deck's west half, from the fallen bay's lip past the west stair's top to the gate, along three lines:
+    // a step whose movement the colliders cut short is a block (each logged with the collider and its module)
+    const C = p.colliders, westEnd = fp.span.plan.decks[0][1] - 1;
+    out.deckWest = { blocks: [], reached: 0 };
+    for (const z of [209, 215, 221]) {
+      p.pos.set(westEnd, 56 + p.eye, z); p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true; p.yaw = Math.PI / 2;
+      p.keys.clear(); p.keys.add('KeyW');
+      for (let t = 0; t < 1200 && p.pos.x > -253; t++) {
+        const bx = p.pos.x, bz = p.pos.z, f0 = feet();
+        fp.controls.update(0.05);
+        const ix = bx + p.vel.x * 0.05, iz = bz + p.vel.z * 0.05;
+        if (Math.hypot(p.pos.x - ix, p.pos.z - iz) > 1e-3) {
+          const c = C.find((c) => Math.hypot(ix - c.x, iz - c.z) < c.r + 0.45 && !(c.h !== undefined && (f0 > c.y + c.h || f0 < c.y - 0.5)));
+          out.deckWest.blocks.push({ x: +bx.toFixed(1), z, by: c ? `${c.mod} (${c.x.toFixed(1)}, ${c.z.toFixed(1)}) r ${c.r.toFixed(2)}` : '?' });
+        }
+      }
+      p.keys.clear();
+      if (p.pos.x <= -253 && Math.abs(feet() - 56) < 0.3) out.deckWest.reached++;
+    }
   }
   out.colliders = fp.controls.state.colliders.length;
   out.calls = fp.renderer.info.render.calls; out.tris = fp.renderer.info.render.triangles;
@@ -95,6 +114,7 @@ const checks = [
   ['landmark card shows at the stones', results.placeShown && /Cardinal/.test(results.placeName)],
   ['the west stair climbs to the Span\'s deck (y 56) and the deck walks east', !!results.stairDone && Math.abs(results.stairEnd.feet - 56) < 0.3 && results.stairEnd.x > -202],
   ['the crack: a running hop clears it, a walk falls through', !!results.crackRun && results.crackRun.hopped && results.crackRun.x > -40 && Math.abs(results.crackRun.feet - 56) < 0.3 && results.crackWalk.feet < 30],
+  ['the deck\'s west half walks to the west gate without a block (3 lines)', !!results.deckWest && results.deckWest.reached === 3 && results.deckWest.blocks.length === 0],
   ['no page errors', errors.length === 0],
 ];
 let fail = 0;
