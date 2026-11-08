@@ -19,6 +19,8 @@ Austin (2026-11-08, last thing): "check the sequence of v4 and v5 and see if it 
 
 4. **v6, the living.** The nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif, then the audio pass over everything new. Three or four figures per agent. Release as **v6**.
 
+5. **v7, nothing pops.** Performance and visible artefacts, after v6 ships: the survey and the six stages in `wilderness-v7.md` (pop-test harness; LOD cross-fades; streaming; shadow, light-slot, pixel-ratio and AA stability; uploads and compiles at load; Austin's hardware table). Its open questions (AA, fade versus pushed-out switches, the shadow box) are asked before stage 2 starts. Release as **v7**.
+
 Between stages: curate `shots/wip/` (the curation brief), write the `RELEASES.md` entry, PR, CI green, merge, publish the artifact if the session has the tool, reset the branch to main, and log the release line in `MORNING.md` (a phone notification too where the session can send one). If Austin wakes mid-stage, what has landed ships as that version's stage A.
 
 ## Standing decisions (Austin's calls, made in advance for the night)

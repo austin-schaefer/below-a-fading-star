@@ -1,0 +1,2269 @@
+{
+"before-precompile/bench": {
+"frames": 2147,
+"medianIv": 16.6,
+"medianCpu": 3.2,
+"over2x": 6,
+"over2xCpu": 28,
+"maxIvRatio": 6.23,
+"maxCpuRatio": 28.47,
+"repacks": 798,
+"repackFrames": 430,
+"cpuShadowFrames": 3.7,
+"cpuOtherFrames": 2.8,
+"cpuRepackFrames": 3.1,
+"lodSwitches": 126,
+"lodFramesMax": 2,
+"instUploads": 34017,
+"visFlips": 53,
+"slotHandovers": 12,
+"shadowRedraws": 912,
+"shadowPerSec": 25.39,
+"programs": [
+96,
+142
+],
+"progFrames": [
+{
+"x": 2.3,
+"z": 34.8,
+"prog": 97,
+"iv": 20.7,
+"cpu": 7.4,
+"newProg": [
+":59,60,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 3.1,
+"z": 34.1,
+"prog": 99,
+"iv": 36.2,
+"cpu": 24.4,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 3.7,
+"z": 33.6,
+"prog": 101,
+"iv": 36.3,
+"cpu": 23.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 3.8,
+"z": 33.5,
+"prog": 105,
+"iv": 29.1,
+"cpu": 28.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":61,62,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 4.3,
+"z": 33,
+"prog": 113,
+"iv": 103.4,
+"cpu": 91.1,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":lambert,highp,srgb-linear,false,,false,false,false,false,fal",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 5.1,
+"z": 32.4,
+"prog": 116,
+"iv": 37.6,
+"cpu": 37.1,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":63,64,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 5.4,
+"z": 32.2,
+"prog": 117,
+"iv": 8.6,
+"cpu": 8.1,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 5.6,
+"z": 32,
+"prog": 118,
+"iv": 24.6,
+"cpu": 16.6,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 6.8,
+"z": 31,
+"prog": 119,
+"iv": 26.3,
+"cpu": 11.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 7,
+"z": 30.9,
+"prog": 120,
+"iv": 23.5,
+"cpu": 19.6,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 7.4,
+"z": 30.5,
+"prog": 121,
+"iv": 20.9,
+"cpu": 6.3,
+"newProg": [
+":65,66,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -5,
+"z": 27.8,
+"prog": 123,
+"iv": 24,
+"cpu": 10.1,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -16.5,
+"z": 25.9,
+"prog": 124,
+"iv": 19.2,
+"cpu": 5.2,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -36.5,
+"z": 22.6,
+"prog": 125,
+"iv": 26.7,
+"cpu": 12.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -36.7,
+"z": 22.6,
+"prog": 126,
+"iv": 15.1,
+"cpu": 11.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -36.9,
+"z": 22.5,
+"prog": 128,
+"iv": 25.3,
+"cpu": 20.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -54.5,
+"z": 47.5,
+"prog": 129,
+"iv": 22.5,
+"cpu": 8.7,
+"newProg": [
+":67,68,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -54.9,
+"z": 48.3,
+"prog": 130,
+"iv": 19.4,
+"cpu": 5.7,
+"newProg": [
+":69,70,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -55.2,
+"z": 48.7,
+"prog": 132,
+"iv": 23.5,
+"cpu": 11.1,
+"newProg": [
+":71,72,highp,srgb-linear,false,,false,false,false,false,false",
+":73,74,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -55.3,
+"z": 48.9,
+"prog": 134,
+"iv": 19.1,
+"cpu": 12.3,
+"newProg": [
+":71,75,highp,srgb-linear,false,,false,false,false,false,false",
+":76,77,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -55.4,
+"z": 49,
+"prog": 136,
+"iv": 26.1,
+"cpu": 22.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -55.6,
+"z": 49.5,
+"prog": 137,
+"iv": 27.4,
+"cpu": 12.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -55.7,
+"z": 49.7,
+"prog": 138,
+"iv": 16.3,
+"cpu": 12.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -55.8,
+"z": 49.8,
+"prog": 139,
+"iv": 17.1,
+"cpu": 13.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,f"
+]
+},
+{
+"x": -56.6,
+"z": 51.2,
+"prog": 140,
+"iv": 24.9,
+"cpu": 12.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,f"
+]
+},
+{
+"x": -56.8,
+"z": 51.5,
+"prog": 141,
+"iv": 25.2,
+"cpu": 12.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 18.9,
+"z": 66.1,
+"prog": 142,
+"iv": 20.3,
+"cpu": 7.3,
+"newProg": [
+":6,7,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+127,
+176,
+237
+],
+"tris": [
+2007428,
+2582994,
+3580721
+],
+"geo": [
+152,
+236
+],
+"tex": [
+27,
+33
+],
+"byName": {
+"inst:demesne-peafowl": 1877,
+"inst:demesne-peafowl-trains": 1877,
+"inst:salt-pedlars": 2152,
+"inst:skylife-worm": 2152,
+"inst:wings": 2152,
+"inst:?": 9296,
+"inst:crows": 2152,
+"inst:fishrings": 2152,
+"inst:bats": 2152,
+"inst:uncanny-wagon-wheels": 1639,
+"inst:uncanny-tarn-rings": 2105,
+"inst:lamp-moths": 851,
+"inst:rooks": 47,
+"inst:gibbet-crows": 300,
+"vis:moths": 3,
+"vis:rooks": 3,
+"inst:lynchets-stoats": 70,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 35,
+"inst:bletting-snail-shells": 35,
+"inst:bletting-snail-bodies": 35,
+"repack:veg-heather": 120,
+"repack:veg-bracken": 99,
+"repack:veg-flowers": 106,
+"repack:veg-fleshy": 89,
+"repack:veg-grass": 131,
+"repack:veg-grass-far": 131,
+"repack:veg-reeds": 61,
+"repack:veg-reeds-far": 61,
+"inst:rocks-pebble": 100,
+"inst:rocks-stone": 150,
+"inst:rocks-boulder": 100,
+"inst:rocks-boulder-far": 100,
+"vis:uncanny-wagon-rope": 2,
+"vis:veg-toadstools": 10,
+"vis:veg-pods": 16,
+"vis:lamp-moths": 2,
+"slot": 12,
+"inst:moths": 4,
+"inst:strandline-sandpipers": 978,
+"inst:strandline-sandpiper-legs": 978,
+"inst:inhabitants-menology-lizards": 601,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:demesne-peafowl",
+"inst:demesne-peafowl-trains",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:crows",
+"inst:fishrings",
+"inst:bats",
+"inst:uncanny-tarn-rings"
+],
+"eventful": {
+"inst:uncanny-wagon-wheels": 1639,
+"inst:lamp-moths": 851,
+"inst:rooks": 47,
+"inst:gibbet-crows": 300,
+"vis:moths": 3,
+"vis:rooks": 3,
+"inst:lynchets-stoats": 70,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 35,
+"inst:bletting-snail-shells": 35,
+"inst:bletting-snail-bodies": 35,
+"repack:veg-heather": 120,
+"repack:veg-bracken": 99,
+"repack:veg-flowers": 106,
+"repack:veg-fleshy": 89,
+"repack:veg-grass": 131,
+"repack:veg-grass-far": 131,
+"repack:veg-reeds": 61,
+"repack:veg-reeds-far": 61,
+"inst:rocks-pebble": 100,
+"inst:rocks-stone": 150,
+"inst:rocks-boulder": 100,
+"inst:rocks-boulder-far": 100,
+"vis:uncanny-wagon-rope": 2,
+"vis:veg-toadstools": 10,
+"vis:veg-pods": 16,
+"vis:lamp-moths": 2,
+"slot": 12,
+"inst:moths": 4,
+"inst:strandline-sandpipers": 978,
+"inst:strandline-sandpiper-legs": 978,
+"inst:inhabitants-menology-lizards": 601,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"scenario": "bench",
+"q": "medium"
+},
+"before-precompile/wood": {
+"frames": 3592,
+"length": 147.74814507948713,
+"medianIv": 16.7,
+"medianCpu": 2,
+"over2x": 2,
+"over2xCpu": 88,
+"maxIvRatio": 3.6,
+"maxCpuRatio": 23.1,
+"repacks": 232,
+"repackFrames": 162,
+"cpuShadowFrames": 2.2,
+"cpuOtherFrames": 1.9,
+"cpuRepackFrames": 2.1,
+"lodSwitches": 588,
+"lodFramesMax": 3,
+"instUploads": 32598,
+"visFlips": 33,
+"slotHandovers": 0,
+"shadowRedraws": 1300,
+"shadowPerSec": 21.7,
+"programs": [
+118,
+125
+],
+"progFrames": [
+{
+"x": -76.9,
+"z": 141,
+"prog": 120,
+"iv": 25.1,
+"cpu": 10.2,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -80.5,
+"z": 140.6,
+"prog": 121,
+"iv": 18.1,
+"cpu": 4.4,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -100.3,
+"z": 138.3,
+"prog": 122,
+"iv": 20.9,
+"cpu": 3.8,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -108,
+"z": 137.4,
+"prog": 123,
+"iv": 24.8,
+"cpu": 11.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -112.5,
+"z": 136.9,
+"prog": 124,
+"iv": 19.2,
+"cpu": 4.2,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -150.7,
+"z": 132.3,
+"prog": 125,
+"iv": 20.3,
+"cpu": 5.9,
+"newProg": [
+":6,7,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+121,
+142,
+177
+],
+"tris": [
+1819937,
+2018977,
+2611628
+],
+"geo": [
+196,
+199
+],
+"tex": [
+28,
+28
+],
+"byName": {
+"inst:strandline-sandpipers": 2921,
+"inst:strandline-sandpiper-legs": 2921,
+"inst:salt-pedlars": 3597,
+"inst:skylife-worm": 3597,
+"inst:inhabitants-menology-lizards": 1179,
+"inst:wings": 3597,
+"inst:?": 3344,
+"inst:fishrings": 3597,
+"inst:bats": 3597,
+"inst:uncanny-tarn-rings": 2473,
+"repack:veg-grass": 48,
+"repack:veg-grass-far": 48,
+"repack:veg-heather": 33,
+"repack:veg-bracken": 30,
+"repack:veg-flowers": 30,
+"repack:veg-fleshy": 21,
+"repack:veg-reeds": 15,
+"repack:veg-reeds-far": 15,
+"inst:crows": 287,
+"inst:uncanny-wagon-wheels": 287,
+"inst:gibbet-crows": 287,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 233,
+"inst:demesne-peafowl-trains": 233,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"inst:lynchets-stoats": 118,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 48,
+"inst:rocks-stone": 72,
+"inst:rocks-boulder": 48,
+"inst:rocks-boulder-far": 48,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:strandline-sandpipers",
+"inst:strandline-sandpiper-legs",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:fishrings",
+"inst:bats"
+],
+"eventful": {
+"inst:inhabitants-menology-lizards": 1179,
+"inst:uncanny-tarn-rings": 2473,
+"repack:veg-grass": 48,
+"repack:veg-grass-far": 48,
+"repack:veg-heather": 33,
+"repack:veg-bracken": 30,
+"repack:veg-flowers": 30,
+"repack:veg-fleshy": 21,
+"repack:veg-reeds": 15,
+"repack:veg-reeds-far": 15,
+"inst:crows": 287,
+"inst:uncanny-wagon-wheels": 287,
+"inst:gibbet-crows": 287,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 233,
+"inst:demesne-peafowl-trains": 233,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"inst:lynchets-stoats": 118,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 48,
+"inst:rocks-stone": 72,
+"inst:rocks-boulder": 48,
+"inst:rocks-boulder-far": 48,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"scenario": "wood",
+"q": "medium"
+},
+"before-precompile/lattice": {
+"frames": 1792,
+"length": 79.44701864763358,
+"medianIv": 16.7,
+"medianCpu": 8.1,
+"over2x": 4,
+"over2xCpu": 2,
+"maxIvRatio": 3.53,
+"maxCpuRatio": 5.52,
+"repacks": 57,
+"repackFrames": 40,
+"cpuShadowFrames": 8.4,
+"cpuOtherFrames": 8.1,
+"cpuRepackFrames": 3.9,
+"lodSwitches": 23,
+"lodFramesMax": 2,
+"instUploads": 15895,
+"visFlips": 27,
+"slotHandovers": 0,
+"shadowRedraws": 66,
+"shadowPerSec": 2.2,
+"programs": [
+81,
+87
+],
+"progFrames": [
+{
+"x": 26.5,
+"z": -178.9,
+"prog": 83,
+"iv": 25.3,
+"cpu": 11,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 29,
+"z": -194.3,
+"prog": 84,
+"iv": 26.2,
+"cpu": 15.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": 29.8,
+"z": -198.7,
+"prog": 85,
+"iv": 20.5,
+"cpu": 9.1,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": 40,
+"z": -248,
+"prog": 86,
+"iv": 19.8,
+"cpu": 13.2,
+"newProg": [
+":4,5,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+},
+{
+"x": 40,
+"z": -248,
+"prog": 87,
+"iv": 22.9,
+"cpu": 13.8,
+"newProg": [
+":57,58,highp,srgb-linear,false,,false,false,false,false,false"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+107,
+113,
+149
+],
+"tris": [
+1282043,
+1461763,
+2170892
+],
+"geo": [
+111,
+116
+],
+"tex": [
+26,
+26
+],
+"byName": {
+"inst:salt-pedlars": 1797,
+"inst:skylife-worm": 1797,
+"inst:wings": 1797,
+"inst:fishrings": 1797,
+"inst:bats": 1797,
+"inst:uncanny-biomesh-lattice": 1797,
+"inst:?": 1144,
+"inst:crows": 143,
+"inst:uncanny-wagon-wheels": 143,
+"inst:uncanny-tarn-rings": 143,
+"inst:rooks": 143,
+"inst:gibbet-crows": 92,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:rooks": 1,
+"vis:gibbet-crows": 2,
+"inst:demesne-peafowl": 116,
+"inst:demesne-peafowl-trains": 116,
+"repack:veg-grass": 16,
+"repack:veg-grass-far": 16,
+"inst:lynchets-stoats": 59,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1127,
+"inst:saltings-crabs": 29,
+"inst:bletting-snail-shells": 29,
+"inst:bletting-snail-bodies": 29,
+"repack:veg-flowers": 7,
+"inst:uncanny-biomesh-runners": 1712,
+"inst:rocks-pebble": 26,
+"inst:rocks-stone": 39,
+"inst:rocks-boulder": 26,
+"inst:rocks-boulder-far": 26,
+"repack:veg-fleshy": 5,
+"repack:veg-bracken": 6,
+"repack:veg-heather": 7,
+"vis:veg-pods": 2,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:region-outwash-air": 1,
+"vis:skylife-flier": 1,
+"vis:hawser-dust": 1
+},
+"steady": [
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:fishrings",
+"inst:bats",
+"inst:uncanny-biomesh-lattice",
+"inst:uncanny-biomesh-runners"
+],
+"eventful": {
+"inst:?": 1144,
+"inst:crows": 143,
+"inst:uncanny-wagon-wheels": 143,
+"inst:uncanny-tarn-rings": 143,
+"inst:rooks": 143,
+"inst:gibbet-crows": 92,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:rooks": 1,
+"vis:gibbet-crows": 2,
+"inst:demesne-peafowl": 116,
+"inst:demesne-peafowl-trains": 116,
+"repack:veg-grass": 16,
+"repack:veg-grass-far": 16,
+"inst:lynchets-stoats": 59,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1127,
+"inst:saltings-crabs": 29,
+"inst:bletting-snail-shells": 29,
+"inst:bletting-snail-bodies": 29,
+"repack:veg-flowers": 7,
+"inst:rocks-pebble": 26,
+"inst:rocks-stone": 39,
+"inst:rocks-boulder": 26,
+"inst:rocks-boulder-far": 26,
+"repack:veg-fleshy": 5,
+"repack:veg-bracken": 6,
+"repack:veg-heather": 7,
+"vis:veg-pods": 2,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:region-outwash-air": 1,
+"vis:skylife-flier": 1,
+"vis:hawser-dust": 1
+},
+"scenario": "lattice",
+"q": "medium"
+},
+"before-precompile/span": {
+"frames": 2690,
+"length": 116.51884354900537,
+"medianIv": 16.7,
+"medianCpu": 2,
+"over2x": 3,
+"over2xCpu": 94,
+"maxIvRatio": 5.24,
+"maxCpuRatio": 36.75,
+"repacks": 176,
+"repackFrames": 130,
+"cpuShadowFrames": 2.4,
+"cpuOtherFrames": 1.9,
+"cpuRepackFrames": 1.9,
+"lodSwitches": 271,
+"lodFramesMax": 3,
+"instUploads": 23690,
+"visFlips": 27,
+"slotHandovers": 0,
+"shadowRedraws": 88,
+"shadowPerSec": 1.96,
+"programs": [
+122,
+126
+],
+"progFrames": [
+{
+"x": -91.8,
+"z": 182.3,
+"prog": 123,
+"iv": 21.5,
+"cpu": 5.3,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -98.9,
+"z": 183.4,
+"prog": 125,
+"iv": 27,
+"cpu": 12.8,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -172.4,
+"z": 193.9,
+"prog": 126,
+"iv": 20,
+"cpu": 4.5,
+"newProg": [
+":6,7,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+111,
+117,
+157
+],
+"tris": [
+1418068,
+1636976,
+2264620
+],
+"geo": [
+201,
+203
+],
+"tex": [
+28,
+28
+],
+"byName": {
+"inst:strandline-sandpipers": 2695,
+"inst:strandline-sandpiper-legs": 2695,
+"inst:salt-pedlars": 2695,
+"inst:skylife-worm": 2695,
+"inst:inhabitants-menology-lizards": 1544,
+"inst:wings": 2695,
+"inst:fishrings": 2695,
+"inst:bats": 2695,
+"repack:veg-grass": 42,
+"repack:veg-grass-far": 42,
+"repack:veg-heather": 28,
+"repack:veg-bracken": 26,
+"repack:veg-flowers": 22,
+"repack:veg-fleshy": 14,
+"inst:?": 1720,
+"inst:crows": 215,
+"inst:uncanny-wagon-wheels": 215,
+"inst:uncanny-tarn-rings": 215,
+"inst:gibbet-crows": 215,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 174,
+"inst:demesne-peafowl-trains": 174,
+"inst:lynchets-stoats": 88,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 44,
+"inst:bletting-snail-shells": 44,
+"inst:bletting-snail-bodies": 44,
+"inst:rocks-pebble": 38,
+"inst:rocks-stone": 57,
+"inst:rocks-boulder": 38,
+"inst:rocks-boulder-far": 38,
+"repack:veg-reeds": 4,
+"repack:veg-reeds-far": 4,
+"vis:veg-toadstools": 3,
+"vis:veg-pods": 4,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:strandline-sandpipers",
+"inst:strandline-sandpiper-legs",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:fishrings",
+"inst:bats"
+],
+"eventful": {
+"inst:inhabitants-menology-lizards": 1544,
+"repack:veg-grass": 42,
+"repack:veg-grass-far": 42,
+"repack:veg-heather": 28,
+"repack:veg-bracken": 26,
+"repack:veg-flowers": 22,
+"repack:veg-fleshy": 14,
+"inst:?": 1720,
+"inst:crows": 215,
+"inst:uncanny-wagon-wheels": 215,
+"inst:uncanny-tarn-rings": 215,
+"inst:gibbet-crows": 215,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 174,
+"inst:demesne-peafowl-trains": 174,
+"inst:lynchets-stoats": 88,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 44,
+"inst:bletting-snail-shells": 44,
+"inst:bletting-snail-bodies": 44,
+"inst:rocks-pebble": 38,
+"inst:rocks-stone": 57,
+"inst:rocks-boulder": 38,
+"inst:rocks-boulder-far": 38,
+"repack:veg-reeds": 4,
+"repack:veg-reeds-far": 4,
+"vis:veg-toadstools": 3,
+"vis:veg-pods": 4,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"scenario": "span",
+"q": "medium"
+},
+"before-precompile/causeway": {
+"frames": 3586,
+"length": 161.8770366323541,
+"medianIv": 16.7,
+"medianCpu": 3.4,
+"over2x": 1,
+"over2xCpu": 908,
+"maxIvRatio": 3.03,
+"maxCpuRatio": 9.94,
+"repacks": 274,
+"repackFrames": 192,
+"cpuShadowFrames": 3.6,
+"cpuOtherFrames": 3.3,
+"cpuRepackFrames": 3.2,
+"lodSwitches": 60,
+"lodFramesMax": 1,
+"instUploads": 49862,
+"visFlips": 33,
+"slotHandovers": 2,
+"shadowRedraws": 571,
+"shadowPerSec": 9.55,
+"programs": [
+118,
+124
+],
+"progFrames": [
+{
+"x": -0.9,
+"z": 28.5,
+"prog": 120,
+"iv": 24,
+"cpu": 10.2,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -20.6,
+"z": 25.2,
+"prog": 121,
+"iv": 19.7,
+"cpu": 8.3,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -72.2,
+"z": 9.1,
+"prog": 122,
+"iv": 24.6,
+"cpu": 10.3,
+"newProg": [
+":6,7,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+},
+{
+"x": -95.8,
+"z": -1.7,
+"prog": 123,
+"iv": 18.5,
+"cpu": 4.6,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -98.5,
+"z": -3.4,
+"prog": 124,
+"iv": 19.8,
+"cpu": 5.4,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+130,
+153,
+212
+],
+"tris": [
+1968100,
+2202582,
+2812625
+],
+"geo": [
+194,
+197
+],
+"tex": [
+26,
+26
+],
+"byName": {
+"inst:demesne-peafowl": 2013,
+"inst:demesne-peafowl-trains": 2013,
+"inst:salt-pedlars": 3591,
+"inst:skylife-worm": 3591,
+"inst:wings": 3591,
+"inst:?": 8448,
+"inst:crows": 1971,
+"inst:fishrings": 3591,
+"inst:bats": 3591,
+"inst:uncanny-wagon-wheels": 3591,
+"inst:uncanny-tarn-rings": 3591,
+"inst:lamp-moths": 693,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"repack:veg-heather": 48,
+"repack:veg-bracken": 36,
+"repack:veg-flowers": 36,
+"repack:veg-fleshy": 26,
+"repack:veg-reeds": 10,
+"repack:veg-reeds-far": 10,
+"inst:rooks": 27,
+"inst:gibbet-crows": 2753,
+"vis:moths": 2,
+"vis:rooks": 2,
+"inst:lynchets-stoats": 912,
+"inst:uncanny-biomesh-boulder": 2008,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 52,
+"inst:rocks-stone": 78,
+"inst:rocks-boulder": 52,
+"inst:rocks-boulder-far": 52,
+"vis:uncanny-wagon-rope": 1,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"vis:lamp-moths": 1,
+"slot": 2,
+"vis:?": 16,
+"inst:moths": 212,
+"vis:skylife-flier": 1,
+"inst:uncanny-biomesh-runners": 1697,
+"inst:uncanny-biomesh-causeway": 1647
+},
+"steady": [
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:fishrings",
+"inst:bats",
+"inst:uncanny-wagon-wheels",
+"inst:uncanny-tarn-rings"
+],
+"eventful": {
+"inst:demesne-peafowl": 2013,
+"inst:demesne-peafowl-trains": 2013,
+"inst:crows": 1971,
+"inst:lamp-moths": 693,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"repack:veg-heather": 48,
+"repack:veg-bracken": 36,
+"repack:veg-flowers": 36,
+"repack:veg-fleshy": 26,
+"repack:veg-reeds": 10,
+"repack:veg-reeds-far": 10,
+"inst:rooks": 27,
+"inst:gibbet-crows": 2753,
+"vis:moths": 2,
+"vis:rooks": 2,
+"inst:lynchets-stoats": 912,
+"inst:uncanny-biomesh-boulder": 2008,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 52,
+"inst:rocks-stone": 78,
+"inst:rocks-boulder": 52,
+"inst:rocks-boulder-far": 52,
+"vis:uncanny-wagon-rope": 1,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"vis:lamp-moths": 1,
+"slot": 2,
+"vis:?": 16,
+"inst:moths": 212,
+"vis:skylife-flier": 1,
+"inst:uncanny-biomesh-runners": 1697,
+"inst:uncanny-biomesh-causeway": 1647
+},
+"scenario": "causeway",
+"q": "medium"
+},
+"before-precompile/woodpan": {
+"frames": 713,
+"medianIv": 16.7,
+"medianCpu": 2,
+"over2x": 3,
+"over2xCpu": 32,
+"maxIvRatio": 3.31,
+"maxCpuRatio": 21.45,
+"repacks": 434,
+"repackFrames": 179,
+"cpuShadowFrames": 2.2,
+"cpuOtherFrames": 1.9,
+"cpuRepackFrames": 2.2,
+"lodSwitches": 0,
+"lodFramesMax": 0,
+"instUploads": 5825,
+"visFlips": 5,
+"slotHandovers": 0,
+"shadowRedraws": 178,
+"shadowPerSec": 14.94,
+"programs": [
+105,
+140
+],
+"progFrames": [
+{
+"x": -195,
+"z": 128,
+"prog": 106,
+"iv": 18.8,
+"cpu": 4.4,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 107,
+"iv": 32.3,
+"cpu": 19.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 108,
+"iv": 20,
+"cpu": 5.7,
+"newProg": [
+":65,66,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 109,
+"iv": 27.2,
+"cpu": 11.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 110,
+"iv": 24.9,
+"cpu": 12,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 112,
+"iv": 27.2,
+"cpu": 22.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 113,
+"iv": 11.7,
+"cpu": 11.4,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 114,
+"iv": 23.8,
+"cpu": 9.1,
+"newProg": [
+":67,68,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 115,
+"iv": 20.7,
+"cpu": 4.9,
+"newProg": [
+":69,70,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 116,
+"iv": 20.6,
+"cpu": 8.8,
+"newProg": [
+":71,72,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 117,
+"iv": 15.6,
+"cpu": 7.8,
+"newProg": [
+":73,74,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 120,
+"iv": 32.4,
+"cpu": 19.6,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":75,76,highp,srgb-linear,false,,false,false,false,false,false",
+":75,77,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 121,
+"iv": 25.7,
+"cpu": 13.1,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 123,
+"iv": 12.3,
+"cpu": 9.5,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 124,
+"iv": 26.4,
+"cpu": 11.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 125,
+"iv": 27.4,
+"cpu": 12.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,f"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 126,
+"iv": 25.1,
+"cpu": 10.2,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 127,
+"iv": 15.5,
+"cpu": 10.7,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 128,
+"iv": 17.6,
+"cpu": 10.6,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,f"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 129,
+"iv": 26,
+"cpu": 11.3,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 130,
+"iv": 26.9,
+"cpu": 11.2,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 131,
+"iv": 16.6,
+"cpu": 10.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 133,
+"iv": 36.6,
+"cpu": 21.9,
+"newProg": [
+":lambert,highp,srgb-linear,false,,false,false,false,false,fal",
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 134,
+"iv": 25.4,
+"cpu": 10.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 135,
+"iv": 24.1,
+"cpu": 11.5,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 137,
+"iv": 26.7,
+"cpu": 19.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals",
+":physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,f"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 138,
+"iv": 22.7,
+"cpu": 11.2,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 139,
+"iv": 26.6,
+"cpu": 11.8,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 140,
+"iv": 25.6,
+"cpu": 10.9,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+112,
+150,
+256
+],
+"tris": [
+1632993,
+2316092,
+3886078
+],
+"geo": [
+159,
+233
+],
+"tex": [
+26,
+33
+],
+"byName": {
+"inst:strandline-sandpipers": 718,
+"inst:strandline-sandpiper-legs": 718,
+"inst:salt-pedlars": 718,
+"inst:skylife-worm": 718,
+"inst:wings": 718,
+"inst:fishrings": 718,
+"inst:bats": 718,
+"repack:veg-heather": 70,
+"repack:veg-bracken": 67,
+"repack:veg-flowers": 66,
+"repack:veg-fleshy": 71,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"inst:?": 456,
+"inst:crows": 57,
+"inst:uncanny-wagon-wheels": 57,
+"inst:uncanny-tarn-rings": 57,
+"inst:gibbet-crows": 57,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 46,
+"inst:demesne-peafowl-trains": 46,
+"inst:lynchets-stoats": 23,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 11,
+"inst:bletting-snail-shells": 11,
+"inst:bletting-snail-bodies": 11,
+"repack:veg-reeds": 24,
+"repack:veg-reeds-far": 24,
+"vis:uncanny-slinker": 2
+},
+"steady": [
+"inst:strandline-sandpipers",
+"inst:strandline-sandpiper-legs",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:fishrings",
+"inst:bats"
+],
+"eventful": {
+"repack:veg-heather": 70,
+"repack:veg-bracken": 67,
+"repack:veg-flowers": 66,
+"repack:veg-fleshy": 71,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"inst:?": 456,
+"inst:crows": 57,
+"inst:uncanny-wagon-wheels": 57,
+"inst:uncanny-tarn-rings": 57,
+"inst:gibbet-crows": 57,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 46,
+"inst:demesne-peafowl-trains": 46,
+"inst:lynchets-stoats": 23,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 11,
+"inst:bletting-snail-shells": 11,
+"inst:bletting-snail-bodies": 11,
+"repack:veg-reeds": 24,
+"repack:veg-reeds-far": 24,
+"vis:uncanny-slinker": 2
+},
+"scenario": "woodpan",
+"q": "medium"
+},
+"before-precompile/keep": {
+"frames": 1784,
+"length": 67.85880408158542,
+"medianIv": 16.7,
+"medianCpu": 2.7,
+"over2x": 1,
+"over2xCpu": 3,
+"maxIvRatio": 3.37,
+"maxCpuRatio": 15.15,
+"repacks": 125,
+"repackFrames": 78,
+"cpuShadowFrames": 2.9,
+"cpuOtherFrames": 2.6,
+"cpuRepackFrames": 3.1,
+"lodSwitches": 27,
+"lodFramesMax": 1,
+"instUploads": 28140,
+"visFlips": 26,
+"slotHandovers": 1,
+"shadowRedraws": 325,
+"shadowPerSec": 10.92,
+"programs": [
+113,
+118
+],
+"progFrames": [
+{
+"x": -4.9,
+"z": 29.2,
+"prog": 115,
+"iv": 26.5,
+"cpu": 12.4,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -10,
+"z": 25,
+"prog": 116,
+"iv": 27.5,
+"cpu": 14.6,
+"newProg": [
+":physical,STANDARD,,highp,srgb-linear,false,,false,false,fals"
+]
+},
+{
+"x": -18.9,
+"z": 22.8,
+"prog": 117,
+"iv": 18.1,
+"cpu": 4.1,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -60,
+"z": 10,
+"prog": 118,
+"iv": 19.9,
+"cpu": 4.9,
+"newProg": [
+":6,7,FLAP,1,highp,srgb-linear,false,,false,false,false,false,"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+153,
+161,
+218
+],
+"tris": [
+2179731,
+2301024,
+2912569
+],
+"geo": [
+183,
+188
+],
+"tex": [
+26,
+26
+],
+"byName": {
+"inst:demesne-peafowl": 1789,
+"inst:demesne-peafowl-trains": 1789,
+"inst:salt-pedlars": 1789,
+"inst:skylife-worm": 1789,
+"inst:wings": 1789,
+"inst:?": 7728,
+"inst:crows": 1789,
+"inst:fishrings": 1789,
+"inst:bats": 1789,
+"inst:uncanny-wagon-wheels": 1789,
+"inst:uncanny-tarn-rings": 1789,
+"inst:lamp-moths": 689,
+"repack:veg-grass": 27,
+"repack:veg-grass-far": 27,
+"repack:veg-heather": 20,
+"repack:veg-bracken": 18,
+"repack:veg-flowers": 16,
+"repack:veg-fleshy": 11,
+"repack:veg-reeds": 7,
+"repack:veg-reeds-far": 7,
+"inst:rooks": 26,
+"inst:gibbet-crows": 1032,
+"vis:moths": 2,
+"vis:rooks": 2,
+"inst:lynchets-stoats": 59,
+"inst:uncanny-biomesh-boulder": 213,
+"inst:uncanny-biomesh-court": 1,
+"vis:uncanny-wagon-rope": 1,
+"inst:saltings-crabs": 29,
+"inst:bletting-snail-shells": 29,
+"inst:bletting-snail-bodies": 29,
+"inst:rocks-pebble": 22,
+"inst:rocks-stone": 33,
+"inst:rocks-boulder": 22,
+"inst:rocks-boulder-far": 22,
+"vis:veg-toadstools": 3,
+"vis:veg-pods": 2,
+"vis:lamp-moths": 1,
+"slot": 1,
+"inst:moths": 76,
+"vis:?": 16,
+"inst:uncanny-biomesh-runners": 321,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:demesne-peafowl",
+"inst:demesne-peafowl-trains",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:crows",
+"inst:fishrings",
+"inst:bats",
+"inst:uncanny-wagon-wheels",
+"inst:uncanny-tarn-rings"
+],
+"eventful": {
+"inst:lamp-moths": 689,
+"repack:veg-grass": 27,
+"repack:veg-grass-far": 27,
+"repack:veg-heather": 20,
+"repack:veg-bracken": 18,
+"repack:veg-flowers": 16,
+"repack:veg-fleshy": 11,
+"repack:veg-reeds": 7,
+"repack:veg-reeds-far": 7,
+"inst:rooks": 26,
+"inst:gibbet-crows": 1032,
+"vis:moths": 2,
+"vis:rooks": 2,
+"inst:lynchets-stoats": 59,
+"inst:uncanny-biomesh-boulder": 213,
+"inst:uncanny-biomesh-court": 1,
+"vis:uncanny-wagon-rope": 1,
+"inst:saltings-crabs": 29,
+"inst:bletting-snail-shells": 29,
+"inst:bletting-snail-bodies": 29,
+"inst:rocks-pebble": 22,
+"inst:rocks-stone": 33,
+"inst:rocks-boulder": 22,
+"inst:rocks-boulder-far": 22,
+"vis:veg-toadstools": 3,
+"vis:veg-pods": 2,
+"vis:lamp-moths": 1,
+"slot": 1,
+"inst:moths": 76,
+"vis:?": 16,
+"inst:uncanny-biomesh-runners": 321,
+"vis:skylife-flier": 1
+},
+"scenario": "keep",
+"q": "medium"
+},
+"with-precompile/woodpan": {
+"frames": 699,
+"medianIv": 16.7,
+"medianCpu": 2.2,
+"over2x": 8,
+"over2xCpu": 13,
+"maxIvRatio": 5.29,
+"maxCpuRatio": 40.05,
+"repacks": 431,
+"repackFrames": 174,
+"cpuShadowFrames": 2.4,
+"cpuOtherFrames": 2.1,
+"cpuRepackFrames": 2.4,
+"lodSwitches": 0,
+"lodFramesMax": 0,
+"instUploads": 5739,
+"visFlips": 5,
+"slotHandovers": 0,
+"shadowRedraws": 177,
+"shadowPerSec": 14.81,
+"programs": [
+144,
+147
+],
+"progFrames": [
+{
+"x": -195,
+"z": 128,
+"prog": 145,
+"iv": 6.9,
+"cpu": 6.5,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -195,
+"z": 128,
+"prog": 147,
+"iv": 88.3,
+"cpu": 88.1,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+112,
+150,
+258
+],
+"tris": [
+1624938,
+2358453,
+3914523
+],
+"geo": [
+159,
+233
+],
+"tex": [
+26,
+33
+],
+"byName": {
+"inst:strandline-sandpipers": 704,
+"inst:strandline-sandpiper-legs": 704,
+"inst:salt-pedlars": 704,
+"inst:skylife-worm": 704,
+"inst:wings": 704,
+"inst:fishrings": 704,
+"inst:bats": 704,
+"repack:veg-heather": 68,
+"repack:veg-bracken": 67,
+"repack:veg-flowers": 66,
+"repack:veg-fleshy": 70,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"inst:?": 464,
+"inst:crows": 58,
+"inst:uncanny-wagon-wheels": 58,
+"inst:uncanny-tarn-rings": 58,
+"inst:gibbet-crows": 58,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 46,
+"inst:demesne-peafowl-trains": 46,
+"inst:lynchets-stoats": 23,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 11,
+"inst:bletting-snail-shells": 11,
+"inst:bletting-snail-bodies": 11,
+"repack:veg-reeds": 24,
+"repack:veg-reeds-far": 24,
+"vis:uncanny-slinker": 2
+},
+"steady": [
+"inst:strandline-sandpipers",
+"inst:strandline-sandpiper-legs",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:fishrings",
+"inst:bats"
+],
+"eventful": {
+"repack:veg-heather": 68,
+"repack:veg-bracken": 67,
+"repack:veg-flowers": 66,
+"repack:veg-fleshy": 70,
+"repack:veg-grass": 58,
+"repack:veg-grass-far": 58,
+"inst:?": 464,
+"inst:crows": 58,
+"inst:uncanny-wagon-wheels": 58,
+"inst:uncanny-tarn-rings": 58,
+"inst:gibbet-crows": 58,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 46,
+"inst:demesne-peafowl-trains": 46,
+"inst:lynchets-stoats": 23,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 11,
+"inst:bletting-snail-shells": 11,
+"inst:bletting-snail-bodies": 11,
+"repack:veg-reeds": 24,
+"repack:veg-reeds-far": 24,
+"vis:uncanny-slinker": 2
+},
+"scenario": "woodpan",
+"q": "medium"
+},
+"with-precompile/bench": {
+"frames": 2155,
+"medianIv": 16.7,
+"medianCpu": 3,
+"over2x": 1,
+"over2xCpu": 5,
+"maxIvRatio": 3.07,
+"maxCpuRatio": 12.53,
+"repacks": 805,
+"repackFrames": 432,
+"cpuShadowFrames": 3.4,
+"cpuOtherFrames": 2.7,
+"cpuRepackFrames": 3,
+"lodSwitches": 126,
+"lodFramesMax": 2,
+"instUploads": 34128,
+"visFlips": 53,
+"slotHandovers": 12,
+"shadowRedraws": 912,
+"shadowPerSec": 25.37,
+"programs": [
+145,
+147
+],
+"progFrames": [
+{
+"x": 4.7,
+"z": 29.5,
+"prog": 147,
+"iv": 25.8,
+"cpu": 12.4,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+127,
+173,
+237
+],
+"tris": [
+2007392,
+2584740,
+3601613
+],
+"geo": [
+152,
+236
+],
+"tex": [
+27,
+33
+],
+"byName": {
+"inst:demesne-peafowl": 1885,
+"inst:demesne-peafowl-trains": 1885,
+"inst:salt-pedlars": 2160,
+"inst:skylife-worm": 2160,
+"inst:wings": 2160,
+"inst:?": 9328,
+"inst:crows": 2160,
+"inst:fishrings": 2160,
+"inst:bats": 2160,
+"inst:uncanny-wagon-wheels": 1639,
+"inst:uncanny-tarn-rings": 2113,
+"inst:lamp-moths": 859,
+"inst:rooks": 47,
+"inst:gibbet-crows": 301,
+"vis:moths": 3,
+"vis:rooks": 3,
+"inst:lynchets-stoats": 70,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 35,
+"inst:bletting-snail-shells": 35,
+"inst:bletting-snail-bodies": 35,
+"repack:veg-heather": 122,
+"repack:veg-bracken": 100,
+"repack:veg-flowers": 108,
+"repack:veg-fleshy": 91,
+"repack:veg-grass": 131,
+"repack:veg-grass-far": 131,
+"repack:veg-reeds": 61,
+"repack:veg-reeds-far": 61,
+"inst:rocks-pebble": 100,
+"inst:rocks-stone": 150,
+"inst:rocks-boulder": 100,
+"inst:rocks-boulder-far": 100,
+"vis:uncanny-wagon-rope": 2,
+"vis:veg-toadstools": 10,
+"vis:veg-pods": 16,
+"vis:lamp-moths": 2,
+"slot": 12,
+"inst:moths": 3,
+"inst:strandline-sandpipers": 978,
+"inst:strandline-sandpiper-legs": 978,
+"vis:?": 16,
+"inst:inhabitants-menology-lizards": 600,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:demesne-peafowl",
+"inst:demesne-peafowl-trains",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:crows",
+"inst:fishrings",
+"inst:bats",
+"inst:uncanny-tarn-rings"
+],
+"eventful": {
+"inst:uncanny-wagon-wheels": 1639,
+"inst:lamp-moths": 859,
+"inst:rooks": 47,
+"inst:gibbet-crows": 301,
+"vis:moths": 3,
+"vis:rooks": 3,
+"inst:lynchets-stoats": 70,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 35,
+"inst:bletting-snail-shells": 35,
+"inst:bletting-snail-bodies": 35,
+"repack:veg-heather": 122,
+"repack:veg-bracken": 100,
+"repack:veg-flowers": 108,
+"repack:veg-fleshy": 91,
+"repack:veg-grass": 131,
+"repack:veg-grass-far": 131,
+"repack:veg-reeds": 61,
+"repack:veg-reeds-far": 61,
+"inst:rocks-pebble": 100,
+"inst:rocks-stone": 150,
+"inst:rocks-boulder": 100,
+"inst:rocks-boulder-far": 100,
+"vis:uncanny-wagon-rope": 2,
+"vis:veg-toadstools": 10,
+"vis:veg-pods": 16,
+"vis:lamp-moths": 2,
+"slot": 12,
+"inst:moths": 3,
+"inst:strandline-sandpipers": 978,
+"inst:strandline-sandpiper-legs": 978,
+"vis:?": 16,
+"inst:inhabitants-menology-lizards": 600,
+"vis:skylife-flier": 1
+},
+"scenario": "bench",
+"q": "medium"
+},
+"with-precompile/wood": {
+"frames": 3592,
+"length": 147.74814507948713,
+"medianIv": 16.7,
+"medianCpu": 1.9,
+"over2x": 2,
+"over2xCpu": 19,
+"maxIvRatio": 3.7,
+"maxCpuRatio": 25,
+"repacks": 230,
+"repackFrames": 162,
+"cpuShadowFrames": 2.1,
+"cpuOtherFrames": 1.8,
+"cpuRepackFrames": 2,
+"lodSwitches": 588,
+"lodFramesMax": 3,
+"instUploads": 32603,
+"visFlips": 33,
+"slotHandovers": 0,
+"shadowRedraws": 1300,
+"shadowPerSec": 21.69,
+"programs": [
+144,
+149
+],
+"progFrames": [
+{
+"x": -76.9,
+"z": 141,
+"prog": 146,
+"iv": 24.8,
+"cpu": 10.9,
+"newProg": [
+":basic,highp,srgb-linear,false,,false,false,false,false,false",
+":basic,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -80.5,
+"z": 140.6,
+"prog": 147,
+"iv": 20.1,
+"cpu": 5.6,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -100.4,
+"z": 138.3,
+"prog": 148,
+"iv": 19.2,
+"cpu": 4.2,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+},
+{
+"x": -112.2,
+"z": 136.9,
+"prog": 149,
+"iv": 19.6,
+"cpu": 5.7,
+"newProg": [
+":depth,highp,srgb-linear,false,,false,false,false,false,false"
+]
+}
+],
+"dprs": [
+1
+],
+"calls": [
+121,
+142,
+177
+],
+"tris": [
+1819875,
+2019594,
+2610592
+],
+"geo": [
+196,
+199
+],
+"tex": [
+28,
+28
+],
+"byName": {
+"inst:strandline-sandpipers": 2921,
+"inst:strandline-sandpiper-legs": 2921,
+"inst:salt-pedlars": 3597,
+"inst:skylife-worm": 3597,
+"inst:inhabitants-menology-lizards": 1179,
+"inst:wings": 3597,
+"inst:?": 3348,
+"inst:fishrings": 3597,
+"inst:bats": 3597,
+"inst:uncanny-tarn-rings": 2473,
+"repack:veg-grass": 47,
+"repack:veg-grass-far": 47,
+"repack:veg-heather": 33,
+"repack:veg-bracken": 30,
+"repack:veg-flowers": 30,
+"repack:veg-fleshy": 21,
+"repack:veg-reeds": 15,
+"repack:veg-reeds-far": 15,
+"inst:crows": 288,
+"inst:uncanny-wagon-wheels": 288,
+"inst:gibbet-crows": 288,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 232,
+"inst:demesne-peafowl-trains": 232,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"inst:lynchets-stoats": 118,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 48,
+"inst:rocks-stone": 72,
+"inst:rocks-boulder": 48,
+"inst:rocks-boulder-far": 48,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"steady": [
+"inst:strandline-sandpipers",
+"inst:strandline-sandpiper-legs",
+"inst:salt-pedlars",
+"inst:skylife-worm",
+"inst:wings",
+"inst:?",
+"inst:fishrings",
+"inst:bats"
+],
+"eventful": {
+"inst:inhabitants-menology-lizards": 1179,
+"inst:uncanny-tarn-rings": 2473,
+"repack:veg-grass": 47,
+"repack:veg-grass-far": 47,
+"repack:veg-heather": 33,
+"repack:veg-bracken": 30,
+"repack:veg-flowers": 30,
+"repack:veg-fleshy": 21,
+"repack:veg-reeds": 15,
+"repack:veg-reeds-far": 15,
+"inst:crows": 288,
+"inst:uncanny-wagon-wheels": 288,
+"inst:gibbet-crows": 288,
+"vis:moths": 1,
+"vis:uncanny-wagon-rope": 1,
+"vis:gibbet-crows": 1,
+"inst:demesne-peafowl": 232,
+"inst:demesne-peafowl-trains": 232,
+"vis:veg-toadstools": 6,
+"vis:veg-pods": 6,
+"inst:lynchets-stoats": 118,
+"inst:uncanny-biomesh-boulder": 1,
+"inst:uncanny-biomesh-court": 1,
+"inst:saltings-crabs": 59,
+"inst:bletting-snail-shells": 59,
+"inst:bletting-snail-bodies": 59,
+"inst:rocks-pebble": 48,
+"inst:rocks-stone": 72,
+"inst:rocks-boulder": 48,
+"inst:rocks-boulder-far": 48,
+"vis:uncanny-slinker": 1,
+"vis:?": 16,
+"vis:skylife-flier": 1
+},
+"scenario": "wood",
+"q": "medium"
+}
+}

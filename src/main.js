@@ -54,6 +54,7 @@ const MODULES = [
   ['occultation', () => import('./v5/occultation.js')], // v5 wonders: AR the Occultation (the passes and the hush; the shading is in the fog, terrain and sky shaders)
   ['dressing5', () => import('./v5/dressing.js')], // v5: CY the Collation, DE the Slipper, DF the Unfinished Prospect
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
+  ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
 ];
 
 async function start() {
