@@ -182,7 +182,7 @@ export async function build(ctx) {
   uPaveBox.value.set(0, 0, 0, 0);
   let paveTries = 0;
   ctx.registerUpdate(() => {
-    if (paveTries < 0 || paveTries++ > 30) return; // done, or no road (?only=, ?skip=structures)
+    if (paveTries < 0 || paveTries++ > 900 || paveTries % 10 !== 1) return; // done, or no road after ~15 s (?only=, ?skip=structures); look every 10th update, structures may build late
     const im = ctx.scene.getObjectByName('structures-pavers');
     if (!im) return;
     paveTries = -1;
