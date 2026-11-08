@@ -50,6 +50,7 @@ const MODULES = [
   ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
   ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
+  ['lamps', () => import('./v5/lamps.js')], // v5 wonders: AO the Escarpment Lamps (window-lights on the north-west wall that go out one by one; ?lamps=0)
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
   ['occultation', () => import('./v5/occultation.js')], // v5 wonders: AR the Occultation (the passes and the hush; the shading is in the fog, terrain and sky shaders)
