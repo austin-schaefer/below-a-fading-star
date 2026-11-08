@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
 import { plinthsClear } from './v5/plinths.js';
+import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -148,6 +149,7 @@ export async function build(ctx) {
     if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
     if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
+    if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
@@ -161,7 +163,7 @@ export async function build(ctx) {
       const size = 1.6 + rng() * 3.4;
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
       const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
-      if (!plinthsClear(x, z)) classes.boulder.push(it); // after the draws, as above
+      if (!plinthsClear(x, z) && !naveClear(x, z)) classes.boulder.push(it); // after the draws, as above
     }
   }
 

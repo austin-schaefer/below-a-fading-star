@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { Builder, mat } from './geo.js';
 import { vary, rubblePile, findSpot, pinSpot, hexCellsIn } from './common.js';
 import { causewayAt } from './causeway.js';
+import { naveClear } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { CAUSEWAY } from '../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 export function buildScatter(ctx, B, env) {
@@ -376,6 +377,7 @@ export function buildScatter(ctx, B, env) {
       env.addPaver(x, z, ci, cj, { sink: 0.06 + d * 0.06, tilt: 0.12, dark: true });
     });
   }
+  for (const st of Object.values(sets)) for (let i = st.mats.length - 1; i >= 0; i--) if (naveClear(st.mats[i].elements[12], st.mats[i].elements[14])) { st.mats.splice(i, 1); st.cols.splice(i, 1); } // v5: off the Foundered Nave's rim, after every draw
 }
 
 // ---------- fragment templates (origin at the ground contact, +y up) ----------

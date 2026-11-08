@@ -1,0 +1,35 @@
+[
+ {
+  "name": "flare",
+  "x": 15.5,
+  "z": -187,
+  "yaw": 0.983,
+  "pitch": -0.12,
+  "dy": 0,
+  "js": "__fp.keptFire.flare(0.5)",
+  "pre": "",
+  "settle": 2500
+ },
+ {
+  "name": "flare-wide",
+  "x": 20,
+  "z": -180,
+  "yaw": 0.725,
+  "pitch": -0.12,
+  "dy": 0,
+  "js": "__fp.keptFire.flare(0.95)",
+  "pre": "",
+  "settle": 2500
+ },
+ {
+  "name": "visits4",
+  "x": 15.5,
+  "z": -187,
+  "yaw": 0.983,
+  "pitch": -0.1,
+  "dy": 0,
+  "js": "__fp.keptFire.flare(null); __fp.keptFire.visit(4)",
+  "pre": "__fp.keptFire&&__fp.keptFire.flare(null)",
+  "settle": 5500
+ }
+]
