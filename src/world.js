@@ -71,7 +71,7 @@ export const CAUSEWAY = [
 // own work is src/v4/regions/<key>.js. Names are the briefs' and stay [Proposed].
 export const REGIONS = {
   bletting:   { id: 'BO', name: 'The Bletting', shape: { circle: { x: 130, z: -90, r: 100 } }, clip: { zMin: -150 }, blend: 8,
-                yields: [] },
+                yields: [{ x: 40, z: 30, r: 85 }] }, // clipped on the west by the Demesne's ha-ha (placement plan, BO)
   saltings:   { id: 'BP', name: 'The Saltings', blend: 6,
                 shape: { strip: [[168, 130, 20], [192, 158, 25], [178, 192, 18], [140, 200, 12], [118, 222, 12], [85, 246, 10], [45, 246, 10], [12, 228, 12], [-18, 200, 12], [-30, 180, 10]] },
                 yields: [{ x: 70, z: 160, r: 75 }] },
