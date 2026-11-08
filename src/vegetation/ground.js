@@ -4,8 +4,8 @@
 import { clamp } from './util.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
-import { plinthsClear, plinthsPaved } from '../v5/plinths.js';
-import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole // v5: the Plinth Road's corridor and paving
+import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
+import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot

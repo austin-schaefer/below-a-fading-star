@@ -1,20 +1,21 @@
-// BD the Foundered Nave (v5 wonders): on the east moor the turf has fallen through a roof. Over the edge of a ragged
-// hole 25 m across the walker looks down on the capitals of a buried hall, a few metres below the eye, whose columns
-// go down 14 m into black water and out of sight. The nave runs east-west under the moor both ways from the hole,
-// bay after bay of close-set octagonal columns in the age of weight (the Sunken Court's order, smaller: straight-
-// tapered, a broad channel down each face, a plain block for a capital carrying the roof's slabs), receding under the
-// turf until the dark takes the count; the west end is choked with slumped earth. Under the hole lie the roof's
-// slabs with their turf still on them, tilted against the columns, and a cone of soil and stones. In the water two or
-// three dark shapes swim slowly; now and then one splashes (rings, a slosh from below). Look straight at one for long
-// and it sinks away under the roof; stand still long enough and one surfaces, a wet back, briefly, and is gone.
-// The plan and the clearances are nave/ground.js. The heightfield is left alone (see there); this module takes the
-// terrain's triangles over the hole out, so the hall shows under the rim, and the roof sinks where the moor is thin. Draws: the hall (stone, earth, turf, the slabs, the
-// rubble, the lip, the ceiling, the measure figure: one mesh), the water, the shapes (only while one surfaces).
-// ?nave=0 leaves the whole thing out.
+// BD the Foundered Nave (v5 wonders): on the east moor the turf has fallen through a roof. Over the torn edge of a
+// ragged hole 23-33 m across the walker looks down on the capitals of a buried hall, a few metres below the eye,
+// whose columns go down 14 m into black water and out of sight. The nave runs east-west under the moor both ways
+// from the hole, bay after bay of close-set octagonal columns in the age of weight (the Sunken Court's order,
+// smaller: straight-tapered, a broad channel down each face, a plain block for a capital carrying the roof's slabs),
+// receding under the turf until the dark takes the count; the west end is choked with slumped earth. Under the hole
+// lie the roof's slabs with their turf still on them, tilted against the columns, and a cone of soil and stones. In
+// the water two or three dark shapes swim slowly; now and then one splashes (rings, a slosh from below). Look
+// straight at one for long and it sinks away under the roof; stand still long enough and one surfaces, a wet back,
+// briefly, and is gone.
+// The plan and the clearances are nave/ground.js. The heightfield is left alone (see there): this module takes the
+// terrain's triangles over the hole out, so the hall shows under the rim, and the roof sinks where the moor is thin.
+// Draws: the hall (stone, earth, turf, the slabs, the rubble, the lip with its clods and roots, the ceiling, the
+// measure figure: one mesh), the water, the shapes (only while one surfaces). ?nave=0 leaves the whole thing out.
 import * as THREE from 'three';
 import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js';
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
-import { approach, angDiff } from '../fauna/uncanny/kit.js';
+import { approach, angDiff, makeGround } from '../fauna/uncanny/kit.js';
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
 // the roof's underside at (x, z): level at NAVE.ceil, sunk with the moor wherever the moor lies lower than the cover
@@ -244,7 +245,9 @@ export async function build(ctx) {
 
   // ---- the lip: the turf's broken edge, the soil under it, the roof's slabs snapped off and jutting, round every bearing
   const step = low ? 3 : 2;
-  const lipOut = low ? [-0.3, 0.3, 1.1, 2.2, 3.4, 4.9] : [-0.3, 0.3, 1.0, 1.9, 2.9, 3.7];
+  const lipOut = low ? [-0.3, 0, 0.4, 1.0, 1.8, 2.7, 3.7, 4.9] : [-0.3, 0, 0.35, 0.8, 1.4, 2.1, 2.9, 3.7];
+  // the lip lies on the drawn terrain (the mesh's own triangles), not the analytic ground, so no sliver shows through
+  const MG = makeGround(ctx), _mn = new THREE.Vector3();
   const rimPts = [];
   for (let b = 0; b <= 360; b += step) {
     const bb = b % 360, R = naveRim(bb), [dx, dz] = dirOf(bb);
@@ -252,13 +255,19 @@ export async function build(ctx) {
     const sag = 0.1 + Math.max(0, SN.noise2(bb * 0.13, 7.7)) * 0.35;      // how far the turf curls over
     const top = [], tcol = [], tnor = [];
     for (const e of lipOut) {
-      const ee = Math.max(e, 0.02), x = CX + dx * (R + ee), z = CZ + dz * (R + ee);
-      const y = T.heightAt(x, z) + (e < 0 ? -0.06 - sag * 0.4 : lerp(0.1, 0.02, smoothstep(1.5, lipOut[lipOut.length - 1], e)));
+      const ee = Math.max(e, 0.02), x = CX + dx * (R + ee), z = CZ + dz * (R + ee), near = 1 - smoothstep(0, 1.3, e);
+      // cracked, lifted turf near the break; a hair over the mesh further out
+      const lift = Math.max(0, SN.noise2(x * 1.3, z * 1.3)) * 0.09 * near;
+      const y = MG.at(x, z) + (e < 0 ? -0.06 - sag * 0.4 : lerp(0.05, 0.015, smoothstep(1.2, lipOut[lipOut.length - 1], e)) + lift);
       top.push([CX + dx * (R + e), y, CZ + dz * (R + e)]);
       const sx = CX + dx * (R + Math.max(e, lipOut[lipOut.length - 1])), sz = CZ + dz * (R + Math.max(e, lipOut[lipOut.length - 1]));
-      tcol.push(tc(sx, sz, [0, 0, 0]));
-      // the ground's normal from far enough out that the drop into the hole does not tilt it
-      const ne = Math.max(e, 1.4), n = T.normalAt(CX + dx * (R + ne), CZ + dz * (R + ne), new THREE.Vector3(), 0.5); tnor.push([n.x, n.y, n.z]);
+      const c = tc(sx, sz, [0, 0, 0]);
+      // torn: the soil shows through in patches near the edge
+      const torn = near * smoothstep(-0.1, 0.5, SN.noise2(x * 0.9 + 3, z * 0.9 - 2));
+      for (let k = 0; k < 3; k++) c[k] = lerp(c[k], SOIL_L[k], torn * 0.75);
+      tcol.push(c);
+      // the mesh's normal from far enough out that the hole's own (undrawn) triangles do not tilt it
+      const ne = Math.max(e, 0.9); MG.normal(CX + dx * (R + ne), CZ + dz * (R + ne), _mn); tnor.push([_mn.x, _mn.y, _mn.z]);
     }
     const yr = top[0][1], cl = ceilAt(CX + dx * R, CZ + dz * R);
     // the face, from the turf's curled edge down to the slab's underside, then back under the roof to the rim
@@ -284,6 +293,30 @@ export async function build(ctx) {
       const col = A.face[k].c;
       const hint = k === fa.length - 2 ? [0, -1, 0] : k === 3 ? [-A.dx * 0.3, 1, -A.dz * 0.3] : [-A.dx, 0, -A.dz];
       H.quad(fa[k], fa[k + 1], fb[k + 1], fb[k], col, hint, 0.15);
+    }
+  }
+  // clods of turf broken off the edge, hanging over or lodged on the slab's end, and roots trailing down the soil face
+  {
+    const ROOT = C('#271d15'), nClod = low ? 22 : 44, nRoot = low ? 60 : 130;
+    for (let i = 0; i < nClod; i++) {
+      const bb = rng() * 360, R = naveRim(bb), [dx, dz] = dirOf(bb), r = R - 0.15 - rng() * 0.5;
+      const x = CX + dx * r, z = CZ + dz * r, y = MG.at(CX + dx * (R + 0.05), CZ + dz * (R + 0.05)) - 0.12 - rng() * 0.35;
+      const sz = 0.25 + rng() * 0.45;
+      E.set((rng() - 0.5) * 0.9, rng() * 6.28, (rng() - 0.5) * 0.9);
+      M.compose(V.set(x, y, z), Q.setFromEuler(E), S1);
+      H.geo(new THREE.BoxGeometry(sz * (1 + rng() * 0.6), sz * 0.6, sz), M, (nx, ny) => (ny > 0.5 ? TURF_D : SOIL), 0.2);
+    }
+    for (let i = 0; i < nRoot; i++) {
+      const bb = rng() * 360, R = naveRim(bb), [dx, dz] = dirOf(bb), tx = -dz, tz = dx;
+      const r0 = R - 0.15 - rng() * 0.2, y0 = MG.at(CX + dx * (R + 0.05), CZ + dz * (R + 0.05)) - 0.1 - rng() * 0.25;
+      const len = 0.5 + rng() * 1.4, w = 0.02 + rng() * 0.035, sway = (rng() - 0.5) * 0.5;
+      let px = CX + dx * r0, pz = CZ + dz * r0, py = y0;
+      for (let k = 0; k < 3; k++) {
+        const ny = py - len / 3, nr = 0.08 * (k + 1), qx = px - dx * nr * 0.3 + tx * sway * 0.15, qz = pz - dz * nr * 0.3 + tz * sway * 0.15, ww = w * (1 - k * 0.3);
+        const a = [px - tx * ww, py, pz - tz * ww], b = [px + tx * ww, py, pz + tz * ww], c = [qx + tx * ww * 0.7, ny, qz + tz * ww * 0.7], d = [qx - tx * ww * 0.7, ny, qz - tz * ww * 0.7];
+        H.quad(a, b, c, d, ROOT, [-dx, 0, -dz], 0.1); H.quad(a, b, c, d, ROOT, [dx, 0, dz], 0.1);
+        px = qx; pz = qz; py = ny;
+      }
     }
   }
   const lipTris = H.tris;

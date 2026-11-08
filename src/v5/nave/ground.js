@@ -35,13 +35,14 @@ export function naveRim(b) {
 export const naveBearing = (x, z) => ((Math.atan2(x - NAVE.x, -(z - NAVE.z)) * 180) / Math.PI + 360) % 360;
 // signed distance to the rim (< 0 over the hole)
 export function naveEdge(x, z) { return Math.hypot(x - NAVE.x, z - NAVE.z) - naveRim(naveBearing(x, z)); }
-// rocks and trees keep off the rim and the hole (read after the draws by rocks.js and vegetation/ground.js)
+// rocks, trees and the scatter keep off the rim and the hole (read after the draws by rocks.js, vegetation/ground.js
+// and structures/scatter.js)
 export function naveClear(x, z) {
   if (NAVE_OFF || x < B[0] - 4 || x > B[1] + 4 || z < B[2] - 4 || z > B[3] + 4) return false;
-  return naveEdge(x, z) < 4;
+  return naveEdge(x, z) < 2;
 }
-// ground cover grows to within 2 m of the lip (the broken edge is bare), never over the hole
+// ground cover grows right up to the torn edge, never over the hole
 export function naveHole(x, z) {
   if (NAVE_OFF || x < B[0] || x > B[1] || z < B[2] || z > B[3]) return false;
-  return naveEdge(x, z) < 2.0;
+  return naveEdge(x, z) < 0.25;
 }
