@@ -401,12 +401,16 @@ function buildPit(ctx) {
     im.computeBoundingSphere();
     scene.add(im); meshes.push(im);
   }
-  // the rim's colliders: a ring just outside the edge, so the walker can stand at the lip and look in
-  let colliders = 0, lx = Infinity, lz = Infinity;
-  if (ctx.addCollider) for (let b = 0; b < 360; b += 0.5) {
-    const a = (b * Math.PI) / 180, R = pitRim(b) + 0.15, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
-    if (Math.hypot(x - lx, z - lz) < 0.8) continue;
-    ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
+  // the rim's colliders: a ring just outside the edge, so the walker can stand at the lip and look in, and a second
+  // 0.7 m further out, so a hurrying walker cannot slip through the first in one step
+  let colliders = 0;
+  if (ctx.addCollider) for (const out of [0.15, 0.85]) {
+    let lx = Infinity, lz = Infinity;
+    for (let b = 0; b < 360; b += 0.5) {
+      const a = (b * Math.PI) / 180, R = pitRim(b) + out, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
+      if (Math.hypot(x - lx, z - lz) < 0.8) continue;
+      ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
+    }
   }
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
 }
