@@ -153,8 +153,45 @@ async function start() {
   const lightView = new THREE.Matrix4().lookAt(sunDir, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
   const lightViewInv = lightView.clone().invert();
   const shadowTexel = (2 * sb) / sm;
+
+  // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
+  // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
+  // been unfocused for 3 s; nothing while the tab is hidden. Time and the updates run once per rendered
+  // frame with the real (clamped) dt, so the world and the audio mix keep going at the slower rate.
+  // ?idle=0 keeps the full rate under the cards and when unfocused.
+  const capParam = url.searchParams.get('cap');
+  let cap = capParam != null && isFinite(+capParam) ? Math.max(0, +capParam) : 60;
+  if (capParam == null && quality === 'low' && typeof navigator.getBattery === 'function') {
+    navigator.getBattery().then((b) => { const f = () => { cap = b.charging ? 60 : 30; }; f(); b.addEventListener('chargingchange', f); }).catch(() => {});
+  }
+  const idle = url.searchParams.get('idle') !== '0';
+  const IDLE_FPS = 10, UNFOCUSED_MS = 3000;
+  const cardEl = document.getElementById('card');
+  let blurredAt = document.hasFocus() ? null : performance.now();
+  addEventListener('blur', () => { blurredAt = performance.now(); });
+  addEventListener('focus', () => { blurredAt = null; });
+  const pacing = { get cap() { return cap; }, fps: 0, idle: false };
+  function targetFps(now) {
+    const benching = ctx.perf.bench && !ctx.perf.bench.done;
+    pacing.idle = idle && !benching && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
+    return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
+  }
+  ctx.pacing = pacing;
+  let due = 0;
+  document.addEventListener('visibilitychange', () => { due = 0; });
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (document.hidden) return;
+    const fps = pacing.fps = targetFps(now);
+    if (fps > 0) {
+      const iv = 1000 / fps;
+      if (now < due - 1) return; // 1 ms early is on time: rAF stamps jitter around the vsync
+      due = now - due > iv ? now + iv : due + iv; // keep the cadence; after a stall start afresh
+    }
+    frame();
+  }
+
   function frame() {
-    requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), 0.1);
     t += dt;
     ctx.time.t = t; ctx.time.dt = dt;
@@ -170,8 +207,6 @@ async function start() {
     shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
     shadowTarget.applyMatrix4(lightViewInv);
-    sunLight.target.position.copy(shadowTarget);
-    sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     const f = ctx.sky.flicker.value;
     sunLight.intensity = 2.7 * f;
     hemi.intensity = 1.4 * (0.6 + 0.4 * f);
@@ -181,6 +216,8 @@ async function start() {
     ctx.perf.mark();
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
+    sunLight.target.position.copy(shadowTarget);
+    sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     ctx.perf.cpu('frame');
     renderer.info.reset();
     ctx.post.composer.render();
@@ -188,7 +225,7 @@ async function start() {
     frames++; fpsT += dt;
     if (fpsT >= 1) { ctx.hud.setFps(frames / fpsT); frames = 0; fpsT = 0; }
   }
-  frame();
+  requestAnimationFrame(loop);
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
 }
