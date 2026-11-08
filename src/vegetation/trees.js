@@ -663,6 +663,7 @@ export function buildTrees(ctx, ground, mats) {
   // LOD by distance with hysteresis: 0 far, 1 mid, 2 near. No allocation.
   const HI = low ? 18 : 24, MID = low ? 55 : 72, HYS = 4;
   function update(px, pz) {
+    batch.sortFrom?.(px, pz);
     for (let i = 0; i < trees.length; i++) {
       const t = trees[i];
       const d = Math.sqrt((t.x - px) ** 2 + (t.z - pz) ** 2) / t.lodK;
