@@ -11,6 +11,7 @@ import { makeSimplex, mulberry32 } from './noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
+import { makeShadowCadence } from './shadows.js';
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -62,7 +63,10 @@ async function start() {
   renderer.setPixelRatio(dprParam > 0 ? dprParam : Math.min(devicePixelRatio, DPR[quality] ?? 1));
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands
+  // the dappled light in the wood (shots/wip/perf-02-pcf-wood-*), for a saving of a few multiplies a tap.
+  const pcf = url.searchParams.get('pcf') || 'soft';
+  renderer.shadowMap.type = pcf === 'hard' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -156,6 +160,9 @@ async function start() {
   const lightView = new THREE.Matrix4().lookAt(sunDir, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
   const lightViewInv = lightView.clone().invert();
   const shadowTexel = (2 * sb) / sm;
+  // Shadow cadence (shadows.js): the map is redrawn when the shadow camera has moved, on a slow clock, or
+  // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
+  ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
 
   // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
   // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
@@ -219,8 +226,11 @@ async function start() {
     ctx.perf.mark();
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
-    sunLight.target.position.copy(shadowTarget);
-    sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
+    // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
+    if (ctx.shadowCadence.update(dt, shadowTarget)) {
+      sunLight.target.position.copy(shadowTarget);
+      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
+    }
     ctx.perf.cpu('frame');
     renderer.info.reset();
     ctx.post.composer.render();
