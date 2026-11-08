@@ -3,6 +3,7 @@
 // occasional guttering, which main() reads to dim the lights.
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
+import { cinctureGLSL } from './v5/cincture.js'; // v5: AQ the Cincture, a chunk of the dome's shader
 
 // Gutter timings, seconds: total length [min, max] and gap between gutters [min, max]. v4: 12-16 s in all
 // (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter is at 25-55 s.
@@ -113,6 +114,7 @@ export function buildSky(ctx) {
         float starFade = smoothstep(-0.02, 0.2, up) * (1.0 - smoothstep(0.75, 0.995, toSun));
         sky += vec3(0.85, 0.88, 1.0) * s * starFade * 1.4;
 
+        ${cinctureGLSL()}
         // High cloud: slow, thin, lit from the sun side
         vec2 cuv = d.xz / max(d.y, 0.05);
         float cloud = fbm(cuv * 0.9 + vec2(uTime * 0.004, uTime * 0.0015));
