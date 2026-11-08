@@ -38,6 +38,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 23 | v4 the Great Span: deck, piers, stairs, gates, the fallen bays, the Postern |
 | 24 | v4 map structure: the causeway's new route, the pit, the leads, the Tumbling Water 2.5× taller |
 | 25 | v4 Tinctures and set-dressing: the regions' air, the Long Figure, the Discontinued Track, the Surveyor's Pegs |
+| 26 | v4 polish: the ground skin's edges, the salt crust and glasswort, the road on the crust, the bay's shore, the creatures in sun |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -334,4 +335,24 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `25-dress-track-along-before.png` | Before: the same crust with no prints. |
 | `25-dress-track-end-after.png` | After: the prints' last stretch in the crust, in step to the final one, then nothing. |
 | `25-dress-track-end-before.png` | Before: the same crust with no prints. |
+| `26-polish-crust-close-after.png` | After: the salt crust close, plates tilted and rimmed with pink-veined cracks; salt, not paving. |
+| `26-polish-crust-close-before.png` | Before: the same close view, uniform hexagonal plates with dark grout. |
+| `26-polish-crust-flat-after.png` | After: the crust along the Saltings' edge, irregular plates of many sizes catching the low sun. |
+| `26-polish-crust-flat-before.png` | Before: the same edge, a regular honeycomb of equal plates. |
+| `26-polish-glasswort-creature-after.png` | After: glasswort as jointed succulent stems, green at the base reddening upward, round a crab. |
+| `26-polish-glasswort-creature-before.png` | Before: glasswort as blood-red planks standing round the same crab. |
+| `26-polish-haha-ditch-after.png` | After: the Demesne's wall at the ha-ha ditch, the drop a clean line behind the face. |
+| `26-polish-haha-ditch-before.png` | Before: the same wall with a sawtooth of triangles standing in front of it. |
+| `26-polish-haha-lip-after.png` | After: the ha-ha's lip from the lawn, the drop a clean edge. |
+| `26-polish-haha-lip-before.png` | Before: the same lip, ragged with holes and steps. |
+| `26-polish-road-crust-after.png` | After: the road's slabs going under the crust, unbroken paving, each raised with a white salt lip. |
+| `26-polish-road-crust-before.png` | Before: the same road on the crust, slabs missing and scattered. |
+| `26-polish-sandpipers-lit.png` | A sandpiper against the sun's glitter on the bay, a small dark shape on the gold. |
+| `26-polish-stoat-lit.png` | The stoat in the long grass on the sunward slope, lit from behind. |
+| `26-polish-strandline-berm-after.png` | After: the Strandline's berm, the skin meeting the coarse ground with plants standing on it. |
+| `26-polish-strandline-berm-before.png` | Before: the same berm, bare patches where the skin frayed. |
+| `26-polish-strandline-edge-after.png` | After: the Strandline's edge, the skin's rim filled and grass standing to the water. |
+| `26-polish-strandline-edge-before.png` | Before: the same edge with holes and a step at the skin's rim. |
+| `26-polish-tarn-bay-spit-after.png` | After: the tarn's bay from the spit, a finer water disc and a smooth shore, the sun's glitter on it. |
+| `26-polish-tarn-bay-spit-before.png` | Before: the same bay, the shore a coarser line and the water flatter. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
