@@ -45,8 +45,7 @@ export function makeTinctures(ctx, url = new URL(location.href)) {
     const l0 = lum(fog);
     fog.r *= sr; fog.g *= sg; fog.b *= sb; relum(fog, l0);
     if (hemi) { // the light the ground answers with: the same turn, a part of it
-      const f = (c, base) => { const l = lum(base); c.setRGB(base.r * (1 + (sr - 1) * a), base.g * (1 + (sg - 1) * a), base.b * (1 + (sb - 1) * a)); relum(c, l); };
-      f(hemi.color, hemiSky); f(hemi.groundColor, hemiGround); f(ambient.color, ambientBase);
+      tintLight(hemi.color, hemiSky, sr, sg, sb, a); tintLight(hemi.groundColor, hemiGround, sr, sg, sb, a); tintLight(ambient.color, ambientBase, sr, sg, sb, a);
     }
     return fog;
   }
@@ -54,3 +53,6 @@ export function makeTinctures(ctx, url = new URL(location.href)) {
   function at(x, z) { const o = new THREE.Color(); mult(x, z, o); return { shift: o, color: air.color.clone(), strength: air.strength, k: T.k }; }
   return T;
 }
+
+// a light colour turned toward the region's hue at its own luminance (module scope: nothing is allocated per frame)
+function tintLight(c, base, sr, sg, sb, a) { const l = lum(base); c.setRGB(base.r * (1 + (sr - 1) * a), base.g * (1 + (sg - 1) * a), base.b * (1 + (sb - 1) * a)); relum(c, l); }
