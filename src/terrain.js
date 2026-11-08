@@ -414,7 +414,8 @@ export function biomeAt(x, z) {
   const dOrch = Math.hypot(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
   const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z);
-  const crystal = (1 - smoothstep(42, 64, dMor)) // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
+  // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11)
+  const crystal = (1 - smoothstep(42, 64, dMor)) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
   // the river: bare shingle along the canyon floor, a reedy margin where it slows toward the fen
   const rv = riverSection(x, z, _csb);
