@@ -1,0 +1,5 @@
+[
+ {"name": "hawser-floor-shift", "x": -57, "z": -188, "yaw": 0.22, "pitch": 0.3, "pre": "window.__fp.hawser.shift(0.5)"},
+ {"name": "hawser-court-shift", "x": -47, "z": -190, "yaw": 0.2, "pitch": 0.35, "pre": "window.__fp.hawser.shift(0.5)"},
+ {"name": "hawser-moraine-shift", "x": 15, "z": -178, "yaw": 0.62, "pitch": 0.16, "pre": "window.__fp.hawser.shift(1.6)"}
+]
