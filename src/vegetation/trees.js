@@ -704,7 +704,7 @@ export function buildTrees(ctx, ground, mats) {
   // instance's level, -1 back to the spare's) and its fade value in ff[k]. The doubles that change every frame
   // live in typed arrays (ff, and clock[0] the last update's world time): a double stored in an object field or a
   // closure variable is boxed anew on every write.
-  const slots = [], free = [], ff = new Float64Array(SPARES), clock = new Float64Array([-1]);
+  const slots = [], free = [], ff = new Float64Array(SPARES), clock = new Float64Array([-1]), F01 = new Float64Array([0, 1]);
   for (let k = 0; k < SPARES; k++) {
     const id = batch.addInstance(gid[0][0]);
     batch.setMatrixAt(id, m4); batch.setColorAt(id, col); batch.setVisibleAt(id, false);
@@ -723,7 +723,7 @@ export function buildTrees(ctx, ground, mats) {
   const endFade = (s, toMain) => {
     const t = s.tree;
     if (!toMain) batch.setGeometryIdAt(t.id, s.geo);
-    setFadeAt(batch, t.id, 1, 0);
+    setFadeAt(batch, t.id, F01, 1, 0);
     batch.setVisibleAt(s.spare, false);
     t.fade = -1; s.tree = null; free.push(s.k);
     fade.inFlight--;
@@ -740,7 +740,7 @@ export function buildTrees(ctx, ground, mats) {
         const f = (ff[k] += s.dir * dt / FADE_S);
         if (f >= 1) endFade(s, true);
         else if (f <= 0) endFade(s, false);
-        else { setFadeAt(batch, s.tree.id, f, 0); setFadeAt(batch, s.spare, f, 1); }
+        else { setFadeAt(batch, s.tree.id, ff, k, 0); setFadeAt(batch, s.spare, ff, k, 1); }
       }
     }
     for (let i = 0; i < trees.length; i++) {
@@ -769,7 +769,7 @@ export function buildTrees(ctx, ground, mats) {
       const s = slots[k];
       s.tree = t; s.geo = from; ff[k] = 0; s.dir = 1; t.fade = k;
       batch.setGeometryIdAt(t.id, to);
-      setFadeAt(batch, t.id, 0, 0); setFadeAt(batch, s.spare, 0, 1);
+      setFadeAt(batch, t.id, F01, 0, 0); setFadeAt(batch, s.spare, F01, 0, 1);
       fade.starts++;
       if (++fade.inFlight > fade.peak) fade.peak = fade.inFlight;
     }

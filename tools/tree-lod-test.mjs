@@ -94,6 +94,20 @@ for (const mode of ['instanced', 'batched']) {
     for (let k = 0; k < 600 && t1 === null; k++) { await frames(1); if (t.fade < 0) t1 = fp.time.t; }
     await frames(30);
     const one = { t0, t1, secs: t1 - t0, dt: fp.time.dt, g0, mid, after: spareShown(), afterGeo: geoOf(t.id), idle };
+    // a switch while it fades: start the near fade, then a frame later jump 200 m (it wants far: the fade ends and
+    // the switch is hard), and separately step back out (the fade turns round and ends on the level it left)
+    const set = b.lodSets(geoOf(t.id)), settle = async () => { for (let k = 0; k < 120 && F.inFlight; k++) await frames(1); await frames(5); };
+    pose(t.x + HI + 8, t.z); await frames(60); await settle();
+    pose(t.x + HI - 4, t.z); await frames(2);
+    const jumpFading = t.fade >= 0;
+    pose(t.x + 200, t.z); await frames(2); await settle();
+    const jump = { fading: jumpFading, geo: geoOf(t.id), far: set[0], shown: spareShown(), inFlight: F.inFlight, fade: t.fade };
+    pose(t.x + HI + 8, t.z); await frames(60); await settle();
+    const gBack = geoOf(t.id);
+    pose(t.x + HI - 4, t.z); await frames(2);
+    const backFading = t.fade >= 0;
+    pose(t.x + HI + 8, t.z); await frames(2); await settle();
+    const back = { fading: backFading, geo: geoOf(t.id), want: gBack, shown: spareShown(), inFlight: F.inFlight, fade: t.fade };
     // the wood walk
     const rt = [[-68, 142], [-120, 136], [-170, 130], [-215, 128]];
     const segs = []; let L = 0; for (let i = 1; i < rt.length; i++) { const l = Math.hypot(rt[i][0] - rt[i - 1][0], rt[i][1] - rt[i - 1][1]); segs.push({ a: rt[i - 1], b: rt[i], L0: L, l }); L += l; }
@@ -110,7 +124,7 @@ for (const mode of ['instanced', 'batched']) {
       if (s >= L) break;
     }
     await frames(40);
-    return { one, walk: { starts: F.starts - st0, overflow: F.overflow - ov0, peak: F.peak, maxShown, inFlight: F.inFlight, shownAfter: spareShown(), spares: F.spares } };
+    return { one, jump, back, walk: { starts: F.starts - st0, overflow: F.overflow - ov0, peak: F.peak, maxShown, inFlight: F.inFlight, shownAfter: spareShown(), spares: F.spares } };
   });
   await page.close();
   if (fz) {
@@ -118,6 +132,9 @@ for (const mode of ['instanced', 'batched']) {
     check(o.t0 !== null && o.mid && o.mid.own && o.mid.spareGeo === o.g0 && o.mid.main !== o.g0, `${mode}: a switch shows the old level as a spare while the new one fades in`, JSON.stringify(o.mid));
     check(o.t1 !== null && o.secs >= 0.4 - 1e-6 && o.secs <= 0.4 + 0.1 + 1e-6, `${mode}: the fade completes in 0.4 s of world time`, `${o.secs?.toFixed(3)} s (frames of up to 0.1 s)`);
     check(o.after === o.idle && o.afterGeo !== o.g0, `${mode}: the spare is gone after the fade`, `spares shown ${o.after}, before ${o.idle}`);
+    const j = fz.jump, k = fz.back;
+    check(!errors.length && j.fading && j.geo === j.far && j.shown === 0 && j.inFlight === 0 && j.fade === -1, `${mode}: a 200 m jump mid-fade ends far with no spare left`, JSON.stringify(j));
+    check(!errors.length && k.fading && k.geo === k.want && k.shown === 0 && k.inFlight === 0 && k.fade === -1, `${mode}: stepping back mid-fade turns the fade round to the level it left`, JSON.stringify(k));
     check(w.inFlight === 0 && w.shownAfter === 0 && w.overflow === 0, `${mode}: no spare leaks or runs out over the wood walk`, `${w.starts} fades, at most ${w.peak} in flight of ${w.spares} spares, ${w.overflow} hard for want of one, ${w.shownAfter} shown after`);
   }
   console.log(`-- ${mode}: ${r.n} trees, placement digest ${r.digest}, first ${JSON.stringify(r.first)}`);

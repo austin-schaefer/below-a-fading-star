@@ -39,11 +39,13 @@ vec2 fpBatchFade(float a) { return a > 1.5 ? vec2(a - 2.0, 1.0) : vec2(a, 0.0); 
 #endif
 `;
 
-// (f, side) of instance id: side 0 draws a share f of its pixels, side 1 the other 1 - f (fade.js)
-export function setFadeAt(b, id, f, side) {
-  if (b.isInstancedBatch) return b.setFadeAt(id, f, side);
+// (f, side) of instance id, f read from fs[k]: side 0 draws a share f of its pixels, side 1 the other 1 - f
+// (fade.js). f comes in a typed array, not as an argument: a double passed to a call that is not inlined is
+// boxed anew on every call, and this runs twice a frame for every fade in flight.
+export function setFadeAt(b, id, fs, k, side) {
+  if (b.isInstancedBatch) return b.setFadeAt(id, fs, k, side);
   const t = b._colorsTexture;
-  t.image.data[id * 4 + 3] = side ? 2 + f : f;
+  t.image.data[id * 4 + 3] = side ? 2 + fs[k] : fs[k];
   t.needsUpdate = true;
 }
 
@@ -73,17 +75,18 @@ class InstancedBatch extends THREE.Group {
     Object.defineProperty(this, 'receiveShadow', { get: () => receive, set: (v) => { receive = v; for (const m of this.children) m.receiveShadow = v; } });
   }
   addGeometry(geo) { this.geos.push(geo); if (!geo.boundingSphere) geo.computeBoundingSphere(); return this.geos.length - 1; }
-  addInstance(geo) { this.inst.push({ geo, cell: null, slot: -1, matrix: new THREE.Matrix4(), color: new THREE.Color(1, 1, 1), fade: [1, 0], on: true }); return this.inst.length - 1; }
+  addInstance(geo) { this.inst.push({ geo, cell: null, slot: -1, matrix: new THREE.Matrix4(), color: new THREE.Color(1, 1, 1), fade: [1, 0], on: true, mesh: null }); return this.inst.length - 1; }
   // Before build: every mesh gets an aFade instance attribute, the fade's depth material, and `reserve` slots
   // over its count for the spare instances cross-fades show (at most as many as the mesh's own count).
   enableFade(depth, reserve) { this.fadeDepth = depth; this.reserve = reserve; }
-  setFadeAt(id, f, side) {
-    const it = this.inst[id];
+  setFadeAt(id, fs, k, side) {
+    const it = this.inst[id], f = fs[k];
     it.fade[0] = f; it.fade[1] = side;
     if (it.slot < 0) return;
-    const a = this.meshes.get(`${it.geo}|${it.cell}`).geometry.attributes.aFade;
+    const a = it.mesh.geometry.attributes.aFade; // the mesh _append put it in: no key string per call
     a.array[it.slot * 2] = f; a.array[it.slot * 2 + 1] = side; a.needsUpdate = true;
   }
+  getGeometryIdAt(id) { return this.inst[id].geo; }
   getMatrixAt(id, m) { return m.copy(this.inst[id].matrix); }
   getColorAt(id, c) { return c.copy(this.inst[id].color); }
   // a hidden instance hides from build on (spares); shown again it goes back into its cell's mesh
@@ -216,7 +219,7 @@ class InstancedBatch extends THREE.Group {
   _append(it, id) {
     const mesh = this.meshes.get(`${it.geo}|${it.cell}`);
     const s = mesh.count++;
-    it.slot = s; mesh.ids[s] = id;
+    it.slot = s; it.mesh = mesh; mesh.ids[s] = id;
     mesh.setMatrixAt(s, it.matrix); mesh.setColorAt(s, it.color);
     mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
     const fa = mesh.geometry.attributes.aFade;
@@ -236,6 +239,6 @@ class InstancedBatch extends THREE.Group {
     }
     mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
     mesh.visible = mesh.count > 0;
-    it.slot = -1;
+    it.slot = -1; it.mesh = null;
   }
 }
