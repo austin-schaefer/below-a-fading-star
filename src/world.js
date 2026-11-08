@@ -128,6 +128,24 @@ export const SITES = {
   slipper:    { x: -20, z: 26, r: 1, name: 'The Slipper' },
   prospect:   { x: 238, z: -30, r: 4, name: 'The Unfinished Prospect' },
   tallestTor: { x: 268, z: -80, r: 8, name: "the High Ling's tallest tor" },
+  // v7, the living (placement plan section 5): routes.js AVOID holds the same numbers; change neither without the other
+  taker:      { x: -255, z: 10, r: 4, name: 'The Taker of Altitudes' }, // facing the sun
+  coheirs:    { x: -45, z: 160, r: 6, name: 'The Coheirs' },
+  sleeper:    { x: 180, z: -40, r: 6, name: 'The Sleeper' },
+  thurifer:   { x: -108, z: -128, r: 0, from: [-108, -128], to: [-170, -50], lead: 'P3', name: 'The Thurifer' },
+  bather:     { x: 158, z: 228, r: 10, rim: [165, 215], rimR: 4, name: 'The Bather' },
+  sexton:     { x: 55, z: 272, r: 18, block: [40, 70, 264, 284], name: 'The Sexton' },
+  stylite:    { x: 268, z: -80, r: 8, on: 'tallestTor', name: 'The Stylite' },
+  accrescent: { x: 60, z: -180, r: 3, trailFrom: [40, -265], corridor: 3, name: 'The Accrescent' },
+  indistinct: { x: 40, z: 30, r: 0, ditch: { from: [40, -55], to: [125, 30] }, name: 'The Indistinct' }, // the ha-ha's ditch, bearings 0-90 from the keep
+  repetend:   { x: -170, z: -97, r: 0, name: 'The Repetend' }, // the Lynchets' east wall-tops
+  scriveners: { x: -100, z: 58, r: 8, name: 'The Scriveners' },
+  simulacrum: { x: 20, z: -205, r: 5, name: 'The Simulacrum' },
+  moles:      { x: 75, z: 0, r: 12, name: 'The Moles' },
+  toadstone:  { x: 180, z: 230, r: 2, name: 'The Toadstone' },
+  linkBoy:    { x: -165, z: -105, r: 2, leads: 'P1-P17', name: 'The Link-Boy' },
+  reach:      { x: 171, z: 235, r: 0, from: [208, 258], to: [134, 211], name: 'The Luminous Reach' },
+  glyphs:     { x: 226, z: -112, r: 0, at: [[75, 0], [-80, null], [75, -200]], name: 'The Glyphs' }, // the Hypogeum's door, a tessera, the peg caps on x = -80, the erratic
 };
 
 // The causeway's v4 route (placement plan section 4): from between the colossi's feet in the saddle, north
