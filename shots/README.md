@@ -72,9 +72,11 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `06-vegetation-wood.jpg` | Deodand Wood interior: trunks, hanging moss and murk. |
 | `07-full-causeway.png` | The full scene: causeway, fen tree line and sun in the saddle. |
 | `07-full-fen-from-keep-hill.png` | Corpse-Candle Fen seen from the keep hill past the wall. |
+| `08-skylife-fireball.jpg` | A fireball falling past the saddle over the water, from the early sky pass. |
 | `08-skylife-from-the-moor.png` | The sky life seen from the moor, floating rock-islands above the glacier. |
 | `08-skylife-great-lattice-and-flier.png` | The great lattice in the night sky with a flier crossing it. |
 | `08-skylife-meteor-shower.png` | A meteor shower streaking past the Milky Way. |
+| `08-skylife-worm-red.jpg` | The great lattice with a red worm of light crawling along it. |
 | `09-uncanny-biomesh-lattice.png` | Biomesh tiles crawling over the lattice's glowing veins. |
 | `09-uncanny-boulder-crust.png` | A boulder crusted with biomesh tiles. |
 | `09-uncanny-cloak-eyes-shut-gutter.png` | The cloak with its eyes shut while the sun gutters. |
@@ -112,15 +114,21 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `12-river-speculum-first-flat-ellipse.png` | The first Speculum: a flat white ellipse in a black void. Funny failure. |
 | `12-river-speculum-young-sun.png` | The Speculum from the pool's edge with cloud reflections. |
 | `13-ruins-carillon-caps-close.png` | The Carillon Flags: bronze caps set in the causeway hexes, studs counting down the notes. |
+| `13-ruins-carillon-walk-first.png` | First Carillon Flags render: a bare hex path up the causeway crown, no caps yet. |
 | `13-ruins-carillon-walk.png` | The Carillon Flags along the causeway crown, the Armiger's Tower beyond. |
+| `13-ruins-cutting-bank-first.png` | First Cutting: a lens of courses cut into the canyon bank, a bulge rather than a slump. |
 | `13-ruins-cutting-bank.png` | The Cutting on the canyon bank: courses, black glass, rusted lattice, soil. Still reads as a lens, not a slump. |
+| `13-ruins-gradine-base-first.png` | First Gradine: a bare ramp of sand climbing into the dark. |
 | `13-ruins-gradine-base.png` | The Gradine's foot: the first tread above head height, the flight climbing into haze. |
 | `13-ruins-gradine-yard.png` | The Gradine from the Leaning Yard, a pale thread up the east wall. Too thin and too dark; a v4 note. |
+| `13-ruins-hypogeum-door-first.png` | First Hypogeum door: plain doors and a blank lintel, before the glyphs and verdigris. |
 | `13-ruins-hypogeum-door.png` | The Hypogeum's bronze door, verdigris and scrapes, glyphs on the lintel. |
 | `13-ruins-hypogeum-into-cut.png` | Looking down into the Hypogeum's cut from the kerb. |
 | `13-ruins-hypogeum-stair-from-floor.png` | From the Hypogeum's floor, the stair climbing to the sun. |
 | `13-ruins-lintel-before.png` | Before a gutter: the glyph row on the lintel. |
 | `13-ruins-lintel-after.png` | After the gutter: the row has slid one place; the last glyph came round to the front. |
+| `13-flora-eddy-grey-fail.png` | Camera inside a ruin wall while testing the grey eddy; a black slab fills the frame. Funny failure. |
+| `13-flora-sward-causeway-first.png` | First Sward from the causeway: a few white flecks on the slope, barely a drift. |
 | `13-flora-sward-causeway-south.png` | The Heliotrope Sward from the causeway: white drifts on the slope that faces the sun. |
 | `13-flora-sward-causeway.png` | The Sward at high quality from the causeway, the Trigon Span beyond the tarn. |
 | `13-flora-sward-close-turned.png` | Close in the Sward: the nearest heads have turned from the sun to the player. |
@@ -129,30 +137,48 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-flora-eddy-grey-after.png` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
 | `13-flora-ovals-before.png` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
 | `13-flora-ovals-after.png` | After: stones kept off steep and spray-wet walls; the wall is clean. |
+| `13-riverlife-glints-stone-fail.png` | The salt fleck as a bright white rectangle with a hard halo on a dark stone. Funny failure. |
+| `13-riverlife-glints-stone-first.png` | First salt glints: a smear of streaks swamping the frame. |
 | `13-riverlife-pedlars-slow-reach.png` | Salt-Pedlars over the slow reach from the bank: pale riders on dragonflies at 6–8 m, the fen's lights beyond. |
 | `13-riverlife-pedlar-close.png` | One Salt-Pedlar at 2 m: hooded salt-white rider, goad, veined wings. |
 | `13-riverlife-salt-on-stone.png` | A white salt fleck left on a bank stone where a pedlar paused. |
 | `13-riverlife-wrong-colour-before.png` | The Wrong Colour's first pass: a dim teal smear on the far bank. |
 | `13-riverlife-wrong-colour-after.png` | After the visibility pass: violet light on the grey reeds, bank and canyon wall. |
+| `13-riverlife-wrong-colour-cutting.png` | The Wrong Colour's green glow seen from the Cutting's foot, spilling onto the water. |
+| `13-riverlife-wrong-colour-first.png` | The Wrong Colour's first light: an acid yellow-green blot on the far bank. |
 | `13-riverlife-wrong-colour-gutter.png` | The Wrong Colour brightening while the sun gutters. |
 | `13-riverlife-wrong-colour-from-cutting.png` | From the Cutting's foot: the basin is round the bend but its green light is not. |
 | `13-riverlife-fall-spray.png` | Spray drifting off the fall into the Speculum's bowl. |
+| `13-sky-city-spawn-first.png` | First Parhelion City attempt: a pale scratch of spires in the saddle beside the sun. |
+| `13-sky-city-zoom-gutter.png` | The Parhelion City through a long lens in a gutter: needle spires against the dimmed sun. |
 | `13-sky-parhelion-ghost.png` | The Parhelion City by day: a faint ghost of spires in the sun's saddle, from the causeway. |
 | `13-sky-parhelion-gutter-solid.png` | The same view in a gutter: the city hardens, windows lit, against the dimmed sun. |
+| `13-sky-still-star-after.png` | After: the still star made a hanging bright thread, readable in the dark. |
+| `13-sky-still-star-before.png` | Before: the still star as a faint streak with a thin trail. |
 | `13-sky-vigilant-from-yard.png` | The Vigilant crouched on the east wall, seen from the Leaning Yard. |
+| `13-sky-vigilant-gradine-fail.png` | Camera pressed into the Gradine's slope instead of looking at the Vigilant. Funny failure. |
 | `13-sky-vigilant-head-zoom.png` | The Vigilant's head through a long lens; it turns only when unwatched. |
 | `13-sky-vigilant-eyes-gutter.png` | In a gutter the Vigilant's eyes glint. |
 | `13-sky-procession.png` | The procession: nine dim lights crossing the high sky in a line. |
 | `13-sky-shard-belt-gutter.png` | The shard belt, an arc of glinting fragments shown only in some gutters. |
+| `13-sky-vigilant-moor-zoom.png` | The Vigilant's silhouette from the moor with the lattice drifting beside it. |
+| `13-sky-vigilant-orchard-first.png` | First Vigilant search from the orchard: the camera hides behind a tree and finds only mountains. |
+| `13-inhabitants-galley-crossing.png` | The Sable Galley crossing the tarn through the reeds, sun in the saddle. |
+| `13-inhabitants-guest-apron-fail.png` | The wimple that read as a white apron on the Guest's front. Funny failure. |
 | `13-inhabitants-guest-fountain.png` | The Wimpled Guest at the taverna's dry fountain, pale wimple round an empty face. |
 | `13-inhabitants-guest-close.png` | The Guest close: hood, wimple, the void where a face should be. |
 | `13-inhabitants-guest-gaze-flush.png` | Held gaze on the Guest: the screen edges flush red and drowsy as the heartbeat rises. |
 | `13-inhabitants-galley-behind-woman.png` | The Sable Galley crossing Lees Tarn behind the woman in the water, lantern unlit. |
 | `13-inhabitants-galley-wake.png` | The galley's faint V wake on the black water. |
+| `13-inhabitants-guest-well-first.png` | First Guest at the taverna well: a dark figure lost against the dusk. |
 | `13-inhabitants-menology-ground.png` | The Menology from the ground: hewn menhirs in a spiral on the south moor. |
 | `13-inhabitants-menology-spiral.png` | The Menology's spiral from above, before the tree inside it was cleared. |
 | `13-inhabitants-menology-lizards.png` | Lizards basking on a menhir's sunward face. |
+| `13-life-bats-gutter-fail.png` | Bats at the tower with the camera half inside the hillside; half the frame is one black wedge. Funny failure. |
+| `13-life-biomesh-lattice-first.png` | The lattice and its ley lines before the biomesh runners were added. |
 | `13-life-cloak-at-shrine.png` | The man in the cloak of eyes, moved to stand before the Wayside Shrine facing the sun. |
+| `13-life-cloak-old-before.png` | Before: the cloak of eyes in its old spot on the moor. |
+| `13-life-gibbet-crows.png` | Crows on the gibbet beside the causeway, its cages hanging, the Armiger's Tower beyond. |
 | `13-life-rooks-perched-yard.png` | Rooks perched on the leaning stones of the Yard. |
 | `13-life-rooks-lift-yard.png` | The rooks lifting from the Yard against the sun. |
 | `13-life-bats-tower-gutter.png` | Bats pouring from the Armiger's Tower as the sun gutters; the procession crosses behind. |

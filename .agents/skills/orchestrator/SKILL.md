@@ -76,6 +76,10 @@ When a subagent reports done:
 4. If everything's good: `gh pr create --fill --body "Closes #<n> ..."` from the branch, wait for CI (`gh pr checks <pr> --watch`; if it says "no checks reported", the workflow hasn't registered yet: wait 30 seconds and run it again, never merge on that message), then `gh pr merge <pr> --squash --delete-branch`, then `tools/worktree.sh rm <n>`. Close the issue with a two- or three-line comment if the merge didn't close it.
 5. If not: send it back with specific feedback, or re-brief a fresh subagent, possibly on a stronger model.
 
+## Visual prototypes: releases have notes
+
+Each merge of a visual prototype to `main` is a release. Before opening the PR, add a short entry at the top of the prototype's `RELEASES.md` (newest first): a one-line title with version and date, then a few bullets on what a visitor notices and what changed underneath, with the screenshot stage numbers. Not verbose; the archive carries the pictures.
+
 ## Visual prototypes: screenshots are the record
 
 For anything visual under `prototypes/` (the wilderness scene is the first), Austin storytells from the build, so renders are part of the deliverable and are curated, not dumped. The full rule lives in `prototypes/wilderness/README.md` ("Screenshots are part of the record") and the reusable curation brief in `prototypes/wilderness/tools/curate-shots.md`. The short form:
