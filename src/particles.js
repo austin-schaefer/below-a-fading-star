@@ -271,7 +271,7 @@ export async function build(ctx) {
         } else li.intensity = 0;
       }
     };
-    ctx.registerUpdate(step);
+    ctx.registerUpdate(step, { pos: L.fen, r: L.fen.r, near: 120, hz: 5 }); // v3: the candles drift at 5 Hz from far off
     ctx.wisps = wisps;
   }
 

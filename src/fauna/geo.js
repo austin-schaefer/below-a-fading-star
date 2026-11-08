@@ -126,3 +126,59 @@ export function flapInstanced(geometry, material, count) {
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+// Straight-down raycasts against big merged meshes, fast. A Raycaster tests every triangle of a mesh
+// whose bounds the ray meets, so the perch searches (900 casts onto the structures at the gibbet, the
+// keep's wall tops) took ~300 ms of one frame. This bins each mesh's triangles by world xz once, then
+// tests only the triangles under the ray, with the same local-space test three's Mesh.raycast makes,
+// so it returns the same nearest hit. Meshes it cannot bin (instanced, groups, material arrays) fall
+// back to the Raycaster. cast(x, z, top, far) returns the nearest hit's world y going down from
+// (x, top, z), or null.
+const DC = 2; // bin size, m
+export function makeDownCaster(meshes) {
+  const rc = new THREE.Raycaster(), hits = [];
+  const binned = [], other = [];
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (const m of meshes) {
+    const g = m.geometry, pos = g?.attributes?.position;
+    if (!pos || m.isInstancedMesh || m.isSkinnedMesh || Array.isArray(m.material) || g.groups.length || g.morphAttributes.position) { other.push(m); continue; }
+    m.updateWorldMatrix(true, false);
+    const idx = g.index, n = idx ? idx.count : pos.count;
+    const s = Math.max(0, g.drawRange.start), e = Math.min(n, g.drawRange.start + g.drawRange.count);
+    const bins = new Map();
+    for (let i = s; i + 2 < e; i += 3) {
+      const ia = idx ? idx.getX(i) : i, ib = idx ? idx.getX(i + 1) : i + 1, ic = idx ? idx.getX(i + 2) : i + 2;
+      a.fromBufferAttribute(pos, ia).applyMatrix4(m.matrixWorld); b.fromBufferAttribute(pos, ib).applyMatrix4(m.matrixWorld); c.fromBufferAttribute(pos, ic).applyMatrix4(m.matrixWorld);
+      const x0 = Math.floor(Math.min(a.x, b.x, c.x) / DC), x1 = Math.floor(Math.max(a.x, b.x, c.x) / DC);
+      const z0 = Math.floor(Math.min(a.z, b.z, c.z) / DC), z1 = Math.floor(Math.max(a.z, b.z, c.z) / DC);
+      for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const k = x * 65536 + z; let l = bins.get(k); if (!l) bins.set(k, (l = [])); l.push(ia, ib, ic); }
+    }
+    binned.push({ m, bins, inv: m.matrixWorld.clone().invert() });
+  }
+  const o = new THREE.Vector3(), down = new THREE.Vector3(0, -1, 0), ray = new THREE.Ray(), p = new THREE.Vector3(), w = new THREE.Vector3();
+  return function cast(x, z, top = 80, far = 160) {
+    o.set(x, top, z);
+    let best = Infinity, y = null;
+    const k = Math.floor(x / DC) * 65536 + Math.floor(z / DC);
+    for (const { m, bins, inv } of binned) {
+      const l = bins.get(k);
+      if (!l) continue;
+      ray.set(o, down).applyMatrix4(inv);
+      const pos = m.geometry.attributes.position, side = m.material.side;
+      for (let i = 0; i < l.length; i += 3) {
+        a.fromBufferAttribute(pos, l[i]); b.fromBufferAttribute(pos, l[i + 1]); c.fromBufferAttribute(pos, l[i + 2]);
+        const hit = side === THREE.BackSide ? ray.intersectTriangle(c, b, a, true, p) : ray.intersectTriangle(a, b, c, side === THREE.FrontSide, p);
+        if (!hit) continue;
+        w.copy(p).applyMatrix4(m.matrixWorld);
+        const d = o.distanceTo(w);
+        if (d < rc.near || d > far) continue;
+        if (d < best) { best = d; y = w.y; }
+      }
+    }
+    if (other.length) {
+      rc.set(o, down); rc.far = far; hits.length = 0; rc.intersectObjects(other, false, hits);
+      if (hits.length && hits[0].distance < best) { best = hits[0].distance; y = hits[0].point.y; }
+    }
+    return y;
+  };
+}

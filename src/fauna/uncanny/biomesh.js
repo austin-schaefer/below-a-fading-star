@@ -557,7 +557,10 @@ export function buildBiomesh(ctx, U) {
       C.mat.userData.u.uTime.value = t; C.mat.userData.u.uGlow.value = glow;
       if (!C.count || !C.ready) continue;
       const cd = Math.hypot(cam.x - C.center.x, cam.z - C.center.z);
-      if (cd > C.radius + 110) continue;
+      // v3 stage 2: tiles more than 60 m away hold still (the creep is too slow to see there); a colony
+      // wholly beyond that and past where runners start is skipped. ?throttle=0: the old 110 m.
+      const hold = ctx.throttle !== false;
+      if (cd > C.radius + (hold ? 70 : 110)) continue;
       // a new runner every few seconds while you are anywhere near
       if (cd < C.radius + 70 && (C.next -= dt) <= 0) {
         C.next = C.every[0] + rng() * (C.every[1] - C.every[0]);
@@ -568,9 +571,10 @@ export function buildBiomesh(ctx, U) {
       C.phase = (C.phase + 1) % S;
       const dS = dt * S;
       const aw = C.aware.array, fa = C.fresh.array;
-      let anyAware = false, anyFresh = false;
+      let anyAware = false, anyFresh = false, wrote = false;
       for (let i = C.phase; i < C.count; i += S) {
-        const near = (C.wx[i] - cam.x) ** 2 + (C.wy[i] - cam.y) ** 2 + (C.wz[i] - cam.z) ** 2 < 36;
+        const d2 = (C.wx[i] - cam.x) ** 2 + (C.wy[i] - cam.y) ** 2 + (C.wz[i] - cam.z) ** 2;
+        const near = d2 < 36;
         C.aw[i] = approach(C.aw[i], near ? 1 : 0, near ? 3 : 0.5, dS);
         aw[i] = C.aw[i];
         if (C.aw[i] > 0.01) anyAware = true;
@@ -580,8 +584,9 @@ export function buildBiomesh(ctx, U) {
         if (fr > 0) C.fr[i] = Math.max(0, fr - dS / 5);
         else if (fr < 0) C.fr[i] = Math.max(-1, fr - dS / 1.6);
         if (fr !== 0 || fa[i] !== 0) { fa[i] = C.fr[i]; anyFresh = true; }
-        if (C.busy[i] && (C.fr[i] <= -1 || C.grow[i] < 1)) { write(C, i, 0); continue; } // dark, or not yet grown, waiting for its runner
+        if (C.busy[i] && (C.fr[i] <= -1 || C.grow[i] < 1)) { write(C, i, 0); wrote = true; continue; } // dark, or not yet grown, waiting for its runner
         if (near && C.grow[i] >= 1) continue;
+        if (hold && d2 > 3600 && C.grow[i] >= 1 && C.hopP[i] < 0) continue; // far: holds still (not mid-hop or growing in)
         // creep: a slow flow field, breathing in waves out from the colony's heart, tethered to home
         const u = C.u[i], v = C.v[i];
         const ang = noise.noise2(u * 0.07 + t * 0.006, v * 0.07 - t * 0.0045 + C.col[i] * 9) * TAU * 1.3;
@@ -605,9 +610,9 @@ export function buildBiomesh(ctx, U) {
         const ty = Math.atan2(-dv, du);
         let dy = ty - C.yaw[i]; dy -= Math.round(dy / TAU) * TAU;
         C.yaw[i] += dy * Math.min(1, dS * 0.6);
-        write(C, i, lift);
+        write(C, i, lift); wrote = true;
       }
-      C.mesh.instanceMatrix.needsUpdate = true;
+      if (wrote) C.mesh.instanceMatrix.needsUpdate = true;
       if (anyAware || C.awareWas) C.aware.needsUpdate = true;
       if (anyFresh) C.fresh.needsUpdate = true;
       C.awareWas = anyAware;

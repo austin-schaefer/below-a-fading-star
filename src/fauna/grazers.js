@@ -220,5 +220,5 @@ export function buildGrazers(ctx, opts = {}) {
     bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = uppers.instanceMatrix.needsUpdate = lowers.instanceMatrix.needsUpdate = true;
   }
   bodies.count = heads.count = n; uppers.count = lowers.count = n * 4;
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => herd, near: 120, hz: 5 }); // v3: beyond 120 m the herd steps at 5 Hz
 }

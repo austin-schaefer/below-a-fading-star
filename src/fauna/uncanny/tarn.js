@@ -159,7 +159,7 @@ export function buildTarnWoman(ctx, U) {
     }
     rings.instanceMatrix.needsUpdate = true; ringA.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => S, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.tarn = Object.assign(pub, {
     state: S, home,

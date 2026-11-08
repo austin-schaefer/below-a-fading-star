@@ -354,7 +354,7 @@ export function buildCloak(ctx, U) {
     }
     gazeA.needsUpdate = true; lidA.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => g.position, near: 40, hz: 5 }); // v3: the eyes track every frame only within 40 m
 
   U.cloak = Object.assign(state, {
     group: g,

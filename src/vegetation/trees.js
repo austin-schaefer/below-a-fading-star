@@ -5,6 +5,7 @@
 // toadstools are a separate InstancedMesh. Both glow brighter when the sun gutters.
 import * as THREE from 'three';
 import { GeoBuilder, tube, clamp, lerp, smoothstep, unflipNormals, fogBatchFix } from './util.js';
+import { makeBatch } from './batch.js';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const lin = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
@@ -631,8 +632,10 @@ export function buildTrees(ctx, ground, mats) {
   // BatchedMesh -------------------------------------------------------------
   let vtx = 0, idx = 0;
   for (const v of variants) for (const g of new Set([v.hi, v.lo, v.far])) { vtx += g.attributes.position.count; idx += g.index.count; }
-  const batch = new THREE.BatchedMesh(trees.length + 8, vtx, idx, mats.tree);
+  const batch = makeBatch(ctx, trees.length + 8, vtx, idx, mats.tree); // instanced stand-in without multi-draw (batch.js)
   const gid = variants.map((v) => { const hi = batch.addGeometry(v.hi), lo = batch.addGeometry(v.lo); return [v.far === v.lo ? lo : batch.addGeometry(v.far), lo, hi]; });
+  const lodSet = []; for (const g of gid) for (const k of g) lodSet[k] = g;
+  batch.lodSets = (k) => lodSet[k];
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), pos = new THREE.Vector3(), col = new THREE.Color();
   const nrm = { x: 0, y: 1, z: 0 }, up = new THREE.Vector3(0, 1, 0), tilt = new THREE.Quaternion(), yawQ = new THREE.Quaternion();
   for (const t of trees) {
@@ -654,6 +657,7 @@ export function buildTrees(ctx, ground, mats) {
   }
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-trees';
+  batch.build?.();
   ctx.scene.add(batch);
 
   // LOD by distance with hysteresis: 0 far, 1 mid, 2 near. No allocation.

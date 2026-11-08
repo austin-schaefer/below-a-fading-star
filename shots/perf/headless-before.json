@@ -1,0 +1,613 @@
+{
+ "headless": true,
+ "url": "http://localhost:8130/?bench=12&q=low",
+ "date": "2026-11-08T04:18:51.795Z",
+ "active": true,
+ "frame": {
+  "frames": 8,
+  "avgMs": 587.54,
+  "low1Ms": 1950.2,
+  "fps": 1.7,
+  "low1Fps": 0.5
+ },
+ "cpu": {
+  "totalMs": 4.48,
+  "modules": {
+   "vegetation": 2.79,
+   "frame": 0.65,
+   "fauna": 0.46,
+   "inhabitants2": 0.16,
+   "particles": 0.11,
+   "skylife": 0.1,
+   "riverlife2": 0.07,
+   "rocks": 0.06,
+   "water": 0.04,
+   "ruins2": 0.01,
+   "structures": 0.01,
+   "core": 0,
+   "audio": 0,
+   "flora2": 0
+  }
+ },
+ "gpu": {
+  "available": true,
+  "frames": 1,
+  "render": 2378.12,
+  "shadow": 333.44,
+  "bloom": 36,
+  "grade": 26.24,
+  "output": 7.12,
+  "total": 2447.48
+ },
+ "calls": [
+  147,
+  154
+ ],
+ "tris": [
+  1335569,
+  1636393
+ ],
+ "render": {
+  "calls": 150,
+  "triangles": 1335569,
+  "points": 2241,
+  "lines": 716
+ },
+ "memory": {
+  "geometries": 124,
+  "textures": 27,
+  "programs": 86
+ },
+ "lights": {
+  "DirectionalLight": {
+   "count": 1,
+   "visible": 1,
+   "shadow": 1
+  },
+  "HemisphereLight": {
+   "count": 1,
+   "visible": 1,
+   "shadow": 0
+  },
+  "AmbientLight": {
+   "count": 2,
+   "visible": 2,
+   "shadow": 0
+  },
+  "PointLight": {
+   "count": 7,
+   "visible": 7,
+   "shadow": 0
+  }
+ },
+ "pixelRatio": 1,
+ "size": {
+  "css": [
+   960,
+   540
+  ],
+  "buffer": [
+   960,
+   540
+  ]
+ },
+ "quality": "low",
+ "gpuTimer": true,
+ "modules": {
+  "core": {
+   "world": false,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  },
+  "rocks": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 10
+  },
+  "inhabitants2": {
+   "world": true,
+   "enabled": true,
+   "updates": 3,
+   "objects": 6
+  },
+  "ruins2": {
+   "world": true,
+   "enabled": true,
+   "updates": 6,
+   "objects": 10
+  },
+  "structures": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 24
+  },
+  "water": {
+   "world": true,
+   "enabled": true,
+   "updates": 2,
+   "objects": 7
+  },
+  "particles": {
+   "world": true,
+   "enabled": true,
+   "updates": 3,
+   "objects": 13
+  },
+  "audio": {
+   "world": true,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  },
+  "vegetation": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 37
+  },
+  "flora2": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 1
+  },
+  "riverlife2": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 6
+  },
+  "skylife": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 5
+  },
+  "fauna": {
+   "world": true,
+   "enabled": true,
+   "updates": 22,
+   "objects": 38
+  },
+  "frame": {
+   "world": false,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  }
+ },
+ "toggles": {
+  "profiler": true,
+  "bloom": true,
+  "shadows": true,
+  "rocks": true,
+  "inhabitants2": true,
+  "ruins2": true,
+  "structures": true,
+  "water": true,
+  "particles": true,
+  "audio": true,
+  "vegetation": true,
+  "flora2": true,
+  "riverlife2": true,
+  "skylife": true,
+  "fauna": true
+ },
+ "bench": {
+  "kind": "fading-planet-bench",
+  "date": "2026-11-08T04:18:51.677Z",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+  "quality": "low",
+  "dpr": 1,
+  "devicePixelRatio": 1,
+  "renderSize": {
+   "css": [
+    960,
+    540
+   ],
+   "buffer": [
+    960,
+    540
+   ]
+  },
+  "url": "?bench=12&q=low",
+  "duration": 12,
+  "warmup": 1.2000000000000002,
+  "pathMetres": 321,
+  "gpuTimer": true,
+  "toggles": {
+   "profiler": true,
+   "bloom": true,
+   "shadows": true,
+   "rocks": true,
+   "inhabitants2": true,
+   "ruins2": true,
+   "structures": true,
+   "water": true,
+   "particles": true,
+   "audio": true,
+   "vegetation": true,
+   "flora2": true,
+   "riverlife2": true,
+   "skylife": true,
+   "fauna": true
+  },
+  "summary": {
+   "avgFps": 1.9,
+   "low1Fps": 0.2,
+   "avgFrameMs": 523.51,
+   "low1FrameMs": 4106.9,
+   "frames": 24,
+   "gpuMs": {
+    "available": true,
+    "frames": 3,
+    "render": 3027.78,
+    "shadow": 453.47,
+    "bloom": 105.42,
+    "grade": 32.84,
+    "output": 13.66,
+    "total": 3179.7
+   },
+   "cpuMs": {
+    "core": 0,
+    "rocks": 0.07,
+    "inhabitants2": 0.22,
+    "ruins2": 0.02,
+    "structures": 0.02,
+    "water": 0.02,
+    "particles": 0.13,
+    "audio": 0,
+    "vegetation": 2.56,
+    "flora2": 0.01,
+    "riverlife2": 0.09,
+    "skylife": 0.14,
+    "fauna": 4.06,
+    "frame": 0.45
+   },
+   "calls": [
+    126,
+    157
+   ],
+   "tris": [
+    1241030,
+    1713608
+   ]
+  },
+  "samples": [
+   {
+    "t": 0.64,
+    "x": 4,
+    "z": 29,
+    "frame": {
+     "frames": 2,
+     "avgMs": 200.65,
+     "low1Ms": 363.9,
+     "fps": 5,
+     "low1Fps": 2.7
+    },
+    "cpu": {
+     "totalMs": 10.4,
+     "modules": {
+      "fauna": 5,
+      "vegetation": 3.35,
+      "frame": 0.55,
+      "riverlife2": 0.45,
+      "inhabitants2": 0.3,
+      "skylife": 0.3,
+      "rocks": 0.2,
+      "particles": 0.1,
+      "ruins2": 0.1,
+      "water": 0.05,
+      "core": 0,
+      "structures": 0,
+      "audio": 0,
+      "flora2": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 0
+    },
+    "calls": [
+     139,
+     154
+    ],
+    "tris": [
+     1287751,
+     1430352
+    ]
+   },
+   {
+    "t": 1.75,
+    "x": -32,
+    "z": 23,
+    "frame": {
+     "frames": 8,
+     "avgMs": 217.19,
+     "low1Ms": 1043.9,
+     "fps": 4.6,
+     "low1Fps": 1
+    },
+    "cpu": {
+     "totalMs": 5.75,
+     "modules": {
+      "vegetation": 2.71,
+      "fauna": 1.59,
+      "frame": 0.59,
+      "inhabitants2": 0.29,
+      "skylife": 0.16,
+      "riverlife2": 0.14,
+      "rocks": 0.1,
+      "particles": 0.06,
+      "water": 0.04,
+      "flora2": 0.02,
+      "ruins2": 0.02,
+      "structures": 0.02,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 0
+    },
+    "calls": [
+     139,
+     154
+    ],
+    "tris": [
+     1241030,
+     1430352
+    ]
+   },
+   {
+    "t": 7.36,
+    "x": -26,
+    "z": 107,
+    "frame": {
+     "frames": 9,
+     "avgMs": 649.38,
+     "low1Ms": 4106.9,
+     "fps": 1.5,
+     "low1Fps": 0.2
+    },
+    "cpu": {
+     "totalMs": 12.87,
+     "modules": {
+      "fauna": 8.89,
+      "vegetation": 2.59,
+      "frame": 0.56,
+      "inhabitants2": 0.28,
+      "skylife": 0.16,
+      "riverlife2": 0.12,
+      "rocks": 0.1,
+      "particles": 0.07,
+      "water": 0.04,
+      "flora2": 0.02,
+      "ruins2": 0.02,
+      "structures": 0.02,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 1,
+     "render": 4912.55,
+     "shadow": 649.34,
+     "bloom": 175.44,
+     "grade": 43.67,
+     "output": 19.99,
+     "total": 5151.65
+    },
+    "calls": [
+     126,
+     154
+    ],
+    "tris": [
+     1241030,
+     1430352
+    ]
+   },
+   {
+    "t": 7.88,
+    "x": -6,
+    "z": 124,
+    "frame": {
+     "frames": 16,
+     "avgMs": 491.5,
+     "low1Ms": 4106.9,
+     "fps": 2,
+     "low1Fps": 0.2
+    },
+    "cpu": {
+     "totalMs": 8.96,
+     "modules": {
+      "fauna": 5.19,
+      "vegetation": 2.57,
+      "frame": 0.44,
+      "inhabitants2": 0.24,
+      "skylife": 0.16,
+      "particles": 0.13,
+      "riverlife2": 0.08,
+      "rocks": 0.07,
+      "water": 0.03,
+      "ruins2": 0.02,
+      "flora2": 0.02,
+      "structures": 0.02,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 2,
+     "render": 3352.61,
+     "shadow": 513.48,
+     "bloom": 140.13,
+     "grade": 36.14,
+     "output": 16.94,
+     "total": 3545.81
+    },
+    "calls": [
+     126,
+     157
+    ],
+    "tris": [
+     1241030,
+     1713608
+    ]
+   },
+   {
+    "t": 8.46,
+    "x": 2,
+    "z": 111,
+    "frame": {
+     "frames": 15,
+     "avgMs": 536.59,
+     "low1Ms": 4106.9,
+     "fps": 1.9,
+     "low1Fps": 0.2
+    },
+    "cpu": {
+     "totalMs": 8.37,
+     "modules": {
+      "fauna": 4.89,
+      "vegetation": 2.4,
+      "frame": 0.41,
+      "inhabitants2": 0.23,
+      "skylife": 0.14,
+      "particles": 0.13,
+      "rocks": 0.05,
+      "riverlife2": 0.04,
+      "water": 0.02,
+      "flora2": 0.02,
+      "structures": 0.02,
+      "ruins2": 0.01,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 2,
+     "render": 3352.61,
+     "shadow": 513.48,
+     "bloom": 140.13,
+     "grade": 36.14,
+     "output": 16.94,
+     "total": 3545.81
+    },
+    "calls": [
+     126,
+     157
+    ],
+    "tris": [
+     1241030,
+     1713608
+    ]
+   },
+   {
+    "t": 9.71,
+    "x": 26,
+    "z": 88,
+    "frame": {
+     "frames": 11,
+     "avgMs": 723.42,
+     "low1Ms": 4106.9,
+     "fps": 1.4,
+     "low1Fps": 0.2
+    },
+    "cpu": {
+     "totalMs": 9.88,
+     "modules": {
+      "fauna": 6.49,
+      "vegetation": 2.45,
+      "frame": 0.28,
+      "inhabitants2": 0.19,
+      "particles": 0.16,
+      "skylife": 0.15,
+      "riverlife2": 0.05,
+      "rocks": 0.05,
+      "water": 0.02,
+      "ruins2": 0.02,
+      "structures": 0.01,
+      "flora2": 0.01,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 3,
+     "render": 3027.78,
+     "shadow": 453.47,
+     "bloom": 105.42,
+     "grade": 32.84,
+     "output": 13.66,
+     "total": 3179.7
+    },
+    "calls": [
+     126,
+     157
+    ],
+    "tris": [
+     1242706,
+     1713608
+    ]
+   },
+   {
+    "t": 10.29,
+    "x": 27,
+    "z": 77,
+    "frame": {
+     "frames": 12,
+     "avgMs": 369.31,
+     "low1Ms": 1516.3,
+     "fps": 2.7,
+     "low1Fps": 0.7
+    },
+    "cpu": {
+     "totalMs": 3.99,
+     "modules": {
+      "vegetation": 2.54,
+      "fauna": 0.44,
+      "frame": 0.37,
+      "inhabitants2": 0.17,
+      "particles": 0.17,
+      "skylife": 0.13,
+      "riverlife2": 0.07,
+      "rocks": 0.04,
+      "ruins2": 0.02,
+      "structures": 0.02,
+      "water": 0.01,
+      "flora2": 0.01,
+      "core": 0,
+      "audio": 0
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 2,
+     "render": 2085.39,
+     "shadow": 355.53,
+     "bloom": 70.41,
+     "grade": 27.43,
+     "output": 10.5,
+     "total": 2193.73
+    },
+    "calls": [
+     144,
+     157
+    ],
+    "tris": [
+     1528660,
+     1713608
+    ]
+   }
+  ]
+ }
+}
