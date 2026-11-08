@@ -196,8 +196,8 @@ function pedlarMaterial(uTime) {
           // shows them at twenty paces
           float back = max(dot(normalize(-vViewPosition), uSunView), 0.0);
           float wingK = (vPart > 0.5 && vPart < 1.5) ? 1.0 : (vPart > 1.5 ? 0.25 : 0.08);
-          totalEmissiveRadiance += uSunCol * wingK * (0.08 + 1.6 * pow(back, 5.0)) * uFlicker;
-          if (vPart > 0.5 && vPart < 1.5) diffuseColor.a = min(1.0, diffuseColor.a + 0.3 * pow(back, 5.0));
+          totalEmissiveRadiance += uSunCol * wingK * (0.04 + 0.7 * pow(back, 8.0)) * uFlicker;
+          if (vPart > 0.5 && vPart < 1.5) diffuseColor.a = min(1.0, diffuseColor.a + 0.12 * pow(back, 8.0));
         }`);
   };
   return m;
@@ -245,7 +245,7 @@ const GLINT_FRAG = /* glsl */`
     if (vKind > 0.5) {
       float s = 1.0 - smoothstep(0.0, 1.0, r);
       ${FOG_ATTEN}
-      gl_FragColor = vec4(vec3(0.95, 0.82, 0.68) * s * s * vA * 0.32 * fogAtten * (0.4 + 0.6 * uFlicker), 1.0);
+      gl_FragColor = vec4(vec3(0.95, 0.84, 0.72) * s * s * vA * 0.5 * fogAtten * (0.4 + 0.6 * uFlicker), 1.0);
       return;
     }
     float core = 1.0 - smoothstep(0.0, 0.45, r);
