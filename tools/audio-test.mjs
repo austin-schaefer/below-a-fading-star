@@ -90,8 +90,13 @@ const res = await page.evaluate(async (CUES) => {
   // voice cap: a running player across the carillon, twenty caps in under a second
   {
     let most = 0;
+    const t0 = performance.now();
     for (let k = 0; k < 20; k++) { a.cue('carillon', at({ dx: 0.4, dy: -1.6, dz: k * 0.6 }), { note: k % 9 }); most = Math.max(most, a.voices.length); await sleep(40); }
-    extra.push({ name: 'voice cap', ok: most <= 12 && most >= 10, info: `most voices at once ${most} (cap 12)` });
+    const took = performance.now() - t0;
+    // the floor of 10 only holds if the twenty cues really landed inside about a second; under load the
+    // sleeps stretch and early voices end before the late ones start, which says nothing about the cap
+    const stretched = took > 1500;
+    extra.push({ name: 'voice cap', ok: most <= 12 && (stretched || most >= 10), info: `most voices at once ${most} (cap 12)${stretched ? `, loop stretched to ${took.toFixed(0)} ms under load so the floor was not measured` : ''}` });
   }
   return { state: a.ctx.state, out, extra };
 }, CUES);

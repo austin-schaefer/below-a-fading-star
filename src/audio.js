@@ -877,7 +877,15 @@ export async function build(ctx) {
     let tick = 0, windSm = 0.5, swellSm = 0, wood = 0, rockH = 0;
     let gustT = 0;
     const g1 = { v: 0 };
+    // The fall follows the river on its own clock as well as on frames: under load frames can be
+    // seconds apart, and a loop that waits for one starts late or stays up after the player has left.
+    let lastFrame = performance.now();
+    const fallTimer = setInterval(() => {
+      if (ac.state === 'closed') { clearInterval(fallTimer); return; }
+      if (performance.now() - lastFrame > 250) fallTick(0.1, performance.now() / 1000, ac.currentTime);
+    }, 100);
     function update(dt, t) {
+      lastFrame = performance.now();
       if (ac.state === 'suspended') ac.resume?.();
       setListener();
       const now = ac.currentTime;
