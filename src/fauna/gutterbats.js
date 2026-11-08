@@ -1,5 +1,5 @@
 // Bats out of the Armiger's Tower at every gutter. When the sun's flicker drops below 0.5 a flight of them
-// pours out of the lit window and from between the merlons just below the banner, wheels over the tower
+// pours out of the lit window and from under the lens mount's collar (v5; the old tower's merlons with ?tower=v2), wheels over the tower
 // hill, and goes back in as the sun recovers (but not before about fifteen seconds of flight). One
 // 'bats-out' cue per gutter, at the window. Tiny: one InstancedMesh of the life.js bat, hidden between gutters.
 import * as THREE from 'three';

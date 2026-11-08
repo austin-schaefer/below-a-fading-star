@@ -94,7 +94,7 @@ export async function build(ctx) {
   // Where rocks may not go
   const L = landmarks;
   const avoid = [
-    [L.castle.x, L.castle.z, 46], [L.tower.x, L.tower.z, 14], [L.stones.x, L.stones.z, 14], [L.byre.x, L.byre.z, 14],
+    [L.castle.x, L.castle.z, 46], [L.tower.x, L.tower.z, 17] /* v5: the lens mount's fins reach 15 m */, [L.stones.x, L.stones.z, 14], [L.byre.x, L.byre.z, 14],
     [L.court.x, L.court.z, 24], [L.orchard.x, L.orchard.z, 30],
     // v2 sites: the Speculum's pale beach, the Menology's spiral, the Hypogeum's forecourt
     [L.speculum.x, L.speculum.z, 10], [L.menology.x, L.menology.z, 26], [L.hypogeum.x, L.hypogeum.z, 12],
