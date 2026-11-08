@@ -80,6 +80,15 @@ const GradeShader = {
     }`,
 };
 
+// bloom settings at full size (as before) and at half size; ?bloomtune=strength,radius,threshold tries others
+const BLOOM_FULL = { strength: 0.38, radius: 0.55, threshold: 0.9 };
+const BLOOM_HALF = (() => {
+  const t = (new URL(location.href).searchParams.get('bloomtune') || '').split(',').map(Number);
+  // at half size the tightest mip is gone (the white rim on the sun, the Wrong Colour's close glow): a little
+  // more strength, weighted toward the smaller mips, a hair lower threshold. Chosen against full-size renders.
+  return t.length === 3 && t.every(isFinite) ? { strength: t[0], radius: t[1], threshold: t[2] } : { strength: 0.52, radius: 0.15, threshold: 0.88 };
+})();
+
 export function buildPost(ctx) {
   const { renderer, scene, camera } = ctx;
   const size = renderer.getSize(new THREE.Vector2());
@@ -87,7 +96,17 @@ export function buildPost(ctx) {
   composer.setPixelRatio(renderer.getPixelRatio());
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
-  const bloom = new UnrealBloomPass(size.clone(), 0.38, 0.55, 0.9);
+  // Bloom at a fraction of the render size (v3 stage 2; ?bloomres=, default 0.5, 1 = as before). UnrealBloom
+  // already starts its chain at half the size it is given, so 0.5 makes the bright pass a quarter of the
+  // render. Its blurs are fixed in texels, so at half size each mip spreads twice as far on screen: the
+  // radius and strength are retuned so the sun, the lanterns, the Lattice and the Wrong Colour read the same.
+  const bloomParam = parseFloat(new URL(location.href).searchParams.get('bloomres'));
+  const bloomRes = bloomParam > 0 ? Math.min(1, bloomParam) : 0.5;
+  const tune = bloomRes < 1 ? BLOOM_HALF : BLOOM_FULL;
+  const bloom = new UnrealBloomPass(size.clone(), tune.strength, tune.radius, tune.threshold);
+  const bloomSetSize = bloom.setSize.bind(bloom);
+  bloom.setSize = (w, h) => bloomSetSize(Math.max(2, Math.round(w * bloomRes)), Math.max(2, Math.round(h * bloomRes)));
+  bloom.resScale = bloomRes;
   composer.addPass(bloom);
   const grade = new ShaderPass(GradeShader);
   composer.addPass(grade);
@@ -107,12 +126,11 @@ export function buildPost(ctx) {
     const inView = !behind && Math.abs(proj.x) < 1.6 && Math.abs(proj.y) < 1.6;
     const vis = inView ? 1 - THREE.MathUtils.smoothstep(Math.max(Math.abs(proj.x), Math.abs(proj.y)), 1.0, 1.6) : 0;
     grade.uniforms.uSunVisible.value += (vis - grade.uniforms.uSunVisible.value) * Math.min(1, dt * 6);
-    bloom.strength = 0.38 * (0.8 + 0.2 * ctx.sky.flicker.value);
+    bloom.strength = tune.strength * (0.8 + 0.2 * ctx.sky.flicker.value);
   }
   function resize(w, h) {
     size.set(w, h);
     composer.setSize(w, h);
-    bloom.setSize(w, h);
   }
   return { composer, bloom, grade, update, resize };
 }
