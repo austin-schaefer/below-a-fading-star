@@ -57,27 +57,35 @@ function guestGeometry(low) {
   });
   P.set('aSway', 0);
   const bow = new THREE.Matrix4().makeTranslation(0, 1.48, 0).multiply(new THREE.Matrix4().makeRotationX(0.2)).multiply(new THREE.Matrix4().makeTranslation(0, -1.48, 0));
-  // ---- the wimple: a gorget wrapped about the throat and chin, and a bib falling over the breast
-  P.paint(WIMPLE, 0, 0.92, 0.07);
+  // ---- the wimple: a gorget wrapped about the throat and chin, a short bib at the breast, and a pale
+  // band framing the face, so that what shows in the hood is an oval of linen round nothing
+  P.paint(WIMPLE, 0, 0.92, 0.1);
   P.xf(bow);
   P.grid(low ? 14 : 18, 4, (u, v, o) => {
-    const a = u * TAU, y = 1.46 + v * 0.2;
-    const r = 0.1 + 0.025 * (1 - v) + 0.012 * Math.sin(a * 6);
+    const a = u * TAU, y = 1.46 + v * 0.18;
+    const r = 0.1 + 0.022 * (1 - v) + 0.01 * Math.sin(a * 6);
     o[0] = Math.cos(a) * r; o[1] = y; o[2] = Math.sin(a) * r * 0.95 + 0.02;
   }, false, false);
+  // the frame: an oval ring laid over the front of the face
+  P.sheet(low ? 16 : 22, 2, (u, v, o) => {
+    const a = u * TAU, rx = 0.058 + v * 0.04, ry = 0.078 + v * 0.04;
+    const x = Math.cos(a) * rx, y = 1.7 + Math.sin(a) * ry;
+    const k = 1 - (x / 0.095) ** 2 - ((y - 1.7) / 0.11) ** 2;
+    o[0] = x; o[1] = y; o[2] = 0.03 + 0.1 * Math.sqrt(Math.max(0, k)) + 0.007;
+  });
   P.xf(null);
-  P.sheet(low ? 9 : 12, low ? 6 : 8, (u, v, o) => {
-    const w = 0.11 + 0.05 * v, a = (u - 0.5) * 2 * w / 0.23; // across the chest
-    const r = 0.21 + 0.045 * smoothstep(0.2, 0.7, v) + 0.012;
-    const y = 1.5 - v * 0.3 - 0.05 * Math.cos((u - 0.5) * Math.PI) * v;
+  P.sheet(low ? 7 : 9, low ? 5 : 6, (u, v, o) => {
+    const w = (0.1 - 0.06 * v) * (1 - 0.3 * v), a = (u - 0.5) * 2 * w / 0.23; // narrowing to a blunt point
+    const r = 0.21 + 0.03 * smoothstep(0.2, 0.7, v) + 0.012;
+    const y = 1.5 - v * 0.2;
     P.set('aSway', smoothstep(0.35, 1, v) * 1.6);
-    if (v > 0.75) P.paint(WIMPLE_D, 0, 0.94, 0.1); else P.paint(WIMPLE, 0, 0.92, 0.15);
+    if (v > 0.75) P.paint(WIMPLE_D, 0, 0.94, 0.06); else P.paint(WIMPLE, 0, 0.92, 0.09);
     o[0] = Math.sin(a) * r; o[1] = y; o[2] = Math.cos(a) * r * 0.82 + 0.02;
   });
   P.set('aSway', 0);
   // the wimple's veil-band across the brow, inside the hood
   P.xf(bow);
-  P.paint(WIMPLE_D, 0, 0.94, 0.16);
+  P.paint(WIMPLE_D, 0, 0.94, 0.1);
   P.sheet(10, 2, (u, v, o) => {
     const a = (u - 0.5) * 2.2;
     o[0] = Math.sin(a) * 0.112; o[1] = 1.79 - v * 0.045; o[2] = Math.cos(a) * 0.105 + 0.02;
