@@ -1,0 +1,16 @@
+[
+  {"name": "lights-moss-far", "x": -230, "z": 150, "yaw": -1.19, "pitch": -0.05},
+  {"name": "lights-moss-rim", "x": -198, "z": 145, "yaw": 1.06, "pitch": -0.3},
+  {"name": "lights-embers-far", "x": 120, "z": 60, "yaw": -1.571, "pitch": 0},
+  {"name": "lights-embers-close", "x": 156, "z": 63, "yaw": -0.88, "pitch": -0.45},
+  {"name": "lights-post-far", "x": -120, "z": 20, "yaw": 0.328, "pitch": 0.02},
+  {"name": "lights-post-road", "x": -115, "z": -14, "yaw": 0.927, "pitch": 0.04},
+  {"name": "lights-post-westleg", "x": -185, "z": -72, "yaw": -2.27, "pitch": 0.02},
+  {"name": "lights-post-close", "x": -132.5, "z": -28.5, "yaw": 1.09, "pitch": 0.12},
+  {"name": "lights-door-brief", "x": -200, "z": -60, "yaw": 0.695, "pitch": 0.04},
+  {"name": "lights-door-westleg", "x": -266, "z": -40, "yaw": -0.194, "pitch": 0.06},
+  {"name": "lights-door-20m", "x": -252, "z": -106, "yaw": -0.15, "pitch": 0.14},
+  {"name": "lights-leerie-house", "x": 110.5, "z": -30.5, "yaw": -2.62, "pitch": 0.02, "js": "__fp.localLights?.leerie?.reset(); __fp.localLights?.leerie?.light(4)", "settle": 3500},
+  {"name": "lights-leerie-arcature", "x": 149, "z": 42, "yaw": 0.527, "pitch": 0.02, "js": "__fp.localLights?.leerie?.light(12)", "settle": 3500},
+  {"name": "lights-leerie-flare", "x": 108, "z": 6, "yaw": -1.01, "pitch": 0.1, "js": "__fp.localLights?.leerie?.reset(); setTimeout(() => __fp.localLights?.leerie?.light(5), 2250)", "settle": 2500}
+]
