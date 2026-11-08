@@ -5,7 +5,8 @@ import { clamp } from './util.js';
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
-const CLEARINGS = [[-86, -48, 7]];
+// Where trees and shrubs keep out (ground cover still grows): the cloak man's old stand, the Wayside Shrine, the Menology's spiral.
+const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
 
 const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
 

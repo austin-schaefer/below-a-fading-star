@@ -144,4 +144,12 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-sky-vigilant-eyes-gutter.png` | In a gutter the Vigilant's eyes glint. |
 | `13-sky-procession.png` | The procession: nine dim lights crossing the high sky in a line. |
 | `13-sky-shard-belt-gutter.png` | The shard belt, an arc of glinting fragments shown only in some gutters. |
+| `13-inhabitants-guest-fountain.png` | The Wimpled Guest at the taverna's dry fountain, pale wimple round an empty face. |
+| `13-inhabitants-guest-close.png` | The Guest close: hood, wimple, the void where a face should be. |
+| `13-inhabitants-guest-gaze-flush.png` | Held gaze on the Guest: the screen edges flush red and drowsy as the heartbeat rises. |
+| `13-inhabitants-galley-behind-woman.png` | The Sable Galley crossing Lees Tarn behind the woman in the water, lantern unlit. |
+| `13-inhabitants-galley-wake.png` | The galley's faint V wake on the black water. |
+| `13-inhabitants-menology-ground.png` | The Menology from the ground: hewn menhirs in a spiral on the south moor. |
+| `13-inhabitants-menology-spiral.png` | The Menology's spiral from above, before the tree inside it was cleared. |
+| `13-inhabitants-menology-lizards.png` | Lizards basking on a menhir's sunward face. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
