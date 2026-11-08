@@ -3,6 +3,7 @@
 // occasional guttering, which main() reads to dim the lights.
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
+import { injectOccultSky } from './v5/occultation.js'; // v5 wonders: AR the Occultation's bite on the disc
 
 // Gutter timings, seconds: total length [min, max] and gap between gutters [min, max]. v4: 12-16 s in all
 // (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter is at 25-55 s.
@@ -153,6 +154,7 @@ export function buildSky(ctx) {
         gl_FragColor = vec4(sky, 1.0);
       }`,
   });
+  injectOccultSky(mat); // v5 wonders: AR the Occultation, the disc's bite and the band in the sky (src/v5/occultation.js)
   const geo = new THREE.SphereGeometry(10, 48, 24);
   const dome = new THREE.Mesh(geo, mat);
   dome.frustumCulled = false;
