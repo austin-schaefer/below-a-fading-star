@@ -52,6 +52,7 @@ const MODULES = [
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
+  ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
 ];
 
 async function start() {
