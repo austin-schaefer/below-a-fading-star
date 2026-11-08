@@ -5,7 +5,7 @@ Worktree: /Users/user/dev/fading-planet/.claude/worktrees/v7-audio on branch `v7
 Read first:
 - `AGENTS.md` (repo root): never invent game content.
 - `prototypes/wilderness/README.md`: the audio module's line, `tools/audio-test.mjs` (fires every one-shot cue in turn at a representative place and reports each sounds; the fall's loop; the voice cap at 12), the tone paragraph.
-- `wilderness-run.md` item 4 ("then the audio pass over everything new").
+- `briefs/v7/index.md` "Austin's words for v7" ("then the audio pass over everything new").
 - `wilderness-v5.md` "## v7, the living": every section's "cues fired" line (names, positions, opts, when they fire, which are loops with `start`/`stop`). Then `grep -rn "audio?.cue" src/v7` and reconcile: every cue name in the code gets a sound or a deliberate silence, and you list any the docs and the code disagree on.
 - `IDEAS-v5.md` for each idea's sound, which is the spec (verbatim below), and "## Rules of the pass".
 - `src/audio.js` end to end: the buses (master, cue bus with its analyser tap, dry bus, reverb send), `voice()` and the voice cap, `panner`/`setPos`, the noise buffers (`white`, `pink`, `brown`), `env`, `burst`, `swell`, `loopSrc`, the footsteps block (with v7-small's `echoStep` refactor: leave the echo alone), the region sounds (`regionSnd`), the hush (`ctx.hush`: the Occultation quiets the birds only; the people are not hushed), the existing figure cues as precedents of register: `greet` (the traveller), `heartbeat` (the guest), `glyphShift`, `pedlarPass`, `galleyDrum`, `keptFire` (a positional loop that swells with distance, with a flare), `hawserGroan`, and the v5 lights' `lamp-tick`.

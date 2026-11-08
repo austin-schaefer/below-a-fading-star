@@ -1,6 +1,10 @@
 # v7, the living: the briefs
 
-Written 2026-11-08 from `wilderness-run.md` item 4, `wilderness-v5.md` (the picks and Austin's notes), `IDEAS-v5.md`, `wilderness-v4-placement.md` section 5 "### v7, the living" and section 7, `MORNING.md` 12:30, and the code at `8afd02b` (deploy worktree) plus `origin/v5-lights`. Eighteen things: the nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif. Six figure agents of three each, a prep agent before them and the audio pass after.
+Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the picks and Austin's notes), `IDEAS-v5.md`, `wilderness-v4-placement.md` section 5 "### v7, the living" and section 7, `MORNING.md` 12:30, and the code at `8afd02b` (deploy worktree) plus `origin/v5-lights`. Eighteen things: the nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif. Six figure agents of three each, a prep agent before them and the audio pass after.
+
+## Austin's words for v7 (from the run plan, 2026-11-08; the plan file is gone)
+
+"**v7, the living.** The nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif, then the audio pass over everything new. Three or four figures per agent. After v6. Release as **v7**." And on v6 before it (09:44): "i want to share with folks but currently performance is too poor to share."
 
 ## The groups
 

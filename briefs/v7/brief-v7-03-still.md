@@ -5,7 +5,7 @@ Worktree: /Users/user/dev/fading-planet/.claude/worktrees/v7-still on branch `v7
 Read first:
 - `AGENTS.md` (repo root): never invent game content.
 - `prototypes/wilderness/README.md`: module contract, `ctx`, budgets, the `{ at, near, hz }` throttle, `ctx.addCollider`, the tone paragraph.
-- `wilderness-run.md` item 4; `wilderness-v5.md` "### Humanoids (nine)" (CB yes; CI yes; CL yes with Austin's note, below) and the region notes for the Bletting, the High Ling and the Outwash in `wilderness-v4-placement.md` section 2.
+- `briefs/v7/index.md` "Austin's words for v7"; `wilderness-v5.md` "### Humanoids (nine)" (CB yes; CI yes; CL yes with Austin's note, below) and the region notes for the Bletting, the High Ling and the Outwash in `wilderness-v4-placement.md` section 2.
 - `IDEAS-v5.md` entries CB, CI, CL (quoted below) and "## Rules of the pass" (rule 2: "the people are absorbed in a task nobody needs any more. Nothing waves, nothing begs, nothing is a mascot."; rule 3: "Robes, ledgers, quadrants, silk, brass and stone ... no tabards, no heraldry"; rule 4: "Everything old and once rich"). DR "The Stylite's Umbra" was **not** picked: the Stylite gets no special shadow.
 - `wilderness-v4-placement.md` "### v7, the living" (lines ~251–272) and the sector table (~316–330).
 - `src/world.js`: `SITES.sleeper` (180, −40) r 6, `SITES.tallestTor` and `SITES.stylite` (268, −80) r 8, `SITES.accrescent` (60, −180) r 3 with `trailFrom` (40, −265) and the 3 m corridor; `LANDMARKS.castle` (40, 30): the keep "his eyes are on" lies due south; `LANDMARKS.moraine` (the Lattice) at (40, −265); `PALETTE.crystal`, `crystalDeep`.

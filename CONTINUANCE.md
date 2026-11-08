@@ -1,6 +1,6 @@
 # Continuance: Below a Fading Star, after v5
 
-Written 11:04 PST on 2026-11-08 and updated 11:14 PST after Austin's measurement and his phone and Firefox checks, for a fresh orchestrator session. Read with AGENTS.md (repo root) and HANDOFF.md (the run's rules; binding). Delete this file, HANDOFF.md and wilderness-run.md when v7 ships.
+Written 11:04 PST on 2026-11-08 and updated 11:14 PST after Austin's measurement and his phone and Firefox checks, for a fresh orchestrator session. Read with AGENTS.md (repo root) and README.md "Working here as an agent" (the pace rules, binding). HANDOFF.md and wilderness-run.md were folded into those two files and deleted at 11:17 PST; this file and MORNING.md go the same way when v7 ships (the durable decisions are in `RELEASES.md`, the `wilderness-v*.md` specs and git).
 
 ## Where things stand
 
@@ -45,7 +45,7 @@ Committed as `shots/perf/laptop-wood-pan-clean-2026-11-08.json` (medium pinned, 
 
 ## Session start checklist
 
-1. Load the `orchestrator` skill; read AGENTS.md, HANDOFF.md, this file, MORNING.md's top ten entries, `wilderness-run.md`, `wilderness-v6.md`, `briefs/v6/index.md`.
+1. Load the `orchestrator` skill; read AGENTS.md, README.md "Working here as an agent", this file, MORNING.md's top ten entries, `wilderness-v6.md` "Status", `briefs/v6/index.md` "Slim v6".
 2. `cd .claude/worktrees/wilderness-deploy && git fetch && git status`; confirm 8123 serves (restart if not).
-3. Recreate the hourly check-in: `/loop 1h` with the text: "Hourly check-in for the Below a Fading Star run (prototypes/wilderness, working branch claude/intelligent-mendel-ca020e in worktree .claude/worktrees/wilderness-deploy). If agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step in prototypes/wilderness/CONTINUANCE.md then wilderness-run.md (v6 performance, then v7 the living). If blocked, write a 'Needs you' entry in prototypes/wilderness/MORNING.md once and continue with anything that is not blocked. Pace rules from HANDOFF.md are binding: at most four implementation agents, one headless browser each, renders and suites in sequence, wip renders at 1280x720, nice -n 10 and SHOT_ANGLE=metal on every node tools/ call. Stop the loop when v7, the living, has shipped or Austin says stop."
+3. Recreate the hourly check-in: `/loop 1h` with the text: "Hourly check-in for the Below a Fading Star run (prototypes/wilderness, working branch claude/intelligent-mendel-ca020e in worktree .claude/worktrees/wilderness-deploy). If agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step in prototypes/wilderness/CONTINUANCE.md then wilderness-run.md (v6 performance, then v7 the living). If blocked, write a 'Needs you' entry in prototypes/wilderness/MORNING.md once and continue with anything that is not blocked. Pace rules from README.md "Working here as an agent" are binding: at most four implementation agents, one headless browser each, renders and suites in sequence, wip renders at 1280x720, nice -n 10 and SHOT_ANGLE=metal on every node tools/ call. Stop the loop when v7, the living, has shipped or Austin says stop."
 4. Make the `v6-square-lights` worktree, fill `PORT` (8173) in `briefs/v6/brief-v6-00-square-lights.md`, then dispatch batch 1: v6-00 and v6-01 together.

@@ -5,7 +5,7 @@ Worktree: /Users/user/dev/fading-planet/.claude/worktrees/v7-small on branch `v7
 Read first:
 - `AGENTS.md` (repo root): never invent game content.
 - `prototypes/wilderness/README.md`: module contract, `ctx` (`player`, `controls.state.onStep`, `sky.flicker`), budgets, the `{ at, near, hz }` throttle, the tone paragraph, `tools/audio-test.mjs` (fires every cue, checks each sounds, the voice cap at 12).
-- `wilderness-run.md` item 4; `wilderness-v5.md` "### Little characters (six)" (CM, CO, CQ with Austin's notes, below), "### The sun-gutter lasts longer" (12–16 s, about 8 s at the floor, every 60–110 s), and the Demesne, Lynchets and Outwash region notes in `wilderness-v4-placement.md` section 2.
+- `briefs/v7/index.md` "Austin's words for v7"; `wilderness-v5.md` "### Little characters (six)" (CM, CO, CQ with Austin's notes, below), "### The sun-gutter lasts longer" (12–16 s, about 8 s at the floor, every 60–110 s), and the Demesne, Lynchets and Outwash region notes in `wilderness-v4-placement.md` section 2.
 - `IDEAS-v5.md` entries CM, CO, CQ (quoted below) and "## Rules of the pass" (rule 2: "Nothing cute. Small life is wary, indifferent or slightly wrong ... nothing is a mascot.").
 - `wilderness-v4-placement.md` "### v7, the living" (lines ~251–272).
 - `src/world.js`: `SITES.indistinct` (the ditch from (40, −55) to (125, 30)), `SITES.repetend` (−170, −97), `SITES.simulacrum` (20, −205) r 5, `LANDMARKS.castle` (40, 30), `REGIONS.lynchets`, `REGIONS.outwash`.

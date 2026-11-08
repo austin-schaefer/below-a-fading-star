@@ -5,7 +5,7 @@ Worktree: /Users/user/dev/fading-planet/.claude/worktrees/v7-glyphs on branch `v
 Read first:
 - `AGENTS.md` (repo root): never invent game content.
 - `prototypes/wilderness/README.md`: module contract, `ctx`, budgets, the `{ at, near, hz }` throttle, the tone paragraph; `?only=`.
-- `wilderness-run.md` item 4; `wilderness-v5.md` "### Little characters (six)" (CP and CT with Austin's notes, below) and the Demesne and Outwash region notes in `wilderness-v4-placement.md` section 2.
+- `briefs/v7/index.md` "Austin's words for v7"; `wilderness-v5.md` "### Little characters (six)" (CP and CT with Austin's notes, below) and the Demesne and Outwash region notes in `wilderness-v4-placement.md` section 2.
 - `IDEAS-v5.md` entries CP and CT (quoted below), DH the Surveyor's Pegs ("Every hundred metres, a peg with a brass cap"), and "## Rules of the pass" (rule 2: "Nothing cute. Small life is wary, indifferent or slightly wrong ... nothing is a mascot." Austin's note on CT, "more of the cute", overrides it for the moles, as his note on the Lynchets' stoats did; read it as small, slow and endearing in scale and timing, never a mascot); `IDEAS.md` entry L (the Hypogeum: "Each time the sun gutters the glyphs shift one place along, as if reading themselves aloud").
 - `wilderness-v4-placement.md` "### v7, the living" (lines ~251–272): CP, CT and the glyph motif's row.
 - `src/world.js`: `SITES.scriveners` (−100, 58) r 8, `SITES.moles` (75, 0) r 12, `SITES.glyphs`, `WATER.tarn` (y −4.6), `LANDMARKS.hypogeum` (226, −112), `CAUSEWAY_V4` (the road passes about 9 m from the moles' lawn at (80, −8)).

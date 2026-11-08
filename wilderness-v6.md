@@ -283,7 +283,7 @@ Acceptance: every target above green in `pop-test`, the hardware frames-over-2×
 
 ## Rules for the v6 agents
 
-- **Pace** (`HANDOFF.md`):
+- **Pace** (README.md "Working here as an agent"):
   - one headless browser per agent, renders and tests in sequence;
   - `nice -n 10` on every `node tools/...`;
   - wip renders at 1280×720;
