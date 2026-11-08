@@ -193,4 +193,6 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `14-loading-card-ready.png` | The same card once the world is built: bar gone, Go out lit, the keep behind the glass. |
 | `14-perf-overlay-spawn.png` | The profiler overlay (`?perf=1`) at spawn: frame time, CPU by module, calls, tris, lights, render size; the debug panel open beside it. |
 | `14-perf-bench-summary.png` | The bench's summary card after a short headless run, with GPU time per pass in the overlay above it. |
+| `15-touch-phone-controls.png` | A phone (390×844) after Go out: the thumbstick ring at bottom right, the hop ring left of and below it, the mute glyph faint at top right. |
+| `15-touch-phone-muted-hop-held.png` | The same view with sound muted (the glyph struck through) and the hop ring held. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
