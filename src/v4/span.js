@@ -18,6 +18,7 @@ import { etch } from './span/etch.js';
 import { buildDeck } from './span/deck.js';
 import { buildGates, boulderGeometry } from './span/gates.js';
 import { buildStairs } from './span/stairs.js';
+import { buildFallen } from './span/fallen.js';
 
 const Y = SPAN.deckY;
 
@@ -72,6 +73,7 @@ export async function build(ctx) {
   await ctx.progress?.('raising the span', 0.45);
   buildStairs(K);
   await ctx.progress?.('raising the span', 0.6);
+  buildFallen(K);
   await ctx.progress?.('raising the span', 0.85);
   const { boulders = [], stairInfo = {}, walkParts = [], partY = () => null, slabInfo = [] } = K;
 

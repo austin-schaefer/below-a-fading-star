@@ -44,6 +44,42 @@ const results = await page.evaluate(() => {
   fp.controls.update(0.016); fp.hud.update(0.016, 0);
   out.placeShown = document.getElementById('place').classList.contains('shown');
   out.placeName = document.getElementById('place-name').textContent;
+  // the Great Span (v4): climb the west stair to the deck by its switchbacks, then walk east along the deck
+  const feet = () => p.pos.y - p.eye;
+  const walkTo = (pts, hurry, maxTicks = 4000) => {
+    p.keys.clear(); p.keys.add('KeyW'); if (hurry) p.keys.add('ShiftLeft');
+    let i = 0, t = 0;
+    for (; t < maxTicks && i < pts.length; t++) {
+      const [tx, tz] = pts[i], dx = tx - p.pos.x, dz = tz - p.pos.z;
+      if (Math.hypot(dx, dz) < 0.7) { i++; continue; }
+      p.yaw = Math.atan2(-dx, -dz);
+      fp.controls.update(0.05);
+    }
+    p.keys.clear();
+    return i === pts.length;
+  };
+  if (fp.span) {
+    const S = fp.span.stairs.west;
+    fp.controls.placeAt(S.foot.x + 3, S.foot.z); p.vel.set(0, 0, 0);
+    const route = [[-205, 200], [-236, 200], [-239.5, 197], [-239.5, 193], [-236, 193], [-208, 193], [-204.5, 190], [-204.5, 186], [-208, 186], [-243, 186], [-246.5, 186], [-246.5, 207], [-246.5, 212], [-200, 213]];
+    out.stairDone = walkTo(route, false);
+    out.stairEnd = { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), feet: +feet().toFixed(2), deck: fp.span.deckAt(p.pos.x, p.pos.z) };
+    // the crack at x -45: a running hop at its lip clears it; walking on without one falls
+    const crack = fp.span.plan.crack, lip = crack.x - crack.w / 2;
+    const jump = (hop) => {
+      p.pos.set(lip - 9, 56 + p.eye, 215); p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true; p.yaw = -Math.PI / 2;
+      p.keys.clear(); p.keys.add('KeyW'); if (hop) p.keys.add('ShiftLeft');
+      let hopped = false;
+      for (let t = 0; t < 160; t++) {
+        if (hop && !hopped && p.pos.x > lip - 0.45) hopped = fp.controls.hop();
+        fp.controls.update(0.05);
+      }
+      p.keys.clear();
+      return { x: +p.pos.x.toFixed(1), feet: +feet().toFixed(2), hopped };
+    };
+    out.crackRun = jump(true);
+    out.crackWalk = jump(false);
+  }
   out.colliders = fp.controls.state.colliders.length;
   out.calls = fp.renderer.info.render.calls; out.tris = fp.renderer.info.render.triangles;
   return out;
@@ -57,6 +93,8 @@ const checks = [
   ['the saddle lets you out to the road start (364-376m)', results.saddleRadius > 364 && results.saddleRadius < 376],
   ['collider stops the player (~2.45m)', results.colliderStop > 2.3 && results.colliderStop < 2.7],
   ['landmark card shows at the stones', results.placeShown && /Cardinal/.test(results.placeName)],
+  ['the west stair climbs to the Span\'s deck (y 56) and the deck walks east', !!results.stairDone && Math.abs(results.stairEnd.feet - 56) < 0.3 && results.stairEnd.x > -202],
+  ['the crack: a running hop clears it, a walk falls through', !!results.crackRun && results.crackRun.hopped && results.crackRun.x > -40 && Math.abs(results.crackRun.feet - 56) < 0.3 && results.crackWalk.feet < 30],
   ['no page errors', errors.length === 0],
 ];
 let fail = 0;
