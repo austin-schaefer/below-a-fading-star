@@ -17,7 +17,7 @@ const sheer = (s) => 0.62 + (s > 0 ? 1.5 : 1.9) * Math.pow(smoothstep(0.45, 1, M
 
 function galleyGeometry(low) {
   const P = new Painter();
-  const NA = low ? 10 : 14, NL = low ? 28 : 40;
+  const NA = low ? 10 : 12, NL = low ? 28 : 38;
   // ---- the hull: an open shell, U in section, sharp at both ends, the sheer sweeping up
   P.paint(HULL, 0, 0.22);
   P.sheet(NA, NL, (u, v, o) => {
@@ -52,12 +52,13 @@ function galleyGeometry(low) {
     const rad = pts.map((_, k) => { const f = k / (pts.length - 1); return [r0 * (1 - f) + r1 * f, (r0 * (1 - f) + r1 * f) * 1.8]; });
     P.loft(pts.map(([y, z]) => [0, y, sign * z]), rad, 6, 0, true);
   };
-  const curl = (y0, z0, R, a0, a1, n) => { const out = []; for (let k = 0; k <= n; k++) { const a = a0 + (a1 - a0) * (k / n); out.push([y0 + Math.sin(a) * R, z0 + Math.cos(a) * R]); } return out; };
-  const nC = low ? 7 : 10;
-  // prow: from the stem up and out, over and back down into a scroll
-  post(1, [[-0.6, 9.6], [0.5, 10.1], [1.5, 10.5], [2.4, 10.9], ...curl(3.0, 10.55, 0.75, 0.0, 2.6, nC).slice(1), ...curl(3.0, 10.4, 0.32, 2.6, 5.4, 6)], 0.14, 0.04);
-  // stern: taller, its head bowed forward over the deckhouse
-  post(-1, [[-0.6, 9.6], [0.6, 10.25], [1.8, 10.9], [3.0, 11.25], [4.0, 11.2], ...curl(4.6, 10.55, 0.75, 0.6, 2.9, nC).slice(1), ...curl(4.3, 9.85, 0.32, 2.9, 5.6, 6)], 0.16, 0.045);
+  // a scroll: from the given start, round a centre, the radius closing to rEnd (in the post's (y, z) plane)
+  const scroll = (cy, cz, r0, a0, a1, rEnd, n) => { const out = []; for (let k = 1; k <= n; k++) { const f = k / n, a = a0 + (a1 - a0) * f, r = r0 + (rEnd - r0) * Math.pow(f, 0.8); out.push([cy + Math.sin(a) * r, cz + Math.cos(a) * r]); } return out; };
+  const nC = low ? 9 : 14;
+  // prow: up the stem, leaning out, then over and back into a scroll
+  post(1, [[-0.1, 9.95], [1.0, 10.05], [2.0, 10.25], [2.9, 10.6], [3.6, 11.05], ...scroll(3.6, 10.45, 0.6, 0, Math.PI * 1.7, 0.14, nC)], 0.14, 0.035);
+  // stern: taller, its head bowed forward over the deck
+  post(-1, [[-0.1, 9.95], [1.2, 10.05], [2.5, 10.3], [3.6, 10.75], [4.6, 11.2], [5.3, 11.4], ...scroll(5.3, 10.7, 0.7, 0, Math.PI * 1.65, 0.16, nC)], 0.16, 0.04);
   // ---- the deckhouse, low and long, aft of the middle; a roof like a closed bivalve
   P.paint(DECK, 0, 0.7);
   const dz0 = -6.2, dz1 = -1.4, dw = 1.0, dh = 0.95, dy = 0.58;
