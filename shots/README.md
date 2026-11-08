@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 150 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 275 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -39,6 +39,20 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 24 | v4 map structure: the causeway's new route, the pit, the leads, the Tumbling Water 2.5× taller |
 | 25 | v4 Tinctures and set-dressing: the regions' air, the Long Figure, the Discontinued Track, the Surveyor's Pegs |
 | 26 | v4 polish: the ground skin's edges, the salt crust and glasswort, the road on the crust, the bay's shore, the creatures in sun |
+| 27 | v5 recasts: Carcanet Keep and the Armiger's Tower |
+| 28 | v5 recasts: the Sunken Court and the Arcature |
+| 29 | v5 recasts: the Gradine and the mother crystal |
+| 30 | v5 wonders: the Galleries of Durance and the Acephalous Thrones |
+| 31 | v5 wonders: the Hawser and the Plinth Road |
+| 32 | v5 wonders: the Annals and the Battlemented Ridge |
+| 33 | v5 wonders: the Cincture and the Occultation |
+| 34 | v5 wonders: the Foundered Nave; spawn moved to (2, 35) |
+| 35 | v5 light: the Kept Fire and the five local lights, the Leerie's row restyled as lamp-cages |
+| 36 | v5 set-dressing: the Collation, the Slipper, the Unfinished Prospect |
+| 37 | v5 mountains: the study, then the massifs as the wall (the v4 wall behind `?mountains=v4`) |
+| 38 | v5 coherence: the four circles, the protected frames before (v4 wall) and after (massifs), the fixes |
+| 39 | v5 morning fixes: tree LOD, stair hop, wood hitch, shadow cadence, the record panel |
+| 40 | v5 light: the Escarpment Lamps on the west massif |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -355,4 +369,125 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `26-polish-strandline-edge-before.png` | Before: the same edge with holes and a step at the skin's rim. |
 | `26-polish-tarn-bay-spit-after.png` | After: the tarn's bay from the spit, a finer water disc and a smooth shore, the sun's glitter on it. |
 | `26-polish-tarn-bay-spit-before.png` | Before: the same bay, the shore a coarser line and the water flatter. |
+| `27-keep-causeway-sheet.png` | Carcanet Keep from the causeway, before (the v4 donjon) beside after (plain mass, sheer planes, slots too tall for a door); wall behind is the v4 wall. |
+| `27-keep-fan-after.png` | After: the keep's fallen north-east corner, a fan of rubble you can climb, with the massifs behind it. |
+| `27-keep-spawn-gate-after.png` | After: the keep's gate wall from the spawn side, the slots dark and the planes sheer. |
+| `27-keep-spawn-gate-before.png` | Before: the same gate in the v4 keep. |
+| `27-tower-sheet.png` | The Armiger's Tower, v4 beside v5: the 70 m fluted spire holding the ring and the lens. |
+| `27-tower-terraces-after.png` | After: the tower from the Lynchets' terraces, the lens mount against the west massif with the Galleries and the Lamps on its face. |
+| `27-tower-terraces-before.png` | Before (`?tower=v2`): the same view with the v4 tower. |
+| `28-arcature-high-ling-after.png` | After: the Arcature's fourteen nested arches seen from the High Ling. |
+| `28-arcature-high-ling-before.png` | Before: the same view with the v4 arcature. |
+| `28-arcature-k1-end-after.png` | After: the Arcature at the end of kerb K1, the armillary close. |
+| `28-arcature-sheet.png` | The Arcature, v4 beside v5, from the causeway. |
+| `28-court-moraine-after.png` | After: the Sunken Court's two piers, 35 m high, reaching for an arch never closed, with the Hawser's links at right and the Galleries on the massif; the strongest frame of the night it was made. |
+| `28-court-moraine-before.png` | Before (`?court=v2`): the same moraine view with the v4 court's columns. |
+| `28-court-sheet.png` | The Sunken Court, v4 beside v5, from the shrine. |
+| `29-gradine-landing-after.png` | After: the Gradine's first landing at (287.8, -192.6), looking back over the bowl; the treads climb the massif's face. |
+| `29-gradine-p8-after.png` | After: the eighth tread, the stair running up the north-east massif toward its gully. |
+| `29-mother-court-sheet.png` | The Lattice's mother crystal, 60 m, from the court: v4 beside v5. |
+| `29-mother-moraine-after.png` | After: the mother crystal at (40, -265) over the Lattice's field, from the moraine, with the massif's crest behind. |
+| `29-mother-moraine-before.png` | Before (`?lattice=v2`): the same view without the mother. |
+| `30-galleries-causeway-sheet.png` | The Galleries of Durance from the causeway: the west wall without and with the eleven tiers of ironwork. |
+| `30-galleries-tower-foot-after.png` | After: the Galleries from the tower's foot, hung on the new massif face; the lens mount's mast still crosses them. |
+| `30-thrones-gutter-spawn-after.png` | After: the Acephalous Thrones from the spawn side in the gutter, the red rim of the saddle against the massifs. |
+| `30-thrones-spawn-sheet.png` | The Thrones from spawn: the saddle empty, then with the two headless colossi either side of the sun. |
+| `30-thrones-start-up-after.png` | After: looking up between the Thrones from the causeway's start, the sun low and swollen in the saddle. |
+| `31-hawser-floor-sheet.png` | The Hawser from the floor: the Lattice's foot without the chain, then with its end crossing the frame. |
+| `31-hawser-floor-shift.png` | After: a link taken up in the foreground in the Hawser's shift, the chain's end across the frame and the Lattice's field behind. |
+| `31-hawser-shrine-after.png` | After: the chain from the shrine, its links larger than a person, running up to the bronze collar on the north wall. |
+| `31-plinths-foot-after.png` | After: the Plinth Road's first pair, the robed figures' feet on 20 m plinths, the road ending under the wall. |
+| `31-plinths-sheet.png` | The Plinth Road from its foot: bare road, then the twelve pairs of plinths. |
+| `32-annals-air-after.png` | After: the Annals' band on the massif's face from the air, in raking light. |
+| `32-annals-air-gutter-after.png` | After: the same band while the sun gutters, the figures seeming to turn. |
+| `32-annals-causeway-after.png` | After: the Annals from the causeway; the honest frame, the band barely reads from the floor. |
+| `32-ridge-45-causeway-after.png` | After: the Battlemented Ridge with its merlons raised to 45 m so they carry from the causeway (the legibility pass). |
+| `32-ridge-outwash-after.png` | After: the seven merlons along the north-east crest from the Outwash. |
+| `32-ridge-outwash-before.png` | Before (`?ridge=0`): the same crest without the merlons. |
+| `33-cincture-gutter-causeway-after.png` | After: the Cincture's broken hoop, its rim red and bright in a gutter, from the causeway. |
+| `33-cincture-sheet.png` | The Cincture from the Lattice: the sky without and with the hoop. |
+| `33-occultation-saddle-after.png` | After: the Occultation's band of shadow over the saddle, the sun's disc darkened. |
+| `33-occultation-saddle-before.png` | Before: the same saddle with no pass. |
+| `33-occultation-sheet.png` | The Occultation from the causeway, without and during the pass; a faint darkening by design. |
+| `34-nave-sheet.png` | The Foundered Nave: the turf, then the hole over the buried hall. |
+| `34-nave-south-after.png` | After: the Nave from the south rim, the hole over the 43 columns, black water below. |
+| `34-nave-west-after.png` | After: the hole from the west lip, the columns' capitals 3-5 m below the eye. |
+| `34-spawn-lattice-after.png` | After: spawn at (2, 35), the mother crystal whole at the keep's edge. |
+| `34-spawn-lattice-before.png` | Before: spawn at (6, 36), the crystal clipped by the keep. |
+| `35-keptfire-flare-after.png` | After: the Kept Fire flaring as you come within 12 m, sparks and a warm pool on the shingle. |
+| `35-keptfire-sheet.png` | The Kept Fire on the Outwash: ring of twelve stones, tripod and pot, then the flare. |
+| `35-lights-arcature-sheet.png` | The local lights at the Arcature, without and with. |
+| `35-lights-door-westleg-after.png` | After: the lens mount's door ajar and lit, from the saddle's west leg. |
+| `35-lights-embers-close-after.png` | After: the embers close, a pulsing bed and the odd spark. |
+| `35-lights-leerie-cages-after.png` | After: the Leerie's row restyled as iron lamp-cages on a kerb, lit by the gutter wave. |
+| `35-lights-leerie-cages-before.png` | Before: the same lit row as street-lamp standards with a cross-arm and a glass box. |
+| `35-lights-leerie-cages-sheet.png` | The restyle in six frames: standards (top) against cages (bottom), unlit, lit and from the house. |
+| `35-lights-leerie-standards-before-sheet.png` | The first Leerie standards from the Arcature end, unlit and lit in a gutter (the cross-arm lanterns the coherence pass rejected). |
+| `35-lights-moss-rim-after.png` | After: the cold moss in the Deodand Wood's hollow from its rim. |
+| `35-lights-post-road-after.png` | After: the lamp on its post by the causeway, the tower's hill and the massif behind. |
+| `36-collation-end-after.png` | After: the Collation, an 11 m table laid for twelve, from its end. |
+| `36-dressing-sheet.png` | The set-dressing: the Collation, the Slipper and the Prospect in one sheet. |
+| `36-prospect-canvas.png` | The Unfinished Prospect's canvas, the one blue sky in the world, painted from the view with the v4 wall; not re-baked for the massifs. |
+| `36-prospect-shoulder-after.png` | After: the easel's canvas beside the real red sun, with the massif behind. |
+| `36-prospect-shoulder-before.png` | The same frame against the v4 wall, the original shot. |
+| `36-slipper-3m-glance-after.png` | After: the Slipper from 3 m at a glance, about ten pixels; the find. |
+| `36-slipper-crouch-after.png` | After: the Slipper crouched over, a peacock-green brocade on the road. |
+| `37-mountains-crest.png` | The mountains study: the crest line of profile C from above. |
+| `37-mountains-hung-galleries-tower-foot-sheet.png` | The Galleries from the tower's foot, v4 wall beside the massifs. |
+| `37-mountains-hung-gradine-landing-sheet.png` | The Gradine's landing, v4 wall beside the massifs. |
+| `37-mountains-hung-hawser-floor-sheet.png` | The Hawser from the floor, v4 wall beside the massifs. |
+| `37-mountains-hung-ridge-outwash-sheet.png` | The Ridge's merlons from the Outwash, v4 wall beside the massifs. |
+| `37-mountains-hung-vigilant-moor-sheet.png` | The Vigilant on the sky from the moor, v4 wall beside the massifs. |
+| `37-mountains-massifs-causeway-north-sheet.png` | From the causeway to the north: the v4 wall, the massifs as landed, then with the rock pass. |
+| `37-mountains-massifs-causeway-sun-after.png` | After: the sun in its saddle between massifs after the col was raised. |
+| `37-mountains-massifs-far-ranges-sheet.png` | The far ranges through the three cols and the saddle, before and after. |
+| `37-mountains-massifs-foreland-sheet.png` | The foreland: the v4 wall, the massifs, the rock pass. |
+| `37-mountains-massifs-high-east-sheet.png` | East from the High Ling: the v4 wall, the massifs as landed, the rock pass. |
+| `37-mountains-massifs-high-north-sheet.png` | North from the High Ling, v4 against the massifs. |
+| `37-mountains-massifs-spawn-sheet.png` | From spawn, v4 against the massifs: the saddle holds the sun. |
+| `37-mountains-overview-high.png` | The mountains study from high above the bowl, profile C. |
+| `37-mountains-study-causeway-sun-sheet.png` | The study: A, B, C and the v4 wall side by side from the causeway. |
+| `38-coh-causeway-135-thrones-after.png` | After the massifs: the Thrones from the causeway at yaw 135. |
+| `38-coh-causeway-135-thrones-before.png` | Before (v4 wall): the Thrones framing the sun from the causeway; protected. |
+| `38-coh-causeway-strip-before.png` | The same circle against the v4 wall. |
+| `38-coh-causeway-strip.png` | The circle from the causeway (-65, 12), eight yaws N to NW, against the massifs. |
+| `38-coh-circles-sheet.png` | The four circles (spawn, causeway, deck, spit) as one sheet, against the massifs. |
+| `38-coh-deck-strip-before.png` | The same circle against the v4 wall. |
+| `38-coh-deck-strip.png` | The circle from the Span's deck, against the massifs. |
+| `38-coh-gutter-after.png` | After the massifs: the Cincture's rim, the Leerie's row and the Vigilant in a gutter. |
+| `38-coh-gutter-before.png` | Before (v4 wall): the gutter frame, the rim outshining the failing sun. |
+| `38-coh-hawser-keptfire-after.png` | After the massifs: the Hawser's chain and the Kept Fire in one frame, still vast and human. |
+| `38-coh-hawser-keptfire-before.png` | Before (v4 wall): the same frame; protected. |
+| `38-coh-leerie-cages-after.png` | After: one iron lamp-cage from the Leerie's row, lit, the gutter held at 0.3. |
+| `38-coh-leerie-victorian-before.png` | The clash that led to the cages: a Victorian lamp post in the bowl. |
+| `38-coh-prospect-after.png` | After the massifs: the canvas against the red sun, the saddle's walls changed behind the easel. |
+| `38-coh-prospect-before.png` | Before (v4 wall): the canvas against the red sun; protected. |
+| `38-coh-spawn-135-thrones-after.png` | After the massifs: the Thrones either side of the sun from spawn; the framing holds but the sky behind them is darker. |
+| `38-coh-spawn-135-thrones-before.png` | Before (v4 wall): the Thrones framing the swollen sun from spawn, the strongest image of the coherence pass. |
+| `38-coh-spawn-strip-before.png` | The same circle against the v4 wall. |
+| `38-coh-spawn-strip.png` | The circle from spawn (2, 35), eight yaws N to NW, against the massifs. |
+| `38-coh-spit-strip-before.png` | The same circle against the v4 wall. |
+| `38-coh-spit-strip.png` | The circle from the tarn's spit, against the massifs. |
+| `38-coh-thrones-after.png` | After the massifs: the saddle between the Thrones from the Thrones' own sightline. |
+| `38-coh-thrones-before.png` | Before (v4 wall): the same sightline; protected. |
+| `38-fix-galleries-after.png` | After the fix (v4 wall): the Galleries' haze hold 0.25 sits in the wall. |
+| `38-fix-galleries-before.png` | Before the fix (v4 wall): at 0.45 the ironwork glows in front of the wall. |
+| `38-fix-leerie-mantle-after.png` | After the fix (v4 wall): the Leerie's mantles amber, `#ffbc72`. |
+| `38-fix-leerie-mantle-before.png` | Before the fix (v4 wall): near-white mantles. |
+| `39-fix-shadow-cadence-wood-diff.png` | The shadow cadence in the Deodand Wood: the difference between two frames a redraw apart. |
+| `39-fix-stair-hop-span-after.png` | After: the eye's height on the Span's west stair, gliding. |
+| `39-fix-stair-hop-span-before.png` | Before: the eye hopping a riser a frame on the Span's stair. |
+| `39-fix-tree-lod-sheet.png` | The tree LOD fix: near and far meshes of each variant, before and after the shared shape. |
+| `39-fix-wood-hitch-after.png` | After: the frame times panning in the Deodand Wood once the programs are precompiled. |
+| `39-fix-wood-hitch-before.png` | Before: the frame-time spikes of a 360 degree pan, each a shader program compiling. |
+| `39-record-panel.png` | The `?record=` panel offering the pan's JSON. |
+| `40-lamps-causeway-after.png` | After: the Escarpment Lamps on the west massif from the causeway, right of the Galleries. |
+| `40-lamps-causeway-before.png` | Before (`?lamps=0`): the same face dark. |
+| `40-lamps-highling-after.png` | After: the Lamps from the High Ling scarp at gain 3.4, a cluster of pinpoints on the hill. |
+| `40-lamps-highling-before.png` | Before: the same hill without them. |
+| `40-lamps-highling-dark40.png` | 40 of 432 out (`?lamps=dark=40`): the wall thinner in a crop, hardly at full frame. |
+| `40-lamps-highling-sheet.png` | The High Ling pair beside the raised-gain pair. |
+| `40-lamps-outwash-after.png` | After: from the Outwash looking west, the Galleries' lit rooms and the Lamps as dust on the rock. |
+| `40-lamps-outwash-before.png` | Before: the same view without the Lamps. |
+| `40-lamps-rows-after.png` | After: from the walk limit looking up, the lamps in long diagonals across the buttresses. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |

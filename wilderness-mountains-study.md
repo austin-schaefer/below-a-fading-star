@@ -92,8 +92,8 @@ What C does to the things hung on the wall:
 
 Each sheet sits in `shots/wip/` and shows v4 | A | B | C left to right, at 1280×720 per frame. Open these first:
 
-1. `v5-11-mtn-crest.png`: crest height by bearing for all four profiles, with the cols, the wall-hung things and the Annals' 130 m line marked.
-2. `v5-11-mtn-overview-high.png`: the bowl from 70 m above its centre, looking south (the SE col), north-west (the NW col and the Galleries' massif), north (the Tierce, the glacier, the Ridge), east (C's east col) and west (the saddle), plus the Outwash's foreland looking up. These are the views that show the form best. The per-view sheets are `v5-11-mtn-sheet-high-<south|northwest|north|east|west>.png` and `v5-11-mtn-sheet-foreland-up.png`.
+1. `37-mountains-crest.png`: crest height by bearing for all four profiles, with the cols, the wall-hung things and the Annals' 130 m line marked.
+2. `37-mountains-overview-high.png`: the bowl from 70 m above its centre, looking south (the SE col), north-west (the NW col and the Galleries' massif), north (the Tierce, the glacier, the Ridge), east (C's east col) and west (the saddle), plus the Outwash's foreland looking up. These are the views that show the form best. The per-view sheets are `v5-11-mtn-sheet-high-<south|northwest|north|east|west>.png` and `v5-11-mtn-sheet-foreland-up.png`.
 3. `v5-11-mtn-overview.png`: the brief's views at the walker's height, one sheet each as `v5-11-mtn-sheet-<view>.png`:
    - `spawn`: (2, 35) looking west at the saddle;
    - `causeway-east`: (−40, 22) looking east;
