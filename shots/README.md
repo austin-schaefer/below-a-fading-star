@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 275 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 430 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
