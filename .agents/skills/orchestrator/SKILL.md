@@ -82,7 +82,7 @@ Each merge of a visual prototype to `main` is a release. Before opening the PR, 
 
 ## Visual prototypes: screenshots are the record
 
-For anything visual under `prototypes/` (the wilderness scene is the first), Austin storytells from the build, so renders are part of the deliverable and are curated, not dumped. The full rule lives in `prototypes/wilderness/README.md` ("Screenshots are part of the record") and the reusable curation brief in `prototypes/wilderness/tools/curate-shots.md`. The short form:
+For anything visual under `prototypes/` (the wilderness scene is the first), Austin storytells from the build, so renders are part of the deliverable and are curated, not dumped. The full rule lives in the `wilderness` skill (Pace, and `tools/curate-shots.md`).md` ("Screenshots are part of the record") and the reusable curation brief in `prototypes/wilderness/tools/curate-shots.md`. The short form:
 
 - Every subagent writes every render it takes into `shots/wip/` named `<module>-<stage>-<view>.png`, never only its scratchpad. Nothing is deleted by the agent that made it.
 - The orchestrator copies the best of each hand-back into `shots/` and commits after every hand-back, so a crash loses nothing.
