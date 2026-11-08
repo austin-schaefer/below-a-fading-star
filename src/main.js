@@ -11,6 +11,7 @@ import { makeSimplex, mulberry32 } from './noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
+import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
 
 const MODULES = [
@@ -138,6 +139,9 @@ async function start() {
 
   // Post
   ctx.post = buildPost(ctx);
+  // Point lights: a fixed number of slots copy the nearest sources (lights.js). ?lights=off: every light live.
+  const lightsParam = url.searchParams.get('lights');
+  ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
 
   // Resize
@@ -231,6 +235,7 @@ async function start() {
       sunLight.target.position.copy(shadowTarget);
       sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
     }
+    ctx.lightSlots?.update();
     ctx.perf.cpu('frame');
     renderer.info.reset();
     ctx.post.composer.render();
