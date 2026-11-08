@@ -99,10 +99,9 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `bloommips=1..5` blurs only the first n of bloom's five mips (default 5; the finish chain only) (v6-02)
 - `aa=off` draws without the FXAA folded into the finish pass (on at every tier) (v6-02, v6-08 Q1)
 - `grain=<multiplier>` scales the film grain (0.6 = the default, Austin's pick from the v6-02 compare set; 1 = the old 0.02; 0 = none) (v6-02)
-
-- `plantfade=0` (grass and reed chunks switch to the far clumps at once at 60 m and 50 m, instead of crossing over 8 m: a chunk within 4 m of the switch, plus 2 m slack, is packed into both meshes and the two dither by the chunk's nearest-edge distance, `src/fade.js`)
-- `rockfade=0` (pebbles and stones cut at their reach, and fine boulders swap to their coarse twin at 140 m, instead of fading over the reach's last 15% and over 132-140 m; low: 51-60, 127.5-150, 102-110)
-- `packstep=6` (rocks repack every mesh on one frame once the camera has moved 6 m and upload whole buffers; plant packs sort with a closure, copy with subarrays and ignore the frame's pack token, `ctx.packToken`)
+- `plantfade=0` (grass and reed chunks switch to the far clumps at once at 60 m and 50 m, instead of crossing over 8 m: a chunk within 4 m of the switch, plus 2 m slack, is packed into both meshes and the two dither by the chunk's nearest-edge distance, `src/fade.js`) (v6-05)
+- `rockfade=0` (pebbles and stones cut at their reach, and fine boulders swap to their coarse twin at 140 m, instead of fading over the reach's last 15% and over 132-140 m; low: 51-60, 127.5-150, 102-110) (v6-05)
+- `packstep=6` (rocks repack every mesh on one frame once the camera has moved 6 m and upload whole buffers; plant packs sort with a closure, copy with subarrays and ignore the frame's pack token, `ctx.packToken`) (v6-05)
 
 ### The walls
 

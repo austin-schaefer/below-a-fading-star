@@ -348,8 +348,9 @@ Only the questions that change which work gets done.
 | `uploads.bench`, `uploads.wood`, `uploads.pan` | v6-01 | programs, geometries, first-sight textures after the card = 0 | yes |
 | `pacing.bench` | orchestrator | frames over 2x the median <= 2, all in the first second | no |
 | `trees.tree-near`, `tree-far`, `tree-wood`; `fungi.fungi` | v6-04 | largest consecutive-frame change <= 2x baseline | no |
-| `plants.grass-far`, `plants.reeds-far`, `rocks.rocks` | v6-05 | the same | no |
-| `plants.bench-repack-spread`, `plants.wood-repack-spread` | v6-05 | no frame packs two kinds | no |
+| `plants.grass-far`, `plants.reeds-far` | v6-05 | the same | yes |
+| `rocks.rocks` | v6-05 | the same | no: noise-bound (a slow drift against a 10–48 px baseline; it passed 2 of 3 runs before and after alike), reported only |
+| `plants.bench-repack-spread`, `plants.wood-repack-spread` | v6-05 | no frame packs two kinds | yes (the rows that tell before from after: 114 → 0 and 9 → 0 frames) |
 | `shadow.pan-redraws` | v6-03 | a turn at 1.2 rad/s redraws <= 4/s | no |
 | `aliasing.step-5cm` | v6-08 | a 5 cm sideways step <= 2x baseline | no |
 | `trees.wood-switches` | v6-04 | reported only | no |

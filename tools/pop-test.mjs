@@ -250,7 +250,7 @@ if (needWalk || needSeq) {
       { id: 'tree-wood', group: 'trees', owner: 'v6-04', tree: [-142.2, 140.9, 'wood'], rel: [[34, 0], [14, 0]], yaw: W, step: 0.5 },
       { id: 'grass-far', group: 'plants', owner: 'v6-05', gate: true, from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
       { id: 'reeds-far', group: 'plants', owner: 'v6-05', gate: true, cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
-      { id: 'rocks', group: 'rocks', owner: 'v6-05', gate: true, from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
+      { id: 'rocks', group: 'rocks', owner: 'v6-05', gate: false /* noise-bound: a slow drift against a 10-48 px baseline; the repack-spread rows are the gate */, from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
       { id: 'fungi', group: 'fungi', owner: 'v6-04', from: [-68, 142], to: [-160, 132], yaw: W, step: 1, watch: { vis: 'veg-(toadstools|pods)' } },
     ];
     const FR = 24;
