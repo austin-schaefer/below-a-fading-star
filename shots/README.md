@@ -128,4 +128,5 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-flora-eddy-grey-before.png` | Before: the reeds round the Wrong Colour in their own colour. |
 | `13-flora-eddy-grey-after.png` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
 | `13-flora-ovals-before.png` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
+| `13-flora-ovals-after.png` | After: stones kept off steep and spray-wet walls; the wall is clean. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
