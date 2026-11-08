@@ -6,12 +6,15 @@
 // right after a synchronous composer.render(), so no preserveDrawingBuffer is needed.
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
-let chromium;
-try { ({ chromium } = await import('playwright')); }
-catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
+let pw;
+try { pw = await import('playwright'); }
+catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
+// FP_BROWSER=chromium|firefox|webkit picks the engine (default chromium); the ANGLE flags are Chromium's
+const engine = process.env.FP_BROWSER || 'chromium';
+const chromium = pw[engine];
 const [vf, outDir, prefix, q = 'low', w = '1280', h = '720', extra = ''] = process.argv.slice(2);
 const views = JSON.parse(readFileSync(vf, 'utf8'));
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 // FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs);
 // FP_SUFFIX goes after the view's name (perf-02-bloom-sun-before.png)
 const base = process.env.FP_BASE || 'http://localhost:8123';
