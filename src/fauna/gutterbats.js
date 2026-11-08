@@ -33,7 +33,7 @@ export function buildGutterBats(ctx) {
   const pickExit = () => { let r = rng(); for (const e of exits) { r -= e.w; if (r <= 0) return e; } return exits[0]; };
   const B = Array.from({ length: N }, () => ({
     mode: 0, ex: null, delay: 0, pos: new THREE.Vector3(), vel: new THREE.Vector3(), a: rng() * 6.28,
-    R: 9 + rng() * 26, y: gm + 14 + rng() * 22, w: (0.35 + rng() * 0.35) * (rng() < 0.5 ? -1 : 1), ph: [rng() * 6, rng() * 6, rng() * 6], fp: rng() * 6, sc: 1.4 + rng() * 0.6, shrink: 1,
+    R: 9 + rng() * 26, y: gm + 14 + rng() * 22, w: (0.35 + rng() * 0.35) * (rng() < 0.5 ? -1 : 1), ph: [rng() * 6, rng() * 6, rng() * 6], fp: rng() * 6, sc: 2.4 + rng() * 0.8, shrink: 1,
   }));
   const st = { out: false, t: 0, armed: true, gutters: 0, flying: 0 };
   ctx.gutterBats = st;

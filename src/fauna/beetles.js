@@ -26,6 +26,12 @@ export function buildBeetles(ctx) {
   const geo = beetleGeometry();
   // black, with the green of old bronze in the highlights only
   const mat = new THREE.MeshStandardMaterial({ color: 0x1e3a28, metalness: 0.85, roughness: 0.34 });
+  // and a dull green glint at the rims of the wing cases, so they read on the dark bronze
+  mat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      { float fr = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.0); totalEmissiveRadiance += vec3(0.05, 0.13, 0.08) * fr; }`);
+  };
+  mat.customProgramCacheKey = () => 'fp-beetle-sheen';
   const mesh = new THREE.InstancedMesh(geo, mat, N);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false; mesh.visible = false; mesh.name = 'door-beetles'; mesh.receiveShadow = true;
@@ -52,7 +58,7 @@ export function buildBeetles(ctx) {
     return 0;
   };
   const B = Array.from({ length: N }, () => ({
-    mode: 'door', s: 0, h: 0, x: 0, y: 0, z: 0, head: 0, speed: 0.025, off: 0, vy: 0, t: 0, sc: 0.014 + rng() * 0.006, pause: 0, life: 1,
+    mode: 'door', s: 0, h: 0, x: 0, y: 0, z: 0, head: 0, speed: 0.025, off: 0, vy: 0, t: 0, sc: 0.02 + rng() * 0.008, pause: 0, life: 1,
   }));
   function spawnOnDoor(b, anywhere) {
     b.mode = 'door'; b.life = 1;

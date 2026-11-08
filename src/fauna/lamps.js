@@ -47,7 +47,7 @@ export function buildLampMoths(ctx) {
       for (let k = 0; k < n && moths.length < MAXN; k++) {
         moths.push({
           L, a: rng() * 6.28, w: (0.7 + rng() * 1.1) * (rng() < 0.5 ? -1 : 1), r0: 0.3 + rng() * 0.9, ph: [rng() * 6.28, rng() * 6.28, rng() * 6.28],
-          y0: (rng() - 0.35) * 0.7, sz: 0.026 + rng() * 0.018, flapW: 26 + rng() * 14, flapPh: rng() * 6.28,
+          y0: (rng() - 0.35) * 0.7, sz: 0.04 + rng() * 0.025, flapW: 26 + rng() * 14, flapPh: rng() * 6.28,
           pos: new THREE.Vector3().copy(L.pos), prev: new THREE.Vector3().copy(L.pos), yaw: 0,
           dart: 2 + rng() * 6, dx: 0, dy: 0, dz: 0, // a sudden sideways jink, decaying
           mode: 0, landT: 0, land: new THREE.Vector3(), landYaw: 0, nextLand: 8 + rng() * 40, tint: rng(),
@@ -123,7 +123,7 @@ export function buildLampMoths(ctx) {
       mesh.setMatrixAt(i, M4);
       // pale where the flame lights them, ash-grey farther out
       const d = m.pos.distanceTo(L);
-      col.copy(ash).lerp(pale, m.tint * 0.4 + 0.6 * (1 - smoothstep(0.3, 1.3, d))).multiplyScalar((0.55 + 0.75 * (1 - smoothstep(0.2, 1.3, d))) * lit);
+      col.copy(ash).lerp(pale, m.tint * 0.4 + 0.6 * (1 - smoothstep(0.3, 1.3, d))).multiplyScalar((0.6 + 1.3 * (1 - smoothstep(0.2, 1.3, d))) * lit);
       mesh.setColorAt(i, col);
     }
     mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
