@@ -349,7 +349,7 @@ Only the questions that change which work gets done.
 |---|---|---|---|
 | `uploads.bench`, `uploads.wood`, `uploads.pan` | v6-01 | programs, geometries, first-sight textures after the card = 0 | yes |
 | `pacing.bench` | orchestrator | frames over 2x the median <= 2, all in the first second | no |
-| `trees.tree-near`, `tree-far`, `tree-wood`; `fungi.fungi` | v6-04 | largest consecutive-frame change <= 2x baseline | yes (noise-bound like `rocks.rocks`: scene motion failed `tree-near` in 2 of 5 runs and `tree-wood` in 1, with no mark on the tree; `### v6-04 trees`) |
+| `trees.tree-near`, `tree-far`, `tree-wood`; `fungi.fungi` | v6-04 | largest consecutive-frame change <= 2x baseline | yes (noise-bound like `rocks.rocks`: scene motion failed `tree-near` in 2 of 5 runs after and `tree-wood` in 1; all pass with v6-05 merged, with no mark on the tree; `### v6-04 trees`) |
 | `plants.grass-far`, `plants.reeds-far` | v6-05 | the same | yes |
 | `rocks.rocks` | v6-05 | the same | no: noise-bound (a slow drift against a 10–48 px baseline; it passed 2 of 3 runs before and after alike), reported only |
 | `plants.bench-repack-spread`, `plants.wood-repack-spread` | v6-05 | no frame packs two kinds | yes (the rows that tell before from after: 114 → 0 and 9 → 0 frames) |
@@ -413,16 +413,16 @@ The brief's baseline (wood, after, twice) is 0 changed. The rays take the quarte
 - *Far crowns:* compared at 96 px (about a crown's height at the far switch) with the outline closed, from four azimuths (`v6-04-silhouette-<variant>-{before,after}.png`: black both, red near only, blue far only). The far mesh had dropped the primary limbs and the moss hung from them, and its 1.45× cards raised the crown's top 4–7 px. It now keeps the primary limbs (3 sides), the moss under them, and lowers its larger card by 0.2 of the cluster's size (0.35 at the crown's top). Changed: deodand0–3, lone0–2, crooked0–2, thorn0–2, giant0–1 and fallen0–2 (limbs and cards), medlar0–2 (moss only); the outline's overlap with the near one rises in every one (deodand2 0.57 → 0.68, crooked0 0.62 → 0.68, giant0 0.70 → 0.76, lone0 0.75 → 0.76). Dead trees and mounds are unchanged. Far meshes go from 84–223 triangles to 104–397 per variant. `tree-lod-test`'s placement digest holds (9d701682); a horizontal inset of the far cards was tried and dropped, because it turned crooked0's azimuth profile 3° (the test's limit).
 - *Fungi:* each toadstool and pod fades out over 80–90 m by its distance to the eye; a 100 m group is culled only beyond 100 m.
 
-**Sequences** (`pop-test --only=trees,fungi,uploads`, medium, the largest consecutive-frame step against its baseline; three runs after, since the baseline moves):
+**Sequences** (`pop-test --only=trees,fungi,uploads`, medium, the largest consecutive-frame step against its baseline; five runs after, since the baseline moves; run 4 on the tree merged with v6-02, run 5 with v6-05 too):
 
-| Row | Before | After, run 1 | Run 2 | Run 3 |
-|---|---|---|---|---|
-| `trees.tree-near` | 74 vs 28 (2.6×) | 134 vs 194 (0.7×) | 128 vs 42 (3.0×) | 113 vs 107 (1.1×) |
-| `trees.tree-far` | 122 vs 154 (0.8×) | 376 vs 316 (1.2×) | 250 vs 343 (0.7×) | 137 vs 240 (0.6×) |
-| `trees.tree-wood` | 11 vs 7 (1.6×) | 99 vs 175 (0.6×) | 11 vs 9 (1.2×) | 16 vs 4 (4.0×) |
-| `fungi.fungi` | 14 vs 7 (2.0×) | 15 vs 16 (0.9×) | 4 vs 2 (2.0×) | 11 vs 47 (0.2×) |
+| Row | Before | After, run 1 | Run 2 | Run 3 | Run 4 | Run 5 |
+|---|---|---|---|---|---|---|
+| `trees.tree-near` | 74 vs 28 (2.6×) | 134 vs 194 (0.7×) | 128 vs 42 (3.0×) | 113 vs 107 (1.1×) | 130 vs 25 (5.2×) | 5 vs 5 (1.0×) |
+| `trees.tree-far` | 122 vs 154 (0.8×) | 376 vs 316 (1.2×) | 250 vs 343 (0.7×) | 137 vs 240 (0.6×) | 57 vs 206 (0.3×) | 3 vs 6 (0.5×) |
+| `trees.tree-wood` | 11 vs 7 (1.6×) | 99 vs 175 (0.6×) | 11 vs 9 (1.2×) | 16 vs 4 (4.0×) | 37 vs 26 (1.4×) | 18 vs 17 (1.1×) |
+| `fungi.fungi` | 14 vs 7 (2.0×) | 15 vs 16 (0.9×) | 4 vs 2 (2.0×) | 11 vs 47 (0.2×) | 2 vs 12 (0.2×) | 13 vs 10 (1.3×) |
 
-The four rows are gated. After, no row has a spike at the switch: the step lists rise and fall smoothly over the 24 frames. The two failures, run 2's `tree-near` and run 3's `tree-wood`, are scene motion, not trees. The diff pictures of those steps mark grass, motes and birds (`tree-near`) and the water's ripples and a creature's eyes (`tree-wood`), and nothing on the tree. The gate is noise-limited headless, as v6-01 found: a few pixels' baseline (`tree-wood`, `fungi`) fails on any drift.
+The four rows are gated. After, no row has a spike at the switch: the step lists rise and fall smoothly over the 24 frames. The failures, `tree-near` in runs 2 and 4 and `tree-wood` in run 3, are scene motion, not trees. The diff pictures of those steps mark grass, motes and birds (`tree-near`) and the water's ripples and a creature's eyes (`tree-wood`), and nothing on the tree. With v6-05's plant and rock fades merged (run 5) the grass's own steps are gone and every row is at its baseline. The gate is noise-limited headless, as v6-01 found: a few pixels' baseline (`tree-wood`, `fungi`) fails on any drift.
 
 **Counts:** switches unchanged: 602 on the wood walk, 81 on the bench, 257 on the span. With no fade in flight (held 1.5 s), before (`?xfade=0&fungifade=0`) against after: `v6-04-still-wood-pan` 0 changed pixels, `still-lone` 39, `still-wood` 1, against a baseline of 711 (`v6-04-baseline-{a,b,diff}`).
 
