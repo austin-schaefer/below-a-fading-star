@@ -2,6 +2,14 @@
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
 
+## v2.2 (2026-11-08) — a hop and a hush for phones
+
+Stage 15. Nothing in the world changed; renders `mobile-15-*`.
+
+- **A hop button** on phones: a small hairline ring left of and below the thumbstick hops, as Space does.
+- **A mute button** on phones, faint, top right: a tap silences or restores the sound and is remembered; a long hold still opens the debug panel.
+- **The thumbstick no longer leaps** to the other finger in mobile Safari when walking and looking change hands quickly: a touch identifier the browser reuses or stops listing now releases the stick. `tools/touch-test.mjs` checks it.
+
 ## v2.1 (2026-11-08) — a loading bar, and the instruments for the heat
 
 Stage 14. Spec: `wilderness-v3.md`, stage 1 and the loading bar. Nothing in the world changed.
