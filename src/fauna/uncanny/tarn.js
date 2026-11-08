@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, approach, turnToward, angDiff } from './kit.js';
 import { hyp } from '../../noise.js';
+import { CAUSEWAY } from '../../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 const SKIN = '#bdb3aa';
 
@@ -126,7 +127,7 @@ export function buildTarnWoman(ctx, U) {
   const S = { x: home.x, z: home.z, yaw: 0, gone: false, wasGutter: false, humT: 8 };
   const pub = ctx.tarnWoman = { position: g.position, visible: true };
   const cam = camera.position;
-  S.yaw = Math.atan2(S.x - causeway[2].x, S.z - causeway[2].z); // back to the road
+  S.yaw = Math.atan2(S.x - CAUSEWAY[2].x, S.z - CAUSEWAY[2].z); // back to the road
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), pv = new THREE.Vector3(), sv = new THREE.Vector3();
 
   function stepToward() {

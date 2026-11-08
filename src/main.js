@@ -8,7 +8,7 @@ import { buildSky } from './sky.js';
 import { buildControls } from './controls.js';
 import { buildPost } from './post.js';
 import { makeSimplex, mulberry32 } from './noise.js';
-import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
+import { WORLD, SUN, LANDMARKS, CAUSEWAY_V4, WATER, PALETTE, SPAWN } from './world.js';
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
@@ -43,6 +43,7 @@ const MODULES = [
   ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
   // v4 systems: the kit's test scene, only when named (?only=kit)
   ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
+  ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
 ];
 
 async function start() {
@@ -103,7 +104,7 @@ async function start() {
   const updates = [];
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
-    world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY, water: WATER, palette: PALETTE, spawn: SPAWN,
+    world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,
     noise: makeSimplex(WORLD.seed + 1),
     rng: mulberry32(WORLD.seed + 2),
     time: { t: 0, dt: 0 },

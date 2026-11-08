@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { Builder, mat } from './geo.js';
 import { vary, rubblePile, findSpot, pinSpot, hexCellsIn } from './common.js';
 import { causewayAt } from './causeway.js';
+import { CAUSEWAY } from '../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 export function buildScatter(ctx, B, env) {
   const { rng, ground, tints } = env;
@@ -341,7 +342,7 @@ export function buildScatter(ctx, B, env) {
 
   // ---------- a gibbet by the causeway ----------
   {
-    const c = causewayAt(ctx.causeway, 168);
+    const c = causewayAt(CAUSEWAY, 168);
     const side = 1, x = c.x - c.dz * side * 4.2, z = c.z + c.dx * side * 4.2;
     const gm = ground.groundAt(x, z), yaw = Math.atan2(c.dx, c.dz);
     B.add(B.box(0.95, 0.7, 0.95, { chip: 0.1 }), mat(x, gm + 0.15, z, 0, yaw, 0), { color: tintOld, moss: 1, ground: gm });

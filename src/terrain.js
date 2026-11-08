@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
 import { tarnHeight, tarnWet } from './v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit
 import { setRegionsCoarse } from './v4/regions.js'; // v4 regions: the mesh's coarse pass
-import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
+import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4, PALETTE, SUN } from './world.js';
+import { mapHeight, prepareMap } from './v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
@@ -20,11 +21,14 @@ function distToSegment(px, pz, ax, az, bx, bz) {
   const x = ax + dx * t, z = az + dz * t;
   return Math.hypot(px - x, pz - z);
 }
+// v4 map: the road is CAUSEWAY_V4 (the saddle to the pit); each segment's box skips the far ones
+const ROAD = CAUSEWAY_V4.slice(1).map((b, i) => { const a = CAUSEWAY_V4[i]; return [a.x, a.z, b.x, b.z, Math.min(a.x, b.x), Math.max(a.x, b.x), Math.min(a.z, b.z), Math.max(a.z, b.z)]; });
 export function causewayDistance(x, z) {
   let d = Infinity;
-  for (let i = 0; i < CAUSEWAY.length - 1; i++) {
-    const a = CAUSEWAY[i], b = CAUSEWAY[i + 1];
-    d = Math.min(d, distToSegment(x, z, a.x, a.z, b.x, b.z));
+  for (const [ax, az, bx, bz, x0, x1, z0, z1] of ROAD) {
+    const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0, ez = z < z0 ? z0 - z : z > z1 ? z - z1 : 0;
+    if (ex * ex + ez * ez >= d * d) continue;
+    d = Math.min(d, distToSegment(x, z, ax, az, bx, bz));
   }
   return d;
 }
@@ -53,8 +57,9 @@ export function glacierMask(x, z) {
 // downstream). The river is not a WATER disc: use waterLevelAt / waterDepthAt / riverAt.
 const POOL = WATER.pool;
 const POOL_R = 5;                    // the bowl; WATER.pool.r takes in the beach
-const FALL_DROP = 20;
-const LIP_Y = POOL.y + FALL_DROP;    // 23.5
+const FALL_DROP = 50;                // v4 map: 2.5 times taller (was 20); the face is raised in v4/paths/ground.js
+const LIP_Y = POOL.y + FALL_DROP;    // 53.5
+const CIRQUE_Y = POOL.y + 20;        // v4 map: the cirque round the pool keeps its old height outside the slot
 const BACK = (() => { const l = Math.hypot(POOL.x, POOL.z); return { x: POOL.x / l, z: POOL.z / l }; })(); // into the wall
 const LIP_RP = 10.1;                 // horizontal distance pool centre -> lip
 const LIP = { x: POOL.x + BACK.x * LIP_RP, z: POOL.z + BACK.z * LIP_RP, y: LIP_Y };
@@ -231,7 +236,7 @@ function riverSection(x, z, out = _cs) {
     // the canyon's mouth faces downstream (toward the first bend), so the cirque stands lower there
     const fx = RIVER_CTRL[1][0] - POOL.x, fz = RIVER_CTRL[1][1] - POOL.z, fl = Math.hypot(fx, fz);
     const front = rp > 1e-3 ? Math.max(0, (px * fx + pz * fz) / (rp * fl)) : 0;
-    const top = LIP_Y + 3.5 + SX.fbm2(x * 0.05, z * 0.05 + 4, 3) * 2.5 - front * 9;
+    const top = CIRQUE_Y + 3.5 + SX.fbm2(x * 0.05, z * 0.05 + 4, 3) * 2.5 - front * 9;
     out.raise = Math.max(out.raise, top - Math.max(0, rp - 14) * 0.8);
     if (rp < 6.8) out.shingle = Math.max(out.shingle, 1);
   }
@@ -384,7 +389,7 @@ export function heightAt(x, z) {
   // --- v4 systems: the mountains (end)
   // Glacier tongue below the ramp too: its snout on the moor (v4 regions: src/v4/glacier.js)
   h = glacierTongue(h, x, z, ramp);
-  return carveRiver(h, x, z);
+  return mapHeight(carveRiver(h, x, z), x, z, RIVER); // v4 map: the pit and the fall's face (marked blocks)
 }
 
 // Analytic-ish normal by central differences.
@@ -513,6 +518,7 @@ export function buildTerrain(ctx) {
   const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
+  prepareMap(); // v4 map: trace the leads before the mesh, so it carries the runnels' cuts
   setRegionsCoarse(size / segs); // v4 regions: the mesh takes fine relief's lower envelope (regions.js)
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
