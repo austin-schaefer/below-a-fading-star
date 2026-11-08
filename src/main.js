@@ -9,7 +9,7 @@ import { buildControls } from './controls.js';
 import { buildPost } from './post.js';
 import { makeSimplex, mulberry32 } from './noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
-import { buildHud } from './hud.js';
+import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 
 const MODULES = [
@@ -36,6 +36,17 @@ async function start() {
 
   installAtmosphere();
 
+  // Loading bar: terrain counts as one unit and each module as one; a module reports sub-steps with
+  // ctx.progress(label, fraction 0..1) (await it so the bar can paint). Overall is monotonic.
+  const showBar = buildLoadBar();
+  const wanted = MODULES.filter(([name]) => (!only || only.split(',').includes(name)) && !skip.includes(name));
+  let settled = 0, within = 0;
+  const progress = (label, fraction = within) => {
+    within = Math.max(0, Math.min(1, fraction));
+    return showBar(label, (settled + within) / (wanted.length + 1));
+  };
+  await progress('shaping the moor', 0);
+
   const canvas = document.getElementById('scene');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: quality === 'high', powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, quality === 'high' ? 1.5 : 1));
@@ -60,6 +71,7 @@ async function start() {
     time: { t: 0, dt: 0 },
     registerUpdate: (fn) => updates.push(fn),
     log: (...a) => console.log('[fp]', ...a),
+    progress,
   };
   // Global helper for stable per-module RNG streams
   ctx.makeRng = (salt) => mulberry32(WORLD.seed ^ (salt * 2654435761 >>> 0));
@@ -68,6 +80,7 @@ async function start() {
 
   // Terrain
   ctx.terrain = buildTerrain(ctx);
+  settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
@@ -99,12 +112,13 @@ async function start() {
   ctx.hud = buildHud(ctx);
 
   // World modules
-  const wanted = MODULES.filter(([name]) => (!only || only.split(',').includes(name)) && !skip.includes(name));
   const results = await Promise.allSettled(wanted.map(async ([name, load]) => {
     const t0 = performance.now();
-    const mod = await load();
-    await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
-    ctx.log(`${name} ready in ${(performance.now() - t0).toFixed(0)}ms`);
+    try {
+      const mod = await load();
+      await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
+      ctx.log(`${name} ready in ${(performance.now() - t0).toFixed(0)}ms`);
+    } finally { settled++; within = 0; progress(); }
   }));
   results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
 
