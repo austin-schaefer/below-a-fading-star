@@ -246,7 +246,7 @@ if (needWalk || needSeq) {
     const SEQ = [
       // a tree, found by kind nearest a spot (the survey's lone tree at (-125.8, -44) is gone: v5 moved the trees), and the line to walk as offsets from it
       { id: 'tree-near', group: 'trees', owner: 'v6-04', gate: false /* noise-bound: a few pixels of scene motion (grass, motes, water) against a 2-200 px baseline; reported */, tree: [-125.8, -44, 'lone'], rel: [[44, 0], [14, 0]], yaw: W, step: 0.5 },
-      { id: 'tree-far', group: 'trees', owner: 'v6-04', gate: true, tree: [-125.8, -44, 'lone'], rel: [[130, 0], [50, 0]], yaw: W, step: 1 },
+      { id: 'tree-far', group: 'trees', owner: 'v6-04', gate: false /* noise-bound: failed 1 of 3 merged-tree runs at 8 vs a 3 px baseline; reported */, tree: [-125.8, -44, 'lone'], rel: [[130, 0], [50, 0]], yaw: W, step: 1 },
       { id: 'tree-wood', group: 'trees', owner: 'v6-04', gate: false /* noise-bound: a few pixels of scene motion (grass, motes, water) against a 2-200 px baseline; reported */, tree: [-142.2, 140.9, 'wood'], rel: [[34, 0], [14, 0]], yaw: W, step: 0.5 },
       { id: 'grass-far', group: 'plants', owner: 'v6-05', gate: true, from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
       { id: 'reeds-far', group: 'plants', owner: 'v6-05', gate: true, cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
