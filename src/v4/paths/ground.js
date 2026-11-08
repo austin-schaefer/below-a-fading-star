@@ -85,7 +85,7 @@ function fallHeight(h, x, z, RV) {
   let y;
   if (rp < foot) return h;
   if (rp < top) y = lerp(POOL.y + 0.6, crest, Math.pow(smoothstep(foot, top, rp), 0.8));
-  else y = crest + (rp - top) * 2.1 + Math.max(0, SN.ridged2(x * 0.09, z * 0.09, 3) - 0.4) * 6 * smoothstep(top, top + 6, rp);
+  else y = crest + Math.min((rp - top) * 2.1, 26) + Math.max(0, SN.ridged2(x * 0.09, z * 0.09, 3) - 0.4) * 6 * smoothstep(top, top + 6, rp);
   // ledges of harder rock across the face
   y += Math.sin(y * 0.55 + SN.noise2(x * 0.2, z * 0.2) * 1.5) * 0.5 * smoothstep(foot, top, rp) * (1 - smoothstep(top, top + 2, rp));
   let out = Math.max(h, lerp(h, y, w));

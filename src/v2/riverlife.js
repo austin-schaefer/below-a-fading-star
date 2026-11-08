@@ -750,7 +750,6 @@ export async function build(ctx) {
       const R = ctx.river;
       if (R && R.fall) {
         const F = R.fall;
-        if (!F.v4) { F.v4 = true; F.rumbleRadius = 2 * (F.rumbleRadius || 70); } // v4 map: the taller fall carries twice as far
         const d = Math.hypot(cam.x - F.x, cam.y - F.y, cam.z - F.z);
         const rumble = clamp(1 - d / (F.rumbleRadius || 70), 0, 1);
         R.rumble = rumble;
