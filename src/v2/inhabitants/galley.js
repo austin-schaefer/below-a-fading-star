@@ -150,7 +150,8 @@ function wakeMesh(K, waterY) {
     transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide,
   });
   const mesh = new THREE.Mesh(g, mat);
-  mesh.frustumCulled = false; mesh.renderOrder = 11;   // over the water surface (renderOrder 10) mesh.name = 'inhabitants-galley-wake';
+  mesh.name = 'inhabitants-galley-wake';
+  mesh.renderOrder = 11;   // over the water surface (renderOrder 10)
   return { mesh, pos, al, pa, aa, strips, across };
 }
 
@@ -184,6 +185,8 @@ export function buildGalley(ctx) {
 
   const K = 34, HIST_DT = 0.45;
   const wake = wakeMesh(K, W.y + 0.04);
+  // the wake never leaves the tarn: a fixed sphere round the water lets it be culled
+  wake.mesh.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(W.x, W.y, W.z), W.r + 20);
   scene.add(wake.mesh);
   // history of the hull's centre, heading and speed, sampled every HIST_DT
   const H = { x: new Float32Array(K), z: new Float32Array(K), tx: new Float32Array(K), tz: new Float32Array(K), v: new Float32Array(K), t: new Float32Array(K), head: 0, n: 0, acc: 0 };

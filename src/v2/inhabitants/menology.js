@@ -232,7 +232,8 @@ export function buildMenology(ctx) {
   const liz = new THREE.InstancedMesh(lgeo, lmat, N);
   liz.name = 'inhabitants-menology-lizards'; liz.castShadow = false; liz.receiveShadow = true;
   liz.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  liz.frustumCulled = false;
+  // they never leave the site, so one sphere round it lets the whole swarm be culled when you look away
+  liz.boundingSphere = new THREE.Sphere(new THREE.Vector3(C.x, ground.at(C.x, C.z), C.z), R + 4);
   scene.add(liz);
 
   // Where a lizard can be: on the ground (stone = -1), or flat on a stone's face (stone index, angle a, height y).
