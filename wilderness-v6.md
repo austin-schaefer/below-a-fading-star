@@ -16,7 +16,7 @@ Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and
 |---|---|---|---|
 | 1 | v6-00 square lights (worktree `v6-square-lights`, port 8173), v6-01 harness trimmed (worktree `v6-harness`, port 8172) | Sonnet each; v6-00 to Opus if it fails once | Light sources draw as flat squares in Firefox, Safari and iOS Safari (Chrome is clean): the one thing wrong on a shared link. v6-01 builds only `pop-test`'s switch gate, `pair-diff` and the wood pan with the frame cap off. |
 | 2 | v6-04 trees, v6-05 ground | Opus, together | The near switches a walker sees in the first minute (trees at 24–36 m, grass at 60 m, reeds at 50 m), time-boxed to bar item 4. |
-| 3, only if earned | v6-02 finish pass | Opus | Only if v6-01's uncapped run puts the post chain at 40% or more of a GPU-bound frame; if not, it is skipped and this line says so. |
+| 3, earned | v6-02 finish pass | Opus | v6-01's uncapped wood pan (`shots/perf/v6-01-uncapped-medium.json`) puts bloom + grade + output at 43% of the GPU timer sum (57% in the vsynced run), over the 40% line, so it runs. The timers still sum to about 4× the real frame, so the share, not the milliseconds, is what v6-02 is measured against. |
 | release | curate `shots/wip`, `RELEASES.md` v6 entry, merge to `main` | | Then v7, the living. |
 
 **Deferred, briefs on disk:** v6-03 shadow box, v6-06 fauna, v6-07 slots and dt, v6-08 AA and the image (antialiasing is not wanted before v7 is out), v6-09 the hardware table. They come back as a polish batch after v7, or sooner if a visitor names one. The survey and catalogue below stay as the record for that.
