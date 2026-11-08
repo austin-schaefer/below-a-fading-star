@@ -125,44 +125,22 @@ for (let i = 0; i <= N; i++) {
   T_PH[i] = ((az + Math.PI) / TAU) * SPURS + 0.8 * ring(az, 3.0, 31.7);
   T_SW[i] = saddleWeight(az);
 }
-// --- v5 study: the mountains' candidate profiles (begin). ?mountains=a|b|c swaps the main wall's form for one of
-// three candidates (wilderness-mountains-study.md); no flag, or ?mountains=v4, keeps the walls above exactly. Each
-// candidate is one organic barrier instead of a wall: a crest that rolls between massifs and cols through a periodic
-// spline over bearing (control points below; the named peaks become broad crowns on it, not spikes), a face whose
-// mean slope follows the crest's height (gentle under the cols, steeper under the massifs, never a continuous cliff),
-// the old pinnacles kept only as texture (amplitude under half, wavelength about double), buttresses and bedding only
-// where a face is steep. Every candidate keeps the sun's saddle (the lowest col), AM's seats, the glacier's notch,
-// the fall's wall, AP's merlons, walkLimit and M_START. The far ranges follow the same form, smoothed and lower in
-// the picture, so they show over the cols and the low shoulders.
-//   a, the rolling range: crest 120-260 m on five long waves, cols at 180 and 328 (floors ~75 m), foothills for a front range;
-//   b, the shouldered range: a, with four spurs running down to toes at r ~310 and no front range;
-//   c, the massifs: five massifs 220-300 m, cols at 112, 180 and 328 (floors ~50 m), scree at the feet.
+// --- the massifs (begin). The main wall's form: five massifs with deep cols between them (the header). ?mountains=v4
+// builds the v4 wall instead (applyV4 and the far ranges' v4 crest below), for comparison. The crest rolls between
+// massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
+// it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
 const PROFILE = (() => {
   const v = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mountains') : null;
-  return v === 'a' || v === 'b' || v === 'c' ? v : 'v4';
+  return v === 'v4' ? 'v4' : 'c';
 })();
-const CANDIDATES = {
-  a: {
-    // [bearing, crest height above the floor]; the saddle's gate (237-263) is the saddle's own
-    crest: [[0, 165], [35, 215], [72, 235], [100, 200], [122, 160], [140, 180], [162, 215], [172, 150], [180, 75], [188, 150],
-      [200, 200], [222, 170], [236, 150], [250, 140], [264, 160], [276, 225], [288, 250], [306, 225], [318, 150], [328, 75], [338, 150], [348, 200]],
-    peaks: 0.45, slope: [30, 48], foothills: true, spurs: [], talus: 10, far: [0.74, 0.84],
-  },
-  b: {
-    crest: [[0, 165], [35, 215], [72, 235], [100, 200], [122, 160], [140, 180], [162, 215], [172, 150], [180, 75], [188, 150],
-      [200, 200], [222, 170], [236, 150], [250, 140], [264, 160], [276, 225], [288, 250], [306, 225], [318, 150], [328, 75], [338, 150], [348, 200]],
-    peaks: 0.45, slope: [30, 48], foothills: false, talus: 10, far: [0.74, 0.84],
-    // the spurs: [bearing at the crest, bearing at the toe, the toe's radius, height where the spur leaves the crest]
-    spurs: [[110, 116, 312, 150], [166, 160, 308, 160], [208, 203, 306, 150], [308, 314, 312, 160]],
-  },
-  c: {
-    crest: [[8, 190], [20, 210], [45, 255], [72, 270], [94, 240], [104, 140], [112, 52], [120, 140], [132, 225], [150, 275],
-      [165, 285], [173, 150], [180, 50], [187, 150], [200, 270], [218, 250], [236, 170], [250, 150], [264, 180], [278, 285], [292, 300], [308, 270],
-      [320, 150], [328, 50], [336, 160], [346, 270], [356, 240]],
-    peaks: 0.35, slope: [28, 52], foothills: false, spurs: [], talus: 18, far: [0.6, 0.7],
-  },
-};
-const CAND = CANDIDATES[PROFILE] || null;
+const CAND = PROFILE === 'c' ? {
+  // [bearing, crest height above the floor]; the saddle's gate (237-263) is the saddle's own. The cols: 112° (east),
+  // 180° (south-east), 328° (north-west); the sun's saddle at 250° stays the lowest point of the circuit.
+  crest: [[8, 190], [20, 210], [45, 255], [72, 270], [94, 240], [104, 140], [112, 52], [120, 140], [132, 225], [150, 275],
+    [165, 285], [173, 150], [180, 50], [187, 150], [200, 270], [218, 250], [236, 170], [250, 150], [264, 180], [278, 285], [292, 300], [308, 270],
+    [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
+  peaks: 0.35, slope: [28, 52], talus: 18, far: [0.6, 0.7],
+} : null;
 // a periodic Catmull-Rom spline through [bearing, value] points
 function splineAt(pts, b) {
   const n = pts.length;
@@ -187,7 +165,7 @@ function crownAt(bearing, k) {
   }
   return add;
 }
-const T_FE = new Float32Array(N + 1); // candidates: the far ranges' elevation (degrees from the centre), the crest's smoothed
+const T_FE = new Float32Array(N + 1); // the massifs: the far ranges' elevation (degrees from the centre), the crest's smoothed
 if (CAND) {
   const el = new Float32Array(N + 1);
   for (let i = 0; i <= N; i++) {
@@ -198,8 +176,7 @@ if (CAND) {
     // the crest stands out where it is high, so the high massifs keep a long face; held inside the terrain's square
     const edge = 500 / Math.max(Math.abs(Math.cos(az)), Math.abs(Math.sin(az)));
     T_CR[i] = lerp(clamp(452 + 0.3 * (T_CH[i] - 150) + 12 * ring(az, 1.6, 3.1), 440, edge - 22), 476, vig);
-    T_FR[i] = 352 + 14 * ring(az, 2.2, 21.1);
-    T_FH[i] = CAND.foothills ? (30 + 14 * ring(az, 3.0, 23.9)) * smoothstep(0.05, 0.45, ring(az, 1.9, 25.3)) : 0;
+    T_FH[i] = 0; // no front range before the massifs
     el[i] = Math.atan2(T_CS[i], T_CR[i]) / D2R;
   }
   // the far ranges see the crest smoothed over ±24°: the same rolls, without the cols
@@ -208,7 +185,7 @@ if (CAND) {
   let norm = 0; for (let k = -W; k <= W; k += 4) norm += 1 - Math.abs(k) / (W + 4);
   for (let i = 0; i <= N; i++) T_FE[i] = acc[i] / norm;
 }
-// --- v5 study: the mountains' candidate profiles (end; applyCandidate and the far ranges' hook below)
+// --- the massifs (end; applyCandidate and the far ranges' hook below)
 // --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 45 m, less wear)
 for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
   const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
@@ -244,7 +221,7 @@ const FALL_AZ = Math.atan2(258, 208);
 // mask and its own surface, from terrain.js) cuts through every tier of the walls as before.
 export function applyMountains(h, x, z, r, g, glacierH) {
   if (r < M_START) return h;
-  if (CAND) return applyCandidate(h, x, z, r, g, glacierH); // v5 study: the candidate profiles
+  if (CAND) return applyCandidate(h, x, z, r, g, glacierH); // the massifs; below, the v4 wall (?mountains=v4)
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
@@ -319,10 +296,8 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   return seatHeights(h + m, x, z);
 }
 
-// --- v5 study: the mountains' candidate profiles (begin): the heightfield for ?mountains=a|b|c (see the tables'
-// block). The face: from a foot set by the crest's height and the mean slope that height asks for (CAND.slope, from
-// the cols' to the massifs'), a long concave toe, a steeper middle and a convex shoulder rounding over the crest.
-const SPUR_W = 22; // a spur's half-width at its toe (m); it broadens as it climbs
+// --- the massifs (begin): the heightfield (see the tables' block). The face: from a foot set by the crest's height
+// and the mean slope that height asks for (CAND.slope, from the cols' to the massifs'), a long concave toe, a steeper middle and a convex shoulder rounding over the crest.
 function applyCandidate(h, x, z, r, g, glacierH) {
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
@@ -360,24 +335,6 @@ function applyCandidate(h, x, z, r, g, glacierH) {
     const q = (m + dip) / st, qf = Math.floor(q), t = q - qf;
     m = lerp(m, (qf + t * t * t) * st - dip, 0.4 * face);
   }
-  // a: the front range as foothills, rounded and broken
-  if (B.fh > 0.5) {
-    const d = Math.abs(r - B.fr);
-    if (d < 58) m = smax(m, B.fh * (0.5 + 0.5 * Math.cos((d / 58) * Math.PI)) * (0.8 + 0.35 * S.fbm2(x * 0.012 + 9, z * 0.012 + 1, 3)), 10);
-  }
-  // b: the spurs, long ridges leaving the crest and running down into the floor, their toes rounded
-  for (const [bc, bt, rt, ht] of CAND.spurs) {
-    if (r < rt - 30) continue;
-    const t = clamp((r - rt) / (Rc - 40 - rt), 0, 1);
-    const ab = (lerp(bt, bc, Math.pow(t, 0.8)) - 90) * D2R + 0.04 * S.noise2(r * 0.01, bc);
-    const d = Math.abs(angDiff(az, ab)) * r;
-    const hs = ht * Math.pow(t, 1.35) + 4 * smoothstep(rt - 30, rt, r);
-    const w = SPUR_W + 0.55 * hs;
-    if (d < w) {
-      const c = Math.pow(1 - (d / w) * (d / w), 1.5) * (0.92 + 0.12 * S.fbm2(x * 0.02, z * 0.02, 2));
-      m = smax(m, hs * c, 12);
-    }
-  }
   // talus: scree at the foot, heavier under the steep faces
   m = smax(m, CAND.talus * (0.4 + 0.6 * steep) * (0.6 + 0.4 * S.fbm2(x * 0.03, z * 0.03, 2)) * smoothstep(foot - 40, foot + 20, r) * (1 - smoothstep(foot + 30, foot + 70, r)), 5);
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
@@ -404,7 +361,7 @@ function applyCandidate(h, x, z, r, g, glacierH) {
   if (g > 0) m = lerp(m, glacierH, g);
   return seatHeights(h + m, x, z);
 }
-// the far ranges for a candidate: the crest's smoothed elevation, scaled down (CAND.far, per tier), so each range
+// the far ranges behind the massifs: the crest's smoothed elevation, scaled down (CAND.far, per tier), so each range
 // stands below the massifs in the picture and above the cols
 function farCrestCand(T, az, out) {
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
@@ -418,8 +375,8 @@ function farCrestCand(T, az, out) {
   out.rc = rc; out.hc = hc;
   return out;
 }
-const FAR_PALE = new THREE.Color('#8e8a99'); // candidates: the far ranges paled toward the haze
-// --- v5 study: the mountains' candidate profiles (end)
+const FAR_PALE = new THREE.Color('#8e8a99'); // the far ranges paled toward the haze
+// --- the massifs (end)
 
 // ---------------------------------------------------------------- the far ranges (tiers 2 and 3)
 // Each far range stands a few degrees higher, seen from the bowl's centre, than the main crest in front of it
@@ -431,7 +388,7 @@ const FAR = [
   { name: 'farthest', rc: 1350, rcv: 80, lift: 5.4, liftv: 2.2, r0: 1080, r1: 1740, floor: 95, full: 11, wall: 22, seed: 67, rows: 30 },
 ];
 function farCrest(T, az, out) {
-  if (CAND) return farCrestCand(T, az, out); // v5 study: the candidate profiles
+  if (CAND) return farCrestCand(T, az, out); // the massifs; below, the v4 far crest
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
   const hs = T_CS[i] + (T_CS[i + 1] - T_CS[i]) * f, rs = T_CR[i] + (T_CR[i + 1] - T_CR[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
@@ -470,7 +427,7 @@ function buildRing(ctx, T) {
       const hc = farCrest(T, az, _fc).hc;
       c.copy(cRock).lerp(cHigh, smoothstep(hc * 0.35, hc * 0.8, y));
       c.lerp(cSnow, smoothstep(hc * 0.85, hc * 1.02, y + 0.08 * hc * S.noise2(pos[k] * 0.01, pos[k + 2] * 0.01)) * (T.name === 'farthest' ? 0.8 : 0.4));
-      if (CAND) c.lerp(FAR_PALE, T.name === 'far' ? 0.3 : 0.5); // v5 study: the candidates' far ranges, paler
+      if (CAND) c.lerp(FAR_PALE, T.name === 'far' ? 0.3 : 0.5); // the massifs' far ranges, paler
       col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
       k += 3;
     }
