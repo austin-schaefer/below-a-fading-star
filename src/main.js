@@ -13,6 +13,7 @@ import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
+import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
 import { buildMountains } from './v4/mountains.js';
@@ -233,6 +234,12 @@ async function start() {
     sunLight.shadow.mapSize.set(sm, sm); sunLight.shadow.map?.dispose(); sunLight.shadow.map = null;
     ctx.shadowCadence.setTexel(shadowTexel); renderer.shadowMap.needsUpdate = true;
   };
+  // Every geometry and texture goes to the GPU here, behind the title card (warmup.js); ?warmup=0 leaves
+  // each to its first draw. ?perf=1 logs what it uploaded and what it cost.
+  if (url.searchParams.get('warmup') !== '0') {
+    const w = warmUp(ctx);
+    if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
+  }
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it

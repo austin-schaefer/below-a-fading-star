@@ -45,7 +45,7 @@ Headless Metal timings are not Austin's laptop's. Every number below is a count 
 
 Each artefact is tagged:
 
-- **[done in v5]**: a fix branch is merged;
+- **[done in v5]**, **[done in v7]**: a fix branch is merged;
 - **[cheap]**: a few lines and a test;
 - **[structural]**: a new mechanism;
 - **[needs Austin's eye]**: whether it is visible at all, or the fix's trade, is his call.
@@ -135,7 +135,8 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
     - *With the fix:* 2 programs in the bench, 5 on the wood route, 3 in the pan.
     - **Left over:** the shadow pass's `depth` programs, compiled when a caster first enters the shadow box (wood route, causeway, Span, keep), and a pair of `basic` programs created by something that appears a few seconds after load in every run.
     - The fix's `compileAsync` compiles the main pass only. **[cheap]**
-20. **First-sight geometry and texture uploads.** **[cheap]**
+20. **First-sight geometry and texture uploads.** **[done in v7]**
+    - *Done:* `src/warmup.js` draws the scene once behind the title card, every object shown and unculled, into a 4×4 corner of the scene buffer with the shadow map, and `initTexture`s every material's textures (≈250 geometries, 20 textures, 8 shadow-depth programs, 100–150 ms headless); the fish rings' per-ring colour exists from the build (`fauna/small.js`), which was the late pair of `basic` programs. `pan-test` runs a second station at (−195, 128) through yaw 3.5–3.9 and fails on any compile or upload while turning. `?warmup=0` turns it off.
     - **This is the hitch the shader fix did not remove.** In the same 12 s pan, 74 geometries and 7 textures are uploaded on first draw (159 → 233, 26 → 33).
     - The worst frames of the pan with the fix are 44–88 ms, ×20–40 the median CPU, all at yaw 3.5–3.9, where the Great Span and its kit textures enter the view. The bench has 84 first-sight geometries and 6 textures.
     - Three uploads a buffer or a texture only when it is first drawn.
