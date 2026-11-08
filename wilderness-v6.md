@@ -1,6 +1,6 @@
 # Wilderness v6: performance and visible artefacts
 
-Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). The milestones were numbered the other way round until 16:10 on 2026-11-08; MORNING.md entries before then used the old numbers and were renumbered. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
+Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). The milestones were numbered the other way round until 10:04 on 2026-11-08; MORNING.md entries before then used the old numbers and were renumbered. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
 
 Three of the artefacts Austin reported this morning are already fixed and merged, so v6 does not plan them again:
 
