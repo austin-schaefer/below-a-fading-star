@@ -17,7 +17,7 @@ Verify: every number in the table traces to a field in a named file (put the fil
 
 Rules (binding): never touch `design/`; never `--no-verify`; never delete or overwrite a render or a perf file; no game content; numbers from Austin's machine only (headless numbers are not hardware numbers; quote them only as ratios and say so); docs in the present tense.
 
-Setup and pace: read-only apart from `wilderness-v6.md`; no browser (README.md "Working here as an agent": a read-only agent with no browser does not count toward the four). Model: Sonnet.
+Setup and pace: read-only apart from `wilderness-v6.md`; no browser (the `wilderness` skill: a read-only agent with no browser does not count toward the four). Model: Sonnet.
 
 Finish: commit (`docs(wilderness): v6 hardware table and Austin's pairs (v6-09)`), `git fetch origin && git merge origin/claude/intelligent-mendel-ca020e`, `git push -u origin v6-table`. No merge, no PR.
 

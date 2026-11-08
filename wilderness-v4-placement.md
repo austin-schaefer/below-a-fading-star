@@ -271,7 +271,7 @@ Coherence agent viewpoints: spawn (6, 36); the causeway at (−65, 12); the Span
 | DM The Link-Boy | waits at the Lynchets' east wall (−165, −105); walks P1–P17 | — | NW, then everywhere | moved with the Lynchets from (−80, 0); one real point light |
 | DP The Luminous Reach | the river from the Speculum (208, 258) to the mouth (134, 211) and into the fen | the river | SE | "a thread from the fall to the fen", through the Saltings at the mouth |
 
-## 6. Conflicts and open questions (for MORNING.md)
+## 6. Conflicts and open questions
 
 **Questions for Austin:**
 
@@ -298,10 +298,10 @@ Coherence agent viewpoints: spawn (6, 36); the causeway at (−65, 12); the Span
 
 16. v4 says the causeway "comes down and east" from the colossi to the Armiger's Tower, but the tower (−250, −135) lies 250 m north of the saddle (bearing 250°); the road runs north.
 17. The run lists the v5 wonders without BG, although v4's picks include it; BG is placed in v4 with the Span.
-18. MORNING.md calls this file `wilderness-v5-placement.md`; the run calls it `wilderness-v4-placement.md`.
+18. An earlier log called this file `wilderness-v5-placement.md`; it is `wilderness-v4-placement.md`.
 19. `?bench=1` walks `CAUSEWAY` from index 0 (`perf.js`). The new polyline starts at the saddle, so the bench path changes unless perf.js pins the old vertices; the systems agent pins them so that bench numbers stay comparable with v3.
 
-**Answers taken overnight by the orchestrator (2026-11-08, logged in MORNING.md; Austin can reverse any of them):**
+**Answers taken overnight by the orchestrator (2026-11-08; Austin can reverse any of them):**
 
 1. The colossi crawl **toward the sun**, soles to the bowl; the road starts between their feet.
 2. **Yes**: the systems agent extends the walkable floor in a wedge through the saddle only, out to the road's start at r 366.
@@ -311,7 +311,7 @@ Coherence agent viewpoints: spawn (6, 36); the causeway at (−65, 12); the Span
 6. The Demesne and the Strandline get **no Tincture**; their air stays neutral, as the brief leaves it.
 7. The Arcature's-top sightline moves **to the causeway at (−40, 22)**, 30 m from spawn, so the keep recast is not constrained; spawn keeps its view west to the sun.
 
-Of the contradictions: the road follows the geometry (north from the saddle, then east); BG ships in v4 with the Span; MORNING.md's name for this file is corrected; the Plinth Road ends at the wall's foot; `perf.js` pins the old causeway vertices for the bench.
+Of the contradictions: the road follows the geometry (north from the saddle, then east); BG ships in v4 with the Span; the log's name for this file is corrected; the Plinth Road ends at the wall's foot; `perf.js` pins the old causeway vertices for the bench.
 
 ## 7. Sector check
 

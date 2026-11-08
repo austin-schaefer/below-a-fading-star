@@ -1,25 +1,15 @@
 # v6, nothing pops: the briefs
 
-## Slim v6 (decided 11:14 PST, 2026-11-08, after Austin's clean measurement)
+## The current plan
 
-Austin's clean wood pan (`shots/perf/laptop-wood-pan-clean-2026-11-08.json`: laptop, Chrome, medium, 1920×1117 at pixel ratio 1.0, no agent on the GPU) is a steady 60 fps: 1500 frames, median 16.7 ms, p99 17.5, one 33 ms frame, 0 frames over 2× the median, 0 pixel-ratio steps, 3 dynamic shadow redraws in 25 s. Bar items 1 and 2 are met before v6 starts, and the phone (iPhone, Safari, production) "seems fine". Austin: "i don't wanna have a gigantic long milestone if performance is basically fine". So v6 is cut to what a visitor would notice, and the rest of this file is kept as the catalogue for later:
+v6 runs slim: three batches, then release. The plan, its state and what is deferred are in `wilderness-v6.md` "Status"; the rest of this file is the full dispatch catalogue it draws on.
 
-| Batch | Brief | Model | Why it stays |
-|---|---|---|---|
-| 1 | **v6-00** `brief-v6-00-square-lights.md` (new) | Sonnet; Opus if it fails once | Light sources draw as flat squares in Firefox, Safari and iOS Safari, in production today. Chrome alone is fine. First because it is the one thing wrong on a shared link. |
-| 1 | **v6-01** harness, trimmed | Sonnet | Only `pop-test`'s switch gate and `pair-diff` (bar item 4's measure), plus one question: run the wood pan with the frame cap off (`?cap=0` if `src/perf.js` has it; otherwise `bench=1`) so the GPU timers are read against a real GPU-bound frame. The clean sample's GPU timers sum to 29.8 ms a frame at a steady 16.7 ms frame, so the pass figures (output 7.7, grade 7.5, bloom 5.4, render 8.8 median) are shares, not costs; the output pass almost certainly carries the vsync wait. Drop the per-module counters and `alloc-audit` unless they fall out for free. |
-| 2 | **v6-04** trees and **v6-05** ground | Opus, together | The near switches a walker sees in the first minute from spawn (tree near switch at 24–36 m, grass at 60 m, reeds at 50 m): the pops the milestone is named for. Time-boxed to the switches in bar item 4. |
-| 3, conditional | **v6-02** finish pass | Opus | Only if v6-01's uncapped run shows the post chain at 40% or more of a GPU-bound frame. If it is under, skip it and say so in MORNING.md. |
-| release | `RELEASES.md` v6 entry, curate `shots/wip`, merge to main | | Then v7, the living. |
-
-Deferred, not dropped (their briefs stay on disk): v6-03 shadow box and cadence (the pan showed 3 dynamic redraws in 25 s and no swim complaint), v6-06 fauna, v6-07 slots and dt, v6-08 AA / the step's reallocation / bloom shimmer / banding, v6-09 the hardware table. They come back as a polish batch after v7 if Austin wants them, or sooner if a visitor names one.
-
-Written 2026-11-08 from `wilderness-v6.md` (the survey, 35 pictures in `shots/wip/v6-00-survey-*`, targets, six stages, rules, open questions), Austin's instruction (14:50: "i want to share with folks but currently performance is too poor to share"; open calls at the defaults, logged), `wilderness-v3.md`, `README.md`, the pace rules (now README.md "Working here as an agent"), `MORNING.md` 12:05–15:10, the laptop samples in `shots/perf/laptop-wood-*.json`, and the code at `aaa42e1` (deploy worktree) plus `fix-dpr-steps` at `0a5a739`. Ordered so what Austin feels most on his laptop lands first: the post chain (bloom 6.5 + grade 3.1 + output 3.2 = 12.8 of 26.7 ms GPU), the shadow pass during turns, the LOD and chunk pops, then the rest.
+Written 2026-11-08 from `wilderness-v6.md` (the survey, 35 pictures in `shots/wip/v6-00-survey-*`, targets, six stages, rules, open questions), Austin's instruction ("i want to share with folks but currently performance is too poor to share"; open calls at the defaults), `wilderness-v3.md`, the `wilderness` skill, the laptop samples in `shots/perf/laptop-wood-*.json`, and the code at `aaa42e1` (deploy worktree) plus `fix-dpr-steps` at `0a5a739`. Ordered so what Austin feels most on his laptop lands first: the post chain (bloom 6.5 + grade 3.1 + output 3.2 = 12.8 of 26.7 ms GPU), the shadow pass during turns, the LOD and chunk pops, then the rest.
 
 ## What is already done and not re-briefed
 
 - **Stage 5, nearly all:** uploads and compiles behind the title card (`src/warmup.js`, the precompile, every caster's depth variant), the late `basic` pair (the fish rings), `pan-test`'s second station (−195, 128). Left: the one dt (→ v6-07). CI does not run browser tests here, so "the counts in CI" becomes pop-test's `uploads` group in the orchestrator's per-batch suite.
-- **Stage 4, the pixel-ratio policy:** `fix-dpr-steps` `0a5a739` (integrated GPUs start at 1.0, no step during motion, 20 s holds, stalls left out, the step on a steady frame after a redraw). **In flight on the same branch:** the shadow map's turning cadence yields to the frame budget. Left: the step without reallocation (→ v6-08), the box, the slots, AA.
+- **Stage 4, the pixel-ratio policy:** `fix-dpr-steps` `0a5a739` (integrated GPUs start at 1.0, no step during motion, 20 s holds, stalls left out, the step on a steady frame after a redraw). **Also landed in it:** the shadow map's turning cadence yields to the frame budget. Left: the step without reallocation (→ v6-08), the box, the slots, AA.
 - **`?record=<s>`** merged (15:10): the laptop measurement is one URL.
 - Before v6: the tree LOD turning fix, the stair hop, the wood hitch's compiles.
 
@@ -44,7 +34,7 @@ How the six stages map: stage 1 → v6-01; stage 2 → v6-04 (trees, fungi, silh
 0. **Before anything:** `fix-dpr-steps` merged with both commits. Austin's clean baseline (below), taken in the 30-minute hold after the v5 notification, with no agent browser on his GPU.
 1. **Batch 1: v6-01 alone.** Every later brief reads its counters, sequences and `pair-diff`; it touches one line in a dozen modules.
 2. **Batch 2: v6-02 alone** (`src/post.js`, `src/perf.js`, the post chain). It also writes `src/fade.js`, which batch 3's three agents all need, so they can run at once.
-3. **Batch 3: v6-03, v6-04, v6-05** (three Opus). Disjoint files apart from `src/main.js` (v6-03 only, the lead lines) and pop-test rows. **The share-ready bar should be met here**: the orchestrator flips the `pacing` row to gated, asks Austin for the laptop runs, and if the bar holds, ships what has landed as **v7a** (the run's mid-stage rule) so he can share it.
+3. **Batch 3: v6-03, v6-04, v6-05** (three Opus). Disjoint files apart from `src/main.js` (v6-03 only, the lead lines) and pop-test rows. **The share-ready bar should be met here**: the orchestrator flips the `pacing` row to gated, asks Austin for the laptop runs, and if the bar holds, ships what has landed to `main` early so he can share it.
 4. **Batch 4: v6-06, v6-07** (Opus + Sonnet). Both touch `src/main.js`: `runUpdates` (v6-06) and the dt line in `frame()` (v6-07), separate hunks.
 5. **Batch 5: v6-08 alone** (the post chain again: `post.js`, `tier.js`, `perf.js`).
 6. **v6-09** (read-only, no browser) after the last laptop run; then curate, `RELEASES.md`, release **v6**.
@@ -60,7 +50,7 @@ Dependencies: everything after v6-01 needs `pop-test`/`pair-diff`; v6-03, v6-04,
 - `src/fade.js`: written by v6-02; v6-04 and v6-05 may each add a missing helper in a separate commit in the same batch: on merge, keep both, then run pop-test `--only=fade`.
 - `tools/pop-test.mjs`: every brief flips its own rows to `gate: true` and may add checks in its group; keep-both merges, then run `pop-test --only=uploads` once to see the table parses.
 - Shader program keys: v6-03's shadow-chunk patch changes every lit program; v6-04, v6-05, v6-06 add fade variants. Each runs pop-test `uploads` and `pan-test` (zero compiles while turning); the orchestrator runs both after merging the batch, since two agents' variants can collide in `customProgramCacheKey`.
-- `README.md` "The v6 switches:" sentence (started by v6-01, appended by every brief): keep-both merges doubled 18 segments of the URL-params line once already; resolve by hand and grep for duplicates after each merge.
+- The "The v6 switches" group in `.agents/skills/wilderness/runtime.md`'s URL params (started by v6-01, appended by every brief): keep-both merges doubled 18 segments of the URL-params line once already; resolve by hand and grep for duplicates after each merge.
 - `wilderness-v6.md` `## Results` (one subsection per brief, appended in brief order) and the catalogue's `[done in v6]` marks.
 - `src/vegetation/trees.js`: v6-01 (two counter lines), v6-04 (everything, fungi included).
 - `src/vegetation/plants.js`, `src/rocks.js`: v6-01 (counter lines), v6-05.
@@ -89,7 +79,7 @@ Needed to reach it: **v6-01** (measures 4), **v6-02** (3, and most of 1 and 2), 
 | The stall's mouse look (stage 5's "capped") | Carried over the next frames at the steady look rate, not capped, so no hand travel is lost and nothing jumps. | v6-07 | `?dt=v3` |
 | Bloom's mips on integrated GPUs | Not lowered unless the finish pass and the low-res rays miss the post target; then four mips or `bloomres` 0.375 inside a 1% tolerance, flagged for Austin's eye. | v6-02 | `?bloommips=5`, `?bloomres=0.5` |
 
-Log each row in `MORNING.md` when its brief merges.
+Each default is written into the commit message that carries it.
 
 ## What needs Austin's laptop
 

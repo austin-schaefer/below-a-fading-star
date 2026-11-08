@@ -1,6 +1,6 @@
 # v7, the living: the briefs
 
-Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the picks and Austin's notes), `IDEAS-v5.md`, `wilderness-v4-placement.md` section 5 "### v7, the living" and section 7, `MORNING.md` 12:30, and the code at `8afd02b` (deploy worktree) plus `origin/v5-lights`. Eighteen things: the nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif. Six figure agents of three each, a prep agent before them and the audio pass after.
+Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the picks and Austin's notes), `IDEAS-v5.md`, `wilderness-v4-placement.md` section 5 "### v7, the living" and section 7, and the code at `8afd02b` (deploy worktree) plus `origin/v5-lights`. Eighteen things: the nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif. Six figure agents of three each, a prep agent before them and the audio pass after.
 
 ## Austin's words for v7 (from the run plan, 2026-11-08; the plan file is gone)
 
@@ -10,7 +10,7 @@ Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the p
 
 | Brief | Worktree / branch | Model | What | Region / sector | Why together | Shared files it touches |
 |---|---|---|---|---|---|---|
-| `brief-v7-00-prep.md` | `v7-prep` | Sonnet | SITES keys for all eighteen; `shadows.js` treats `living-*` modules as dynamic casters; the `## v7, the living` heading; README's "The v7 living:" sentence; a main.js comment | — | the lines every other agent would otherwise fight over | `src/world.js`, `src/shadows.js`, `src/main.js`, `wilderness-v5.md`, `README.md` |
+| `brief-v7-00-prep.md` | `v7-prep` | Sonnet | SITES keys for all eighteen; `shadows.js` treats `living-*` modules as dynamic casters; the `## v7, the living` heading; `runtime.md`'s "The v7 living" group; a main.js comment | — | the lines every other agent would otherwise fight over | `src/world.js`, `src/shadows.js`, `src/main.js`, `wilderness-v5.md`, `README.md` |
 | `brief-v7-01-walkers.md` | `v7-walkers` | Opus | CD the Little Thurifer, CG the Leerie, DM the Link-Boy, and the one walking rig | NW/W (P3, P4), NE/E (K1), then every lead | the three that walk (gaits, lead-following, state machines), two carrying flame; the only new real light | `src/main.js`, `src/v5/lights.js` (only if its Leerie hook lacks something), `src/v4/regions/lynchets.js` (one line: wall runs), README, wilderness-v5.md |
 | `brief-v7-02-workers.md` | `v7-workers` | Opus | BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One | W (Adust), SW (Strandline), S (south moor) | people at a task, each with one armed reaction (state machines); the Sexton cuts the terrain mesh | `src/main.js`, `src/rocks.js` and `src/vegetation/ground.js` (one `sextonClear` read each), the terrain mesh's index (runtime, like the Nave), README, wilderness-v5.md |
 | `brief-v7-03-still.md` | `v7-still` | Sonnet | CB the Long Sleeper, CI the Stylite, CL the Accrescent and his trail | NE (Bletting), E (High Ling), N (Outwash) | the three that barely move: one slow motion each, no gait | `src/main.js`, `src/rocks.js` / `src/vegetation/ground.js` (one clearance read, only if needed), README, wilderness-v5.md |
@@ -25,9 +25,9 @@ Note on the figure precedents: the Long Figure (`src/v4/dressing/figure.js`) is 
 
 ## Dispatch order and dependencies
 
-0. **Before anything: `v5-lights` merged with the Leerie rework** (`MORNING.md` 12:30: the row unlit always, lit in a half-second wave in the gutter, out with a 2 s afterglow at its end, "a hook for v7's figure"). `origin/v5-lights` as fetched still has the walk-lit rule (`b1f417d`); the rework was in flight. v7-01 depends on it; nothing else does.
+0. **Before anything: `v5-lights` merged with the Leerie rework** (`wilderness-v5.md` "The local lights": the row unlit always, lit in a half-second wave in the gutter, out with a 2 s afterglow at its end, "a hook for v7's figure"). `origin/v5-lights` as fetched still has the walk-lit rule (`b1f417d`); the rework was in flight. v7-01 depends on it; nothing else does.
 1. **v7-00 prep** (Sonnet, alone, minutes). Every other brief checks for its keys and stops if they are missing. The orchestrator can do these five edits inline instead if it prefers; the brief is the spec either way.
-2. **Batch A, four at once** (HANDOFF: four agents at most): **v7-01 walkers**, **v7-02 workers**, **v7-04 glyphs**, **v7-06 canyon**. The four long Opus jobs, in four separate sectors and file sets.
+2. **Batch A, four at once** (the `wilderness` skill: four agents at most): **v7-01 walkers**, **v7-02 workers**, **v7-04 glyphs**, **v7-06 canyon**. The four long Opus jobs, in four separate sectors and file sets.
 3. **Batch B, as slots free:** **v7-05 small** (Opus; must land before v7-07 because it owns the footstep refactor in `audio.js`), **v7-03 still** (Sonnet).
 4. **v7-07 audio**, alone, after all six have merged.
 5. Curate `shots/wip/`, `RELEASES.md`, release **v7**.
@@ -37,7 +37,7 @@ Merge order inside a batch does not matter except: v7-04 and v7-03 both read the
 ## Shared-file hot spots (each brief already warns its agent)
 
 - `src/main.js`: one module line per group after v7-prep's comment; six adjacent-line merges. Keep-both resolution, in brief order.
-- `README.md`: the module table (six rows) and the one "The v7 living:" URL-params sentence (six appends). The 12:30 log shows keep-both merges already doubled 18 segments of that line once: resolve by hand and grep for duplicates after each merge.
+- `.agents/skills/wilderness/modules.md` (six rows) and the one "The v7 living" group in `.agents/skills/wilderness/runtime.md`'s URL params (six appends). Keep-both merges have already doubled 18 segments of that line once: resolve by hand and grep for duplicates after each merge.
 - `wilderness-v5.md` `## v7, the living`: six agents appending sections; keep-both, in brief order.
 - `src/world.js` SITES: v7-prep writes all keys once; no other agent touches it. Checked: nothing in `src/` or `tools/` iterates `SITES` (the slinker's `SITES` is a local array), so the new keys move nothing. Its numbers must match `src/v4/paths/routes.js` `AVOID` (the leads were routed round them); neither changes alone.
 - `src/shadows.js` line 30: v7-prep's `living-*` rule; module names must start with `living-` or their shadows lag (v7-prep makes this one edit so no figure agent does).
@@ -51,7 +51,7 @@ Merge order inside a batch does not matter except: v7-04 and v7-03 both read the
 
 ## Design gaps (questions, each with the default the briefs use)
 
-The briefs build the default; the orchestrator logs each in `MORNING.md` so Austin can reverse it. The first three change the most.
+The briefs build the default: each is decided at the default; the commit that carries it says so. The first three change the most.
 
 1. **The Link-Boy across P1–P17: one figure, or one per lead, and how does he "meet you"?** The idea: he "meets you on the lead paths ... and walks ahead"; the plan: "waits at the Lynchets' east wall (−165, −105); walks P1–P17". *Default:* one figure for the map. He waits at his post on P4; when you are on, or heading for the end of, any path lead (not rivulets, not K1), he is placed just off that end, or 10 m ahead of you on it, only while the spot is out of view and at least 40 m off; within 12 m he walks ahead to the lead's far end, stands aside, walks back, and returns unseen to his post. One lead at a time, each at most once in 5 minutes.
 2. **The Link-Boy's moving shadows: real or drawn?** The idea keeps the point light "for its moving shadows"; here a point light casts none, and a shadow-casting light would recompile every lit shader or add a shadow pass everywhere (the Kept Fire agent's finding). *Default:* drawn: a ground disc round him while he walks, with the light's pool swinging with his stride and soft wedges behind the Lynchets' wall runs and boulders within 10 m, plus a sliding noise for the heather. A real shadow-casting light is a later, measured call.
