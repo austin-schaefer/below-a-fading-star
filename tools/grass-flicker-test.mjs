@@ -4,7 +4,7 @@
 // neighbour keep exactly the same number of packed instances of every kind (a chunk that drops out or
 // changes its prefix while you only turn your head is grass popping in and out at your feet).
 // Also reports what the old per-chunk test (box against the frustum, no 3x3 keep) would have done.
-// Usage: node tools/grass-flicker-test.mjs [q=low|high]
+// Usage: node tools/grass-flicker-test.mjs [q=low|high]   (FP_BASE=http://localhost:8141 for another port)
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -15,7 +15,7 @@ const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(`http://localhost:8123/?q=${q}&only=vegetation`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${process.env.FP_BASE || 'http://localhost:8123'}/?q=${q}&only=vegetation`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 const res = await page.evaluate(() => {
   const fp = window.__fp, P = window.__vegPlants, cam = fp.camera, T = fp.THREE;

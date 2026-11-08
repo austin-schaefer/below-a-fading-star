@@ -1,29 +1,26 @@
 # Handoff: flickering spars (Austin's austin-01-wood-spars-flicker.webp)
 
-Status: root cause **not yet found**. No source code has changed.
+Status: **fixed** on `v3-flicker` (`src/vegetation/plants.js`, reedGeo). Wants Austin's eye on his Mac at `?q=high`.
 
-## Where Austin stood
-On the Corpse-Candle Fen's **east** edge, about 9 m north of the dead hollow snag at (143, 158) (a `dead` instance in the trees BatchedMesh, `src/vegetation/trees.js` meshHollow, placed by the fen-edge loop at trees.js:622-627), looking south-south-west (yaw ≈ π−0.28, pitch ≈ 0.25). The "huge forked trunk" is that snag with its two snapped limbs. `shots/wip/flicker-01-before-yaw00.png` (pos 144,149) matches his frame: the snag, the white block on the left, the cliffs, the wet path bottom right.
+## Cause
+The spars are reed seed heads within a metre or two of the eye, at the fen's east edge about 13 m north of the dead hollow snag at (143, 158). The plant vertex shader scales every blade's height, and with it the wind bend, by a hash of the blade's `rand` (`fpBh`, 0.75 to 1.25). Each reed's seed head drew its own `rand` instead of its stem's, so it was scaled to a different height from the stem it was built on: it floated free beside, above or through its stem. Measured over the 223 reeds within 10 m of (144.6, 144.4), by replaying the shader's placement in JS: head-to-stem offset **mean 0.31 m, median 0.25 m, max 1.07 m** before; mean 0.01 m, max 0.026 m after (the residual is the linear interpolation of the curved stem). The stems are hairlines, so a free head reads as a disembodied dark spar, and walking or turning through the bed sweeps those near heads hundreds of pixels a frame with no stem to anchor them: spars popping in and out.
 
-## What the spars probably are
-Dark, blunt-ended rods with a sun-lit edge, near eye height. Best match: **reed seed heads** (`src/vegetation/plants.js` reedGeo, plants.js:135-152: dark brown 5-sided tube, r 0.017, on the tallest stem), seen from under a metre while standing in the reed bed. My frames at 144,149 have no reed close enough to show them that large, so his exact spot was a little different. Not confirmed.
+## Fix
+`blade()` returns its `rnd`; the seed head uses its stem's (`s.rnd`) instead of a fresh `rng()`. It was the last draw in reedGeo, so nothing else moves. Grass seed heads (plants.js grassGeo) and flower florets (flowerGeo) have the same pattern; they are small and were left alone.
 
-## Ruled out, with evidence
-- **Tree batch frustum culling**: the per-geometry bounding spheres the BatchedMesh uses (three r170, copied from each source geometry's `computeBoundingSphere`) contain every vertex of all 75 geometries (worst overshoot 0.000 m); the batch sphere is 360 m. Trees have no vertex sway. Hypothesis 1 does not hold for trees.
-- **Plant chunk culling or packing** at this spot: yaw 0-360° in 2° steps at (144,149), (143,151), (141,147) → reeds/grass/etc within 6 m packed counts constant (reeds 58/45/93). Walking 80 steps of 0.2 m: 0 instances within 4.5 m dropped between steps. Reeds drawn 4929, cap 20000.
-- Frame order: controls update before vegetation (main.js:155, :173), so no one-frame frustum lag.
-
-## Leads not yet checked
-1. Tree LOD (trees.js:659-667): hi, lo and far meshes of one variant are grown from the same rng stream consumed in turn, so they **differ in shape** (meshHollow: `sides` changes how many rng draws the lip takes, so lean and limbs differ between hi and lo; meshSkeleton hi/lo/far likewise). A swap at 24/72 m × lodK changes the silhouette: popping on walking past the threshold, not on turning.
-2. Shadow camera box (main.js:91, :161) clipping tall casters.
-3. Exact spot: find where reed heads sit within ~0.6 m of the eye and sweep yaw there.
-Fen-east frames on Austin's Mac at q=high, turning slowly, would settle whether the reeds or the trees flicker.
+## Ruled out, with evidence (q=high, device pixel ratio 2, Metal)
+- **Tree batch frustum culling**: every geometry's bounding sphere contains all its vertices; the batch sphere is 360 m.
+- **Tree LOD swaps (lead 1)**: `setGeometryIdAt` wrapped and counted over a 3 m walk (61 steps) and a 0.6 rad turn (60 frames) at the spot: 0 swaps. hi, lo and far meshes do differ in shape (meshHollow's lip draws `sides` rng values), but no tree crosses a threshold here.
+- **Shadow box (lead 2)**: re-rendering one pose with the shadow camera moved as for yaw ±0.1 and ±0.3: 0 changed pixels.
+- **Plant chunk culling or packing**: reeds/grass within 3 m change only as instances enter and leave the radius while walking; earlier yaw sweeps gave constant counts.
+- Frame order: controls update before vegetation, so no one-frame frustum lag.
 
 ## Renders (shots/wip/)
-- `flicker-01-cand-byre-{n,e,s,w}.png`, `flicker-01-cand-woodedge-n.png`: candidates, wrong place.
-- `flicker-01-fen-east-from{NE,N,E,NNE}.png`: around the snag; fromN is close to Austin's view.
-- `flicker-01-before-yaw00..02.png`: start of a 2°-step sweep at (144,149), yaw π−16°, π−14°, π−12°. calls 135/135/135, tris 2059642/2054615/2045823. Sweep stopped there; no after renders.
+- `flicker-02-fen-east-t{0,1,2}-{before,after}.png`: (144.6, 144.4), yaw π−0.28, pitch 0.25, wind time 4, 9, 13.5 s; `t3` is (145.17, 142.88) at 9 s.
+- `flicker-02-reed-heads-closeup-before-after.png`: left of t1, before and after: the floating head sits on its stem.
+- `flicker-02-walk-frozen-wind.png`, `flicker-02-walk-parallax-mask.png`: the walk sequence; red marks pixels that change for one 5 cm step only, all of it near-head parallax.
+- `flicker-01-*`: the first pass's candidates and the snag views.
 
-## Tooling notes
-- Port 8126 is held by an unrelated python server; I served on 8141. `tools/views.mjs`, `tools/map.mjs` and `tools/grass-flicker-test.mjs` hardcode port 8123 (grass-flicker-test takes `q`, not a URL).
-- No tests run: walk-test and grass-flicker-test were not run.
+## Tooling
+- `tools/shot.mjs` takes `SHOT_DPR` (device pixel ratio, default 1); `tools/grass-flicker-test.mjs` takes `FP_BASE` (default `http://localhost:8123`).
+- `tools/views.mjs` and `tools/map.mjs` still hardcode port 8123.

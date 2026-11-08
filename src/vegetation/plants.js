@@ -49,7 +49,7 @@ function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, t
     if (s === segs - 1 && tipW === 0) { pg.tri(L[s], R[s], L[s + 1]); break; }
     pg.tri(L[s], R[s], R[s + 1]); pg.tri(L[s], R[s + 1], L[s + 1]);
   }
-  return { dx, dz, lean, h };
+  return { dx, dz, lean, h, rnd };
 }
 
 // Grass cluster: three families in one geometry. The shader shows family sets per instance, so
@@ -139,7 +139,9 @@ function reedGeo(rng) {
     const s = stems[k];
     const at = (t) => [s.x0 + s.dx * s.lean * s.h * t * t, s.h * t * (1 - s.lean * s.lean * 0.35 * t), s.z0 + s.dz * s.lean * s.h * t * t];
     const t0 = 0.72, t1 = 0.9, rr = 0.017, sides = 5;
-    const rnd = rng();
+    // the head shares its stem's rand: the shader scales each blade's height (and so its wind bend)
+    // by a hash of it, and a head with its own rand floated off the stem and swung on its own
+    const rnd = s.rnd;
     const ringAt = (t) => {
       const c = at(t), out = [];
       for (let j = 0; j < sides; j++) {
