@@ -177,6 +177,9 @@ export function regionsHeight(h, x, z) {
 // ground skin the region draws over it (regions/skin.js); heightAt() itself stays exact for walking and placing.
 let COARSE = 0;
 export function setRegionsCoarse(cell) { COARSE = cell || 0; }
+// The boxes of the regions whose height hook takes the coarse pass (a fifth parameter): only there can the mesh sit
+// below heightAt() under a skin, so placement (vegetation/ground.js) asks only there.
+export const COARSE_BOXES = REGION_KEYS.filter((k) => typeof HOOKS[k].height === 'function' && HOOKS[k].height.length >= 5).map((k) => BOX[k]);
 
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('regions') === '1';
 export const REGION_DEBUG_COLORS = {

@@ -605,11 +605,16 @@ export function buildTerrain(ctx) {
 
   const detail = makeDetailTexture();
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0.0 });
+  // one set of uniform objects, shared by every program built from this material (the ground skins compile it again,
+  // v4/regions/skin.js), so a toggle through userData.shader.uniforms reaches them all
+  const uniforms = {
+    uDetail: { value: detail },
+    uBumpFar: { value: BANDS ? 60 : 1e9 },
+    uFineBand: { value: new THREE.Vector2(BANDS ? 90 : 1e9, BANDS ? 120 : 2e9) },
+    uFineMean: { value: new THREE.Vector3(...detail.userData.mean) },
+  };
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uDetail = { value: detail };
-    shader.uniforms.uBumpFar = { value: BANDS ? 60 : 1e9 };
-    shader.uniforms.uFineBand = { value: new THREE.Vector2(BANDS ? 90 : 1e9, BANDS ? 120 : 2e9) };
-    shader.uniforms.uFineMean = { value: new THREE.Vector3(...detail.userData.mean) };
+    Object.assign(shader.uniforms, uniforms);
     mat.userData.shader = shader; // the bands' uniforms, for A/B timing from the console
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying vec3 vGlac;')

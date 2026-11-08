@@ -4,6 +4,8 @@
 import { clamp } from './util.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
+import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
+import { coarseLowering } from '../v4/regions/skin.js';
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
@@ -22,7 +24,12 @@ export function makeGround(ctx) {
 
   // Height on the rendered triangle. PlaneGeometry (rotated -90° about x) puts vertex (ix, iz) at
   // x = ix*step - half, z = iz*step - half, faces (a,b,d) and (b,c,d) with a=(ix,iz) b=(ix,iz+1) c=(ix+1,iz+1) d=(ix+1,iz).
+  // v4 regions: where the coarse pass lowered the mesh under a ground skin (a ha-ha's drop, a berm, a dune), a plant
+  // stands on the skin (heightAt() + its lift), not buried under it on the mesh (regions/skin.js)
+  const lowered = coarseLowering(terrain);
+  function inCoarse(x, z) { for (const b of COARSE_BOXES) if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) return true; return false; }
   function heightAt(x, z) {
+    if (COARSE_BOXES.length && inCoarse(x, z) && lowered(x, z) > 0.02) return terrain.heightAt(x, z) + 0.02;
     const gx = clamp((x + half) / step, 0, segs - 1e-4), gz = clamp((z + half) / step, 0, segs - 1e-4);
     const ix = gx | 0, iz = gz | 0, fx = gx - ix, fz = gz - iz;
     const a = (iz * row + ix) * 3 + 1, b = ((iz + 1) * row + ix) * 3 + 1, c = ((iz + 1) * row + ix + 1) * 3 + 1, d = (iz * row + ix + 1) * 3 + 1;

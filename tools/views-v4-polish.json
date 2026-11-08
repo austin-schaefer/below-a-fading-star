@@ -1,0 +1,12 @@
+[
+ { "name": "polish-skin-strandline-edge", "x": -44, "z": 164, "yaw": 2.3, "pitch": -0.3 },
+ { "name": "polish-skin-strandline-berm", "x": -40, "z": 160, "yaw": 2.6, "pitch": -0.38, "dy": -0.6 },
+ { "name": "polish-skin-demesne-lip", "x": 58, "z": -35, "yaw": 0, "pitch": -0.3 },
+ { "name": "polish-skin-demesne-ditch", "x": 22, "z": -52, "yaw": 3.0, "pitch": -0.15 },
+ { "name": "polish-tarn-bay-from-spit", "x": -55, "z": 148, "yaw": 2.25, "pitch": -0.05 },
+ { "name": "polish-crust-saltings-flat", "x": 172, "z": 128, "yaw": -2.74, "pitch": -0.05 },
+ { "name": "polish-crust-saltings-close", "x": 172, "z": 128, "yaw": -2.74, "pitch": -0.75 },
+ { "name": "polish-glasswort-saltings-creature", "x": 190, "z": 160, "yaw": 0, "pitch": 0,
+   "pre": "const fp=window.__fp;const s=fp.scene.getObjectByName('saltings-crabs');const M=new fp.THREE.Matrix4();s.getMatrixAt(0,M);const p=new fp.THREE.Vector3().setFromMatrixPosition(M);fp.camera.position.set(p.x+0.55,p.y+0.4,p.z+0.55);fp.camera.lookAt(p.x,p.y+0.03,p.z);fp.camera.updateMatrixWorld();" },
+ { "name": "polish-road-map-road-crust", "x": 178, "z": 139, "yaw": -2.692, "pitch": -0.3 }
+]

@@ -25,18 +25,60 @@ export function meshGround(terrain) {
   };
 }
 
+// How far the terrain mesh sits below heightAt() round a point: the most any vertex of its mesh cell was lowered
+// by the coarse pass (or left without fine relief), cached per vertex.
+export function coarseLowering(terrain) {
+  const geo = terrain.mesh.geometry, prm = geo.parameters;
+  const segs = prm.widthSegments, size = prm.width, step = size / segs, half = size / 2, row = segs + 1;
+  const P = geo.attributes.position.array, cache = new Map();
+  const at = (ix, iz) => {
+    const k = iz * row + ix;
+    let v = cache.get(k);
+    if (v === undefined) { v = terrain.heightAt(-half + ix * step, -half + iz * step) - P[k * 3 + 1]; cache.set(k, v); }
+    return v;
+  };
+  return (x, z) => {
+    const ix = Math.min(segs - 1, Math.max(0, Math.floor((x + half) / step))), iz = Math.min(segs - 1, Math.max(0, Math.floor((z + half) / step)));
+    return Math.max(at(ix, iz), at(ix + 1, iz), at(ix, iz + 1), at(ix + 1, iz + 1));
+  };
+}
+
+// Height for placing things where a skin may lie: on the skin (heightAt() plus its lift) where `covers(x, z)` says one
+// is drawn, on the terrain's own triangles elsewhere. Without `covers` (built before the skins), the coarse pass's
+// envelope stands in for it: every skin draws there (buildSkin), and only there is the mesh far below the skin.
+export function skinGround(terrain, covers = null, lift = 0.02) {
+  const mesh = meshGround(terrain), lowered = covers ? null : coarseLowering(terrain);
+  return function heightAt(x, z) {
+    if (covers ? covers(x, z) : lowered(x, z) > 0.02) return terrain.heightAt(x, z) + lift;
+    return mesh(x, z);
+  };
+}
+
 // opts: { name, box: [x0, x1, z0, z1], step, keep(x, z) -> bool (a quad is drawn when its four corners keep),
 //   color(x, z, y, col) (sets the THREE.Color), attr(x, z, y) -> [a, b, c, d] (a vec4 the fragment reads as vSkin),
 //   wet(x, z, y) -> 0..1 (the terrain's wet band), lift (m), frag: GLSL run after the vertex colour (diffuseColor,
 //   vSkin, vTPos, vTNormal in scope), rough: GLSL after the roughness, normal: GLSL after the terrain's normal
 //   (view-space `normal` in scope), post: GLSL just before lighting (the last word on diffuseColor and
-//   roughnessFactor, after the terrain's own grain), decl: GLSL declarations, uniforms: { name: { value } } }
+//   roughnessFactor, after the terrain's own grain), decl: GLSL declarations, uniforms: { name: { value } },
+//   snap(x, z, step) -> null or [px, pz, sx, sz]: a grid vertex drawn at (px, pz) with its ground sampled at (sx, sz),
+//   so a crease sharper than the grid (the ha-ha's drop) lies on a line instead of a grid's sawtooth }
 export function buildSkin(ctx, o) {
   const { terrain } = ctx;
   const [x0, x1, z0, z1] = o.box, st = o.step;
   const nx = Math.ceil((x1 - x0) / st) + 1, nz = Math.ceil((z1 - z0) / st) + 1;
   const keep = new Uint8Array(nx * nz);
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) keep[j * nx + i] = o.keep(x0 + i * st, z0 + j * st) ? 1 : 0;
+  // The coarse pass's envelope: wherever the terrain mesh sits below heightAt() (a cell the coarse pass lowered, or
+  // fine relief it left out), the skin is kept and drawn whatever the region's keep says: every quad that overlaps
+  // such a cell (its corners within a step of it, and a mesh cell is wider than a step), so a drop or a berm never
+  // shows a hole or a step at the skin's edge (regions.js, setRegionsCoarse).
+  const env = new Uint8Array(nx * nz), lowered = coarseLowering(terrain);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const x = x0 + i * st, z = z0 + j * st;
+    if (Math.max(lowered(x, z), lowered(x - st, z - st), lowered(x + st, z - st), lowered(x - st, z + st), lowered(x + st, z + st)) > 0.02) {
+      env[j * nx + i] = 1; keep[j * nx + i] = 1;
+    }
+  }
   // only the vertices some kept quad uses
   const map = new Int32Array(nx * nz).fill(-1), idx = [];
   let n = 0;
@@ -51,11 +93,14 @@ export function buildSkin(ctx, o) {
   const c = new THREE.Color(), lift = o.lift ?? 0.02;
   for (let k = 0; k < nx * nz; k++) {
     const v = map[k]; if (v < 0) continue;
-    const x = x0 + (k % nx) * st, z = z0 + Math.floor(k / nx) * st, y = terrain.heightAt(x, z);
-    pos[v * 3] = x; pos[v * 3 + 1] = y + lift; pos[v * 3 + 2] = z;
+    let x = x0 + (k % nx) * st, z = z0 + Math.floor(k / nx) * st, px = x, pz = z;
+    if (o.snap) { const s = o.snap(x, z, st); if (s) { px = s[0]; pz = s[1]; x = s[2]; z = s[3]; } }
+    const y = terrain.heightAt(x, z);
+    pos[v * 3] = px; pos[v * 3 + 1] = y + lift; pos[v * 3 + 2] = pz;
     c.setRGB(0.3, 0.3, 0.3); o.color(x, z, y, c);
     col[v * 3] = c.r; col[v * 3 + 1] = c.g; col[v * 3 + 2] = c.b;
     if (o.attr) { const a = o.attr(x, z, y); skin[v * 4] = a[0]; skin[v * 4 + 1] = a[1]; skin[v * 4 + 2] = a[2]; skin[v * 4 + 3] = a[3]; }
+    if (env[k]) skin[v * 4 + 1] = Math.max(skin[v * 4 + 1], 1); // inside the envelope the fragment never discards
     if (o.wet) wet[v] = o.wet(x, z, y);
   }
   const geo = new THREE.BufferGeometry();
@@ -91,6 +136,14 @@ export function buildSkin(ctx, o) {
   mat.customProgramCacheKey = () => 'region-skin-' + name;
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'skin-' + name;
+  // where this skin is drawn: a kept quad (a fragment may still fray its edge away)
+  mesh.userData.lift = lift;
+  mesh.userData.covers = (x, z) => {
+    const fi = (x - x0) / st, fj = (z - z0) / st, i = Math.floor(fi), j = Math.floor(fj);
+    if (i < 0 || j < 0 || i >= nx - 1 || j >= nz - 1) return false;
+    const a = j * nx + i;
+    return !!(keep[a] && keep[a + 1] && keep[a + nx] && keep[a + nx + 1]);
+  };
   mesh.receiveShadow = true; mesh.castShadow = false;
   ctx.scene.add(mesh);
   return mesh;

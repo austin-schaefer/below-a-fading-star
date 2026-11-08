@@ -16,7 +16,7 @@ import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
 const KEY = 'demesne';
 const N = makeSimplex(20261107 + 1010);
 const K = LANDMARKS.castle; // (40, 30)
-const HAHA = 77, FROM = 300, TO = 120; // the sunk wall; its ditch and the ramp back up run out to the region's edge at r 85
+const HAHA = 77, FROM = 300, TO = 120, WALL_R = HAHA + 0.22; // the sunk wall; its ditch and the ramp back up run out to the region's edge at r 85
 // the lower lawn's level by compass bearing from the keep (eased from the hill's own fall between r 70 and 85)
 const LAWN = [[300, 8.2], [330, 4.2], [0, 3.6], [30, 3.6], [45, 2.4], [60, 1.6], [90, 2.4], [120, 1.8]];
 function lawnAt(b) {
@@ -75,8 +75,8 @@ function hahaProfile(r, b, hNat, x, z) {
   const lawn = lerp(hNat, L, smoothstep(58, 68, r) * (1 - smoothstep(HAHA + 0.2, HAHA + 0.6, r)) * ang);
   if (r <= HAHA) return lawn;
   const floor = Math.min(L - 2.1, hNat - 1.0), out = r < HAHA + 9 ? lerp(floor, hNat, smoothstep(HAHA + 2.2, HAHA + 9, r)) : hNat;
-  // the drop happens across 0.5 m: the skin draws it, the wall faces it
-  const k = smoothstep(HAHA, HAHA + 0.5, r);
+  // the drop happens at the wall's face (WALL_R), across 10 cm: the skin draws it there (snapped to the line), the wall faces it
+  const k = smoothstep(WALL_R - 0.05, WALL_R + 0.05, r);
   return lerp(lawn, lerp(lawn, out, k), amt);
 }
 export function height(h, x, z, w, coarse) {
@@ -209,6 +209,14 @@ export async function build(ctx) {
     // y: 1 inside; the skin's inner and outer edges fray into the terrain under it
     attr: (x, z) => { const r = Math.hypot(x - K.x, z - K.z), e = Math.min(r - (HAHA - 4.5), HAHA + 11 - r) / 3; return [0, e / (2 * edgeN(x, z)), 0, 0]; },
     frag: /* glsl */`if (vSkin.y < 0.5) discard;`,
+    // the skin's vertices within a grid diagonal of the wall's face sit on it (the lawn's just behind, the ditch's
+    // on it), so the drop is a clean line hidden by the face, not a sawtooth of triangles standing out in front
+    snap: (x, z, st) => {
+      const dx = x - K.x, dz = z - K.z, r = Math.hypot(dx, dz);
+      if (Math.abs(r - WALL_R) > st * 1.5 || !wallAt(x, z)) return null;
+      const inner = r < WALL_R, pr = inner ? WALL_R - 0.05 : WALL_R, sr = inner ? WALL_R - 0.1 : WALL_R + 0.12;
+      return [K.x + (dx / r) * pr, K.z + (dz / r) * pr, K.x + (dx / r) * sr, K.z + (dz / r) * sr];
+    },
   });
   meshes.push(skin);
 
@@ -237,15 +245,17 @@ export async function build(ctx) {
 
 // The ha-ha's wall: a vertical face along r = 85 (+0.25), every half metre round the arc where the ha-ha runs, its
 // top flush with the lawn and its foot below the ditch floor; courses and joints drawn from the world position.
+// where the sunk wall stands: wherever there is ha-ha to face, away from the road's bank
+function wallAt(x, z, amt = hahaAmt(bearingOf(x, z))) { return amt >= 0.02 && roadD(x, z) >= 5; }
 function buildHahaWall(ctx) {
   const { THREE: T, terrain } = ctx;
   const P = [], Nn = [], I = [], U = [];
-  const rf = HAHA + 0.22;
+  const rf = WALL_R;
   let prev = -1;
   for (let b = FROM - 1; b <= 360 + TO + 1; b += 0.33) {
     const bb = b % 360, amt = hahaAmt(bb), a = (bb * Math.PI) / 180;
     const x = K.x + Math.sin(a) * rf, z = K.z - Math.cos(a) * rf;
-    if (amt < 0.02 || roadD(x, z) < 5) { prev = -1; continue; }
+    if (!wallAt(x, z, amt)) { prev = -1; continue; }
     const xi = K.x + Math.sin(a) * (HAHA - 0.6), zi = K.z - Math.cos(a) * (HAHA - 0.6), xo = K.x + Math.sin(a) * (HAHA + 1.2), zo = K.z - Math.cos(a) * (HAHA + 1.2);
     const top = terrain.heightAt(xi, zi) + 0.04, foot = terrain.heightAt(xo, zo) - 0.4;
     const o = P.length / 3, nx = Math.sin(a), nz = -Math.cos(a);

@@ -10,7 +10,7 @@
 import * as THREE from 'three';
 import { SUN, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
-import { buildSkin, instanced, meshStats, meshGround, leanShader } from './skin.js';
+import { buildSkin, instanced, meshStats, leanShader, skinGround } from './skin.js';
 
 const KEY = 'adust';
 const N = makeSimplex(20261107 + 808);
@@ -119,7 +119,6 @@ export async function build(ctx) {
   const rng = ctx.makeRng(8300);
   const R = ctx.regions;
   const wAt = (x, z) => R.regionAt(x, z)[KEY];
-  const meshH = meshGround(terrain);
   const meshes = [];
   const roadD = (x, z) => { // the v4 causeway runs through from the saddle north: nothing of ours on it
     let d = Infinity;
@@ -290,7 +289,7 @@ export async function build(ctx) {
   meshes.push(...beetles.meshes);
 
   // ---- rosettes and cushions, all leaning a little east; a last line of dead heather at the boundary
-  const plants = buildPlants(ctx, rng, wAt, meshH, roadD, low);
+  const plants = buildPlants(ctx, rng, wAt, skinGround(terrain, skin.userData.covers, skin.userData.lift), roadD, low); // on the skin where it lies
   meshes.push(...plants.meshes);
 
   // ---- red dust in the air
