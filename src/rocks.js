@@ -94,8 +94,9 @@ export async function build(ctx) {
   // Where rocks may not go
   const L = landmarks;
   const avoid = [
-    [L.castle.x, L.castle.z, 46], [L.tower.x, L.tower.z, 17] /* v5: the lens mount's fins reach 15 m */, [L.stones.x, L.stones.z, 14], [L.byre.x, L.byre.z, 14],
-    [L.court.x, L.court.z, 24], [L.orchard.x, L.orchard.z, 30],
+    [L.castle.x, L.castle.z, 46], [L.tower.x, L.tower.z, 14], [L.stones.x, L.stones.z, 14], [L.byre.x, L.byre.z, 14],
+    [L.court.x, L.court.z, 24], [L.orchard.x, L.orchard.z, 30], // the court's and the tower's wider v5 clearances are applied after the draws, below
+
     // v2 sites: the Speculum's pale beach, the Menology's spiral, the Hypogeum's forecourt
     [L.speculum.x, L.speculum.z, 10], [L.menology.x, L.menology.z, 26], [L.hypogeum.x, L.hypogeum.z, 12],
   ];
@@ -138,7 +139,10 @@ export async function build(ctx) {
     const y = terrain.heightAt(x, z);
     terrain.normalAt(x, z, n);
     const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
-    if (Math.hypot(x - L.court.x, z - L.court.z) < 40) continue; // v5: the court's piers reach 39 m (after the draws, so rocks elsewhere keep their places)
+    // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
+    // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m.
+    if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
+    if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor

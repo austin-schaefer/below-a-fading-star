@@ -104,7 +104,6 @@ export function makeGround(ctx) {
     return null;
   }
   const d2 = (x, z, p) => (x - p.x) ** 2 + (z - p.z) ** 2;
-  const TOWER_CLEAR = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17; // v5: the lens mount's fins reach 15 m
   // The shared placement rules from the brief. `margin` widens every keep-out (trees use it).
   // opts.wet: allow shallow water down to that depth (reeds).
   function excluded(x, z, margin = 0, opts = null) {
@@ -112,7 +111,7 @@ export function makeGround(ctx) {
     // trees and shrubs (margin >= 0) keep out of the clearings; ground cover still grows there
     if (margin >= 0) for (const c of CLEARINGS) if ((x - c[0]) ** 2 + (z - c[1]) ** 2 < (c[2] + margin) ** 2) return true;
     if (d2(x, z, L.castle) < (31 + margin * 1.6) ** 2) return true; // the keep's hexagon has apothem ~29; trees (margin) stay further out
-    if (d2(x, z, L.tower) < (TOWER_CLEAR + margin) ** 2) return true;
+    if (d2(x, z, L.tower) < (12 + margin) ** 2) return true;
     if (d2(x, z, L.stones) < (10 + margin) ** 2) return true;
     if (d2(x, z, L.byre) < (16 + margin) ** 2) return true;
     if (d2(x, z, L.court) < (20 + margin) ** 2) return true;
@@ -128,6 +127,9 @@ export function makeGround(ctx) {
 
   // v5: the Sunken Court's piers reach 39 m; a tree placed there is kept (so the placement's rng and spacing stay as
   // they were everywhere else) but not drawn and not collided (trees.js)
-  const underPiers = (x, z) => d2(x, z, L.court) < 39 * 39;
-  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, underPiers, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
+  // Trees placed here are neither drawn nor collided, but keep their place in the placement rng so that every other tree
+  // stays where it is: under the court's piers (39 m) and inside the lens mount's fins (17 m; 12 when ?tower=v2).
+  const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
+  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE;
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
 }

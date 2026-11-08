@@ -490,7 +490,7 @@ export function buildTrees(ctx, ground, mats) {
   };
   const place = (x, z, v, s, gap, rot, tint, kind, collide = true) => {
     const y = ground.heightAt(x, z);
-    const t = { x, y, z, v, s, gap, rot, tint, kind, hidden: ground.underPiers(x, z) };
+    const t = { x, y, z, v, s, gap, rot, tint, kind, hidden: ground.hiddenAt(x, z) };
     trees.push(t);
     const k = key(Math.floor(x / 8), Math.floor(z / 8));
     if (!occ.has(k)) occ.set(k, []);
