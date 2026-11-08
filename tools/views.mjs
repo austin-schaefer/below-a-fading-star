@@ -11,7 +11,7 @@ try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const [vf, outDir, prefix, q = 'low', w = '1280', h = '720', extra = ''] = process.argv.slice(2);
 const views = JSON.parse(readFileSync(vf, 'utf8'));
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 // FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs);
 // FP_SUFFIX goes after the view's name (perf-02-bloom-sun-before.png)
 const base = process.env.FP_BASE || 'http://localhost:8123';

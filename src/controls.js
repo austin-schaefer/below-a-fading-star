@@ -4,8 +4,8 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { SPAWN, WORLD } from './world.js';
 
-const WALK = 4.2, HURRY = 7.6;      // m/s
-const STEPS_WALK = 1.9, STEPS_HURRY = 2.6; // footsteps per second at full speed
+const WALK = 3.6, HURRY = 6.6;      // m/s (4.2/7.6 in v2 was a shade too fast, Austin)
+const STEPS_WALK = 1.7, STEPS_HURRY = 2.4; // footsteps per second at full speed
 const LOOK_SENS = 0.005;            // rad per css px of touch drag
 const AUTO_HURRY = 0.8;             // stick pulled past this fraction hurries
 
@@ -59,6 +59,15 @@ export function buildControls(ctx) {
   window.addEventListener('pagehide', release);
   window.addEventListener('beforeunload', release);
   document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+  // If the GPU resets (driver crash, context lost under load) the canvas goes blank; a page holding the
+  // mouse captured through that has been seen to leave Firefox's cursor stuck. Let go at once and say so.
+  el.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    release();
+    state.enabled = false; state.keys.clear();
+    ctx.events.dispatchEvent(new CustomEvent('contextlost'));
+  });
+  el.addEventListener('webglcontextrestored', () => location.reload());
   // Drag-look mode: never ask for pointer lock; the mouse looks while the left button is held.
   // Chosen with ?lock=0, remembered in localStorage, or offered on the paused card when the lock misbehaves.
   function setDragLook(on) {

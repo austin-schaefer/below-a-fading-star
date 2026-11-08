@@ -9,7 +9,7 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 
 const [url, out, w = '1280', h = '720', settle = '2500'] = process.argv.slice(2);
 if (!url || !out) { console.error('usage: node tools/shot.mjs <url> <out.png> [w] [h] [settleMs]'); process.exit(2); }
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: +w, height: +h } });
 let failed = false;
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning' || /\[fp\]/.test(m.text())) console.log(`[console.${m.type()}]`, m.text().slice(0, 600)); });

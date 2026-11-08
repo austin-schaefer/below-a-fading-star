@@ -6,7 +6,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low';
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -47,7 +47,7 @@ const results = await page.evaluate(() => {
 await page.waitForTimeout(1500);
 await browser.close();
 const checks = [
-  ['walked 38-46m in 10s (4.2 m/s)', results.walked > 38 && results.walked < 46],
+  ['walked 32-40m in 10s (3.6 m/s)', results.walked > 32 && results.walked < 40],
   ['stays on the ground', results.onGround && Math.abs(results.feetAboveGround) < 0.05],
   ['boundary holds (< 352m)', results.boundaryRadius < 352],
   ['collider stops the player (~2.45m)', results.colliderStop > 2.3 && results.colliderStop < 2.7],

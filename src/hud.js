@@ -56,6 +56,13 @@ export function buildHud(ctx) {
     const label = () => { dragBtn.textContent = ctx.player.dragLook ? 'Mouse look by dragging is on. Switch back to captured mouse' : 'Mouse trouble? Look by dragging instead (no mouse capture)'; };
     ctx.events.addEventListener('draglook', label); label();
   }
+  ctx.events.addEventListener('contextlost', () => {
+    card.classList.remove('hidden'); card.classList.add('paused');
+    hint.textContent = 'The graphics driver reset and the moor went dark. Reload the page to go back out.';
+    hint.classList.add('shown');
+    const err = document.getElementById('error');
+    if (err) err.textContent = 'WebGL context lost (the GPU reset). Reload to continue; if it repeats, try ?q=low.';
+  });
   ctx.events.addEventListener('lockfail', () => {
     if (('ontouchstart' in window) || navigator.maxTouchPoints > 0) return;
     hint.textContent = 'The mouse cannot be captured in this window. Hold the left button and drag to look.';
