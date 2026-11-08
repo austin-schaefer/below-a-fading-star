@@ -408,20 +408,20 @@ export function buildBiomesh(ctx, U) {
   rMesh.setColorAt(0, new THREE.Color(0, 0, 0)); rMesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
   rMesh.frustumCulled = false; rMesh.count = 0; rMesh.renderOrder = 5; rMesh.name = 'uncanny-biomesh-runners';
   scene.add(rMesh);
-  const hot = new THREE.Color(ctx.palette.crystal), deep = new THREE.Color(ctx.palette.crystalDeep);
+  const hot = new THREE.Color(ctx.palette.crystal), deep = new THREE.Color(ctx.palette.crystalDeep), white = new THREE.Color(1, 1, 1);
   const camFwd = new THREE.Vector3();
   let clock = 0;
 
   // pick the tile a runner leaves from: out at the edge, and if possible in front of you, not at your feet
   function pickSource(C) {
     let best = -1, bs = -1e9;
-    for (let k = 0; k < 28; k++) {
+    for (let k = 0; k < 64; k++) {
       const i = (rng() * C.count) | 0;
       if (C.busy[i] || C.grow[i] < 1 || C.fr[i] < 0) continue;
       const dx = C.wx[i] - cam.x, dy = C.wy[i] - cam.y, dz = C.wz[i] - cam.z, d = Math.hypot(dx, dy, dz) || 1;
       if (d < 6.5) continue;
-      const inView = (dx * camFwd.x + dy * camFwd.y + dz * camFwd.z) / d > 0.8 && d < 30;
-      const sc = edgeness(C, i) * 1.4 + (inView ? 2.2 : 0) - (d > 45 ? 0.8 : 0) + rng() * 0.6;
+      const inView = (dx * camFwd.x + dy * camFwd.y + dz * camFwd.z) / d > 0.82 && d < 26;
+      const sc = edgeness(C, i) * 1.2 + (inView ? 3 : 0) - (d > 45 ? 0.8 : 0) + rng() * 0.6;
       if (sc > bs) { bs = sc; best = i; }
     }
     return best;
@@ -518,7 +518,7 @@ export function buildBiomesh(ctx, U) {
         const L2 = Math.hypot(dx, dy, dz) || 1e-4;
         // width across: (d x n), normalised; a little wider with distance so it does not vanish into aliasing
         let wx = dy * nz - dz * ny, wy = dz * nx - dx * nz, wz = dx * ny - dy * nx;
-        const wl = Math.hypot(wx, wy, wz) || 1, W = 0.022 + dc * 0.0012;
+        const wl = Math.hypot(wx, wy, wz) || 1, W = 0.026 + dc * 0.0016;
         wx *= W / wl; wy *= W / wl; wz *= W / wl;
         const o = k * 16;
         e[o] = dx; e[o + 1] = dy; e[o + 2] = dz; e[o + 3] = 0;
@@ -526,9 +526,10 @@ export function buildBiomesh(ctx, U) {
         e[o + 8] = wx; e[o + 9] = wy; e[o + 10] = wz; e[o + 11] = 0;
         e[o + 12] = R.wp[a] - wx * 0.5; e[o + 13] = R.wp[a + 1] - wy * 0.5; e[o + 14] = R.wp[a + 2] - wz * 0.5; e[o + 15] = 1;
         // brightest at the growing tip, a cooler glow behind it, the whole trace fading once the tile has settled
-        const head = Math.exp(-(g - s - f) * 0.9);
-        const I = (0.55 + 2.2 * head) * R.fade * distFade * glow * (0.85 + 0.15 * Math.sin(clock * 9 + s));
-        rc.copy(deep).lerp(hot, 0.35 + 0.65 * head).multiplyScalar(I);
+        // a white-hot bead running out ahead, a crackling blue thread behind it
+        const head = Math.exp(-(g - s - f) * 1.4);
+        const I = (1.1 + 4.5 * head) * R.fade * distFade * glow * (0.75 + 0.25 * Math.sin(clock * 23 + s * 2.1));
+        rc.copy(deep).lerp(hot, 0.45 + 0.55 * head).lerp(white, head * 0.6).multiplyScalar(I);
         rMesh.setColorAt(k, rc);
         k++;
       }
