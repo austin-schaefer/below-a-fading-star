@@ -1,0 +1,45 @@
+[
+ {
+  "name": "ridge-causeway",
+  "x": -40,
+  "z": 22,
+  "yaw": -0.62,
+  "pitch": 0.3
+ },
+ {
+  "name": "ridge-outwash",
+  "x": 60,
+  "z": -230,
+  "yaw": -0.87,
+  "pitch": 0.42
+ },
+ {
+  "name": "ridge-spawn",
+  "x": 6,
+  "z": 36,
+  "yaw": -0.52,
+  "pitch": 0.32
+ },
+ {
+  "name": "ridge-span-deck",
+  "x": -200,
+  "z": 215,
+  "dy": 56.54,
+  "yaw": -0.64,
+  "pitch": 0.3
+ },
+ {
+  "name": "ridge-high-ling",
+  "x": 250,
+  "z": 5,
+  "yaw": 0.0,
+  "pitch": 0.5
+ },
+ {
+  "name": "ridge-vigilant",
+  "x": 60,
+  "z": -230,
+  "yaw": -1.42,
+  "pitch": 0.3
+ }
+]
