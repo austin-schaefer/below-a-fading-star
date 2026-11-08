@@ -922,7 +922,14 @@ export function buildToadstools(ctx, ground, mats, trees) {
     m4.compose(pos, q, sc);
     const t = podT[Math.floor(s.hue * 3) % 3]; col.setRGB(t[0], t[1], t[2]);
   }, 'veg-pods'));
-  const VIS = 90;
+  // v6: each instance fades out over 80-90 m in the shader (its distance to the eye), so a group is culled
+  // only beyond 100 m, where all of it is already gone. ?fungifade=0 culls whole groups at 90 m.
+  const FADE = new URL(location.href).searchParams.get('fungifade') !== '0';
+  if (FADE) withFade(mats.fungus, {
+    key: 'fungi', uniforms: { uFpEye: { value: ctx.camera.position } }, head: 'uniform vec3 uFpEye;',
+    vertex: 'vec2(1.0 - smoothstep(80.0, 90.0, distance(uFpEye, (modelMatrix * instanceMatrix[3]).xyz)), 0.0)',
+  });
+  const VIS = FADE ? 100 : 90;
   function update(px, pz) {
     for (const g of groups) {
       const dx = Math.max(g.x0 - px, 0, px - g.x0 - GROUP), dz = Math.max(g.z0 - pz, 0, pz - g.z0 - GROUP);

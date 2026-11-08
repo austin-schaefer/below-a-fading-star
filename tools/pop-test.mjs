@@ -251,7 +251,7 @@ if (needWalk || needSeq) {
       { id: 'grass-far', group: 'plants', owner: 'v6-05', from: [-20, 18], to: [-70, 14], yaw: W, step: 1, watch: { ver: '^veg-grass-far$' } },
       { id: 'reeds-far', group: 'plants', owner: 'v6-05', cands: [{ from: [70, 40], to: [70, 110], yaw: Math.PI }, { from: [70, 280], to: [70, 215], yaw: 0 }, { from: [-30, 160], to: [10, 160], yaw: -W }, { from: [190, 160], to: [150, 160], yaw: W }], step: 1, watch: { ver: '^veg-reeds-far$' } },
       { id: 'rocks', group: 'rocks', owner: 'v6-05', from: [230, -20], to: [250, -40], yaw: 2.4, step: 1, settle: 3, watch: { ver: '^rocks-stone' } },
-      { id: 'fungi', group: 'fungi', owner: 'v6-04', from: [-68, 142], to: [-160, 132], yaw: W, step: 1, watch: { vis: 'veg-(toadstools|pods)' } },
+      { id: 'fungi', group: 'fungi', owner: 'v6-04', gate: true, from: [-68, 142], to: [-160, 132], yaw: W, step: 1, watch: { vis: 'veg-(toadstools|pods)' } },
     ];
     const FR = 24;
     let savedBaseline = false;
