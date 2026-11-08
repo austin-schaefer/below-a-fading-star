@@ -151,7 +151,7 @@ export const WATER = {
   pool: { x: 208, z: 258, r: 6.8, y: 3.5 },
 };
 
-export const SPAWN = { x: 2, z: 36, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks down -z; PI/2 looks down -x (west)
+export const SPAWN = { x: 2, z: 35, yaw: Math.PI / 2 + 0.15 }; // yaw: 0 looks down -z; PI/2 looks down -x (west)
 
 // Shared palette (hex strings) so modules agree on the world's colours.
 export const PALETTE = {
