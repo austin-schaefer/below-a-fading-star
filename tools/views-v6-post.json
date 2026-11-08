@@ -1,0 +1,8 @@
+[
+  { "name": "sun", "x": -40, "z": 22, "yaw": 1.92 },
+  { "name": "wood", "x": -190, "z": 165, "yaw": 0 },
+  { "name": "lattice", "x": 30, "z": -200, "yaw": -0.15 },
+  { "name": "wrongcolour", "x": 171, "z": 226, "yaw": 3.14 },
+  { "name": "keptfire", "x": -20, "z": -165, "yaw": -0.88 },
+  { "name": "spawn", "x": 2, "z": 35, "yaw": 1.7208, "pitch": -0.04 }
+]
