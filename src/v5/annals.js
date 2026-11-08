@@ -1,19 +1,19 @@
 // AK The Annals [Proposed] (IDEAS-v4.md AK; site in wilderness-v4-placement.md section 5, key `annals`; SITES.annals in
-// world.js). A frieze runs round the bowl's main wall 100-140 m up: a procession of figures each 80 m tall, walking
+// world.js). A frieze runs round the bowl's main wall 110-130 m up: a procession of figures each 40 m tall, walking
 // sunwise (toward rising bearings, to the viewer's right on every wall), worn almost smooth. The band is narrower
-// than the figures (feet at 76 m, crowns at 156), so their feet and heads are lost: it shows hips, torsos, the swing of arms and whatever each one
+// than the figures, so their feet and heads are lost: it shows hips, torsos, the swing of arms and whatever each one
 // carries, none of it legible.
 //
 // No geometry: a chunk injected into the terrain's fragment shader (terrain.js calls injectAnnals in its
 // onBeforeCompile, so the ground skins and the Thrones, which compile that material again, carry it too; nothing of
-// theirs reaches the band). The relief is four metres deep, a soft-edged 2D field in the wall's own
+// theirs reaches the band). The relief is two metres deep, a soft-edged 2D field in the wall's own
 // (arc, height) frame. Its slope comes from two more evaluations half a metre along and up (screen-space
 // derivatives went blocky in 2x2 pixel steps), laid on the face in world space, and is used twice: the shading
 // normal tilts by it, and the albedo is shaded by it against the sun's direction projected on the face. That projection is long where the sun
 // grazes the face and short where it strikes it square, so the frieze reads only in raking light. Faces turned from
 // the sun (the west wall) do not show it.
 //
-// The period: 120 figures round the bowl, one every 3° (about 21 m of arc at r 400; the figures are wider than the cell, so the arms are cut at its edge), deliberately not in step with
+// The period: 120 figures round the bowl, one every 3° (about 21 m of arc at r 400), deliberately not in step with
 // the buttresses (40, every ~9°, wandering with noise). The procession runs over arêtes and into gullies alike, so
 // it reads as cut before the wall took its folds, and no buttress gives the eye a unit to count the figures by.
 //
@@ -27,7 +27,7 @@
 // ?gradine=v2), the bench's flat tops (the relief holds to faces steeper than about 40°), and anything inside r 330.
 // Clearest on bearings 60-120 (SITES.annals): elsewhere it is worn to under half its depth.
 //
-// Cost: outside 96-144 m the chunk is one compare; inside, three evaluations of the figure (nine capsules each).
+// Cost: outside 106-134 m the chunk is one compare; inside, three evaluations of the figure (nine capsules each).
 // ?annals=0 compiles it out; ctx.annals.uniforms.uAnnals.value = 0 zeroes it at runtime (and scales its depth);
 // ?annals=mask paints the relief's height red and ?annals=shade the raking term, to find them. One uniform written
 // per frame, no allocation.
@@ -40,12 +40,12 @@ const OFF = Q === '0';
 const MASK = Q === 'mask'; // ?annals=mask paints the relief's height red, to find the band and its breaks
 
 export const ANNALS = {
-  band: SITES.annals.band,  // [100, 140]
+  band: SITES.annals.band,  // [110, 130]
   clear: SITES.annals.bearings, // [60, 120]
   figures: 120,             // round the bowl
-  height: 80,               // each figure, feet to crown (annFig0 is drawn 40 tall; annFigure scales it)
-  foot: 76,                 // the figures' feet, so the band shows hips to shoulders
-  amp: 4.0,                 // relief, metres
+  height: 40,               // each figure, feet to crown
+  foot: 96,                 // the figures' feet, so the band shows hips to shoulders
+  amp: 2.0,                 // relief, metres
   gain: 7.0,                // the raking shade's strength on the albedo
   arcR: 400,                // the radius the period is measured at (one figure ~21 m of arc)
   saddle: [250, 12, 3],     // a break: bearing, half-width, fade (degrees)
@@ -59,7 +59,6 @@ const uniforms = {
   uAnnGlac: { value: new THREE.Vector3() },
 };
 
-const FSC = (1 / (ANNALS.height / 40)).toFixed(5); // world metres to the figure's own 40 m frame
 const f = (n) => n.toFixed(5);
 const S = SUN.dir;
 const DECL = /* glsl */`
@@ -80,7 +79,7 @@ float annCap(vec2 p, vec2 a, vec2 b, float ra, float rb) {
 // a worn rounded edge, about 2.6 m from the ground of the band to the top of the relief
 float annDome(float d) { return smoothstep(0.8, -1.8, d); }
 // one figure: q.x metres along the walk (it walks +x), q.y metres up from its feet; k and j vary it
-float annFig0(vec2 q, float k, float j) {
+float annFigure(vec2 q, float k, float j) {
   float st = (k - 0.5) * 3.0;
   vec2 sh = vec2(1.6 + (j - 0.5), 32.5);
   float h = 0.0;
@@ -103,7 +102,6 @@ float annFig0(vec2 q, float k, float j) {
   else o = (length((q - sh - vec2(-1.5, 2.5)) / vec2(4.2, 2.6)) - 1.0) * 2.6;
   return max(h, 0.9 * annDome(o));
 }
-float annFigure(vec2 q, float k, float j) { return annFig0(q * ${FSC}, k, j); }
 float annBreak(float b, vec3 w) {
   float d = abs(mod(b - w.x + 180.0, 360.0) - 180.0);
   return mix(1.0, smoothstep(w.y, w.y + w.z, d), step(0.5, w.z));
