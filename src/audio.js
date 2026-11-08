@@ -704,7 +704,7 @@ export async function build(ctx) {
     // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
     // ctx.river.rumble is above zero), its gain follows that rumble at 10 Hz; on leaving it fades over 2 s and
     // is torn down. Low brown rumble, a mid roar, a hiss of spray, a slow wander in all three.
-    const fall = audio.fall = { running: false, gain: null, pos: null, left: false, quietSince: -1, parts: null };
+    const fall = audio.fall = { running: false, gain: null, pos: null, left: false, quietSince: -1, parts: null, leaveTimer: null };
     function fallLevel() {
       const R = ctx.river;
       if (R && typeof R.rumble === 'number') { if (R.rumble > 0) fall.left = false; return R.rumble; }
@@ -751,8 +751,15 @@ export async function build(ctx) {
     function fallCue(pos, entering) {
       if (pos && typeof pos.x === 'number') fall.pos = pos;
       fall.left = !entering;
-      if (entering) { fall.quietSince = -1; fallStart(); }
-      // leaving: fallLevel() reads zero from here, the tick eases the gain down (tau 0.5 s) and stops it at 2.2 s
+      if (fall.leaveTimer) { clearTimeout(fall.leaveTimer); fall.leaveTimer = null; }
+      if (entering) { fall.quietSince = -1; fallStart(); return; }
+      // leaving: fallLevel() reads zero from here. The fade starts now on the audio clock and a timer
+      // stops the loop at 2.2 s, so neither waits for a frame (frames can be seconds apart under load).
+      if (!fall.running || !fall.parts) return;
+      const now = ac.currentTime;
+      fall.parts.out.gain.setTargetAtTime(0.0001, now, 0.5);
+      if (fall.quietSince < 0) fall.quietSince = now;
+      fall.leaveTimer = setTimeout(() => { fall.leaveTimer = null; if (fall.running && fall.left && fallLevel() <= 0.001) fallStop(); }, 2200);
     }
 
     audio.cue = (name, position, opts) => {
