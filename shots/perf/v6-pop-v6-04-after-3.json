@@ -1,0 +1,376 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-04-after-3",
+ "date": "2026-11-08T21:40:58.038Z",
+ "base": "http://localhost:8175",
+ "q": "medium",
+ "only": [
+  "trees",
+  "fungi"
+ ],
+ "runSecs": 177,
+ "rows": [
+  {
+   "id": "trees.tree-near",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "113 changed (frame 12 of 23) vs baseline 107: 1.1x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 107,
+    "largest": 113,
+    "ratio": 1.06,
+    "stepsOver100": 3,
+    "watchBefore": "16",
+    "watchAfter": "15",
+    "switched": true
+   }
+  },
+  {
+   "id": "trees.tree-far",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "137 changed (frame 9 of 23) vs baseline 240: 0.6x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 240,
+    "largest": 137,
+    "ratio": 0.57,
+    "stepsOver100": 6,
+    "watchBefore": "17",
+    "watchAfter": "16",
+    "switched": true
+   }
+  },
+  {
+   "id": "trees.tree-wood",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "16 changed (frame 14 of 23) vs baseline 4: 4.0x",
+   "pass": false,
+   "gate": true,
+   "detail": {
+    "baseline": 4,
+    "largest": 16,
+    "ratio": 4,
+    "stepsOver100": 0,
+    "watchBefore": "1",
+    "watchAfter": "0",
+    "switched": true
+   }
+  },
+  {
+   "id": "fungi.fungi",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "11 changed (frame 4 of 23) vs baseline 47: 0.2x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 47,
+    "largest": 11,
+    "ratio": 0.23,
+    "stepsOver100": 0,
+    "watchBefore": "00011110111101111000001001100",
+    "watchAfter": "00011010111101110000001001100",
+    "switched": true
+   }
+  }
+ ],
+ "routes": {},
+ "seqs": {
+  "tree-near": {
+   "from": [
+    -53.3516544685273,
+    -92.70708765007483
+   ],
+   "to": [
+    -83.3516544685273,
+    -92.70708765007483
+   ],
+   "tree": [
+    -97.4,
+    -92.7,
+    "lone"
+   ],
+   "switchStep": 17,
+   "at": [
+    -61.8516544685273,
+    -92.70708765007483
+   ],
+   "baseline": [
+    65,
+    54,
+    50,
+    52,
+    48,
+    61,
+    64,
+    63,
+    71,
+    78,
+    105,
+    107,
+    78,
+    94,
+    68,
+    37,
+    26,
+    14,
+    14,
+    19,
+    26,
+    27,
+    33
+   ],
+   "switch": [
+    64,
+    53,
+    46,
+    35,
+    21,
+    24,
+    29,
+    38,
+    53,
+    61,
+    98,
+    113,
+    110,
+    108,
+    89,
+    78,
+    77,
+    78,
+    72,
+    64,
+    61,
+    52,
+    44
+   ]
+  },
+  "tree-far": {
+   "from": [
+    32.6483455314727,
+    -92.70708765007483
+   ],
+   "to": [
+    -47.3516544685273,
+    -92.70708765007483
+   ],
+   "tree": [
+    -97.4,
+    -92.7,
+    "lone"
+   ],
+   "switchStep": 23,
+   "at": [
+    9.6483455314727,
+    -92.70708765007483
+   ],
+   "baseline": [
+    43,
+    50,
+    55,
+    65,
+    81,
+    87,
+    85,
+    96,
+    110,
+    123,
+    137,
+    148,
+    156,
+    192,
+    205,
+    195,
+    214,
+    220,
+    240,
+    231,
+    232,
+    223,
+    217
+   ],
+   "switch": [
+    41,
+    50,
+    61,
+    85,
+    93,
+    107,
+    123,
+    123,
+    137,
+    127,
+    115,
+    99,
+    87,
+    64,
+    52,
+    31,
+    17,
+    18,
+    22,
+    19,
+    25,
+    42,
+    54
+   ]
+  },
+  "tree-wood": {
+   "from": [
+    -108.17896628421124,
+    140.92853430314923
+   ],
+   "to": [
+    -128.17896628421124,
+    140.92853430314923
+   ],
+   "tree": [
+    -142.2,
+    140.9,
+    "wood"
+   ],
+   "switchStep": 21,
+   "at": [
+    -118.67896628421124,
+    140.92853430314923
+   ],
+   "baseline": [
+    3,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    3,
+    4,
+    4,
+    3
+   ],
+   "switch": [
+    2,
+    2,
+    2,
+    3,
+    8,
+    13,
+    13,
+    13,
+    13,
+    14,
+    14,
+    15,
+    15,
+    16,
+    15,
+    15,
+    15,
+    15,
+    16,
+    16,
+    16,
+    16,
+    16
+   ]
+  },
+  "fungi": {
+   "from": [
+    -68,
+    142
+   ],
+   "to": [
+    -160,
+    132
+   ],
+   "switchStep": 13,
+   "at": [
+    -80.86021505376344,
+    140.6021505376344
+   ],
+   "baseline": [
+    11,
+    12,
+    20,
+    14,
+    16,
+    18,
+    18,
+    21,
+    22,
+    27,
+    47,
+    40,
+    24,
+    6,
+    5,
+    5,
+    5,
+    5,
+    6,
+    7,
+    6,
+    8,
+    6
+   ],
+   "switch": [
+    8,
+    8,
+    9,
+    11,
+    10,
+    9,
+    8,
+    7,
+    6,
+    7,
+    7,
+    7,
+    8,
+    7,
+    7,
+    7,
+    8,
+    8,
+    7,
+    8,
+    8,
+    9,
+    8
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}

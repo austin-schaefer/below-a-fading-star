@@ -13,7 +13,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `controls.js` | first-person movement, colliders, touch stick, look and hop |
 | `post.js` | bloom, crepuscular rays, grade, vignette, grain |
 | `hud.js` | title card, landmark names, the title card's loading bar (fed by `ctx.progress(label, fraction)`; "Go out" enables on `body.ready`) |
-| `vegetation.js` | grass, heather, reeds, trees, fungi, crystal lattice and its mother crystal (`vegetation/mother.js`) |
+| `vegetation.js` | grass, heather, reeds, trees, fungi, crystal lattice and its mother crystal (`vegetation/mother.js`); trees cross-fade between LOD levels through spare instances and fungi fade by distance (v6-04, `fade.js`) |
 | `structures.js` | keep, tower, stones, causeway paving, court ruins, byre, cairns; `structures/keep.js` the v5 recast of Carcanet Keep, `structures/keep/v2.js` the v4 keep (`?keep=v2`); `structures/court.js` the v5 recast of the Sunken Court, `structures/court/v2.js` the v4 court (`?court=v2`); `structures/arches.js` the v5 recast of the Arcature (a stone armillary), `structures/arches/v2.js` the earlier arch-nest (`?arcature=v2`) |
 | `water.js` | tarn and fen surfaces |
 | `particles.js` | dust, ash, corpse-candles, fireflies, mist wisps |

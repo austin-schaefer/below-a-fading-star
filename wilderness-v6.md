@@ -67,7 +67,8 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
 
 ### LOD and distance bands
 
-1. **Tree LOD swaps are hard switches.** **[structural]**
+1. **Tree LOD swaps are hard switches.** **[structural]** **[done in v6]**
+   - *Done:* a switch closer than 120 m cross-fades for 0.4 s (a spare instance holds the old level; both dither with `fade.js`, shadows too), and the far crowns keep the near outline (`### v6-04 trees`). `?xfade=0` restores the hard switch and v5's far mesh.
    - *What:* each tree jumps from near detail to mid detail at 24 m and from mid to far at 72 m, scaled by kind: lone and dead trees ×1.5, giants ×2.2, thorns and mounds ×0.6. Approaching, the swap happens at the threshold. Leaving, it happens 4 m further out (hysteresis), so nothing oscillates. The swap also changes the tree's shadow caster, so the leaf pattern of the shadow changes too.
    - *Where:* every walk passes them: 588 switches on the 148 m wood route, up to 3 in one frame; 126 on the bench; 271 on the Span approach.
    - *Cause:* `vegetation/trees.js` `update()` → `batch.setGeometryIdAt`. Since the tree LOD fix the levels share one skeleton, so a swap changes card density, not shape.
@@ -84,7 +85,8 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
    - *Measured:* 4086 changed pixels against a baseline of 69.
    - *Pictures:* `v6-00-survey-rocks-*` (`pos=234,-24&yaw=2.4`, the High Ling).
    - *Also:* `pack` calls `P.all.subarray()` once per instance in reach, an allocation burst every 6 m of walking (see 14).
-4. **Fungi and pods switch whole 100 m groups at 90 m.** **[cheap]**
+4. **Fungi and pods switch whole 100 m groups at 90 m.** **[cheap]** **[done in v6]**
+   - *Done:* each instance fades out over 80–90 m in the shader; groups are culled beyond 100 m (`### v6-04 trees`; `?fungifade=0`).
    - *Cause:* `vegetation/trees.js` `buildToadstools` `update()`, `VIS = 90`, by the group's rectangle.
    - *Measured:* 6–16 group flips per route. At 90 m the toadstools are a few pixels: from the spit the flip did not show above the noise.
    - *Pictures:* `v6-00-survey-fungi-*` (`pos=-68,142&yaw=1.571`). Low priority, but the glowing pods at dusk may show it.
@@ -377,3 +379,28 @@ The picture rows are noise-limited headless: with the sky pinned, the baseline o
 **Uploads while panning:** no first-sight upload is left. The textures that upload every frame are BatchedMesh data textures: `veg-trees._colorsTexture` (33x33) every frame the tree batch draws (about 4000 on the 50 s wood walk), and `veg-lattice._colorsTexture` (52x52) near the Lattice; the matrices and indirect textures upload far less. Expected today; `pop-test` reports them as `texData` with their sizes (`dataTextures`, named in the JSON's `dataTextureNames`).
 
 **The uncapped wood pan** (`shots/perf/v6-01-uncapped-medium.json`: `?q=medium&record=6&pos=-190,165&cap=0&adapt=0`, headless Chrome with `--disable-frame-rate-limit --disable-gpu-vsync`, 189 fps): GPU timers per frame render 13.0 ms (shadow 0.4), bloom 3.5, grade 3.0, output 3.1, total 22.7, so the post chain is 9.7 of 22.7 = 43%. The timers sum to four times the 5.3 ms frame: they overlap on this GPU and are shares, not costs. The vsync-held run (`v6-01-uncapped-medium-vsynced.json`, `?cap=0` alone, 60 fps) reads bloom 5.2, grade 5.3, output 5.4 of 28.0 = 57%. Both are over the 40% line for v6-02; Austin's laptop numbers are what settle it.
+
+### v6-04 trees
+
+**Built:** the trees cross-fade between LOD levels, the far crowns keep the near outline, and the fungi and pods fade by distance (`?xfade=0`, `?fungifade=0` restore the old behaviour).
+
+- *Cross-fade:* a switch closer than 120 m keeps the old level as a spare instance (same matrix, same colour) for 0.4 s of world time while the new level fades in; both dither with `fade.js` at the same f, in the colour pass and the shadow pass (`fadeDepthMaterial`), so every pixel is drawn once. The per-instance fade rides in the alpha of the BatchedMesh's colour texture (three r170's `setColorAt` writes rgb only; side 0 stores f, side 1 stores 2 + f, the default 1 draws in full), and in an `aFade` instance attribute on the instanced stand-in's cell meshes, which keep spare slots. 48 spares: the 3 m/s wood walk peaks at 16–17 fades in flight (5 on average), the span at 8 (2.6); out of spares a switch is hard and counts `trees.fadeOverflow` (0 on every walk measured). Hysteresis stays; no switch distance moves. Decided at the brief's default: a fade at every switch closer than 120 m, so the giants' far switch at 158 m stays hard.
+- *Far crowns:* compared at 96 px (about a crown's height at the far switch) with the outline closed, from four azimuths (`v6-04-silhouette-<variant>-{before,after}.png`: black both, red near only, blue far only). The far mesh had dropped the primary limbs and the moss hung from them, and its 1.45× cards raised the crown's top 4–7 px. It now keeps the primary limbs (3 sides), the moss under them, and lowers its larger card by 0.2 of the cluster's size (0.35 at the crown's top). Changed: deodand0–3, lone0–2, crooked0–2, thorn0–2, giant0–1 and fallen0–2 (limbs and cards), medlar0–2 (moss only); the outline's overlap with the near one rises in every one (deodand2 0.57 → 0.68, crooked0 0.62 → 0.68, giant0 0.70 → 0.76, lone0 0.75 → 0.76). Dead trees and mounds are unchanged. Far meshes go from 84–223 triangles to 104–397 per variant. `tree-lod-test`'s placement digest holds (9d701682); a horizontal inset of the far cards was tried and dropped, because it turned crooked0's azimuth profile 3° (the test's limit).
+- *Fungi:* each toadstool and pod fades out over 80–90 m by its distance to the eye; a 100 m group is culled only beyond 100 m.
+
+**Sequences** (`pop-test --only=trees,fungi,uploads`, medium, the largest consecutive-frame step against its baseline; three runs after, since the baseline moves):
+
+| Row | Before | After, run 1 | Run 2 | Run 3 |
+|---|---|---|---|---|
+| `trees.tree-near` | 74 vs 28 (2.6×) | 134 vs 194 (0.7×) | 128 vs 42 (3.0×) | 113 vs 107 (1.1×) |
+| `trees.tree-far` | 122 vs 154 (0.8×) | 376 vs 316 (1.2×) | 250 vs 343 (0.7×) | 137 vs 240 (0.6×) |
+| `trees.tree-wood` | 11 vs 7 (1.6×) | 99 vs 175 (0.6×) | 11 vs 9 (1.2×) | 16 vs 4 (4.0×) |
+| `fungi.fungi` | 14 vs 7 (2.0×) | 15 vs 16 (0.9×) | 4 vs 2 (2.0×) | 11 vs 47 (0.2×) |
+
+The four rows are gated. After, no row has a spike at the switch: the step lists rise and fall smoothly over the 24 frames. The two failures, run 2's `tree-near` and run 3's `tree-wood`, are scene motion, not trees. The diff pictures of those steps mark grass, motes and birds (`tree-near`) and the water's ripples and a creature's eyes (`tree-wood`), and nothing on the tree. The gate is noise-limited headless, as v6-01 found: a few pixels' baseline (`tree-wood`, `fungi`) fails on any drift.
+
+**Counts:** switches unchanged: 602 on the wood walk, 81 on the bench, 257 on the span. With no fade in flight (held 1.5 s), before (`?xfade=0&fungifade=0`) against after: `v6-04-still-wood-pan` 0 changed pixels, `still-lone` 39, `still-wood` 1, against a baseline of 711 (`v6-04-baseline-{a,b,diff}`).
+
+**Overdraw and cost:** triangles per frame on the 3 m/s wood walk (medium), mean and peak: 2,156,721 and 2,635,458 before; 2,149,332 and 2,640,581 with the cross-fade alone (−0.3% and +0.2%: the fades' overdraw is under the walk's own variation); 2,226,182 and 2,699,968 with the far crowns too (+3.2% and +2.4%). At rest at (−190, 165), yaw 0: 200 draw calls both; 2,916,164 triangles before, 2,970,762 after (+1.9%, the far crowns). Programs 159 both; `uploads` 0 on the bench, the wood walk and the pan; `pan-test` compiles nothing while turning. The bench's frame pacing, A/B in one browser: over-2× frames 2 and 2 before, 1 and 2 after; median CPU 3.3 and 2.7 ms before, 2.8 and 2.8 after. The pop-test JSONs' bench `over2x` (14, 33) came from another agent's load on the machine. The headless GPU timer was not read; the laptop numbers come from the batch's `?record=25`. `alloc-audit`: THREE objects per frame 1.93 against 1.93. Its sampled heap puts about 380 B a frame on the trees' `update` against about 215 B with `?xfade=0`. Profiled with inlining off, the fade path allocates about 30 B a second (`getColorAt` at a switch).
+
+**Renders** (1280×720, `?postclock=0`): `v6-04-tree-{near,far,wood}-{before,after}-{1,2,3}.png` and `v6-04-fungi-{before,after}-{1,2,3}.png` (at dusk, flicker held at 0.25) are three frames across the switch: the frame before, 0.2 s after (mid-fade) and 0.6 s after. Also `v6-04-still-<view>-{before,after,diff}.png`, the silhouette sheets above, `v6-04-baseline-{a,b,diff}.png` and `v6-04-rest-{before,after}.png`.
