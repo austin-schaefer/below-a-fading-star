@@ -93,8 +93,9 @@ export const REGIONS = {
                 yields: [] },
   lynchets:   { id: 'BU', name: 'The Lynchets', shape: { poly: [[-228, -115], [-200, -150], [-160, -115], [-182, -78], [-215, -85]] }, blend: 4,
                 yields: [{ x: -170, z: -50, r: 30 }, { x: -250, z: -135, r: 24 }] },
-  strandline: { id: 'BV', name: 'The Strandline', blend: 4,
-                shape: { strip: [[-35, 128, 9], [-44, 148, 9], [-60, 166, 9], [-80, 180, 9], [-100, 190, 9], [-115, 183, 9], [-122, 172, 9]] },
+  strandline: { id: 'BV', name: 'The Strandline', blend: 1.5, // v4 regions: "abrupt as a carpet's edge"
+                // v4 regions: the spine follows the tarn's new shore (src/v4/tarn.js) round the south bay, 4.5 m inland, and out along the spit
+                shape: { strip: [[-31, 130, 9], [-37, 142, 9], [-45, 153, 9], [-67, 142.5, 4.5], [-45, 153, 9], [-55, 162, 9], [-66, 171, 9], [-73, 180, 8], [-77, 191, 8], [-88, 202, 7], [-102, 206, 7], [-114, 195, 8], [-121, 180, 8], [-121, 169, 8]] },
                 yields: [{ x: -210, z: 130, r: 95 }] },
   adust:      { id: 'BW', name: 'The Adust', shape: { poly: [[-255, -70], [-290, -72], [-297, 40], [-252, 40]] }, blend: 8,
                 yields: [] },
@@ -141,7 +142,9 @@ export const CAUSEWAY_V4 = [
 
 // Water bodies: flat planes at a fixed height, clipped by the terrain naturally.
 export const WATER = {
-  tarn: { x: -90, z: 110, r: 60, y: -4.6 },
+  // r takes in the south bay (v4 regions, src/v4/tarn.js); shore is the old round shore's radius, for what is laid
+  // round it (the bench's arc, mists, reeds). terrain.waterLevelAt knows where the water really is.
+  tarn: { x: -90, z: 110, r: 92, y: -4.6, shore: 60 },
   fen:  { x: 70, z: 160, r: 80, y: -2.45 },
   // the pool at the fall's foot (The Speculum): the disc takes in its pale-stone beach; the river itself
   // is not a disc, see terrain.js (RIVER, riverAt, waterDepthAt)

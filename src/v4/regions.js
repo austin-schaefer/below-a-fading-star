@@ -168,9 +168,15 @@ export function regionsHeight(h, x, z) {
   for (const k of HEIGHT_KEYS) { const b = BOX[k]; if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) { any = true; break; } }
   if (!any) return h;
   const w = regionAt(x, z, _hw);
-  for (const k of HEIGHT_KEYS) if (w[k] > 0) h = HOOKS[k].height(h, x, z, w[k]);
+  for (const k of HEIGHT_KEYS) if (w[k] > 0) h = HOOKS[k].height(h, x, z, w[k], COARSE);
   return h;
 }
+// The coarse pass (v4 regions): while terrain.js lays its mesh (2-3 m cells) it calls setRegionsCoarse(cell), and
+// every height hook gets that cell size as a fifth argument (0 the rest of the time). Relief finer than a cell (a
+// ha-ha's drop, a shingle berm) returns its lower envelope then, so the coarse mesh never pokes through the fine
+// ground skin the region draws over it (regions/skin.js); heightAt() itself stays exact for walking and placing.
+let COARSE = 0;
+export function setRegionsCoarse(cell) { COARSE = cell || 0; }
 
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('regions') === '1';
 export const REGION_DEBUG_COLORS = {

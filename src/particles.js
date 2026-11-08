@@ -346,7 +346,7 @@ export async function build(ctx) {
       if (h < -9) continue;
       const nb = (terrain.heightAt(x + 14, z) + terrain.heightAt(x - 14, z) + terrain.heightAt(x, z + 14) + terrain.heightAt(x, z - 14)) * 0.25;
       if (h >= -1 && h > nb - 0.7) continue;     // a hollow: low, or lower than its surroundings
-      if (Math.hypot(x - fen.x, z - fen.z) < fen.r + 10 || Math.hypot(x - tarn.x, z - tarn.z) < tarn.r + 10) continue;
+      if (Math.hypot(x - fen.x, z - fen.z) < fen.r + 10 || Math.hypot(x - tarn.x, z - tarn.z) < (tarn.shore ?? tarn.r) + 10) continue;
       add(x, h + 0.2, z, 18 + rng() * 16, 2.5 + rng() * 2); got++;
     }
     const n = homes.length / 4;
