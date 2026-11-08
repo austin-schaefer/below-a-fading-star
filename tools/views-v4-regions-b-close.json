@@ -1,0 +1,40 @@
+[
+ {
+  "name": "strandline-sandpipers",
+  "x": -75.6,
+  "z": 182.6,
+  "yaw": 1.75,
+  "pitch": -0.42,
+  "settle": 4000,
+  "pre": "{ const fp = __fp, s = fp.regions.creatures.sandpipers[1], bx = s.x + s.ux * s.o, bz = s.z + s.uz * s.o; const cx = bx + s.ux * 1.6 - s.uz * 0.5, cz = bz + s.uz * 1.6 + s.ux * 0.5; const y = fp.terrain.heightAt(cx, cz) + 0.9; fp.camera.position.set(cx, y, cz); fp.camera.lookAt(bx, fp.terrain.heightAt(bx, bz) + 0.1, bz); }"
+ },
+ {
+  "name": "adust-beetles",
+  "x": -270,
+  "z": -10,
+  "yaw": 1.6,
+  "pitch": -0.4,
+  "settle": 3000,
+  "pre": "{ const fp = __fp, b = fp.regions.creatures.beetles[0]; const cx = b.x + 0.7 * 0.94 - 0.3 * 0.34, cz = b.z - 0.7 * 0.34 - 0.3 * 0.94; fp.camera.position.set(cx, b.y + 0.45, cz); fp.camera.lookAt(b.x, b.y + 0.02, b.z); }"
+ },
+ {
+  "name": "lynchets-stoat",
+  "x": -200,
+  "z": -110,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 3000,
+  "pre": "{ const fp = __fp, T = fp.terrain, s = fp.__stoat; const cx = s.x + 1.0, cz = s.z + 0.7, g = T.heightAt(s.x, s.z); const y = Math.max(T.heightAt(cx, cz), g) + 1.1; fp.camera.position.set(cx, y, cz); fp.camera.lookAt(s.x, g + 0.25, s.z); }",
+  "js": "{ const L = __fp.regions.creatures.stoats; let s = L[0]; for (const o of L) if (Math.abs(o.x + 200) + Math.abs(o.z + 115) < Math.abs(s.x + 200) + Math.abs(s.z + 115)) s = o; s.state = 'stand'; s.stand = 1; s.t = 99; s.cool = 99; __fp.__stoat = s; }"
+ },
+ {
+  "name": "demesne-peafowl",
+  "x": 75,
+  "z": -15,
+  "yaw": 0,
+  "pitch": -0.1,
+  "settle": 3000,
+  "pre": "{ const fp = __fp, b = fp.regions.creatures.peafowl[0]; const cx = b.x + 3.0, cz = b.z + 2.0; const y = b.y + 1.0; fp.camera.position.set(cx, y, cz); fp.camera.lookAt(b.x, b.y + 0.7, b.z); }",
+  "js": "__fp.regions.creatures.peafowl[0].cry = 9;"
+ }
+]

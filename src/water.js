@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { makeWaterTexture } from './water/textures.js';
 import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
+import { tideAt } from './v4/tarn.js';
 
 const MAX_RIPPLES = 6;
 
@@ -19,6 +20,7 @@ function discGeometry(ctx, body, rings, segs) {
   const put = (i, x, z) => {
     pos[i * 3] = x - body.x; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = z - body.z;
     depth[i] = body.y - ctx.terrain.heightAt(x, z);
+    if (body.shore && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // v4: dry hollows inside the tarn's disc
   };
   put(0, body.x, body.z);
   for (let r = 1; r <= rings; r++) {
@@ -232,7 +234,10 @@ export async function build(ctx) {
   for (const [name, body] of Object.entries(ctx.water)) {
     if (name === 'pool') continue; // The Speculum has its own surface
     const fen = name === 'fen';
-    const geo = discGeometry(ctx, body, high ? (fen ? 150 : 130) : 90, high ? 260 : 180);
+    // v4: the tarn's disc reaches r 92 for the south bay, so it takes 1.4 times the rings and segments to keep its
+    // shore as fine as at the old r 60 (still one mesh, one call)
+    const k = body.shore ? 1.4 : 1;
+    const geo = discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },
@@ -252,7 +257,7 @@ export async function build(ctx) {
     mesh.name = 'water-' + name;
     scene.add(mesh);
     meshes.push(mesh);
-    bodies.push({ body, mat, next: 1 + rng() * 3, slot: 0, rng: ctx.makeRng(7100 + (fen ? 1 : 0)) });
+    bodies.push({ body, mat, mesh, tarn: name === 'tarn', next: 1 + rng() * 3, slot: 0, rng: ctx.makeRng(7100 + (fen ? 1 : 0)) });
   }
 
   const flick = sky && sky.flicker ? sky.flicker : { value: 1 };
@@ -260,10 +265,11 @@ export async function build(ctx) {
     for (const b of bodies) {
       const u = b.mat.uniforms;
       u.uTime.value = t; u.uFlicker.value = flick.value;
+      if (b.tarn) b.mesh.position.y = b.body.y + tideAt(t); // v4: the tarn's moonless tide (src/v4/tarn.js)
       b.next -= dt;
       if (b.next <= 0) {
         b.next = 2.5 + b.rng() * 6;
-        const a = b.rng() * Math.PI * 2, r = Math.sqrt(b.rng()) * b.body.r * 0.8;
+        const a = b.rng() * Math.PI * 2, r = Math.sqrt(b.rng()) * (b.body.shore ?? b.body.r) * 0.8;
         u.uRipples.value[b.slot].set(b.body.x + Math.cos(a) * r, b.body.z + Math.sin(a) * r, t, 0.5 + b.rng() * 0.5);
         b.slot = (b.slot + 1) % MAX_RIPPLES;
       }

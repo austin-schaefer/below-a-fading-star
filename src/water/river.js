@@ -480,6 +480,6 @@ export function buildRiver(ctx, tex) {
   return {
     update: (dt, t) => { for (const u of updates) u(dt, t); },
     rocks, impact, tFall, vx,
-    fall: { x: lip.x + out.x * vx * tFall * 0.5, z: lip.z + out.z * vx * tFall * 0.5, y: (lip.y + pool.y) / 2, lip: { ...lip }, foot: impact, drop, rumbleRadius: 70 },
+    fall: { x: lip.x + out.x * vx * tFall * 0.5, z: lip.z + out.z * vx * tFall * 0.5, y: (lip.y + pool.y) / 2, lip: { ...lip }, foot: impact, drop, rumbleRadius: 140 }, // v4 map: the taller fall carries twice as far (was 70)
   };
 }

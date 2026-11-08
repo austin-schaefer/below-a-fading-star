@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { makeGround, approach } from './kit.js';
 import { hyp } from '../../noise.js';
+import { CAUSEWAY } from '../../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 const TAU = Math.PI * 2;
 
@@ -237,7 +238,7 @@ export function buildBiomesh(ctx, U) {
 
   // ---- 2. outliers on the causeway, far from home: a thin column of them marching along the paving
   {
-    const a = causeway[3], b = causeway[4];
+    const a = CAUSEWAY[3], b = CAUSEWAY[4];
     const len = Math.hypot(b.x - a.x, b.z - a.z), ux = (b.x - a.x) / len, uz = (b.z - a.z) / len;
     const C = colony('causeway', Math.round(200 * q), { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }, 30);
     C.lift = 0.05;

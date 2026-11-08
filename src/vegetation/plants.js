@@ -497,6 +497,9 @@ export function buildPlants(ctx, ground, shared) {
   const half = low ? 0.5 : 1;
   let rng = null; // per chunk, see genChunk
   const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+  const NO_COVER = { d: {}, s: {}, f: {}, tint: {}, tw: {} };
+  for (const k of ['grass', 'sedge', 'heather', 'bracken', 'flowers', 'fleshy', 'reeds', 'trees']) { NO_COVER.d[k] = 1; NO_COVER.s[k] = 1; NO_COVER.f[k] = 0; NO_COVER.tint[k] = [0, 0, 0]; NO_COVER.tw[k] = 0; }
+  const regionCover = ctx.regions?.coverAt || (() => NO_COVER); // v4 regions
 
   // grass draw distance by tier (v3 stage 3; ?grasstier=0 keeps high's everywhere): fade0, fade1 in metres
   const gt = PARAMS.get('grasstier') === '0' ? GRASS_TIERS.high : GRASS_TIERS[quality] || GRASS_TIERS.high;
@@ -547,6 +550,7 @@ export function buildPlants(ctx, ground, shared) {
     const mx = cx + 1, mz = cz + 1;
     if (mx * mx + mz * mz > 318 * 318) return;
     ground.biomeAt(mx, mz, b);
+    const cv = regionCover(mx, mz); // v4 regions: each region's cover (density, scale, floor, tint by kind)
     // the Wrong Colour's eddy sits in the rocky canyon: give it a reed stand (which its uGrey ring bleaches)
     const nearEddy = L.eddy ? Math.hypot(mx - L.eddy.x, mz - L.eddy.z) < 9 : false;
     if ((b.rock > 0.6 || b.ice > 0.5) && !nearEddy) return;
@@ -563,6 +567,8 @@ export function buildPlants(ctx, ground, shared) {
     const marshW = smoothstep(0.25, 0.7, b.marsh);
     const crysW = smoothstep(0.15, 0.7, b.crystal);
     const nearCd = cd < 7;
+    // v4 map: the leads (v4/paths/routes.js) wear the cover off; a hash of the spot, not the rng, decides, so the rest stays as it was
+    const nearLead = ground.leadNear(mx, mz), worn = (x, z) => nearLead && ground.wornAt(x, z) > (Math.sin(x * 12.9898 + z * 78.233) * 43758.5453 % 1 + 1) % 1;
     const bleach = smoothstep(0.58, 0.78, noise.fbm2(mx * 0.02 + 70, mz * 0.02 - 20, 3) * 0.5 + 0.5);
     const tussock = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.06 - 30, mz * 0.06 + 12, 2) * 0.5 + 0.5) * (1 - path);
     const hc = ground.heightAt(mx, mz);
@@ -575,10 +581,12 @@ export function buildPlants(ctx, ground, shared) {
     let dg = D_GRASS * (0.6 + 0.6 * path + 0.4 * land) * (0.35 + 1.0 * smoothstep(0.2, 0.75, patch));
     dg *= (1 - 0.55 * swardW);
     dg *= (1 - 0.6 * heathW) * (1 - 0.6 * b.wood) * (1 - 0.92 * crysW) * (1 - b.rock) * (1 - 0.6 * b.ice) * (1 - 0.7 * marshW);
+    dg *= cv.d.grass;
     const ng = Math.floor(dg * CELL * CELL + rng());
     for (let i = 0; i < ng; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.05) continue;
       const v = rng() < 0.4 ? 0 : rng() < 0.6 ? 1 : 2;
@@ -586,16 +594,18 @@ export function buildPlants(ctx, ground, shared) {
       mixInto(null, cHeathG, heathW * 0.6); mixInto(null, cOrch, b.orchard * 0.5);
       mixInto(null, cBone, bleach * 0.75 * (1 - b.wood));
       mixInto(null, cWoodG, smoothstep(0.2, 0.8, b.wood)); mixInto(null, cMarsh, marshW * 0.9); mixInto(null, cBleach, crysW * 0.9);
+      mixInto(null, cv.tint.grass, cv.tw.grass);
       const br = 0.8 + rng() * 0.35; tint[0] *= br; tint[1] *= br; tint[2] *= br;
       const tus = rng() < tussock * 0.5;
-      const sy = (0.75 + rng() * 0.5) * (1 - 0.35 * swardW) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
+      const sy = cv.s.grass * (0.75 + rng() * 0.5) * (1 - 0.35 * swardW) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
       grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.3 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.1 + 0.55 * rng() * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
     }
     // sedge: taller, olive, in the fen and on the tarn shore
-    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8, nearEddy ? 0.7 : 0) * (0.4 + 0.8 * patch);
+    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8, nearEddy ? 0.7 : 0) * (0.4 + 0.8 * patch) * cv.d.sedge;
     const ns = Math.floor(ds * CELL * CELL + rng());
     for (let i = 0; i < ns; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       const dep = ground.waterDepth(x, z, y);
       if (dep > 0.15) continue;
@@ -605,21 +615,22 @@ export function buildPlants(ctx, ground, shared) {
     }
     // bracken: rust patches on the moor, dark undergrowth in the wood
     const bpatch = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.035 + 11, mz * 0.035 + 50, 3) * 0.5 + 0.5);
-    const db = D_BRACKEN * (bpatch * b.moor * (1 - heathW * 0.5) * (1 - marshW) + 1.3 * smoothstep(0.3, 0.8, b.wood) * (0.4 + 0.6 * patch)) * (1 - crysW) * (1 - path * 0.8) * (1 - swardW);
+    const db = cv.d.bracken * D_BRACKEN * (bpatch * b.moor * (1 - heathW * 0.5) * (1 - marshW) + 1.3 * smoothstep(0.3, 0.8, b.wood) * (0.4 + 0.6 * patch)) * (1 - crysW) * (1 - path * 0.8) * (1 - swardW);
     const nb = Math.floor(db * CELL * CELL + rng());
     for (let i = 0; i < nb; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.1) continue;
-      setT(cBrk[Math.floor(rng() * 3)]); mixInto(null, cBrkWood, smoothstep(0.3, 0.8, b.wood) * 0.85);
+      setT(cBrk[Math.floor(rng() * 3)]); mixInto(null, cBrkWood, smoothstep(0.3, 0.8, b.wood) * 0.85); mixInto(null, cv.tint.bracken, cv.tw.bracken);
       const br = 0.75 + rng() * 0.4; tint[0] *= br; tint[1] *= br; tint[2] *= br;
       const s = (0.8 + rng() * 0.6) * (1 + 0.4 * b.wood);
       bracken.add(x, y - 0.03, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0.5 * rng() * (1 - b.wood));
     }
     // pale flower spikes in drifts; one colour per drift
     const drift = smoothstep(0.56, 0.74, noise.fbm2(mx * 0.025 - 90, mz * 0.025 + 33, 3) * 0.5 + 0.5);
-    const df = D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5) * (1 - swardW);
+    const df = Math.max(cv.d.flowers * D_FLOWER * (drift * (b.moor + 0.5 * b.marsh) * (1 - b.wood * 0.7) + wetEdge * 0.4) * (1 - crysW) * (1 - path * 0.5) * (1 - swardW), D_FLOWER * cv.f.flowers * (0.3 + drift));
     const nf = Math.floor(df * CELL * CELL + rng());
     if (nf) {
       const hueN = noise.noise2(mx * 0.01 + 5, mz * 0.01 - 5) * 0.5 + 0.5;
@@ -627,15 +638,16 @@ export function buildPlants(ctx, ground, shared) {
       for (let i = 0; i < nf; i++) {
         const x = cx + rng() * CELL, z = cz + rng() * CELL;
         if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+        if (worn(x, z)) continue;
         const y = ground.heightAt(x, z);
         if (ground.waterDepth(x, z, y) > -0.05) continue;
-        setT(fc); const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
+        setT(fc); mixInto(null, cv.tint.flowers, cv.tw.flowers * (0.6 + 0.4 * rng())); const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
         const s = 0.8 + rng() * 0.5;
         flowers.add(x, y - 0.03, z, rng() * 6.283, s, s * (0.75 + rng() * 0.5), 2, rng(), tint[0], tint[1], tint[2], 0);
       }
     }
     // black-green fleshy leaves in the hollows, along the water, and in the wood's wet places
-    const dl = D_FLESH * Math.max(hollow * (1 - b.rock), wetEdge * 1.4, b.wood * hollow * 1.5) * (1 - crysW) * (1 - swardW);
+    const dl = cv.d.fleshy * D_FLESH * Math.max(hollow * (1 - b.rock), wetEdge * 1.4, b.wood * hollow * 1.5) * (1 - crysW) * (1 - swardW);
     const nl = Math.floor(dl * CELL * CELL + rng());
     for (let i = 0; i < nl; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
@@ -649,24 +661,25 @@ export function buildPlants(ctx, ground, shared) {
       fleshy.add(x, y - 0.05, z, rng() * 6.283, s, s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // heather
-    const dh = D_HEATH * (heathW * (0.5 + patch) + 0.03 * b.moor * (1 - b.wood)) * (1 - crysW) * (1 - marshW) * (1 - 0.7 * swardW);
+    const dh = Math.max(cv.d.heather * D_HEATH * (heathW * (0.5 + patch) + 0.03 * b.moor * (1 - b.wood)) * (1 - crysW) * (1 - marshW) * (1 - 0.7 * swardW), D_HEATH * cv.f.heather * (0.5 + patch));
     const nh = Math.floor(dh * CELL * CELL + rng());
     for (let i = 0; i < nh; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.1) continue;
       const pick = rng();
-      setT(cHeath[pick < 0.4 ? 0 : pick < 0.65 ? 1 : pick < 0.85 ? 2 : 3]);
+      setT(cHeath[pick < 0.4 ? 0 : pick < 0.65 ? 1 : pick < 0.85 ? 2 : 3]); mixInto(null, cv.tint.heather, cv.tw.heather * (0.5 + 0.5 * rng()));
       const br = 0.75 + rng() * 0.4; tint[0] *= br; tint[1] *= br; tint[2] *= br;
-      const s = 0.75 + rng() * 0.7;
+      const s = (0.75 + rng() * 0.7) * cv.s.heather;
       heather.add(x, y - 0.04, z, rng() * 6.283, s * (0.9 + rng() * 0.3), s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // reeds: in stands along the water's edge, standing in the shallows
     if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy) {
       const stand = Math.max(smoothstep(0.35, 0.65, noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5), nearEddy ? 0.9 : 0);
       if (stand > 0) {
-        const nr = Math.floor(D_REED * stand * CELL * CELL * 1.2 + rng());
+        const nr = Math.floor(D_REED * stand * CELL * CELL * 1.2 * cv.d.reeds + rng());
         for (let i = 0; i < nr; i++) {
           const x = cx + rng() * CELL, z = cz + rng() * CELL;
           const y = ground.heightAt(x, z);
@@ -675,6 +688,7 @@ export function buildPlants(ctx, ground, shared) {
           const dep = wn.dep;
           if (dep < -1.1 || dep > (wn.rim < 7 ? 1.7 : 0.55)) continue;
           if (ground.causewayDistance(x, z) < 4) continue;
+          if (worn(x, z)) continue; // v4 map: P14's gap in the grey reeds
           // two open stretches of Lees Tarn's shore, so the black water (and whoever stands in it) can be seen
           if (Math.hypot(x - OPEN_SHORE[0][0], z - OPEN_SHORE[0][1]) < 11 || Math.hypot(x - OPEN_SHORE[1][0], z - OPEN_SHORE[1][1]) < 10) continue;
           setT(cReed); mixInto(null, cReed2, rng());

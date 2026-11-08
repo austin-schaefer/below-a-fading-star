@@ -5,6 +5,7 @@
 //  - bone: plain, a little waxy.
 //  - pit: an interior-mapped flooded shaft (walls, a broad stair, black water) drawn on one quad.
 import * as THREE from 'three';
+import { CRUST_PAVE } from '../v4/regions/saltings.js'; // v4 polish: the road's slabs on the Saltings' crust
 
 export const RUST_SLOTS = 12;
 
@@ -26,6 +27,7 @@ export function makeStoneMaterial(ctx) {
     uGlyph: { value: 1 },
     uWindow: { value: 1 },
     uRust: { value: Array.from({ length: RUST_SLOTS }, () => new THREE.Vector4(0, 0, 0, 0)) },
+    uPave: CRUST_PAVE.uPave, uPaveBox: CRUST_PAVE.uPaveBox,
   };
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0.0 });
   mat.onBeforeCompile = (sh) => {
@@ -48,7 +50,7 @@ export function makeStoneMaterial(ctx) {
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uSTime, uGlyph, uWindow; uniform vec4 uRust[${RUST_SLOTS}];
+        uniform float uSTime, uGlyph, uWindow; uniform vec4 uRust[${RUST_SLOTS}]; uniform sampler2D uPave; uniform vec4 uPaveBox;
         varying vec3 vSW; varying vec3 vSN; varying vec2 vSU; varying vec4 vSA; varying vec4 vSE; varying float vSL;
         ${NOISE_GLSL}`)
       .replace('#include <color_fragment>', `#include <color_fragment>
@@ -95,6 +97,15 @@ export function makeStoneMaterial(ctx) {
         float mN = fpFbm(sP * 0.9 + 7.0);
         float moss = smoothstep(0.42, 0.72, mossAmt * 0.62 + (mN - 0.5) * 0.9 + (g2 - 0.5) * 0.25 + 0.1);
         moss *= 1.0 - iron;
+        // v4: the road's slabs on the Saltings' crust: no moss in the salt, their stone bleached a little
+        float onSalt = 0.0;
+        if (uPaveBox.z > 0.0) {
+          vec2 pu = (sP.xz - uPaveBox.xy) * uPaveBox.zw;
+          if (pu.x > 0.0 && pu.y > 0.0 && pu.x < 1.0 && pu.y < 1.0) onSalt = 1.0 - smoothstep(0.0, 0.03, texture2D(uPave, pu).r);
+        }
+        moss *= 1.0 - onSalt;
+        sc *= 1.0 + 0.9 * onSalt;
+        sc = mix(sc, vec3(0.62, 0.59, 0.57), onSalt * (1.0 - sUp) * 0.6); // salt rimed up their sides
         vec3 mossC = mix(vec3(0.030, 0.042, 0.014), vec3(0.085, 0.090, 0.026), g1);
         sc = mix(sc, mossC, moss * 0.92);
         float lich = smoothstep(0.70, 0.76, fpVn(sP * 5.0 + 3.0) * 0.8 + mN * 0.35) * vSA.y * (0.35 + sNorth * 0.4 + sUp * 0.4) * (1.0 - moss);

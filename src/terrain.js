@@ -2,7 +2,14 @@
 // with a glacier tongue coming down from the north. Everything else samples heightAt().
 import * as THREE from 'three';
 import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
-import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
+import { tarnHeight, tarnWet } from './v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit
+import { setRegionsCoarse } from './v4/regions.js'; // v4 regions: the mesh's coarse pass
+import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4, PALETTE, SUN } from './world.js';
+import { mapHeight, prepareMap } from './v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
+import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
+import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
+import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
+import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -15,11 +22,14 @@ function distToSegment(px, pz, ax, az, bx, bz) {
   const x = ax + dx * t, z = az + dz * t;
   return Math.hypot(px - x, pz - z);
 }
+// v4 map: the road is CAUSEWAY_V4 (the saddle to the pit); each segment's box skips the far ones
+const ROAD = CAUSEWAY_V4.slice(1).map((b, i) => { const a = CAUSEWAY_V4[i]; return [a.x, a.z, b.x, b.z, Math.min(a.x, b.x), Math.max(a.x, b.x), Math.min(a.z, b.z), Math.max(a.z, b.z)]; });
 export function causewayDistance(x, z) {
   let d = Infinity;
-  for (let i = 0; i < CAUSEWAY.length - 1; i++) {
-    const a = CAUSEWAY[i], b = CAUSEWAY[i + 1];
-    d = Math.min(d, distToSegment(x, z, a.x, a.z, b.x, b.z));
+  for (const [ax, az, bx, bz, x0, x1, z0, z1] of ROAD) {
+    const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0, ez = z < z0 ? z0 - z : z > z1 ? z - z1 : 0;
+    if (ex * ex + ez * ez >= d * d) continue;
+    d = Math.min(d, distToSegment(x, z, ax, az, bx, bz));
   }
   return d;
 }
@@ -48,8 +58,9 @@ export function glacierMask(x, z) {
 // downstream). The river is not a WATER disc: use waterLevelAt / waterDepthAt / riverAt.
 const POOL = WATER.pool;
 const POOL_R = 5;                    // the bowl; WATER.pool.r takes in the beach
-const FALL_DROP = 20;
-const LIP_Y = POOL.y + FALL_DROP;    // 23.5
+const FALL_DROP = 50;                // v4 map: 2.5 times taller (was 20); the face is raised in v4/paths/ground.js
+const LIP_Y = POOL.y + FALL_DROP;    // 53.5
+const CIRQUE_Y = POOL.y + 20;        // v4 map: the cirque round the pool keeps its old height outside the slot
 const BACK = (() => { const l = Math.hypot(POOL.x, POOL.z); return { x: POOL.x / l, z: POOL.z / l }; })(); // into the wall
 const LIP_RP = 10.1;                 // horizontal distance pool centre -> lip
 const LIP = { x: POOL.x + BACK.x * LIP_RP, z: POOL.z + BACK.z * LIP_RP, y: LIP_Y };
@@ -226,7 +237,7 @@ function riverSection(x, z, out = _cs) {
     // the canyon's mouth faces downstream (toward the first bend), so the cirque stands lower there
     const fx = RIVER_CTRL[1][0] - POOL.x, fz = RIVER_CTRL[1][1] - POOL.z, fl = Math.hypot(fx, fz);
     const front = rp > 1e-3 ? Math.max(0, (px * fx + pz * fz) / (rp * fl)) : 0;
-    const top = LIP_Y + 3.5 + SX.fbm2(x * 0.05, z * 0.05 + 4, 3) * 2.5 - front * 9;
+    const top = CIRQUE_Y + 3.5 + SX.fbm2(x * 0.05, z * 0.05 + 4, 3) * 2.5 - front * 9;
     out.raise = Math.max(out.raise, top - Math.max(0, rp - 14) * 0.8);
     if (rp < 6.8) out.shingle = Math.max(out.shingle, 1);
   }
@@ -337,6 +348,7 @@ export function heightAt(x, z) {
     h = flatten(h, x, z, L.tarn.x, L.tarn.z, 62, 34, -4.0 + SX.noise2(x * 0.05, z * 0.05) * 0.25);
     const bowl = 1 - smoothstep(36, 60, d);
     h -= bowl * 8.5 + SX.noise2(x * 0.03, z * 0.03) * 0.5 * (1 - smoothstep(40, 70, d));
+    h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
   }
   // Fen: broad, flat, pocked with pools
   {
@@ -363,30 +375,22 @@ export function heightAt(x, z) {
     }
   }
 
-  // Bounding mountains, with a glacier notch in the north
+  // --- v4 systems: the regions' heightfield hooks (one line; each region's block is its own module's height())
+  h = regionsHeight(h, x, z);
+  // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: layered ranges, buttresses,
+  // talus, bedding ledges, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
+  // notch cuts through them as before.
   const r = Math.hypot(x, z);
   const ramp = smoothstep(WORLD.regionRadius - 10, WORLD.mountainRadius, r);
-  if (ramp > 0) {
-    const ridge = SX.ridged2(x * 0.006 + 2.3, z * 0.006 - 1.1, 5);
-    const ridge2 = SY.ridged2(x * 0.02, z * 0.02, 4);
-    let mtn = ramp * ramp * 150 + ramp * (ridge * 90 + ridge2 * 25);
-    // A saddle in the western wall where the sun sits
-    const ang = Math.atan2(z, x);
-    let dAng = Math.abs(ang - SUN.azimuth); if (dAng > Math.PI) dAng = Math.PI * 2 - dAng;
-    const saddle = 1 - smoothstep(0.1, 0.3, dAng);
-    mtn = lerp(mtn, ramp * ramp * 55 + ramp * (ridge * 20 + ridge2 * 10), saddle);
+  if (r > M_START) {
     const g = glacierMask(x, z);
-    // glacier: a smoother, lower tongue riding up into the pass
-    const glacierH = ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp;
-    mtn = lerp(mtn, glacierH, g);
-    h += mtn;
+    const glacierH = g > 0 ? ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp : 0;
+    h = applyMountains(h, x, z, r, g, glacierH);
   }
-  // Glacier tongue below the ramp too: ice spills a little way onto the moor
-  {
-    const g = glacierMask(x, z) * smoothstep(-215, -265, z) * (1 - ramp);
-    h = lerp(h, h + 2.5 + SX.fbm2(x * 0.03, z * 0.03, 3) * 1.2, g);
-  }
-  return carveRiver(h, x, z);
+  // --- v4 systems: the mountains (end)
+  // Glacier tongue below the ramp too: its snout on the moor (v4 regions: src/v4/glacier.js)
+  h = glacierTongue(h, x, z, ramp);
+  return mapHeight(spanGround(carveRiver(h, x, z), x, z), x, z, RIVER); // v4: the Great Span's marked blocks (src/v4/span/plan.js), then the map's pit and the fall's face
 }
 
 // Analytic-ish normal by central differences.
@@ -409,7 +413,7 @@ export function biomeAt(x, z) {
   const slope = slopeAt(x, z);
   const r = Math.hypot(x, z);
   const rock = smoothstep(0.55, 0.95, slope) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, r) * 0.6;
-  const ice = glacierMask(x, z) * smoothstep(-200, -240, z);
+  const ice = glacierIce(x, z); // v4 regions: the tongue's width, cut sharp at the snout
   const dWood = Math.hypot(x - L.wood.x, z - L.wood.z);
   const wood = (1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood)) * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
   const dFen = Math.hypot(x - L.fen.x, z - L.fen.z);
@@ -419,7 +423,8 @@ export function biomeAt(x, z) {
   const dOrch = Math.hypot(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
   const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z);
-  const crystal = (1 - smoothstep(40, 110, dMor)) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
+  // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11)
+  const crystal = (1 - smoothstep(42, 64, dMor)) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
   // the river: bare shingle along the canyon floor, a reedy margin where it slows toward the fen
   const rv = riverSection(x, z, _csb);
@@ -433,7 +438,7 @@ export function biomeAt(x, z) {
 const WATER_DISCS = Object.values(WATER);
 export function waterLevelAt(x, z) {
   for (const w of WATER_DISCS) {
-    if (Math.hypot(x - w.x, z - w.z) < w.r) return w.y;
+    if (Math.hypot(x - w.x, z - w.z) < w.r && (w !== WATER.tarn || tarnWet(x, z))) return w.y; // v4: the tarn's own shore
   }
   return riverLevelAt(x, z);
 }
@@ -503,6 +508,7 @@ export function buildTerrain(ctx) {
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   const iceArr = new Float32Array(pos.count);
+  const glacArr = new Float32Array(pos.count * 3), gc = [0, 0, 0];
   const wetArr = new Float32Array(pos.count);
   const rsec = { ..._cs };
   const cShingle = C('#48443e'), cPale = C('#8a8274'), cSilt = C('#2c2a24');
@@ -513,6 +519,8 @@ export function buildTerrain(ctx) {
   const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
+  prepareMap(); // v4 map: trace the leads before the mesh, so it carries the runnels' cuts
+  setRegionsCoarse(size / segs); // v4 regions: the mesh takes fine relief's lower envelope (regions.js)
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = heightAt(x, z);
@@ -537,9 +545,10 @@ export function buildTerrain(ctx) {
     tmp.copy(cScree).lerp(cRock, smoothstep(10, 60, y)).lerp(cRockD, smoothstep(60, 160, y));
     col.lerp(tmp, rockMix);
     // ice lies on the glacier floor, not plastered up the notch's cliff walls
-    const ice = b.ice * (1 - smoothstep(0.35, 0.75, b.slope));
+    const ice = glacierFloorIce(b.ice, b.slope, x, z); // v4 regions: ice holds on the snout's face too
     col.lerp(cIce, ice);
     iceArr[i] = ice;
+    if (ice > 0) { glacierCoords(x, z, gc); glacArr[i * 3] = gc[0]; glacArr[i * 3 + 1] = gc[1]; glacArr[i * 3 + 2] = gc[2]; }
     // the river: shingle banks and bed, pale stones in the pool, a wet band along the water and spray-soaked
     // rock round the fall
     {
@@ -563,11 +572,13 @@ export function buildTerrain(ctx) {
     // causeway paving colour
     const cd = causewayDistance(x, z);
     col.lerp(cRoad, 1 - smoothstep(2.6, 4.2, cd));
+    regionsGround(col, x, z, b); // v4 systems: the regions' ground hooks (and the ?regions=1 tint)
     // a little per-vertex variation so the moor isn't flat
     const v = SX.noise2(x * 0.11, z * 0.11) * 0.06;
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
     colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
   }
+  setRegionsCoarse(0);
   // Crevices and ridges on the mountains: grid curvature darkens gullies and lifts crests, so the wall
   // reads as folded rock from a distance instead of a smooth dune.
   {
@@ -588,23 +599,30 @@ export function buildTerrain(ctx) {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('aIce', new THREE.BufferAttribute(iceArr, 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(wetArr, 1));
+  geo.setAttribute('aGlac', new THREE.BufferAttribute(glacArr, 3));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
 
   const detail = makeDetailTexture();
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0.0 });
+  // one set of uniform objects, shared by every program built from this material (the ground skins compile it again,
+  // v4/regions/skin.js), so a toggle through userData.shader.uniforms reaches them all
+  const uniforms = {
+    uDetail: { value: detail },
+    uBumpFar: { value: BANDS ? 60 : 1e9 },
+    uFineBand: { value: new THREE.Vector2(BANDS ? 90 : 1e9, BANDS ? 120 : 2e9) },
+    uFineMean: { value: new THREE.Vector3(...detail.userData.mean) },
+  };
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uDetail = { value: detail };
-    shader.uniforms.uBumpFar = { value: BANDS ? 60 : 1e9 };
-    shader.uniforms.uFineBand = { value: new THREE.Vector2(BANDS ? 90 : 1e9, BANDS ? 120 : 2e9) };
-    shader.uniforms.uFineMean = { value: new THREE.Vector3(...detail.userData.mean) };
+    Object.assign(shader.uniforms, uniforms);
     mat.userData.shader = shader; // the bands' uniforms, for A/B timing from the console
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet;');
+      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying vec3 vGlac;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet; vGlac = aGlac;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet;
+        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying vec3 vGlac;
+        ${GLACIER_GLSL}
         vec3 triplanar(sampler2D t, vec3 p, vec3 n, float s) {
           vec3 w = abs(n); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z);
           return texture2D(t, p.yz * s).rgb * w.x + texture2D(t, p.xz * s).rgb * w.y + texture2D(t, p.xy * s).rgb * w.z;
@@ -659,14 +677,13 @@ export function buildTerrain(ctx) {
           // dampness darkens low ground
           float wet = max(smoothstep(-1.0, -3.2, vTPos.y), vWet * (0.75 + 0.5 * d1.g));
           diffuseColor.rgb *= 1.0 - clamp(wet, 0.0, 1.0) * 0.38;
-          // glacier ice: pale, faintly blue from within, with dark crevasse lines
-          float crev = smoothstep(0.48, 0.5, abs(fract(vTPos.x * 0.07 + d2.r * 3.0 + vTPos.z * 0.015) - 0.5));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.4, 0.46, 0.55) * (0.7 + 0.3 * d1.g) * (1.0 - crev * 0.7), vIce * 0.9);
+          // glacier ice (v4 regions: src/v4/glacier.js): flow lines, crevasses that follow the slope, the snout's face
+          diffuseColor.rgb = fpGlacier(diffuseColor.rgb, vTPos, normalize(vTNormal), vIce * 0.92, vGlac, d1, d2);
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(roughnessFactor, 0.6, smoothstep(-1.0, -3.2, vTPos.y));
         roughnessFactor = mix(roughnessFactor, 0.38, clamp(vWet, 0.0, 1.0));
-        roughnessFactor = mix(roughnessFactor, 0.45, vIce);`)
+        roughnessFactor = mix(roughnessFactor, 0.7, vIce); // v4 regions: glacier ice, not a mirror for the violet sky`)
       .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
         {
           float camD = length(vTPos - cameraPosition);

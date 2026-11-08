@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, angDiff } from './kit.js';
 import { hyp } from '../../noise.js';
+import { CAUSEWAY } from '../../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 const GOLD = '#8a6a30', GOLD_D = '#5e4622', ROBE = '#0f0c0e', VEIL = '#151113', VELVET = '#3a1416', CANOPY = '#17201d', WOOD = '#1c130d', GLOVE = '#070606';
 const TAU = Math.PI * 2;
@@ -223,7 +224,8 @@ function wagonParts(low, noise) {
 }
 
 export function buildTraveller(ctx, U) {
-  const { scene, camera, causeway, noise } = ctx;
+  const { scene, camera, noise } = ctx;
+  const causeway = CAUSEWAY; // its slow round trip keeps to the gate-to-tower stretch, as in v3
   const ground = makeGround(ctx);
   const low = ctx.quality === 'low';
   const T = travellerParts(low), Wg = wagonParts(low, noise);

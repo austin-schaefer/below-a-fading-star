@@ -1,0 +1,77 @@
+[
+ {
+  "name": "outwash-creature",
+  "x": 48,
+  "z": -190,
+  "yaw": 0,
+  "pitch": 0,
+  "pre": "const fp=window.__fp;const s=fp.scene.getObjectByName('outwash-grouse');const M=new fp.THREE.Matrix4();s.getMatrixAt(0,M);const p=new fp.THREE.Vector3().setFromMatrixPosition(M);fp.camera.position.set(p.x+1.4,p.y+0.6,p.z+1.4);fp.camera.lookAt(p.x,p.y+0.15,p.z);fp.camera.updateMatrixWorld();"
+ },
+ {
+  "name": "outwash-boundary",
+  "x": 30,
+  "z": -150,
+  "yaw": 0.05,
+  "pitch": 0.0
+ },
+ {
+  "name": "bletting-creature",
+  "x": 114,
+  "z": -60,
+  "yaw": 0,
+  "pitch": 0,
+  "pre": "const fp=window.__fp;const s=fp.scene.getObjectByName('bletting-snail-shells');const M=new fp.THREE.Matrix4();s.getMatrixAt(0,M);const p=new fp.THREE.Vector3().setFromMatrixPosition(M);fp.camera.position.set(p.x+0.3,p.y+0.22,p.z+0.3);fp.camera.lookAt(p.x,p.y+0.03,p.z);fp.camera.updateMatrixWorld();"
+ },
+ {
+  "name": "bletting-boundary",
+  "x": 150,
+  "z": 12,
+  "yaw": 0.2,
+  "pitch": 0.0
+ },
+ {
+  "name": "high-ling-creature",
+  "x": 255,
+  "z": -50,
+  "yaw": 0,
+  "pitch": 0,
+  "pre": "const fp=window.__fp;const s=fp.scene.getObjectByName('highling-stonechats');const M=new fp.THREE.Matrix4();s.getMatrixAt(0,M);const p=new fp.THREE.Vector3().setFromMatrixPosition(M);fp.camera.position.set(p.x+0.8,p.y+0.25,p.z+0.8);fp.camera.lookAt(p.x,p.y+0.12,p.z);fp.camera.updateMatrixWorld();"
+ },
+ {
+  "name": "high-ling-boundary",
+  "x": 222,
+  "z": -62,
+  "yaw": -1.45,
+  "pitch": 0.02
+ },
+ {
+  "name": "saltings-creature",
+  "x": 190,
+  "z": 160,
+  "yaw": 0,
+  "pitch": 0,
+  "pre": "const fp=window.__fp;const s=fp.scene.getObjectByName('saltings-crabs');const M=new fp.THREE.Matrix4();s.getMatrixAt(0,M);const p=new fp.THREE.Vector3().setFromMatrixPosition(M);fp.camera.position.set(p.x+0.55,p.y+0.4,p.z+0.55);fp.camera.lookAt(p.x,p.y+0.03,p.z);fp.camera.updateMatrixWorld();"
+ },
+ {
+  "name": "saltings-boundary",
+  "x": 205,
+  "z": 120,
+  "yaw": 2.6,
+  "pitch": -0.06
+ },
+ {
+  "name": "glacier-snout",
+  "x": 75,
+  "z": -195,
+  "yaw": 0.35,
+  "pitch": 0.06
+ },
+ {
+  "name": "glacier-above",
+  "x": 40,
+  "z": -150,
+  "yaw": 0.0,
+  "pitch": -0.32,
+  "dy": 40
+ }
+]

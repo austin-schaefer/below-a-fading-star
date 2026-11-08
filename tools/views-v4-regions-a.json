@@ -1,0 +1,100 @@
+[
+ {
+  "name": "outwash-moraine",
+  "x": 30,
+  "z": -160,
+  "yaw": 0.0,
+  "pitch": -0.02
+ },
+ {
+  "name": "outwash-snout",
+  "x": 70,
+  "z": -190,
+  "yaw": 0.45,
+  "pitch": 0.02
+ },
+ {
+  "name": "bletting-orchard",
+  "x": 92,
+  "z": -50,
+  "yaw": -0.85,
+  "pitch": -0.03
+ },
+ {
+  "name": "high-ling-scarp",
+  "x": 205,
+  "z": -40,
+  "yaw": -1.45,
+  "pitch": 0.0
+ },
+ {
+  "name": "high-ling-heath",
+  "x": 250,
+  "z": -20,
+  "yaw": -0.2,
+  "pitch": -0.03
+ },
+ {
+  "name": "saltings-lobe",
+  "x": 152,
+  "z": 128,
+  "yaw": -2.2,
+  "pitch": -0.04
+ },
+ {
+  "name": "saltings-strip",
+  "x": 70,
+  "z": 245,
+  "yaw": 1.45,
+  "pitch": -0.03
+ },
+ {
+  "name": "outwash-ridge",
+  "x": 25,
+  "z": -168,
+  "yaw": 0.05,
+  "pitch": -0.05
+ },
+ {
+  "name": "outwash-ice",
+  "x": 55,
+  "z": -200,
+  "yaw": 0.25,
+  "pitch": 0.03
+ },
+ {
+  "name": "bletting-close",
+  "x": 165,
+  "z": -40,
+  "yaw": 0.61,
+  "pitch": -0.02
+ },
+ {
+  "name": "high-ling-west",
+  "x": 205,
+  "z": -60,
+  "yaw": -1.571,
+  "pitch": 0.02
+ },
+ {
+  "name": "high-ling-tor",
+  "x": 250,
+  "z": -20,
+  "yaw": -0.29,
+  "pitch": 0.0
+ },
+ {
+  "name": "saltings-flat",
+  "x": 172,
+  "z": 128,
+  "yaw": -2.74,
+  "pitch": -0.05
+ },
+ {
+  "name": "saltings-rim",
+  "x": 60,
+  "z": 246,
+  "yaw": 1.21,
+  "pitch": -0.04
+ }
+]

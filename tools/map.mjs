@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Top-down map of the region from the live terrain: hillshade, water, landmarks, causeway, river,
-// and any extra sites passed as JSON (for placement planning).
+// Top-down map of the region from the live terrain: hillshade, water, landmarks, the causeway (v4 map: CAUSEWAY_V4,
+// the walked road, with v3's CAUSEWAY dashed under it), the leads (paths P, kerb K, rivulets R, from
+// src/v4/paths/routes.js), the river, and any extra sites passed as JSON (for placement planning).
 //   node tools/map.mjs <out.png> [sites.json]   (sites: [{key, x, z, r, label}])
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -15,7 +16,7 @@ await p.waitForFunction(() => document.body.classList.contains('ready'), null, {
 const res = await p.evaluate(async (sites) => {
   const ctx = window.__fp, T = ctx.terrain;
   const W = await import('./src/world.js');
-  const { LANDMARKS, CAUSEWAY, SUN } = W;
+  const { LANDMARKS, CAUSEWAY, CAUSEWAY_V4, SUN } = W;
   const S = 1800, half = 360, px = S / (2 * half), step = 2;
   const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d');
   const toPx = (x, z) => [(x + half) * px, (z + half) * px];
@@ -37,16 +38,42 @@ const res = await p.evaluate(async (sites) => {
   }
   g.putImageData(img, 0, 0);
   g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 2; g.beginPath(); g.arc(S / 2, S / 2, 300 * px, 0, 7); g.stroke();
-  // causeway
-  g.strokeStyle = 'rgba(230,210,170,0.9)'; g.lineWidth = 4; g.beginPath();
-  CAUSEWAY.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+  // causeway: the v4 road (walked and drawn), v3's dashed under it (the bench's)
+  g.strokeStyle = 'rgba(230,210,170,0.95)'; g.lineWidth = 6; g.beginPath();
+  (CAUSEWAY_V4 || CAUSEWAY).forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+  g.strokeStyle = 'rgba(90,70,50,0.9)'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath();
+  CAUSEWAY.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke(); g.setLineDash([]);
+  // the leads (v4 map)
+  try {
+    const R = await import('./src/v4/paths/routes.js');
+    g.font = 'bold 18px Alegreya, Georgia, serif'; g.textAlign = 'center';
+    for (const L of R.leads().list) {
+      const col = L.kind === 'rivulet' ? 'rgba(110,200,255,0.95)' : L.kind === 'kerb' ? 'rgba(200,200,200,0.95)' : 'rgba(255,200,120,0.9)';
+      g.strokeStyle = col; g.lineWidth = L.kind === 'rivulet' ? 2.5 : 3; g.setLineDash(L.kind === 'path' ? [7, 4] : []);
+      for (const S of L.lines) {
+        g.beginPath(); S.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+      }
+      g.setLineDash([]);
+      const S = L.lines[0], m = S[Math.floor(S.length / 2)], [a, bb] = toPx(m.x, m.z);
+      g.fillStyle = col; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(L.id, a + 12, bb - 8); g.shadowBlur = 0;
+    }
+  } catch (e) { console.log('leads', e); }
   // river path
   if (ctx.river?.pathPoints) { g.strokeStyle = 'rgba(120,190,255,0.95)'; g.lineWidth = 3; g.beginPath();
     ctx.river.pathPoints.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke(); }
   g.font = '22px Alegreya, Georgia, serif'; g.textAlign = 'center';
   const circle = (x, z, r, col, label, dash) => { const [a, bb] = toPx(x, z); g.setLineDash(dash ? [8, 6] : []); g.strokeStyle = col; g.lineWidth = 3; g.beginPath(); g.arc(a, bb, Math.max(6, r * px), 0, 7); g.stroke(); g.setLineDash([]);
     g.fillStyle = col; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(label, a, bb - Math.max(6, r * px) - 6); g.shadowBlur = 0; };
-  for (const [k, L] of Object.entries(LANDMARKS)) circle(L.x, L.z, L.r, 'rgba(240,228,200,0.95)', L.name, false);
+  for (const [k, L] of Object.entries(LANDMARKS)) if (!L.axis) circle(L.x, L.z, L.r, 'rgba(240,228,200,0.95)', L.name, false);
+  // the Great Span (v4, ctx.span): its deck where it stands, the piers, the stairs, the gates; its name on the line
+  if (ctx.span) {
+    const S = ctx.span.plan, rect = (x0, x1, z0, z1, fill) => { const [a, b] = toPx(x0, z0), [c, d] = toPx(x1, z1); g.fillStyle = fill; g.fillRect(a, b, c - a, d - b); };
+    for (const [x0, x1] of S.decks) rect(x0, x1, S.z0, S.z1, 'rgba(240,228,200,0.55)');
+    for (const p of S.piers) rect(p - S.pierT / 2, p + S.pierT / 2, S.z0 - 6, S.z1 + 6, 'rgba(240,228,200,0.95)');
+    for (const st of Object.values(ctx.span.stairs)) for (const f of st.flights) { const L = f.steps * f.run, x1 = f.x + f.dir[0] * L, z1 = f.z + f.dir[1] * L, w = 3.2; rect(Math.min(f.x, x1) - (f.dir[0] ? 0 : w), Math.max(f.x, x1) + (f.dir[0] ? 0 : w), Math.min(f.z, z1) - (f.dir[1] ? 0 : w), Math.max(f.z, z1) + (f.dir[1] ? 0 : w), 'rgba(255,190,120,0.9)'); }
+    for (const s of [-1, 1]) rect(Math.min(s * S.gateX, s * (S.gateX + S.facade.depth)), Math.max(s * S.gateX, s * (S.gateX + S.facade.depth)), S.facade.z0, S.facade.z1, 'rgba(240,228,200,0.95)');
+    const L = LANDMARKS.bridge, [lx, lz] = toPx(L.x, L.z + 22); g.fillStyle = 'rgba(240,228,200,0.95)'; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(L.name, lx, lz); g.shadowBlur = 0;
+  }
   for (const s of sites) circle(s.x, s.z, s.r, '#ff9a5c', s.label, true);
   // sun arrow
   const [sx, sz] = toPx(-300, 0); g.fillStyle = '#ff9a5c'; g.font = 'bold 26px Alegreya, serif'; g.fillText('☉ sun (west, low)', 190, S / 2 - 30);

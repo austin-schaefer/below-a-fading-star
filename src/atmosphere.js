@@ -3,6 +3,7 @@
 // once before any material compiles. The sun does not move, so its direction is baked in.
 import * as THREE from 'three';
 import { SUN, PALETTE } from './world.js';
+import { FOG_TIER_GLSL, FOG_CAP } from './v4/kit/fog.js';
 
 export function installAtmosphere() {
   const d = SUN.dir;
@@ -45,6 +46,26 @@ export function installAtmosphere() {
         else f = base * exp(-ro.y * falloff) * (1.0 - exp(-dy * falloff * dist)) / (dy * falloff);
         return clamp(f, 0.0, 1.0);
       }
+      // v4 systems (BI): fog tiers, range behind range (kit/fog.js). The tier colour is the sky low in that
+      // direction (sky.js's horizon, warmed toward the sun), dimmed with the haze while the sun gutters.
+      ${FOG_TIER_GLSL}
+      const vec3 FP_HAZE = vec3(${hexToVec(PALETTE.haze)});
+      const vec3 FP_TIER_AWAY = vec3(${hexToVec(PALETTE.skyHorizonAway)}) * 1.25 + vec3(0.0, 0.004, 0.018);
+      const vec3 FP_TIER_SUN = vec3(${hexToVec(PALETTE.skyHorizonSun)});
+      vec3 fpTierCol(vec3 rd, float flick) {
+        float toSun = max(dot(normalize(vec3(rd.x, 0.0, rd.z)), normalize(vec3(FP_SUN_DIR.x, 0.0, FP_SUN_DIR.z))), 0.0);
+        float s = max(dot(rd, FP_SUN_DIR), 0.0);
+        return mix(FP_TIER_AWAY, FP_TIER_SUN, pow(toSun, 1.6)) * (0.6 + 0.4 * flick) + FP_SUN_GLOW * (pow(s, 6.0) * 0.3 + pow(s, 24.0) * 0.4) * flick;
+      }
+      // the dome's colour behind (sky.js's gradient and glow, no stars or cloud): toward the sun nothing on the
+      // walls outshines the sky behind it, so the ranges there stand as soft silhouettes in the glow
+      const vec3 FP_ZENITH = vec3(${hexToVec(PALETTE.skyZenith)});
+      vec3 fpSkyBehind(vec3 rd, float flick) {
+        float up = clamp(rd.y, 0.0, 1.0), s = max(dot(rd, FP_SUN_DIR), 0.0);
+        vec3 horizon = mix(vec3(${hexToVec(PALETTE.skyHorizonAway)}), FP_TIER_SUN, pow(s, 1.6));
+        vec3 sky = mix(FP_ZENITH, horizon, pow(1.0 - up, 3.5));
+        return sky + FP_SUN_GLOW * (pow(s, 6.0) * 0.55 + pow(s, 24.0) * 0.7) * flick * (0.6 + 0.4 * (1.0 - smoothstep(0.0, 0.35, up)));
+      }
     #endif`;
   THREE.ShaderChunk.fog_fragment = `
     #ifdef USE_FOG
@@ -56,6 +77,7 @@ export function installAtmosphere() {
       #else
         float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
       #endif
+      fogFactor = min(fogFactor, ${FOG_CAP.toFixed(3)}); // v4 systems: the tiers carry the far haze
       float hf = fpHeightFog(cameraPosition, fpDir, fpDist);
       float sunAmt = max(dot(fpDir, FP_SUN_DIR), 0.0);
       vec3 haze = mix(FP_HAZE_AWAY, fogColor, 0.55 + 0.45 * sunAmt);
@@ -65,6 +87,12 @@ export function installAtmosphere() {
       vec3 lowMist = mix(fogColor, vec3(0.28, 0.29, 0.38), 0.5) + FP_SUN_GLOW * pow(sunAmt, 4.0) * 0.16;
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
       gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
+      float fpTier = fpTierAmt(vFogWorldPos);
+      if (fpTier > 0.0) {
+        float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, fpTierCol(fpDir, fpFl), fpTier);
+        gl_FragColor.rgb = min(gl_FragColor.rgb, max(fpSkyBehind(fpDir, fpFl) * 0.88, FP_HAZE * 1.4));
+      }
     #endif`;
 }
 

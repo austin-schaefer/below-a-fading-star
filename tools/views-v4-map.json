@@ -1,0 +1,60 @@
+[
+ {
+  "name": "colossi",
+  "x": -338,
+  "z": 123,
+  "yaw": -0.69,
+  "pitch": -0.06,
+  "dy": 1.5
+ },
+ {
+  "name": "causeway-fall",
+  "x": -40,
+  "z": 22,
+  "yaw": -2.336,
+  "pitch": 0.04
+ },
+ {
+  "name": "brow-fall",
+  "x": 238,
+  "z": -30,
+  "yaw": 3.061,
+  "pitch": 0.03
+ },
+ {
+  "name": "gate-road",
+  "x": 4,
+  "z": 33,
+  "yaw": 0.62,
+  "pitch": -0.03
+ },
+ {
+  "name": "pit-lip",
+  "x": 193,
+  "z": 166,
+  "yaw": -2.89,
+  "pitch": -0.22
+ },
+ {
+  "name": "pool",
+  "x": 194,
+  "z": 238,
+  "yaw": -2.521,
+  "pitch": 0.38
+ },
+ {
+  "name": "span-standin",
+  "x": 0,
+  "z": 215,
+  "yaw": -1.571,
+  "pitch": -0.08,
+  "dy": 63
+ },
+ {
+  "name": "causeway-fall-16",
+  "x": -16,
+  "z": 26,
+  "yaw": -2.377,
+  "pitch": 0.05
+ }
+]
