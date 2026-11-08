@@ -23,8 +23,8 @@
 //      (f, side) evaluated after project_vertex (instanceMatrix, batchingMatrix, transformed and mvPosition
 //      are in scope); `head` declares what it reads; `uniforms` are merged into the program's. Never use
 //      cameraPosition for f: in the shadow pass it is the light's camera, so the shadow would fade at another
-//      distance than its caster. Pass the player's position as a uniform the caller updates (copy into the
-//      same Vector3 each frame; no allocation).
+//      distance than its caster. Pass the player's position as a uniform (the camera's own position Vector3, or
+//      one the caller copies into each frame; no allocation).
 //        const u = { uFpEye: { value: ctx.camera.position }, uNear: { value: 60 }, uFar: { value: 70 } };
 //        withFade(mat, { key: 'grass-far', uniforms: u, head: 'uniform vec3 uFpEye; uniform float uNear, uFar;',
 //          vertex: 'vec2(1.0 - smoothstep(uNear, uFar, distance(uFpEye, (modelMatrix * instanceMatrix[3]).xyz)), 0.0)' });
