@@ -57,6 +57,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 42 | v6 lights: bloom's squares on WebKit and Firefox, found and capped |
 | 43 | v6 post: the finish pass, FXAA and the grain |
 | 44 | v6 ground: plant and rock cross-fades |
+| 45 | v6 trees: LOD cross-fades, far crowns, fungi by distance |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -325,6 +326,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `23-span-bay-fen.png` | A pier in the fen's south bay, etched triangles on its face and fallen pieces in the grass. |
 | `23-span-bay-hollow-ground-after.png` | Two piers of the hollow bay with a fallen crown piece between them, rubble at their feet. |
 | `23-span-deck-bowl.png` | From the deck at the parapet: the bowl, the Lattice and the glacier's icefall, the north wall. |
+| `23-span-deck-west-colliders-after.png` | After: the deck's west half walks to the gate without a block; ten uncapped colliders in the hollow below (boulders and trees, pre-existing since v4) are capped at their own heights. |
 | `23-span-east-gate.png` | The east gate hidden behind a fall of rock heaped against its doors. |
 | `23-span-east-stair.png` | The east stair's top: a curbed landing onto the deck above the fen. |
 | `23-span-map.png` | The debug map with the Span's ten piers laid out along z 215. |
@@ -553,4 +555,12 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `44-reeds-switch-before.png` | Before: the reed chunk's hard switch at 50 m. |
 | `44-rocks-ling-after.png` | After: the High Ling's boulders crossing from fine to coarse twin over 132-140 m (`?rockfade`), shadow fading with them. |
 | `44-rocks-ling-before.png` | Before (`?rockfade=0`): the same view with the fine boulders ending in a ring. |
+| `45-trees-fungi-fade-after.png` | After: the fungi and pods fade out by distance in the shader, not in 100 m groups; the second of three frames across the 90 m switch. |
+| `45-trees-fungi-fade-before.png` | Before (`?fungifade=0`): the same frame with the groups flipping whole at 90 m. |
+| `45-trees-near-switch-after.png` | After: a lone tree on the moor 0.2 s into its 0.4 s dithered cross-fade from mid to near detail; the frame shows no pop. |
+| `45-trees-near-switch-before.png` | Before (`?xfade=0`): the same moment with the tree's levels swapping whole. |
+| `45-trees-silhouette-crooked-after.png` | After: a crooked tree's far crown keeps the near outline (black near, blue far-only, red near-only); the far trunk's red gap has closed and IoU rises from 0.65 to 0.69. |
+| `45-trees-silhouette-crooked-before.png` | Before: the same sheet with v5's far mesh, a red near-only trunk and blue far-only fringes. |
+| `45-trees-wood-switch-after.png` | After: the Deodand Wood's trees across a switch, 0.2 s into the cross-fade, over the tarn. |
+| `45-trees-wood-switch-before.png` | Before (`?xfade=0`): the same wood frame with the hard switch. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
