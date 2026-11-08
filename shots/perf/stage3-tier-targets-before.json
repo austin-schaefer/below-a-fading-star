@@ -1,0 +1,1773 @@
+{
+ "headless": true,
+ "url": "http://localhost:8131/?bench=12&q=medium&lean=0",
+ "date": "2026-11-08T06:31:59.974Z",
+ "active": true,
+ "frame": {
+  "frames": 124,
+  "avgMs": 16.66,
+  "low1Ms": 18.4,
+  "fps": 60,
+  "low1Fps": 54.3
+ },
+ "cpu": {
+  "totalMs": 1.04,
+  "modules": {
+   "vegetation": 0.4,
+   "frame": 0.28,
+   "fauna": 0.2,
+   "particles": 0.08,
+   "skylife": 0.03,
+   "riverlife2": 0.01,
+   "rocks": 0.01,
+   "ruins2": 0.01,
+   "inhabitants2": 0.01,
+   "water": 0,
+   "structures": 0,
+   "flora2": 0,
+   "core": 0,
+   "audio": 0
+  },
+  "callbacks": {
+   "vegetation vegetation.js:34": 0.4,
+   "fauna fauna/grazers.js:223": 0.12,
+   "particles particles.js:274": 0.08,
+   "skylife skylife.js:67": 0.03,
+   "fauna fauna/lamps.js:131": 0.01,
+   "riverlife2 v2/riverlife.js:760": 0.01,
+   "rocks rocks.js:222": 0.01,
+   "fauna fauna/wings.js:158": 0.01
+  }
+ },
+ "gpu": {
+  "available": true,
+  "frames": 124,
+  "render": 12.67,
+  "shadow": 2.42,
+  "bloom": 4.48,
+  "grade": 3.66,
+  "output": 3.79,
+  "total": 24.6
+ },
+ "calls": [
+  132,
+  143
+ ],
+ "tris": [
+  2094660,
+  2578715
+ ],
+ "render": {
+  "calls": 133,
+  "triangles": 2062025,
+  "points": 4403,
+  "lines": 1498
+ },
+ "memory": {
+  "geometries": 131,
+  "textures": 27,
+  "programs": 93,
+  "gpu": {
+   "textureMB": 32.9,
+   "renderbufferMB": 20.4,
+   "backbufferMB": 4,
+   "totalMB": 57.3,
+   "textures": 27,
+   "renderbuffers": 14,
+   "uploads": 1495,
+   "uploadsLastFrame": 3
+  }
+ },
+ "tier": {
+  "tier": "medium",
+  "source": "url",
+  "pinned": null,
+  "gpu": null,
+  "adapt": true,
+  "dpr": 1,
+  "base": 1,
+  "floor": 0.75,
+  "budgetMs": 33.3,
+  "low1Ms": null,
+  "probeMs": null,
+  "steps": [],
+  "shadowMap": 2048
+ },
+ "lights": {
+  "DirectionalLight": {
+   "count": 1,
+   "visible": 1,
+   "shadow": 1
+  },
+  "HemisphereLight": {
+   "count": 1,
+   "visible": 1,
+   "shadow": 0
+  },
+  "AmbientLight": {
+   "count": 2,
+   "visible": 2,
+   "shadow": 0
+  },
+  "PointLight": {
+   "count": 10,
+   "visible": 3,
+   "shadow": 0
+  }
+ },
+ "pixelRatio": 1,
+ "size": {
+  "css": [
+   960,
+   540
+  ],
+  "buffer": [
+   960,
+   540
+  ]
+ },
+ "quality": "medium",
+ "settings": {
+  "cap": 60,
+  "targetFps": 60,
+  "idle": false,
+  "shadows": {
+   "hz": 2,
+   "dynHz": 15,
+   "cull": true,
+   "every": false,
+   "texel": 0.0927734375,
+   "redraws": 332,
+   "dynamicRedraws": 244,
+   "nearCasters": 7,
+   "pcf": "soft"
+  },
+  "lightSlots": {
+   "slots": 3,
+   "sources": 7,
+   "active": 0
+  },
+  "bloomRes": 0.5,
+  "throttle": true
+ },
+ "gpuTimer": true,
+ "firstBlock": {
+  "frames": 15,
+  "callbacks": {
+   "fauna fauna/rooks.js:209": 47.6,
+   "fauna fauna/small.js:204": 6.3,
+   "riverlife2 v2/riverlife.js:760": 3,
+   "vegetation vegetation.js:34": 2.6,
+   "particles particles.js:274": 1.4,
+   "fauna fauna/grazers.js:223": 1.1,
+   "skylife skylife.js:67": 0.8,
+   "fauna fauna/lamps.js:131": 0.8,
+   "fauna fauna/uncanny/traveller.js:407": 0.6,
+   "rocks rocks.js:222": 0.5,
+   "inhabitants2 v2/inhabitants/galley.js:279": 0.5,
+   "fauna fauna/uncanny/cloak.js:357": 0.4
+  }
+ },
+ "modules": {
+  "core": {
+   "world": false,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  },
+  "ruins2": {
+   "world": true,
+   "enabled": true,
+   "updates": 6,
+   "objects": 10
+  },
+  "inhabitants2": {
+   "world": true,
+   "enabled": true,
+   "updates": 3,
+   "objects": 6
+  },
+  "rocks": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 10
+  },
+  "structures": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 24
+  },
+  "water": {
+   "world": true,
+   "enabled": true,
+   "updates": 2,
+   "objects": 7
+  },
+  "particles": {
+   "world": true,
+   "enabled": true,
+   "updates": 3,
+   "objects": 13
+  },
+  "audio": {
+   "world": true,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  },
+  "flora2": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 1
+  },
+  "skylife": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 5
+  },
+  "riverlife2": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 6
+  },
+  "vegetation": {
+   "world": true,
+   "enabled": true,
+   "updates": 1,
+   "objects": 38
+  },
+  "fauna": {
+   "world": true,
+   "enabled": true,
+   "updates": 22,
+   "objects": 38
+  },
+  "frame": {
+   "world": false,
+   "enabled": true,
+   "updates": 0,
+   "objects": 0
+  }
+ },
+ "toggles": {
+  "profiler": true,
+  "bloom": true,
+  "shadows": true,
+  "ruins2": true,
+  "inhabitants2": true,
+  "rocks": true,
+  "structures": true,
+  "water": true,
+  "particles": true,
+  "audio": true,
+  "flora2": true,
+  "skylife": true,
+  "riverlife2": true,
+  "vegetation": true,
+  "fauna": true
+ },
+ "bench": {
+  "kind": "fading-planet-bench",
+  "date": "2026-11-08T06:31:59.884Z",
+  "settings": {
+   "cap": 60,
+   "targetFps": 60,
+   "idle": false,
+   "shadows": {
+    "hz": 2,
+    "dynHz": 15,
+    "cull": true,
+    "every": false,
+    "texel": 0.0927734375,
+    "redraws": 326,
+    "dynamicRedraws": 238,
+    "nearCasters": 7,
+    "pcf": "soft"
+   },
+   "lightSlots": {
+    "slots": 3,
+    "sources": 7,
+    "active": 0
+   },
+   "bloomRes": 0.5,
+   "throttle": true
+  },
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+  "quality": "medium",
+  "tier": {
+   "tier": "medium",
+   "source": "url",
+   "pinned": null,
+   "gpu": null,
+   "adapt": true,
+   "dpr": 1,
+   "base": 1,
+   "floor": 0.75,
+   "budgetMs": 33.3,
+   "low1Ms": null,
+   "probeMs": null,
+   "steps": [],
+   "shadowMap": 2048
+  },
+  "gpuMemory": {
+   "textureMB": 32.9,
+   "renderbufferMB": 20.4,
+   "backbufferMB": 4,
+   "totalMB": 57.3,
+   "textures": 27,
+   "renderbuffers": 14,
+   "uploads": 1477,
+   "uploadsLastFrame": 3
+  },
+  "dpr": 1,
+  "devicePixelRatio": 1,
+  "renderSize": {
+   "css": [
+    960,
+    540
+   ],
+   "buffer": [
+    960,
+    540
+   ]
+  },
+  "url": "?bench=12&q=medium&lean=0",
+  "duration": 12,
+  "warmup": 1.2000000000000002,
+  "pathMetres": 321,
+  "gpuTimer": true,
+  "toggles": {
+   "profiler": true,
+   "bloom": true,
+   "shadows": true,
+   "ruins2": true,
+   "inhabitants2": true,
+   "rocks": true,
+   "structures": true,
+   "water": true,
+   "particles": true,
+   "audio": true,
+   "flora2": true,
+   "skylife": true,
+   "riverlife2": true,
+   "vegetation": true,
+   "fauna": true
+  },
+  "summary": {
+   "avgFps": 59.9,
+   "low1Fps": 42.5,
+   "avgFrameMs": 16.69,
+   "low1FrameMs": 23.54,
+   "frames": 720,
+   "gpuMs": {
+    "available": true,
+    "frames": 703,
+    "render": 11.64,
+    "shadow": 1.16,
+    "bloom": 4.35,
+    "grade": 4,
+    "output": 4.12,
+    "total": 24.11
+   },
+   "cpuMs": {
+    "core": 0,
+    "ruins2": 0.01,
+    "inhabitants2": 0.04,
+    "rocks": 0.01,
+    "structures": 0,
+    "water": 0,
+    "particles": 0.09,
+    "audio": 0,
+    "flora2": 0,
+    "skylife": 0.03,
+    "riverlife2": 0.02,
+    "vegetation": 0.78,
+    "fauna": 0.18,
+    "frame": 0.27
+   },
+   "cpuCallbacks": {
+    "vegetation vegetation.js:34": 0.78,
+    "fauna fauna/grazers.js:223": 0.1,
+    "particles particles.js:274": 0.09,
+    "skylife skylife.js:67": 0.03,
+    "inhabitants2 v2/inhabitants/menology.js:416": 0.02,
+    "riverlife2 v2/riverlife.js:760": 0.02,
+    "rocks rocks.js:222": 0.01,
+    "inhabitants2 v2/inhabitants/galley.js:279": 0.01,
+    "fauna fauna/uncanny/traveller.js:407": 0.01
+   },
+   "calls": [
+    92,
+    143
+   ],
+   "tris": [
+    1453079,
+    2799547
+   ]
+  },
+  "samples": [
+   {
+    "t": 0.5,
+    "x": 1,
+    "z": 29,
+    "frame": {
+     "frames": 29,
+     "avgMs": 17.23,
+     "low1Ms": 40.4,
+     "fps": 58,
+     "low1Fps": 24.8
+    },
+    "cpu": {
+     "totalMs": 1.41,
+     "modules": {
+      "vegetation": 0.8,
+      "frame": 0.3,
+      "fauna": 0.1,
+      "particles": 0.06,
+      "riverlife2": 0.04,
+      "skylife": 0.03,
+      "inhabitants2": 0.03,
+      "rocks": 0.02,
+      "ruins2": 0.01,
+      "water": 0.01,
+      "core": 0,
+      "structures": 0,
+      "audio": 0,
+      "flora2": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.8,
+      "particles particles.js:274": 0.06,
+      "fauna fauna/grazers.js:223": 0.05,
+      "riverlife2 v2/riverlife.js:760": 0.04,
+      "skylife skylife.js:67": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.03,
+      "fauna fauna/uncanny/traveller.js:407": 0.02,
+      "rocks rocks.js:222": 0.02
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 30,
+     "render": 11.75,
+     "shadow": 1.5,
+     "bloom": 3.95,
+     "grade": 3.62,
+     "output": 3.74,
+     "total": 23.05
+    },
+    "calls": [
+     110,
+     140
+    ],
+    "tris": [
+     1596825,
+     2161815
+    ]
+   },
+   {
+    "t": 1.02,
+    "x": -13,
+    "z": 27,
+    "frame": {
+     "frames": 60,
+     "avgMs": 16.94,
+     "low1Ms": 40.4,
+     "fps": 59,
+     "low1Fps": 24.8
+    },
+    "cpu": {
+     "totalMs": 1.49,
+     "modules": {
+      "vegetation": 0.85,
+      "frame": 0.3,
+      "fauna": 0.14,
+      "particles": 0.08,
+      "skylife": 0.04,
+      "riverlife2": 0.03,
+      "rocks": 0.03,
+      "inhabitants2": 0.02,
+      "ruins2": 0.01,
+      "water": 0,
+      "structures": 0,
+      "core": 0,
+      "audio": 0,
+      "flora2": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.85,
+      "particles particles.js:274": 0.07,
+      "fauna fauna/grazers.js:223": 0.06,
+      "skylife skylife.js:67": 0.04,
+      "riverlife2 v2/riverlife.js:760": 0.03,
+      "fauna fauna/uncanny/traveller.js:407": 0.03,
+      "rocks rocks.js:222": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 61,
+     "render": 11.29,
+     "shadow": 1.06,
+     "bloom": 4.65,
+     "grade": 4.36,
+     "output": 4.51,
+     "total": 24.81
+    },
+    "calls": [
+     110,
+     140
+    ],
+    "tris": [
+     1523476,
+     2161815
+    ]
+   },
+   {
+    "t": 1.54,
+    "x": -26,
+    "z": 24,
+    "frame": {
+     "frames": 91,
+     "avgMs": 16.87,
+     "low1Ms": 40.4,
+     "fps": 59.3,
+     "low1Fps": 24.8
+    },
+    "cpu": {
+     "totalMs": 1.49,
+     "modules": {
+      "vegetation": 0.82,
+      "frame": 0.3,
+      "fauna": 0.16,
+      "particles": 0.08,
+      "riverlife2": 0.04,
+      "skylife": 0.03,
+      "rocks": 0.03,
+      "inhabitants2": 0.02,
+      "ruins2": 0.01,
+      "water": 0.01,
+      "structures": 0,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.82,
+      "particles particles.js:274": 0.08,
+      "fauna fauna/grazers.js:223": 0.07,
+      "riverlife2 v2/riverlife.js:760": 0.04,
+      "skylife skylife.js:67": 0.03,
+      "fauna fauna/uncanny/traveller.js:407": 0.03,
+      "rocks rocks.js:222": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "fauna fauna/lamps.js:131": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 92,
+     "render": 11.07,
+     "shadow": 0.88,
+     "bloom": 4.79,
+     "grade": 4.52,
+     "output": 4.67,
+     "total": 25.05
+    },
+    "calls": [
+     110,
+     140
+    ],
+    "tris": [
+     1455663,
+     2161815
+    ]
+   },
+   {
+    "t": 2.04,
+    "x": -39,
+    "z": 22,
+    "frame": {
+     "frames": 121,
+     "avgMs": 16.81,
+     "low1Ms": 40.4,
+     "fps": 59.5,
+     "low1Fps": 24.8
+    },
+    "cpu": {
+     "totalMs": 1.49,
+     "modules": {
+      "vegetation": 0.84,
+      "frame": 0.29,
+      "fauna": 0.15,
+      "particles": 0.08,
+      "riverlife2": 0.03,
+      "skylife": 0.03,
+      "rocks": 0.02,
+      "inhabitants2": 0.01,
+      "ruins2": 0,
+      "water": 0,
+      "structures": 0,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.84,
+      "particles particles.js:274": 0.08,
+      "fauna fauna/grazers.js:223": 0.07,
+      "riverlife2 v2/riverlife.js:760": 0.03,
+      "skylife skylife.js:67": 0.03,
+      "fauna fauna/uncanny/traveller.js:407": 0.03,
+      "rocks rocks.js:222": 0.02,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 11.56,
+     "shadow": 1.04,
+     "bloom": 4.85,
+     "grade": 4.68,
+     "output": 4.84,
+     "total": 25.94
+    },
+    "calls": [
+     103,
+     140
+    ],
+    "tris": [
+     1453079,
+     2161815
+    ]
+   },
+   {
+    "t": 2.56,
+    "x": -46,
+    "z": 33,
+    "frame": {
+     "frames": 123,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.47,
+     "modules": {
+      "vegetation": 0.83,
+      "frame": 0.28,
+      "fauna": 0.16,
+      "particles": 0.09,
+      "riverlife2": 0.03,
+      "skylife": 0.03,
+      "inhabitants2": 0.02,
+      "rocks": 0.02,
+      "water": 0,
+      "flora2": 0,
+      "structures": 0,
+      "ruins2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.83,
+      "particles particles.js:274": 0.08,
+      "fauna fauna/grazers.js:223": 0.08,
+      "riverlife2 v2/riverlife.js:760": 0.03,
+      "skylife skylife.js:67": 0.03,
+      "fauna fauna/uncanny/traveller.js:407": 0.02,
+      "rocks rocks.js:222": 0.02,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 11.04,
+     "shadow": 0.81,
+     "bloom": 4.99,
+     "grade": 4.89,
+     "output": 5.02,
+     "total": 25.94
+    },
+    "calls": [
+     103,
+     138
+    ],
+    "tris": [
+     1453079,
+     2067952
+    ]
+   },
+   {
+    "t": 3.06,
+    "x": -53,
+    "z": 45,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.46,
+     "modules": {
+      "vegetation": 0.8,
+      "frame": 0.28,
+      "fauna": 0.17,
+      "particles": 0.09,
+      "riverlife2": 0.03,
+      "skylife": 0.03,
+      "inhabitants2": 0.03,
+      "rocks": 0.02,
+      "water": 0.01,
+      "flora2": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.8,
+      "fauna fauna/grazers.js:223": 0.09,
+      "particles particles.js:274": 0.09,
+      "riverlife2 v2/riverlife.js:760": 0.03,
+      "skylife skylife.js:67": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "rocks rocks.js:222": 0.02,
+      "fauna fauna/uncanny/traveller.js:407": 0.02
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 121,
+     "render": 11.17,
+     "shadow": 0.84,
+     "bloom": 4.9,
+     "grade": 4.9,
+     "output": 5.03,
+     "total": 25.99
+    },
+    "calls": [
+     102,
+     138
+    ],
+    "tris": [
+     1453079,
+     2067952
+    ]
+   },
+   {
+    "t": 3.57,
+    "x": -56,
+    "z": 56,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.66,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.45,
+     "modules": {
+      "vegetation": 0.82,
+      "frame": 0.26,
+      "fauna": 0.16,
+      "particles": 0.09,
+      "skylife": 0.03,
+      "inhabitants2": 0.03,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "water": 0.01,
+      "flora2": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.82,
+      "fauna fauna/grazers.js:223": 0.09,
+      "particles particles.js:274": 0.09,
+      "skylife skylife.js:67": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/uncanny/traveller.js:407": 0.01,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 11.23,
+     "shadow": 1.12,
+     "bloom": 4.6,
+     "grade": 4.76,
+     "output": 4.89,
+     "total": 25.48
+    },
+    "calls": [
+     99,
+     138
+    ],
+    "tris": [
+     1453079,
+     2156606
+    ]
+   },
+   {
+    "t": 4.07,
+    "x": -44,
+    "z": 64,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.66,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.4,
+     "modules": {
+      "vegetation": 0.75,
+      "frame": 0.27,
+      "fauna": 0.16,
+      "particles": 0.1,
+      "skylife": 0.04,
+      "inhabitants2": 0.03,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "water": 0.01,
+      "flora2": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.75,
+      "fauna fauna/grazers.js:223": 0.09,
+      "particles particles.js:274": 0.09,
+      "skylife skylife.js:67": 0.04,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/uncanny/traveller.js:407": 0.02,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 10.78,
+     "shadow": 0.93,
+     "bloom": 4.2,
+     "grade": 4.52,
+     "output": 4.62,
+     "total": 24.12
+    },
+    "calls": [
+     99,
+     138
+    ],
+    "tris": [
+     1590422,
+     2168005
+    ]
+   },
+   {
+    "t": 4.59,
+    "x": -36,
+    "z": 75,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.37,
+     "modules": {
+      "vegetation": 0.7,
+      "frame": 0.27,
+      "fauna": 0.18,
+      "particles": 0.1,
+      "skylife": 0.04,
+      "riverlife2": 0.02,
+      "inhabitants2": 0.02,
+      "rocks": 0.01,
+      "water": 0.01,
+      "ruins2": 0.01,
+      "structures": 0.01,
+      "flora2": 0.01,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.7,
+      "fauna fauna/grazers.js:223": 0.1,
+      "particles particles.js:274": 0.09,
+      "skylife skylife.js:67": 0.04,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/uncanny/traveller.js:407": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 11.17,
+     "shadow": 0.95,
+     "bloom": 3.91,
+     "grade": 4.18,
+     "output": 4.32,
+     "total": 23.58
+    },
+    "calls": [
+     99,
+     138
+    ],
+    "tris": [
+     1590422,
+     2221031
+    ]
+   },
+   {
+    "t": 5.09,
+    "x": -30,
+    "z": 87,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.49,
+     "modules": {
+      "vegetation": 0.83,
+      "frame": 0.27,
+      "fauna": 0.18,
+      "particles": 0.1,
+      "skylife": 0.04,
+      "inhabitants2": 0.02,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "water": 0.01,
+      "ruins2": 0.01,
+      "flora2": 0.01,
+      "structures": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.83,
+      "fauna fauna/grazers.js:223": 0.1,
+      "particles particles.js:274": 0.09,
+      "skylife skylife.js:67": 0.04,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/uncanny/traveller.js:407": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "fauna fauna/wings.js:158": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 123,
+     "render": 11.48,
+     "shadow": 0.91,
+     "bloom": 3.73,
+     "grade": 3.73,
+     "output": 3.88,
+     "total": 22.82
+    },
+    "calls": [
+     99,
+     138
+    ],
+    "tris": [
+     1590422,
+     2221031
+    ]
+   },
+   {
+    "t": 5.6,
+    "x": -27,
+    "z": 100,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.65,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.62,
+     "modules": {
+      "vegetation": 0.88,
+      "frame": 0.28,
+      "fauna": 0.2,
+      "particles": 0.11,
+      "inhabitants2": 0.05,
+      "skylife": 0.04,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "ruins2": 0.01,
+      "water": 0.01,
+      "structures": 0.01,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.88,
+      "fauna fauna/grazers.js:223": 0.11,
+      "particles particles.js:274": 0.1,
+      "skylife skylife.js:67": 0.04,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/wings.js:158": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "fauna fauna/uncanny/traveller.js:407": 0.01,
+      "fauna fauna/small.js:204": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 121,
+     "render": 11.58,
+     "shadow": 0.6,
+     "bloom": 3.74,
+     "grade": 3.5,
+     "output": 3.64,
+     "total": 22.47
+    },
+    "calls": [
+     97,
+     133
+    ],
+    "tris": [
+     1619660,
+     2221031
+    ]
+   },
+   {
+    "t": 6.12,
+    "x": -26,
+    "z": 114,
+    "frame": {
+     "frames": 123,
+     "avgMs": 16.66,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.87,
+     "modules": {
+      "vegetation": 1.12,
+      "frame": 0.27,
+      "fauna": 0.21,
+      "particles": 0.12,
+      "inhabitants2": 0.06,
+      "skylife": 0.04,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "ruins2": 0.01,
+      "water": 0.01,
+      "structures": 0.01,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 1.12,
+      "fauna fauna/grazers.js:223": 0.13,
+      "particles particles.js:274": 0.11,
+      "skylife skylife.js:67": 0.04,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.03,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "fauna fauna/wings.js:158": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "fauna fauna/uncanny/traveller.js:407": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 123,
+     "render": 11.57,
+     "shadow": 0.51,
+     "bloom": 3.97,
+     "grade": 3.29,
+     "output": 3.46,
+     "total": 22.28
+    },
+    "calls": [
+     92,
+     131
+    ],
+    "tris": [
+     1619660,
+     2221031
+    ]
+   },
+   {
+    "t": 6.62,
+    "x": -28,
+    "z": 127,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.66,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 2.12,
+     "modules": {
+      "vegetation": 1.35,
+      "frame": 0.28,
+      "fauna": 0.21,
+      "particles": 0.11,
+      "inhabitants2": 0.08,
+      "skylife": 0.04,
+      "riverlife2": 0.01,
+      "rocks": 0.01,
+      "ruins2": 0.01,
+      "structures": 0.01,
+      "water": 0.01,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 1.35,
+      "fauna fauna/grazers.js:223": 0.14,
+      "particles particles.js:274": 0.11,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.05,
+      "skylife skylife.js:67": 0.04,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.03,
+      "fauna fauna/wings.js:158": 0.02,
+      "riverlife2 v2/riverlife.js:760": 0.01,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 123,
+     "render": 11.23,
+     "shadow": 0.57,
+     "bloom": 4.03,
+     "grade": 3.47,
+     "output": 3.64,
+     "total": 22.37
+    },
+    "calls": [
+     92,
+     126
+    ],
+    "tris": [
+     1631791,
+     2267429
+    ]
+   },
+   {
+    "t": 7.12,
+    "x": -18,
+    "z": 132,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 2.06,
+     "modules": {
+      "vegetation": 1.28,
+      "frame": 0.29,
+      "fauna": 0.21,
+      "particles": 0.11,
+      "inhabitants2": 0.09,
+      "skylife": 0.04,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "ruins2": 0.01,
+      "structures": 0.01,
+      "water": 0,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 1.28,
+      "fauna fauna/grazers.js:223": 0.14,
+      "particles particles.js:274": 0.1,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.07,
+      "skylife skylife.js:67": 0.04,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "inhabitants2 v2/inhabitants/galley.js:279": 0.01,
+      "fauna fauna/wings.js:158": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 121,
+     "render": 10.86,
+     "shadow": 0.58,
+     "bloom": 3.96,
+     "grade": 3.71,
+     "output": 3.86,
+     "total": 22.39
+    },
+    "calls": [
+     92,
+     126
+    ],
+    "tris": [
+     1651228,
+     2340086
+    ]
+   },
+   {
+    "t": 7.62,
+    "x": -9,
+    "z": 130,
+    "frame": {
+     "frames": 121,
+     "avgMs": 16.68,
+     "low1Ms": 26.7,
+     "fps": 60,
+     "low1Fps": 37.5
+    },
+    "cpu": {
+     "totalMs": 1.98,
+     "modules": {
+      "vegetation": 1.28,
+      "frame": 0.26,
+      "fauna": 0.18,
+      "particles": 0.1,
+      "inhabitants2": 0.08,
+      "skylife": 0.03,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "structures": 0.01,
+      "ruins2": 0.01,
+      "flora2": 0,
+      "water": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 1.28,
+      "fauna fauna/grazers.js:223": 0.12,
+      "particles particles.js:274": 0.1,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.06,
+      "skylife skylife.js:67": 0.03,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 10.92,
+     "shadow": 0.7,
+     "bloom": 3.9,
+     "grade": 3.72,
+     "output": 3.85,
+     "total": 22.39
+    },
+    "calls": [
+     92,
+     140
+    ],
+    "tris": [
+     1651228,
+     2799547
+    ]
+   },
+   {
+    "t": 8.14,
+    "x": -3,
+    "z": 118,
+    "frame": {
+     "frames": 121,
+     "avgMs": 16.67,
+     "low1Ms": 26.7,
+     "fps": 60,
+     "low1Fps": 37.5
+    },
+    "cpu": {
+     "totalMs": 1.66,
+     "modules": {
+      "vegetation": 0.96,
+      "frame": 0.27,
+      "fauna": 0.17,
+      "particles": 0.1,
+      "inhabitants2": 0.08,
+      "skylife": 0.04,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "flora2": 0,
+      "water": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.96,
+      "fauna fauna/grazers.js:223": 0.11,
+      "particles particles.js:274": 0.1,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.07,
+      "skylife skylife.js:67": 0.04,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 120,
+     "render": 11.08,
+     "shadow": 0.73,
+     "bloom": 4.04,
+     "grade": 3.9,
+     "output": 3.99,
+     "total": 23.01
+    },
+    "calls": [
+     94,
+     140
+    ],
+    "tris": [
+     1689171,
+     2799547
+    ]
+   },
+   {
+    "t": 8.64,
+    "x": 5,
+    "z": 107,
+    "frame": {
+     "frames": 121,
+     "avgMs": 16.67,
+     "low1Ms": 26.7,
+     "fps": 60,
+     "low1Fps": 37.5
+    },
+    "cpu": {
+     "totalMs": 1.34,
+     "modules": {
+      "vegetation": 0.67,
+      "frame": 0.25,
+      "fauna": 0.16,
+      "particles": 0.1,
+      "inhabitants2": 0.08,
+      "skylife": 0.03,
+      "riverlife2": 0.02,
+      "rocks": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "flora2": 0,
+      "water": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.67,
+      "fauna fauna/grazers.js:223": 0.11,
+      "particles particles.js:274": 0.1,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.06,
+      "skylife skylife.js:67": 0.03,
+      "riverlife2 v2/riverlife.js:760": 0.02,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 120,
+     "render": 11.65,
+     "shadow": 0.65,
+     "bloom": 4.39,
+     "grade": 3.96,
+     "output": 4.05,
+     "total": 24.05
+    },
+    "calls": [
+     105,
+     140
+    ],
+    "tris": [
+     1769107,
+     2799547
+    ]
+   },
+   {
+    "t": 9.15,
+    "x": 15,
+    "z": 97,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.66,
+     "low1Ms": 26.7,
+     "fps": 60,
+     "low1Fps": 37.5
+    },
+    "cpu": {
+     "totalMs": 1.21,
+     "modules": {
+      "vegetation": 0.59,
+      "frame": 0.23,
+      "fauna": 0.15,
+      "particles": 0.1,
+      "inhabitants2": 0.08,
+      "skylife": 0.03,
+      "riverlife2": 0.01,
+      "rocks": 0.01,
+      "structures": 0.01,
+      "ruins2": 0,
+      "flora2": 0,
+      "water": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.59,
+      "particles particles.js:274": 0.1,
+      "fauna fauna/grazers.js:223": 0.09,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.06,
+      "skylife skylife.js:67": 0.03,
+      "riverlife2 v2/riverlife.js:760": 0.01,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 11.73,
+     "shadow": 0.72,
+     "bloom": 4.52,
+     "grade": 3.85,
+     "output": 3.93,
+     "total": 24.03
+    },
+    "calls": [
+     105,
+     140
+    ],
+    "tris": [
+     1909547,
+     2799547
+    ]
+   },
+   {
+    "t": 9.65,
+    "x": 25,
+    "z": 89,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.66,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.11,
+     "modules": {
+      "vegetation": 0.5,
+      "frame": 0.24,
+      "fauna": 0.16,
+      "particles": 0.09,
+      "inhabitants2": 0.06,
+      "skylife": 0.03,
+      "rocks": 0.01,
+      "riverlife2": 0.01,
+      "structures": 0,
+      "ruins2": 0,
+      "flora2": 0,
+      "water": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.5,
+      "fauna fauna/grazers.js:223": 0.09,
+      "particles particles.js:274": 0.09,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.05,
+      "skylife skylife.js:67": 0.03,
+      "rocks rocks.js:222": 0.01,
+      "riverlife2 v2/riverlife.js:760": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 122,
+     "render": 12.19,
+     "shadow": 1.12,
+     "bloom": 4.7,
+     "grade": 3.95,
+     "output": 4.04,
+     "total": 24.87
+    },
+    "calls": [
+     105,
+     140
+    ],
+    "tris": [
+     1909547,
+     2656033
+    ]
+   },
+   {
+    "t": 10.17,
+    "x": 28,
+    "z": 80,
+    "frame": {
+     "frames": 122,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.15,
+     "modules": {
+      "vegetation": 0.55,
+      "frame": 0.24,
+      "fauna": 0.16,
+      "particles": 0.1,
+      "inhabitants2": 0.04,
+      "skylife": 0.03,
+      "rocks": 0.01,
+      "riverlife2": 0.01,
+      "ruins2": 0,
+      "structures": 0,
+      "water": 0,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.55,
+      "fauna fauna/grazers.js:223": 0.1,
+      "particles particles.js:274": 0.09,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.03,
+      "skylife skylife.js:67": 0.03,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 123,
+     "render": 12.32,
+     "shadow": 1.56,
+     "bloom": 4.47,
+     "grade": 3.78,
+     "output": 3.91,
+     "total": 24.49
+    },
+    "calls": [
+     105,
+     143
+    ],
+    "tris": [
+     1909547,
+     2596349
+    ]
+   },
+   {
+    "t": 10.69,
+    "x": 22,
+    "z": 67,
+    "frame": {
+     "frames": 123,
+     "avgMs": 16.67,
+     "low1Ms": 18.6,
+     "fps": 60,
+     "low1Fps": 53.8
+    },
+    "cpu": {
+     "totalMs": 1.16,
+     "modules": {
+      "vegetation": 0.55,
+      "frame": 0.26,
+      "fauna": 0.17,
+      "particles": 0.08,
+      "skylife": 0.03,
+      "inhabitants2": 0.03,
+      "rocks": 0.01,
+      "riverlife2": 0.01,
+      "ruins2": 0.01,
+      "water": 0,
+      "flora2": 0,
+      "structures": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.55,
+      "fauna fauna/grazers.js:223": 0.1,
+      "particles particles.js:274": 0.08,
+      "skylife skylife.js:67": 0.03,
+      "inhabitants2 v2/inhabitants/menology.js:416": 0.02,
+      "rocks rocks.js:222": 0.01,
+      "fauna fauna/uncanny/traveller.js:407": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 124,
+     "render": 12.63,
+     "shadow": 2.12,
+     "bloom": 4.39,
+     "grade": 3.7,
+     "output": 3.83,
+     "total": 24.55
+    },
+    "calls": [
+     105,
+     143
+    ],
+    "tris": [
+     1909547,
+     2578715
+    ]
+   },
+   {
+    "t": 11.2,
+    "x": 16,
+    "z": 55,
+    "frame": {
+     "frames": 123,
+     "avgMs": 16.67,
+     "low1Ms": 18.4,
+     "fps": 60,
+     "low1Fps": 54.3
+    },
+    "cpu": {
+     "totalMs": 1.09,
+     "modules": {
+      "vegetation": 0.47,
+      "frame": 0.27,
+      "fauna": 0.19,
+      "particles": 0.08,
+      "skylife": 0.03,
+      "riverlife2": 0.01,
+      "rocks": 0.01,
+      "inhabitants2": 0.01,
+      "ruins2": 0.01,
+      "water": 0,
+      "flora2": 0,
+      "structures": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.47,
+      "fauna fauna/grazers.js:223": 0.12,
+      "particles particles.js:274": 0.08,
+      "skylife skylife.js:67": 0.03,
+      "riverlife2 v2/riverlife.js:760": 0.01,
+      "fauna fauna/uncanny/traveller.js:407": 0.01,
+      "rocks rocks.js:222": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 124,
+     "render": 12.81,
+     "shadow": 2.48,
+     "bloom": 4.36,
+     "grade": 3.6,
+     "output": 3.77,
+     "total": 24.54
+    },
+    "calls": [
+     107,
+     143
+    ],
+    "tris": [
+     1915811,
+     2578715
+    ]
+   },
+   {
+    "t": 11.72,
+    "x": 9,
+    "z": 43,
+    "frame": {
+     "frames": 124,
+     "avgMs": 16.66,
+     "low1Ms": 18.4,
+     "fps": 60,
+     "low1Fps": 54.3
+    },
+    "cpu": {
+     "totalMs": 1.04,
+     "modules": {
+      "vegetation": 0.4,
+      "frame": 0.28,
+      "fauna": 0.2,
+      "particles": 0.08,
+      "skylife": 0.03,
+      "riverlife2": 0.01,
+      "rocks": 0.01,
+      "ruins2": 0.01,
+      "inhabitants2": 0.01,
+      "water": 0,
+      "structures": 0,
+      "flora2": 0,
+      "core": 0,
+      "audio": 0
+     },
+     "callbacks": {
+      "vegetation vegetation.js:34": 0.4,
+      "fauna fauna/grazers.js:223": 0.12,
+      "particles particles.js:274": 0.08,
+      "skylife skylife.js:67": 0.03,
+      "fauna fauna/lamps.js:131": 0.01,
+      "riverlife2 v2/riverlife.js:760": 0.01,
+      "rocks rocks.js:222": 0.01,
+      "fauna fauna/wings.js:158": 0.01
+     }
+    },
+    "gpu": {
+     "available": true,
+     "frames": 124,
+     "render": 12.67,
+     "shadow": 2.42,
+     "bloom": 4.48,
+     "grade": 3.66,
+     "output": 3.79,
+     "total": 24.6
+    },
+    "calls": [
+     132,
+     143
+    ],
+    "tris": [
+     2094660,
+     2578715
+    ]
+   }
+  ]
+ }
+}

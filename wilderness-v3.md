@@ -120,6 +120,24 @@ Bench, `?q=medium` (`stage3-tier-medium-before.json` is the old tree, where medi
 
 Render pairs `shots/wip/perf-03-tier-<view>-before.png` (q=high) against `-after.png` (q=medium), all ten views of `tools/views-perf.json`, 1280×720, device pixel ratio 1 (so both render at ratio 1 and the pair shows the shadow map; medium's lower ratio is stage 2's `perf-02-dpr-*` pair). Mean absolute difference per pixel against a second q=high render (`perf-03-noise-<view>-again.png`, the grain, wind and particles alone): spawn 5.80 vs 5.73, wood 7.63 vs 7.62, sun 6.92 vs 6.85, lattice 8.78 vs 8.31 (the largest), the rest within 0.15. Medium is high at a glance at spawn, the wood and the sun.
 
+**Targets and textures.** `src/gpumem.js` wraps the WebGL calls that allocate texture and renderbuffer storage and keeps each one's bytes (mip chains included), so the profiler reports megabytes, not just `renderer.info.memory`'s counts; the canvas's drawing buffer is estimated from its context attributes. What it found, at q=high and 1280×720:
+
+- The canvas had MSAA at high, but the scene is drawn into the composer's targets (no MSAA) and the canvas only takes OutputPass's full-screen triangle: a 4× multisampled colour and depth buffer that changed no pixel (31.6 MB at 1280×720, 69.5 MB at a 1440×900 retina window). The canvas now has no antialias and no depth buffer. If high should be antialiased, it needs MSAA samples on the composer's scene target or an FXAA/SMAA pass: a look decision for Austin, not made here.
+- All eleven bloom targets and the composer's second target carried depth renderbuffers for full-screen quads. Only the scene target (the composer's readBuffer, where RenderPass draws) keeps one; post.js restores depth on both composer targets if a future pass list ever hands RenderPass the other one. Renderbuffers 14 → 2.
+- Half float stays where it is needed: the composer pair and the bloom chain carry HDR values (the sun, lanterns, the Lattice) into OutputPass's tone mapping. The shadow map is RGBA8 with a depth renderbuffer, three r170's packing (4096²: 128 MB at high; 2048²: 32 MB at medium and low, which is most of medium's saving).
+- Resizing is clean: after a window resize from 1280×720 to 800×600, and after the adaptive step to 0.75, every target matches a fresh load at that size byte for byte (50.3 MB and 51.3 MB at medium); bloom's chain follows (240, 120, 60, 30, 15 px wide at 960 px).
+- The procedural textures (terrain, water, mist, the trees' atlas, the Hypogeum's walls, the Parhelion City) are all mipmapped with trilinear minification, and none is re-uploaded: over 60 frames no texture's version moved except three's own BatchedMesh indirect texture (4 KB, rewritten per draw for its per-camera culling), which is the 1–3 uploads a frame the profiler shows.
+
+GPU memory (textures + renderbuffers + canvas), before → after the target changes:
+
+| tier | 1280×720, device ratio 1 | 1440×900, device ratio 2 (a 13" retina laptop) |
+|---|---:|---:|
+| high | 189.7 → 157.2 MB | 255.7 → 184.4 MB |
+| medium | 69.0 → 61.2 MB | 81.5 → 70.4 MB |
+| low | 60.6 → 54.9 MB | 69.5 → 61.6 MB |
+
+So a laptop that drops from high to medium goes from 256 to 70 MB of render memory. Bench pair `stage3-tier-targets-before.json` (`&lean=0`) and `-after.json`: same frames, calls and triangles; CPU 1.43 vs 1.25 ms (noise). Render pair `shots/wip/perf-03-tier-lean-<spawn|wood|sun>-before|after.png` at q=high: differences below the noise floor (spawn 5.71 against 5.73 between two identical renders, wood 7.53 against 7.62, sun 6.09 against 6.85).
+
 ## Stage 4: verify on hardware and write it down
 
 - Austin runs `?bench=1` on his PC at high, his laptop (if any) at medium, and his phone at low, before stage 2 and after stage 3. The agent records the JSON in `shots/perf/` with dates and the commit hash, and a short table in this file.

@@ -54,14 +54,19 @@ async function start() {
   await progress('shaping the moor', 0);
 
   const canvas = document.getElementById('scene');
+  // Target hygiene (v3 stage 3): the canvas only ever receives the composer's last full-screen pass (the scene is
+  // drawn into the composer's targets, which have no MSAA), so it needs neither antialiasing nor a depth buffer;
+  // high's antialias only bought a multisampled back buffer that changed no pixel. ?lean=0: as before.
+  const lean = url.searchParams.get('lean') !== '0';
+  const canvasAA = !lean && quality === 'high';
   // ?multidraw=0 hides WEBGL_multi_draw, as Firefox does: a BatchedMesh then draws once per instance
   let context;
   if (url.searchParams.get('multidraw') === '0') {
-    context = canvas.getContext('webgl2', { alpha: false, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: quality === 'high', powerPreference: 'high-performance' });
+    context = canvas.getContext('webgl2', { alpha: false, depth: !lean, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, antialias: canvasAA, powerPreference: 'high-performance' });
     const get = context.getExtension.bind(context);
     context.getExtension = (name) => (name === 'WEBGL_multi_draw' ? null : get(name));
   }
-  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: quality === 'high', powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, context, antialias: canvasAA, depth: !lean, powerPreference: 'high-performance' });
   const gpumem = installGpuMem(renderer.getContext(), canvas); // texture and target bytes for the profiler
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
