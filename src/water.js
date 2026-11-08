@@ -209,6 +209,7 @@ const FRAG = /* glsl */`
 
 export async function build(ctx) {
   const { scene, terrain, palette, sky } = ctx;
+  await ctx.progress?.('filling the tarn', 0.1);
   const rng = ctx.makeRng(7001);
   const tex = makeWaterTexture(rng, 256);
   const high = ctx.quality === 'high';
@@ -257,7 +258,9 @@ export async function build(ctx) {
   });
 
   // the river, the fall and the pool
+  await ctx.progress?.('cutting the ravine', 0.5);
   const river = buildRiver(ctx, tex);
+  await ctx.progress?.('lighting the Speculum', 0.8);
   const pool = buildPool(ctx, tex, river.impact);
   ctx.registerUpdate((dt, t) => { river.update(dt, t); pool.update(dt, t); });
   const RV = terrain.river;

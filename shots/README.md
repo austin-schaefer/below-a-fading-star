@@ -26,6 +26,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 11 | Controls: phone thumbstick and debug panel |
 | 12 | River and the Speculum |
 | 13 | v2 stage C: ruins, flora, river life, sky, inhabitants, more life |
+| 14 | v3 stage 1: the loading bar, the profiler and the bench |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -188,4 +189,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-life-beetles-bronze-door.png` | Beetles clustering on the rings of the Hypogeum's bronze door. |
 | `13-life-moths-taverna-lamp.png` | Moths at one of the Pomegranate House's lamps. |
 | `13-life-wader-slow-reach.png` | The stilted wader at the slow reach, a pale spindle at distance; it is gone if you look. |
+| `14-loading-card-midload.png` | The title card mid-load: a hairline bar under the buttons, "lighting the sun" beneath it, Go out dimmed. |
+| `14-loading-card-ready.png` | The same card once the world is built: bar gone, Go out lit, the keep behind the glass. |
+| `14-perf-overlay-spawn.png` | The profiler overlay (`?perf=1`) at spawn: frame time, CPU by module, calls, tris, lights, render size; the debug panel open beside it. |
+| `14-perf-bench-summary.png` | The bench's summary card after a short headless run, with GPU time per pass in the overlay above it. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |

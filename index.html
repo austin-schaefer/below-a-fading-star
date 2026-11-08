@@ -25,7 +25,11 @@
   #begin { margin-top: 1.4em; font: inherit; font-size: 1.05rem; letter-spacing: 0.12em; padding: 0.7em 2.2em; color: var(--ink); background: transparent;
     border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; transition: background 0.3s, border-color 0.3s; }
   #begin:hover { background: rgba(232, 89, 26, 0.18); border-color: var(--wordmark); }
-  #load { margin-top: 1.1em; font-style: italic; font-size: 0.9rem; color: rgba(219, 170, 134, 0.55); min-height: 1.2em; transition: opacity 0.8s; }
+  #load { margin-top: 1.1em; width: min(20rem, 70vw); transition: opacity 0.8s; }
+  #load .track { height: 1px; background: rgba(219, 170, 134, 0.28); }
+  #load .fill { display: block; height: 100%; width: 0; background: var(--wordmark); box-shadow: 0 0 8px rgba(232, 89, 26, 0.5); transition: width 0.35s ease-out; }
+  #load .step { display: block; margin-top: 0.55em; font-style: italic; font-size: 0.9rem; color: rgba(219, 170, 134, 0.55); min-height: 1.2em; }
+  #begin:disabled { opacity: 0.4; cursor: default; background: transparent; border-color: rgba(255, 154, 92, 0.6); }
   body.ready #load { opacity: 0; }
   #draglook { margin-top: 0.9em; font: inherit; font-size: 0.85rem; font-style: italic; color: rgba(219, 170, 134, 0.7); background: none; border: 0; border-bottom: 1px dotted rgba(219, 170, 134, 0.4); padding: 0 0 1px; cursor: pointer; }
   #draglook:hover { color: var(--ink); }
@@ -60,6 +64,17 @@
   #dbg-list button { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 5px 10px; font: inherit; color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }
   #dbg-list button:hover, #dbg-list button:active { background: rgba(217, 205, 180, 0.12); }
   #dbg-list kbd { flex: none; min-width: 1.1em; text-align: center; font-family: ui-monospace, monospace; font-size: 0.72rem; color: rgba(217, 205, 180, 0.6); border: 1px solid rgba(217, 205, 180, 0.3); border-radius: 2px; padding: 0 0.3em; margin: 0; }
+  #dbg-list .dbg-head { padding: 6px 10px 2px; font-family: 'Alegreya SC', 'Alegreya', serif; font-size: 0.75rem; letter-spacing: 0.18em; color: rgba(217, 205, 180, 0.5); border-top: 1px solid rgba(217, 205, 180, 0.15); }
+  #dbg-list button.off span { opacity: 0.45; }
+  /* profiler overlay (perf.js): top-left, under the hint line */
+  #perf { position: fixed; top: calc(44px + env(safe-area-inset-top, 0px)); left: calc(10px + env(safe-area-inset-left, 0px)); max-width: calc(100vw - 20px); display: none; margin: 0; padding: 6px 9px; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.74rem; line-height: 1.35; color: rgba(255, 233, 219, 0.82); background: rgba(11, 6, 9, 0.5); border: 1px solid rgba(217, 205, 180, 0.18); border-radius: 2px; z-index: 11; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+  #perf.shown { display: block; }
+  #perf-bench { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 32px)); box-sizing: border-box; padding: 14px 18px; background: rgba(11, 6, 9, 0.88); border: 1px solid rgba(255, 154, 92, 0.45); border-radius: 2px; color: var(--ink); z-index: 15; }
+  #perf-bench h2 { margin: 0 0 0.4em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 1.1rem; letter-spacing: 0.18em; color: var(--wordmark); }
+  #perf-bench pre { margin: 0; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.85rem; line-height: 1.45; color: var(--muted); }
+  #perf-bench .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  #perf-bench button { font: inherit; font-size: 0.9rem; padding: 0.35em 1.1em; color: var(--ink); background: transparent; border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; }
+  #perf-bench button:hover { background: rgba(232, 89, 26, 0.18); }
   @media (max-width: 700px) { #card .keys { display: none; } #fps { display: none; } }
 </style>
 </head>
@@ -70,15 +85,16 @@
   <h1>Below a <em>Fading</em> Star</h1>
   <p class="intro">You wake at the gate of a keep that has outlived its name. The sun is swollen, red and guttering; it will not rise any higher than this. Below you a region of moor and fen lies open, bounded by mountains nothing crosses. Walk it.</p>
   <p class="paused-note">Paused. Click to return to the moor.</p>
-  <button id="begin">Go out</button>
+  <button id="begin" disabled>Go out</button>
   <button id="draglook" type="button">Mouse trouble? Look by dragging instead (no mouse capture)</button>
-  <div id="load">the moor is loading…</div>
+  <div id="load"><div class="track"><i class="fill"></i></div><span class="step">the moor is loading…</span></div>
   <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>Esc</kbd> pause. On a phone: the thumbstick at bottom right walks (pull it far to hurry), drag anywhere else to look.</div>
 </div>
 <div id="hint">The causeway runs west from the gate. The lights in the fen are not for you.</div>
 <div id="place"><div id="place-name"></div><div id="place-line"></div></div>
 <div id="reticle"></div>
 <div id="fps"></div>
+<pre id="perf"></pre>
 <div id="stick"><div id="stick-knob"></div></div>
 <button id="dbg-btn" type="button" aria-label="debug">&#10022;</button>
 <div id="dbg"><div id="dbg-live"></div><div id="dbg-list"></div></div>
@@ -94,7 +110,7 @@
     addEventListener('error', function (e) { show(e.message || (e.error && e.error.message) || 'script error'); });
     addEventListener('unhandledrejection', function (e) { show('unhandled: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)); });
     setTimeout(function () {
-      var l = document.getElementById('load');
+      var l = document.getElementById('load-step') || document.querySelector('#load .step');
       if (l && !document.body.classList.contains('ready')) l.textContent = 'Still loading. If this never clears, something failed; the browser console will say what.';
     }, 45000);
   })();

@@ -13,14 +13,18 @@ export async function build(ctx) {
   const lap = () => { T.push(performance.now()); return (T[T.length - 1] - T[T.length - 2]).toFixed(0); };
   const shared = { time: { value: 0 } };
 
+  await ctx.progress?.('combing the grass', 0.1);
   const ground = makeGround(ctx);
   const tGround = lap();
+  await ctx.progress?.('growing the wood', 0.3);
   const mats = makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4001)));
   const trees = buildTrees(ctx, ground, mats);
   const fungi = buildToadstools(ctx, ground, mats, trees);
   const tTrees = lap();
+  await ctx.progress?.('sowing the heather and the reeds', 0.6);
   const plants = buildPlants(ctx, ground, shared);
   const tPlants = lap();
+  await ctx.progress?.('seeding the Lattice', 0.85);
   const lattice = buildLattice(ctx, ground, shared);
   const tLattice = lap();
 

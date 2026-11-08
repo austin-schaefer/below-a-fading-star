@@ -71,19 +71,28 @@ export async function build(ctx) {
     sites[name] = { B, ms: performance.now() - ts, extra, tris: B.triangles };
     return B;
   };
+  await ctx.progress?.('raising the keep', 0.0);
   site('keep', 1101, buildKeep);
+  await ctx.progress?.('laying the causeway', 0.15);
   site('causeway', 1202, buildCauseway);
+  await ctx.progress?.('raising the tower', 0.3);
   site('tower', 1303, buildTower);
+  await ctx.progress?.('setting the stones', 0.4);
   site('stones', 1404, buildStones);
+  await ctx.progress?.('sinking the court', 0.5);
   site('court', 1505, buildCourt);
+  await ctx.progress?.('roofing the byre', 0.6);
   site('byre', 1606, buildByre);
+  await ctx.progress?.('lighting the lamps', 0.7);
   site('taverna', 1909, buildTaverna);
   site('arches', 2010, buildArches);
+  await ctx.progress?.('joining the span', 0.8);
   site('bridge', 2111, buildBridge);
   // keep the scatter off the newer landmarks too
   env.taken = [[TAVERNA.x, TAVERNA.z, 26], [ARCHES.x, ARCHES.z, 26], [BRIDGE.a.x, BRIDGE.a.z, 14], [BRIDGE.b.x, BRIDGE.b.z, 14],
     [(BRIDGE.a.x + BRIDGE.b.x) / 2, (BRIDGE.a.z + BRIDGE.b.z) / 2, 26]];
   site('markers', 1707, buildMarkers);
+  await ctx.progress?.('scattering the rubble', 0.9);
   site('scatter', 1808, buildScatter);
 
   // ---- meshes ----

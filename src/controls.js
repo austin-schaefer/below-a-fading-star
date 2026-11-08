@@ -146,7 +146,7 @@ export function buildControls(ctx) {
         }
       }
     }
-    if (!state.enabled) ctx.events.dispatchEvent(new CustomEvent('begin'));
+    if (!state.enabled && document.body.classList.contains('ready')) ctx.events.dispatchEvent(new CustomEvent('begin'));
     e.preventDefault();
   }, { passive: false });
   function updateStick(cx, cy) {
