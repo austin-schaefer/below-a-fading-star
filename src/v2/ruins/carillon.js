@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { Builder } from '../../structures/geo.js';
 import { stoneTints, vary, HEX_R, hexCellsIn } from '../../structures/common.js';
 import { Acc, stoneMesh, SKY_SHEEN } from './util.js';
+import { CAUSEWAY } from '../../world.js'; // v4 map: the crown notes read the v3 stretch of the road (gate westward), which CAUSEWAY_V4 keeps but walks the other way
 
 const SITE = { x: -65, z: 12, half: 6 };
 // notes by position: down the crown in walking order (from the keep gate westward), then the edges
@@ -48,7 +49,7 @@ export function caps(causeway, causewayDistance) {
 
 export function buildCarillon(ctx, env) {
   const G = env.ground, rng = ctx.makeRng(7401), tints = stoneTints(ctx.palette);
-  const list = caps(ctx.causeway, ctx.terrain.causewayDistance);
+  const list = caps(CAUSEWAY, ctx.terrain.causewayDistance);
   const B = new Builder(ctx.noise);
   const A = new Acc(null, 'aPolish');
   const colors = [];

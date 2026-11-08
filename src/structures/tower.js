@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, rubblePile } from './common.js';
+import { CAUSEWAY } from '../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 export function buildTower(ctx, B, env) {
   const { rng, ground, tints } = env;
@@ -14,7 +15,7 @@ export function buildTower(ctx, B, env) {
   const course = 0.42;
   const tint = vary(tints.stone, rng, 0.04).multiplyScalar(0.92);
   // the window looks back down the causeway toward the keep
-  const end = ctx.causeway[ctx.causeway.length - 1];
+  const end = CAUSEWAY[CAUSEWAY.length - 1];
   const winA = Math.atan2(end.z - z, end.x - x);
   const winS = Math.round(winA / da - 0.5);
   const winY0 = 18.2, winY1 = 19.8;

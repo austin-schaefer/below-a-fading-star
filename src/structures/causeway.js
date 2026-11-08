@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, hexCellsIn } from './common.js';
+import { pitEdge, PIT_PAVE } from '../v4/paths/ground.js'; // v4 map: the road's end is laid by v4/paths.js
 
 // Walk the polyline: point and direction at arc length s.
 export function causewayAt(cw, s) {
@@ -42,16 +43,19 @@ export function buildCauseway(ctx, B, env) {
     }
     const edge = 1.75 + N2(x * 0.15, z * 0.15) * 0.3;
     if (d > edge && !apron) return;
+    if (pitEdge(x, z) < PIT_PAVE) return; // v4 map: the slabs tilting into the pit and hanging over it are v4/paths.js's
     // ~15% missing, in clusters, more at the ragged edges
     const miss = N2(x * 0.21 + 9, z * 0.21 - 4) * 0.5 + 0.5;
     if (miss > 0.86 || rng() < 0.06 + Math.max(0, d - 1.1) * 0.12) return;
-    env.addPaver(x, z, i, j, { sink: 0.02 + rng() * 0.05, tilt: 0.07 });
+    // v4 map: on the Saltings' lobe the paving sinks half into the crust, canted as it settled
+    const salt = ctx.regions ? ctx.regions.regionAt(x, z).saltings : 0;
+    env.addPaver(x, z, i, j, { sink: 0.02 + rng() * 0.05 + salt * 0.09, tilt: 0.07 + salt * 0.1 });
   });
 
   // waymarkers every ~40 m: a short hexagonal pillar with a worn carving
   const len = causewayLength(cw);
   let n = 0;
-  for (let s = 38; s < len - 10; s += 40) {
+  for (let s = 38; s < len - 26; s += 40) { // v4 map: none in the pit at the road's end
     const p = causewayAt(cw, s);
     const side = n % 2 ? 1 : -1;
     const nx = -p.dz * side, nz = p.dx * side;
@@ -77,9 +81,13 @@ export function buildCauseway(ctx, B, env) {
     n++;
   }
 
-  // broken gateposts at the gate end
+  // broken gateposts at the gate end (v4 map: the road now runs on past the gate, so 14 m back from it)
   {
-    const p = causewayAt(cw, 14);
+    let gi = 0, sg = 0;
+    cw.forEach((q, i) => { if (Math.hypot(q.x - ctx.spawn.x, q.z - ctx.spawn.z) < Math.hypot(cw[gi].x - ctx.spawn.x, cw[gi].z - ctx.spawn.z)) gi = i; });
+    for (let i = 0; i < gi; i++) sg += Math.hypot(cw[i + 1].x - cw[i].x, cw[i + 1].z - cw[i].z);
+    const p = causewayAt(cw, sg - 14);
+    if (gi > 0) { p.dx = -p.dx; p.dz = -p.dz; } // facing out from the gate, as on the v3 road
     for (const side of [-1, 1]) {
       const nx = -p.dz * side, nz = p.dx * side;
       const x = p.x + nx * 2.7, z = p.z + nz * 2.7;
