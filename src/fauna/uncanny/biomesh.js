@@ -456,7 +456,7 @@ export function buildBiomesh(ctx, U) {
     if (i < 0) return false;
     const mode = C.mode[i], col = C.col[i];
     let u = C.u[i], v = C.v[i], a = outward(C, i);
-    const len = (mode === 1 ? 0.8 : 1.4) + rng() * (mode === 1 ? 1.4 : 2.4), step = len / SEG;
+    const len = (mode === 1 ? 0.9 : 2.2) + rng() * (mode === 1 ? 1.6 : 2.8), step = len / SEG;
     R.uv[0] = u; R.uv[1] = v; let n = 1;
     for (let k = 1; k <= SEG; k++) {
       a += (rng() - 0.5) * 0.55;
