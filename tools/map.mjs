@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Top-down map of the region from the live terrain: hillshade, water, landmarks, causeway, river,
-// and any extra sites passed as JSON (for placement planning).
+// Top-down map of the region from the live terrain: hillshade, water, landmarks, the causeway (v4 map: CAUSEWAY_V4,
+// the walked road, with v3's CAUSEWAY dashed under it), the leads (paths P, kerb K, rivulets R, from
+// src/v4/paths/routes.js), the river, and any extra sites passed as JSON (for placement planning).
 //   node tools/map.mjs <out.png> [sites.json]   (sites: [{key, x, z, r, label}])
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -15,7 +16,7 @@ await p.waitForFunction(() => document.body.classList.contains('ready'), null, {
 const res = await p.evaluate(async (sites) => {
   const ctx = window.__fp, T = ctx.terrain;
   const W = await import('./src/world.js');
-  const { LANDMARKS, CAUSEWAY, SUN } = W;
+  const { LANDMARKS, CAUSEWAY, CAUSEWAY_V4, SUN } = W;
   const S = 1800, half = 360, px = S / (2 * half), step = 2;
   const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d');
   const toPx = (x, z) => [(x + half) * px, (z + half) * px];
@@ -37,9 +38,26 @@ const res = await p.evaluate(async (sites) => {
   }
   g.putImageData(img, 0, 0);
   g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 2; g.beginPath(); g.arc(S / 2, S / 2, 300 * px, 0, 7); g.stroke();
-  // causeway
-  g.strokeStyle = 'rgba(230,210,170,0.9)'; g.lineWidth = 4; g.beginPath();
-  CAUSEWAY.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+  // causeway: the v4 road (walked and drawn), v3's dashed under it (the bench's)
+  g.strokeStyle = 'rgba(230,210,170,0.95)'; g.lineWidth = 6; g.beginPath();
+  (CAUSEWAY_V4 || CAUSEWAY).forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+  g.strokeStyle = 'rgba(90,70,50,0.9)'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath();
+  CAUSEWAY.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke(); g.setLineDash([]);
+  // the leads (v4 map)
+  try {
+    const R = await import('./src/v4/paths/routes.js');
+    g.font = 'bold 18px Alegreya, Georgia, serif'; g.textAlign = 'center';
+    for (const L of R.leads().list) {
+      const col = L.kind === 'rivulet' ? 'rgba(110,200,255,0.95)' : L.kind === 'kerb' ? 'rgba(200,200,200,0.95)' : 'rgba(255,200,120,0.9)';
+      g.strokeStyle = col; g.lineWidth = L.kind === 'rivulet' ? 2.5 : 3; g.setLineDash(L.kind === 'path' ? [7, 4] : []);
+      for (const S of L.lines) {
+        g.beginPath(); S.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke();
+      }
+      g.setLineDash([]);
+      const S = L.lines[0], m = S[Math.floor(S.length / 2)], [a, bb] = toPx(m.x, m.z);
+      g.fillStyle = col; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(L.id, a + 12, bb - 8); g.shadowBlur = 0;
+    }
+  } catch (e) { console.log('leads', e); }
   // river path
   if (ctx.river?.pathPoints) { g.strokeStyle = 'rgba(120,190,255,0.95)'; g.lineWidth = 3; g.beginPath();
     ctx.river.pathPoints.forEach((q, i) => { const [a, bb] = toPx(q.x, q.z); i ? g.lineTo(a, bb) : g.moveTo(a, bb); }); g.stroke(); }
