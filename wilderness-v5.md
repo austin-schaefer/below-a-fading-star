@@ -237,3 +237,53 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
   - From near the walk limit (−305, −62): the lower tiers overhead.
   - `tower-foot-20s` is rendered with `ctx.galleries.offset = 20`. Against `tower-foot`, chain ends have risen and dropped and the great wheel has stepped.
 - **Renders:** `shots/wip/v5-04-galleries-<view>-<before|after>.png` for `spawn`, `causeway-65`, `causeway-40`, `tower-foot`, `tower-foot-20s`, `w140`, `stones`, `span-deck` and `under` (`tools/views-v5-galleries.json`). `v5-04-galleries-sheet.png` puts the causeway (−65, 12) pair side by side. The `-draft*` renders are the iterations. Draft 1 is six sparse tiers that read as a building's front. Draft 2 is a rectangle of tiers. `-draft4b` is the first full set.
+
+### AW. The Plinth Road (`src/v5/plinths.js`; `?plinths=0` leaves it out)
+
+**Idea:** a processional way of paired 20 m plinths runs north-north-east from the Bletting's hedge to the north-east wall's foot; on every plinth only the feet of a robed figure remain, and none of them are human.
+
+- **Count and spacing:** twelve pairs, 11 m apart along the line from (130, −150) to (165, −290). The first pair stands 22 m up from the hedge's gap, at (124.7, −174.0) and (146.0, −168.7). The last pair stands at the plan's end, 143 m up, on the talus. Across the road the two plinths of a pair are 22 m apart, centre to centre. Each plinth is in the kit's masonry, 2.2 m courses with a bronze channel in a few: a footing 7 m square, a step, a battered die, a flaring cornice and a crown slab 6 m square, 20 m in all. The paving between the rows is 13 m wide, in 2.2 m slabs worn through and grassed over in patches. It frays out toward the hedge and runs on past the last pair up the talus to 158 m, where the wall goes up sheer, as if the road went on into it. From the foot, five or six plinths a side read as separate before the rows close into one wall. The haze greys the last pairs against the rock but does not take them.
+- **The feet:** every figure faced across the road and is broken off above the hem. What is left is the hem's robe, 1.7–2.5 m of it, cut unevenly, with deep folds. The legs and feet come out under its lifted front edge. Eleven kinds, dealt so neither row repeats a kind next to itself, each two or three times, every figure with its own sizes and stance:
+  - raptor's talons hooked over the crown's edge
+  - a wader's long splayed toes
+  - a ratite's two toes
+  - webbed toes
+  - a parrot's two forward and two back
+  - a pig's cloven trotters with their dewclaws
+  - a solid hoof
+  - a lizard's splayed claws
+  - a crocodile's webbed feet
+  - a tortoise's columns with their nails
+  - a beast's clawed paws
+
+  The feet are 2–4 m long. Claws, hooves and nails are darker. Most figures are in the plinths' stone, paler where they broke. Seven are black bronze gone to verdigris. Each figure is one distance field polygonised once at build by surface nets (0.30 m cells at high, 0.40 at low), all in one mesh.
+- **What fell:** six of the 24 plinths:
+  - The third pair's east plinth, the eighth pair's west and the tenth pair's east fell. Each footing still stands. The die lies in the grass in three or four blocks along its fall, with the cornice beyond. The eighth pair's west plinth fell inward across the west half of the road, and its webbed feet lie on the paving between the eighth and ninth pairs.
+  - The fifth pair's west plinth (9 m), the seventh pair's east (13 m) and the eleventh pair's west (5.5 m) are broken off. Their top courses lie at their feet.
+  - Each fallen figure's feet lie in the grass beside its plinth, either on their back with the toes in the air or on their side with the soles turned away from the road.
+  - Three kit measure figures stand on the paving at the first pair's west footing, by the fifth pair's raptor feet in the grass, and far up the road at 104 m.
+- **Kept:**
+  - P7 and the Bletting's gap at (130, −150): the paving starts 1.5 m north of the gap, frayed. The hedge and the `GAPS` are unchanged. The first west plinth's centre is 7.8 m from P7's traced line, its footing 3–4 m clear of it. `paths-test` passes 43/43.
+  - The Outwash's gravel: nothing stands west of x 120 north of z −200. The nearest thing there is the fifth pair's raptor feet in the grass, at about x 123.
+  - The walk limit (r 348): every plinth is inside it, the last pair at r 329 and r 335. The paving stops 1.6 m inside the limit.
+  - Rocks and trees stay out of the corridor (15 m either side of the line, `SITES.plinths.r`) and off every fall. The clearances are applied after the draws, in `rocks.js` (the moor's stones and the tor at (120, −180)) and in `hiddenAt` (`vegetation/ground.js`). Ground cover keeps off the paving's middle. With `?plinths=0` the clearances go too.
+  - The ground the road crosses is unchanged: a hollow to −2 m at 16–32 m up the line, flat to 112 m, then the talus rising 20 m to the last pair. The plinths stand on it as it lies, their footings sunk to the lowest corner.
+- **Colliders:** every footing (a ring of five), every fallen block and cornice, the broken plinths' larger fallen blocks, every pair of feet in the grass, and the measure figures. Nothing moves and nothing registers an update.
+- **Cost at high:** 3 draw calls (the masonry, the feet and the measure figures), each with a shadow pass, and 59.7k triangles: 5.0k of masonry, 54.1k of feet and the figures. At low it is 34.7k. Built in about 3 s at high. Before, 0. From the foot (130, −150), the frame goes from 144 to 150 calls (main and shadow passes) and from 2.438M to 2.493M triangles.
+- **Sightlines** (`tools/views-v5-plinths.json`; before is `?plinths=0`):
+
+  | from | what shows |
+  |---|---|
+  | the road's foot (130, −150), looking north up the line | the two rows close into a corridor up to the wall. The tor and the copse that stood in the corridor are gone. |
+  | Medlar Close (130, −90) | the first pairs as a short colonnade over the rank grass, left of centre, with the wall behind |
+  | the Pomegranate House (110, −25) | hidden: the house's own wall and the rise toward the close |
+  | (116, −42), 18 m north of the house | the first plinths just show over the orchard (`pomegranate-n`) |
+  | the Outwash's east end (100, −195), looking east | the west row broadside, the robe stumps on the crowns against the sky, a broken plinth among them |
+  | the Span's deck (−200, 215), y 56 | not seen: 560 m off, behind the keep's hill and lost in the haze |
+  | close (`close`, from (118.7, −224.5)) | the fifth pair's raptor feet on their side in the grass, legs out of the robe and talons toward the measure figure, the broken stump behind |
+  | up at the first west plinth from the paving (`first-up`) | its raptor's talons hanging over the crown's edge against the sky |
+  | the end (`end`, on the talus at (166.4, −295.5)) | only the wall's rock filling the view |
+  | the end (`end-road`, from 90 m up the line) | the road climbing between the last pairs to the rock, the eighth pair's fallen die and its feet on the paving in front |
+- **Renders:** `shots/wip/v5-05-plinths-<view>-<before|after>.png` for `foot`, `medlar`, `pomegranate`, `pomegranate-n`, `outwash`, `span-deck`, `close`, `first-up`, `end` and `end-road`. `v5-05-plinths-sheet.png` puts the foot pair side by side. The iterations:
+  - `-draft1` to `-draft4`: the first feet were too small and set back, so nothing showed from below.
+  - `-dbg*`: views from crown height and of the feet in the grass. In `dbg`, robes 3–4 m tall hid the feet. `dbg2`/`dbg3` show the talons over the edge. `dbg4`/`dbg5` show the lying feet.
