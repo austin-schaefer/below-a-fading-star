@@ -8,7 +8,8 @@
 // to sRGB on the canvas. It does in one fragment what bloom's full-size blend, the grade pass and OutputPass did
 // in three. ?post=v3 restores the three passes (bloom's blend, the grade into the writeBuffer, OutputPass);
 // ?rays=full marches the rays at every pixel inside the grade or the finish, as before; ?postclock=0 pins the
-// grain's and the rays' clock, so two loads draw the same noise (render pairs).
+// grain's and the rays' clock, so two loads draw the same noise (render pairs). The finish antialiases (FXAA)
+// at every tier; ?aa=off draws without it.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -21,6 +22,8 @@ const params = new URL(location.href).searchParams;
 const POST_V3 = params.get('post') === 'v3';
 const RAYS_FULL = params.get('rays') === 'full';
 const POST_CLOCK = params.get('postclock') !== '0';
+// FXAA inside the finish, at every tier (v6-08 Q1's default, pulled forward); ?aa=off draws without it
+const FXAA = params.get('aa') !== 'off';
 // the rays' target per axis, as a fraction of the render (chosen against the sun pair's tolerance)
 const RAYS_RES = 0.25;
 
@@ -56,13 +59,57 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn; uniform vec2 uTexel;`;
+
+// FXAA (three's FXAAShader, r170, after Catlike Coding's; written for GLSL ES 1.00, which the finish's raw
+// material compiles as): the edge search runs on the scene's luminance (the exposure applied, square-rooted
+// toward display values for the thresholds), and the answer is a shifted uv at which the finish then evaluates
+// everything it draws, so the graded colour is what is antialiased, without a pass or a target of its own.
+const FXAA_GLSL = `
+  float fxL(vec2 uv){ return sqrt(clamp(lum(texture2D(tDiffuse, uv).rgb) * toneMappingExposure, 0.0, 1.0)); }
+  float fxStep(int i){ return i < 2 ? (i == 0 ? 1.0 : 1.5) : (i < 5 ? 2.0 : 4.0); }
+  vec2 fxaa(vec2 uv){
+    vec2 ts = uTexel;
+    float m = fxL(uv), n = fxL(uv + vec2(0.0, ts.y)), e = fxL(uv + vec2(ts.x, 0.0)), s = fxL(uv - vec2(0.0, ts.y)), w = fxL(uv - vec2(ts.x, 0.0));
+    float ne = fxL(uv + ts), nw = fxL(uv + vec2(-ts.x, ts.y)), se = fxL(uv + vec2(ts.x, -ts.y)), sw = fxL(uv - ts);
+    float hi = max(max(max(max(n, e), s), w), m), lo = min(min(min(min(n, e), s), w), m), con = hi - lo;
+    if (con < max(0.0312, 0.063 * hi)) return uv;
+    float f = (2.0 * (n + e + s + w) + ne + nw + se + sw) / 12.0;
+    f = clamp(abs(f - m) / con, 0.0, 1.0);
+    float pixelBlend = smoothstep(0.0, 1.0, f); pixelBlend *= pixelBlend;
+    float horizontal = abs(n + s - 2.0 * m) * 2.0 + abs(ne + se - 2.0 * e) + abs(nw + sw - 2.0 * w);
+    float vertical = abs(e + w - 2.0 * m) * 2.0 + abs(ne + nw - 2.0 * n) + abs(se + sw - 2.0 * s);
+    bool isH = horizontal >= vertical;
+    float pL = isH ? n : e, nL = isH ? s : w, pG = abs(pL - m), nG = abs(nL - m);
+    float pixelStep = isH ? ts.y : ts.x, opposite, gradient;
+    if (pG < nG) { pixelStep = -pixelStep; opposite = nL; gradient = nG; } else { opposite = pL; gradient = pG; }
+    vec2 uvEdge = uv, edgeStep;
+    if (isH) { uvEdge.y += pixelStep * 0.5; edgeStep = vec2(ts.x, 0.0); } else { uvEdge.x += pixelStep * 0.5; edgeStep = vec2(0.0, ts.y); }
+    float edgeL = (m + opposite) * 0.5, gT = gradient * 0.25;
+    vec2 puv = uvEdge + edgeStep; float pD = fxL(puv) - edgeL; bool pEnd = abs(pD) >= gT;
+    for (int i = 1; i < 6; i++) { if (pEnd) break; puv += edgeStep * fxStep(i); pD = fxL(puv) - edgeL; pEnd = abs(pD) >= gT; }
+    if (!pEnd) puv += edgeStep * 8.0;
+    vec2 nuv = uvEdge - edgeStep; float nD = fxL(nuv) - edgeL; bool nEnd = abs(nD) >= gT;
+    for (int i = 1; i < 6; i++) { if (nEnd) break; nuv -= edgeStep * fxStep(i); nD = fxL(nuv) - edgeL; nEnd = abs(nD) >= gT; }
+    if (!nEnd) nuv -= edgeStep * 8.0;
+    float pDist = isH ? puv.x - uv.x : puv.y - uv.y, nDist = isH ? uv.x - nuv.x : uv.y - nuv.y;
+    float shortest; bool deltaSign;
+    if (pDist <= nDist) { shortest = pDist; deltaSign = pD >= 0.0; } else { shortest = nDist; deltaSign = nD >= 0.0; }
+    float edgeBlend = deltaSign == (m - edgeL >= 0.0) ? 0.0 : 0.5 - shortest / (pDist + nDist);
+    float blend = max(pixelBlend, edgeBlend);
+    if (isH) uv.y += pixelStep * blend; else uv.x += pixelStep * blend;
+    return uv;
+  }`;
 
 // the grade (and, with FINISH, the tone mapping and sRGB transfer OutputPass did)
 const GRADE_MAIN = `
   varying vec2 vUv;
   void main(){
+  #ifdef FXAA
+    vec2 uv = fxaa(vUv);
+  #else
     vec2 uv = vUv;
+  #endif
     // chromatic aberration, stronger at the edges
     vec2 toC = uv - 0.5; float r2 = dot(toC, toC);
     vec2 ca = toC * r2 * 0.012;
@@ -99,7 +146,7 @@ const GRADE_MAIN = `
     col *= mix(0.55, 1.0, vig);
 
     // grain
-    float g = hash(uv * uResolution + fract(uTime * 7.0) * 100.0) - 0.5;
+    float g = hash(vUv * uResolution + fract(uTime * 7.0) * 100.0) - 0.5; // the pixel's own uv: FXAA does not move the grain
     col += g * 0.02 * (1.0 - smoothstep(0.0, 0.6, l) * 0.6);
 
     gl_FragColor = vec4(col, 1.0);
@@ -128,14 +175,14 @@ const VERT = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionM
 // the finish is a RawShaderMaterial, as OutputPass's is: a ShaderMaterial drawn to the canvas would get three's
 // own tone mapping prefix on top of the chunks included here
 const VERT_RAW = `precision highp float; uniform mat4 modelViewMatrix; uniform mat4 projectionMatrix; attribute vec3 position; attribute vec2 uv; ${VERT}`;
-const FRAG = (head, main) => `precision highp float;\n${head}\n${UNIFORMS}\n${SHARED}\n${main}`;
+const FRAG = (head, main) => `precision highp float;\n${head}\n${UNIFORMS}\n${SHARED}\n#ifdef FXAA\n${FXAA_GLSL}\n#endif\n${main}`;
 
 function makeUniforms() {
   return {
     tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
     uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uBloomOn: { value: 1 },
-    uResolution: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
+    uResolution: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
   };
 }
 
@@ -319,7 +366,7 @@ export function buildPost(ctx) {
     composer.addPass(grade);
     composer.addPass(new OutputPass());
   } else {
-    const defines = { ADD_BLOOM: '', FINISH: '', ...(lowRays ? { RAYS_TEX: '' } : {}) };
+    const defines = { ADD_BLOOM: '', FINISH: '', ...(lowRays ? { RAYS_TEX: '' } : {}), ...(FXAA ? { FXAA: '' } : {}) };
     finish = new FinishPass(new THREE.RawShaderMaterial({
       name: 'post.finish', uniforms: u, defines, vertexShader: VERT_RAW,
       fragmentShader: FRAG(`${THREE.ShaderChunk.tonemapping_pars_fragment}\n${THREE.ShaderChunk.colorspace_pars_fragment}`, GRADE_MAIN),
@@ -340,6 +387,8 @@ export function buildPost(ctx) {
     u.uFlicker.value = ctx.sky.flicker.value;
     u.uWade.value = ctx.controls.state.wading || 0;
     u.uResolution.value.set(size.x, size.y);
+    renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
+    u.uTexel.value.set(1 / u.uTexel.value.x, 1 / u.uTexel.value.y);
     u.uBloomOn.value = bloom.enabled ? 1 : 0;
     // sun screen position
     sunWorld.copy(ctx.sky.sunDir).multiplyScalar(1000).add(camera.position);
