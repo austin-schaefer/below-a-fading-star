@@ -1,12 +1,16 @@
-// The walls (v4 systems, BI: the Recession of Ranges). The bowl's mountains as ranges in depth instead of one
-// fractal wall:
-//   tier 0, the front range: a broken line of lower ridges at r ~362, dark and sharp, standing in front of
-//   tier 1, the main wall: a steep face from r ~320 to a crest at r ~430-475, its foot pushed out along
-//          buttresses (arêtes every ~6°) with gullies between, talus fans at the gullies' mouths, bedding
-//          ledges that dip gently east-north-east across the faces, and the named peaks (PEAKS in world.js)
-//          on the crest; both live in the heightfield (terrain.js calls applyMountains in a marked block);
-//   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~820 and ~1380) that
-//          rise above the main crest, each paler under the fog tiers (kit/fog.js), the last nearly the sky.
+// The walls: the bowl's mountains as five massifs with deep cols between them (wilderness-v5.md, "The massifs"):
+//   tier 1, the massifs, in the heightfield (terrain.js calls applyMountains in a marked block): the north-east
+//          (20-100°, to 300 m: the Ridge, the Vigilant), the south-east (125-172°, the Horn to 335 m), the south
+//          (190-235°, ~300 m), the west (265-318°, to 320 m: the Galleries) and the Tierce (336-356°, 300 m); the
+//          cols at 112° (61 m), 180° (41 m) and 328° (73 m), the glacier's notch (354-20°) and the sun's saddle
+//          (250°, 22 m, the lowest). The crest runs through a periodic spline over bearing, rounded within a massif,
+//          the named peaks (PEAKS) broad crowns on it. Each face has three sizes of structure: a scree apron at 33°,
+//          a steep rock band behind it, a convex shoulder into the crest, and corries; ledges along each massif's
+//          tilted bedding plane, a few gullies crest to apron, buttresses where the face is steep; creased facets.
+//   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~800 and ~1350), each rolling
+//          in massifs of its own set behind the near cols, lower in the picture and paler under the fog tiers.
+// ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
+// bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
 // a walkable wedge (±4.5°) out to the road's start at r 366 and two flat seats for AM's colossi on its flanks
 // (the marked block below). Every range dips in the saddle, below the line from the gate over the col, so
@@ -126,7 +130,7 @@ for (let i = 0; i <= N; i++) {
   T_SW[i] = saddleWeight(az);
 }
 // --- the massifs (begin). The main wall's form: five massifs with deep cols between them (the header). ?mountains=v4
-// builds the v4 wall instead (applyV4 and the far ranges' v4 crest below), for comparison. The crest rolls between
+// builds the v4 wall instead (applyMountains' body and farCrest's below), for comparison. The crest rolls between
 // massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
 // it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
 export const PROFILE = (() => {
@@ -185,7 +189,7 @@ if (CAND) {
   let norm = 0; for (let k = -W; k <= W; k += 4) norm += 1 - Math.abs(k) / (W + 4);
   for (let i = 0; i <= N; i++) T_FE[i] = acc[i] / norm;
 }
-// --- the massifs (end; applyCandidate and the far ranges' hook below)
+// --- the massifs (end; applyMassifs and the far ranges' hook below)
 // --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 45 m, less wear)
 for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
   const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
@@ -221,7 +225,7 @@ const FALL_AZ = Math.atan2(258, 208);
 // mask and its own surface, from terrain.js) cuts through every tier of the walls as before.
 export function applyMountains(h, x, z, r, g, glacierH) {
   if (r < M_START) return h;
-  if (CAND) return applyCandidate(h, x, z, r, g, glacierH); // the massifs; below, the v4 wall (?mountains=v4)
+  if (CAND) return applyMassifs(h, x, z, r, g, glacierH); // the massifs; below, the v4 wall (?mountains=v4)
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
@@ -331,7 +335,7 @@ if (CAND) {
     T_DX[i] = dx / w; T_DZ[i] = dz / w; T_ST[i] = st / w;
   }
 }
-function applyCandidate(h, x, z, r, g, glacierH) {
+function applyMassifs(h, x, z, r, g, glacierH) {
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
@@ -447,7 +451,7 @@ function farLobe(T, b) {
   }
   return w;
 }
-function farCrestCand(T, az, out) {
+function farCrestMassifs(T, az, out) {
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
   const fe = T_FE[i] + (T_FE[i + 1] - T_FE[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
@@ -472,7 +476,7 @@ const FAR = [
   { name: 'farthest', rc: 1350, rcv: 80, lift: 5.4, liftv: 2.2, r0: 1080, r1: 1740, floor: 95, full: 11, wall: 22, seed: 67, rows: 30 },
 ];
 function farCrest(T, az, out) {
-  if (CAND) return farCrestCand(T, az, out); // the massifs; below, the v4 far crest
+  if (CAND) return farCrestMassifs(T, az, out); // the massifs; below, the v4 far crest
   const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
   const hs = T_CS[i] + (T_CS[i + 1] - T_CS[i]) * f, rs = T_CR[i] + (T_CR[i + 1] - T_CR[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);

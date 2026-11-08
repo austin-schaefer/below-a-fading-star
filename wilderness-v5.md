@@ -186,6 +186,46 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 
 ## v5 wonders
 
+### The massifs (the walls recast) (`src/v4/mountains.js`; the v4 wall is behind `?mountains=v4`)
+
+**Idea:** Austin, after v4: "not 'this is a videogame wall to keep you in' but 'this valley happens to be surrounded by mountains'." He chose profile C from the study (`wilderness-mountains-study.md`).
+
+- **The massifs:** five, with deep cols between them. The crest runs through a periodic spline over bearing, rounded within a massif; the named peaks are broad crowns on it (35 % of their height, 2.6× their width).
+
+  | Massif | Bearings | Crest |
+  |---|---|---|
+  | North-east (the Ridge, the Vigilant) | 20–100° | 260–300 m |
+  | South-east (the Horn, the Span's east end, the fall) | 125–172° | to 335 m |
+  | South (the Abbess, the Span's west end) | 190–235° | about 300 m |
+  | West (the Galleries, the Lectern) | 265–318° | to 320 m |
+  | The Tierce | 336–356° | about 300 m |
+
+- **The cols:** 112° (61 m), 180° (41 m) and 328° (73 m; the study had it at 24 m, and its spline point goes from 50 to 102 m). The glacier's notch (354–20°, 84 m) reads as a fourth gap. The sun's saddle at 250° stays the circuit's lowest point at 22 m, and the sun sits in it from spawn, the causeway and the road's start. `walkLimit`, `M_START`, the saddle, AM's seats and every floor feature are unchanged.
+- **The face, at three sizes:**
+  - *The big form.* A scree apron at 33° rises from the foot to 10–20 % of the crest's height (heavier at the gullies' mouths). A steep rock band stands behind it, with a clear break of slope where they meet; on the massifs its foot is about 70°. A convex shoulder rounds the band over into the crest. Corries are scooped high in the north- and east-facing faces at 158°, 207° and 308°, a lip below each and a headwall under the crest.
+  - *The middle.* Ledges every 13–17 m follow one bedding plane per massif, tilted 4–7° (`MASSIFS`; a different dip on each, blended across the cols). Eight gullies run from the crest to the apron (`GULLIES`: 40, 88, 153, 166, 199, 214, 305 and 314°), clear of every wall-hung thing. The buttress rhythm appears only where the face's mean slope passes about 50°.
+  - *The small.* Creased facets and broad ribs move the face in and out along r, in the face's own chart (the arc along, the height up), so a steep face keeps planes instead of noise stretched down it. The pinnacles stand 13 m on the crest only (v4 52 m); the shoulder lumps go from 18 to 6 m.
+  - *The colour* (`terrain.js`, marked "the massifs' bands", off under `?mountains=v4`). The walls' colour goes by slope before height: pale scree `#5c5752` on the aprons, bare rock on the band, dark rock only where it is steep and above 60–220 m. In the shader the bedding follows each massif's plane. Each ledge's tread is a pale line, brighter on the faces turned to the low sun, with the riser's shadow below it; a third of the ledges stand out and the rest are faint. Snow lies from 160–250 m (v4 90–160) on the flatter ground and on the high treads, so it no longer falls in blotches over the faces. The faces away from the sun go flat and blue into the haze.
+- **The far ranges:** each ring rolls in massifs of its own (`FAR_LOBES`) on the near crest's smoothed elevation × 0.6 (the nearer ring) and × 0.7 (the farther). The nearer ring sets a broad massif behind each near col, and the farther ring's massifs fall between, so each gap shows a second, paler line of the same form. Their crest's ridged term is 0.08 of the height (v4 0.045). Paling: 30 % and 50 % toward `#8e8a99`, under the fog tiers.
+- **What moved among the wall-hung things:** each one follows the ground by code, so no module or site changed.
+  - **Galleries:** the face reaches 68 and 150 m on 268–296° and 245 m on 276–296°. The decks sit on the face and the lift reaches the talus. From the tower view (the coherence pass's `tower`) they now hang against rock instead of glow, but the lens mount's mast still crosses them, so the new face does not separate the two.
+  - **Hawser:** the anchor at 100 m moves from r 398 to r 385; the chain's catenary and its clearance are recomputed by `hawser.js`.
+  - **Gradine:** the band points are at r 350, 373 and 403 (v4 352, 404, 434). Every tread seats on the new face, and the flight climbs into a gully of the north-east massif.
+  - **Vigilant:** the crest at 72° is 287 m at r 478 (v4 184 m), and the colossus stands on the sky from the moor (130, −30).
+  - **Ridge:** the crest under the merlons is 218–291 m (v4 170–226); the merlons are unchanged. The coherence pass found the run reads as built crenellation on a game wall. On the massif's rounded crest it now rises off rock, but it is as regular as before; its regularity is the wonder's stated idea ("too regular to be natural"), so it is left for Austin.
+  - **Annals:** no band over 0–14, 105–119, 174–186, 239–261 and 324–331° (v4: 0–16 and 239–262). The band is painted in the terrain shader, so no fragment can float in a gap.
+  - **Span:** the wall within 60 m beyond the gates is 103 m (west) and 85 m (east); v4 had 62 and 29 m.
+  - **Thrones:** the seats and their frames are unchanged.
+  - **The Long Figure** (103°) now lies on the east col's flank at 22° (v4 48°).
+  - **The Escarpment Lamps' reservation** moves to bearings 300–318°, 60–220 m, about (−330, −268), because the 328° col takes the rest of the old arc.
+- **Cost:** the terrain mesh and the far rings keep their vertex counts, so the walls' triangles do not change. A high-tier bench from the causeway (`bench=12`, two runs each, v4 then C): frames 16.67 ms (capped) with 1% lows of 17.7/18.7 ms for both; GPU render 14.8/14.0 ms (v4) against 15.1/13.4 ms (C); 3.01–3.21M triangles in both. The extra shader work is one bearing lookup over five massifs per terrain fragment.
+- **Renders and sheets** (`shots/wip/`, at low, 1280×720):
+  - `v5-13-mtn-c-sheet-<view>.png`: v4, C as landed, and C with the rock pass, for the causeway north, east and south, spawn, the foreland, the Span's deck, the High Ling and the five `high-*` views. `high-east`, `high-north` and `foreland` show the rock reading best.
+  - `v5-13-mtn-c-<view>-try0..5.png`: the iterations. `try2` has the first ledges, too even, like contour lines; `try3` breaks them too far; `try5` is the set kept.
+  - `v5-13-mtn-c-sheet-far.png`: the far ranges through the three cols and the saddle, before and after.
+  - `v5-13-mtn-c-hung-sheet-<view>.png`: each wall-hung thing from its own sightline, v4 against C.
+  - `v5-13-mtn-c-step1-*.png`: the sun in its saddle after the col was raised.
+
 ### AM. The Acephalous Thrones (`src/v5/thrones.js`; the saddle without them is behind `?thrones=0`)
 
 **Idea:** two headless colossi carved from the west wall, crawling on hands and knees either side of the sun's saddle, the sun between them like an offering.
