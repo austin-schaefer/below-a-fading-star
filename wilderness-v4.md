@@ -1,6 +1,6 @@
 # Wilderness v4: the Great Span and the scale pass
 
-> **Sequencing (2026-11-08):** this brief is the spec, but it ships across two releases. The land (mountain rework, light floor, fog tiers, paths, the causeway route and pit, the taller fall) and the Great Span go in **v4** together with the v5 bioregions; the other wonders, the awe-audit recasts and the local lights go in **v5**. See `wilderness-run.md`.
+> **Sequencing (2026-11-08):** this brief is the spec, but it ships across two releases. The land (mountain rework, light floor, fog tiers, paths, the causeway route and pit, the taller fall) and the Great Span go in **v4** together with the v5 bioregions; the other wonders, the awe-audit recasts and the local lights go in **v5**.
 
 Austin, after walking v2 stage A. Runs after v3 (performance), so the biggest thing in the world is built on a renderer that can afford it.
 
