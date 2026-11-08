@@ -69,6 +69,21 @@ function seatHeights(h, x, z) {
 }
 // --- v4 systems: AM's seats (end)
 
+// --- v5 wonders: AP the Battlemented Ridge (begin). The north-east crest, bearings 9-57 (the full run 12-54 with
+// 3 degrees of taper at each end; 60-85 stays the Vigilant's), is cut into a run of merlons and embrasures: a
+// square wave in bearing, period 7.6 degrees (62 m at r 470), a merlon 0.54 of it (4.1 degrees, 34 m), an
+// embrasure the rest (28 m). Each merlon's top is flat at the natural crest's height at its centre plus 30 m, less
+// 0-2 m of wear; two are broken to half. The embrasure floor is the natural crest, with its pinnacles damped, so
+// the notches read as cut and the tops as raised (raising a clean block off a damped crest reads as masonry;
+// lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
+// in r (Crest r - 10 to + 4), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
+// ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
+const RIDGE_ON = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('ridge') === '0');
+const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 30, kMin: 0, kMax: 6, broken: [2, 5] };
+export const RIDGE = { bearings: [RG.lo + RG.taper, RG.hi - RG.taper], merlons: [] };
+const ridgeEnv = (b) => smoothstep(RG.lo, RG.lo + RG.taper, b) * (1 - smoothstep(RG.hi - RG.taper, RG.hi, b));
+// --- v5 wonders: AP the Battlemented Ridge (end)
+
 // ---------------------------------------------------------------- per-bearing tables
 // Everything that varies only with bearing is tabulated once (0.1° steps) and interpolated.
 const N = 3600;
@@ -110,6 +125,13 @@ for (let i = 0; i <= N; i++) {
   T_PH[i] = ((az + Math.PI) / TAU) * SPURS + 0.8 * ring(az, 3.0, 31.7);
   T_SW[i] = saddleWeight(az);
 }
+// --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 30 m, less wear)
+for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
+  const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
+  const wear = RG.broken.includes(k) ? 0.5 : 1 - 0.06 * hash2(k + 40, 77); // 0-2 m of wear; two broken to half
+  RIDGE.merlons.push({ k, bearing: bc, top: (T_CH[i] - 0) + RG.height * wear * ridgeEnv(bc), env: ridgeEnv(bc) });
+}
+// --- v5 wonders: AP (end)
 const _b = { cr: 0, ch: 0, fr: 0, fh: 0, ph: 0, sw: 0 };
 function sampleBearing(az) {
   const u = ((az + Math.PI) / TAU) * N;
@@ -165,7 +187,8 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   // arêtes and pinnacles on the upper face and the crest, sharper than the far ranges carry
   const up = smoothstep(0.45, 1.0, u);
   // (pinnacles rise from the crest line; the troughs between stay broad, not a saw)
-  m += (Math.max(0, S.ridged2(x * 0.011 + 3.1, z * 0.011 - 7.7, 4) - 0.32) * 52 - 5 + S.fbm2(x * 0.006, z * 0.006, 3) * 14) * up;
+  const rEnv = RIDGE_ON ? ridgeEnv(bearingOf(az)) : 0; // v5 wonders: AP (the run's weight)
+  m += (Math.max(0, S.ridged2(x * 0.011 + 3.1, z * 0.011 - 7.7, 4) - 0.32) * 52 - 5 + S.fbm2(x * 0.006, z * 0.006, 3) * 14) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
   m += S.noise2(x * 0.08, z * 0.08) * 2.2 * u;
   // bedding: ledges every 11 m that dip gently east-north-east, so strata run across the faces and the
   // buttresses alike instead of following the noise
@@ -189,6 +212,17 @@ export function applyMountains(h, x, z, r, g, glacierH) {
     const da = Math.abs(angDiff(az, FALL_AZ));
     if (da < 0.16) m = smax(m, 76 * smoothstep(340, 356, r) * (1 - smoothstep(0.07, 0.16, da)), 4);
   }
+  // --- v5 wonders: AP the Battlemented Ridge (begin): the merlons, raised off the damped crest (see the head block)
+  if (rEnv > 0) {
+    const t = (bearingOf(az) - RG.b0) / RG.period, k = Math.floor(t), f = t - k;
+    const rm = smoothstep(Rc - 10, Rc - 6, r) * (1 - smoothstep(Rc + 4, Rc + 8, r));
+    const bm = smoothstep(0, RG.edge, f) * (1 - smoothstep(RG.merlon - RG.edge, RG.merlon, f));
+    if (rm * bm > 0) {
+      const M = RIDGE.merlons[k - (RG.kMin - 1)];
+      if (M) m = lerp(m, Math.max(m, M.top + S.noise2(x * 0.15, z * 0.15) * 0.5), rm * bm);
+    }
+  }
+  // --- v5 wonders: AP (end)
   m *= smoothstep(M_START, M_START + 18, r); // no seam where the walls begin
   // the saddle: a flat-floored gate; the moor's roll damps out across its floor
   if (sw > 0) {
