@@ -518,7 +518,7 @@ export function buildBiomesh(ctx, U) {
         const L2 = Math.hypot(dx, dy, dz) || 1e-4;
         // width across: (d x n), normalised; a little wider with distance so it does not vanish into aliasing
         let wx = dy * nz - dz * ny, wy = dz * nx - dx * nz, wz = dx * ny - dy * nx;
-        const wl = Math.hypot(wx, wy, wz) || 1, W = 0.026 + dc * 0.0016;
+        const wl = Math.hypot(wx, wy, wz) || 1, W = (0.04 + dc * 0.0022) * (s === full ? 1.8 : 1);
         wx *= W / wl; wy *= W / wl; wz *= W / wl;
         const o = k * 16;
         e[o] = dx; e[o + 1] = dy; e[o + 2] = dz; e[o + 3] = 0;
@@ -528,7 +528,7 @@ export function buildBiomesh(ctx, U) {
         // brightest at the growing tip, a cooler glow behind it, the whole trace fading once the tile has settled
         // a white-hot bead running out ahead, a crackling blue thread behind it
         const head = Math.exp(-(g - s - f) * 1.4);
-        const I = (1.1 + 4.5 * head) * R.fade * distFade * glow * (0.75 + 0.25 * Math.sin(clock * 23 + s * 2.1));
+        const I = (1.6 + 6 * head) * R.fade * distFade * glow * (0.75 + 0.25 * Math.sin(clock * 23 + s * 2.1));
         rc.copy(deep).lerp(hot, 0.45 + 0.55 * head).lerp(white, head * 0.6).multiplyScalar(I);
         rMesh.setColorAt(k, rc);
         k++;

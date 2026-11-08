@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, DITHER_GLSL, approach } from './kit.js';
 
-const GREY = '#6c6a6e', GREY_D = '#4a484e', BONE = '#8a847c';
+const GREY = '#8c8a90', GREY_D = '#5e5c64', BONE = '#a49d92';
 
 function waderGeometry(low) {
   const P = new Painter();
