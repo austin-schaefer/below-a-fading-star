@@ -5,6 +5,18 @@ import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
 import { plinthsClear } from './v5/plinths.js';
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { withFade, fadeDepthMaterial } from './fade.js';
+
+const PARAMS = new URL(location.href).searchParams;
+// v6: stones and pebbles fade over their reach's last 15%, and fine boulders cross to their coarse twin over
+// 8 m, by the fade kit's dither (?rockfade=0: the hard cut and swap)
+const FADE = PARAMS.get('rockfade') !== '0';
+// v6: each pack repacks after 2 m, one a frame in turn, with no allocation and only the changed range uploaded
+// (?packstep=6: every pack on one frame after 6 m, the whole buffer uploaded)
+const OLD_PACK = PARAMS.get('packstep') === '6';
+const STEP = OLD_PACK ? 6 : 2;
+// with the fade, a pack reaches this much past its band so an instance comes into the band already packed
+const SLACK = 3;
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -74,6 +86,18 @@ function makeRockMaterial(palette) {
         roughnessFactor = mix(roughnessFactor, 0.75, smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)));`);
   };
   return mat;
+}
+
+// One material per pack role, so each carries its own band (uFpBand: fade start, end; uFpSide: the kit's
+// side); the rock patch and the fade make one program for all of them. f is the share of pixels kept by
+// side 0: 1 inside the band's start, 0 past its end, from the instance's distance to the eye (the camera's
+// position, never cameraPosition, so the shadow pass fades at the caster's distance).
+function fadeRock(mat, eye, r0, r1, side) {
+  const u = { uFpEye: { value: eye }, uFpBand: { value: new THREE.Vector2(r0, r1) }, uFpSide: { value: side } };
+  return withFade(mat, {
+    key: 'rocks', uniforms: u, head: 'uniform vec3 uFpEye; uniform vec2 uFpBand; uniform float uFpSide;',
+    vertex: 'vec2(1.0 - smoothstep(uFpBand.x, uFpBand.y, distance(uFpEye.xz, (modelMatrix * instanceMatrix[3]).xz)), uFpSide)',
+  });
 }
 
 export async function build(ctx) {
@@ -170,11 +194,17 @@ export async function build(ctx) {
   // Draw distance by size class: pebbles vanish into the turf past ~75 m and stones past ~170 m (a few pixels
   // by then); boulders and tors are kept everywhere, they are what the eye finds on the far slopes.
   // Each mesh keeps every matrix in its own array and packs the ones in reach into the instance buffer
-  // whenever the player has moved a few metres (no allocation, a few thousand distance tests).
+  // once the player has moved 2 m from where it was last packed (no allocation, a few thousand distance tests).
   const REACH = { pebble: low ? 60 : 75, stone: low ? 150 : 170, boulder: Infinity };
-  // fine boulders swap to their coarse twin past this distance, and stop casting shadows (the shadow map
+  // fine boulders cross to their coarse twin by this distance, and the twin casts no shadow (the shadow map
   // only reaches ~100 m round the player anyway)
   const BOULDER_NEAR = low ? 110 : 140;
+  const BOULDER_BAND = 8; // v6: the fine boulder fades out and its twin in over BOULDER_NEAR - 8 .. BOULDER_NEAR
+  const eye = ctx.camera.position;
+  const mats = {}, matFor = (role, r0, r1, side) => (mats[role] ||= FADE ? fadeRock(makeRockMaterial(palette), eye, r0, r1, side) : mat);
+  const depthFine = FADE ? fadeDepthMaterial({ key: 'rocks', uniforms: { uFpEye: { value: eye }, uFpBand: { value: new THREE.Vector2(BOULDER_NEAR - BOULDER_BAND, BOULDER_NEAR) }, uFpSide: { value: 0 } },
+    head: 'uniform vec3 uFpEye; uniform vec2 uFpBand; uniform float uFpSide;',
+    vertex: 'vec2(1.0 - smoothstep(uFpBand.x, uFpBand.y, distance(uFpEye.xz, (modelMatrix * instanceMatrix[3]).xz)), uFpSide)' }) : null;
   const packs = [];
   let drawCalls = 0, tris = 0;
   for (const [cls, list] of Object.entries(classes)) {
@@ -182,7 +212,9 @@ export async function build(ctx) {
     for (let vi = 0; vi < variants.length; vi++) {
       const items = list.filter((it) => it.variant === vi);
       if (!items.length) continue;
-      const mesh = new T.InstancedMesh(variants[vi], mat, items.length);
+      const fine = REACH[cls] === Infinity && twins[vi] !== variants[vi];
+      const mesh = new T.InstancedMesh(variants[vi], REACH[cls] < Infinity ? matFor(cls, REACH[cls] * 0.85, REACH[cls], 0) : fine ? matFor('fine', BOULDER_NEAR - BOULDER_BAND, BOULDER_NEAR, 0) : mat, items.length);
+      if (fine && depthFine) mesh.customDepthMaterial = depthFine; // the fine boulder's shadow fades with it
       mesh.castShadow = cls !== 'pebble';
       mesh.receiveShadow = true;
       mesh.frustumCulled = false; // spread over the whole region; distance packing below does the culling
@@ -200,46 +232,87 @@ export async function build(ctx) {
       mesh.instanceMatrix.needsUpdate = true;
       mesh.name = `rocks-${cls}-${vi}`;
       scene.add(mesh);
-      if (REACH[cls] < Infinity) packs.push({ mesh, all, xz, r2: REACH[cls] * REACH[cls], n: items.length });
-      else if (twins[vi] !== variants[vi]) {
-        const far = new T.InstancedMesh(twins[vi], mat, items.length);
+      // r2: packed into the mesh inside this; f2: packed into the twin outside this (the fade band and its slack)
+      const slot = new Int32Array(items.length); for (let i = 0; i < slot.length; i++) slot[i] = i;
+      const sq = (r) => r * r;
+      if (REACH[cls] < Infinity) packs.push({ mesh, all, xz, slot, r2: sq(REACH[cls] + (FADE ? SLACK : 0)), n: items.length, last: { x: Infinity, z: Infinity } });
+      else if (fine) {
+        const far = new T.InstancedMesh(twins[vi], matFor('twin', BOULDER_NEAR - BOULDER_BAND, BOULDER_NEAR, 1), items.length);
         far.castShadow = false; far.receiveShadow = true; far.frustumCulled = false;
         far.instanceMatrix.array.set(all); far.instanceMatrix.needsUpdate = true;
         far.name = `rocks-${cls}-${vi}-far`;
         scene.add(far);
-        packs.push({ mesh, all, xz, r2: BOULDER_NEAR * BOULDER_NEAR, n: items.length, far });
+        const fslot = new Int32Array(items.length); fslot.set(slot);
+        packs.push({ mesh, all, xz, slot, r2: sq(BOULDER_NEAR + (FADE ? SLACK : 0)), f2: sq(FADE ? BOULDER_NEAR - BOULDER_BAND - SLACK : BOULDER_NEAR), n: items.length, far, fslot, last: { x: Infinity, z: Infinity } });
         drawCalls++;
       }
       drawCalls++;
       tris += items.length * variants[vi].attributes.position.count / 3;
     }
   }
-  const last = { x: Infinity, z: Infinity };
-  function pack(px, pz) {
-    for (const P of packs) {
-      const dst = P.mesh.instanceMatrix.array;
-      const fdst = P.far ? P.far.instanceMatrix.array : null;
-      let c = 0, f = 0;
-      for (let i = 0; i < P.n; i++) {
-        const dx = P.xz[i * 2] - px, dz = P.xz[i * 2 + 1] - pz;
-        if (dx * dx + dz * dz > P.r2) {
-          if (fdst) { if (f !== i) fdst.set(P.all.subarray(i * 16, i * 16 + 16), f * 16); f++; }
-          continue;
-        }
-        if (c !== i) dst.set(P.all.subarray(i * 16, i * 16 + 16), c * 16);
-        c++;
+  // Pack one mesh (and its twin): the matrices in reach, in placement order, into the front of the instance
+  // buffer. A slot that already holds the same instance is not rewritten, and only the range from the first
+  // changed slot to the last written one is uploaded. ?packstep=6: the old copy (a subarray per instance) and
+  // the whole buffer uploaded.
+  function packOne(P, px, pz) {
+    const src = P.all, xz = P.xz, dst = P.mesh.instanceMatrix.array, fdst = P.far ? P.far.instanceMatrix.array : null;
+    const S = P.slot, FS = P.fslot, r2 = P.r2, f2 = P.f2;
+    let c = 0, f = 0, lo = Infinity, flo = Infinity;
+    for (let i = 0; i < P.n; i++) {
+      const dx = xz[i * 2] - px, dz = xz[i * 2 + 1] - pz, d2 = dx * dx + dz * dz;
+      if (fdst && d2 > f2) {
+        if (OLD_PACK) { if (f !== i) fdst.set(src.subarray(i * 16, i * 16 + 16), f * 16); }
+        else if (FS[f] !== i) { FS[f] = i; const a = i * 16, b = f * 16; for (let k = 0; k < 16; k++) fdst[b + k] = src[a + k]; if (f < flo) flo = f; }
+        f++;
       }
-      P.mesh.count = c;
-      P.mesh.instanceMatrix.needsUpdate = true;
-      if (P.far) { P.far.count = f; P.far.instanceMatrix.needsUpdate = true; }
+      if (d2 > r2) continue;
+      if (OLD_PACK) { if (c !== i) dst.set(src.subarray(i * 16, i * 16 + 16), c * 16); }
+      else if (S[c] !== i) { S[c] = i; const a = i * 16, b = c * 16; for (let k = 0; k < 16; k++) dst[b + k] = src[a + k]; if (c < lo) lo = c; }
+      c++;
     }
+    upload(P.mesh, c, lo);
+    if (P.far) upload(P.far, f, flo);
+    P.last.x = px; P.last.z = pz;
   }
+  function upload(mesh, count, lo) {
+    const im = mesh.instanceMatrix;
+    mesh.count = count;
+    if (OLD_PACK) { im.needsUpdate = true; ctx.perf?.count('rocks.uploadBytes', im.array.byteLength); return; }
+    if (lo >= count) return; // nothing written: the front of the buffer already holds these
+    const r = im.fpRange || (im.fpRange = { start: 0, count: 0 }); // reused: three's addUpdateRange allocates one a call
+    r.start = lo * 16; r.count = (count - lo) * 16; im.updateRanges.length = 0; im.updateRanges.push(r); im.needsUpdate = true;
+    ctx.perf?.count('rocks.uploadBytes', (count - lo) * 64);
+  }
+  // ?packstep=6: every pack on one frame once the camera has moved 6 m. Otherwise each pack is due after
+  // 2 m from where it was last packed, and one due pack runs a frame, in turn, when the frame's pack token
+  // (ctx.packToken, shared with vegetation/plants.js) is free and no plant kind is waiting for it.
+  const last = { x: Infinity, z: Infinity };
+  const token = (ctx.packToken ||= { t: -1, hold: 0 });
+  let turn = 0;
+  const step2 = STEP * STEP;
   ctx.registerUpdate(() => {
     const cp = ctx.camera.position;
-    if ((cp.x - last.x) ** 2 + (cp.z - last.z) ** 2 < 36) return;
-    last.x = cp.x; last.z = cp.z;
-    pack(cp.x, cp.z);
-    ctx.perf?.count('rocks.packs');
+    if (OLD_PACK) {
+      if ((cp.x - last.x) ** 2 + (cp.z - last.z) ** 2 < step2) return;
+      last.x = cp.x; last.z = cp.z;
+      for (const P of packs) packOne(P, cp.x, cp.z);
+      ctx.perf?.count('rocks.packs');
+      return;
+    }
+    if (token.hold > 0) { token.hold--; return; } // a plant kind is waiting for the token: it goes first
+    if (token.t === ctx.time.t) return;
+    for (let k = 0; k < packs.length; k++) {
+      const P = packs[(turn + k) % packs.length];
+      const dx = cp.x - P.last.x, dz = cp.z - P.last.z;
+      if (dx * dx + dz * dz < step2) continue;
+      token.t = ctx.time.t;
+      packOne(P, cp.x, cp.z);
+      turn = (turn + k + 1) % packs.length;
+      ctx.perf?.count('rocks.packs');
+      return;
+    }
   });
+  // the first fill, before the first frame: every pack round the player
+  { const pp = ctx.player.pos; for (const P of packs) packOne(P, pp.x, pp.z); }
   ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }
