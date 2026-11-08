@@ -1,0 +1,21 @@
+[
+ {
+  "name": "polish-stoat-lit",
+  "x": -200,
+  "z": -110,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 3000,
+  "js": "{ const fp = __fp, T = fp.terrain, L = fp.regions.creatures.stoats, az = 160 * Math.PI / 180, el = 13.5 * Math.PI / 180, sx = Math.cos(el) * Math.cos(az), sy = Math.sin(el), sz = Math.cos(el) * Math.sin(az); let s = L[0], best = -9; for (const o of L) { const e = 0.6, nx = T.heightAt(o.x - e, o.z) - T.heightAt(o.x + e, o.z), nz = T.heightAt(o.x, o.z - e) - T.heightAt(o.x, o.z + e), l = Math.hypot(nx, 2 * e, nz), d = (nx * sx + 2 * e * sy + nz * sz) / l; if (d > best) { best = d; s = o; } } s.state = 'stand'; s.stand = 1; s.t = 99; s.cool = 99; fp.__stoat = s; fp.player.pos.set(s.x + 6, T.heightAt(s.x + 6, s.z) + fp.player.eye, s.z); }",
+  "pre": "{ const fp = __fp, T = fp.terrain, s = fp.__stoat, THREE = fp.THREE, g = T.heightAt(s.x, s.z), tgt = new THREE.Vector3(s.x, g + 0.2, s.z); const cands = []; fp.scene.traverse((o) => { if (o.isMesh && o.visible && o.name !== 'lynchets-stoats' && (!o.isInstancedMesh || o.count < 3000)) cands.push(o); }); const rc = new THREE.Raycaster(); let best = null; for (const off of [0, 10, -10, 20, -20, 30, -30]) { const az = (160 + off) * Math.PI / 180, cx = s.x - Math.cos(az) * 3.2, cz = s.z - Math.sin(az) * 3.2;   const c = new THREE.Vector3(cx, Math.max(T.heightAt(cx, cz), g) + 1.2, cz), d = tgt.clone().sub(c), l = d.length(); rc.set(c, d.normalize()); rc.far = l - 0.15;   if (!best) best = c; if (rc.intersectObjects(cands, false).length === 0) { best = c; break; } } fp.camera.position.copy(best); fp.camera.lookAt(s.x, g + 0.15, s.z); }"
+ },
+ {
+  "name": "polish-sandpipers-lit",
+  "x": -72.9,
+  "z": 173.7,
+  "yaw": 1.9,
+  "pitch": 0,
+  "settle": 4000,
+  "pre": "{ const fp = __fp, T = fp.terrain, wy = fp.water.tarn ? fp.water.tarn.y : -4.6; const birds = fp.regions.creatures.sandpipers.map((s) => [s.x + s.ux * s.o, s.z + s.uz * s.o]).sort((a, b) => Math.hypot(a[0] - (-75.9), a[1] - (174.7)) - Math.hypot(b[0] - (-75.9), b[1] - (174.7))); const [bx, bz] = birds[0], g = T.heightAt(bx, bz), az = 160 * Math.PI / 180, cx = bx - Math.cos(az) * 3.0, cz = bz - Math.sin(az) * 3.0; fp.camera.position.set(cx, Math.max(T.heightAt(cx, cz) + 0.3, wy + 0.8), cz); fp.camera.lookAt(bx, g + 0.1, bz); }"
+ }
+]
