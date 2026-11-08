@@ -1,4 +1,4 @@
-// Debug panel: landmark teleports, live position, fps and render counts.
+// Debug panel: landmark teleports, live position, fps and render counts, and on/off rows (addToggle).
 // Enabled by ?debug=1 or Backquote on desktop; on touch a corner button (top-right) shows once
 // debug is on via the URL or after a 1.2 s long-press on that corner (controls.js calls reveal()).
 import { LANDMARKS, SPAWN } from './world.js';
@@ -17,7 +17,7 @@ export function buildDebug(ctx) {
   const keys = Object.keys(LANDMARKS);
   let acc = 0, smooth = 0;
 
-  const api = { shown: false, enabled: urlOn, teleport, toggle, reveal, keyFor: (key) => KEYS[keys.indexOf(key)] };
+  const api = { shown: false, enabled: urlOn, teleport, toggle, reveal, keyFor: (key) => KEYS[keys.indexOf(key)], addToggle, addHeading };
   ctx.debug = api;
 
   keys.forEach((key, i) => {
@@ -28,6 +28,24 @@ export function buildDebug(ctx) {
     row.addEventListener('click', () => teleport(key));
     list.appendChild(row);
   });
+
+  // On/off rows below the teleports (perf.js adds the profiler, bloom, shadows and one per module).
+  function addHeading(text) {
+    const h = document.createElement('div');
+    h.className = 'dbg-head'; h.textContent = text;
+    list.appendChild(h);
+  }
+  function addToggle(name, get, set) {
+    const row = document.createElement('button');
+    row.type = 'button'; row.dataset.toggle = name;
+    row.innerHTML = '<kbd></kbd><span></span>';
+    row.lastChild.textContent = name;
+    const sync = () => { const on = !!get(); row.firstChild.textContent = on ? 'on' : 'off'; row.classList.toggle('off', !on); };
+    row.addEventListener('click', () => { set(!get()); sync(); });
+    sync();
+    list.appendChild(row);
+    return row;
+  }
 
   function teleport(key) {
     const L = LANDMARKS[key];

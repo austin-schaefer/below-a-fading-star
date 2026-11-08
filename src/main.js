@@ -10,6 +10,7 @@ import { buildPost } from './post.js';
 import { makeSimplex, mulberry32 } from './noise.js';
 import { WORLD, SUN, LANDMARKS, CAUSEWAY, WATER, PALETTE, SPAWN } from './world.js';
 import { buildHud } from './hud.js';
+import { createPerf } from './perf.js';
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -62,6 +63,8 @@ async function start() {
   };
   // Global helper for stable per-module RNG streams
   ctx.makeRng = (salt) => mulberry32(WORLD.seed ^ (salt * 2654435761 >>> 0));
+  // Profiler, bench and toggles (perf.js): wraps registerUpdate so each callback is timed per module
+  ctx.perf = createPerf(ctx);
 
   // Terrain
   ctx.terrain = buildTerrain(ctx);
@@ -100,13 +103,14 @@ async function start() {
   const results = await Promise.allSettled(wanted.map(async ([name, load]) => {
     const t0 = performance.now();
     const mod = await load();
-    await mod.build(ctx);
+    await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
     ctx.log(`${name} ready in ${(performance.now() - t0).toFixed(0)}ms`);
   }));
   results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
 
   // Post
   ctx.post = buildPost(ctx);
+  ctx.perf.attach();
 
   // Resize
   function resize() {
@@ -133,6 +137,7 @@ async function start() {
     const dt = Math.min(clock.getDelta(), 0.1);
     t += dt;
     ctx.time.t = t; ctx.time.dt = dt;
+    ctx.perf.frameBegin(); // drives the bench camera before controls place it
     ctx.controls.update(dt);
     ctx.sky.update(dt, t);
     // The shadow camera rides along with the player. Its centre is snapped to whole shadow-map
@@ -150,11 +155,15 @@ async function start() {
     sunLight.intensity = 2.7 * f;
     hemi.intensity = 1.4 * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
+    ctx.perf.cpu('frame');
     for (const u of updates) u(dt, t);
+    ctx.perf.mark();
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
+    ctx.perf.cpu('frame');
     renderer.info.reset();
     ctx.post.composer.render();
+    ctx.perf.frameEnd();
     frames++; fpsT += dt;
     if (fpsT >= 1) { ctx.hud.setFps(frames / fpsT); frames = 0; fpsT = 0; }
   }
