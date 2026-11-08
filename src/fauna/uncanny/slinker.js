@@ -232,7 +232,7 @@ export function buildSlinker(ctx, U) {
     mesh.quaternion.multiplyQuaternions(qa, qb);
     mesh.position.set(S.x, ground.at(S.x, S.z) - 0.02, S.z);
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => S, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.slinker = Object.assign(pub, {
     state: S,

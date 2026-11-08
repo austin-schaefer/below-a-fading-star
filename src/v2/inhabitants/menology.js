@@ -412,7 +412,8 @@ export function buildMenology(ctx) {
     S.near = near;
     liz.instanceMatrix.needsUpdate = true; swish.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  // v3: past R + 140 m the lizards' AI already stopped; now the 48 poses are not rewritten either
+  ctx.registerUpdate(update, { pos: C, r: R, near: 140, hz: 0 });
 
   const tri = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   return {

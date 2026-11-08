@@ -206,7 +206,7 @@ function buildFlock(ctx, opts) {
     }
     mesh.instanceMatrix.needsUpdate = flap.needsUpdate = fold.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => opts.home, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
   // test hook: run it forward (seconds) without rendering
   pub.advance = (sec, step = 0.05) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
   return pub;

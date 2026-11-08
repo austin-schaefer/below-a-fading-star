@@ -57,7 +57,7 @@ export function buildMoths(ctx) {
     }
     mesh.instanceMatrix.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { pos: centre, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
 
 // ---------------------------------------------------------------- crows
@@ -201,7 +201,7 @@ export function buildCrows(ctx) {
     }
     mesh.instanceMatrix.needsUpdate = true; flap.needsUpdate = true; fold.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { pos: { x: KEEP.cx, z: KEEP.cz }, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
 
 // ---------------------------------------------------------------- fish rings on the tarn

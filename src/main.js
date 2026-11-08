@@ -84,9 +84,11 @@ async function start() {
     noise: makeSimplex(WORLD.seed + 1),
     rng: mulberry32(WORLD.seed + 2),
     time: { t: 0, dt: 0 },
-    registerUpdate: (fn) => updates.push(fn),
+    // meta (optional, v3 stage 2): { pos | at(): {x,z}, near: m, hz: rate beyond near (0 holds still), r: m }
+    registerUpdate: (fn, meta) => updates.push({ fn, meta: meta || null, acc: 0, held: false }),
     log: (...a) => console.log('[fp]', ...a),
     progress,
+    throttle: url.searchParams.get('throttle') !== '0', // distance throttling (v3 stage 2); modules read it for their own gates
   };
   // Global helper for stable per-module RNG streams
   ctx.makeRng = (salt) => mulberry32(WORLD.seed ^ (salt * 2654435761 >>> 0));
@@ -168,6 +170,26 @@ async function start() {
   // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
   ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
 
+  // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
+  // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
+  // skipped as its dt so motion covers the same ground. On resuming after holding still it gets one
+  // ordinary frame's dt. ?throttle=0 runs everything every frame.
+  const throttle = ctx.throttle;
+  const P = () => ctx.player.pos;
+  function runUpdates(dt, t) {
+    const p = P();
+    for (const u of updates) {
+      const m = u.meta;
+      if (!m || !throttle) { u.fn(dt, t); continue; }
+      u.acc += dt;
+      const q = m.at ? m.at() : m.pos;
+      const d = Math.hypot(q.x - p.x, q.z - p.z) - (m.r || 0);
+      if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
+      else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
+      else u.held = true;
+    }
+  }
+
   // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
   // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
   // been unfocused for 3 s; nothing while the tab is hidden. Time and the updates run once per rendered
@@ -226,7 +248,7 @@ async function start() {
     hemi.intensity = 1.4 * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
     ctx.perf.cpu('frame');
-    for (const u of updates) u(dt, t);
+    runUpdates(dt, t);
     ctx.perf.mark();
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);

@@ -202,6 +202,7 @@ export function buildGalley(ctx) {
   const wp = { x: 0, z: 0 };
   const lookAhead = { x: 0, z: 0, tx: 0, tz: 0 };
 
+  const WAKE_NEAR = 160;
   function update(dt, t) {
     // ---- along the loop; slowing into the western pause, a minute's wait, and away
     const toPause = (((path.pauseU - S.u) % 1) + 1) % 1 * path.length;   // metres ahead to the pause point
@@ -234,13 +235,14 @@ export function buildGalley(ctx) {
       if (dist < 120) ctx.audio?.cue?.('galley-drum', hull.position, { distance: dist });
     }
 
-    // ---- the wake
+    // ---- the wake (v3 stage 2: the strip is rebuilt only within 160 m; the history is kept regardless)
     H.acc += dt;
     if (H.acc >= HIST_DT || H.n === 0) {
       H.acc = 0; H.head = (H.head + 1) % K;
       H.x[H.head] = S.x; H.z[H.head] = S.z; H.tx[H.head] = S.tx; H.tz[H.head] = S.tz; H.v[H.head] = S.v; H.t[H.head] = t;
       H.n = Math.min(K, H.n + 1);
     }
+    if (dist > WAKE_NEAR && ctx.throttle !== false) return;
     const pos = wake.pos, al = wake.al;
     for (let s = 0; s < 3; s++) {
       for (let k = 0; k < K; k++) {

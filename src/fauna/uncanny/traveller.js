@@ -339,6 +339,7 @@ export function buildTraveller(ctx, U) {
     let x = 0, z = 0; for (const c of caps) { x += c.x; z += c.z; }
     return { x: x / caps.length, z: z / caps.length };
   }
+  const ROPE_NEAR = 60;
   function update(dt, t) {
     const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = Math.hypot(dx, dz);
     if (!flags && (flagsT -= dt) <= 0) { flagsT = 2; flags = flagsCentre(); }
@@ -381,7 +382,10 @@ export function buildTraveller(ctx, U) {
     lanternPivot.rotation.set(Math.sin(t * 1.9) * 0.16 * (0.4 + S.speed) + Math.sin(t * 0.7) * 0.05, 0, Math.sin(t * 1.33 + 1) * 0.08);
     const fl = 0.92 + 0.08 * Math.sin(t * 13.1) * Math.sin(t * 7.7);
     light.intensity = 2.6 * fl; matL.userData.uEmit.value = fl;
-    // rope: from the back of his cushion to the tip of the wagon's shaft, sagging as the gap closes
+    // rope: from the back of his cushion to the tip of the wagon's shaft, sagging as the gap closes. A 3 cm
+    // rope is under a pixel past 60 m: there it is hidden and not rebuilt (v3 stage 2; ?throttle=0 keeps it)
+    rope.visible = dist < ROPE_NEAR || ctx.throttle === false;
+    if (!rope.visible) return;
     trav.updateMatrixWorld(); wagon.updateMatrixWorld();
     A.set(0, 0.13, -0.6).applyMatrix4(trav.matrixWorld); // (scaled with him)
     Bv.set(0, 0.34, 2.6).applyMatrix4(wagon.matrixWorld);
@@ -400,7 +404,7 @@ export function buildTraveller(ctx, U) {
     ropeGeo.attributes.position.needsUpdate = true; ropeGeo.attributes.normal.needsUpdate = true;
   }
   place(0, 0);
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => trav.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.traveller = Object.assign(pub, {
     state: S, route, length: L,

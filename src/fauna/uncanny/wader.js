@@ -144,7 +144,7 @@ export function buildStiltWader(ctx, U) {
     mesh.visible = S.fade > 0.01 && S.mode !== 'gone';
     mesh.castShadow = S.fade > 0.9;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => mesh.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.wader = Object.assign(pub, {
     // test hook: stand it at the spot nearest (x, z), facing as it was, and hold it there

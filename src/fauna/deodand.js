@@ -125,5 +125,5 @@ export function buildDeodand(ctx) {
       }
     }
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => g.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
