@@ -110,36 +110,52 @@ export function buildControls(ctx) {
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
 
-  // --- touch: a drawn thumbstick in the bottom-right zone, look from any other touch, a hop button
+  // --- touch: a drawn thumbstick at bottom right, look from any other touch, a hop button
   const stickEl = document.getElementById('stick');
   const knobEl = document.getElementById('stick-knob');
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   const RING_R = 60;                       // css px (ring is 120 wide)
+  // A touch that starts within ZONE_R of the stick's home walks, and the ring moves under the thumb
+  // if it lands outside it; any touch farther off looks. (The zone was once the whole lower-right
+  // 40% x 45% of the screen, so in portrait a look drag from mid-screen grabbed the stick and
+  // carried the ring there: #100.)
+  const ZONE_R = 110;
   const moveVec = { x: 0, y: 0, mag: 0 }; // y positive = pulled down
   let moveTouch = null, lookTouch = null, cornerTimer = 0;
   let ringX = 0, ringY = 0;                // current ring centre, css px
-  let homeSet = false;
+  let homeX = 0, homeY = 0;                // the ring's CSS home, css px, measured at each touchstart
   const lookVel = { x: 0, y: 0 };          // rad/s inertia after release
   let lastLookT = 0;
 
+  // At rest the ring carries no inline position, so the CSS (safe-area aware) places it wherever
+  // the viewport now is; only a stick in use is pinned in px.
   function ringHome() {
-    // measure the home position the CSS gives the ring (safe-area aware)
     stickEl.style.left = ''; stickEl.style.top = ''; stickEl.style.bottom = ''; stickEl.style.transform = 'none';
-    const r = stickEl.getBoundingClientRect();
-    ringX = r.left + r.width / 2; ringY = r.top + r.height / 2; homeSet = true;
-    placeRing(ringX, ringY, false);
+    measureHome();
   }
-  function placeRing(cx, cy, custom) {
+  function measureHome() {
+    const r = stickEl.getBoundingClientRect();
+    homeX = ringX = r.left + r.width / 2; homeY = ringY = r.top + r.height / 2;
+  }
+  function placeRing(cx, cy) {
     stickEl.style.bottom = 'auto';
     stickEl.style.left = (cx - RING_R) + 'px'; stickEl.style.top = (cy - RING_R) + 'px';
     ringX = cx; ringY = cy;
   }
   function setKnob(dx, dy) { knobEl.style.transform = `translate(${dx}px, ${dy}px)`; }
-  function inStickZone(x, y) { return x > innerWidth * 0.6 && y > innerHeight * 0.55; }
+  function inStickZone(x, y) { return Math.hypot(x - homeX, y - homeY) <= ZONE_R; }
   function inCorner(x, y) { return x > innerWidth - 72 && y < 72; }
   if (isTouch) document.body.classList.add('touch');
   ctx.events.addEventListener('begin', () => { if (isTouch) { document.body.classList.add('begun'); if (stickEl) ringHome(); } });
-  addEventListener('resize', () => { if (isTouch && stickEl && !moveTouch) ringHome(); });
+  // A viewport change (rotation, Safari's bars) moves the home: a held stick lets go and the ring
+  // goes to the new home. iOS can also take the page away mid-drag (app switch, lock, notification
+  // or Control Centre pull, a system alert) without a touchend or touchcancel, which left the stick
+  // held where it was until the next touch: losing focus or visibility lets go of every touch.
+  addEventListener('resize', () => { if (isTouch && stickEl) releaseMove(); });
+  const dropTouches = () => { releaseMove(); releaseLook(); lookVel.x = lookVel.y = 0; };
+  addEventListener('blur', dropTouches);
+  addEventListener('pagehide', dropTouches);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') dropTouches(); });
 
   // A touch keeps the role it was given at touchstart for its whole life: one that starts in the
   // stick zone walks, any other looks. Mobile Safari reuses identifiers at once and can deliver a
@@ -181,10 +197,10 @@ export function buildControls(ctx) {
     for (const t of e.changedTouches) {
       if (moveTouch && t.identifier === moveTouch.id) releaseMove();
       if (lookTouch && t.identifier === lookTouch.id) releaseLook();
-      if (!moveTouch && inStickZone(t.clientX, t.clientY) && stickEl) {
-        if (!homeSet) ringHome();
+      if (!moveTouch && stickEl) measureHome();
+      if (!moveTouch && stickEl && inStickZone(t.clientX, t.clientY)) {
         if (Math.hypot(t.clientX - ringX, t.clientY - ringY) > RING_R) {
-          placeRing(clamp(t.clientX, RING_R, innerWidth - RING_R), clamp(t.clientY, RING_R, innerHeight - RING_R), true);
+          placeRing(clamp(t.clientX, RING_R, innerWidth - RING_R), clamp(t.clientY, RING_R, innerHeight - RING_R));
         }
         moveTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
         stickEl.classList.add('active');
@@ -256,7 +272,7 @@ export function buildControls(ctx) {
   // read-only view of the touch state, for tools/touch-test.mjs
   const touch = {
     moveVec,
-    get ring() { return { x: ringX, y: ringY }; },
+    get ring() { if (!moveTouch && stickEl) measureHome(); return { x: ringX, y: ringY }; },
     get moveId() { return moveTouch ? moveTouch.id : null; },
     get lookId() { return lookTouch ? lookTouch.id : null; },
   };

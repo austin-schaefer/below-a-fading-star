@@ -170,6 +170,104 @@ if (mc) {
   check('mute long-press: the mute button moves left of the debug button', shifted && shifted[0] < mc[0] - 30, { mc, shifted });
 }
 
+// 6. the stick stays home (#100): on an iPhone the ring sat mid-screen with the knob pulled away.
+// A touch that starts well away from the stick looks; a gesture the browser never ends (no
+// touchend, as when iOS takes the page away mid-drag) sends the ring home once the page loses
+// focus or is hidden; a viewport change mid-drag re-homes the ring.
+// SHOTS100=<label> also writes shots/wip/touch-100-<label>-{midscreen,interrupted}.png at 402×874.
+{
+  const r = await page.evaluate(() => {
+    const fp = window.__fp, t = fp.controls.touch, cv = fp.renderer.domElement;
+    const T = (id, x, y) => new Touch({ identifier: id, target: cv, clientX: x, clientY: y });
+    const fire = (type, touches, changed) => cv.dispatchEvent(new TouchEvent(type, { touches, changedTouches: changed, cancelable: true, bubbles: true }));
+    const snap = () => ({ mag: t.moveVec.mag, ring: { ...t.ring }, moveId: t.moveId, lookId: t.lookId, knob: document.getElementById('stick-knob').style.transform });
+    const home = { ...t.ring }, out = { home };
+    // a: a thumb lands mid-screen, right of centre (where Austin's ring sat), and drags left
+    const mx = innerWidth * 0.6 + 2, my = innerHeight * 0.58;
+    let a = T(40, mx, my); fire('touchstart', [a], [a]);
+    a = T(40, mx - 70, my + 10); fire('touchmove', [a], [a]);
+    out.mid = snap();
+    fire('touchend', [], [a]);
+    // b: a thumb lands just outside the ring, near home: it walks, and the ring follows only a little
+    let b = T(41, home.x - 75, home.y - 30); fire('touchstart', [b], [b]);
+    b = T(41, home.x - 75, home.y - 60); fire('touchmove', [b], [b]);
+    out.near = snap();
+    fire('touchend', [], [b]);
+    out.nearEnd = snap();
+    // c: walking, then the touchend never comes and the window loses focus
+    let c = T(42, home.x - 40, home.y - 60); fire('touchstart', [c], [c]);
+    c = T(42, home.x - 100, home.y - 50); fire('touchmove', [c], [c]);
+    out.cHeld = snap();
+    dispatchEvent(new Event('blur'));
+    out.cBlur = snap();
+    // d: the same, and the page is hidden (app switch, lock, notification pull)
+    let d = T(43, home.x, home.y); fire('touchstart', [d], [d]);
+    d = T(43, home.x - 50, home.y); fire('touchmove', [d], [d]);
+    out.dHeld = snap();
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    delete document.visibilityState;
+    out.dHidden = snap();
+    // e: pagehide (Safari's back-forward cache) mid-drag
+    let e = T(44, home.x, home.y); fire('touchstart', [e], [e]);
+    e = T(44, home.x, home.y - 50); fire('touchmove', [e], [e]);
+    out.eHeld = snap();
+    dispatchEvent(new Event('pagehide'));
+    out.eHidden = snap();
+    return out;
+  });
+  const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+  check('#100 mid-screen touch: looks, not walks', r.mid.moveId === null && r.mid.lookId === 40 && r.mid.mag === 0, r.mid);
+  check('#100 mid-screen touch: the ring stays home', near(r.mid.ring, r.home), r.mid);
+  check('#100 near-home touch: walks, the ring follows within reach of home', r.near.moveId === 41 && r.near.mag > 0.3 && dist(r.near.ring, r.home) <= 120, r.near);
+  check('#100 near-home touch: release sends the ring home', near(r.nearEnd.ring, r.home) && r.nearEnd.mag === 0, r.nearEnd);
+  check('#100 lost touchend + blur: walking before', r.cHeld.moveId === 42 && r.cHeld.mag > 0.5, r.cHeld);
+  check('#100 lost touchend + blur: stick released, ring home, knob centred', r.cBlur.moveId === null && r.cBlur.mag === 0 && near(r.cBlur.ring, r.home) && /translate\(0px, 0px\)/.test(r.cBlur.knob), r.cBlur);
+  check('#100 lost touchend + hidden: stick released, ring home', r.dHeld.mag > 0.5 && r.dHidden.moveId === null && r.dHidden.mag === 0 && near(r.dHidden.ring, r.home), { held: r.dHeld, hidden: r.dHidden });
+  check('#100 lost touchend + pagehide: stick released, ring home', r.eHeld.mag > 0.5 && r.eHidden.moveId === null && r.eHidden.mag === 0 && near(r.eHidden.ring, r.home), { held: r.eHeld, hidden: r.eHidden });
+  // the element really sits at home too
+  let s6 = await read();
+  check('#100 after the interruptions the ring element is at home', near(s6.el, r.home, 1.5) && s6.moveId === null, s6);
+
+  // f: the viewport turns to landscape mid-drag, then back
+  await touch('touchStart', [[45, r.home.x, r.home.y]]);
+  await touch('touchMove', [[45, r.home.x - 30, r.home.y - 30]]);
+  const fHeld = await read();
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(400);
+  const fTurned = await read();
+  const landHome = await page.evaluate(() => { const el = document.getElementById('stick');
+    const keep = [el.style.left, el.style.top, el.style.bottom]; el.style.left = el.style.top = el.style.bottom = '';
+    const b = el.getBoundingClientRect(); [el.style.left, el.style.top, el.style.bottom] = keep; return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+  await touch('touchEnd', []);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+  const fBack = await read();
+  check('#100 resize mid-drag: walking before', fHeld.moveId === 45 && fHeld.mag > 0.5, fHeld);
+  check('#100 resize mid-drag: the ring moves to the landscape home, on screen', near(fTurned.ring, landHome, 1.5) && near(fTurned.el, landHome, 1.5) && fTurned.mag === 0, { fTurned, landHome });
+  check('#100 resize back: the ring is home again', near(fBack.ring, r.home, 1.5) && near(fBack.el, r.home, 1.5) && fBack.moveId === null, fBack);
+  if (process.env.SHOTS100) {
+    // before/after renders (#100): Austin's gesture, a thumb landing mid-screen and dragging left, held
+    await page.setViewportSize({ width: 402, height: 874 });
+    await page.waitForTimeout(600);
+    const h = (await read()).ring;
+    const mx = Math.round(402 * 0.6 + 2), my = Math.round(874 * 0.58);
+    await touch('touchStart', [[46, mx, my]]);
+    await touch('touchMove', [[46, mx - 70, my + 12]]);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `shots/wip/touch-100-${process.env.SHOTS100}-midscreen.png`, timeout: 240000 });
+    await touch('touchEnd', []);
+    // a drag interrupted with no touchend, then the page hidden and shown again
+    await touch('touchStart', [[47, h.x - 30, h.y - 20]]);
+    await touch('touchMove', [[47, h.x - 110, h.y - 40]]);
+    await page.evaluate(() => { dispatchEvent(new Event('blur')); dispatchEvent(new Event('focus')); });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `shots/wip/touch-100-${process.env.SHOTS100}-interrupted.png`, timeout: 240000 });
+    console.log(`[saved] shots/wip/touch-100-${process.env.SHOTS100}-{midscreen,interrupted}.png`);
+    await touch('touchEnd', []);
+  }
+}
+
 check('no page errors', errors.length === 0, errors);
 await browser.close();
 let fail = 0;

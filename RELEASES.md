@@ -1,6 +1,10 @@
 # Releases
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
+## v6.1 (2026-11-08) — the stick stays home
+
+A hotfix for issue #100. On an iPhone in portrait the thumbstick's ring could sit mid-screen with the knob pulled away. The stick zone was the whole lower-right 40% × 45% of the screen, and the ring moved to wherever a touch in it began, so a look drag from mid-screen grabbed the stick and carried the ring there (`touch-test` reproduced Austin's screenshot: ring at (236, 490), knob 59 px left). Now only a touch within 110 px of the stick's home walks, and the ring follows the thumb only that far; any other touch looks. The ring at rest has no inline position, so the CSS keeps it home through rotation and Safari's bars. A drag iOS never ends (app switch, lock, a notification or Control Centre pull) lets go when the page loses focus or is hidden, and a viewport change lets go of a held stick. `touch-test` has 13 new checks (37); renders `shots/wip/touch-100-{before,after}-{midscreen,interrupted}.png` (`SHOTS100=<label>`).
+
 ## v6 (2026-11-08) — nothing pops
 
 Stages 41–45. Spec: `wilderness-v6.md` (the survey, the catalogue, the share-ready bar, "Status" for the slim plan and its decisions, "Results" per brief), briefs in `briefs/v6/`. Opened for the laptop's hitching; Austin's clean measurement after v5 showed that fixed, so v6 ran slim: the harness, the near switches, the post chain, and the two things a visitor on a shared link reported.
