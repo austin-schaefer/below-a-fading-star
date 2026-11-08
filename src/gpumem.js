@@ -27,6 +27,15 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   const bound = new Map(); // unit*65536 + target -> texture
   let unit = 0, rb = null;
   let uploads = 0, uploadsFrame = 0, perFrame = 0, frames = 0;
+  // v6: uploads split by whether the texture had been uploaded before (a first sight, expected behind the title
+  // card only) or is a data texture refreshed (the BatchedMesh's matrices and indirect textures, the shadow's...),
+  // with the sizes of the refreshed ones
+  const seen = new WeakSet(), dataDims = new Map();
+  let upFirst = 0, upData = 0;
+  const note = (t, w, h) => {
+    if (!t) return;
+    if (seen.has(t)) { upData++; const k = w * 65536 + h; dataDims.set(k, (dataDims.get(k) || 0) + 1); } else { seen.add(t); upFirst++; }
+  };
   const key = (target) => unit * 65536 + (target >= CUBE_X && target <= CUBE_NZ ? CUBE : target);
   const levels = (t) => { let m = tex.get(t); if (!m) { m = new Map(); tex.set(t, m); } return m; };
   // Installed only while profiling (main.js with ?perf=1 or ?bench, else perf.js when the profiler comes on).
@@ -44,11 +53,13 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
     let w, h, fmt, type;
     if (a.length >= 8) { w = a[3]; h = a[4]; fmt = a[6]; type = a[7]; }
     else { const s = a[5]; w = s?.videoWidth || s?.naturalWidth || s?.displayWidth || s?.width || 0; h = s?.videoHeight || s?.naturalHeight || s?.displayHeight || s?.height || 0; fmt = a[3]; type = a[4]; }
+    if (!a[1]) note(t, w, h);
     levels(t).set(`${a[0]}:${a[1]}`, w * h * bpp(a[2], fmt, type));
   });
   wrap('texImage3D', (a) => {
     uploads++; uploadsFrame++;
     const t = bound.get(key(a[0])); if (!t) return;
+    if (!a[1]) note(t, a[3], a[4]);
     levels(t).set(`${a[0]}:${a[1]}`, a[3] * a[4] * a[5] * bpp(a[2], a[7], a[8]));
   });
   const storage = (a, depth) => {
@@ -61,8 +72,8 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   };
   wrap('texStorage2D', (a) => storage(a, false));
   wrap('texStorage3D', (a) => storage(a, true));
-  wrap('texSubImage2D', () => { uploads++; uploadsFrame++; });
-  wrap('texSubImage3D', () => { uploads++; uploadsFrame++; });
+  wrap('texSubImage2D', (a) => { uploads++; uploadsFrame++; if (!a[1]) note(bound.get(key(a[0])), a.length >= 9 ? a[4] : 0, a.length >= 9 ? a[5] : 0); });
+  wrap('texSubImage3D', (a) => { uploads++; uploadsFrame++; if (!a[1]) note(bound.get(key(a[0])), a[5], a[6]); });
   wrap('generateMipmap', (a) => {
     const t = bound.get(key(a[0])); if (!t) return;
     const m = levels(t); if (m.has('storage')) return; // texStorage already allocated the chain
@@ -86,6 +97,8 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   }
   return {
     bytesOf,
+    get upFirst() { return upFirst; }, get upData() { return upData; },
+    dataDims() { const o = {}; for (const [k, v] of dataDims) o[`${k >> 16}x${k & 65535}`] = v; return o; },
     frame() { perFrame = uploadsFrame; uploadsFrame = 0; frames++; },
     stats() {
       let t = 0; for (const k of tex.keys()) t += bytesOf(k);

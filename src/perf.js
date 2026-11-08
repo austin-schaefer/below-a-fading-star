@@ -183,6 +183,38 @@ export function createPerf(ctx) {
   let current = null; // rolling summary, rebuilt at each block close
   let rec = null, lastRec = null; // the recorder's live state; the last finished record
 
+  // --- counters (v6): ctx.perf.count(key, n) from the modules, one boolean test when the profiler is off.
+  // A slot is made the first time a key is counted (at build, for the keys the modules count in their updates);
+  // after that counting allocates nothing. total: since the page loaded; last: the frame just ended; rec: the
+  // total at the recorder's last sample.
+  const counters = {}, clist = [];
+  function count(key, n = 1) {
+    if (!api.active) return;
+    let c = counters[key];
+    if (!c) { c = counters[key] = { total: 0, frame: 0, last: 0, rec: 0 }; clist.push(c); }
+    c.total += n; c.frame += n;
+  }
+  // renderer.info deltas: programs, geometries and textures created since the last frame; texture uploads from gpumem
+  let upProg = 0, upGeo = 0, upTex = 0, upFirst = 0, upData = 0;
+  function countUploads() {
+    const info = renderer.info, np = info.programs ? info.programs.length : 0, ng = info.memory.geometries, nt = info.memory.textures;
+    if (np > upProg) count('uploads.programs', np - upProg);
+    if (ng > upGeo) count('uploads.geometries', ng - upGeo);
+    if (nt > upTex) count('uploads.textures', nt - upTex);
+    upProg = np; upGeo = ng; upTex = nt;
+    const gm = ctx.gpumem;
+    if (gm) {
+      if (gm.upFirst > upFirst) count('uploads.texFirst', gm.upFirst - upFirst);
+      if (gm.upData > upData) count('uploads.texData', gm.upData - upData);
+      upFirst = gm.upFirst; upData = gm.upData;
+    }
+  }
+  function countersOut() {
+    const totals = {}, lastFrame = {};
+    for (const k in counters) { totals[k] = counters[k].total; if (counters[k].last) lastFrame[k] = counters[k].last; }
+    return { totals, lastFrame };
+  }
+
   function frameBegin() {
     const now = performance.now();
     if (bench) bench.drive(now);
@@ -198,6 +230,8 @@ export function createPerf(ctx) {
     ctx.gpumem?.frame();
     if (!api.active) return;
     gpuEndFrame();
+    countUploads();
+    for (let i = 0; i < clist.length; i++) { const c = clist[i]; c.last = c.frame; c.frame = 0; }
     const r = renderer.info.render;
     last.calls = r.calls; last.tris = r.triangles; last.points = r.points; last.lines = r.lines;
     if (r.calls < block.calls[0]) block.calls[0] = r.calls;
@@ -472,6 +506,7 @@ export function createPerf(ctx) {
       if (!walk) return;
       rec.on = true; rec.wall0 = now; rec.prev = 0;
       for (const m of mods.values()) rec.tot.set(m, m.tot);
+      for (const k in counters) counters[k].rec = counters[k].total;
       rec.uploads = ctx.gpumem?.stats().uploads ?? 0;
       rec.redraws = ctx.shadowCadence?.stats.redraws ?? 0; rec.dynamic = ctx.shadowCadence?.stats.dynamic ?? 0;
       rec.gpu = {}; rec.gpuFrames = 0;
@@ -499,6 +534,8 @@ export function createPerf(ctx) {
     const size = renderSize();
     const g = !gpu.ok ? 'n/a' : rec.gpuFrames ? gpuOut(rec.gpu, rec.gpuFrames) : null;
     const uploads = gm ? gm.uploads : 0;
+    const cn = {};
+    for (const k in counters) { const c = counters[k], d = c.total - c.rec; c.rec = c.total; if (d) cn[k] = d; }
     rec.samples.push({
       t: r1(rec.sampleAt), frames, avgMs: r2((rec.el - rec.sampleAt) / frames),
       gpu: g && g !== 'n/a' ? { frames: g.frames, render: g.render, shadow: g.shadow ?? null, bloom: g.bloom ?? null, grade: g.grade ?? null, output: g.output ?? null, total: g.total } : g,
@@ -507,7 +544,7 @@ export function createPerf(ctx) {
       shadowRedraws: sc ? sc.redraws : null, shadowDynamic: sc ? sc.dynamic : null,
       x: r1(cam.x), y: r1(cam.y), z: r1(cam.z), yaw: r2(p.yaw),
       geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null,
-      uploads: uploads - rec.uploads, cpuMs: cpu,
+      uploads: uploads - rec.uploads, counters: cn, cpuMs: cpu,
     });
     rec.uploads = uploads;
     rec.sampleAt = rec.el; rec.sampleN = rec.n; rec.gpu = {}; rec.gpuFrames = 0; rec.calls = 0; rec.tris = 0;
@@ -621,7 +658,7 @@ export function createPerf(ctx) {
       ...(current || summarise(win.length ? win : [block])),
       render: { calls: r.calls, triangles: r.tris, points: r.points, lines: r.lines },
       memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null, gpu: ctx.gpumem?.stats() ?? null },
-      tier: ctx.tier?.stats() ?? null,
+      tier: ctx.tier?.stats() ?? null, counters: countersOut(),
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
       settings: settings(), ...(machine ? { machine } : {}),
       gpuTimer: gpu.ok,
@@ -633,7 +670,7 @@ export function createPerf(ctx) {
   }
 
   const api = {
-    active: false, gpuTimer: gpu.ok, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
+    active: false, gpuTimer: gpu.ok, count, counters, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
     record, lastRecord: () => lastRec, get recording() { return !!rec; }, setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
     get bench() { return bench; },
   };

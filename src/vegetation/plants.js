@@ -315,6 +315,7 @@ function makePlantMaterial(ctx, shared, o) {
 // ---------- the chunked store ----------
 // Chunks are generated on demand (each from its own rng stream, so order does not matter) and
 // freed when far away; every frame the visible ones are packed into one instanced buffer.
+let perf = null; // ctx.perf, for the counters
 class Kind {
   constructor(name, geo, mat, o, cap) {
     this.name = name; this.geo = geo; this.mat = mat; this.o = o;
@@ -452,6 +453,7 @@ class Kind {
       const c = this.order[i], ch = this.chunks[c];
       const q = ch.q > 0 ? ch.q : Math.ceil(64 * Math.pow(Math.min(1, r0 / fade1), ex) * (1 - smoothstep(fade0, fade1, fade1 - MARGIN * 0.5)) + 0.5);
       ch.q = Math.min(64, Math.ceil(q * 1.25) + 1);
+      if (perf?.active && this.far && PQ[c] && (this.packedFar[c] === 1) !== (ch.d > this.far.dist)) perf.count('plants.farSwitches'); // a packed chunk crossing the far switch
       this.order[n++] = c;
     }
     PQ.fill(0); this.packedFar.fill(0);
@@ -485,12 +487,14 @@ class Kind {
       f.geo.instanceCount = wf; f.drawn = wf;
     }
     this.repacks++;
+    perf?.count('plants.repacks');
   }
 }
 
 // ---------- placement ----------
 export function buildPlants(ctx, ground, shared) {
   const { landmarks: L, quality, noise } = ctx;
+  perf = ctx.perf;
   const low = quality === 'low';
   const eddy = L.eddy;
   shared.grey = { value: new THREE.Vector4(eddy ? eddy.x : 0, eddy ? eddy.z : 0, 8, eddy ? 1 : 0) };

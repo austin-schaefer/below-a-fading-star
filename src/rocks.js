@@ -239,6 +239,7 @@ export async function build(ctx) {
     if ((cp.x - last.x) ** 2 + (cp.z - last.z) ** 2 < 36) return;
     last.x = cp.x; last.z = cp.z;
     pack(cp.x, cp.z);
+    ctx.perf?.count('rocks.packs');
   });
   ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }

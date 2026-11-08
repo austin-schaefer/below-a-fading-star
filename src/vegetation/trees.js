@@ -693,7 +693,7 @@ export function buildTrees(ctx, ground, mats) {
       const d = Math.sqrt((t.x - px) ** 2 + (t.z - pz) ** 2) / t.lodK;
       let want = d < HI ? 2 : d < MID ? 1 : 0;
       if (want < t.lod) { if (t.lod === 2 && d < HI + HYS) want = 2; else if (d < MID + HYS) want = Math.max(want, 1); }
-      if (want !== t.lod) { t.lod = want; batch.setGeometryIdAt(t.id, gid[t.v][want]); }
+      if (want !== t.lod) { t.lod = want; batch.setGeometryIdAt(t.id, gid[t.v][want]); ctx.perf?.count('trees.lodSwitches'); }
     }
   }
 
@@ -849,7 +849,9 @@ export function buildToadstools(ctx, ground, mats, trees) {
   function update(px, pz) {
     for (const g of groups) {
       const dx = Math.max(g.x0 - px, 0, px - g.x0 - GROUP), dz = Math.max(g.z0 - pz, 0, pz - g.z0 - GROUP);
-      g.mesh.visible = dx * dx + dz * dz < VIS * VIS;
+      const v = dx * dx + dz * dz < VIS * VIS;
+      if (v !== g.mesh.visible) ctx.perf?.count('fungi.groupFlips');
+      g.mesh.visible = v;
     }
   }
   return { update, groups: groups.length, count: spots.length, pods: pods.length, tris: geo.index.count / 3 * spots.length + pg.index.count / 3 * pods.length };

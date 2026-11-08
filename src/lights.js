@@ -34,6 +34,7 @@ export function makeLightSlots(ctx, n) {
   const near = []; // indices of candidates, nearest first
   const dist = new Float32Array(sources.length);
   const nearest = (a, b) => dist[a] - dist[b];
+  const held = new Int16Array(slots.length).fill(-1); // the source each slot copied last frame, for the handover counter
   function update() {
     near.length = 0;
     const c = camera.position;
@@ -50,7 +51,8 @@ export function makeLightSlots(ctx, n) {
     }
     near.sort(nearest);
     for (let k = 0; k < slots.length; k++) {
-      const l = slots[k];
+      const l = slots[k], src = k < near.length ? near[k] : -1;
+      if (src !== held[k]) { held[k] = src; ctx.perf?.count('lights.handovers'); }
       if (k >= near.length) { l.intensity = 0; continue; }
       const s = sources[near[k]];
       l.position.copy(wp[near[k]]);

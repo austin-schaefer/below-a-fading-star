@@ -134,9 +134,11 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
     }
     const dynDue = (dyn && cadence) || maxMove > T2;
     if (moved || since >= 1 / hz || dynDue) {
+      const slid = target.distanceToSquared(last); // counters: a redraw with the player under 0.5 m from the last is the turning cadence
       renderer.shadowMap.needsUpdate = true;
       since = 0; last.copy(target); stamp();
       stats.redraws++; if (moved) stats.moves++; else if (dynDue) stats.dynamic++;
+      ctx.perf?.count(moved ? (slid < 0.25 ? 'shadow.redraws.turn' : 'shadow.redraws.move') : dynDue ? 'shadow.redraws.dynamic' : 'shadow.redraws.clock');
       return true;
     }
     return false;

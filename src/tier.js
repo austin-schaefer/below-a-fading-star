@@ -272,6 +272,7 @@ export function makeTier(ctx, url, choice) {
     const from = state.dpr;
     pending = null;
     state.steps.push({ at: Math.round(now), from, to: Math.round(p.to * 100) / 100, low1Ms: Math.round(p.l * 10) / 10, why: p.why, waitMs: Math.round(now - p.at), afterRedraw, steady });
+    ctx.perf?.count('tier.steps');
     if (state.steps.length > 20) state.steps.shift();
     const t0 = performance.now();
     setPixelRatio(p.to);
