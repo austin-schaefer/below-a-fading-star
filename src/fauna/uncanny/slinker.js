@@ -2,6 +2,9 @@
 // It keeps about 30 m off, 50-70 degrees from where you are looking, slinking along with a rippling gait.
 // Turn toward it and it flattens itself into the ground, runs for the nearest cover and is gone; some
 // while later it is back, on your other side. It keeps out of water and out of the keep.
+// It haunts three places only: the edges of the Sunken Court, the Lattice and the Deodand Wood. When it
+// decides to come it picks whichever of them is nearest you, and keeps within 90 m of it; if you are more
+// than 150 m from all three it does not come at all, and if you walk off it slips away.
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, makeGround, approach, turnToward, DITHER_GLSL } from './kit.js';
@@ -97,8 +100,18 @@ export function buildSlinker(ctx, U) {
   const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
   const colliders = ctx.controls?.state?.colliders || [];
   const S = { x: 0, z: 0, vx: 0, vz: 0, heading: 0, mode: 'gone', timer: -8, fade: 0, flat: 1, side: 1, tx: 0, tz: 0, hold: false, speed: 0 };
-  const pub = ctx.slinker = { position: mesh.position, seen: false, mode: 'gone', fade: 0 };
-  const ok = (x, z) => rules.dry(x, z, 0.4) && !rules.inKeep(x, z, 48) && rules.inRegion(x, z, 285) && ctx.terrain.slopeAt(x, z) < 0.8;
+  const pub = ctx.slinker = { position: mesh.position, seen: false, mode: 'gone', fade: 0, site: null };
+  const L = ctx.landmarks;
+  const SITES = [L.court, L.moraine, L.wood].map((l) => ({ x: l.x, z: l.z, name: l.name }));
+  const HAUNT = 90, REACH = 150;
+  let site = null;
+  const nearestSite = () => {
+    let best = null, bd = 1e9;
+    for (const s of SITES) { const d = Math.hypot(cam.x - s.x, cam.z - s.z); if (d < bd) { bd = d; best = s; } }
+    return bd <= REACH ? best : null;
+  };
+  const inHaunt = (x, z) => !site || (x - site.x) ** 2 + (z - site.z) ** 2 < HAUNT * HAUNT;
+  const ok = (x, z) => inHaunt(x, z) && rules.dry(x, z, 0.4) && !rules.inKeep(x, z, 48) && rules.inRegion(x, z, 285) && ctx.terrain.slopeAt(x, z) < 0.8;
 
   let camBearing = 0, hHalf = 0.9;
   // a point at bearing (radians from camera forward, + is to the camera's left) and distance
@@ -137,7 +150,16 @@ export function buildSlinker(ctx, U) {
       S.tx = best.x + (cx / cl) * (best.r + 0.9); S.tz = best.z + (cz / cl) * (best.r + 0.9);
     } else { S.tx = S.x + (ax / al) * 12; S.tz = S.z + (az / al) * 12; }
   }
+  function leave() {
+    // slip off without being seen to: away from you, fading
+    S.mode = 'flee'; S.timer = 0.6;
+    const ax = S.x - cam.x, az = S.z - cam.z, al = Math.hypot(ax, az) || 1;
+    S.tx = S.x + (ax / al) * 12; S.tz = S.z + (az / al) * 12;
+  }
   function appear() {
+    site = nearestSite();
+    pub.site = site ? site.name : null;
+    if (!site) return false;
     for (let k = 0; k < 10; k++) {
       at(S.side * (1.05 + (rng() - 0.5) * 0.3), 30 + rng() * 9, pt);
       if (!ok(pt[0], pt[1]) || viewAngle(pt[0], pt[1]) < hHalf + 0.1) continue;
@@ -179,12 +201,14 @@ export function buildSlinker(ctx, U) {
           if (lurkTarget()) move(dt, 1.2, 2);
           if (S.fade >= 1) S.mode = 'lurk';
           if (ang < 0.6) flee();
+          else if (Math.hypot(cam.x - site.x, cam.z - site.z) > REACH) leave();
         } else if (S.mode === 'lurk') {
           S.flat = approach(S.flat, 0, 3, dt);
           if (!lurkTarget()) S.side = -S.side;
           move(dt, dist > 50 ? 7 : 3.4, 1.6);
           if (ang < 0.52 && dist < 75) flee();
           else if (dist > 90) { S.mode = 'gone'; S.timer = -2; S.fade = 0; }
+          else if (Math.hypot(cam.x - site.x, cam.z - site.z) > REACH) leave();
         } else if (S.mode === 'flee') {
           move(dt, 6.5, 5);
           S.flat = Math.min(1, S.flat + dt / 0.5);
@@ -215,6 +239,7 @@ export function buildSlinker(ctx, U) {
     // test hook: put it at a bearing (degrees, + to the left of view) and distance from the camera, and hold it
     stage(deg, d, o = {}) {
       const pp = ctx.player.pos; camBearing = ctx.player.yaw;
+      site = o.anywhere ? null : nearestSite();
       const b = camBearing + (deg * Math.PI) / 180; pt[0] = pp.x - Math.sin(b) * d; pt[1] = pp.z - Math.cos(b) * d;
       S.x = pt[0]; S.z = pt[1]; S.hold = true; S.mode = 'lurk'; S.fade = o.fade ?? 1; S.flat = o.flat ?? 0;
       S.heading = o.heading ?? Math.atan2(pp.x - S.x, pp.z - S.z) + Math.PI / 2; S.speed = o.speed ?? 2.2;

@@ -78,7 +78,7 @@ export function buildFlush(ctx) {
 }
 
 // ---------------------------------------------------------------- bats
-function batGeometry() {
+export function batGeometry() {
   const M = new Mesher();
   const W = (x) => clamp((Math.abs(x) - 0.01) / 0.3, 0, 1);
   M.loft([[0, 0, -0.07], [0, 0, 0.0], [0, 0.005, 0.07]], [[0.012, 0.012], [0.025, 0.025], [0.012, 0.012]], 5);

@@ -63,3 +63,7 @@ Each change behind a flag until measured; renders before and after at the same v
 - No look changes without a before/after render pair in `shots/wip/perf-*`; Austin decides on any trade.
 - Flags for everything (`?cap=`, `?dpr=`, `?shadows=`, `?bloom=`), so a regression can be bisected from the URL.
 - The walk test and the audio test still pass; the artifact bundle still builds.
+
+## Also in v3 (Austin, after the merge)
+
+- **A loading bar on first entry.** The title card shows a thin bar that fills as modules land (main.js knows the module list and uses Promise.allSettled; emit progress per settled module and per big build step inside the slow ones: terrain, vegetation, structures), with the current module's name in small type under it ("growing the wood", "raising the keep"), so the wait reads as something happening. The "Go out" button stays disabled until the scene is ready; the line under it becomes the bar. Belongs to stage 1 with the profiler, since both are about telling the player what the machine is doing.

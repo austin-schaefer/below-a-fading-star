@@ -1,4 +1,6 @@
-// Grazers: a small herd of stilt-legged, grey, antlered beasts on the moor between the keep and the stones.
+// Grazers: small herds of stilt-legged, grey, antlered beasts, each pinned to a landmark (opts.home): one on the
+// moor south of the keep above the fen's rim, one grazing the edge of Medlar Close. They amble back toward home
+// after they bolt, so meeting them tells you where you are.
 // Four instanced meshes (bodies, heads+antlers, upper legs, lower legs); poses are composed per frame from matrices.
 import * as THREE from 'three';
 import { Mesher, clamp, lerp } from './geo.js';
@@ -55,6 +57,8 @@ export function buildGrazers(ctx, opts = {}) {
   const slopeLimit = 0.7;
   const valid = (x, z) => {
     if (Math.hypot(x, z) > 280) return false;
+    const K = ctx.landmarks.castle;
+    if (Math.hypot(x - K.x, z - K.z) < 40) return false; // not under the keep's walls
     if (terrain.causewayDistance(x, z) < 5.5) return false;
     const wl = terrain.waterLevelAt(x, z);
     if (wl !== null && terrain.heightAt(x, z) < wl + 1.2) return false;
@@ -62,7 +66,7 @@ export function buildGrazers(ctx, opts = {}) {
     return true;
   };
 
-  const [HX, HZ] = opts.home ?? [-60, -40];
+  const [HX, HZ] = opts.home ?? [22, 78];
   const herd = { x: HX, z: HZ, mode: 'graze', alertT: 0, calmT: 0 };
   const A = [];
   let tries = 0;

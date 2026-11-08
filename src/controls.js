@@ -17,7 +17,7 @@ export function buildControls(ctx) {
     pos: new THREE.Vector3(SPAWN.x, 0, SPAWN.z),
     vel: new THREE.Vector3(),
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
-    locked: false, everLocked: false, lockFailed: false, enabled: false, moving: false, stepPhase: 0,
+    locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
     onStep: null,
   };
@@ -44,10 +44,34 @@ export function buildControls(ctx) {
   window.addEventListener('keyup', onKey(false));
   window.addEventListener('blur', () => state.keys.clear());
 
-  document.addEventListener('pointerlockchange', () => {
-    state.locked = document.pointerLockElement === el;
-    if (state.locked) state.everLocked = true;
-    ctx.events.dispatchEvent(new CustomEvent('lock', { detail: state.locked }));
+  // One place decides whether the mouse is captured. Called on the browser's event and again
+  // every frame, because Firefox has been seen to drop or keep the capture without telling us.
+  function syncLock() {
+    const held = document.pointerLockElement === el;
+    if (held === state.locked) return;
+    state.locked = held;
+    if (held) state.everLocked = true;
+    ctx.events.dispatchEvent(new CustomEvent('lock', { detail: held }));
+  }
+  document.addEventListener('pointerlockchange', syncLock);
+  // Never leave the mouse captured by a page that is going away or hidden.
+  const release = () => { if (document.pointerLockElement) { try { document.exitPointerLock(); } catch (e) { /* ignore */ } } };
+  window.addEventListener('pagehide', release);
+  window.addEventListener('beforeunload', release);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+  // Drag-look mode: never ask for pointer lock; the mouse looks while the left button is held.
+  // Chosen with ?lock=0, remembered in localStorage, or offered on the paused card when the lock misbehaves.
+  function setDragLook(on) {
+    state.dragLook = !!on;
+    state.lockFailed = !!on;
+    try { localStorage.setItem('fp-draglook', on ? '1' : '0'); } catch (e) { /* ignore */ }
+    if (on) release();
+    ctx.events.dispatchEvent(new CustomEvent('draglook', { detail: state.dragLook }));
+  }
+  try { if (url.searchParams.get('lock') === '0' || localStorage.getItem('fp-draglook') === '1') { state.dragLook = true; state.lockFailed = true; } } catch (e) { /* ignore */ }
+  // In drag-look mode Esc is ours (no capture to release), so it toggles the pause.
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && state.dragLook && state.enabled) ctx.events.dispatchEvent(new CustomEvent('pausetoggle'));
   });
   // Pointer lock can be refused (an embedding iframe without the permission, some browsers). Then
   // the mouse looks by dragging on the canvas instead, and the page says so once.
@@ -70,7 +94,7 @@ export function buildControls(ctx) {
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
 
-  // --- touch: a drawn thumbstick in the bottom-left zone, look from any other touch
+  // --- touch: a drawn thumbstick in the bottom-right zone, look from any other touch
   const stickEl = document.getElementById('stick');
   const knobEl = document.getElementById('stick-knob');
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -95,7 +119,7 @@ export function buildControls(ctx) {
     ringX = cx; ringY = cy;
   }
   function setKnob(dx, dy) { knobEl.style.transform = `translate(${dx}px, ${dy}px)`; }
-  function inStickZone(x, y) { return x < innerWidth * 0.4 && y > innerHeight * 0.55; }
+  function inStickZone(x, y) { return x > innerWidth * 0.6 && y > innerHeight * 0.55; }
   function inCorner(x, y) { return x > innerWidth - 72 && y < 72; }
   if (isTouch) document.body.classList.add('touch');
   ctx.events.addEventListener('begin', () => { if (isTouch) { document.body.classList.add('begun'); if (stickEl) ringHome(); } });
@@ -165,8 +189,15 @@ export function buildControls(ctx) {
   el.addEventListener('touchend', endTouch); el.addEventListener('touchcancel', endTouch);
 
   // --- walkable floors: fn(x, z) -> world y of a floor, or null
-  const walkables = [];
-  function addWalkable(fn) { walkables.push(fn); }
+  // Walkable floors. Default: a floor can only raise the ground (decks, ramps). With
+  // { replace: true } the floor replaces the terrain wherever it returns a value (a cut, a pit,
+  // stairs going down), so the player can descend below the heightfield.
+  const walkables = [], replacers = [];
+  function addWalkable(fn, opts) { (opts && opts.replace ? replacers : walkables).push(fn); }
+  function baseFloor(x, z) {
+    for (const fn of replacers) { const h = fn(x, z); if (h !== null && h !== undefined) return h; }
+    return terrain.heightAt(x, z);
+  }
   ctx.addWalkable = addWalkable;
 
   // Put the player at (x, z) at ground height: inside the region, pushed out of colliders.
@@ -187,7 +218,7 @@ export function buildControls(ctx) {
       }
       if (!moved) break;
     }
-    const g = terrain.heightAt(x, z), wl = terrain.waterLevelAt(x, z);
+    const g = baseFloor(x, z), wl = g !== terrain.heightAt(x, z) ? null : terrain.waterLevelAt(x, z);
     let floor = g;
     if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
     state.pos.set(x, floor + state.eye, z);
@@ -209,6 +240,7 @@ export function buildControls(ctx) {
 
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3();
   function update(dt) {
+    syncLock();
     dt = Math.min(dt, 0.05);
     const k = state.keys;
     let mx = 0, mz = 0;
@@ -269,8 +301,8 @@ export function buildControls(ctx) {
     state.pos.x = nx; state.pos.z = nz;
 
     // vertical: follow the ground, with a small jump
-    const groundY = terrain.heightAt(state.pos.x, state.pos.z);
-    const wl = terrain.waterLevelAt(state.pos.x, state.pos.z);
+    const groundY = baseFloor(state.pos.x, state.pos.z);
+    const wl = replacers.length && groundY !== terrain.heightAt(state.pos.x, state.pos.z) ? null : terrain.waterLevelAt(state.pos.x, state.pos.z);
     let floorY = groundY;
     if (wl !== null && groundY < wl) floorY = Math.max(groundY, wl - 1.1); // wade, don't sink
     // walkable floors (decks, ramps): within 1.2 m below the feet or 0.6 m above
@@ -305,5 +337,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release };
 }

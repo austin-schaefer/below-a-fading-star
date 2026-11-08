@@ -29,7 +29,7 @@ const EYE_FS = /* glsl */`
   varying float vFog;
   void main() {
     vec2 q = gl_PointCoord - 0.5; float r2 = dot(q, q) * 4.0;
-    float l = exp(-r2 * 10.0) + exp(-r2 * 2.5) * 0.12;
+    float l = exp(-r2 * 7.0) + exp(-r2 * 2.5) * 0.12;
     gl_FragColor = vec4(uCol * l * uGlint * vFog, 1.0);
   }`;
 
@@ -196,11 +196,11 @@ export function buildVigilant(ctx, rng) {
   const eyeAttr = new THREE.BufferAttribute(eyePos, 3);
   eg.setAttribute('position', eyeAttr);
   const eyeMat = new THREE.ShaderMaterial({
-    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(4.0) }, uGlint: { value: 0 }, uSize: { value: 4.5 * ctx.renderer.getPixelRatio() } },
+    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(4.0) }, uGlint: { value: 0 }, uSize: { value: 6.5 * ctx.renderer.getPixelRatio() } },
     vertexShader: EYE_VS, fragmentShader: EYE_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
   const eyes = new THREE.Points(eg, eyeMat);
-  eyes.name = 'vigilant-eyes'; eyes.frustumCulled = false; eyes.renderOrder = 5;
+  eyes.name = 'vigilant-eyes'; eyes.renderOrder = 5;
   ctx.scene.add(eyes);
 
   // ---- turning the head (CPU, only when it changes: it is never seen to move)
@@ -228,6 +228,7 @@ export function buildVigilant(ctx, rng) {
       eyePos[k * 3] = e3.x; eyePos[k * 3 + 1] = e3.y; eyePos[k * 3 + 2] = e3.z;
     });
     eyeAttr.needsUpdate = true;
+    eg.computeBoundingSphere(); // only when the head turns; lets the eyes cull when it is behind you
     headWorld.set(0, 59, 13); mesh.localToWorld(headWorld);
   }
   poseHead();

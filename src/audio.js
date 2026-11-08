@@ -1,7 +1,30 @@
 // Audio: everything synthesised with WebAudio, started on the first click (the `begin` event).
 // Wind, a low drone that swells when the sun gutters, footsteps by ground, place sounds (tarn, fen, Lattice,
 // Cardinal Stones), calls (wings, crows, fish) and a faint counting click near the deodand.
-// Exposes ctx.audio = { cue(name, position?), ctx: AudioContext, master, analyser }. A no-op without AudioContext.
+// Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall }.
+// A no-op without AudioContext. One-shots share the cue bus (with its own analyser tap for tools/audio-test.mjs)
+// and a hard cap of 12 voices, the oldest stolen. Positions are {x,y,z}, copied at the call.
+//
+// Cues: name (position, opts): range
+//   cry, crows, flush, plop, rumble, farcry, skycreak, eyes-close, eyes-open, slinker-seen, slinker-gone,
+//   traveller-greet, tarn-hum, tarn-step (pos): as they were; strike (stone index 0..3) rings on the stones' own panners
+//   carillon (cap pos, { note: 0..8, quiet? }): a worn bronze bell, 2.5-4 s; quiet = a third the gain: ~260 m
+//   glyph-shift (lintel pos): a low stone grind, sinking then rising, and a grit tail, 2 s: 15 m (linear to silence)
+//   sward-close (centre): a dry petal rustle swelling and fading as a wave across the sward, 1.5 s: ~240 m
+//   sward-open (centre): the same, slower and softer, 4 s: ~240 m
+//   sward-whimper (head pos): one tiny breathy pitched sigh, 0.3-0.6 s: 5 m (linear)
+//   pedlar-pass (pos): a dragonfly wing-whirr sliding down in pitch as it passes, and a salt-goad tink, 0.4 s: 30 m
+//   wrong-colour-near (pos): nearly a chord, beating, sagging, 3 s, quiet: 60 m
+//   fall-rumble-enter / fall-rumble-leave (fall {x,y,z}): start / fade (2 s) the fall's positional rumble loop,
+//     whose gain follows ctx.river.rumble (0..1), read at 10 Hz whether or not the cues arrive
+//   procession (pos, ~300 m off): nine faint high whistles under a slow tremolo, 6-8 s: anywhere
+//   guest-heartbeat (pos ignored, { strength: 0.05..1 }): lub-dub, centre, no rolloff; louder, brighter with strength
+//   galley-drum (hull pos, { distance }): one deep damped boom, more muffled with distance: 130 m
+//   lizard-skitter (pos): a few dry claw grains on stone, 0.2-0.3 s: 6 m (linear)
+//   rooks-lift (centroid, { count }): wing clatter of the flock and two or three caws, 1.5 s: ~260 m
+//   bats-out (tower window pos, { count }): a soft high fluttering rush and many tiny chirps, 3-4 s: 160 m
+//   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
+//   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -24,6 +47,10 @@ export async function build(ctx) {
     const rng = ctx.makeRng(909);
     const { terrain, landmarks, player, camera } = ctx;
     const now0 = ac.currentTime;
+    // how far ahead one-shots are scheduled: a little more than the audio clock's staleness as JS sees it
+    // (offset of performance.now() against ac.currentTime above its best), so a short envelope never lands in
+    // the past on a starved machine
+    let lead = 0.03, offMin = Infinity, staleMax = 0;
 
     // ---- master chain: master -> limiter -> out, with a tap for tests
     const master = ac.createGain(); master.gain.value = 0;
@@ -44,7 +71,7 @@ export async function build(ctx) {
     // ---- noise sources
     const brown = makeNoiseBuffer(ac, 7, 'brown', rng), pink = makeNoiseBuffer(ac, 5, 'pink', rng), white = makeNoiseBuffer(ac, 3, 'white', rng);
     const loopSrc = (buf, off) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; s.start(0, off * buf.duration); return s; };
-    const burst = (buf, dur, off = rng()) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(ac.currentTime, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+    const burst = (buf, dur, off = rng()) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(ac.currentTime + lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
 
     // ---- listener follows the camera
     const L = ac.listener, fwd = { x: 0, y: 0, z: -1 };
@@ -66,7 +93,8 @@ export async function build(ctx) {
       return p;
     };
     const setPos = (p, x, y, z) => { if (p.positionX) { p.positionX.value = x; p.positionY.value = y; p.positionZ.value = z; } else p.setPosition(x, y, z); };
-    const send = (node, amt) => { const g = ac.createGain(); g.gain.value = amt; node.connect(g); g.connect(verbIn); return g; };
+    // a one-shot's reverb send leaves from its voice gate, so a stolen voice falls silent in the reverb too
+    const send = (node, amt) => { const g = ac.createGain(); g.gain.value = amt; (node._v ? node._v.gate : node).connect(g); g.connect(verbIn); return g; };
 
     // ================================================================ wind
     const windBus = ac.createGain(); windBus.gain.value = 0; windBus.connect(master); send(windBus, 0.12);
@@ -113,7 +141,7 @@ export async function build(ctx) {
       const c = landmarks.castle, ct = landmarks.court;
       const nearCastle = Math.hypot(p.x - c.x, p.z - c.z) < 40 && ground < 20;
       const inCourt = Math.hypot(p.x - ct.x, p.z - ct.z) < 34;
-      const t0 = ac.currentTime + 0.005;
+      const t0 = ac.currentTime + lead;
       const vol = (hurrying ? 1.35 : 1) * (0.8 + rng() * 0.4);
       const pitch = 0.85 + rng() * 0.35;
       const out = ac.createGain(); out.gain.value = 1;
@@ -192,7 +220,7 @@ export async function build(ctx) {
     for (const s of stones) { s.armed = true; s.cool = 0; s.pan = panner('HRTF', 8, 0.8); setPos(s.pan, s.x, terrain.heightAt(s.x, s.z) + 1.6, s.z); s.pan.connect(master); send(s.pan, 0.55); }
     const bellPartials = [[1, 1, 9], [2.0, 0.55, 7], [2.41, 0.4, 6], [3.0, 0.3, 5], [4.2, 0.18, 3.5], [5.43, 0.1, 2.5]];
     function strike(s, soft = 1) {
-      const t0 = ac.currentTime + 0.01;
+      const t0 = ac.currentTime + lead;
       for (const [r, a, d] of bellPartials) {
         const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = s.f * r * (1 + (rng() - 0.5) * 0.002);
         const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.2 * a * soft, t0 + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
@@ -205,7 +233,7 @@ export async function build(ctx) {
     const bubG = ac.createGain(); bubG.gain.value = 1; bubPan.connect(bubG); bubG.connect(master); send(bubG, 0.2);
     let bubT = 0;
     function bubble() {
-      const t0 = ac.currentTime + 0.01, f = 180 + rng() * 380;
+      const t0 = ac.currentTime + lead, f = 180 + rng() * 380;
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * (1.8 + rng()), t0 + 0.07);
       const g = ac.createGain(); env(g, t0, 0.07 * (0.5 + rng()), 0.004, 0.08);
       o.connect(g); g.connect(bubPan); o.start(t0); o.stop(t0 + 0.14);
@@ -216,12 +244,77 @@ export async function build(ctx) {
     const cueBus = ac.createGain(); cueBus.connect(master);
     const cueAnalyser = ac.createAnalyser(); cueAnalyser.fftSize = 2048; cueBus.connect(cueAnalyser);
     audio.cueAnalyser = cueAnalyser;
+
+    // ---- voices: a hard cap on simultaneous one-shots, the oldest stolen
+    // A voice is sources -> in -> [air lowpass] -> [panner] -> gate -> cue bus, with any reverb send off the gate.
+    // Past MAX_VOICES the oldest is stolen: its gate fades in 40 ms, its sources stop and it is disconnected.
+    const MAX_VOICES = 12, NO_SRCS = [];
+    const voices = [];
+    audio.voices = voices;
+    function retire(v) {
+      if (v.done) return;
+      v.done = true;
+      const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1);
+      try { v.in.disconnect(); v.gate.disconnect(); } catch (e) { /* already gone */ }
+    }
+    function steal(v) {
+      const i = voices.indexOf(v); if (i >= 0) voices.splice(i, 1);
+      const now = ac.currentTime, g = v.gate.gain;
+      g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + 0.04);
+      for (const s of v.srcs) { try { s.stop(now + 0.06); } catch (e) { /* not started yet or already stopped */ } }
+      setTimeout(() => retire(v), 150);
+    }
+    function admit(v) {
+      const now = ac.currentTime;
+      for (let i = voices.length - 1; i >= 0; i--) if (voices[i].until < now) retire(voices[i]);
+      while (voices.length >= MAX_VOICES) steal(voices[0]);
+      voices.push(v);
+    }
+    // o: { ref, roll, range (m: nothing is built past it), model ('inverse' | 'linear', which reaches silence at
+    // range), verb (send), dur (s), air (m: a distance lowpass, e-folding length), centre (no panner) }
+    function voice(pos, o) {
+      const cp = camera.position;
+      if (!o.centre && !pos) pos = { x: cp.x + 4, y: cp.y, z: cp.z }; // a cue fired with no place: just beside you
+      const d = o.centre ? 0 : Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
+      if (d > o.range) return null;
+      const v = { in: ac.createGain(), gate: ac.createGain(), srcs: [], until: 0, done: false, d, t0: ac.currentTime + lead, pan: null };
+      let tail = v.in;
+      if (o.air) { const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = clamp(20000 * Math.exp(-d / o.air), 900, 20000); tail.connect(lp); tail = lp; }
+      if (!o.centre) {
+        const p = ac.createPanner(); p.panningModel = 'equalpower'; p.distanceModel = o.model || 'inverse';
+        p.refDistance = o.ref; p.rolloffFactor = o.roll ?? 1; p.maxDistance = o.range;
+        setPos(p, pos.x, pos.y, pos.z); tail.connect(p); tail = p; v.pan = p;
+      }
+      tail.connect(v.gate); v.gate.connect(cueBus);
+      if (o.verb) { const g = ac.createGain(); g.gain.value = o.verb; v.gate.connect(g); g.connect(verbIn); }
+      v.until = v.t0 + o.dur;
+      admit(v);
+      setTimeout(() => retire(v), (v.until - ac.currentTime + 0.3) * 1000);
+      return v;
+    }
+    // sources owned by a voice (so a steal can stop them), and the small pieces cues are made of
+    const vOsc = (v, type, f, at, end) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.start(at); o.stop(end); v.srcs.push(o); return o; };
+    const vNoise = (v, buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at, rng() * Math.max(0, buf.duration - dur - 0.1), dur + 0.05); v.srcs.push(s); return s; };
+    const filt = (type, f, q = 0.7) => { const b = ac.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
+    const gainOf = (x) => { const g = ac.createGain(); g.gain.value = x; return g; };
+    const chain = (...n) => { for (let i = 1; i < n.length; i++) n[i - 1].connect(n[i]); return n[n.length - 1]; };
+    // a grain of filtered noise: claws, petals, wingbeats, grit
+    function grain(v, dest, at, f, q, peak, dec, buf = white) {
+      const g = ac.createGain(); env(g, at, peak, 0.001, dec);
+      chain(vNoise(v, buf, at, dec + 0.02), filt('bandpass', f, q), g, dest);
+    }
+    // swell: 0 -> peak over att, hold-ish, gone by end (exponential tail)
+    function swell(g, t0, peak, att, end) { g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, end); }
+    // the older cues build on a bare panner; it is registered as a voice (sources -> panner -> gate -> cue bus)
+    // so the cap counts it, and later(p, sec) below sets when it ends
     function oneShotPanner(position, ref = 10, roll = 1) {
       const p = panner('equalpower', ref, roll); setPos(p, position.x, position.y, position.z);
-      p.connect(cueBus); return p;
+      const v = { in: p, gate: ac.createGain(), srcs: NO_SRCS, until: ac.currentTime + 6, done: false };
+      p.connect(v.gate); v.gate.connect(cueBus); p._v = v; admit(v);
+      return p;
     }
     function cry(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos, 50, 1.1);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos, 50, 1.1);
       send(p, 0.9);
       const n = 1 + ((rng() * 2) | 0);
       let at = t0;
@@ -238,13 +331,13 @@ export async function build(ctx) {
         o.start(at); vib.start(at); o.stop(at + dur + 0.1); vib.stop(at + dur + 0.1);
         at += dur * 0.7 + 0.1 + rng() * 0.2;
       }
-      setTimeout(() => p.disconnect(), (at - t0 + 4) * 1000);
+      later(p, at - t0 + 4);
     }
     function crows(pos) {
       const c = landmarks.castle;
       const pp = pos || { x: 65, y: 34, z: 30 };
       const p = oneShotPanner(pp, 12, 1); send(p, 0.5);
-      let at = ac.currentTime + 0.03;
+      let at = ac.currentTime + lead;
       const n = 5 + ((rng() * 4) | 0);
       for (let k = 0; k < n; k++) {
         const f0 = 380 + rng() * 220, dur = 0.16 + rng() * 0.12;
@@ -258,19 +351,23 @@ export async function build(ctx) {
       }
       // wing-clatter as they leave
       const w = burst(white, 1.4), wf = ac.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 500; wf.Q.value = 0.8;
-      const wg = ac.createGain(); env(wg, ac.currentTime + 0.05, 0.08, 0.2, 1.1); w.connect(wf); wf.connect(wg); wg.connect(p);
-      setTimeout(() => p.disconnect(), (at - ac.currentTime + 5) * 1000);
+      const wg = ac.createGain(); env(wg, ac.currentTime + lead, 0.08, 0.2, 1.1); w.connect(wf); wf.connect(wg); wg.connect(p);
+      later(p, at - ac.currentTime + 5);
     }
     function plop(pos) {
-      const t0 = ac.currentTime + 0.01, p = oneShotPanner(pos, 6, 1.2); send(p, 0.35);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos, 6, 1.2); send(p, 0.35);
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(820, t0); o.frequency.exponentialRampToValueAtTime(190, t0 + 0.11);
       const g = ac.createGain(); env(g, t0, 0.13, 0.004, 0.13); o.connect(g); g.connect(p); o.start(t0); o.stop(t0 + 0.2);
       const s = burst(pink, 0.1), f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1500; const ng = ac.createGain(); env(ng, t0, 0.04, 0.002, 0.08);
       s.connect(f); f.connect(ng); ng.connect(p);
-      setTimeout(() => p.disconnect(), 3000);
+      later(p, 3);
     }
     // ---- sky and uncanny cues: all quiet, all placed where they happen
-    const later = (p, sec) => setTimeout(() => p.disconnect(), sec * 1000);
+    const later = (p, sec) => {
+      const v = p._v;
+      if (!v) { setTimeout(() => p.disconnect(), sec * 1000); return; }
+      v.until = ac.currentTime + sec; setTimeout(() => retire(v), sec * 1000);
+    };
     const near = (pos, d = 4) => pos || { x: camera.position.x + d, y: camera.position.y, z: camera.position.z };
     // a short band of noise: the stuff of clicks, ticks and sloshes
     const burstAt = (buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at, rng() * (buf.duration - dur - 0.1), dur + 0.05); return s; };
@@ -280,7 +377,7 @@ export async function build(ctx) {
     }
     // a fireball's report, arriving late: a long low roll that grumbles away
     function rumble(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x + 200, y: 80, z: camera.position.z }, 120, 1); send(p, 0.7);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos || { x: camera.position.x + 200, y: 80, z: camera.position.z }, 120, 1); send(p, 0.7);
       const s = burst(brown, 6), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(260, t0); lp.frequency.exponentialRampToValueAtTime(70, t0 + 5.5);
       const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.5, t0 + 0.35);
       for (let k = 1; k < 7; k++) g.gain.linearRampToValueAtTime(0.5 * (1 - k / 7) * (0.55 + 0.45 * rng()), t0 + 0.35 + k * 0.75);
@@ -289,7 +386,7 @@ export async function build(ctx) {
     }
     // the four-winged flier, very far: one long falling call, half of it reverb
     function farcry(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x - 200, y: 120, z: camera.position.z - 200 }, 90, 1); send(p, 1.3);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos || { x: camera.position.x - 200, y: 120, z: camera.position.z - 200 }, 90, 1); send(p, 1.3);
       const o = ac.createOscillator(); o.type = 'triangle';
       o.frequency.setValueAtTime(520, t0); o.frequency.linearRampToValueAtTime(610, t0 + 0.5); o.frequency.exponentialRampToValueAtTime(260, t0 + 2.4);
       const v = ac.createOscillator(); v.frequency.value = 6.5; const vg = ac.createGain(); vg.gain.value = 9; v.connect(vg); vg.connect(o.frequency);
@@ -299,7 +396,7 @@ export async function build(ctx) {
     }
     // the iron worm flexing in the sky: an iron groan, slow-beating partials and a grinding edge
     function skycreak(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: camera.position.x, y: 200, z: camera.position.z - 250 }, 90, 1); send(p, 1.0);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos || { x: camera.position.x, y: 200, z: camera.position.z - 250 }, 90, 1); send(p, 1.0);
       const dur = 2.2 + rng() * 1.2, f0 = 48 + rng() * 20;
       for (const [r, a] of [[1, 1], [2.03, 0.5], [3.11, 0.3]]) {
         const o = ac.createOscillator(); o.type = 'sawtooth';
@@ -316,7 +413,7 @@ export async function build(ctx) {
     function lids(pos, opening) {
       const p = oneShotPanner(near(pos), 3, 1.4); send(p, 0.25);
       const n = opening ? 46 : 60, span = opening ? 0.9 : 0.32;
-      const t0 = ac.currentTime + 0.02;
+      const t0 = ac.currentTime + lead;
       for (let k = 0; k < n; k++) {
         const at = t0 + Math.pow(rng(), opening ? 1.0 : 1.6) * span;
         nTick(p, at, 1500 + rng() * 2200, 3 + rng() * 4, 0.035 + rng() * 0.03, 0.012 + rng() * 0.02);
@@ -330,7 +427,7 @@ export async function build(ctx) {
     // the slinker noticed: a dry rattle of many fingertips on stone, close and unreverberant
     function rattle(pos, leaving) {
       const p = oneShotPanner(near(pos), 4, 1.3); send(p, leaving ? 0.12 : 0.05);
-      const t0 = ac.currentTime + 0.02, span = leaving ? 1.4 : 0.6;
+      const t0 = ac.currentTime + lead, span = leaving ? 1.4 : 0.6;
       let at = t0;
       while (at < t0 + span) {
         const fade = leaving ? 1 - (at - t0) / span : 1 - 0.4 * (at - t0) / span;
@@ -341,7 +438,7 @@ export async function build(ctx) {
     }
     // the traveller lifts his hand: a small cracked bell on the wagon, and a warm two-note hum
     function greet(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(near(pos, 6), 6, 1.1); send(p, 0.4);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(near(pos, 6), 6, 1.1); send(p, 0.4);
       [[880, 0.025, 1.6], [1318.5, 0.015, 1.2], [2213, 0.006, 0.7]].forEach(([f, a, d], i) => {
         const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f * (1 + (rng() - 0.5) * 0.004);
         const g = ac.createGain(); env(g, t0 + i * 0.004, a, 0.004, d); o.connect(g); g.connect(p); o.start(t0); o.stop(t0 + d + 0.2);
@@ -355,7 +452,7 @@ export async function build(ctx) {
     }
     // the woman in the tarn: a wordless low hum through closed lips, drifting between two notes
     function tarnHum(pos) {
-      const t0 = ac.currentTime + 0.05, p = oneShotPanner(pos || { x: -90, y: -3, z: 72 }, 10, 1.1); send(p, 0.8);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos || { x: -90, y: -3, z: 72 }, 10, 1.1); send(p, 0.8);
       const dur = 4.5 + rng() * 2, f0 = 196 * (rng() < 0.5 ? 1 : 0.89);
       const o = ac.createOscillator(); o.type = 'sawtooth';
       o.frequency.setValueAtTime(f0, t0); o.frequency.linearRampToValueAtTime(f0 * 1.122, t0 + dur * 0.4); o.frequency.linearRampToValueAtTime(f0 * 0.944, t0 + dur);
@@ -371,7 +468,7 @@ export async function build(ctx) {
     }
     // she has moved: one soft slosh of water round a body
     function slosh(pos) {
-      const t0 = ac.currentTime + 0.02, p = oneShotPanner(pos || { x: -90, y: -4.6, z: 80 }, 6, 1.2); send(p, 0.4);
+      const t0 = ac.currentTime + lead, p = oneShotPanner(pos || { x: -90, y: -4.6, z: 80 }, 6, 1.2); send(p, 0.4);
       const s = burst(pink, 0.8), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
       bp.frequency.setValueAtTime(900, t0); bp.frequency.exponentialRampToValueAtTime(260, t0 + 0.6);
       const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.11, t0 + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75);
@@ -379,7 +476,282 @@ export async function build(ctx) {
       for (let k = 0; k < 4; k++) nTick(p, t0 + 0.25 + rng() * 0.4, 1800 + rng() * 1500, 5, 0.012, 0.03, pink); // drips
       later(p, 3);
     }
-    audio.cue = (name, position) => {
+
+    // ================================================================ v2 cues: ruins, flora, river, sky, inhabitants, life
+    // ---- the Carillon Flags: nine worn bronze caps. A just minor pentatonic (so a running player makes a peal,
+    // not a cluster) on D3, each cap a little out of true; partials after a church bell's (hum, prime, tierce,
+    // quint, nominal and the inharmonic upper ones), the prime doubled a hair sharp so it beats as it dies.
+    const NOTE_RATIO = [1, 6 / 5, 4 / 3, 3 / 2, 9 / 5, 2, 12 / 5, 8 / 3, 3];
+    const NOTE_TRUE = NOTE_RATIO.map(() => 1 + (rng() - 0.5) * 0.014);
+    const BELL = [[0.5, 0.55, 3.6], [1, 1, 3.0], [1.0042, 0.4, 2.7], [1.183, 0.42, 2.2], [1.506, 0.28, 1.8], [2.0, 0.32, 1.5], [2.74, 0.14, 1.0], [3.01, 0.1, 0.8], [4.17, 0.06, 0.5]];
+    function carillon(pos, o) {
+      const k = clamp((o?.note ?? 0) | 0, 0, 8), soft = o?.quiet ? 1 / 3 : 1;
+      const v = voice(pos, { ref: 4, roll: 1, range: 260, verb: 0.4, dur: 4.4, air: 140 });
+      if (!v) return;
+      const t0 = v.t0, f = 146.83 * NOTE_RATIO[k] * NOTE_TRUE[k], amp = 0.065 * soft * (1 - k * 0.035), life = 1.15 - k * 0.04;
+      for (const [r, a, d] of BELL) {
+        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp * a, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d * life);
+        chain(vOsc(v, 'sine', f * r * (1 + (rng() - 0.5) * 0.003), t0, t0 + d * life + 0.05), g, v.in);
+      }
+      grain(v, v.in, t0, 700 + k * 110, 1.3, 0.06 * soft, 0.035, pink); // the foot on the cap: metal seating in stone
+    }
+    // ---- the Hypogeum lintel: one glyph sinks (the grind falls), a breath, the next rises (it climbs), then
+    // grit runs off the stone. Stick-slip: the gain catches and gives in uneven steps.
+    function glyphShift(pos) {
+      const v = voice(pos, { model: 'linear', ref: 2, roll: 1, range: 15, verb: 0.35, dur: 2.1 });
+      if (!v) return;
+      const t0 = v.t0;
+      for (const [at, len, f0, f1] of [[0, 0.56, 260, 120], [0.66, 0.54, 120, 240]]) {
+        const a = t0 + at, bp = filt('bandpass', f0, 1.6), g = ac.createGain();
+        bp.frequency.setValueAtTime(f0, a); bp.frequency.exponentialRampToValueAtTime(f1, a + len);
+        g.gain.setValueAtTime(0.0001, a); g.gain.linearRampToValueAtTime(0.24, a + 0.05);
+        for (let tt = a + 0.09; tt < a + len - 0.06; tt += 0.035 + rng() * 0.05) g.gain.linearRampToValueAtTime(0.08 + 0.16 * rng(), tt);
+        g.gain.exponentialRampToValueAtTime(0.0001, a + len + 0.08);
+        chain(vNoise(v, brown, a, len + 0.1), bp, g, v.in);
+        const eg = ac.createGain(); swell(eg, a, 0.01, 0.05, a + len + 0.05); // the harder edge of it
+        chain(vNoise(v, white, a, len + 0.1), filt('bandpass', 1300 + rng() * 400, 1.2), eg, v.in);
+      }
+      for (let at = t0 + 1.12; at < t0 + 1.9;) { const k = (at - t0 - 1.12) / 0.78; grain(v, v.in, at, 2200 + rng() * 2800, 3, 0.012 * (1 - k) + 0.002, 0.01 + rng() * 0.01); at += 0.02 + rng() * rng() * 0.12; }
+    }
+    // ---- the Heliotrope Sward: a thousand heads turning shut, or open. A dry bed of high noise and a crowd of
+    // petal-grains whose density follows the swell, with the panner sliding across the sward so it comes as a wave.
+    function rustle(centre, o) {
+      const v = voice(centre, { ref: 14, roll: 1, range: 240, verb: 0.15, dur: o.dur + 0.4, air: 160 });
+      if (!v) return;
+      const t0 = v.t0, D = o.dur, a = rng() * 6.283, span = 14, cx = Math.cos(a) * span, cz = Math.sin(a) * span;
+      if (v.pan.positionX) {
+        v.pan.positionX.setValueAtTime(centre.x - cx, t0); v.pan.positionX.linearRampToValueAtTime(centre.x + cx, t0 + D);
+        v.pan.positionZ.setValueAtTime(centre.z - cz, t0); v.pan.positionZ.linearRampToValueAtTime(centre.z + cz, t0 + D);
+      }
+      const bed = ac.createGain(); swell(bed, t0, o.gain * 0.5, D * o.peakAt, t0 + D);
+      chain(vNoise(v, pink, t0, D), filt('highpass', o.band * 0.45), filt('bandpass', o.band, 0.6), bed, v.in);
+      for (let k = 0; k < o.n; k++) {
+        const u = (rng() + rng() + rng()) / 3, at = t0 + D * (u < 0.5 ? u * 2 * o.peakAt : o.peakAt + (u - 0.5) * 2 * (1 - o.peakAt)) * 0.95;
+        grain(v, v.in, at, o.band * (0.6 + rng() * 1.1), 2 + rng() * 2, o.gain * (0.25 + 0.5 * rng()), 0.008 + rng() * 0.018);
+      }
+    }
+    // one turned flower: a breathy little falling sigh, pitched, a hair of vibrato, nothing past 5 m
+    function whimper(pos) {
+      const v = voice(pos, { model: 'linear', ref: 0.6, roll: 1, range: 5, verb: 0.05, dur: 0.9 });
+      if (!v) return;
+      const t0 = v.t0, D = 0.3 + rng() * 0.3, f = 620 + rng() * 140;
+      const o = vOsc(v, 'triangle', f, t0, t0 + D + 0.05);
+      o.frequency.setValueAtTime(f * 1.03, t0); o.frequency.linearRampToValueAtTime(f * 1.07, t0 + D * 0.25); o.frequency.exponentialRampToValueAtTime(f * 0.78, t0 + D);
+      const vib = vOsc(v, 'sine', 6 + rng() * 2, t0, t0 + D + 0.05); chain(vib, gainOf(f * 0.012), o.frequency);
+      const tg = ac.createGain(); swell(tg, t0, 0.012, D * 0.3, t0 + D); chain(o, filt('lowpass', 1500), tg, v.in);
+      const bg = ac.createGain(); swell(bg, t0, 0.03, D * 0.2, t0 + D); chain(vNoise(v, pink, t0, D), filt('bandpass', f * 2.2, 2.5), bg, v.in);
+    }
+    // ---- the Salt-Pedlars: a papery wing-whirr chopped at the wingbeat, its rate and pitch sliding down as it
+    // passes, a low body hum, and the rider's salt goad: one tiny tink.
+    function pedlarPass(pos) {
+      const v = voice(pos, { ref: 2, roll: 1.4, range: 30, verb: 0.08, dur: 0.9 });
+      if (!v) return;
+      const t0 = v.t0, D = 0.4, up = 1.09, dn = 0.9;
+      const bp = filt('bandpass', 1100 * up, 0.9); bp.frequency.setValueAtTime(1100 * up, t0); bp.frequency.exponentialRampToValueAtTime(1100 * dn, t0 + D);
+      const chop = gainOf(0.5), am = vOsc(v, 'square', 38 * up, t0, t0 + D + 0.05);
+      am.frequency.setValueAtTime(38 * up, t0); am.frequency.exponentialRampToValueAtTime(38 * dn, t0 + D); chain(am, gainOf(0.5), chop.gain);
+      const eg = ac.createGain(); swell(eg, t0, 0.13, D * 0.45, t0 + D);
+      chain(vNoise(v, pink, t0, D), bp, chop, eg, v.in);
+      const h = vOsc(v, 'sawtooth', 76 * up, t0, t0 + D + 0.05); h.frequency.setValueAtTime(76 * up, t0); h.frequency.exponentialRampToValueAtTime(76 * dn, t0 + D);
+      const hg = ac.createGain(); swell(hg, t0, 0.03, D * 0.45, t0 + D); chain(h, filt('lowpass', 420), hg, v.in);
+      const tt = t0 + 0.1 + rng() * 0.12, p = tt < t0 + D * 0.45 ? up : dn;
+      for (const [f, a, d] of [[3520, 1, 0.3], [5390, 0.4, 0.18], [8030, 0.2, 0.1]]) {
+        const g = ac.createGain(); env(g, tt, 0.008 * a, 0.001, d); chain(vOsc(v, 'sine', f * p, tt, tt + d + 0.05), g, v.in);
+      }
+    }
+    // ---- the Wrong Colour: nearly a chord, every interval a little off true, two of them doubled a hair apart
+    // so they beat; it sags a fraction as it fades.
+    function wrongColour(pos) {
+      const v = voice(pos, { ref: 5, roll: 1, range: 60, verb: 0.7, dur: 3.4 });
+      if (!v) return;
+      const t0 = v.t0, D = 3.0, f = 98, sum = gainOf(1), lp = filt('lowpass', 900);
+      for (const [r, a, beat] of [[1, 1, 0.55], [1.287, 0.6, 0], [1.468, 0.5, 1.3], [1.94, 0.3, 0], [2.61, 0.12, 0]]) {
+        for (const df of beat ? [0, beat] : [0]) {
+          const o = vOsc(v, 'triangle', f * r + df, t0, t0 + D + 0.1);
+          o.frequency.setValueAtTime(f * r + df, t0); o.frequency.linearRampToValueAtTime((f * r + df) * 0.992, t0 + D);
+          chain(o, gainOf(a * (beat ? 0.6 : 1)), sum);
+        }
+      }
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.02, t0 + 1.3); g.gain.linearRampToValueAtTime(0.015, t0 + 2.1); g.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+      chain(sum, lp, g, v.in);
+    }
+    // ---- the procession: nine lights, nine faint high whistles entering one by one, drifting apart, under one
+    // slow tremolo; most of it reverb. Barely there.
+    function procession(pos) {
+      const v = voice(pos, { ref: 250, roll: 1, range: 3000, verb: 1.2, dur: 8.6 });
+      if (!v) return;
+      const t0 = v.t0, D = 6.5 + rng() * 1.5, bus = gainOf(0.65), m = ac.createGain();
+      chain(vOsc(v, 'sine', 0.37, t0, t0 + D + 0.1), gainOf(0.35), bus.gain);
+      for (let k = 0; k < 9; k++) {
+        const f = 2900 * (1 + k * 0.021 + (rng() - 0.5) * 0.006), at = t0 + k * 0.22 + rng() * 0.1;
+        const o = vOsc(v, 'sine', f, at, t0 + D + 0.05);
+        o.frequency.setValueAtTime(f, at); o.frequency.linearRampToValueAtTime(f * (1 + (k % 2 ? 0.012 : -0.009)), t0 + D);
+        const g = ac.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(0.11, at + 1.6); g.gain.linearRampToValueAtTime(0.09, t0 + D - 2); g.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+        chain(o, g, bus);
+      }
+      const ng = ac.createGain(); swell(ng, t0, 0.04, 2.5, t0 + D); chain(vNoise(v, pink, t0, Math.min(D, 4.8)), filt('bandpass', 3100, 8), ng, bus);
+      m.gain.setValueAtTime(0.0001, t0); m.gain.linearRampToValueAtTime(0.02, t0 + 2.5); m.gain.linearRampToValueAtTime(0.018, t0 + D - 2); m.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+      chain(bus, m, v.in);
+    }
+    // ---- the Wimpled Guest: the player's own heart, centre, no distance. Lub-dub: two falling low sines with
+    // a soft click; louder and brighter (the lowpass opens) as the gaze holds.
+    function heartbeat(o) {
+      const st = clamp(o?.strength ?? 0.5, 0.05, 1);
+      const v = voice(null, { centre: true, dur: 0.75 });
+      const t0 = v.t0, amp = 0.04 + 0.28 * st, lp = filt('lowpass', 140 + 1100 * Math.pow(st, 1.5), 0.5);
+      lp.connect(v.in);
+      for (const [at, f0, a] of [[0, 60, 1], [0.26, 66, 0.7]]) {
+        const o2 = vOsc(v, 'sine', f0 * 1.2, t0 + at, t0 + at + 0.3);
+        o2.frequency.setValueAtTime(f0 * 1.2, t0 + at); o2.frequency.exponentialRampToValueAtTime(f0 * 0.8, t0 + at + 0.11);
+        const g = ac.createGain(); env(g, t0 + at, amp * a, 0.006, 0.2); chain(o2, g, lp);
+        grain(v, lp, t0 + at, 600, 0.8, amp * a * 0.2, 0.012, pink);
+      }
+    }
+    // ---- the Sable Galley: a deep damped boom, muffled more (and fainter) the farther off you are
+    function galleyDrum(pos, o) {
+      const cp = camera.position, d = o?.distance ?? Math.hypot(pos.x - cp.x, pos.z - cp.z);
+      const v = voice(pos, { ref: 12, roll: 0.9, range: 130, verb: 0.45, dur: 1.2 });
+      if (!v) return;
+      const t0 = v.t0, far = clamp(d / 120, 0, 1);
+      const bus = gainOf(1 - 0.6 * far); bus.connect(v.in);
+      drumInto(v, t0, far, bus);
+    }
+    function drumInto(v, t0, far, out) {
+      const lp = filt('lowpass', 110 + 1000 * Math.exp(-far * 4), 0.7); lp.connect(out);
+      const body = vOsc(v, 'sine', 64, t0, t0 + 0.7); body.frequency.setValueAtTime(64, t0); body.frequency.exponentialRampToValueAtTime(52, t0 + 0.18);
+      const bg = ac.createGain(); env(bg, t0, 0.2, 0.006, 0.55); chain(body, bg, lp);
+      const mode = vOsc(v, 'sine', 101, t0, t0 + 0.3); const mg = ac.createGain(); env(mg, t0, 0.06, 0.004, 0.2); chain(mode, mg, lp);
+      const sg = ac.createGain(); env(sg, t0, 0.12, 0.003, 0.12); chain(vNoise(v, brown, t0, 0.2), filt('bandpass', 180, 1), sg, lp);
+      if (far < 0.5) grain(v, lp, t0, 1500, 1, 0.06 * (1 - 2 * far), 0.04);
+    }
+    // ---- the Menology's lizards: a few quick dry grains of claw on stone
+    function skitter(pos) {
+      const v = voice(pos, { model: 'linear', ref: 0.8, roll: 1, range: 6, dur: 0.6 });
+      if (!v) return;
+      const t0 = v.t0, span = 0.2 + rng() * 0.1;
+      for (let at = t0; at < t0 + span;) { const k = (at - t0) / span; grain(v, v.in, at, 3000 + rng() * 3500, 5 + rng() * 5, 0.06 * (1 - 0.6 * k), 0.004 + rng() * 0.005); at += 0.012 + rng() * 0.03; }
+      const sg = ac.createGain(); swell(sg, t0, 0.008, 0.03, t0 + span); chain(vNoise(v, pink, t0, span), filt('bandpass', 2000, 1.5), sg, v.in);
+    }
+    // ---- rooks: each bird its own labouring wingbeat (pink grains, thinning as they climb) and two or three caws
+    function caw(v, at) {
+      const dur = 0.2 + rng() * 0.1, f0 = 330 + rng() * 90;
+      const o = vOsc(v, 'sawtooth', f0 * 1.12, at, at + dur + 0.05);
+      o.frequency.setValueAtTime(f0 * 1.12, at); o.frequency.linearRampToValueAtTime(f0, at + dur * 0.3); o.frequency.exponentialRampToValueAtTime(f0 * 0.82, at + dur);
+      const rough = gainOf(0.6); chain(vOsc(v, 'square', 60 + rng() * 25, at, at + dur + 0.05), gainOf(0.4), rough.gain);
+      const g = ac.createGain(); env(g, at, 0.12, 0.02, dur); g.connect(v.in);
+      o.connect(rough);
+      chain(rough, filt('bandpass', 1150, 4), g); chain(rough, filt('bandpass', 1800, 5), gainOf(0.5), g);
+      const ng = ac.createGain(); env(ng, at, 0.03, 0.02, dur); chain(vNoise(v, white, at, dur), filt('bandpass', 2000, 1), ng, v.in);
+    }
+    function rooksLift(pos, o) {
+      const n = clamp(o?.count ?? 12, 3, 24);
+      const v = voice(pos, { ref: 12, roll: 1, range: 260, verb: 0.4, dur: 2.0, air: 200 });
+      if (!v) return;
+      const t0 = v.t0;
+      for (let b = 0; b < n; b++) {
+        let at = t0 + rng() * 0.25; const rate = 0.11 + rng() * 0.05, beats = 4 + ((rng() * 4) | 0);
+        for (let k = 0; k < beats && at < t0 + 1.4; k++) { grain(v, v.in, at, 500 + rng() * 700, 1.2, 0.07 * (1 - (at - t0) / 1.5), 0.035 + rng() * 0.02, pink); at += rate * (1 + k * 0.08); }
+      }
+      const nc = 2 + (rng() < 0.5 ? 1 : 0);
+      for (let c = 0, at = t0 + 0.1; c < nc; c++) { caw(v, at); at += 0.3 + rng() * 0.2; }
+    }
+    // ---- the tower's bats: a soft high fluttering rush and a hundred tiny falling chirps, densest early
+    function batsOut(pos, o) {
+      const v = voice(pos, { ref: 20, roll: 1, range: 160, verb: 0.35, dur: 4.4, air: 90 });
+      if (!v) return;
+      const t0 = v.t0, D = 3.2 + rng() * 0.6, n = Math.round(clamp(o?.count ?? 34, 10, 60) * 2.8);
+      const fl = gainOf(0.6);
+      chain(vOsc(v, 'sine', 13, t0, t0 + D), gainOf(0.25), fl.gain); chain(vOsc(v, 'sine', 9.3, t0, t0 + D), gainOf(0.15), fl.gain);
+      const rg = ac.createGain(); rg.gain.setValueAtTime(0.0001, t0); rg.gain.linearRampToValueAtTime(0.05, t0 + 0.6); rg.gain.linearRampToValueAtTime(0.04, t0 + D * 0.6); rg.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+      chain(vNoise(v, pink, t0, D), filt('highpass', 2500), filt('bandpass', 5200, 0.7), fl, rg, v.in);
+      for (let k = 0; k < n; k++) {
+        const at = t0 + Math.pow(rng(), 1.5) * D * 0.9, f = 6500 + rng() * 3500;
+        const c = vOsc(v, 'sine', f, at, at + 0.03); c.frequency.setValueAtTime(f, at); c.frequency.exponentialRampToValueAtTime(f * 0.6, at + 0.008);
+        const g = ac.createGain(); env(g, at, 0.006 + 0.008 * rng(), 0.001, 0.01); chain(c, g, v.in);
+      }
+    }
+    // ---- the wader, gone: a breath of air and one soft plip, then a smaller drop falling back
+    function waderGone(pos) {
+      const v = voice(pos, { model: 'linear', ref: 2, roll: 1, range: 20, verb: 0.25, dur: 1.2 });
+      if (!v) return;
+      const t0 = v.t0;
+      const bg = ac.createGain(); env(bg, t0, 0.05, 0.12, 0.7); chain(vNoise(v, pink, t0, 0.85), filt('bandpass', 650, 0.8), bg, v.in);
+      for (const [at, f, a] of [[0.06, 900, 0.03], [0.21, 1300, 0.012]]) {
+        const p = vOsc(v, 'sine', f, t0 + at, t0 + at + 0.08); p.frequency.setValueAtTime(f, t0 + at); p.frequency.exponentialRampToValueAtTime(f * 2.1, t0 + at + 0.035);
+        const g = ac.createGain(); env(g, t0 + at, a, 0.002, 0.05); chain(p, g, v.in);
+      }
+    }
+    // ---- a biomesh runner's tile settling: a tiny glassy tick, two high inharmonic partials and a click.
+    // Thinned: at most one every 0.6 s, and none while the last is still sounding.
+    let settleNext = 0;
+    function biomeshSettle(pos) {
+      const now = ac.currentTime;
+      if (now < settleNext) return;
+      const v = voice(pos, { model: 'linear', ref: 1.5, roll: 1, range: 10, verb: 0.2, dur: 0.16 });
+      if (!v) return;
+      const t0 = v.t0, f = 3800 + rng() * 1400, D = 0.06 + rng() * 0.06;
+      settleNext = t0 + Math.max(0.6, D + 0.05);
+      for (const [r, a, d] of [[1, 1, D], [2.76, 0.4, D * 0.6]]) {
+        const g = ac.createGain(); env(g, t0, 0.01 * a, 0.001, d); chain(vOsc(v, 'sine', f * r, t0, t0 + d + 0.03), g, v.in);
+      }
+      grain(v, v.in, t0, 7000, 3, 0.008, 0.006);
+    }
+
+    // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
+    // ctx.river.rumble is above zero), its gain follows that rumble at 10 Hz; on leaving it fades over 2 s and
+    // is torn down. Low brown rumble, a mid roar, a hiss of spray, a slow wander in all three.
+    const fall = audio.fall = { running: false, gain: null, pos: null, left: false, quietSince: -1, parts: null };
+    function fallLevel() {
+      const R = ctx.river;
+      if (R && typeof R.rumble === 'number') { if (R.rumble > 0) fall.left = false; return R.rumble; }
+      const F = fall.pos || R?.fall;
+      if (!F || fall.left) return 0;
+      const cp = camera.position;
+      return clamp(1 - Math.hypot(cp.x - F.x, cp.y - (F.y ?? cp.y), cp.z - F.z) / (F.rumbleRadius || 70), 0, 1);
+    }
+    function fallStart() {
+      const F = fall.pos || ctx.river?.fall;
+      if (fall.running || !F) return;
+      const out = ac.createGain(); out.gain.value = 0.0001;
+      const p = panner('equalpower', 14, 0.5, 500); setPos(p, F.x, F.y ?? terrain.heightAt(F.x, F.z), F.z);
+      const low = filt('lowpass', 150, 0.7), mid = filt('bandpass', 420, 0.8), hiss = filt('bandpass', 2600, 0.5);
+      const lowG = gainOf(1), midG = gainOf(0.35), hissG = gainOf(0.1);
+      const srcs = [loopSrc(brown, rng()), loopSrc(brown, rng()), loopSrc(pink, rng())];
+      chain(srcs[0], low, lowG, out); chain(srcs[1], mid, midG, out); chain(srcs[2], filt('highpass', 1200), hiss, hissG, out);
+      chain(out, p, cueBus);
+      const vs = gainOf(0.22); p.connect(vs); vs.connect(verbIn);
+      fall.parts = { srcs, p, out, low, lowG, midG, hissG, vs };
+      fall.gain = out; fall.running = true; fall.quietSince = -1;
+    }
+    function fallStop() {
+      const P = fall.parts; if (!P) return;
+      const now = ac.currentTime;
+      for (const s of P.srcs) { try { s.stop(now + 0.05); } catch (e) { /* stopped */ } }
+      setTimeout(() => { try { P.p.disconnect(); P.out.disconnect(); P.vs.disconnect(); } catch (e) { /* gone */ } }, 200);
+      fall.parts = null; fall.gain = null; fall.running = false;
+    }
+    function fallTick(step, t, now) {
+      const lvl = fallLevel();
+      if (lvl > 0.001 && !fall.running) fallStart();
+      if (!fall.running) return;
+      const P = fall.parts;
+      const w1 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.23, 7.1), w2 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.61, 3.3);
+      P.out.gain.setTargetAtTime(0.0001 + 0.5 * Math.pow(lvl, 1.3) * (0.75 + 0.25 * w1), now, fall.left ? 0.5 : 0.3);
+      P.low.frequency.setTargetAtTime(120 + 60 * w2, now, 0.4);
+      P.midG.gain.setTargetAtTime(0.25 + 0.2 * w2, now, 0.4);
+      P.hissG.gain.setTargetAtTime(0.06 + 0.08 * w1 * lvl, now, 0.4);
+      // timed on the audio clock: game time can run slow when frames are clamped
+      if (lvl > 0.001) fall.quietSince = -1; else if (fall.quietSince < 0) fall.quietSince = now;
+      if (fall.quietSince >= 0 && now - fall.quietSince > 2.2) fallStop();
+    }
+    function fallCue(pos, entering) {
+      if (pos && typeof pos.x === 'number') fall.pos = pos;
+      fall.left = !entering;
+      if (entering) { fall.quietSince = -1; fallStart(); }
+      // leaving: fallLevel() reads zero from here, the tick eases the gain down (tau 0.5 s) and stops it at 2.2 s
+    }
+
+    audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
       try {
         if (name === 'cry') cry(position || { x: camera.position.x + 120, y: 80, z: camera.position.z - 100 });
@@ -397,6 +769,23 @@ export async function build(ctx) {
         else if (name === 'traveller-greet') greet(position);
         else if (name === 'tarn-hum') tarnHum(position);
         else if (name === 'tarn-step') slosh(position);
+        else if (name === 'carillon') carillon(position, opts);
+        else if (name === 'glyph-shift') glyphShift(position);
+        else if (name === 'sward-close') rustle(position, { dur: 1.5, peakAt: 0.4, n: 90, band: 4200, gain: 0.075 });
+        else if (name === 'sward-open') rustle(position, { dur: 4, peakAt: 0.5, n: 70, band: 3000, gain: 0.035 });
+        else if (name === 'sward-whimper') whimper(position);
+        else if (name === 'pedlar-pass') pedlarPass(position);
+        else if (name === 'wrong-colour-near') wrongColour(position);
+        else if (name === 'fall-rumble-enter') fallCue(position, true);
+        else if (name === 'fall-rumble-leave') fallCue(position, false);
+        else if (name === 'procession') procession(position);
+        else if (name === 'guest-heartbeat') heartbeat(opts);
+        else if (name === 'galley-drum') galleyDrum(position, opts);
+        else if (name === 'lizard-skitter') skitter(position);
+        else if (name === 'rooks-lift') rooksLift(position, opts);
+        else if (name === 'bats-out') batsOut(position, opts);
+        else if (name === 'wader-gone') waderGone(position);
+        else if (name === 'biomesh-settle') biomeshSettle(position);
       } catch (e) { if (audio.debug) throw e; }
     };
 
@@ -417,7 +806,7 @@ export async function build(ctx) {
     const frogPan = panner('equalpower', 6, 1.2); frogPan.connect(frogBus);
     let frogT = 0;
     function frog() {
-      const t0 = ac.currentTime + 0.01, base = rng() < 0.6 ? 150 + rng() * 80 : 1700 + rng() * 500;
+      const t0 = ac.currentTime + lead, base = rng() < 0.6 ? 150 + rng() * 80 : 1700 + rng() * 500;
       const pulses = base > 1000 ? 2 : 3 + ((rng() * 3) | 0), gap = base > 1000 ? 0.09 : 0.07;
       for (let k = 0; k < pulses; k++) {
         const tt = t0 + k * gap;
@@ -430,7 +819,7 @@ export async function build(ctx) {
     let callT = 6 + rng() * 6;
     function distantCall(kind, x, z) {
       const p = panner('equalpower', 40, 1.0); setPos(p, x, camera.position.y + 10, z); p.connect(master); send(p, 0.9);
-      let at = ac.currentTime + 0.02;
+      let at = ac.currentTime + lead;
       if (kind === 0) { // hoot
         for (let k = 0; k < 2; k++) {
           const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(330, at); o.frequency.exponentialRampToValueAtTime(250, at + 0.7);
@@ -450,14 +839,14 @@ export async function build(ctx) {
       setTimeout(() => p.disconnect(), (at - ac.currentTime + 5) * 1000);
     }
     function flush(pos) {
-      const p = oneShotPanner(pos, 6, 1.1); const t0 = ac.currentTime + 0.01;
+      const p = oneShotPanner(pos, 6, 1.1); const t0 = ac.currentTime + lead;
       const s = burst(white, 0.6), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2200; f.Q.value = 0.8;
       const g = ac.createGain(); env(g, t0, 0.14, 0.02, 0.5);
       // a rattle of wingbeats
       const am = ac.createOscillator(); am.frequency.value = 22; const ag = ac.createGain(); ag.gain.value = 0.5; const base = ac.createGain(); base.gain.value = 0.5; am.connect(ag); ag.connect(base.gain);
       s.connect(f); f.connect(base); base.connect(g); g.connect(p); am.start(t0); am.stop(t0 + 0.7);
       for (let k = 0; k < 3; k++) { const o = ac.createOscillator(); o.type = 'sawtooth'; const tt = t0 + 0.1 + k * 0.12 + rng() * 0.06; o.frequency.setValueAtTime(3000, tt); o.frequency.exponentialRampToValueAtTime(2200, tt + 0.05); const og = ac.createGain(); env(og, tt, 0.02, 0.003, 0.05); o.connect(og); og.connect(p); o.start(tt); o.stop(tt + 0.08); }
-      setTimeout(() => p.disconnect(), 3000);
+      later(p, 3);
     }
 
     // ================================================================ deodand click
@@ -465,7 +854,7 @@ export async function build(ctx) {
     clickPan.connect(master);
     let clickT = 0, clickN = 0;
     function click(vol) {
-      const t0 = ac.currentTime + 0.005, pitch = 1 + clickN * 0.05;
+      const t0 = ac.currentTime + lead, pitch = 1 + clickN * 0.05;
       const s = burst(white, 0.04), hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 3200 * pitch; hp.Q.value = 4;
       const g = ac.createGain(); env(g, t0, vol, 0.001, 0.025);
       s.connect(hp); hp.connect(g); g.connect(clickPan);
@@ -481,10 +870,15 @@ export async function build(ctx) {
       if (ac.state === 'suspended') ac.resume?.();
       setListener();
       const now = ac.currentTime;
+      const off = performance.now() / 1000 - now;
+      offMin = Math.min(offMin + dt * 0.002, off); // let the floor creep, for clock drift
+      staleMax = Math.max(staleMax * 0.995, off - offMin);
+      lead = clamp(staleMax + 0.02, 0.03, 0.3);
       tick -= dt;
       if (tick > 0) return;
       const step = 0.1 - tick; tick = 0.1;
       const px = cam.x, pz = cam.z;
+      fallTick(step, t, now);
       // --- wind
       const b = terrain.biomeAt(px, pz);
       wood += (b.wood - wood) * 0.25;

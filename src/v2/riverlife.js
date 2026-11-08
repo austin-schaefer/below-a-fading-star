@@ -41,7 +41,8 @@ const FOG_ATTEN = /* glsl */`
 
 // ---------------------------------------------------------------- G: the pedlar's mesh
 // One mesh: dragonfly (part 0), four wings drawn twice at different stroke phases (part 1), the rider, his
-// pack and goad (part 2). Metres; forward +z, up +y. Span 14 cm; the hunched rider stands 3.5 cm on the thorax.
+// pack and goad (part 2). Metres; forward +z, up +y. Span 14 cm, the hunched rider 3.5 cm on the thorax; the
+// instances draw it 2.2x, so ~30 cm across with a rider a finger high.
 function pedlarGeometry() {
   const pos = [], nrm = [], col = [], part = [], wing = [], idx = [];
   const add = (M, part0, colourAt) => {
@@ -141,8 +142,9 @@ function pedlarGeometry() {
 
 function pedlarMaterial(uTime) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.08, transparent: true, side: THREE.DoubleSide });
+  m.userData = { uSunView: { value: new THREE.Vector3(0, 0, -1) }, uSunCol: { value: new THREE.Color('#ffb084') }, uFlicker: { value: 1 } };
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = uTime;
+    sh.uniforms.uTime = uTime; sh.uniforms.uSunView = m.userData.uSunView; sh.uniforms.uSunCol = m.userData.uSunCol; sh.uniforms.uFlicker = m.userData.uFlicker;
     const motion = /* glsl */`
       // aPh: x phase, y beat rate (Hz), z hover (0 darting .. 1 holding), w lean
       float ph = aPh.x;
@@ -179,6 +181,7 @@ function pedlarMaterial(uTime) {
         vPart = aPart; vWuv = vec2(fract(aWing.w * 0.5) * 2.0, step(1.5, aWing.w));`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
+        uniform vec3 uSunView, uSunCol; uniform float uFlicker;
         varying float vPart; varying vec2 vWuv;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         if (vPart > 0.5 && vPart < 1.5) {
@@ -186,7 +189,26 @@ function pedlarMaterial(uTime) {
           float vein = smoothstep(0.86, 0.97, fract(vWuv.x * 9.0)) * 0.6 + smoothstep(0.8, 0.95, fract(vWuv.y * 4.0)) * 0.3;
           float stigma = smoothstep(0.78, 0.8, vWuv.x) * (1.0 - smoothstep(0.88, 0.9, vWuv.x)) * (1.0 - smoothstep(0.15, 0.3, vWuv.y));
           diffuseColor.rgb *= 1.0 - vein * 0.35 - stigma * 0.8;
-          diffuseColor.a = 0.2 + stigma * 0.4 + vein * 0.08;
+          diffuseColor.a = 0.3 + stigma * 0.4 + vein * 0.08;
+        }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        {
+          // against the low sun the wings light up like mica and the rider's salt-white rims: that is what
+          // shows them at twenty paces
+          float back = max(dot(normalize(-vViewPosition), uSunView), 0.0);
+          float wingK = (vPart > 0.5 && vPart < 1.5) ? 1.0 : (vPart > 1.5 ? 0.25 : 0.08);
+          totalEmissiveRadiance += uSunCol * wingK * (0.04 + 0.7 * pow(back, 8.0)) * uFlicker;
+          // from any side: a sheen on the wing membranes at grazing angles, and the salt-white of the rider
+          // holding a little of the light, so they show against dark water and dark bank
+          float fres = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 2.0);
+          if (vPart > 0.5 && vPart < 1.5) {
+            totalEmissiveRadiance += vec3(0.78, 0.8, 0.82) * (0.04 + 0.28 * fres);
+            diffuseColor.a = min(1.0, diffuseColor.a + 0.12 * pow(back, 8.0) + 0.15 * fres);
+          } else if (vPart > 1.5) {
+            totalEmissiveRadiance += diffuseColor.rgb * (0.5 + 0.4 * fres);
+          } else {
+            totalEmissiveRadiance += vec3(0.35, 0.42, 0.3) * 0.3 * fres;
+          }
         }`);
   };
   return m;
@@ -196,8 +218,9 @@ function pedlarMaterial(uTime) {
 const GLINT_VERT = /* glsl */`
   attribute vec4 aGl;   // born, life, drift vx, vz
   attribute float aSeed;
+  attribute float aKind;  // 0 a fleck of salt, 1 the shimmer of a pedlar's wings (its position moved each frame)
   uniform float uTime, uScale, uFlicker;
-  varying float vA; varying float vTw;
+  varying float vA; varying float vTw; varying float vKind;
   #include <fog_pars_vertex>
   void main() {
     float age = uTime - aGl.x;
@@ -212,23 +235,36 @@ const GLINT_VERT = /* glsl */`
     // the fleck catches the light as the eye moves: twinkle by view angle as much as by time
     vec3 v = normalize(cameraPosition - transformed);
     vTw = 0.45 + 0.55 * pow(abs(sin(aSeed * 91.0 + v.x * 23.0 + v.z * 17.0 + uTime * (0.7 + aSeed))), 6.0);
-    gl_PointSize = clamp(0.018 * uScale / max(depth, 0.1), 1.8, 9.0);
+    gl_PointSize = clamp(0.055 * uScale / max(depth, 0.1), 2.6, 18.0);
+    vKind = aKind;
+    if (aKind > 0.5) {
+      // what the eye catches of a pedlar at twenty paces: the blur of its wings in the low light
+      transformed = position;
+      vA = (0.55 + 0.45 * sin(uTime * 23.0 + aSeed * 40.0)) * smoothstep(7.0, 14.0, depth);
+      gl_PointSize = clamp(0.4 * uScale / max(depth, 0.1), 3.0, 40.0);
+    }
     #include <fog_vertex>
   }`;
 const GLINT_FRAG = /* glsl */`
   uniform float uFlicker;
-  varying float vA; varying float vTw;
+  varying float vA; varying float vTw; varying float vKind;
   #include <fog_pars_fragment>
   void main() {
     if (vA < 0.004) discard;
     vec2 c = (gl_PointCoord - 0.5) * 2.0;
     float r = length(c);
+    if (vKind > 0.5) {
+      float s = 1.0 - smoothstep(0.0, 1.0, r);
+      ${FOG_ATTEN}
+      gl_FragColor = vec4(vec3(0.95, 0.84, 0.72) * s * s * vA * 0.3 * fogAtten * (0.4 + 0.6 * uFlicker), 1.0);
+      return;
+    }
     float core = 1.0 - smoothstep(0.0, 0.45, r);
     float cross = (1.0 - smoothstep(0.0, 0.12, abs(c.x))) * (1.0 - smoothstep(0.3, 1.0, abs(c.y)))
                 + (1.0 - smoothstep(0.0, 0.12, abs(c.y))) * (1.0 - smoothstep(0.3, 1.0, abs(c.x)));
     float a = (core + cross * 0.55 * vTw) * vA * (0.6 + 0.4 * vTw);
     ${FOG_ATTEN}
-    gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * a * fogAtten * (0.75 + 0.25 * uFlicker), 1.0);
+    gl_FragColor = vec4(vec3(0.92, 0.94, 1.0) * a * 1.4 * fogAtten * (0.75 + 0.25 * uFlicker), 1.0);
   }`;
 
 // ---------------------------------------------------------------- V: the surface of the Wrong Colour
@@ -267,14 +303,16 @@ const WC_FRAG = /* glsl */`
     float h = uHue + sw * 0.035;
     vec3 a = hsv2rgb(vec3(h, 0.92, 1.0)), b = hsv2rgb(vec3(h + 0.5, 0.92, 1.0));
     vec3 c = mix(a, b, k * 0.5);
+    // equal low luminance whatever the hue: a blue is lifted, a green held down, so it is always as visible
+    c *= clamp(0.3 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-3), 0.8, 3.0);
     // the glow comes up from under the water: strongest over the deepest part, a slow breathing in it
     float glow = exp(-r * r * 0.55) * (0.8 + 0.2 * sin(t * 0.37 + r * 2.3)) + 0.18 * exp(-r * r * 0.12);
-    float lum = 0.55 * uBright;
+    float lum = 0.72 * uBright;
     // dark still water at the rim, so the colour sits in it rather than on it
     vec3 col = vec3(0.006, 0.005, 0.008) + c * glow * lum;
     // a faint skin on the surface, slowly turning
     float skin = sin(along * 9.0 + sin(across * 5.0 + t * 0.2) * 2.0 - t * 0.15);
-    col += c * smoothstep(0.85, 1.0, skin) * 0.04 * uBright;
+    col += c * smoothstep(0.9, 1.0, skin) * 0.012 * uBright;
     gl_FragColor = vec4(col, mask * (0.7 + 0.3 * glow));
     vec3 pre = gl_FragColor.rgb;
     #include <fog_fragment>
@@ -306,8 +344,9 @@ const HALO_FRAG = /* glsl */`
     float a = exp(-r2 * 4.5) * 0.8 + exp(-r2 * 12.0) * 0.5;
     a *= (1.0 - smoothstep(0.5, 1.0, abs(q0.x))) * (1.0 - smoothstep(0.5, 1.0, abs(q0.y)));
     vec3 c = hsv2rgb(vec3(uHue + vUv.y * 0.06 + sin(uTime * 0.2) * 0.02, 0.85, 1.0));
+    c *= clamp(0.35 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-3), 0.8, 3.0);
     ${FOG_ATTEN}
-    gl_FragColor = vec4(c * a * 0.07 * uBright * fogAtten, 1.0);
+    gl_FragColor = vec4(c * a * 0.14 * uBright * fogAtten, 1.0);
   }`;
 
 // ---------------------------------------------------------------- the fall's spray
@@ -330,8 +369,8 @@ const SPRAY_VERT = /* glsl */`
     gl_Position = projectionMatrix * mvPosition;
     float depth = -mvPosition.z;
     float rr = length(p.xz);
-    vA = (1.0 - smoothstep(7.0, 15.0, rr)) * smoothstep(0.3, 1.2, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
-    gl_PointSize = clamp((0.006 + 0.006 * aSeed.w) * uScale / max(depth, 0.1), 1.2, 7.0);
+    vA = (1.0 - smoothstep(9.0, 16.0, rr)) * smoothstep(0.25, 0.9, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
+    gl_PointSize = clamp((0.01 + 0.012 * aSeed.w) * uScale / max(depth, 0.1), 1.6, 10.0);
     #include <fog_vertex>
   }`;
 const SPRAY_FRAG = /* glsl */`
@@ -342,7 +381,7 @@ const SPRAY_FRAG = /* glsl */`
     float r = length(gl_PointCoord - 0.5) * 2.0;
     float a = (1.0 - smoothstep(0.3, 1.0, r)) * vA * uOn;
     if (a < 0.003) discard;
-    gl_FragColor = vec4(vec3(0.7, 0.71, 0.76) * (0.55 + 0.45 * uFlicker), a * 0.55);
+    gl_FragColor = vec4(vec3(0.78, 0.79, 0.84) * (0.55 + 0.45 * uFlicker), a * 0.8);
     #include <fog_fragment>
   }`;
 
@@ -424,7 +463,8 @@ export async function build(ctx) {
       home: s0, s: s0, d: 0, pos: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), anchor: new THREE.Vector3(),
       mode: 0, u: 0, dur: 1, timer: 0.5 + prng() * 3, kind: 0, stone: null, glinted: false, held: 0,
       yaw: prng() * 6.28, yawGoal: 0, pitch: 0, roll: 0, lean: 0, ph: prng() * 6.28, rate: 26 + prng() * 10, near: false, passCd: 0,
-      w1: prng() * 6.28, w2: prng() * 6.28, scale: 0.92 + prng() * 0.2,
+      // the model is built at life size for its parts; drawn 2.2x so a rider is a finger high (~8 cm, ~30 cm span)
+      w1: prng() * 6.28, w2: prng() * 6.28, scale: (0.92 + prng() * 0.2) * 2.2,
     };
     p.yawGoal = p.yaw;
     pickTarget(p, false);
@@ -437,13 +477,14 @@ export async function build(ctx) {
 
   // a place to go: over the water (kind 0), over a stone (1) or over the bank (2), in river coordinates
   function pickTarget(p, retreat, plS = 0, plD = 0) {
+    const near = Math.hypot(p.pos.x - cam.x, p.pos.z - cam.z) < 22;
     for (let tries = 0; tries < 8; tries++) {
       let s, d, y, kind = 0, stone = null;
       const roll = prng();
       if (retreat) {
         // away from the player along the river, upstream if he comes from below; or out across the water
         const dir = p.s >= plS ? 1 : -1;
-        s = p.s + dir * (6 + prng() * 7);
+        s = p.s + dir * (4 + prng() * 4);
         if (s < S_FROM || s > S_TO) s = clamp(p.s - dir * 0.5, S_FROM, S_TO);
         const hw = RV.halfWidthAt(s);
         d = -Math.sign(plD || 1) * hw * (0.4 + prng() * 0.5);
@@ -464,13 +505,15 @@ export async function build(ctx) {
       linePt(s, _lp);
       const x = stone ? stone.x : _lp.x + _lp.lx * d, z = stone ? stone.z : _lp.z + _lp.lz * d;
       const wl = terrain.waterLevelAt(x, z), gh = terrain.heightAt(x, z);
-      if (stone) y = stone.y + 0.1 + prng() * 0.12;
+      if (stone) y = stone.y + 0.22 + prng() * 0.2;
       else if (wl !== null && wl > gh) { y = wl + 0.3 + prng() * 0.8; kind = 0; }
       else { y = gh + 0.35 + prng() * 0.7; kind = 2; }
       if (retreat) y += 0.3 + prng() * 0.6;
-      // a polite distance: never choose a place nearer the player than twelve metres
-      const dx = x - cam.x, dz = z - cam.z;
-      if (dx * dx + dz * dz < 144 && tries < 7) continue;
+      // a polite distance: never a place nearer the player than six metres; and when he is about, they keep
+      // within sight of him, six to ten metres off, as if curious and mannerly
+      const dx = x - cam.x, dz = z - cam.z, e2 = dx * dx + dz * dz;
+      if (e2 < 36 && tries < 7) continue;
+      if (!retreat && near && e2 > 100 && tries < 5) continue;
       p.to.set(x, y, z); p.s = s; p.d = d; p.kind = kind; p.stone = stone;
       return;
     }
@@ -487,12 +530,13 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- flecks of salt
-  const gPos = new Float32Array(MAX_GLINTS * 3), gGl = new Float32Array(MAX_GLINTS * 4), gSeed = new Float32Array(MAX_GLINTS);
-  for (let i = 0; i < MAX_GLINTS; i++) { gGl[i * 4] = -1e4; gGl[i * 4 + 1] = 1; gSeed[i] = prng(); }
+  const NG = MAX_GLINTS + N;
+  const gPos = new Float32Array(NG * 3), gGl = new Float32Array(NG * 4), gSeed = new Float32Array(NG), gKind = new Float32Array(NG);
+  for (let i = 0; i < NG; i++) { gGl[i * 4] = -1e4; gGl[i * 4 + 1] = 1; gSeed[i] = prng(); gKind[i] = i < MAX_GLINTS ? 0 : 1; }
   const glGeo = new THREE.BufferGeometry();
   const gPosA = new THREE.BufferAttribute(gPos, 3), gGlA = new THREE.BufferAttribute(gGl, 4);
   gPosA.setUsage(THREE.DynamicDrawUsage); gGlA.setUsage(THREE.DynamicDrawUsage);
-  glGeo.setAttribute('position', gPosA); glGeo.setAttribute('aGl', gGlA); glGeo.setAttribute('aSeed', new THREE.BufferAttribute(gSeed, 1));
+  glGeo.setAttribute('position', gPosA); glGeo.setAttribute('aGl', gGlA); glGeo.setAttribute('aSeed', new THREE.BufferAttribute(gSeed, 1)); glGeo.setAttribute('aKind', new THREE.BufferAttribute(gKind, 1));
   const glMat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uFlicker: { value: 1 } }]),
     vertexShader: GLINT_VERT, fragmentShader: GLINT_FRAG, fog: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -523,6 +567,7 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- pedlar motion
+  const sunW = new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z).normalize();
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(0, 0, 0, 'YXZ'), SC = new THREE.Vector3();
   let plS = 0, plD = 0, plT = 0;
   const _pr = { s: 0, d: 0, y: 0, hw: 0, speed: 0, tx: 0, tz: 0, inWater: false };
@@ -540,8 +585,8 @@ export async function build(ctx) {
       const p = pedlars[i];
       const dx = p.pos.x - cam.x, dz = p.pos.z - cam.z, dh = Math.hypot(dx, dz);
       if (!hold) {
-        // retreat when the player comes within ten metres: off along the river or over the water, not in panic
-        if (dh < 10 && (p.mode === 0 || p.u > 0.85)) startDart(p, true, plS, plD);
+        // retreat when the player comes within four metres: off along the river or over the water, not in panic
+        if (dh < 4 && (p.mode === 0 || p.u > 0.85)) startDart(p, true, plS, plD);
         if (p.mode === 1) {
           p.u += dt / p.dur;
           const u = Math.min(1, p.u), e = u * u * (3 - 2 * u);
@@ -565,6 +610,9 @@ export async function build(ctx) {
           // and sometimes turn on the spot to look about
           if (p.held > 1.2 && Math.sin(t * 0.7 + p.w1) > 0.995) p.yawGoal += 0.6;
         }
+        // never nearer than three metres, whatever the dart: eased out along the line from the player
+        { const ex = p.pos.x - cam.x, ez = p.pos.z - cam.z, e = Math.hypot(ex, ez);
+          if (e < 3) { const k = 3 / Math.max(e, 1e-3); p.pos.x = cam.x + ex * k; p.pos.z = cam.z + ez * k; if (p.mode === 0) { p.anchor.x = p.pos.x; p.anchor.z = p.pos.z; } } }
         let dy = p.yawGoal - p.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
         const turn = dy * Math.min(1, dt * 9);
         p.yaw += turn;
@@ -580,10 +628,14 @@ export async function build(ctx) {
       SC.setScalar(p.scale);
       M4.compose(p.pos, Q, SC);
       pMesh.setMatrixAt(i, M4);
+      gPos[(MAX_GLINTS + i) * 3] = p.pos.x; gPos[(MAX_GLINTS + i) * 3 + 1] = p.pos.y + 0.01; gPos[(MAX_GLINTS + i) * 3 + 2] = p.pos.z;
       aPh.setZ(i, p.mode === 0 ? 1 : 0.3); aPh.setW(i, p.lean);
     }
-    pMesh.instanceMatrix.needsUpdate = true; aPh.needsUpdate = true;
+    pMesh.instanceMatrix.needsUpdate = true; aPh.needsUpdate = true; gPosA.needsUpdate = true;
     glMat.uniforms.uFlicker.value = flick.value;
+    const ud = pMesh.material.userData;
+    ud.uFlicker.value = flick.value;
+    ud.uSunView.value.copy(sunW).transformDirection(camera.matrixWorldInverse);
   }
   updates.push(updatePedlars);
 
@@ -591,12 +643,14 @@ export async function build(ctx) {
   const EB = RV.eddy || { x: ctx.landmarks.eddy.x, z: ctx.landmarks.eddy.z, y: 0.7, r: 2, ox: 1, oz: 0 };
   const wcPos = new THREE.Vector3(EB.x, EB.y, EB.z);
   const hueNoise = ctx.noise.noise2;
-  // two complementary poles (a rose-magenta and a cold green-yellow) and the hue wandering between them by
-  // noise, never resting at either; the poles themselves drift a little. Mirrored in WC_FRAG by uHue.
+  // two complementary poles, an acid green and a violet, and the hue wandering between them by noise through
+  // the cold side of the wheel (never through the sun's reds and ambers), never resting at either; the poles
+  // themselves drift a little. The shader swirls the complement into it place by place.
   const hueAt = (t) => {
+    t += ctx.wrongColour ? ctx.wrongColour.tOffset : 0;
     const n = hueNoise(t * 0.031, 3.7) * 0.75 + hueNoise(t * 0.097, 11.3) * 0.25;
-    const w = 0.5 + 0.5 * clamp(n * 1.3, -1, 1);
-    return fract(0.86 + hueNoise(t * 0.009, 21.1) * 0.05 + 0.5 * w);
+    const w = 0.5 + 0.5 * Math.sin(n * 3.4 + 0.4);   // folded, so it spends time near both poles
+    return fract(0.29 + hueNoise(t * 0.009, 21.1) * 0.04 + 0.5 * w);
   };
   let wcMat;
   {
@@ -638,22 +692,25 @@ export async function build(ctx) {
     scene.add(halo);
   }
   // the one point light: low over the basin, its colour the hue's, so the bank and the grey reeds take it
-  const wcLight = new THREE.PointLight(new THREE.Color(1, 0, 1), 0, 12, 2);
-  wcLight.position.set(EB.x, EB.y + 1.1, EB.z);
+  const wcLight = new THREE.PointLight(new THREE.Color(1, 0, 1), 0, 20, 2);
+  wcLight.position.set(EB.x, EB.y + 1.6, EB.z);
   wcLight.name = 'wrong-colour-light';
   scene.add(wcLight);
-  ctx.wrongColour = { hue: hueAt(0), position: wcPos, light: wcLight };
+  // tOffset: shifts its clock, for renders of the hue at other moments
+  ctx.wrongColour = { hue: 0, position: wcPos, light: wcLight, tOffset: 0 };
+  ctx.wrongColour.hue = hueAt(0);
   let wcVisited = false;
   updates.push((dt, t) => {
     const h = hueAt(t);
     ctx.wrongColour.hue = h;
     // the sun gutters and the colour comes up, as if it had been waiting
     const g = clamp((1 - flick.value) / 0.8, 0, 1);
-    const bright = 1 + g * 1.4;
+    const bright = 1 + g * 2.0;
     wcMat.uniforms.uHue.value = h; wcMat.uniforms.uBright.value = bright;
     haloMat.uniforms.uHue.value = h; haloMat.uniforms.uBright.value = bright;
     wcLight.color.setHSL(h, 0.95, 0.5);
-    wcLight.intensity = 9 * bright * (0.92 + 0.08 * Math.sin(t * 0.37));
+    const lc = wcLight.color, luma = 0.2126 * lc.r + 0.7152 * lc.g + 0.0722 * lc.b;
+    wcLight.intensity = 32 * clamp(0.4 / Math.max(luma, 1e-3), 1, 3) * (1 + g * 0.8) * (0.92 + 0.08 * Math.sin(t * 0.37));
     const d = Math.hypot(cam.x - wcPos.x, cam.z - wcPos.z);
     if (d < 6 && !wcVisited) { wcVisited = true; cue('wrong-colour-near', wcPos); }
     else if (d > 25) wcVisited = false;
@@ -662,7 +719,7 @@ export async function build(ctx) {
   // ================================================================ the fall: rumble zone and spray
   const foot = RV.impact;
   {
-    const n = high ? 420 : 220, rng = ctx.makeRng(9301);
+    const n = high ? 600 : 320, rng = ctx.makeRng(9301);
     const g = new THREE.BufferGeometry();
     const seed = new Float32Array(n * 4);
     for (let i = 0; i < n * 4; i++) seed[i] = rng();

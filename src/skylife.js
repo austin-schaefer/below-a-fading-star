@@ -11,8 +11,10 @@
 // 'skycreak' (the worm's lunge, sometimes); each gets a world position 300 m out in its direction.
 // Also here, outside the camera group: the Parhelion City in the sun's saddle (skylife/parhelion.js,
 // ctx.parhelion), the Vigilant seated on the east-north-east wall (skylife/vigilant.js,
-// ctx.vigilant; 'rumble' at its head, rarely, when it turns unseen), and three omens in the group
-// (skylife/omens.js: the procession, the shard belt, the still star). Those add 5 draw calls.
+// ctx.vigilant = { headYaw, watched, ... }; 'rumble' at its head, rarely, when it turns unseen), and
+// three omens in the group (skylife/omens.js: the procession, with a 'procession' cue as it
+// appears; the shard belt, in some gutters only; the still star). Those add 5 draw calls
+// (city 1, Vigilant body and eyes 2, omens 2) and about 14k triangles at q=high, 5k at q=low.
 import * as THREE from 'three';
 import { makeSkyUniforms, skylineElevation } from './skylife/common.js';
 import { buildMeteors, METEOR_COLOURS } from './skylife/meteors.js';

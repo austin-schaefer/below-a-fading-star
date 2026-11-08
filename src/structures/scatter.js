@@ -5,7 +5,7 @@
 // surfacing through the turf, and a gibbet by the causeway. Repeated fragments are instanced.
 import * as THREE from 'three';
 import { Builder, mat } from './geo.js';
-import { vary, rubblePile, findSpot, hexCellsIn } from './common.js';
+import { vary, rubblePile, findSpot, pinSpot, hexCellsIn } from './common.js';
 import { causewayAt } from './causeway.js';
 
 export function buildScatter(ctx, B, env) {
@@ -250,7 +250,9 @@ export function buildScatter(ctx, B, env) {
 
   // ---------- a hermit's shrine: a corbelled cell, half fallen, and a niche with a seated figure ----------
   {
-    const p = findSpot(env, { slope: 0.3, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 } }) || findSpot(env, { slope: 0.3, sep: 30, size: 6 });
+    // Pinned to its LANDMARKS entry: findSpot rejects every landmark's own footprint, so once the
+    // shrine became a landmark the search near (-100,-100) could never succeed and nothing was built.
+    const p = pinSpot(env, ctx.landmarks.shrine, 6, { slope: 0.3, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 }, allow: ['shrine'] });
     if (p) {
       const gm = ground.groundAt(p.x, p.z);
       // beehive cell: rings of stone stepping inward, the top fallen in
@@ -290,8 +292,8 @@ export function buildScatter(ctx, B, env) {
   // ---------- a walled graveyard near the orchard ----------
   {
     const O = ctx.landmarks.orchard;
-    const p = findSpot(env, { slope: 0.25, sep: 10, size: 10, near: { x: O.x - 30, z: O.z + 40, r: 25 }, landmarkPad: 4 })
-      || findSpot(env, { slope: 0.3, sep: 10, size: 10, near: { x: O.x, z: O.z, r: O.r + 30 }, nearMin: O.r + 6, landmarkPad: 2 });
+    // Pinned to LANDMARKS.graveyard for the same reason as the shrine (it had drifted to the fallback ring).
+    const p = pinSpot(env, ctx.landmarks.graveyard, 10, { slope: 0.3, sep: 10, size: 10, near: { x: O.x, z: O.z, r: O.r + 30 }, nearMin: O.r + 6, landmarkPad: 2, allow: ['graveyard', 'hypogeum'] });
     if (p) {
       const W = 16, Dp = 11, yaw = rng() * 0.6 - 0.3;
       const ca = Math.cos(yaw), sa = Math.sin(yaw);
