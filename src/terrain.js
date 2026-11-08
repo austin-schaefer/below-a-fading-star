@@ -5,6 +5,7 @@ import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
 import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
 import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
+import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
 
 const SX = makeSimplex(WORLD.seed);
@@ -381,7 +382,7 @@ export function heightAt(x, z) {
   // --- v4 systems: the mountains (end)
   // Glacier tongue below the ramp too: its snout on the moor (v4 regions: src/v4/glacier.js)
   h = glacierTongue(h, x, z, ramp);
-  return carveRiver(h, x, z);
+  return spanGround(carveRiver(h, x, z), x, z); // v4: the Great Span's marked blocks (src/v4/span/plan.js)
 }
 
 // Analytic-ish normal by central differences.

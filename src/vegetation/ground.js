@@ -2,6 +2,7 @@
 // interpolated over the same triangles the GPU draws, so nothing floats or sinks. Biome weights
 // come from a coarse grid of terrain.biomeAt() (it is too slow to call per blade of grass).
 import { clamp } from './util.js';
+import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
@@ -106,6 +107,7 @@ export function makeGround(ctx) {
     if (d2(x, z, L.stones) < (10 + margin) ** 2) return true;
     if (d2(x, z, L.byre) < (16 + margin) ** 2) return true;
     if (d2(x, z, L.court) < (20 + margin) ** 2) return true;
+    if (spanClear(x, z, margin)) return true; // v4: the Great Span
     if (slopeAt(x, z) > 0.85) return true;
     const y = heightAt(x, z);
     const depth = waterDepth(x, z, y);

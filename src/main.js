@@ -43,6 +43,7 @@ const MODULES = [
   ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
   // v4 systems: the kit's test scene, only when named (?only=kit)
   ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
+  ['span', () => import('./v4/span.js')], // v4: the Great Span (W) and the Postern (BG)
 ];
 
 async function start() {
