@@ -6,6 +6,8 @@ Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the p
 
 "**v7, the living.** The nine humanoids, the six little characters, the Link-Boy, the Luminous Reach, the glyph motif, then the audio pass over everything new. Three or four figures per agent. After v6. Release as **v7**." And on v6 before it (09:44): "i want to share with folks but currently performance is too poor to share."
 
+Austin, 2026-11-08 ~14:20 PST, in the v6 release chat: "please add a settings menu to the next iteration. settings should have volume slider, mute, quality, and a teleport button. also the mouse capture option." Read as: an in-world settings panel (the debug panel is not it) with a volume slider, a mute toggle, the quality tier (low/medium/high, the same choice `?q=` makes, applied live or on reload), a teleport button (to spawn and the named places the briefs already use for renders; the list is his to trim), and a mouse-capture option (pointer lock on click, as now, versus a drag-to-look mode without capture). Open calls for the brief writer: where the panel lives on touch, whether quality applies live, which places teleport offers. Default: brief `v7-08-settings`, Sonnet, dispatched with v7-00 since nothing depends on it.
+
 ## The groups
 
 | Brief | Worktree / branch | Model | What | Region / sector | Why together | Shared files it touches |
@@ -18,6 +20,7 @@ Written 2026-11-08 from Austin's words for v7 (below), `wilderness-v5.md` (the p
 | `brief-v7-05-small.md` | `v7-small` | Opus | CM the Indistinct, CO the Repetend, CQ the Simulacrum (time-boxed) | centre (ha-ha), NW (Lynchets' walls), N (Outwash pools) | the three tricks of perception: a blur shader with a distance constraint, an audio delay, a particle face | `src/main.js`, **`src/audio.js`** (the footstep refactor and `echoStep`), `tools/audio-test.mjs` (+1), `src/v4/regions/demesne.js` and `lynchets.js` (one export each), README, wilderness-v5.md |
 | `brief-v7-06-canyon.md` | `v7-canyon` | Opus | DP the Luminous Reach, CE the Bather, CX the Toadstone | SE (the canyon, the reach, the fen's mouth) | all in the canyon, all water and the gutter; the Reach is a shader | `src/main.js`, **`src/water/river.js`** and **`src/water.js`** (one injection each), README, wilderness-v5.md |
 | `brief-v7-07-audio.md` | `v7-audio` | Opus | every v7 cue's sound, the loops, the voice cap at the two clusters | everywhere | one hand over everything new, last | **`src/audio.js`**, `tools/audio-test.mjs`, README, wilderness-v5.md |
+| `brief-v7-08-settings.md` (to write) | `v7-settings` | Sonnet | the settings menu Austin asked for: volume slider, mute, quality tier, teleport to named places, mouse capture on/off | — | UI only, no world module; can run beside v7-00 | `index.html`, `src/main.js` (one hook), `src/audio.js` (volume), `src/tier.js` (quality), `src/controls.js` (capture) |
 
 Tiers by the rule: Opus for a gait, a state machine or a shader; Sonnet for still figures and set-dressing. The Stylite's rising basket and the Sleeper's falling fruit are two-state timers, kept on Sonnet with the still group; if the orchestrator prefers, v7-03 moves to Opus at no cost to the plan. The audio pass is Opus as a cross-cutting job (one module, every cue, the voice cap).
 

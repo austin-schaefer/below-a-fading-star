@@ -313,6 +313,7 @@ export function buildControls(ctx) {
 
   const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
   let eyeOff = 0, lastY = null; // the eye's height less the feet's
+  const UP = new THREE.Vector3(0, 1, 0);
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
     syncLock();
@@ -343,9 +344,11 @@ export function buildControls(ctx) {
     if (len > 1) wish.divideScalar(len);
     state.moving = len > 0.05;
 
-    // slope slows you and stops you on the steep stuff
-    const n = terrain.normalAt(state.pos.x, state.pos.z);
-    const slope = Math.acos(clamp(n.y, -1, 1));
+    // slope slows you and stops you on the steep stuff; a raised floor (a deck, a stair) more than a metre
+    // above the ground is level, whatever the slope beneath it
+    const raised = state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
+    const n = raised ? UP : terrain.normalAt(state.pos.x, state.pos.z);
+    const slope = raised ? 0 : Math.acos(clamp(n.y, -1, 1));
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
 
     const accel = state.onGround ? 14 : 3;
