@@ -1,6 +1,6 @@
 // Small life: moths at the tower window, crows on the keep, rings of fish rising on the tarn.
 import * as THREE from 'three';
-import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep } from './geo.js';
+import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep, makeDownCaster } from './geo.js';
 import { KEEP } from '../structures/keep.js';
 
 // ---------------------------------------------------------------- moths
@@ -81,15 +81,14 @@ const PERCHES = PERCH_CANDIDATES.slice(0, 8).concat(PERCH_CANDIDATES.slice(12, 2
 function snapPerches(scene, terrain) {
   const keep = scene.getObjectByName('structures-keep');
   if (!keep) return false;
-  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3(0, -1, 0);
+  const cast = makeDownCaster([keep]); // binned, not a Raycaster over every triangle (geo.js)
   const good = { donjon: [], wall: [] };
   PERCH_CANDIDATES.forEach((p, i) => {
-    o.set(p[0], 80, p[2]); rc.set(o, d); rc.far = 120;
-    const hit = rc.intersectObject(keep, false)[0];
+    const hitY = cast(p[0], p[2], 80, 120);
     // the turf at the foot of the wall: the higher of the courtyard side and the wall line itself
     const gy = Math.max(terrain.heightAt(p[0], p[2]), terrain.heightAt(p[0] + (KEEP.cx - p[0]) * 0.1, p[2] + (KEEP.cz - p[2]) * 0.1));
     // a wall top well above the turf: a perch; anything lower is rubble or a fallen stretch
-    if (hit && hit.point.y > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hit.point.y, p[2]]);
+    if (hitY !== null && hitY > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hitY, p[2]]);
   });
   const list = good.donjon.slice(0, 8).concat(good.wall.slice(0, 10));
   if (list.length >= 6) { PERCHES.length = 0; PERCHES.push(...list); }
