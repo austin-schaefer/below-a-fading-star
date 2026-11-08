@@ -151,41 +151,83 @@ export async function build(ctx) {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
       varying float vSalt; varying vec3 vSP;
       vec2 sHash2(vec2 p) { p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p) * 43758.5453); }
-      // distance to the nearest cell centre, to the second, and to the third (for the plates and their joints)
-      vec3 sVoronoi(vec2 x) {
-        vec2 n = floor(x), f = fract(x); float d1 = 8.0, d2 = 8.0, d3 = 8.0;
+      float sNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(sHash2(i).x, sHash2(i + vec2(1.0, 0.0)).x, f.x), mix(sHash2(i + vec2(0.0, 1.0)).x, sHash2(i + vec2(1.0)).x, f.x), f.y); }
+      // plates: x the distance to the nearest plate's edge (cell units, the true bisector distance), y to the nearest
+      // triple joint's neighbour (third cell), zw the nearest cell's offset from the point; sId its cell
+      vec2 sId;
+      vec4 sVoronoi(vec2 x) {
+        vec2 n = floor(x), f = fract(x), mr = vec2(0.0), mg = vec2(0.0); float md = 8.0;
         for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
-          vec2 g = vec2(float(i), float(j)), o = sHash2(n + g) * 0.85 + 0.075, r = g + o - f; float d = dot(r, r);
-          if (d < d1) { d3 = d2; d2 = d1; d1 = d; } else if (d < d2) { d3 = d2; d2 = d; } else if (d < d3) d3 = d;
+          vec2 g = vec2(float(i), float(j)), r = g + sHash2(n + g) * 0.9 + 0.05 - f; float d = dot(r, r);
+          if (d < md) { md = d; mr = r; mg = g; }
         }
-        return sqrt(vec3(d1, d2, d3));
+        float e1 = 8.0, e2 = 8.0;
+        for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {
+          vec2 g = mg + vec2(float(i), float(j)), r = g + sHash2(n + g) * 0.9 + 0.05 - f;
+          if (dot(mr - r, mr - r) > 1e-5) { float e = dot(0.5 * (mr + r), normalize(r - mr)); if (e < e1) { e2 = e1; e1 = e; } else if (e < e2) e2 = e; }
+        }
+        sId = n + mg;
+        return vec4(e1, e2, mr);
       }`)
       .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
         // the crust's edge dissolves at the tideline (screen-door, no blending)
         float sDither = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
         if (sDither > smoothstep(0.15, 0.85, vSalt)) discard;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
+        // salt plates of 0.6 to 2 m, irregular (a warped cell field; about half the big plates cracked again in two
+        // or three), each tilted its own way, with rims curled up a few centimetres and pink gypsum in the cracks
+        float sH = 0.0; // the crust's relief (m), for the normal below
         {
           vec2 p = vSP.xz;
-          float dist = length(vSP - cameraPosition);
-          float sc = 1.25 + 0.6 * sHash2(floor(p / 9.0)).x;                    // plates of a metre to two, by patches
-          vec3 v = sVoronoi(p / sc);
-          float fw = fwidth(p.x / sc) + fwidth(p.y / sc);
-          float edge = v.y - v.x;                                              // 0 on a crack
-          float crack = (1.0 - smoothstep(0.012, 0.012 + fw * 1.2, edge)) * (1.0 - smoothstep(0.2, 0.5, fw));
-          float ridge = (1.0 - smoothstep(0.02, 0.09 + fw, edge)) * (1.0 - smoothstep(0.3, 0.7, fw));   // the plates' curled rims
-          float joint = (1.0 - smoothstep(0.1, 0.24, v.z - v.x)) * (1.0 - smoothstep(0.35, 0.8, fw));
-          float mott = sHash2(floor(p * 3.0)).x * 0.5 + sHash2(floor(p * 0.7) + 3.0).y * 0.5;
-          vec3 crust = vec3(0.7, 0.66, 0.65) * (0.9 + 0.12 * mott);
-          crust *= 0.92 + 0.1 * smoothstep(0.45, 0.0, v.x);                     // a little domed
-          crust = mix(crust, vec3(0.86, 0.83, 0.8), ridge * 0.6);                 // the rims stand up white
-          crust = mix(crust, vec3(0.62, 0.36, 0.38), smoothstep(0.0, 1.0, joint) * 0.9); // gypsum roses at the joints
-          crust = mix(crust, vec3(0.3, 0.26, 0.25), crack * 0.7);
+          float sc = 1.5 + 0.5 * sHash2(floor(p / 11.0)).x;                     // plates of 1.5 to 2 m, by patches
+          vec2 q = p / sc + 0.2 * vec2(sNoise(p * 0.45), sNoise(p * 0.45 + 17.0)) + 0.1 * vec2(sNoise(p * 1.9 + 5.0), sNoise(p * 1.9 - 9.0));
+          vec4 v = sVoronoi(q);
+          vec2 id = sId, h = sHash2(id + 0.37);
+          float fw = fwidth(q.x) + fwidth(q.y);
+          float near = 1.0 - smoothstep(0.12, 0.45, fw);                          // detail that would shimmer fades out
+          float e = v.x * sc, ej = (v.y - v.x) * sc;                               // metres to the edge, and how near a joint
+          // the plate cracked again: a finer cell field inside it (only where its hash says so)
+          if (h.x > 0.45) {
+            vec4 w = sVoronoi(q * 2.1 + id * 3.1);
+            e = min(e, w.x * sc / 2.1 + 0.004);
+            id += sId * 0.013;
+          }
+          float t = sHash2(id + 0.71).x, ta = 6.2832 * sHash2(id + 1.3).y;
+          vec2 off = -v.zw * sc;                                                   // from the plate's centre, metres
+          vec2 tdir = vec2(cos(ta), sin(ta)); float slope = 0.012 + 0.05 * t;
+          float tilt = slope * dot(off, tdir);                                     // each plate settled its own way
+          float rim = 0.035 * smoothstep(0.16, 0.02, e) * (0.6 + 0.4 * h.y);       // the edges curl up
+          float crack = 1.0 - smoothstep(0.004, 0.012 + fw * sc * 0.6, e);
+          sH = (tilt + rim - 0.03 * crack) * near;
+          float grain = sHash2(floor(p * 37.0)).x * 0.5 + sHash2(floor(p * 11.0) + 3.0).y * 0.5;
+          vec3 crust = vec3(0.8, 0.77, 0.75) * (0.9 + 0.16 * mix(0.5, grain, near));   // a grainy white
+          // the low sun (from the west-south-west) finds each plate's tilt: lighter facing it, greyer turned away;
+          // the rims' faces turned to it catch it, and the crack between two rims is a little shaded
+          vec2 sunD = vec2(-0.94, 0.34);
+          crust *= 1.0 - 3.2 * slope * dot(tdir, sunD) * near;
+          vec2 eg = normalize(v.zw + 1e-4);                                        // toward the plate's centre: the rim faces it
+          float rimLit = dot(eg, sunD);
+          crust *= 1.0 + (0.18 * rimLit * smoothstep(0.1, 0.03, e) * smoothstep(0.008, 0.02, e) - 0.12 * smoothstep(0.035, 0.015, e) * (1.0 - crack)) * near;
+          crust = mix(crust, vec3(0.9, 0.88, 0.86), smoothstep(0.1, 0.02, e) * 0.5 * near); // the rims dried whitest
+          vec3 gyp = vec3(0.78, 0.55, 0.56);
+          float joint = (1.0 - smoothstep(0.05, 0.22, ej)) * smoothstep(0.08, 0.0, e);
+          crust = mix(crust, gyp, crack * (0.55 + 0.25 * sNoise(p * 4.0)) * near);  // pink gypsum veining the cracks
+          crust = mix(crust, gyp * 0.95, joint * 0.7 * near);                      // and its roses at the joints
           float rn = 1.0 - smoothstep(0.05, 0.22, ${RUNNEL_GLSL});
           crust = mix(crust, vec3(0.32, 0.24, 0.22), rn * 0.6);                    // damp along the runnels
-          // salt is brighter where it dried last, greyer where the fen's damp creeps in
-          crust *= 0.92 + 0.12 * sHash2(floor(p * 0.25)).x;
+          sH *= 1.0 - rn;
+          crust *= 0.93 + 0.1 * sHash2(floor(p * 0.25)).x;                        // brighter where it dried last
           diffuseColor.rgb = crust;
+        }`)
+      .replace('#include <normal_fragment_begin>', `#include <normal_fragment_begin>
+        {
+          // the plates' tilt and the curled rims, as a bump on the view-space normal (screen derivatives of sH)
+          vec3 sX = dFdx(-vViewPosition), sY = dFdy(-vViewPosition);
+          vec3 r1 = cross(sY, normal), r2 = cross(normal, sX);
+          float det = dot(sX, r1) * faceDirection;
+          vec3 gr = sign(det) * (dFdx(sH) * r1 + dFdy(sH) * r2);
+          normal = normalize(abs(det) * normal - gr);
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(0.55, 0.9, smoothstep(0.0, 0.5, vSalt * 0.5));`);
@@ -207,29 +249,62 @@ export async function build(ctx) {
     return [lerp(a[0], b[0], t) - tz * side * hw, lerp(a[1], b[1], t) + tx * side * hw];
   }
 
-  // glasswort, blood-red, in beds along the runnels
+  // glasswort, blood-red, in beds along the runnels: a bushy clump of jointed succulent stems, each a stack of short
+  // fleshy segments that widen to their tops (two crossed strips per segment), green at the base reddening upward,
+  // the joints paler where the light comes through
   const gwGeo = (() => {
-    const parts = [];
-    for (let i = 0; i < 5; i++) {
-      const h = 0.08 + (i % 3) * 0.04, c = new THREE.CylinderGeometry(0.008, 0.012, h, 3, 1, true);
-      const a = i * 1.05, r = 0.03 + (i % 2) * 0.03; c.translate(Math.cos(a) * r, h / 2, Math.sin(a) * r);
-      const p = c.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k); p.setX(k, p.getX(k) * (1 + 0.5 * Math.abs(Math.sin(y * 70)))); p.setZ(k, p.getZ(k) * (1 + 0.5 * Math.abs(Math.sin(y * 70)))); } // jointed
-      parts.push(c.toNonIndexed());
+    const P = [], Nn = [], A = [], I = [];
+    // [lean (rad), bearing (rad), segments, segment length]: a straight middle stem, three leaning out and curving up,
+    // and three short ones low down for the bushy base
+    const STEMS = [[0.05, 0, 4, 0.05], [0.55, 0.4, 4, 0.037], [0.5, 2.5, 4, 0.034], [0.62, 4.4, 4, 0.036], [0.95, 1.5, 2, 0.03], [0.9, 3.5, 2, 0.028], [1.0, 5.5, 2, 0.03]];
+    for (const [lean, bear, nseg, len] of STEMS) {
+      const bx = Math.cos(bear), bz = Math.sin(bear);
+      let x = bx * 0.012, y = 0, z = bz * 0.012, k = 0;
+      for (let sg = 0; sg < nseg; sg++) {
+        const l = lean * (1 - sg / nseg) ** 1.5;                                 // curving up toward the tip
+        const dx = Math.sin(l) * bx, dy = Math.cos(l), dz = Math.sin(l) * bz;
+        const x2 = x + dx * len, y2 = y + dy * len, z2 = z + dz * len;
+        const w0 = 0.009 - sg * 0.0006, w1 = 0.013 - sg * 0.0007;            // narrow at the joint, swelling to the top
+        const h0 = (k * len) / 0.2, h1 = ((k + 1) * len) / 0.2;
+        for (const [px, pz] of nseg > 2 ? [[1, 0], [0, 1]] : [[bz, -bx]]) {      // two crossed strips (the short ones one, face on)
+          const o = P.length / 3;
+          P.push(x - px * w0, y, z - pz * w0, x + px * w0, y, z + pz * w0, x2 + px * w1, y2, z2 + pz * w1, x2 - px * w1, y2, z2 - pz * w1);
+          const nx = pz * 0.8, nz = -px * 0.8; // the strip's face, tipped up so the flesh reads round
+          for (let q = 0; q < 4; q++) Nn.push(nx, 0.6, nz);
+          A.push(h0, 0, h0, 0, h1, 1, h1, 1);
+          I.push(o, o + 1, o + 2, o, o + 2, o + 3);
+        }
+        x = x2; y = y2; z = z2; k++;
+      }
     }
-    let n = 0; for (const p of parts) n += p.attributes.position.count;
-    const P = new Float32Array(n * 3); let o = 0; for (const p of parts) { P.set(p.attributes.position.array, o * 3); o += p.attributes.position.count; }
-    const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(P, 3)); m.computeVertexNormals();
-    return m;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(Nn, 3));
+    g.setAttribute('aGw', new THREE.Float32BufferAttribute(A, 2));
+    g.setIndex(I);
+    return g;
   })();
-  const gwMat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.6, side: THREE.DoubleSide });
+  const gwMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.5, side: THREE.DoubleSide });
+  gwMat.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aGw; varying vec2 vGw;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGw = aGw;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGw;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        // the instance's red at the tips, a waxy green low down; each segment paler toward its swollen top
+        diffuseColor.rgb = mix(vec3(0.2, 0.27, 0.09), diffuseColor.rgb, smoothstep(0.1, 0.65, vGw.x));
+        diffuseColor.rgb *= 0.8 + 0.45 * vGw.y * vGw.y;`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        totalEmissiveRadiance += diffuseColor.rgb * 0.16; // light through the flesh`);
+  };
+  gwMat.customProgramCacheKey = () => 'fp-saltings-glasswort';
   const glasswort = [];
   for (let k = 0; k < 40000 && glasswort.length < (low ? 700 : 1200); k++) {
     const [x, z] = along(rng(), rng() * 2 - 1);
     const rn = runnel(x, z);
     if (rn > 0.3 || rng() > 1 - rn / 0.3) continue;
     if (wAt(x, z) < 0.5 || keepOut(x, z)) continue;
-    const s = 0.8 + rng() * 1.2, r = rng();
-    glasswort.push({ x, y: G.heightAt(x, z) - 0.01, z, s, sy: s * (0.8 + rng() * 0.6), ry: rng() * 6.28, c: new THREE.Color(lerp(0.32, 0.5, r), lerp(0.02, 0.06, r), lerp(0.02, 0.03, r)) });
+    const s = 0.75 + rng() * 0.75, r = rng(); // 15 to 30 cm
+    glasswort.push({ x, y: G.heightAt(x, z) - 0.01, z, s, sy: s * (0.85 + rng() * 0.3), ry: rng() * 6.28, c: new THREE.Color(lerp(0.5, 0.7, r), lerp(0.04, 0.09, r), lerp(0.04, 0.06, r)) });
   }
   const gwMesh = instanced(gwGeo, gwMat, glasswort, { name: 'saltings-glasswort', colors: true });
   scene.add(gwMesh); meshes.push(gwMesh);
