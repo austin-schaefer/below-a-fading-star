@@ -127,7 +127,7 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
     - *Redraw rates:* standing near the banners or a moving creature, 2–11 per second (measured standing still: (−40, 22) 10.9/s, of which 10.5/s from dynamic casters). Walking: 21.7/s on the wood route, 25/s on the bench. The CPU cost of a redraw frame headless is +10–20% over the median. The GPU cost is the open number: it needs Austin's timer query.
     - *Creature shadows:* they stop at 40 m, so a creature's shadow appears when it comes within 40 m.
     - *Pictures:* `v6-00-survey-shadow-edge-*` (`pos=-150,128&yaw=1.571`, a 3.3 m move redraw). In the dark wood the edge itself did not show above the noise. On open ground at dusk it is a case for Austin's eye.
-13. **No antialiasing.** **[structural]** **[needs Austin's eye]** There has been none since the post chain went in (v3's release notes). Three kinds of thin thing crawl when you move: alpha-tested leaf cards and their sky holes, chains, and spars and grass blades.
+13. **No antialiasing.** **[structural]** **[needs Austin's eye]** **[done in v6]** (FXAA in the finish pass at every tier, v6-02; `?aa=off` to compare; the rest of v6-08 stays deferred). There had been none since the post chain went in (v3's release notes). Three kinds of thin thing crawl when you move: alpha-tested leaf cards and their sky holes, chains, and spars and grass blades.
     - *Measured:* a 5 cm sideways step in the wood changes 467 pixels, against the baseline's 69.
     - *Pictures:* `v6-00-survey-aliasing-{a,b,diff}` and the ×3 crops `v6-00-survey-aliasing-crop-{a,b}` (`pos=-160,140&yaw=1.571&pitch=0.25`). The leaf holes flick on and off.
     - The most visible artefact on any walk after the tree swaps.
@@ -380,3 +380,25 @@ The picture rows are noise-limited headless: with the sky pinned, the baseline o
 **Uploads while panning:** no first-sight upload is left. The textures that upload every frame are BatchedMesh data textures: `veg-trees._colorsTexture` (33x33) every frame the tree batch draws (about 4000 on the 50 s wood walk), and `veg-lattice._colorsTexture` (52x52) near the Lattice; the matrices and indirect textures upload far less. Expected today; `pop-test` reports them as `texData` with their sizes (`dataTextures`, named in the JSON's `dataTextureNames`).
 
 **The uncapped wood pan** (`shots/perf/v6-01-uncapped-medium.json`: `?q=medium&record=6&pos=-190,165&cap=0&adapt=0`, headless Chrome with `--disable-frame-rate-limit --disable-gpu-vsync`, 189 fps): GPU timers per frame render 13.0 ms (shadow 0.4), bloom 3.5, grade 3.0, output 3.1, total 22.7, so the post chain is 9.7 of 22.7 = 43%. The timers sum to four times the 5.3 ms frame: they overlap on this GPU and are shares, not costs. The vsync-held run (`v6-01-uncapped-medium-vsynced.json`, `?cap=0` alone, 60 fps) reads bloom 5.2, grade 5.3, output 5.4 of 28.0 = 57%. Both are over the 40% line for v6-02; Austin's laptop numbers are what settle it.
+
+### v6-02 finish pass
+
+**The chain.** Before: the scene pass, bloom (bright pass, five mips, composite, then a full-size additive blend back into the scene target), the grade (full size, into the composer's writeBuffer), OutputPass (full size, to the canvas). After: the scene pass, bloom to its composite (`BloomComposite`, wrapped in v6-00's `capBloom`), the rays at a quarter of the render per axis only while the sun is in view, and one finish pass to the canvas that adds bloom (the composite times its alpha, as the blend's SRC_ALPHA did) at each chromatic-aberration tap and in the march, adds the rays, runs FXAA, grades and tone maps through three's chunks. Full-size passes after the scene: three to one. Render targets allocated: 13 to 13 (the full-size writeBuffer is never bound now; the rays' 320x180 one is new): 7.0 MB of textures freed at 1280x720 (`report().memory.gpu` 43.3 to 36.2 MB), about 12 MB at Austin's 1365x1117. `?post=v3`, `?rays=full`, `?postclock=0`, `?aa=off`, `?grain=`, `?bloommips=` in `runtime.md`.
+
+**Shares of the GPU timer sum, uncapped wood pan** (`?q=medium&cap=0&record=25&pos=-190,165&adapt=0`, driven as v6-01's: 360° per 6 s, `--disable-frame-rate-limit --disable-gpu-vsync`): before (`shots/perf/v6-02-uncapped-medium-before.json`) bloom 3.33, grade 2.86, output 3.00 of 21.74, post chain 42.3%; after parts 1 and 2 (`v6-02-uncapped-medium-after.json`) bloom 3.17, rays 0.07, finish 2.71 of 18.02, post chain 33.0%, a 22% drop in share. Back-to-back reruns with two other agents' browsers on the GPU agree within a point (31.6 to 34.2% after, 42.0% for `?post=v3&rays=full`). FXAA adds about half a point: the finish is 14.5 and 14.7% without, 15.1 and 15.4% with. Austin's next `?record=25` settles the milliseconds.
+
+**Part 3.** Its condition held (22%, short of the 40% line), so four mips on integrated and apple GPUs and `?bloomres=0.375` were tried: both inside its tolerance (lattice 0.78% and 0.85% of the frame, the others under 0.3%; `shots/wip/v6-02-bloom-<view>-{mips4,res375}.png`), and neither moved bloom's timer (3.2 to 3.4 ms with five, four or 0.375: its cost here is per pass, not per pixel). So the default stays five mips at 0.5; `?bloommips=` stays for Austin's laptop.
+
+**Picture.** Changed pixels against `?post=v3&rays=full` at medium 1280x720 with `?postclock=0` (pair-diff), and the same build loaded twice at each view (the lattice, the Wrong Colour and the spawn move on their own):
+
+| view | part 1 | parts 1+2 | after the merge (FXAA, the bloom cap) | the same build twice |
+|---|---|---|---|---|
+| sun | 5 | 18 (meanAbs 0.09/255) | 19 (0.22/255) | 24 |
+| wood | 0 | 0 | 0 | 0 |
+| lattice | 14319 | 55 | 36 | 110 to 12886 |
+| wrongcolour | 2568 | 1790 | 651 | 2379 to 2631 |
+| keptfire | 134 | 33 | 1 | 49 to 192 |
+| spawn | 184 | 10 | 9 | 8 to 180 |
+
+The brief's baseline (wood, after, twice) is 0 changed. The rays take the quarter size, not the half: both are inside the sun's bar (half 1 changed, quarter 18; the bar is 0.5% of the frame and 0.5/255), no blocks at ×20, so no blur; the rays are a faint glow (taking them out changes 37 pixels). FXAA against `?aa=off`: 16, 0, 63, 66, 6, 24 (the 1.5 px blur takes most of an edge filter out of the count). The grain: `?grain=` scales it, the default stays 1, and `shots/wip/v6-02-grain-{fog,moss}-g{1,0.7,0.5}[-low-phone].png` is the set Austin picks from. On a 390x844 phone at device scale 3 the low tier draws at pixel ratio 0.85 (a 331x717 buffer, under a third of the screen's pixels per axis), which is part of the phone's aliasing.
+
