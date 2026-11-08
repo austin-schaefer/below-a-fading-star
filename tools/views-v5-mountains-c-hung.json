@@ -1,0 +1,167 @@
+[
+ {
+  "name": "galleries-causeway-40",
+  "x": -40,
+  "z": 22,
+  "yaw": 1.287,
+  "pitch": 0.18
+ },
+ {
+  "name": "galleries-tower-foot",
+  "x": -262,
+  "z": -118,
+  "yaw": 1.859,
+  "pitch": 0.5
+ },
+ {
+  "name": "galleries-under",
+  "x": -305,
+  "z": -62,
+  "yaw": 1.362,
+  "pitch": 0.75
+ },
+ {
+  "name": "coh-tower",
+  "x": -170,
+  "z": -110,
+  "yaw": 1.267,
+  "pitch": 0.36,
+  "settle": 6000
+ },
+ {
+  "name": "coh-occultation",
+  "x": -150,
+  "z": 0,
+  "yaw": -1.5708,
+  "pitch": 0.12,
+  "settle": 3000,
+  "dy": 60,
+  "js": "__fp.sky.flicker.hold = 1; window.__fp.occultation.pass(200)"
+ },
+ {
+  "name": "coh-deck-000",
+  "x": -200,
+  "z": 215,
+  "yaw": 0.0,
+  "pitch": 0.0,
+  "js": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "pre": "var fp=window.__fp; fp.player.pos.y=56+fp.player.eye; fp.camera.position.y=fp.player.pos.y",
+  "settle": 8000
+ },
+ {
+  "name": "hawser-floor",
+  "x": -57,
+  "z": -188,
+  "yaw": 0.22,
+  "pitch": 0.3
+ },
+ {
+  "name": "hawser-measure",
+  "x": -22,
+  "z": -200,
+  "yaw": 1.55,
+  "pitch": 0.12
+ },
+ {
+  "name": "hawser-causeway-40",
+  "x": -40,
+  "z": 22,
+  "yaw": 0.13,
+  "pitch": 0.08
+ },
+ {
+  "name": "gradine-foot",
+  "x": 278.3,
+  "z": -166.7,
+  "yaw": -0.6,
+  "pitch": 0.55
+ },
+ {
+  "name": "gradine-landing",
+  "x": 287.8,
+  "z": -192.6,
+  "yaw": 2.16,
+  "pitch": -0.1,
+  "js": "{ const fp = window.__fp, r = fp.gradine && fp.gradine.reach; if (r) { fp.player.pos.set(r.x, r.y + fp.player.eye + 0.05, r.z); } }"
+ },
+ {
+  "name": "ridge-causeway",
+  "x": -40,
+  "z": 22,
+  "yaw": -0.62,
+  "pitch": 0.3
+ },
+ {
+  "name": "ridge-outwash",
+  "x": 60,
+  "z": -230,
+  "yaw": -0.87,
+  "pitch": 0.42
+ },
+ {
+  "name": "ridge-vigilant",
+  "x": 60,
+  "z": -230,
+  "yaw": -1.42,
+  "pitch": 0.3
+ },
+ {
+  "name": "annals-causeway",
+  "x": -40,
+  "z": 22,
+  "yaw": -0.95,
+  "pitch": 0.1
+ },
+ {
+  "name": "annals-causeway-se",
+  "x": -40,
+  "z": 22,
+  "yaw": -2.2,
+  "pitch": 0.1
+ },
+ {
+  "name": "annals-air",
+  "x": 150,
+  "z": 0,
+  "dy": 90,
+  "yaw": -1.571,
+  "pitch": 0.08
+ },
+ {
+  "name": "thrones-start-west",
+  "x": -344,
+  "z": 126,
+  "yaw": 1.92,
+  "pitch": 0.32
+ },
+ {
+  "name": "thrones-causeway-65",
+  "x": -65,
+  "z": 12,
+  "yaw": 1.92,
+  "pitch": 0.1
+ },
+ {
+  "name": "vigilant-moor",
+  "x": 130,
+  "z": -30,
+  "yaw": -1.257,
+  "pitch": 0.28
+ },
+ {
+  "name": "span-abut-west",
+  "x": -120,
+  "z": 215,
+  "yaw": 1.5708,
+  "pitch": 0.12,
+  "dy": 56
+ },
+ {
+  "name": "span-abut-east",
+  "x": 120,
+  "z": 215,
+  "yaw": -1.5708,
+  "pitch": 0.12,
+  "dy": 56
+ }
+]
