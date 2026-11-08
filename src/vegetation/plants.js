@@ -26,6 +26,8 @@ const BAND = 4, SLACK = 2;
 // subarray copies and no token)
 const OLD_PACK = PARAMS.get('packstep') === '6';
 let token = null;
+// ?wind= scales the plants' sway too (wind=0 holds them still, as pop-test's pinned sequences need)
+const WIND = PARAMS.has('wind') && Number(PARAMS.get('wind')) >= 0 ? Number(PARAMS.get('wind')) : 1;
 
 // ---------- geometry ----------
 // Plant geometry carries position, normal, color and aBlade = (t: height fraction, family, rand, tintWeight).
@@ -257,7 +259,7 @@ function makePlantMaterial(ctx, shared, o) {
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
   const u = {
     uTime: shared.time, uR0: { value: o.r0 }, uFade0: { value: o.fade0 }, uFade1: { value: o.fade1 },
-    uWind: { value: o.wind }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
+    uWind: { value: o.wind * WIND }, uTip: { value: new THREE.Color(o.tip || '#7a2e14') }, uBase: { value: new THREE.Color(o.base || '#ffffff') },
     uTrans: { value: o.trans ?? 1.5 }, uSunDir: { value: ctx.sun.vec }, uComp: { value: o.comp ?? 1.8 }, uExp: { value: o.exp ?? 1 },
     // The Wrong Colour [Proposed]: within 8 m of the eddy everything low is bleached grey-brown
     uGrey: shared.grey,
