@@ -72,14 +72,14 @@ function seatHeights(h, x, z) {
 // --- v5 wonders: AP the Battlemented Ridge (begin). The north-east crest, bearings 9-57 (the full run 12-54 with
 // 3 degrees of taper at each end; 60-85 stays the Vigilant's), is cut into a run of merlons and embrasures: a
 // square wave in bearing, period 7.6 degrees (62 m at r 470), a merlon 0.54 of it (4.1 degrees, 34 m), an
-// embrasure the rest (28 m). Each merlon's top is flat at the natural crest's height at its centre plus 30 m, less
+// embrasure the rest (28 m). Each merlon's top is flat at the natural crest's height at its centre plus 45 m, less
 // 0-2 m of wear; two are broken to half. The embrasure floor is the natural crest, with its pinnacles damped, so
 // the notches read as cut and the tops as raised (raising a clean block off a damped crest reads as masonry;
 // lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
 // in r (full height from the crest's r - 6 to + 4, ramping out to r - 10 and + 8), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
 // ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
 const RIDGE_ON = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('ridge') === '0');
-const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 30, kMin: 0, kMax: 6, broken: [2, 5] };
+const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 45, kMin: 0, kMax: 6, broken: [2, 5] };
 export const RIDGE = { bearings: [RG.lo + RG.taper, RG.hi - RG.taper], merlons: [] };
 const ridgeEnv = (b) => smoothstep(RG.lo, RG.lo + RG.taper, b) * (1 - smoothstep(RG.hi - RG.taper, RG.hi, b));
 // --- v5 wonders: AP the Battlemented Ridge (end)
@@ -125,7 +125,7 @@ for (let i = 0; i <= N; i++) {
   T_PH[i] = ((az + Math.PI) / TAU) * SPURS + 0.8 * ring(az, 3.0, 31.7);
   T_SW[i] = saddleWeight(az);
 }
-// --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 30 m, less wear)
+// --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 45 m, less wear)
 for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
   const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
   const wear = RG.broken.includes(k) ? 0.5 : 1 - 0.06 * hash2(k + 40, 77); // 0-2 m of wear; two broken to half
@@ -173,7 +173,7 @@ export function applyMountains(h, x, z, r, g, glacierH) {
   let foot = Math.max(318, Rc - 125 - 60 * sp);
   foot = lerp(foot, Math.max(foot, B.fr + 16 - 20 * sp), smoothstep(12, 32, B.fh));
   const span = Rc - foot;
-  // the profile: a concave lower slope up to a bench (the Annals' band, 110-130 m, rides the cliff above it),
+  // the profile: a concave lower slope up to a bench (the Annals' band, 100-140 m, rides the cliff above it),
   // then the upper cliff to the crest; behind the crest it falls away out of sight
   const yb = Math.min(108, 0.6 * Hc) + 5 * S.noise2(az * 4.0, 1.7);
   const rb = foot + span * 0.4, rb2 = rb + span * 0.1;
