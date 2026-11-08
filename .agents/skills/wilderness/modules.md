@@ -27,6 +27,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `shadows.js` | shadow-map cadence and the far cut-off for creatures' shadows |
 | `tier.js` | quality tier choice, the adaptive pixel ratio, the debug panel's quality rows |
 | `gpumem.js` | texture and render-target bytes and per-frame uploads, for the profiler |
+| `fade.js` | the fade kit for cross-fades: `FADE_GLSL` (`fpFadeKeep(f, side)`, a still screen-space dither: side 0 keeps a share f of the pixels, side 1 the rest), `withFade(material, { key, attribute \| vertex \| fadeExpr })`, `fadeDepthMaterial(opts)` for the shadow pass; `node tools/fade-test.mjs <base>` checks it |
 | `v2/flora.js` | the Heliotrope Sward; grey reeds at the Wrong Colour |
 | `v2/ruins.js` | the Hypogeum, the Gradine, the Cutting, the Carillon Flags |
 | `v2/inhabitants.js` | the Wimpled Guest, the Sable Galley, the Menology and its lizards |
