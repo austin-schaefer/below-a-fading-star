@@ -49,6 +49,7 @@ const MODULES = [
   ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
   ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
+  ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
 ];
 
 async function start() {
