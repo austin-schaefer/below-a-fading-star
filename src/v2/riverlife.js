@@ -292,6 +292,8 @@ const WC_FRAG = /* glsl */`
     float h = uHue + sw * 0.035;
     vec3 a = hsv2rgb(vec3(h, 0.92, 1.0)), b = hsv2rgb(vec3(h + 0.5, 0.92, 1.0));
     vec3 c = mix(a, b, k * 0.5);
+    // equal low luminance whatever the hue: a blue is lifted, a green held down, so it is always as visible
+    c *= clamp(0.3 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-3), 0.5, 3.0);
     // the glow comes up from under the water: strongest over the deepest part, a slow breathing in it
     float glow = exp(-r * r * 0.55) * (0.8 + 0.2 * sin(t * 0.37 + r * 2.3)) + 0.18 * exp(-r * r * 0.12);
     float lum = 0.36 * uBright;
@@ -331,6 +333,7 @@ const HALO_FRAG = /* glsl */`
     float a = exp(-r2 * 4.5) * 0.8 + exp(-r2 * 12.0) * 0.5;
     a *= (1.0 - smoothstep(0.5, 1.0, abs(q0.x))) * (1.0 - smoothstep(0.5, 1.0, abs(q0.y)));
     vec3 c = hsv2rgb(vec3(uHue + vUv.y * 0.06 + sin(uTime * 0.2) * 0.02, 0.85, 1.0));
+    c *= clamp(0.35 / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-3), 0.5, 3.0);
     ${FOG_ATTEN}
     gl_FragColor = vec4(c * a * 0.07 * uBright * fogAtten, 1.0);
   }`;
@@ -628,7 +631,7 @@ export async function build(ctx) {
   const hueAt = (t) => {
     t += ctx.wrongColour ? ctx.wrongColour.tOffset : 0;
     const n = hueNoise(t * 0.031, 3.7) * 0.75 + hueNoise(t * 0.097, 11.3) * 0.25;
-    const w = 0.5 + 0.5 * clamp(n * 1.3, -1, 1);
+    const w = 0.5 + 0.5 * Math.sin(n * 3.4 + 0.4);   // folded, so it spends time near both poles
     return fract(0.29 + hueNoise(t * 0.009, 21.1) * 0.04 + 0.5 * w);
   };
   let wcMat;
@@ -688,7 +691,8 @@ export async function build(ctx) {
     wcMat.uniforms.uHue.value = h; wcMat.uniforms.uBright.value = bright;
     haloMat.uniforms.uHue.value = h; haloMat.uniforms.uBright.value = bright;
     wcLight.color.setHSL(h, 0.95, 0.5);
-    wcLight.intensity = 9 * bright * (0.92 + 0.08 * Math.sin(t * 0.37));
+    const lc = wcLight.color, luma = 0.2126 * lc.r + 0.7152 * lc.g + 0.0722 * lc.b;
+    wcLight.intensity = 9 * clamp(0.4 / Math.max(luma, 1e-3), 0.6, 3) * bright * (0.92 + 0.08 * Math.sin(t * 0.37));
     const d = Math.hypot(cam.x - wcPos.x, cam.z - wcPos.z);
     if (d < 6 && !wcVisited) { wcVisited = true; cue('wrong-colour-near', wcPos); }
     else if (d > 25) wcVisited = false;
