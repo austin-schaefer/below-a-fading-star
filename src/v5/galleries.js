@@ -21,7 +21,7 @@
 // halo for the bloom), brighter while the sun gutters; one real point light at the lower furnace, lighting the rock
 // round it for a walker at the wall's foot (lights.js slots it only within about 105 m).
 // Seen from the bowl the sun is behind the wall, so every face toward the walker is in shade: dark bronze, and the
-// fog's haze is held back by 45%, so the lattice stays black against the hazed wall.
+// fog's haze is held back by 25%, so the lattice stays darker than the hazed wall it hangs on without reading nearer than it.
 //
 // Draws: struts (one instanced box), chain links (one instanced link), wheels (one merged mesh), halos (one points
 // draw), stays (one line draw). No shadows: the wall they hang on casts none, and a lattice's shadow on its own face is
@@ -38,7 +38,7 @@ export const GALLERIES = {
   link: 2.5,      // a chain link's length (m): the measure, 28 links to the lens mount's 70 m shaft
   bay: 8,         // a gallery bay's width along the face (m)
   floorGap: 4,    // a chain's end stops this far above the ground under it
-  hold: 0.45,     // how much of the fog's haze the ironwork holds back
+  hold: 0.25,     // how much of the fog's haze the ironwork holds back
 };
 
 // ---------------------------------------------------------------- shared GLSL: the machinery's clock
