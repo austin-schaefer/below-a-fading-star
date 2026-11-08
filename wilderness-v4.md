@@ -51,6 +51,11 @@ Renders required at each step, before and after, from spawn, from the causeway, 
 
 Plus, from before: **W. The Great Span** with its two sealed gates, and the awe audit.
 
+### Map structure (Austin, 2026-11-08, after walking v2.1)
+
+- **Ways between the places.** It is easy to lose the thread between points of interest. Add subtle leads from one to the next: worn paths and sheep-tracks in the grass, little rivulets and runnels that run downhill toward the next thing, lines of stones or old kerbs, a gap in the reeds. Nothing signposted; the land should simply tend to lead you on, the way a real moor does along its drainage. This is terrain and ground-cover work (`terrain.js` wear and wet masks, `vegetation/ground.js`, the causeway module) and belongs to the systems agent with the placement plan, which should draw the lead lines between POIs first.
+- **The Tumbling Water, two or three times taller.** The fall from the eastern wall should be a landmark you can see from a good distance, not a thing you find. Raise the lip two to three times higher, widen the spray and the mist column to match, carry its rumble further, and check the sightlines from spawn, the causeway and the Span's deck. Owner: the Great Span agent or a river agent, after the mountain rework (BI) sets the wall it falls from.
+
 ### Light (Austin, 2026-11-08)
 
 It is **too dark** in many places: can't-see dark, not atmospheric dark. Keep the variance in luminance, which Austin loves, and nothing goes crazy bright, but the floor comes up. Two parts:
