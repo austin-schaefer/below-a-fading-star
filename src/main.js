@@ -16,6 +16,7 @@ import { makeShadowCadence } from './shadows.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
 import { buildMountains } from './v4/mountains.js';
+import { installKit } from './v4/kit/index.js';
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -37,6 +38,8 @@ const MODULES = [
   ['ruins2', () => import('./v2/ruins.js')],
   ['inhabitants2', () => import('./v2/inhabitants.js')],
   ['riverlife2', () => import('./v2/riverlife.js')],
+  // v4 systems: the kit's test scene, only when named (?only=kit)
+  ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
 ];
 
 async function start() {
@@ -52,7 +55,7 @@ async function start() {
   // Loading bar: terrain counts as one unit and each module as one; a module reports sub-steps with
   // ctx.progress(label, fraction 0..1) (await it so the bar can paint). Overall is monotonic.
   const showBar = buildLoadBar();
-  const wanted = MODULES.filter(([name]) => (!only || only.split(',').includes(name)) && !skip.includes(name));
+  const wanted = MODULES.filter(([name, , o]) => (only ? only.split(',').includes(name) : !o?.optIn) && !skip.includes(name));
   let settled = 0, within = 0;
   const progress = (label, fraction = within) => {
     within = Math.max(0, Math.min(1, fraction));
@@ -119,6 +122,7 @@ async function start() {
   ctx.terrain = buildTerrain(ctx);
   // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
   ctx.mountains = buildMountains(ctx);
+  installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce
