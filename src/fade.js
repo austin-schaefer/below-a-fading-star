@@ -19,16 +19,30 @@
 //        withFade(mat, { attribute: 'aFade', key: 'trees' });
 //        mesh.customDepthMaterial = fadeDepthMaterial({ attribute: 'aFade', key: 'trees' });
 //
-//   2. An expression in the shader, from the instance's camera distance. `vertex` is a GLSL vec2 (f, side)
-//      evaluated after project_vertex (instanceMatrix, batchingMatrix, transformed and mvPosition are in
-//      scope); `head` declares what it reads; `uniforms` are merged into the program's.
-//        const u = { uNear: { value: 60 }, uFar: { value: 70 } };
-//        withFade(mat, { key: 'grass-far', uniforms: u, head: 'uniform float uNear, uFar;',
-//          vertex: 'vec2(1.0 - smoothstep(uNear, uFar, distance(cameraPosition, (modelMatrix * instanceMatrix[3]).xyz)), 0.0)' });
+//   2. An expression in the shader, from the instance's distance to the player. `vertex` is a GLSL vec2
+//      (f, side) evaluated after project_vertex (instanceMatrix, batchingMatrix, transformed and mvPosition
+//      are in scope); `head` declares what it reads; `uniforms` are merged into the program's. Never use
+//      cameraPosition for f: in the shadow pass it is the light's camera, so the shadow would fade at another
+//      distance than its caster. Pass the player's position as a uniform the caller updates (copy into the
+//      same Vector3 each frame; no allocation).
+//        const u = { uFpEye: { value: ctx.camera.position }, uNear: { value: 60 }, uFar: { value: 70 } };
+//        withFade(mat, { key: 'grass-far', uniforms: u, head: 'uniform vec3 uFpEye; uniform float uNear, uFar;',
+//          vertex: 'vec2(1.0 - smoothstep(uNear, uFar, distance(uFpEye, (modelMatrix * instanceMatrix[3]).xyz)), 0.0)' });
+//
+//   A BatchedMesh (trees.js) has no per-instance attributes. Either compute f in `vertex` from
+//   batchingMatrix (the instance's matrix, in scope at project_vertex): distance(uFpEye, (modelMatrix *
+//   batchingMatrix[3]).xyz); or keep (f, side) per instance in a DataTexture the caller writes, declared in
+//   `head` (uniform sampler2D uFpFades;) and read in `vertex` by the instance id three's batching chunk uses
+//   (texelFetch(uFpFades, ivec2(int(getIndirectIndex(gl_DrawID)) % W, int(getIndirectIndex(gl_DrawID)) / W), 0).xy).
 //
 //   Either way, `fadeExpr` and `sideExpr` (fragment GLSL) override what the fragment tests; by default they
 //   read the varying the vertex stage wrote (vFpFade.x, vFpFade.y). With neither attribute nor vertex, give
 //   fadeExpr (a uniform, say) and the patch touches the fragment shader alone.
+//
+// Call withFade after the material has its own onBeforeCompile and customProgramCacheKey (it wraps what is
+// there then; a later assignment replaces the fade). The patch looks for #include <common>,
+// #include <project_vertex> (only with attribute or vertex) and #include <clipping_planes_fragment>, so an
+// earlier patch must leave those in place.
 //
 // FADE_GLSL is the chunk itself, for a ShaderMaterial that includes it by hand. Nothing here runs per frame;
 // a material made with the kit at build time compiles behind the title card like any other.
