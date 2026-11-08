@@ -11,6 +11,9 @@ import { makeBatch, setFadeAt, cloneInstance, BATCH_FADE_HEAD } from './batch.js
 import { withFade, fadeDepthMaterial } from '../fade.js';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+// v6: the far mesh keeps the near outline (its limbs, the moss hung from them, its crown's top), so a cross-fade
+// changes card density and not shape; ?xfade=0 builds v5's far mesh
+const FAR_OUTLINE = new URL(location.href).searchParams.get('xfade') !== '0';
 const lin = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const mixc = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
 
@@ -170,7 +173,7 @@ function branch(sk, rng, P, start, dir, len, r, level, crown) {
   if (P.moss && level <= 2 && rng() < P.moss) {
     const k = 1 + Math.floor(rng() * (pts.length - 2));
     const q = pts[k];
-    sk.moss.push({ p: V(q.x, q.y - q.r, q.z), len: 1.2 + rng() * 2.6, w: 0.5 + rng() * 0.6, ang: rng() * Math.PI });
+    sk.moss.push({ p: V(q.x, q.y - q.r, q.z), len: 1.2 + rng() * 2.6, w: 0.5 + rng() * 0.6, ang: rng() * Math.PI, level });
   }
   if (P.fruit && level >= P.levels - 1 && rng() < P.fruit) {
     sk.fruits.push({ p: p.clone().add(V((rng() - 0.5) * 0.2, -0.08 - rng() * 0.15, (rng() - 0.5) * 0.2)), r: 0.045 + rng() * 0.03 });
@@ -199,13 +202,14 @@ function meshSkeleton(sk, detail, colors, rng) {
   const ex0 = { glow: 0 };
   // a bare crown (fewer than two leaf clusters per limb, as the medlars') is its limbs: the far mesh keeps them
   const primaries = sk.limbs.reduce((n, l) => n + (l.level === 1 ? 1 : 0), 0), bare = sk.leaves.length < 2 * primaries;
-  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 3, bare ? 3 : 0, 0, 0] : [4, bare ? 3 : 0, bare ? 3 : 0, 0, 0];
+  const keep = FAR_OUTLINE && detail === 'far';
+  const sidesFor = detail === 'hi' ? [8, 6, 4, 3, 3] : detail === 'lo' ? [5, 3, bare ? 3 : 0, 0, 0] : [4, bare || keep ? 3 : 0, bare ? 3 : 0, 0, 0];
   for (const limb of sk.limbs) {
     const sides = sidesFor[Math.min(limb.level, 4)];
     if (!sides) continue;
     if (detail !== 'hi' && limb.root && sk.trunkR < 1) continue;
     let pts = limb.pts;
-    const stride = detail === 'hi' ? (limb.level >= 3 ? 2 : 1) : detail === 'lo' ? (limb.level >= 2 ? 3 : 2) : 3;
+    const stride = detail === 'hi' ? (limb.level >= 3 ? 2 : 1) : detail === 'lo' || keep ? (limb.level >= 2 ? 3 : 2) : 3;
     if (stride > 1 && pts.length > 3) pts = pts.filter((_, i) => i % stride === 0 || i === pts.length - 1);
     const H = Math.max(sk.height, 1);
     tube(gb, pts, sides, (i, t) => {
@@ -215,21 +219,24 @@ function meshSkeleton(sk, detail, colors, rng) {
     }, { capTip: limb.level > 0, u0: BARK_U0, u1: BARK_U1, vPerMetre: 0.35, ex: ex0 });
   }
   // foliage cards: two crossed quads per cluster, normals bent outward from the crown. The far mesh keeps
-  // every cluster with one of its two cards (alternating), so the crown's mass stays where the near one has it.
+  // every cluster with one of its two cards (alternating), so the crown's mass stays where the near one has it;
+  // its larger card (1.45x) sits lower by 0.2 of the cluster's size (0.35 on the crown's top), so the crown's top
+  // stays where the near cards end (a leafy crown; a bare one keeps its cards where they are).
   for (let i = 0; i < sk.leaves.length; i++) {
     const L = sk.leaves[i];
     const col = mixc(colors.leaf, colors.leafAlt, (i * 0.618) % 1);
     const [u0, v0, u1, v1] = leafUV(L.tile);
     const s = L.s * (detail === 'hi' ? 1 : detail === 'lo' ? 1.1 : 1.45);
+    const P = keep && !bare ? L.p.clone().setY(L.p.y - (0.2 + 0.15 * L.n.y) * L.s) : L.p;
     for (let q = 0; q < 2; q++) {
       if (detail === 'far' && q !== i % 2) continue;
       const ang = L.spin + q * Math.PI / 2;
       const ax = V(Math.cos(ang), 0, Math.sin(ang));
       const up = V(0, 1, 0).applyAxisAngle(ax, (q ? 0.9 : 0.25)); // second card lies flatter
-      const a = L.p.clone().addScaledVector(ax, -s / 2).addScaledVector(up, -s * 0.3);
-      const b = L.p.clone().addScaledVector(ax, s / 2).addScaledVector(up, -s * 0.3);
-      const c = L.p.clone().addScaledVector(ax, s / 2).addScaledVector(up, s * 0.7);
-      const d = L.p.clone().addScaledVector(ax, -s / 2).addScaledVector(up, s * 0.7);
+      const a = P.clone().addScaledVector(ax, -s / 2).addScaledVector(up, -s * 0.3);
+      const b = P.clone().addScaledVector(ax, s / 2).addScaledVector(up, -s * 0.3);
+      const c = P.clone().addScaledVector(ax, s / 2).addScaledVector(up, s * 0.7);
+      const d = P.clone().addScaledVector(ax, -s / 2).addScaledVector(up, s * 0.7);
       const n = L.n;
       const ia = gb.vert(a.x, a.y, a.z, n.x, n.y, n.z, col[0], col[1], col[2], u0, v0, ex0);
       const ib = gb.vert(b.x, b.y, b.z, n.x, n.y, n.z, col[0], col[1], col[2], u1, v0, ex0);
@@ -239,7 +246,8 @@ function meshSkeleton(sk, detail, colors, rng) {
     }
   }
   // hanging moss: crossed vertical cards under the limbs
-  if (detail !== 'far') for (const Mo of sk.moss) {
+  if (detail !== 'far' || keep) for (const Mo of sk.moss) {
+    if (detail === 'far' && Mo.level > 1) continue; // the far mesh keeps the moss under the limbs it draws
     const [u0, v0, u1, v1] = leafUV(3);
     const col = colors.mossHang || [0.25, 0.27, 0.18];
     for (let q = 0; q < 2; q++) {
