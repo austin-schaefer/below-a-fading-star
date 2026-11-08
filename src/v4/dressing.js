@@ -3,11 +3,13 @@
 // track, pegs, stats() } (draw calls and triangles all four together cost when in view). ?skip=dressing leaves it out.
 import { buildFigure } from './dressing/figure.js';
 import { buildTrack } from './dressing/track.js';
+import { buildPegs } from './dressing/pegs.js';
 
 export async function build(ctx) {
   const parts = {};
   parts.figure = buildFigure(ctx);
   parts.track = buildTrack(ctx);
+  parts.pegs = buildPegs(ctx);
   function stats() {
     let calls = 0, tris = 0;
     for (const p of Object.values(parts)) for (const m of p.meshes) {

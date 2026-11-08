@@ -8,7 +8,7 @@
  {"name": "dress-figure-span-west", "x": 0, "z": 209.4, "yaw": 5.157, "pitch": -0.08, "js": "__fp.player.pos.y = 60.2;", "pre": "__fp.player.pos.y = 60.2; __fp.camera.position.y = 60.2;"},
  {"name": "dress-track-along", "x": 165.5, "z": 148.9, "yaw": 4.49, "pitch": -0.3, "dy": -0.2},
  {"name": "dress-track-end", "x": 220, "z": 161.6, "yaw": 1.36, "pitch": -0.5, "dy": 7},
- {"name": "dress-pegs-causeway", "x": -80, "z": 26, "yaw": 0, "pitch": -0.04},
- {"name": "dress-pegs-tarn", "x": -80, "z": 38, "yaw": 3.14, "pitch": -0.06},
- {"name": "dress-pegs-span", "x": -80, "z": 196, "yaw": 3.14, "pitch": 0.2}
+ {"name": "dress-pegs-causeway", "x": -80, "z": -34, "yaw": 3.14159, "pitch": -0.08, "dy": 1.2},
+ {"name": "dress-pegs-tarn", "x": -80, "z": 18, "yaw": 3.14159, "pitch": -0.02, "dy": 0.5},
+ {"name": "dress-pegs-span", "x": -80, "z": 246, "yaw": 0, "pitch": 0.1}
 ]
