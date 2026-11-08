@@ -2,6 +2,16 @@
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
 
+## v2.1 (2026-11-08) — a loading bar, and the instruments for the heat
+
+Stage 14. Spec: `wilderness-v3.md`, stage 1 and the loading bar. Nothing in the world changed.
+
+- **A loading bar** on the title card: a hairline that fills as the world builds, with the step's name under it ("shaping the moor", "growing the wood", "raising the keep"). "Go out" waits until the scene is ready.
+- **A profiler**, `?perf=1` or the debug panel: frame time with the 1% low, CPU per module, GPU time per pass, calls, triangles, memory, lights, render size.
+- **A bench**, `?bench=1`: a fixed 45-second walk from the gate along the causeway to the tarn and the fen and back, sun held steady, that ends with a summary and a JSON to download. Austin's runs go in `shots/perf/`.
+- **Toggles** in the debug panel: every module, bloom and shadows, on and off without a reload; `?bloom=0`, `?shadows=0`.
+- **Under the hood**: modules are built against a tagged view of the context so their updates and objects can be timed and hidden; a headless `tools/perf-test.mjs` and `tools/loading-test.mjs`.
+
 ## v2 (2026-11-08) — the river's people, and more life everywhere
 
 Stages 12–13. Spec: `wilderness-v2.md`, sites in `wilderness-v2-placement.md`.
