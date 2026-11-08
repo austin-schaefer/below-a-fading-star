@@ -141,7 +141,16 @@ function makeUniforms() {
 
 // bloom without its last step: the bright pass, the mips and the composite into renderTargetsHorizontal[0], which
 // the finish samples. UnrealBloomPass.render less the full-size additive blend back into the scene target.
+// useMips(n) blurs only the first n of the five mips (?bloommips=); the composite reads a black texel with alpha 1
+// for each one left out, so the others and the composite's alpha (the blend's scale) are as with five.
+const BLACK = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+BLACK.needsUpdate = true;
 class BloomComposite extends UnrealBloomPass {
+  useMips(n) {
+    this.mips = Math.max(1, Math.min(this.nMips, n));
+    const cu = this.compositeMaterial.uniforms;
+    for (let i = 0; i < this.nMips; i++) cu[`blurTexture${i + 1}`].value = i < this.mips ? this.renderTargetsVertical[i].texture : BLACK;
+  }
   render(renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
     renderer.getClearColor(this._oldClearColor);
     this.oldClearAlpha = renderer.getClearAlpha();
@@ -156,7 +165,7 @@ class BloomComposite extends UnrealBloomPass {
     renderer.clear();
     this.fsQuad.render(renderer);
     let input = this.renderTargetBright;
-    for (let i = 0; i < this.nMips; i++) {
+    for (let i = 0; i < (this.mips ?? this.nMips); i++) {
       const m = this.separableBlurMaterials[i];
       this.fsQuad.material = m;
       m.uniforms.colorTexture.value = input.texture;
@@ -274,6 +283,13 @@ export function buildPost(ctx) {
   const bloomSetSize = bloom.setSize.bind(bloom);
   bloom.setSize = (w, h) => bloomSetSize(Math.max(2, Math.round(w * bloomRes)), Math.max(2, Math.round(h * bloomRes)));
   bloom.resScale = bloomRes;
+  // ?bloommips=1..5 blurs fewer of bloom's five mips (the finish chain only; ?post=v3 keeps five). The default
+  // stays five: v6-02 tried four on integrated and apple GPUs (and ?bloomres=0.375) and neither moved bloom's
+  // share of the GPU timer on the uncapped wood pan, so nothing is given up for it.
+  const mipsParam = parseInt(params.get('bloommips'), 10);
+  const mips = mipsParam >= 1 ? Math.min(5, mipsParam) : 5;
+  if (bloom.useMips) bloom.useMips(mips);
+  bloom.mipsUsed = POST_V3 ? 5 : mips;
   composer.addPass(bloom);
   // Target hygiene (v3 stage 3; ?lean=0 as before): only the target the scene is drawn into needs a depth buffer.
   // The RenderPass draws into the composer's readBuffer (renderTarget2). With ?post=v3 the grade and output passes
