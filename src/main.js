@@ -18,6 +18,7 @@ import { installGpuMem } from './gpumem.js';
 import { buildMountains } from './v4/mountains.js';
 import { installKit } from './v4/kit/index.js';
 import { makeRegions, REGION_FILES } from './v4/regions.js';
+import { makeTinctures } from './v4/tinctures.js';
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -43,6 +44,7 @@ const MODULES = [
   ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
   // v4 systems: the kit's test scene, only when named (?only=kit)
   ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
+  ['dressing', () => import('./v4/dressing.js')], // v4: the Long Figure, the Discontinued Track, the Surveyor's Pegs
   ['span', () => import('./v4/span.js')], // v4: the Great Span (W) and the Postern (BG)
   ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
 ];
@@ -128,6 +130,7 @@ async function start() {
   // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
   ctx.mountains = buildMountains(ctx);
   ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
+  ctx.tinctures = makeTinctures(ctx, url); // v4 Tinctures (DI): each region's hue in the haze, ?tinct=0 off
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   settled = 1; await progress('lighting the sun', 0);
 
@@ -289,6 +292,7 @@ async function start() {
     sunLight.intensity = rig.sun * f;
     hemi.intensity = rig.hemi * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
+    ctx.tinctures.apply(scene.fog.color); // the region's hue at the same luminance
     ctx.perf.cpu('frame');
     runUpdates(dt, t);
     ctx.perf.mark();

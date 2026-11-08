@@ -17,6 +17,7 @@ import { buildMarkers } from './structures/markers.js';
 import { buildScatter } from './structures/scatter.js';
 import { buildTaverna, TAVERNA } from './structures/taverna.js';
 import { buildArches, ARCHES } from './structures/arches.js';
+import { STAIR_BOX } from './v4/span/plan.js';
 
 export async function build(ctx) {
   const t0 = performance.now();
@@ -87,6 +88,10 @@ export async function build(ctx) {
   site('arches', 2010, buildArches);
   // keep the scatter off the newer landmarks too
   env.taken = [[TAVERNA.x, TAVERNA.z, 26], [ARCHES.x, ARCHES.z, 26]];
+  for (const b of Object.values(STAIR_BOX)) { // the Great Span's stairs: circles along each box keep the scatter off the flights
+    const hw = Math.min(b[1] - b[0], b[3] - b[2]) / 2, long = b[1] - b[0] > b[3] - b[2];
+    for (let u = hw; ; u += hw) { const c = Math.min(u, (long ? b[1] - b[0] : b[3] - b[2]) - hw); env.taken.push(long ? [b[0] + c, (b[2] + b[3]) / 2, hw + 1] : [(b[0] + b[1]) / 2, b[2] + c, hw + 1]); if (c < u) break; }
+  }
   site('markers', 1707, buildMarkers);
   await ctx.progress?.('scattering the rubble', 0.9);
   site('scatter', 1808, buildScatter);
