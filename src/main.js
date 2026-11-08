@@ -51,6 +51,7 @@ const MODULES = [
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
+  ['occultation', () => import('./v5/occultation.js')], // v5 wonders: AR the Occultation (the passes and the hush; the shading is in the fog, terrain and sky shaders)
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
 ];
 
@@ -186,6 +187,21 @@ async function start() {
   ctx.tier.attach(); // the debug panel's quality rows, above perf's measure rows
   ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
+  // Every material's shader program is compiled here, behind the title card. three otherwise compiles a
+  // program the first time its object is drawn, and on ANGLE's Metal one compile holds a frame for tens of
+  // milliseconds: turning towards a creature, a ruin or a region not yet seen stalled the frame and the
+  // view jumped by the mouse travel it had missed. compileAsync walks every mesh, shown or hidden, with the
+  // scene's final lights (the slots above), into the composer's buffer the scene pass draws to (a program
+  // drawn to a render target is a different program from one drawn to the canvas), so the programs match
+  // the ones the frames ask for. ?precompile=0 leaves each to its first draw.
+  if (url.searchParams.get('precompile') !== '0') {
+    const tc = performance.now();
+    renderer.setRenderTarget(ctx.post.composer.readBuffer);
+    const compiling = renderer.compileAsync(scene, camera);
+    renderer.setRenderTarget(null);
+    await compiling;
+    ctx.log(`programs compiled in ${(performance.now() - tc).toFixed(0)}ms (${renderer.info.programs.length})`);
+  }
 
   // Resize
   function resize() {

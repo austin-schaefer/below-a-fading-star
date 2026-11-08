@@ -162,7 +162,7 @@ export const sound = {
         // the rooks are heard round the keep and well beyond the park
         const d = Math.hypot(x - K.x, z - K.z), near = Math.max(w, 1 - smoothstep(60, 170, d));
         lvl += (near - lvl) * 0.2;
-        bus.gain.setTargetAtTime(lvl * 0.55, now, 0.5);
+        bus.gain.setTargetAtTime(lvl * 0.55 * (1 - (k.hush?.(top) ?? 0)), now, 0.5); // v5: hushed under the Occultation's band
         if (lvl > 0.02) {
           next -= step;
           if (next <= 0) {
