@@ -64,7 +64,7 @@ export function buildBeetles(ctx) {
     b.mode = 'door'; b.life = 1;
     if (anywhere) {
       // a few already round the rings, the rest anywhere on the leaves
-      if (rng() < 0.45) { const r = F.rings[(rng() * 2) | 0]; b.s = r[0] + (rng() - 0.5) * 0.3; b.h = r[1] + (rng() - 0.5) * 0.3; }
+      if (rng() < 0.6) { const r = F.rings[(rng() * 2) | 0]; b.s = r[0] + (rng() - 0.5) * 0.3; b.h = r[1] + (rng() - 0.5) * 0.3; }
       else { b.s = (rng() - 0.5) * 2 * (F.half - 0.06); b.h = F.y0 + 0.1 + rng() * (F.H - 0.2); }
       b.head = rng() * Math.PI * 2;
     } else {
@@ -114,7 +114,7 @@ export function buildBeetles(ctx) {
             const r = Math.abs(b.s - F.rings[0][0]) < Math.abs(b.s - F.rings[1][0]) ? F.rings[0] : F.rings[1];
             const rx = r[0] - b.s, ry = r[1] - b.h, rd = Math.hypot(rx, ry);
             b.head += (rng() - 0.5) * 2.4 * dt * 3;
-            if (rd > 0.22) { const want = Math.atan2(rx, ry); let d = want - b.head; d = Math.atan2(Math.sin(d), Math.cos(d)); b.head += d * dt * 0.35; }
+            if (rd > 0.22) { const want = Math.atan2(rx, ry); let d = want - b.head; d = Math.atan2(Math.sin(d), Math.cos(d)); b.head += d * dt * 0.9; }
             const v = b.speed * (rd < 0.22 ? 0.35 : 1);
             let ns = b.s + Math.sin(b.head) * v * dt, nh = b.h + Math.cos(b.head) * v * dt;
             if (Math.abs(ns) > F.half - 0.03) { b.head = -b.head; ns = clamp(ns, -(F.half - 0.03), F.half - 0.03); }
