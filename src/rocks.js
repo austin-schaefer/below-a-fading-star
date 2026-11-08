@@ -99,6 +99,7 @@ export async function build(ctx) {
     // v2 sites: the Speculum's pale beach, the Menology's spiral, the Hypogeum's forecourt
     [L.speculum.x, L.speculum.z, 10], [L.menology.x, L.menology.z, 26], [L.hypogeum.x, L.hypogeum.z, 12],
   ];
+  const pool = ctx.water.pool || { x: 208, z: 258 };
   function allowed(x, z) {
     if (terrain.isUnderwater(x, z)) return false;
     if (terrain.causewayDistance(x, z) < 4.5) return false;
@@ -122,11 +123,16 @@ export async function build(ctx) {
     density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
     if (rng() > density) continue;
     if (b.slope > 1.1) continue;
+    // The cirque walls round the fall are steep and spray-wet: a stone sunk 0.18 of its size into a near-vertical
+    // face pokes out as a flat dark ellipse (the "black ovals" Austin saw from the Speculum). Keep stones and
+    // boulders off slopes over 0.6 rad, and everything off the spray band round the pool.
+    if (Math.hypot(x - pool.x, z - pool.z) < 24) continue;
     const u = rng();
     let size, cls;
     if (u < 0.6) { size = 0.18 + rng() * 0.3; cls = 'pebble'; }
     else if (u < 0.92) { size = 0.5 + rng() * 0.9; cls = 'stone'; }
     else { size = 1.3 + rng() * rng() * 3.2; cls = 'boulder'; }
+    if (b.slope > 0.6 && cls !== 'pebble') continue;
     if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
     const y = terrain.heightAt(x, z);
     terrain.normalAt(x, z, n);

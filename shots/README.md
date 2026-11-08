@@ -121,4 +121,11 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-ruins-hypogeum-stair-from-floor.png` | From the Hypogeum's floor, the stair climbing to the sun. |
 | `13-ruins-lintel-before.png` | Before a gutter: the glyph row on the lintel. |
 | `13-ruins-lintel-after.png` | After the gutter: the row has slid one place; the last glyph came round to the front. |
+| `13-flora-sward-causeway-south.png` | The Heliotrope Sward from the causeway: white drifts on the slope that faces the sun. |
+| `13-flora-sward-causeway.png` | The Sward at high quality from the causeway, the Trigon Span beyond the tarn. |
+| `13-flora-sward-close-turned.png` | Close in the Sward: the nearest heads have turned from the sun to the player. |
+| `13-flora-sward-gutter-close.png` | The Sward in a gutter: every head closed and dropped. |
+| `13-flora-eddy-grey-before.png` | Before: the reeds round the Wrong Colour in their own colour. |
+| `13-flora-eddy-grey-after.png` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
+| `13-flora-ovals-before.png` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
