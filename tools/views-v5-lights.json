@@ -10,7 +10,7 @@
   {"name": "lights-door-brief", "x": -200, "z": -60, "yaw": 0.695, "pitch": 0.04},
   {"name": "lights-door-westleg", "x": -266, "z": -40, "yaw": -0.194, "pitch": 0.06},
   {"name": "lights-door-20m", "x": -252, "z": -106, "yaw": -0.15, "pitch": 0.14},
-  {"name": "lights-leerie-house", "x": 110.5, "z": -30.5, "yaw": -2.62, "pitch": 0.02, "js": "__fp.localLights?.leerie?.reset(); __fp.localLights?.leerie?.light(4)", "settle": 3500},
-  {"name": "lights-leerie-arcature", "x": 149, "z": 42, "yaw": 0.527, "pitch": 0.02, "js": "__fp.localLights?.leerie?.light(12)", "settle": 3500},
-  {"name": "lights-leerie-flare", "x": 108, "z": 6, "yaw": -1.01, "pitch": 0.1, "js": "__fp.localLights?.leerie?.reset(); setTimeout(() => __fp.localLights?.leerie?.light(5), 2250)", "settle": 2500}
+  {"name": "lights-leerie-house", "x": 110.5, "z": -30.5, "yaw": -2.62, "pitch": 0.02, "settle": 3000},
+  {"name": "lights-leerie-arcature", "x": 149, "z": 42, "yaw": 0.527, "pitch": 0.02, "settle": 3000},
+  {"name": "lights-leerie-flare", "x": 108, "z": 6, "yaw": -1.01, "pitch": 0.1, "settle": 3000}
 ]

@@ -8,13 +8,14 @@
 //           for a second every minute or two. One real light, r 10.
 //   door    the lens mount's door in the south fin, ajar: a slit of warm light at its west edge, the east jamb lit,
 //           a wedge on the ground outside. One real light, r 8, just inside.
-//   leerie  the Leerie's twelve lamp-standards beside kerb K1: they light in order from the Pomegranate House as you
-//           come within 15 m of the next, with a flare and a tick, as if someone just ahead were lighting them, and
-//           stay lit. Nobody is there. Emissive heads and glow sprites; one real light, r 10, at the last one lit.
+//   leerie  the Leerie's twelve lamp-standards beside kerb K1, unlit, except while the sun gutters: then all twelve
+//           light in a wave along the row with a flare and a tick each, and go out together when it ends (IDEAS-v5.md CG
+//           with Austin's change; the lamplighter who walks the row is v6's). Emissive heads and glow sprites; two real
+//           lights, r 12, at the row's quarter points, on only while it is lit.
 // Draws: one mesh of solids (vertex colours, emissive per vertex by channel; casts) and one mesh of glows (additive
 // sprites, decals, sparks and motes, with the smoke in the same premultiplied pass). `?locallights=0` leaves all five
-// out; `?locallights=moss,post` builds only those. `ctx.localLights`: `stats()`, `leerie.light(n)` (n lit, the n-th
-// flaring), `leerie.lit`, `mothLamps` (read by fauna/lamps.js).
+// out; `?locallights=moss,post` builds only those. `ctx.localLights`: `stats()`, `leerie` (also `ctx.leerie`: `light(true | false | null)`,
+// `lit`), `mothLamps` (read by fauna/lamps.js).
 import * as THREE from 'three';
 import { SITES } from '../world.js';
 import { makeGround } from '../fauna/uncanny/kit.js';
@@ -23,7 +24,7 @@ import { hyp, clamp, smoothstep } from '../noise.js';
 
 const PARAM = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('locallights') : null;
 const ALL = ['moss', 'embers', 'post', 'door', 'leerie'];
-export const LEERIE = { n: 12, height: 5.6, side: 1.0, reach: 15 };
+export const LEERIE = { n: 12, height: 5.6, side: 1.0 };
 const CH = { moss: 0, embers: 1, post: 2, door: 3, leerie: 4 }; // leerie: 4..15, one per standard
 const COL = { moss: '#46e8c8', ember: '#ff4a12', post: '#ff8a3a', door: '#ffae5c', leerie: '#ffd690' };
 
@@ -258,32 +259,44 @@ export async function build(ctx) {
       api.mothLamps.push({ light: { intensity: 0 }, pos: hp.clone(), base: 1, per: [3, 5], min: 0 });
     }
     api.mothMax = LEERIE.n * 5;
-    const L = light(COL.leerie, 0, 10, heads[0].x, heads[0].y - 0.1, heads[0].z);
-    const lightT = new Float32Array(LEERIE.n).fill(-1); // when each lit (s), -1 dark
-    let litN = 0, lastT = 0;
-    const flare = (i, t) => { const a = t - lightT[i]; return a < 0.12 ? 1 + 2.8 * (a / 0.12) : 1 + 2.8 * Math.exp(-(a - 0.12) * 2.6); };
-    function lightTo(n, t, quiet) {
-      n = Math.min(LEERIE.n, n);
-      for (let i = litN; i < n; i++) lightT[i] = quiet || i < n - 1 ? t - 10 : t;
-      if (n > litN) {
-        litN = n;
-        const h = heads[n - 1]; L.position.set(h.x, h.y - 0.1, h.z);
-        if (!quiet) ctx.audio?.cue?.('lamp-tick', h);
-      }
+    // two slot lights at the row's quarter points, each reaching the standards round it; on only while the row is lit
+    const Ls = [2, 8].map((i) => light(COL.leerie, 0, 12, (heads[i].x + heads[i + 1].x) / 2, heads[i].y - 0.1, (heads[i].z + heads[i + 1].z) / 2));
+    // the row lights only while the sun gutters: all twelve in a wave along it over half a second, from the house's end,
+    // each with a flare and a tick; when the gutter ends they all go out together, the mantles glowing on for 2 s.
+    // The gutter is read from the sun's flicker with a hysteresis (lit under 0.6, out over 0.85), so a held flicker poses
+    // it. `ctx.leerie.light(true | false)` overrides (for renders and the v6 lamplighter); `light(null)` gives it back.
+    const WAVE = 0.5 / (LEERIE.n - 1), AFTER = 2;
+    const onT = new Float32Array(LEERIE.n).fill(-1e9);
+    let rowLit = false, offT = -1e9, override = null, lastT = 0;
+    const flare = (a) => (a < 0.12 ? 1 + 2.8 * (a / 0.12) : 1 + 2.8 * Math.exp(-(a - 0.12) * 2.6));
+    function set(on, t) {
+      if (on === rowLit) return;
+      rowLit = on;
+      if (on) for (let i = 0; i < LEERIE.n; i++) onT[i] = t + i * WAVE;
+      else offT = t;
     }
-    const P = () => ctx.player?.pos || ctx.camera.position;
-    updates.push([(dt, t) => {
+    updates.push([(dt, t, f) => {
       lastT = t;
-      const p = P();
-      // the next one lights as you come within reach of it; joining the row partway, the ones behind you are lit
-      for (let i = LEERIE.n - 1; i >= litN; i--) if (hyp(heads[i].x - p.x, heads[i].z - p.z) < LEERIE.reach) { lightTo(i + 1, t, false); break; }
+      set(override != null ? override : rowLit ? f < 0.85 : f < 0.6, t);
+      let mid = 0;
       for (let i = 0; i < LEERIE.n; i++) {
-        const k = lightT[i] < 0 ? 0 : flare(i, t) * (0.93 + 0.05 * N2(t * 0.8, i * 3.1) + 0.02 * N2(t * 4.4, i));
-        U.uCh.value[CH.leerie + i] = k; api.mothLamps[i].light.intensity = k;
+        let k = 0;
+        if (rowLit) {
+          const a = t - onT[i];
+          if (a >= 0) {
+            if (a < dt + 0.001) ctx.audio?.cue?.('lamp-tick', heads[i]);
+            k = flare(a) * (0.93 + 0.05 * N2(t * 0.8, i * 3.1) + 0.02 * N2(t * 4.4, i));
+          }
+        } else {
+          const a = t - offT;
+          if (a < AFTER) k = 0.55 * Math.pow(1 - a / AFTER, 2);
+        }
+        U.uCh.value[CH.leerie + i] = k; api.mothLamps[i].light.intensity = k; mid += k;
       }
-      L.intensity = litN ? 3.0 * U.uCh.value[CH.leerie + litN - 1] : 0;
+      Ls[0].intensity = Ls[1].intensity = 3.0 * mid / LEERIE.n;
     }, { pos: S, r: len / 2, near: 40, hz: 4 }]);
-    api.leerie = { heads, get lit() { return litN; }, light: (n) => lightTo(n, lastT, false), reset: () => { litN = 0; lightT.fill(-1); L.intensity = 0; } };
+    api.leerie = { heads, get lit() { return rowLit; }, light: (on) => { override = on; if (on != null) set(on, lastT); } };
+    ctx.leerie = api.leerie;
   }
 
   // ---------------------------------------------------------------- the meshes

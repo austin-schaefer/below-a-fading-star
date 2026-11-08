@@ -768,7 +768,7 @@ export async function build(ctx) {
     // the end of the jerk; then the iron rings out on a few inharmonic partials. Inverse falloff from a 160 m
     // reference: still a third its level 500 m off, so the whole bowl hears it.
     // the Leerie's standards (v5/lights.js): a lantern catching, a small click and the soft breath of the flame
-    function lampTick(pos) { const v = voice(pos, { ref: 6, roll: 1.2, range: 70, verb: 0.35, dur: 0.9, air: 400 }); if (!v) return; grain(v, v.in, v.t0, 3400, 7, 0.16, 0.022); grain(v, v.in, v.t0 + 0.014, 1500, 3, 0.07, 0.05); const g = ac.createGain(); swell(g, v.t0 + 0.03, 0.05, 0.07, v.t0 + 0.75); chain(vNoise(v, pink, v.t0 + 0.03, 0.75), filt('lowpass', 560, 0.7), g, v.in); }
+    function lampTick(pos) { const v = voice(pos, { ref: 6, roll: 1.2, range: 70, verb: 0.35, dur: 0.6, air: 400 }); if (!v) return; grain(v, v.in, v.t0, 3400, 7, 0.16, 0.022); grain(v, v.in, v.t0 + 0.014, 1500, 3, 0.07, 0.05); const g = ac.createGain(); swell(g, v.t0 + 0.03, 0.05, 0.07, v.t0 + 0.75); chain(vNoise(v, pink, v.t0 + 0.03, 0.75), filt('lowpass', 560, 0.7), g, v.in); }
     function hawserGroan(pos) {
       const v = voice(pos, { ref: 160, roll: 1, range: 3000, verb: 1.1, dur: 7.4, air: 700 });
       if (!v) return;
