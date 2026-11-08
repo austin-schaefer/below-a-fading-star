@@ -160,7 +160,7 @@ export function createPerf(ctx) {
     if (!gpu.ok) return;
     const passes = post.composer.passes;
     passes.forEach((p, i) => {
-      const label = p === post.bloom ? 'bloom' : p === post.grade ? 'grade' : i === 0 ? 'render' : i === passes.length - 1 ? 'output' : `pass${i}`;
+      const label = p === post.bloom ? 'bloom' : p === post.rays ? 'rays' : p === post.finish ? 'finish' : p === post.grade ? 'grade' : i === 0 ? 'render' : i === passes.length - 1 ? 'output' : `pass${i}`;
       const orig = p.render;
       p.render = function (a, b, c, d, e) { gpuBegin(label); const r = orig.call(this, a, b, c, d, e); gpuEnd(); return r; };
     });
@@ -292,6 +292,10 @@ export function createPerf(ctx) {
     // 'render' is the whole render pass including the shadow map; 'shadow' is the shadow map alone
     o.render = r2(((g.render || 0) + (g.shadow || 0)) / frames);
     for (const k of Object.keys(g)) if (k !== 'render') o[k] = r2(g[k] / frames);
+    // post: the chain after the scene (v6-02: bloom, rays, finish; ?post=v3: bloom, grade, output); grade and
+    // output stay as keys (null under the finish) so old and new records compare
+    o.post = r2(['bloom', 'rays', 'finish', 'grade', 'output'].reduce((a, k) => a + (g[k] || 0), 0) / frames);
+    o.grade ??= null; o.output ??= null;
     o.total = r2(total / frames);
     return o;
   }
@@ -323,7 +327,7 @@ export function createPerf(ctx) {
       const g = s.gpu;
       if (!g.available) lines.push('gpu n/a (no timer query; the shadows toggle gives the shadow cost)');
       else if (!g.frames) lines.push('gpu waiting for queries…');
-      else lines.push(`gpu ${g.total} ms: render ${g.render ?? '–'} (shadow ${g.shadow ?? '–'}) · bloom ${g.bloom ?? '–'} · grade ${g.grade ?? '–'} · output ${g.output ?? '–'}`);
+      else lines.push(`gpu ${g.total} ms: render ${g.render ?? '–'} (shadow ${g.shadow ?? '–'}) · post ${g.post} (bloom ${g.bloom ?? '–'} · rays ${g.rays ?? '–'} · finish ${g.finish ?? '–'} · grade ${g.grade ?? '–'} · output ${g.output ?? '–'})`);
       const cpuParts = Object.entries(s.cpu.modules).filter(([, v]) => v >= 0.01).map(([k, v]) => `${k} ${v}`);
       lines.push(`cpu ${s.cpu.totalMs} ms: ${cpuParts.join(' · ') || '–'}`);
     }
@@ -538,7 +542,7 @@ export function createPerf(ctx) {
     for (const k in counters) { const c = counters[k], d = c.total - c.rec; c.rec = c.total; if (d) cn[k] = d; }
     rec.samples.push({
       t: r1(rec.sampleAt), frames, avgMs: r2((rec.el - rec.sampleAt) / frames),
-      gpu: g && g !== 'n/a' ? { frames: g.frames, render: g.render, shadow: g.shadow ?? null, bloom: g.bloom ?? null, grade: g.grade ?? null, output: g.output ?? null, total: g.total } : g,
+      gpu: g && g !== 'n/a' ? { frames: g.frames, render: g.render, shadow: g.shadow ?? null, bloom: g.bloom ?? null, rays: g.rays ?? null, finish: g.finish ?? null, grade: g.grade ?? null, output: g.output ?? null, post: g.post, total: g.total } : g,
       calls: rec.calls, tris: rec.tris, dpr: renderer.getPixelRatio(), buffer: size.buffer,
       tierSteps: ctx.tier ? ctx.tier.state.steps.length : 0,
       shadowRedraws: sc ? sc.redraws : null, shadowDynamic: sc ? sc.dynamic : null,
@@ -592,7 +596,7 @@ export function createPerf(ctx) {
     if (overlay && overlay.classList.contains('shown')) draw();
   }
   function recordView(res) {
-    const s = res.summary, gp = (g) => (g === 'n/a' ? 'gpu n/a' : g ? `gpu ${g.total} (render ${g.render}, shadow ${g.shadow ?? '–'}, bloom ${g.bloom ?? '–'}, grade ${g.grade ?? '–'}, output ${g.output ?? '–'})` : 'gpu no results');
+    const s = res.summary, gp = (g) => (g === 'n/a' ? 'gpu n/a' : g ? `gpu ${g.total} (render ${g.render}, shadow ${g.shadow ?? '–'}, post ${g.post ?? '–'}: bloom ${g.bloom ?? '–'}, rays ${g.rays ?? '–'}, finish ${g.finish ?? '–'}, grade ${g.grade ?? '–'}, output ${g.output ?? '–'})` : 'gpu no results');
     const lines = [
       `recorded ${res.recordedSeconds} s of ${res.requestedSeconds} s asked${res.idleSeconds > 0.05 ? ` (${res.idleSeconds} s idle, not counted)` : ''} · ${s.frames} frames · ${s.fps ?? '–'} fps · q=${res.quality} · dpr ${res.dpr} · ${res.renderSize.buffer.join('×')} px`,
       `median ${s.medianMs} ms · 95th ${s.p95Ms} · 99th ${s.p99Ms} · worst ${s.worstMs} · over 2× median ${s.over2xMedian} · over 3× ${s.over3xMedian}`,

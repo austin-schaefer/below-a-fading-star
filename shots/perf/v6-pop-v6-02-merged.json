@@ -1,0 +1,213 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v6-02-merged",
+ "date": "2026-11-08T21:15:30.568Z",
+ "base": "http://localhost:8177",
+ "q": "medium",
+ "only": [
+  "uploads"
+ ],
+ "runSecs": 137,
+ "rows": [
+  {
+   "id": "uploads.bench",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 3383,
+    "dataTextures": {
+     "33x33": 2514,
+     "52x52": 869
+    }
+   }
+  },
+  {
+   "id": "uploads.wood",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 3744,
+    "dataTextures": {
+     "33x33": 3744
+    }
+   }
+  },
+  {
+   "id": "uploads.pan",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 946,
+    "dataTextures": {
+     "33x33": 739,
+     "52x52": 207
+    }
+   }
+  }
+ ],
+ "routes": {
+  "bench": {
+   "frames": 1885,
+   "medianIv": 16.7,
+   "medianCpu": 3.6,
+   "over2x": 9,
+   "over2xAfter1s": 7,
+   "maxIvRatio": 6.63,
+   "counters": {
+    "rocks.packs": 50,
+    "plants.repacks": 612,
+    "shadow.redraws.move": 80,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 3383,
+    "shadow.redraws.clock": 3,
+    "plants.farSwitches": 102,
+    "trees.lodSwitches": 81,
+    "shadow.redraws.dynamic": 542,
+    "fungi.groupFlips": 24,
+    "lights.handovers": 12
+   },
+   "repackTwoKindFrames": 113,
+   "dataTextures": {
+    "33x33": 2514,
+    "52x52": 869
+   },
+   "bench": 58.9
+  },
+  "benchCounters": {
+   "rocks.packs": 50,
+   "plants.repacks": 612,
+   "shadow.redraws.move": 80,
+   "uploads.programs": 0,
+   "uploads.geometries": 0,
+   "uploads.textures": 0,
+   "uploads.texFirst": 0,
+   "uploads.texData": 3383,
+   "shadow.redraws.clock": 3,
+   "plants.farSwitches": 102,
+   "trees.lodSwitches": 81,
+   "shadow.redraws.dynamic": 542,
+   "fungi.groupFlips": 24,
+   "lights.handovers": 12
+  },
+  "wood": {
+   "frames": 2726,
+   "wallSecs": 49.2,
+   "complete": true,
+   "medianIv": 17.4,
+   "medianCpu": 3.5,
+   "over2x": 3,
+   "over2xAfter1s": 3,
+   "maxIvRatio": 2.16,
+   "calls": [
+    124,
+    146,
+    182
+   ],
+   "tris": [
+    1829932,
+    2053717,
+    2635457
+   ],
+   "counters": {
+    "trees.lodSwitches": 602,
+    "fungi.groupFlips": 13,
+    "plants.repacks": 177,
+    "plants.farSwitches": 42,
+    "rocks.packs": 24,
+    "shadow.redraws.move": 1,
+    "shadow.redraws.clock": 7,
+    "shadow.redraws.dynamic": 1006,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 3744
+   },
+   "lodFramesMax": 4,
+   "repackFrames": 161,
+   "repackTwoKindFrames": 10,
+   "shadowRedrawsPerSec": 20.6,
+   "dataTextures": {
+    "33x33": 3744
+   }
+  },
+  "woodpan": {
+   "frames": 626,
+   "wallSecs": 11.9,
+   "complete": true,
+   "medianIv": 18.6,
+   "medianCpu": 3.7,
+   "over2x": 2,
+   "over2xAfter1s": 2,
+   "maxIvRatio": 2.23,
+   "calls": [
+    116,
+    150,
+    269
+   ],
+   "tris": [
+    1666429,
+    2265483,
+    3978501
+   ],
+   "counters": {
+    "trees.lodSwitches": 0,
+    "fungi.groupFlips": 0,
+    "plants.repacks": 359,
+    "plants.farSwitches": 0,
+    "rocks.packs": 0,
+    "shadow.redraws.move": 109,
+    "shadow.redraws.clock": 0,
+    "shadow.redraws.dynamic": 0,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 946
+   },
+   "lodFramesMax": 0,
+   "repackFrames": 173,
+   "repackTwoKindFrames": 99,
+   "shadowRedrawsPerSec": 9.14,
+   "dataTextures": {
+    "33x33": 739,
+    "52x52": 207
+   }
+  }
+ },
+ "seqs": {},
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}
