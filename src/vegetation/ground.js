@@ -5,6 +5,8 @@ import { clamp } from './util.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
+import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
+import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -124,6 +126,7 @@ export function makeGround(ctx) {
     if (depth > (opts && opts.wet ? opts.wet : 0)) return true;
     if (terrain.causewayDistance(x, z) < 4 + margin) return true;
     if (margin >= 0 && wornAt(x, z) > 0.05) return true; // v4 map: nothing woody grows on a lead
+    if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     return false;
   }

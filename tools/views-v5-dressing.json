@@ -1,0 +1,94 @@
+[
+ {
+  "name": "collation-glimpse",
+  "x": 148,
+  "z": -86,
+  "yaw": 2.805,
+  "pitch": -0.08
+ },
+ {
+  "name": "collation-end",
+  "x": 134.3,
+  "z": -62.8,
+  "yaw": -1.13,
+  "pitch": 0.03
+ },
+ {
+  "name": "collation-side",
+  "x": 138.1,
+  "z": -70.2,
+  "yaw": -2.45,
+  "pitch": -0.05
+ },
+ {
+  "name": "collation-close",
+  "x": 139.0,
+  "z": -63.1,
+  "yaw": -0.268,
+  "pitch": -0.18
+ },
+ {
+  "name": "slipper-3m",
+  "x": -17.6,
+  "z": 25.74,
+  "yaw": 1.571,
+  "pitch": 0.0
+ },
+ {
+  "name": "slipper-3m-glance",
+  "x": -17.6,
+  "z": 25.74,
+  "yaw": 1.571,
+  "pitch": -0.3
+ },
+ {
+  "name": "slipper-detour",
+  "x": -20.6,
+  "z": 27.74,
+  "yaw": 0.0,
+  "pitch": -0.5
+ },
+ {
+  "name": "slipper-crouch",
+  "x": -19.8,
+  "z": 25.9,
+  "dy": -1.15,
+  "yaw": 1.373,
+  "pitch": -0.35
+ },
+ {
+  "name": "slipper-walk",
+  "x": 2,
+  "z": 35,
+  "yaw": 1.9,
+  "pitch": -0.05
+ },
+ {
+  "name": "prospect-shoulder",
+  "x": 242.9,
+  "z": -30.8,
+  "yaw": 1.74,
+  "pitch": 0.0
+ },
+ {
+  "name": "prospect-side",
+  "x": 238.7,
+  "z": -34.7,
+  "yaw": 3.339,
+  "pitch": -0.05
+ },
+ {
+  "name": "prospect-close",
+  "x": 240.6,
+  "z": -30.4,
+  "yaw": 1.74,
+  "pitch": 0.0
+ },
+ {
+  "name": "prospect-table",
+  "x": 240.4,
+  "z": -33.7,
+  "yaw": 2.462,
+  "pitch": -0.3
+ }
+]
