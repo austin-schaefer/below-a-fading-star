@@ -360,17 +360,18 @@ const SPRAY_VERT = /* glsl */`
   void main() {
     vec3 wind = normalize(vec3(1.0, 0.0, 0.35));
     float sp = 0.6 + 0.8 * aSeed.w;
-    // a box 30 m across around the foot; each drop rides the wind through it, sinking a little, and wraps
-    vec3 p = (aSeed.xyz - 0.5) * vec3(30.0, 7.0, 30.0) + wind * uWindD * sp;
+    // a box 75 m across around the foot (v4 map: 2.5 times the v2 box, for the taller fall); each drop rides the
+    // wind through it, sinking a little, and wraps
+    vec3 p = (aSeed.xyz - 0.5) * vec3(75.0, 17.5, 75.0) + wind * uWindD * sp;
     p.y -= uTime * (0.08 + 0.12 * aSeed.w);
     p += vec3(sin(uTime * 0.9 + aSeed.x * 40.0), sin(uTime * 1.3 + aSeed.y * 30.0) * 0.5, cos(uTime * 0.8 + aSeed.z * 50.0)) * 0.35;
-    p = mod(p + vec3(15.0, 3.5, 15.0), vec3(30.0, 7.0, 30.0)) - vec3(15.0, 3.5, 15.0);
-    vec3 transformed = uFoot + vec3(p.x, p.y + 3.5, p.z);
+    p = mod(p + vec3(37.5, 8.75, 37.5), vec3(75.0, 17.5, 75.0)) - vec3(37.5, 8.75, 37.5);
+    vec3 transformed = uFoot + vec3(p.x, p.y + 8.75, p.z);
     vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     float depth = -mvPosition.z;
     float rr = length(p.xz);
-    vA = (1.0 - smoothstep(9.0, 16.0, rr)) * smoothstep(0.25, 0.9, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
+    vA = (1.0 - smoothstep(22.5, 40.0, rr)) * smoothstep(0.25, 0.9, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 8.75));
     gl_PointSize = clamp((0.01 + 0.012 * aSeed.w) * uScale / max(depth, 0.1), 1.6, 10.0);
     #include <fog_vertex>
   }`;
@@ -720,7 +721,7 @@ export async function build(ctx) {
   // ================================================================ the fall: rumble zone and spray
   const foot = RV.impact;
   {
-    const n = high ? 600 : 320, rng = ctx.makeRng(9301);
+    const n = high ? 1500 : 800, rng = ctx.makeRng(9301); // v4 map: the box is 2.5 times wider; denser near the foot by vA
     const g = new THREE.BufferGeometry();
     const seed = new Float32Array(n * 4);
     for (let i = 0; i < n * 4; i++) seed[i] = rng();
@@ -742,13 +743,14 @@ export async function build(ctx) {
       const gu = Math.max(0, Math.sin(t * 0.11 + 1.3) * 0.6 + Math.sin(t * 0.047 + 0.4) * 0.5 + 0.05);
       windD += dt * (0.5 + smooth(0.25, 0.85, gu) * 2.2);
       const df = hyp(cam.x - foot.x, cam.z - foot.z);
-      spray.visible = df < 40;
+      spray.visible = df < 100;
       mat.uniforms.uWindD.value = windD; mat.uniforms.uFlicker.value = flick.value;
-      mat.uniforms.uOn.value = 1 - smooth(18, 34, df);
+      mat.uniforms.uOn.value = 1 - smooth(45, 85, df);
       // the rumble: player distance to the middle of the fall against its radius
       const R = ctx.river;
       if (R && R.fall) {
         const F = R.fall;
+        if (!F.v4) { F.v4 = true; F.rumbleRadius = 2 * (F.rumbleRadius || 70); } // v4 map: the taller fall carries twice as far
         const d = Math.hypot(cam.x - F.x, cam.y - F.y, cam.z - F.z);
         const rumble = clamp(1 - d / (F.rumbleRadius || 70), 0, 1);
         R.rumble = rumble;
