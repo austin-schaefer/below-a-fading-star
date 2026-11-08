@@ -162,7 +162,7 @@ function swardMaterial(u) {
           float flRim = pow(1.0 - abs(dot(normalize(normal), -flV)), 2.0);
           outgoingLight += uSunCol * diffuseColor.rgb * vFlT * (0.06 + flBack * (0.9 + 1.6 * flRim));
           // pale in the gloom, as snowdrops are at dusk
-          outgoingLight += diffuseColor.rgb * vFlT * 0.05;
+          outgoingLight += diffuseColor.rgb * vFlT * 0.09;
         }
         #include <opaque_fragment>`);
     unflipNormals(shader);
@@ -319,7 +319,7 @@ export async function build(ctx) {
     for (let o = 0; o < n; o++) for (let c = 0; c < 3; c++) if (Math.abs(state[o * 4 + c]) < 1e8) state[o * 4 + c] -= 100;
     aState.clearUpdateRanges(); aState.needsUpdate = true;
   };
-  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false, positions: pos, settle }; // positions: x, y, z, stem height per flower (tools)
+  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false, positions: pos, drifts, settle }; // positions: x, y, z, stem height per flower (tools)
   const cue = (name, p) => ctx.audio?.cue?.(name, p);
   const whimperPos = new THREE.Vector3();
   const trng = ctx.makeRng(5102);

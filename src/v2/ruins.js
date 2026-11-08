@@ -164,7 +164,9 @@ function openGround(ctx, plan) {
   ctx.scene.add(patch);
 
   // the floor inside the cut is offered to the controls as a walkable surface; nothing under ctx.terrain is touched
-  ctx.addWalkable?.(plan.floorAt);
+  // controls.js today only lets a walkable raise the floor, so this floor (below the terrain) is not yet
+  // followed; { replace: true } asks for the override the coordinator is weighing, and is ignored until then
+  ctx.addWalkable?.(plan.floorAt, { replace: true });
   // the ground as it was drawn before the opening (the patch's surface), for seating things round the rim
   const at = (x, z) => {
     if (x < bx0 || x > bx1 || z < bz0 || z > bz1) return meshHeight(M, P, x, z);

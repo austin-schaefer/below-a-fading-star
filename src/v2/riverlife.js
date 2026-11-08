@@ -207,8 +207,9 @@ function pedlarMaterial(uTime) {
 const GLINT_VERT = /* glsl */`
   attribute vec4 aGl;   // born, life, drift vx, vz
   attribute float aSeed;
+  attribute float aKind;  // 0 a fleck of salt, 1 the shimmer of a pedlar's wings (its position moved each frame)
   uniform float uTime, uScale, uFlicker;
-  varying float vA; varying float vTw;
+  varying float vA; varying float vTw; varying float vKind;
   #include <fog_pars_vertex>
   void main() {
     float age = uTime - aGl.x;
@@ -224,16 +225,29 @@ const GLINT_VERT = /* glsl */`
     vec3 v = normalize(cameraPosition - transformed);
     vTw = 0.45 + 0.55 * pow(abs(sin(aSeed * 91.0 + v.x * 23.0 + v.z * 17.0 + uTime * (0.7 + aSeed))), 6.0);
     gl_PointSize = clamp(0.035 * uScale / max(depth, 0.1), 2.2, 14.0);
+    vKind = aKind;
+    if (aKind > 0.5) {
+      // what the eye catches of a pedlar at twenty paces: the blur of its wings in the low light
+      transformed = position;
+      vA = (0.55 + 0.45 * sin(uTime * 23.0 + aSeed * 40.0)) * smoothstep(2.5, 7.0, depth);
+      gl_PointSize = clamp(0.2 * uScale / max(depth, 0.1), 3.0, 30.0);
+    }
     #include <fog_vertex>
   }`;
 const GLINT_FRAG = /* glsl */`
   uniform float uFlicker;
-  varying float vA; varying float vTw;
+  varying float vA; varying float vTw; varying float vKind;
   #include <fog_pars_fragment>
   void main() {
     if (vA < 0.004) discard;
     vec2 c = (gl_PointCoord - 0.5) * 2.0;
     float r = length(c);
+    if (vKind > 0.5) {
+      float s = 1.0 - smoothstep(0.0, 1.0, r);
+      ${FOG_ATTEN}
+      gl_FragColor = vec4(vec3(0.95, 0.82, 0.68) * s * s * vA * 0.32 * fogAtten * (0.4 + 0.6 * uFlicker), 1.0);
+      return;
+    }
     float core = 1.0 - smoothstep(0.0, 0.45, r);
     float cross = (1.0 - smoothstep(0.0, 0.12, abs(c.x))) * (1.0 - smoothstep(0.3, 1.0, abs(c.y)))
                 + (1.0 - smoothstep(0.0, 0.12, abs(c.y))) * (1.0 - smoothstep(0.3, 1.0, abs(c.x)));
@@ -280,7 +294,7 @@ const WC_FRAG = /* glsl */`
     vec3 c = mix(a, b, k * 0.5);
     // the glow comes up from under the water: strongest over the deepest part, a slow breathing in it
     float glow = exp(-r * r * 0.55) * (0.8 + 0.2 * sin(t * 0.37 + r * 2.3)) + 0.18 * exp(-r * r * 0.12);
-    float lum = 0.55 * uBright;
+    float lum = 0.36 * uBright;
     // dark still water at the rim, so the colour sits in it rather than on it
     vec3 col = vec3(0.006, 0.005, 0.008) + c * glow * lum;
     // a faint skin on the surface, slowly turning
@@ -341,7 +355,7 @@ const SPRAY_VERT = /* glsl */`
     gl_Position = projectionMatrix * mvPosition;
     float depth = -mvPosition.z;
     float rr = length(p.xz);
-    vA = (1.0 - smoothstep(7.0, 15.0, rr)) * smoothstep(0.3, 1.2, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
+    vA = (1.0 - smoothstep(9.0, 16.0, rr)) * smoothstep(0.25, 0.9, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
     gl_PointSize = clamp((0.01 + 0.012 * aSeed.w) * uScale / max(depth, 0.1), 1.6, 10.0);
     #include <fog_vertex>
   }`;
@@ -498,12 +512,13 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- flecks of salt
-  const gPos = new Float32Array(MAX_GLINTS * 3), gGl = new Float32Array(MAX_GLINTS * 4), gSeed = new Float32Array(MAX_GLINTS);
-  for (let i = 0; i < MAX_GLINTS; i++) { gGl[i * 4] = -1e4; gGl[i * 4 + 1] = 1; gSeed[i] = prng(); }
+  const NG = MAX_GLINTS + N;
+  const gPos = new Float32Array(NG * 3), gGl = new Float32Array(NG * 4), gSeed = new Float32Array(NG), gKind = new Float32Array(NG);
+  for (let i = 0; i < NG; i++) { gGl[i * 4] = -1e4; gGl[i * 4 + 1] = 1; gSeed[i] = prng(); gKind[i] = i < MAX_GLINTS ? 0 : 1; }
   const glGeo = new THREE.BufferGeometry();
   const gPosA = new THREE.BufferAttribute(gPos, 3), gGlA = new THREE.BufferAttribute(gGl, 4);
   gPosA.setUsage(THREE.DynamicDrawUsage); gGlA.setUsage(THREE.DynamicDrawUsage);
-  glGeo.setAttribute('position', gPosA); glGeo.setAttribute('aGl', gGlA); glGeo.setAttribute('aSeed', new THREE.BufferAttribute(gSeed, 1));
+  glGeo.setAttribute('position', gPosA); glGeo.setAttribute('aGl', gGlA); glGeo.setAttribute('aSeed', new THREE.BufferAttribute(gSeed, 1)); glGeo.setAttribute('aKind', new THREE.BufferAttribute(gKind, 1));
   const glMat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uFlicker: { value: 1 } }]),
     vertexShader: GLINT_VERT, fragmentShader: GLINT_FRAG, fog: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -592,9 +607,10 @@ export async function build(ctx) {
       SC.setScalar(p.scale);
       M4.compose(p.pos, Q, SC);
       pMesh.setMatrixAt(i, M4);
+      gPos[(MAX_GLINTS + i) * 3] = p.pos.x; gPos[(MAX_GLINTS + i) * 3 + 1] = p.pos.y + 0.01; gPos[(MAX_GLINTS + i) * 3 + 2] = p.pos.z;
       aPh.setZ(i, p.mode === 0 ? 1 : 0.3); aPh.setW(i, p.lean);
     }
-    pMesh.instanceMatrix.needsUpdate = true; aPh.needsUpdate = true;
+    pMesh.instanceMatrix.needsUpdate = true; aPh.needsUpdate = true; gPosA.needsUpdate = true;
     glMat.uniforms.uFlicker.value = flick.value;
     const ud = pMesh.material.userData;
     ud.uFlicker.value = flick.value;
@@ -606,12 +622,14 @@ export async function build(ctx) {
   const EB = RV.eddy || { x: ctx.landmarks.eddy.x, z: ctx.landmarks.eddy.z, y: 0.7, r: 2, ox: 1, oz: 0 };
   const wcPos = new THREE.Vector3(EB.x, EB.y, EB.z);
   const hueNoise = ctx.noise.noise2;
-  // two complementary poles (a rose-magenta and a cold green-yellow) and the hue wandering between them by
-  // noise, never resting at either; the poles themselves drift a little. Mirrored in WC_FRAG by uHue.
+  // two complementary poles, an acid green and a violet, and the hue wandering between them by noise through
+  // the cold side of the wheel (never through the sun's reds and ambers), never resting at either; the poles
+  // themselves drift a little. The shader swirls the complement into it place by place.
   const hueAt = (t) => {
+    t += ctx.wrongColour ? ctx.wrongColour.tOffset : 0;
     const n = hueNoise(t * 0.031, 3.7) * 0.75 + hueNoise(t * 0.097, 11.3) * 0.25;
     const w = 0.5 + 0.5 * clamp(n * 1.3, -1, 1);
-    return fract(0.86 + hueNoise(t * 0.009, 21.1) * 0.05 + 0.5 * w);
+    return fract(0.29 + hueNoise(t * 0.009, 21.1) * 0.04 + 0.5 * w);
   };
   let wcMat;
   {
@@ -657,7 +675,9 @@ export async function build(ctx) {
   wcLight.position.set(EB.x, EB.y + 1.1, EB.z);
   wcLight.name = 'wrong-colour-light';
   scene.add(wcLight);
-  ctx.wrongColour = { hue: hueAt(0), position: wcPos, light: wcLight };
+  // tOffset: shifts its clock, for renders of the hue at other moments
+  ctx.wrongColour = { hue: 0, position: wcPos, light: wcLight, tOffset: 0 };
+  ctx.wrongColour.hue = hueAt(0);
   let wcVisited = false;
   updates.push((dt, t) => {
     const h = hueAt(t);
