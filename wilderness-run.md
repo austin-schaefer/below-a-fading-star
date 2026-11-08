@@ -1,6 +1,6 @@
 # The running order: v3 → v4 → v5, unattended
 
-Austin, 2026-11-08, going to bed: "when v3 is finished, compact, then pick up v4; v4 runs for however many hours, then compact, then v5; set it up so it just continues autonomously." This file is the orchestrator's standing instructions for that run. It survives context compaction and session restarts; the scheduled check-in (every two hours, firing into the orchestrator's session) points here. Delete it when the run is over.
+Austin, 2026-11-08, going to bed: "when v3 is finished, compact, then pick up v4; v4 runs for however many hours, then compact, then v5; set it up so it just continues autonomously." This file is the orchestrator's standing instructions for that run. It survives context compaction and session restarts; the scheduled check-in (hourly, at 23 past, firing into the orchestrator's session) points here. Delete it when the run is over.
 
 ## Sequence
 
@@ -24,4 +24,4 @@ Read the report; run the checks yourself (walk 6/6, audio 39/39, perf, loading 7
 
 ## Check-in behaviour (the scheduled task)
 
-Every two hours: if agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step above. If blocked, notify once and continue with anything that is not blocked. Disable the check-in when v5 has shipped or when Austin says stop.
+Every hour: if agents are running and nothing is blocked, do nothing. If nothing is in flight, pick up the next step above. If blocked, notify once and continue with anything that is not blocked. Disable the check-in when v5 has shipped or when Austin says stop.
