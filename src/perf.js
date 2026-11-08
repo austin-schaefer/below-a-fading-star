@@ -177,6 +177,7 @@ export function createPerf(ctx) {
   function cpu(name) { if (!api.active) return; const now = performance.now(); mod(name).cpu += now - mark; mark = now; }
   function markNow() { if (api.active) mark = performance.now(); }
   function frameEnd() {
+    ctx.gpumem?.frame();
     if (!api.active) return;
     gpuEndFrame();
     const r = renderer.info.render;
@@ -275,7 +276,9 @@ export function createPerf(ctx) {
     }
     lines.push(`${last.calls} calls · ${(last.tris / 1000).toFixed(0)}k tris · ${mem.geometries} geometries · ${mem.textures} textures · ${renderer.info.programs?.length ?? '?'} programs`);
     lines.push('lights ' + (Object.entries(lights).map(([k, v]) => `${k.replace('Light', '')} ${v.visible}/${v.count}`).join(' · ') || 'none'));
-    lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}`);
+    lines.push(`dpr ${renderer.getPixelRatio()} · ${size.css[0]}×${size.css[1]} css · ${size.buffer[0]}×${size.buffer[1]} px · q=${ctx.quality}${ctx.tier ? ` (${ctx.tier.state.source}${ctx.tier.state.adapt ? ', adaptive' : ''})` : ''}`);
+    const gm = ctx.gpumem?.stats();
+    if (gm) lines.push(`gpu memory ${gm.totalMB} MB: textures ${gm.textureMB} · renderbuffers ${gm.renderbufferMB} · canvas ${gm.backbufferMB} · uploads ${gm.uploadsLastFrame}/frame`);
     const st = settings();
     lines.push(`cap ${st.cap || 'off'}${st.idle ? ' (idle ' + st.targetFps + ')' : ''} · shadow redraws ${st.shadows ? (st.shadows.every ? 'every frame' : st.shadows.redraws) : '–'} · point slots ${typeof st.lightSlots === 'object' ? st.lightSlots.active + '/' + st.lightSlots.slots : 'off'} · bloom ×${st.bloomRes} · throttle ${st.throttle ? 'on' : 'off'}`);
     overlay.textContent = lines.join('\n');
@@ -402,7 +405,7 @@ export function createPerf(ctx) {
         ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
         ...(machine ? { machine } : {}),
         settings: settings(),
-        userAgent: navigator.userAgent, quality: ctx.quality, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
+        userAgent: navigator.userAgent, quality: ctx.quality, tier: ctx.tier?.stats() ?? null, gpuMemory: ctx.gpumem?.stats() ?? null, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
         renderSize: size, url: location.search, duration, warmup: warm, pathMetres: Math.round(path.length),
         gpuTimer: gpu.ok, toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
         summary: {
@@ -466,7 +469,8 @@ export function createPerf(ctx) {
       date: new Date().toISOString(), active: api.active,
       ...(current || summarise(win.length ? win : [block])),
       render: { calls: r.calls, triangles: r.tris, points: r.points, lines: r.lines },
-      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null },
+      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null, gpu: ctx.gpumem?.stats() ?? null },
+      tier: ctx.tier?.stats() ?? null,
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
       settings: settings(), ...(machine ? { machine } : {}),
       gpuTimer: gpu.ok,

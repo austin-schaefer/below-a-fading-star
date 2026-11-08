@@ -35,7 +35,7 @@ const EYE_FS = /* glsl */`
 
 export function buildVigilant(ctx, rng) {
   const { terrain, noise } = ctx;
-  const hi = ctx.quality === 'high';
+  const hi = ctx.quality !== 'low';
   
   // seat and facing
   // it sits on the highest point of the crest near its bearing, so its shoulders and head stand

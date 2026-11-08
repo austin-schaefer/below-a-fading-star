@@ -176,7 +176,7 @@ export async function build(ctx) {
   const { terrain, landmarks: L } = ctx;
   const S = L.sward;
   const R = S.r;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const N = high ? 1150 : 450;
   const rng = ctx.makeRng(5101);
   const sunH = new THREE.Vector2(ctx.sun.dir.x, ctx.sun.dir.z).normalize();

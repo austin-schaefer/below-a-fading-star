@@ -118,7 +118,7 @@ function makeLattice(rng, spec, sIndex, struts, webs, quality) {
     struts.push(A, B, [sIndex, thick[1], rng(), 1]);
   }
   // webbing on panels whose faces are open on at least one side
-  const wq = quality === 'high' ? 1 : 0.6;
+  const wq = quality !== 'low' ? 1 : 0.6;
   for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) for (let k = 0; k < nz; k++) {
     if (!present(i, j, k)) continue;
     for (let a = 0; a < 3; a++) for (const side of [0, 1]) {
@@ -153,7 +153,7 @@ function web(rng, o, u, v, su, sv, sIndex, out, rings) {
 }
 
 export function buildLattices(ctx, group, U, rng, skyline) {
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   // The lattices. A: the great one low over the eastern mountains. The rest higher and smaller.
   const aElev = skyline(92) + 13;
   const specs = [

@@ -388,7 +388,7 @@ const SPRAY_FRAG = /* glsl */`
 export async function build(ctx) {
   const { scene, terrain, camera } = ctx;
   const RV = terrain.river;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const cam = camera.position;
   const flick = ctx.sky && ctx.sky.flicker ? ctx.sky.flicker : { value: 1 };
   const cue = (name, pos) => ctx.audio?.cue?.(name, pos);

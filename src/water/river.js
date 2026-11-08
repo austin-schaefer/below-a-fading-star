@@ -240,7 +240,7 @@ const MIST_FRAG = /* glsl */`
 export function buildRiver(ctx, tex) {
   const { scene, terrain, palette } = ctx;
   const RV = terrain.river;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const C = (h) => new THREE.Color(h);
   const meshH = meshHeightSampler(terrain);
   const rng = ctx.makeRng(7301);

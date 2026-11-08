@@ -53,7 +53,7 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
 
   const p = new THREE.Vector3(), last = new THREE.Vector3(Infinity, 0, 0);
   let since = Infinity, sig = 0, maxMove = 0;
-  const T2 = texel * texel;
+  let T2 = texel * texel;
   const stats = { redraws: 0, dynamic: 0, casters: casters.length, near: 0 };
   // a cheap signature of every near caster's placement; it changes when one moves, turns or shows/hides
   function scan() {
@@ -124,5 +124,7 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
     }
     return false;
   }
-  return { update, stats, casters, settings: { hz, dynHz, cull, every, texel } };
+  const settings = { hz, dynHz, cull, every, texel };
+  const setTexel = (t) => { settings.texel = t; T2 = t * t; }; // the tier's shadow map changed size
+  return { update, stats, casters, settings, setTexel };
 }

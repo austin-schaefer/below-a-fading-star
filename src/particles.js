@@ -13,7 +13,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 
 export async function build(ctx) {
   const { scene, terrain, palette, camera } = ctx;
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const q = high ? 1 : 0.5;
   const C = (h) => new THREE.Color(h);
   const L = ctx.landmarks;
