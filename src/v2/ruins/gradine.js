@@ -113,6 +113,7 @@ export function buildGradine(ctx, env) {
   // steep), a tread down where the route goes over a crest (the front range's) into the trough behind it, and a
   // landing where it lies level
   const route = routeUp(G, px, pz, a, TOP_Y + 2);
+  if (!route.reached) console.warn('gradine: the route up the wall did not reach its height; the stair stops short at', route.len.toFixed(0), 'm');
   const along = (sa, out) => {                 // the point and heading on the route at arc length sa (resampled every 0.25 m)
     const k = Math.min(route.n - 2, Math.max(0, Math.floor(sa / 0.25)));
     const t = Math.min(1, Math.max(0, (sa - route.s[k]) / 0.25));
