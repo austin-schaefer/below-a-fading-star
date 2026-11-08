@@ -10,7 +10,13 @@
 // Modules are attributed by building each against forModule(name), a Proxy of ctx that tags its
 // registerUpdate callbacks and the objects it adds to the scene. Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
-import { SPAWN, CAUSEWAY, WATER } from './world.js';
+import { SPAWN, WATER } from './world.js';
+
+// The bench walks the causeway as it was in v3, pinned here (v4 systems) so that v4's reroute of CAUSEWAY
+// (from the saddle to the pit, wilderness-v4-placement.md) leaves bench numbers comparable with v3's.
+const BENCH_CAUSEWAY = [
+  { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
+];
 import { installGpuMem } from './gpumem.js';
 
 const BLOCK_MS = 500; // one sample block
@@ -332,8 +338,8 @@ export function createPerf(ctx) {
     const pts = [{ x: SPAWN.x, z: SPAWN.z }];
     const tarn = WATER.tarn, fen = WATER.fen;
     let near = 0;
-    CAUSEWAY.forEach((p, i) => { if (Math.hypot(p.x - tarn.x, p.z - tarn.z) < Math.hypot(CAUSEWAY[near].x - tarn.x, CAUSEWAY[near].z - tarn.z)) near = i; });
-    for (let i = 0; i <= near; i++) pts.push({ x: CAUSEWAY[i].x, z: CAUSEWAY[i].z });
+    BENCH_CAUSEWAY.forEach((p, i) => { if (Math.hypot(p.x - tarn.x, p.z - tarn.z) < Math.hypot(BENCH_CAUSEWAY[near].x - tarn.x, BENCH_CAUSEWAY[near].z - tarn.z)) near = i; });
+    for (let i = 0; i <= near; i++) pts.push({ x: BENCH_CAUSEWAY[i].x, z: BENCH_CAUSEWAY[i].z });
     const bearing = (c, p) => Math.atan2(p.z - c.z, p.x - c.x);
     const arc = (c, rad, a0, a1) => {
       let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;

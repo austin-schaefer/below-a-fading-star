@@ -15,6 +15,15 @@ import { makeLightSlots } from './lights.js';
 import { makeShadowCadence } from './shadows.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
+import { buildMountains } from './v4/mountains.js';
+import { installKit } from './v4/kit/index.js';
+import { makeRegions, REGION_FILES } from './v4/regions.js';
+
+// Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
+const LIGHT_RIGS = {
+  v3: { name: 'v3', exposure: 1.0, sun: 2.7, hemi: 1.4, hemiSky: '#564e94', hemiGround: '#1a1c14', ambient: 0.6, ambientColor: '#2c2a48' },
+  v4: { name: 'v4', exposure: 1.25, sun: 2.7, hemi: 2.7, hemiSky: '#5a5296', hemiGround: '#2e2c20', ambient: 1.6, ambientColor: '#302d4c' },
+};
 
 const MODULES = [
   ['rocks', () => import('./rocks.js')],
@@ -30,6 +39,10 @@ const MODULES = [
   ['ruins2', () => import('./v2/ruins.js')],
   ['inhabitants2', () => import('./v2/inhabitants.js')],
   ['riverlife2', () => import('./v2/riverlife.js')],
+  // v4 systems: one module per bioregion (src/v4/regions/<file>.js), filled by the region agents
+  ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
+  // v4 systems: the kit's test scene, only when named (?only=kit)
+  ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
 ];
 
 async function start() {
@@ -45,7 +58,7 @@ async function start() {
   // Loading bar: terrain counts as one unit and each module as one; a module reports sub-steps with
   // ctx.progress(label, fraction 0..1) (await it so the bar can paint). Overall is monotonic.
   const showBar = buildLoadBar();
-  const wanted = MODULES.filter(([name]) => (!only || only.split(',').includes(name)) && !skip.includes(name));
+  const wanted = MODULES.filter(([name, , o]) => (only ? only.split(',').includes(name) : !o?.optIn) && !skip.includes(name));
   let settled = 0, within = 0;
   const progress = (label, fraction = within) => {
     within = Math.max(0, Math.min(1, fraction));
@@ -76,7 +89,10 @@ async function start() {
   const pcf = url.searchParams.get('pcf') || 'soft';
   renderer.shadowMap.type = pcf === 'hard' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  // The light rig (v4 systems, v4 Light (b)): the floor comes up so the darkest places are legibly dark rather
+  // than black, the sun and the variance stay. ?light=v3 restores v3's rig for a bisect.
+  const rig = url.searchParams.get('light') === 'v3' ? LIGHT_RIGS.v3 : LIGHT_RIGS.v4;
+  renderer.toneMappingExposure = rig.exposure;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
@@ -107,11 +123,15 @@ async function start() {
 
   // Terrain
   ctx.terrain = buildTerrain(ctx);
+  // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
+  ctx.mountains = buildMountains(ctx);
+  ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
+  installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce
   const sunDir = new THREE.Vector3(SUN.dir.x, SUN.dir.y, SUN.dir.z);
-  const sunLight = new THREE.DirectionalLight(new THREE.Color('#ffb084'), 2.7);
+  const sunLight = new THREE.DirectionalLight(new THREE.Color('#ffb084'), rig.sun);
   sunLight.castShadow = true;
   let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
@@ -121,11 +141,11 @@ async function start() {
   sunLight.shadow.bias = -0.0006; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
   sunLight.shadow.camera.updateProjectionMatrix();
   scene.add(sunLight); scene.add(sunLight.target);
-  const hemi = new THREE.HemisphereLight(new THREE.Color('#564e94'), new THREE.Color('#1a1c14'), 1.4);
+  const hemi = new THREE.HemisphereLight(new THREE.Color(rig.hemiSky), new THREE.Color(rig.hemiGround), rig.hemi);
   scene.add(hemi);
-  const ambient = new THREE.AmbientLight(new THREE.Color('#2c2a48'), 0.6);
+  const ambient = new THREE.AmbientLight(new THREE.Color(rig.ambientColor), rig.ambient);
   scene.add(ambient);
-  ctx.lights = { sun: sunLight, hemi, ambient, sunDir };
+  ctx.lights = { sun: sunLight, hemi, ambient, sunDir, rig };
   ctx.sun.light = sunLight;
   ctx.sun.vec = sunDir;
 
@@ -264,8 +284,8 @@ async function start() {
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
     shadowTarget.applyMatrix4(lightViewInv);
     const f = ctx.sky.flicker.value;
-    sunLight.intensity = 2.7 * f;
-    hemi.intensity = 1.4 * (0.6 + 0.4 * f);
+    sunLight.intensity = rig.sun * f;
+    hemi.intensity = rig.hemi * (0.6 + 0.4 * f);
     scene.fog.color.setStyle(PALETTE.haze).multiplyScalar(0.55 + 0.45 * f);
     ctx.perf.cpu('frame');
     runUpdates(dt, t);

@@ -2,7 +2,8 @@
 // a little head bob, soft cylinder colliders registered by other modules, and touch fallback.
 import * as THREE from 'three';
 import { clamp, smoothstep, hyp } from './noise.js';
-import { SPAWN, WORLD } from './world.js';
+import { SPAWN } from './world.js';
+import { walkLimit } from './v4/mountains.js'; // v4 systems: the saddle's walkable wedge
 
 const WALK = 3.6, HURRY = 6.6;      // m/s (4.2/7.6 in v2 was a shade too fast, Austin)
 const STEPS_WALK = 1.7, STEPS_HURRY = 2.4; // footsteps per second at full speed
@@ -274,10 +275,9 @@ export function buildControls(ctx) {
 
   // Put the player at (x, z) at ground height: inside the region, pushed out of colliders.
   function placeAt(x, z) {
-    const limit = WORLD.regionRadius + 48;
     for (let iter = 0; iter < 8; iter++) {
       let moved = false;
-      const rr = Math.hypot(x, z);
+      const rr = Math.hypot(x, z), limit = walkLimit(x, z);
       if (rr > limit) { x *= limit / rr; z *= limit / rr; moved = true; }
       for (const c of state.colliders) {
         const dx = x - c.x, dz = z - c.z, rad = c.r + 0.6;
@@ -356,9 +356,9 @@ export function buildControls(ctx) {
 
     let nx = state.pos.x + state.vel.x * dt;
     let nz = state.pos.z + state.vel.z * dt;
-    // region boundary (the mountains are impassable)
+    // region boundary (the mountains are impassable but for the saddle's wedge, v4 systems)
     const rr = hyp(nx, nz);
-    const limit = WORLD.regionRadius + 48;
+    const limit = walkLimit(nx, nz);
     if (rr > limit) { nx *= limit / rr; nz *= limit / rr; }
     // colliders
     for (const c of state.colliders) {
