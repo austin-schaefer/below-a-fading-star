@@ -3,6 +3,10 @@
 // about the Lattice; outliers have crept far down the causeway, up a boulder beside it, and up the
 // columns of the Sunken Court. Each tile creeps along a slow flow field at a few cm/s, now and then
 // hops; within 6 m of you they stop, and their traces brighten, as if attending. One InstancedMesh a colony.
+// The colonies spread while you watch: every few seconds one sends out a runner, a thin lit trace that
+// grows outward from its edge over two to four seconds, and a new tile settles at its end. Each colony has
+// a ceiling; at the ceiling the oldest tiles in its interior go dark and are taken up again at the edge,
+// so it never runs away. All the runners share one InstancedMesh of thin additive segments.
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { makeGround, approach } from './kit.js';
@@ -21,15 +25,15 @@ function tileMaterial(ctx, center) {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
-        attribute float aSeed; attribute float aAware;
-        varying vec3 vLoc; varying vec3 vN0; varying float vSeed; varying float vAware; varying vec3 vWP;`)
+        attribute float aSeed; attribute float aAware; attribute float aFresh;
+        varying vec3 vLoc; varying vec3 vN0; varying float vSeed; varying float vAware; varying vec3 vWP; varying float vFresh;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-        vLoc = position; vN0 = normal; vSeed = aSeed; vAware = aAware;
+        vLoc = position; vN0 = normal; vSeed = aSeed; vAware = aAware; vFresh = aFresh;
         vWP = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform float uTime; uniform float uGlow; uniform vec2 uCenter; uniform vec3 uDeep; uniform vec3 uHot;
-        varying vec3 vLoc; varying vec3 vN0; varying float vSeed; varying float vAware; varying vec3 vWP;
+        varying vec3 vLoc; varying vec3 vN0; varying float vSeed; varying float vAware; varying vec3 vWP; varying float vFresh;
         float th(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float fpTrace = 0.0; float fpMetal = 0.7; float fpRough = 0.3;
@@ -54,6 +58,7 @@ function tileMaterial(ctx, center) {
             fpTrace = max(tr, edge * 0.22);
             diffuseColor.rgb *= mix(1.0, 0.45, die);
             fpRough = mix(0.32, 0.12, die);
+            fpTrace += max(vFresh, 0.0) * 0.35 * (1.0 - die);
           } else if (abs(vN0.z) > 0.5) {
             // long sides: a comb of tarnished gilt pins
             float pin = step(0.5, fract(vLoc.x * 11.0 + 0.25)) * step(-0.2, vLoc.y);
@@ -67,8 +72,11 @@ function tileMaterial(ctx, center) {
         {
           float pulse = 0.5 + 0.5 * sin(uTime * 1.1 - length(vWP.xz - uCenter) * 0.45 + vSeed * 0.8);
           vec3 ec = mix(uDeep, uHot, pulse * 0.7 + vAware * 0.3);
-          totalEmissiveRadiance += ec * fpTrace * uGlow * (0.35 + 1.1 * pulse * pulse + vAware * 1.8);
-        }`);
+          float fresh = max(vFresh, 0.0), dim = max(-vFresh, 0.0);
+          ec = mix(ec, uHot, fresh * 0.6);
+          totalEmissiveRadiance += ec * fpTrace * uGlow * (0.35 + 1.1 * pulse * pulse + vAware * 1.8 + fresh * 2.4) * (1.0 - dim);
+        }`)
+      .replace('#include <lights_fragment_begin>', 'diffuseColor.rgb *= 1.0 - 0.55 * max(-vFresh, 0.0);\n#include <lights_fragment_begin>');
   };
   return m;
 }
