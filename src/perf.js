@@ -384,7 +384,7 @@ export function createPerf(ctx) {
   function showSummary(res) {
     const s = res.summary, el = document.createElement('div');
     el.id = 'perf-bench';
-    const g = s.gpuMs === 'n/a' ? 'n/a (no timer query in this browser)' : s.gpuMs ? Object.entries(s.gpuMs).map(([k, v]) => `${k} ${v}`).join(' · ') + ' ms' : 'no results';
+    const g = s.gpuMs === 'n/a' ? 'n/a (no timer query in this browser)' : s.gpuMs ? Object.entries(s.gpuMs).filter(([k]) => k !== 'available' && k !== 'frames').map(([k, v]) => `${k} ${v}`).join(' · ') + ` ms (${s.gpuMs.frames} frames timed)` : 'no results';
     const rng = (a, k = 1) => (a ? `${Math.round(a[0] / k)}–${Math.round(a[1] / k)}` : '–');
     el.innerHTML = '<h2>Bench done</h2><pre></pre><div class="row"><button type="button" data-a="dl">Download JSON</button><button type="button" data-a="copy">Copy JSON</button><button type="button" data-a="close">Close</button></div>';
     el.querySelector('pre').textContent = [

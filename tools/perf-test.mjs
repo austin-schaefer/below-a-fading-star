@@ -38,6 +38,13 @@ const r = await page.evaluate(() => {
   return out;
 });
 await page.waitForTimeout(1500);
+// the same page as if the GPU timer extension were missing: gpu reads n/a, no errors
+const page2 = await browser.newPage({ viewport: { width: 640, height: 360 } });
+page2.on('pageerror', (e) => errors.push('pageerror (gpu=0): ' + e.message));
+page2.on('console', (m) => { if (m.type() === 'error') errors.push('console (gpu=0): ' + m.text().slice(0, 300)); });
+await page2.goto(url.replace(/bench=\d+/, 'bench=3') + '&gpu=0', { waitUntil: 'load', timeout: 60000 });
+await page2.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 1000 });
+const r2 = await page2.evaluate(() => ({ rep: window.__fp.perf.report(), text: document.getElementById('perf').textContent, sum: document.querySelector('#perf-bench pre')?.textContent || '' }));
 await browser.close();
 const rep = r.report, bench = rep.bench || {};
 const worldMods = Object.keys(rep.modules).filter((k) => rep.modules[k].world);
@@ -48,7 +55,8 @@ const checks = [
   ['bench JSON has ua, quality, dpr, size, date', !!(bench.userAgent && bench.quality && bench.dpr && bench.renderSize && bench.date)],
   ['report calls == renderer.info.render.calls', rep.render.calls === r.infoCalls && r.infoCalls > 0],
   ['report tris == renderer.info.render.triangles', rep.render.triangles === r.infoTris && r.infoTris > 0],
-  ['gpu degrades to n/a without the timer extension', rep.gpuTimer || rep.gpu.available === false],
+  ['gpu per pass when the timer extension exists', !rep.gpuTimer || rep.gpu.available === true],
+  ['gpu reads n/a without the extension (?gpu=0)', r2.rep.gpuTimer === false && r2.rep.gpu.available === false && /gpu n\/a/.test(r2.text) && r2.rep.bench?.summary?.gpuMs === 'n/a' && /n\/a/.test(r2.sum)],
   ['cpu split by module', Object.keys(rep.cpu.modules).length > 1],
   ['a toggle row for every loaded module', worldMods.length > 0 && worldMods.every((m) => r.toggleRows.includes(m))],
   ['bloom, shadows, profiler rows', ['bloom', 'shadows', 'profiler'].every((m) => r.toggleRows.includes(m))],
