@@ -337,7 +337,11 @@ function buildGlyphs(ctx, lintel) {
   const geo = A.build();
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), PITCH * GLYPHS);
   const uniforms = { uShift: { value: 0 }, uN: { value: GLYPHS }, uPitch: { value: PITCH } };
-  const mt = new THREE.MeshStandardMaterial({ color: new THREE.Color('#9a8c7c'), roughness: 0.9, metalness: 0 });
+  // pale worn relief; a faint glimmer that swells while the sun gutters, so the row can be read in the
+  // shadow at the foot of the cut and seems to stir just before it moves
+  const mt = new THREE.MeshStandardMaterial({ color: new THREE.Color('#bcae9a'), roughness: 0.85, metalness: 0, emissive: new THREE.Color('#2a1d16') });
+  const flick = ctx.sky?.flicker || { value: 1 };
+  ctx.registerUpdate(() => { mt.emissiveIntensity = 0.6 + 2.6 * (1 - flick.value); });
   mt.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader

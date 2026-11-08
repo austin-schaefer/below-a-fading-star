@@ -3,10 +3,12 @@
 //   region in a dead straight line, slowly, and they wink out one by one before it reaches the
 //   far side.
 // - The shard belt: a thin arc of glinting fragments from the east round through the south, as if
-//   a small moon broke there long ago. It is only there while the sun gutters.
+//   a small moon broke there long ago. It shows only while the sun gutters, and not every time:
+//   the second gutter, then about one in three, so the gutter is not always a set piece.
 // - The still star: one star in the north-north-east that moves, but only while nothing else
 //   does. Stand still long enough and it begins to creep; take a step and it stops dead.
-// Draw calls: procession and star (one Points), shard belt (one Points).
+// Draw calls: procession and star (one Points), shard belt (one Points). No triangles.
+// Audio: 'procession' as the file appears, placed 300 m toward its leader (audio.js may ignore it).
 import * as THREE from 'three';
 import { SKY_GLSL, withSky, dirFrom } from './common.js';
 
@@ -72,7 +74,7 @@ export function buildOmens(ctx, group, U, rng) {
   PS.a.aCol.setXYZ(NP, sc.r, sc.g, sc.b); PS.a.aSize.setX(NP, 4.0 * pr); PS.a.aSeed.setX(NP, 0.5);
 
   const pro = { t0: -1e6, dur: 150, next: 100 + rng() * 80, a: new THREE.Vector3(), axis: new THREE.Vector3(), angle: 2, gap: 1.1 * Math.PI / 180, out: new Float32Array(NP) };
-  const pv = new THREE.Vector3(), pb = new THREE.Vector3();
+  const pv = new THREE.Vector3(), pb = new THREE.Vector3(), cueAt = new THREE.Vector3();
   function startProcession(t, mid = null) {
     // a straight line across the high sky: a great circle between two low points, peaking 40-65 deg up
     const b0 = rng() * 360, peak = 40 + rng() * 25;
@@ -93,6 +95,10 @@ export function buildOmens(ctx, group, U, rng) {
     // the order they go out in, and when: from a third of the way over, one by one
     const order = [...Array(NP).keys()].sort(() => rng() - 0.5);
     order.forEach((k, j) => { pro.out[k] = 0.32 + j * 0.065 + rng() * 0.03; });
+    pv.copy(pro.a).applyAxisAngle(pro.axis, pro.angle * Math.max(0, (t - pro.t0) / pro.dur));
+    const cp = ctx.camera.position;
+    cueAt.set(cp.x + pv.x * 300, cp.y + pv.y * 300, cp.z + pv.z * 300);
+    ctx.audio?.cue?.('procession', cueAt);
   }
   function updateProcession(dt, t) {
     pro.next -= dt;
@@ -163,14 +169,21 @@ export function buildOmens(ctx, group, U, rng) {
     const big = i === 7 ? 7.5 : 2.0 + Math.pow(rng(), 5) * 3.0;
     BS.a.aSize.setX(i, big * pr);
     BS.a.aSeed.setX(i, rng());
-    beltI[i] = (i === 7 ? 1.0 : 0.32 + Math.pow(rng(), 3) * 0.8) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
+    beltI[i] = 0.6 * (i === 7 ? 1.0 : 0.32 + Math.pow(rng(), 3) * 0.8) * smooth(u, 0.02, 0.12) * (1 - smooth(u, 0.85, 1));
   }
   const beltDir = pv.copy(A).applyAxisAngle(bAxis, span * 0.45).clone();
-  let beltShown = 0;
+  // which gutters it shows in: decided at each gutter's onset (from the omens' own stream)
+  const belt = { shown: 0, gutters: 0, inGutter: false, thisOne: false, force: null };
   function updateBelt(dt) {
-    const gut = THREE.MathUtils.clamp((0.86 - U.uFlicker.value) / 0.5, 0, 1);
-    const target = gut * gut;
+    const f = U.uFlicker.value;
+    if (!belt.inGutter && f < 0.8) { belt.inGutter = true; belt.gutters++; belt.thisOne = belt.gutters === 2 || (belt.gutters > 2 && rng() < 0.33); }
+    else if (belt.inGutter && f > 0.95) belt.inGutter = false;
+    const gut = THREE.MathUtils.clamp((0.86 - f) / 0.5, 0, 1);
+    const on = belt.force ?? belt.thisOne;
+    const target = on ? gut * gut : 0;
+    let beltShown = belt.shown;
     beltShown += (target - beltShown) * Math.min(1, dt * (target > beltShown ? 3 : 0.7));
+    belt.shown = beltShown;
     BS.m.visible = beltShown > 0.003;
     if (!BS.m.visible) return;
     const ia = BS.a.aI.array;
@@ -189,7 +202,8 @@ export function buildOmens(ctx, group, U, rng) {
   }
 
   const api = {
-    procession: pro, star, startProcession,
+    procession: pro, star, startProcession, belt,
+    showBelt: (on = true) => { belt.force = on; },
     dirs: {
       procession: () => { const f = Math.max(0, ((ctx.skylife?.uniforms.uT.value ?? 0) - pro.t0) / pro.dur); return pv.copy(pro.a).applyAxisAngle(pro.axis, pro.angle * Math.min(1, f)).clone(); },
       star: () => star.dir.clone(), shards: () => beltDir.clone(),

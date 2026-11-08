@@ -81,7 +81,11 @@ export function buildCutting(ctx, env) {
       const u = -HALF + i * (HALF * 2 / NU), vt = topAt(u);
       const back = r / ROWS * 3.2;
       const o = (0.08 + 0.1 + 0.06 * ctx.noise.noise2(u * 3.1, vt * 3.1)) - 0.5 * Math.pow(Math.abs(u) / HALF, 3) - back;
-      pos.push(...P(u, vt + back * 0.55 + (r ? 0.05 : 0), o));
+      // the cap rolls back from the lip and goes down under the bank's own turf, wherever that lies
+      const [qx, , qz] = P(u, 0, o);
+      const yLip = Yb + vt + 0.05, yBank = G.at(qx, qz) - 0.25;
+      const k = smooth(0, 1, r / ROWS);
+      pos.push(qx, r === 0 ? yLip : Math.min(yLip + 0.15, yLip + (yBank - yLip) * k), qz);
     }
     const top0 = NV * (NU + 1);
     for (let i = 0; i < NU; i++) {

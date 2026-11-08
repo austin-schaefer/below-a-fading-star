@@ -178,14 +178,14 @@ export function buildGradine(ctx, env) {
   const haze = [];
   for (let i = 50; i < N; i += 3) {
     const s = steps[i], t = (i - 50) / (N - 50);
-    haze.push({ x: s.x + (rng() - 0.5) * 3, y: s.y + 0.8 + rng() * 1.5, z: s.z + (rng() - 0.5) * 3, size: 5 + 7 * t + rng() * 3, alpha: 0.12 + 0.4 * t * t, squash: 0.35 + rng() * 0.15 });
+    haze.push({ x: s.x + (rng() - 0.5) * 3, y: s.y + 0.8 + rng() * 1.5, z: s.z + (rng() - 0.5) * 3, size: 5 + 7 * t + rng() * 3, alpha: 0.08 + 0.26 * t * t, squash: 0.35 + rng() * 0.15 });
   }
   const top = steps[N - 1], fxT = Math.cos(top.a), fzT = Math.sin(top.a);
   for (let k = 0; k < 8; k++) {
     const d = 2 + k * 3.5;
-    haze.push({ x: top.x + fxT * d + (rng() - 0.5) * 6, y: top.y + d * 1.1 + rng() * 2, z: top.z + fzT * d + (rng() - 0.5) * 6, size: 12 + rng() * 8, alpha: 0.5 + rng() * 0.15, squash: 0.4 });
+    haze.push({ x: top.x + fxT * d + (rng() - 0.5) * 6, y: top.y + d * 1.1 + rng() * 2, z: top.z + fzT * d + (rng() - 0.5) * 6, size: 12 + rng() * 8, alpha: 0.28 + rng() * 0.1, squash: 0.4 });
   }
-  env.meshes.push(hazeMesh(ctx, haze, new THREE.Color('#7d6672'), 'ruins-gradine-haze'));
+  env.meshes.push(hazeMesh(ctx, haze, new THREE.Color('#6a5864'), 'ruins-gradine-haze'));
 
   // ---- colliders: the rock stub at the base, and the flight while it is within reach ----
   for (let u = -W / 2 - 0.4; u <= W / 2 + 0.41; u += 0.55) {

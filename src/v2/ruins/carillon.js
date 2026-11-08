@@ -52,7 +52,7 @@ export function buildCarillon(ctx, env) {
   const B = new Builder(ctx.noise);
   const A = new Acc(null, 'aPolish');
   const colors = [];
-  const cPatina = new THREE.Color('#24473a'), cDark = new THREE.Color('#13201a'), cBright = new THREE.Color('#c08a52');
+  const cPatina = new THREE.Color('#3c7a62'), cDark = new THREE.Color('#13201a'), cBright = new THREE.Color('#d9a066');
   const up = new THREE.Vector3(0, 1, 0), n = new THREE.Vector3(), q = new THREE.Quaternion(), qy = new THREE.Quaternion(), m4 = new THREE.Matrix4(), s1 = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
   const R = 0.62;                                // a touch larger than the causeway pavers, so it covers one
   const TOP = 0.068;                             // the paver profile's crown
@@ -99,7 +99,7 @@ export function buildCarillon(ctx, env) {
 
   const geo = A.build();
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
-  const uniforms = { uSheen: { value: 0.8 }, uSheenFlicker: { value: 1 }, uSheenSun: { value: new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z) } };
+  const uniforms = { uSheen: { value: 1.4 }, uSheenFlicker: { value: 1 }, uSheenSun: { value: new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z) } };
   const mt = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.5 });
   mt.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
@@ -108,8 +108,8 @@ export function buildCarillon(ctx, env) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPolish = aPolish;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vPolish; uniform float uSheen, uSheenFlicker; uniform vec3 uSheenSun;')
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.82, 0.28, vPolish);')
-      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.15, 0.9, vPolish);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(0.8, 0.32, vPolish);')
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = mix(0.1, 0.55, vPolish);')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + SKY_SHEEN.replace('uSheen *', 'uSheen * (0.1 + vPolish) *'));
   };
   mt.customProgramCacheKey = () => 'fp-ruins-bronze-caps';
