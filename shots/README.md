@@ -32,6 +32,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 17 | v3 stage 3: the medium tier (before = high, after = medium) and the lean canvas |
 | 18 | The v4 master placement plan: every site for v4, v5 and v6 on the map, and the regions alone |
 | 19 | v3 stage 3: vegetation and materials (terrain bands, far grass and reed LOD, the water band, the chunk scan, grass by tier) |
+| 20 | v2.2: the phone controls, a hop button and a mute button (renumbered from 15 when v3 merged) |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
