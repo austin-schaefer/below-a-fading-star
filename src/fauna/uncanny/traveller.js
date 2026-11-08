@@ -2,7 +2,7 @@
 // rides a metre above the causeway, his face a gilt mask under a towering wrapped headdress. Behind him,
 // on a sagging rope, a covered wagon heaped with treasure floats on a cushion of its own, its useless wheels
 // turning anyway, a lantern swinging from its pole. They go the length of the causeway and back, very
-// slowly. Come within 20 m and he turns his head to you and raises one hand, once; then looks ahead again.
+// slowly, stopping a moment on the Carillon Flags each time he crosses them. Come within 20 m and he turns his head to you and raises one hand, once; then looks ahead again.
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, makeGround, approach, angDiff } from './kit.js';
@@ -331,12 +331,28 @@ export function buildTraveller(ctx, U) {
     wagon.rotation.set(pitch + Math.sin(t * 0.6) * 0.02, S.yawW, Math.sin(t * 0.47 + 2) * 0.035, 'YXZ');
     colT.x = trav.position.x; colT.z = trav.position.z; colW.x = wagon.position.x; colW.z = wagon.position.z;
   }
+  // the Carillon Flags (built by ruins2, perhaps after us): he stops a moment on them, as if listening
+  let flags = null, flagsT = 0, pauseT = 0, pausedHere = false;
+  function flagsCentre() {
+    const caps = ctx.carillon?.caps;
+    if (!caps || !caps.length) return null;
+    let x = 0, z = 0; for (const c of caps) { x += c.x; z += c.z; }
+    return { x: x / caps.length, z: z / caps.length };
+  }
   function update(dt, t) {
     const dx = cam.x - trav.position.x, dz = cam.z - trav.position.z, dist = Math.hypot(dx, dz);
+    if (!flags && (flagsT -= dt) <= 0) { flagsT = 2; flags = flagsCentre(); }
+    if (flags) {
+      const fd = Math.hypot(trav.position.x - flags.x, trav.position.z - flags.z);
+      if (fd > 14) pausedHere = false;
+      else if (!pausedHere && fd < 1.6) { pausedHere = true; pauseT = 3.2; }
+    }
+    if (pauseT > 0) pauseT -= dt;
+    S.pausing = pauseT > 0;
     // wait for anyone standing in the way
     const ahead = (dx * Math.sin(S.yawT) + dz * Math.cos(S.yawT));
     const blocked = dist < 2.6 && ahead > 0;
-    const target = S.hold || blocked ? 0 : 0.8;
+    const target = S.hold || blocked || pauseT > 0 ? 0 : 0.8;
     mat.userData.uT.value = t; matD.userData.uT.value = t;
     S.speed = approach(S.speed, target, 1.2, dt);
     S.s += S.speed * dt;

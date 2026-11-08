@@ -29,7 +29,7 @@ const EYE_FS = /* glsl */`
   varying float vFog;
   void main() {
     vec2 q = gl_PointCoord - 0.5; float r2 = dot(q, q) * 4.0;
-    float l = exp(-r2 * 10.0) + exp(-r2 * 2.5) * 0.12;
+    float l = exp(-r2 * 7.0) + exp(-r2 * 2.5) * 0.12;
     gl_FragColor = vec4(uCol * l * uGlint * vFog, 1.0);
   }`;
 
@@ -196,7 +196,7 @@ export function buildVigilant(ctx, rng) {
   const eyeAttr = new THREE.BufferAttribute(eyePos, 3);
   eg.setAttribute('position', eyeAttr);
   const eyeMat = new THREE.ShaderMaterial({
-    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(4.0) }, uGlint: { value: 0 }, uSize: { value: 4.5 * ctx.renderer.getPixelRatio() } },
+    uniforms: { uCol: { value: new THREE.Color('#ffe2b0').multiplyScalar(4.0) }, uGlint: { value: 0 }, uSize: { value: 6.5 * ctx.renderer.getPixelRatio() } },
     vertexShader: EYE_VS, fragmentShader: EYE_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
   const eyes = new THREE.Points(eg, eyeMat);

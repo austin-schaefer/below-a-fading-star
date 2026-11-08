@@ -1,4 +1,4 @@
-// The man in the cloak of eyes: a tall hooded figure standing on the open moor, his cloak sewn thick with
+// The man in the cloak of eyes: a tall hooded figure standing before the Wayside Shrine, his cloak sewn thick with
 // eyes. Every eye follows you, each with its own lag and its own small restlessness; they blink in waves
 // that climb from hem to hood. He faces the sun until you come within 40 m, then turns, slowly, to you.
 // When the sun gutters every eye shuts at once. He never moves from his spot.
@@ -134,11 +134,26 @@ export function buildCloak(ctx, U) {
   const n2 = noise.noise2;
   const low = ctx.quality === 'low';
 
-  // the spot: a rise of open moor ~45 m north of the causeway, in sight from nearly every step of the road
-  // between the castle and the stones (checked by line of sight from causeway points within 110 m)
-  const cands = [[-86, -48], [-80, -54], [-86, -42], [-70, -38]];
-  let sx = -86, sz = -48;
-  for (const [x, z] of cands) if (U.rules.okStatic(x, z) && terrain.causewayDistance(x, z) > 30) { sx = x; sz = z; break; }
+  // the spot: before the Wayside Shrine. He stands about 6 m out from the niche, on the side away from the
+  // sun, so that walking up from the causeway you see him from behind with the shrine and the sun beyond,
+  // and he faces the sun over the shrine. The shrine is built by the structures module, which may finish
+  // after us: until its note appears we place him against the landmark's centre and move him once it does.
+  const SH = ctx.landmarks.shrine;
+  const sunYaw = Math.atan2(ctx.sun.dir.x, ctx.sun.dir.z);
+  const spot = (cx, cz) => {
+    // the niche sits 4.2 m east and 1.2 m south of the cell's centre; try a fan of points round "away from the sun"
+    const nx = cx + 4.2, nz = cz + 1.2;
+    const away = sunYaw + Math.PI;
+    for (const da of [0, -0.3, 0.3, -0.6, 0.6, -0.9, 0.9]) for (const d of [6, 6.6, 5.6, 7.2]) {
+      const x = nx + Math.sin(away + da) * d, z = nz + Math.cos(away + da) * d;
+      if (Math.hypot(x - cx, z - cz) < 5.5) continue; // clear of the cell's ring
+      if (U.rules.okFoot(x, z)) return [x, z];
+    }
+    return [nx + Math.sin(away) * 6, nz + Math.cos(away) * 6];
+  };
+  const shrineNote = () => ctx.structures?.notes?.shrine || null;
+  let placedFrom = shrineNote();
+  let [sx, sz] = placedFrom ? spot(placedFrom.x, placedFrom.z) : spot(SH.x - 4.2, SH.z - 1.2);
 
   // ---- body: cloak, hood, sleeves. Coal-black, matte; only the eyes catch light.
   const P = new Painter(['aSway']);
@@ -254,18 +269,25 @@ export function buildCloak(ctx, U) {
 
   const g = new THREE.Group();
   g.add(body, eyes);
-  const gy = ground.at(sx, sz) - 0.04;
-  g.position.set(sx, gy, sz);
-  const sunYaw = Math.atan2(ctx.sun.dir.x, ctx.sun.dir.z);
+  g.position.set(sx, ground.at(sx, sz) - 0.04, sz);
   g.rotation.y = sunYaw;
   scene.add(g);
-  ctx.addCollider({ x: sx, z: sz, r: 0.65 });
+  const collider = { x: sx, z: sz, r: 0.65 };
+  ctx.addCollider(collider);
+  let lookT = 0;
+  function moveTo(x, z) { g.position.set(x, ground.at(x, z) - 0.04, z); collider.x = x; collider.z = z; }
 
   const state = { position: g.position, closed: false, distance: 99, facingPlayer: false };
   const cam = camera.position;
   let closedPrev = false;
   function update(dt, t) {
     bodyMat.userData.uT.value = t;
+    // the shrine's own position, once the structures module has built it (looked for during the first minute)
+    if (!placedFrom && t < 60 && (lookT -= dt) <= 0) {
+      lookT = 1;
+      const n = shrineNote();
+      if (n) { placedFrom = n; const p = spot(n.x, n.z); moveTo(p[0], p[1]); }
+    }
     const dx = cam.x - g.position.x, dz = cam.z - g.position.z, dist = Math.hypot(dx, dz);
     state.distance = dist;
     // the figure: toward the sun, or toward you when you are near; never quickly
