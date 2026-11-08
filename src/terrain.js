@@ -695,7 +695,7 @@ export function buildTerrain(ctx) {
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         totalEmissiveRadiance += vec3(0.02, 0.04, 0.07) * vIce;`);
-    injectAnnals(shader); // v5 wonders: AK the Annals round the wall, 100-140 m up (src/v5/annals.js)
+    injectAnnals(shader); // v5 wonders: AK the Annals round the wall, 110-130 m up (src/v5/annals.js)
   };
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
