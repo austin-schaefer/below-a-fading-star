@@ -11,7 +11,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `atmosphere.js` | global fog patch: height fog + sun in-scatter on every fogged material |
 | `sky.js` | sky dome, sun, moon, stars, high cloud, the sun's guttering |
 | `controls.js` | first-person movement, colliders, touch stick, look and hop |
-| `post.js` | bloom, crepuscular rays, grade, vignette, grain |
+| `post.js` | the chain after the scene: bloom to its composite (no blend), the crepuscular rays at a quarter size while the sun is in view, and one full-size finish pass to the canvas (bloom added, rays, FXAA, grade, wade, vignette, grain, tone mapping, sRGB); `?post=v3` the three passes as before |
 | `hud.js` | title card, landmark names, the title card's loading bar (fed by `ctx.progress(label, fraction)`; "Go out" enables on `body.ready`) |
 | `vegetation.js` | grass, heather, reeds, trees, fungi, crystal lattice and its mother crystal (`vegetation/mother.js`); `vegetation/plants.js` packs 24 m chunks lazily into one buffer per kind, and grass and reeds cross to their far clumps over 8 m round 60 m and 50 m (`?plantfade=0`), one kind's repack a frame by `ctx.packToken` (`?packstep=6`) |
 | `structures.js` | keep, tower, stones, causeway paving, court ruins, byre, cairns; `structures/keep.js` the v5 recast of Carcanet Keep, `structures/keep/v2.js` the v4 keep (`?keep=v2`); `structures/court.js` the v5 recast of the Sunken Court, `structures/court/v2.js` the v4 court (`?court=v2`); `structures/arches.js` the v5 recast of the Arcature (a stone armillary), `structures/arches/v2.js` the earlier arch-nest (`?arcature=v2`) |
