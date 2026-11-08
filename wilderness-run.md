@@ -29,6 +29,10 @@ Between stages: curate `shots/wip/` (the curation brief), write the `RELEASES.md
 - Budgets and the tone notes in each brief are binding. When a brief and a render disagree, the render is re-done, not the brief.
 - Stop and notify (phone, once) rather than push on when: an agent fails the same task twice; CI is red for a reason outside the diff; anything would delete or rewrite history; the live site is broken after a merge (roll forward with a fix, never force-push).
 
+## Pace: the container is the bottleneck
+
+The cloud container has four CPUs and renders WebGL in software. One render takes minutes, a test suite ten to fifty, and every parallel headless browser slows the others, so hand-backs run one to two hours each. Rules for the night: at most two implementation agents at once; wip renders at half size (`--scale 0.5` or 1280×720), full size only for the renders that go into `shots/`; an agent runs the test for the module it touched and the orchestrator runs the full suite once per merge, not per agent; the orchestrator does not run its own renders or suites while two agents are rendering.
+
 ## Protocol per hand-back
 
 Read the report; run the checks yourself (walk 6/6, audio 39/39, perf, loading 7/7, grass-flicker 3/3, artifact build); look at the renders; copy the best into `shots/`; commit. Same-tree agents never commit; worktree agents commit on their branch and the orchestrator merges.
