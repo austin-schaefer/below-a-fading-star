@@ -1,0 +1,51 @@
+{
+ "extra": "",
+ "before": "__fp.scene.traverse(o=>{if(o.material&&o.material.uniforms&&o.material.uniforms.uFar)o.material.uniforms.uFar.value.set(1e9,2e9)})",
+ "after": "__fp.scene.traverse(o=>{if(o.material&&o.material.uniforms&&o.material.uniforms.uFar)o.material.uniforms.uFar.value.set(100,120)})",
+ "method": "same page, alternating every 2.3 s, 6 samples each, median of the 2 s rolling GPU pass time (render minus shadow = main pass); calls and tris from renderer.info for the last frame",
+ "date": "2026-11-08T06:56:33.423Z",
+ "views": {
+  "spawn": {
+   "before": {
+    "mainMs": 9.525,
+    "renderMs": 10.905,
+    "calls": 112,
+    "tris": 1805366
+   },
+   "after": {
+    "mainMs": 9.425,
+    "renderMs": 11.07,
+    "calls": 113,
+    "tris": 1805464
+   }
+  },
+  "fen": {
+   "before": {
+    "mainMs": 9.95,
+    "renderMs": 10.07,
+    "calls": 110,
+    "tris": 2024366
+   },
+   "after": {
+    "mainMs": 10.11,
+    "renderMs": 10.23,
+    "calls": 110,
+    "tris": 2024366
+   }
+  },
+  "sun": {
+   "before": {
+    "mainMs": 8.875,
+    "renderMs": 10.035,
+    "calls": 128,
+    "tris": 2004144
+   },
+   "after": {
+    "mainMs": 8.85,
+    "renderMs": 10.05,
+    "calls": 103,
+    "tris": 1697136
+   }
+  }
+ }
+}

@@ -61,5 +61,6 @@ export async function build(ctx) {
   ctx.log('vegetation lattice:', JSON.stringify(lattice.stats));
   ctx.log('vegetation plants:', JSON.stringify(plants.stats()));
   // for the screenshot tool and the console
+  window.__vegParts = { plants, trees, fungi, lattice };
   window.__vegStats = () => ({ plants: plants.stats(), trees: trees.stats, lattice: lattice.stats, fungi: { toadstools: fungi.count, pods: fungi.pods } });
 }
