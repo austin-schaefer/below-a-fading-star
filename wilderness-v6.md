@@ -1,8 +1,8 @@
-# Wilderness v7: performance and visible artefacts
+# Wilderness v6: performance and visible artefacts
 
-Austin, 2026-11-08: a v7 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v7 comes after v5 and v6 ship. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v7 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
+Austin, 2026-11-08: a v6 milestone "that focuses on performance optimization and reducing weird pop-in, LOD swaps, and other visible artefacts." v6 comes straight after v5 ships; v7, the living, follows (Austin, 2026-11-08: "i want to share with folks but currently performance is too poor to share"). The milestones were numbered the other way round until 16:10 on 2026-11-08; MORNING.md entries before then used the old numbers and were renumbered. Like v3 it adds nothing to the world; anything that looks different is a deliberate, reviewed trade. v3 made the scene run cooler. v6 makes it hold still: nothing should swap, pop, step or stall where the eye can catch it.
 
-Three of the artefacts Austin reported this morning are already fixed and merged, so v7 does not plan them again:
+Three of the artefacts Austin reported this morning are already fixed and merged, so v6 does not plan them again:
 
 - trees that turned as you approached them (fixed by `fix-tree-lod`, `tools/tree-lod-test.mjs`);
 - the hop on stairs (fixed by `fix-stair-hop`, `tools/stair-test.mjs`);
@@ -35,7 +35,7 @@ It has seven scenarios:
 | `causeway` | spawn to (−140, −30) |
 | `woodpan` | standing at (−195, 128), turning at 1.2 rad/s |
 
-`woodpan`, `bench` and `wood` were run twice: once before `fix-wood-hitch` and once with it. The survey pictures come from a pair script that walks a line in small steps until a watched state changes (a tree's geometry id, a buffer version, a visibility mask, the shadow redraw count), then saves the frame before and the frame after with the camera pinned at the before pose, so the pair differs only by the pop. Each `-diff` picture marks in red what changed (both frames blurred 1.5 px to remove the film grain, 5% fuzz). `v7-00-survey-baseline-*` is the noise floor: the same pose grabbed twice, 69 changed pixels.
+`woodpan`, `bench` and `wood` were run twice: once before `fix-wood-hitch` and once with it. The survey pictures come from a pair script that walks a line in small steps until a watched state changes (a tree's geometry id, a buffer version, a visibility mask, the shadow redraw count), then saves the frame before and the frame after with the camera pinned at the before pose, so the pair differs only by the pop. Each `-diff` picture marks in red what changed (both frames blurred 1.5 px to remove the film grain, 5% fuzz). `v6-00-survey-baseline-*` is the noise floor: the same pose grabbed twice, 69 changed pixels.
 
 The sky dome follows the camera, so pinned pairs also show a changed sun disc and sky. That red blob near the sun is a side effect of the method, not an artefact.
 
@@ -45,7 +45,7 @@ Headless Metal timings are not Austin's laptop's. Every number below is a count 
 
 Each artefact is tagged:
 
-- **[done in v5]**, **[done in v7]**: a fix branch is merged;
+- **[done in v5]**, **[done in v6]**: a fix branch is merged;
 - **[cheap]**: a few lines and a test;
 - **[structural]**: a new mechanism;
 - **[needs Austin's eye]**: whether it is visible at all, or the fix's trade, is his call.
@@ -59,22 +59,22 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
    - *Where:* every walk passes them: 588 switches on the 148 m wood route, up to 3 in one frame; 126 on the bench; 271 on the Span approach.
    - *Cause:* `vegetation/trees.js` `update()` → `batch.setGeometryIdAt`. Since the tree LOD fix the levels share one skeleton, so a swap changes card density, not shape.
    - *Measured:* the lone tree at (−125.8, −44) switches to near detail at 36.5 m and to mid at 109 m. The wood tree at (−142, 141) switches at 24.4 m.
-   - *Pictures:* `v7-00-survey-tree-near-{a,b,diff}` (`pos=-89.3,-44&yaw=1.571`: the crown's leaf cards rearrange), `v7-00-survey-tree-far-*`, `v7-00-survey-tree-wood-*` (the tree's shadow on the water shifts).
+   - *Pictures:* `v6-00-survey-tree-near-{a,b,diff}` (`pos=-89.3,-44&yaw=1.571`: the crown's leaf cards rearrange), `v6-00-survey-tree-far-*`, `v6-00-survey-tree-wood-*` (the tree's shadow on the water shifts).
 2. **Plant chunks change mesh in 24 m blocks.** **[structural]**
    - *What:* past 60 m (grass) and 50 m (reeds) a chunk is packed into the cheap far mesh: fewer blades, wider, one-triangle stems. The vertex shader thins and fades every instance smoothly, but the switch between meshes is per chunk and instant.
    - *Where:* the repacks themselves are frequent. Lazy packing keeps them to 15–20% of frames on the bench (798 repacks in 430 of 2147 frames) and 162 of 3592 frames on the wood route.
    - *Cause:* `vegetation/plants.js` `lazyUpdate` and `pack`, with `FAR_GRASS` and `FAR_REEDS`.
-   - *Pictures:* `v7-00-survey-grass-far-*` (`pos=-22,17.8&yaw=1.571`, one repack: the marks in the diff are blades changing in the mid-ground).
+   - *Pictures:* `v6-00-survey-grass-far-*` (`pos=-22,17.8&yaw=1.571`, one repack: the marks in the diff are blades changing in the mid-ground).
 3. **Rocks pop in rings every 6 m.** **[cheap]**
    - *What:* pebbles are cut at 75 m and stones at 170 m, with no fade. Each class is repacked only after the camera has moved 6 m, so a whole ring of stones appears or vanishes at once on that step. Fine boulders swap to their coarse twin at 140 m and stop casting there.
    - *Cause:* `rocks.js` `pack`, `REACH` and `BOULDER_NEAR`.
    - *Measured:* 4086 changed pixels against a baseline of 69.
-   - *Pictures:* `v7-00-survey-rocks-*` (`pos=234,-24&yaw=2.4`, the High Ling).
+   - *Pictures:* `v6-00-survey-rocks-*` (`pos=234,-24&yaw=2.4`, the High Ling).
    - *Also:* `pack` calls `P.all.subarray()` once per instance in reach, an allocation burst every 6 m of walking (see 14).
 4. **Fungi and pods switch whole 100 m groups at 90 m.** **[cheap]**
    - *Cause:* `vegetation/trees.js` `buildToadstools` `update()`, `VIS = 90`, by the group's rectangle.
    - *Measured:* 6–16 group flips per route. At 90 m the toadstools are a few pixels: from the spit the flip did not show above the noise.
-   - *Pictures:* `v7-00-survey-fungi-*` (`pos=-68,142&yaw=1.571`). Low priority, but the glowing pods at dusk may show it.
+   - *Pictures:* `v6-00-survey-fungi-*` (`pos=-68,142&yaw=1.571`). Low priority, but the glowing pods at dusk may show it.
 5. **Far creatures move at 5 Hz.** **[cheap]**
    - *What:* beyond 120 m, herds, rooks, the slinker, the wader, the traveller, the deodand and the moths update at 5 Hz with the skipped time as their dt. On open ground, a grazer or the wagon 120–260 m away visibly steps five times a second.
    - *Cause:* `main.js` `runUpdates` and each module's `{ near: 120, hz: 5 }`.
@@ -110,15 +110,15 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
     - *Turning:* a turn moves the centre, which is 40 m ahead. Turning at 1.2 rad/s redraws the map 15 times a second (`woodpan`: 177 redraws in 12 s).
     - *Redraw rates:* standing near the banners or a moving creature, 2–11 per second (measured standing still: (−40, 22) 10.9/s, of which 10.5/s from dynamic casters). Walking: 21.7/s on the wood route, 25/s on the bench. The CPU cost of a redraw frame headless is +10–20% over the median. The GPU cost is the open number: it needs Austin's timer query.
     - *Creature shadows:* they stop at 40 m, so a creature's shadow appears when it comes within 40 m.
-    - *Pictures:* `v7-00-survey-shadow-edge-*` (`pos=-150,128&yaw=1.571`, a 3.3 m move redraw). In the dark wood the edge itself did not show above the noise. On open ground at dusk it is a case for Austin's eye.
+    - *Pictures:* `v6-00-survey-shadow-edge-*` (`pos=-150,128&yaw=1.571`, a 3.3 m move redraw). In the dark wood the edge itself did not show above the noise. On open ground at dusk it is a case for Austin's eye.
 13. **No antialiasing.** **[structural]** **[needs Austin's eye]** There has been none since the post chain went in (v3's release notes). Three kinds of thin thing crawl when you move: alpha-tested leaf cards and their sky holes, chains, and spars and grass blades.
     - *Measured:* a 5 cm sideways step in the wood changes 467 pixels, against the baseline's 69.
-    - *Pictures:* `v7-00-survey-aliasing-{a,b,diff}` and the ×3 crops `v7-00-survey-aliasing-crop-{a,b}` (`pos=-160,140&yaw=1.571&pitch=0.25`). The leaf holes flick on and off.
+    - *Pictures:* `v6-00-survey-aliasing-{a,b,diff}` and the ×3 crops `v6-00-survey-aliasing-crop-{a,b}` (`pos=-160,140&yaw=1.571&pitch=0.25`). The leaf holes flick on and off.
     - The most visible artefact on any walk after the tree swaps.
 14. **The adaptive pixel ratio steps.** **[cheap]**
     - *What:* at medium, after 5 s over budget, the ratio drops 0.1 in one frame: the whole image softens at once. `EffectComposer.setPixelRatio` reallocates every target (`tier.js` `step` → `setPixelRatio`), which is a hitch of its own. It steps back up 0.05 after 20 s.
     - The hysteresis is already sound. The step itself is not smooth.
-    - *Pictures:* `v7-00-survey-dpr-step-{a,b}` (1.0 → 0.9 at `pos=-40,22&yaw=1.9`; b is 1152×648).
+    - *Pictures:* `v6-00-survey-dpr-step-{a,b}` (1.0 → 0.9 at `pos=-40,22&yaw=1.9`; b is 1152×648).
     - Never seen headless (the probe's ratio held at 1.0 in every run). Austin's laptop is where it happens.
 
 ### Temporal artefacts
@@ -135,12 +135,12 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
     - *With the fix:* 2 programs in the bench, 5 on the wood route, 3 in the pan.
     - **Left over:** the shadow pass's `depth` programs, compiled when a caster first enters the shadow box (wood route, causeway, Span, keep), and a pair of `basic` programs created by something that appears a few seconds after load in every run.
     - The fix's `compileAsync` compiles the main pass only. **[cheap]**
-20. **First-sight geometry and texture uploads.** **[done in v7]**
+20. **First-sight geometry and texture uploads.** **[done in v6]**
     - *Done:* `src/warmup.js` draws the scene once behind the title card, every object shown and unculled, into a 4×4 corner of the scene buffer with the shadow map, and `initTexture`s every material's textures (≈260 geometries, 22 textures and 10 shadow-depth programs, each caster's own depth variant, since three's shared depth material otherwise builds a variant by draw order; 100–160 ms headless); the fish rings' per-ring colour exists from the build (`fauna/small.js`), which was the late pair of `basic` programs. `pan-test` runs a second station at (−195, 128) through yaw 3.5–3.9 and fails on any compile or upload while turning. `?warmup=0` turns it off.
     - **This is the hitch the shader fix did not remove.** In the same 12 s pan, 74 geometries and 7 textures are uploaded on first draw (159 → 233, 26 → 33).
     - The worst frames of the pan with the fix are 44–88 ms, ×20–40 the median CPU, all at yaw 3.5–3.9, where the Great Span and its kit textures enter the view. The bench has 84 first-sight geometries and 6 textures.
     - Three uploads a buffer or a texture only when it is first drawn.
-    - *Pictures:* `v7-00-survey-wood-pan-{a,b}` (`pos=-195,128`, yaw 3.4 → 3.7: what comes into view).
+    - *Pictures:* `v6-00-survey-wood-pan-{a,b}` (`pos=-195,128`, yaw 3.4 → 3.7: what comes into view).
     - `tools/pan-test.mjs` stands at (−190, 165), facing north, and misses it.
 21. **Allocation bursts.** **[cheap]** The steady state is 2.2 THREE objects a frame (v3 stage 3). The bursts are what is left:
     - the rocks' per-instance `subarray` every 6 m;
@@ -184,7 +184,7 @@ Places are given as `pos=` and `yaw=` URL params. Ranked by how often a normal w
 
 **Where:** `tools/pop-test.mjs`, `src/perf.js` (the counters), a line in each module listed.
 
-**Tests it adds:** `pop-test` (failing on today's build: it records the before numbers in `shots/perf/v7-before.json`).
+**Tests it adds:** `pop-test` (failing on today's build: it records the before numbers in `shots/perf/v6-before.json`).
 
 **Risks:** pinned pairs pick up the sky dome (it follows the camera) and the sun's rays. The test must mask them or pin the dome as well.
 
@@ -276,7 +276,7 @@ Austin runs `?bench=1&perf=1` and walks the four routes on his laptop (medium) a
 
 Acceptance: every target above green in `pop-test`, the hardware frames-over-2× at most one a minute, and Austin sees no swap on a ten-minute walk.
 
-## Rules for the v7 agents
+## Rules for the v6 agents
 
 - **Pace** (`HANDOFF.md`):
   - one headless browser per agent, renders and tests in sequence;
@@ -285,7 +285,7 @@ Acceptance: every target above green in `pop-test`, the hardware frames-over-2×
   - at most four agents at once;
   - the tests that cover the change plus walk, perf, loading, `pan-test`, `pop-test` and the artifact build before pushing.
 - **Never lower a quality setting as a fix.** No shorter draw distances, fewer trees, a smaller shadow map or a lower pixel ratio to hide a pop. A pop is fixed by a transition, not by removing what pops.
-- **A pinned before/after pair for every change** in `shots/wip/v7-NN-<artefact>-<view>-{before,after}.png`, with its diff. Austin judges the pairs.
+- **A pinned before/after pair for every change** in `shots/wip/v6-NN-<artefact>-<view>-{before,after}.png`, with its diff. Austin judges the pairs.
 - **A flag for every change** (`?xfade=0`, `?shadowslide=0`, `?aa=off`, …), so a regression bisects from the URL. This follows v3's rule.
 - **Counts and ratios, not headless milliseconds.** Absolute times come from Austin's machines.
 - **Nothing new is added to the world.** No game content, nothing touched in `design/`.
@@ -294,7 +294,7 @@ Acceptance: every target above green in `pop-test`, the hardware frames-over-2×
 
 Only the questions that change which work gets done.
 
-1. **Antialiasing.** The leaf holes and chains crawl (`v7-00-survey-aliasing-crop-{a,b}`). Do you want it fixed, and at what cost?
+1. **Antialiasing.** The leaf holes and chains crawl (`v6-00-survey-aliasing-crop-{a,b}`). Do you want it fixed, and at what cost?
    - (a) FXAA: one cheap pass, slightly soft;
    - (b) SMAA: sharper, three passes;
    - (c) MSAA on the scene target with alpha-to-coverage on leaves and grass: the cleanest foliage, the most memory, and medium may not afford it;

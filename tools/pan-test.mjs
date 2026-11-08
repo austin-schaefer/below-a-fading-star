@@ -10,7 +10,7 @@
 // Two stations, in one browser, one after the other:
 //   A  (-190, 165) facing north, two 360° turns over 6 s each;
 //   B  (-195, 128) in the Deodand Wood facing north, turning at 1.2 rad/s to yaw 3.9: the Great Span and
-//      its kit enter the view at yaw 3.5-3.9 (the v7 survey's worst frames), reported apart.
+//      its kit enter the view at yaw 3.5-3.9 (the v6 survey's worst frames), reported apart.
 // Usage: node tools/pan-test.mjs "<url>" [max ratio, default 3] [json out]
 // With pos= in the url it runs that one spot as station A; without, both stations at the url's other params
 // (default ?q=medium&perf=1&adapt=0).

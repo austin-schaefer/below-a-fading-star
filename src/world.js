@@ -101,7 +101,7 @@ export const REGIONS = {
                 yields: [] },
 };
 
-// v4–v6 reserved sites (wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
+// v4–v7 reserved sites (wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
 // placed twice. Not landmarks yet (the HUD and the scatter ignore them); a module claims its site when it builds.
 export const SITES = {
   pit:        { x: 200, z: 185, r: 14, name: 'the pit', block: [182, 218, 167, 203] },
