@@ -30,9 +30,20 @@ export function warmUp(ctx) {
   const vp = rt.viewport.clone(), sc = rt.scissor.clone(), st = rt.scissorTest;
   rt.viewport.set(0, 0, 4, 4); rt.scissor.set(0, 0, 4, 4); rt.scissorTest = true;
   renderer.shadowMap.needsUpdate = true;
+  // three's shadow pass shares one depth material among casters without their own and reassigns its map and
+  // side per caster without marking it changed, so which depth program a caster gets depends on the caster
+  // drawn before it: a textured caster after an instanced one (the slipper after the trees) builds a variant
+  // no other order builds. Marking the depth material changed before every draw of this pass builds each
+  // caster's own variant, which is every variant a later order can ask for.
+  const draw = renderer.renderBufferDirect;
+  renderer.renderBufferDirect = function (cam, sc2, geo, mat, obj, group) {
+    if (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial) mat.needsUpdate = true;
+    return draw.call(this, cam, sc2, geo, mat, obj, group);
+  };
   renderer.setRenderTarget(rt);
   renderer.render(scene, camera);
   renderer.setRenderTarget(null);
+  renderer.renderBufferDirect = draw;
   rt.viewport.copy(vp); rt.scissor.copy(sc); rt.scissorTest = st;
   renderer.shadowMap.needsUpdate = true;
   casters.forEach((c, i) => { c.far = far[i]; });
