@@ -25,7 +25,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 10 | Refinement pass: before and after fixes (fog, sun, reeds, cloak) |
 | 11 | Controls: phone thumbstick and debug panel |
 | 12 | River and the Speculum |
-| 13 | v2 stage C in progress: sky, flora, ruins, riverlife (raw in `wip/`, not yet curated) |
+| 13 | v2 stage C: ruins, flora, river life, sky, inhabitants, more life |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
@@ -152,4 +152,14 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-inhabitants-menology-ground.png` | The Menology from the ground: hewn menhirs in a spiral on the south moor. |
 | `13-inhabitants-menology-spiral.png` | The Menology's spiral from above, before the tree inside it was cleared. |
 | `13-inhabitants-menology-lizards.png` | Lizards basking on a menhir's sunward face. |
+| `13-life-cloak-at-shrine.png` | The man in the cloak of eyes, moved to stand before the Wayside Shrine facing the sun. |
+| `13-life-rooks-perched-yard.png` | Rooks perched on the leaning stones of the Yard. |
+| `13-life-rooks-lift-yard.png` | The rooks lifting from the Yard against the sun. |
+| `13-life-bats-tower-gutter.png` | Bats pouring from the Armiger's Tower as the sun gutters; the procession crosses behind. |
+| `13-life-grazers-orchard.png` | The second grazer herd pinned to the edge of Medlar Close. |
+| `13-life-biomesh-runners-t0.png` | The Lattice colony at t0, before a runner. |
+| `13-life-biomesh-runners-t8.png` | Eight seconds on: bright runners out over the ground and a fresh tile at the end of each. |
+| `13-life-beetles-bronze-door.png` | Beetles clustering on the rings of the Hypogeum's bronze door. |
+| `13-life-moths-taverna-lamp.png` | Moths at one of the Pomegranate House's lamps. |
+| `13-life-wader-slow-reach.png` | The stilted wader at the slow reach, a pale spindle at distance; it is gone if you look. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
