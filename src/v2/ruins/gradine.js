@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { Builder, mat } from '../../structures/geo.js';
 import { vary } from '../../structures/common.js';
-import { wornBlock, recolor, reaux, stoneMesh } from './util.js';
+import { wornBlock, recolor, reaux, stoneMesh, hazeMesh } from './util.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -14,14 +14,16 @@ export function buildGradine(ctx, env) {
   const L = ctx.landmarks.gradine, G = env.ground, rng = ctx.makeRng(7201), N2 = ctx.noise.noise2;
   const low = ctx.quality === 'low';
   const B = new Builder(ctx.noise);
-  const W = 2.3, D = 0.34, RISE = 0.31, N = 108;
+  const W = 2.8, D = 0.36, RISE = 0.33, N = 112;
   const C = (h) => new THREE.Color(h);
   // the terrain's rock (terrain.js: scree, rock, dark rock), the palette's stone, and pale worn stone
-  const cScree = C('#4a4644'), cRock = C('#3c3838'), cRockD = C('#262224'), cStone = C(ctx.palette.scree), cPale = C('#b3a796'), cMoss = C('#3a4226');
+  const cScree = C('#4a4644'), cRock = C('#3c3838'), cRockD = C('#262224'), cStone = C(ctx.palette.scree), cPale = C('#c9bba6'), cMoss = C('#3a4226');
   const tmp = new THREE.Color();
 
   // ---- lay out the flight: a heading per tread, chosen so the treads ride the wall ----
-  const aNE = Math.atan2(-1, 1); // bearing 45°: +x and -z
+  // heading: north-east-by-north (bearing 30°), so from the Yard and the Hypogeum the flight crosses the
+  // wall as a diagonal instead of foreshortening into a vertical tick
+  const aNE = Math.atan2(-Math.cos(Math.PI / 6), Math.sin(Math.PI / 6));
   const base = { x: L.x - 1.2, z: L.z + 1.0 };
   const gBase = G.at(base.x, base.z);
   const steps = [];
@@ -171,6 +173,19 @@ export function buildGradine(ctx, env) {
   }
   const mesh = stoneMesh(B, env.stone.mat, 'ruins-gradine');
   env.meshes.push(mesh);
+
+  // ---- the haze the flight climbs into: soft banks lying across the upper steps and above them ----
+  const haze = [];
+  for (let i = 50; i < N; i += 3) {
+    const s = steps[i], t = (i - 50) / (N - 50);
+    haze.push({ x: s.x + (rng() - 0.5) * 3, y: s.y + 0.8 + rng() * 1.5, z: s.z + (rng() - 0.5) * 3, size: 5 + 7 * t + rng() * 3, alpha: 0.12 + 0.4 * t * t, squash: 0.35 + rng() * 0.15 });
+  }
+  const top = steps[N - 1], fxT = Math.cos(top.a), fzT = Math.sin(top.a);
+  for (let k = 0; k < 8; k++) {
+    const d = 2 + k * 3.5;
+    haze.push({ x: top.x + fxT * d + (rng() - 0.5) * 6, y: top.y + d * 1.1 + rng() * 2, z: top.z + fzT * d + (rng() - 0.5) * 6, size: 12 + rng() * 8, alpha: 0.5 + rng() * 0.15, squash: 0.4 });
+  }
+  env.meshes.push(hazeMesh(ctx, haze, new THREE.Color('#7d6672'), 'ruins-gradine-haze'));
 
   // ---- colliders: the rock stub at the base, and the flight while it is within reach ----
   for (let u = -W / 2 - 0.4; u <= W / 2 + 0.41; u += 0.55) {

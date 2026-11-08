@@ -32,10 +32,10 @@ export function buildCutting(ctx, env) {
   let fx = cx, fz = cz;
   for (let d = 0; d < 14; d += 0.1) {
     fx = cx + nx * d; fz = cz + nz * d;
-    if (G.at(fx, fz) > wl + 1.0 && T.waterDepthAt(fx, fz) < -0.6) break;
+    if (G.at(fx, fz) > wl + 0.6 && T.waterDepthAt(fx, fz) < -0.35) break;
   }
   // the face plane sits a little into the bank from there
-  fx += nx * 0.4; fz += nz * 0.4;
+  fx += nx * 0.15; fz += nz * 0.15;
   const Yb = G.at(fx, fz) - 0.45;        // the face's foot, buried a little
   const HALF = 4.3, HT = 4.05;           // half width; height in the middle (incl. the buried foot)
   const P = (u, v, o) => [fx + ux * u + ox * o, Yb + v, fz + uz * u + oz * o];
@@ -201,7 +201,7 @@ export function buildCutting(ctx, env) {
       let v = v0 + (v1 - v0) * j / NV;
       if (j === 0) v += 0.01; if (j === NV) v -= 0.01;
       // conchoidal fracture on the front: shallow scallops
-      const conch = side === 0 ? 0.03 * Math.abs(N2(u * 5.5, v * 9.0)) + 0.02 * N2(u * 13.0, v * 21.0) : 0;
+      const conch = side === 0 ? 0.018 * Math.abs(N2(u * 3.5, v * 6.0)) + 0.008 * N2(u * 9.0, v * 14.0) : 0;
       const o = side === 0 ? -0.09 + thick + conch - endBite * (i === 0 || i === NU ? 1 : 0.2) : -0.09;
       pos.push(...P(u, v, o));
     }
@@ -230,7 +230,7 @@ export function buildCutting(ctx, env) {
     const u = (rng() + rng() + rng() - 1.5) / 1.5 * (HALF - 0.2);
     const out = 0.25 + Math.pow(rng(), 1.3) * 3.3 * (1 - Math.abs(u) / HALF * 0.5);
     const x = fx + ux * u + ox * out, z = fz + uz * u + oz * out;
-    if (T.waterDepthAt(x, z) > -0.15) continue;
+    if (T.waterDepthAt(x, z) > -0.08) continue;
     const gy = G.at(x, z);
     const kind = rng();
     const near = 1 - out / 3.6;
@@ -290,7 +290,7 @@ export function buildCutting(ctx, env) {
 // seen a little way inside (parallax layers) so it reads as glass and not as paint.
 function glassMesh(ctx, GA) {
   const uniforms = {
-    uSheen: { value: 0.9 }, uSheenFlicker: { value: 1 },
+    uSheen: { value: 0.5 }, uSheenFlicker: { value: 1 },
     uSheenSun: { value: new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z) },
   };
   const mt = new THREE.MeshStandardMaterial({ color: new THREE.Color('#06070a'), roughness: 0.07, metalness: 0.15 });

@@ -72,7 +72,7 @@ export function buildCarillon(ctx, env) {
     const polish = c.crown ? 0.8 + rng() * 0.2 : 0.1 + rng() * 0.2;
     const dome = c.crown ? 0.006 : 0.014;
     const cp = [[0, TOP + 0.008 + dome], [rc * 0.5, TOP + 0.008 + dome * 0.75], [rc * 0.85, TOP + 0.007], [rc, TOP + 0.002], [rc + 0.012, TOP - 0.004], [rc + 0.012, TOP - 0.04]]
-      .map(([a, b]) => new THREE.Vector2(a, b));
+      .reverse().map(([a, b]) => new THREE.Vector2(a, b));   // bottom to top, so the faces point out
     const cg = new THREE.LatheGeometry(cp, 24);
     // a ring of worn studs round the rim, one per note (the low notes count more)
     const studs = 9 - c.note + 3;
