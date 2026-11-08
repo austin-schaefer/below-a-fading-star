@@ -9,14 +9,14 @@
 // 3 radii off) and the top (bearing 65, 55 degrees up), and its axis passes through the world's centre (a ring at a
 // latitude, not round the equator). Solved here once at load: the circle's radius is 3.13 and its centre 0.47 from the
 // world's centre, so the band runs 3.16 radii from the centre. The eye stands 0.75 radii off the ring's plane on the
-// sun's side, and the sun lies within 8 degrees of the ring's axis, so the broad inner face the eye sees is grazed by
+// sun's side, and the sun lies 5.4 degrees off the ring's axis, so the broad inner face the eye sees is grazed by
 // the light (in shadow, dark) and the hoop's rim on the sun's side, its end face, takes the sun full on: the red edge,
 // on the western side of the band. The top, 2.29 radii off, is the nearest part, so the band is widest there (1.5
 // degrees with the rim) and thins toward the horizons, to about three quarters 10 degrees up: a ring round a world
 // seen from its surface is always nearest at its highest point.
 // Per fragment: one ray-cylinder intersection gives the point on the hoop's inner face, its height across the band
 // and the angle round the ring; outside the band plus a margin nothing else runs. Inside: the angle picks the segment
-// (120 round the whole ring, about 50 above the horizon, each about 5 degrees long at the top), its joints, four panels
+// (120 round the whole ring, about 45 above the horizon, each about 3.5 degrees long at the top), its joints, four panels
 // to each, a seam along the band, the gaps (whole segments missing, square ends), the rim (a second intersection, with
 // the plane of the hoop's sunward end) and the haze toward the horizon. `?cincture=0` leaves it out (the chunk is
 // empty).
@@ -30,7 +30,7 @@ export const CINCTURE = {
   faceDeg: 1.25, rimDeg: 0.25, // the inner face's and the rim's apparent widths at the top
   segments: 120,
   // missing lengths, in segment indices from the top (0 is the segment just past the top toward the north-east foot's
-  // side; see the note for which way is which): [first, last + 1)
+  // side; negative indices count the other way, toward the south-east foot): [first, last + 1)
   gaps: [[1, 3], [-12, -11], [-18, -14], [9, 12]],
 };
 
@@ -48,8 +48,8 @@ function solve() {
   b *= 1.02;
   for (let i = 0; i < 60; i++) { const m = (a + b) / 2; if (Math.sign(at(m).f) === Math.sign(at(a).f)) a = m; else b = m; }
   const g = at((a + b) / 2);
-  const tb = CINCTURE.topBearing * D2R, lb = (CINCTURE.topBearing + 90) * D2R;
-  const hx = [Math.sin(tb), -Math.cos(tb)], hz = [Math.sin(lb), -Math.cos(lb)];
+  const tb = CINCTURE.topBearing * D2R;
+  const hx = [Math.sin(tb), -Math.cos(tb)];
   const W = (p) => [p[0] * hx[0], p[1], p[0] * hx[1]];
   const O = W(g.O);
   const n = W([-g.e[1], g.e[0]]);
