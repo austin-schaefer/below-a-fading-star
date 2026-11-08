@@ -17,6 +17,7 @@ import { mergeGeometries } from './kit/merge.js';
 import { etch } from './span/etch.js';
 import { buildDeck } from './span/deck.js';
 import { buildGates, boulderGeometry } from './span/gates.js';
+import { buildPostern } from './span/postern.js';
 import { buildStairs } from './span/stairs.js';
 import { buildFallen } from './span/fallen.js';
 
@@ -70,6 +71,7 @@ export async function build(ctx) {
   buildDeck(K);
   await ctx.progress?.('raising the span', 0.3);
   buildGates(K);
+  buildPostern(K);
   await ctx.progress?.('raising the span', 0.45);
   buildStairs(K);
   await ctx.progress?.('raising the span', 0.6);
