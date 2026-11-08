@@ -76,7 +76,7 @@ function seatHeights(h, x, z) {
 // 0-2 m of wear; two are broken to half. The embrasure floor is the natural crest, with its pinnacles damped, so
 // the notches read as cut and the tops as raised (raising a clean block off a damped crest reads as masonry;
 // lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
-// in r (Crest r - 10 to + 4), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
+// in r (full height from the crest's r - 6 to + 4, ramping out to r - 10 and + 8), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
 // ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
 const RIDGE_ON = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('ridge') === '0');
 const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 30, kMin: 0, kMax: 6, broken: [2, 5] };
@@ -129,7 +129,7 @@ for (let i = 0; i <= N; i++) {
 for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
   const bc = RG.b0 + (k + RG.merlon / 2) * RG.period, i = Math.round(((bc - 90) * D2R + Math.PI) / TAU * N);
   const wear = RG.broken.includes(k) ? 0.5 : 1 - 0.06 * hash2(k + 40, 77); // 0-2 m of wear; two broken to half
-  RIDGE.merlons.push({ k, bearing: bc, top: (T_CH[i] - 0) + RG.height * wear * ridgeEnv(bc), env: ridgeEnv(bc) });
+  RIDGE.merlons.push({ k, bearing: bc, top: T_CH[i] + RG.height * wear * ridgeEnv(bc) });
 }
 // --- v5 wonders: AP (end)
 const _b = { cr: 0, ch: 0, fr: 0, fh: 0, ph: 0, sw: 0 };
