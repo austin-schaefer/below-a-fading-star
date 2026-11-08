@@ -21,9 +21,9 @@ One Opus agent. Owns `src/structures/bridge.js` (rewritten), new files under `sr
 
 The brief here is not more things but **scale contrast, long sightlines and silhouettes against the sky**. Austin judges each from renders before it lands.
 
-- **Carcanet Keep:** the donjon one and a half times taller, one curtain tower fallen outward in a fan of blocks; a 30 m banner pole on the keep.
+- **Carcanet Keep:** taller, and recast (see "Height, and which architecture works" below): not a donjon with curtain towers but the far-future thing it should have been, one great piece of it fallen outward in a fan of blocks; a 30 m pole or needle on it.
 - **The Arcature:** nest of arches grown to cathedral height (40 m), its outermost arches breaking the skyline from the causeway.
-- **The Sunken Court:** two or three columns raised to 35 m, the rest stumps, so the court reads as the floor of something vast.
+- **The Sunken Court:** two or three uprights raised to 35 m, the rest stumps, so the court reads as the floor of something vast; the uprights are not classical columns (see below) but fluted bronze-shod piers or lens frames.
 - **The Lattice:** one mother crystal 60 m tall at the moraine's heart, the small ones its litter.
 - **The Gradine:** check it climbs out of sight into the haze; if the ruins agent's stair stops short, extend it.
 - **Sightlines:** from spawn the Great Span, the Arcature's top and the Lattice's mother crystal should all be visible; from the Span's deck, everything.
@@ -50,6 +50,11 @@ Renders required at each step, before and after, from spawn, from the causeway, 
 - **BI. The Recession of Ranges.** Yes, and treat it as a larger note: the mountains read as a first fractal mountain range. v4 reworks the walls: layered ranges in depth with fog tiers, distinct silhouettes (crests, buttresses, a few named peaks), strata and scree that follow the structure, and the carved works above sitting in that structure rather than on noise.
 
 Plus, from before: **W. The Great Span** with its two sealed gates, and the awe audit.
+
+### Height, and which architecture works (Austin, 2026-11-08)
+
+- **Use the height.** Few points of interest can be seen from any distance; the bowl reads flat until you are on top of something. v4 should put things up: tall things on the floor (the Great Span's deck and gates, the Lattice's mother crystal, the taller fall, the Gradine climbing out of sight), things on the walls at heights that catch the sun (the wonders), and places the walker can climb to look back over everything (the Span's stairs, the Gradine, a wall gallery). From spawn and from the causeway a walker should be able to count five or six destinations against the sky. The placement plan marks, for every POI, the furthest point it is visible from.
+- **The architecture that works.** The arabesque caravan, the Trigon Span and the other pieces with an architectural point of view of their own are far more compelling than the medieval towers and the Greco-Roman pillars. So the awe audit does not simply enlarge Carcanet Keep, the Armiger's Tower and the Sunken Court: it recasts them in the register that works. Curved and cantilevered forms, inlay and fretwork at a giant's scale, bronze and black glass set in dressed stone, instruments and machines rather than battlements and colonnades; nothing with crenellations, nothing with a Doric column. Where a tower must stay a tower, it becomes something a late and better civilisation would have raised: a gnomon, a beacon frame, a lens mount. Before any of the three is rebuilt the agent shows Austin a render of the new form beside the old.
 
 ### Map structure (Austin, 2026-11-08, after walking v2.1)
 
