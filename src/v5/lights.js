@@ -254,32 +254,28 @@ export async function build(ctx) {
       put(sq(rB * 1.25, rB, 0.3), 0, y0 + 0.15, 0, fe(1.3));
       put(sq(rB, rC, hA - 0.3), 0, y0 + 0.3 + (hA - 0.3) / 2, 0, fe(1));
       put(sq(rC, rT, hB), 0, yc + hB / 2, 0, fe(0.35));
-      put(new THREE.BoxGeometry(0.2, 0.06, 0.2), 0, yc, 0, fe(0.7));
-      put(new THREE.BoxGeometry(0.15, 0.05, 0.15), 0, yc + 0.07, 0, fe(0.6), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 4)));
-      put(new THREE.BoxGeometry(0.15, 0.05, 0.15), 0, yc - 0.065, 0, fe(0.6), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 4)));
-      for (let k = 0; k < 3; k++) put(new THREE.BoxGeometry(0.035, 0.05, 0.035), (rng() - 0.5) * 0.1, 0.5 + rng() * (Hs - 1), (rng() < 0.5 ? -1 : 1) * 0.08, rustC.clone().multiplyScalar(0.8 + rng() * 0.4));
-      if (i % 3 === 1) put(new THREE.SphereGeometry(0.07, 6, 4).scale(1, 1.5, 0.4), 0.02, 0.45 + rng() * 0.5, 0.1, lichen); // a lichen patch on the shaft's face
-      if (i % 4 === 2) put(new THREE.SphereGeometry(0.1, 6, 4).scale(1.3, 0.35, 1), 0.08, 0.3, 0.08, lichen); // and on the foot's shoulder
+      put(new THREE.BoxGeometry(0.18, 0.07, 0.18), 0, yc, 0, fe(0.6), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 4)));
+      put(new THREE.CylinderGeometry(0.02, 0.02, 0.05, 3, 1, true), (rng() - 0.5) * 0.1, 0.5 + rng() * (Hs - 1), (rng() < 0.5 ? -1 : 1) * 0.08, rustC.clone().multiplyScalar(0.8 + rng() * 0.4)); // a blister of scale
+      if (i % 3 === 1) put(new THREE.SphereGeometry(0.07, 5, 3).scale(1, 1.5, 0.4), 0.02, 0.45 + rng() * 0.5, 0.1, lichen); // a lichen patch on the shaft's face
+      if (i % 4 === 2) put(new THREE.SphereGeometry(0.1, 5, 3).scale(1.3, 0.35, 1), 0.08, 0.3, 0.08, lichen); // and on the foot's shoulder
       // the crook: the shaft's head bends over the kerb (local -x) in an arc of five bars and ends in a hook turned down
       const cr = 0.22, ccy = Hs + 0.02, arc = [0, 30, 60, 90, 120, 150].map((d) => d * Math.PI / 180);
       for (let k = 0; k < 5; k++) {
         const a0 = arc[k], a1 = arc[k + 1], p0 = [-cr + cr * Math.cos(a0), ccy + cr * Math.sin(a0)], p1 = [-cr + cr * Math.cos(a1), ccy + cr * Math.sin(a1)];
         const dxa = p1[0] - p0[0], dya = p1[1] - p0[1];
-        put(new THREE.BoxGeometry(Math.hypot(dxa, dya) + 0.012, 0.036, 0.036), (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, 0, fe(0.4), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.atan2(dya, dxa))));
+        put(new THREE.CylinderGeometry(0.022, 0.022, Math.hypot(dxa, dya) + 0.012, 3, 1, true).rotateZ(Math.PI / 2), (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, 0, fe(0.4), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.atan2(dya, dxa))));
       }
-      put(new THREE.SphereGeometry(0.03, 5, 4), -cr + cr * Math.cos(arc[5]), ccy + cr * Math.sin(arc[5]) - 0.01, 0, fe(0.4));
-      // the cage hangs from the hook by a short chain: a ring, five links; one hangs askew on a slack chain
+      // the cage hangs from the hook by a short chain: five links; one hangs askew on a slack chain
       const hkx = -cr + cr * Math.cos(arc[5]), hky = ccy + cr * Math.sin(arc[5]) - 0.04, askew = i === 7, cx = hkx, cyTop = hky - 0.27;
       const tilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(askew ? 0.13 : (rng() - 0.5) * 0.05, rng() * 6, askew ? -0.3 : (rng() - 0.5) * 0.05));
       const cq = lean.clone().multiply(tilt), swing = askew ? 0.1 : 0;
-      put(new THREE.TorusGeometry(0.026, 0.006, 4, 6), cx, hky, 0, fe(0.3), null, 0, lean.clone().multiply(new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 2)));
-      for (let k = 0; k < 5; k++) put(new THREE.BoxGeometry(k % 2 ? 0.012 : 0.02, 0.04, k % 2 ? 0.02 : 0.012), cx + swing * (k + 1) / 6, hky - 0.04 - k * 0.04, 0, fe(0.3));
+      for (let k = 0; k < 5; k++) put(new THREE.CylinderGeometry(0.008, 0.008, 0.05, 3, 1, true), cx + swing * (k + 1) / 6, hky - 0.025 - k * 0.04, 0, fe(0.3));
       // the cage: an open basket of six to eight ribs around the mantle; no glass, no cap. Its frame is the tilted one.
       const cageY = cyTop - 0.12, ccx = cx + swing, nr = 6 + Math.floor(rng() * 3), miss = i % 2 ? (rng() < 0.5 ? 1 : 0) + (rng() < 0.3 ? 1 : 0) : 0, skip = new Set();
       while (skip.size < miss) skip.add(Math.floor(rng() * nr));
       const cp = (px, py, pz) => { const v = new THREE.Vector3(px, py, pz).applyQuaternion(tilt); return [ccx + v.x, cageY + 0.12 + v.y, v.z]; }; // a point in the cage's frame (origin at its top ring) in the shaft's
       const [rx, ry, rz] = cp(0, 0, 0);
-      put(new THREE.TorusGeometry(0.055, 0.008, 4, 8).rotateX(Math.PI / 2), rx, ry - 0.015, rz, fe(0.4), null, 0, cq);
+      put(new THREE.CylinderGeometry(0.052, 0.052, 0.014, 6, 1, true), rx, ry - 0.01, rz, fe(0.4), null, 0, cq);
       for (let k = 0; k < nr; k++) {
         if (skip.has(k)) continue;
         const a = k / nr * Math.PI * 2 + 0.2;
@@ -288,14 +284,14 @@ export async function build(ctx) {
           const dxr = Math.cos(a) * (r1 - r0), dzr = Math.sin(a) * (r1 - r0), dy = y1r - y0r, len3 = Math.hypot(dxr, dzr, dy);
           const mid = cp(Math.cos(a) * (r0 + r1) / 2, (y0r + y1r) / 2, Math.sin(a) * (r0 + r1) / 2);
           const rq = new THREE.Quaternion().setFromUnitVectors(up, new THREE.Vector3(dxr, dy, dzr).normalize());
-          put(new THREE.BoxGeometry(0.014, len3, 0.014), mid[0], mid[1] + 0.0, mid[2], fe(0.5), (px, py, pz) => [lit.r * 0.55, lit.g * 0.5, lit.b * 0.4], CH.leerie + i, lean.clone().multiply(tilt).multiply(rq));
+          put(new THREE.CylinderGeometry(0.008, 0.008, len3, 3, 1, true), mid[0], mid[1] + 0.0, mid[2], fe(0.5), (px, py, pz) => [lit.r * 0.55, lit.g * 0.5, lit.b * 0.4], CH.leerie + i, lean.clone().multiply(tilt).multiply(rq));
         }
       }
       const [bx, by, bz] = cp(0, -0.345, 0);
-      put(new THREE.CylinderGeometry(0.075, 0.06, 0.025, 8), bx, by, bz, fe(0.6), null, 0, cq);
+      put(new THREE.CylinderGeometry(0.075, 0.06, 0.025, 5), bx, by, bz, fe(0.6), null, 0, cq);
       // the mantle: a small ember-bright knot of ash on a wire, hung in the middle of the basket
       const [mx, my, mz] = cp(0, -0.17, 0);
-      put(new THREE.SphereGeometry(0.055, 8, 6).scale(1, 1.6, 1), mx, my, mz, new THREE.Color('#0c0a08'), () => [lit.r * 4.2, lit.g * 3.8, lit.b * 3.1], CH.leerie + i, cq);
+      put(new THREE.SphereGeometry(0.055, 5, 3).scale(1, 1.6, 1), mx, my, mz, new THREE.Color('#0c0a08'), () => [lit.r * 4.2, lit.g * 3.8, lit.b * 3.1], CH.leerie + i, cq);
       const hp = at(mx, my, mz);
       heads.push(hp);
       glows.halo(hp.x, hp.y, hp.z, 1.2, lit.clone().multiplyScalar(0.42), CH.leerie + i, 2.4);
