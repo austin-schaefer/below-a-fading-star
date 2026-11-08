@@ -27,6 +27,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 12 | River and the Speculum |
 | 13 | v2 stage C: ruins, flora, river life, sky, inhabitants, more life |
 | 14 | v3 stage 1: the loading bar, the profiler and the bench |
+| 15 | v3 stage 2: the cheap wins (bloom at half size, pixel ratio by tier, the rejected hard PCF, instanced trees on Firefox) |
 
 `plan-v2-placement-map.png` is the v2 placement plan, unnumbered.
 
