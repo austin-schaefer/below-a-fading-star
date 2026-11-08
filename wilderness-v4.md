@@ -51,6 +51,15 @@ Renders required at each step, before and after, from spawn, from the causeway, 
 
 Plus, from before: **W. The Great Span** with its two sealed gates, and the awe audit.
 
+### Light (Austin, 2026-11-08)
+
+It is **too dark** in many places: can't-see dark, not atmospheric dark. Keep the variance in luminance, which Austin loves, and nothing goes crazy bright, but the floor comes up. Two parts:
+
+- **(a) More local light on the map.** A few more areas and objects that produce their own light: the Escarpment Lamps (AO) and the galleries' machinery (AL) count, but also small things on the walk: a lit doorway, a guttering lamp on a post, embers, bioluminescent moss in a hollow, the Cincture's glow. Local, coloured, varied. Each one a reason to walk toward it. Budget them against the v3 light count (point lights are expensive; prefer emissive materials and baked glow where a real light is not needed).
+- **(b) Brighter overall.** Raise the ambient and hemisphere floor, and the exposure, until the darkest places are legibly dark rather than black. Target: in the Deodand Wood and under the Arcature you can still read the ground and the nearest trunks. Tune on real renders at the five standard viewpoints and in the three darkest spots, before and after, and do not flatten the contrast: shadows stay deep next to lit ground, the sky stays the brightest thing.
+
+This belongs to the systems agent (fog tiers, light rig, exposure) with per-wonder agents adding their own local lights from the kit.
+
 ### How v4 is staffed
 
 1. Placement plan for the picks (orchestrator), shown to Austin.
