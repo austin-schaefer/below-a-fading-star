@@ -26,6 +26,7 @@
 //   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
 //   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
+import { hyp } from './noise.js';
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -902,7 +903,7 @@ export async function build(ctx) {
       const b = terrain.biomeAt(px, pz);
       wood += (b.wood - wood) * 0.25;
       const c = landmarks.castle, ground = cam.y - 1.72;
-      const inKeep = Math.hypot(px - c.x, pz - c.z) < 40 && ground < 20 ? 1 : 0;
+      const inKeep = hyp(px - c.x, pz - c.z) < 40 && ground < 20 ? 1 : 0;
       const high = smoothstep(6, 30, b.h);
       const openness = (0.55 + 0.45 * clamp(b.moor + b.heath * 0.5, 0, 1)) * (1 + 0.4 * high) * (1 - 0.7 * wood) * (1 - 0.6 * inKeep);
       for (let i = 0; i < windLayers.length; i++) {
@@ -925,7 +926,7 @@ export async function build(ctx) {
       droneLP.frequency.setTargetAtTime(360 + 500 * swellSm, now, 0.5);
       windBus.gain.setTargetAtTime(WIND_BUS * (1 - 0.35 * swellSm), now, 0.5);
       // --- tarn lapping
-      const T = landmarks.tarn, td = Math.hypot(px - T.x, pz - T.z), edge = 52;
+      const T = landmarks.tarn, td = hyp(px - T.x, pz - T.z), edge = 52;
       const toEdge = Math.abs(td - edge);
       const lapGain = (1 - smoothstep(3, 75, toEdge)) * (td > 20 ? 1 : 0.6);
       if (td > 1) { const k = td > edge ? edge / td : 1; const ex = T.x + (px - T.x) * (td > edge ? k : 1), ez = T.z + (pz - T.z) * (td > edge ? k : 1); setPos(lapPan, ex, T.h ?? -4.6, ez); }
@@ -933,23 +934,23 @@ export async function build(ctx) {
       lapBus.gain.setTargetAtTime(lapGain * (0.1 + 0.22 * lap), now, 0.15);
       lapLP.frequency.setTargetAtTime(300 + 250 * lap, now, 0.2);
       // --- fen bubbles
-      const F = landmarks.fen, fd = Math.hypot(px - F.x, pz - F.z);
+      const F = landmarks.fen, fd = hyp(px - F.x, pz - F.z);
       if (fd < F.r + 25) {
         bubT -= step;
         if (bubT <= 0) {
           bubT = 0.25 + rng() * 1.4;
           for (let k = 0; k < 6; k++) {
             const a = rng() * 6.283, r = 5 + rng() * 25, x = px + Math.cos(a) * r, z = pz + Math.sin(a) * r;
-            if (Math.hypot(x - F.x, z - F.z) < F.r) { setPos(bubPan, x, -2.5, z); bubble(); break; }
+            if (hyp(x - F.x, z - F.z) < F.r) { setPos(bubPan, x, -2.5, z); bubble(); break; }
           }
         }
       }
       // --- lattice
-      const md = Math.hypot(px - L0.x, pz - L0.z);
+      const md = hyp(px - L0.x, pz - L0.z);
       humBus.gain.setTargetAtTime(1 - smoothstep(30, 130, md), now, 0.5);
       // --- stones
       for (const s of stones) {
-        const d = Math.hypot(px - s.x, pz - s.z);
+        const d = hyp(px - s.x, pz - s.z);
         s.cool -= step;
         if (s.armed && d < 20 && s.cool <= 0) { strike(s, 0.5 + 0.5 * (1 - d / 20)); s.armed = false; s.cool = 20; }
         if (!s.armed && d > 28) s.armed = true;
@@ -964,7 +965,7 @@ export async function build(ctx) {
         if (frogT <= 0) {
           frogT = 0.2 + rng() * 1.3;
           const a = rng() * 6.283, r = 4 + rng() * 40, x = px + Math.cos(a) * r, z = pz + Math.sin(a) * r;
-          if (Math.hypot(x - F.x, z - F.z) < F.r) { setPos(frogPan, x, -2.3, z); frog(); }
+          if (hyp(x - F.x, z - F.z) < F.r) { setPos(frogPan, x, -2.3, z); frog(); }
         }
       }
       // --- distant calls from all around, so the quiet is never empty
@@ -978,7 +979,7 @@ export async function build(ctx) {
       // --- deodand click
       const D = ctx.deodand;
       if (D && D.visible) {
-        const dd = Math.hypot(px - D.position.x, pz - D.position.z);
+        const dd = hyp(px - D.position.x, pz - D.position.z);
         let seen = D.inView;
         if (seen === undefined) { camera.getWorldDirection(fwdV); const dx = D.position.x - px, dz = D.position.z - pz; seen = (fwdV.x * dx + fwdV.z * dz) / (dd || 1) > 0.7; }
         if (dd < 30 && !seen) {

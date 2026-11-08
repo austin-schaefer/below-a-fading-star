@@ -1,0 +1,76 @@
+{
+ "kind": "fading-planet-alloc-audit",
+ "date": "2026-11-08T06:35:18.480Z",
+ "url": "http://localhost:8131/?bench=30&q=medium",
+ "windowSeconds": 10,
+ "benchPhaseAtEnd": "run",
+ "three": {
+  "frames": 600,
+  "perFrame": 5.89,
+  "byClass": {
+   "Vector3": 5.01,
+   "Box3": 0.44,
+   "Sphere": 0.44
+  },
+  "bySite": {
+   "Vector3 terrain.js:401 < fauna/grazers.js:65": 2.63,
+   "Vector3 controls.js:286 < main.js:254": 1,
+   "Vector3 vegetation/plants.js:339 < vegetation.js:40": 0.88,
+   "Box3 vegetation/plants.js:339 < vegetation.js:40": 0.44,
+   "Vector3 vegetation/plants.js:340 < vegetation.js:40": 0.44,
+   "Sphere vegetation/plants.js:340 < vegetation.js:40": 0.44,
+   "Vector3 terrain.js:401 < fauna/deodand.js:55": 0.05
+  }
+ },
+ "heap": {
+  "frames": 630,
+  "bytesPerFrame": {
+   "src": 329226.26,
+   "three": 212629.3,
+   "other": 247110.79
+  },
+  "srcByFunction": {
+   "controls.js:251 update": 65655.03,
+   "terrain.js:315 heightAt": 36583.6,
+   "noise.js:42 noise2": 30352.11,
+   "vegetation/plants.js:434 cell": 29161.69,
+   "noise.js:83 warped2": 15659.2,
+   "noise.js:6 (anonymous)": 14961.28,
+   "terrain.js:170 riverSection": 14559.07,
+   "terrain.js:63 (anonymous)": 10823.87,
+   "vegetation/ground.js:81 waterDepth": 10720.25,
+   "terrain.js:118 project": 10716.56,
+   "vegetation/plants.js:373 (anonymous)": 9823.85,
+   "terrain.js:28 flatten": 9657.49,
+   "v2/inhabitants/menology.js:315 update": 8664.96,
+   "terrain.js:18 causewayDistance": 8153.43,
+   "v2/inhabitants/menology.js:35 (anonymous)": 5489.7,
+   "fauna/grazers.js:105 update": 4263.89,
+   "noise.js:63 fbm2": 3744.36,
+   "particles.js:214 step": 3618.32,
+   "skylife/remnants.js:274 updateWorm": 3171.6,
+   "terrain.js:434 waterLevelAt": 2883.33,
+   "hud.js:74 update": 2274.7,
+   "fauna/uncanny/kit.js:136 at": 2192.74,
+   "vegetation/ground.js:23 heightAt": 2099.17,
+   "vegetation/plants.js:347 update": 1993.67,
+   "fauna/wings.js:92 update": 1942.9,
+   "v2/inhabitants/galley.js:206 update": 1896.75,
+   "fauna/life.js:106 update": 1372.63,
+   "vegetation/plants.js:322 commit": 1326.13,
+   "v2/inhabitants/menology.js:245 onStone": 960.07,
+   "fauna/uncanny/kit.js:130 locate": 874.49,
+   "v2/riverlife.js:574 updatePedlars": 851.87,
+   "main.js:196 runUpdates": 727.18,
+   "fauna/small.js:161 update": 713.51,
+   "vegetation/ground.js:88 waterNear": 709.37,
+   "skylife/vigilant.js:210 poseHead": 623.92,
+   "vegetation/plants.js:580 chunkDist": 540.32,
+   "perf.js:205 summarise": 446.64,
+   "perf.js:129 gpuPoll": 424.14,
+   "fauna/grazers.js:91 steer": 418.54,
+   "fauna/uncanny/tarn.js:138 update": 401.81
+  }
+ },
+ "errors": []
+}

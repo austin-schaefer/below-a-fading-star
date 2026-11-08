@@ -1,7 +1,8 @@
 // Small life: moths at the tower window, crows on the keep, rings of fish rising on the tarn.
 import * as THREE from 'three';
-import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep } from './geo.js';
+import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep, makeDownCaster } from './geo.js';
 import { KEEP } from '../structures/keep.js';
+import { hyp } from '../noise.js';
 
 // ---------------------------------------------------------------- moths
 export function buildMoths(ctx) {
@@ -36,7 +37,7 @@ export function buildMoths(ctx) {
   const pts = m.map(() => new THREE.Vector3());
   function update(dt, t) {
     if (!found) { lookT -= dt; if (lookT <= 0) { lookT = 1.5; findWindow(); } }
-    const far = Math.hypot(cam.x - centre.x, cam.z - centre.z) > 260;
+    const far = hyp(cam.x - centre.x, cam.z - centre.z) > 260;
     mesh.visible = !far;
     if (far) return;
     for (let i = 0; i < N; i++) {
@@ -57,7 +58,7 @@ export function buildMoths(ctx) {
     }
     mesh.instanceMatrix.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { pos: centre, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
 
 // ---------------------------------------------------------------- crows
@@ -81,15 +82,14 @@ const PERCHES = PERCH_CANDIDATES.slice(0, 8).concat(PERCH_CANDIDATES.slice(12, 2
 function snapPerches(scene, terrain) {
   const keep = scene.getObjectByName('structures-keep');
   if (!keep) return false;
-  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3(0, -1, 0);
+  const cast = makeDownCaster([keep]); // binned, not a Raycaster over every triangle (geo.js)
   const good = { donjon: [], wall: [] };
   PERCH_CANDIDATES.forEach((p, i) => {
-    o.set(p[0], 80, p[2]); rc.set(o, d); rc.far = 120;
-    const hit = rc.intersectObject(keep, false)[0];
+    const hitY = cast(p[0], p[2], 80, 120);
     // the turf at the foot of the wall: the higher of the courtyard side and the wall line itself
     const gy = Math.max(terrain.heightAt(p[0], p[2]), terrain.heightAt(p[0] + (KEEP.cx - p[0]) * 0.1, p[2] + (KEEP.cz - p[2]) * 0.1));
     // a wall top well above the turf: a perch; anything lower is rubble or a fallen stretch
-    if (hit && hit.point.y > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hit.point.y, p[2]]);
+    if (hitY !== null && hitY > gy + (i < 12 ? 8 : 2.5)) (i < 12 ? good.donjon : good.wall).push([p[0], hitY, p[2]]);
   });
   const list = good.donjon.slice(0, 8).concat(good.wall.slice(0, 10));
   if (list.length >= 6) { PERCHES.length = 0; PERCHES.push(...list); }
@@ -167,7 +167,7 @@ export function buildCrows(ctx) {
     }
     cooldown -= dt;
     if (cooldown <= 0) {
-      for (const o of crows) if (o.mode === 0 && Math.hypot(o.pos.x - cam.x, o.pos.z - cam.z) < 15 && Math.abs(o.pos.y - cam.y) < 25) { takeoff(); break; }
+      for (const o of crows) if (o.mode === 0 && hyp(o.pos.x - cam.x, o.pos.z - cam.z) < 15 && Math.abs(o.pos.y - cam.y) < 25) { takeoff(); break; }
     }
     for (let i = 0; i < N; i++) {
       const o = crows[i];
@@ -202,7 +202,7 @@ export function buildCrows(ctx) {
     }
     mesh.instanceMatrix.needsUpdate = true; flap.needsUpdate = true; fold.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { pos: { x: KEEP.cx, z: KEEP.cz }, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 }
 
 // ---------------------------------------------------------------- fish rings on the tarn
@@ -244,7 +244,7 @@ export function buildFishRings(ctx) {
         for (let k = 0; k < 10; k++) {
           const a = rng() * 6.28, r = 6 + rng() * 40, x = T.x + Math.cos(a) * r, z = T.z + Math.sin(a) * r;
           if (terrain.heightAt(x, z) > y - 0.8) continue;
-          const dx = x - cam.x, dz = z - cam.z, d = Math.hypot(dx, dz);
+          const dx = x - cam.x, dz = z - cam.z, d = hyp(dx, dz);
           const s = (fwd.x * dx + fwd.z * dz) / (d || 1) - d * 0.003;
           if (s > bs) { bs = s; best = [x, z]; }
         }

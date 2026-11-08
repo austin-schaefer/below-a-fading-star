@@ -34,6 +34,7 @@ export function buildDebug(ctx) {
     const h = document.createElement('div');
     h.className = 'dbg-head'; h.textContent = text;
     list.appendChild(h);
+    return h;
   }
   function addToggle(name, get, set) {
     const row = document.createElement('button');

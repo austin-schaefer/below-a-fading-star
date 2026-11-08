@@ -4,8 +4,9 @@
 // Perches are found by casting down onto the structures' and ruins' meshes once they exist (either may
 // build after fauna), so the flock follows the yard wherever the structures module puts it.
 import * as THREE from 'three';
-import { flapMaterial, flapInstanced, lerp } from './geo.js';
+import { flapMaterial, flapInstanced, lerp, makeDownCaster } from './geo.js';
 import { crowGeometry } from './small.js';
+import { hyp } from '../noise.js';
 
 const rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), o = new THREE.Vector3(), hits = [];
 const cast = (objs, x, z) => { o.set(x, 80, z); rc.set(o, down); rc.far = 160; hits.length = 0; rc.intersectObjects(objs, false, hits); return hits.length ? hits[0].point.y : null; };
@@ -43,11 +44,12 @@ export function buildRooks(ctx) {
     // the Hypogeum's kerb: the rim of its cut, along both side walls
     const ruin = scene.getObjectByName('ruins-hypogeum');
     if (hyp && ruin) {
+      const castRuin = makeDownCaster([ruin]);
       const x0 = hyp.stairTop.x, x1 = hyp.door.x, zc = hyp.door.z;
       for (let x = x0 + 0.5; x < x1 - 0.2; x += 1.1) for (const s of [-1, 1]) {
         let best = null;
         for (let dz = 1.0; dz < 3.4; dz += 0.2) {
-          const z = zc + s * dz, y = cast([ruin], x, z);
+          const z = zc + s * dz, y = castRuin(x, z);
           if (y !== null && y > terrain.heightAt(x, z) - 0.3 && (!best || y > best.y)) best = { x, y, z };
         }
         if (best) cand.push(best);
@@ -66,9 +68,9 @@ export function buildGibbetCrows(ctx) {
     const g = ctx.structures?.notes?.gibbet;
     if (!g) return null;
     home.x = g.x; home.z = g.z;
-    const objs = structureMeshes(scene), gm = terrain.heightAt(g.x, g.z), cand = [];
+    const castObjs = makeDownCaster(structureMeshes(scene)), gm = terrain.heightAt(g.x, g.z), cand = [];
     for (let dz = -2.6; dz <= 2.6; dz += 0.18) for (let dx = -2.6; dx <= 2.6; dx += 0.18) {
-      const x = g.x + dx, z = g.z + dz, y = cast(objs, x, z);
+      const x = g.x + dx, z = g.z + dz, y = castObjs(x, z);
       if (y === null || y < gm + 4.4) continue;
       if (cand.some((c) => Math.hypot(c.x - x, c.z - z) < 0.5)) continue;
       cand.push({ x, y, z });
@@ -141,12 +143,12 @@ function buildFlock(ctx, opts) {
       B.forEach((b, i) => seat(b, i, farthestFree(false)));
       mesh.visible = true;
     }
-    const far = Math.hypot(cam.x - yard.x, cam.z - yard.z) > 260;
+    const far = hyp(cam.x - yard.x, cam.z - yard.z) > 260;
     mesh.visible = !far;
     if (far) return;
     cool -= dt;
     if (flightT <= 0 && cool <= 0) {
-      for (const b of B) if (b.mode === 0 && Math.hypot(b.pos.x - cam.x, b.pos.z - cam.z) < opts.liftR && Math.abs(b.pos.y - cam.y) < 10) { lift(); break; }
+      for (const b of B) if (b.mode === 0 && hyp(b.pos.x - cam.x, b.pos.z - cam.z) < opts.liftR && Math.abs(b.pos.y - cam.y) < 10) { lift(); break; }
     }
     if (flightT > 0) {
       flightT -= dt;
@@ -205,7 +207,7 @@ function buildFlock(ctx, opts) {
     }
     mesh.instanceMatrix.needsUpdate = flap.needsUpdate = fold.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => opts.home, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
   // test hook: run it forward (seconds) without rendering
   pub.advance = (sec, step = 0.05) => { for (let k = 0; k < sec; k += step) update(step, ctx.time.t + k); };
   return pub;

@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { flapMaterial, flapInstanced, clamp, smoothstep } from './geo.js';
 import { batGeometry } from './life.js';
+import { hyp } from '../noise.js';
 
 export function buildGutterBats(ctx) {
   const { scene, terrain, camera, landmarks, sky } = ctx;
@@ -56,7 +57,7 @@ export function buildGutterBats(ctx) {
     st.t += dt;
     // go home once the sun has come back and they have had their flight
     const homing = st.t > 15 && f > 0.8;
-    const far = Math.hypot(cam.x - TW.x, cam.z - TW.z) > 420;
+    const far = hyp(cam.x - TW.x, cam.z - TW.z) > 420;
     let flying = 0;
     for (let i = 0; i < N; i++) {
       const b = B[i];

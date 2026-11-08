@@ -212,7 +212,7 @@ export async function build(ctx) {
   await ctx.progress?.('filling the tarn', 0.1);
   const rng = ctx.makeRng(7001);
   const tex = makeWaterTexture(rng, 256);
-  const high = ctx.quality === 'high';
+  const high = ctx.quality !== 'low';
   const C = (h) => new THREE.Color(h);
   const meshes = [];
   const bodies = [];

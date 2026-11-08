@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { Painter, paintedMaterial, makeGround, angDiff } from '../../fauna/uncanny/kit.js';
 import { smoothstep, clamp } from '../../fauna/geo.js';
+import { hyp } from '../../noise.js';
 
 const TAU = Math.PI * 2;
 const STONE = new THREE.Color('#1d1b19'), STONE_FACE = new THREE.Color('#2a2724'), STONE_RAW = new THREE.Color('#24211d');
@@ -51,7 +52,7 @@ function stoneShape(st, noise) {
     const rough = (n1 * 0.07 + (0.35 - Math.abs(n3)) * 0.08 + n2 * 0.03 + grain) * (1 - 0.85 * face);
     // the unfinished stone keeps quarry steps on its flanks
     const step = unfinished ? 0.05 * Math.round(Math.sin(y * 6 + seed) * 1.5) / 1.5 : 0;
-    const k = 1 + (rough + step) / Math.max(0.15, Math.hypot(x, z));
+    const k = 1 + (rough + step) / Math.max(0.15, hyp(x, z));
     x *= k; z *= k;
     if (face > 0) z -= face * 0.008;
     out[0] = x; out[1] = y; out[2] = z;
@@ -316,7 +317,7 @@ export function buildMenology(ctx) {
     lmat.userData.uTime.value = t;
     const frozen = ctx.sky.flicker.value < 0.55;
     S.frozen = frozen;
-    const farAway = Math.hypot(cam.x - C.x, cam.z - C.z) > R + 140;
+    const farAway = hyp(cam.x - C.x, cam.z - C.z) > R + 140;
     S.skitterT -= dt;
     let near = 0;
     for (let i = 0; i < N; i++) {
@@ -324,14 +325,14 @@ export function buildMenology(ctx) {
       // where it is now (ground position for distance tests)
       let px, pz;
       if (L.stone >= 0) { px = stones[L.stone].x; pz = stones[L.stone].z; } else { px = L.x; pz = L.z; }
-      const pd = Math.hypot(cam.x - px, cam.z - pz);
+      const pd = hyp(cam.x - px, cam.z - pz);
       if (pd < 12) near++;
       if (!frozen && !farAway) {
         L.t -= dt;
         // the player too close: away under the nearest stone, on the side away from you
         if (pd < 4 && L.state !== FLEE && L.state !== HIDDEN) {
           const st = stones[nearestStone(px, pz)];
-          const ax = st.x - cam.x, az = st.z - cam.z, al = Math.hypot(ax, az) || 1;
+          const ax = st.x - cam.x, az = st.z - cam.z, al = hyp(ax, az) || 1;
           L.hideAt = st.i;
           startDart(L, st.x + (ax / al) * (st.d * 0.5 + 0.12), st.z + (az / al) * (st.d * 0.5 + 0.12), 3.6 + L.seed);
           L.state = FLEE;
@@ -345,7 +346,7 @@ export function buildMenology(ctx) {
               const fromX = L.stone >= 0 ? stones[L.stone].x : L.x, fromZ = L.stone >= 0 ? stones[L.stone].z : L.z;
               startDart(L, fromX + Math.cos(a) * d, fromZ + Math.sin(a) * d, 2.4 + L.seed * 1.4);
               L.state = DART;
-              if (Math.hypot(cam.x - L.x, cam.z - L.z) < 6 && S.skitterT <= 0) { S.skitterT = 1; ctx.audio?.cue?.('lizard-skitter', v3.set(L.x, ground.at(L.x, L.z), L.z), {}); }
+              if (hyp(cam.x - L.x, cam.z - L.z) < 6 && S.skitterT <= 0) { S.skitterT = 1; ctx.audio?.cue?.('lizard-skitter', v3.set(L.x, ground.at(L.x, L.z), L.z), {}); }
             }
             break;
           case DART: case FLEE:
@@ -362,7 +363,7 @@ export function buildMenology(ctx) {
           case FREEZE:
             if (L.t <= 0) {
               if (rng() < 0.45) { const a = rng() * TAU, d = 1 + rng() * 2; startDart(L, L.x + Math.cos(a) * d, L.z + Math.sin(a) * d, 2.4 + L.seed * 1.4); L.state = DART;
-                if (Math.hypot(cam.x - L.x, cam.z - L.z) < 6 && S.skitterT <= 0) { S.skitterT = 1; ctx.audio?.cue?.('lizard-skitter', v3.set(L.x, ground.at(L.x, L.z), L.z), {}); } }
+                if (hyp(cam.x - L.x, cam.z - L.z) < 6 && S.skitterT <= 0) { S.skitterT = 1; ctx.audio?.cue?.('lizard-skitter', v3.set(L.x, ground.at(L.x, L.z), L.z), {}); } }
               else { pickBask(L, stones[nearestStone(L.x, L.z)]); L.state = BASK; L.t = 6 + rng() * 18; }
             }
             break;
@@ -370,7 +371,7 @@ export function buildMenology(ctx) {
             if (L.t <= 0) {
               // out again, but not while you stand over the stone
               const st = stones[L.hideAt];
-              if (Math.hypot(cam.x - st.x, cam.z - st.z) < 5) L.t = 2 + rng() * 3;
+              if (hyp(cam.x - st.x, cam.z - st.z) < 5) L.t = 2 + rng() * 3;
               else { L.state = FREEZE; L.t = 1.5 + rng() * 2; L.yaw = Math.atan2(L.x - st.x, L.z - st.z); }
             }
             break;
@@ -412,7 +413,8 @@ export function buildMenology(ctx) {
     S.near = near;
     liz.instanceMatrix.needsUpdate = true; swish.needsUpdate = true;
   }
-  ctx.registerUpdate(update);
+  // v3: past R + 140 m the lizards' AI already stopped; now the 48 poses are not rewritten either
+  ctx.registerUpdate(update, { pos: C, r: R, near: 140, hz: 0 });
 
   const tri = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   return {

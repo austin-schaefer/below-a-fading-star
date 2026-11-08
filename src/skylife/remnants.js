@@ -7,6 +7,7 @@
 // Draw calls: flier, worm (instanced), hull, thread, lamps (points).
 import * as THREE from 'three';
 import { SKY_GLSL, withSky, dirFrom, Soup } from './common.js';
+import { hyp } from '../noise.js';
 
 const SOLID_VS = /* glsl */`
   #ifdef FLAP
@@ -301,7 +302,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
       const u0 = s / NSEG, u1 = (s + 1) / NSEG, um = (u0 + u1) / 2;
       const xa = W.tail + W.dirn * d * u0, xb = W.tail + W.dirn * d * u1;
       const ya = amp * Math.sin(Math.PI * u0), yb = amp * Math.sin(Math.PI * u1);
-      const dx = xb - xa, dy = yb - ya, len = Math.hypot(dx, dy) * (s % 2 ? 1.12 : 0.9);
+      const dx = xb - xa, dy = yb - ya, len = hyp(dx, dy) * (s % 2 ? 1.12 : 0.9);
       const ang = Math.atan2(dy, dx);
       const fat = s === NSEG - 1 ? 1.5 : (1 + 0.25 * Math.sin(um * Math.PI * 9)) * (s < 2 ? 1.2 : 1);
       rm.makeRotationZ(ang);

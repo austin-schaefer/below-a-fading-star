@@ -1,7 +1,7 @@
 // First-person walking: pointer-lock mouse look, WASD, shift to hurry, terrain-following with
 // a little head bob, soft cylinder colliders registered by other modules, and touch fallback.
 import * as THREE from 'three';
-import { clamp, smoothstep } from './noise.js';
+import { clamp, smoothstep, hyp } from './noise.js';
 import { SPAWN, WORLD } from './world.js';
 
 const WALK = 3.6, HURRY = 6.6;      // m/s (4.2/7.6 in v2 was a shade too fast, Austin)
@@ -247,7 +247,7 @@ export function buildControls(ctx) {
   // --- colliders: {x, z, r} cylinders (infinite height) or {x, z, r, y, h} capped
   function addCollider(c) { state.colliders.push(c); }
 
-  const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3();
+  const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
     syncLock();
     dt = Math.min(dt, 0.05);
@@ -283,7 +283,7 @@ export function buildControls(ctx) {
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
 
     const accel = state.onGround ? 14 : 3;
-    const target = wish.clone().multiplyScalar(maxSpeed * (0.35 + 0.65 * slopeFactor));
+    target.copy(wish).multiplyScalar(maxSpeed * (0.35 + 0.65 * slopeFactor));
     state.vel.x += (target.x - state.vel.x) * Math.min(1, accel * dt);
     state.vel.z += (target.z - state.vel.z) * Math.min(1, accel * dt);
     // steep slopes push you back down
@@ -294,14 +294,15 @@ export function buildControls(ctx) {
     let nx = state.pos.x + state.vel.x * dt;
     let nz = state.pos.z + state.vel.z * dt;
     // region boundary (the mountains are impassable)
-    const rr = Math.hypot(nx, nz);
+    const rr = hyp(nx, nz);
     const limit = WORLD.regionRadius + 48;
     if (rr > limit) { nx *= limit / rr; nz *= limit / rr; }
     // colliders
     for (const c of state.colliders) {
       const dx = nx - c.x, dz = nz - c.z;
-      const d = Math.hypot(dx, dz);
       const rad = c.r + 0.45;
+      if (dx > rad || dx < -rad || dz > rad || dz < -rad) continue;
+      const d = hyp(dx, dz);
       if (d < rad && d > 1e-4) {
         if (c.h !== undefined && (state.pos.y - state.eye > c.y + c.h || state.pos.y - state.eye < c.y - 0.5)) continue;
         nx = c.x + (dx / d) * rad; nz = c.z + (dz / d) * rad;
@@ -326,7 +327,7 @@ export function buildControls(ctx) {
     if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.35) feet = floorY;
     if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; } else state.onGround = false;
     // smooth the ground-follow a touch when walking
-    const speed = Math.hypot(state.vel.x, state.vel.z);
+    const speed = hyp(state.vel.x, state.vel.z);
     state.speed = speed;
     if (state.onGround) {
       // |sin(bob)| has one bump per footstep, so bob advances pi per step

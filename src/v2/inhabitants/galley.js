@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { Painter, paintedMaterial, approach } from '../../fauna/uncanny/kit.js';
 import { smoothstep, clamp } from '../../fauna/geo.js';
+import { hyp } from '../../noise.js';
 
 const HULL = '#030304', TRIM = '#060506', DECK = '#08070a', IRON = '#0b0a0a', GLASS = '#0d0b08';
 const LEN = 20;           // hull length between the posts' feet; the posts carry it to about 22 m overall
@@ -202,6 +203,7 @@ export function buildGalley(ctx) {
   const wp = { x: 0, z: 0 };
   const lookAhead = { x: 0, z: 0, tx: 0, tz: 0 };
 
+  const WAKE_NEAR = 160;
   function update(dt, t) {
     // ---- along the loop; slowing into the western pause, a minute's wait, and away
     const toPause = (((path.pauseU - S.u) % 1) + 1) % 1 * path.length;   // metres ahead to the pause point
@@ -228,19 +230,20 @@ export function buildGalley(ctx) {
 
     // ---- the drum, slow and muffled, while you are within earshot
     const cam = camera.position;
-    const dist = Math.hypot(cam.x - S.x, cam.z - S.z);
+    const dist = hyp(cam.x - S.x, cam.z - S.z);
     if ((S.drumT -= dt) <= 0) {
       S.drumT += 2.4;
       if (dist < 120) ctx.audio?.cue?.('galley-drum', hull.position, { distance: dist });
     }
 
-    // ---- the wake
+    // ---- the wake (v3 stage 2: the strip is rebuilt only within 160 m; the history is kept regardless)
     H.acc += dt;
     if (H.acc >= HIST_DT || H.n === 0) {
       H.acc = 0; H.head = (H.head + 1) % K;
       H.x[H.head] = S.x; H.z[H.head] = S.z; H.tx[H.head] = S.tx; H.tz[H.head] = S.tz; H.v[H.head] = S.v; H.t[H.head] = t;
       H.n = Math.min(K, H.n + 1);
     }
+    if (dist > WAKE_NEAR && ctx.throttle !== false) return;
     const pos = wake.pos, al = wake.al;
     for (let s = 0; s < 3; s++) {
       for (let k = 0; k < K; k++) {
@@ -264,7 +267,7 @@ export function buildGalley(ctx) {
         a *= clamp(v / SPEED, 0, 1);
         // across the strip: perpendicular to the strip's own direction (the V arms angle outward)
         let ax = nx, az = nz;
-        if (s < 2) { const side = s === 0 ? -1 : 1, sl = 0.42 * Math.max(v, 0.3); ax = nx - tx * side * sl * 0.6; az = nz - tz * side * sl * 0.6; const l = Math.hypot(ax, az); ax /= l; az /= l; }
+        if (s < 2) { const side = s === 0 ? -1 : 1, sl = 0.42 * Math.max(v, 0.3); ax = nx - tx * side * sl * 0.6; az = nz - tz * side * sl * 0.6; const l = hyp(ax, az); ax /= l; az /= l; }
         for (let j = 0; j < 3; j++) {
           const i = (s * K + k) * 3 + j;
           pos[i * 3] = cx + ax * (j - 1) * half; pos[i * 3 + 2] = cz + az * (j - 1) * half;

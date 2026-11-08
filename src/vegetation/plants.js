@@ -49,7 +49,7 @@ function blade(pg, rng, x0, z0, ang, w, h, lean, segs, fam, col = ONE, tw = 1, t
     if (s === segs - 1 && tipW === 0) { pg.tri(L[s], R[s], L[s + 1]); break; }
     pg.tri(L[s], R[s], R[s + 1]); pg.tri(L[s], R[s + 1], L[s + 1]);
   }
-  return { dx, dz, lean, h };
+  return { dx, dz, lean, h, rnd };
 }
 
 // Grass cluster: three families in one geometry. The shader shows family sets per instance, so
@@ -71,7 +71,7 @@ function grassGeo(rng) {
     const at = (t) => [x0 + bl.dx * lean * h * t * t, h * t, z0 + bl.dz * lean * h * t * t];
     const p0 = at(t0), p1 = at((t0 + t1) / 2), p2 = at(t1);
     const wx = -bl.dz * 0.014, wz = bl.dx * 0.014;
-    const rnd = rng();
+    rng(); const rnd = bl.rnd; // the head shares its stalk's rand so the shader scales them together (the draw keeps the stream)
     const i0 = pg.v(p0[0], p0[1], p0[2], bl.dx, 0.6, bl.dz, seed, t0, 1, rnd, 1);
     const i1 = pg.v(p1[0] - wx, p1[1], p1[2] - wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
     const i2 = pg.v(p1[0] + wx, p1[1], p1[2] + wz, bl.dx, 0.6, bl.dz, seed, (t0 + t1) / 2, 1, rnd, 1);
@@ -139,7 +139,9 @@ function reedGeo(rng) {
     const s = stems[k];
     const at = (t) => [s.x0 + s.dx * s.lean * s.h * t * t, s.h * t * (1 - s.lean * s.lean * 0.35 * t), s.z0 + s.dz * s.lean * s.h * t * t];
     const t0 = 0.72, t1 = 0.9, rr = 0.017, sides = 5;
-    const rnd = rng();
+    // the head shares its stem's rand: the shader scales each blade's height (and so its wind bend)
+    // by a hash of it, and a head with its own rand floated off the stem and swung on its own
+    const rnd = s.rnd;
     const ringAt = (t) => {
       const c = at(t), out = [];
       for (let j = 0; j < sides; j++) {
@@ -180,7 +182,7 @@ function flowerGeo(rng) {
       const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
       const fa = i * 2.4 + rng(), fs = 0.026 * (1.2 - 0.6 * (i / n));
       const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
-      const rnd = rng();
+      rng(); const rnd = bl.rnd; // florets share their stem's rand so the shader scales them together (the draw keeps the stream)
       const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i1 = pg.v(cx + ox * 1.1, cy + fs * 0.2, cz + oz * 1.1, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
       const i2 = pg.v(cx - oz, cy + fs * 0.8, cz + ox, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);

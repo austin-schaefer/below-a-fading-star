@@ -12,12 +12,15 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const [vf, outDir, prefix, q = 'low', w = '1280', h = '720', extra = ''] = process.argv.slice(2);
 const views = JSON.parse(readFileSync(vf, 'utf8'));
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: +w, height: +h } });
+// FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs);
+// FP_SUFFIX goes after the view's name (perf-02-bloom-sun-before.png)
+const base = process.env.FP_BASE || 'http://localhost:8123';
+const page = await browser.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: +(process.env.FP_DSF || 1) });
 page.setDefaultTimeout(600000);
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`[console.${m.type()}]`, m.text().slice(0, 400)); });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 const v0 = views[0];
-await page.goto(`http://localhost:8123/?q=${q}&pos=${v0.x},${v0.z}&yaw=${v0.yaw}${extra}`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${base}/?q=${q}&pos=${v0.x},${v0.z}&yaw=${v0.yaw}${extra}`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 await page.evaluate(() => { document.getElementById('card')?.classList.add('hidden'); document.getElementById('place').style.display = 'none'; document.getElementById('hint').style.display = 'none'; const fp = window.__fp; fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1; });
 for (const v of views) {
@@ -33,11 +36,12 @@ for (const v of views) {
     const fp = window.__fp;
     if (v.pre) (0, eval)(v.pre);
     if (v.dy) { fp.player.pos.y = fp.terrain.heightAt(v.x, v.z) + fp.player.eye + v.dy; fp.camera.position.y = fp.player.pos.y; }
+    fp.renderer.shadowMap.needsUpdate = true; // a fresh shadow map at the exact view, whatever its cadence
     fp.renderer.info.reset(); fp.post.composer.render();
     const i = fp.renderer.info.render;
     return { url: document.getElementById('scene').toDataURL('image/png'), calls: i.calls, tris: i.triangles };
   }, v);
-  const out = `${outDir}/${prefix}-${v.name}.png`;
+  const out = `${outDir}/${prefix}-${v.name}${process.env.FP_SUFFIX || ''}.png`; // FP_SUFFIX: e.g. -before
   writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
   console.log(`[saved] ${out} calls=${r.calls} tris=${r.tris}`);
 }

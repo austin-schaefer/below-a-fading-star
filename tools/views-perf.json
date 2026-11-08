@@ -1,0 +1,72 @@
+[
+ {
+  "name": "spawn",
+  "x": 6,
+  "z": 36,
+  "yaw": 1.72,
+  "pitch": 0
+ },
+ {
+  "name": "causeway",
+  "x": -60,
+  "z": 14,
+  "yaw": 1.75,
+  "pitch": -0.02
+ },
+ {
+  "name": "tarn",
+  "x": -40,
+  "z": 80,
+  "yaw": 2.11,
+  "pitch": -0.03
+ },
+ {
+  "name": "fen",
+  "x": 70,
+  "z": 72,
+  "yaw": 3.14,
+  "pitch": -0.04
+ },
+ {
+  "name": "wood",
+  "x": -210,
+  "z": 130,
+  "yaw": 1.2,
+  "pitch": 0
+ },
+ {
+  "name": "sun",
+  "x": -90,
+  "z": 2,
+  "yaw": 1.92,
+  "pitch": 0.12
+ },
+ {
+  "name": "lattice",
+  "x": 40,
+  "z": -215,
+  "yaw": 0,
+  "pitch": 0.02
+ },
+ {
+  "name": "wrongcolour",
+  "x": 160,
+  "z": 232,
+  "yaw": -2.31,
+  "pitch": -0.12
+ },
+ {
+  "name": "taverna",
+  "x": 89,
+  "z": -43,
+  "yaw": -1.5708,
+  "pitch": 0.08
+ },
+ {
+  "name": "herd",
+  "x": 22,
+  "z": 20,
+  "yaw": 3.1416,
+  "pitch": -0.05
+ }
+]

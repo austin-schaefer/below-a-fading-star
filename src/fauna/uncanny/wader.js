@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, DITHER_GLSL, approach } from './kit.js';
+import { hyp } from '../../noise.js';
 
 const GREY = '#8c8a90', GREY_D = '#5e5c64', BONE = '#a49d92';
 
@@ -115,7 +116,7 @@ export function buildStiltWader(ctx, U) {
   function update(dt, t) {
     if (S.hold) return;
     const p = mesh.position;
-    const dist = Math.hypot(p.x - cam.x, p.z - cam.z);
+    const dist = hyp(p.x - cam.x, p.z - cam.z);
     if (S.mode === 'stand') {
       // the gaze test: the middle of its height, against the centre of the view
       camera.getWorldDirection(fwd);
@@ -144,7 +145,7 @@ export function buildStiltWader(ctx, U) {
     mesh.visible = S.fade > 0.01 && S.mode !== 'gone';
     mesh.castShadow = S.fade > 0.9;
   }
-  ctx.registerUpdate(update);
+  ctx.registerUpdate(update, { at: () => mesh.position, near: 120, hz: 5 }); // v3: 5 Hz beyond 120 m
 
   U.wader = Object.assign(pub, {
     // test hook: stand it at the spot nearest (x, z), facing as it was, and hold it there

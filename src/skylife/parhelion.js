@@ -216,7 +216,7 @@ function paintAtlas(rng) {
 }
 
 export function buildParhelion(ctx, U, rng) {
-  const segU = ctx.quality === 'high' ? 64 : 36, segV = 4;
+  const segU = ctx.quality !== 'low' ? 64 : 36, segV = 4;
   // three strips in one geometry, back first so they blend in order
   const pos = [], uvs = [], lay = [], idx = [];
   for (let L = 0; L < 3; L++) {
