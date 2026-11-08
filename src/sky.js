@@ -148,20 +148,28 @@ export function buildSky(ctx) {
 
   // Guttering: the sun falters now and then, as if about to go out.
   // flicker.hold (null normally) pins the value, for renders and tests of the gutter.
-  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, hold: null };
+  // A gutter is a vast thing failing, not a light switch: it fades in over ~1.4 s, holds a dim,
+  // shuddering floor of ~0.3 for a few seconds, and comes back over ~2.5 s with a slight overshoot.
+  // Austin found the first version (a third of a second to the floor) too abrupt.
+  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, len: 0, hold: null };
   function update(dt, t) {
     uniforms.uTime.value = t;
     flicker.next -= dt;
-    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.phase = 2.4 + Math.random() * 1.5; flicker.next = 45 + Math.random() * 60; }
+    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = 6.5 + Math.random() * 2.5; flicker.next = 70 + Math.random() * 80; }
     let target = 1.0;
     if (flicker.phase > 0) {
       flicker.phase -= dt;
-      const p = flicker.phase;
-      // a stutter: dips to ~0.25, two shudders, then recovers
-      target = 0.3 + 0.1 * Math.sin(p * 23.0) + 0.6 * Math.pow(Math.abs(Math.sin(p * 1.9)), 6.0);
-      target = Math.min(1, Math.max(0.22, target));
+      const e = flicker.len - flicker.phase;            // seconds since onset
+      const onset = Math.min(1, e / 1.4);                 // 0..1 over the first 1.4 s
+      const tail = Math.min(1, flicker.phase / 2.5);      // 1 until the last 2.5 s, then 0
+      const depth = Math.pow(onset, 2) * Math.pow(tail, 1.6);
+      const shudder = 0.06 * Math.sin(e * 17.0) + 0.05 * Math.sin(e * 5.3);
+      const floor = 0.3 + shudder;
+      target = 1 - (1 - floor) * depth;
+      if (flicker.phase < 0.6) target = 1 + 0.06 * Math.sin((0.6 - flicker.phase) / 0.6 * Math.PI); // a faint overshoot as it catches
+      target = Math.min(1.06, Math.max(0.22, target));
     }
-    flicker.value += (target - flicker.value) * Math.min(1, dt * 9);
+    flicker.value += (target - flicker.value) * Math.min(1, dt * 6);
     if (flicker.hold != null) flicker.value = flicker.hold;
     uniforms.uFlicker.value = flicker.value;
     dome.position.copy(ctx.camera.position);
