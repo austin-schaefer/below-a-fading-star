@@ -2,6 +2,16 @@
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
 
+## v3 (2026-11-08) — the same picture, running cooler, and a medium tier
+
+Stages 15–19. Spec: `wilderness-v3.md`, stages 2 and 3, and the flickering spars. Also in this merge: the plan for the next three releases, `wilderness-v4-placement.md`, with its maps at stage 18.
+
+- **What a visitor notices**: little, on purpose. The frame rate is capped at 60 and the render loop idles under the title card and in a hidden tab, so fans stay quiet; walking is slower; the fall's rumble keeps time when frames stall; the wind mix is quieter; a favicon; the page survives a lost WebGL context. The tall thin spars that popped in and out at the fen's edge were reed seed heads (and grass heads and flower florets) scaled apart from their own stems by the wind shader; they sit on them now.
+- **A medium tier** for laptops, between high and low: picked from the GPU's name or the first three seconds of frame times, with the same scene as high at a lower pixel ratio and a smaller shadow map. An adaptive step lowers the pixel ratio when the 1% low stays over budget and raises it back with headroom. The debug panel's quality rows show the tier and pin one (`?q=medium`, `?tier=`, `?adapt=0`).
+- **Under the hood, stage 2**: pixel ratio by tier, the shadow map redrawn every other frame and far creatures without shadows, bloom at half size, point lights in three slots nearest you, update throttling by distance, instanced trees and Lattice where `WEBGL_multi_draw` is missing (Firefox: 3992 draw calls to 538), binned down-casts for the perch searches.
+- **Under the hood, stage 3**: a lean canvas (no unused MSAA or depth buffers; high 256 → 184 MB of GPU memory on a retina laptop), per-frame allocations 5.9 → 2.2 THREE objects (`Math.hypot` was the culprit), the plant chunk repack only when a chunk in view is short (worst frames 8–11 → 2–3 ms), terrain bump and fine detail skipped past 60 and 120 m, water ripples dropped past 120 m, far grass and reeds as single triangles, grass distance by tier. Every change has a `?flag=0` listed in `README.md`.
+- **Not in v3**: stage 4's hardware table waits for Austin's bench runs; real antialiasing at high (there has been none since the post chain went in) is a decision for later; alpha-to-coverage was not possible without MSAA on the composer's target.
+
 ## v2.1 (2026-11-08) — a loading bar, and the instruments for the heat
 
 Stage 14. Spec: `wilderness-v3.md`, stage 1 and the loading bar. Nothing in the world changed.
