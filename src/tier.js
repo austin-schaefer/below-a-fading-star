@@ -21,17 +21,19 @@
 // decide: an average over 1.15 frame intervals of the cap (over 20 ms uncapped) drops to medium.
 //
 // Adaptive step (makeTier().frame, every rendered frame). A step reallocates every composer target and changes
-// the sharpness of the whole image, so it is rare and never happens mid-turn:
+// the sharpness of the whole image, so it is rare and happens only on steady frames, or once per 20 s when
+// the view never holds still:
 // - Steady frames are those with the view turning under 0.35 rad/s, moving under 4.5 m/s, for 250 ms. Their
 //   1% low over the last 2 s (the mean of the slowest 1% of frames, as the profiler reports it) decides.
 // - Down 0.1, to the tier's floor, after 5 s of steady time with that 1% low over the tier's budget. Time
 //   spent turning neither counts towards the 5 s nor resets it. If the view has not been steady for 20 s, the
-//   1% low of every frame decides instead, over budget for 20 s.
+//   1% low of every frame decides instead: over budget for those 20 s, it steps.
 // - Up 0.05 after 45 s with the 1% low of every frame (turns too) under 0.6 of the budget, never to a ratio
 //   that failed in the last 60 s.
 // - After any step, or a tier change, nothing steps either way for 20 s; nor during the tier probe.
 // - A stall (a frame over 50 ms and over twice the running mean) is left out of both windows: one long frame
-//   is not a slow GPU. Frames under the title and paused cards, in a hidden tab, during the bench (unless
+//   is not a slow GPU. Five stalls in a row are: from the fifth on they count, and the mean follows them.
+//   Frames under the title and paused cards, in a hidden tab, during the bench (unless
 //   ?adapt=1) and gaps over a second are not counted.
 // - The step, once due, waits for a steady frame right after a shadow-map redraw (so the reallocation and a
 //   redraw never share a frame; after 3 s, any steady frame); a step the turning forced takes the next redraw.
@@ -163,8 +165,8 @@ export function makeTier(ctx, url, choice) {
   const ringS = new Float32Array(512), ringA = new Float32Array(512);
   let nS = 0, headS = 0, nA = 0, headA = 0;
   let last = 0, blockAt = 0, probeT = 0, probeSum = 0, probeN = 0;
-  let overMs = 0, allOverMs = 0, underMs = 0, heldAt = -Infinity, steadyAt = performance.now(), stillSince = 0, mean = 0;
-  let blockFrames = 0, blockSteady = 0, lastYaw = null, lastPitch = 0, lastRedraws = -1, stalls = 0;
+  let overMs = 0, allOverMs = 0, underMs = 0, heldAt = -Infinity, stillSince = 0, mean = 0;
+  let blockFrames = 0, blockSteady = 0, lastYaw = null, lastPitch = 0, lastRedraws = -1, stalls = 0, stallRun = 0;
   let pending = null; // { to, l, why, at }
   const top = new Float32Array(8);
   function low1(ring = ringA, n = nA) {
@@ -209,7 +211,9 @@ export function makeTier(ctx, url, choice) {
     if (last) {
       const dt = now - last;
       if (dt > 1000) { reset(); last = now; return; }
-      const stall = dt > STALL_MS && mean > 0 && dt > 2 * mean;
+      const long = dt > STALL_MS && mean > 0 && dt > 2 * mean;
+      stallRun = long ? stallRun + 1 : 0;
+      const stall = long && stallRun < 5; // five in a row is the GPU's new pace, not a stall
       if (stall) stalls++;
       else {
         mean = mean ? mean + (dt - mean) * 0.05 : dt;
@@ -218,7 +222,6 @@ export function makeTier(ctx, url, choice) {
         if (steady) { ringS[headS] = dt; headS = (headS + 1) % w; if (nS < w) nS++; }
         blockFrames++; if (steady) blockSteady++;
       }
-      if (steady) steadyAt = now;
       if (choice.probe && probeT < PROBE_MS) {
         // A stall is not a slow GPU: right after "Go out" the first frames compile shaders and upload textures
         // (100-900 ms each), which would drag the mean past the threshold on a fast machine. Frames over 250 ms
@@ -252,7 +255,8 @@ export function makeTier(ctx, url, choice) {
     // down, on steady frames: turning pauses the count
     if (wasSteady && lS != null) overMs = lS > b ? overMs + blockMs : 0;
     // down, when the view never holds still: every frame, over a longer window
-    if (now - steadyAt >= UNSTEADY_MS && lA != null) allOverMs = lA > b ? allOverMs + blockMs : 0;
+    // (a steady block resets it, so 20 s of it are 20 s without holding still)
+    if (!wasSteady && lA != null) allOverMs = lA > b ? allOverMs + blockMs : 0;
     else allOverMs = 0;
     // up: every frame, turns included, well under the budget
     underMs = lA != null && lA < b * HEADROOM && state.dpr < state.base - 1e-3 ? underMs + blockMs : 0;
