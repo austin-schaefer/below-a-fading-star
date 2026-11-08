@@ -1,7 +1,8 @@
 // Audio: everything synthesised with WebAudio, started on the first click (the `begin` event).
 // Wind, a low drone that swells when the sun gutters, footsteps by ground, place sounds (tarn, fen, Lattice,
 // Cardinal Stones), calls (wings, crows, fish) and a faint counting click near the deodand.
-// Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall }.
+// Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall,
+// muted, setMuted(bool), mute (the GainNode after the limiter) }. Chain: master -> limiter -> mute -> out.
 // A no-op without AudioContext. One-shots share the cue bus (with its own analyser tap for tools/audio-test.mjs)
 // and a hard cap of 12 voices, the oldest stolen. Positions are {x,y,z}, copied at the call.
 //
@@ -28,12 +29,67 @@
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
 import { hyp } from './noise.js';
 
+// The touch mute button (#mute, top right; shown on touch devices only). A short tap toggles
+// ctx.audio.setMuted; a 1.2 s hold without moving reveals the debug panel instead, as the
+// corner long-press on the canvas does.
+let syncMuteButton = () => {};
+function wireMuteButton(ctx, audio) {
+  const btn = typeof document !== 'undefined' && document.getElementById('mute');
+  if (!btn) return;
+  syncMuteButton = () => {
+    btn.setAttribute('aria-pressed', audio.muted ? 'true' : 'false');
+    btn.setAttribute('aria-label', audio.muted ? 'unmute sound' : 'mute sound');
+  };
+  syncMuteButton();
+  let id = null, sx = 0, sy = 0, timer = 0, armed = false;
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (id !== null) return;
+    const t = e.changedTouches[0];
+    id = t.identifier; sx = t.clientX; sy = t.clientY; armed = true;
+    btn.classList.add('held');
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (armed) { armed = false; ctx.debug?.reveal(); } }, 1200);
+  }, { passive: false });
+  btn.addEventListener('touchmove', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    for (const t of e.changedTouches) {
+      if (t.identifier === id && Math.hypot(t.clientX - sx, t.clientY - sy) > 14) { armed = false; clearTimeout(timer); }
+    }
+  }, { passive: false });
+  const end = (e) => {
+    e.stopPropagation();
+    for (const t of e.changedTouches) {
+      if (t.identifier !== id) continue;
+      clearTimeout(timer);
+      if (armed && e.type === 'touchend') audio.setMuted(!audio.muted);
+      armed = false; id = null; btn.classList.remove('held');
+    }
+  };
+  btn.addEventListener('touchend', end); btn.addEventListener('touchcancel', end);
+  btn.addEventListener('click', () => audio.setMuted(!audio.muted)); // assistive tech; touch taps preventDefault the click
+}
+
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
 export async function build(ctx) {
   const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
-  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {} };
+  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {}, muted: false, mute: null, setMuted };
+  // Mute: a gain after the limiter, ramped rather than suspending the context (other code reads
+  // ac.currentTime, which suspend freezes). Remembered in localStorage; settable before start().
+  try { audio.muted = localStorage.getItem('fp-muted') === '1'; } catch (e) { /* private mode */ }
+  function setMuted(on) {
+    audio.muted = !!on;
+    try { localStorage.setItem('fp-muted', audio.muted ? '1' : '0'); } catch (e) { /* private mode */ }
+    const g = audio.mute && audio.mute.gain;
+    if (g) {
+      const t = audio.ctx.currentTime;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(audio.muted ? 0 : 1, t + 0.15);
+    }
+    syncMuteButton();
+  }
+  wireMuteButton(ctx, audio);
   if (!AC) { ctx.log('audio: no AudioContext, silent'); return; }
   ctx.events.addEventListener('begin', () => {
     if (audio.started) return;
@@ -60,8 +116,9 @@ export async function build(ctx) {
     const limiter = ac.createDynamicsCompressor();
     limiter.threshold.value = -14; limiter.knee.value = 12; limiter.ratio.value = 8; limiter.attack.value = 0.005; limiter.release.value = 0.3;
     const analyser = ac.createAnalyser(); analyser.fftSize = 2048;
-    master.connect(limiter); limiter.connect(ac.destination); master.connect(analyser);
-    audio.master = master; audio.analyser = analyser;
+    const mute = ac.createGain(); mute.gain.value = audio.muted ? 0 : 1;
+    master.connect(limiter); limiter.connect(mute); mute.connect(ac.destination); master.connect(analyser);
+    audio.master = master; audio.analyser = analyser; audio.mute = mute;
 
     // ---- reverb send
     const verb = ac.createConvolver(); verb.buffer = makeImpulse(ac, 3.2, 3.2, rng);

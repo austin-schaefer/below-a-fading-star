@@ -78,7 +78,7 @@ export function buildDebug(ctx) {
     return api.shown;
   }
   function reveal() { api.enabled = true; syncButton(); toggle(true); }
-  function syncButton() { btn.classList.toggle('shown', isTouch && api.enabled); }
+  function syncButton() { btn.classList.toggle('shown', isTouch && api.enabled); document.body.classList.toggle('dbg-shown', isTouch && api.enabled); }
 
   btn.addEventListener('click', () => toggle());
   addEventListener('keydown', (e) => {

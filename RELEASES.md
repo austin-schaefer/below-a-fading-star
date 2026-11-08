@@ -12,6 +12,14 @@ Stages 15–19. Spec: `wilderness-v3.md`, stages 2 and 3, and the flickering spa
 - **Under the hood, stage 3**: a lean canvas (no unused MSAA or depth buffers; high 256 → 184 MB of GPU memory on a retina laptop), per-frame allocations 5.9 → 2.2 THREE objects (`Math.hypot` was the culprit), the plant chunk repack only when a chunk in view is short (worst frames 8–11 → 2–3 ms), terrain bump and fine detail skipped past 60 and 120 m, water ripples dropped past 120 m, far grass and reeds as single triangles, grass distance by tier. Every change has a `?flag=0` listed in `README.md`.
 - **Not in v3**: stage 4's hardware table waits for Austin's bench runs; real antialiasing at high (there has been none since the post chain went in) is a decision for later; alpha-to-coverage was not possible without MSAA on the composer's target.
 
+## v2.2 (2026-11-08) — a hop and a hush for phones
+
+Stage 20 (renumbered from 15 when v3 merged). Nothing in the world changed; renders `20-touch-*`.
+
+- **A hop button** on phones: a small hairline ring left of and below the thumbstick hops, as Space does.
+- **A mute button** on phones, faint, top right: a tap silences or restores the sound and is remembered; a long hold still opens the debug panel.
+- **The thumbstick no longer leaps** to the other finger in mobile Safari when walking and looking change hands quickly: a touch identifier the browser reuses or stops listing now releases the stick. `tools/touch-test.mjs` checks it.
+
 ## v2.1 (2026-11-08) — a loading bar, and the instruments for the heat
 
 Stage 14. Spec: `wilderness-v3.md`, stage 1 and the loading bar. Nothing in the world changed.

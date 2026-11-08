@@ -250,4 +250,6 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `19-veg-tier-low-spawn-before.png` | Spawn at q=low with the high-tier grass distance. |
 | `19-veg-water-tarn-after.png` | The water band: far octaves and twinkle faded past 100-120 m; the black far water reads the same. |
 | `19-veg-water-tarn-before.png` | The tarn with the full water shader at distance. |
+| `20-touch-phone-controls.png` | A phone (390×844) after Go out: the thumbstick ring at bottom right, the hop ring left of and below it, the mute glyph faint at top right. |
+| `20-touch-phone-muted-hop-held.png` | The same view with sound muted (the glyph struck through) and the hop ring held. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
