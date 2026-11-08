@@ -59,6 +59,15 @@ export function buildControls(ctx) {
   window.addEventListener('pagehide', release);
   window.addEventListener('beforeunload', release);
   document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+  // If the GPU resets (driver crash, context lost under load) the canvas goes blank; a page holding the
+  // mouse captured through that has been seen to leave Firefox's cursor stuck. Let go at once and say so.
+  el.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    release();
+    state.enabled = false; state.keys.clear();
+    ctx.events.dispatchEvent(new CustomEvent('contextlost'));
+  });
+  el.addEventListener('webglcontextrestored', () => location.reload());
   // Drag-look mode: never ask for pointer lock; the mouse looks while the left button is held.
   // Chosen with ?lock=0, remembered in localStorage, or offered on the paused card when the lock misbehaves.
   function setDragLook(on) {
