@@ -125,26 +125,55 @@ export function buildControls(ctx) {
   ctx.events.addEventListener('begin', () => { if (isTouch) { document.body.classList.add('begun'); if (stickEl) ringHome(); } });
   addEventListener('resize', () => { if (isTouch && stickEl && !moveTouch) ringHome(); });
 
+  // A touch keeps the role it was given at touchstart for its whole life: one that starts in the
+  // stick zone walks, any other looks. Mobile Safari reuses identifiers at once and can deliver a
+  // new finger's touchstart before (or without) the old finger's touchend, so a tracked id can go
+  // stale and then belong to a different finger. Every event first releases tracked touches the
+  // browser no longer lists, and a touchstart that reuses a tracked id releases the old owner.
+  function releaseMove() {
+    if (!moveTouch) return;
+    moveTouch = null; moveVec.x = moveVec.y = moveVec.mag = 0; setKnob(0, 0);
+    stickEl.classList.remove('active'); ringHome();
+  }
+  function releaseLook() {
+    if (!lookTouch) return;
+    clearTimeout(cornerTimer);
+    if (performance.now() - lastLookT > 80) lookVel.x = lookVel.y = 0; // held still: no fling
+    lookTouch = null;
+  }
+  function listed(list, id) { for (let i = 0; i < list.length; i++) if (list[i].identifier === id) return true; return false; }
+  function reconcile(e) {
+    if (moveTouch && !listed(e.touches, moveTouch.id)) releaseMove();
+    if (lookTouch && !listed(e.touches, lookTouch.id)) releaseLook();
+  }
+  // A real thumb never covers this much ground between two touchmoves; a stale id that now
+  // belongs to another finger does. Such a jump releases the stick and the finger looks instead.
+  const STALE_JUMP = 160; // css px of finger travel in one event
+  function startLook(t) {
+    lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY };
+    lookVel.x = lookVel.y = 0; lastLookT = performance.now();
+    if (inCorner(t.clientX, t.clientY)) {
+      clearTimeout(cornerTimer);
+      cornerTimer = setTimeout(() => { if (lookTouch && lookTouch.corner) { ctx.debug?.reveal(); lookTouch = null; } }, 1200);
+      lookTouch.corner = true;
+    }
+  }
+
   el.addEventListener('touchstart', (e) => {
     if (!isTouch) { document.body.classList.add('touch'); }
+    reconcile(e);
     for (const t of e.changedTouches) {
+      if (moveTouch && t.identifier === moveTouch.id) releaseMove();
+      if (lookTouch && t.identifier === lookTouch.id) releaseLook();
       if (!moveTouch && inStickZone(t.clientX, t.clientY) && stickEl) {
         if (!homeSet) ringHome();
         if (Math.hypot(t.clientX - ringX, t.clientY - ringY) > RING_R) {
           placeRing(clamp(t.clientX, RING_R, innerWidth - RING_R), clamp(t.clientY, RING_R, innerHeight - RING_R), true);
         }
-        moveTouch = { id: t.identifier };
+        moveTouch = { id: t.identifier, x: t.clientX, y: t.clientY };
         stickEl.classList.add('active');
         updateStick(t.clientX, t.clientY);
-      } else if (!lookTouch) {
-        lookTouch = { id: t.identifier, x: t.clientX, y: t.clientY, sx: t.clientX, sy: t.clientY };
-        lookVel.x = lookVel.y = 0; lastLookT = performance.now();
-        if (inCorner(t.clientX, t.clientY)) {
-          clearTimeout(cornerTimer);
-          cornerTimer = setTimeout(() => { if (lookTouch && lookTouch.corner) { ctx.debug?.reveal(); lookTouch = null; } }, 1200);
-          lookTouch.corner = true;
-        }
-      }
+      } else if (!lookTouch) startLook(t);
     }
     if (!state.enabled && document.body.classList.contains('ready')) ctx.events.dispatchEvent(new CustomEvent('begin'));
     e.preventDefault();
@@ -157,9 +186,17 @@ export function buildControls(ctx) {
     moveVec.x = dx / RING_R; moveVec.y = dy / RING_R; moveVec.mag = Math.min(1, d / RING_R);
   }
   el.addEventListener('touchmove', (e) => {
+    reconcile(e);
     for (const t of e.changedTouches) {
-      if (moveTouch && t.identifier === moveTouch.id) updateStick(t.clientX, t.clientY);
-      else if (lookTouch && t.identifier === lookTouch.id) {
+      if (moveTouch && t.identifier === moveTouch.id) {
+        if (Math.hypot(t.clientX - moveTouch.x, t.clientY - moveTouch.y) > STALE_JUMP) {
+          releaseMove();
+          if (!lookTouch) startLook(t);
+          continue;
+        }
+        moveTouch.x = t.clientX; moveTouch.y = t.clientY;
+        updateStick(t.clientX, t.clientY);
+      } else if (lookTouch && t.identifier === lookTouch.id) {
         const dxp = t.clientX - lookTouch.x, dyp = t.clientY - lookTouch.y;
         if (lookTouch.corner && Math.hypot(t.clientX - lookTouch.sx, t.clientY - lookTouch.sy) > 14) { lookTouch.corner = false; clearTimeout(cornerTimer); }
         const dYaw = -dxp * LOOK_SENS, dPitch = -dyp * LOOK_SENS;
@@ -174,19 +211,21 @@ export function buildControls(ctx) {
     e.preventDefault();
   }, { passive: false });
   const endTouch = (e) => {
+    reconcile(e); // e.touches is what remains
     for (const t of e.changedTouches) {
-      if (moveTouch && t.identifier === moveTouch.id) {
-        moveTouch = null; moveVec.x = moveVec.y = moveVec.mag = 0; setKnob(0, 0);
-        stickEl.classList.remove('active'); ringHome();
-      }
-      if (lookTouch && t.identifier === lookTouch.id) {
-        clearTimeout(cornerTimer);
-        if (performance.now() - lastLookT > 80) lookVel.x = lookVel.y = 0; // held still: no fling
-        lookTouch = null;
-      }
+      if (moveTouch && t.identifier === moveTouch.id) releaseMove();
+      if (lookTouch && t.identifier === lookTouch.id) releaseLook();
     }
   };
   el.addEventListener('touchend', endTouch); el.addEventListener('touchcancel', endTouch);
+
+  // read-only view of the touch state, for tools/touch-test.mjs
+  const touch = {
+    moveVec,
+    get ring() { return { x: ringX, y: ringY }; },
+    get moveId() { return moveTouch ? moveTouch.id : null; },
+    get lookId() { return lookTouch ? lookTouch.id : null; },
+  };
 
   // --- walkable floors: fn(x, z) -> world y of a floor, or null
   // Walkable floors. Default: a floor can only raise the ground (decks, ramps). With
@@ -337,5 +376,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, touch };
 }
