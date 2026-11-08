@@ -172,3 +172,34 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 
   From spawn no height would show it: the keep's front stands 2 m east of the line within 25 m of the eye, so the line would need more than 70°. Neither the gate passage, which runs east, nor more height gives the line. The keep's west foot does. Along the causeway it shows whole from (−18, 26) to (2, 29), coming from the west. It is hidden from (4, 29) through the gate point (8, 30) and down the keep's west foot. It shows whole again from (4, 18), 18 m north-west of spawn, and stays seen to (160, 115), where the Arcature hides it. From the far causeway, (−344, 126) to (−254, −108), the upper half shows, except where terrain hides it around (−260, −72). From none of the named places does it stand against the glow: the sun is at bearing 250, and the crystal lies at bearings 6–27° from them.
 - **Renders:** `shots/wip/v5-03-lattice-<view>-<before|after>.png` (before is `?lattice=v2`) for `spawn`, `spawn-w4`, `causeway-40`, `causeway-65`, `span-deck`, `court`, `moraine`, `foot` and `measure` (`tools/views-v5-lattice.json`). `v5-03-lattice-sheet.png` puts the court floor pair side by side. The `-draft1` to `-draft6` renders are the iterations: draft 1 has broad bands and no terraces, and draft 6 fades the top toward the sky's colour instead of the haze's.
+
+## v5 wonders
+
+### AL. The Galleries of Durance (`src/v5/galleries.js`; `?galleries=0` leaves them out)
+
+**Idea:** north of the sun's saddle the west wall carries galleries, gantries and catwalks bridging its clefts, with chains hundreds of metres long hanging from them, all of it working with nothing seen to work it.
+
+- **What is built:** on the face round bearing 282 (the site (−390, −80)), bearings 268–296, densest between 271.5 and 292.5. Eleven tiers of galleries from 68 to about 245 m up, 16–21 m apart, and four catwalks between them. Each tier is a run of one 8 m bay: a deck 5–7.5 m deep, a post, a lintel 8.5–12 m up, a roof beam back into the rock, a rail, a mullion, and a lattice screen in some bays. Each tier runs along the face's most protruding line, so where the face falls back into a cleft the deck crosses it as a bridge on a truss. Some tiers are broken into two runs. Every other one stops mid-work at one end: a lintel begun as a stub, posts with no deck, a deck with nothing on it. Beyond 271.5 and 292.5 the bays thin into fragments.
+- **Booms, towers and the lift:** three lattice booms stand out from the face. The top one is at 236 m, 80 m long, with a derrick mast and stays. The others are at 142 m (32 m) and 208 m (32 m). Two square gantry towers stand proud of every gallery, from the rock to 262 and 276 m, above the crest, each tied back every 24 m and carrying a jib at its head. An inclined lift climbs the face from 66 to 246 m: two rails, rungs every 6 m, braced to the rock.
+- **Chains:** ten, in 2.5 m links (28 to the lens mount's 70 m shaft). Seven hang from the booms and jibs. The longest is 252 m, from the north tower's jib. Five reach to 4 m above the talus. The nearest anchor is at r 376, and the walk limit there is r 348. One chain is draped between two boom tips.
+- **What moves:** everything is driven from one time uniform in the vertex shaders, with no per-link or per-strut CPU work:
+  - The chains are wound in and paid out on cycles of 95–170 s with dwells. Their links scroll into the anchor, and the end shackle rises and falls 10–30 m.
+  - Each chain swings as a pendulum of its own length. The middle boom's swings most, about 0.6°.
+  - The draped chain's sag swings.
+  - A trolley runs 22 m along the top boom and back every 160 s, carrying its chain.
+  - A cage rides the lift about 70 m up and down every 180 s.
+  - A 24 m wheel set flat in the face ticks a tooth (7.5°) every 9 s.
+  - A 14 m wheel turns steadily.
+  - The drum and the sheaves turn by exactly the chain they wind.
+  - The CPU writes one float per frame and one light's intensity. The update registers with `{ near: 260, hz: 10 }` and sits under `?throttle=0`. `ctx.galleries.offset` adds seconds to the clock.
+- **Lights:** 32 lamps hung from lintels at high (19 at low), the lift's cage lamp, and two furnace mouths in the rock behind the lowest tier and the fourth. All are emissive, with an additive halo for the bloom. They breathe slowly and come up to 2.4× while the sun gutters. There is one real point light (`galleries-furnace`, distance 85) at the lower furnace mouth. `lights.js` slots it within about 105 m, so it warms the ironwork and rock round the furnace for a walker near the wall's foot (`under` against `under-draft6-nolight`). Seen from the bowl, the ironwork is dark bronze in shade and holds back 45% of the fog's haze, so it stays black against the hazed wall.
+- **Cost at high:** 5 draw calls (struts, links, wheels, halos, stays) and 66.4k triangles (45.2k at low). From the causeway (−65, 12) the frame goes from 181 to 186 calls and from 2.414M to 2.481M triangles. No shadows: the wall casts none, and the works stand outside the shadow camera's box. No colliders. No sound.
+- **Sightlines** (renders, before `?galleries=0`):
+  - From spawn (6, 36): 410 m off, left of centre, just right of the glow.
+  - From the causeway (−65, 12) and (−40, 22): a black lattice against the hazed face, its south edge in the glow. The towers and the mast break the crest against the sky. The lens mount stands about 20° to the right, its silhouette clear.
+  - From the tower's foot (−262, −118): 150 m off, the bays repeat across the frame and up into the haze, black against the glow to the south, with the chains hanging past.
+  - The brief's (−140, −30) (`w140`; the lens mount stands at (−250, −135)) and the Cardinal Stones (−170, −50): the whole works, with the towers against the glow.
+  - From the Span's deck (−200, 215), looking north-west: the lit tiers between the west gate's crag and the wall.
+  - From near the walk limit (−305, −62): the lower tiers overhead.
+  - `tower-foot-20s` is rendered with `ctx.galleries.offset = 20`. Against `tower-foot`, chain ends have risen and dropped and the great wheel has stepped.
+- **Renders:** `shots/wip/v5-04-galleries-<view>-<before|after>.png` for `spawn`, `causeway-65`, `causeway-40`, `tower-foot`, `tower-foot-20s`, `w140`, `stones`, `span-deck` and `under` (`tools/views-v5-galleries.json`). `v5-04-galleries-sheet.png` puts the causeway (−65, 12) pair side by side. The `-draft*` renders are the iterations. Draft 1 is six sparse tiers that read as a building's front. Draft 2 is a rectangle of tiers. `-draft4b` is the first full set.
