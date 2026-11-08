@@ -1,0 +1,111 @@
+[
+ {
+  "name": "strandline-bay",
+  "x": -70,
+  "z": 188,
+  "yaw": 1.45,
+  "pitch": -0.05
+ },
+ {
+  "name": "strandline-shore",
+  "x": -50,
+  "z": 170,
+  "yaw": 1.1,
+  "pitch": -0.04
+ },
+ {
+  "name": "strandline-edge",
+  "x": -40,
+  "z": 160,
+  "yaw": 2.6,
+  "pitch": -0.18
+ },
+ {
+  "name": "tarn-byre",
+  "x": -140,
+  "z": 72,
+  "yaw": -2.47,
+  "pitch": -0.03
+ },
+ {
+  "name": "tarn-spit",
+  "x": -60,
+  "z": 145,
+  "yaw": 2.42,
+  "pitch": -0.03,
+  "pre": "__fp.player.pos.y = -2.3; __fp.camera.position.y = -2.3;"
+ },
+ {
+  "name": "adust-west",
+  "x": -262,
+  "z": -20,
+  "yaw": 1.57,
+  "pitch": 0.02
+ },
+ {
+  "name": "adust-north",
+  "x": -270,
+  "z": 30,
+  "yaw": 0.05,
+  "pitch": -0.02
+ },
+ {
+  "name": "adust-edge",
+  "x": -243,
+  "z": -12,
+  "yaw": 1.55,
+  "pitch": -0.16,
+  "dy": 1.5
+ },
+ {
+  "name": "lynchets-terraces",
+  "x": -172,
+  "z": -95,
+  "yaw": 1.1,
+  "pitch": 0.02
+ },
+ {
+  "name": "lynchets-down",
+  "x": -212,
+  "z": -132,
+  "yaw": -2.36,
+  "pitch": -0.06
+ },
+ {
+  "name": "lynchets-edge",
+  "x": -164,
+  "z": -103,
+  "yaw": 2.52,
+  "pitch": -0.08,
+  "dy": 0.8
+ },
+ {
+  "name": "demesne-parterre",
+  "x": 64,
+  "z": -38,
+  "yaw": 1.57,
+  "pitch": -0.2,
+  "dy": 2.5
+ },
+ {
+  "name": "demesne-fan",
+  "x": 60,
+  "z": -40,
+  "yaw": -2.36,
+  "pitch": -0.05
+ },
+ {
+  "name": "demesne-haha-in",
+  "x": 40,
+  "z": -36,
+  "yaw": 0,
+  "pitch": -0.05
+ },
+ {
+  "name": "demesne-haha-wall",
+  "x": 40,
+  "z": -58,
+  "yaw": 3.14,
+  "pitch": 0.02
+ }
+]

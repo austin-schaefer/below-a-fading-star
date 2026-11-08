@@ -120,6 +120,7 @@ export async function build(ctx) {
     const b = terrain.biomeAt(x, z);
     // density: scree and rock slopes, heath, the moor; less in marsh and wood
     let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6;
+    if (ctx.regions) density *= ctx.regions.stoneAt(x, z).density; // v4 regions: a region's own stone replaces these
     density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
     if (rng() > density) continue;
     if (b.slope > 1.1) continue;
@@ -141,7 +142,7 @@ export async function build(ctx) {
   // Tors: a few stacked outcrops as landmarks of the open moor
   const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
   for (const [tx, tz] of tors) {
-    if (!allowed(tx, tz)) continue;
+    if (!allowed(tx, tz) || (ctx.regions && !ctx.regions.stoneAt(tx, tz).tors)) continue;
     const count = 6 + Math.floor(rng() * 5);
     for (let k = 0; k < count; k++) {
       const ang = rng() * Math.PI * 2, d = rng() * 5;

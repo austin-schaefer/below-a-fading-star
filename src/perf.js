@@ -347,7 +347,7 @@ export function createPerf(ctx) {
       for (let i = 0; i <= n; i++) { const a = a0 + (d * i) / n; pts.push({ x: c.x + Math.cos(a) * rad, z: c.z + Math.sin(a) * rad }); }
     };
     const cw = pts[pts.length - 1];
-    arc(tarn, tarn.r + 4, bearing(tarn, cw), bearing(tarn, fen));
+    arc(tarn, (tarn.shore ?? tarn.r) + 4, bearing(tarn, cw), bearing(tarn, fen)); // the old round shore (v4: r takes in the bay)
     arc(fen, fen.r + 4, bearing(fen, tarn), bearing(fen, SPAWN));
     pts.push({ x: SPAWN.x, z: SPAWN.z });
     const cum = [0];

@@ -14,6 +14,14 @@
 //   stone                       { ... } read by rocks (colour, shape, how it lies)
 //   air                         { tint: '#hex', strength } the Tincture; airAt() blends them over 25 m
 //   sound                       { ... } read by audio; soundAt() gives the weights to mix by
+//                               (v4 regions: { start(kit) -> { tick(w, x, z, step, t, now), step?(x, z, at, vol, pitch,
+//                               out) -> bool, cues?: { name: (pos, opts) => void } } }, started by audio.js)
+//   cover (v4 regions)          { density: { grass, sedge, heather, bracken, flowers, fleshy, reeds, trees }, scale:
+//                               { grass, heather, ... }, floor: { heather, ... }, tint: { grass: '#hex', ... },
+//                               tintAmt, trees(ground, rng) -> [{ x, z, kind: 'medlar'|'thorn'|'dead'|'crooked', s }] }:
+//                               multipliers (1 = as the moor), read by vegetation through coverAt() and treesFor()
+//   stone (v4 regions)          { density, tors: bool }: how many of rocks.js's shared stones lie here (stoneAt());
+//                               a region's own stone is built in its module
 //   build(ctx)                  async, the region's meshes, creatures and lights, run as a world module
 //                               named `region-<key>` (main.js)
 // ctx.regions = { regionAt, airAt, soundAt, hooks, defs, shapes, distance(key, x, z), keys }.
@@ -160,9 +168,15 @@ export function regionsHeight(h, x, z) {
   for (const k of HEIGHT_KEYS) { const b = BOX[k]; if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) { any = true; break; } }
   if (!any) return h;
   const w = regionAt(x, z, _hw);
-  for (const k of HEIGHT_KEYS) if (w[k] > 0) h = HOOKS[k].height(h, x, z, w[k]);
+  for (const k of HEIGHT_KEYS) if (w[k] > 0) h = HOOKS[k].height(h, x, z, w[k], COARSE);
   return h;
 }
+// The coarse pass (v4 regions): while terrain.js lays its mesh (2-3 m cells) it calls setRegionsCoarse(cell), and
+// every height hook gets that cell size as a fifth argument (0 the rest of the time). Relief finer than a cell (a
+// ha-ha's drop, a shingle berm) returns its lower envelope then, so the coarse mesh never pokes through the fine
+// ground skin the region draws over it (regions/skin.js); heightAt() itself stays exact for walking and placing.
+let COARSE = 0;
+export function setRegionsCoarse(cell) { COARSE = cell || 0; }
 
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('regions') === '1';
 export const REGION_DEBUG_COLORS = {
@@ -203,10 +217,94 @@ export function airAt(x, z, out = { color: new THREE.Color(), strength: 0 }) {
 const _sw = { ..._w };
 export function soundAt(x, z, out) { return regionAt(x, z, out || _sw, REGION_AIR_BLEND); }
 
+// ---------------------------------------------------------------- v4 regions: cover, stone, trees and sound
+// cover: each region's multipliers, blended by its weight (6-10 m boundaries); 1 everywhere a region does not touch
+export const COVER_KINDS = ['grass', 'sedge', 'heather', 'bracken', 'flowers', 'fleshy', 'reeds', 'trees'];
+const COVER_KEYS = REGION_KEYS.filter((k) => HOOKS[k].cover);
+const COVER = Object.fromEntries(COVER_KEYS.map((k) => {
+  const c = HOOKS[k].cover, tint = {};
+  for (const [kind, hex] of Object.entries(c.tint || {})) { const col = new THREE.Color(hex); tint[kind] = [col.r, col.g, col.b]; }
+  return [k, { d: c.density || {}, s: c.scale || {}, f: c.floor || {}, tint, ta: c.tintAmt ?? 0.85 }];
+}));
+const mk = (v) => Object.fromEntries(COVER_KINDS.map((k) => [k, v]));
+const _cov = { d: mk(1), s: mk(1), f: mk(0), tint: Object.fromEntries(COVER_KINDS.map((k) => [k, [0, 0, 0]])), tw: mk(0) };
+const _cw = { ..._w };
+export function coverAt(x, z, out = _cov) {
+  for (const k of COVER_KINDS) { out.d[k] = 1; out.s[k] = 1; out.f[k] = 0; out.tw[k] = 0; }
+  let any = false;
+  for (const k of COVER_KEYS) { const b = BOX[k]; if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) { any = true; break; } }
+  if (!any) return out;
+  const w = regionAt(x, z, _cw);
+  for (const k of COVER_KEYS) {
+    const wk = w[k]; if (!(wk > 0)) continue;
+    const C = COVER[k];
+    for (const kind in C.d) out.d[kind] += wk * (C.d[kind] - 1);
+    for (const kind in C.s) out.s[kind] += wk * (C.s[kind] - 1);
+    for (const kind in C.f) out.f[kind] += wk * C.f[kind];
+    for (const kind in C.tint) {
+      const t = out.tint[kind], c = C.tint[kind], a = wk * C.ta, tw = out.tw[kind] + a;
+      // a running weighted mean of the tints, and their total weight
+      t[0] += (c[0] - t[0]) * (a / tw); t[1] += (c[1] - t[1]) * (a / tw); t[2] += (c[2] - t[2]) * (a / tw);
+      out.tw[kind] = tw;
+    }
+  }
+  return out;
+}
+// stone: how many of rocks.js's shared stones lie here, and whether its old tors stand
+const STONE_KEYS = REGION_KEYS.filter((k) => HOOKS[k].stone);
+const _st = { density: 1, tors: true }, _sw2 = { ..._w };
+export function stoneAt(x, z, out = _st) {
+  out.density = 1; out.tors = true;
+  if (!STONE_KEYS.length) return out;
+  const w = regionAt(x, z, _sw2);
+  for (const k of STONE_KEYS) {
+    const wk = w[k]; if (!(wk > 0)) continue;
+    const S = HOOKS[k].stone;
+    out.density += wk * ((S.density ?? 1) - 1);
+    if (S.tors === false && wk > 0.3) out.tors = false;
+  }
+  return out;
+}
+// trees a region plants itself (placed by vegetation/trees.js with its own variants, so they batch with the rest)
+export function treesFor(ground, makeRng) {
+  const out = [];
+  REGION_KEYS.forEach((k, i) => { const f = HOOKS[k].cover?.trees; if (typeof f === 'function') for (const t of f(ground, makeRng(5100 + i))) out.push(t); });
+  return out;
+}
+// sound: audio.js starts every region's sound hook once with its kit; each ticks at 10 Hz with its soundAt weight
+export function startSounds(kit) {
+  const live = [];
+  for (const k of REGION_KEYS) {
+    const S = HOOKS[k].sound;
+    if (!S || typeof S.start !== 'function') continue;
+    try { const r = S.start(kit); if (r) live.push({ k, r }); } catch (e) { console.error(`region ${k}: sound`, e); }
+  }
+  const cues = {};
+  for (const { r } of live) Object.assign(cues, r.cues || {});
+  const sw = { ..._w };
+  return {
+    keys: live.map((l) => l.k), cueNames: Object.keys(cues),
+    tick(x, z, step, t, now) {
+      const w = soundAt(x, z, sw);
+      for (const { k, r } of live) r.tick?.(w[k] || 0, x, z, step, t, now);
+    },
+    cue(name, pos, opts) { const f = cues[name]; if (!f) return false; f(pos, opts); return true; },
+    // a region's own footstep where it is the ground underfoot (weight over a half); true if it sounded
+    step(x, z, at, vol, pitch, out) {
+      const w = regionAt(x, z, sw);
+      for (const { k, r } of live) if (r.step && w[k] > 0.5 && r.step(x, z, at, vol, pitch, out)) return true;
+      return false;
+    },
+  };
+}
+
 export function makeRegions() {
   return {
     keys: REGION_KEYS, places: PLACE_KEYS, defs: REGIONS, hooks: HOOKS, files: REGION_FILES,
     regionAt, airAt, soundAt, distance: regionDistance, debugColors: REGION_DEBUG_COLORS, debug: DEBUG,
     cover: (k) => HOOKS[k].cover ?? null, stone: (k) => HOOKS[k].stone ?? null, sound: (k) => HOOKS[k].sound ?? null,
+    coverAt, stoneAt, treesFor, startSounds,
+    // each region module registers stats[key] = () => ({ calls, tris, instances, creature }) (tools/regions-test.mjs)
+    stats: {},
   };
 }

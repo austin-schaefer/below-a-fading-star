@@ -212,6 +212,7 @@ export async function build(ctx) {
       else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(p.x, p.z) > 0.2)) kind = 'crunch';
       else if (terrain.causewayDistance(p.x, p.z) < 2.5 || nearCastle || inCourt) kind = 'click';
       else if (b.marsh > 0.5) kind = 'squelch';
+      if (kind !== 'splash' && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return; } // v4 regions
       if (kind === 'grass') {
         const s = burst(pink, 0.22), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520 * pitch; f.Q.value = 0.6;
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500 * pitch;
@@ -820,6 +821,9 @@ export async function build(ctx) {
       fall.leaveTimer = setTimeout(() => { fall.leaveTimer = null; if (fall.running && fall.left && fallLevel() <= 0.001) fallStop(); }, 2200);
     }
 
+    // v4 regions: each region's sound hook (src/v4/regions/<key>.js), its bed ticked below, its cues in the table
+    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng });
+    audio.regionCues = regionSnd?.cueNames || [];
     audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
       try {
@@ -855,6 +859,7 @@ export async function build(ctx) {
         else if (name === 'bats-out') batsOut(position, opts);
         else if (name === 'wader-gone') waderGone(position);
         else if (name === 'biomesh-settle') biomeshSettle(position);
+        else regionSnd?.cue(name, position, opts);
       } catch (e) { if (audio.debug) throw e; }
     };
 
@@ -956,6 +961,7 @@ export async function build(ctx) {
       const step = 0.1 - tick; tick = 0.1;
       const px = cam.x, pz = cam.z;
       fallTick(step, t, now);
+      regionSnd?.tick(px, pz, step, t, now); // v4 regions
       // --- wind
       const b = terrain.biomeAt(px, pz);
       wood += (b.wood - wood) * 0.25;

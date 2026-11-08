@@ -502,6 +502,7 @@ export function buildTrees(ctx, ground, mats) {
   const openMoor = (x, z, margin) => {
     ground.biomeAt(x, z, b);
     if (b.wood > 0.1 || b.orchard > 0.1 || b.crystal > 0.2 || b.ice > 0.1 || b.marsh > 0.3 || b.rock > 0.4) return false;
+    if (ctx.regions && ctx.regions.coverAt(x, z).d.trees < 0.5) return false; // v4 regions: a region's cover keeps the moor's trees out
     return !ground.excluded(x, z, margin);
   };
   // (a) The Deodand Wood: dense and dim
@@ -613,6 +614,12 @@ export function buildTrees(ctx, ground, mats) {
     if (ground.excluded(x, z, 1)) continue;
     const dead = rng() < 0.12;
     place(x, z, dead ? deadV[Math.floor(rng() * deadV.length)] : medV[Math.floor(rng() * medV.length)], dead ? 0.5 + rng() * 0.2 : 0.85 + rng() * 0.3, 7, rng() * Math.PI * 2, 0.85 + rng() * 0.3, 'orchard');
+  }
+  // (c2) v4 regions: the trees a region plants itself (its cover.trees), with these variants so they batch with the rest
+  const RV = { medlar: medV, thorn: thornV, dead: deadV, crooked: crookV }, rr = ctx.makeRng(5099); // own stream: the rest stays put
+  for (const t of ctx.regions ? ctx.regions.treesFor(ground, ctx.makeRng) : []) {
+    const V = RV[t.kind]; if (!V || ground.excluded(t.x, t.z, 1) || near(t.x, t.z, t.gap ?? 3)) continue;
+    place(t.x, t.z, V[Math.floor(rr() * V.length)], t.s ?? 1, t.gap ?? 3, t.rot ?? rr() * 6.28, t.tint ?? 0.85 + rr() * 0.25, t.kind === 'thorn' ? 'thorn' : 'region', t.kind !== 'thorn');
   }
   // (d) dead hollow trunks near the sunken court and the fen edge
   const deadSpots = [];

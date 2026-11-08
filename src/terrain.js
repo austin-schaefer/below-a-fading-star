@@ -2,6 +2,8 @@
 // with a glacier tongue coming down from the north. Everything else samples heightAt().
 import * as THREE from 'three';
 import { makeSimplex, mulberry32, clamp, lerp, smoothstep } from './noise.js';
+import { tarnHeight, tarnWet } from './v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit
+import { setRegionsCoarse } from './v4/regions.js'; // v4 regions: the mesh's coarse pass
 import { WORLD, LANDMARKS, WATER, CAUSEWAY, PALETTE, SUN } from './world.js';
 import { applyMountains, M_START } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
@@ -339,6 +341,7 @@ export function heightAt(x, z) {
     h = flatten(h, x, z, L.tarn.x, L.tarn.z, 62, 34, -4.0 + SX.noise2(x * 0.05, z * 0.05) * 0.25);
     const bowl = 1 - smoothstep(36, 60, d);
     h -= bowl * 8.5 + SX.noise2(x * 0.03, z * 0.03) * 0.5 * (1 - smoothstep(40, 70, d));
+    h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
   }
   // Fen: broad, flat, pocked with pools
   {
@@ -430,7 +433,7 @@ export function biomeAt(x, z) {
 const WATER_DISCS = Object.values(WATER);
 export function waterLevelAt(x, z) {
   for (const w of WATER_DISCS) {
-    if (Math.hypot(x - w.x, z - w.z) < w.r) return w.y;
+    if (Math.hypot(x - w.x, z - w.z) < w.r && (w !== WATER.tarn || tarnWet(x, z))) return w.y; // v4: the tarn's own shore
   }
   return riverLevelAt(x, z);
 }
@@ -510,6 +513,7 @@ export function buildTerrain(ctx) {
   const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
+  setRegionsCoarse(size / segs); // v4 regions: the mesh takes fine relief's lower envelope (regions.js)
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = heightAt(x, z);
@@ -566,6 +570,7 @@ export function buildTerrain(ctx) {
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
     colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
   }
+  setRegionsCoarse(0);
   // Crevices and ridges on the mountains: grid curvature darkens gullies and lifts crests, so the wall
   // reads as folded rock from a distance instead of a smooth dune.
   {
