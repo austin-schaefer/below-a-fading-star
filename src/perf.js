@@ -42,23 +42,37 @@ export function createPerf(ctx) {
     return m;
   }
   const rawRegister = ctx.registerUpdate;
+  // Each callback is also timed on its own, labelled by the file:line that registered it, so the report
+  // can say which callback inside a module costs what (report().callbacks, the bench's cpuCallbacks).
+  const cbs = [];
+  function site() {
+    const lines = (new Error().stack || '').split('\n').slice(1);
+    for (const l of lines) {
+      const m = l.match(/\/src\/([^?#)]+?\.js)(?:\?[^:)]*)?:(\d+)/);
+      if (m && !/^(perf|main)\.js$/.test(m[1])) return `${m[1]}:${m[2]}`;
+    }
+    return '?';
+  }
   function wrapUpdate(m, fn) {
     m.updates++;
+    const cb = { label: `${m.name} ${site()}`, cpu: 0 };
+    cbs.push(cb);
     return (dt, t) => {
       if (!m.enabled) return;
       if (!api.active) { fn(dt, t); return; }
       const t0 = performance.now();
       fn(dt, t);
-      m.cpu += performance.now() - t0;
+      const d = performance.now() - t0;
+      m.cpu += d; cb.cpu += d;
     };
   }
   // updates registered outside a module build (terrain, sky, controls...) count as 'core'
   const core = mod('core');
-  ctx.registerUpdate = (fn) => rawRegister(wrapUpdate(core, fn));
+  ctx.registerUpdate = (fn, meta) => rawRegister(wrapUpdate(core, fn), meta);
 
   function forModule(name) {
     const m = mod(name); m.world = true;
-    const register = (fn) => rawRegister(wrapUpdate(m, fn));
+    const register = (fn, meta) => rawRegister(wrapUpdate(m, fn), meta);
     const add = (...objs) => { for (const o of objs) m.objects.add(o); scene.add(...objs); return scene; };
     const sceneProxy = new Proxy(scene, {
       get(target, prop) {
@@ -144,7 +158,8 @@ export function createPerf(ctx) {
   }
 
   // --- sampling: frames accumulate into 500 ms blocks; the overlay and report read the last WINDOW
-  const newBlock = (t0) => ({ t0, frameMs: [], gpu: {}, gpuFrames: 0, calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], cpu: {} });
+  const newBlock = (t0) => ({ t0, frameMs: [], gpu: {}, gpuFrames: 0, calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], cpu: {}, cb: {} });
+  let firstBlock = null; // the first sampled block's per-callback ms (first-frame setup shows here)
   let block = newBlock(performance.now());
   let win = [];
   const last = { calls: 0, tris: 0, points: 0, lines: 0 };
@@ -175,6 +190,8 @@ export function createPerf(ctx) {
   }
   function closeBlock(now) {
     for (const m of mods.values()) { block.cpu[m.name] = m.cpu; m.cpu = 0; }
+    for (const c of cbs) { if (c.cpu) block.cb[c.label] = (block.cb[c.label] || 0) + c.cpu; c.cpu = 0; }
+    if (!firstBlock) firstBlock = { frames: block.frameMs.length, cb: { ...block.cb } };
     win.push(block); if (win.length > WINDOW) win.shift();
     if (bench) bench.add(block);
     block = newBlock(now);
@@ -182,16 +199,17 @@ export function createPerf(ctx) {
     if (bench) bench.sample(current);
     if (overlay && overlay.classList.contains('shown')) draw();
   }
-  function resetWindow() { win = []; block = newBlock(performance.now()); for (const m of mods.values()) m.cpu = 0; lastStart = 0; current = null; }
+  function resetWindow() { win = []; block = newBlock(performance.now()); for (const m of mods.values()) m.cpu = 0; for (const c of cbs) c.cpu = 0; lastStart = 0; current = null; }
 
   function summarise(blocks) {
-    const ms = []; let gpuFrames = 0; const g = {}, c = {};
+    const ms = []; let gpuFrames = 0; const g = {}, c = {}, cb = {};
     let calls = [Infinity, -Infinity], tris = [Infinity, -Infinity];
     for (const b of blocks) {
       for (const v of b.frameMs) ms.push(v);
       gpuFrames += b.gpuFrames;
       for (const k in b.gpu) g[k] = (g[k] || 0) + b.gpu[k];
       for (const k in b.cpu) c[k] = (c[k] || 0) + b.cpu[k];
+      for (const k in b.cb) cb[k] = (cb[k] || 0) + b.cb[k];
       calls = [Math.min(calls[0], b.calls[0]), Math.max(calls[1], b.calls[1])];
       tris = [Math.min(tris[0], b.tris[0]), Math.max(tris[1], b.tris[1])];
     }
@@ -200,10 +218,16 @@ export function createPerf(ctx) {
     const cpuOut = {}; let cpuTotal = 0;
     for (const k of Object.keys(c).sort((a, b) => c[b] - c[a])) { cpuOut[k] = r2(c[k] / n); cpuTotal += c[k] / n; }
     return {
-      frame, cpu: { totalMs: r2(cpuTotal), modules: cpuOut },
+      frame, cpu: { totalMs: r2(cpuTotal), modules: cpuOut, callbacks: topCallbacks(cb, n) },
       gpu: gpuOut(g, gpuFrames),
       calls: isFinite(calls[0]) ? calls : null, tris: isFinite(tris[0]) ? tris : null,
     };
+  }
+  // the heaviest callbacks, ms per frame, those under 0.01 ms dropped
+  function topCallbacks(cb, n, k = 12) {
+    const out = {};
+    for (const [label, v] of Object.entries(cb).sort((a, b) => b[1] - a[1]).slice(0, k)) if (v / n >= 0.01) out[label] = r2(v / n);
+    return out;
   }
   function gpuOut(g, frames) {
     if (!gpu.ok) return { available: false };
@@ -320,7 +344,7 @@ export function createPerf(ctx) {
     const duration = param > 1 ? param : 45;
     const warm = Math.min(2, duration * 0.1); // held at spawn first, unrecorded, while shaders settle
     const path = benchPath();
-    const b = { duration, warm, length: path.length, phase: 'warm', t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, result: null, done: false };
+    const b = { duration, warm, length: path.length, phase: 'warm', t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, cb: {}, result: null, done: false };
     const p = ctx.player, here = { x: 0, z: 0 }, ahead = { x: 0, z: 0 };
     let prevHold = null, runStart = 0, lastNow = 0;
     b.drive = (now) => {
@@ -348,6 +372,7 @@ export function createPerf(ctx) {
     b.add = (blk) => {
       if (b.phase !== 'run') return;
       b.cpuN += blk.frameMs.length; for (const k in blk.cpu) b.cpu[k] = (b.cpu[k] || 0) + blk.cpu[k];
+      for (const k in blk.cb) b.cb[k] = (b.cb[k] || 0) + blk.cb[k];
       b.gpuN += blk.gpuFrames; for (const k in blk.gpu) b.gpu[k] = (b.gpu[k] || 0) + blk.gpu[k];
     };
     b.sample = (s) => {
@@ -373,6 +398,7 @@ export function createPerf(ctx) {
           avgFps: f.fps, low1Fps: f.low1Fps, avgFrameMs: f.avgMs, low1FrameMs: f.low1Ms, frames: f.frames,
           gpuMs: gpu.ok ? (b.gpuN ? gpuOut(b.gpu, b.gpuN) : null) : 'n/a',
           cpuMs: avg(b.cpu, b.cpuN),
+          cpuCallbacks: topCallbacks(b.cb, Math.max(1, b.cpuN), 20),
           calls: isFinite(b.calls[0]) ? b.calls : null, tris: isFinite(b.tris[0]) ? b.tris : null,
         },
         samples: b.samples,
@@ -421,6 +447,7 @@ export function createPerf(ctx) {
       memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null },
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
       gpuTimer: gpu.ok,
+      firstBlock: firstBlock && { frames: firstBlock.frames, callbacks: topCallbacks(firstBlock.cb, 1) },
       modules: Object.fromEntries([...mods.values()].map((m) => [m.name, { world: m.world, enabled: m.enabled, updates: m.updates, objects: m.objects.size }])),
       toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
       bench: bench ? (bench.result || { phase: bench.phase, samples: bench.samples.length }) : null,
@@ -429,7 +456,7 @@ export function createPerf(ctx) {
 
   const api = {
     active: false, gpuTimer: gpu.ok, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
-    setModule, setBloom, setShadows, setActive, toggles,
+    setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
     get bench() { return bench; },
   };
   return api;
