@@ -10,7 +10,7 @@ import { smoothstep, clamp } from '../../fauna/geo.js';
 
 const TAU = Math.PI * 2;
 const STONE = new THREE.Color('#1d1b19'), STONE_FACE = new THREE.Color('#2a2724'), STONE_RAW = new THREE.Color('#24211d');
-const LICHEN = new THREE.Color('#6f6c4c'), LICHEN_D = new THREE.Color('#4e5238'), RUST = new THREE.Color('#5a4630');
+const LICHEN = new THREE.Color('#9b9670'), LICHEN_D = new THREE.Color('#68704a'), RUST = new THREE.Color('#5a4630');
 
 // ---------------------------------------------------------------- the stones
 function layout(C, rng) {
@@ -114,11 +114,11 @@ function buildStones(ctx, C, ground, rng, low) {
         const sunSide = wx * sunX + wz * sunZ;
         const face = smoothstep(0.4, 0.85, sa) * (unfinished ? 0 : 1);
         const ln = noise.noise2(st.seed * 3 + a * 2.2, y * 3.1) * 0.6 + noise.noise2(a * 7 + st.seed, y * 9) * 0.4;
-        const lichen = smoothstep(0.0, 0.6, sunSide) * smoothstep(0.05, 0.45, ln + 0.25 * (1 - y / top) + (j === NV ? 0.3 : 0)) * (1 - face * 0.6) * (y > st.sink - 0.05 ? 1 : 0);
+        const lichen = smoothstep(0.0, 0.6, sunSide) * smoothstep(0.05, 0.22, ln + 0.2 * (1 - y / top) + (j === NV ? 0.3 : 0)) * (1 - face * 0.6) * (y > st.sink - 0.05 ? 1 : 0);
         const c = (unfinished ? STONE_RAW : STONE).clone().lerp(STONE_FACE, face);
         c.multiplyScalar(0.9 + 0.2 * noise.noise2(a * 3 + st.seed, y * 2.7));
         if (y < st.sink + 0.12) c.lerp(RUST, 0.25);
-        c.lerp(ln > 0.2 ? LICHEN : LICHEN_D, lichen * 0.85);
+        c.lerp(ln > 0.3 ? LICHEN : LICHEN_D, lichen * 0.9);
         P.col = [c.r, c.g, c.b]; P.mre = [0, 0.95 - 0.25 * face, 0];
         row.push(P.v(tmp[0], yy, tmp[2]));
       }
@@ -143,7 +143,8 @@ function buildStones(ctx, C, ground, rng, low) {
     // a collider a little inside the stone's footprint
     ctx.addCollider({ x: sp.x, z: sp.z, r: Math.max(st.w, st.d) * 0.5 + 0.05 });
   }
-  const geo = P.geometry();
+  // flat-shaded: hewn stone is facets, not clay
+  const geo = P.geometry().toNonIndexed();
   geo.computeVertexNormals();
   const mat = paintedMaterial();
   const mesh = new THREE.Mesh(geo, mat);
@@ -158,7 +159,7 @@ function lizardGeometry() {
   const BACK = '#4a4c3c', THROAT = '#8a8670';
   // body: a flattened four-sided tube, snout to tail root; the throat and belly pale
   const body = [[0, 0.012, 0.085], [0, 0.017, 0.045], [0, 0.016, -0.005], [0, 0.011, -0.045]];
-  const brad = [[0.007, 0.005], [0.015, 0.01], [0.016, 0.01], [0.008, 0.006]];
+  const brad = [[0.009, 0.006], [0.021, 0.011], [0.022, 0.011], [0.011, 0.007]];
   const sides = 4;
   const rings = [];
   for (let k = 0; k < body.length; k++) {
@@ -189,7 +190,7 @@ function lizardGeometry() {
   // four splayed legs, each a single flat triangle
   P.set('aTail', 0);
   for (const [sx, z] of [[-1, 0.045], [1, 0.045], [-1, -0.03], [1, -0.03]]) {
-    const r = P.v(sx * 0.012, 0.008, z), f = P.v(sx * 0.036, 0.001, z + 0.014), b = P.v(sx * 0.032, 0.001, z - 0.01);
+    const r = P.v(sx * 0.016, 0.008, z), f = P.v(sx * 0.05, 0.001, z + 0.02), b = P.v(sx * 0.044, 0.001, z - 0.012);
     P.tri(r, f, b);
   }
   const g = P.geometry();
@@ -390,7 +391,7 @@ export function buildMenology(ctx) {
       side.crossVectors(up, fw).normalize(); fw.crossVectors(side, up);
       basis.makeBasis(side, up, fw);
       q.setFromRotationMatrix(basis);
-      const s = 1.15 * L.vis * (0.85 + 0.3 * L.seed);
+      const s = 1.3 * L.vis * (0.85 + 0.3 * L.seed);
       sc.set(s, s, s);
       if (L.vis < 0.02) sc.set(0, 0, 0);
       m4.compose(v3, q, sc);
@@ -401,7 +402,7 @@ export function buildMenology(ctx) {
   }
   ctx.registerUpdate(update);
 
-  const tri = (g) => g.index.count / 3;
+  const tri = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   return {
     api: { tick: (dt, t) => update(dt, t), stones, lizards: Z, state: S, mesh, lizardMesh: liz, centre: C },
     drawCalls: 2, tris: tri(mesh.geometry) + tri(lgeo) * N, lizardTris: tri(lgeo),
