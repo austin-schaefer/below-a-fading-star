@@ -2,6 +2,8 @@
 
 Decisions the orchestrator made on your behalf overnight, newest first, each with the renders to look at. Reverse any of them by saying so.
 
+- **The sun-gutter now lasts 12–16 s every 60–110 s** (on the working branch for v4; `?gutter=v3` restores the old timing, `?gutter=<len>,<every>` tunes it). One wrinkle: with the ramps unchanged, "12–16 s in all" gives about 7–11 s at the floor across that range, not a flat 8; I kept 12–16. A headless `tools/gutter-test.mjs` measures it (floor held 7.1–7.2 s at a 12 s gutter). Nothing else keyed to the gutter needed changing.
+
 - **v3 released to main** (PR #93, merge commit on `main`, CI green, Netlify deploying it): stage 2's cheap wins, the flickering spars, stage 3's medium tier and vegetation work, with main's v2.2 (the phone hop and mute buttons) merged in and its renders renumbered to stage 20. Suite on the merged tree: audio 39/39, walk 6/6, loading 7/7, perf 17/17, grass-flicker 3/3 at low and high, touch 25/25, artifact built. v3's stage 4 table waits for your bench runs (`?bench=1` on each machine, JSON into `shots/perf/`).
 
 - **v3 is complete on the working branch and going to main** once the suite and the curation finish (stage 3's vegetation half: plant repacks 4158 → 582 per 780 frames, terrain and water distance bands, far grass; every pair at the noise floor). The notes are in `RELEASES.md`; stages 15–19 in `shots/`. **I started the v4 systems agent (mountains, light floor, cyclopean kit, regions kit) before v3 shipped**, from the working branch, so the Mac was not idle during the release; its branch merges after main is updated.
