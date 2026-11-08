@@ -2,6 +2,8 @@
 
 Decisions the orchestrator made on your behalf overnight, newest first, each with the renders to look at. Reverse any of them by saying so.
 
+- **Pace rules relaxed at your word (07:25):** three implementation agents at once instead of two; agents run only the tests that cover their change plus walk, perf, loading and the artifact build before pushing; I run the full suite once per batch rather than after every merge (twelve merges, twelve suites, none ever failed). `HANDOFF.md` says so now. The legibility follow-up (bigger Annals, 45 m merlons, spawn 4 m west) went out into the third slot at once.
+
 - **You deferred every open call to me (07:20). Here is what I decided**, each reversible by saying so:
   - **The mother crystal from spawn:** spawn moves 4 m west, from (6, 36) to (2, 36), so the crystal shows whole from where you start; a follow-up agent makes the change, checks the Span and the Arcature sightlines from the new spot do not get worse, and reruns the walk test. If any of that fails it stays at (6, 36).
   - **The Arcature's height:** stays 40 m. Raising it to 56 m clears the hill from (−40, 22) only for the keep to hide it from most of the causeway anyway; it reads from the back route from (23, −19) on and from the Demesne, which is enough.

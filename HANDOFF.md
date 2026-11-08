@@ -39,8 +39,8 @@ If the render is a real picture, export `SHOT_ANGLE=metal` for every tool call f
 
 Austin: "ensure it doesn't torch my computer doing too many things at once." Binding:
 
-- **At most two implementation agents at once**, each told it is one of two and that the other is rendering too.
-- **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. The orchestrator runs no renders or suites while two agents are rendering.
+- **At most three implementation agents at once** (Austin raised it from two at 07:25 on 2026-11-08), each told how many others are rendering.
+- **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. Agents run only the tests that cover their change plus walk, perf, loading and the artifact build before pushing; the orchestrator runs the full suite once per batch, not per merge (Austin, 07:25).
 - **Wip renders at half size** (1280×720); full size only for the few that go into `shots/`. No `--trace` on Playwright runs.
 - **`nice -n 10`** in front of every `node tools/...` call, so the Mac stays usable if Austin wakes early.
 - Curation and review agents are Sonnet and render nothing new.
