@@ -234,7 +234,10 @@ export async function build(ctx) {
   for (const [name, body] of Object.entries(ctx.water)) {
     if (name === 'pool') continue; // The Speculum has its own surface
     const fen = name === 'fen';
-    const geo = discGeometry(ctx, body, high ? (fen ? 150 : 130) : 90, high ? 260 : 180);
+    // v4: the tarn's disc reaches r 92 for the south bay, so it takes 1.4 times the rings and segments to keep its
+    // shore as fine as at the old r 60 (still one mesh, one call)
+    const k = body.shore ? 1.4 : 1;
+    const geo = discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },

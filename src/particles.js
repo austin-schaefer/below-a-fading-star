@@ -337,7 +337,7 @@ export async function build(ctx) {
       add(x, Math.max(terrain.heightAt(x, z), fen.y) + 0.2, z, 24 + rng() * 22, 3 + rng() * 2.5);
     }
     for (let i = 0; i < nTarn; i++) {
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * 52;
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * ((tarn.shore ?? tarn.r) - 8); // v4: inside the old round shore, not over the bay's dry hollows
       add(tarn.x + Math.cos(a) * r, tarn.y + 0.3, tarn.z + Math.sin(a) * r, 26 + rng() * 22, 3 + rng() * 2);
     }
     for (let tries = 0, got = 0; tries < 8000 && got < nHollow; tries++) {
@@ -521,7 +521,7 @@ export async function build(ctx) {
     const fen = ctx.water.fen, tarn = ctx.water.tarn;
     for (let i = 0; i < n; i++) {
       const onFen = rng() < 0.7, b = onFen ? fen : tarn;
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * (onFen ? 84 : 70);
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * (onFen ? 84 : (tarn.shore ?? tarn.r) + 10); // v4: the tarn's old round shore
       const x = b.x + Math.cos(a) * r, z = b.z + Math.sin(a) * r;
       pos.push(x, Math.max(terrain.heightAt(x, z), b.y) + 0.4 + rng() * 2.4, z);
       seed.push(rng(), rng(), rng(), rng());
@@ -657,7 +657,7 @@ export async function build(ctx) {
     const tarn = ctx.water.tarn, rng = ctx.makeRng(9101), n = Math.round(120 * q);
     const pos = [], seed = [];
     for (let i = 0; i < n; i++) {
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * 48;
+      const a = rng() * 6.283, r = Math.sqrt(rng()) * ((tarn.shore ?? tarn.r) - 12); // v4: on the old round water
       pos.push(tarn.x + Math.cos(a) * r, tarn.y + 0.02, tarn.z + Math.sin(a) * r);
       seed.push(rng(), rng(), rng(), rng());
     }
