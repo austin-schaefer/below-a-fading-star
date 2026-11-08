@@ -89,3 +89,7 @@ If Austin wakes between releases, what has shipped is the version and the rest i
 ## Not in v5
 
 Performance is v3; the wonders, the light and the paths between places are v4. v5 is the land between them.
+
+## v5 recasts
+
+- **The Armiger's Tower** (`src/structures/tower.js`; `?tower=v2` the old one): the age of instruments, a lens mount: one fluted spire 70 m tall on three plain blade-fins, carrying a bronze yoke and a 20 m ring that holds a dished black-glass lens to the sun, three of its twelve panes never set and one left lying at the foot; 92 m to the ring's top (was 33 m to the pole's tip). Kit masonry with diminishing courses and bronze inlay, a measure figure by the south fin, the door with no handle at (−250, −120), the window still lit toward the v3 road. 5 draw calls, about 18k triangles at high (v2: 1 call in the merged stone mesh, 8k, and a banner). Sightlines (`shots/wip/v5-01-tower-*`): from the causeway (−65, 12) and from spawn a dark fluted needle with the ring and its bite reads against the hazed west wall, never against the sky (the wall stands far above it; the glow is 60° to its left); from the Lynchets' terraces the whole silhouette stands against the glow; from the Span's deck and the tarn's spit it is a faint needle with the window's spark, the ring near edge-on. The banner is gone with the crenellations, so its line is now "A lens mount, still turned to the sun. Nobody has seen who turned it."; the gutter's bats leave from under the collar.
