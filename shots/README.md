@@ -137,4 +137,11 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-riverlife-wrong-colour-gutter.png` | The Wrong Colour brightening while the sun gutters. |
 | `13-riverlife-wrong-colour-from-cutting.png` | From the Cutting's foot: the basin is round the bend but its green light is not. |
 | `13-riverlife-fall-spray.png` | Spray drifting off the fall into the Speculum's bowl. |
+| `13-sky-parhelion-ghost.png` | The Parhelion City by day: a faint ghost of spires in the sun's saddle, from the causeway. |
+| `13-sky-parhelion-gutter-solid.png` | The same view in a gutter: the city hardens, windows lit, against the dimmed sun. |
+| `13-sky-vigilant-from-yard.png` | The Vigilant crouched on the east wall, seen from the Leaning Yard. |
+| `13-sky-vigilant-head-zoom.png` | The Vigilant's head through a long lens; it turns only when unwatched. |
+| `13-sky-vigilant-eyes-gutter.png` | In a gutter the Vigilant's eyes glint. |
+| `13-sky-procession.png` | The procession: nine dim lights crossing the high sky in a line. |
+| `13-sky-shard-belt-gutter.png` | The shard belt, an arc of glinting fragments shown only in some gutters. |
 | `plan-v2-placement-map.png` | Placement map for the v2 plan. |
