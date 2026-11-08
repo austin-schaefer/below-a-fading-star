@@ -1,0 +1,11 @@
+[
+ {"name": "lattice-spawn", "x": 6, "z": 36, "yaw": -0.112, "pitch": 0.06},
+ {"name": "lattice-spawn-w4", "x": 2, "z": 36, "yaw": -0.125, "pitch": 0.06},
+ {"name": "lattice-causeway-40", "x": -40, "z": 22, "yaw": -0.272, "pitch": 0.06},
+ {"name": "lattice-causeway-65", "x": -65, "z": 12, "yaw": -0.362, "pitch": 0.06},
+ {"name": "lattice-span-deck", "x": -200, "z": 215, "dy": 56.54, "yaw": -0.464, "pitch": -0.02},
+ {"name": "lattice-court", "x": -40, "z": -165, "yaw": -0.675, "pitch": 0.12},
+ {"name": "lattice-moraine", "x": 15, "z": -178, "yaw": -0.279, "pitch": 0.28},
+ {"name": "lattice-foot", "x": 37, "z": -228, "yaw": 0.08, "pitch": 0.42},
+ {"name": "lattice-measure", "x": 32, "z": -248, "yaw": -0.2, "pitch": 0.32}
+]

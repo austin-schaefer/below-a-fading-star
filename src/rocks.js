@@ -144,6 +144,7 @@ export async function build(ctx) {
     if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
     if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
     if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
+    if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < 7.5) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
