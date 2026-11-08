@@ -567,6 +567,8 @@ export function buildPlants(ctx, ground, shared) {
     const marshW = smoothstep(0.25, 0.7, b.marsh);
     const crysW = smoothstep(0.15, 0.7, b.crystal);
     const nearCd = cd < 7;
+    // v4 map: the leads (v4/paths/routes.js) wear the cover off; a hash of the spot, not the rng, decides, so the rest stays as it was
+    const nearLead = ground.leadNear(mx, mz), worn = (x, z) => nearLead && ground.wornAt(x, z) > (Math.sin(x * 12.9898 + z * 78.233) * 43758.5453 % 1 + 1) % 1;
     const bleach = smoothstep(0.58, 0.78, noise.fbm2(mx * 0.02 + 70, mz * 0.02 - 20, 3) * 0.5 + 0.5);
     const tussock = smoothstep(0.55, 0.75, noise.fbm2(mx * 0.06 - 30, mz * 0.06 + 12, 2) * 0.5 + 0.5) * (1 - path);
     const hc = ground.heightAt(mx, mz);
@@ -584,6 +586,7 @@ export function buildPlants(ctx, ground, shared) {
     for (let i = 0; i < ng; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.05) continue;
       const v = rng() < 0.4 ? 0 : rng() < 0.6 ? 1 : 2;
@@ -602,6 +605,7 @@ export function buildPlants(ctx, ground, shared) {
     const ns = Math.floor(ds * CELL * CELL + rng());
     for (let i = 0; i < ns; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       const dep = ground.waterDepth(x, z, y);
       if (dep > 0.15) continue;
@@ -616,6 +620,7 @@ export function buildPlants(ctx, ground, shared) {
     for (let i = 0; i < nb; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.1) continue;
       setT(cBrk[Math.floor(rng() * 3)]); mixInto(null, cBrkWood, smoothstep(0.3, 0.8, b.wood) * 0.85); mixInto(null, cv.tint.bracken, cv.tw.bracken);
@@ -633,6 +638,7 @@ export function buildPlants(ctx, ground, shared) {
       for (let i = 0; i < nf; i++) {
         const x = cx + rng() * CELL, z = cz + rng() * CELL;
         if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+        if (worn(x, z)) continue;
         const y = ground.heightAt(x, z);
         if (ground.waterDepth(x, z, y) > -0.05) continue;
         setT(fc); mixInto(null, cv.tint.flowers, cv.tw.flowers * (0.6 + 0.4 * rng())); const br = 0.8 + rng() * 0.3; tint[0] *= br; tint[1] *= br; tint[2] *= br;
@@ -660,6 +666,7 @@ export function buildPlants(ctx, ground, shared) {
     for (let i = 0; i < nh; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (nearCd && ground.causewayDistance(x, z) < 4.5) continue;
+      if (worn(x, z)) continue;
       const y = ground.heightAt(x, z);
       if (ground.waterDepth(x, z, y) > -0.1) continue;
       const pick = rng();
@@ -681,6 +688,7 @@ export function buildPlants(ctx, ground, shared) {
           const dep = wn.dep;
           if (dep < -1.1 || dep > (wn.rim < 7 ? 1.7 : 0.55)) continue;
           if (ground.causewayDistance(x, z) < 4) continue;
+          if (worn(x, z)) continue; // v4 map: P14's gap in the grey reeds
           // two open stretches of Lees Tarn's shore, so the black water (and whoever stands in it) can be seen
           if (Math.hypot(x - OPEN_SHORE[0][0], z - OPEN_SHORE[0][1]) < 11 || Math.hypot(x - OPEN_SHORE[1][0], z - OPEN_SHORE[1][1]) < 10) continue;
           setT(cReed); mixInto(null, cReed2, rng());

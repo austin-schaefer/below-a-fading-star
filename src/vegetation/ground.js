@@ -2,6 +2,7 @@
 // interpolated over the same triangles the GPU draws, so nothing floats or sinks. Biome weights
 // come from a coarse grid of terrain.biomeAt() (it is too slow to call per blade of grass).
 import { clamp } from './util.js';
+import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
@@ -111,8 +112,9 @@ export function makeGround(ctx) {
     const depth = waterDepth(x, z, y);
     if (depth > (opts && opts.wet ? opts.wet : 0)) return true;
     if (terrain.causewayDistance(x, z) < 4 + margin) return true;
+    if (margin >= 0 && wornAt(x, z) > 0.05) return true; // v4 map: nothing woody grows on a lead
     return false;
   }
 
-  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance };
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
 }
