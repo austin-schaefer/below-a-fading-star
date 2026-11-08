@@ -8,9 +8,7 @@
 //    below the floor (vegetation reads the mesh, so nothing grows in mid-air over the hole);
 //  - a patch of the same surface, with the same material and vertex data, re-covers those cells up
 //    to the cut's rim exactly;
-//  - ctx.terrain.heightAt / normalAt answer the stair and floor inside the cut, so the controls (which
-//    take the higher of terrain and walkable floors) follow the player down. addWalkable alone cannot
-//    lower the floor below the terrain.
+//  - the stair and floor inside the cut go to the controls through ctx.addWalkable(plan.floorAt).
 
 export async function build(ctx) {
   const t0 = performance.now();
@@ -82,7 +80,6 @@ export function planHypogeum(ctx) {
   return { xc, zc, HW, WT, D, n, rise, Yf, Yr, yTop, x0, x1, R, floorAt, depth: DEPTH };
 }
 
-const _up = { x: 0, y: 1, z: 0 };
 function openGround(ctx, plan) {
   const T = ctx.terrain, THREE = ctx.THREE;
   const M = meshInfo(ctx), geo = M.geo;
@@ -166,14 +163,12 @@ function openGround(ctx, plan) {
   patch.receiveShadow = true; patch.name = 'ruins-hypogeum-ground';
   ctx.scene.add(patch);
 
-  // the controls and everyone else: the stair and the floor inside the cut
-  const h0 = T.heightAt, n0 = T.normalAt;
-  const nOut = new THREE.Vector3();
-  T.heightAt = (x, z) => { const f = plan.floorAt(x, z); return f === null ? h0(x, z) : f; };
-  T.normalAt = (x, z, o, eps) => {
-    if (plan.floorAt(x, z) === null) return n0(x, z, o, eps);
-    const r = o || nOut; r.x = _up.x; r.y = _up.y; r.z = _up.z; return r;
-  };
+  // the floor inside the cut is offered to the controls as a walkable surface; nothing under ctx.terrain is touched
   ctx.addWalkable?.(plan.floorAt);
-  return { patch, tris: index.length / 3, cells: (ix1 - ix0 + 1) * (iz1 - iz0 + 1), heightAt0: h0 };
+  // the ground as it was drawn before the opening (the patch's surface), for seating things round the rim
+  const at = (x, z) => {
+    if (x < bx0 || x > bx1 || z < bz0 || z > bz1) return meshHeight(M, P, x, z);
+    bary(x, z); return sample('position', 1);
+  };
+  return { patch, tris: index.length / 3, cells: (ix1 - ix0 + 1) * (iz1 - iz0 + 1), at };
 }

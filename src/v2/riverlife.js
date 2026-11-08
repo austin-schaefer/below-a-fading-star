@@ -141,8 +141,9 @@ function pedlarGeometry() {
 
 function pedlarMaterial(uTime) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.08, transparent: true, side: THREE.DoubleSide });
+  m.userData = { uSunView: { value: new THREE.Vector3(0, 0, -1) }, uSunCol: { value: new THREE.Color('#ffb084') }, uFlicker: { value: 1 } };
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uTime = uTime;
+    sh.uniforms.uTime = uTime; sh.uniforms.uSunView = m.userData.uSunView; sh.uniforms.uSunCol = m.userData.uSunCol; sh.uniforms.uFlicker = m.userData.uFlicker;
     const motion = /* glsl */`
       // aPh: x phase, y beat rate (Hz), z hover (0 darting .. 1 holding), w lean
       float ph = aPh.x;
@@ -179,6 +180,7 @@ function pedlarMaterial(uTime) {
         vPart = aPart; vWuv = vec2(fract(aWing.w * 0.5) * 2.0, step(1.5, aWing.w));`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
+        uniform vec3 uSunView, uSunCol; uniform float uFlicker;
         varying float vPart; varying vec2 vWuv;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         if (vPart > 0.5 && vPart < 1.5) {
@@ -187,6 +189,15 @@ function pedlarMaterial(uTime) {
           float stigma = smoothstep(0.78, 0.8, vWuv.x) * (1.0 - smoothstep(0.88, 0.9, vWuv.x)) * (1.0 - smoothstep(0.15, 0.3, vWuv.y));
           diffuseColor.rgb *= 1.0 - vein * 0.35 - stigma * 0.8;
           diffuseColor.a = 0.2 + stigma * 0.4 + vein * 0.08;
+        }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        {
+          // against the low sun the wings light up like mica and the rider's salt-white rims: that is what
+          // shows them at twenty paces
+          float back = max(dot(normalize(-vViewPosition), uSunView), 0.0);
+          float wingK = (vPart > 0.5 && vPart < 1.5) ? 1.0 : (vPart > 1.5 ? 0.25 : 0.08);
+          totalEmissiveRadiance += uSunCol * wingK * (0.08 + 1.6 * pow(back, 5.0)) * uFlicker;
+          if (vPart > 0.5 && vPart < 1.5) diffuseColor.a = min(1.0, diffuseColor.a + 0.3 * pow(back, 5.0));
         }`);
   };
   return m;
@@ -212,7 +223,7 @@ const GLINT_VERT = /* glsl */`
     // the fleck catches the light as the eye moves: twinkle by view angle as much as by time
     vec3 v = normalize(cameraPosition - transformed);
     vTw = 0.45 + 0.55 * pow(abs(sin(aSeed * 91.0 + v.x * 23.0 + v.z * 17.0 + uTime * (0.7 + aSeed))), 6.0);
-    gl_PointSize = clamp(0.018 * uScale / max(depth, 0.1), 1.8, 9.0);
+    gl_PointSize = clamp(0.035 * uScale / max(depth, 0.1), 2.2, 14.0);
     #include <fog_vertex>
   }`;
 const GLINT_FRAG = /* glsl */`
@@ -274,7 +285,7 @@ const WC_FRAG = /* glsl */`
     vec3 col = vec3(0.006, 0.005, 0.008) + c * glow * lum;
     // a faint skin on the surface, slowly turning
     float skin = sin(along * 9.0 + sin(across * 5.0 + t * 0.2) * 2.0 - t * 0.15);
-    col += c * smoothstep(0.85, 1.0, skin) * 0.04 * uBright;
+    col += c * smoothstep(0.9, 1.0, skin) * 0.012 * uBright;
     gl_FragColor = vec4(col, mask * (0.7 + 0.3 * glow));
     vec3 pre = gl_FragColor.rgb;
     #include <fog_fragment>
@@ -331,7 +342,7 @@ const SPRAY_VERT = /* glsl */`
     float depth = -mvPosition.z;
     float rr = length(p.xz);
     vA = (1.0 - smoothstep(7.0, 15.0, rr)) * smoothstep(0.3, 1.2, depth) * (1.0 - smoothstep(0.75, 1.0, abs(p.y) / 3.5));
-    gl_PointSize = clamp((0.006 + 0.006 * aSeed.w) * uScale / max(depth, 0.1), 1.2, 7.0);
+    gl_PointSize = clamp((0.01 + 0.012 * aSeed.w) * uScale / max(depth, 0.1), 1.6, 10.0);
     #include <fog_vertex>
   }`;
 const SPRAY_FRAG = /* glsl */`
@@ -342,7 +353,7 @@ const SPRAY_FRAG = /* glsl */`
     float r = length(gl_PointCoord - 0.5) * 2.0;
     float a = (1.0 - smoothstep(0.3, 1.0, r)) * vA * uOn;
     if (a < 0.003) discard;
-    gl_FragColor = vec4(vec3(0.7, 0.71, 0.76) * (0.55 + 0.45 * uFlicker), a * 0.55);
+    gl_FragColor = vec4(vec3(0.78, 0.79, 0.84) * (0.55 + 0.45 * uFlicker), a * 0.8);
     #include <fog_fragment>
   }`;
 
@@ -523,6 +534,7 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- pedlar motion
+  const sunW = new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z).normalize();
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(0, 0, 0, 'YXZ'), SC = new THREE.Vector3();
   let plS = 0, plD = 0, plT = 0;
   const _pr = { s: 0, d: 0, y: 0, hw: 0, speed: 0, tx: 0, tz: 0, inWater: false };
@@ -584,6 +596,9 @@ export async function build(ctx) {
     }
     pMesh.instanceMatrix.needsUpdate = true; aPh.needsUpdate = true;
     glMat.uniforms.uFlicker.value = flick.value;
+    const ud = pMesh.material.userData;
+    ud.uFlicker.value = flick.value;
+    ud.uSunView.value.copy(sunW).transformDirection(camera.matrixWorldInverse);
   }
   updates.push(updatePedlars);
 
@@ -649,7 +664,7 @@ export async function build(ctx) {
     ctx.wrongColour.hue = h;
     // the sun gutters and the colour comes up, as if it had been waiting
     const g = clamp((1 - flick.value) / 0.8, 0, 1);
-    const bright = 1 + g * 1.4;
+    const bright = 1 + g * 2.0;
     wcMat.uniforms.uHue.value = h; wcMat.uniforms.uBright.value = bright;
     haloMat.uniforms.uHue.value = h; haloMat.uniforms.uBright.value = bright;
     wcLight.color.setHSL(h, 0.95, 0.5);
@@ -662,7 +677,7 @@ export async function build(ctx) {
   // ================================================================ the fall: rumble zone and spray
   const foot = RV.impact;
   {
-    const n = high ? 420 : 220, rng = ctx.makeRng(9301);
+    const n = high ? 600 : 320, rng = ctx.makeRng(9301);
     const g = new THREE.BufferGeometry();
     const seed = new Float32Array(n * 4);
     for (let i = 0; i < n * 4; i++) seed[i] = rng();

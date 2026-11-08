@@ -108,7 +108,7 @@ function swardMaterial(u) {
         vec3 flAx = normalize(mix(flAsun, flApl, flTurn));
         flAx = normalize(flAx + vec3(0.0, -1.1, 0.0) * (1.0 - flOpen) * (1.0 - 0.5 * flTurn));
         vec3 flX = normalize(flW - flAx * dot(flW, flAx)), flY = cross(flAx, flX);
-        float flL = 0.026 * iPrm.z; // outer tepal length
+        float flL = 0.034 * iPrm.z; // outer tepal length
         // ---- place this vertex ----
         float part = aP.x, s = aP.y, w = aP.z, k = aP.w;
         vec3 flPos, flN; vFlT = 0.0;
@@ -130,7 +130,7 @@ function swardMaterial(u) {
           vec3 D = flAx * cos(al) + R * sin(al), Nt = R * cos(al) - flAx * sin(al);
           vec3 base = flHinge + flAx * 0.0085;
           if (outer) {
-            float wd = flL * 0.34 * max(sin(3.14159 * pow(s, 0.7)), 0.12);
+            float wd = flL * 0.46 * max(sin(3.14159 * pow(s, 0.62)), 0.14);
             flPos = base + D * (s * flL) + Ct * (w * wd) + Nt * (-0.4 * wd * w * w + flL * 0.14 * s * s * flOpen);
             flN = normalize(Nt - Ct * w * 0.5);
             vFlT = 1.0;
@@ -160,7 +160,9 @@ function swardMaterial(u) {
           vec3 flV = normalize(vFlW - cameraPosition);
           float flBack = pow(max(dot(flV, uSun), 0.0), 3.0);
           float flRim = pow(1.0 - abs(dot(normalize(normal), -flV)), 2.0);
-          outgoingLight += uSunCol * diffuseColor.rgb * vFlT * (0.05 + flBack * (0.55 + 0.9 * flRim));
+          outgoingLight += uSunCol * diffuseColor.rgb * vFlT * (0.06 + flBack * (0.9 + 1.6 * flRim));
+          // pale in the gloom, as snowdrops are at dusk
+          outgoingLight += diffuseColor.rgb * vFlT * 0.05;
         }
         #include <opaque_fragment>`);
     unflipNormals(shader);
@@ -171,7 +173,7 @@ function swardMaterial(u) {
 
 export async function build(ctx) {
   const t0 = performance.now();
-  const { terrain, landmarks: L, noise } = ctx;
+  const { terrain, landmarks: L } = ctx;
   const S = L.sward;
   const R = S.r;
   const high = ctx.quality === 'high';
@@ -187,21 +189,46 @@ export async function build(ctx) {
     const c = L.castle; if ((x - c.x) ** 2 + (z - c.z) ** 2 < 33 * 33) return true; // the keep's keep-out (as vegetation's)
     return false;
   };
+  // a handful of dense drifts (snowdrop-carpet density at the heart, thinning to the rim), each made of
+  // tight clumps, on ground that faces the sun; and a scatter of strays between them
   const xs = [], zs = [];
-  for (let tries = 0; tries < 20000 && xs.length < N; tries++) {
-    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
-    const cx = S.x + Math.cos(a) * r, cz = S.z + Math.sin(a) * r;
-    const drift = smoothstep(0.38, 0.68, noise.fbm2(cx * 0.07 + 13, cz * 0.07 - 7, 3) * 0.5 + 0.5);
-    const edge = 1 - smoothstep(0.4 * R, R, r);
-    if (rng() > edge * (0.08 + 0.92 * drift)) continue;
-    if (keepOut(cx, cz)) continue;
-    const n = 1 + Math.floor(Math.pow(rng(), 1.4) * (2 + 10 * drift));
-    for (let j = 0; j < n && xs.length < N; j++) {
-      const b = rng() * Math.PI * 2, q = (0.04 + rng() * rng() * 0.5) * (j ? 1 : 0);
+  const nrm = new THREE.Vector3();
+  const drifts = [];
+  for (let tries = 0; tries < 400 && drifts.length < (high ? 9 : 7); tries++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.78;
+    const x = S.x + Math.cos(a) * r, z = S.z + Math.sin(a) * r;
+    if (keepOut(x, z)) continue;
+    terrain.normalAt(x, z, nrm);
+    if (nrm.x * sunH.x + nrm.z * sunH.y < 0.02) continue; // must face the sun
+    if (drifts.some((d) => Math.hypot(d.x - x, d.z - z) < d.a + 5)) continue;
+    const ar = 2.2 + rng() * 3.0;
+    drifts.push({ x, z, a: ar, b: ar * (0.5 + rng() * 0.4), th: rng() * Math.PI, w: ar * ar });
+  }
+  const wSum = drifts.reduce((s, d) => s + d.w, 0) || 1;
+  const nStray = Math.floor(N * 0.14);
+  const clump = (cx, cz, k) => {
+    for (let j = 0; j < k && xs.length < N; j++) {
+      const b = rng() * Math.PI * 2, q = j ? 0.03 + Math.sqrt(rng()) * 0.22 : 0;
       const x = cx + Math.cos(b) * q, z = cz + Math.sin(b) * q;
-      if (j && keepOut(x, z)) continue;
+      if (keepOut(x, z)) continue;
       xs.push(x); zs.push(z);
     }
+  };
+  for (const d of drifts) {
+    const target = xs.length + Math.round(((N - nStray) * d.w) / wSum);
+    const c = Math.cos(d.th), sn = Math.sin(d.th);
+    for (let tries = 0; tries < 4000 && xs.length < Math.min(target, N - nStray); tries++) {
+      const a = rng() * Math.PI * 2, r = Math.pow(rng(), 0.75); // denser toward the heart
+      const u = Math.cos(a) * r * d.a, v = Math.sin(a) * r * d.b;
+      clump(d.x + u * c - v * sn, d.z + u * sn + v * c, 2 + Math.floor(rng() * (2 + 6 * (1 - r))));
+    }
+  }
+  for (let tries = 0; tries < 20000 && xs.length < N; tries++) {
+    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
+    if (rng() > 1 - smoothstep(0.3 * R, R, r)) continue;
+    const x = S.x + Math.cos(a) * r, z = S.z + Math.sin(a) * r;
+    if (keepOut(x, z)) continue;
+    clump(x, z, 1 + Math.floor(rng() * 3));
   }
   const n = xs.length;
 
@@ -287,7 +314,12 @@ export async function build(ctx) {
     turned[j] = turned[--nTurned];
   }
 
-  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false, positions: pos }; // positions: x, y, z, stem height per flower (tools)
+  // tools: jump every flower to the end of whatever it is doing (renders run at a few frames a second)
+  const settle = () => {
+    for (let o = 0; o < n; o++) for (let c = 0; c < 3; c++) if (Math.abs(state[o * 4 + c]) < 1e8) state[o * 4 + c] -= 100;
+    aState.clearUpdateRanges(); aState.needsUpdate = true;
+  };
+  const sward = ctx.sward = { centre, open: 1, turned: 0, count: n, closed: false, positions: pos, settle }; // positions: x, y, z, stem height per flower (tools)
   const cue = (name, p) => ctx.audio?.cue?.(name, p);
   const whimperPos = new THREE.Vector3();
   const trng = ctx.makeRng(5102);
@@ -354,5 +386,5 @@ export async function build(ctx) {
   });
 
   const tris = geo.index.count / 3;
-  ctx.log(`flora2: sward ${n} flowers, ${tris} tris each (${n * tris} total), built in ${(performance.now() - t0).toFixed(0)}ms`);
+  ctx.log(`flora2: sward ${n} flowers in ${drifts.length} drifts, ${tris} tris each (${n * tris} total), built in ${(performance.now() - t0).toFixed(0)}ms`);
 }
