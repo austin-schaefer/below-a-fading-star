@@ -4,8 +4,8 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { SPAWN, WORLD } from './world.js';
 
-const WALK = 4.2, HURRY = 7.6;      // m/s
-const STEPS_WALK = 1.9, STEPS_HURRY = 2.6; // footsteps per second at full speed
+const WALK = 3.6, HURRY = 6.6;      // m/s (4.2/7.6 in v2 was a shade too fast, Austin)
+const STEPS_WALK = 1.7, STEPS_HURRY = 2.4; // footsteps per second at full speed
 const LOOK_SENS = 0.005;            // rad per css px of touch drag
 const AUTO_HURRY = 0.8;             // stick pulled past this fraction hurries
 
