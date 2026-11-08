@@ -287,6 +287,7 @@ Performance is v3; the wonders, the light and the paths between places are v4. v
 - **Renders:** `shots/wip/v5-05-plinths-<view>-<before|after>.png` for `foot`, `medlar`, `pomegranate`, `pomegranate-n`, `outwash`, `span-deck`, `close`, `first-up`, `end` and `end-road`. `v5-05-plinths-sheet.png` puts the foot pair side by side. The iterations:
   - `-draft1` to `-draft4`: the first feet were too small and set back, so nothing showed from below.
   - `-dbg*`: views from crown height and of the feet in the grass. In `dbg`, robes 3–4 m tall hid the feet. `dbg2`/`dbg3` show the talons over the edge. `dbg4`/`dbg5` show the lying feet.
+
 ### BA. The Hawser (`src/v5/hawser.js`; `?hawser=0` leaves it out)
 
 **Idea:** one chain of 15 m links runs taut from high on the north wall down across the north-west floor into the Sunken Court's paving and goes into the ground; once in a long while whatever is below takes one more link.
