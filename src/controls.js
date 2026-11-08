@@ -19,7 +19,7 @@ export function buildControls(ctx) {
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
-    onStep: null,
+    onStep: null, hops: 0,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -38,8 +38,14 @@ export function buildControls(ctx) {
     if (e.repeat) return;
     const k = e.code;
     if (down) state.keys.add(k); else state.keys.delete(k);
-    if (down && k === 'Space' && state.onGround && state.enabled) { state.vy = 4.2; state.onGround = false; }
+    if (down && k === 'Space') hop();
   };
+  // The one jump: Space and the touch button both come here.
+  function hop() {
+    if (!state.onGround || !state.enabled) return false;
+    state.vy = 4.2; state.onGround = false; state.hops++;
+    return true;
+  }
   window.addEventListener('keydown', onKey(true));
   window.addEventListener('keyup', onKey(false));
   window.addEventListener('blur', () => state.keys.clear());
@@ -94,7 +100,7 @@ export function buildControls(ctx) {
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
 
-  // --- touch: a drawn thumbstick in the bottom-right zone, look from any other touch
+  // --- touch: a drawn thumbstick in the bottom-right zone, look from any other touch, a hop button
   const stickEl = document.getElementById('stick');
   const knobEl = document.getElementById('stick-knob');
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -219,6 +225,24 @@ export function buildControls(ctx) {
   };
   el.addEventListener('touchend', endTouch); el.addEventListener('touchcancel', endTouch);
 
+  // --- the hop button, left of and below the stick's home. A sibling of the canvas: a touch that
+  // starts on it is its own and never reaches the stick or look; one that drifts onto it does nothing.
+  const jumpEl = document.getElementById('jump');
+  if (jumpEl) {
+    let jumpId = null;
+    jumpEl.addEventListener('touchstart', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (jumpId === null) { jumpId = e.changedTouches[0].identifier; jumpEl.classList.add('held'); }
+      hop();
+    }, { passive: false });
+    const jumpEnd = (e) => {
+      e.stopPropagation();
+      if (!listed(e.touches, jumpId)) { jumpId = null; jumpEl.classList.remove('held'); }
+    };
+    jumpEl.addEventListener('touchend', jumpEnd); jumpEl.addEventListener('touchcancel', jumpEnd);
+    jumpEl.addEventListener('touchmove', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    jumpEl.addEventListener('click', () => hop()); // assistive tech activates without touch events
+  }
   // read-only view of the touch state, for tools/touch-test.mjs
   const touch = {
     moveVec,
@@ -376,5 +400,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, touch };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch };
 }
