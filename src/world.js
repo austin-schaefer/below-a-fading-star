@@ -33,7 +33,9 @@ export const LANDMARKS = {
   tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: 'The banner still flies. Nobody has seen who raises it.' },
   arcature: { x: 160,  z: 60,   r: 22,  y: null, name: 'The Arcature',         line: 'It was built to think. Nobody can say whether it has stopped.' },
   taverna:  { x: 95,   z: -45,  r: 20,  y: null, name: 'The Pomegranate House', line: 'The last stopping place. The lamps are kept for no one you will meet.' },
-  bridge:   { x: -95,  z: 215,  r: 40,  y: null, name: 'The Trigon Span',      line: 'Each triangle holds three more. Count them and you will not reach the far side.' },
+  // v4: the Great Span (W) along z 215, gate to gate; axis: the landmark is that line (landmarkDistance), at: where the debug panel lands you
+  bridge:   { x: 0,    z: 215,  r: 270, y: null, name: 'The Trigon Span',      line: 'Each triangle holds three more. Count them and you will not reach the far side.',
+              axis: { x0: -257, x1: 257, half: 14 }, at: { x: -199, z: 199 } },
   shrine:   { x: -108, z: -128, r: 8,   y: null, name: 'The Wayside Shrine',   line: 'Whoever is carved here has been prayed smooth.' },
   graveyard:{ x: 198,  z: -130, r: 14,  y: null, name: 'The Leaning Yard',     line: 'The stones lean the way the wind goes. So, in time, do the dead.' },
   speculum: { x: 208,  z: 258,  r: 10,  y: 3.5, name: 'The Speculum',          line: 'It remembers a sun that was young. It will not remember you.' },
@@ -46,6 +48,14 @@ export const LANDMARKS = {
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: 'The Cutting',          line: 'Stone, black glass, lattice, stone. The ages lie flat here, like strata of mistakes.' },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: 'The Wrong Colour',     line: 'The reeds around it have gone grey. You will not be able to say what colour it is.' },
 };
+
+// Distance from (x, z) to a landmark's edge (negative inside): its circle, or for one with an axis its line.
+export function landmarkDistance(L, x, z) {
+  const a = L.axis;
+  if (!a) { const dx = x - L.x, dz = z - L.z; return Math.sqrt(dx * dx + dz * dz) - L.r; }
+  const dx = x < a.x0 ? x - a.x0 : x > a.x1 ? x - a.x1 : 0, dz = z - L.z;
+  return Math.sqrt(dx * dx + dz * dz) - a.half;
+}
 
 // v4 systems (BI): named peaks on the main crest of the walls. Bearings are compass degrees from the bowl's
 // centre (0 north, 90 east); h is metres above the crest round it, w the half-width in degrees; a twin peak has

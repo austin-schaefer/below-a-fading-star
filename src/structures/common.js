@@ -1,6 +1,7 @@
 // Shared helpers for the ruins: stone colours, rubble, collider chains, banners, the hex paving grid.
 import * as THREE from 'three';
 import { mat } from './geo.js';
+import { landmarkDistance } from '../world.js';
 
 // Stone tints (linear). Built from the shared palette so the ruins agree with the terrain's rock.
 export function stoneTints(palette) {
@@ -149,7 +150,7 @@ export function findSpot(env, o = {}) {
     for (const [k, L] of Object.entries(ctx.landmarks)) {
       if (o.allow && o.allow.includes(k)) continue;
       const pad = k === 'wood' ? (o.inWood ? -1e9 : -30) : lmPad;
-      if (Math.hypot(x - L.x, z - L.z) < L.r + pad) { bad = true; break; }
+      if (landmarkDistance(L, x, z) < pad) { bad = true; break; }
     }
     if (bad) continue;
     const sep = o.sep ?? 6;

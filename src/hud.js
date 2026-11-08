@@ -1,7 +1,6 @@
 // HUD: the title card, a landmark name that fades in when you draw near, a hint line, fps.
-import { LANDMARKS } from './world.js';
+import { LANDMARKS, landmarkDistance } from './world.js';
 import { buildDebug } from './debug.js';
-import { hyp } from './noise.js';
 
 // The title card's loading bar: a hairline that fills as the world builds, with the current step's name
 // under it. Built before anything else so the terrain's own steps show. Enables "Go out" once body.ready.
@@ -78,7 +77,7 @@ export function buildHud(ctx) {
     const p = ctx.player.pos;
     let best = null, bestD = Infinity;
     for (const [key, L] of landmarkList) {
-      const d = hyp(p.x - L.x, p.z - L.z) - L.r;
+      const d = landmarkDistance(L, p.x, p.z);
       if (d < bestD) { bestD = d; best = key; }
     }
     const near = bestD < 6 ? best : null;

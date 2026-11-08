@@ -17,7 +17,6 @@ import { buildMarkers } from './structures/markers.js';
 import { buildScatter } from './structures/scatter.js';
 import { buildTaverna, TAVERNA } from './structures/taverna.js';
 import { buildArches, ARCHES } from './structures/arches.js';
-import { buildBridge, BRIDGE } from './structures/bridge.js';
 
 export async function build(ctx) {
   const t0 = performance.now();
@@ -58,7 +57,7 @@ export async function build(ctx) {
 
   const env = { ctx, ground, tints, rust, banners, notes, addPaver, rng: null };
   const sites = {};
-  // debugging aid: ?sskip=scatter,bridge leaves those sites out
+  // debugging aid: ?sskip=scatter,court leaves those sites out
   const sskip = (new URL(location.href).searchParams.get('sskip') || '').split(',');
   const site = (name, salt, fn) => {
     const ts = performance.now();
@@ -86,11 +85,8 @@ export async function build(ctx) {
   await ctx.progress?.('lighting the lamps', 0.7);
   site('taverna', 1909, buildTaverna);
   site('arches', 2010, buildArches);
-  await ctx.progress?.('joining the span', 0.8);
-  site('bridge', 2111, buildBridge);
   // keep the scatter off the newer landmarks too
-  env.taken = [[TAVERNA.x, TAVERNA.z, 26], [ARCHES.x, ARCHES.z, 26], [BRIDGE.a.x, BRIDGE.a.z, 14], [BRIDGE.b.x, BRIDGE.b.z, 14],
-    [(BRIDGE.a.x + BRIDGE.b.x) / 2, (BRIDGE.a.z + BRIDGE.b.z) / 2, 26]];
+  env.taken = [[TAVERNA.x, TAVERNA.z, 26], [ARCHES.x, ARCHES.z, 26]];
   site('markers', 1707, buildMarkers);
   await ctx.progress?.('scattering the rubble', 0.9);
   site('scatter', 1808, buildScatter);
@@ -99,7 +95,7 @@ export async function build(ctx) {
   let tris = 0, draws = 0;
   const meshes = [];
   // causeway and markers geometry is sparse; fold them in with the scatter to save draw calls
-  const merged = { keep: ['keep'], tower: ['tower'], stones: ['stones'], court: ['court'], byre: ['byre'], taverna: ['taverna'], arches: ['arches'], bridge: ['bridge'], wide: ['causeway', 'markers', 'scatter'] };
+  const merged = { keep: ['keep'], tower: ['tower'], stones: ['stones'], court: ['court'], byre: ['byre'], taverna: ['taverna'], arches: ['arches'], wide: ['causeway', 'markers', 'scatter'] };
   for (const [name, parts] of Object.entries(merged)) {
     let B = sites[parts[0]].B;
     for (let i = 1; i < parts.length; i++) {
@@ -189,6 +185,6 @@ export async function build(ctx) {
   ctx.log(`structures: ${draws} draw calls, ${(tris / 1000).toFixed(0)}k tris, ${paverMats.length} pavers, built in ${ms.toFixed(0)}ms (${per})`);
   if (notes.keep) ctx.log('structures: gate', JSON.stringify(notes.keep.gate), 'courtyard', JSON.stringify(notes.keep.courtyard));
   if (notes.byre) ctx.log('structures: byre door', JSON.stringify(notes.byre));
-  for (const k of ['taverna', 'arches', 'bridge', 'shrine', 'graveyard', 'gibbet']) if (notes[k]) ctx.log(`structures: ${k}`, JSON.stringify(notes[k]));
+  for (const k of ['taverna', 'arches', 'shrine', 'graveyard', 'gibbet']) if (notes[k]) ctx.log(`structures: ${k}`, JSON.stringify(notes[k]));
   ctx.structures = { notes };
 }

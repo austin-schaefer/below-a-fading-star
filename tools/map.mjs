@@ -46,7 +46,16 @@ const res = await p.evaluate(async (sites) => {
   g.font = '22px Alegreya, Georgia, serif'; g.textAlign = 'center';
   const circle = (x, z, r, col, label, dash) => { const [a, bb] = toPx(x, z); g.setLineDash(dash ? [8, 6] : []); g.strokeStyle = col; g.lineWidth = 3; g.beginPath(); g.arc(a, bb, Math.max(6, r * px), 0, 7); g.stroke(); g.setLineDash([]);
     g.fillStyle = col; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(label, a, bb - Math.max(6, r * px) - 6); g.shadowBlur = 0; };
-  for (const [k, L] of Object.entries(LANDMARKS)) circle(L.x, L.z, L.r, 'rgba(240,228,200,0.95)', L.name, false);
+  for (const [k, L] of Object.entries(LANDMARKS)) if (!L.axis) circle(L.x, L.z, L.r, 'rgba(240,228,200,0.95)', L.name, false);
+  // the Great Span (v4, ctx.span): its deck where it stands, the piers, the stairs, the gates; its name on the line
+  if (ctx.span) {
+    const S = ctx.span.plan, rect = (x0, x1, z0, z1, fill) => { const [a, b] = toPx(x0, z0), [c, d] = toPx(x1, z1); g.fillStyle = fill; g.fillRect(a, b, c - a, d - b); };
+    for (const [x0, x1] of S.decks) rect(x0, x1, S.z0, S.z1, 'rgba(240,228,200,0.55)');
+    for (const p of S.piers) rect(p - S.pierT / 2, p + S.pierT / 2, S.z0 - 6, S.z1 + 6, 'rgba(240,228,200,0.95)');
+    for (const st of Object.values(ctx.span.stairs)) for (const f of st.flights) { const L = f.steps * f.run, x1 = f.x + f.dir[0] * L, z1 = f.z + f.dir[1] * L, w = 3.2; rect(Math.min(f.x, x1) - (f.dir[0] ? 0 : w), Math.max(f.x, x1) + (f.dir[0] ? 0 : w), Math.min(f.z, z1) - (f.dir[1] ? 0 : w), Math.max(f.z, z1) + (f.dir[1] ? 0 : w), 'rgba(255,190,120,0.9)'); }
+    for (const s of [-1, 1]) rect(Math.min(s * S.gateX, s * (S.gateX + S.facade.depth)), Math.max(s * S.gateX, s * (S.gateX + S.facade.depth)), S.facade.z0, S.facade.z1, 'rgba(240,228,200,0.95)');
+    const L = LANDMARKS.bridge, [lx, lz] = toPx(L.x, L.z + 22); g.fillStyle = 'rgba(240,228,200,0.95)'; g.shadowColor = '#000'; g.shadowBlur = 6; g.fillText(L.name, lx, lz); g.shadowBlur = 0;
+  }
   for (const s of sites) circle(s.x, s.z, s.r, '#ff9a5c', s.label, true);
   // sun arrow
   const [sx, sz] = toPx(-300, 0); g.fillStyle = '#ff9a5c'; g.font = 'bold 26px Alegreya, serif'; g.fillText('☉ sun (west, low)', 190, S / 2 - 30);

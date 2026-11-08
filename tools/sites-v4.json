@@ -315,6 +315,76 @@
 "label": "Jumpable gap [v4]"
 },
 {
+"key": "span-pier--211",
+"x": -211,
+"z": 215,
+"r": 7,
+"label": "pier -211 [v4]"
+},
+{
+"key": "span-pier--166",
+"x": -166,
+"z": 215,
+"r": 7,
+"label": "pier -166 [v4]"
+},
+{
+"key": "span-pier--120",
+"x": -120,
+"z": 215,
+"r": 7,
+"label": "pier -120 [v4]"
+},
+{
+"key": "span-pier--70",
+"x": -70,
+"z": 215,
+"r": 7,
+"label": "pier -70 [v4]"
+},
+{
+"key": "span-pier--22",
+"x": -22,
+"z": 215,
+"r": 7,
+"label": "pier -22 [v4]"
+},
+{
+"key": "span-pier-25",
+"x": 25,
+"z": 215,
+"r": 7,
+"label": "pier 25 [v4]"
+},
+{
+"key": "span-pier-70",
+"x": 70,
+"z": 215,
+"r": 7,
+"label": "pier 70 [v4]"
+},
+{
+"key": "span-pier-115",
+"x": 115,
+"z": 215,
+"r": 7,
+"label": "pier 115 [v4]"
+},
+{
+"key": "span-pier-176",
+"x": 176,
+"z": 215,
+"r": 7,
+"label": "pier 176 [v4]"
+},
+{
+"key": "span-pier-222",
+"x": 222,
+"z": 215,
+"r": 7,
+"label": "pier 222 [v4]"
+},
+{
 "key": "causeway-0",
 "x": -344,
 "z": 126,
