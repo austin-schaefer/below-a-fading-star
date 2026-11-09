@@ -33,11 +33,11 @@ export function startCues(a) {
   // ================================================================ calls (one-shots)
   // the generic far cry (v7.2-04): a formant call, not a bare saw. A darkened buzz through two bandpasses and a
   // breath, rising a fifth and falling a fourth in D minor pentatonic (D5/F5/G5 up to A5/C6/D6, down to A4/C5/D5),
-  // a slow vibrato (5-7 Hz, never in the rough band). 6 dB under its old level, through a voice with the air's
-  // lowpass: far means dull.
+  // a slow vibrato (5-7 Hz, never in the rough band). 6 dB under its old level, through a voice that falls off fast
+  // past 25 m (rolloff 1.4) with a short air lowpass (60 m), so at 260 m it is a dull breath under 1 kHz, not a call.
   const CRY_ROOT = [587.33, 698.46, 783.99];
   function cry(pos) {
-    const v = voice(pos, { ref: 50, roll: 1.1, range: 600, verb: 0.9, dur: 3.2, air: 120 });
+    const v = voice(pos, { ref: 25, roll: 1.4, range: 400, verb: 0.9, dur: 3.2, air: 60 });
     if (!v) return;
     const t0 = v.t0, n = 1 + ((rng() * 2) | 0), f0 = CRY_ROOT[(rng() * 3) | 0] * jit(1, 0.01);
     const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
@@ -47,10 +47,10 @@ export function startCues(a) {
       const o = vOsc(v, 'sawtooth', f0, at, at + dur + 0.1);
       o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f0 * 1.5, at + dur * 0.35); o.frequency.exponentialRampToValueAtTime(f0 * 0.75, at + dur);
       chain(vOsc(v, 'sine', 5 + rng() * 2, at, at + dur + 0.1), gainOf(18), o.detune);
-      const g = ac.createGain(); env(g, at, 0.06, 0.1, dur);
+      const g = ac.createGain(); env(g, at, 0.06, 0.15, dur);
       const pre = filt('lowpass', f0 * 3, 0.7);
       chain(o, pre); chain(pre, filt('bandpass', 1100, 3), g); chain(pre, filt('bandpass', 1700, 4), gainOf(0.4), g); g.connect(out);
-      const ng = ac.createGain(); env(ng, at, 0.02, 0.1, dur); chain(vNoise(v, pink, at, dur), filt('bandpass', 1400, 1.0), ng, out);
+      const ng = ac.createGain(); env(ng, at, 0.02, 0.15, dur); chain(vNoise(v, pink, at, dur), filt('bandpass', 1400, 1.0), ng, out);
       at += dur * 0.7 + 0.1 + rng() * 0.2;
     }
   }
@@ -74,8 +74,9 @@ export function startCues(a) {
     // wing-clatter as they leave
     const wg = ac.createGain(); env(wg, v.t0, 0.05, 0.2, 1.1); chain(vNoise(v, pink, v.t0, 1.4), filt('bandpass', 500, 0.8), wg, out);
   }
+  // a fish rising: a small thing, heard at the water's edge and gone by 30 m (inverse from 3 m, the air's lowpass)
   function plop(pos) {
-    const v = voice(pos, { ref: 6, roll: 1.2, range: 60, verb: 0.35, dur: 0.4, air: 80 }); if (!v) return;
+    const v = voice(pos, { ref: 3, roll: 1.3, range: 30, verb: 0.35, dur: 0.4, air: 40 }); if (!v) return;
     const t0 = v.t0;
     const o = vOsc(v, 'sine', 820, t0, t0 + 0.25); o.frequency.setValueAtTime(820, t0); o.frequency.exponentialRampToValueAtTime(190, t0 + 0.11);
     const g = ac.createGain(); shape(g, t0, 0.13, 0.004, 0.13); chain(o, g, v.in);

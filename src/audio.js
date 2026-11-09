@@ -40,7 +40,7 @@
 //   bats-out (tower window pos, { count }): a soft fluttering rush and a few faint squeaks, 3-4 s: 200 m
 //   wader-gone (pos, { quiet }): a breath of air and one soft plip: 35 m
 //   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 25 m
-//   lamp-tick (a Leerie standard lighting, v5/lights.js): a dark tock and the flame's breath, 0.9 s: 90 m
+//   lamp-tick (a Leerie standard lighting, v5/lights.js): a dark tock and the flame's breath, 0.9 s: 60 m
 //   kept-fire (hearth pos, { flare?, strength? }): a fire's crackle, 1.8 s, pops and a hiss: 70 m; flare: a roar swelling under thick crackle and a low whump, 3.4 s: 130 m
 //   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
 //   v7, the living (src/audio/living.js, which lists each one's make and range): taker-click, taker-murmur, coheirs-knot,

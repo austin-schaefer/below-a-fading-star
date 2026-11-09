@@ -269,13 +269,13 @@ export function startCuesV2(a) {
   // reference: still a third its level 500 m off, so the whole bowl hears it.
   // the Leerie's standards (v5/lights.js): a lantern catching, a small click and the soft breath of the flame
   // A lantern catching (v7.2-04): a soft iron tock low in the cage, a dull tap on the glass, and the flame's breath
-  // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, a 4 ms attack, a 50 ms release. Twelve
+  // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, an 8 ms attack, a 50 ms release, gone by 60 m. Twelve
   // fire in a wave along the Leerie's row at a gutter, so each is a small thing.
   function lampTick(pos) {
-    const v = voice(pos, { ref: 6, roll: 1, range: 90, verb: 0.35, dur: 1.0, air: 120 }); if (!v) return;
+    const v = voice(pos, { ref: 4, roll: 1.2, range: 60, verb: 0.35, dur: 1.0, air: 60 }); if (!v) return;
     const t0 = v.t0, lp = filt('lowpass', 2400, 0.6); lp.connect(v.in);
-    sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.004);
-    sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.005);
+    sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.008);
+    sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.008);
     const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.02); g.gain.linearRampToValueAtTime(0.05, t0 + 0.14);
     g.gain.linearRampToValueAtTime(0.03, t0 + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
     chain(vNoise(v, pink, t0 + 0.02, 0.9), filt('lowpass', 520, 0.7), g, lp);
@@ -291,7 +291,7 @@ export function startCuesV2(a) {
       const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(a, t0 + 0.2);
       for (let tt = t0 + 0.32; tt < t0 + 3.8; tt += 0.05 + rng() * 0.13) g.gain.linearRampToValueAtTime(a * (0.4 + 0.6 * rng()), tt);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7);
-      chain(o, filt('lowpass', f * 4, 0.9), g, lp);
+      chain(o, filt('lowpass', f * 3, 0.7), filt('lowpass', f * 3, 0.7), g, lp); // v7.2-04: two poles more, so the saws' edges never stand out as the grind stops
     }
     const gg = ac.createGain(); swell(gg, t0, 0.22, 0.3, t0 + 3.6);
     const gb = filt('bandpass', 190, 1.1); gb.frequency.setValueAtTime(190, t0); gb.frequency.exponentialRampToValueAtTime(85, t0 + 3.2);

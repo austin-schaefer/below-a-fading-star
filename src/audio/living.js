@@ -8,7 +8,7 @@
 //   taker-click 40 m, taker-murmur 25 m, coheirs-knot 40 m, sexton-bite / sexton-throw 60 m, sleeper-breath 25 m,
 //   sleeper-fruit 30 m, stylite-creak 50 m (it sounds at the tor's lip, 9-10 m above the basket), accrescent-step 40 m,
 //   moles-click 30 m, thurifer-chain 50 m, leerie-click 50 m, bather-pour 80 m (fired only from the rim, 20-40 m
-//   above her); leerie-step 25 m and linkboy-step 15 m are footsteps by ground through audio/steps.js's stepSynth (k.figureStep).
+//   above her); leerie-step 16 m and linkboy-step 12 m are footsteps by ground through audio/steps.js's stepSynth (k.figureStep).
 // Every grain and partial has a real attack and a 40 ms or longer release (the soft kit, cues-v2.js).
 // Loops (one voice each, outside the cap, as the fall's is): coheirs-hum and thurifer-hiss, started and stopped by the
 // figures' { start } / { stop }; the link's flutter, run by distance alone (within 8 m of the Link-Boy's flame). Each
@@ -267,7 +267,8 @@ export function startLiving(k) {
   }
   const LOOPS = [hum, hiss, flutter];
 
-  const LEERIE_STEP = { vol: 0.6, range: 25, ref: 1.5 }, LINKBOY_STEP = { vol: 0.4, range: 15, ref: 1 };
+  // v7.2-04: a figure's steps are near detail, under the walker's own: the Leerie's at 0.4 to 16 m, the Link-Boy's at 0.3 to 12 m
+  const LEERIE_STEP = { vol: 0.4, range: 16, ref: 1.5 }, LINKBOY_STEP = { vol: 0.3, range: 12, ref: 1 };
   return {
     loops, tick,
     takerClick, takerMurmur, coheirsKnot, sextonBite, sextonThrow, sleeperBreath, sleeperFruit, styliteCreak, accrescentStep,
