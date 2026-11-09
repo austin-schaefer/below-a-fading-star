@@ -60,6 +60,7 @@ const MODULES = [
   ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
   // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
   ['living-glyphs', () => import('./v7/glyphs.js')], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
+  ['living-small', () => import('./v7/small.js')], // v7: CM the Indistinct, CO the Repetend, CQ the Simulacrum (?small=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
