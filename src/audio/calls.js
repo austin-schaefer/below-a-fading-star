@@ -1,11 +1,66 @@
-// Place sounds and scheduled calls (v7.2-01 split out of src/audio.js; v7.2-03 voices it next): the tarn's lapping
-// and the Lattice's hum (positional loops), the fen's bubbles and frogs, the distant calls from all around (a hoot,
-// yelps, a moan, or a `cry` cue) and the deodand's counting click. Nothing here is a named cue or a region hook.
-// startPlaces(a) builds the lap, hum and bubbles; startCalls(a) builds the frogs, calls and click, later, where they
-// were in the shared stream's order of draws. Each returns { update(f) }, called at 10 Hz from audio.js with the
-// frame f = { now, t, step, px, pz, b }.
+// Place sounds and scheduled calls (v7.2-01 split out of src/audio.js; v7.2-03 voiced it): the tarn's lapping and
+// the Lattice's hum (positional loops), the fen's bubbles and frogs, the far call from the wood's edge, and the
+// deodand's counting click. Nothing here is a named cue or a region hook. startPlaces(a) builds the lap, hum and
+// bubbles; startCalls(a) builds the frogs, the far calls and the click. Each returns { update(f) }, called at 10 Hz
+// from audio.js with the frame f = { now, t, step, px, pz, b }.
+//
+// The phrasing every scheduled sound here and in the regions' hooks uses (craft.md "Scheduling and pacing"):
+//   lognormal(rng, median, spread): a long-tailed draw (median * e^(spread * z), z normal)
+//   caller(rng, o, fire): an emitter's clock. o = { bout: [n0, n1], gap: [s0, s1], rest: [median, spread, min?, max?],
+//     first?: [s0, s1], answer?: { p, delay: [s0, s1], gain }, when?: () => bool }. A bout of n0..n1 calls gap apart,
+//     then a rest; when() false at a bout's start skips it (the emitter keeps its own time whether you hear it or
+//     not). fire(i, n, gain, answer) per call; an answer (p per bout) is one call from the partner, delay after the
+//     bout's last, at gain (0.71: 3 dB under).
+//   placed(a, o): a continuous source with a place: in -> air lowpass -> panner -> master, a reverb send; at(x, y, z)
+//     moves it and sets the lowpass by its distance (o = { ref, roll, range, air, verb })
+//   a.far: the far calls' shared clock ({ last }): no far call starts within FAR_GAP s of another
+// Pitched things sit in D (palette.md): the hum on A (the fifth), the hoot D4 to A3, the frogs on D pentatonic notes.
 import { hyp } from '../noise.js';
-import { smoothstep } from './graph.js';
+import { smoothstep, clamp } from './graph.js';
+
+export function lognormal(rng, median, spread) {
+  const u = Math.max(1e-6, rng()), v = rng();
+  return median * Math.exp(spread * Math.sqrt(-2 * Math.log(u)) * Math.cos(6.2832 * v));
+}
+const span = (rng, r) => r[0] + rng() * (r[1] - r[0]);
+export function caller(rng, o, fire) {
+  const rest = () => clamp(lognormal(rng, o.rest[0], o.rest[1]), o.rest[2] ?? 0, o.rest[3] ?? Infinity);
+  let t = o.first ? span(rng, o.first) : rest(), left = 0, n = 0, ans = -1;
+  return {
+    tick(step) {
+      if (ans >= 0) { ans -= step; if (ans < 0) fire(n, n + 1, o.answer.gain ?? 0.71, true); }
+      t -= step;
+      if (t > 0) return;
+      if (left === 0) {
+        if (o.when && !o.when()) { t = rest(); return; }
+        n = left = o.bout[0] + Math.floor(rng() * (o.bout[1] - o.bout[0] + 1));
+      }
+      fire(n - left, n, 1, false); left--;
+      if (left > 0) t = span(rng, o.gap);
+      else { t = rest(); if (o.answer && rng() < o.answer.p) ans = span(rng, o.answer.delay); }
+    },
+    get busy() { return left > 0 || ans >= 0; },
+  };
+}
+export function placed(a, o) {
+  const { ac, panner, setPos, send, camera, master } = a;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 20000;
+  const p = panner('equalpower', o.ref ?? 5, o.roll ?? 1, o.range ?? 200);
+  lp.connect(p); p.connect(o.dest || master); if (o.verb) send(p, o.verb);
+  const air = o.air ?? 60;
+  return {
+    in: lp, pan: p,
+    at(x, y, z) {
+      setPos(p, x, y, z);
+      const c = camera.position, d = Math.hypot(x - c.x, y - c.y, z - c.z);
+      lp.frequency.setTargetAtTime(clamp(20000 * Math.exp(-d / air), 900, 20000), ac.currentTime, 0.03);
+      return d;
+    },
+  };
+}
+export const FAR_GAP = 20;
+// a far sound's reverb share: more of it the further off (10-20 % near, 60-80 % far)
+export const wetBy = (d) => 0.15 + 0.6 * smoothstep(10, 220, d);
 
 export function startPlaces(a) {
   const { ac, rng, master, send, panner, setPos, loopSrc, brown, pink, env, landmarks, terrain } = a;
@@ -18,28 +73,40 @@ export function startPlaces(a) {
   lapSrc.connect(lapLP); lapLP.connect(lapBus); lapSrc2.connect(lapHP); lapHP.connect(lapHg); lapHg.connect(lapBus);
   lapBus.connect(lapPan); lapPan.connect(master); send(lapPan, 0.1);
 
-  // lattice hum: sine partials, slightly apart so they shimmer
+  // lattice hum: sine partials on A4 (the fifth of D), two pairs slightly apart so they beat slowly (1.2 and 2.6 Hz)
   const humBus = ac.createGain(); humBus.gain.value = 0;
   const humPan = panner('HRTF', 30, 0.9);
   const L0 = landmarks.moraine;
   setPos(humPan, L0.x, terrain.heightAt(L0.x, L0.z) + 12, L0.z);
-  [[392, 1], [393.1, 0.8], [588.4, 0.6], [783.2, 0.45], [1177.6, 0.3], [1569, 0.18], [1571.4, 0.15]].forEach(([f, amp], i) => {
+  [[440.5, 1], [441.7, 0.8], [660.75, 0.6], [881, 0.45], [1321.5, 0.3], [1762, 0.18], [1764.6, 0.15]].forEach(([f, amp], i) => {
     const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = ac.createGain(); g.gain.value = amp * 0.1;
     const lfo = ac.createOscillator(); lfo.frequency.value = 0.11 + 0.07 * i; const lg = ac.createGain(); lg.gain.value = amp * 0.07; lfo.connect(lg); lg.connect(g.gain); lfo.start();
     o.connect(g); g.connect(humBus); o.start();
   });
   humBus.connect(humPan); humPan.connect(master); send(humPan, 0.4);
 
-  // fen bubbles
-  const bubPan = panner('equalpower', 6, 1.3);
-  const bubG = ac.createGain(); bubG.gain.value = 1; bubPan.connect(bubG); bubG.connect(master); send(bubG, 0.2);
-  let bubT = 0;
-  function bubble() {
-    const t0 = ac.currentTime + a.lead, f = 180 + rng() * 380;
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * (1.8 + rng()), t0 + 0.07);
-    const g = ac.createGain(); env(g, t0, 0.07 * (0.5 + rng()), 0.004, 0.08);
-    o.connect(g); g.connect(bubPan); o.start(t0); o.stop(t0 + 0.14);
+  // fen bubbles: gas rising from the mud near you, in runs with rests between
+  a.far = { last: -1e9 }; // the far calls' shared clock (startCalls, the regions' hooks)
+  const prng = a.ctx.makeRng(9093), F = landmarks.fen;
+  const spot = { x: 0, y: -2.5, z: 0 };
+  function findSpot(px, pz) {
+    for (let k = 0; k < 8; k++) {
+      const ang = prng() * 6.283, r = 5 + prng() * 25, x = px + Math.cos(ang) * r, z = pz + Math.sin(ang) * r;
+      if (hyp(x - F.x, z - F.z) < F.r) { spot.x = x; spot.z = z; return spot; }
+    }
+    return null;
   }
+  let fpx = 0, fpz = 0;
+  const bubbles = caller(prng, { bout: [2, 6], gap: [0.15, 0.6], rest: [7, 0.7, 2, 45], first: [1, 6], when: () => hyp(fpx - F.x, fpz - F.z) < F.r + 25 }, () => {
+    const s = findSpot(fpx, fpz); if (!s) return;
+    const cp = a.camera.position, d = Math.hypot(s.x - cp.x, s.y - cp.y, s.z - cp.z);
+    const v = a.voice(s, { ref: 6, roll: 1.3, range: 60, air: 60, verb: 0.5 * wetBy(d), dur: 0.2 });
+    if (!v) return;
+    const t0 = v.t0, f0 = 180 + prng() * 380;
+    const o = a.vOsc(v, 'sine', f0, t0, t0 + 0.14); o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * (1.8 + prng()), t0 + 0.07);
+    const g = ac.createGain(); env(g, t0, 0.3 * (0.6 + 0.8 * prng()), 0.004, 0.08);
+    o.connect(g); g.connect(v.in);
+  });
 
   function update(f) {
     const { now, t, step, px, pz } = f;
@@ -52,17 +119,7 @@ export function startPlaces(a) {
     lapBus.gain.setTargetAtTime(lapGain * (0.1 + 0.22 * lap), now, 0.15);
     lapLP.frequency.setTargetAtTime(300 + 250 * lap, now, 0.2);
     // --- fen bubbles
-    const F = landmarks.fen, fd = hyp(px - F.x, pz - F.z);
-    if (fd < F.r + 25) {
-      bubT -= step;
-      if (bubT <= 0) {
-        bubT = 0.25 + rng() * 1.4;
-        for (let k = 0; k < 6; k++) {
-          const ang = rng() * 6.283, r = 5 + rng() * 25, x = px + Math.cos(ang) * r, z = pz + Math.sin(ang) * r;
-          if (hyp(x - F.x, z - F.z) < F.r) { setPos(bubPan, x, -2.5, z); bubble(); break; }
-        }
-      }
-    }
+    fpx = px; fpz = pz; bubbles.tick(step);
     // --- lattice
     const md = hyp(px - L0.x, pz - L0.z);
     humBus.gain.setTargetAtTime(1 - smoothstep(30, 130, md), now, 0.5);
@@ -71,45 +128,60 @@ export function startPlaces(a) {
 }
 
 export function startCalls(a) {
-  const { ac, rng, ctx, master, send, panner, setPos, env, burst, white, camera } = a;
-  // ================================================================ frogs
-  const frogBus = ac.createGain(); frogBus.gain.value = 1; frogBus.connect(master); send(frogBus, 0.3);
-  const frogPan = panner('equalpower', 6, 1.2); frogPan.connect(frogBus);
-  let frogT = 0;
-  function frog() {
-    const t0 = ac.currentTime + a.lead, base = rng() < 0.6 ? 150 + rng() * 80 : 1700 + rng() * 500;
-    const pulses = base > 1000 ? 2 : 3 + ((rng() * 3) | 0), gap = base > 1000 ? 0.09 : 0.07;
+  const { ac, ctx, master, env, burst, white, camera, panner, setPos, voice, vOsc, gainOf, filt, chain } = a;
+  const rng = ctx.makeRng(9095), cp = camera.position;
+  const dist = (p) => Math.hypot(p.x - cp.x, p.y - cp.y, p.z - cp.z);
+  let px = 0, pz = 0;
+  // ================================================================ frogs: five at their places in the fen, each
+  // croaking in bouts with long rests, and the nearest other answering now and then
+  const F = a.landmarks.fen, NOTES = [146.8, 195.8, 220, 176.2, 1760]; // D3 G3 A3 F3 and one peeper on A6
+  const frogs = NOTES.map((f, i) => {
+    const ang = rng() * 6.283, r = F.r * (0.65 + 0.3 * rng()), fr = { x: F.x + Math.cos(ang) * r, y: -2.3, z: F.z + Math.sin(ang) * r, f: f * (1 + (rng() - 0.5) * 0.01), c: null };
+    return fr;
+  });
+  function croak(fr, gain) {
+    const d = dist(fr);
+    const v = voice(fr, { ref: 15, roll: 1.2, range: 90, air: 60, verb: wetBy(d) * 0.6, dur: 0.6 });
+    if (!v) return;
+    const hi = fr.f > 1000, pulses = hi ? 2 : 3 + Math.floor(rng() * 3), gap = hi ? 0.09 : 0.085;
     for (let k = 0; k < pulses; k++) {
-      const tt = t0 + k * gap;
-      const o = ac.createOscillator(); o.type = base > 1000 ? 'sine' : 'square'; o.frequency.setValueAtTime(base, tt); o.frequency.exponentialRampToValueAtTime(base * (base > 1000 ? 1.25 : 0.8), tt + 0.05);
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = base * 2; bp.Q.value = 2;
-      const g = ac.createGain(); env(g, tt, base > 1000 ? 0.025 : 0.05, 0.005, 0.045);
-      o.connect(bp); bp.connect(g); g.connect(frogPan); o.start(tt); o.stop(tt + 0.08);
+      const tt = v.t0 + k * gap, f = fr.f * (1 + (rng() - 0.5) * 0.03);
+      const o = vOsc(v, 'sine', f, tt, tt + 0.08); o.frequency.setValueAtTime(f, tt); o.frequency.exponentialRampToValueAtTime(f * (hi ? 1.25 : 0.8), tt + 0.05);
+      const g = gainOf(0); env(g, tt, (hi ? 0.12 : 0.35) * gain, 0.006, 0.045);
+      if (!hi) { const o2 = vOsc(v, 'sine', f * 2, tt, tt + 0.08), g2 = gainOf(0.35); o2.frequency.setValueAtTime(f * 2, tt); o2.frequency.exponentialRampToValueAtTime(f * 1.6, tt + 0.05); o2.connect(g2); g2.connect(g); }
+      chain(o, g, filt('bandpass', fr.f * 1.5, 0.8), v.in);
     }
   }
-  // ================================================================ distant calls
-  let callT = 6 + rng() * 6;
-  function distantCall(kind, x, z) {
-    const p = panner('equalpower', 40, 1.0); setPos(p, x, camera.position.y + 10, z); p.connect(master); send(p, 0.9);
-    let at = ac.currentTime + a.lead;
-    if (kind === 0) { // hoot
-      for (let k = 0; k < 2; k++) {
-        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(330, at); o.frequency.exponentialRampToValueAtTime(250, at + 0.7);
-        const g = ac.createGain(); env(g, at, 0.1, 0.12, 0.7); o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.9); at += 1.0;
-      }
-    } else if (kind === 1) { // yelps
-      for (let k = 0; k < 3; k++) {
-        const f = 800 + rng() * 300; const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f, at); o.frequency.exponentialRampToValueAtTime(f * 0.55, at + 0.16);
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 1.5;
-        const g = ac.createGain(); env(g, at, 0.1, 0.01, 0.15); o.connect(bp); bp.connect(g); g.connect(p); o.start(at); o.stop(at + 0.25); at += 0.22 + rng() * 0.1;
-      }
-    } else { // a long wavering moan
-      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(180, at); o.frequency.linearRampToValueAtTime(240, at + 1.2); o.frequency.linearRampToValueAtTime(140, at + 2.8);
-      const v = ac.createOscillator(); v.frequency.value = 5; const vg = ac.createGain(); vg.gain.value = 8; v.connect(vg); vg.connect(o.frequency);
-      const g = ac.createGain(); env(g, at, 0.09, 0.8, 2.2); o.connect(g); g.connect(p); o.start(at); v.start(at); o.stop(at + 3.2); v.stop(at + 3.2); at += 3;
+  frogs.forEach((fr, i) => {
+    const partner = frogs.map((o, j) => j).filter((j) => j !== i).sort((p, q) => hyp(frogs[p].x - fr.x, frogs[p].z - fr.z) - hyp(frogs[q].x - fr.x, frogs[q].z - fr.z))[0];
+    fr.c = caller(rng, { bout: [2, 6], gap: [0.4, 1.1], rest: [16, 0.6, 5, 70], first: [1, 12], answer: { p: 0.5, delay: [0.8, 2], gain: 0.71 }, when: () => hyp(px - fr.x, pz - fr.z) < 90 },
+      (k, n, gain, ans) => croak(ans ? frogs[partner] : fr, gain));
+  });
+  // ================================================================ the far call: a hoot from the wood's edge, heard
+  // across the moor and never from inside the wood; a pair of falling notes (D4 to A3), answered now and then from
+  // further along the edge. It keeps to the far calls' shared clock (a.far).
+  const W = a.landmarks.wood;
+  const edge = [-1.1, -0.45, 0.2].map((ang) => { const x = W.x + Math.cos(ang) * W.r * 0.95, z = W.z + Math.sin(ang) * W.r * 0.95; return { x, y: (a.terrain.heightAt(x, z) || 0) + 12, z }; });
+  let hootAt = edge[0];
+  function hoot(pos, gain) {
+    const d = dist(pos);
+    const v = voice(pos, { ref: 40, roll: 1, range: 420, air: 60, verb: wetBy(d), dur: 2.6 });
+    if (!v) return;
+    for (let k = 0; k < 2; k++) {
+      const at = v.t0 + k * 1.0, o = vOsc(v, 'sine', 293.7, at, at + 0.9);
+      o.frequency.setValueAtTime(293.7, at); o.frequency.exponentialRampToValueAtTime(220, at + 0.7);
+      const g = gainOf(0); env(g, at, 0.1 * gain * (k ? 0.8 : 1), 0.12, 0.7); o.connect(g); g.connect(v.in);
     }
-    setTimeout(() => p.disconnect(), (at - ac.currentTime + 5) * 1000);
   }
+  const owl = caller(rng, { bout: [1, 2], gap: [3, 6], rest: [120, 0.6, 40, 400], first: [20, 90], answer: { p: 0.4, delay: [1.5, 3], gain: 0.71 },
+    when: () => {
+      if (hyp(px - W.x, pz - W.z) < W.r + 15 || ac.currentTime - a.far.last < FAR_GAP) return false;
+      let bd = Infinity; for (const e of edge) { const d = hyp(e.x - px, e.z - pz); if (d < bd) { bd = d; hootAt = e; } }
+      return bd < 380;
+    } }, (k, n, gain, ans) => {
+    a.far.last = ac.currentTime;
+    hoot(ans ? edge[(edge.indexOf(hootAt) + 1) % edge.length] : hootAt, gain);
+  });
   // ================================================================ deodand click
   const clickPan = panner('HRTF', 3, 1.4);
   clickPan.connect(master);
@@ -124,24 +196,10 @@ export function startCalls(a) {
 
   const fwdV = camera.position.clone();
   function update(f) {
-    const { step, px, pz } = f, F = a.landmarks.fen, fd = hyp(px - F.x, pz - F.z);
-    // --- frogs
-    if (fd < F.r + 30) {
-      frogT -= step;
-      if (frogT <= 0) {
-        frogT = 0.2 + rng() * 1.3;
-        const ang = rng() * 6.283, r = 4 + rng() * 40, x = px + Math.cos(ang) * r, z = pz + Math.sin(ang) * r;
-        if (hyp(x - F.x, z - F.z) < F.r) { setPos(frogPan, x, -2.3, z); frog(); }
-      }
-    }
-    // --- distant calls from all around, so the quiet is never empty
-    callT -= step;
-    if (callT <= 0) {
-      callT = 8 + rng() * 14;
-      const ang = rng() * 6.283, r = 140 + rng() * 160, kind = (rng() * 4) | 0;
-      if (kind === 3) a.audio.cue('cry', { x: px + Math.cos(ang) * r, y: 70, z: pz + Math.sin(ang) * r });
-      else distantCall(kind, px + Math.cos(ang) * r, pz + Math.sin(ang) * r);
-    }
+    const { step } = f;
+    px = f.px; pz = f.pz;
+    for (const fr of frogs) fr.c.tick(step);
+    owl.tick(step);
     // --- deodand click
     const D = ctx.deodand;
     if (D && D.visible) {

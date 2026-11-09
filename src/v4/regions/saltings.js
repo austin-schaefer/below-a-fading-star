@@ -62,32 +62,34 @@ export const sound = {
     const rng = k.makeRng(8101);
     // and now and then out on the flat, a plate settling as it cools
     const bus = gainOf(0); bus.connect(k.master); k.send(bus, 0.3);
-    const pan = panner('equalpower', 5, 1.1, 120); pan.connect(bus);
-    let next = 3;
+    const pl = k.placed({ ref: 5, roll: 1.1, range: 120, air: 60, dest: bus }), pan = pl.in; // a plate's place, with the air between
+    let cx = 0, cz = 0, cw = 0, now0 = 0;
     function creak(dest, at, vol, pitch, crackles = 5) {
       // a brittle crackle of crust plates breaking, and under it a short dry creak
       for (let i = 0; i < crackles; i++) {
         const tt = at + i * (0.008 + rng() * 0.022), g = gainOf(0); k.env(g, tt, (0.06 + rng() * 0.06) * vol, 0.0006, 0.012 + rng() * 0.02);
         const s = ac.createBufferSource(); s.buffer = white; s.start(tt, rng() * 2, 0.05);
-        chain(s, filt('highpass', (2400 + rng() * 3500) * pitch, 0.8), g, dest);
+        chain(s, filt('bandpass', (2000 + rng() * 2400) * pitch, 1.2), g, dest);
       }
       const o = ac.createOscillator(); o.type = 'sawtooth';
       const f0 = (95 + rng() * 60) * pitch; o.frequency.setValueAtTime(f0, at + 0.01); o.frequency.linearRampToValueAtTime(f0 * (0.8 + rng() * 0.5), at + 0.11);
       const og = gainOf(0); k.env(og, at + 0.01, 0.07 * vol, 0.01, 0.1);
       chain(o, filt('bandpass', f0 * 4, 4), og, dest); o.start(at); o.stop(at + 0.2);
     }
+    // the plates settle in ones and threes from one patch of the flat, then a long rest
+    let pa = 0, pr = 0;
+    const plates = k.caller(rng, { bout: [1, 3], gap: [1.5, 4], rest: [9, 0.7, 3, 60], first: [1, 5],
+      when: () => { if (cw <= 0.1) return false; pa = rng() * 6.283; pr = 8 + rng() * 30; return true; } }, () => {
+      const a = pa + (rng() - 0.5) * 0.2;
+      pl.at(cx + Math.cos(a) * pr, camera.position.y - 1.7, cz + Math.sin(a) * pr);
+      creak(pan, now0 + k.lead() + 0.02, 0.5, 0.8 + rng() * 0.3, 2 + (rng() * 3 | 0));
+    });
     return {
       step(x, z, at, vol, pitch, out) { creak(out, at, vol * 1.6, pitch, 4 + (rng() * 4 | 0)); return true; },
       tick(w, x, z, step, t, now) {
         bus.gain.setTargetAtTime(w > 0.02 ? w : 0, now, 0.5);
-        if (w <= 0.1) return;
-        next -= step;
-        if (next <= 0) {
-          const a = rng() * 6.283, r = 8 + rng() * 30;
-          setPos(pan, x + Math.cos(a) * r, camera.position.y - 1.7, z + Math.sin(a) * r);
-          creak(pan, now + k.lead() + 0.02, 0.5, 0.8 + rng() * 0.3, 2 + (rng() * 3 | 0));
-          next = (2 + rng() * 5) / w;
-        }
+        cx = x; cz = z; cw = w; now0 = now;
+        plates.tick(step);
       },
     };
   },

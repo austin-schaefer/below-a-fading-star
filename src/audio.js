@@ -12,7 +12,7 @@
 //              listener, voice() and the cap, oneShotPanner, the helpers; startGraph returns the shared object `a`
 //   bed.js     wind, drone, shimmer, the gutter's dip and swell, insects
 //   steps.js   footsteps by ground, the step ring, audio.echoStep, figureStep
-//   calls.js   the tarn's lap, the Lattice's hum, the fen's bubbles and frogs, distant calls, the deodand's click
+//   calls.js   the tarn's lap, the Lattice's hum, the fen's bubbles and frogs, the far call, the deodand's click; the phrasing (caller, placed)
 //   cues.js    the cue dispatcher, the older one-shots, the Cardinal Stones, the fall's loop; cues-v2.js the v2 and
 //              v5 one-shots (carillon to kept-fire); living.js v7's figures
 //   regions.js the v4 regions' sound hooks and their kit
@@ -22,12 +22,13 @@
 //
 // Cues: name (position, opts): range
 //   cry, crows, flush, plop, rumble, farcry, skycreak, eyes-close, eyes-open, slinker-seen, slinker-gone,
-//   traveller-greet, tarn-hum, tarn-step (pos): as they were; strike (stone index 0..3) rings on the stones' own panners
+//   traveller-greet, tarn-hum, tarn-step (pos): voices (the cap, the air's lowpass), v7.2-04's formant cries and soft grains;
+//   strike (stone index 0..3) rings on the stones' own panners
 //   carillon (cap pos, { note: 0..8, quiet? }): a worn bronze bell, 2.5-4 s; quiet = a third the gain: ~260 m
-//   glyph-shift (lintel pos): a low stone grind, sinking then rising, and a grit tail, 2 s: 15 m (linear to silence)
+//   glyph-shift (lintel pos): a low stone grind, sinking then rising, and a grit tail, 2 s: 40 m
 //   sward-close (centre): a dry petal rustle swelling and fading as a wave across the sward, 1.5 s: ~240 m
 //   sward-open (centre): the same, slower and softer, 4 s: ~240 m
-//   sward-whimper (head pos): one tiny breathy pitched sigh, 0.3-0.6 s: 5 m (linear)
+//   sward-whimper (head pos): one tiny breathy pitched sigh, 0.3-0.6 s: 20 m
 //   pedlar-pass (pos): a dragonfly wing-whirr sliding down in pitch as it passes, and a salt-goad tink, 0.4 s: 30 m
 //   wrong-colour-near (pos): nearly a chord, beating, sagging, 3 s, quiet: 60 m
 //   fall-rumble-enter / fall-rumble-leave (fall {x,y,z}): start / fade (2 s) the fall's positional rumble loop,
@@ -35,12 +36,12 @@
 //   procession (pos, ~300 m off): nine faint high whistles under a slow tremolo, 6-8 s: anywhere
 //   guest-heartbeat (pos ignored, { strength: 0.05..1 }): lub-dub, centre, no rolloff; louder, brighter with strength
 //   galley-drum (hull pos, { distance }): one deep damped boom, more muffled with distance: 130 m
-//   lizard-skitter (pos): a few dry claw grains on stone, 0.2-0.3 s: 6 m (linear)
+//   lizard-skitter (pos): a few dry claw grains on stone, 0.2-0.3 s: 20 m
 //   rooks-lift (centroid, { count }): wing clatter of the flock and two or three caws, 1.5 s: ~260 m
-//   bats-out (tower window pos, { count }): a soft high fluttering rush and many tiny chirps, 3-4 s: 160 m
-//   wader-gone (pos, { quiet }): a breath of air and one soft plip: 20 m (linear)
-//   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 10 m (linear)
-//   lamp-tick (a Leerie standard lighting, v5/lights.js): a click and the flame's breath, 0.8 s
+//   bats-out (tower window pos, { count }): a soft fluttering rush and a few faint squeaks, 3-4 s: 200 m
+//   wader-gone (pos, { quiet }): a breath of air and one soft plip: 35 m
+//   biomesh-settle (tile pos, { quiet }): a tiny glassy tick, 60-120 ms, at most one per 0.6 s: 25 m
+//   lamp-tick (a Leerie standard lighting, v5/lights.js): a dark tock and the flame's breath, 0.9 s: 60 m
 //   kept-fire (hearth pos, { flare?, strength? }): a fire's crackle, 1.8 s, pops and a hiss: 70 m; flare: a roar swelling under thick crackle and a low whump, 3.4 s: 130 m
 //   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
 //   v7, the living (src/audio/living.js, which lists each one's make and range): taker-click, taker-murmur, coheirs-knot,

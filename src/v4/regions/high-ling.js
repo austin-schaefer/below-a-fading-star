@@ -67,41 +67,55 @@ const TORS = [[SITES.tallestTor.x, SITES.tallestTor.z, 10], [252, -40, 7.5], [28
 // ---------------------------------------------------------------- sound: grasshoppers, the wind in the tors
 export const sound = {
   start(k) {
-    const { ac, panner, setPos, filt, gainOf, chain, white, pink, camera, loopSrc } = k;
+    const { ac, panner, setPos, filt, gainOf, chain, white, pink, camera } = k;
     const rng = k.makeRng(6101);
     const bus = gainOf(0); bus.connect(k.master); k.send(bus, 0.12);
     // three grasshoppers in the heather round you, each a train of scraped pulses then a rest
     const hoppers = [0, 1, 2].map((i) => {
       const p = panner('equalpower', 3, 1.2, 40); p.connect(bus);
-      return { p, f: 4200 + i * 1100 + rng() * 600, next: rng() * 2, a: rng() * 6.28 };
+      return { p, f: 3400 + i * 700 + rng() * 400, next: rng() * 2, a: rng() * 6.28 };
     });
     function chirr(h, at) {
       const n = 8 + (rng() * 10 | 0), rate = 0.035 + rng() * 0.015;
       for (let i = 0; i < n; i++) {
         const tt = at + i * rate, g = gainOf(0); k.env(g, tt, 0.05 * (0.6 + 0.4 * Math.sin(i / n * Math.PI)), 0.002, rate * 0.7);
         const s = ac.createBufferSource(); s.buffer = white; s.start(tt, rng() * 2, rate + 0.01);
-        chain(s, filt('bandpass', h.f, 6), g, h.p);
+        chain(s, filt('bandpass', h.f, 3), g, h.p);
       }
       return n * rate;
     }
-    // the moan: one resonant voice of wind at the nearest tor, its pitch and swell wandering with the gusts
-    const moan = gainOf(0); moan.connect(k.master); k.send(moan, 0.5);
-    const mp = panner('equalpower', 8, 1, 200); mp.connect(moan);
-    const src = loopSrc(pink, rng()), bp1 = filt('bandpass', 230, 14), bp2 = filt('bandpass', 345, 18);
-    chain(src, bp1, gainOf(0.7), mp); chain(src, bp2, gainOf(0.4), mp);
+    // the moan: wind finding the nearest tor in a gust, a swell of noise through two bands (A3 rising toward D4, and
+    // its octave), Q 3: an event of 3-5 s with rests, not a standing whistle. Near the tors it comes every half
+    // minute or so; from the moor it is a far call and keeps to the far calls' shared clock
+    let tor = null, torD = Infinity;
+    function moan(gain) {
+      if (!tor) return;
+      const pos = { x: tor[0], y: (k.terrain.heightAt(tor[0], tor[1]) || 0) + tor[2] * 0.6, z: tor[1] };
+      const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z), dur = 3 + rng() * 2;
+      const v = k.voice(pos, { ref: 30, roll: 1, range: 450, air: 80, verb: k.wetBy(d), dur: dur + 0.5 });
+      if (!v) return;
+      const t0 = v.t0, g = gainOf(0), src = k.vNoise(v, pink, t0, dur);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.22 * gain, t0 + dur * 0.35); g.gain.setTargetAtTime(0.0001, t0 + dur * 0.55, dur * 0.15);
+      const b1 = filt('bandpass', 220, 3), b2 = filt('bandpass', 440, 3);
+      b1.frequency.setValueAtTime(205, t0); b1.frequency.linearRampToValueAtTime(260, t0 + dur * 0.4); b1.frequency.linearRampToValueAtTime(215, t0 + dur);
+      b2.frequency.setValueAtTime(410, t0); b2.frequency.linearRampToValueAtTime(520, t0 + dur * 0.4); b2.frequency.linearRampToValueAtTime(430, t0 + dur);
+      chain(src, b1, gainOf(0.8), g); chain(src, b2, gainOf(0.35), g); g.connect(v.in);
+    }
+    const moans = k.caller(rng, { bout: [1, 2], gap: [4, 8], rest: [30, 0.7, 8, 300], first: [5, 40],
+      when: () => {
+        if (torD > 450) return false;
+        if (torD > 150) { if (ac.currentTime - k.far.last < 20 || rng() < 0.6) return false; k.far.last = ac.currentTime; }
+        return true;
+      } }, (i, n, gain) => moan(gain));
     const cues = { 'stonechat': (pos) => chack(k, pos) };
     return {
       cues,
       tick(w, x, z, step, t, now) {
         bus.gain.setTargetAtTime(w > 0.02 ? w * (k.sky?.flicker?.value ?? 1) : 0, now, 0.5); // they fall quiet in the gutter
         // the nearest tor
-        let best = null, bd = Infinity;
-        for (const T of TORS) { const d = hyp(T[0] - x, T[1] - z); if (d < bd) { bd = d; best = T; } }
-        const gust = 0.5 + 0.5 * k.noise.fbm2(t * 0.11, 4.2, 2);
-        if (best) setPos(mp, best[0], (k.terrain.heightAt(best[0], best[1]) || 0) + best[2] * 0.6, best[1]);
-        moan.gain.setTargetAtTime(w * (1 - smoothstep(20, 120, bd)) * smoothstep(0.45, 0.8, gust) * 0.6, now, 0.8);
-        bp1.frequency.setTargetAtTime(200 + 70 * gust + 15 * Math.sin(t * 0.3), now, 0.6);
-        bp2.frequency.setTargetAtTime(300 + 90 * gust, now, 0.6);
+        torD = Infinity;
+        for (const T of TORS) { const d = hyp(T[0] - x, T[1] - z); if (d < torD) { torD = d; tor = T; } }
+        moans.tick(step);
         if (w <= 0.1) return;
         for (const h of hoppers) {
           h.next -= step;
@@ -109,7 +123,7 @@ export const sound = {
           h.a += 1 + rng() * 2;
           const r = 3 + rng() * 9;
           setPos(h.p, x + Math.cos(h.a) * r, camera.position.y - 1.5, z + Math.sin(h.a) * r);
-          h.next = chirr(h, now + k.lead() + 0.02) + 0.4 + rng() * 2.5;
+          h.next = chirr(h, now + k.lead() + 0.02) + k.lognormal(rng, 3, 0.7);
         }
       },
     };

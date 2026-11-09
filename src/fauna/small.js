@@ -144,7 +144,7 @@ export function buildCrows(ctx) {
   const m4 = new THREE.Matrix4(), mr = new THREE.Matrix4();
   let cooldown = 3;
   function takeoff() {
-    ctx.audio?.cue?.('crows');
+    ctx.audio?.cue?.('crows', crows.reduce((b, o) => (hyp(o.pos.x - cam.x, o.pos.z - cam.z) < hyp(b.pos.x - cam.x, b.pos.z - cam.z) ? o : b)).pos); // v7.2-03: from the nearest bird
     cooldown = 8;
     for (const o of crows) {
       const k = pick(true);

@@ -27,7 +27,7 @@
 //
 // The distance model (craft.md "Distance"), one for every placed sound: dry gain inverse from `ref` (2 m unless the
 // caller says; linear to silence at the range only when it asks, model: 'linear'); air absorption always, a lowpass at
-// 18000 e^(-d/60) Hz floored at 700; the reverb send taken before the distance gain and falling at a third of its rate
+// 18000 e^(-d/60) Hz floored at 700 (a caller's `air` sets its own length in place of 60); the reverb send taken before the distance gain and falling at a third of its rate
 // in dB, so a far thing is mostly room (wet share about 15 % near, 50-70 % at 200 m) where a near one is mostly itself;
 // nothing built past the range (maxDistance); HRTF only for a source flagged near: true, equal-power otherwise.
 //
@@ -209,7 +209,7 @@ export function startGraph(ctx, audio, AC) {
   };
   const setPos = (p, x, y, z) => { if (p.positionX) { p.positionX.value = x; p.positionY.value = y; p.positionZ.value = z; } else p.setPosition(x, y, z); };
   // ---- the distance model (header): the air's cutoff, the dry gain as the panner gives it, and the send's gain
-  const airAt = (d) => clamp(AIR_TOP * Math.exp(-d / AIR_M), AIR_FLOOR, AIR_TOP);
+  const airAt = (d, m = AIR_M) => clamp(AIR_TOP * Math.exp(-d / m), AIR_FLOOR, AIR_TOP);
   function dryAt(d, o = {}) {
     const ref = o.ref ?? 2, roll = o.roll ?? 1, max = o.range ?? o.maxDistance ?? 600;
     if (o.model === 'linear') return clamp(1 - roll * (clamp(d, ref, max) - ref) / Math.max(1e-3, max - ref), 0, 1);
@@ -268,7 +268,7 @@ export function startGraph(ctx, audio, AC) {
   // A placed voice's path (the distance model): in -> air lowpass -> panner -> gate -> bus, and from the lowpass a
   // wet tap for its sends, through the voice's wet gate to the rooms. v.wetK is the distance's wet gain.
   function placed(v, pos, d, o, bus) {
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = AIR_Q; lp.frequency.value = airAt(d);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = AIR_Q; lp.frequency.value = airAt(d, o.air || AIR_M);
     const p = ac.createPanner(); p.panningModel = o.near ? 'HRTF' : 'equalpower'; p.distanceModel = o.model === 'linear' ? 'linear' : 'inverse';
     p.refDistance = o.ref ?? 2; p.rolloffFactor = o.roll ?? 1; p.maxDistance = o.range ?? o.maxDistance ?? 600;
     setPos(p, pos.x, pos.y, pos.z);
@@ -277,7 +277,8 @@ export function startGraph(ctx, audio, AC) {
   }
   // o: { ref (2 m by default), roll (1), range or maxDistance (m: nothing is built past it), model ('inverse' |
   // 'linear', which reaches silence at range), verb (the send at the source: the distance shapes it), dur (s), near
-  // (HRTF), centre (no panner, no distance) }. `air` is no longer read: every placed voice has the one air lowpass.
+  // (HRTF), centre (no panner, no distance), air (m: the air lowpass's e-folding length, 60 unless given; the lowpass is
+  // always there) }.
   function voice(pos, o) {
     const cp = camera.position;
     if (!o.centre && !pos) pos = { x: cp.x + 4, y: cp.y, z: cp.z }; // a cue fired with no place: just beside you
@@ -332,8 +333,8 @@ export function startGraph(ctx, audio, AC) {
       set(x, y, z) { P.x = x; P.y = y; P.z = z; setPos(pan, x, y, z); },
       update(now, first) {
         const cp = camera.position, d = Math.hypot(P.x - cp.x, P.y - cp.y, P.z - cp.z);
-        if (first) { lp.frequency.value = airAt(d); wet.gain.value = (o.verb || 0) * wetAt(d, o); return; }
-        lp.frequency.setTargetAtTime(airAt(d), now, 0.15);
+        if (first) { lp.frequency.value = airAt(d, o.air || AIR_M); wet.gain.value = (o.verb || 0) * wetAt(d, o); return; }
+        lp.frequency.setTargetAtTime(airAt(d, o.air || AIR_M), now, 0.15);
         if (o.verb) wet.gain.setTargetAtTime(o.verb * wetAt(d, o), now, 0.15);
       },
       release() { const i = held.indexOf(h); if (i >= 0) held.splice(i, 1); try { out.disconnect(); wet.disconnect(); } catch (e) { /* gone */ } },

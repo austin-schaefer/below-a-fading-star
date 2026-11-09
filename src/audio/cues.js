@@ -6,11 +6,12 @@
 // from here. startCues(a) returns { cue, fallTick, update(f) } and sets a.fall (= audio.fall); cue reads a.living
 // and a.regionSnd when it is called, so it is handed to ctx.audio.cue once they have started.
 import { hyp } from '../noise.js';
-import { startCuesV2 } from './cues-v2.js';
+import { startCuesV2, softKit } from './cues-v2.js';
 
 export function startCues(a) {
   const { ac, rng, ctx, audio, camera, terrain, landmarks, master, cueBus, verbIn, send, panner, setPos, loopSrc, burst,
-    brown, pink, white, env, filt, gainOf, chain, oneShotPanner, later, near, nTick, clamp } = a;
+    brown, pink, white, env, filt, gainOf, chain, oneShotPanner, later, near, nTick, clamp, voice, vOsc, vNoise } = a;
+  const { shape, sgrain, stone, jit } = softKit(a);
 
   // ================================================================ Cardinal Stones: a low bell on each, struck as you come near
   const S = landmarks.stones, H = 7;
@@ -30,54 +31,56 @@ export function startCues(a) {
   }
 
   // ================================================================ calls (one-shots)
+  // the generic far cry (v7.2-04): a formant call, not a bare saw. A darkened buzz through two bandpasses and a
+  // breath, rising a fifth and falling a fourth in D minor pentatonic (D5/F5/G5 up to A5/C6/D6, down to A4/C5/D5),
+  // a slow vibrato (5-7 Hz, never in the rough band). 6 dB under its old level, through a voice that falls off fast
+  // past 25 m (rolloff 1.4) with a short air lowpass (60 m), so at 260 m it is a dull breath under 1 kHz, not a call.
+  const CRY_ROOT = [587.33, 698.46, 783.99];
   function cry(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos, 50, 1.1);
-    send(p, 0.9);
-    const n = 1 + ((rng() * 2) | 0);
+    const v = voice(pos, { ref: 25, roll: 1.4, range: 400, verb: 0.9, dur: 3.2, air: 60 });
+    if (!v) return;
+    const t0 = v.t0, n = 1 + ((rng() * 2) | 0), f0 = CRY_ROOT[(rng() * 3) | 0] * jit(1, 0.01);
+    const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
     let at = t0;
     for (let k = 0; k < n; k++) {
-      const dur = 0.6 + rng() * 0.7, f0 = 700 + rng() * 500;
-      const o = ac.createOscillator(); o.type = 'sawtooth';
-      o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f0 * (1.5 + rng() * 0.6), at + dur * 0.35); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, at + dur);
-      const vib = ac.createOscillator(); vib.frequency.value = 22 + rng() * 14; const vg = ac.createGain(); vg.gain.value = 40; vib.connect(vg); vg.connect(o.frequency);
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.6;
-      const g = ac.createGain(); env(g, at, 0.09, 0.1, dur);
-      o.connect(bp); bp.connect(g); g.connect(p);
-      const ns = burst(pink, dur), nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 1800; nf.Q.value = 1.0;
-      const ng = ac.createGain(); env(ng, at, 0.05, 0.1, dur); ns.connect(nf); nf.connect(ng); ng.connect(p);
-      o.start(at); vib.start(at); o.stop(at + dur + 0.1); vib.stop(at + dur + 0.1);
+      const dur = 0.6 + rng() * 0.7;
+      const o = vOsc(v, 'sawtooth', f0, at, at + dur + 0.1);
+      o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f0 * 1.5, at + dur * 0.35); o.frequency.exponentialRampToValueAtTime(f0 * 0.75, at + dur);
+      chain(vOsc(v, 'sine', 5 + rng() * 2, at, at + dur + 0.1), gainOf(18), o.detune);
+      const g = ac.createGain(); env(g, at, 0.06, 0.15, dur);
+      const pre = filt('lowpass', f0 * 3, 0.7);
+      chain(o, pre); chain(pre, filt('bandpass', 1100, 3), g); chain(pre, filt('bandpass', 1700, 4), gainOf(0.4), g); g.connect(out);
+      const ng = ac.createGain(); env(ng, at, 0.02, 0.15, dur); chain(vNoise(v, pink, at, dur), filt('bandpass', 1400, 1.0), ng, out);
       at += dur * 0.7 + 0.1 + rng() * 0.2;
     }
-    later(p, at - t0 + 4);
   }
+  // crows: a few hoarse caws and the wing-clatter as they leave (v7.2-04): a darkened buzz through a nasal formant
+  // pair, a breath of pink noise for the hoarseness; 6 dB under their old level, through a voice with the air
   function crows(pos) {
-    const c = landmarks.castle;
     const pp = pos || { x: 65, y: 34, z: 30 };
-    const p = oneShotPanner(pp, 12, 1); send(p, 0.5);
-    let at = ac.currentTime + a.lead;
+    const v = voice(pp, { ref: 12, roll: 1, range: 400, verb: 0.5, dur: 4.5, air: 140 });
+    if (!v) return;
+    const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
+    let at = v.t0;
     const n = 5 + ((rng() * 4) | 0);
     for (let k = 0; k < n; k++) {
       const f0 = 380 + rng() * 220, dur = 0.16 + rng() * 0.12;
-      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f0 * 1.25, at); o.frequency.exponentialRampToValueAtTime(f0 * 0.7, at + dur);
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900 + rng() * 300; bp.Q.value = 2;
-      const g = ac.createGain(); env(g, at, 0.13, 0.015, dur);
-      o.connect(bp); bp.connect(g); g.connect(p); o.start(at); o.stop(at + dur + 0.05);
-      const ns = burst(white, dur), nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 1500; nf.Q.value = 1;
-      const ng = ac.createGain(); env(ng, at, 0.04, 0.01, dur); ns.connect(nf); nf.connect(ng); ng.connect(p);
+      const o = vOsc(v, 'sawtooth', f0 * 1.25, at, at + dur + 0.05); o.frequency.setValueAtTime(f0 * 1.25, at); o.frequency.exponentialRampToValueAtTime(f0 * 0.7, at + dur);
+      const g = ac.createGain(); env(g, at, 0.065, 0.015, Math.max(0.05, dur));
+      chain(o, filt('lowpass', f0 * 3.5, 0.7), filt('bandpass', 900 + rng() * 300, 2), g, out);
+      const ng = ac.createGain(); env(ng, at, 0.02, 0.01, Math.max(0.05, dur)); chain(vNoise(v, pink, at, dur), filt('bandpass', 1300, 1), ng, out);
       at += 0.12 + rng() * 0.3;
     }
     // wing-clatter as they leave
-    const w = burst(white, 1.4), wf = ac.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 500; wf.Q.value = 0.8;
-    const wg = ac.createGain(); env(wg, ac.currentTime + a.lead, 0.08, 0.2, 1.1); w.connect(wf); wf.connect(wg); wg.connect(p);
-    later(p, at - ac.currentTime + 5);
+    const wg = ac.createGain(); env(wg, v.t0, 0.05, 0.2, 1.1); chain(vNoise(v, pink, v.t0, 1.4), filt('bandpass', 500, 0.8), wg, out);
   }
+  // a fish rising: a small thing, heard at the water's edge and gone by 30 m (inverse from 3 m, the air's lowpass)
   function plop(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos, 6, 1.2); send(p, 0.35);
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(820, t0); o.frequency.exponentialRampToValueAtTime(190, t0 + 0.11);
-    const g = ac.createGain(); env(g, t0, 0.13, 0.004, 0.13); o.connect(g); g.connect(p); o.start(t0); o.stop(t0 + 0.2);
-    const s = burst(pink, 0.1), f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1500; const ng = ac.createGain(); env(ng, t0, 0.04, 0.002, 0.08);
-    s.connect(f); f.connect(ng); ng.connect(p);
-    later(p, 3);
+    const v = voice(pos, { ref: 3, roll: 1.3, range: 30, verb: 0.35, dur: 0.4, air: 40 }); if (!v) return;
+    const t0 = v.t0;
+    const o = vOsc(v, 'sine', 820, t0, t0 + 0.25); o.frequency.setValueAtTime(820, t0); o.frequency.exponentialRampToValueAtTime(190, t0 + 0.11);
+    const g = ac.createGain(); shape(g, t0, 0.13, 0.004, 0.13); chain(o, g, v.in);
+    sgrain(v, v.in, t0, 1900, 1, 0.04, 0.06, pink, 0.003);
   }
   // ---- sky and uncanny cues: all quiet, all placed where they happen
   // a fireball's report, arriving late: a long low roll that grumbles away
@@ -89,107 +92,113 @@ export function startCues(a) {
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 6);
     s.connect(lp); lp.connect(g); g.connect(p); later(p, 9);
   }
-  // the four-winged flier, very far: one long falling call, half of it reverb
+  // the four-winged flier, very far: one long falling call, half of it reverb (C5 up to D5, down to C4)
   function farcry(pos) {
     const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos || { x: camera.position.x - 200, y: 120, z: camera.position.z - 200 }, 90, 1); send(p, 1.3);
     const o = ac.createOscillator(); o.type = 'triangle';
-    o.frequency.setValueAtTime(520, t0); o.frequency.linearRampToValueAtTime(610, t0 + 0.5); o.frequency.exponentialRampToValueAtTime(260, t0 + 2.4);
+    o.frequency.setValueAtTime(523.25, t0); o.frequency.linearRampToValueAtTime(587.33, t0 + 0.5); o.frequency.exponentialRampToValueAtTime(261.63, t0 + 2.4);
     const v = ac.createOscillator(); v.frequency.value = 6.5; const vg = ac.createGain(); vg.gain.value = 9; v.connect(vg); vg.connect(o.frequency);
     const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.9;
     const g = ac.createGain(); env(g, t0, 0.07, 0.35, 2.1);
     o.connect(bp); bp.connect(g); g.connect(p); o.start(t0); v.start(t0); o.stop(t0 + 2.6); v.stop(t0 + 2.6); later(p, 7);
   }
-  // the iron worm flexing in the sky: an iron groan, slow-beating partials and a grinding edge
+  // the iron worm flexing in the sky: an iron groan, slow-beating partials and a grinding edge (v7.2-04: each saw
+  // darkened under a lowpass at five times its pitch before its bandpass, Q 3 not 6; the grind's ticks soft)
   function skycreak(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos || { x: camera.position.x, y: 200, z: camera.position.z - 250 }, 90, 1); send(p, 1.0);
-    const dur = 2.2 + rng() * 1.2, f0 = 48 + rng() * 20;
-    for (const [r, a] of [[1, 1], [2.03, 0.5], [3.11, 0.3]]) {
-      const o = ac.createOscillator(); o.type = 'sawtooth';
+    const v = voice(pos || { x: camera.position.x, y: 200, z: camera.position.z - 250 }, { ref: 90, roll: 1, range: 900, verb: 1.0, dur: 4.2, air: 200 });
+    if (!v) return;
+    const t0 = v.t0, dur = 2.2 + rng() * 1.2, f0 = 48 + rng() * 20, out = filt('lowpass', 1800, 0.6); out.connect(v.in);
+    for (const [r, amp] of [[1, 1], [2.03, 0.5], [3.11, 0.3]]) {
+      const o = vOsc(v, 'sawtooth', f0 * r, t0, t0 + dur + 0.6);
       o.frequency.setValueAtTime(f0 * r, t0); o.frequency.linearRampToValueAtTime(f0 * r * 1.12, t0 + dur * 0.6); o.frequency.linearRampToValueAtTime(f0 * r * 0.94, t0 + dur);
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 340 * r; bp.Q.value = 6;
-      const g = ac.createGain(); env(g, t0, 0.09 * a, 0.4, dur);
-      o.connect(bp); bp.connect(g); g.connect(p); o.start(t0); o.stop(t0 + dur + 0.6);
+      const g = ac.createGain(); env(g, t0, 0.09 * amp, 0.4, dur);
+      chain(o, filt('lowpass', f0 * r * 5, 0.7), filt('bandpass', 340 * r, 3), g, out);
     }
-    // stick-slip grinding: ticks clustered in bursts
-    for (let k = 0, at = t0 + 0.2; at < t0 + dur; k++) { nTick(p, at, 700 + rng() * 500, 4, 0.05, 0.03); at += 0.02 + rng() * rng() * 0.25; }
-    later(p, dur + 6);
+    // stick-slip grinding: soft ticks clustered in bursts
+    for (let at = t0 + 0.2; at < t0 + dur;) { sgrain(v, out, at, 700 + rng() * 500, 3, 0.05, 0.04, white, 0.003); at += 0.02 + rng() * rng() * 0.25; }
   }
-  // a cloak of eyes closing all at once: many wet lid-clicks in a crowded rush; opening is slower and stickier
+  // a cloak of eyes closing all at once: many wet lid-closings in a crowded rush; opening is slower and stickier
+  // (v7.2-04). Each lid is a soft dark tick (pink noise at 0.6-1.6 kHz, 3 ms in, 40 ms out) and every third a tiny
+  // falling wet pop (a sine, 10 ms in); under them one breath of lowpassed noise, so the rush is one gesture, not a
+  // train of clicks. A voice: inverse from 4 m, the air's lowpass, heard to 70 m from the cloak.
   function lids(pos, opening) {
-    const p = oneShotPanner(near(pos), 3, 1.4); send(p, 0.25);
-    const n = opening ? 46 : 60, span = opening ? 0.9 : 0.32;
-    const t0 = ac.currentTime + a.lead;
+    const v = voice(near(pos), { ref: 4, roll: 1, range: 70, verb: 0.25, dur: (opening ? 0.9 : 0.32) + 0.5, air: 60 });
+    if (!v) return;
+    const n = opening ? 40 : 52, span = opening ? 0.9 : 0.32, t0 = v.t0;
+    const out = filt('lowpass', 2200, 0.6); out.connect(v.in);
+    const bg = ac.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.linearRampToValueAtTime(0.03, t0 + span * 0.4); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + span + 0.15);
+    chain(vNoise(v, pink, t0, span + 0.2), filt('bandpass', 700, 0.8), bg, out);
     for (let k = 0; k < n; k++) {
       const at = t0 + Math.pow(rng(), opening ? 1.0 : 1.6) * span;
-      nTick(p, at, 1500 + rng() * 2200, 3 + rng() * 4, 0.035 + rng() * 0.03, 0.012 + rng() * 0.02);
-      // the wet part: a tiny falling pop under each click
-      const o = ac.createOscillator(); o.type = 'sine'; const f = 600 + rng() * 700;
-      o.frequency.setValueAtTime(opening ? f * 0.7 : f, at); o.frequency.exponentialRampToValueAtTime(opening ? f : f * 0.55, at + 0.025);
-      const g = ac.createGain(); env(g, at, 0.02, 0.002, 0.03); o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.05);
+      sgrain(v, out, at, 600 + rng() * 1000, 2 + rng() * 1.5, 0.04 + rng() * 0.035, 0.04, pink, 0.003);
+      if (k % 3) continue;
+      // the wet part: a tiny falling pop under the tick
+      const f = 380 + rng() * 360, o = stone(v, out, 'sine', opening ? f * 0.75 : f, at, 0.012, 0.01, 0.04);
+      o.frequency.setValueAtTime(opening ? f * 0.75 : f, at); o.frequency.exponentialRampToValueAtTime(opening ? f : f * 0.6, at + 0.04);
     }
-    later(p, span + 3);
   }
-  // the slinker noticed: a dry rattle of many fingertips on stone, close and unreverberant
+  // the slinker noticed: a dry rattle of many fingertips on stone, close and unreverberant (v7.2-04: the taps at
+  // 0.9-1.8 kHz, 3 ms in, under a lowpass at 2.2 kHz; heard to 30 m)
   function rattle(pos, leaving) {
-    const p = oneShotPanner(near(pos), 4, 1.3); send(p, leaving ? 0.12 : 0.05);
-    const t0 = ac.currentTime + a.lead, span = leaving ? 1.4 : 0.6;
+    const span = leaving ? 1.4 : 0.6;
+    const v = voice(near(pos), { ref: 4, roll: 1, range: 30, verb: leaving ? 0.12 : 0.05, dur: span + 0.2, air: 60 });
+    if (!v) return;
+    const t0 = v.t0, out = filt('lowpass', 2200, 0.6); out.connect(v.in);
     let at = t0;
     while (at < t0 + span) {
       const fade = leaving ? 1 - (at - t0) / span : 1 - 0.4 * (at - t0) / span;
-      nTick(p, at, 2600 + rng() * 2400, 6 + rng() * 6, 0.13 * fade + 0.01, 0.006 + rng() * 0.006);
+      sgrain(v, out, at, 900 + rng() * 900, 3 + rng() * 2, 0.11 * fade + 0.01, 0.04, white, 0.003);
       at += (leaving ? 0.025 + (at - t0) * 0.08 : 0.008) + rng() * 0.022;
     }
-    later(p, span + 2);
   }
-  // the traveller lifts his hand: a small cracked bell on the wagon, and a warm two-note hum
+  // the traveller lifts his hand: a small cracked bell on the wagon (A5 and its partials), and a warm two-note hum,
+  // D3 then G3, through closed lips (v7.2-04: a darkened buzz through an "mm" formant pair, not a bare saw)
   function greet(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(near(pos, 6), 6, 1.1); send(p, 0.4);
-    [[880, 0.025, 1.6], [1318.5, 0.015, 1.2], [2213, 0.006, 0.7]].forEach(([f, a, d], i) => {
-      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f * (1 + (rng() - 0.5) * 0.004);
-      const g = ac.createGain(); env(g, t0 + i * 0.004, a, 0.004, d); o.connect(g); g.connect(p); o.start(t0); o.stop(t0 + d + 0.2);
+    const v = voice(near(pos, 6), { ref: 6, roll: 1.1, range: 60, verb: 0.4, dur: 2.0, air: 80 }); if (!v) return;
+    const t0 = v.t0;
+    [[880, 0.025, 1.6], [1318.5, 0.015, 1.2], [2213, 0.006, 0.7]].forEach(([f, amp, d], i) => {
+      stone(v, v.in, 'sine', f * (1 + (rng() - 0.5) * 0.004), t0 + i * 0.004, amp, 0.004, d);
     });
-    [[146.8, 0.35], [196, 0.75]].forEach(([f, at]) => {
-      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * 0.97, t0 + at); o.frequency.linearRampToValueAtTime(f, t0 + at + 0.12);
-      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 2;
-      const g = ac.createGain(); env(g, t0 + at, 0.025, 0.06, 0.45); o.connect(lp); lp.connect(g); g.connect(p); o.start(t0 + at); o.stop(t0 + at + 0.6);
+    [[146.83, 0.35], [196, 0.75]].forEach(([f, at]) => {
+      const o = vOsc(v, 'sawtooth', f * 0.97, t0 + at, t0 + at + 0.6); o.frequency.setValueAtTime(f * 0.97, t0 + at); o.frequency.linearRampToValueAtTime(f, t0 + at + 0.12);
+      const g = ac.createGain(); env(g, t0 + at, 0.03, 0.06, 0.45);
+      const pre = filt('lowpass', f * 3, 0.7);
+      chain(o, pre); chain(pre, filt('bandpass', 280, 3), g); chain(pre, filt('bandpass', 900, 4), gainOf(0.3), g); g.connect(v.in);
     });
-    later(p, 4);
   }
-  // the woman in the tarn: a wordless low hum through closed lips, drifting between two notes
+  // the woman in the tarn: a wordless low hum through closed lips, drifting between two notes of the key (G3 to A3
+  // and back, or F3 to G3 and back; v7.2-04: the buzz darkened before its "mm" formants, Q 5 and 4)
   function tarnHum(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos || { x: -90, y: -3, z: 72 }, 10, 1.1); send(p, 0.8);
-    const dur = 4.5 + rng() * 2, f0 = 196 * (rng() < 0.5 ? 1 : 0.89);
-    const o = ac.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(f0, t0); o.frequency.linearRampToValueAtTime(f0 * 1.122, t0 + dur * 0.4); o.frequency.linearRampToValueAtTime(f0 * 0.944, t0 + dur);
-    const v = ac.createOscillator(); v.frequency.value = 4.8; const vg = ac.createGain(); vg.gain.value = 1.6; v.connect(vg); vg.connect(o.frequency);
+    const v = voice(pos || { x: -90, y: -3, z: 72 }, { ref: 10, roll: 1.1, range: 140, verb: 0.8, dur: 7, air: 120 }); if (!v) return;
+    const t0 = v.t0, dur = 4.5 + rng() * 2, lowSide = rng() < 0.5, f0 = lowSide ? 174.61 : 196, f1 = lowSide ? 196 : 220;
+    const o = vOsc(v, 'sawtooth', f0, t0, t0 + dur + 0.1);
+    o.frequency.setValueAtTime(f0, t0); o.frequency.linearRampToValueAtTime(f1, t0 + dur * 0.4); o.frequency.linearRampToValueAtTime(f0, t0 + dur);
+    chain(vOsc(v, 'sine', 4.8, t0, t0 + dur + 0.1), gainOf(1.6), o.frequency);
     const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.05, t0 + 1.0); g.gain.linearRampToValueAtTime(0.035, t0 + dur - 1); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
-    for (const [f, q, a] of [[260, 5, 1], [1100, 8, 0.25]]) { // nasal "mm" formants
-      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; const ag = ac.createGain(); ag.gain.value = a;
-      o.connect(bp); bp.connect(ag); ag.connect(lp);
-    }
-    lp.connect(g); g.connect(p); o.start(t0); v.start(t0); o.stop(t0 + dur + 0.1); v.stop(t0 + dur + 0.1);
-    later(p, dur + 5);
+    const lp = filt('lowpass', 700), pre = filt('lowpass', 650, 0.7); o.connect(pre);
+    for (const [f, q, amp] of [[260, 5, 1], [1100, 4, 0.2]]) chain(pre, filt('bandpass', f, q), gainOf(amp), lp); // nasal "mm" formants
+    chain(lp, g, v.in);
   }
-  // she has moved: one soft slosh of water round a body
+  // she has moved: one soft slosh of water round a body, and a few drips
   function slosh(pos) {
-    const t0 = ac.currentTime + a.lead, p = oneShotPanner(pos || { x: -90, y: -4.6, z: 80 }, 6, 1.2); send(p, 0.4);
-    const s = burst(pink, 0.8), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+    const v = voice(pos || { x: -90, y: -4.6, z: 80 }, { ref: 6, roll: 1.2, range: 60, verb: 0.4, dur: 1.2, air: 80 }); if (!v) return;
+    const t0 = v.t0, bp = filt('bandpass', 900, 1.2);
     bp.frequency.setValueAtTime(900, t0); bp.frequency.exponentialRampToValueAtTime(260, t0 + 0.6);
     const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.11, t0 + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75);
-    s.connect(bp); bp.connect(g); g.connect(p);
-    for (let k = 0; k < 4; k++) nTick(p, t0 + 0.25 + rng() * 0.4, 1800 + rng() * 1500, 5, 0.012, 0.03, pink); // drips
-    later(p, 3);
+    chain(vNoise(v, pink, t0, 0.8), bp, g, v.in);
+    for (let k = 0; k < 4; k++) sgrain(v, v.in, t0 + 0.25 + rng() * 0.4, 1500 + rng() * 1000, 4, 0.012, 0.04, pink); // drips
   }
+  // a bird flushed from the heather (v7.2-04): wingbeats as soft pink grains slowing as it climbs (irregular, so no
+  // buzz), the rush under a lowpass, and three short alarm chips, falling, 10 ms in
   function flush(pos) {
-    const p = oneShotPanner(pos, 6, 1.1); const t0 = ac.currentTime + a.lead;
-    const s = burst(white, 0.6), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2200; f.Q.value = 0.8;
-    const g = ac.createGain(); env(g, t0, 0.14, 0.02, 0.5);
-    // a rattle of wingbeats
-    const am = ac.createOscillator(); am.frequency.value = 22; const ag = ac.createGain(); ag.gain.value = 0.5; const base = ac.createGain(); base.gain.value = 0.5; am.connect(ag); ag.connect(base.gain);
-    s.connect(f); f.connect(base); base.connect(g); g.connect(p); am.start(t0); am.stop(t0 + 0.7);
-    for (let k = 0; k < 3; k++) { const o = ac.createOscillator(); o.type = 'sawtooth'; const tt = t0 + 0.1 + k * 0.12 + rng() * 0.06; o.frequency.setValueAtTime(3000, tt); o.frequency.exponentialRampToValueAtTime(2200, tt + 0.05); const og = ac.createGain(); env(og, tt, 0.02, 0.003, 0.05); o.connect(og); og.connect(p); o.start(tt); o.stop(tt + 0.08); }
-    later(p, 3);
+    const v = voice(pos, { ref: 6, roll: 1.1, range: 80, verb: 0.2, dur: 0.9, air: 80 }); if (!v) return;
+    const t0 = v.t0, out = filt('lowpass', 2000, 0.6); out.connect(v.in);
+    const g = ac.createGain(); env(g, t0, 0.06, 0.02, 0.5); chain(vNoise(v, pink, t0, 0.6), filt('bandpass', 1000, 0.8), g, out);
+    for (let at = t0, k = 0; at < t0 + 0.6; k++) { sgrain(v, out, at, jit(1000, 0.1), 1.2, 0.08 * (1 - (at - t0) / 0.7), 0.04, pink, 0.004); at += 0.045 * (1 + k * 0.06) * jit(1, 0.25); }
+    for (let k = 0; k < 3; k++) {
+      const tt = t0 + 0.1 + k * 0.12 + rng() * 0.06, o = stone(v, out, 'triangle', 1600, tt, 0.01, 0.01, 0.05);
+      o.frequency.setValueAtTime(1600, tt); o.frequency.exponentialRampToValueAtTime(1200, tt + 0.06);
+    }
   }
 
   // ---- the fall: a positional loop, not a one-shot. Built on entering the rumble zone (or whenever
@@ -275,8 +284,8 @@ export function startCues(a) {
       else if (name === 'tarn-step') slosh(position);
       else if (name === 'carillon') c2.carillon(position, opts);
       else if (name === 'glyph-shift') c2.glyphShift(position);
-      else if (name === 'sward-close') c2.rustle(position, { dur: 1.5, peakAt: 0.4, n: 90, band: 4200, gain: 0.075 });
-      else if (name === 'sward-open') c2.rustle(position, { dur: 4, peakAt: 0.5, n: 70, band: 3000, gain: 0.035 });
+      else if (name === 'sward-close') c2.rustle(position, { dur: 1.5, peakAt: 0.4, n: 90, band: 1400, gain: 0.09 });
+      else if (name === 'sward-open') c2.rustle(position, { dur: 4, peakAt: 0.5, n: 70, band: 1100, gain: 0.045 });
       else if (name === 'sward-whimper') c2.whimper(position);
       else if (name === 'pedlar-pass') c2.pedlarPass(position);
       else if (name === 'wrong-colour-near') c2.wrongColour(position);

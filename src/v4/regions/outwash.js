@@ -107,33 +107,34 @@ export const sound = {
     const { ac, panner, setPos, filt, gainOf, chain, white, camera } = k;
     const rng = k.makeRng(7101);
     const bus = gainOf(0); bus.connect(k.master); k.send(bus, 0.25);
-    const pans = [0, 1, 2].map(() => { const p = panner('equalpower', 2.5, 1.3, 40); p.connect(bus); return p; });
-    let next = 0, pi = 0;
+    // under the stones: runs of ticks and drips from one hollow, then a rest; each from its place with the air between
+    const pans = [0, 1, 2].map(() => k.placed({ ref: 2.5, roll: 1.3, range: 40, air: 60, dest: bus }));
+    let pi = 0, cx = 0, cz = 0, cw = 0, now0 = 0, ha = 0, hr = 0;
     const cues = { 'grouse-flush': (pos) => flushCue(k, pos) };
     function tickOne(x, z, at) {
-      const p = pans[pi++ % 3];
-      const a = rng() * 6.283, r = 2 + rng() * 10;
-      setPos(p, x + Math.cos(a) * r, camera.position.y - 1.9, z + Math.sin(a) * r);
+      const p = pans[pi++ % 3], a = ha + (rng() - 0.5) * 0.3, r = hr + (rng() - 0.5);
+      p.at(x + Math.cos(a) * r, camera.position.y - 1.9, z + Math.sin(a) * r);
       if (rng() < 0.78) { // a tick: a tiny resonant knock in a hollow under the stones
-        const f = 1500 + rng() * 2200, o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const f = 1200 + rng() * 1600, o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
         const g = ac.createGain(); k.env(g, at, 0.05 + rng() * 0.05, 0.001, 0.02 + rng() * 0.03);
-        o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.08);
+        o.connect(g); g.connect(p.in); o.start(at); o.stop(at + 0.08);
         const s = ac.createBufferSource(); s.buffer = white; s.start(at, rng() * 2, 0.02);
-        const ng = ac.createGain(); k.env(ng, at, 0.03, 0.0005, 0.008); chain(s, filt('bandpass', f * 1.7, 3), ng, p);
+        const ng = ac.createGain(); k.env(ng, at, 0.03, 0.0005, 0.008); chain(s, filt('bandpass', f * 1.7, 3), ng, p.in);
       } else { // a drip into a hidden pool: a falling plink
         const o = ac.createOscillator(); o.type = 'sine';
         const f0 = 900 + rng() * 700; o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, at + 0.06);
         const g = ac.createGain(); k.env(g, at, 0.06, 0.002, 0.07);
-        o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.12);
+        o.connect(g); g.connect(p.in); o.start(at); o.stop(at + 0.12);
       }
     }
+    const runs = k.caller(rng, { bout: [3, 9], gap: [0.12, 0.45], rest: [5, 0.7, 1.5, 30], first: [0.5, 3],
+      when: () => { if (cw <= 0.05) return false; ha = rng() * 6.283; hr = 2 + rng() * 10; return true; } }, () => tickOne(cx, cz, now0 + k.lead() + rng() * 0.04));
     return {
       cues,
       tick(w, x, z, step, t, now) {
         bus.gain.setTargetAtTime(w > 0.02 ? 0.9 * w : 0, now, 0.4);
-        if (w <= 0.05) return;
-        next -= step;
-        while (next <= 0) { tickOne(x, z, now + k.lead() + rng() * 0.09); next += (0.12 + rng() * 0.35) / w; }
+        cx = x; cz = z; cw = w; now0 = now;
+        runs.tick(step);
       },
     };
   },

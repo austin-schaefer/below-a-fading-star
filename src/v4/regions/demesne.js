@@ -122,66 +122,99 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   const dur = 0.22 + rng() * 0.12;
   const o = ac.createOscillator(); o.type = 'sawtooth';
   o.frequency.setValueAtTime(420 * pitch, t0); o.frequency.exponentialRampToValueAtTime(300 * pitch, t0 + dur);
-  const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.5;
-  const g = ac.createGain(); g.gain.value = 0.5; am.connect(amg); amg.connect(g.gain);
-  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 2300 * pitch, 5);
+  // v7.2-04: the hoarseness a shallow tremolo (depth 0.2, was full: its troughs on the saw's edges clicked) over a buzz
+  // darkened under a lowpass at 3.5x its pitch, the upper formant lower (1.9 kHz, was 2.3)
+  const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.2;
+  const g = ac.createGain(); g.gain.value = 0.8; am.connect(amg); amg.connect(g.gain);
+  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 1900 * pitch, 4), dk = filt('lowpass', 1470 * pitch, 0.7);
   const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(0.16, t0 + 0.025); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
+  o.connect(dk); dk.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
   o.start(t0); o.stop(t0 + dur + 0.02); am.start(t0); am.stop(t0 + dur + 0.02);
 }
-function peaCry(k, pos, t0) {
-  // the peacock's scream: "may-AWE", a rising nasal yelp and a long falling wail, twice or three times
-  const { ac, filt, panner, setPos, master, send } = k;
-  const rng = k.makeRng(Math.floor(t0 * 1000) % 100000);
-  const p = panner('equalpower', 14, 1.0, 400); setPos(p, pos.x, pos.y, pos.z); p.connect(master); send(p, 0.5);
-  const n = 2 + Math.floor(rng() * 2);
+function peaCry(k, pos, o = {}) {
+  // the peacock's scream: "may-AWE", a rising nasal yelp and a long falling wail, once or twice, from the bird's own
+  // block (v7.2-03 calls it; v7.2-04 voices it). A formant cry: a buzzy source darkened under a lowpass at three times
+  // its pitch, through two nasal bandpasses, with a breath of noise; the pitch glides (never jumps) in D minor
+  // pentatonic, the yelp D5 -> G5 -> A5, the wail A5 -> F5 -> D5, each bird a fixed hair out of true. A voice (air
+  // lowpass, the cap, a reverb share that rises with distance).
+  const { ac, filt, gainOf, chain, vOsc, vNoise, voice, camera, pink } = k;
+  const rng = k.makeRng(Math.floor(ac.currentTime * 1000) % 100000);
+  const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
+  const n = o.n ?? 1 + Math.floor(rng() * 2), gain = o.gain ?? 1;
+  const v = voice(pos, { ref: 14, roll: 1, range: 400, air: 90, verb: 0.25 + 0.5 * smoothstep(15, 200, d), dur: n * 1.25 + 0.8 });
+  if (!v) return;
+  const tr = 1 + (rng() - 0.5) * 0.024; // this bird's own pitch, within a quarter-tone of true
+  const D5 = 587.33 * tr, G5 = 783.99 * tr, A5 = 880 * tr, F5 = 698.46 * tr;
+  const out = filt('lowpass', 3000, 0.6); chain(out, v.in);
   for (let i = 0; i < n; i++) {
-    const t = t0 + i * (0.95 + rng() * 0.25);
-    const o = ac.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(560, t); o.frequency.exponentialRampToValueAtTime(820, t + 0.12);
-    o.frequency.setValueAtTime(980, t + 0.16); o.frequency.exponentialRampToValueAtTime(700, t + 0.6);
-    const vib = ac.createOscillator(); vib.frequency.value = 7; const vg = ac.createGain(); vg.gain.value = 18; vib.connect(vg); vg.connect(o.frequency);
-    const f1 = filt('bandpass', 1500, 4), f2 = filt('bandpass', 2900, 6), f3 = filt('bandpass', 800, 3);
-    const env = ac.createGain();
-    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.11, t + 0.04); env.gain.linearRampToValueAtTime(0.05, t + 0.14);
-    env.gain.linearRampToValueAtTime(0.16, t + 0.2); env.gain.exponentialRampToValueAtTime(0.0001, t + 0.66);
-    o.connect(f1); o.connect(f2); o.connect(f3); f1.connect(env); f2.connect(env); f3.connect(env); env.connect(p);
-    o.start(t); o.stop(t + 0.7); vib.start(t); vib.stop(t + 0.7);
+    const t = v.t0 + i * (0.95 + rng() * 0.25), end = t + 0.78, pk = gain * (i ? 0.85 : 1);
+    const os = vOsc(v, 'sawtooth', D5, t, end + 0.05);
+    os.frequency.setValueAtTime(D5, t); os.frequency.exponentialRampToValueAtTime(G5, t + 0.12); // may-
+    os.frequency.exponentialRampToValueAtTime(A5, t + 0.19); // the turn, a 70 ms glide up
+    os.frequency.exponentialRampToValueAtTime(F5, t + 0.5); os.frequency.exponentialRampToValueAtTime(D5 * 0.98, end); // -AWE, falling
+    chain(vOsc(v, 'sine', 6.5 + rng(), t, end + 0.05), gainOf(14), os.detune); // a slow nasal vibrato, 14 cents
+    const dark = filt('lowpass', 2200, 0.7), env = k.ac.createGain();
+    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.1 * pk, t + 0.03); env.gain.linearRampToValueAtTime(0.05 * pk, t + 0.14);
+    env.gain.linearRampToValueAtTime(0.15 * pk, t + 0.22); env.gain.linearRampToValueAtTime(0.11 * pk, t + 0.5); env.gain.exponentialRampToValueAtTime(0.0001, end);
+    chain(os, dark); chain(dark, filt('bandpass', 1150, 3), env); chain(dark, filt('bandpass', 1750, 4), gainOf(0.5), env); chain(dark, filt('lowpass', 900, 0.7), gainOf(0.35), env);
+    env.connect(out);
+    const br = k.ac.createGain(); br.gain.setValueAtTime(0.0001, t); br.gain.linearRampToValueAtTime(0.03 * pk, t + 0.2); br.gain.exponentialRampToValueAtTime(0.0001, end);
+    chain(vNoise(v, pink, t, 0.8), filt('bandpass', 1400, 1.5), br, out);
   }
-  setTimeout(() => { try { p.disconnect(); } catch (e) { /* gone */ } }, (t0 - ac.currentTime + n * 1.3 + 1) * 1000);
 }
 export const sound = {
   start(k) {
-    const { ac, master, filt, panner, setPos, send } = k;
+    const { ac, filt, voice, camera } = k;
     const rng = k.makeRng(10311);
+    // the rooks: at three places on the keep's top, a conversation of a few caw-groups, then a long rest; another
+    // part of the keep answers now and then. Close to the keep they talk often; from the moor they are a far call
+    // (they keep to the far calls' shared clock and talk less)
     const top = { x: K.x, y: K.y + 22, z: K.z };
-    const pan = panner('equalpower', 25, 1.0, 500); setPos(pan, top.x, top.y, top.z);
-    const bus = ac.createGain(); bus.gain.value = 0; bus.connect(pan); pan.connect(master); send(pan, 0.4);
-    let next = 2, lvl = 0, wasGutter = false;
+    const roosts = [[0, 0], [9, -6], [-7, 8]].map(([dx, dz]) => ({ x: K.x + dx, y: K.y + 22, z: K.z + dz }));
+    let px = 0, pz = 0, roost = roosts[0], wasGutter = false, pitch = 1;
+    const pend = []; // the gutter's answers, waiting for their time
+    let lastAnswer = -1e9;
     const flick = k.sky?.flicker || { value: 1 };
+    const kd = () => Math.hypot(px - K.x, pz - K.z);
+    function talk(pos, gain) {
+      const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
+      const n = 1 + Math.floor(rng() * 3), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5 });
+      if (!v) return;
+      const out = ac.createGain(); out.gain.value = 0.55 * gain * (1 - (k.hush?.(top) ?? 0)); out.connect(v.in); // v5: hushed under the Occultation's band
+      for (let i = 0; i < n; i++) cawInto(ac, filt, rng, out, v.t0 + i * (0.3 + rng() * 0.25), pitch);
+    }
+    const rooks = k.caller(rng, { bout: [2, 4], gap: [1.5, 4], rest: [30, 0.6, 10, 180], first: [2, 10], answer: { p: 0.5, delay: [0.8, 2], gain: 0.71 },
+      when: () => {
+        const d = kd();
+        if (d > 230) return false;
+        if (d > 80) { if (ac.currentTime - k.far.last < 20 || rng() < 0.6) return false; k.far.last = ac.currentTime; }
+        roost = roosts[Math.floor(rng() * roosts.length)]; pitch = 0.9 + rng() * 0.25;
+        return true;
+      } }, (i, n, gain, ans) => talk(ans ? roosts[(roosts.indexOf(roost) + 1) % roosts.length] : roost, gain));
     return {
       tick(w, x, z, step, t, now) {
-        // the rooks are heard round the keep and well beyond the park
-        const d = Math.hypot(x - K.x, z - K.z), near = Math.max(w, 1 - smoothstep(60, 170, d));
-        lvl += (near - lvl) * 0.2;
-        bus.gain.setTargetAtTime(lvl * 0.55 * (1 - (k.hush?.(top) ?? 0)), now, 0.5); // v5: hushed under the Occultation's band
-        if (lvl > 0.02) {
-          next -= step;
-          if (next <= 0) {
-            // a conversation: a few caws, sometimes answered from another part of the keep
-            const t0 = now + k.lead(), n = 1 + Math.floor(rng() * 4), p = 0.9 + rng() * 0.25;
-            for (let i = 0; i < n; i++) cawInto(ac, filt, rng, bus, t0 + i * (0.3 + rng() * 0.25), p);
-            next = 1.5 + rng() * 6;
-          }
-        }
-        // the peafowl cry at every gutter, from wherever they stand
+        px = x; pz = z;
+        rooks.tick(step);
+        // the gutter: the peafowl answer it from their blocks, late (1.5-4 s after the light drops), one bird and
+        // sometimes a second, 3 dB quieter, 0.8-2 s after the first has done; never the flock at once
         const g = flick.value < 0.5;
-        if (g && !wasGutter && PEAFOWL.length && Math.hypot(x - 75, z + 15) < 260) {
-          PEAFOWL.forEach((b, i) => peaCry(k, { x: b.x, y: b.y + 1.2, z: b.z }, now + k.lead() + 0.15 + i * (0.6 + rng() * 0.8)));
+        // (the light can cross the threshold more than once in one gutter: one answer a gutter, none within 30 s)
+        if (g && !wasGutter && now - lastAnswer > 30 && PEAFOWL.length && Math.hypot(x - 75, z + 15) < 260) {
+          lastAnswer = now;
+          const i0 = Math.floor(rng() * PEAFOWL.length), n0 = 1 + (rng() < 0.4 ? 1 : 0), at = now + 1.5 + rng() * 2.5;
+          pend.push({ at, i: i0, n: n0, gain: 1 });
+          if (PEAFOWL.length > 1 && rng() < 0.5) pend.push({ at: at + n0 * 1.1 + 0.8 + rng() * 1.2, i: (i0 + 1 + Math.floor(rng() * (PEAFOWL.length - 1))) % PEAFOWL.length, n: 1, gain: 0.71 });
+        }
+        for (let j = pend.length - 1; j >= 0; j--) {
+          const c = pend[j];
+          if (now < c.at) continue;
+          pend.splice(j, 1);
+          const b = PEAFOWL[c.i];
+          if (b) k.cue('demesne-peafowl-cry', { x: b.x, y: b.y + 1.2, z: b.z }, { n: c.n, gain: c.gain });
         }
         wasGutter = g;
       },
-      cues: { 'demesne-peafowl-cry': (pos) => peaCry(k, pos || { x: 75, y: 6, z: -15 }, ac.currentTime + k.lead()) },
+      cues: { 'demesne-peafowl-cry': (pos, o) => peaCry(k, pos || { x: 75, y: 6, z: -15 }, o || {}) },
     };
   },
 };
