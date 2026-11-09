@@ -1,0 +1,7 @@
+[{"name":"glint","x":-60,"z":28,"yaw":2.0,"pitch":-0.6},
+ {"name":"glintfar","x":-72,"z":22,"yaw":2.05,"pitch":-0.3},
+ {"name":"glintwide","x":-47,"z":38,"yaw":1.92,"pitch":-0.45},
+ {"name":"moss","x":-205,"z":146,"yaw":0,"pitch":-0.1},
+ {"name":"leerie","x":128,"z":18,"yaw":0,"pitch":0,"js":"window.__fp.leerie.light(true)"},
+ {"name":"keptfire","x":-20,"z":-165,"yaw":-0.88},
+ {"name":"sun","x":-40,"z":22,"yaw":1.92}]
