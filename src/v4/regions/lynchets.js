@@ -101,24 +101,28 @@ export const sound = {
     src.connect(bp); bp.connect(am); am.connect(bus);
     const src2 = loopSrc(white, rng()), bp2 = filt('bandpass', 4200, 2), am2 = ac.createGain(); am2.gain.value = 0;
     src2.connect(bp2); bp2.connect(am2); am2.connect(bus);
-    // the gate: stick-slip on a dry hinge. A train of tiny grains of noise (each a slip), juddering from about 30 to 15
-    // a second as it swings, rung through the hinge's pitch (Q 4) and two formants; a creak or two, then a long while
+    // the gate: stick-slip on a dry hinge. A train of soft grains of pink noise (each a slip), juddering from about 12
+    // to 6 a second as it swings, each slip a little early or late, rung through the hinge's pitch (Q 4) and one
+    // formant, all under a lowpass at 1.8 kHz; a creak or two, then a long while. v7.2-08: was white grains at 13-34 a
+    // second with a 2.3 kHz formant, a broadband burst to 10 kHz that read rough (the slips' rate inside 15-300 Hz)
     const gl = k.placed({ ref: 8, roll: 1.0, range: 160, air: 70, verb: 0.45 }), gpan = gl.in;
     let lvl = 0, gx = 0, gz = 0, now0 = 0;
+    const dark = filt('lowpass', 1800, 0.6), dark2 = filt('lowpass', 2400, 0.6); dark.connect(dark2); dark2.connect(gpan);
     function creak(t0) {
       const dur = 0.7 + rng() * 0.9, f0 = 380 + rng() * 260, f1 = f0 * (0.55 + rng() * 0.3);
-      const r0 = 26 + rng() * 8, r1 = 13 + rng() * 5;
+      const r0 = 10 + rng() * 3, r1 = 5.5 + rng() * 2;
       const pitch = filt('bandpass', f0, 4);
       pitch.frequency.setValueAtTime(f0, t0); pitch.frequency.linearRampToValueAtTime(f1, t0 + dur * 0.6); pitch.frequency.linearRampToValueAtTime(f0 * 0.8, t0 + dur);
-      const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(4, t0 + 0.06); env.gain.setTargetAtTime(0.0001, t0 + dur * 0.8, dur * 0.06);
-      const b1 = filt('bandpass', 1100, 3), b2 = filt('bandpass', 2300, 4);
-      pitch.connect(b1); pitch.connect(b2); pitch.connect(env); b1.connect(env); b2.connect(env); env.connect(gpan);
+      const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(1.6, t0 + 0.06); env.gain.setTargetAtTime(0.0001, t0 + dur * 0.8, dur * 0.06);
+      env.gain.linearRampToValueAtTime(0, t0 + dur + 0.3);
+      const b1 = filt('bandpass', 1000, 2.5);
+      pitch.connect(b1); pitch.connect(env); b1.connect(env); env.connect(dark);
       for (let tt = t0; tt < t0 + dur;) {
         const u = (tt - t0) / dur, g = ac.createGain(), pk = 2.4 + rng() * 1.6;
-        g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(pk, tt + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.03);
-        const b = ac.createBufferSource(); b.buffer = white; b.start(tt, rng() * 2.5, 0.04);
+        g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(pk, tt + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.07); g.gain.linearRampToValueAtTime(0, tt + 0.08);
+        const b = ac.createBufferSource(); b.buffer = pink; b.start(tt, rng() * 2.5, 0.09);
         b.connect(g); g.connect(pitch);
-        tt += (1 / (r0 + (r1 - r0) * u)) * (0.92 + rng() * 0.16);
+        tt += (1 / (r0 + (r1 - r0) * u)) * (0.7 + rng() * 0.6);
       }
     }
     const gate = k.caller(rng, { bout: [1, 3], gap: [1.4, 2.6], rest: [25, 0.6, 8, 120], first: [3, 12],
