@@ -27,6 +27,14 @@ export async function build(ctx) {
     parts.push(s);
   }
 
+  if (Q.get('stylite') !== '0') {
+    await ctx.progress?.('the stylite on the tallest tor', 0.4);
+    const { buildStylite } = await import('./still/stylite.js');
+    const s = api.stylite = await buildStylite(ctx, G);
+    ctx.registerUpdate(s.update, { at: s.at, near: 60, hz: 2 });
+    parts.push(s);
+  }
+
   api.stats = () => {
     let calls = 0, tris = 0;
     for (const p of parts) { const s = p.stats(); calls += s.calls; tris += s.tris; }
