@@ -3,6 +3,9 @@
 // gives it a weight of at least 0.9; airAt there returns its Tincture (or nothing, for a region the brief leaves
 // neutral); and, unless its module is still a stub, its stats() report at most 12 draw calls and 150k triangles at
 // high and at least one of its creature. Generic over the regions, so every region module passes through it.
+// The Demesne's yews (v6.3): every yew mesh carries at least 1000 triangles a yew at high (the clipped mass
+// roughened, and the grown-out sprigs), an alpha-tested card material, and a mass the near-black green the brief
+// asks for (mean vertex colour, shown in sRGB, luma under 0.3; v4 drew about 0.38): v4's smooth pale lathes fail all three.
 // Joins: a creature built of parts declares them (geometry.userData.parts, vertex ranges); every part must touch the
 // rest (bounding boxes overlapping and vertices within 2 cm), so a body cannot fall apart into floating pieces again.
 // The Demesne's peafowl are checked so, and each bird's train must start inside its rump in every instance.
@@ -20,7 +23,7 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 400)); });
 await page.goto(`${base}/?q=high`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
-const { out: res, pea } = await page.evaluate(() => {
+const { out: res, pea, yews } = await page.evaluate(() => {
   const fp = window.__fp, R = fp.regions, out = [];
   // a point well inside each shape
   const centre = (def) => {
@@ -46,6 +49,12 @@ const { out: res, pea } = await page.evaluate(() => {
     try { stats = R.stats[key] ? R.stats[key]() : null; } catch (e) { statsErr = String(e); }
     out.push({ key, file: R.files[key], x: +x.toFixed(1), z: +z.toFixed(1), w: +w.toFixed(3), tint: want ? '#' + want.getHexString() : null, got: '#' + air.color.getHexString(), strength: +air.strength.toFixed(3), airErr: +airErr.toFixed(4), stub, stats, statsErr });
   }
+  const yews = fp.scene.children.filter((o) => /^demesne-yew/.test(o.name)).map((o) => {
+    const g = o.geometry, c = g.attributes.color, tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+    let l = 0; for (let i = 0; i < c.count; i++) l += 0.2126 * c.getX(i) + 0.7152 * c.getY(i) + 0.0722 * c.getZ(i);
+    const toS = (v) => (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055);
+    return { name: o.name, n: o.userData.yews || (o.isInstancedMesh ? o.count : 1), perYew: o.isInstancedMesh ? tris : tris / (o.userData.yews || 1), tris, cards: !!(o.material.map && o.material.alphaTest > 0), luma: +toS(l / c.count).toFixed(3) };
+  });
   // joins: the parts of one geometry form one connected piece
   const joins = (g) => {
     const parts = g?.userData?.parts, P = g?.attributes?.position;
@@ -84,7 +93,7 @@ const { out: res, pea } = await page.evaluate(() => {
     } else worst = Infinity;
     pea.rump = +worst.toFixed(4); pea.n = body.count; pea.calls = 2;
   }
-  return { out, pea };
+  return { out, pea, yews };
 });
 await browser.close();
 
@@ -103,6 +112,12 @@ for (const r of res) {
   check(s.calls <= 12, `${tag}: draw calls <= 12`, `${s.calls}`);
   check(s.tris <= 150000, `${tag}: triangles <= 150k at high`, `${s.tris}`);
   check(s.creature > 0, `${tag}: its creature`, `${s.creature}`);
+}
+check(yews.length > 0, 'demesne yews: a mesh', yews.map((y) => y.name).join(', '));
+for (const y of yews) {
+  check(y.perYew >= 1000, `${y.name}: >= 1000 tris a yew at high`, `${Math.round(y.perYew)} (${y.n} yews)`);
+  check(y.cards, `${y.name}: alpha-tested sprig cards`, `${y.cards}`);
+  check(y.luma < 0.3, `${y.name}: near-black green (sRGB luma < 0.3)`, `${y.luma}`);
 }
 check(pea.found, 'demesne: peafowl meshes', pea.found ? 'body and train' : 'demesne-peafowl / -trains not in the scene');
 if (pea.found) {

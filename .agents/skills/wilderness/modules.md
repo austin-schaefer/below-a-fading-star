@@ -45,6 +45,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `v4/regions/adust.js` | the Adust: crazed clay and red drifts (a ground skin), varnished sandstone pavements you can stand on, leaning rosettes and cushions, red dust, ticking stones, the head-standing beetles |
 | `v4/regions/lynchets.js` | the Lynchets: terraces and ridge-and-furrow, drystone walls on every edge, docks, nettles and thistles, thistle-down, the creaking gate, the half-moult stoats |
 | `v4/regions/demesne.js` | the Demesne: the eased lawn, parterre ridges, the ha-ha (a ground skin and a coursed wall), topiary yews, the fallen blocks, rooks, the white peafowl |
+| `v4/regions/yews.js` | the Demesne's yews, built for `demesne.js`: the clipped cone and urn roughened per yew, mottled near-black green, a shaggy layer of sprig cards and sagging whips; all in one mesh |
 | `v4/regions/peafowl.js` | the Demesne's white peafowl: one connected body a bird (a loft along a midplane spine, wings, legs, crest) and a train placed through the body's matrix at the rump; two instanced meshes, the parts listed in `geometry.userData.parts` for regions-test |
 | `v4/regions/skin.js` | shared by those four: the fine ground skin over the coarse terrain, mesh-height sampling, instancing, stats |
 | `v4/tarn.js` | Lees Tarn's new shore: the south bay to z 200 and the shingle spit, `tarnWet()` for `waterLevelAt`, the tide and the lap |
