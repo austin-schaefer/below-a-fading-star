@@ -305,6 +305,56 @@
     "gap_min_s": { "min": 0.3 },
     "silence_pct": { "max": 0 }
    }
+  },
+  {
+   "name": "demesne-park",
+   "place": "The Demesne lawn below the keep, standing, 40 s (v7.2-03: the rooks talk from the keep top in bouts with rests)",
+   "params": "pos=70,10&yaw=2.5",
+   "seconds": 40,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "lynchets",
+   "place": "The Lynchets terraces near the unseen gate, standing, 40 s (v7.2-03: the dock-heads in the gusts, the gate now and then)",
+   "params": "pos=-195,-112&yaw=-2.4",
+   "seconds": 40,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
   }
  ]
 }
