@@ -12,6 +12,7 @@ import { mergeGeometries } from './merge.js';
 
 export const SCALE = { person: 1.8, tread: 0.32, door: 3.2, rook: 0.45, rookSpan: 0.95 };
 
+// v7.1 cut every use in the world at Austin's note ("too much random noise"); only kit/demo.js still calls it.
 export function measureFigures(ctx, spots, opts = {}) {
   const T = THREE;
   const h = opts.height ?? SCALE.person;

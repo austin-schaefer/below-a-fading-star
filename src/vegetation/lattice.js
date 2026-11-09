@@ -3,7 +3,7 @@
 // of biomesh creep over the ground away from the ice like frost veins, closing into hex cells
 // near the seed. At the seed stands the mother crystal, 60 m tall, the litter round it its children (mother.js;
 // ?lattice=v2 builds the Lattice without it, as it stood to v4). One BatchedMesh for every crystal shape and the
-// mother's pieces, one mesh for every filament, and the mother's measure figure.
+// mother's pieces, and one mesh for every filament.
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep, fogBatchFix } from './util.js';
 import { makeBatch } from './batch.js';
@@ -334,17 +334,10 @@ export function buildLattice(ctx, ground, shared) {
   filaments.renderOrder = 2;
   ctx.scene.add(filaments);
 
-  // the measure at the mother's foot (kit/scale.js): one robed figure
-  let figure = null;
-  if (mother) {
-    figure = ctx.kit.measureFigures([mother.measure], { name: 'veg-lattice-measure' }, ctx);
-    ctx.scene.add(figure);
-  }
-
   function update(flicker) {
     const g = 1 + 0.9 * (1 - flicker);
     crysGain.value = g; filGain.value = g;
   }
   const motherStats = mother ? { motherTris: mother.tris, motherTop: +mother.top.toFixed(1), litterHidden: shards.length - drawn.length } : {};
-  return { batch, filaments, figure, update, stats: { shards: drawn.length, giants: giants.length, crystalTris: tris + (mother ? mother.tris : 0), filaments: fil, filamentTris: P.length / 9, hexCells: hexCells.length, ...motherStats } };
+  return { batch, filaments, update, stats: { shards: drawn.length, giants: giants.length, crystalTris: tris + (mother ? mother.tris : 0), filaments: fil, filamentTris: P.length / 9, hexCells: hexCells.length, ...motherStats } };
 }
