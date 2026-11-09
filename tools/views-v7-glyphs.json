@@ -1,0 +1,91 @@
+[
+ {
+  "name": "glyphs-scriveners-wander",
+  "x": -101,
+  "z": 50,
+  "yaw": 3.266,
+  "pitch": -0.3,
+  "js": "window.__fp.glyphs?.scriveners?.wander?.()",
+  "settle": 3000
+ },
+ {
+  "name": "glyphs-scriveners-p2",
+  "x": -101,
+  "z": 50,
+  "yaw": 3.266,
+  "pitch": -0.28,
+  "js": "window.__fp.glyphs?.scriveners?.form(undefined,{now:true,hold:1e9})",
+  "settle": 2500
+ },
+ {
+  "name": "glyphs-scriveners-bank",
+  "x": -101,
+  "z": 50,
+  "yaw": 3.266,
+  "pitch": -0.72,
+  "dy": 4,
+  "settle": 1500
+ },
+ {
+  "name": "glyphs-moles-causeway",
+  "x": 80,
+  "z": -8,
+  "yaw": 2.583,
+  "pitch": -0.1,
+  "js": "window.__fp.glyphs?.scriveners?.release?.()"
+ },
+ {
+  "name": "glyphs-moles-heap",
+  "x": 82.99,
+  "z": 7.2,
+  "yaw": 0,
+  "pitch": -1.04,
+  "js": "const fp=window.__fp,t=fp.glyphs?.moles?.glyphTessera?.()||{x:82.99,y:16.58,z:6.04};const p=fp.player;p.pos.set(t.x,t.y+2,t.z+1.16);p.yaw=0;p.pitch=-1.04;",
+  "pre": "const fp=window.__fp,t=fp.glyphs?.moles?.glyphTessera?.()||{x:82.99,y:16.58,z:6.04};const p=fp.player;p.pos.set(t.x,t.y+2,t.z+1.16);fp.camera.position.copy(p.pos);"
+ },
+ {
+  "name": "glyphs-moles-tessera",
+  "x": 82.99,
+  "z": 6.5,
+  "yaw": 0,
+  "pitch": -1.1,
+  "js": "const fp=window.__fp,t=fp.glyphs?.moles?.glyphTessera?.()||{x:82.99,y:16.58,z:6.04};const p=fp.player;p.pos.set(t.x,t.y+0.42,t.z+0.22);p.yaw=0;p.pitch=-1.1;",
+  "pre": "const fp=window.__fp,t=fp.glyphs?.moles?.glyphTessera?.()||{x:82.99,y:16.58,z:6.04};const p=fp.player;p.pos.set(t.x,t.y+0.42,t.z+0.22);fp.camera.position.copy(p.pos);"
+ },
+ {
+  "name": "glyphs-moles-rise",
+  "x": 78,
+  "z": -4,
+  "yaw": 2.583,
+  "pitch": -0.3,
+  "settle": 6500,
+  "js": "const fp=window.__fp,m=fp.glyphs?.moles;window.__riseAt=null;if(m){let b=-1,bd=1e9;m.slots.forEach((s,i)=>{if(!s.used){const d=Math.hypot(s.x-78,s.z+2);if(d<bd){bd=d;b=i;}}});if(b>=0){m.rise(b,0.62);const s=m.slots[b];window.__riseAt={x:s.x,y:s.y,z:s.z};}}const a=window.__riseAt||{x:75,y:16.8,z:0};const p=fp.player;p.pos.set(a.x+0.9,a.y+1.5,a.z-1.6);p.yaw=Math.atan2(0.9,-1.6);p.pitch=-0.72;",
+  "pre": "const fp=window.__fp,a=window.__riseAt||{x:75,y:16.8,z:0},p=fp.player;p.pos.set(a.x+0.9,a.y+1.5,a.z-1.6);fp.camera.position.copy(p.pos);"
+ },
+ {
+  "name": "glyphs-cap-top",
+  "x": -80,
+  "z": 0.12,
+  "yaw": 0,
+  "pitch": -1.4,
+  "dy": 0.1,
+  "settle": 1500
+ },
+ {
+  "name": "glyphs-erratic-sun",
+  "x": 69.5,
+  "z": -198,
+  "yaw": -1.223,
+  "pitch": 0.03,
+  "settle": 2000
+ },
+ {
+  "name": "glyphs-lintel-door",
+  "x": 227,
+  "z": -112,
+  "yaw": -1.5708,
+  "pitch": 0.36,
+  "dy": -3.86,
+  "settle": 2500
+ }
+]
