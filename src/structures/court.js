@@ -7,8 +7,8 @@
 // stands on its footing with no pier in it. The flooded shaft stays in the nave, its stair opening north toward the
 // paving where the Hawser (BA) comes to ground (COURT.hawser). `?court=v2` builds the colonnades and the fallen
 // crowned head instead (court/v2.js); only one of the two is ever built.
-// Draws: the masonry (kit stone, courses diminishing as they rise), the bronze, the shaft's interior quad, and the
-// measure figures; none in the structures' merged stone mesh.
+// Draws: the masonry (kit stone, courses diminishing as they rise), the bronze, and the shaft's interior quad;
+// none in the structures' merged stone mesh.
 import * as THREE from 'three';
 import { mergeGeometries } from '../v4/kit/merge.js';
 import { LANDMARKS } from '../world.js';
@@ -377,15 +377,6 @@ function buildCourtV5(ctx, B, env) {
     }
     bg.setAttribute('color', new THREE.BufferAttribute(cols, 3));
   }
-  // measures: one at the north upright's foot, one at the stair's head, one at the fallen one's broken end
-  const T1 = piers.find((p) => p.kind === 'tall');
-  const fig = ctx.kit.measureFigures([
-    { x: T1.x - 4.0, z: T1.z - 5.0, yaw: -1.3 },
-    { x: cx + 2.2, z: pit.z0 - 2.4, yaw: 0.2 },
-    { x: cx + 26.8, z: cz + 17.2, yaw: -1.1 },
-  ], { name: 'structures-court-measure' }, ctx);
-  extra.push({ mesh: fig, tris: fig.geometry.attributes.position.count / 3 });
-
   // what the biomesh climbs (fauna/uncanny/biomesh.js): the two uprights' stone above their shoes, as octagons
   // (r the apothem there, sides, rot the first face's normal), with the floor pool kept outside half and reach
   const shoeTop = floor + PIER.shoe + 0.05;

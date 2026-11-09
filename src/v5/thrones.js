@@ -13,8 +13,8 @@
 // build by surface nets into one mesh; both are one geometry and one draw call, in the terrain's own material (its
 // colours, triplanar detail, bedding streaks, snow on the ledges, and the walls' fog tier by world radius), plus one
 // rim term: while the sun gutters the shoulders catch a thin edge of sunlight, then lose it (uRim, set each frame from
-// the gutter's phase; no lights). Kit measure figures stand at the plinths' feet, on the road's start and on the bench
-// by a hand. No shadows: the wall casts none, and a 330 m shadow does not fit the shadow camera's 190 m box. No
+// the gutter's phase; no lights). No shadows: the wall casts none, and a 330 m shadow does not fit the shadow
+// camera's 190 m box. No
 // colliders: nothing of them is inside the walkable wedge (±4.5°, to r 372); the nearest fingers are about 8 m beyond
 // its corner. ?thrones=0 leaves them out (the seats stay, empty). ctx.thrones = { stats(), rim, rimHold, mesh }.
 import * as THREE from 'three';
@@ -345,19 +345,6 @@ export async function build(ctx) {
   mesh.matrixAutoUpdate = false; mesh.updateMatrix();
   ctx.scene.add(mesh);
 
-  // measures: one at the foot of each plinth under the inner hand, one on the road's start, one on the bench by the
-  // near colossus's fingers
-  const st = ctx.causeway[0];
-  const at = (seat, side, u, v) => ({ x: seat.cx * (THRONES.edge + u) - seat.cz * side * (THRONES.out + v), z: seat.cz * (THRONES.edge + u) + seat.cx * side * (THRONES.out + v) });
-  const f0 = at(seats[0], 1, -6, -17), f1 = at(seats[1], -1, -5, -15), f2 = at(seats[0], 1, 3, -27);
-  const figs = ctx.kit.measureFigures([
-    { ...f0, yaw: 1.2 }, { ...f1, yaw: 2.2 },
-    { x: st.x + 9, z: st.z - 2.5, yaw: -0.4 },
-    { ...f2, y: THRONES.bench, yaw: 1.6 },
-  ], { name: 'thrones-figures' }, ctx);
-  figs.castShadow = false;
-  ctx.scene.add(figs);
-
   const api = { rim, rimHold: null }; // rimHold pins the rim (0..1), for renders
   // the rim: it catches as the light fails, holds a few seconds, then the gutter takes it; nothing until the next
   const g = { on: false, t: 0 };
@@ -370,6 +357,6 @@ export async function build(ctx) {
     rim.value = api.rimHold ?? depth * env;
   });
 
-  const tris = geo.index.count / 3 + (figs.geometry.attributes.position.count / 3) * 3;
-  ctx.thrones = Object.assign(api, { mesh, figures: figs, stats: () => ({ calls: 2, tris: Math.round(tris), verts: n, buildMs: Math.round(t1 - t0) }) });
+  const tris = geo.index.count / 3;
+  ctx.thrones = Object.assign(api, { mesh, stats: () => ({ calls: 1, tris: Math.round(tris), verts: n, buildMs: Math.round(t1 - t0) }) });
 }

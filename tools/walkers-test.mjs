@@ -208,6 +208,56 @@ const slots = await page.evaluate(() => {
   return worst;
 });
 check('with the link anywhere on a path, no point on the paths has more than three live sources within reach + 20 m', slots.n <= 3, slots);
+// ---- v7.1 the Link-Boy keeps to the lead: on every P-lead line whose samples come within 20 m of z 215 (under the
+// Great Span), both ways, he leads (his own update, accelerated) with you 10 m behind on his line (a walker is pushed
+// round the piers as his line goes round them); while he leads and
+// stands aside he is never inside a collider (the controls' list, capped ones where his ground is within their height),
+// and while he leads he is within 0.6 m of the lead's polyline or on a straight piece of his line that no collider touches
+const span = await page.evaluate(() => {
+  const fp = window.__fp, B = fp.walkers.linkBoy, C = fp.controls.state.colliders, cam = fp.camera.position;
+  const inside = (x, z, pad = 0) => { const gy = fp.terrain.heightAt(x, z); for (const c of C) { const dx = x - c.x, dz = z - c.z, r = c.r + pad; if (dx * dx + dz * dz >= r * r) continue; if (c.h !== undefined && (gy > c.y + c.h || gy < c.y - 0.5)) continue; return c; } return null; };
+  const near = (L, x, z) => { let b = 1e9; for (let i = 0; i < L.length - 1; i++) { const [ax, az] = L[i], [bx, bz] = L[i + 1], ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2)); b = Math.min(b, Math.hypot(ax + ex * t - x, az + ez * t - z)); } return b; };
+  const segClear = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let s = 0; s <= l; s += 0.1) if (inside(a[0] + (b[0] - a[0]) * s / (l || 1), a[1] + (b[1] - a[1]) * s / (l || 1))) return false; return true; };
+  const at = (L, s) => { for (let i = 0; i < L.length - 1; i++) { const [ax, az] = L[i], [bx, bz] = L[i + 1], l = Math.hypot(bx - ax, bz - az); if (s <= l || i === L.length - 2) { const t = Math.max(0, Math.min(1, s / (l || 1))); return [ax + (bx - ax) * t, az + (bz - az) * t]; } s -= l; } return L[L.length - 1]; };
+  const lenOf = (L) => { let s = 0; for (let i = 0; i < L.length - 1; i++) s += Math.hypot(L[i + 1][0] - L[i][0], L[i + 1][1] - L[i][1]); return s; };
+  const out = { lines: [], inside: [], off: [], aside: [] };
+  for (const Ld of fp.paths.leads) {
+    if (Ld.kind !== 'path') continue;
+    Ld.lines.forEach((L, li) => {
+      if (!L.some(([, z]) => Math.abs(z - 215) < 20)) return;
+      const len = lenOf(L);
+      for (const dir of [1, -1]) {
+        B.reset();
+        const s0 = dir > 0 ? 12 : len - 12;
+        B.lead(Ld.id, s0, dir, 15, li); B.lead(null);
+        // his line, and which of its pieces leave the lead: those must be clear of every collider
+        const W = B.walkLine(Ld.id, li), clear = [];
+        for (let i = 0; i < W.length - 1; i++) clear.push(near(L, W[i][0], W[i][1]) <= 0.6 && near(L, W[i + 1][0], W[i + 1][1]) <= 0.6 ? true : segClear(W[i], W[i + 1]));
+        const onClear = (x, z) => { for (let i = 0; i < W.length - 1; i++) { if (!clear[i]) continue; const [ax, az] = W[i], [bx, bz] = W[i + 1], ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2)); if (Math.hypot(ax + ex * t - x, az + ez * t - z) < 0.05) return true; } return false; };
+        const wlen = lenOf(W), st0 = B.state;
+        let ws = Math.max(0, Math.min(wlen, st0.s - dir * 10)), steps = 0, leadSteps = 0, asideSteps = 0, worstOff = 0;
+        for (let k = 0; k < 2400; k++) {
+          ws = Math.max(0, Math.min(wlen, ws + dir * 1.4 * 0.1));
+          const [cx, cz] = at(W, ws); cam.set(cx, fp.terrain.heightAt(cx, cz) + 1.7, cz);
+          const st = B.sim(0.1, 0.1); steps++;
+          if (st.mode !== 'lead' && st.mode !== 'aside') { if (leadSteps) break; continue; }
+          const c = inside(st.x, st.z);
+          if (c && out.inside.length < 6) out.inside.push({ id: Ld.id, li, dir, mode: st.mode, x: +st.x.toFixed(2), z: +st.z.toFixed(2), c: [+c.x.toFixed(1), +c.z.toFixed(1), +c.r.toFixed(2), c.mod] });
+          if (st.mode === 'lead') {
+            leadSteps++;
+            const d = near(L, st.x, st.z);
+            if (d > 0.6 && !onClear(st.x, st.z)) { worstOff = Math.max(worstOff, d); if (out.off.length < 6) out.off.push({ id: Ld.id, li, dir, x: +st.x.toFixed(2), z: +st.z.toFixed(2), d: +d.toFixed(2) }); }
+          } else if (++asideSteps > 40) break;
+        }
+        out.lines.push({ id: Ld.id, li, dir, len: +len.toFixed(0), leadSteps, asideSteps, worstOff: +worstOff.toFixed(2) });
+      }
+    });
+  }
+  B.reset();
+  return out;
+});
+check('v7.1: leading on the P-leads under the Span, the Link-Boy is never inside a collider', span.lines.length >= 4 && span.lines.every((l) => l.leadSteps > 50) && span.inside.length === 0, { lines: span.lines.map((l) => `${l.id}:${l.li}${l.dir > 0 ? '+' : '-'} ${l.leadSteps}/${l.asideSteps}`), inside: span.inside });
+check('v7.1: and keeps within 0.6 m of the lead, or on a straight piece of his line clear of every collider', span.lines.length >= 4 && span.off.length === 0, { off: span.off });
 check('no errors on the page', errors.length === 0, errors.slice(0, 3));
 await page.close();
 
