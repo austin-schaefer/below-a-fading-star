@@ -45,6 +45,7 @@ Put `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...` call.
 - `node tools/grass-flicker-test.mjs low $B` (3/3)
 - `node tools/build-artifact.mjs` (builds the single-file artifact and `commit.json`)
 - `node tools/pop-test.mjs http://localhost:PORT --label=<name>` (v6; `--only=<group,...>`; exits 1 only on gated rows) and `node tools/pair-diff.mjs a.png b.png [diff.png]` (picture difference in the survey's numbers)
+- `node tools/bloom-test.mjs $B medium` (6/6; `FP_BROWSER=webkit|firefox` too): bloom's response to a small light is round and to a thin line is a line, measured on the page's own bloom pass
 - `node tools/pan-test.mjs "$B/?q=medium&perf=1&adapt=0"`: no compile or upload while turning
 - `node tools/record-test.mjs "$B/?q=medium&record=6&pos=-190,165"`
 - Renders: `node tools/shot.mjs "$B/?q=low&pos=-60,20&yaw=1.9" shots/wip/<name>.png 1280 720`; several views from one load: `node tools/views.mjs views.json shots/wip <prefix> low` (holds the sun's guttering so pairs match)

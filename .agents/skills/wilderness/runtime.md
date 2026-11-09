@@ -34,7 +34,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `pcf=soft|hard`
 - `bloomres=0.5` (`1` full size)
 - `bloomtune=strength,radius,threshold`
-- `bloomcap=16`: the ceiling on bloom's bright pass (brightest channel; NaN and Inf drop to black), `src/bloomfix.js`; `0` is three's uncapped pass, which turns one extreme pixel into nested squares
+- `bloomcap=16`: the ceiling on bloom's bright pass (brightest channel; NaN and Inf drop to black), `src/bloomfix.js`; `0` is three's bright pass entirely (no ceiling, one tap per texel)
 - `lights=3` (slot count; `off` keeps every point light live)
 - `throttle=0` (every update every frame)
 - `light=v3` (v3's light rig)
@@ -106,6 +106,8 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `packstep=6` (rocks repack every mesh on one frame once the camera has moved 6 m and upload whole buffers; plant packs sort with a closure, copy with subarrays and ignore the frame's pack token, `ctx.packToken`) (v6-05)
 - `xfade=0` (v6-04: trees switch LOD hard, with no spare instances, and build v5's far mesh)
 - `fungifade=0` (v6-04: toadstools and pods cull by 100 m group at 90 m, with no distance fade)
+- `bloomkernel=box` (v6.2: bloom's mips blur with three's near-box kernel, sigma equal to the radius and cut at it, instead of a Gaussian of the same variance taken to 3 sigma; the box is what draws a bright glint or light as nested soft squares)
+- `bloomprefilter=0` (v6.2: bloom's bright pass reads the scene with one bilinear tap per texel, 2×2 of the 4×4 pixels under it, instead of four taps over all of them; one tap turns a line one pixel wide into dots). `?bloomkernel=box&bloomprefilter=0` is v6's bloom
 
 ### The walls
 
