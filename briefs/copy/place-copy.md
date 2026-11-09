@@ -169,14 +169,6 @@ name: The Kept Fire
 
 line: "He walked apart, beyond the glow of the campfires to gaze out among the mystic vistas of crag and valley. The slopes were softened by verdue and foliage, the vales deepening into shadowy realms of magic."
 
-## slipper (new)
-
-where: the brocade slipper on the road near spawn, (-20, 26); small radius, a find
-
-name: The Slipper
-
-line: <no, don't need a named place for this>
-
 ## hawser (new)
 
 where: the chain from the north wall into the Court's paving, (-80, -272)
@@ -221,25 +213,9 @@ line: "She turned her face up to the strange stars and wondered in what directio
 
 where: the twelve lamp-cages beside the kerb, (128, 5)
 
-name: The Leerie's Standards
+name: A Lamplighter's Standards
 
-line: "No man has a home unless he is master of a place where he must please no one—a place where he can go and lock the door behind him."
-
-## ridge (new)
-
-where: the seven merlons on the north-east crest, (270, -380)
-
-name: The Battlemented Ridge
-
-line: <how woudl this even work? you can't get up there. delete>
-
-## lamps (new)
-
-where: the window-lights high on the west massif, (-330, -268)
-
-name: The Escarpment Lamps
-
-line: <how woudl this even work? you can't get up there. delete>
+line: "All fled, all done, so lift me on the pyre; <line break here>The feast is over and the lamps expire."
 
 ## Notes for the agent
 
@@ -249,7 +225,7 @@ line: <how woudl this even work? you can't get up there. delete>
 
 what: The far west, a strip along the road under the sun (x −250 to −300, z −70 to 40). Red clay crazed into hexagons, drifts of red dust, dead heather, and fourteen black-varnished sandstone pavements you can stand on. The Taker of Altitudes sits on one.
 
-name: The Adust
+name: The Taker of Altitudes
 
 line: "Man was unaware of his vulnerability. Logic was the special environment; the brain was the special tool."
 
@@ -257,17 +233,9 @@ line: "Man was unaware of his vulnerability. Logic was the special environment; 
 
 what: The orchard country east and north-east of the keep (centred 130, −90, radius 100). Long rank grass gone greener-gold, knapweed, medlar and quince thickets run wild past Medlar Close's wall, a blackthorn hedge, broken honey-coloured field walls. The Long Sleeper lies here.
 
-name: The Bletting
+name: Sleeper's Orchard
 
 line: "I loved the irradiate refuge of sleep. In my dreams I found a little of the beauty I had vainly sought in life, and wandered through old gardens and enchanted woods."
-
-## highLing
-
-what: The heather shelf in the east (x 228 to 293, z −105 to 10), three metres up a granite-lipped scarp. Knee-deep ling, bell-heather, gorse, six pink granite tors with their clitter; the Stylite sits on the tallest at (268, −80); the Prospect's brow is here.
-
-name: The High Ling
-
-line: <skip>
 
 ## lynchets
 
@@ -277,14 +245,6 @@ name: The Lynchets
 
 line: "On the gentle slopes there are farms, ancient and rocky... but these are all vacant now. The old folk have gone away, and foreigners do not like to live there."
 
-## outwash
-
-what: The gravel plain in the north (centred 25, −195), between the moor and the Lattice's crystal. Braided dry channels, erratic boulders, bright mineral runnels, sparse ground. The Accrescent's trail crosses it, the Simulacrum's gnat columns stand over it, the erratic with the glyph is here.
-
-name: The Outwash
-
-line: <skip>
-
 ## saltings
 
 what: The salt flat along the south, a step down from the moor by the fen's tideline and south of the Great Span (z 250 to 290). A white crust in plates with curled rims, pink gypsum roses, brown runnels, blood-red glasswort, bleached reeds and stumps, salt motes in a rose-white air; it creaks underfoot. The Sexton digs his rows at its edge.
@@ -293,18 +253,17 @@ name: Kenching Flats
 
 line: "From the essential Saltes of humane Dust, a Philosopher may, without any criminal Necromancy, call up the Shape of any dead Ancestour from the Dust."
 
-## strandline
+## pit
 
-what: The shingle beach at the tarn's spit in the south-west (around −45, 160). Bands of black flint pebbles fine to coarse, a wrack line under a storm berm, foam running up and down, horsetail and bogbean in the shallows, midge columns. The Coheirs sit at their net at the spit's root.
+what: The hole at (200, 185), just north of the Great Span's east end and 30 m from the canyon, where the old road from the east gate ends: a pit about 28 m across with a ragged, fractal lip that has swallowed the road's last stretch. You find it by the road running out under your feet; the taller fall's mist drifts across it. Its lip faces south-west toward the fall.
 
-name: The Strandline
+name: The Pit
 
-line: <skip>
+line: "He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?"
+## graves
 
-## demesne
+what: The Sexton's field on Kenching Flats, south of the Great Span: sixty grave slots in six rows of ten in the block x 40–70, z 264–284, forty open at load and one more each gutter, spoil heaps beside each, no stones, none filled. Austin's name and line, given in chat 2026-11-08.
 
-what: The grounds ringing the keep (from its wall out to about 85 m, on the north and east sides). Grazed lawn eased level toward a ha-ha, a parterre of old beds showing as ridges, yews grown shapeless, urns; the Tesserine Moles' heaps and the Indistinct's ditch are here.
+name: Rest in Starlight
 
-name: The Demesne
-
-line: <cut>
+line: "Dig me no grave; I shall not need one."
