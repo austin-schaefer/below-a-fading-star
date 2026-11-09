@@ -270,18 +270,17 @@ export function startCuesV2(a) {
   // sag in pitch and catch (stick-slip in their gain) as the links drag, under a brown grind; the settle's thud at
   // the end of the jerk; then the iron rings out on a few inharmonic partials. Inverse falloff from a 160 m
   // reference: still a third its level 500 m off, so the whole bowl hears it.
-  // the Leerie's standards (v5/lights.js): a lantern catching, a small click and the soft breath of the flame
-  // A lantern catching (v7.2-04): a soft iron tock low in the cage, a dull tap on the glass, and the flame's breath
-  // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, an 8 ms attack, a 50 ms release, gone by 60 m. Twelve
-  // fire in a wave along the Leerie's row at a gutter, so each is a small thing.
+  // the Leerie's standards (v5/lights.js): a lantern catching. v7.2-08: a soft click (a grain of pink noise round
+  // 900 Hz, 4 ms in, 50 ms out) and the flame's breath, a smooth swell of dark noise (240-700 Hz) that rises over a
+  // tenth of a second and settles over a second, with no tremolo, gate or beating pair under it: twelve of these come
+  // together at a gutter, and the old breath's low end (pink to 50 Hz, its gain stepped) read as a rough rumble.
   function lampTick(pos) {
-    const v = voice(pos, { ref: 4, roll: 2.5, range: 16, verb: 0.35, dur: 1.0, air: 60, gain: 18 }); if (!v) return;
-    const t0 = v.t0, lp = filt('lowpass', 2400, 0.6); lp.connect(v.in);
-    sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.008);
-    sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.008);
-    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.02); g.gain.linearRampToValueAtTime(0.05, t0 + 0.14);
-    g.gain.linearRampToValueAtTime(0.03, t0 + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
-    chain(vNoise(v, pink, t0 + 0.02, 0.9), filt('lowpass', 520, 0.7), g, lp);
+    const v = voice(pos, { ref: 4, roll: 2.5, range: 16, verb: 0.35, dur: 1.8, air: 60, gain: 18 }); if (!v) return;
+    const t0 = v.t0, lp = filt('lowpass', 2000, 0.6); lp.connect(v.in);
+    sgrain(v, lp, t0, jit(900), 0.9, 0.16, 0.05, pink, 0.004);
+    const g = ac.createGain(); g.gain.setValueAtTime(0, t0); g.gain.setTargetAtTime(0.014, t0 + 0.01, 0.08);
+    g.gain.setTargetAtTime(0, t0 + 0.35, 0.25);
+    chain(vNoise(v, pink, t0, 1.75), filt('highpass', 240, 0.6), filt('lowpass', 700, 0.6), g, lp);
   }
   function hawserGroan(pos) {
     const v = voice(pos, { ref: 160, roll: 1, range: 3000, verb: 1.1, dur: 7.4, air: 700 });

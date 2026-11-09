@@ -313,7 +313,7 @@ export async function build(ctx) {
     function set(on, t) {
       if (on === rowLit) return;
       rowLit = on;
-      if (on) for (let i = 0; i < LEERIE.n; i++) onT[i] = t + i * WAVE;
+      if (on) for (let i = 0; i < LEERIE.n; i++) onT[i] = t + i * WAVE + 0.75 + 0.75 * N2(i * 2.3, 9.4); // v7.2-08: each catches on its own beat, 0-1.5 s late (a 22 Hz train of ticks was a rattle)
       else offT = t;
     }
     updates.push([(dt, t, f) => {
