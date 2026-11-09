@@ -7,7 +7,8 @@
 // Usage: node tools/audio-survey.mjs <base> [--out=shots/wip/audio/survey-<label>] [--only=moor-stand,fen-edge]
 //        [--baseline=shots/wip/audio/survey-before] [--q=low] [--survey=tools/audio-survey.json] [--remeasure]
 // --remeasure measures the WAVs already in --out again (after a change to the metrics) without rendering.
-// A name in --only matches a pose exactly or as a prefix (--only=moor runs every moor pose).
+// A name in --only matches a pose exactly or as a prefix (--only=moor runs every moor pose); a partial run into a
+// directory that already holds a survey replaces those poses and keeps the rest.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -76,6 +77,17 @@ export async function survey(base, { out, only = null, baseline = null, q = 'low
     }
   } finally { if (!given && browser) await browser.close(); }
 
+  // a partial run (--only) into a directory that holds a survey keeps that survey's other poses, in the survey's order
+  if (only) {
+    try {
+      const prev = JSON.parse(fs.readFileSync(path.join(out, 'survey.json'), 'utf8')).poses.filter((r) => !rows.some((x) => x.name === r.name));
+      if (prev.length) {
+        for (const r of prev) r.metrics = r.metrics && { ...r.metrics, detail: r.detail };
+        rows.push(...prev); rows.sort((a, b) => S.poses.findIndex((p) => p.name === a.name) - S.poses.findIndex((p) => p.name === b.name));
+        log(`kept ${prev.length} poses from the survey already in ${out}`);
+      }
+    } catch { /* no survey there yet */ }
+  }
   let baseRows = null;
   if (baseline) {
     try { baseRows = JSON.parse(fs.readFileSync(path.join(baseline, 'survey.json'), 'utf8')).poses; }
@@ -89,7 +101,8 @@ export async function survey(base, { out, only = null, baseline = null, q = 'low
   }
   let commit = null; try { commit = execSync('git rev-parse --short HEAD', { cwd: HERE }).toString().trim() + (execSync('git status --porcelain -- ../src', { cwd: HERE }).toString().trim() ? '+dirty src' : ''); } catch { /* not a checkout */ }
   const S2 = loadSurvey(surveyFile);
-  const bands = `| pose | ${METRICS.join(' | ')} |\n|---|${METRICS.map(() => '---').join('|')}|\n` + pick.map((p) => `| ${p.name} | ${METRICS.map((k) => bandText(p.bands[k]) + (p.bands[k]?.gated ? ' (g)' : '')).join(' | ')} |`).join('\n');
+  const shown = S2.poses.filter((p) => rows.some((r) => r.name === p.name));
+  const bands = `| pose | ${METRICS.join(' | ')} |\n|---|${METRICS.map(() => '---').join('|')}|\n` + shown.map((p) => `| ${p.name} | ${METRICS.map((k) => bandText(p.bands[k]) + (p.bands[k]?.gated ? ' (g)' : '')).join(' | ')} |`).join('\n');
   const failing = rows.filter((r) => r.gatedFail.length);
   const md = `# Audio survey${baseline ? ' (before → after)' : ''}
 

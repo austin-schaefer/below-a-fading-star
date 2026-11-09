@@ -9,7 +9,7 @@
 //        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--mono] [--draw] [--settle=<s>] [--seed=<n>]
 // --cue fires 1 s in at the camera plus --at (world axes, as tools/audio-test.mjs's offsets), --every repeats it.
 // --walk holds W at that speed (over 3.6 m/s it hurries: Shift, the speed scaled from 6.6); --steps fires n of the
-// walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own 12-16 s course); without
+// walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own course, its length pinned at 14 s by ?gutter=14,600); without
 // it the gutter is held off for the render so two renders compare; --gutter-hold=0.3 pins the flicker at a value.
 // --settle=<s> (default 6) waits after body.ready before `begin` (see pageRender). The page loads with ?render=0 (every frame's updates, no draw: software GL otherwise starves the page's timers and
 // the walk); --draw draws as usual. --pre taps the master (pre-limiter) instead, as 32-bit float, and writes the post-limiter tap of the same render to
@@ -47,11 +47,13 @@ export function plan(o = {}) {
     pre: !!o.pre, mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
   };
 }
-// the page's url for a plan: ?render=0 (the frame's updates without the draw, so software GL cannot starve the
+// the page's url for a plan: ?gutter=14,600 with --gutter, ?render=0 (the frame's updates without the draw, so software GL cannot starve the
 // page's clock; --draw keeps the picture) and ?speed= for a walk at other than 3.6 or 6.6 m/s
 export function withWalk(url, p) {
   const u = new URL(url);
   if (!p.draw && !u.searchParams.has('render')) u.searchParams.set('render', '0');
+  // a gutter's length is drawn from Math.random (12-16 s): pinned at 14 s so two gutter renders are a fair pair
+  if (p.gutter && !u.searchParams.has('gutter')) u.searchParams.set('gutter', '14,600');
   if (p.walk) { const base = p.walk > 3.6 ? 6.6 : 3.6, mul = p.walk / base; if (Math.abs(mul - 1) > 1e-6) u.searchParams.set('speed', mul.toFixed(4)); }
   return u.toString();
 }
