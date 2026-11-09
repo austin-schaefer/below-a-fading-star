@@ -268,7 +268,7 @@ export function startLiving(k) {
   const LOOPS = [hum, hiss, flutter];
 
   // v7.2-04: a figure's steps are near detail, under the walker's own: the Leerie's at 0.4 to 16 m, the Link-Boy's at 0.3 to 12 m
-  const LEERIE_STEP = { vol: 0.4, range: 16, ref: 1.5, gain: 10 }, LINKBOY_STEP = { vol: 0.3, range: 12, ref: 1, gain: 10 };
+  const LEERIE_STEP = { vol: 0.4, range: 16, ref: 1.5, gain: 2.5 }, LINKBOY_STEP = { vol: 0.3, range: 12, ref: 1, gain: 10 };
   return {
     loops, tick,
     takerClick, takerMurmur, coheirsKnot, sextonBite, sextonThrow, sleeperBreath, sleeperFruit, styliteCreak, accrescentStep,

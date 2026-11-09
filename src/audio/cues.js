@@ -39,6 +39,7 @@ export function startCues(a) {
   function cry(pos) {
     const v = voice(pos, { ref: 40, roll: 0.6, range: 400, verb: 0.9, dur: 3.2, air: 120, gain: 30 });
     if (!v) return;
+    v.in.gain.value *= Math.pow(10, -0.15 * Math.max(0, v.d - 120) / 20); // v7.2-07: past 120 m a further 0.15 dB a metre: a far bird is a breath
     const t0 = v.t0, n = 1 + ((rng() * 2) | 0), f0 = CRY_ROOT[(rng() * 3) | 0] * jit(1, 0.01);
     const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
     let at = t0;

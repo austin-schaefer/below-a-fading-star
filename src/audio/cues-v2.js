@@ -176,7 +176,9 @@ export function startCuesV2(a) {
     const v = voice(pos, { ref: 12, roll: 0.9, range: 130, verb: 0.45, dur: 1.2, gain: 10 });
     if (!v) return;
     const t0 = v.t0, far = clamp(d / 120, 0, 1);
-    const bus = gainOf(1 - 0.6 * far); bus.connect(v.in);
+    // v7.2-07: a far thing heard near the galleries, not on the moor: past 36 m a further 0.2 dB a metre on the
+    // inverse law (about -12 dBFS at 36 m, -30 at 80 m, under -45 by its 130 m range)
+    const bus = gainOf((1 - 0.6 * far) * Math.pow(10, -0.2 * Math.max(0, d - 36) / 20)); bus.connect(v.in);
     drumInto(v, t0, far, bus);
   }
   function drumInto(v, t0, far, out) {
@@ -273,7 +275,7 @@ export function startCuesV2(a) {
   // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, an 8 ms attack, a 50 ms release, gone by 60 m. Twelve
   // fire in a wave along the Leerie's row at a gutter, so each is a small thing.
   function lampTick(pos) {
-    const v = voice(pos, { ref: 4, roll: 1.2, range: 60, verb: 0.35, dur: 1.0, air: 60, gain: 28 }); if (!v) return;
+    const v = voice(pos, { ref: 4, roll: 2.5, range: 16, verb: 0.35, dur: 1.0, air: 60, gain: 18 }); if (!v) return;
     const t0 = v.t0, lp = filt('lowpass', 2400, 0.6); lp.connect(v.in);
     sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.008);
     sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.008);
