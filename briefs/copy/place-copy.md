@@ -16,9 +16,9 @@ line: Pride and Sloth, Avarice and Spite.
 
 ## tarn
 
-name: Lees Tarn
+name: Circumbambulate Pool
 
-line: The water keeps what it is given, and gives back nothing.
+line: "No hand was at the sweep of the Tigress, no oars drove her through the green water."
 
 ## fen
 
@@ -244,3 +244,67 @@ line: <how woudl this even work? you can't get up there. delete>
 ## Notes for the agent
 
 - 
+
+## adust
+
+what: The far west, a strip along the road under the sun (x −250 to −300, z −70 to 40). Red clay crazed into hexagons, drifts of red dust, dead heather, and fourteen black-varnished sandstone pavements you can stand on. The Taker of Altitudes sits on one.
+
+name: The Adust
+
+line: "Man was unaware of his vulnerability. Logic was the special environment; the brain was the special tool."
+
+## bletting
+
+what: The orchard country east and north-east of the keep (centred 130, −90, radius 100). Long rank grass gone greener-gold, knapweed, medlar and quince thickets run wild past Medlar Close's wall, a blackthorn hedge, broken honey-coloured field walls. The Long Sleeper lies here.
+
+name: The Bletting
+
+line: "I loved the irradiate refuge of sleep. In my dreams I found a little of the beauty I had vainly sought in life, and wandered through old gardens and enchanted woods."
+
+## highLing
+
+what: The heather shelf in the east (x 228 to 293, z −105 to 10), three metres up a granite-lipped scarp. Knee-deep ling, bell-heather, gorse, six pink granite tors with their clitter; the Stylite sits on the tallest at (268, −80); the Prospect's brow is here.
+
+name: The High Ling
+
+line: <skip>
+
+## lynchets
+
+what: The terraced hillside below the tower in the north-west (around −195, −110). Strip lynchets and ridge-and-furrow raking the low sun, grey drystone walls gapped and slumped, four walls to nowhere, nettles and docks on the old middens. The Link-Boy's post and the Repetend's bird are on its east wall.
+
+name: The Lynchets
+
+line: "On the gentle slopes there are farms, ancient and rocky... but these are all vacant now. The old folk have gone away, and foreigners do not like to live there."
+
+## outwash
+
+what: The gravel plain in the north (centred 25, −195), between the moor and the Lattice's crystal. Braided dry channels, erratic boulders, bright mineral runnels, sparse ground. The Accrescent's trail crosses it, the Simulacrum's gnat columns stand over it, the erratic with the glyph is here.
+
+name: The Outwash
+
+line: <skip>
+
+## saltings
+
+what: The salt flat along the south, a step down from the moor by the fen's tideline and south of the Great Span (z 250 to 290). A white crust in plates with curled rims, pink gypsum roses, brown runnels, blood-red glasswort, bleached reeds and stumps, salt motes in a rose-white air; it creaks underfoot. The Sexton digs his rows at its edge.
+
+name: Kenching Flats
+
+line: "From the essential Saltes of humane Dust, a Philosopher may, without any criminal Necromancy, call up the Shape of any dead Ancestour from the Dust."
+
+## strandline
+
+what: The shingle beach at the tarn's spit in the south-west (around −45, 160). Bands of black flint pebbles fine to coarse, a wrack line under a storm berm, foam running up and down, horsetail and bogbean in the shallows, midge columns. The Coheirs sit at their net at the spit's root.
+
+name: The Strandline
+
+line: <skip>
+
+## demesne
+
+what: The grounds ringing the keep (from its wall out to about 85 m, on the north and east sides). Grazed lawn eased level toward a ha-ha, a parterre of old beds showing as ridges, yews grown shapeless, urns; the Tesserine Moles' heaps and the Indistinct's ditch are here.
+
+name: The Demesne
+
+line: <cut>
