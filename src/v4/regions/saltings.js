@@ -217,10 +217,6 @@ export async function build(ctx) {
         sId = n + mg;
         return vec4(e1, e2, mr);
       }`)
-      .replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
-        // the crust's edge dissolves at the tideline (screen-door, no blending)
-        float sDither = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
-        if (sDither > smoothstep(0.15, 0.85, vSalt)) discard;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         // salt plates of 0.6 to 2 m, irregular (a warped cell field; about half the big plates cracked again in two
         // or three), each tilted its own way, with rims curled up a few centimetres and pink gypsum in the cracks
@@ -240,6 +236,13 @@ export async function build(ctx) {
             e = min(e, w.x * sc / 2.1 + 0.004);
             id += sId * 0.013;
           }
+          // the crust's edge breaks up at the tideline plate by plate: each plate (or its cracked piece) has its own
+          // threshold on the strip's weight, so the edge is a ragged line of whole plates fixed to the ground; where the
+          // plates shrink under a few pixels the thresholds become a smooth noise of 5 m blobs, so nothing finer than
+          // that is ever cut (a per-pixel screen-door here stayed on the screen while the ground moved under it: a
+          // band of speckle that swam with every turn)
+          float keepT = mix(0.1 + 0.8 * sNoise(p * 0.2 + 31.0), 0.05 + 0.9 * sHash2(id + 2.9).x, near);
+          if (keepT > smoothstep(0.15, 0.85, vSalt)) discard;
           float t = sHash2(id + 0.71).x, ta = 6.2832 * sHash2(id + 1.3).y;
           vec2 off = -v.zw * sc;                                                   // from the plate's centre, metres
           vec2 tdir = vec2(cos(ta), sin(ta)); float slope = 0.012 + 0.05 * t;
@@ -366,19 +369,42 @@ export async function build(ctx) {
 
   // the tideline: grey brittle reeds, as round the eddy, broken and bleached, along the strip's outer edge
   const reedGeo = (() => {
-    const P = [], I = [];
+    const P = [], I = [], Wd = [];
     for (let i = 0; i < 7; i++) {
       const a = i * 0.9 + 0.3, r = 0.05 + (i % 3) * 0.04, x = Math.cos(a) * r, z = Math.sin(a) * r;
       const h = 0.9 + ((i * 37) % 7) / 7 * 0.8, broken = i % 3 === 0 ? 0.55 : 1, lean = 0.12 + (i % 2) * 0.1;
       const top = h * broken, tx = x + Math.cos(a) * lean * top, tz = z + Math.sin(a) * lean * top;
       const w = 0.012, b = P.length / 3;
       P.push(x - w, 0, z, x + w, 0, z, tx - w * 0.4, top, tz, tx + w * 0.4, top, tz);
+      Wd.push(-w, w, -w * 0.4, w * 0.4);
       I.push(b, b + 1, b + 2, b + 1, b + 3, b + 2);
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals();
+    g.setAttribute('aRw', new THREE.Float32BufferAttribute(Wd, 1)); // each vertex's signed half-width across its blade
     return g;
   })();
+  // a blade is 2.4 cm wide, under a pixel from 13 m out: drawn that thin it breaks into dashes that crawl as the view
+  // moves, so each blade widens to keep at least 0.8 px across (uPxH: the drawing buffer's height)
+  const reedPx = { value: 720 }, _db = new THREE.Vector2();
+  ctx.registerUpdate(() => { reedPx.value = ctx.renderer.getDrawingBufferSize(_db).y; });
   const reedMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.85, side: THREE.DoubleSide });
+  reedMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uPxH = reedPx;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aRw; uniform float uPxH;')
+      .replace('#include <project_vertex>', `#include <project_vertex>
+        {
+          // across the screen, square to the blade's projected stem (edge-on blades too), out to 0.4 px a side
+          mat4 rm = modelViewMatrix * instanceMatrix;
+          vec2 up = (rm * vec4(0.0, 1.0, 0.0, 0.0)).xy, wv = (rm * vec4(1.0, 0.0, 0.0, 0.0)).xy;
+          vec2 across = normalize(vec2(up.y, -up.x) + vec2(1e-6, 0.0));
+          float px = 2.0 * max(-mvPosition.z, 0.01) / (projectionMatrix[1][1] * uPxH); // a pixel's size there (m)
+          float half_ = abs(aRw) * abs(dot(wv, across));                           // the blade's half-width on screen (m)
+          float side = sign(aRw) * (dot(wv, across) < 0.0 ? -1.0 : 1.0);
+          mvPosition.xy += across * side * max(0.4 * px - half_, 0.0);
+          gl_Position = projectionMatrix * mvPosition;
+        }`);
+  };
+  reedMat.customProgramCacheKey = () => 'fp-saltings-reeds';
   const reeds = [];
   for (let k = 0; k < 30000 && reeds.length < (low ? 700 : 1300); k++) {
     const side = rng() < 0.5 ? -1 : 1, [x, z] = along(rng(), side * (0.92 + rng() * 0.22));

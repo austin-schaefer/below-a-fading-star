@@ -13,11 +13,11 @@
 // paws; most in the plinths' stone, some in black bronze gone to verdigris. Feet 2-4 m long: figures of about 40 m.
 // Six plinths are down: three fell (their footings stand, the die lies in the grass in four blocks with the cornice
 // beyond, one of them across the west half of the road) and three are broken off at 5-13 m; each one's feet lie in
-// the grass beside it. Kit measure figures stand at the first pair, by a fallen pair of feet and far up the road.
+// the grass beside it.
 //
 // Draws: the masonry (plinths, paving, fallen blocks: one merged mesh in the kit's stone, casting shadows), the feet
 // (one merged mesh, each figure one signed-distance field polygonised once at build by surface nets, casting
-// shadows), the measure figures. Nothing moves. Colliders on every plinth, footing, fallen block and fallen pair of
+// shadows). Nothing moves. Colliders on every plinth, footing, fallen block and fallen pair of
 // feet. Rocks and trees keep off the corridor and the fallen blocks (plinthsClear, read by rocks.js and
 // vegetation/ground.js) and ground cover off the paving (plinthsPaved). ?plinths=0 leaves the whole thing out, the
 // clearances too. ctx.plinths = { stats() }.
@@ -525,22 +525,12 @@ export async function build(ctx) {
   fMesh.matrixAutoUpdate = false; fMesh.updateMatrix();
   scene.add(fMesh);
 
-  // ---- measures: one at the first pair's west footing, one by the fifth pair's west feet in the grass, one far up the road
-  const f4 = list.find((p) => p.i === 4 && p.side === -1);
-  const spots = [];
-  { const [x, z] = at(PLINTHS.first - 4.5, -PLINTHS.across + 4.6); spots.push({ x, z, yaw: Math.atan2(UX, UZ) + 0.4 }); }
-  { const [x, z] = f4.feet; spots.push({ x: x + UX * 6 - PX * 1.2, z: z + UZ * 6 - PZ * 1.2, yaw: Math.PI / 2 + 0.25 }); } // past its talons
-  { const [x, z] = at(104, 1.8); spots.push({ x, z, yaw: Math.PI + Math.atan2(UX, UZ) }); }
-  const mFig = ctx.kit.measureFigures(spots, { name: 'plinths-figures' }, ctx);
-  scene.add(mFig);
-  for (const p of spots) cols({ x: p.x, z: p.z, r: 0.35 });
-
   const t1 = performance.now();
-  const tris = sGeo.attributes.position.count / 3 + fGeo.index.count / 3 + (mFig.geometry.attributes.position.count / 3) * spots.length;
+  const tris = sGeo.attributes.position.count / 3 + fGeo.index.count / 3;
   const kinds = [...new Set(figs.map((f) => f.kind))];
   ctx.plinths = {
     list, figures: figs.map((f) => ({ kind: f.kind, bronze: f.bronze, S: +f.S.toFixed(2) })),
-    stats: () => ({ calls: 3, tris: Math.round(tris), stoneTris: sGeo.attributes.position.count / 3, feetTris: fGeo.index.count / 3, pairs: PLINTHS.pairs, spacing: PLINTHS.spacing, standing, broken, fallen, slabs, kinds: kinds.length, buildMs: Math.round(t1 - t0) }),
+    stats: () => ({ calls: 2, tris: Math.round(tris), stoneTris: sGeo.attributes.position.count / 3, feetTris: fGeo.index.count / 3, pairs: PLINTHS.pairs, spacing: PLINTHS.spacing, standing, broken, fallen, slabs, kinds: kinds.length, buildMs: Math.round(t1 - t0) }),
   };
   ctx.log?.(`plinths: ${PLINTHS.pairs} pairs every ${PLINTHS.spacing} m (${standing} standing, ${broken} broken, ${fallen} fallen), ${slabs} slabs, ${kinds.length} kinds of feet; ${Math.round(tris / 1000)}k tris, ${Math.round(t1 - t0)} ms`);
 }

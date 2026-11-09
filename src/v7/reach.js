@@ -117,21 +117,31 @@ const RIVER_CHUNK = /* glsl */`
     if (ravine < 0.5) {
       float rGain = 1.0 + uReachGain * (1.0 - clamp(uFlicker, 0.0, 1.0));
       vec4 rProf = texture2D(uReachProf, vec2(clamp(s * uReachK.x, 0.0, 1.0), 0.5));
-      // the carry: soft streaks stretched along the flow and carried down it at the current's speed
-      float rS1 = mask(vec2(d * 0.19 + 0.13, (s - sp * t) * 0.045));
-      float rS2 = mask(vec2(d * 0.52 + 0.71, (s - sp * 1.1 * t) * 0.11));
-      float rStreak = smoothstep(0.3, 0.85, rS1 * 0.6 + rS2 * 0.4);
+      // the carry: soft streaks stretched along the flow and carried down it at the current's speed, on the host's
+      // two flow phases (fT0, fT1, fW0, fNorm: water/river.js), so the speed's changes never shear them into noise
+      float rS = mix(mask(vec2(d * 0.19 + 0.58, (s - sp * fT1) * 0.045 + 0.37)) * 0.6 + mask(vec2(d * 0.52 + 0.29, (s - sp * 1.1 * fT1) * 0.11 + 0.83)) * 0.4,
+                     mask(vec2(d * 0.19 + 0.13, (s - sp * fT0) * 0.045)) * 0.6 + mask(vec2(d * 0.52 + 0.71, (s - sp * 1.1 * fT0) * 0.11)) * 0.4, fW0);
+      float rStreak = smoothstep(0.3, 0.85, 0.5 + (rS - 0.5) * fNorm);
       float rMid = 1.0 - smoothstep(0.45, 1.05, abs(d) / max(hw, 0.5));
       float rCarry = rProf.r * (0.3 + 0.7 * rStreak) * rMid * uReachK.y;
       // the flash: fine points in the white water, each twinkling at 6-10 Hz, carried at the local speed
       float rWhite = max(foam, smoothstep(0.02, 0.45, rough) * 0.7) * rProf.g;
-      vec2 rq = vec2(d, s - sp * t) * 7.0;
-      vec2 rc = floor(rq), rf = fract(rq) - 0.5;
-      float rh = reachHash(rc), rh2 = reachHash(rc + 17.31);
-      vec2 rOff = vec2(rh2, fract(rh * 7.13)) - 0.5;
-      float rPt = 1.0 - smoothstep(0.06, 0.2, length(rf - rOff * 0.6));
-      float rTw = pow(max(0.0, sin(t * (37.7 + 25.1 * rh2) + rh * 6.2832)), 6.0);
-      float rSpark = step(0.55, rh) * rPt * rTw * rWhite * uReachK.z * (1.0 - smoothstep(30.0, 120.0, dist));
+      // (each point rides one of the two phases and fades with it; a point under about two pixels is not drawn, as
+      // a smaller one only flickers on and off between pixels as the view moves)
+      float rCellPx = length(fwidth(vec2(d, s))) * 7.0;                       // cells per pixel
+      float rSpark = 0.0;
+      if (rCellPx < 0.5) {
+        for (int k = 0; k < 2; k++) {
+          vec2 rq = vec2(d, s - sp * (k == 0 ? fT0 : fT1)) * 7.0 + float(k) * vec2(0.5, 31.7);
+          vec2 rc = floor(rq), rf = fract(rq) - 0.5;
+          float rh = reachHash(rc), rh2 = reachHash(rc + 17.31);
+          vec2 rOff = vec2(rh2, fract(rh * 7.13)) - 0.5;
+          float rPt = 1.0 - smoothstep(0.06, 0.2, length(rf - rOff * 0.6));
+          float rTw = pow(max(0.0, sin(t * (37.7 + 25.1 * rh2) + rh * 6.2832)), 6.0);
+          rSpark += step(0.55, rh) * rPt * rTw * (k == 0 ? fW0 : 1.0 - fW0);
+        }
+        rSpark *= rWhite * uReachK.z * (1.0 - smoothstep(30.0, 120.0, dist)) * (1.0 - smoothstep(0.25, 0.5, rCellPx));
+      }
       float rGlow = (rCarry + rSpark) * rGain * edge;
       fpReach = rGlow;
       alpha = max(alpha, clamp(rGlow * 1.6, 0.0, 1.0) * edge);

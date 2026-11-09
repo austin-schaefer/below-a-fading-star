@@ -8,10 +8,13 @@
 // acceleration cap of 12 m/s², and the distance is a constraint over that: never nearer than 6.75 m nor further than 7.25 m
 // while the walker is within 7 m of the line. Pushed past an end of the arc, it thins (the blur widens and it fades over
 // 0.6 s) and forms again 7 m on the walker's far side.
-// The look: one camera-facing quad whose fragment shader draws a soft dark mass 0.55 x 0.35 m, no limbs, no face, its edge
-// blurred by a radius held at 8 px of a 720-px-tall view at any distance (so it never sharpens), a slow noise moving it as
-// if breathing; near-black brown with the faintest rim of the sky's colour; fogged; far under bloom's threshold. A second
-// flat quad is its contact shadow. Neither casts a shadow; it makes no sound.
+// The look: one camera-facing quad whose fragment shader draws a soft dark mass 0.7 m wide, its base on the ditch floor
+// and its crown 1.0 m over the lawn's lip wherever it stands (v7.1: 3.1-4.0 m over a ha-ha wall of 2.1-3 m, so it is
+// seen from the lawn; a tall narrow smear rather than a figure), no limbs, no face, its edge blurred
+// by a radius held at 8 px of a 720-px-tall view at any distance (so it never sharpens), a slow noise moving it as if
+// breathing; near-black brown with a wide rim of the sky's colour round it and a faint cold glow in its core that
+// strengthens as the sun gutters, and round it the ditch's haze stirred, as if it bent the air; fogged; under bloom's
+// threshold. A second flat quad is its contact shadow. Neither casts a shadow; it makes no sound.
 import * as THREE from 'three';
 import { LANDMARKS } from '../../world.js';
 import { clamp, hyp } from '../../noise.js';
@@ -21,16 +24,22 @@ const R = 78.2, B0 = 0, B1 = 90, WAIT_B = 45;
 const KEEP = 7.0, NEAR_LINE = 30, BAND = 0.25, HOLD_V = 0.1, VMAX = 8, AMAX = 12, THIN = 0.6;
 const LEN = (R * (B1 - B0) * Math.PI) / 180; // 122.8 m of arc
 const STEP = 0.25, NS = Math.ceil(LEN / STEP) + 1;
-const MASS = { w: 0.55, h: 0.35 }, BLUR_PX = 8;
+const MASS = { w: 0.7, h: 1.8 }, BLUR_PX = 8, OVER_LIP = 1.0, LIP_R = [73.5, 77.8];
 
 export function buildIndistinct(ctx) {
   const { scene, terrain, player, camera } = ctx;
   // ---- the line, sampled every 0.25 m of arc: x, y (the skin's drawn floor: heightAt + its 2 cm lift), z
-  const LX = new Float32Array(NS), LY = new Float32Array(NS), LZ = new Float32Array(NS);
+  // LH: its height there, from the floor to 1.0 m over the lawn's lip (the highest ground between r 73.5 and 77.8 on the
+  // same bearing), never under MASS.h
+  const LX = new Float32Array(NS), LY = new Float32Array(NS), LZ = new Float32Array(NS), LH = new Float32Array(NS);
   for (let i = 0; i < NS; i++) {
     const a = Math.min(LEN, i * STEP) / R;
     LX[i] = K.x + Math.sin(a) * R; LZ[i] = K.z - Math.cos(a) * R; LY[i] = terrain.heightAt(LX[i], LZ[i]) + 0.02;
+    let lip = -Infinity;
+    for (let r = LIP_R[0]; r <= LIP_R[1]; r += 0.2) lip = Math.max(lip, terrain.heightAt(K.x + Math.sin(a) * r, K.z - Math.cos(a) * r));
+    LH[i] = Math.max(MASS.h, lip + OVER_LIP - LY[i]);
   }
+  const heightAtS = (s) => { const u = clamp(s, 0, LEN) / STEP, i = Math.min(NS - 2, u | 0), f = u - i; return LH[i] + (LH[i + 1] - LH[i]) * f; };
   const out = { x: 0, y: 0, z: 0 };
   function lineAt(s, o = out) {
     const u = clamp(s, 0, LEN) / STEP, i = Math.min(NS - 2, u | 0), f = u - i;
@@ -55,7 +64,7 @@ export function buildIndistinct(ctx) {
   // ---- the look
   const U = {
     uC: { value: new THREE.Vector3() }, uTime: { value: 0 }, uThin: { value: 0 }, uFlicker: { value: 1 },
-    uBlurPx: { value: BLUR_PX }, uUnveil: { value: 0.3 }, uRim: { value: 2.4 }, uMass: { value: new THREE.Vector2(MASS.w, MASS.h) },
+    uBlurPx: { value: BLUR_PX }, uUnveil: { value: 0.3 }, uRim: { value: 3.6 }, uGlow: { value: 1 }, uMass: { value: new THREE.Vector2(MASS.w, MASS.h) },
   };
   const geo = new THREE.PlaneGeometry(1, 1);
   // the shader places both quads; the bounds follow it (place() moves the centre) so they are culled out of view
@@ -71,7 +80,7 @@ export function buildIndistinct(ctx) {
         vec4 mvC = viewMatrix * vec4(uC, 1.0);
         float depth = max(0.5, -mvC.z);
         float blur = depth * (2.0 / projectionMatrix[1][1]) * uBlurPx / 720.0 * (1.0 + 2.5 * uThin);
-        vec2 half_ = uMass * 0.5 + 2.6 * blur;
+        vec2 half_ = uMass * 0.5 + 2.6 * blur + 0.28; // the stirred haze round it
         vP = position.xy * 2.0 * half_; vBlur = blur;
         vec4 mvPosition = mvC + vec4(vP, 0.0, 0.0);
         // drawn a little toward the eye (and shrunk to keep its size) so the floor under it never cuts the blur's edge
@@ -82,31 +91,40 @@ export function buildIndistinct(ctx) {
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
-      uniform float uTime, uThin, uFlicker, uUnveil, uRim; uniform vec2 uMass;
+      uniform float uTime, uThin, uFlicker, uUnveil, uRim, uGlow; uniform vec2 uMass;
       varying vec2 vP; varying float vBlur;
       #include <fog_pars_fragment>
       float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
       void main() {
-        // a low soft mass, flatter below than above, a little fuller at one end; it breathes
+        // a tall soft mass, broader low than high, rounded at the top, flatter at the foot; it breathes
         vec2 p = vP;
-        float br = 1.0 + 0.035 * sin(uTime * 1.7) + 0.015 * sin(uTime * 0.63 + 1.3);
-        vec2 hm = uMass * 0.5 * vec2(1.0, br);
-        p.y -= -hm.y * 0.15;
+        float br = 1.0 + 0.03 * sin(uTime * 1.7) + 0.012 * sin(uTime * 0.63 + 1.3);
+        vec2 hm = uMass * 0.5 * vec2(br, 1.0);
         vec2 q = p / hm;
-        q.y *= q.y < 0.0 ? 1.35 : 1.0;
-        q.x *= 1.0 - 0.12 * q.x;
+        q.x *= 1.0 + 0.12 * q.y;                    // a little narrower toward the rounded top
+        q.y *= q.y < 0.0 ? 1.25 : 1.0;
         float n = vn(vec2(atan(q.y, q.x) * 1.6, uTime * 0.35)) - 0.5;
-        float d = (length(q) - 1.0 - 0.12 * n) * min(hm.x, hm.y);  // metres, roughly
+        float n2 = vn(vec2(q.y * 2.2 - uTime * 0.21, q.x * 1.3 + uTime * 0.13)) - 0.5;
+        float d = (length(q) - 1.0 - 0.12 * n - 0.06 * n2) * hm.x;  // metres, roughly (in the mass's width)
         // its edge: a Gaussian of the blur's radius, never sharper
         float a = 1.0 - smoothstep(-1.15 * vBlur, 1.15 * vBlur, d);
-        a *= 1.0 - uThin;
-        if (a < 0.01) discard;
-        // near-black brown, and on its upper edge the faintest rim of the sky
-        float rim = smoothstep(-1.4 * vBlur, 0.0, d) * (1.0 - smoothstep(0.0, 1.4 * vBlur, d)) * (0.2 + 0.8 * smoothstep(-0.3, 0.7, q.y));
-        vec3 col = vec3(0.016, 0.011, 0.008) + fogColor * uRim * rim * (0.6 + 0.4 * uFlicker);
-        gl_FragColor = vec4(col, a * 0.97);
+        // the rim: the sky's colour round its edge, wide and strongest along its top and shoulders
+        float rk = (d + 0.5 * vBlur + 0.015) / (0.55 * vBlur + 0.03);
+        float rim = exp(-rk * rk) * (0.06 + 0.94 * smoothstep(-0.7, 0.55, q.y));
+        // the core: a faint cold glow, deep in it, that strengthens as the sun gutters
+        float core = (1.0 - smoothstep(-0.95 * hm.x, -0.35 * hm.x, d)) * (0.7 + 0.3 * sin(uTime * 0.9 + n * 3.0));
+        float gl = uGlow * (0.2 + 1.2 * (1.0 - uFlicker));
+        // the haze round it, stirred: a thin veil of the mist, turning slowly, just outside its edge
+        float sw = vn(vec2(atan(q.y, q.x) * 2.5 + uTime * 0.5, length(q) * 3.0 - uTime * 0.7));
+        float veil = smoothstep(0.0, 0.08, d) * (1.0 - smoothstep(0.08, 0.28, d)) * smoothstep(0.45, 0.8, sw) * 0.22;
+        vec3 col = vec3(0.016, 0.011, 0.008) + fogColor * uRim * rim * (0.7 + 0.3 * uFlicker) + vec3(0.05, 0.07, 0.1) * core * gl;
+        float alpha = max(a * 0.97, veil);
+        col = mix(fogColor * 1.25, col, a * 0.97 / max(alpha, 1e-3));
+        alpha *= 1.0 - uThin;
+        if (alpha < 0.01) discard;
+        gl_FragColor = vec4(col, alpha);
         #include <fog_fragment>
         // the ditch holds the ground mist, which flattens a dark thing to the turf's own tone at a few metres: the distance
         // fog stands (it fades with the world), but the mist only half veils it, so it is found by eye ("not too subtle")
@@ -130,7 +148,7 @@ export function buildIndistinct(ctx) {
       #include <fog_pars_vertex>
       void main() {
         vP = position.xy;
-        vec2 a = uDir * position.x * 0.85, b = vec2(-uDir.y, uDir.x) * position.y * 0.6;
+        vec2 a = uDir * position.x * 1.2, b = vec2(-uDir.y, uDir.x) * position.y * 0.9;
         vec3 transformed = uC + vec3(a.x + b.x, 0.03, a.y + b.y);
         vec4 mvPosition = viewMatrix * vec4(transformed, 1.0);
         gl_Position = projectionMatrix * mvPosition;
@@ -165,8 +183,11 @@ export function buildIndistinct(ctx) {
 
   function place() {
     const p = lineAt(st.s);
-    U.uC.value.set(p.x, p.y + MASS.h * 0.5, p.z);
+    const h = heightAtS(st.s);
+    U.uMass.value.y = h;
+    U.uC.value.set(p.x, p.y + h * 0.5, p.z);
     geo.boundingSphere.center.copy(U.uC.value);
+    geo.boundingSphere.radius = h * 0.5 + 2;
     // the shadow lies along the ditch
     const a = st.s / R; U.uThin.value = st.thin;
     SU.uDir.value.set(Math.cos(a), Math.sin(a));
@@ -238,6 +259,6 @@ export function buildIndistinct(ctx) {
   return {
     mesh, shadow, update, lineAt, LEN, R,
     state: () => { const p = lineAt(st.s, {}); return { ...st, x: p.x, y: p.y, z: p.z, dist: dAt(st.s), bearing: (st.s / R) * 180 / Math.PI }; },
-    tris: () => 4,
+    tris: () => 4, heightAt: heightAtS,
   };
 }

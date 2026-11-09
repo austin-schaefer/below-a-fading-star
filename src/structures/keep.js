@@ -351,19 +351,6 @@ function buildKeepV5(ctx, B, env) {
     im.name = 'structures-keep-blocks'; im.castShadow = true; im.receiveShadow = true;
     out.push({ mesh: im, tris: 12 * blocks.length });
   }
-  // measures: one at the court end of the passage (seen from the gate against the lit court), one by the break,
-  // one at the slab's far end
-  {
-    const far = SLAB.Ls * cosT + 1.6;
-    const fig = kit.measureFigures([
-      { x: 19.3, z: 33.0, yaw: -Math.PI / 2 },
-      { x: 45.5, z: 26.5, yaw: 2.4 },
-      { x: O.x + fx * far + sx * 3.5, z: O.z + fz * far + sz * 3.5, yaw: Math.PI - sb },
-    ], { name: 'structures-keep-figures' }, ctx);
-    out.push({ mesh: fig, tris: (fig.geometry.attributes.position.count / 3) * 3 });
-    col(19.3, 33.0, 0.35); col(45.5, 26.5, 0.35);
-  }
-
   // ---------------------------------------------------------------- paving: the passage, and the court worn through
   const N2 = ctx.noise.noise2;
   hexCellsIn(7, 17, 53, 45, (x, z, i, j) => {

@@ -153,13 +153,5 @@ export function motherCrystal(ctx, ground, M) {
     const t = Math.max(0, (1.7 - s.hb) / Math.cos(s.th)), rx = RA * 0.55 + Math.sin(s.th) * Math.max(t, 2);
     colliders.push({ x: M.x + Math.cos(s.phi) * rx, z: M.z + Math.sin(s.phi) * rx, r: 1.2 });
   }
-  // the measure: a figure at the foot on the side the walker comes from (south, down the ice), where the druse is thinnest
-  let measure = null, best = -Infinity;
-  for (let i = 0; i <= 16; i++) {
-    const a = Math.PI / 2 + (i / 16 - 0.5) * 1.2, d = RA + 3.2, x = Math.cos(a) * d, z = Math.sin(a) * d;
-    const c = Math.min(...druse.map((e) => Math.hypot(x - e.x, z - e.z) - e.r));
-    if (c > best) { best = c; measure = { x: M.x + x, z: M.z + z, yaw: Math.PI + a }; }
-  }
-  colliders.push({ x: measure.x, z: measure.z, r: 0.35 });
-  return { geos, matrix, inside, colliders, measure, tris, g0, foot: RA, top: g0 + MOTHER_H };
+  return { geos, matrix, inside, colliders, tris, g0, foot: RA, top: g0 + MOTHER_H };
 }

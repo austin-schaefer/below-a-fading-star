@@ -34,7 +34,7 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `v2/inhabitants.js` | the Wimpled Guest, the Sable Galley, the Menology and its lizards |
 | `v2/riverlife.js` | the Salt-Pedlars, the Wrong Colour, the fall's spray and rumble |
 | `v4/mountains.js` | the walls (called from `terrain.js`'s marked block): front range, main wall, buttresses, bench, bedding, talus, named peaks, the sun's saddle with its walkable wedge and AM's seats, AP's battlemented ridge on the north-east crest; the two far ranges; `ctx.mountains` |
-| `v4/kit/` | the shared kit on `ctx.kit`: cyclopean masonry, stairs, measure figures, rook wheels, fog tiers (`fog.js`, used by `atmosphere.js`); `?only=kit` loads its test scene |
+| `v4/kit/` | the shared kit on `ctx.kit`: cyclopean masonry, stairs, measure figures (only `?only=kit`'s scene uses them since v7.1), rook wheels, fog tiers (`fog.js`, used by `atmosphere.js`); `?only=kit` loads its test scene |
 | `v4/regions.js` | the eight bioregions' shapes and weights, their hooks into terrain, vegetation, rocks, air and audio; `ctx.regions` |
 | `v4/regions/<key>.js` | one bioregion each (world modules `region-<key>`), filled by the region agents; `common.js` their shared helpers |
 | `v4/regions/outwash.js` | BQ the Outwash: gravel plain, braided channels, the moraine, erratics, moss-campion, meltwater ticking; the white grouse |

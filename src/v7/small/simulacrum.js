@@ -1,10 +1,12 @@
 // CQ The Simulacrum [Proposed] (wilderness-v5.md, "### CQ. The Simulacrum"): "Winter gnats dancing in columns over the
 // Outwash's meltwater pools. When the sun gutters, one column draws together into a face, a long grave face the size of
 // a man's, that looks at you and comes apart when the light comes back." Austin: liked but doubted; time-boxed.
-// Four columns within r 5 of (20, -205), 180 gnats each (90 at low), one Points for all: each column 0.6 m wide and 2.2 m
+// Four columns within r 5 of (20, -205), 240 gnats each (120 at low), one Points for all: each column 0.6 m wide and 3.0 m
 // tall, its base 0.4 m over the ground there (the Outwash keeps the spot clear for the pools but draws none: they stand
 // over the dry channel's gravel), every gnat orbiting its column's axis with its own radius, rate and bob, all on the GPU
-// from attributes and a time uniform. Gnats are tiny (2-3 px at 6 m), dark, with a faint warm rim on the sun side.
+// from attributes and a time uniform. Each gnat is a dark speck lit as a tiny sphere by the low sun, so its sun side
+// glints warm (v7.1: 2.4-4 px, a sunlit side, the columns taller and their gnats held closer to the axis, so a column
+// reads as a column from 20 m in daylight).
 // The face (face.js): when flicker has been under 0.5 for 1 s, the column nearest the walker that is in view draws together
 // over 2.5 s into a life-size face, turned to the walker every frame, its gnats catching a faint pale light; when flicker
 // rises past 0.85 it unravels over 1.5 s back into its column. The face never speaks, follows or reaches.
@@ -14,7 +16,7 @@ import { hyp } from '../../noise.js';
 import { facePoints } from './face.js';
 
 const SITE = SITES.simulacrum;          // (20, -205) r 5
-const COLS = 4, PER = 180, PER_LOW = 90, WIDE = 0.3, TALL = 2.2, BASE = 0.4, FACE_Y = 1.55;
+const COLS = 4, PER = 240, PER_LOW = 120, WIDE = 0.3, TALL = 3.0, BASE = 0.4, FACE_Y = 1.55;
 const LOW_FLICK = 0.5, LOW_FOR = 1, BACK = 0.85, FORM = 2.5, UNRAVEL = 1.5;
 
 export function buildSimulacrum(ctx, { face: faceOn }) {
@@ -38,11 +40,12 @@ export function buildSimulacrum(ctx, { face: faceOn }) {
     for (let j = 0; j < per; j++) {
       const i = c * per + j;
       pos[i * 3] = cols[c].x; pos[i * 3 + 1] = cols[c].y; pos[i * 3 + 2] = cols[c].z;
-      const rad = WIDE * Math.sqrt(0.05 + 0.95 * rng()), rate = (rng() < 0.5 ? -1 : 1) * (1.2 + rng() * 3.2), ph = rng() * 6.2832;
+      // held toward the axis (a column, not a cloud), the ends a little narrower than the middle
+      const rad = WIDE * (0.15 + 0.85 * Math.pow(rng(), 1.4)), rate = (rng() < 0.5 ? -1 : 1) * (1.2 + rng() * 3.2), ph = rng() * 6.2832;
       aG[i * 4] = c; aG[i * 4 + 1] = rad; aG[i * 4 + 2] = rate; aG[i * 4 + 3] = ph;
       // thicker low in the column, thinning toward its top
-      const h = TALL * Math.pow(rng(), 1.25);
-      aB[i * 4] = h; aB[i * 4 + 1] = 0.04 + rng() * 0.18; aB[i * 4 + 2] = 0.8 + rng() * 2.2; aB[i * 4 + 3] = rng();
+      const h = TALL * Math.pow(rng(), 1.15);
+      aB[i * 4] = h; aB[i * 4 + 1] = 0.03 + rng() * 0.1; aB[i * 4 + 2] = 0.8 + rng() * 2.2; aB[i * 4 + 3] = rng();
       aF[i * 4] = fp[j * 4]; aF[i * 4 + 1] = fp[j * 4 + 1]; aF[i * 4 + 2] = fp[j * 4 + 2]; aF[i * 4 + 3] = fp[j * 4 + 3];
     }
   }
@@ -65,7 +68,7 @@ export function buildSimulacrum(ctx, { face: faceOn }) {
       uniform vec3 uCols[${COLS}]; uniform float uTime, uFace, uFaceCol, uH;
       uniform vec3 uFC, uFR, uFU, uFN, uSun;
       attribute vec4 aG, aB, aF;
-      varying float vRim, vLit, vA; varying vec2 vRimDir;
+      varying float vLit, vA; varying vec3 vSun;
       #include <fog_pars_vertex>
       void main() {
         int ci = int(aG.x + 0.5);
@@ -73,9 +76,11 @@ export function buildSimulacrum(ctx, { face: faceOn }) {
         for (int k = 1; k < ${COLS}; k++) if (k == ci) base = uCols[k];
         float a = aG.w + uTime * aG.z;
         float h = clamp(aB.x + sin(uTime * aB.z + aG.w * 3.0) * aB.y, 0.0, ${TALL.toFixed(2)});
+        float hu = h / ${TALL.toFixed(2)};
+        float taper = 0.75 + 0.25 * sin(3.1416 * clamp(hu * 1.15, 0.0, 1.0));
         float fc = aG.x;
         vec3 sway = vec3(sin(uTime * 0.41 + fc * 1.7), 0.0, cos(uTime * 0.33 + fc * 2.3)) * 0.07 * (h / ${TALL.toFixed(2)});
-        vec3 p = base + vec3(cos(a) * aG.y, h, sin(a) * aG.y) + sway;
+        vec3 p = base + vec3(cos(a) * aG.y * taper, h, sin(a) * aG.y * taper) + sway;
         // the face: this column's gnats drawn onto the relief, each in its turn
         float f = 0.0;
         if (abs(fc - uFaceCol) < 0.5) f = smoothstep(aB.w * 0.45, aB.w * 0.45 + 0.55, uFace);
@@ -87,27 +92,27 @@ export function buildSimulacrum(ctx, { face: faceOn }) {
         vec4 mvPosition = viewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mvPosition;
         float depth = max(0.3, -mvPosition.z), px = uH / 720.0;
-        // 2-3 px at 6 m, never under 1.5 px; a formed face's gnats a little finer, so the relief is not a blot
-        float s = clamp(15.0 / depth, 1.8, 3.2) * mix(1.0, 0.7, f);
+        // 4 px at 6 m, never under 2.4 px; a formed face's gnats a little finer, so the relief is not a blot
+        float s = clamp(24.0 / depth, 2.4, 4.0) * mix(1.0, 0.55, f);
         gl_PointSize = s * px;
         vA = mix(1.0, 0.95, f);
         vLit = f * aF.w;
-        // the sun's side on the screen, for the rim
-        vec3 sv = (viewMatrix * vec4(uSun, 0.0)).xyz;
-        vRimDir = normalize(vec2(sv.x, -sv.y) + 1e-5);
-        vRim = clamp(length(sv.xy), 0.0, 1.0) * (1.0 - f);
+        // the sun in view space, to light each gnat as a tiny sphere
+        vSun = (viewMatrix * vec4(uSun, 0.0)).xyz * (1.0 - f);
         #include <fog_vertex>
       }`,
     fragmentShader: /* glsl */`
       uniform vec3 uSunCol; uniform float uFlicker;
-      varying float vRim, vLit, vA; varying vec2 vRimDir;
+      varying float vLit, vA; varying vec3 vSun;
       #include <fog_pars_fragment>
       void main() {
         vec2 q = gl_PointCoord - 0.5;
         float r = length(q) * 2.0;
         if (r > 1.0) discard;
-        float side = clamp(dot(q * 2.0, vRimDir), 0.0, 1.0);
-        vec3 col = vec3(0.006, 0.005, 0.004) + uSunCol * 0.1 * vRim * side * side * uFlicker;
+        // a tiny sphere: its sun side glints warm, the rest dark
+        vec3 nrm = vec3(q.x * 2.0, -q.y * 2.0, sqrt(max(0.0, 1.0 - r * r)));
+        float lit = max(0.0, dot(nrm, vSun));
+        vec3 col = vec3(0.012, 0.009, 0.007) + uSunCol * 0.5 * lit * uFlicker;
         // held in the face: a faint pale light, cold, strongest on the brows and the nose
         col = mix(col, vec3(0.42, 0.43, 0.47), vLit * 0.8);
         gl_FragColor = vec4(col, vA * (1.0 - smoothstep(0.8, 1.0, r)));

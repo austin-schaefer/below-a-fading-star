@@ -10,8 +10,8 @@
 // briefly, and is gone.
 // The plan and the clearances are nave/ground.js. The heightfield is left alone (see there): this module takes the
 // terrain's triangles over the hole out, so the hall shows under the rim, and the roof sinks where the moor is thin.
-// Draws: the hall (stone, earth, turf, the slabs, the rubble, the lip with its clods and roots, the ceiling, the
-// measure figure: one mesh), the water, the shapes (only while one surfaces). ?nave=0 leaves the whole thing out.
+// Draws: the hall (stone, earth, turf, the slabs, the rubble, the lip with its clods and roots, the ceiling:
+// one mesh), the water, the shapes (only while one surfaces). ?nave=0 leaves the whole thing out.
 import * as THREE from 'three';
 import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js';
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
@@ -212,7 +212,7 @@ export async function build(ctx) {
   makeCeil(T);
   const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
   const STONE = C('#7d7268'), STONE_D = C('#5f574f'), SLAB = C('#4a443d'), SOIL = C('#3e3124'), SOIL_L = C('#54432f');
-  const TURF = C('#5a6630'), TURF_D = C('#48502a'), RUBBLE = C('#7a7064'), FIG = C('#1d1a1c');
+  const TURF = C('#5a6630'), TURF_D = C('#48502a'), RUBBLE = C('#7a7064');
   const H = new Builder();
   const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1);
 
@@ -500,14 +500,6 @@ export async function build(ctx) {
     M.compose(V.set(0, 0.62, 0).applyQuaternion(Q).add(new THREE.Vector3(x, y, z)), Q, S1);
     H.geo(turf, M, (nx, ny) => (ny > 0.5 ? TURF : SOIL), 0.2);
   }
-  // ---- one figure on the north-east rim, looking in: a person's height against the hole
-  const FIG_B = 38, FR = naveRim(FIG_B) + 1.7, [fdx, fdz] = dirOf(FIG_B), fx = CX + fdx * FR, fz = CZ + fdz * FR;
-  {
-    const fm = ctx.kit.measureFigures([{ x: fx, z: fz, yaw: Math.atan2(-fdx, -fdz) }], { name: 'nave-figure' }, ctx);
-    fm.getMatrixAt(0, M);
-    H.geo(fm.geometry, M, FIG, 0.02);
-    fm.geometry.dispose(); fm.material.dispose(); fm.dispose?.();
-  }
   await ctx.progress?.('the foundered nave', 0.8);
 
   const hallGeo = H.geometry();
@@ -559,7 +551,6 @@ export async function build(ctx) {
         ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
       }
     }
-    ctx.addCollider({ x: fx, z: fz, r: 0.35 }); colliders++;
   }
 
   // ---- the life in the water
@@ -674,7 +665,7 @@ export async function build(ctx) {
   const tris = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   const stats = () => ({ calls: 2 + (shapesMesh.visible ? 1 : 0), tris: Math.round(tris(hallGeo) + 2 + (shapesMesh.visible ? 3 * tris(sgeo) : 0)), hall: Math.round(tris(hallGeo)), lip: lipTris, columns: columns.length, slabs: SLABS.length, colliders, terrainCut: cut });
   ctx.nave = {
-    state: S, stats, columns, cone: CONE, figure: { x: fx, z: fz }, rim: naveRim, edge: naveEdge,
+    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge,
     // test hooks: a splash at shape i (or at (x, z)), shape i surfacing now, shape i placed at (x, z), hold the life still
     splash(i = 0, x, z) { const sh = S.shapes[i]; splashAt(x ?? sh.x, z ?? sh.z, 1, WU.uT.value, true); sh.flick = 0.6; return { x: x ?? sh.x, z: z ?? sh.z }; },
     surface(i = 0) { surface(S.shapes[i], WU.uT.value); },
