@@ -3,6 +3,7 @@
 // for the fall, one instanced billboard set for the mist, one instanced mesh for the boulders in the
 // stream. The channel itself is carved in terrain.js; RIVER there is the single source of the layout.
 import * as THREE from 'three';
+import { injectReachRiver } from '../v7/reach.js'; // v7: DP the Luminous Reach, a chunk in the ribbon's fragment shader
 
 const MAX_ROCKS = 16;
 
@@ -354,6 +355,7 @@ export function buildRiver(ctx, tex) {
     }]),
     vertexShader: RIBBON_VERT, fragmentShader: RIBBON_FRAG, fog: true, transparent: true, depthWrite: false,
   });
+  injectReachRiver(ribbonMat, ctx); // v7: DP the Luminous Reach, the glow from the fall to the fen (src/v7/reach.js)
   const ribbon = new THREE.Mesh(rg, ribbonMat);
   ribbon.renderOrder = 10; ribbon.name = 'water-river';
   scene.add(ribbon);

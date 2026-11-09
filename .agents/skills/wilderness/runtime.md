@@ -113,6 +113,8 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 (each v7 module's flag; see wilderness-v5.md, "## v7, the living")
 
+- `canyon=0` (no `living-canyon`: no Bather, stones or Toadstone); `bather=0` and `toadstone=0` leave out each alone (v7-06)
+- `reach=0` (DP the Luminous Reach's chunks compiled out of the river's and the fen's shaders, which are then exactly as before); `reach=mask` paints the glow red, to check where it lies (v7-06)
 - `glyphs=0` leaves out all of `living-glyphs` (the caps stay plain); `scriveners=0` the shoal, `moles=0` the heaps and their tesserae, `glyphmotif=0` the caps' glyphs, the tessera's and the erratic's (v7-04)
 - `walkers=0` (v7-01: no Thurifer, Leerie or Link-Boy); `thurifer=0`, `leerie=0`, `linkboy=0` each its own
 
