@@ -51,32 +51,35 @@ export const air = { tint: '#b84a2a', strength: 1 }; // "red dust"
 let PAVE = null; // the slabs, set by build() for the sound and the walkable floor
 export const sound = {
   start(k) {
-    const { ac, master, white, filt, panner, setPos, send } = k;
+    const { ac, white, filt } = k;
     const rng = k.makeRng(8311);
-    const pans = [0, 1, 2, 3].map(() => { const p = panner('equalpower', 3, 1.4, 60); p.connect(master); send(p, 0.25); return p; });
-    let pi = 0, next = 0;
+    // the clay ticking as it cools: runs of ticks from one patch, then a rest (craft.md's phrasing), each from its place
+    // with the air between (placed: a lowpass by distance)
+    const pans = [0, 1, 2, 3].map(() => k.placed({ ref: 3, roll: 1.4, range: 60, air: 60, verb: 0.25 }));
+    let pi = 0, cx = 0, cz = 0, cw = 0, now0 = 0;
     function tick(x, z, at, loud) {
-      const p = pans[pi++ % pans.length]; setPos(p, x, k.terrain.heightAt(x, z) + 0.3, z);
+      const p = pans[pi++ % pans.length]; p.at(x, k.terrain.heightAt(x, z) + 0.3, z);
       const n = rng() < 0.2 ? 2 : 1;
       for (let i = 0; i < n; i++) {
         const tt = at + i * (0.05 + rng() * 0.06);
-        const b = ac.createBufferSource(); b.buffer = white; b.start(tt, rng() * 2.5, 0.012);
-        const bp = filt('bandpass', 3200 + rng() * 3800, 9), g = ac.createGain();
-        g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(loud * (0.5 + rng() * 0.5), tt + 0.0008); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.012);
-        b.connect(bp); bp.connect(g); g.connect(p);
+        const b = ac.createBufferSource(); b.buffer = white; b.start(tt, rng() * 2.5, 0.025);
+        const bp = filt('bandpass', 2200 + rng() * 2400, 3), g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(loud * (0.5 + rng() * 0.5), tt + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.02);
+        b.connect(bp); bp.connect(g); g.connect(p.in);
       }
     }
+    // a run's patch: a pavement near you if there is one, else the clay
+    let rx = 0, rz = 0;
+    const runs = k.caller(rng, { bout: [3, 8], gap: [0.12, 0.5], rest: [4, 0.7, 1.5, 30], first: [0.5, 3], when: () => {
+      if (cw <= 0.02) return false;
+      rx = cx + (rng() - 0.5) * 24; rz = cz + (rng() - 0.5) * 24;
+      if (PAVE && PAVE.length && rng() < 0.75) { const s = PAVE[Math.floor(rng() * PAVE.length)]; if (Math.hypot(s.x - cx, s.z - cz) < 30) { rx = s.x; rz = s.z; } }
+      return true;
+    } }, () => tick(rx + (rng() - 0.5) * 2, rz + (rng() - 0.5) * 2, now0 + k.lead() + rng() * 0.04, 0.22 * cw));
     return {
       tick(w, x, z, step, t, now) {
-        if (w <= 0.02) return;
-        next -= step;
-        while (next <= 0) {
-          next += (0.25 + rng() * 0.9) / w;
-          // from a pavement near you if there is one, else from the clay
-          let px = x + (rng() - 0.5) * 24, pz = z + (rng() - 0.5) * 24;
-          if (PAVE && PAVE.length && rng() < 0.75) { const s = PAVE[Math.floor(rng() * PAVE.length)]; if (Math.hypot(s.x - x, s.z - z) < 30) { px = s.x; pz = s.z; } }
-          tick(px, pz, now + k.lead() + rng() * 0.09, 0.22 * w);
-        }
+        cx = x; cz = z; cw = w; now0 = now;
+        runs.tick(step);
       },
       step(x, z, t0, vol, pitch, out) {
         const onPave = PAVE && paveAt(x, z) !== null;

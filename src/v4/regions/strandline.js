@@ -70,8 +70,8 @@ export const sound = {
     const { ac, master, pink, white, filt, setPos, panner, send } = k;
     const rng = k.makeRng(7311);
     const bus = ac.createGain(); bus.gain.value = 0;
-    const pan = panner('equalpower', 6, 1.1, 120);
-    bus.connect(pan); pan.connect(master); send(pan, 0.15);
+    const pl = k.placed({ ref: 6, roll: 1.1, range: 120, air: 60, verb: 0.15 }); // the nearest shore, with the air between
+    bus.connect(pl.in);
     const at = { x: 0, z: 0 };
     let lastLap = -1, level = 0;
     function lap(t0) {
@@ -83,10 +83,10 @@ export const sound = {
       // the draw back through the shingle: a falling rattle of tiny stones
       const d0 = t0 + LAP.period * 0.35, n = 34 + Math.floor(rng() * 14);
       for (let i = 0; i < n; i++) {
-        const tt = d0 + Math.pow(rng(), 1.6) * 2.6, f = 2600 + rng() * 3800, a = 0.05 + 0.12 * Math.pow(1 - (tt - d0) / 2.6, 1.5);
+        const tt = d0 + Math.pow(rng(), 1.6) * 2.6, f = 1800 + rng() * 2800, a = 0.05 + 0.12 * Math.pow(1 - (tt - d0) / 2.6, 1.5);
         const b = ac.createBufferSource(); b.buffer = white; b.start(tt, rng() * 2.5, 0.03);
-        const hp = filt('bandpass', f, 6), gg = ac.createGain();
-        gg.gain.setValueAtTime(0.0001, tt); gg.gain.linearRampToValueAtTime(a, tt + 0.002); gg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.025);
+        const hp = filt('bandpass', f, 3), gg = ac.createGain();
+        gg.gain.setValueAtTime(0.0001, tt); gg.gain.linearRampToValueAtTime(a, tt + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, tt + 0.025);
         b.connect(hp); hp.connect(gg); gg.connect(bus);
       }
       const hiss = ac.createBufferSource(); hiss.buffer = pink; hiss.start(d0, rng() * 3, 2.4);
@@ -101,7 +101,7 @@ export const sound = {
         bus.gain.setTargetAtTime(level * 0.5, now, 0.3);
         if (level < 0.01) { lastLap = -1; return; }
         nearestShore(x, z, at);
-        setPos(pan, at.x, WY + 0.2, at.z);
+        pl.at(at.x, WY + 0.2, at.z);
         const n = Math.floor(t / LAP.period);
         if (n !== lastLap) {
           if (lastLap >= 0) lap(now + k.lead() + Math.max(0, (n + 1) * LAP.period - t - LAP.period));

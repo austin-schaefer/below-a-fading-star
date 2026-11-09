@@ -124,7 +124,7 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   o.frequency.setValueAtTime(420 * pitch, t0); o.frequency.exponentialRampToValueAtTime(300 * pitch, t0 + dur);
   const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.5;
   const g = ac.createGain(); g.gain.value = 0.5; am.connect(amg); amg.connect(g.gain);
-  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 2300 * pitch, 5);
+  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 2300 * pitch, 4);
   const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(0.16, t0 + 0.025); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
   o.start(t0); o.stop(t0 + dur + 0.02); am.start(t0); am.stop(t0 + dur + 0.02);
@@ -153,29 +153,36 @@ function peaCry(k, pos, o = {}) {
 }
 export const sound = {
   start(k) {
-    const { ac, master, filt, panner, setPos, send } = k;
+    const { ac, filt, voice, camera } = k;
     const rng = k.makeRng(10311);
+    // the rooks: at three places on the keep's top, a conversation of a few caw-groups, then a long rest; another
+    // part of the keep answers now and then. Close to the keep they talk often; from the moor they are a far call
+    // (they keep to the far calls' shared clock and talk less)
     const top = { x: K.x, y: K.y + 22, z: K.z };
-    const pan = panner('equalpower', 25, 1.0, 500); setPos(pan, top.x, top.y, top.z);
-    const bus = ac.createGain(); bus.gain.value = 0; bus.connect(pan); pan.connect(master); send(pan, 0.4);
-    let next = 2, lvl = 0, wasGutter = false;
+    const roosts = [[0, 0], [9, -6], [-7, 8]].map(([dx, dz]) => ({ x: K.x + dx, y: K.y + 22, z: K.z + dz }));
+    let px = 0, pz = 0, roost = roosts[0], wasGutter = false, pitch = 1;
     const pend = []; // the gutter's answers, waiting for their time
     const flick = k.sky?.flicker || { value: 1 };
+    const kd = () => Math.hypot(px - K.x, pz - K.z);
+    function talk(pos, gain) {
+      const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
+      const n = 1 + Math.floor(rng() * 3), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5 });
+      if (!v) return;
+      const out = ac.createGain(); out.gain.value = 0.55 * gain * (1 - (k.hush?.(top) ?? 0)); out.connect(v.in); // v5: hushed under the Occultation's band
+      for (let i = 0; i < n; i++) cawInto(ac, filt, rng, out, v.t0 + i * (0.3 + rng() * 0.25), pitch);
+    }
+    const rooks = k.caller(rng, { bout: [2, 4], gap: [1.5, 4], rest: [30, 0.6, 10, 180], first: [2, 10], answer: { p: 0.5, delay: [0.8, 2], gain: 0.71 },
+      when: () => {
+        const d = kd();
+        if (d > 230) return false;
+        if (d > 80) { if (ac.currentTime - k.far.last < 20 || rng() < 0.6) return false; k.far.last = ac.currentTime; }
+        roost = roosts[Math.floor(rng() * roosts.length)]; pitch = 0.9 + rng() * 0.25;
+        return true;
+      } }, (i, n, gain, ans) => talk(ans ? roosts[(roosts.indexOf(roost) + 1) % roosts.length] : roost, gain));
     return {
       tick(w, x, z, step, t, now) {
-        // the rooks are heard round the keep and well beyond the park
-        const d = Math.hypot(x - K.x, z - K.z), near = Math.max(w, 1 - smoothstep(60, 170, d));
-        lvl += (near - lvl) * 0.2;
-        bus.gain.setTargetAtTime(lvl * 0.55 * (1 - (k.hush?.(top) ?? 0)), now, 0.5); // v5: hushed under the Occultation's band
-        if (lvl > 0.02) {
-          next -= step;
-          if (next <= 0) {
-            // a conversation: a few caws, sometimes answered from another part of the keep
-            const t0 = now + k.lead(), n = 1 + Math.floor(rng() * 4), p = 0.9 + rng() * 0.25;
-            for (let i = 0; i < n; i++) cawInto(ac, filt, rng, bus, t0 + i * (0.3 + rng() * 0.25), p);
-            next = 1.5 + rng() * 6;
-          }
-        }
+        px = x; pz = z;
+        rooks.tick(step);
         // the gutter: the peafowl answer it from their blocks, late (1.5-4 s after the light drops), one bird and
         // sometimes a second, 3 dB quieter, 0.8-2 s after the first has done; never the flock at once
         const g = flick.value < 0.5;
