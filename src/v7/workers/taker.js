@@ -16,7 +16,7 @@ import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rigPainter, rigMesh, makeBones, pivot, limb, arm2, placeMatrix, ramp, ease, tris, UP } from './rig.js';
 import { rgb, tone, mix3, clothBody, head, sleeve } from './body.js';
 
-const ROBE = rgb('#a2713f'), ROBE_D = rgb('#4e3018'), HEM = rgb('#857560'), SKIN = rgb('#8e6c56'), GREY = rgb('#8a857d');
+const ROBE = rgb('#b07a42'), ROBE_D = rgb('#4e3018'), HEM = rgb('#948268'), SKIN = rgb('#8e6c56'), GREY = rgb('#8a857d');
 const WOOD = rgb('#3a2a1c'), BRASS = rgb('#8a6a30'), BRASS_D = rgb('#5e4622'), BINDING = rgb('#2a1b13'), PAGES = rgb('#b9a884'), INK = rgb('#15110e');
 const A_UP = 0.27, A_FORE = 0.27, PEN = 0.1;          // upper arm, forearm to the hand, the pen beyond it
 const APEX = 0.55, Q_R = 0.35, STAFF = 2.2;          // the quadrant's apex on the staff, its radius; the staff
