@@ -6,7 +6,9 @@ v7.2 adds nothing to the world. Every sound that exists keeps its meaning; how i
 
 ## Status
 
-**Opened 2026-11-09** on branch `claude/focused-heisenberg-vtkzad` (v7.1 is in flight on another branch; v7.2 does not depend on it and touches no figure file). The cold read of `src/audio.js` that the briefs build on is summarised in `briefs/v7.2/index.md` "What is wrong". Order: the harness and the split together, then four voicing agents in parallel, then a listening review, then release.
+**Opened 2026-11-09** on branch `claude/focused-heisenberg-vtkzad` (v7.1 is in flight on another branch; v7.2 does not depend on it and touches no figure file). The cold read of `src/audio.js` that the briefs build on is summarised in `briefs/v7.2/index.md` "What is wrong"; the measured baseline is in "The baseline, in numbers" there and in `briefs/v7.2/audio/baseline/`.
+
+**2026-11-09, evening.** Briefs 00–05 are merged on the working branch. The gutter, Austin's worst noise, measures as fixed: on the moor its roughness fell from 0.35 to 0.03 and its level from −24 to −31 LUFS; in the Demesne one peafowl answers it instead of the flock. The beds sit at −31 to −37 LUFS and no longer repeat; the far calls are phrased emitters; every one-shot is a voice with an attack and a release; the space has three rooms and one distance model. Left open by the agents: the bus levels and `panned()` (05), the moor walk reading −30 LUFS under its −28…−24 band, the LRA band for the moor (the survey's 2…6 against the brief's 6…12), and `audio-test` and `perf-test`, which have not completed on the cloud host used for this work (one headless page saturates its four cores). Brief 06, the listening review, is in flight. Then the release.
 
 **Done when** the survey (`tools/audio-survey.mjs`) is green at every pose, the designer has ten renders to listen to with a line each on what changed, and `RELEASES.md` carries the v7.2 entry.
 
