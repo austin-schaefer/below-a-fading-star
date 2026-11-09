@@ -2,6 +2,10 @@
 
 Read `_common.md` first. You own `src/audio/cues.js` (every named one-shot from `cry` to `hawser-groan` and the fall loop), `src/audio/living.js` (the v7 figures' sounds) and `src/audio/steps.js` (footsteps, the step record, the Repetend's echo). Austin's words you answer: "unpleasant", "too rare".
 
+## First: the gutter
+
+Austin: "the worse noise is the one when sun gutters." The sounds the gutter fires are yours to re-voice before any other: the peafowl cry (raw sawtooth, `setValueAtTime` 820 → 980), `bats-out`, `eyes-close`/`eyes-open`, `lamp-tick`. Render each with `--cue` first; after re-voicing, none shows `clicks`, `rough` over 0.3 or `sharp_db` over −6, and the peafowl is a formant cry in the key with a glide, not a jump.
+
 ## The fault (confirm with `--cue` renders on `?only=audio`; render every cue once at its audio-test offset into `shots/wip/audio/cues-before/` and run metrics on each; the table is your baseline)
 
 Raw sawtooth with little filtering: cry, crows, yelps, tarn hum, traveller-greet, caws, peafowl, the coheirs hum. Square sources: the deodand click (1500 Hz), pedlar, caw rough. `setValueAtTime` jumps on pitch (peafowl 820→980) and on gains. Transients at 0.35–0.5 gain that pump the limiter (grouse crack 0.5, mole click 0.35, hawser thud 0.36, the flare). Footstep pitch 0.85–1.2 and level 0.8–1.2 per step. The distinctive cues ranged and gained below meaning: sward-whimper 5 m at 0.012–0.03, lizard-skitter 6 m, biomesh-settle 10 m, glyph-shift 15 m, wrong-colour-near 0.02, procession 0.02, bats' chirps 0.006; the living's one-shots mostly linear-to-silence at 15–30 m. Meanwhile cry at 0.09 and crows at 0.13 carry.

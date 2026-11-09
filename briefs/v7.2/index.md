@@ -2,6 +2,12 @@
 
 Written 2026-11-09 from Austin's words (`wilderness-v7.2.md`), a cold read of `src/audio.js`, `src/audio/synth.js`, `src/audio/living.js` and the regions' sound hooks at `38d9106` (main after v7), and the research in `.agents/skills/sound-design/SOURCES.md`. Seven briefs: two foundations, four voicing passes, one listening review.
 
+## Austin's second note (2026-11-09)
+
+"I forgot to mention the worse noise is the one when sun gutters. I end up playing muted because every time it triggers I have to mute, it's so unpleasant."
+
+So the gutter is the first thing to fix and the first thing to listen to. Today it stacks everything at once: the drone bus rises 0.1 → 0.5 (14 dB) and detunes −260 cents over the gutter, the shimmer sines (1822/2417/3105 Hz, unrelated to any key) come up five-fold, every peafowl in the Demesne cries on a raw sawtooth with a `setValueAtTime` pitch jump, bypassing the voice cap, the bats leave, the eyes close, the lamps tick, the wind ducks and comes back. Every brief that touches a gutter-locked sound treats it as its first render and its first fix; the survey's gutter poses (moor in a gutter, the Leerie's row, the Demesne) are gated on `sharp_db`, `rough`, `lufs_s_max` and `clicks` from the start. The target, in words: the gutter is felt as a dip in everything, the drone comes up as a floor you feel more than hear, and the few living that react do so from their places, not as a chorus. If the baseline render of the gutter is the worst picture in the survey, that is expected.
+
 ## What is wrong (the cold read, in the designer's three words)
 
 **Random.** `distantCall` (audio.js ~1207) fires every 8–22 s, uniform, at a random bearing 140–300 m off, one of four kinds drawn uniformly, with no emitter ("so the quiet is never empty"). Every scheduler in the file is `base + rng() * span`: memoryless, unphrased, no rests, no answer. Crows fire with no position and always sound from (65, 34, 30) (~496). Footstep pitch wanders 0.85–1.2 (~248). The pitched sounds have no shared key (drone E/G/A, shimmer at 1822/2417/3105 Hz, carillon D pentatonic, hums on G). The gutter uses `Math.random` (sky.js:173,178).
