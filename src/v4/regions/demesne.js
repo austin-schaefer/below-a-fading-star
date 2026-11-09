@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { LANDMARKS, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp, lerp } from '../../noise.js';
 import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
+import { buildPeafowl } from './peafowl.js';
 
 const KEY = 'demesne';
 const N = makeSimplex(20261107 + 1010);
@@ -234,6 +235,7 @@ export async function build(ctx) {
 
   // ---- the white peafowl, on the biggest blocks round (75, -15)
   const birds = buildPeafowl(ctx, rng, blocks.perches);
+  PEAFOWL = birds.list;
   meshes.push(...birds.meshes);
   ctx.registerUpdate((dt, t) => birds.update(dt, t), { pos: { x: 75, z: -15 }, near: 160, hz: 4 });
 
@@ -366,91 +368,4 @@ function buildBlocks(ctx, rng, low) {
   return { mesh, perches, count: list.length };
 }
 
-// The white peafowl: moulted, a ragged white train with a few last eyed feathers. Each stands on a fallen block,
-// turning its head; at every gutter it lifts its neck and cries (the cry is in the sound hook) and half raises its
-// train. Built facing +z; the body and the train are two instanced meshes.
-function buildPeafowl(ctx, rng, perches) {
-  const { THREE: T } = ctx;
-  const P = [], C = [], I = [];
-  const W = [0.88, 0.87, 0.84], W2 = [0.74, 0.73, 0.7], BLK = [0.06, 0.06, 0.07], BEAK = [0.5, 0.42, 0.34];
-  const ell = (cx, cy, cz, rx, ry, rz, col, seg = 8) => {
-    const o = P.length / 3;
-    for (let j = 0; j <= 5; j++) for (let i = 0; i < seg; i++) { const v = (j / 5) * Math.PI, u = (i / seg) * 6.283; P.push(cx + Math.cos(u) * Math.sin(v) * rx, cy + Math.cos(v) * ry, cz + Math.sin(u) * Math.sin(v) * rz); C.push(...col); }
-    for (let j = 0; j < 5; j++) for (let i = 0; i < seg; i++) { const a = o + j * seg + i, b = o + j * seg + ((i + 1) % seg); I.push(a, a + seg, b, b, a + seg, b + seg); }
-  };
-  ell(0, 0.6, -0.02, 0.13, 0.14, 0.3, W);             // body, long and low
-  ell(0, 0.62, -0.28, 0.1, 0.07, 0.12, W2, 7);         // the rump, where the train springs
-  ell(0, 0.76, 0.22, 0.045, 0.12, 0.05, W, 7);         // lower neck, leaning forward
-  ell(0, 0.92, 0.29, 0.035, 0.1, 0.04, W, 7);          // upper neck
-  ell(0, 1.03, 0.33, 0.042, 0.04, 0.058, W, 7);        // head
-  ell(0, 1.02, 0.4, 0.01, 0.01, 0.032, BEAK, 5);       // bill
-  for (let i = -1; i <= 1; i++) ell(i * 0.014, 1.12, 0.32 - Math.abs(i) * 0.01, 0.005, 0.05, 0.005, W2, 4); // the crest's fan
-  for (const sd of [-1, 1]) ell(sd * 0.06, 0.25, 0.02, 0.012, 0.25, 0.012, [0.45, 0.4, 0.38], 5); // legs
-  ell(0.025, 1.05, 0.37, 0.007, 0.007, 0.007, BLK, 4); ell(-0.025, 1.05, 0.37, 0.007, 0.007, 0.007, BLK, 4); // eyes
-  const bodyGeo = new T.BufferGeometry();
-  bodyGeo.setAttribute('position', new T.Float32BufferAttribute(P, 3)); bodyGeo.setAttribute('color', new T.Float32BufferAttribute(C, 3));
-  bodyGeo.setIndex(I); bodyGeo.computeVertexNormals();
-  // the train: long ragged feathers fanning back from the rump, pivot at the rump (origin); most plain white and
-  // gapped, three or four still carrying an eye
-  const tP = [], tC = [], tI = [];
-  const n = 15;
-  for (let i = 0; i < n; i++) {
-    if (i % 4 === 2) continue; // moulted gaps
-    const a = (i / (n - 1) - 0.5) * 1.1, len = 1.1 + 0.35 * Math.cos(a * 2) - (i % 3) * 0.12, w = 0.05;
-    const dx = Math.sin(a), dz = -Math.cos(a), px = -dz * w, pz = dx * w;
-    const eyed = i === 4 || i === 8 || i === 13;
-    const o = tP.length / 3;
-    tP.push(px * 0.2, 0, pz * 0.2, -px * 0.2, 0, -pz * 0.2, dx * len - px, 0, dz * len - pz, dx * len + px, 0, dz * len + pz);
-    tC.push(...W, ...W, ...W2, ...W2);
-    tI.push(o, o + 2, o + 1, o + 1, o + 2, o + 3);
-    if (eyed) { // the eye: a dark disc with a bronze ring, near the tip
-      const ex = dx * (len - 0.07), ez = dz * (len - 0.07), r = 0.05;
-      const e0 = tP.length / 3; tP.push(ex, 0.004, ez); tC.push(0.05, 0.08, 0.2);
-      for (let k = 0; k < 8; k++) { const t = (k / 8) * 6.283; tP.push(ex + Math.cos(t) * r, 0.004, ez + Math.sin(t) * r * 1.3); tC.push(...(k % 2 ? [0.42, 0.3, 0.1] : [0.08, 0.32, 0.3])); }
-      for (let k = 0; k < 8; k++) tI.push(e0, e0 + 1 + k, e0 + 1 + ((k + 1) % 8));
-    }
-  }
-  const trainGeo = new T.BufferGeometry();
-  trainGeo.setAttribute('position', new T.Float32BufferAttribute(tP, 3)); trainGeo.setAttribute('color', new T.Float32BufferAttribute(tC, 3));
-  trainGeo.setIndex(tI); trainGeo.computeVertexNormals();
-  const mat = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, side: T.DoubleSide });
-  // perches: the biggest blocks nearest (75, -15)
-  const ps = perches.slice().sort((a, b) => Math.hypot(a.x - 75, a.z + 15) - Math.hypot(b.x - 75, b.z + 15)).slice(0, 3);
-  const list = ps.map((b) => ({ x: b.x, y: b.y + b.sy * 0.5, z: b.z, yaw: rng() * 6.28, look: 0, next: 1 + rng() * 3, cry: 0, ph: rng() * 6 }));
-  PEAFOWL = list;
-  const body = new T.InstancedMesh(bodyGeo, mat, Math.max(1, list.length));
-  const train = new T.InstancedMesh(trainGeo, mat, Math.max(1, list.length));
-  body.name = 'demesne-peafowl'; train.name = 'demesne-peafowl-trains';
-  for (const m of [body, train]) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; ctx.scene.add(m); }
-  const m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), p = new T.Vector3(), one = new T.Vector3(1, 1, 1), off = new T.Vector3();
-  const flick = ctx.sky?.flicker || { value: 1 };
-  let wasG = false;
-  function update(dt, t) {
-    dt = Math.min(dt, 0.3);
-    const g = flick.value < 0.5;
-    for (let i = 0; i < list.length; i++) {
-      const b = list[i];
-      if (g && !wasG) b.cry = 2.6 + i * 0.7;
-      b.cry = Math.max(0, b.cry - dt);
-      b.next -= dt;
-      if (b.next <= 0) { b.look = (rng() - 0.5) * 1.6; b.next = 1.5 + rng() * 4; }
-      b.yaw += (b.look * 0.25) * dt;
-      b.cs = (b.cs || 0) + ((b.cry > 0.3 ? 1 : 0) - (b.cs || 0)) * Math.min(1, dt * 6);
-      const cr = b.cs; // up while crying
-      // the body: a slight bob, the head raised (whole bird pitches back a little) while it cries
-      e.set(-0.18 * cr + 0.03 * Math.sin(t * 1.3 + b.ph), b.yaw + 0.25 * Math.sin(t * 0.5 + b.ph) * (1 - cr), 0, 'YXZ'); q.setFromEuler(e);
-      p.set(b.x, b.y, b.z);
-      body.setMatrixAt(i, m4.compose(p, q, one));
-      // the train: trailing behind, half raised and spread at the cry
-      e.set(-0.25 + 1.15 * cr, b.yaw, 0, 'YXZ'); q.setFromEuler(e);
-      off.set(0, 0.62, -0.34).applyQuaternion(_q.setFromEuler(_e.set(0, b.yaw, 0)));
-      p.set(b.x + off.x, b.y + off.y, b.z + off.z);
-      train.setMatrixAt(i, m4.compose(p, q, _s.set(1 + 0.4 * cr, 1, 1 - 0.15 * cr)));
-    }
-    wasG = g;
-    body.instanceMatrix.needsUpdate = true; train.instanceMatrix.needsUpdate = true;
-  }
-  update(0, 0);
-  return { meshes: [body, train], update, count: list.length, list };
-}
-const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3();
+// The white peafowl are built in peafowl.js: one connected body per bird and a train pivoting at its rump.
