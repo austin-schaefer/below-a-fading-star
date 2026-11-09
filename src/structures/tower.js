@@ -4,8 +4,8 @@
 // lies at the foot where it was left. One window lit near the top, looking back down the v3 road; a doorway with
 // no handle in the south fin's end, at (-250, -120), for the lit doorway (v5 lights). `?tower=v2` builds the old
 // watchtower instead (tower/v2.js); only one of the two is ever built.
-// Draws: the masonry (kit cyclopean stone, courses diminishing as they rise), the bronze, the glass, the measure
-// figure, and the window panel inside the structures' merged stone mesh.
+// Draws: the masonry (kit cyclopean stone, courses diminishing as they rise), the bronze, the glass, and the
+// window panel inside the structures' merged stone mesh.
 import * as THREE from 'three';
 import { mat } from './geo.js';
 import { mergeGeometries } from '../v4/kit/merge.js';
@@ -233,7 +233,4 @@ function buildLensMount(ctx, B, env) {
     bg.setAttribute('color', new THREE.BufferAttribute(col, 3));
   }
   add(glass, new THREE.MeshStandardMaterial({ color: '#07070a', roughness: 0.07, metalness: 0.5, side: THREE.DoubleSide }), 'tower-glass');
-  // a measure: one robed figure by the doorway
-  const fig = ctx.kit.measureFigures([{ x: x - 3.3, z: z + S - 2.6, yaw: -0.3 }], { name: 'tower-measure' }, ctx);
-  extra.push({ mesh: fig, tris: fig.geometry.attributes.position.count / 3 });
 }

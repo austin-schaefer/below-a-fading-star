@@ -13,8 +13,7 @@
 // collar and into the ground below the paving, so a link always comes out of the wall and goes into the floor.
 // Interval: 90-240 s from a private rng; the first falls within 60 s of first standing within 160 m of the chain.
 // `?hawser=shift` forces one 3 s after the frames start; `__fp.hawser.shift(at)` forces one (posed `at` seconds in).
-// `?hawser=0` leaves the whole thing out. Draws: the links, the collar, the dust (only while it falls), one measure
-// figure standing under the low end.
+// `?hawser=0` leaves the whole thing out. Draws: the links, the collar, the dust (only while it falls).
 import * as THREE from 'three';
 import { SITES } from '../world.js';
 import { COURT } from '../structures/court.js';
@@ -233,12 +232,7 @@ export async function build(ctx) {
   anchor.castShadow = true; anchor.receiveShadow = true;
   scene.add(anchor);
 
-  // ---- the measure: one robed figure standing under the low end, where the links pass a body's height overhead
   const horiz = Math.hypot(u.x, u.z); // metres on the ground per metre of chain
-  const pf = at(L - 15 / horiz).addScaledVector(H, 1.4); // 15 m out from the paving
-  const fig = ctx.kit.measureFigures([{ x: pf.x, z: pf.z, yaw: Math.atan2(-u.x, -u.z) + 0.4 }], { name: 'hawser-measure' }, ctx);
-  scene.add(fig);
-
   // ---- colliders: where the links come down within a body's height of the ground (near the paving), so a walker
   // can come up against the iron; beyond that the chain passes overhead and nothing stands on the ground
   for (let hd = 0; hd <= 12.5; hd += 2) {
@@ -357,12 +351,12 @@ export async function build(ctx) {
     if (S.el < 2.5 && distToLine(pp.x, pp.z) < 220) ctx.renderer.shadowMap.needsUpdate = true;
   }, { pos: MID, r: L / 2, near: 600, hz: 4 });
 
-  const tris = (geo.attributes.position.count / 3) * N + anchorGeo.attributes.position.count / 3 + fig.geometry.attributes.position.count / 3;
+  const tris = (geo.attributes.position.count / 3) * N + anchorGeo.attributes.position.count / 3;
   ctx.hawser = {
     A, E, u, L, pitch: P, links: N, mid: MID, state: S, clearance: { min: clear, at: clearAt },
     // force a shift, posed `el0` seconds in (views use it for the mid-shift render)
     shift: (el0 = 0) => { if (S.active) end(); begin(el0); },
-    stats: () => ({ calls: 3 + (dustPts.visible ? 1 : 0), tris: Math.round(tris), dust: DN }),
+    stats: () => ({ calls: 2 + (dustPts.visible ? 1 : 0), tris: Math.round(tris), dust: DN }),
   };
   ctx.log(`hawser: anchor (${A.x.toFixed(1)}, ${A.y.toFixed(1)}, ${A.z.toFixed(1)}), entry (${E.x}, ${E.y.toFixed(2)}, ${E.z}), ${L.toFixed(1)} m, ${N} links, least clearance ${clear.toFixed(1)} m at ${clearAt} m, ${Math.round(tris)} tris`);
 }
