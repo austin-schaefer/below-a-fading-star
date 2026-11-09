@@ -33,7 +33,7 @@
 // A one-shot's own level is its voice's `gain` (v7.2-07), set by tier where the cue is made, on the cue bus at the
 // master's gain: a near detail (a tick, a click, a step) about -10 dBFS at 4 m; a punctuation cue (crows, flush,
 // rooks, the drum, the bats, the flare, the far cry, the keep's rooks) -12 to -5 dBFS at its natural distance; the bed
-// peaks near -21 dBFS there.
+// peaks near -21 dBFS there. Every envelope (env, swell, shape) ends at true zero before its source stops.
 //
 // The rooms (craft.md "Space"; SPACES below): open (1.2 s, dark, a few sparse reflections), wood (0.8 s, dense, very
 // dark, early-heavy), stone (3.2 s, brighter, a 28 ms gap before the walls answer). Three convolvers; the sends follow
@@ -231,6 +231,7 @@ export function startGraph(ctx, audio, AC) {
   };
   function env(g, t0, peak, att, dec) {
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, t0 + att + dec);
+    g.gain.linearRampToValueAtTime(0, t0 + att + dec + 0.01); // to true silence before the source stops (v7.2-07)
   }
   Object.assign(a, { panner, setPos, send, env });
 
@@ -310,7 +311,7 @@ export function startGraph(ctx, audio, AC) {
     chain(vNoise(v, buf, at, dec + 0.02), filt('bandpass', f, q), g, dest);
   }
   // swell: 0 -> peak over att, hold-ish, gone by end (exponential tail)
-  function swell(g, t0, peak, att, end) { g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, end); }
+  function swell(g, t0, peak, att, end) { g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, end); g.gain.linearRampToValueAtTime(0, end + 0.01); }
   // the older cues build on what looks like a bare panner: it is the input of a placed voice (the same distance model:
   // air lowpass, panner, gate, cue bus; send() off it is shaped by distance), registered so the cap counts it, and
   // later(p, sec) sets when it ends

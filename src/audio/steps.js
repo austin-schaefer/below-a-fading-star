@@ -103,6 +103,7 @@ export function startSteps(a) {
     f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.value = (r.kind === 'click' ? 1100 : r.kind === 'crunch' ? 1300 : 420) * r.pitch;
     const g = ac.createGain(); env(g, tt, 0.09 * r.vol, 0.005, 0.07);
     s.connect(f); f.connect(g); g.connect(out);
+    audio.onToe?.(tt); // v7.2-07: the toe is the walker's step too; the render logs it as one
   }
   a.stepSynth = stepSynth;
   // the echo: rec played again `delay` s after it was, through a voice's panner at pos (so the voice cap counts it);

@@ -44,10 +44,11 @@ export function startCuesV2(a) {
     if (!v) return;
     const t0 = v.t0, f = 146.83 * NOTE_RATIO[k] * NOTE_TRUE[k], amp = 0.065 * soft * (1 - k * 0.035), life = 1.15 - k * 0.04;
     for (const [r, a, d] of BELL) {
-      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp * a, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d * life);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(amp * a, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d * life);
+      g.gain.linearRampToValueAtTime(0, t0 + d * life + 0.01); // v7.2-07: 12 ms in (a tonal attack), and to true silence before the partial stops
       chain(vOsc(v, 'sine', f * r * (1 + (rng() - 0.5) * 0.003), t0, t0 + d * life + 0.05), g, v.in);
     }
-    sgrain(v, v.in, t0, 700 + k * 110, 1.3, 0.06 * soft, 0.04, pink, 0.003); // the foot on the cap: metal seating in stone
+    sgrain(v, v.in, t0, 700 + k * 110, 1.3, 0.06 * soft, 0.04, pink, 0.006); // the foot on the cap: metal seating in stone
   }
   // ---- the Hypogeum lintel: one glyph sinks (the grind falls), a breath, the next rises (it climbs), then
   // grit runs off the stone. Stick-slip: the gain catches and gives in uneven steps.
@@ -290,7 +291,7 @@ export function startCuesV2(a) {
       o.frequency.linearRampToValueAtTime(f * 0.92, t0 + 2.0); o.frequency.exponentialRampToValueAtTime(f * 0.78, t0 + 4.6);
       const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(a, t0 + 0.2);
       for (let tt = t0 + 0.32; tt < t0 + 3.8; tt += 0.05 + rng() * 0.13) g.gain.linearRampToValueAtTime(a * (0.4 + 0.6 * rng()), tt);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7); g.gain.linearRampToValueAtTime(0, t0 + 4.71);
       chain(o, filt('lowpass', f * 3, 0.7), filt('lowpass', f * 3, 0.7), g, lp); // v7.2-04: two poles more, so the saws' edges never stand out as the grind stops
     }
     const gg = ac.createGain(); swell(gg, t0, 0.22, 0.3, t0 + 3.6);
@@ -300,7 +301,7 @@ export function startCuesV2(a) {
     th.frequency.setValueAtTime(52, t0 + 0.42); th.frequency.exponentialRampToValueAtTime(27, t0 + 1.4);
     env(tg, t0 + 0.42, 0.24, 0.02, 1.0); chain(th, tg, v.in); // v7.2-04: the settle's thud scaled at the source (0.36 -> 0.24), 20 ms in
     for (const [f, a, d] of [[113, 0.05, 5.5], [271, 0.035, 4.2], [489, 0.02, 3.0], [747, 0.012, 2.2]]) {
-      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.45); g.gain.linearRampToValueAtTime(a, t0 + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45 + d);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.45); g.gain.linearRampToValueAtTime(a, t0 + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45 + d); g.gain.linearRampToValueAtTime(0, t0 + 0.46 + d);
       chain(vOsc(v, 'sine', f * (1 + (rng() - 0.5) * 0.01), t0 + 0.45, t0 + 0.5 + d), g, v.in);
     }
   }

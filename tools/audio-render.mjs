@@ -110,6 +110,7 @@ async function pageRender(P) {
   };
   const step0 = fp.player.onStep;
   fp.player.onStep = function (h) { events.push({ kind: 'step', at: ac.currentTime, hurrying: !!h }); return step0?.apply(this, arguments); };
+  a.onToe = (t) => events.push({ kind: 'step', at: t, toe: true }); // the hurried step's toe (steps.js)
   for (const v of a.voices) seen.add(v);
 
   // ---- the taps
