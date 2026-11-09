@@ -241,7 +241,7 @@ export function buildMoles(ctx, { motif }) {
       }
     }
     // with every slot in use, the oldest goes back to turf as soon as nobody is looking
-    if (st.rising < 0 && slots.every((s) => s.used)) flattenOldest();
+    if (st.rising < 0) { let all = true; for (let i = 0; i < slots.length && all; i++) all = slots[i].used; if (all) flattenOldest(); }
   }
   // every frame while a heap rises (at: the walker himself), else 4 Hz beyond 35 m
   const atSite = { x: SITE.x, z: SITE.z };
