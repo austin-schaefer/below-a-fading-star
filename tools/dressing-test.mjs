@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // v4 Tinctures and set-dressing check: the air at a Saltings point has the rose-white hue and the tint at spawn is neutral,
 // the tint keeps the fog's luminance; the Discontinued Track's footprints (count, ends, spacing, none on the causeway, all on
-// the crust); the Surveyor's Pegs (count, spacing, the caps, none in deep water, all on x = -80); the Long Figure (80 m
+// the crust); the Surveyor's Pegs (count, spacing, the caps and their glyphs (v7), none in deep water, all on x = -80); the Long Figure (80 m
 // long on the ground, its centre on the wall's face, hugging the terrain); and the four items' draw calls and triangles;
 // and v5's story set-dressing: the Collation (twelve places, twelve chairs one of them down, clear of every tree, level, collided),
 // the Slipper (25 cm, on a slab, no collider) and the Unfinished Prospect (the canvas facing the painter, 512 x 384, under 200 KB).
@@ -42,6 +42,7 @@ const r = await page.evaluate(async () => {
   out.pegs = { n: Q.length, caps: pg.caps.map((c) => c.z), deep: 0, offLine: 0, minGap: Infinity, over: 0, wet: pg.wet };
   for (let i = 0; i < Q.length; i++) { const d = T.waterDepthAt(Q[i].x, Q[i].z) || 0; if (d > 0.7) out.pegs.deep++; if (Math.abs(Q[i].x + 80) > 0.1) out.pegs.offLine++; if (i && Q[i].z - Q[i - 1].z < 40) { const g = Q[i].z - Q[i - 1].z; out.pegs.minGap = Math.min(out.pegs.minGap, g); if (g > 10.5) out.pegs.over++; } }
   out.pegs.first = Q[0].z; out.pegs.last = Q[Q.length - 1].z;
+  { const cm = fp.scene.getObjectByName('surveyors-caps'), a = cm?.geometry.attributes.aForm; out.pegs.capForms = a ? Array.from(a.array).slice(0, cm.count) : []; } // v7: the glyph motif
   // the figure
   const fg = fp.dressing.figure, pos = fg.mesh.geometry.attributes.position.array, c = fg.centre;
   let maxLift = 0, minLift = 1e9;
@@ -95,6 +96,7 @@ check(p.offLine === 0 && p.first === -285 && p.last === 285, 'dead straight alon
 check(p.deep === 0, 'none stands in deep water (over 0.7 m)');
 check(p.minGap >= 5.5 && p.over <= 4, 'spaced 6 to 10 m (longer only across the tarn\'s deeps and the fallen slabs)', `shortest ${p.minGap.toFixed(1)}, ${p.over} longer`);
 check(p.caps.length >= 4 && p.caps.every((z) => [-200, -100, 0, 100, 200].includes(z)), 'brass caps only at the five z values (the one in the tarn\'s deep is absent)', `caps at ${p.caps}`);
+check(p.capForms.length === p.caps.length && p.capForms.every((g) => Number.isInteger(g) && g >= 0 && g <= 8) && p.capForms.every((g, i) => i === 0 || g !== p.capForms[i - 1]), 'each standing cap carries one of the lintel\'s glyphs, no two neighbours alike (v7)', `forms ${p.capForms}`);
 const f = r.fig;
 check(Math.abs(f.arc - 80) < 4, 'the figure is 80 m long on the ground', `${f.arc.toFixed(1)} m`);
 check(f.slope > 20 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}, dy ${f.dy.toFixed(3)} (analytic ${f.dyAnalytic.toFixed(2)})`);

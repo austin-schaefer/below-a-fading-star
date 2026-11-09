@@ -1,6 +1,10 @@
 # Releases
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
+## v6.7 (2026-11-08) — two lines of place copy
+
+Austin's last two place-card tweaks, which v6.5 missed: the Deodand Wood and the Gradine now carry his chosen quotes, word for word. `briefs/copy/place-copy.md` is refreshed to match his file; every one of the 23 cards now matches it.
+
 ## v6.6 (2026-11-08) — the settings menu
 
 Austin asked for it in the v6 release chat. A gear button sits beside the speaker on every screen, desktop and phone, and opens a panel over the view (the pointer is released; clicking the view locks it again as before). Brief: `briefs/v7/brief-v7-08-settings.md`; code in `src/settings.js`, one hook line in `src/main.js`.

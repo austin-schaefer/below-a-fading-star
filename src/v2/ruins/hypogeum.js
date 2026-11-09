@@ -288,7 +288,7 @@ function buildDoor(ctx, P, dHalf, dTop) {
 // Nine glyph forms from simple strokes, none of them letters: stepped bars under a dot; an eye with a
 // tail; two chevrons on a bar; a hook holding a dot; a fringe; a pierced lozenge; an arc over two dots;
 // a zigzag on a ledge; a guttered sun.
-function glyphStrokes(f) {
+export function glyphStrokes(f) {
   const S = [];
   const seg = (a, b, c, d) => S.push(['s', a, b, c, d]);
   const ring = (x, y, r) => S.push(['r', x, y, r]);
