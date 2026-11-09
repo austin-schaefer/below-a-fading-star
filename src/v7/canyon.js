@@ -4,12 +4,13 @@
 // woman eight metres tall reclining in the slow pool below the second rapid, pale shoulders and hair in the water,
 // washing one arm with slow care. She never looks up. Climb down into the Clough and there are only long pale stones in
 // the river and the water moving round them." Austin: "a classy, featureless nude". She lies along the pool below the
-// second rapid, head upstream, so the rim at SITES.bather.rim sees her whole length. The swap, by the walker's height:
-// she is shown while the walker's feet are SHOW_RISE or more above the pool's water and MIN_DIST or more from her, the
-// stones otherwise (hysteresis 1.5 m on the height). It is made only while she is out of the camera's view (a frustum
-// widened by 10 degrees) or behind the canyon's wall (sight lines to her head, middle and knee against the drawn
-// ground); if the walker has wanted the other for 4 s in view, the two cross-fade over 1.2 s by a dithered screen
-// door, never a pop. From the rim, at each turn of her stroke (every 8 s), the cue 'bather-pour'.
+// second rapid, head upstream, so the rim at SITES.bather.rim sees her whole length. The swap, by the walker's distance
+// (v7.1, Austin: "no need to have her vanish / break into rocks until REALLY close"): she is shown from every distance
+// and height until the walker comes within SWAP.near (4 m) of her, measured across the ground to the nearest of her
+// masses; then the stones; she is armed again at SWAP.rearm (6 m). Out of the camera's view (a frustum widened by 10
+// degrees) or behind the canyon's wall (sight lines to her head, middle and knee against the drawn ground) the swap is
+// instant; in view the two cross-fade over 1.2 s by a dithered screen door, never a pop. From the rim, at each turn of
+// her stroke (every 8 s), the cue 'bather-pour'.
 //
 // CX The Toadstone (IDEAS-v5.md CX; "### CX. The Toadstone"; ?toadstone=0): "A fat toad on a wet ledge of the Clough
 // with a red stone set in its forehead like a cabochon, which glows faintly when the sun gutters. It never moves."
@@ -31,9 +32,9 @@ const Q = new URLSearchParams(location.search);
 const OFF = Q.get('canyon') === '0';
 const BATHER = Q.get('bather') !== '0', TOADSTONE = Q.get('toadstone') !== '0';
 
-// The rule (wilderness-v5.md, "### CE. The Bather"): the rim at SITES.bather.rim stands 6.0 m over the pool's water,
-// so the plan's 7 m would never show her there; 5 m does, and the canyon's floor beside her stays under 2.5 m.
-export const SWAP = { showRise: 5.0, hideRise: 3.5, minDist: 10, hold: 4, fade: 1.2, margin: 10 * Math.PI / 180 };
+// The rule (wilderness-v5.md, "### CE. The Bather"; briefs/v7/index.md item 23, v7.1): the stones within 4 m of her
+// masses, her again from 6 m; rimRise is the height over the pool's water from which her stroke's cue is heard.
+export const SWAP = { near: 4, rearm: 6, rimRise: 3.5, fade: 1.2, margin: 10 * Math.PI / 180 };
 
 export async function build(ctx) {
   if (OFF) { ctx.canyon = { off: true }; return; }
@@ -125,11 +126,20 @@ export async function build(ctx) {
       frustum.setFromProjectionMatrix(pm);
       return frustum.intersectsSphere(sphere) && !occluded(cam.position);
     };
+    // her masses across the ground (the stones' axes, which lie where she lies), for the distance to her
+    const segs = STONE_PARTS.map(([A, B]) => { const a = toWorld(...A), b = toWorld(...B); return [cx + a[0], cz + a[2], cx + b[0], cz + b[2]]; });
+    const herD = (x, z) => {
+      let d = Infinity;
+      for (const [ax, az, bx, bz] of segs) {
+        const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2));
+        d = Math.min(d, hyp(x - ax - ex * t, z - az - ez * t));
+      }
+      return d;
+    };
     const want = () => {
       const p = ctx.player, feet = p.pos.y - (p.eye ?? 1.72);
-      st.rise = feet - waterY; st.dist = hyp(p.pos.x - cx, p.pos.z - cz);
-      const need = st.target === 1 ? SWAP.hideRise : SWAP.showRise;
-      return st.rise >= need && st.dist >= SWAP.minDist ? 1 : 0;
+      st.rise = feet - waterY; st.dist = herD(p.pos.x, p.pos.z);
+      return st.dist >= (st.target === 1 ? SWAP.near : SWAP.rearm) ? 1 : 0;
     };
     const apply = () => {
       matB.userData.uniforms.uFade.value = st.f; matS.userData.uniforms.uFade.value = 1 - st.f;
@@ -152,19 +162,19 @@ export async function build(ctx) {
       } else if (w !== st.target) {
         st.seen = inView();
         if (!st.seen) { st.target = w; st.f = w; st.held = 0; st.swaps++; }
-        else if ((st.held += dt) >= SWAP.hold) { st.target = w; st.fading = w ? 1 : -1; st.fades++; st.held = 0; }
+        else { st.target = w; st.fading = w ? 1 : -1; st.fades++; st.held = 0; }
       } else st.held = 0;
       apply();
       // from the rim, at each turn of the stroke (the far turn, half-way through each period)
       const k = Math.floor((t - STROKE.period / 2) / STROKE.period);
-      if (st.f === 1 && st.rise >= SWAP.hideRise && st.dist < 40 && k !== st.lastK && st.lastK !== null) { st.cues++; ctx.audio?.cue?.('bather-pour', handW); }
+      if (st.f === 1 && st.rise >= SWAP.rimRise && st.dist < 40 && k !== st.lastK && st.lastK !== null) { st.cues++; ctx.audio?.cue?.('bather-pour', handW); }
       st.lastK = k;
     });
     // start in the state the spawn asks for, so nothing swaps in view on the first frames
     st.target = st.f = want(); apply();
     api.bather = {
       mesh: bather, stones, state: st, centre: { x: cx, z: cz, y: waterY, s: sc, d: dc }, frame: { U, V, slope }, rapids, targets, handW,
-      tris: forms.tris, SWAP, inView, want, materials: [matB, matS], uniforms: shared,
+      tris: forms.tris, SWAP, inView, want, herD, materials: [matB, matS], uniforms: shared,
       hold(f) { st.hold = f; }, // pin the cross-fade (0 stones .. 1 her), for renders; null lets go
     };
     api.inView = inView; api.want = want;
