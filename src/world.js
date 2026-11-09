@@ -23,7 +23,7 @@ SUN.dir = (() => {
 export const LANDMARKS = {
   castle:   { x: 40,   z: 30,   r: 42,  y: 18,  name: "Carcanet Keep",        line: "“Over all brooded the citadel, like a condor stooping above its prey, intent on its own dark meditations.”" },
   stones:   { x: -170, z: -50,  r: 26,  y: 4,   name: "The Cardinal Stones",  line: "Pride and Sloth, Avarice and Spite." },
-  tarn:     { x: -90,  z: 110,  r: 58,  y: -6,  name: "Lees Tarn",            line: "The water keeps what it is given, and gives back nothing." },
+  tarn:     { x: -90,  z: 110,  r: 58,  y: -6,  name: "Circumbambulate Pool",            line: "“No hand was at the sweep of the Tigress, no oars drove her through the green water.”" },
   fen:      { x: 70,   z: 160,  r: 72,  y: -2,  name: "Corpse-Candle Fen",    line: "“Unseen whippoorwills chatter and the fireflies come out in abnormal profusion to dance.”" },
   wood:     { x: -210, z: 130,  r: 90,  y: null, name: "The Deodand Wood",    line: "“Branches and boughs knit patterns on the fading purple over hi; the air smelt of moss and dank mold.”" },
   byre:     { x: -148, z: 64,   r: 14,  y: null, name: "The Oast Byre",    line: "“In a litter of filth and matted straw stood a number of hulking men eight or nine feet tall. They were naked, with shocks of dirty yellow hair and watery bule eyes.”" },
