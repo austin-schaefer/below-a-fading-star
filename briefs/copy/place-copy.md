@@ -30,7 +30,7 @@ line: They say after the sun is fully dark, these lights are the only ones that 
 
 name: The Deodand Wood
 
-line: Something in the trees is counting your steps.
+line: "Trees towered to either side and the long sundown rays steeped one side in blood, left the other deep in black shadow."
 
 ## byre
 
@@ -126,7 +126,7 @@ line: "The magician hides his hinges, mirrors, and trapdoors with the utmost car
 
 name: The Gradine
 
-line: I have gone almost reluctantly—step by step, as pressed by facts too insistent to deny."
+line: "The marble treads were cracked: A condition which the murk of twilight invested with a mournful grandeur."
 
 ## cutting
 

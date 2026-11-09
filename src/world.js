@@ -25,7 +25,7 @@ export const LANDMARKS = {
   stones:   { x: -170, z: -50,  r: 26,  y: 4,   name: "The Cardinal Stones",  line: "Pride and Sloth, Avarice and Spite." },
   tarn:     { x: -90,  z: 110,  r: 58,  y: -6,  name: "Lees Tarn",            line: "The water keeps what it is given, and gives back nothing." },
   fen:      { x: 70,   z: 160,  r: 72,  y: -2,  name: "Corpse-Candle Fen",    line: "They say after the sun is fully dark, these lights are the only ones that will still burn." },
-  wood:     { x: -210, z: 130,  r: 90,  y: null, name: "The Deodand Wood",    line: "Something in the trees is counting your steps." },
+  wood:     { x: -210, z: 130,  r: 90,  y: null, name: "The Deodand Wood",    line: "“Trees towered to either side and the long sundown rays steeped one side in blood, left the other deep in black shadow.”" },
   byre:     { x: -148, z: 64,   r: 14,  y: null, name: "The Deodand Byre",    line: "“Eight of them, the ostler said. He did not say what he fed them.”" },
   orchard:  { x: 130,  z: -90,  r: 52,  y: null, name: "Medlar Close",        line: "The fruit is best eaten rotten. It has been ready a long while." },
   court:    { x: -40,  z: -165, r: 40,  y: -1,  name: "The Sunken Court",     line: "“Law cannot reach where enforcement will not follow.”" },
@@ -44,7 +44,7 @@ export const LANDMARKS = {
   sward:    { x: -45,  z: 45,   r: 26,  y: null, name: "The Heliotrope Sward", line: "“You shall die in this tragic golden light of sunset.”" },
   menology: { x: -15,  z: 255,  r: 24,  y: null, name: "The Menology",         line: "“The clock moves forward; wasted time is life defeated.”" },
   hypogeum: { x: 226,  z: -112, r: 12,  y: null, name: "The Hypogeum",         line: "“The magician hides his hinges, mirrors, and trapdoors with the utmost care.”" },
-  gradine:  { x: 282,  z: -172, r: 14,  y: null, name: "The Gradine",          line: "I have gone almost reluctantly—step by step, as pressed by facts too insistent to deny.”" },
+  gradine:  { x: 282,  z: -172, r: 14,  y: null, name: "The Gradine",          line: "“The marble treads were cracked: A condition which the murk of twilight invested with a mournful grandeur.”" },
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
   // v6.5: name cards for the v5 sites (SITES): card places have no footprint of their own, so the scatter ignores them and
