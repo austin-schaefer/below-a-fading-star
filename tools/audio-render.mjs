@@ -6,14 +6,14 @@
 // cue log (every audio.cue call, every new one-shot voice, every footstep, the gutter) in seconds from the render's
 // first sample. Used by tools/audio-survey.mjs and audio-quality-test.mjs through render().
 // Usage: node tools/audio-render.mjs <url> <out.wav> [--seconds=20] [--cue=name[,name]] [--at=dx,dy,dz] [--opts=<json>]
-//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--mono] [--draw] [--settle=<s>] [--seed=<n>]
+//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>]
 // --cue fires 1 s in at the camera plus --at (world axes, as tools/audio-test.mjs's offsets), --every repeats it.
 // --walk holds W at that speed (over 3.6 m/s it hurries: Shift, the speed scaled from 6.6); --steps fires n of the
 // walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own course, its length pinned at 14 s by ?gutter=14,600); without
 // it the gutter is held off for the render so two renders compare; --gutter-hold=0.3 pins the flicker at a value.
 // --settle=<s> (default 6) waits after body.ready before `begin` (see pageRender). The page loads with ?render=0 (every frame's updates, no draw: software GL otherwise starves the page's timers and
 // the walk); --draw draws as usual. --pre taps the master (pre-limiter) instead, as 32-bit float, and writes the post-limiter tap of the same render to
-// <out>.post.wav, sample-aligned. The page has no seed parameter (WORLD.seed is fixed), so --seed is recorded and
+// <out>.post.wav, sample-aligned. --tap=cue taps the cue bus alone (one-shots against silence, at the master's gain). The page has no seed parameter (WORLD.seed is fixed), so --seed is recorded and
 // ignored: a render is reproducible by url, options and length.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -44,7 +44,7 @@ export function plan(o = {}) {
     at: { dx: at[0] || 0, dy: at[1] || 0, dz: at[2] || 0 }, opts: opts || null, every: o.every ? Number(o.every) : 0,
     walk: o.walk ? Number(o.walk) : 0, steps: o.steps ? Number(o.steps) : 0,
     gutter: !!o.gutter && o.gutter !== 'false', gutterHold: o['gutter-hold'] != null ? Number(o['gutter-hold']) : null,
-    pre: !!o.pre, mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
+    pre: !!o.pre, cueTap: o.tap === 'cue', mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
   };
 }
 // the page's url for a plan: ?gutter=14,600 with --gutter, ?render=0 (the frame's updates without the draw, so software GL cannot starve the
@@ -137,7 +137,10 @@ async function pageRender(P) {
     }
     return t;
   };
-  const taps = [mkTap(P.pre ? a.master : a.vol)];
+  // --tap=cue: the cue bus alone (through its analyser, which passes its input on) at the master's gain, so a one-shot
+  // reads against silence at the level it reaches the limiter; anything wired past the cue bus is not in it
+  const cueOnly = () => { const g = ac.createGain(); g.gain.value = a.master.gain.value; a.cueAnalyser.connect(g); return g; };
+  const taps = [mkTap(P.cueTap ? cueOnly() : P.pre ? a.master : a.vol)];
   if (P.pre) taps.push(mkTap(a.vol));
 
   // ---- the walk: W (and Shift) held from the first sample
