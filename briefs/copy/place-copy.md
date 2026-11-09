@@ -1,6 +1,6 @@
 # Place copy (the name and line at the bottom of the screen when you draw near)
 
-Each place has a **name** (the heading line) and a **line** (the sentence under it). Edit the text after `name:` and `line:`; leave the `## key` headings alone. Names are [Proposed] placeholders and yours to change. To drop a line, leave it empty. When you're done, tell the orchestrator and an agent applies it word for word and commits this file as the record.
+Austin's hand edits to the place name cards, applied word for word on 2026-11-08 (v6.5). This file is the record; the live text is in `src/world.js`.
 
 ## castle
 

@@ -1,6 +1,6 @@
 # Loading screen copy
 
-Hand-edit the text under each heading; leave the headings alone. Everything here comes from `index.html`'s title card (`#card`) and the first hint. When you're done, tell the orchestrator and an agent applies it word for word (no edits to your words), ships it with the other pre-v7 fixes, and commits this file as the record.
+Austin's hand edits to the title card and loading screen, applied word for word on 2026-11-08 (v6.5). This file is the record; the live text is in `index.html`.
 
 ## Kicker (small caps line above the title)
 
