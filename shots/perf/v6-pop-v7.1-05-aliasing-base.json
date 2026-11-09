@@ -1,0 +1,60 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "v7.1-05-aliasing-base",
+ "date": "2026-11-09T09:06:51.096Z",
+ "base": "http://localhost:8162",
+ "q": "medium",
+ "only": [
+  "aliasing"
+ ],
+ "runSecs": 20,
+ "rows": [
+  {
+   "id": "aliasing.step-5cm",
+   "owner": "v6-08",
+   "target": "a 5 cm sideways step <= 2x baseline",
+   "value": "149 changed vs baseline 10: 14.9x",
+   "pass": false,
+   "gate": false,
+   "detail": {
+    "baseline": 10,
+    "largest": 149
+   }
+  }
+ ],
+ "routes": {},
+ "seqs": {
+  "aliasing": {
+   "baseline": [
+    7,
+    7,
+    7,
+    9,
+    10
+   ],
+   "switch": [
+    149,
+    33,
+    33,
+    35,
+    32
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}

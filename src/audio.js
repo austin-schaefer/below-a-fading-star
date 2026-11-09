@@ -207,9 +207,12 @@ export async function build(ctx) {
       const lfo = ac.createOscillator(); lfo.frequency.value = 0.04 + i * 0.023; const lg = ac.createGain(); lg.gain.value = 0.15 + i * 0.04; lfo.connect(lg); lg.connect(o.frequency); lfo.start();
       o.connect(gn); gn.connect(droneBus); o.start(); droneOsc.push(o);
     });
-    const shim = ac.createGain(); shim.gain.value = 0.0; shim.connect(master); send(shim, 0.5);
+    // The gutter's high voice (v7.1: softened). A fifth, two sines in a steady 2:3 so nothing beats, rolled off from 1.6 kHz and
+    // eased in over seconds; it sits under the drone, not over the bed.
+    const shim = ac.createGain(); shim.gain.value = 0.0; const shimLP = ac.createBiquadFilter(); shimLP.type = 'lowpass'; shimLP.frequency.value = 1600; shimLP.Q.value = 0.5;
+    shim.connect(shimLP); shimLP.connect(master); send(shimLP, 0.35);
     const shimOsc = [];
-    [1822, 2417, 3105].forEach((f, i) => {
+    [1210, 1815].forEach((f, i) => {
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const t = ac.createGain(); t.gain.value = 0.3;
       const lfo = ac.createOscillator(); lfo.frequency.value = 0.07 + 0.05 * i; const lg = ac.createGain(); lg.gain.value = 0.3; lfo.connect(lg); lg.connect(t.gain); lfo.start();
       o.connect(t); t.connect(shim); o.start(); shimOsc.push(o);
@@ -1155,10 +1158,10 @@ export async function build(ctx) {
       const fl = ctx.sky?.flicker?.value ?? 1;
       const target = clamp((1 - fl) / 0.78, 0, 1);
       swellSm += (target - swellSm) * (target > swellSm ? 0.25 : 0.04);
-      droneBus.gain.setTargetAtTime(0.1 + 0.4 * swellSm, now, 0.4);
+      droneBus.gain.setTargetAtTime(0.1 + 0.12 * swellSm, now, 0.7);
       for (const o of droneOsc) o.detune.setTargetAtTime(-260 * swellSm, now, 0.6);
-      shim.gain.setTargetAtTime(0.004 + 0.016 * swellSm, now, 0.5);
-      droneLP.frequency.setTargetAtTime(360 + 500 * swellSm, now, 0.5);
+      shim.gain.setTargetAtTime(0.004 + 0.005 * swellSm, now, 1.2); // v7.1: about -9 dB at the peak, a 1.2 s time constant
+      droneLP.frequency.setTargetAtTime(360 + 280 * swellSm, now, 0.7);
       windBus.gain.setTargetAtTime(WIND_BUS * (1 - 0.35 * swellSm), now, 0.5);
       // --- tarn lapping
       const T = landmarks.tarn, td = hyp(px - T.x, pz - T.z), edge = 52;

@@ -16,7 +16,7 @@ import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rigPainter, rigMesh, makeBones, pivot, arm2, placeMatrix, ramp, ease, tris } from './rig.js';
 import { rgb, tone, mix3, clothBody, head, sleeve } from './body.js';
 
-const DRESS = rgb('#6a4c3e'), DRESS_D = rgb('#3c2738'), DRESS_HEM = rgb('#5e5246'), SKIN = rgb('#a48a78'), HAIR = rgb('#211814'), FRAME = rgb('#3a2d22');
+const DRESS = rgb('#865a44'), DRESS_D = rgb('#4a3040'), DRESS_HEM = rgb('#6c5c4a'), SKIN = rgb('#a48a78'), HAIR = rgb('#211814'), FRAME = rgb('#3a2d22');
 const A_UP = 0.26, A_FORE = 0.25, SEP = 0.55;          // each woman sits SEP in front of the frame
 const SH_R = new THREE.Vector3(-0.17, 0.55, 0.0), SH_L = new THREE.Vector3(0.17, 0.55, 0.0); // her right is -x (she faces +z)
 const WAIST = [0, 0.24, 0], NECK = [0, 0.645, 0.01], LEAN = 0.2;

@@ -792,7 +792,7 @@ export function buildTrees(ctx, ground, mats) {
 // ---------- Toadstools ----------
 function toadstoolGeo() {
   const gb = new GeoBuilder(['glow']);
-  const stem = lin('#c8bca0'), cap = lin('#8a6a48'), gill = lin('#d8e0c0');
+  const stem = lin('#c8bca0'), cap = lin('#a88058'), gill = lin('#d8e0c0');
   const pts = [{ x: 0, y: -0.05, z: 0, r: 0.07 }, { x: 0.02, y: 0.4, z: 0, r: 0.06 }, { x: 0.05, y: 0.82, z: 0, r: 0.05 }];
   tube(gb, [pts[0], pts[2]], 5, (i) => mixc(stem, [0.3, 0.25, 0.2], i === 0 ? 0.5 : 0), { capTip: false, u0: 0.02, u1: 0.4, ex: { glow: 0.1 } });
   // cap: dome rings

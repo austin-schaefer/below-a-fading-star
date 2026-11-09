@@ -57,7 +57,7 @@ export function buildSleeper(ctx, G, flags) {
   // ---------------------------------------------------------------- the man
   const P = new Painter(['aLid']);
   const skin = new THREE.Color('#ab8f76'), lidc = new THREE.Color('#85695a'), hair = new THREE.Color('#a8a090'), beard = new THREE.Color('#b4ac9c');
-  const under = new THREE.Color('#4a4c66'), over = new THREE.Color('#6e3e48'), edge = new THREE.Color('#8e7c46'), boot = new THREE.Color('#2a2220');
+  const under = new THREE.Color('#4a4c66'), over = new THREE.Color('#7c4652'), edge = new THREE.Color('#9e8a4e'), boot = new THREE.Color('#2a2220');
   const chestW = (x, y) => Math.exp(-(((x + 0.38) / 0.3) ** 2)) * clamp((y - 0.03) / 0.13, 0, 1);
   // the long gown: wide at the shoulder, layered, spread on the ground at the sides
   const X = [-0.74, -0.58, -0.32, -0.06, 0.2, 0.46, 0.7, 0.92];

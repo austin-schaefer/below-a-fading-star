@@ -276,7 +276,8 @@ async function start() {
 
   // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
   // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
-  // been unfocused for 3 s; nothing while the tab is hidden. Time and the updates run once per rendered
+  // been unfocused for 3 s (read from document.hasFocus() each frame, not from blur and focus events, which can
+  // be missed); never while the pointer is locked, a movement key is down or a touch is active; nothing while the tab is hidden. Time and the updates run once per rendered
   // frame with the real (clamped) dt, so the world and the audio mix keep going at the slower rate.
   // ?idle=0 keeps the full rate under the cards and when unfocused.
   const capParam = url.searchParams.get('cap');
@@ -287,13 +288,14 @@ async function start() {
   const idle = url.searchParams.get('idle') !== '0';
   const IDLE_FPS = 10, UNFOCUSED_MS = 3000;
   const cardEl = document.getElementById('card');
-  let blurredAt = document.hasFocus() ? null : performance.now();
-  addEventListener('blur', () => { blurredAt = performance.now(); });
-  addEventListener('focus', () => { blurredAt = null; });
-  const pacing = { get cap() { return cap; }, fps: 0, idle: false };
+  let blurredAt = null;
+  const pacing = { get cap() { return cap; }, fps: 0, idle: false, targetFps: (now) => targetFps(now) };
   function targetFps(now) {
     const benching = ctx.perf.bench && !ctx.perf.bench.done;
-    pacing.idle = idle && !benching && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
+    if (document.hasFocus()) blurredAt = null; else if (blurredAt === null) blurredAt = now;
+    const pl = ctx.player, tc = ctx.controls.touch;
+    const active = pl.locked || pl.keys.size > 0 || !!(tc && (tc.moveId != null || tc.lookId != null));
+    pacing.idle = idle && !benching && !active && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
     return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
   }
   ctx.pacing = pacing;
