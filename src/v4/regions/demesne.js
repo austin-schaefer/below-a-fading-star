@@ -162,6 +162,7 @@ export const sound = {
     const roosts = [[0, 0], [9, -6], [-7, 8]].map(([dx, dz]) => ({ x: K.x + dx, y: K.y + 22, z: K.z + dz }));
     let px = 0, pz = 0, roost = roosts[0], wasGutter = false, pitch = 1;
     const pend = []; // the gutter's answers, waiting for their time
+    let lastAnswer = -1e9;
     const flick = k.sky?.flicker || { value: 1 };
     const kd = () => Math.hypot(px - K.x, pz - K.z);
     function talk(pos, gain) {
@@ -186,7 +187,9 @@ export const sound = {
         // the gutter: the peafowl answer it from their blocks, late (1.5-4 s after the light drops), one bird and
         // sometimes a second, 3 dB quieter, 0.8-2 s after the first has done; never the flock at once
         const g = flick.value < 0.5;
-        if (g && !wasGutter && PEAFOWL.length && Math.hypot(x - 75, z + 15) < 260) {
+        // (the light can cross the threshold more than once in one gutter: one answer a gutter, none within 30 s)
+        if (g && !wasGutter && now - lastAnswer > 30 && PEAFOWL.length && Math.hypot(x - 75, z + 15) < 260) {
+          lastAnswer = now;
           const i0 = Math.floor(rng() * PEAFOWL.length), n0 = 1 + (rng() < 0.4 ? 1 : 0), at = now + 1.5 + rng() * 2.5;
           pend.push({ at, i: i0, n: n0, gain: 1 });
           if (PEAFOWL.length > 1 && rng() < 0.5) pend.push({ at: at + n0 * 1.1 + 0.8 + rng() * 1.2, i: (i0 + 1 + Math.floor(rng() * (PEAFOWL.length - 1))) % PEAFOWL.length, n: 1, gain: 0.71 });
