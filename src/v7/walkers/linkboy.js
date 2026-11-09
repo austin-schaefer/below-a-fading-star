@@ -271,7 +271,7 @@ export function buildLinkBoy(ctx, F, cue) {
       case 'wait': {
         // the walker within 12 m: he steps on and leads
         if (wd < NEAR) { S.mode = 'lead'; S.t = 0; S.lost = 0; S.rec.last = t; S.leads++; S.offTarget = 0; }
-        else if (S.t > 90 && wd > 2 * HEAD && !seen(S.x, S.z)) { S.mode = 'free'; }
+        else if (S.t > 90 && wd >= FAR && !seen(S.x, S.z)) { S.mode = 'free'; } // not come after 90 s: free again, to be put on the lead you are heading for
         break;
       }
       case 'lead': case 'onward': {

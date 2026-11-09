@@ -11,6 +11,7 @@
 // faded in and out over half a second.
 import * as THREE from 'three';
 import { clamp, hyp } from '../../noise.js';
+import { fogPars, fogAtten } from '../../particles/shaderParts.js';
 
 const R = 14, STEP = 1.4, GRID = Math.round((2 * R) / STEP), NS = 8, NR = 6, REACH = 10;
 
@@ -28,12 +29,17 @@ export function buildShadowDisc(ctx, G) {
     uSwing: { value: new THREE.Vector2() }, uFade: { value: 0 },
   };
   const mat = new THREE.ShaderMaterial({
-    uniforms: U, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]), fog: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3,
     blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
-    vertexShader: /* glsl */`varying vec2 vXZ; void main() { vXZ = position.xz; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }`,
+    vertexShader: /* glsl */`varying vec2 vXZ;
+      #include <fog_pars_vertex>
+      void main() { vXZ = position.xz; vec3 transformed = position; vec4 mvPosition = viewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+      }`,
     fragmentShader: /* glsl */`
       uniform vec4 uL; uniform vec4 uSeg[${NS}]; uniform float uSegH[${NS}]; uniform vec4 uRock[${NR}]; uniform vec2 uSwing; uniform float uFade;
       varying vec2 vXZ;
+      ${fogPars}
       float cr(vec2 a, vec2 b) { return a.x * b.y - a.y * b.x; }
       float h21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -67,9 +73,12 @@ export function buildShadowDisc(ctx, G) {
         }
         float heather = smoothstep(0.45, 0.85, vn((vXZ - uSwing * 2.2) * 3.1)) * smoothstep(0.6, 2.0, d);
         float dark = min(0.8, (0.8 * sh + 0.28 * heather * (1.0 - sh) * min(1.0, 5.0 / (d * d + 0.5))) * pool) * uL.w * uFade;
-        gl_FragColor = vec4(0.0, 0.0, 0.0, dark);
+        // the fog: a darkening has no colour to mix toward the haze, so it thins with the fog instead (the particles' fogAtten)
+        ${fogAtten}
+        gl_FragColor = vec4(0.0, 0.0, 0.0, dark * fogAtten);
       }`,
   });
+  Object.assign(mat.uniforms, U); // the shared objects, by reference
   mat.customProgramCacheKey = () => 'v7-walkers-shadow';
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'walkers-linkboy-shadows'; mesh.frustumCulled = false; mesh.renderOrder = 3; mesh.visible = false;
