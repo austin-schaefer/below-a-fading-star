@@ -18,9 +18,10 @@ What each module under `prototypes/wilderness/src/` owns. Every agent that adds 
 | `water.js` | tarn and fen surfaces |
 | `particles.js` | dust, ash, corpse-candles, fireflies, mist wisps |
 | `fauna.js` | things that move: wings, the deodand, lesser creatures |
-| `audio.js` | procedural wind, drone, footsteps, calls; the mute button |
+| `audio.js` | procedural wind, drone, footsteps, calls; the mute button, `setVolume` and the `vol` gain |
 | `skylife.js` | sky events: the Parhelion City, the Vigilant, omens (procession, shard belt, still star) |
 | `rocks.js` | pebbles, stones, boulders, tors; pebbles and stones fade over their reach's last 15% and fine boulders cross to their coarse twin over 132-140 m (the fade kit; `?rockfade=0`); each mesh repacks after 2 m, one a frame when `ctx.packToken` is free, uploading only the changed range (`?packstep=6`) |
+| `settings.js` | the gear and the settings panel: volume, mute, quality tier, mouse capture, teleport to ten named places (`runtime.md`, "Settings") |
 | `debug.js` | teleport panel, live position, on/off rows |
 | `perf.js` | profiler overlay, bench path, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |

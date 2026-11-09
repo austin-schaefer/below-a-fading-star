@@ -174,6 +174,7 @@ async function start() {
   ctx.addCollider = ctx.controls.addCollider;
   // HUD
   ctx.hud = buildHud(ctx);
+  import('./settings.js').then((m) => m.buildSettings(ctx)).catch((e) => console.error('[fp] settings failed:', e)); // v7-08: the gear and its panel
 
   // World modules
   const results = await Promise.allSettled(wanted.map(async ([name, load]) => {

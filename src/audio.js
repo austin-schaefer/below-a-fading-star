@@ -2,7 +2,7 @@
 // Wind, a low drone that swells when the sun gutters, footsteps by ground, place sounds (tarn, fen, Lattice,
 // Cardinal Stones), calls (wings, crows, fish) and a faint counting click near the deodand.
 // Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall,
-// muted, setMuted(bool), mute (the GainNode after the limiter) }. Chain: master -> limiter -> mute -> out.
+// muted, setMuted(bool), mute (the GainNode after the limiter), volume (0..1), setVolume(v), vol (the GainNode after mute) }. Chain: master -> limiter -> mute -> vol -> out.
 // A no-op without AudioContext. One-shots share the cue bus (with its own analyser tap for tools/audio-test.mjs)
 // and a hard cap of 12 voices, the oldest stolen. Positions are {x,y,z}, copied at the call.
 //
@@ -78,7 +78,7 @@ const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); retu
 
 export async function build(ctx) {
   const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
-  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {}, muted: false, mute: null, setMuted };
+  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {}, muted: false, mute: null, setMuted, volume: 1, vol: null, setVolume };
   // Mute: a gain after the limiter, ramped rather than suspending the context (other code reads
   // ac.currentTime, which suspend freezes). Remembered in localStorage; settable before start().
   try { audio.muted = localStorage.getItem('fp-muted') === '1'; } catch (e) { /* private mode */ }
@@ -91,6 +91,20 @@ export async function build(ctx) {
       g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(audio.muted ? 0 : 1, t + 0.15);
     }
     syncMuteButton();
+    ctx.events.dispatchEvent(new CustomEvent('audiochange'));
+  }
+  // Volume (the settings panel's slider): 0..1 on a gain after the mute gain, with a squared taper so the
+  // slider is even to the ear; 1 is the level the mix was made at. Remembered in localStorage; settable before start().
+  try { const v = parseFloat(localStorage.getItem('fp-volume')); if (v >= 0 && v <= 1) audio.volume = v; } catch (e) { /* private mode */ }
+  function setVolume(v) {
+    audio.volume = clamp(+v || 0, 0, 1);
+    try { localStorage.setItem('fp-volume', String(audio.volume)); } catch (e) { /* private mode */ }
+    const g = audio.vol && audio.vol.gain;
+    if (g) {
+      const t = audio.ctx.currentTime;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(audio.volume * audio.volume, t + 0.05);
+    }
+    ctx.events.dispatchEvent(new CustomEvent('audiochange'));
   }
   wireMuteButton(ctx, audio);
   if (!AC) { ctx.log('audio: no AudioContext, silent'); return; }
@@ -120,8 +134,9 @@ export async function build(ctx) {
     limiter.threshold.value = -14; limiter.knee.value = 12; limiter.ratio.value = 8; limiter.attack.value = 0.005; limiter.release.value = 0.3;
     const analyser = ac.createAnalyser(); analyser.fftSize = 2048;
     const mute = ac.createGain(); mute.gain.value = audio.muted ? 0 : 1;
-    master.connect(limiter); limiter.connect(mute); mute.connect(ac.destination); master.connect(analyser);
-    audio.master = master; audio.analyser = analyser; audio.mute = mute;
+    const vol = ac.createGain(); vol.gain.value = audio.volume * audio.volume;
+    master.connect(limiter); limiter.connect(mute); mute.connect(vol); vol.connect(ac.destination); master.connect(analyser);
+    audio.master = master; audio.analyser = analyser; audio.mute = mute; audio.vol = vol;
 
     // ---- reverb send
     const verb = ac.createConvolver(); verb.buffer = makeImpulse(ac, 3.2, 3.2, rng);
