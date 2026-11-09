@@ -14,7 +14,7 @@
 // flat quad is its contact shadow. Neither casts a shadow; it makes no sound.
 import * as THREE from 'three';
 import { LANDMARKS } from '../../world.js';
-import { clamp } from '../../noise.js';
+import { clamp, hyp } from '../../noise.js';
 
 const K = LANDMARKS.castle;             // (40, 30): the keep
 const R = 78.2, B0 = 0, B1 = 90, WAIT_B = 45;
@@ -161,7 +161,7 @@ export function buildIndistinct(ctx) {
   let px = player.pos.x, pz = player.pos.z, prevTarget = sWait, first = true;
   const fwd = new THREE.Vector3();
   // which of two points is better in view: larger dot with the camera's forward
-  const viewDot = (s) => { const p = lineAt(s), dx = p.x - camera.position.x, dz = p.z - camera.position.z, l = Math.hypot(dx, dz) || 1; return (dx * fwd.x + dz * fwd.z) / l; };
+  const viewDot = (s) => { const p = lineAt(s), dx = p.x - camera.position.x, dz = p.z - camera.position.z, l = hyp(dx, dz) || 1; return (dx * fwd.x + dz * fwd.z) / l; };
 
   function place() {
     const p = lineAt(st.s);
@@ -176,7 +176,7 @@ export function buildIndistinct(ctx) {
     if (dt <= 0) return;
     const P = player.pos;
     fx = P.x; fz = P.z; fy = P.y - (player.eye ?? 1.72);
-    const jump = Math.hypot(P.x - px, P.z - pz);
+    const jump = hyp(P.x - px, P.z - pz);
     const wv = jump / dt; st.walkerV = wv;
     px = P.x; pz = P.z;
     camera.getWorldDirection(fwd);

@@ -219,10 +219,15 @@ export async function build(ctx) {
     // synthesis again through a panner at pos: the Repetend's echo (v7, src/v7/small/repetend.js). The walker's own step
     // draws from rng in the same order as before, so it sounds as it did.
     const stepRing = [];
-    for (let i = 0; i < 16; i++) stepRing.push({ seq: -1, t: 0, hurrying: false, kind: 'grass', regionKind: null, x: 0, z: 0, vol: 1, pitch: 1, verb: false, d: new Float64Array(16) });
+    for (let i = 0; i < 16; i++) stepRing.push({ seq: -1, t: 0, hurrying: false, kind: 'grass', regionKind: null, x: 0, z: 0, vol: 1, pitch: 1, verb: false, d: new Float64Array(64) });
     audio.steps = { ring: stepRing, seq: 0 };
-    let rec = stepRing[0], recN = 0, replaying = false;
-    const draw = () => { if (replaying) return rec.d[recN++ & 15]; const v = rng(); rec.d[recN++ & 15] = v; return v; };
+    // tap(src): a random stream that, while a step is being made (capturing), writes each draw into the step's record, and
+    // while it is replayed (replaying) hands the recorded draws back without touching src. The step's own draws go through
+    // tap(rng); the regions' streams (their makeRng and the shared rng in their kit) are tapped too, so a region's own step
+    // is recorded and replayed the same way and the stream behind the walker's later steps is left as it was
+    let rec = stepRing[0], recN = 0, replaying = false, capturing = false;
+    const tap = (src) => () => { if (replaying) return rec.d[recN++ & 63]; const v = src(); if (capturing) rec.d[recN++ & 63] = v; return v; };
+    const draw = tap(rng);
     const stepBurst = (buf, dur, off, at) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at ?? ac.currentTime + lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
     const _rw = {};
     function stepSound(hurrying) {
@@ -241,13 +246,14 @@ export async function build(ctx) {
       else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(p.x, p.z) > 0.2)) kind = 'crunch';
       else if (terrain.causewayDistance(p.x, p.z) < 2.5 || nearCastle || inCourt) kind = 'click';
       else if (b.marsh > 0.5) kind = 'squelch';
-      rec = stepRing[audio.steps.seq & 15]; recN = 0; replaying = false;
+      rec = stepRing[audio.steps.seq & 15]; recN = 0; replaying = false; capturing = true;
       rec.t = t0; rec.hurrying = !!hurrying; rec.kind = kind; rec.regionKind = null; rec.x = p.x; rec.z = p.z; rec.vol = vol; rec.pitch = pitch; rec.verb = nearCastle || inCourt;
       if (kind !== 'splash' && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
+        capturing = false;
         rec.regionKind = ctx.regions?.regionAt?.(p.x, p.z, _rw)?.primary || 'region'; rec.seq = audio.steps.seq++;
         out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return;
       }
-      stepSynth(rec, t0, null, out);
+      try { stepSynth(rec, t0, null, out); } finally { capturing = false; }
       rec.seq = audio.steps.seq++;
       out.connect(dryBus);
       setTimeout(() => out.disconnect(), 1200);
@@ -290,7 +296,7 @@ export async function build(ctx) {
       }
     }
     // the echo: rec played again `delay` s after it was, through a voice's panner at pos (so the voice cap counts it);
-    // the same kind, hurry, pitch, volume and draws (a region's own step draws from that region's stream). Returns
+    // the same kind, hurry, pitch, volume and draws (a region's own step too: its draws were recorded through tap). Returns
     // { at, voice } or null (too late, or out of range)
     audio.echoStep = (r, pos, delay = 1.0) => {
       if (!r || r.seq < 0) return null;
@@ -933,7 +939,7 @@ export async function build(ctx) {
     }
 
     // v4 regions: each region's sound hook (src/v4/regions/<key>.js), its bed ticked below, its cues in the table
-    const regionSnd = ctx.regions?.startSounds({ ac, rng, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: ctx.makeRng, hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
+    const regionSnd = ctx.regions?.startSounds({ ac, rng: tap(rng), master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: (salt) => tap(ctx.makeRng(salt)), hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
     audio.regionCues = regionSnd?.cueNames || [];
     audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
