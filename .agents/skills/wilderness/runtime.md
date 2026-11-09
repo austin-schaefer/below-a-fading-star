@@ -109,6 +109,10 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `bloomkernel=box` (v6.2: bloom's mips blur with three's near-box kernel, sigma equal to the radius and cut at it, instead of a Gaussian of the same variance taken to 3 sigma; the box is what draws a bright glint or light as nested soft squares)
 - `bloomprefilter=0` (v6.2: bloom's bright pass reads the scene with one bilinear tap per texel, 2×2 of the 4×4 pixels under it, instead of four taps over all of them; one tap turns a line one pixel wide into dots). `?bloomkernel=box&bloomprefilter=0` is v6's bloom
 
+### The v7 living
+
+(each v7 module's flag; see wilderness-v5.md, "## v7, the living")
+
 ### The walls
 
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `wilderness-v5.md`, "The massifs"), to compare
@@ -126,6 +130,10 @@ Quality tiers (`src/tier.js`). Without `q=`, the tier pinned in the debug panel'
 The pixel ratio is never above the display's, and never above 1.0 at medium or high on a GPU without its own memory (an integrated GPU or Apple silicon, by its renderer name; the floors stay). The adaptive ratio measures steady frames: the view turning under 0.35 rad/s and moving under 4.5 m/s for 250 ms. When their 1% low has been over the budget for 5 s of steady time (turning pauses the count), the ratio steps down 0.1 toward the floor; if the view has not held still for 20 s and every frame's 1% low has been over budget all that time, it steps instead. After 45 s with every frame's 1% low under 0.6 of the budget it steps back up 0.05, never to a ratio that failed in the last minute. After a step, a tier change or the tier probe, nothing steps for 20 s. Stalls (over 50 ms and twice the running mean) are left out. A due step waits for a steady frame right after a shadow redraw, so the composer's reallocation never lands mid-turn or on a redraw; `report().tier.steps` records each step's reason and wait. `?dpr=` sets the ratio and holds it.
 
 Shadow cadence (`src/shadows.js`): the map is redrawn on a 2 Hz clock, at once when a creature within 40 m moves a texel, and when the box (40 m ahead of you, texel-snapped) has moved 3 m, which turning does constantly. While the view turns (over 0.35 rad/s), those box moves come at most 15 times a second (`shadowdyn=`), 10 by default on a GPU without its own memory, and only after a frame within the tier's budget; after an over-budget frame the redraw waits a frame, never more than 0.12 s (8 a second). Walking moves the box at once. Texel snapping keeps the shadows still between redraws (`shots/wip/fix-dpr-shadow-cadence-*`).
+
+## Settings
+
+The gear in the top-right corner (beside the speaker on touch, always visible, also under the title card) opens the settings panel (`src/settings.js`; markup and CSS in `index.html`; `ctx.settings`). Opening releases pointer lock; the gear, Close or Escape closes it, and the view is clicked again to take the mouse back. Escape while the mouse is captured is the browser's and does not open it. It holds the volume slider (0-100 on `audio.vol`, a squared taper, 100 the mix's own level, `fp-volume` in localStorage), the mute toggle (the same `audio.setMuted` as the speaker button, `fp-muted`), the quality tier (low / medium / high, the current one marked; choosing another navigates to `?q=<tier>` with the player's `pos`, `yaw` and `pitch`, so the world reloads where they stood), the mouse capture choice (capture on click, or drag to look through `controls.setDragLook`, `fp-draglook`; hidden on touch-only devices) and ten places to teleport to (spawn and nine stand points from the docs' render poses, via `controls.placeAt`, facing the thing or the sun; no cue). With the panel closed nothing runs. `node tools/settings-test.mjs "http://localhost:PORT/?q=low&shadows=0&bloom=0"` checks all of it on a desktop and a phone viewport (`SHOTS=1` writes `shots/wip/settings-01-{desktop,touch}.png`).
 
 ## The profiler
 

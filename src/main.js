@@ -58,6 +58,7 @@ const MODULES = [
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
   ['keptfire', () => import('./v5/keptfire.js')], // v5 wonders: DN the Kept Fire (a tended hearth on the Outwash; one point light, ?keptfire=0)
   ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
+  // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -174,6 +175,7 @@ async function start() {
   ctx.addCollider = ctx.controls.addCollider;
   // HUD
   ctx.hud = buildHud(ctx);
+  import('./settings.js').then((m) => m.buildSettings(ctx)).catch((e) => console.error('[fp] settings failed:', e)); // v7-08: the gear and its panel
 
   // World modules
   const results = await Promise.allSettled(wanted.map(async ([name, load]) => {

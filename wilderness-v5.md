@@ -561,3 +561,7 @@ None blocking; each is a look for Austin's eye.
 - The Battlemented Ridge's regularity is its stated idea and stays; the Armiger's Tower's mast still crosses the Galleries from the Lynchets (−165, −105).
 - The causeway's post lamp keeps a glass box under a pyramid cap; the Leerie's standards became lamp-cages, the post lamp did not.
 - The Annals' band is absent over bearings 0–14, 105–119, 174–186, 239–261 and 324–331 (the face is not at 110–130 m there); nothing floats.
+
+## v7, the living
+
+v7 puts the living in the wilderness: the run's item 4, the nine humanoids, the six little characters, the Link-Boy, the Luminous Reach and the glyph motif, built in parallel and followed by an audio pass. Each section below is one figure or thing (`### <ID>. <Name> (<file>; <flag>)`) with its idea, what was built, behaviour in numbers, cues fired, cost and sightlines. The sites are section 5 of the placement plan (`wilderness-v4-placement.md`) and `SITES` in `src/world.js`.
