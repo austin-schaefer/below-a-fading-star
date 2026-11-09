@@ -23,6 +23,11 @@ export function startSteps(a) {
   const draw = tap(rng);
   const stepBurst = (buf, dur, off, at) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at ?? ac.currentTime + a.lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
   const _rw = {};
+  // v7.2-04: small jitter (pitch +-4 %, level +-2 dB), the first step after standing a little louder (+2 dB), and
+  // when hurrying a heel-toe pair: the toe 60-120 ms after the heel, softer and duller
+  let lastStepAt = -1e9;
+  // the walker's steps stand over the quieter v7.2 bed: +12 dB at the dry bus (the echo and the figures' steps keep their own levels)
+  const STEP_GAIN = 4;
   function stepSound(hurrying) {
     const regionSnd = a.regionSnd;
     const p = player.pos;
@@ -32,9 +37,10 @@ export function startSteps(a) {
     const nearCastle = Math.hypot(p.x - c.x, p.z - c.z) < 40 && ground < 20;
     const inCourt = Math.hypot(p.x - ct.x, p.z - ct.z) < 34;
     const t0 = ac.currentTime + a.lead;
-    const vol = (hurrying ? 1.35 : 1) * (0.8 + rng() * 0.4);
-    const pitch = 0.85 + rng() * 0.35;
-    const out = ac.createGain(); out.gain.value = 1;
+    const first = t0 - lastStepAt > 1.5; lastStepAt = t0;
+    const vol = (hurrying ? 1.35 : 1) * (first ? 1.26 : 1) * Math.pow(10, (rng() * 4 - 2) / 20);
+    const pitch = 0.96 + rng() * 0.08;
+    const out = ac.createGain(); out.gain.value = STEP_GAIN;
     let kind = 'grass';
     if (player.wading > 0.05) kind = 'splash';
     else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(p.x, p.z) > 0.2)) kind = 'crunch';
@@ -47,7 +53,7 @@ export function startSteps(a) {
       rec.regionKind = ctx.regions?.regionAt?.(p.x, p.z, _rw)?.primary || 'region'; rec.seq = audio.steps.seq++;
       out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return;
     }
-    try { stepSynth(rec, t0, null, out); } finally { capturing = false; }
+    try { stepSynth(rec, t0, null, out); if (hurrying) toe(rec, t0, out); } finally { capturing = false; }
     rec.seq = audio.steps.seq++;
     out.connect(dryBus);
     setTimeout(() => out.disconnect(), 1200);
@@ -55,17 +61,18 @@ export function startSteps(a) {
   // a step's synthesis from its record, into out at t0 (sAt: when its noise bursts start; null for now + lead)
   function stepSynth(r, t0, sAt, out) {
     const kind = r.kind, vol = r.vol, pitch = r.pitch;
-    if (kind === 'grass') {
-      const s = stepBurst(pink, 0.22, draw(), sAt), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520 * pitch; f.Q.value = 0.6;
-      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500 * pitch;
+    if (kind === 'grass') { // three variants by colour (the bandpass's centre and width), dull: a lowpass at 1.3 kHz
+      const s = stepBurst(pink, 0.22, draw(), sAt), f = ac.createBiquadFilter(), vr = GRASS[(draw() * 3) | 0]; f.type = 'bandpass'; f.frequency.value = vr[0] * pitch; f.Q.value = vr[1];
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1300 * pitch;
       const g = ac.createGain(); env(g, t0, 0.2 * vol, 0.02, 0.16);
       s.connect(f); f.connect(lp); lp.connect(g); g.connect(out);
     } else if (kind === 'click') {
-      const s = stepBurst(white, 0.06, draw(), sAt), hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 2300 * pitch; hp.Q.value = 2.2;
-      const g = ac.createGain(); env(g, t0, 0.22 * vol, 0.002, 0.045);
+      // stone: brighter than grass but not a tick: pink at 1.4-2.1 kHz (three variants), 3 ms in, 50 ms out
+      const s = stepBurst(pink, 0.08, draw(), sAt), hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = CLICK[(draw() * 3) | 0] * pitch; hp.Q.value = 1.6;
+      const g = ac.createGain(); env(g, t0, 0.26 * vol, 0.003, 0.05);
       s.connect(hp); hp.connect(g); g.connect(out);
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(190 * pitch, t0); o.frequency.exponentialRampToValueAtTime(90, t0 + 0.05);
-      const og = ac.createGain(); env(og, t0, 0.14 * vol, 0.002, 0.06); o.connect(og); og.connect(out); o.start(t0); o.stop(t0 + 0.12);
+      const og = ac.createGain(); env(og, t0, 0.14 * vol, 0.004, 0.06); o.connect(og); og.connect(out); o.start(t0); o.stop(t0 + 0.12);
       if (r.verb) send(out, 0.35);
     } else if (kind === 'splash' || kind === 'squelch') {
       const dur = kind === 'splash' ? 0.5 : 0.25;
@@ -81,13 +88,21 @@ export function startSteps(a) {
     } else { // crunch
       for (let k = 0; k < 4; k++) {
         const tt = t0 + k * (0.012 + draw() * 0.018);
-        const s = ac.createBufferSource(); s.buffer = white; s.start(tt, draw() * 2, 0.05);
-        const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = (2200 + draw() * 1800) * pitch;
-        const g = ac.createGain(); env(g, tt, 0.1 * vol, 0.001, 0.03 + draw() * 0.02);
+        const s = ac.createBufferSource(); s.buffer = white; s.start(tt, draw() * 2, 0.09);
+        const hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.Q.value = 1.4; hp.frequency.value = (1500 + draw() * 1200) * pitch; // ice: 1.5-2.7 kHz, 3 ms in
+        const g = ac.createGain(); env(g, tt, 0.1 * vol, 0.003, 0.04 + draw() * 0.02);
         s.connect(hp); hp.connect(g); g.connect(out);
       }
       send(out, 0.25);
     }
+  }
+  const GRASS = [[520, 0.6], [440, 0.8], [600, 0.5]], CLICK = [1400, 1750, 2100];
+  // the toe of a hurried step: the same ground, softer and duller, 60-120 ms after the heel
+  function toe(r, t0, out) {
+    const tt = t0 + 0.06 + draw() * 0.06, s = stepBurst(pink, 0.12, draw(), tt), f = ac.createBiquadFilter();
+    f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.value = (r.kind === 'click' ? 1100 : r.kind === 'crunch' ? 1300 : 420) * r.pitch;
+    const g = ac.createGain(); env(g, tt, 0.09 * r.vol, 0.005, 0.07);
+    s.connect(f); f.connect(g); g.connect(out);
   }
   a.stepSynth = stepSynth;
   // the echo: rec played again `delay` s after it was, through a voice's panner at pos (so the voice cap counts it);
@@ -123,7 +138,7 @@ export function startSteps(a) {
     else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(x, z) > 0.2)) kind = 'crunch';
     else if (terrain.causewayDistance(x, z) < 2.5 || nearCastle || inCourt) kind = 'click';
     else if (b.marsh > 0.5) kind = 'squelch';
-    r.t = v.t0; r.kind = kind; r.x = x; r.z = z; r.vol = o.vol * (0.8 + figRng() * 0.4); r.pitch = 0.85 + figRng() * 0.35; r.verb = nearCastle || inCourt;
+    r.t = v.t0; r.kind = kind; r.x = x; r.z = z; r.vol = o.vol * Math.pow(10, (figRng() * 4 - 2) / 20); r.pitch = 0.96 + figRng() * 0.08; r.verb = nearCastle || inCourt;
     for (let i = 0; i < 64; i++) r.d[i] = figRng();
     const out = ac.createGain(); out.gain.value = 1; out.connect(v.in);
     const keep = rec, keepN = recN;

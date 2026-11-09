@@ -122,11 +122,13 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   const dur = 0.22 + rng() * 0.12;
   const o = ac.createOscillator(); o.type = 'sawtooth';
   o.frequency.setValueAtTime(420 * pitch, t0); o.frequency.exponentialRampToValueAtTime(300 * pitch, t0 + dur);
-  const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.5;
-  const g = ac.createGain(); g.gain.value = 0.5; am.connect(amg); amg.connect(g.gain);
-  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 2300 * pitch, 4);
+  // v7.2-04: the hoarseness a shallow tremolo (depth 0.2, was full: its troughs on the saw's edges clicked) over a buzz
+  // darkened under a lowpass at 3.5x its pitch, the upper formant lower (1.9 kHz, was 2.3)
+  const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.2;
+  const g = ac.createGain(); g.gain.value = 0.8; am.connect(amg); amg.connect(g.gain);
+  const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 1900 * pitch, 4), dk = filt('lowpass', 1470 * pitch, 0.7);
   const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(0.16, t0 + 0.025); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
+  o.connect(dk); dk.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
   o.start(t0); o.stop(t0 + dur + 0.02); am.start(t0); am.stop(t0 + dur + 0.02);
 }
 function peaCry(k, pos, o = {}) {
