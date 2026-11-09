@@ -2,7 +2,7 @@
 // places to teleport to. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
 // ctx.controls (controls.js), ctx.quality (tier.js) and ctx.terrain lazily, because those build after the hud.
-import { LANDMARKS, SITES, SPAWN, SUN } from './world.js';
+import { LANDMARKS, REGION_CARDS, SITES, SPAWN, SUN } from './world.js';
 
 const TIERS = ['low', 'medium', 'high'];
 
@@ -16,6 +16,7 @@ const HAND = { // stand points kept from the first list; look: a point, a landma
   court: { x: LANDMARKS.court.x, z: LANDMARKS.court.z, look: 'sun' },
   arcature: { x: LANDMARKS.arcature.x, z: LANDMARKS.arcature.z, look: { x: 200, z: 60 } },
   moraine: { x: 40, z: -215, look: LANDMARKS.moraine },
+  pit: { x: 192, z: 193, look: LANDMARKS.pit }, // the lip's south-west side
   gradine: { x: LANDMARKS.gradine.x, z: LANDMARKS.gradine.z, look: { x: 287.8, z: -192.6 } },
   wood: { x: SITES.lightMoss.x + 6, z: SITES.lightMoss.z, look: SITES.lightMoss },
   bridge: { x: LANDMARKS.bridge.at.x, z: LANDMARKS.bridge.at.z, look: { x: 257, z: 215 } },
@@ -49,12 +50,13 @@ const offToward = (c, d) => { // d metres from (c.x, c.z) toward spawn
 function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
-    if (!L.name) continue;
+    if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
     const h = HAND[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
+  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];
     if (x != null) out.push({ name: S.name, group: 'The living', x, z, yaw, pitch });

@@ -109,7 +109,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the eighteen living)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 18, n);
+  check('teleport: the whole map (spawn, every named landmark, the three region cards, the Taker standing for the Adust, the eighteen living)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 3 + 18 - 1, n);
   check('teleport: Places and The living headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -177,6 +177,20 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const nu2 = new URL(await page.evaluate(() => window.__nav));
   check('quality: carries the debug panel and every parameter', nu2.searchParams.get('debug') === '1' && nu2.searchParams.get('shadows') === '0' && nu2.searchParams.get('bloom') === '0' && nu2.searchParams.get('q') === 'high', nu2.href);
   await page.evaluate(() => { window.__fp.debug.toggle(false); window.__fp.settings.close(); });
+  await context.close();
+}
+
+// ---- region cards (v7.1): the bottom-of-screen card for the Adust, the Lynchets and Kenching Flats, and Medlar Close beating the Bletting
+{
+  const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  for (const [x, z, want] of [[-275, -15, 'The Taker of Altitudes'], [130, -60, 'Medlar Close'], [-195, -113, 'The Lynchets'], [60, 250, 'Kenching Flats'], [55, 274, 'Rest in Starlight'], [185, -70, 'Sleeper\u2019s Orchard'], [195, -100, 'Sleeper\u2019s Orchard'], [200, 185, 'The Pit']]) {
+    await page.evaluate(([x, z]) => { const p = window.__fp.player; p.pos.set(x, window.__fp.terrain.heightAt(x, z) + p.eye, z); window.__fp.hud.update(0.1); }, [x, z]);
+    const got = await page.textContent('#place-name');
+    check(`cards: (${x}, ${z}) shows ${want}`, got === want, got);
+  }
+  await page.evaluate(() => { const p = window.__fp.player; p.pos.set(128, window.__fp.terrain.heightAt(128, 5) + p.eye, 5); window.__fp.hud.update(0.1); });
+  const lee = await page.evaluate(() => { const l = document.getElementById('place-line'); return { name: document.getElementById('place-name').textContent, lines: Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)), text: l.textContent }; });
+  check('cards: (128, 5) A Lamplighter\u2019s Standards, the line on two lines', lee.name === 'A Lamplighter\u2019s Standards' && lee.lines === 2 && lee.text.includes('\n'), lee);
   await context.close();
 }
 
