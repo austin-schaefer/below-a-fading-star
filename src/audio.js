@@ -29,7 +29,13 @@
 //   lamp-tick (a Leerie standard lighting, v5/lights.js): a click and the flame's breath, 0.8 s
 //   kept-fire (hearth pos, { flare?, strength? }): a fire's crackle, 1.8 s, pops and a hiss: 70 m; flare: a roar swelling under thick crackle and a low whump, 3.4 s: 130 m
 //   hawser-groan (the chain's midpoint): iron dragged one link through the paving, a sagging groan, the grind, a long ring, 7.4 s: the whole bowl
+//   v7, the living (src/audio/living.js, which lists each one's make and range): taker-click, taker-murmur, coheirs-knot,
+//     coheirs-hum ({ start } / { stop }: a loop), sexton-bite, sexton-throw, sleeper-breath, sleeper-fruit, stylite-creak,
+//     accrescent-step, moles-click, thurifer-chain, thurifer-hiss ({ start } / { stop }: a loop that follows the figure),
+//     leerie-click, bather-pour, leerie-step and linkboy-step (footsteps by the ground under them, through stepSynth);
+//     the Link-Boy's flutter is a loop by distance alone. audio.living.loops holds the loops' state for tests
 import { makeNoiseBuffer, makeImpulse } from './audio/synth.js';
+import { startLiving } from './audio/living.js';
 import { hyp } from './noise.js';
 
 // The touch mute button (#mute, top right; shown on touch devices only). A short tap toggles
@@ -313,6 +319,31 @@ export async function build(ctx) {
       return { at, voice: v };
     };
     const v0 = (now) => now + lead; // a voice's own start (voice() sets until from it)
+    // a figure's footstep (v7: the Leerie, the Link-Boy): the walker's synthesis for the ground under pos, through a voice's
+    // panner there (linear to silence at o.range), at o.vol of a walker's step. Its draws come from a private stream through
+    // a record of its own (replayed as the echo is), so neither the walker's ring nor his stream is touched
+    const figRng = ctx.makeRng(9171);
+    const figRec = { seq: 0, t: 0, hurrying: false, kind: 'grass', regionKind: null, x: 0, z: 0, vol: 1, pitch: 1, verb: false, d: new Float64Array(64) };
+    function figureStep(pos, o) {
+      const v = voice(pos, { model: 'linear', ref: o.ref, roll: 1, range: o.range, dur: 0.6, air: 60 });
+      if (!v) return null;
+      const r = figRec, x = pos.x, z = pos.z, b = terrain.biomeAt(x, z), wl = terrain.waterLevelAt?.(x, z);
+      const c = landmarks.castle, ct = landmarks.court, nearCastle = hyp(x - c.x, z - c.z) < 40 && pos.y < 20, inCourt = hyp(x - ct.x, z - ct.z) < 34;
+      let kind = 'grass';
+      if (wl != null && wl > pos.y + 0.05) kind = 'splash';
+      else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(x, z) > 0.2)) kind = 'crunch';
+      else if (terrain.causewayDistance(x, z) < 2.5 || nearCastle || inCourt) kind = 'click';
+      else if (b.marsh > 0.5) kind = 'squelch';
+      r.t = v.t0; r.kind = kind; r.x = x; r.z = z; r.vol = o.vol * (0.8 + figRng() * 0.4); r.pitch = 0.85 + figRng() * 0.35; r.verb = nearCastle || inCourt;
+      for (let i = 0; i < 64; i++) r.d[i] = figRng();
+      const out = ac.createGain(); out.gain.value = 1; out.connect(v.in);
+      const keep = rec, keepN = recN;
+      rec = r; recN = 0; replaying = true;
+      try { if (kind === 'splash' || !regionSnd?.step(x, z, v.t0, r.vol, r.pitch, out)) stepSynth(r, v.t0, v.t0, out); }
+      finally { replaying = false; rec = keep; recN = keepN; }
+      setTimeout(() => out.disconnect(), 1200);
+      return v;
+    }
     const prevStep = player.onStep;
     player.onStep = (hurrying) => { try { stepSound(hurrying); } catch (e) { /* never break the frame loop */ } prevStep?.(hurrying); };
 
@@ -941,6 +972,8 @@ export async function build(ctx) {
     // v4 regions: each region's sound hook (src/v4/regions/<key>.js), its bed ticked below, its cues in the table
     const regionSnd = ctx.regions?.startSounds({ ac, rng: tap(rng), master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => lead, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: (salt) => tap(ctx.makeRng(salt)), hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
     audio.regionCues = regionSnd?.cueNames || [];
+    // v7, the living: the figures' sounds (src/audio/living.js)
+    const living = audio.living = startLiving({ ac, ctx, camera, cueBus, verbIn, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, setPos, figureStep });
     audio.cue = (name, position, opts) => {
       if (ac.state === 'closed') return;
       if (ctx.hush?.cue(name, position || camera.position)) return; // v5: AR the Occultation hushes the birds under its band
@@ -980,6 +1013,23 @@ export async function build(ctx) {
         else if (name === 'hawser-groan') hawserGroan(position);
         else if (name === 'lamp-tick') lampTick(position);
         else if (name === 'kept-fire') keptFire(position, opts);
+        else if (name === 'taker-click') living.takerClick(position);
+        else if (name === 'taker-murmur') living.takerMurmur(position);
+        else if (name === 'coheirs-knot') living.coheirsKnot(position);
+        else if (name === 'coheirs-hum') living.hum(position, opts);
+        else if (name === 'sexton-bite') living.sextonBite(position);
+        else if (name === 'sexton-throw') living.sextonThrow(position);
+        else if (name === 'sleeper-breath') living.sleeperBreath(position);
+        else if (name === 'sleeper-fruit') living.sleeperFruit(position);
+        else if (name === 'stylite-creak') living.styliteCreak(position);
+        else if (name === 'accrescent-step') living.accrescentStep(position);
+        else if (name === 'moles-click') living.molesClick(position);
+        else if (name === 'thurifer-chain') living.thuriferChain(position);
+        else if (name === 'thurifer-hiss') living.hiss(position, opts);
+        else if (name === 'leerie-step') living.leerieStep(position);
+        else if (name === 'leerie-click') living.leerieClick(position);
+        else if (name === 'linkboy-step') living.linkboyStep(position);
+        else if (name === 'bather-pour') living.batherPour(position);
         else regionSnd?.cue(name, position, opts);
       } catch (e) { if (audio.debug) throw e; }
     };
@@ -1066,7 +1116,7 @@ export async function build(ctx) {
     let lastFrame = performance.now();
     const fallTimer = setInterval(() => {
       if (ac.state === 'closed') { clearInterval(fallTimer); return; }
-      if (performance.now() - lastFrame > 250) fallTick(0.1, performance.now() / 1000, ac.currentTime);
+      if (performance.now() - lastFrame > 250) { fallTick(0.1, performance.now() / 1000, ac.currentTime); living.tick(); }
     }, 100);
     function update(dt, t) {
       lastFrame = performance.now();
@@ -1082,6 +1132,7 @@ export async function build(ctx) {
       const step = 0.1 - tick; tick = 0.1;
       const px = cam.x, pz = cam.z;
       fallTick(step, t, now);
+      living.tick(); // v7 loops: follow, release, reopen
       regionSnd?.tick(px, pz, step, t, now); // v4 regions
       // --- wind
       const b = terrain.biomeAt(px, pz);
