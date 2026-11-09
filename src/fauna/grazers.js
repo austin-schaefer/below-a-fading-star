@@ -2,6 +2,8 @@
 // moor south of the keep above the fen's rim, one grazing the edge of Medlar Close. They amble back toward home
 // after they bolt, so meeting them tells you where you are.
 // Four instanced meshes (bodies, heads+antlers, upper legs, lower legs); poses are composed per frame from matrices.
+// They keep out of the colliders (v7.1): every heading they take is tested against them, a step into one slides
+// along it, and a bolting herd follows its leader's turn off a wall. tools/grazers-test.mjs drives them.
 import * as THREE from 'three';
 import { Mesher, clamp, lerp } from './geo.js';
 import { hyp } from '../noise.js';
@@ -50,7 +52,7 @@ export function buildGrazers(ctx, opts = {}) {
   const uppers = mk(legGeometry(UP_LEN, 0.065, 0.04), N * 4), lowers = mk(legGeometry(LO_LEN, 0.038, 0.022), N * 4);
   const col = new THREE.Color();
   for (let i = 0; i < N; i++) {
-    col.setHSL(0.72, 0.05, 0.62 + rng() * 0.2);
+    col.setHSL(0.06, 0.12, 0.66 + rng() * 0.2); // a warm grey, the low sun's rust in the flank (v7.1)
     for (const m of [bodies, heads]) m.setColorAt(i, col);
     for (let k = 0; k < 4; k++) { uppers.setColorAt(i * 4 + k, col); lowers.setColorAt(i * 4 + k, col); }
   }
@@ -59,8 +61,48 @@ export function buildGrazers(ctx, opts = {}) {
   // terrain.slopeAt's own sums with a scratch normal (slopeAt allocates a Vector3 per call; this runs per frame)
   const nTmp = new THREE.Vector3();
   const slopeAt = (x, z) => Math.acos(clamp(terrain.normalAt(x, z, nTmp).y, -1, 1));
+  // v7.1: the colliders (the list controls.js reads), bucketed once into an 8 m grid over the bowl with each circle
+  // grown by the body's radius; built at the first update, after every module has registered its own, and again
+  // only if the list's length changes. Capped colliders count where the grazer's ground is within their height.
+  const CL = ctx.controls?.state?.colliders || [];
+  const walkLimit = ctx.mountains?.walkLimit;
+  const BODY = 0.6, CELL = 8, G0 = -320, GN = 80;
+  let gridLen = -1, cellStart = null, cellIdx = null;
+  function buildGrid() {
+    gridLen = CL.length;
+    const counts = new Int32Array(GN * GN + 1);
+    const span = (c, f) => {
+      const r = c.r + BODY;
+      const i0 = Math.max(0, Math.floor((c.x - r - G0) / CELL)), i1 = Math.min(GN - 1, Math.floor((c.x + r - G0) / CELL));
+      const j0 = Math.max(0, Math.floor((c.z - r - G0) / CELL)), j1 = Math.min(GN - 1, Math.floor((c.z + r - G0) / CELL));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) f(j * GN + i);
+    };
+    for (const c of CL) span(c, (k) => counts[k + 1]++);
+    for (let k = 1; k <= GN * GN; k++) counts[k] += counts[k - 1];
+    cellStart = counts.slice();
+    cellIdx = new Int32Array(counts[GN * GN]);
+    const fill = counts.slice(0, GN * GN);
+    CL.forEach((c, ci) => span(c, (k) => { cellIdx[fill[k]++] = ci; }));
+  }
+  // the collider (index) whose circle, grown by pad, holds (x, z), or -1; the ground's y is read only for a capped one
+  const hitAt = (x, z, pad) => {
+    if (cellStart === null) return -1;
+    const i = Math.floor((x - G0) / CELL), j = Math.floor((z - G0) / CELL);
+    if (i < 0 || j < 0 || i >= GN || j >= GN) return -1;
+    const k = j * GN + i;
+    for (let q = cellStart[k], e = cellStart[k + 1]; q < e; q++) {
+      const c = CL[cellIdx[q]], r = c.r + pad, dx = x - c.x, dz = z - c.z;
+      if (dx * dx + dz * dz >= r * r) continue;
+      if (c.h !== undefined) { const gy = terrain.heightAt(x, z); if (gy > c.y + c.h || gy < c.y - 0.5) continue; }
+      return cellIdx[q];
+    }
+    return -1;
+  };
+  const blocked = (x, z, pad) => hitAt(x, z, pad) >= 0;
   const valid = (x, z) => {
     if (Math.hypot(x, z) > 280) return false;
+    if (walkLimit && x * x + z * z > 240 * 240 && hyp(x, z) > walkLimit(x, z) - 2) return false;
+    if (blocked(x, z, BODY)) return false;
     const K = ctx.landmarks.castle;
     if (Math.hypot(x - K.x, z - K.z) < 40) return false; // not under the keep's walls
     if (terrain.causewayDistance(x, z) < 5.5) return false;
@@ -85,19 +127,24 @@ export function buildGrazers(ctx, opts = {}) {
     });
   }
   const n = A.length;
-  (ctx.herds = ctx.herds || []).push({ animals: A, herd });
-  ctx.grazers = ctx.grazers || { animals: A, herd };
+  // the herd's own hook (v7.1): update(dt, t) steps it once, so tools/grazers-test.mjs can run it accelerated
+  const entry = { animals: A, herd, home: [HX, HZ], update: (dt, t) => update(dt, t) };
+  (ctx.herds = ctx.herds || []).push(entry);
+  ctx.grazers = ctx.grazers || entry;
 
   const M = new THREE.Matrix4(), Mh = new THREE.Matrix4(), Mu = new THREE.Matrix4(), Ml = new THREE.Matrix4(), T = new THREE.Matrix4(), R = new THREE.Matrix4();
   const cam = camera.position;
-  const stepOk = (x, z, dx, dz, ahead) => valid(x + dx * ahead, z + dz * ahead);
+  const stepOk = (x, z, dx, dz, ahead) => valid(x + dx * ahead, z + dz * ahead) && !blocked(x + dx * 1.2, z + dz * 1.2, BODY) && !blocked(x + dx * ahead * 0.5, z + dz * ahead * 0.5, BODY);
+  // headings tried around the wanted one: straight, then ±23°, ±45°, ±75°, ±90°, ±110°
+  const OFFS = [0, 0.4, -0.4, 0.8, -0.8, 1.3, -1.3, Math.PI / 2, -Math.PI / 2, 1.9, -1.9];
+  let lastOff = 0;
 
   function steer(a, hx, hz, ahead) {
     // returns a heading (angle) near the desired one that is valid ahead, or null
     const base = Math.atan2(hx, hz);
-    for (const o of [0, 0.4, -0.4, 0.8, -0.8, 1.3, -1.3, 1.9, -1.9]) {
-      const ang = base + o;
-      if (stepOk(a.x, a.z, Math.sin(ang), Math.cos(ang), ahead)) return ang;
+    for (let k = 0; k < OFFS.length; k++) {
+      const ang = base + OFFS[k];
+      if (stepOk(a.x, a.z, Math.sin(ang), Math.cos(ang), ahead)) { lastOff = OFFS[k]; return ang; }
     }
     return null;
   }
@@ -107,6 +154,19 @@ export function buildGrazers(ctx, opts = {}) {
   };
 
   function update(dt, t) {
+    if (gridLen !== CL.length) {
+      buildGrid();
+      for (let i = 0; i < n; i++) {
+        const a = A[i];
+        for (let k = 0; k < 4; k++) {
+          const ci = hitAt(a.x, a.z, BODY);
+          if (ci < 0) break;
+          const c = CL[ci], dx = a.x - c.x, dz = a.z - c.z, d = hyp(dx, dz) || 1, r = c.r + BODY + 0.05;
+          a.x = c.x + (dx / d) * r; a.z = c.z + (dz / d) * r;
+        }
+        a.wx = a.x; a.wz = a.z;
+      }
+    }
     // herd-level awareness
     let dmin = 1e9, cx = 0, cz = 0;
     for (let i = 0; i < n; i++) { const a = A[i]; dmin = Math.min(dmin, hyp(cam.x - a.x, cam.z - a.z)); cx += a.x; cz += a.z; }
@@ -135,7 +195,18 @@ export function buildGrazers(ctx, opts = {}) {
         else {
           const ang = steer(a, a.fx, a.fz, 4);
           if (ang === null) a.flee = 0;
-          else { a.fx = Math.sin(ang); a.fz = Math.cos(ang); turnTo(a, ang, 4, dt); goalSpeed = 6.8; gaitStride = 3.6; a.liftGoal = 0.55; }
+          else {
+            a.fx = Math.sin(ang); a.fz = Math.cos(ang); turnTo(a, ang, 4, dt); goalSpeed = 6.8; gaitStride = 3.6; a.liftGoal = 0.55;
+            // the leader (the first) turned off its line by a wall: the rest of the bolting herd takes its new line
+            if (i === 0 && lastOff !== 0) {
+              for (let j = 1; j < n; j++) {
+                const b = A[j];
+                if (b.state !== 'flee') continue;
+                const bang = ang + b.off * 0.6;
+                b.fx = Math.sin(bang); b.fz = Math.cos(bang);
+              }
+            }
+          }
           if (goalSpeed > 0) a.flee -= a.speed * dt;
           if (a.flee <= 0) { a.state = 'settle'; a.timer = 3 + rng() * 3; }
         }
@@ -173,7 +244,15 @@ export function buildGrazers(ctx, opts = {}) {
 
       a.speed += (goalSpeed - a.speed) * Math.min(1, dt * (goalSpeed > 3 ? 4 : 3));
       if (a.speed > 0.02) {
-        a.x += Math.sin(a.yaw) * a.speed * dt; a.z += Math.cos(a.yaw) * a.speed * dt;
+        let nx = a.x + Math.sin(a.yaw) * a.speed * dt, nz = a.z + Math.cos(a.yaw) * a.speed * dt;
+        const ci = hitAt(nx, nz, BODY);
+        if (ci >= 0) {
+          // slide: out to the grown circle's edge along the line from its centre, kept only if that is clear too
+          const c = CL[ci], dx = nx - c.x, dz = nz - c.z, d = hyp(dx, dz) || 1, r = c.r + BODY + 0.01;
+          nx = c.x + (dx / d) * r; nz = c.z + (dz / d) * r;
+          if (hitAt(nx, nz, BODY) >= 0) { nx = a.x; nz = a.z; a.speed *= 0.5; }
+        }
+        a.x = nx; a.z = nz;
         a.gait += (a.speed / gaitStride) * Math.PI * 2 * dt;
       }
       const lg = a.liftGoal > a.lift ? 5 : 2.2;

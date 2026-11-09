@@ -62,6 +62,7 @@ const RIBBON_FRAG = /* glsl */`
   uniform vec4 uRocks[${MAX_ROCKS}]; // s, d, radius, on
   varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld;
   #include <fog_pars_fragment>
+  #define FLOW_T 2.0
   ${SKY_GLSL}
   vec2 slope2(vec2 uv) { return (texture2D(uTex, uv).rg - 0.5) * 2.0; }
   float mask(vec2 uv) { return texture2D(uTex, uv).a; }
@@ -82,15 +83,24 @@ const RIBBON_FRAG = /* glsl */`
     vec3 V = toCam / dist;
     float far = 1.0 / (1.0 + dist * 0.01);
 
-    // flow space: ripples stretched along the stream and carried down it, faster where it runs
+    // flow space: ripples stretched along the stream and carried down it, faster where it runs. The carry is a
+    // flow map's two phases: each runs FLOW_T seconds from where it started and fades out as it restarts, the
+    // other half a period behind, so the speed's change along the stream never shears the pattern by more than
+    // FLOW_T seconds' worth (carried by the whole of uTime, it crushed the texture into streaks and noise wherever
+    // the speed changed, worse every minute); the phases are staggered across the water so it never pulses as one
     float t = uTime;
-    vec2 a = slope2(vec2(d * 0.16, (s - sp * t) * 0.075));
-    vec2 b = slope2(vec2(d * 0.37 + 0.31, (s - sp * 1.25 * t) * 0.19));
-    vec2 c = slope2(vec2(d * 0.85 + 0.7, (s - sp * 0.85 * t) * 0.47));
+    float fJit = mask(P.xz * 0.031 + 0.5);
+    float fF0 = fract(t / FLOW_T + fJit), fF1 = fract(fF0 + 0.5);
+    float fT0 = fF0 * FLOW_T, fT1 = fF1 * FLOW_T, fW0 = 1.0 - abs(2.0 * fF0 - 1.0);
+    vec2 a = mix(slope2(vec2(d * 0.16 + 0.43, (s - sp * fT1) * 0.075 + 0.29)), slope2(vec2(d * 0.16, (s - sp * fT0) * 0.075)), fW0);
+    vec2 b = mix(slope2(vec2(d * 0.37 + 0.74, (s - sp * 1.25 * fT1) * 0.19 + 0.53)), slope2(vec2(d * 0.37 + 0.31, (s - sp * 1.25 * fT0) * 0.19)), fW0);
+    vec2 c = mix(slope2(vec2(d * 0.85 + 0.19, (s - sp * 0.85 * fT1) * 0.47 + 0.67)), slope2(vec2(d * 0.85 + 0.7, (s - sp * 0.85 * fT0) * 0.47)), fW0);
+    // two uncorrelated phases half and half are flatter than either: give back the lost relief (1 / sqrt(w^2 + (1-w)^2))
+    float fNorm = inversesqrt(fW0 * fW0 + (1.0 - fW0) * (1.0 - fW0));
     // a slow cross-swirl so slow water still breathes
     vec2 sw = slope2(vec2(P.x * 0.05 + t * 0.006, P.z * 0.05 - t * 0.004));
     float amp = 0.035 + 0.045 * sp + rough * 0.16;
-    vec2 sl = (a * 0.5 + b * 0.4 + c * 0.35 * far) * amp + sw * 0.025;
+    vec2 sl = (a * 0.5 + b * 0.4 + c * 0.35 * far) * amp * fNorm + sw * 0.025;
     // standing waves over the stones of the bed where it runs fast
     sl.y += sin(s * 2.1 + d * 0.7 + mask(vec2(d * 0.3, s * 0.05)) * 6.0) * 0.03 * smoothstep(1.0, 3.0, sp);
     vec3 T = vec3(vTan.x, 0.0, vTan.y), B = vec3(vTan.y, 0.0, -vTan.x);
@@ -123,8 +133,12 @@ const RIBBON_FRAG = /* glsl */`
 
     // foam: white water on the rapids and the ravine cascade, streaks along the swift edges,
     // a cushion and a wake behind every boulder in the stream
-    float streak = mask(vec2(d * 0.9, (s - sp * t) * 0.11)) * 0.55 + mask(vec2(d * 2.3 + 0.4, (s - sp * 1.15 * t) * 0.3)) * 0.45;
-    float churn = mask(vec2(d * 0.6 + t * 0.03, (s - sp * t) * 0.35)) * 0.5 + mask(vec2(d * 1.7, (s - sp * 1.4 * t) * 0.9)) * 0.5;
+    // (the same two phases; a mask's mean is kept as they cross, its spread given back as for the slopes)
+    float streak = mix(mask(vec2(d * 0.9 + 0.37, (s - sp * fT1) * 0.11 + 0.41)) * 0.55 + mask(vec2(d * 2.3 + 0.83, (s - sp * 1.15 * fT1) * 0.3 + 0.17)) * 0.45,
+                       mask(vec2(d * 0.9, (s - sp * fT0) * 0.11)) * 0.55 + mask(vec2(d * 2.3 + 0.4, (s - sp * 1.15 * fT0) * 0.3)) * 0.45, fW0);
+    float churn = mix(mask(vec2(d * 0.6 + t * 0.03 + 0.59, (s - sp * fT1) * 0.35 + 0.23)) * 0.5 + mask(vec2(d * 1.7 + 0.31, (s - sp * 1.4 * fT1) * 0.9 + 0.71)) * 0.5,
+                      mask(vec2(d * 0.6 + t * 0.03, (s - sp * fT0) * 0.35)) * 0.5 + mask(vec2(d * 1.7, (s - sp * 1.4 * fT0) * 0.9)) * 0.5, fW0);
+    streak = 0.5 + (streak - 0.5) * fNorm; churn = 0.5 + (churn - 0.5) * fNorm;
     float foam = smoothstep(0.72 - rough * 0.55, 0.92 - rough * 0.45, churn) * smoothstep(0.02, 0.25, rough);
     float edgeLine = (1.0 - smoothstep(0.0, 0.22, dep)) * smoothstep(1.0, 3.0, sp);
     foam = max(foam, edgeLine * smoothstep(0.6, 0.8, streak) * 0.6);
@@ -272,6 +286,9 @@ export function buildRiver(ctx, tex) {
       const p = at(L, s), tg = tangent(L, s, 1);
       const hw = widthAt(s), ext = hw + (ravine ? 0.6 : 2.0);
       const y = levelAt(s);
+      // the speed averaged over 8 m: the surface's gradient steps it from 1.8 to 4.2 m/s within a metre or two,
+      // and the carry's shear (above) is that change times the phase's length
+      let spd = 0; for (let k = -8; k <= 8; k++) spd += speedAt(s + k * 0.5) / 17;
       // downstream direction and the flow coordinate run the same way on both strips
       const fs = dir > 0 ? s : -s;
       const ftx = tg.tx * dir, ftz = tg.tz * dir;
@@ -281,7 +298,7 @@ export function buildRiver(ctx, tex) {
         const x = p.x + ftz * d, z = p.z - ftx * d;
         pos.push(x, y, z);
         flow.push(fs, d, hw, y - meshH(x, z));
-        misc.push(speedAt(s), roughAt(s), wallAt(s), ravine);
+        misc.push(spd, roughAt(s), wallAt(s), ravine);
         tan.push(ftx, ftz);
       }
       rows++;

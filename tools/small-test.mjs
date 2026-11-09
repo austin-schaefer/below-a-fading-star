@@ -5,8 +5,8 @@
 // under 6.7 m; it does not move while the walker stands; it stays on the ditch line (r 78.2 from the keep, the drawn floor)
 // within 0.3 m. The Repetend, over a walk in to the Lynchets' east wall, along it and away: it sits or hops within 0.1 m of a
 // wall-top's height and inside the Lynchets; it follows only within 18 m, and goes home beyond; each step near it is echoed
-// 1.0 s later. The Simulacrum: the face forms only after flicker has been under 0.5 for 1 s, and comes apart when it rises
-// past 0.85; 180 gnats a column at high and 90 at low. Cost: stats() within 5 draws and 5k triangles, no lights, and the
+// 1.0 s later, and (v7.1) it perches within 6 m of P3 or P4 and flicks its tail and hops as each echo sounds and every 6-10 s on its own. The Simulacrum: the face forms only after flicker has been under 0.5 for 1 s, and comes apart when it rises
+// past 0.85; 240 gnats a column at high and 120 at low (v7.1; 180 and 90 before). Cost: stats() within 5 draws and 5k triangles, no lights, and the
 // module's CPU.
 // Usage: node tools/small-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
@@ -105,7 +105,16 @@ const bird = await walk([
   const last = bird[bird.length - 1];
   r.birdFollow = { wrong: wrong.length, nearN: near.length, inBand: near.filter((o) => o.walkerD <= 6.5).length, flits: last.flits, hops: last.hops, home: Math.hypot(last.x - birdHome.x, last.z - birdHome.z), farFollowing: bird.filter((o) => o.leg === 'gone' && o.following).length };
   r.birdEcho = { echoes: last.echoes, steps: last.seq, maxVoices: Math.max(...bird.map((o) => o.voices)) };
+  r.birdMove = { echoes: last.echoes, flicks: last.flicks, echoHops: last.echoHops, idleHops: last.idleHops };
 }
+// v7.1: its perch lies within 6 m of P3 or P4 (it is found from the lead)
+r.perch = await page.evaluate(async () => {
+  const R = await import('/src/v4/paths/routes.js'), rp = window.__fp.small.repetend, w = rp.walls.find((x) => x.i === rp.home.w);
+  const x = w.ax + w.dx * rp.home.i * 0.1, z = w.az + w.dz * rp.home.i * 0.1;
+  let d = Infinity;
+  for (const L of R.leads().list) if (L.id === 'P3' || L.id === 'P4') for (const S of L.lines) for (const q of S) d = Math.min(d, Math.hypot(q.x - x, q.z - z));
+  return { x, z, d, tall: w.top[rp.home.i] - window.__fp.terrain.heightAt(x, z) };
+});
 // the echo's timing: a step recorded now is replayed by the bird exactly 1.0 s after it (audio.echoStep's scheduled time)
 r.echoTiming = await page.evaluate(async () => {
   const fp = window.__fp, a = fp.audio, p = fp.player, b = fp.small.repetend.at();
@@ -170,8 +179,9 @@ const checks = [
   ['Repetend: on wall-tops (0.1 m) inside the Lynchets', r.birdTop.n > 50 && r.birdTop.err <= 0.1 && r.birdTop.out === 0, `${r.birdTop.n} frames on a top, worst ${r.birdTop.err.toFixed(3)} m off it, ${r.birdTop.out} outside`],
   ['Repetend: follows only within 18 m, home beyond', r.birdFollow.wrong === 0 && r.birdFollow.farFollowing === 0 && r.birdFollow.home < 1 && r.birdFollow.hops + r.birdFollow.flits > 3, `${r.birdFollow.wrong} frames following wrongly; ${r.birdFollow.hops} hops, ${r.birdFollow.flits} flits; ${r.birdFollow.inBand}/${r.birdFollow.nearN} near frames within 6.5 m; ends ${r.birdFollow.home.toFixed(2)} m from home`],
   ['Repetend: echoes each step 1.0 s late, at the bird', r.echoTiming.length >= 2 && r.echoTiming.every((e) => Math.abs(e.dt - 1) <= 0.05 && Math.hypot(e.x - e.bx, e.z - e.bz) < 0.5) && r.birdEcho.echoes > 3, `${r.echoTiming.length} timed: dt ${r.echoTiming.map((e) => e.dt.toFixed(3)).join(', ')} s; ${r.birdEcho.echoes} echoes over the walk (${r.birdEcho.steps} steps), most voices ${r.birdEcho.maxVoices}`],
+  ['Repetend (v7.1): perched by the lead; it flicks and hops at each echo and on its own', r.perch.d <= 6.5 && r.birdMove.flicks >= r.birdMove.echoes - 2 && r.birdMove.flicks > 3 && r.birdMove.echoHops > 0 && r.birdMove.idleHops > 0, `perch (${r.perch.x.toFixed(1)}, ${r.perch.z.toFixed(1)}) ${r.perch.d.toFixed(1)} m from P3/P4, its top ${r.perch.tall.toFixed(2)} m over the ground; ${r.birdMove.flicks} flicks for ${r.birdMove.echoes} echoes, ${r.birdMove.echoHops} hops at an echo, ${r.birdMove.idleHops} on its own`],
   ['Simulacrum: the face forms after 1 s under 0.5, unravels past 0.85', r.faceRule.early === 0 && r.faceRule.formed >= 0.99 && r.faceRule.held && r.faceRule.rise && r.faceRule.end === 'columns' && r.faceRule.endU === 0, JSON.stringify(r.faceRule)],
-  ['Simulacrum: 180 gnats a column at high, 90 at low', r.per.per === 180 && r.per.N === 720 && r.low.per === 90 && r.low.N === 360, `high ${r.per.N} (${r.per.per} a column), low ${r.low.N} (${r.low.per})`],
+  ['Simulacrum: 240 gnats a column at high, 120 at low', r.per.per === 240 && r.per.N === 960 && r.low.per === 120 && r.low.N === 480, `high ${r.per.N} (${r.per.per} a column), low ${r.low.N} (${r.low.per})`],
   ['Cost: within 5 draws, 5k triangles, no lights', r.stats.calls <= 5 && r.stats.tris <= 5000 && r.stats.lights === 0, JSON.stringify(r.stats)],
   ['Cost: CPU under 0.05 ms at the ditch', r.cpu != null && r.cpu < 0.05, `living-small ${r.cpu == null ? 'n/a' : r.cpu.toFixed(4)} ms`],
 ];

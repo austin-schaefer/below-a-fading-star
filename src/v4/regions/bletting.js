@@ -331,7 +331,7 @@ export async function build(ctx) {
     g.translate(0, 0.02, -0.01);
     return g;
   })();
-  const shellMat = new THREE.MeshStandardMaterial({ color: '#c99a3c', metalness: 0.75, roughness: 0.38 });
+  const shellMat = new THREE.MeshStandardMaterial({ color: '#d6a644', metalness: 0.75, roughness: 0.38 });
   shellMat.onBeforeCompile = (sh) => { // the lacquer worn through to dull horn in places
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vSL;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSL = position;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vSL;')

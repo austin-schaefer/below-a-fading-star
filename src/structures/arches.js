@@ -12,7 +12,7 @@
 // The floor inside r 6 is bare turf and dark: the embers light (SITES.lightEmbers) is a later agent's.
 // ARCATURE_TOP is the top's height above the ground at the centre; ?arcature=h<m> sets it (e.g. ?arcature=h62)
 // so a taller nest can be compared in the page. ?arcature=v2 builds the earlier arch-nest (arches/v2.js) instead.
-// Draws: the stone (kit masonry, black glass set in some blocks), the glass veins, the bronze, the measure figures.
+// Draws: the stone (kit masonry, black glass set in some blocks), the glass veins, the bronze.
 import * as THREE from 'three';
 import { mergeGeometries } from '../v4/kit/merge.js';
 import { LANDMARKS, SITES } from '../world.js';
@@ -308,24 +308,6 @@ function buildArcature(ctx, env) {
       c[i * 3] = k.r; c[i * 3 + 1] = k.g; c[i * 3 + 2] = k.b;
     }
     bg.setAttribute('color', new THREE.BufferAttribute(c, 3));
-  }
-  // measures: one standing under the nest just outside the embers' circle, one where K1 comes in from the
-  // Pomegranate House, one beneath the tallest arch's crown; each where it is clearest of the trunnions
-  {
-    const E = SITES.lightEmbers;
-    const clear = (x, z) => Math.min(...allFeet.map((f) => Math.hypot(x - f.x, z - f.z) - f.r));
-    const spot = (r, a0, a1, yaw) => {
-      let bx = 0, bz = 0, bd = -Infinity;
-      for (let i = 0; i <= 24; i++) { const a = a0 + ((a1 - a0) * i) / 24, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r, d = clear(x, z); if (d > bd) { bd = d; bx = x; bz = z; } }
-      return { x: bx, z: bz, yaw };
-    };
-    const aK = Math.atan2(35 - cz, 145 - cx);
-    const tall = crowns.reduce((a, b) => (b.y > a.y ? b : a)), aT = Math.atan2(tall.z - cz, tall.x - cx);
-    const spots = [spot(E.r + 1.0, 0, Math.PI * 2, 0.4), spot(19.5, aK - 0.35, aK + 0.35, 2.2), spot(Math.min(21, Math.hypot(tall.x - cx, tall.z - cz)), aT - 0.25, aT + 0.25, Math.PI / 2)];
-    const fig = ctx.kit.measureFigures(spots, { name: 'structures-arcature-figures' }, ctx);
-    out.push({ mesh: fig, tris: (fig.geometry.attributes.position.count / 3) * spots.length });
-    for (const s of spots) col(s.x, s.z, 0.35);
-    env.notes.arcatureFigures = spots.map((s) => [+s.x.toFixed(1), +s.z.toFixed(1)]);
   }
   const top = Math.max(...crowns.map((c) => c.y));
   const note = { x: cx, z: cz, r: L.r, top: +(top - g0).toFixed(1), arches: ribs, horns };

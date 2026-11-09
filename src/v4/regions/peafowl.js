@@ -10,7 +10,7 @@
 import * as THREE from 'three';
 
 const col = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; }; // sRGB hex → linear
-const WHITE = col('#cbc6b9'), UNDER = col('#aaa497'), BACK = col('#d3cec2'), WING = col('#c2bcae'), QUILL = col('#a39d90');
+const WHITE = col('#d8d3c6'), UNDER = col('#aaa497'), BACK = col('#e0dbcf'), WING = col('#cfc9bb'), QUILL = col('#a39d90');
 const LEG = col('#7a6e66'), BILL = col('#a5967d'), EYE = col('#120f0d');
 const EYE_C = col('#18213f'), EYE_T = col('#2c5c55'), EYE_B = col('#7e6230'), TIP = col('#9c968a');
 export const RUMP = [0, 0.645, -0.31]; // where the train springs, in the body's frame

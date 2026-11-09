@@ -21,7 +21,7 @@ const CHAIN = 0.8, SWING = 35 * DEG, PERIOD = 1.8;
 const BOW = { near: 10, close: 0.3, inner: 5, step: 1.6, stepT: 2.5, pitch: 75 * DEG, downT: 1.5, hold: 6, passed: 3, far: 14, upT: 1.5, backT: 2 };
 const TRAIN = { segs: 12, across: 4, len: 2.75, every: 0.25, lift: 0.03 };
 const HIP = 0.5;
-const ROBE = '#15110f', ROBE_HI = '#231b16', VOID = '#040303', SKIN = '#77695d', SKIN_D = '#3e322c', BRASS = '#7c5c2c', BRASS_D = '#3a2a16';
+const ROBE = '#15110f', ROBE_HI = '#30231a', VOID = '#040303', SKIN = '#77695d', SKIN_D = '#3e322c', BRASS = '#8e6a32', BRASS_D = '#3a2a16';
 const PARTS = 6; // 0 skirt, 1 torso and hood, 2 left arm, 3 right arm, 4 the censer, 5 its chain
 
 function table(tab, v) {

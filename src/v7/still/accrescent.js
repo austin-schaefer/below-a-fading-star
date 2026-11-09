@@ -113,7 +113,7 @@ export async function buildAccrescent(ctx, G) {
 
   // ---------------------------------------------------------------- the man: forward +z, up y, left +x; the first leg (sign +1, x +0.18) is the rear one
   const P = new Painter(['aKind', 'aSign']);
-  const cloth = new THREE.Color('#5c4552'), hem = new THREE.Color('#6a5638'), skin = new THREE.Color('#8e6e5a'), dark = new THREE.Color('#2e2c3a'), hair = new THREE.Color('#6a665e'), shoe = new THREE.Color('#2a2220');
+  const cloth = new THREE.Color('#6a4e5e'), hem = new THREE.Color('#7a6240'), skin = new THREE.Color('#8e6e5a'), dark = new THREE.Color('#2e2c3a'), hair = new THREE.Color('#6a665e'), shoe = new THREE.Color('#2a2220');
   const clothMix = new THREE.Color();
   const prof = [[0.42, 0.31, 0.22], [0.6, 0.27, 0.2], [0.83, 0.23, 0.17], [1.1, 0.19, 0.13], [1.3, 0.22, 0.14], [1.44, 0.17, 0.11], [1.52, 0.07, 0.07]];
   const rAt = (y) => { for (let i = 1; i < prof.length; i++) if (y <= prof[i][0]) { const f = (y - prof[i - 1][0]) / (prof[i][0] - prof[i - 1][0]); return [lerp(prof[i - 1][1], prof[i][1], f), lerp(prof[i - 1][2], prof[i][2], f)]; } return [0.07, 0.07]; };

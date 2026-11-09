@@ -1,23 +1,30 @@
 // CO The Repetend [Proposed] (wilderness-v5.md, "### CO. The Repetend"): "A brown bird on the Lynchets' walls that follows
 // you along the wall-tops and, a second behind, repeats your footsteps exactly, gravel or grass, walking or hurrying.
 // Stop and it plays out your last few steps, then is quiet." Austin: yes.
-// A brown bird 0.18 m long (body, head, tail, folded wings) in one mesh. The wall-tops are read from the Lynchets' own
+// A bird 0.35 m long (v7.1: the 0.18 m model drawn at 1.94 times; body, head, tail, folded wings; a light dove-grey, so
+// it reads against the dark wall-top stone, the Lynchets lying in the western wall's shadow) in one mesh. The wall-tops are read from the Lynchets' own
 // stones (lynchets-walls' instances, along the runs region-lynchets exposes as ctx.regions.lynchetsWalls): every 0.1 m of each run
 // the highest stone's top, none in a gap. While the walker is within 18 m of a wall-top it hops along its wall's top to
 // keep 3-6 m from the walker (hops of 0.3 m, up to 6 a second, pauses and turns its head), and flits (under 15 m, the
 // wings beating) to another wall's top when that keeps it nearer the band; it never leaves the walls. Beyond 18 m it
-// goes back to, and sits on, the wall-top nearest (-170, -97).
+// goes back to, and sits on, its perch: the highest stretch of wall-top (the stones standing tallest over their ground)
+// within 6 m of the leads P3 and P4 (v7.1; it was the wall-top nearest (-170, -97)).
 // The echo: audio/steps.js records each of the walker's steps as it plays (audio.steps, a ring of 16); while the bird follows,
 // each is replayed 1.0 s after it with audio.echoStep(rec, pos) at the bird: the same ground kind, hurry, pitch and
-// volume draws. Nothing else: the delay is the whole behaviour, and the bird makes no other sound.
+// volume draws. Nothing else: the delay is the whole behaviour, and the bird makes no other sound. As each echo sounds
+// the bird moves (v7.1), so the eye goes to the sound: a flick of the tail and a hop of a stone's width along the top;
+// and every 6-10 s while it sits it does the same on its own, so the eye finds it by its movement.
 import * as THREE from 'three';
 import { SITES, REGIONS } from '../../world.js';
 import { hyp, clamp, lerp } from '../../noise.js';
 import { Mesher } from '../../fauna/geo.js';
+import { leads } from '../../v4/paths/routes.js';
 
 const HOME = SITES.repetend;            // (-170, -97)
 const FOLLOW = 18, BAND = [3, 6], WANT = 4.5, HOP = 0.3, HOP_T = 1 / 6, FLIT_MAX = 15, FLIT_V = 7, DELAY = 1.0;
 const SAMPLE = 0.1;
+const IDLE = [6, 10], HOME_SLACK = 4; // its own hops (s apart); how far (samples) from its perch still counts as home
+const SCALE = 0.35 / 0.18, PERCH_LEADS = ['P3', 'P4'], PERCH_NEAR = 6, FLICK = 0.32;
 
 // the bird: body, head, tail and folded wings (aW marks the wings for the flap; aH the head for its turn), 0.18 m long
 function birdGeometry() {
@@ -33,20 +40,23 @@ function birdGeometry() {
   }
   for (const sx of [-1, 1]) m.loft([[sx * 0.008, 0.026, 0.005], [sx * 0.009, 0.0, 0.008]], [0.0025, 0.002], 3, 0, false); // legs
   const g = m.geometry();
-  const p = g.attributes.position, c = new Float32Array(p.count * 3), h = new Float32Array(p.count);
+  const p = g.attributes.position, c = new Float32Array(p.count * 3), h = new Float32Array(p.count), tl = new Float32Array(p.count);
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    // brown all over: a darker, streaked back and wings, a paler buff throat and belly, a dark bill and legs
-    let col = [0.16, 0.1, 0.06];
-    if (y < 0.04 && z > -0.03) col = [0.32, 0.23, 0.14];
-    if (z > 0.032 && y < 0.078 && y > 0.06) col = [0.36, 0.27, 0.17];
-    if (Math.abs(x) > 0.02 && y > 0.05) col = [0.12, 0.075, 0.045].map((v) => v * (0.85 + 0.3 * ((Math.sin(z * 260) > 0.3) ? 1 : 0)));
-    if (z > 0.062 || y < 0.012) col = [0.06, 0.05, 0.04];
+    // v7.1: a light dove-grey all over, to read against the dark wall-top stone in the western wall's shadow: the wings
+    // a little darker with two faint bars, the throat and breast palest, a dark bill and legs
+    let col = [0.6, 0.59, 0.57];
+    if (y < 0.042 && z > -0.03) col = [0.68, 0.66, 0.63];
+    if (z > 0.012 && y < 0.06 && y > 0.02) col = [0.74, 0.72, 0.69];
+    if (Math.abs(x) > 0.02 && y > 0.05) col = [0.5, 0.49, 0.48].map((v) => v * ((Math.abs(z + 0.012) < 0.006 || Math.abs(z + 0.03) < 0.006) ? 0.62 : 1));
+    if (z > 0.062 || y < 0.012) col = [0.08, 0.07, 0.07];
     c[i * 3] = col[0]; c[i * 3 + 1] = col[1]; c[i * 3 + 2] = col[2];
     h[i] = z > 0.026 && y > 0.058 ? 1 : 0;
+    tl[i] = z < -0.03 && Math.abs(x) < 0.014 && y > 0.035 ? 1 : 0; // the tail, for its flick
   }
   g.setAttribute('color', new THREE.BufferAttribute(c, 3));
   g.setAttribute('aH', new THREE.BufferAttribute(h, 1));
+  g.setAttribute('aT', new THREE.BufferAttribute(tl, 1));
   return g;
 }
 function birdMaterial(U) {
@@ -55,14 +65,16 @@ function birdMaterial(U) {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', `#include <common>
-        attribute float aW; attribute float aH; uniform float uFlap, uFold, uHead;
+        attribute float aW; attribute float aH; attribute float aT; uniform float uFlap, uFold, uHead, uTail;
+        vec3 fpPitch(vec3 p, vec3 o, float th) { vec3 q = p - o; float c = cos(th), s = sin(th); return o + vec3(q.x, q.y * c - q.z * s, q.y * s + q.z * c); }
         vec3 fpRot(vec3 p, float th) { float c = cos(th), s = sin(th); return vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z); }
         vec3 fpYaw(vec3 p, vec3 o, float th) { vec3 q = p - o; float c = cos(th), s = sin(th); return o + vec3(q.x * c + q.z * s, q.y, -q.x * s + q.z * c); }`)
       .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
         if (aW > 0.0) objectNormal = fpRot(objectNormal, uFlap * aW * (position.x < 0.0 ? -1.0 : 1.0));`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         if (aW > 0.0) { float sx = position.x < 0.0 ? -1.0 : 1.0; transformed.x *= mix(1.0, 0.25, uFold); transformed = fpRot(transformed, uFlap * aW * sx); }
-        if (aH > 0.0) transformed = fpYaw(transformed, vec3(0.0, 0.07, 0.03), uHead);`);
+        if (aH > 0.0) transformed = fpYaw(transformed, vec3(0.0, 0.07, 0.03), uHead);
+        if (aT > 0.0) transformed = fpPitch(transformed, vec3(0.0, 0.05, -0.032), -uTail);`);
   };
   m.customProgramCacheKey = () => 'small-repetend';
   return m;
@@ -113,22 +125,53 @@ export function buildRepetend(ctx, mesh) {
     return -1;
   }
   const lineDist = (w, x, z) => { const t = clamp((x - w.ax) * w.dx + (z - w.az) * w.dz, 0, w.len); return hyp(x - w.ax - w.dx * t, z - w.az - w.dz * t); };
-  // home: the standing sample nearest (-170, -97)
-  let home = { w: 0, i: 0 }, hd = Infinity;
-  for (const w of walls) { const i = nearestOn(w, HOME.x, HOME.z); if (i < 0) continue; const p = posOf(w, i, {}); const d = hyp(p.x - HOME.x, p.z - HOME.z); if (d < hd) { hd = d; home = { w: w.i, i }; } }
+  // home (v7.1): the perch nearest the leads, so a walker on P3 or P4 finds it: of the standing samples within 6 m of
+  // either lead, the one where the wall stands tallest over its ground (its top averaged over a stone's width either
+  // side); failing any, the standing sample nearest (-170, -97)
+  const leadPts = [];
+  for (const L of leads().list) if (PERCH_LEADS.includes(L.id)) for (const S of L.lines) for (let k = 0; k < S.length - 1; k++) leadPts.push(S[k].x, S[k].z, S[k + 1].x, S[k + 1].z);
+  const leadD = (x, z) => {
+    let d = Infinity;
+    for (let k = 0; k < leadPts.length; k += 4) {
+      const ax = leadPts[k], az = leadPts[k + 1], ex = leadPts[k + 2] - ax, ez = leadPts[k + 3] - az, l2 = ex * ex + ez * ez || 1;
+      const t = clamp(((x - ax) * ex + (z - az) * ez) / l2, 0, 1); d = Math.min(d, hyp(x - ax - ex * t, z - az - ez * t));
+    }
+    return d;
+  };
+  let home = { w: 0, i: 0 }, hd = Infinity, best = -Infinity;
+  const pp = { x: 0, y: 0, z: 0 };
+  for (const w of walls) for (let i = 3; i < w.n - 3; i++) {
+    let sum = 0, ok = true;
+    for (let k = -3; k <= 3; k++) { const y = w.top[i + k]; if (y !== y) { ok = false; break; } sum += y; }
+    if (!ok) continue;
+    posOf(w, i, pp);
+    if (leadD(pp.x, pp.z) > PERCH_NEAR) continue;
+    const tall = sum / 7 - ctx.terrain.heightAt(pp.x, pp.z);
+    if (tall > best) { best = tall; home = { w: w.i, i }; }
+  }
+  if (best === -Infinity) for (const w of walls) { const i = nearestOn(w, HOME.x, HOME.z); if (i < 0) continue; const p = posOf(w, i, {}); const d = hyp(p.x - HOME.x, p.z - HOME.z); if (d < hd) { hd = d; home = { w: w.i, i }; } }
   const wallBy = new Map(walls.map((w) => [w.i, w]));
+  // at its perch it sits facing the lead
+  let homeYaw = 0;
+  { const hw = wallBy.get(home.w), hp = posOf(hw, home.i, {}); let bd = Infinity, bx = hp.x, bz = hp.z;
+    for (let k = 0; k < leadPts.length; k += 2) { const d = hyp(leadPts[k] - hp.x, leadPts[k + 1] - hp.z); if (d < bd && d > 0.5) { bd = d; bx = leadPts[k]; bz = leadPts[k + 1]; } }
+    homeYaw = Math.atan2(bx - hp.x, bz - hp.z); }
 
   // ---- the bird
-  const U = { uFlap: { value: 0 }, uFold: { value: 1 }, uHead: { value: 0 } };
+  const U = { uFlap: { value: 0 }, uFold: { value: 1 }, uHead: { value: 0 }, uTail: { value: 0 } };
   const bird = new THREE.Mesh(birdGeometry(), birdMaterial(U));
+  bird.scale.setScalar(SCALE);
   bird.name = 'small-repetend'; bird.castShadow = true; bird.receiveShadow = true;
   scene.add(bird);
   const rng = ctx.makeRng(7505);
   const b = {
-    w: home.w, i: home.i, x: 0, y: 0, z: 0, yaw: rng() * 6.28, state: 'sit', following: false,
+    w: home.w, i: home.i, x: 0, y: 0, z: 0, yaw: (rng(), homeYaw) /* the draw kept, so the stream after it is as before */, state: 'sit', following: false,
     hopT: 0, hopFrom: 0, hopTo: 0, pause: 0, headT: 0, head: 0, headTo: 0,
     fly: { t: 0, dur: 1, fx: 0, fy: 0, fz: 0, tx: 0, ty: 0, tz: 0, w: 0, i: 0 }, flits: 0, hops: 0, echoes: 0, walkerD: 0, wallD: 0,
+    flicks: 0, echoHops: 0, idleHops: 0, tailT: 9, hopDir: 1, idleT: 0,
   };
+  // the echoes' sounding times (audio clock), so the bird moves as each sounds, not when it is scheduled
+  const due = new Float64Array(8); let dueN = 0;
   { const p = posOf(wallBy.get(b.w), b.i, {}); b.x = p.x; b.y = p.y; b.z = p.z; }
   const tmp = { x: 0, y: 0, z: 0 };
   const echoPos = { x: 0, y: 0, z: 0 };
@@ -175,6 +218,20 @@ export function buildRepetend(ctx, mesh) {
   const homeP = posOf(wallBy.get(home.w), home.i, {});
   const homeScore = (x, z) => hyp(x - homeP.x, z - homeP.z);
 
+  // a hop of a stone's width along the top (from sitting): toward where it wants to be along this wall while it follows,
+  // else back and forth about where it sits; false if no standing stone lies either way
+  function stoneHop(px, pz) {
+    if (b.state !== 'sit') return false;
+    const w = wallBy.get(b.w);
+    const own = b.following ? bestOn(w, px, pz, b.i) : null;
+    let dir = own && own.i >= 0 && Math.abs(own.i - b.i) * SAMPLE > 0.25 ? (own.i > b.i ? 1 : -1) : b.hopDir;
+    let to = clamp(b.i + dir * Math.round(HOP / SAMPLE), 0, w.n - 1);
+    if (to === b.i || w.top[to] !== w.top[to]) { dir = -dir; to = clamp(b.i + dir * Math.round(HOP / SAMPLE), 0, w.n - 1); }
+    if (to === b.i || w.top[to] !== w.top[to]) return false;
+    b.state = 'hop'; b.hopT = 0; b.hopFrom = b.i; b.hopTo = to; b.yaw = Math.atan2(w.dx * dir, w.dz * dir); b.hopDir = -dir;
+    b.pause = Math.max(b.pause, 0.4);
+    return true;
+  }
   function update(dt, t) {
     if (dt <= 0) return;
     const px = player.pos.x, pz = player.pos.z;
@@ -226,14 +283,34 @@ export function buildRepetend(ctx, mesh) {
               else flitTo(w, own.i);
             } else { b.pause = 0.8 + rng() * 1.6; b.headTo = (rng() - 0.5) * 1.6; b.yaw += (rng() - 0.5) * 0.3; }
           }
-        } else if (b.w !== home.w || Math.abs(b.i - home.i) > 2) {
+        } else if (b.w !== home.w || Math.abs(b.i - home.i) > HOME_SLACK) {
           // back home along the walls, a leg at a time
           const hw = wallBy.get(home.w);
           if (hyp(homeP.x - b.x, homeP.z - b.z) <= FLIT_MAX) flitTo(hw, home.i);
           else { const leg = legToward(homeP.x, homeP.z, homeScore); if (leg) flitTo(leg.w, leg.i); else b.pause = 2; }
-        } else { b.pause = 1.5 + rng() * 3; b.headTo = (rng() - 0.5) * 1.6; }
+        } else { b.pause = 1.5 + rng() * 3; b.headTo = (rng() - 0.5) * 1.6; b.yaw = homeYaw + (rng() - 0.5) * 0.5; }
       }
     }
+    // ---- at each echo as it sounds: the tail flicks and, if it sits, it hops a stone's width along the top
+    const ac = ctx.audio?.ctx;
+    if (dueN && ac) {
+      const now = ac.currentTime;
+      let k = 0;
+      while (k < dueN && due[k] <= now) k++;
+      if (k) {
+        for (let j = k; j < dueN; j++) due[j - k] = due[j];
+        dueN -= k;
+        b.tailT = 0; b.flicks++;
+        if (stoneHop(px, pz)) b.echoHops++;
+      }
+    }
+    // ---- and on its own, every 6-10 s while it sits: a flick and a hop, so the eye finds it by its movement
+    if (b.state === 'sit') {
+      b.idleT -= dt;
+      if (b.idleT <= 0) { b.idleT = IDLE[0] + rng() * (IDLE[1] - IDLE[0]); b.tailT = 0; b.flicks++; if (stoneHop(px, pz)) b.idleHops++; }
+    }
+    b.tailT += dt;
+    U.uTail.value = b.tailT < FLICK ? Math.sin((b.tailT / FLICK) * Math.PI) * 0.75 : 0;
     // the head: turned, glancing toward the walker now and then while it follows
     b.head += (b.headTo - b.head) * Math.min(1, dt * 9);
     U.uHead.value = b.state === 'fly' ? 0 : b.head;
@@ -251,8 +328,8 @@ export function buildRepetend(ctx, mesh) {
         const at = r.t + DELAY;
         if (at - now > 0.15) break;                           // not yet: schedule it a little ahead
         if (at > now && b.following) {
-          echoPos.x = b.x; echoPos.y = b.y + 0.05; echoPos.z = b.z;
-          if (a.echoStep(r, echoPos, DELAY)) b.echoes++;
+          echoPos.x = b.x; echoPos.y = b.y + 0.05 * SCALE; echoPos.z = b.z;
+          if (a.echoStep(r, echoPos, DELAY)) { b.echoes++; if (dueN < due.length) due[dueN++] = at; }
         }
         seqNext++;
       }
@@ -268,7 +345,7 @@ export function buildRepetend(ctx, mesh) {
     state: () => {
       const wl = wallBy.get(b.state === 'fly' ? b.fly.w : b.w);
       const top = b.state === 'fly' ? NaN : (() => { const s = (b.state === 'hop' ? lerp(b.hopFrom, b.hopTo, Math.min(1, b.hopT / HOP_T)) : b.i); const i0 = Math.floor(s); return wl.top[i0]; })();
-      return { x: b.x, y: b.y, z: b.z, state: b.state, following: b.following, walkerD: b.walkerD, wallD: b.wallD, top, flits: b.flits, hops: b.hops, echoes: b.echoes, wall: b.w, inPoly: inPoly(b.x, b.z), polyD: polyEdgeD(poly, b.x, b.z) };
+      return { x: b.x, y: b.y, z: b.z, state: b.state, following: b.following, walkerD: b.walkerD, wallD: b.wallD, top, flits: b.flits, hops: b.hops, echoes: b.echoes, flicks: b.flicks, echoHops: b.echoHops, idleHops: b.idleHops, wall: b.w, inPoly: inPoly(b.x, b.z), polyD: polyEdgeD(poly, b.x, b.z) };
     },
     topAt: (x, z) => { let best = NaN, bd = Infinity; for (const w of walls) { const i = nearestOn(w, x, z); if (i < 0) continue; posOf(w, i, tmp); const d = hyp(tmp.x - x, tmp.z - z); if (d < bd) { bd = d; best = tmp.y; } } return { y: best, d: bd }; },
     tris: () => bird.geometry.index.count / 3,

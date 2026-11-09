@@ -8,8 +8,7 @@
 // marked blocks call its spanGround(), the vegetation keeps off spanClear().
 //
 // Draw calls at high: the body, the gates, the crags, the stairs, the doors, the metal, the Postern's frame, the
-// boulders, the rubble, the measure figures (ten, and a shadow draw for each that casts one). The parts are
-// span/deck.js, gates.js, postern.js, stairs.js, fallen.js, each filling the shared lists in K.
+// boulders, the rubble. The parts are span/deck.js, gates.js, postern.js, stairs.js, fallen.js, each filling the shared lists in K.
 // ctx.span: { plan, stairs, slabs, deckAt(x, z), floorAt(x, z), stats(), meshes, colliders }.
 import * as THREE from 'three';
 import { SPAN, BOT, deckAt } from './span/plan.js';
@@ -111,13 +110,6 @@ export async function build(ctx) {
   const bg = boulderGeometry(ctx, hi);
   inst(bg, rockMat, boulders, 'span-rockfall', true);
   inst(new THREE.BoxGeometry(1, 1, 1), stone.mat, rubble, 'span-rubble', hi);
-  // measure: one at the west stair's foot, one on the west deck
-  const fig = kit.measureFigures([
-    { x: -202.6, z: 204.6, yaw: 2.2 },
-    { x: -186, z: 211.2, y: Y, yaw: -1.3 },
-  ], {}, ctx);
-  scene.add(fig); meshes.push(fig);
-
   // ---------------------------------------------------------------- ctx.span
   const floorAt = (x, z) => {
     let best = deckAt(x, z);

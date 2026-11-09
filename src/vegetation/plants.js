@@ -209,7 +209,7 @@ function flowerGeo(rng) {
     for (let i = 0; i < n; i++) {
       const t = 0.55 + 0.45 * (i / (n - 1));
       const cx = x0 + bl.dx * lean * h * t * t, cy = h * t, cz = z0 + bl.dz * lean * h * t * t;
-      const fa = i * 2.4 + rng(), fs = 0.026 * (1.2 - 0.6 * (i / n));
+      const fa = i * 2.4 + rng(), fs = 0.029 * (1.2 - 0.6 * (i / n)); // v7.1: florets 11% larger
       const ox = Math.cos(fa) * fs, oz = Math.sin(fa) * fs;
       rng(); const rnd = bl.rnd; // florets share their stem's rand so the shader scales them together (the draw keeps the stream)
       const i0 = pg.v(cx, cy - fs * 0.6, cz, ox, 0.7, oz, [1, 1, 1], t, 1, rnd, 1);
@@ -602,7 +602,7 @@ export function buildPlants(ctx, ground, shared) {
   const cHeath = [C('#6a4058'), C('#7a5068'), C('#5a4044'), C('#6a4a34')]; // bloom, bloom, faded, dead-rust
   const cReed = C('#8a7a4a'), cReed2 = C('#6a6a38');
   const cBone = C('#e0d6b4'), cBrk = [C('#8a4420'), C('#6e3a1c'), C('#5a4a24')], cBrkWood = C('#2e3a1e');
-  const cFlw = [C('#e0dcd0'), C('#a090c4'), C('#d0c0a0'), C('#c8b8d8')];
+  const cFlw = [C('#e8e4d8'), C('#ac9cd0'), C('#dacaa8'), C('#d2c2e2')]; // v7.1: a half-step brighter
   const cFlesh = C('#2a4024'), cFlesh2 = C('#303a20');
   const tint = [0, 0, 0];
   const mixInto = (a, b2, t) => { tint[0] = lerp(tint[0], b2[0], t); tint[1] = lerp(tint[1], b2[1], t); tint[2] = lerp(tint[2], b2[2], t); };
