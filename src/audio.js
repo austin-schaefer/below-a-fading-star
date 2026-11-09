@@ -214,6 +214,17 @@ export async function build(ctx) {
     function env(g, t0, peak, att, dec) {
       g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, t0 + att + dec);
     }
+    // Each of the walker's steps is recorded as it plays, { seq, t (its audio time), hurrying, kind, regionKind, x, z, vol,
+    // pitch, verb, d (its random draws) }, in a ring of 16 (audio.steps), so audio.echoStep(rec, pos) can play the same
+    // synthesis again through a panner at pos: the Repetend's echo (v7, src/v7/small/repetend.js). The walker's own step
+    // draws from rng in the same order as before, so it sounds as it did.
+    const stepRing = [];
+    for (let i = 0; i < 16; i++) stepRing.push({ seq: -1, t: 0, hurrying: false, kind: 'grass', regionKind: null, x: 0, z: 0, vol: 1, pitch: 1, verb: false, d: new Float64Array(16) });
+    audio.steps = { ring: stepRing, seq: 0 };
+    let rec = stepRing[0], recN = 0, replaying = false;
+    const draw = () => { if (replaying) return rec.d[recN++ & 15]; const v = rng(); rec.d[recN++ & 15] = v; return v; };
+    const stepBurst = (buf, dur, off, at) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at ?? ac.currentTime + lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+    const _rw = {};
     function stepSound(hurrying) {
       const p = player.pos;
       const ground = p.y - 1.72;
@@ -230,43 +241,72 @@ export async function build(ctx) {
       else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(p.x, p.z) > 0.2)) kind = 'crunch';
       else if (terrain.causewayDistance(p.x, p.z) < 2.5 || nearCastle || inCourt) kind = 'click';
       else if (b.marsh > 0.5) kind = 'squelch';
-      if (kind !== 'splash' && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return; } // v4 regions
+      rec = stepRing[audio.steps.seq & 15]; recN = 0; replaying = false;
+      rec.t = t0; rec.hurrying = !!hurrying; rec.kind = kind; rec.regionKind = null; rec.x = p.x; rec.z = p.z; rec.vol = vol; rec.pitch = pitch; rec.verb = nearCastle || inCourt;
+      if (kind !== 'splash' && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
+        rec.regionKind = ctx.regions?.regionAt?.(p.x, p.z, _rw)?.primary || 'region'; rec.seq = audio.steps.seq++;
+        out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return;
+      }
+      stepSynth(rec, t0, null, out);
+      rec.seq = audio.steps.seq++;
+      out.connect(dryBus);
+      setTimeout(() => out.disconnect(), 1200);
+    }
+    // a step's synthesis from its record, into out at t0 (sAt: when its noise bursts start; null for now + lead)
+    function stepSynth(r, t0, sAt, out) {
+      const kind = r.kind, vol = r.vol, pitch = r.pitch;
       if (kind === 'grass') {
-        const s = burst(pink, 0.22), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520 * pitch; f.Q.value = 0.6;
+        const s = stepBurst(pink, 0.22, draw(), sAt), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520 * pitch; f.Q.value = 0.6;
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500 * pitch;
         const g = ac.createGain(); env(g, t0, 0.2 * vol, 0.02, 0.16);
         s.connect(f); f.connect(lp); lp.connect(g); g.connect(out);
       } else if (kind === 'click') {
-        const s = burst(white, 0.06), hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 2300 * pitch; hp.Q.value = 2.2;
+        const s = stepBurst(white, 0.06, draw(), sAt), hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = 2300 * pitch; hp.Q.value = 2.2;
         const g = ac.createGain(); env(g, t0, 0.22 * vol, 0.002, 0.045);
         s.connect(hp); hp.connect(g); g.connect(out);
         const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(190 * pitch, t0); o.frequency.exponentialRampToValueAtTime(90, t0 + 0.05);
         const og = ac.createGain(); env(og, t0, 0.14 * vol, 0.002, 0.06); o.connect(og); og.connect(out); o.start(t0); o.stop(t0 + 0.12);
-        if (nearCastle || inCourt) send(out, 0.35);
+        if (r.verb) send(out, 0.35);
       } else if (kind === 'splash' || kind === 'squelch') {
         const dur = kind === 'splash' ? 0.5 : 0.25;
-        const s = burst(pink, dur), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.1;
+        const s = stepBurst(pink, dur, draw(), sAt), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.1;
         f.frequency.setValueAtTime((kind === 'splash' ? 450 : 260) * pitch, t0); f.frequency.exponentialRampToValueAtTime((kind === 'splash' ? 1700 : 600) * pitch, t0 + dur * 0.8);
         const g = ac.createGain(); env(g, t0, 0.26 * vol, 0.04, dur * 0.8);
         s.connect(f); f.connect(g); g.connect(out);
         if (kind === 'splash') for (let k = 0; k < 3; k++) {
-          const o = ac.createOscillator(); const tt = t0 + 0.08 + rng() * 0.3; o.frequency.setValueAtTime((700 + rng() * 900) * pitch, tt); o.frequency.exponentialRampToValueAtTime(1800, tt + 0.05);
+          const o = ac.createOscillator(); const tt = t0 + 0.08 + draw() * 0.3; o.frequency.setValueAtTime((700 + draw() * 900) * pitch, tt); o.frequency.exponentialRampToValueAtTime(1800, tt + 0.05);
           const og = ac.createGain(); env(og, tt, 0.04 * vol, 0.004, 0.06); o.connect(og); og.connect(out); o.start(tt); o.stop(tt + 0.1);
         }
         send(out, 0.2);
       } else { // crunch
         for (let k = 0; k < 4; k++) {
-          const tt = t0 + k * (0.012 + rng() * 0.018);
-          const s = ac.createBufferSource(); s.buffer = white; s.start(tt, rng() * 2, 0.05);
-          const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = (2200 + rng() * 1800) * pitch;
-          const g = ac.createGain(); env(g, tt, 0.1 * vol, 0.001, 0.03 + rng() * 0.02);
+          const tt = t0 + k * (0.012 + draw() * 0.018);
+          const s = ac.createBufferSource(); s.buffer = white; s.start(tt, draw() * 2, 0.05);
+          const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = (2200 + draw() * 1800) * pitch;
+          const g = ac.createGain(); env(g, tt, 0.1 * vol, 0.001, 0.03 + draw() * 0.02);
           s.connect(hp); hp.connect(g); g.connect(out);
         }
         send(out, 0.25);
       }
-      out.connect(dryBus);
-      setTimeout(() => out.disconnect(), 1200);
     }
+    // the echo: rec played again `delay` s after it was, through a voice's panner at pos (so the voice cap counts it);
+    // the same kind, hurry, pitch, volume and draws (a region's own step draws from that region's stream). Returns
+    // { at, voice } or null (too late, or out of range)
+    audio.echoStep = (r, pos, delay = 1.0) => {
+      if (!r || r.seq < 0) return null;
+      const at = r.t + delay, now = ac.currentTime;
+      if (at < now) return null;
+      const v = voice(pos, { ref: 2.5, roll: 1.1, range: 70, dur: at - v0(now) + 0.7, air: 60 });
+      if (!v) return null;
+      const out = ac.createGain(); out.gain.value = 1; out.connect(v.in);
+      const keep = rec, keepN = recN;
+      rec = r; recN = 0; replaying = true;
+      try { if (r.regionKind) regionSnd?.step(r.x, r.z, at, r.vol, r.pitch, out); else stepSynth(r, at, at, out); }
+      finally { replaying = false; rec = keep; recN = keepN; }
+      setTimeout(() => out.disconnect(), (at - now + 1.2) * 1000);
+      return { at, voice: v };
+    };
+    const v0 = (now) => now + lead; // a voice's own start (voice() sets until from it)
     const prevStep = player.onStep;
     player.onStep = (hurrying) => { try { stepSound(hurrying); } catch (e) { /* never break the frame loop */ } prevStep?.(hurrying); };
 

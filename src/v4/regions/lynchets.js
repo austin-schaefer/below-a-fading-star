@@ -192,6 +192,7 @@ export async function build(ctx) {
     walls.push({ ...r, len });
   }
   for (const c of coll) ctx.addCollider(c);
+  R.walls = walls; // v7: the wall runs ({ ax, az, bx, bz, edge, len }), for the Repetend's wall-tops (v7/small/repetend.js)
   // field-stone: a lumpy, flat-bedded block (an icosahedron squared off top and bottom), not a brick
   const stoneGeo = new T.IcosahedronGeometry(0.62, 0);
   {

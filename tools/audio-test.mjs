@@ -3,7 +3,8 @@
 // it threw and how much energy reached the one-shot bus's analyser in the second after it, against the
 // silence just before (strike rings on the stones' own panners, so it is read from the master tap). Each cue is
 // fired at a representative place (inside its range) with representative opts. Then: the fall's rumble loop rises
-// with ctx.river.rumble = 1 and dies with 0, and a burst of carillon hits never holds more than 12 voices.
+// with ctx.river.rumble = 1 and dies with 0, and a burst of carillon hits never holds more than 12 voices. Last, the
+// Repetend's echo (v7): audio.echoStep replays a step 1.0 s after it at the bird's position, within the voice cap.
 // Usage: node tools/audio-test.mjs [url]
 import { createRequire } from 'node:module';
 let chromium;
@@ -102,6 +103,41 @@ const res = await page.evaluate(async (CUES) => {
     // sleeps stretch and early voices end before the late ones start, which says nothing about the cap
     const stretched = took > 1500;
     extra.push({ name: 'voice cap', ok: most <= 12 && (stretched || most >= 10), info: `most voices at once ${most} (cap 12)${stretched ? `, loop stretched to ${took.toFixed(0)} ms under load so the floor was not measured` : ''}` });
+  }
+  // the Repetend's echo (v7): a walker's step, replayed by audio.echoStep 1.0 s later through a panner at the bird (4 m off);
+  // it must be scheduled 1.0 s after the step, first sound on the cue bus within 1.0 +- 0.05 s, sit at the bird's position, and
+  // hurrying beside the bird (a step and its echo every 0.17 s for 3 s) must keep the voices within the cap of 12
+  {
+    // a quiet cue bus first: the fall's loop (left running by the check above) torn down, the carillon's tails gone
+    fp.river = Object.assign(fp.river || {}, { rumble: 0 }); try { a.cue('fall-rumble-leave', at({ dx: 8, dy: 2, dz: -10 })); } catch (e) { /* no loop */ }
+    await sleep(7000);
+    const bird = at({ dx: 3, dy: -1.2, dz: -2.6 });
+    // the bed's level and spread (the fall's loop may still be fading on the cue bus), polled as the echo will be
+    const lvl = () => { a.cueAnalyser.getFloatTimeDomainData(buf); let s2 = 0; for (const v of buf) s2 += v * v; return Math.sqrt(s2 / buf.length); };
+    const bs = []; for (let k = 0; k < 60; k++) { bs.push(lvl()); await sleep(5); }
+    const bed = bs.reduce((x, y) => x + y, 0) / bs.length, sd = Math.sqrt(bs.reduce((x, y) => x + (y - bed) ** 2, 0) / bs.length);
+    const thr = Math.max(bed + 6 * sd, bed * 1.15, 1e-5);
+    fp.player.onStep(false);
+    const rec = a.steps.ring[(a.steps.seq - 1) & 15], t0 = rec.t;
+    const o = a.echoStep(rec, bird, 1.0), sched = o ? o.at - t0 : NaN;
+    let onset = null, peak = 0, run = 0, first = 0;
+    const until = t0 + 1.6;
+    while (a.ctx.currentTime < until) {
+      const lv = lvl(), now = a.ctx.currentTime; peak = Math.max(peak, lv);
+      if (lv > thr) { if (run++ === 0) first = now; if (run >= 3 && onset == null) onset = first; } else run = 0; // three polls running over the bed
+      await sleep(5);
+    }
+    const p = o?.voice?.pan, px = p?.positionX ? [p.positionX.value, p.positionY.value, p.positionZ.value] : null;
+    let most = 0;
+    for (let k = 0; k < 18; k++) {
+      fp.player.onStep(true); const r2 = a.steps.ring[(a.steps.seq - 1) & 15];
+      setTimeout(() => { a.echoStep(r2, bird, 1.0); }, 850);
+      most = Math.max(most, a.voices.length); await sleep(170);
+    }
+    for (let k = 0; k < 12; k++) { most = Math.max(most, a.voices.length); await sleep(100); }
+    const heard = onset == null ? NaN : onset - t0;
+    const placed = px && Math.hypot(px[0] - bird.x, px[1] - bird.y, px[2] - bird.z) < 0.01;
+    extra.push({ name: 'repetend echo', ok: Math.abs(sched - 1) < 1e-6 && Math.abs(heard - 1) <= 0.05 && placed && most <= 12, info: `scheduled ${sched.toFixed(3)} s after the step, first heard at ${heard.toFixed(3)} s (bed ${bed.toExponential(1)}, peak ${peak.toExponential(1)}), at the bird ${placed}, most voices hurrying beside it ${most} (cap 12)` });
   }
   return { state: a.ctx.state, out, extra };
 }, CUES);
