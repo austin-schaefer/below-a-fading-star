@@ -6,6 +6,9 @@
 // The Demesne's yews (v6.3): every yew mesh carries at least 1000 triangles a yew at high (the clipped mass
 // roughened, and the grown-out sprigs), an alpha-tested card material, and a mass the near-black green the brief
 // asks for (mean vertex colour, shown in sRGB, luma under 0.3; v4 drew about 0.38): v4's smooth pale lathes fail all three.
+// Joins: a creature built of parts declares them (geometry.userData.parts, vertex ranges); every part must touch the
+// rest (bounding boxes overlapping and vertices within 2 cm), so a body cannot fall apart into floating pieces again.
+// The Demesne's peafowl are checked so, and each bird's train must start inside its rump in every instance.
 // Usage: node tools/regions-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -20,7 +23,7 @@ page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 400)); });
 await page.goto(`${base}/?q=high`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
-const res = await page.evaluate(() => {
+const { out: res, pea, yews } = await page.evaluate(() => {
   const fp = window.__fp, R = fp.regions, out = [];
   // a point well inside each shape
   const centre = (def) => {
@@ -52,13 +55,51 @@ const res = await page.evaluate(() => {
     const toS = (v) => (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055);
     return { name: o.name, n: o.userData.yews || (o.isInstancedMesh ? o.count : 1), perYew: o.isInstancedMesh ? tris : tris / (o.userData.yews || 1), tris, cards: !!(o.material.map && o.material.alphaTest > 0), luma: +toS(l / c.count).toFixed(3) };
   });
-  return { out, yews };
+  // joins: the parts of one geometry form one connected piece
+  const joins = (g) => {
+    const parts = g?.userData?.parts, P = g?.attributes?.position;
+    if (!parts?.length || !P) return { ok: false, why: 'no userData.parts' };
+    const box = parts.map((q) => { const b = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; for (let i = q.start; i < q.start + q.count; i++) { const v = [P.getX(i), P.getY(i), P.getZ(i)]; for (let a = 0; a < 3; a++) { b[a] = Math.min(b[a], v[a]); b[a + 3] = Math.max(b[a + 3], v[a]); } } return b; });
+    const near = (a, b) => {
+      for (let k = 0; k < 3; k++) if (box[a][k] > box[b][k + 3] + 0.002 || box[b][k] > box[a][k + 3] + 0.002) return false;
+      const A = parts[a], B = parts[b];
+      for (let i = A.start; i < A.start + A.count; i++) for (let j = B.start; j < B.start + B.count; j++) {
+        if (Math.hypot(P.getX(i) - P.getX(j), P.getY(i) - P.getY(j), P.getZ(i) - P.getZ(j)) < 0.02) return true;
+      }
+      return false;
+    };
+    const seen = new Set([0]), todo = [0];
+    while (todo.length) { const a = todo.pop(); for (let b = 0; b < parts.length; b++) if (!seen.has(b) && near(a, b)) { seen.add(b); todo.push(b); } }
+    const loose = parts.filter((_, i) => !seen.has(i)).map((q) => q.name);
+    return { ok: !loose.length, why: loose.length ? `loose: ${loose.join(', ')}` : `${parts.length} parts: ${parts.map((q) => q.name).join(', ')}`, tris: g.index.count / 3 };
+  };
+  const body = fp.scene.getObjectByName('demesne-peafowl'), train = fp.scene.getObjectByName('demesne-peafowl-trains');
+  let pea = { found: !!(body && train) };
+  if (pea.found) {
+    pea.body = joins(body.geometry); pea.train = joins(train.geometry);
+    // each bird's train coverts (in its body's frame) come within 2 cm of the body's own surface
+    const T = fp.THREE, mb = new T.Matrix4(), mt = new T.Matrix4(), v = new T.Vector3();
+    const bg = body.geometry, bp = bg.attributes.position, bpart = bg.userData.parts?.find((q) => q.name === 'body');
+    const cov = train.geometry.userData.parts?.find((q) => q.name === 'coverts'), tp = train.geometry.attributes.position;
+    let worst = 0;
+    if (bpart && cov) for (let i = 0; i < body.count; i++) {
+      body.getMatrixAt(i, mb); train.getMatrixAt(i, mt); mt.premultiply(mb.invert());
+      let best = 1e9;
+      for (let k = cov.start; k < cov.start + cov.count; k++) {
+        v.fromBufferAttribute(tp, k).applyMatrix4(mt);
+        for (let j = bpart.start; j < bpart.start + bpart.count; j++) best = Math.min(best, Math.hypot(v.x - bp.getX(j), v.y - bp.getY(j), v.z - bp.getZ(j)));
+      }
+      worst = Math.max(worst, best);
+    } else worst = Infinity;
+    pea.rump = +worst.toFixed(4); pea.n = body.count; pea.calls = 2;
+  }
+  return { out, pea, yews };
 });
 await browser.close();
 
 let fail = 0, pass = 0;
 const check = (ok, label, detail) => { if (ok) pass++; else fail++; console.log(ok ? 'PASS' : 'FAIL', label.padEnd(44), detail); };
-for (const r of res.out) {
+for (const r of res) {
   const tag = `${r.key} (${r.file}.js)`;
   const moduleErrors = errors.filter((e) => e.includes(`region-${r.key}`) || e.includes(`regions/${r.file}.js`));
   check(!moduleErrors.length, `${tag}: module loaded`, moduleErrors[0] || '');
@@ -72,13 +113,19 @@ for (const r of res.out) {
   check(s.tris <= 150000, `${tag}: triangles <= 150k at high`, `${s.tris}`);
   check(s.creature > 0, `${tag}: its creature`, `${s.creature}`);
 }
-check(res.yews.length > 0, 'demesne yews: a mesh', res.yews.map((y) => y.name).join(', '));
-for (const y of res.yews) {
+check(yews.length > 0, 'demesne yews: a mesh', yews.map((y) => y.name).join(', '));
+for (const y of yews) {
   check(y.perYew >= 1000, `${y.name}: >= 1000 tris a yew at high`, `${Math.round(y.perYew)} (${y.n} yews)`);
   check(y.cards, `${y.name}: alpha-tested sprig cards`, `${y.cards}`);
   check(y.luma < 0.3, `${y.name}: near-black green (sRGB luma < 0.3)`, `${y.luma}`);
 }
-const other = errors.filter((e) => !res.out.some((r) => e.includes(`region-${r.key}`)));
+check(pea.found, 'demesne: peafowl meshes', pea.found ? 'body and train' : 'demesne-peafowl / -trains not in the scene');
+if (pea.found) {
+  check(pea.body.ok, 'demesne: peafowl body is one piece', `${pea.body.why}; ${pea.body.tris} tris`);
+  check(pea.train.ok, 'demesne: peafowl train is one piece', `${pea.train.why}; ${pea.train.tris} tris`);
+  check(pea.rump < 0.02, 'demesne: each train starts at its rump', `coverts to body ${pea.rump} m over ${pea.n} birds`);
+}
+const other = errors.filter((e) => !res.some((r) => e.includes(`region-${r.key}`)));
 if (other.length) console.log(`(other page errors: ${other.length}) ${other[0]}`);
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);
