@@ -1,0 +1,360 @@
+{
+ "about": "The listening stations of the world (v7.2-00). Each pose renders at <base>/?q=low&<params> for <seconds> with <options> (tools/audio-render.mjs's, as keys) and must sit in its bands: min/max inclusive, none: true means the metric must be null (no seam). gated: true fails the survey (exit 1). Bands are harness.md's: the bed-at-a-quiet-pose column for moor-stand and wood-stand, the whole-mix column elsewhere. Voicing agents may add a pose for a place they voice, never loosen a band.",
+ "poses": [
+  {
+   "name": "moor-stand",
+   "place": "Open moor west of the causeway, standing (the harness's first render pose)",
+   "params": "pos=-60,20&yaw=1.9",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -36, "max": -30 },
+    "lufs_s_max": { "max": -24, "gated": true },
+    "lra": { "min": 2, "max": 6 },
+    "peak_dbfs": { "max": -12 },
+    "crest_db": { "min": 10, "max": 14 },
+    "centroid_hz": { "min": 300, "max": 900 },
+    "sharp_db": { "max": -14, "gated": true },
+    "rough": { "max": 0.15 },
+    "hf_db": { "max": -20 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true, "gated": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 0, "max": 3 },
+    "gap_max_s": { "min": 19, "gated": true },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "moor-walk",
+   "place": "Open moor, walking west-north-west from the same spot at 3.6 m/s",
+   "params": "pos=-60,20&yaw=1.9",
+   "seconds": 20,
+   "options": {
+    "walk": 3.6
+   },
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true, "gated": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15, "gated": true },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "wood-stand",
+   "place": "The Deodand Wood at the moss light (the settings teleport, facing the light)",
+   "params": "pos=-199,140&yaw=1.571",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -36, "max": -30 },
+    "lufs_s_max": { "max": -24 },
+    "lra": { "min": 2, "max": 6 },
+    "peak_dbfs": { "max": -12 },
+    "crest_db": { "min": 10, "max": 14 },
+    "centroid_hz": { "min": 300, "max": 900 },
+    "sharp_db": { "max": -14 },
+    "rough": { "max": 0.15 },
+    "hf_db": { "max": -20 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 0, "max": 3 },
+    "gap_max_s": { "min": 19 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "fen-edge",
+   "place": "Corpse-Candle Fen, its south edge, facing the water",
+   "params": "pos=70,92&yaw=3.1416",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "tarn",
+   "place": "Lees Tarn from the north shore (the settings teleport, facing the tarn)",
+   "params": "pos=-90,50&yaw=3.1416",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "canyon-rim",
+   "place": "The canyon rim above the Tumbling Water (v7 canyon render pose)",
+   "params": "pos=166.5,218.5&yaw=2.43",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "sunken-court",
+   "place": "The Sunken Court, a stone enclosure (the settings teleport)",
+   "params": "pos=-40,-165&yaw=0",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "lattice",
+   "place": "The Lattice from its north foot (the settings teleport, facing the moraine)",
+   "params": "pos=40,-215&yaw=0",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "moor-gutter",
+   "place": "Open moor standing, a gutter 1 s in",
+   "params": "pos=-60,20&yaw=1.9",
+   "seconds": 20,
+   "options": {
+    "gutter": true
+   },
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true, "gated": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15, "gated": true },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "leerie-gutter",
+   "place": "The Leerie's row of standards, a gutter 1 s in",
+   "params": "pos=118,-8&yaw=-2.596",
+   "seconds": 20,
+   "options": {
+    "gutter": true
+   },
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "moor-hurry",
+   "place": "Open moor, hurrying (6.6 m/s) from the same spot",
+   "params": "pos=-60,20&yaw=1.9",
+   "seconds": 20,
+   "options": {
+    "walk": 6.6
+   },
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true, "gated": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15, "gated": true },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "demesne-gutter",
+   "place": "The Demesne by the peafowl's blocks, from the causeway, a gutter 1 s in (they cry at every gutter)",
+   "params": "pos=85,-3&yaw=0.785",
+   "seconds": 20,
+   "options": {
+    "gutter": true
+   },
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "demesne-park",
+   "place": "The Demesne lawn below the keep, standing, 40 s (v7.2-03: the rooks talk from the keep top in bouts with rests)",
+   "params": "pos=70,10&yaw=2.5",
+   "seconds": 40,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "lynchets",
+   "place": "The Lynchets terraces near the unseen gate, standing, 40 s (v7.2-03: the dock-heads in the gusts, the gate now and then)",
+   "params": "pos=-195,-112&yaw=-2.4",
+   "seconds": 40,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -28, "max": -24 },
+    "lufs_s_max": { "max": -14 },
+    "lra": { "min": 6, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 20 },
+    "centroid_hz": { "min": 400, "max": 1200 },
+    "sharp_db": { "max": -10 },
+    "rough": { "max": 0.25 },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 12 },
+    "gap_max_s": { "min": 15 },
+    "gap_min_s": { "min": 0.3 },
+    "silence_pct": { "max": 0 }
+   }
+  }
+ ]
+}

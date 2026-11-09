@@ -7,7 +7,7 @@ Fading Planet: a roguelike card battler. Slay the Spire's combat, Heroes of Migh
 - `design/`: the canon, Austin's. Status tags (`[Decided]`, `[Working]`, `[Proposed]`, `[Open]`) are defined in `design/index.md`.
 - `inbox/`: raw ideas, one file each. `proposals/`: agent speculation and questions for Austin. Frontmatter schema in the `design-partner` skill.
 - `wiki/`: the local app that browses and edits those folders. Load the `wiki-maintenance` skill before changing it.
-- `prototypes/wilderness/`: the walk prototype; load the `wilderness` skill before working in it.
+- `prototypes/wilderness/`: the walk prototype; load the `wilderness` skill before working in it, and the `sound-design` skill before touching its audio.
 - GitHub Issues: everything agents build. `.agents/skills/`: skills (mirrored into `.claude/skills/`). `tools/`: repo scripts. `docs/`: architecture notes and archived docs.
 
 ## Roles

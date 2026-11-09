@@ -1,0 +1,1642 @@
+{
+ "base": "http://localhost:8160",
+ "q": "low",
+ "commit": "22d0ff0",
+ "rendered": "2026-11-09T12:20:26.409Z",
+ "baseline": null,
+ "poses": [
+  {
+   "name": "moor-stand",
+   "place": "Open moor west of the causeway, standing (the harness's first render pose)",
+   "url": "http://localhost:8160/?q=low&pos=-60,20&yaw=1.9",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "out",
+    "lufs_s_max": "ok",
+    "lra": "ok",
+    "peak_dbfs": "ok",
+    "crest_db": "out",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": "ok",
+    "gap_min_s": null,
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lufs_i",
+    "crest_db",
+    "centroid_hz",
+    "repeat_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 69,
+    "voice": 9
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "end": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-stand.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.9,
+    "lra": 2.4,
+    "peak_dbfs": -13.8,
+    "crest_db": 15.1,
+    "centroid_hz": 298,
+    "sharp_db": -19.2,
+    "rough": 0.015,
+    "hf_db": -33,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.433
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.014,
+      "strongest_hz": 39,
+      "share": 0.223
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.031,
+      "strongest_hz": 29.3,
+      "share": 0.365
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.003,
+      "strongest_hz": 49.1,
+      "share": 0.251
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.001,
+      "strongest_hz": 209.6,
+      "share": 0.112
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 191.4,
+      "share": 0.037
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.01
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": 191.4,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "moor-walk",
+   "place": "Open moor, walking west-north-west from the same spot at 3.6 m/s",
+   "url": "http://localhost:8160/?q=low&pos=-60,20&yaw=1.9",
+   "options": {
+    "walk": 3.6
+   },
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "ok",
+    "onsets_pm": "out",
+    "gap_max_s": "gated",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "onsets_pm",
+    "gap_max_s",
+    "gap_min_s"
+   ],
+   "gatedFail": [
+    "gap_max_s"
+   ],
+   "events": {
+    "cue": 69,
+    "step": 33,
+    "voice": 9
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "end": {
+     "x": -128.00327260914105,
+     "y": -0.9143921184862533,
+     "z": 43.22851658525664,
+     "yaw": 1.9
+    },
+    "walked": 71.8610399890281
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-walk.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.3,
+    "lufs_s_max": -25.8,
+    "lra": 2.3,
+    "peak_dbfs": -14.6,
+    "crest_db": 14.2,
+    "centroid_hz": 316,
+    "sharp_db": -17.8,
+    "rough": 0.02,
+    "hf_db": -31.6,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": null,
+    "onsets_pm": 15,
+    "gap_max_s": 13.6,
+    "gap_min_s": 0.13,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 2.368,
+     "r": -0.002
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.044,
+      "strongest_hz": 39,
+      "share": 0.22
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.023,
+      "strongest_hz": 29.3,
+      "share": 0.36
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.004,
+      "strongest_hz": 49.1,
+      "share": 0.249
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.001,
+      "strongest_hz": 209.6,
+      "share": 0.115
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.005,
+      "strongest_hz": 66.3,
+      "share": 0.041
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.015,
+      "strongest_hz": 66.3,
+      "share": 0.012
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0.007,
+      "strongest_hz": 72.3,
+      "share": 0.003
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     0.3,
+     0.43,
+     5.69,
+     19.31,
+     19.7
+    ],
+    "step_onsets": 1,
+    "steps_logged": 33
+   }
+  },
+  {
+   "name": "wood-stand",
+   "place": "The Deodand Wood at the moss light (the settings teleport, facing the light)",
+   "url": "http://localhost:8160/?q=low&pos=-199,140&yaw=1.571",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "out",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": "ok",
+    "gap_min_s": null,
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "crest_db",
+    "centroid_hz",
+    "repeat_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 63,
+    "voice": 9
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -199,
+     "y": -4.3477568139923735,
+     "z": 140,
+     "yaw": 1.571
+    },
+    "end": {
+     "x": -199,
+     "y": -4.3477568139923735,
+     "z": 140,
+     "yaw": 1.571
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/wood-stand.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -32.4,
+    "lufs_s_max": -31.2,
+    "lra": 1.7,
+    "peak_dbfs": -18.2,
+    "crest_db": 14.2,
+    "centroid_hz": 187,
+    "sharp_db": -18.6,
+    "rough": 0.069,
+    "hf_db": -36.7,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.441
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.176,
+      "strongest_hz": 89.8,
+      "share": 0.304
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.042,
+      "strongest_hz": 16.1,
+      "share": 0.334
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.004,
+      "strongest_hz": 83.8,
+      "share": 0.22
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.003,
+      "strongest_hz": 104,
+      "share": 0.097
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 109.3,
+      "share": 0.033
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": 91.2,
+      "share": 0.009
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": 46.8,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "fen-edge",
+   "place": "Corpse-Candle Fen, its south edge, facing the water",
+   "url": "http://localhost:8160/?q=low&pos=70,92&yaw=3.1416",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "out",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": null,
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lufs_i",
+    "lra",
+    "centroid_hz",
+    "repeat_s",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 54,
+    "voice": 1
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": 70,
+     "y": -1.7423589864888875,
+     "z": 92,
+     "yaw": 3.1416
+    },
+    "end": {
+     "x": 70,
+     "y": -1.7423589864888875,
+     "z": 92,
+     "yaw": 3.1416
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/fen-edge.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -30.2,
+    "lufs_s_max": -28.8,
+    "lra": 2.2,
+    "peak_dbfs": -17.1,
+    "crest_db": 13.9,
+    "centroid_hz": 242,
+    "sharp_db": -18.5,
+    "rough": 0.034,
+    "hf_db": -34.4,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 3,
+    "gap_max_s": 11.8,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.397
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.099,
+      "strongest_hz": 89.8,
+      "share": 0.252
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.022,
+      "strongest_hz": 29.3,
+      "share": 0.353
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.002,
+      "strongest_hz": 49.1,
+      "share": 0.239
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.002,
+      "strongest_hz": 209.6,
+      "share": 0.107
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 82.4,
+      "share": 0.037
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.001,
+      "strongest_hz": 124.2,
+      "share": 0.01
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": 95.9,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     8.23
+    ],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "tarn",
+   "place": "Lees Tarn from the north shore (the settings teleport, facing the tarn)",
+   "url": "http://localhost:8160/?q=low&pos=-90,50&yaw=3.1416",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "out",
+    "gap_max_s": null,
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "repeat_s",
+    "onsets_pm",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 68,
+    "voice": 9
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -90,
+     "y": -2.411426635910032,
+     "z": 50,
+     "yaw": 3.1416
+    },
+    "end": {
+     "x": -90,
+     "y": -2.411426635910032,
+     "z": 50,
+     "yaw": 3.1416
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/tarn.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.1,
+    "lufs_s_max": -25.7,
+    "lra": 2.2,
+    "peak_dbfs": -14.4,
+    "crest_db": 14.2,
+    "centroid_hz": 307,
+    "sharp_db": -19.2,
+    "rough": 0.018,
+    "hf_db": -33,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.447
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.039,
+      "strongest_hz": 39,
+      "share": 0.217
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.022,
+      "strongest_hz": 29.3,
+      "share": 0.362
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.004,
+      "strongest_hz": 49.1,
+      "share": 0.255
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.001,
+      "strongest_hz": 209.6,
+      "share": 0.115
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 209.6,
+      "share": 0.038
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.01
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "canyon-rim",
+   "place": "The canyon rim above the Tumbling Water (v7 canyon render pose)",
+   "url": "http://localhost:8160/?q=low&pos=166.5,218.5&yaw=2.43",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "out",
+    "gap_max_s": null,
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "repeat_s",
+    "onsets_pm",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 58,
+    "voice": 3
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": 166.5,
+     "y": 7.86591496723691,
+     "z": 218.5,
+     "yaw": 2.43
+    },
+    "end": {
+     "x": 166.5,
+     "y": 7.86591496723691,
+     "z": 218.5,
+     "yaw": 2.43
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/canyon-rim.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.8,
+    "lra": 2.4,
+    "peak_dbfs": -14.8,
+    "crest_db": 14.1,
+    "centroid_hz": 297,
+    "sharp_db": -19.1,
+    "rough": 0.019,
+    "hf_db": -32.9,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.45
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.016,
+      "strongest_hz": 39,
+      "share": 0.228
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.028,
+      "strongest_hz": 29.3,
+      "share": 0.364
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.017,
+      "strongest_hz": 91.5,
+      "share": 0.248
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.006,
+      "strongest_hz": 71.7,
+      "share": 0.111
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 102.6,
+      "share": 0.037
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.002,
+      "strongest_hz": 151.1,
+      "share": 0.01
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0.001,
+      "strongest_hz": 31,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "sunken-court",
+   "place": "The Sunken Court, a stone enclosure (the settings teleport)",
+   "url": "http://localhost:8160/?q=low&pos=-40,-165&yaw=0",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": "out",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "repeat_s",
+    "gap_max_s",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 73,
+    "voice": 1
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -40,
+     "y": 0.720000053710484,
+     "z": -165,
+     "yaw": 0
+    },
+    "end": {
+     "x": -40,
+     "y": 0.720000053710484,
+     "z": -165,
+     "yaw": 0
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/sunken-court.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.8,
+    "lra": 2.5,
+    "peak_dbfs": -14.5,
+    "crest_db": 14.3,
+    "centroid_hz": 304,
+    "sharp_db": -18.4,
+    "rough": 0.017,
+    "hf_db": -32.3,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 3,
+    "gap_max_s": 11.7,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.393
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.01,
+      "strongest_hz": 39,
+      "share": 0.224
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.028,
+      "strongest_hz": 29.3,
+      "share": 0.363
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.017,
+      "strongest_hz": 91.5,
+      "share": 0.248
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.004,
+      "strongest_hz": 76,
+      "share": 0.112
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 91.5,
+      "share": 0.039
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.004,
+      "strongest_hz": 38.4,
+      "share": 0.011
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0.003,
+      "strongest_hz": 91.5,
+      "share": 0.003
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     8.29
+    ],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "lattice",
+   "place": "The Lattice from its north foot (the settings teleport, facing the moraine)",
+   "url": "http://localhost:8160/?q=low&pos=40,-215&yaw=0",
+   "options": {},
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": "out",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "repeat_s",
+    "gap_max_s",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 78,
+    "voice": 10
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": 40,
+     "y": 2.8839502447398484,
+     "z": -215,
+     "yaw": 0
+    },
+    "end": {
+     "x": 40,
+     "y": 2.8839502447398484,
+     "z": -215,
+     "yaw": 0
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/lattice.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -25.6,
+    "lufs_s_max": -24.5,
+    "lra": 1.8,
+    "peak_dbfs": -13.1,
+    "crest_db": 14.3,
+    "centroid_hz": 360,
+    "sharp_db": -21.3,
+    "rough": 0.059,
+    "hf_db": -34.4,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 4.5,
+    "onsets_pm": 3,
+    "gap_max_s": 11.7,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 4.505,
+     "r": 0.21
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.031,
+      "strongest_hz": 39,
+      "share": 0.146
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.015,
+      "strongest_hz": 196.5,
+      "share": 0.31
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.11,
+      "strongest_hz": 196.5,
+      "share": 0.371
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.065,
+      "strongest_hz": 196.5,
+      "share": 0.125
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.022,
+      "strongest_hz": 196.5,
+      "share": 0.038
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.018,
+      "strongest_hz": 196.5,
+      "share": 0.009
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0.016,
+      "strongest_hz": 196.5,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     8.29
+    ],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "moor-gutter",
+   "place": "Open moor standing, a gutter 1 s in",
+   "url": "http://localhost:8160/?q=low&pos=-60,20&yaw=1.9",
+   "options": {
+    "gutter": true
+   },
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "out",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "gated",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "out",
+    "gap_max_s": "ok",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "crest_db",
+    "centroid_hz",
+    "rough",
+    "repeat_s",
+    "onsets_pm",
+    "gap_min_s"
+   ],
+   "gatedFail": [
+    "rough"
+   ],
+   "events": {
+    "cue": 83,
+    "gutter": 1,
+    "voice": 11
+   },
+   "gutter": {
+    "start": 1.021678004535148,
+    "len": 14,
+    "floor": 2.3539229024943316,
+    "end": 15.01170068027211,
+    "minValue": 0.24796495251346565
+   },
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "end": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-gutter.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -24.4,
+    "lufs_s_max": -22.8,
+    "lra": 3.9,
+    "peak_dbfs": -10.4,
+    "crest_db": 11.8,
+    "centroid_hz": 122,
+    "sharp_db": -15.6,
+    "rough": 0.347,
+    "hf_db": -42.9,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.306
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.687,
+      "strongest_hz": 78.4,
+      "share": 0.467
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.091,
+      "strongest_hz": 78.4,
+      "share": 0.274
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.006,
+      "strongest_hz": 78.4,
+      "share": 0.153
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.002,
+      "strongest_hz": 90.5,
+      "share": 0.067
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 78.4,
+      "share": 0.028
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": 56.5,
+      "share": 0.009
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0.001,
+      "strongest_hz": 90.5,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "leerie-gutter",
+   "place": "The Leerie's row of standards, a gutter 1 s in",
+   "url": "http://localhost:8160/?q=low&pos=118,-8&yaw=-2.596",
+   "options": {
+    "gutter": true
+   },
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "out",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "gated",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "ok",
+    "onsets_pm": "ok",
+    "gap_max_s": "out",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "crest_db",
+    "centroid_hz",
+    "rough",
+    "gap_max_s",
+    "gap_min_s"
+   ],
+   "gatedFail": [
+    "rough"
+   ],
+   "events": {
+    "cue": 71,
+    "voice": 48,
+    "gutter": 1
+   },
+   "gutter": {
+    "start": 1.0361904761904759,
+    "len": 14,
+    "floor": 2.3684353741496595,
+    "end": 15.029115646258504,
+    "minValue": 0.24796562964600435
+   },
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": 118,
+     "y": -0.8316042637232857,
+     "z": -8,
+     "yaw": -2.596
+    },
+    "end": {
+     "x": 118,
+     "y": -0.8316042637232857,
+     "z": -8,
+     "yaw": -2.596
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/leerie-gutter.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -24.3,
+    "lufs_s_max": -22.8,
+    "lra": 3.9,
+    "peak_dbfs": -10.4,
+    "crest_db": 11.8,
+    "centroid_hz": 123,
+    "sharp_db": -15.4,
+    "rough": 0.344,
+    "hf_db": -42.5,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": null,
+    "onsets_pm": 3,
+    "gap_max_s": 11.8,
+    "gap_min_s": null,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": null,
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.687,
+      "strongest_hz": 78.4,
+      "share": 0.465
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.087,
+      "strongest_hz": 78.4,
+      "share": 0.274
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.002,
+      "strongest_hz": 78.4,
+      "share": 0.154
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0.001,
+      "strongest_hz": 91.9,
+      "share": 0.068
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0.001,
+      "strongest_hz": 78.4,
+      "share": 0.029
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.01
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": 78.4,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     8.22
+    ],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  },
+  {
+   "name": "moor-hurry",
+   "place": "Open moor, hurrying (6.6 m/s) from the same spot",
+   "url": "http://localhost:8160/?q=low&pos=-60,20&yaw=1.9",
+   "options": {
+    "walk": 6.6
+   },
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "ok",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "ok",
+    "onsets_pm": "ok",
+    "gap_max_s": "ok",
+    "gap_min_s": "out",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "gap_min_s"
+   ],
+   "gatedFail": [],
+   "events": {
+    "cue": 69,
+    "step": 47,
+    "voice": 9
+   },
+   "gutter": "held off",
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": -60,
+     "y": 3.5898276603167476,
+     "z": 20,
+     "yaw": 1.9
+    },
+    "end": {
+     "x": -155.23073992883226,
+     "y": -0.2959486045039757,
+     "z": 52.194937825786724,
+     "yaw": 1.9
+    },
+    "walked": 100.52565766509146
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-hurry.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.8,
+    "lra": 2.4,
+    "peak_dbfs": -13.8,
+    "crest_db": 15.1,
+    "centroid_hz": 310,
+    "sharp_db": -18.2,
+    "rough": 0.017,
+    "hf_db": -32,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": null,
+    "onsets_pm": 9,
+    "gap_max_s": 16.2,
+    "gap_min_s": 0.14,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": null,
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.018,
+      "strongest_hz": 89.8,
+      "share": 0.221
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.034,
+      "strongest_hz": 29.3,
+      "share": 0.361
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.003,
+      "strongest_hz": 49.1,
+      "share": 0.25
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.114
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.04
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0,
+      "strongest_hz": 155.8,
+      "share": 0.012
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.003
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     0.29,
+     0.43,
+     16.59
+    ],
+    "step_onsets": 2,
+    "steps_logged": 47
+   }
+  },
+  {
+   "name": "demesne-gutter",
+   "place": "The Demesne by the peafowl's blocks, from the causeway, a gutter 1 s in (they cry at every gutter)",
+   "url": "http://localhost:8160/?q=low&pos=85,-3&yaw=0.785",
+   "options": {
+    "gutter": true
+   },
+   "seconds": 20,
+   "judged": {
+    "lufs_i": "ok",
+    "lufs_s_max": "ok",
+    "lra": "out",
+    "peak_dbfs": "ok",
+    "crest_db": "ok",
+    "centroid_hz": "out",
+    "sharp_db": "ok",
+    "rough": "gated",
+    "hf_db": "ok",
+    "clicks": "ok",
+    "seam_s": "ok",
+    "repeat_s": "out",
+    "onsets_pm": "out",
+    "gap_max_s": "out",
+    "gap_min_s": "ok",
+    "silence_pct": "ok"
+   },
+   "outOfBand": [
+    "lra",
+    "centroid_hz",
+    "rough",
+    "repeat_s",
+    "onsets_pm",
+    "gap_max_s"
+   ],
+   "gatedFail": [
+    "rough"
+   ],
+   "events": {
+    "cue": 72,
+    "gutter": 1,
+    "voice": 14
+   },
+   "gutter": {
+    "start": 1.0303854875283447,
+    "len": 14,
+    "floor": 2.3626303854875284,
+    "end": 15.029115646258502,
+    "minValue": 0.24799679881298245
+   },
+   "errors": 0,
+   "pose": {
+    "start": {
+     "x": 85,
+     "y": 15.417647061197696,
+     "z": -3,
+     "yaw": 0.785
+    },
+    "end": {
+     "x": 85,
+     "y": 15.417647061197696,
+     "z": -3,
+     "yaw": 0.785
+    },
+    "walked": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/demesne-gutter.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -24.1,
+    "lufs_s_max": -22.6,
+    "lra": 3.5,
+    "peak_dbfs": -10.1,
+    "crest_db": 12,
+    "centroid_hz": 138,
+    "sharp_db": -15.1,
+    "rough": 0.292,
+    "hf_db": -40.6,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 21,
+    "gap_max_s": 10.5,
+    "gap_min_s": 0.45,
+    "silence_pct": 0
+   },
+   "detail": {
+    "seams": [],
+    "repeat": {
+     "period": 7.001,
+     "r": 0.287
+    },
+    "rough_bands": [
+     {
+      "band_hz": 125,
+      "rough": 0.629,
+      "strongest_hz": 78.4,
+      "share": 0.432
+     },
+     {
+      "band_hz": 250,
+      "rough": 0.071,
+      "strongest_hz": 78.4,
+      "share": 0.279
+     },
+     {
+      "band_hz": 500,
+      "rough": 0.002,
+      "strongest_hz": 49.1,
+      "share": 0.165
+     },
+     {
+      "band_hz": 1000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.077
+     },
+     {
+      "band_hz": 2000,
+      "rough": 0,
+      "strongest_hz": null,
+      "share": 0.033
+     },
+     {
+      "band_hz": 4000,
+      "rough": 0.001,
+      "strongest_hz": 95.9,
+      "share": 0.011
+     },
+     {
+      "band_hz": 8000,
+      "rough": 0,
+      "strongest_hz": 95.9,
+      "share": 0.002
+     }
+    ],
+    "click_times": [],
+    "onset_times": [
+     2.79,
+     3.65,
+     4.81,
+     5.26,
+     5.94,
+     8.24,
+     18.7
+    ],
+    "step_onsets": 0,
+    "steps_logged": 0
+   }
+  }
+ ]
+}

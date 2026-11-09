@@ -9,7 +9,7 @@
 // wings beating) to another wall's top when that keeps it nearer the band; it never leaves the walls. Beyond 18 m it
 // goes back to, and sits on, its perch: the highest stretch of wall-top (the stones standing tallest over their ground)
 // within 6 m of the leads P3 and P4 (v7.1; it was the wall-top nearest (-170, -97)).
-// The echo: audio.js records each of the walker's steps as it plays (audio.steps, a ring of 16); while the bird follows,
+// The echo: audio/steps.js records each of the walker's steps as it plays (audio.steps, a ring of 16); while the bird follows,
 // each is replayed 1.0 s after it with audio.echoStep(rec, pos) at the bird: the same ground kind, hurry, pitch and
 // volume draws. Nothing else: the delay is the whole behaviour, and the bird makes no other sound. As each echo sounds
 // the bird moves (v7.1), so the eye goes to the sound: a flick of the tail and a hop of a stone's width along the top;

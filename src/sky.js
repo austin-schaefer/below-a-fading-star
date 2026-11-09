@@ -170,12 +170,13 @@ export function buildSky(ctx) {
   // shuddering floor of ~0.3 for about 8 s, and comes back over ~2.5 s with a slight overshoot.
   // Austin found the first version (a third of a second to the floor) too abrupt.
   // Timings come from GUTTER (below) so everything that wants them reads one place; ?gutter=<len>,<every> overrides, ?gutter=v3 restores the old ones.
-  const flicker = { value: 1.0, next: 25 + Math.random() * 30, phase: 0, len: 0, hold: null, timing: GUTTER };
+  const grng = ctx.makeRng(1733); // the gutter's own stream (v7.2-05): the same distribution, the same course every visit
+  const flicker = { value: 1.0, next: 25 + grng() * 30, phase: 0, len: 0, hold: null, timing: GUTTER };
   if (GUTTER.pinned) flicker.next = Math.min(flicker.next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
   function update(dt, t) {
     uniforms.uTime.value = t;
     flicker.next -= dt;
-    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + Math.random() * (GUTTER.len[1] - GUTTER.len[0]); flicker.next = GUTTER.every[0] + Math.random() * (GUTTER.every[1] - GUTTER.every[0]); }
+    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + grng() * (GUTTER.len[1] - GUTTER.len[0]); flicker.next = GUTTER.every[0] + grng() * (GUTTER.every[1] - GUTTER.every[0]); }
     let target = 1.0;
     if (flicker.phase > 0) {
       flicker.phase -= dt;

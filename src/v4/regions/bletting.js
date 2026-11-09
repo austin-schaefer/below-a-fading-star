@@ -113,30 +113,33 @@ export const sound = {
     const { ac, panner, setPos, filt, gainOf, chain, white, brown, pink, camera, loopSrc } = k;
     const rng = k.makeRng(5101);
     const bus = gainOf(0); bus.connect(k.master); k.send(bus, 0.35);
-    const pan = panner('equalpower', 4, 1.1, 80); pan.connect(bus);
+    const pl = k.placed({ ref: 4, roll: 1.1, range: 80, air: 60, dest: bus }), pan = pl.in; // a windfall's place, with the air between
     // the buzz: a few wasps drifting round you, pitch wandering
     const buzz = gainOf(0); buzz.connect(k.master);
     const bpan = panner('equalpower', 1.5, 1.4, 25); bpan.connect(buzz);
     const osc = ac.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 170;
     const fm = ac.createOscillator(); fm.frequency.value = 7; const fmg = gainOf(14); fm.connect(fmg); fmg.connect(osc.frequency);
     chain(osc, filt('bandpass', 520, 1.6), gainOf(0.025), bpan); osc.start(); fm.start();
-    let next = 2, wob = 0;
+    let wob = 0, cx = 0, cz = 0, cw = 0, now0 = 0;
     function drop(x, z, at) {
       // the nearest tree spot round you, or a guess in the grass
       let px = x + (rng() - 0.5) * 30, pz = z + (rng() - 0.5) * 30;
       for (let i = 0; i < 6 && DROPS.length; i++) { const d = DROPS[(rng() * DROPS.length) | 0]; if (hyp(d[0] - x, d[1] - z) < 28) { px = d[0]; pz = d[1]; break; } }
-      setPos(pan, px, camera.position.y, pz);
+      pl.at(px, camera.position.y, pz);
       // a rustle through the leaves on its way down, then a soft thud in long grass
       const fallT = 0.18 + rng() * 0.3;
       for (let i = 0; i < 3 + (rng() * 3 | 0); i++) {
         const tt = at + i * (fallT / 4) + rng() * 0.03, g = gainOf(0); k.env(g, tt, 0.035, 0.004, 0.05 + rng() * 0.05);
-        const s = ac.createBufferSource(); s.buffer = white; s.start(tt, rng() * 2, 0.12); chain(s, filt('bandpass', 2600 + rng() * 2400, 1.5), g, pan);
+        const s = ac.createBufferSource(); s.buffer = white; s.start(tt, rng() * 2, 0.12); chain(s, filt('bandpass', 2000 + rng() * 1800, 1.5), g, pan);
       }
       const tt = at + fallT, o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(130 + rng() * 60, tt); o.frequency.exponentialRampToValueAtTime(70, tt + 0.09);
       const og = gainOf(0); k.env(og, tt, 0.18, 0.003, 0.11); o.connect(og); og.connect(pan); o.start(tt); o.stop(tt + 0.2);
       const s = ac.createBufferSource(); s.buffer = brown; s.start(tt, rng() * 5, 0.15); const sg = gainOf(0); k.env(sg, tt, 0.25, 0.002, 0.07); chain(s, filt('lowpass', 500), sg, pan);
       const s2 = ac.createBufferSource(); s2.buffer = pink; s2.start(tt, rng() * 3, 0.15); const sg2 = gainOf(0); k.env(sg2, tt, 0.04, 0.005, 0.1); chain(s2, filt('bandpass', 1800, 0.8), sg2, pan);
     }
+    // windfalls come in ones and twos, a few seconds apart, then a while with none
+    const drops = k.caller(rng, { bout: [1, 3], gap: [1.5, 4], rest: [10, 0.7, 3, 60], first: [1, 5], when: () => cw > 0.1 },
+      () => drop(cx, cz, now0 + k.lead() + 0.02));
     return {
       tick(w, x, z, step, t, now) {
         bus.gain.setTargetAtTime(w > 0.02 ? w : 0, now, 0.5);
@@ -146,9 +149,8 @@ export const sound = {
         setPos(bpan, x + Math.cos(a) * r, camera.position.y - 0.6 + Math.sin(t * 1.3) * 0.3, z + Math.sin(a * 1.3) * r);
         osc.frequency.setTargetAtTime(160 + 40 * Math.sin(t * 0.9) + 20 * Math.sin(t * 2.7), now, 0.2);
         buzz.gain.setTargetAtTime(w * nearClose * (0.5 + 0.5 * Math.max(0, Math.sin(t * 0.21))) * (k.sky?.flicker?.value ?? 1), now, 0.6);
-        if (w <= 0.1) return;
-        next -= step;
-        if (next <= 0) { drop(x, z, now + k.lead() + 0.02); next = (2.5 + rng() * 6) / w; }
+        cx = x; cz = z; cw = w; now0 = now;
+        drops.tick(step);
       },
     };
   },
