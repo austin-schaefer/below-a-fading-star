@@ -1,8 +1,8 @@
 {
  "base": "http://localhost:8160",
  "q": "low",
- "commit": "1e8b2d6",
- "rendered": "2026-11-09T09:11:40.302Z",
+ "commit": "d87d83a",
+ "rendered": "2026-11-09T11:12:22.745Z",
  "baseline": null,
  "poses": [
   {
@@ -56,28 +56,6 @@
      "yaw": 1.9
     },
     "walked": 0
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/moor-stand.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.4,
-    "lufs_s_max": -25.9,
-    "lra": 2.4,
-    "peak_dbfs": -14.6,
-    "crest_db": 14.3,
-    "centroid_hz": 297,
-    "sharp_db": -19.2,
-    "rough": 0.022,
-    "hf_db": -33.1,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 0,
-    "gap_max_s": 20,
-    "gap_min_s": null,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -133,6 +111,28 @@
     "onset_times": [],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-stand.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.9,
+    "lra": 2.4,
+    "peak_dbfs": -14.6,
+    "crest_db": 14.3,
+    "centroid_hz": 297,
+    "sharp_db": -19.2,
+    "rough": 0.022,
+    "hf_db": -33.1,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -191,28 +191,6 @@
      "yaw": 1.9
     },
     "walked": 71.67894900821034
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/moor-walk.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.3,
-    "lufs_s_max": -25.8,
-    "lra": 2.3,
-    "peak_dbfs": -14.6,
-    "crest_db": 14.2,
-    "centroid_hz": 315,
-    "sharp_db": -17.8,
-    "rough": 0.021,
-    "hf_db": -31.6,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": null,
-    "onsets_pm": 12,
-    "gap_max_s": 13.7,
-    "gap_min_s": 0.13,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -273,6 +251,28 @@
     ],
     "step_onsets": 1,
     "steps_logged": 33
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-walk.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.3,
+    "lufs_s_max": -25.8,
+    "lra": 2.3,
+    "peak_dbfs": -14.6,
+    "crest_db": 14.2,
+    "centroid_hz": 315,
+    "sharp_db": -17.8,
+    "rough": 0.021,
+    "hf_db": -31.6,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": null,
+    "onsets_pm": 12,
+    "gap_max_s": 13.7,
+    "gap_min_s": 0.13,
+    "silence_pct": 0
    }
   },
   {
@@ -325,28 +325,6 @@
      "yaw": 1.571
     },
     "walked": 0
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/wood-stand.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -32.4,
-    "lufs_s_max": -31.2,
-    "lra": 1.8,
-    "peak_dbfs": -19.3,
-    "crest_db": 13.1,
-    "centroid_hz": 188,
-    "sharp_db": -18.6,
-    "rough": 0.066,
-    "hf_db": -36.7,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 0,
-    "gap_max_s": 20,
-    "gap_min_s": null,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -402,6 +380,28 @@
     "onset_times": [],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/wood-stand.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -32.4,
+    "lufs_s_max": -31.2,
+    "lra": 1.8,
+    "peak_dbfs": -19.3,
+    "crest_db": 13.1,
+    "centroid_hz": 188,
+    "sharp_db": -18.6,
+    "rough": 0.066,
+    "hf_db": -36.7,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -456,28 +456,6 @@
      "yaw": 3.1416
     },
     "walked": 0
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/fen-edge.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -30.2,
-    "lufs_s_max": -28.8,
-    "lra": 2.2,
-    "peak_dbfs": -17.2,
-    "crest_db": 13.8,
-    "centroid_hz": 243,
-    "sharp_db": -18.6,
-    "rough": 0.025,
-    "hf_db": -34.5,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 3,
-    "gap_max_s": 11.8,
-    "gap_min_s": null,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -535,6 +513,28 @@
     ],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/fen-edge.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -30.2,
+    "lufs_s_max": -28.8,
+    "lra": 2.2,
+    "peak_dbfs": -17.2,
+    "crest_db": 13.8,
+    "centroid_hz": 243,
+    "sharp_db": -18.6,
+    "rough": 0.025,
+    "hf_db": -34.5,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 3,
+    "gap_max_s": 11.8,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -590,28 +590,6 @@
     },
     "walked": 0
    },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/tarn.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.1,
-    "lufs_s_max": -25.7,
-    "lra": 2.2,
-    "peak_dbfs": -14.9,
-    "crest_db": 13.7,
-    "centroid_hz": 305,
-    "sharp_db": -19.2,
-    "rough": 0.015,
-    "hf_db": -33,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 0,
-    "gap_max_s": 20,
-    "gap_min_s": null,
-    "silence_pct": 0
-   },
    "detail": {
     "seams": [],
     "repeat": {
@@ -666,6 +644,28 @@
     "onset_times": [],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/tarn.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.1,
+    "lufs_s_max": -25.7,
+    "lra": 2.2,
+    "peak_dbfs": -14.9,
+    "crest_db": 13.7,
+    "centroid_hz": 305,
+    "sharp_db": -19.2,
+    "rough": 0.015,
+    "hf_db": -33,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -721,28 +721,6 @@
     },
     "walked": 0
    },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/canyon-rim.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.4,
-    "lufs_s_max": -25.8,
-    "lra": 2.5,
-    "peak_dbfs": -14.2,
-    "crest_db": 14.6,
-    "centroid_hz": 295,
-    "sharp_db": -19.2,
-    "rough": 0.013,
-    "hf_db": -33,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 0,
-    "gap_max_s": 20,
-    "gap_min_s": null,
-    "silence_pct": 0
-   },
    "detail": {
     "seams": [],
     "repeat": {
@@ -797,6 +775,28 @@
     "onset_times": [],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/canyon-rim.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.8,
+    "lra": 2.5,
+    "peak_dbfs": -14.2,
+    "crest_db": 14.6,
+    "centroid_hz": 295,
+    "sharp_db": -19.2,
+    "rough": 0.013,
+    "hf_db": -33,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -851,28 +851,6 @@
      "yaw": 0
     },
     "walked": 0
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/sunken-court.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.4,
-    "lufs_s_max": -25.7,
-    "lra": 2.6,
-    "peak_dbfs": -13.7,
-    "crest_db": 15.2,
-    "centroid_hz": 304,
-    "sharp_db": -18.5,
-    "rough": 0.013,
-    "hf_db": -32.4,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 3,
-    "gap_max_s": 11.7,
-    "gap_min_s": null,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -930,6 +908,28 @@
     ],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/sunken-court.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.7,
+    "lra": 2.6,
+    "peak_dbfs": -13.7,
+    "crest_db": 15.2,
+    "centroid_hz": 304,
+    "sharp_db": -18.5,
+    "rough": 0.013,
+    "hf_db": -32.4,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 3,
+    "gap_max_s": 11.7,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -983,28 +983,6 @@
      "yaw": 0
     },
     "walked": 0
-   },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/lattice.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -25.7,
-    "lufs_s_max": -24.1,
-    "lra": 2.6,
-    "peak_dbfs": -13.1,
-    "crest_db": 14.4,
-    "centroid_hz": 350,
-    "sharp_db": -21.6,
-    "rough": 0.065,
-    "hf_db": -34.9,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": 7,
-    "onsets_pm": 3,
-    "gap_max_s": 15.4,
-    "gap_min_s": null,
-    "silence_pct": 0
    },
    "detail": {
     "seams": [],
@@ -1062,6 +1040,28 @@
     ],
     "step_onsets": 0,
     "steps_logged": 0
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/lattice.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -25.7,
+    "lufs_s_max": -24.1,
+    "lra": 2.6,
+    "peak_dbfs": -13.1,
+    "crest_db": 14.4,
+    "centroid_hz": 350,
+    "sharp_db": -21.6,
+    "rough": 0.065,
+    "hf_db": -34.9,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": 7,
+    "onsets_pm": 3,
+    "gap_max_s": 15.4,
+    "gap_min_s": null,
+    "silence_pct": 0
    }
   },
   {
@@ -1085,9 +1085,9 @@
     "clicks": "ok",
     "seam_s": "ok",
     "repeat_s": "out",
-    "onsets_pm": "out",
-    "gap_max_s": "ok",
-    "gap_min_s": "out",
+    "onsets_pm": "ok",
+    "gap_max_s": "gated",
+    "gap_min_s": "ok",
     "silence_pct": "ok"
    },
    "outOfBand": [
@@ -1096,23 +1096,23 @@
     "centroid_hz",
     "rough",
     "repeat_s",
-    "onsets_pm",
-    "gap_min_s"
+    "gap_max_s"
    ],
    "gatedFail": [
-    "rough"
+    "rough",
+    "gap_max_s"
    ],
    "events": {
-    "cue": 83,
-    "gutter": 1,
-    "voice": 11
+    "cue": 86,
+    "voice": 12,
+    "gutter": 1
    },
    "gutter": {
-    "start": 1.0187755102040814,
-    "len": 13.992144834866487,
-    "floor": 2.3539229024943316,
-    "end": 15.020408163265305,
-    "minValue": 0.2478922645503222
+    "start": 1.027482993197279,
+    "len": 14,
+    "floor": 2.3684353741496604,
+    "end": 15.119092970521542,
+    "minValue": 0.2480328945849186
    },
    "errors": 0,
    "pose": {
@@ -1138,72 +1138,75 @@
     "lufs_i": -24.4,
     "lufs_s_max": -22.9,
     "lra": 3.9,
-    "peak_dbfs": -10.6,
-    "crest_db": 11.5,
+    "peak_dbfs": -10.9,
+    "crest_db": 11.2,
     "centroid_hz": 121,
-    "sharp_db": -15.6,
-    "rough": 0.341,
-    "hf_db": -42.8,
+    "sharp_db": -15.5,
+    "rough": 0.345,
+    "hf_db": -42.9,
     "clicks": 0,
     "seam_s": null,
     "repeat_s": 7,
-    "onsets_pm": 0,
-    "gap_max_s": 20,
-    "gap_min_s": null,
+    "onsets_pm": 6,
+    "gap_max_s": 12.3,
+    "gap_min_s": 12.31,
     "silence_pct": 0
    },
    "detail": {
     "seams": [],
     "repeat": {
      "period": 7.001,
-     "r": 0.298
+     "r": 0.284
     },
     "rough_bands": [
      {
       "band_hz": 125,
-      "rough": 0.684,
+      "rough": 0.685,
       "strongest_hz": 78.4,
-      "share": 0.466
+      "share": 0.467
      },
      {
       "band_hz": 250,
-      "rough": 0.078,
+      "rough": 0.086,
       "strongest_hz": 78.4,
       "share": 0.275
      },
      {
       "band_hz": 500,
-      "rough": 0.005,
+      "rough": 0.007,
       "strongest_hz": 78.4,
-      "share": 0.154
+      "share": 0.153
      },
      {
       "band_hz": 1000,
-      "rough": 0,
-      "strongest_hz": null,
-      "share": 0.067
+      "rough": 0.002,
+      "strongest_hz": 90.5,
+      "share": 0.066
      },
      {
       "band_hz": 2000,
       "rough": 0.001,
-      "strongest_hz": 67.6,
+      "strongest_hz": 56.5,
       "share": 0.028
      },
      {
       "band_hz": 4000,
-      "rough": 0,
+      "rough": 0.001,
       "strongest_hz": 248.6,
       "share": 0.009
      },
      {
       "band_hz": 8000,
-      "rough": 0.001,
-      "strongest_hz": 31,
+      "rough": 0,
+      "strongest_hz": 90.5,
       "share": 0.002
      }
     ],
     "click_times": [],
-    "onset_times": [],
+    "onset_times": [
+     2.65,
+     14.95
+    ],
     "step_onsets": 0,
     "steps_logged": 0
    }
@@ -1217,7 +1220,7 @@
    },
    "seconds": 20,
    "judged": {
-    "lufs_i": "ok",
+    "lufs_i": "out",
     "lufs_s_max": "ok",
     "lra": "out",
     "peak_dbfs": "ok",
@@ -1226,38 +1229,37 @@
     "sharp_db": "ok",
     "rough": "gated",
     "hf_db": "ok",
-    "clicks": "gated",
+    "clicks": "ok",
     "seam_s": "ok",
     "repeat_s": "ok",
-    "onsets_pm": "ok",
-    "gap_max_s": "out",
+    "onsets_pm": "out",
+    "gap_max_s": "ok",
     "gap_min_s": "out",
     "silence_pct": "ok"
    },
    "outOfBand": [
+    "lufs_i",
     "lra",
     "crest_db",
     "centroid_hz",
     "rough",
-    "clicks",
-    "gap_max_s",
+    "onsets_pm",
     "gap_min_s"
    ],
    "gatedFail": [
-    "rough",
-    "clicks"
+    "rough"
    ],
    "events": {
-    "cue": 66,
-    "voice": 42,
+    "cue": 63,
+    "voice": 40,
     "gutter": 1
    },
    "gutter": {
-    "start": 1.021678004535147,
-    "len": 14.776903982803525,
-    "floor": 2.3597278911564628,
-    "end": 15.780861678004534,
-    "minValue": 0.24794581315104963
+    "start": 1.0245804988662126,
+    "len": 14,
+    "floor": 2.345215419501134,
+    "end": null,
+    "minValue": 0.24762996574513554
    },
    "errors": 0,
    "pose": {
@@ -1280,80 +1282,75 @@
     "seconds": 20,
     "sample_rate": 44100,
     "channels": 2,
-    "lufs_i": -24.2,
-    "lufs_s_max": -22.9,
-    "lra": 3.5,
-    "peak_dbfs": -10.5,
-    "crest_db": 11.5,
-    "centroid_hz": 116,
-    "sharp_db": -15.2,
-    "rough": 0.368,
-    "hf_db": -42.9,
-    "clicks": 1,
+    "lufs_i": -23.7,
+    "lufs_s_max": -22.8,
+    "lra": 2,
+    "peak_dbfs": -10.8,
+    "crest_db": 10.3,
+    "centroid_hz": 95,
+    "sharp_db": -14.9,
+    "rough": 0.403,
+    "hf_db": -45.3,
+    "clicks": 0,
     "seam_s": null,
     "repeat_s": null,
-    "onsets_pm": 3,
-    "gap_max_s": 11.8,
+    "onsets_pm": 0,
+    "gap_max_s": 20,
     "gap_min_s": null,
     "silence_pct": 0
    },
    "detail": {
     "seams": [],
-    "repeat": null,
+    "repeat": {
+     "period": 1.08,
+     "r": 0.14
+    },
     "rough_bands": [
      {
       "band_hz": 125,
-      "rough": 0.718,
+      "rough": 0.699,
       "strongest_hz": 78.4,
-      "share": 0.476
+      "share": 0.523
      },
      {
       "band_hz": 250,
-      "rough": 0.093,
+      "rough": 0.134,
       "strongest_hz": 78.4,
-      "share": 0.27
+      "share": 0.259
      },
      {
       "band_hz": 500,
-      "rough": 0.007,
+      "rough": 0.018,
       "strongest_hz": 78.4,
-      "share": 0.149
+      "share": 0.132
      },
      {
       "band_hz": 1000,
-      "rough": 0,
-      "strongest_hz": null,
-      "share": 0.065
+      "rough": 0.006,
+      "strongest_hz": 78.4,
+      "share": 0.053
      },
      {
       "band_hz": 2000,
-      "rough": 0,
-      "strongest_hz": null,
-      "share": 0.028
+      "rough": 0.002,
+      "strongest_hz": 78.1,
+      "share": 0.024
      },
      {
       "band_hz": 4000,
-      "rough": 0.001,
-      "strongest_hz": 56.5,
-      "share": 0.009
+      "rough": 0,
+      "strongest_hz": 83.8,
+      "share": 0.008
      },
      {
       "band_hz": 8000,
-      "rough": 0,
-      "strongest_hz": 290.4,
-      "share": 0.002
+      "rough": 0.001,
+      "strongest_hz": 78.4,
+      "share": 0.001
      }
     ],
-    "click_times": [
-     {
-      "t": 9.0771,
-      "ratio": 9.2,
-      "dbfs": -38.7
-     }
-    ],
-    "onset_times": [
-     8.24
-    ],
+    "click_times": [],
+    "onset_times": [],
     "step_onsets": 0,
     "steps_logged": 0
    }
@@ -1412,28 +1409,6 @@
     },
     "walked": 100.52589164142942
    },
-   "metrics": {
-    "file": "shots/wip/audio/survey-baseline/moor-hurry.wav",
-    "seconds": 20,
-    "sample_rate": 44100,
-    "channels": 2,
-    "lufs_i": -27.4,
-    "lufs_s_max": -25.8,
-    "lra": 2.4,
-    "peak_dbfs": -14.4,
-    "crest_db": 14.4,
-    "centroid_hz": 311,
-    "sharp_db": -18.3,
-    "rough": 0.02,
-    "hf_db": -32.1,
-    "clicks": 0,
-    "seam_s": null,
-    "repeat_s": null,
-    "onsets_pm": 12,
-    "gap_max_s": 19.2,
-    "gap_min_s": 0.13,
-    "silence_pct": 0
-   },
    "detail": {
     "seams": [],
     "repeat": null,
@@ -1490,6 +1465,28 @@
     ],
     "step_onsets": 2,
     "steps_logged": 47
+   },
+   "metrics": {
+    "file": "shots/wip/audio/survey-baseline/moor-hurry.wav",
+    "seconds": 20,
+    "sample_rate": 44100,
+    "channels": 2,
+    "lufs_i": -27.4,
+    "lufs_s_max": -25.8,
+    "lra": 2.4,
+    "peak_dbfs": -14.4,
+    "crest_db": 14.4,
+    "centroid_hz": 311,
+    "sharp_db": -18.3,
+    "rough": 0.02,
+    "hf_db": -32.1,
+    "clicks": 0,
+    "seam_s": null,
+    "repeat_s": null,
+    "onsets_pm": 12,
+    "gap_max_s": 19.2,
+    "gap_min_s": 0.13,
+    "silence_pct": 0
    }
   },
   {
@@ -1501,16 +1498,16 @@
    },
    "seconds": 20,
    "judged": {
-    "lufs_i": "out",
+    "lufs_i": "ok",
     "lufs_s_max": "ok",
     "lra": "out",
     "peak_dbfs": "ok",
-    "crest_db": "out",
+    "crest_db": "ok",
     "centroid_hz": "out",
     "sharp_db": "ok",
     "rough": "gated",
     "hf_db": "ok",
-    "clicks": "gated",
+    "clicks": "ok",
     "seam_s": "ok",
     "repeat_s": "out",
     "onsets_pm": "out",
@@ -1519,31 +1516,27 @@
     "silence_pct": "ok"
    },
    "outOfBand": [
-    "lufs_i",
     "lra",
-    "crest_db",
     "centroid_hz",
     "rough",
-    "clicks",
     "repeat_s",
     "onsets_pm",
     "gap_max_s"
    ],
    "gatedFail": [
-    "rough",
-    "clicks"
+    "rough"
    ],
    "events": {
-    "cue": 68,
+    "cue": 72,
     "gutter": 1,
-    "voice": 14
+    "voice": 15
    },
    "gutter": {
-    "start": 1.027482993197279,
-    "len": 15.107483208302405,
-    "floor": 2.3800453514739237,
-    "end": 16.370068027210884,
-    "minValue": 0.2476301209013073
+    "start": 1.0303854875283447,
+    "len": 14,
+    "floor": 2.3597278911564628,
+    "end": 15.020408163265305,
+    "minValue": 0.24620316854740276
    },
    "errors": 0,
    "pose": {
@@ -1566,88 +1559,80 @@
     "seconds": 20,
     "sample_rate": 44100,
     "channels": 2,
-    "lufs_i": -23.9,
-    "lufs_s_max": -22.6,
-    "lra": 3,
-    "peak_dbfs": -10.3,
-    "crest_db": 11.5,
-    "centroid_hz": 127,
-    "sharp_db": -14.8,
-    "rough": 0.312,
-    "hf_db": -41.2,
-    "clicks": 1,
+    "lufs_i": -24.1,
+    "lufs_s_max": -22.7,
+    "lra": 3.7,
+    "peak_dbfs": -9.4,
+    "crest_db": 12.7,
+    "centroid_hz": 133,
+    "sharp_db": -15.7,
+    "rough": 0.298,
+    "hf_db": -41.9,
+    "clicks": 0,
     "seam_s": null,
     "repeat_s": 7,
-    "onsets_pm": 21,
-    "gap_max_s": 10.5,
-    "gap_min_s": 0.58,
+    "onsets_pm": 15,
+    "gap_max_s": 14.1,
+    "gap_min_s": 0.35,
     "silence_pct": 0
    },
    "detail": {
     "seams": [],
     "repeat": {
      "period": 7.001,
-     "r": 0.296
+     "r": 0.299
     },
     "rough_bands": [
      {
       "band_hz": 125,
       "rough": 0.648,
       "strongest_hz": 78.4,
-      "share": 0.451
+      "share": 0.435
      },
      {
       "band_hz": 250,
-      "rough": 0.072,
-      "strongest_hz": 83.8,
-      "share": 0.273
+      "rough": 0.052,
+      "strongest_hz": 78.4,
+      "share": 0.281
      },
      {
       "band_hz": 500,
-      "rough": 0.001,
-      "strongest_hz": 289.7,
-      "share": 0.158
+      "rough": 0.007,
+      "strongest_hz": 78.4,
+      "share": 0.166
      },
      {
       "band_hz": 1000,
-      "rough": 0.002,
-      "strongest_hz": 20.2,
-      "share": 0.073
+      "rough": 0.001,
+      "strongest_hz": 247,
+      "share": 0.076
      },
      {
       "band_hz": 2000,
       "rough": 0.001,
       "strongest_hz": 78.4,
-      "share": 0.032
+      "share": 0.031
      },
      {
       "band_hz": 4000,
       "rough": 0,
       "strongest_hz": null,
-      "share": 0.011
+      "share": 0.01
      },
      {
       "band_hz": 8000,
       "rough": 0,
-      "strongest_hz": null,
+      "strongest_hz": 78.4,
       "share": 0.002
      }
     ],
-    "click_times": [
-     {
-      "t": 19.5857,
-      "ratio": 14.1,
-      "dbfs": -29
-     }
-    ],
+    "click_times": [],
     "onset_times": [
-     2.83,
-     3.94,
-     4.52,
-     5.14,
-     6.49,
-     8.46,
-     18.96
+     2.76,
+     3.87,
+     4.83,
+     5.18,
+     5.91
     ],
     "step_onsets": 0,
     "steps_logged": 0

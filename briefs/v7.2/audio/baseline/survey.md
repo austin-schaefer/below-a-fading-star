@@ -1,6 +1,6 @@
 # Audio survey
 
-Rendered 2026-11-09T09:11:40.301Z from `http://localhost:8160` at q=low, commit 1e8b2d6, by `tools/audio-survey.mjs`. 12 poses, 20 s each, post-limiter tap, volume 100.
+Rendered 2026-11-09T11:12:22.744Z from `http://localhost:8160` at q=low, commit d87d83a, by `tools/audio-survey.mjs`. 12 poses, 20 s each, post-limiter tap, volume 100.
 A cell marked `!` is outside its band; `!!` is outside a gated band (the survey fails). `–` is no value (no seam; fewer than two onsets for gap_min).
 `onsets_pm` and the gaps leave out the walker's own steps (the cue log's).
 
@@ -14,12 +14,12 @@ A cell marked `!` is outside its band; `!!` is outside a gated band (the survey 
 | canyon-rim | -27.4 | -25.8 | 2.5 ! | -14.2 | 14.6 | 295 ! | -19.2 | 0.013 | -33 | 0 | – | 7 ! | 0 ! | 20 | – ! | 0 |
 | sunken-court | -27.4 | -25.7 | 2.6 ! | -13.7 | 15.2 | 304 ! | -18.5 | 0.013 | -32.4 | 0 | – | 7 ! | 3 | 11.7 ! | – ! | 0 |
 | lattice | -25.7 | -24.1 | 2.6 ! | -13.1 | 14.4 | 350 ! | -21.6 | 0.065 | -34.9 | 0 | – | 7 ! | 3 | 15.4 | – ! | 0 |
-| moor-gutter | -24.4 | -22.9 | 3.9 ! | -10.6 | 11.5 ! | 121 ! | -15.6 | 0.341 !! | -42.8 | 0 | – | 7 ! | 0 ! | 20 | – ! | 0 |
-| leerie-gutter | -24.2 | -22.9 | 3.5 ! | -10.5 | 11.5 ! | 116 ! | -15.2 | 0.368 !! | -42.9 | 1 !! | – | – | 3 | 11.8 ! | – ! | 0 |
+| moor-gutter | -24.4 | -22.9 | 3.9 ! | -10.9 | 11.2 ! | 121 ! | -15.5 | 0.345 !! | -42.9 | 0 | – | 7 ! | 6 | 12.3 !! | 12.31 | 0 |
+| leerie-gutter | -23.7 ! | -22.8 | 2 ! | -10.8 | 10.3 ! | 95 ! | -14.9 | 0.403 !! | -45.3 | 0 | – | – | 0 ! | 20 | – ! | 0 |
 | moor-hurry | -27.4 | -25.8 | 2.4 ! | -14.4 | 14.4 | 311 ! | -18.3 | 0.02 | -32.1 | 0 | – | – | 12 | 19.2 | 0.13 ! | 0 |
-| demesne-gutter | -23.9 ! | -22.6 | 3 ! | -10.3 | 11.5 ! | 127 ! | -14.8 | 0.312 !! | -41.2 | 1 !! | – | 7 ! | 21 ! | 10.5 ! | 0.58 | 0 |
+| demesne-gutter | -24.1 | -22.7 | 3.7 ! | -9.4 | 12.7 | 133 ! | -15.7 | 0.298 !! | -41.9 | 0 | – | 7 ! | 15 ! | 14.1 ! | 0.35 | 0 |
 
-**Gated failures:** moor-walk (gap_max_s); moor-gutter (rough); leerie-gutter (rough, clicks); demesne-gutter (rough, clicks).
+**Gated failures:** moor-walk (gap_max_s); moor-gutter (rough, gap_max_s); leerie-gutter (rough); demesne-gutter (rough).
 
 ## Poses
 
@@ -31,10 +31,10 @@ A cell marked `!` is outside its band; `!!` is outside a gated band (the survey 
 - **canyon-rim**: The canyon rim above the Tumbling Water (v7 canyon render pose). `http://localhost:8160/?q=low&pos=166.5,218.5&yaw=2.43`; events {"cue":58,"voice":3}
 - **sunken-court**: The Sunken Court, a stone enclosure (the settings teleport). `http://localhost:8160/?q=low&pos=-40,-165&yaw=0`; events {"cue":73,"voice":1}
 - **lattice**: The Lattice from its north foot (the settings teleport, facing the moraine). `http://localhost:8160/?q=low&pos=40,-215&yaw=0`; events {"cue":56,"voice":8}
-- **moor-gutter**: Open moor standing, a gutter 1 s in. `http://localhost:8160/?q=low&pos=-60,20&yaw=1.9` {"gutter":true}; events {"cue":83,"gutter":1,"voice":11}; gutter 1.0–15.0 s (floor at 2.4 s)
-- **leerie-gutter**: The Leerie's row of standards, a gutter 1 s in. `http://localhost:8160/?q=low&pos=118,-8&yaw=-2.596` {"gutter":true}; events {"cue":66,"voice":42,"gutter":1}; gutter 1.0–15.8 s (floor at 2.4 s)
+- **moor-gutter**: Open moor standing, a gutter 1 s in. `http://localhost:8160/?q=low&pos=-60,20&yaw=1.9` {"gutter":true}; events {"cue":86,"voice":12,"gutter":1}; gutter 1.0–15.1 s (floor at 2.4 s)
+- **leerie-gutter**: The Leerie's row of standards, a gutter 1 s in. `http://localhost:8160/?q=low&pos=118,-8&yaw=-2.596` {"gutter":true}; events {"cue":63,"voice":40,"gutter":1}; gutter 1.0–? s (floor at 2.3 s)
 - **moor-hurry**: Open moor, hurrying (6.6 m/s) from the same spot. `http://localhost:8160/?q=low&pos=-60,20&yaw=1.9` {"walk":6.6}; events {"cue":70,"step":47,"voice":9}
-- **demesne-gutter**: The Demesne by the peafowl's blocks, from the causeway, a gutter 1 s in (they cry at every gutter). `http://localhost:8160/?q=low&pos=85,-3&yaw=0.785` {"gutter":true}; events {"cue":68,"gutter":1,"voice":14}; gutter 1.0–16.4 s (floor at 2.4 s)
+- **demesne-gutter**: The Demesne by the peafowl's blocks, from the causeway, a gutter 1 s in (they cry at every gutter). `http://localhost:8160/?q=low&pos=85,-3&yaw=0.785` {"gutter":true}; events {"cue":72,"gutter":1,"voice":15}; gutter 1.0–15.0 s (floor at 2.4 s)
 
 ## Bands
 
