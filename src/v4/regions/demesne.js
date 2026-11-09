@@ -125,9 +125,9 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   // v7.2-04: the hoarseness a shallow tremolo (depth 0.2, was full: its troughs on the saw's edges clicked) over a buzz
   // darkened under a lowpass at 3.5x its pitch, the upper formant lower (1.9 kHz, was 2.3)
   const am = ac.createOscillator(); am.frequency.value = 62 + rng() * 20; const amg = ac.createGain(); amg.gain.value = 0.2;
-  const g = ac.createGain(); g.gain.value = 0.8; am.connect(amg); amg.connect(g.gain);
+  const g = ac.createGain(); g.gain.value = 0.8; am.connect(amg); amg.connect(g.gain); amg.gain.setValueAtTime(0, t0); amg.gain.linearRampToValueAtTime(0.2, t0 + 0.06); amg.gain.linearRampToValueAtTime(0, t0 + dur * 0.8); // v7.2-08: the tremolo eased in and out, so its cycles never land on the caw's ends
   const f1 = filt('bandpass', 1250 * pitch, 3), f2 = filt('bandpass', 1900 * pitch, 4), dk = filt('lowpass', 1470 * pitch, 0.7);
-  const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(0.16, t0 + 0.025); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  const env = ac.createGain(); env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(0.16, t0 + 0.025); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); // v7.2-08: from true zero
   env.gain.linearRampToValueAtTime(0, t0 + dur + 0.01); // v7.2-08: to true silence before the saw stops (at the keep's level its stop under 1e-4 clicked, once a tremolo cycle)
   const dk2 = filt('lowpass', 1470 * pitch, 0.7); // v7.2-08: two poles more, so the saw's edges read as a buzz, not a train of clicks
   o.connect(dk); dk.connect(dk2); dk2.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
@@ -156,7 +156,7 @@ function peaCry(k, pos, o = {}) {
     os.frequency.exponentialRampToValueAtTime(F5, t + 0.5); os.frequency.exponentialRampToValueAtTime(D5 * 0.98, end); // -AWE, falling
     chain(vOsc(v, 'sine', 6.5 + rng(), t, end + 0.05), gainOf(14), os.detune); // a slow nasal vibrato, 14 cents
     const dark = filt('lowpass', 2200, 0.7), env = k.ac.createGain();
-    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.1 * pk, t + 0.03); env.gain.linearRampToValueAtTime(0.05 * pk, t + 0.14);
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.1 * pk, t + 0.03); env.gain.linearRampToValueAtTime(0.05 * pk, t + 0.14);
     env.gain.linearRampToValueAtTime(0.15 * pk, t + 0.22); env.gain.linearRampToValueAtTime(0.11 * pk, t + 0.5); env.gain.exponentialRampToValueAtTime(0.0001, end); env.gain.linearRampToValueAtTime(0, end + 0.01); // v7.2-08: true silence before the stop
     chain(os, dark); chain(dark, filt('bandpass', 1150, 3), env); chain(dark, filt('bandpass', 1750, 4), gainOf(0.5), env); chain(dark, filt('lowpass', 900, 0.7), gainOf(0.35), env);
     env.connect(out);
