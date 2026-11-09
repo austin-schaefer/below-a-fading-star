@@ -61,6 +61,7 @@ const MODULES = [
   // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
   ['living-canyon', () => import('./v7/canyon.js')], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
   ['living-glyphs', () => import('./v7/glyphs.js')], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
+  ['living-still', () => import('./v7/still.js')], // v7: CB the Long Sleeper, CI the Stylite, CL the Accrescent (?still=0, ?sleeper=0, ?stylite=0, ?accrescent=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 

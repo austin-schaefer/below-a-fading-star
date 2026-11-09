@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
 import { plinthsClear } from './v5/plinths.js';
+import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' ground and the Accrescent's line
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { withFade, fadeDepthMaterial } from './fade.js';
 
@@ -174,6 +175,7 @@ export async function build(ctx) {
     if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
+    if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
