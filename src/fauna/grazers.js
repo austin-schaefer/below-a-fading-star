@@ -52,7 +52,7 @@ export function buildGrazers(ctx, opts = {}) {
   const uppers = mk(legGeometry(UP_LEN, 0.065, 0.04), N * 4), lowers = mk(legGeometry(LO_LEN, 0.038, 0.022), N * 4);
   const col = new THREE.Color();
   for (let i = 0; i < N; i++) {
-    col.setHSL(0.72, 0.05, 0.62 + rng() * 0.2);
+    col.setHSL(0.06, 0.12, 0.66 + rng() * 0.2); // a warm grey, the low sun's rust in the flank (v7.1)
     for (const m of [bodies, heads]) m.setColorAt(i, col);
     for (let k = 0; k < 4; k++) { uppers.setColorAt(i * 4 + k, col); lowers.setColorAt(i * 4 + k, col); }
   }

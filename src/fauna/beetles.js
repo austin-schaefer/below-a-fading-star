@@ -26,7 +26,7 @@ export function buildBeetles(ctx) {
   const N = ctx.quality === 'low' ? 16 : 26;
   const geo = beetleGeometry();
   // black, with the green of old bronze in the highlights only
-  const mat = new THREE.MeshStandardMaterial({ color: 0x1e3a28, metalness: 0.85, roughness: 0.34 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x24452f, metalness: 0.85, roughness: 0.27 });
   // and a dull green glint at the rims of the wing cases, so they read on the dark bronze
   mat.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
