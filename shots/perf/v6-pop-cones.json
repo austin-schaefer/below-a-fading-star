@@ -1,0 +1,1064 @@
+{
+ "kind": "fading-planet-pop-test",
+ "label": "cones",
+ "date": "2026-11-09T00:29:02.064Z",
+ "base": "http://localhost:8163",
+ "q": "medium",
+ "only": [],
+ "runSecs": 813,
+ "rows": [
+  {
+   "id": "uploads.bench",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 4247,
+    "dataTextures": {
+     "33x33": 3345,
+     "52x52": 840,
+     "68x68": 62
+    }
+   }
+  },
+  {
+   "id": "pacing.bench",
+   "owner": "orchestrator",
+   "target": "frames over 2x the median <= 2, all in the first second",
+   "value": "15 over 2x (15 after 1 s), max 20.1x",
+   "pass": false,
+   "gate": false
+  },
+  {
+   "id": "plants.bench-repack-spread",
+   "owner": "v6-05",
+   "target": "no frame packs two kinds",
+   "value": "556 repacks, 0 frames with 2+",
+   "pass": true,
+   "gate": true
+  },
+  {
+   "id": "uploads.wood",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 7200,
+    "dataTextures": {
+     "33x33": 6665,
+     "68x68": 535
+    }
+   }
+  },
+  {
+   "id": "plants.wood-repack-spread",
+   "owner": "v6-05",
+   "target": "no frame packs two kinds",
+   "value": "179 repacks in 175 frames, 0 with 2+",
+   "pass": true,
+   "gate": true
+  },
+  {
+   "id": "trees.wood-switches",
+   "owner": "v6-04",
+   "target": "reported (the switches per route)",
+   "value": "602 switches, at most 3 in a frame",
+   "pass": true,
+   "gate": false
+  },
+  {
+   "id": "uploads.pan",
+   "owner": "v6-01",
+   "target": "programs, geometries, first-sight textures after the card = 0",
+   "value": "programs 0, geometries 0, textures 0, first-sight uploads 0",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "texData": 960,
+    "dataTextures": {
+     "33x33": 759,
+     "52x52": 201
+    }
+   }
+  },
+  {
+   "id": "shadow.pan-redraws",
+   "owner": "v6-03",
+   "target": "a turn at 1.2 rad/s redraws <= 4/s",
+   "value": "9.1/s (109 move, 0 clock, 0 dynamic, 0 turn)",
+   "pass": false,
+   "gate": false
+  },
+  {
+   "id": "trees.tree-near",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "7 changed (frame 17 of 23) vs baseline 10: 0.7x",
+   "pass": true,
+   "gate": false,
+   "detail": {
+    "baseline": 10,
+    "largest": 7,
+    "ratio": 0.7,
+    "stepsOver100": 0,
+    "watchBefore": "16",
+    "watchAfter": "15",
+    "switched": true
+   }
+  },
+  {
+   "id": "trees.tree-far",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "5 changed (frame 23 of 23) vs baseline 1: 5.0x",
+   "pass": false,
+   "gate": false,
+   "detail": {
+    "baseline": 1,
+    "largest": 5,
+    "ratio": 5,
+    "stepsOver100": 0,
+    "watchBefore": "17",
+    "watchAfter": "16",
+    "switched": true
+   }
+  },
+  {
+   "id": "trees.tree-wood",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "47 changed (frame 9 of 23) vs baseline 13: 3.6x",
+   "pass": false,
+   "gate": false,
+   "detail": {
+    "baseline": 13,
+    "largest": 47,
+    "ratio": 3.62,
+    "stepsOver100": 0,
+    "watchBefore": "1",
+    "watchAfter": "0",
+    "switched": true
+   }
+  },
+  {
+   "id": "plants.grass-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "13 changed (frame 22 of 23) vs baseline 10: 1.3x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 10,
+    "largest": 13,
+    "ratio": 1.3,
+    "stepsOver100": 0,
+    "watchBefore": "382507",
+    "watchAfter": "383682",
+    "switched": true
+   }
+  },
+  {
+   "id": "plants.reeds-far",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "14 changed (frame 3 of 23) vs baseline 18: 0.8x",
+   "pass": true,
+   "gate": true,
+   "detail": {
+    "baseline": 18,
+    "largest": 14,
+    "ratio": 0.78,
+    "stepsOver100": 0,
+    "watchBefore": "94012",
+    "watchAfter": "94012",
+    "switched": false
+   }
+  },
+  {
+   "id": "rocks.rocks",
+   "owner": "v6-05",
+   "target": "largest step <= 2x baseline",
+   "value": "11 changed (frame 23 of 23) vs baseline 28: 0.4x",
+   "pass": true,
+   "gate": false,
+   "detail": {
+    "baseline": 28,
+    "largest": 11,
+    "ratio": 0.39,
+    "stepsOver100": 0,
+    "watchBefore": "803515",
+    "watchAfter": "804516",
+    "switched": true
+   }
+  },
+  {
+   "id": "fungi.fungi",
+   "owner": "v6-04",
+   "target": "largest step <= 2x baseline",
+   "value": "11 changed (frame 2 of 23) vs baseline 11: 1.0x",
+   "pass": true,
+   "gate": false,
+   "detail": {
+    "baseline": 11,
+    "largest": 11,
+    "ratio": 1,
+    "stepsOver100": 0,
+    "watchBefore": "00011110111101111000001001100",
+    "watchAfter": "00011010111101110000001001100",
+    "switched": true
+   }
+  },
+  {
+   "id": "aliasing.step-5cm",
+   "owner": "v6-08",
+   "target": "a 5 cm sideways step <= 2x baseline",
+   "value": "141 changed vs baseline 22: 6.4x",
+   "pass": false,
+   "gate": false,
+   "detail": {
+    "baseline": 22,
+    "largest": 141
+   }
+  }
+ ],
+ "routes": {
+  "bench": {
+   "frames": 1856,
+   "medianIv": 16.8,
+   "medianCpu": 7.9,
+   "over2x": 15,
+   "over2xAfter1s": 15,
+   "maxIvRatio": 20.1,
+   "counters": {
+    "plants.farSwitches": 400,
+    "plants.repacks": 556,
+    "shadow.redraws.move": 81,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 4247,
+    "shadow.redraws.clock": 3,
+    "trees.lodSwitches": 81,
+    "trees.fades": 1543,
+    "rocks.uploadBytes": 3209664,
+    "rocks.packs": 819,
+    "fungi.groupFlips": 24,
+    "shadow.redraws.dynamic": 519,
+    "lights.handovers": 12
+   },
+   "repackTwoKindFrames": 0,
+   "dataTextures": {
+    "33x33": 3345,
+    "52x52": 840,
+    "68x68": 62
+   },
+   "bench": 58.4
+  },
+  "benchCounters": {
+   "plants.farSwitches": 400,
+   "plants.repacks": 556,
+   "shadow.redraws.move": 81,
+   "uploads.programs": 0,
+   "uploads.geometries": 0,
+   "uploads.textures": 0,
+   "uploads.texFirst": 0,
+   "uploads.texData": 4247,
+   "shadow.redraws.clock": 3,
+   "trees.lodSwitches": 81,
+   "trees.fades": 1543,
+   "rocks.uploadBytes": 3209664,
+   "rocks.packs": 819,
+   "fungi.groupFlips": 24,
+   "shadow.redraws.dynamic": 519,
+   "lights.handovers": 12
+  },
+  "wood": {
+   "frames": 2836,
+   "wallSecs": 49.2,
+   "complete": true,
+   "medianIv": 16.7,
+   "medianCpu": 4.4,
+   "over2x": 43,
+   "over2xAfter1s": 41,
+   "maxIvRatio": 7.22,
+   "calls": [
+    124,
+    147,
+    181
+   ],
+   "tris": [
+    1846358,
+    2144811,
+    2710608
+   ],
+   "counters": {
+    "trees.lodSwitches": 602,
+    "fungi.groupFlips": 13,
+    "plants.repacks": 179,
+    "plants.farSwitches": 163,
+    "rocks.packs": 500,
+    "shadow.redraws.move": 1,
+    "shadow.redraws.clock": 7,
+    "shadow.redraws.dynamic": 1073,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 7200
+   },
+   "lodFramesMax": 3,
+   "repackFrames": 175,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 21.95,
+   "dataTextures": {
+    "33x33": 6665,
+    "68x68": 535
+   }
+  },
+  "woodpan": {
+   "frames": 646,
+   "wallSecs": 12,
+   "complete": true,
+   "medianIv": 16.8,
+   "medianCpu": 4.2,
+   "over2x": 26,
+   "over2xAfter1s": 25,
+   "maxIvRatio": 3.09,
+   "calls": [
+    116,
+    148,
+    268
+   ],
+   "tris": [
+    1681932,
+    2227916,
+    4099069
+   ],
+   "counters": {
+    "trees.lodSwitches": 0,
+    "fungi.groupFlips": 0,
+    "plants.repacks": 331,
+    "plants.farSwitches": 140,
+    "rocks.packs": 0,
+    "shadow.redraws.move": 109,
+    "shadow.redraws.clock": 0,
+    "shadow.redraws.dynamic": 0,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 960
+   },
+   "lodFramesMax": 0,
+   "repackFrames": 330,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 9.12,
+   "dataTextures": {
+    "33x33": 759,
+    "52x52": 201
+   }
+  },
+  "lattice": {
+   "frames": 1206,
+   "wallSecs": 26.5,
+   "complete": true,
+   "medianIv": 17.7,
+   "medianCpu": 9,
+   "over2x": 84,
+   "over2xAfter1s": 84,
+   "maxIvRatio": 5.63,
+   "calls": [
+    110,
+    119,
+    157
+   ],
+   "tris": [
+    1307471,
+    1546639,
+    2076483
+   ],
+   "counters": {
+    "trees.lodSwitches": 42,
+    "fungi.groupFlips": 1,
+    "plants.repacks": 131,
+    "plants.farSwitches": 36,
+    "rocks.packs": 265,
+    "shadow.redraws.move": 1,
+    "shadow.redraws.clock": 17,
+    "shadow.redraws.dynamic": 201,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 1,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 3427
+   },
+   "lodFramesMax": 2,
+   "repackFrames": 130,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 8.28,
+   "dataTextures": {
+    "33x33": 1962,
+    "52x52": 1429,
+    "68x68": 36
+   }
+  },
+  "keep": {
+   "frames": 1306,
+   "wallSecs": 22.6,
+   "complete": true,
+   "medianIv": 16.7,
+   "medianCpu": 4.7,
+   "over2x": 14,
+   "over2xAfter1s": 13,
+   "maxIvRatio": 3.08,
+   "calls": [
+    154,
+    163,
+    222
+   ],
+   "tris": [
+    2243449,
+    2391660,
+    3112053
+   ],
+   "counters": {
+    "trees.lodSwitches": 9,
+    "fungi.groupFlips": 7,
+    "plants.repacks": 183,
+    "plants.farSwitches": 102,
+    "rocks.packs": 225,
+    "shadow.redraws.move": 3,
+    "shadow.redraws.clock": 42,
+    "shadow.redraws.dynamic": 3,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 1792
+   },
+   "lodFramesMax": 1,
+   "repackFrames": 183,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 2.12,
+   "dataTextures": {
+    "33x33": 1515,
+    "52x52": 270,
+    "68x68": 7
+   }
+  },
+  "span": {
+   "frames": 2235,
+   "wallSecs": 38.9,
+   "complete": true,
+   "medianIv": 16.7,
+   "medianCpu": 3,
+   "over2x": 31,
+   "over2xAfter1s": 31,
+   "maxIvRatio": 10.55,
+   "calls": [
+    111,
+    120,
+    163
+   ],
+   "tris": [
+    1419954,
+    1698426,
+    2382453
+   ],
+   "counters": {
+    "trees.lodSwitches": 262,
+    "fungi.groupFlips": 28,
+    "plants.repacks": 236,
+    "plants.farSwitches": 133,
+    "rocks.packs": 389,
+    "shadow.redraws.move": 2,
+    "shadow.redraws.clock": 75,
+    "shadow.redraws.dynamic": 0,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 0,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 4642
+   },
+   "lodFramesMax": 3,
+   "repackFrames": 232,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 1.98,
+   "dataTextures": {
+    "33x33": 4407,
+    "68x68": 235
+   }
+  },
+  "causeway": {
+   "frames": 3236,
+   "wallSecs": 53.9,
+   "complete": true,
+   "medianIv": 16.6,
+   "medianCpu": 5.7,
+   "over2x": 0,
+   "over2xAfter1s": 0,
+   "maxIvRatio": 1.46,
+   "calls": [
+    136,
+    154,
+    216
+   ],
+   "tris": [
+    2023170,
+    2244493,
+    3068880
+   ],
+   "counters": {
+    "trees.lodSwitches": 44,
+    "fungi.groupFlips": 16,
+    "plants.repacks": 256,
+    "plants.farSwitches": 184,
+    "rocks.packs": 550,
+    "shadow.redraws.move": 3,
+    "shadow.redraws.clock": 101,
+    "shadow.redraws.dynamic": 6,
+    "shadow.redraws.turn": 0,
+    "lights.handovers": 1,
+    "tier.steps": 0,
+    "uploads.programs": 0,
+    "uploads.geometries": 0,
+    "uploads.textures": 0,
+    "uploads.texFirst": 0,
+    "uploads.texData": 4162
+   },
+   "lodFramesMax": 1,
+   "repackFrames": 252,
+   "repackTwoKindFrames": 0,
+   "shadowRedrawsPerSec": 2.04,
+   "dataTextures": {
+    "33x33": 4095,
+    "52x52": 33,
+    "68x68": 34
+   }
+  }
+ },
+ "seqs": {
+  "tree-near": {
+   "from": [
+    -53.3516544685273,
+    -92.70708765007483
+   ],
+   "to": [
+    -83.3516544685273,
+    -92.70708765007483
+   ],
+   "tree": [
+    -97.4,
+    -92.7,
+    "lone"
+   ],
+   "switchStep": 17,
+   "at": [
+    -61.8516544685273,
+    -92.70708765007483
+   ],
+   "baseline": [
+    8,
+    9,
+    8,
+    9,
+    9,
+    10,
+    8,
+    9,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    9,
+    9,
+    9,
+    9,
+    8,
+    8,
+    7
+   ],
+   "switch": [
+    6,
+    6,
+    5,
+    5,
+    5,
+    5,
+    4,
+    4,
+    4,
+    5,
+    5,
+    6,
+    5,
+    6,
+    6,
+    6,
+    7,
+    7,
+    7,
+    6,
+    6,
+    6,
+    6
+   ]
+  },
+  "tree-far": {
+   "from": [
+    32.6483455314727,
+    -92.70708765007483
+   ],
+   "to": [
+    -47.3516544685273,
+    -92.70708765007483
+   ],
+   "tree": [
+    -97.4,
+    -92.7,
+    "lone"
+   ],
+   "switchStep": 23,
+   "at": [
+    9.6483455314727,
+    -92.70708765007483
+   ],
+   "baseline": [
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1
+   ],
+   "switch": [
+    3,
+    2,
+    2,
+    2,
+    2,
+    1,
+    2,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    3,
+    3,
+    3,
+    5
+   ]
+  },
+  "tree-wood": {
+   "from": [
+    -108.17896628421124,
+    140.92853430314923
+   ],
+   "to": [
+    -128.17896628421124,
+    140.92853430314923
+   ],
+   "tree": [
+    -142.2,
+    140.9,
+    "wood"
+   ],
+   "switchStep": 21,
+   "at": [
+    -118.67896628421124,
+    140.92853430314923
+   ],
+   "baseline": [
+    10,
+    11,
+    5,
+    4,
+    3,
+    6,
+    8,
+    7,
+    4,
+    13,
+    2,
+    5,
+    4,
+    5,
+    11,
+    6,
+    5,
+    4,
+    3,
+    4,
+    4,
+    5,
+    6
+   ],
+   "switch": [
+    14,
+    19,
+    23,
+    30,
+    21,
+    17,
+    35,
+    42,
+    47,
+    30,
+    15,
+    7,
+    6,
+    6,
+    8,
+    10,
+    9,
+    9,
+    10,
+    9,
+    10,
+    14,
+    14
+   ]
+  },
+  "grass-far": {
+   "from": [
+    -20,
+    18
+   ],
+   "to": [
+    -70,
+    14
+   ],
+   "switchStep": 3,
+   "at": [
+    -22.941176470588236,
+    17.764705882352942
+   ],
+   "baseline": [
+    3,
+    1,
+    4,
+    3,
+    3,
+    4,
+    3,
+    5,
+    3,
+    2,
+    5,
+    5,
+    4,
+    4,
+    4,
+    4,
+    10,
+    4,
+    4,
+    2,
+    3,
+    3,
+    3
+   ],
+   "switch": [
+    4,
+    1,
+    3,
+    4,
+    6,
+    4,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    3,
+    2,
+    3,
+    4,
+    3,
+    1,
+    5,
+    7,
+    3,
+    13,
+    8
+   ]
+  },
+  "reeds-far": {
+   "from": [
+    70,
+    40
+   ],
+   "to": [
+    70,
+    110
+   ],
+   "switchStep": 8,
+   "at": [
+    70,
+    48
+   ],
+   "baseline": [
+    8,
+    7,
+    8,
+    7,
+    7,
+    7,
+    18,
+    8,
+    7,
+    8,
+    11,
+    12,
+    14,
+    10,
+    12,
+    13,
+    9,
+    10,
+    9,
+    12,
+    10,
+    9,
+    11
+   ],
+   "switch": [
+    2,
+    2,
+    14,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    4,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "rocks": {
+   "from": [
+    230,
+    -20
+   ],
+   "to": [
+    250,
+    -40
+   ],
+   "switchStep": 4,
+   "at": [
+    232.75862068965517,
+    -22.758620689655174
+   ],
+   "baseline": [
+    22,
+    24,
+    18,
+    19,
+    18,
+    19,
+    19,
+    22,
+    22,
+    15,
+    19,
+    22,
+    21,
+    20,
+    19,
+    20,
+    20,
+    23,
+    22,
+    26,
+    28,
+    25,
+    23
+   ],
+   "switch": [
+    6,
+    4,
+    4,
+    5,
+    4,
+    4,
+    4,
+    5,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    6,
+    5,
+    5,
+    6,
+    7,
+    9,
+    11
+   ]
+  },
+  "fungi": {
+   "from": [
+    -68,
+    142
+   ],
+   "to": [
+    -160,
+    132
+   ],
+   "switchStep": 13,
+   "at": [
+    -80.86021505376344,
+    140.6021505376344
+   ],
+   "baseline": [
+    11,
+    8,
+    6,
+    5,
+    3,
+    3,
+    3,
+    3,
+    4,
+    3,
+    3,
+    4,
+    4,
+    5,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    3,
+    4
+   ],
+   "switch": [
+    5,
+    11,
+    5,
+    5,
+    4,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  "aliasing": {
+   "baseline": [
+    22,
+    22,
+    22,
+    17,
+    9
+   ],
+   "switch": [
+    141,
+    36,
+    22,
+    18,
+    13
+   ]
+  }
+ },
+ "dataTextureNames": {
+  "68x68": [
+   "veg-trees._matricesTexture"
+  ],
+  "33x33": [
+   "veg-trees._indirectTexture",
+   "veg-trees._colorsTexture"
+  ],
+  "104x104": [
+   "veg-lattice._matricesTexture"
+  ],
+  "52x52": [
+   "veg-lattice._indirectTexture",
+   "veg-lattice._colorsTexture"
+  ]
+ }
+}
