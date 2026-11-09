@@ -2,6 +2,10 @@
 
 Read `_common.md` first. You own `src/audio/calls.js`, `src/audio/regions.js`, and the sound hooks inside `src/v4/regions/*.js` (adust, bletting, demesne, high-ling, lynchets, outwash, saltings, strandline), plus the position arguments at the fauna call sites that pass none (`src/fauna/small.js` crows, `src/fauna/wings.js`). Austin's words you answer: "feels random", "too rare".
 
+## First: the gutter
+
+Austin: "the worse noise is the one when sun gutters." The gutter-locked chorus is yours: every peafowl in the Demesne crying at once through its own panner outside the voice cap, the rooks, anything in a region hook keyed to `sky.flicker`. Render the Demesne pose in a gutter before anything else. Target: at most one or two peafowl answer the gutter, from their places, staggered 0.5–2 s, through `voice()` (04 is re-voicing the cry itself; you own when and how many), nothing else in the hooks fires on the gutter unless `palette.md` says it belongs to it.
+
 ## The fault (confirm with baseline renders at the moor standing, the fen edge, the keep's court, the Lynchets)
 
 `distantCall`: every 8–22 s uniform, random bearing, 140–300 m, kind uniform from four, no emitter, no air lowpass, bypasses the voice cap; its comment says "so the quiet is never empty". Crows fire with no position and sound from (65, 34, 30) always. The fen's frogs (square waves) and bubbles every 0.2–1.65 s with no bouts. Rooks every 1.5–7.5 s within 170 m. The regions' hooks each run their own `base + rng() * span` timers (ticks every 0.12–0.47 s on the Outwash, 0.25–1.15 s on Adust, the gate every 14–36 s, the tor moan at Q 14/18 always on), through their own panners with no distance filtering. Expect `onsets_pm` high and even everywhere, `gap_max_s` under 15 at every pose, and far sounds in the spectrogram as bright as near ones.

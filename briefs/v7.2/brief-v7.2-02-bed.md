@@ -2,6 +2,10 @@
 
 Read `_common.md` first. You own `src/audio/bed.js` and `src/audio/synth.js`: the wind, the drone, the shimmer, the insects, and how they move with the gutter. Austin's words you answer: "too omnipresent", "unpleasant".
 
+## First: the gutter
+
+Austin: "the worse noise is the one when sun gutters ... every time it triggers I have to mute." The drone's swell (0.1 → 0.5, −260 cents) and the shimmer's rise are yours. Render the moor in a gutter (`--gutter`) before anything else; it is your baseline's worst picture. Target: the drone comes up 6–8 dB (not 14) over 2 s to a level you feel, sinks 30–60 cents and returns over the gutter's tail, with the wind ducked under it; the shimmer is gone or re-tuned per below; `sharp_db` under −14 and `rough` under 0.15 during the gutter; no `clicks`. This is the first render in your report.
+
 ## The fault, in numbers (from the cold read; confirm with your baseline renders at the moor pose standing, the wood, and the moor in a gutter)
 
 Wind: three bandpassed noise layers at 260/640/1500 Hz on fixed stereo panners that do not turn with the head; gusts from fbm on game time floored at 0.4, so it never rests; bus 0.55. Drone: sines at 41.2/55.1/48.6/82.9 Hz (a major second in the sub-bass, beating at 6.5 Hz), always on at 0.1, up to 0.5 and −260 cents in a gutter. Shimmer: sines at 1822/2417/3105 Hz (no relation to any key) at a floor of 0.004. Insects: white noise through a Q 9 bandpass at 3.6–6.1 kHz, square-gated at 17–31 Hz, scaled by grassiness; sharp and rough by construction, and on wherever there is grass. Expect the baseline to show `sharp_db` well over the cap, `rough` over 0.15, `gap_max_s` near zero, and a flat spectrogram.

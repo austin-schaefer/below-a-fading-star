@@ -51,7 +51,7 @@ The spectrogram: log-frequency 40 Hz–16 kHz, 20 s across 1600 px, dB colour fr
 node tools/audio-survey.mjs $B --out=shots/wip/audio/survey-<label> [--only=moor,fen] [--baseline=shots/wip/audio/survey-before]
 ```
 
-Renders every pose in `tools/audio-survey.json` (a name, `pos`, `yaw`, seconds, options such as `walk` or `gutter`, and the metric bands that pose must sit in), measures each, writes the WAVs, PNGs and one `survey.md` table (pose × metric, each cell marked when out of its band), and `survey.json`. With `--baseline` the table shows both and the deltas. Exit 1 when a gated band fails. The poses are the listening stations of this world: open moor standing and walking, the wood, the fen edge, the tarn, the canyon rim, the keep's court, the Lattice, a gutter on the moor, the Leerie's row in a gutter, and a hurry across the moor. Add a pose when you add a place with a sound.
+Renders every pose in `tools/audio-survey.json` (a name, `pos`, `yaw`, seconds, options such as `walk` or `gutter`, and the metric bands that pose must sit in), measures each, writes the WAVs, PNGs and one `survey.md` table (pose × metric, each cell marked when out of its band), and `survey.json`. With `--baseline` the table shows both and the deltas. Exit 1 when a gated band fails. The poses are the listening stations of this world: open moor standing and walking, the wood, the fen edge, the tarn, the canyon rim, the keep's court, the Lattice, a gutter on the moor, the Leerie's row in a gutter, the Demesne in a gutter (the peafowl), and a hurry across the moor. Add a pose when you add a place with a sound.
 
 ## Gates (`tools/audio-quality-test.mjs`)
 
