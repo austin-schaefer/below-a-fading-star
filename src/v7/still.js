@@ -35,6 +35,14 @@ export async function build(ctx) {
     parts.push(s);
   }
 
+  if (Q.get('accrescent') !== '0') {
+    await ctx.progress?.('the accrescent and his trail', 0.7);
+    const { buildAccrescent } = await import('./still/accrescent.js');
+    const s = api.accrescent = await buildAccrescent(ctx, G);
+    ctx.registerUpdate(s.update, { at: () => s.pos, near: 30, hz: 0.2 });
+    parts.push(s);
+  }
+
   api.stats = () => {
     let calls = 0, tris = 0;
     for (const p of parts) { const s = p.stats(); calls += s.calls; tris += s.tris; }
