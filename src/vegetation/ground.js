@@ -5,9 +5,11 @@ import { clamp } from './util.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
+import { stillWorn, stillNear } from '../v7/still/clear.js'; // v7: the bare ground round the Sleeper and the Stylite's basket
 import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { sextonClear } from '../v7/workers/graves.js'; // v7: CF the Sexton's graves and heaps
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -130,6 +132,7 @@ export function makeGround(ctx) {
     if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
+    if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)
     return false;
   }
 
@@ -139,5 +142,5 @@ export function makeGround(ctx) {
   // stays where it is: under the court's piers (39 m), inside the lens mount's fins (17 m; 12 when ?tower=v2) the armillary (LANDMARKS.arcature.r) and the mother crystal's foot (MOTHER_FOOT).
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
   const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z);
-  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt, leadNear };
+  return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

@@ -4,7 +4,9 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
 import { plinthsClear } from './v5/plinths.js';
+import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' ground and the Accrescent's line
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
 
 const PARAMS = new URL(location.href).searchParams;
@@ -174,6 +176,8 @@ export async function build(ctx) {
     if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
+    if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
+    if (sextonClear(x, z, cls === 'boulder' ? size : 0, size * 0.5)) continue; // the Sexton's graves and heaps (v7/workers/graves.js)
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor

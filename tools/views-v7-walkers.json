@@ -1,0 +1,164 @@
+[
+ {
+  "name": "walkers-thurifer-causeway",
+  "x": -140,
+  "z": -30,
+  "yaw": 0.713,
+  "pitch": -0.03,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.place(w.thurifer.track.length - 12, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bow",
+  "x": -165.435,
+  "z": -65.464,
+  "yaw": 2.203,
+  "pitch": -0.22,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(110, 1, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bowrise",
+  "x": -165.435,
+  "z": -65.464,
+  "yaw": 2.203,
+  "pitch": -0.18,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(110, 0.4, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-p4",
+  "x": -150,
+  "z": -107,
+  "yaw": 0.351,
+  "pitch": -0.03,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.place(46.5, 1); }"
+ },
+ {
+  "name": "walkers-leerie-house",
+  "x": 110.5,
+  "z": -30.5,
+  "yaw": -2.719,
+  "pitch": 0.04,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.leerie.at(4, 1, 1); }"
+ },
+ {
+  "name": "walkers-leerie-gutter",
+  "x": 149,
+  "z": 42,
+  "yaw": 0.516,
+  "pitch": 0.05,
+  "js": "__fp.sky.flicker.hold = 0.25; if (0.25 === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.leerie.at(7, 0, 1); }"
+ },
+ {
+  "name": "walkers-leerie-wick",
+  "x": 120.4,
+  "z": 3.85,
+  "yaw": -1.045,
+  "pitch": 0.08,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.leerie.at(5, 1, 1); }"
+ },
+ {
+  "name": "walkers-linkboy-post",
+  "x": -150,
+  "z": -95,
+  "yaw": 0.983,
+  "pitch": -0.04,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null);  }"
+ },
+ {
+  "name": "walkers-linkboy-p2",
+  "x": -94.75,
+  "z": 28.33,
+  "yaw": 2.856,
+  "pitch": -0.06,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.linkBoy.lead('P2', 40, 1); }"
+ },
+ {
+  "name": "walkers-linkboy-p2-gutter",
+  "x": -94.75,
+  "z": 28.33,
+  "yaw": 2.856,
+  "pitch": -0.06,
+  "js": "__fp.sky.flicker.hold = 0.2; if (0.2 === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.linkBoy.lead('P2', 40, 1); }"
+ },
+ {
+  "name": "walkers-linkboy-p3wall",
+  "x": -183.45,
+  "z": -90.57,
+  "yaw": -2.106,
+  "pitch": -0.38,
+  "dy": 2.5,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.linkBoy.lead('P3', 84, 1); }"
+ },
+ {
+  "name": "walkers-linkboy-p3wall-gutter",
+  "x": -183.45,
+  "z": -90.57,
+  "yaw": -2.106,
+  "pitch": -0.38,
+  "dy": 2.5,
+  "js": "__fp.sky.flicker.hold = 0.2; if (0.2 === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.linkBoy.lead('P3', 84, 1); }"
+ },
+ {
+  "name": "walkers-linkboy-aside",
+  "x": -125.8,
+  "z": 60.6,
+  "yaw": 1.94,
+  "pitch": -0.05,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.linkBoy.aside('P2', 1); }"
+ },
+ {
+  "name": "walkers-thurifer-road",
+  "x": -140,
+  "z": -30,
+  "yaw": 0.714,
+  "pitch": -0.04,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.place(w.thurifer.track.length - 3, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bow34",
+  "x": -168.508,
+  "z": -67.096,
+  "yaw": 3.103,
+  "pitch": -0.25,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(110, 1, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bowrise34",
+  "x": -168.508,
+  "z": -67.096,
+  "yaw": 3.103,
+  "pitch": -0.2,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(110, 0.4, -1); }"
+ },
+ {
+  "name": "walkers-leerie-arcature",
+  "x": 149,
+  "z": 42,
+  "yaw": 0.503,
+  "pitch": 0.04,
+  "js": "__fp.sky.flicker.hold = 0.25; if (0.25 === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.leerie.at(10, 0, 1); }"
+ },
+ {
+  "name": "walkers-thurifer-bowstones",
+  "x": -156.18,
+  "z": -49.872,
+  "yaw": 1.362,
+  "pitch": -0.25,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(125, 1, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bowstones-rise",
+  "x": -156.18,
+  "z": -49.872,
+  "yaw": 1.362,
+  "pitch": -0.2,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(125, 0.4, -1); }"
+ },
+ {
+  "name": "walkers-thurifer-bowtrain",
+  "x": -161.542,
+  "z": -53.568,
+  "yaw": -1.779,
+  "pitch": -0.25,
+  "js": "__fp.sky.flicker.hold = null; if (null === null) __fp.sky.flicker.value = 1; const w = __fp.walkers; if (w) { w.linkBoy.reset(); w.thurifer.bow(null); w.leerie.at(null); w.thurifer.bow(125, 1, 1); }"
+ }
+]
