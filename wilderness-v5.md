@@ -817,3 +817,24 @@ Every v7 cue is voiced in `src/audio/living.js` (one dispatch line each in `audi
 The loops' rule: one voice each (outside the cap, as the fall's loop is), started and stopped by the figure's `{ start }` / `{ stop }`; it swells in over 0.4 s and out over 0.3 s, a second start while running is ignored, and it is released when its figure is past its range or its module is switched off (`ctx.perf` toggles), opening again on return while still wanted. Filters, panner and gain are built once; only the sources are made at each opening. `audio.living.loops` holds their state.
 
 The voice peaks (`tools/audio-test.mjs`, 10 s each at the real cadences): the north-west on P3 by the Lynchets' east wall (the Thurifer's hiss and chain, the Link-Boy's steps, the walker hurrying and the Repetend's echo) peaks at 9 voices, mean about 7, with only the audio loaded, and at the cap of 12 (mean about 9, the oldest stolen) with the whole world's own cues on top; the Leerie's row in a gutter (his steps and clicks, the lamp-tick wave along twelve standards, the walker walking) at 4 (mean about 2), and 6–7 (mean about 4) with the world; the cue calls take 1–2.5 ms of main thread a second. The loops sit outside the cap. Short WAVs of each cue alone (its own voices, normalised to −3 dBFS peak) are in `shots/wip/v7-07-audio-<cue>.wav`.
+
+### v7.1 visibility
+
+Austin: "a lot of the color / embellishments are slightly too subtle esp on the creature / fauna / flora side. don't go crazy but just a bit of visibility would help them to not simply be missed." The survey renders each creature, bird, insect, notable plant and v7 figure (the legible agent's Indistinct, Repetend, Simulacrum, erratic glyph and Bather left out) from the walker's eye at the distance a visitor meets it (fauna 10–25 m, ground flora 3–8 m, the figures 8–15 m), across the sun's line, in daylight and with the gutter held at 0.28, at `q=low`. Each frame is drawn twice in the same instant, once with the thing hidden; the changed pixels are its mask, and its contrast is the CIELAB distance (ΔE) between its mean colour and a 12 px ring of ground round it. The median is ΔE 5.9. Static things repeat to ±0.3 between runs. Things that move (the herds, the walkers, the Coheirs' heads) do not hold a pose between runs, so their numbers move by about ±3 either way, and a single pair says less about them.
+
+The bottom of the ranking, before → after (ΔE; frames of 30 px or more): the high wings in a gutter 0.7 → 1.2, the Menology's lizards 1.0 → 1.2, bracken 1.5 → 1.5, the peafowl in a gutter 1.8 → 2.3, reeds 1.8 → 1.8, the Coheirs in a gutter 2.0 → 10.9, the Taker in a gutter 2.2 → 3.9, the Coheirs by day 2.5 → 4.1, rooks in a gutter 2.7 → 3.5, toadstools 2.7 → 2.8, the Thurifer in a gutter 3.4 → 6.1, the Accrescent 3.8 → 6.2, the orchard herd 3.9 → 7.1, flowers 4.0 → 4.7, the Sleeper 4.0–5.2 → 4.3–5.5, the Taker by day 4.7 → 6.3, the door beetles 4.7 → 5.9, the peafowl by day 6.3 → 9.4, the pomace snails 6.4 → 8.0. Left as they are: the wings, rooks and crows (black against the sky, as they are meant to be); bracken and reeds (they are the ground's own cover); the lizards (v2 inhabitants); the halite crabs (on the Saltings' crust, which v7.1-03 is reworking). The sheet is `shots/wip/v7.1-05-visibility-sheet.png`; each pair is `shots/wip/v7.1-05-<thing>-<day|gutter>-{before,after}.png` (`-after2` for the second step on the Coheirs and the toadstools).
+
+The changes, 23 parameters, each a step along the colour the thing already has:
+- the grazers' coat (`fauna/grazers.js`): HSL (0.72, 0.05, 0.62–0.82) → (0.06, 0.12, 0.66–0.86), a warm grey with the low sun's rust in the flank
+- the white peafowl (`v4/regions/peafowl.js`): WHITE `#cbc6b9` → `#d8d3c6`, BACK `#d3cec2` → `#e0dbcf`, WING `#c2bcae` → `#cfc9bb`
+- the Coheirs (`v7/workers/coheirs.js`): DRESS `#6a4c3e` → `#865a44`, DRESS_D `#3c2738` → `#4a3040`, DRESS_HEM `#5e5246` → `#6c5c4a`
+- the Taker (`v7/workers/taker.js`): ROBE `#a2713f` → `#b07a42`, HEM `#857560` → `#948268`
+- the Thurifer (`v7/walkers/thurifer.js`): ROBE_HI `#231b16` → `#30231a`, BRASS (the censer) `#7c5c2c` → `#8e6a32`
+- the Accrescent (`v7/still/accrescent.js`): cloth `#5c4552` → `#6a4e5e`, hem `#6a5638` → `#7a6240`
+- the Sleeper (`v7/still/sleeper.js`): over-robe `#6e3e48` → `#7c4652`, its border `#8e7c46` → `#9e8a4e`
+- flower spikes (`vegetation/plants.js`): heads `#e0dcd0 #a090c4 #d0c0a0 #c8b8d8` → `#e8e4d8 #ac9cd0 #dacaa8 #d2c2e2`, florets 0.026 → 0.029 (11% larger)
+- toadstool caps (`vegetation/trees.js`): `#8a6a48` → `#a88058`
+- the pomace snails' shells (`v4/regions/bletting.js`): `#c99a3c` → `#d6a644`
+- the door beetles (`fauna/beetles.js`): `0x1e3a28` → `0x24452f`, roughness 0.34 → 0.27 (the wing-cases take a real highlight)
+
+Nothing new glows, and there are no outlines; counts, placement, behaviour and quality settings are unchanged.
