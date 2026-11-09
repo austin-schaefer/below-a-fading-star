@@ -192,6 +192,7 @@ export async function build(ctx) {
     walls.push({ ...r, len });
   }
   for (const c of coll) ctx.addCollider(c);
+  R.lynchetsWalls = walls; // v7: the Link-Boy's drawn shadows read the runs (src/v7/walkers/shadow.js)
   // field-stone: a lumpy, flat-bedded block (an icosahedron squared off top and bottom), not a brick
   const stoneGeo = new T.IcosahedronGeometry(0.62, 0);
   {
