@@ -1,0 +1,15 @@
+[
+ {"name": "canyon-bather-rim", "x": 166.5, "z": 218.5, "yaw": 2.43, "pitch": -0.45, "js": "__fp.sky.flicker.hold = 1; __fp.canyon?.bather?.hold(1)"},
+ {"name": "canyon-bather-rim-gutter", "x": 166.5, "z": 218.5, "yaw": 2.43, "pitch": -0.45, "js": "__fp.sky.flicker.hold = 0.25; __fp.canyon?.bather?.hold(1)"},
+ {"name": "canyon-stones-floor", "x": 167, "z": 223, "yaw": 2.16, "pitch": -0.15, "js": "__fp.sky.flicker.hold = 1; __fp.canyon?.bather?.hold(0)"},
+ {"name": "canyon-reach-rim-day", "x": 166.5, "z": 218.5, "yaw": 1.4, "pitch": -0.28, "js": "__fp.sky.flicker.hold = 1; __fp.canyon?.bather?.hold(null)"},
+ {"name": "canyon-reach-rim-gutter", "x": 166.5, "z": 218.5, "yaw": 1.4, "pitch": -0.28, "js": "__fp.sky.flicker.hold = 0.25"},
+ {"name": "canyon-reach-pit-gutter", "x": 212, "z": 198, "yaw": 1.735, "pitch": -0.08, "js": "__fp.sky.flicker.hold = 0.25"},
+ {"name": "canyon-reach-deck-gutter", "x": -200, "z": 221.6, "yaw": -1.62, "pitch": -0.14, "js": "__fp.sky.flicker.hold = 0.25; __fp.player.pos.y = 57.72", "pre": "__fp.player.pos.y = 58.2; __fp.camera.position.set(-200, 58.2, 221.6)"},
+ {"name": "canyon-reach-bowl-gutter", "x": 89, "z": 358, "yaw": -0.45, "pitch": -0.5, "js": "__fp.sky.flicker.hold = 0.25; __fp.leerie?.light(true); __fp.player.pos.y = 170", "pre": "__fp.player.pos.y = 170; __fp.camera.position.set(89, 170, 358)"},
+ {"name": "canyon-reach-mask-above", "x": 165, "z": 215, "yaw": 3.14159, "pitch": -1.55, "dy": 230, "js": "__fp.sky.flicker.hold = 1; __fp.leerie?.light(null); __fp.reach?.mask?.(true)"},
+ {"name": "canyon-toad-p13-day", "x": 186, "z": 232, "yaw": 0.95, "pitch": -0.3, "js": "__fp.sky.flicker.hold = 1; __fp.reach?.mask?.(false); const t = __fp.canyon?.toad?.spot || { x: 180.75, z: 228.25, y: 10.25 }, p = __fp.player; p.yaw = Math.atan2(-(t.x - 186), -(t.z - 232)); p.pitch = Math.atan2(t.y + 0.05 - p.pos.y, Math.hypot(t.x - 186, t.z - 232));"},
+ {"name": "canyon-toad-p13-gutter", "x": 186, "z": 232, "yaw": 0.95, "pitch": -0.3, "js": "__fp.sky.flicker.hold = 0.25; const t = __fp.canyon?.toad?.spot || { x: 180.75, z: 228.25, y: 10.25 }, p = __fp.player; p.yaw = Math.atan2(-(t.x - 186), -(t.z - 232)); p.pitch = Math.atan2(t.y + 0.05 - p.pos.y, Math.hypot(t.x - 186, t.z - 232));"},
+ {"name": "canyon-toad-close", "x": 186, "z": 232, "yaw": 1.3, "pitch": -0.6, "js": "__fp.sky.flicker.hold = 1", "pre": "const p = __fp.player; p.pos.set(181.5, 10.8, 228.45); __fp.camera.position.copy(p.pos); __fp.camera.rotation.set(-0.6, 1.31, 0); __fp.camera.updateMatrixWorld()"},
+ {"name": "canyon-toad-close-gutter", "x": 186, "z": 232, "yaw": 1.3, "pitch": -0.6, "js": "__fp.sky.flicker.hold = 0.25", "pre": "const p = __fp.player; p.pos.set(181.5, 10.8, 228.45); __fp.camera.position.copy(p.pos); __fp.camera.rotation.set(-0.6, 1.31, 0); __fp.camera.updateMatrixWorld()"}
+]

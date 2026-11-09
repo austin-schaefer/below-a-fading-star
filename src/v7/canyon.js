@@ -23,7 +23,9 @@ import * as THREE from 'three';
 import { SITES } from '../world.js';
 import { hyp } from '../noise.js';
 import { meshHeightSampler } from '../water/river.js';
+import { SPAN, spanClear } from '../v4/span/plan.js';
 import { buildForms, stoneMaterial, ARM, STROKE, STONE_PARTS } from './canyon/bather.js';
+import { buildToad, glowAt, TOAD } from './canyon/toad.js';
 
 const Q = new URLSearchParams(location.search);
 const OFF = Q.get('canyon') === '0';
@@ -166,6 +168,54 @@ export async function build(ctx) {
       hold(f) { st.hold = f; }, // pin the cross-fade (0 stones .. 1 her), for renders; null lets go
     };
     api.inView = inView; api.want = want;
+  }
+
+  // ---------------------------------------------------------------- CX the Toadstone
+  if (TOADSTONE) {
+    await ctx.progress?.('a wet ledge', 0.8);
+    const site = SITES.toadstone, R = site.r;
+    const slopeAt = (x, z) => { const e = 0.3, gx = (meshH(x + e, z) - meshH(x - e, z)) / (2 * e), gz = (meshH(x, z + e) - meshH(x, z - e)) / (2 * e); return Math.atan(hyp(gx, gz)); };
+    // seen from the rim path (P13): its bend at (174, 224) stands inside the Span's pier 176 (its cutwater runs to z 230),
+    // so the sight lines are from the next bend (186, 232) and a step on toward (199, 236), at eye height, clear of the
+    // drawn ground and of the pier. Ground cover keeps off the pier's margin (vegetation/ground.js: spanClear at -1.5),
+    // so a spot there is bare ledge and the toad is not lost in the grass.
+    const T2 = SPAN.pierT / 2, inPier = (x, z) => SPAN.piers.slice(1, -1).some((a) => {
+      const dx = Math.abs(x - a), dz = Math.abs(z - SPAN.z) - SPAN.half;
+      return dx < T2 && (dz < 0 || dz < 7 * (1 - dx / T2));
+    });
+    const views = [[186, 232], [190.3, 233.3]];
+    const seen = (x, z, y) => views.filter(([vx, vz]) => {
+      const ey = meshH(vx, vz) + 1.72, ty = y + 0.08, n = 32;
+      for (let k = 1; k < n; k++) {
+        const f = k / n, px = vx + (x - vx) * f, pz = vz + (z - vz) * f;
+        if (hyp(x - px, z - pz) < 0.3) break;
+        if (inPier(px, pz) || meshH(px, pz) > ey + (ty - ey) * f - 0.02) return false;
+      }
+      return true;
+    }).length;
+    let best = null;
+    for (let dz = -R; dz <= R + 1e-6; dz += 0.25) for (let dx = -R; dx <= R + 1e-6; dx += 0.25) {
+      if (hyp(dx, dz) > R) continue;
+      const x = site.x + dx, z = site.z + dz, y = meshH(x, z), sl = slopeAt(x, z);
+      if (terrain.waterLevelAt(x, z) !== null || inPier(x, z) || inPier(x + 0.4, z) || inPier(x - 0.4, z) || inPier(x, z + 0.4) || inPier(x, z - 0.4)) continue;
+      // a ledge: under 20 degrees, seen from the path, bare, and nearest the lip (the deepest drop within 3 m)
+      let drop = 0;
+      for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4; drop = Math.max(drop, y - meshH(x + Math.cos(an) * 3, z + Math.sin(an) * 3)); }
+      const vis = seen(x, z, y), bare = spanClear(x, z, -1.6);
+      const score = (sl < 20 * Math.PI / 180 ? 0 : 100 + sl * 10) + (2 - vis) * 20 + (bare ? 0 : 8) - drop;
+      if (!best || score < best.score) best = { x, z, y, slope: sl, drop, seen: vis, bare, score };
+    }
+    // it faces the rim path's bend at (186, 232), where it is seen from
+    const spot = { x: best.x, z: best.z, y: best.y, yaw: Math.atan2(-(views[0][1] - best.z), views[0][0] - best.x), lift: 0.004 };
+    const toad = buildToad(ctx, spot, meshH, low);
+    scene.add(toad.mesh); scene.add(toad.glow);
+    toad.mesh.receiveShadow = true; toad.mesh.castShadow = false;
+    updates.push(() => {
+      const cam = ctx.camera, h = ctx.renderer.domElement.height || 720;
+      toad.uScale.value = h / (2 * Math.tan(cam.fov * Math.PI / 360));
+      toad.glow.visible = (ctx.sky?.flicker?.value ?? 1) < 0.995; // drawn only while the sun gutters
+    });
+    api.toad = { mesh: toad.mesh, glow: toad.glow, spot: best, gem: toad.gemWorld, tris: toad.tris, glowAt, TOAD };
   }
 
   ctx.registerUpdate((dt, t) => { for (let i = 0; i < updates.length; i++) updates[i](dt, t); }, { at: () => (api.bather ? api.bather.centre : SITES.toadstone), near: 120, hz: 4 });
