@@ -178,7 +178,7 @@ export const sound = {
     const kd = () => Math.hypot(px - K.x, pz - K.z);
     function talk(pos, gain) {
       const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
-      const n = 1 + Math.floor(rng() * 3), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5 });
+      const n = 1 + Math.floor(rng() * 3), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5, gain: 60 }); // v7.2-07: a punctuation cue, about -9 dBFS at 41 m
       if (!v) return;
       const out = ac.createGain(); out.gain.value = 0.55 * gain * (1 - (k.hush?.(top) ?? 0)); out.connect(v.in); // v5: hushed under the Occultation's band
       for (let i = 0; i < n; i++) cawInto(ac, filt, rng, out, v.t0 + i * (0.3 + rng() * 0.25), pitch);

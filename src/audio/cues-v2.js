@@ -172,7 +172,7 @@ export function startCuesV2(a) {
   // ---- the Sable Galley: a deep damped boom, muffled more (and fainter) the farther off you are
   function galleyDrum(pos, o) {
     const cp = camera.position, d = o?.distance ?? Math.hypot(pos.x - cp.x, pos.z - cp.z);
-    const v = voice(pos, { ref: 12, roll: 0.9, range: 130, verb: 0.45, dur: 1.2 });
+    const v = voice(pos, { ref: 12, roll: 0.9, range: 130, verb: 0.45, dur: 1.2, gain: 10 });
     if (!v) return;
     const t0 = v.t0, far = clamp(d / 120, 0, 1);
     const bus = gainOf(1 - 0.6 * far); bus.connect(v.in);
@@ -209,7 +209,7 @@ export function startCuesV2(a) {
   }
   function rooksLift(pos, o) {
     const n = clamp(o?.count ?? 12, 3, 24);
-    const v = voice(pos, { ref: 12, roll: 1, range: 260, verb: 0.4, dur: 2.0, air: 200 });
+    const v = voice(pos, { ref: 12, roll: 1, range: 260, verb: 0.4, dur: 2.0, air: 200, gain: 20 });
     if (!v) return;
     const t0 = v.t0;
     for (let b = 0; b < n; b++) {
@@ -224,7 +224,7 @@ export function startCuesV2(a) {
   // rough band); the squeaks are short falling sines near 3 kHz with 10 ms attacks, few and quiet, so the whole
   // stays dark (the chirps proper are above hearing). Heard from the tower's window out to 200 m.
   function batsOut(pos, o) {
-    const v = voice(pos, { ref: 20, roll: 1, range: 200, verb: 0.35, dur: 4.6, air: 90 });
+    const v = voice(pos, { ref: 20, roll: 0.6, range: 200, verb: 0.35, dur: 4.6, air: 90, gain: 30 });
     if (!v) return;
     const t0 = v.t0, D = 3.2 + rng() * 0.6, n = Math.round(clamp(o?.count ?? 34, 10, 60) * 0.7);
     const out = filt('lowpass', 2600, 0.6); out.connect(v.in);
@@ -272,7 +272,7 @@ export function startCuesV2(a) {
   // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, an 8 ms attack, a 50 ms release, gone by 60 m. Twelve
   // fire in a wave along the Leerie's row at a gutter, so each is a small thing.
   function lampTick(pos) {
-    const v = voice(pos, { ref: 4, roll: 1.2, range: 60, verb: 0.35, dur: 1.0, air: 60 }); if (!v) return;
+    const v = voice(pos, { ref: 4, roll: 1.2, range: 60, verb: 0.35, dur: 1.0, air: 60, gain: 28 }); if (!v) return;
     const t0 = v.t0, lp = filt('lowpass', 2400, 0.6); lp.connect(v.in);
     sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.008);
     sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.008);
@@ -309,7 +309,7 @@ export function startCuesV2(a) {
   // bandpassed noise, a few with a wooden knock); the flare is a roar swelling in brown noise with a low whump.
   function keptFire(pos, opts) {
     const flare = !!opts?.flare, k = opts?.strength ?? 1;
-    const v = voice(pos, { ref: flare ? 5 : 2.5, roll: 1.1, range: flare ? 130 : 70, dur: flare ? 3.4 : 1.8, verb: 0.2, air: 160 });
+    const v = voice(pos, { ref: flare ? 10 : 2.5, roll: flare ? 0.7 : 1.1, range: flare ? 130 : 70, dur: flare ? 3.4 : 1.8, verb: 0.2, air: 160, gain: flare ? 6 : 30 });
     if (!v) return;
     const t0 = v.t0, dur = flare ? 3.0 : 1.5, hg = ac.createGain(), out = filt('lowpass', 3000, 0.6); out.connect(v.in); // v7.2-04: the pops 3 ms in, under 3 kHz
     swell(hg, t0, (flare ? 0.05 : 0.014) * k, flare ? 0.3 : 0.4, t0 + dur);

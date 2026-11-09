@@ -30,7 +30,7 @@ export function startLiving(k) {
   // ---------------------------------------------------------------- BY the Taker of Altitudes
   // the quadrant's click: the index arm seating in its detent (two dry ticks) and a little brass ring
   function takerClick(pos) {
-    const v = voice(pos, lin(40, 3, 0.4, 0.15)); if (!v) return;
+    const v = voice(pos, { ...lin(40, 3, 0.4, 0.15), gain: 32 }); if (!v) return;
     const t0 = v.t0;
     sgrain(v, v.in, t0, 2400, 4, 0.12, 0.04, white, 0.003);
     sgrain(v, v.in, t0 + 0.017, 1800, 4, 0.06, 0.04, white, 0.003);
@@ -268,7 +268,7 @@ export function startLiving(k) {
   const LOOPS = [hum, hiss, flutter];
 
   // v7.2-04: a figure's steps are near detail, under the walker's own: the Leerie's at 0.4 to 16 m, the Link-Boy's at 0.3 to 12 m
-  const LEERIE_STEP = { vol: 0.4, range: 16, ref: 1.5 }, LINKBOY_STEP = { vol: 0.3, range: 12, ref: 1 };
+  const LEERIE_STEP = { vol: 0.4, range: 16, ref: 1.5, gain: 10 }, LINKBOY_STEP = { vol: 0.3, range: 12, ref: 1, gain: 10 };
   return {
     loops, tick,
     takerClick, takerMurmur, coheirsKnot, sextonBite, sextonThrow, sleeperBreath, sleeperFruit, styliteCreak, accrescentStep,

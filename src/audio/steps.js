@@ -129,7 +129,7 @@ export function startSteps(a) {
   const figRng = ctx.makeRng(9171);
   const figRec = { seq: 0, t: 0, hurrying: false, kind: 'grass', regionKind: null, x: 0, z: 0, vol: 1, pitch: 1, verb: false, d: new Float64Array(64) };
   a.figureStep = function figureStep(pos, o) {
-    const v = voice(pos, { model: 'linear', ref: o.ref, roll: 1, range: o.range, dur: 0.6, air: 60 });
+    const v = voice(pos, { model: 'linear', ref: o.ref, roll: 1, range: o.range, dur: 0.6, air: 60, gain: o.gain ?? 1 });
     if (!v) return null;
     const r = figRec, x = pos.x, z = pos.z, b = terrain.biomeAt(x, z), wl = terrain.waterLevelAt?.(x, z);
     const c = landmarks.castle, ct = landmarks.court, nearCastle = hyp(x - c.x, z - c.z) < 40 && pos.y < 20, inCourt = hyp(x - ct.x, z - ct.z) < 34;

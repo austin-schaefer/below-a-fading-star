@@ -30,6 +30,10 @@
 // 18000 e^(-d/60) Hz floored at 700 (a caller's `air` sets its own length in place of 60); the reverb send taken before the distance gain and falling at a third of its rate
 // in dB, so a far thing is mostly room (wet share about 15 % near, 50-70 % at 200 m) where a near one is mostly itself;
 // nothing built past the range (maxDistance); HRTF only for a source flagged near: true, equal-power otherwise.
+// A one-shot's own level is its voice's `gain` (v7.2-07), set by tier where the cue is made, on the cue bus at the
+// master's gain: a near detail (a tick, a click, a step) about -10 dBFS at 4 m; a punctuation cue (crows, flush,
+// rooks, the drum, the bats, the flare, the far cry, the keep's rooks) -12 to -5 dBFS at its natural distance; the bed
+// peaks near -21 dBFS there.
 //
 // The rooms (craft.md "Space"; SPACES below): open (1.2 s, dark, a few sparse reflections), wood (0.8 s, dense, very
 // dark, early-heavy), stone (3.2 s, brighter, a 28 ms gap before the walls answer). Three convolvers; the sends follow
@@ -278,13 +282,14 @@ export function startGraph(ctx, audio, AC) {
   // o: { ref (2 m by default), roll (1), range or maxDistance (m: nothing is built past it), model ('inverse' |
   // 'linear', which reaches silence at range), verb (the send at the source: the distance shapes it), dur (s), near
   // (HRTF), centre (no panner, no distance), air (m: the air lowpass's e-folding length, 60 unless given; the lowpass is
-  // always there) }.
+  // always there), gain (the cue's own level, 1 unless given: its tier's trim, set where the cue is made) }.
   function voice(pos, o) {
     const cp = camera.position;
     if (!o.centre && !pos) pos = { x: cp.x + 4, y: cp.y, z: cp.z }; // a cue fired with no place: just beside you
     const d = o.centre ? 0 : Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
     if (d > (o.range ?? o.maxDistance ?? Infinity)) return null;
     const v = { in: ac.createGain(), gate: ac.createGain(), srcs: [], until: 0, done: false, d, t0: ac.currentTime + a.lead, pan: null };
+    v.in.gain.value = o.gain ?? 1; // the cue's level by its tier (v7.2-07): the voice's input, so its room share follows
     if (!o.centre) placed(v, pos, d, o, cueBus);
     else { v.in.connect(v.gate); v.gate.connect(cueBus); v.wetTap = v.in; v.wet = ac.createGain(); v.wet.connect(verbIn); v.wetK = VOICE_WET; }
     if (o.verb) { const g = ac.createGain(); g.gain.value = o.verb * v.wetK; v.wetTap.connect(g); g.connect(v.wet); }

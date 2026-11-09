@@ -25,7 +25,7 @@ export function startCues(a) {
     const t0 = ac.currentTime + a.lead;
     for (const [r, a, d] of bellPartials) {
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = s.f * r * (1 + (rng() - 0.5) * 0.002);
-      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.2 * a * soft, t0 + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.5 * a * soft, t0 + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
       o.connect(g); g.connect(s.pan); o.start(t0); o.stop(t0 + d + 0.1);
     }
   }
@@ -33,11 +33,11 @@ export function startCues(a) {
   // ================================================================ calls (one-shots)
   // the generic far cry (v7.2-04): a formant call, not a bare saw. A darkened buzz through two bandpasses and a
   // breath, rising a fifth and falling a fourth in D minor pentatonic (D5/F5/G5 up to A5/C6/D6, down to A4/C5/D5),
-  // a slow vibrato (5-7 Hz, never in the rough band). 6 dB under its old level, through a voice that falls off fast
-  // past 25 m (rolloff 1.4) with a short air lowpass (60 m), so at 260 m it is a dull breath under 1 kHz, not a call.
+  // a slow vibrato (5-7 Hz, never in the rough band). A punctuation cue (v7.2-07): about -5 dBFS on the cue bus within
+  // 40 m, falling slowly past it (rolloff 0.6) under the air's lowpass (120 m), about -14 dBFS at 110 m.
   const CRY_ROOT = [587.33, 698.46, 783.99];
   function cry(pos) {
-    const v = voice(pos, { ref: 25, roll: 1.4, range: 400, verb: 0.9, dur: 3.2, air: 60 });
+    const v = voice(pos, { ref: 40, roll: 0.6, range: 400, verb: 0.9, dur: 3.2, air: 120, gain: 30 });
     if (!v) return;
     const t0 = v.t0, n = 1 + ((rng() * 2) | 0), f0 = CRY_ROOT[(rng() * 3) | 0] * jit(1, 0.01);
     const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
@@ -58,7 +58,7 @@ export function startCues(a) {
   // pair, a breath of pink noise for the hoarseness; 6 dB under their old level, through a voice with the air
   function crows(pos) {
     const pp = pos || { x: 65, y: 34, z: 30 };
-    const v = voice(pp, { ref: 12, roll: 1, range: 400, verb: 0.5, dur: 4.5, air: 140 });
+    const v = voice(pp, { ref: 12, roll: 1, range: 400, verb: 0.5, dur: 4.5, air: 140, gain: 25 });
     if (!v) return;
     const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
     let at = v.t0;
@@ -122,7 +122,7 @@ export function startCues(a) {
   // falling wet pop (a sine, 10 ms in); under them one breath of lowpassed noise, so the rush is one gesture, not a
   // train of clicks. A voice: inverse from 4 m, the air's lowpass, heard to 70 m from the cloak.
   function lids(pos, opening) {
-    const v = voice(near(pos), { ref: 4, roll: 1, range: 70, verb: 0.25, dur: (opening ? 0.9 : 0.32) + 0.5, air: 60 });
+    const v = voice(near(pos), { ref: 4, roll: 1, range: 70, verb: 0.25, dur: (opening ? 0.9 : 0.32) + 0.5, air: 60, gain: 22 });
     if (!v) return;
     const n = opening ? 40 : 52, span = opening ? 0.9 : 0.32, t0 = v.t0;
     const out = filt('lowpass', 2200, 0.6); out.connect(v.in);
@@ -191,7 +191,7 @@ export function startCues(a) {
   // a bird flushed from the heather (v7.2-04): wingbeats as soft pink grains slowing as it climbs (irregular, so no
   // buzz), the rush under a lowpass, and three short alarm chips, falling, 10 ms in
   function flush(pos) {
-    const v = voice(pos, { ref: 6, roll: 1.1, range: 80, verb: 0.2, dur: 0.9, air: 80 }); if (!v) return;
+    const v = voice(pos, { ref: 6, roll: 1.1, range: 80, verb: 0.2, dur: 0.9, air: 80, gain: 65 }); if (!v) return;
     const t0 = v.t0, out = filt('lowpass', 2000, 0.6); out.connect(v.in);
     const g = ac.createGain(); env(g, t0, 0.06, 0.02, 0.5); chain(vNoise(v, pink, t0, 0.6), filt('bandpass', 1000, 0.8), g, out);
     for (let at = t0, k = 0; at < t0 + 0.6; k++) { sgrain(v, out, at, jit(1000, 0.1), 1.2, 0.08 * (1 - (at - t0) / 0.7), 0.04, pink, 0.004); at += 0.045 * (1 + k * 0.06) * jit(1, 0.25); }
