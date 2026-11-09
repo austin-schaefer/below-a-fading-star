@@ -129,26 +129,27 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   o.connect(g); g.connect(f1); g.connect(f2); f1.connect(env); f2.connect(env); env.connect(out);
   o.start(t0); o.stop(t0 + dur + 0.02); am.start(t0); am.stop(t0 + dur + 0.02);
 }
-function peaCry(k, pos, t0) {
-  // the peacock's scream: "may-AWE", a rising nasal yelp and a long falling wail, twice or three times
-  const { ac, filt, panner, setPos, master, send } = k;
-  const rng = k.makeRng(Math.floor(t0 * 1000) % 100000);
-  const p = panner('equalpower', 14, 1.0, 400); setPos(p, pos.x, pos.y, pos.z); p.connect(master); send(p, 0.5);
-  const n = 2 + Math.floor(rng() * 2);
+function peaCry(k, pos, o = {}) {
+  // the peacock's scream: "may-AWE", a rising nasal yelp gliding up a fifth (D5 to A5) and a long wail falling to F5,
+  // once or twice, from the bird's own block. A voice (air lowpass, the cap, a reverb share that rises with distance).
+  const { filt, gainOf, chain, vOsc, voice, camera } = k;
+  const rng = k.makeRng(Math.floor(k.ac.currentTime * 1000) % 100000);
+  const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
+  const n = o.n ?? 1 + Math.floor(rng() * 2), gain = o.gain ?? 1;
+  const v = voice(pos, { ref: 14, roll: 1, range: 400, air: 90, verb: 0.25 + 0.5 * smoothstep(15, 200, d), dur: n * 1.25 + 0.8 });
+  if (!v) return;
   for (let i = 0; i < n; i++) {
-    const t = t0 + i * (0.95 + rng() * 0.25);
-    const o = ac.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(560, t); o.frequency.exponentialRampToValueAtTime(820, t + 0.12);
-    o.frequency.setValueAtTime(980, t + 0.16); o.frequency.exponentialRampToValueAtTime(700, t + 0.6);
-    const vib = ac.createOscillator(); vib.frequency.value = 7; const vg = ac.createGain(); vg.gain.value = 18; vib.connect(vg); vg.connect(o.frequency);
-    const f1 = filt('bandpass', 1500, 4), f2 = filt('bandpass', 2900, 6), f3 = filt('bandpass', 800, 3);
-    const env = ac.createGain();
-    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.11, t + 0.04); env.gain.linearRampToValueAtTime(0.05, t + 0.14);
-    env.gain.linearRampToValueAtTime(0.16, t + 0.2); env.gain.exponentialRampToValueAtTime(0.0001, t + 0.66);
-    o.connect(f1); o.connect(f2); o.connect(f3); f1.connect(env); f2.connect(env); f3.connect(env); env.connect(p);
-    o.start(t); o.stop(t + 0.7); vib.start(t); vib.stop(t + 0.7);
+    const t = v.t0 + i * (0.95 + rng() * 0.25), out = gainOf(0), pk = gain * (i ? 0.85 : 1);
+    const os = vOsc(v, 'sawtooth', 587.3, t, t + 0.72);
+    os.frequency.setValueAtTime(587.3, t); os.frequency.exponentialRampToValueAtTime(880, t + 0.16);
+    os.frequency.setTargetAtTime(704.7, t + 0.2, 0.15);
+    const vib = vOsc(v, 'sine', 6.5, t, t + 0.72), vg = gainOf(14); vib.connect(vg); vg.connect(os.frequency);
+    const lp = filt('lowpass', 2600, 0.7); os.connect(lp);
+    for (const [f, q, g] of [[800, 3, 0.8], [1500, 4, 1], [2900, 4, 0.5]]) chain(lp, filt('bandpass', f, q), gainOf(g), out);
+    out.gain.setValueAtTime(0.0001, t); out.gain.linearRampToValueAtTime(0.11 * pk, t + 0.04); out.gain.linearRampToValueAtTime(0.05 * pk, t + 0.14);
+    out.gain.linearRampToValueAtTime(0.16 * pk, t + 0.2); out.gain.exponentialRampToValueAtTime(0.0001, t + 0.68);
+    out.connect(v.in);
   }
-  setTimeout(() => { try { p.disconnect(); } catch (e) { /* gone */ } }, (t0 - ac.currentTime + n * 1.3 + 1) * 1000);
 }
 export const sound = {
   start(k) {
@@ -158,6 +159,7 @@ export const sound = {
     const pan = panner('equalpower', 25, 1.0, 500); setPos(pan, top.x, top.y, top.z);
     const bus = ac.createGain(); bus.gain.value = 0; bus.connect(pan); pan.connect(master); send(pan, 0.4);
     let next = 2, lvl = 0, wasGutter = false;
+    const pend = []; // the gutter's answers, waiting for their time
     const flick = k.sky?.flicker || { value: 1 };
     return {
       tick(w, x, z, step, t, now) {
@@ -174,14 +176,24 @@ export const sound = {
             next = 1.5 + rng() * 6;
           }
         }
-        // the peafowl cry at every gutter, from wherever they stand
+        // the gutter: the peafowl answer it from their blocks, late (1.5-4 s after the light drops), one bird and
+        // sometimes a second, 3 dB quieter, 0.8-2 s after the first has done; never the flock at once
         const g = flick.value < 0.5;
         if (g && !wasGutter && PEAFOWL.length && Math.hypot(x - 75, z + 15) < 260) {
-          PEAFOWL.forEach((b, i) => peaCry(k, { x: b.x, y: b.y + 1.2, z: b.z }, now + k.lead() + 0.15 + i * (0.6 + rng() * 0.8)));
+          const i0 = Math.floor(rng() * PEAFOWL.length), n0 = 1 + (rng() < 0.4 ? 1 : 0), at = now + 1.5 + rng() * 2.5;
+          pend.push({ at, i: i0, n: n0, gain: 1 });
+          if (PEAFOWL.length > 1 && rng() < 0.5) pend.push({ at: at + n0 * 1.1 + 0.8 + rng() * 1.2, i: (i0 + 1 + Math.floor(rng() * (PEAFOWL.length - 1))) % PEAFOWL.length, n: 1, gain: 0.71 });
+        }
+        for (let j = pend.length - 1; j >= 0; j--) {
+          const c = pend[j];
+          if (now < c.at) continue;
+          pend.splice(j, 1);
+          const b = PEAFOWL[c.i];
+          if (b) k.cue('demesne-peafowl-cry', { x: b.x, y: b.y + 1.2, z: b.z }, { n: c.n, gain: c.gain });
         }
         wasGutter = g;
       },
-      cues: { 'demesne-peafowl-cry': (pos) => peaCry(k, pos || { x: 75, y: 6, z: -15 }, ac.currentTime + k.lead()) },
+      cues: { 'demesne-peafowl-cry': (pos, o) => peaCry(k, pos || { x: 75, y: 6, z: -15 }, o || {}) },
     };
   },
 };
