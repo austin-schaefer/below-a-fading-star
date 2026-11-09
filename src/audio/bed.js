@@ -1,6 +1,7 @@
-// The bed (v7.2-01 split out of src/audio.js; v7.2-02 voices it next): the wind (three bandpassed noise layers,
-// their gusts and the ground's openness), the low drone and the high shimmer that swell while the sun gutters, the
-// wind's dip under that swell, and the insects by ground. startBed(a) builds the wind, drone and shimmer;
+// The bed (v7.2-01 split out of src/audio.js; v7.2-02 voices it): the wind (three bandpassed noise layers, their
+// gusts and the ground's openness), the low drone on D that comes up while the sun gutters, the wind's dip and
+// darkening under it, and the insects by ground. The gutter is a darkening and a thinning, not a swell: the high
+// shimmer (sines at 1822/2417/3105 Hz, in no key) is gone. startBed(a) builds the wind and drone;
 // startInsects(a) builds the insects, later, where they were in the shared stream's order of draws. Each returns
 // { update(f) }, called at 10 Hz from audio.js with the frame f = { now, t, step, px, pz, b (biomeAt) }; the bed's
 // update writes f.wood, f.inKeep and f.swellSm for the parts after it.
@@ -29,21 +30,20 @@ export function startBed(a) {
   });
 
   // ================================================================ drone
+  // v7.2-02: the drone is in the key (D, decision 1): D1, D2 and A2 as plain sines, each a few cents out of true and
+  // fixed (worn, per the palette), so nothing in it beats faster than about 0.2 Hz. It was four detuned sines and
+  // triangles at 41/49/55/83 Hz whose harmonics beat at 6.5 Hz and ~78 Hz, swelling 14 dB and sinking 260 cents in a
+  // gutter: the noise Austin muted for. Now it sits low, felt more than heard, and in a gutter comes up DRONE_SWELL
+  // (+7 dB) over about 2 s and sinks GUTTER_CENTS, then returns over the gutter's tail.
+  const DRONE_BASE = 0.02, DRONE_SWELL = 2.24, GUTTER_CENTS = -45;
   const droneBus = ac.createGain(); droneBus.gain.value = 0;
-  const droneLP = ac.createBiquadFilter(); droneLP.type = 'lowpass'; droneLP.frequency.value = 420;
+  const droneLP = ac.createBiquadFilter(); droneLP.type = 'lowpass'; droneLP.frequency.value = 240; droneLP.Q.value = 0.5;
   droneBus.connect(droneLP); droneLP.connect(master); send(droneLP, 0.2);
   const droneOsc = [];
-  [['sine', 41.2, 0.5], ['triangle', 55.1, 0.3], ['sine', 48.6, 0.35], ['triangle', 82.9, 0.08]].forEach(([type, f, g], i) => {
-    const o = ac.createOscillator(); o.type = type; o.frequency.value = f; const gn = ac.createGain(); gn.gain.value = g;
-    const lfo = ac.createOscillator(); lfo.frequency.value = 0.04 + i * 0.023; const lg = ac.createGain(); lg.gain.value = 0.15 + i * 0.04; lfo.connect(lg); lg.connect(o.frequency); lfo.start();
-    o.connect(gn); gn.connect(droneBus); o.start(); droneOsc.push(o);
-  });
-  const shim = ac.createGain(); shim.gain.value = 0.0; shim.connect(master); send(shim, 0.5);
-  const shimOsc = [];
-  [1822, 2417, 3105].forEach((f, i) => {
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const t = ac.createGain(); t.gain.value = 0.3;
-    const lfo = ac.createOscillator(); lfo.frequency.value = 0.07 + 0.05 * i; const lg = ac.createGain(); lg.gain.value = 0.3; lfo.connect(lg); lg.connect(t.gain); lfo.start();
-    o.connect(t); t.connect(shim); o.start(); shimOsc.push(o);
+  [[36.71, 0.6, 2], [73.42, 0.7, -3]].forEach(([f, g, cents]) => {
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.detune.value = cents;
+    const gn = ac.createGain(); gn.gain.value = g;
+    o.connect(gn); gn.connect(droneBus); o.start(); droneOsc.push({ o, cents });
   });
 
   let swellSm = 0, wood = 0;
@@ -61,7 +61,7 @@ export function startBed(a) {
       const gust2 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.31 + w.ph * 2, i);
       const lvl = w.lvl * openness * (0.4 + 0.6 * clamp(gust * 1.3, 0, 1)) * (0.85 + 0.3 * gust2);
       w.g.gain.setTargetAtTime(lvl * 0.9, now, 0.25);
-      const fr = w.f * (0.85 + 0.4 * gust) * (1 + 0.1 * high);
+      const fr = w.f * (0.85 + 0.4 * gust) * (1 + 0.1 * high) * (1 - 0.3 * swellSm); // darker in a gutter
       for (const fl of w.filters) fl.frequency.setTargetAtTime(fr, now, 0.3);
     }
     windBus.gain.setTargetAtTime(WIND_BUS, now, 1.5);
@@ -69,11 +69,10 @@ export function startBed(a) {
     const fl = ctx.sky?.flicker?.value ?? 1;
     const target = clamp((1 - fl) / 0.78, 0, 1);
     swellSm += (target - swellSm) * (target > swellSm ? 0.25 : 0.04);
-    droneBus.gain.setTargetAtTime(0.1 + 0.4 * swellSm, now, 0.4);
-    for (const o of droneOsc) o.detune.setTargetAtTime(-260 * swellSm, now, 0.6);
-    shim.gain.setTargetAtTime(0.004 + 0.016 * swellSm, now, 0.5);
-    droneLP.frequency.setTargetAtTime(360 + 500 * swellSm, now, 0.5);
-    windBus.gain.setTargetAtTime(WIND_BUS * (1 - 0.35 * swellSm), now, 0.5);
+    droneBus.gain.setTargetAtTime(DRONE_BASE * (1 + (DRONE_SWELL - 1) * swellSm), now, 0.7);
+    for (const d of droneOsc) d.o.detune.setTargetAtTime(d.cents + GUTTER_CENTS * swellSm, now, 0.7);
+    // the wind is ducked (-6 dB) and darkened under the drone: the gutter is a dip, not a swell
+    windBus.gain.setTargetAtTime(WIND_BUS * (1 - 0.5 * swellSm), now, 0.5);
     f.wood = wood; f.inKeep = inKeep; f.swellSm = swellSm;
   }
   return { update };
