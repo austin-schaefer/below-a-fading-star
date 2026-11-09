@@ -6,11 +6,12 @@
 // from here. startCues(a) returns { cue, fallTick, update(f) } and sets a.fall (= audio.fall); cue reads a.living
 // and a.regionSnd when it is called, so it is handed to ctx.audio.cue once they have started.
 import { hyp } from '../noise.js';
-import { startCuesV2 } from './cues-v2.js';
+import { startCuesV2, softKit } from './cues-v2.js';
 
 export function startCues(a) {
   const { ac, rng, ctx, audio, camera, terrain, landmarks, master, cueBus, verbIn, send, panner, setPos, loopSrc, burst,
-    brown, pink, white, env, filt, gainOf, chain, oneShotPanner, later, near, nTick, clamp } = a;
+    brown, pink, white, env, filt, gainOf, chain, oneShotPanner, later, near, nTick, clamp, voice, vOsc, vNoise } = a;
+  const { shape, sgrain, stone, jit } = softKit(a);
 
   // ================================================================ Cardinal Stones: a low bell on each, struck as you come near
   const S = landmarks.stones, H = 7;
@@ -114,20 +115,25 @@ export function startCues(a) {
     for (let k = 0, at = t0 + 0.2; at < t0 + dur; k++) { nTick(p, at, 700 + rng() * 500, 4, 0.05, 0.03); at += 0.02 + rng() * rng() * 0.25; }
     later(p, dur + 6);
   }
-  // a cloak of eyes closing all at once: many wet lid-clicks in a crowded rush; opening is slower and stickier
+  // a cloak of eyes closing all at once: many wet lid-closings in a crowded rush; opening is slower and stickier
+  // (v7.2-04). Each lid is a soft dark tick (pink noise at 0.6-1.6 kHz, 3 ms in, 40 ms out) and every third a tiny
+  // falling wet pop (a sine, 10 ms in); under them one breath of lowpassed noise, so the rush is one gesture, not a
+  // train of clicks. A voice: inverse from 4 m, the air's lowpass, heard to 70 m from the cloak.
   function lids(pos, opening) {
-    const p = oneShotPanner(near(pos), 3, 1.4); send(p, 0.25);
-    const n = opening ? 46 : 60, span = opening ? 0.9 : 0.32;
-    const t0 = ac.currentTime + a.lead;
+    const v = voice(near(pos), { ref: 4, roll: 1, range: 70, verb: 0.25, dur: (opening ? 0.9 : 0.32) + 0.5, air: 60 });
+    if (!v) return;
+    const n = opening ? 40 : 52, span = opening ? 0.9 : 0.32, t0 = v.t0;
+    const out = filt('lowpass', 2200, 0.6); out.connect(v.in);
+    const bg = ac.createGain(); bg.gain.setValueAtTime(0.0001, t0); bg.gain.linearRampToValueAtTime(0.03, t0 + span * 0.4); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + span + 0.15);
+    chain(vNoise(v, pink, t0, span + 0.2), filt('bandpass', 700, 0.8), bg, out);
     for (let k = 0; k < n; k++) {
       const at = t0 + Math.pow(rng(), opening ? 1.0 : 1.6) * span;
-      nTick(p, at, 1500 + rng() * 2200, 3 + rng() * 4, 0.035 + rng() * 0.03, 0.012 + rng() * 0.02);
-      // the wet part: a tiny falling pop under each click
-      const o = ac.createOscillator(); o.type = 'sine'; const f = 600 + rng() * 700;
-      o.frequency.setValueAtTime(opening ? f * 0.7 : f, at); o.frequency.exponentialRampToValueAtTime(opening ? f : f * 0.55, at + 0.025);
-      const g = ac.createGain(); env(g, at, 0.02, 0.002, 0.03); o.connect(g); g.connect(p); o.start(at); o.stop(at + 0.05);
+      sgrain(v, out, at, 600 + rng() * 1000, 2 + rng() * 1.5, 0.04 + rng() * 0.035, 0.04, pink, 0.003);
+      if (k % 3) continue;
+      // the wet part: a tiny falling pop under the tick
+      const f = 380 + rng() * 360, o = stone(v, out, 'sine', opening ? f * 0.75 : f, at, 0.012, 0.01, 0.04);
+      o.frequency.setValueAtTime(opening ? f * 0.75 : f, at); o.frequency.exponentialRampToValueAtTime(opening ? f : f * 0.6, at + 0.04);
     }
-    later(p, span + 3);
   }
   // the slinker noticed: a dry rattle of many fingertips on stone, close and unreverberant
   function rattle(pos, leaving) {
@@ -275,8 +281,8 @@ export function startCues(a) {
       else if (name === 'tarn-step') slosh(position);
       else if (name === 'carillon') c2.carillon(position, opts);
       else if (name === 'glyph-shift') c2.glyphShift(position);
-      else if (name === 'sward-close') c2.rustle(position, { dur: 1.5, peakAt: 0.4, n: 90, band: 4200, gain: 0.075 });
-      else if (name === 'sward-open') c2.rustle(position, { dur: 4, peakAt: 0.5, n: 70, band: 3000, gain: 0.035 });
+      else if (name === 'sward-close') c2.rustle(position, { dur: 1.5, peakAt: 0.4, n: 90, band: 1400, gain: 0.09 });
+      else if (name === 'sward-open') c2.rustle(position, { dur: 4, peakAt: 0.5, n: 70, band: 1100, gain: 0.045 });
       else if (name === 'sward-whimper') c2.whimper(position);
       else if (name === 'pedlar-pass') c2.pedlarPass(position);
       else if (name === 'wrong-colour-near') c2.wrongColour(position);

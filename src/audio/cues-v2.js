@@ -3,8 +3,34 @@
 // heartbeat, the Sable Galley's drum, the Menology's lizards, the rooks, the bats, the wader, the biomesh, the
 // Leerie's lamps, the Hawser and the Kept Fire. All are voices (a.voice: the cap counts them). startCuesV2(a)
 // draws the carillon's tuning from the shared stream and returns the synths by name for cues.js's dispatcher.
+// The soft kit (v7.2-04), shared with cues.js and living.js: every grain and tone has a real attack (3 ms or more for
+// noise, 10 ms or more for a tone) and an exponential release of 40 ms or more, so nothing a cue makes is a click.
+//   sgrain(v, dest, at, f, q, peak, dec, buf = pink, att = 0.004): a grain of bandpassed noise
+//   stone(v, dest, type, f, at, peak, att, dec): one partial (or a darkened buzz), its own envelope
+//   shape(g, at, peak, att, dec): that envelope on a gain, returning its end
+//   jit(x, k = 0.04): x within +-k (the small jitter: +-3-5 % on pitch and centre, never more)
+export function softKit(a) {
+  const { ac, rng, vOsc, vNoise, filt, chain, pink } = a;
+  function shape(g, at, peak, att, dec) {
+    g.gain.setValueAtTime(0.0001, at); g.gain.linearRampToValueAtTime(peak, at + att);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + att + Math.max(0.04, dec));
+    return at + att + Math.max(0.04, dec);
+  }
+  function sgrain(v, dest, at, f, q, peak, dec, buf = pink, att = 0.004) {
+    const g = ac.createGain(), end = shape(g, at, peak, Math.max(0.003, att), dec);
+    chain(vNoise(v, buf, at, end - at + 0.02), filt('bandpass', f, q), g, dest);
+  }
+  function stone(v, dest, type, f, at, peak, att, dec) {
+    const g = ac.createGain(), end = shape(g, at, peak, Math.max(0.01, att), dec);
+    const o = vOsc(v, type, f, at, end + 0.03); chain(o, g, dest); return o;
+  }
+  const jit = (x, k = 0.04) => x * (1 + (rng() * 2 - 1) * k);
+  return { shape, sgrain, stone, jit };
+}
+
 export function startCuesV2(a) {
   const { ac, rng, camera, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, clamp, white, pink, brown } = a;
+  const { shape, sgrain, stone, jit } = softKit(a);
   // ---- the Carillon Flags: nine worn bronze caps. A just minor pentatonic (so a running player makes a peal,
   // not a cluster) on D3, each cap a little out of true; partials after a church bell's (hum, prime, tierce,
   // quint, nominal and the inharmonic upper ones), the prime doubled a hair sharp so it beats as it dies.
@@ -25,21 +51,24 @@ export function startCuesV2(a) {
   // ---- the Hypogeum lintel: one glyph sinks (the grind falls), a breath, the next rises (it climbs), then
   // grit runs off the stone. Stick-slip: the gain catches and gives in uneven steps.
   function glyphShift(pos) {
-    const v = voice(pos, { model: 'linear', ref: 2, roll: 1, range: 15, verb: 0.35, dur: 2.1 });
+    // v7.2-04: heard across the Hypogeum's floor (40 m, inverse, the air's lowpass), not at the lintel alone; the
+    // grind's catches are ramps; the harder edge and the grit sit under a lowpass at 2.4 kHz with 3 ms attacks
+    const v = voice(pos, { ref: 3, roll: 1, range: 40, verb: 0.35, dur: 2.2, air: 60 });
     if (!v) return;
-    const t0 = v.t0;
+    const t0 = v.t0, out = filt('lowpass', 2400, 0.6); out.connect(v.in);
     for (const [at, len, f0, f1] of [[0, 0.56, 260, 120], [0.66, 0.54, 120, 240]]) {
       const a = t0 + at, bp = filt('bandpass', f0, 1.6), g = ac.createGain();
       bp.frequency.setValueAtTime(f0, a); bp.frequency.exponentialRampToValueAtTime(f1, a + len);
       g.gain.setValueAtTime(0.0001, a); g.gain.linearRampToValueAtTime(0.24, a + 0.05);
       for (let tt = a + 0.09; tt < a + len - 0.06; tt += 0.035 + rng() * 0.05) g.gain.linearRampToValueAtTime(0.08 + 0.16 * rng(), tt);
       g.gain.exponentialRampToValueAtTime(0.0001, a + len + 0.08);
-      chain(vNoise(v, brown, a, len + 0.1), bp, g, v.in);
+      chain(vNoise(v, brown, a, len + 0.1), bp, g, out);
       const eg = ac.createGain(); swell(eg, a, 0.01, 0.05, a + len + 0.05); // the harder edge of it
-      chain(vNoise(v, white, a, len + 0.1), filt('bandpass', 1300 + rng() * 400, 1.2), eg, v.in);
+      chain(vNoise(v, pink, a, len + 0.1), filt('bandpass', 1000 + rng() * 300, 1.2), eg, out);
     }
-    for (let at = t0 + 1.12; at < t0 + 1.9;) { const k = (at - t0 - 1.12) / 0.78; grain(v, v.in, at, 2200 + rng() * 2800, 3, 0.012 * (1 - k) + 0.002, 0.01 + rng() * 0.01); at += 0.02 + rng() * rng() * 0.12; }
+    for (let at = t0 + 1.12; at < t0 + 1.9;) { const k = (at - t0 - 1.12) / 0.78; sgrain(v, out, at, 1400 + rng() * 1400, 2, 0.014 * (1 - k) + 0.002, 0.04, pink, 0.003); at += 0.02 + rng() * rng() * 0.12; }
   }
+
   // ---- the Heliotrope Sward: a thousand heads turning shut, or open. A dry bed of high noise and a crowd of
   // petal-grains whose density follows the swell, with the panner sliding across the sward so it comes as a wave.
   function rustle(centre, o) {
@@ -50,11 +79,13 @@ export function startCuesV2(a) {
       v.pan.positionX.setValueAtTime(centre.x - cx, t0); v.pan.positionX.linearRampToValueAtTime(centre.x + cx, t0 + D);
       v.pan.positionZ.setValueAtTime(centre.z - cz, t0); v.pan.positionZ.linearRampToValueAtTime(centre.z + cz, t0 + D);
     }
+    // v7.2-04: dry petals, but darkened: the bed and the grains under a lowpass at 2 kHz, each grain a 3 ms attack
+    const out = filt('lowpass', 2000, 0.6); out.connect(v.in);
     const bed = ac.createGain(); swell(bed, t0, o.gain * 0.5, D * o.peakAt, t0 + D);
-    chain(vNoise(v, pink, t0, D), filt('highpass', o.band * 0.45), filt('bandpass', o.band, 0.6), bed, v.in);
+    chain(vNoise(v, pink, t0, D), filt('highpass', o.band * 0.3), filt('bandpass', o.band, 0.6), bed, out);
     for (let k = 0; k < o.n; k++) {
       const u = (rng() + rng() + rng()) / 3, at = t0 + D * (u < 0.5 ? u * 2 * o.peakAt : o.peakAt + (u - 0.5) * 2 * (1 - o.peakAt)) * 0.95;
-      grain(v, v.in, at, o.band * (0.6 + rng() * 1.1), 2 + rng() * 2, o.gain * (0.25 + 0.5 * rng()), 0.008 + rng() * 0.018);
+      sgrain(v, out, at, o.band * (0.6 + rng() * 0.9), 1.5 + rng() * 1.5, o.gain * (0.25 + 0.5 * rng()), 0.04, pink, 0.003);
     }
   }
   // one turned flower: a breathy little falling sigh, pitched, a hair of vibrato, nothing past 5 m
@@ -182,19 +213,22 @@ export function startCuesV2(a) {
     const nc = 2 + (rng() < 0.5 ? 1 : 0);
     for (let c = 0, at = t0 + 0.1; c < nc; c++) { caw(v, at); at += 0.3 + rng() * 0.2; }
   }
-  // ---- the tower's bats: a soft high fluttering rush and a hundred tiny falling chirps, densest early
+  // ---- the tower's bats (v7.2-04): a soft fluttering rush of many small wings, densest early, and a scatter of
+  // faint squeaks. The rush is papery noise low in the mids, trembling at the wingbeats (9-13 Hz, under the
+  // rough band); the squeaks are short falling sines near 3 kHz with 10 ms attacks, few and quiet, so the whole
+  // stays dark (the chirps proper are above hearing). Heard from the tower's window out to 200 m.
   function batsOut(pos, o) {
-    const v = voice(pos, { ref: 20, roll: 1, range: 160, verb: 0.35, dur: 4.4, air: 90 });
+    const v = voice(pos, { ref: 20, roll: 1, range: 200, verb: 0.35, dur: 4.6, air: 90 });
     if (!v) return;
-    const t0 = v.t0, D = 3.2 + rng() * 0.6, n = Math.round(clamp(o?.count ?? 34, 10, 60) * 2.8);
+    const t0 = v.t0, D = 3.2 + rng() * 0.6, n = Math.round(clamp(o?.count ?? 34, 10, 60) * 0.7);
+    const out = filt('lowpass', 2600, 0.6); out.connect(v.in);
     const fl = gainOf(0.6);
-    chain(vOsc(v, 'sine', 13, t0, t0 + D), gainOf(0.25), fl.gain); chain(vOsc(v, 'sine', 9.3, t0, t0 + D), gainOf(0.15), fl.gain);
-    const rg = ac.createGain(); rg.gain.setValueAtTime(0.0001, t0); rg.gain.linearRampToValueAtTime(0.05, t0 + 0.6); rg.gain.linearRampToValueAtTime(0.04, t0 + D * 0.6); rg.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
-    chain(vNoise(v, pink, t0, D), filt('highpass', 2500), filt('bandpass', 5200, 0.7), fl, rg, v.in);
+    chain(vOsc(v, 'sine', 12.5, t0, t0 + D), gainOf(0.25), fl.gain); chain(vOsc(v, 'sine', 9.3, t0, t0 + D), gainOf(0.15), fl.gain);
+    const rg = ac.createGain(); rg.gain.setValueAtTime(0.0001, t0); rg.gain.linearRampToValueAtTime(0.11, t0 + 0.6); rg.gain.linearRampToValueAtTime(0.08, t0 + D * 0.6); rg.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+    chain(vNoise(v, pink, t0, D), filt('highpass', 380, 0.6), filt('bandpass', 1100, 0.7), fl, rg, out);
     for (let k = 0; k < n; k++) {
-      const at = t0 + Math.pow(rng(), 1.5) * D * 0.9, f = 6500 + rng() * 3500;
-      const c = vOsc(v, 'sine', f, at, at + 0.03); c.frequency.setValueAtTime(f, at); c.frequency.exponentialRampToValueAtTime(f * 0.6, at + 0.008);
-      const g = ac.createGain(); env(g, at, 0.006 + 0.008 * rng(), 0.001, 0.01); chain(c, g, v.in);
+      const at = t0 + Math.pow(rng(), 1.5) * D * 0.9, f = jit(3100, 0.15);
+      const c = stone(v, out, 'sine', f, at, 0.004 + 0.004 * rng(), 0.01, 0.04); c.frequency.setValueAtTime(f, at); c.frequency.exponentialRampToValueAtTime(f * 0.7, at + 0.05);
     }
   }
   // ---- the wader, gone: a breath of air and one soft plip, then a smaller drop falling back
@@ -229,7 +263,18 @@ export function startCuesV2(a) {
   // the end of the jerk; then the iron rings out on a few inharmonic partials. Inverse falloff from a 160 m
   // reference: still a third its level 500 m off, so the whole bowl hears it.
   // the Leerie's standards (v5/lights.js): a lantern catching, a small click and the soft breath of the flame
-  function lampTick(pos) { const v = voice(pos, { ref: 6, roll: 1.2, range: 70, verb: 0.35, dur: 0.6, air: 400 }); if (!v) return; grain(v, v.in, v.t0, 3400, 7, 0.16, 0.022); grain(v, v.in, v.t0 + 0.014, 1500, 3, 0.07, 0.05); const g = ac.createGain(); swell(g, v.t0 + 0.03, 0.05, 0.07, v.t0 + 0.75); chain(vNoise(v, pink, v.t0 + 0.03, 0.75), filt('lowpass', 560, 0.7), g, v.in); }
+  // A lantern catching (v7.2-04): a soft iron tock low in the cage, a dull tap on the glass, and the flame's breath
+  // as it takes, rising and settling. Dark: nothing above 2.5 kHz to speak of, a 4 ms attack, a 50 ms release. Twelve
+  // fire in a wave along the Leerie's row at a gutter, so each is a small thing.
+  function lampTick(pos) {
+    const v = voice(pos, { ref: 6, roll: 1, range: 90, verb: 0.35, dur: 1.0, air: 120 }); if (!v) return;
+    const t0 = v.t0, lp = filt('lowpass', 2400, 0.6); lp.connect(v.in);
+    sgrain(v, lp, t0, jit(1150), 2.5, 0.11, 0.05, pink, 0.004);
+    sgrain(v, lp, t0 + 0.012, jit(620), 2, 0.07, 0.07, pink, 0.005);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t0 + 0.02); g.gain.linearRampToValueAtTime(0.05, t0 + 0.14);
+    g.gain.linearRampToValueAtTime(0.03, t0 + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+    chain(vNoise(v, pink, t0 + 0.02, 0.9), filt('lowpass', 520, 0.7), g, lp);
+  }
   function hawserGroan(pos) {
     const v = voice(pos, { ref: 160, roll: 1, range: 3000, verb: 1.1, dur: 7.4, air: 700 });
     if (!v) return;

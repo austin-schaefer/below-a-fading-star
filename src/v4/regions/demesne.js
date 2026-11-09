@@ -130,25 +130,37 @@ function cawInto(ac, filt, rng, out, t0, pitch = 1) {
   o.start(t0); o.stop(t0 + dur + 0.02); am.start(t0); am.stop(t0 + dur + 0.02);
 }
 function peaCry(k, pos, t0) {
-  // the peacock's scream: "may-AWE", a rising nasal yelp and a long falling wail, twice or three times
-  const { ac, filt, panner, setPos, master, send } = k;
+  // the peacock's scream: "may-AWE", a rising nasal yelp and a long falling wail, twice or three times (v7.2-04).
+  // A formant cry: a buzzy source darkened under a lowpass at three times its pitch, through two nasal bandpasses,
+  // with a breath of noise; the pitch glides (never jumps) in D minor pentatonic, the yelp D5 -> G5, the wail
+  // A5 -> F5 -> D5, each bird a fixed hair out of true. One voice a bird (the cap counts it), on the cue bus,
+  // with the air's lowpass by distance.
+  const { ac, filt, voice, vOsc, vNoise, chain, gainOf, pink } = k;
   const rng = k.makeRng(Math.floor(t0 * 1000) % 100000);
-  const p = panner('equalpower', 14, 1.0, 400); setPos(p, pos.x, pos.y, pos.z); p.connect(master); send(p, 0.5);
-  const n = 2 + Math.floor(rng() * 2);
+  const n = 2 + Math.floor(rng() * 2), gaps = Array.from({ length: n }, () => 0.95 + rng() * 0.25);
+  const lag = Math.max(0, t0 - ac.currentTime), span = gaps.reduce((s, g) => s + g, 0) + 0.8;
+  const v = voice(pos, { ref: 14, roll: 1, range: 320, verb: 0.5, dur: lag + span, air: 160 });
+  if (!v) return;
+  const tr = 1 + (rng() - 0.5) * 0.024; // this bird's own pitch, within a quarter-tone of true
+  const D5 = 587.33 * tr, G5 = 783.99 * tr, A5 = 880 * tr, F5 = 698.46 * tr;
+  const out = filt('lowpass', 3000, 0.6); chain(out, v.in);
+  let t = Math.max(t0, v.t0);
   for (let i = 0; i < n; i++) {
-    const t = t0 + i * (0.95 + rng() * 0.25);
-    const o = ac.createOscillator(); o.type = 'sawtooth';
-    o.frequency.setValueAtTime(560, t); o.frequency.exponentialRampToValueAtTime(820, t + 0.12);
-    o.frequency.setValueAtTime(980, t + 0.16); o.frequency.exponentialRampToValueAtTime(700, t + 0.6);
-    const vib = ac.createOscillator(); vib.frequency.value = 7; const vg = ac.createGain(); vg.gain.value = 18; vib.connect(vg); vg.connect(o.frequency);
-    const f1 = filt('bandpass', 1500, 4), f2 = filt('bandpass', 2900, 6), f3 = filt('bandpass', 800, 3);
+    const end = t + 0.78, o = vOsc(v, 'sawtooth', D5, t, end + 0.05);
+    o.frequency.setValueAtTime(D5, t); o.frequency.exponentialRampToValueAtTime(G5, t + 0.12); // may-
+    o.frequency.exponentialRampToValueAtTime(A5, t + 0.19); // the turn, a 70 ms glide up
+    o.frequency.exponentialRampToValueAtTime(F5, t + 0.5); o.frequency.exponentialRampToValueAtTime(D5 * 0.98, end); // -AWE, falling
+    chain(vOsc(v, 'sine', 6.5 + rng(), t, end + 0.05), gainOf(14), o.detune); // a slow nasal vibrato, 14 cents
+    const dark = filt('lowpass', 2200, 0.7), f1 = filt('bandpass', 1150, 3), f2 = filt('bandpass', 1750, 4), body = filt('lowpass', 900, 0.7);
     const env = ac.createGain();
-    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.11, t + 0.04); env.gain.linearRampToValueAtTime(0.05, t + 0.14);
-    env.gain.linearRampToValueAtTime(0.16, t + 0.2); env.gain.exponentialRampToValueAtTime(0.0001, t + 0.66);
-    o.connect(f1); o.connect(f2); o.connect(f3); f1.connect(env); f2.connect(env); f3.connect(env); env.connect(p);
-    o.start(t); o.stop(t + 0.7); vib.start(t); vib.stop(t + 0.7);
+    env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(0.1, t + 0.03); env.gain.linearRampToValueAtTime(0.05, t + 0.14);
+    env.gain.linearRampToValueAtTime(0.15, t + 0.22); env.gain.linearRampToValueAtTime(0.11, t + 0.5); env.gain.exponentialRampToValueAtTime(0.0001, end);
+    chain(o, dark); chain(dark, f1, env); chain(dark, f2, gainOf(0.5), env); chain(dark, body, gainOf(0.35), env);
+    const br = ac.createGain(); br.gain.setValueAtTime(0.0001, t); br.gain.linearRampToValueAtTime(0.03, t + 0.2); br.gain.exponentialRampToValueAtTime(0.0001, end);
+    chain(vNoise(v, pink, t, 0.8), filt('bandpass', 1400, 1.5), br, out);
+    env.connect(out);
+    t += gaps[i];
   }
-  setTimeout(() => { try { p.disconnect(); } catch (e) { /* gone */ } }, (t0 - ac.currentTime + n * 1.3 + 1) * 1000);
 }
 export const sound = {
   start(k) {
