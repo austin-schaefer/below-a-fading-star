@@ -11,7 +11,7 @@
 //              listener, voice() and the cap, oneShotPanner, the helpers; startGraph returns the shared object `a`
 //   bed.js     wind, drone, shimmer, the gutter's dip and swell, insects
 //   steps.js   footsteps by ground, the step ring, audio.echoStep, figureStep
-//   calls.js   the tarn's lap, the Lattice's hum, the fen's bubbles and frogs, distant calls, the deodand's click
+//   calls.js   the tarn's lap, the Lattice's hum, the fen's bubbles and frogs, the far call, the deodand's click; the phrasing (caller, placed)
 //   cues.js    the cue dispatcher, the older one-shots, the Cardinal Stones, the fall's loop; cues-v2.js the v2 and
 //              v5 one-shots (carillon to kept-fire); living.js v7's figures
 //   regions.js the v4 regions' sound hooks and their kit
