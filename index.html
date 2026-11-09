@@ -41,6 +41,7 @@
   kbd { font-family: inherit; border: 1px solid rgba(219,170,134,0.4); border-radius: 2px; padding: 0 0.4em; margin: 0 0.1em; }
   #place { position: fixed; left: 0; right: 0; bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transform: translateY(8px); transition: opacity 1.6s ease, transform 1.6s ease; pointer-events: none; z-index: 5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #place.shown { opacity: 1; transform: none; }
+  #card:not(.hidden) ~ #place { opacity: 0; } /* no place card behind the title or paused card */
   #place-name { font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.18em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); }
   #place-line { max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; line-height: 1.35; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
   #hint { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 0; right: 0; text-align: center; font-size: 0.9rem; letter-spacing: 0.08em; color: rgba(219,170,134,0.75); opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 5; }
