@@ -10,6 +10,7 @@
 import { leads } from '../v4/paths/routes.js';
 import { buildFlames } from './walkers/flames.js';
 import { buildThurifer } from './walkers/thurifer.js';
+import { buildLeerie } from './walkers/leerie.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 const off = (k) => Q.get(k) === '0';
@@ -26,6 +27,7 @@ export async function build(ctx) {
   const api = { thurifer: null, leerie: null, linkBoy: null, flames: F };
   if (want.thurifer) { const T = api.thurifer = buildThurifer(ctx, F, cue); ctx.scene.add(T.root, T.train); }
   else F.U.uOn.value.x = 0;
+  if (want.leerie) { const L = api.leerie = buildLeerie(ctx, F, cue); ctx.scene.add(L.root); }
   F.U.uOn.value.y = 0;
   ctx.registerUpdate((dt, t) => F.frame(t));
   api.stats = () => {
