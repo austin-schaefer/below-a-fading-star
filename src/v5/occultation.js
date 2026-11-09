@@ -35,7 +35,7 @@
 // The hush: ctx.hush = { level(x, z), cue(name, pos) }. level is the pass's envelope within the body's ground
 // footprint (straight below it) plus 100 m, soft over 20 m, and 0 beyond; cue(name, pos) drops a bird's cue (crows,
 // rooks-lift, flush, stonechat, grouse-flush, wader-gone) with probability 0.97 * level at its position, drawing from
-// a stream of its own. audio.js asks ctx.hush.cue first thing in ctx.audio.cue and hands its region kit a hush(pos);
+// a stream of its own. audio/cues.js asks ctx.hush.cue first thing in ctx.audio.cue; audio/regions.js hands the region kit a hush(pos);
 // the Demesne's rooks, the one bird voice that is a bed rather than a cue, scale their gain by 1 - hush. The
 // sandpipers do not call. Nothing sounds.
 //

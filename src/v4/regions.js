@@ -15,7 +15,7 @@
 //   air                         { tint: '#hex', strength } the Tincture; airAt() blends them over 25 m
 //   sound                       { ... } read by audio; soundAt() gives the weights to mix by
 //                               (v4 regions: { start(kit) -> { tick(w, x, z, step, t, now), step?(x, z, at, vol, pitch,
-//                               out) -> bool, cues?: { name: (pos, opts) => void } } }, started by audio.js)
+//                               out) -> bool, cues?: { name: (pos, opts) => void } } }, started by audio/regions.js)
 //   cover (v4 regions)          { density: { grass, sedge, heather, bracken, flowers, fleshy, reeds, trees }, scale:
 //                               { grass, heather, ... }, floor: { heather, ... }, tint: { grass: '#hex', ... },
 //                               tintAmt, trees(ground, rng, regionAt) -> [{ x, z, kind: 'medlar'|'thorn'|'dead'|'crooked', s, gap?, rot? }] }:
@@ -274,7 +274,7 @@ export function treesFor(ground, makeRng) {
   REGION_KEYS.forEach((k, i) => { const f = HOOKS[k].cover?.trees; if (typeof f === 'function') for (const t of f(ground, makeRng(5100 + i), regionAt)) out.push(t); });
   return out;
 }
-// sound: audio.js starts every region's sound hook once with its kit; each ticks at 10 Hz with its soundAt weight
+// sound: audio/regions.js starts every region's sound hook once with its kit; each ticks at 10 Hz with its soundAt weight
 export function startSounds(kit) {
   const live = [];
   for (const k of REGION_KEYS) {

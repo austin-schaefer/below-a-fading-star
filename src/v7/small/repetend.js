@@ -7,7 +7,7 @@
 // keep 3-6 m from the walker (hops of 0.3 m, up to 6 a second, pauses and turns its head), and flits (under 15 m, the
 // wings beating) to another wall's top when that keeps it nearer the band; it never leaves the walls. Beyond 18 m it
 // goes back to, and sits on, the wall-top nearest (-170, -97).
-// The echo: audio.js records each of the walker's steps as it plays (audio.steps, a ring of 16); while the bird follows,
+// The echo: audio/steps.js records each of the walker's steps as it plays (audio.steps, a ring of 16); while the bird follows,
 // each is replayed 1.0 s after it with audio.echoStep(rec, pos) at the bird: the same ground kind, hurry, pitch and
 // volume draws. Nothing else: the delay is the whole behaviour, and the bird makes no other sound.
 import * as THREE from 'three';
