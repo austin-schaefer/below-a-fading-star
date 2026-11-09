@@ -21,7 +21,7 @@ export function startSteps(a) {
   let rec = stepRing[0], recN = 0, replaying = false, capturing = false;
   const tap = a.tap = (src) => () => { if (replaying) return rec.d[recN++ & 63]; const v = src(); if (capturing) rec.d[recN++ & 63] = v; return v; };
   const draw = tap(rng);
-  const stepBurst = (buf, dur, off, at) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at ?? ac.currentTime + a.lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+  const stepBurst = (buf, dur, off, at) => { const s = ac.createBufferSource(); s.buffer = a.mono(buf); s.start(at ?? ac.currentTime + a.lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
   const _rw = {};
   // v7.2-04: small jitter (pitch +-4 %, level +-2 dB), the first step after standing a little louder (+2 dB), and
   // when hurrying a heel-toe pair: the toe 60-120 ms after the heel, softer and duller
@@ -88,7 +88,7 @@ export function startSteps(a) {
     } else { // crunch
       for (let k = 0; k < 4; k++) {
         const tt = t0 + k * (0.012 + draw() * 0.018);
-        const s = ac.createBufferSource(); s.buffer = white; s.start(tt, draw() * 2, 0.09);
+        const s = ac.createBufferSource(); s.buffer = a.mono(white); s.start(tt, draw() * 2, 0.09);
         const hp = ac.createBiquadFilter(); hp.type = 'bandpass'; hp.Q.value = 1.4; hp.frequency.value = (1500 + draw() * 1200) * pitch; // ice: 1.5-2.7 kHz, 3 ms in
         const g = ac.createGain(); env(g, tt, 0.1 * vol, 0.003, 0.04 + draw() * 0.02);
         s.connect(hp); hp.connect(g); g.connect(out);

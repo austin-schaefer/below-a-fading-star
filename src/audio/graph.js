@@ -184,9 +184,15 @@ export function startGraph(ctx, audio, AC) {
   // ---- noise sources
   const brown = makeNoiseBuffer(ac, 7, 'brown', rng), pink = makeNoiseBuffer(ac, 5, 'pink', rng), white = makeNoiseBuffer(ac, 3, 'white', rng);
   const loopSrc = (buf, off) => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; s.start(0, off * buf.duration); return s; };
-  const burst = (buf, dur, off = rng()) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(ac.currentTime + a.lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+  // A one-shot's noise is mono (v7.2-07): a stereo source summed with mono oscillators into a filter makes that filter
+  // two channels while it plays and one when it ends, and Chromium resets a biquad's state when its channel count
+  // changes: a click as the noise stops, under the tones still sounding. The loops (loopSrc) keep their two channels.
+  const monoOf = new Map();
+  const mono = (buf) => { let m = monoOf.get(buf); if (!m) { m = ac.createBuffer(1, buf.length, buf.sampleRate); m.copyToChannel(buf.getChannelData(0), 0); monoOf.set(buf, m); } return m; };
+  a.mono = mono;
+  const burst = (buf, dur, off = rng()) => { const s = ac.createBufferSource(); s.buffer = mono(buf); s.start(ac.currentTime + a.lead, off * (buf.duration - dur - 0.1), dur + 0.05); return s; };
   // a short band of noise: the stuff of clicks, ticks and sloshes
-  const burstAt = (buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at, rng() * (buf.duration - dur - 0.1), dur + 0.05); return s; };
+  const burstAt = (buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = mono(buf); s.start(at, rng() * (buf.duration - dur - 0.1), dur + 0.05); return s; };
   Object.assign(a, { brown, pink, white, loopSrc, burst, burstAt });
 
   // ---- listener follows the camera: position, forward and up (so looking down at your feet does not swap left and
@@ -291,6 +297,7 @@ export function startGraph(ctx, audio, AC) {
     if (d > (o.range ?? o.maxDistance ?? Infinity)) return null;
     const v = { in: ac.createGain(), gate: ac.createGain(), srcs: [], until: 0, done: false, d, t0: ac.currentTime + a.lead, pan: null };
     v.in.gain.value = o.gain ?? 1; // the cue's level by its tier (v7.2-07): the voice's input, so its room share follows
+    v.in.channelCount = 2; v.in.channelCountMode = 'explicit'; // always two channels on, whatever its sources (v7.2-07)
     if (!o.centre) placed(v, pos, d, o, cueBus);
     else { v.in.connect(v.gate); v.gate.connect(cueBus); v.wetTap = v.in; v.wet = ac.createGain(); v.wet.connect(verbIn); v.wetK = VOICE_WET; }
     if (o.verb) { const g = ac.createGain(); g.gain.value = o.verb * v.wetK; v.wetTap.connect(g); g.connect(v.wet); }
@@ -301,7 +308,7 @@ export function startGraph(ctx, audio, AC) {
   }
   // sources owned by a voice (so a steal can stop them), and the small pieces cues are made of
   const vOsc = (v, type, f, at, end) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.start(at); o.stop(end); v.srcs.push(o); return o; };
-  const vNoise = (v, buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = buf; s.start(at, rng() * Math.max(0, buf.duration - dur - 0.1), dur + 0.05); v.srcs.push(s); return s; };
+  const vNoise = (v, buf, at, dur) => { const s = ac.createBufferSource(); s.buffer = mono(buf); s.start(at, rng() * Math.max(0, buf.duration - dur - 0.1), dur + 0.05); v.srcs.push(s); return s; };
   const filt = (type, f, q = 0.7) => { const b = ac.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
   const gainOf = (x) => { const g = ac.createGain(); g.gain.value = x; return g; };
   const chain = (...n) => { for (let i = 1; i < n.length; i++) n[i - 1].connect(n[i]); return n[n.length - 1]; };
@@ -318,6 +325,7 @@ export function startGraph(ctx, audio, AC) {
   function oneShotPanner(position, ref = 10, roll = 1) {
     const cp = camera.position, d = Math.hypot(position.x - cp.x, position.y - cp.y, position.z - cp.z);
     const v = { in: ac.createGain(), gate: ac.createGain(), srcs: NO_SRCS, until: ac.currentTime + 6, done: false, d };
+    v.in.channelCount = 2; v.in.channelCountMode = 'explicit';
     placed(v, position, d, { ref, roll }, cueBus);
     v.in._v = v; admit(v);
     return v.in;
