@@ -138,24 +138,38 @@ export function startBed(a) {
 }
 
 // ================================================================ insects
+// The insects belong to the wet ground (the fen, the marsh, the Saltings), nowhere else: two bands of pink noise at
+// Q 2.5 near 2.3 and 2.9 kHz under a 5 kHz lowpass, each breathing on a smooth 0.4-0.8 Hz swell (no square gate), in
+// bouts of 30-90 s with rests as long, drawn from their own stream. Gone on the moor and in the wood; hushed in a gutter.
 export function startInsects(a) {
-  const { ac, rng, master, send, loopSrc, white } = a;
-  const insBus = ac.createGain(); insBus.gain.value = 0; insBus.connect(master); send(insBus, 0.08);
-  [[4700, 24, -0.6, 0.5], [6100, 31, 0.6, 0.4], [3600, 17, 0.1, 0.35]].forEach(([f, rate, pan, lvl], i) => {
-    const src = loopSrc(white, rng()), bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 9;
-    const g = ac.createGain(); g.gain.value = 0.5;
-    const lfo = ac.createOscillator(); lfo.type = 'square'; lfo.frequency.value = rate; const lg = ac.createGain(); lg.gain.value = 0.5; lfo.connect(lg); lg.connect(g.gain); lfo.start();
-    const slow = ac.createOscillator(); slow.frequency.value = 0.2 + 0.13 * i; const sg = ac.createGain(); sg.gain.value = 0.0; slow.start();
-    const out = ac.createGain(); out.gain.value = lvl * 0.5;
-    const gate = ac.createOscillator(); gate.type = 'sine'; gate.frequency.value = 0.35 + 0.17 * i; const gg = ac.createGain(); gg.gain.value = lvl * 0.45; gate.connect(gg); gg.connect(out.gain); gate.start();
+  const { ac, rng, ctx, master, send } = a;
+  const insRng = ctx.makeRng(7205), _rw = {};
+  const shared = [rng(), rng(), rng()]; // the three draws the insects always took
+  const insBus = ac.createGain(); insBus.gain.value = 0;
+  const insLP = ac.createBiquadFilter(); insLP.type = 'lowpass'; insLP.frequency.value = 5000; insLP.Q.value = 0.5;
+  insBus.connect(insLP); insLP.connect(master); send(insLP, 0.08);
+  [[2300, 0.43, -0.4, 1.0], [2900, 0.71, 0.35, 0.7]].forEach(([f, rate, pan, lvl], i) => {
+    const src = a.bedNoise.reader(a.bedNoise.pink, shared[i], 0.023 + 0.004 * i);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 2.5;
+    const g = ac.createGain(); g.gain.value = lvl * 0.6; // the swell: 0.6 +- 0.4 of lvl, a sine
+    const lfo = ac.createOscillator(); lfo.frequency.value = rate; const lg = ac.createGain(); lg.gain.value = lvl * 0.4;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start(ac.currentTime + shared[2] * (i + 1));
     const pn = ac.createStereoPanner(); pn.pan.value = pan;
-    src.connect(bp); bp.connect(g); g.connect(out); out.connect(pn); pn.connect(insBus);
+    src.connect(bp); bp.connect(g); g.connect(pn); pn.connect(insBus);
   });
-  // --- insects by ground
+  // the bouts: on 30-90 s, off 30-90 s; the first starts on, part way through
+  const bout = { on: true, left: 20 + 50 * insRng() };
+  let boutSm = 0;
   function update(f) {
-    const { b, wood, inKeep, swellSm, now } = f;
-    const grassy = clamp(b.moor + b.heath * 0.6 + b.orchard * 0.5, 0, 1) * (1 - 0.8 * wood) * (1 - b.rock) * (1 - 0.8 * inKeep) * (1 - swellSm * 0.9);
-    insBus.gain.setTargetAtTime(0.045 * grassy, now, 0.6);
+    const { b, swellSm, now, step, px, pz } = f;
+    bout.left -= step || 0.1;
+    if (bout.left <= 0) { bout.on = !bout.on; bout.left = 30 + 60 * insRng(); }
+    boutSm += ((bout.on ? 1 : 0) - boutSm) * 0.03; // about 3 s in and out
+    const w = ctx.regions?.soundAt?.(px, pz, _rw);
+    const wet = Math.max(b.marsh || 0, w?.fen || 0, w?.saltings || 0);
+    const lvl = INS_LVL * smoothstep(0.3, 0.6, wet) * boutSm * (1 - swellSm * 0.9);
+    insBus.gain.setTargetAtTime(lvl, now, 0.6);
   }
   return { update };
 }
+const INS_LVL = 0.025;
