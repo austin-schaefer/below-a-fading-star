@@ -113,6 +113,8 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 (each v7 module's flag; see wilderness-v5.md, "## v7, the living")
 
+- `walkers=0` (v7-01: no Thurifer, Leerie or Link-Boy); `thurifer=0`, `leerie=0`, `linkboy=0` each its own
+
 ### The walls
 
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `wilderness-v5.md`, "The massifs"), to compare
