@@ -113,6 +113,9 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 (each v7 module's flag; see wilderness-v5.md, "## v7, the living")
 
+- `canyon=0` (no `living-canyon`: no Bather, stones or Toadstone); `bather=0` and `toadstone=0` leave out each alone (v7-06)
+- `reach=0` (DP the Luminous Reach's chunks compiled out of the river's and the fen's shaders, which are then exactly as before); `reach=mask` paints the glow red, to check where it lies (v7-06)
+
 ### The walls
 
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `wilderness-v5.md`, "The massifs"), to compare
