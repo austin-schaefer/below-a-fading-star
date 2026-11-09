@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { LANDMARKS, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp, lerp } from '../../noise.js';
 import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
+import { buildYewMesh } from './yews.js';
 
 const KEY = 'demesne';
 const N = makeSimplex(20261107 + 1010);
@@ -240,7 +241,7 @@ export async function build(ctx) {
   R.stats[KEY] = () => ({ ...meshStats(meshes), creature: birds.count });
   R.creatures = Object.assign(R.creatures || {}, { peafowl: birds.list });
   void meshH;
-  ctx.log(`region demesne: skin ${skin.geometry.index.count / 3} tris, ha-ha wall, ${yews.count} yews, ${blocks.count} blocks, ${birds.count} peafowl`);
+  ctx.log(`region demesne: skin ${skin.geometry.index.count / 3} tris, ha-ha wall, ${yews.count} yews (${yews.tris} tris), ${blocks.count} blocks, ${birds.count} peafowl`);
 }
 
 // The ha-ha's wall: a vertical face along r = 85 (+0.25), every half metre round the arc where the ha-ha runs, its
@@ -302,34 +303,16 @@ function ashlar(T, hex, course, len) {
   return mat;
 }
 
-// Yews: lathe shapes (a cone, an urn on a stem) pushed about by noise so the clipped lines have grown out; near-black
-// green, a few rusty dead patches. Two instanced meshes; each casts a shadow and blocks the way.
+// Yews: the clipped cone and urn grown out (yews.js), all in one mesh that casts a shadow; each blocks the way.
+// The placements draw from the region's stream exactly as v4's did, so the blocks after them land where they were.
 function buildYews(ctx, rng, low) {
-  const { THREE: T, terrain } = ctx;
-  const lathe = (profile, seg, seed) => {
-    const pts = profile.map(([r, y]) => new T.Vector2(r, y));
-    const g = new T.LatheGeometry(pts, seg);
-    const p = g.attributes.position, col = [];
-    for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x);
-      const k = 1 + 0.22 * N.noise2(Math.cos(a) * 1.6 + seed, y * 0.9 + Math.sin(a) * 1.6) + 0.1 * N.noise2(a * 3 + seed, y * 2.5);
-      p.setXYZ(i, x * k, y + 0.12 * N.noise2(a * 2 + seed, y), z * k);
-      const dead = smoothstep(0.55, 0.7, N.noise2(a * 1.3 + seed * 3, y * 0.7)) * 0.8;
-      const sh = 0.75 + 0.35 * clamp(y / 4, 0, 1);
-      col.push(lerp(0.08, 0.32, dead) * sh, lerp(0.14, 0.18, dead) * sh, lerp(0.07, 0.08, dead) * sh);
-    }
-    g.setAttribute('color', new T.Float32BufferAttribute(col, 3));
-    g.computeVertexNormals();
-    return g;
-  };
-  const cone = lathe([[0.01, 0], [0.45, 0], [0.45, 0.5], [1.5, 0.7], [1.35, 1.8], [1.0, 2.9], [0.55, 3.8], [0.15, 4.5], [0.01, 4.7]], low ? 10 : 14, 3.1);
-  const urn = lathe([[0.01, 0], [0.9, 0], [1.0, 0.6], [0.7, 0.9], [0.4, 1.3], [0.45, 1.7], [1.3, 2.2], [1.45, 2.9], [1.1, 3.5], [0.4, 3.75], [0.55, 4.1], [0.3, 4.5], [0.01, 4.6]], low ? 10 : 14, 7.7);
-  const mat = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+  const { terrain } = ctx;
   // along the old walks: two rows framing the parterre, a ring round the keep's north and east side
   const cones = [], urns = [];
   const add = (x, z, kind) => {
     if (Math.hypot(x - K.x, z - K.z) > HAHA - 3 || roadD(x, z) < 5) return;
     const it = { x, y: terrain.heightAt(x, z) - 0.15, z, s: 0.85 + rng() * 0.35, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.12, rz: (rng() - 0.5) * 0.12 };
+    it.kind = kind ? 'urn' : 'cone';
     (kind ? urns : cones).push(it);
     ctx.addCollider({ x, z, r: 1.15 * it.s });
   };
@@ -339,8 +322,8 @@ function buildYews(ctx, rng, low) {
     const a = (bb * Math.PI) / 180, r = 62 + (rng() - 0.5) * 3;
     add(K.x + Math.sin(a) * r, K.z - Math.cos(a) * r, rng() < 0.4);
   }
-  const meshes = [instanced(ctx, cone, mat, cones, { name: 'demesne-yew-cones', shadow: true }), instanced(ctx, urn, mat, urns, { name: 'demesne-yew-urns', shadow: true })];
-  return { meshes, count: cones.length + urns.length };
+  const yews = buildYewMesh(ctx, [...cones, ...urns], { low, name: 'demesne-yews' });
+  return { meshes: [yews.mesh], count: cones.length + urns.length, tris: yews.tris };
 }
 
 // Dressed blocks fallen from the curtain tower: squared ashlar, chamfered, lying askew, half sunk, in a fan.
