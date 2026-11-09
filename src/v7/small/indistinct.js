@@ -8,8 +8,9 @@
 // acceleration cap of 12 m/s², and the distance is a constraint over that: never nearer than 6.75 m nor further than 7.25 m
 // while the walker is within 7 m of the line. Pushed past an end of the arc, it thins (the blur widens and it fades over
 // 0.6 s) and forms again 7 m on the walker's far side.
-// The look: one camera-facing quad whose fragment shader draws a soft dark mass 0.7 m wide and 1.8 m tall (v7.1: tall
-// enough to break the ditch's lip and stand against the lit turf or the sky beyond), no limbs, no face, its edge blurred
+// The look: one camera-facing quad whose fragment shader draws a soft dark mass 0.7 m wide, its base on the ditch floor
+// and its crown 1.0 m over the lawn's lip wherever it stands (v7.1: 3.1-4.0 m over a ha-ha wall of 2.1-3 m, so it is
+// seen from the lawn; a tall narrow smear rather than a figure), no limbs, no face, its edge blurred
 // by a radius held at 8 px of a 720-px-tall view at any distance (so it never sharpens), a slow noise moving it as if
 // breathing; near-black brown with a wide rim of the sky's colour round it and a faint cold glow in its core that
 // strengthens as the sun gutters, and round it the ditch's haze stirred, as if it bent the air; fogged; under bloom's
@@ -23,16 +24,22 @@ const R = 78.2, B0 = 0, B1 = 90, WAIT_B = 45;
 const KEEP = 7.0, NEAR_LINE = 30, BAND = 0.25, HOLD_V = 0.1, VMAX = 8, AMAX = 12, THIN = 0.6;
 const LEN = (R * (B1 - B0) * Math.PI) / 180; // 122.8 m of arc
 const STEP = 0.25, NS = Math.ceil(LEN / STEP) + 1;
-const MASS = { w: 0.7, h: 1.8 }, BLUR_PX = 8;
+const MASS = { w: 0.7, h: 1.8 }, BLUR_PX = 8, OVER_LIP = 1.0, LIP_R = [73.5, 77.8];
 
 export function buildIndistinct(ctx) {
   const { scene, terrain, player, camera } = ctx;
   // ---- the line, sampled every 0.25 m of arc: x, y (the skin's drawn floor: heightAt + its 2 cm lift), z
-  const LX = new Float32Array(NS), LY = new Float32Array(NS), LZ = new Float32Array(NS);
+  // LH: its height there, from the floor to 1.0 m over the lawn's lip (the highest ground between r 73.5 and 77.8 on the
+  // same bearing), never under MASS.h
+  const LX = new Float32Array(NS), LY = new Float32Array(NS), LZ = new Float32Array(NS), LH = new Float32Array(NS);
   for (let i = 0; i < NS; i++) {
     const a = Math.min(LEN, i * STEP) / R;
     LX[i] = K.x + Math.sin(a) * R; LZ[i] = K.z - Math.cos(a) * R; LY[i] = terrain.heightAt(LX[i], LZ[i]) + 0.02;
+    let lip = -Infinity;
+    for (let r = LIP_R[0]; r <= LIP_R[1]; r += 0.2) lip = Math.max(lip, terrain.heightAt(K.x + Math.sin(a) * r, K.z - Math.cos(a) * r));
+    LH[i] = Math.max(MASS.h, lip + OVER_LIP - LY[i]);
   }
+  const heightAtS = (s) => { const u = clamp(s, 0, LEN) / STEP, i = Math.min(NS - 2, u | 0), f = u - i; return LH[i] + (LH[i + 1] - LH[i]) * f; };
   const out = { x: 0, y: 0, z: 0 };
   function lineAt(s, o = out) {
     const u = clamp(s, 0, LEN) / STEP, i = Math.min(NS - 2, u | 0), f = u - i;
@@ -176,8 +183,11 @@ export function buildIndistinct(ctx) {
 
   function place() {
     const p = lineAt(st.s);
-    U.uC.value.set(p.x, p.y + MASS.h * 0.5, p.z);
+    const h = heightAtS(st.s);
+    U.uMass.value.y = h;
+    U.uC.value.set(p.x, p.y + h * 0.5, p.z);
     geo.boundingSphere.center.copy(U.uC.value);
+    geo.boundingSphere.radius = h * 0.5 + 2;
     // the shadow lies along the ditch
     const a = st.s / R; U.uThin.value = st.thin;
     SU.uDir.value.set(Math.cos(a), Math.sin(a));
@@ -249,6 +259,6 @@ export function buildIndistinct(ctx) {
   return {
     mesh, shadow, update, lineAt, LEN, R,
     state: () => { const p = lineAt(st.s, {}); return { ...st, x: p.x, y: p.y, z: p.z, dist: dAt(st.s), bearing: (st.s / R) * 180 / Math.PI }; },
-    tris: () => 4,
+    tris: () => 4, heightAt: heightAtS,
   };
 }
