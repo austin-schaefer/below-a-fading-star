@@ -75,7 +75,7 @@ node tools/audio-quality-test.mjs $B
 
 Run before every push, after `audio-test.mjs`. About 16 minutes in one browser, into `shots/wip/audio/quality-<timestamp>/`:
 - The survey: one check a pose that it rendered, one a gated band.
-- Limiter engagement: the moor walk rendered with `--pre`; per 50 ms block the post/pre level difference less its median (Chromium's compressor adds a fixed makeup gain) is the gain reduction; reduction over 1 dB in under 1 % of the blocks above −70 dBFS.
+- Limiter engagement: the moor walk rendered with `--pre`; the post tap lined up on the pre tap past the compressor's look-ahead (6 ms in Chromium, found by correlation), then per 50 ms block the post/pre level difference less its median (the compressor's fixed makeup gain, +4.6 dB at the baseline) is the gain reduction; reduction over 1 dB in under 1 % of the blocks above −70 dBFS. `--rescore=<pre.wav>` scores an existing `--pre` render. At the baseline the limiter never acts on the moor walk (worst block 0.0 dB).
 - Determinism: the first pose rendered again agrees with the survey's render within 0.2 dB on `lufs_i`.
 
 Prints `PASS`/`FAIL` lines and a count; exit 1 on any failure; zero checks is a failure. `--only=<pose,...>` runs a subset for a quick look (not for a push).
