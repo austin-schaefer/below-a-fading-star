@@ -14,6 +14,8 @@ v7.2 adds nothing to the world. Every sound that exists keeps its meaning; how i
 
 **2026-11-09, the fix round (v7.2-07) is in.** The cues are audible (per-cue gains were 27–39 dB too low; `voice()` takes a gain by tier), the rooks sound, the carillon and drum clicks were a stereo noise ending in a mono voice and are gone, the galley drum and the far cry are ranged by meaning. Gated survey: moor-stand, moor-walk, moor-hurry, moor-gutter and demesne-gutter green; leerie-gutter red on roughness (the lamp tick's own sound). Ten samples went to Austin. Next: his listening notes; the lamp tick re-voiced; the Lynchets gate; the places' rooms told apart; the test counts on a Mac; then `main`.
 
+**2026-11-09, night.** Austin listened to the ten samples and approved the direction ("Love it on a listen"). The last round (v7.2-08) re-voiced the lamp tick and staggered the Leerie's standards, fixed the Demesne's clicks (the rooks' caws) and darkened the Lynchets gate; the gated survey is green at every pose. `origin/main` (v7.1) is merged in: v7.1's softer shimmer and drone swell in the old monolith are superseded by v7.2's rebuilt gutter. The suite runs once on the merged result; then the PR to `main`. Not done in this milestone: the rooms told apart by ear, the insects' bouts, the test counts on a Mac (see `RELEASES.md`, "Known and left").
+
 **Done when** the survey (`tools/audio-survey.mjs`) is green at every pose, the designer has ten renders to listen to with a line each on what changed, and `RELEASES.md` carries the v7.2 entry.
 
 ## What a visitor should notice
