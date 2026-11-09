@@ -148,7 +148,7 @@ export function findSpot(env, o = {}) {
     if (bad) continue;
     if (T.heightAt(x, z) < -2.2) continue; // low wet ground: the fen's and tarn's margins
     for (const [k, L] of Object.entries(ctx.landmarks)) {
-      if (o.allow && o.allow.includes(k)) continue;
+      if (L.card || (o.allow && o.allow.includes(k))) continue; // card places have no footprint
       const pad = k === 'wood' ? (o.inWood ? -1e9 : -30) : lmPad;
       if (landmarkDistance(L, x, z) < pad) { bad = true; break; }
     }

@@ -4,6 +4,10 @@
 # Paths here are relative to that folder.
 [build]
   publish = "."
+  # Build only when something the site serves changed. Docs, briefs, tools, tests and the perf JSONs live in this
+  # folder too, and every commit here used to start a build. Exit 0 skips the build (Netlify's ignore contract).
+  # Runs from the base directory against the last successfully built commit.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html src vendor netlify.toml favicon-32.png apple-touch-icon.png"
   # The screenshots are part of the repo's record, not of the site; keep them out of the deploy.
   # commit.json carries the short commit hash, so a bench run on the site names its commit.
   command = 'rm -rf shots dist && printf "{\"commit\":\"%s\"}" "${COMMIT_REF:0:7}" > commit.json'

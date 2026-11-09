@@ -41,8 +41,9 @@
   kbd { font-family: inherit; border: 1px solid rgba(219,170,134,0.4); border-radius: 2px; padding: 0 0.4em; margin: 0 0.1em; }
   #place { position: fixed; left: 0; right: 0; bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transform: translateY(8px); transition: opacity 1.6s ease, transform 1.6s ease; pointer-events: none; z-index: 5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #place.shown { opacity: 1; transform: none; }
+  #card:not(.hidden) ~ #place { opacity: 0; } /* no place card behind the title or paused card */
   #place-name { font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.18em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); }
-  #place-line { font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
+  #place-line { max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; line-height: 1.35; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
   #hint { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 0; right: 0; text-align: center; font-size: 0.9rem; letter-spacing: 0.08em; color: rgba(219,170,134,0.75); opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 5; }
   #hint.shown { opacity: 1; }
   #fps { position: fixed; right: 10px; bottom: 8px; font-size: 0.7rem; color: rgba(219,170,134,0.35); font-family: ui-monospace, monospace; z-index: 5; }
@@ -131,14 +132,15 @@
 <div id="card">
   <div class="kicker">fading planet · a wilderness</div>
   <h1>Below a <em>Fading</em> Star</h1>
-  <p class="intro">You wake at the gate of a keep that has outlived its name. The sun is swollen, red and guttering; it will not rise any higher than this. Below you a region of moor and fen lies open, bounded by mountains nothing crosses. Walk it.</p>
+  <p class="intro">You wake at the gate of a keep that has outlived its name, at the center of a valley strewn with past ages of a dying earth.</p>
+  <p class="intro">The swollen sun lies heavy in the western sky; too tired to rise, too prideful to set. When its ancient flame gutters, the valley floor and things above it shudder in response.</p>
   <p class="paused-note">Paused. Click to return to the moor.</p>
   <button id="begin" disabled>Go out</button>
-  <button id="draglook" type="button">Mouse trouble? Look by dragging instead (no mouse capture)</button>
+  <button id="draglook" type="button">Mouse trouble? Click to look by dragging instead.</button>
   <div id="load"><div class="track"><i class="fill"></i></div><span class="step">the moor is loading…</span></div>
-  <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>Esc</kbd> pause. On a phone: the thumbstick at bottom right walks (pull it far to hurry), the ring beside it hops, drag anywhere else to look.</div>
+  <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look<br><kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>Esc</kbd> pause</div>
 </div>
-<div id="hint">The causeway runs west from the gate. The lights in the fen are not for you.</div>
+<div id="hint"></div>
 <div id="place"><div id="place-name"></div><div id="place-line"></div></div>
 <div id="reticle"></div>
 <div id="fps"></div>

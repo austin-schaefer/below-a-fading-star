@@ -14,7 +14,7 @@ export function buildDebug(ctx) {
   const btn = document.getElementById('dbg-btn');
   const live = document.getElementById('dbg-live');
   const list = document.getElementById('dbg-list');
-  const keys = Object.keys(LANDMARKS);
+  const keys = Object.keys(LANDMARKS).filter((k) => !LANDMARKS[k].card); // name-card places are not teleport targets (the keys run out)
   let acc = 0, smooth = 0;
 
   const api = { shown: false, enabled: urlOn, teleport, toggle, reveal, keyFor: (key) => KEYS[keys.indexOf(key)], addToggle, addHeading };
