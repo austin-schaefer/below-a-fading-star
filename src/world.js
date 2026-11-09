@@ -21,13 +21,13 @@ SUN.dir = (() => {
 })();
 
 export const LANDMARKS = {
-  castle:   { x: 40,   z: 30,   r: 42,  y: 18,  name: "Carcanet Keep",        line: "You woke here. The gate has not closed in a thousand years." },
+  castle:   { x: 40,   z: 30,   r: 42,  y: 18,  name: "Carcanet Keep",        line: "“Over all brooded the citadel, like a condor stooping above its prey, intent on its own dark meditations.”" },
   stones:   { x: -170, z: -50,  r: 26,  y: 4,   name: "The Cardinal Stones",  line: "Pride and Sloth, Avarice and Spite." },
   tarn:     { x: -90,  z: 110,  r: 58,  y: -6,  name: "Lees Tarn",            line: "The water keeps what it is given, and gives back nothing." },
-  fen:      { x: 70,   z: 160,  r: 72,  y: -2,  name: "Corpse-Candle Fen",    line: "They say after the sun is fully dark, these lights are the only ones that will still burn." },
-  wood:     { x: -210, z: 130,  r: 90,  y: null, name: "The Deodand Wood",    line: "“Trees towered to either side and the long sundown rays steeped one side in blood, left the other deep in black shadow.”" },
-  byre:     { x: -148, z: 64,   r: 14,  y: null, name: "The Deodand Byre",    line: "“Eight of them, the ostler said. He did not say what he fed them.”" },
-  orchard:  { x: 130,  z: -90,  r: 52,  y: null, name: "Medlar Close",        line: "The fruit is best eaten rotten. It has been ready a long while." },
+  fen:      { x: 70,   z: 160,  r: 72,  y: -2,  name: "Corpse-Candle Fen",    line: "“Unseen whippoorwills chatter and the fireflies come out in abnormal profusion to dance.”" },
+  wood:     { x: -210, z: 130,  r: 90,  y: null, name: "The Deodand Wood",    line: "“Branches and boughs knit patterns on the fading purple over hi; the air smelt of moss and dank mold.”" },
+  byre:     { x: -148, z: 64,   r: 14,  y: null, name: "The Oast Byre",    line: "“In a litter of filth and matted straw stood a number of hulking men eight or nine feet tall. They were naked, with shocks of dirty yellow hair and watery bule eyes.”" },
+  orchard:  { x: 130,  z: -90,  r: 52,  y: null, name: "Medlar Close",        line: "“Now in the last fleeting moments, humanity festers rich as rotten fruit.”" },
   court:    { x: -40,  z: -165, r: 40,  y: -1,  name: "The Sunken Court",     line: "“Law cannot reach where enforcement will not follow.”" },
   moraine:  { x: 40,   z: -265, r: 80,  y: null, name: "The Lattice",         line: "“Automatic, unmoral, uncalculating inevitability.”" },
   tower:    { x: -250, z: -135, r: 24,  y: 34,  name: "The Armiger's Tower",  line: "“The moon is dark, and the gods dance in the night; there is terror in the sky, for upon the moon hath sunk an eclipse foretold in no books of men or of earth’s gods.”" },

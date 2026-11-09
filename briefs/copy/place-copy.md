@@ -6,7 +6,7 @@ Austin's hand edits to the place name cards, applied word for word on 2026-11-08
 
 name: Carcanet Keep
 
-line: You woke here. The gate has not closed in a thousand years.
+line: "Over all brooded the citadel, like a condor stooping above its prey, intent on its own dark meditations."
 
 ## stones
 
@@ -24,25 +24,25 @@ line: The water keeps what it is given, and gives back nothing.
 
 name: Corpse-Candle Fen
 
-line: They say after the sun is fully dark, these lights are the only ones that will still burn.
+line: "Unseen whippoorwills chatter and the fireflies come out in abnormal profusion to dance."
 
 ## wood
 
 name: The Deodand Wood
 
-line: "Trees towered to either side and the long sundown rays steeped one side in blood, left the other deep in black shadow."
+line: "Branches and boughs knit patterns on the fading purple over hi; the air smelt of moss and dank mold."
 
 ## byre
 
-name: The Deodand Byre
+name: The Oast Byre
 
-line: "Eight of them, the ostler said. He did not say what he fed them."
+line: "In a litter of filth and matted straw stood a number of hulking men eight or nine feet tall. They were naked, with shocks of dirty yellow hair and watery bule eyes."
 
 ## orchard
 
 name: Medlar Close
 
-line: The fruit is best eaten rotten. It has been ready a long while.
+line: "Now in the last fleeting moments, humanity festers rich as rotten fruit."
 
 ## court
 
