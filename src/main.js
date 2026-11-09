@@ -62,6 +62,7 @@ const MODULES = [
   ['living-canyon', () => import('./v7/canyon.js')], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
   ['living-glyphs', () => import('./v7/glyphs.js')], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
   ['living-walkers', () => import('./v7/walkers.js')], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
+  ['living-workers', () => import('./v7/workers.js')], // v7: BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One (?workers=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
