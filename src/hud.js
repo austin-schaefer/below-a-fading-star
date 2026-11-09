@@ -1,4 +1,4 @@
-// HUD: the title card, a landmark name that fades in when you draw near, a hint line, fps.
+// HUD: the title card, a landmark name that fades in when you draw near, a notice line for failures, fps.
 import { LANDMARKS, landmarkDistance } from './world.js';
 import { buildDebug } from './debug.js';
 
@@ -31,13 +31,7 @@ export function buildHud(ctx) {
   const begin = document.getElementById('begin');
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
-  let hinted = false; // the opening hint shows once per visit, not on every return from the paused card
-  ctx.events.addEventListener('begin', () => {
-    card.classList.add('hidden');
-    if (hinted) return;
-    hinted = true;
-    hint.classList.add('shown'); setTimeout(() => hint.classList.remove('shown'), 7000);
-  });
+  ctx.events.addEventListener('begin', () => card.classList.add('hidden'));
   ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
   // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
   ctx.events.addEventListener('pausetoggle', () => {
@@ -53,7 +47,7 @@ export function buildHud(ctx) {
       if (on && !ctx.player.enabled) return; // they chose it before going out; begin as usual
       if (on) ctx.events.dispatchEvent(new CustomEvent('begin'));
     });
-    const label = () => { dragBtn.textContent = ctx.player.dragLook ? 'Mouse look by dragging is on. Switch back to captured mouse' : 'Mouse trouble? Look by dragging instead (no mouse capture)'; };
+    const label = () => { dragBtn.textContent = ctx.player.dragLook ? 'Mouse look by dragging is on. Switch back to captured mouse' : 'Mouse trouble? Click to look by dragging instead.'; };
     ctx.events.addEventListener('draglook', label); label();
   }
   ctx.events.addEventListener('contextlost', () => {
@@ -78,14 +72,16 @@ export function buildHud(ctx) {
     let best = null, bestD = Infinity;
     for (const [key, L] of landmarkList) {
       const d = landmarkDistance(L, p.x, p.z);
-      if (d < bestD) { bestD = d; best = key; }
+      const k = L.card && d < 6 ? d - 1000 : d; // a name card lying inside a broad landmark wins there
+      if (k < bestD) { bestD = k; best = key; }
     }
     const near = bestD < 6 ? best : null;
     if (near !== current) {
       current = near;
       if (near) {
         placeName.textContent = LANDMARKS[near].name;
-        placeLine.textContent = LANDMARKS[near].line;
+        placeLine.textContent = LANDMARKS[near].line || '';
+        placeLine.style.display = LANDMARKS[near].line ? '' : 'none';
         place.classList.add('shown');
         timer = 7;
       } else place.classList.remove('shown');
