@@ -1,5 +1,5 @@
 // v7, the living: the sounds of the figures (wilderness-v5.md, "### The living's sounds (the v7 audio pass)"). The
-// figure modules fire named cues (ctx.audio.cue) and audio.js hands each to one function here. Register: people
+// figure modules fire named cues (ctx.audio.cue) and audio/cues.js hands each to one function here. Register: people
 // absorbed in a task nobody needs any more, heard in a dying world: dry, small, close, a little reverberant, never
 // musical except the Coheirs' hum in thirds, and no words, ever.
 //
@@ -7,7 +7,7 @@
 //   taker-click 18 m, taker-murmur 12 m, coheirs-knot 18 m, sexton-bite / sexton-throw 30 m, sleeper-breath 12 m,
 //   sleeper-fruit 18 m, stylite-creak 25 m (it sounds at the tor's lip, 9-10 m above the basket), accrescent-step 18 m,
 //   moles-click 15 m, thurifer-chain 30 m, leerie-click 25 m, bather-pour 60 m (fired only from the rim, 20-40 m
-//   above her); leerie-step 25 m and linkboy-step 15 m are footsteps by ground through audio.js's stepSynth (k.figureStep).
+//   above her); leerie-step 25 m and linkboy-step 15 m are footsteps by ground through audio/steps.js's stepSynth (k.figureStep).
 // Loops (one voice each, outside the cap, as the fall's is): coheirs-hum and thurifer-hiss, started and stopped by the
 // figures' { start } / { stop }; the link's flutter, run by distance alone (within 8 m of the Link-Boy's flame). Each
 // swells in over 0.4 s and out over 0.3 s; a second start while running is ignored; each is released when its figure
