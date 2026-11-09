@@ -72,6 +72,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 57 | v7.1 world: the measuring pawns cut, the grazers' collider grid, the Link-Boy routed round the Span's piers |
 | 58 | v7.1 legible: the Indistinct's crown over the lawn's lip, the Repetend dove-grey, the Simulacrum's denser columns, the erratic's glyph cut deep, the Bather's 4 m swap |
 | 59 | v7.1 UI: coordinates, the full teleport list, the region cards, the Pit and Rest in Starlight, the Lamplighter's couplet |
+| 60 | v7.1 visibility: each thing a step more visible along its own palette, before and after, and the survey sheet |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered.
 
@@ -418,5 +419,10 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `59-settings-living-desktop.webp` | The full teleport list on desktop, scrolled to the living: the Taker, the Co-heirs, the Sexton and the rest. |
 | `59-settings-living-touch.webp` | The teleport list on a phone, scrolled to the places near the Pit and the Collation. |
 | `59-settings-touch.webp` | The settings panel on a phone: sound, quality, position and the go-to list. |
+| `60-beetles-gutter-after.webp` | After: the same slabs in the gutter, the door beetles a step more distinct on the stone. |
+| `60-beetles-gutter-before.webp` | Before: paving slabs in the gutter, the door beetles all but lost on the stone. |
+| `60-grazers-gutter-after.webp` | After: a grazer on the moor below the Span’s arches in the gutter, its body a warm grey against the grass. |
+| `60-grazers-gutter-before.webp` | Before: the same slope in the gutter, the grazer hard to pick out from the grass. |
+| `60-visibility-sheet.webp` | The visibility pass as a sheet: before and after pairs for the grazers, peafowl, Co-heirs, Taker, Thurifer, Accrescent, flowers, door beetles and snails. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
