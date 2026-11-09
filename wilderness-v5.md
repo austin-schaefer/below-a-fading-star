@@ -794,3 +794,26 @@ The time-box: the first render attempt read. At the gutter's floor, from 4 m the
 Cost: one draw call (720 points, 360 at low), no triangles; its state `{ at, near: 60, hz: 10 }`, the motion on the GPU. Sightlines (`v7-05-small-simulacrum-*-before|after.png`): the columns from 6 m west of them in normal light (`columns`); the face at the gutter's floor from 4 m (`face4`) and 7 m (`face7`).
 
 All of `living-small`: 4 draw calls in the main pass, 190 triangles and 720 points at high, no lights, no textures; about 0.01 ms a frame at the ditch; deterministic (`makeRng` 7505–7510). `v7-05-small-sheet.png` sets the Indistinct at 7 m beside the face at 4 m. `node tools/small-test.mjs <base>` checks all three (13 checks); `audio-test`'s last check is the echo.
+
+### The living's sounds (the v7 audio pass)
+
+Every v7 cue is voiced in `src/audio/living.js` (one dispatch line each in `audio.cue`). One-shots are voices under the cap of 12, positional, linear to silence at their range; no words anywhere, no music but the hum.
+
+- `taker-click` (BY): two dry ticks of the quadrant's arm seating and a small brass ring (2.9, 4.4 kHz); 18 m.
+- `taker-murmur` (BY): 3–5 breathy low pulses (a 104–114 Hz saw under pink noise) through two formants that step to a new place on each pulse, the pitch falling like a figure said under the breath, lowpassed so nothing is a syllable; 12 m.
+- `coheirs-knot` (BZ): the cord's short rising squeak (bandpassed noise sweeping 0.7→1.6 kHz) and the knot seating; 18 m.
+- `coheirs-hum` (BZ, a loop): two wordless closed-lip voices a **minor third** apart (G3 and the B-flat above, 6:5; design gap 10 decided here, for good), one slow drift moving both so the interval never changes; 25 m.
+- `sexton-bite` (CF): a low dull crunch of blade into soil, grit, the iron's faint edge; 30 m. `sexton-throw`: the swing's swish, the clod's thump on the heap, its crumbs pattering; 30 m.
+- `sleeper-breath` (CB): one long nasal inhale (a band of noise rising) and a slower, lower exhale, 4.5 s; 12 m. `sleeper-fruit`: a soft dull thud on cloth or turf; 18 m.
+- `stylite-creak` (CI): stick-slip, a wandering pulse train through two rope resonances, its grip catching; 25 m (it sounds at the lip, 9–10 m above the basket).
+- `accrescent-step` (CL): 3–5 small clinks of ice in a glass (inharmonic partials over 2.3 kHz) and a crackle of crystal; 18 m.
+- `moles-click` (CT): stone on stone, one dry grain and a knock; 15 m.
+- `thurifer-chain` (CD): a few tiny metal grains of the links settling and the censer's small ring; 30 m. `thurifer-hiss` (a loop): cloth over grass, a band of high noise wandering a little, following the figure; 20 m.
+- `leerie-step` (CG): footsteps by the ground under him through the walker's own synthesis (`figureStep`, from its own record and stream, so the walker's ring and the Repetend are untouched), at 0.6 of the walker's level; 25 m. `leerie-click`: the pole's hook on the iron cage, its ring and the door's rattle; 25 m.
+- `linkboy-step` (DM): footsteps by ground the same way, at 0.4; 15 m. The link's flutter: a faint low flutter of flame, a loop by distance alone, within 8 m of his light while he is shown. Nothing else: he never speaks (design gap 5's default).
+- `bather-pour` (CE): water poured from a cupped hand eight metres tall, a falling band of water, bubbling, the splash back; 60 m (fired only from the rim). From below, the river's own sound.
+- Silent, as their ideas give no sound: CM, CP, CQ, CX, DP and the glyph motif. CO's echo is v7-small's `audio.echoStep`.
+
+The loops' rule: one voice each (outside the cap, as the fall's loop is), started and stopped by the figure's `{ start }` / `{ stop }`; it swells in over 0.4 s and out over 0.3 s, a second start while running is ignored, and it is released when its figure is past its range or its module is switched off (`ctx.perf` toggles), opening again on return while still wanted. Filters, panner and gain are built once; only the sources are made at each opening. `audio.living.loops` holds their state.
+
+The voice peaks (`tools/audio-test.mjs`, 10 s each at the real cadences): the north-west on P3 by the Lynchets' east wall (the Thurifer's hiss and chain, the Link-Boy's steps, the walker hurrying and the Repetend's echo) peaks at 9 voices, mean about 7, with only the audio loaded, and at the cap of 12 (mean about 9, the oldest stolen) with the whole world's own cues on top; the Leerie's row in a gutter (his steps and clicks, the lamp-tick wave along twelve standards, the walker walking) at 4 (mean about 2), and 6–7 (mean about 4) with the world; the cue calls take 1–2.5 ms of main thread a second. The loops sit outside the cap. Short WAVs of each cue alone (its own voices, normalised to −3 dBFS peak) are in `shots/wip/v7-07-audio-<cue>.wav`.
