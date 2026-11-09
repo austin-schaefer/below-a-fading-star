@@ -109,7 +109,9 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: spawn and nine places', n === 10, n);
+  check('teleport: the whole map (spawn, every named landmark, the eighteen living)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 18, n);
+  check('teleport: Places and The living headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living');
+  check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
   const detail = [];
   for (let i = 0; i < n; i++) {
@@ -122,10 +124,12 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const p = fp.player, T = fp.terrain;
       const sa = 160 * Math.PI / 180, sun = { x: Math.cos(sa), z: Math.sin(sa) }; // SUN.azimuth: from +x toward +z
       const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw);
+      if (pl.pitch !== undefined && Math.abs(p.pitch - pl.pitch) > 1e-6) return { name: pl.name, d: 99, above: 2, closed: true, cues: 0, dot: 1, pitchBad: true };
       const tx = pl.look === 'sun' ? sun.x : pl.look ? pl.look.x - p.pos.x : Math.sin(pl.yaw) * -1;
       const tz = pl.look === 'sun' ? sun.z : pl.look ? pl.look.z - p.pos.z : Math.cos(pl.yaw) * -1;
       const l = Math.hypot(tx, tz) || 1;
-      return { name: pl.name, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - T.heightAt(p.pos.x, p.pos.z), closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
+      const wl = T.waterLevelAt(p.pos.x, p.pos.z), inCol = fp.player.colliders.some((c) => Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < c.r + 0.3 && !(c.h !== undefined && c.y + c.h < T.heightAt(p.pos.x, p.pos.z)));
+      return { name: pl.name, q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - T.heightAt(p.pos.x, p.pos.z), closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
     detail.push(r);
     if (r.d > 1) allNear = false;
@@ -134,12 +138,75 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     if (r.cues) noCue = false;
     if (r.dot < 0.999) facing = false;
   }
-  const bad = detail.filter((r) => r.d > 1 || !r.closed || r.above < 1.5 || r.above > 2.5 || r.cues || r.dot < 0.999);
-  check('teleport: all ten land within 1 m of their stand point', allNear, bad);
+  const bad = detail.filter((r) => r.wet || r.inCol || r.d > 1 || !r.closed || r.above < 1.5 || r.above > 2.5 || r.cues || r.dot < 0.999);
+  check('teleport: none inside a collider or under water', detail.every((r) => !r.wet && !r.inCol), bad);
+  check('teleport: all land within 1 m of their stand point', allNear, bad);
   check('teleport: eye on the ground (heightAt + eye)', allGround, bad);
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);
+
+  // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
+  await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });
+  await page.evaluate(() => window.__fp.settings.open()); await page.waitForTimeout(600);
+  check('coords: the panel shows x, z and facing', (await page.textContent('#set-pos')) === 'x 12  z \u221234  facing E', await page.textContent('#set-pos'));
+  await page.evaluate(() => { window.__fp.player.pos.x = 40; window.__fp.player.yaw = 0; }); await page.waitForTimeout(600);
+  check('coords: it follows at 4 Hz', (await page.textContent('#set-pos')).startsWith('x 40') && (await page.textContent('#set-pos')).endsWith('facing N'));
+  const dirs = await page.evaluate(async () => { const m = await import('./src/settings.js'); return [0, -Math.PI / 4, -Math.PI / 2, Math.PI, Math.PI / 2, 3 * Math.PI / 4].map((y) => m.facing(y)).join(); });
+  check('coords: yaw 0 is N, -pi/2 E, pi S... (NE, E, S, W, SW)', dirs === 'N,NE,E,S,W,SW', dirs);
+  await page.evaluate(() => window.__fp.settings.close()); await page.waitForTimeout(100);
+  await page.evaluate(() => { document.getElementById('set-pos').textContent = 'stale'; window.__fp.player.pos.x = 90; }); await page.waitForTimeout(600);
+  check('coords: nothing updates while closed', (await page.textContent('#set-pos')) === 'stale' && !(await page.evaluate(() => document.getElementById('posline').classList.contains('shown'))));
+  await page.evaluate(() => window.__fp.settings.open());
+  await page.click('#set-showpos'); await page.waitForTimeout(600);
+  check('coords: Show position puts the line bottom-left and remembers it', await page.evaluate(() => { const e = document.getElementById('posline'), r = e.getBoundingClientRect(); return e.classList.contains('shown') && r.left < 40 && r.bottom > 690 && /^x 90/.test(e.textContent) && localStorage.getItem('fp-showpos') === '1'; }));
+  await page.click('#set-showpos');
+  check('coords: and off again, off by default', await page.evaluate(() => !document.getElementById('posline').classList.contains('shown') && localStorage.getItem('fp-showpos') === '0'));
+  await page.evaluate(() => window.__fp.settings.close());
+
+  // the debug panel survives a teleport from either panel, and the quality reload keeps every parameter
+  await page.evaluate(() => { window.__fp.debug.toggle(true); window.__fp.settings.open(); });
+  await page.locator('#set-places button').nth(3).click();
+  check('debug: stays shown through a teleport from the settings panel', await page.evaluate(() => window.__fp.debug.shown && document.getElementById('dbg').classList.contains('shown')));
+  await page.evaluate(() => window.__fp.debug.teleport('castle'));
+  check('debug: stays shown through its own teleport', await page.evaluate(() => window.__fp.debug.shown));
+  await page.evaluate(() => window.__fp.debug.teleport('bridge'));
+  check('debug: stays shown through the Span teleport', await page.evaluate(() => window.__fp.debug.shown));
+  await page.evaluate(() => { window.__nav = null; window.__fp.settings.navigate = (u) => { window.__nav = u; }; });
+  await page.click('#gear'); await page.click('#set-quality [data-tier="high"]');
+  const nu2 = new URL(await page.evaluate(() => window.__nav));
+  check('quality: carries the debug panel and every parameter', nu2.searchParams.get('debug') === '1' && nu2.searchParams.get('shadows') === '0' && nu2.searchParams.get('bloom') === '0' && nu2.searchParams.get('q') === 'high', nu2.href);
+  await page.evaluate(() => { window.__fp.debug.toggle(false); window.__fp.settings.close(); });
+  await context.close();
+}
+
+// ---- idle cap and the pause card, on a desktop viewport
+{
+  const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  await page.evaluate(() => window.__fp.settings.open()); await page.waitForTimeout(800);
+  const o = await page.evaluate(() => ({ idle: window.__fp.pacing.idle, hidden: document.getElementById('card').classList.contains('hidden') }));
+  check('panel: opening it does not raise the pause card or idle the frame', o.hidden && o.idle === false, o);
+  await page.evaluate(() => window.__fp.settings.close());
+  const t = await page.evaluate(() => {
+    const fp = window.__fp, P = fp.pacing; let r = {};
+    const hf = document.hasFocus; document.hasFocus = () => true;
+    window.dispatchEvent(new Event('blur'));
+    r.focusedAfterBlur = P.targetFps(performance.now() + 60000) === P.cap && !P.idle;
+    document.hasFocus = () => false;
+    const t0 = performance.now(); P.targetFps(t0);
+    r.unfocused = P.targetFps(t0 + 3500) === 10 && P.idle;
+    fp.player.keys.add('KeyW');
+    r.keyDown = P.targetFps(t0 + 3600) === P.cap && !P.idle;
+    fp.player.keys.delete('KeyW');
+    r.idleAgain = P.targetFps(t0 + 3700) === 10;
+    document.hasFocus = () => true;
+    r.refocused = P.targetFps(t0 + 3800) === P.cap;
+    document.hasFocus = hf;
+    fp.hud.setFps(60); r.label = document.getElementById('fps').textContent;
+    return r;
+  });
+  check('idle: a synthetic blur while hasFocus() is true keeps the cap', t.focusedAfterBlur, t);
+  check('idle: unfocused 3 s drops to 10, a key held does not, refocus restores', t.unfocused && t.keyDown && t.idleAgain && t.refocused, t);
   await context.close();
 }
 

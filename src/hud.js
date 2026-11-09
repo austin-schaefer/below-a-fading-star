@@ -32,7 +32,10 @@ export function buildHud(ctx) {
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
   ctx.events.addEventListener('begin', () => card.classList.add('hidden'));
-  ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
+  ctx.events.addEventListener('lock', (e) => {
+    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself: no pause card behind it
+    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden');
+  });
   // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
   ctx.events.addEventListener('pausetoggle', () => {
     if (card.classList.contains('hidden')) { card.classList.remove('hidden'); card.classList.add('paused'); }
@@ -88,5 +91,5 @@ export function buildHud(ctx) {
     }
     if (current && timer > 0) { timer -= dt; if (timer <= 0) place.classList.remove('shown'); }
   }
-  return { update, setFps: (v) => { fps.textContent = `${v.toFixed(0)} fps`; } };
+  return { update, setFps: (v) => { fps.textContent = `${v.toFixed(0)} fps${ctx.pacing?.idle ? ' idle' : ''}`; } };
 }
