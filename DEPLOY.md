@@ -6,8 +6,9 @@ The prototype is a static site: one `index.html`, ES modules under `src/`, a ven
 
 - Netlify site `below-a-fading-star` (team `austin-schaefer`): https://below-a-fading-star.netlify.app. A prototype, not the main event: the repo can host other Netlify sites alongside it.
 - Linked to GitHub `austin-schaefer/fading-planet` through the Netlify GitHub App. Base directory (set on the site, Build & deploy → Build settings): `prototypes/wilderness`. Production branch: `main`.
-- Branch deploys are on for `claude/intelligent-mendel-ca020e` only, served at https://claude-intelligent-mendel-ca020e--below-a-fading-star.netlify.app. Add or remove branches under Branches and deploy contexts.
-- To deploy, push to `main` or to an allowed branch, from a local checkout or a Claude Code on the web session. Pushes that don't touch `prototypes/wilderness/` skip the build.
+- Production builds only. Branch deploys and PR deploy previews are off (Build & deploy → Continuous deployment: `allowed_branches = [main]`, `skip_prs = true`, set 2026-11-08 after one day of agent work ran 100 builds, 71 of them branch deploys of the working branch, and used half the month's build minutes). To look at a branch, serve it locally (`tools/serve.sh`) or build the single-file artifact (`tools/build-artifact.mjs`). To re-enable a branch deploy for a demo, add the branch under Branches and deploy contexts and remove it afterwards.
+- To deploy, push to `main`. Pushes that don't touch `prototypes/wilderness/` skip the build, and so do pushes that touch only docs, briefs, tools, tests or `shots/` here: `netlify.toml`'s `ignore` command builds only when `index.html`, `src/`, `vendor/`, `netlify.toml` or the icons changed since the last built commit.
+- Build minutes: Netlify bills each build by the started minute, so the count of builds matters more than their length (these take about 11 s). Batch merges to `main`; one release PR per batch of fixes, not one build per commit.
 - Not indexed: `netlify.toml` sends `X-Robots-Tag: noindex, nofollow` on every path, and `index.html` carries a robots meta tag.
 
 ## What ships
