@@ -18,6 +18,18 @@ So the gutter is the first thing to fix and the first thing to listen to. Today 
 
 **Keep:** the voice system with its air lowpass and steal fade (~409–452), lead-time scheduling against clock staleness, the carillon's bell partials on a just minor pentatonic, the stones' partials and approach hysteresis, the Lattice hum, the stick-slip grind (glyph, hawser), the heartbeat tied to gaze, the strandline lap locked to the waves, the gutter drone tied to world state, `living.js`'s loop lifecycle, the step record and replay (Repetend), the wind-by-openness model.
 
+## The baseline, in numbers (2026-11-09, commit 22d0ff0, `briefs/v7.2/audio/baseline/survey.md`)
+
+The harness's twelve-pose survey of the sound as it stands. Read the table before the brief; these are the faults to fix, named in metric terms.
+
+- **The gutter fails roughness everywhere it was measured**: `rough` 0.35 on the moor, 0.34 at the Leerie's row, 0.29 at the Demesne, against the 0.25 cap. Nearly all of it is a 78 Hz beat in the 125 Hz band that carries about half the gutter's energy: the drone's stacked detuned voices beating against each other as they swell. The spectrogram shows the pulse under 100 Hz for the whole gutter and a few seconds after. This is the noise Austin mutes for.
+- **The gutters are the loudest thing in the world**: about −24 LUFS integrated, −22.8 short-term max, against the standing moor's −27.4. Peak rises from −14 to −10 dBFS. The gutter should be a darkening, not a swell; brief 02's gutter section says how.
+- **The standing beds are too loud and too flat**: −27 LUFS integrated where the band wants −36 to −30, LRA 2.4 where it wants 2–6 with gusts, centroid about 300 Hz. "Omnipresent."
+- **Every standing bed repeats every 7.0 s** (`repeat_s` 7, self-correlation 0.3): the noise buffers are seven seconds long and loop. The seam no longer thumps, but the pattern reads. Brief 02: longer buffers, or two readers of one buffer at different offsets and rates, so nothing repeats inside a minute.
+- **Events are too rare on the open moor**: 0 onsets a minute standing, 15 walking (nearly all the walker's own steps are excluded, so those are the cue bus). The moor walk's longest gap is 13.6 s against the ≥15 s gate, meaning cues bunch and then nothing: "random." Brief 03's phrased emitters are the fix.
+- **Sharpness and clicks pass everywhere.** The ear's complaint is not the high end or the seams; it is the low beat, the level, and the pacing.
+- **The harness tools and their quirks** are in `harness.md`: the render waits 6 s after the page is ready; `--gutter` pins a real gutter from 1 s to 15 s; renders are at the browser's 44.1 kHz; `--seed` is ignored (the page has no seed parameter).
+
 ## The briefs
 
 | Brief | Branch / worktree | Model | Owns | Shared files (a line or two at most) |
