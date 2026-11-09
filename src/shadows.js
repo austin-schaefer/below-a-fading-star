@@ -35,7 +35,8 @@ export function makeShadowCadence(ctx, url, texel = 0.05) {
   const casters = [];
   const mods = ctx.perf._mods;
   const roots = [];
-  for (const name of ['fauna', 'inhabitants2']) for (const o of mods?.get(name)?.objects || []) roots.push(o);
+  // v7: every module named living-* is a dynamic caster too, so no v7 agent edits this file
+  for (const name of ['fauna', 'inhabitants2', ...(mods ? [...mods.keys()].filter((n) => n.startsWith('living-')) : [])]) for (const o of mods?.get(name)?.objects || []) roots.push(o);
   const seen = new Set();
   for (const r of roots) r.traverse((o) => {
     if (!o.isMesh || seen.has(o)) return;

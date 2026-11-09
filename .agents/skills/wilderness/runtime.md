@@ -107,6 +107,10 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `xfade=0` (v6-04: trees switch LOD hard, with no spare instances, and build v5's far mesh)
 - `fungifade=0` (v6-04: toadstools and pods cull by 100 m group at 90 m, with no distance fade)
 
+### The v7 living
+
+(each v7 module's flag; see wilderness-v5.md, "## v7, the living")
+
 ### The walls
 
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `wilderness-v5.md`, "The massifs"), to compare
