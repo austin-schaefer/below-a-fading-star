@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { groundOf } from '../regions/common.js';
 import { spanClear } from '../span/plan.js';
+import { engraveCaps } from '../../v7/glyphs/engrave.js'; // v7: the glyph motif, one of the Hypogeum's forms cut in each cap's top
 
 export const PEGS = { x: -80, z0: -285, z1: 285, caps: [-200, -100, 0, 100, 200], height: 1.3, wet: 0.7 };
 
@@ -69,6 +70,7 @@ export function buildPegs(ctx) {
   capped.forEach((p, i) => cm.setMatrixAt(i, M.compose(P.set(p.x, p.y, p.z), q.identity(), S.set(1, 1, 1))));
   for (const m of [pm, rm, cm]) { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; m.castShadow = false; m.receiveShadow = false; m.computeBoundingSphere(); scene.add(m); }
   cm.count = capped.length;
+  engraveCaps(ctx, cm, brass, capped.map((p) => PEGS.caps.indexOf(p.z))); // v7: cap i takes the lintel's form at its station's index
   pm.name = 'surveyors-pegs'; rm.name = 'surveyors-ribbons'; cm.name = 'surveyors-caps';
   // the ribbons' flutter: within 120 m only (they are specks beyond that)
   const ref = { x: PEGS.x, z: 0 }; // the nearest point of the line to the player, reused

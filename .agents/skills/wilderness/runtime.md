@@ -113,6 +113,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 (each v7 module's flag; see wilderness-v5.md, "## v7, the living")
 
+- `glyphs=0` leaves out all of `living-glyphs` (the caps stay plain); `scriveners=0` the shoal, `moles=0` the heaps and their tesserae, `glyphmotif=0` the caps' glyphs, the tessera's and the erratic's (v7-04)
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 
 ### The walls
