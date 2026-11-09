@@ -1,5 +1,5 @@
 // HUD: the title card, a landmark name that fades in when you draw near, a notice line for failures, fps.
-import { LANDMARKS, landmarkDistance } from './world.js';
+import { LANDMARKS, REGION_CARDS, landmarkDistance } from './world.js';
 import { buildDebug } from './debug.js';
 
 // The title card's loading bar: a hairline that fills as the world builds, with the current step's name
@@ -32,7 +32,10 @@ export function buildHud(ctx) {
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
   ctx.events.addEventListener('begin', () => card.classList.add('hidden'));
-  ctx.events.addEventListener('lock', (e) => { if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden'); });
+  ctx.events.addEventListener('lock', (e) => {
+    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself: no pause card behind it
+    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden');
+  });
   // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
   ctx.events.addEventListener('pausetoggle', () => {
     if (card.classList.contains('hidden')) { card.classList.remove('hidden'); card.classList.add('paused'); }
@@ -65,6 +68,7 @@ export function buildHud(ctx) {
 
   const debug = buildDebug(ctx);
   const landmarkList = Object.entries(LANDMARKS);
+  const regionList = Object.entries(REGION_CARDS), rw = {};
   let current = null, timer = 0;
   function update(dt) {
     debug.update(dt);
@@ -75,18 +79,23 @@ export function buildHud(ctx) {
       const k = L.card && d < 6 ? d - 1000 : d; // a name card lying inside a broad landmark wins there
       if (k < bestD) { bestD = k; best = key; }
     }
-    const near = bestD < 6 ? best : null;
+    let near = bestD < 6 ? best : null;
+    if (near === null && ctx.regions) { // no landmark card is up: a region card, where the region holds half the ground or more
+      const w = ctx.regions.regionAt(p.x, p.z, rw);
+      for (const [key, R] of regionList) if (w[R.region] >= 0.5) { near = 'region:' + key; break; }
+    }
     if (near !== current) {
       current = near;
       if (near) {
-        placeName.textContent = LANDMARKS[near].name;
-        placeLine.textContent = LANDMARKS[near].line || '';
-        placeLine.style.display = LANDMARKS[near].line ? '' : 'none';
+        const C = near.startsWith('region:') ? REGION_CARDS[near.slice(7)] : LANDMARKS[near];
+        placeName.textContent = C.name;
+        placeLine.textContent = C.line || '';
+        placeLine.style.display = C.line ? '' : 'none';
         place.classList.add('shown');
         timer = 7;
       } else place.classList.remove('shown');
     }
     if (current && timer > 0) { timer -= dt; if (timer <= 0) place.classList.remove('shown'); }
   }
-  return { update, setFps: (v) => { fps.textContent = `${v.toFixed(0)} fps`; } };
+  return { update, setFps: (v) => { fps.textContent = `${v.toFixed(0)} fps${ctx.pacing?.idle ? ' idle' : ''}`; } };
 }

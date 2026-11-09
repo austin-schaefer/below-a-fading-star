@@ -51,7 +51,7 @@ export function buildDebug(ctx) {
   function teleport(key) {
     const L = LANDMARKS[key];
     if (!L) return false;
-    if (L.at) { ctx.controls.placeAt(L.at.x, L.at.z); ctx.player.yaw = Math.atan2(-(L.x - L.at.x), -(L.z - L.at.z)); ctx.player.pitch = 0.1; if (api.shown) toggle(false); return true; } // a landmark that names its own spot (the Span)
+    if (L.at) { ctx.controls.placeAt(L.at.x, L.at.z); ctx.player.yaw = Math.atan2(-(L.x - L.at.x), -(L.z - L.at.z)); ctx.player.pitch = 0.1; return true; } // a landmark that names its own spot (the Span)
     // a point 0.6 r from the centre, on the side facing spawn
     let dx = SPAWN.x - L.x, dz = SPAWN.z - L.z;
     const d = Math.hypot(dx, dz) || 1;
@@ -68,7 +68,6 @@ export function buildDebug(ctx) {
     // forward = (-sin yaw, 0, -cos yaw): face the centre
     ctx.player.yaw = Math.atan2(-(L.x - placed.x), -(L.z - placed.z));
     ctx.player.pitch = -0.04;
-    if (api.shown) toggle(false);
     return true;
   }
   function toggle(force) {

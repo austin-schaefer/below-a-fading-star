@@ -47,6 +47,10 @@ export const LANDMARKS = {
   gradine:  { x: 282,  z: -172, r: 14,  y: null, name: "The Gradine",          line: "“The marble treads were cracked: A condition which the murk of twilight invested with a mournful grandeur.”" },
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
+  // v7.1: the pit where the old road from the east gate ends (SITES.pit); inside the Span's broad card, so a card wins there
+  pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true },
+  // v7.1: the Sexton's grave field (SITES.sexton's block): a card wins over the Saltings' region card and the Span's broad one
+  graves:   { x: 55,   z: 274,  r: 18,  y: null, name: "Rest in Starlight", line: "“Dig me no grave; I shall not need one.”", card: true },
   // v6.5: name cards for the v5 sites (SITES): card places have no footprint of their own, so the scatter ignores them and
   // the HUD prefers one to the broad landmark it lies inside. The Galleries and the Thrones hang on the wall: their trigger
   // sits on the nearest walkable ground below them.
@@ -58,7 +62,18 @@ export const LANDMARKS = {
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
-  leerie: { x: 128, z: 5, r: 20, y: null, name: "The Leerie's Standards", line: "“No man has a home unless he is master of a place where he must please no one—a place where he can go and lock the door behind him.”", card: true },
+  leerie: { x: 128, z: 5, r: 20, y: null, name: "A Lamplighter’s Standards", line: "“All fled, all done, so lift me on the pyre;\nThe feast is over and the lamps expire.”", card: true },
+};
+
+// v7.1: region cards. Austin's copy for four of the v4 regions (briefs/copy/place-copy.md): the card shows while the
+// region's weight at the player is 0.5 or more and no landmark card is up (hud.js). Kept apart from LANDMARKS so nothing
+// that walks LANDMARKS (the scatter, the Link-Boy's bearings, the debug keys) takes a region for a footprint. x, z: where
+// the settings panel stands you (inside the region, clear of the smaller cards that would win there).
+export const REGION_CARDS = {
+  adust:    { region: 'adust',    x: -275, z: -15, name: "The Taker of Altitudes",     line: "“Man was unaware of his vulnerability. Logic was the special environment; the brain was the special tool.”" },
+  bletting: { region: 'bletting', x: 185,  z: -70, name: "Sleeper’s Orchard",  line: "“I loved the irradiate refuge of sleep. In my dreams I found a little of the beauty I had vainly sought in life, and wandered through old gardens and enchanted woods.”" },
+  lynchets: { region: 'lynchets', x: -195, z: -113, name: "The Lynchets", line: "“On the gentle slopes there are farms, ancient and rocky... but these are all vacant now. The old folk have gone away, and foreigners do not like to live there.”" },
+  saltings: { region: 'saltings', x: 45,   z: 246, name: "Kenching Flats", line: "“From the essential Saltes of humane Dust, a Philosopher may, without any criminal Necromancy, call up the Shape of any dead Ancestour from the Dust.”" },
 };
 
 // Distance from (x, z) to a landmark's edge (negative inside): its circle, or for one with an axis its line.

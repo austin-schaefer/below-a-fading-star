@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 540 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 565 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -68,6 +68,10 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 53 | v7 glyphs: the lintel script, the scrivener's sign, the erratic's sun and the moles' caps |
 | 54 | v7 the small: the Repetend's echo, the Simulacrum's face and the indistinct lawn |
 | 55 | v7 the canyon: the Toad, the Bather and the Reach |
+| 56 | v7.1 visual: the Saltings' crust fading plate by plate, the river's two-phase flow, the Reach's sparkle |
+| 57 | v7.1 world: the measuring pawns cut, the grazers' collider grid, the Link-Boy routed round the Span's piers |
+| 58 | v7.1 legible: the Indistinct's crown over the lawn's lip, the Repetend dove-grey, the Simulacrum's denser columns, the erratic's glyph cut deep, the Bather's 4 m swap |
+| 59 | v7.1 UI: coordinates, the full teleport list, the region cards, the Pit and Rest in Starlight, the Lamplighter's couplet |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered.
 
@@ -390,5 +394,29 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `55-canyon-toad-after.webp` | After: the Toad's corner with the grass redone. |
 | `55-canyon-toad-before.webp` | Before: the Toad's corner, grass and a sloping wall. |
 | `55-canyon-toad-v1.webp` | The first redo: a taller wall and the Toad's shadow, grass thinner. |
+| `56-river-flow-after.webp` | After: the river's flow as two phases, the white sheet breaking into ripples rather than freezing. |
+| `56-river-flow-before.webp` | Before: the river south of the Reach, the white sheet reading as a single frozen smear. |
+| `56-river-map-top.webp` | Looking straight down on the Span's deck and the river's bend, the flow mapped from above. |
+| `56-saltings-crust-after.webp` | After: the crust on the bank worn to plates, the grain of glitter gone. |
+| `56-saltings-crust-before.webp` | Before: the same slope of salt crust, a wash of sparkle over every plate. |
+| `56-water-reach-deck.webp` | The Reach's water from the deck, calm and dark under the keep on its hill. |
+| `56-water-time-bank.webp` | The Reach from its bank between the Lattice's hoops, later in the run: the flow still moving, no frozen sheet, a candle at the reeds. |
+| `57-pawns-plinths-after.webp` | After the pawns were cut: the plinth court, tiled ground and sky clear of markers. |
+| `57-pawns-spawn-span-after.webp` | After: the spawn view over the tarn to the Span, no measuring pawns on the bank. |
+| `58-bather-swap-after.webp` | After: the Bather lies in the pool with the pale stepping-stones gone from the water. |
+| `58-bather-swap-before.webp` | Before: pale ovals strewn through the water where the Bather now lies. |
+| `58-erratic-glyph-after.webp` | After: the sun glyph cut deep into the erratic, a clear pale line. |
+| `58-erratic-glyph-before.webp` | Before: the same boulder with the sun glyph barely scratched in. |
+| `58-indistinct-crown-after.webp` | After: a pale crown of light over the lawn's lip, beyond the bank of grass. |
+| `58-indistinct-crown-before.webp` | Before: the same lawn edge with the wall and grass, no crown. |
+| `58-indistinct-lawn-after.webp` | The Indistinct's lawn from twenty metres, the crown over the lip of the fallen court. |
+| `58-legible-sheet.webp` | The legibility pass as a sheet: the before and after pairs for each figure, side by side. |
+| `58-repetend-grey-after.webp` | The Repetend in dove-grey on the road at eight metres, lamp lifted beside the red leaves. |
+| `58-simulacrum-columns-after.webp` | After: the Simulacrum's columns denser and brighter along the ley lines in the gutter. |
+| `58-simulacrum-columns-before.webp` | Before: the same gutter view with the columns thin and dim. |
+| `59-settings-desktop.webp` | The settings panel on desktop: sound, quality, mouse, the position readout and the start of the places list. |
+| `59-settings-living-desktop.webp` | The full teleport list on desktop, scrolled to the living: the Taker, the Co-heirs, the Sexton and the rest. |
+| `59-settings-living-touch.webp` | The teleport list on a phone, scrolled to the places near the Pit and the Collation. |
+| `59-settings-touch.webp` | The settings panel on a phone: sound, quality, position and the go-to list. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
