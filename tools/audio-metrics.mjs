@@ -196,7 +196,7 @@ function roughness(mono, sr) {
   const dec = Math.max(1, Math.round(sr / 1378)), esr = sr / dec, M = 4096, step = M / 2;
   const w = hann(M); let w2 = 0; for (const v of w) w2 += v * v;
   const bands = [125, 250, 500, 1000, 2000, 4000, 8000].filter((f) => f * 1.41 < sr / 2);
-  let tot = 0, acc = 0;
+  let tot = 0, acc = 0; const bandsOut = [];
   for (const fc of bands) {
     const y = biquad(mono, bandpass(fc, 1.41, sr));
     const ne = Math.floor(y.length / dec), e = new Float64Array(ne);
@@ -213,16 +213,18 @@ function roughness(mono, sr) {
     }
     for (let k = 0; k <= M / 2; k++) P[k] /= segs;
     const df = esr / M, half = Math.round(5 / df);
-    let line = 0;
+    let line = 0, top = 0, topHz = null;
     for (let k = Math.ceil(15 / df); k <= Math.min(M / 2, Math.floor(300 / df)); k++) {
       const nb = []; for (let j = k - half; j <= k + half; j++) if (j > 0 && j <= M / 2 && Math.abs(j - k) > 2) nb.push(P[j]);
       const fl = median(nb);
-      if (P[k] > 3 * fl) line += P[k] - fl;
+      if (P[k] > 3 * fl) { line += P[k] - fl; if (P[k] - fl > top) { top = P[k] - fl; topHz = k * df; } }
     }
     const m = line / (mean * mean);
     tot += mean; acc += mean * Math.min(m, 2);
+    bandsOut.push({ band_hz: fc, energy: mean, rough: m, strongest_hz: topHz });
   }
-  return tot > 0 ? acc / tot : 0;
+  for (const b of bandsOut) { b.share = r(b.energy / tot, 3); b.rough = r(b.rough, 3); b.strongest_hz = r(b.strongest_hz, 1); delete b.energy; }
+  return { value: tot > 0 ? acc / tot : 0, bands: bandsOut };
 }
 
 // ------------------------------------------------------------------------------------------------ clicks and seams
@@ -380,11 +382,12 @@ export function measure(wav, { log = null } = {}) {
   let peak = 0, ss = 0; for (const c of ch) for (let i = 0; i < n; i++) { const v = Math.abs(c[i]); if (v > peak) peak = v; ss += v * v; }
   const rms = Math.sqrt(ss / (n * ch.length));
   const ld = loudness(ch, sr), sp = spectral(mono, sr), all = onsets(mono, sr);
-  // a discontinuity from 20 ms before to 120 ms after an event the render logged (a step, a cue, a voice's start) is
-  // that sound's own attack: not a click (a cue whose attack is a click shows on its own render, without a log)
+  // a discontinuity from 60 ms before to 120 ms after an event the render logged (a step, a cue, a voice's start; the
+  // main thread's clock that stamps them runs a little off the audio thread's) is that sound's own attack: not a click
+  // (a cue whose attack is a click shows on its own render, without a log)
   const logged = (log?.events || []).filter((e) => e.kind === 'step' || e.kind === 'cue' || e.kind === 'voice').map((e) => e.t);
-  const disc = discontinuities(ch, sr).filter((c) => !logged.some((t) => c.t >= t - 0.02 && c.t <= t + 0.12));
-  const rep = repetition(all, log?.events, dur);
+  const disc = discontinuities(ch, sr).filter((c) => !logged.some((t) => c.t >= t - 0.06 && c.t <= t + 0.12));
+  const rep = repetition(all, log?.events, dur), rg = roughness(mono, sr);
   const sm = seams(disc.slice().sort((a, b) => b.ratio - a.ratio).slice(0, 300).map((c) => c.t).sort((a, b) => a - b), dur);
   // a click: a discontinuity over 8x, or a weaker one that repeats at a seam's period
   const onSeam = new Set(sm.flatMap((s) => s.times)), cl = disc.filter((c) => c.ratio > 8 || onSeam.has(c.t));
@@ -398,12 +401,13 @@ export function measure(wav, { log = null } = {}) {
     file: wav.file, seconds: r(dur, 2), sample_rate: sr, channels: ch.length,
     lufs_i: r(ld.lufs_i), lufs_s_max: r(ld.lufs_s_max), lra: r(ld.lra),
     peak_dbfs: r(peak > 0 ? 20 * Math.log10(peak) : -Infinity), crest_db: r(rms > 0 ? 20 * Math.log10(peak / rms) : null),
-    centroid_hz: r(sp.centroid_hz, 0), sharp_db: r(sp.sharp_db), rough: r(roughness(mono, sr), 3), hf_db: r(sp.hf_db),
+    centroid_hz: r(sp.centroid_hz, 0), sharp_db: r(sp.sharp_db), rough: r(rg.value, 3), hf_db: r(sp.hf_db),
     clicks: cl.length, seam_s: sm.length ? r(sm[0].period, 3) : null, repeat_s: rep && rep.r >= 0.2 ? r(rep.period, 2) : null,
     onsets_pm: r(ev.length / (dur / 60)), gap_max_s: r(gapMax), gap_min_s: gaps.length ? r(Math.min(...gaps), 2) : null,
     silence_pct: r(ld.silence_pct),
     detail: {
       click_times: cl.map((c) => ({ t: r(c.t, 4), ratio: r(c.ratio), dbfs: r(c.dbfs) })), seams: sm.map((s) => ({ period: r(s.period, 4), hits: s.hits })), candidates: disc.length,
+      rough_bands: rg.bands,
       repeat: rep && { period: r(rep.period, 3), r: r(rep.r, 3) },
       onset_times: ev.map((t) => r(t, 2)), step_onsets: all.length - ev.length, steps_logged: steps.length,
       short_term: ld.short.filter((_, i) => i % 10 === 0).map((v) => r(v)), // one a second
@@ -491,8 +495,9 @@ export function spectrogramPanel(wav, { log = null, title = '' } = {}) {
   const lastEnd = [0, 0, 0];
   for (const e of voices) {
     const x = xOf(e.t), lab = (e.name || 'v') + (e.d != null ? ' ' + Math.round(e.d) : '');
-    let row = lastEnd.findIndex((end) => end < x); if (row < 0) row = lastEnd.indexOf(Math.min(...lastEnd));
-    const y = 14 + row * 10, c = e.name ? [90, 230, 255] : [140, 200, 140];
+    const row = lastEnd.findIndex((end) => end < x), c = e.name ? [90, 230, 255] : [140, 200, 140];
+    if (row < 0) { cv.vline(x, SPEC.top - 10, SPEC.top + 8, c); continue; } // no room for its label: the tick alone
+    const y = 14 + row * 10;
     cv.vline(x, y + 10, SPEC.top + 8, c);
     lastEnd[row] = cv.text(x + 2, y, lab, c) + 4;
   }
