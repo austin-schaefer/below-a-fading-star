@@ -2,12 +2,13 @@
 // Wind, a low drone that swells when the sun gutters, footsteps by ground, place sounds (tarn, fen, Lattice,
 // Cardinal Stones), calls (wings, crows, fish) and a faint counting click near the deodand.
 // Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall,
-// muted, setMuted(bool), mute (the GainNode after the limiter), volume (0..1), setVolume(v), vol (the GainNode after mute) }. Chain: master -> limiter -> mute -> vol -> out.
+// muted, setMuted(bool), mute (the GainNode after the limiter), volume (0..1), setVolume(v), vol (the GainNode after mute) }. Chain: master -> bus compressor -> limiter (a net) -> mute -> vol -> out; audio.space (graph.js) is the listener's room.
 // A no-op without AudioContext. One-shots share the cue bus (with its own analyser tap for tools/audio-test.mjs)
 // and a hard cap of 12 voices, the oldest stolen. Positions are {x,y,z}, copied at the call.
 //
 // Where each part lives (src/audio/; each file's header says what it owns and which v7.2 brief voices it next):
-//   graph.js   the AudioContext, master -> limiter -> mute -> vol, the reverb send, the buses and noise buffers, the
+//   graph.js   the AudioContext, master -> busComp -> limiter -> mute -> vol, the three rooms and the water's slap by
+//              place (a.space), the distance model (voice, panned), the buses and noise buffers, the
 //              listener, voice() and the cap, oneShotPanner, the helpers; startGraph returns the shared object `a`
 //   bed.js     wind, drone, shimmer, the gutter's dip and swell, insects
 //   steps.js   footsteps by ground, the step ring, audio.echoStep, figureStep
@@ -15,7 +16,7 @@
 //   cues.js    the cue dispatcher, the older one-shots, the Cardinal Stones, the fall's loop; cues-v2.js the v2 and
 //              v5 one-shots (carillon to kept-fire); living.js v7's figures
 //   regions.js the v4 regions' sound hooks and their kit
-//   synth.js   noise buffers (looped with a true crossfade at the seam) and the reverb impulse
+//   synth.js   noise buffers (looped with a true crossfade at the seam) and the rooms' impulses (makeSpace)
 // This file: build(ctx), the mute button, the ctx.audio surface, and the wiring that starts the parts in the shared
 // stream's order of draws and ticks them at 10 Hz in the same order.
 //
