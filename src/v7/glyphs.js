@@ -9,6 +9,7 @@
 // stay plain); ?scriveners=0, ?moles=0 and ?glyphmotif=0 (the caps, the tessera's glyph and the erratic) each on its own.
 import { flags, lintelForms } from './glyphs/forms.js';
 import { buildScriveners } from './glyphs/scriveners.js';
+import { buildErraticGlyph } from './glyphs/erratic.js';
 
 // the erratic belongs to region-outwash, which builds alongside this module: wait for its mesh (unless it is not loading)
 async function erraticMesh(ctx) {
@@ -28,6 +29,10 @@ export async function build(ctx) {
   ctx.glyphs = pub;
   if (!F.all) return;
   if (F.scriveners) pub.scriveners = buildScriveners(ctx);
+  if (F.motif) {
+    const m = await erraticMesh(ctx);
+    if (m) pub.erratic = buildErraticGlyph(ctx, m, lintelForms(ctx)[6]);
+  }
   pub.stats = () => {
     const parts = [pub.scriveners?.fish, pub.scriveners?.marks, pub.moles?.heaps, pub.moles?.tesserae, pub.erratic?.mesh].filter(Boolean);
     const tris = (pub.scriveners?.tris() || 0) + (pub.moles?.tris() || 0) + (pub.erratic?.tris || 0);
