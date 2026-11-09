@@ -23,7 +23,7 @@ async function lynchetsWalls(ctx) {
   if ((only && !only.split(',').includes('region-lynchets')) || skip.includes('region-lynchets')) return null;
   for (let k = 0; k < 1200; k++) {
     const m = ctx.scene.getObjectByName('lynchets-walls');
-    if (m && ctx.regions?.walls) return m;
+    if (m && ctx.regions?.lynchetsWalls) return m;
     await new Promise((r) => setTimeout(r, 50));
   }
   return null;

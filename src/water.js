@@ -10,6 +10,7 @@ import { makeWaterTexture } from './water/textures.js';
 import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
 import { tideAt } from './v4/tarn.js';
+import { injectReachFen } from './v7/reach.js'; // v7: DP the Luminous Reach, its plume in the fen's disc shader
 
 const MAX_RIPPLES = 6;
 
@@ -251,6 +252,7 @@ export async function build(ctx) {
       vertexShader: VERT, fragmentShader: FRAG,
       fog: true, transparent: true, depthWrite: false,
     });
+    injectReachFen(mat, ctx); // v7: DP the Luminous Reach's plume into the fen (gated by uFen; src/v7/reach.js)
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(body.x, body.y, body.z);
     mesh.renderOrder = 10;

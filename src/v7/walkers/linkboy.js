@@ -1,0 +1,372 @@
+// DM The Link-Boy (IDEAS-v5.md DM; wilderness-v5.md "### DM"): a thin youth in a long coat carrying a flaming link, who
+// meets you on the lead paths between places and walks ahead of you, ten metres off, lighting the way to the next
+// landmark. He never speaks and never looks back; at the place he stands aside and goes back the way he came. His light
+// throws the drystone walls' and the heather's shadows swinging across the ground as he walks.
+//
+// One figure for the map. Post: at SITES.linkBoy, P4's west end by the Lynchets' east wall, facing along P4. Meet: when
+// you are on a path lead (P1-P17, within 1.5 m, moving along it) or heading for one end of one (off it, within 60 m of
+// that end, your way within 45 degrees of it), and he is free, he waits just off that end facing along it; he is placed
+// there only while the spot is out of view (the camera's frustum widened by 10 degrees, his feet, head, flame and four
+// points of his pool) and 40 m or more from you; once you are on the lead, 10 m ahead of you on it, again only out of
+// view. P4 he leads only from his post. Lead: within 12 m he steps on and walks to the far end, 10 m of arc length ahead
+// of you (to 3.6 m/s, his stride to 1.8 m); stops when you stop; if you hurry he lets the gap close to 5 m and holds it at
+// your speed; if you turn back or leave the lead by 10 m for 6 s he walks on to the end at 1.1 m/s. The place: 2 m off the
+// line on the side away from what continues, facing the line, until you have passed within 4 m or 20 s. Back: 1.1 m/s
+// the way he came; out of view and 40 m off he is free, and goes back unseen to his post. One lead at a time, each at
+// most once in 5 minutes. One real PointLight at the flame, built at load and kept live.
+import * as THREE from 'three';
+import { clamp, smoothstep, lerp, hyp } from '../../noise.js';
+import { Track, Gait, figurePainter, figureMesh, rootMatrix, about, hang, point, easeYaw, standGround, TAU, DEG } from './gait.js';
+import { SITES, LANDMARKS } from '../../world.js';
+import { nearestLead } from '../../v4/paths/routes.js';
+import { buildShadowDisc } from './shadow.js';
+import { angDiff, approach } from '../../fauna/uncanny/kit.js';
+
+const H = 1.7, WALK = 3.6, SLOW = 1.1, GAP = 10, GAP_HURRY = 5, NEAR = 12, FAR = 40, HEAD = 60, AWAY = 10, LOST_T = 6, ASIDE = 2, ASIDE_T = 20, PASS = 4, COOL = 300;
+// the light: between PALETTE.ember (#e8591a) and the Kept Fire's #ff8a3a, half its 22 cd, reach 14 m
+export const LINK_LIGHT = { colour: '#f4722a', i0: 11, dist: 14 };
+const SH_R = [-0.19, 1.34, 0.0], SH_L = [0.19, 1.34, 0.0];
+const HAND_R = [-0.25, 1.36, 0.22], HAND_L = [0.22, 0.8, 0.03];
+const KNEE = [[0.085, 0.5, 0.0], [-0.085, 0.5, 0.0]];
+const LINK_TOP = 0.56; // the link's head above the hand
+const COAT = '#14110f', COAT_HI = '#1f1914', HOSE = '#1b1613', BOOT = '#0d0b09', SKIN = '#715649', HAIR = '#0e0b0a', WOOD = '#1d140d', TOW = '#2a1a10';
+const PARTS = 6; // 0 body, 1 left shin, 2 right shin, 3 left arm, 4 right arm, 5 the link
+
+function table(tab, v) {
+  for (let k = 0; k < tab.length - 1; k++) if (v <= tab[k + 1][0]) { const t = (v - tab[k][0]) / (tab[k + 1][0] - tab[k][0]); return lerp(tab[k][1], tab[k + 1][1], smoothstep(0, 1, t)); }
+  return tab[tab.length - 1][1];
+}
+const R_COAT = [[0, 0.235], [0.28, 0.2], [0.5, 0.165], [0.6, 0.15], [0.82, 0.18], [0.94, 0.195], [1, 0.07]];
+
+function paint(n2, low) {
+  const P = figurePainter();
+  P.part(0);
+  // the coat: long, to the shins, thin shoulders; worn
+  P.grid(low ? 16 : 24, low ? 10 : 14, (u, v, o) => {
+    const a = u * TAU, y = 0.42 + v * 0.98, side = Math.sin(a);
+    const r = table(R_COAT, v), fold = 1 + (0.07 * (1 - v) + 0.015) * Math.pow(Math.abs(Math.sin(a * 6 + 0.5 * Math.sin(a * 3))), 0.6);
+    P.paint(n2(a * 3 + 4, v * 7) > 0.5 ? COAT_HI : COAT, 0, 0.96);
+    P.hem(smoothstep(0.4, 0, v));
+    o[0] = Math.cos(a) * r * fold; o[1] = y + (v < 0.01 ? 0.01 * Math.sin(a * 7) : 0); o[2] = side * r * lerp(0.75, 0.6, smoothstep(0.6, 0.95, v)) * fold + 0.015 * v;
+  }, false, false);
+  P.hem(0);
+  P.paint(COAT, 0, 0.95); P.lathe(0, 1.4, 0.0, [[0.085, 0], [0.075, 0.07], [0.08, 0.1]], low ? 8 : 12); // the collar up
+  P.paint(SKIN, 0, 0.8); P.blob(0, 1.56, 0.012, 0.07, 0.095, 0.085, low ? 8 : 10, 6);
+  P.blob(0, 1.53, 0.09, 0.01, 0.013, 0.016, 4, 3);
+  P.paint(HAIR, 0, 0.9); P.blob(0, 1.6, -0.005, 0.075, 0.07, 0.088, low ? 8 : 10, 5);
+  // the lower legs, below the coat: hose and worn boots, each a rigid piece swinging from the knee
+  for (const [k, kn] of [[1, KNEE[0]], [2, KNEE[1]]]) {
+    P.part(k).paint(HOSE, 0, 0.9);
+    P.loft([[kn[0], kn[1], kn[2]], [kn[0], 0.12, kn[2]]], [0.045, 0.036], low ? 5 : 6, 0, true);
+    P.paint(BOOT, 0.05, 0.75);
+    P.blob(kn[0], 0.06, 0.04, 0.042, 0.05, 0.11, 6, 4);
+  }
+  // arms: the left hanging, the right up at the shoulder holding the link
+  P.part(3).paint(COAT, 0, 0.96);
+  P.loft([[SH_L[0], SH_L[1], 0], [0.23, 1.08, 0.0], [HAND_L[0], HAND_L[1] + 0.07, HAND_L[2]]], [0.05, 0.045, 0.045], low ? 5 : 7, 0, true);
+  P.paint(SKIN, 0, 0.8); P.blob(HAND_L[0], HAND_L[1], HAND_L[2], 0.026, 0.04, 0.026, 5, 3);
+  P.part(4).paint(COAT, 0, 0.96);
+  P.loft([[SH_R[0], SH_R[1], 0], [-0.3, 1.14, 0.08], [HAND_R[0], HAND_R[1] - 0.05, HAND_R[2] - 0.03]], [0.05, 0.045, 0.045], low ? 5 : 7, 0, true);
+  P.paint(SKIN, 0, 0.8); P.blob(HAND_R[0], HAND_R[1], HAND_R[2], 0.03, 0.035, 0.03, 5, 3);
+  // the link: a 0.7 m stave, its head a wrapped knot of pitch and tow, charred, a little ember in it
+  P.part(5).paint(WOOD, 0, 0.85);
+  P.loft([[HAND_R[0], HAND_R[1] - 0.14, HAND_R[2]], [HAND_R[0], HAND_R[1] + LINK_TOP - 0.08, HAND_R[2] + 0.02]], [0.018, 0.02], 5, 0, true);
+  P.paint(TOW, 0, 0.9, 0.4); P.blob(HAND_R[0], HAND_R[1] + LINK_TOP - 0.06, HAND_R[2] + 0.02, 0.04, 0.04, 0.09, 6, 4);
+  return P;
+}
+
+export function buildLinkBoy(ctx, F, cue) {
+  const T = ctx.THREE;
+  const low = ctx.quality === 'low';
+  const G = standGround(ctx);
+  const P = paint(ctx.noise.noise2, low);
+  const fig = figureMesh(P, PARTS, 'walkers-linkboy', 1.0, 1.6);
+  const root = new T.Group(); root.name = 'walkers-linkboy-root'; root.add(fig.mesh);
+  const parts = fig.parts;
+
+  // the leads he walks: every line of every path lead (never the rivulets or K1)
+  const recs = [];
+  for (const L of ctx._walkerLeads) {
+    if (L.kind !== 'path') continue;
+    L.lines.forEach((S, li) => { const tr = new Track(S); if (tr.length > 15) recs.push({ id: L.id, key: `${L.id}:${li}`, li, track: tr, last: -1e9 }); });
+  }
+  const recOf = (id, li = 0) => recs.find((r) => r.id === id && r.li === li);
+  const P4 = recOf('P4');
+  // the post: P4's west end, by the Lynchets' east wall; facing along P4
+  const post = { x: SITES.linkBoy.x, z: SITES.linkBoy.z, yaw: 0 };
+  post.yaw = P4.track.heading(P4.track.length - 2) + Math.PI;
+
+  // the light
+  const light = new T.PointLight(new T.Color(LINK_LIGHT.colour), LINK_LIGHT.i0, LINK_LIGHT.dist, 2);
+  light.name = 'walkers-link-light';
+  const disc = buildShadowDisc(ctx, G.mesh);
+
+  // the state
+  const S = {
+    mode: 'post', rec: P4, s: P4.track.length, dir: -1, x: post.x, z: post.z, yaw: post.yaw, v: 0, t: 0, lost: 0, off: 0, offSide: 1, offTarget: 0,
+    asideT: 0, held: false, leads: 0, placed: [], wait: null, swayT: 0, from: 'post',
+  };
+  const at = { x: 0, z: 0, tx: 0, tz: 1 }, at2 = { x: 0, z: 0, tx: 0, tz: 1 }, proj = { s: 0, d: 0 };
+  const gait = new Gait('linkboy', H, (v) => lerp(0.75, 1.8, clamp((v - SLOW) / (WALK - SLOW), 0, 1)), (f, i) => { cueP.x = S.x; cueP.y = G(S.x, S.z); cueP.z = S.z; cue('linkboy-step', cueP); });
+  const cueP = { x: 0, y: 0, z: 0 };
+  const cam = ctx.camera, camP = cam.position;
+  const walker = { x: 0, z: 0, vx: 0, vz: 0, init: false };
+  function readWalker(dt) {
+    if (!walker.init || hyp(camP.x - walker.x, camP.z - walker.z) > 8) { walker.x = camP.x; walker.z = camP.z; walker.vx = walker.vz = 0; walker.init = true; return; }
+    if (dt > 0) { const k = 1 - Math.exp(-6 * dt); walker.vx += ((camP.x - walker.x) / dt - walker.vx) * k; walker.vz += ((camP.z - walker.z) / dt - walker.vz) * k; }
+    walker.x = camP.x; walker.z = camP.z;
+  }
+
+  // ---- out of view: the camera's frustum widened by 10 degrees on every side, for his body, flame and pool
+  const v3 = new T.Vector3();
+  function pointSeen(x, y, z, margin) {
+    v3.set(x, y, z).applyMatrix4(cam.matrixWorldInverse);
+    if (v3.z > -0.05) return false;
+    const hv = (cam.fov * DEG) / 2 + margin, hh = Math.atan(Math.tan((cam.fov * DEG) / 2) * cam.aspect) + margin;
+    return Math.abs(v3.x / -v3.z) < Math.tan(Math.min(hh, 1.5)) && Math.abs(v3.y / -v3.z) < Math.tan(Math.min(hv, 1.5));
+  }
+  function seen(x, z, margin = 10 * DEG) {
+    cam.updateMatrixWorld(); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
+    const g = G.mesh(x, z);
+    if (pointSeen(x, g + 0.1, z, margin) || pointSeen(x, g + 1.75, z, margin) || pointSeen(x, g + 2.1, z, margin)) return true;
+    for (let k = 0; k < 4; k++) { const a = (k * Math.PI) / 2; if (pointSeen(x + Math.cos(a) * 5, G.mesh(x + Math.cos(a) * 5, z + Math.sin(a) * 5), z + Math.sin(a) * 5, margin)) return true; }
+    return false;
+  }
+  function relocate(x, z, why) {
+    const d = hyp(x - camP.x, z - camP.z);
+    S.placed.push({ t: ctx.time.t, x, z, why, d, seen: seen(x, z, 0), seenFrom: seen(S.x, S.z, 0) });
+    if (S.placed.length > 40) S.placed.shift();
+    S.x = x; S.z = z;
+  }
+
+  // ---- choosing a lead
+  const endPt = (rec, e) => rec.track.at(e ? rec.track.length : 0, at2);
+  function spotAt(rec, e, out) { // just off end e, facing along the lead
+    const tr = rec.track, s = e ? tr.length - 0.6 : 0.6, p = tr.at(s, at2), sd = e ? -1 : 1;
+    out.x = p.x + p.tz * 1.1; out.z = p.z - p.tx * 1.1; out.s = s; out.dir = sd; out.yaw = tr.heading(s) + (sd < 0 ? Math.PI : 0);
+    return out;
+  }
+  const spot = { x: 0, z: 0, s: 0, dir: 1, yaw: 0 };
+  function candidate(t) {
+    const sp = hyp(walker.vx, walker.vz);
+    // on a path lead, moving along it
+    const h = nearestLead(walker.x, walker.z, 1.5);
+    if (h && h.kind === 'path' && h.id !== 'P4' && sp > 0.8) {
+      for (const rec of recs) {
+        if (rec.id !== h.id || t - rec.last < COOL) continue;
+        rec.track.project(walker.x, walker.z, proj);
+        if (proj.d > 2) continue;
+        const tg = rec.track.at(proj.s, at2), along = (walker.vx * tg.tx + walker.vz * tg.tz) / sp;
+        if (Math.abs(along) < 0.7) continue;
+        return { rec, kind: 'on', dir: along > 0 ? 1 : -1, ws: proj.s };
+      }
+    }
+    // heading for an end, from off the lead
+    if (sp < 0.8) return null;
+    for (const rec of recs) {
+      if (t - rec.last < COOL) continue;
+      for (const e of [0, 1]) {
+        if (rec === P4 && e === 0) continue; // P4: only from the post, at its west end
+        const p = endPt(rec, e), dx = p.x - walker.x, dz = p.z - walker.z, d = hyp(dx, dz);
+        if (d > HEAD || d < 2) continue;
+        if ((walker.vx * dx + walker.vz * dz) / (sp * d) < Math.cos(45 * DEG)) continue;
+        rec.track.project(walker.x, walker.z, proj);
+        if (Math.abs(proj.s - (e ? rec.track.length : 0)) > 1.5) continue; // off it, beyond this end
+        return { rec, kind: 'end', e, dir: e ? -1 : 1 };
+      }
+    }
+    return null;
+  }
+  function startWait(c, t) {
+    const rec = c.rec;
+    if (c.kind === 'end') {
+      spotAt(rec, c.e, spot);
+      const atPost = rec === P4 && S.mode === 'post';
+      if (!atPost) {
+        if (hyp(spot.x - walker.x, spot.z - walker.z) < FAR || seen(spot.x, spot.z) || seen(S.x, S.z)) return false;
+        relocate(spot.x, spot.z, `${rec.id} end`);
+        S.rec = rec; S.s = spot.s; S.dir = spot.dir; S.off = 1.1; S.offSide = 1; S.yaw = spot.yaw;
+      } else {
+        // at his post already: where it lies off P4's end
+        rec.track.project(post.x, post.z, proj);
+        const p = rec.track.at(proj.s, at2), left = (post.x - p.x) * p.tz - (post.z - p.z) * p.tx;
+        S.rec = rec; S.s = proj.s; S.dir = -1; S.off = proj.d; S.offSide = left >= 0 ? 1 : -1;
+      }
+    } else {
+      const s = c.ws + c.dir * GAP;
+      if (s < 2 || s > rec.track.length - 2) return false;
+      const p = rec.track.at(s, at2);
+      if (seen(p.x, p.z) || seen(S.x, S.z)) return false;
+      relocate(p.x, p.z, `${rec.id} ahead`);
+      S.rec = rec; S.s = s; S.dir = c.dir; S.off = 0; S.yaw = rec.track.heading(s) + (c.dir < 0 ? Math.PI : 0);
+    }
+    S.mode = 'wait'; S.t = 0;
+    return true;
+  }
+
+  // ---- the walk along the current lead
+  function placeOnLead() {
+    const p = S.rec.track.at(S.s, at);
+    S.x = p.x + p.tz * S.off * S.offSide; S.z = p.z - p.tx * S.off * S.offSide;
+  }
+  function leadYaw() { return S.rec.track.heading(S.s) + (S.dir < 0 ? Math.PI : 0); }
+  function asideSide() {
+    // the side away from what continues: the nearest landmark or site past the end, or any lead's end near it
+    const tr = S.rec.track, e = S.dir > 0 ? tr.length : 0, p = tr.at(e, at2), tx = p.tx * S.dir, tz = p.tz * S.dir;
+    let bx = tx, bz = tz, best = 70;
+    for (const L of [...Object.values(LANDMARKS), ...Object.values(SITES)]) {
+      if (L.x == null) continue;
+      const d = hyp(L.x - p.x, L.z - p.z);
+      if (d > 2 && d < best) { best = d; bx = (L.x - p.x) / d; bz = (L.z - p.z) / d; }
+    }
+    // left of the way is (tz, -tx); go to the other side from the continuation
+    const left = bx * tz - bz * tx;
+    return left > 0.05 ? -1 : 1;
+  }
+
+  const flame = new T.Vector3(), hand = new T.Vector3(), lean = new T.Vector3();
+  let swing = 0;
+  function pose(dt, t) {
+    rootMatrix(parts[0], gait.bob, gait.roll);
+    const sw = 25 * DEG * gait.s1;
+    about(parts[1], parts[0], KNEE[0][0], KNEE[0][1], KNEE[0][2], -sw);
+    about(parts[2], parts[0], KNEE[1][0], KNEE[1][1], KNEE[1][2], sw);
+    about(parts[3], parts[0], SH_L[0], SH_L[1], SH_L[2], -12 * DEG * gait.s1);
+    // the right arm holds the link up; it swings sideways with his stride (+-12 cm at the flame), and sways at rest
+    S.swayT += dt;
+    swing = 0.12 * gait.s1 + 0.03 * (1 - gait.m) * Math.sin(S.swayT * 0.7);
+    about(parts[4], parts[0], SH_R[0], SH_R[1], SH_R[2], 0, 0, 0);
+    parts[4].elements[12] += swing;
+    parts[5].copy(parts[4]);
+    fig.gait.x = 0.045 * -gait.s1;
+    point(flame, parts[5], HAND_R[0], HAND_R[1] + LINK_TOP, HAND_R[2] + 0.02);
+    root.updateMatrixWorld(true);
+    flame.applyMatrix4(fig.mesh.matrixWorld);
+    const fl = 1 + 0.15 * (0.5 * Math.sin(t * 2.3 * TAU) + 0.3 * Math.sin(t * 3.9 * TAU + 1.1) + 0.2 * Math.sin(t * 5.7 * TAU + 2.3));
+    const vis = root.visible;
+    light.position.copy(flame); light.position.y += 0.1;
+    light.intensity = vis ? LINK_LIGHT.i0 * fl : 0;
+    F.U.uLink.value.set(flame.x, flame.y, flame.z, vis ? fl : 0);
+    const c = Math.sin(S.yaw), s = Math.cos(S.yaw);
+    F.U.uLinkV.value.set(c * S.v, 0, s * S.v);
+    fig.mat.userData.uEmit.value = 0.6 + 0.4 * fl;
+  }
+
+  function update(dt, t) {
+    readWalker(dt);
+    S.t += dt;
+    const wd = hyp(walker.x - S.x, walker.z - S.z);
+    let v = 0;
+    if (!S.held) switch (S.mode) {
+      case 'post': case 'free': {
+        S.v = 0;
+        const c = candidate(t);
+        if (c) startWait(c, t);
+        else if (S.mode === 'free' && hyp(post.x - walker.x, post.z - walker.z) >= FAR && !seen(post.x, post.z) && !seen(S.x, S.z)) {
+          relocate(post.x, post.z, 'post'); S.mode = 'post'; S.rec = P4; S.s = P4.track.length; S.off = 0; S.yaw = post.yaw;
+        }
+        if (S.mode === 'post') S.yaw = easeYaw(S.yaw, post.yaw, dt, 0.5);
+        break;
+      }
+      case 'wait': {
+        // the walker within 12 m: he steps on and leads
+        if (wd < NEAR) { S.mode = 'lead'; S.t = 0; S.lost = 0; S.rec.last = t; S.leads++; S.offTarget = 0; }
+        else if (S.t > 90 && wd >= FAR && !seen(S.x, S.z)) { S.mode = 'free'; } // not come after 90 s: free again, to be put on the lead you are heading for
+        break;
+      }
+      case 'lead': case 'onward': {
+        const tr = S.rec.track;
+        tr.project(walker.x, walker.z, proj);
+        const ws = proj.s, gap = (S.s - ws) * S.dir;
+        const tg = tr.at(ws, at2), along = (walker.vx * tg.tx + walker.vz * tg.tz) * S.dir, wsp = hyp(walker.vx, walker.vz);
+        if (S.mode === 'lead') {
+          S.lost = (proj.d > AWAY || along < -0.4) ? S.lost + dt : Math.max(0, S.lost - dt * 0.5);
+          if (S.lost > LOST_T) { S.mode = 'onward'; S.t = 0; }
+        }
+        let target;
+        if (S.mode === 'onward') target = SLOW;
+        else {
+          const hurry = wsp > 4.4;
+          const want = hurry ? GAP_HURRY : GAP, vmax = hurry && gap < GAP_HURRY + 1 ? Math.max(WALK, wsp) : WALK;
+          target = clamp(Math.max(0, along) + 1.2 * (want - gap), 0, vmax);
+          if (along < 0.15 && gap >= want - 1.5) target = 0; // you have stopped: he stops, facing ahead
+        }
+        S.v = approach(S.v, target, 3, dt);
+        S.s += S.dir * S.v * dt; v = S.v;
+        S.off = approach(S.off, 0, 2.5, dt);
+        S.yaw = easeYaw(S.yaw, leadYaw(), dt); // never looks back
+        const end = S.dir > 0 ? tr.length : 0;
+        if ((S.s - end) * S.dir >= -0.3) { S.s = end - S.dir * 0.3; S.mode = 'aside'; S.t = 0; S.offSide = asideSide(); S.v = 0; }
+        placeOnLead();
+        break;
+      }
+      case 'aside': {
+        // 2 m off the line on the side away from what continues, facing the line
+        S.off = approach(S.off, ASIDE, 2.2, dt); v = S.off < ASIDE - 0.1 ? 0.8 : 0;
+        const p = S.rec.track.at(S.s, at2), fy = Math.atan2(-p.tz * S.offSide, p.tx * S.offSide);
+        S.yaw = easeYaw(S.yaw, fy, dt);
+        if (S.t > 2.5 && (wd < PASS || S.t > ASIDE_T)) S.passedNear = S.passedNear || wd < PASS;
+        if (S.t > 2.5 && (S.passedNear && wd > PASS + 1 || S.t > ASIDE_T)) { S.mode = 'back'; S.t = 0; S.passedNear = false; }
+        placeOnLead();
+        break;
+      }
+      case 'back': {
+        const tr = S.rec.track, home = S.dir > 0 ? 0 : tr.length;
+        S.v = approach(S.v, (S.s - home) * S.dir > 0.5 ? SLOW : 0, 3, dt); v = S.v;
+        S.s -= S.dir * S.v * dt; S.off = approach(S.off, 0, 1.5, dt);
+        S.yaw = easeYaw(S.yaw, leadYaw() + Math.PI, dt);
+        placeOnLead();
+        if (wd >= FAR && !seen(S.x, S.z)) { S.mode = 'free'; S.t = 0; }
+        break;
+      }
+    }
+    if (!S.held) gait.advance(dt, v);
+    root.position.set(S.x, G(S.x, S.z) - 0.02, S.z); root.rotation.y = S.yaw;
+    pose(dt, t);
+    // the thread of smoke
+    S.smoke = (S.smoke || 0) + dt;
+    let n = 0;
+    while (S.smoke >= 0.55 && n < 6) { S.smoke -= 0.55; F.born(F.K.lsmoke, flame.x, flame.y + 0.25, flame.z, t - S.smoke); n++; }
+    // the drawn shadows, while he walks within 40 m of you; deeper as the sun gutters
+    const walking = S.mode === 'lead' || S.mode === 'onward' || S.mode === 'back' || (S.mode === 'aside' && S.off < ASIDE - 0.1) || S.held === 'walk';
+    const f = ctx.sky?.flicker?.value ?? 1;
+    const sx = -Math.cos(S.yaw) * swing, sz = Math.sin(S.yaw) * swing; // the flame's sideways offset in the world (local +x)
+    disc.update(dt, walking && wd < FAR && root.visible, flame.x, flame.y, flame.z, sx, sz, 0.45 + 0.55 * (1 - f));
+  }
+  const busy = () => S.mode !== 'post';
+  pose(0, 0);
+  root.position.set(S.x, G(S.x, S.z) - 0.02, S.z); root.rotation.y = S.yaw;
+  ctx.registerUpdate(update, { at: () => (busy() ? camP : root.position), near: 80, hz: 1 });
+
+  const api = {
+    root, mesh: fig.mesh, light, disc: disc.mesh, flame,
+    get state() { return { mode: S.mode, id: S.rec?.id, s: S.s, dir: S.dir, x: S.x, z: S.z, yaw: S.yaw, v: S.v, off: S.off, leads: S.leads, placed: S.placed.slice(), obstacles: disc.obstacles, shadows: disc.mesh.visible, light: light.intensity }; },
+    post,
+    leads: recs.map((r) => ({ id: r.id, li: r.li, length: r.track.length })),
+    // lead(id, s, dir = 1): pose him walking on that lead at arc length s, mid-stride, and hold; returns his spot and a
+    // point 15 m behind him on the lead facing him (for a view); lead(null) lets him go on leading
+    lead(id, s, dir = 1, behind = 15) {
+      if (id === null) { S.held = false; S.mode = 'lead'; S.t = 0; return api.state; }
+      const rec = recOf(id); S.rec = rec; S.dir = dir; S.s = clamp(s, 0, rec.track.length); S.off = 0; S.mode = 'lead'; S.held = 'walk'; S.v = WALK;
+      S.yaw = leadYaw(); placeOnLead();
+      gait.phase = 0.25; gait.m = 1; gait.advance(0, 0);
+      gait.m = 1; gait.s1 = 1;
+      root.position.set(S.x, G(S.x, S.z) - 0.02, S.z); root.rotation.y = S.yaw; pose(0, ctx.time.t);
+      const b = rec.track.at(S.s - dir * behind, at2), byaw = Math.atan2(-(S.x - b.x), -(S.z - b.z));
+      return { x: S.x, z: S.z, yaw: S.yaw, behind: { x: b.x, z: b.z, yaw: byaw } };
+    },
+    // aside(id, e = 1): pose him standing aside at end e of a lead, and hold
+    aside(id, e = 1) {
+      const rec = recOf(id); S.rec = rec; S.dir = e ? 1 : -1; S.s = e ? rec.track.length - 0.3 : 0.3; S.offSide = asideSide(); S.off = ASIDE; S.mode = 'aside'; S.held = true; S.v = 0;
+      placeOnLead(); const p = rec.track.at(S.s, at2); S.yaw = Math.atan2(-p.tz * S.offSide, p.tx * S.offSide);
+      gait.m = 0; gait.s1 = 0; gait.bob = 0; gait.roll = 0;
+      root.position.set(S.x, G(S.x, S.z) - 0.02, S.z); root.rotation.y = S.yaw; pose(0, ctx.time.t);
+      return { x: S.x, z: S.z, yaw: S.yaw, end: [p.x, p.z] };
+    },
+    release() { S.held = false; },
+    reset() { S.held = false; S.mode = 'post'; S.rec = P4; S.s = P4.track.length; S.off = 0; S.x = post.x; S.z = post.z; S.yaw = post.yaw; for (const r of recs) r.last = -1e9; S.placed.length = 0; },
+    seen: (x, z, m) => seen(x, z, m),
+    stats() { return { calls: 1 + (disc.mesh.visible ? 1 : 0), tris: fig.tris + (disc.mesh.visible ? disc.mesh.geometry.index.count / 3 : 0), lights: 1 }; },
+  };
+  return { api, light, disc: disc.mesh };
+}

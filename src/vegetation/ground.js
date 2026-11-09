@@ -8,6 +8,7 @@ import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth
 import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { sextonClear } from '../v7/workers/graves.js'; // v7: CF the Sexton's graves and heaps
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -130,6 +131,7 @@ export function makeGround(ctx) {
     if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
+    if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)
     return false;
   }
 

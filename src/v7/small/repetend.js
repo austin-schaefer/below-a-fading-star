@@ -2,7 +2,7 @@
 // you along the wall-tops and, a second behind, repeats your footsteps exactly, gravel or grass, walking or hurrying.
 // Stop and it plays out your last few steps, then is quiet." Austin: yes.
 // A brown bird 0.18 m long (body, head, tail, folded wings) in one mesh. The wall-tops are read from the Lynchets' own
-// stones (lynchets-walls' instances, along the runs region-lynchets exposes as ctx.regions.walls): every 0.1 m of each run
+// stones (lynchets-walls' instances, along the runs region-lynchets exposes as ctx.regions.lynchetsWalls): every 0.1 m of each run
 // the highest stone's top, none in a gap. While the walker is within 18 m of a wall-top it hops along its wall's top to
 // keep 3-6 m from the walker (hops of 0.3 m, up to 6 a second, pauses and turns its head), and flits (under 15 m, the
 // wings beating) to another wall's top when that keeps it nearer the band; it never leaves the walls. Beyond 18 m it
@@ -70,7 +70,7 @@ function birdMaterial(U) {
 
 export function buildRepetend(ctx, mesh) {
   const { scene, player } = ctx;
-  const runs = ctx.regions?.walls;
+  const runs = ctx.regions?.lynchetsWalls;
   if (!runs?.length || !mesh) return null;
   const poly = REGIONS.lynchets.shape.poly;
 

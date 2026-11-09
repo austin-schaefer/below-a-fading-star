@@ -1,0 +1,13 @@
+[
+ { "name": "workers-taker-road", "x": -275.35, "z": 13.29, "yaw": -1.222, "pitch": -0.04, "settle": 3500 },
+ { "name": "workers-taker-north", "x": -255, "z": -5, "yaw": 3.1416, "pitch": -0.06, "js": "window.__fp.workers?.taker?.sight()", "settle": 1500 },
+ { "name": "workers-taker-shoulder", "x": -255.22, "z": 3.83, "yaw": 2.6, "pitch": -0.33, "settle": 1500, "dy": -0.2 },
+ { "name": "workers-coheirs-p17", "x": -42, "z": 150, "yaw": 2.85, "pitch": -0.12, "settle": 5200 },
+ { "name": "workers-coheirs-shingle", "x": -63.5, "z": 176.8, "yaw": -0.833, "pitch": -0.05, "settle": 1500 },
+ { "name": "workers-coheirs-turned", "x": -42, "z": 150, "yaw": 2.85, "pitch": -0.12, "js": "window.__fp.workers?.coheirs?.turn(true)", "settle": 1500 },
+ { "name": "workers-coheirs-close", "x": -42.86, "z": 162.37, "yaw": 0.736, "pitch": -0.32, "dy": -0.3, "settle": 1500, "js": "window.__fp.workers?.coheirs?.release()" },
+ { "name": "workers-sexton-p14", "x": 9, "z": 252, "yaw": -2.017, "pitch": -0.05, "settle": 1500 },
+ { "name": "workers-sexton-rows", "x": 30, "z": 259.4, "yaw": -2.099, "pitch": -0.06, "settle": 1500 },
+ { "name": "workers-sexton-measure", "x": 52, "z": 271, "yaw": 2.52, "pitch": -0.1, "pre": "window.__fp.workers?.sexton?.measure(0.55)", "settle": 1500 },
+ { "name": "workers-sexton-gutter", "x": 44, "z": 266, "yaw": -2.76, "pitch": -0.15, "js": "window.__fp.workers?.sexton?.gutter()", "settle": 6500 }
+]
