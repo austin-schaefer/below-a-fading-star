@@ -3,6 +3,9 @@
 // gives it a weight of at least 0.9; airAt there returns its Tincture (or nothing, for a region the brief leaves
 // neutral); and, unless its module is still a stub, its stats() report at most 12 draw calls and 150k triangles at
 // high and at least one of its creature. Generic over the regions, so every region module passes through it.
+// The Demesne's yews (v6.3): every yew mesh carries at least 1000 triangles a yew at high (the clipped mass
+// roughened, and the grown-out sprigs), an alpha-tested card material, and a mass the near-black green the brief
+// asks for (mean vertex colour, shown in sRGB, luma under 0.3; v4 drew about 0.38): v4's smooth pale lathes fail all three.
 // Usage: node tools/regions-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -43,13 +46,19 @@ const res = await page.evaluate(() => {
     try { stats = R.stats[key] ? R.stats[key]() : null; } catch (e) { statsErr = String(e); }
     out.push({ key, file: R.files[key], x: +x.toFixed(1), z: +z.toFixed(1), w: +w.toFixed(3), tint: want ? '#' + want.getHexString() : null, got: '#' + air.color.getHexString(), strength: +air.strength.toFixed(3), airErr: +airErr.toFixed(4), stub, stats, statsErr });
   }
-  return out;
+  const yews = fp.scene.children.filter((o) => /^demesne-yew/.test(o.name)).map((o) => {
+    const g = o.geometry, c = g.attributes.color, tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+    let l = 0; for (let i = 0; i < c.count; i++) l += 0.2126 * c.getX(i) + 0.7152 * c.getY(i) + 0.0722 * c.getZ(i);
+    const toS = (v) => (v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055);
+    return { name: o.name, n: o.userData.yews || (o.isInstancedMesh ? o.count : 1), perYew: o.isInstancedMesh ? tris : tris / (o.userData.yews || 1), tris, cards: !!(o.material.map && o.material.alphaTest > 0), luma: +toS(l / c.count).toFixed(3) };
+  });
+  return { out, yews };
 });
 await browser.close();
 
 let fail = 0, pass = 0;
 const check = (ok, label, detail) => { if (ok) pass++; else fail++; console.log(ok ? 'PASS' : 'FAIL', label.padEnd(44), detail); };
-for (const r of res) {
+for (const r of res.out) {
   const tag = `${r.key} (${r.file}.js)`;
   const moduleErrors = errors.filter((e) => e.includes(`region-${r.key}`) || e.includes(`regions/${r.file}.js`));
   check(!moduleErrors.length, `${tag}: module loaded`, moduleErrors[0] || '');
@@ -63,7 +72,13 @@ for (const r of res) {
   check(s.tris <= 150000, `${tag}: triangles <= 150k at high`, `${s.tris}`);
   check(s.creature > 0, `${tag}: its creature`, `${s.creature}`);
 }
-const other = errors.filter((e) => !res.some((r) => e.includes(`region-${r.key}`)));
+check(res.yews.length > 0, 'demesne yews: a mesh', res.yews.map((y) => y.name).join(', '));
+for (const y of res.yews) {
+  check(y.perYew >= 1000, `${y.name}: >= 1000 tris a yew at high`, `${Math.round(y.perYew)} (${y.n} yews)`);
+  check(y.cards, `${y.name}: alpha-tested sprig cards`, `${y.cards}`);
+  check(y.luma < 0.3, `${y.name}: near-black green (sRGB luma < 0.3)`, `${y.luma}`);
+}
+const other = errors.filter((e) => !res.out.some((r) => e.includes(`region-${r.key}`)));
 if (other.length) console.log(`(other page errors: ${other.length}) ${other[0]}`);
 console.log(`\n${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);
