@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 470 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 540 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -58,6 +58,16 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 43 | v6 post: the finish pass, FXAA and the grain |
 | 44 | v6 ground: plant and rock cross-fades |
 | 45 | v6 trees: LOD cross-fades, far crowns, fungi by distance |
+| 46 | v6.2 round glints: the square glints on grass and the sun's path made round, before and after, with the difference map |
+| 47 | v6.3 yews: the demesne's yews, from the first green cones to crowned trees |
+| 48 | v6.4 peafowl: the first bird of ovals and sticks, then the finished peafowl |
+| 49 | v6.6 settings: the settings panel on desktop and phone, and the title card |
+| 50 | v7 walkers: the Thurifer, the Link-boy and the Leerie, now walking figures |
+| 51 | v7 workers: the Co-heirs, the Sexton and the Taker |
+| 52 | v7 the still: the Sleeper, the Stylite and the Accrescent with his glassy trail |
+| 53 | v7 glyphs: the lintel script, the scrivener's sign, the erratic's sun and the moles' caps |
+| 54 | v7 the small: the Repetend's echo, the Simulacrum's face and the indistinct lawn |
+| 55 | v7 the canyon: the Toad, the Bather and the Reach |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered.
 
@@ -138,6 +148,35 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `12-river-speculum-cracked-tiles.webp` | The Speculum pool tiled like cracked paving. |
 | `12-river-speculum-first-flat-ellipse.webp` | The first Speculum: a flat white ellipse in a black void. Funny failure. |
 | `12-river-speculum-young-sun.webp` | The Speculum from the pool's edge with cloud reflections. |
+| `13-flora-eddy-grey-after.webp` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
+| `13-flora-eddy-grey-before.webp` | Before: the reeds round the Wrong Colour in their own colour. |
+| `13-flora-eddy-grey-fail.webp` | Camera inside a ruin wall while testing the grey eddy; a black slab fills the frame. Funny failure. |
+| `13-flora-ovals-after.webp` | After: stones kept off steep and spray-wet walls; the wall is clean. |
+| `13-flora-ovals-before.webp` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
+| `13-flora-sward-causeway-first.webp` | First Sward from the causeway: a few white flecks on the slope, barely a drift. |
+| `13-flora-sward-causeway.webp` | The Sward at high quality from the causeway, the Trigon Span beyond the tarn. |
+| `13-flora-sward-close-turned.webp` | Close in the Sward: the nearest heads have turned from the sun to the player. |
+| `13-inhabitants-galley-behind-woman.webp` | The Sable Galley crossing Lees Tarn behind the woman in the water, lantern unlit. |
+| `13-inhabitants-galley-crossing.webp` | The Sable Galley crossing the tarn through the reeds, sun in the saddle. |
+| `13-inhabitants-guest-apron-fail.webp` | The wimple that read as a white apron on the Guest's front. Funny failure. |
+| `13-inhabitants-guest-fountain.webp` | The Wimpled Guest at the taverna's dry fountain, pale wimple round an empty face. |
+| `13-inhabitants-guest-gaze-flush.webp` | Held gaze on the Guest: the screen edges flush red and drowsy as the heartbeat rises. |
+| `13-inhabitants-menology-ground.webp` | The Menology from the ground: hewn menhirs in a spiral on the south moor. |
+| `13-life-bats-gutter-fail.webp` | Bats at the tower with the camera half inside the hillside; half the frame is one black wedge. Funny failure. |
+| `13-life-beetles-bronze-door.webp` | Beetles clustering on the rings of the Hypogeum's bronze door. |
+| `13-life-biomesh-lattice-first.webp` | The lattice and its ley lines before the biomesh runners were added. |
+| `13-life-biomesh-runners-t8.webp` | Eight seconds on: bright runners out over the ground and a fresh tile at the end of each. |
+| `13-life-cloak-at-shrine.webp` | The man in the cloak of eyes, moved to stand before the Wayside Shrine facing the sun. |
+| `13-life-gibbet-crows.webp` | Crows on the gibbet beside the causeway, its cages hanging, the Armiger's Tower beyond. |
+| `13-life-moths-taverna-lamp.webp` | Moths at one of the Pomegranate House's lamps. |
+| `13-life-rooks-lift-yard.webp` | The rooks lifting from the Yard against the sun. |
+| `13-riverlife-glints-stone-fail.webp` | The salt fleck as a bright white rectangle with a hard halo on a dark stone. Funny failure. |
+| `13-riverlife-glints-stone-first.webp` | First salt glints: a smear of streaks swamping the frame. |
+| `13-riverlife-pedlars-slow-reach.webp` | Salt-Pedlars over the slow reach from the bank: pale riders on dragonflies at 6–8 m, the fen's lights beyond. |
+| `13-riverlife-wrong-colour-after.webp` | After the visibility pass: violet light on the grey reeds, bank and canyon wall. |
+| `13-riverlife-wrong-colour-before.webp` | The Wrong Colour's first pass: a dim teal smear on the far bank. |
+| `13-riverlife-wrong-colour-first.webp` | The Wrong Colour's first light: an acid yellow-green blot on the far bank. |
+| `13-riverlife-wrong-colour-from-cutting.webp` | From the Cutting's foot: the basin is round the bend but its green light is not. |
 | `13-ruins-carillon-caps-close.webp` | The Carillon Flags: bronze caps set in the causeway hexes, studs counting down the notes. |
 | `13-ruins-carillon-walk.webp` | The Carillon Flags along the causeway crown, the Armiger's Tower beyond. |
 | `13-ruins-cutting-bank.webp` | The Cutting on the canyon bank: courses, black glass, rusted lattice, soil. Still reads as a lens, not a slump. |
@@ -145,50 +184,21 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `13-ruins-gradine-yard.webp` | The Gradine from the Leaning Yard, a pale thread up the east wall. Too thin and too dark; a v4 note. |
 | `13-ruins-hypogeum-door.webp` | The Hypogeum's bronze door, verdigris and scrapes, glyphs on the lintel. |
 | `13-ruins-hypogeum-stair-from-floor.webp` | From the Hypogeum's floor, the stair climbing to the sun. |
-| `13-ruins-lintel-before.webp` | Before a gutter: the glyph row on the lintel. |
 | `13-ruins-lintel-after.webp` | After the gutter: the row has slid one place; the last glyph came round to the front. |
-| `13-flora-eddy-grey-fail.webp` | Camera inside a ruin wall while testing the grey eddy; a black slab fills the frame. Funny failure. |
-| `13-flora-sward-causeway-first.webp` | First Sward from the causeway: a few white flecks on the slope, barely a drift. |
-| `13-flora-sward-causeway.webp` | The Sward at high quality from the causeway, the Trigon Span beyond the tarn. |
-| `13-flora-sward-close-turned.webp` | Close in the Sward: the nearest heads have turned from the sun to the player. |
-| `13-flora-eddy-grey-before.webp` | Before: the reeds round the Wrong Colour in their own colour. |
-| `13-flora-eddy-grey-after.webp` | After: the reeds within 8 m bleached grey by the Wrong Colour. |
-| `13-flora-ovals-before.webp` | The "black ovals" on the cirque wall by the fall: stones sunk into a near-vertical face. |
-| `13-flora-ovals-after.webp` | After: stones kept off steep and spray-wet walls; the wall is clean. |
-| `13-riverlife-glints-stone-fail.webp` | The salt fleck as a bright white rectangle with a hard halo on a dark stone. Funny failure. |
-| `13-riverlife-glints-stone-first.webp` | First salt glints: a smear of streaks swamping the frame. |
-| `13-riverlife-pedlars-slow-reach.webp` | Salt-Pedlars over the slow reach from the bank: pale riders on dragonflies at 6–8 m, the fen's lights beyond. |
-| `13-riverlife-wrong-colour-before.webp` | The Wrong Colour's first pass: a dim teal smear on the far bank. |
-| `13-riverlife-wrong-colour-after.webp` | After the visibility pass: violet light on the grey reeds, bank and canyon wall. |
-| `13-riverlife-wrong-colour-first.webp` | The Wrong Colour's first light: an acid yellow-green blot on the far bank. |
-| `13-riverlife-wrong-colour-from-cutting.webp` | From the Cutting's foot: the basin is round the bend but its green light is not. |
+| `13-ruins-lintel-before.webp` | Before a gutter: the glyph row on the lintel. |
 | `13-sky-city-zoom-gutter.webp` | The Parhelion City through a long lens in a gutter: needle spires against the dimmed sun. |
 | `13-sky-parhelion-ghost.webp` | The Parhelion City by day: a faint ghost of spires in the sun's saddle, from the causeway. |
 | `13-sky-parhelion-gutter-solid.webp` | The same view in a gutter: the city hardens, windows lit, against the dimmed sun. |
+| `13-sky-vigilant-eyes-gutter.webp` | In a gutter the Vigilant's eyes glint. |
 | `13-sky-vigilant-from-yard.webp` | The Vigilant crouched on the east wall, seen from the Leaning Yard. |
 | `13-sky-vigilant-gradine-fail.webp` | Camera pressed into the Gradine's slope instead of looking at the Vigilant. Funny failure. |
 | `13-sky-vigilant-head-zoom.webp` | The Vigilant's head through a long lens; it turns only when unwatched. |
-| `13-sky-vigilant-eyes-gutter.webp` | In a gutter the Vigilant's eyes glint. |
 | `13-sky-vigilant-moor-zoom.webp` | The Vigilant's silhouette from the moor with the lattice drifting beside it. |
 | `13-sky-vigilant-orchard-first.webp` | First Vigilant search from the orchard: the camera hides behind a tree and finds only mountains. |
-| `13-inhabitants-galley-crossing.webp` | The Sable Galley crossing the tarn through the reeds, sun in the saddle. |
-| `13-inhabitants-guest-apron-fail.webp` | The wimple that read as a white apron on the Guest's front. Funny failure. |
-| `13-inhabitants-guest-fountain.webp` | The Wimpled Guest at the taverna's dry fountain, pale wimple round an empty face. |
-| `13-inhabitants-guest-gaze-flush.webp` | Held gaze on the Guest: the screen edges flush red and drowsy as the heartbeat rises. |
-| `13-inhabitants-galley-behind-woman.webp` | The Sable Galley crossing Lees Tarn behind the woman in the water, lantern unlit. |
-| `13-inhabitants-menology-ground.webp` | The Menology from the ground: hewn menhirs in a spiral on the south moor. |
-| `13-life-bats-gutter-fail.webp` | Bats at the tower with the camera half inside the hillside; half the frame is one black wedge. Funny failure. |
-| `13-life-biomesh-lattice-first.webp` | The lattice and its ley lines before the biomesh runners were added. |
-| `13-life-cloak-at-shrine.webp` | The man in the cloak of eyes, moved to stand before the Wayside Shrine facing the sun. |
-| `13-life-gibbet-crows.webp` | Crows on the gibbet beside the causeway, its cages hanging, the Armiger's Tower beyond. |
-| `13-life-rooks-lift-yard.webp` | The rooks lifting from the Yard against the sun. |
-| `13-life-biomesh-runners-t8.webp` | Eight seconds on: bright runners out over the ground and a fresh tile at the end of each. |
-| `13-life-beetles-bronze-door.webp` | Beetles clustering on the rings of the Hypogeum's bronze door. |
-| `13-life-moths-taverna-lamp.webp` | Moths at one of the Pomegranate House's lamps. |
 | `14-loading-card-midload.webp` | The title card mid-load: a hairline bar under the buttons, "lighting the sun" beneath it, Go out dimmed. |
 | `14-loading-card-ready.webp` | The same card once the world is built: bar gone, Go out lit, the keep behind the glass. |
-| `14-perf-overlay-spawn.webp` | The profiler overlay (`?perf=1`) at spawn: frame time, CPU by module, calls, tris, lights, render size; the debug panel open beside it. |
 | `14-perf-bench-summary.webp` | The bench's summary card after a short headless run, with GPU time per pass in the overlay above it. |
+| `14-perf-overlay-spawn.webp` | The profiler overlay (`?perf=1`) at spawn: frame time, CPU by module, calls, tris, lights, render size; the debug panel open beside it. |
 | `15-perf-bloom-sun-after.webp` | Bloom at half size: the sun's rim a touch wider and about 3 levels brighter; the change Austin was asked to judge. |
 | `15-perf-bloom-sun-before.webp` | Bloom at full size on the sun: the bright rim, the reference for the half-size pair. |
 | `15-perf-pcf-wood-after.webp` | Hard PCF: the dapples band and reshape; the saving was only arithmetic, so the change was rejected. |
@@ -308,5 +318,77 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `44-rocks-ling-before.webp` | Before (`?rockfade=0`): the same view with the fine boulders ending in a ring. |
 | `45-trees-silhouette-crooked-after.webp` | After: a crooked tree's far crown keeps the near outline (black near, blue far-only, red near-only); the far trunk's red gap has closed and IoU rises from 0.65 to 0.69. |
 | `45-trees-silhouette-crooked-before.webp` | Before: the same sheet with v5's far mesh, a red near-only trunk and blue far-only fringes. |
+| `46-glints-grass-after.webp` | After: the same glint rounded into a soft star. |
+| `46-glints-grass-before.webp` | Before: the glint on the stream is a hard square on WebKit's medium tier. |
+| `46-glints-grass-diff.webp` | The difference map between the two; red marks every changed pixel, mostly on glints and grass tips. |
+| `46-glints-probe-old.webp` | The old probe: square sparkles scattered over the moor, the thing being fixed. |
+| `46-glints-sun-after.webp` | After: the same view with the glints round. |
+| `46-glints-sun-before.webp` | Before: the sun's path on the tarn with square glints along the grass. |
+| `47-yews-far-after.webp` | After: the same row as dark, feathered yews. |
+| `47-yews-far-before.webp` | Before: a row of flat green cones on the far ridge. |
+| `47-yews-first-find.webp` | The first yews, smooth green cones that block the view; a funny failure. |
+| `47-yews-near-after.webp` | After: the same trees with foliage and a red-tinged crown. |
+| `47-yews-near-before.webp` | Before: near yews as bare green cones on the slope. |
+| `47-yews-near-wip-black.webp` | A work-in-progress yew rendered as a solid black silhouette; instructive failure. |
+| `48-peafowl-10m.webp` | Peafowl at ten metres: small pale figures on the ridge against the setting sun. |
+| `48-peafowl-cry.webp` | The peafowl in profile on a rock, tail drooping, calling over the demesne. |
+| `48-peafowl-front-first.webp` | The first peafowl: oval parts, stick legs and a thin tail, on a plinth. |
+| `48-peafowl-front.webp` | The finished peafowl from the front, with a real neck, wing and crest. |
+| `48-peafowl-rear.webp` | The peafowl from behind, train trailing over a block, the keep below. |
+| `48-peafowl-traintop.webp` | The peafowl's train from above, a fan of tail feathers. |
+| `49-settings-desktop.webp` | The settings panel on desktop: sound, quality, mouse and a go-to list. |
+| `49-settings-title-card.webp` | The title card with its gear button at the top right. |
+| `49-settings-touch.webp` | The settings panel on a phone, the go-to list scrolling below the quality row. |
+| `50-walkers-leerie-arcature.webp` | The Leerie lighting lamps by the Arcature with the Lattice glowing far off. |
+| `50-walkers-leerie-wick.webp` | The Leerie's row of lamp posts and the wire between them under the great wall. |
+| `50-walkers-linkboy-gutter.webp` | The Link-boy carrying his torch along the tarn's shore under the gutter light. |
+| `50-walkers-sheet.webp` | The walkers sheet: the Leerie's lamp, the Link-boy's torch and the Thurifer's stones. |
+| `50-walkers-thurifer-bow-after.webp` | After: the Thurifer bowed at the stone with his censer. |
+| `50-walkers-thurifer-bow-before.webp` | Before: the stone where the Thurifer bows, empty. |
+| `50-walkers-thurifer-bow-try1.webp` | An earlier try: the Thurifer crouched in the grass, a weaker pose. |
+| `50-walkers-thurifer-bowtrain.webp` | The Thurifer bowing among the ruins with the train of the keep behind. |
+| `50-walkers-thurifer-road.webp` | The Plinth Road's hexagons and a hanging lamp-cage on the Thurifer's route. |
+| `51-workers-coheirs-after.webp` | After: two Co-heirs kneeling together on the bank. |
+| `51-workers-coheirs-before.webp` | Before: the reedy bank where the Co-heirs sit, empty. |
+| `51-workers-sexton-gutter.webp` | The Sexton at the edge of his open plots, seen across the pits. |
+| `51-workers-sexton-rows-after.webp` | After: the Sexton at work and a row of fresh cuts in the grass. |
+| `51-workers-sexton-rows-before.webp` | Before: the Sexton's field of grass, no worker. |
+| `51-workers-sheet.webp` | The workers sheet: the Co-heirs' graves of stones and the Sexton's pits. |
+| `51-workers-taker-road.webp` | The Taker's field of cairns on cracked ground below the keep's cliff. |
+| `52-still-accrescent-after.webp` | After: the Accrescent standing in his crystal robe at the 4 metre mark. |
+| `52-still-accrescent-before.webp` | Before: the Accrescent's ground, a failed view of sloping sky and glass. |
+| `52-still-accrescent-trail.webp` | The Accrescent's glassy trail at 40 metres, boulders and glowing threads across the moor. |
+| `52-still-sheet.webp` | The still sheet: the Accrescent's glassy trail across the moor and the Sleeper's glade. |
+| `52-still-sleeper-after.webp` | After: the Sleeper asleep on the open ground under a bare tree. |
+| `52-still-sleeper-before.webp` | Before: the Sleeper's grass, with only a pale shape in the reeds. |
+| `52-still-sleeper-fruit.webp` | The Sleeper's tree among the dead moor, the sleeper in the corner. |
+| `52-still-stylite-after.webp` | After: the same view, the stack rebuilt. |
+| `52-still-stylite-before.webp` | Before: the stone stack and the glowing growths, no Stylite. |
+| `52-still-stylite-offer.webp` | The Stylite atop his stack of stones, his offering below the glowing growth. |
+| `53-glyphs-erratic-after.webp` | The erratic boulder bearing its small sun glyph. |
+| `53-glyphs-erratic-try1-missing.webp` | An early try: the same boulder with the glyph missing entirely. |
+| `53-glyphs-lintel-after.webp` | After: the lintel's script reworked and legible. |
+| `53-glyphs-lintel-before.webp` | Before: the keep door's lintel, script faint on the stone. |
+| `53-glyphs-mole-cap.webp` | A mole's cap seen from above, its diamond sign amid trampled grass. |
+| `53-glyphs-scrivener-bank.webp` | A scrivener's sun glyph drawn in dots on the water's edge. |
+| `53-glyphs-sheet.webp` | The glyphs sheet: the erratic's sun sign, the lintel script, the cap and the boulders' marks. |
+| `54-small-indistinct-lawn.webp` | The indistinct figure on the lawn beside the wall, a barely seen shape. |
+| `54-small-repetend-after.webp` | After: the same view with the Repetend's echo set among the grass. |
+| `54-small-repetend-before.webp` | Before: the moor and a low stone wall, the Repetend not yet here. |
+| `54-small-repetend-strayed.webp` | A strayed camera inside a wall, a funny failure. |
+| `54-small-sheet.webp` | The small sheet: the indistinct figure on the lawn and the Simulacrum's face in the ruins. |
+| `54-small-simulacrum-after.webp` | After: the Simulacrum's face looming in the colonnade. |
+| `54-small-simulacrum-before.webp` | Before: the Lattice's edge, the colonnade with no face. |
+| `55-canyon-bather-after.webp` | After: the Bather floating in the pool beside the dark rocks. |
+| `55-canyon-bather-before.webp` | Before: the pool with no Bather. |
+| `55-canyon-reach-pit-after.webp` | After: the same brim with lights along the far shore. |
+| `55-canyon-reach-pit-before.webp` | Before: the pit's brim beside the Reach, bare. |
+| `55-canyon-reach-rim.webp` | The Reach's rim at day, a stream between two blocks. |
+| `55-canyon-sheet-bowl.webp` | The canyon sheet's second view: the Bather and the bowl seen from above. |
+| `55-canyon-sheet.webp` | The canyon sheet: the Bather in her pool and the Reach's deck. |
+| `55-canyon-stones.webp` | The Bather's stones lying in the shallow water. |
+| `55-canyon-toad-after.webp` | After: the Toad's corner with the grass redone. |
+| `55-canyon-toad-before.webp` | Before: the Toad's corner, grass and a sloping wall. |
+| `55-canyon-toad-v1.webp` | The first redo: a taller wall and the Toad's shadow, grass thinner. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
