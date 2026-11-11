@@ -78,7 +78,7 @@ export function height(h, x, z, w) {
 }
 
 const C = (h) => new THREE.Color(h);
-const cGravel = C('#6c706c'), cBar = C('#525654'), cWash = C('#9c998c'), cTill = C('#6a6256'), cMoss = C('#46523a'), cWet = C('#45474c');
+const cGravel = C('#6e7c8a'), cBar = C('#56616e'), cWash = C('#9eaab6'), cTill = C('#6c7078'), cMoss = C('#4c5a52'), cWet = C('#434a56'); // v8-02: grey-blue, the glacier's
 const _gc = new THREE.Color();
 export function ground(col, x, z, w, b) {
   const ch = channelAt(x, z), mo = moraineAt(x, z);
@@ -96,7 +96,7 @@ export function ground(col, x, z, w, b) {
 export const cover = {
   density: { grass: 0.22, sedge: 0, heather: 0, bracken: 0, flowers: 0, fleshy: 0.15, reeds: 0, trees: 0 },
   scale: { grass: 0.38 },
-  tint: { grass: '#8c8f7c' }, tintAmt: 0.75,
+  tint: { grass: '#8a96a0' }, tintAmt: 0.8,
 };
 export const stone = { density: 0.12, tors: false }; // the shared stones mostly give way to the region's own
 export const air = { tint: '#cfe0f6', strength: 1 }; // "a blue-white breath" (DI)

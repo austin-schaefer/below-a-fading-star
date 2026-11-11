@@ -99,18 +99,18 @@ export function height(h, x, z, w, coarse) {
 }
 
 // grazed turf: an even green, paler where the beds' ridges dry out, a little darker in the hollows of the tussocks
-const cLawn = new THREE.Color('#4f5c2c'), cLawn2 = new THREE.Color('#5d6532'), cRidge = new THREE.Color('#6b6a3a');
+const cLawn = new THREE.Color('#6f8c3a'), cLawn2 = new THREE.Color('#7c9444'), cRidge = new THREE.Color('#9a9c58'); // v8-02: shaven, the brightest green on the map
 export function ground(col, x, z, w) {
   const n = N.fbm2(x * 0.08, z * 0.08, 2) * 0.5 + 0.5, pd = parterreD(x, z);
   _c.copy(cLawn).lerp(cLawn2, n).lerp(cRidge, pd < 1.2 ? (1 - pd / 1.2) * 0.6 : 0);
-  col.lerp(_c, smoothstep(0.2, 0.7, w));
+  col.lerp(_c, smoothstep(0.45, 0.55, w)); // v8-02: a crisp edge, as a mown lawn has
 }
 const _c = new THREE.Color();
 
 export const cover = {
-  density: { grass: 1.45, heather: 0, bracken: 0, flowers: 0.35, fleshy: 0, sedge: 0, reeds: 0, trees: 0 },
-  scale: { grass: 0.6 },
-  tint: { grass: '#6c7c3a' }, tintAmt: 0.5,
+  density: { grass: 0.9, heather: 0, bracken: 0, flowers: 0, fleshy: 0, sedge: 0, reeds: 0, trees: 0 },
+  scale: { grass: 0.16 }, // v8-02: shaven, a few centimetres
+  tint: { grass: '#86a048' }, tintAmt: 0.9,
 };
 export const stone = { density: 0.15, tors: false };
 export const air = null; // neutral: "the air is still and smells of cut stone"
@@ -233,7 +233,7 @@ export async function build(ctx) {
 
   // ---- the ha-ha's ground: a skin over the ring where the drop is, so its edge is a clean line
   const edgeN = (x, z) => 0.5 + 0.2 * N.noise2(x * 0.4, z * 0.4) + 0.1 * N.noise2(x * 1.7, z * 1.7);
-  const cTurf = new T.Color('#4f5c2c'), cDitch = new T.Color('#3e4626'), cField = new T.Color('#4c5228');
+  const cTurf = new T.Color('#6f8c3a'), cDitch = new T.Color('#3e4626'), cField = new T.Color('#4c5228');
   const skin = buildSkin(ctx, {
     name: KEY, box: [K.x - 98, K.x + 98, K.z - 98, K.z + 72], step: low ? 0.7 : 0.45, lift: 0.02,
     keep: (x, z) => inRing(x, z, HAHA - 4.5, HAHA + 11),

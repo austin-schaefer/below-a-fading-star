@@ -20,6 +20,7 @@ import { buildMountains } from './v4/mountains.js';
 import { installKit } from './v4/kit/index.js';
 import { makeRegions, REGION_FILES } from './v4/regions.js';
 import { makeTinctures } from './v4/tinctures.js';
+import * as places from './v8/places.js'; // v8-02: places that differ
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -150,6 +151,7 @@ async function start() {
   ctx.mountains = buildMountains(ctx);
   ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
   ctx.tinctures = makeTinctures(ctx, url); // v4 Tinctures (DI): each region's hue in the haze, ?tinct=0 off
+  ctx.places = places; // v8-02: each place's ground, cover and light (placeAt, gradeAt)
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   settled = 1; await progress('lighting the sun', 0);
 
