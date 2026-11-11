@@ -8,7 +8,8 @@
 //   blades  the share of it that the low plants (grass, heather, bracken, flowers, reeds) cover:
 //        pixels that change by more than 0.04 when they are hidden
 // The gate: on the downward frames (the ground itself), at least GATE_N regions differ from the cropped common by
-// the margin in at least two of the four numbers. Margins (MARGIN below): L 0.035, S 0.05, hue 20° (counted only
+// the margin in at least two of the four numbers, and at most MAX_ALIKE pairs of places (the common and the regions)
+// differ in none of them. Margins (MARGIN below): L 0.035, S 0.05, hue 20° (counted only
 // where both frames are saturated enough, S >= 0.08, for the hue to mean something), blades 0.15.
 // The wind is held (wind=0), the grain's clock pinned (postclock=0) and the sun's guttering held off, so two runs match.
 //   node tools/contrast-survey.mjs [base=http://localhost:8123] [--q=medium] [--out=after] [--shots=after]
@@ -48,7 +49,7 @@ export const POSES = [
   ['graves', 40, 262, -1.2, 'landmark'],
 ];
 export const MARGIN = { L: 0.035, S: 0.05, hue: 20, blades: 0.15 };
-const GATE_N = 4;
+const GATE_N = 4, MAX_ALIKE = 1; // MAX_ALIKE: the most pairs of places no number tells apart
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
@@ -137,7 +138,16 @@ const diffs = rows.filter((r) => r.frame === 'down' && r.kind === 'region').map(
   return { name: r.name, apart };
 });
 const passing = diffs.filter((d) => d.apart.length >= 2);
-const ok = passing.length >= GATE_N && !errors.length;
+// pairs of places (the common and the regions) that no number tells apart: two frames a visitor could not tell from
+// each other by their ground's brightness, colour or cover
+const placesD = rows.filter((r) => r.frame === 'down' && r.kind !== 'landmark');
+const alike = [];
+for (let i = 0; i < placesD.length; i++) for (let j = i + 1; j < placesD.length; j++) {
+  const a = placesD[i], b = placesD[j], hueOk = a.S >= 0.08 && b.S >= 0.08;
+  const n = (Math.abs(a.L - b.L) >= MARGIN.L) + (Math.abs(a.S - b.S) >= MARGIN.S) + (hueOk && hd(a.hue, b.hue) >= MARGIN.hue) + (Math.abs(a.blades - b.blades) >= MARGIN.blades);
+  if (n === 0) alike.push(`${a.name}~${b.name}`);
+}
+const ok = passing.length >= GATE_N && alike.length <= MAX_ALIKE && !errors.length;
 
 if (opt.out) {
   mkdirSync('briefs/v8/contrast', { recursive: true });
@@ -151,9 +161,10 @@ if (opt.out) {
     const e = rows.find((r) => r.name === name && r.frame === 'eye'), d = down(name), df = diffs.find((x) => x.name === name);
     lines.push(`| ${name} | ${d.pos} | ${d.primary} | ${e.L} | ${e.S} | ${e.hue} | ${e.blades} | ${d.L} | ${d.S} | ${d.hue} | ${d.blades} | ${df ? (df.apart.join(', ') || 'none') : '-'} |`);
   }
-  lines.push('', `Gate: ${passing.length} regions differ from the common in two or more numbers (needs ${GATE_N}): ${passing.map((p) => p.name).join(', ') || 'none'}. ${ok ? 'PASS' : 'FAIL'}.`, '');
+  lines.push('', `Gate: ${passing.length} regions differ from the common in two or more numbers (needs ${GATE_N}): ${passing.map((p) => p.name).join(', ') || 'none'}. Pairs of places no number tells apart: ${alike.length} (at most ${MAX_ALIKE}): ${alike.join(', ') || 'none'}. ${ok ? 'PASS' : 'FAIL'}.`, '');
   writeFileSync(`briefs/v8/contrast/${opt.out}.md`, lines.join('\n'));
 }
 console.log(`${passing.length >= GATE_N ? 'PASS' : 'FAIL'} contrast: ${passing.length} regions apart from the common in 2+ numbers (need ${GATE_N}): ${diffs.map((d) => `${d.name}[${d.apart.join('+')}]`).join(' ')}`);
+console.log(`${alike.length <= MAX_ALIKE ? 'PASS' : 'FAIL'} distinct: ${alike.length} pairs of places no number tells apart (at most ${MAX_ALIKE}): ${alike.join(' ') || 'none'}`);
 console.log(`${errors.length ? 'FAIL' : 'PASS'} no page errors${errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''}`);
 process.exit(ok ? 0 : 1);

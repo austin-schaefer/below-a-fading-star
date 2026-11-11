@@ -12,8 +12,8 @@
 // | the High Ling | purple-brown | low, wind-flat heather | 1.0, 1.15, 1.08, +0.02 |
 // | the Demesne | shaven bright lawn, a crisp edge | turf a few cm high, nothing else | palest: 1.28, 1.1, 0.94, 0 |
 // | the Lynchets | striped strips, each a different crop's ghost | stubble rows and fallow | 1.06, 1.05, 1.0, +0.02 |
-// | the Deodand Wood | leaf litter, near black | almost nothing under the canopy | darkest: 0.8, 0.9, 1.1, +0.02 |
-// | Corpse-Candle Fen | black mud | tall reeds in stands, open black water between | dark, cold: 0.74, 0.8, 1.12, -0.04 |
+// | the Deodand Wood | leaf litter, near black | almost nothing under the canopy | darkest, ember-warm: 0.8, 0.95, 1.1, +0.1 |
+// | Corpse-Candle Fen | black mud | tall reeds in stands, open black water between | dark, cold: 0.74, 0.8, 1.12, -0.12 |
 // | the Adust | red clay | none | hot: 1.06, 1.12, 1.06, +0.04 |
 // | the Saltings | white crust | none | palest, washed out: 1.32, 0.72, 0.92, 0 |
 // | the Outwash | grey-blue gravel | ankle grass, sparse | cold: 1.08, 0.8, 1.0, -0.05 |
@@ -40,8 +40,8 @@ export const GRADE = {
   highLing: [1.0, 1.15, 1.08, 0.02],
   demesne: [1.28, 1.1, 0.94, 0],
   lynchets: [1.06, 1.05, 1.0, 0.02],
-  wood: [0.8, 0.9, 1.1, 0.02],
-  fen: [0.74, 0.8, 1.12, -0.04],
+  wood: [0.8, 0.95, 1.1, 0.1],
+  fen: [0.74, 0.8, 1.12, -0.12],
   adust: [1.06, 1.12, 1.06, 0.04],
   saltings: [1.32, 0.72, 0.92, 0],
   outwash: [1.08, 0.8, 1.0, -0.05],
