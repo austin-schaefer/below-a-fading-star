@@ -1,8 +1,8 @@
 # Below a Fading Star
 
-## Human-written intro
-
 A walking simulator in a dark dreamscape, inspired by Dying Earth literature and Golden Age science fantasy more broadly. 
+
+This repo is 100% vibe-coded, but this README is human-written.
 
 This repo is an experiment to see how far agents could get in building a 3D space with minimal human steering and intervention. Each revision was built in large, multi-hour loops (4–8 hours per feature), where I gave high-level direction like "add more life" or "the architecture needs to be more monumental." Then the agent either proposed ideas to me, or just went and did it. 
 
