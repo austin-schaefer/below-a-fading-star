@@ -122,6 +122,10 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 - `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
 
+### v8
+
+- `strata=0` (v8-03: no `strata` module, no signs or spolia, and the Pomegranate House, the byre, the shrine and the Leaning Yard as in v7)
+
 ### The walls
 
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
