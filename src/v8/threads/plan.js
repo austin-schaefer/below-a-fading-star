@@ -20,6 +20,7 @@ export const OFF = {
   traveller: THREADS_OFF || Q.get('traveller') === '0',
   chair: THREADS_OFF || Q.get('chair') === '0',
   gold: THREADS_OFF || Q.get('gold') === '0',
+  painter: THREADS_OFF || Q.get('painter') === '0',
 };
 
 // ---------------------------------------------------------------- 1 the traveller
@@ -55,6 +56,31 @@ export const GOLD = {
   shrine: { x: -108, z: -128 }, // LANDMARKS.shrine: the niche is at +4.2, +1.2 (structures/scatter.js)
 };
 
+// ---------------------------------------------------------------- 5 the painter (v8-08)
+// The Unfinished Prospect (v5, 238,-30) is the last of his attempts. On the way to it from Medlar Close (P8) and down
+// P10 from the Hypogeum, and on P22 beyond it, the others stand where he gave up on them, each a few metres west of the
+// track, its face turned halfway between its stand point and away from the sun, the view it failed at behind it: a
+// single confident line (P8), the sun painted five times lower as it sank (P10), the keep slashed corner to corner (P10
+// by the junction), the Arcature kicked through (P22). He sits east of the Prospect, his back squarely to the view,
+// painting a medlar. `stand`: on the track, 8-12 m off, where a walker sees it (threads-test pins both).
+export const PAINTER = {
+  attempts: [
+    { kind: 'line', x: 186.5, z: -111.5, stand: { x: 195.5, z: -112.5 } },
+    { kind: 'suns', x: 229.0, z: -80.0, stand: { x: 231.5, z: -89.0 } },
+    { kind: 'slash', x: 228.5, z: -57.0, stand: { x: 231.5, z: -65.5 } },
+    { kind: 'kicked', x: 242.0, z: 3.0, stand: { x: 250.0, z: 0.1 } },
+  ],
+  // dropped between them: a squeezed tube, a brush snapped in two, a rag; and his tubes by him
+  drops: [
+    { kind: 'tube', x: 211.0, z: -101.8, yaw: 0.6 },
+    { kind: 'brush', x: 231.6, z: -68.0, yaw: 1.9 },
+    { kind: 'rag', x: 235.3, z: -42.0, yaw: 0.4 },
+  ],
+  man: { x: 246.0, z: -36.0, yaw: Math.PI / 2 }, // seated on his pack, facing east: the view and the sun at his back
+  stand: { x: 238.5, z: -41.5 },
+};
+const PAINT_CLEAR = [...PAINTER.attempts.map((a) => ({ ...a, r: 2.6 })), ...PAINTER.drops.map((d) => ({ ...d, r: 0.9 })), { ...PAINTER.man, r: 3.2 }];
+
 // ---------------------------------------------------------------- where the ground cover keeps off (ground.js, after the draws)
 const d2 = (x, z, p) => (x - p.x) ** 2 + (z - p.z) ** 2;
 const C = Math.cos(CHAIR.drag.bearing), S = Math.sin(CHAIR.drag.bearing);
@@ -80,6 +106,7 @@ export function threadsClear(x, z) {
     for (const g of GOLD.glints) if (d2(x, z, g) < 0.9 * 0.9) return true;
     if (d2(x, z, GOLD.mosaic) < 2.9 * 2.9) return true;
   }
+  if (!OFF.painter) for (const c of PAINT_CLEAR) if (d2(x, z, c) < c.r * c.r) return true;
   return false;
 }
 
@@ -92,4 +119,6 @@ export const THREAD_PLACES = [
   { name: 'A chair by the graves', x: 34.5, z: 276.0, look: { x: 40.3, z: 279 }, pitch: -0.12, thread: 'chair' },
   { name: 'Gold in the court', x: -73.5, z: -149.0, look: { x: -68, z: -153 }, pitch: -0.3, thread: 'gold' },
   { name: 'The Wayside Shrine', x: -97.5, z: -124.5, look: { x: -103.8, z: -126.8 }, pitch: 0.05, thread: 'gold' },
+  { name: 'A canvas abandoned', x: PAINTER.attempts[0].stand.x, z: PAINTER.attempts[0].stand.z, look: { x: 186.5, z: -111.5 }, pitch: -0.1, thread: 'painter' },
+  { name: 'The painter', x: PAINTER.stand.x, z: PAINTER.stand.z, look: { x: 246, z: -36 }, pitch: -0.12, thread: 'painter' },
 ];
