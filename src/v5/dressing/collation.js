@@ -9,6 +9,7 @@
 // shadows; colliders on the table (a row of circles) and every chair. Static.
 import * as THREE from 'three';
 import { Acc, mat } from './kit.js';
+import { OFF as THREAD_OFF, CHAIR_GONE } from '../../v8/threads/plan.js'; // v8-04: the twelfth chair is carried off to the graves
 
 const OFF = typeof location !== 'undefined' && (() => { const q = new URLSearchParams(location.search); return q.get('dressing5') === '0' || q.get('collation') === '0'; })();
 export const COLLATION = { x: 141, z: -66, angle: -0.4, length: 11, width: 1.1, height: 0.74, places: 12 };
@@ -66,8 +67,15 @@ export function buildCollation(ctx) {
   const plate = new THREE.LatheGeometry([[0, 0], [0.085, 0], [0.098, 0.004], [0.138, 0.013], [0.148, 0.021], [0.153, 0.019], [0.149, 0.012]].map(([x, y]) => new THREE.Vector2(x, y)), 12);
   const medlar = new THREE.IcosahedronGeometry(1, 1), bowl = new THREE.CylinderGeometry(0.034, 0.021, 0.075, 10, 1, true), stem = new THREE.CylinderGeometry(0.005, 0.006, 0.06, 5), foot = new THREE.CylinderGeometry(0.03, 0.033, 0.006, 10), dust = new THREE.CylinderGeometry(0.0225, 0.0225, 0.004, 10), calyx = new THREE.CylinderGeometry(0.01, 0.012, 0.006, 6);
   const PU = []; for (let i = 0; i < 6; i++) PU.push(-4.25 + i * 1.7);
-  for (const side of [-1, 1]) for (const u of PU) {
+  const gone = (side, i) => !THREAD_OFF.chair && side === CHAIR_GONE.side && i === CHAIR_GONE.i;
+  for (const side of [-1, 1]) PU.forEach((u, i) => {
     const v = side * 0.27, tilt = (rng() - 0.5) * 0.02;
+    if (gone(side, i)) { // v8-04: plate, medlar and glass went with the chair; the cloth kept their shapes, darker where it was covered
+      acc.add(new THREE.CylinderGeometry(0.15, 0.15, 0.002, 16), at(u, v, top + 0.0125), '#5f5b56', 0.02);
+      acc.add(new THREE.CylinderGeometry(0.033, 0.033, 0.002, 10), at(u + 0.2, side * 0.43, top + 0.0125), '#5f5b56', 0.02);
+      for (let k = 0; k < 10; k++) rng(); // the stream as if the place were laid (13 draws), so every other place keeps its jitter
+      return;
+    }
     acc.add(plate, at(u, v, top + 0.012, tilt, rng() * 6.28, 0), '#666a72', 0.1); counts.plates++;
     const ms = 0.04 + rng() * 0.008;
     acc.add(medlar, at(u + (rng() - 0.5) * 0.04, v + (rng() - 0.5) * 0.04, top + 0.012 + 0.03, 0, rng() * 6.28, 0).scale(new THREE.Vector3(ms, ms * 0.82, ms)), '#4b2f1b', 0.18);
@@ -78,7 +86,7 @@ export function buildCollation(ctx) {
     acc.add(stem, at(gu, gv, top + 0.036), '#929f98', 0.04);
     acc.add(bowl, at(gu, gv, top + 0.066 + 0.0375), '#a5b3ab', 0.04);
     acc.add(dust, at(gu, gv, top + 0.067 + 0.004), '#58554f', 0.12); counts.glasses++;
-  }
+  });
 
   // chairs
   const chairAt = (x, z, psi, ground, fallen) => {
@@ -90,6 +98,7 @@ export function buildCollation(ctx) {
     for (const sx of [-1, 1]) put(0.04, 0.52, 0.04, sx * 0.19, 0.71, -0.18, '#43362b');
     put(0.42, 0.07, 0.03, 0, 0.93, -0.18, c);
     put(0.4, 0.045, 0.03, 0, 0.74, -0.18, c);
+    put(0.36, 0.028, 0.028, 0, 0.17, 0.18, '#43362b'); // v8-04: the front rung (the carried chair loses its own on the road)
     if (fallen) { const [lo2] = acc.yRange(from); acc.shift(from, ground - lo2 + 0.005); }
     chairs.push({ x, z, fallen, ground, ...(fallen ? { rise: acc.yRange(from)[1] - ground } : {}) });
   };
@@ -101,6 +110,7 @@ export function buildCollation(ctx) {
     // facing: toward the table's axis, turned by jitter
     const psi = Math.atan2(side * SA, -side * CA) + jitter; // facing -side * (world direction of +v) = -side * (-sin, cos)
     if (side === -1 && i === 3) return; // this one is the knocked-over chair, below
+    if (gone(side, i)) return; // v8-04: carried off (src/v8/threads/chair.js)
     chairAt(x, z, psi, H(x, z), false);
     cols.push({ x, z, r: 0.3, y: H(x, z) - 0.1, h: 1.0 });
   });
