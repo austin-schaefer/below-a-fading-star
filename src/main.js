@@ -20,6 +20,7 @@ import { buildMountains } from './v4/mountains.js';
 import { installKit } from './v4/kit/index.js';
 import { makeRegions, REGION_FILES } from './v4/regions.js';
 import { makeTinctures } from './v4/tinctures.js';
+import { installStrata } from './v8/strata.js';
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -66,6 +67,8 @@ const MODULES = [
   ['living-walkers', () => import('./v7/walkers.js')], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
   ['living-workers', () => import('./v7/workers.js')], // v7: BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One (?workers=0)
   ['living-small', () => import('./v7/small.js')], // v7: CM the Indistinct, CO the Repetend, CQ the Simulacrum (?small=0)
+  ['threads', () => import('./v8/threads.js')], // v8-04: stories with two ends (the traveller, the twelfth chair, the gold from the court; ?threads=0)
+  ['strata', () => import('./v8/strata/place.js')], // v8-03: the three hands' signs and spolia across the map (?strata=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -152,6 +155,7 @@ async function start() {
   ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
   ctx.tinctures = makeTinctures(ctx, url); // v4 Tinctures (DI): each region's hue in the haze, ?tinct=0 off
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
+  installStrata(ctx, url); // ctx.strata: the three hands' parts, signs and placements (v8-03)
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce
