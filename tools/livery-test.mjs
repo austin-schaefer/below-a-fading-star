@@ -2,7 +2,7 @@
 // v8-06 the liveries (src/v8/livery.js): every Heliarch officer's mesh carries the ember stole in its vertex colours and
 // a badge (the formal sign) among its parts; every Late figure wears at least three cloths and the sign sewn wrong; the
 // dealings' props stand (the Leerie's slate on his first standard, the keeper's peg at the Kept Fire); the Thurifer bows
-// to a gnomon it passes (one is registered for the test, as brief 01's will be) and walks on.
+// to a gnomon it passes (one registered for the test, then brief 01's own, ctx.roads.gnomons) and walks on.
 // Usage: node tools/livery-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -80,11 +80,16 @@ const nod = await page.evaluate(() => {
   for (let k = 0; k < 200; k++) { const st = T.sim(0.1); modes.add(st.mode); maxK = Math.max(maxK, st.bowK); }
   const after = T.state;
   delete __fp.gnomons;
-  const none = (() => { T.place(s0, 1); const n0 = T.state.nods; T.sim(20); return T.state.nods - n0; })();
-  return { nods: after.nods - before, modes: [...modes], maxK: +maxK.toFixed(2), mode: after.mode, moved: +(after.s - s0).toFixed(1), none };
+  const none = (() => { __fp.gnomons = []; T.place(s0, 1); const n0 = T.state.nods; T.sim(20); delete __fp.gnomons; return T.state.nods - n0; })();
+  // brief 01's own gnomons (ctx.roads.gnomons): those within reach of P3, and the bows in one walk of it
+  const real = (__fp.roads?.gnomons || []).filter((g) => { const p = { s: 0, d: 0 }; tr.project(g.x, g.z, p); return p.d < 3.5; }).length;
+  T.place(1, 1); const r0 = T.state.nods; T.sim(Math.ceil(tr.length / 0.55) + 60, 0.2);
+  const realNods = T.state.nods - r0;
+  return { real, realNods, nods: after.nods - before, modes: [...modes], maxK: +maxK.toFixed(2), mode: after.mode, moved: +(after.s - s0).toFixed(1), none };
 });
 check('the Thurifer bows to a gnomon it passes, once, and walks on', nod.nods === 1 && nod.maxK > 0.25 && nod.maxK < 0.6 && nod.modes.includes('nod') && nod.mode === 'walk' && nod.moved > 6, nod);
 check('with no gnomon registered it never bows to one', nod.none === 0, nod);
+check('it bows at the roads\' own gnomons along P3 (if any stand within reach)', nod.real === 0 || nod.realNods >= 1, { real: nod.real, nods: nod.realNods });
 
 check('no page errors', errors.length === 0, errors.slice(0, 3));
 await browser.close();
