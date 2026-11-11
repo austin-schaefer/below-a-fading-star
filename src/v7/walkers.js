@@ -1,5 +1,5 @@
 // v7, the living: the walkers (world module `living-walkers`): CD the Little Thurifer on P3, CG the Leerie at his
-// standards beside K1, DM the Link-Boy at his post on P4 and on every path lead (wilderness-v5.md, "## v7, the
+// standards beside K1, DM the Link-Boy at his post on P4 and on every path lead (plans/wilderness-v5.md, "## v7, the
 // living"). The rig they share is walkers/gait.js; their fire and smoke one Points (walkers/flames.js); the Link-Boy's
 // drawn shadows one disc (walkers/shadow.js). Main pass: the three bodies, the Thurifer's train, the Points, and the disc
 // while the Link-Boy walks near you: at most 6 draw calls. One new PointLight, the link's.

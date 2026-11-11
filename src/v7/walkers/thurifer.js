@@ -1,4 +1,4 @@
-// CD The Little Thurifer (IDEAS-v5.md CD; wilderness-v5.md "### CD"): a child-sized figure in robes three times too
+// CD The Little Thurifer (plans/IDEAS-v5.md CD; plans/wilderness-v5.md "### CD"): a child-sized figure in robes three times too
 // long, the hem dragging a train metres behind, swinging a censer that gives off a thin blue smoke, walking P3
 // between the Wayside Shrine and the Cardinal Stones and back. From far off a child; up close, under the hood, the face
 // is old and unfinished. Approach and it steps off the track, bows far too low, and waits for you to pass.

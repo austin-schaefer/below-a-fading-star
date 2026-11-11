@@ -1,4 +1,4 @@
-// Lees Tarn's new shore (v4 regions; wilderness-v4-placement.md section 2, "The new shore"): Austin's "make the
+// Lees Tarn's new shore (v4 regions; plans/wilderness-v4-placement.md section 2, "The new shore"): Austin's "make the
 // lake not perfectly circular". The old round basin (terrain.js) keeps its shore everywhere but two places: a
 // south bay that reaches z 200 beside the Trigon Span's dry bed, and a shingle spit running 28 m west-north-west
 // from the south-east shore. WATER.tarn grows to r 92 so its surface covers the bay; tarnWet() says where the

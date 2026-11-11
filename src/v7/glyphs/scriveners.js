@@ -1,4 +1,4 @@
-// CP The Scriveners [Proposed] (wilderness-v5.md, "### CP. The Scriveners"): "A shoal of small dark fish in the tarn's north
+// CP The Scriveners [Proposed] (plans/wilderness-v5.md, "### CP. The Scriveners"): "A shoal of small dark fish in the tarn's north
 // shallows that arranges itself, for a breath at a time, into one of the Hypogeum's glyphs, holds it, and breaks up. The
 // glyph is the one the bronze door showed last."
 // 70 fish (45 at low), 14 cm, one instanced mesh with the tail beat in its vertex shader (fauna/geo.js flapMaterial's

@@ -1,4 +1,4 @@
-// BT The Demesne [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.demesne in
+// BT The Demesne [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.demesne in
 // world.js). "The keep's home ground, once a park: turf grazed short and gone tussocky, the outlines of parterres
 // showing as ridges under the grass, yew shapes clipped long ago into cones and urns and now grown shapeless, and
 // dressed blocks scattered from the fallen curtain tower. The boundary is a ha-ha, a sunk wall in a ditch that you

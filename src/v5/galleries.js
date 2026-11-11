@@ -1,6 +1,6 @@
-// AL The Galleries of Durance [Proposed] (IDEAS-v4.md AL; wilderness-v4.md: "make the whole thing active: no figures
+// AL The Galleries of Durance [Proposed] (plans/IDEAS-v4.md AL; plans/wilderness-v4.md: "make the whole thing active: no figures
 // seen, but machinery turns, chains move up and down, gantries shift, animation with no visible animating force"; site in
-// wilderness-v4-placement.md section 5, key `galleries`, (-390, -80), 60-260 m up, r 70, the west wall).
+// plans/wilderness-v4-placement.md section 5, key `galleries`, (-390, -80), 60-260 m up, r 70, the west wall).
 // North of the sun's saddle the west wall's face carries eleven tiers of galleries between 68 and 245 m up (bearings
 // 268-296, densest 271.5-292.5, thinning into fragments beyond) and four catwalks, each a run of
 // one repeated bay (a deck, a post, a lintel, a roof beam into the rock, a lattice screen in some bays) laid along the

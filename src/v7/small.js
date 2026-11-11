@@ -1,4 +1,4 @@
-// v7, the living: three little characters on the edge of perception (wilderness-v5.md, "### CM. The Indistinct",
+// v7, the living: three little characters on the edge of perception (plans/wilderness-v5.md, "### CM. The Indistinct",
 // "### CO. The Repetend", "### CQ. The Simulacrum"). World module `living-small`.
 //   small/indistinct.js  CM the Indistinct: a blur that keeps seven metres from you along the ha-ha's ditch (a shader and a constraint)
 //   small/repetend.js    CO the Repetend: a brown bird on the Lynchets' walls that repeats your footsteps a second late (audio.echoStep)
@@ -10,7 +10,7 @@ import { buildIndistinct } from './small/indistinct.js';
 import { buildRepetend } from './small/repetend.js';
 import { buildSimulacrum } from './small/simulacrum.js';
 
-const FACE_DEFAULT = true; // the face is built (the time-box's verdict: wilderness-v5.md, "### CQ. The Simulacrum")
+const FACE_DEFAULT = true; // the face is built (the time-box's verdict: plans/wilderness-v5.md, "### CQ. The Simulacrum")
 
 function flags() {
   const q = new URLSearchParams(location.search), off = (k) => q.get(k) === '0';

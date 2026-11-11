@@ -1,6 +1,6 @@
 // v7, the living: the Tumbling Water's canyon (world module living-canyon; ?canyon=0 leaves it out).
 //
-// CE The Bather (IDEAS-v5.md CE; wilderness-v5.md "### CE. The Bather"; ?bather=0): "Seen only from the canyon's rim: a
+// CE The Bather (plans/IDEAS-v5.md CE; plans/wilderness-v5.md "### CE. The Bather"; ?bather=0): "Seen only from the canyon's rim: a
 // woman eight metres tall reclining in the slow pool below the second rapid, pale shoulders and hair in the water,
 // washing one arm with slow care. She never looks up. Climb down into the Clough and there are only long pale stones in
 // the river and the water moving round them." Austin: "a classy, featureless nude". She lies along the pool below the
@@ -12,7 +12,7 @@
 // instant; in view the two cross-fade over 1.2 s by a dithered screen door, never a pop. From the rim, at each turn of
 // her stroke (every 8 s), the cue 'bather-pour'.
 //
-// CX The Toadstone (IDEAS-v5.md CX; "### CX. The Toadstone"; ?toadstone=0): "A fat toad on a wet ledge of the Clough
+// CX The Toadstone (plans/IDEAS-v5.md CX; "### CX. The Toadstone"; ?toadstone=0): "A fat toad on a wet ledge of the Clough
 // with a red stone set in its forehead like a cabochon, which glows faintly when the sun gutters. It never moves."
 // Austin: without the turning-to-face-you. On drawn ground under 20 degrees within 2 m of SITES.toadstone, seen from the
 // rim path, nearest the lip.
@@ -32,7 +32,7 @@ const Q = new URLSearchParams(location.search);
 const OFF = Q.get('canyon') === '0';
 const BATHER = Q.get('bather') !== '0', TOADSTONE = Q.get('toadstone') !== '0';
 
-// The rule (wilderness-v5.md, "### CE. The Bather"; briefs/v7/index.md item 23, v7.1): the stones within 4 m of her
+// The rule (plans/wilderness-v5.md, "### CE. The Bather"; briefs/v7/index.md item 23, v7.1): the stones within 4 m of her
 // masses, her again from 6 m; rimRise is the height over the pool's water from which her stroke's cue is heard.
 export const SWAP = { near: 4, rearm: 6, rimRise: 3.5, fade: 1.2, margin: 10 * Math.PI / 180 };
 

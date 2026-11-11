@@ -1,6 +1,6 @@
-// AW The Plinth Road [Proposed] (IDEAS-v4.md AW; wilderness-v4.md: "with no human feet: bird feet, pigs' hooves,
+// AW The Plinth Road [Proposed] (plans/IDEAS-v4.md AW; plans/wilderness-v4.md: "with no human feet: bird feet, pigs' hooves,
 // reptilian feet, all emerging from robes, so it reads as a row of robed half-human figures that are gone"; site in
-// wilderness-v4-placement.md section 5, key `plinths`, from (130, -150) to (165, -290), corridor 30 m).
+// plans/wilderness-v4-placement.md section 5, key `plinths`, from (130, -150) to (165, -290), corridor 30 m).
 // A processional way runs north-north-east from the Bletting's hedge, at the gap P7 comes through, toward the wall:
 // twelve pairs of plinths 11 m apart, the first pair 22 m up the line, the last at the plan's end (165, -290) on the
 // talus, each plinth 20 m of the kit's coursed masonry (a footing, a step, a battered die, a cornice, a crown slab),

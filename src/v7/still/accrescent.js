@@ -1,4 +1,4 @@
-// CL The Accrescent (IDEAS-v5.md CL; wilderness-v5.md "### CL. The Accrescent"; ?accrescent=0).
+// CL The Accrescent (plans/IDEAS-v5.md CL; plans/wilderness-v5.md "### CL. The Accrescent"; ?accrescent=0).
 // "A man walking south out of the Lattice at one step an hour, his trailing half grown through with glacial-blue crystal
 // from heel to shoulder, his front half still flesh and robes. Each step leaves a glassy footprint that stays. Come close
 // and he does not see you; his eyes are on the keep. Sound: a faint tinkle like ice in a glass at each step." Austin:

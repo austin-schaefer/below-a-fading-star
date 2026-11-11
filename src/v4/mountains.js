@@ -1,4 +1,4 @@
-// The walls: the bowl's mountains as five massifs with deep cols between them (wilderness-v5.md, "The massifs"):
+// The walls: the bowl's mountains as five massifs with deep cols between them (plans/wilderness-v5.md, "The massifs"):
 //   tier 1, the massifs, in the heightfield (terrain.js calls applyMountains in a marked block): the north-east
 //          (20-100°, to 300 m: the Ridge, the Vigilant), the south-east (125-172°, the Horn to 335 m), the south
 //          (190-235°, ~300 m), the west (265-318°, to 320 m: the Galleries) and the Tierce (336-356°, 300 m); the

@@ -1,4 +1,4 @@
-// DH The Surveyor's Pegs [Proposed] (wilderness-v5.md): "a line of wooden pegs, each with a faded ribbon, runs dead straight
+// DH The Surveyor's Pegs [Proposed] (plans/wilderness-v5.md): "a line of wooden pegs, each with a faded ribbon, runs dead straight
 // from the north wall to the south wall, ignoring everything: ... across the causeway, into Lees Tarn and out the other side,
 // under the Great Span. Every hundred metres, a peg with a brass cap. The surveyor is not to be found." Along x = -80 from
 // z -285 to 285 (placement plan section 4; the Lynchets' walls are no longer on it).

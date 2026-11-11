@@ -1,5 +1,5 @@
-// BA The Hawser [Proposed] (v5 wonder; IDEAS-v4.md BA, wilderness-v4.md "Yes, emphatically"; site in
-// wilderness-v4-placement.md section 5 and answer 3). One stud-link chain of dressed iron, each link 15 m long, runs taut
+// BA The Hawser [Proposed] (v5 wonder; plans/IDEAS-v4.md BA, plans/wilderness-v4.md "Yes, emphatically"; site in
+// plans/wilderness-v4-placement.md section 5 and answer 3). One stud-link chain of dressed iron, each link 15 m long, runs taut
 // and straight from a bronze hawse collar in the bare rock of the north wall (on the bearing of (-120, -380), where the
 // face reaches y 100) down across the north-west floor into the Sunken Court's paving at COURT.hawser (-40, -189), where
 // it goes into the ground. It is held down: once in a long while whatever is below takes one more link. The whole chain

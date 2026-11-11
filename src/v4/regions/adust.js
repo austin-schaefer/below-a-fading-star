@@ -1,4 +1,4 @@
-// BW The Adust [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.adust in
+// BW The Adust [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.adust in
 // world.js). "The apron under the west wall, nearest the sun and burnt by it for ages: clay cracked into hexagons,
 // small drifts of red sand, sandstone pavements varnished black on the sun side, and plants that are only rosettes
 // and cushions, everything leaning a little east as if from heat. The air is dust lit red; stones tick as they

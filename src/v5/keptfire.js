@@ -1,4 +1,4 @@
-// DN The Kept Fire [Proposed] (IDEAS-v5.md DN; wilderness-v5.md "### DN"; site in wilderness-v4-placement.md section 5,
+// DN The Kept Fire [Proposed] (plans/IDEAS-v5.md DN; plans/wilderness-v5.md "### DN"; site in plans/wilderness-v4-placement.md section 5,
 // key `keptFire`, (10, -190), r 6, beside lead P6 on the Outwash): a hearth in a ring of stones, always burning, a
 // blackened iron pot on a hook from a tripod of rods, a pile of driftwood beside it that is a little higher each
 // visit, a flat stone to sit on. Nobody is ever there: no figure, no footprints, nothing else of anyone's. Come near

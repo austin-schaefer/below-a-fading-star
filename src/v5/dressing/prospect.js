@@ -1,4 +1,4 @@
-// DF The Unfinished Prospect [Decided, time-boxed] (IDEAS-v5.md DF; Hubert Robert): at the brow of the High Ling, looking
+// DF The Unfinished Prospect [Decided, time-boxed] (plans/IDEAS-v5.md DF; Hubert Robert): at the brow of the High Ling, looking
 // west over the bowl, an easel with a canvas of that exact view, carefully painted, except that the painted sun is small
 // and white and the sky blue. A stool, a small table with dishes of paint dried hard, a palette with a brush across it.
 //

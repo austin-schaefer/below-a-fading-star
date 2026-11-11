@@ -1,5 +1,5 @@
-// The Lattice's mother crystal (v5 recast, the awe audit; wilderness-v4.md: "one mother crystal 60 m tall at the
-// moraine's heart, the small ones its litter"; site in wilderness-v4-placement.md section 5). One crystal standing
+// The Lattice's mother crystal (v5 recast, the awe audit; plans/wilderness-v4.md: "one mother crystal 60 m tall at the
+// moraine's heart, the small ones its litter"; site in plans/wilderness-v4-placement.md section 5). One crystal standing
 // out of the glacier's tongue at the Lattice's seed (LANDMARKS.moraine, 40, -265): a six-sided prism 60 m from the
 // ice to its apex, two parallel crystals grown into its flanks and stopped short of it (one terminated at 41 m, one
 // left open at 29 m, its growth face stepped and unfinished), a ring of offshoots leaning out of its lower third, and

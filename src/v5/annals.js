@@ -1,4 +1,4 @@
-// AK The Annals [Proposed] (IDEAS-v4.md AK; site in wilderness-v4-placement.md section 5, key `annals`; SITES.annals in
+// AK The Annals [Proposed] (plans/IDEAS-v4.md AK; site in plans/wilderness-v4-placement.md section 5, key `annals`; SITES.annals in
 // world.js). A frieze runs round the bowl's main wall 110-130 m up: a procession of figures each 40 m tall, walking
 // sunwise (toward rising bearings, to the viewer's right on every wall), worn almost smooth. The band is narrower
 // than the figures, so their feet and heads are lost: it shows hips, torsos, the swing of arms and whatever each one

@@ -1,4 +1,4 @@
-// CG The Leerie (IDEAS-v5.md CG with Austin's change; wilderness-v5.md "### CG"): a lamplighter with a long brass pole
+// CG The Leerie (plans/IDEAS-v5.md CG with Austin's change; plans/wilderness-v5.md "### CG"): a lamplighter with a long brass pole
 // and a small flame at its tip, walking the row of iron standards beside kerb K1. At each he raises the pole, touches
 // the flame to the wick, waits, and walks on; none of them lights. Only when the sun gutters does the row light (the
 // lights module's wave, src/v5/lights.js: he never writes a lamp's state), and he never looks round at it. When the

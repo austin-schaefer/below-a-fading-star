@@ -1,4 +1,4 @@
-// DG The Long Figure [Proposed] (wilderness-v5.md; site in wilderness-v4-placement.md): "on the lowest slope of the east
+// DG The Long Figure [Proposed] (plans/wilderness-v5.md; site in plans/wilderness-v4-placement.md): "on the lowest slope of the east
 // wall, facing the sun, a figure 80 m long cut through the turf to pale stone: a standing person with too many arms, or a
 // person with their arms in several places at once, as in a slow photograph." Above the Foundered Nave; seen best from the
 // Span's deck and from the keep.

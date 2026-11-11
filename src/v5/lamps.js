@@ -1,6 +1,6 @@
-// AO The Escarpment Lamps [Decided: "Yes, multi-coloured lights, not all warm."] (IDEAS-v4.md AO; wilderness-v4.md; site in
-// wilderness-v4-placement.md, key `lamps`: the north-west wall's face at bearings 300-318, 60-220 m up, in the part the sun never
-// reaches; wilderness-v5.md "### AO"). High on the west massif, a scatter of hundreds of tiny window-lights, far too high and
+// AO The Escarpment Lamps [Decided: "Yes, multi-coloured lights, not all warm."] (plans/IDEAS-v4.md AO; plans/wilderness-v4.md; site in
+// plans/wilderness-v4-placement.md, key `lamps`: the north-west wall's face at bearings 300-318, 60-220 m up, in the part the sun never
+// reaches; plans/wilderness-v5.md "### AO"). High on the west massif, a scatter of hundreds of tiny window-lights, far too high and
 // too many for anything on the floor. Each time the sun gutters, one of them goes out and stays out for the session: over a long
 // walk the wall gets darker. No inhabitants, no story: windows, in rows.
 //

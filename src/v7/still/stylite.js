@@ -1,4 +1,4 @@
-// CI The Stylite (IDEAS-v5.md CI; wilderness-v5.md "### CI. The Stylite"; ?stylite=0).
+// CI The Stylite (plans/IDEAS-v5.md CI; plans/wilderness-v5.md "### CI. The Stylite"; ?stylite=0).
 // "On top of the tallest tor of the High Ling sits a gaunt man in a loincloth, cross-legged, facing the sun, unmoving. A
 // rope runs from his hand down the tor's face to a basket at the foot. When you come near, the basket rises, empty, to
 // his hand and then lowers again, as if offered. He never looks down. Sound: the rope's creak." No special shadow (DR

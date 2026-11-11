@@ -1,4 +1,4 @@
-// CQ The Simulacrum [Proposed] (wilderness-v5.md, "### CQ. The Simulacrum"): "Winter gnats dancing in columns over the
+// CQ The Simulacrum [Proposed] (plans/wilderness-v5.md, "### CQ. The Simulacrum"): "Winter gnats dancing in columns over the
 // Outwash's meltwater pools. When the sun gutters, one column draws together into a face, a long grave face the size of
 // a man's, that looks at you and comes apart when the light comes back." Austin: liked but doubted; time-boxed.
 // Four columns within r 5 of (20, -205), 240 gnats each (120 at low), one Points for all: each column 0.6 m wide and 3.0 m

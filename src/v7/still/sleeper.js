@@ -1,4 +1,4 @@
-// CB The Long Sleeper (IDEAS-v5.md CB; wilderness-v5.md "### CB. The Long Sleeper"; ?sleeper=0).
+// CB The Long Sleeper (plans/IDEAS-v5.md CB; plans/wilderness-v5.md "### CB. The Long Sleeper"; ?sleeper=0).
 // "Under a single old medlar outside the close, a man asleep on his back in robes of a cut nobody wears, his beard grown
 // into the grass and a ring of brown toadstools round him. He breathes once a minute, deeply enough to see. He never
 // wakes; come close and his eyelids move as if he dreamed you. Sound: the breath, and a fruit dropping onto him now and
@@ -10,7 +10,7 @@ import { hyp } from '../../noise.js';
 import { Painter, paintedMaterial, ell, strand, conform, clamp, smooth, lerp, ZERO, hash3 } from './kit.js';
 import { medlarGeometry } from './medlar.js';
 
-// the numbers (all of them in wilderness-v5.md)
+// the numbers (all of them in plans/wilderness-v5.md)
 export const SLEEP = {
   length: 1.85, beard: 1.2, ringN: [18, 24], ringR: [1.6, 2.0], capD: [0.04, 0.09],
   breath: { period: 60, phase: 17, inhale: 3.5, hold: 0.5, exhale: 5, lift: 0.05 },

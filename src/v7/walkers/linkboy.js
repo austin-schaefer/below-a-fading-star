@@ -1,4 +1,4 @@
-// DM The Link-Boy (IDEAS-v5.md DM; wilderness-v5.md "### DM"): a thin youth in a long coat carrying a flaming link, who
+// DM The Link-Boy (plans/IDEAS-v5.md DM; plans/wilderness-v5.md "### DM"): a thin youth in a long coat carrying a flaming link, who
 // meets you on the lead paths between places and walks ahead of you, ten metres off, lighting the way to the next
 // landmark. He never speaks and never looks back; at the place he stands aside and goes back the way he came. His light
 // throws the drystone walls' and the heather's shadows swinging across the ground as he walks.

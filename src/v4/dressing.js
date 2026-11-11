@@ -1,5 +1,5 @@
 // v4 terrain set-dressing, one world module: DG the Long Figure, DC the Discontinued Track, DH the Surveyor's Pegs
-// (wilderness-v4-placement.md, "Terrain set-dressing in v4"). Each part is in src/v4/dressing/; ctx.dressing = { figure,
+// (plans/wilderness-v4-placement.md, "Terrain set-dressing in v4"). Each part is in src/v4/dressing/; ctx.dressing = { figure,
 // track, pegs, stats() } (draw calls and triangles all four together cost when in view). ?skip=dressing leaves it out.
 import { buildFigure } from './dressing/figure.js';
 import { buildTrack } from './dressing/track.js';

@@ -1,4 +1,4 @@
-// The local lights (v5; wilderness-v4.md Light (a), wilderness-v4-placement.md's `lightMoss`, `lightEmbers`,
+// The local lights (v5; plans/wilderness-v4.md Light (a), plans/wilderness-v4-placement.md's `lightMoss`, `lightEmbers`,
 // `lightPost`, `lightDoor` and `leerie`). Five small lit things on the walk, each a reason to walk toward it:
 //   moss    bioluminescent moss in a hollow of the Deodand Wood: clumps and three roots glowing cold green-blue,
 //           brightest at the hollow's bottom, a pool on the ground, a haze over it, motes. No real light.
@@ -9,7 +9,7 @@
 //   door    the lens mount's door in the south fin, ajar: a slit of warm light at its west edge, the east jamb lit,
 //           a wedge on the ground outside. One real light, r 8, just inside.
 //   leerie  the Leerie's twelve lamp-standards beside kerb K1, unlit, except while the sun gutters: then all twelve
-//           light in a wave along the row with a flare and a tick each, and go out together when it ends (IDEAS-v5.md CG
+//           light in a wave along the row with a flare and a tick each, and go out together when it ends (plans/IDEAS-v5.md CG
 //           with Austin's change; the lamplighter who walks the row is v7's). Emissive heads and glow sprites; two real
 //           lights, r 12, at the row's quarter points, on only while it is lit.
 // Draws: one mesh of solids (vertex colours, emissive per vertex by channel; casts) and one mesh of glows (additive
