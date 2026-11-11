@@ -15,13 +15,15 @@ import * as THREE from 'three';
 import { clamp, smoothstep, lerp, hyp } from '../../noise.js';
 import { Track, Gait, figurePainter, figureMesh, rootMatrix, about, hang, point, easeYaw, standGround, TAU, DEG } from './gait.js';
 import { angDiff } from '../../fauna/uncanny/kit.js';
+import { LIVERY, lv, stole, badge, collar } from '../../v8/livery.js';
 
 const H = 1.15, SPEED = 0.55, STRIDE = 0.55, TURN_T = 3, PAUSE_T = 6;
 const CHAIN = 0.8, SWING = 35 * DEG, PERIOD = 1.8;
 const BOW = { near: 10, close: 0.3, inner: 5, step: 1.6, stepT: 2.5, pitch: 75 * DEG, downT: 1.5, hold: 6, passed: 3, far: 14, upT: 1.5, backT: 2 };
+const NOD = { reach: 3.5, turn: 0.8, down: 0.9, hold: 1.0, up: 0.9, k: 0.35 }; // v8-06: the bow to a gnomon
 const TRAIN = { segs: 12, across: 4, len: 2.75, every: 0.25, lift: 0.03 };
 const HIP = 0.5;
-const ROBE = '#15110f', ROBE_HI = '#30231a', VOID = '#040303', SKIN = '#77695d', SKIN_D = '#3e322c', BRASS = '#8e6a32', BRASS_D = '#3a2a16';
+const ROBE = lv('#15110f', LIVERY.coat), ROBE_HI = lv('#30231a', LIVERY.coatHi), VOID = '#040303', SKIN = '#77695d', SKIN_D = '#3e322c', BRASS = '#8e6a32', BRASS_D = '#3a2a16';
 const PARTS = 6; // 0 skirt, 1 torso and hood, 2 left arm, 3 right arm, 4 the censer, 5 its chain
 
 function table(tab, v) {
@@ -74,6 +76,23 @@ function paint(n2, low) {
     P.paint(new THREE.Color(SKIN).lerp(new THREE.Color(SKIN_D), dark).getHex(), 0, 0.8);
     o[0] = x; o[1] = y; o[2] = z;
   });
+  // v8-06 the livery: the Heliarch collar round the hood's foot, the ember stole down the front (a child's, to the
+  // knees of a robe three times too long, so its ends drag at the hem), the formal sign as a brass badge between
+  if (LIVERY.on) {
+    P.part(1).hem(0);
+    collar(P, 0, 0.75, 0.0, 0.135, 0.08, LIVERY.coat, { sides: low ? 10 : 14, gap: 0.7 });
+    const front = (y) => table(R_ROBE, clamp(y / 0.84, 0, 1)) * 0.8 * 1.08 + 0.02 * (y / 0.84) + 0.012;
+    for (const sx of [-1, 1]) {
+      const ys = [0.82, 0.74, 0.62, 0.5, 0.38, 0.26, 0.14, 0.04];
+      const pts = ys.map((y, i) => [sx * (0.07 + 0.012 * i), y, (i === 0 ? 0.11 : front(y))]);
+      stole(P, pts, { w: 0.095, out: [0, 0.15, 1], seed: sx + 3, dirt: 0.4, fray: 0.04,
+        each: (t) => { const y = 0.82 - t * 0.78, w = smoothstep(HIP - 0.08, HIP + 0.08, y); P.part(0, 1, w).hem(smoothstep(0.3, 0.05, y) * 0.6); } });
+    }
+    // round the back of the neck, under the hood's rim
+    P.part(1).hem(0);
+    stole(P, [[-0.07, 0.82, 0.11], [-0.12, 0.84, 0.02], [-0.08, 0.86, -0.1], [0.08, 0.86, -0.1], [0.12, 0.84, 0.02], [0.07, 0.82, 0.11]], { w: 0.08, out: (t, p) => [p[0], 0.3, p[2]], fray: 0, dirt: 0, seed: 9 });
+    badge(P, [0, 0.7, front(0.7) + 0.012], [0, 1, 0], [0, 0.1, 1], 0.07, { th: 0.008 });
+  }
   // the left sleeve: hanging, far too long, nothing showing at the cuff
   P.part(2).paint(ROBE, 0, 0.97);
   P.loft([[SH_L[0], SH_L[1], 0], [0.19, 0.55, 0.02], [0.2, 0.36, 0.05], [0.2, 0.27, 0.06]], [0.045, 0.06, 0.075, 0.08], low ? 6 : 8, 0, true);
@@ -109,7 +128,7 @@ export function buildThurifer(ctx, F, cue) {
   // ---- the train: a strip on the ground behind it, world space, rebuilt when the hem moves
   const nr = TRAIN.segs + 1, nc = TRAIN.across + 1;
   const tpos = new Float32Array(nr * nc * 3), tcol = new Float32Array(nr * nc * 3), tidx = [];
-  const cA = new T.Color(ROBE), cB = new T.Color('#2a2219');
+  const cA = new T.Color(ROBE), cB = new T.Color(lv('#2a2219', '#3a3c40'));
   for (let j = 0; j < nr; j++) for (let i = 0; i < nc; i++) {
     const k = j * nc + i, f = j / (nr - 1), wear = clamp(f * 0.8 + 0.25 * ctx.noise.noise2(i * 1.3, j * 0.7), 0, 1);
     const c = cA.clone().lerp(cB, wear * 0.6);
@@ -139,7 +158,7 @@ export function buildThurifer(ctx, F, cue) {
   // ---- state
   const S = {
     s: 0, dir: 1, mode: 'walk', t: 0, yaw: 0, x: 0, z: 0, gy: 0, off: 0, offSide: 1, bowK: 0, faceYaw: 0,
-    walkerSide: 0, held: null, heldK: 1, swingA: 1, turnFrom: 0, turnTo: 0, shrineS: null, cloakAt: null, hiss: false, bows: 0, armed: true,
+    walkerSide: 0, held: null, heldK: 1, nods: 0, swingA: 1, turnFrom: 0, turnTo: 0, shrineS: null, cloakAt: null, hiss: false, bows: 0, armed: true,
   };
   const at = { x: 0, z: 0, tx: 0, tz: 1 };
   const gait = new Gait('thurifer', H, () => STRIDE, (f, i) => {});
@@ -176,7 +195,7 @@ export function buildThurifer(ctx, F, cue) {
 
   function pose(dt, t) {
     const sw = Math.sin((t / PERIOD) * TAU);
-    S.swingA = lerp(S.swingA, S.mode === 'walk' || S.mode === 'turn' || S.mode === 'pause' ? 1 : 0, 1 - Math.exp(-2.5 * dt));
+    S.swingA = lerp(S.swingA, S.mode === 'walk' || S.mode === 'turn' || S.mode === 'pause' || S.mode === 'nod' ? 1 : 0, 1 - Math.exp(-2.5 * dt));
     const swing = SWING * sw * S.swingA;
     const dsw = Math.cos((t / PERIOD) * TAU);
     const sign = dsw > 0 ? 1 : -1;
@@ -245,6 +264,19 @@ export function buildThurifer(ctx, F, cue) {
   }
 
   function setMode(m) { S.mode = m; S.t = 0; }
+  // v8-06: the gnomons brief 01 sets along the tracks, read at run time (ctx.gnomons, or ctx.roads.gnomons: [{x, z}] or
+  // objects with a position); none registered, no bow. One bow a gnomon a pass: it must be 20 m off before the next.
+  function gnomonList() { const g = ctx.gnomons || ctx.roads?.gnomons || ctx.paths?.gnomons; return Array.isArray(g) ? g : null; }
+  function nodTarget() {
+    if (!LIVERY.on) return false;
+    const list = gnomonList(); if (!list) return false;
+    if (S.nodLast && hyp(S.nodLast.x - S.x, S.nodLast.z - S.z) > 20) S.nodLast = null;
+    for (const g of list) {
+      const p = g.position || g, d = hyp(p.x - S.x, p.z - S.z);
+      if (d < NOD.reach && d > 0.4 && (!S.nodLast || S.nodLast.g !== g)) { S.nodAt = { x: p.x, z: p.z }; S.nodLast = { g, x: p.x, z: p.z }; return true; }
+    }
+    return false;
+  }
   // facing the track from the side it stands on (the track's left is (tz, -tx))
   function faceTrackYaw() { track.at(S.s, at); return Math.atan2(-at.tz * S.offSide, at.tx * S.offSide); }
   function hiss(on) { if (on !== S.hiss) { S.hiss = on; cueP.x = S.x; cueP.y = S.gy + 0.2; cueP.z = S.z; cue('thurifer-hiss', cueP, on ? { start: true } : { stop: true }); } }
@@ -274,7 +306,15 @@ export function buildThurifer(ctx, F, cue) {
         S.s += S.dir * v * dt;
         const end = S.dir > 0 ? track.length : S.shrineS;
         if ((S.dir > 0 && S.s >= end) || (S.dir < 0 && S.s <= end)) { S.s = end; S.turnFrom = S.yaw; S.turnTo = S.yaw + Math.PI; setMode('turn'); }
+        else if (S.held == null && (S.nodT = (S.nodT || 0) + dt) > 0.5 && (S.nodT = 0, nodTarget())) { S.nods++; setMode('nod'); }
         else S.yaw = easeYaw(S.yaw, track.heading(S.s) + (S.dir < 0 ? Math.PI : 0), dt);
+        break;
+      }
+      case 'nod': { // v8-06: a bow to a gnomon in passing, a third of the one it gives you
+        const g = S.nodAt, want = Math.atan2(g.x - S.x, g.z - S.z);
+        S.yaw = easeYaw(S.yaw, S.t < NOD.down + NOD.hold ? want : track.heading(S.s) + (S.dir < 0 ? Math.PI : 0), dt, 2.4);
+        S.bowK = S.t < NOD.turn ? 0 : S.t < NOD.turn + NOD.down ? NOD.k * smoothstep(0, 1, (S.t - NOD.turn) / NOD.down) : S.t < NOD.turn + NOD.down + NOD.hold ? NOD.k : NOD.k * (1 - smoothstep(0, 1, (S.t - NOD.turn - NOD.down - NOD.hold) / NOD.up));
+        if (S.t >= NOD.turn + NOD.down + NOD.hold + NOD.up + 0.6) { S.bowK = 0; setMode('walk'); }
         break;
       }
       case 'turn': {
@@ -343,7 +383,7 @@ export function buildThurifer(ctx, F, cue) {
 
   const api = {
     root, train, mesh: fig.mesh, track, collider,
-    get state() { return { s: S.s, dir: S.dir, mode: S.mode, x: S.x, z: S.z, yaw: S.yaw, off: S.off, bowK: S.bowK, bows: S.bows, shrineS: S.shrineS, cloakAt: S.cloakAt, length: track.length }; },
+    get state() { return { s: S.s, dir: S.dir, mode: S.mode, x: S.x, z: S.z, yaw: S.yaw, off: S.off, bowK: S.bowK, bows: S.bows, nods: S.nods, shrineS: S.shrineS, cloakAt: S.cloakAt, length: track.length }; },
     // place(s, dir): put it walking at arc length s in direction dir
     place(s, dir = 1) { S.s = clamp(s, S.shrineS ?? 0, track.length); S.dir = dir; S.off = 0; S.bowK = 0; S.held = null; S.yaw = track.heading(S.s) + (dir < 0 ? Math.PI : 0); setMode('walk'); seedRing(); place(); pose(0, ctx.time.t); trainUpdate(); return api.state; },
     // bow(s, k = 1, side = 1): pose it bowed (k of the full bow) off the track at s, and hold; bow(null) lets go
