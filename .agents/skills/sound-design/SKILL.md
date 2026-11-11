@@ -1,6 +1,6 @@
 ---
 name: sound-design
-description: How an agent designs, changes and judges sound it cannot hear. Load before touching any procedural audio in this repo (prototypes/wilderness/src/audio*, the regions' sound hooks, any `ctx.audio.cue` site), as implementer or reviewer. Covers the render-measure-look loop, the harness tools, the craft rules that keep synthesised sound pleasant, the pacing rules that keep a soundscape from feeling random, and the world's sound palette.
+description: How an agent designs, changes and judges sound it cannot hear. Load before touching any procedural audio in this repo (src/audio*, the regions' sound hooks, any `ctx.audio.cue` site), as implementer or reviewer. Covers the render-measure-look loop, the harness tools, the craft rules that keep synthesised sound pleasant, the pacing rules that keep a soundscape from feeling random, and the world's sound palette.
 ---
 
 # Sound design
@@ -34,6 +34,6 @@ Companion files: `craft.md` (why things sound bad and what to do instead, with n
 ## Working here
 
 - Load the `wilderness` skill too; its pace rules (ports, one browser at a time, `nice -n 10`, tests before pushing) apply.
-- Audio renders are WAVs and PNGs in `prototypes/wilderness/shots/wip/audio/`, gitignored. Only metrics JSON and the survey's markdown table may be committed, under `prototypes/wilderness/briefs/<version>/audio/`.
+- Audio renders are WAVs and PNGs in `shots/wip/audio/`, gitignored. Only metrics JSON and the survey's markdown table may be committed, under `briefs/<version>/audio/`.
 - `tools/audio-test.mjs` checks that cues sound; the harness checks how they sound. Both must pass.
-- A design question about *what* a thing should sound like goes to `proposals/` as a `type: question` file (see `design-partner`). *How* it sounds is yours.
+- *What* a thing sounds like and *how* it sounds are both yours; the milestone doc records what you settled.

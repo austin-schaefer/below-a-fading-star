@@ -1,6 +1,6 @@
 # Wilderness modules
 
-What each module under `prototypes/wilderness/src/` owns. Every agent that adds a module extends this table by one row; a module that changes what it owns updates its row.
+What each module under `src/` owns. Every agent that adds a module extends this table by one row; a module that changes what it owns updates its row.
 
 `src/world.js` is the map: `LANDMARKS` (each with a centre, radius, placeholder name and a line of flavour; one may have an `axis`, a line it is the distance to, and `at`, where the debug panel lands you), the `CAUSEWAY` polyline, `WATER` bodies, `SPAWN`, `SUN` (fixed direction) and `PALETTE`; and for v4, `PEAKS` (the named peaks on the walls), `REGIONS` (the bioregions' shapes), `SITES` (every reserved v4-v6 site, not yet landmarks) and `CAUSEWAY_V4` (the road from the colossi's feet to the pit: `ctx.causeway` and `causewayDistance` use it; `CAUSEWAY` stays v3's stretch for the bench and the things placed by it). Names are **[Proposed]** placeholders in the game's register; Austin decides names, per `design/naming.md`.
 

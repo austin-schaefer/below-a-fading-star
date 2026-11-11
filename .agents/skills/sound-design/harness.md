@@ -1,6 +1,6 @@
 # The harness
 
-Tools live in `prototypes/wilderness/tools/`; run them from `prototypes/wilderness/`. They run against a served build (`tools/serve.sh PORT`, your own port from 8160 up; `B=http://localhost:PORT`). `nice -n 10` and `SHOT_ANGLE=metal` in front of every call, one browser at a time. Outputs go to `shots/wip/audio/` (gitignored; never commit a WAV or PNG). The tools are dependency-free beyond the Playwright already used by every other tool; no npm audio packages.
+Tools live in `tools/`; run them from the repository root. They run against a served build (`tools/serve.sh PORT`, your own port from 8160 up; `B=http://localhost:PORT`). `nice -n 10` and `SHOT_ANGLE=metal` in front of every call, one browser at a time. Outputs go to `shots/wip/audio/` (gitignored; never commit a WAV or PNG). The tools are dependency-free beyond the Playwright already used by every other tool; no npm audio packages.
 
 ## Render: `tools/audio-render.mjs`
 

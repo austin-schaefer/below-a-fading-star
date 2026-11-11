@@ -1,5 +1,5 @@
 #!/bin/zsh
-cd /Users/user/dev/fading-planet/.claude/worktrees/wilderness-deploy/prototypes/wilderness
+cd "$(dirname "$0")/.."
 export SHOT_ANGLE=metal
 B=http://localhost:8123
 run() { echo "=== $1"; shift; nice -n 10 node "$@"; echo "exit $?"; }

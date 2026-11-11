@@ -1,2 +1,25 @@
+# macOS
+.DS_Store
 
+# Node (Playwright is installed with --no-save; there is no package.json)
+node_modules/
+*.log
+
+# Artifact build output
 dist/
+
+# Claude Code: per-machine state and worktrees
+.claude/settings.local.json
+.claude/worktrees/
+
+# Work-in-progress renders: never committed (the curator commits WebP keepers into shots/)
+shots/wip/
+
+# Scratch
+tmp/
+
+# Playwright MCP screenshots (never committed)
+.playwright-mcp/
+
+# Editor
+.vscode/

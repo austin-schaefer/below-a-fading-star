@@ -24,9 +24,6 @@ case "${1:-}" in
     mkdir -p "$wt_root"
     git -C "$main_root" fetch -q origin main
     git -C "$main_root" worktree add -q -b "$name" "$dir" origin/main
-    if [ -f "$dir/wiki/package.json" ] && [ ! -d "$dir/wiki/node_modules" ]; then
-      (cd "$dir/wiki" && npm ci --silent)
-    fi
     echo "$dir"
     ;;
   rm)
@@ -35,10 +32,10 @@ case "${1:-}" in
     [ -d "${matches[0]}" ] || { echo "no worktree for issue $n" >&2; exit 1; }
     dir="${matches[0]}"; name="$(basename "$dir")"
     # Ignored files die with the worktree: rescue the wip renders into the deploy worktree first.
-    wip=prototypes/wilderness/shots/wip
+    wip=shots/wip
     moved=0
     if [ -d "$dir/$wip" ] && [ -n "$(find "$dir/$wip" -type f -print -quit)" ]; then
-      deploy="$wt_root/wilderness-deploy"
+      deploy="$wt_root/deploy"
       [ -d "$deploy" ] || { echo "refusing: $deploy is missing, so $name's wip renders have nowhere to go" >&2; exit 1; }
       mkdir -p "$deploy/$wip"
       while IFS= read -r -d '' f; do

@@ -1,17 +1,17 @@
 ---
 name: wilderness
-description: How to work in prototypes/wilderness/ ("Below a Fading Star", the Three.js first-person walk). Load it before any work there, as implementer, reviewer, curator or orchestrator. Covers serving it, the module contract, the tools and tests, the pace rules that keep Austin's Mac usable, hand-backs, the binding rules, how decisions are recorded, and autonomous runs.
+description: How to work on "Below a Fading Star", the Three.js first-person walk this repository holds. Load it before any work here, as implementer, reviewer, curator or orchestrator. Covers serving it, the module contract, the tools and tests, the pace rules that keep Austin's Mac usable, hand-backs, the binding rules, how decisions are recorded, and autonomous runs.
 ---
 
 # Wilderness
 
-`prototypes/wilderness/` is a static Three.js r170 site with no build step and no package.json. Paths below are relative to it. The milestone docs (`wilderness-v<N>.md`) and their briefs (`briefs/v<N>/`) say what to build; this skill says how to work. References: `runtime.md` (URL params, quality tiers, shadow cadence, the profiler, what each test checks) and `modules.md` (the module table, which every agent that adds a module extends by one row).
+This repository is a static Three.js r170 site with no build step and no package.json; the site is the repository root. The milestone docs (`wilderness-v<N>.md`) and their briefs (`briefs/v<N>/`) say what to build; this skill says how to work. References: `runtime.md` (URL params, quality tiers, shadow cadence, the profiler, what each test checks) and `modules.md` (the module table, which every agent that adds a module extends by one row).
 
 ## Run and serve
 
-- Ports: 8123 is the orchestrator's live server (Austin's view). Every other agent takes its own port from 8160 up, in its own worktree, never in the deploy worktree or the main checkout.
-- In a fresh worktree: `cd prototypes/wilderness && npm install --no-save --silent playwright@1.63.0` (keep it without a package.json).
-- Serve: `cd prototypes/wilderness && nohup nice -n 10 tools/serve.sh PORT > /tmp/serve-PORT.log 2>&1 &`. Kill it when you hand back.
+- Ports: 8123 is the orchestrator's live server (Austin's view). Every other agent takes its own port from 8160 up, in its own worktree, never in the deploy worktree.
+- In a fresh worktree: `npm install --no-save --silent playwright@1.63.0` (keep it without a package.json).
+- Serve: `nohup nice -n 10 tools/serve.sh PORT > /tmp/serve-PORT.log 2>&1 &`. Kill it when you hand back.
 - Controls: WASD walk, mouse look, Shift hurry, Space hop; on touch, the stick bottom right, the hop ring left of it, drag to look; holding the speaker 1.2 s opens the debug panel. `?debug=1`, `?perf=1`, `?q=low` and the rest are in `runtime.md`.
 
 ## Module contract
@@ -58,17 +58,17 @@ The rest (stair, audio, gutter, tree-lod, regions, touch, paths, dressing, bench
 
 - **At most four implementation agents at once**, each in its own worktree on its own port. A read-only planning, review or curation agent with no browser does not count.
 - **One headless browser per agent at a time**; renders and tests run in sequence, never fanned out. `nice -n 10` and `SHOT_ANGLE=metal` on every `node tools/...` call. No `--trace` on Playwright runs.
-- **Wip renders at 1280×720** into `shots/wip/`, named `<module>-<stage>-<view>.png`. `shots/wip/` is gitignored and never committed: only the curator commits, as WebP keepers into `shots/`, and a pre-commit hook rejects any staged PNG under `shots/` (so `git add -f` fails) and any image over 1.25 MB. Ignored files die with their worktree, so `tools/worktree.sh rm` first moves a worktree's `shots/wip/` files into the deploy worktree's (`.claude/worktrees/wilderness-deploy`), which is where the curator reads them; it refuses if the deploy worktree is missing. Never delete or overwrite a render; the curator decides.
+- **Wip renders at 1280×720** into `shots/wip/`, named `<module>-<stage>-<view>.png`. `shots/wip/` is gitignored and never committed: only the curator commits, as WebP keepers into `shots/`, and a pre-commit hook rejects any staged PNG under `shots/` (so `git add -f` fails) and any image over 1.25 MB. Ignored files die with their worktree, so `tools/worktree.sh rm` first moves a worktree's `shots/wip/` files into the deploy worktree's (`.claude/worktrees/deploy`), which is where the curator reads them; it refuses if the deploy worktree is missing. Never delete or overwrite a render; the curator decides.
 - **Tests before pushing:** the test for what you touched plus `walk-test`, `perf-test`, `loading-test`, `grass-flicker-test` and `build-artifact`.
 
 ## Hand-back
 
-- **Implementer:** commit by part with conventional messages (`feat(wilderness): …`); `git fetch origin && git merge origin/claude/intelligent-mendel-ca020e`; push your branch; no merge, no PR; kill your server. Report in under 200 words: what changed, the exact test commands and their counts, the renders to look at, any default you took.
-- **Orchestrator:** a second agent reviews `git diff HEAD...origin/<branch>` cold and read-only against the brief; blockers go back to the author. Merge into the deploy worktree with `git merge --no-edit origin/<branch>`, push, remove the agent's worktree. Run the suite once per batch. Before each merge to `main`: curate the deploy worktree's `shots/wip/` into WebP keepers in `shots/` (`tools/curate-shots.md`), add the `RELEASES.md` entry (what a visitor notices, what changed underneath, which shot stages) in the same PR, `gh pr checks` until nothing is pending or failing ("no checks reported" means wait), then `gh pr merge --merge`, and merge `origin/main` back into the working branch.
+- **Implementer:** commit by part with conventional messages (`feat(wilderness): …`); `git fetch origin && git merge origin/next`; push your branch; no merge, no PR; kill your server. Report in under 200 words: what changed, the exact test commands and their counts, the renders to look at, any default you took.
+- **Orchestrator:** a second agent reviews `git diff HEAD...origin/<branch>` cold and read-only against the brief; blockers go back to the author. Merge into the deploy worktree with `git merge --no-edit origin/<branch>`, push, remove the agent's worktree. Run the suite once per batch. Before each merge to `main`: curate the deploy worktree's `shots/wip/` into WebP keepers in `shots/` (`tools/curate-shots.md`), add the `RELEASES.md` entry (what a visitor notices, what changed underneath, which shot stages) in the same PR, then `gh pr merge --merge` (the repository has no CI: the suite on the working branch is the gate), and merge `origin/main` back into the working branch.
 
 ## Rules
 
-- Never invent game content; build only what the milestone doc and briefs source. Names are `[Proposed]` placeholders; Austin decides names. Nothing touches `design/`.
+- The walk grew out of Fading Planet, Austin's card battler, and borrows its world. That game's canon lives in its own repository and is not settled here: names in the walk are `[Proposed]` placeholders, and Austin decides names.
 - A brief's budgets and tone notes are binding. When a brief and a render disagree, redo the render, not the brief.
 - No quality setting lowered as a fix (draw distance, counts, shadow map, pixel ratio): fix a pop with a transition.
 - Tone: Vance's Dying Earth over a HoMM overworld; baroque and worn, never cartoon or generic fantasy. Colour comes from the sun (ember, crimson, blood-orange) against a violet-slate sky, cold starlight, moss and rust on the ground, and a few unnatural lights (corpse-candles, the lattice's glacial blue, the four stones: Pride amber, Sloth lichen green, Avarice verdigris, Spite violet). Things are old and were once rich. Nothing is new.
@@ -78,11 +78,11 @@ The rest (stair, audio, gutter, tree-lod, regions, touch, paths, dressing, bench
 
 An open call in a brief is decided at the brief's default and written into the commit message that carries it. Nothing else: no decision log, no morning file, no continuance file. State lives in the current milestone doc's "Status" section; history lives in git and `RELEASES.md`. A fresh session reads `README.md` → the current milestone's doc → its `briefs/<v>/index.md`, and starts.
 
-Stop and tell Austin only when an agent fails the same task twice, CI is red for a reason outside the diff, something would rewrite history, or the live site breaks after a merge (roll forward with a fix).
+Stop and tell Austin only when an agent fails the same task twice, something would rewrite history, or the live site breaks after a merge (roll forward with a fix).
 
 ## Autonomous runs
 
-- Working branch `claude/intelligent-mendel-ca020e`, in the worktree `.claude/worktrees/wilderness-deploy`, served on 8123 with `nohup nice -n 10 tools/serve.sh 8123` from its `prototypes/wilderness` (restart it the same way if `lsof -ti:8123` is empty). Files update live; merge there, never run agents there.
-- The main checkout `/Users/user/dev/fading-planet` is Austin's live wiki: never pull, build, commit or run agents in it.
-- Hourly check-in (`/loop 1h`): "Below a Fading Star run, working branch claude/intelligent-mendel-ca020e in .claude/worktrees/wilderness-deploy; load the wilderness skill. If agents run and nothing is blocked, do nothing. If nothing is in flight, dispatch the next batch of the current milestone. If blocked, note it in the milestone doc's Status and continue with what is not blocked. Stop when the milestone is on main."
+- Working branch `next`, in the worktree `.claude/worktrees/deploy` (`git worktree add .claude/worktrees/deploy next`, creating `next` from `origin/main` if it is gone), served on 8123 with `nohup nice -n 10 tools/serve.sh 8123` from there (restart it the same way if `lsof -ti:8123` is empty). Files update live; merge there, never run agents there.
+- `main` is the live site: every push that touches what the site serves starts a Netlify build (`DEPLOY.md`). Work reaches it only as a release PR from the working branch.
+- Hourly check-in (`/loop 1h`): "Below a Fading Star run, working branch next in .claude/worktrees/deploy; load the wilderness skill. If agents run and nothing is blocked, do nothing. If nothing is in flight, dispatch the next batch of the current milestone. If blocked, note it in the milestone doc's Status and continue with what is not blocked. Stop when the milestone is on main."
 - Timestamps come from `date`, never from an estimated clock.

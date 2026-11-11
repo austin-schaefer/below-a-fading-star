@@ -1,12 +1,10 @@
-# Netlify config for the wilderness prototype, one of possibly several Netlify sites in this repo.
-# It lives in the site's base directory so it applies to this site only: the site's base directory
-# (Netlify: Build & deploy → Build settings) is prototypes/wilderness, and Netlify reads netlify.toml from there.
-# Paths here are relative to that folder.
+# Netlify config for Below a Fading Star. The site is the repository root: the Netlify site has no base
+# directory set, and paths here are relative to the root.
 [build]
   publish = "."
   # Build only when something the site serves changed. Docs, briefs, tools, tests and the perf JSONs live in this
   # folder too, and every commit here used to start a build. Exit 0 skips the build (Netlify's ignore contract).
-  # Runs from the base directory against the last successfully built commit.
+  # Runs from the repository root against the last successfully built commit.
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html src vendor netlify.toml favicon-32.png apple-touch-icon.png"
   # The screenshots are part of the repo's record, not of the site; keep them out of the deploy.
   # commit.json carries the short commit hash, so a bench run on the site names its commit.

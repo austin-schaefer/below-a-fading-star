@@ -1,6 +1,6 @@
 # Wilderness runtime reference
 
-The URL params, the quality tiers, the shadow cadence, the profiler and what each test checks, for `prototypes/wilderness/`. Paths are relative to it. Every agent that adds a flag appends it to its milestone's group here (v6: "The v6 switches"; v7: "The v7 living"); keep-both merges have doubled whole groups before, so grep for duplicates after a merge.
+The URL params, the quality tiers, the shadow cadence, the profiler and what each test checks. Paths are relative to the repository root. Every agent that adds a flag appends it to its milestone's group here (v6: "The v6 switches"; v7: "The v7 living"); keep-both merges have doubled whole groups before, so grep for duplicates after a merge.
 
 ## URL params
 
