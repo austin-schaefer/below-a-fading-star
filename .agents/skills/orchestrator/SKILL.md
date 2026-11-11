@@ -11,7 +11,7 @@ Load the `wilderness` skill too: its pace rules and hand-back steps bind you as 
 
 ## Start of session
 
-1. **Read the state:** `README.md` → the current milestone's doc (its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`).
+1. **Read the state:** the current milestone's doc (the highest-numbered `wilderness-v<N>.md`, its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`).
 2. **Report to the owner** in five lines or fewer: what's on `main`, what's in flight, what's waiting on them, and what you plan to do next.
 
 Then carry on. Take the owner's direction if they give any; otherwise work the current milestone, and if there is none, choose the next one and open it (`autonomous-run`, "Choosing what to build"). Don't wait for a go-ahead.
@@ -57,7 +57,7 @@ When a subagent reports done:
 
 ## Releases have notes
 
-Each merge to `main` is a release and a Netlify build. Before opening the PR, add a short entry at the top of `RELEASES.md` (newest first): a one-line title with version and date, then a few bullets on what a visitor notices and what changed underneath, with the screenshot stage numbers.
+Each merge to `main` is a release and a Netlify build. Before opening the PR, add a short entry at the top of `RELEASES.md` (newest first): a one-line title with version and date, then a few bullets on what a visitor notices and what changed underneath, with the screenshot stage numbers. A shipped milestone also gets one plain line in `README.md`'s Milestones, in the owner's style (`AGENTS.md`); the rest of that file is theirs.
 
 ## Screenshots are the record
 

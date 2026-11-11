@@ -81,7 +81,7 @@ Where the piece stands today, and why. These are yours to move (`AGENTS.md`): ke
 
 ## Decisions
 
-An open call is decided by whoever meets it, at the brief's default if it has one, and written into the commit message that carries it. No decision log, no morning file, no continuance file: state lives in the current milestone doc's "Status" section, history in git and `RELEASES.md`. A fresh session reads `README.md` → the current milestone's doc → its `briefs/<v>/index.md`, and starts.
+An open call is decided by whoever meets it, at the brief's default if it has one, and written into the commit message that carries it. No decision log, no morning file, no continuance file: state lives in the current milestone doc's "Status" section, history in git and `RELEASES.md`. A fresh session reads the current milestone's doc (the highest-numbered `wilderness-v<N>.md`) → its `briefs/<v>/index.md`, and starts.
 
 Nothing here waits on the owner's approval. The `autonomous-run` skill covers the few things that do need them and how to keep going around them.
 
