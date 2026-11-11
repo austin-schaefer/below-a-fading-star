@@ -15,6 +15,7 @@ import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
 import { buildYewMesh } from './yews.js';
 import { buildPeafowl } from './peafowl.js';
 
+import { crossingDistance } from '../../v8/roads/crossings.js'; // v8-01
 const KEY = 'demesne';
 const N = makeSimplex(20261107 + 1010);
 const K = LANDMARKS.castle; // (40, 30)
@@ -43,7 +44,7 @@ function roadD(x, z) {
     let t = ((x - a.x) * ex + (z - a.z) * ez) / l2; t = clamp(t, 0, 1);
     d = Math.min(d, Math.hypot(x - a.x - ex * t, z - a.z - ez * t));
   }
-  return d;
+  return Math.min(d, crossingDistance(x, z)); // v8-01: the ways' banks across the ditch (src/v8/roads/crossings.js)
 }
 // the parterre: a grid of beds north of the keep on the lower lawn, with a round bed in the middle; returns the
 // distance (m) to the nearest bed's outline, Infinity off it
@@ -90,6 +91,7 @@ export function height(h, x, z, w, coarse) {
     const c = coarse * 1.25;
     y = Math.min(hahaProfile(r - c, b, h, x, z), hahaProfile(r, b, h, x, z), hahaProfile(r + c, b, h, x, z));
   } else y = hahaProfile(r, b, h, x, z);
+  { const cw = 1 - smoothstep(3, 6.5, crossingDistance(x, z)); if (cw > 0) y = lerp(y, lerp(lerp(h, lawnAt(b), smoothstep(58, 68, r) * hahaAmt(b)), h, smoothstep(HAHA - 3, HAHA + 9.5, r)), cw); } // v8-01: the ways' banks across the ditch, a ramp from the lawn to the field
   // parterre ridges (on the lawn; the coarse mesh can carry ridges this broad)
   const pd = parterreD(x, z);
   if (pd < 2) y += 0.36 * (1 - smoothstep(0.2, 1.5, pd)) * (0.85 + 0.15 * N.noise2(x * 0.3, z * 0.3));
@@ -99,18 +101,18 @@ export function height(h, x, z, w, coarse) {
 }
 
 // grazed turf: an even green, paler where the beds' ridges dry out, a little darker in the hollows of the tussocks
-const cLawn = new THREE.Color('#4f5c2c'), cLawn2 = new THREE.Color('#5d6532'), cRidge = new THREE.Color('#6b6a3a');
+const cLawn = new THREE.Color('#6f8c3a'), cLawn2 = new THREE.Color('#7c9444'), cRidge = new THREE.Color('#9a9c58'); // v8-02: shaven, the brightest green on the map
 export function ground(col, x, z, w) {
   const n = N.fbm2(x * 0.08, z * 0.08, 2) * 0.5 + 0.5, pd = parterreD(x, z);
   _c.copy(cLawn).lerp(cLawn2, n).lerp(cRidge, pd < 1.2 ? (1 - pd / 1.2) * 0.6 : 0);
-  col.lerp(_c, smoothstep(0.2, 0.7, w));
+  col.lerp(_c, smoothstep(0.45, 0.55, w)); // v8-02: a crisp edge, as a mown lawn has
 }
 const _c = new THREE.Color();
 
 export const cover = {
-  density: { grass: 1.45, heather: 0, bracken: 0, flowers: 0.35, fleshy: 0, sedge: 0, reeds: 0, trees: 0 },
-  scale: { grass: 0.6 },
-  tint: { grass: '#6c7c3a' }, tintAmt: 0.5,
+  density: { grass: 0.9, heather: 0, bracken: 0, flowers: 0, fleshy: 0, sedge: 0, reeds: 0, trees: 0 },
+  scale: { grass: 0.16 }, // v8-02: shaven, a few centimetres
+  tint: { grass: '#86a048' }, tintAmt: 0.9,
 };
 export const stone = { density: 0.15, tors: false };
 export const air = null; // neutral: "the air is still and smells of cut stone"
@@ -233,7 +235,7 @@ export async function build(ctx) {
 
   // ---- the ha-ha's ground: a skin over the ring where the drop is, so its edge is a clean line
   const edgeN = (x, z) => 0.5 + 0.2 * N.noise2(x * 0.4, z * 0.4) + 0.1 * N.noise2(x * 1.7, z * 1.7);
-  const cTurf = new T.Color('#4f5c2c'), cDitch = new T.Color('#3e4626'), cField = new T.Color('#4c5228');
+  const cTurf = new T.Color('#6f8c3a'), cDitch = new T.Color('#3e4626'), cField = new T.Color('#4c5228');
   const skin = buildSkin(ctx, {
     name: KEY, box: [K.x - 98, K.x + 98, K.z - 98, K.z + 72], step: low ? 0.7 : 0.45, lift: 0.02,
     keep: (x, z) => inRing(x, z, HAHA - 4.5, HAHA + 11),

@@ -23,7 +23,8 @@ export async function build(ctx) {
   const gy = (x, z) => (x > 38 && x < 72 && z > 262 && z < 286 && turf() ? surfaceAt(x, z, [turf()], mg, 60) : mg(x, z));
   const pavers = () => ctx.scene.getObjectByName('structures-pavers');
   const surf = (x, z) => surfaceAt(x, z, [pavers(), ctx.terrain.mesh], mg, 60);
-  if (!OFF.traveller) T.traveller = buildTraveller(ctx, gy);
+  // the traveller's kit lies on the Span's deck: built only with the Span
+  if (!OFF.traveller && loaded('span') && await waitFor(() => ctx.span)) T.traveller = buildTraveller(ctx, gy);
   if (!OFF.gold) {
     if (loaded('structures')) await waitFor(() => ctx.structures);
     T.gold = buildGold(ctx, gy);
@@ -32,6 +33,8 @@ export async function build(ctx) {
     if (loaded('structures')) await waitFor(() => ctx.structures);
     if (loaded('living-workers') && !SEXTON_OFF) await waitFor(() => ctx.workers?.sexton || ctx.workers?.off); // his turf is laid by then
     T.chair = buildChair(ctx, gy, surf);
+    // the Collation gives up its twelfth place only now that the chair stands at the graves
+    if (loaded('dressing5')) T.chair.taken = !!(await waitFor(() => ctx.dressing5))?.collation?.takeTwelfth?.();
   }
   const all = () => [T.traveller, T.chair, T.gold].filter(Boolean).flatMap((p) => p.meshes);
   T.ends = () => ({ traveller: T.traveller?.ends, chair: T.chair?.ends, gold: T.gold?.ends });

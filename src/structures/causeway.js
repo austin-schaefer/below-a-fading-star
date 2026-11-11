@@ -59,7 +59,8 @@ export function buildCauseway(ctx, B, env) {
   // waymarkers every ~40 m: a short hexagonal pillar with a worn carving
   const len = causewayLength(cw);
   let n = 0;
-  for (let s = 38; s < len - 26; s += 40) { // v4 map: none in the pit at the road's end
+  const v8Roads = new URL(location.href).searchParams.get('roads') !== '0'; // v8-01: the waymarkers are the roads' grand gnomons now (src/v8/roads.js)
+  for (let s = 38; s < (v8Roads ? 0 : len - 26); s += 40) { // v4 map: none in the pit at the road's end
     const p = causewayAt(cw, s);
     const side = n % 2 ? 1 : -1;
     const nx = -p.dz * side, nz = p.dx * side;

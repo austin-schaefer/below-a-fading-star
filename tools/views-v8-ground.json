@@ -1,0 +1,9 @@
+[
+ {"name": "keep-n", "x": 40, "z": 30, "dy": 40, "fly": true, "yaw": 0.0, "pitch": -0.38},
+ {"name": "keep-e", "x": 40, "z": 30, "dy": 40, "fly": true, "yaw": -1.5708, "pitch": -0.38},
+ {"name": "keep-s", "x": 40, "z": 30, "dy": 40, "fly": true, "yaw": 3.1416, "pitch": -0.38},
+ {"name": "keep-w", "x": 40, "z": 30, "dy": 40, "fly": true, "yaw": 1.5708, "pitch": -0.38},
+ {"name": "keep-nw", "x": 40, "z": 30, "dy": 40, "fly": true, "yaw": 0.785, "pitch": -0.3},
+ {"name": "overhead", "x": 0, "z": 0, "dy": 420, "fly": true, "yaw": 0.0, "pitch": -1.45, "settle": 4000},
+ {"name": "lynchets-above", "x": -175, "z": -85, "dy": 30, "fly": true, "yaw": 0.6, "pitch": -0.5}
+]

@@ -36,7 +36,7 @@ export function height(h, x, z, w, coarse) {
 }
 
 // The terrain under the skin goes dark flint, so a gap in the skin never shows green; outside the carpet, moor.
-const cFlint = new THREE.Color('#1e1d22');
+const cFlint = new THREE.Color('#0e0d11'); // v8-02: black
 export function ground(col, x, z, w) {
   col.lerp(cFlint, smoothstep(0.55, 0.85, w));
 }

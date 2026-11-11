@@ -35,7 +35,7 @@ const r = await page.evaluate(() => {
   };
   // what is drawn under a point, excluding the threads' own meshes and the cover
   const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
-  const solids = fp.scene.children.filter((o) => o.isMesh && !/^threads|vegetation|grass|reeds|plants|fung|living-moles/.test(o.name));
+  const solids = fp.scene.children.filter((o) => o.isMesh && o.visible && !/^threads|vegetation|grass|reeds|plants|fung|living-moles/.test(o.name));
   const under = (x, y, z) => { ray.set(new THREE.Vector3(x, y, z), down); ray.far = 50; const h = ray.intersectObjects(solids, false)[0]; return h ? h.point.y : null; };
   const end = (key, e, opts = {}) => {
     const g = opts.deck ? fp.span.deckAt(e.x, e.z) : under(e.x, (e.y ?? T.heightAt(e.x, e.z)) + 0.6, e.z);
@@ -54,8 +54,17 @@ const r = await page.evaluate(() => {
   const tr = E.traveller;
   if (tr) {
     end('traveller.deck', tr.deck, { deck: true }); end('traveller.body', tr.body); end('traveller.hat', tr.hat);
-    sight('deck lip to the body', eyeAt(tr.deck.stand), tr.body, true);
-    sight('body to the broken bay\'s lip', eyeAt(tr.body.stand), tr.deck.lip, true);
+    sight('deck lip to the body', eyeAt(tr.deck.stand), { ...tr.body, y: tr.body.top }, true);
+    sight('the approach below to the body', eyeAt(tr.body.stand), { ...tr.body, y: tr.body.top }, true);
+    sight('the approach below to the broken bay\'s lip', eyeAt(tr.body.stand), tr.deck.lip, true);
+    sight('the hat\'s stand to the hat', eyeAt(tr.hat.stand), { ...tr.hat, y: tr.hat.y + 1.1 }, true);
+    out.deckPitch = tr.deck.stand.pitch;
+    out.bodyApproach = Math.hypot(tr.body.stand.x - tr.body.x, tr.body.stand.z - tr.body.z);
+    { // nothing over him, and the sun on him
+      const p = new THREE.Vector3(tr.body.x, tr.body.top + 0.3, tr.body.z), up = new THREE.Vector3(0, 1, 0), sun = new THREE.Vector3(fp.sun.dir.x, fp.sun.dir.y, fp.sun.dir.z);
+      ray.set(p, up); ray.far = 150; out.bodyOver = ray.intersectObjects(solids, false)[0]?.object.name || null;
+      ray.set(p, sun); ray.far = 150; out.bodySun = ray.intersectObjects(solids, false)[0]?.object.name || null;
+    }
     out.deckLip = Math.abs(tr.deck.stand.x - tr.deck.lip.x);
   }
   // 2 the twelfth chair
@@ -82,14 +91,19 @@ const r = await page.evaluate(() => {
     out.hoardOn = under(gd.hoard.x, gd.hoard.y + 0.05, gd.hoard.z);
   }
   out.stats = th.stats();
+  out.bad = fp.scene.children.filter((o) => /^threads/.test(o.name)).filter((o) => { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox, v = new THREE.Vector3(); b.getSize(v); return !o.visible || o.geometry.attributes.position.count === 0 || v.x * v.y * v.z === 0 && v.x + v.z < 0.05; }).map((o) => o.name);
+  out.twelfth = { taken: !!cy?.taken, shown: fp.scene.getObjectByName('collation-twelfth')?.visible, rings: fp.scene.getObjectByName('collation-rings')?.visible, chairTaken: th.chair?.taken };
   out.names = fp.scene.children.filter((o) => /^threads/.test(o.name)).map((o) => o.name);
   out.stories = fp.settings ? fp.settings.places.filter((p) => p.group === 'Stories').length : null;
   return out;
 });
-// ?threads=0: a second, lighter load (only the threads, the Collation and what they wait on)
-await page.goto(`${base}/?q=low&threads=0&only=threads,dressing5`, { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
-const off = await page.evaluate(() => ({ names: window.__fp.scene.children.filter((o) => /^threads/.test(o.name)).length, chairs: window.__fp.dressing5?.collation?.chairs.length, plates: window.__fp.dressing5?.collation?.plates }));
+// ?threads=0, and the module not loaded at all (?only= without it): lighter loads of the Collation alone
+const offs = [];
+for (const q of ['threads=0&only=threads,dressing5', 'only=dressing5']) {
+  await page.goto(`${base}/?q=low&${q}`, { waitUntil: 'load', timeout: 120000 });
+  await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
+  offs.push(await page.evaluate(() => { const fp = window.__fp, c = fp.dressing5?.collation, tw = fp.scene.getObjectByName('collation-twelfth'); return { names: fp.scene.children.filter((o) => /^threads/.test(o.name)).length, chairs: c?.chairs.length, plates: c?.plates, twelfthHidden: tw ? !tw.visible : false }; }));
+}
 await browser.close();
 
 let pass = 0, fail = 0;
@@ -97,6 +111,7 @@ const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  $
 const E = r.ends;
 check(['traveller.deck', 'traveller.body', 'traveller.hat', 'chair.table', 'chair.grave', 'gold.mosaic', 'gold.hoard'].every((k) => E[k]), 'every end of the three threads is built', Object.keys(E).join(' '));
 check(r.names.length >= 8, 'their meshes are in the scene', r.names.join(' '));
+check(r.bad.length === 0, 'none of them hidden or empty', r.bad.join(' '));
 const ground = Object.entries(E).filter(([k]) => k !== 'gold.hoard');
 const off_ = ground.filter(([k, e]) => e.lift == null || Math.abs(e.lift) > (k === 'gold.mosaic' ? 0.25 : 0.12) || e.wet);
 check(off_.length === 0, 'each stands on its ground (the deck, the drawn ground, the paving), none under water', off_.map(([k, e]) => `${k} lift ${e.lift}${e.wet ? ' wet' : ''}`).join('; ') || ground.map(([k, e]) => `${k} ${e.lift}`).join(', '));
@@ -115,11 +130,15 @@ check(r.goldGaps.every((g) => g >= 8 && g <= 40), 'the gold\'s trail: each glint
 const blocked = r.sight.filter((s) => s.terrain < 0.05 || s.mesh);
 check(blocked.length === 0, 'from each stand point the other end or the next mark is in sight over the terrain (and past the Span\'s lip)', (blocked.length ? blocked : r.sight).map((s) => `${s.name} ${s.d} m: clear ${s.terrain}${s.mesh ? ', blocked by ' + s.mesh : ''}`).join('; '));
 check(r.deckLip >= 0 && r.deckLip <= 0.5, 'the deck\'s stand point is at the lip', `${r.deckLip?.toFixed(2)} m back`);
+check(r.deckPitch <= -0.5 && r.deckPitch >= -1.0, 'from the lip the body lies at a natural look down (0.5-1.0 rad), past the Span\'s and the rubble\'s meshes', `pitch ${r.deckPitch?.toFixed(2)}`);
+check(!r.bodyOver && !r.bodySun, 'nothing over the body and the sun on it', `over ${r.bodyOver}, sun blocked by ${r.bodySun}`);
+check(r.bodyApproach >= 15 && r.bodyApproach <= 25, 'the approach from below stands 15-25 m from the body', r.bodyApproach?.toFixed(1));
+check(r.twelfth.taken && r.twelfth.shown === false && r.twelfth.rings === true && r.twelfth.chairTaken, 'the threads took the Collation\'s twelfth place after building the chair', JSON.stringify(r.twelfth));
 check(r.cy && r.cy.places === 12 && r.cy.chairs === 11 && r.cy.fallen === 1 && r.cy.plates === 11 && r.cy.glasses === 11, 'the Collation: laid for twelve, eleven chairs (one down), the gap\'s plate and glass gone', JSON.stringify(r.cy));
 check(r.grave && r.grave.slot === r.grave.current, 'the chair stands at the grave the Sexton is digging', JSON.stringify(r.grave));
 check(r.stats.calls <= 12 && r.stats.tris <= 80000, 'the three threads: at most 12 draw calls and 80k triangles (low)', `${r.stats.calls} calls, ${r.stats.tris} tris`);
 check(r.stories === 6, 'the settings panel lists both ends of each thread under Stories', `${r.stories}`);
-check(off.names === 0 && off.chairs === 12 && off.plates === 12, '?threads=0: no props, the Collation keeps its twelve chairs', JSON.stringify(off));
+check(offs.every((o) => o.names === 0 && o.chairs === 12 && o.plates === 12 && !o.twelfthHidden), '?threads=0 and ?only= without threads: no props, the Collation keeps its twelve chairs', JSON.stringify(offs));
 check(errors.length === 0, 'no page errors', errors.slice(0, 3).join(' | '));
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

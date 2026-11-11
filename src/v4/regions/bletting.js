@@ -37,7 +37,7 @@ export function height(h, x, z, w) {
 }
 
 const C = (h) => new THREE.Color(h);
-const cRank = C('#5c5a32'), cWind = C('#4a3a24'), cHeal = C('#4e4250');
+const cRank = C('#4c6a2a'), cWind = C('#4a3a24'), cHeal = C('#4e4250');
 const _gc = new THREE.Color();
 export function ground(col, x, z, w) {
   const n = SN.fbm2(x * 0.04, z * 0.04, 3) * 0.5 + 0.5;
@@ -97,10 +97,10 @@ function plantTrees(ground, rng, regionAt) {
 
 // rank grass, long and rough; knapweed and self-heal in it; little heather or bracken; the moor's copses give way
 export const cover = {
-  density: { grass: 1.45, heather: 0.15, bracken: 0.35, flowers: 1.6, fleshy: 1.2, trees: 0 },
-  scale: { grass: 1.3, heather: 0.8 },
-  floor: { flowers: 0.35 },
-  tint: { grass: '#8c8a44', flowers: '#7a3470', bracken: '#6a5a2a' }, tintAmt: 0.8,
+  density: { grass: 1.3, heather: 0.15, bracken: 0.35, flowers: 2.6, fleshy: 1.2, trees: 0 },
+  scale: { grass: 1.9, heather: 0.8 }, // v8-02: rank, over the head where it stands thickest (plants.js's rank patches)
+  floor: { flowers: 0.6 },
+  tint: { grass: '#6e9a3a', flowers: '#b03a6a', bracken: '#6a6a2a' }, tintAmt: 0.85,
   trees: plantTrees,
 };
 export const stone = { density: 0.45, tors: false };

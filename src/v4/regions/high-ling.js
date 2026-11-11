@@ -38,7 +38,7 @@ export function height(h, x, z, w) {
 }
 
 const C = (h) => new THREE.Color(h);
-const cLing = C('#4c3232'), cBell = C('#4a3448'), cBil = C('#34442a'), cGrit = C('#6a5854');
+const cLing = C('#54303e'), cBell = C('#5e3252') /* v8-02: purple-brown */, cBil = C('#34442a'), cGrit = C('#6a5854');
 const _gc = new THREE.Color();
 export function ground(col, x, z, w, b) {
   const n = SN.fbm2(x * 0.06 + 5, z * 0.06, 3) * 0.5 + 0.5;
@@ -53,10 +53,10 @@ export function ground(col, x, z, w, b) {
 
 // deep ling everywhere, knee-high and ruddy; little grass; no trees (gorse and the tors are the region's own)
 export const cover = {
-  density: { grass: 0.35, heather: 2.0, bracken: 0.25, flowers: 0.25, trees: 0 },
-  scale: { heather: 1.35, grass: 0.8 },
-  floor: { heather: 1.4 },
-  tint: { heather: '#7c4a2e', grass: '#8a6a50', bracken: '#7a3a1a' }, tintAmt: 0.6,
+  density: { grass: 0.15, heather: 2.2, bracken: 0.1, flowers: 0.15, trees: 0 },
+  scale: { heather: 0.62, grass: 0.45 }, // v8-02: low and wind-flat
+  floor: { heather: 1.6 },
+  tint: { heather: '#6e3a52', grass: '#7a5a5a', bracken: '#6a3a2a' }, tintAmt: 0.75,
 };
 export const stone = { density: 0.3, tors: false };
 export const air = { tint: '#f2c95e', strength: 1 }; // "gold pollen" (DI)

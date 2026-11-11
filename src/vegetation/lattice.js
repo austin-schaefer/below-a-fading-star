@@ -49,7 +49,7 @@ export function buildLattice(ctx, ground, shared) {
     const glacial = b.glacier * smoothstep(-205, -240, z) * 0.85;
     return clamp(Math.max(b.crystal * 1.1, glacial), 0, 1);
   };
-  const okGround = (x, z) => ground.slopeAt(x, z) < 0.85 && ground.waterDepth(x, z) < 0 && ground.causewayDistance(x, z) > 4;
+  const okGround = (x, z) => ground.slopeAt(x, z) < 0.85 && ground.waterDepth(x, z) < 0 && ground.causewayDistance(x, z) > 4 && ground.wornAt(x, z) < 0.05; // v8-01: no crystal on a road
 
   // Geometries
   const geos = {
