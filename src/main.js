@@ -48,6 +48,7 @@ const MODULES = [
   ['dressing', () => import('./v4/dressing.js')], // v4: the Long Figure, the Discontinued Track, the Surveyor's Pegs
   ['span', () => import('./v4/span.js')], // v4: the Great Span (W) and the Postern (BG)
   ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
+  ['roads', () => import('./v8/roads.js')], // v8-01: the gnomons along the roads (?roads=0)
   ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
   ['lamps', () => import('./v5/lamps.js')], // v5 wonders: AO the Escarpment Lamps (window-lights on the north-west wall that go out one by one; ?lamps=0)
