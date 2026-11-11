@@ -62,8 +62,8 @@ export function buildTaverna(ctx, B, env) {
         B.add(B.box(0.36, 0.3, th * 0.6, { chip: 0.03 }), mat(x, gm + h + 0.58, z, 0, yaw, 0), { color: vary(mc, rng, 0.05), moss: pmoss, ground: gm });
       }
       if (S) {
-        // a band of tile under the cresting, both faces: turquoise, white and pomegranate
-        for (const k of [1, -1]) S.parts.late.tiles(B, mat(x + nx * k * (th / 2), gm + h - 0.42, z + nz * k * (th / 2), 0, Math.atan2(nx * k, nz * k), 0), { n: 8, w: w / 8, h: 0.2, cols: [0, 3, 1, 3, 0, 4, 0, 3], rng, lost: 0.03 });
+        // a band of tile under the cresting, both faces (the outer only on the low tier): turquoise, white and pomegranate
+        for (const k of ctx.quality === 'low' ? [1] : [1, -1]) S.parts.late.tiles(B, mat(x + nx * k * (th / 2), gm + h - 0.42, z + nz * k * (th / 2), 0, Math.atan2(nx * k, nz * k), 0), { n: 8, w: w / 8, h: 0.2, cols: [0, 3, 1, 3, 0, 4, 0, 3], rng, lost: 0.03 });
         // a lamp bracket every other bay along the outer face, at the height of a raised hand
         if (Math.round(tm / 1.6) % 3 === 1 && !(s.gate && Math.abs(lx) < gate.w / 2 + 3)) {
           const by = gm + 2.7, hook = S.parts.late.bracket(B, mat(x + nx * (th / 2), by, z + nz * (th / 2), 0, Math.atan2(nx, nz), 0), { reach: 0.5 });
