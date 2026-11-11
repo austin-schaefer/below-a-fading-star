@@ -24,6 +24,28 @@ Austin, 2026-11-11, in session: "feel free (be encouraged!) to add new things an
 - **Something small and funny.** Twk-men [Vance's own]: thumb-high riders on dragonflies who come to look at you at the waystones and squabble over spilt salt.
 - **Stories with two ends.** Things found in one place that are answered in another, along the roads that join them (the threads are listed in `briefs/v8/index.md`): the traveller who left his cloak and pack on the Span; the twelfth chair missing from the Collation; the slipper's mate; the gold picked out of the Sunken Court's floor.
 
+## Places (v8-02)
+
+Each place's ground, cover and light, as built (`src/v8/places.js` holds the same table; light is exposure, saturation, contrast, warmth, applied at the camera and blended over 25 m):
+
+| place | ground | cover | light |
+|---|---|---|---|
+| the common (round the keep, along the causeway to the stones) | pale sage turf `#7c8a56`-`#969a68`, bare trodden earth `#7c6a52` | ankle turf, rare tussocks, bare patches | 1.12, 1.0, 1.0, 0 |
+| the far moor | dun-olive and peat (as v7) | knee grass in drifts with bare gaps | 1.0, 1.0, 1.0, 0 |
+| the Bletting | rank green `#4c6a2a` | grass to the head in patches, the most flowers | 1.1, 1.3, 1.04, +0.05 |
+| round the Pomegranate House | (the Bletting's) | (the Bletting's) | 1.18, 1.38, 1.04, +0.08 |
+| the High Ling | purple-brown `#54303e`-`#5e3252` | low wind-flat heather | 1.0, 1.15, 1.08, +0.02 |
+| the Demesne | shaven lawn `#6f8c3a`-`#7c9444`, a crisp edge | turf a few cm high, nothing else | 1.28, 1.1, 0.94, 0 |
+| the Lynchets | 7 m strips: stubble `#b4a25a`, ley `#3e6e22`, plough `#3a2014`, fallow `#82704e` | each strip its own crop | 1.06, 1.05, 1.0, +0.02 |
+| the Deodand Wood | leaf litter `#3a2414`-`#1c140e` | almost none; shafts of ember light | 0.8, 0.95, 1.1, +0.1 |
+| Corpse-Candle Fen | black mud `#0f110e` | tall reeds in tight stands, open water between | 0.74, 0.8, 1.12, -0.12 |
+| the Adust | red clay `#94523a`-`#b05a36` | none | 1.06, 1.12, 1.06, +0.04 |
+| the Saltings | white crust `#f0ebe8` | none | 1.32, 0.72, 0.92, 0 |
+| the Outwash | grey-blue gravel `#6e7c8a`-`#9eaab6` | sparse ankle grass | 1.08, 0.8, 1.0, -0.05 |
+| the Strandline | black flint `#0e0d11` | none | 0.9, 0.85, 1.12, -0.03 |
+
+The survey (`tools/contrast-survey.mjs`, tables in `briefs/v8/contrast/before.md` and `after.md`) gates it in the suite.
+
 ## Done when
 
 - A cold critic, asked what connects the places, names the sign, the roads and at least two distinct builders without being told.
