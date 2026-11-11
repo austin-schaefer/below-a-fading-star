@@ -38,6 +38,7 @@ run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B
 run strata tools/strata-test.mjs $B
 run livery tools/livery-test.mjs $B
+run house tools/house-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"

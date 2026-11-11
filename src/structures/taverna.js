@@ -364,6 +364,7 @@ function lantern(ctx, B, env, x, y, z, phase) {
   B.add(B.cyl(0.13, 0.04, 0.1, 8, 1), mat(x, y - 0.27, z), { color: tints.iron, iron: 1, moss: 0, ground: gm - 3 });
   const light = new THREE.PointLight(new THREE.Color('#ff9a4a'), 3, 12, 2);
   light.position.set(x, y - 0.05, z);
+  light.name = phase ? 'taverna-court-lantern' : 'taverna-gate-lantern'; // v8-05: src/v8/house.js takes the court's light for the court
   ctx.scene.add(light);
   const N2 = ctx.noise.noise2;
   (env.updates ||= []).push((dt, t, f) => { light.intensity = 3.2 * (0.78 + 0.14 * N2(t * 1.3 + phase * 10, phase) + 0.08 * N2(t * 6.1, phase * 3)) * (0.5 + 0.5 * f); });

@@ -56,6 +56,7 @@ import { startPlaces, startCalls } from './audio/calls.js';
 import { startCues } from './audio/cues.js';
 import { startRegions } from './audio/regions.js';
 import { startLiving } from './audio/living.js';
+import { startHouseSound } from './v8/house/sound.js'; // v8-05
 
 // The touch mute button (#mute, top right; shown on touch devices only). A short tap toggles
 // ctx.audio.setMuted; a 1.2 s hold without moving reveals the debug panel instead, as the
@@ -150,6 +151,7 @@ export async function build(ctx) {
     audio.cue = cues.cue;
     const insects = startInsects(a);
     const calls = startCalls(a);
+    a.house = startHouseSound(a, ctx); // v8-05: the Pomegranate House's voices (its own rng, after every shared draw)
 
     // ================================================================ per-frame control
     let tick = 0;

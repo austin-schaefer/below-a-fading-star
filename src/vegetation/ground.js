@@ -10,6 +10,7 @@ import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collati
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { sextonClear } from '../v7/workers/graves.js'; // v7: CF the Sexton's graves and heaps
+import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate House's court and its trampled gate
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
@@ -133,6 +134,7 @@ export function makeGround(ctx) {
     if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
+    if (margin < 0 && houseClear(x, z)) return true; // v8-05: the house's court swept, the ground before its gate trampled
     if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)
     if (margin < 0 && threadsClear(x, z)) return true; // v8-04: ground cover keeps off the threads' props (after the draws)
     return false;
