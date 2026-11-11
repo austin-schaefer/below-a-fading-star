@@ -84,7 +84,7 @@ export const LEADS = [
   { id: 'P45', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard trod to the Collation\'s table', pts: [[148, -100], [150, -84]] },
   { id: 'P46', kind: 'path', cls: 'trod', w: 0.5, brief: 'field trod below the ha-ha, the north way to the Pomegranate House', pts: [[18, -54], [45, -63], [67, -53]] },
   { id: 'P47', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Collation\'s table to the orchard (v8-04\'s twelfth chair)', pts: [[112, -82], [126, -72], [136, -69], [150, -84]] },
-  { id: 'P48', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down to the Sexton\'s open grave (v8-04\'s twelfth chair)', pts: [[40, 261], [36, 268], [37, 276], [40.5, 279]] },
+  { id: 'P48', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down to the Sexton\'s open grave (v8-04\'s twelfth chair)', pts: [[40, 261], [36, 268], [38, 276.5]] },
   { id: 'P49', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Pomegranate House\'s south side', pts: [[92, -66], [88, -61]] },
 ];
 

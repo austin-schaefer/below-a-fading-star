@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the 46 paths (v8-01 joined the plan's 17 into
+// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the 49 paths (v8-01 joined the plan's 17 into
 // one network: tools/roads-test.mjs), the kerb and five rivulets are all laid; each lead's two ends lie on it or on the
 // lead it joins (leadAt finds one there) and resolve to the material of the
 // region they are in; every rivulet runs downhill (its water never rises, and the ground along it is no higher than
@@ -106,7 +106,7 @@ const check = (ok, label, detail = '') => { if (ok) pass++; else fail++; console
 const modErr = errors.filter((e) => /paths/.test(e));
 check(!modErr.length, 'paths module loaded without errors', modErr[0] || '');
 const kinds = (k) => res.leads.filter((l) => l.kind === k).length;
-check(kinds('path') === 46 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 46 paths (v8-01: 17 + 29), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
+check(kinds('path') === 49 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 49 paths (v8-01: 17 + 32), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
 for (const L of res.leads) {
   // v8-01: an end that is a junction finds the lead it joins (leadAt gives the nearest), and that is right too
   const bad = L.ends.filter((e) => !e.id || e.material !== e.region);
