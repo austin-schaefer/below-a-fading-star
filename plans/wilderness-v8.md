@@ -29,6 +29,19 @@ Next: as each reports, look at its renders, run its tests, have a second agent r
 
 In flight now: 01 roads (8161), 02 ground (8162), 04 threads (8164), and **05 the house lit and lived in** (`issue-805-house`, 8165; lamps, three to five Late-folk figures with a behaviour each, the slipper's mate, a diegetic voice through the sound harness). Written and waiting for the next free slot: **06 liveries** (`briefs/v8/brief-v8-06-liveries.md`; its worktree `issue-806-liveries` exists, port 8166). Still to write: 07 Twk-men, 08 the painter's thread and repairs.
 
+**2026-11-11, 14:46 PST. 04 threads: first push merged, a fix round out.** Brief 04 handed back after 49 minutes (commit `26c4ae8`, merged into `next`; `threads-test` 15/15 and `strata-test` 8/8 there; a cold review found no blockers). What is in: the twelfth chair (a gap at the Collation at 138,-66; the chair at grave 41 at 40.5,279 beside the Sexton, which reads well), the court's gold (a mosaic slab at -68,-153 with the gold disc half picked out; a jackdaw's nest on the Wayside Shrine's saint), and the traveller at the Span's west broken bay (kit on the deck at -114,218, body at -87,227, hat on P16). **The traveller does not land yet**: from the deck's lip the body cannot be found, and body and hat are unreadable at 15–25 m. It is the owner's own example, so the same agent is on a fix round in the same worktree (`issue-804-threads`, 8164): body found within a second from the lip, the cloak matching above and below, the hat somewhere lit, plus two review notes (`?skip=threads` must not leave the Collation short a chair with none at the grave; the settings menu must hide teleports for threads that did not build). Also open: `settings-test` read 64/66 for the agent, thought to be the URL it was started with, to be confirmed; the chair's two ends are waived from the 15 m track rule in `threads-test` (`NEEDS_TRACK`) until 01's network reaches them, and the roads agent has been told of both tracks.
+
+In flight: 01 roads (8161), 02 ground (8162, on its final test run), 04's fix round (8164), 05 the house (8165). Waiting for a slot: 06 liveries, 07 Twk-men (both briefs written; worktree `issue-806-liveries` exists).
+
+**2026-11-11, 15:02 PST. Batch 1 is all on `next`; batch 2 is three agents deep.** Merged since the last entry, each after the orchestrator looked at its renders and a cold review found no blockers:
+
+- **02 ground** (`0d7a89e`): a pale grazed common round the keep and causeway (the first view is now ankle turf under the sun, not violet knee grass), the Bletting rank and green, the Demesne shaven, the wood near-black with a bare floor and 34 shafts of ember light, Adust redder, Saltings whiter, the Lynchets striped; a per-place grade (`src/v8/places.js`, a `uPlace` uniform in `src/post.js`, blended over 25 m; `?placegrade=0`); `tools/contrast-survey.mjs` in the suite (3/3). Bench GPU 19.14 → 19.44 ms, peak triangles 2.46M → 2.35M. Weaker than asked: the pan from the keep top still shows mostly lawn and salt (haze flattens the far patches); the Lynchets' strips read only from a distance; the survey's gate is a tripwire, not proof (its first clause passed on the old tree, and the second sits exactly at the limit the agent chose). The ungated `aliasing.step-5cm` row of `pop-test` fails at 57× baseline and nobody has checked whether it failed before v8.
+- **01 roads** (`43b0511`): 49 path leads (32 new, appended) and the causeway as one network with loops; ways 2 m wide with kerb runs, trods 1 m, coloured against the ground under them; stepping slabs over open water; two ramps over the ha-ha; 112 gnomons (`ctx.roads`, `src/v8/roads*`; `?roads=0`) with the notched head and an ember bead, standing at junctions, many sunk or fallen along the leads; `tools/roads-test.mjs` in the suite. On `next`: roads 43/43, paths 75/75, walkers 20/20, threads 15/15, contrast 3/3. Weaker than asked: the canyon rim (P13: the Cutting, the Speculum, the Wrong Colour, the Tumbling Water) is off the network and exempt in the test, walled off by the Span's fallen-bay colliders and the pit's rim since before v8; older leads (P3, P4, P7, P8, P14, P15) and the causeway still cross piers, walls and gateposts, which the test notes and does not fail; gnomons are faint in the wood; the gnomon nearest the spawn reads as a blue post with a bright ball, cruder than the brief's waystone (the orchestrator's eye; left for the critic).
+
+Worktrees 801 and 802 removed. The gate (`tools/suite.sh 8123`) is running on `next` for the batch: `/tmp/suite-m8-batch1.log`.
+
+In flight, four agents: 04's fix round on the traveller (`issue-804-threads`, 8164; on its final tests), 05 the house (`issue-805-house`, 8165), 06 liveries (`issue-806-liveries`, 8166), **07 Twk-men** (`issue-807-twk`, 8167; dispatched 15:02). To write when a slot nears: 08 (the painter's thread; the canyon rim joined to the network; older leads rerouted round what they cross; the Heliarch roundels readable beyond 10 m; the house's low-tier triangles; the gnomon's look if the critic agrees). Then the gate, the critic, the curator, the release.
+
 ## What a visitor should notice
 
 - **Three hands, one country.** Austin, 2026-11-11, in session: "careful about one culture btw: the goal is still diversity, but with coherence. i like that the architecture today has both cyclopean bridges and arabesque tavernas." So the differences stay and are sharpened into three **strata** [Proposed names], each with its own hand, and the coherence is in how each treats the one before it:
@@ -42,6 +55,28 @@ In flight now: 01 roads (8161), 02 ground (8162), 04 threads (8164), and **05 th
 - **Places that differ.** Cropped pale turf where the grazers keep it; bare red clay; white salt; rank orchard grass over the head; the wood dark. And one place that is warm, lit and silly: the Pomegranate House, hung with coloured lamps, with music and somebody laughing inside.
 - **Something small and funny.** Twk-men [Vance's own]: thumb-high riders on dragonflies who come to look at you at the waystones and squabble over spilt salt.
 - **Stories with two ends.** Things found in one place that are answered in another, along the roads that join them (the threads are listed in `briefs/v8/index.md`): the traveller who left his cloak and pack on the Span; the twelfth chair missing from the Collation; the slipper's mate; the gold picked out of the Sunken Court's floor.
+
+## Places (v8-02)
+
+Each place's ground, cover and light, as built (`src/v8/places.js` holds the same table; light is exposure, saturation, contrast, warmth, applied at the camera and blended over 25 m):
+
+| place | ground | cover | light |
+|---|---|---|---|
+| the common (round the keep, along the causeway to the stones) | pale sage turf `#7c8a56`-`#969a68`, bare trodden earth `#7c6a52` | ankle turf, rare tussocks, bare patches | 1.12, 1.0, 1.0, 0 |
+| the far moor | dun-olive and peat (as v7) | knee grass in drifts with bare gaps | 1.0, 1.0, 1.0, 0 |
+| the Bletting | rank green `#4c6a2a` | grass to the head in patches, the most flowers | 1.1, 1.3, 1.04, +0.05 |
+| round the Pomegranate House | (the Bletting's) | (the Bletting's) | 1.18, 1.38, 1.04, +0.08 |
+| the High Ling | purple-brown `#54303e`-`#5e3252` | low wind-flat heather | 1.0, 1.15, 1.08, +0.02 |
+| the Demesne | shaven lawn `#6f8c3a`-`#7c9444`, a crisp edge | turf a few cm high, nothing else | 1.28, 1.1, 0.94, 0 |
+| the Lynchets | 7 m strips: stubble `#b4a25a`, ley `#3e6e22`, plough `#3a2014`, fallow `#82704e` | each strip its own crop | 1.06, 1.05, 1.0, +0.02 |
+| the Deodand Wood | leaf litter `#3a2414`-`#1c140e` | almost none; shafts of ember light | 0.8, 0.95, 1.1, +0.1 |
+| Corpse-Candle Fen | black mud `#0f110e` | tall reeds in tight stands, open water between | 0.74, 0.8, 1.12, -0.12 |
+| the Adust | red clay `#94523a`-`#b05a36` | none | 1.06, 1.12, 1.06, +0.04 |
+| the Saltings | white crust `#f0ebe8` | none | 1.32, 0.72, 0.92, 0 |
+| the Outwash | grey-blue gravel `#6e7c8a`-`#9eaab6` | sparse ankle grass | 1.08, 0.8, 1.0, -0.05 |
+| the Strandline | black flint `#0e0d11` | none | 0.9, 0.85, 1.12, -0.03 |
+
+The survey (`tools/contrast-survey.mjs`, tables in `briefs/v8/contrast/before.md` and `after.md`) gates it in the suite.
 
 ## Done when
 

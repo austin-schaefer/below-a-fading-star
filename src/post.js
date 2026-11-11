@@ -62,7 +62,7 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel; uniform vec4 uPlace;`;
 
 // FXAA (three's FXAAShader, r170, after Catlike Coding's; written for GLSL ES 1.00, which the finish's raw
 // material compiles as): the edge search runs on the scene's luminance (the exposure applied, square-rooted
@@ -141,6 +141,13 @@ const GRADE_MAIN = `
     col = pow(max(col, 0.0), vec3(1.05));
     col = mix(col, vec3(lum(col)), 0.2);
 
+    // v8-02: the place's own light at the camera (src/v8/places.js): exposure, saturation, contrast round a mid
+    // grey, warmth; (1, 1, 1, 0) leaves the frame as the grade above made it
+    col *= uPlace.x;
+    col = max(mix(vec3(lum(col)), col, uPlace.y), 0.0);
+    col = 0.18 * pow(col / 0.18, vec3(uPlace.z));
+    col *= vec3(1.0 + uPlace.w, 1.0 + uPlace.w * 0.15, 1.0 - uPlace.w * 1.2);
+
     // wading tint
     col = mix(col, col * vec3(0.5, 0.65, 0.6), uWade * 0.5);
 
@@ -184,7 +191,7 @@ function makeUniforms() {
   return {
     tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
-    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
+    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uPlace: { value: new THREE.Vector4(1, 1, 1, 0) }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
     uResolution: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
   };
 }
@@ -389,6 +396,7 @@ export function buildPost(ctx) {
     u.uTime.value = POST_CLOCK ? t : 0;
     u.uFlicker.value = ctx.sky.flicker.value;
     u.uWade.value = ctx.controls.state.wading || 0;
+    if (ctx.places) ctx.places.gradeAt(camera.position.x, camera.position.z, ctx.terrain.causewayDistance(camera.position.x, camera.position.z), u.uPlace.value); // v8-02
     u.uResolution.value.set(size.x, size.y);
     renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
     u.uTexel.value.set(1 / u.uTexel.value.x, 1 / u.uTexel.value.y);

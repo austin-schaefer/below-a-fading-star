@@ -8,6 +8,7 @@ import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4, PALETTE, SUN } from './world.js';
 import { mapHeight, prepareMap } from './v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START, PROFILE as MTN_PROFILE, MASSIFS } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
+import { ground as placesGround } from './v8/places.js'; // v8-02: the common, the wood's litter, the fen's mud
 import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { injectOccultation } from './v5/occultation.js'; // v5 wonders: AR the Occultation's shadow on the walls
@@ -524,6 +525,7 @@ function makeDetailTexture(size = 256) {
 const BANDS = new URL(location.href).searchParams.get('bands') !== '0';
 
 const C = (hex) => new THREE.Color(hex);
+const REGIONS_DEBUG = new URL(location.href).searchParams.get('regions') === '1';
 
 export function buildTerrain(ctx) {
   const { scene } = ctx;
@@ -609,6 +611,7 @@ export function buildTerrain(ctx) {
     const cd = causewayDistance(x, z);
     col.lerp(cRoad, 1 - smoothstep(2.6, 4.2, cd));
     regionsGround(col, x, z, b); // v4 systems: the regions' ground hooks (and the ?regions=1 tint)
+    if (!REGIONS_DEBUG) placesGround(col, x, z, cd); // v8-02
     // a little per-vertex variation so the moor isn't flat
     const v = SX.noise2(x * 0.11, z * 0.11) * 0.06;
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
