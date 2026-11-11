@@ -74,7 +74,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 59 | v7.1 UI: coordinates, the full teleport list, the region cards, the Pit and Rest in Starlight, the Lamplighter's couplet |
 | 60 | v7.1 visibility: each thing a step more visible along its own palette, before and after, and the survey sheet |
 
-`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `17-tier-spawn-after`, `23-span-spawn-after`, `30-thrones-gutter-spawn-after`, `47-yews-far-after` and `50-walkers-thurifer-road`.
+`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
 ## Index
 
