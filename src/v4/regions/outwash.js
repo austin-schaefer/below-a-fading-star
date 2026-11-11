@@ -1,4 +1,4 @@
-// BQ The Outwash [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.outwash
+// BQ The Outwash [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.outwash
 // in world.js). The glacier's foreland: "a grey plain of gravel and till in braided dry channels, the stones sorted
 // and rounded, with erratics the size of carts perched on three points where the ice put them down. Cushions of
 // moss-campion with a few pinpricks of pink, map-lichen in yellow-green continents on every boulder, and nothing

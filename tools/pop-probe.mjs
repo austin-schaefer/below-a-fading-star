@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Per-frame survey of pops, swaps and hitches along a route (the v6 survey's probe; see wilderness-v6.md).
+// Per-frame survey of pops, swaps and hitches along a route (the v6 survey's probe; see plans/wilderness-v6.md).
 //   node tools/pop-probe.mjs <base> <scenario> <out.json> [q=medium]
 // Scenarios: bench (the ?bench path, 30 s), wood (the tarn's spit into the Deodand Wood), lattice (the
 // Outwash to the Lattice), keep (spawn to the gate), span (the west floor toward the Great Span's west

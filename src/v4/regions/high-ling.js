@@ -1,4 +1,4 @@
-// BR The High Ling [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2,
+// BR The High Ling [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2,
 // REGIONS.highLing in world.js). "The heath under the eastern wall, the one place that faces the sun across the
 // whole bowl and is lit full on: deep ling and bell-heather, ruddy and knee-high, bilberry in the hollows, and gorse
 // in bloom whose yellow turns ember in this light. Its stone is a pinkish granite that weathers into tors, stacked

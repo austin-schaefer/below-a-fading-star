@@ -1,4 +1,4 @@
-// The Demesne's white peafowl (wilderness-v4.md, BT): "three white peafowl on the biggest blocks round (75, -15),
+// The Demesne's white peafowl (plans/wilderness-v4.md, BT): "three white peafowl on the biggest blocks round (75, -15),
 // turning their heads; at every gutter they raise the ragged train with its last few eyes and cry". White and
 // moulted, a few last eyed feathers. Each bird is one connected body: a tube lofted along a spine in the bird's
 // midplane runs bill, head, neck, breast, belly and rump in one surface; the folded wings lie on its flanks, the legs

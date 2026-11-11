@@ -1,4 +1,4 @@
-// v7, the living: the sounds of the figures (wilderness-v5.md, "### The living's sounds (the v7 audio pass)"). The
+// v7, the living: the sounds of the figures (plans/wilderness-v5.md, "### The living's sounds (the v7 audio pass)"). The
 // figure modules fire named cues (ctx.audio.cue) and audio/cues.js hands each to one function here. Register: people
 // absorbed in a task nobody needs any more, heard in a dying world: dry, small, close, a little reverberant, never
 // musical except the Coheirs' hum in thirds, and no words, ever.

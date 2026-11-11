@@ -2,7 +2,7 @@
 // sixty grave slots in six rows of ten, rows along x, numbered in the order he digs them (row by row from the
 // north, each row the other way from the last, so the next slot is always a few metres on), and the clearances
 // rocks.js and vegetation/ground.js read after their draws. The heightfield is not changed: every placement stream
-// that reads the ground before it draws would shift across the whole map (wilderness-v5.md, BD). The graves are cut
+// that reads the ground before it draws would shift across the whole map (plans/wilderness-v5.md, BD). The graves are cut
 // by src/v7/workers/sexton.js, which takes the terrain's triangles over the block out and lays its own ground there.
 // A boulder rocks.js has placed on a slot keeps its place: rocks.js passes each boulder's size, and the slot under it
 // is never opened. ?workers=0 or ?sexton=0 makes every export here a no-op.

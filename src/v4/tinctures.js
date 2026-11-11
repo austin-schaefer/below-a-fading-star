@@ -1,4 +1,4 @@
-// The Tinctures (DI, wilderness-v5.md; placement plan section 4): each bioregion takes the one sun a little
+// The Tinctures (DI, plans/wilderness-v5.md; placement plan section 4): each bioregion takes the one sun a little
 // differently, so the haze answers in its own hue. "Don't take it too far: subtle regional variation in light, nothing
 // extreme. Hue shifts the eye notices on crossing a boundary, not a filter per region; luminance unchanged."
 //

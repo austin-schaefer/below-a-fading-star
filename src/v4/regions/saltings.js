@@ -1,4 +1,4 @@
-// BP The Saltings [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2,
+// BP The Saltings [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2,
 // REGIONS.saltings in world.js). "What the Wrong Colour has been doing to the land for a long time: a salt-flat ...
 // a white crust cracked into plates with pink gypsum roses at the joints, glasswort gone blood-red along the
 // runnels, a margin of the same grey brittle reeds that ring the eddy. No stone at all, only crust and a few

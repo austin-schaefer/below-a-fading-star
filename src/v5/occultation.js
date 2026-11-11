@@ -1,6 +1,6 @@
-// AR The Occultation [Proposed] (IDEAS-v4.md AR; wilderness-v4.md "Yes, but the shadow band sweeps a couple of
+// AR The Occultation [Proposed] (plans/IDEAS-v4.md AR; plans/wilderness-v4.md "Yes, but the shadow band sweeps a couple of
 // hundred metres up, through the air and across the walls, a weather event, not along the floor"; placement in
-// wilderness-v4-placement.md, AR). Every several minutes a band of shadow sweeps the bowl from the sun's saddle in the
+// plans/wilderness-v4-placement.md, AR). Every several minutes a band of shadow sweeps the bowl from the sun's saddle in the
 // west to the east wall at a walking pace, as if something vast were passing between the bowl and the sun. Nothing is
 // drawn: look up and there is only haze, and the sun's disc dims along one edge. Birds under it go quiet.
 //

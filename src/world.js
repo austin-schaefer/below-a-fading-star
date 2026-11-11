@@ -40,7 +40,7 @@ export const LANDMARKS = {
   graveyard:{ x: 198,  z: -130, r: 14,  y: null, name: "The Leaning Yard",     line: "“When we’re young, we notice things that are young, like ourselves. New grass on old graves.”" },
   speculum: { x: 208,  z: 258,  r: 10,  y: 3.5, name: "The Speculum",          line: "“... who lived ages before there were any men, and who came to the young world out of the sky.”" },
   river:    { x: 168,  z: 236,  r: 30,  y: null, name: "The Tumbling Water",   line: "“Below she caught glimpses of misty plains and valleys with mountain peaks rising far away.”" },
-  // v2 sites from the placement plan (wilderness-v2-placement.md). Built by the stage C agents; names [Proposed].
+  // v2 sites from the placement plan (plans/wilderness-v2-placement.md). Built by the stage C agents; names [Proposed].
   sward:    { x: -45,  z: 45,   r: 26,  y: null, name: "The Heliotrope Sward", line: "“You shall die in this tragic golden light of sunset.”" },
   menology: { x: -15,  z: 255,  r: 24,  y: null, name: "The Menology",         line: "“The clock moves forward; wasted time is life defeated.”" },
   hypogeum: { x: 226,  z: -112, r: 12,  y: null, name: "The Hypogeum",         line: "“The magician hides his hinges, mirrors, and trapdoors with the utmost care.”" },
@@ -100,7 +100,7 @@ export const CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
 ];
 
-// v4: the eight bioregions (wilderness-v4-placement.md section 2; briefs in wilderness-v5.md). Shapes:
+// v4: the eight bioregions (plans/wilderness-v4-placement.md section 2; briefs in plans/wilderness-v5.md). Shapes:
 // circle {x, z, r}, ellipse {x, z, rx, rz}, poly [[x, z], ...], strip (a spine of [x, z, halfWidth]),
 // annulus {x, z, r0, r1, from, to} (compass bearings from the centre, clockwise). clip: half-planes the shape
 // stops at ({ zMin } / { zMax }). yields: places that win inside their radius ({x, z, r}). blend: metres the
@@ -128,7 +128,7 @@ export const REGIONS = {
                 yields: [] },
 };
 
-// v4–v7 reserved sites (wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
+// v4–v7 reserved sites (plans/wilderness-v4-placement.md sections 3–5): where each later piece goes, so nothing is
 // placed twice. Not landmarks yet (the HUD and the scatter ignore them); a module claims its site when it builds.
 export const SITES = {
   pit:        { x: 200, z: 185, r: 14, name: 'the pit', block: [182, 218, 167, 203] },

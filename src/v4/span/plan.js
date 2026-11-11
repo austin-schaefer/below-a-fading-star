@@ -1,6 +1,6 @@
 // The Great Span's plan (v4, W): every measure the build, the terrain's marked blocks, the vegetation's
 // keep-out and the tests share. Pure data and functions, no THREE, so terrain.js and vegetation can import it.
-// wilderness-v4-placement.md section 3: a straight span along z = 215 between abutments 48 m into the walls at
+// plans/wilderness-v4-placement.md section 3: a straight span along z = 215 between abutments 48 m into the walls at
 // x ±257 (the floor ends at x ±209), deck top at y 56, ten piers, three collapsed bays, a crack at x -45, a
 // stair at each end, the west gate shut, the east gate blocked by rockfall.
 import { smoothstep, lerp, clamp } from '../../noise.js';

@@ -1,6 +1,6 @@
 # v7.2, the sound: the briefs
 
-Written 2026-11-09 from Austin's words (`wilderness-v7.2.md`), a cold read of `src/audio.js`, `src/audio/synth.js`, `src/audio/living.js` and the regions' sound hooks at `38d9106` (main after v7), and the research in `.agents/skills/sound-design/SOURCES.md`. Seven briefs: two foundations, four voicing passes, one listening review.
+Written 2026-11-09 from Austin's words (`plans/wilderness-v7.2.md`), a cold read of `src/audio.js`, `src/audio/synth.js`, `src/audio/living.js` and the regions' sound hooks at `38d9106` (main after v7), and the research in `.agents/skills/sound-design/SOURCES.md`. Seven briefs: two foundations, four voicing passes, one listening review.
 
 ## Austin's second note (2026-11-09)
 

@@ -1,4 +1,4 @@
-// CY The Collation [Decided] (wilderness-v5.md "Detail"; IDEAS-v5.md CY): in a clearing inside Medlar Close a long table
+// CY The Collation [Decided] (plans/wilderness-v5.md "Detail"; plans/IDEAS-v5.md CY): in a clearing inside Medlar Close a long table
 // laid for twelve. Pewter plates with a bletted medlar on each, glasses with dust at the bottom, the chairs pulled out as
 // if the guests had just stood, one knocked over on its back; a cloth gone to grey; nothing else.
 //

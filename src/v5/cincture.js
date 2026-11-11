@@ -1,5 +1,5 @@
-// AQ The Cincture [Proposed] (v5 wonder; IDEAS-v4.md AQ, wilderness-v4.md "Yes, emphatically"; the arc in
-// wilderness-v4-placement.md: from bearing 140 at the horizon, highest about 55 degrees up near bearing 70, down to
+// AQ The Cincture [Proposed] (v5 wonder; plans/IDEAS-v4.md AQ, plans/wilderness-v4.md "Yes, emphatically"; the arc in
+// plans/wilderness-v4-placement.md: from bearing 140 at the horizon, highest about 55 degrees up near bearing 70, down to
 // bearing 350). A thin, broken band built round the world long ago, drawn in the sky dome's fragment shader: no
 // textures, no draw calls, no uniforms of its own (it reads the dome's uSunDir and uFlicker).
 //

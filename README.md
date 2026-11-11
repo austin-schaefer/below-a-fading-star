@@ -16,14 +16,14 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ## Milestones
 
-- v2, `wilderness-v2.md` + `wilderness-v2-placement.md`: Adding more life, named sites.
-- v3, `wilderness-v3.md` + `wilderness-v3-survey.md`: Adjusting the color temperatures, and performance pass.
-- v4, `wilderness-v4.md` + `wilderness-v4-placement.md` + `wilderness-mountains-study.md`: Adding distinct bioregions and more architectural features.
-- v5, `wilderness-v5.md` + `wilderness-v5-coherence.md`: Making the architecture and landscapes more distinctive and less generic fantasy.
-- v6, `wilderness-v6.md`: Another performance improvement spike.
+- v2, `plans/wilderness-v2.md` + `plans/wilderness-v2-placement.md`: Adding more life, named sites.
+- v3, `plans/wilderness-v3.md` + `plans/wilderness-v3-survey.md`: Adjusting the color temperatures, and performance pass.
+- v4, `plans/wilderness-v4.md` + `plans/wilderness-v4-placement.md` + `plans/wilderness-mountains-study.md`: Adding distinct bioregions and more architectural features.
+- v5, `plans/wilderness-v5.md` + `plans/wilderness-v5-coherence.md`: Making the architecture and landscapes more distinctive and less generic fantasy.
+- v6, `plans/wilderness-v6.md`: Another performance improvement spike.
 - v7, `briefs/v7/index.md`: Way more characters and living creatures.
 - v7.1, `briefs/v7.1/`: Improved copy and text with human-chosen quotes.
-- v7.2, `wilderness-v7.2.md`: Soundscape level-up.
+- v7.2, `plans/wilderness-v7.2.md`: Soundscape level-up.
 
 ## License
 

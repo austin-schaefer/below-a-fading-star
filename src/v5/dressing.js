@@ -1,6 +1,6 @@
 // v5 story set-dressing: CY the Collation (a long table laid for twelve in Medlar Close), DE the Slipper (on the causeway,
 // 24 m into the first walk) and DF the Unfinished Prospect (an easel at the High Ling's brow with a painted canvas of the
-// view), wilderness-v5.md "Detail". Each part is in src/v5/dressing/. ctx.dressing5 = { collation, slipper, prospect, stats() }
+// view), plans/wilderness-v5.md "Detail". Each part is in src/v5/dressing/. ctx.dressing5 = { collation, slipper, prospect, stats() }
 // (draw calls and triangles the three cost in all, 4 and about 8k). Static: no update, no lights. ?dressing5=0 leaves
 // all three out, ?collation=0, ?slipper=0 and ?prospect=0 each its own.
 import { buildCollation } from './dressing/collation.js';

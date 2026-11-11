@@ -18,7 +18,7 @@
 import { SPAWN, WATER } from './world.js';
 
 // The bench walks the causeway as it was in v3, pinned here (v4 systems) so that v4's reroute of CAUSEWAY
-// (from the saddle to the pit, wilderness-v4-placement.md) leaves bench numbers comparable with v3's.
+// (from the saddle to the pit, plans/wilderness-v4-placement.md) leaves bench numbers comparable with v3's.
 const BENCH_CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
 ];

@@ -2,9 +2,9 @@
 
 ## The current plan
 
-v6 runs slim: three batches, then release. The plan, its state and what is deferred are in `wilderness-v6.md` "Status"; the rest of this file is the full dispatch catalogue it draws on.
+v6 runs slim: three batches, then release. The plan, its state and what is deferred are in `plans/wilderness-v6.md` "Status"; the rest of this file is the full dispatch catalogue it draws on.
 
-Written 2026-11-08 from `wilderness-v6.md` (the survey, 35 pictures in `shots/wip/v6-00-survey-*`, targets, six stages, rules, open questions), Austin's instruction ("i want to share with folks but currently performance is too poor to share"; open calls at the defaults), `wilderness-v3.md`, the `wilderness` skill, the laptop samples in `shots/perf/laptop-wood-*.json`, and the code at `aaa42e1` (deploy worktree) plus `fix-dpr-steps` at `0a5a739`. Ordered so what Austin feels most on his laptop lands first: the post chain (bloom 6.5 + grade 3.1 + output 3.2 = 12.8 of 26.7 ms GPU), the shadow pass during turns, the LOD and chunk pops, then the rest.
+Written 2026-11-08 from `plans/wilderness-v6.md` (the survey, 35 pictures in `shots/wip/v6-00-survey-*`, targets, six stages, rules, open questions), Austin's instruction ("i want to share with folks but currently performance is too poor to share"; open calls at the defaults), `plans/wilderness-v3.md`, the `wilderness` skill, the laptop samples in `shots/perf/laptop-wood-*.json`, and the code at `aaa42e1` (deploy worktree) plus `fix-dpr-steps` at `0a5a739`. Ordered so what Austin feels most on his laptop lands first: the post chain (bloom 6.5 + grade 3.1 + output 3.2 = 12.8 of 26.7 ms GPU), the shadow pass during turns, the LOD and chunk pops, then the rest.
 
 ## What is already done and not re-briefed
 
@@ -25,7 +25,7 @@ Written 2026-11-08 from `wilderness-v6.md` (the survey, 35 pictures in `shots/wi
 | v6-06 | `brief-v6-06-fauna.md` | `v6-fauna` | Opus | 5 far 5 Hz motion, 6 fauna hides | `src/fauna/*`, `src/main.js` `runUpdates` | polish |
 | v6-07 | `brief-v6-07-slots.md` | `v6-slots` | Sonnet | 11 light slots, 18 dt | `src/lights.js`, `src/controls.js`, `src/main.js` line 308 | polish |
 | v6-08 | `brief-v6-08-image.md` | `v6-image` | Opus | 13 AA, 14 the step's reallocation, 16 bloom shimmer, 17 banding | `src/post.js`, `src/tier.js`, `src/perf.js` | polish |
-| v6-09 | `brief-v6-09-table.md` | `v6-table` | Sonnet | stage 6 table and Austin's pairs | `wilderness-v6.md` only | reports it |
+| v6-09 | `brief-v6-09-table.md` | `v6-table` | Sonnet | stage 6 table and Austin's pairs | `plans/wilderness-v6.md` only | reports it |
 
 How the six stages map: stage 1 → v6-01; stage 2 → v6-04 (trees, fungi, silhouettes), v6-05 (plants, rocks), v6-06 (fauna); stage 3 → v6-05 (packs, sort, budget), v6-06 (frustum hide), v6-01 (burst window); stage 4 → v6-03 (box), v6-07 (slots), v6-08 (pixel-ratio step, AA); stage 5 → done but v6-07 (dt); stage 6 → v6-09. v6-02 is new: the laptop sample showed the post chain as half the GPU, which no stage planned.
 
@@ -51,7 +51,7 @@ Dependencies: everything after v6-01 needs `pop-test`/`pair-diff`; v6-03, v6-04,
 - `tools/pop-test.mjs`: every brief flips its own rows to `gate: true` and may add checks in its group; keep-both merges, then run `pop-test --only=uploads` once to see the table parses.
 - Shader program keys: v6-03's shadow-chunk patch changes every lit program; v6-04, v6-05, v6-06 add fade variants. Each runs pop-test `uploads` and `pan-test` (zero compiles while turning); the orchestrator runs both after merging the batch, since two agents' variants can collide in `customProgramCacheKey`.
 - The "The v6 switches" group in `.agents/skills/wilderness/runtime.md`'s URL params (started by v6-01, appended by every brief): keep-both merges doubled 18 segments of the URL-params line once already; resolve by hand and grep for duplicates after each merge.
-- `wilderness-v6.md` `## Results` (one subsection per brief, appended in brief order) and the catalogue's `[done in v6]` marks.
+- `plans/wilderness-v6.md` `## Results` (one subsection per brief, appended in brief order) and the catalogue's `[done in v6]` marks.
 - `src/vegetation/trees.js`: v6-01 (two counter lines), v6-04 (everything, fungi included).
 - `src/vegetation/plants.js`, `src/rocks.js`: v6-01 (counter lines), v6-05.
 - `src/tier.js`: `fix-dpr-steps`, v6-01 (one line), v6-08.

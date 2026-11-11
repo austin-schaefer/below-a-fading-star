@@ -1,4 +1,4 @@
-// The glacier, rebuilt (v4 regions, with BQ the Outwash; wilderness-v5.md: "flow lines, crevasses that follow the
+// The glacier, rebuilt (v4 regions, with BQ the Outwash; plans/wilderness-v5.md: "flow lines, crevasses that follow the
 // slope, a snout that reads as ice"). The notch in the north wall is unchanged (terrain.glacierMask, which the
 // Lattice and the walls read); this file shapes the tongue on the floor and paints it.
 // - glacierTongue(h, x, z, ramp): the ice on the floor, called from terrain.js's heightAt. A convex tongue,

@@ -1,5 +1,5 @@
-// AM The Acephalous Thrones [Proposed] (IDEAS-v4.md AM; wilderness-v4.md: "the two colossi are not seated: both are
-// crawling on hands and knees, flanking the sun's saddle"; site in wilderness-v4-placement.md section 5, key `thrones`).
+// AM The Acephalous Thrones [Proposed] (plans/IDEAS-v4.md AM; plans/wilderness-v4.md: "the two colossi are not seated: both are
+// crawling on hands and knees, flanking the sun's saddle"; site in plans/wilderness-v4-placement.md section 5, key `thrones`).
 // Two headless colossi carved from the west wall, one on each of AM's seats (src/v4/mountains.js, the marked block),
 // crawling out of the wall into the bowl: hands flat on the bench at the plinth's edge (r 380, 8 m above the road's
 // start), the outer hand's fingers over it; arms 50 m; shoulders 67 m above the bench and the neck's stump to 75 m;

@@ -5,7 +5,7 @@ description: How to work on "Below a Fading Star", the Three.js first-person wal
 
 # Wilderness
 
-This repository is a static Three.js r170 site with no build step and no package.json; the site is the repository root. The milestone docs (`wilderness-v<N>.md`) and their briefs (`briefs/v<N>/`) say what to build; this skill says how to work. References: `runtime.md` (URL params, quality tiers, shadow cadence, the profiler, what each test checks) and `modules.md` (the module table, which every agent that adds a module extends by one row).
+This repository is a static Three.js r170 site with no build step and no package.json; the site is the repository root. The milestone docs (`plans/wilderness-v<N>.md`) and their briefs (`briefs/v<N>/`) say what to build; this skill says how to work. References: `runtime.md` (URL params, quality tiers, shadow cadence, the profiler, what each test checks) and `modules.md` (the module table, which every agent that adds a module extends by one row).
 
 ## Run and serve
 
@@ -81,7 +81,7 @@ Where the piece stands today, and why. These are yours to move (`AGENTS.md`): ke
 
 ## Decisions
 
-An open call is decided by whoever meets it, at the brief's default if it has one, and written into the commit message that carries it. No decision log, no morning file, no continuance file: state lives in the current milestone doc's "Status" section, history in git and `RELEASES.md`. A fresh session reads the current milestone's doc (the highest-numbered `wilderness-v<N>.md`) → its `briefs/<v>/index.md`, and starts.
+An open call is decided by whoever meets it, at the brief's default if it has one, and written into the commit message that carries it. No decision log, no morning file, no continuance file: state lives in the current milestone doc's "Status" section, history in git and `RELEASES.md`. A fresh session reads the current milestone's doc (the highest-numbered `plans/wilderness-v<N>.md`) → its `briefs/<v>/index.md`, and starts.
 
 Nothing here waits on the owner's approval. The `autonomous-run` skill covers the few things that do need them and how to keep going around them.
 

@@ -1,4 +1,4 @@
-// DP The Luminous Reach (IDEAS-v5.md DP; wilderness-v5.md "### DP. The Luminous Reach"): "Where the river breaks white
+// DP The Luminous Reach (plans/IDEAS-v5.md DP; plans/wilderness-v5.md "### DP. The Luminous Reach"): "Where the river breaks white
 // in the Clough the water flashes a faint blue-green, plankton lit by the churn, and the glow is carried downstream on the
 // current, out of the canyon and across the slow reach into the fen, fading as it goes. During a gutter it is the
 // brightest line on the bowl's floor, a thread from the fall to the fen."

@@ -1,5 +1,5 @@
-// Carcanet Keep [Proposed] (wilderness-v4.md, the awe audit and "Height, and which architecture
-// works"; site in wilderness-v4-placement.md section 5). The age of plain mass: four ranges of sheer, unornamented
+// Carcanet Keep [Proposed] (plans/wilderness-v4.md, the awe audit and "Height, and which architecture
+// works"; site in plans/wilderness-v4-placement.md section 5). The age of plain mass: four ranges of sheer, unornamented
 // stone round a court, 24 to 36 m high, cut by a rhythm of deep-set slots too tall for any door, entered by one slot
 // that is the gate; a few enormous details (the cracked lintel over the gate, a bronze ring on the court's south
 // wall, a 30 m bronze needle on the south-west block). Its north-east
@@ -24,7 +24,7 @@ const GATE = KEEP_V2.gate; // the passage keeps the old gate's line: z 31-37.6, 
 const NEEDLE = { x: 28, z: 50.5, h: 30 };
 const SLAB = { b: 30, r0: 27, Ls: 17, W: 13, T: 3, yHi: BASE + 6.5 }; // the fallen face: bearing, near end, slant length
 const CHUNK = { x: 65.5, z: 12.5 };
-const MOLES = { x: 75, z: 0, r: 12 }; // v7's reserved lawn (wilderness-v4-placement.md section 5): blocks keep off it
+const MOLES = { x: 75, z: 0, r: 12 }; // v7's reserved lawn (plans/wilderness-v4-placement.md section 5): blocks keep off it
 
 // What fauna/small.js reads to seat the rooks: its "donjon" ring (12 high perches) falls on the south-west block's
 // roof, its hexagon (wall perches) on the four ranges' roofs; perches over the fallen corner find only rubble and drop.

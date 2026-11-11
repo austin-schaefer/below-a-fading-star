@@ -1,4 +1,4 @@
-// The regions kit (v4 systems): the eight bioregions of wilderness-v5.md as shapes with soft boundaries, and
+// The regions kit (v4 systems): the eight bioregions of plans/wilderness-v5.md as shapes with soft boundaries, and
 // the hooks through which each region's own module (src/v4/regions/<key>.js) reaches the shared systems.
 //
 // regionAt(x, z, out?, blend?) -> { bletting, saltings, ..., moor, wood, fen, lattice, primary }

@@ -1,4 +1,4 @@
-// DC The Discontinued Track [Proposed] (wilderness-v5.md): "a line of bare footprints crossing the Saltings' crust from
+// DC The Discontinued Track [Proposed] (plans/wilderness-v5.md): "a line of bare footprints crossing the Saltings' crust from
 // the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (170, 150)
 // east to (215, 160), a 2 m strip. Left and right, one stride apart, each a slight hollow with a darker floor; where the
 // line crosses the causeway the slabs have no prints on them, and the line goes on in the same step on the far side.

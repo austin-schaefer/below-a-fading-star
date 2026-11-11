@@ -23,7 +23,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `tinct=0` (no regional tint on the haze and the light)
 - `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, timings exported from `src/sky.js`)
 
-### v3 stage 2 switches (each defaults to the new behaviour; see `wilderness-v3.md`)
+### v3 stage 2 switches (each defaults to the new behaviour; see `plans/wilderness-v3.md`)
 
 - `cap=60` (frames per second; `0` uncapped)
 - `idle=0` (full rate under the cards and when unfocused)
@@ -111,7 +111,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### The v7 living
 
-(each v7 module's flag; see wilderness-v5.md, "## v7, the living")
+(each v7 module's flag; see plans/wilderness-v5.md, "## v7, the living")
 
 - `canyon=0` (no `living-canyon`: no Bather, stones or Toadstone); `bather=0` and `toadstone=0` leave out each alone (v7-06)
 - `reach=0` (DP the Luminous Reach's chunks compiled out of the river's and the fen's shaders, which are then exactly as before); `reach=mask` paints the glow red, to check where it lies (v7-06)
@@ -123,7 +123,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### The walls
 
-- `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `wilderness-v5.md`, "The massifs"), to compare
+- `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
 
 ## Quality tiers
 

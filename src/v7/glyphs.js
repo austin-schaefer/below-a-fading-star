@@ -1,4 +1,4 @@
-// v7, the living: the Hypogeum's glyphs where they turn up outside the tomb (wilderness-v5.md, "### CP. The Scriveners",
+// v7, the living: the Hypogeum's glyphs where they turn up outside the tomb (plans/wilderness-v5.md, "### CP. The Scriveners",
 // "### The glyph motif", "### CT. The Tesserine Moles"). World module `living-glyphs`.
 //   glyphs/scriveners.js  CP the Scriveners: a shoal in Lees Tarn's north shallows that forms the door's last glyph
 //   glyphs/moles.js       CT the Tesserine Moles: heaps of tesserae on the Demesne's lawn, one tessera carrying a glyph

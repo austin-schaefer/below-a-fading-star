@@ -1,4 +1,4 @@
-// BO The Bletting [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.bletting
+// BO The Bletting [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.bletting
 // in world.js). "The orchard country round Medlar Close, spread out past its wall: old medlars and quinces gone to
 // thicket, windfalls browning in the grass, a hedge-line of blackthorn running between broken field walls of
 // honey-coloured stone laid without mortar. The ground is long rank grass with knapweed and the dull purple of

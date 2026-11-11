@@ -1,4 +1,4 @@
-// CT The Tesserine Moles [Proposed] (wilderness-v5.md, "### CT. The Tesserine Moles"): "Molehills on the Demesne's old lawn,
+// CT The Tesserine Moles [Proposed] (plans/wilderness-v5.md, "### CT. The Tesserine Moles"): "Molehills on the Demesne's old lawn,
 // but the earth they push up is full of tesserae: small dressed cubes of red, gold and lapis from a mosaic floor somewhere
 // under the turf. Now and then a new heap rises, slowly, with a click of stone on stone." Austin: "more of the cute": the
 // cute is in the scale and the slow heave; no mole is ever seen.

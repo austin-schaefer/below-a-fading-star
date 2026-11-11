@@ -11,14 +11,14 @@ Load the `wilderness` skill too: its pace rules and hand-back steps bind you as 
 
 ## Start of session
 
-1. **Read the state:** the current milestone's doc (the highest-numbered `wilderness-v<N>.md`, its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`).
+1. **Read the state:** the current milestone's doc (the highest-numbered `plans/wilderness-v<N>.md`, its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`).
 2. **Report to the owner** in five lines or fewer: what's on `main`, what's in flight, what's waiting on them, and what you plan to do next.
 
 Then carry on. Take the owner's direction if they give any; otherwise work the current milestone, and if there is none, choose the next one and open it (`autonomous-run`, "Choosing what to build"). Don't wait for a go-ahead.
 
 ## Planning a milestone
 
-- A milestone is one doc, `wilderness-v<N>.md`, with a Status section, and a `briefs/v<N>/index.md` dispatch plan. The `IDEAS*.md` files are the bank to draw on and add to.
+- A milestone is one doc, `plans/wilderness-v<N>.md`, with a Status section, and a `briefs/v<N>/index.md` dispatch plan. The `plans/IDEAS*.md` files are the bank to draw on and add to.
 - Each brief is one subagent's work: one coherent change, testable on its own, reviewable in a single diff. Order them so the foundations land first.
 - Don't over-plan. Brief the next batch in detail and leave the rest coarse.
 - Every batch names what the owner can see when it lands (a position and yaw on the local server, a render, a sound). A batch they can't see until the end is a smell; split it.

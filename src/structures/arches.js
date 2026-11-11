@@ -1,4 +1,4 @@
-// The Arcature [Proposed] (v5 recast, the awe audit; site in wilderness-v4-placement.md section 5). The age of the
+// The Arcature [Proposed] (v5 recast, the awe audit; site in plans/wilderness-v4-placement.md section 5). The age of the
 // reckoning engines: a stone armillary. Fourteen parabolic arches nested one inside the next, each spanning the
 // whole nest from a pair of bronze trunnions, each turned 25.7 degrees from the one outside it and tilted on its
 // trunnions the other way, as though the nest were set to some reckoning; their feet wind inward in two spirals.

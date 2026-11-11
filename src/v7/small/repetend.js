@@ -1,4 +1,4 @@
-// CO The Repetend [Proposed] (wilderness-v5.md, "### CO. The Repetend"): "A brown bird on the Lynchets' walls that follows
+// CO The Repetend [Proposed] (plans/wilderness-v5.md, "### CO. The Repetend"): "A brown bird on the Lynchets' walls that follows
 // you along the wall-tops and, a second behind, repeats your footsteps exactly, gravel or grass, walking or hurrying.
 // Stop and it plays out your last few steps, then is quiet." Austin: yes.
 // A bird 0.35 m long (v7.1: the 0.18 m model drawn at 1.94 times; body, head, tail, folded wings; a light dove-grey, so

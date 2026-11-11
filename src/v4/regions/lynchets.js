@@ -1,4 +1,4 @@
-// BU The Lynchets [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.lynchets
+// BU The Lynchets [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.lynchets
 // in world.js). "The Byre's farmland gone back to grass: long terraces stepped down the slope toward the tarn,
 // ridge-and-furrow under the turf that shows in low light, docks and nettles thick where middens were, and drystone
 // walls of grey field-stone running in straight lines to nowhere, gapped and slumped. Thistle-down drifts in the

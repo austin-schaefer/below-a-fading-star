@@ -1,4 +1,4 @@
-// The map structure (v4 map; wilderness-v4.md "Map structure", placement plan section 4), as a world module:
+// The map structure (v4 map; plans/wilderness-v4.md "Map structure", placement plan section 4), as a world module:
 //   - the leads: worn paths P1-P17, the old kerb K1 and the rivulets R1-R5 (traced in paths/routes.js), each drawn
 //     as a wear on the ground in the material of the region it crosses, never as a plank: a soft-edged ground
 //     decal in a clone of the terrain's own lighting, its middle bare or trodden, its shoulders thinning into the

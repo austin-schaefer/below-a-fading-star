@@ -1,4 +1,4 @@
-// CM The Indistinct [Proposed] (wilderness-v5.md, "### CM. The Indistinct"): "Something small and dark that keeps exactly
+// CM The Indistinct [Proposed] (plans/wilderness-v5.md, "### CM. The Indistinct"): "Something small and dark that keeps exactly
 // seven metres from you along the ha-ha's ditch, always a little out of focus whatever you do: a soft blur where the eye
 // wants an animal. Walk toward it and it keeps the distance; stop and it stops." Austin: "ensure it's not too subtle to be seen."
 // The line: the ditch floor at r 78.2 from the keep, bearings 0-90 (the ha-ha's NE arc), on the drawn floor's height.

@@ -1,4 +1,4 @@
-// DE The Slipper [Decided] (IDEAS-v5.md DE): a single brocade slipper on the causeway, the toe curled, the gold thread
+// DE The Slipper [Decided] (plans/IDEAS-v5.md DE): a single brocade slipper on the causeway, the toe curled, the gold thread
 // rubbed through, lying on its side as if dropped from something moving; on the first walk out. 25 cm long, one mesh of
 // about 700 triangles, no collider, no light, no emissive: the gold is thread in the brocade's texture (a small canvas drawn
 // at build from a private rng: peacock-green ground, a lattice of lozenges each with a dot in it in gold, a faint weave; the

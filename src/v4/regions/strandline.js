@@ -1,4 +1,4 @@
-// BV The Strandline [Proposed] (wilderness-v5.md; shape and site in wilderness-v4-placement.md section 2, REGIONS.strandline
+// BV The Strandline [Proposed] (plans/wilderness-v5.md; shape and site in plans/wilderness-v4-placement.md section 2, REGIONS.strandline
 // in world.js). "The south-east shore of Lees Tarn: a beach of black flint shingle sorted by size into bands, the
 // coarse up top and the fine at the water, with horsetails and bogbean in the shallows and quillwort under the
 // surface. Midges stand in columns over the margin; water laps though there is no wind. The boundary is the change
