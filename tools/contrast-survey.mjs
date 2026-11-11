@@ -33,7 +33,7 @@ export const POSES = [
   ['highLing', 262, -30, 3.0, 'region'],
   ['demesne', 40, -38, 1.3, 'region'],          // the lawn north of the keep, looking west along it
   ['lynchets', -180, -95, 0.59, 'region'],
-  ['wood', -200, 140, 1.9, 'region'],      // toward the sun through the trunks
+  ['wood', -185, 118, 1.9, 'region'],      // toward the sun through the trunks
   ['fen', 40, 135, 2.6, 'region'],
   ['adust', -275, -15, 0.2, 'region'],
   ['saltings', 45, 246, 1.0, 'region'],
