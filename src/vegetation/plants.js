@@ -734,6 +734,7 @@ export function buildPlants(ctx, ground, shared) {
     for (let i = 0; i < nl; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
       if (cd < 9) continue;
+      if (worn(x, z)) continue; // v8-01: the fleshy leaves keep off the roads too
       // a rosette laid on steep ground reads as a flat black disc: keep them to gentle ground off the river's wet band
       if (ground.slopeAt(x, z) > 0.6 || ground.wetAt(x, z) > 0.3) continue;
       const y = ground.heightAt(x, z);
