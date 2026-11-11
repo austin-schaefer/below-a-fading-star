@@ -2,7 +2,7 @@
 // v8-03 three hands (src/v8/strata.js, src/v8/strata/): the kit's parts build (every part of every hand adds clean
 // geometry into a Builder); the sign is placed at least a dozen times and at least three times in each hand; the spolia at
 // least ten times; every placement stands where it says it does (on the ground: its foot at or under the ground and not
-// lost in it; on a wall: a ray from it back into the wall meets stone within 0.6 m; on top of something: a ray down meets
+// lost in it; on a wall: rays back from beside it, either side, meet the wall within 0.6 m; on top of something: a ray down meets
 // its support within 0.4 m; across a gap: its deck within half a metre of the banks); every placement is in sight of a road
 // (a lead, the causeway, the Plinth Road or the Span's deck: a sample within 60 m with a clear line over the terrain from
 // eye height); the module's cost (two draw calls, under 60k triangles).
@@ -74,8 +74,11 @@ const r = await page.evaluate(async () => {
       const r = p.r ?? 1, hi = maxG(p.x, p.z, r);
       o.ok = Math.abs(p.y - hi) < 0.5; o.info = `deck ${(p.y - hi).toFixed(2)} m from the banks`;
     } else if (m === 'wall') {
-      const d = cast([p.x, p.y, p.z], [-p.face[0], 0, -p.face[1]], 1.0);
-      o.ok = d != null && d < 0.6; o.info = `the wall ${d == null ? 'not met' : d.toFixed(2) + ' m'} behind`;
+      // beside it on both hands, in its own plane, a ray straight back meets the wall it hangs on (the sign's own
+      // tablet is merged into the same mesh, so the ray starts clear of it)
+      const k = (p.size ?? 1) / 2 + 0.12, lx = -p.face[1], lz = p.face[0];
+      const ds = [1, -1].map((sg) => cast([p.x + lx * k * sg, p.y, p.z + lz * k * sg], [-p.face[0], 0, -p.face[1]], 1.0));
+      o.ok = ds.every((d) => d != null && d < 0.6); o.info = `the wall ${ds.map((d) => (d == null ? 'not met' : d.toFixed(2) + ' m')).join(' and ')} behind, either side`;
     } else if (m === 'top') {
       const d = cast([p.x, p.foot + 0.05, p.z], [0, -1, 0], 0.6);
       o.ok = d != null && d < 0.4; o.info = `support ${d == null ? 'not met' : d.toFixed(2) + ' m'} under its foot`;

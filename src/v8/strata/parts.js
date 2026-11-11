@@ -102,6 +102,9 @@ function heliRoundel(B, M, o = {}) {
   // a carved hexagon at each shoulder, the Heliarchy's everyday motif
   for (const sx of [-1, 1]) B.add(B.cyl(s * 0.07, s * 0.07, 0.012, 6, 1), ch(M, sx * s * 0.36, s * 0.09 + h * 0.5, d / 2 + 0.004, Math.PI / 2, 0, 0), { color: H.carve, moss: 0.1, ground: g0 - 2 });
   const cy = s * 0.09 + h + SIGN.discUp * S, r = SIGN.discR * S;
+  // the tablet it is cut from, behind it and darker, so the notch reads against any wall: the sky's hollow
+  const th = cy + r * 1.35 - s * 0.09;
+  B.add(B.box(s * 1.04, th, 0.04), ch(M, 0, s * 0.09 + th / 2, -d / 2 - 0.018), { color: H.carve.clone().lerp(H.dark, 0.45), moss: 0.1, ground: g0 - 2 });
   const discOpts = o.disc === 'bronze' ? { color: H.bronze, moss: 0, ground: g0 - 2, iron: 0 } : { color: c('#4a1a08'), moss: 0, ground: g0 - 2, emit: [...H.ember, 0] };
   B.add(B.cyl(r, r, d * 0.7, 28, 1), ch(M, 0, cy, 0, Math.PI / 2, 0, 0), discOpts);
   B.add(new THREE.TorusGeometry(r * 1.06, s * 0.022, 6, 32), ch(M, 0, cy, d * 0.36), { color: H.bronzeDark, moss: 0, ground: g0 - 2 });
