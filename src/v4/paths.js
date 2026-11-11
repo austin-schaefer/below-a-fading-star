@@ -54,11 +54,11 @@ function leadMaterial(ctx) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uFlick = uFlicker;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec4 aLead; attribute vec3 aMat; varying vec4 vLead; varying vec3 vMat; varying vec3 vLPos;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLead = aLead; vMat = aMat; vLPos = (modelMatrix * vec4(position, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nattribute vec4 aLead; attribute vec3 aMat; attribute vec3 aGround; varying vec4 vLead; varying vec3 vMat; varying vec3 vLPos; varying vec3 vGround;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLead = aLead; vMat = aMat; vGround = aGround; vLPos = (modelMatrix * vec4(position, 1.0)).xyz;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying vec4 vLead; varying vec3 vMat; varying vec3 vLPos; uniform float uFlick;
+        varying vec4 vLead; varying vec3 vMat; varying vec3 vLPos; varying vec3 vGround; uniform float uFlick;
         ${NOISE_GLSL}
         ${MAT_GLSL}
         float lGroove; float lWet;`)
@@ -76,9 +76,19 @@ function leadMaterial(ctx) {
             float edge = p + (n - 0.5) * 0.55 + (n2 - 0.5) * 0.25;
             a = 1.0 - smoothstep(0.55, 1.0, edge);
             float sp = smoothstep(1.0 - sa, 1.0, lNoise(g * sf) * 0.7 + lNoise(g * sf * 2.3 + 3.1) * 0.3);
-            col = base * (0.86 + 0.28 * n) * (1.0 - 0.18 * smoothstep(0.2, 0.0, p));
-            col = mix(col, speck * (0.8 + 0.4 * lHash(floor(g * sf))), sp);
-            a *= 0.92 * (0.75 + 0.25 * vMat.y);
+            // v8-01: the tread's colour is set against the ground under it (the terrain's own colour there, aGround),
+            // not as a fixed hex: the material's hue at a luminance well above the ground's on dark ground, below it on
+            // pale ground (salt, clay), so the line reads in every region; a way (vMat.y 1) more than a trod
+            const vec3 LUM = vec3(0.2126, 0.7152, 0.0722);
+            float gl = max(dot(vGround, LUM), 0.004), bl = max(dot(base, LUM), 0.004), lift = vMat.y;
+            float target = gl < 0.2 ? min(0.5, max(gl * (1.9 + 0.9 * lift), gl + 0.04 + 0.04 * lift)) : gl * (0.5 - 0.12 * lift);
+            vec3 hue = mix(vGround / gl, base / bl, 0.6);
+            // two trodden lines where feet go, a little paler, and the turf breaking in at the edges in tufts
+            float rut = smoothstep(0.16, 0.0, abs(p - 0.3 - (n2 - 0.5) * 0.12));
+            col = hue * target * (0.8 + 0.34 * n) * (1.0 + 0.12 * rut);
+            a *= 1.0 - 0.55 * smoothstep(0.58, 0.74, lFbm(g * 0.8 + 11.0)) * smoothstep(0.15, 0.6, p);
+            col = mix(col, speck * (target / max(dot(speck, LUM), 0.004)) * (0.8 + 0.4 * lHash(floor(g * sf))), sp * 0.6);
+            a *= 0.97 * (0.8 + 0.2 * lift);
             lGroove = u * (1.0 - smoothstep(0.3, 0.9, p));
           } else if (kind < 1.5) {
             // the kerb: dressed blocks set in a line, joints every 0.9 m, some sunk under the turf
@@ -124,20 +134,38 @@ function leadMaterial(ctx) {
 }
 
 // ribbons for every lead line, split into 200 m tiles
+// v8-01: the terrain's own vertex colour at (x, z) (linear), bilinear over its grid: what a lead is set against
+function groundColourSampler(terrain) {
+  const g = terrain.mesh?.geometry, C = g?.attributes.color, P = g?.attributes.position;
+  if (!C || !P) return (x, z, out) => { out[0] = 0.08; out[1] = 0.08; out[2] = 0.05; return out; };
+  const n = Math.round(Math.sqrt(P.count)), x0 = P.getX(0), z0 = P.getZ(0), dx = P.getX(1) - x0, dz = P.getZ(n) - z0;
+  return (x, z, out) => {
+    const fx = clamp((x - x0) / dx, 0, n - 1.001), fz = clamp((z - z0) / dz, 0, n - 1.001), i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j;
+    const k00 = j * n + i, k10 = k00 + 1, k01 = k00 + n, k11 = k01 + 1;
+    for (let c = 0; c < 3; c++) {
+      const a = C.array[k00 * 3 + c] * (1 - tx) + C.array[k10 * 3 + c] * tx, b = C.array[k01 * 3 + c] * (1 - tx) + C.array[k11 * 3 + c] * tx;
+      out[c] = a * (1 - tz) + b * tz;
+    }
+    return out;
+  };
+}
+
 function buildLeads(ctx) {
   const { terrain } = ctx;
+  const groundCol = groundColourSampler(terrain), _gc = [0, 0, 0];
   const low = ctx.quality === 'low';
   const G = groundOf(terrain);
   const B = leads();
   const step = low ? 1.3 : 0.7, across = low ? [-1, 0, 1] : [-1, -0.5, 0, 0.5, 1];
   const tiles = new Map();
-  const tileOf = (x, z) => `${Math.floor(x / TILE)},${Math.floor(z / TILE)}`;
-  const getTile = (k) => { let t = tiles.get(k); if (!t) tiles.set(k, (t = { pos: [], lead: [], mat: [], idx: [] })); return t; };
+  const tileOf = (x, z) => `${Math.floor((x + TILE / 2) / TILE)},${Math.floor((z + TILE / 2) / TILE)}`; // v8-01: centred, so the walkable floor takes 3 x 3 tiles
+  const getTile = (k) => { let t = tiles.get(k); if (!t) tiles.set(k, (t = { pos: [], lead: [], mat: [], gc: [], idx: [] })); return t; };
   const matIdx = Object.fromEntries(MATERIAL_KEYS.map((k, i) => [k, i]));
   let samplesTotal = 0;
   for (const L of B.list) {
     if (L.kind === 'kerb') continue; // the kerb is stones (buildKerb), not a wear
     const kind = KIND[L.kind];
+    const lift = L.cls === 'way' ? 1 : 0.55; // v8-01: a way reads paler than a trod
     // the decal is wider than the worn line: the shoulders are where it fades
     const half = L.kind === 'rivulet' ? Math.max(0.55, L.w * 3.2) : L.kind === 'kerb' ? L.w * 1.4 : L.w * 2.0;
     for (const S of L.lines) {
@@ -177,7 +205,8 @@ function buildLeads(ctx) {
         if (L.kind === 'kerb') y += 0.05 * (1 - Math.abs(u)); // the stones stand a little proud
         T.pos.push(x, y, z);
         T.lead.push(u, r.s, kind, r.open);
-        T.mat.push(r.mat, 1, ang);
+        T.mat.push(r.mat, lift, ang);
+        groundCol(x, z, _gc); T.gc.push(_gc[0], _gc[1], _gc[2]);
       }
       if (c.rows > 0) {
         const w = across.length, b0 = base - w;
@@ -194,6 +223,7 @@ function buildLeads(ctx) {
     g.setAttribute('position', new THREE.Float32BufferAttribute(T.pos, 3));
     g.setAttribute('aLead', new THREE.Float32BufferAttribute(T.lead, 4));
     g.setAttribute('aMat', new THREE.Float32BufferAttribute(T.mat, 3));
+    g.setAttribute('aGround', new THREE.Float32BufferAttribute(T.gc, 3));
     g.setIndex(T.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(T.idx, 1) : new THREE.Uint16BufferAttribute(T.idx, 1));
     g.computeVertexNormals();
     g.computeBoundingSphere();
@@ -209,12 +239,7 @@ function buildLeads(ctx) {
 // ---------------------------------------------------------------- K1, the old kerb (the Leerie's row)
 // A line of dressed kerbstones, each a metre or so long, set end to end and sunk in the turf: a few gone, a few
 // canted or heaved, their tops worn round and greened. Instanced, one draw call.
-function buildKerb(ctx) {
-  const { terrain, scene } = ctx;
-  const rng = ctx.makeRng(41401);
-  const K = leads().list.find((l) => l.kind === 'kerb');
-  if (!K) return { meshes: [], stones: 0 };
-  const S = K.lines[0], len = S[S.length - 1].s;
+function kerbGeometry() {
   const g = new THREE.BoxGeometry(1, 1, 1, 3, 2, 2);
   { // worn arrises: pull the corners in, round the top
     const p = g.attributes.position;
@@ -224,6 +249,15 @@ function buildKerb(ctx) {
     }
     g.computeVertexNormals();
   }
+  return g;
+}
+function buildKerb(ctx) {
+  const { terrain, scene } = ctx;
+  const rng = ctx.makeRng(41401);
+  const K = leads().list.find((l) => l.kind === 'kerb');
+  if (!K) return { meshes: [], stones: 0 };
+  const S = K.lines[0], len = S[S.length - 1].s;
+  const g = kerbGeometry();
   const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.92 });
   const list = [];
   for (let s = 0.6; s < len - 0.4; s += 0.92 + rng() * 0.12) {
@@ -249,6 +283,85 @@ function buildKerb(ctx) {
   im.computeBoundingSphere();
   scene.add(im);
   return { meshes: [im], stones: list.length };
+}
+
+// ---------------------------------------------------------------- v8-01: the ways' kerbs and the slabs
+// Here and there along a way, a run of three to six kerbstones on one side, the Heliarchy's edging, mostly gone;
+// and where a lead with slabs crosses open water (the fen, the reed gap), flat stepping slabs a stride apart,
+// which a walker can stand on (a walkable floor a hand over the water). One instanced mesh each.
+const hx = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+function sampleLine(S, s) {
+  let j = 0; while (j < S.length - 2 && S[j + 1].s < s) j++;
+  const a = S[j], b = S[j + 1], t = clamp((s - a.s) / Math.max(1e-6, b.s - a.s), 0, 1), l = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+  return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, dx: (b.x - a.x) / l, dz: (b.z - a.z) / l };
+}
+function buildWaysEdge(ctx) {
+  const { terrain, scene } = ctx;
+  const B = leads();
+  const kerbs = [], slabs = [];
+  const wet = (x, z) => { const wl = terrain.waterLevelAt(x, z); return wl !== null && terrain.heightAt(x, z) > wl - 3 && terrain.heightAt(x, z) < wl + 0.04 ? wl : null; };
+  for (const L of B.list) {
+    if (L.kind !== 'path') continue;
+    for (const S of L.lines) {
+      const len = S[S.length - 1].s;
+      if (L.cls === 'way') for (let s = 8; s < len - 10; s += 21) {
+        const h = hx(s + L.seed, len);
+        if (h > 0.5) continue;
+        const side = hx(len, s * 1.7) < 0.5 ? -1 : 1, n = 3 + Math.floor(hx(s, L.seed) * 4);
+        for (let k = 0; k < n; k++) {
+          const p = sampleLine(S, s + k * 0.95);
+          const x = p.x - p.dz * side * (L.w + 0.28), z = p.z + p.dx * side * (L.w + 0.28);
+          if (wet(x, z) !== null || terrain.causewayDistance(x, z) < 2.5) continue;
+          if (hx(x, z) < 0.15) continue; // one gone
+          const heave = hx(z, x) < 0.15;
+          kerbs.push({ x, z, y: terrain.heightAt(x, z) - 0.17 + 0.04 + hx(x * 3, z) * 0.1, yaw: Math.atan2(p.dx, p.dz) + (hx(x, z * 2) - 0.5) * 0.08,
+            rx: (hx(x * 5, z) - 0.5) * (heave ? 0.3 : 0.05), rz: (hx(x, z * 5) - 0.5) * (heave ? 0.25 : 0.05), c: 0.2 + hx(x * 7, z) * 0.08, moss: hx(x, z * 7) });
+        }
+      }
+      if (L.slabs) for (let s = 0.5; s < len; s += 1.0) {
+        const p = sampleLine(S, s);
+        const wl = wet(p.x, p.z);
+        if (wl === null) continue;
+        const j = (hx(p.x, p.z) - 0.5) * 0.18;
+        slabs.push({ x: p.x - p.dz * j, z: p.z + p.dx * j, y: wl + 0.06, yaw: Math.atan2(p.dx, p.dz) + (hx(p.z, p.x) - 0.5) * 0.4, w: L.w * 1.5 + hx(s, p.x) * 0.3, c: 0.26 + hx(p.x * 3, p.z) * 0.1 });
+      }
+    }
+  }
+  const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), col = new THREE.Color(), _moss = new THREE.Color(0.1, 0.13, 0.06);
+  const meshes = [];
+  if (kerbs.length) {
+    const im = new THREE.InstancedMesh(kerbGeometry(), new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.92 }), kerbs.length);
+    kerbs.forEach((k, i) => {
+      _e.set(k.rx, k.yaw, k.rz, 'YXZ'); _q.setFromEuler(_e); _p.set(k.x, k.y, k.z); _s.set(0.26, 0.34, 0.88);
+      im.setMatrixAt(i, _m.compose(_p, _q, _s));
+      im.setColorAt(i, col.setRGB(k.c * 1.06, k.c, k.c * 1.08).lerp(_moss, k.moss * 0.45)); // Heliarch grey-violet, greened
+    });
+    im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true;
+    im.castShadow = true; im.receiveShadow = true; im.name = 'paths-way-kerbs'; im.computeBoundingSphere();
+    scene.add(im); meshes.push(im);
+  }
+  if (slabs.length) {
+    const g = new THREE.CylinderGeometry(0.5, 0.56, 0.22, 7, 1).translate(0, -0.08, 0);
+    { const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const a = Math.atan2(p.getZ(i), p.getX(i)); const k = 1 + 0.12 * Math.sin(a * 3 + 1) ; p.setX(i, p.getX(i) * k * 1.25); p.setZ(i, p.getZ(i) * k * 0.8); } g.computeVertexNormals(); }
+    const im = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.85 }), slabs.length);
+    slabs.forEach((k, i) => {
+      _e.set(0, k.yaw + Math.PI / 2, 0); _q.setFromEuler(_e); _p.set(k.x, k.y, k.z); _s.set(k.w * 0.8, 1, 0.9);
+      im.setMatrixAt(i, _m.compose(_p, _q, _s));
+      im.setColorAt(i, col.setRGB(k.c * 1.04, k.c, k.c * 1.06));
+    });
+    im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true;
+    im.castShadow = false; im.receiveShadow = true; im.name = 'paths-slabs'; im.computeBoundingSphere();
+    scene.add(im); meshes.push(im);
+    // a floor on the slab lines over the water: the walker steps from slab to slab rather than wading
+    const slabLeads = new Set(B.list.filter((l) => l.slabs).map((l) => l.id)), _h = {};
+    ctx.addWalkable?.((x, z) => {
+      const h = nearestLead(x, z, 0, _h);
+      if (!h || !slabLeads.has(h.id) || h.d > h.w * 1.1) return null;
+      const wl = terrain.waterLevelAt(x, z);
+      return wl !== null && terrain.heightAt(x, z) < wl + 0.04 ? wl + 0.06 : null;
+    });
+  }
+  return { meshes, kerbs: kerbs.length, slabs: slabs.length };
 }
 
 // ---------------------------------------------------------------- the pit's throat
@@ -503,6 +616,8 @@ export async function build(ctx) {
   P.meshes.push(buildThroat(ctx));
   const K = buildKerb(ctx);
   L.meshes.push(...K.meshes);
+  const E = buildWaysEdge(ctx); // v8-01
+  L.meshes.push(...E.meshes);
   const M = buildFallMist(ctx);
   const t4 = performance.now();
   const ms = { leads: Math.round(t2 - t1), pit: Math.round(t4 - t3) };
@@ -510,7 +625,7 @@ export async function build(ctx) {
   const B = leads();
   const tris = (ms) => ms.reduce((a, m) => a + (m.isInstancedMesh ? (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * m.count : m.geometry.index ? m.geometry.index.count / 3 : 0), 0);
   const api = {
-    leads: B.list.map((l) => ({ id: l.id, kind: l.kind, brief: l.brief, length: l.length, ends: l.ends, ended: l.ended || null, skipped: l.skipped || null,
+    leads: B.list.map((l) => ({ id: l.id, kind: l.kind, cls: l.cls || null, w: l.w, slabs: !!l.slabs, brief: l.brief, length: l.length, ends: l.ends, ended: l.ended || null, skipped: l.skipped || null,
       materials: [...new Set(l.lines.flat().map((s) => s.mat))], lines: l.lines.map((S) => S.map((s) => [s.x, s.z, s.y, s.wy, s.open])) })),
     pit: { x: PIT.x, z: PIT.z, r: PIT.r, depth: PIT.depth, rim: pitRim, edge: pitEdge, slabs: P.slabs, colliders: P.colliders },
     fall: { lipY: ctx.terrain.river.lip.y, poolY: ctx.terrain.river.pool.y, lip: { ...ctx.terrain.river.lip } },

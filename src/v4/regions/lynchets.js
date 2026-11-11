@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { REGIONS, CAUSEWAY, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
+import { stripAt, stripEdge } from '../../v8/strips.js';
 import { instanced, meshStats, meshGround } from './skin.js';
 
 const KEY = 'lynchets';
@@ -33,12 +34,15 @@ export function height(h, x, z, w) {
 
 // rank turf, greener than the moor, darker where the middens were; the walls' foot is bare
 const cTurf = new THREE.Color('#566331'), cTurf2 = new THREE.Color('#6d6e3a'), cMid = new THREE.Color('#2f3a1c');
+// v8-02: stubble, ley, plough, fallow (src/v8/strips.js)
+const STRIP = [new THREE.Color('#b4a25a'), new THREE.Color('#3e6e22'), new THREE.Color('#3a2014'), new THREE.Color('#82704e')];
 let MIDDENS = [];
 function middenAt(x, z) { let m = 0; for (const d of MIDDENS) m = Math.max(m, 1 - smoothstep(d.r * 0.5, d.r, Math.hypot(x - d.x, z - d.z))); return m; }
 export function ground(col, x, z, w) {
   if (!MIDDENS.length) MIDDENS = makeMiddens();
   const n = N.fbm2(x * 0.05, z * 0.05, 3) * 0.5 + 0.5;
-  _c.copy(cTurf).lerp(cTurf2, n).lerp(cMid, middenAt(x, z) * 0.8);
+  // v8-02: the strips, each a different crop's ghost, with a green balk between
+  _c.copy(STRIP[stripAt(x, z)]).lerp(cTurf2, n * 0.15).lerp(cTurf, (1 - stripEdge(x, z)) * 0.7).lerp(cMid, middenAt(x, z) * 0.8);
   col.lerp(_c, smoothstep(0.3, 0.6, w));
 }
 const _c = new THREE.Color();

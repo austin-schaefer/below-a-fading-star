@@ -39,7 +39,7 @@ export function height(h, x, z, w) {
 }
 
 const C = (h) => new THREE.Color(h);
-const cCrust = C('#cfc4c0'), cPink = C('#c8a0a0'), cDamp = C('#8a7e78');
+const cCrust = C('#f0ebe8'), cPink = C('#e6cccb'), cDamp = C('#a89e9a'); // v8-02: white, the palest ground on the map
 const _gc = new THREE.Color();
 export function ground(col, x, z, w) {
   const n = SN.fbm2(x * 0.05 + 3, z * 0.05, 3) * 0.5 + 0.5;
