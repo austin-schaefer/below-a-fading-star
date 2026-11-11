@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the plan's 17 paths, the kerb and five
-// rivulets are all laid; each lead's two ends lie on it (leadAt finds it there) and resolve to the material of the
+// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the 49 paths (v8-01 joined the plan's 17 into
+// one network: tools/roads-test.mjs), the kerb and five rivulets are all laid; each lead's two ends lie on it or on the
+// lead it joins (leadAt finds one there) and resolve to the material of the
 // region they are in; every rivulet runs downhill (its water never rises, and the ground along it is no higher than
 // its water); no lead is drawn on the set-dressing strips; the causeway is CAUSEWAY_V4 (its samples are on the
 // walked road, inside the walkable floor, from the colossi's feet to the pit) while the bench keeps v3's; the pit
@@ -105,10 +106,11 @@ const check = (ok, label, detail = '') => { if (ok) pass++; else fail++; console
 const modErr = errors.filter((e) => /paths/.test(e));
 check(!modErr.length, 'paths module loaded without errors', modErr[0] || '');
 const kinds = (k) => res.leads.filter((l) => l.kind === k).length;
-check(kinds('path') === 17 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the plan\'s leads: 17 paths, 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
+check(kinds('path') === 49 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 49 paths (v8-01: 17 + 32), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
 for (const L of res.leads) {
-  const bad = L.ends.filter((e) => e.id !== L.id || e.material !== e.region);
-  check(!bad.length && L.length > 5, `${L.id} (${L.kind}): its ends lie on it, in their region's material`,
+  // v8-01: an end that is a junction finds the lead it joins (leadAt gives the nearest), and that is right too
+  const bad = L.ends.filter((e) => !e.id || e.material !== e.region);
+  check(!bad.length && L.length > 5, `${L.id} (${L.kind}): its ends lie on it or a lead it joins, in their region's material`,
     `${L.length} m, ${L.materials.join(' / ')}; ` + L.ends.map((e) => `(${e.x}, ${e.z}) ${e.id || 'none'} ${e.material || '-'}${e.material !== e.region ? ` vs ${e.region}` : ''}`).join(', '));
 }
 for (const L of res.leads.filter((l) => l.kind === 'rivulet')) {

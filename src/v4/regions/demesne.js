@@ -15,6 +15,7 @@ import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
 import { buildYewMesh } from './yews.js';
 import { buildPeafowl } from './peafowl.js';
 
+import { crossingDistance } from '../../v8/roads/crossings.js'; // v8-01
 const KEY = 'demesne';
 const N = makeSimplex(20261107 + 1010);
 const K = LANDMARKS.castle; // (40, 30)
@@ -43,7 +44,7 @@ function roadD(x, z) {
     let t = ((x - a.x) * ex + (z - a.z) * ez) / l2; t = clamp(t, 0, 1);
     d = Math.min(d, Math.hypot(x - a.x - ex * t, z - a.z - ez * t));
   }
-  return d;
+  return Math.min(d, crossingDistance(x, z)); // v8-01: the ways' banks across the ditch (src/v8/roads/crossings.js)
 }
 // the parterre: a grid of beds north of the keep on the lower lawn, with a round bed in the middle; returns the
 // distance (m) to the nearest bed's outline, Infinity off it
@@ -90,6 +91,7 @@ export function height(h, x, z, w, coarse) {
     const c = coarse * 1.25;
     y = Math.min(hahaProfile(r - c, b, h, x, z), hahaProfile(r, b, h, x, z), hahaProfile(r + c, b, h, x, z));
   } else y = hahaProfile(r, b, h, x, z);
+  { const cw = 1 - smoothstep(3, 6.5, crossingDistance(x, z)); if (cw > 0) y = lerp(y, lerp(lerp(h, lawnAt(b), smoothstep(58, 68, r) * hahaAmt(b)), h, smoothstep(HAHA - 3, HAHA + 9.5, r)), cw); } // v8-01: the ways' banks across the ditch, a ramp from the lawn to the field
   // parterre ridges (on the lawn; the coarse mesh can carry ridges this broad)
   const pd = parterreD(x, z);
   if (pd < 2) y += 0.36 * (1 - smoothstep(0.2, 1.5, pd)) * (0.85 + 0.15 * N.noise2(x * 0.3, z * 0.3));

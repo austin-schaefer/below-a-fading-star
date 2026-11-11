@@ -8,6 +8,7 @@ import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' 
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
+import { wornAt } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
 
 const PARAMS = new URL(location.href).searchParams;
 // v6: stones and pebbles fade over their reach's last 15%, and fine boulders cross to their coarse twin over
@@ -133,6 +134,7 @@ export async function build(ctx) {
   function allowed(x, z) {
     if (terrain.isUnderwater(x, z)) return false;
     if (terrain.causewayDistance(x, z) < 4.5) return false;
+    if (wornAt(x, z) > 0.2) return false; // v8-01: the roads and their verges are clear of stones
     for (const [ax, az, ar] of avoid) if (Math.hypot(x - ax, z - az) < ar) return false;
     return true;
   }
