@@ -12,6 +12,8 @@ Written 2026-11-11 from Austin's issue #1 and his two notes in session (`plans/w
 | **Heliarchy** | coursed ashlar, round arches, columns, bronze, glyphs, formal and symmetrical; everything faces the sun | grey-violet stone, verdigris bronze, ember glass | keep, tower, Sunken Court, Arcature, Hypogeum, Gradine, Cutting, Menology, Speculum, causeway, the lamps and standards, the Cardinal Stones' setting, shrine, Leaning Yard |
 | **Late folk** | small, crooked, cheerful: lime plaster, horseshoe and ogee arches, pierced screens, coloured tile and glass, painted timber, awnings, patched cloth | warm plaster (cream, rose, saffron), turquoise and pomegranate-red tile, lamp glass in four colours | Pomegranate House, Oast Byre, Medlar Close's walls, the Lynchets' walls and gate, Kept Fire, Collation |
 
+**What the code already has (audit, 2026-11-11).** Two stone systems that nearly match the strata, which is the diversity the owner likes; keep it and make it deliberate. `ctx.kit.masonry` (polygonal courses, bronze or black-glass inlay; with `etch` from `src/v4/span/etch.js` on the Span only) is the Elder hand and the Heliarchy's grandest works raised in its manner (keep, tower, court, Arcature). The v3 stone (`makeStoneMaterial` in `src/structures/materials.js`, built with `structures/geo.js`'s Builder; mortar courses, rust, glyph glow) carries the **hexagon**: hex pavers, hexagonal waymarkers, the hex altar, hex rosettes. The hexagon is the Heliarchy's everyday motif and stays theirs. The Pomegranate House already has horseshoe arches, an alfiz and lattice screens but in the same grey v3 stone (`#9a8266`): its hand is right and its colour is not. Two glyph systems exist (the Hypogeum's nine forms, `src/v7/glyphs/forms.js` with `engrave`; the Cardinal Stones' lattice strokes): both Heliarch writing. No figure has any emblem; three figure rigs share `Painter` (`src/fauna/uncanny/kit.js`). The Salt-Pedlars (`src/v2/riverlife.js`) are already 3.5 cm riders on dragonflies: they are the Twk-men, and almost nobody will ever have seen them.
+
 **Each uses the last.** Spolia: Elder blocks in Heliarch footings; Heliarch drums, capitals and bronze in Late walls and furniture. Late things lean on, hang from and are propped against older ones.
 
 **The sign: the sun in the saddle.** A disc sitting in a V notch (the spawn view). Proportions: notch half-angle about 35°, the disc's diameter 0.6 of the notch's width at the disc's centre, the disc's lower third below the notch's shoulders. Elder: the bare notch cut giant-size, the disc absent or a socket. Heliarch: a carved roundel in a notched head, exact, with a bronze or ember-glass disc. Late: painted, tiled or sewn, the notch often rounded into a crescent, the disc a pomegranate. Same sign, never the same rendering; each brief makes its own in its stratum's hand.
@@ -44,7 +46,7 @@ Batch 1 (foundations, in parallel):
 Batch 2 (coarse until batch 1 is in):
 - **05 the Pomegranate House**, lit, merry and audible; thread 3 ends here.
 - **06 liveries**: the stole and the sign on the officers, patched colour on the Late folk, and one visible dealing between the two.
-- **07 Twk-men**, and thread 6.
+- **07 Twk-men**: the Salt-Pedlars already are them (3.5 cm, by the river); make them something a visitor meets (at gnomons, at the house, at spilt salt) and finds funny; thread 6.
 - **08 threads 5 and whatever batch 1 showed was missing**; places moved to their roads.
 
 Then the gate, the critic, the curator, the release.
