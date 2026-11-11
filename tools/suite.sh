@@ -34,6 +34,7 @@ run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
 run roads tools/roads-test.mjs $B
+run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B
 run strata tools/strata-test.mjs $B

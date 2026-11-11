@@ -355,6 +355,26 @@
     "gap_min_s": { "min": 0.3 },
     "silence_pct": { "max": 0 }
    }
+  },
+  {
+   "name": "twk-spawn",
+   "place": "Eleven metres east of the gnomon nearest the spawn, facing it: when the walk begins a Twk-man comes out to inspect you (his whirr, his sniff a metre from your face), and the pair at the gnomon quarrel (v8-07)",
+   "params": "pos=2.2,32.1&yaw=1.395",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -30, "max": -22 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "peak_dbfs": { "max": -3 },
+    "centroid_hz": { "min": 300, "max": 1400 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 40 },
+    "silence_pct": { "max": 0 }
+   }
   }
  ]
 }
