@@ -7,3 +7,4 @@ Skills live here, one folder per skill with a `SKILL.md`, in the [Agent Skills](
 | `wilderness` | Anyone working in this repository: implementer, reviewer, curator or orchestrator |
 | `sound-design` | Anyone touching the procedural audio, on top of `wilderness` |
 | `orchestrator` | The main session, at the start of every session |
+| `autonomous-run` | The main session on a loop or told to keep going; `critic.md` beside it is the brief for the cold critic |

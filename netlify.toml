@@ -1,17 +1,22 @@
-# Netlify config for Below a Fading Star. The site is the repository root: the Netlify site has no base
-# directory set, and paths here are relative to the root.
+# Netlify config for Below a Fading Star. The site has no base directory set; paths are relative to the
+# repository root.
 [build]
-  publish = "."
-  # Build only when something the site serves changed. Docs, briefs, tools, tests and the perf JSONs live in this
-  # folder too, and every commit here used to start a build. Exit 0 skips the build (Netlify's ignore contract).
-  # Runs from the repository root against the last successfully built commit.
+  # Only what the page loads is published: the build copies it into _site/, so docs, briefs, tools, skills
+  # and the screenshot archive never reach the CDN. commit.json carries the short commit hash, so a bench
+  # run on the site names its commit.
+  publish = "_site"
+  command = 'rm -rf _site && mkdir _site && cp -R index.html src vendor favicon-32.png apple-touch-icon.png _site/ && printf "{\"commit\":\"%s\"}" "${COMMIT_REF:0:7}" > _site/commit.json'
+  # Build only when something the site serves changed. Netlify bills by the build, and most commits here
+  # are docs, briefs, tools and tests. Exit 0 skips the build (Netlify's ignore contract). Runs against the
+  # last successfully built commit. A new top-level file the page loads goes in both lists.
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.html src vendor netlify.toml favicon-32.png apple-touch-icon.png"
-  # The screenshots are part of the repo's record, not of the site; keep them out of the deploy.
-  # commit.json carries the short commit hash, so a bench run on the site names its commit.
-  command = 'rm -rf shots dist && printf "{\"commit\":\"%s\"}" "${COMMIT_REF:0:7}" > commit.json'
 
-# A prototype, not for search engines.
 [[headers]]
   for = "/*"
   [headers.values]
+    # A prototype, not for search engines.
     X-Robots-Tag = "noindex, nofollow"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # The page needs none of these; pointer lock, fullscreen and audio are not governed here.
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"

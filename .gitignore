@@ -5,8 +5,9 @@
 node_modules/
 *.log
 
-# Artifact build output
+# Artifact build output, and the folder Netlify publishes
 dist/
+_site/
 
 # Claude Code: per-machine state and worktrees
 .claude/settings.local.json
