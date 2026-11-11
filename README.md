@@ -8,6 +8,12 @@ This repo is an experiment to see how far agents could get in building a 3D spac
 
 You can try out the live version (works on mobile or desktop!) at [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app), or pull the source yourself and build it locally if you want to hack new features in.
 
+## Progress
+
+![Four screenshots: the first render, then versions 1, 2 and 3](shots/gallery-first-render-to-v3.webp)
+
+![Four screenshots: versions 4, 5, 6 and 7](shots/gallery-v4-to-v7.webp)
+
 ## Milestones
 
 - v2, `wilderness-v2.md` + `wilderness-v2-placement.md`: Adding more life, named sites.
