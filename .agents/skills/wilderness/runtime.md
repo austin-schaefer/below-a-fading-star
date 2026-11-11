@@ -91,7 +91,7 @@ Tree LOD (`vegetation/trees.js`): near, mid and far at 24 and 72 m (18 and 55 at
 - `nave=0` (the east moor without BD the Foundered Nave of `src/v5/nave.js`: the terrain keeps its triangles over the hole, and the clearances in the rocks, the trees, the ground cover and the scatter are off)
 - `locallights=0` (none of the five local lights of `src/v5/lights.js`; `locallights=moss,embers,post,door,leerie` builds only those named; the Leerie's standards light only in the sun's gutter, `__fp.leerie.light(true)` poses them)
 - `dressing5=0` (leaves out the Collation, the Slipper and the Unfinished Prospect of `src/v5/dressing.js`; `collation=0`, `slipper=0` and `prospect=0` each its own; the ground cover's clearings go with them)
-- `threads=0` (leaves out v8-04's story threads, `src/v8/threads.js`; `traveller=0`, `chair=0` (the Collation keeps its twelfth chair) and `gold=0` each its own; their ground-cover clearings go with them)
+- `threads=0` (leaves out v8-04's story threads, `src/v8/threads.js`; `traveller=0`, `chair=0` (the Collation keeps its twelfth chair), `gold=0` and `painter=0` (v8-08) each its own; their ground-cover clearings go with them)
 
 ### The v6 switches
 

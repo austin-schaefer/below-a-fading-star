@@ -11,6 +11,7 @@ import { SITES } from '../../world.js';
 import { hyp } from '../../noise.js';
 import { makeDownCaster } from '../../fauna/geo.js';
 import { Painter, paintedMaterial, ell, smooth, lerp, clamp } from './kit.js';
+import { LIVERY, stole, badge, collar, tag } from '../../v8/livery.js';
 
 export const STY = {
   near: 18, rearm: 40, rise: 14, hold: 3, fall: 14, swing: 0.07, swingT: 3, creak: [0.8, 1.2],
@@ -86,6 +87,17 @@ export async function buildStylite(ctx, G) {
   P.loft([[0.01, 0.72, 0], [0.04, 0.84, 0]], [0.04, 0.035], 6, 0, false);                       // the neck
   ell(P, 0.05, 0.96, 0, 0.1, 0.115, 0.082, 9, 6);                                                // the head, facing the sun
   rg(hair, 0, 0.95); ell(P, 0.0, 1.0, 0, 0.1, 0.1, 0.09, 8, 5);
+  if (LIVERY.on) {
+    // v8-06 the livery: an officer in nothing but a loincloth, and still in the collar: the Heliarch collar stands
+    // round his bare neck, and the stole is wound round his waist as a girdle, the sign its buckle, the ends down
+    // over his crossed shins
+    collar(P, 0.01, 0.7, 0, 0.06, 0.14, LIVERY.coat, { front: 0, gap: 0.45, rx: 1, rz: 1.1, sides: low ? 10 : 14 });
+    const g = [];
+    for (let k = 0; k <= 16; k++) { const a = (k / 16) * Math.PI * 2; g.push([Math.cos(a) * 0.205 - 0.01, 0.27 + 0.015 * Math.cos(a), Math.sin(a) * 0.225]); }
+    stole(P, g, { w: 0.09, out: (t, p) => [p[0], 0, p[2]], fray: 0, dirt: 0.05, seed: 13 });
+    for (const sz of [-1, 1]) stole(P, [[0.19, 0.25, sz * 0.04], [0.26, 0.2, sz * 0.06], [0.33, 0.12, sz * 0.07], [0.36, 0.03, sz * 0.08]], { w: 0.08, out: [1, 0.5, 0], seed: 14 + sz, dirt: 0.3, fray: 0.04 });
+    badge(P, [0.215, 0.3, 0], [0, 1, 0], [1, 0, 0], 0.075, { th: 0.01 });
+  }
   P.xf(null);
   // the basket, on the turf at the foot (its centre under the rope's end), hollow, woven in bands
   const bx = foot.x - sx, bz = foot.z - sz, by = fy - sy - 0.02;
@@ -109,7 +121,7 @@ export async function buildStylite(ctx, G) {
     for (let k = 0; k < ptsN; k++) { P.set('aT', (k + 0.5) / ptsN); P.loft([pts[k], pts[k + 1]], [0.012, 0.012], 4, 0, false); }
     P.set('aT', -1);
   }
-  const geo = P.geometry();
+  const geo = tag(P.geometry(), P, 'heliarch');
   const U = { uOff: { value: new THREE.Vector3() }, uSwing: { value: 0 }, uSlack: { value: STY.coilTurns[0] / STY.coilTurns[1] }, uBase: { value: new THREE.Vector3(bx, by + A, bz) } };
   const mat = paintedMaterial({ side: THREE.DoubleSide }, (sh) => {
     Object.assign(sh.uniforms, U);

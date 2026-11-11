@@ -30,7 +30,7 @@ export function collationClear(x, z) {
 export function buildCollation(ctx) {
   const counts = { plates: 0, medlars: 0, glasses: 0 }, chairs = [];
   const rng = ctx.makeRng(5400), H = (x, z) => ctx.terrain.heightAt(x, z);
-  const acc = new Acc(rng);
+  const acc = new Acc(rng), main = acc;
   const L = COLLATION.length, W = COLLATION.width;
   // the table's top is level, at the highest ground under a trestle plus its height
   const TU = [-4.8, -2.4, 0, 2.4, 4.8];
@@ -67,14 +67,16 @@ export function buildCollation(ctx) {
   const plate = new THREE.LatheGeometry([[0, 0], [0.085, 0], [0.098, 0.004], [0.138, 0.013], [0.148, 0.021], [0.153, 0.019], [0.149, 0.012]].map(([x, y]) => new THREE.Vector2(x, y)), 12);
   const medlar = new THREE.IcosahedronGeometry(1, 1), bowl = new THREE.CylinderGeometry(0.034, 0.021, 0.075, 10, 1, true), stem = new THREE.CylinderGeometry(0.005, 0.006, 0.06, 5), foot = new THREE.CylinderGeometry(0.03, 0.033, 0.006, 10), dust = new THREE.CylinderGeometry(0.0225, 0.0225, 0.004, 10), calyx = new THREE.CylinderGeometry(0.01, 0.012, 0.006, 6);
   const PU = []; for (let i = 0; i < 6; i++) PU.push(-4.25 + i * 1.7);
-  const gone = (side, i) => !THREAD_OFF.chair && side === CHAIR_GONE.side && i === CHAIR_GONE.i;
+  // v8-04: the twelfth place (its chair, plate, medlar and glass) is built into its own mesh, from the same stream, so
+  // the threads module can take it (takeTwelfth) once it has built the chair at the graves; until then the table is whole.
+  const twelfth = new Acc(rng), split = !THREAD_OFF.chair;
+  const gone = (side, i) => split && side === CHAIR_GONE.side && i === CHAIR_GONE.i;
+  const rings = new Acc(ctx.makeRng(5401)); // what the cloth shows once the place is gone: darker rounds where plate and glass stood
   for (const side of [-1, 1]) PU.forEach((u, i) => {
-    const v = side * 0.27, tilt = (rng() - 0.5) * 0.02;
-    if (gone(side, i)) { // v8-04: plate, medlar and glass went with the chair; the cloth kept their shapes, darker where it was covered
-      acc.add(new THREE.CylinderGeometry(0.15, 0.15, 0.002, 16), at(u, v, top + 0.0125), '#5f5b56', 0.02);
-      acc.add(new THREE.CylinderGeometry(0.033, 0.033, 0.002, 10), at(u + 0.2, side * 0.43, top + 0.0125), '#5f5b56', 0.02);
-      for (let k = 0; k < 10; k++) rng(); // the stream as if the place were laid (13 draws), so every other place keeps its jitter
-      return;
+    const v = side * 0.27, tilt = (rng() - 0.5) * 0.02, acc = gone(side, i) ? twelfth : main;
+    if (gone(side, i)) {
+      rings.add(new THREE.CylinderGeometry(0.15, 0.15, 0.002, 16), at(u, v, top + 0.0125), '#5f5b56', 0.02);
+      rings.add(new THREE.CylinderGeometry(0.033, 0.033, 0.002, 10), at(u + 0.2, side * 0.43, top + 0.0125), '#5f5b56', 0.02);
     }
     acc.add(plate, at(u, v, top + 0.012, tilt, rng() * 6.28, 0), '#666a72', 0.1); counts.plates++;
     const ms = 0.04 + rng() * 0.008;
@@ -89,7 +91,7 @@ export function buildCollation(ctx) {
   });
 
   // chairs
-  const chairAt = (x, z, psi, ground, fallen) => {
+  const chairAt = (x, z, psi, ground, fallen, acc = main) => {
     const from = acc.count, c = '#4a3b2f';
     const parent = new THREE.Matrix4().compose(new THREE.Vector3(x, ground, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(fallen ? -1.36 : 0, psi, 0, 'YXZ')), new THREE.Vector3(1, 1, 1));
     const put = (w, h, d, px, py, pz, col) => acc.box(w, h, d, parent.clone().multiply(new THREE.Matrix4().makeTranslation(px, py, pz)), col, 0.1);
@@ -103,6 +105,7 @@ export function buildCollation(ctx) {
     chairs.push({ x, z, fallen, ground, ...(fallen ? { rise: acc.yRange(from)[1] - ground } : {}) });
   };
   const cols = [];
+  let twelfthChair = null;
   for (const side of [-1, 1]) PU.forEach((u, i) => {
     const pull = (rng() < 0.3 ? 0.65 + rng() * 0.45 : 0.08 + rng() * 0.42), du = (rng() - 0.5) * 0.3, jitter = (rng() - 0.5) * 0.9;
     const v = side * (0.55 + 0.26 + pull);
@@ -110,9 +113,9 @@ export function buildCollation(ctx) {
     // facing: toward the table's axis, turned by jitter
     const psi = Math.atan2(side * SA, -side * CA) + jitter; // facing -side * (world direction of +v) = -side * (-sin, cos)
     if (side === -1 && i === 3) return; // this one is the knocked-over chair, below
-    if (gone(side, i)) return; // v8-04: carried off (src/v8/threads/chair.js)
-    chairAt(x, z, psi, H(x, z), false);
-    cols.push({ x, z, r: 0.3, y: H(x, z) - 0.1, h: 1.0 });
+    chairAt(x, z, psi, H(x, z), false, gone(side, i) ? twelfth : main);
+    if (gone(side, i)) twelfthChair = chairs[chairs.length - 1];
+    cols.push({ x, z, r: 0.3, y: H(x, z) - 0.1, h: 1.0, ...(gone(side, i) ? { twelfth: true } : {}) });
   });
   { // knocked over backward, a pace behind where it stood, lying with its back on the grass
     const [x, z] = toWorld(PU[3] + 0.15, -(0.55 + 0.26 + 0.95));
@@ -128,5 +131,21 @@ export function buildCollation(ctx) {
   const mesh = new THREE.Mesh(acc.geometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0, side: THREE.DoubleSide }));
   mesh.name = 'collation'; mesh.castShadow = true; mesh.receiveShadow = true;
   ctx.scene.add(mesh);
-  return { mesh, meshes: [mesh], top, colliders: cols.length, places: PU.length * 2, ...counts, chairs, axis: { ...COLLATION } };
+  const out = { mesh, meshes: [mesh], top, colliders: cols.length, places: PU.length * 2, ...counts, chairs, axis: { ...COLLATION }, taken: false, takeTwelfth: () => false };
+  if (split) { // v8-04: the twelfth place, and the cloth under it, as two small meshes; the threads module takes the place
+    const tw = new THREE.Mesh(twelfth.geometry(), mesh.material), rg = new THREE.Mesh(rings.geometry(), mesh.material);
+    tw.name = 'collation-twelfth'; tw.castShadow = true; tw.receiveShadow = true;
+    rg.name = 'collation-rings'; rg.receiveShadow = true; rg.visible = false;
+    ctx.scene.add(tw, rg);
+    out.takeTwelfth = () => {
+      if (out.taken) return true;
+      tw.visible = false; rg.visible = true; out.taken = true;
+      const cs = ctx.controls?.state?.colliders, c = cols.find((q) => q.twelfth), k = cs ? cs.indexOf(c) : -1;
+      if (k >= 0) cs.splice(k, 1);
+      chairs.splice(chairs.indexOf(twelfthChair), 1);
+      out.plates--; out.medlars--; out.glasses--; out.colliders--;
+      return true;
+    };
+  }
+  return out;
 }

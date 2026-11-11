@@ -1,0 +1,18 @@
+[
+ { "name": "slate-3m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const L = __fp.livery.slate, p = __fp.player, cx = L.x + L.face[0] * 2.6 + L.face[1] * 0.8, cz = L.z + L.face[1] * 2.6 - L.face[0] * 0.8; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - L.x, cz - L.z); p.pitch = Math.atan2(L.y - 0.2 - p.pos.y, Math.hypot(cx - L.x, cz - L.z)); __fp.walkers?.leerie?.at(0, 1, 1);" },
+ { "name": "slate-track-9m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const L = __fp.livery.slate, p = __fp.player, cx = L.x + L.face[0] * 7 + L.face[1] * 5, cz = L.z + L.face[1] * 7 - L.face[0] * 5; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - L.x, cz - L.z); p.pitch = Math.atan2(L.y - 0.4 - p.pos.y, Math.hypot(cx - L.x, cz - L.z)); __fp.walkers?.leerie?.at(0, 1, 1);" },
+ { "name": "peg-p6", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const L = __fp.livery.peg, p = __fp.player, cx = 11.5, cz = -186.5; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - L.x, cz - L.z); p.pitch = Math.atan2(L.y + 0.8 - p.pos.y, Math.hypot(cx - L.x, cz - L.z));" },
+ { "name": "peg-2m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const L = __fp.livery.peg, p = __fp.player, dx = 10 - L.x, dz = -188 - L.z, d = Math.hypot(dx, dz), cx = L.x + dx / d * 2, cz = L.z + dz / d * 2; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - L.x, cz - L.z); p.pitch = Math.atan2(L.y + 0.8 - p.pos.y, 2);" },
+ { "name": "net-3m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const c = __fp.workers.coheirs, mx = (c.seats[0].x + c.seats[1].x) / 2, mz = (c.seats[0].z + c.seats[1].z) / 2, A = c.axis, p = __fp.player, cx = mx - A[1] * 2.6 + A[0] * 0.6, cz = mz + A[0] * 2.6 + A[1] * 0.6; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - mx, cz - mz); p.pitch = Math.atan2(__fp.terrain.heightAt(mx, mz) + 0.5 - p.pos.y, 2.6);" },
+ { "name": "net-3m-other", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const c = __fp.workers.coheirs, mx = (c.seats[0].x + c.seats[1].x) / 2, mz = (c.seats[0].z + c.seats[1].z) / 2, A = c.axis, p = __fp.player, cx = mx + A[1] * 2.6 + A[0] * 0.6, cz = mz - A[0] * 2.6 + A[1] * 0.6; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - mx, cz - mz); p.pitch = Math.atan2(__fp.terrain.heightAt(mx, mz) + 0.5 - p.pos.y, 2.6);" },
+ { "name": "staffhead-taker-2m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const t = __fp.workers.taker, p = __fp.player, s = t.seat, b = t.yaw + 0.6, cx = s.x + Math.sin(b) * 2.4, cz = s.z + Math.cos(b) * 2.4; t.sight(); p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - s.x, cz - s.z); p.pitch = Math.atan2(s.y + 0.9 - p.pos.y, 2.4);" },
+ { "name": "staffhead-sexton-2m", "x": 0, "z": 0, "yaw": 0, "settle": 1200,
+   "js": "const S = __fp.workers.sexton.state, p = __fp.player, b = S.yaw + 0.5, cx = S.x + Math.sin(b) * 2.6, cz = S.z + Math.cos(b) * 2.6; p.pos.set(cx, __fp.terrain.heightAt(cx, cz) + p.eye, cz); p.yaw = Math.atan2(cx - S.x, cz - S.z); p.pitch = Math.atan2(__fp.terrain.heightAt(S.x, S.z) + 1.1 - p.pos.y, 2.6);" }
+]

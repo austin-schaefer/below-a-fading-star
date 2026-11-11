@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { SITES } from '../../world.js';
 import { hyp } from '../../noise.js';
 import { Painter, paintedMaterial, ell, ellZ, prism, conform, smooth, lerp, clamp, hash3, ZERO } from './kit.js';
+import { LIVERY, stole, badge, collar, tag } from '../../v8/livery.js';
 
 export const ACC = {
   hour: 3600, stepT: 20, pace: 0.75, side: 0.18, slots: 24, wander: 0.55, tall: 1.8,
@@ -156,13 +157,27 @@ export async function buildAccrescent(ctx, G) {
   ell(P, 0, 1.65, 0.015, 0.085, 0.115, 0.1, 10, 6);                                // the head, face to the keep
   P.paint(skin, 0, 0.7, 0); ell(P, 0, 1.63, 0.105, 0.016, 0.03, 0.02, 5, 4);        // the nose
   P.paint(hair, 0, 0.95, 0); ell(P, 0, 1.69, -0.02, 0.09, 0.1, 0.09, 8, 5);        // grey hair at the back of the head
+  if (LIVERY.on) {
+    // v8-06 the livery: an officer once, walking to the keep in his stole, the collar and the sign; the crystal has
+    // the stole's back and the left band from the shoulder, so it is half ember and half glacial glass
+    const cb = [crystalBase.r, crystalBase.g, crystalBase.b];
+    collar(P, 0, 1.44, 0.0, 0.075, 0.13, '#3a3448', { sides: low ? 10 : 14, gap: 0.5 });
+    const fz = (y) => rAt(y)[1] + 0.014;
+    for (const sx of [-1, 1]) {
+      const pts = [[sx * 0.075, 1.47, 0.05], ...[1.38, 1.25, 1.1, 0.95, 0.8, 0.65].map((y, i) => [sx * (0.08 + 0.008 * i), y, fz(y)])];
+      stole(P, pts, { w: 0.12, out: [0, 0.15, 1], seed: 30 + sx, dirt: 0.2, fray: 0.04,
+        tint: sx > 0 ? (t, k) => [cb, t < 0.55 ? 0.9 : 0.9 * (1 - smooth(0.55, 0.8, t)) * (k < 0.5 ? 1 : 0.5)] : null });
+    }
+    stole(P, [[-0.075, 1.47, 0.05], [-0.13, 1.47, -0.02], [-0.08, 1.48, -0.1], [0.08, 1.48, -0.1], [0.13, 1.47, -0.02], [0.075, 1.47, 0.05]], { w: 0.1, out: (t, p) => [p[0], 0.3, p[2]], fray: 0, dirt: 0, seed: 33, tint: (t) => [cb, 0.9] });
+    badge(P, [0, 1.3, fz(1.3) + 0.012], [0, 1, 0], [0, 0.1, 1], 0.075, { th: 0.01 });
+  }
   // the back of the torso: prisms standing in the torn robe, small at the shoulder, large toward the hem
   for (let i = 0; i < (low ? 26 : 46); i++) {
     const f = Math.pow(prng(), 0.8), y = 1.46 - f * 0.9, a = Math.PI + (prng() - 0.5) * Math.PI * 0.9, [rx, rz] = rAt(y), L = lerp(0.025, 0.14, f) * (0.7 + prng() * 0.6);
     const ax = Math.cos(a) * 0.7 + (prng() - 0.5) * 0.5, az = Math.sin(a) * 1.0, ay = 0.25 + (prng() - 0.5) * 0.5;
     prism(P, Math.cos(a) * rx * 0.97, y, Math.sin(a) * rz * 0.97, ax, ay, az, L, L * 0.22, crystalBase, crystalPale, [0.2, 0.08, [0.2, 0.4, 0.8]]);
   }
-  const bg = P.geometry();
+  const bg = tag(P.geometry(), P, 'heliarch');
   const UB = { uSwing: { value: -1 } };
   const bodyMat = paintedMaterial({ side: THREE.DoubleSide }, (sh) => {
     Object.assign(sh.uniforms, UB);

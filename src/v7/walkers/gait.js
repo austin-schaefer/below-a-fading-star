@@ -11,6 +11,7 @@
 import * as THREE from 'three';
 import { Painter, paintedMaterial, makeGround, turnToward, approach } from '../../fauna/uncanny/kit.js';
 import { clamp } from '../../noise.js';
+import { tag } from '../../v8/livery.js';
 
 export const MAX_TURN = 1.6; // rad/s
 export const TAU = Math.PI * 2;
@@ -133,6 +134,7 @@ export function figureMaterial(nParts) {
 export function figureMesh(P, nParts, name, centerY, radius) {
   const geo = P.geometry();
   geo.deleteAttribute('aW');
+  tag(geo, P, 'heliarch'); // v8-06: the livery's record, for its test
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, centerY, 0), radius);
   const M = figureMaterial(nParts);
   const mesh = new THREE.Mesh(geo, M.mat);
