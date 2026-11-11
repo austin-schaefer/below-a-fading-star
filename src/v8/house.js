@@ -162,7 +162,9 @@ export async function build(ctx) {
       if (T.left > 0) T.next = t + len + 0.25 + srng() * 0.7;
       else {
         // the end of a bout: the winner laughs at some of them, then a rest
-        if (srng() < 0.4) { const l = t + len + 0.3; S.laughAt = l; }
+        // (and never three bouts running without one: the winner cannot help himself)
+        S.dry = (S.dry || 0) + 1;
+        if (srng() < 0.4 || S.dry >= 3) { S.laughAt = t + len + 0.3; S.dry = 0; }
         T.next = t + len + 2.5 + srng() * 5;
       }
     }
