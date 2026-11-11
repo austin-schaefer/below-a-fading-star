@@ -10,6 +10,17 @@ Austin, 2026-11-11, in session: "feel free (be encouraged!) to add new things an
 
 **Opened 2026-11-11, 14:10 PST**, on `next` (equal to `main` at `b941334` when opened). The orchestrator read issue #1, walked the map in 24 renders at medium and agreed with every word of it: from any stand point the frame is violet-dark with knee-high grass to the horizon; the leads P1–P17 are short, faint and joined to nothing; the Pomegranate House is plain boxes and a cylinder beside the keep's coursed stone; nine figures in nine costumes; three story props (the Slipper, the Collation, the Prospect) that end where they start. Two read-only audits (architecture and figures; paths, density and palette) are feeding the briefs. The gate was run on `next` before any v8 work as the baseline (its result is in the next entry).
 
+**2026-11-11, batch 1 dispatched (about 14:40 PST).** Both audits are in and folded into `briefs/v8/index.md` (the bible: the three strata, the sign's proportions, the six story threads, the shared-file ownership). Findings that changed the plan: the code already has two stone systems that nearly match the strata (`ctx.kit.masonry` for the cyclopean, the v3 stone with its hexagons for the Heliarchy), the Pomegranate House has the right arches in the wrong grey, no figure has any emblem, and the Salt-Pedlars are already Twk-men that nobody sees. In flight, four opus agents, each in its own worktree under `.claude/worktrees/` on its own port, pushing a branch and no PR:
+
+| Brief | Branch / worktree | Port |
+|---|---|---|
+| 01 roads (network joined, visible tracks, gnomons, `roads-test`) | `issue-801-roads` | 8161 |
+| 02 ground (cover, ground colour and grade by place, `contrast-survey`) | `issue-802-ground` | 8162 |
+| 03 strata (`ctx.strata`, the sign in three hands, spolia, the house re-skinned, `strata-test`) | `issue-803-strata` | 8163 |
+| 04 threads (the traveller on the Span, the twelfth chair, the court's gold, `threads-test`) | `issue-804-threads` | 8164 |
+
+Next: as each reports, look at its renders, run its tests, have a second agent review the diff cold, merge into `next` (expect conflicts between 01 and 02 round `wornAt` and the plants' density, and between 03 and 04 in `court.js`), run `tools/suite.sh` once for the batch. Then write batch 2's briefs in detail (05 the Pomegranate House lit and peopled, 06 liveries, 07 Twk-men, 08 the painter's thread and whatever batch 1 shows is missing) and dispatch. The baseline gate on `next` before v8 was still running when this was written: `/tmp/suite-m8-baseline.log`. The owner's two untracked files in the main checkout (`briefs/loading-copy.md`, `briefs/place-copy.md`, templates identical in body to `briefs/copy/`) are left alone.
+
 ## What a visitor should notice
 
 - **Three hands, one country.** Austin, 2026-11-11, in session: "careful about one culture btw: the goal is still diversity, but with coherence. i like that the architecture today has both cyclopean bridges and arabesque tavernas." So the differences stay and are sharpened into three **strata** [Proposed names], each with its own hand, and the coherence is in how each treats the one before it:
