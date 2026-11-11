@@ -286,6 +286,12 @@ export function buildScatter(ctx, B, env) {
       add(B.box(0.7, 0.18, 0.3, { chip: 0.03 }), tr(0, 1.15, 0.16, 0.3, 0, 0), { color: tintOld, moss: 0.6, ground: ng });
       // offerings long gone: a hollowed stone bowl before it
       add(B.cyl(0.32, 0.24, 0.25, 10, 1), tr(0, 0.12, 1.1), { color: tintOld, moss: 0.9, ground: ng });
+      // v8-03: the Heliarchy's roundel on the niche's head, its disc of ember glass
+      if (ctx.strata?.on) {
+        ctx.strata.parts.heliarch.roundel(B, m.clone().multiply(tr(0, 2.83, 0.56)), { size: 0.55, disc: 'ember' });
+        const cs = Math.cos(yaw), sn = Math.sin(yaw);
+        ctx.strata.place({ hand: 'heliarch', kind: 'sign', name: 'the Wayside Shrine', x: nx + sn * 0.56, y: ng + 3.1, z: nz + cs * 0.56, face: [sn, cs], mount: 'wall', size: 0.55 });
+      }
       ctx.addCollider({ x: nx, z: nz, r: 1.1 });
       env.notes.shrine = { x: +p.x.toFixed(1), z: +p.z.toFixed(1) };
     }
@@ -315,11 +321,21 @@ export function buildScatter(ctx, B, env) {
         }
       };
       run(-W / 2, -Dp / 2, W / 2, -Dp / 2); run(W / 2, -Dp / 2, W / 2, Dp / 2); run(W / 2, Dp / 2, -W / 2, Dp / 2); run(-W / 2, Dp / 2, -W / 2, -Dp / 2);
-      // gateposts with ball finials
+      // gateposts with ball finials (v8-03: a lintel across them, the Heliarchy's roundel on it)
+      const lych = ctx.strata?.on;
+      let postTop = -Infinity;
       for (const s of [-1, 1]) {
         const [x, z] = toW(s * 1.3, Dp / 2), gm = ground.groundAt(x, z);
-        B.add(B.box(0.55, 1.7, 0.55, { chip: 0.06 }), mat(x, gm + 0.7, z, 0, yaw, 0), { color: tintOld, moss: 0.9, ground: gm });
-        if (s < 0) B.add(B.rock(0.26, 1, 1, 1, 1), mat(x, gm + 1.8, z), { color: tintOld, moss: 0.8, ground: gm, disp: 0.01 });
+        const ph = lych ? 2.3 : 1.7;
+        B.add(B.box(0.55, ph, 0.55, { chip: 0.06 }), mat(x, gm + ph / 2 - 0.15, z, 0, yaw, 0), { color: tintOld, moss: 0.9, ground: gm });
+        postTop = Math.max(postTop, gm + ph - 0.15);
+        if (s < 0 && !lych) B.add(B.rock(0.26, 1, 1, 1, 1), mat(x, gm + 1.8, z), { color: tintOld, moss: 0.8, ground: gm, disp: 0.01 });
+      }
+      if (lych) {
+        const [x, z] = toW(0, Dp / 2);
+        B.add(B.box(3.3, 0.32, 0.6, { chip: 0.05 }), mat(x, postTop + 0.16, z, 0, yaw, 0), { color: vary(tints.old, rng, 0.04), moss: 0.7, ground: postTop - 2 });
+        ctx.strata.parts.heliarch.roundel(B, mat(x, postTop + 0.32, z, 0, yaw, 0), { size: 0.62, disc: 'bronze' });
+        ctx.strata.place({ hand: 'heliarch', kind: 'sign', name: 'the Leaning Yard\'s gate', x, y: postTop + 0.6, z, face: [sa, ca], mount: 'top', foot: postTop + 0.32, size: 0.62 });
       }
       // the stones, in rows, leaning every way
       for (let r = 0; r < 4; r++) for (let c = 0; c < 8; c++) {
