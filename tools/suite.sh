@@ -32,6 +32,7 @@ run() {
 
 run dressing tools/dressing-test.mjs $B
 run paths tools/paths-test.mjs $B
+run roads tools/roads-test.mjs $B
 run regions tools/regions-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
