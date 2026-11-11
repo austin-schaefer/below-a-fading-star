@@ -158,11 +158,12 @@ export function buildSettings(ctx) {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = pl.name;
     b.addEventListener('click', () => teleport(i));
+    if (pl.thread) { b.dataset.thread = pl.thread; b.hidden = true; } // v8-04: shown once the thread has built (open())
     placesEl.appendChild(b);
   });
   function teleport(pl) {
     if (typeof pl === 'number') pl = PLACES[pl];
-    if (!pl) return false;
+    if (!pl || (pl.thread && !ctx.threads?.[pl.thread])) return false; // v8-04: a story's end only when its thread was built
     const p = ctx.player;
     const at = pl.y != null ? (p.pos.set(pl.x, pl.y + p.eye, pl.z), p.vel.set(0, 0, 0), p.vy = 0, { x: pl.x, z: pl.z }) : ctx.controls.placeAt(pl.x, pl.z); // v8-04: y, a floor above the ground (the Span's deck)
     if (pl.look === 'sun') p.yaw = yawToward(0, 0, SUN.dir.x, SUN.dir.z);
@@ -179,6 +180,7 @@ export function buildSettings(ctx) {
     open_ = true;
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
     syncSound(); syncQuality(); syncCapture(); syncPos();
+    for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');
     panel.focus({ preventScroll: true });
