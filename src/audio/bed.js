@@ -114,7 +114,7 @@ export function startBed(a) {
     const inKeep = hyp(px - c.x, pz - c.z) < 40 && ground < 20 ? 1 : 0;
     const high = smoothstep(6, 30, b.h);
     const openness = (0.55 + 0.45 * clamp(b.moor + b.heath * 0.5, 0, 1)) * (1 + 0.4 * high);
-    const shelter = clamp(wood + 0.6 * inKeep, 0, 1);
+    const shelter = clamp(wood + 0.6 * inKeep + 0.6 * (ctx.house?.sheltered(px, pz) || 0), 0, 1); // v8-05: the Pomegranate House's walled court
     hurrySm += (smoothstep(4, 6.5, a.player?.speed || 0) - hurrySm) * 0.1; // air past the ears: +1 dB, a little brighter
     const g = stepGust(step || 0.1);
     const turb = smoothstep(0.6, 1, g) * 0.35 * ctx.noise.noise2(t * 1.6 + turbPh, 0.5);

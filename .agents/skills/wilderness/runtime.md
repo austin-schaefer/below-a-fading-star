@@ -124,6 +124,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v8
 
 - `strata=0` (v8-03: no `strata` module, no signs or spolia, and the Pomegranate House, the byre, the shrine and the Leaning Yard as in v7)
+- `house=0` (v8-05: the Pomegranate House unlit and empty: no lamps, strings, poles, people, voice or swept court, and the court's lantern keeps its own light)
 
 ### The walls
 

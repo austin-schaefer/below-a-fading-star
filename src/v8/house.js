@@ -213,6 +213,8 @@ export async function build(ctx) {
   }
   ctx.registerUpdate(update, { pos: { x: cx, z: cz }, near: 160, hz: 4 });
   ctx.house = {
+    // 1 inside the walled court (the wind drops there: audio/bed.js), easing to 0 out through the gate and 3 m past the walls
+    sheltered: (x, z) => { const e = Math.max(Math.abs(x - cx), Math.abs(z - cz)); return e < 10 ? 1 : e > 14 ? 0 : (14 - e) / 4; },
     lamps, plan, gutter, uK: K, U, log, state: S, inCourt, slipper, meshes: { lamps: lampM, glows: glowM, props, bare },
     figures: { host, patrons, musician, sleeper },
     sim(dt, n = 1) { for (let i = 0; i < n; i++) update(dt, S.t + dt); },

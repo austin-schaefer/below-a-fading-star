@@ -34,6 +34,7 @@ run dressing tools/dressing-test.mjs $B
 run paths tools/paths-test.mjs $B
 run regions tools/regions-test.mjs $B
 run strata tools/strata-test.mjs $B
+run house tools/house-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"

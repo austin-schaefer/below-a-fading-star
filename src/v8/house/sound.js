@@ -29,7 +29,7 @@ export function startHouseSound(a, ctx) {
     const V = VOICES[(o.voice | 0) % 3], n = Math.max(3, o.n | 0 || 5);
     const lens = []; let D = 0;
     for (let i = 0; i < n; i++) { const l = 0.09 + rng() * 0.11; lens.push(l); D += l + 0.02 + rng() * 0.05; }
-    const v = at(pos, { ref: 4, range: 90, dur: D + 0.3, verb: 0.3 }); if (!v) return;
+    const v = at(pos, { ref: 4, range: 90, dur: D + 0.3, verb: 0.3, gain: 10 }); if (!v) return;
     const t0 = v.t0;
     const f1 = filt('bandpass', V.f1[0], 3.5), f2 = filt('bandpass', V.f2[0], 5), lp = filt('lowpass', 1500, 0.5), sum = gainOf(1), g = ac.createGain();
     g.gain.setValueAtTime(0.0001, t0);
@@ -56,7 +56,7 @@ export function startHouseSound(a, ctx) {
   function laugh(pos, o = {}) {
     const nervous = !!o.nervous, n = nervous ? 2 + ((rng() * 2) | 0) : Math.max(3, o.n | 0 || 5);
     const per = nervous ? 0.17 : 0.21 + rng() * 0.03;
-    const v = at(pos, { ref: 4, range: 110, dur: n * per + 0.5, verb: 0.35, gain: nervous ? 0.6 : 1 }); if (!v) return;
+    const v = at(pos, { ref: 4, range: 110, dur: n * per + 0.5, verb: 0.35, gain: nervous ? 5 : 8 }); if (!v) return;
     const t0 = v.t0, f1 = filt('bandpass', 760, 3), f2 = filt('bandpass', 1220, 4), lp = filt('lowpass', 2000, 0.5), sum = gainOf(1), g = ac.createGain();
     const f0 = (nervous ? 170 : 150) * (0.96 + rng() * 0.08), o0 = vOsc(v, 'sawtooth', f0, t0, t0 + n * per + 0.2);
     g.gain.setValueAtTime(0.0001, t0); o0.frequency.setValueAtTime(f0 * 1.15, t0);
@@ -75,7 +75,7 @@ export function startHouseSound(a, ctx) {
   // the oud: a few partials, the higher dying faster; a nail's soft tick; a little body (a low resonance) under it
   function pluck(pos, o = {}) {
     const k = Math.max(0, Math.min(5, o.note | 0)), vel = o.v ?? 0.8, f = D3 * PENT[k] * TRUE[k];
-    const v = at(pos, { ref: 3, range: 60, dur: 2.6, verb: 0.35, gain: 0.9 }); if (!v) return;
+    const v = at(pos, { ref: 3, range: 60, dur: 2.6, verb: 0.35, gain: 3 }); if (!v) return;
     const t0 = v.t0, lp = filt('lowpass', 2600, 0.6); lp.connect(v.in);
     for (let n = 1; n <= 6; n++) {
       const amp = 0.05 * vel * Math.pow(n, -1.15) * (n === 2 ? 1.2 : 1), dec = 1.6 / Math.pow(n, 0.75);
@@ -87,7 +87,7 @@ export function startHouseSound(a, ctx) {
 
   // a clay cup on stone: a dull knock (falling), two short inharmonic rings, a scrape of grit
   function cup(pos) {
-    const v = at(pos, { ref: 2, range: 35, dur: 0.5, verb: 0.2 }); if (!v) return;
+    const v = at(pos, { ref: 2, range: 35, dur: 0.5, verb: 0.2, gain: 2.5 }); if (!v) return;
     const t0 = v.t0, o = vOsc(v, 'sine', 210, t0, t0 + 0.14), g = ac.createGain();
     o.frequency.setValueAtTime(210, t0); o.frequency.exponentialRampToValueAtTime(120, t0 + 0.06); shape(g, t0, 0.07, 0.004, 0.08); chain(o, g, v.in);
     for (const [f, a0, d] of [[1130, 0.012, 0.09], [1710, 0.006, 0.06]]) stone(v, v.in, 'sine', f * (0.98 + rng() * 0.04), t0 + 0.002, a0, 0.01, d);
@@ -97,7 +97,7 @@ export function startHouseSound(a, ctx) {
 
   // the lamp's glass: a tiny dry tick and a faint ring, low in the bright band
   function tick(pos) {
-    const v = at(pos, { ref: 1.5, range: 14, dur: 0.25, verb: 0.15, gain: 0.7 }); if (!v) return;
+    const v = at(pos, { ref: 1.5, range: 14, dur: 0.25, verb: 0.15, gain: 1.5 }); if (!v) return;
     const t0 = v.t0, lp = filt('lowpass', 2600, 0.6); lp.connect(v.in);
     sgrain(v, lp, t0, 1900 + rng() * 400, 4, 0.03, 0.03, white, 0.003);
     stone(v, lp, 'sine', 1500 + rng() * 300, t0, 0.004, 0.01, 0.07);
