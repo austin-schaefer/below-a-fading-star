@@ -34,6 +34,8 @@ echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
+run music-director tools/music-director-sim.mjs
+run music-live tools/music-test.mjs $B
 run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B

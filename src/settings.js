@@ -100,6 +100,24 @@ export function buildSettings(ctx) {
   }
   ctx.events.addEventListener('audiochange', syncSound);
 
+  // --- music: how often it comes (v9-M2); read by audio/music/index.js on start and applied at once if it runs
+  const musicEl = $('set-music');
+  const MUSIC = ['off', 'rare', 'default', 'frequent'];
+  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'default'; };
+  function setMusic(s) {
+    if (ctx.audio?.music) ctx.audio.music.setSetting(s);
+    else { try { localStorage.setItem('fp-music', s); } catch (e) { /* private mode */ } }
+    syncMusic();
+  }
+  if (musicEl) for (const s of MUSIC) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.music = s; b.textContent = s;
+    b.addEventListener('click', () => setMusic(s));
+    musicEl.appendChild(b);
+  }
+  function syncMusic() { if (musicEl) { const n = musicNow(); for (const b of musicEl.children) b.setAttribute('aria-pressed', b.dataset.music === n ? 'true' : 'false'); } }
+  api.setMusic = setMusic;
+
   // --- quality: the tier ?q= sets, applied on reload at the same place and heading
   for (const t of TIERS) {
     const b = document.createElement('button');
@@ -179,7 +197,7 @@ export function buildSettings(ctx) {
     if (open_) return;
     open_ = true;
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
-    syncSound(); syncQuality(); syncCapture(); syncPos();
+    syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
     for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');
@@ -204,6 +222,6 @@ export function buildSettings(ctx) {
   }, true);
   const swallow = (e) => { if (e.code !== 'Escape') e.stopPropagation(); };
   root.addEventListener('keydown', swallow); root.addEventListener('keyup', swallow);
-  syncSound(); syncQuality(); syncCapture(); syncPos();
+  syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
   return api;
 }
