@@ -62,6 +62,12 @@ const motif = [3, 8 / 3, 12 / 5, 8 / 3, 2], others = [[2, 9 / 4, 12 / 5, 2], [3,
 const mm = measure([0, 1, 2, 3, 4].flatMap((k) => phr(k * 12, k % 2 ? others[k >> 1] : motif)), T);
 check('a figure in 3 of 5 phrases returns at 0.6', Math.abs(mm.motif - 0.6) < 1e-9 && mm.motifFig === 'A4 G4 F4 G4', `${mm.motif} ${mm.motifFig}`);
 check('a melody with no rest has rest share 0', measure(phr(0, [2, 9 / 4, 12 / 5]).map((e) => ({ ...e, dur: 1 })), T).rest < 1e-9);
+// rubato moves an onset after the roughness check: a jittered note must still keep clear of a chord that changes under it
+const RUB = { name: 'rubato', length: 120, bpm: 60, mode: 'aeolian', voices: [
+  { id: 'p', patch: 'pad', gen: 'drone', chords: [[[0, 4], 3], [[2, 6], 3], [[3, 7], 3], [[4, 7], 3]], vel: 0.4 },
+  { id: 'm', patch: 'flute', role: 'lead', gen: 'walk', range: [7, 13], rest: [3, 5], durs: [[1, 2], [2, 1]], rubato: 0.3, legato: 0.9 }] };
+const rubRough = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((s, sd) => s + measure(compose(RUB, sd), RUB).rough, 0);
+check('a walk with heavy rubato over a moving chord stays clear of it (10 seeds)', rubRough === 0, `${rubRough} rough pairs`);
 check('follow without its leader listed first says so', (() => { try { compose({ ...T, voices: [{ id: 'f', gen: 'follow', of: 'm' }] }); return false; } catch (e) { return /list it before/.test(e.message); } })());
 
 // the distance: two seeds of one track are near; a different track is far
