@@ -50,7 +50,8 @@ export function buildProps(ctx, plan, G, rng) {
   }
   // ---- benches
   for (const b of plan.benches) P.late.bench(B, mat(b.x, G(b.x, b.z) - 0.05, b.z, 0, b.yaw, 0), { w: b.w, rng });
-  for (const b of plan.benches) { const ca = Math.cos(b.yaw), sa = Math.sin(b.yaw); for (const s of [-1, 1]) ctx.addCollider({ x: b.x + ca * s * b.w * 0.3, z: b.z - sa * s * b.w * 0.3, r: 0.35 }); }
+  // v8-10 (#7): each bench a capsule at its seat (0.45 m), to be hopped onto and walked along
+  for (const b of plan.benches) { const ca = Math.cos(b.yaw), sa = Math.sin(b.yaw), e = b.w / 2 - 0.25, g = G(b.x, b.z); ctx.addCollider({ x1: b.x - ca * e, z1: b.z + sa * e, x2: b.x + ca * e, z2: b.z - sa * e, r: 0.25, y: g - 1, h: 1.45 }); }
   // ---- the patrons' board, counters and the winner's pile; two cups
   {
     const t = plan.table, top = t.top;
@@ -79,7 +80,7 @@ export function buildProps(ctx, plan, G, rng) {
     { const [x, z] = at(-0.4, 0.15); B.add(B.cyl(0.04, 0.032, 0.1, 8, 1), mat(x, top + 0.085, z), { color: L.tile[2], moss: 0, ground: g, wet: 0.4 }); }
     { const [x, z] = at(0.5, -0.2); B.add(B.lathe([[0.0, 0], [0.08, 0.02], [0.1, 0.16], [0.05, 0.27], [0.035, 0.33], [0.05, 0.36]], 10), mat(x, top + 0.11, z, 0, t.yaw + 0.4, Math.PI / 2 - 0.1), { color: L.tile[1], moss: 0, ground: g, wet: 0.4 }); }
     S.place({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a Heliarch bronze door for a table', x: t.x, y: top, z: t.z, foot: g - 0.02, mount: 'ground', r: 0.6 });
-    for (const lx of [-0.6, 0.6]) { const [x, z] = at(lx, 0); ctx.addCollider({ x, z, r: 0.5 }); }
+    { const [x1, z1] = at(-0.6, 0), [x2, z2] = at(0.6, 0); ctx.addCollider({ x1, z1, x2, z2, r: 0.47, y: g - 1, h: 1.79 }); } // v8-10: the door-table at its top
   }
   // ---- spilt: a cup on its side, red shards of a jar, a split pomegranate, a spoon
   for (const s of plan.spilt) {

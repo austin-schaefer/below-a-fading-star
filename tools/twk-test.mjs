@@ -122,6 +122,8 @@ else {
   console.log('  salute', JSON.stringify(sal));
   const up = await poll(page, () => window.__rs('p3').every((r) => r.mode === 'salute') && window.__rs('p3')[0].st.saluting, 20000);
   ok(!!up, `the salute: P3's riders rise in a rank as the Thurifer comes up (his track passes ${sal.bd} m from them)`);
+  // they rise at slightly different moments, so the rank is read once it has settled
+  await poll(page, () => { const R = window.__rs('p3'); return Math.max(...R.map((r) => Math.abs(r.pos.y - R[0].pos.y))) < 0.15; }, 4000);
   const rank = await page.evaluate(() => { const R = window.__rs('p3'); return Math.max(...R.map((r) => Math.abs(r.pos.y - R[0].pos.y))); });
   ok(rank < 0.15, `in a rank: level within ${rank.toFixed(2)} m`);
   const down = await poll(page, () => !window.__rs('p3')[0].st.saluting && window.__rs('p3').every((r) => r.mode !== 'salute'), 60000);

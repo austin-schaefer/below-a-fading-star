@@ -16,7 +16,7 @@ This repository is a static Three.js r170 site with no build step and no package
 
 ## Module contract
 
-Each world module exports `async function build(ctx)`. It adds its objects to `ctx.scene`, registers per-frame work with `ctx.registerUpdate((dt, t) => ...)` (optionally `ctx.registerUpdate(fn, { pos | at(), near, hz, r })`: every frame within `near` metres of the player, beyond it at `hz` with the skipped time as `dt`, or held still when `hz` is 0), and registers anything the player should not walk through with `ctx.addCollider({ x, z, r })` (optionally `y, h` to cap the height). It must not touch other modules' files. Keep everything deterministic from `ctx.makeRng(salt)` or `ctx.noise`, never `Math.random()`, so the world is the same on every visit.
+Each world module exports `async function build(ctx)`. It adds its objects to `ctx.scene`, registers per-frame work with `ctx.registerUpdate((dt, t) => ...)` (optionally `ctx.registerUpdate(fn, { pos | at(), near, hz, r })`: every frame within `near` metres of the player, beyond it at `hz` with the skipped time as `dt`, or held still when `hz` is 0), and registers anything the player should not walk through with `ctx.addCollider({ x, z, r })` (optionally `y, h` to cap the height: a capped top within a hop and a scramble, about 1.4 m, can be stood on, so give low things their true top; a wall is a capsule `{ x1, z1, x2, z2, r, y, h, dh }`; `stand: false` for a top that is not a surface; the rule is at `addCollider` in `src/controls.js`). It must not touch other modules' files. Keep everything deterministic from `ctx.makeRng(salt)` or `ctx.noise`, never `Math.random()`, so the world is the same on every visit.
 
 `ctx` fields:
 

@@ -116,7 +116,15 @@ const res = await page.evaluate(async () => {
   // gate), and it ends at the pit's lip (its line runs on under the water: samples past the rim ring are not road).
   const PG = await import('/src/v4/paths/ground.js');
   const blocked = [], CG = new Map(), CC = 8;
-  for (const c of fp.controls.state.colliders) { if (c.moving) continue; const k = Math.floor(c.x / CC) * 4096 + Math.floor(c.z / CC); let a = CG.get(k); if (!a) CG.set(k, (a = [])); a.push(c); }
+  const flat = [];
+  for (const c of fp.controls.state.colliders) {
+    if (c.moving) continue;
+    if (c.x1 === undefined) { flat.push(c); continue; }
+    // a capsule is read as circles along its length, a radius apart
+    const L = Math.hypot(c.x2 - c.x1, c.z2 - c.z1), n = Math.max(1, Math.ceil(L / Math.max(0.1, c.r)));
+    for (let i = 0; i <= n; i++) flat.push({ ...c, x: c.x1 + (c.x2 - c.x1) * i / n, z: c.z1 + (c.z2 - c.z1) * i / n });
+  }
+  for (const c of flat) { const k = Math.floor(c.x / CC) * 4096 + Math.floor(c.z / CC); let a = CG.get(k); if (!a) CG.set(k, (a = [])); a.push(c); }
   const hitAt = (x, z) => {
     const gy = T.heightAt(x, z);
     for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {

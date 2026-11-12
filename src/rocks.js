@@ -172,6 +172,17 @@ export async function build(ctx) {
     const edge = 0.69 + com * 0.12 - b.rock * 0.12;
     return o > edge || h < 0.04 * (1 - com) + 0.1 * b.rock;
   }
+  // v8-10 (#7): each variant's height at its middle and how far its surface falls by 0.75 of its radius, so a
+  // boulder's or a big stone's collider has the rock's own top (a dome) and can be hopped onto
+  const tops = variants.map((g) => {
+    const P = g.attributes.position; let top = 0, rim = 0, n = 0;
+    for (let i = 0; i < P.count; i++) {
+      const x = P.getX(i), y = P.getY(i), z = P.getZ(i), d = Math.hypot(x, z);
+      if (d < 0.3) top = Math.max(top, y);
+      else if (d > 0.6 && d < 0.9 && y > 0) { rim += y; n++; }
+    }
+    return { top, dome: Math.max(0, top - (n ? rim / n : top * 0.7)) };
+  });
 
   // Where rocks may not go
   const L = landmarks;
@@ -271,7 +282,7 @@ export async function build(ctx) {
     head: 'uniform vec3 uFpEye; uniform vec2 uFpBand; uniform float uFpSide;',
     vertex: 'vec2(1.0 - smoothstep(uFpBand.x, uFpBand.y, distance(uFpEye.xz, (modelMatrix * instanceMatrix[3]).xz)), uFpSide)' }) : null;
   const packs = [];
-  let drawCalls = 0, tris = 0;
+  let drawCalls = 0, tris = 0, rockColliders = 0;
   for (const [cls, list] of Object.entries(classes)) {
     // split by variant
     for (let vi = 0; vi < variants.length; vi++) {
@@ -293,7 +304,13 @@ export async function build(ctx) {
         mesh.setMatrixAt(idx, m);
         m.toArray(all, idx * 16); xz[idx * 2] = it.x; xz[idx * 2 + 1] = it.z;
         // capped at the boulder's height, so one in the hollow under the Span does not block the deck above it
-        if (cls === 'boulder' && it.size > 0.9) ctx.addCollider({ x: it.x, z: it.z, r: it.size * 0.75, y: it.y - 1, h: it.size * 2 + 1 });
+        // v8-10: the top is the rock's own (it was twice its size, a column above the rock), so it can be stood on;
+        // a stone joins the boulders once it stands knee high (0.45 m) above the ground
+        const T0 = tops[vi], above = it.y + it.size * T0.top - terrain.heightAt(it.x, it.z);
+        if ((cls === 'boulder' && it.size > 0.9) || (cls === 'stone' && above > 0.45)) {
+          ctx.addCollider({ x: it.x, z: it.z, r: it.size * (cls === 'stone' ? 0.65 : 0.75), y: it.y - 1, h: it.size * T0.top + 1, dome: it.size * T0.dome });
+          rockColliders++;
+        }
       });
       mesh.instanceMatrix.needsUpdate = true;
       mesh.name = `rocks-${cls}-${vi}`;
@@ -384,7 +401,7 @@ export async function build(ctx) {
   const foot = (list) => list.map((it) => ({ x: +it.x.toFixed(2), z: +it.z.toFixed(2), size: +it.size.toFixed(3), r: +(it.size * reachOf[it.variant]).toFixed(3) }));
   ctx.rocks = {
     cut: CUT, lichen: LICHEN, rock: palette.rock, boulders: foot(classes.boulder), stones: foot(classes.stone),
-    stats: () => ({ pebbles: classes.pebble.length, stones: classes.stone.length, boulders: classes.boulder.length, drawCalls, tris: Math.round(tris), cleared: cut.cleared, thinned: cut.thinned }),
+    stats: () => ({ pebbles: classes.pebble.length, stones: classes.stone.length, boulders: classes.boulder.length, colliders: rockColliders, drawCalls, tris: Math.round(tris), cleared: cut.cleared, thinned: cut.thinned }),
   };
-  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
+  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders, ${rockColliders} colliders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }

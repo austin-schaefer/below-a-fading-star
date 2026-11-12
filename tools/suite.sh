@@ -42,6 +42,7 @@ run livery tools/livery-test.mjs $B
 run house tools/house-test.mjs $B
 run rocks tools/rocks-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
+run hop tools/hop-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"

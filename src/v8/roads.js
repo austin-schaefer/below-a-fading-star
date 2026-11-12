@@ -106,7 +106,7 @@ export async function build(ctx) {
     _p.set(x, y0 + r * 0.7, z);
     put(shaftG, _m.compose(_p, _q, _s.set(g.sc, len, g.sc)), tint(g, 0.45), y0 - 0.4, 0.9);
     if (headToo) head(new THREE.Matrix4().compose(_p.clone().addScaledVector(_d, len + 0.02), _q.clone(), _s.set(g.sc, g.sc, g.sc)), g, y0 - 0.4, tint(g, 0.4), false);
-    if (ctx.addCollider) for (let t = 0.2; t < 1; t += 0.4) { ctx.addCollider({ x: x + dx * len * t, z: z + dz * len * t, r: 0.24 * g.sc, y: y0 - 0.2, h: 0.6 }); colliders++; }
+    if (ctx.addCollider) { const r = 0.24 * g.sc; ctx.addCollider({ x1: x + dx * r, z1: z + dz * r, x2: x + dx * (len - r), z2: z + dz * (len - r), r, y: y0 - 0.2, h: 0.2 + 1.7 * r, dh: (y1 - y0) * (1 - 2 * r / len) }); colliders++; } // v8-10: one capsule along it, at its top
   };
   let arms = 0;
   for (const g of G) {
