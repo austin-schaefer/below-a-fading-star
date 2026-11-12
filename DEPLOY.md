@@ -25,7 +25,7 @@ The dashboard's build command, publish directory and base directory stay blank s
 
 The site is on Netlify's free plan, and a run of agents can spend a month's allowance in a day if nothing stops it.
 
-- **Builds.** Each build is billed as a started minute. Three guards: the `ignore` command skips every push that doesn't change what the site serves; branch deploys and PR previews are off; and releases are batched, **at most three merges to `main` in a day**. A fix for a broken live site is the exception.
+- **Builds.** Each build is billed as a started minute. Three guards: the `ignore` command skips every push that doesn't change what the site serves; branch deploys and PR previews are off; and releases are batched, **at most six merges to `main` in a day**. A fix for a broken live site is the exception.
 - **PR previews stay off** for a second reason: the repository is public, and a preview would build and publish a stranger's fork.
 - **Bandwidth.** The published site is a few megabytes. Assets are generated in code (`DataTexture`, `CanvasTexture`, synthesised sound); a milestone that adds large binary assets needs a reason and a size in its release note.
 - **GitHub.** `main` and `next` are protected from force-pushes and deletion, and `main` takes changes only through pull requests. Secret scanning and push protection are on. The pre-commit hook keeps images over 1.25 MB and PNG renders out of history; a repository that grows by gigabytes can't be shrunk without rewriting it.
