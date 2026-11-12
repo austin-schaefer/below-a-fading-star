@@ -2,7 +2,8 @@
 // Wind, a low drone that swells when the sun gutters, footsteps by ground, place sounds (tarn, fen, Lattice,
 // Cardinal Stones), calls (wings, crows, fish) and a faint counting click near the deodand.
 // Exposes ctx.audio = { cue(name, position?, opts?), ctx: AudioContext, master, analyser, cueAnalyser, voices, fall,
-// muted, setMuted(bool), mute (the GainNode after the limiter), volume (0..1), setVolume(v), vol (the GainNode after mute) }. Chain: master -> bus compressor -> limiter (a net) -> mute -> vol -> out; audio.space (graph.js) is the listener's room.
+// muted, setMuted(bool), mute (the GainNode after the limiter), volume (0..1), setVolume(v), vol (the GainNode after mute),
+// levels { music, effects, ambience } (0..1, the settings panel's three sub-sliders, v9-M6), setLevel(kind, v) }. Chain: master -> bus compressor -> limiter (a net) -> mute -> vol -> out; audio.space (graph.js) is the listener's room.
 // A no-op without AudioContext. One-shots share the cue bus (with its own analyser tap for tools/audio-test.mjs)
 // and a hard cap of 12 voices, the oldest stolen. Positions are {x,y,z}, copied at the call.
 //
@@ -64,6 +65,7 @@ import { startTwk } from './v8/twk/voice.js'; // v8-07: the Twk-men's buzz and c
 // ctx.audio.setMuted; a 1.2 s hold without moving reveals the debug panel instead, as the
 // corner long-press on the canvas does.
 let syncMuteButton = () => {};
+export const LEVELS = ['music', 'effects', 'ambience'];
 function wireMuteButton(ctx, audio) {
   const btn = typeof document !== 'undefined' && document.getElementById('mute');
   if (!btn) return;
@@ -103,7 +105,7 @@ function wireMuteButton(ctx, audio) {
 
 export async function build(ctx) {
   const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
-  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {}, muted: false, mute: null, setMuted, volume: 1, vol: null, setVolume };
+  const audio = ctx.audio = { ctx: null, master: null, analyser: null, started: false, cue: () => {}, muted: false, mute: null, setMuted, volume: 1, vol: null, setVolume, levels: { music: 1, effects: 1, ambience: 1 }, setLevel };
   // Mute: a gain after the limiter, ramped rather than suspending the context (other code reads
   // ac.currentTime, which suspend freezes). Remembered in localStorage; settable before start().
   try { audio.muted = localStorage.getItem('fp-muted') === '1'; } catch (e) { /* private mode */ }
@@ -128,6 +130,21 @@ export async function build(ctx) {
     if (g) {
       const t = audio.ctx.currentTime;
       g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(audio.volume * audio.volume, t + 0.05);
+    }
+    ctx.events.dispatchEvent(new CustomEvent('audiochange'));
+  }
+  // The three parts of the sound (v9-M6): music (the music bus), effects (footsteps, one-shot cues, the figures: the dry
+  // and cue buses) and ambience (the wind, the drone and every bed), each 0..1 on its own gains in graph.js
+  // (audio.levelGains) with the volume's squared taper; 1 leaves the mix as made. Remembered as fp-level-<kind>.
+  for (const k of LEVELS) { try { const v = parseFloat(localStorage.getItem('fp-level-' + k)); if (v >= 0 && v <= 1) audio.levels[k] = v; } catch (e) { /* private mode */ } }
+  function setLevel(kind, v) {
+    if (!LEVELS.includes(kind)) return;
+    const x = audio.levels[kind] = clamp(+v || 0, 0, 1);
+    try { localStorage.setItem('fp-level-' + kind, String(x)); } catch (e) { /* private mode */ }
+    const gs = audio.levelGains?.[kind];
+    if (gs) {
+      const t = audio.ctx.currentTime;
+      for (const n of gs) { const g = n.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(x * x, t + 0.05); }
     }
     ctx.events.dispatchEvent(new CustomEvent('audiochange'));
   }

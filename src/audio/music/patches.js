@@ -8,7 +8,9 @@
 //   (end: the time the note must be silent by, when its voice is taken by a later note; cut() below)
 //   pad    three saws (two on low) detuned +-7 cents into two lowpasses at 2.5x the fundamental; a swell over seconds
 //   organ  one PeriodicWave of sines at 1-3x (a soft flue stop), a lowpass at 900 Hz; a short swell
-//   flute  a triangle, breath (pink noise through a bandpass at the pitch), vibrato of 5 cents at 4.6 Hz that enters late
+//   flute  a triangle, breath (pink noise through a bandpass at the pitch, thinner up high), both through two lowpass
+//          poles at 2.2x the pitch (at most 1.6 kHz), a soft 0.16 s attack, vibrato of 5 cents at 4.6 Hz that enters late
+//          (v9-M6, the owner: "the flute is PIERCING": its own 2-5 kHz share down from -20 to under -30 dB on cold)
 //   choir  saws through two formant bandpasses ('oh': 450 and 800 Hz), slow
 //   bell   a struck sine and two quiet partials (2x, 3x; nothing inharmonic, so the partials do not beat), each with its
 //          own decay over the note's length
@@ -17,7 +19,7 @@
 // The tape over the stem: wow (+-4 cents from a modulated delay, two incommensurate LFOs at 0.31 and 0.53 Hz),
 // a lowpass at 3 kHz (two poles of it), faint hiss (pink noise about 50 dB under the music, lowpassed with the rest; it also keeps the
 // click meter's linear predictor from reading the corners of a near-noiseless sum of tones as clicks).
-// quality 'low': pad and choir with fewer oscillators. Deterministic: noise from mulberry32, no Math.random.
+// quality 'low': pad and choir with fewer oscillators, no hiss on the tape (the player's pool is smaller too). Deterministic: noise from mulberry32, no Math.random.
 // PATCHES is a plain object so a test fixture can swap one patch for a broken one (tools/music-fixtures/).
 import { mulberry32 } from '../../noise.js';
 import { makeNoiseBuffer } from '../synth.js';
@@ -58,6 +60,8 @@ const gain = (ac, v) => { const g = ac.createGain(); g.gain.value = v; return g;
 // about -43 LUFS against the flute's -35), so the pad is heard as a pad. PAD_TILT: higher pad notes softer,
 // (147 / f) ** tilt.
 export const PAD_LP = 2.5, PAD_GAIN = 1.56, PAD_TILT = 1, ORGAN_GAIN = 0.46, CHOIR_GAIN = 5.3, BELL_GAIN = 0.5;
+// the flute (v9-M6): its lowpass at FLUTE_LP x the pitch, never over FLUTE_LP_MAX; its level (was 0.5); its attack
+export const FLUTE_LP = 2.2, FLUTE_LP_MAX = 1600, FLUTE_GAIN = 0.34, FLUTE_ATTACK = 0.16, FLUTE_BREATH = 0.18;
 export const PATCHES = {
   pad: {
     attack: (d) => clamp(d * 0.12, 0.4, 4), release: (d) => clamp(d * 0.08, 0.6, 3),
@@ -91,22 +95,24 @@ export const PATCHES = {
     },
   },
   flute: {
-    attack: () => 0.07, release: () => 0.3,
+    attack: () => FLUTE_ATTACK, release: () => 0.3,
     make(ac, out, o) {
-      const x = osc(ac, 'triangle', 294), env = gain(ac, 0), f = lp(ac, 1200, 0.5);
+      const x = osc(ac, 'triangle', 294), env = gain(ac, 0), f = lp(ac, 650, 0.5), f2 = lp(ac, 650, 0.5);
       const vib = osc(ac, 'sine', 4.6), vibDepth = gain(ac, 0);
       vib.connect(vibDepth).connect(x.detune);
       const breath = ac.createBufferSource(); breath.buffer = o.noise; breath.loop = true;
-      const bf = bp(ac, 294, 6), bg = gain(ac, 0.18);
-      breath.connect(bf).connect(bg).connect(env);
-      x.connect(f).connect(env).connect(out);
+      const bf = bp(ac, 294, 6), bg = gain(ac, FLUTE_BREATH);
+      breath.connect(bf).connect(bg).connect(f);
+      x.connect(f).connect(f2).connect(env).connect(out);
       return {
         note(t, fr, dur, vel, end) {
-          x.frequency.setValueAtTime(fr, t); bf.frequency.setValueAtTime(fr, t); f.frequency.setValueAtTime(fr * 4, t);
+          const cut2 = Math.min(fr * FLUTE_LP, FLUTE_LP_MAX);
+          x.frequency.setValueAtTime(fr, t); bf.frequency.setValueAtTime(fr, t); f.frequency.setValueAtTime(cut2, t); f2.frequency.setValueAtTime(cut2, t);
+          bg.gain.setValueAtTime(FLUTE_BREATH * Math.min(1, 330 / fr), t); // less breath up high, where it reads as hiss
           const [h, r] = cut(t, dur, 0.3, end);
           // vibrato enters after 0.4 s on a long note and is gone before the next
           if (h > 0.8) { vibDepth.gain.setValueCurveAtTime(scaled(RISE, 5), t + 0.4, Math.min(0.8, h - 0.41)); vibDepth.gain.setValueCurveAtTime(scaled(FALL, 5), t + h, r); }
-          envelope(env, t, h, vel * 0.5, 0.07, r);
+          envelope(env, t, h, vel * FLUTE_GAIN, FLUTE_ATTACK, r);
         },
         start(t) { x.start(t); vib.start(t); breath.start(t, (o.index * 1.37) % 3); }, stop(t) { halt(x, t); halt(vib, t); halt(breath, t); },
       };
@@ -153,21 +159,23 @@ export const PATCHES = {
 };
 
 // seconds a note of this patch sounds after its dur ends (the player frees the voice after it)
-export const tail = (patch, dur) => (patch === 'bell' ? 0.4 : PATCHES[patch].release(dur));
+// (the bell's partials ring to (dur + 0.4) after a 31 ms strike: 0.45 keeps a same-voice bell clear of the last one's curve)
+export const tail = (patch, dur) => (patch === 'bell' ? 0.45 : PATCHES[patch].release(dur));
 
 // the tape: in → wow (a modulated delay) → two lowpass poles at 3 kHz → dest, with hiss mixed in before the lowpass
 // the stem's level: a track at the player's gain 1 measures about -35 LUFS (tools/music-render.mjs)
-export const STEM_LEVEL = 0.1;
+export const STEM_LEVEL = 0.115; // v9-M6: 0.1 until the flute came down 3 dB and wet's stem fell under -38
 
-function makeTape(ac, dest, noise) {
+function makeTape(ac, dest, noise, withHiss = true) {
   const input = gain(ac, STEM_LEVEL), wow = ac.createDelay(0.05);
   wow.delayTime.value = 0.012;
   // a sine LFO of amplitude A s on the delay bends pitch by up to 2 pi f A: +-4 cents (0.00231) shared over two LFOs
   const lfos = [0.31, 0.53].map((f) => { const l = osc(ac, 'sine', f), d = gain(ac, 0.00231 / 2 / (2 * Math.PI * f)); l.connect(d).connect(wow.delayTime); return l; });
   const l1 = lp(ac, 3000, 0.6), l2 = lp(ac, 3000, 0.6);
+  input.connect(wow).connect(l1).connect(l2).connect(dest);
+  if (!withHiss) return { input, start(t) { for (const l of lfos) l.start(t); }, stop(t) { for (const l of lfos) halt(l, t); } };
   const hiss = ac.createBufferSource(); hiss.buffer = noise; hiss.loop = true;
   const hg = gain(ac, 0.01 * STEM_LEVEL), hh = ac.createBiquadFilter(); hh.type = 'highpass'; hh.frequency.value = 400;
-  input.connect(wow).connect(l1).connect(l2).connect(dest);
   hiss.connect(hh).connect(hg).connect(l1);
   const level = hg.gain.value;
   return {
@@ -180,7 +188,7 @@ function makeTape(ac, dest, noise) {
 
 export function makeVoices(ac, dest, { quality = 'high', plan = {} } = {}) {
   const noise = makeNoiseBuffer(ac, 4, 'pink', mulberry32(9091));
-  const tape = makeTape(ac, dest, noise);
+  const tape = makeTape(ac, dest, noise, quality !== 'low'); // low: no hiss (one looped source and two filters fewer)
   const pool = {}, all = [];
   let index = 0;
   for (const [patch, n] of Object.entries(plan)) {

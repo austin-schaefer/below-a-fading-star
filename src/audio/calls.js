@@ -43,7 +43,7 @@ export function caller(rng, o, fire) {
   };
 }
 export function placed(a, o) {
-  const { ac, panner, setPos, send, camera, master } = a;
+  const { ac, panner, setPos, send, camera, ambBus: master } = a; // a placed loop is a bed: the Ambience slider's bus
   const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.5; lp.frequency.value = 20000;
   const p = panner('equalpower', o.ref ?? 5, o.roll ?? 1, o.range ?? 200);
   lp.connect(p); p.connect(o.dest || master); if (o.verb) send(p, o.verb);
@@ -63,7 +63,7 @@ export const FAR_GAP = 20;
 export const wetBy = (d) => 0.15 + 0.6 * smoothstep(10, 220, d);
 
 export function startPlaces(a) {
-  const { ac, rng, master, send, panner, setPos, loopSrc, brown, pink, env, landmarks, terrain } = a;
+  const { ac, rng, ambBus: master, send, panner, setPos, loopSrc, brown, pink, env, landmarks, terrain } = a; // place sounds: the Ambience slider's bus
   // tarn lapping
   const lapBus = ac.createGain(); lapBus.gain.value = 0;
   const lapPan = panner('equalpower', 8, 1.2);
@@ -128,7 +128,7 @@ export function startPlaces(a) {
 }
 
 export function startCalls(a) {
-  const { ac, ctx, master, env, burst, white, camera, panner, setPos, voice, vOsc, gainOf, filt, chain } = a;
+  const { ac, ctx, ambBus: master, env, burst, white, camera, panner, setPos, voice, vOsc, gainOf, filt, chain } = a; // the deodand's click is a place sound (Ambience); the calls are voices (Effects)
   const rng = ctx.makeRng(9095), cp = camera.position;
   const dist = (p) => Math.hypot(p.x - cp.x, p.y - cp.y, p.z - cp.z);
   let px = 0, pz = 0;

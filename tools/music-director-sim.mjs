@@ -99,5 +99,18 @@ const order = SETTINGS.map((s) => rows[s].soundT);
 check(order[0] === 0 && order[0] < order[1] && order[1] < order[2] && order[2] < order[3], 'settings ordered by music heard: off ' + order.map((x) => (x / 60).toFixed(0)).join(' < ') + ' min');
 const again = run(REAL, 'default');
 check(again.starts === d.starts && again.firstAt === d.firstAt, 'same seed, same course');
+// off and on again: a director switched off mid-track, or built while off, plays again once switched back on
+{
+  const run = (d, s) => { let n = 0; for (let t = 0; t < s; t += 0.5) for (const a of d.step(0.5, { weights: { moor: 1 }, gutterIn: 99, moving: true })) if (a.start) n++; return n; };
+  const d1 = makeDirector({ catalog: CATALOG, setting: 'default', seed: 3 });
+  for (let i = 0; i < 2000 && d1.state.mode !== 'playing'; i++) d1.step(0.5, { weights: { moor: 1 }, gutterIn: 99, moving: true }); // switched off while a track plays
+  d1.setSetting('off'); const offN = run(d1, 1200); d1.setSetting('default'); const onN = run(d1, 3000);
+  console.log(`${offN === 0 && onN > 0 ? 'PASS' : 'FAIL'} off mid-track, then on: ${offN} starts while off, ${onN} in the 3000 s after`);
+  const d2 = makeDirector({ catalog: CATALOG, setting: 'off', seed: 4 });
+  run(d2, 300); d2.setSetting('frequent'); const n2 = run(d2, 1500);
+  console.log(`${n2 > 0 ? 'PASS' : 'FAIL'} built off, then on: ${n2} starts in 1500 s`);
+  if (!(offN === 0 && onN > 0 && n2 > 0)) fails++;
+}
+
 console.log(fails ? `\n${fails} failed` : '\nall passed');
 process.exit(fails ? 1 : 0);

@@ -128,9 +128,13 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### v9 music
 
-- `music=<track>`: plays that track 3 s after the walk begins and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
+- `music=<track>`: plays that track (any of the nine) 3 s after the walk begins, whatever the setting, and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
+- `musicspeed=N`: the director's waits run N times faster (tests). The setting "Music (experimental): off / rare / default / frequent" is in the settings panel's Sound group (`fp-music` in localStorage), **off by default** (v9-M6): with it off nothing of the music but its glue is fetched, built or ticked. The debug panel lists the tracks as rows (playing one loads the music).
+- The Sound group's three level sliders (v9-M6): Sound effects (`fxBus`: the dry and cue buses, and `fxVerb`, their reverb sends), Ambience (`ambBus`: the wind, drone, insects, place sounds, stones and region beds, and `ambVerb`), Music (`musicLevel`, after `musicBus`); `audio.levels`, `audio.setLevel(kind, v)`, `fp-level-<kind>` in localStorage; at 100 each gain is 1, the mix as made.
+
+### v9
+
 - `waystation=0` leaves out the Lantern Halt on the causeway (`src/v9/waystation.js`; its rock clearing stays)
-- `musicspeed=N`: the director's waits run N times faster (tests). The setting "Music: off / rare / default / frequent" is in the settings panel (`fp-music` in localStorage); the debug panel lists the tracks as rows.
 
 ### v8
 

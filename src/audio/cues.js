@@ -9,7 +9,8 @@ import { hyp } from '../noise.js';
 import { startCuesV2, softKit } from './cues-v2.js';
 
 export function startCues(a) {
-  const { ac, rng, ctx, audio, camera, terrain, landmarks, master, cueBus, verbIn, send, panner, setPos, loopSrc, burst,
+  // the stones ring on the Ambience slider's bus (place sounds); the fall's rumble is a cue, its send the Effects one
+  const { ac, rng, ctx, audio, camera, terrain, landmarks, ambBus: master, cueBus, fxVerb: verbIn, send, panner, setPos, loopSrc, burst,
     brown, pink, white, env, filt, gainOf, chain, oneShotPanner, later, near, nTick, clamp, voice, vOsc, vNoise } = a;
   const { shape, sgrain, stone, jit } = softKit(a);
 

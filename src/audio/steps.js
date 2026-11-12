@@ -6,7 +6,7 @@
 import { hyp } from '../noise.js';
 
 export function startSteps(a) {
-  const { ac, rng, ctx, audio, player, terrain, landmarks, dryBus, white, pink, env, send, voice } = a;
+  const { ac, rng, ctx, audio, player, terrain, landmarks, dryBus, white, pink, env, sendFx: send, voice } = a; // footsteps' sends: the Effects slider
   // Each of the walker's steps is recorded as it plays, { seq, t (its audio time), hurrying, kind, regionKind, x, z, vol,
   // pitch, verb, d (its random draws) }, in a ring of 16 (audio.steps), so audio.echoStep(rec, pos) can play the same
   // synthesis again through a panner at pos: the Repetend's echo (v7, src/v7/small/repetend.js). The walker's own step

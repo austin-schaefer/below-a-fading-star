@@ -12,10 +12,12 @@
 //     dest     an AudioNode the stem connects to (the musicBus live; the context's destination offline)
 //     voices   the track's `voices` array: maps each event's `voice` id to its `patch` (pad organ flute choir bell)
 //     at       audio-clock time the track's t = 0 falls on (default ac.currentTime + 0.1)
-//     quality  'high' | 'medium' | 'low' (low: fewer detuned oscillators); default 'high'
+//     quality  'high' | 'medium' | 'low' (low: fewer detuned oscillators, a pool of LOW_POOL, no tape hiss); default 'high'
 //     gain     the stem's starting level 0..1 (default 1; the stem fades in from 0 over 0.05 s at `at`)
-//   Live, one timer schedules events about 2 s ahead on the audio clock; on an OfflineAudioContext everything is
-//   scheduled at once (there is no wall clock to wait on).
+//   Live, one timer schedules events about 2 s ahead on the audio clock, and issues the sources' one stop() once the
+//   end (the track's, or a stop()'s fade) is inside that lookahead: older WebKit refuses a second stop() on a source,
+//   so a source is never stopped twice. On an OfflineAudioContext everything is scheduled at once (there is no wall
+//   clock to wait on). A note that throws as it is scheduled is skipped (warned once) and the schedule goes on.
 //
 //   h.stop(fade = 1.5)   fade the stem to silence over `fade` s, then free the voices; safe at any moment and
 //                        more than once. Returns a Promise that resolves when it is silent and disposed.
@@ -34,6 +36,7 @@ import { makeVoices, tail } from './patches.js';
 export const LOOKAHEAD = 2; // seconds of events on the audio clock ahead of now
 export const TICK_MS = 250;
 export const MAX_POOL = 10; // voices a track may hold at once (moor needs 9: a pad chord crossfading into the next holds four); past it, a voice is stolen (allocate)
+export const LOW_POOL = 7; // on the low tier (a phone): a stolen voice's note is cut short, which the ear forgives
 const GAP = 0.02; // a voice is free this long after its note's release ends, before it is retuned
 
 // Which voice of its patch each event takes: greedy over the sorted events, a voice free once the note's release is
@@ -41,7 +44,7 @@ const GAP = 0.02; // a voice is free this long after its note's release ends, be
 // is full, a note takes its patch's voice whose note ends soonest, and that note is cut: silent by GAP before the new
 // one starts (cuts[i], its release shortened to 40 ms or more; patches.js cut()). Only a patch with no voice at all
 // once the pool is full drops its note (h.dropped).
-export function allocate(events, voices) {
+export function allocate(events, voices, maxPool = MAX_POOL) {
   const patchOf = new Map(voices.map((v) => [v.id, v.patch]));
   const busy = {}, slots = [], cuts = new Array(events.length).fill(Infinity), plan = {};
   let total = 0, dropped = 0, stolen = 0, end = 0;
@@ -51,7 +54,7 @@ export function allocate(events, voices) {
     const until = e.t + e.dur + tail(patch, e.dur) + GAP;
     const list = (busy[patch] ??= []);
     let k = list.findIndex((u) => u.until <= e.t);
-    if (k < 0 && total < MAX_POOL) { k = list.length; list.push({ until: 0, ev: -1 }); total++; }
+    if (k < 0 && total < maxPool) { k = list.length; list.push({ until: 0, ev: -1 }); total++; }
     if (k < 0 && list.length) { // steal the voice whose note ends soonest
       k = list.reduce((b, u, j) => (u.until < list[b].until ? j : b), 0);
       cuts[list[k].ev] = e.t - GAP; stolen++;
@@ -69,7 +72,7 @@ const panOf = (voices) => new Map(voices.map((v, i) => [v.id, i === 0 ? 0 : (((i
 
 export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, quality = 'high', gain = 1 } = {}) {
   const offline = typeof OfflineAudioContext !== 'undefined' && ac instanceof OfflineAudioContext;
-  const { patchOf, slots, cuts, plan, dropped, stolen, length } = allocate(events, voices);
+  const { patchOf, slots, cuts, plan, dropped, stolen, length } = allocate(events, voices, quality === 'low' ? LOW_POOL : MAX_POOL);
   const pans = panOf(voices);
   const stem = ac.createGain();
   stem.gain.setValueAtTime(0, at);
@@ -80,7 +83,15 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
   const t0 = Math.max(at, ac.currentTime);
   vs.start(t0); clock.start(t0);
   let endAt = at + length + 0.4; // the tape's hiss fades over the last 0.3 s
-  vs.stop(endAt); clock.stop(endAt);
+  let stopIssued = false, warned = false;
+  // the one stop() of every source: at once offline, lazily live (when the end is inside the lookahead)
+  function issueStop(force) {
+    if (stopIssued || (!force && endAt > ac.currentTime + LOOKAHEAD)) return;
+    stopIssued = true;
+    const t = Math.max(endAt, ac.currentTime);
+    vs.stop(t); clock.stop(t);
+  }
+  if (offline) issueStop(true);
 
   let next = 0, timer = null, stopping = null, disposed = false, resolveDone;
   const done = new Promise((r) => { resolveDone = r; });
@@ -94,10 +105,13 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
       const when = at + e.t;
       if (when < ac.currentTime) continue; // late (a stalled tab): skip rather than click in mid-note
       const patch = patchOf.get(e.voice), v = vs.pool[patch][k];
-      vs.place(v, when, pans.get(e.voice));
-      v.note(when, D3 * e.ratio, e.dur, e.vel, at + cuts[next]);
+      try {
+        vs.place(v, when, pans.get(e.voice));
+        v.note(when, D3 * e.ratio, e.dur, e.vel, at + cuts[next]);
+      } catch (err) { if (!warned) { warned = true; console.warn('[fp] music: a note was skipped:', err); } }
     }
   }
+  function tick() { schedule(ac.currentTime + LOOKAHEAD); issueStop(false); }
   function dispose() {
     if (disposed) return; disposed = true;
     if (timer) clearInterval(timer);
@@ -108,7 +122,7 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
   clock.onended = dispose;
 
   if (offline) schedule(Infinity);
-  else { schedule(ac.currentTime + LOOKAHEAD); timer = setInterval(() => schedule(ac.currentTime + LOOKAHEAD), TICK_MS); }
+  else { tick(); timer = setInterval(tick, TICK_MS); }
 
   h.fadeTo = (g, s = 1) => {
     if (stopping || disposed) return;
@@ -120,10 +134,15 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
     if (disposed) return Promise.resolve();
     const now = Math.max(ac.currentTime, at), p = stem.gain, f = Math.max(0.05, fade);
     p.cancelScheduledValues(now); p.setValueAtTime(now > at ? p.value : 0, now); p.linearRampToValueAtTime(0, now + f);
-    if (timer) { clearInterval(timer); timer = null; }
     next = events.length; // schedule nothing more
     const end = now + f + 0.4;
-    if (end < endAt) { endAt = end; try { vs.stop(end); clock.stop(end); } catch { /* stop twice on some engines */ } }
+    if (end < endAt) {
+      endAt = end;
+      // offline the sources' stop was issued at the start: move it (Chromium allows a second stop on an offline
+      // context, and there is no tick to wait for); live the tick issues the first and only one
+      if (stopIssued) { try { vs.stop(end); clock.stop(end); } catch { /* an engine that refuses */ } }
+    }
+    if (!offline) issueStop(false);
     stopping = done;
     return stopping;
   };

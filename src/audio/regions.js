@@ -10,7 +10,7 @@ import { caller, lognormal, placed, wetBy } from './calls.js';
 
 export function startRegions(a) {
   const { ac, rng, ctx, audio, master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, camera, terrain, tap } = a;
-  const regionSnd = a.regionSnd = ctx.regions?.startSounds({ ac, rng: tap(rng), master, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => a.lead, cue: (n, p, o) => audio.cue(n, p, o), caller, lognormal, wetBy, placed: (o) => placed(a, o), far: a.far, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: (salt) => tap(ctx.makeRng(salt)), hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
+  const regionSnd = a.regionSnd = ctx.regions?.startSounds({ ac, rng: tap(rng), master: a.ambBus /* the regions' beds: the Ambience slider */, cueBus, verbIn, dryBus, white, pink, brown, voice, vOsc, vNoise, grain, filt, gainOf, chain, env, swell, send, panner, setPos, loopSrc, lead: () => a.lead, cue: (n, p, o) => audio.cue(n, p, o), caller, lognormal, wetBy, placed: (o) => placed(a, o), far: a.far, camera, terrain, noise: ctx.noise, sky: ctx.sky, makeRng: (salt) => tap(ctx.makeRng(salt)), hush: (p) => ctx.hush?.level(p.x, p.z) ?? 0 });
   audio.regionCues = regionSnd?.cueNames || [];
   return regionSnd;
 }

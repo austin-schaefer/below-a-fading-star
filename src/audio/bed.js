@@ -10,7 +10,7 @@ import { clamp, smoothstep } from './graph.js';
 import { makeNoiseBuffer } from './synth.js';
 
 export function startBed(a) {
-  const { ac, rng, ctx, master, send, landmarks } = a;
+  const { ac, rng, ctx, ambBus: master, send, landmarks } = a; // the beds go to the Ambience slider's bus (graph.js)
   // the bed's own noise, on its own streams so the shared stream's order of draws is the same as before for the
   // parts after it: 17 s of brown and 19 s of pink, stereo (each channel its own noise, so the bed is wide without a
   // panner), about 13 MB at 48 kHz. Every reader drifts in rate (+-2.5 %, 40-70 s periods) so no stretch of the bed
@@ -142,7 +142,7 @@ export function startBed(a) {
 // Q 2.5 near 2.3 and 2.9 kHz under a 5 kHz lowpass, each breathing on a smooth 0.4-0.8 Hz swell (no square gate), in
 // bouts of 30-90 s with rests as long, drawn from their own stream. Gone on the moor and in the wood; hushed in a gutter.
 export function startInsects(a) {
-  const { ac, rng, ctx, master, send } = a;
+  const { ac, rng, ctx, ambBus: master, send } = a; // the Ambience slider's bus
   const insRng = ctx.makeRng(7205), _rw = {};
   const shared = [rng(), rng(), rng()]; // the three draws the insects always took
   const insBus = ac.createGain(); insBus.gain.value = 0;
