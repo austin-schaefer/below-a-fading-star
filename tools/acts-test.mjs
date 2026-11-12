@@ -468,6 +468,8 @@ await seeded('ridden', () => { try { if (!sessionStorage.getItem('seeded')) { lo
     const v = await pg.evaluate(() => { let vis = null; window.__fp.scene.traverse((o) => { if (o.name === 'waystation-pillow') vis = o.visible; }); return vis; });
     check('a return visit after a ride: a second pillow lies on the sill beside him', v === true, v);
   });
+// ------------------------------------------------------------------ v10-A1: the crystal and the door (tools/acts-central.mjs)
+if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).centralRows({ browser, base, check, watch });
 // ------------------------------------------------------------------ v10-A3 the bell under the Span (src/v10/bell.js)
 {
   const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });

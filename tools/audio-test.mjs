@@ -63,6 +63,9 @@ const CUES = [
   ['act-glasses', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 8000],
   ...(process.env.SALT === '1' ? [['act-pinch', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-tribute', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 2500]] : []), // salt for news is shelved (?salt=1)
   ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { dur: 1.55, bar: true }, 1200, 1000], ['act-winch', { dx: 2, dy: -0.5, dz: -2.5 }, { dur: 3, rate: 1.4 }, 1500, 2500], ['act-murmur', { dx: 0.8, dy: 0, dz: -0.6 }, null, 1200, 1000], // v10-A4 the Halt's seat
+  // v10-A1 the crystal and the door (src/v10/sound-central.js)
+  ['act-crystal', { dx: 1.5, dy: -0.3, dz: -1.5 }, { n: 1 }, 2500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 1 }, 1500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 2, back: true }, 3000, 5000],
+  ['act-knock', { dx: 1, dy: -0.5, dz: -1 }, null, 800, 800], ['act-answer', { dx: 2, dy: -2, dz: -2 }, { near: 0 }, 1500, 1500], ['act-answer', { dx: 1, dy: -0.5, dz: -1 }, { near: 1 }, 1000, 1500], ['act-plate', { dx: 0.6, dy: -1.6, dz: -0.6 }, null, 1500, 800],
   // v10-A3 the bell under the Span (src/v10/bell-sound.js)
   ['act-bell-haul', { dx: 2, dy: 0, dz: -3 }, null, 1000, 1000], ['act-bell-candles', { dx: 60, dy: -2, dz: -40 }, null, 2500, 1500],
   ['act-bell-hum', { dx: 4, dy: 3, dz: -6 }, null, 2500, 1500], ['act-bell-rest', { dx: 6, dy: 0, dz: -8 }, null, 1500, 1500],
