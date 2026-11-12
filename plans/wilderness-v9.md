@@ -6,6 +6,12 @@ Austin, 2026-11-11 (issue #2, "Environmental music"): "v7.2 added a leveled-up s
 
 ## Status
 
+**2026-11-11, 19:03 PST. Nine tracks merged; M2 back and held for M1; five new issues triaged.** M3 (wood, wet, cold, garden, dry) and M4 (span, keep, gates) are merged: `node tools/music-score.mjs all` prints 207 PASS, 0 FAIL (nine tracks, 19 gates each, 36 pair distances; the closest pair is keep/moor at 0.28). M2 (director, simulator, bus, setting, `?music=`, `tools/music-test.mjs`) reported done on `issue-902-music-director` (sim 14/14, music-test 15/15, audio 73/73) and is **not merged yet**: its glue imports M1's `player.js`, so it merges after M1, and then needs (a) the eight new tracks added to its `catalog.js`, (b) its one settings-test failure ("teleport: the whole map", 65/66) checked against `next`, (c) a cold review. The owner filed #15 to #19 at about 19:00: #17 (footsteps a hair too loud), #19 (wood light shafts from nowhere) and #16 (clear the white figure of rocks and plants) ride along with v9 as brief T1; #18 (the wood) is planned as v11 and #15 (walk to the edge of pits) joins #4 in v12; `plans/ROADMAP.md` has the order. The owner asked to be sent example tracks as soon as they exist: give the WAV paths from `shots/wip/music-*.wav` and the `?music=<track>` URL on 8123 when M1 lands. The owner lifted the collaborators-only limit for a test at 18:56 and it was restored at about 18:59 (the upload failure was a file over GitHub's size limit).
+
+Known flaw to fix after M1 merges: `score.js` applies a walk's rubato after its roughness check, so a jittered onset can land rough against a held chord (the keep track sets rubato 0 to avoid it).
+
+In flight: M1 (opus, `issue-901-music-sound`, 8162), M5 (sonnet, `issue-905-sound-harness`, 8165), T1 the owner's three tweaks (opus, `issue-910-owner-tweaks`, 8166, `briefs/v9/brief-v9-T1-owner-tweaks.md`).
+
 **2026-11-11, 18:39 PST. M0 merged; M1, M2 and M3 out beside M5.** M0 (the score) merged at about 18:37 after the orchestrator ran its tools (`music-score moor` 19/19, self-test 60/60) and a cold review found no blockers: `src/audio/music/score.js` (`compose(track, seed)`; generators drone, loop, walk, follow, notes), `tracks/moor.js`, `tools/music-score.mjs`, the `music` skill. Notes carried into the next briefs: events carry `voice`, not `patch`; drones are held 30 s and more; moor's lead lands every onset on the beat and its last 30 s are pad alone (M3 is told to do better). In flight (four implementation agents, the limit):
 
 | Brief | Model | Branch / worktree | Port |
