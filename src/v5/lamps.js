@@ -1,9 +1,9 @@
 // AO The Escarpment Lamps [Decided: "Yes, multi-coloured lights, not all warm."] (plans/IDEAS-v4.md AO; plans/wilderness-v5.md "### AO").
 // On the south massif's north face (bearings 190-218, 60-240 m up), over the Great Span's road and away from the sun's glare: a
-// city of windows far too high and too many for anything on the floor, no inhabitants and no story. v11 moved it off the west
+// city of windows (v11 round two: 227 windows at high, 114 at low, plus the great opening) far too high and too many for anything on the floor, no inhabitants and no story. v11 moved it off the west
 // wall (it stood beside the Galleries, two rectangles of one size) and gave it the shape of a place built into a ravine: the
 // spine follows the deepest cleft of the rendered face up the wall (found from the mesh, so it follows the rock if the rock
-// changes), broad and dense at the foot, a pinched waist, a swollen lobe, a thin finger to near the crest; a tributary climbs
+// changes), broad and dense at the foot, a pinched waist, a swollen lobe, a thin finger to near the crest, windows laid in level terraces that stack in columns, each a lit rectangle in a dark reveal with a glow on the rock beside it, and one tall lit arch (the great opening, never put out); a tributary climbs
 // away to the left; a thread of lamps strings out along a ledge to the right with a gap where it has fallen; a dense quarter
 // of lit floors at the foot of the waist; dark bays inside the body; single outliers high up. Lamps thin up the ribs
 // between the clefts. Each sits 0.3-0.5 m off the rock. A light the sun would reach (face normal toward the sun), on the scree
@@ -17,7 +17,7 @@
 import * as THREE from 'three';
 import { SITES, SUN } from '../world.js';
 import { makeGround } from '../fauna/uncanny/kit.js';
-import { fogPars, fogAtten, softDot } from '../particles/shaderParts.js';
+import { fogPars, fogAtten } from '../particles/shaderParts.js';
 
 const PARAM = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lamps') : null;
 const D2R = Math.PI / 180;
@@ -48,7 +48,7 @@ export async function build(ctx) {
   const rej = { sun: 0, slope: 0, apron: 0, off: 0 };
   let tries = 0, litByLocal = 0;
   const colorPick = () => { let u = rng(), a = 0; for (let i = 0; i < PALETTE.length; i++) { a += PALETTE[i][2]; if (u < a) return i; } return 0; };
-  function place(b, y, ci, size) {
+  function place(b, y, ci, size, kind = 0) {
     tries++;
     if (b < S.bearings[0] || b > S.bearings[1] || y < S.y[0] || y > S.y[1]) { rej.off++; return false; }
     const a = az(b), cx = Math.cos(a), cz = Math.sin(a);
@@ -64,10 +64,10 @@ export async function build(ctx) {
     if (ny > 0.64) { rej.slope++; return false; }                    // under ~50 degrees: scree, a shelf, a corrie floor
     const rise = MG.at(cx * (hi - 8), cz * (hi - 8));
     if (rise > y - 12) { rej.apron++; return false; }                 // a ledge or shoulder just in front: the apron, a gully floor
-    // the sun never reaches this face: a light whose rock faces the sun (3-D normal . sun direction > 0) is rejected
-    if (tmp.x * SUN.dir.x + tmp.y * SUN.dir.y + tmp.z * SUN.dir.z > 0) { rej.sun++; return false; }
+    // the sun never reaches this face: a light whose rock faces the sun (3-D normal . sun direction > 0.2, a face turned well toward the sun) is rejected
+    if (tmp.x * SUN.dir.x + tmp.y * SUN.dir.y + tmp.z * SUN.dir.z > 0.2) { rej.sun++; return false; }
     const proud = 0.3 + 0.2 * rng();
-    P.push({ x: x + tmp.x * proud, y: y + tmp.y * proud, z: z + tmp.z * proud, ci, size, });
+    P.push({ x: x + tmp.x * proud, y: y + tmp.y * proud, z: z + tmp.z * proud, ci, size, kind });
     return true;
   }
   const b0 = S.bearings[0], b1 = S.bearings[1];
@@ -112,47 +112,54 @@ export async function build(ctx) {
     .map(([db, u, rb, ry]) => [db, yLo + u * (yHi - yLo), rb, ry]);
   const inVoid = (b, y) => voids.some(([db, vy, rb, ry]) => ((b - spineAt(vy) - db) / rb) ** 2 + ((y - vy) / ry) ** 2 < 1);
   let c1 = colorPick(), c2 = colorPick(); while (c2 === c1) c2 = colorPick();
-  // the body: scatter weighted by the outline, the cleft and the dark bays; the low quarter in one colour, the lobe in another
-  for (let g = 0; P.length < 380 && g < 30000; g++) {
-    const y = yLo + Math.pow(rng(), 1.25) * (yHi - yLo);
-    if (rng() > dens(y)) continue;
-    const b = spineAt(y) + gauss() * half(y) * 0.55;
-    const rv = ravAt(b, y);
-    if (rng() > 0.28 + 0.72 * Math.max(0, Math.min(1, (rv + 1) / 7))) continue; // thins up a rib
-    if (inVoid(b, y)) continue;
-    const u = (y - yLo) / (yHi - yLo);
-    place(b, y, rng() < 0.22 ? colorPick() : u < 0.34 ? c1 : u < 0.7 ? c2 : colorPick(), 0.3 + 0.3 * rng());
+  // the city: windows in terraces. Rows run level along the couloir's flanks every 7 m, windows at one spacing so they stack
+  // in columns (rows and stacks with dark wall between), broad at the foot and narrowing up the cleft; runs of bays are dark;
+  // the lit fraction falls with height until only strings and outliers remain.
+  const step = arcDeg(4.1), RANGE = yHi - yLo;
+  const terrace = (y, cen, hw, lit, ci, ci2, sz) => {
+    const tip = (rng() - 0.5) * 0.5;
+    let skip = 0;
+    for (let k = Math.ceil(-hw / step); k * step <= hw; k++) {
+      if (skip > 0) { skip--; continue; }
+      if (rng() < 0.07) { skip = 1 + Math.floor(rng() * 4); continue; } // a dark run of bays
+      if (rng() > lit) continue;
+      const b = cen + k * step + (rng() - 0.5) * 0.08;
+      if (inVoid(b, y)) continue;
+      place(b, y + tip * k * step + (rng() - 0.5) * 0.4, rng() < 0.12 ? colorPick() : rng() < 0.3 ? ci2 : ci, sz * (0.85 + 0.3 * rng()));
+    }
+  };
+  for (let y = yLo + 3; y < yLo + 0.7 * RANGE; y += 5.2 + rng() * 0.8) {
+    const u = (y - yLo) / RANGE;
+    // the width of the lit quarter: broad low, pinched at the waist, a second swelling, then the finger
+    const hw = 1.6 + 5.8 * Math.exp(-(((u - 0.3) / 0.2) ** 2)) + 2.4 * Math.exp(-(((u - 0.56) / 0.1) ** 2)) + 0.5 * (1 - u);
+    const lit = Math.max(0.25, 0.98 - 0.8 * u);
+    terrace(y, spineAt(y) + (rng() - 0.5) * 0.6, hw, lit, u < 0.42 ? c1 : c2, c1 === c2 ? colorPick() : c1, 3.7);
   }
-  // the branch: a thin run, one colour, with its own dark bays
-  for (let g = 0, n = 0; n < 56 && g < 3000; g++) {
-    const y = brY0 + rng() * (brY1 - brY0), t = (y - brY0) / (brY1 - brY0);
-    const b = branchAt(y) + gauss() * (1.5 - 0.8 * t);
-    if (rng() < 0.18 + 0.5 * t) continue;
-    if (Math.sin(y / 9) > 0.55 && rng() < 0.8) continue; // bays in its length
-    if (place(b, y, rng() < 0.15 ? colorPick() : c2, 0.3 + 0.3 * rng())) n++;
-  }
-  // the dense quarter: a knot at the foot of the waist, rows of lit floors tight to the cleft's left wall
-  {
-    const cy = yLo + 0.2 * (yHi - yLo), cb = spineAt(cy) - 2.2;
-    for (let k = 0; k < 70; k++) place(cb + gauss() * 1.7, cy + gauss() * 12, rng() < 0.2 ? colorPick() : c1, 0.35 + 0.3 * rng());
+  // the finger and what is above it: single strings up the cleft, a window to a row
+  for (let y = yLo + 0.7 * RANGE; y < yHi - 6; y += 12 + rng() * 6) terrace(y, spineAt(y), 0.6 + 1.0 * rng(), 0.7, c2, c2, 3.3);
+  // the tributary: a thinner stair of terraces climbing away to the left
+  for (let y = brY0; y < brY1; y += 8 + rng() * 2) {
+    const t = (y - brY0) / (brY1 - brY0);
+    terrace(y, branchAt(y), 2.8 - 1.9 * t, 0.9 - 0.6 * t, c2, c2, 3.5);
   }
   // a ledge: a thread of lamps strung along a ledge that runs out to the right and climbs, thinning as it goes, with one gap
   {
-    const sy = yLo + 0.4 * (yHi - yLo), sb = spineAt(sy) + 3, ci = colorPick();
-    for (let k = 0, b = sb, y = sy; k < 46 && b < b1 - 0.4; k++, b += arcDeg(5 + 3 * rng()), y += 0.55 + (rng() - 0.5) * 0.9) {
+    const sy = yLo + 0.3 * RANGE, sb = spineAt(sy) + 3.2, ci = colorPick();
+    for (let k = 0, b = sb, y = sy; k < 46 && b < b1 - 0.4; k++, b += step * (1 + 0.5 * rng()), y += 0.55 + (rng() - 0.5) * 0.9) {
       if (k > 24 && rng() < 0.45) continue;                      // fading out
       if (k > 12 && k < 17) continue;                             // a gap where the ledge has fallen
-      place(b, y, rng() < 0.08 ? colorPick() : ci, 0.3 + 0.25 * rng());
+      place(b, y, rng() < 0.08 ? colorPick() : ci, 3.3);
     }
   }
   // outliers: single lights far up and far out, on their own (a watch-room, a hermit's window)
   for (let k = 0; k < 9; k++) {
-    const y = yLo + (0.72 + 0.28 * rng()) * (yHi - yLo), side = rng() < 0.5 ? -1 : 1;
-    place(spineAt(y) + side * (3 + rng() * 6), y, colorPick(), 0.45);
+    const y = yLo + (0.7 + 0.3 * rng()) * RANGE, side = rng() < 0.5 ? -1 : 1;
+    place(spineAt(y) + side * (3 + rng() * 6), y, colorPick(), 4.2);
   }
-  for (let g = 0; P.length < want * 0.85 && g < want * 20; g++) { // a few strays to fill the count, inside the outline
-    const y = yLo + rng() * (yHi - yLo) * 0.8, b = spineAt(y) + (rng() - 0.5) * 2 * half(y);
-    if (!inVoid(b, y)) place(b, y, colorPick(), 0.3 + 0.3 * rng());
+  // the great opening: one tall lit arch in the face at the heart of the dense quarter, where the eye goes first
+  for (let t = 0; t < 40 && !P.some((q) => q.kind === 1); t++) {
+    const y = yLo + 0.33 * RANGE + (rng() - 0.5) * 14;
+    place(spineAt(y) + (rng() - 0.5) * 1.2, y, 0, 15, 1);
   }
   const NALL = P.length;
 
@@ -161,29 +168,31 @@ export async function build(ctx) {
   const orng = ctx.makeRng(5518);
   for (let i = NALL - 1; i > 0; i--) { const j = Math.floor(orng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
   const rank = new Float32Array(NALL);
-  order.forEach((idx, r) => { rank[idx] = r; });
+  order.forEach((idx, r) => { rank[idx] = P[idx].kind ? 1e6 : r; });
 
   // low draws every other lamp; ranks stay the high set's, so the k-th lamp to go out is the same lamp on every tier
-  const keep = P.map((_, i) => i).filter((i) => !low || i % 2 === 0);
+  const keep = P.map((_, i) => i).filter((i) => !low || i % 2 === 0 || P[i].kind);
   const N = keep.length;
-  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3);
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3), kind = new Float32Array(N);
   keep.forEach((src, i) => {
     const p = P[src];
     pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
     const c = PALETTE[p.ci][1]; col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
-    meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng();
+    meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng(); kind[i] = p.kind;
   });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aCol', new THREE.BufferAttribute(col, 3));
   geo.setAttribute('aMeta', new THREE.BufferAttribute(meta, 3));
+  geo.setAttribute('aKind', new THREE.BufferAttribute(kind, 1));
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(S.x, 140, S.z), 260);
 
   const U = { uTime: { value: 0 }, uDark: { value: seen0 }, uH: { value: 720 } };
   const vs = /* glsl */`
     uniform float uTime, uDark, uH;
     attribute vec3 aCol, aMeta;
-    varying vec3 vCol; varying float vA;
+    attribute float aKind;
+    varying vec3 vCol; varying float vA, vWin, vKind;
     #include <fog_pars_vertex>
     float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
     void main() {
@@ -195,8 +204,12 @@ export async function build(ctx) {
       gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 2.0, 0.0));
       float sc = uH * 0.5 * projectionMatrix[1][1], px = uH / 720.0;
       float phys = aMeta.x * sc / max(depth, 1.0);
-      float s = clamp(phys, 2.6 * px, 4.5 * px);
-      gl_PointSize = s;  // (set to 0 below when the lamp is out)
+      // a window (0.68 as wide as tall) held to 4.5-10 px tall, or for the great opening 12-70; its point is 2.4 times that,
+      // so the sill and the glow round it have room
+      float win = aKind > 0.5 ? clamp(phys, 12.0 * px, 70.0 * px) : clamp(phys, 4.5 * px, 10.0 * px);
+      float s = win;
+      gl_PointSize = win * 2.4;
+      vWin = win; vKind = aKind;  // (set to 0 below when the lamp is out)
       // a slow flicker of its own: two incommensurate sines on a hash of the index, and now and then a brief sag
       float i = aMeta.z * 91.7;
       float fl = 0.80 + 0.20 * sin(uTime * (0.25 + 0.5 * h11(i)) + i * 6.28) * sin(uTime * (0.11 + 0.2 * h11(i + 3.0)) + i * 3.1);
@@ -209,24 +222,42 @@ export async function build(ctx) {
       // energy: a window smaller than its dot is dimmer than the dot would be
       float k = pow(min(1.0, phys / s), 0.5);
       if (lit <= 0.0) gl_PointSize = 0.0;
-      vA = fl * lit * mix(0.5, 1.0, k) * 3.4;
+      vA = fl * lit * mix(0.5, 1.0, k) * (aKind > 0.5 ? 2.2 : 2.6);
       vCol = mix(aCol, aCol * aCol, 0.5);
     }`;
   const fs = /* glsl */`
-    varying vec3 vCol; varying float vA;
+    varying vec3 vCol; varying float vA, vWin, vKind;
     ${fogPars}
-    ${softDot}
     void main() {
       ${fogAtten}
-      float d = softDot(gl_PointCoord);
-      gl_FragColor = vec4(vCol * d * vA * (0.5 + 0.5 * fogAtten), 1.0);
+      // p in window heights, the window centred: x within +-0.34, y within +-0.5 (the great one's top an arch)
+      vec2 p = (vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) - 0.5) * 2.4;
+      float hx = 0.34;
+      vec2 q = abs(p) - vec2(hx, 0.5);
+      float sd = max(q.x, q.y);
+      if (vKind > 0.5 && p.y > 0.5 - hx) sd = length(vec2(p.x, p.y - (0.5 - hx))) - hx; // the arch
+      float ew = 0.6 / vWin;
+      float inside = 1.0 - smoothstep(-ew, ew, sd);
+      // a lit window: brighter low (the lamp stands on the sill), a dark mullion in the big ones
+      float glowy = mix(0.75, 1.0, smoothstep(0.5, -0.5, p.y));
+      float mull = 1.0;
+      if (vKind > 0.5) mull = smoothstep(0.02, 0.05, abs(p.x)) * smoothstep(0.02, 0.05, abs(p.y + 0.12));
+      float lum = inside * glowy * mull;
+      // the wall it sits in: a dark sill and reveal round it, and a soft glow on the rock beyond
+      float reveal = (1.0 - smoothstep(0.02, 0.17, sd)) * (1.0 - inside);
+      float halo = exp(-max(sd, 0.0) * 6.0) * (1.0 - inside) * step(0.0, sd) * 0.34;
+      float vis = 0.5 + 0.5 * fogAtten;
+      vec3 c = vCol * (lum * vA + halo * vA * 0.5) * vis;
+      gl_FragColor = vec4(c, reveal * 0.55 * fogAtten);
     }`;
   const mat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]), vertexShader: vs, fragmentShader: fs, fog: true,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    // premultiplied: the reveal darkens the rock (alpha, no colour), the window and glow add
+    transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
   });
   Object.assign(mat.uniforms, U);
-  mat.customProgramCacheKey = () => 'escarpment-lamps';
+  mat.customProgramCacheKey = () => 'escarpment-lamps-v11';
   const points = new THREE.Points(geo, mat);
   points.name = 'escarpment-lamps'; points.frustumCulled = true; points.renderOrder = 24;
   points.onBeforeRender = (r) => { U.uH.value = r.domElement.height; };

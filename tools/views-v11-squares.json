@@ -21,6 +21,13 @@
   "pitch": 0.85
  },
  {
+  "name": "lamps-causeway",
+  "x": -40,
+  "z": 22,
+  "yaw": -3.3,
+  "pitch": 0.3
+ },
+ {
   "name": "gal-400",
   "x": -10,
   "z": -95,
