@@ -26,6 +26,8 @@ The look before planning was the v9 critic's walk of the same day (49 renders, t
 
 ## Status
 
+**2026-11-11, 22:57 PST. T1 merged; its Pit sent back; A0 still out.** T1 (#15, `issue-1001-edges`) is merged into `next` after the orchestrator looked at its renders, reran `ONLY=edges,walk,hop,paths,stair tools/suite.sh 8162` on the branch (75, 10, 25, 92, 5 PASS lines; 0 failed) and a cold review found no blockers. What it did: the collider rings at the Foundered Nave and the Pit stand 0.3 m from the rim where they stood 1.1 to 2 m; the Great Span's broken deck edges have a 0.14 m kerb (a walk stops at the lip where it fell 56 m; a hop still goes over); pale glints on the Sunken Court's water; `tools/edges-test.mjs` in the gate. The ha-ha, the canyon, the glacier and the Hypogeum's stair are slopes that never stopped anyone. `main` (PR #29, a line of `AGENTS.md`) is merged into `next` too. Not good enough yet: at the Pit the rim's boulders fill the view and the throat is mist behind them, so the same agent is back in the same worktree (port 8162) making two or three clear lookouts on the rim and giving the throat some depth; it pushes to the same branch, to be merged again. In flight beside it: A0 (opus, `issue-1000-acts`, 8161), uncommitted work in `src/v10/`, `tools/acts-test.mjs` and the Halt. The full suite has not run on `next` since the merge (T1 touched no shared file); it runs once with the batch.
+
 **2026-11-11, 22:38 PST. Opened; batch 1 dispatched.** `next` is `main` at v9.1 plus the look-back commit. In flight, each in its own worktree under `.claude/worktrees/`, pushing a branch and no PR:
 
 | Brief | Model | Branch / worktree | Port |
