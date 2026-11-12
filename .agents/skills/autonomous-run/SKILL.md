@@ -76,10 +76,9 @@ Pause a piece of work only for things you truly can't do: it needs money, a cred
 
 ## After a release: start clean
 
-A milestone fills the orchestrator's context with renders, reviews and merges that the next milestone does not need. Claude Code gives the model no way to compact or clear its own context (no tool, no hook and no scheduled prompt can run `/compact` or `/clear`; checked against its docs on 2026-11-11), so the clean start is arranged from outside, and your part is to make it lossless:
+A milestone fills the orchestrator's context with renders, reviews and merges that the next milestone does not need. Claude Code gives the model no way to compact or clear its own context (no tool, no hook and no scheduled prompt can run `/compact` or `/clear`; checked against its docs on 2026-11-11), so the owner compacts by hand, and your part is to make that lossless and to say when. (A script that ran one headless process per milestone was tried and removed on the owner's word the same day: headless sessions are harder for them to follow.)
 
 - **Before you say a milestone is released**, everything the next session needs is in the repository: the milestone doc's Status says released, with what is left open; `RELEASES.md` has the entry; the idea bank has what the critic found and you did not fix; anything the owner said in session that is not yet in a doc is written into one. Then say plainly in your last message that this is a good point to `/compact` or to start a fresh session, and stop the turn there rather than opening the next milestone in the same breath.
-- **`tools/run-milestones.sh`** is the unattended form: it starts one fresh `claude -p` process per milestone, so every milestone begins with an empty context and this skill's "On each wake". Under it, ship one milestone and end; the script starts the next.
 - **When compaction does happen** (the owner's `/compact`, or automatically), `tools/hooks/pre-compact.sh` tells the summariser what to keep: the owner's unwritten words, agents in flight, half-done merges. Keep that script true to how the run works.
 
 ## What the owner finds on coming back
