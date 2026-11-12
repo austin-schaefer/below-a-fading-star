@@ -193,3 +193,5 @@ The audio harness (v7.2, `.agents/skills/sound-design/harness.md` is its contrac
 
 
 `node tools/terrain-probe.mjs <base> [q] [runs] [out.json]` times `buildTerrain` in a bare page (no walk) and fingerprints what it builds (heightAt at 5,000 wall samples, a checksum of each baked attribute); `--diff a.json b.json` compares two trees, for a change to the terrain that must not change what is seen.
+
+`node tools/mountains-test.mjs <base> [--self-check]` (v11, in the gate as `mountains`) checks the near wall for what v10 had: periodic stepping up the faces (the mean autocorrelation, over 72 radial profiles, of the face's angle at 8-25 m along the ground), folds (profiles that dip on the way up: the fins), and ruled horizontal lines in `high-y0` and `high-y4` rendered on low (the share of the wall's fine detail left in 48 px row means). `--self-check` feeds it v10's bedding and v10's ribs on today's heightfield, v10's frames (`v11-00-before-*`, the deploy worktree's `shots/wip/` or `$MT_BEFORE`) and today's frames with lines drawn in, and says that each fails.

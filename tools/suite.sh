@@ -54,6 +54,7 @@ run rocks tools/rocks-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
 run hop tools/hop-test.mjs $B
 run edges tools/edges-test.mjs $B
+run mountains tools/mountains-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
