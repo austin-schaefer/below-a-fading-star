@@ -14,9 +14,9 @@
 // lit cloth behind them.
 // The story: stories/the-lantern-halt.md.
 //
-// Three draws: the slab (the Elder material, ctx.strata.mesh), the furniture at its foot (a stone-shader Builder), and
-// the globe with its chains (the same shader, its own material instance so its glow is its own, swung about the
-// beam). One PointLight, inside the globe. Colliders: the slab (a capsule, uncapped), the
+// Four draws: the slab (the Elder material, ctx.strata.mesh), the furniture at its foot (a stone-shader Builder), the
+// globe with its chains (the same shader, its own material instance so its glow is its own, swung about the beam), and
+// the travellers' tally on the face, with the act that adds the visitor's stroke (v10, src/v10/tally.js). One PointLight, inside the globe. Colliders: the slab (a capsule, uncapped), the
 // winch, the bench and the fallen blocks (capped, low enough to hop onto). Deterministic: ctx.makeRng only.
 // ?waystation=0 leaves it out. ctx.waystation: { site, globe, stats() }.
 import * as THREE from 'three';
@@ -25,6 +25,7 @@ import { makeStoneMaterial } from '../structures/materials.js';
 import { COLORS } from '../v8/strata/parts.js';
 import { LIVERY } from '../v8/livery.js';
 
+import { buildTally } from '../v10/tally.js';
 import { WAYSTATION } from './waystation/site.js';
 export { WAYSTATION };
 
@@ -157,20 +158,8 @@ export async function build(ctx) {
     const cx = winch.x + hdx * 0.9 + hdz * 0.55, cz = winch.z + hdz * 0.9 - hdx * 0.55;
     clog(cx + hdz * 0.1, cz - hdx * 0.1, -HA + 0.06); clog(cx - hdz * 0.1, cz + hdx * 0.1, -HA - 0.04);
   }
-  // the tallies: a stroke in chalk on the slab's face for every night someone has slept up there, in bundles of five,
-  // by many hands at many heights, beside the rope
-  {
-    const ty0 = gAt(winch.x, W.d / 2) - foot;
-    let n = 0;
-    for (let row = 0; row < 5; row++) for (let grp = 0; grp < 5 - ((row * 7) % 3); grp++) {
-      if (rng() < 0.2) continue;
-      const gx = winch.x + 0.9 + grp * 0.42 + (rng() - 0.5) * 0.12, gy = ty0 + 1.15 + row * 0.24 + (rng() - 0.5) * 0.05;
-      const k = (row === 4 && grp === 1) ? 3 : 5; // the last bundle unfinished
-      for (let i = 0; i < Math.min(4, k); i++) B.add(B.box(0.022, 0.17, 0.01), at(gx + i * 0.055, gy, W.d / 2 + 0.02, 0, 0, (rng() - 0.5) * 0.12), late(c('#c4b8a2')));
-      if (k === 5) B.add(B.box(0.022, 0.27, 0.01), at(gx + 0.08, gy, W.d / 2 + 0.025, 0, 0, 1.05), late(c('#c4b8a2')));
-      n++;
-    }
-  }
+  // the tallies: the travellers' chalk on the slab's face, and the act that adds the visitor's stroke (v10, src/v10/tally.js)
+  const tally = buildTally(ctx, { M0, W, foot, gAt, at, B, late, group, iron });
   // the bench against the slab's face, tiled, and a cup left on it
   const bench = { x: -2.3, z: W.d / 2 + 0.35 };
   // its foot sunk below the lowest ground under it and its top 0.45 m over the highest, so no end stands in the air
@@ -402,7 +391,7 @@ export async function build(ctx) {
   }, { pos: SP, near: 160, hz: 4 });
 
   const ms = Math.round(performance.now() - t0);
-  const stats = () => ({ calls: 3, tris: Math.round(tris), lights: 1, ms });
+  const stats = () => ({ calls: 4, tris: Math.round(tris), lights: 1, ms });
   ctx.waystation = { site: W, globe: { x: W.x, y: foot + gcY, z: W.z, r: R }, foot, stats, lampAt: () => lamp.getWorldPosition(lampAt) };
-  ctx.log(`waystation: ${Math.round(tris)} tris, 3 draws`);
+  ctx.log(`waystation: ${Math.round(tris)} tris, 4 draws, ${tally.strokes()} strokes on the tally`);
 }
