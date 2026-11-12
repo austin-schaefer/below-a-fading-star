@@ -9,6 +9,24 @@ The walk is a landscape seen against the light. A swollen red sun sits 13.5° up
 
 Everything here comes from something real: code that looks good, a render in `shots/`, a critic's finding or the owner's words, and each claim says which. None of it is a rule. It is what tends to pay off; break any of it on purpose and say why in the commit. Where nothing has been tried yet, this skill says nothing, and you are the one who finds out.
 
+## What the owner has seen, across milestones
+
+Their notes on the art in this repository (2026-11-11), in their words where quoted. These outrank anything below that disagrees.
+
+**Common gaps**
+- **Figures:** "humanoid and animal figures tend to be a bit too low poly, a bit stiff in animation."
+- **Things that move are the hardest.** "water looks janky right now"; human and animal animations "are often jank too". A moving thing wants more of the budget and more looks than a still one.
+- **Scale:** "the scale of generated plants and structures is often too small. there's not enough variation in size to create a sense of contrast and occasional awe." Make some things much bigger than feels safe.
+- **Generic fantasy is the biggest pitfall:** "bullrushes! tall grass! gray stone tower!" If the first idea is what any fantasy game would put there, it is the wrong idea; ask what this dying, baroque, slightly absurd world would have instead.
+- **Mountains and large natural features** "look bad" (issue #5: "what users see most").
+- **The three ages are a start, not a fence.** Architecture was "too generically medieval", and the three builders' hands fixed that; the worry now is that "future agents will feel constrained to exactly three ages rather than feeling free to extend and build on the system". A fourth hand, a sect, a stranger machine, a people nobody has met: all welcome, as long as each is as distinct as the three and you write down what makes it so.
+
+**What works**
+- The Great Span: "distinct architectural vibe".
+- The Pomegranate House.
+- "the thing that's like a bunch of cyber hoops".
+- The little men who walk around: "their animations may be a bit janky, but they all have a lot of personality". Personality beats polish; keep it while fixing the stiffness.
+
 ## The references
 
 Open the one your work touches; each lists what exists and where its code is, what read well and what failed, and the render checks worth doing.
@@ -25,7 +43,7 @@ Open the one your work touches; each lists what exists and where its code is, wh
 1. **Silhouette against the west first.** Ask what it looks like as a black shape against the sun's glow, and from the side the sun lights. The Thrones, the deodand and the Span's arches read from hundreds of metres as outline alone (`30-thrones-gutter-spawn-after`, `03-fauna-deodand-standard`). A thing with a weak outline is not saved by its surface.
 2. **Value before detail.** The world is mostly dark violet; a thing reads when it stands a step lighter or darker than what is behind it, not when it is busy. The officers' coats went from near-black to a blue-grey `#2a303b` so they stand off the turf (`src/v8/livery.js`); the Late folk still vanished at 30 m in dark patched cloth. Check the value in a render before adding a single trim.
 3. **Scale to the eye and to the work.** Decide the distance a visitor first meets it and how big it must be there. The Elder work is 2 m blocks and up with nothing at human size; a story prop meant to be found has to be more than a few pixels at the distance the visitor stands (the traveller's body, 40 px wide from the deck 80 m off, is not found within a second).
-4. **It belongs to a people or a place.** Before shaping it, decide whose it is: Elder, Heliarch, Late folk, nobody's (the Twk-men), or a place's own ground. Then use that hand's parts and colours (`architecture.md`, `figures.md`) or the place's ground and cover (`land.md`). The owner: "diversity, but with coherence"; three hands made more themselves, never blended.
+4. **It belongs to a people or a place.** Before shaping it, decide whose it is: Elder, Heliarch, Late folk, nobody's (the Twk-men), or a place's own ground. Then use that hand's parts and colours (`architecture.md`, `figures.md`) or the place's ground and cover (`land.md`). The owner: "diversity, but with coherence"; the hands made more themselves, never blended, and the set is open: a new one is welcome if it is as distinct.
 5. **Reuse the palette and the kit.** `PALETTE` in `src/world.js`, the hands' `COLORS` in `src/v8/strata/parts.js`, `LIVERY` in `src/v8/livery.js`, the place table in `src/v8/places.js`, the cyclopean stone (`ctx.kit.masonry`), the structures' Builder and stone shader, the figures' Painter. A new literal colour beside an existing one is usually the same colour slightly wrong.
 6. **Vary the shape, not only the trim.** Rows of the same icosahedron along the Lynchets "look machine-made" (critic); the yews became good when each sagged out of its clipped cone differently ("no two alike", v6.3). Vary footprint, lean, height, breakage and spacing, then colour.
 7. **Light and humour where the dark needs them.** The owner asked for contrast in palette, density and tone, "cuteness or humor to give the dark things punch". The house, the Twk-men and the painter's failed suns do that. A light or funny thing earns its place next to something grim.
@@ -62,7 +80,7 @@ None of this is required. Reach for it when it makes the work better.
 
 - A literal colour in a recipe where the palette, `COLORS` or `LIVERY` already has one.
 - A Victorian lamp post, a battlement, a Doric column or a castle: the shapes the owner and the coherence pass found off-register (`plans/wilderness-v4.md`, "Height, and which architecture works").
-- Blending the three hands into one house style, or one people's colours on another's.
+- Blending the existing hands into one house style, or one people's colours on another's. (Adding a new hand is not this: see the owner's note above.)
 - Light from nowhere: a shaft, glow or pool with no visible source (the owner on the wood's first shafts; fixed so each falls from a crown, `src/v8/shafts.js`).
 - Rows of identical copies; variety by trim alone.
 - Lifting a thing's visibility with a new hue outside its palette; lift value and saturation along its own colour (v7.1's visibility pass, stage 60).
