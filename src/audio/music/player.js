@@ -33,28 +33,35 @@ import { makeVoices, tail } from './patches.js';
 
 export const LOOKAHEAD = 2; // seconds of events on the audio clock ahead of now
 export const TICK_MS = 250;
-export const MAX_POOL = 10; // voices a track may hold at once (moor needs 9: a pad chord crossfading into the next holds four); a note that finds none is dropped (h.dropped)
+export const MAX_POOL = 10; // voices a track may hold at once (moor needs 9: a pad chord crossfading into the next holds four); past it, a voice is stolen (allocate)
 const GAP = 0.02; // a voice is free this long after its note's release ends, before it is retuned
 
 // Which voice of its patch each event takes: greedy over the sorted events, a voice free once the note's release is
-// over. The pool is sized by this (each patch as many voices as it ever needs at once), so nothing is stolen.
+// over. The pool is sized by this (each patch as many voices as it ever needs at once, MAX_POOL in all). When the pool
+// is full, a note takes its patch's voice whose note ends soonest, and that note is cut: silent by GAP before the new
+// one starts (cuts[i], its release shortened to 40 ms or more; patches.js cut()). Only a patch with no voice at all
+// once the pool is full drops its note (h.dropped).
 export function allocate(events, voices) {
   const patchOf = new Map(voices.map((v) => [v.id, v.patch]));
-  const busy = {}, slots = [], plan = {};
-  let total = 0, dropped = 0, end = 0;
-  for (const e of events) {
+  const busy = {}, slots = [], cuts = new Array(events.length).fill(Infinity), plan = {};
+  let total = 0, dropped = 0, stolen = 0, end = 0;
+  events.forEach((e, i) => {
     const patch = patchOf.get(e.voice);
     if (!patch) throw new Error(`music: event voice '${e.voice}' is not in the track's voices`);
     const until = e.t + e.dur + tail(patch, e.dur) + GAP;
     const list = (busy[patch] ??= []);
-    let k = list.findIndex((u) => u <= e.t);
-    if (k < 0 && total < MAX_POOL) { k = list.length; list.push(0); total++; }
-    if (k < 0) { slots.push(-1); dropped++; continue; }
-    list[k] = until; slots.push(k);
+    let k = list.findIndex((u) => u.until <= e.t);
+    if (k < 0 && total < MAX_POOL) { k = list.length; list.push({ until: 0, ev: -1 }); total++; }
+    if (k < 0 && list.length) { // steal the voice whose note ends soonest
+      k = list.reduce((b, u, j) => (u.until < list[b].until ? j : b), 0);
+      cuts[list[k].ev] = e.t - GAP; stolen++;
+    }
+    if (k < 0) { slots.push(-1); dropped++; return; }
+    list[k] = { until, ev: i }; slots.push(k);
     end = Math.max(end, until);
-  }
+  });
   for (const [p, l] of Object.entries(busy)) plan[p] = l.length;
-  return { patchOf, slots, plan, dropped, length: end };
+  return { patchOf, slots, cuts, plan, dropped, stolen, length: end };
 }
 
 // a voice id's place in the stereo field: spread by its order in the track, small (the stem is mostly centred)
@@ -62,7 +69,7 @@ const panOf = (voices) => new Map(voices.map((v, i) => [v.id, i === 0 ? 0 : (((i
 
 export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, quality = 'high', gain = 1 } = {}) {
   const offline = typeof OfflineAudioContext !== 'undefined' && ac instanceof OfflineAudioContext;
-  const { patchOf, slots, plan, dropped, length } = allocate(events, voices);
+  const { patchOf, slots, cuts, plan, dropped, stolen, length } = allocate(events, voices);
   const pans = panOf(voices);
   const stem = ac.createGain();
   stem.gain.setValueAtTime(0, at);
@@ -77,7 +84,7 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
 
   let next = 0, timer = null, stopping = null, disposed = false, resolveDone;
   const done = new Promise((r) => { resolveDone = r; });
-  const h = { playing: true, ended: false, length, dropped, done, plan,
+  const h = { playing: true, ended: false, length, dropped, stolen, done, plan,
     get t() { return ac.currentTime - at; } };
 
   function schedule(until) {
@@ -88,7 +95,7 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
       if (when < ac.currentTime) continue; // late (a stalled tab): skip rather than click in mid-note
       const patch = patchOf.get(e.voice), v = vs.pool[patch][k];
       vs.place(v, when, pans.get(e.voice));
-      v.note(when, D3 * e.ratio, e.dur, e.vel);
+      v.note(when, D3 * e.ratio, e.dur, e.vel, at + cuts[next]);
     }
   }
   function dispose() {

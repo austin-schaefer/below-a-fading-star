@@ -4,7 +4,8 @@
 // is retuned while its envelope is at zero and its envelope is gated by automation curves. The player decides which
 // voice takes which note (player.js), so a voice is never asked to sound two notes at once.
 //
-// PATCHES[name] = { attack(dur), release(dur), make(ac, out, o) → { note(t, f, dur, vel), start(t), stop(t) } }
+// PATCHES[name] = { attack(dur), release(dur), make(ac, out, o) → { note(t, f, dur, vel, end?), start(t), stop(t) } }
+//   (end: the time the note must be silent by, when its voice is taken by a later note; cut() below)
 //   pad    three saws (two on low) detuned +-7 cents into two lowpasses at 2.5x the fundamental; a swell over seconds
 //   organ  one PeriodicWave of sines at 1-3x (a soft flue stop), a lowpass at 900 Hz; a short swell
 //   flute  a triangle, breath (pink noise through a bandpass at the pitch), vibrato of 5 cents at 4.6 Hz that enters late
@@ -38,6 +39,14 @@ export function envelope(g, t, hold, peak, att, rel) {
   g.gain.setValueCurveAtTime(scaled(FALL, peak), t + Math.max(hold, att + 0.001), rel);
 }
 
+// a note that must be silent by `end` (its voice is taken by a later note: player.js steals the voice whose note ends
+// soonest when the pool is full): its release shortened to 40 ms or more, its hold to what is left → [hold, rel]
+export function cut(t, hold, rel, end = Infinity) {
+  if (t + hold + rel <= end) return [hold, rel];
+  const r = clamp((end - t) * 0.3, 0.04, rel);
+  return [Math.max(MIN_ATTACK + 0.002, end - t - r), r];
+}
+
 const osc = (ac, type, f) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; return o; };
 const lp = (ac, f, q = 0.5) => { const b = ac.createBiquadFilter(); b.type = 'lowpass'; b.frequency.value = f; b.Q.value = q; return b; };
 const bp = (ac, f, q) => { const b = ac.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = f; b.Q.value = q; return b; };
@@ -45,11 +54,10 @@ const bp = (ac, f, q) => { const b = ac.createBiquadFilter(); b.type = 'bandpass
 export const halt = (x, t) => { try { x.stop(t); } catch { /* stopped already */ } };
 const gain = (ac, v) => { const g = ac.createGain(); g.gain.value = v; return g; };
 
-// The balance (v9-M1, set by tools/music-render.mjs on the moor): the pad and organ sit about 16 dB under the lead.
-// The roughness meter reads any two tones 15-300 Hz apart in one octave band, and a lone tone under 150 Hz (D3), as
-// rough (a pure D3 sine reads 0.43, a pure D4-A4 fifth 0.36), so the chord-bearing patches stay well under the
-// monophonic lead or the stem fails rough < 0.15. PAD_TILT: higher pad notes softer, (147 / f) ** tilt.
-export const PAD_LP = 2.5, PAD_GAIN = 0.6, PAD_TILT = 1, ORGAN_GAIN = 0.16;
+// The balance (v9-M1, set by tools/music-render.mjs on the moor): pad and organ about 8 dB under the flute (each solo
+// about -43 LUFS against the flute's -35), so the pad is heard as a pad. PAD_TILT: higher pad notes softer,
+// (147 / f) ** tilt.
+export const PAD_LP = 2.5, PAD_GAIN = 1.56, PAD_TILT = 1, ORGAN_GAIN = 0.46, CHOIR_GAIN = 5.3, BELL_GAIN = 0.5;
 export const PATCHES = {
   pad: {
     attack: (d) => clamp(d * 0.12, 0.4, 4), release: (d) => clamp(d * 0.08, 0.6, 3),
@@ -59,10 +67,11 @@ export const PATCHES = {
       const oscs = det.map((c) => { const x = osc(ac, 'sawtooth', 147); x.detune.value = c; x.connect(mix); return x; });
       mix.connect(f1).connect(f2).connect(env).connect(out);
       return {
-        note(t, f, dur, vel) {
+        note(t, f, dur, vel, end) {
           for (const x of oscs) x.frequency.setValueAtTime(f, t);
           for (const b of [f1, f2]) b.frequency.setValueAtTime(f * PAD_LP, t);
-          envelope(env, t, dur, vel * PAD_GAIN * (147 / f) ** PAD_TILT, PATCHES.pad.attack(dur), PATCHES.pad.release(dur));
+          const [h, r] = cut(t, dur, PATCHES.pad.release(dur), end);
+          envelope(env, t, h, vel * PAD_GAIN * (147 / f) ** PAD_TILT, PATCHES.pad.attack(dur), r);
         },
         start(t) { for (const x of oscs) x.start(t); }, stop(t) { for (const x of oscs) halt(x, t); },
       };
@@ -76,7 +85,7 @@ export const PATCHES = {
       const env = gain(ac, 0), f = lp(ac, 900, 0.4);
       x.connect(f).connect(env).connect(out);
       return {
-        note(t, fr, dur, vel) { x.frequency.setValueAtTime(fr, t); envelope(env, t, dur, vel * ORGAN_GAIN, 0.08, 0.35); },
+        note(t, fr, dur, vel, end) { x.frequency.setValueAtTime(fr, t); const [h, r] = cut(t, dur, 0.35, end); envelope(env, t, h, vel * ORGAN_GAIN, 0.08, r); },
         start(t) { x.start(t); }, stop(t) { halt(x, t); },
       };
     },
@@ -92,11 +101,12 @@ export const PATCHES = {
       breath.connect(bf).connect(bg).connect(env);
       x.connect(f).connect(env).connect(out);
       return {
-        note(t, fr, dur, vel) {
+        note(t, fr, dur, vel, end) {
           x.frequency.setValueAtTime(fr, t); bf.frequency.setValueAtTime(fr, t); f.frequency.setValueAtTime(fr * 4, t);
+          const [h, r] = cut(t, dur, 0.3, end);
           // vibrato enters after 0.4 s on a long note and is gone before the next
-          if (dur > 0.8) { vibDepth.gain.setValueCurveAtTime(scaled(RISE, 5), t + 0.4, Math.min(0.8, dur - 0.41)); vibDepth.gain.setValueCurveAtTime(scaled(FALL, 5), t + dur, 0.25); }
-          envelope(env, t, dur, vel * 0.5, 0.07, 0.3);
+          if (h > 0.8) { vibDepth.gain.setValueCurveAtTime(scaled(RISE, 5), t + 0.4, Math.min(0.8, h - 0.41)); vibDepth.gain.setValueCurveAtTime(scaled(FALL, 5), t + h, r); }
+          envelope(env, t, h, vel * 0.5, 0.07, r);
         },
         start(t) { x.start(t); vib.start(t); breath.start(t, (o.index * 1.37) % 3); }, stop(t) { halt(x, t); halt(vib, t); halt(breath, t); },
       };
@@ -111,9 +121,10 @@ export const PATCHES = {
       const oscs = det.map((c) => { const x = osc(ac, 'sawtooth', 220); x.detune.value = c; x.connect(mix); return x; });
       mix.connect(pre); pre.connect(fa).connect(ga).connect(env); pre.connect(fb).connect(gb).connect(env); env.connect(out);
       return {
-        note(t, fr, dur, vel) {
+        note(t, fr, dur, vel, end) {
           for (const x of oscs) x.frequency.setValueAtTime(fr, t);
-          envelope(env, t, dur, vel * 2.1, PATCHES.choir.attack(dur), PATCHES.choir.release(dur));
+          const [h, r] = cut(t, dur, PATCHES.choir.release(dur), end);
+          envelope(env, t, h, vel * CHOIR_GAIN, PATCHES.choir.attack(dur), r);
         },
         start(t) { for (const x of oscs) x.start(t); }, stop(t) { for (const x of oscs) halt(x, t); },
       };
@@ -127,12 +138,12 @@ export const PATCHES = {
         const x = osc(ac, 'sine', 440 * m), g = gain(ac, 0); x.connect(g).connect(out); return { x, g, m, a, d };
       });
       return {
-        note(t, fr, dur, vel) {
+        note(t, fr, dur, vel, end = Infinity) {
           for (const p of parts) {
             // partials above 2 kHz (the ear's sharpest band) are left out
             const f = fr * p.m, a = f < 2000 ? p.a : 0;
             p.x.frequency.setValueAtTime(f, t);
-            if (a > 0) envelope(p.g, t, MIN_ATTACK + 0.001, vel * 0.5 * a, MIN_ATTACK, (dur + 0.4) * p.d);
+            if (a > 0) envelope(p.g, t, MIN_ATTACK + 0.001, vel * BELL_GAIN * a, MIN_ATTACK, Math.max(0.04, Math.min((dur + 0.4) * p.d, end - t - MIN_ATTACK - 0.002)));
           }
         },
         start(t) { for (const p of parts) p.x.start(t); }, stop(t) { for (const p of parts) halt(p.x, t); },
@@ -146,7 +157,7 @@ export const tail = (patch, dur) => (patch === 'bell' ? 0.4 : PATCHES[patch].rel
 
 // the tape: in → wow (a modulated delay) → two lowpass poles at 3 kHz → dest, with hiss mixed in before the lowpass
 // the stem's level: a track at the player's gain 1 measures about -35 LUFS (tools/music-render.mjs)
-export const STEM_LEVEL = 0.075;
+export const STEM_LEVEL = 0.1;
 
 function makeTape(ac, dest, noise) {
   const input = gain(ac, STEM_LEVEL), wow = ac.createDelay(0.05);
