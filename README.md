@@ -16,19 +16,34 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ## Milestones
 
-- v2, `plans/wilderness-v2.md` + `plans/wilderness-v2-placement.md`: Adding more life, named sites.
-- v3, `plans/wilderness-v3.md` + `plans/wilderness-v3-survey.md`: Adjusting the color temperatures, and performance pass.
-- v4, `plans/wilderness-v4.md` + `plans/wilderness-v4-placement.md` + `plans/wilderness-mountains-study.md`: Adding distinct bioregions and more architectural features.
-- v5, `plans/wilderness-v5.md` + `plans/wilderness-v5-coherence.md`: Making the architecture and landscapes more distinctive and less generic fantasy.
-- v6, `plans/wilderness-v6.md`: Another performance improvement spike.
-- v7, `briefs/v7/index.md`: Way more characters and living creatures.
-- v7.1, `briefs/v7.1/`: Improved copy and text with human-chosen quotes.
-- v7.2, `plans/wilderness-v7.2.md`: Soundscape level-up.
-- v8, `plans/wilderness-v8.md` + `briefs/v8/index.md`: Roads, peoples and stories that tie the world together.
+Each release, newest first, linked to its release notes. The full notes are in [`RELEASES.md`](RELEASES.md).
+
+- [v8: One world](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v8). Roads, peoples and stories that tie the world together.
+- [v7.2.1: Quieter birds at the keep](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v7.2.1). Quieter, rarer bird sounds near the start.
+- [v7.2: The sound](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v7.2). Soundscape level-up.
+- [v7.1: Easier to see, and the regions named](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v7.1). Characters easier to spot, steadier water, and names for the regions.
+- [v7: The living](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v7). Way more characters and living creatures.
+- [v6.7: Two more place names](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.7). The last two place names.
+- [v6.6: A settings menu](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.6). A settings menu.
+- [v6.5: New words](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.5). Improved copy and text with human-chosen quotes.
+- [v6.4: The peafowl hold together](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.4). Fixed the peafowl.
+- [v6.3: The yews grow out](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.3). Fixed the yew trees.
+- [v6.2: Round glints](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.2). Lights are round in every browser.
+- [v6.1: The thumbstick stays home](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6.1). A fix for walking on phones.
+- [v6: Nothing pops](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v6). Another performance improvement spike.
+- [v5: The built](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v5). Making the architecture and landscapes more distinctive and less generic fantasy.
+- [v4: The land and the Great Span](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v4). Adding distinct bioregions and more architectural features.
+- [v3: Running cooler, and a medium quality](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v3). Adjusting the color temperatures, and performance pass.
+- [v2.2: A hop and a hush for phones](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v2.2). Better controls on phones.
+- [v2.1: A loading bar](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v2.1). A loading bar.
+- [v2: The river's people, and more life everywhere](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v2). Adding more life, named sites.
+- [v1: The moor, the keep, the things between](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v1). The first release.
 
 ## License
 
-MIT; see `LICENSE`. Two things it does not cover:
+This repo is MIT-licensed, but doesn't accept issues or pull requests since part of the experiment is having agents use issues as a way to prioritize and track work.
+
+Two things in the repo are separately licensed:
 
 - Quotations from literary works, in the docs or in the walk itself, remain the copyright of their owners and appear here under fair use.
 - `vendor/three/` is Three.js, under its own MIT license (`vendor/three/LICENSE`).
