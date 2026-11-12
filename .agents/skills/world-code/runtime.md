@@ -126,6 +126,10 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 - `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
 
+### v9 places
+
+- `waystation=0` (the causeway without the Bell-House of `src/v9/waystation.js`)
+
 ### v9 music
 
 - `music=<track>`: plays that track 3 s after the walk begins and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
