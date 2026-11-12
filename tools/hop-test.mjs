@@ -114,7 +114,7 @@ const R = await page.evaluate(() => {
     return null;
   });
   // a boulder about chest height, on level ground
-  site('boulder', pick('rocks', (c) => c.dome !== undefined && c.r > 0.9).filter((c) => { const h = c.y + c.h - T.heightAt(c.x, c.z); return h > 0.9 && h < 1.3 && T.slopeAt(c.x, c.z) < 0.15; }), (c) => {
+  site('boulder', pick('rocks', (c) => c.dome !== undefined && c.r > 0.9).filter((c) => { const h = c.y + c.h - T.heightAt(c.x, c.z); return h > 0.9 && h < 1.3 && T.slopeAt(c.x, c.z) < 0.15 && Math.hypot(c.x, c.z) < fp.mountains.walkLimit(c.x, c.z) - c.r - 4; }), (c) => { // a boulder a walker can reach
     for (let k = 0; k < 8; k++) {
       const a = k * Math.PI / 4, nx = Math.cos(a), nz = Math.sin(a), g = T.heightAt(c.x, c.z);
       if (T.isUnderwater(c.x + nx * 4, c.z + nz * 4) || T.isUnderwater(c.x - nx * 4, c.z - nz * 4)) continue;

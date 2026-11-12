@@ -302,9 +302,10 @@ export async function build(ctx) {
   geo.setAttribute('normal', new THREE.Float32BufferAttribute(out.nrm, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(out.col, 3));
   geo.setAttribute('aRim', new THREE.Float32BufferAttribute(out.rim, 1));
-  // the terrain material's own attributes, empty: no ice, no wet, no glacier
+  // the terrain material's own attributes, empty: no ice, no wet, no glacier, no wall water
   geo.setAttribute('aIce', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(new Float32Array(n), 1));
+  geo.setAttribute('aWall', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aGlac', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   geo.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(out.idx, 1) : new THREE.Uint16BufferAttribute(out.idx, 1));
   geo.computeBoundingSphere();
