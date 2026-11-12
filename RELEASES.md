@@ -1,13 +1,16 @@
 # Releases
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
-## v7.2.1 (2026-11-11) — the keep's rooks, quieter and rarer
+## v7.2.1: Quieter birds at the keep
 
-A hotfix. Austin: "idk what bird is honking non-stop near keep like a bicycle horn, but it's very distracting/frequent."
+Released 2026-11-11.
 
-- **What a visitor notices.** The rooks on Carcanet Keep's top no longer start cawing seconds after the walk begins and no longer come back every half minute. They say one or two short things, then rest for minutes (a median of two and a half, never under one), the first not before forty seconds in, and they are about 7 dB quieter. Since the spawn is under their roosts, this was the most-heard sound in the walk.
-- **Under the hood.** `src/v4/regions/demesne.js` only: the rooks' caller goes from bouts of 2–4 groups with a median rest of 30 s (minimum 10) and an answer half the time to bouts of 1–2 with a median rest of 150 s (60 to 600) and an answer one time in four; one or two caws a group (was one to three); the bus gain 0.55 → 0.25. The caw's voicing is unchanged, so if it still reads as a horn when it does sound, that is a re-voicing for the next audio pass.
-- **Known and left.** Nobody has listened to it: the change is to how often and how loud, by arithmetic. The audio survey's Demesne poses expect at least two onsets a minute in their 40 s (an ungated band) and will now often read none, since the first caw comes after 40 s.
+A small fix to the birds' sounds around the keep, where the walk begins.
+
+- **The rooks on the keep are rarer and quieter**: The rooks, black crows that roost on top of Carcanet Keep (the great stone keep you start beside), used to start cawing seconds into the walk and come back every half minute. Now they wait a while, say one or two short things, rest for minutes at a time, and sound softer.
+- **Birds taking off no longer sound like gunshots**: The small birds that burst out of the grass as you walk, and the flocks that lift off the keep and the gibbet, are much quieter and softer at the start, and the grass birds flush every minute or two of walking instead of several times a minute.
+
+Known issues: the caw itself is unchanged, so when the rooks do call, it may still sound like a horn.
 
 ## v7.2 (2026-11-09) — the sound
 
