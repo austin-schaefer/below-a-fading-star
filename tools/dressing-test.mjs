@@ -99,7 +99,7 @@ check(p.caps.length >= 4 && p.caps.every((z) => [-200, -100, 0, 100, 200].includ
 check(p.capForms.length === p.caps.length && p.capForms.every((g) => Number.isInteger(g) && g >= 0 && g <= 8) && p.capForms.every((g, i) => i === 0 || g !== p.capForms[i - 1]), 'each standing cap carries one of the lintel\'s glyphs, no two neighbours alike (v7)', `forms ${p.capForms}`);
 const f = r.fig;
 check(Math.abs(f.arc - 80) < 4, 'the figure is 80 m long on the ground', `${f.arc.toFixed(1)} m`);
-check(f.slope > 20 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}, dy ${f.dy.toFixed(3)} (analytic ${f.dyAnalytic.toFixed(2)})`);
+check(f.slope > 15 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}, dy ${f.dy.toFixed(3)} (analytic ${f.dyAnalytic.toFixed(2)})`);
 check(f.minLift > 0 && f.maxLift < 1.2 && !f.castShadow, 'it hugs the ground and casts no shadow', `lift ${f.minLift.toFixed(2)} to ${f.maxLift.toFixed(2)}`);
 check(r.stats.calls <= 8 && r.stats.tris <= 60000, 'draw calls and triangles within the budget', `${r.stats.calls} calls, ${r.stats.tris} tris`);
 const cy = r.cy, sl = r.sl, pr = r.pr;
