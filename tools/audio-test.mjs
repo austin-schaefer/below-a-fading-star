@@ -66,6 +66,7 @@ const CUES = [
   // v10-A3 the bell under the Span (src/v10/bell-sound.js)
   ['act-bell-haul', { dx: 2, dy: 0, dz: -3 }, null, 1000, 1000], ['act-bell-candles', { dx: 60, dy: -2, dz: -40 }, null, 2500, 1500],
   ['act-bell-hum', { dx: 4, dy: 3, dz: -6 }, null, 2500, 1500], ['act-bell-rest', { dx: 6, dy: 0, dz: -8 }, null, 1500, 1500],
+  ['act-bell-letters', { dx: 2, dy: -1, dz: -2 }, null, 1500, 1500], ['act-bell-ascend', { dx: 4, dy: 3, dz: -6 }, null, 3000, 1500],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
   ['act-bell', { dx: 6, dy: 2, dz: -8 }, { n: 1 }, 1500, 1500], // v10-A3: last, its minute of tail would be the bed of any row after it
 ];

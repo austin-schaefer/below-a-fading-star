@@ -13,6 +13,10 @@
 //   act-bell-hum      the candles passing under the mouth: the bell's prime, quint and nominal swelling back to them
 //                     with no stroke, 7 s. Detail, 90 m
 //   act-bell-rest     the ninth candle taking its place round the traveller: a low soft fifth (D3, A3) and a sigh. 60 m
+//   act-bell-letters  his letters gathered: paper lifted off the grass and laid down, a sheet at a time, 5 s. 30 m
+//   act-bell-ascend   the candles going up from round him: their chord again, an octave higher as they rise, 12 s. 250 m
+// The stroke's voice lives 32 s; past the voice cap (12) it is the oldest and the first stolen, its tail ramped out in
+// 40 ms: accepted (it takes twelve newer voices in half a minute, which only the busiest places make).
 import { softKit } from '../audio/cues-v2.js';
 
 const D2 = 73.42;
@@ -25,7 +29,9 @@ export function startBellSound(a, ctx) {
   // the bell's partials: [ratio to D2, level, decay s, beat Hz]; their tuning fixed once (the bell is the same bell)
   // One strong partial an octave band from 125 Hz up (two in a band beat at 15-300 Hz, and that is roughness, not a
   // bell); the minor tierce sits with the prime in the 63 Hz octave, the quint is an octave up, the rest are small.
-  const PART = [[0.5, 0.5, 70, 0.4], [1, 0.8, 55, 0.7], [1.2, 0.42, 34, 1.1], [2, 0.85, 40, 0.45], [3, 0.36, 24, 0.8],
+  // The low partials die fastest of a real bell's, on purpose: their energy holds the bus compressor down, and a
+  // half-minute of D1 and D2 would duck the bed and every cue after the stroke. The nominal and the quint carry the tail.
+  const PART = [[0.5, 0.42, 16, 0.4], [1, 0.7, 20, 0.7], [1.2, 0.4, 16, 1.1], [2, 0.85, 30, 0.45], [3, 0.36, 22, 0.8],
     [6, 0.08, 9, 0], [12, 0.025, 4, 0]]
     .map(([r, l, d, b]) => ({ f: D2 * r * cents((rng() - 0.5) * 12), l, d, b }));
 
@@ -44,7 +50,7 @@ export function startBellSound(a, ctx) {
   }
 
   function bell(pos, o = {}) {
-    const v = voice(pos, { ref: 6, roll: 1, range: 900, dur: 72, verb: 0.55, air: 450, gain: 12 }); if (!v) return;
+    const v = voice(pos, { ref: 6, roll: 1, range: 900, dur: 32, verb: 0.55, air: 450, gain: 9 }); if (!v) return;
     const t0 = v.t0, A = 0.05;
     const body = filt('lowpass', 3800, 0.5); body.connect(v.in); // dark by default: the bell's top rolled off
     // the stroke: iron on bronze, a thump and a short clang
@@ -60,7 +66,7 @@ export function startBellSound(a, ctx) {
   }
 
   function candles(pos) {
-    const v = voice(pos, { ref: 10, roll: 1, range: 300, dur: 16, verb: 0.5, air: 220, gain: 9 }); if (!v) return;
+    const v = voice(pos, { ref: 10, roll: 1, range: 300, dur: 18, verb: 0.5, air: 220, gain: 9 }); if (!v) return;
     const t0 = v.t0, out = filt('lowpass', 2000, 0.6); out.connect(v.in);
     const notes = [D2 * 8, D2 * 9.6, D2 * 12]; // D5, F5, A5
     for (let i = 0; i < 9; i++) {
@@ -85,12 +91,31 @@ export function startBellSound(a, ctx) {
     sgrain(v, out, t0 + 0.1, 500, 0.8, 0.012, 1.2, pink, 0.4);
   }
 
+  function letters(pos) { // paper lifted off grass and laid in a pile, a sheet at a time: dry, small, close
+    const v = voice(pos, { ref: 2, roll: 1, range: 30, dur: 6.5, verb: 0.2, air: 60, gain: 6 }); if (!v) return;
+    const t0 = v.t0, out = filt('lowpass', 3000, 0.6); out.connect(v.in);
+    for (let k = 0; k < 31; k++) { const at = t0 + k * 0.14 + rng() * 0.05; sgrain(v, out, at, 900 + rng() * 900, 1.6, 0.012 + 0.01 * rng(), 0.08, pink, 0.008); sgrain(v, out, at + 1.25, 600 + rng() * 300, 1.2, 0.01, 0.05, pink, 0.004); }
+  }
+
+  function ascend(pos) { // the ring lifting: the candles' chord again, rising an octave as they go up, and gone
+    const v = voice(pos, { ref: 8, roll: 1, range: 250, dur: 22, verb: 0.6, air: 220, gain: 7 }); if (!v) return;
+    const t0 = v.t0, out = filt('lowpass', 2200, 0.6); out.connect(v.in);
+    const notes = [D2 * 8, D2 * 9.6, D2 * 12, D2 * 16];
+    for (let i = 0; i < 8; i++) {
+      const at = t0 + 1.5 + i * 0.9, f = notes[i % 4] * (i >= 4 ? 2 : 1) * cents((rng() - 0.5) * 6);
+      stone(v, out, 'sine', f, at, 0.008, 0.8, 6);
+      stone(v, out, 'sine', f * 1.003, at + 0.1, 0.004, 0.9, 5);
+    }
+  }
+
   function cue(name, pos, opts) {
     if (name === 'act-bell') bell(pos, opts);
     else if (name === 'act-bell-haul') haul(pos);
     else if (name === 'act-bell-candles') candles(pos);
     else if (name === 'act-bell-hum') hum(pos);
     else if (name === 'act-bell-rest') rest(pos);
+    else if (name === 'act-bell-letters') letters(pos);
+    else if (name === 'act-bell-ascend') ascend(pos);
   }
   return { cue };
 }

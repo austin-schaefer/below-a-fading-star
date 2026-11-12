@@ -15,7 +15,7 @@ He came to cross the Span and found it broken. He was not a man who turned back.
 | # | Where | What the visitor finds | What it tells them alone | What points on | State |
 |---|---|---|---|---|---|
 | 1 | The deck's broken edge, reached from the west stair | Boots with their toes at the lip, the folded cloak, the pack, the cup, book and rope in a row, the rope's end over the edge | Someone careful stopped here, chose, and went over. Barefoot. | The rope's end and the edge itself: you look down | built |
-| 2 | The slope below, by the track under the Span | A skeleton on a saffron greatcoat with a cream lining, bare feet, a broken stick, a burst purse and coppers | The same cloth: it is him. Years ago. Nobody robbed him: nobody comes here | The track runs on past him | built; a few pixels from the deck until the bell is rung, then a ring of candles and a pool of their light |
+| 2 | The slope below, by the track under the Span | A man on his back in his saffron greatcoat, a skull in its hood, bare bone feet, a broken stick, a burst purse and coppers, his letter-case burst and his sealed letters blown down the slope | The same cloth: it is him. Years ago. Nobody robbed him: nobody comes here | The track runs on past him | built; a few pixels from the deck until the bell is rung, then a ring of candles and a pool of their light |
 | 3 | A dead thorn further along that track | His hat, the same cloth | The wind had him before the ground did | (ends) | built |
 
 `src/v8/threads/traveller.js`.
@@ -35,3 +35,4 @@ Whether he climbed down the rope and it ended, or simply stepped.
 - 2026-11-11, v8 brief 04: built. First round the body could not be found at all; one fix round moved it into the sun.
 - 2026-11-11, v8 critic: from the lip "the body is a few coloured pixels". Noted in its state.
 - 2026-11-12, v10-A3: the bell under the Span tolls for him; the fen's candles come and stand round him, and stay.
+- 2026-11-12, v10-A3 second round: redrawn so a stranger reads a man (the coat on him, not flung flat; the parasol smaller and further off); his letters sealed in red, in a case by his hand, and gathered by a visitor once the bell has been rung (`the-bell-under-the-span.md`).
