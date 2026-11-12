@@ -57,13 +57,15 @@ When a subagent reports done:
 
 ## Releases have notes
 
-Each merge to `main` is a release and a Netlify build. Before opening the PR, add a short entry at the top of `RELEASES.md` (newest first): a one-line title with version and date, then a few bullets on what a visitor notices and what changed underneath, with the screenshot stage numbers. A shipped milestone also gets one plain line in `README.md`'s Milestones, in the owner's style (`AGENTS.md`); the rest of that file is theirs.
+Each merge to `main` is a release and a Netlify build. Before opening the PR, add an entry at the top of `RELEASES.md` (newest first), written for a stranger who has never taken the walk: a plain title, a sentence or two on what it adds, three to seven bullets on what a visitor can find or will notice, and Known issues only where they matter to a visitor. No process, tests, paths or measurements: those live in the milestone doc. The model, the owner's example and the rules: `release-notes.md`. After the PR merges, `tools/gh-release.sh <version>` publishes the entry as the GitHub release. A shipped milestone also gets one plain line in `README.md`'s Milestones, in the owner's style (`AGENTS.md`); the rest of that file is theirs.
 
 ## Screenshots are the record
 
 The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/` and updates `shots/README.md`. The `wilderness` skill's Pace has the full rule.
 
 ## Working with the owner
+
+- Anything you post to GitHub (an issue comment, a pull request body, a release) goes out under the owner's account. Begin every comment and pull request body with the automated marker in `AGENTS.md`, and never treat marked text as the owner's word.
 
 - Keep updates short: outcomes, not narration.
 - **Decide, don't ask:** what to build, what to name it, how to build it, what to cut, breakdown, model choice. Record the call where they can find it (commit message, Status, release note) so they can reverse it.

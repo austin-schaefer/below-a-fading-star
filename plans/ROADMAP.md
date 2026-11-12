@@ -11,8 +11,9 @@ Labels: a kind (`milestone`, `bug`, `tweak`, `harness`), a target (`v8`, `v9`, â
 | #1 Consistency, Coherence, and Conscious Contrast | milestone | **v8**, in progress: `plans/wilderness-v8.md` |
 | #7 Let me jump on more stuff | tweak | v8, brief 10 (`briefs/v8/brief-v8-10-owner-tweaks.md`) |
 | #8 Gaps at top of crystals | bug | v8, brief 10 |
-| #3 Improve release notes | harness | with v8's release: all of `RELEASES.md` rewritten to the owner's model, GitHub releases, the release process updated |
-| #10 The bird takeoff noises are kinda insane | bug | **hotfix v7.2.1**, with the keep's rooks (asked in session the same day) |
+| #11 Lamplighter walks thru a giant rock | bug | v8, brief 11 (`briefs/v8/brief-v8-11-rocks.md`) |
+| #12 Too many of those goofy dalmation colored rocks | tweak | v8, brief 11 |
+| #3 Improve release notes | harness | done on `next` and on GitHub (all entries rewritten, 19 GitHub releases published, `tools/gh-release.sh`, `.agents/skills/orchestrator/release-notes.md`); closes when v8's entry ships in the same style |
 
 ## Next, in order
 
@@ -24,3 +25,9 @@ Labels: a kind (`milestone`, `bug`, `tweak`, `harness`), a target (`v8`, `v9`, â
 | **v12, a payoff at the centre** | #9 | Something that happens when a visitor reaches a zone's central thing. After v11 so the new heights and depths get their payoffs in the same pass. |
 
 The order after v9 is the orchestrator's call (2026-11-11) and is the owner's to change.
+
+## Shipped
+
+| Issue | Release |
+|---|---|
+| #10 The bird takeoff noises are kinda insane | v7.2.1 (2026-11-11), with the keep's rooks |
