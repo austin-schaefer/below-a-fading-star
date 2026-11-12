@@ -11,16 +11,12 @@ Everything here comes from something real: code that looks good, a render in `sh
 
 ## Strange first, then fitting
 
-Agents default to the familiar, and this skill can make that worse: everything below describes what already exists, and it is easy to read it as "make more of that". The one test run so far showed it. Two agents were given the same brief for a waystation. The one that read this skill built a fallen column with a shelter in it, well made and fitting, and the owner's verdict was "this could be in Breath of the Wild". The one that had not built a bell nine metres across lying by the road with a door cut in it: "a much stronger, more interesting and unique concept", better in silhouette and at distance, and rougher up close.
-
-So before shaping anything, do this, in order:
+Agents default to the familiar, and a skill that describes what already exists can make that worse: it is easy to read it as "make more of that". So before shaping anything:
 
 1. **Write the first idea down and set it aside.** It is the one any fantasy game would have.
 2. **Write two more: one stranger, one much bigger** than feels safe (a thing a visitor sees from 200 m and walks toward to find out what it is). Ask what only this world would have here: old, once rich, baroque, a little absurd, made by people with odd reasons.
 3. **Build the strangest one that still belongs.** Belonging comes second and is the easier half: the rest of this skill is for that.
-4. **Then make it read up close.** The bold one in the test was janky near to (a confused door, muddy surface, murky inside); the careful one was clear and detailed, and cheaper, because it reused the builders' ready-made parts. The aim is the bell's idea with the column's finish.
-
-A detail that carried world: the careful one's charcoal tally of travellers beside the door, thinning row by row. The owner loved it. Small human marks like that are worth more than ornament.
+4. **Then make it read up close.** A bold shape with a muddy surface and a confused door is half done; the builders' ready-made parts give clean detail cheaply. Small human marks (a tally of travellers scratched by a door) carry more world than ornament.
 
 ## What the owner has seen, across milestones
 
