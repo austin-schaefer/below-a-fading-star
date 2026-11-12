@@ -158,7 +158,13 @@ function makeTape(ac, dest, noise) {
   const hg = gain(ac, 0.01 * STEM_LEVEL), hh = ac.createBiquadFilter(); hh.type = 'highpass'; hh.frequency.value = 400;
   input.connect(wow).connect(l1).connect(l2).connect(dest);
   hiss.connect(hh).connect(hg).connect(l1);
-  return { input, start(t) { for (const l of lfos) l.start(t); hiss.start(t); }, stop(t) { for (const l of lfos) halt(l, t); halt(hiss, t); } };
+  const level = hg.gain.value;
+  return {
+    input,
+    start(t) { for (const l of lfos) l.start(t); hiss.start(t); hg.gain.setValueAtTime(0, t); hg.gain.linearRampToValueAtTime(level, t + 0.3); },
+    // the hiss fades over the last 0.3 s, so the stem does not end on a step in its noise floor
+    stop(t) { hg.gain.setValueAtTime(level, t - 0.32); hg.gain.linearRampToValueAtTime(0, t - 0.02); for (const l of lfos) halt(l, t); halt(hiss, t); },
+  };
 }
 
 export function makeVoices(ac, dest, { quality = 'high', plan = {} } = {}) {

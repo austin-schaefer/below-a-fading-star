@@ -76,11 +76,11 @@ Changed from the index's first design: phrase rests are judged as a band (a sile
 | rough | < 0.15 [0.12] | buzz: bare saws, beating partials |
 | notes without a voice | 0 | a track that needs more than the pool's 10 voices at once |
 | ducked and stopped mid-note | clicks 0, silent after, ended | a track that cannot be interrupted (the director fades it out for every gutter) |
-| live | playing at ~3 s, stop(0.5) ends | the AudioContext path: the one timer, the 2 s lookahead |
+| live | the clock moving after 3 s, stop(0.5) ends | the AudioContext path: the one timer, the 2 s lookahead |
 
 What the numbers mean here, learned on the moor:
 - **The roughness meter reads harmony as rough.** It was built for noise beds: any two tones 15-300 Hz apart in one octave band show as envelope modulation (a pure D4-A4 fifth reads 0.36), and a lone tone under 150 Hz (D3 itself: the 1 ms power envelope keeps its 2f ripple) reads 0.43. So `rough` is mostly the share of the stem's energy that is chords. The moor passes with the pad and organ about 16 dB under the flute (pad solo -51 LUFS, flute solo -35); louder, and it fails. A new track with a busier pad will meet this first: keep the chord-bearing voices under a monophonic lead, or fix the meter (a partial-based dissonance measure) rather than thin the harmony to pass.
-- **The click detector sees a near-noiseless sum of tones as clicky.** Without a noise floor its linear predictor flags the curve corners of envelopes at 5x as candidates, and a long file finds chance "seams" among them. The tape's hiss (about 50 dB under the music) is what keeps it honest; real clicks read far higher (the click fixture: 161 clicks, ratios to 20x).
+- **The click detector sees a near-noiseless sum of tones as clicky.** Without a noise floor its linear predictor flags the curve corners of envelopes at 5x as candidates, and a long file finds chance "seams" among them. The tape's hiss (about 50 dB under the music) is what keeps it honest; real clicks read far higher (the click fixture: 161 clicks, ratios to 20x). The tape fades its hiss over the last 0.3 s: a stem that ends on a step in its noise floor reads as one click at x16 in the last half second.
 - **The bad patches** (`tools/music-fixtures/patches-click.js`, a flute gated with setValueAtTime; `patches-saw.js`, a pad of bare saws at the lead's level): the click flute fails clicks (161), rough and loudness; the saw pad fails clicks (1444, the saw's own wrap), sharp_db (-15.4) and rough (0.46). Run them after changing a meter or a gate: both must still fail.
 
 ## What the gates cannot tell you, so be conservative there

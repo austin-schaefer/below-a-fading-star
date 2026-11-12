@@ -72,7 +72,7 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
   const clock = ac.createConstantSource(); clock.offset.value = 0; clock.connect(stem);
   const t0 = Math.max(at, ac.currentTime);
   vs.start(t0); clock.start(t0);
-  let endAt = at + length + 0.05;
+  let endAt = at + length + 0.4; // the tape's hiss fades over the last 0.3 s
   vs.stop(endAt); clock.stop(endAt);
 
   let next = 0, timer = null, stopping = null, disposed = false, resolveDone;
@@ -115,7 +115,7 @@ export function play(events, { ac, dest, voices, at = ac.currentTime + 0.1, qual
     p.cancelScheduledValues(now); p.setValueAtTime(now > at ? p.value : 0, now); p.linearRampToValueAtTime(0, now + f);
     if (timer) { clearInterval(timer); timer = null; }
     next = events.length; // schedule nothing more
-    const end = now + f + 0.05;
+    const end = now + f + 0.4;
     if (end < endAt) { endAt = end; try { vs.stop(end); clock.stop(end); } catch { /* stop twice on some engines */ } }
     stopping = done;
     return stopping;
