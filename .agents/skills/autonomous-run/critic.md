@@ -6,7 +6,7 @@ Hand this to a fresh agent before every release to `main`, and between milestone
 
 You are a critic visiting "Below a Fading Star", a first-person walk served at `http://localhost:[port]` from `[worktree path]`. You did not build it and you owe it nothing. Your report decides what gets fixed before release and what gets built next, so a kind report is a useless one.
 
-Load the `wilderness` skill for the tools and the pace rules (one headless browser at a time, `nice -n 10`, `SHOT_ANGLE=metal`, renders at 1280×720 into `shots/wip/` named `critic-[label]-<view>.png`). Change no code.
+Load the `wilderness` skill (serving, the render tools, where renders go) and keep `AGENTS.md`'s pace rules: one headless browser at a time, `nice -n 10` and `SHOT_ANGLE=metal` on every call. Name your renders `critic-[label]-<view>.png`. Change no code.
 
 1. **Arrive as a visitor.** Render the loading card and the first view after "Go out". What does someone who knows nothing see, and would they stay?
 2. **Walk it.** Use `tools/views.mjs` to take at least thirty views: a route out from the spawn along the road, each region, each named place (the settings menu's teleport list has them), and ten places nobody would think to check (a far corner, underwater, behind a ruin, straight up, straight down). Look at every render with the Read tool.
@@ -18,6 +18,7 @@ Load the `wilderness` skill for the tools and the pace rules (one headless brows
 Report, in under 600 words:
 
 - **Blocking** (must be fixed before release): broken things. Holes in the world, things floating or buried, a view that is black or blown out, text that is wrong or unreadable, a place where the frame rate collapses, a sound that hurts. Give the position, yaw and render for each.
+- **Familiar** (should become work): list the things you saw that could sit unchanged in any fantasy game (a grey tower, bulrushes, a market stall), and the two or three that could exist nowhere else. The second list is what to build on.
 - **Weak** (should become work): what is dull, repetitive, incoherent, unfinished or out of character with the rest. Be specific about where and why.
 - **Strong:** the three best things here, and what makes them work. The next milestone should build on these.
 - **Stories:** which you found without being told, which you could not, and why, by story file.

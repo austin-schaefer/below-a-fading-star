@@ -1,6 +1,6 @@
 ---
 name: music
-description: How an agent writes and judges the walk's music, which it cannot hear. Load before touching src/audio/music/ (the score, the tracks, later the patches, player and director) or tools/music-*, as composer or reviewer, on top of `wilderness` and `sound-design`. Covers what good music is here, the track format, the text loop with tools/music-score.mjs, each gate and what it protects against, and what the gates cannot tell you.
+description: How an agent writes and judges the walk's music, which it cannot hear. Load before touching src/audio/music/ (the score, the tracks, later the patches, player and director) or tools/music-*, as composer or reviewer, on top of `wilderness`, `world-code` and `sound-design`. Covers what good music is here, the track format, the text loop with tools/music-score.mjs, each gate and what it protects against, and what the gates cannot tell you.
 ---
 
 # Music

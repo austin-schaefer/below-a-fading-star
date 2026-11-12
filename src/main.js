@@ -133,6 +133,38 @@ async function start() {
 
   const events = new EventTarget();
   const updates = [];
+  // ctx, what every world module's build(ctx) receives (the contract: the `world-code` skill). Its fields, as set below:
+  // - THREE, scene, renderer, camera, quality ('high'|'medium'|'low'; medium builds as high, so test === 'low' or
+  //   !== 'low'), tier (tier.js: stats(), state), events (EventTarget: begin, lock)
+  // - terrain: heightAt(x,z), normalAt(x,z,out?), slopeAt(x,z) (radians), biomeAt(x,z) → { moor, heath, wood, marsh,
+  //   shore, rock, ice, orchard, crystal, slope, h } (weights 0..1), waterLevelAt(x,z) (y or null), isUnderwater(x,z),
+  //   causewayDistance(x,z), glacierMask(x,z), regionRadius, mesh
+  // - landmarks, causeway, water, palette, spawn, world, sun (dir {x,y,z} toward the sun, vec Vector3, light the
+  //   DirectionalLight)
+  // - lights: { sun, hemi, ambient, sunDir, rig } (rig: the light rig's exposure and base intensities; ?light=v3
+  //   restores v3's); sky: { flicker: { value } } (1 normally; dips toward 0.2 while the sun gutters, every minute or
+  //   so: tie emissives and point lights to it where that reads well)
+  // - player: { pos: Vector3 (eye position), yaw, pitch, speed, moving, onGround, enabled }; controls.state.onStep is a
+  //   hook (hurrying) => void for footsteps; addCollider (controls.js, the rule is above it)
+  // - perf: the profiler (report(), toggles, setModule(name, on), count(key, n = 1): a per-frame counter, free when the
+  //   profiler is off, read by pop-test). Each module's ctx is a Proxy of the shared one that tags its registerUpdate
+  //   callbacks and scene.add objects, and writes fields through to the shared ctx; pass your module's ctx wherever a
+  //   kit function takes one, so its updates are tagged
+  // - mountains (v4): crestAt(bearing) → {x, z, r, y} the main crest, faceAt(bearing, y) → the first point on the inner
+  //   face at height y (for things hung on the wall), farHeightAt(tier, bearing, r), saddle (azimuth, bearing, widths,
+  //   the walkable wedge), seats (AM's two flat benches), peaks, ranges (the far-range meshes), walkLimit(x, z)
+  // - kit (v4): masonry(opts) → { mat, uniforms, set } cyclopean stone, stair(opts, ctx) → { geometry, walkable, top,
+  //   steps }, measureFigures(spots, opts, ctx), rookWheel(opts, ctx) → { mesh, scatter }, SCALE, fogTierAt(x, z),
+  //   fogTierAmount(r), FOG_TIERS, FOG_CAP, CYCLOPEAN_GLSL
+  // - regions (v4): regionAt(x, z, out?, blend?) → weights for each region, wood, fen, lattice and moor (summing to 1)
+  //   and primary; airAt(x, z) → the blended Tincture { color, strength }; soundAt(x, z); distance(key, x, z);
+  //   hooks[key] (each region module's height, ground, cover, stone, air, sound); setRegionsCoarse(cell) (terrain.js)
+  //   passes the cell size to height hooks so fine relief returns its lower envelope under a region's ground skin
+  //   (v4/regions/skin.js)
+  // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
+  //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
+  // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
     world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,

@@ -46,7 +46,7 @@ None of these is a rule. They are what has worked; use the ones that serve the s
 - **More than one place.** A hook, a turn, an ending, spread out, so that finding the second is a small journey. A third beat is often what turns a riddle and its answer into a story (the hat on the thorn, further than the body: the wind had him first).
 - **The moment before or after.** Boots set side by side with their toes at the edge are often stronger than the fall. Not always: sometimes the thing happening in front of you is the point.
 - **Something withheld.** Did he jump, or reach for the rope? A question left open keeps a story alive; a story may also simply be clear.
-- **Findable when you mean it to be.** If a beat is meant to be found, check in a render that it can be (the traveller's body is a few pixels from the deck, and it was meant to be seen). A beat hidden on purpose is fine; say so in the file.
+- **Findable when you mean it to be.** If a beat is meant to be found, check in a render that it can be (the traveller's body is a few pixels from the deck, and it was meant to be seen). A beat hidden on purpose is fine; say so in the file. What makes a figure or prop readable at distance is in the `visual-art` skill (`figures.md`).
 - **Comedy.** A jackdaw wearing stolen gold on a saint's head is a story. Next to something grim put something vain, greedy or absurd.
 - **Time.** A figure who walks to the grave when the sun gutters, a light that goes out, a sound heard once. One beat that moves or sounds can be worth three that do not.
 
