@@ -20,7 +20,9 @@ const SN = makeSimplex(5511);
 const HEDGE_R = CI.r - 3, HEDGE_N = ZMIN + 3; // the hedge stands just inside the region's edge, and along its northern clip
 // gaps where paths come through (placement plan section 4: P7 at the Plinth Road's foot, P8 toward the Hypogeum,
 // P9 and the causeway from (80, -8), the Leerie's kerb K1)
-const GAPS = [[130, -150], [212, -121], [82, -6], [123, 5]];
+// [x, z, r]: r the wall's gap (6 m unless given; the hedge's is 4.5). v8-09: Medlar Close's wicket (strata/place.js),
+// where P8 comes through the close's circuit, a gate's width
+const GAPS = [[130, -150], [212, -121], [82, -6], [123, 5], [178.7, -115.05, 1.2]];
 
 function hedgeDist(x, z) {
   const r = hyp(x - CI.x, z - CI.z);
@@ -74,7 +76,7 @@ function plantTrees(ground, rng, regionAt) {
   // the hedge, gapped where the paths and the causeway come through, and where the Demesne or the High Ling take over
   const W = {};
   const hedgeAt = (x, z) => {
-    if (GAPS.some(([gx, gz]) => hyp(x - gx, z - gz) < 4.5)) return;
+    if (GAPS.some(([gx, gz, r]) => hyp(x - gx, z - gz) < Math.min(4.5, r ?? 4.5))) return;
     for (let i = 0; i < CAUSEWAY_V4.length - 1; i++) {
       const a = CAUSEWAY_V4[i], b = CAUSEWAY_V4[i + 1], ex = b.x - a.x, ez = b.z - a.z, l2 = ex * ex + ez * ez;
       const t = Math.max(0, Math.min(1, ((x - a.x) * ex + (z - a.z) * ez) / l2));
@@ -208,7 +210,7 @@ export async function build(ctx) {
     runs.push(pts);
   }
   const taverna = LANDMARKS.taverna, yard = LANDMARKS.graveyard;
-  const okWall = (x, z) => inRegion(x, z, 0.7) && hyp(x - taverna.x, z - taverna.z) > 22 && hyp(x - yard.x, z - yard.z) > 14 && terrain.causewayDistance(x, z) > 5 && !GAPS.some(([gx, gz]) => hyp(x - gx, z - gz) < 6);
+  const okWall = (x, z) => inRegion(x, z, 0.7) && hyp(x - taverna.x, z - taverna.z) > 22 && hyp(x - yard.x, z - yard.z) > 14 && terrain.causewayDistance(x, z) > 5 && !GAPS.some(([gx, gz, r]) => hyp(x - gx, z - gz) < (r ?? 6));
   let wallLen = 0;
   for (const pts of runs) {
     // walk the run a metre at a time; the wall's height wanders and falls to nothing at the breaks
