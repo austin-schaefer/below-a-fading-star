@@ -74,6 +74,7 @@ const MODULES = [
   ['livery', () => import('./v8/livery/props.js')], // v8-06: the dealings' props, the Leerie's slate and the keeper's peg (?livery=0 also restores v7's costumes)
   ['strata', () => import('./v8/strata/place.js')], // v8-03: the three hands' signs and spolia across the map (?strata=0)
   ['house', () => import('./v8/house.js')], // v8-05: the Pomegranate House lit and lived in (?house=0)
+  ['waystation', () => import('./v9/waystation.js')], // v9: the Bell-House, a waystation in a fallen bell beside the causeway (?waystation=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 

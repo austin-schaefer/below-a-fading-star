@@ -18,6 +18,7 @@ import { COLLATION } from '../v5/dressing/collation.js';
 import { LEERIE } from '../v5/lights.js';
 import { leads } from '../v4/paths/routes.js';
 import { onFigure } from '../v4/dressing/figure.js';
+import { BELL_HOUSE } from '../v9/waystation.js';
 
 // the Leerie's row: the kerb K1 from SITES.leerie.from to .to; the standards stand LEERIE.side east of it and he walks
 // 0.6 m on the kerb's side of their feet. The strip covers both lines with 2 m to spare, and 3 m past each end.
@@ -42,6 +43,7 @@ export const CLEARINGS = [
   { name: "the grazers' home", kind: 'disc', x: 22, z: 78, r: 17 }, // fauna.js: home [22, 78], strays 2-13 m and ambles
   { name: "the orchard herd's home", kind: 'disc', x: 183, z: -76, r: 17 }, // fauna.js: home [183, -76]
   { name: 'the Demesne lawn', kind: 'region', key: 'demesne', w: 0.15 }, // the shaven lawn (v8-02), wherever the region reaches
+  { name: 'the Bell-House', kind: 'disc', x: BELL_HOUSE.x, z: BELL_HOUSE.z, r: BELL_HOUSE.r + 2 }, // v9: the waystation, its clapper and pebbles
   { name: 'the Long Figure', kind: 'figure', pad: 1 }, // v9 (#16): nothing lies on him; rocks.js also keeps pebbles off, with or without the cut
 ];
 export const LEAD_PAD = 0.6, LEAD_PADS = { P3: 2.0 };
