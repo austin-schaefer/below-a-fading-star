@@ -4,6 +4,34 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v10: Things to do
+
+Released 2026-11-12.
+
+Until now you could only walk and look. This release adds the first things you can do: at five places, come close, face the thing, and a few words appear at the bottom of the view. Do it, and something happens because you did. What you leave is still there the next time you visit.
+
+### New
+
+- **Things to do, and how**: Where there is something for you to do, a thin thread of yellow sparks rises over it, slow and easy to miss until you know it. Walk up, and two or three words appear at the bottom of the screen ("Chalk your stroke"). Press E or click on a computer; tap the words on a phone. The settings menu's list of places (the gear button) now includes the Lantern Halt and the bell. Your marks are kept by your browser, and the settings menu (the gear button) has a button to forget them.
+- **Chalk your stroke at the Lantern Halt**: The dark slab beside the causeway (the old raised road) is covered in chalk tallies, one for everyone who has slept in the lantern hung at its top. A stub of yellow chalk hangs on a cord. Add your own stroke and the Halt takes you for a guest: a rope seat comes down for you. Take it and you are hauled ten metres up the stone, with the moor opening out below, to hang beside the sleeper in his red nightcap. He has something for you.
+- **Pour for the missing diner**: At the Collation, a long table laid for twelve in the medlar orchard, one place has no chair: his hat and spectacles are on the cloth and his plate is piled with food gone old. Pour his wine, and the other eleven glasses answer. Then follow the lights to where the eleven stopped to drink to him on the road.
+- **Lay your hand on the great crystal**: At the heart of the Lattice, the field of blue crystals in the north, stands one crystal sixty metres tall. Touch it and light runs out from your hand through the glass, up the whole height of it and out through the field, and then along the ground across the moor to somewhere else. Small crystals come up along the line and stay, so you can follow it.
+- **Knock at the Hypogeum**: The Hypogeum is a tomb cut into the ground in the east, with a bronze door at the foot of a stair. The door does not open. Knock with the great ring, and whoever is inside knocks back and passes a bronze plate out under the door. Read it: one side counts your knocks, the other shows somewhere else you have been, or have not been yet. Whoever is inside comes nearer each time you return.
+- **Ring the bell under the Great Span**: A bronze bell ten metres tall hangs on chains in one arch of the Great Span (the giant bridge), with a ram to strike it. Ring it and corpse-candles (pale wandering lights) come in off the fen, gather in the bell's mouth, and lead you to a traveller who fell from the bridge and has lain below it ever since, where nobody could find him. There is one last thing to do for him there.
+
+### Fixed
+
+- **Walk to the edge and look down**: You can now stand at the very lip of the Pit and the Foundered Nave (a hole in the east moor over a buried hall) and look straight down; before, something stopped you a metre or two short. The Pit has three places on its rim cleared of rocks for the view. On the Great Span a low kerb now stops you at the broken edge of the deck instead of letting you walk off it; a running hop still clears it.
+
+### Behind the scenes
+
+- Anything a visitor can do is now tried in a real browser, frame by frame, and shown to a reviewer who is told nothing about it, before it is merged. The first version of the chalk stroke passed every test and still left its first visitor asking whether anything had happened.
+- The critic who walks the map before each release now has to find and do everything the walk offers without being told where. This time it found one of seven, which is why the sparks exist.
+
+Known issues: the yellow sparks are hard to see at the great crystal until you are about twenty metres from it, and faint at the long table and at the traveller. The figures you meet up close (the sleeper, the man below the bridge) are blocky. The Hypogeum's doorway is dim. Your marks live in your browser only: clearing its data, or visiting on another device, starts you again.
+
+<p><img src="shots/76-tally-c-drawing.webp" width="24%" alt="The chalk on its cord drawing a stroke on the tally wall at the Lantern Halt"> <img src="shots/76-sleeper-c-from-the-seat.webp" width="24%" alt="From the rope seat at the top of the slab: the sleeper in the hanging lantern, the country behind"> <img src="shots/76-bell-b-candles.webp" width="24%" alt="The great bell under the Span after it is rung, corpse-candles gathered in its mouth"> <img src="shots/76-crystal-b-hand.webp" width="24%" alt="A handprint of light on the great crystal, veins of light running out from it"></p>
+
 ## v9.1: The Lantern Halt
 
 Released 2026-11-11.
