@@ -743,23 +743,45 @@ export function buildTerrain(ctx) {
           vec2 uv = vec2(atan(p.z, p.x) * k, p.y * sy);
           vec2 gx = vec2((p.x * dpx.z - p.z * dpx.x) / r2 * k, dpx.y * sy), gy = vec2((p.x * dpy.z - p.z * dpy.x) / r2 * k, dpy.y * sy);
           return textureGrad(uDetail, uv, gx, gy);
+        }
+        // the slope in world space of one of the wall's relief maps, as a height in metres (v11-F1). The slope is a difference
+        // in the chart a footprint wide (the texel at least), read through the same mips, so it is the slope of what
+        // the pixel shows: band-limited by construction, with nothing the screen-space dFdx of a magnified 8-bit
+        // texture gave (the bilinear filter's sub-texel stairs, the 2x2 quads), which drew moire rings round every
+        // swell of the apron and blocks on the face from close by. One map: K tiles round the circle, sy up; its
+        // channel (sel) is shaped by smoothstep(a, b) when a >= 0, else taken as it is, then scaled by amp.
+        vec3 fpWallSlope(vec3 p, float K, float sy, vec3 dpx, vec3 dpy, vec4 c0, vec4 sel, float a, float b, float amp) {
+          float r2 = max(dot(p.xz, p.xz), 1.0), k = K * 0.15915494;
+          vec2 uv = vec2(atan(p.z, p.x) * k, p.y * sy);
+          vec2 gx = vec2((p.x * dpx.z - p.z * dpx.x) / r2 * k, dpx.y * sy), gy = vec2((p.x * dpy.z - p.z * dpy.x) / r2 * k, dpy.y * sy);
+          float eu = max(1.0 / 256.0, max(abs(gx.x), abs(gy.x))), ev = max(1.0 / 256.0, max(abs(gx.y), abs(gy.y)));
+          float h0 = dot(c0, sel), hu = dot(textureGrad(uDetail, uv + vec2(eu, 0.0), gx, gy), sel);
+          float hv = dot(textureGrad(uDetail, uv + vec2(0.0, ev), gx, gy), sel);
+          if (a >= 0.0) { h0 = smoothstep(a, b, h0); hu = smoothstep(a, b, hu); hv = smoothstep(a, b, hv); }
+          // d(uv)/d(world): u = atan(z, x) k, v = y sy
+          return amp * ((hu - h0) / eu * vec3(-p.z, 0.0, p.x) * (k / r2) + (hv - h0) / ev * vec3(0.0, sy, 0.0));
         }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         vec3 fpDpx = dFdx(vTPos), fpDpy = dFdy(vTPos); // the wall chart's gradients, outside any branch
-        float fpCav = 0.5, fpHW = 0.0; vec2 fpDH = vec2(0.0);
+        float fpCav = 0.5, fpHW = 0.0; vec3 fpHG = vec3(0.0);
         #ifdef FP_MASSIFS
         {
           // the wall's relief finer than its 2-3 m mesh (v11): blocks of ~10 m, smaller ones, and flutes down the fall
-          // line, as a height in metres (bumped below by its screen derivative, so it holds at 400 m and the mips quiet
-          // it beyond) and as a cavity term (the hollows between the blocks darker). Outside any branch, so the
-          // derivatives are defined everywhere.
+          // line, as a height in metres (bumped below by its slope from fpWallSlope, so it holds at 400 m and the mips
+          // quiet it beyond) and as a cavity term (the hollows between the blocks darker). The reads have explicit
+          // gradients, so the branch on wm is safe.
           float rW0 = length(vTPos.xz);
           float wm = smoothstep(290.0, 330.0, rW0) * smoothstep(0.82, 0.5, vTNormal.y) * (1.0 - vIce);
-          float blk = fpWallTex(vTPos, 60.0, 0.03, fpDpx, fpDpy).r, sml = fpWallTex(vTPos, 128.0, 0.05, fpDpx, fpDpy).g;
-          float flu = fpWallTex(vTPos, 84.0, 0.006, fpDpx, fpDpy).b;
+          vec4 tBlk = fpWallTex(vTPos, 60.0, 0.03, fpDpx, fpDpy), tSml = fpWallTex(vTPos, 128.0, 0.05, fpDpx, fpDpy);
+          vec4 tFlu = fpWallTex(vTPos, 84.0, 0.006, fpDpx, fpDpy);
+          float blk = tBlk.r, sml = tSml.g, flu = tFlu.b;
           fpCav = blk * 0.6 + sml * 0.25 + flu * 0.15;
-          fpHW = (smoothstep(0.35, 0.65, blk) * 1.8 + sml * 0.6 + flu * 0.5) * wm;
-          fpDH = vec2(dFdx(fpHW), dFdy(fpHW));
+          fpHW = wm; // the bump's weight: where it is 0 the normal is left alone
+          if (wm > 0.0) { // explicit gradients, so the branch is safe
+            fpHG = wm * (fpWallSlope(vTPos, 60.0, 0.03, fpDpx, fpDpy, tBlk, vec4(1.0, 0.0, 0.0, 0.0), 0.35, 0.65, 1.8)
+                       + fpWallSlope(vTPos, 128.0, 0.05, fpDpx, fpDpy, tSml, vec4(0.0, 1.0, 0.0, 0.0), -1.0, 0.0, 0.6)
+                       + fpWallSlope(vTPos, 84.0, 0.006, fpDpx, fpDpy, tFlu, vec4(0.0, 0.0, 1.0, 0.0), -1.0, 0.0, 0.5));
+          }
         }
         #endif
         {
@@ -848,11 +870,7 @@ export function buildTerrain(ctx) {
           vec3 nW = normalize(vTNormal);
           if (camD < uBumpFar) nW = fpBumpWorld(vTPos, nW, bumpStrength);
           #ifdef FP_MASSIFS
-          if (fpHW > 0.0) { // the wall's bump (fpHW and its derivatives, above)
-            vec3 R1 = cross(fpDpy, nW), R2 = cross(nW, fpDpx);
-            float det = dot(fpDpx, R1);
-            nW = normalize(abs(det) * nW - sign(det) * (fpDH.x * R1 + fpDH.y * R2));
-          }
+          if (fpHW > 0.0) nW = normalize(nW - (fpHG - nW * dot(fpHG, nW))); // the wall's bump: its height's slope along the surface (above)
           #endif
           normal = normalize(mat3(viewMatrix) * nW);
         }`)
