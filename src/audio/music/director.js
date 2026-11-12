@@ -91,8 +91,10 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
     state: S,
     setSetting(s) {
       if (!SCALE[s] || s === S.setting) return;
+      if (s === 'off' && S.mode === 'playing') end(2); // ended on the old setting's scale, so its wait stays finite
       S.setting = s;
-      if (s === 'off' && S.mode === 'playing') end(2); // the current wait keeps its draw; the next one is scaled
+      // a wait drawn while off is infinite (off never plays): coming back on draws a fresh one
+      if (s !== 'off' && !isFinite(S.timer)) S.timer = S.started ? silence() : firstDelay();
     },
     interrupt(fade = 1) { if (S.mode === 'playing') end(fade); },
     step(dt, { weights, place = null, swellSm = 0, gutterIn = 99, moving = true } = {}) {
