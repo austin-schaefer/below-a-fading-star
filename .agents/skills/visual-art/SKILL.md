@@ -7,25 +7,17 @@ description: How to think about the look of "Below a Fading Star" when making or
 
 The walk is a landscape seen against the light. A swollen red sun sits 13.5° up in the saddle of the western wall (`SUN` in `src/world.js`), so most of what a visitor sees is either a shape standing black against that glow or a violet-dark mass with its sunward edge lit. The pictures that have worked best here are shapes before they are surfaces: the two headless Thrones either side of the disc from the spawn, the deodand alone on a ridge, the painter's back with the keep and the sun behind him. Into that dusk the world sets a few things that are bright on purpose (the Lattice's blue, the corpse-candles, the Pomegranate House's cream walls and turquoise domes under coloured lamps), and they work because the dark round them stays dark. And it is a country of peoples and ages layered on one another, each with its own look and each reusing what the last left, so that a block or a stole tells a visitor who made it. Three builders and two liveries exist so far; they are what has been made, not the list of what may be. The tone itself (Vance, worn, once rich, never cartoon) is in `AGENTS.md`; this skill is how that has turned into pictures.
 
-Everything here comes from something real: code that looks good, a render in `shots/`, a critic's finding or the owner's words, and each claim says which. None of it is a rule. It is what tends to pay off; break any of it on purpose and say why in the commit. Where nothing has been tried yet, this skill says nothing, and you are the one who finds out.
+Everything here comes from something real: code that looks good, a render in `shots/`, a critic's finding or the owner's words, and each claim says which. None of it is a rule. It is what tends to pay off; break any of it on purpose and say why in the commit. Where nothing has been tried yet, this skill says nothing, and you are the one who finds out. Keep it lean: when something is learned, replace or sharpen a line rather than adding one, and cut what the work has outgrown.
 
 ## What the owner has seen, across milestones
 
-Their notes on the art in this repository (2026-11-11), in their words where quoted. These outrank anything below that disagrees.
+These outrank anything below that disagrees.
 
-**Common gaps**
-- **Figures:** "humanoid and animal figures tend to be a bit too low poly, a bit stiff in animation."
-- **Things that move are the hardest.** "water looks janky right now"; human and animal animations "are often jank too". A moving thing wants more of the budget and more looks than a still one.
-- **Scale:** "the scale of generated plants and structures is often too small. there's not enough variation in size to create a sense of contrast and occasional awe." Make some things much bigger than feels safe.
-- **Generic fantasy is the biggest pitfall:** "bullrushes! tall grass! gray stone tower!" If the first idea is what any fantasy game would put there, it is the wrong idea; ask what this dying, baroque, slightly absurd world would have instead.
-- **Mountains and large natural features** "look bad" (issue #5: "what users see most").
-- **The three ages are a start, not a fence.** Architecture was "too generically medieval", and the three builders' hands fixed that; the worry now is that "future agents will feel constrained to exactly three ages rather than feeling free to extend and build on the system". A fourth hand, a sect, a stranger machine, a people nobody has met: all welcome, as long as each is as distinct as the three and you write down what makes it so.
+**Gaps:** figures too low-poly and stiff; anything that moves (water, animation) is the weakest work here; plants and structures too small, with too little range of size for contrast and "occasional awe"; mountains and large natural features look bad (issue #5); and the biggest pitfall, generic fantasy ("bullrushes! tall grass! gray stone tower!").
 
-**What works**
-- The Great Span: "distinct architectural vibe".
-- The Pomegranate House.
-- The Arcature (`src/structures/arches.js`): "the thing that's like a bunch of cyber hoops", great nested arches bristling with ribs, the bones of some ancient thinking machine. Big, strange, and nobody's idea of a fantasy ruin.
-- The little men who walk around: "their animations may be a bit janky, but they all have a lot of personality". Personality beats polish; keep it while fixing the stiffness.
+**Works:** the Great Span, the Pomegranate House, the Arcature, and the little walking men, whose personality outweighs their jank.
+
+**Open, not fenced:** the three builders' ages fixed "generically medieval"; agents should feel "free to extend and build on the system", not held to exactly three.
 
 ## The references
 

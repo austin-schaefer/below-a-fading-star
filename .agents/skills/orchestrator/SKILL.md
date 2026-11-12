@@ -79,6 +79,10 @@ Each merge to `main` is a release and a Netlify build. Before opening the PR, ad
 
 The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/` and updates `shots/README.md`. The `wilderness` skill's Renders has the naming and the rules.
 
+## Growing the craft skills
+
+`visual-art`, `storytelling`, `sound-design` and `music` are where the repository remembers what it has learned about making things well. They start lean and are meant to be built on: after a critic's report, the owner's notes on a release, or a brief that taught something (what read from 30 m, what looked generic, what the owner loved), put the lesson where the next maker will meet it, in the skill or the one reference file it belongs to. Keep them lean as they grow: a line earns its place by changing what someone does; sharpen or replace before you append; cut what no longer holds. They are tools, not constraints, and should read that way.
+
 ## Working with the owner
 
 - Anything you post to GitHub (an issue comment, a pull request body, a release) goes out under the owner's account. Begin every comment and pull request body with the automated marker in `AGENTS.md`, and never treat marked text as the owner's word.
