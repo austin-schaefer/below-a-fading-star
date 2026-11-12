@@ -46,6 +46,20 @@ Nothing, at first: the mountains stop catching the eye. Then, looking at them: r
 
 ## Status
 
+**2026-11-12, 14:40 PST. v11.1 is open: the weak spots, as a point release.** The owner, in session after the release: "awesome! please chase the "weaker than meant" things as a further refinement for a v11.1". The plan and briefs are `briefs/v11.1/` (W1 the wall close up and the sunward faces; W2 the north-east wall and the Horn; W3 the Lamps near to; W4 three Go-to poses and the bell's glow; R a cold review of M4, F1 and F2 as merged). Not taken on: the yellow sparks against other lights (v10's), and the working frames in `shots/wip/` (clearing was denied). v11 itself stays released; the entry below.
+
+In flight (v11.1):
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| W1 | `issue-1108-wall-close` | 8161 | opus |
+| W2 | `issue-1109-ne-wall-horn` | 8162 | opus |
+| W3 | `issue-1110-lamps-near` | 8163 | sonnet |
+| W4 | `issue-1111-poses-bell` | 8164 | sonnet |
+| R | read-only, no worktree | none | sonnet |
+
+Next: check and merge each (W3, W4 as they come; W1, then W2 after it merges `next`), a blind read of the renders, `tools/suite.sh 8123` in full, then the release as `v11.1` (the day's third merge to `main` of six).
+
 **2026-11-12, 11:34 PST. Released.** PR #32 merged to `main` at `b47f683` (the day's second merge of six); the GitHub release `v11` is published; #5 and #6 are closed from it; `origin/main` is merged back into `next`; no agent is in flight and no worktree but the deploy one exists. What shipped and what is weak: the entry below this one.
 
 **Waiting on the owner:** #22 (Umami tracking) needs them to create the Umami site and paste its snippet; agents may not create accounts.
