@@ -237,6 +237,7 @@ export function crystalAct(ctx, mother, M, ground) {
     id: ID,
     at: { x: M.x, y: g0 + 1.6, z: M.z },
     reach: far, rise: 7,
+    lure: { x: M.x - 2, y: g0 + 0.2, z: M.z + 10 }, // the lure (acts.js) at the foot on the side the path comes up, not in the glass
     words: 'Lay your hand',
     // within arm's length of its foot (the trunk is 6-7 m from its axis) and looking at it, not up at the sky
     facing: (p) => {
