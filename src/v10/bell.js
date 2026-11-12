@@ -319,14 +319,17 @@ export async function build(ctx) {
   wGeo.setAttribute('aS', new THREE.BufferAttribute(wS, 1));
   wGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(BX, 0, BZ), 140);
   const wMat = dMat.clone(); wMat.uniforms = dMat.uniforms; // the same uniforms (its scale), its own colour below
-  wMat.fragmentShader = dMat.fragmentShader.replace('vec3(0.24, 0.28, 0.23), vec3(0.36, 0.33, 0.29)', 'vec3(0.40, 0.36, 0.31), vec3(0.40, 0.36, 0.31)');
+  // v11.1-W4: the ring dimmer, and gone within 14 m of the eye: seen end-on at the ringer's feet its puffs overlapped into a pale
+  // glow along the Span's wall; the ring is read from a distance, as dust running out across the low ground
+  wMat.fragmentShader = dMat.fragmentShader.replace('vec3(0.24, 0.28, 0.23), vec3(0.36, 0.33, 0.29)', 'vec3(0.30, 0.28, 0.25), vec3(0.30, 0.28, 0.25)');
+  wMat.vertexShader = dMat.vertexShader.replace('smoothstep(1.0, 6.0, -mvPosition.z)', 'smoothstep(4.0, 16.0, -mvPosition.z)');
   const wave = new THREE.Points(wGeo, wMat); wave.visible = false; wave.name = 'bell-wave'; wave.r = 0; scene.add(wave);
   function stepWave(T) {
     const age = T - STRIKE - 0.2;
     if (age < 0 || age > 9) { if (wave.visible && age > 9) wave.visible = false; return; }
     wave.visible = true;
     const r = 6.5 + age * WAVE; wave.r = r;
-    const fade = 0.5 * smoothstep(0, 0.4, age) * (1 - smoothstep(70, 130, r));
+    const fade = 0.2 * smoothstep(0, 0.4, age) * (1 - smoothstep(70, 130, r));
     for (let i = 0; i < NW; i++) {
       const a = (i / NW) * Math.PI * 2, rr = r * (1 + 0.03 * Math.sin(i * 7.3 + age * 3)) - wJ[i] * 2.5;
       const x = BX + Math.sin(a) * rr, z = BZ + Math.cos(a) * rr;

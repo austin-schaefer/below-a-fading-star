@@ -145,7 +145,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: none inside a collider or under water', detail.every((r) => !r.wet && !r.inCol), bad);
   check('teleport: all land within 1 m of their stand point', allNear, bad);
   check('teleport: eye on the ground (heightAt + eye)', allGround, bad);
-  check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || r.name === 'The Speculum') && r.above > 0.5), detail.filter((r) => (r.basin > 6 && r.name !== 'The Speculum') || r.above <= 0.5)); // (the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
+  check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || ['The Speculum', 'The Cutting'].includes(r.name)) && r.above > 0.5), detail.filter((r) => (r.basin > 6 && !['The Speculum', 'The Cutting'].includes(r.name)) || r.above <= 0.5)); // (the Cutting stands in its gorge, the one place the slot is seen from; the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);

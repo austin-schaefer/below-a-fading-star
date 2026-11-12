@@ -31,6 +31,10 @@ const HAND = { // stand points kept from the first list; look: a point, a landma
 const CARD_POSES = {
   galleries: { x: -120, z: -70, look: { x: -338, z: -69 }, pitch: 0.38 }, // the whole ragged prow over the tarn's west shore
   hawser: { x: -102, z: -134, look: { x: -80, z: -272 }, pitch: 0.28 }, // the chain running off to the crystals and the arch
+  // v11.1-W4: the canyon's three were a rock at arm's length or a wall; each now on dry ground with the thing across open air
+  river: { x: 208, z: 240, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the slope 26 m off
+  cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
+  prospect: { x: 247, z: -36, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
 };
 // v10-F1: places with an act and no landmark of their own, 9 m out in front of it, facing it
 // v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground

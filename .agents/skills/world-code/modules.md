@@ -7,7 +7,7 @@ What each module under `src/` owns. Every agent that adds a module extends this 
 | Module | Owns |
 |---|---|
 | `main.js` | renderer, lights, shadow camera, frame loop, module loading |
-| `terrain.js` | heightfield, biomes, water levels, terrain material |
+| `terrain.js` | heightfield, biomes, water levels, terrain material (with the wall's close rock, `CLOSE_ROCK_GLSL`: joints, blocks, lichen and scree under ~200 m) |
 | `atmosphere.js` | global fog patch: height fog + sun in-scatter on every fogged material |
 | `sky.js` | sky dome, sun, moon, stars, high cloud, the sun's guttering |
 | `controls.js` | first-person movement, colliders, touch stick, look and hop |
