@@ -6,7 +6,7 @@ Austin, 2026-11-11 (issue #2, "Environmental music"): "v7.2 added a leveled-up s
 
 ## Status
 
-**2026-11-11, 18:52 PST. M0 merged; M1, M2 and M3 out beside M5.** M0 (the score) merged at 18:48 after the orchestrator ran its tools (`music-score moor` 19/19, self-test 60/60) and a cold review found no blockers: `src/audio/music/score.js` (`compose(track, seed)`; generators drone, loop, walk, follow, notes), `tracks/moor.js`, `tools/music-score.mjs`, the `music` skill. Notes carried into the next briefs: events carry `voice`, not `patch`; drones are held 30 s and more; moor's lead lands every onset on the beat and its last 30 s are pad alone (M3 is told to do better). In flight (four implementation agents, the limit):
+**2026-11-11, 18:39 PST. M0 merged; M1, M2 and M3 out beside M5.** M0 (the score) merged at about 18:37 after the orchestrator ran its tools (`music-score moor` 19/19, self-test 60/60) and a cold review found no blockers: `src/audio/music/score.js` (`compose(track, seed)`; generators drone, loop, walk, follow, notes), `tracks/moor.js`, `tools/music-score.mjs`, the `music` skill. Notes carried into the next briefs: events carry `voice`, not `patch`; drones are held 30 s and more; moor's lead lands every onset on the beat and its last 30 s are pad alone (M3 is told to do better). In flight (four implementation agents, the limit):
 
 | Brief | Model | Branch / worktree | Port |
 |---|---|---|---|
