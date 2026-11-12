@@ -1,0 +1,9 @@
+[
+ {"name": "cols-spawn-saddle", "x": 2, "z": 35, "yaw": 1.84, "pitch": 0.03},
+ {"name": "cols-floor-east", "x": -70, "z": -110, "yaw": -2.081, "pitch": 0.05},
+ {"name": "cols-floor-southeast", "x": -110, "z": -70, "yaw": -2.943, "pitch": 0.05},
+ {"name": "cols-floor-northwest", "x": 130, "z": 60, "yaw": 0.684, "pitch": 0.05},
+ {"name": "cols-high-east", "x": 0, "z": 0, "yaw": -1.9548, "pitch": -0.02, "dy": 70},
+ {"name": "cols-high-southeast", "x": 0, "z": 0, "yaw": -3.1416, "pitch": -0.02, "dy": 70},
+ {"name": "cols-high-northwest", "x": 0, "z": 0, "yaw": -5.7247, "pitch": -0.02, "dy": 70}
+]
