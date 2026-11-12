@@ -9,12 +9,14 @@
 //               a longer drag. Bandpassed pink grains centred low (900-1600 Hz) and
 //               lowpassed at 3.2 kHz, so the rasp stays out of the ear's sharpest band. Detail tier, 25 m
 import { softKit } from '../audio/cues-v2.js';
+import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, act-pinch, act-tribute
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
   const rng = ctx.makeRng(1010);
   const { sgrain, stone, jit } = softKit({ ...a, rng }); // its jitter from this module's own stream, not the shared one
   const D4 = 293.66;
+  const stories = startStoriesSound(a, ctx);
 
   function offer(pos) {
     const v = voice(pos, { ref: 2.5, roll: 1, range: 20, dur: 1.6, verb: 0.3, air: 60, gain: 4 }); if (!v) return;
@@ -51,6 +53,7 @@ export function startActsSound(a, ctx) {
   function cue(name, pos, opts) {
     if (name === 'act-offer') offer(pos);
     else if (name === 'act-chalk') chalk(pos, opts);
+    else stories.cue(name, pos, opts);
   }
   return { cue };
 }
