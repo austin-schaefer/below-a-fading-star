@@ -378,6 +378,9 @@ export function makePitMaterial(ctx, box) {
           float sunA = max(dot(rr, uSunDir), 0.0);
           vec3 skyR = mix(vec3(0.03, 0.012, 0.03), vec3(0.22, 0.05, 0.025), sunA * sunA);
           col = vec3(0.0025, 0.003, 0.004) + fres * mix(vec3(0.004, 0.004, 0.006), skyR, sees) * 1.4;
+          // v10-T1 (#15): seen from the lip, the water is a floor: a few slow wet glints of cold light on its skin
+          float glint = smoothstep(0.72, 0.9, fpVn(vec3(H.xz * 2.3, uPTime * 0.35))) * smoothstep(0.6, 0.85, fpVn(vec3(H.xz * 0.9 + 3.0, uPTime * 0.1)));
+          col += vec3(0.04, 0.052, 0.07) * glint;
         }
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Touch controls on a phone-sized viewport: the thumbstick, the hop button, the mute button (tap
-// and the long-press debug reveal), and the Safari stale-identifier bug, where a reused touch id
+// and the long-press debug reveal), the offer of an act (v10: tapped at the Lantern Halt's tally), and the Safari stale-identifier bug, where a reused touch id
 // made the stick leap to the panning finger. Usage: node tools/touch-test.mjs [url]
 // SHOTS=1 also writes shots/wip/mobile-15-phone-begun.png and mobile-15-phone-muted-pressed.png.
 // Real touches go through CDP; the stale-id cases dispatch synthetic TouchEvents, because CDP
@@ -90,6 +90,39 @@ if (mc) {
   if (gainChecked) check('mute: the mute gain ramps back to 1', a.gain > 0.99, a);
   console.log(`audio: context ${a.acState}, mute node ${a.hasNode ? 'present' : 'absent'}; gain ${gainChecked ? 'checked' : 'not checked (flag only)'}`);
 } else check('mute: button exists', false);
+
+// 3b. the offer of an act (v10, src/v10/acts.js): at the tally at the Lantern Halt the offer is the button; it sits
+// clear of the stick, its reach and the hop button, a tap on it does the act and reaches neither the stick nor the
+// look, and a drag that starts beside it still looks. The mark is forgotten afterwards.
+const offerUp = await page.evaluate(async () => {
+  const fp = window.__fp, t = fp.tally;
+  if (!t || !fp.acts || fp.acts.off) return false;
+  const s = t.stand(2.3); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch;
+  for (let i = 0; i < 40 && !fp.acts.offered; i++) await new Promise((r) => setTimeout(r, 150));
+  return !!fp.acts.offered;
+});
+check('offer: up at the tally on touch', offerUp);
+if (offerUp) {
+  const box = (sel) => page.evaluate((q) => { const r = document.querySelector(q).getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom }; }, sel);
+  const ab = await box('#act'), jb = await box('#jump'), sb = await box('#stick');
+  const apart = (u, v) => u.r <= v.l || v.r <= u.l || u.b <= v.t || v.b <= u.t;
+  const oc = [(ab.l + ab.r) / 2, (ab.t + ab.b) / 2];
+  check('offer: clear of the stick, its 110 px reach and the hop button, on screen', apart(ab, jb) && apart(ab, sb) && Math.hypot(oc[0] - home.x, oc[1] - home.y) > 150 && ab.l >= 0 && ab.r <= 390 && ab.t > 0, { ab, jb, sb, home });
+  check('offer: at least 44 px tall, on top at its centre', ab.b - ab.t >= 44 && await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('#act') !== null, oc), ab);
+  const v0 = await page.evaluate(() => window.__fp.tally.visitor);
+  await touch('touchStart', [[8, oc[0], oc[1]]]); await touch('touchEnd', []);
+  await page.waitForTimeout(200);
+  s = await read();
+  const v1 = await page.evaluate(() => window.__fp.tally.visitor);
+  check('offer: a tap does the act', v1 === v0 + 1, { v0, v1 });
+  check('offer: the tap reached neither the stick nor the look', s.moveId === null && s.lookId === null && s.mag === 0, s);
+  const y0 = s.yaw;
+  await touch('touchStart', [[9, oc[0], ab.t - 60]]); await touch('touchMove', [[9, oc[0] + 60, ab.t - 60]]);
+  s = await read();
+  check('offer: a drag starting just above it looks', s.lookId === 9 && s.yaw !== y0 && s.moveId === null, s);
+  await touch('touchEnd', []);
+  await page.evaluate(() => window.__fp.acts.forget());
+}
 
 // 4. the stale identifier (mobile Safari): synthetic TouchEvents with full control of the lists
 const stale = await page.evaluate(() => {

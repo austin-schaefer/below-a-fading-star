@@ -17,13 +17,21 @@ const HAND = { // stand points kept from the first list; look: a point, a landma
   tower: { x: -228, z: -135, look: LANDMARKS.tower },
   court: { x: LANDMARKS.court.x, z: LANDMARKS.court.z, look: 'sun' },
   arcature: { x: LANDMARKS.arcature.x, z: LANDMARKS.arcature.z, look: { x: 200, z: 60 } },
-  moraine: { x: 40, z: -215, look: LANDMARKS.moraine },
+  // v10-F1: the places with an act land about 9 m back from it, facing it, its lure in view (src/v10/lure.js)
+  moraine: { x: 39, z: -245, look: { x: 37.5, z: -255.3 }, pitch: 0.12 }, // the mother crystal's foot, where the hand goes
+  hypogeum: { x: 221.5, z: -112, look: { x: 230.6, z: -112 } }, // down the stair, facing the bronze door
+  collation: { x: 135.4, z: -73.8, look: { x: 138.9, z: -65.5 } }, // the twelfth place and its bottle
   pit: { x: 192, z: 193, look: LANDMARKS.pit }, // the lip's south-west side
   gradine: { x: LANDMARKS.gradine.x, z: LANDMARKS.gradine.z, look: { x: 287.8, z: -192.6 } },
   wood: { x: SITES.lightMoss.x + 6, z: SITES.lightMoss.z, look: SITES.lightMoss },
   bridge: { x: LANDMARKS.bridge.at.x, z: LANDMARKS.bridge.at.z, look: { x: 257, z: 215 } },
   tarn: { x: -90, z: 50, look: LANDMARKS.tarn },
 };
+// v10-F1: places with an act and no landmark of their own, 9 m out in front of it, facing it
+const ACT_PLACES = [
+  { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
+  { name: 'The bell under the Span', x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
+];
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
   ['taker', -275.35, 13.29, -1.222, -0.04], // workers-taker-road
@@ -58,6 +66,7 @@ function buildPlaces() {
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
+  for (const a of ACT_PLACES) out.push({ ...a, group: 'Places' });
   for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];

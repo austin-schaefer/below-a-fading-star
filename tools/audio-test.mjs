@@ -57,7 +57,21 @@ const CUES = [
   ['bather-pour', { dx: 10, dy: -22, dz: -15 }, null, 2000, 2500],
   // v8-05 the Pomegranate House (src/v8/house/sound.js)
   ['house-murmur', { dx: 3, dy: -0.5, dz: -3 }, { voice: 0, n: 6 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { n: 5 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { nervous: true }], ['house-pluck', { dx: 2, dy: -1, dz: -2 }, { note: 3, v: 0.8 }, 1000, 2000], ['house-cup', { dx: 2, dy: -0.9, dz: -2 }], ['house-tick', { dx: 1, dy: 0.8, dz: -1 }],
+  // v10 the acts (src/v10/sound.js)
+  ['act-offer', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1200], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { bar: true }, 1000, 1000],
+  // v10-A2 the story acts (src/v10/sound-stories.js)
+  ['act-glasses', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 8000],
+  ...(process.env.SALT === '1' ? [['act-pinch', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-tribute', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 2500]] : []), // salt for news is shelved (?salt=1)
+  ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { dur: 1.55, bar: true }, 1200, 1000], ['act-winch', { dx: 2, dy: -0.5, dz: -2.5 }, { dur: 3, rate: 1.4 }, 1500, 2500], ['act-murmur', { dx: 0.8, dy: 0, dz: -0.6 }, null, 1200, 1000], // v10-A4 the Halt's seat
+  // v10-A1 the crystal and the door (src/v10/sound-central.js)
+  ['act-crystal', { dx: 1.5, dy: -0.3, dz: -1.5 }, { n: 1 }, 2500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 1 }, 1500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 2, back: true }, 3000, 5000],
+  ['act-knock', { dx: 1, dy: -0.5, dz: -1 }, null, 800, 800], ['act-answer', { dx: 2, dy: -2, dz: -2 }, { near: 0 }, 1500, 1500], ['act-answer', { dx: 1, dy: -0.5, dz: -1 }, { near: 1 }, 1000, 1500], ['act-plate', { dx: 0.6, dy: -1.6, dz: -0.6 }, null, 1500, 800],
+  // v10-A3 the bell under the Span (src/v10/bell-sound.js)
+  ['act-bell-haul', { dx: 2, dy: 0, dz: -3 }, null, 1000, 1000], ['act-bell-candles', { dx: 60, dy: -2, dz: -40 }, null, 2500, 1500],
+  ['act-bell-hum', { dx: 4, dy: 3, dz: -6 }, null, 2500, 1500], ['act-bell-rest', { dx: 6, dy: 0, dz: -8 }, null, 1500, 1500],
+  ['act-bell-letters', { dx: 2, dy: -1, dz: -2 }, null, 1500, 1500], ['act-bell-ascend', { dx: 4, dy: 3, dz: -6 }, null, 3000, 1500],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
+  ['act-bell', { dx: 6, dy: 2, dz: -8 }, { n: 1 }, 1500, 1500], // v10-A3: last, its minute of tail would be the bed of any row after it
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });

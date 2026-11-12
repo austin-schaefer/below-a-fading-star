@@ -7,7 +7,7 @@
 // cream lining the other, a madder border), the same cloth as the cloak upstairs, bare bone feet (his boots are
 // upstairs), the stick he walked with broken in two beside him and his purse burst with a few copper coins round it.
 // His hat, the same cloth, hangs on a dead thorn further along P15.
-// Three merged vertex-coloured meshes (deck, body, hat); one collider (the pack); nothing animated.
+// Three merged vertex-coloured meshes (deck, body, hat) and his letters (instanced, v10-A3: src/v10/bell.js can gather them); one collider (the pack).
 import * as THREE from 'three';
 import { TRAVELLER as T } from './plan.js';
 import { Acc, frame, local, ellipsoid, rod, boxAt, finish } from './kit.js';
@@ -77,76 +77,100 @@ function body(ctx, rng, acc, gy) {
       boxAt(acc, frame(wx, gy(wx, wz) + 0.025, wz, B.yaw + rot, n), w / nx + 0.02, 0.012, l / nz + 0.02, 0, 0, 0, color, 0, 0, 0, 0.04);
     }
   };
-  // his greatcoat, flung open as he landed: the two halves spread either side of him on the turf, one the saffron
-  // cloth, one turned over to its cream lining, a madder border at the hem: two and a half metres across
-  sheet(-0.75, -0.15, 1.2, 2.0, CLOTH, 0.15); sheet(0.75, -0.15, 1.2, 2.0, LINING, -0.15);
-  sheet(-0.9, -1.17, 1.2, 0.1, TRIM, 0.15); sheet(0.9, -1.17, 1.2, 0.1, TRIM, -0.15);
-  // the coat: chest and belly under the cloth, sunk flat; the skirts spread on the ground to the knees, the saffron hem
-  ellipsoid(acc, F, 0, 0.08, 0.27, 0.21, 0.085, 0.3, CLOTH, { low: lo });
-  ellipsoid(acc, F, 0, 0.05, -0.02, 0.2, 0.06, 0.16, CLOTH_D, { low: lo });
-  boxAt(acc, F, 0.62, 0.018, 0.42, 0, 0.012, -0.24, CLOTH, 0, 0.12, 0);
-  boxAt(acc, F, 0.64, 0.02, 0.06, 0.03, 0.014, -0.44, TRIM, 0, 0.12, 0);
-  boxAt(acc, F, 0.3, 0.016, 0.3, 0.3, 0.008, -0.18, CLOTH_D, 0, -0.5, 0); // a tail flung out
-  // the open collar: a dark gap with the ribs and breastbone in it
-  ellipsoid(acc, F, 0, 0.12, 0.44, 0.1, 0.03, 0.08, '#2a1f1b');
-  for (let k = 0; k < 4; k++) rod(acc, F, [-0.09 + 0.004 * k, 0.13, 0.4 + k * 0.035], [0.09 - 0.004 * k, 0.13, 0.41 + k * 0.035], 0.008, BONE, 0.008, 0.05, 5);
-  rod(acc, F, [0, 0.14, 0.38], [0, 0.14, 0.52], 0.01, BONE);
-  boxAt(acc, F, 0.2, 0.025, 0.05, 0, 0.13, 0.55, TRIM, 0, 0.3, 0); // the kerchief at his neck
-  // the skull, turned toward his left, the jaw fallen a little open
-  const Hd = local(F, 0.05, 0.1, 0.72, 0, 0.9, 0.25);
-  ellipsoid(acc, Hd, 0, 0, 0, 0.085, 0.09, 0.105, BONE, { low: lo });
-  for (const s of [-1, 1]) ellipsoid(acc, Hd, s * 0.032, 0.02, 0.085, 0.022, 0.024, 0.02, '#211c18');
-  ellipsoid(acc, Hd, 0, -0.02, 0.098, 0.01, 0.018, 0.01, '#211c18');
-  boxAt(acc, Hd, 0.09, 0.03, 0.06, 0, -0.08, 0.06, BONE_D, -0.35, 0, 0);
-  // the arms: the right flung up past his head, the left out on the ground; sleeves to the wrist, saffron cuffs, bone hands
+  // v10-A3: he is drawn to be read as a man from twenty metres and from the deck: a figure in his saffron greatcoat,
+  // buttoned, on his back where he came down, his arms flung out, his legs in dark hose to bare bone feet, a pale skull
+  // in the coat's hood. The coat's skirts lie open round his legs; under him its cream lining shows at the edges.
+  sheet(0, -0.55, 1.15, 1.25, LINING, 0.05); // the skirts' lining, spread under his legs
+  sheet(-0.42, -0.55, 0.5, 1.25, CLOTH, 0.25); sheet(0.42, -0.55, 0.5, 1.25, CLOTH, -0.25); // the skirts, fallen open
+  sheet(-0.55, -1.16, 0.55, 0.08, TRIM, 0.25); sheet(0.55, -1.16, 0.55, 0.08, TRIM, -0.25); // the madder hem
+  // the coat on him: a chest and belly with the shape of a man still in it, the buttons down its front, the collar up
+  ellipsoid(acc, F, 0, 0.13, 0.3, 0.26, 0.14, 0.34, CLOTH, { low: lo });
+  ellipsoid(acc, F, 0, 0.11, 0.0, 0.23, 0.12, 0.2, CLOTH_D, { low: lo });
+  for (let k = 0; k < 5; k++) ellipsoid(acc, F, 0.02, 0.265 - k * 0.006, 0.52 - k * 0.11, 0.022, 0.012, 0.022, '#c9a45a');
+  boxAt(acc, F, 0.5, 0.05, 0.1, 0, 0.2, 0.62, TRIM, 0.3, 0, 0); // the collar's madder facing
+  // the hood fallen back round the skull, the skull turned toward his left, the jaw a little open
+  ellipsoid(acc, F, 0.02, 0.1, 0.8, 0.2, 0.1, 0.17, CLOTH_D, { low: lo });
+  const Hd = local(F, 0.05, 0.13, 0.8, 0, 0.9, 0.25);
+  ellipsoid(acc, Hd, 0, 0, 0, 0.1, 0.105, 0.125, BONE, { low: lo });
+  for (const s of [-1, 1]) ellipsoid(acc, Hd, s * 0.038, 0.024, 0.1, 0.026, 0.028, 0.022, '#211c18');
+  ellipsoid(acc, Hd, 0, -0.024, 0.115, 0.012, 0.02, 0.012, '#211c18');
+  boxAt(acc, Hd, 0.1, 0.035, 0.07, 0, -0.095, 0.07, BONE_D, -0.35, 0, 0);
+  // the arms in their sleeves, the right flung up past his head, the left out on the turf toward his letter-case;
+  // saffron cuffs, bone hands open on the grass
   const arm = (sh, el, wr, fingers) => {
-    rod(acc, F, sh, el, 0.055, CLOTH, 0.05);
-    rod(acc, F, el, wr, 0.05, CLOTH, 0.045);
+    rod(acc, F, sh, el, 0.085, CLOTH, 0.075);
+    rod(acc, F, el, wr, 0.075, CLOTH, 0.065);
     const c = new THREE.Vector3(...wr).sub(new THREE.Vector3(...el)).normalize();
-    rod(acc, F, [wr[0] - c.x * 0.03, wr[1], wr[2] - c.z * 0.03], [wr[0] + c.x * 0.01, wr[1], wr[2] + c.z * 0.01], 0.05, TRIM);
+    rod(acc, F, [wr[0] - c.x * 0.04, wr[1], wr[2] - c.z * 0.04], [wr[0] + c.x * 0.02, wr[1], wr[2] + c.z * 0.02], 0.08, TRIM);
+    ellipsoid(acc, F, wr[0] + c.x * 0.08, 0.03, wr[2] + c.z * 0.08, 0.05, 0.02, 0.06, BONE);
     for (let k = 0; k < 5; k++) {
-      const a = Math.atan2(c.x, c.z) + (k - 2) * 0.28 + fingers, l = 0.1 + (k === 0 ? -0.03 : 0.02 * Math.sin(k));
-      rod(acc, F, [wr[0] + c.x * 0.02, 0.02, wr[2] + c.z * 0.02], [wr[0] + c.x * 0.02 + Math.sin(a) * l, 0.012, wr[2] + c.z * 0.02 + Math.cos(a) * l], 0.007, BONE, 0.005, 0.05, 4);
+      const a = Math.atan2(c.x, c.z) + (k - 2) * 0.3 + fingers, l = 0.12 + (k === 0 ? -0.03 : 0.02 * Math.sin(k));
+      rod(acc, F, [wr[0] + c.x * 0.1, 0.025, wr[2] + c.z * 0.1], [wr[0] + c.x * 0.1 + Math.sin(a) * l, 0.015, wr[2] + c.z * 0.1 + Math.cos(a) * l], 0.012, BONE, 0.008, 0.05, 4);
     }
   };
-  arm([-0.2, 0.08, 0.5], [-0.4, 0.05, 0.8], [-0.34, 0.04, 1.08], 0.2);
-  arm([0.2, 0.08, 0.5], [0.5, 0.05, 0.42], [0.76, 0.04, 0.32], -0.15);
-  // the legs: breeches to the knee, bare shin bones, bare bone feet splayed
+  arm([-0.24, 0.13, 0.52], [-0.46, 0.07, 0.86], [-0.4, 0.05, 1.18], 0.2);
+  arm([0.24, 0.13, 0.52], [0.58, 0.07, 0.46], [0.9, 0.05, 0.34], -0.15);
+  // the legs: dark hose to the ankle, the knees a little up, bare bone feet splayed (his boots are on the deck above)
   for (const s of [-1, 1]) {
-    const kx = s * 0.2 + (s > 0 ? 0.08 : 0), ax = s * 0.27 + (s > 0 ? 0.16 : 0);
-    rod(acc, F, [s * 0.1, 0.07, -0.02], [kx, 0.06, -0.44], 0.075, BREECH, 0.06);
-    rod(acc, F, [kx, 0.05, -0.44], [ax, 0.03, -0.86], 0.022, BONE, 0.017);
-    rod(acc, F, [kx + s * 0.03, 0.04, -0.46], [ax + s * 0.03, 0.025, -0.85], 0.012, BONE_D);
+    const kx = s * 0.2 + (s > 0 ? 0.08 : 0), ax = s * 0.26 + (s > 0 ? 0.16 : 0);
+    rod(acc, F, [s * 0.11, 0.1, -0.08], [kx, 0.15, -0.5], 0.1, BREECH, 0.085);
+    rod(acc, F, [kx, 0.15, -0.5], [ax, 0.06, -0.92], 0.075, BREECH, 0.055);
     const fa = s * 0.6 + (s > 0 ? 0.3 : 0);
-    boxAt(acc, F, 0.06, 0.03, 0.08, ax, 0.03, -0.89, BONE, 0, fa, 0);
-    for (let k = 0; k < 4; k++) rod(acc, F, [ax + Math.sin(fa) * 0.0 + (k - 1.5) * 0.015, 0.02, -0.92], [ax + Math.sin(fa) * -0.12 + (k - 1.5) * 0.02, 0.01, -0.92 - Math.cos(fa) * 0.12], 0.007, BONE, 0.006, 0.05, 4);
+    boxAt(acc, F, 0.08, 0.04, 0.1, ax, 0.04, -0.98, BONE, 0, fa, 0);
+    for (let k = 0; k < 4; k++) rod(acc, F, [ax + (k - 1.5) * 0.02, 0.03, -1.0], [ax + (k - 1.5) * 0.025 - Math.sin(fa) * 0.12, 0.015, -1.0 - Math.cos(fa) * 0.12], 0.01, BONE, 0.008, 0.05, 4);
   }
   // round him, each on its own ground: the stick in two, the purse burst and its coins, a clay pipe's stem
   const at = (x, z, yaw = 0) => { const wx = B.x + x * Math.cos(B.yaw) + z * Math.sin(B.yaw), wz = B.z - x * Math.sin(B.yaw) + z * Math.cos(B.yaw); return frame(wx, gy(wx, wz), wz, yaw); };
-  rod(acc, at(1.7, 0.6, 0.4), [-0.45, 0.02, 0], [0.4, 0.02, 0.02], 0.016, WOOD);
-  rod(acc, at(2.2, -0.7, -0.9), [-0.28, 0.02, 0], [0.32, 0.02, 0], 0.016, WOOD);
-  ellipsoid(acc, at(-1.6, -0.3, 0.6), 0, 0.03, 0, 0.07, 0.03, 0.05, '#4a3424');
+  rod(acc, at(-1.3, 0.5, 0.4), [-0.45, 0.025, 0], [0.4, 0.025, 0.02], 0.02, WOOD);
+  rod(acc, at(-1.8, -0.6, -0.9), [-0.28, 0.025, 0], [0.32, 0.025, 0], 0.02, WOOD);
+  ellipsoid(acc, at(-0.9, -0.5, 0.6), 0, 0.03, 0, 0.07, 0.03, 0.05, '#4a3424');
   for (let k = 0; k < 7; k++) {
-    const a = rng() * 6.28, r = 0.15 + rng() * 0.9;
-    rod(acc, at(-1.6 + Math.cos(a) * r * 0.6, -0.3 + Math.sin(a) * r, 0), [0, 0.003, 0], [0, 0.007, 0], 0.012, COPPER, 0.012, 0.15, 8);
+    const a = rng() * 6.28, r = 0.15 + rng() * 0.6;
+    rod(acc, at(-0.9 + Math.cos(a) * r * 0.6, -0.5 + Math.sin(a) * r, 0), [0, 0.003, 0], [0, 0.007, 0], 0.014, COPPER, 0.014, 0.15, 8);
   }
-  rod(acc, at(1.1, 1.6, 1.2), [-0.12, 0.01, 0], [0.1, 0.01, 0], 0.005, '#c9c0ad');
-  // his letters, burst from the coat and blown in a fan downstream: pale against the bank, seen from the deck
-  for (let k = 0; k < (lo ? 70 : 120); k++) {
-    const a = rng() * 6.283, r = 1.4 + Math.sqrt(rng()) * 5.4;
-    boxAt(acc, at(Math.sin(a) * r, Math.cos(a) * r - 0.3, rng() * 6), 0.42, 0.004, 0.54, 0, 0.004, 0, rng() < 0.3 ? '#c9bea2' : '#ddd3bb', (rng() - 0.5) * 0.15, 0, (rng() - 0.5) * 0.15, 0.06);
-  }
-  // and the parasol he jumped with, meaning to float: a market parasol near five metres across, saffron and cream gores, blown
-  // inside out and fetched up on its rim beside him, its handle in the air. The brightest thing below the bay.
-  const Pa = local(at(3.6, 1.8, 0.6), 0, 0.95, 0, 0.22, 0, 0.1, 1.6);
+  // his letter-case, a flat leather satchel burst open by his left hand, its flap thrown back
+  const Lc = at(1.35, 0.25, 0.5);
+  boxAt(acc, Lc, 0.46, 0.07, 0.34, 0, 0.04, 0, LEATHER, 0, 0, 0.1);
+  boxAt(acc, Lc, 0.46, 0.012, 0.26, 0, 0.012, 0.29, '#4a3320', 0, 0, 0.05); // the flap, thrown back on the turf
+  boxAt(acc, Lc, 0.03, 0.02, 0.3, 0.17, 0.08, -0.02, '#2a1c12', 0, 0, 0); boxAt(acc, Lc, 0.03, 0.02, 0.3, -0.17, 0.08, -0.02, '#2a1c12', 0, 0, 0); // its straps
+  // and the parasol he jumped with, meaning to float, fetched up on its side four metres off, broken and half shut
+  const Pa = local(at(-3.8, 2.6, 0.6), 0, 0.5, 0, 0.1, 0, 1.25, 0.75);
   for (let k = 0; k < 8; k++) {
-    const gore = new THREE.CylinderGeometry(0.06, 1.55, 0.55, 2, 1, true, k * Math.PI / 4, Math.PI / 4);
-    acc.add(gore, local(Pa, 0, 0, 0, Math.PI, 0, 0), k % 2 ? LINING : CLOTH, 0.05); // inside out: the cone opens upward
+    const gore = new THREE.CylinderGeometry(0.06, 0.9, 1.2, 2, 1, true, k * Math.PI / 4, Math.PI / 4);
+    acc.add(gore, local(Pa, 0, 0, 0, 0, 0, 0), k % 2 ? LINING : CLOTH, 0.05);
   }
-  for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; rod(acc, Pa, [0, -0.27, 0], [Math.sin(a) * 1.57, 0.29, Math.cos(a) * 1.57], 0.012, '#3a2c20'); } // the ribs
-  rod(acc, Pa, [0, -0.3, 0], [0, -1.35, 0], 0.02, '#3a2c20'); // the shaft
-  rod(acc, Pa, [0, -1.35, 0], [0.12, -1.5, 0], 0.025, TRIM); // the crook
+  rod(acc, Pa, [0, 0.55, 0], [0, -1.1, 0], 0.02, '#3a2c20');
   return top;
+}
+
+// his letters (v10-A3): thirty-one, folded and sealed in red wax, out of the burst case and blown in a fan down the
+// slope below him. One instanced mesh of their own, so a visitor can gather them (src/v10/bell.js, "Gather his
+// letters"); userData: base (each letter's matrix as it lies), chest (world point on his chest they are laid on).
+function letters(ctx, rng, gy) {
+  const B = T.body, n = 31, g = new THREE.BoxGeometry(0.21, 0.008, 0.29).toNonIndexed(), seal = new THREE.CylinderGeometry(0.032, 0.032, 0.012, 8).toNonIndexed();
+  seal.translate(0, 0.008, 0.02);
+  const merged = new THREE.BufferGeometry(), cnt = g.attributes.position.count + seal.attributes.position.count;
+  const pos = new Float32Array(cnt * 3), nor = new Float32Array(cnt * 3), col = new Float32Array(cnt * 3);
+  pos.set(g.attributes.position.array, 0); pos.set(seal.attributes.position.array, g.attributes.position.count * 3);
+  nor.set(g.attributes.normal.array, 0); nor.set(seal.attributes.normal.array, g.attributes.position.count * 3);
+  const paper = new THREE.Color('#e4dac2'), wax = new THREE.Color('#8e1f18');
+  for (let i = 0; i < cnt; i++) { const c = i < g.attributes.position.count ? paper : wax; col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+  merged.setAttribute('position', new THREE.BufferAttribute(pos, 3)); merged.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); merged.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mesh = new THREE.InstancedMesh(merged, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 }), n);
+  const toW = (x, z) => [B.x + x * Math.cos(B.yaw) + z * Math.sin(B.yaw), B.z - x * Math.sin(B.yaw) + z * Math.cos(B.yaw)];
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), base = [];
+  for (let k = 0; k < n; k++) {
+    const a = 0.3 + (rng() - 0.5) * 1.6, r = 0.8 + Math.sqrt(rng()) * 3.2; // a fan from the case, downslope
+    const [wx, wz] = toW(1.35 + Math.sin(a) * r * 0.7, 0.25 - Math.cos(a) * r);
+    q.setFromEuler(e.set((rng() - 0.5) * 0.12, rng() * 6.28, (rng() - 0.5) * 0.12));
+    m.compose(v.set(wx, gy(wx, wz) + 0.012, wz), q, one); mesh.setMatrixAt(k, m); base.push(m.clone());
+  }
+  mesh.name = 'threads-traveller-letters'; mesh.castShadow = false; mesh.receiveShadow = true;
+  const [cx, cz] = toW(0.02, 0.32);
+  mesh.userData = { base, chest: new THREE.Vector3(cx, gy(B.x, B.z) + 0.3, cz), yaw: B.yaw };
+  mesh.computeBoundingSphere();
+  ctx.scene.add(mesh);
+  return mesh;
 }
 
 function hat(ctx, rng, acc, gy) {
@@ -178,6 +202,7 @@ export function buildTraveller(ctx, gy) {
   const deck = new Acc(rng), dk = deckKit(ctx, rng, deck);
   const bodyAcc = new Acc(rng); const bodyTop = body(ctx, rng, bodyAcc, gy);
   const hatAcc = new Acc(rng); hat(ctx, rng, hatAcc, gy);
+  const lettersMesh = letters(ctx, ctx.makeRng(80402), gy); // their own stream: the hat's draws are as they were
   const meshes = [finish(ctx, deck, 'threads-traveller-deck'), finish(ctx, bodyAcc, 'threads-traveller-body', { cast: true }), finish(ctx, hatAcc, 'threads-traveller-hat')];
   for (const c of dk.cols) ctx.addCollider(c);
   const ends = {
@@ -185,5 +210,5 @@ export function buildTraveller(ctx, gy) {
     body: { x: T.body.x, z: T.body.z, y: gy(T.body.x, T.body.z), top: bodyTop, stand: { ...T.stand.approach, y: gy(T.stand.approach.x, T.stand.approach.z) + 1.72, yaw: yawTo(T.stand.approach, T.body), pitch: -0.05 } },
     hat: { x: T.hat.x, z: T.hat.z, y: gy(T.hat.x, T.hat.z), stand: { ...T.stand.hat, y: gy(T.stand.hat.x, T.stand.hat.z) + 1.72 } },
   };
-  return { meshes, ends, colliders: dk.cols.length };
+  return { meshes, ends, colliders: dk.cols.length, letters: lettersMesh };
 }

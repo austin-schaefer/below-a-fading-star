@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, fogBatchFix } from './util.js';
 import { makeBatch } from './batch.js';
 import { motherCrystal } from './mother.js';
+import { crystalAct } from '../v10/crystal.js'; // v10-A1: a hand on the mother crystal (its answer is in this material)
 
 const V2 = typeof location !== 'undefined' && new URLSearchParams(location.search).get('lattice') === 'v2';
 
@@ -117,12 +118,13 @@ export function buildLattice(ctx, ground, shared) {
     for (const k in mother.geos) geos['mother-' + k] = mother.geos[k];
     for (const c of mother.colliders) ctx.addCollider(c);
   }
+  const act = mother ? crystalAct(ctx, mother, M, ground) : null; // v10-A1: uniforms and GLSL for the answer; null: none
 
   // Crystal material: dark glassy body, slow inner pulse, rim light; brighter while the sun gutters
   const crysGain = { value: 1 };
   const uni = {
     uTime: shared.time, uCrys: crysGain, uOrigin: { value: new THREE.Vector2(G.x, G.z) },
-    uDeep: { value: new THREE.Color(ctx.palette.crystalDeep) }, uPale: { value: new THREE.Color(ctx.palette.crystal) },
+    uDeep: { value: new THREE.Color(ctx.palette.crystalDeep) }, uPale: { value: new THREE.Color(ctx.palette.crystal) }, ...act?.uniforms,
   };
   const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#3a7898'), roughness: 0.08, metalness: 0.2, flatShading: true });
   mat.onBeforeCompile = (shader) => {
@@ -145,6 +147,7 @@ export function buildLattice(ctx, ground, shared) {
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform float uTime, uCrys; uniform vec2 uOrigin; uniform vec3 uDeep, uPale; varying vec3 vCrW; varying float vCrH; varying float vCrBig;
+        ${act ? 'uniform vec4 uAct; uniform vec3 uActM, uHand, uHandN;' : ''} float fpKeep = 0.0;
         float fpH3(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
         float fpN3(vec3 p) {
           vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -183,6 +186,7 @@ export function buildLattice(ctx, ground, shared) {
           totalEmissiveRadiance += uPale * smoothstep(0.45, 0.85, fpVeil) * core * (0.1 + 0.6 * (uCrys - 1.0));
           // light caught in the veils: the inside of the glass is lit unevenly, so it never reads as paint
           totalEmissiveRadiance += uDeep * smoothstep(0.3, 0.85, fpVeil) * (0.12 + 0.2 * core) * (1.0 - fres) * uCrys;
+          ${act ? act.glsl : ''}
         }`);
     // the mother crystal's top 20 m (position.y past 2; no shard reaches 1) go into the far haze (the fog's own colour), so its
     // apex is never seen whole
@@ -190,7 +194,7 @@ export function buildLattice(ctx, ground, shared) {
       #ifdef USE_FOG
       {
         float fpLost = smoothstep(2.0, 3.0, vCrH) * 0.92;
-        if (fpLost > 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, haze, fpLost);
+        if (fpLost > 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, haze, fpLost * (1.0 - 0.8 * clamp(fpKeep, 0.0, 1.0))); // fpKeep: v10-A1's light
       }
       #endif`);
     fogBatchFix(shader);
@@ -311,23 +315,24 @@ export function buildLattice(ctx, ground, shared) {
   fg.setAttribute('aEdge', new THREE.Float32BufferAttribute(E, 1));
   fg.computeBoundingSphere();
   const filGain = { value: 1 };
-  const fu = { uTime: shared.time, uGain: filGain, uFil: { value: new THREE.Color('#5fd0ff') } };
+  const fu = { uTime: shared.time, uGain: filGain, uFil: { value: new THREE.Color('#5fd0ff') }, ...act?.uniforms };
   const fmat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: THREE.DoubleSide });
   fmat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, fu);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aAlong; attribute float aEdge; varying float vAlong; varying float vEdge; varying float vFade;')
+      .replace('#include <common>', '#include <common>\nattribute float aAlong; attribute float aEdge; varying float vAlong; varying float vEdge; varying float vFade; varying vec2 vFpXZ;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-        vAlong = aAlong; vEdge = aEdge;
+        vAlong = aAlong; vEdge = aEdge; ${act ? act.filVert : ''}
         vFade = 1.0 - smoothstep(50.0, 150.0, distance(cameraPosition, position));`);
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime, uGain; uniform vec3 uFil; varying float vAlong; varying float vEdge; varying float vFade;')
+      .replace('#include <common>', '#include <common>\nuniform float uTime, uGain; uniform vec3 uFil; varying float vAlong; varying float vEdge; varying float vFade; varying vec2 vFpXZ;' + (act ? 'uniform vec4 uAct; uniform vec3 uActM;' : ''))
       .replace('#include <color_fragment>', `#include <color_fragment>
         {
           float pulse = pow(0.5 + 0.5 * sin(vAlong * 0.22 - uTime * 1.3), 10.0);
           float slow = 0.5 + 0.5 * sin(vAlong * 0.05 - uTime * 0.35);
           diffuseColor.rgb = uFil * (0.5 + 0.5 * slow + 2.6 * pulse) * uGain;
           diffuseColor.a = (1.0 - vEdge * vEdge) * (0.45 + 0.55 * max(pulse, slow * 0.6)) * vFade;
+          ${act ? act.filGlsl : ''}
         }`);
   };
   fmat.customProgramCacheKey = () => 'fp-veg-filament';

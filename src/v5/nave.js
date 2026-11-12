@@ -540,16 +540,15 @@ export async function build(ctx) {
   shapesMesh.name = 'nave-shapes'; shapesMesh.frustumCulled = false; shapesMesh.visible = false; shapesMesh.castShadow = false;
   scene.add(shapesMesh);
 
-  // ---- the rim's colliders: a ring just outside the edge and a second 0.7 m further out (the pit's precedent)
+  // ---- the rim's colliders (v10-T1, #15): one ring of small columns 0.45 m inside the edge, 0.45 m apart, so the
+  // walker's body stops 0.3 m outside it and the eye is over the edge; a hurrying step (0.33 m) cannot pass between them
   let colliders = 0;
   if (ctx.addCollider) {
-    for (const out of [0.15, 0.5]) {
-      let lx = Infinity, lz = Infinity;
-      for (let b = 0; b < 360; b += 0.5) {
-        const R = naveRim(b) + out, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
-        if (Math.hypot(x - lx, z - lz) < 0.8) continue;
-        ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
-      }
+    let lx = Infinity, lz = Infinity;
+    for (let b = 0; b < 360; b += 0.25) {
+      const R = naveRim(b) - 0.45, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
+      if (Math.hypot(x - lx, z - lz) < 0.45) continue;
+      ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
     }
   }
 

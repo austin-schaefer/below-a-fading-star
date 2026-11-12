@@ -20,7 +20,7 @@ export function buildControls(ctx) {
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
-    onStep: null, hops: 0, hopping: false, onTop: false,
+    onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0, lookQuiet: 0,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -43,7 +43,7 @@ export function buildControls(ctx) {
   };
   // The one jump: Space and the touch button both come here.
   function hop() {
-    if (!state.onGround || !state.enabled) return false;
+    if (!state.onGround || !state.enabled || carried) return false;
     state.vy = 4.2; state.onGround = false; state.hopping = true; state.hops++;
     return true;
   }
@@ -106,6 +106,7 @@ export function buildControls(ctx) {
   window.addEventListener('mouseup', () => { dragging = false; });
   document.addEventListener('mousemove', (e) => {
     if (!state.locked && !dragging) return;
+    if (e.movementX || e.movementY) state.lookQuiet = 0; // the visitor is steering the look (a carrier stops turning it)
     state.yaw -= e.movementX * 0.0021;
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
@@ -232,6 +233,7 @@ export function buildControls(ctx) {
         const dxp = t.clientX - lookTouch.x, dyp = t.clientY - lookTouch.y;
         if (lookTouch.corner && Math.hypot(t.clientX - lookTouch.sx, t.clientY - lookTouch.sy) > 14) { lookTouch.corner = false; clearTimeout(cornerTimer); }
         const dYaw = -dxp * LOOK_SENS, dPitch = -dyp * LOOK_SENS;
+        if (dxp || dyp) state.lookQuiet = 0;
         state.yaw += dYaw;
         state.pitch = clamp(state.pitch + dPitch, -1.45, 1.45);
         const now = performance.now(), dtm = Math.max(1, now - lastLookT) / 1000;
@@ -289,8 +291,9 @@ export function buildControls(ctx) {
   }
   ctx.addWalkable = addWalkable;
 
-  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders.
+  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders. A teleport: it ends a carry.
   function placeAt(x, z) {
+    if (carried) dropCarry();
     for (let iter = 0; iter < 8; iter++) {
       let moved = false;
       const rr = Math.hypot(x, z), limit = walkLimit(x, z);
@@ -359,6 +362,26 @@ export function buildControls(ctx) {
     if (c.dome) { const f = d / c.r; y -= c.dome * (f < 1 ? f * f : 1); }
     return y;
   }
+  // --- carrying (v10): a module holds the player for a while (a seat on a rope) and gives them back.
+  // carry({ step(pos, dt), drop() }) → release(). While carried, each frame step() sets pos (the eye) and nothing
+  // else moves the player: no walking, hop, gravity or colliders; the look stays free, and state.intent (0..1) says
+  // how hard the visitor is pushing to move, for the carrier to read. The carrier gives them back by calling
+  // release() and then placing them (placeAt, or pos itself). A teleport (placeAt, or pos moved more than 1.5 m by
+  // anyone else) ends the carry and calls drop(), so the carrier can let go of its end; a step() that throws ends it
+  // too, and puts the player back where the carry began. A carrier may also turn the view: look(dt, quiet) → null or
+  // { yaw, pitch, rate }, where quiet is the seconds since the visitor last moved the look themselves; the look eases
+  // toward that yaw and pitch at rate (1/s), and the visitor's own mouse or drag still adds to it.
+  let carried = null, carryAt = null;
+  const carryFrom = new THREE.Vector3(); // where the carry began: a carrier that throws puts them back here
+  function carry(c) {
+    if (carried) dropCarry();
+    carried = c; carryAt = null; state.carried = true; state.intent = 0; carryFrom.copy(state.pos);
+    return () => { if (carried === c) { carried = null; carryAt = null; state.carried = false; } };
+  }
+  function dropCarry() {
+    const c = carried; carried = null; carryAt = null; state.carried = false;
+    try { c?.drop?.(); } catch (e) { console.error('[fp] carry drop failed:', e); }
+  }
   const cand = new Array(32); // the capped colliders touched this frame whose tops may be stood on
 
   const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
@@ -368,6 +391,7 @@ export function buildControls(ctx) {
   function update(dt) {
     syncLock();
     dt = Math.min(dt, 0.05);
+    state.lookQuiet += dt;
     const k = state.keys;
     let mx = 0, mz = 0;
     if (state.enabled) {
@@ -383,6 +407,28 @@ export function buildControls(ctx) {
       const decay = Math.exp(-dt / 0.08);
       lookVel.x *= decay; lookVel.y *= decay;
       if (Math.abs(lookVel.x) + Math.abs(lookVel.y) < 0.01) lookVel.x = lookVel.y = 0;
+    }
+    if (carried) {
+      if (carryAt && Math.abs(state.pos.x - carryAt.x) + Math.abs(state.pos.y - carryAt.y) + Math.abs(state.pos.z - carryAt.z) > 1.5) dropCarry();
+      else {
+        state.intent = Math.min(1, hyp(mx, mz));
+        try { carried.step(state.pos, dt); }
+        catch (e) { console.error('[fp] carry step failed:', e); dropCarry(); placeAt(carryFrom.x, carryFrom.z); return; }
+        (carryAt ||= new THREE.Vector3()).copy(state.pos);
+        const L = carried.look ? carried.look(dt, state.lookQuiet) : null;
+        if (L && L.rate > 0) {
+          const k = 1 - Math.exp(-L.rate * dt);
+          state.yaw += Math.atan2(Math.sin(L.yaw - state.yaw), Math.cos(L.yaw - state.yaw)) * k;
+          state.pitch = clamp(state.pitch + (L.pitch - state.pitch) * k, -1.45, 1.45);
+        }
+        state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
+        state.moving = false; state.speed = 0; state.bobAmt = 0; state.wading = 0;
+        eyeOff = 0; lastY = state.pos.y; state.eyeY = state.pos.y;
+        camera.position.copy(state.pos);
+        camera.rotation.order = 'YXZ';
+        camera.rotation.set(state.pitch, state.yaw, 0);
+        return;
+      }
     }
     const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.mag > AUTO_HURRY;
     state.hurrying = hurry;
@@ -499,5 +545,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry };
 }

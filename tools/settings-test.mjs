@@ -110,7 +110,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 3 + 18 - 1 + 8, n);
+  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 3 + 18 - 1 + 8, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -146,6 +146,19 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);
+  // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
+  const actLand = await page.evaluate(() => {
+    const fp = window.__fp, out = {};
+    for (const [name, id] of [['The Lantern Halt', 'halt-tally'], ['The bell under the Span', 'span-bell'], ['The Lattice', 'mother-hand'], ['The Hypogeum', 'hypogeum-door'], ['The Collation', 'collation-twelfth']]) {
+      const pl = fp.settings.places.find((q) => q.name === name), h = fp.acts?.list.find((q) => q.def.id === id);
+      if (!pl || !h) { out[name] = null; continue; }
+      fp.settings.teleport(pl);
+      const p = fp.player, L = fp.acts.lure.state().find((q) => q.id === id).at, tx = L.x - p.pos.x, tz = L.z - p.pos.z, d = Math.hypot(tx, tz);
+      out[name] = { d: +d.toFixed(1), deg: Math.round(Math.acos(Math.max(-1, Math.min(1, (-Math.sin(p.yaw) * tx - Math.cos(p.yaw) * tz) / d))) * 180 / Math.PI) };
+    }
+    return out;
+  });
+  check('teleport: the Lantern Halt, the bell, the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
   await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });
