@@ -36,3 +36,4 @@ What news the Twk-men would have sold for it.
 ## Log
 
 - 2026-11-11, v8 brief 07: built. Marked partial when the library began.
+- 2026-11-12, v10-A4: the pedlar whose sack split is the sleeper in the Lantern Halt (stories/the-lantern-halt.md): what was left of the sack lies by his bed, and he pays a guest at the hatch with a handful of it.

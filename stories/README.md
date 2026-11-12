@@ -11,7 +11,7 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The twelfth chair](the-twelfth-chair.md) | deep | built; a plainer surface is written, optional | one of twelve diners, dead, and the eleven | the Collation, the Sexton's graves | the Sexton |
 | [The gold from the court](the-gold-from-the-court.md) | plain | built | a jackdaw | the Sunken Court, the Wayside Shrine | the sign of the sun; the moles |
 | [The slipper's mate](the-slippers-mate.md) | plain | partial: no turn | a sleeper at the Pomegranate House | the causeway, the house | the house's people |
-| [Salt for news](salt-for-news.md) | plain | partial: no turn | the Salt-Pedlars and the Twk-men | the pedlars' road | the traveller; the house |
+| [Salt for news](salt-for-news.md) | plain | partial: no turn | the Salt-Pedlars and the Twk-men | the pedlars' road | the traveller; the house; the Lantern Halt (the pedlar sleeps there) |
 | [The Lantern Halt](the-lantern-halt.md) | plain | built | a traveller asleep in a hung lantern, half out of its hatch; chalk your stroke and the seat hauls you up to him | the causeway, halfway | the sign of the sun; the traveller's boots; shoes left by the winch |
 
 Six plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
@@ -22,8 +22,8 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 
 - The eleven who dine at the Collation. Unseen.
 - Whoever commissioned the painter. Unseen.
-- The pedlar whose sack split. Unseen.
-- The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; his face is never seen up close.
+- The pedlar whose sack split: the sleeper in the Lantern Halt (v10-A4).
+- The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
 - The Sexton, the Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet.
 
 ## Things that travel
