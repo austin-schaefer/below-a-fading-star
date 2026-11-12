@@ -26,8 +26,10 @@ export function startSteps(a) {
   // v7.2-04: small jitter (pitch +-4 %, level +-2 dB), the first step after standing a little louder (+2 dB), and
   // when hurrying a heel-toe pair: the toe 60-120 ms after the heel, softer and duller
   let lastStepAt = -1e9;
-  // the walker's steps stand over the quieter v7.2 bed: +12 dB at the dry bus (the echo and the figures' steps keep their own levels)
-  const STEP_GAIN = 4;
+  // the walker's steps stand over the quieter v7.2 bed: +12 dB at the dry bus, less STEP_TRIM (v9, #17: "a hair too loud
+  // across the board", -3 dB on every ground). The figures' steps come down by the same trim, so they keep their level
+  // relative to the walker's; the Repetend's echo keeps its own level
+  const STEP_TRIM = Math.pow(10, -3 / 20), STEP_GAIN = 4 * STEP_TRIM;
   function stepSound(hurrying) {
     const regionSnd = a.regionSnd;
     const p = player.pos;
@@ -141,7 +143,7 @@ export function startSteps(a) {
     else if (b.marsh > 0.5) kind = 'squelch';
     r.t = v.t0; r.kind = kind; r.x = x; r.z = z; r.vol = o.vol * Math.pow(10, (figRng() * 4 - 2) / 20); r.pitch = 0.96 + figRng() * 0.08; r.verb = nearCastle || inCourt;
     for (let i = 0; i < 64; i++) r.d[i] = figRng();
-    const out = ac.createGain(); out.gain.value = 1; out.connect(v.in);
+    const out = ac.createGain(); out.gain.value = STEP_TRIM; out.connect(v.in);
     const keep = rec, keepN = recN;
     rec = r; recN = 0; replaying = true;
     try { if (kind === 'splash' || !a.regionSnd?.step(x, z, v.t0, r.vol, r.pitch, out)) stepSynth(r, v.t0, v.t0, out); }
