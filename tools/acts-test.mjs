@@ -291,6 +291,111 @@ await seeded('throws', () => { for (const k of ['getItem', 'setItem', 'removeIte
   await c.close();
 }
 
+// ------------------------------------------------------------------ v10-A2: pour for the twelfth (src/v10/chair.js); salt for news (src/v10/salt.js) is shelved behind ?salt=1, its rows run with SALT=1
+const SALT = process.env.SALT === '1', SQ = SALT ? '&salt=1' : '';
+if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; run with SALT=1 to include them');
+{
+  const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const p = await c.newPage(); watch(p, 'stories');
+  await ready(p, `${base}/?q=low&pos=0,0${SQ}`);
+  await p.waitForFunction(() => window.__fp.storyActs?.chair, null, { timeout: 120000 });
+  const put = (w, f, a) => p.evaluate(([w, f, a]) => { const fp = window.__fp, S = fp.storyActs[w], st = S[f](...(a || [])), pl = fp.player; pl.pos.set(st.x, fp.terrain.heightAt(st.x, st.z) + pl.eye, st.z); pl.yaw = st.yaw; pl.pitch = st.pitch; if (pl.vel) pl.vel.set(0, 0, 0); }, [w, f, a]);
+  const off = () => p.evaluate(() => window.__fp.acts.offered?.def.id || null);
+  const want = async (id, ms = 4000) => { const t0 = Date.now(); let o; do { o = await off(); if (o === id) return o; await sleep(150); } while (Date.now() - t0 < ms); return o; };
+  const turn = (d) => p.evaluate((d) => { window.__fp.player.yaw += d; }, d);
+  // the twelfth place
+  await put('chair', 'stand', [8]); await sleep(1500);
+  check('the twelfth place: not offered from 8 m', (await off()) === null);
+  await put('chair', 'stand'); await sleep(200); await turn(2.2); await sleep(1500);
+  check('the twelfth place: not offered looking away', (await off()) !== 'collation-twelfth');
+  await turn(-2.2);
+  check('the twelfth place: offered at it, "Pour for him"', (await want('collation-twelfth')) === 'collation-twelfth' && (await p.evaluate(() => document.getElementById('act-words').textContent)) === 'Pour for him');
+  await put('chair', 'stand', [-1.5]); await sleep(1500);
+  check('the twelfth place: not offered from the table\'s far side', (await off()) !== 'collation-twelfth');
+  await put('chair', 'stand'); await want('collation-twelfth');
+  const lvl0 = await p.evaluate(() => window.__fp.storyActs.chair.wine.scale.y);
+  await p.keyboard.press('KeyE'); await sleep(50);
+  check('E pours: counted, kept, the bottle is moving', await p.evaluate(() => { const A = window.__fp.acts; return A.count('collation-twelfth') === 1 && window.__fp.storyActs.chair.running && JSON.parse(localStorage.getItem('fp-acts')).marks['collation-twelfth'].n === 1; }));
+  await sleep(1500);
+  const mid = await p.evaluate(() => { const c = window.__fp.storyActs.chair; return { bottleTilted: Math.abs(c.bottle.quaternion.z) + Math.abs(c.bottle.quaternion.x) > 0.3, y: c.bottle.position.y }; });
+  check('1.5 s in: the bottle has tilted over the goblet', mid.bottleTilted, mid);
+  await sleep(3000);
+  const mid2 = await p.evaluate(() => { const c = window.__fp.storyActs.chair; return { wine: c.wine.scale.y, eleven: c.eleven.visible, flares: c.flares.filter((f) => f.visible).length }; });
+  check('4.5 s in: the goblet is full and the eleven answer (their glasses flare)', mid2.wine > lvl0 * 1.8 && mid2.eleven && mid2.flares >= 1, { lvl0, mid2 });
+  await p.waitForFunction(() => !window.__fp.storyActs.chair.running, null, { timeout: 60000 });
+  const end = await p.evaluate(() => { const c = window.__fp.storyActs.chair; return { rest0: c.rests[0].visible, rest1: c.rests[1].visible, bottleHome: Math.abs(c.bottle.quaternion.x) + Math.abs(c.bottle.quaternion.z) < 0.01, offered: window.__fp.acts.offered?.def.id || null }; });
+  check('after it: a glass stands at the first rest, none at the second, the bottle is set down, not offered again this visit', end.rest0 && !end.rest1 && end.bottleHome && end.offered !== 'collation-twelfth', end);
+  await c.close();
+}
+{
+  // a return visit: the pour once before, the pinch carried
+  const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await c.addInitScript(() => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('fp-acts', JSON.stringify({ v: 1, marks: { 'collation-twelfth': { n: 1, last: 1 }, 'salt-pinch': { n: 2, last: 1, data: { held: 1 } }, 'salt-news': { n: 1, last: 1 } } })); sessionStorage.setItem('seeded', '1'); } } catch (e) { /* */ } });
+  const p = await c.newPage(); watch(p, 'stories2');
+  await ready(p, `${base}/?q=low&pos=0,0${SQ}`);
+  await p.waitForFunction(() => window.__fp.storyActs?.chair, null, { timeout: 120000 });
+  const put = (w, f, a) => p.evaluate(([w, f, a]) => { const fp = window.__fp, S = fp.storyActs[w], st = S[f](...(a || [])), pl = fp.player; pl.pos.set(st.x, fp.terrain.heightAt(st.x, st.z) + pl.eye, st.z); pl.yaw = st.yaw; pl.pitch = st.pitch; if (pl.vel) pl.vel.set(0, 0, 0); }, [w, f, a]);
+  const off = () => p.evaluate(() => window.__fp.acts.offered?.def.id || null);
+  const want = async (id, ms = 4000) => { const t0 = Date.now(); let o; do { o = await off(); if (o === id) return o; await sleep(150); } while (Date.now() - t0 < ms); return o; };
+  const r = await p.evaluate(() => { const c = window.__fp.storyActs.chair, s = window.__fp.storyActs.salt; return { rest0: c.rests[0].visible, rest1: c.rests[1].visible, eleven: c.eleven.visible, again: c.again.visible, level: c.level, thing0: s?.things[0].m.visible, thing1: s?.things[1].m.visible, held: s?.take.data.held, stain: window.__fp.scene.getObjectByName('collation-twelfth-stain').visible }; });
+  check('a return visit: the stain, the eleven\'s wine, the candle and flowers, the goblet drunk down, the first rest\'s row of glasses are there, the second is not', r.rest0 && !r.rest1 && r.eleven && r.again && r.stain && Math.abs(r.level - 0.55) < 1e-6, r);
+  if (SALT) check('a return visit: the first of the news is there, the second is not, the carried pinch is still carried', r.thing0 && !r.thing1 && r.held === 1, r);
+  await put('chair', 'stand'); await sleep(1200);
+  check('a return visit: offered again at the twelfth place (a new visit)', (await want('collation-twelfth')) === 'collation-twelfth');
+  // a second pour starts from the remembered state, not from empty
+  await put('chair', 'stand'); await want('collation-twelfth');
+  await p.keyboard.press('KeyE'); await sleep(300);
+  const sp = await p.evaluate(() => { const c = window.__fp.storyActs.chair; return { level: c.level, stain: window.__fp.scene.getObjectByName('collation-twelfth-stain').visible, n: window.__fp.acts.count('collation-twelfth') }; });
+  check('a second pour: counted, and the goblet and the stain are as the eleven left them (0.55), not reset to empty', sp.n === 2 && Math.abs(sp.level - 0.55) < 0.02 && sp.stain, sp);
+  await sleep(4000);
+  check('a second pour: the goblet fills from there', (await p.evaluate(() => window.__fp.storyActs.chair.level)) > 0.9);
+  await p.waitForFunction(() => !window.__fp.storyActs.chair.running, null, { timeout: 90000 });
+  check('a second pour: the second rest has its glasses (eight), the third not', await p.evaluate(() => { const c = window.__fp.storyActs.chair; return c.rests[1].visible && !c.rests[2].visible; }));
+  if (SALT) {
+  // salt: at the sack carrying a pinch it is not offered; at the pile "Pay in salt"
+  await put('salt', 'standSack'); await sleep(1500);
+  check('salt: not offered at the sack while a pinch is carried', (await off()) !== 'salt-pinch');
+  await put('salt', 'standPile', [9]); await sleep(1500);
+  check('salt: not offered at the pile from 9 m', (await off()) === null);
+  await put('salt', 'standPile'); await sleep(200); await p.evaluate(() => { window.__fp.player.yaw += 2.5; }); await sleep(1500);
+  check('salt: not offered at the pile looking away', (await off()) !== 'salt-news');
+  await p.evaluate(() => { window.__fp.player.yaw -= 2.5; });
+  check('salt: carrying a pinch, at the pile: "Pay in salt"', (await want('salt-news')) === 'salt-news' && (await p.evaluate(() => document.getElementById('act-words').textContent)) === 'Pay in salt');
+  await p.keyboard.press('KeyE'); await sleep(200);
+  const a = await p.evaluate(() => { const fp = window.__fp, s = fp.storyActs.salt; return { n: fp.acts.count('salt-news'), held: s.take.data.held || 0, tossing: s.tossing, scripts: fp.twk.riders.filter((q) => q.mode === 'script').length }; });
+  check('E pays: counted, the pinch spent, grains in the air, three riders sent on the errand', a.n === 2 && a.held === 0 && a.tossing && a.scripts === 3, a);
+  await sleep(3500);
+  const b = await p.evaluate(() => { const s = window.__fp.storyActs.salt; return { thing1: s.things[1].m.visible }; });
+  check('3.7 s in: the second thing of news has been dropped by the guard', b.thing1, b);
+  await p.waitForFunction(() => window.__fp.twk.riders.every((q) => q.mode !== 'script'), null, { timeout: 60000 });
+  const d = await p.evaluate(() => ({ modes: window.__fp.twk.stats().modes }));
+  check('the riders are home again after (none still on the errand)', !d.modes.script, d);
+  await sleep(300);
+  check('salt: not offered at the pile with no pinch', (await off()) !== 'salt-news');
+  await put('salt', 'standSack'); await sleep(200);
+  check('salt: at the sack with none carried: "Take a pinch"', (await want('salt-pinch')) === 'salt-pinch');
+  await p.keyboard.press('KeyE'); await sleep(250);
+  const g = await p.evaluate(() => { const s = window.__fp.storyActs.salt; return { held: s.take.data.held, tossing: s.tossing }; });
+  check('E takes a pinch: carried (kept), grains lift into the hand', g.held === 1 && g.tossing, g);
+  await sleep(1500);
+  }
+  await p.evaluate(() => window.__fp.acts.forget());
+  const h = await p.evaluate(() => { const c = window.__fp.storyActs.chair, s = window.__fp.storyActs.salt; return { rest0: c.rests[0].visible, eleven: c.eleven.visible, again: c.again.visible, level: c.level, thing0: s?.things[0].m.visible, held: s?.take.data.held || 0 }; });
+  check('forget: no glasses at the rests, no candle or flowers, the goblet back to its first level, nothing of the salt kept', !h.rest0 && !h.eleven && !h.again && Math.abs(h.level - 0.45) < 1e-6 && !h.thing0 && h.held === 0, h);
+  await c.close();
+}
+
+{
+  const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const p = await c.newPage(); watch(p, 'stories-acts0');
+  await ready(p, `${base}/?q=low&acts=0&pos=0,0`);
+  await p.waitForFunction(() => window.__fp.storyActs?.chair, null, { timeout: 120000 });
+  await p.evaluate(() => { const fp = window.__fp, st = fp.storyActs.chair.stand(), pl = fp.player; pl.pos.set(st.x, fp.terrain.heightAt(st.x, st.z) + pl.eye, st.z); pl.yaw = st.yaw; pl.pitch = st.pitch; });
+  await sleep(2000);
+  const z = await p.evaluate(() => { const fp = window.__fp, c = fp.storyActs.chair; return { n: fp.acts.list.length, offered: fp.acts.offered?.def.id || null, place: c.place.visible, again: c.again.visible, eleven: c.eleven.visible, rest0: c.rests[0].visible }; });
+  check('?acts=0: his place is there as laid, nothing registered or offered, no candle, no row of glasses at the rests', z.n === 0 && z.offered === null && z.place && !z.again && !z.eleven && !z.rest0, z);
+  await c.close();
+}
 // ------------------------------------------------------------------ v10-A4: the chalk's place, the seat, the ride
 {
   const c = await browser.newContext({ viewport: { width: 640, height: 360 } });
