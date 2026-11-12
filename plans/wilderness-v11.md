@@ -69,6 +69,8 @@ In flight (v11.1):
 
 **W4 is merged (by 15:22)** (`issue-1111-poses-bell`): the three poses now face their subjects (frames `v11.1-W4-after-*`, looked at beside the before frames), the bell's glow on the Span's wall is gone at 4 s (it was the wave's points seen end-on). The Cutting is exempt from `settings-test`'s hole check, as the Speculum is: it stands in a gorge by intent. The agent's run: acts 140, settings 68 (run directly after the exemption). In flight: W1 and W5.
 
+**The high passes go with the Heights (the owner, in session: "i think high passes can go with 'the heights'")**: written on #4 with their words. v11.1 ships W5 only as the flag `?cols=high`, default unchanged, if the trial is sound; making it the default is #4's.
+
 Next: check and merge each (W3, W4 as they come; W1, then W2 after it merges `next`), a blind read of the renders, `tools/suite.sh 8123` in full, then the release as `v11.1` (the day's third merge to `main` of six).
 
 **2026-11-12, 11:34 PST. Released.** PR #32 merged to `main` at `b47f683` (the day's second merge of six); the GitHub release `v11` is published; #5 and #6 are closed from it; `origin/main` is merged back into `next`; no agent is in flight and no worktree but the deploy one exists. What shipped and what is weak: the entry below this one.
