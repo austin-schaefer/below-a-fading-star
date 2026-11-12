@@ -287,7 +287,9 @@ export function doorAct(ctx, H, meshes) {
     rt += dt; st.reading = rt;
     // held: in front of the eye, a little low, tilted up to face it (far edge up), its across-axis level
     fwd.set(-Math.sin(P.yaw), 0, -Math.cos(P.yaw));
-    pHold.copy(P.pos).addScaledVector(fwd, 0.6); pHold.y -= 0.17;
+    const cam = ctx.camera, hw = Math.tan((cam.fov * Math.PI) / 360) * cam.aspect; // the view's half-width a metre out
+    const far = Math.max(0.6, 0.4 / hw); // far enough that the whole plate fits across, on a phone held upright too
+    pHold.copy(P.pos).addScaledVector(fwd, far); pHold.y -= 0.17 * far / 0.6;
     qa.setFromAxisAngle(new THREE.Vector3(fwd.z, 0, -fwd.x).normalize(), -1.3); // tip its far edge up toward the eye
     qHold.setFromAxisAngle(YAX, P.yaw + Math.PI / 2).premultiply(qa); // its +x (toward the door when lying) along the look
     qBack.copy(qHold).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI)); // turned over in the hands
