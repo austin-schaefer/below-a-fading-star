@@ -11,7 +11,8 @@
 //          in massifs of its own set behind the near cols, ridged in plan and lit on their sunward sides, lower in
 //          the picture and paler under the fog tiers.
 //   v11 the form: summits, notches and serration along the crest, spurs and the valleys between them (FORM, SPURS_M);
-//          v11.1 the north-east wall's buttresses, recess and notch, and the Ossuary Horn as a pyramid (HORN).
+//          v11.1 the north-east wall's buttresses, recess and notch, and the Ossuary Horn as a pyramid (HORN);
+//          ?cols=high (a trial) the three cols as high passes (PASSES).
 // ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
 // bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
@@ -148,6 +149,34 @@ const CAND = PROFILE === 'c' ? {
     [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
   peaks: 0.35, slope: [28, 52], farEl: [[8.5, 8], [10.5, 8]],
 } : null;
+// ?cols=high (v11.1 W5, a trial): the three cols that are not the sun's become high passes, so the saddle is the one
+// place the wall breaks to the floor. Each pass is a broad saddle between its massifs at 40-50 % of their height (on
+// the ground: the east 131 m, the south-east 141 m under the Horn, the north-west 149 m), its shoulders rising long to
+// either side, set back between the massifs (passRecess; held inside the terrain's square, so the south-east's less);
+// the notches cut beside the cols go (a slot beside a pass reads as a second col), and the far ring's lobe behind each
+// pass stands higher so it still shows over it. Inside the walk limit the ground within ±10° of a pass rises by up to
+// 9 m (the pass's long foot). Without the flag nothing here runs. The heightfield is built once: a reload.
+const COLS_HIGH = PROFILE === 'c' && typeof location !== 'undefined' && new URLSearchParams(location.search).get('cols') === 'high';
+// [bearing of the pass, the spline's points that replace the col's three: [bearing, height]]
+const PASSES = [
+  [112, [[100, 200], [106, 152], [112, 133], [118, 147], [124, 190]]],
+  [180, [[171, 225], [175, 172], [180, 152], [185, 165], [190, 220]]],
+  [328, [[318, 228], [323, 168], [328, 150], [333, 163], [338, 222]]],
+];
+// a pass lies back between its massifs: its crest set out, so its long approach keeps its foot near where the col's was
+function passRecess(b) {
+  let add = 0;
+  for (const [pb] of PASSES) { let d = Math.abs(b - pb); if (d > 180) d = 360 - d; if (d < 14) add = Math.max(add, PASS_RECESS * Math.pow(Math.cos((d / 14) * Math.PI / 2), 2)); }
+  return add;
+}
+const PASS_RECESS = 45; // m
+const FAR_PASS = { 112: 6.5, 180: 6, 328: 5 }; // degrees added to the far ring's lobe behind each pass
+if (COLS_HIGH) {
+  for (const [pb, pts] of PASSES) {
+    CAND.crest = CAND.crest.filter(([b]) => Math.abs(b - pb) > 9).concat(pts);
+  }
+  CAND.crest.sort((a, b) => a[0] - b[0]);
+}
 // a periodic Catmull-Rom spline through [bearing, value] points
 function splineAt(pts, b) {
   const n = pts.length;
@@ -180,7 +209,7 @@ if (CAND) {
     T_CH[i] = T_CS[i] + crownAt(b, CAND.peaks);
     // the crest stands out where it is high, so the high massifs keep a long face; held inside the terrain's square
     const edge = 500 / Math.max(Math.abs(Math.cos(az)), Math.abs(Math.sin(az)));
-    T_CR[i] = lerp(clamp(452 + 0.3 * (T_CH[i] - 150) + 12 * ring(az, 1.6, 3.1), 440, edge - 22), 476, vig);
+    T_CR[i] = lerp(clamp(452 + 0.3 * (T_CH[i] - 150) + 12 * ring(az, 1.6, 3.1) + (COLS_HIGH ? passRecess(b) : 0), 440, edge - 22), 476, vig);
     T_FH[i] = 0; // no front range before the massifs
   }
 }
@@ -219,6 +248,7 @@ const FORM = [
   [335, 26, 6, 4.5], [339, -18, 1.5, 2], [350, 34, 10.5, 4.5],
 ];
 const T_FM = new Float32Array(N + 1); // the crest's form, added over the face's top
+if (COLS_HIGH) FORM.splice(0, FORM.length, ...FORM.filter(([fb, fh]) => !(fh < 0 && [172, 186, 320].includes(fb)))); // the notches beside the cols
 if (CAND) {
   const bd = (a, c) => ((a - c) % 360 + 540) % 360 - 180;
   for (let i = 0; i <= N; i++) {
@@ -709,10 +739,21 @@ function farLobe(T, b) {
   }
   return w;
 }
+// ?cols=high: the far ring's lobes behind the passes, raised on the lobe's own shape
+function farPassLift(b) {
+  let add = 0;
+  for (const [lb, lw, side] of FAR_LOBES.far) {
+    const k = FAR_PASS[lb]; if (!k) continue;
+    let d = b - lb; if (d > 180) d -= 360; if (d < -180) d += 360;
+    const ww = lw * (Math.sign(d) === side ? 0.6 : 1.4);
+    if (Math.abs(d) < ww) add = Math.max(add, k * Math.pow(Math.cos((Math.abs(d) / ww) * Math.PI / 2), 1.1));
+  }
+  return add;
+}
 function farCrestMassifs(T, az, out) {
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
   const [el0, el1] = CAND.farEl[T.name === 'far' ? 0 : 1];
-  const elev = (el0 + el1 * farLobe(T, bearingOf(az)) + 1.6 * ring(az, 2.3, T.seed + 3) + 1.1 * ring(az, 7.0, T.seed + 5)) * D2R;
+  const elev = (el0 + el1 * farLobe(T, bearingOf(az)) + (COLS_HIGH && T.name === 'far' ? farPassLift(bearingOf(az)) : 0) + 1.6 * ring(az, 2.3, T.seed + 3) + 1.1 * ring(az, 7.0, T.seed + 5)) * D2R;
   let hc = Math.tan(elev) * rc;
   const d = Math.abs(angDiff(az, SADDLE.azimuth));
   hc = lerp(T.floor, hc, smoothstep(T.full * D2R, T.wall * D2R, d));

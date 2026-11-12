@@ -151,6 +151,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### The walls
 
+- `cols=high` (v11.1 W5, a trial): the three cols that are not the sun's saddle (112°, 180°, 328°) become high passes, broad saddles at about 130, 140 and 150 m set back 45 m between their massifs, the notches beside them gone and the far ring's lobes behind them raised, so the saddle is the one break to the floor (`PASSES` in `src/v4/mountains.js`); within ±10° of each pass the ground at r 300-348 rises up to 9 m. Off, nothing changes. Renders: `tools/views-v11-cols.json`
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
 
 ## Quality tiers
