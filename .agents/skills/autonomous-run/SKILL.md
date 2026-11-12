@@ -54,7 +54,7 @@ Write the milestone doc (`plans/wilderness-v<N>.md`: what a visitor should notic
 Tests show that it runs. They do not show that it is good, and no human will tell you.
 
 - **Look at every render.** The Read tool shows images. A brief that asked for a heron and a render that shows a grey smear is a failed brief, whatever the tests say.
-- **A cold critic before every release.** Dispatch `critic.md` (next to this file) to a fresh agent that has not seen the plan. Fix what it marks as blocking before release; the rest goes to the idea bank. The author of a thing is the worst judge of it, and that includes you as orchestrator.
+- **A cold critic before every milestone release** (a small point release skips it: `orchestrator`, "Releasing to `main`"). Dispatch `critic.md` (next to this file) to a fresh agent that has not seen the plan. Fix what it marks as blocking before release; the rest goes to the idea bank. The author of a thing is the worst judge of it, and that includes you as orchestrator.
 - **Sound:** the `sound-design` skill's harness is the ear you don't have. Use its gates.
 - **Speed:** `perf-test` and the bench numbers are in the gate. A milestone that makes the walk slower on a phone says why in its milestone doc's Status, and says so plainly in the release note's Known issues.
 - **Be plain in the record.** If something shipped weaker than planned, say so twice: in the release note's Known issues, in a visitor's words, when a visitor would trip over it; and in the milestone doc's Status, with the detail an engineer needs. A run whose record is all triumph teaches the next session nothing.
