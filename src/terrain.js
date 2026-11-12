@@ -201,6 +201,164 @@ function massifGLSL() {
 }
 // --- the massifs' bands (end)
 
+// --- the wall close up (v11.1 W1, begin). The mesh is 2-3 m a cell, so under ~200 m the wall's rock is the shader's:
+// joints that break it into blocks of ~3 m and ~0.9 m, each block a facet tilted its own way (the bump), with thin
+// beds inside it that stop at its joints, a joint on only some edges (so blocks merge into masses), lichen in
+// patches, and on the aprons and fans scree: boulders, stones and grit, each stone its own gap, value and tilt. All of it is cells of a jittered grid (Voronoi), drawn in three charts like a triplanar (the arc round
+// the bowl and height; the radius and height, for faces turned along the arc; plan, for the shoulders and the
+// scree), blended by the normal. Every line is a filtered line: where a joint is thinner than the pixel's footprint
+// (half the larger of its two ways, or their mean if more, so a grazing view is filtered along its length) it widens and pales, and a whole layer
+// fades out before its cells are a few pixels, so nothing rings or shimmers. The arc chart's cells repeat a whole
+// number of times round the circle (FP_NL, FP_NS), so atan's wrap has no seam. Bounded by vRock (the bake: the
+// wall's rock and its scree), so the bowl's ground is untouched; past 250 m none of it runs.
+const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
+        const float FP_NL = 704.0, FP_NS = 2512.0; // cells round the circle at r 360: 3.21 m and 0.90 m
+        const vec3 FP_LICHEN = vec3(1.25, 1.45, 1.15), FP_LICHEN_RUST = vec3(1.9, 1.05, 0.55); // as tints of the rock
+        uvec2 fpPcg(uvec2 v) {
+          v = v * 1664525u + 1013904223u; v.x += v.y * 1664525u; v.y += v.x * 1664525u; v ^= v >> 16u;
+          v.x += v.y * 1664525u; v.y += v.x * 1664525u; v ^= v >> 16u; return v;
+        }
+        vec4 fpCellHash(ivec2 c, int per) {
+          if (per > 0) c.x -= per * int(floor(float(c.x) / float(per)));
+          uvec2 v = fpPcg(uvec2(c + 65536));
+          return vec4(float(v.x & 65535u), float(v.x >> 16u), float(v.y & 65535u), float(v.y >> 16u)) / 65535.0;
+        }
+        // the nearest cell of a jittered grid at p (in cells): returns the distance to its edge (the bisector with the
+        // second nearest), in cells; off is p from the cell's point, h the cell's hash (xy placed the point), h2's
+        // .z and .w the second nearest's (so a joint can be there or not, the same seen from either side)
+        float fpVoro(vec2 p, int per, out vec2 off, out vec4 h, out vec2 h2) {
+          vec2 c0 = floor(p), f = p - c0; ivec2 ic = ivec2(c0);
+          float d1 = 1e9, d2 = 1e9; vec2 o1 = vec2(0.0), o2 = vec2(1.0); h = vec4(0.0); h2 = vec2(0.0);
+          for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+            vec4 hh = fpCellHash(ic + ivec2(i, j), per);
+            vec2 o = f - (vec2(float(i), float(j)) + 0.5 + (hh.xy - 0.5) * 0.95);
+            float d = dot(o, o);
+            if (d < d1) { d2 = d1; o2 = o1; h2 = h.zw; d1 = d; o1 = o; h = hh; } else if (d < d2) { d2 = d; o2 = o; h2 = hh.zw; }
+          }
+          off = o1;
+          return (d2 - d1) / (2.0 * max(length(o1 - o2), 1e-4));
+        }
+        // a line w cells wide along an edge e cells off, filtered by the footprint fc (cells): wider and paler, never thinner
+        float fpLine(float e, float w, float fc) { float ww = max(w, fc * 1.5); return (1.0 - smoothstep(0.0, ww, e)) * (w / ww); }
+        // a smooth warp, so no joint is a straight polygon side for long
+        vec2 fpWarp(vec2 p, float a) { return p + a * vec2(sin(p.y * 1.37 + sin(p.x * 0.61) * 1.9), sin(p.x * 1.13 + sin(p.y * 0.73) * 2.1)); }
+        // the face in one chart: uv in metres (u across, v up the beds), per = cells round the circle (0: no wrap); fp
+        // the footprint in metres; gr (x: a fine grain, y: a coarse one) for the lichen. Adds the darkening (o.x), the
+        // albedo's shift (o.y), the lichen (o.z), its rust share (o.w); t the facets' slope in the chart. A joint is
+        // drawn on a little over half the cells' edges (the pair decides), so the blocks merge into irregular masses
+        // with fractures that start and stop, not a crazy paving.
+        void fpFace(vec2 uv, int perL, int perS, float fp, vec2 gr, float dry, inout vec4 o, inout vec2 t, float w) {
+          vec2 off, h2; vec4 h;
+          float cL = perL > 0 ? 6.2831853 * 360.0 / FP_NL : 3.21, cS = perS > 0 ? 6.2831853 * 360.0 / FP_NS : 0.9;
+          float fcL = fp / cL, fadeL = 1.0 - smoothstep(0.06, 0.16, fcL);
+          if (fadeL > 0.0) {
+            // taller than wide: the joints run down the face, the beds across (perL wraps u; the warp is periodic in it
+            // only approximately, but its amplitude is a fraction of a cell, under the jitter)
+            vec2 pL = fpWarp(vec2(uv.x / cL, uv.y / (cL * 1.5)), 0.22);
+            float e = fpVoro(pL, perL, off, h, h2);
+            float keep = step(0.42, fract((h.z + h2.x) * 7.13 + h.z * h2.x * 3.1));
+            float open = 0.35 + 0.95 * h.w * h2.y;
+            o.x += w * fadeL * keep * fpLine(e, 0.02 + 0.04 * h.w * h2.y, fcL) * 0.7 * open;
+            // most blocks weathered dark; one in six a fresh scar where a block fell, pale, the face's lightest value
+            o.y += w * fadeL * ((h.z - 0.5) * 0.3 + smoothstep(0.82, 0.9, fract(h.z * 5.37 + h.w)) * 0.75);
+            t += w * fadeL * (vec2(h.z, h.w) - 0.5) * vec2(1.3, 0.8);
+            // beds inside the block, 0.3-0.7 m, tilted its own way: they stop at its joints
+            float bp = 0.3 + 0.4 * fract(h.z * 7.31), bs = uv.y / bp + h.w * 9.0 + uv.x * (h.x - 0.5) * 0.15 / bp;
+            float fb = fp / bp, fadeB = (1.0 - smoothstep(0.12, 0.35, fb)) * step(0.35, h.x);
+            o.x += w * fadeL * fadeB * fpLine(abs(fract(bs + 0.5) - 0.5), 0.04, fb) * 0.3;
+            o.y += w * fadeL * fadeB * (fract(floor(bs) * 0.618 + h.x) - 0.5) * 0.14;
+          }
+          float fcS = fp / cS, fadeS = 1.0 - smoothstep(0.06, 0.16, fcS);
+          if (fadeS > 0.0) {
+            vec2 pS = fpWarp(vec2(uv.x / cS, uv.y / (cS * 1.3)) + 17.0, 0.25);
+            float e = fpVoro(pS, perS, off, h, h2);
+            float keep = step(0.5, fract((h.z + h2.x) * 5.71 + h.z * h2.x * 2.3));
+            o.x += w * fadeS * keep * fpLine(e, 0.025, fcS) * 0.5;
+            o.y += w * fadeS * (h.z - 0.5) * 0.18;
+            t += w * fadeS * (vec2(h.z, h.w) - 0.5) * 0.6;
+            // lichen: in patches where the coarse grain says so, on the dry rock, a ragged crust over some of the
+            // small blocks; one patch in twenty-five the rust kind
+            float zone = smoothstep(0.5, 0.64, gr.y) * dry;
+            if (zone > 0.0) {
+              float m = smoothstep(0.56, 0.68, gr.x + (h.w - 0.5) * 0.3 - length(off) * 0.15) * fadeS * w * zone;
+              o.z += m; o.w += m * step(0.94, h.z);
+            }
+          }
+        }
+        // scree in plan (x, z metres): stones of 0.9 m cells over stones of 0.27 m, each its own angular block
+        // (the cell less a gap of its own width, so some lie apart in gravel), tilted its own way, its own value;
+        // the gravel between, darker
+        void fpScree(vec2 p, float fp, float gF, inout vec4 o, inout vec2 t, float w) {
+          vec2 off, h2; vec4 h;
+          // boulders, one 3 m cell in three, for the scree's look from 100 m: darker, fresher rock than the weathered
+          // gravel, domed, and grained; a soft shadow round the foot, not an outline
+          float fB = fp / 3.0, fadeB = 1.0 - smoothstep(0.06, 0.16, fB), bould = 0.0;
+          if (fadeB > 0.0) {
+            float e = fpVoro(fpWarp(p / 3.0 + 31.0, 0.15), 0, off, h, h2);
+            float gap = 0.14 + 0.25 * h.w, on = step(0.66, h.z) * fadeB;
+            bould = smoothstep(gap, gap + 0.05 + fB, e) * on;
+            o.x += w * on * (1.0 - bould) * (1.0 - smoothstep(0.0, 0.12 + fB, gap - e)) * 0.3; // the shadow at its foot
+            o.x += w * bould * ((1.0 - smoothstep(gap, gap + 0.25, e)) * 0.3 + 0.18 + 0.2 * fract(h.z * 9.3) - 0.25 * gF);
+            t += w * bould * ((vec2(h.w, h.x) - 0.5) * 0.6 - off * 0.9);
+          }
+          w *= 1.0 - 0.65 * bould; // (a boulder keeps a faint crazing of the smaller stones' cracks, not a smooth dome)
+          // stones of 0.8 m, one cell in three
+          float fc = fp / 0.8, fade = 1.0 - smoothstep(0.06, 0.16, fc), cob = 0.0;
+          if (fade > 0.0) {
+            float e = fpVoro(fpWarp(p / 0.8, 0.18), 0, off, h, h2);
+            float gap = 0.06 + 0.3 * h.w * h.w, on = step(0.62, h.z) * fade;
+            cob = smoothstep(gap, gap + 0.04 + fc, e) * on;
+            o.x += w * on * (1.0 - cob) * (1.0 - smoothstep(0.0, 0.1 + fc, gap - e)) * 0.35;
+            o.x += w * cob * ((1.0 - smoothstep(gap, gap + 0.2, e)) * 0.3 - 0.2 * (gF - 0.5));
+            o.y += w * cob * (fract(h.z * 13.1) - 0.5) * 0.7;
+            t += w * cob * ((vec2(h.w, h.x) - 0.5) * 0.5 - off * 1.0);
+          }
+          // and stones of 0.22 m everywhere else, in a darker grit
+          float fs = fp / 0.22, fadeS = (1.0 - smoothstep(0.06, 0.16, fs)) * (1.0 - cob);
+          if (fadeS > 0.0) {
+            float e = fpVoro(fpWarp(p / 0.22 + 5.0, 0.2), 0, off, h, h2);
+            float gap = 0.05 + 0.4 * h.w * h.w * h.w;
+            float inside = smoothstep(gap, gap + 0.05 + fs, e);
+            o.x += w * fadeS * (1.0 - inside) * (0.25 + 0.3 * gF);
+            o.x += w * fadeS * inside * (1.0 - smoothstep(gap, gap + 0.25, e)) * 0.22;
+            o.y += w * fadeS * inside * (fract(h.z * 11.7) - 0.5) * 0.8;
+            t += w * fadeS * inside * ((vec2(h.z, h.w) - 0.5) * 0.5 - off * 1.1);
+          }
+        }
+        // all of it at p (n the normal, fp the footprint, rk the face's and the scree's weights, gr the grains, dry
+        // where no water runs): returns (albedo factor, lichen, the bump's weight, the lichen's rust share); g gets
+        // the slope in world space
+        vec4 fpCloseRock(vec3 p, vec3 n, float fp, vec2 rk, vec2 gr, float dry, inout vec3 g) {
+          float r = max(length(p.xz), 1.0); vec2 R = p.xz / r, T = vec2(-R.y, R.x);
+          vec3 w3 = pow(abs(vec3(dot(n.xz, R), dot(n.xz, T), n.y)), vec3(4.0)); w3 /= (w3.x + w3.y + w3.z);
+          vec2 mb = fpMassifBed(p.xz);
+          float v = p.y + dot(p.xz, mb); // up the beds
+          vec4 o = vec4(0.0); vec2 t;
+          if (rk.x > 0.002) {
+            if (w3.x > 0.08) { // the arc chart: faces turned to the bowl
+              t = vec2(0.0); fpFace(vec2(atan(p.z, p.x) * 360.0, v), int(FP_NL), int(FP_NS), fp, gr, dry, o, t, w3.x * rk.x);
+              g += t.x * vec3(T.x, 0.0, T.y) + vec3(0.0, t.y, 0.0);
+            }
+            if (w3.y > 0.08) { // the radial chart: the sides of spurs and couloirs
+              t = vec2(0.0); fpFace(vec2(r, v), 0, 0, fp, gr, dry, o, t, w3.y * rk.x);
+              g += t.x * vec3(R.x, 0.0, R.y) + vec3(0.0, t.y, 0.0);
+            }
+            if (w3.z > 0.08) { // plan: the shoulders and ledges
+              t = vec2(0.0); fpFace(p.xz, 0, 0, fp, gr, dry, o, t, w3.z * rk.x);
+              g += vec3(t.x, 0.0, t.y);
+            }
+          }
+          if (rk.y > 0.002) {
+            float ws = smoothstep(0.0, 0.35, rk.y) * smoothstep(0.45, 0.7, n.y); // talus spills a little onto the moor at the foot
+            t = vec2(0.0); fpScree(p.xz, fp, gr.x, o, t, ws);
+            g += vec3(t.x, 0.0, t.y);
+          }
+          float lich = clamp(o.z, 0.0, 1.0);
+          return vec4(max(0.2, (1.0 - clamp(o.x, 0.0, 0.8)) * max(0.3, 1.0 + o.y)), lich * 0.8, max(rk.x, rk.y), lich > 0.0 ? clamp(o.w / max(o.z, 1e-3), 0.0, 1.0) : 0.0);
+        }
+        #endif`;
+// --- the wall close up (end)
+
 // The river's cross-section at a point: carved height of the channel (Infinity where nothing is cut)
 // and the raised spur the canyon runs through (-Infinity where nothing is raised).
 const _cs = { cut: Infinity, raise: -Infinity, s: 0, d: 0, W: 0, hw: 0, bank: 0, inRiver: false, gully: false, shingle: 0, slow: 0 };
@@ -540,6 +698,7 @@ export function buildTerrain(ctx) {
   const glacArr = new Float32Array(pos.count * 3), gc = [0, 0, 0];
   const wetArr = new Float32Array(pos.count);
   const wallArr = new Float32Array(pos.count); // the wall's water (v4/mountains.js drainage): the couloirs and their gullies
+  const rockArr = new Float32Array(pos.count * 3); // (v11.1) how much of the colour is the wall's bare rock, its scree (the shader's close detail), and the face's convexity over ~12 m (ribs +, couloirs -)
   const rsec = { ..._cs };
   const cShingle = C('#48443e'), cPale = C('#8a8274'), cSilt = C('#2c2a24');
   const col = new THREE.Color();
@@ -619,6 +778,8 @@ export function buildTerrain(ctx) {
         const scree = (1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth)) * (1 - smoothstep(70, 140, y) * (1 - wMouth));
         tmp2.lerp(cScreeL, scree).lerp(cFan, scree * Math.min(1, wMouth * 1.5) * 0.8);
         tmp.lerp(tmp2, mm);
+        const rf = mm * clamp(rockMix, 0, 1);
+        rockArr[i * 3] = rf * (1 - scree); rockArr[i * 3 + 1] = rf * scree;
       }
     }
     // --- the massifs' bands (end)
@@ -627,6 +788,7 @@ export function buildTerrain(ctx) {
     const ice = glacierFloorIce(b.ice, b.slope, x, z); // v4 regions: ice holds on the snout's face too
     col.lerp(cIce, ice);
     iceArr[i] = ice;
+    if (ice > 0) { rockArr[i * 3] *= 1 - ice; rockArr[i * 3 + 1] *= 1 - ice; }
     if (ice > 0) { glacierCoords(x, z, gc); glacArr[i * 3] = gc[0]; glacArr[i * 3 + 1] = gc[1]; glacArr[i * 3 + 2] = gc[2]; }
     // the river: shingle banks and bed, pale stones in the pool, a wet band along the water and spray-soaked
     // rock round the fall
@@ -682,6 +844,7 @@ export function buildTerrain(ctx) {
         // sky's, which the normals barely vary, so the drainage has to show in the colour
         const lap6 = (pos.getY(k - 6) + pos.getY(k + 6) + pos.getY(k - 6 * n) + pos.getY(k + 6 * n) - 4 * pos.getY(k)) / (36 * cell * cell);
         const c6 = clamp(lap6 * 8, -0.8, 1);
+        rockArr[k * 3 + 2] = clamp(-(lap6 * 8 + lap2 * 1.5), -1, 1);
         const fw = (c2 > 0 ? 1 - 0.3 * c2 : 1 - c2 * 0.25) * (c6 > 0 ? 1 - 0.5 * c6 : 1 - c6 * 0.5);
         f = lerp(f, 1 - (1 - fw) * m, mw);
       }
@@ -692,6 +855,7 @@ export function buildTerrain(ctx) {
   geo.setAttribute('aIce', new THREE.BufferAttribute(iceArr, 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(wetArr, 1));
   geo.setAttribute('aWall', new THREE.BufferAttribute(wallArr, 1));
+  geo.setAttribute('aRock', new THREE.BufferAttribute(rockArr, 3));
   geo.setAttribute('aGlac', new THREE.BufferAttribute(glacArr, 3));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
@@ -710,11 +874,11 @@ export function buildTerrain(ctx) {
     Object.assign(shader.uniforms, uniforms);
     mat.userData.shader = shader; // the bands' uniforms, for A/B timing from the console
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute float aWall; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vGlac;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet; vWallW = aWall; vGlac = aGlac;');
+      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute float aWall; attribute vec3 aRock; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vRock; varying vec3 vGlac;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet; vWallW = aWall; vRock = aRock; vGlac = aGlac;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vGlac;
+        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vRock; varying vec3 vGlac;
         ${GLACIER_GLSL}
         vec3 triplanar(sampler2D t, vec3 p, vec3 n, float s) {
           vec3 w = abs(n); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z);
@@ -760,7 +924,8 @@ export function buildTerrain(ctx) {
           if (a >= 0.0) { h0 = smoothstep(a, b, h0); hu = smoothstep(a, b, hu); hv = smoothstep(a, b, hv); }
           // d(uv)/d(world): u = atan(z, x) k, v = y sy
           return amp * ((hu - h0) / eu * vec3(-p.z, 0.0, p.x) * (k / r2) + (hv - h0) / ev * vec3(0.0, sy, 0.0));
-        }`)
+        }
+        ${CLOSE_ROCK_GLSL}`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         vec3 fpDpx = dFdx(vTPos), fpDpy = dFdy(vTPos); // the wall chart's gradients, outside any branch
         float fpCav = 0.5, fpHW = 0.0; vec3 fpHG = vec3(0.0);
@@ -781,6 +946,19 @@ export function buildTerrain(ctx) {
             fpHG = wm * (fpWallSlope(vTPos, 60.0, 0.03, fpDpx, fpDpy, tBlk, vec4(1.0, 0.0, 0.0, 0.0), 0.35, 0.65, 1.8)
                        + fpWallSlope(vTPos, 128.0, 0.05, fpDpx, fpDpy, tSml, vec4(0.0, 1.0, 0.0, 0.0), -1.0, 0.0, 0.6)
                        + fpWallSlope(vTPos, 84.0, 0.006, fpDpx, fpDpy, tFlu, vec4(0.0, 0.0, 1.0, 0.0), -1.0, 0.0, 0.5));
+          }
+          // the wall close up (v11.1): joints, blocks, beds, lichen and scree under ~200 m (CLOSE_ROCK_GLSL)
+          float fpNearW = (1.0 - smoothstep(170.0, 250.0, length(vTPos - cameraPosition))) * (1.0 - vIce);
+          if (fpNearW * (vRock.x + vRock.y) > 0.002) {
+            // metres a pixel: half the larger way, or the mean of the two if more (a grazing view is filtered along its
+            // length, but not so hard that the ground at 30 m goes plain)
+            float fpL1 = length(fpDpx), fpL2 = length(fpDpy), fpFoot = max(0.5 * max(fpL1, fpL2), sqrt(fpL1 * fpL2));
+            vec3 g = vec3(0.0);
+            vec4 gT = fpWallTex(vTPos, 640.0, 0.18, fpDpx, fpDpy); // fine grain (3.5 m tiles): the lichen's ragged edge, the gravel
+            vec4 cl = fpCloseRock(vTPos, normalize(vTNormal), fpFoot, vRock.xy * fpNearW, vec2(gT.b, sml), 1.0 - smoothstep(0.1, 0.4, vWallW), g);
+            diffuseColor.rgb *= cl.x;
+            diffuseColor.rgb *= mix(vec3(1.0), mix(FP_LICHEN, FP_LICHEN_RUST, cl.w), cl.y); // lichen tints the rock it crusts
+            fpHG += g; fpHW = max(fpHW, cl.z);
           }
         }
         #endif
@@ -839,6 +1017,18 @@ export function buildTerrain(ctx) {
             // the streaks gather where water runs and fade on the dry ribs, so they do not hang evenly like a curtain
             float wetS = 0.35 + 0.65 * smoothstep(0.0, 0.5, vWallW + lens);
             diffuseColor.rgb *= 1.0 + rockW * (lens * 0.25 - streak * wetS * (0.05 + 0.22 * vWallW) + salt * 0.08 + (fpCav - 0.5) * 0.7);
+            // (v11.1) toward the sun (the southern and western massifs seen from the bowl) the faces have the sky's light
+            // and the sun's at a graze, and the warm haze laid over them buried their values: there, seen from afar,
+            // the dry rock between the couloirs is paler and the couloirs darker, so the erosion shows through the
+            // glare. A face the sun strikes full is left alone (it would blow out); the cold side is as it was.
+            vec3 fpV = vTPos - cameraPosition; float fpVl = length(fpV.xz);
+            float fpVs = dot(fpV.xz / max(fpVl, 1e-3), FP_SUN_XZ); // (close round the disc the ranges stay soft silhouettes)
+            float shadeS = rockW * smoothstep(-0.1, 0.6, fpVs) * (1.0 - 0.6 * smoothstep(0.88, 0.98, fpVs)) * smoothstep(150.0, 300.0, fpVl)
+                         * (1.0 - smoothstep(0.35, 0.65, dot(normalize(vTNormal), vec3(FP_SUN_XZ.x * 0.972, 0.233, FP_SUN_XZ.y * 0.972))));
+            // the ribs from the mesh's convexity over ~12 m (the bake's vRock.z), broken by the rock's masses
+            float fpRib = smoothstep(0.05, 0.4, vRock.z + (fpCav - 0.5) * 0.8 + lens * 0.4) * (1.0 - smoothstep(0.15, 0.6, vWallW));
+            float fpGut = max(smoothstep(0.0, -0.45, vRock.z), min(1.0, vWallW * 1.5));
+            diffuseColor.rgb = mix(diffuseColor.rgb, max(diffuseColor.rgb, vec3(0.34, 0.29, 0.235)), shadeS * fpRib) * (1.0 - shadeS * fpGut * 0.75);
             float hi = smoothstep(150.0, 245.0, vTPos.y + (d2.r - 0.5) * 40.0);
             float flt = smoothstep(0.58, 0.82, vTNormal.y);
             float lee = 1.0 - 0.45 * smoothstep(0.0, 0.6, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
