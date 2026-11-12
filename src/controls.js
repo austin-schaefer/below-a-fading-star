@@ -365,11 +365,13 @@ export function buildControls(ctx) {
   // else moves the player: no walking, hop, gravity or colliders; the look stays free, and state.intent (0..1) says
   // how hard the visitor is pushing to move, for the carrier to read. The carrier gives them back by calling
   // release() and then placing them (placeAt, or pos itself). A teleport (placeAt, or pos moved more than 1.5 m by
-  // anyone else) ends the carry and calls drop(), so the carrier can let go of its end.
+  // anyone else) ends the carry and calls drop(), so the carrier can let go of its end; a step() that throws ends it
+  // too, and puts the player back where the carry began.
   let carried = null, carryAt = null;
+  const carryFrom = new THREE.Vector3(); // where the carry began: a carrier that throws puts them back here
   function carry(c) {
     if (carried) dropCarry();
-    carried = c; carryAt = null; state.carried = true; state.intent = 0;
+    carried = c; carryAt = null; state.carried = true; state.intent = 0; carryFrom.copy(state.pos);
     return () => { if (carried === c) { carried = null; carryAt = null; state.carried = false; } };
   }
   function dropCarry() {
@@ -405,7 +407,8 @@ export function buildControls(ctx) {
       if (carryAt && Math.abs(state.pos.x - carryAt.x) + Math.abs(state.pos.y - carryAt.y) + Math.abs(state.pos.z - carryAt.z) > 1.5) dropCarry();
       else {
         state.intent = Math.min(1, hyp(mx, mz));
-        carried.step(state.pos, dt);
+        try { carried.step(state.pos, dt); }
+        catch (e) { console.error('[fp] carry step failed:', e); dropCarry(); placeAt(carryFrom.x, carryFrom.z); return; }
         (carryAt ||= new THREE.Vector3()).copy(state.pos);
         state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
         state.moving = false; state.speed = 0; state.bobAmt = 0; state.wading = 0;

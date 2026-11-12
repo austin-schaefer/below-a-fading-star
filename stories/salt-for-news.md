@@ -38,3 +38,4 @@ Whether the pedlar jumped or was pushed to look up.
 
 - 2026-11-12, v10-A2: the turn written as an act, then shelved after a blind reading (the sack place, the salt, the tokens and the riders' errand did not read): take a pinch at the sack, pay it at the pile, three tokens of news that point at the traveller, the twelfth chair and the jackdaw.
 - 2026-11-11, v8 brief 07: built. Marked partial when the library began.
+- 2026-11-12, v10-A4: the pedlar whose sack split is the sleeper in the Lantern Halt (stories/the-lantern-halt.md): what was left of the sack lies by his bed, and he pays a guest at the hatch with a handful of it.
