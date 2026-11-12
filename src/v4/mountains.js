@@ -4,9 +4,9 @@
 //          (190-235°, ~300 m), the west (265-318°, to 320 m: the Galleries) and the Tierce (336-356°, 300 m); the
 //          cols at 112° (61 m), 180° (41 m) and 328° (73 m), the glacier's notch (354-20°) and the sun's saddle
 //          (250°, 22 m, the lowest). The crest runs through a periodic spline over bearing, rounded within a massif,
-//          the named peaks (PEAKS) broad crowns on it. Each face has three sizes of structure: a scree apron at 33°,
-//          a steep rock band behind it, a convex shoulder into the crest, and corries; ledges along each massif's
-//          tilted bedding plane, a few gullies crest to apron, buttresses where the face is steep; creased facets.
+//          the named peaks (PEAKS) broad crowns on it. Each face is organised by water (v11): a scree apron at 33°,
+//          a steep rock band behind it, a convex shoulder into the crest, corries; couloirs cut down it, fed by
+//          gullies high up, opening onto fans of scree; ribs and arêtes between them (applyMassifs).
 //   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~800 and ~1350), each rolling
 //          in massifs of its own set behind the near cols, lower in the picture and paler under the fog tiers.
 // ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
@@ -223,7 +223,11 @@ const FALL_AZ = Math.atan2(258, 208);
 // ---------------------------------------------------------------- the heightfield
 // h: the floor's height at (x, z) before the walls; r = hypot(x, z); g, glacierH: the glacier's notch (its
 // mask and its own surface, from terrain.js) cuts through every tier of the walls as before.
+// WALL_SAMPLE: what the last applyMountains call left of the face's water (0..1) and its fans' mouths (0..1), for
+// terrain.js's colour bake to read straight after its heightAt (reset it first: inside M_START nothing is written)
+export const WALL_SAMPLE = { water: 0, mouth: 0 };
 export function applyMountains(h, x, z, r, g, glacierH) {
+  WALL_SAMPLE.water = 0; WALL_SAMPLE.mouth = 0;
   if (r < M_START) return h;
   if (CAND) return applyMassifs(h, x, z, r, g, glacierH); // the massifs; below, the v4 wall (?mountains=v4)
   const az = Math.atan2(z, x);
@@ -302,38 +306,125 @@ export function applyMountains(h, x, z, r, g, glacierH) {
 
 // --- the massifs (begin): the heightfield (see the tables' block). The face: from a foot set by the crest's height
 // and the mean slope that height asks for (CAND.slope, from the cols' to the massifs'), a long concave toe, a steeper middle and a convex shoulder rounding over the crest.
-// The face's structure at three sizes:
-//   the big form: a scree apron at 33° from the foot (lighter, smooth), a steep rock band standing behind it (a
-//     clear break of slope where they meet), a convex shoulder rounding over into the crest; corries (CORRIES)
-//     scooped high in the north- and east-facing faces, a lip below and a headwall under the crest;
-//   the middle: bedding, ledges every 13-17 m along a plane tilted 4-7° (MASSIFS: one dip per massif, another
-//     across the next col), a few deep gullies from the crest to the apron (GULLIES), each with a heavier scree fan
-//     at its mouth, and the buttress rhythm only where the face's mean slope passes ~50°;
-//   the small: creased facets (ridged noise, ~45 m) so the low sun picks out planes, and the old noise octaves low.
+// The face is organised by water (v11): everything on it runs downhill.
+//   the big form: a scree apron at 33° from the foot, a steep rock band standing behind it, a convex shoulder
+//     rounding over into the crest; corries (CORRIES) scooped high in three faces; broad bays and spurs (~250 m);
+//   the drainage (drainage()): couloirs (N_COUL round the bowl, uneven, some left out), each a V cut into the face
+//     with one flank steeper than the other, deepest low on the face and opening at its mouth onto a cone of
+//     scree; on the upper face three gullies a couloir that converge downward into it, the ribs standing
+//     between; nothing finer than ~30 m in the mesh (finer than that aliases against its 2-3 m cells: the shader
+//     carries it);
+//   no bedding in the geometry: the old ledges (every 13-17 m) read as rulers. Bedding is the shader's, faint.
 const TAN_SCREE = Math.tan(33 * D2R);
-// [first bearing, last bearing, dip (dy/dx, dy/dz), ledge step (m)]; the cols between blend from one to the next
+// [first bearing, last bearing, dip (dy/dx, dy/dz), bedding step (m)]: the shader tilts its faint bedding by these
 export const MASSIFS = [[20, 100, 0.07, -0.06, 15], [125, 172, -0.05, -0.08, 17], [190, 235, 0.09, 0.03, 14], [264, 318, -0.04, 0.1, 16], [336, 356, 0.08, 0.05, 13]];
-// [bearing, half-width at the crest (m), depth (m)]: clear of the Gradine (54), the Vigilant (72), the Span (130,
-// 230), the fall (133-145), the Galleries (268-296), the Hawser (342) and the glacier (354-20)
-const GULLIES = [[40, 14, 20], [88, 12, 16], [153, 13, 18], [166, 11, 14], [199, 14, 20], [214, 12, 16], [305, 13, 18], [314, 11, 15]];
 // [bearing, half-width (degrees), push back (fraction of the face's run)]: the south massif's north face, the
 // south-east massif's north-west face, the west massif's east face north of the Galleries
 const CORRIES = [[158, 6.5, 0.22], [207, 8, 0.26], [308, 6.5, 0.22]];
-const T_DX = new Float32Array(N + 1), T_DZ = new Float32Array(N + 1), T_ST = new Float32Array(N + 1);
+// the bearings things hang on (the Hawser, the Galleries, the Lamps, the Vigilant, the Gradine, the Long Figure,
+// the Span's abutments, the fall): the drainage cuts shallower there, so the face stays where they were fitted
+const HUNG = [[342, 346], [268, 296], [300, 318], [72, 72], [54, 59], [103, 103], [130, 130], [230, 230], [133, 145]];
+// there the face keeps the relief they were fitted to (v10's buttresses, gullies and facets, without the ledges)
+const GULLIES = [[40, 14, 20], [88, 12, 16], [153, 13, 18], [166, 11, 14], [199, 14, 20], [214, 12, 16], [305, 13, 18], [314, 11, 15]];
+// the old gullies' fans, which raised the apron (and so moved the whole face's profile) under them
+function fittedFan(b, r, u, steep) {
+  let fan = 0;
+  for (const [gb, gw] of GULLIES) {
+    const w = gw * (0.55 + 0.45 * u);
+    let db = b - gb; if (db > 180) db -= 360; if (db < -180) db += 360;
+    if ((Math.abs(db) - 1.6) * D2R * r >= w * 2.2) continue;
+    db -= 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
+    fan = Math.max(fan, (1 - smoothstep(w * 0.6, w * 2.2, Math.abs(db) * D2R * r)) * (0.4 + 0.6 * steep));
+  }
+  return fan;
+}
+function fittedRelief(B, b, x, z, r, u, steep, along, up0, face) {
+  const ph = B.ph + 0.22 * S.noise2(r * 0.012, Math.atan2(z, x) * 3.0);
+  const fl = Math.floor(ph), s = Math.abs(ph - fl - 0.5) * 2;
+  const sp = (1 - Math.pow(s, 0.75)) * (0.4 + 0.6 * hash2(((fl % SPURS) + SPURS) % SPURS, 913)) * steep;
+  let gul = 0;
+  for (const [gb, gw, gd] of GULLIES) {
+    const w = gw * (0.55 + 0.45 * u);
+    let db = b - gb; if (db > 180) db -= 360; if (db < -180) db += 360;
+    if ((Math.abs(db) - 1.6) * D2R * r >= w) continue;
+    db -= 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
+    const v = Math.max(0, 1 - (Math.abs(db) * D2R * r) / w);
+    gul = Math.max(gul, gd * Math.pow(v, 1.4) * (0.4 + 0.6 * steep));
+  }
+  let dr = 9 * sp - 4 * Math.pow(s, 1.5) * steep * smoothstep(0.15, 0.6, u + 0.12 * S.noise2(x * 0.02, z * 0.02 + 3.3));
+  dr -= gul * smoothstep(0.05, 0.25, u) * (1 - smoothstep(0.93, 1.02, u));
+  dr += (S.ridged2(along * 0.018 + 7.1, up0 * 0.04 - 3.3, 2) - 0.55) * 8 * face * (0.4 + 0.6 * steep);
+  dr += S.fbm2(along * 0.011 + 1.3, up0 * 0.011 - 2.1, 3) * 14 * face; // v10's ribs and bays
+  return dr;
+}
+const N_COUL = 30;
+const T_HC = new Float32Array(N + 1);
 if (CAND) {
   const bd = (a, b) => ((a - b) % 360 + 540) % 360 - 180;
   for (let i = 0; i <= N; i++) {
     const b = bearingOf(-Math.PI + (TAU * i) / N);
-    // the massif this bearing belongs to (or the two a col lies between, blended across it)
-    let best = 0, w = 0, dx = 0, dz = 0, st = 0;
-    for (const [b0, b1, mx, mz, ms] of MASSIFS) {
-      const mid = (b0 + b1) / 2, half = (b1 - b0) / 2;
-      const d = Math.abs(bd(b, mid));
-      const k = Math.pow(Math.max(1e-3, 1 - smoothstep(half, half + 14, d)), 2) + 1e-6 / (1 + d);
-      dx += mx * k; dz += mz * k; st += ms * k; w += k; best = Math.max(best, k);
+    let calm = 0;
+    for (const [h0, h1] of HUNG) {
+      const d = Math.max(0, bd(h0, b), bd(b, h1));
+      calm = Math.max(calm, 1 - smoothstep(1, 5, d));
     }
-    T_DX[i] = dx / w; T_DZ[i] = dz / w; T_ST[i] = st / w;
+    T_HC[i] = calm;
   }
+}
+// The drainage at a point of the face: how far the water has cut it back (m, radially), how much water runs
+// there (0..1, for the shading), and the scree cone at the couloir's mouth (its height, or -Infinity).
+// u: the run up the face (0 the apron's toe, 1 the crest); steep: the face's steepness (0..1); Ha, ra: the
+// apron's top height and the rock band's foot radius, where each couloir's fan has its apex.
+const _dn = { cut: 0, water: 0, fan: -Infinity, mouth: 0 }, _cc = new Float64Array(5);
+function drainage(x, z, az, r, u, steep, calm, Ha, ra) {
+  // the couloirs' lines wander as they climb (world-space noise, so the bowl has no seam), unevenly spaced
+  const t = ((az + Math.PI) / TAU) * N_COUL + 0.5 * S.fbm2(x * 0.0042 + 17.3, z * 0.0042 - 4.1, 3);
+  const L1 = (TAU * r) / N_COUL, i0 = Math.floor(t);
+  for (let j = 0; j < 5; j++) { const k = i0 - 2 + j; _cc[j] = k + 0.5 + 0.7 * (hash2(((k % N_COUL) + N_COUL) % N_COUL, 517) - 0.5); }
+  // the heads' heights wander with noise, so no two gullies start level (a row of gully heads at one height is
+  // a row of fins)
+  const uw = u + 0.09 * S.noise2(x * 0.009 - 2.2, z * 0.009 + 6.4);
+  let cut1 = 0, wat1 = 0, fan = -Infinity, mouth = 0, nq = 9, nd = 0, nb = 0;
+  for (let j = 1; j <= 3; j++) {
+    const kk = (((i0 - 2 + j) % N_COUL) + N_COUL) % N_COUL, d = t - _cc[j];
+    const half = d < 0 ? _cc[j] - _cc[j - 1] : _cc[j + 1] - _cc[j]; // to the neighbour on this side (cells)
+    const q = (2 * Math.abs(d)) / half; // 0 on the line, 1 halfway to the next
+    if (q < nq) { nq = q; nd = d / half; nb = kk; }
+    const str = hash2(kk, 733);
+    const k1 = smoothstep(0.2, 0.45, str) * (0.4 + 0.6 * str); // the weakest are left out: a plain face
+    if (k1 <= 0) continue;
+    // the V: one flank steep, the other long; the bottom rounded by a few metres; where two meet, a sharp rib
+    const sk = 0.4 * (2 * hash2(kk, 91) - 1);
+    const dm = Math.abs(d) * L1, w = (0.32 + 0.3 * hash2(kk, 92)) * half * L1 * (d < 0 ? 1 + sk : 1 - sk);
+    const v = Math.max(0, 1 - Math.sqrt(dm * dm + 16) / w);
+    // along the run: each heads at its own height (most in a notch of the crest), cuts deepest low on the face,
+    // opens at its mouth onto its fan
+    const uTop = 1.04 - 0.34 * hash2(kk, 211) * hash2(kk, 212);
+    const run = (1 - smoothstep(uTop - 0.3, uTop, uw)) * smoothstep(0.03, 0.2, u) * (0.55 + 0.45 * (1 - u));
+    const c = 36 * k1 * (0.7 + 0.3 * steep) * Math.pow(v, 1.2) * run;
+    if (c > cut1) { cut1 = c; wat1 = Math.pow(v, 2) * run * k1 * 1.6; }
+    // the cone of scree at the mouth: apex at the rock band's foot, falling away at 33° all round
+    // (apex a little up the gully, low enough that the toe stops near the apron's, short of the bowl's floor)
+    const ap = Ha * (0.75 + 0.35 * k1) * (1 - 0.6 * calm), da = d * L1, rap = ra + 0.25 * Ha / TAN_SCREE;
+    const fh = (ap - TAN_SCREE * Math.sqrt(da * da + Math.max(0, rap - r) ** 2) * (0.9 + 0.2 * hash2(kk, 41))) * smoothstep(M_START + 6, M_START + 30, r);
+    if (fh > fan) { fan = fh; mouth = k1 * (1 - smoothstep(0, 0.6 * L1, Math.abs(da))); }
+  }
+  // the gullies feeding the nearest couloir, high on the face: three a couloir, drawn together as they descend,
+  // each with its own head and length; none across the rib between two couloirs
+  const conv = 0.55 + 0.45 * smoothstep(0.15, 0.9, u);
+  const t2 = nd * conv * 3 + 0.35 * S.noise2(x * 0.011 + 3.3, z * 0.011 - 8.1);
+  const f2 = t2 - Math.floor(t2) - 0.5, i2 = Math.floor(t2) + 7 * nb;
+  const v2 = Math.max(0, 1 - Math.abs(f2) / 0.42);
+  const h2 = 0.72 + 0.3 * hash2(i2, 338), l2 = 0.2 + 0.3 * hash2(i2, 339);
+  const env2 = smoothstep(h2 - l2, h2 - 0.4 * l2, uw) * (1 - smoothstep(h2 - 0.08, h2, uw)) * (1 - smoothstep(0.7, 0.98, nq));
+  const g2 = v2 * v2 * (3 - 2 * v2);
+  // (uneven: about a third are missing and the rest of any depth, so the feeders never comb the face evenly)
+  const cut2 = 7 * (0.25 + 0.75 * steep) * smoothstep(0.3, 0.6, hash2(i2, 337)) * (0.4 + 0.6 * hash2(i2, 336)) * env2 * g2;
+  const quiet = 1 - calm;
+  _dn.cut = (Math.max(cut1, cut2) + 0.4 * Math.min(cut1, cut2)) * quiet;
+  _dn.water = clamp(wat1 + 0.5 * g2 * env2, 0, 1) * quiet;
+  _dn.fan = fan; _dn.mouth = mouth * quiet;
+  return _dn;
 }
 function applyMassifs(h, x, z, r, g, glacierH) {
   const az = Math.atan2(z, x);
@@ -345,25 +436,6 @@ function applyMassifs(h, x, z, r, g, glacierH) {
   const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
   const span = Rc - foot;
   const u = clamp((r - foot) / span, 0, 1);
-  // buttresses, only where the face is steep: they push the rock band out over the apron
-  const ph = B.ph + 0.22 * S.noise2(r * 0.012, az * 3.0);
-  const fl = Math.floor(ph), s = Math.abs(ph - fl - 0.5) * 2;
-  const spA = 0.4 + 0.6 * hash2(((fl % SPURS) + SPURS) % SPURS, 913);
-  const sp = (1 - Math.pow(s, 0.75)) * spA * steep;
-  // the gullies: across-distance (m) from each one's line, which wanders as it climbs
-  let gul = 0, fan = 0;
-  for (const [gb, gw, gd] of GULLIES) {
-    const w = gw * (0.55 + 0.45 * u);
-    let db = b - gb; if (db > 180) db -= 360; if (db < -180) db += 360;
-    if ((Math.abs(db) - 1.6) * D2R * r >= w * 2.2) continue; // out of reach even at the line's widest wander (±1.6°)
-    db -= 1.6 * S.noise2(r * 0.011, gb * 0.37); if (db > 180) db -= 360; if (db < -180) db += 360;
-    const d = Math.abs(db) * D2R * r;
-    if (d < w * 2.2) {
-      const v = Math.max(0, 1 - d / w);
-      gul = Math.max(gul, gd * Math.pow(v, 1.4) * (0.4 + 0.6 * steep));
-      fan = Math.max(fan, (1 - smoothstep(w * 0.6, w * 2.2, d)) * (0.4 + 0.6 * steep));
-    }
-  }
   // corries: the face pushed back in a bowl high on the face, so a lip stands below and a headwall above
   let push = 0;
   for (const [cb, cw, ck] of CORRIES) {
@@ -371,8 +443,10 @@ function applyMassifs(h, x, z, r, g, glacierH) {
     if (db < cw) push = Math.max(push, ck * span * Math.pow(Math.cos((db / cw) * Math.PI / 2), 2));
   }
   const re = r - push * smoothstep(0.22, 0.55, u) * (1 - smoothstep(0.78, 0.96, u));
-  // the apron: scree at 33° from the foot up to Ha, heavier under the steep faces and at the gullies' mouths
-  const Ha = Hc * (0.1 + 0.1 * steep) * (0.8 + 0.25 * fan + 0.25 * S.noise2(az * 9.0, 2.9));
+  const ui = Math.min(N - 1, Math.max(0, Math.floor(((az + Math.PI) / TAU) * N)));
+  // the apron: scree at 33° from the foot up to Ha, heavier under the steep faces
+  const calm = T_HC[ui];
+  const Ha = Hc * (0.1 + 0.1 * steep) * (lerp(0.85, 0.8 + 0.25 * (calm > 0 ? fittedFan(b, r, u, steep) : 0), calm) + 0.25 * S.noise2(az * 9.0, 2.9));
   const r0 = foot + 0.75 * Ha / TAN_SCREE; // the rock band's foot, behind the apron's top
   const H0 = 0.55 * Ha;
   // the profile along the run: easy faces a concave toe into a convex shoulder; steep ones a band steepest at its
@@ -387,26 +461,33 @@ function applyMassifs(h, x, z, r, g, glacierH) {
   // The face's relief moves it in and out (r), not up and down, so a steep face keeps its planes instead of taking
   // noise stretched down its height; the relief's noise runs in the face's own chart (along the arc, up the face).
   const up0 = P(re), along = az * Rc;
-  let dr = 9 * sp - 4 * Math.pow(s, 1.5) * steep * smoothstep(0.15, 0.6, u); // the buttresses and their gullies
-  dr -= gul * smoothstep(0.05, 0.25, u) * (1 - smoothstep(0.93, 1.02, u)); // the gullies, crest to apron
-  dr += (S.ridged2(along * 0.018 + 7.1, up0 * 0.04 - 3.3, 2) - 0.55) * 8 * face * (0.4 + 0.6 * steep); // facets, wider than tall
-  dr += S.fbm2(along * 0.011 + 1.3, up0 * 0.011 - 2.1, 3) * 14 * face; // ribs and bays
+  const dn = drainage(x, z, az, r, u, steep, T_HC[ui], Ha, r0);
+  let dr = -dn.cut * smoothstep(0.03, 0.2, u) * (1 - smoothstep(0.95, 1.02, u)); // the drainage, crest to apron
+  // ribs and bays, drawn out down the fall line (2.4:1) in a polar chart, so they run downhill and have no seam.
+  // Their noise runs on the radius, not the height: v10's ran on the face's height and pushed the face in and out
+  // by more than its own vertical wavelength, so the heightfield folded into rows of pointed fins. The hung
+  // bearings keep v10's (fittedRelief) until what hangs there is fitted again.
+  const rho = 4.95 + (r - 450) * 0.0045;
+  dr += S.fbm2(Math.cos(az) * rho + 1.3, Math.sin(az) * rho - 2.1, 3) * 12 * face * (1 - calm);
+  // arêtes: creases of ridged noise in the same chart, finer (~40 m across, 90 m down), so the ribs break into
+  // planes the low sun can pick out instead of reading as draped cloth
+  const rho2 = 11.5 + (r - 450) * 0.011;
+  dr += (S.ridged2(Math.cos(az) * rho2 - 4.7, Math.sin(az) * rho2 + 8.2, 2) - 0.45) * 10 * face * (0.5 + 0.5 * steep) * (1 - calm);
+  const rho3 = 26 + (r - 450) * 0.026; // and smaller, ~17 m across, 38 m down, low on the face where it is seen near
+  dr += (S.ridged2(Math.cos(az) * rho3 + 2.9, Math.sin(az) * rho3 - 6.6, 1) - 0.5) * 3.5 * face * (1 - 0.6 * u) * (1 - calm);
+  dr += S.fbm2(x * 0.0035 + 6.1, z * 0.0035 + 2.7, 2) * 16 * face * (1 - calm); // spurs and bays, ~250 m
+  if (calm > 0) dr += calm * fittedRelief(B, b, x, z, r, u, steep, along, up0, face);
+  WALL_SAMPLE.water = dn.water * (1 - sw) * (1 - g); WALL_SAMPLE.mouth = dn.mouth * (1 - sw) * (1 - g);
   let m = P(re + dr);
   // the small: the old pinnacles at a quarter of v4's height and twice its wavelength, on the crest only (it stays
   // rounded); the broad roll and the fine noise, low
   const up = smoothstep(0.6, 1.0, u);
   const rEnv = RIDGE_ON ? ridgeEnv(b) : 0; // AP's run, as in applyMountains
   m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
-  m += S.noise2(x * 0.06, z * 0.06) * 1.2 * u + S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
+  m += S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
   m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
-  // bedding: treads and risers along the massif's tilted plane, on the rock (the apron covers their feet)
-  const bed = face * (1 - sw) * (0.3 + 0.7 * steep);
-  if (bed > 0) {
-    const ui = Math.min(N - 1, Math.max(0, Math.floor(((az + Math.PI) / TAU) * N)));
-    const dip = x * T_DX[ui] + z * T_DZ[ui], st = T_ST[ui];
-    const q = (m + dip) / st, qf = Math.floor(q), t = q - qf;
-    m = lerp(m, (qf + Math.pow(t, 4)) * st - dip, 0.6 * bed);
-  }
+  // the couloirs' fans: cones of scree spread from each mouth over the apron
+  if (dn.fan > 0) m = smax(m, dn.fan, 5);
   // the apron meets the band in a crease, its top soft
   if (r > foot - 6) {
     const cone = (r - foot) * TAN_SCREE * (1 + 0.06 * S.noise2(x * 0.05, z * 0.05));
