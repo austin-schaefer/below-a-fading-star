@@ -6,6 +6,15 @@ Austin, 2026-11-11 (issue #2, "Environmental music"): "v7.2 added a leveled-up s
 
 ## Status
 
+**Opened 2026-11-11, 18:27 PST**, on `next` (equal to `main` at the v8 release, `5514e71`, plus this entry). v8 shipped at 18:24 and the owner's word was "once you ship this milestone, go ahead and pick up the next one", so v9 opens in the same session. In flight, each in its own worktree under `.claude/worktrees/`, pushing a branch and no PR:
+
+| Brief | Model | Branch / worktree | Port |
+|---|---|---|---|
+| M0 the score, the text harness, the moor track, the `music` skill (`briefs/v9/brief-v9-M0-score.md`) | opus | `issue-900-music-score` | 8161 if it serves |
+| M5 the sound harness made cheaper (briefed in the dispatch prompt from the index's M5 row: spectrograms off by default with a text band table, one page for all poses, `--poses=`, the skill updated, no gate loosened) | sonnet | `issue-905-sound-harness` | 8165 |
+
+Next: when M0 reports, look at its piano roll and gates, cold review, merge; then write and dispatch M1 (patches, player, render) and M2 (director, simulator, bus, setting, `?music=`) side by side from what M0 defined; then M3 and M4. Before release the owner gets a WAV of every track and `?music=<track>`; that is a "Done when", and the release leans rare. The owner's standing words from the v8 session still hold and are listed in `plans/wilderness-v8.md` (the 17:08 entry).
+
 **Planned, not started (2026-11-11, 14:08 PST).** A research and design agent read the sound code and harness and searched for how programs compose without hearing; its findings are the design in `briefs/v9/index.md`, and the first brief (M0: the score format, the text harness, one reference track, the `music` skill) is written. Nothing is dispatched and nothing will be until v8's release is on `main`. Then: M0 alone first, because every later brief builds on its score format.
 
 ## What a visitor should notice
