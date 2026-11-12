@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 565 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 480 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -73,6 +73,18 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 58 | v7.1 legible: the Indistinct's crown over the lawn's lip, the Repetend dove-grey, the Simulacrum's denser columns, the erratic's glyph cut deep, the Bather's 4 m swap |
 | 59 | v7.1 UI: coordinates, the full teleport list, the region cards, the Pit and Rest in Starlight, the Lamplighter's couplet |
 | 60 | v7.1 visibility: each thing a step more visible along its own palette, before and after, and the survey sheet |
+| 61 | v8 roads: the leads joined into a network, visible worn tracks, gnomons, the Lynchets gate; before and after, with the map |
+| 62 | v8 ground: cover, ground colour and grade by place; before and after at eye level (the `after` is the last render of the pass) |
+| 63 | v8 strata: the three stone hands (Elder, Heliarch, Late), the sign in each, the Pomegranate House re-skinned |
+| 64 | v8 threads: the traveller on the Span, the Collation's twelfth chair, the grave, the court's gold |
+| 65 | v8 the house lit and lived in: lamps, host, musician, patrons, sleeper, the slipper's mate (one blown-out failure kept) |
+| 66 | v8 liveries: the figures' costumes at 4 m, the officers' and Late-folk's sheets, the dealing props |
+| 67 | v8 Twk-men: the salt-pedlars as small winged figures with gestures, at gnomons and the house gate |
+| 68 | v8 the painter's thread: the painter's man and the paintings left along the road |
+| 69 | v8 repairs: gnomon tips, the house's glare, the roundels, before and after |
+| 70 | v8 crystal tops and the low-thing hop: the crystals' true tops, hopping onto boulders, walls and the parapet |
+| 71 | v8 rocks: a third of the boulders, in outcrops on cleared ground, a quiet lichen; before and after |
+| 72 | v8 the walk: the orchestrator's 24-stop walk before v8 and after batch 1, six pairs |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -424,5 +436,139 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `60-grazers-gutter-after.webp` | After: a grazer on the moor below the Span’s arches in the gutter, its body a warm grey against the grass. |
 | `60-grazers-gutter-before.webp` | Before: the same slope in the gutter, the grazer hard to pick out from the grass. |
 | `60-visibility-sheet.webp` | The visibility pass as a sheet: before and after pairs for the grazers, peafowl, Co-heirs, Taker, Thurifer, Accrescent, flowers, door beetles and snails. |
+| `61-roads-spawn-before.webp` | Before: the spawn at the keep's gate, the track faint and joined to nothing. |
+| `61-roads-spawn-after.webp` | After: the same view with a worn track, a gnomon and the road running on to the fen. |
+| `61-roads-northway-before.webp` | Before: the north way from the junction, the lead a smear in the grass. |
+| `61-roads-northway-after.webp` | After: the north way as a visible road beside the boulder. |
+| `61-roads-shrine-before.webp` | Before: the junction at the shrine, no road to read. |
+| `61-roads-shrine-after.webp` | After: the shrine junction with the road and its marker. |
+| `61-roads-fenway-before.webp` | Before: the fen way and the great arch, no track under it. |
+| `61-roads-fenway-after.webp` | After: the fen way with the track laid to the arch. |
+| `61-roads-lattice-before.webp` | Before: the lattice glacier's glowing veins with no ground road. |
+| `61-roads-lattice-after.webp` | After: the road meeting the glacier, the veins kept. |
+| `61-roads-gnomon-junction.webp` | A road gnomon at a junction, a short post with a lit tip. |
+| `61-roads-gnomon-grand.webp` | A grand gnomon beside the keep's wall, the stone and the post close. |
+| `61-roads-hahacrossing.webp` | The ha-ha crossing: a road ending in a sunken wall and its gate. |
+| `61-roads-prospect-junction.webp` | The road to the Unfinished Prospect over the stacked stones. |
+| `61-roads-lynchets-gate.webp` | The Lynchets gate on the causeway with its glowing sign. |
+| `61-roads-map-before.webp` | Before: the placement map with the leads unjoined. |
+| `61-roads-map-after.webp` | After: the same map with the road network joined. |
+| `62-ground-adust-before.webp` | Before: the red crust of the Adust, a single flat colour. |
+| `62-ground-adust-after.webp` | After: the Adust's crust with its own grade. |
+| `62-ground-bletting-before.webp` | Before: the Bletting's grass under the sun, uniform. |
+| `62-ground-bletting-after.webp` | After: the Bletting's grass greener and thicker. |
+| `62-ground-demesne-before.webp` | Before: the Demesne's lawn grey and bare. |
+| `62-ground-demesne-after.webp` | After: the Demesne's lawn a worked green. |
+| `62-ground-spawn-before.webp` | Before: the spawn lawn and its pond, violet-dark to the horizon. |
+| `62-ground-spawn-after.webp` | After: the spawn lawn lighter and warmer, the grass shorter. |
+| `62-ground-lynchets-above-before.webp` | Before: the Lynchets' terraces from above, flat. |
+| `62-ground-lynchets-above-after.webp` | After: the terraces picked out in their own greens. |
+| `62-ground-house-before.webp` | Before: the Pomegranate House's ground in knee-high grass. |
+| `62-ground-house-after.webp` | After: the ground round the house cleared and lighter. |
+| `62-ground-overhead-before.webp` | Before: straight down on the keep's yard, one tone. |
+| `62-ground-overhead-after.webp` | After: the same yard with the ground coloured by place. |
+| `63-strata-house-gate-before.webp` | Before: the Pomegranate House's gate, plain boxes in grey. |
+| `63-strata-house-gate-after.webp` | After: the gate in cream and rose limewash with a roundel and lamp. |
+| `63-strata-house-far-before.webp` | Before: the house at 60 m, a grey huddle by the keep. |
+| `63-strata-house-far-after.webp` | After: the house at 60 m, plainly not a ruin. |
+| `63-strata-house-front.webp` | The house's front: tile bands, an awning and the Late sign over the door. |
+| `63-strata-house-court.webp` | The house's court with its arcade and lattice screen. |
+| `63-strata-medlar-wicket-before.webp` | Before: the Medlar wicket, a grey slab. |
+| `63-strata-medlar-wicket-after.webp` | After: the wicket in the Late hand, a pointed arch and a crescent. |
+| `63-strata-span-east-before.webp` | Before: the Span's east gate in the cyclopean stone. |
+| `63-strata-span-east-after.webp` | After: the same gate with the Elder notches cut in. |
+| `63-strata-sign-elder.webp` | The sign in the Elder hand: a notch in cyclopean stone. |
+| `63-strata-sign-heliarch.webp` | The sign in the Heliarch hand: a roundel on a plinth. |
+| `63-strata-sign-late.webp` | The sign in the Late hand: tile, arch and lamp. |
+| `63-strata-sheet-three-hands.webp` | Three strips: Elder, Heliarch and Late hands of masonry side by side. |
+| `63-strata-sheet-three-signs.webp` | Three strips: one sign drawn in the three hands. |
+| `64-threads-traveller-body-first.webp` | First render of the traveller's body: a few pale scraps in the grass. |
+| `64-threads-traveller-body-close.webp` | The traveller's body by the Span's foot, papers scattered round it. |
+| `64-threads-traveller-body-approach.webp` | Approaching the body from the glare of the gutter. |
+| `64-threads-traveller-deck.webp` | His kit on the Span's deck: a box, a satchel and a bowl. |
+| `64-threads-traveller-hat.webp` | His hat in the grass at the foot of the Span. |
+| `64-threads-collation-before.webp` | Before: the Collation's long table, laid and empty. |
+| `64-threads-collation-after.webp` | After: the twelfth chair and the table drawn along the track. |
+| `64-threads-grave.webp` | The grave on the rise, two figures and a marker. |
+| `64-threads-court-hoard.webp` | The court's hoard behind a doorway, a gold figure in lamplight. |
+| `64-threads-court-mosaic.webp` | The court's mosaic laid out on the grass, gold on blue. |
+| `65-house-court-blown-out.webp` | A failure: the house's court blown to white by the new lamps. |
+| `65-house-gate-before.webp` | Before: the house's gate, unlit. |
+| `65-house-gate-after.webp` | After: the gate under strings of coloured lamps, a host at the door. |
+| `65-house-court-before.webp` | Before: the house's court, empty. |
+| `65-house-court-after.webp` | After: the court lit with the fountain, a musician and the slipper. |
+| `65-house-host-bow.webp` | The host bowing at the gate, close. |
+| `65-house-musician-offended.webp` | The musician turned away from the player, offended. |
+| `65-house-patrons.webp` | Two patrons at a game under the awning. |
+| `65-house-sleeper.webp` | The sleeper on the court floor, mid-twitch. |
+| `65-house-slipper-mate.webp` | The slipper's mate under a table in the court. |
+| `65-house-far-glow.webp` | The house's lamps glowing at 200 m across the moor. |
+| `66-liveries-linkboy.webp` | The Link-boy at 4 m, red-sashed with his torch on the wall. |
+| `66-liveries-sexton.webp` | The Sexton at 4 m in his dark coat and red sash. |
+| `66-liveries-taker.webp` | The Taker at 4 m, orange on the cracked red ground. |
+| `66-liveries-thurifer.webp` | The Thurifer at 4 m, a red thread in the grass. |
+| `66-liveries-guest.webp` | A guest of the house at 4 m by the colonnade. |
+| `66-liveries-leerie.webp` | The Leerie at 4 m beside a lamp-post. |
+| `66-liveries-accrescent.webp` | The Accrescent at 4 m by the chain. |
+| `66-liveries-officers-sheet.webp` | Sheet: the officers' liveries, before and after, at 10 m. |
+| `66-liveries-latefolk-sheet.webp` | Sheet: the Late-folk's liveries, before and after, at 10 m. |
+| `66-liveries-dealing-peg.webp` | The dealing peg at 2 m: a fire-basket and a banner. |
+| `66-liveries-dealing-slate.webp` | The dealing slate on a lamp-post at 3 m. |
+| `66-liveries-dealing-staffhead.webp` | The Sexton's staff-head at 2 m. |
+| `67-twk-gnomon-before.webp` | Before: a gnomon at 15 m with the place card over it. |
+| `67-twk-gnomon-after.webp` | After: the keep's gate and its gnomon, a Twk-man at its foot. |
+| `67-twk-guard.webp` | A Twk-man guarding the house's gate. |
+| `67-twk-inspect.webp` | A Twk-man with wings spread inspecting a gnomon. |
+| `67-twk-quarrel.webp` | Two Twk-men quarrelling by a stone. |
+| `67-twk-saltline.webp` | A Twk-man on the salt line of the fen. |
+| `67-twk-salute.webp` | A Twk-man saluting the gnomon. |
+| `67-twk-salute-drop.webp` | The same salute, the wings dropped. |
+| `68-painter-man-approach.webp` | The painter's man on the moor, seen from the track. |
+| `68-painter-man-close.webp` | The painter's man at close range, his canvas on his back. |
+| `68-painter-man-hides.webp` | The painter's man hiding behind a rock. |
+| `68-painter-man-painting.webp` | The painter's man at his easel. |
+| `68-painter-kicked.webp` | A canvas kicked into the grass by the track. |
+| `68-painter-line.webp` | The line painting: a red line on cream, set on an easel. |
+| `68-painter-slash.webp` | The slash painting on its easel by the road. |
+| `68-painter-suns.webp` | The suns painting propped on a stone. |
+| `68-painter-prospect-rag.webp` | A painting on the Prospect's easel with a rag on the stool. |
+| `68-painter-scout-over.webp` | The scout view from above, tracks and a red frame. |
+| `69-repairs-gnomon-spawn-before.webp` | Before: the spawn gnomon with a plain post. |
+| `69-repairs-gnomon-spawn-after.webp` | After: the spawn gnomon with a red tip and the pond clear. |
+| `69-repairs-house-near-before.webp` | Before: the house's lamps glaring from 15 m. |
+| `69-repairs-house-near-after.webp` | After: the lamps quieter, the house's wall readable. |
+| `69-repairs-house-north-before.webp` | Before: the house from the north, strings in the haze. |
+| `69-repairs-house-north-after.webp` | After: the house from the north with a tree in front. |
+| `69-repairs-roundel-keep-before.webp` | Before: the keep's roundel a glowing dot. |
+| `69-repairs-roundel-keep-after.webp` | After: the roundel read as a roundel. |
+| `70-crystal-giant-before.webp` | Before: the giant crystal's side, its top dim. |
+| `70-crystal-giant-after.webp` | After: the giant crystal's true top lit. |
+| `70-crystal-mother-before.webp` | Before: the mother crystal from below. |
+| `70-crystal-mother-after.webp` | After: the mother crystal, the faces brighter. |
+| `70-hop-boulder.webp` | Hopping onto a boulder, the rock's top just under the eye. |
+| `70-hop-lynchets-wall.webp` | Standing on the Lynchets' dry-stone wall. |
+| `70-hop-parapet.webp` | Walking along the keep's parapet. |
+| `71-rocks-boulder-moor-before.webp` | Before: a speckled boulder on the moor by the fen. |
+| `71-rocks-boulder-moor-after.webp` | After: the boulder a plain stone, the footprint cleared. |
+| `71-rocks-boulder-east-before.webp` | Before: a speckled boulder at the east of the keep. |
+| `71-rocks-boulder-east-after.webp` | After: a dark outcrop with a quiet lichen. |
+| `71-rocks-moor-open-before.webp` | Before: the open moor with its scattered boulders. |
+| `71-rocks-moor-open-after.webp` | After: fewer boulders, in outcrops, with cleared ground. |
+| `71-rocks-shrine-before.webp` | Before: the shrine's slope with the boulders in the grass. |
+| `71-rocks-shrine-after.webp` | After: the same slope, the stones gone to outcrops. |
+| `71-rocks-lynchets-terraces.webp` | The Lynchets' terraces with their rocks. |
+| `71-rocks-strandline-bay.webp` | The strandline bay and its few stones. |
+| `72-walk-spawn-before.webp` | Walk 01 before: the spawn on the orchestrator's first v8 walk. |
+| `72-walk-spawn-after.webp` | Walk 01 after batch 1: the road, a gnomon and the lighter grass. |
+| `72-walk-keep-west-before.webp` | Walk 02 before: the keep from the west across a boulder. |
+| `72-walk-keep-west-after.webp` | Walk 02 after: the keep from the west along a road. |
+| `72-walk-house-before.webp` | Walk 14 before: the taverna as grey boxes and a cylinder. |
+| `72-walk-house-after.webp` | Walk 14 after: the Pomegranate House in limewash and turquoise. |
+| `72-walk-graves-before.webp` | Walk 21 before: the graves, no path. |
+| `72-walk-graves-after.webp` | Walk 21 after: the graves with a track and a marker. |
+| `72-walk-lattice-before.webp` | Walk 16 before: the lattice glacier, grass and veins. |
+| `72-walk-lattice-after.webp` | Walk 16 after: the glacier with its crystals on bare ground. |
+| `72-walk-moor-before.webp` | Walk 24 before: the open moor, one grass. |
+| `72-walk-moor-after.webp` | Walk 24 after: the moor with a tree and variety. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

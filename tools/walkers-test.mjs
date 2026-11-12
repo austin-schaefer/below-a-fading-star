@@ -226,6 +226,7 @@ const span = await page.evaluate(() => {
     Ld.lines.forEach((L, li) => {
       if (!L.some(([, z]) => Math.abs(z - 215) < 20)) return;
       const len = lenOf(L);
+      if (len < 30) return; // he is led 15 m from 12 m in: a spur shorter than that (P13's to the lip over the Cutting, v8-09) has no room
       for (const dir of [1, -1]) {
         B.reset();
         const s0 = dir > 0 ? 12 : len - 12;

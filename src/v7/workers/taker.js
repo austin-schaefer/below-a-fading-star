@@ -15,6 +15,7 @@ import { hyp, smoothstep } from '../../noise.js';
 import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rigPainter, rigMesh, makeBones, pivot, limb, arm2, placeMatrix, ramp, ease, tris, UP } from './rig.js';
 import { rgb, tone, mix3, clothBody, head, sleeve } from './body.js';
+import { LIVERY, stole, badge, collar, staffHead, tag } from '../../v8/livery.js';
 
 const ROBE = rgb('#b07a42'), ROBE_D = rgb('#4e3018'), HEM = rgb('#948268'), SKIN = rgb('#8e6c56'), GREY = rgb('#8a857d');
 const WOOD = rgb('#3a2a1c'), BRASS = rgb('#8a6a30'), BRASS_D = rgb('#5e4622'), BINDING = rgb('#2a1b13'), PAGES = rgb('#b9a884'), INK = rgb('#15110e');
@@ -60,7 +61,19 @@ function build(low) {
   const tab = (T, v) => { for (let k = 0; k < T.length - 1; k++) if (v <= T[k + 1][0]) { const t = smoothstep(T[k][0], T[k + 1][0], v); return T[k].slice(1).map((a, i) => a + (T[k + 1][i + 1] - a) * t); } return T[T.length - 1].slice(1); };
   clothBody(P, nu, low ? 6 : 9, (v) => tab(LAP, v), { folds: 9, amp: (v) => 0.05 * (1 - v * 0.6), colour: wear, seed: 1.3, capTop: false });
   clothBody(P, nu, low ? 6 : 9, (v) => tab(TORSO, v), { folds: 6, amp: (v) => 0.03 * (1 - v), colour: (v, r) => mix3(ROBE_D, ROBE, 0.45 + 0.55 * r), seed: 0.4, capBottom: false });
-  tone(P, ROBE, 0.8); P.ring(0, 0.675, 0.065, 0.085, 0.03, low ? 10 : 14, 4);
+  if (!LIVERY.on) { tone(P, ROBE, 0.8); P.ring(0, 0.675, 0.065, 0.085, 0.03, low ? 10 : 14, 4); }
+  else {
+    // v8-06 the livery: the senior officer. The Heliarch collar, a broad stole over the shoulders down to the lap,
+    // the sign at his throat; the staff's head is the sign in ember glass, the Sexton's pattern (livery.js staffHead)
+    collar(P, 0, 0.655, 0.065, 0.078, 0.13, '#8a5a30', { sides: low ? 10 : 14, gap: 0.5 });
+    const fz = (y) => { const [, , rz, , cz] = tab(TORSO, Math.min(1, Math.max(0, (y - 0.25) / 0.45))); return cz + rz * 1.06 + 0.012; };
+    for (const sx of [-1, 1]) {
+      const pts = [[sx * 0.075, 0.69, 0.09], ...[0.62, 0.52, 0.42, 0.33].map((y, i) => [sx * (0.085 + 0.008 * i), y, fz(y)]), [sx * 0.11, 0.285, fz(0.33) + 0.06], [sx * 0.12, 0.27, fz(0.33) + 0.13]];
+      stole(P, pts, { w: 0.13, out: (t) => (t < 0.75 ? [0, 0.2, 1] : [0, 1, 0.3]), seed: sx + 7, dirt: 0.15, fray: 0.035 });
+    }
+    stole(P, [[-0.075, 0.69, 0.09], [-0.15, 0.68, 0.03], [-0.1, 0.7, -0.06], [0.1, 0.7, -0.06], [0.15, 0.68, 0.03], [0.075, 0.69, 0.09]], { w: 0.12, out: (t, p) => [p[0], 0.4, p[2]], fray: 0, dirt: 0, seed: 12 });
+    badge(P, [0, 0.645, 0.205], [0, 1, 0.3], [0, -0.2, 1], 0.06, { th: 0.008 });
+  }
   P.xf(BOOK);
   tone(P, BINDING, 1, 0, 0.8); P.box(0, -0.006, 0, 0.36, 0.012, 0.25);
   tone(P, PAGES, 1, 0, 0.95); P.box(-0.088, 0.03, 0, 0.165, 0.058, 0.236); P.box(0.088, 0.03, 0, 0.165, 0.058, 0.236);
@@ -80,6 +93,7 @@ function build(low) {
   tone(P, WOOD, 1, 0, 0.7); P.loft([[0, 0, 0], [0, STAFF * 0.5, 0], [0, STAFF, 0]], [0.017, 0.015, 0.012], 6, 0, true);
   tone(P, BRASS, 1, 0.75, 0.45);
   P.lathe(0, STAFF - 0.04, 0, [[0.0, 0], [0.016, 0.0], [0.017, 0.04], [0.0, 0.05]], 6); // the ferrule
+  if (LIVERY.on) { staffHead(P, 0, STAFF, 0); tone(P, BRASS, 1, 0.75, 0.45); }
   const arc = [];
   for (let k = 0; k <= (low ? 6 : 10); k++) { const f = (k / (low ? 6 : 10)) * Math.PI / 2; arc.push([0, APEX + Q_R * Math.cos(f), Q_R * Math.sin(f)]); }
   P.loft(arc, arc.map(() => 0.0065), 4, 0, true);
@@ -91,7 +105,7 @@ function build(low) {
   P.bone(7);
   tone(P, rgb('#6a5a40'), 1, 0, 0.9); P.loft([[0, 0, 0], [0, -0.3, 0]], [0.0018, 0.0018], 3, 0, false);
   tone(P, BRASS_D, 1, 0.6, 0.5); P.blob(0, -0.31, 0, 0.012, 0.012, 0.016, 6, 4);
-  return P.geometry();
+  return tag(P.geometry(), P, 'heliarch');
 }
 
 export function buildTaker(ctx, seat) {

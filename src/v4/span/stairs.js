@@ -112,7 +112,7 @@ export function buildStairs(K) {
         if (walkParts.some((o) => inRect(o.rect, cx, cz, 0.2)) || (Math.abs(cz - Z) < SPAN.half + 1.5 && Math.abs(cx) > 200)) continue;
         const top = (w.fl ? (partY(w, x - nx * 0.3, z - nz * 0.3) ?? w.y0) : w.y) - 0.8;
         if (top < H(cx, cz) + 0.3) continue;
-        addCol({ x: cx, z: cz, r: 1.5, y: BOT - 20, h: top - (BOT - 20) });
+        addCol({ x: cx, z: cz, r: 1.5, y: BOT - 20, h: top - (BOT - 20), stand: false });
       }
     }
   }

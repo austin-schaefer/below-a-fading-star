@@ -20,7 +20,7 @@ export function buildControls(ctx) {
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
-    onStep: null, hops: 0,
+    onStep: null, hops: 0, hopping: false, onTop: false,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -44,7 +44,7 @@ export function buildControls(ctx) {
   // The one jump: Space and the touch button both come here.
   function hop() {
     if (!state.onGround || !state.enabled) return false;
-    state.vy = 4.2; state.onGround = false; state.hops++;
+    state.vy = 4.2; state.onGround = false; state.hopping = true; state.hops++;
     return true;
   }
   window.addEventListener('keydown', onKey(true));
@@ -296,12 +296,13 @@ export function buildControls(ctx) {
       const rr = Math.hypot(x, z), limit = walkLimit(x, z);
       if (rr > limit) { x *= limit / rr; z *= limit / rr; moved = true; }
       for (const c of state.colliders) {
-        const dx = x - c.x, dz = z - c.z, rad = c.r + 0.6;
+        const t = along(c, x, z), px = c.len === undefined ? c.x : c.x1 + c.ux * t, pz = c.len === undefined ? c.z : c.z1 + c.uz * t;
+        const dx = x - px, dz = z - pz, rad = c.r + 0.6;
         const d = Math.hypot(dx, dz);
         if (d < rad) {
           if (c.h !== undefined && c.y + c.h < terrain.heightAt(x, z)) continue;
           const nx = d > 1e-4 ? dx / d : 1, nz = d > 1e-4 ? dz / d : 0;
-          x = c.x + nx * rad; z = c.z + nz * rad; moved = true;
+          x = px + nx * rad; z = pz + nz * rad; moved = true;
         }
       }
       if (!moved) break;
@@ -310,7 +311,7 @@ export function buildControls(ctx) {
     let floor = g;
     if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
     state.pos.set(x, floor + state.eye, z);
-    state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true;
+    state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
     eyeOff = 0; lastY = null;
     return { x, z };
   }
@@ -324,11 +325,44 @@ export function buildControls(ctx) {
     setTimeout(() => { if (!state.locked && !state.everLocked) onLockFail(); }, 1500);
   }
 
-  // --- colliders: {x, z, r} cylinders (infinite height) or {x, z, r, y, h} capped
-  function addCollider(c) { state.colliders.push(c); }
+  // --- colliders: {x, z, r} cylinders of infinite height, or capped {x, z, r, y, h}: bottom y, top y + h.
+  // A capsule {x1, z1, x2, z2, r, y, h, dh?} is a wall: the segment swept by r, its top y + h at (x1, z1) and
+  // y + h + dh at (x2, z2) (x, z are set to its middle). A round one may take `dome`: its top falls by that much
+  // toward its rim (a boulder). `stand: false` keeps a capped collider's top from being stood on (a pier's top
+  // hidden under a deck, a figure's easel).
+  //
+  // Standing on things (issue #7), the one rule: a capped collider whose top the feet are above (less STEP_UP)
+  // does not push, and while the feet are over its top (within its r + FOOT) the top is the walker's floor;
+  // stepping off drops them. Rising in a hop, a top up to MANTLE above the feet that the walker moves toward does
+  // not push either: they scramble onto it. So a hop (0.74 m) and a scramble reach about 1.4 m, chest height.
+  // Uncapped colliders (trees, pillars, people) stay columns to the sky.
+  const BODY = 0.45, STEP_UP = 0.12, FOOT = 0.15, MANTLE = 0.65;
+  function addCollider(c) {
+    if (c.x2 !== undefined) {
+      const dx = c.x2 - c.x1, dz = c.z2 - c.z1, len = Math.hypot(dx, dz) || 1e-6;
+      c.ux = dx / len; c.uz = dz / len; c.len = len; c.dh ||= 0;
+      c.x = (c.x1 + c.x2) / 2; c.z = (c.z1 + c.z2) / 2;
+      c.ex = Math.abs(dx) / 2 + c.r; c.ez = Math.abs(dz) / 2 + c.r;
+    }
+    state.colliders.push(c);
+  }
+  // how far along a capsule the point nearest (x, z) lies (0 for a round collider)
+  function along(c, x, z) {
+    if (c.len === undefined) return 0;
+    const t = (x - c.x1) * c.ux + (z - c.z1) * c.uz;
+    return t < 0 ? 0 : t > c.len ? c.len : t;
+  }
+  // a capped collider's top at distance d from its axis, t along it
+  function topAt(c, t, d) {
+    let y = c.y + c.h;
+    if (c.len !== undefined) y += c.dh * t / c.len;
+    if (c.dome) { const f = d / c.r; y -= c.dome * (f < 1 ? f * f : 1); }
+    return y;
+  }
+  const cand = new Array(32); // the capped colliders touched this frame whose tops may be stood on
 
   const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
-  let eyeOff = 0, lastY = null; // the eye's height less the feet's
+  let eyeOff = 0, lastY = null, eyeLim = EYE_LAG; // the eye's height less the feet's; how far it may lag
   const UP = new THREE.Vector3(0, 1, 0);
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
@@ -362,7 +396,7 @@ export function buildControls(ctx) {
 
     // slope slows you and stops you on the steep stuff; a raised floor (a deck, a stair) more than a metre
     // above the ground is level, whatever the slope beneath it
-    const raised = state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
+    const raised = state.onTop || state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
     const n = raised ? UP : terrain.normalAt(state.pos.x, state.pos.z);
     const slope = raised ? 0 : Math.acos(clamp(n.y, -1, 1));
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
@@ -382,18 +416,39 @@ export function buildControls(ctx) {
     const rr = hyp(nx, nz);
     const limit = walkLimit(nx, nz);
     if (rr > limit) { nx *= limit / rr; nz *= limit / rr; }
-    // colliders
+    // colliders (the rule for standing on them is at addCollider)
+    const feetNow = state.pos.y - state.eye;
+    let nCand = 0;
     for (const c of state.colliders) {
-      const dx = nx - c.x, dz = nz - c.z;
-      const rad = c.r + 0.45;
-      if (dx > rad || dx < -rad || dz > rad || dz < -rad) continue;
-      const d = hyp(dx, dz);
-      if (d < rad && d > 1e-4) {
-        if (c.h !== undefined && (state.pos.y - state.eye > c.y + c.h || state.pos.y - state.eye < c.y - 0.5)) continue;
-        nx = c.x + (dx / d) * rad; nz = c.z + (dz / d) * rad;
+      const rad = c.r + BODY;
+      let dx = nx - c.x, dz = nz - c.z, px = c.x, pz = c.z, t = 0;
+      if (c.len === undefined) {
+        if (dx > rad || dx < -rad || dz > rad || dz < -rad) continue;
+      } else {
+        if (dx > c.ex + BODY || dx < -c.ex - BODY || dz > c.ez + BODY || dz < -c.ez - BODY) continue;
+        t = along(c, nx, nz); px = c.x1 + c.ux * t; pz = c.z1 + c.uz * t; dx = nx - px; dz = nz - pz;
       }
+      const d = hyp(dx, dz);
+      if (d >= rad) continue;
+      if (c.h !== undefined) {
+        if (feetNow < c.y - 0.5) continue; // under it
+        const top = topAt(c, t, d);
+        const over = feetNow > top - STEP_UP;
+        const reach = !over && state.hopping && c.stand !== false && top - feetNow <= MANTLE && state.vel.x * dx + state.vel.z * dz < 0;
+        if (over || reach) { if (c.stand !== false && nCand < cand.length) cand[nCand++] = c; continue; }
+      }
+      if (d > 1e-4) { nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad; }
     }
     state.pos.x = nx; state.pos.z = nz;
+    // the highest top under the feet, within a step (or, rising in a hop, a scramble) of them
+    let standY = -Infinity;
+    for (let i = 0; i < nCand; i++) {
+      const c = cand[i], t = along(c, nx, nz);
+      const d = c.len === undefined ? hyp(nx - c.x, nz - c.z) : hyp(nx - c.x1 - c.ux * t, nz - c.z1 - c.uz * t);
+      if (d >= c.r + FOOT) continue;
+      const top = topAt(c, t, Math.min(d, c.r));
+      if (top > standY && top <= feetNow + (state.hopping ? MANTLE : STEP_UP)) standY = top;
+    }
 
     // vertical: follow the ground, with a small jump
     const groundY = baseFloor(state.pos.x, state.pos.z);
@@ -406,12 +461,15 @@ export function buildControls(ctx) {
       const h = fn(state.pos.x, state.pos.z);
       if (h !== null && h !== undefined && h <= feet0 + 0.6 && h >= feet0 - 1.2 && h > floorY) floorY = h;
     }
+    const onTop = standY > floorY;
+    if (onTop) floorY = standY;
     const wasOnGround = state.onGround;
     state.vy -= 12 * dt;
     let feet = state.pos.y - state.eye + state.vy * dt;
     // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too
     if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6) feet = floorY;
-    if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; } else state.onGround = false;
+    if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; state.hopping = false; } else state.onGround = false;
+    state.onTop = onTop && state.onGround;
     // smooth the ground-follow a touch when walking
     const speed = hyp(state.vel.x, state.vel.z);
     state.speed = speed;
@@ -429,7 +487,9 @@ export function buildControls(ctx) {
     // the feet follow the floor; the eye follows the feet, damped, for steps under 0.7 m
     const step = state.pos.y - (lastY ?? state.pos.y);
     if (wasOnGround && state.onGround && Math.abs(step) < 0.7) eyeOff -= step;
-    eyeOff = clamp(eyeOff * Math.exp(-dt / EYE_TAU), -EYE_LAG, EYE_LAG); // first-order; never more than a riser and a bit behind
+    else if (!wasOnGround && state.onTop && step > 0) { eyeOff -= step; eyeLim = MANTLE; } // a scramble: the eye follows up
+    eyeLim = Math.max(EYE_LAG, eyeLim * Math.exp(-dt / EYE_TAU));
+    eyeOff = clamp(eyeOff * Math.exp(-dt / EYE_TAU), -eyeLim, eyeLim); // first-order; never more than a riser and a bit behind
     lastY = state.pos.y;
     state.eyeY = state.pos.y + eyeOff;
 

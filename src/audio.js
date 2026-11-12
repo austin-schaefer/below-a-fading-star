@@ -56,6 +56,8 @@ import { startPlaces, startCalls } from './audio/calls.js';
 import { startCues } from './audio/cues.js';
 import { startRegions } from './audio/regions.js';
 import { startLiving } from './audio/living.js';
+import { startHouseSound } from './v8/house/sound.js'; // v8-05
+import { startTwk } from './v8/twk/voice.js'; // v8-07: the Twk-men's buzz and chirrup
 
 // The touch mute button (#mute, top right; shown on touch devices only). A short tap toggles
 // ctx.audio.setMuted; a 1.2 s hold without moving reveals the debug panel instead, as the
@@ -147,9 +149,11 @@ export async function build(ctx) {
     const regionSnd = startRegions(a);
     // v7, the living: the figures' sounds (src/audio/living.js)
     const living = a.living = audio.living = startLiving(a);
+    a.twk = startTwk(a); // v8-07: twk-buzz, twk-chirrup, twk-quarrel
     audio.cue = cues.cue;
     const insects = startInsects(a);
     const calls = startCalls(a);
+    a.house = startHouseSound(a, ctx); // v8-05: the Pomegranate House's voices (its own rng, after every shared draw)
 
     // ================================================================ per-frame control
     let tick = 0;

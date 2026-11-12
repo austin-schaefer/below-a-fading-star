@@ -8,6 +8,9 @@ import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' 
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
+import { wornAt, nearestLead } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
+import { clearedBy } from './v8/clearings.js'; // v8-11: the one table of ground kept clear of stones and boulders
+import { commonAt } from './v8/places.js'; // v8-11: the grazed common round the keep keeps few boulders
 
 const PARAMS = new URL(location.href).searchParams;
 // v6: stones and pebbles fade over their reach's last 15%, and fine boulders cross to their coarse twin over
@@ -19,6 +22,15 @@ const OLD_PACK = PARAMS.get('packstep') === '6';
 const STEP = OLD_PACK ? 6 : 2;
 // with the fade, a pack reaches this much past its band so an instance comes into the band already packed
 const SLACK = 3;
+// v8-11: the boulders a third of what they were, in outcrops with bare ground between; nothing bigger than a pebble on
+// a road, a walked line or a built place (v8/clearings.js); the lichen a low grey-green bloom, not pale spots
+// (?rockcut=0: v8-10's rocks, counts, places and look)
+const CUT = PARAMS.get('rockcut') !== '0';
+// The lichen is made from the stone under it, so its contrast holds in any light: where it grows the stone goes toward
+// its own luminance times `bloom` (grey-green, a shade lighter), up to `amount`; the rarer rust crust multiplies the
+// stone by `rust`, up to `rustAmount`. The patch differs from the stone in hue far more than in brightness.
+// tools/rocks-test.mjs reads these (ctx.rocks.lichen) and holds a full patch to under 1.2 times the stone's luminance.
+export const LICHEN = CUT ? { bloom: [0.72, 1.5, 0.7], amount: 1.0, rust: [1.3, 1.0, 0.76], rustAmount: 0.45 } : null;
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -42,7 +54,7 @@ function makeRockGeometry(rng, noise, detail, seed) {
   return geo;
 }
 
-function makeRockMaterial(palette) {
+function makeRockMaterial(palette, sun) {
   const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(palette.rock), roughness: 0.92, metalness: 0.0 });
   mat.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
@@ -73,21 +85,40 @@ function makeRockMaterial(palette) {
           diffuseColor.rgb *= 0.78 + 0.45 * g + 0.12 * (g2 - 0.5);
           float strata = smoothstep(0.42, 0.5, abs(fract(vRPos.y * 0.9 + g * 1.5) - 0.5));
           diffuseColor.rgb *= 1.0 - strata * 0.18;
-          // lichen: pale green-grey and rust-orange crusts on the upper and north faces
-          float up = clamp(vRN.y, 0.0, 1.0);
-          float north = clamp(-vRN.z, 0.0, 1.0);
-          float l1 = smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)) * (0.4 + 0.6 * up);
-          float l2 = smoothstep(0.58, 0.7, rfbm(vRPos * 5.3 + 29.0)) * (0.3 + 0.7 * north);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.6, 0.42), l1 * 0.75);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.72, 0.42, 0.16), l2 * 0.6);
+          ${LICHEN ? lichenGLSL(sun) : OLD_LICHEN}
           // damp dark base where it meets the turf
           float base = smoothstep(0.1, -0.2, vRN.y);
           diffuseColor.rgb *= 1.0 - base * 0.35;
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        roughnessFactor = mix(roughnessFactor, 0.75, smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)));`);
+        ${LICHEN ? 'roughnessFactor = mix(roughnessFactor, 0.85, smoothstep(0.38, 0.6, rfbm(vRPos * 2.3 + 11.0)));'
+    : 'roughnessFactor = mix(roughnessFactor, 0.75, smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)));'}`);
   };
   return mat;
+}
+// v8-10's lichen: pale green-grey and bright rust crusts at high contrast (the "dalmatian" spots of issue #12)
+const OLD_LICHEN = `
+          float up = clamp(vRN.y, 0.0, 1.0);
+          float north = clamp(-vRN.z, 0.0, 1.0);
+          float l1 = smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)) * (0.4 + 0.6 * up);
+          float l2 = smoothstep(0.58, 0.7, rfbm(vRPos * 5.3 + 29.0)) * (0.3 + 0.7 * north);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.6, 0.42), l1 * 0.75);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.72, 0.42, 0.16), l2 * 0.6);`;
+// v8-11: a thin bloom, a tint of the stone itself, on the tops and the faces turned from the sun (west, low), in soft
+// patches broken up again at a hand's scale; the rust rarer, on the same shaded faces, and as quiet
+function lichenGLSL(sun) {
+  const l = Math.hypot(sun.x, sun.z) || 1, sx = (-sun.x / l).toFixed(4), sz = (-sun.z / l).toFixed(4);
+  const v3 = (a) => `vec3(${a.map((v) => v.toFixed(3)).join(', ')})`;
+  return `
+          float up = clamp(vRN.y, 0.0, 1.0);
+          float shade = clamp(vRN.x * ${sx} + vRN.z * ${sz}, 0.0, 1.0);
+          float face = clamp(up * 1.1 + shade * 0.7, 0.0, 1.0);
+          float fine = smoothstep(0.4, 0.6, rfbm(vRPos * 13.0 + 5.0));
+          float l1 = smoothstep(0.38, 0.6, rfbm(vRPos * 2.3 + 11.0)) * face * (0.3 + 0.7 * fine);
+          float l2 = smoothstep(0.6, 0.74, rfbm(vRPos * 5.3 + 29.0)) * shade * (0.3 + 0.7 * fine);
+          float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+          diffuseColor.rgb = mix(diffuseColor.rgb, lum * ${v3(LICHEN.bloom)}, l1 * ${LICHEN.amount.toFixed(3)});
+          diffuseColor.rgb *= mix(vec3(1.0), ${v3(LICHEN.rust)}, l2 * ${LICHEN.rustAmount.toFixed(3)});`;
 }
 
 // One material per pack role, so each carries its own band (uFpBand: fade start, end; uFpSide: the kit's
@@ -107,7 +138,8 @@ export async function build(ctx) {
   const t0 = performance.now();
   const rng = ctx.makeRng(41);
   const low = ctx.quality === 'low';
-  const mat = makeRockMaterial(palette);
+  const sun = ctx.sun?.dir || { x: -1, y: 0.1, z: 0 };
+  const mat = makeRockMaterial(palette, sun);
   // detail by use: boulders get the finest facets, pebbles the coarsest
   // each variant also gets a coarse twin of the same shape (same squash, same noise) for far boulders
   const twins = [];
@@ -119,6 +151,38 @@ export async function build(ctx) {
     return g;
   });
   const variantFor = { boulder: [0, 1, 2], stone: [2, 3, 4], pebble: [5, 6] };
+  // v8-11: each variant's footprint, per unit of size: the widest reach of its faces above the turf (a rock is sunk
+  // 0.18 of its size), so a clearance is held by the stone's whole bulk and not its centre
+  const reachOf = variants.map((g) => {
+    const P = g.attributes.position; let m = 0;
+    for (let i = 0; i < P.count; i++) if (P.getY(i) > 0.1) m = Math.max(m, Math.hypot(P.getX(i), P.getZ(i)));
+    return m;
+  });
+  // v8-11: the outcrops: a low-frequency field the boulders keep to (and a hash for the odd stray between), read after
+  // the draws so no placement moves
+  const outcrop = (x, z) => noise.noise2(x * 0.011 + 71.3, z * 0.011 - 33.1) * 0.5 + 0.5;
+  const hash = (x, z) => { const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return h - Math.floor(h); };
+  const cut = { cleared: {}, thinned: { boulder: 0, stone: 0, tor: 0 } };
+  const clear = (x, z, r) => { const why = clearedBy(x, z, r, ctx); if (why) cut.cleared[why] = (cut.cleared[why] || 0) + 1; return !!why; };
+  // whether a boulder (or a big stone, share 1 - its weight) stays: in an outcrop, or a rare stray; on the grazed common
+  // and the scree under the walls, fewer and more
+  function keepBig(x, z, b, cls, size) {
+    const com = commonAt(x, z, terrain.causewayDistance(x, z)), o = outcrop(x, z), h = hash(x, z);
+    if (cls === 'stone') return size < 1.0 || o > 0.5 - b.rock * 0.2 || h < 0.5 - com * 0.3;
+    const edge = 0.69 + com * 0.12 - b.rock * 0.12;
+    return o > edge || h < 0.04 * (1 - com) + 0.1 * b.rock;
+  }
+  // v8-10 (#7): each variant's height at its middle and how far its surface falls by 0.75 of its radius, so a
+  // boulder's or a big stone's collider has the rock's own top (a dome) and can be hopped onto
+  const tops = variants.map((g) => {
+    const P = g.attributes.position; let top = 0, rim = 0, n = 0;
+    for (let i = 0; i < P.count; i++) {
+      const x = P.getX(i), y = P.getY(i), z = P.getZ(i), d = Math.hypot(x, z);
+      if (d < 0.3) top = Math.max(top, y);
+      else if (d > 0.6 && d < 0.9 && y > 0) { rim += y; n++; }
+    }
+    return { top, dome: Math.max(0, top - (n ? rim / n : top * 0.7)) };
+  });
 
   // Where rocks may not go
   const L = landmarks;
@@ -133,6 +197,7 @@ export async function build(ctx) {
   function allowed(x, z) {
     if (terrain.isUnderwater(x, z)) return false;
     if (terrain.causewayDistance(x, z) < 4.5) return false;
+    if (wornAt(x, z) > 0.2) return false; // v8-01: the roads and their verges are clear of stones
     for (const [ax, az, ar] of avoid) if (Math.hypot(x - ax, z - az) < ar) return false;
     return true;
   }
@@ -177,7 +242,12 @@ export async function build(ctx) {
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
     if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
+    if (CUT && cls !== 'pebble') { // v8-11: off the cleared ground by its whole footprint, then into outcrops
+      if (clear(x, z, size * reachOf[it.variant])) continue;
+      if (!keepBig(x, z, b, cls, size)) { cut.thinned[cls]++; continue; }
+    }
     if (sextonClear(x, z, cls === 'boulder' ? size : 0, size * 0.5)) continue; // the Sexton's graves and heaps (v7/workers/graves.js)
+    if (cls === 'boulder') { const h = nearestLead(x, z, size * 0.75 + 0.3); if (h && h.kind !== 'rivulet') continue; } // v8-09: a boulder's whole bulk off the road, not only its centre
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor
@@ -191,7 +261,9 @@ export async function build(ctx) {
       const size = 1.6 + rng() * 3.4;
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
       const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
-      if (!plinthsClear(x, z) && !naveClear(x, z)) classes.boulder.push(it); // after the draws, as above
+      if (plinthsClear(x, z) || naveClear(x, z)) continue; // after the draws, as above
+      if (CUT && clear(x, z, size * reachOf[it.variant])) { cut.thinned.tor++; continue; }
+      classes.boulder.push(it);
     }
   }
 
@@ -205,12 +277,12 @@ export async function build(ctx) {
   const BOULDER_NEAR = low ? 110 : 140;
   const BOULDER_BAND = 8; // v6: the fine boulder fades out and its twin in over BOULDER_NEAR - 8 .. BOULDER_NEAR
   const eye = ctx.camera.position;
-  const mats = {}, matFor = (role, r0, r1, side) => (mats[role] ||= FADE ? fadeRock(makeRockMaterial(palette), eye, r0, r1, side) : mat);
+  const mats = {}, matFor = (role, r0, r1, side) => (mats[role] ||= FADE ? fadeRock(makeRockMaterial(palette, sun), eye, r0, r1, side) : mat);
   const depthFine = FADE ? fadeDepthMaterial({ key: 'rocks', uniforms: { uFpEye: { value: eye }, uFpBand: { value: new THREE.Vector2(BOULDER_NEAR - BOULDER_BAND, BOULDER_NEAR) }, uFpSide: { value: 0 } },
     head: 'uniform vec3 uFpEye; uniform vec2 uFpBand; uniform float uFpSide;',
     vertex: 'vec2(1.0 - smoothstep(uFpBand.x, uFpBand.y, distance(uFpEye.xz, (modelMatrix * instanceMatrix[3]).xz)), uFpSide)' }) : null;
   const packs = [];
-  let drawCalls = 0, tris = 0;
+  let drawCalls = 0, tris = 0, rockColliders = 0;
   for (const [cls, list] of Object.entries(classes)) {
     // split by variant
     for (let vi = 0; vi < variants.length; vi++) {
@@ -232,7 +304,13 @@ export async function build(ctx) {
         mesh.setMatrixAt(idx, m);
         m.toArray(all, idx * 16); xz[idx * 2] = it.x; xz[idx * 2 + 1] = it.z;
         // capped at the boulder's height, so one in the hollow under the Span does not block the deck above it
-        if (cls === 'boulder' && it.size > 0.9) ctx.addCollider({ x: it.x, z: it.z, r: it.size * 0.75, y: it.y - 1, h: it.size * 2 + 1 });
+        // v8-10: the top is the rock's own (it was twice its size, a column above the rock), so it can be stood on;
+        // a stone joins the boulders once it stands knee high (0.45 m) above the ground
+        const T0 = tops[vi], above = it.y + it.size * T0.top - terrain.heightAt(it.x, it.z);
+        if ((cls === 'boulder' && it.size > 0.9) || (cls === 'stone' && above > 0.45)) {
+          ctx.addCollider({ x: it.x, z: it.z, r: it.size * (cls === 'stone' ? 0.65 : 0.75), y: it.y - 1, h: it.size * T0.top + 1, dome: it.size * T0.dome });
+          rockColliders++;
+        }
       });
       mesh.instanceMatrix.needsUpdate = true;
       mesh.name = `rocks-${cls}-${vi}`;
@@ -319,5 +397,11 @@ export async function build(ctx) {
   });
   // the first fill, before the first frame: every pack round the player
   { const pp = ctx.player.pos; for (const P of packs) packOne(P, pp.x, pp.z); }
-  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
+  // v8-11: what tools/rocks-test.mjs reads: every stone and boulder's place and footprint, the lichen, the cut
+  const foot = (list) => list.map((it) => ({ x: +it.x.toFixed(2), z: +it.z.toFixed(2), size: +it.size.toFixed(3), r: +(it.size * reachOf[it.variant]).toFixed(3) }));
+  ctx.rocks = {
+    cut: CUT, lichen: LICHEN, rock: palette.rock, boulders: foot(classes.boulder), stones: foot(classes.stone),
+    stats: () => ({ pebbles: classes.pebble.length, stones: classes.stone.length, boulders: classes.boulder.length, colliders: rockColliders, drawCalls, tris: Math.round(tris), cleared: cut.cleared, thinned: cut.thinned }),
+  };
+  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders, ${rockColliders} colliders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }

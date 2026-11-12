@@ -35,7 +35,7 @@ export function height(h, x, z, w, coarse) {
 }
 
 // the terrain under and round the skin: green failing into ochre and rust over the boundary
-const cOchre = new THREE.Color('#6a4a30'), cRust = new THREE.Color('#5a2e1c');
+const cOchre = new THREE.Color('#8a4a2c'), cRust = new THREE.Color('#7a2a16'); // v8-02: redder, further from the moor
 export function ground(col, x, z, w) {
   const k = smoothstep(0.04, 0.5, w);
   col.lerp(cOchre, k).lerp(cRust, k * 0.4 * (0.5 + 0.5 * N.noise2(x * 0.05, z * 0.05)));
@@ -131,7 +131,7 @@ export async function build(ctx) {
 
   // ---- the clay and the drifts: a skin over the region, cracks and ripples in its fragment
   const edgeN = (x, z) => 0.5 + 0.18 * N.noise2(x * 0.3, z * 0.3) + 0.1 * N.noise2(x * 1.5, z * 1.5);
-  const cClay = new T.Color('#7a5c42'), cClay2 = new T.Color('#6c4a34'), cSand = new T.Color('#8a4428'), cSand2 = new T.Color('#9a5434'), cBurn = new T.Color('#3a2418');
+  const cClay = new T.Color('#94523a'), cClay2 = new T.Color('#84422c'), cSand = new T.Color('#a2462a'), cSand2 = new T.Color('#b05a36'), cBurn = new T.Color('#4a2216'); // v8-02: red clay
   const skin = buildSkin(ctx, {
     name: KEY, box: [-302, -244, -82, 50], step: low ? 0.9 : 0.7, lift: 0.02,
     keep: (x, z) => wAt(x, z) > 0.2 && terrain.slopeAt(x, z) < 0.75,

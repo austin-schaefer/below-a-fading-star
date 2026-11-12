@@ -17,8 +17,9 @@ import { rigPainter, rigMesh, makeBones, pivot, limb, arm2, placeMatrix, ramp, e
 import { rgb, tone, mix3, clothBody, head, sleeve } from './body.js';
 import { GRAVE, heapZ } from './graves.js';
 import { buildGround } from './cut.js';
+import { LIVERY, lv, stole, badge, collar, staffHead, tag } from '../../v8/livery.js';
 
-const BLACK = rgb('#17141a'), BLACK_D = rgb('#0b0a0c'), HEM = rgb('#2a2522'), SKIN = rgb('#86705f'), HAIR = rgb('#2b2622'), WOOD = rgb('#3a2c20'), IRON = rgb('#2d2b29'), BOOT = rgb('#120f0d');
+const BLACK = rgb(lv('#17141a', LIVERY.coat)), BLACK_D = rgb(lv('#0b0a0c', LIVERY.coatD)), HEM = rgb(lv('#2a2522', '#3a3836')), SKIN = rgb('#86705f'), HAIR = rgb('#2b2622'), WOOD = rgb('#3a2c20'), IRON = rgb('#2d2b29'), BOOT = rgb('#120f0d');
 const A_UP = 0.3, A_FORE = 0.3, GRIP = 0.45, SPADE = 1.0, BLADE = 0.28;
 const HIP = [0, 0.95, 0], NECK = [0, 1.52, 0.02], HEAD_Y = 1.63;
 const SH_R = new THREE.Vector3(-0.2, 1.42, 0.0), SH_L = new THREE.Vector3(0.2, 1.42, 0.0); // his right is -x (he faces +z)
@@ -52,7 +53,17 @@ function build(low) {
   P.bone(1);
   const TORSO = [[0, 0.93, 0.19, 0.13, 0, 0], [0.5, 1.2, 0.2, 0.135, 0, 0.01], [0.85, 1.42, 0.225, 0.13, 0, 0.0], [1, 1.52, 0.065, 0.065, 0, 0.02]];
   clothBody(P, nu, low ? 5 : 7, (v) => tab(TORSO, v), { folds: 4, amp: () => 0.02, colour: (v, r) => mix3(BLACK_D, BLACK, 0.4 + 0.6 * r), seed: 1.1, capBottom: false });
-  tone(P, BLACK, 0.9); P.ring(0, 1.5, 0.02, 0.075, 0.028, low ? 8 : 12, 4);
+  if (!LIVERY.on) { tone(P, BLACK, 0.9); P.ring(0, 1.5, 0.02, 0.075, 0.028, low ? 8 : 12, 4); }
+  else {
+    // v8-06 the livery: the Heliarch collar; the stole wound twice round his waist as a belt and tucked in, out of
+    // the dirt, a loop of it hanging at his hip; the sign is the buckle. His spade's head is the Taker's staff head.
+    collar(P, 0, 1.47, 0.02, 0.072, 0.14, LIVERY.coat, { sides: low ? 10 : 12, gap: 0.5 });
+    const belt = [];
+    for (let k = 0; k <= 16; k++) { const a = Math.PI / 2 + (k / 16) * Math.PI * 2; belt.push([Math.cos(a) * 0.205, 0.97 + 0.012 * Math.sin(a * 2), Math.sin(a) * 0.145]); }
+    stole(P, belt, { w: 0.12, out: (t, p) => [p[0], 0, p[2]], fray: 0, dirt: 0.1, seed: 4 });
+    stole(P, [[0.19, 0.99, 0.06], [0.235, 0.86, 0.06], [0.24, 0.74, 0.02], [0.23, 0.8, -0.04], [0.2, 0.95, -0.07]], { w: 0.085, out: [1, 0, 0.1], fray: 0, dirt: 0.2, seed: 6 });
+    badge(P, [0, 1.005, 0.165], [0, 1, 0], [0, 0, 1], 0.07, { th: 0.01 });
+  }
   // ---- 2: the head
   P.bone(2); head(P, 0, HEAD_Y, 0.03, 0.1, { skin: SKIN, hair: HAIR, sides: low ? 8 : 10 });
   // ---- 3-6: the arms
@@ -61,11 +72,12 @@ function build(low) {
   P.bone(7);
   tone(P, WOOD, 1, 0, 0.75);
   P.loft([[-0.07, 0, 0], [0.07, 0, 0]], [0.016, 0.016], 5, 0, true);
+  if (LIVERY.on) { staffHead(P, 0, 0.01, 0); tone(P, WOOD, 1, 0, 0.75); }
   P.loft([[0, 0, 0], [0, -SPADE, 0]], [0.018, 0.02], 6, 0, false);
   tone(P, IRON, 1, 0.55, 0.55);
   P.loft([[0, -SPADE + 0.04, 0], [0, -SPADE - 0.03, 0]], [0.026, 0.024], 6, 0, false); // the socket
   P.sheet(3, 3, (u, v, o) => { const w = 0.095 * (1 - 0.15 * v * v); o[0] = (u - 0.5) * 2 * w; o[1] = -SPADE - 0.02 - v * BLADE; o[2] = 0.015 * (1 - (2 * u - 1) ** 2); });
-  return P.geometry();
+  return tag(P.geometry(), P, 'heliarch');
 }
 
 // the clods: a few dark points per throw, flown on the GPU from the blade to the heap (no uploads)
@@ -141,7 +153,7 @@ export function buildSexton(ctx, order) {
   // still says turf there)
   let colliders = 0;
   const collide = (s) => {
-    for (const dx of [-0.5, 0.5]) { ctx.addCollider({ x: s.x + dx, z: s.z, r: 0.55 }); ctx.addCollider({ x: s.x + dx, z: heapZ(s), r: 0.45 }); colliders += 2; }
+    for (const dx of [-0.5, 0.5]) { ctx.addCollider({ x: s.x + dx, z: s.z, r: 0.55 }); const hz = heapZ(s), hy = ctx.terrain.heightAt(s.x + dx, hz); ctx.addCollider({ x: s.x + dx, z: hz, r: 0.45, y: hy - 0.5, h: GRAVE.heapH + 0.5 }); colliders += 2; } // v8-10: the heap at its top
     s.collided = true;
   };
   for (let k = 0; k <= OPEN; k++) collide(order[k]);

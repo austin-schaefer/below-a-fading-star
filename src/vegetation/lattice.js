@@ -26,7 +26,9 @@ function shardGeo(rng, sides, bodyTop, taper, skew, bevel = false) {
   const push = (a, b, c) => pos.push(...a, ...b, ...c);
   for (let r = 0; r < rings.length - 1; r++) {
     const A = rings[r], B = rings[r + 1];
-    for (let s = 0; s < sides; s++) { const s1 = (s + 1) % sides; push(A[s], B[s1], B[s]); push(A[s], A[s1], B[s1]); }
+    // wound outward like the point: wound inward (as to v8), the shaft drew its far inner walls and the point's
+    // underside showed the sky through the open top from below (#8)
+    for (let s = 0; s < sides; s++) { const s1 = (s + 1) % sides; push(A[s], B[s], B[s1]); push(A[s], B[s1], A[s1]); }
   }
   const T = rings[rings.length - 1];
   for (let s = 0; s < sides; s++) push(T[s], apex, T[(s + 1) % sides]);
@@ -49,7 +51,7 @@ export function buildLattice(ctx, ground, shared) {
     const glacial = b.glacier * smoothstep(-205, -240, z) * 0.85;
     return clamp(Math.max(b.crystal * 1.1, glacial), 0, 1);
   };
-  const okGround = (x, z) => ground.slopeAt(x, z) < 0.85 && ground.waterDepth(x, z) < 0 && ground.causewayDistance(x, z) > 4;
+  const okGround = (x, z) => ground.slopeAt(x, z) < 0.85 && ground.waterDepth(x, z) < 0 && ground.causewayDistance(x, z) > 4 && ground.wornAt(x, z) < 0.05; // v8-01: no crystal on a road
 
   // Geometries
   const geos = {

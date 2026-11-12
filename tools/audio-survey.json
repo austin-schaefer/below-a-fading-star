@@ -355,6 +355,50 @@
     "gap_min_s": { "min": 0.3 },
     "silence_pct": { "max": 0 }
    }
+  },
+  {
+   "name": "house-court",
+   "place": "The Pomegranate House's court inside the gate, facing the fountain and the musician, standing, 30 s (v8-05: talk in bouts with rests, a laugh at the end of some, the oud in halting phrases, a cup set down, the lamps' glass; the wind drops in the walled court. clicks not gated: 27 weak seam-period detections at -73 dBFS are here with ?house=0 too, source not found)",
+   "params": "pos=95,-54&yaw=3.1416",
+   "seconds": 30,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -38, "max": -28 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "lra": { "min": 3, "max": 14 },
+    "peak_dbfs": { "max": -3 },
+    "crest_db": { "min": 12, "max": 24 },
+    "centroid_hz": { "min": 250, "max": 1200 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0 },
+    "seam_s": { "none": true },
+    "repeat_s": { "none": true },
+    "onsets_pm": { "min": 6, "max": 70 },
+    "gap_max_s": { "min": 2 },
+    "silence_pct": { "max": 0 }
+   }
+  },
+  {
+   "name": "twk-spawn",
+   "place": "Eleven metres east of the gnomon nearest the spawn, facing it: when the walk begins a Twk-man comes out to inspect you (his whirr, his sniff a metre from your face), and the pair at the gnomon quarrel (v8-07)",
+   "params": "pos=2.2,32.1&yaw=1.395",
+   "seconds": 20,
+   "options": {},
+   "bands": {
+    "lufs_i": { "min": -30, "max": -22 },
+    "lufs_s_max": { "max": -14, "gated": true },
+    "peak_dbfs": { "max": -3 },
+    "centroid_hz": { "min": 300, "max": 1400 },
+    "sharp_db": { "max": -10, "gated": true },
+    "rough": { "max": 0.25, "gated": true },
+    "hf_db": { "max": -16 },
+    "clicks": { "max": 0, "gated": true },
+    "seam_s": { "none": true },
+    "onsets_pm": { "min": 2, "max": 40 },
+    "silence_pct": { "max": 0 }
+   }
   }
  ]
 }

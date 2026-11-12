@@ -63,3 +63,15 @@ Brainstormed 2026-11-07 from pre-1960s science fantasy and weird fiction. Names 
 5. **Y. The Settle**: the purest stand-still-and-wait moment, uncanny without any monster.
 
 Needs design input before building: AG's sigils, AC's element pairs, any carved signs on AB. Those are questions for `proposals/`, not things to invent in a build.
+
+## From the v8 critic (2026-11-11), not blocking, not done
+
+- An orange bar hangs in the sky above the southern crest in every southward frame (older than v8, somewhere in `skylife`); it reads as a stray plank behind the Pomegranate House. Find what draws it and either make it a thing or remove it.
+- The plain grey `demesne-blocks` at about (72, -4) sit in the foreground of the best approach to the house.
+- The Lynchets' walls are rows of identical icosahedra; the hillside's spike rows look machine-made.
+- The "uncanny biomesh" (blue boxes up the hex path at the Cardinal Stones, blue flecks on the court masonry) reads as a bug.
+- The fallen traveller is a few pixels from the Span's lip: a pale cloth, a circling bird or a lamp below would point at him.
+- The Arcature's new outcrops are featureless black; the Leerie's standards are unlit black posts; at the Collation and the orchard eye-height grass fills the frame.
+- Phone cost at low: 1.1 to 1.8M triangles, 170 to 233 draw calls.
+- 16 of about 190 low round things refuse a running hop (Collation dressing at (142.4, -65.3), grave kerbs at (58.9, 268.1), a Demesne block at (103.3, -17.3), a court block at (-16.5, -163.1)); the fallen gnomon needs a 3.2 m run-up. Step-up is per frame, not per metre.
+- The house court's audio measures 79 clicks and a 0.51 s seam (ungated; present with the house off).

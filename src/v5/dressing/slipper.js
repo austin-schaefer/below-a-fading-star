@@ -81,6 +81,8 @@ function shape() {
   return g;
 }
 
+export { shape as slipperShape, brocade }; // v8-05: the house's sleeper wears the mate
+
 export function buildSlipper(ctx) {
   const rng = ctx.makeRng(5402), g = shape();
   g.translate(-SLIPPER.length * 0.5, 0, 0);

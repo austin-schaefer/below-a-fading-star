@@ -15,6 +15,7 @@ import { hyp, smoothstep, clamp, mulberry32 } from '../../noise.js';
 import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rigPainter, rigMesh, makeBones, pivot, arm2, placeMatrix, ramp, ease, tris } from './rig.js';
 import { rgb, tone, mix3, clothBody, head, sleeve } from './body.js';
+import { LIVERY, stole, patch, lateCloth, wrongSign, tag } from '../../v8/livery.js';
 
 const DRESS = rgb('#865a44'), DRESS_D = rgb('#4a3040'), DRESS_HEM = rgb('#6c5c4a'), SKIN = rgb('#a48a78'), HAIR = rgb('#211814'), FRAME = rgb('#3a2d22');
 const A_UP = 0.26, A_FORE = 0.25, SEP = 0.55;          // each woman sits SEP in front of the frame
@@ -31,9 +32,18 @@ function woman(low) {
   // the dress pooled round legs folded to her right; purple only deep in the folds, a worn hem
   const SKIRT = [[0, 0.005, 0.47, 0.41, -0.12, 0.03], [0.35, 0.12, 0.43, 0.34, -0.1, 0.03], [0.7, 0.19, 0.25, 0.19, -0.03, 0.0], [1, 0.245, 0.15, 0.11, 0, 0]];
   const BODICE = [[0, 0.23, 0.15, 0.105, 0, 0], [0.45, 0.42, 0.155, 0.12, 0, 0.02], [0.85, 0.555, 0.175, 0.1, 0, 0], [1, 0.645, 0.052, 0.052, 0, 0.01]];
-  const cloth = (v, r) => mix3(mix3(DRESS_D, DRESS, 0.3 + 0.7 * r), DRESS_HEM, 1 - smoothstep(0, 0.1, v));
+  let cloth = (v, r) => mix3(mix3(DRESS_D, DRESS, 0.3 + 0.7 * r), DRESS_HEM, 1 - smoothstep(0, 0.1, v));
+  let bod = (v, r) => mix3(DRESS_D, DRESS, 0.5 + 0.5 * r);
+  if (LIVERY.on) {
+    // v8-06 the livery: the once-fine purple patched, and patched again, with what the Late folk had: the skirt in
+    // pomegranate and saffron squares, the bodice in turquoise and undyed; still the same on both of them
+    const SK = [DRESS, lateCloth('pom'), lateCloth('saffron')], BO = [DRESS, lateCloth('turq'), lateCloth('undyed')];
+    cloth = (v, r, a) => mix3(mix3(patch(P, SK, a / (Math.PI * 2), v, { nu: 6, nv: 3, seed: 2 }), DRESS_D, 0.45 - 0.4 * r), DRESS_HEM, (1 - smoothstep(0, 0.1, v)) * 0.6);
+    bod = (v, r, a) => mix3(patch(P, BO, a / (Math.PI * 2), v, { nu: 5, nv: 2, seed: 5 }), DRESS_D, 0.35 - 0.3 * r);
+  }
   P.bone(0); clothBody(P, nu, low ? 6 : 9, (v) => tab(SKIRT, v), { folds: 11, amp: (v) => 0.06 * (1 - v * 0.5), colour: cloth, seed: 2.1, capTop: false, rough: 0.62 });
-  P.bone(1); clothBody(P, nu, low ? 6 : 8, (v) => tab(BODICE, v), { folds: 5, amp: () => 0.018, colour: (v, r) => mix3(DRESS_D, DRESS, 0.5 + 0.5 * r), seed: 0.9, capBottom: false, rough: 0.6 });
+  P.bone(1); clothBody(P, nu, low ? 6 : 8, (v) => tab(BODICE, v), { folds: 5, amp: () => 0.018, colour: bod, seed: 0.9, capBottom: false, rough: 0.6 });
+  if (LIVERY.on) wrongSign(P, [0.06, 0.5, 0.128], [0, 1, 0], [0, 0.1, 1], 0.07); // the sign, sewn on wrong
   P.bone(2); head(P, 0, 0.74, 0.03, 0.084, { skin: SKIN, hair: HAIR, bun: true, sides: low ? 8 : 10 });
   for (const [b, f] of [[3, false], [4, true], [5, false], [6, true]]) { P.bone(b); f ? sleeve(P, A_FORE, 0.05, 0.06, mix3(DRESS_D, DRESS, 0.7), { hand: SKIN }) : sleeve(P, A_UP, 0.05, 0.05, mix3(DRESS_D, DRESS, 0.7)); }
   P.mre = [0, 0.6, 0];
@@ -46,6 +56,14 @@ function frame(P) {
     P.loft([[s * 0.8, 0.02, -0.2], [s * 0.8, 0.02, 0.2]], [0.02, 0.02], 5, 0, true);
   }
   for (const y of [NET.y0 - 0.02, NET.y1 + 0.02]) P.loft([[-0.82, y, 0], [0.82, y, 0]], [0.016, 0.016], 5, 0, true);
+  // v8-06, a dealing: the net is mended with a strip of an officer's ember stole, darned in across its lower half and
+  // tied off at the post, its frayed end hanging
+  if (LIVERY.on) {
+    const pts = [];
+    for (let k = 0; k <= 10; k++) { const x = -0.78 + k * 0.1; pts.push([x, 0.36 + 0.03 * Math.sin(k * 1.3) - 0.02 * k / 10, 0.004 * Math.sin(k * 2.1)]); }
+    pts.push([0.26, 0.3, 0.01], [0.27, 0.2, 0.012]);
+    stole(P, pts, { w: 0.06, th: 0.006, out: [0, 0, 1], seed: 8, dirt: 0.15, fray: 0.05 });
+  }
 }
 // two copies of the woman's geometry in one: the second's bones offset by 7; then the frame
 function pairGeometry(low) {
@@ -56,7 +74,7 @@ function pairGeometry(low) {
   for (let k = 0; k < c.length; k++) { P.c.push(c[k]); P.mr.push(mr[k]); }
   for (let k = 0; k < i0; k++) P.i.push(idx[k] + n0);
   frame(P);
-  return P.geometry();
+  return tag(P.geometry(), P, 'late');
 }
 function netGeometry(rng) {
   const nx = Math.round((2 * NET.x) / NET.mesh), ny = Math.round((NET.y1 - NET.y0) / NET.mesh);

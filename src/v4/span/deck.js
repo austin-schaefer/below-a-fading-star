@@ -64,6 +64,7 @@ export function buildDeck(K) {
     if (x0 < c0 && x1 > c1) deckRuns.push([x0, c0], [c1, x1]); else deckRuns.push([x0, x1]);
   }
   const gaps = [STAIRS.west.gap, STAIRS.east.gap];
+  const rails = []; // v8-10: each parapet piece as it stands, for its collider: [x0, x1, zA, zB, height]
   for (const [x0, x1] of deckRuns) {
     body.push(box(x0, x1, Y - 2.1, Y - 1.0, Z0 - 0.7, Z1 + 0.7));
     for (const [zA, zB, north] of [[Z0, Z - SPAN.inner, true], [Z + SPAN.inner, Z1, false]]) {
@@ -73,12 +74,12 @@ export function buildDeck(K) {
         const inGap = north && gaps.some(([g0, g1]) => x < g1 && xb > g0);
         if (inGap) {
           for (const [g0, g1] of gaps) if (north && x < g1 && xb > g0) {
-            if (x < g0) body.push(box(x, g0, Y, Y + 1.05, zA, zB));
-            if (xb > g1) body.push(box(g1, xb, Y, Y + 1.05, zA, zB));
+            if (x < g0) { body.push(box(x, g0, Y, Y + 1.05, zA, zB)); rails.push([x, g0, zA, zB, 1.05]); }
+            if (xb > g1) { body.push(box(g1, xb, Y, Y + 1.05, zA, zB)); rails.push([g1, xb, zA, zB, 1.05]); }
           }
         } else {
           const r = rng(), top = r < 0.1 ? 0.35 : r < 0.22 ? 0.7 : 1.05; // a few courses fallen
-          body.push(box(x + 0.04, xb - 0.04, Y, Y + top, zA, zB));
+          body.push(box(x + 0.04, xb - 0.04, Y, Y + top, zA, zB)); rails.push([x + 0.04, xb - 0.04, zA, zB, top]);
         }
         x = xb;
       }
@@ -87,22 +88,24 @@ export function buildDeck(K) {
   K.bays = bays; K.gaps = gaps;
   // ---------------------------------------------------------------- the deck: walkable, parapets collide
   ctx.addWalkable(deckAt);
-  for (const [x0, x1] of SPAN.decks) {
-    for (let x = x0; x <= x1 + 0.01; x += 1.2) {
-      addCol({ x, z: Z + SPAN.keep + 1.35, r: 0.9, y: Y - 0.5, h: 3 });
-      if (!gaps.some(([g0, g1]) => x > g0 - 0.6 && x < g1 + 0.6)) addCol({ x, z: Z - SPAN.keep - 1.35, r: 0.9, y: Y - 0.5, h: 3 });
-    }
+  // v8-10 (#7): each parapet piece is a capsule at its own height (1.05 m, or 0.7 and 0.35 where courses have
+  // fallen), so a hop and a scramble put the walker on top of it, 56 m over the ground, and a step outward drops
+  // them as the crack does. Its inner face stops a walker on the deck where SPAN.keep says.
+  for (const [x0, x1, zA, zB, top] of rails) {
+    const r = (zB - zA) / 2, zc = (zA + zB) / 2, e = Math.min(r, (x1 - x0) / 2);
+    addCol({ x1: x0 + e, z1: zc, x2: x1 - e, z2: zc, r, y: Y - 0.5, h: top + 0.5 });
   }
   // the piers and abutments at ground level, up to just under the deck
   const footY = (x) => Math.min(H(x - 6, Z), H(x + 6, Z), H(x, Z - 8), H(x, Z + 8)) - 3;
   for (let i = 0; i < P.length; i++) {
     const a = P[i], yb = footY(a);
-    addCol({ x: a, z: Z, r: 8, y: yb, h: Y - 1 - yb });
-    if (i > 0 && i < P.length - 1) { addCol({ x: a, z: Z0 - 1.5, r: 5, y: yb, h: Y - 1 - yb }); addCol({ x: a, z: Z1 + 1.5, r: 5, y: yb, h: Y - 1 - yb }); }
+    // (their tops are under the deck, not surfaces: stand: false, so a walker falling past one is not caught in the air)
+    addCol({ x: a, z: Z, r: 8, y: yb, h: Y - 1 - yb, stand: false });
+    if (i > 0 && i < P.length - 1) { addCol({ x: a, z: Z0 - 1.5, r: 5, y: yb, h: Y - 1 - yb, stand: false }); addCol({ x: a, z: Z1 + 1.5, r: 5, y: yb, h: Y - 1 - yb, stand: false }); }
   }
   for (const s of [-1, 1]) {
     const xa = s < 0 ? -SPAN.gateX : P[P.length - 1], xb = s < 0 ? P[0] : SPAN.gateX;
-    for (let x = xa; x <= xb; x += 2.5) for (const z of [Z0 - 1.5, Z1 + 1.5]) addCol({ x, z, r: 1.5, y: BOT - 20, h: Y - 1 - (BOT - 20) });
+    for (let x = xa; x <= xb; x += 2.5) for (const z of [Z0 - 1.5, Z1 + 1.5]) addCol({ x, z, r: 1.5, y: BOT - 20, h: Y - 1 - (BOT - 20), stand: false });
   }
 
 }

@@ -3,6 +3,7 @@
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
 // ctx.controls (controls.js), ctx.quality (tier.js) and ctx.terrain lazily, because those build after the hud.
 import { LANDMARKS, REGION_CARDS, SITES, SPAWN, SUN } from './world.js';
+import { THREAD_PLACES } from './v8/threads/plan.js'; // v8-04: both ends of each story thread
 
 const TIERS = ['low', 'medium', 'high'];
 
@@ -63,6 +64,7 @@ function buildPlaces() {
     else if (key === 'thurifer') { const p = offToward({ x: S.from[0], z: S.from[1] }, 6); out.push({ name: S.name, group: 'The living', x: p.x, z: p.z, look: { x: S.from[0], z: S.from[1] } }); }
     else out.push({ name: S.name, group: 'The living', x: 165, z: 216, look: { x: 150, z: 216 } }); // the Span's line, the last firm ground by the river
   }
+  for (const pl of THREAD_PLACES) out.push({ ...pl, group: 'Stories' }); // v8-04
   return out;
 }
 export const PLACES = buildPlaces();
@@ -156,13 +158,14 @@ export function buildSettings(ctx) {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = pl.name;
     b.addEventListener('click', () => teleport(i));
+    if (pl.thread) { b.dataset.thread = pl.thread; b.hidden = true; } // v8-04: shown once the thread has built (open())
     placesEl.appendChild(b);
   });
   function teleport(pl) {
     if (typeof pl === 'number') pl = PLACES[pl];
-    if (!pl) return false;
+    if (!pl || (pl.thread && !ctx.threads?.[pl.thread])) return false; // v8-04: a story's end only when its thread was built
     const p = ctx.player;
-    const at = ctx.controls.placeAt(pl.x, pl.z);
+    const at = pl.y != null ? (p.pos.set(pl.x, pl.y + p.eye, pl.z), p.vel.set(0, 0, 0), p.vy = 0, { x: pl.x, z: pl.z }) : ctx.controls.placeAt(pl.x, pl.z); // v8-04: y, a floor above the ground (the Span's deck)
     if (pl.look === 'sun') p.yaw = yawToward(0, 0, SUN.dir.x, SUN.dir.z);
     else if (pl.look) p.yaw = yawToward(at.x, at.z, pl.look.x, pl.look.z);
     else p.yaw = pl.yaw;
@@ -177,6 +180,7 @@ export function buildSettings(ctx) {
     open_ = true;
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
     syncSound(); syncQuality(); syncCapture(); syncPos();
+    for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');
     panel.focus({ preventScroll: true });

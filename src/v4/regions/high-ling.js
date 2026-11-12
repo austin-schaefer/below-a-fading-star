@@ -13,6 +13,8 @@ import { REGIONS, SITES } from '../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { Mesher, flapMaterial, flapInstanced } from '../../fauna/geo.js';
 import { groundOf, stoneGeo, instanced, stoneMaterial, airMotes, meshStats, compose } from './common.js';
+import { nearestLead } from '../paths/routes.js'; // v8-09: no stone or bush across a road (called at build time)
+const onRoad = (x, z, r) => { const h = nearestLead(x, z, r + 0.3); return !!h && h.kind !== 'rivulet'; };
 
 const KEY = 'highLing';
 const SN = makeSimplex(6611);
@@ -38,7 +40,7 @@ export function height(h, x, z, w) {
 }
 
 const C = (h) => new THREE.Color(h);
-const cLing = C('#4c3232'), cBell = C('#4a3448'), cBil = C('#34442a'), cGrit = C('#6a5854');
+const cLing = C('#54303e'), cBell = C('#5e3252') /* v8-02: purple-brown */, cBil = C('#34442a'), cGrit = C('#6a5854');
 const _gc = new THREE.Color();
 export function ground(col, x, z, w, b) {
   const n = SN.fbm2(x * 0.06 + 5, z * 0.06, 3) * 0.5 + 0.5;
@@ -53,10 +55,10 @@ export function ground(col, x, z, w, b) {
 
 // deep ling everywhere, knee-high and ruddy; little grass; no trees (gorse and the tors are the region's own)
 export const cover = {
-  density: { grass: 0.35, heather: 2.0, bracken: 0.25, flowers: 0.25, trees: 0 },
-  scale: { heather: 1.35, grass: 0.8 },
-  floor: { heather: 1.4 },
-  tint: { heather: '#7c4a2e', grass: '#8a6a50', bracken: '#7a3a1a' }, tintAmt: 0.6,
+  density: { grass: 0.15, heather: 2.2, bracken: 0.1, flowers: 0.15, trees: 0 },
+  scale: { heather: 0.62, grass: 0.45 }, // v8-02: low and wind-flat
+  floor: { heather: 1.6 },
+  tint: { heather: '#6e3a52', grass: '#7a5a5a', bracken: '#6a3a2a' }, tintAmt: 0.75,
 };
 export const stone = { density: 0.3, tors: false };
 export const air = { tint: '#f2c95e', strength: 1 }; // "gold pollen" (DI)
@@ -197,6 +199,7 @@ export async function build(ctx) {
     const a = rng() * 6.283, r = 3 + Math.pow(rng(), 0.8) * (8 + H), x = tx + Math.cos(a) * r, z = tz + Math.sin(a) * r;
     if (!inRegion(x, z, 0.5)) continue;
     const s = (0.25 + Math.pow(rng(), 2) * 1.0) * (1 - r / (24 + H) * 0.5);
+    if (onRoad(x, z, s * 0.8)) continue;
     clitter.push({ x, y: G.heightAt(x, z) + s * 0.1, z, s, sx: s * (1 + rng() * 0.5), sy: s * (0.7 + rng() * 0.4), sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.6, rz: (rng() - 0.5) * 0.6, c: pinkish(0.9) });
     if (s > 0.8) ctx.addCollider({ x, z, r: s * 0.8 });
   }
@@ -247,11 +250,12 @@ export async function build(ctx) {
     if (rng() > smoothstep(0.42, 0.65, clump) + 0.05) continue;
     if (gorse.some((g) => hyp(g.x - x, g.z - z) < g.s * 1.7)) continue;
     const s = 0.55 + rng() * 0.6;
+    if (onRoad(x, z, s * 0.8)) continue;
     gorse.push({ x, y: G.heightAt(x, z) - 0.05, z, s, sx: s * (1 + rng() * 0.4), sy: s * (0.9 + rng() * 0.6), sz: s * (1 + rng() * 0.3), ry: rng() * 6.28 });
   }
   const gorseMesh = instanced(gorseGeo, gorseMat, gorse, { name: 'highling-gorse' });
   scene.add(gorseMesh); meshes.push(gorseMesh);
-  for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5 });
+  for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5, stand: false }); // v8-10: gorse is not stood on
   // the top sprig of each bush: where a stonechat sits
   const tops = gorse.map((g) => ({ x: g.x, z: g.z, y: g.y + g.sy * gorseTop * 0.97, used: false }));
 

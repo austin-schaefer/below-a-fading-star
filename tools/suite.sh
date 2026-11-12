@@ -31,9 +31,18 @@ run() {
 }
 
 run dressing tools/dressing-test.mjs $B
+run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
+run roads tools/roads-test.mjs $B
+run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
+run contrast tools/contrast-survey.mjs $B
+run strata tools/strata-test.mjs $B
+run livery tools/livery-test.mjs $B
+run house tools/house-test.mjs $B
+run rocks tools/rocks-test.mjs $B
 run walk tools/walk-test.mjs "$B/?q=low"
+run hop tools/hop-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"

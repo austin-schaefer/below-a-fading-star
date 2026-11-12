@@ -1,4 +1,4 @@
-// The Deodand Byre: a low drystone byre at the wood's edge, its slate roof sagging and half fallen in,
+// The Deodand Byre (the Oast Byre): a low drystone byre at the wood's edge, its slate roof sagging and half fallen in,
 // a dark doorway facing the wood, a stone trough, a tether ring, and bones. A few more inside the door.
 import * as THREE from 'three';
 import { mat } from './geo.js';
@@ -53,6 +53,19 @@ export function buildByre(ctx, B, env) {
   }
   // lintel over the door
   B.add(B.box(door.lx1 - door.lx0 + 0.9, 0.32, th + 0.1, { chip: 0.05 }), M((door.lx0 + door.lx1) / 2, gAvg + door.h + 0.16, hw - th / 2), { color: vary(tints.old, rng, 0.05), moss: 0.7, ground: gAvg });
+  // v8-03: the Late folk keep it now: a painted leaf swung back against the wall, a rag awning over the door, their
+  // sign tiled into the wall beside it (the Elder block for the threshold is v8/strata/place.js's)
+  const S = ctx.strata?.on ? ctx.strata : null;
+  if (S) {
+    const L = S.colors.late, face = hw + 0.005;
+    for (let k = 0; k < 5; k++) B.add(B.box(0.25, 1.75, 0.06), M(door.lx0 - 1.0 + k * 0.255, gAvg + 0.92, face + 0.08, 0, 0, (rng() - 0.5) * 0.02), { color: vary(k % 2 ? L.paint[1] : L.paint[1].clone().multiplyScalar(0.85), rng, 0.05), moss: 0.05, ground: gAvg });
+    for (const y of [0.35, 1.5]) B.add(B.box(1.3, 0.12, 0.05), M(door.lx0 - 0.49, gAvg + y, face + 0.13), { color: L.paint[0], moss: 0, ground: gAvg });
+    B.add(B.box(0.1, 1.4, 0.05), M(door.lx0 - 0.49, gAvg + 0.93, face + 0.13, 0, 0, 0.72), { color: L.paint[0], moss: 0, ground: gAvg });
+    S.parts.late.awning(B, M((door.lx0 + door.lx1) / 2, gAvg, face), { w: 2.4, d: 1.5, h: 2.3, rng });
+    S.parts.late.sign(B, M(2.55, gAvg + 0.75, face + 0.05), { w: 0.7, h: 0.7, rng });
+    const [sx, sz] = W(2.55, face + 0.08);
+    S.place({ hand: 'late', kind: 'sign', name: "the Oast Byre's door", x: sx, y: gAvg + 1.1, z: sz, face: [Fx, Fz], mount: 'wall', size: 0.7 });
+  }
   // gable ends: courses stepping in toward the ridge; the fallen end broken low
   for (const end of [-1, 1]) {
     const lx = end * (hl - th / 2);
