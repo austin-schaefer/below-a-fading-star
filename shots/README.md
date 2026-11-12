@@ -585,6 +585,9 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `75-lantern-halt-from-the-road.webp` | The Lantern Halt from the causeway, 60 m east: a dark slab with a lit globe in its notch. |
 | `75-lantern-halt-near.webp` | The Lantern Halt at 15 m: the globe in its painted arch, the sleeper at the hatch, his bundle on the slab's shoulder. |
 | `75-lantern-halt-sleeper.webp` | Enlarged: the sleeper under a patchwork quilt, the bindle beside him. |
+| `76-bell-a-struck.webp` | The bell under the Great Span just struck: the ram rebounding, dust coming off the crown. |
+| `76-bell-b-candles.webp` | Thirty-five seconds on: the corpse-candles gathered in the bell's mouth. |
+| `76-bell-c-traveller.webp` | Where the candles lead: the fallen traveller below the Span, his sealed letters scattered. |
 | `76-collation-a-offer.webp` | The long table: the missing diner's hat and spectacles, "Pour for him". |
 | `76-collation-b-pour.webp` | The bottle tipped over his glass. |
 | `76-collation-c-lit.webp` | The other glasses filled and lit, a spark in the air. |
