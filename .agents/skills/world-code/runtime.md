@@ -139,6 +139,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v10
 
 - `acts=0`: no acts (`src/v10/acts.js`): nothing offered, nothing read from or written to `fp-acts`, and each place draws as it did before (the tally its own strokes only). The settings panel's Marks row ("Forget my marks") clears `fp-acts` and redraws every act's place. `node tools/acts-test.mjs <base>` checks the offer (not from the road, 30 m off, facing away or away from the row's end; offered in front of it, nothing behind the paused card or the settings panel), `E` and not Ctrl+E, the stored mark, the stroke drawn in view, once a visit, busy, `when()`, `at.y`, `data`, the stroke after a reload, the forget row, corrupt, tampered and refused storage, `?acts=0` and the tap on a touch page, and renders `shots/wip/acts-halt2-*.png`
+- `bell=0`: no bell under the Span (`src/v10/bell.js`), nor its ram, post, candles or act. acts-test's `bell:` rows (14) check it is offered at the post and not from 28 m, facing away or from beyond it, the ram and the bell in view, `E` hauls the ram, the stroke (sway, dust, stones), the candles kindling on the fen, nine standing round the traveller (`ctx.bell.ff` runs the minute on), all of it after a reload, and the forget row; renders `shots/wip/acts-bell-offer.png`, `acts-bell-struck.png`
 
 ### v8
 
