@@ -7,12 +7,13 @@
 //   act-crystal-ring  the ring through the field, from the crystal: A2-A3-E4-A4 beating slowly (1-3 Hz apart, as the hum
 //                     does), swelling over a second and dying over six, much of it in the room. opts.back: the field
 //                     sending it back, a swell that grows toward the end instead. Punctuation, 400 m
-//   act-knock         the ring dropped on its boss (src/v10/door.js): a short bronze clank (a small bell's inharmonic
-//                     partials on 330 Hz, gone in 0.4 s), a click of metal on metal, and the leaf's dull thump. Detail, 40 m
+//   act-knock         the great ring dropped on its stud (src/v10/door.js): a heavy bronze clank (a bell's inharmonic
+//                     partials on 196 Hz, gone in 0.7 s), a click of metal on metal, and the leaf's deep thump. Detail, 50 m
 //   act-answer        a knock from inside: a thump in the dark, lowpassed by the stone and the distance it comes from;
 //                     opts.near 0..1 (0: far below, quiet, dark, two late echoes off a great depth; 1: just behind the
 //                     bronze, loud and close, the door rattling in its frame). Detail, 60 m
-//   act-tessera       the tessera pushed out: a little scrape of metal over stone and a clink as it stops. Detail, 15 m
+//   act-plate         his bronze plate pushed out under the door: a long low scrape of metal over stone, a knock as it
+//                     drops off the threshold's lip, and a dull settle. Detail, 20 m
 import { softKit } from '../audio/cues-v2.js';
 
 export function startCentralSound(a, ctx) {
@@ -56,13 +57,13 @@ export function startCentralSound(a, ctx) {
 
   const BRONZE = [[1, 1, 0.35], [2.32, 0.5, 0.22], [3.7, 0.28, 0.14], [5.1, 0.12, 0.08]];
   function knock(pos) {
-    const v = voice(pos, { ref: 2, roll: 1, range: 40, dur: 1, verb: 0.35, air: 60, gain: 2.2 }); if (!v) return;
-    const t0 = v.t0, lp = filt('lowpass', 4200, 0.6); lp.connect(v.in);
-    const f0 = jit(330, 0.01);
-    for (const [r, amp, d] of BRONZE) stone(v, lp, 'sine', f0 * r, t0, 0.03 * amp, 0.01, d);
-    sgrain(v, lp, t0, jit(1700, 0.04), 1.8, 0.05, 0.03, pink, 0.003); // metal on metal
-    const th = stone(v, lp, 'sine', 95, t0, 0.07, 0.01, 0.22); // the leaf's thump
-    th.frequency.setValueAtTime(95, t0); th.frequency.exponentialRampToValueAtTime(62, t0 + 0.2);
+    const v = voice(pos, { ref: 2.5, roll: 1, range: 50, dur: 1.4, verb: 0.4, air: 60, gain: 2.4 }); if (!v) return;
+    const t0 = v.t0, lp = filt('lowpass', 3600, 0.6); lp.connect(v.in);
+    const f0 = jit(196, 0.01);
+    for (const [r, amp, d] of BRONZE) stone(v, lp, 'sine', f0 * r, t0, 0.035 * amp, 0.01, d * 2);
+    sgrain(v, lp, t0, jit(1300, 0.04), 1.6, 0.06, 0.035, pink, 0.003); // metal on metal
+    const th = stone(v, lp, 'sine', 80, t0, 0.09, 0.01, 0.3); // the leaf's thump
+    th.frequency.setValueAtTime(80, t0); th.frequency.exponentialRampToValueAtTime(52, t0 + 0.25);
   }
 
   function answer(pos, o = {}) {
@@ -85,15 +86,17 @@ export function startCentralSound(a, ctx) {
     }
   }
 
-  function tessera(pos) {
-    const v = voice(pos, { ref: 1.5, roll: 1, range: 15, dur: 1.4, verb: 0.25, air: 40, gain: 3 }); if (!v) return;
-    const t0 = v.t0, lp = filt('lowpass', 5000, 0.6); lp.connect(v.in);
+  function plate(pos) {
+    const v = voice(pos, { ref: 2, roll: 1, range: 20, dur: 1.8, verb: 0.3, air: 40, gain: 3 }); if (!v) return;
+    const t0 = v.t0, lp = filt('lowpass', 3000, 0.6); lp.connect(v.in);
     let t = t0;
-    while (t < t0 + 0.75) { const u = (t - t0) / 0.75; sgrain(v, lp, t, 2200 + rng() * 900, 3, 0.012 * (1 - u * 0.7), 0.012, pink, 0.003); t += 0.018 + rng() * 0.02; }
-    const end = t0 + 0.8;
-    stone(v, lp, 'sine', jit(3100, 0.01), end, 0.012, 0.01, 0.18); // the clink as it stops
-    stone(v, lp, 'sine', jit(4650, 0.01), end, 0.005, 0.01, 0.1);
-    sgrain(v, lp, end, 1500, 2, 0.02, 0.02, pink, 0.003);
+    while (t < t0 + 1.1) { const u = (t - t0) / 1.1; sgrain(v, lp, t, 900 + rng() * 700, 2.5, 0.016 * (1 - u * 0.6), 0.016, pink, 0.003); t += 0.016 + rng() * 0.02; }
+    const drop = t0 + 0.45; // off the threshold's lip
+    stone(v, lp, 'sine', jit(520, 0.01), drop, 0.02, 0.01, 0.25);
+    sgrain(v, lp, drop, 700, 1.5, 0.03, 0.03, pink, 0.003);
+    const end = t0 + 1.15;
+    stone(v, lp, 'sine', jit(410, 0.01), end, 0.014, 0.01, 0.3); // the settle
+    stone(v, lp, 'sine', jit(980, 0.01), end, 0.005, 0.01, 0.2);
   }
   void shape;
   function cue(name, pos, opts) {
@@ -101,7 +104,7 @@ export function startCentralSound(a, ctx) {
     else if (name === 'act-crystal-ring') crystalRing(pos, opts);
     else if (name === 'act-knock') knock(pos);
     else if (name === 'act-answer') answer(pos, opts);
-    else if (name === 'act-tessera') tessera(pos);
+    else if (name === 'act-plate') plate(pos);
     else return false;
     return true;
   }

@@ -173,7 +173,7 @@ export function buildHypogeum(ctx, env) {
   const pub = ctx.hypogeum = {
     glyphOrder: order, shifts: 0,
     door: { x: x1 + 0.3, y: Yf + 1.27, z: zc, width: dHalf * 2, height: dTop - Yf },
-    doorMesh: door.mesh, ring: door.ring, glyphMat: glyphs.mesh.material, speed: 0.7, spin(k) { target += k; pub.speed = 7; },
+    doorMesh: door.mesh, ring: door.ring, doorU: door.uniforms, glyphMat: glyphs.mesh.material, glyphRead: glyphs.uniforms.uRead, glyphLift: glyphs.lift, speed: 0.7, spin(k) { target += k; pub.speed = 7; },
     lintel: { x: lintel.x, y: lintel.y, z: zc }, floor: Yf, stairTop: { x: x0, z: zc, y: yTop }, treadD: D, treadRise: rise,
   };
   const cuePos = { x: lintel.x, y: lintel.y, z: zc };
@@ -291,9 +291,9 @@ function buildDoor(ctx, P, dHalf, dTop) {
   const rg = new THREE.TorusGeometry(0.11, 0.017, 6, 18); rg.rotateY(Math.PI / 2); rg.translate(0, -0.11, 0);
   const uv = rg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (0.17 + dHalf) / (dHalf * 2), (1.16 - 0.02) / H);
   const ring = new THREE.Mesh(rg, mt);
-  ring.position.set(xd - 0.07, Yf + 1.16 + 0.11, zc + 0.17); ring.rotation.z = 0.12;
+  ring.position.set(xd - 0.07 - 0.11 * Math.sin(0.12), Yf + 1.16 + 0.11 * Math.cos(0.12), zc + 0.17); ring.rotation.z = 0.12; // its centre where it hung when it was part of the leaf
   ring.castShadow = true; ring.receiveShadow = true; ring.name = 'ruins-hypogeum-ring';
-  return { mesh, ring };
+  return { mesh, ring, uniforms };
 }
 
 // Nine glyph forms from simple strokes, none of them letters: stepped bars under a dot; an eye with a
@@ -347,16 +347,17 @@ function buildGlyphs(ctx, lintel) {
   }
   const geo = A.build();
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), PITCH * GLYPHS);
-  const uniforms = { uShift: { value: 0 }, uN: { value: GLYPHS }, uPitch: { value: PITCH } };
+  const uniforms = { uShift: { value: 0 }, uN: { value: GLYPHS }, uPitch: { value: PITCH }, uRead: { value: new THREE.Vector2(-9, 0) } }; // uRead: a lamp behind the row (v10-A1): its slot, its strength
+  const lift = { v: 0 }; // v10-A1: the row's glow raised for the act
   // pale worn relief; a faint glimmer that swells while the sun gutters, so the row can be read in the
   // shadow at the foot of the cut and seems to stir just before it moves
   const mt = new THREE.MeshStandardMaterial({ color: new THREE.Color('#bcae9a'), roughness: 0.85, metalness: 0, emissive: new THREE.Color('#2a1d16') });
   const flick = ctx.sky?.flicker || { value: 1 };
-  ctx.registerUpdate(() => { mt.emissiveIntensity = 0.6 + 2.6 * (1 - flick.value); });
+  ctx.registerUpdate(() => { mt.emissiveIntensity = 0.6 + lift.v + 2.6 * (1 - flick.value); });
   mt.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aGlyph; uniform float uShift, uN, uPitch;')
+      .replace('#include <common>', '#include <common>\nattribute float aGlyph; uniform float uShift, uN, uPitch; varying float vGlSlot;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         {
           float gBase = mod(aGlyph + floor(uShift), uN);
@@ -368,8 +369,13 @@ function buildGlyphs(ctx, lintel) {
             if (gF < 0.5) { gSlot = uN - 1.0; gSink = 1.0 - gF * 2.0; } else { gSlot = 0.0; gSink = gF * 2.0 - 1.0; }
           }
           transformed.z = transformed.z * gSink - 0.006 * (1.0 - gSink);
+          vGlSlot = gSlot;
           transformed.x += (gSlot - (uN - 1.0) * 0.5) * uPitch;
         }`);
+    // v10-A1: a lamp passing behind the row lights the glyph it is behind (uRead.x: the slot, uRead.y: how bright)
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec2 uRead; varying float vGlSlot;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float d = vGlSlot - uRead.x; totalEmissiveRadiance += vec3(1.0, 0.62, 0.3) * exp(-d * d * 1.5) * uRead.y; }');
   };
   mt.customProgramCacheKey = () => 'fp-ruins-glyphs';
   const mesh = new THREE.Mesh(geo, mt);
@@ -377,5 +383,5 @@ function buildGlyphs(ctx, lintel) {
   mesh.position.set(lintel.x, lintel.y, lintel.z);
   mesh.rotation.y = -Math.PI / 2;
   mesh.castShadow = false; mesh.receiveShadow = true; mesh.name = 'ruins-hypogeum-glyphs';
-  return { mesh, uniforms, forms };
+  return { mesh, uniforms, forms, lift };
 }

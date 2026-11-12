@@ -1,251 +1,310 @@
-// The Hypogeum's door (v10-A1, #9): the bronze door at the foot of the stair that never opens, and the one inside who
-// keeps the count of the sun's gutters (stories/the-reckoner.md). Registered from src/v2/ruins/hypogeum.js, which
-// hands over its public frame (ctx.hypogeum: the door, its loose ring, the glyph row's material and spin()).
+// The Hypogeum's door (v10-A1, #9): the bronze door at the foot of the stair that never opens, and the Reckoner behind it,
+// who keeps the count of the sun's gutters (stories/the-reckoner.md). Registered from src/v2/ruins/hypogeum.js, which
+// hands over its public frame (ctx.hypogeum: the door and its uniforms, the old ring, the glyph row's material, its
+// reading lamp uRead, its glow lift and spin()). With ?acts=0 none of this is built and the door is as it was.
 //
-// The act, "Knock", once a visit. What the visitor sees and hears:
-//   0-2 s     the right leaf's ring lifts from its boss and falls, three times (act-knock at each strike), the leaf
-//             shivering in its frame;
-//   3-4.6 s   three knocks answer from inside (act-answer), and with each the door jolts in its frame and dust sifts from
-//             the lintel. On the first visit they come from far below, deeper than a tomb cut four metres into the
-//             ground could go; on the second, nearer; from the third on, the last lands just behind the bronze;
-//   4.6-9 s   light shows in the seam between the leaves and spills on the threshold (ember; glacial blue once the mother
-//             crystal's thread has reached the stair, src/v10/crystal.js); from the third visit the glyph row runs a
-//             whole turn, eleven places, as if someone inside had counted it through;
-//   5.6-6.6 s a gold tessera is pushed out under the door, slides over the threshold and stops at the visitor's feet,
-//             the door's last glyph cut in its face (act-tessera).
-// Remembered: show(n) lays n tesserae (at most nine) on the flags in front of the door, each with the glyph it came with.
+// Before anything is done: a great knocker ring, bronze worn bright, hangs from the right leaf's boss, the full height of
+// the leaf's upper half, over a striking stud; a dim warm light shows in the seam between the leaves and in a fan under
+// them (his lamp, far down); the bronze's sky sheen and the glyph row are raised so the door reads at the stair's foot.
 //
-// No point light: the seam and the spill are unlit emissive quads, drawn only while lit. One InstancedMesh of
-// tesserae (engraved: src/v7/glyphs/engrave.js), one Points of dust (drawn only while it falls).
+// The act, "Knock", once a visit, about 22 s:
+//   0-3 s     the great ring is lifted out toward the visitor and dropped, three times: each fall jolts the leaf, shakes
+//             dust from the lintel and sends a ripple of light out over the bronze from the stud (act-knock);
+//   3.8-5.6 s three knocks answer from inside, each jolting the door outward and flaring the light in the seam (act-answer):
+//             from far below the first visit, nearer the second, just behind the bronze from the third;
+//   6-10 s    the lamp comes up behind the door: the seam and the fan under it brighten, and the light passes behind the
+//             glyph row from left to right, lighting each glyph in turn (his voice); then the row turns: one place, or from
+//             the third visit a whole turn of eleven;
+//   9.5-13 s  the shadow of a hand comes into the fan of light from under the door and lies flat, fingers spread (as the
+//             visitor's lies on the crystal);
+//   12.5-14 s a bronze plate is pushed out under the door and slides to the visitor's feet (act-plate): the door's last glyph
+//             cut large in it, and beside it his tally for them, a stroke a visit in gates of five, in chalk;
+//   15-21 s   the lamp goes back down: the light sinks down the seam and the fan dims to its first glow.
+// Remembered: show(n) lays the plate (n > 0) with n strokes and its glyph (the act's data). Once the mother crystal's
+// thread has come down the stair (src/v10/crystal.js) his light is the crystal's blue.
+// No point light: the seam, its halo and the fan are emissive quads; the ripple is a term in the door's own material.
 import * as THREE from 'three';
-import { engrave } from '../v7/glyphs/engrave.js';
+import { glyphStrokes } from '../v2/ruins/hypogeum.js';
 import { doorsLast } from '../v7/glyphs/forms.js';
 
 const ID = 'hypogeum-door';
-export const TESSERAE = 9;
-export const T = { strikes: [0.25, 0.87, 1.49], answers: [3.0, 3.75, 4.45], seam: [4.6, 9.0], spin: 5.0, slide: [5.6, 6.6], end: 9.5 };
-const LIFT = 0.32, FALL = 0.1; // s: the ring rising off its boss, and dropping back
+export const T = { strikes: [0.75, 1.75, 2.75], answers: [3.8, 4.6, 5.4], lamp: [6.0, 15.0], read: [6.6, 9.6], turn: 9.8, hand: [9.5, 13.5], slide: [12.6, 13.8], sink: [15.0, 21.0], end: 21.5 };
+const LIFT = 0.55, FALL = 0.13; // s: the ring hauled out, and falling back
+const EMBER = new THREE.Color('#ff8a3a'), BLUE = new THREE.Color('#79d2ff');
 
 export function doorAct(ctx, H, meshes) {
-  if (!ctx.acts) return null;
+  if (!ctx.acts || ctx.acts.off) return null;
   const rng = ctx.makeRng(1002);
-  const D = H.door, x1 = D.x - 0.3, zc = D.z, Yf = H.floor, dHalf = D.width / 2;
-  const doorMesh = H.doorMesh, ring = H.ring;
-  const door0 = doorMesh.position.x, ring0 = ring.position.x, ringRot = ring.rotation.z;
-  // the ring the visitor lifts: bronze worn bright by every hand that has lifted it, so the thing to use is the thing
-  // that catches the eye, and its swing can be followed in the dark at the foot of the stair
-  const ringMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#b8925a'), metalness: 0.9, roughness: 0.3, emissive: new THREE.Color('#5a3a18'), emissiveIntensity: 0.7 });
-  ring.material = ringMat;
+  const D = H.door, x1 = D.x - 0.3, xd = D.x, zc = D.z, Yf = H.floor, dHalf = D.width / 2, HD = D.height;
+  const doorMesh = H.doorMesh;
+  const door0 = doorMesh.position.x;
+  H.ring.visible = false; // the great ring hangs in its place on this leaf
 
-  // ---- the seam: a plate of light behind the leaves, seen only through the gap between them; and its spill
-  const seamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff7a2a'), toneMapped: false, fog: true });
-  const seam = new THREE.Mesh(new THREE.PlaneGeometry(dHalf * 2, D.height), seamMat);
-  seam.position.set(x1 + 0.41, Yf + D.height / 2, zc); seam.rotation.y = -Math.PI / 2;
-  seam.visible = false; seam.name = 'act-door-seam';
-  const sc = document.createElement('canvas'); sc.width = 128; sc.height = 64;
-  {
-    // a long thin fan out from the seam's foot (the canvas's right edge is the door), brightest where it leaves it
-    const g = sc.getContext('2d');
-    g.save(); g.translate(128, 32); g.scale(1, 0.3);
-    const gr = g.createRadialGradient(0, 0, 1, 0, 0, 128);
-    gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.2, 'rgba(255,255,255,0.4)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = gr; g.fillRect(-128, -110, 128, 220); g.restore();
-  }
-  const spillMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), color: new THREE.Color('#ff7a2a'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: true, opacity: 0 });
-  const spill = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.5), spillMat);
-  spill.rotation.x = -Math.PI / 2;
-  spill.position.set(x1 + 0.3 - 0.65, Yf + 0.045, zc); spill.visible = false; spill.renderOrder = 3; spill.name = 'act-door-spill';
+  // ---- the place made legible: the bronze's sheen and the glyph row raised
+  if (H.doorU?.uSheen) H.doorU.uSheen.value = 0.85;
+  if (H.glyphLift) H.glyphLift.v = 0.9;
+
+  // ---- the great ring, its staple under the boss and the stud it strikes; bronze polished by every hand that lifted it
+  const zr = zc + dHalf / 2, yp = Yf + 2.02, RR = 0.4;
+  const ringMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#b8925a'), metalness: 0.9, roughness: 0.32, emissive: new THREE.Color('#4a3018'), emissiveIntensity: 0.6 });
+  const rg = new THREE.TorusGeometry(RR, 0.032, 10, 36); rg.rotateY(Math.PI / 2); rg.translate(0, -RR, 0);
+  const ring = new THREE.Mesh(rg, ringMat); ring.position.set(xd - 0.075, yp, zr); ring.castShadow = true; ring.receiveShadow = true; ring.name = 'act-door-ring';
+  const fit = new THREE.Group(); fit.name = 'act-door-fittings';
+  { const g = new THREE.TorusGeometry(0.045, 0.014, 6, 12); g.rotateZ(Math.PI / 2); const m = new THREE.Mesh(g, ringMat); m.position.set(xd - 0.05, yp + 0.02, zr); fit.add(m); }
+  { const g = new THREE.CylinderGeometry(0.075, 0.09, 0.05, 12); g.rotateZ(Math.PI / 2); const m = new THREE.Mesh(g, ringMat); m.position.set(xd - 0.025, yp - 2 * RR, zr); fit.add(m); }
+  const ringRest = 0.04;
+  ring.rotation.z = ringRest;
+  // ---- the ripple off the bronze where the ring strikes: a term in the door's material (its world position, a ring of
+  // light running out from the stud and fading)
+  const uRip = { value: new THREE.Vector4(xd - 0.03, yp - 2 * RR, zr, 99) };
+  const dm = doorMesh.material, prev = dm.onBeforeCompile;
+  dm.onBeforeCompile = (sh, r) => {
+    prev?.call(dm, sh, r);
+    sh.uniforms.uRip = uRip;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vFpW;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvFpW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec4 uRip; varying vec3 vFpW;')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        { float d = distance(vFpW.yz, uRip.yz), r = uRip.w * 2.4, w = d - r;
+          totalEmissiveRadiance += vec3(1.0, 0.66, 0.34) * exp(-w * w / 0.004) * exp(-uRip.w * 2.2) * 1.6 * metalnessFactor; }`);
+  };
+  dm.customProgramCacheKey = () => 'fp-ruins-bronze-door-act';
+
+  // ---- his light: a plate of light behind the leaves (seen through the seam and the gap over them), a soft halo over
+  // the seam, and a fan on the floor under the door; the hand's shadow is cast in the fan
+  const seamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#000000'), fog: true });
+  const seam = new THREE.Mesh(new THREE.PlaneGeometry(dHalf * 2, HD), seamMat);
+  seam.position.set(x1 + 0.41, Yf + HD / 2, zc); seam.rotation.y = -Math.PI / 2; seam.name = 'act-door-seam';
+  const haloC = document.createElement('canvas'); haloC.width = 64; haloC.height = 8;
+  { const g = haloC.getContext('2d'), gr = g.createLinearGradient(0, 0, 64, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 8); }
+  const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(haloC), color: new THREE.Color('#000000'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: true });
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.22, HD - 0.1), haloMat);
+  halo.position.set(xd - 0.05, Yf + HD / 2, zc); halo.rotation.y = -Math.PI / 2; halo.renderOrder = 3; halo.name = 'act-door-halo';
+  // the fan: u runs from the visitor (0) to the door (1), v across the doorway
+  const uFan = { uCol: { value: new THREE.Color() }, uHandS: { value: new THREE.Vector3(-1, 0, 0) }, uSink: { value: 0 } };
+  const fanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: true });
+  const FL = 1.15, FW = dHalf * 2 + 0.1;
+  fanMat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uFan);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vFp;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvFp = uv;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+        uniform vec3 uCol, uHandS; uniform float uSink; varying vec2 vFp;
+        float fpSeg(vec2 p, vec2 a, vec2 b, float r) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h) - r; }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          float dist = (1.0 - vFp.x) * ${FL.toFixed(2)};          // metres out from the door
+          float side = (vFp.y - 0.5) * ${FW.toFixed(2)};          // metres across
+          float fan = exp(-dist / 0.5) * (1.0 - smoothstep(${(dHalf - 0.45).toFixed(2)}, ${(dHalf + 0.05).toFixed(2)}, abs(side) - dist * 0.3)) * (0.75 + 0.25 * exp(-side * side / 0.05));
+          // the hand: palm toward the door, fingers out toward the visitor, a little larger than a hand; uHandS.x how far
+          // it has come out (m), y how spread, z how dark
+          vec2 hp = vec2(side + 0.1, dist - uHandS.x) / 1.9;
+          float hd = length((hp - vec2(0.0, -0.03)) / vec2(0.055, 0.065)) - 1.0; hd *= 0.05;
+          for (int f = 0; f < 4; f++) {
+            float ff = float(f);
+            vec2 a = vec2(-0.036 + ff * 0.024, 0.02), b = a + vec2((ff - 1.5) * (0.006 + 0.02 * uHandS.y), 0.07 + 0.018 * (1.0 - abs(ff - 1.4) * 0.6));
+            hd = min(hd, fpSeg(hp, a, b, 0.012));
+          }
+          hd = min(hd, fpSeg(hp, vec2(0.045, -0.03), vec2(0.07 + 0.03 * uHandS.y, 0.02), 0.013));
+          hd = min(hd, fpSeg(hp, vec2(0.0, -0.06), vec2(0.0, -0.5), 0.05)); // the wrist and arm, back under the door
+          float shade = 1.0 - uHandS.z * (1.0 - smoothstep(0.0, 0.012, hd));
+          diffuseColor.rgb = uCol * fan * shade;
+          diffuseColor.a = 1.0;
+        }`);
+  };
+  fanMat.customProgramCacheKey = () => 'fp-act-door-fan';
+  const fan = new THREE.Mesh(new THREE.PlaneGeometry(FL, FW), fanMat);
+  fan.rotation.x = -Math.PI / 2; fan.position.set(xd - FL / 2 - 0.02, Yf + 0.04, zc); fan.renderOrder = 3; fan.name = 'act-door-fan';
 
   // ---- dust from the lintel's joint: falls while the door jolts
-  const ND = 220, dp = new Float32Array(ND * 3), ds = new Float32Array(ND);
-  for (let i = 0; i < ND; i++) { dp[i * 3] = x1 + 0.25 - rng() * 0.3; dp[i * 3 + 1] = Yf + D.height + 0.02 - rng() * 0.05; dp[i * 3 + 2] = zc + (rng() - 0.5) * 2.2; ds[i] = rng(); }
+  const ND = 260, dp = new Float32Array(ND * 3), ds = new Float32Array(ND);
+  for (let i = 0; i < ND; i++) { dp[i * 3] = x1 + 0.25 - rng() * 0.3; dp[i * 3 + 1] = Yf + HD + 0.02 - rng() * 0.05; dp[i * 3 + 2] = zc + (rng() - 0.5) * 2.2; ds[i] = rng(); }
   const dg = new THREE.BufferGeometry();
   dg.setAttribute('position', new THREE.BufferAttribute(dp, 3)); dg.setAttribute('aSeed', new THREE.BufferAttribute(ds, 1));
-  dg.boundingSphere = new THREE.Sphere(new THREE.Vector3(x1, Yf + 1.3, zc), 3);
-  const dustU = { uT: { value: 0 }, uAmt: { value: 0 }, uFloor: { value: Yf } };
+  const dustU = { uT: { value: 9 }, uAmt: { value: 0 }, uFloor: { value: Yf } };
   const dustMat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, dustU]), transparent: true, depthWrite: false, fog: true,
     vertexShader: `uniform float uT, uAmt, uFloor; attribute float aSeed; varying float vA;
       #include <common>
       #include <fog_pars_vertex>
       void main() {
-        float t = uT - aSeed * 0.5;                    // each mote lets go a little after the jolt
+        float t = uT - aSeed * 0.4, fall = max(0.0, t);
         vec3 p = position;
-        float fall = max(0.0, t);
-        p.y -= fall * (0.25 + 0.5 * aSeed) + 0.4 * fall * fall;
+        p.y -= fall * (0.25 + 0.5 * aSeed) + 0.5 * fall * fall;
         p.x -= fall * (0.08 + 0.2 * fract(aSeed * 7.3));
         p.z += sin(fall * 3.0 + aSeed * 40.0) * 0.03;
-        vA = step(0.0, t) * step(aSeed, uAmt) * (1.0 - smoothstep(uFloor + 0.2, uFloor, p.y)) * (1.0 - smoothstep(1.6, 2.6, fall));
+        vA = step(0.0, t) * step(aSeed, uAmt) * (1.0 - smoothstep(uFloor + 0.2, uFloor, p.y)) * (1.0 - smoothstep(1.4, 2.4, fall));
         vec3 transformed = p; // the fog chunks read it
         vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = max(1.5, (0.006 + 0.012 * fract(aSeed * 13.1)) * 560.0 / -mvPosition.z);
+        gl_PointSize = max(2.0, (0.008 + 0.014 * fract(aSeed * 13.1)) * 560.0 / -mvPosition.z);
         #include <fog_vertex>
       }`,
     fragmentShader: `varying float vA;
       #include <common>
       #include <fog_pars_fragment>
       void main() {
-        vec2 c = gl_PointCoord - 0.5;
-        float a = (1.0 - smoothstep(0.2, 0.5, length(c))) * vA * 0.9;
+        float a = (1.0 - smoothstep(0.2, 0.5, length(gl_PointCoord - 0.5))) * vA * 0.9;
         if (a < 0.01) discard;
-        gl_FragColor = vec4(vec3(0.92, 0.84, 0.7), a);
+        gl_FragColor = vec4(0.92, 0.84, 0.7, a);
         #include <fog_fragment>
       }`,
   });
-  const dust = new THREE.Points(dg, dustMat); dust.visible = false; dust.frustumCulled = false; dust.name = 'act-door-dust';
+  const dust = new THREE.Points(dg, dustMat); dust.visible = false; dust.name = 'act-door-dust';
+  dg.boundingSphere = new THREE.Sphere(new THREE.Vector3(x1, Yf + 1.3, zc), 3);
 
-  // ---- a puff of verdigris and grit where the ring strikes, at each of the visitor's knocks
-  const NP = 60, pp = new Float32Array(NP * 3), pv = new Float32Array(NP * 3);
-  const hitAt = new THREE.Vector3(ring.position.x + 0.03, ring.position.y - 0.22, ring.position.z);
-  for (let i = 0; i < NP; i++) {
-    pp.set([hitAt.x, hitAt.y, hitAt.z], i * 3);
-    const a = rng() * Math.PI * 2, sp = 0.25 + rng() * 0.6;
-    pv.set([-(0.3 + rng() * 0.7) * sp, Math.sin(a) * sp * 0.6 + 0.1, Math.cos(a) * sp], i * 3);
+  // ---- the plate: a bronze tablet 50 x 32 cm, the door's last glyph cut large, his tally for the visitor in chalk
+  const PW = 0.5, PD = 0.32, PT = 0.018;
+  const pc = document.createElement('canvas'); pc.width = 256; pc.height = 160;
+  const pTex = new THREE.CanvasTexture(pc); pTex.colorSpace = THREE.SRGBColorSpace; pTex.anisotropy = 4;
+  function drawPlate(n, form) {
+    const g = pc.getContext('2d'), W = 256, Hh = 160;
+    g.fillStyle = '#5a4424'; g.fillRect(0, 0, W, Hh);
+    const r2 = ctx.makeRng(1014);
+    for (let i = 0; i < 260; i++) { g.fillStyle = r2() < 0.5 ? 'rgba(30,42,30,0.25)' : 'rgba(150,112,60,0.18)'; g.beginPath(); g.arc(r2() * W, r2() * Hh, 2 + r2() * 8, 0, 6.3); g.fill(); }
+    g.strokeStyle = 'rgba(210,170,100,0.8)'; g.lineWidth = 4; g.strokeRect(6, 6, W - 12, Hh - 12);
+    g.strokeStyle = 'rgba(25,18,10,0.7)'; g.lineWidth = 2; g.strokeRect(11, 11, W - 22, Hh - 22);
+    // the glyph, cut: dark grooves with a bright lip, on the left
+    const gx = 70, gy = 80, sc = 380;
+    const path = (o) => { for (const s of glyphStrokes(form)) { g.beginPath(); if (s[0] === 's') { g.moveTo(gx + s[1] * sc, gy - s[2] * sc); g.lineTo(gx + s[3] * sc, gy - s[4] * sc); } else if (s[0] === 'r') g.arc(gx + s[1] * sc, gy - s[2] * sc, s[3] * sc, 0, 6.3); else g.arc(gx + s[1] * sc, gy - s[2] * sc, 3, 0, 6.3); o(); } };
+    g.lineCap = 'round';
+    path(() => { g.strokeStyle = 'rgba(230,190,120,0.9)'; g.lineWidth = 9; g.stroke(); });
+    path(() => { g.strokeStyle = 'rgba(20,14,8,0.95)'; g.lineWidth = 5; g.stroke(); });
+    // the tally: a stroke a visit, gates of five, in chalk, on the right
+    g.strokeStyle = 'rgba(240,234,220,0.95)'; g.lineWidth = 4;
+    for (let k = 0; k < Math.min(n, 25); k++) {
+      const gate = Math.floor(k / 5), j = k % 5, row = Math.floor(gate / 2), col = gate % 2;
+      const bx = 140 + col * 52, by = 34 + row * 40;
+      g.beginPath();
+      if (j < 4) { g.moveTo(bx + j * 9, by); g.lineTo(bx + j * 9 + 1, by + 30); } else { g.moveTo(bx - 4, by + 26); g.lineTo(bx + 32, by + 4); }
+      g.stroke();
+    }
+    pTex.needsUpdate = true;
   }
-  const pg = new THREE.BufferGeometry();
-  pg.setAttribute('position', new THREE.BufferAttribute(pp, 3)); pg.setAttribute('aVel', new THREE.BufferAttribute(pv, 3));
-  const puffU = { uT: { value: 9 } };
-  const puffMat = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, puffU]), transparent: true, depthWrite: false, fog: true,
-    vertexShader: `uniform float uT; attribute vec3 aVel; varying float vA;
-      #include <common>
-      #include <fog_pars_vertex>
-      void main() {
-        vec3 p = position + aVel * (1.0 - exp(-uT * 3.0)) / 3.0 * 1.4 + vec3(0.0, -0.35 * uT * uT, 0.0);
-        vA = (1.0 - smoothstep(0.15, 1.1, uT));
-        vec3 transformed = p;
-        vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
-        gl_Position = projectionMatrix * mvPosition;
-        gl_PointSize = max(3.0, 0.022 * 560.0 / -mvPosition.z);
-        #include <fog_vertex>
-      }`,
-    fragmentShader: `varying float vA;
-      #include <common>
-      #include <fog_pars_fragment>
-      void main() {
-        float a = (1.0 - smoothstep(0.15, 0.5, length(gl_PointCoord - 0.5))) * vA;
-        if (a < 0.01) discard;
-        gl_FragColor = vec4(0.75, 0.95, 0.78, a);
-        #include <fog_fragment>
-      }`,
-  });
-  const puff = new THREE.Points(pg, puffMat); puff.visible = false; puff.frustumCulled = false; puff.name = 'act-door-puff';
+  const plateMat = new THREE.MeshStandardMaterial({ map: pTex, metalness: 0.55, roughness: 0.5, emissive: new THREE.Color('#ffffff'), emissiveMap: pTex, emissiveIntensity: 0.08 });
+  const edgeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#6a5028'), metalness: 0.85, roughness: 0.4 });
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(PD, PT, PW), [edgeMat, edgeMat, plateMat, edgeMat, edgeMat, edgeMat]);
+  // the top face's uv: rotate so the glyph is on the visitor's left as they face the door (+x)
+  { const uv = plate.geometry.attributes.uv; for (let i = 8; i < 12; i++) { const u = uv.getX(i), v = uv.getY(i); uv.setXY(i, 1 - v, u); } }
+  plate.visible = false; plate.castShadow = false; plate.receiveShadow = true; plate.name = 'act-door-plate';
+  const restX = x1 - 0.5, yRest = Yf + PT / 2 + 0.004;
+  const placePlate = (x) => { plate.position.set(x, x > x1 - 0.16 - PD / 2 ? Yf + 0.03 + PT / 2 : yRest, zc - 0.05); };
+  placePlate(restX);
 
-  // ---- the tesserae: gold worn to brass, 4 cm, each with one of the lintel's forms cut in its face
-  const TS = 0.04, TH = 0.018;
-  const tg = new THREE.BoxGeometry(TS, TH, TS);
-  const aForm = new THREE.InstancedBufferAttribute(new Float32Array(TESSERAE).fill(-1), 1);
-  tg.setAttribute('aForm', aForm);
-  const tMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#c9a24a'), metalness: 0.85, roughness: 0.32, emissive: new THREE.Color('#4a300c'), emissiveIntensity: 1 });
-  engrave(tMat, { scale: 0.13 / (TS * 0.42), half: 0.016, top: TH / 2, face: TS / 2 });
-  tMat.customProgramCacheKey = () => 'fp-act-tessera';
-  const tess = new THREE.InstancedMesh(tg, tMat, TESSERAE);
-  tess.count = 0; tess.castShadow = false; tess.receiveShadow = true; tess.name = 'act-door-tesserae'; tess.frustumCulled = false;
-  // where each comes to rest: a loose spread on the flags in front of the threshold, the first nearest the door
-  const rest = [];
-  for (let k = 0; k < TESSERAE; k++) rest.push({ x: x1 - 0.24 - k * 0.05 - rng() * 0.06, z: zc + (rng() - 0.5) * 0.36 + (k % 2 ? -0.07 : 0.07), ry: rng() * Math.PI });
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
-  function place(k, x, y, z, ry) { q.setFromEuler(e.set(0, ry, 0)); m4.compose(v3.set(x, y, z), q, one); tess.setMatrixAt(k, m4); tess.instanceMatrix.needsUpdate = true; }
-  const yRest = Yf + TH / 2 + 0.003;
-  function lay(n, forms) {
-    const c = Math.min(n, TESSERAE);
-    for (let k = 0; k < c; k++) { place(k, rest[k].x, yRest, rest[k].z, rest[k].ry); aForm.setX(k, forms?.[k] ?? 0); }
-    aForm.needsUpdate = true; tess.count = c;
+  meshes.push(ring, seam, halo, fan, dust, plate);
+  ctx.scene.add(fit); // a group: the ruins' tally of meshes counts geometries
+
+  // ---- the light, now: k 0..1 (0 the first glow), its colour by whether the crystal's thread has come
+  const lit = new THREE.Color();
+  function light(k, flash = 0) {
+    const thread = (ctx.acts.count('mother-hand') > 0) ? 1 : 0;
+    lit.copy(EMBER).lerp(BLUE, thread);
+    const b = 0.9 * k + flash;
+    seamMat.color.copy(lit).multiplyScalar(0.13 + 1.3 * b);   // at rest a faint line: his lamp far down
+    haloMat.color.copy(lit).multiplyScalar(0.045 + 0.32 * b);
+    uFan.uCol.value.copy(lit).multiplyScalar(0.05 + 0.75 * b);
+    plateMat.emissiveIntensity = 0.2 + 0.5 * k;
+    st.light = b;
   }
-  meshes.push(seam, spill, dust, tess, puff);
 
   // ---- the act
-  const P = ctx.player;
-  let t = -1, n = 0, fired = 0, k0 = 0, lit = new THREE.Color();
-  const cueDoor = { x: x1 + 0.2, y: Yf + 1.2, z: zc }, cueRing = { x: ring.position.x, y: ring.position.y - 0.1, z: ring.position.z };
-  const cueIn = { x: x1 + 2, y: Yf - 1, z: zc };
-  let jolt = 0, joltV = 0, flash = 0;
-  const st = { t: -1, n: 0, tesserae: 0, strikes: 0, answers: 0, ring: 0, ringMax: 0, seam: 0, jolt: 0, spun: 0 };
+  let t = -1, n = 0, fired = 0, form = 0, jolt = 0, joltV = 0, flash = 0;
+  const cueRing = { x: xd - 0.05, y: yp - 2 * RR, z: zr }, cueIn = { x: x1 + 2, y: Yf - 1, z: zc };
+  const st = { t: -1, n: 0, strikes: 0, answers: 0, ring: 0, ringMax: 0, read: 0, spun: 0, hand: 0, plate: false, light: 0, jolt: 0 };
   const near = (i) => Math.min(1, Math.max(0, (n - 1) * 0.4 + i * 0.12)); // how near the inside's i-th knock lands
-
+  const sstep = THREE.MathUtils.smoothstep;
   ctx.registerUpdate((dt) => {
     if (t < 0) return; // idle: nothing per frame
     t += dt; st.t = t;
-    // the visitor's knocks: the ring rises off its boss and drops back
+    // the visitor's knocks: the ring hauled out toward them and dropped
     let lift = 0;
     for (let i = 0; i < 3; i++) {
-      const u = t - T.strikes[i] + LIFT; // u in [0, LIFT]: rising; [LIFT, LIFT + FALL]: falling
+      const u = t - T.strikes[i] + LIFT + FALL;
       if (u >= 0 && u < LIFT) lift = Math.max(lift, Math.sin((u / LIFT) * Math.PI / 2));
       else if (u >= LIFT && u < LIFT + FALL) lift = Math.max(lift, 1 - ((u - LIFT) / FALL) ** 2);
-      else if (u >= LIFT + FALL && u < LIFT + FALL + 0.25) lift = Math.max(lift, 0.08 * Math.sin((u - LIFT - FALL) / 0.25 * Math.PI)); // the bounce
-      if (!(fired & (1 << i)) && t >= T.strikes[i]) { fired |= 1 << i; st.strikes++; ctx.audio?.cue('act-knock', cueRing); joltV -= 0.05; puffU.uT.value = 0; puff.visible = true; }
+      else if (u >= LIFT + FALL && u < LIFT + FALL + 0.3) lift = Math.max(lift, 0.07 * Math.sin((u - LIFT - FALL) / 0.3 * Math.PI));
+      if (!(fired & (1 << i)) && t >= T.strikes[i]) {
+        fired |= 1 << i; st.strikes++;
+        ctx.audio?.cue('act-knock', cueRing);
+        joltV += 0.35; uRip.value.w = 0; // the leaf knocked back into its frame; the ripple
+        dustU.uT.value = 0; dustU.uAmt.value = Math.max(dustU.uAmt.value, 0.35); dust.visible = true;
+      }
     }
-    ring.rotation.z = ringRot - lift * 1.45; st.ring = lift; st.ringMax = Math.max(st.ringMax, lift); ringMat.emissiveIntensity = 0.7 + 1.3 * lift;
-    if (puff.visible) { puffU.uT.value += dt; if (puffU.uT.value > 1.2) puff.visible = false; }
-    // the answers from inside: knocks, each nearer than the last, jolting the door and loosening the dust
+    ring.rotation.z = ringRest - lift * 1.25; st.ring = lift; st.ringMax = Math.max(st.ringMax, lift);
+    ringMat.emissiveIntensity = 0.6 + 0.8 * lift;
+    uRip.value.w += dt;
+    // the answers from inside
     for (let i = 0; i < 3; i++) {
       const b = 8 << i;
       if (!(fired & b) && t >= T.answers[i]) {
         fired |= b; st.answers++;
         const nr = near(i);
         ctx.audio?.cue('act-answer', cueIn, { near: nr });
-        joltV -= 0.12 + 0.55 * nr; // m/s, outward
-        flash = Math.max(flash, 0.35 + 0.65 * nr); // a lamp swung behind the door: light in the seam with each knock
-        dustU.uT.value = 0; dustU.uAmt.value = Math.max(dustU.uAmt.value, 0.25 + 0.75 * nr); dust.visible = true;
+        joltV -= 0.25 + 0.6 * nr; // outward, toward the visitor
+        flash = Math.max(flash, 0.5 + 0.8 * nr);
+        dustU.uT.value = 0; dustU.uAmt.value = Math.max(dustU.uAmt.value, 0.4 + 0.6 * nr); dust.visible = true;
       }
     }
     // the door in its frame: a damped spring about where it hangs
-    joltV += (-jolt * 600 - joltV * 12) * dt; jolt += joltV * dt; jolt = Math.max(-0.025, Math.min(0.01, jolt));
-    doorMesh.position.x = door0 + jolt; ring.position.x = ring0 + jolt; st.jolt = jolt;
-    if (dust.visible) { dustU.uT.value += dt; if (dustU.uT.value > 3.2) { dust.visible = false; dustU.uAmt.value = 0; } }
-    // the light inside
-    const s0 = T.seam[0], s1 = T.seam[1];
-    flash = Math.max(0, flash - dt * 2.2);
-    const glow = Math.max(flash, t < s0 || t > s1 ? 0 : Math.min(1, (t - s0) / 0.5) * Math.min(1, (s1 - t) / 2) * (0.75 + 0.25 * Math.sin(t * 9) * Math.sin(t * 3.7)));
-    tMat.emissiveIntensity = 1 + 5 * glow;
-    seam.visible = spill.visible = glow > 0.002; st.seam = glow;
-    seamMat.color.copy(lit).multiplyScalar(0.5 + 3.0 * glow * (0.5 + 0.5 * near(2)));
-    spillMat.opacity = glow * (0.35 + 0.4 * near(2));
-    if (!(fired & 64) && n >= 3 && t >= T.spin) { fired |= 64; H.spin(11); st.spun++; ctx.audio?.cue('glyph-shift', { x: x1 - 0.21, y: Yf + 2.86, z: zc }); }
-    // the tessera, pushed out under the door: along the threshold's top, off its lip, and over the flags to rest
-    if (k0 < TESSERAE) {
-      const u = (t - T.slide[0]) / (T.slide[1] - T.slide[0]);
-      if (u >= 0) {
-        if (!(fired & 128)) { fired |= 128; tess.count = k0 + 1; ctx.audio?.cue('act-tessera', { x: x1, y: Yf + 0.1, z: zc }); }
-        const w = Math.min(1, u), ease = 1 - (1 - w) ** 3, r = rest[k0];
-        const x = (x1 + 0.34) + (r.x - (x1 + 0.34)) * ease, z = zc + (r.z - zc) * ease;
-        const y = x > x1 - 0.16 ? Yf + 0.03 + TH / 2 : yRest + Math.max(0, (x - (x1 - 0.3)) / 0.14) * 0.03 * (1 - w);
-        place(k0, x, y, z, r.ry * ease + (1 - ease) * 0.6);
-        st.tesserae = k0 + (w >= 1 ? 1 : 0);
-      }
+    joltV += (-jolt * 500 - joltV * 9) * dt; jolt += joltV * dt; jolt = Math.max(-0.03, Math.min(0.015, jolt));
+    doorMesh.position.x = door0 + jolt; ring.position.x = xd - 0.075 + jolt; fit.position.x = jolt; st.jolt = jolt;
+    if (dust.visible) { dustU.uT.value += dt; if (dustU.uT.value > 3) { dust.visible = false; dustU.uAmt.value = 0; } }
+    flash = Math.max(0, flash - dt * 2);
+    // the lamp coming up, and going back down
+    const up = sstep(t, T.lamp[0], T.lamp[0] + 1.5), down = sstep(t, T.sink[0], T.sink[1]);
+    light(up * (1 - down) * (0.8 + 0.2 * Math.sin(t * 7) * Math.sin(t * 2.9)), flash);
+    // the light sinking: the plate of light behind the seam drops down it
+    const sink = sstep(t, T.sink[0], T.sink[1] - 1);
+    seam.scale.y = Math.max(0.02, 1 - sink); seam.position.y = Yf + (HD * seam.scale.y) / 2;
+    halo.scale.y = seam.scale.y; halo.position.y = seam.position.y;
+    // his voice: the light passing behind the glyph row, then the row turned
+    if (H.glyphRead) {
+      const r = (t - T.read[0]) / (T.read[1] - T.read[0]);
+      H.glyphRead.value.set(-1 + r * 12, r > 0 && r < 1 ? 2.2 : 0);
+      st.read = r > 0 && r < 1 ? r : st.read;
     }
+    if (!(fired & 64) && t >= T.turn) { fired |= 64; H.spin(n >= 3 ? 11 : 1); st.spun = n >= 3 ? 11 : 1; ctx.audio?.cue('glyph-shift', { x: x1 - 0.21, y: Yf + 2.86, z: zc }); }
+    // the hand in the light: coming out from under the door, stopping, spreading flat, going back
+    const hIn = sstep(t, T.hand[0], T.hand[0] + 1.6), hOut = sstep(t, T.hand[1] - 0.8, T.hand[1]);
+    uFan.uHandS.value.set(-0.35 + 0.6 * hIn - 0.6 * hOut, sstep(t, T.hand[0] + 1.6, T.hand[0] + 2.4), (hIn > 0.01 && hOut < 0.99) ? 0.92 : 0);
+    st.hand = Math.max(st.hand, hIn * (1 - hOut));
+    // the plate, pushed out under the door: over the threshold, off its lip, over the flags to the visitor's feet
+    const u = (t - T.slide[0]) / (T.slide[1] - T.slide[0]);
+    if (u >= 0 && !(fired & 128)) { fired |= 128; drawPlate(n, form); plate.visible = true; ctx.audio?.cue('act-plate', { x: x1, y: Yf + 0.1, z: zc }); }
+    if (u >= 0) { const w = Math.min(1, u), e = 1 - (1 - w) ** 3; placePlate(xd + PD / 2 + (restX - (xd + PD / 2)) * e); st.plate = w >= 1; }
     if (t >= T.end) {
-      t = -1; st.t = -1; seam.visible = spill.visible = false; dust.visible = false;
-      doorMesh.position.x = door0; ring.position.x = ring0; ring.rotation.z = ringRot; jolt = joltV = flash = 0; tMat.emissiveIntensity = 1; puff.visible = false; ringMat.emissiveIntensity = 0.7;
+      t = -1; st.t = -1; jolt = joltV = flash = 0;
+      doorMesh.position.x = door0; ring.position.x = xd - 0.075; fit.position.x = 0; ring.rotation.z = ringRest; ringMat.emissiveIntensity = 0.6;
+      dust.visible = false; uRip.value.w = 99; H.glyphRead?.value.set(-9, 0); uFan.uHandS.value.set(-1, 0, 0);
+      seam.scale.y = halo.scale.y = 1; seam.position.y = halo.position.y = Yf + HD / 2;
+      lay(handle.count, handle.data); // the count now: a forget during the answer holds
     }
   });
 
+  function lay(count, data) {
+    const f = Number.isInteger(data?.glyph) ? data.glyph : 0;
+    plate.visible = count > 0; if (count > 0) { drawPlate(count, f); placePlate(restX); }
+    light(0); st.plate = count > 0; st.n = count;
+  }
   const handle = ctx.acts.add({
     id: ID,
     at: { x: D.x - 0.1, y: Yf + 1.3, z: zc },
     face: { x: -1, z: 0 },
-    reach: 2.6, rise: 1.4, cone: 0.75,
+    reach: 2.8, rise: 1.4, cone: 0.75,
     words: 'Knock',
-    do: (count, data) => {
-      n = count; t = 0; fired = 0; jolt = joltV = 0;
-      k0 = Math.min(count - 1, TESSERAE);
-      // the light behind: glacial blue once the crystal's thread has come down the stair
-      lit.set((ctx.acts.count('mother-hand') > 0) ? '#7fd8ff' : '#ff7a2a');
-      const forms = Array.isArray(data?.forms) ? data.forms.slice(0, TESSERAE) : [];
-      if (k0 < TESSERAE) {
-        forms[k0] = doorsLast(ctx, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        aForm.setX(k0, forms[k0]); aForm.needsUpdate = true;
-        handle.setData({ forms });
-      }
+    do: (count) => {
+      n = count; t = 0; fired = 0; jolt = joltV = flash = 0; st.strikes = st.answers = 0; st.ringMax = 0; st.hand = 0; st.read = 0; st.spun = 0;
+      form = doorsLast(ctx, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+      handle.setData({ glyph: form });
+      plate.visible = false; // his plate goes back in, to come out again with one more stroke
       st.n = count;
       return T.end;
     },
-    show: (count, data) => { lay(count, data?.forms); st.tesserae = Math.min(count, TESSERAE); st.n = count; },
+    show: (count, data) => { if (t < 0) lay(count, data); },
   });
-  // the tessera being pushed out is not drawn until it moves (lay() drew the remembered ones)
   ctx.hypogeumAct = st;
-  st.state = () => ({ ...st, count: handle.count, offered: ctx.acts.offered?.def.id === ID, drawn: tess.count });
-  st.rest = rest; st.at = handle.def.at;
+  st.state = () => ({ ...st, count: handle.count, offered: ctx.acts.offered?.def.id === ID });
   return st;
 }
