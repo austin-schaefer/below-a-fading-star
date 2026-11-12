@@ -26,7 +26,7 @@ import { bodyGeometry, wingGeometry, riderGeometry, bodyMaterial, wingMaterial, 
 import { buildSalt } from './twk/salt.js';
 import { saltPlan, pointOn } from './twk/plan.js';
 import { waitFor, loaded } from '../v7/workers/rig.js';
-import { buildSaltActs } from '../v10/salt.js'; // v10-A2: the pinch, and the news
+import { buildSaltActs } from '../v10/salt.js'; // v10-A2: the pinch, and the news (shelved: ?salt=1)
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const LEGS = 0.03;       // thorax centre above whatever it stands on
@@ -134,8 +134,9 @@ export async function build(ctx) {
   scene.add(S.mesh);
   ctx.addCollider?.({ x: pile.x, z: pile.z, r: 0.5, y: gy(pile.x, pile.z) - 0.2, h: 0.8 });
   // v10-A2: two more riders of the guard's, perched on the turf 18 m out toward the road, who come for a pinch of salt (src/v10/salt.js)
+  const SALT_ON = new URL(location.href).searchParams.get('salt') === '1'; // v10-A2: the salt act is written, not built: off unless asked for
   const houseFar = [], road = Math.atan2((salt.spill?.x ?? pile.x + 1) - pile.x, (salt.spill?.z ?? pile.z) - pile.z);
-  for (const da of [-0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2]) {
+  for (const da of SALT_ON ? [-0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2] : []) {
     const ang = road + da, x = pile.x + Math.sin(ang) * 18, z = pile.z + Math.cos(ang) * 18;
     if (houseFar.length < 2 && dry(x, z)) houseFar.push({ x, y: gy(x, z) + LEGS + 0.02, z, yaw: ang });
   }
@@ -203,7 +204,7 @@ export async function build(ctx) {
   // nobody is inspected, escorted or quarrelled at while the title card is up: their manners start with the walk
   let begun = false; ctx.events?.addEventListener('begin', () => { begun = true; });
   const api = { hold: false };
-  api.runScript = (r, wps) => { r.script = wps; r.mode = 'script'; r.t = 0; r.hold = 0; r.looking = false; r.wantFlap = 1; r.landed = false; buzz(r); };
+  if (new URL(location.href).searchParams.get('salt') === '1') api.runScript = (r, wps) => { r.script = wps; r.mode = 'script'; r.t = 0; r.hold = 0; r.looking = false; r.wantFlap = 1; r.landed = false; buzz(r); };
   const face = (r) => {
     // a metre in front of the eye, at eye height, a little to the side the rider came from
     const fy = ctx.player?.yaw ?? 0, fx = -Math.sin(fy), fz = -Math.cos(fy);
@@ -543,6 +544,6 @@ export async function build(ctx) {
     get gutter() { return gut; },
     stats: () => ({ riders: N, stations: stations.length, calls: 4, tris: Math.round(tris), modes: riders.reduce((a, r) => { a[r.mode] = (a[r.mode] || 0) + 1; return a; }, {}), ms: Math.round(performance.now() - t0) }),
   });
-  if (SP) buildSaltActs(ctx, { fan: SP.fan || salt.spill, pile, spill: salt.spill, gy, twk: ctx.twk, house: stations.find((q) => q.id === 'house'), gate });
+  if (SP && SALT_ON) buildSaltActs(ctx, { fan: SP.fan || salt.spill, pile, spill: salt.spill, gy, twk: ctx.twk, house: stations.find((q) => q.id === 'house'), gate });
   ctx.log(`twk: ${N} riders at ${stations.length} stations (${stations.map((s) => `${s.id} ${s.n}`).join(', ')}) in ${(performance.now() - t0).toFixed(0)} ms`);
 }

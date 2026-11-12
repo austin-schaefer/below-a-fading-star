@@ -60,7 +60,8 @@ const CUES = [
   // v10 the acts (src/v10/sound.js)
   ['act-offer', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1200], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { bar: true }, 1000, 1000],
   // v10-A2 the story acts (src/v10/sound-stories.js)
-  ['act-glasses', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 8000], ['act-pinch', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-tribute', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 2500],
+  ['act-glasses', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 8000],
+  ...(process.env.SALT === '1' ? [['act-pinch', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-tribute', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 2500]] : []), // salt for news is shelved (?salt=1)
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });

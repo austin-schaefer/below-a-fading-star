@@ -112,9 +112,9 @@ export function buildCollation(ctx) {
     const [x, z] = toWorld(u + du, v);
     // facing: toward the table's axis, turned by jitter
     const psi0 = Math.atan2(side * SA, -side * CA); // facing -side * (world direction of +v) = -side * (-sin, cos)
-    // v10-A2: every chair is turned a little toward the gap (the twelfth place), whose chair was carried off
-    const [gx, gz] = toWorld(PU[CHAIR_GONE.i], CHAIR_GONE.side * 0.27), dTurn = Math.atan2(gx - x, gz - z) - psi0;
-    const psi = psi0 + jitter * 0.6 + 0.5 * Math.atan2(Math.sin(dTurn), Math.cos(dTurn));
+    // v10-A2: every chair but the carried one is turned a little toward the gap (the twelfth place), when its chair has been carried off
+    const turned = split && !gone(side, i), [gx, gz] = toWorld(PU[CHAIR_GONE.i], CHAIR_GONE.side * 0.27), dTurn = Math.atan2(gx - x, gz - z) - psi0;
+    const psi = psi0 + jitter * (turned ? 0.6 : 1) + (turned ? 0.35 * Math.atan2(Math.sin(dTurn), Math.cos(dTurn)) : 0);
     if (side === -1 && i === 3) return; // this one is the knocked-over chair, below
     chairAt(x, z, psi, H(x, z), false, gone(side, i) ? twelfth : main);
     if (gone(side, i)) twelfthChair = chairs[chairs.length - 1];

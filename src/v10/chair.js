@@ -29,8 +29,10 @@ const NREST = 3;
 const PEWTER = '#8a8e96', GLASS = '#b0c0b8', WINE = '#a21a2c';
 const CA = Math.cos(COLLATION.angle), SA = Math.sin(COLLATION.angle);
 const G = 1.7; // his goblet's scale on theirs
-const T_POUR = 1.0, T_POURED = 2.6, T_BACK = 3.5, T_RIPPLE = 3.0, PER = 0.25, T_STRING = 5.7, V_STRING = 18;
-const LEVEL0 = 0.45;
+const T_POUR = 1.0, T_POURED = 2.6, T_BACK = 3.5, T_RIPPLE = 3.0, PER = 0.25, T_STRING = 5.7;
+const speedAt = (s) => (s < 5 ? 3 : s < 30 ? 7 : 16); // the string's pace along its way: walking pace over the table and the first stretch, then away
+const ROW = [11, 11, 11]; // glasses left at each rest: eleven, the last turned over
+const LEVEL0 = 0.45, LEVEL_BACK = 0.55; // his goblet's level at first, and after the eleven have been back
 
 export function buildTwelfthPlace(ctx, col, marks) {
   if (!col || !ctx.acts) return null;
@@ -61,6 +63,17 @@ export function buildTwelfthPlace(ctx, col, marks) {
   A.box(0.4, 0.016, 0.3, M(nu, nv, top + 0.02, 0, 0.12, 0), '#f0e8d2', 0.02);
   A.box(0.4, 0.014, 0.16, M(nu, nv, top + 0.035, 0, 0.12, 0), '#e2d9c0', 0.02);
   A.box(0.4, 0.005, 0.02, M(nu, nv, top + 0.045, 0, 0.12, 0), '#c8581e', 0.04);
+  // his hat laid by the napkin, black felt with an ember band, and his spectacles on the napkin: a person, who has stepped away
+  { const hu = u0 - 1.0, hv = pv - 0.12;
+    A.add(new THREE.CylinderGeometry(0.19, 0.19, 0.012, 20), M(hu, hv, top + 0.018, 0.05, 0.3, 0.03), '#1e1a20', 0.05);
+    A.add(new THREE.CylinderGeometry(0.1, 0.115, 0.13, 16), M(hu, hv, top + 0.085, 0.05, 0.3, 0.03), '#241f27', 0.05);
+    A.add(new THREE.CylinderGeometry(0.1, 0.1, 0.012, 16), M(hu, hv, top + 0.152, 0.05, 0.3, 0.03), '#2e2832', 0.05);
+    A.add(new THREE.CylinderGeometry(0.117, 0.117, 0.03, 16, 1, true), M(hu, hv, top + 0.04, 0.05, 0.3, 0.03), '#c8581e', 0.05);
+    const ring = new THREE.TorusGeometry(0.04, 0.005, 6, 16), GOLD = '#d8b050';
+    for (const dv of [-0.055, 0.055]) A.add(ring, M(nu, nv + dv, top + 0.054, Math.PI / 2, 0, 0), GOLD, 0.03);
+    A.box(0.03, 0.006, 0.02, M(nu, nv, top + 0.052), GOLD, 0.03);
+    for (const dv of [-0.095, 0.095]) A.box(0.12, 0.005, 0.005, M(nu - 0.1, nv + dv, top + 0.048), GOLD, 0.03);
+  }
   // his goblet and the bottle beside it
   const gu = u0 + 0.42, gv = side * 0.34;
   const foot = new THREE.CylinderGeometry(0.03, 0.03, 0.006, 14), stem = new THREE.CylinderGeometry(0.005, 0.006, 0.06, 6), bowl = new THREE.CylinderGeometry(0.034, 0.021, 0.075, 16, 1, true);
@@ -115,7 +128,35 @@ export function buildTwelfthPlace(ctx, col, marks) {
   const setStain = (k) => { stain.visible = k > 0.01; stain.scale.set(0.14 * k, 0.1 * k, 1); };
   level(LEVEL0);
 
-  // ------------------------------------------------------------------ the eleven's glasses: wine, and a flare
+  // ------------------------------------------------------------------ light: one shared glow material, quads turned to the eye while the act runs
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  { const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,214,160,1)'); gr.addColorStop(0.3, 'rgba(255,140,80,0.45)'); gr.addColorStop(1, 'rgba(170,40,30,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const GLOW = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.6 }), plane = new THREE.PlaneGeometry(1, 1);
+  const glows = [];
+  const spr = (size) => { const q = new THREE.Mesh(plane, GLOW); q.userData.size = size; q.scale.setScalar(1e-3); q.visible = false; ctx.scene.add(q); glows.push(q); return q; };
+  const lit = (q, a) => { q.visible = a > 0.02; q.scale.setScalar(Math.max(1e-3, q.userData.size * a)); }; // a light's strength is its size: the material is shared
+  const camQ = ctx.camera.quaternion;
+
+  // ------------------------------------------------------------------ what the eleven leave when they have been back: a lit candle, flowers on the gap
+  const again = new THREE.Group(); again.visible = false; ctx.scene.add(again);
+  const flameQ = spr(0.5);
+  { const B = new Acc(rng), [cx, cz] = toWorld(u0 + 0.22, side * 0.02);
+    B.add(new THREE.CylinderGeometry(0.035, 0.05, 0.03, 10), mat(cx, top + 0.015, cz), '#8a8e96', 0.03);
+    B.add(new THREE.CylinderGeometry(0.024, 0.026, 0.22, 10), mat(cx, top + 0.14, cz), '#e8dcb8', 0.03);
+    B.add(new THREE.SphereGeometry(0.022, 8, 6).scale(1, 1.8, 1), mat(cx, top + 0.285, cz), '#ffb050', 0);
+    const flame = new THREE.Mesh(B.geometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, emissive: '#c07020', emissiveIntensity: 0.9 })); flame.castShadow = true; again.add(flame);
+    flameQ.position.set(cx, top + 0.3, cz);
+    // flowers laid on the gap, where his chair stood: marigold, white, madder, stems toward the table
+    const F = new Acc(rng), [fx, fz] = toWorld(u0 - 0.55, side * 0.8), fy = ctx.terrain.heightAt(fx, fz), cols = ['#f0a416', '#f4eed8', '#b8508a', '#e0601c', '#f0a416', '#f4eed8', '#e0601c'];
+    cols.forEach((c, k) => { const a = (k - 3) * 0.16, ex = fx + Math.sin(a) * 0.06 * k * 0.3, len = 0.46;
+      F.add(new THREE.CylinderGeometry(0.006, 0.006, len, 4), mat(fx + Math.cos(a) * (len / 2), fy + 0.04, fz + (k - 3) * 0.05, 0, 0, Math.PI / 2 - 0.1).multiply(new THREE.Matrix4().makeRotationX(0)), '#4a6a34', 0.1);
+      F.add(new THREE.IcosahedronGeometry(0.055, 1), mat(fx + Math.cos(a) * len, fy + 0.07, fz + (k - 3) * 0.05 * 1.8, 0, 0, 0).scale(new THREE.Vector3(1, 0.7, 1)), c, 0.08); void ex; });
+    F.box(0.04, 0.02, 0.16, mat(fx + 0.02, fy + 0.045, fz), '#c8581e', 0.05); // the ribbon
+    const posy = new THREE.Mesh(F.geometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, emissive: '#4a3a1a', emissiveIntensity: 0.6, side: THREE.DoubleSide })); posy.castShadow = true; again.add(posy);
+  }
+
+  // ------------------------------------------------------------------ the eleven's glasses: wine, and a warm light in each
   const slots = [];
   for (const s of [-1, 1]) PU.forEach((u, i) => { if (!(s === side && i === CHAIR_GONE.i)) slots.push({ u: u + 0.2, v: s * 0.43, ring: s < 0 ? u + 5 : 10 + (5 - u) }); });
   const gring = side < 0 ? u0 + 5 : 10 + (5 - u0);
@@ -130,116 +171,131 @@ export function buildTwelfthPlace(ctx, col, marks) {
   for (let i = 0; i < N; i++) setWine(i, 0);
   wineI.instanceMatrix.needsUpdate = true; wineI.visible = false;
   ctx.scene.add(wineI);
+  const flares = home.map((p) => { const s = spr(0.34); s.position.set(p.x, top + 0.1, p.z); s.name = 'collation-twelfth-flare'; return s; });
+  const hisFlare = spr(0.5); hisFlare.position.set(glassPos.x, top + 0.24, glassPos.z); hisFlare.name = 'collation-twelfth-flare';
 
-  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
-  { const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,200,150,1)'); gr.addColorStop(0.2, 'rgba(255,110,70,0.7)'); gr.addColorStop(1, 'rgba(170,24,32,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-  // glows are camera-facing quads (the atmosphere's fog patch does not suit THREE.Sprite), turned to the eye while the act runs
-  const glows = [], plane = new THREE.PlaneGeometry(1, 1);
-  const spr = (size) => { const sp = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); sp.scale.setScalar(size); sp.visible = false; ctx.scene.add(sp); glows.push(sp); return sp; };
-  const flares = home.map((p) => { const s = spr(1.0); s.position.set(p.x, top + 0.2, p.z); s.name = 'collation-twelfth-flare'; return s; });
-  const hisFlare = spr(1.1); hisFlare.position.set(glassPos.x, top + 0.3, glassPos.z); hisFlare.name = 'collation-twelfth-flare';
-
-  // ------------------------------------------------------------------ the way he was carried: the string, and the glasses at the rests
-  const R = (marks || []).slice(0, NREST).map((m) => ({ x: m.x, z: m.z, y: ctx.terrain.heightAt(m.x, m.z) }));
-  // the string's corners: off the table toward the visitor and past their shoulder (so it is seen leave), then the rests
-  const wnw = { x: Math.cos(-2.62), z: Math.sin(-2.62) }; // the way the furrows go (threads/plan.js CHAIR.drag.bearing)
-  const path = [{ x: glassPos.x, z: glassPos.z }, { x: glassPos.x - SA * side * 1.6 + wnw.x * 1.0, z: glassPos.z + CA * side * 1.6 + wnw.z * 1.0 }, ...R]; // cum[i] the length to path[i]
+  // ------------------------------------------------------------------ the way he was carried: the lights, and what is left at each rest
+  // The string leaves his goblet along the table, toward the visitor's right (the table's -u end, which is also the way the
+  // chair went), at a walking pace, then on over the grass to the rests.
+  const R = (marks || []).slice(0, NREST).map((m) => ({ x: m.x, z: m.z, y: m.y ?? ctx.terrain.heightAt(m.x, m.z) }));
+  const [ex, ez] = toWorld(-5.9, side * 0.34);
+  const path = [{ x: glassPos.x, z: glassPos.z, y: top + 0.3 }, { x: ex, z: ez, y: top + 0.3 }, ...R.map((r) => ({ ...r, y: null }))];
   const cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i].x - path[i - 1].x, path[i].z - path[i - 1].z));
-  const pointAt = (s, o) => { // s metres along the path
-    let i = 1; while (i < path.length - 1 && cum[i] < s) i++;
-    const u = Math.min(1, Math.max(0, (s - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1])));
-    o.x = path[i - 1].x + (path[i].x - path[i - 1].x) * u; o.z = path[i - 1].z + (path[i].z - path[i - 1].z) * u; return o;
+  const pointAt = (sd, o) => {
+    let i = 1; while (i < path.length - 1 && cum[i] < sd) i++;
+    const u = Math.min(1, Math.max(0, (sd - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1])));
+    o.x = path[i - 1].x + (path[i].x - path[i - 1].x) * u; o.z = path[i - 1].z + (path[i].z - path[i - 1].z) * u;
+    o.y = i === 1 ? top + 0.3 : ctx.terrain.heightAt(o.x, o.z) + 0.8; return o;
   };
-  const NB = 14, SPACE = 1.5;
-  const beads = Array.from({ length: NB }, () => { const s = spr(0.8); s.name = 'collation-twelfth-string'; return s; });
-  const restGeo = (() => { const B = new Acc(rng); glass(B, (y, k) => mat(0, y, 0, 0, 0, 0, k), 1.9);
-    B.add(unit, mat(0, (0.066 + 0.002) * 1.9 + 0.017 * 1.9, 0).scale(scl(0.0255 * 1.9, 0.034 * 1.9, 0.0255 * 1.9)), WINE, 0);
-    B.add(new THREE.DodecahedronGeometry(0.2, 0), mat(0, -0.03, 0, 0, 0.5, 0).scale(scl(1.2, 0.35, 1.0)), '#6a665e', 0.1); // the flat stone it stands on
-    return B.geometry(); })();
-  const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: THREE.DoubleSide, emissive: '#5a1a1a', emissiveIntensity: 0.6 });
-  const restGlass = R.map((r, k) => { const m = new THREE.Mesh(restGeo, restMat); m.position.set(r.x + 0.55, r.y + 0.04, r.z + 0.25 * (k % 2 ? -1 : 1)); m.rotation.y = rng() * 6; m.castShadow = true; m.visible = false; m.name = 'collation-twelfth-rest'; ctx.scene.add(m); return m; });
-  const restFlare = R.map((r, k) => { const s = spr(1.4); s.position.set(r.x + 0.55, r.y + 0.5, r.z + 0.25 * (k % 2 ? -1 : 1)); s.name = 'collation-twelfth-flare'; return s; });
+  const NB = 12, SPACE = 1.0;
+  const beads = Array.from({ length: NB }, () => { const q = spr(0.45); q.name = 'collation-twelfth-string'; return q; });
+  // a rest: a flat stone, and on it the glasses they set down in a row, the last turned over, a wine stain by it
+  const glassGeo = (() => { const B = new Acc(rng); glass(B, (y, k) => mat(0, y, 0, 0, 0, 0, k), 3.0); return B.geometry(); })();
+  const restMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0, side: THREE.DoubleSide, emissive: '#5a3a30', emissiveIntensity: 0.7 });
+  const rests = R.map((r, k) => {
+    const leg = path[k + 2], from = path[k + 1], dx = leg.x - from.x, dz = leg.z - from.z, l = Math.hypot(dx, dz) || 1, d = { x: dx / l, z: dz / l };
+    const B = new Acc(rng), n = ROW[k];
+    B.add(new THREE.DodecahedronGeometry(0.5, 0), mat(0, 0.02, 0, 0, 0.3, 0).scale(new THREE.Vector3(1.6 + n * 0.37, 0.2, 0.8)), '#7a766e', 0.08); // the slab
+    for (let i = 0; i < n; i++) {
+      const x = (i - (n - 1) / 2) * 0.37, last = i === n - 1;
+      B.add(glassGeo, last ? mat(x + 0.05, 0.47, 0.1, Math.PI, 0.4, 0) : mat(x, 0.08, 0.02 * Math.sin(i * 2.1)), GLASS, 0.03);
+    }
+    B.add(new THREE.CircleGeometry(0.22, 14), mat((n - 1) / 2 * 0.37 + 0.1, 0.105, 0.14, -Math.PI / 2, 0, 0), '#4a0c16', 0); // what ran out of the turned glass
+    const m = new THREE.Mesh(B.geometry(), restMat);
+    m.position.set(r.x + d.x * 1.1, r.y + 0.02, r.z + d.z * 1.1); m.rotation.y = Math.atan2(-d.x, -d.z); m.castShadow = true; m.receiveShadow = true; m.visible = false; m.name = 'collation-twelfth-rest';
+    ctx.scene.add(m);
+    const f = spr(1.8); f.position.set(m.position.x, r.y + 0.6, m.position.z); f.name = 'collation-twelfth-flare';
+    return { m, f };
+  });
+  const restGlass = rests.map((r) => r.m), restFlare = rests.map((r) => r.f);
 
   // ------------------------------------------------------------------ the act
   const at = { x: glassPos.x, y: top + 0.2, z: glassPos.z };
   const nrm = { x: -SA * side, z: CA * side }; // out from the table on his side (the table's v runs (-SA, CA))
-  let run = null;
-  const o = { x: 0, z: 0 };
+  let run = null, curLevel = LEVEL0, curStain = 0;
+  const o = { x: 0, y: 0, z: 0 };
+  const hideAll = () => { for (const q of glows) q.visible = false; };
   function frame(dt) {
-    if (!run) return;
+    if (!run) { if (flameQ.visible) flameQ.quaternion.copy(camQ); return; }
     const t = (run.t += dt), K = run.k;
-    for (const g of glows) if (g.visible) g.quaternion.copy(ctx.camera.quaternion);
-    // the pour
+    // the pour, from where the goblet stands now
     if (t < T_BACK + 0.05) {
       const p = t < T_POUR ? t / T_POUR : t < T_POURED ? 1 : Math.max(0, 1 - (t - T_POURED) / (T_BACK - T_POURED));
       poseBottle(p, t > T_POUR && t < T_POURED ? 0.25 * (t - T_POUR) / (T_POURED - T_POUR) : 0);
-      const f = t < T_POUR + 0.15 ? LEVEL0 : Math.min(1, LEVEL0 + (1 - LEVEL0) * (t - T_POUR - 0.15) / (T_POURED - T_POUR - 0.15)), s = level(f);
+      const f0 = run.f0, f = t < T_POUR + 0.15 ? f0 : Math.min(1, f0 + (1 - f0) * (t - T_POUR - 0.15) / (T_POURED - T_POUR - 0.15)), sf = level(f);
+      curLevel = f;
       const pouring = t > T_POUR + 0.15 && t < T_POURED + 0.1;
       stream.visible = pouring;
-      if (pouring) { const h = mouth.y - s; stream.scale.set(0.011, Math.max(1e-3, h), 0.011); stream.position.set(mouth.x - dirU.x * 0.02, s + h / 2, mouth.z - dirU.z * 0.02); }
-      setStain(Math.max(0, Math.min(1, (t - T_POURED + 0.3) / 0.9)));
-      if (t >= T_BACK) { poseBottle(0); run.poured = true; }
+      if (pouring) { const h = mouth.y - sf; stream.scale.set(0.011, Math.max(1e-3, h), 0.011); stream.position.set(mouth.x - dirU.x * 0.02, sf + h / 2, mouth.z - dirU.z * 0.02); }
+      curStain = Math.max(run.s0, Math.min(1, (t - T_POURED + 0.3) / 0.9)); setStain(curStain);
+      if (t >= T_BACK) poseBottle(0);
     }
     // the eleven
     let any = false;
     for (let i = 0; i < N; i++) {
-      const u = t - (T_RIPPLE + i * PER), s = flares[i];
+      const u = t - (T_RIPPLE + i * PER);
       if (u < 0) continue;
       setWine(i, Math.min(1, u / 0.5)); any = true;
-      s.visible = u < 1.8; s.material.opacity = u < 0.15 ? u / 0.15 : Math.max(0, 1 - (u - 0.15) / 1.6) * 0.9;
+      lit(flares[i], u < 0.15 ? u / 0.15 : Math.max(0, 1 - (u - 0.15) / 1.6));
     }
     if (any) wineI.instanceMatrix.needsUpdate = true;
-    { const u = t - (T_RIPPLE + N * PER + 0.1); if (u >= 0) { hisFlare.visible = u < 2.4; hisFlare.material.opacity = u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.2) / 2.1) * 0.8; } }
-    // the string, and what it finds
+    { const u = t - (T_RIPPLE + N * PER + 0.1); if (u >= 0) lit(hisFlare, u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.2) / 2.1)); }
+    // the lights lift off the table and go
     if (t > T_STRING) {
-      const head = (t - T_STRING) * V_STRING, last = cum[K + 1] || 0;
+      run.head += speedAt(run.head) * dt;
+      const head = run.head, last = cum[K + 1] || 0;
       for (let i = 0; i < NB; i++) {
-        const s = head - i * SPACE, b = beads[i];
-        b.visible = s > 0 && s <= last + 0.1;
-        if (!b.visible) continue;
-        pointAt(Math.min(s, last), o); b.position.set(o.x, ctx.terrain.heightAt(o.x, o.z) + 0.8 + 0.15 * Math.sin(t * 6 + i), o.z);
-        b.material.opacity = (1 - i / NB) * 0.9;
+        const sd = head - i * SPACE, b = beads[i];
+        if (!(sd > 0 && sd <= last + 0.1)) { lit(b, 0); continue; }
+        pointAt(Math.min(sd, last), o); b.position.set(o.x, o.y + 0.08 * Math.sin(t * 6 + i), o.z);
+        lit(b, 1 - i / NB * 0.7);
       }
       for (let k = 1; k <= K; k++) {
-        const u = (head - cum[k + 1]) / V_STRING; // seconds since the head arrived
-        if (u < 0) continue;
+        if (head < cum[k + 1]) continue;
+        if (run.arr[k] == null) run.arr[k] = t;
+        const u = t - run.arr[k];
         restGlass[k - 1].visible = true;
-        const f = restFlare[k - 1]; f.visible = u < 3; f.material.opacity = u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.2) / 2.6);
+        lit(restFlare[k - 1], u < 0.3 ? u / 0.3 : Math.max(0, 1 - (u - 0.3) / 3));
       }
-      if (head > last + NB * SPACE + 2.5 * V_STRING) run.done = true;
+      if (head > last + NB * SPACE + 15) run.done = true;
     }
-    for (const g of glows) if (g.visible) g.quaternion.copy(ctx.camera.quaternion);
-    if (run.done) { run = null; for (const s of [...flares, hisFlare, ...beads, ...restFlare]) s.visible = false; }
+    for (const q of glows) if (q.visible) q.quaternion.copy(camQ);
+    if (run.done) { run = null; hideAll(); if (flameQ.userData.on) lit(flameQ, 1); }
   }
-  ctx.registerUpdate(frame, { pos: { x: at.x, z: at.z }, near: 600, hz: 30 });
+  const tablePos = { x: at.x, z: at.z }, camPos = { x: 0, z: 0 };
+  ctx.registerUpdate(frame, { at: () => { if (!run) return tablePos; camPos.x = ctx.camera.position.x; camPos.z = ctx.camera.position.z; return camPos; }, near: 60, hz: 0 });
 
-  const set = (n) => { // the remembered state: the goblet full, the stain, the eleven poured, the rests the visitor has opened
+  const set = (n) => { // the remembered state: the eleven have been back (the goblet drunk to 0.55, the stain, the eleven's wine, a candle lit and flowers on the gap), and the rests the visitor has opened
     const on = n > 0;
-    level(on ? 1 : LEVEL0); setStain(on ? 1 : 0); poseBottle(0); stream.visible = false;
-    wineI.visible = on;
+    curLevel = on ? LEVEL_BACK : LEVEL0; curStain = on ? 1 : 0;
+    level(curLevel); setStain(curStain); poseBottle(0); stream.visible = false;
+    wineI.visible = on; again.visible = on; flameQ.userData.on = on;
     for (let i = 0; i < N; i++) setWine(i, on ? 1 : 0);
     wineI.instanceMatrix.needsUpdate = true;
     restGlass.forEach((m, k) => { m.visible = k < Math.min(n, NREST); });
+    if (on) { flameQ.quaternion.copy(camQ); lit(flameQ, 1); } else lit(flameQ, 0);
   };
   const handle = ctx.acts.add({
     id: ID, at, reach: 1.9, rise: 2, face: nrm, cone: 0.45, words: 'Pour for him', every: 'visit',
-    show(n) { run = null; for (const s of [...flares, hisFlare, ...beads, ...restFlare]) s.visible = false; set(n); },
+    show(n) { run = null; hideAll(); set(n); },
     do(n) {
       const K = Math.min(n, R.length);
-      run = { t: 0, k: K, done: false }; wineI.visible = true;
+      run = { t: 0, k: K, done: false, head: 0, arr: [], f0: curLevel, s0: curStain }; wineI.visible = true;
       for (let i = 0; i < N; i++) setWine(i, 0);
       wineI.instanceMatrix.needsUpdate = true;
       restGlass.forEach((m, k) => { m.visible = k < K - 1; }); // the newest is found when the string reaches it
       ctx.audio?.cue('act-glasses', { x: at.x, y: at.y, z: at.z });
-      return T_STRING + (cum[K + 1] || 0) / V_STRING + 1;
+      let sd = 0, tt = T_STRING; const last = cum[K + 1] || 0; while (sd < last + NB * SPACE + 15 && tt < 200) { sd += speedAt(sd) / 30; tt += 1 / 30; }
+      return tt + 1;
     },
   });
   const out = {
-    handle, at, normal: nrm, place: placeMesh, wine: hisWine, bottle, eleven: wineI, rests: restGlass, path, flares, beads, top, T: { T_POUR, T_POURED, T_BACK, T_RIPPLE, PER, T_STRING, V_STRING },
-    get running() { return !!run; }, get t() { return run ? run.t : -1; },
+    handle, at, normal: nrm, place: placeMesh, wine: hisWine, bottle, eleven: wineI, rests: restGlass, path, flares, beads, again, top, T: { T_POUR, T_POURED, T_BACK, T_RIPPLE, PER, T_STRING },
+    get running() { return !!run; }, get t() { return run ? run.t : -1; }, get head() { return run ? run.head : -1; }, get level() { return curLevel; },
     // where a visitor stands: 1.25 m out from the table's edge, looking at his place
     stand(d = 1.2) { const x = at.x + nrm.x * d, z = at.z + nrm.z * d; return { x, z, yaw: Math.atan2(-(at.x - x), -(at.z - z)), pitch: Math.atan2(top + 0.15 - (ctx.terrain.heightAt(x, z) + ctx.player.eye), d) }; },
+    // 5 m back from a rest's row, looking at it, and the row's place
+    standRest(k = 0, d = 5, turn = 0.7) { const m = restGlass[k], a = m.rotation.y + turn, rx = Math.sin(a), rz = Math.cos(a); const x = m.position.x + rx * d, z = m.position.z + rz * d; return { x, z, yaw: Math.atan2(-(m.position.x - x), -(m.position.z - z)), pitch: -0.12 }; },
   };
   ctx.storyActs = Object.assign(ctx.storyActs || {}, { chair: out });
   return out;
