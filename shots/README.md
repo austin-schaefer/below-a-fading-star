@@ -89,6 +89,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 74 | v9 settings menu: sound, quality and position, on desktop and phone |
 | 75 | v9 the Lantern Halt, a waystation on the causeway |
 | 76 | v10 something to do: chalking the Halt's tally, the rope seat and the sleeper, pouring for the missing diner, the hand on the Lattice, the knock at the Hypogeum, the edges; the first tally kept as the failure |
+| 77 | v11 the mountains: the ruled contours and fins replaced by eroded rock, new outlines and far ranges, the Escarpment Lamps as a city of windows on the south massif, the Galleries' ragged outline, the fitting pass; before and after from the same views, two failed intermediates kept |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -616,5 +617,27 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `76-tally-b-offer.webp` | The rebuilt wall, a lamp-chalk hanging, "Chalk your stroke". |
 | `76-tally-c-drawing.webp` | The chalk drawing its stroke on the wall. |
 | `76-tally-d-done.webp` | The finished stroke, bold beside the old tallies. |
+| `77-galleries-150-after.webp` | The Galleries of Durance from 150 m: the scaffold climbing its ragged crag, lamps in the cages. |
+| `77-galleries-400-after.webp` | The Galleries from 400 m at dusk, now a broken outline against the sun, not a block. |
+| `77-galleries-highling-y1-after.webp` | The Galleries alone from the highling, with the Lamps' first windows at the left edge (round two). |
+| `77-lamps-400-after.webp` | The Escarpment Lamps from 400 m: a city of windows scattered over the south massif above the Great Span. |
+| `77-lamps-causeway.webp` | The Lamps seen over the Span's arches from the causeway, the mountain's own outline against the sky. |
+| `77-lamps-400-sparks-failed.webp` | The Lamps' round one: a few faint sparks on the rock, not a city. Failed; kept for the record. |
+| `77-lamps-span-deck.webp` | The Lamps from the Span's deck: lit windows in tiers and rows climbing the massif. |
+| `77-mountains-foreland-y2-after.webp` | After: the foreland from the glacier's ice, the far ranges cut into jagged sheets and spires. |
+| `77-mountains-foreland-y2-before.webp` | Before: the same view with the old smooth, ruled ring mountains. |
+| `77-mountains-high-y0-after.webp` | After: the glacier valley from above, the walls eroded into fluted rock and the far peaks sharpened. |
+| `77-mountains-high-y0-before.webp` | Before: the same view with the walls ruled in horizontal contour lines. |
+| `77-mountains-high-y0-m2-outlines.webp` | Midway: new outlines and far ranges, but the contour lines still ruling the walls. |
+| `77-mountains-high-y3-after.webp` | After: the Span's arches against the new massifs, fins and tiers gone, the skyline torn. |
+| `77-mountains-high-y4-after.webp` | After: the Arcature valley with the Stylite's wall as one cliff of eroded rock under a notched skyline. |
+| `77-mountains-high-y4-before.webp` | Before: the same valley with the walls ruled in terraces and fins. |
+| `77-mountains-high-y4-clay-failed.webp` | The "clay" round: contours gone, but the rock a smooth haze-washed slab with no grain. Failed. |
+| `77-mountains-highling-y1-after.webp` | After: the highling's view with the Galleries and the Lamps against pointed, eroded peaks. |
+| `77-mountains-highling-y1-before.webp` | Before: the same view with rounded, ruled hills behind the Galleries. |
+| `77-mountains-span-deck.webp` | Standing on the Great Span's deck, the gate ahead between two walls of strata rock. |
+| `77-mountains-span-far.webp` | From the reeds below the Span, the new outline of the ring mountains behind the gate. |
+| `77-mountains-spawn-y1-after.webp` | After: the spawn view from the tarn; the massif is one eroded face and the Galleries sit in it. |
+| `77-mountains-spawn-y1-before.webp` | Before: the same view with the ruled wall and the Galleries hung on it. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
