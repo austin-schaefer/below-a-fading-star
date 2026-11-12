@@ -10,15 +10,19 @@
 // every act the check is a squared distance per act (five to seven on the map) and nothing else: no DOM write, no
 // allocation. ?acts=0: no offer, no memory read; add() returns a handle whose count is 0, so places draw as before.
 //
-// ctx.acts: { add(def) → handle, count(id), forget(), offered (the act on offer, or null), list, off, total() }
+// ctx.acts: { add(def) → handle, count(id), forget(), offered (the act on offer, or null), list, off, total(), lure }
 // A def: { id, at: {x, y, z}, reach = 2.5 (m, level), rise = 3 (m: the eye within this of at.y), face?: {x, z} (the
 //   thing's front: offered only from that side), cone = 0.6 (rad, how far off the look may be) or facing?(player) →
 //   bool, when?() → bool (offered only while true), words, every = 'visit' ('once' | 'visit' | 'free'), do(n, data) →
 //   seconds | Promise | undefined (busy until then: not offered, not done again), show?(n, data) }.
 //   do runs when the act is done, with the count after it; show runs at add() with the remembered count and again
 //   with 0 when the visitor forgets their marks.
+//   v10-F1: far = reach * 1.5 (at most reach + 3) and ease = true (the easier offer, in inReach below); lure = { x, y, z, h }
+//   | false (the lure over it, src/v10/lure.js: there while it may be done and is not on offer).
 // A handle: { def, count, done (this visit), busy, data (the act's kept object), setData(obj) }.
 // Events on ctx.events: 'act' ({ id, count }) after an act is done; 'actsforget' after the marks are forgotten.
+
+import { buildLure } from './lure.js';
 
 const KEY = 'fp-acts';
 const EVERY = ['once', 'visit', 'free'];
@@ -50,6 +54,7 @@ export function installActs(ctx, url) {
     add(def) {
       if (!def?.id || list.some((h) => h.def.id === def.id)) throw new Error(`acts: id missing or taken: ${def?.id}`);
       const d = { reach: 2.5, rise: 3, cone: 0.6, every: 'visit', ...def };
+      d.far ??= d.ease === false ? d.reach : d.reach + Math.min(d.reach * 0.5, 3); // v10-F1: the easier offer's edge
       if (!EVERY.includes(d.every)) throw new Error(`acts: every must be one of ${EVERY.join(', ')}`);
       const h = {
         def: d, count: off ? 0 : (store.marks[d.id]?.n ?? 0), done: false, until: 0,
@@ -110,7 +115,8 @@ export async function build(ctx) {
   const card = document.getElementById('card');
   const forgetBtn = document.getElementById('set-forget');
   const P = ctx.player;
-  const RISE = 0.45, LINGER = 0.35; // s in the offer's condition before it rises; s out of it before it goes
+  const RISE = 0.25, LINGER = 0.35; // s in the offer's condition before it rises; s out of it before it goes
+  const EASE_YAW = 0.35, EASE_PITCH = 0.3; // rad the stand-in's look is turned toward the thing (inReach)
   let cand = null, held = 0, away = 0, shown = null;
 
   // the walk is in front of the visitor: no title or paused card, no settings panel
@@ -122,18 +128,43 @@ export async function build(ctx) {
     else el.classList.remove('shown');
   }
   // is h offered from where the player stands and looks? (no allocation: this runs every frame near an act)
+  // v10-F1, the easier offer: within the def's own reach and look, as before; and out to `far` (default reach + half of
+  // it, at most 3 m more) for a visitor who would be offered it a little nearer and looking a little more toward it:
+  // the def's own test (cone or facing) is asked of a stand-in moved in along the line to `reach` and turned toward the
+  // thing by up to EASE_YAW (and its look up or down toward it by up to EASE_PITCH); a def with its own facing() is also
+  // asked with the look turned EASE_YAW either way. The level (rise) and the side
+  // (face) are always the real player's, so the wider offer never reaches round a door or up a stair.
+  const V = { pos: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, vel: P.vel, enabled: true };
+  const turnToward = (from, to, by) => { let d = to - from; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; return from + Math.max(-by, Math.min(by, d)); };
   function inReach(h) {
     const d = h.def, p = P.pos, dx = d.at.x - p.x, dz = d.at.z - p.z, r2 = dx * dx + dz * dz;
-    if (r2 > d.reach * d.reach) return -1;
+    if (r2 > d.far * d.far) return -1;
     if (d.at.y != null && Math.abs(p.y - d.at.y) > d.rise) return -1; // another level: up a stair, under a deck
     if (d.face && (p.x - d.at.x) * d.face.x + (p.z - d.at.z) * d.face.z <= 0) return -1; // behind the thing
-    if (d.facing) return d.facing(P) ? r2 : -1;
+    const r = Math.sqrt(r2) || 1;
+    let Q = P;
+    if (d.ease !== false) { // the stand-in: nearer (only if further than reach) and turned a little toward it
+      const k = r > d.reach ? (r - d.reach * 0.97) / r : 0;
+      V.pos.x = p.x + dx * k; V.pos.y = p.y; V.pos.z = p.z + dz * k;
+      V.yaw = turnToward(P.yaw, Math.atan2(-dx, -dz), EASE_YAW);
+      V.pitch = d.at.y != null ? turnToward(P.pitch, Math.atan2(d.at.y - p.y, Math.max(0.3, r - r * k)), EASE_PITCH) : P.pitch;
+      Q = V;
+    }
+    if (d.facing) { // its own test, which may look at something beside `at` (the bell's ram): either way a little, too
+      if (d.facing(Q)) return r2;
+      if (Q !== V) return -1;
+      const y0 = V.yaw;
+      for (const s of [-1, 1]) { V.yaw = P.yaw + s * EASE_YAW; if (d.facing(V)) return r2; }
+      V.yaw = y0; return -1;
+    }
     // the look's bearing against the bearing to the thing; yaw 0 looks down -z
-    const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), r = Math.sqrt(r2) || 1;
+    const fx = -Math.sin(Q.yaw), fz = -Math.cos(Q.yaw);
     return (fx * dx + fz * dz) / r >= Math.cos(d.cone) ? r2 : -1;
   }
-  ctx.registerUpdate((dt) => {
-    if (!open()) { cand = null; held = 0; away = 0; if (shown) show(null); return; } // gone at once behind a card or the panel
+  const lure = acts.lure = buildLure(ctx, acts);
+  const lureWant = (h) => h !== shown && acts.may(h); // can be done now and not already on offer
+  ctx.registerUpdate((dt, t) => {
+    if (!open()) { cand = null; held = 0; away = 0; if (shown) show(null); lure.step(dt, t, lureWant); return; } // gone at once behind a card or the panel
     let best = null, bd = Infinity;
     for (const h of acts.list) {
       if (!acts.may(h)) continue;
@@ -145,6 +176,7 @@ export async function build(ctx) {
       if (best === shown) away = 0;
       else if ((away += dt) > LINGER || !acts.may(shown)) { away = 0; show(null); }
     } else if (cand && held > RISE) show(cand);
+    lure.step(dt, t, lureWant);
   });
 
   function doIt() {
