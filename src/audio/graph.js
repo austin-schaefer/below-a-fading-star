@@ -13,9 +13,15 @@
 //   water's slap), verb (alias of space.rooms.open's convolver), verbOut (the rooms' sum, into master),
 //   space = { open, wood, stone, water (the listener's place now, 0..1; open + wood + stone = 1), at(x, z, out?) (the
 //   same weights anywhere), rooms: { open, wood, stone } ({ conv, send }) },
-//   cueBus (one-shots, with cueAnalyser), dryBus (footsteps), musicBus (v9 music; musicSend takes its share into the stone room), brown / pink / white (looped noise buffers),
+//   cueBus (one-shots, with cueAnalyser), dryBus (footsteps), musicBus (v9 music; musicSend takes its share into the stone room),
+//   the three level sliders (v9-M6; audio.levels, setLevel): ambBus (the beds: wind, drone, insects, the place sounds,
+//   the stones, the regions' beds; every part's bed connects here, not to master) with ambVerb (their reverb sends),
+//   fxBus (dryBus and cueBus: footsteps, one-shot cues, the figures) with fxVerb (the voices' and footsteps' sends),
+//   musicLevel (after musicBus and its send), each a gain into master at 1 unless the visitor lowers it,
+//   brown / pink / white (looped noise buffers),
 //   loopSrc(buf, off), burst(buf, dur, off?), burstAt(buf, at, dur), panner(model, ref, roll, maxD?), setPos(p, x, y, z),
-//   send(node, amt) (a reverb send; off a one-shot's voice when node._v, shaped by its distance), setListener(),
+//   send(node, amt) (a reverb send; off a one-shot's voice when node._v, shaped by its distance, into fxVerb; off
+//   anything else into ambVerb), sendFx(node, amt) (the same off a node that is an effect: the footsteps), setListener(),
 //   distance: { air(d) (the air lowpass's cutoff, Hz), dry(d, o) (the dry gain), wet(d, o) (the send's gain) },
 //   voices (the live ones), MAX_VOICES (12), voice(pos, o), retire(v), oneShotPanner(pos, ref?, roll?), later(p, sec),
 //   panned(pos, o) (a held, placed source for beds and hooks: the same distance model, kept current as you move),
@@ -137,6 +143,15 @@ export function startGraph(ctx, audio, AC) {
   const verb = rooms.open.conv; // the old single convolver's name: the open room
   Object.assign(a, { verb, verbIn, verbOut });
 
+  // ---- the level sliders (v9-M6): three gains at 1 (the mix as made) the settings panel lowers, each on its share of
+  // the dry path and of the reverb sends, so a slider at 0 leaves no tail in the rooms either. setLevel ramps (audio.js).
+  const lvl = (to) => { const g = ac.createGain(); g.gain.value = 1; g.connect(to); return g; };
+  const ambBus = lvl(master), ambVerb = lvl(verbIn), fxBus = lvl(master), fxVerb = lvl(verbIn), musicLevel = lvl(master);
+  const L0 = audio.levels || {}, sq = (k) => { const v = L0[k] ?? 1; return v * v; };
+  ambBus.gain.value = ambVerb.gain.value = sq('ambience'); fxBus.gain.value = fxVerb.gain.value = sq('effects'); musicLevel.gain.value = sq('music');
+  audio.levelGains = { ambience: [ambBus, ambVerb], effects: [fxBus, fxVerb], music: [musicLevel] };
+  Object.assign(a, { ambBus, ambVerb, fxBus, fxVerb, musicLevel });
+
   // ---- the place: where the listener stands, as room weights. Read from the regions' weights, the wood's biome, the
   // stone places by distance (the keep below its wall-walk, the Sunken Court, the Hypogeum; the Demesne and the Lattice
   // a little), walls of ground round you (eight bearings at 12 and 24 m standing 6 m over your feet: the canyon), and
@@ -230,27 +245,28 @@ export function startGraph(ctx, audio, AC) {
   // a reverb send. Off a one-shot's voice (node._v) it leaves before the distance gain, through the voice's own wet
   // gate (so a stolen voice falls silent in the room too), at amt times the distance's wet gain; off anything else it
   // leaves from the node itself, as it always has
-  const send = (node, amt) => {
+  const send = (node, amt, room) => {
     const g = ac.createGain(), v = node._v;
     if (v && v.wet) { g.gain.value = amt * v.wetK; v.wetTap.connect(g); g.connect(v.wet); return g; }
-    g.gain.value = amt; (v ? v.gate : node).connect(g); g.connect(verbIn); return g;
+    g.gain.value = amt; (v ? v.gate : node).connect(g); g.connect(room || (v ? fxVerb : ambVerb)); return g;
   };
+  const sendFx = (node, amt) => send(node, amt, fxVerb);
   function env(g, t0, peak, att, dec) {
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + att); g.gain.exponentialRampToValueAtTime(0.0001, t0 + att + dec);
     g.gain.linearRampToValueAtTime(0, t0 + att + dec + 0.01); // to true silence before the source stops (v7.2-07)
   }
-  Object.assign(a, { panner, setPos, send, env });
+  Object.assign(a, { panner, setPos, send, sendFx, env });
 
   // ---- buses: footsteps (dry) and one-shots (with their own analyser tap, so tests can hear a cue apart from the
   // wind and drone)
-  const dryBus = ac.createGain(); dryBus.gain.value = 1; dryBus.connect(master);
-  const cueBus = ac.createGain(); cueBus.connect(master);
+  const dryBus = ac.createGain(); dryBus.gain.value = 1; dryBus.connect(fxBus);
+  const cueBus = ac.createGain(); cueBus.connect(fxBus);
   const cueAnalyser = ac.createAnalyser(); cueAnalyser.fftSize = 2048; cueBus.connect(cueAnalyser);
   audio.cueAnalyser = cueAnalyser;
   // the music bus (v9-M2): the player's destination -> master, ducked by the glue with the gutter; its send goes straight
   // into the stone room's convolver (music is not in the world: its room stays the same as you walk; no fourth convolver)
-  const musicBus = ac.createGain(); musicBus.gain.value = 1; musicBus.connect(master);
-  const musicSend = ac.createGain(); musicSend.gain.value = 0.45; musicBus.connect(musicSend); musicSend.connect(rooms.stone.conv);
+  const musicBus = ac.createGain(); musicBus.gain.value = 1; musicBus.connect(musicLevel);
+  const musicSend = ac.createGain(); musicSend.gain.value = 0.45; musicLevel.connect(musicSend); musicSend.connect(rooms.stone.conv);
   Object.assign(a, { dryBus, cueBus, cueAnalyser, musicBus, musicSend });
 
   // ---- voices: a hard cap on simultaneous one-shots, the oldest stolen
@@ -288,7 +304,7 @@ export function startGraph(ctx, audio, AC) {
     p.refDistance = o.ref ?? 2; p.rolloffFactor = o.roll ?? 1; p.maxDistance = o.range ?? o.maxDistance ?? 600;
     setPos(p, pos.x, pos.y, pos.z);
     v.in.connect(lp); lp.connect(p); p.connect(v.gate); v.gate.connect(bus);
-    v.pan = p; v.lp = lp; v.wetTap = lp; v.wet = ac.createGain(); v.wet.connect(verbIn); v.wetK = wetAt(d, o);
+    v.pan = p; v.lp = lp; v.wetTap = lp; v.wet = ac.createGain(); v.wet.connect(fxVerb); v.wetK = wetAt(d, o);
   }
   // o: { ref (2 m by default), roll (1), range or maxDistance (m: nothing is built past it), model ('inverse' |
   // 'linear', which reaches silence at range), verb (the send at the source: the distance shapes it), dur (s), near
@@ -303,7 +319,7 @@ export function startGraph(ctx, audio, AC) {
     v.in.gain.value = o.gain ?? 1; // the cue's level by its tier (v7.2-07): the voice's input, so its room share follows
     v.in.channelCount = 2; v.in.channelCountMode = 'explicit'; // always two channels on, whatever its sources (v7.2-07)
     if (!o.centre) placed(v, pos, d, o, cueBus);
-    else { v.in.connect(v.gate); v.gate.connect(cueBus); v.wetTap = v.in; v.wet = ac.createGain(); v.wet.connect(verbIn); v.wetK = VOICE_WET; }
+    else { v.in.connect(v.gate); v.gate.connect(cueBus); v.wetTap = v.in; v.wet = ac.createGain(); v.wet.connect(fxVerb); v.wetK = VOICE_WET; }
     if (o.verb) { const g = ac.createGain(); g.gain.value = o.verb * v.wetK; v.wetTap.connect(g); g.connect(v.wet); }
     v.until = v.t0 + o.dur;
     admit(v);
@@ -335,7 +351,7 @@ export function startGraph(ctx, audio, AC) {
     return v.in;
   }
   // a held, placed source for beds and region hooks (not a one-shot, not capped): in -> air lowpass -> panner -> out
-  // (gain 1) -> o.bus (master by default), a send of o.verb into the rooms, both kept current with the distance as you
+  // (gain 1) -> o.bus (ambBus by default), a send of o.verb into the rooms, both kept current with the distance as you
   // move (every 0.25 s, glided). o: { ref, roll, model, range / maxDistance, verb, bus, near }. Returns { in, out, pan,
   // lp, wet, set(x, y, z), update(now), release() }.
   function panned(pos, o = {}) {
@@ -343,8 +359,9 @@ export function startGraph(ctx, audio, AC) {
     const pan = ac.createPanner(); pan.panningModel = o.near ? 'HRTF' : 'equalpower'; pan.distanceModel = o.model === 'linear' ? 'linear' : 'inverse';
     pan.refDistance = o.ref ?? 2; pan.rolloffFactor = o.roll ?? 1; pan.maxDistance = o.range ?? o.maxDistance ?? 600;
     const inp = ac.createGain(), out = ac.createGain(), wet = ac.createGain(); wet.gain.value = 0;
-    inp.connect(lp); lp.connect(pan); pan.connect(out); out.connect(o.bus || master);
-    if (o.verb) { lp.connect(wet); wet.connect(verbIn); }
+    const bus = o.bus || ambBus;
+    inp.connect(lp); lp.connect(pan); pan.connect(out); out.connect(bus);
+    if (o.verb) { lp.connect(wet); wet.connect(bus === cueBus || bus === dryBus ? fxVerb : ambVerb); }
     const P = { x: pos.x, y: pos.y, z: pos.z };
     const h = {
       in: inp, out, pan, lp, wet,

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // The settings panel (v7-08): the gear, open and close, volume, mute, quality, mouse capture and teleport, on a
 // desktop viewport; then the gear and a finger-sized panel on a phone. Usage: node tools/settings-test.mjs [url]
-// SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844).
+// SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
+// SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low&shadows=0&bloom=0';
-const shots = process.env.SHOTS === '1';
+const shots = process.env.SHOTS === '1', shotTag = process.env.SHOTS_TAG || 'settings-01';
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const errors = [];
 const checks = [];
@@ -38,7 +39,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('open: the gear opens the panel', await shown(page));
   check('open: aria-expanded', (await page.getAttribute('#gear', 'aria-expanded')) === 'true');
   check('open: pointer lock released', await page.evaluate(() => !document.pointerLockElement && !window.__fp.player.locked));
-  if (shots) await page.screenshot({ path: 'shots/wip/settings-01-desktop.png' });
+  if (shots) await page.screenshot({ path: `shots/wip/${shotTag}-desktop.png` });
   await page.click('#set-close');
   check('close: the Close button', !(await shown(page)));
   await page.click('#gear'); await page.click('#gear');
@@ -232,7 +233,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('touch: gear clear of the stick, hop ring and speaker', !hit(g, s) && !hit(g, j) && !hit(g, m), { g, s, j, m });
   await page.touchscreen.tap(g.l + g.w / 2, g.t + g.h / 2);
   check('touch: a tap opens the panel', await shown(page));
-  if (shots) await page.screenshot({ path: 'shots/wip/settings-01-touch.png' });
+  if (shots) await page.screenshot({ path: `shots/wip/${shotTag}-touch.png` });
   const sizes = await page.evaluate(() => [...document.querySelectorAll('#settings-panel button, #settings-panel input[type=range]')].filter((e) => e.offsetParent).map((e) => e.getBoundingClientRect().height));
   check('touch: rows are finger-sized (44 px or more)', sizes.length > 10 && sizes.every((h) => h >= 43.9), sizes.filter((h) => h < 43.9));
   check('touch: no mouse row', await page.evaluate(() => getComputedStyle(document.getElementById('set-capture')).display === 'none'));

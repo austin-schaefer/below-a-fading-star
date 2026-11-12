@@ -1,4 +1,5 @@
-// The settings panel (v7-08): a gear beside the speaker opens volume, mute, quality, mouse capture and a list of
+// The settings panel (v7-08): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
+// parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture and a list of
 // places to teleport to. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
 // ctx.controls (controls.js), ctx.quality (tier.js) and ctx.terrain lazily, because those build after the hud.
@@ -91,19 +92,24 @@ export function buildSettings(ctx) {
   const audio = () => ctx.audio;
   slider.addEventListener('input', () => audio()?.setVolume(slider.value / 100));
   muteBtn.addEventListener('click', () => audio()?.setMuted(!audio().muted));
+  // the three parts under it (v9-M6): music, sound effects, ambience (audio.setLevel; graph.js says which buses each moves)
+  const levelEls = [...panel.querySelectorAll('input[data-level]')];
+  for (const el of levelEls) el.addEventListener('input', () => { audio()?.setLevel(el.dataset.level, el.value / 100); el.nextElementSibling.textContent = el.value; });
   function syncSound() {
     const a = audio();
     if (!a) return;
     slider.value = Math.round(a.volume * 100); sliderOut.textContent = slider.value;
     muteBtn.setAttribute('aria-pressed', a.muted ? 'true' : 'false');
     muteBtn.textContent = a.muted ? 'Muted' : 'Mute';
+    for (const el of levelEls) { el.value = Math.round((a.levels?.[el.dataset.level] ?? 1) * 100); el.nextElementSibling.textContent = el.value; }
   }
   ctx.events.addEventListener('audiochange', syncSound);
 
-  // --- music: how often it comes (v9-M2); read by audio/music/index.js on start and applied at once if it runs
-  const musicEl = $('set-music');
+  // --- music: off, or how often it comes (v9-M2); off by default (v9-M6: experimental). Read by audio/music/index.js
+  // on start and applied at once if it runs. While off, the music's level and the three frequencies are dimmed.
+  const musicEl = $('set-music'), musicLevel = $('set-level-music');
   const MUSIC = ['off', 'rare', 'default', 'frequent'];
-  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'default'; };
+  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'off'; };
   function setMusic(s) {
     if (ctx.audio?.music) ctx.audio.music.setSetting(s);
     else { try { localStorage.setItem('fp-music', s); } catch (e) { /* private mode */ } }
@@ -115,7 +121,12 @@ export function buildSettings(ctx) {
     b.addEventListener('click', () => setMusic(s));
     musicEl.appendChild(b);
   }
-  function syncMusic() { if (musicEl) { const n = musicNow(); for (const b of musicEl.children) b.setAttribute('aria-pressed', b.dataset.music === n ? 'true' : 'false'); } }
+  function syncMusic() {
+    if (!musicEl) return;
+    const n = musicNow();
+    for (const b of musicEl.children) { b.setAttribute('aria-pressed', b.dataset.music === n ? 'true' : 'false'); b.classList.toggle('set-dim', n === 'off' && b.dataset.music !== 'off'); }
+    musicLevel?.closest('.set-part')?.classList.toggle('set-dim', n === 'off');
+  }
   api.setMusic = setMusic;
 
   // --- quality: the tier ?q= sets, applied on reload at the same place and heading
