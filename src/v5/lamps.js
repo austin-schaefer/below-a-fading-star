@@ -1,15 +1,18 @@
-// AO The Escarpment Lamps [Decided: "Yes, multi-coloured lights, not all warm."] (plans/IDEAS-v4.md AO; plans/wilderness-v4.md; site in
-// plans/wilderness-v4-placement.md, key `lamps`: the north-west wall's face at bearings 300-318, 60-220 m up, in the part the sun never
-// reaches; plans/wilderness-v5.md "### AO"). High on the west massif, a scatter of hundreds of tiny window-lights, far too high and
-// too many for anything on the floor. Each time the sun gutters, one of them goes out and stays out for the session: over a long
-// walk the wall gets darker. No inhabitants, no story: windows, in rows.
-//
-// One Points draw. Placement is a seeded rng with the rendered mesh's height (makeGround) so each light sits 0.3-0.5 m off the rock in
-// the steep band: loose horizontal runs (storeys), two dense knots, a few lone ones high up. A light the sun would reach (face
-// normal toward the sun), on the scree apron, or on a slope under 50 degrees is rejected. The shader draws a soft dot sized by distance
-// but held to 2.6-4.5 px (720p-relative), dimmed by the wall's own haze (fogAtten), with a slow flicker from a hash of the index
-// and time. The gutter's falling edge (ctx.sky.flicker through 0.85) puts out the next lamp in a fixed seeded order; the update
-// sets two uniforms (time, the dark count) at 4 Hz. `?lamps=0` leaves them out; `?lamps=dark=N` starts with N already out.
+// AO The Escarpment Lamps [Decided: "Yes, multi-coloured lights, not all warm."] (plans/IDEAS-v4.md AO; plans/wilderness-v5.md "### AO").
+// On the south massif's north face (bearings 190-218, 60-240 m up), over the Great Span's road and away from the sun's glare: a
+// city of windows far too high and too many for anything on the floor, no inhabitants and no story. v11 moved it off the west
+// wall (it stood beside the Galleries, two rectangles of one size) and gave it the shape of a place built into a ravine: the
+// spine follows the deepest cleft of the rendered face up the wall (found from the mesh, so it follows the rock if the rock
+// changes), broad and dense at the foot, a pinched waist, a swollen lobe, a thin finger to near the crest; a tributary climbs
+// away to the left; a thread of lamps strings out along a ledge to the right with a gap where it has fallen; a dense quarter
+// of lit floors at the foot of the waist; dark bays inside the body; single outliers high up. Lamps thin up the ribs
+// between the clefts. Each sits 0.3-0.5 m off the rock. A light the sun would reach (face normal toward the sun), on the scree
+// apron, or on a slope under 50 degrees is rejected.
+// Each time the sun gutters, one of them goes out and stays out for the session: over a long walk the wall gets darker.
+// One Points draw. The shader draws a soft dot sized by distance but held to 2.6-4.5 px (720p-relative), dimmed by the wall's own
+// haze (fogAtten), with a slow flicker from a hash of the index and time. The gutter's falling edge (ctx.sky.flicker through
+// 0.85) puts out the next lamp in a fixed seeded order; the update sets two uniforms (time, the dark count) at 4 Hz.
+// `?lamps=0` leaves them out; `?lamps=dark=N` starts with N already out.
 // `ctx.lamps`: `stats()`, `dark` (count seen), `gutter()` (as if the sun had guttered).
 import * as THREE from 'three';
 import { SITES, SUN } from '../world.js';
@@ -68,27 +71,89 @@ export async function build(ctx) {
     return true;
   }
   const b0 = S.bearings[0], b1 = S.bearings[1];
-  const arcDeg = (m) => m / (D2R * 425); // metres along the arc at r 425, in degrees
-  // storeys: long rows with gaps, each a mostly one colour, on a line that tips with the bedding
-  const rows = 10;
-  for (let i = 0; i < rows; i++) {
-    const y0 = S.y[0] + 6 + (S.y[1] - S.y[0] - 12) * (i + rng() * 0.9) / rows;
-    const len = 22 + Math.floor(rng() * 22), step = arcDeg(4.5 + rng() * 4), tip = (rng() - 0.5) * 1.6;
-    const start = b0 + 0.5 + rng() * (b1 - b0 - 6), ci = colorPick();
-    for (let k = 0, b = start, skip = 0; k < len && b < b1; k++, b += step * (0.7 + rng() * 0.8)) {
-      if (skip > 0) { skip--; continue; }
-      if (rng() < 0.06) { skip = 1 + Math.floor(rng() * 3); continue; }  // a dark bay
-      place(b, y0 + tip * (b - start) + (rng() - 0.5) * 0.5, rng() < 0.1 ? colorPick() : ci, 0.3 + 0.3 * rng());
+  const arcDeg = (m) => m / (D2R * 400); // metres along the arc at r 400, in degrees (the south face stands near there)
+  const gauss = () => (rng() + rng() + rng() - 1.5) * 1.6;
+  // the face's own ravines: at each height, how far back the rock stands against its neighbours either side (metres, positive
+  // in a cut). The city gathers where water has cut the face, thins up a rib, and its spine follows the cleft up the wall.
+  const dB = 0.5, nB = Math.round((b1 - b0) / dB) + 1, yLo = S.y[0], yHi = S.y[1], dY = 6, nY = Math.round((yHi - yLo) / dY) + 1;
+  const faceR = (b, y) => {
+    const a = az(b), cx = Math.cos(a), cz = Math.sin(a);
+    let lo = 330, hi = 0;
+    for (let r = 330; r <= 520; r += 3) { if (MG.at(cx * r, cz * r) >= y) { hi = r; break; } lo = r; }
+    return hi ? lo + (hi - lo) * 0.5 : 520;
+  };
+  const R = [];
+  for (let j = 0; j < nY; j++) { const row = new Float32Array(nB); for (let i = 0; i < nB; i++) row[i] = faceR(b0 + i * dB, yLo + j * dY); R.push(row); }
+  const ravine = (i, j) => { // cut depth at column i, row j against the mean of columns +-8 (4 degrees) away
+    let m = 0, c = 0;
+    for (const o of [-8, -6, 6, 8]) { const k = i + o; if (k >= 0 && k < nB) { m += R[j][k]; c++; } }
+    return c ? R[j][i] - m / c : 0;
+  };
+  // the spine: per row, the bearing of the deepest cut within the middle of the window; then smoothed up the wall
+  const spine = new Float32Array(nY), lo0 = Math.round(4 / dB), hi0 = nB - 1 - lo0;
+  for (let j = 0; j < nY; j++) {
+    let best = -1e9, bi = (lo0 + hi0) >> 1;
+    for (let i = lo0; i <= hi0; i++) { const v = ravine(i, j) - Math.abs(i - ((lo0 + hi0) >> 1)) * 0.06; if (v > best) { best = v; bi = i; } }
+    spine[j] = bi;
+  }
+  for (let pass = 0; pass < 6; pass++) for (let j = 0; j < nY; j++) spine[j] = (spine[Math.max(0, j - 1)] + 2 * spine[j] + spine[Math.min(nY - 1, j + 1)]) / 4;
+  // (the cleft is straight where water ran straight; the city wanders off it a little, as a stair wanders)
+  const spineAt = (y) => { const f = Math.max(0, Math.min(nY - 1.001, (y - yLo) / dY)), j = Math.floor(f); return b0 + dB * (spine[j] + (spine[j + 1] - spine[j]) * (f - j)) + 1.6 * Math.sin(y / 31) + 0.9 * Math.sin(y / 13 + 1); };
+  // a tributary: from the cleft's waist a second, thinner run climbs away to the left and ends short of the crest
+  const brY0 = yLo + 0.4 * (yHi - yLo), brY1 = yLo + 0.9 * (yHi - yLo);
+  const branchAt = (y) => spineAt(y) - 9.5 * Math.pow((y - brY0) / (brY1 - brY0), 0.8);
+  const ravAt = (b, y) => { const i = Math.max(0, Math.min(nB - 1, Math.round((b - b0) / dB))), j = Math.max(0, Math.min(nY - 1, Math.round((y - yLo) / dY))); return ravine(i, j); };
+  // the outline, from the foot: broad and dense at the bottom, a pinched waist, a swollen lobe, then a thin finger of light up
+  // the cleft to near the crest; it leans with the spine. Half-width in degrees.
+  const half = (y) => { const u = (y - yLo) / (yHi - yLo); return 1.1 + 4.4 * Math.exp(-(((u - 0.12) / 0.14) ** 2)) + 2.6 * Math.exp(-(((u - 0.52) / 0.16) ** 2)) + 0.5 * u; };
+  const dens = (y) => { const u = (y - yLo) / (yHi - yLo); return 0.25 + 0.75 * Math.exp(-(((u - 0.14) / 0.28) ** 2)) + 0.35 * Math.exp(-(((u - 0.55) / 0.12) ** 2)); };
+  // dark bays: ovals inside the body where nothing is lit (a collapsed quarter, a blind stair)
+  const voids = [[0.00, 0.32, 1.3, 16], [1.6, 0.58, 1.0, 11], [-1.2, 0.80, 0.8, 10], [2.2, 0.14, 0.9, 9]]
+    .map(([db, u, rb, ry]) => [db, yLo + u * (yHi - yLo), rb, ry]);
+  const inVoid = (b, y) => voids.some(([db, vy, rb, ry]) => ((b - spineAt(vy) - db) / rb) ** 2 + ((y - vy) / ry) ** 2 < 1);
+  let c1 = colorPick(), c2 = colorPick(); while (c2 === c1) c2 = colorPick();
+  // the body: scatter weighted by the outline, the cleft and the dark bays; the low quarter in one colour, the lobe in another
+  for (let g = 0; P.length < 380 && g < 30000; g++) {
+    const y = yLo + Math.pow(rng(), 1.25) * (yHi - yLo);
+    if (rng() > dens(y)) continue;
+    const b = spineAt(y) + gauss() * half(y) * 0.55;
+    const rv = ravAt(b, y);
+    if (rng() > 0.28 + 0.72 * Math.max(0, Math.min(1, (rv + 1) / 7))) continue; // thins up a rib
+    if (inVoid(b, y)) continue;
+    const u = (y - yLo) / (yHi - yLo);
+    place(b, y, rng() < 0.22 ? colorPick() : u < 0.34 ? c1 : u < 0.7 ? c2 : colorPick(), 0.3 + 0.3 * rng());
+  }
+  // the branch: a thin run, one colour, with its own dark bays
+  for (let g = 0, n = 0; n < 56 && g < 3000; g++) {
+    const y = brY0 + rng() * (brY1 - brY0), t = (y - brY0) / (brY1 - brY0);
+    const b = branchAt(y) + gauss() * (1.5 - 0.8 * t);
+    if (rng() < 0.18 + 0.5 * t) continue;
+    if (Math.sin(y / 9) > 0.55 && rng() < 0.8) continue; // bays in its length
+    if (place(b, y, rng() < 0.15 ? colorPick() : c2, 0.3 + 0.3 * rng())) n++;
+  }
+  // the dense quarter: a knot at the foot of the waist, rows of lit floors tight to the cleft's left wall
+  {
+    const cy = yLo + 0.2 * (yHi - yLo), cb = spineAt(cy) - 2.2;
+    for (let k = 0; k < 70; k++) place(cb + gauss() * 1.7, cy + gauss() * 12, rng() < 0.2 ? colorPick() : c1, 0.35 + 0.3 * rng());
+  }
+  // a ledge: a thread of lamps strung along a ledge that runs out to the right and climbs, thinning as it goes, with one gap
+  {
+    const sy = yLo + 0.4 * (yHi - yLo), sb = spineAt(sy) + 3, ci = colorPick();
+    for (let k = 0, b = sb, y = sy; k < 46 && b < b1 - 0.4; k++, b += arcDeg(5 + 3 * rng()), y += 0.55 + (rng() - 0.5) * 0.9) {
+      if (k > 24 && rng() < 0.45) continue;                      // fading out
+      if (k > 12 && k < 17) continue;                             // a gap where the ledge has fallen
+      place(b, y, rng() < 0.08 ? colorPick() : ci, 0.3 + 0.25 * rng());
     }
   }
-  // two dense knots (a block lit floor over floor)
-  for (let n = 0; n < 2; n++) {
-    const cb = b0 + 4 + rng() * (b1 - b0 - 8), cy = S.y[0] + 30 + rng() * (S.y[1] - S.y[0] - 60), ci = colorPick(), cnt = 44;
-    for (let k = 0; k < cnt; k++) place(cb + (rng() - 0.5) * arcDeg(46), cy + (rng() - 0.5) * 34, rng() < 0.25 ? colorPick() : ci, 0.3 + 0.3 * rng());
+  // outliers: single lights far up and far out, on their own (a watch-room, a hermit's window)
+  for (let k = 0; k < 9; k++) {
+    const y = yLo + (0.72 + 0.28 * rng()) * (yHi - yLo), side = rng() < 0.5 ? -1 : 1;
+    place(spineAt(y) + side * (3 + rng() * 6), y, colorPick(), 0.45);
   }
-  // lone ones, high up, and a thin scatter to fill the rest to the budget
-  for (let k = 0; k < 5; k++) place(b0 + rng() * (b1 - b0), S.y[1] - 22 + rng() * 22, colorPick(), 0.45);
-  for (let g = 0; P.length < want * 0.9 && g < want * 20; g++) place(b0 + rng() * (b1 - b0), S.y[0] + rng() * (S.y[1] - S.y[0]), colorPick(), 0.3 + 0.3 * rng());
+  for (let g = 0; P.length < want * 0.85 && g < want * 20; g++) { // a few strays to fill the count, inside the outline
+    const y = yLo + rng() * (yHi - yLo) * 0.8, b = spineAt(y) + (rng() - 0.5) * 2 * half(y);
+    if (!inVoid(b, y)) place(b, y, colorPick(), 0.3 + 0.3 * rng());
+  }
   const NALL = P.length;
 
   // the order they go out in: a fixed seeded shuffle
