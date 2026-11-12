@@ -264,8 +264,10 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
             // joint it broke from), fading down the block in streaks where the dust washed out of it
             float scar = step(0.9, fract(h.z * 5.37 + h.w));
             float tail = off.y > 0.0 ? 1.0 : smoothstep(-0.45, 0.05, off.y) * (0.55 + 0.45 * sin(off.x * 17.0 + h.x * 6.3)) * (1.0 - smoothstep(0.1, 0.2, fcL));
-            o.y += w * fadeL * ((h.z - 0.5) * 0.3 + scar * max(tail, 0.0) * 0.7);
-            t += w * fadeL * (vec2(h.z, h.w) - 0.5) * vec2(1.3, 0.8);
+            o.y += w * fadeL * ((h.z - 0.5) * 0.16 + scar * max(tail, 0.0) * 0.35);
+            // each block turned a few degrees its own way (at most ~6): a step of value from its neighbour, the crack
+            // carrying the line. (Slopes of 0.4-0.65 swung whole 3 m blocks past the light into flat black polygons.)
+            t += w * fadeL * (vec2(h.z, h.w) - 0.5) * 0.2;
             // beds inside the block, 0.3-0.7 m, tilted its own way: they stop at its joints
             float bp = 0.3 + 0.4 * fract(h.z * 7.31), bs = uv.y / bp + h.w * 9.0 + uv.x * (h.x - 0.5) * 0.15 / bp;
             float fb = fp / bp, fadeB = (1.0 - smoothstep(0.12, 0.35, fb)) * step(0.35, h.x);
@@ -279,7 +281,7 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
             float keep = step(0.5, fract((h.z + h2.x) * 5.71 + h.z * h2.x * 2.3));
             o.x += w * fadeS * keep * fpLine(e, 0.025, fcS) * 0.5;
             o.y += w * fadeS * (h.z - 0.5) * 0.18;
-            t += w * fadeS * (vec2(h.z, h.w) - 0.5) * 0.6;
+            t += w * fadeS * (vec2(h.z, h.w) - 0.5) * 0.14;
             // lichen: in patches where the coarse grain says so, on the dry rock, a ragged crust over some of the
             // small blocks; one patch in twenty-five the rust kind
             float zone = smoothstep(0.5, 0.64, gr.y) * dry;
@@ -314,7 +316,8 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
           float inside = (1.0 - smoothstep(1.0 - soft, 1.0, d)) * fade * edge;
           // flat-faced: the top tilted a little its own way, the sides steep, each face one slope (lit or not by the low sun)
           float side = smoothstep(0.4, 0.68, d);
-          vec2 sd = mix((vec2(h.y, h.w) - 0.5) * 0.5, nf * 1.6, side);
+          // (a big block's sides stay gentle: at the small stones' 1.3 a 2 m block's far side went black as a slab)
+          vec2 sd = mix((vec2(h.y, h.w) - 0.5) * 0.3, nf * (c > 1.0 ? 0.45 : 1.3), side);
           t += w * inside * sd;
           float away = dot(nf, FP_SUN_XZ) * side;                      // > 0 on its sunward side
           o.x += w * inside * (smoothstep(0.0, -0.9, away) * 0.22 + 0.1 * (1.0 - gF));
@@ -951,7 +954,11 @@ export function buildTerrain(ctx) {
           fpCav = blk * 0.6 + sml * 0.25 + flu * 0.15;
           fpHW = wm; // the bump's weight: where it is 0 the normal is left alone
           if (wm > 0.0) { // explicit gradients, so the branch is safe
-            fpHG = wm * (fpWallSlope(vTPos, 60.0, 0.03, fpDpx, fpDpy, tBlk, vec4(1.0, 0.0, 0.0, 0.0), 0.35, 0.65, 1.8)
+            // (v11.1) the blocks' height is shaped by a smoothstep that reads as blocks from afar; within ~150 m its
+            // steep shoulders, magnified, turned 30 m of face into hard-edged light and dark terraces (camouflage), so
+            // close to, the shaping widens to a gentle swell and the close rock below carries the blocks
+            float fpFarW = smoothstep(60.0, 180.0, length(vTPos - cameraPosition));
+            fpHG = wm * (fpWallSlope(vTPos, 60.0, 0.03, fpDpx, fpDpy, tBlk, vec4(1.0, 0.0, 0.0, 0.0), mix(0.1, 0.35, fpFarW), mix(0.9, 0.65, fpFarW), 1.8)
                        + fpWallSlope(vTPos, 128.0, 0.05, fpDpx, fpDpy, tSml, vec4(0.0, 1.0, 0.0, 0.0), -1.0, 0.0, 0.6)
                        + fpWallSlope(vTPos, 84.0, 0.006, fpDpx, fpDpy, tFlu, vec4(0.0, 0.0, 1.0, 0.0), -1.0, 0.0, 0.5));
           }
@@ -964,6 +971,7 @@ export function buildTerrain(ctx) {
             vec3 g = vec3(0.0);
             vec4 gT = fpWallTex(vTPos, 640.0, 0.18, fpDpx, fpDpy); // fine grain (3.5 m tiles): the lichen's ragged edge, the gravel
             vec4 cl = fpCloseRock(vTPos, normalize(vTNormal), fpFoot, vRock.xy * fpNearW, vec2(gT.b, sml), 1.0 - smoothstep(0.1, 0.4, vWallW), g);
+            float gl = length(g); if (gl > 0.35) g *= 0.35 / gl; // the close relief never tilts the face more than ~19 degrees
             diffuseColor.rgb *= cl.x;
             diffuseColor.rgb *= mix(vec3(1.0), mix(FP_LICHEN, FP_LICHEN_RUST, cl.w), cl.y); // lichen tints the rock it crusts
             fpHG += g; fpHW = max(fpHW, cl.z);
