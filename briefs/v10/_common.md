@@ -11,6 +11,17 @@ Read first: `AGENTS.md`; the `wilderness` and `world-code` skills (its "Acts" se
 - It is found, not signposted: nothing shows from far off except what the place already shows.
 - It works on a phone (the shared module handles the offer; check it) and costs nothing per frame while not being done. No new point light unless your brief says so (`world-code`, the lights budget).
 
+## The owner tried the first act (23:48 PST, 2026-11-11) and it was not good enough
+
+Their words, on the tally as first merged: "uhhh. it didn't seem to work? no animation? the hanging chalk is a meter away from the chalkmark? we're gonna need to do better on legibility". And, about every act: "these things need meaningful actions. like, i ring a great bell: what happens next".
+
+What had been built: a thin stroke that appeared over half a second among 470 others, a metre from the chalk that was supposed to have drawn it, and then nothing. It passed 39 test rows and a review. So, for every act, on top of everything above:
+
+- **The doing is seen.** The thing the visitor uses moves: the chalk leaves its cord, goes to the stone and draws; the beam swings and strikes; the hand's work takes one to three seconds, in the middle of the view, big enough to follow at 1280x720 with the sound off. If a stranger shown three frames (before, during, after) cannot say what was done and by what, it is not built.
+- **Cause sits next to effect.** The tool, the mark and the offer are in one place. Nothing happens off to the side of where the visitor is looking.
+- **Something happens next.** The act is the first half; the second half is the world doing something because of it, that the visitor did not expect and can follow: something arrives, opens, wakes, comes down, lights along a line, answers from across the map and then comes nearer. It can take a minute. It should give the visitor a next thing to walk to or to do (the contract's `when()` lets one act open another). "A sound plays and a light pulses" is not an answer.
+- **Check it moving.** Take frames through the act (the `js` hook of `tools/views.mjs`, or a short Playwright script on your port: before, 0.3 s, 1 s, 2 s, 5 s, 20 s after) and look at them in order, as the owner would.
+
 **Shared files.** Two other agents are adding acts beside you. Put your code in new files under `src/v10/` and register from the place's own module in a few lines. In `tools/acts-test.mjs`, `tools/audio-test.mjs`, `src/v10/sound.js`, `modules.md` and `runtime.md`, add your rows as one small block and leave the rest alone, so the three branches merge cleanly.
 
 **Pace rules that bind you.** One headless browser at a time; `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...` call; no `--trace`. Work only in your worktree; `git fetch origin && git merge --no-edit origin/next` before you start (the worktree is cut from `main`).
