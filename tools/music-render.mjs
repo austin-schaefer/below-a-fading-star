@@ -4,7 +4,8 @@
 // OfflineAudioContext the track's length, the stem straight into its destination (no bus, no reverb: those are the
 // director's, v9-M2), rendered faster than real time. Prints the stem's loudness, peak, clicks, sharpness and roughness
 // (the meters of tools/audio-metrics.mjs), a text band-energy table and PASS/FAIL lines; --wav writes
-// shots/wip/music-<track>.wav (gitignored) for the owner's ear. The bands and what each number means: the `music` skill.
+// shots/wip/music-<track>.wav (gitignored) at the stem's level and shots/wip/music/<track>-listen.wav, the same gained
+// to a -6 dBFS peak, for the owner's ear. The bands and what each number means: the `music` skill.
 //
 //   node tools/music-render.mjs <track|all|path/to/track.js> [--wav] [--q=low] [--seed=n] [--patches=fixture.js] [--solo=voice,...] [--json]
 //
@@ -16,11 +17,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch, parseArgs } from './audio-render.mjs';
 import { measure, writeWav } from './audio-metrics.mjs';
+import { musicRough, selfTest } from './music-metrics.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TRACKS = path.join(ROOT, 'src/audio/music/tracks');
 const HOST = 'http://music.local';
 const SR = 48000;
+const MUSIC_ROUGH_MAX = 0.15;
 
 // [key, label, test, band]
 export const GATES = [
@@ -28,7 +31,7 @@ export const GATES = [
   ['peak_dbfs', 'peak dBFS', (v) => v <= -12, '<= -12'],
   ['clicks', 'clicks', (v) => v === 0, '0'],
   ['sharp_db', 'sharp_db (2-5 kHz)', (v) => v != null && v < -16, '< -16'],
-  ['rough', 'rough', (v) => v < 0.15, '< 0.15'],
+  ['music_rough', 'rough (partials, tools/music-metrics.mjs)', (v) => v < MUSIC_ROUGH_MAX, `< ${MUSIC_ROUGH_MAX}`],
   ['dropped', 'notes without a voice', (v) => v === 0, '0'],
 ];
 const BANDS = [[20, 140, 'sub (the bed)'], [140, 300, 'D3-D4 (pad)'], [300, 600, 'D4-D5 (lead)'], [600, 1200, 'D5-D6 (wind)'], [1200, 2000, '1.2-2k'], [2000, 5000, '2-5k (sharp)'], [5000, 20000, 'over 5k']];
@@ -86,7 +89,7 @@ async function renderTrack(page, file, o) {
     const t0 = performance.now();
     const buf = await ac.startRendering();
     window.__buf = [buf.getChannelData(0), buf.getChannelData(1)];
-    return { name: track.name, sr, frames, seconds: frames / sr, plan: h.plan, dropped: h.dropped, events: events.length, ms: Math.round(performance.now() - t0), ended: h.ended };
+    return { name: track.name, sr, frames, seconds: frames / sr, plan: h.plan, dropped: h.dropped, stolen: h.stolen, events: events.length, ms: Math.round(performance.now() - t0), ended: h.ended };
   }, { url, quality: o.q || 'high', seed: o.seed != null ? Number(o.seed) : null, sr: SR, solo: o.solo ? String(o.solo).split(',') : null });
   const ch = await pull(page, '__buf', info.frames);
   return { info, ch };
@@ -142,9 +145,10 @@ async function liveCheck(page, file) {
 function report(name, info, m, bands, wavPath) {
   const out = [];
   const plan = Object.entries(info.plan).map(([k, v]) => `${k} ${v}`).join(', ');
-  out.push(`${name}: ${info.seconds.toFixed(1)} s, ${info.events} notes, voices ${plan}; rendered in ${(info.ms / 1000).toFixed(1)} s (${(info.seconds / (info.ms / 1000)).toFixed(0)}x real time)`);
+  out.push(`${name}: ${info.seconds.toFixed(1)} s, ${info.events} notes, voices ${plan}${info.stolen ? ` (${info.stolen} stolen)` : ''}; rendered in ${(info.ms / 1000).toFixed(1)} s (${(info.seconds / (info.ms / 1000)).toFixed(0)}x real time)`);
   out.push(`  loudness ${m.lufs_i} LUFS (short-term max ${m.lufs_s_max}, range ${m.lra} LU)  peak ${m.peak_dbfs} dBFS  crest ${m.crest_db} dB  centroid ${m.centroid_hz} Hz`);
-  out.push(`  sharp_db ${m.sharp_db}  rough ${m.rough}  hf_db ${m.hf_db}  clicks ${m.clicks} (at a -6 dBFS peak)  silence ${m.silence_pct} %`);
+  out.push(`  rough ${m.music_rough} (partials; p95 ${m.music_rough_p95}, roughest at ${m.music_rough_worst} s)  bed meter's rough ${m.rough} (shown, not gated: it reads chords as rough)`);
+  out.push(`  sharp_db ${m.sharp_db}  hf_db ${m.hf_db}  clicks ${m.clicks} (at a -6 dBFS peak)  silence ${m.silence_pct} %`);
   out.push('  band energy (dB re the whole)');
   for (const b of bands) out.push(`    ${b.name.padEnd(16)} ${String(b.db).padStart(6)}  ${'#'.repeat(Math.max(0, Math.round((b.db + 60) / 2)))}`);
   out.push(`  rough by band: ${m.detail.rough_bands.map((b) => `${b.band_hz} ${b.rough}${b.strongest_hz ? '@' + b.strongest_hz : ''} (${b.share})`).join(', ')}`);
@@ -170,6 +174,7 @@ async function main() {
 
   const browser = await launch();
   let fail = 0; const results = [];
+  if (selfTest()) fail++;
   try {
     const page = await browser.newPage();
     page.on('pageerror', (e) => console.error('page error:', e.message));
@@ -192,10 +197,16 @@ async function main() {
       const loud = ch.map((c) => c.map((v) => v * k));
       const mc = measure({ sr: info.sr, ch: loud, frames: info.frames });
       m.clicks = mc.clicks; m.detail.click_times = mc.detail.click_times; m.seam_s = mc.seam_s; m.detail.seams = mc.detail.seams; m.detail.candidates = mc.detail.candidates;
+      const mr = musicRough(ch, info.sr); m.music_rough = mr.rough; m.music_rough_p95 = mr.p95; m.music_rough_worst = mr.worst_t;
       const bands = bandTable(ch, info.sr);
       let wavPath = null;
-      if (o.wav) { wavPath = path.join(ROOT, 'shots/wip', `music-${name}.wav`); writeWav(wavPath, ch, info.sr); }
-      const r = report(name, info, m, bands, wavPath);
+      let listenPath = null;
+      if (o.wav) {
+        wavPath = path.join(ROOT, 'shots/wip', `music-${name}.wav`); writeWav(wavPath, ch, info.sr);
+        // the listening copy: the same audio gained to a -6 dBFS peak (the stem alone is too quiet to audition)
+        listenPath = path.join(ROOT, 'shots/wip/music', `${name}-listen.wav`); writeWav(listenPath, loud, info.sr);
+      }
+      const r = report(name, info, m, bands, wavPath && `${wavPath}\n  listen: ${listenPath} (gained ${(20 * Math.log10(k)).toFixed(1)} dB to a -6 dBFS peak)`);
       console.log(r.text);
       fail += r.fail;
       if (!o.solo) {
