@@ -18,6 +18,7 @@ Load the `wilderness` skill (serving, the render tools, where renders go) and ke
 Report, in under 600 words:
 
 - **Blocking** (must be fixed before release): broken things. Holes in the world, things floating or buried, a view that is black or blown out, text that is wrong or unreadable, a place where the frame rate collapses, a sound that hurts. Give the position, yaw and render for each.
+- **Familiar** (should become work): list the things you saw that could sit unchanged in any fantasy game (a grey tower, bulrushes, a market stall), and the two or three that could exist nowhere else. The second list is what to build on.
 - **Weak** (should become work): what is dull, repetitive, incoherent, unfinished or out of character with the rest. Be specific about where and why.
 - **Strong:** the three best things here, and what makes them work. The next milestone should build on these.
 - **Stories:** which you found without being told, which you could not, and why, by story file.

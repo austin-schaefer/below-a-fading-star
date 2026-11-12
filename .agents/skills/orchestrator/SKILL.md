@@ -37,7 +37,7 @@ A subagent starts cold. The brief is everything it knows. Include:
 ```
 Brief: <milestone-number> <title>
 Worktree: <path printed by `tools/worktree.sh new <n> <slug>`; the orchestrator runs this before dispatch>. Work only there. Read AGENTS.md first, then load the `wilderness` and `world-code` skills (and any the work needs: `sound-design`, `music`, `storytelling`).
-Goal: <one paragraph, oriented for a visitor walking the scene>
+Goal: <one paragraph, oriented for a visitor walking the scene. For anything a visitor will see, ask for the strange and the large outright: "not the first idea; something a visitor would walk 200 m to look at and could find in no other game". Agents default to the familiar unless the brief pushes>
 Read: <milestone doc sections, briefs, modules>
 Files likely involved: <paths>
 Done when: <checkable criteria, including tests and renders>
