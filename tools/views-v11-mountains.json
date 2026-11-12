@@ -1,0 +1,19 @@
+[
+ {"name":"spawn-y0","x":2,"z":35,"yaw":0},
+ {"name":"spawn-y1","x":2,"z":35,"yaw":1.57},
+ {"name":"spawn-y2","x":2,"z":35,"yaw":3.14},
+ {"name":"spawn-y3","x":2,"z":35,"yaw":4.71},
+ {"name":"high-y0","x":0,"z":0,"yaw":0,"dy":70},
+ {"name":"high-y1","x":0,"z":0,"yaw":1.05,"dy":70},
+ {"name":"high-y2","x":0,"z":0,"yaw":2.09,"dy":70},
+ {"name":"high-y3","x":0,"z":0,"yaw":3.14,"dy":70},
+ {"name":"high-y4","x":0,"z":0,"yaw":4.19,"dy":70},
+ {"name":"high-y5","x":0,"z":0,"yaw":5.24,"dy":70},
+ {"name":"highling-y1","x":250,"z":5,"yaw":1.57},
+ {"name":"highling-y3","x":250,"z":5,"yaw":4.71},
+ {"name":"foreland-y0","x":60,"z":-230,"yaw":0},
+ {"name":"foreland-y2","x":60,"z":-230,"yaw":3.14},
+ {"name":"west-y1","x":-200,"z":-60,"yaw":1.57},
+ {"name":"west-y0","x":-200,"z":-60,"yaw":0.6},
+ {"name":"west-y2","x":-200,"z":-60,"yaw":2.5}
+]
