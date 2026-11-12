@@ -116,13 +116,16 @@ export function instanced(geo, mat, items, { name, shadow = false, receive = tru
   return mesh;
 }
 
+// v8-11: a lichen patch is never more than LICHEN_CAP times as bright as the stone it grows on: it keeps its colour
+// (grey-green, rust) and its map-lichen rim, and loses the pale spots that read from 400 m (issue #12). ?rockcut=0: uncapped.
+export const LICHEN_CAP = typeof location !== 'undefined' && new URLSearchParams(location.search).get('rockcut') === '0' ? 0 : 1.4;
 // Stone: grain, a little strata, and lichen. lichen: [{ color: [r,g,b], scale, cover (0..1), up (0..1 bias to upper
 // faces), rim (0..1 a darker edge round each patch: map lichen's continents) }]
 export function stoneMaterial({ color = '#6a6a66', rough = 0.9, lichen = [], grain = 1, strata = 0.15, warm = null } = {}) {
   const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: rough, metalness: 0 });
   // the shader text differs by these options, so each set compiles its own program (three keys programs by the
   // onBeforeCompile source, which is the same function for every stone material)
-  const key = 'fp-stone:' + JSON.stringify({ lichen, grain, strata, warm });
+  const key = 'fp-stone:' + JSON.stringify({ lichen, grain, strata, warm, cap: LICHEN_CAP });
   mat.customProgramCacheKey = () => key;
   const lic = lichen.map((l, i) => `
     {
@@ -130,7 +133,9 @@ export function stoneMaterial({ color = '#6a6a66', rough = 0.9, lichen = [], gra
       float edge = ${(1 - l.cover).toFixed(3)};
       float m = smoothstep(edge, edge + 0.03, n) * (${(1 - l.up).toFixed(3)} + ${l.up.toFixed(3)} * clamp(vRN.y * 0.5 + 0.6, 0.0, 1.0));
       float rim = ${(l.rim || 0).toFixed(3)} * (smoothstep(edge - 0.015, edge + 0.01, n) - smoothstep(edge + 0.01, edge + 0.035, n));
-      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${l.color.map((v) => v.toFixed(3)).join(', ')}) * (0.85 + 0.3 * g2), m * 0.9);
+      vec3 lc = vec3(${l.color.map((v) => v.toFixed(3)).join(', ')}) * (0.85 + 0.3 * g2);
+      ${LICHEN_CAP ? `lc *= min(1.0, ${LICHEN_CAP.toFixed(3)} * dot(diffuseColor.rgb, LUMA) / max(dot(lc, LUMA), 1e-4));` : ''}
+      diffuseColor.rgb = mix(diffuseColor.rgb, lc, m * 0.9);
       diffuseColor.rgb *= 1.0 - rim * 0.55;
     }`).join('');
   mat.onBeforeCompile = (shader) => {
@@ -145,6 +150,7 @@ export function stoneMaterial({ color = '#6a6a66', rough = 0.9, lichen = [], gra
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         varying vec3 vRPos; varying vec3 vRN;
+        const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
         float rhash(vec3 p) { p = fract(p * vec3(443.897, 441.423, 437.195)); p += dot(p, p.yzx + 19.19); return fract((p.x + p.y) * p.z); }
         float rnoise(vec3 p) {
           vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
