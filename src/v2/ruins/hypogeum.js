@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { Builder, mat } from '../../structures/geo.js';
 import { stoneTints, vary } from '../../structures/common.js';
 import { wornBlock, recolor, reaux, Acc, stoneMesh, SKY_SHEEN } from './util.js';
+import { doorAct } from '../../v10/door.js'; // v10-A1: the knock
 
 const GLYPHS = 11;          // slots on the lintel
 const PITCH = 0.205;        // metres between glyph centres
@@ -154,7 +155,8 @@ export function buildHypogeum(ctx, env) {
   env.meshes.push(stoneMesh(B, env.stone.mat, 'ruins-hypogeum'));
 
   // ---- the door ----
-  env.meshes.push(buildDoor(ctx, P, dHalf, dTop));
+  const door = buildDoor(ctx, P, dHalf, dTop);
+  env.meshes.push(door.mesh, door.ring);
   // ---- the glyphs ----
   const glyphs = buildGlyphs(ctx, lintel);
   env.meshes.push(glyphs.mesh);
@@ -171,7 +173,8 @@ export function buildHypogeum(ctx, env) {
   const pub = ctx.hypogeum = {
     glyphOrder: order, shifts: 0,
     door: { x: x1 + 0.3, y: Yf + 1.27, z: zc, width: dHalf * 2, height: dTop - Yf },
-    lintel: { x: lintel.x, y: lintel.y, z: zc }, floor: Yf, stairTop: { x: x0, z: zc, y: yTop },
+    doorMesh: door.mesh, ring: door.ring, glyphMat: glyphs.mesh.material, speed: 0.7, spin(k) { target += k; pub.speed = 7; },
+    lintel: { x: lintel.x, y: lintel.y, z: zc }, floor: Yf, stairTop: { x: x0, z: zc, y: yTop }, treadD: D, treadRise: rise,
   };
   const cuePos = { x: lintel.x, y: lintel.y, z: zc };
   const u = glyphs.uniforms;
@@ -187,8 +190,10 @@ export function buildHypogeum(ctx, env) {
       order[0] = last;
       ctx.audio?.cue?.('glyph-shift', cuePos);
     }
-    if (u.uShift.value < target) u.uShift.value = Math.min(target, u.uShift.value + dt * 0.7);
+    if (u.uShift.value < target) u.uShift.value = Math.min(target, u.uShift.value + dt * pub.speed);
+    else pub.speed = 0.7;
   });
+  doorAct(ctx, pub, env.meshes); // v10-A1: the knock and what answers it (src/v10/door.js)
   return { glyphs: GLYPHS, colliders: 0 };
 }
 
@@ -278,11 +283,17 @@ function buildDoor(ctx, P, dHalf, dTop) {
     // the ring and its boss
     const ry = Yf + 1.16, rz = zc + s * 0.17;
     { const g = new THREE.CylinderGeometry(0.045, 0.06, 0.05, 10); g.rotateZ(Math.PI / 2); g.translate(xd - 0.025, ry + 0.11, rz); A.add(g); }
-    { const g = new THREE.TorusGeometry(0.11, 0.017, 6, 18); g.rotateY(Math.PI / 2); g.rotateZ(0.12 * s); g.translate(xd - 0.07, ry, rz); A.add(g); }
+    if (s < 0) { const g = new THREE.TorusGeometry(0.11, 0.017, 6, 18); g.rotateY(Math.PI / 2); g.rotateZ(0.12 * s); g.translate(xd - 0.07, ry, rz); A.add(g); }
   }
   const mesh = new THREE.Mesh(A.build(), mt);
   mesh.castShadow = true; mesh.receiveShadow = true; mesh.name = 'ruins-hypogeum-door';
-  return mesh;
+  // the other ring on its own, pivoted at its boss, so the knock can lift it (v10-A1); its uv is the leaf's at rest
+  const rg = new THREE.TorusGeometry(0.11, 0.017, 6, 18); rg.rotateY(Math.PI / 2); rg.translate(0, -0.11, 0);
+  const uv = rg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (0.17 + dHalf) / (dHalf * 2), (1.16 - 0.02) / H);
+  const ring = new THREE.Mesh(rg, mt);
+  ring.position.set(xd - 0.07, Yf + 1.16 + 0.11, zc + 0.17); ring.rotation.z = 0.12;
+  ring.castShadow = true; ring.receiveShadow = true; ring.name = 'ruins-hypogeum-ring';
+  return { mesh, ring };
 }
 
 // Nine glyph forms from simple strokes, none of them letters: stepped bars under a dot; an eye with a
