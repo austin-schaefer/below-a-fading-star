@@ -10,7 +10,8 @@
 //   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~800 and ~1350), each rolling
 //          in massifs of its own set behind the near cols, ridged in plan and lit on their sunward sides, lower in
 //          the picture and paler under the fog tiers.
-//   v11 the form: summits, notches and serration along the crest, spurs and the valleys between them (FORM, SPURS_M).
+//   v11 the form: summits, notches and serration along the crest, spurs and the valleys between them (FORM, SPURS_M);
+//          v11.1 the north-east wall's buttresses, recess and notch, and the Ossuary Horn as a pyramid (HORN).
 // ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
 // bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
@@ -190,11 +191,11 @@ if (CAND) {
 // something hangs at the crest (HOLD_CREST) and at the cols' floors, so faceAt below ~0.6 of the run, crestAt at the
 // hung bearings, the cols and the Ridge's merlons stay. SPURS push the face toward the bowl along a narrow line from
 // under the crest down to the apron: a ridge that comes down at the viewer, broad at its foot, a lit flank and a dark
-// one, a shoulder where it leaves the crest; only where nothing hangs on the face (HOLD_FACE); neither spur nor valley
-// reaches inside r 352 (walkLimit is 348)
-// (walkLimit is 348).
-const HOLD_CREST = [[6, 61], [66, 78], [99, 107], [109, 115], [126, 134], [177, 183], [226, 234], [236, 264], [262, 300], [325, 331]];
-const HOLD_FACE = [[50, 62], [64, 80], [98, 108], [125, 149], [225, 300], [300, 320], [338, 360], [0, 10]];
+// one, a shoulder where it leaves the crest; not where a thing hangs on the face as fitted (HOLD_FACE). The Gradine and
+// the Vigilant are not held (v11.1): they stand on spurs of their own and refit to them by code. Neither spur nor
+// valley reaches inside r 352 (walkLimit is 348).
+const HOLD_CREST = [[6, 58.5], [66.5, 78], [99, 107], [109, 115], [126, 134], [177, 183], [226, 234], [236, 264], [262, 300], [325, 331]];
+const HOLD_FACE = [[98, 108], [125, 149], [225, 300], [300, 320], [338, 360], [0, 10]];
 function holdOf(list, b, soft) {
   let w = 0;
   for (const [a0, a1] of list) w = Math.max(w, smoothstep(a0 - soft, a0, b) * (1 - smoothstep(a1, a1 + soft, b)));
@@ -207,9 +208,9 @@ function holdOf(list, b, soft) {
 // short to the glacier; the Mitre's north horn stands over a notch.
 const FORM = [
   // the north-east, between the Vigilant and the Long Figure
-  [84, -26, 3, 4], [88, 22, 6, 3.75], [96, 16, 4.5, 3],
+  [62.5, -55, 2.2, 2.4], [84, -26, 3, 4], [88, 22, 6, 3.75], [96, 16, 4.5, 3],
   // the south-east: shoulders on the long side, a nick, the Horn pushed up, a short steep fall
-  [118, 20, 4.5, 7.5], [152, 30, 9, 3.75], [158, -16, 1.6, 2.2], [160, 22, 3, 3], [165, 26, 9, 5], [172, -40, 2, 3.5],
+  [118, 20, 4.5, 7.5], [152, 30, 9, 3.75], [167, 18, 3, 3], [172, -40, 2, 3.5],
   // the south: a steep climb to the Abbess, then a long broken run down to the saddle
   [186, -30, 2, 3], [196, 46, 6, 10.5], [205, -38, 2, 2.4], [211, 30, 4.5, 6], [217, -24, 1.5, 2.5], [222, 18, 3.75, 4.5],
   // the west, north of the Galleries: the Lectern's table broken, a nick, a steep fall to the col
@@ -236,16 +237,48 @@ if (CAND) {
 }
 // The plan: spurs (+, the face pushed toward the bowl) and the valleys between them (-, pulled back into the mass).
 // [bearing at the root, push (m), half-width at the root (m), at the foot (m), lean (degrees the line swings from
-// root to foot)]. A spur leaves the crest at a shoulder and runs down sharp-backed, broadening; a valley is cut
-// deepest at its mouth and closes under the crest, round-floored, so the drainage between the spurs reads.
+// root to foot), and optionally { drop: how far below the crest a spur's shoulder leaves it (m), shoulder: over how
+// many metres it comes to its full push (default 62), ramp: over how many metres beyond r 352 a valley comes to its
+// full depth (default 38) }]. A spur leaves the crest at a shoulder and runs down sharp-backed, broadening; a valley is
+// cut deepest at its mouth and closes under the crest, round-floored, so the drainage between the spurs reads. A push
+// or a pull that changes faster than the radius folds the face (a hollow behind a lip): v11.1's entries keep their
+// shoulders and ramps at least 1.5 times their push.
 const SPURS_M = [
-  [16, -91, 36, 90, 4], [24, 38, 19, 53, -2], [33, -78, 31, 72, -3], [40, 35, 19, 48, 2], [46, -52, 24, 43, 2],
+  // the north-east (v11.1): buttresses under the Ridge; the Gradine's rib, leaning as the flight climbs (bearing 49 at
+  // the crest to 57 at its foot, on the stair's line); a recess under a notch between it and the Vigilant; the
+  // Vigilant's shoulder, a buttress that meets the crest under it
+  [16, -91, 36, 90, 4], [24, 62, 19, 50, -2, { drop: 20, shoulder: 95 }], [33, -78, 31, 72, -3], [39, 50, 18, 46, 2, { drop: 55, shoulder: 80 }],
+  [43.5, -64, 20, 40, 4, { ramp: 100 }], [49, 56, 22, 52, 5, { drop: 25, shoulder: 115 }], [62.5, -100, 28, 48, 3, { ramp: 150 }], [72, 60, 36, 62, -1, { shoulder: 95 }],
   [82, -72, 29, 67, 2], [89, 46, 26, 66, 3], [96, -52, 24, 48, -2],
   [118, -39, 24, 48, 0],
-  [152, 59, 29, 72, -4], [158, -91, 34, 86, 3], [165, 49, 24, 60, 3], [172, -58, 26, 58, -2],
+  [152, 59, 29, 72, -4], [157, -60, 24, 56, 3], [166, 40, 22, 52, 3], [172, -58, 26, 58, -2],
   [187, -65, 26, 60, 2], [192, 54, 26, 70, 4], [199, -104, 38, 101, -3], [208, 62, 31, 77, -3], [215, -84, 31, 79, 3], [221, 40, 22, 60, 3],
   [322, 35, 22, 55, 3], [334, 46, 24, 62, -3],
 ];
+// The Ossuary Horn (v11.1): a peak in plan, not a bump along the crest. A pyramid on its summit, its height falling
+// away at a slope set by direction: three arêtes (gentle: one down toward the bowl, a little toward lower bearings; the long one along the crest toward the shoulders at 152; a shorter, steeper one to the col at 180) and
+// steep faces between them, so it widens to its foot, with the shoulders on its flanks and its top leaning over the
+// col. It only raises the ground, and nothing inside r 352.
+const HORN = { b: 161, r: 494, h: 396, face: 2.2, ar: [[-0.3, 1.25, 0.4, 0], [-1.42, 0.82, 0.38, 0], [1.42, 1.9, 0.3, 0]] };
+HORN.x = Math.cos((HORN.b - 90) * D2R) * HORN.r; HORN.z = Math.sin((HORN.b - 90) * D2R) * HORN.r;
+function hornAt(x, z) {
+  const dx = x - HORN.x, dz = z - HORN.z, d = Math.sqrt(dx * dx + dz * dz);
+  if (d > 260) return -Infinity;
+  // the direction from the summit in its own frame: 0 toward the bowl, + toward higher bearings
+  const ix = -HORN.x / HORN.r, iz = -HORN.z / HORN.r; // inward
+  const ang = Math.atan2(dx * iz - dz * ix, dx * ix + dz * iz);
+  let s = HORN.face, along = 0;
+  for (let k = 0; k < 3; k++) {
+    const [a, sk, w, tw] = HORN.ar[k];
+    let da = ang - (a + tw * d); da -= TAU * Math.round(da / TAU);
+    const e = Math.exp(-(da / w) * (da / w));
+    s -= (HORN.face - sk) * e;
+    if (k === 1) along = e;
+  }
+  // the long arête breaks: a nick under the summit, then a shoulder before it runs on down to the shoulders at 152
+  const sh = along * (20 * Math.exp(-(((d - 100) / 24) ** 2)) - 9 * Math.exp(-(((d - 52) / 10) ** 2)));
+  return HORN.h - s * d + sh + 3 * S.noise2(x * 0.03, z * 0.03);
+}
 function sampleForm(az) {
   const q = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(q))), f = q - i;
   return T_FM[i] + (T_FM[i + 1] - T_FM[i]) * f;
@@ -253,7 +286,7 @@ function sampleForm(az) {
 function spurPush(b, r, Rc) {
   let push = 0, pull = 0;
   const t = clamp((Rc - r) / 150, 0, 1); // 0 at the crest, 1 at the foot
-  for (const [sb, sp, w0, w1, lean] of SPURS_M) {
+  for (const [sb, sp, w0, w1, lean, o] of SPURS_M) {
     let db = b - sb; if (db > 180) db -= 360; if (db < -180) db += 360;
     if (Math.abs(db) > 24) continue;
     const edge = 1 - smoothstep(18, 24, Math.abs(db)); // fades out before the cutoff, so a wide foot leaves no step
@@ -261,15 +294,15 @@ function spurPush(b, r, Rc) {
     const w = lerp(w0, w1, t);
     if (across > w) continue;
     if (sp > 0) {
-      const prof = smoothstep(Rc - 8, Rc - 70, r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
+      const r0 = Rc - 8 - (o?.drop ?? 0), prof = smoothstep(r0, r0 - (o?.shoulder ?? 62), r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
       push = Math.max(push, sp * prof * Math.pow(1 - across / w, 1.15) * edge);
     } else {
       const prof = smoothstep(Rc - 10, Rc - 100, r); // closes under the crest, deepest at the mouth
       const c = across / w;
-      pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c) * edge);
+      pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c) * edge * smoothstep(352, 352 + (o?.ramp ?? 38), r));
     }
   }
-  return (push * smoothstep(352, 395, r) - pull * smoothstep(352, 390, r)) * (1 - holdOf(HOLD_FACE, b, 3));
+  return (push * smoothstep(352, 395, r) - pull) * (1 - holdOf(HOLD_FACE, b, 3));
 }
 // --- the form (end)
 // --- the massifs (end; applyMassifs and the far ranges' hook below)
@@ -610,7 +643,8 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   let m = P(re + dr);
   // the crags: on the rock band (not the apron, not the crest's rounding), strongest where the face is steep
   const rock = smoothstep(0.12, 0.3, u) * (1 - smoothstep(0.9, 0.98, u)) * (0.45 + 0.55 * steep);
-  m += crags(x, z, az, r, m, ui, rock, dn.water);
+  const crg = crags(x, z, az, r, m, ui, rock, dn.water);
+  m += crg;
   WALL_SAMPLE.water = dn.water * (1 - sw) * (1 - g); WALL_SAMPLE.mouth = dn.mouth * (1 - sw) * (1 - g);
   WALL_SAMPLE.hard = _cr.hard * (1 - sw) * (1 - g); WALL_SAMPLE.step = _cr.step * (1 - sw) * (1 - g);
   // the small: the old pinnacles at a quarter of v4's height and twice its wavelength, on the crest only (it stays
@@ -629,6 +663,9 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   }
   m = Math.max(m, 0);
   m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
+  // v11.1 the Horn: the pyramid, with the face's relief (the height dr makes on the profile, at 0.8, held to -45..+10 m) and the
+  // crags, so the couloirs and crags stay cut into it
+  { const hz = hornAt(x, z) + clamp(0.8 * (P(re + dr) - P(re)), -45, 10) + crg; if (hz > m) m += (hz - m) * smoothstep(352, 400, rTrue) * (1 - smoothstep(169, 177, b)); } // the col at 180 stays
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {
@@ -637,7 +674,7 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   }
   if (rEnv > 0) {
     const t = (bearingOf(az) - RG.b0) / RG.period, k = Math.floor(t), f = t - k;
-    const rm = smoothstep(Rc - 10, Rc - 6, r) * (1 - smoothstep(Rc + 4, Rc + 8, r));
+    const rm = smoothstep(Rc - 10, Rc - 6, rTrue) * (1 - smoothstep(Rc + 4, Rc + 8, rTrue)); // on the true radius: a spur under the Ridge carries no merlon of its own
     const bm = smoothstep(0, RG.edge, f) * (1 - smoothstep(RG.merlon - RG.edge, RG.merlon, f));
     if (rm * bm > 0) {
       const M = RIDGE.merlons[k - (RG.kMin - 1)];
