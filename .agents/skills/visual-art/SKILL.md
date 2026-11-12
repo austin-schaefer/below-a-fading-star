@@ -24,7 +24,7 @@ Their notes on the art in this repository (2026-11-11), in their words where quo
 **What works**
 - The Great Span: "distinct architectural vibe".
 - The Pomegranate House.
-- "the thing that's like a bunch of cyber hoops".
+- The Arcature (`src/structures/arches.js`): "the thing that's like a bunch of cyber hoops", great nested arches bristling with ribs, the bones of some ancient thinking machine. Big, strange, and nobody's idea of a fantasy ruin.
 - The little men who walk around: "their animations may be a bit janky, but they all have a lot of personality". Personality beats polish; keep it while fixing the stiffness.
 
 ## The references
