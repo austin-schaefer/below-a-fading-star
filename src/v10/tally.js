@@ -1,23 +1,26 @@
-// The travellers' tally at the Lantern Halt (v10-A0, #24): the first act, and the example in the `world-code`
-// skill's "Acts". Everyone who slept in the lantern chalked a stroke on the slab's face, in fives, row under row,
-// each in their own hand: the oldest rows high up, washed thin by the rain; the newest low, still white. A few counted
-// in boxes, a few had only a coal from the lamp or the red earth by the trough. Above them the Late folk chalked the
-// halt's own sign large, the V with the lamp hung in it, ruled a line, and kept their own count of the hundreds in
-// strokes as long as a forearm. A stub of saffron chalk hangs on a cord from an iron staple, the Late folk's colour.
-// Standing at the wall and looking at where the last row ends, the visitor is offered it ("Chalk your stroke");
-// their stroke is drawn there in saffron, over half a second, with a fall of dust under it, and kept (one a visit):
-// on a return visit their own gates stand a little apart at the end of the rows, the only saffron on the wall.
+// The travellers' tally at the Lantern Halt (v10-A0, #24; reworked in v10-A4 after the owner tried it): the first act,
+// and the example in the `world-code` skill's "Acts". Everyone who slept in the lantern chalked a stroke on the slab's
+// face, in fives, row under row, each in their own hand: the oldest rows high up, washed thin by the rain; lower
+// down, nearer the road. A few counted in boxes, a few had only a coal from the lamp or the red earth by the trough.
+// Above them the Late folk chalked the halt's own sign large, ruled a line, and kept their count of the hundreds.
+// At chest height, left of where the seat's rope comes down, the stone is nearly clear (rubbed for the newcomers):
+// that is where the visitor writes, and a stub of saffron chalk hangs there on a cord from an iron staple driven in
+// over their gate. Standing at the wall and looking at that spot, the visitor is offered it ("Chalk your stroke"):
+// the stub lifts on its cord to the stone, draws a forearm-long stroke top to bottom over a second and more, dust
+// falling from its tip, and is let go and swings, settling. The stroke is the brightest thing on the wall while it
+// is new. Kept, one a visit: on a return visit their own gates are there, saffron, with the chalk over the next.
+// Chalking is how a traveller claims the bed, so the stroke brings the seat down (src/v10/halt-seat.js).
 //
 // One draw for the wall: a decal on the face, a CanvasTexture of all of it (1536 x 614, about 4.7 mm a pixel; half
 // that on the low tier), drawn once at build from ctx.makeRng. A stroke being drawn goes on a small overlay quad of
-// its own (160 px square, no mipmaps), uploaded each frame of the half second; the wall is uploaded once when the
-// stroke is done, and when the marks are forgotten. Its emissive share is chalk catching the sky: the face looks
-// east, away from the sun, and in its shadow plain chalk would read as nothing from the road. The chalk stub and its
-// staple go into the waystation's furniture Builder (no draw of their own).
+// its own (160 px square, no mipmaps), uploaded on the frames the tip moves; it stays there, fresh, for 25 s and then
+// goes onto the wall in one upload. Its emissive share is chalk catching the sky: the face looks east, away from the
+// sun, and in its shadow plain chalk would read as nothing from the road. The chalk (staple, cord, stub) and its dust
+// are four small draws in the slab's frame; nothing runs per frame while the chalk hangs still.
 //
 // buildTally(ctx, o) is called by src/v9/waystation.js with its frame: { M0 (the slab's matrix), W (its site), foot,
-// gAt(x, z) (ground, local), at(...) (a local frame), B (the furniture Builder), late(color, o) (its material
-// options), group, iron }. Returns ctx.tally: { wall, visitor, strokes(), stand(), next(), centre, normal, mesh }.
+// gAt(x, z) (ground, local), at(...) (a local frame), B, late, group, iron }. Returns ctx.tally: { wall, visitor,
+// strokes(), stand(), next(), centre, normal, mesh, chalk, strokeEnd() }.
 import * as THREE from 'three';
 
 const X0 = -3.55, X1 = 3.65; // the wall's extent along the face, local x: nearly all of it, over the bench too
@@ -125,6 +128,12 @@ export function buildTally(ctx, o) {
   const cursor = { row: 0, x: LEFT };
   const OWN_ROWS = rows - 1; // the last row is left for the visitors who come after
   const rowY = (row, r) => TOP + row * ROW + (r() - 0.5) * 7 * K;
+  // the visitors' place: the stone at chest height left of the seat's fall, kept nearly clear of old marks (a few big
+  // old gates stay, washed), so a visitor's strokes have dark stone about them. Canvas px, from local x and the
+  // height over the ground.
+  const hx = (x) => (x - X0) * M2P, hy = (h) => (0.35 + HM - h) * M2P;
+  const CLR = { x0: hx(-3.5), x1: hx(0.34), y0: hy(1.98), y1: hy(0.36), keep: hx(-2.3) }; // old gates kept only at its far end
+  const inClear = (x0, y0, x1, y1) => x1 > CLR.x0 && x0 < CLR.x1 && y1 > CLR.y0 && y0 < CLR.y1;
   for (let row = 0; row < OWN_ROWS; row++) {
     let x = LEFT + (rng() * 0.18) * M2P;
     const last = row === OWN_ROWS - 1;
@@ -136,7 +145,9 @@ export function buildTally(ctx, o) {
       const w = gateW(h);
       if (x + w > end && !last) break;
       const n = last && x + w * 2.4 > end ? 3 : 5; // the last gate unfinished
-      for (const st of gate(x, rowY(row, rng), h, n, rng)) stroke(bg, st);
+      const gy = rowY(row, rng);
+      if (inClear(x, gy, x + w, gy + h.L) && (x + w > CLR.keep || rng() > 0.2)) { if (n < 5) break; x += w + 0.06 * M2P; continue; } // rubbed out: the visitors' place
+      for (const st of gate(x, gy, h, n, rng)) stroke(bg, st);
       wall += n;
       cursor.row = row; cursor.x = x + w; cursor.y = TOP + row * ROW;
       x += w + (0.04 + 0.09 * rng()) * M2P + (rng() < 0.1 ? 0.2 * M2P : 0);
@@ -146,6 +157,7 @@ export function buildTally(ctx, o) {
   // a few marks beside the counts: a hand's sign after its gate (a ring, a cross, a hook), as people sign
   for (let i = 0; i < 12; i++) {
     const x = LEFT + 20 * K + rng() * (RIGHT - LEFT - 60 * K), y = TOP + Math.floor(rng() * (OWN_ROWS - 1)) * ROW + ROW * 0.86;
+    if (inClear(x - 12 * K, y - 12 * K, x + 12 * K, y + 12 * K)) { rng(); rng(); continue; }
     const o = { w: 4 * K, press: 0.35 + 0.3 * rng(), col: 'rgb(206,196,176)' }, k = i % 3, r = (5 + 3 * rng()) * K;
     if (k === 0) path(ring(x, y, r, 9), o);
     else if (k === 1) { path([[x - r, y - r], [x + r, y + r]], o); path([[x + r, y - r], [x - r, y + r]], o); }
@@ -185,20 +197,21 @@ export function buildTally(ctx, o) {
   g.drawImage(base, 0, 0);
 
   // ------------------------------------------------------------------ the visitor's strokes: their own gates
-  // In saffron chalk, set a little apart after the last row's end, gate after gate, then on along the free row, then
-  // over the oldest rows from the top. The k-th stroke's place and grain are a pure function of k, so a reload puts
-  // each where it was and draws it the same.
-  const mine = { L: 0.27 * M2P, w: 0.028 * M2P, gap: 0.068 * M2P, slant: 0.05, jit: 0.05, press: 1.05, hook: 3, bar: 1.1, col: SAFFRON };
-  const gw = gateW(mine) + 0.1 * M2P, startX = cursor.x + 0.3 * M2P;
-  const perRow0 = Math.max(0, Math.floor((RIGHT - startX) / gw)), perRow = Math.floor((RIGHT - LEFT) / gw);
+  // In saffron chalk, forearm-long, in gates of five in the clear place: the first gate just left of where the seat
+  // comes down, each next gate to its left, three rows, then over them again. The k-th stroke's place and grain are
+  // a pure function of k, so a reload puts each where it was and draws it the same.
+  const mine = { L: 0.38 * M2P, w: 0.034 * M2P, gap: 0.085 * M2P, slant: 0.05, jit: 0.04, press: 1.1, hook: 3, bar: 1.1, col: SAFFRON };
+  const gw = gateW(mine) + 0.17 * M2P, VR = [1.8, 1.25, 0.76], GX0 = hx(-0.4);
+  const perRow = Math.floor((GX0 - hx(-3.45)) / gw) + 1;
+  // gate gi's top-left on the canvas
+  function gateAt(gi) {
+    const j = gi % perRow, row = Math.floor(gi / perRow) % VR.length, cyc = Math.floor(gi / (perRow * VR.length));
+    return { x: GX0 - j * gw + (cyc % 3) * 0.05 * M2P, y: hy(VR[row]) + (cyc % 2) * 0.05 * M2P };
+  }
   function visitorStroke(k) {
-    const gi = Math.floor(k / 5), i = k % 5;
-    let row, x;
-    if (gi < perRow0) { row = cursor.row; x = startX + gi * gw; }
-    else { const j = gi - perRow0; row = cursor.row + 1 + Math.floor(j / perRow); x = LEFT + (j % perRow) * gw; }
-    if (row >= rows) row = (row - rows) % rows; // the wall is full: over the old ones, from the top again
+    const gi = Math.floor(k / 5), i = k % 5, G = gateAt(gi);
     const r = ctx.makeRng(2000 + gi);
-    const s = gate(x + (r() - 0.5) * 6 * K, TOP + row * ROW + (r() - 0.5) * 5 * K, mine, 5, r)[i];
+    const s = gate(G.x + (r() - 0.5) * 6 * K, G.y + (r() - 0.5) * 5 * K, mine, 5, r)[i];
     return { ...s, rng: ctx.makeRng(3000 + k), dust: true };
   }
   let visitors = 0;
@@ -222,18 +235,75 @@ export function buildTally(ctx, o) {
   const og = ocv.getContext('2d');
   const otex = new THREE.CanvasTexture(ocv);
   otex.colorSpace = THREE.SRGBColorSpace; otex.generateMipmaps = false; otex.minFilter = THREE.LinearFilter;
-  const overlay = new THREE.Mesh(new THREE.PlaneGeometry(OS / M2P, OS / M2P), chalkMat(otex, -4));
+  const omat = chalkMat(otex, -4);
+  const overlay = new THREE.Mesh(new THREE.PlaneGeometry(OS / M2P, OS / M2P), omat);
   overlay.name = 'waystation-tally-stroke'; overlay.visible = false; overlay.renderOrder = 1;
   group.add(overlay);
   // canvas px -> local frame on the face
   const lx = (px) => X0 + px / M2P, ly = (py) => Y0 + HM - py / M2P;
 
-  // the chalk: a stub of the Late folk's saffron on a cord from an iron staple, between the bench's end and the winch
-  {
-    const sx = -0.95, sy = Y0 + 1.5;
-    B.add(B.box(0.1, 0.03, 0.05), at(sx, sy, zf + 0.025), late(o.iron, { iron: 0.8 }));
-    B.add(B.cyl(0.006, 0.006, 0.42, 4, 1), at(sx, sy - 0.21, zf + 0.04, 0, 0, 0.03), late(new THREE.Color('#8a7a5a')));
-    B.add(B.cyl(0.022, 0.026, 0.11, 7, 1), at(sx + 0.006, sy - 0.47, zf + 0.045, 0.05, 0, 0.06), late(new THREE.Color('#f2c878'), { emit: [0.3, 0.22, 0.1, 1] }));
+  // ------------------------------------------------------------------ the chalk on its cord
+  // A stub of the Late folk's saffron on a cord from an iron staple driven into the stone over the visitor's gate,
+  // so the chalk, the offer and the stroke are one place. The rig is in the slab's frame (x along the face, y up,
+  // z out of it); the staple is set over the gate the next stroke belongs to, when the wall is drawn (a load, a
+  // forget), so it moves along as the visitor's gates grow.
+  const rig = new THREE.Group(); rig.name = 'waystation-chalk'; rig.applyMatrix4(M0);
+  group.add(rig);
+  const ironM = new THREE.MeshStandardMaterial({ color: o.iron, roughness: 0.6, metalness: 0.6 });
+  const cordM = new THREE.MeshStandardMaterial({ color: '#8a7a5a', roughness: 1 });
+  const stubM = new THREE.MeshStandardMaterial({ color: '#f2c878', roughness: 0.9, emissive: new THREE.Color('#5a3c14'), emissiveIntensity: 1 });
+  const staple = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.035, 0.06), ironM);
+  const cordG = new THREE.CylinderGeometry(0.006, 0.006, 1, 4, 1); cordG.translate(0, -0.5, 0); // hangs down from its top, length 1
+  const cord = new THREE.Mesh(cordG, cordM);
+  const stubG = new THREE.CylinderGeometry(0.024, 0.029, 0.14, 8, 1); stubG.translate(0, -0.07, 0); // its butt at the origin, its tip down
+  const stub = new THREE.Mesh(stubG, stubM);
+  staple.castShadow = stub.castShadow = true;
+  rig.add(staple, cord, stub);
+  const LC = 0.66, PR = 0.035; // the cord's length; the angle it hangs out from the stone at rest
+  const S = new THREE.Vector3(); // the cord's top, under the staple
+  const butt = new THREE.Vector3(), tipDir = new THREE.Vector3(0, -1, 0), DOWN = new THREE.Vector3(0, -1, 0);
+  const WRITE = new THREE.Vector3(0.12, -0.45, -0.85).normalize(); // a hand holds chalk like this: tip into the stone, a little down
+  function hang() { butt.set(S.x, S.y - LC * Math.cos(PR), S.z + LC * Math.sin(PR)); tipDir.copy(DOWN); }
+  function placeStaple(k) { // over gate k / 5, toward its right end
+    const G = gateAt(Math.floor(k / 5));
+    const x = lx(G.x + gateW(mine) * 0.6), top = ly(G.y) + 0.24;
+    staple.position.set(x, top + 0.02, zf + 0.03);
+    S.set(x, top, zf + 0.04);
+    hang(); pose();
+  }
+  const q = new THREE.Quaternion(), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), dv = new THREE.Vector3();
+  function pose() { // stub at butt pointing along tipDir; the cord straight from S to the butt
+    stub.position.copy(butt); stub.quaternion.setFromUnitVectors(DOWN, tipDir);
+    dv.copy(butt).sub(S); const len = dv.length();
+    cord.position.copy(S); cord.quaternion.setFromUnitVectors(DOWN, dv.divideScalar(len || 1)); cord.scale.set(1, len, 1);
+  }
+
+  // the dust: grains that fall from the chalk's tip while it bites, catching the light, and are gone in a second
+  const ND = 48, dpos = new Float32Array(ND * 3), dcol = new Float32Array(ND * 3), dvel = new Float32Array(ND * 3), dlife = new Float32Array(ND);
+  const dGeo = new THREE.BufferGeometry();
+  dGeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3)); dGeo.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
+  const dust = new THREE.Points(dGeo, new THREE.PointsMaterial({ size: 0.022, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  dust.name = 'waystation-chalk-dust'; dust.frustumCulled = false; dust.visible = false;
+  rig.add(dust);
+  const drng = ctx.makeRng(1001);
+  let dnext = 0, dlive = 0;
+  function emit(p) {
+    const i = dnext; dnext = (dnext + 1) % ND;
+    dpos[i * 3] = p.x + (drng() - 0.5) * 0.02; dpos[i * 3 + 1] = p.y + (drng() - 0.5) * 0.02; dpos[i * 3 + 2] = p.z + 0.01 + drng() * 0.02;
+    dvel[i * 3] = (drng() - 0.5) * 0.12; dvel[i * 3 + 1] = -0.05 - drng() * 0.1; dvel[i * 3 + 2] = 0.02 + drng() * 0.08;
+    dlife[i] = 0.9 + drng() * 0.8;
+  }
+  function stepDust(dt) {
+    dlive = 0;
+    for (let i = 0; i < ND; i++) {
+      if (dlife[i] <= 0) { dcol[i * 3] = dcol[i * 3 + 1] = dcol[i * 3 + 2] = 0; continue; }
+      dlife[i] -= dt; dlive++;
+      dvel[i * 3 + 1] -= 0.9 * dt; // chalk dust falls slowly
+      for (let a = 0; a < 3; a++) dpos[i * 3 + a] += dvel[i * 3 + a] * dt;
+      const f = Math.max(0, Math.min(1, dlife[i] / 0.7)) * 0.9;
+      dcol[i * 3] = 1 * f; dcol[i * 3 + 1] = 0.86 * f; dcol[i * 3 + 2] = 0.6 * f;
+    }
+    dGeo.attributes.position.needsUpdate = true; dGeo.attributes.color.needsUpdate = true;
   }
 
   // ------------------------------------------------------------------ the act
@@ -255,58 +325,108 @@ export function buildTally(ctx, o) {
     const into = -(fx * nrm.x + fz * nrm.z);
     if (into < 0.45) return false;
     const d = (P.pos.x - centre.x) * nrm.x + (P.pos.z - centre.z) * nrm.z; // metres out from the face
-    const hx = P.pos.x + fx * d / into - centre.x, hz = P.pos.z + fz * d / into - centre.z;
-    if (Math.abs(hx * ex.x + hz * ex.z - next.along) > 1.4) return false;
+    const hx2 = P.pos.x + fx * d / into - centre.x, hz2 = P.pos.z + fz * d / into - centre.z;
+    if (Math.abs(hx2 * ex.x + hz2 * ex.z - next.along) > 1.4) return false;
     const el = Math.atan2(next.y - P.pos.y, Math.max(0.3, d));
     return Math.abs(P.pitch - el) < 0.42;
   }
-  // a stroke drawn over half a second on the overlay, with the scrape of chalk; then onto the wall in one upload
-  let drawing = null;
-  const DRAW = 0.55;
-  function finish() {
-    if (!drawing) return;
-    paint(g, SAFFRON, drawing.d);
-    tex.needsUpdate = true;
-    overlay.visible = false; drawing = null;
+  // The stroke is made by the chalk: it lifts on its cord to the stone (TL), draws the stroke top to bottom (TD; the
+  // bar a little longer) with dust falling from its tip, is let go and swings on its cord, settling over a few
+  // seconds. The stroke grows on the overlay as the tip passes; it stays there, brighter than the wall (fresh chalk),
+  // fading to the wall's own over FRESH seconds, and then goes onto the wall in one upload.
+  const TL = 0.55, TD = 1.3, TDB = 1.55, SWING = 10, FRESH = 25, TAU = 2.2, OMEGA = (2 * Math.PI) / 1.6;
+  let drawing = null; // { d (dabs), i (painted), s (the stroke), t, td, ox, oy, a: lift start butt, ta (tip dir at start) }
+  let fresh = -1, swing = -1;
+  const sw = { th: 0, ph: 0 }, p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), lift0 = new THREE.Vector3(), tip = new THREE.Vector3();
+  const sCanvas = (s, u, out) => out.set(lx(s.x0 + (s.x1 - s.x0) * u), ly(s.y0 + (s.y1 - s.y0) * u), zf + 0.006);
+  function bake() { // the fresh stroke onto the wall
+    if (fresh < 0) return;
+    paint(g, SAFFRON, drawing ? drawing.d : bakeD); tex.needsUpdate = true;
+    overlay.visible = false; fresh = -1; bakeD = null;
   }
+  let bakeD = null;
+  function finish() { // a stroke being drawn goes straight onto the wall; the chalk hangs again
+    if (drawing) { bakeD = drawing.d; drawing = null; fresh = 0; }
+    bake(); swing = -1; dust.visible = false; dlife.fill(0); hang(); pose();
+  }
+  const ease = (x) => x * x * (3 - 2 * x);
   ctx.registerUpdate((dt) => {
-    if (!drawing) return;
-    const n = drawing.d.length / 5;
-    drawing.t = Math.min(1, drawing.t + dt / drawing.len);
-    const b = Math.ceil(drawing.t * n);
-    paint(og, SAFFRON, drawing.d, drawing.i, b, drawing.ox, drawing.oy); drawing.i = b;
-    otex.needsUpdate = true;
-    if (drawing.t >= 1) finish();
+    if (!drawing && swing < 0 && fresh < 0 && !dust.visible) return; // nothing being done: nothing per frame
+    if (drawing) {
+      const D = drawing; D.t += dt;
+      if (D.t < TL) { // the lift: from where it hangs, out from the stone and to the stroke's top
+        const u = ease(D.t / TL);
+        sCanvas(D.s, 0, p1); tip.copy(p1); p1.addScaledVector(WRITE, -0.14);
+        p0.copy(lift0).lerp(p1, u); p0.z += Math.sin(Math.PI * u) * 0.12; butt.copy(p0);
+        qa.setFromUnitVectors(DOWN, D.ta); qb.setFromUnitVectors(DOWN, WRITE); q.slerpQuaternions(qa, qb, u);
+        tipDir.copy(DOWN).applyQuaternion(q); pose();
+      } else if (D.t < TL + D.td) { // the drawing: the tip down the stroke, the stroke growing behind it
+        if (!D.cued) { D.cued = true; tmp.copy(butt).applyMatrix4(M0); ctx.audio?.cue('act-chalk', { x: tmp.x, y: tmp.y, z: tmp.z }, { bar: !!D.s.bar, dur: D.td }); }
+        const u = Math.min(1, (D.t - TL) / D.td), uu = u < 0.08 ? u * u / 0.16 : u - 0.04 + 0.04 * Math.min(1, (u - 0.08) / 0.92); // a bite, then steady
+        sCanvas(D.s, Math.min(1, uu), tip);
+        const wob = Math.sin(D.t * 31) * 0.003;
+        butt.copy(tip).addScaledVector(WRITE, -0.14); butt.x += wob; tipDir.copy(WRITE); pose();
+        const n = D.d.length / 5, b = Math.min(D.nStroke, Math.ceil(uu * D.nStroke));
+        if (b > D.i) { paint(og, SAFFRON, D.d, D.i, b, D.ox, D.oy); D.i = b; otex.needsUpdate = true; }
+        if (drng() < dt * 40) emit(tip);
+        if (u >= 1 && D.i < n) { paint(og, SAFFRON, D.d, D.i, n, D.ox, D.oy); D.i = n; otex.needsUpdate = true; } // the dust under it
+      } else if (D.t > TL + D.td + 0.12) { // let go: it swings on its cord from where it is
+        dv.copy(butt).sub(S);
+        sw.th = Math.atan2(dv.x, -dv.y); sw.ph = Math.atan2(dv.z, -dv.y);
+        bakeD = D.d; drawing = null; fresh = 0; swing = 0;
+      }
+    }
+    if (swing >= 0) {
+      swing += dt;
+      const k = Math.exp(-swing / TAU) * Math.cos(OMEGA * swing);
+      const th = sw.th * k, ph = Math.max(0.012, PR + (sw.ph - PR) * Math.exp(-swing / (TAU * 0.6)) * Math.cos(OMEGA * swing));
+      butt.set(S.x + LC * Math.sin(th), S.y - LC * Math.cos(th) * Math.cos(ph), S.z + LC * Math.sin(ph));
+      dv.copy(butt).sub(S).normalize();
+      const u = Math.min(1, swing / 0.35); // from the writing angle to hanging along its cord
+      tipDir.copy(WRITE).lerp(dv, ease(u)).normalize(); pose();
+      if (swing > SWING) { swing = -1; hang(); pose(); }
+    }
+    if (fresh >= 0) {
+      fresh += dt;
+      omat.emissiveIntensity = 0.5 + 0.9 * Math.exp(-fresh / (FRESH * 0.35));
+      if (fresh > FRESH) bake();
+    }
+    if (drawing || dlive > 0) { dust.visible = true; stepDust(dt); } else dust.visible = false;
   }, { pos: { x: centre.x, z: centre.z }, near: 60, hz: 2 });
 
   const handle = ctx.acts?.add({
     id: ID, at: next, reach: 3.4, face: { x: nrm.x, z: nrm.z }, facing,
     words: 'Chalk your stroke', every: 'visit',
-    show(count) { visitors = count; drawing = null; overlay.visible = false; drawVisitors(count); tex.needsUpdate = true; aim(); },
+    show(count) { visitors = count; drawing = null; fresh = -1; bakeD = null; overlay.visible = false; swing = -1; drawVisitors(count); tex.needsUpdate = true; aim(); placeStaple(count); },
     do(count) {
-      finish(); // one still being drawn goes straight onto the wall
+      finish(); // one still being drawn (or fresh) goes straight onto the wall
       visitors = count;
       const s = visitorStroke(count - 1), d = dabs(s);
       const mx = (s.x0 + s.x1) / 2, my = (Math.min(s.y0, s.y1) + Math.max(s.y0, s.y1)) / 2 + 0.02 * M2P;
-      drawing = { d, t: 0, i: 0, len: s.bar ? DRAW * 1.15 : DRAW, ox: mx - OS / 2, oy: my - OS / 2 };
-      og.clearRect(0, 0, OS, OS); otex.needsUpdate = true;
+      lift0.copy(butt);
+      drawing = { d, s, i: 0, t: 0, td: s.bar ? TDB : TD, ox: mx - OS / 2, oy: my - OS / 2, ta: tipDir.clone(), nStroke: d.length / 5 - (s.dust ? 26 : 0), cued: false };
+      og.clearRect(0, 0, OS, OS); otex.needsUpdate = true; omat.emissiveIntensity = 1.4;
       overlay.position.copy(tmp.set(lx(mx), ly(my), zf + 0.016).applyMatrix4(M0).sub(group.position));
       overlay.quaternion.setFromRotationMatrix(M0); overlay.visible = true;
       aim();
-      ctx.audio?.cue('act-chalk', { x: next.x, y: next.y, z: next.z }, { bar: !!s.bar });
-      return drawing.len + 0.1; // busy while the stroke is drawn
+      return TL + drawing.td + 0.3; // busy while the chalk is at the stone
     },
   });
-  if (!handle || ctx.acts?.off) aim();
+  if (!handle || ctx.acts?.off) { aim(); placeStaple(0); }
+  const world = (v) => v.clone().applyMatrix4(M0);
   return (ctx.tally = {
     wall, rows, get visitor() { return visitors; }, strokes: () => wall + visitors, mesh, overlay, centre, normal: nrm, next,
-    // where a visitor stands to chalk: 1.6 m out in front of where the next stroke goes, looking at it
-    stand(d = 1.6) {
+    // where a visitor stands to chalk: d metres out in front of where the next stroke goes, looking at it
+    stand(d = 2.4) {
       const p = { x: next.x + nrm.x * d, z: next.z + nrm.z * d };
       return { x: p.x, z: p.z, yaw: Math.atan2(nrm.x, nrm.z), pitch: Math.atan2(next.y - (ctx.terrain.heightAt(p.x, p.z) + ctx.player.eye), d) };
     },
     // the canvas position of the k-th visitor stroke's middle, in metres along and up the face (for the tests)
     strokeAt(k) { const s = visitorStroke(k); return { along: lx((s.x0 + s.x1) / 2) - (X0 + X1) / 2, up: ly((s.y0 + s.y1) / 2) - Y0 }; },
+    // the chalk: its staple and the stub's butt in the world (for the tests: the chalk sits over the next stroke)
+    chalk: { staple: () => world(S), stub: () => world(butt), get swinging() { return swing >= 0; } },
     get drawing() { return !!drawing; },
+    get fresh() { return fresh >= 0; },
+    strokeEnd: () => TL + TD,
   });
 }

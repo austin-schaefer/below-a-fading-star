@@ -20,7 +20,7 @@ export function buildControls(ctx) {
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
-    onStep: null, hops: 0, hopping: false, onTop: false,
+    onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -43,7 +43,7 @@ export function buildControls(ctx) {
   };
   // The one jump: Space and the touch button both come here.
   function hop() {
-    if (!state.onGround || !state.enabled) return false;
+    if (!state.onGround || !state.enabled || carried) return false;
     state.vy = 4.2; state.onGround = false; state.hopping = true; state.hops++;
     return true;
   }
@@ -289,8 +289,9 @@ export function buildControls(ctx) {
   }
   ctx.addWalkable = addWalkable;
 
-  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders.
+  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders. A teleport: it ends a carry.
   function placeAt(x, z) {
+    if (carried) dropCarry();
     for (let iter = 0; iter < 8; iter++) {
       let moved = false;
       const rr = Math.hypot(x, z), limit = walkLimit(x, z);
@@ -359,6 +360,22 @@ export function buildControls(ctx) {
     if (c.dome) { const f = d / c.r; y -= c.dome * (f < 1 ? f * f : 1); }
     return y;
   }
+  // --- carrying (v10): a module holds the player for a while (a seat on a rope) and gives them back.
+  // carry({ step(pos, dt), drop() }) → release(). While carried, each frame step() sets pos (the eye) and nothing
+  // else moves the player: no walking, hop, gravity or colliders; the look stays free, and state.intent (0..1) says
+  // how hard the visitor is pushing to move, for the carrier to read. The carrier gives them back by calling
+  // release() and then placing them (placeAt, or pos itself). A teleport (placeAt, or pos moved more than 1.5 m by
+  // anyone else) ends the carry and calls drop(), so the carrier can let go of its end.
+  let carried = null, carryAt = null;
+  function carry(c) {
+    if (carried) dropCarry();
+    carried = c; carryAt = null; state.carried = true; state.intent = 0;
+    return () => { if (carried === c) { carried = null; carryAt = null; state.carried = false; } };
+  }
+  function dropCarry() {
+    const c = carried; carried = null; carryAt = null; state.carried = false;
+    try { c?.drop?.(); } catch (e) { console.error('[fp] carry drop failed:', e); }
+  }
   const cand = new Array(32); // the capped colliders touched this frame whose tops may be stood on
 
   const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
@@ -383,6 +400,21 @@ export function buildControls(ctx) {
       const decay = Math.exp(-dt / 0.08);
       lookVel.x *= decay; lookVel.y *= decay;
       if (Math.abs(lookVel.x) + Math.abs(lookVel.y) < 0.01) lookVel.x = lookVel.y = 0;
+    }
+    if (carried) {
+      if (carryAt && Math.abs(state.pos.x - carryAt.x) + Math.abs(state.pos.y - carryAt.y) + Math.abs(state.pos.z - carryAt.z) > 1.5) dropCarry();
+      else {
+        state.intent = Math.min(1, hyp(mx, mz));
+        carried.step(state.pos, dt);
+        (carryAt ||= new THREE.Vector3()).copy(state.pos);
+        state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
+        state.moving = false; state.speed = 0; state.bobAmt = 0; state.wading = 0;
+        eyeOff = 0; lastY = state.pos.y; state.eyeY = state.pos.y;
+        camera.position.copy(state.pos);
+        camera.rotation.order = 'YXZ';
+        camera.rotation.set(state.pitch, state.yaw, 0);
+        return;
+      }
     }
     const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.mag > AUTO_HURRY;
     state.hurrying = hurry;
@@ -499,5 +531,5 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry };
 }
