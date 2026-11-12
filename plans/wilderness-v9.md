@@ -6,6 +6,17 @@ Austin, 2026-11-11 (issue #2, "Environmental music"): "v7.2 added a leveled-up s
 
 ## Status
 
+**2026-11-11, 18:52 PST. M0 merged; M1, M2 and M3 out beside M5.** M0 (the score) merged at 18:48 after the orchestrator ran its tools (`music-score moor` 19/19, self-test 60/60) and a cold review found no blockers: `src/audio/music/score.js` (`compose(track, seed)`; generators drone, loop, walk, follow, notes), `tracks/moor.js`, `tools/music-score.mjs`, the `music` skill. Notes carried into the next briefs: events carry `voice`, not `patch`; drones are held 30 s and more; moor's lead lands every onset on the beat and its last 30 s are pad alone (M3 is told to do better). In flight (four implementation agents, the limit):
+
+| Brief | Model | Branch / worktree | Port |
+|---|---|---|---|
+| M1 patches, player, `tools/music-render.mjs` (`brief-v9-M1-sound.md`) | opus | `issue-901-music-sound` | 8162 |
+| M2 director, simulator, bus, setting, `?music=` (`brief-v9-M2-director.md`) | sonnet | `issue-902-music-director` | 8163 |
+| M3 five region tracks: wood, wet, cold, garden, dry (`brief-v9-M3-tracks.md`; started before M1 lands because tracks are data judged by text) | sonnet | `issue-903-music-tracks` | none |
+| M5 the sound harness made cheaper | sonnet | `issue-905-sound-harness` | 8165 |
+
+Next: merge each after a look and a cold review; M2 after M1 (it calls the player); then render every track (`music-render all --wav`), M4 (three special tracks), the gate, the critic, WAVs and `?music=` to the owner, release.
+
 **Opened 2026-11-11, 18:27 PST**, on `next` (equal to `main` at the v8 release, `5514e71`, plus this entry). v8 shipped at 18:24 and the owner's word was "once you ship this milestone, go ahead and pick up the next one", so v9 opens in the same session. In flight, each in its own worktree under `.claude/worktrees/`, pushing a branch and no PR:
 
 | Brief | Model | Branch / worktree | Port |
