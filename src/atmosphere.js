@@ -54,6 +54,11 @@ export function installAtmosphere() {
       const vec3 FP_TIER_AWAY = vec3(${hexToVec(PALETTE.skyHorizonAway)}) * 1.25 + vec3(0.0, 0.004, 0.018);
       const vec3 FP_TIER_SUN = vec3(${hexToVec(PALETTE.skyHorizonSun)});
       const vec3 FP_WALL_AIR = vec3(${hexToVec('#4a4a66')}); // v11: the cool pale air on the walls turned from the sun
+      // (M4) toward the sun the haze on the near wall (and the main tier's) is laid on as a screen, not a mix: the
+      // glow lifts the dark rock about as much, but the face's detail is scaled by (1 - haze * amount) rather than
+      // (1 - amount), so couloirs stay darker than ribs in the light (the south massifs in high-y3 went smooth)
+      const float FP_SUN_POW = 1.5;
+      vec3 fpScreen(vec3 c, vec3 h, float a) { return 1.0 - (1.0 - c) * (1.0 - h * a); }
       vec3 fpTierCol(vec3 rd, float flick) {
         vec2 fpH = rd.xz; float fpHl = length(fpH); // looking straight up or down there is no horizontal direction
         float toSun = fpHl > 1e-4 ? max(dot(fpH / fpHl, normalize(FP_SUN_DIR.xz)), 0.0) : 0.0;
@@ -91,7 +96,11 @@ export function installAtmosphere() {
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
       // (M1) on the near wall the distance fog a third lighter, so its couloirs and crags read through the warm haze
       // toward the sun as well; the cool air below and the tiers still set it back
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor * (1.0 - 0.32 * smoothstep(300.0, 345.0, length(vFogWorldPos.xz)) * (1.0 - smoothstep(540.0, 600.0, length(vFogWorldPos.xz)))) );
+      float fpNear = smoothstep(300.0, 345.0, length(vFogWorldPos.xz)) * (1.0 - smoothstep(540.0, 600.0, length(vFogWorldPos.xz)));
+      float fpFogA = fogFactor * (1.0 - 0.32 * fpNear);
+      vec2 fpSh = fpDir.xz; float fpShl = length(fpSh);
+      float fpSunW = (fpShl > 1e-4 ? pow(max(dot(fpSh / fpShl, normalize(FP_SUN_DIR.xz)), 0.0), FP_SUN_POW) : 0.0) * fpNear;
+      gl_FragColor.rgb = mix(mix( gl_FragColor.rgb, haze, fpFogA ), fpScreen(gl_FragColor.rgb, haze, fpFogA), fpSunW);
       float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
       // v11: the walls recede in the cold light. Beyond the bowl (world radius past 300 m), by distance from the eye,
       // a cool pale air over everything turned from the sun, so the near wall at 400 m sits behind what stands in
@@ -111,7 +120,8 @@ export function installAtmosphere() {
       }
       float fpTier = fpTierAmt(vFogWorldPos);
       if (fpTier > 0.0) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, fpTierCol(fpDir, fpFl), fpTier);
+        vec3 fpTc = fpTierCol(fpDir, fpFl);
+        gl_FragColor.rgb = mix(mix(gl_FragColor.rgb, fpTc, fpTier), fpScreen(gl_FragColor.rgb, fpTc, fpTier), fpSunW);
         gl_FragColor.rgb = min(gl_FragColor.rgb, max(fpSkyBehind(fpDir, fpFl) * 0.88, FP_HAZE * 1.4));
       }
     #endif`;

@@ -434,9 +434,12 @@ export function slopeAt(x, z) {
 
 // Biome weights at a point. Not normalised; each is 0..1.
 export function biomeAt(x, z) {
+  return biomeWith(x, z, heightAt(x, z), slopeAt(x, z), riverSection(x, z, _csb));
+}
+// biomeAt with its height, slope and river section given: the build has the height already, shares the river's
+// section with its own shading, and skips the slope (four heightAt) where nothing it bakes reads one (buildTerrain)
+function biomeWith(x, z, h, slope, rv) {
   const L = LANDMARKS;
-  const h = heightAt(x, z);
-  const slope = slopeAt(x, z);
   const r = Math.hypot(x, z);
   const rock = smoothstep(0.55, 0.95, slope) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, r) * 0.6;
   const ice = glacierIce(x, z); // v4 regions: the tongue's width, cut sharp at the snout
@@ -453,7 +456,6 @@ export function biomeAt(x, z) {
   const crystal = (1 - smoothstep(42, 64, dMor)) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
   // the river: bare shingle along the canyon floor, a reedy margin where it slows toward the fen
-  const rv = riverSection(x, z, _csb);
   const rockR = clamp(rock + rv.shingle * 0.75, 0, 1.6);
   const shoreR = shore + rv.slow * (1 - smoothstep(0.2, 1.5, h - rv.W)) * 0.8;
   const moor = clamp(1 - rockR - ice - marsh - wood * 0.5, 0, 1);
@@ -574,7 +576,14 @@ export function buildTerrain(ctx) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = pos.getY(i);
     const wWater = wallArr[i], wMouth = mouthArr[i];
-    const b = biomeAt(x, z);
+    // the biome's slope (four heightAt at 0.6 m) feeds its rock, the ice's hold and the shingle; on the wall the rock is
+    // read from the mesh instead (sW, below), so where that rock is whole (it covers the moor's colours) and there is
+    // no ice or shingle, the biome takes slope 0 and nothing baked changes
+    const r = riverSection(x, z, rsec);
+    const rW = Math.hypot(x, z), mmW = MASSIF_BANDS ? smoothstep(300, 334, rW) : 0, sW = mmW > 0 ? slopeW(i) : 0;
+    const wallRock = clamp(smoothstep(0.55, 0.95, sW) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, rW) * 0.6, 0, 1);
+    let b = mmW === 1 && wallRock === 1 && !(r.shingle > 0) ? biomeWith(x, z, y, 0, r) : null;
+    if (!b || b.ice > 0) b = biomeWith(x, z, y, slopeAt(x, z), r);
     // base: moor grass to dry grass by noise, heather patches
     const dry = SX.warped2(x * 0.01 + 3, z * 0.01 + 1, 3) * 0.5 + 0.5;
     col.copy(cMoor).lerp(cDry, dry);
@@ -590,8 +599,7 @@ export function buildTerrain(ctx) {
     col.lerp(cShore, b.shore * 0.8);
     col.lerp(cCrys, b.crystal * 0.5);
     // slope → rock; height → scree then dark rock (on the massifs' wall, by the slope over 4 cells)
-    const rW = Math.hypot(x, z), mmW = MASSIF_BANDS ? smoothstep(300, 334, rW) : 0, sW = mmW > 0 ? slopeW(i) : b.slope;
-    const rockMix = lerp(clamp(b.rock, 0, 1), clamp(smoothstep(0.55, 0.95, sW) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, rW) * 0.6, 0, 1), mmW);
+    const rockMix = lerp(clamp(b.rock, 0, 1), wallRock, mmW);
     tmp.copy(cScree).lerp(cRock, smoothstep(10, 60, y)).lerp(cRockD, smoothstep(60, 160, y));
     // --- the massifs' bands (begin): on the walls (not ?mountains=v4) the colour goes by what the rock is and where
     // water runs, not by height, in three values a face: dark (the couloirs, damp; the basalt; the crags' risers),
@@ -606,7 +614,9 @@ export function buildTerrain(ctx) {
         tmp2.copy(cSlate).lerp(cRust, smoothstep(0.0, 0.3, mass)).lerp(cBasalt, smoothstep(0.12, 0.4, -mass) * 0.85).lerp(cLichen, smoothstep(0.2, 0.55, mass2) * 0.4);
         tmp2.lerp(cHard, hardArr[i] * 0.85).multiplyScalar(1 - 0.45 * stepArr[i]);
         tmp2.lerp(cDamp, Math.min(1, wWater * 1.2) * 0.85).lerp(cLichen, wWater * smoothstep(0.2, 0.6, mass2 + 0.3) * 0.2);
-        const scree = 1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth);
+        // (scree lies at the foot, on the aprons and the fans; the high shoulders' gentler ground is the rock masses'
+        // own colour, frost-broken, not the aprons' pale: M4, the upper faces read pale and plain)
+        const scree = (1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth)) * (1 - smoothstep(70, 140, y) * (1 - wMouth));
         tmp2.lerp(cScreeL, scree).lerp(cFan, scree * Math.min(1, wMouth * 1.5) * 0.8);
         tmp.lerp(tmp2, mm);
       }
@@ -621,7 +631,6 @@ export function buildTerrain(ctx) {
     // the river: shingle banks and bed, pale stones in the pool, a wet band along the water and spray-soaked
     // rock round the fall
     {
-      const r = riverSection(x, z, rsec);
       let wet = 0;
       if (r.cut < Infinity || r.gully) {
         const prp = Math.hypot(x - POOL.x, z - POOL.z);
@@ -801,7 +810,8 @@ export function buildTerrain(ctx) {
             vec3 pbx = vec3(fpDpx.x, fpDpx.y + dot(fpDpx.xz, mb.xy), fpDpx.z), pby = vec3(fpDpy.x, fpDpy.y + dot(fpDpy.xz, mb.xy), fpDpy.z);
             float lens = fpWallTex(pb, 10.0, 0.02, pbx, pby).r - 0.5;
             float stk = fpWallTex(vTPos, 56.0, 0.003, fpDpx, fpDpy).r;
-            float rockW = mtn * smoothstep(0.78, 0.5, vTNormal.y); // bare rock, not the aprons or the shoulders' flats
+            // bare rock, not the aprons; high up (M4) the shoulders' gentler ground carries the rock's lenses and cavities too
+            float rockW = mtn * max(smoothstep(0.78, 0.5, vTNormal.y), smoothstep(110.0, 180.0, vTPos.y) * smoothstep(0.95, 0.7, vTNormal.y) * 0.8);
             float streak = smoothstep(0.5, 0.78, stk);
             float salt = smoothstep(0.32, 0.18, stk) * (1.0 - vWallW);
             // the streaks gather where water runs and fade on the dry ribs, so they do not hang evenly like a curtain

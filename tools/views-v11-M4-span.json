@@ -1,0 +1,6 @@
+[
+ {"name":"span-deck","x":100,"z":212,"yaw":4.71,"pitch":0.22,"js":"window.__fp.player.pos.y = 56 + window.__fp.player.eye"},
+ {"name":"span-north","x":180,"z":165,"yaw":4.18,"pitch":0.38},
+ {"name":"span-south","x":185,"z":262,"yaw":5.3,"pitch":0.38},
+ {"name":"span-far","x":30,"z":150,"yaw":4.45,"pitch":0.1}
+]
