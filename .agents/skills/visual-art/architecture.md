@@ -2,7 +2,9 @@
 
 For anything made by hands: walls, gates, signs, waystones, furniture, ruins, props. The history behind it is `briefs/v8/index.md` ("The bible") and `plans/wilderness-v8.md` ("What a visitor should notice"); this file is how it is drawn.
 
-## Three hands, kept apart
+## The hands so far
+
+Three builders have been drawn to date. They are a starting vocabulary, not a closed set: the owner's worry is that agents "will feel constrained to exactly three ages rather than feeling free to extend and build on the system". Use one where it fits, bend one, or add another; what has mattered is that each is distinct, not that there are three.
 
 The owner (v8, in session): "careful about one culture btw: the goal is still diversity, but with coherence. i like that the architecture today has both cyclopean bridges and arabesque tavernas." Earlier (v4, "Height, and which architecture works"): the pieces "with an architectural point of view of their own are far more compelling than the medieval towers and the Greco-Roman pillars", and "Layers, not a house style... make each one strong and distinct rather than blending them."
 

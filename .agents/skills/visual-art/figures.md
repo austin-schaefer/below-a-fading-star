@@ -11,7 +11,9 @@ For people, creatures and anything with a body. Who the people are is in `briefs
 - **Creatures:** `src/fauna/` (the deodand, grazers, rooks, beetles, wings, gutterbats, lamps' moths, and the uncanny), the Twk-men (`src/v8/twk/model.js`), the peafowl.
 - `SCALE` in `src/v4/kit/scale.js`: person 1.8 m, door 3.2 m, tread 0.32 m, rook 0.45 m.
 
-## The two peoples, and nobody's
+## The peoples so far
+
+Two liveries and the Twk-men exist to date; new peoples, sects and creatures are welcome and need not fit either.
 
 | | Body | Colours in code | Mark |
 |---|---|---|---|
