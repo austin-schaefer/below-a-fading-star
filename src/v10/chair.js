@@ -73,7 +73,6 @@ export function buildTwelfthPlace(ctx, col, marks) {
   const placeMesh = new THREE.Mesh(A.geometry(), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide, emissive: '#3a352c', emissiveIntensity: 0.5 }));
   placeMesh.name = 'collation-twelfth-place'; placeMesh.castShadow = true; placeMesh.receiveShadow = true;
   ctx.scene.add(placeMesh);
-  const rg = ctx.scene.getObjectByName('collation-rings'); if (rg) rg.visible = false; // the cloth's two dark rounds are covered by his place now
 
   // the bottle: dark glass with a cream band, origin at its base, axis +y
   const BH = 0.352, BK = 1.1;

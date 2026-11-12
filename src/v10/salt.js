@@ -59,7 +59,7 @@ export function buildSaltActs(ctx, { fan, pile, spill, gy, twk, house }) {
     const m = new THREE.Mesh(mk(k), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: k === 2 ? 0.35 : 0.9, metalness: k === 2 ? 0.4 : 0, side: THREE.DoubleSide,
       emissive: ['#5a3c0a', '#5a200a', '#7a5a14'][k], emissiveIntensity: 1 }));
     const s = spots[k], y = Math.max(gy(s.x, s.z), gy(s.x + 0.2, s.z), gy(s.x - 0.2, s.z), gy(s.x, s.z + 0.2), gy(s.x, s.z - 0.2));
-    m.position.set(s.x, y + 0.012, s.z); m.rotation.y = s.a + (k - 1) * 0.5; m.scale.setScalar(1.3); m.name = `twk-news-${k}`; m.castShadow = false; m.receiveShadow = true; m.visible = false;
+    m.position.set(s.x, y + 0.012, s.z); m.rotation.y = s.a + (k - 1) * 0.5; m.scale.setScalar(1.3); m.name = `salt-news-${k}`; m.castShadow = false; m.receiveShadow = true; m.visible = false;
     ctx.scene.add(m);
     return { m, y: m.position.y, drop: -1 };
   });
@@ -67,7 +67,7 @@ export function buildSaltActs(ctx, { fan, pile, spill, gy, twk, house }) {
   // ------------------------------------------------------------------ grains in flight: one InstancedMesh of 16
   const NG = 16;
   const gI = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.03, 0), new THREE.MeshStandardMaterial({ color: SALT, roughness: 0.8, emissive: '#d8d2c0', emissiveIntensity: 1 }), NG);
-  gI.frustumCulled = false; gI.visible = false; gI.name = 'twk-news-grains'; ctx.scene.add(gI);
+  gI.frustumCulled = false; gI.visible = false; gI.name = 'salt-news-grains'; ctx.scene.add(gI);
   const tm = new THREE.Matrix4(), tp = new THREE.Vector3(), tq = new THREE.Quaternion(), ts = new THREE.Vector3(1, 1, 1);
   const top = pile.top ?? gy(pile.x, pile.z) + 0.5;
   let toss = null; // { t, dur, from, to, g[] }
