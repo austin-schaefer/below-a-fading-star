@@ -85,6 +85,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 70 | v8 crystal tops and the low-thing hop: the crystals' true tops, hopping onto boulders, walls and the parapet |
 | 71 | v8 rocks: a third of the boulders, in outcrops on cleared ground, a quiet lichen; before and after |
 | 72 | v8 the walk: the orchestrator's 24-stop walk before v8 and after batch 1, six pairs |
+| 73 | v9 fixes: wood light shafts (#19) and the white hillside figure (#16); before and after |
+| 74 | v9 settings menu: sound, quality and position, on desktop and phone |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -570,5 +572,13 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `72-walk-lattice-after.webp` | Walk 16 after: the glacier with its crystals on bare ground. |
 | `72-walk-moor-before.webp` | Walk 24 before: the open moor, one grass. |
 | `72-walk-moor-after.webp` | Walk 24 after: the moor with a tree and variety. |
+| `73-wood-shafts-glade-before.webp` | Before: the wood's glade, no light through the canopy. |
+| `73-wood-shafts-glade-after.webp` | After: low sun shafts slanting through the trees. |
+| `73-wood-shafts-clearing-before.webp` | Before: a clearing in the wood, flat and dark. |
+| `73-wood-shafts-clearing-after.webp` | After: the same clearing with broad shafts of ember light. |
+| `73-hillside-figure-before.webp` | Before: the white figure on the hillside, a hard bright white. |
+| `73-hillside-figure-after.webp` | After: the figure toned to cream, its edge softer (a subtle change; the figure remains). |
+| `74-settings-desktop.webp` | The settings menu on desktop: sound, quality, mouse and position. |
+| `74-settings-phone.webp` | The settings menu on a phone, with the Go to list. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
