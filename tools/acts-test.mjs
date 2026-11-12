@@ -590,6 +590,101 @@ if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).cent
   await c.close();
 }
 
+// ------------------------------------------------------------------ v10-F1: finding the acts (src/v10/lure.js, the easier offer)
+// A walker comes at each of the seven along a straight line from 30 m, three ways a visitor would come, looking where it
+// walks (at a point 1.2 m beside the thing, never at its exact spot), level, at 1.4 m/s; the row says how far out the offer
+// rose, and the act is offered before the walker arrives. The bell is remembered as rung (so the letters can be gathered);
+// the seat is walked to after the tally's stroke has brought it down. Then: the lures follow the acts' state; the wider
+// offer never reaches round the tomb door or the slab, or down from the stair's lip.
+if (process.env.FIND !== '0') {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  await c.addInitScript(() => { if (!sessionStorage.getItem('f1')) { sessionStorage.setItem('f1', '1'); localStorage.setItem('fp-acts', JSON.stringify({ v: 1, marks: { 'span-bell': { n: 1, last: 1 } } })); } });
+  const p = await c.newPage(); watch(p, 'find');
+  await p.goto(`${base}/?q=low`, { waitUntil: 'load', timeout: 60000 });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.acts?.lure && window.__fp.threads?.traveller?.letters, null, { timeout: 300000 });
+  await begin(p);
+  const lures = () => p.evaluate(() => Object.fromEntries(window.__fp.acts.lure.state().map((l) => [l.id, l.want])));
+  const L0 = await lures();
+  check('lures: one at each act that can be done now (the tally, the bell, the letters, the door, the crystal, the twelfth place), none at the seat still up', ['halt-tally', 'span-bell', 'span-letters', 'hypogeum-door', 'mother-hand', 'collation-twelfth'].every((id) => L0[id] === 1) && L0['halt-seat'] === 0, L0);
+  check('lures: one draw for all of them, no light', await p.evaluate(() => { let n = 0, lights = 0; window.__fp.scene.traverse((o) => { if (o.name === 'act-lures') { n++; o.traverse((q) => { if (q.isLight) lights++; }); } }); return n === 1 && lights === 0; }));
+  // walk(id, dir, side): from 30 m out along dir (from the thing toward the walker), toward a point `side` m to the side
+  const rot = (d, a) => [d[0] * Math.cos(a) - d[1] * Math.sin(a), d[0] * Math.sin(a) + d[1] * Math.cos(a)];
+  const walk = (id, dir, stop, side = 1.2, shift = 0) => p.evaluate(async ([id, dir, stop, side, shift]) => {
+    const fp = window.__fp, A = fp.acts, h = A.list.find((q) => q.def.id === id), a = h.def.at, P = fp.player;
+    const l = Math.hypot(dir[0], dir[1]), ux = dir[0] / l, uz = dir[1] / l, ox = -uz * shift, oz = ux * shift; // shift: a parallel line
+    const tx = a.x + ox - uz * side, tz = a.z + oz + ux * side;
+    const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+    let d = 30, at = null, lure = 0;
+    fp.controls.placeAt(a.x + ox + ux * 30, a.z + oz + uz * 30); await sleepMs(300); // not offered from 30 m
+    if (A.offered === h) return { at: 30, early: true };
+    const L = A.lure.state().find((q) => q.id === id); lure = L.want;
+    d = Math.min(30, h.def.far + 4); // the walk that matters starts 4 m outside the widest offer
+    while (d > stop) {
+      const x = a.x + ox + ux * d, z = a.z + oz + uz * d;
+      fp.controls.placeAt(x, z); P.vel.set(0, 0, 0); P.yaw = Math.atan2(-(tx - x), -(tz - z)); P.pitch = 0;
+      await sleepMs(100);
+      if (A.offered === h) { at = d; break; }
+      d -= 0.14;
+    }
+    if (A.offered) { fp.controls.placeAt(a.x + ux * 40, a.z + uz * 40); await sleepMs(500); } // let it go before the next walk
+    return { at: at && +at.toFixed(1), lure };
+  }, [id, dir, stop, side, shift]);
+  const WALKS = [ // id, the thing's way out (toward where visitors come from), where a walker stops, and the three ways in
+    ['halt-tally', [0.928, 0.372], 0.9, [0, 0.6, -0.6]],
+    ['span-bell', [0, -1], 1.2, [0, 0.6, -0.6]],
+    ['span-letters', [0, -1], 1.5, [0, 0.7, -0.7]],
+    ['hypogeum-door', [-1, 0], 0.9, [['shift', 0], ['shift', 0.8], ['shift', -0.8]]], // down the stair: three lines along it
+    ['mother-hand', [0, 1], 5, [0, Math.PI / 4, -Math.PI / 4]],
+    ['collation-twelfth', [-0.39, -0.92], 0.9, [0, 0.6, -0.6]],
+  ];
+  const far = {};
+  for (const [id, out, stop, ways] of WALKS) {
+    const got = [];
+    for (const w of ways) got.push(await walk(id, Array.isArray(w) ? out : rot(out, w), stop, 1.2, Array.isArray(w) ? w[1] : 0));
+    far[id] = got.map((g) => g.at);
+    check(`find: ${id}: walked at from 30 m three ways, looking where it walks: offered before arriving, not from 30 m (rose at ${far[id].join(', ')} m)`, got.every((g) => g.at && !g.early), got);
+  }
+  // the tally done: the lure goes while it is busy and stays gone this visit; the seat comes down and its lure comes up
+  await p.evaluate(() => { const fp = window.__fp, t = fp.tally, s = t.stand(2.1), pl = fp.player; fp.controls.placeAt(s.x, s.z); pl.yaw = s.yaw; pl.pitch = s.pitch; });
+  await p.waitForFunction(() => window.__fp.acts.offered?.def.id === 'halt-tally', null, { timeout: 5000 }).catch(() => {});
+  await p.keyboard.press('KeyE'); await sleep(300);
+  let L = await lures();
+  check('lures: the tally\'s goes while its stroke is drawn', L['halt-tally'] === 0, L);
+  await p.waitForFunction(() => window.__fp.tally.seat?.mode === 'waiting', null, { timeout: 40000 }).catch(() => {});
+  await p.evaluate(() => { const fp = window.__fp, t = fp.tally, s = t.stand(14); fp.controls.placeAt(s.x, s.z); }); await sleep(800); // stepped back: not on offer
+  L = await lures();
+  check('lures: the stroke made, the tally\'s stays gone this visit, and the seat, come down, has one', L['halt-tally'] === 0 && L['halt-seat'] === 1, { L, mode: await p.evaluate(() => window.__fp.tally.seat?.mode) });
+  {
+    const got = [];
+    for (const a of [0, 0.6, -0.6]) got.push(await walk('halt-seat', rot([0.928, 0.372], a), 0.9));
+    far['halt-seat'] = got.map((g) => g.at);
+    check(`find: halt-seat: walked at from 30 m three ways once it is down: offered before arriving (rose at ${far['halt-seat'].join(', ')} m)`, got.every((g) => g.at && !g.early), got);
+  }
+  console.log('[find] the offer rose at (m):', JSON.stringify(far));
+  // not round a wall, the tomb door or a stair's lip
+  const offAt = (x, z, yaw, pitch = 0) => p.evaluate(async ([x, z, yaw, pitch]) => { const fp = window.__fp, P = fp.player; for (let i = 0; i < 8; i++) { fp.controls.placeAt(x, z); P.yaw = yaw; P.pitch = pitch; P.vel.set(0, 0, 0); await new Promise((r) => setTimeout(r, 100)); } return fp.acts.offered?.def.id || null; }, [x, z, yaw, pitch]);
+  const D = await p.evaluate(() => window.__fp.acts.list.find((h) => h.def.id === 'hypogeum-door').def.at);
+  check('find: the door is not offered from behind it (east, 2.5 m, looking west at it)', (await offAt(D.x + 2.5, D.z, Math.PI / 2)) !== 'hypogeum-door');
+  check('find: nor from the stair\'s lip above it (3 m north of it, looking down at it)', (await offAt(D.x - 1.5, D.z - 3, Math.atan2(-1.5, -3), -0.6)) !== 'hypogeum-door');
+  const T = await p.evaluate(() => ({ ...window.__fp.tally.next, n: window.__fp.tally.normal }));
+  check('find: the tally is not offered from behind the slab', (await offAt(T.x - T.n.x * 3.2, T.z - T.n.z * 3.2, Math.atan2(T.n.x, T.n.z))) !== 'halt-tally');
+  // forgotten: the lures come back where the acts can be done again
+  await p.evaluate(() => window.__fp.acts.forget()); await sleep(400);
+  L = await lures();
+  check('lures: after a forget the tally\'s is back', L['halt-tally'] === 1, L);
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.acts?.lure, null, { timeout: 300000 });
+  await begin(p); await sleep(400);
+  L = await lures();
+  check('lures: a new visit: the tally\'s is there again', L['halt-tally'] === 1, L);
+  await c.close();
+  const z = await browser.newPage(); watch(z, 'find-off');
+  await z.goto(`${base}/?q=low&acts=0`, { waitUntil: 'load', timeout: 60000 });
+  await z.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
+  check('?acts=0: no lures', await z.evaluate(() => { let n = 0; window.__fp.scene.traverse((o) => { if (o.name === 'act-lures') n++; }); return n === 0 && !window.__fp.acts?.lure; }));
+  await z.close();
+}
+
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
 console.log(`${passes} passed, ${fails} failed`);
