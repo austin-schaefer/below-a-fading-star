@@ -23,7 +23,7 @@ That is not a dealbreaker. The world wants a mix of both. Plain stories are what
 - **Know which you are writing,** and say so in its file. A deep story is a choice, not an accident.
 - **Keep enough plain ones.** If the last few stories added were deep, the next is plain.
 - **Give a deep story a plain surface where you can.** Whatever the full truth, a thing a visitor finds is better if it reads as *something* on its own (somebody is still being served who is not here). The surface can be simpler than the truth.
-- **Test by telling it back.** Describe only what a visitor sees at one beat. If nothing at all follows from it without the file open, you have decoration there; decide whether that is what you meant.
+- **Test by telling it back.** Describe only what a visitor sees at one beat, from the render and not from your notes: a story is easy to love in words and easy to believe you have built. If nothing at all follows from it without the file open, you have decoration there; decide whether that is what you meant.
 
 ## What makes it a story
 

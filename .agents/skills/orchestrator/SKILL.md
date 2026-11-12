@@ -55,7 +55,7 @@ Report back: under 200 words. What changed, how you verified it (exact commands 
 
 When a subagent reports done:
 
-1. Read its report and look at its renders.
+1. Read its report and look at its renders. Look before you read: say what each picture shows, then compare with what the report claims. A report describes what the agent meant to make, and it is easy to repeat it; for anything whose point is an idea (a story beat, a strange building), give a fresh agent the render alone and ask what it sees.
 2. Run the checks yourself. "Tests pass" in a report is a claim, not evidence. A run that reports zero tests is a failure to investigate.
 3. A second agent reviews the diff cold, read-only, against the brief (`world-code`, "Reviewing a branch"); blockers go back to the author.
 4. Merge in the deploy worktree with `git merge --no-edit origin/<branch>`, push `next`, and remove the agent's worktree (`tools/worktree.sh rm`, which first gathers its renders into the deploy worktree's `shots/wip/`). Run `tools/suite.sh` once per batch.
