@@ -1,0 +1,69 @@
+---
+name: visual-art
+description: How to think about the look of "Below a Fading Star" when making or changing anything a visitor sees (a building, a figure, a creature, a plant, ground, rock, water, light), as maker, reviewer or critic, on top of `wilderness`. A tool in the toolbox, not a hard constraint. Covers the visual thesis, how to think about a new thing, the render loop, sharp edges and anti-patterns, all taken from what has worked and failed here; references beside it for architecture, the land, figures and creatures, and light and colour, each with the kit, palette and numbers that already exist.
+---
+
+# Visual art
+
+The walk is a landscape seen against the light. A swollen red sun sits 13.5° up in the saddle of the western wall (`SUN` in `src/world.js`), so most of what a visitor sees is either a shape standing black against that glow or a violet-dark mass with its sunward edge lit. The pictures that have worked best here are shapes before they are surfaces: the two headless Thrones either side of the disc from the spawn, the deodand alone on a ridge, the painter's back with the keep and the sun behind him. Into that dusk the world sets a few things that are bright on purpose (the Lattice's blue, the corpse-candles, the Pomegranate House's cream walls and turquoise domes under coloured lamps), and they work because the dark round them stays dark. And it is a country of peoples: three builders' hands and two liveries, kept apart and each reusing the last, so that a block or a stole tells a visitor who made it. The tone itself (Vance, worn, once rich, never cartoon) is in `AGENTS.md`; this skill is how that has turned into pictures.
+
+Everything here comes from something real: code that looks good, a render in `shots/`, a critic's finding or the owner's words, and each claim says which. None of it is a rule. It is what tends to pay off; break any of it on purpose and say why in the commit. Where nothing has been tried yet, this skill says nothing, and you are the one who finds out.
+
+## The references
+
+Open the one your work touches; each lists what exists and where its code is, what read well and what failed, and the render checks worth doing.
+
+| File | Open it for |
+|---|---|
+| `architecture.md` | anything built: the three hands (`ctx.strata`), the sign of the sun in its notch, spolia, the cyclopean and Heliarch stone, the Pomegranate House, props and ruins |
+| `land.md` | ground, cover and plants by place, rocks, water, the mountains, the sky; the places' table and the clearings |
+| `figures.md` | people and creatures: the liveries, the figure rigs and their Painter, scale against the eye, finding a figure at 10 and 30 m, the Twk-men |
+| `light-and-colour.md` | the palette and where colours live, the per-place grade, lamps and emissives, the gutter, bloom and blow-out, shafts of light |
+
+## How to think about a new thing
+
+1. **Silhouette against the west first.** Ask what it looks like as a black shape against the sun's glow, and from the side the sun lights. The Thrones, the deodand and the Span's arches read from hundreds of metres as outline alone (`30-thrones-gutter-spawn-after`, `03-fauna-deodand-standard`). A thing with a weak outline is not saved by its surface.
+2. **Value before detail.** The world is mostly dark violet; a thing reads when it stands a step lighter or darker than what is behind it, not when it is busy. The officers' coats went from near-black to a blue-grey `#2a303b` so they stand off the turf (`src/v8/livery.js`); the Late folk still vanished at 30 m in dark patched cloth. Check the value in a render before adding a single trim.
+3. **Scale to the eye and to the work.** Decide the distance a visitor first meets it and how big it must be there. The Elder work is 2 m blocks and up with nothing at human size; a story prop meant to be found has to be more than a few pixels at the distance the visitor stands (the traveller's body, 40 px wide from the deck 80 m off, is not found within a second).
+4. **It belongs to a people or a place.** Before shaping it, decide whose it is: Elder, Heliarch, Late folk, nobody's (the Twk-men), or a place's own ground. Then use that hand's parts and colours (`architecture.md`, `figures.md`) or the place's ground and cover (`land.md`). The owner: "diversity, but with coherence"; three hands made more themselves, never blended.
+5. **Reuse the palette and the kit.** `PALETTE` in `src/world.js`, the hands' `COLORS` in `src/v8/strata/parts.js`, `LIVERY` in `src/v8/livery.js`, the place table in `src/v8/places.js`, the cyclopean stone (`ctx.kit.masonry`), the structures' Builder and stone shader, the figures' Painter. A new literal colour beside an existing one is usually the same colour slightly wrong.
+6. **Vary the shape, not only the trim.** Rows of the same icosahedron along the Lynchets "look machine-made" (critic); the yews became good when each sagged out of its clipped cone differently ("no two alike", v6.3). Vary footprint, lean, height, breakage and spacing, then colour.
+7. **Light and humour where the dark needs them.** The owner asked for contrast in palette, density and tone, "cuteness or humor to give the dark things punch". The house, the Twk-men and the painter's failed suns do that. A light or funny thing earns its place next to something grim.
+8. **Fewer, stronger.** Small markers scattered for their own sake were cut on the owner's word ("cut all the pawns, they are too much random noise"); 857 boulders became 297 in outcrops. One thing placed where it reads beats ten that each nearly read.
+
+## Working
+
+- **Look at the baseline first.** The stage table in `shots/README.md` and the keepers for your place or kind (`63-strata-*` for building, `66-liveries-*` for figures, `71-rocks-*` for stone, `62-ground-*` for ground). Render the spot as it is before you change it.
+- **Render from where a visitor stands**, at the walker's height, at two or three distances: close (2–4 m), the distance it is meant to be noticed from (10–30 m for a figure or prop, 60–200 m for a building), and the farthest point it can be seen from. One load renders them all: `tools/views.mjs` with a views list (`tools/views-v8-livery-{4,10,30}.json` are a model of the three-distance sheet).
+- **Render it into the sun and away from it,** in a gutter (`"js": "window.__fp.sky.flicker.hold = 0.3"` in a view; `views.mjs` otherwise holds the gutter off), at `?q=low`, and once on a phone (`tools/shot.mjs <url> <out.png> 390 844`).
+- **Open every image** you make before you judge or name it, at full size; a downscaled sheet hides a figure.
+- **Before and after from the same view** (`-before` / `-after`, the same pose), so the curator and the next agent can see the change; `tools/pair-diff.mjs` measures a difference when a number helps.
+- **Say what is weaker than asked.** Each v8 Status entry ends with it ("the roundels read as a glowing dot beyond about 10 m"); the next agent starts from that line.
+
+## Sharp edges
+
+- **The sun is low and in the west, so the near side of most things faces away from it.** A thing seen from the east is lit; from the spawn or the causeway looking west it is a silhouette, and its surface detail is gone. Judge from both.
+- **Bright patterns read from very far.** The boulders' pale lichen at about eleven times the stone's luminance drew the eye at 400 m (owner, issue #12); it is now capped near 1.3x (`tools/rocks-test.mjs`). A high-contrast pattern on anything common is visible across the map.
+- **Dark grades go black on a phone.** The fen graded to exposure 0.74 was the v8 critic's one blocking fault (near-black, darker still on a phone); it is 1.0 now (`src/v8/places.js`). Darkness comes from the ground and fog, not from pulling exposure down.
+- **Additive light blows out.** The house's lamps blew the court to white in one round (`65-house-court-blown-out`) and glared from 15 m in the next (`69-repairs-house-near-*`). Every new emissive gets a near render.
+- **Haze is depth.** The Galleries' ironwork at 45% haze hold read "pasted in front" of the wall it hangs on; 25% sat it in (`plans/wilderness-v5-coherence.md`). Keep far things in the fog.
+- **Plain untextured boxes read as placeholders** (the grey `demesne-blocks`; the old taverna as "plain boxes and a cylinder"). Every surface takes a material from the kit.
+
+## Where it tends to help
+
+None of this is required. Reach for it when it makes the work better.
+
+- **Writing a brief:** naming the hand or people a thing belongs to, the distance it must read at, and the keepers to look at gives the implementer the look in three lines.
+- **Making:** the reference for your kind, the baseline renders, then the loop above.
+- **Reviewing and the critic:** walk as a stranger and ask what reads from where you stand: whose is this building, can I find that figure, where does that light come from, does this place look like the last one.
+- **Curating:** a before and after from the same pose is what lets the next agent learn from a change.
+
+## Anti-patterns
+
+- A literal colour in a recipe where the palette, `COLORS` or `LIVERY` already has one.
+- A Victorian lamp post, a battlement, a Doric column or a castle: the shapes the owner and the coherence pass found off-register (`plans/wilderness-v4.md`, "Height, and which architecture works").
+- Blending the three hands into one house style, or one people's colours on another's.
+- Light from nowhere: a shaft, glow or pool with no visible source (the owner on the wood's first shafts; fixed so each falls from a crown, `src/v8/shafts.js`).
+- Rows of identical copies; variety by trim alone.
+- Lifting a thing's visibility with a new hue outside its palette; lift value and saturation along its own colour (v7.1's visibility pass, stage 60).
+- Judging from a downscaled sheet, or from one distance, or only with the sun behind you.
