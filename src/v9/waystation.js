@@ -159,6 +159,13 @@ export async function build(ctx) {
     clog(cx + hdz * 0.1, cz - hdx * 0.1, -HA + 0.06); clog(cx - hdz * 0.1, cz + hdx * 0.1, -HA - 0.04);
   }
   // the tallies: the travellers' chalk on the slab's face, and the act that adds the visitor's stroke (v10, src/v10/tally.js)
+  // the strokes that were drawn here before v10 took the same draws from rng; burn them, so the bench, tiles, sign
+  // and globe after this keep the shapes they had (the tally has its own stream)
+  for (let row = 0; row < 5; row++) for (let grp = 0; grp < 5 - ((row * 7) % 3); grp++) {
+    if (rng() < 0.2) continue;
+    rng(); rng();
+    for (let i = 0; i < ((row === 4 && grp === 1) ? 3 : 4); i++) rng();
+  }
   const tally = buildTally(ctx, { M0, W, foot, gAt, at, B, late, group, iron });
   // the bench against the slab's face, tiled, and a cup left on it
   const bench = { x: -2.3, z: W.d / 2 + 0.35 };
