@@ -8,7 +8,9 @@
 //          a steep rock band behind it, a convex shoulder into the crest, and corries; ledges along each massif's
 //          tilted bedding plane, a few gullies crest to apron, buttresses where the face is steep; creased facets.
 //   tiers 2 and 3, the far ranges: two rings of mesh beyond the terrain (crests at r ~800 and ~1350), each rolling
-//          in massifs of its own set behind the near cols, lower in the picture and paler under the fog tiers.
+//          in massifs of its own set behind the near cols, ridged in plan and lit on their sunward sides, lower in
+//          the picture and paler under the fog tiers.
+//   v11 the form: summits, notches and serration along the crest, spurs and the valleys between them (FORM, SPURS_M).
 // ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
 // bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
@@ -17,7 +19,7 @@
 // the sun and the Parhelion City keep the gap. Deterministic: no rng, only seeded noise.
 import * as THREE from 'three';
 import { makeSimplex, hash2, clamp, lerp, smoothstep } from '../noise.js';
-import { WORLD, SUN, PEAKS } from '../world.js';
+import { WORLD, SUN, PEAKS, PALETTE } from '../world.js';
 
 const S = makeSimplex(WORLD.seed + 404);
 const D2R = Math.PI / 180;
@@ -143,7 +145,7 @@ const CAND = PROFILE === 'c' ? {
   crest: [[8, 190], [20, 210], [45, 255], [72, 270], [94, 240], [104, 140], [112, 52], [120, 140], [132, 225], [150, 275],
     [165, 285], [173, 150], [180, 50], [187, 150], [200, 270], [218, 250], [236, 170], [250, 150], [264, 180], [278, 285], [292, 300], [308, 270],
     [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
-  peaks: 0.35, slope: [28, 52], far: [0.6, 0.7],
+  peaks: 0.35, slope: [28, 52], farEl: [[8.5, 8], [10.5, 8]],
 } : null;
 // a periodic Catmull-Rom spline through [bearing, value] points
 function splineAt(pts, b) {
@@ -169,9 +171,7 @@ function crownAt(bearing, k) {
   }
   return add;
 }
-const T_FE = new Float32Array(N + 1); // the massifs: the far ranges' elevation (degrees from the centre), the crest's smoothed
 if (CAND) {
-  const el = new Float32Array(N + 1);
   for (let i = 0; i <= N; i++) {
     const az = -Math.PI + (TAU * i) / N, b = bearingOf(az);
     const vig = 1 - smoothstep(4, 11, Math.min(Math.abs(b - 72), 360 - Math.abs(b - 72)));
@@ -181,14 +181,95 @@ if (CAND) {
     const edge = 500 / Math.max(Math.abs(Math.cos(az)), Math.abs(Math.sin(az)));
     T_CR[i] = lerp(clamp(452 + 0.3 * (T_CH[i] - 150) + 12 * ring(az, 1.6, 3.1), 440, edge - 22), 476, vig);
     T_FH[i] = 0; // no front range before the massifs
-    el[i] = Math.atan2(T_CS[i], T_CR[i]) / D2R;
   }
-  // the far ranges see the crest smoothed over ±24°: the same rolls, without the cols
-  const W = 240, acc = new Float64Array(N + 1);
-  for (let i = 0; i <= N; i++) { let s = 0; for (let k = -W; k <= W; k += 4) s += el[((i + k) % N + N) % N] * (1 - Math.abs(k) / (W + 4)); acc[i] = s; }
-  let norm = 0; for (let k = -W; k <= W; k += 4) norm += 1 - Math.abs(k) / (W + 4);
-  for (let i = 0; i <= N; i++) T_FE[i] = acc[i] / norm;
 }
+// --- the form (v11): the outline and the spurs. The spline gives each massif its mass; this block breaks the bell.
+// The crest's top (the upper third of each face's run and everything behind it) takes FORM: hand-set summits and
+// notches, each with a steep side and a long one (a fall from a summit is steeper on one side, as rock breaks), and a
+// serration along the whole crest from broken noise (sharp nicks, rounded tops between). It is held to nothing where
+// something hangs at the crest (HOLD_CREST) and at the cols' floors, so faceAt below ~0.6 of the run, crestAt at the
+// hung bearings, the cols and the Ridge's merlons stay. SPURS push the face toward the bowl along a narrow line from
+// under the crest down to the apron: a ridge that comes down at the viewer, broad at its foot, a lit flank and a dark
+// one, a shoulder where it leaves the crest; only where nothing hangs on the face (HOLD_FACE), and never inside r 345
+// (walkLimit is 348).
+const HOLD_CREST = [[6, 61], [66, 78], [99, 107], [109, 115], [126, 134], [177, 183], [226, 234], [236, 264], [262, 300], [325, 331]];
+const HOLD_FACE = [[50, 62], [64, 80], [98, 108], [125, 149], [225, 300], [300, 320], [338, 360], [0, 10]];
+function holdOf(list, b, soft) {
+  let w = 0;
+  for (const [a0, a1] of list) w = Math.max(w, smoothstep(a0 - soft, a0, b) * (1 - smoothstep(a1, a1 + soft, b)));
+  return w;
+}
+// [bearing of the top, height (m), half-width on the low-bearing side, on the high-bearing side (degrees)]; negative
+// heights are notches. The SE massif climbs long from its col to the Horn by two shoulders and drops short to the
+// col at 180; the south massif rises steeply from that col to the Abbess and runs out long and broken to the
+// saddle; the Lectern's table breaks off steep to the north-west col; the Tierce climbs long from that col and falls
+// short to the glacier; the Mitre's north horn stands over a notch.
+const FORM = [
+  // the north-east, between the Vigilant and the Long Figure
+  [84, -26, 3, 4], [88, 22, 6, 3.75], [96, 16, 4.5, 3],
+  // the south-east: shoulders on the long side, a nick, the Horn pushed up, a short steep fall
+  [118, 20, 4.5, 7.5], [152, 30, 9, 3.75], [158, -16, 1.6, 2.2], [160, 22, 3, 3], [165, 26, 9, 5], [172, -40, 2, 3.5],
+  // the south: a steep climb to the Abbess, then a long broken run down to the saddle
+  [186, -30, 2, 3], [196, 46, 6, 10.5], [205, -38, 2, 2.4], [211, 30, 4.5, 6], [217, -24, 1.5, 2.5], [222, 18, 3.75, 4.5],
+  // the west, north of the Galleries: the Lectern's table broken, a nick, a steep fall to the col
+  [303, 26, 4.5, 4.5], [309, -28, 1.5, 2], [314, 24, 3, 3], [320, -34, 2, 4],
+  // the Tierce: a long shoulder from the col, its top, a short fall to the glacier
+  [335, 26, 6, 4.5], [339, -18, 1.5, 2], [350, 34, 10.5, 4.5],
+];
+const T_FM = new Float32Array(N + 1); // the crest's form, added over the face's top
+if (CAND) {
+  const bd = (a, c) => ((a - c) % 360 + 540) % 360 - 180;
+  for (let i = 0; i <= N; i++) {
+    const az = -Math.PI + (TAU * i) / N, b = bearingOf(az);
+    let f = 0;
+    for (const [fb, fh, w0, w1] of FORM) {
+      const d = bd(b, fb), w = d < 0 ? w0 : w1, t = Math.abs(d) / w;
+      if (t < 1.6) f += fh * Math.exp(-2.2 * t * t) * (fh < 0 ? 1 : 1 - 0.25 * smoothstep(0.6, 1.6, t));
+    }
+    // serration: sharp nicks (the abs of noise) with rounded tops, two wavelengths along the arc (~45 m and ~110 m)
+    const n1 = Math.abs(ring(az, 14.0, 61.7)), n2 = Math.abs(ring(az, 5.5, 63.1));
+    f += 22 * (n2 - 0.35) + 12 * (n1 - 0.35);
+    const hold = holdOf(HOLD_CREST, b, 2.5);
+    T_FM[i] = f * (1 - hold) * smoothstep(80, 150, T_CS[i]);
+  }
+}
+// The plan: spurs (+, the face pushed toward the bowl) and the valleys between them (-, pulled back into the mass).
+// [bearing at the root, push (m), half-width at the root (m), at the foot (m), lean (degrees the line swings from
+// root to foot)]. A spur leaves the crest at a shoulder and runs down sharp-backed, broadening; a valley is cut
+// deepest at its mouth and closes under the crest, round-floored, so the drainage between the spurs reads.
+const SPURS_M = [
+  [16, -91, 36, 90, 4], [24, 38, 19, 53, -2], [33, -78, 31, 72, -3], [40, 35, 19, 48, 2], [46, -52, 24, 43, 2],
+  [82, -72, 29, 67, 2], [89, 46, 26, 66, 3], [96, -52, 24, 48, -2],
+  [118, -39, 24, 48, 0],
+  [152, 59, 29, 72, -4], [158, -91, 34, 86, 3], [165, 49, 24, 60, 3], [172, -58, 26, 58, -2],
+  [187, -65, 26, 60, 2], [192, 54, 26, 70, 4], [199, -104, 38, 101, -3], [208, 62, 31, 77, -3], [215, -84, 31, 79, 3], [221, 40, 22, 60, 3],
+  [322, 35, 22, 55, 3], [334, 46, 24, 62, -3],
+];
+function sampleForm(az) {
+  const q = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(q))), f = q - i;
+  return T_FM[i] + (T_FM[i + 1] - T_FM[i]) * f;
+}
+function spurPush(b, r, Rc) {
+  let push = 0, pull = 0;
+  const t = clamp((Rc - r) / 150, 0, 1); // 0 at the crest, 1 at the foot
+  for (const [sb, sp, w0, w1, lean] of SPURS_M) {
+    let db = b - sb; if (db > 180) db -= 360; if (db < -180) db += 360;
+    if (Math.abs(db) > 16) continue;
+    const across = Math.abs(db - lean * t + 1.2 * S.noise2(r * 0.013, sb)) * D2R * r;
+    const w = lerp(w0, w1, t);
+    if (across > w) continue;
+    if (sp > 0) {
+      const prof = smoothstep(Rc - 8, Rc - 70, r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
+      push = Math.max(push, sp * prof * Math.pow(1 - across / w, 1.15));
+    } else {
+      const prof = smoothstep(Rc - 10, Rc - 100, r); // closes under the crest, deepest at the mouth
+      const c = across / w;
+      pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c));
+    }
+  }
+  return (push * smoothstep(345, 395, r) - pull * smoothstep(292, 325, r)) * (1 - holdOf(HOLD_FACE, b, 3));
+}
+// --- the form (end)
 // --- the massifs (end; applyMassifs and the far ranges' hook below)
 // --- v5 wonders: AP (begin): each merlon's flat top (natural crest height at its centre + 45 m, less wear)
 for (let k = RG.kMin - 1; k <= RG.kMax + 1; k++) {
@@ -335,11 +416,12 @@ if (CAND) {
     T_DX[i] = dx / w; T_DZ[i] = dz / w; T_ST[i] = st / w;
   }
 }
-function applyMassifs(h, x, z, r, g, glacierH) {
+function applyMassifs(h, x, z, rTrue, g, glacierH) {
   const az = Math.atan2(z, x);
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
   const b = bearingOf(az);
+  const r = rTrue + spurPush(b, rTrue, Rc); // v11 the form: a spur is the face pushed toward the bowl (the face's code sees it as nearer the crest)
   const slope = lerp(CAND.slope[0], CAND.slope[1], smoothstep(70, 280, Hc)) * D2R;
   const foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3)); // the apron's toe
   const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
@@ -413,6 +495,7 @@ function applyMassifs(h, x, z, r, g, glacierH) {
     m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
   }
   m = Math.max(m, 0);
+  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it)
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {
@@ -437,33 +520,51 @@ function applyMassifs(h, x, z, r, g, glacierH) {
   if (g > 0) m = lerp(m, glacierH, g);
   return seatHeights(h + m, x, z);
 }
-// the far ranges behind the massifs: the crest's smoothed elevation, scaled down (CAND.far, per tier), so each range
-// stands below the massifs in the picture and above the cols
-// Each far range rolls in massifs and cols of its own, not the near crest smoothed: [bearing, half-width] lobes; the
-// nearer ring sets a massif behind each near col (112, 180, 328), so a second, paler line of the same form stands in
-// each gap, its own cols hidden behind the near massifs; the farthest ring's lobes fall between the nearer's.
+// The far ranges behind the massifs (v11): ranges of their own, not the near crest smoothed (that read as an echo).
+// Each ring's crest is an envelope of lobes, [bearing, half-width, the steep side (-1 low bearings, +1 high)], over
+// a floor elevation (degrees seen from the bowl's centre, CAND.farEl), so it stands below the massifs in the picture
+// and above the cols; the nearer ring sets a massif behind each near col (112, 180, 328), the farthest's lobes fall
+// between. Under the envelope the ground is a warped ridged field in plan (farHeight), so each range has ridges
+// running out in every direction, spurs and valleys the low sun lights on one side and leaves dark on the other.
 const FAR_LOBES = {
-  far: [[30, 16], [74, 13], [112, 14], [150, 14], [180, 11], [214, 14], [292, 15], [328, 12], [356, 10]],
-  farthest: [[8, 14], [52, 15], [94, 13], [132, 14], [198, 15], [282, 13], [310, 12], [344, 13]],
+  far: [[30, 16, 1], [74, 13, -1], [112, 14, 1], [150, 14, -1], [180, 11, 1], [214, 14, -1], [292, 15, 1], [328, 12, -1], [356, 10, 1]],
+  farthest: [[8, 14, -1], [52, 15, 1], [94, 13, 1], [132, 14, -1], [198, 15, 1], [282, 13, -1], [310, 12, 1], [344, 13, -1]],
 };
 function farLobe(T, b) {
   let w = 0;
-  for (const [lb, lw] of FAR_LOBES[T.name]) {
-    let d = Math.abs(b - lb); if (d > 180) d = 360 - d;
-    if (d < lw) w = Math.max(w, Math.pow(Math.cos((d / lw) * Math.PI / 2), 1.2)); // broad-shouldered, not cones
+  for (const [lb, lw, side] of FAR_LOBES[T.name]) {
+    let d = b - lb; if (d > 180) d -= 360; if (d < -180) d += 360;
+    const ww = lw * (Math.sign(d) === side ? 0.6 : 1.4); // a short steep side and a long one
+    if (Math.abs(d) < ww) w = Math.max(w, Math.pow(Math.cos((Math.abs(d) / ww) * Math.PI / 2), 1.1));
   }
   return w;
 }
 function farCrestMassifs(T, az, out) {
-  const u = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(u))), f = u - i;
-  const fe = T_FE[i] + (T_FE[i + 1] - T_FE[i]) * f;
   const rc = T.rc + T.rcv * ring(az, 1.3, T.seed);
-  const k = CAND.far[T.name === 'far' ? 0 : 1];
-  const elev = (fe * k * (0.55 + 0.6 * farLobe(T, bearingOf(az))) + 1.2 * ring(az, 2.3, T.seed + 3)) * D2R;
+  const [el0, el1] = CAND.farEl[T.name === 'far' ? 0 : 1];
+  const elev = (el0 + el1 * farLobe(T, bearingOf(az)) + 1.6 * ring(az, 2.3, T.seed + 3) + 1.1 * ring(az, 7.0, T.seed + 5)) * D2R;
   let hc = Math.tan(elev) * rc;
   const d = Math.abs(angDiff(az, SADDLE.azimuth));
   hc = lerp(T.floor, hc, smoothstep(T.full * D2R, T.wall * D2R, d));
   out.rc = rc; out.hc = hc;
+  return out;
+}
+// the far ground under its envelope: 0..~1.1 of the crest's height, ridges in plan at about T.grain metres
+const _fr = { y: 0, ridge: 0 };
+function farMassifs(T, az, r, out) {
+  const { rc, hc } = farCrestMassifs(T, az, _fc);
+  const x = Math.cos(az) * r, z = Math.sin(az) * r, D = T.r1 - T.r0;
+  const env = Math.pow(smoothstep(T.r0, rc - 0.12 * D, r), 1.2) * (1 - 0.5 * smoothstep(rc + 0.05 * D, T.r1, r));
+  const f = 1 / T.grain;
+  const wx = x + T.grain * S.noise2(x * f * 0.3 + T.seed, z * f * 0.3), wz = z + T.grain * S.noise2(x * f * 0.3, z * f * 0.3 - T.seed);
+  // ridges at the grain (two octaves: more reads as a saw of spikes at this distance), their height varied by a
+  // broad swell so the tops along a crest are not a row of equal teeth, and a finer set of ribs on the flanks
+  const R = S.ridged2(wx * f + T.seed * 0.37, wz * f - T.seed * 0.21, 2) / 0.75; // 0..~1: sharp ridges, broad valleys
+  const B = S.fbm2(x * f * 0.4 - T.seed, z * f * 0.4, 2);                          // -1..1, about 2.5 grains across
+  const Rf = S.ridged2(wx * f * 2.7 - T.seed, wz * f * 2.7 + 3.3, 1);
+  const ridge = R * (0.55 + 0.45 * smoothstep(-0.5, 0.5, B));
+  out.ridge = 0.8 * R + 0.2 * Rf;
+  out.y = hc * env * (0.5 + 0.55 * ridge + 0.14 * B + 0.08 * Rf * (1 - R)) - 30 * (1 - smoothstep(T.r0, T.r0 + 80, r)); // the inner edge tucks below the floor
   return out;
 }
 const FAR_PALE = new THREE.Color('#8e8a99'); // the far ranges paled toward the haze
@@ -475,8 +576,8 @@ const FAR_PALE = new THREE.Color('#8e8a99'); // the far ranges paled toward the 
 const FAR = [
   // crest radius and spread, lift over the main crest (degrees) and spread, inner and outer radius,
   // saddle floor and gate (degrees)
-  { name: 'far', rc: 800, rcv: 50, lift: 2.6, liftv: 1.6, r0: 560, r1: 1040, floor: 55, full: 9, wall: 17, seed: 51, rows: 30 },
-  { name: 'farthest', rc: 1350, rcv: 80, lift: 5.4, liftv: 2.2, r0: 1080, r1: 1740, floor: 95, full: 11, wall: 22, seed: 67, rows: 30 },
+  { name: 'far', rc: 800, rcv: 50, lift: 2.6, liftv: 1.6, r0: 560, r1: 1040, floor: 55, full: 9, wall: 17, seed: 51, rows: 30, grain: 230 },
+  { name: 'farthest', rc: 1350, rcv: 80, lift: 5.4, liftv: 2.2, r0: 1080, r1: 1740, floor: 95, full: 11, wall: 22, seed: 67, rows: 30, grain: 360 },
 ];
 function farCrest(T, az, out) {
   if (CAND) return farCrestMassifs(T, az, out); // the massifs; below, the v4 far crest
@@ -492,6 +593,7 @@ function farCrest(T, az, out) {
 }
 const _fc = { rc: 0, hc: 0 };
 function farHeight(T, az, r) {
+  if (CAND) return farMassifs(T, az, r, _fr).y;
   const { rc, hc } = farCrest(T, az, _fc);
   const u = r <= rc ? smoothstep(T.r0, rc, r) : 1 - smoothstep(rc, T.r1, r) * 0.55;
   let y = hc * (r <= rc ? Math.pow(u, 1.5) : u);
@@ -504,21 +606,35 @@ function farHeight(T, az, r) {
 }
 function buildRing(ctx, T) {
   const low = ctx.quality === 'low';
-  const nA = low ? 540 : 900, nR = low ? 18 : T.rows;
+  // v11: more cells, evenly spaced in r, so the ridges in plan have room (medium/high 1200x56, low 720x30 a ring)
+  const nA = CAND ? (low ? 720 : 1200) : (low ? 540 : 900), nR = CAND ? (low ? 30 : 56) : (low ? 18 : T.rows);
   const pos = new Float32Array((nA + 1) * (nR + 1) * 3), col = new Float32Array((nA + 1) * (nR + 1) * 3);
   const cRock = new THREE.Color('#5a535c'), cHigh = new THREE.Color('#77717c'), cSnow = new THREE.Color('#a2a2b4'), c = new THREE.Color();
+  const cGully = new THREE.Color(T.name === 'far' ? '#302c3a' : '#3e3c4c'), cRib = new THREE.Color(T.name === 'far' ? '#867a80' : '#86828e');
   let k = 0;
   for (let i = 0; i <= nA; i++) {
     const az = -Math.PI + (TAU * i) / nA;
     for (let j = 0; j <= nR; j++) {
+      const v = j / nR;
+      if (CAND) {
+        // the far ranges: rock darker in the valleys and pale on the ridges (the ridged field's value), snow on the
+        // farthest's high ridges only, all paled a step toward the haze (the fog tiers do the rest)
+        const r = T.r0 + (T.r1 - T.r0) * v, F = farMassifs(T, az, r, _fr), hc = _fc.hc;
+        pos[k] = Math.cos(az) * r; pos[k + 1] = F.y; pos[k + 2] = Math.sin(az) * r;
+        c.copy(cGully).lerp(cRib, smoothstep(0.15, 0.7, F.ridge));
+        c.lerp(cSnow, smoothstep(0.78, 0.98, F.y / hc + 0.1 * S.noise2(pos[k] * 0.006, pos[k + 2] * 0.006)) * smoothstep(0.45, 0.7, F.ridge) * (T.name === 'farthest' ? 0.7 : 0.25));
+        c.lerp(FAR_PALE, T.name === 'far' ? 0.15 : 0.3);
+        col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
+        k += 3;
+        continue;
+      }
       // rows denser toward the crest
-      const v = j / nR, r = T.r0 + (T.r1 - T.r0) * (0.5 - 0.5 * Math.cos(v * Math.PI));
+      const r = T.r0 + (T.r1 - T.r0) * (0.5 - 0.5 * Math.cos(v * Math.PI));
       const y = farHeight(T, az, r);
       pos[k] = Math.cos(az) * r; pos[k + 1] = y; pos[k + 2] = Math.sin(az) * r;
       const hc = farCrest(T, az, _fc).hc;
       c.copy(cRock).lerp(cHigh, smoothstep(hc * 0.35, hc * 0.8, y));
       c.lerp(cSnow, smoothstep(hc * 0.85, hc * 1.02, y + 0.08 * hc * S.noise2(pos[k] * 0.01, pos[k + 2] * 0.01)) * (T.name === 'farthest' ? 0.8 : 0.4));
-      if (CAND) c.lerp(FAR_PALE, T.name === 'far' ? 0.3 : 0.5); // the massifs' far ranges, paler
       col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
       k += 3;
     }
@@ -533,6 +649,16 @@ function buildRing(ctx, T) {
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.setIndex(idx);
   geo.computeVertexNormals();
+  if (CAND) {
+    // v11: the sun's side baked into the colour too, so the far ranges keep a bright side and a shadow side under
+    // the fog tiers: warmed and lifted where a slope faces the low sun, cooled and dropped where it turns away
+    const nrm = geo.getAttribute('normal').array, sd = SUN.dir, warm = new THREE.Color(PALETTE.sunLight);
+    for (let q = 0; q < col.length; q += 3) {
+      const ndl = nrm[q] * sd.x + nrm[q + 1] * sd.y + nrm[q + 2] * sd.z;
+      const lit = smoothstep(-0.1, 0.6, ndl), sh = 0.45 + 0.85 * lit;
+      col[q] = col[q] * sh + warm.r * 0.02 * lit; col[q + 1] = col[q + 1] * sh + warm.g * 0.02 * lit; col[q + 2] = col[q + 2] * (sh * 0.92 + 0.08) + warm.b * 0.02 * lit;
+    }
+  }
   geo.computeBoundingSphere();
   const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
   mesh.name = `ranges-${T.name}`;
