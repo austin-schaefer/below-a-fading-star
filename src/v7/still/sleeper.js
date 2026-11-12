@@ -9,6 +9,7 @@ import { SITES } from '../../world.js';
 import { hyp } from '../../noise.js';
 import { Painter, paintedMaterial, ell, strand, conform, clamp, smooth, lerp, ZERO, hash3 } from './kit.js';
 import { medlarGeometry } from './medlar.js';
+import { LIVERY, stole, badge, tag } from '../../v8/livery.js';
 
 // the numbers (all of them in plans/wilderness-v5.md)
 export const SLEEP = {
@@ -85,6 +86,22 @@ export function buildSleeper(ctx, G, flags) {
   for (const s of [1, -1]) { P.paint(lidc, 0, 0.6, 0); ell(P, -0.805, 0.2, s * 0.032, 0.02, 0.009, 0.017, 6, 4); } // the lids: shut
   P.set('aLid', 0);
   P.paint(boot, 0, 0.6, 0); for (const s of [1, -1]) ell(P, 0.95, 0.105, s * 0.085, 0.07, 0.04, 0.04, 6, 4); // the soles of his shoes
+  if (LIVERY.on) {
+    // v8-06 the livery: an officer long past duty, still in the stole (from the high collar down the gown to his
+    // knees) and the sign on his breast; moss has had the stole in patches, worst where it lies on the turf
+    const top = (lx, lz = 0) => { // the gown's surface over (lx, lz): its centre line plus the ellipse's height there
+      let i = 1; while (i < X.length - 1 && lx > X[i]) i++;
+      const f = clamp((lx - X[i - 1]) / (X[i] - X[i - 1]), 0, 1), rs = lerp(R[i - 1][0], R[i][0], f), ru = lerp(R[i - 1][1], R[i][1], f);
+      return ru - 0.02 + ru * Math.sqrt(Math.max(0, 1 - (lz / rs) ** 2));
+    };
+    const moss = [0.25, 0.32, 0.12];
+    for (const s of [1, -1]) {
+      const pts = [[-0.68, 0.2, s * 0.13], ...[-0.55, -0.42, -0.3, -0.15, 0.0, 0.15, 0.3, 0.45].map((x) => [x, top(x, s * (0.13 + 0.01 * (x + 0.55))) + 0.008, s * (0.13 + 0.01 * (x + 0.55))]), [0.56, 0.06, s * 0.2], [0.6, 0.02, s * 0.24]];
+      stole(P, pts, { w: 0.12, out: [0, 1, 0], seed: 20 + s, dirt: 0.3, fray: 0.05, weight: (p) => chestW(p[0], p[1]),
+        tint: (t, k) => [moss, (hash3(Math.floor(t * 9), Math.floor(k * 3), s) > 0.55 ? 0.75 : 0.15) + 0.4 * Math.max(0, t - 0.8) * 5] });
+    }
+    badge(P, [-0.5, top(-0.5) + 0.012, 0], [-1, 0, 0], [0, 1, 0], 0.08, { th: 0.01, weight: 1, plate: '#4a4a2a', disc: '#8a7a3a' });
+  }
   // the beard: from the chin over the chest, off the shoulder and along the turf, its last third turning to grass
   const chin = [-0.7, 0.12, 0];
   const path = [chin, [-0.62, 0.22, 0.03], [-0.54, 0.25, 0.14], [-0.5, 0.17, 0.3], [-0.46, 0.04, 0.42], [-0.44, 0.022, 0.62], [-0.4, 0.02, 0.8], [-0.37, 0.02, 0.97]];
@@ -106,7 +123,7 @@ export function buildSleeper(ctx, G, flags) {
     const i0 = P.v(bx - w, 0.01, bz), i1 = P.v(bx + w, 0.01, bz), i2 = P.v(bx + lean, 0.01 + h, bz + lz);
     P.tri(i0, i1, i2);
   }
-  const geo = P.geometry();
+  const geo = tag(P.geometry(), P, 'heliarch');
   conform(geo, centre.x, centre.z, yaw, G.at, baseY);
   const U = { uBreath: { value: 0 }, uLid: { value: 0 } };
   const mat = paintedMaterial({ side: THREE.DoubleSide }, (sh) => {

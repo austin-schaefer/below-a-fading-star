@@ -91,7 +91,7 @@ Tree LOD (`vegetation/trees.js`): near, mid and far at 24 and 72 m (18 and 55 at
 - `nave=0` (the east moor without BD the Foundered Nave of `src/v5/nave.js`: the terrain keeps its triangles over the hole, and the clearances in the rocks, the trees, the ground cover and the scatter are off)
 - `locallights=0` (none of the five local lights of `src/v5/lights.js`; `locallights=moss,embers,post,door,leerie` builds only those named; the Leerie's standards light only in the sun's gutter, `__fp.leerie.light(true)` poses them)
 - `dressing5=0` (leaves out the Collation, the Slipper and the Unfinished Prospect of `src/v5/dressing.js`; `collation=0`, `slipper=0` and `prospect=0` each its own; the ground cover's clearings go with them)
-- `threads=0` (leaves out v8-04's story threads, `src/v8/threads.js`; `traveller=0`, `chair=0` (the Collation keeps its twelfth chair) and `gold=0` each its own; their ground-cover clearings go with them)
+- `threads=0` (leaves out v8-04's story threads, `src/v8/threads.js`; `traveller=0`, `chair=0` (the Collation keeps its twelfth chair), `gold=0` and `painter=0` (v8-08) each its own; their ground-cover clearings go with them)
 
 ### The v6 switches
 
@@ -121,12 +121,14 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `glyphs=0` leaves out all of `living-glyphs` (the caps stay plain); `scriveners=0` the shoal, `moles=0` the heaps and their tesserae, `glyphmotif=0` the caps' glyphs, the tessera's and the erratic's (v7-04)
 - `walkers=0` (v7-01: no Thurifer, Leerie or Link-Boy); `thurifer=0`, `leerie=0`, `linkboy=0` each its own
 - `roads=0` (v8-01: no gnomons, and the causeway gets its v3 waymarkers back)
+- `twk=0` (v8-07: no Twk-men, no salt at the spill or the house; `node tools/twk-test.mjs <base>` pins their stations, the inspection's metre, the quarrel, the salute, the salt line, the guard and the gutter)
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 - `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
 
 ### v8
 
 - `strata=0` (v8-03: no `strata` module, no signs or spolia, and the Pomegranate House, the byre, the shrine and the Leaning Yard as in v7)
+- `house=0` (v8-05: the Pomegranate House unlit and empty: no lamps, strings, poles, people, voice or swept court, and the court's lantern keeps its own light)
 
 ### The walls
 

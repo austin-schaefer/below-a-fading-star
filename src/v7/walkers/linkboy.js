@@ -22,6 +22,7 @@ import { SITES, LANDMARKS } from '../../world.js';
 import { nearestLead } from '../../v4/paths/routes.js';
 import { buildShadowDisc } from './shadow.js';
 import { angDiff, approach } from '../../fauna/uncanny/kit.js';
+import { LIVERY, lv, stole, badge, collar } from '../../v8/livery.js';
 
 const H = 1.7, WALK = 3.6, SLOW = 1.1, GAP = 10, GAP_HURRY = 5, NEAR = 12, FAR = 40, HEAD = 60, AWAY = 10, LOST_T = 6, ASIDE = 2, ASIDE_T = 20, PASS = 4, COOL = 300;
 // the light: between PALETTE.ember (#e8591a) and the Kept Fire's #ff8a3a, half its 22 cd, reach 14 m
@@ -30,7 +31,7 @@ const SH_R = [-0.19, 1.34, 0.0], SH_L = [0.19, 1.34, 0.0];
 const HAND_R = [-0.25, 1.36, 0.22], HAND_L = [0.22, 0.8, 0.03];
 const KNEE = [[0.085, 0.5, 0.0], [-0.085, 0.5, 0.0]];
 const LINK_TOP = 0.56; // the link's head above the hand
-const COAT = '#14110f', COAT_HI = '#1f1914', HOSE = '#1b1613', BOOT = '#0d0b09', SKIN = '#715649', HAIR = '#0e0b0a', WOOD = '#1d140d', TOW = '#2a1a10';
+const COAT = lv('#14110f', LIVERY.coat), COAT_HI = lv('#1f1914', LIVERY.coatHi), HOSE = lv('#1b1613', '#24262b'), BOOT = '#0d0b09', SKIN = '#715649', HAIR = '#0e0b0a', WOOD = '#1d140d', TOW = '#2a1a10';
 const PARTS = 6; // 0 body, 1 left shin, 2 right shin, 3 left arm, 4 right arm, 5 the link
 
 function table(tab, v) {
@@ -51,7 +52,22 @@ function paint(n2, low) {
     o[0] = Math.cos(a) * r * fold; o[1] = y + (v < 0.01 ? 0.01 * Math.sin(a * 7) : 0); o[2] = side * r * lerp(0.75, 0.6, smoothstep(0.6, 0.95, v)) * fold + 0.015 * v;
   }, false, false);
   P.hem(0);
-  P.paint(COAT, 0, 0.95); P.lathe(0, 1.4, 0.0, [[0.085, 0], [0.075, 0.07], [0.08, 0.1]], low ? 8 : 12); // the collar up
+  if (!LIVERY.on) { P.paint(COAT, 0, 0.95); P.lathe(0, 1.4, 0.0, [[0.085, 0], [0.075, 0.07], [0.08, 0.1]], low ? 8 : 12); } // the collar up
+  else {
+    // v8-06 the livery: the Heliarch collar; a stole made for a bigger man, its ends down to his boots and dragging,
+    // and a badge too big for his chest
+    collar(P, 0, 1.39, 0.0, 0.085, 0.14, COAT, { sides: low ? 10 : 12, gap: 0.5 });
+    const front = (y) => { const v = clamp((y - 0.42) / 0.98, 0, 1); return table(R_COAT, v) * lerp(0.75, 0.6, smoothstep(0.6, 0.95, v)) * 1.08 + 0.015 * v + 0.014; };
+    for (const sx of [-1, 1]) {
+      const ys = [1.42, 1.3, 1.12, 0.92, 0.72, 0.52, 0.34, 0.16, 0.03];
+      const pts = ys.map((y, i) => [sx * (0.085 + 0.006 * i), y, i === 0 ? 0.08 : y > 0.42 ? front(y) : front(0.42) + 0.02 + (0.42 - y) * 0.25]);
+      pts.push([sx * 0.13, 0.012, pts[pts.length - 1][2] + 0.12]); // the end on the ground before him
+      stole(P, pts, { w: 0.125, out: [0, 0.2, 1], seed: sx + 5, dirt: 0.35, fray: 0.05, each: (t) => P.hem(t > 0.4 ? (t - 0.4) * 0.7 : 0) });
+    }
+    P.hem(0);
+    stole(P, [[-0.075, 1.42, 0.08], [-0.13, 1.44, 0.0], [-0.09, 1.45, -0.09], [0.09, 1.45, -0.09], [0.13, 1.44, 0.0], [0.075, 1.42, 0.08]], { w: 0.14, out: (t, p) => [p[0], 0.3, p[2]], fray: 0, dirt: 0, seed: 11 });
+    badge(P, [0, 1.25, front(1.25) + 0.02], [0, 1, 0], [0, 0.1, 1], 0.15, { th: 0.012 });
+  }
   P.paint(SKIN, 0, 0.8); P.blob(0, 1.56, 0.012, 0.07, 0.095, 0.085, low ? 8 : 10, 6);
   P.blob(0, 1.53, 0.09, 0.01, 0.013, 0.016, 4, 3);
   P.paint(HAIR, 0, 0.9); P.blob(0, 1.6, -0.005, 0.075, 0.07, 0.088, low ? 8 : 10, 5);

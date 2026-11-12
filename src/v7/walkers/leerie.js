@@ -16,6 +16,7 @@ import { clamp, smoothstep, lerp, hyp } from '../../noise.js';
 import { Gait, figurePainter, figureMesh, rootMatrix, about, hang, point, easeYaw, standGround, TAU, DEG } from './gait.js';
 import { SITES } from '../../world.js';
 import { LEERIE } from '../../v5/lights.js';
+import { LIVERY, lv, stole, badge, collar } from '../../v8/livery.js';
 
 const H = 1.8, SPEED = 0.9, SIDE = LEERIE.side - 0.6;
 const T_RAISE = 1.2, T_HOLD = 1.5, T_WAIT = 1.0, T_LOWER = 1.0, T_TURN = 2.5;
@@ -24,7 +25,7 @@ const SH_R = [-0.21, 1.43, 0.0], SH_L = [0.21, 1.43, 0.0];
 const HAND_R = [-0.25, 1.13, 0.3], HAND_L = [0.24, 0.84, 0.04];
 const ARM_RAISE = -0.5; // rad, the right arm forward and up as the pole goes up
 const REST = { rx: 10 * DEG, ry: Math.atan2(0.25, 3) }; // the pole carried low before him, its tip on his line
-const COAT = '#16120f', COAT_HI = '#211913', SKIN = '#6a5246', CAP = '#0f0c0b', BRASS = '#8a6a32', BRASS_D = '#4a3618';
+const COAT = lv('#16120f', LIVERY.coat), COAT_HI = lv('#211913', LIVERY.coatHi), SKIN = '#6a5246', CAP = '#0f0c0b', BRASS = '#8a6a32', BRASS_D = '#4a3618';
 const PARTS = 4; // 0 body, 1 left arm, 2 right arm, 3 the pole
 
 function table(tab, v) {
@@ -47,9 +48,29 @@ function paint(n2, low) {
   }, false, false);
   P.hem(0);
   // a standing collar edged in dull brass, the neck, the head, a close felt cap
-  P.paint(COAT, 0, 0.95);
-  P.lathe(0, 1.44, 0.01, [[0.11, 0], [0.095, 0.08], [0.1, 0.14]], low ? 10 : 14);
-  P.paint(BRASS_D, 0.6, 0.55); P.ring(0, 1.585, 0.01, 0.1, 0.006, low ? 12 : 18, 3);
+  if (!LIVERY.on) {
+    P.paint(COAT, 0, 0.95);
+    P.lathe(0, 1.44, 0.01, [[0.11, 0], [0.095, 0.08], [0.1, 0.14]], low ? 10 : 14);
+    P.paint(BRASS_D, 0.6, 0.55); P.ring(0, 1.585, 0.01, 0.1, 0.006, low ? 12 : 18, 3);
+  } else {
+    // v8-06 the livery: the Heliarch collar (his was the pattern), the stole worn as a sash from the left shoulder to
+    // the right hip, its end hanging; the formal sign its brooch; and at his left hip an oil flask in the Pomegranate
+    // House's ruby lamp glass, which he has not paid for (the tally is on his first standard: src/v8/livery/props.js)
+    collar(P, 0, 1.43, 0.01, 0.1, 0.15, COAT, { sides: low ? 10 : 14, gap: 0.45 });
+    const front = (y) => { const v = clamp((y - 0.04) / 1.43, 0, 1); return table(R_COAT, v) * lerp(0.82, 0.62, smoothstep(0.6, 0.95, v)) * 1.07 + 0.02 * v + 0.012; };
+    const sash = [[0.15, 1.3, -0.14], [0.19, 1.43, -0.04], [0.17, 1.44, 0.07], [0.1, 1.36, front(1.36)], [0.0, 1.24, front(1.24)], [-0.1, 1.12, front(1.12)], [-0.19, 1.0, front(1.0) - 0.04], [-0.235, 0.94, 0.0]];
+    stole(P, sash, { w: 0.13, out: (t, p) => [p[0] * 1.2, 0.35, p[2] + (t < 0.2 ? 0 : 0.05)], fray: 0, dirt: 0, seed: 1 });
+    // the knot at the hip and the end hanging down his right side, swinging with the coat
+    stole(P, [[-0.235, 0.96, 0.02], [-0.25, 0.82, 0.03], [-0.255, 0.66, 0.02], [-0.25, 0.5, 0.0]], { w: 0.11, out: [-1, 0, 0.25], seed: 2, dirt: 0.3, fray: 0.05, each: (t) => P.hem(t * 0.5) });
+    P.hem(0);
+    P.paint(LIVERY.stoleDeep, 0, 0.9); P.blob(-0.235, 0.96, 0.02, 0.05, 0.045, 0.05, 6, 4);
+    badge(P, [0.115, 1.385, front(1.38) + 0.018], [0.25, 1, 0], [0.1, 0.25, 1], 0.085, { th: 0.01 });
+    // the flask: a squat bottle of ruby glass on a thong, a cork
+    P.paint('#8a1c22', 0.1, 0.18, 0.8); P.blob(0.255, 0.9, 0.05, 0.048, 0.06, 0.05, 7, 5);
+    P.paint('#6a1418', 0.1, 0.2, 0.6); P.loft([[0.255, 0.95, 0.05], [0.255, 1.0, 0.05]], [0.016, 0.014], 5, 0, false);
+    P.paint('#5a3a22', 0, 0.9); P.blob(0.255, 1.01, 0.05, 0.016, 0.016, 0.016, 5, 3);
+    P.paint(BRASS_D, 0.4, 0.6); P.loft([[0.255, 1.0, 0.05], [0.24, 1.06, 0.07], [0.22, 1.12, 0.12]], [0.004, 0.004, 0.004], 3, 0, false);
+  }
   P.paint(SKIN, 0, 0.8);
   P.blob(0, 1.66, 0.015, 0.082, 0.1, 0.095, low ? 8 : 10, 6);
   P.blob(0, 1.62, 0.1, 0.012, 0.015, 0.02, 4, 3); // the nose: faces only close

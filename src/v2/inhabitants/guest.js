@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { Painter, paintedMaterial } from '../../fauna/uncanny/kit.js';
 import { smoothstep, clamp } from '../../fauna/geo.js';
+import { LIVERY, patch, lateCloth, wrongSign, tag } from '../../v8/livery.js';
 
 const ROBE = '#0b080b', ROBE_D = '#070507', MANTLE = '#0e0a0d', WIMPLE = '#8c8476', WIMPLE_D = '#6e675b', VOID = '#010101';
 const TAU = Math.PI * 2;
@@ -15,8 +16,15 @@ const TAU = Math.PI * 2;
 // gate is a 3.2 m gap in the north wall.
 const COURT = { x: 95, z: -45, half: 13, basin: 2.5, gateHalf: 1.6 };
 
+// v8-06 the livery: she is Late folk, so her black-violet is patched, dark (she has been standing here a long time):
+// the robe in three cloths, the mantle in two, each kept to the shadow of its colour, and the sign sewn wrong at her breast
+const dim = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+const ROBE_CL = () => [new THREE.Color(ROBE).toArray(), dim(lateCloth('pom'), 0.42), dim(lateCloth('turq'), 0.36)];
+const MANTLE_CL = () => [new THREE.Color(MANTLE).toArray(), dim(lateCloth('saffron'), 0.32)];
 function guestGeometry(low) {
   const P = new Painter(['aSway']);
+  const RC = ROBE_CL(), MC = MANTLE_CL();
+  const cloth = (cl, u, v, o, rough = 0.95) => { const c = patch(P, cl, u, v, o); P.col = c.slice(); P.mre = [0, rough, 0]; };
   const nu = low ? 28 : 40;
   // ---- the robe: pooled at the hem, narrow at the waist, high-shouldered; deep vertical folds
   P.paint(ROBE, 0, 0.96);
@@ -28,7 +36,7 @@ function guestGeometry(low) {
     // a short train behind (-z), the front falling straight
     const train = (Math.sin(a) < 0 ? -Math.sin(a) : 0) * 0.16 * smoothstep(0.25, 0, v);
     P.set('aSway', smoothstep(0.3, 0.0, v) * 0.7);
-    if (v < 0.04) P.paint(ROBE_D, 0, 0.98); else P.paint(ROBE, 0, 0.95);
+    if (v < 0.04) P.paint(ROBE_D, 0, 0.98); else if (LIVERY.on) cloth(RC, u, v, { nu: 7, nv: 4, seed: 3 }); else P.paint(ROBE, 0, 0.95);
     o[0] = Math.cos(a) * r * fold; o[1] = y + (v === 0 ? 0.015 * Math.sin(a * 9) : 0); o[2] = Math.sin(a) * (r * 0.78 * fold + train) + 0.01;
   }, true, true);
   P.set('aSway', 0);
@@ -53,9 +61,11 @@ function guestGeometry(low) {
     const y = 1.56 - v * (0.5 + 0.06 * Math.sin(u * 23) + 0.04 * Math.sin(u * 41 + 1));
     const r = 0.13 + 0.15 * smoothstep(0, 0.35, v) + 0.04 * v;
     P.set('aSway', v * v * 1.3);
+    if (LIVERY.on) cloth(MC, u, v, { nu: 6, nv: 2, seed: 4 }, 0.94);
     o[0] = Math.cos(a) * r * 1.05; o[1] = y; o[2] = Math.sin(a) * r * 0.86 + 0.0;
   });
   P.set('aSway', 0);
+  if (LIVERY.on) wrongSign(P, [0.07, 1.22, 0.225], [0, 1, 0], [0.1, 0.1, 1], 0.075, { tilt: 0.3 });
   const bow = new THREE.Matrix4().makeTranslation(0, 1.48, 0).multiply(new THREE.Matrix4().makeRotationX(0.2)).multiply(new THREE.Matrix4().makeTranslation(0, -1.48, 0));
   // ---- the wimple: a gorget wrapped about the throat and chin, a short bib at the breast, and a pale
   // band framing the face, so that what shows in the hood is an oval of linen round nothing
@@ -108,7 +118,7 @@ function guestGeometry(low) {
     o[0] = Math.cos(a) * r * (1 + 0.04 * lip); o[1] = y; o[2] = Math.sin(a) * r * 1.08 + 0.02 + lip * 0.04 + peak;
   });
   P.xf(null);
-  return P.geometry();
+  return tag(P.geometry(), P, 'late');
 }
 
 // The flush: a full-screen quad of our own, drawn last over the scene. post.js has its own vignette
