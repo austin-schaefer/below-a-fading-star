@@ -1,6 +1,7 @@
 # Salt for news
 
-- **State:** partial
+- **Kind:** plain
+- **State:** partial (no turn)
 - **Someone:** the Salt-Pedlars, and the Twk-men (thumb-high riders on dragonflies) who trade news for salt
 - **Places:** the Salt-Pedlars' road from the Saltings to the Pomegranate House; a split sack on it; the Twk-men's cache
 - **Touches:** `the-traveller-on-the-span.md` (the road passes under the Span); the house

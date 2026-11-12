@@ -31,7 +31,7 @@ Your context does not survive. Sessions end, conversations are summarised, and t
 Nobody hands you a backlog. Between milestones, look before you plan:
 
 - **Walk it.** Take renders along a route a first-time visitor would walk and look at every one. Listen with the audio survey. What is dull, what is broken, what is the best thing here and why isn't there more of it?
-- **Read the library.** `stories/README.md`: which stories are `weak` or `partial`, which people have no story yet, which loose ends are open (the `storytelling` skill). The next beat of a story that exists is often the best idea available.
+- **Read the library.** `stories/README.md`: which stories are partial or fall short, which people have no story yet, which loose ends are open (the `storytelling` skill). The next beat of a story that exists is often the best idea available.
 - **Read the critic's last report** and the idea banks (`plans/IDEAS*.md`). Add your own ideas to the bank as you have them; it is yours to grow and prune.
 - **Read `RELEASES.md` as an arc.** What has the piece been becoming? What has it been avoiding?
 - **Check for the owner's word:** issues they authored, anything they added to a Status section. It outranks your plan.

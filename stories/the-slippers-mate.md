@@ -1,5 +1,6 @@
 # The slipper's mate
 
+- **Kind:** plain
 - **State:** partial (two ends, no turn)
 - **Someone:** a patron of the Pomegranate House, asleep
 - **Places:** the causeway (one brocade slipper, since v5); the Pomegranate House, under the table by the bronze door

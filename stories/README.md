@@ -4,14 +4,16 @@ The world's library: what has happened in this country, one file a story. Read i
 
 Anyone may add a story, add a beat to another's, or repair one, and says so in that story's Log. A story's file is kept true to what is built in the same commit that builds or changes it.
 
-| Story | State | Someone | Places | Touches |
-|---|---|---|---|---|
-| [The traveller on the Span](the-traveller-on-the-span.md) | weak: the body cannot be found from the deck | a careful man in a saffron cloak | the Great Span, the slope below | Salt for news |
-| [The painter who could not paint the sun](the-painter.md) | built | a proud landscape painter | the tracks to the Unfinished Prospect | (the twelfth chair, by a medlar core) |
-| [The twelfth chair](the-twelfth-chair.md) | weak: reads as a missing chair; a repair is written | nobody yet | the Collation, the Sexton's graves | the Sexton |
-| [The gold from the court](the-gold-from-the-court.md) | built | a jackdaw | the Sunken Court, the Wayside Shrine | the sign of the sun; the moles |
-| [The slipper's mate](the-slippers-mate.md) | partial: no turn | a sleeper at the Pomegranate House | the causeway, the house | the house's people |
-| [Salt for news](salt-for-news.md) | partial: no turn | the Salt-Pedlars and the Twk-men | the pedlars' road | the traveller; the house |
+| Story | Kind | State | Someone | Places | Touches |
+|---|---|---|---|---|---|
+| [The traveller on the Span](the-traveller-on-the-span.md) | plain | built, but the body cannot be found from the deck | a careful man in a saffron cloak | the Great Span, the slope below | Salt for news |
+| [The painter who could not paint the sun](the-painter.md) | plain | built | a proud landscape painter | the tracks to the Unfinished Prospect | (the twelfth chair, by a medlar core) |
+| [The twelfth chair](the-twelfth-chair.md) | deep | built; a plainer surface is written, optional | one of twelve diners, dead, and the eleven | the Collation, the Sexton's graves | the Sexton |
+| [The gold from the court](the-gold-from-the-court.md) | plain | built | a jackdaw | the Sunken Court, the Wayside Shrine | the sign of the sun; the moles |
+| [The slipper's mate](the-slippers-mate.md) | plain | partial: no turn | a sleeper at the Pomegranate House | the causeway, the house | the house's people |
+| [Salt for news](salt-for-news.md) | plain | partial: no turn | the Salt-Pedlars and the Twk-men | the pedlars' road | the traveller; the house |
+
+Five plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 

@@ -1,5 +1,6 @@
 # The gold from the court
 
+- **Kind:** plain
 - **State:** built
 - **Someone:** a jackdaw, a thief with taste
 - **Places:** the Sunken Court's west floor; the track from it; a mole heap by the causeway; the Wayside Shrine

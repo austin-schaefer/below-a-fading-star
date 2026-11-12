@@ -1,5 +1,6 @@
 # The painter who could not paint the sun
 
+- **Kind:** plain
 - **State:** built
 - **Someone:** a landscape painter, proud, in a smock stiff with every colour he has thrown away
 - **Places:** four abandoned easels along the tracks to the Unfinished Prospect; the Prospect; the painter himself east of it

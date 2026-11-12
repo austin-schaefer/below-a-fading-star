@@ -1,6 +1,7 @@
 # <The story's name>
 
-- **State:** seed | written | partial | built | weak
+- **Kind:** plain (readable from what is there) | deep (needs context a visitor may not have)
+- **State:** seed | written | partial | built, with a note if it does not do what it was meant to
 - **Someone:** <who it is about, as the visitor could picture them>
 - **Places:** <where its beats are>
 - **Touches:** <other stories, by file, and the figures or peoples it shares with them>
@@ -13,11 +14,15 @@
 
 | # | Where (place, position, the view it reads from) | What the visitor finds | What it tells them alone | What points on to the next | State |
 |---|---|---|---|---|---|
-| 1 | | | | | written / built / weak |
+| 1 | | | | | written / built (and a note if it falls short) |
+
+## What it ties together
+
+<For the next agent: what in the world this story makes belong together, and what could be built from it.>
 
 ## What the visitor never learns
 
-<The thing left out on purpose.>
+<Optional: anything left out on purpose.>
 
 ## Open threads
 
