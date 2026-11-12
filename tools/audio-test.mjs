@@ -62,6 +62,7 @@ const CUES = [
   // v10-A2 the story acts (src/v10/sound-stories.js)
   ['act-glasses', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 8000],
   ...(process.env.SALT === '1' ? [['act-pinch', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-tribute', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 2500]] : []), // salt for news is shelved (?salt=1)
+  ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { dur: 1.55, bar: true }, 1200, 1000], ['act-winch', { dx: 2, dy: -0.5, dz: -2.5 }, { dur: 3, rate: 1.4 }, 1500, 2500], ['act-murmur', { dx: 0.8, dy: 0, dz: -0.6 }, null, 1200, 1000], // v10-A4 the Halt's seat
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
