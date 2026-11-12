@@ -21,7 +21,7 @@ Your context does not survive. Sessions end, conversations are summarised, and t
    - **Agents running, nothing blocked:** leave them alone.
    - **An agent finished:** check its work and merge it into `next` (the `wilderness` skill's Hand-back).
    - **A batch is in:** dispatch the next one.
-   - **The milestone is done:** run the gate (`tools/suite.sh`), the critic (below) and the curator, write the `RELEASES.md` entry (for a visitor, per the `orchestrator` skill's `release-notes.md`), add the milestone's line to `README.md` (below), release to `main`, then publish the entry as the GitHub release (`tools/gh-release.sh <version>`).
+   - **The milestone is done:** run the gate (`tools/suite.sh`), the critic (below) and the curator, write the `RELEASES.md` entry (for a visitor, per the `orchestrator` skill's `release-notes.md`), add the release's line to `README.md` (below), release to `main`, then publish the entry as the GitHub release (`tools/gh-release.sh <version>`).
    - **Nothing is open:** choose the next milestone (below) and open it. This is the normal case after a release, not a reason to stop.
    - **Something is blocked:** write it in Status, route around it, keep the rest moving.
 4. Before the wake ends, add a dated entry to the milestone doc's Status: what happened, what is in flight (agent, branch, worktree, port), what comes next. Write it for a reader with no memory of this session. Commit and push it on `next`.
@@ -46,7 +46,7 @@ Then pick one thing and commit to it. Some guidance on picking:
 
 Write the milestone doc (`plans/wilderness-v<N>.md`: what a visitor should notice, done when, Status) and its `briefs/v<N>/index.md`. Then dispatch.
 
-`README.md` is the owner's, written by hand for people who find the repository. It lists what shipped, not what is planned, so a milestone gets its line there only when it is released: `- v<N>, <its docs>: <one plain sentence>.` Write the sentence the way the owner wrote the others, as you would say it to a stranger ("Another performance improvement spike."), not in the voice of the milestone docs ("nothing pops"). Touch nothing else in that file.
+`README.md` is the owner's, written by hand for people who find the repository. It lists what shipped, not what is planned, and its Milestones list mirrors `RELEASES.md`: every release, a hotfix included, has one line there, newest first, with the entry's own title linked to its GitHub release: `- [v<N>: <the entry's title>](https://github.com/<owner>/<repo>/releases/tag/v<N>). <One plain sentence.>` The line goes in with the `RELEASES.md` entry, in the release PR, and `tools/release-check.sh` (in the gate) fails if the two are out of step. Write the sentence the way the owner wrote the others, as you would say it to a stranger ("Another performance improvement spike."), not in the voice of the milestone docs ("nothing pops"). Touch nothing else in that file.
 
 ## Judging work nobody has looked at
 
