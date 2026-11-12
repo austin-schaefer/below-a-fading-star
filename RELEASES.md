@@ -12,7 +12,7 @@ A second pass over the mountains, for the things the last release left weak: the
 
 ### Fixed
 
-- **The rock was plain up close**: Walk to the foot of the mountains and the cliff was a smooth painted slope. It is now cracked into blocks, with pale scars where rock has fallen away, patches of lichen, and loose stone lying on the slope below.
+- **The rock was plain up close**: Walk to the foot of the mountains and the cliff was a smooth painted slope. It now has cracks and joints in the face, pale scars where rock has fallen away, patches of lichen, and loose stone lying on the slope below.
 - **The mountains toward the sun were smooth**: The southern mountains, beside the setting sun, washed out in its glare. Their ribs and gullies now show through the haze.
 - **The north-east wall was one flat face**: The wall under the Battlemented Ridge, the Gradine (the great stair) and the Vigilant (the giant seated on the crest) now has buttresses, a deep notch in its skyline, and a rib that the stair climbs.
 - **The Horn was a finger**: The tallest peak, in the south-east, is now a pyramid with a broad base and a long shoulder.
@@ -25,7 +25,7 @@ A second pass over the mountains, for the things the last release left weak: the
 - The three releases merged without a second reader last time were read cold; nothing serious was found.
 - The front page of the repository gets one picture for every major release, and the release tests now fail if one is missing.
 
-Known issues: from the middle of the valley the north-east wall still reads as a wall; its new shape shows best from the moor and the ice. You cannot walk close enough to the city of windows to see its rooms well. The yellow sparks that mark things to do are still hard to see where other lights are near.
+Known issues: up close the rock is better but still plainer than it should be, and from far off the cliffs can still look smooth. From the middle of the valley the north-east wall still reads as a wall; its new shape shows best from the moor and the ice. You cannot walk close enough to the city of windows to see its rooms well. The yellow sparks that mark things to do are still hard to see where other lights are near.
 
 <p><img src="shots/78-wall-close-before.webp" width="24%" alt="Before: the foot of the mountain wall, a smooth slope"> <img src="shots/78-wall-close-after.webp" width="24%" alt="After: the same view, cracked rock on the face and loose stone below"> <img src="shots/78-ne-wall-from-the-moor.webp" width="24%" alt="The north-east wall from the moor, with buttresses and a deep notch in its skyline"> <img src="shots/78-lamps-near.webp" width="24%" alt="The city of windows from below: framed windows and lanterns climbing a ravine"></p>
 

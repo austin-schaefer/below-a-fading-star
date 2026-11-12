@@ -643,7 +643,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `77-mountains-spawn-y1-before.webp` | Before: the same view with the ruled wall and the Galleries hung on it. |
 | `78-lamps-near.webp` | The Escarpment Lamps from 100 m below: framed windows, arches and shutters, lanterns along the ledge. |
 | `78-ne-wall-from-the-moor.webp` | The north-east wall from the moor: buttresses, a deep notch, the Vigilant on its shoulder. |
-| `78-wall-close-after.webp` | After: the foot of the wall at a grazing angle; cracked blocks on the face, loose stone on the apron. |
+| `78-wall-close-after.webp` | After: the foot of the wall at a grazing angle; jointed rock on the face, loose stone on the apron. |
 | `78-wall-close-before.webp` | Before: the same view, the face and the apron smooth. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
