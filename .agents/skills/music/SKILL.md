@@ -31,7 +31,7 @@ Why it is built this way: the sound harness (`sound-design`) renders in a browse
 1. `node tools/music-score.mjs <track> --roll` (or `all`, or a path). Read the header line (phrases and their sizes, the shortest rest, the motif found), the gate table, and the roll.
 2. Read the roll as a musician reads a page: is there a shape (a rise and fall in each phrase, a middle where something changes, an ending that comes home)? Do the rests look like rests? Does the lead stay in a narrow band and step? Does the pad move rarely? `--from=40 --to=80` to look closer, `--res=1` to see the whole piece at once.
 3. Change one thing in the track's data, run again (milliseconds), compare. Try a few seeds (`--seed=n`) to see whether a pass is the track or luck; the moor passes at 94 of seeds 1-100 and the shipped seed is fixed, so the visitor always hears the one you judged.
-4. Green, and the roll reads, then render once (v9-M1's tool) and meet the audio gates. `--json` gives everything to another tool.
+4. Green, and the roll reads, then render once (`tools/music-render.mjs`, below) and meet the audio gates. `--json` gives everything to another tool.
 5. Hand-back: the table, the first 40 s of the roll, what you listened for in your head and why, and what the owner should listen for in the WAV.
 
 `node tools/music-score-selftest.mjs` checks the tool itself (60 checks); both are in `tools/suite.sh`.
@@ -63,9 +63,29 @@ Why it is built this way: the sound harness (`sound-design`) renders in a browse
 
 Changed from the index's first design: phrase rests are judged as a band (a silence of 2 s or more ends a phrase; none may fall 2-4 s), the rough check needs 0.25 s of overlap (a release brushing the next note is not a chord), "held" means 0.5 s or more, and the motif is found from the notes rather than declared, so a hand-written track is judged the same way.
 
+## The render (v9-M1)
+
+`nice -n 10 node tools/music-render.mjs <track|all> [--wav] [--q=low] [--solo=voice,...] [--patches=fixture.js]` composes the track, plays it through the real `patches.js` and `player.js` into an `OfflineAudioContext` on a blank headless page (no server, no world; about 40x real time, the moor in under 10 s with its checks), and prints text: the stem's loudness, peak, a band-energy table, roughness by octave band, and PASS/FAIL lines. `--wav` writes `shots/wip/music-<track>.wav` (gitignored) at the stem's own level, for the owner. `--solo` renders only some voices, to find which one a number comes from. It is in `tools/suite.sh`.
+
+| gate | band | protects against |
+|---|---|---|
+| loudness | -38 to -32 LUFS [moor -35.3] | a stem louder than the bed it sits under, or lost in it. The balance between patches is set in `patches.js` (`STEM_LEVEL`, the patch gains) |
+| peak | <= -12 dBFS [-27.7] | a struck note or a stacked chord that will hit the limiter |
+| clicks | 0 [0] | a gated envelope, a jump on an audible parameter, a voice retuned while sounding. Judged on a copy raised to a -6 dBFS peak (the detector has an absolute floor) |
+| sharp_db | < -16 [-32.1] | energy in 2-5 kHz: bright partials, bare saws, hiss |
+| rough | < 0.15 [0.12] | buzz: bare saws, beating partials |
+| notes without a voice | 0 | a track that needs more than the pool's 10 voices at once |
+| ducked and stopped mid-note | clicks 0, silent after, ended | a track that cannot be interrupted (the director fades it out for every gutter) |
+| live | playing at ~3 s, stop(0.5) ends | the AudioContext path: the one timer, the 2 s lookahead |
+
+What the numbers mean here, learned on the moor:
+- **The roughness meter reads harmony as rough.** It was built for noise beds: any two tones 15-300 Hz apart in one octave band show as envelope modulation (a pure D4-A4 fifth reads 0.36), and a lone tone under 150 Hz (D3 itself: the 1 ms power envelope keeps its 2f ripple) reads 0.43. So `rough` is mostly the share of the stem's energy that is chords. The moor passes with the pad and organ about 16 dB under the flute (pad solo -51 LUFS, flute solo -35); louder, and it fails. A new track with a busier pad will meet this first: keep the chord-bearing voices under a monophonic lead, or fix the meter (a partial-based dissonance measure) rather than thin the harmony to pass.
+- **The click detector sees a near-noiseless sum of tones as clicky.** Without a noise floor its linear predictor flags the curve corners of envelopes at 5x as candidates, and a long file finds chance "seams" among them. The tape's hiss (about 50 dB under the music) is what keeps it honest; real clicks read far higher (the click fixture: 161 clicks, ratios to 20x).
+- **The bad patches** (`tools/music-fixtures/patches-click.js`, a flute gated with setValueAtTime; `patches-saw.js`, a pad of bare saws at the lead's level): the click flute fails clicks (161), rough and loudness; the saw pad fails clicks (1444, the saw's own wrap), sharp_db (-15.4) and rough (0.46). Run them after changing a meter or a gate: both must still fail.
+
 ## What the gates cannot tell you, so be conservative there
 
-- **Timbre and level.** The score says nothing about how the flute sounds, whether the pad's saws are harsh, or whether the stem sits under the bed. That is v9-M1's render and its LUFS, sharpness and roughness meters. Keep patches dark and soft; the stem goes under the wind.
+- **Timbre and level.** The score says nothing about how the flute sounds, whether the pad's saws are harsh, or whether the stem sits under the bed. That is the render's job (above). Keep patches dark and soft; the stem goes under the wind.
 - **Partials.** Roughness is checked on fundamentals. Two pad notes a fifth apart are clean; their upper harmonics can still beat. Prefer open fifths and octaves in the pad, nothing denser than a triad in the low register, and do not stack thirds below D4.
 - **Taste.** A green track can still be dull, or sweet. Read the roll for shape; keep the moor's restraint as the reference; ask yourself whether it sounds old. When unsure, take a note out.
 - **The world's moment.** The gates do not know the gutter, the walker or the other sounds playing. Keep tracks interruptible and quiet; leave the timing to the director.
