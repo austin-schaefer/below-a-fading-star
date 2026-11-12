@@ -110,7 +110,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 3 + 18 - 1 + 8, n);
+  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the Escarpment Lamps, the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 3 + 18 - 1 + 8 + 1, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -130,7 +130,9 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const tz = pl.look === 'sun' ? sun.z : pl.look ? pl.look.z - p.pos.z : Math.cos(pl.yaw) * -1;
       const l = Math.hypot(tx, tz) || 1;
       const wl = T.waterLevelAt(p.pos.x, p.pos.z), inCol = fp.player.colliders.some((c) => Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < c.r + 0.3 && !(c.h !== undefined && c.y + c.h < Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1))); // (a collider under the deck is not one you stand in)
-      return { name: pl.name, q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? T.heightAt(p.pos.x, p.pos.z)) /* v8-04: a story end on the deck */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
+      // v11-F2: never stand in a hole: the mean of the ground in a 30 m ring against the ground underfoot (the Pit's old entry stood 29 m down)
+      let ring = 0; for (let k = 0; k < 16; k++) ring += T.heightAt(p.pos.x + 30 * Math.cos(k * Math.PI / 8), p.pos.z + 30 * Math.sin(k * Math.PI / 8)); const basin = ring / 16 - T.heightAt(p.pos.x, p.pos.z);
+      return { name: pl.name, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? T.heightAt(p.pos.x, p.pos.z)) /* v8-04: a story end on the deck */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
     detail.push(r);
     if (r.d > 1) allNear = false;
@@ -143,6 +145,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: none inside a collider or under water', detail.every((r) => !r.wet && !r.inCol), bad);
   check('teleport: all land within 1 m of their stand point', allNear, bad);
   check('teleport: eye on the ground (heightAt + eye)', allGround, bad);
+  check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || r.name === 'The Speculum') && r.above > 0.5), detail.filter((r) => (r.basin > 6 && r.name !== 'The Speculum') || r.above <= 0.5)); // (the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);
