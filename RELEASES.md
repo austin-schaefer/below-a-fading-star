@@ -20,6 +20,8 @@ The mountains that ring the valley are in almost every view, and they have looke
 - **Every mountain was the same smooth hump**: Each now has its own outline, with peaks, notches, a steep side and a long side, and spurs running down toward the valley. The far ranges behind them were flat cut-outs and are now ridged ranges catching the sun.
 - **The mountains fought with everything in front of them**: Away from the sun they now sit back in cool haze, so the keep, the bridge and the ruins stand out against them.
 - **Two big square things side by side on the west wall**: The Galleries of Durance (old iron walkways bolted to the cliff) have the wall to themselves, and are no longer a rectangle: a ragged stack of tiers with one long arm reaching out along the rock and a run that has fallen away.
+- **Places in the settings menu that dropped you somewhere useless**: The Pit's entry stood you at the bottom of the pit, and several others faced a wall or an empty slope. Each now shows its place, and the city of windows has an entry of its own.
+- **The bell's flash**: Ringing the bell under the Great Span threw up a hard-edged box of light. It is a soft drift of dust now.
 - **Loading is a little faster**: the ground and mountains are built about a fifth quicker than before.
 
 ### Behind the scenes
@@ -27,9 +29,9 @@ The mountains that ring the valley are in almost every view, and they have looke
 - The release tests now measure the mountains for ruled lines and folded rock, in the shape of the ground and in two pictures, so the old look cannot come back unnoticed.
 - Each change to the mountains was shown to a reviewer who was told nothing and asked what looked artificial. The first version without the lines came back as "smooth plasticine", and was sent round again.
 
-Known issues: the mountains toward the sun are still smoother than the rest. Up close, at the foot of a cliff, the rock is plain. The city's windows are flat squares of light if you get near them.
+Known issues: the mountains toward the sun are still smoother than the rest. Up close, at the foot of a cliff, the rock is plain. The city's windows are small squares of light if you get near them. The yellow sparks that mark things to do are still hard to see where other lights are near (the long table, the tomb door).
 
-<p><img src="shots/77-mountains-high-y0-before.webp" width="24%" alt="Before: the mountains from above the valley, their faces ruled with horizontal lines"> <img src="shots/77-mountains-high-y0-after.webp" width="24%" alt="After: the same view, the faces now weathered rock under sharper peaks"> <img src="shots/77-mountains-foreland-y2-after.webp" width="24%" alt="From the ice field at walking height: jagged mountains across the valley, paler ranges behind"> <img src="shots/77-lamps-400-after.webp" width="24%" alt="The city of windows climbing a ravine above the arches of the Great Span"></p>
+<p><img src="shots/77-mountains-high-y0-before.webp" width="24%" alt="Before: the mountains from above the valley, their faces ruled with horizontal lines"> <img src="shots/77-mountains-high-y0-after.webp" width="24%" alt="After: the same view, the faces now weathered rock under sharper peaks"> <img src="shots/77-mountains-foreland-y2-after.webp" width="24%" alt="From the ice field at walking height: jagged mountains across the valley, paler ranges behind"> <img src="shots/77-lamps-400-warm.webp" width="24%" alt="The city of windows climbing a ravine above the arches of the Great Span"></p>
 
 ## v10: Things to do
 

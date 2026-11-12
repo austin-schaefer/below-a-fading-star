@@ -620,7 +620,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `77-galleries-150-after.webp` | The Galleries of Durance from 150 m: the scaffold climbing its ragged crag, lamps in the cages. |
 | `77-galleries-400-after.webp` | The Galleries from 400 m at dusk, now a broken outline against the sun, not a block. |
 | `77-galleries-highling-y1-after.webp` | The Galleries alone from the highling, with the Lamps' first windows at the left edge (round two). |
-| `77-lamps-400-after.webp` | The Escarpment Lamps from 400 m: a city of windows scattered over the south massif above the Great Span. |
+| `77-lamps-400-after.webp` | The Escarpment Lamps from 400 m: a city of windows scattered over the south massif above the Great Span, in round three's lilac and white. |
+| `77-lamps-400-warm.webp` | The same view as shipped: the windows in ember and amber after the critic called the lilac squares UI. |
 | `77-lamps-causeway.webp` | The Lamps seen over the Span's arches from the causeway, the mountain's own outline against the sky. |
 | `77-lamps-400-sparks-failed.webp` | The Lamps' round one: a few faint sparks on the rock, not a city. Failed; kept for the record. |
 | `77-lamps-span-deck.webp` | The Lamps from the Span's deck: lit windows in tiers and rows climbing the massif. |
