@@ -16,7 +16,7 @@ export const SIGN = { tan: TAN, discUp: 0.163, discR: 0.488 };
 const c = (h) => new THREE.Color(h);
 export const COLORS = {
   elder: { stone: c('#86796a') },
-  heliarch: { stone: c('#8c8592'), dark: c('#6e6878'), bronze: c('#3f6a5a'), bronzeDark: c('#4a3a22'), carve: c('#2a2430'), ember: [0.95, 0.26, 0.05] },
+  heliarch: { stone: c('#8c8592'), dark: c('#6e6878'), bronze: c('#3f6a5a'), bronzeDark: c('#4a3a22'), bronzeDull: c('#6a4e30'), carve: c('#2a2430'), cut: c('#16121a'), ember: [0.95, 0.26, 0.05] },
   late: {
     plaster: [c('#e9dcc0'), c('#e6b8a0'), c('#e8c070'), c('#efe8da')], // cream, rose, saffron, limewash
     tile: [c('#1f9a92'), c('#b3263a'), c('#2b4fa6'), c('#ece4d0'), c('#e0a32a')], // turquoise, pomegranate, cobalt, white, saffron
@@ -41,6 +41,12 @@ function notchedShape(w, h, S, cup = 0) {
     sh.absarc(0, cy, cup, -ang, -Math.PI + ang, true);
   } else sh.lineTo(0, h - S);
   sh.lineTo(-a, h); sh.lineTo(-w / 2, h); sh.lineTo(-w / 2, 0);
+  return sh;
+}
+// the lining of a notch of depth S cut in the top of a block h high: a band t thick (across the flank) down each side
+function notchCutShape(h, S, t) {
+  const a = S * TAN, k = t / Math.cos((35 * Math.PI) / 180), sh = new THREE.Shape();
+  sh.moveTo(-a, h); sh.lineTo(0, h - S); sh.lineTo(a, h); sh.lineTo(a + k, h); sh.lineTo(0, h - S - k * 1.22); sh.lineTo(-a - k, h); sh.lineTo(-a, h);
   return sh;
 }
 // a crescent, horns up, outer radius R: the inner circle (radius k R) raised by u R
@@ -92,20 +98,25 @@ function elderBlock(B, M, o = {}) {
 // ---------------------------------------------------------------- the Heliarchy: formal, exact, bronze and ember glass
 // roundel: the sign as the Heliarchy carved it, a disc set in an exactly notched head, with a moulded base and a bronze
 // ring round the disc. o: size (0.8, the head's width), disc 'ember' | 'bronze'. Origin at the foot of the head.
+// Read from the road (v8-09): the notch is deep (0.5 of the width), its flanks lined with a dark cut that stands just
+// proud of the face, so the V reads as a V beyond 10 m; the ember disc is dull bronze glass by day and glows only as
+// the sun gutters (strata.js tick: channel 0's glow is near nothing in full sun).
 function heliRoundel(B, M, o = {}) {
   const g0 = M.elements[13];
-  const H = COLORS.heliarch, s = o.size ?? 0.8, d = s * 0.22, h = s * 0.62, S = s * 0.42;
+  const H = COLORS.heliarch, s = o.size ?? 0.8, d = s * 0.22, h = s * 0.66, S = s * 0.5;
   const base = { color: H.stone, moss: 0.25, ground: g0 - 2 };
   // the base moulding: a plinth and a fillet
   B.add(B.box(s * 1.12, s * 0.09, d * 1.25), ch(M, 0, s * 0.045, 0), { ...base, color: H.dark });
   B.add(B.extrude(notchedShape(s, h, S), d, 4), ch(M, 0, s * 0.09, 0), base);
+  // the notch's cut: a dark band down each flank, through the head
+  B.add(B.extrude(notchCutShape(h, S, s * 0.05), d + 0.012, 1), ch(M, 0, s * 0.09, 0), { color: H.cut, moss: 0, ground: g0 - 2 });
   // a carved hexagon at each shoulder, the Heliarchy's everyday motif
-  for (const sx of [-1, 1]) B.add(B.cyl(s * 0.07, s * 0.07, 0.012, 6, 1), ch(M, sx * s * 0.36, s * 0.09 + h * 0.5, d / 2 + 0.004, Math.PI / 2, 0, 0), { color: H.carve, moss: 0.1, ground: g0 - 2 });
+  for (const sx of [-1, 1]) B.add(B.cyl(s * 0.07, s * 0.07, 0.012, 6, 1), ch(M, sx * s * 0.39, s * 0.09 + h * 0.45, d / 2 + 0.004, Math.PI / 2, 0, 0), { color: H.carve, moss: 0.1, ground: g0 - 2 });
   const cy = s * 0.09 + h + SIGN.discUp * S, r = SIGN.discR * S;
   // the tablet it is cut from, behind it and darker, so the notch reads against any wall: the sky's hollow
   const th = cy + r * 1.35 - s * 0.09;
-  B.add(B.box(s * 1.04, th, 0.04), ch(M, 0, s * 0.09 + th / 2, -d / 2 - 0.018), { color: H.carve.clone().lerp(H.dark, 0.45), moss: 0.1, ground: g0 - 2 });
-  const discOpts = o.disc === 'bronze' ? { color: H.bronze, moss: 0, ground: g0 - 2, iron: 0 } : { color: c('#4a1a08'), moss: 0, ground: g0 - 2, emit: [...H.ember, 0] };
+  B.add(B.box(s * 1.04, th, 0.04), ch(M, 0, s * 0.09 + th / 2, -d / 2 - 0.018), { color: H.cut.clone().lerp(H.dark, 0.3), moss: 0.1, ground: g0 - 2 });
+  const discOpts = o.disc === 'bronze' ? { color: H.bronze, moss: 0, ground: g0 - 2, iron: 0 } : { color: H.bronzeDull, moss: 0, ground: g0 - 2, emit: [...H.ember, 0] };
   B.add(B.cyl(r, r, d * 0.7, 28, 1), ch(M, 0, cy, 0, Math.PI / 2, 0, 0), discOpts);
   B.add(new THREE.TorusGeometry(r * 1.06, s * 0.022, 6, 32), ch(M, 0, cy, d * 0.36), { color: H.bronzeDark, moss: 0, ground: g0 - 2 });
   return { disc: { y: cy, r } };
