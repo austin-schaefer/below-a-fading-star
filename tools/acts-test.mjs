@@ -89,6 +89,9 @@ check('30 m out, facing the wall: not offered', s.offered === null && !s.shown, 
 
 await atStroke(page);
 s = await waitOffer(page, true);
+// `shown` is set a frame or more before the fade has any opacity: wait for the fade itself, not a fixed time (this row
+// failed twice under load with visible:false while three agents shared the machine)
+for (let i = 0; i < 40 && s.shown && !s.visible; i++) { await new Promise((r) => setTimeout(r, 100)); s = await waitOffer(page, true); }
 check('in front of where the next stroke goes, facing it: offered, shown, with its words', s.offered === 'halt-tally' && s.shown && s.visible && s.words === 'Chalk your stroke', s);
 check('the next stroke\'s place is in view', await onScreen(page, await page.evaluate(() => ({ ...window.__fp.tally.next }))));
 await sleep(1300); await shot(page, 'acts-halt2-offer');
