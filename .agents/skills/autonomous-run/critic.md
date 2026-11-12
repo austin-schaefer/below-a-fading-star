@@ -11,7 +11,7 @@ Load the `wilderness` skill for the tools and the pace rules (one headless brows
 1. **Arrive as a visitor.** Render the loading card and the first view after "Go out". What does someone who knows nothing see, and would they stay?
 2. **Walk it.** Use `tools/views.mjs` to take at least thirty views: a route out from the spawn along the road, each region, each named place (the settings menu's teleport list has them), and ten places nobody would think to check (a far corner, underwater, behind a ruin, straight up, straight down). Look at every render with the Read tool.
 3. **Check it on a phone.** Repeat six views at `?q=low` in a portrait viewport (`tools/shot.mjs <url> <out.png> 390 844`).
-4. **Listen.** Run the audio survey (`sound-design` skill, `harness.md`) and read the numbers and spectrograms at four poses.
+4. **Listen.** Run the audio survey (`sound-design` skill, `harness.md`) and read the numbers and the band tables at four poses (`--poses=`; `--images` only if the text leaves a question).
 5. **Compare with last time** if a previous report exists at `[path or "none"]`: what got better, what got worse, what is still there.
 
 Report, in under 600 words:
