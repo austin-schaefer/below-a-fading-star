@@ -188,7 +188,8 @@ export async function build(ctx) {
   B.add(B.cyl(0.07, 0.09, 2.5, 6, 1), at(post.x, py + 1.2, post.z, 0.03, 0, 0.04), late(ox, { moss: 0.1 }));
   ctx.strata.sign('late', B, at(post.x - 0.1, py + 1.75, post.z, 0, -Math.PI / 2, 0), { w: 0.62, h: 0.62, rng });
   ctx.strata.place({ hand: 'late', kind: 'sign', name: 'the Lantern Halt', x: wx(post.x, post.z), y: py + foot + 2, z: wz(post.x, post.z), face: [-cy, sy], mount: 'ground', foot: py + foot });
-  ctx.strata.place({ hand: 'late', kind: 'spolia', from: 'elder', name: 'the Lantern Halt', x: W.x, y: foot + apexY, z: W.z, mount: 'top' });
+  // the arch stands on the slab's shoulder: the placement is at one of its feet, where there is stone under it
+  ctx.strata.place({ hand: 'late', kind: 'spolia', from: 'elder', name: 'the Lantern Halt', x: wx(X0, 0), y: foot + shoulder + 1, z: wz(X0, 0), mount: 'top', foot: foot + shoulder });
   const furn = new THREE.Mesh(B.build(), stone.mat);
   furn.name = 'waystation-late'; furn.castShadow = true; furn.receiveShadow = true;
   count(furn); group.add(furn);
