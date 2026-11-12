@@ -18,6 +18,16 @@ try: print(json.load(sys.stdin).get("tool_input",{}).get("command",""))
 except Exception: print("")' 2>/dev/null)"
 case "$cmd" in *"gh issue "*|*"gh pr "*) ;; *) exit 0 ;; esac
 dir="${CLAUDE_PROJECT_DIR:-.}"
+# Agents post under the owner's account, so what they post must say it is automated (AGENTS.md). A comment, a new
+# issue or a new pull request whose text is given inline must carry the marker; with --body-file the file must.
+if printf '%s' "$cmd" | grep -qE 'gh (issue|pr) (comment|create)'; then
+  text="$cmd"
+  f="$(printf '%s' "$cmd" | sed -nE 's/.*--body-file[= ]+("([^"]+)"|([^ ]+)).*/\2\3/p' | head -1)"
+  [ -n "$f" ] && [ -f "$f" ] && text="$text $(cat "$f")"
+  if ! printf '%s' "$text" | grep -qE 'Automated (comment|pull request|issue)'; then
+    echo "outside-guard: this comment, issue or pull request has no automated marker. Begin its body with: > 🤖 **Automated comment** from the Claude Code orchestrator. Not written by Austin. (for a pull request: Automated pull request). AGENTS.md says why." >&2; exit 2
+  fi
+fi
 printf '%s\n' "$cmd" | python3 -c '
 import re, sys
 cmd = sys.stdin.read()
