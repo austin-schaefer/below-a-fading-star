@@ -75,3 +75,15 @@ Needs design input before building: AG's sigils, AC's element pairs, any carved 
 - Phone cost at low: 1.1 to 1.8M triangles, 170 to 233 draw calls.
 - 16 of about 190 low round things refuse a running hop (Collation dressing at (142.4, -65.3), grave kerbs at (58.9, 268.1), a Demesne block at (103.3, -17.3), a court block at (-16.5, -163.1)); the fallen gnomon needs a 3.2 m run-up. Step-up is per frame, not per metre.
 - The house court's audio measures 79 clicks and a 0.51 s seam (ungated; present with the house off).
+
+## From the v9 critic (2026-11-11), not blocking, not done
+
+- Nothing shows what music is playing or when it is due; a "play now" or a preview in the menu, and the piece's name shown for a moment when it starts.
+- The wood's light shafts break when you look steeply up from inside (at (-235, 165), pitch 0.9: flat orange slabs and a pale arc across the crowns).
+- Still here from v8: the orange bar in the sky; the blue "biomesh" up the hex path at the Cardinal Stones; the house court's clicks (84, with a 0.42 s seam).
+- The Lattice has a steady tone: its 500 Hz band stands 13 dB over its neighbours and the place integrates at -23 LUFS, the loudest measured.
+- The moor walk measures -30.2 LUFS against a -28 to -24 band (ungated); only 4 of 8 grass steps register as onsets since footsteps came down 3 dB.
+- Empty or dark where nobody checks: the south-west corner (-260, 290), a bare plain at (330, -20), near-black under the Span's west end (-230, 205).
+- Familiar, by the critic's list: the bulrush fen, a grey tower, the domed Pomegranate House. Nowhere else: the Long Figure, the scaffold hung on the cliff, the sun between the twin arches.
+- No story beat was met on a short walk; the Go-to list's Stories group is what points at them, not the world.
+- The Lantern Halt: no trimmed version at the low tier; the winch may be too tall to hop onto; the sleeper shows only from the east.
