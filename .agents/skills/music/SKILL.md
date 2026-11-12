@@ -63,6 +63,10 @@ Why it is built this way: the sound harness (`sound-design`) renders in a browse
 
 Changed from the index's first design: phrase rests are judged as a band (a silence of 2 s or more ends a phrase; none may fall 2-4 s), the rough check needs 0.25 s of overlap (a release brushing the next note is not a chord), "held" means 0.5 s or more, and the motif is found from the notes rather than declared, so a hand-written track is judged the same way.
 
+## How the director decides (`director.js`, v9-M2)
+
+A pure state machine fed by the glue (`index.js`) 10 times a second; `node tools/music-director-sim.mjs` runs ten simulated hours of it in text and is the proof. The rules, so a track is written for them: the first track comes 60-150 s into the walk, then 4-9 minutes of silence (lognormal, median 6) between tracks, both scaled by the setting (rare x1.5 / x1.8, frequent x0.7 / x0.5, off never). The pool is where the walker stands (the heaviest of moor, wood, wet, cold, garden, dry; `POOL_OF` maps the region weights); a pool with no track is silence, never moor's music, except that the first piece of a visit is moor's. Specials (`span`, `keep`, `gates`) start after 15 s in the place, once a visit. A track never starts in a gutter, with one due in its first 20 s, or while the walker stands still; it waits. Leaving the pool for 10 s fades the track over 8 s; the gutter ducks the bus to silence in about 1.5 s (the track keeps running under it and returns on the gutter's tail), so a track must survive being cut at any moment. To add a track: its file in `tracks/`, an import and a line in `catalog.js` with its pool; nothing else changes.
+
 ## What the gates cannot tell you, so be conservative there
 
 - **Timbre and level.** The score says nothing about how the flute sounds, whether the pad's saws are harsh, or whether the stem sits under the bed. That is v9-M1's render and its LUFS, sharpness and roughness meters. Keep patches dark and soft; the stem goes under the wind.

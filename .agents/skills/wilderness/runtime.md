@@ -126,6 +126,11 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 - `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
 
+### v9 music
+
+- `music=<track>`: plays that track 3 s after the walk begins and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
+- `musicspeed=N`: the director's waits run N times faster (tests). The setting "Music: off / rare / default / frequent" is in the settings panel (`fp-music` in localStorage); the debug panel lists the tracks as rows.
+
 ### v8
 
 - `strata=0` (v8-03: no `strata` module, no signs or spolia, and the Pomegranate House, the byre, the shrine and the Leaning Yard as in v7)
