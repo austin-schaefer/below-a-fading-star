@@ -2,9 +2,11 @@
 // Tree LOD check: every LOD of a tree variant is meshed from the same skeleton and placed with the same matrix, so a tree
 // keeps its silhouette as it swaps detail. For one placed tree of every variant (and the dead tree nearest the Lattice),
 // in both batch paths, it switches the instance to each LOD, reads back the geometry and matrix the renderer draws, and
-// finds the turn about the vertical that best aligns each LOD's area-weighted azimuth profile (world space, about
-// the base) with the near one's, compares the direction of each LOD's lean (its height-weighted horizontal centroid),
-// and checks every LOD is drawn with the same matrix. It also prints a placement digest (x, z, rot of every tree) so placement can be compared across changes.
+// finds the turn about the vertical that best aligns each LOD's area-weighted azimuth profile (in the geometry's own
+// frame, about the base) with the near one's, compares the direction of each LOD's lean (its height-weighted horizontal
+// centroid), and checks every LOD is drawn with the same matrix. The profiles are measured before the instance matrix,
+// which the matrix check pins separately: in world space the sample tree's slope tilt and scale would make the lean of
+// an upright crown depend on which instance happens to be first of its variant, and any change to placement moves that. It also prints a placement digest (x, z, rot of every tree) so placement can be compared across changes.
 // With the cross-fade on (not ?xfade=0) it checks one switch's fade (the spare, 0.4 s, gone after) and a wood walk's spares.
 // Usage: node tools/tree-lod-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
@@ -12,7 +14,11 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const TOL = 3, LEAN_TOL = 15; // degrees: the azimuth profile's best turn; the lean's direction (a far mesh without twigs shifts a sparse crown's centroid a little)
+// degrees: the azimuth profile's best turn (lo; far, which keeps one of each cluster's two crossed cards, so a sparse
+// crown's profile peak moves a little: medlar2's far mesh sits 5° off in its own frame, as it has since v6-04); the
+// lean's direction (a far mesh without twigs shifts a sparse crown's centroid a little). A far level grown from another
+// skeleton or drawn turned is off by tens of degrees.
+const TOL = 3, TOL_FAR = 6, LEAN_TOL = 15;
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let pass = 0, fail = 0;
 const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${info ? '  ' + info : ''}`); ok ? pass++ : fail++; };
@@ -28,17 +34,17 @@ for (const mode of ['instanced', 'batched']) {
     const fp = window.__fp, THREE = fp.THREE, T = window.__vegParts.trees, b = T.batch, m = new THREE.Matrix4(), v = new THREE.Vector3();
     const inst = b.isInstancedBatch;
     // the vertices and matrix the renderer draws for instance id right now
-    // area-weighted azimuth histogram (weight area x horizontal reach) of the drawn triangles, in world space about the base
+    // area-weighted azimuth histogram (weight area x horizontal reach) of the drawn triangles, in the geometry's frame about the base
     const NB = 360;
     const drawn = (id) => {
       let pos, idx, start = 0, count;
       if (inst) { const it = b.inst[id]; const mesh = b.meshes.get(`${it.geo}|${it.cell}`); mesh.getMatrixAt(it.slot, m); const g = b.geos[it.geo]; pos = g.attributes.position; idx = g.index.array; count = idx.length; }
       else { b.getMatrixAt(id, m); const gi = b._geometryInfo[b.getGeometryIdAt(id)]; pos = b.geometry.attributes.position; idx = b.geometry.index.array; start = gi.indexStart; count = gi.indexCount; }
-      const o = new THREE.Vector3().setFromMatrixPosition(m), A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+      const o = new THREE.Vector3(), A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
       const hist = new Float64Array(NB);
       let lx = 0, lz = 0, lw = 0, reach = 0, rw = 0;
       for (let i = start; i < start + count; i += 3) {
-        A.fromBufferAttribute(pos, idx[i]).applyMatrix4(m); B.fromBufferAttribute(pos, idx[i + 1]).applyMatrix4(m); C.fromBufferAttribute(pos, idx[i + 2]).applyMatrix4(m);
+        A.fromBufferAttribute(pos, idx[i]); B.fromBufferAttribute(pos, idx[i + 1]); C.fromBufferAttribute(pos, idx[i + 2]);
         const area = B.clone().sub(A).cross(C.clone().sub(A)).length() / 2;
         const x = (A.x + B.x + C.x) / 3 - o.x, z = (A.z + B.z + C.z) / 3 - o.z, r = Math.hypot(x, z);
         const y = (A.y + B.y + C.y) / 3 - o.y;
@@ -151,9 +157,9 @@ for (const mode of ['instanced', 'batched']) {
     const mean = hi.hist.reduce((a, v) => a + v, 0) / hi.hist.length, shaped = (Math.max(...hi.hist) - Math.min(...hi.hist)) / mean >= 2.5;
     const leans = hi.leanLen >= 0.15 * hi.reach;
     const lean = (l) => Math.round(((((l.lean - hi.lean) * 180 / Math.PI) % 360) + 540) % 360 - 180);
-    const bad = (l, t) => (shaped && Math.abs(t) >= TOL) || (leans && Math.abs(lean(l)) >= LEAN_TOL);
+    const bad = (l, t, tol = TOL) => (shaped && Math.abs(t) >= tol) || (leans && Math.abs(lean(l)) >= LEAN_TOL);
     const fmt = (nm, l, t) => `${nm}: turn ${shaped ? t + '°' : '-'} lean ${leans ? lean(l) + '°' : '-'}`;
-    check(!bad(lo, tl) && !bad(far, tf) && dm < 1e-6, `${mode}: ${p.name} (${p.kind}) at ${p.x.toFixed(0)},${p.z.toFixed(0)} keeps its heading near to far`, `${fmt('lo', lo, tl)}  ${fmt('far', far, tf)}  matrix diff ${dm.toExponential(1)}`);
+    check(!bad(lo, tl) && !bad(far, tf, TOL_FAR) && dm < 1e-6, `${mode}: ${p.name} (${p.kind}) at ${p.x.toFixed(0)},${p.z.toFixed(0)} keeps its heading near to far`, `${fmt('lo', lo, tl)}  ${fmt('far', far, tf)}  matrix diff ${dm.toExponential(1)}`);
   }
 }
 await browser.close();
