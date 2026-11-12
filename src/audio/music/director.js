@@ -19,7 +19,9 @@
 //  * a track never starts inside a gutter or with one due in its first 20 s, nor while the walker stands still; it
 //    waits for the first moment that is clear;
 //  * leaving a track's pool for 10 s fades it over 8 s; entering a special's place and staying 15 s starts the
-//    special's track (once a visit; a place with no track yet is spent all the same);
+//    special's track (once a visit; a place with no track yet is spent all the same). A place the walker is already in
+//    at the first step is not entered (v9-M6: the walk begins inside the keep's radius, and its piece must not be the
+//    first thing a visit hears 15 s in): it counts once they have left it and come back;
 //  * every track can be cut at any moment (the gutter ducks the bus, a stop fades it).
 export const POOLS = ['moor', 'wood', 'wet', 'cold', 'garden', 'dry'];
 export const SPECIALS = ['span', 'keep', 'gates'];
@@ -53,7 +55,7 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
   const S = {
     setting, t: 0, mode: 'wait', // wait | playing
     timer: 0, // wait: seconds to the next start; playing: seconds since it began
-    track: null, away: 0, dwell: 0, special: null, spent: {}, started: 0, stray: false,
+    track: null, away: 0, dwell: 0, special: null, spent: {}, started: 0, stray: false, steps: 0,
     pool: 'moor', duck: 1, lastDuck: 1,
   };
   const normal = () => { let u = 0; while (u === 0) u = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng()); };
@@ -96,7 +98,7 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
     step(dt, { weights, place = null, swellSm = 0, gutterIn = 99, moving = true } = {}) {
       acts.length = 0;
       if (dt > 5) dt = 5;
-      S.t += dt;
+      S.t += dt; S.steps++;
       S.pool = poolOf(weights);
       // the bus's duck: to silence with the gutter, back on its tail (the follower already shapes it)
       S.duck = swellSm > 0.02 ? Math.max(0, 1 - swellSm * 1.15) : 1;
@@ -104,7 +106,7 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
       if (S.setting === 'off') return acts;
 
       // a special: the place, 15 s in it, once a visit
-      if (place && S.special !== place) { S.special = place; S.dwell = 0; } else if (!place) { S.special = null; S.dwell = 0; } else S.dwell += dt;
+      if (place && S.special !== place) { S.special = place; S.dwell = S.steps === 1 ? -Infinity : 0; } else if (!place) { S.special = null; S.dwell = 0; } else S.dwell += dt;
       const specialDue = place && S.dwell >= SPECIAL_DWELL && !S.spent[place];
 
       if (S.mode === 'playing') {
