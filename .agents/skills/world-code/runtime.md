@@ -128,6 +128,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### v9 music
 
+- `waystation=0` (#931: no Drum, the waystation on the causeway; its rock clearing stays)
 - `music=<track>`: plays that track 3 s after the walk begins and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
 - `musicspeed=N`: the director's waits run N times faster (tests). The setting "Music: off / rare / default / frequent" is in the settings panel (`fp-music` in localStorage); the debug panel lists the tracks as rows.
 

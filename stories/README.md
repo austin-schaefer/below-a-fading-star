@@ -12,8 +12,9 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The gold from the court](the-gold-from-the-court.md) | plain | built | a jackdaw | the Sunken Court, the Wayside Shrine | the sign of the sun; the moles |
 | [The slipper's mate](the-slippers-mate.md) | plain | partial: no turn | a sleeper at the Pomegranate House | the causeway, the house | the house's people |
 | [Salt for news](salt-for-news.md) | plain | partial: no turn | the Salt-Pedlars and the Twk-men | the pedlars' road | the traveller; the house |
+| [The tally at the Drum](the-tally-at-the-drum.md) | plain | built | whoever keeps the waystation, and every traveller | the Drum, beside the causeway | the slipper's mate (a stroke for him?); the Twk-men |
 
-Five plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Six plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -30,3 +31,4 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown.
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.
+- The keeper's charcoal and the tally: one stroke for every traveller who stopped at the Drum.
