@@ -9,14 +9,18 @@ Labels: a kind (`milestone`, `bug`, `tweak`, `harness`), a target (`v8`, `v9`, â
 | Issue | Kind | Where |
 |---|---|---|
 | #2 Environmental music | milestone | **v9**, in progress: `plans/wilderness-v9.md`, `briefs/v9/` |
+| #17 Footsteps are a hair too loud across the board | tweak | v9, `briefs/v9/brief-v9-T1-owner-tweaks.md` |
+| #19 Forest shafts of light from... nowhere | bug | v9, same brief |
+| #16 Remove all rocks/vegetation from the white man on the mountain | tweak | v9, same brief |
 
 ## Next, in order
 
 | Milestone | Issues | Why here |
 |---|---|---|
-| **v10, better mountains** | #5, #6 | The owner: the mountains are "what users see most" and have been the jankiest thing in every release. #6 (the two square things on the wall; move the city of windows) is part of the same look at the walls. Before #4 because #4 builds on them. |
-| **v11, the heights and depths** | #4 | Verticality: the Span walkable end to end, ways up the ring mountains, tunnels, the stranger machines. Wants v10's mountains to climb. |
-| **v12, a payoff at the centre** | #9 | Something that happens when a visitor reaches a zone's central thing. After v11 so the new heights and depths get their payoffs in the same pass. |
+| **v10, better mountains** | #5, #6 | The owner: the mountains are "what users see most" and have been the jankiest thing in every release. #6 (the two square things on the wall; move the city of windows) is part of the same look at the walls. |
+| **v11, the wood** | #18 | Enliven and enrich the forest: wider reach, inhabitants, spur trails, things to find (the stained-glass greenhouse). Before v12 so its trails can lead to that milestone's tunnels and crypts. |
+| **v12, the heights and depths** | #4, #15 | Verticality: the Span walkable end to end, ways up the ring mountains, tunnels, the stranger machines; walking to the very edge of chasms and pits to look down (#15). Wants v10's mountains to climb. |
+| **v13, a payoff at the centre** | #9 | Something that happens when a visitor reaches a zone's central thing. Last so the new wood, heights and depths get their payoffs in the same pass. |
 
 The order is the orchestrator's call (2026-11-11) and is the owner's to change.
 
