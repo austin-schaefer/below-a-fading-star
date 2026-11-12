@@ -10,13 +10,15 @@
 // apron, or on a slope under 50 degrees is rejected.
 // Each time the sun gutters, one of them goes out and stays out for the session: over a long walk the wall gets darker.
 // One Points draw. The shader draws a window sized by distance, its on-screen height held to 4.5-10 px (720p-relative) and, nearer than
-// 250 m, capped lower (5.5 px inside 60 m) with its fill and brightness dimmed so no window is a flat slab: a warm core where the lamp
-// stands, a thin mullion, a dark reveal and a warm spill on the rock beside; widths and heights differ per lamp and one in six is
-// shuttered to a slit. The palette is the world's warm lights (amber, ember, sodium, crimson) with lilac, green-white and cold blue as
+// 250 m, capped lower with its fill and brightness dimmed so no window is a flat slab, and inside 160 m it grows again to
+// 25 px, drawn as a room: a back wall that slides with the eye's parallax in a dark reveal, a lit sill, a heavy lintel, the lamp's pool
+// of light low and to one side, now and then a shadow of something standing within, a warm spill on the rock; widths and
+// heights differ per lamp, a few are arches or slots, one in five is shuttered (a leaf shut, or louvred shut), one in eight
+// gutters hard. The ledge's string is lamps on iron brackets and stone posts, unevenly spaced, some out, one gap. The palette is the world's warm lights (amber, ember, sodium, crimson) with lilac, green-white and cold blue as
 // rare exceptions. The wall's own haze (fogAtten) dims them and they flicker slowly from a hash of the index and time. The gutter's falling edge (ctx.sky.flicker through
 // 0.85) puts out the next lamp in a fixed seeded order; the update sets two uniforms (time, the dark count) at 4 Hz.
 // `?lamps=0` leaves them out; `?lamps=dark=N` starts with N already out.
-// `ctx.lamps`: `stats()`, `dark` (count seen), `gutter()` (as if the sun had guttered).
+// `ctx.lamps`: `stats()`, `dark` (count seen), `gutter()` (as if the sun had guttered), `posts` (indices of the ledge's lamps).
 import * as THREE from 'three';
 import { SITES, SUN } from '../world.js';
 import { makeGround } from '../fauna/uncanny/kit.js';
@@ -147,13 +149,21 @@ export async function build(ctx) {
     const t = (y - brY0) / (brY1 - brY0);
     terrace(y, branchAt(y), 2.8 - 1.9 * t, 0.9 - 0.6 * t, c2, c2, 3.5);
   }
-  // a ledge: a thread of lamps strung along a ledge that runs out to the right and climbs, thinning as it goes, with one gap
+  // a ledge: a path that runs out to the right and climbs, with lamps on posts along it: unevenly spaced (3 to 11 m), a few
+  // out and only the post left, the run thinning at the far end, one gap where the ledge has fallen. Its own rng, so the
+  // windows' layout does not move with it.
   {
-    const sy = yLo + 0.3 * RANGE, sb = spineAt(sy) + 3.2, ci = warmPick();
-    for (let k = 0, b = sb, y = sy; k < 46 && b < b1 - 0.4; k++, b += step * (1 + 0.5 * rng()), y += 0.55 + (rng() - 0.5) * 0.9) {
-      if (k > 24 && rng() < 0.45) continue;                      // fading out
-      if (k > 12 && k < 17) continue;                             // a gap where the ledge has fallen
-      place(b, y, rng() < 0.08 ? colorPick() : ci, 3.3);
+    const lr = ctx.makeRng(5519);
+    const sy = yLo + 0.3 * RANGE, ci = warmPick();
+    let b = spineAt(sy) + 3.0, y = sy;
+    for (let k = 0; k < 64 && b < b1 - 0.4; k++) {
+      b += arcDeg(1.8 + 5.5 * lr() * lr() + 0.8);              // mostly short steps, now and then a long one
+      y += 0.5 + (lr() - 0.5) * 1.0;
+      if (k > 18 && k < 24) continue;                             // a gap where the ledge has fallen
+      const fade = k > 34 ? 0.55 : 1;
+      if (lr() > fade) continue;
+      const out = lr() < 0.22;                                    // the lamp is out; the post stays
+      place(b, y, lr() < 0.08 ? colorPick() : ci, 2.4, out ? 3 : 2, 1);
     }
   }
   // outliers: single lights far up and far out, on their own (a watch-room, a hermit's window)
@@ -173,29 +183,34 @@ export async function build(ctx) {
   const orng = ctx.makeRng(5518);
   for (let i = NALL - 1; i > 0; i--) { const j = Math.floor(orng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
   const rank = new Float32Array(NALL);
-  order.forEach((idx, r) => { rank[idx] = P[idx].kind ? 1e6 : r; });
+  order.forEach((idx, r) => { rank[idx] = P[idx].kind === 1 || P[idx].kind === 3 ? 1e6 : r; });
 
   // low draws every other lamp; ranks stay the high set's, so the k-th lamp to go out is the same lamp on every tier
-  const keep = P.map((_, i) => i).filter((i) => !P[i].kind && (!low || i % 2 === 0)); // the great opening is a mesh, below
+  const keep = P.map((_, i) => i).filter((i) => P[i].kind !== 1 && (!low || i % 2 === 0 || P[i].kind >= 2)); // the great opening is a mesh, below
   const N = keep.length;
-  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3);
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3), nor = new Float32Array(N * 3), kin = new Float32Array(N);
   keep.forEach((src, i) => {
     const p = P[src];
     pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
     const c = PALETTE[p.ci][1]; col[i * 3] = c[0] * p.dim; col[i * 3 + 1] = c[1] * p.dim; col[i * 3 + 2] = c[2] * p.dim;
     meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng();
+    nor.set(p.n, i * 3); kin[i] = p.kind;
   });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aCol', new THREE.BufferAttribute(col, 3));
   geo.setAttribute('aMeta', new THREE.BufferAttribute(meta, 3));
+  geo.setAttribute('aN', new THREE.BufferAttribute(nor, 3));
+  geo.setAttribute('aKind', new THREE.BufferAttribute(kin, 1));
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(S.x, 140, S.z), 260);
 
   const U = { uTime: { value: 0 }, uDark: { value: seen0 }, uH: { value: 720 } };
+  // vKind: 0 a window (vSub says which), 1 the great opening, 2 a lamp on a post, 3 a post with its lamp out
+  // vSub (windows, from a hash of the lamp): 0 a plain opening, 1 arched, 2 a slot, 3 shuttered, a leaf closed, 4 louvred shut
   const vs = /* glsl */`
     uniform float uTime, uDark, uH;
-    attribute vec3 aCol, aMeta;
-    varying vec3 vCol; varying float vA, vWin, vKind, vNear; varying vec2 vShape;
+    attribute vec3 aCol, aMeta, aN; attribute float aKind;
+    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift;
     #include <fog_pars_vertex>
     float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
     void main() {
@@ -207,66 +222,146 @@ export async function build(ctx) {
       gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 2.0, 0.0));
       float sc = uH * 0.5 * projectionMatrix[1][1], px = uH / 720.0;
       float phys = aMeta.x * sc / max(depth, 1.0);
-      // a window (0.68 as wide as tall) held to 4.5-10 px tall; its point is 2.4 times that so the sill and the glow round
-      // it have room, and never over 60 px (some GPUs clamp points at 64): the window is then what fits
+      // a window held to 4.5-10 px tall; its point is 2.4 times that so the sill and the glow round it have room, and never
+      // over 60 px (some GPUs clamp points at 64): the window is then what fits.
       // v11-F2: nearer than ~250 m a window is a small thing with a warm core, not a slab: its cap falls from 10 px at 250 m
-      // to 5.5 px inside 60 m, and its fill dims with it (vNear 0 close, 1 far)
+      // to 7 px at 160 m, and its fill dims with it (vNear 0 close, 1 far).
+      // v11.1-W3: inside 160 m it grows again (the walk ends about 100 m from the foot: r 348 against a wall at r 420 and
+      // up), to 13 px at 100 m, 19 px at 45 m and 25 px (a 60 px point) inside 15 m, because what is drawn there is a room (a back wall, reveal faces that
+      // slide as you walk, a sill, a lintel, a shadow within), not a lit patch; vNear still dims the fill.
       float near = smoothstep(60.0, 250.0, depth);
-      float win = clamp(phys, 4.5 * px, mix(5.5, 10.0, near) * px);
+      float close = 1.0 - smoothstep(30.0, 160.0, depth);
+      float cap = mix(7.0, 10.0, near) + 12.0 * close + 6.0 * (1.0 - smoothstep(15.0, 45.0, depth));
+      if (aKind > 1.5) cap = cap * 1.35 + 2.0; // a post and its lantern need the room to show
+      float win = clamp(phys, 4.5 * px, cap * px);
       float ps = min(win * 2.4, 60.0);
       win = ps / 2.4;
       float s = win;
       gl_PointSize = ps;
-      vWin = win; vKind = 0.0; vNear = near;
-      // unequal windows: width and height vary by lamp, and one in six is shuttered to a thin line
-      float hz = h11(aMeta.z * 53.3 + 7.0), hw = h11(aMeta.z * 17.9 + 2.0);
-      vShape = vec2(0.24 + 0.2 * hw, hz > 0.84 ? 0.08 : 0.34 + 0.2 * h11(aMeta.z * 29.1));
+      vWin = win; vKind = aKind; vNear = near; vSeed = aMeta.z;
+      // unequal windows: width and height vary by lamp; a few are arches, a few slots, a few shuttered
+      float hz = h11(aMeta.z * 53.3 + 7.0), hw = h11(aMeta.z * 17.9 + 2.0), sub = h11(aMeta.z * 31.7 + 11.0);
+      vSub = sub < 0.52 ? 0.0 : sub < 0.70 ? 1.0 : sub < 0.80 ? 2.0 : sub < 0.90 ? 3.0 : 4.0;
+      vShape = vec2(0.24 + 0.2 * hw, 0.34 + 0.2 * h11(aMeta.z * 29.1));
+      if (vSub > 0.5 && vSub < 1.5) vShape = vec2(0.27 + 0.08 * hw, 0.5);
+      if (vSub > 1.5 && vSub < 2.5) vShape = vec2(0.10 + 0.04 * hw, 0.52);
+      // the depth of the wall: the room's back wall stands 1.3 m behind the opening, and slides across it as the eye moves
+      vec3 nv = mat3(viewMatrix) * aN;
+      vec2 sh = -(nv.xy - nv.z * mvPosition.xy / mvPosition.z) * 1.3 / aMeta.x;
+      vShift = clamp(sh, vec2(-0.3), vec2(0.3)) * 0.5;
       // a slow flicker of its own: two incommensurate sines on a hash of the index, and now and then a brief sag
       float i = aMeta.z * 91.7;
       float fl = 0.80 + 0.20 * sin(uTime * (0.25 + 0.5 * h11(i)) + i * 6.28) * sin(uTime * (0.11 + 0.2 * h11(i + 3.0)) + i * 3.1);
       float sag = step(0.992, sin(uTime * (0.07 + 0.05 * h11(i + 5.0)) + i * 9.0) * 0.5 + 0.5);
       fl *= 1.0 - 0.6 * sag;
+      // one in eight is guttering: it gutters hard and fast, and is down to a red coal a third of the time
+      if (hw > 0.875) fl *= 0.25 + 0.75 * smoothstep(0.1, 0.9, sin(uTime * (1.3 + 1.7 * h11(i + 8.0)) + i) * sin(uTime * 0.37 + i * 2.0) * 0.5 + 0.5);
       // gone: rank < dark. The one going out this gutter fades and stutters over its last second or two
       float go = clamp(uDark - aMeta.y, 0.0, 1.0);
       float stut = go > 0.0 && go < 1.0 ? 0.5 + 0.5 * sin(go * 60.0 + i) : 1.0;
       float lit = (1.0 - smoothstep(0.35, 1.0, go)) * stut;
       // energy: a window smaller than its dot is dimmer than the dot would be
       float k = pow(min(1.0, phys / s), 0.5);
-      if (lit <= 0.0) gl_PointSize = 0.0;
-      vA = fl * lit * mix(0.5, 1.0, k) * 2.6 * mix(0.36, 1.0, near * near);
+      if (aKind > 2.5) lit = 1.0; // a post stands lit or not
+      vA = fl * lit * mix(0.5, 1.0, k) * 2.6 * mix(0.5, 1.0, near * near);
+      if (aKind > 1.5) vA = fl * lit * 2.2 * mix(0.6, 1.0, near);
       vCol = mix(aCol, aCol * aCol, 0.5);
     }`;
-  const fs = /* glsl */`
-    varying vec3 vCol; varying float vA, vWin, vKind, vNear; varying vec2 vShape;
+  const FS_HEAD = /* glsl */`
+    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift;
     ${fogPars}
-    void main() {
-      ${fogAtten}
-      // p in window heights, the window centred (the great one's top an arch)
-      vec2 p = (vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) - 0.5) * 2.4;
-      float hx = vKind > 0.5 ? 0.34 : vShape.x, hy = vKind > 0.5 ? 0.5 : vShape.y;
+    float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
+    // an opening: a rectangle, or an arch (the top a half round), as a signed distance in window heights
+    float opening(vec2 p, float hx, float hy, bool arch) {
       vec2 q = abs(p) - vec2(hx, hy);
       float sd = max(q.x, q.y);
-      if (vKind > 0.5 && p.y > 0.5 - hx) sd = length(vec2(p.x, p.y - (0.5 - hx))) - hx; // the arch
-      float ew = 0.6 / vWin;
-      float inside = 1.0 - smoothstep(-ew, ew, sd);
-      // a lit room seen through a hole: a warm core where the lamp stands (low in the opening), the room's far wall dimmer,
-      // dark towards the reveal; near, the fill is held down and the core carries the window (never a flat bright slab)
-      vec2 lc = (p - vec2(0.0, -0.18 * hy)) / vec2(hx, hy);
-      float core = exp(-dot(lc, lc) * 2.2);
-      float fill = mix(0.30, 0.62, vNear);
-      float glowy = fill + (1.0 - fill) * core;
-      float mull = 1.0;
-      if (vKind > 0.5) mull = smoothstep(0.02, 0.05, abs(p.x)) * smoothstep(0.02, 0.05, abs(p.y + 0.12));
-      else if (vWin > 6.5 && hy > 0.2) mull = 1.0 - 0.7 * (1.0 - smoothstep(0.012, 0.035, abs(p.x))); // a thin mullion in the larger ones
-      float lum = inside * glowy * mull;
-      // the wall it sits in: a dark sill and reveal round it, and a soft warm glow spilling on the rock beside it
-      float reveal = (1.0 - smoothstep(0.02, 0.17, sd)) * (1.0 - inside);
-      float spill = (1.0 - smoothstep(0.55, 1.2, length(p)));
-      float halo = exp(-max(sd, 0.0) * 3.4) * (1.0 - inside) * step(0.0, sd) * 0.30 * spill;
+      if (arch && p.y > hy - hx) sd = length(vec2(p.x, p.y - (hy - hx))) - hx;
+      return sd;
+    }`;
+  const fs = FS_HEAD + /* glsl */`
+    void main() {
+      ${fogAtten}
+      // p in window heights, the window centred
+      vec2 p = (vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y) - 0.5) * 2.4;
       float vis = 0.5 + 0.5 * fogAtten;
+      float ew = 0.6 / vWin;
+      if (vKind > 1.5) {
+        // a lamp along the path, one of two kinds by its seed: an iron bracket out of the rock (an arm, a brace under it, the
+        // lantern hung from its end), or a squat stone post with the lantern set on top. Out: the iron or the stone only. The
+        // iron and stone are dark against the rock (alpha); the flame and its glow add, and the metal near it takes some light.
+        float side = vSeed > 0.5 ? 1.0 : -1.0;
+        vec2 q = vec2(p.x * side, p.y);
+        bool bracket = fract(vSeed * 7.0) < 0.5;
+        vec2 lc = bracket ? vec2(0.20, 0.02) : vec2(0.0, -0.06);
+        float body;
+        if (bracket) {
+          float arm = (1.0 - smoothstep(0.02, 0.04, abs(q.y - 0.26))) * step(-0.30, q.x) * step(q.x, 0.20);
+          float diag = (1.0 - smoothstep(0.02, 0.045, abs(q.y - (0.26 - (0.05 - q.x) * 0.9)) )) * step(-0.30, q.x) * step(q.x, 0.05) * step(q.y, 0.27);
+          float plate = (1.0 - smoothstep(0.04, 0.07, abs(q.x + 0.31))) * step(abs(q.y - 0.12), 0.2);
+          float chain = (1.0 - smoothstep(0.012, 0.03, abs(q.x - 0.20))) * step(0.12, q.y) * step(q.y, 0.27);
+          body = max(max(arm, diag), max(plate, chain));
+        } else {
+          float stump = (1.0 - smoothstep(0.075, 0.1, abs(q.x))) * step(-0.52, q.y) * step(q.y, -0.12);
+          float cap = (1.0 - smoothstep(0.1, 0.13, abs(q.x))) * step(-0.17, q.y) * step(q.y, -0.11);
+          body = max(stump, cap);
+        }
+        vec2 d = (q - lc) / vec2(0.085, 0.11);
+        float cage = (1.0 - smoothstep(0.85, 1.05, length(d))) ;
+        float ring = cage * smoothstep(0.55, 0.8, length(d)); // the cage's bars, round the flame
+        body = max(body, ring * 0.9);
+        float flame = exp(-dot((q - lc) * vec2(9.0, 6.5), (q - lc) * vec2(9.0, 6.5))) * step(vKind, 2.5);
+        float edge = 1.0 - smoothstep(0.7, 1.15, length(p)); // the glow ends inside the sprite
+        float halo = exp(-length(q - lc) * 3.2) * edge * step(vKind, 2.5);
+        vec3 c = (mix(vCol, vec3(1.0, 0.82, 0.55), 0.35 * flame) * (flame * 1.5 + halo * 0.30) * vA) * vis;
+        body = clamp(body, 0.0, 1.0);
+        c += vCol * body * 0.55 * vA * vis * exp(-length(q - lc) * 2.6) * (0.25 + 0.75 * step(vKind, 2.5)); // the metal and stone near the lamp take its light
+        gl_FragColor = vec4(c, body * 0.8 * fogAtten);
+        return;
+      }
+      bool great = vKind > 0.5;
+      float hx = great ? 0.34 : vShape.x, hy = great ? 0.5 : vShape.y;
+      bool arch = great || (vSub > 0.5 && vSub < 1.5);
+      float sd = opening(p, hx, hy, arch);
+      float inside = 1.0 - smoothstep(-ew, ew, sd);
+      // the room: the lamp stands low and to one side; its back wall (smaller, and slid by the eye's parallax) catches a pool of
+      // light and is brighter toward the floor; round it the reveal's faces, the sill bright, the soffit dark, the side wall
+      // nearer the lamp lit; and, in a lit room, a shadow of something standing within
+      float lampx = (h11(vSeed * 13.7 + 1.0) - 0.5) * 0.9 * hx;
+      vec2 pi = (p - vShift) / 0.74;
+      float sdi = opening(pi, hx, hy, arch) * 0.74;
+      float back = 1.0 - smoothstep(-ew, ew, sdi);
+      float pool = exp(-(((pi.x - lampx) / (hx * 1.1)) * ((pi.x - lampx) / (hx * 1.1)) + ((pi.y + 0.55 * hy) / (hy * 0.9)) * ((pi.y + 0.55 * hy) / (hy * 0.9))) * 1.6);
+      float grad = mix(0.30, 1.0, smoothstep(hy, -hy, pi.y));
+      float room = 0.26 * grad + 0.95 * pool;
+      if (vWin > 6.0 && !great) {
+        float sx = -lampx + (h11(vSeed * 7.3) - 0.5) * 0.5 * hx;
+        float bar = (1.0 - smoothstep(0.05 * hx, 0.16 * hx, abs(pi.x - sx))) * (1.0 - smoothstep(-0.1 * hy, 0.2 * hy, pi.y + 0.15)) * step(h11(vSeed * 3.1), 0.55);
+        room *= 1.0 - 0.8 * bar;
+      }
+      vec2 rel = (p - vShift * 0.6) / vec2(hx, hy);
+      float face = abs(rel.y) > abs(rel.x) * 0.9 ? (rel.y > 0.0 ? 0.04 : 0.55 * (0.35 + exp(-((p.x - lampx) / hx) * ((p.x - lampx) / hx)))) : 0.20 * grad * (0.5 + 0.9 * exp(-((p.x - lampx) / hx) * ((p.x - lampx) / hx) * 0.6));
+      float lum = inside * mix(face, room, back);
+      if (great) lum *= smoothstep(0.02, 0.05, abs(p.x)) * smoothstep(0.02, 0.05, abs(p.y + 0.12));
+      else if (vSub > 2.5 && vSub < 3.5) {
+        // shuttered, one leaf shut across the opening: planks, and the open side lit
+        float cut = mix(-0.2, 0.6, h11(vSeed * 5.5)) * hx * (vSeed > 0.5 ? 1.0 : -1.0);
+        float leaf = vSeed > 0.5 ? step(p.x, cut) : step(cut, p.x);
+        lum *= 1.0 - leaf * 0.97;
+      } else if (vSub > 3.5) {
+        // shuttered shut: a thin line of light at the meeting of the leaves and a few louvres of it
+        float gap = 1.0 - smoothstep(0.02, 0.05, abs(p.x));
+        float lou = 0.55 * smoothstep(0.5, 0.9, sin(p.y * (40.0 / max(1.0, 14.0 / vWin)) ));
+        lum *= (0.25 + 0.75 * gap) * (0.25 + 0.75 * lou);
+      }
+      // the wall it sits in: a dark reveal round it, a heavy lintel over, a sill under (catching the lamp), a warm spill beyond
+      float rev = (1.0 - smoothstep(0.02, 0.17, sd)) * (1.0 - inside);
+      float lint = (1.0 - smoothstep(0.0, 0.07, abs(p.y - hy - 0.07))) * step(abs(p.x), hx + 0.10) * (1.0 - inside);
+      float sill = (1.0 - smoothstep(0.0, 0.035, abs(p.y + hy + 0.045))) * step(abs(p.x), hx + 0.08) * (1.0 - inside) * (arch || great ? 1.0 : 1.0);
+      float spill = (1.0 - smoothstep(0.55, 1.2, length(p)));
+      float halo = exp(-length(max(abs(p) - vec2(hx, hy) * 0.6, 0.0)) * 3.6) * (1.0 - inside) * step(0.0, sd) * 0.28 * spill * smoothstep(0.0, 0.12, sd);
       vec3 warm = vCol * vec3(1.0, 0.78, 0.55); // the rock's glow is warmer than the lamp
-      vec3 c = (vCol * lum * vA + mix(warm, vCol, vNear * 0.5) * halo * vA * 0.7) * vis;
-      gl_FragColor = vec4(c, reveal * 0.55 * fogAtten);
+      vec3 c = (vCol * lum * vA + mix(warm, vCol, vNear * 0.5) * (halo + sill * 0.9 * (0.35 + pool)) * vA * 0.7) * vis;
+      gl_FragColor = vec4(c, clamp(rev * 0.55 + lint * 0.5, 0.0, 0.8) * fogAtten);
     }`;
   const mat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]), vertexShader: vs, fragmentShader: fs, fog: true,
@@ -275,7 +370,7 @@ export async function build(ctx) {
     blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
   });
   Object.assign(mat.uniforms, U);
-  mat.customProgramCacheKey = () => 'escarpment-lamps-v11f2';
+  mat.customProgramCacheKey = () => 'escarpment-lamps-v111w3';
   const blend = { transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
     blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor };
   const points = new THREE.Points(geo, mat);
@@ -292,7 +387,7 @@ export async function build(ctx) {
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uH: U.uH, uTime: U.uTime, uCol: { value: new THREE.Vector3(...PALETTE[great.ci][1]) } }]),
       vertexShader: /* glsl */`
         uniform float uH, uTime; uniform vec3 uCol;
-        varying vec3 vCol; varying float vA, vWin, vKind, vNear; varying vec2 vShape; varying vec2 vUv;
+        varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift; varying vec2 vUv;
         #include <fog_pars_vertex>
         void main() {
           vec3 transformed = position;
@@ -300,7 +395,7 @@ export async function build(ctx) {
           #include <fog_vertex>
           vec4 centre = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
           gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 3.0, 0.0));
-          vUv = uv; vKind = 1.0; vNear = 1.0; vShape = vec2(0.34, 0.5);
+          vUv = uv; vKind = 1.0; vNear = 1.0; vSub = 1.0; vSeed = 0.3; vShift = vec2(0.0); vShape = vec2(0.34, 0.5);
           vWin = max(${great.size.toFixed(2)} * uH * 0.5 * projectionMatrix[1][1] / max(-centre.z, 1.0), 2.0);
           vA = 2.0 * (0.9 + 0.1 * sin(uTime * 0.4));
           vCol = mix(uCol, uCol * uCol, 0.5);
@@ -322,6 +417,7 @@ export async function build(ctx) {
     get dark() { return S_.seen; },
     gutter() { S_.seen = Math.min(NALL, S_.seen + 1); },
     order, position: (i, out) => out.set(P[i].x, P[i].y, P[i].z),
+    posts: P.map((q, i) => (q.kind >= 2 ? i : -1)).filter((i) => i >= 0), // the ledge's lamps and posts, for the views
     stats: () => ({ n: N, placed: NALL, tries, rejected: { ...rej }, dark: Math.min(NALL, S_.seen), colours: PALETTE.map((p) => p[0]) }),
   };
   ctx.lamps = api;

@@ -1,0 +1,47 @@
+[
+ {
+  "name": "lamps-400",
+  "x": -40.5,
+  "z": 31.4,
+  "yaw": 2.825,
+  "pitch": 0.194
+ },
+ {
+  "name": "lamps-300",
+  "x": -123.8,
+  "z": 285.3,
+  "yaw": 2.825,
+  "pitch": 0.583
+ },
+ {
+  "name": "lamps-100-foot",
+  "x": -141.5,
+  "z": 318,
+  "yaw": 2.899,
+  "pitch": 0.582
+ },
+ {
+  "name": "lamps-60",
+  "x": -141,
+  "z": 318,
+  "yaw": 2.847,
+  "pitch": 0.0,
+  "pre": "const f=window.__fp;const y=Math.max(98,f.terrain.heightAt(-142.6,347.6)+3);f.camera.position.set(-142.6,y,347.6);f.player.pitch=Math.atan2(95-y,60);f.camera.rotation.x=f.player.pitch"
+ },
+ {
+  "name": "lamps-20",
+  "x": -141,
+  "z": 318,
+  "yaw": 2.847,
+  "pitch": 0.0,
+  "pre": "const f=window.__fp;const y=Math.max(98,f.terrain.heightAt(-153.6,383.9)+3);f.camera.position.set(-153.6,y,383.9);f.player.pitch=Math.atan2(95-y,22);f.camera.rotation.x=f.player.pitch"
+ },
+ {
+  "name": "ledge-25",
+  "x": -141,
+  "z": 318,
+  "yaw": 2.731,
+  "pitch": 0.0,
+  "pre": "window.__fp.camera.position.set(-176,116,340)"
+ }
+]
