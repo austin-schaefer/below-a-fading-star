@@ -212,7 +212,7 @@ export function startCuesV2(a) {
   }
   function rooksLift(pos, o) {
     const n = clamp(o?.count ?? 12, 3, 24);
-    const v = voice(pos, { ref: 12, roll: 1, range: 260, verb: 0.4, dur: 2.0, air: 200, gain: 20 });
+    const v = voice(pos, { ref: 12, roll: 1, range: 260, verb: 0.4, dur: 2.0, air: 200, gain: 8 }); // v7.2.1: 8 dB down (was 20)
     if (!v) return;
     const t0 = v.t0;
     for (let b = 0; b < n; b++) {

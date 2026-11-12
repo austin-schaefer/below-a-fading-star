@@ -39,7 +39,7 @@ export function buildFlush(ctx) {
         o.c.set((o.p0.x + lx) / 2 + (rng() - 0.5) * 12, gy + 4 + rng() * 5, (o.p0.z + lz) / 2 + (rng() - 0.5) * 12);
         o.u = 0; o.dur = 2.6 + rng() * 1.4; o.delay = rng() * 0.35; o.pos.copy(o.p0);
       }
-      mesh.visible = true; mode = 1; hideT = 0; cool = 14 + rng() * 10;
+      mesh.visible = true; mode = 1; hideT = 0; cool = 50 + rng() * 50; // v7.2.1: a covey every minute or two of walking, not every 14-24 s
       ctx.audio?.cue?.('flush', B[0].p0);
       return;
     }
