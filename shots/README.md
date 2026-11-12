@@ -599,6 +599,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `76-door-a-offer.webp` | The tomb door's iron ring, "Knock". |
 | `76-door-b-seam.webp` | Light in the door's seam and across the step. |
 | `76-door-c-hand.webp` | A hand's shadow on the lit step below the door. |
+| `76-door-d-ring-falling.webp` | The reworked knock: the great ring swung wide and falling on the bronze. |
+| `76-door-e-plate.webp` | The plate passed out under the door, taken up: the Lantern Halt's lantern and the visitor's strokes. |
 | `76-edges-nave-a-before.webp` | Before: looking down into the Foundered Nave, a black void with shards. |
 | `76-edges-nave-b-after.webp` | After: the same drop with fallen beams and a floor to read. |
 | `76-edges-pit-a-before.webp` | Before: looking down into the Pit, rock faces and a flat tile floor. |
@@ -606,8 +608,10 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `76-edges-pit-c-lookout.webp` | The lookout at the Pit's lip, the shaft falling away below. |
 | `76-seat-a-offer.webp` | The rope seat come down the tally wall, "Take the seat". |
 | `76-seat-b-rising.webp` | Riding up the slab, the Halt's roof coming level. |
+| `76-seat-c-the-country.webp` | The reworked ride: the seat turned out to the keep, the causeway and the Span. |
 | `76-sleeper-a-lantern.webp` | At the top: the sleeper curled beside the great lantern. |
 | `76-sleeper-b-knock.webp` | The visitor's fist raised over the sleeper at the lantern. |
+| `76-sleeper-c-from-the-seat.webp` | The reworked top of the ride: the whole lantern mouth, the sleeper's hand opening. |
 | `76-tally-a-failed.webp` | The first tally: the new stroke one thin line among hundreds. |
 | `76-tally-b-offer.webp` | The rebuilt wall, a lamp-chalk hanging, "Chalk your stroke". |
 | `76-tally-c-drawing.webp` | The chalk drawing its stroke on the wall. |
