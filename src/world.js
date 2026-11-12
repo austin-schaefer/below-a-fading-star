@@ -149,7 +149,7 @@ export const SITES = {
   lightEmbers:{ x: 160, z: 60, r: 6, name: 'embers' },
   lightPost:  { x: -140, z: -30, r: 3, name: 'a lamp on a post' },
   lightDoor:  { x: -250, z: -120, r: 4, name: 'a lit doorway' },
-  leerie:     { x: 128, z: 5, r: 3, name: "the Leerie's standards", from: [110, -25], to: [145, 35] },
+  leerie:     { x: 128, z: 5, r: 3, name: "The Leerie's Standards", from: [110, -25], to: [145, 35] },
   keptFire:   { x: 10, z: -190, r: 6, name: 'The Kept Fire' },
   collation:  { x: 150, z: -70, r: 10, name: 'The Collation' },
   slipper:    { x: -20, z: 26, r: 1, name: 'The Slipper' },

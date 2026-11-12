@@ -109,7 +109,13 @@ check(again.starts === d.starts && again.firstAt === d.firstAt, 'same seed, same
   const d2 = makeDirector({ catalog: CATALOG, setting: 'off', seed: 4 });
   run(d2, 300); d2.setSetting('frequent'); const n2 = run(d2, 1500);
   console.log(`${n2 > 0 ? 'PASS' : 'FAIL'} built off, then on: ${n2} starts in 1500 s`);
-  if (!(offN === 0 && onN > 0 && n2 > 0)) fails++;
+  // switched on by hand while standing at the menu: a piece within ten seconds, moving or not
+  const d3 = makeDirector({ catalog: CATALOG, setting: 'off', seed: 5 });
+  for (let t = 0; t < 30; t += 0.5) d3.step(0.5, { weights: { moor: 1 }, gutterIn: 99, moving: false });
+  d3.setSetting('default'); let at3 = -1;
+  for (let t = 0; t < 20 && at3 < 0; t += 0.5) for (const x of d3.step(0.5, { weights: { moor: 1 }, gutterIn: 99, moving: false })) if (x.start) at3 = t;
+  console.log(`${at3 >= 0 && at3 <= 10 ? 'PASS' : 'FAIL'} switched on by hand, standing still: first piece ${at3 < 0 ? 'never' : at3 + ' s'} after (within 10)`);
+  if (!(offN === 0 && onN > 0 && n2 > 0 && at3 >= 0 && at3 <= 10)) fails++;
 }
 
 console.log(fails ? `\n${fails} failed` : '\nall passed');
