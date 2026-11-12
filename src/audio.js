@@ -59,6 +59,7 @@ import { startCues } from './audio/cues.js';
 import { startRegions } from './audio/regions.js';
 import { startLiving } from './audio/living.js';
 import { startHouseSound } from './v8/house/sound.js'; // v8-05
+import { startActsSound } from './v10/sound.js'; // v10: the acts' cues
 import { startTwk } from './v8/twk/voice.js'; // v8-07: the Twk-men's buzz and chirrup
 
 // The touch mute button (#mute, top right; shown on touch devices only). A short tap toggles
@@ -172,6 +173,7 @@ export async function build(ctx) {
     const insects = startInsects(a);
     const calls = startCalls(a);
     a.house = startHouseSound(a, ctx); // v8-05: the Pomegranate House's voices (its own rng, after every shared draw)
+    a.acts = startActsSound(a, ctx); // v10: act-offer, act-chalk (its own rng)
     let music = null; // v9-M2: the music's glue (audio/music/index.js), loaded on its own so a fault there cannot take the sound down
     import('./audio/music/index.js').then((m) => { music = audio.music = m.startMusic(a, ctx); }).catch((e) => console.warn('[fp] music failed to load:', e));
 

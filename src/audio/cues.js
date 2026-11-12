@@ -324,6 +324,7 @@ export function startCues(a) {
       else if (name === 'bather-pour') a.living.batherPour(position);
       else if (name.startsWith('house-')) a.house?.cue(name, position, opts); // v8-05
       else if (name.startsWith('twk-')) a.twk?.cue(name, position, opts); // v8-07
+      else if (name.startsWith('act-')) a.acts?.cue(name, position, opts); // v10: the acts (src/v10/sound.js)
       else a.regionSnd?.cue(name, position, opts);
     } catch (e) { if (audio.debug) throw e; }
   }

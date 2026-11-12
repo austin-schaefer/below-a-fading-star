@@ -57,6 +57,8 @@ const CUES = [
   ['bather-pour', { dx: 10, dy: -22, dz: -15 }, null, 2000, 2500],
   // v8-05 the Pomegranate House (src/v8/house/sound.js)
   ['house-murmur', { dx: 3, dy: -0.5, dz: -3 }, { voice: 0, n: 6 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { n: 5 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { nervous: true }], ['house-pluck', { dx: 2, dy: -1, dz: -2 }, { note: 3, v: 0.8 }, 1000, 2000], ['house-cup', { dx: 2, dy: -0.9, dz: -2 }], ['house-tick', { dx: 1, dy: 0.8, dz: -1 }],
+  // v10 the acts (src/v10/sound.js)
+  ['act-offer', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1200], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { bar: true }, 1000, 1000],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
