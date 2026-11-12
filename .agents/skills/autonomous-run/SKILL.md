@@ -20,7 +20,7 @@ Your context does not survive. Sessions end, conversations are summarised, and t
    - **Agents running, nothing blocked:** leave them alone.
    - **An agent finished:** check its work and merge it into `next` (the `wilderness` skill's Hand-back).
    - **A batch is in:** dispatch the next one.
-   - **The milestone is done:** run the gate (`tools/suite.sh`), the critic (below) and the curator, write the `RELEASES.md` entry, add the milestone's line to `README.md` (below), release to `main`.
+   - **The milestone is done:** run the gate (`tools/suite.sh`), the critic (below) and the curator, write the `RELEASES.md` entry (for a visitor, per the `orchestrator` skill's `release-notes.md`), add the milestone's line to `README.md` (below), release to `main`, then publish the entry as the GitHub release (`tools/gh-release.sh <version>`).
    - **Nothing is open:** choose the next milestone (below) and open it. This is the normal case after a release, not a reason to stop.
    - **Something is blocked:** write it in Status, route around it, keep the rest moving.
 4. Before the wake ends, add a dated entry to the milestone doc's Status: what happened, what is in flight (agent, branch, worktree, port), what comes next. Write it for a reader with no memory of this session. Commit and push it on `next`.
@@ -53,8 +53,8 @@ Tests show that it runs. They do not show that it is good, and no human will tel
 - **Look at every render.** The Read tool shows images. A brief that asked for a heron and a render that shows a grey smear is a failed brief, whatever the tests say.
 - **A cold critic before every release.** Dispatch `critic.md` (next to this file) to a fresh agent that has not seen the plan. Fix what it marks as blocking before release; the rest goes to the idea bank. The author of a thing is the worst judge of it, and that includes you as orchestrator.
 - **Sound:** the `sound-design` skill's harness is the ear you don't have. Use its gates.
-- **Speed:** `perf-test` and the bench numbers are in the gate. A milestone that makes the walk slower on a phone needs a reason in its release note.
-- **Be plain in the record.** If something shipped weaker than planned, the release note says so. A run whose notes are all triumph teaches the next session nothing.
+- **Speed:** `perf-test` and the bench numbers are in the gate. A milestone that makes the walk slower on a phone says why in its milestone doc's Status, and says so plainly in the release note's Known issues.
+- **Be plain in the record.** If something shipped weaker than planned, say so twice: in the release note's Known issues, in a visitor's words, when a visitor would trip over it; and in the milestone doc's Status, with the detail an engineer needs. A run whose record is all triumph teaches the next session nothing.
 
 ## The harness is yours too
 
@@ -85,7 +85,7 @@ A milestone fills the orchestrator's context with renders, reviews and merges th
 ## What the owner finds on coming back
 
 - The live site, better than they left it.
-- `RELEASES.md`: what shipped, newest first, honest.
+- `RELEASES.md` and the GitHub releases: what shipped, newest first, honest, in words a stranger understands.
 - The current milestone's Status: where things stand, and **Waiting on the owner** if anything is.
 - `shots/`: the pictures that tell the story.
 
