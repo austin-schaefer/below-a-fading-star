@@ -121,6 +121,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `glyphs=0` leaves out all of `living-glyphs` (the caps stay plain); `scriveners=0` the shoal, `moles=0` the heaps and their tesserae, `glyphmotif=0` the caps' glyphs, the tessera's and the erratic's (v7-04)
 - `walkers=0` (v7-01: no Thurifer, Leerie or Link-Boy); `thurifer=0`, `leerie=0`, `linkboy=0` each its own
 - `roads=0` (v8-01: no gnomons, and the causeway gets its v3 waymarkers back)
+- `rockcut=0` (v8-11: the rocks as v8-10 left them: every boulder, no cleared-ground table, the pale high-contrast lichen, uncapped region lichen; `node tools/rocks-test.mjs <base> [low,high]` checks every stone's and boulder's footprint against the walkers' lines, the roads and the built places, the common's boulder count, the boulders' share of the uncut count, and the lichen's contrast)
 - `twk=0` (v8-07: no Twk-men, no salt at the spill or the house; `node tools/twk-test.mjs <base>` pins their stations, the inspection's metre, the quarrel, the salute, the salt line, the guard and the gutter)
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
 - `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)

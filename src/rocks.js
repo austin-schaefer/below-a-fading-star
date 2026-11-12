@@ -26,10 +26,11 @@ const SLACK = 3;
 // a road, a walked line or a built place (v8/clearings.js); the lichen a low grey-green bloom, not pale spots
 // (?rockcut=0: v8-10's rocks, counts, places and look)
 const CUT = PARAMS.get('rockcut') !== '0';
-// The lichen as a tint of the stone under it (so its contrast holds in any light): `bloom` multiplies the stone's
-// colour where it grows, up to `amount`; `rust` the same for the rarer orange crust. tools/rocks-test.mjs reads these
-// (ctx.rocks.lichen) and holds the full patch's luminance to under 1.3 times the bare stone's.
-export const LICHEN = CUT ? { bloom: [1.16, 1.3, 1.12], amount: 0.75, rust: [1.3, 1.02, 0.78], rustAmount: 0.45 } : null;
+// The lichen is made from the stone under it, so its contrast holds in any light: where it grows the stone goes toward
+// its own luminance times `bloom` (grey-green, a shade lighter), up to `amount`; the rarer rust crust multiplies the
+// stone by `rust`, up to `rustAmount`. The patch differs from the stone in hue far more than in brightness.
+// tools/rocks-test.mjs reads these (ctx.rocks.lichen) and holds a full patch to under 1.2 times the stone's luminance.
+export const LICHEN = CUT ? { bloom: [0.72, 1.5, 0.7], amount: 1.0, rust: [1.3, 1.0, 0.76], rustAmount: 0.45 } : null;
 
 function makeRockGeometry(rng, noise, detail, seed) {
   const geo = new THREE.IcosahedronGeometry(1, detail);
@@ -90,7 +91,7 @@ function makeRockMaterial(palette, sun) {
           diffuseColor.rgb *= 1.0 - base * 0.35;
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        ${LICHEN ? 'roughnessFactor = mix(roughnessFactor, 0.85, smoothstep(0.44, 0.68, rfbm(vRPos * 2.3 + 11.0)));'
+        ${LICHEN ? 'roughnessFactor = mix(roughnessFactor, 0.85, smoothstep(0.38, 0.6, rfbm(vRPos * 2.3 + 11.0)));'
     : 'roughnessFactor = mix(roughnessFactor, 0.75, smoothstep(0.52, 0.66, rfbm(vRPos * 3.1 + 11.0)));'}`);
   };
   return mat;
@@ -111,11 +112,12 @@ function lichenGLSL(sun) {
   return `
           float up = clamp(vRN.y, 0.0, 1.0);
           float shade = clamp(vRN.x * ${sx} + vRN.z * ${sz}, 0.0, 1.0);
-          float face = clamp(up * 0.75 + shade * 0.55, 0.0, 1.0);
-          float fine = smoothstep(0.3, 0.7, rfbm(vRPos * 13.0 + 5.0));
-          float l1 = smoothstep(0.44, 0.68, rfbm(vRPos * 2.3 + 11.0)) * face * (0.45 + 0.55 * fine);
+          float face = clamp(up * 1.1 + shade * 0.7, 0.0, 1.0);
+          float fine = smoothstep(0.4, 0.6, rfbm(vRPos * 13.0 + 5.0));
+          float l1 = smoothstep(0.38, 0.6, rfbm(vRPos * 2.3 + 11.0)) * face * (0.3 + 0.7 * fine);
           float l2 = smoothstep(0.6, 0.74, rfbm(vRPos * 5.3 + 29.0)) * shade * (0.3 + 0.7 * fine);
-          diffuseColor.rgb *= mix(vec3(1.0), ${v3(LICHEN.bloom)}, l1 * ${LICHEN.amount.toFixed(3)});
+          float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+          diffuseColor.rgb = mix(diffuseColor.rgb, lum * ${v3(LICHEN.bloom)}, l1 * ${LICHEN.amount.toFixed(3)});
           diffuseColor.rgb *= mix(vec3(1.0), ${v3(LICHEN.rust)}, l2 * ${LICHEN.rustAmount.toFixed(3)});`;
 }
 
@@ -167,8 +169,8 @@ export async function build(ctx) {
   function keepBig(x, z, b, cls, size) {
     const com = commonAt(x, z, terrain.causewayDistance(x, z)), o = outcrop(x, z), h = hash(x, z);
     if (cls === 'stone') return size < 1.0 || o > 0.5 - b.rock * 0.2 || h < 0.5 - com * 0.3;
-    const edge = 0.6 + com * 0.14 - b.rock * 0.12;
-    return o > edge || h < 0.07 * (1 - com) + 0.12 * b.rock;
+    const edge = 0.69 + com * 0.12 - b.rock * 0.12;
+    return o > edge || h < 0.04 * (1 - com) + 0.1 * b.rock;
   }
 
   // Where rocks may not go
