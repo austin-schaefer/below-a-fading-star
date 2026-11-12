@@ -11,6 +11,7 @@ import { buildTraveller } from './threads/traveller.js';
 import { buildChair } from './threads/chair.js';
 import { buildGold } from './threads/gold.js';
 import { buildPainter } from './threads/painter.js';
+import { buildTwelfthPlace } from '../v10/chair.js';
 import { meshGround } from '../v4/regions/skin.js';
 import { surfaceAt } from './threads/kit.js';
 import { waitFor, loaded } from '../v7/workers/rig.js';
@@ -37,6 +38,7 @@ export async function build(ctx) {
     T.chair = buildChair(ctx, gy, surf);
     // the Collation gives up its twelfth place only now that the chair stands at the graves
     if (loaded('dressing5')) T.chair.taken = !!(await waitFor(() => ctx.dressing5))?.collation?.takeTwelfth?.();
+    if (T.chair.taken) buildTwelfthPlace(ctx, ctx.dressing5.collation, T.chair.ends.marks); // v10-A2: his place stays laid, and the visitor can drink to him
   }
   if (!OFF.painter) T.painter = buildPainter(ctx, mg, loaded('dressing5') && !/[?&](prospect|dressing5)=0/.test(location.search)); // v8-08: on the drawn ground (the High Ling, the Bletting)
   const all = () => [T.traveller, T.chair, T.gold, T.painter].filter(Boolean).flatMap((p) => p.meshes);
