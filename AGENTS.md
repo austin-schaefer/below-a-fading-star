@@ -30,9 +30,10 @@ Each has a reason outside the codebase, which is why it is not yours to change.
 - The site is the repository root: `index.html`, `src/`, `vendor/`. `netlify.toml` and `DEPLOY.md` cover the deploy.
 - `README.md`: the owner's, written by hand for human visitors. The one thing that is not yours: leave it as it is, except to add a line to its Milestones list when a milestone ships. Match the lines already there: the version, its docs, and one plain sentence a stranger would understand ("Way more characters and living creatures."), with no status words and no flourish.
 - `plans/wilderness-v<N>.md`: each milestone's doc, with its Status; the highest-numbered one is the current milestone. `briefs/`: per-agent briefs. `plans/IDEAS*.md`: the idea banks. `RELEASES.md`: one entry per merge to `main`, written for visitors and published as a GitHub release by `tools/gh-release.sh` (the model: `.agents/skills/orchestrator/release-notes.md`).
+- `stories/`: the world's library of stories, one file each, with an index. A tool for making things that connect: worth a look before inventing something a visitor finds, and yours to add to (the `storytelling` skill).
 - `tools/`: serve, tests, renders, the audio harness, and the repo scripts (`suite.sh`, `worktree.sh`, `ensure-hooks.sh`, `link-skills.sh`, `relay.sh`, `gh-release.sh`, `hooks/`).
 - `shots/`: the curated renders.
-- `.agents/skills/`: skills, mirrored into `.claude/skills/`. `wilderness` before any work here, `sound-design` before touching audio, `orchestrator` if you are the main session, `autonomous-run` on a loop.
+- `.agents/skills/`: skills, mirrored into `.claude/skills/`. `wilderness` before any work here, `sound-design` before touching audio, `storytelling` when planning or inventing things a visitor finds, if it helps, `orchestrator` if you are the main session, `autonomous-run` on a loop.
 
 ## Roles
 

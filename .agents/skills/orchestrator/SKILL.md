@@ -20,6 +20,7 @@ Then carry on. Take the owner's direction if they give any; otherwise work the c
 
 - A milestone is one doc, `plans/wilderness-v<N>.md`, with a Status section, and a `briefs/v<N>/index.md` dispatch plan. The `plans/IDEAS*.md` files are the bank to draw on and add to.
 - Each brief is one subagent's work: one coherent change, testable on its own, reviewable in a single diff. Order them so the foundations land first.
+- **Stories are a tool for this.** The `storytelling` skill and the library in `stories/` help a milestone's additions connect to what is already in the world, so it does not become a variety box. Use them where they help: a look at `stories/README.md` while planning, a story file a brief can point at. Not a requirement.
 - Don't over-plan. Brief the next batch in detail and leave the rest coarse.
 - Every batch names what the owner can see when it lands (a position and yaw on the local server, a render, a sound). A batch they can't see until the end is a smell; split it.
 - Don't split one unit of work across several PRs for tidiness. Tangential tooling made along the way rides along, named in the summary.
