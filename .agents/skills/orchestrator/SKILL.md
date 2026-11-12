@@ -58,7 +58,7 @@ When a subagent reports done:
 
 ## Releases have notes
 
-Each merge to `main` is a release and a Netlify build. Before opening the PR, add an entry at the top of `RELEASES.md` (newest first), written for a stranger who has never taken the walk: a plain title, a sentence or two on what it adds, three to seven bullets on what a visitor can find or will notice, and Known issues only where they matter to a visitor. No process, tests, paths or measurements: those live in the milestone doc. The model, the owner's example and the rules: `release-notes.md`. After the PR merges, `tools/gh-release.sh <version>` publishes the entry as the GitHub release. A shipped milestone also gets one plain line in `README.md`'s Milestones, in the owner's style (`AGENTS.md`); the rest of that file is theirs.
+Each merge to `main` is a release and a Netlify build. Before opening the PR, add an entry at the top of `RELEASES.md` (newest first), written for a stranger who has never taken the walk: a plain title, a sentence or two on what it adds, three to seven bullets on what a visitor can find or will notice, and Known issues only where they matter to a visitor. No process, tests, paths or measurements: those live in the milestone doc. The model, the owner's example and the rules: `release-notes.md`. After the PR merges, `tools/gh-release.sh <version>` publishes the entry as the GitHub release. Every release also gets one line at the top of `README.md`'s Milestones, in the same PR: the entry's title linked to its GitHub release, then one plain sentence in the owner's style (`release-notes.md`, step 2). `tools/release-check.sh`, in the gate, fails when `README.md` and `RELEASES.md` disagree. The rest of that file is the owner's.
 
 ## Screenshots are the record
 

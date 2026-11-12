@@ -11,8 +11,9 @@
 // Usage:
 //   node tools/audio-metrics.mjs a.wav [--spectrogram=a.png] [--json] [--clicks]
 //   node tools/audio-metrics.mjs after.wav --baseline=before.wav [--spectrogram=pair.png] [--json]
-// --json writes <wav>.metrics.json. --clicks lists every click. With --baseline the two spectrograms are stacked
-// (before on top) in one PNG, by default <after>.compare.png.
+// --json writes <wav>.metrics.json. --clicks lists every click. A band-energy table (tools/audio-bands.mjs) is printed
+// after the metrics, with the change from the baseline; images only on request: --spectrogram[=file.png] (with
+// --baseline the two stacked, before on top, by default <after>.compare.png).
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -517,10 +518,16 @@ export function analyse(file) { const wav = readWav(file); wav.file = file; cons
 const fmt = (v) => (v == null ? 'none' : typeof v === 'number' ? String(v) : String(v));
 export function headline(m) { return `${path.basename(m.file || '')}  ${m.lufs_i} LUFS  s-max ${m.lufs_s_max}  pk ${m.peak_dbfs}  sharp ${m.sharp_db}  rough ${m.rough}  clicks ${m.clicks}${m.seam_s ? ' seam ' + m.seam_s : ''}  onsets ${m.onsets_pm}/min`; }
 
+// the band-energy table (tools/audio-bands.mjs; it imports readWav from here, so it is loaded when wanted)
+async function bandsText(wav, base = null) {
+  const { bandTable, bandText } = await import('./audio-bands.mjs');
+  return bandText(bandTable(wav), base && bandTable(base));
+}
+
 async function main() {
   const args = process.argv.slice(2), opt = {}, files = [];
   for (const a of args) { const m = a.match(/^--([^=]+)(?:=(.*))?$/); if (m) opt[m[1]] = m[2] ?? true; else files.push(a); }
-  if (!files.length) { console.error('usage: node tools/audio-metrics.mjs a.wav [--spectrogram=a.png] [--json] [--clicks] [--baseline=before.wav]'); process.exit(2); }
+  if (!files.length) { console.error('usage: node tools/audio-metrics.mjs a.wav [--spectrogram[=a.png]] [--json] [--clicks] [--baseline=before.wav]'); process.exit(2); }
   const A = analyse(files[0]);
   if (opt.baseline) {
     const B = analyse(opt.baseline);
@@ -529,15 +536,19 @@ async function main() {
       const b = B.m[k], a = A.m[k], d = typeof a === 'number' && typeof b === 'number' ? (a - b >= 0 ? '+' : '') + (+(a - b).toFixed(3)) : '';
       console.log(`${k.padEnd(13)} ${fmt(b).padStart(8)} → ${fmt(a).padEnd(8)} ${d}`);
     }
-    const out = typeof opt.spectrogram === 'string' ? opt.spectrogram : files[0].replace(/\.wav$/i, '') + '.compare.png';
-    writeSpectrogram(out, [spectrogramPanel(B.wav, { log: B.log, title: 'BEFORE ' + headline(B.m) }), spectrogramPanel(A.wav, { log: A.log, title: 'AFTER ' + headline(A.m) })]);
-    console.log('spectrograms (before above, after below):', out);
+    console.log('\nband energy, dB (after; "vs before" is the whole-render change):\n' + (await bandsText(A.wav, B.wav)));
+    if (opt.spectrogram) { // images only on request
+      const out = typeof opt.spectrogram === 'string' ? opt.spectrogram : files[0].replace(/\.wav$/i, '') + '.compare.png';
+      writeSpectrogram(out, [spectrogramPanel(B.wav, { log: B.log, title: 'BEFORE ' + headline(B.m) }), spectrogramPanel(A.wav, { log: A.log, title: 'AFTER ' + headline(A.m) })]);
+      console.log('spectrograms (before above, after below):', out);
+    }
   } else {
     const { detail, ...flat } = A.m;
     for (const k of METRICS) console.log(`${k.padEnd(13)} ${fmt(flat[k])}`);
     if (detail.seams.length > 1) console.log(`seams         ${detail.seams.map((s) => `${s.period} s (${s.hits} hits)`).join(', ')}`);
     if (detail.repeat) console.log(`repeat        best self-correlation ${detail.repeat.r} at ${detail.repeat.period} s (reported from 0.2)`);
     if (detail.steps_logged) console.log(`steps         ${detail.steps_logged} logged, ${detail.step_onsets} onsets left out as steps`);
+    console.log('\nband energy, dB:\n' + (await bandsText(A.wav)));
     if (opt.clicks) for (const c of detail.click_times) console.log(`click         ${c.t} s  ${c.ratio}x local  ${c.dbfs} dBFS`);
     if (opt.spectrogram) {
       const out = typeof opt.spectrogram === 'string' ? opt.spectrogram : files[0].replace(/\.wav$/i, '') + '.png';
