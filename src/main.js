@@ -22,6 +22,7 @@ import { makeRegions, REGION_FILES } from './v4/regions.js';
 import { makeTinctures } from './v4/tinctures.js';
 import * as places from './v8/places.js'; // v8-02: places that differ
 import { installStrata } from './v8/strata.js';
+import { installActs } from './v10/acts.js'; // v10: acts, registered by the places' modules
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -75,6 +76,7 @@ const MODULES = [
   ['strata', () => import('./v8/strata/place.js')], // v8-03: the three hands' signs and spolia across the map (?strata=0)
   ['house', () => import('./v8/house.js')], // v8-05: the Pomegranate House lit and lived in (?house=0)
   ['waystation', () => import('./v9/waystation.js')], // v9 (#934): the Lantern Halt, the causeway's waystation (?waystation=0)
+  ['acts', () => import('./v10/acts.js')], // v10 (#24): the offer, its input and the marks' memory for every act (?acts=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -165,7 +167,7 @@ async function start() {
   // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
-  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js)
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
     world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,
@@ -195,6 +197,7 @@ async function start() {
   ctx.places = places; // v8-02: each place's ground, cover and light (placeAt, gradeAt)
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   installStrata(ctx, url); // ctx.strata: the three hands' parts, signs and placements (v8-03)
+  installActs(ctx, url); // ctx.acts: add(def), count(id), forget() (v10; the contract: the `world-code` skill, "Acts")
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce

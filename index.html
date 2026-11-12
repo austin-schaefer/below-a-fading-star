@@ -44,6 +44,15 @@
   #card:not(.hidden) ~ #place { opacity: 0; } /* no place card behind the title or paused card */
   #place-name { font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.18em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); }
   #place-line { white-space: pre-line; max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; line-height: 1.35; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
+  /* v10 acts: the offer (src/v10/acts.js). Small and late: rises below the place card; on touch it is the button, above the stick */
+  #act { position: fixed; left: 50%; bottom: calc(3.2vh + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 6px); display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.9em; font: inherit; font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(0.95rem, 1.5vw, 1.15rem); letter-spacing: 0.16em; color: var(--ink); background: none; border: 0; text-shadow: 0 1px 10px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.9s ease, transform 0.9s ease; pointer-events: none; z-index: 6; white-space: nowrap; -webkit-tap-highlight-color: transparent; touch-action: none; }
+  #act.shown { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  #card:not(.hidden) ~ #act, body:has(#settings.shown) #act { opacity: 0; pointer-events: none; }
+  #act svg { width: 0.9em; height: 0.9em; stroke: var(--wordmark); flex: none; }
+  #act kbd { font-family: 'Alegreya', serif; font-size: 0.75em; letter-spacing: 0; color: var(--muted); border-color: rgba(219,170,134,0.35); }
+  body.touch #act { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 172px); min-height: 48px; padding: 0.3em 1.2em; border: 1px solid rgba(217, 205, 180, 0.32); border-radius: 24px; background: rgba(11, 6, 9, 0.28); }
+  body.touch #act kbd { display: none; }
+  body.touch #act.held { background: rgba(217, 205, 180, 0.16); }
   #hint { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 0; right: 0; text-align: center; font-size: 0.9rem; letter-spacing: 0.08em; color: rgba(219,170,134,0.75); opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 5; }
   #hint.shown { opacity: 1; }
   #fps { position: fixed; right: 10px; bottom: 8px; font-size: 0.7rem; color: rgba(219,170,134,0.35); font-family: ui-monospace, monospace; z-index: 5; }
@@ -161,6 +170,7 @@
 <div id="hint"></div>
 <div id="place"><div id="place-name"></div><div id="place-line"></div></div>
 <div id="reticle"></div>
+<button id="act" type="button" aria-hidden="true" aria-live="polite"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 3.5l-1 9M8.5 3.5l-1 9M12 3.5l-1 9M2.5 10.5l11-4"/></svg><span id="act-words"></span><kbd>E</kbd></button>
 <div id="fps"></div>
 <div id="posline"></div>
 <pre id="perf"></pre>
@@ -186,6 +196,8 @@
   <div class="set-choice" id="set-capture-choice" role="group" aria-label="mouse capture"><button type="button" data-capture="lock">Capture on click</button><button type="button" data-capture="drag">Drag to look</button></div></div>
   <h3>Position</h3>
   <div class="set-row"><span class="set-label">Show position, bottom left</span><button id="set-showpos" type="button" aria-pressed="false">Hidden</button></div>
+  <h3>Marks</h3>
+  <div class="set-row"><span class="set-label">What you have left on the moor, kept by this browser</span><button id="set-forget" type="button">Forget my marks</button></div>
   <h3>Go to</h3>
   <div id="set-places"></div>
 </div></div>
