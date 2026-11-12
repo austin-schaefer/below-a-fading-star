@@ -129,6 +129,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v9 music
 
 - `music=<track>`: plays that track 3 s after the walk begins and nothing else (the director is out of the load); `music=0` is no music. Unknown names warn in the console.
+- `waystation=0` leaves out the Lantern Halt on the causeway (`src/v9/waystation.js`; its rock clearing stays)
 - `musicspeed=N`: the director's waits run N times faster (tests). The setting "Music: off / rare / default / frequent" is in the settings panel (`fp-music` in localStorage); the debug panel lists the tracks as rows.
 
 ### v8
