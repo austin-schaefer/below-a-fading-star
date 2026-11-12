@@ -13,11 +13,11 @@
 // visitor can make), shivers, and sways on its chains for half a minute; dust and grit sift down out of the crack.
 //
 // What it calls. The bell tolls for the dead. Twenty-five metres beyond it, on the slope past its mouth, the traveller
-// (stories/the-traveller-on-the-span.md) has lain unburied for years. A few seconds after the stroke, out on the
-// Corpse-Candle Fen (east, behind the visitor) nine pale candles rise out of the water one after another with a thin
-// chord, and come: in a line along the Span's north side at a walking pace, past the visitor, under the bell (its
-// mouth lights green-white from inside as each passes, and it hums back to them), and out to the traveller, where they
-// stand round him in a ring. It takes a minute and a quarter. They stay: on a return visit they are there, lighting
+// (stories/the-traveller-on-the-span.md) has lain unburied for years. The stroke runs out from the bell along the
+// ground as a wave of dust over the low ground the ringer looks across, and where it reaches, nine pale candles kindle
+// with a thin chord (within eight seconds, in the ringer's view), and come in toward the bell: in its mouth by half a
+// minute (it lights green-white inside and hums back), they wait to be looked at, then lead out to the traveller at a
+// walking pace, the last hanging back until the ringer follows, and stand round him in a ring. They stay: on a return visit they are there, lighting
 // him so he can be found at last from the deck, and the ram's strike-plate on the bronze is rubbed bright. Each later
 // ringing calls nine more, and the ring round him widens (up to three rings).
 //
@@ -45,7 +45,7 @@ const RAM = { len: 5.6, r: 0.4, gap: 0.9, back: 3.0 }; // the ram's length, its 
 // the timeline of a ringing, in seconds from the press
 const LUGS = [-4.6, -1.5]; // the ram's chain lugs, local z (the head's face at 0, the tail at -len)
 const HAUL = 1.8, HOLD = 0.5, SWING = 0.75, STRIKE = HAUL + HOLD + SWING;
-const CALL = STRIKE + 2.5, EVERY = 1.1, RISE = 3.0, SPEED = 2.4; // the candles: first rises at CALL, one each EVERY s, RISE s up out of the water, then SPEED m/s
+const RISE = 1.6; // the candles: each kindles as the stroke's wave reaches it and takes RISE s to come up off the ground
 const NC = 9, MAXSTAND = 27; // candles a ringing calls; standing round him at most
 
 export async function build(ctx) {
@@ -307,6 +307,34 @@ export async function build(ctx) {
     fog: true, transparent: true, depthWrite: false,
   });
   const dust = new THREE.Points(dGeo, dMat); dust.visible = false; dGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(BX, 25, BZ), 30); dust.name = 'bell-dust'; scene.add(dust);
+  // the stroke's wave: a ring of dust lifted off the ground and running out from the bell at WAVE m/s, across the low
+  // ground the ringer looks over; the candles kindle where it reaches. Points on the dust's material, one draw, eight
+  // seconds after a stroke and never else.
+  const NW = low ? 160 : 260;
+  const wPos = new Float32Array(NW * 3), wA = new Float32Array(NW), wS = new Float32Array(NW).fill(4.5), wJ = new Float32Array(NW);
+  for (let i = 0; i < NW; i++) wJ[i] = rng();
+  const wGeo = new THREE.BufferGeometry();
+  wGeo.setAttribute('position', new THREE.BufferAttribute(wPos, 3).setUsage(THREE.DynamicDrawUsage));
+  wGeo.setAttribute('aA', new THREE.BufferAttribute(wA, 1).setUsage(THREE.DynamicDrawUsage));
+  wGeo.setAttribute('aS', new THREE.BufferAttribute(wS, 1));
+  wGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(BX, 0, BZ), 140);
+  const wMat = dMat.clone(); wMat.uniforms = dMat.uniforms; // the same uniforms (its scale), its own colour below
+  wMat.fragmentShader = dMat.fragmentShader.replace('vec3(0.24, 0.28, 0.23), vec3(0.36, 0.33, 0.29)', 'vec3(0.6, 0.55, 0.46), vec3(0.6, 0.55, 0.46)');
+  const wave = new THREE.Points(wGeo, wMat); wave.visible = false; wave.name = 'bell-wave'; wave.r = 0; scene.add(wave);
+  function stepWave(T) {
+    const age = T - STRIKE - 0.2;
+    if (age < 0 || age > 9) { if (wave.visible && age > 9) wave.visible = false; return; }
+    wave.visible = true;
+    const r = 6.5 + age * WAVE; wave.r = r;
+    const fade = 0.5 * smoothstep(0, 0.4, age) * (1 - smoothstep(70, 130, r));
+    for (let i = 0; i < NW; i++) {
+      const a = (i / NW) * Math.PI * 2, rr = r * (1 + 0.03 * Math.sin(i * 7.3 + age * 3)) - wJ[i] * 2.5;
+      const x = BX + Math.sin(a) * rr, z = BZ + Math.cos(a) * rr;
+      wPos[i * 3] = x; wPos[i * 3 + 1] = H(x, z) + 0.5 + wJ[i] * 0.8; wPos[i * 3 + 2] = z; wA[i] = fade * (0.6 + 0.4 * wJ[i]);
+      wS[i] = 3 + r * 0.05;
+    }
+    wGeo.attributes.position.needsUpdate = true; wGeo.attributes.aA.needsUpdate = true; wGeo.attributes.aS.needsUpdate = true;
+  }
   function startDust(t) {
     const r3 = ctx.makeRng(10042 + Math.floor(t * 10));
     for (let i = 0; i < ND; i++) {
@@ -350,21 +378,31 @@ export async function build(ctx) {
   // ---------------------------------------------------------------- the candles
   const fen = ctx.water?.fen || { x: 70, z: 160, y: -2.45 };
   const body = TRAVELLER.body;
-  // where each rises: over the fen's water at its west end, nearest the Span
+  // Where each kindles: out on the low ground south of the Span, in the ringer's own view from the post (through the
+  // arch, right of the bell and under its lip), 45-110 m off; each the farthest point on its bearing the eye can see.
+  // The stroke runs out to them along the ground as a wave of dust, and each kindles as the wave reaches it.
+  const STAND = { x: POST.x + 1.2, z: POST.z - 1.1 };
+  const EYE = { x: STAND.x, y: H(STAND.x, STAND.z) + 1.6, z: STAND.z };
   const homes = [];
   {
     const r4 = ctx.makeRng(10043);
-    for (let tries = 0; homes.length < NC && tries < 400; tries++) {
-      const x = 28 + r4() * 26, z = 160 + r4() * 22;
-      if (H(x, z) > fen.y - 0.2 && tries < 300) continue;
-      if (homes.some((h) => (h.x - x) ** 2 + (h.z - z) ** 2 < 16)) continue;
-      homes.push({ x, z });
+    for (let i = 0; i < NC; i++) {
+      const b = (lerp(-3, 48, (i + 0.5) / NC) + (r4() - 0.5) * 4) * Math.PI / 180, sx = Math.sin(b), sz = Math.cos(b); // bearing from +z toward +x
+      let best = null;
+      for (let d = 110; d >= 45 && !best; d -= 4) {
+        const x = EYE.x + sx * d, z = EYE.z + sz * d, gy = H(x, z);
+        if (gy > EYE.y + 6) continue;
+        let seen = true;
+        for (let k = 1; k < 24 && seen; k++) { const u = k / 24, yy = lerp(EYE.y, gy + 1.4, u); if (H(EYE.x + sx * d * u, EYE.z + sz * d * u) > yy - 0.25) seen = false; }
+        if (seen) best = { x, z, d: Math.hypot(x - BX, z - BZ) };
+      }
+      homes.push(best || { x: EYE.x + sx * 50, z: EYE.z + sz * 50, d: 50 });
     }
-    while (homes.length < NC) homes.push({ x: 36 + homes.length * 2, z: 172 });
   }
-  // the way they come: along the Span's north side, close past the post where the visitor stands, and in under the
-  // bell, where they gather in its mouth and wait for the visitor; then on out through the arch to him
-  const WAY1 = [[24, 180], [8, 187], [-10, 193.5], [-28, 198], [-44, 199.6], [-55, 200.6], [-56.5, 205.5], [-51, 210.5]];
+  const WAVE = 15; // m/s: the stroke's wave along the ground
+  const kindleAt = (i) => STRIKE + 0.4 + homes[i].d / WAVE; // when the wave reaches it
+  const ARRIVE = (i) => STRIKE + 29 + i * 0.5; // in the bell's mouth by half a minute after the stroke
+  const WAY1 = [[-46, 229]]; // in through the arch's south mouth, under the bell
   const WAY2 = [[-48.6, 223.5], [-54.5, 231.5]];
   const gatherSlot = (i) => { const a = (i / NC) * Math.PI * 2; return { x: BX + Math.cos(a) * 2.6, z: BZ + Math.sin(a) * 2.6, y: LIP - 0.6 + 0.5 * Math.sin(i * 1.9) }; };
   const ringSlot = (k) => { const ring = Math.floor(k / 9), a = (k % 9) / 9 * Math.PI * 2 + ring * 0.35, r = 1.9 + ring * 1.0; return { x: body.x + Math.cos(a) * r, z: body.z + Math.sin(a) * r }; };
@@ -450,16 +488,17 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- the ringing
-  const st = { t: -1, active: false, n: 0, from: 0, rang: false, called: 0, arrived: 0, hummed: false, settled: false, goT: -1, waiting: 0, asc: -1, resolve: null };
+  const st = { t: -1, active: false, n: 0, from: 0, rang: false, called: 0, arrived: 0, hummed: false, settled: false, goT: -1, lastGo: -1, waiting: 0, asc: -1, resolve: null };
   const wayA = [], wayB = [], there = new Uint8Array(NC), cur = { x: 0, z: 0 };
   function ring(n) {
     there.fill(0);
-    Object.assign(st, { t: 0, active: true, n, rang: false, called: 0, arrived: 0, hummed: false, settled: false, goT: -1, waiting: 0, asc: -1 });
+    Object.assign(st, { t: 0, active: true, n, rang: false, called: 0, arrived: 0, hummed: false, settled: false, goT: -1, lastGo: -1, waiting: 0, asc: -1 });
     st.from = gathered ? 0 : standing;
     wayA.length = 0; wayB.length = 0;
     for (let i = 0; i < NC; i++) {
       const g = gatherSlot(i), k = Math.min(MAXSTAND - NC + i, st.from + i), r = ringSlot(k);
-      wayA.push(pathOf([[homes[i].x, homes[i].z], ...WAY1, [g.x, g.z]])); const w = pathOf([[g.x, g.z], ...WAY2, [r.x, r.z]]); w.k = k; wayB.push(w);
+      const wa = pathOf([[homes[i].x, homes[i].z], ...WAY1, [g.x, g.z]]); wa.speed = wa.len / Math.max(6, ARRIVE(i) - kindleAt(i) - RISE); wayA.push(wa);
+      const w = pathOf([[g.x, g.z], ...WAY2, [r.x, r.z]]); w.k = k; wayB.push(w);
     }
     ctx.audio?.cue('act-bell-haul', { x: RING.x, y: RING.y, z: RING.z });
     return new Promise((res) => { st.resolve = res; }); // busy until the candles have come to him (they wait for the visitor at the bell)
@@ -472,7 +511,8 @@ export async function build(ctx) {
     const u = t - STRIKE; return -RAM.gap * Math.exp(-u / 2.4) * Math.cos(u * Math.PI * 2 / 3.4); // knocked back off it, swinging, dying
   }
   const RAM_STILL = STRIKE + 16;
-  function finishRing() { st.active = false; pivot.rotation.z = 0; hang.rotation.x = 0; hang.position.x = 0; placeRam(0); dust.visible = false; const r = st.resolve; st.resolve = null; r?.(); }
+  const goAt = (i) => (i < NC - 1 ? st.goT + i * 0.9 : (st.lastGo >= 0 ? st.lastGo : Infinity));
+  function finishRing() { wave.visible = false; st.active = false; pivot.rotation.z = 0; hang.rotation.x = 0; hang.position.x = 0; placeRam(0); dust.visible = false; const r = st.resolve; st.resolve = null; r?.(); }
   let lettersLaid = null; // the letters mesh as last laid (threads may build after this module: lay them when it comes)
   function step(dt, t) {
     cMat.uniforms.uTime.value = t;
@@ -500,25 +540,26 @@ export async function build(ctx) {
       hang.position.x = 0.04 * Math.exp(-u / 0.7) * Math.sin(u * Math.PI * 2 * 7.3 + 1);
     }
     if (dust.visible) stepDust(dt, T);
+    stepWave(T);
     // the candles
     let glow = 0, gatheredAll = 0;
     const pl = ctx.player.pos, near = Math.hypot(pl.x - BX, pl.z - BZ) < 32;
     for (let i = 0; i < NC && !st.settled; i++) {
       const idx = MAXSTAND + i; // a moving candle draws in its own entry past the standing ones
-      const t0 = CALL + i * EVERY;
+      const t0 = kindleAt(i);
       if (T < t0) { cOn[idx] = 0; continue; }
       const h = homes[i];
       let x, y, z, on = 1;
-      if (T < t0 + RISE) { // up out of the water, kindling
-        const u = (T - t0) / RISE; x = h.x; z = h.z; y = fen.y - 0.3 + ease(u) * 1.7; on = smoothstep(0, 0.12, u) * (1 + 3 * Math.exp(-u * 4)); // a flare as it kindles, then a candle
-        if (i === 0 && !st.called) { st.called = 1; ctx.audio?.cue('act-bell-candles', { x: h.x, y: fen.y + 1.5, z: h.z }); }
+      if (T < t0 + RISE) { // kindled where the wave reaches: a flare off the ground, then a candle
+        const u = (T - t0) / RISE; x = h.x; z = h.z; y = cy(x, z, -0.2 + ease(u) * 1.7); on = smoothstep(0, 0.1, u) * (1 + 3.5 * Math.exp(-u * 3));
+        if (!st.called) { st.called = 1; ctx.audio?.cue('act-bell-candles', { x: h.x, y: cy(h.x, h.z, 1.5), z: h.z }); }
       } else {
-        const wA = wayA[i], dA2 = (T - t0 - RISE) * SPEED;
+        const wA = wayA[i], dA2 = (T - t0 - RISE) * wA.speed;
         const bob = 0.15 * Math.sin(T * 1.9 + i * 1.7);
         if (dA2 < wA.len) { along(wA, dA2, cur); x = cur.x; z = cur.z; const g = gatherSlot(i), k = smoothstep(wA.len - 10, wA.len, dA2); y = lerp(cy(x, z, 1.5 + bob), g.y + bob, k); }
-        else if (st.goT < 0 || T < st.goT + i * 0.8) { const g = gatherSlot(i); x = g.x; z = g.z; y = g.y + bob; gatheredAll++; } // in the bell's mouth, waiting
+        else if (st.goT < 0 || T < goAt(i)) { const g = gatherSlot(i); x = g.x; z = g.z; y = g.y + bob; gatheredAll++; } // in the bell's mouth, waiting
         else {
-          const wB = wayB[i], d = Math.min(wB.len, (T - st.goT - i * 0.8) * SPEED);
+          const wB = wayB[i], d = Math.min(wB.len, (T - goAt(i)) * 1.5); // on to him at a walking pace
           along(wB, d, cur); x = cur.x; z = cur.z;
           const g = gatherSlot(i), land = smoothstep(wB.len - 4, wB.len, d), off = smoothstep(0, 6, d);
           y = lerp(g.y + bob, lerp(cy(x, z, 1.5 + bob), cy(x, z, standH(wB.k)), land), off);
@@ -532,7 +573,9 @@ export async function build(ctx) {
       if (dd < 5 && !st.hummed) { st.hummed = true; ctx.audio?.cue('act-bell-hum', { x: BX, y: LIP + 3, z: BZ }); }
     }
     st.waiting = gatheredAll;
-    if (st.goT < 0 && gatheredAll >= NC && near) st.goT = T + 1.5; // all nine in its mouth and the visitor near: they go on to him
+    if (st.goT < 0 && gatheredAll >= NC && near) st.goT = T + 6; // all nine in its mouth and the visitor near: a few seconds to be looked at, then they go on
+    // the last one hangs back in the mouth until the visitor follows (comes within 12 m of the bell), or for half a minute
+    if (st.goT >= 0 && st.lastGo < 0 && T >= st.goT + (NC - 2) * 0.9 && (Math.hypot(pl.x - BX, pl.z - BZ) < 12 || T > st.goT + 30)) st.lastGo = T;
     if (!st.settled) uGlow.value.copy(cMat.uniforms.uWisp.value).multiplyScalar(0.05 + 0.3 * Math.min(1.4, glow));
     candles.visible = true;
     cGeo.attributes.position.needsUpdate = true; cGeo.attributes.aOn.needsUpdate = true; cBound();
@@ -608,7 +651,6 @@ export async function build(ctx) {
   // ---------------------------------------------------------------- the acts
   const at = { x: RING.x, y: RING.y, z: RING.z }; // the rope's ring on the post
   const AIM = { x: HEADX + 1.5, z: BZ }; // where a visitor ringing it looks: the ram's head and the bronze it strikes
-  const STAND = { x: POST.x + 1.2, z: POST.z - 1.1 };
   function facing(P) {
     if (P.pos.z > POST.z + 3) return false; // under the vault past the post: not from there
     const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
@@ -658,7 +700,7 @@ export async function build(ctx) {
     },
     // where a visitor stands to gather his letters: two metres off, looking down at him
     standBody() { const x = body.x + 1.6, z = body.z - 2.2, eye = H(x, z) + (ctx.player?.eye ?? 1.6), dx = body.x - x, dz = body.z - z; return { x, z, yaw: Math.atan2(-dx, -dz), pitch: Math.atan2(H(body.x, body.z) - eye, Math.hypot(dx, dz)) }; },
-    post: POST, aim: AIM, strike: STRIKE, call: CALL,
+    post: POST, aim: AIM, strike: STRIKE, call: STRIKE + 0.4 + Math.max(...homes.map((h) => h.d)) / WAVE + RISE, wave: WAVE, waveR: () => wave.r,
     ff(sec) { for (let i = 0; i < sec * 10 && (st.active || st.asc >= 0 || letterAnim); i++) step(0.1, (st.t > 0 ? st.t : 0) + 0.1); }, // for the tests: run a ringing (or the last beat) on
     letters: lettersMesh,
   };

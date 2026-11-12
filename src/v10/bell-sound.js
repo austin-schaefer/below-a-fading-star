@@ -8,7 +8,7 @@
 //   act-bell          the stroke: the iron-shod ram on the sound-bow (a dull thump and a short clang), then the bell, a
 //                     minute's worth of tail of which thirty seconds are audible. The loudest thing a visitor can make:
 //                     punctuation tier, heard across the bowl (900 m, a long air path, a stone room's share of reverb)
-//   act-bell-candles  far off on the fen as the candles kindle: a thin glassy chord (D5, F5, A5) entering a note at a
+//   act-bell-candles  out on the low ground south of the Span as the candles kindle where the stroke's wave reaches: a thin glassy chord (D5, F5, A5) entering a note at a
 //                     time, with a breath under each. Detail tier, but heard from the bell (300 m)
 //   act-bell-hum      the candles passing under the mouth: the bell's prime, quint and nominal swelling back to them
 //                     with no stroke, 7 s. Detail, 90 m

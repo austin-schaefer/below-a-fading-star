@@ -543,17 +543,21 @@ if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).cent
   await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 6');
   b = await bs();
   check('bell: knocked off plumb, it swings (over half a degree six seconds on)', b.sway > 0.009, b);
-  await p.evaluate(() => window.__fp.bell.ff(window.__fp.bell.call + 4 - window.__fp.bell.state.t));
-  b = await bs();
-  const onFen = await p.evaluate(() => window.__fp.bell.candles().filter((q) => q.x > 15).length);
-  check('bell: a few seconds on, candles kindle out on the fen', onFen >= 1, { onFen, b });
+  // cause to effect in the ringer's own view: the stroke's wave runs out and candles kindle where it reaches, in sight
+  await p.evaluate(() => { const pl = window.__fp.player; pl.yaw = -2.4; pl.pitch = 0.1; });
+  await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 10', 30000);
+  const inView = await p.evaluate(() => { const fp = window.__fp, v = new fp.THREE.Vector3(); return fp.bell.candles().filter((q) => { v.set(q.x, q.y, q.z).project(fp.camera); return Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95 && v.z < 1; }).length; });
+  check('bell: ten seconds after the stroke, candles kindled where its wave reached are in the ringer\'s view (yaw -2.4)', inView >= 1, { inView, b: await bs() });
   await p.keyboard.press('KeyE'); await sleep(300);
   check('bell: a second E while it rings does nothing', (await bs()).count === 1);
-  // the visitor walks off: the candles gather in the bell's mouth and wait for them
+  // the visitor walks off: the candles come to the bell's mouth all the same, and wait there for them
   await p.evaluate(() => { const fp = window.__fp; fp.controls.placeAt(fp.bell.site.x, fp.bell.site.z - 80); });
-  await p.evaluate(() => window.__fp.bell.ff(70));
+  await p.evaluate(() => window.__fp.bell.ff(window.__fp.bell.strike + 35 - window.__fp.bell.state.t));
   b = await bs();
-  check('bell: with the visitor gone off, the nine gather in the bell\'s mouth and wait', b.active && b.waiting === 9 && !b.going && b.glow > 0.2, b);
+  check('bell: 35 s after the stroke the nine are in the bell\'s mouth, its inside lit, waiting while the visitor is away', b.active && b.waiting === 9 && !b.going && b.glow > 0.2, b);
+  await p.evaluate(() => window.__fp.bell.ff(20));
+  b = await bs();
+  check('bell: and still waiting twenty seconds on', b.waiting === 9 && !b.going, b);
   await bstand(); await sleep(200);
   await p.evaluate(() => window.__fp.bell.ff(120));
   b = await bs();
