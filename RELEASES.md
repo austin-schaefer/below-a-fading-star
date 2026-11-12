@@ -1,6 +1,14 @@
 # Releases
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
+## v7.2.1 (2026-11-11) — the keep's rooks, quieter and rarer
+
+A hotfix. Austin: "idk what bird is honking non-stop near keep like a bicycle horn, but it's very distracting/frequent."
+
+- **What a visitor notices.** The rooks on Carcanet Keep's top no longer start cawing seconds after the walk begins and no longer come back every half minute. They say one or two short things, then rest for minutes (a median of two and a half, never under one), the first not before forty seconds in, and they are about 7 dB quieter. Since the spawn is under their roosts, this was the most-heard sound in the walk.
+- **Under the hood.** `src/v4/regions/demesne.js` only: the rooks' caller goes from bouts of 2–4 groups with a median rest of 30 s (minimum 10) and an answer half the time to bouts of 1–2 with a median rest of 150 s (60 to 600) and an answer one time in four; one or two caws a group (was one to three); the bus gain 0.55 → 0.25. The caw's voicing is unchanged, so if it still reads as a horn when it does sound, that is a re-voicing for the next audio pass.
+- **Known and left.** Nobody has listened to it: the change is to how often and how loud, by arithmetic. The audio survey's Demesne poses expect at least two onsets a minute in their 40 s (an ungated band) and will now often read none, since the first caw comes after 40 s.
+
 ## v7.2 (2026-11-09) — the sound
 
 A quality pass over every sound, answering Austin's three words for the old mix: random, unpleasant, at once omnipresent and rare; and his second note, that the sun-gutter sound was so unpleasant he played muted. Nothing new in the world. Plan, decisions and the measured baseline: `briefs/v7.2/index.md`; the method agents that cannot hear now follow: `.agents/skills/sound-design/`.
