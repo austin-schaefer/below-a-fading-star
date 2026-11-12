@@ -6,7 +6,7 @@ import { tarnHeight, tarnWet } from './v4/tarn.js'; // v4 regions: Lees Tarn's s
 import { setRegionsCoarse } from './v4/regions.js'; // v4 regions: the mesh's coarse pass
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4, PALETTE, SUN } from './world.js';
 import { mapHeight, prepareMap } from './v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
-import { applyMountains, M_START, PROFILE as MTN_PROFILE, MASSIFS } from './v4/mountains.js'; // v4 systems: the walls
+import { applyMountains, M_START, PROFILE as MTN_PROFILE, MASSIFS, WALL_SAMPLE } from './v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 import { ground as placesGround } from './v8/places.js'; // v8-02: the common, the wood's litter, the fen's mud
 import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
@@ -179,8 +179,8 @@ for (let i = 0; i < RIVER_LINE.n; i++) {
 const _rq = { hit: false }, _gq = { hit: false }, _bw = { bl: 0, br: 0 };
 const FEN = LANDMARKS.fen;
 // --- the massifs' bands (begin): the shader's copy of the massifs' bedding planes (MASSIFS in v4/mountains.js,
-// blended across the cols the same way) and the sun's direction across the ground, for the ledges' lines. Empty
-// under ?mountains=v4, whose bands are as they were.
+// blended across the cols the same way), which tilt the wall's faint bedding, and the sun's direction across the
+// ground, for the snow's lee. Empty under ?mountains=v4, whose bands are as they were.
 function massifGLSL() {
   if (MTN_PROFILE === 'v4') return '';
   const f = (v) => v.toFixed(4);
@@ -403,8 +403,8 @@ export function heightAt(x, z) {
 
   // --- v4 systems: the regions' heightfield hooks (one line; each region's block is its own module's height())
   h = regionsHeight(h, x, z);
-  // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: layered ranges, buttresses,
-  // talus, bedding ledges, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
+  // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: the massifs, their couloirs,
+  // ribs and fans, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
   // notch cuts through them as before.
   const r = Math.hypot(x, z);
   const ramp = smoothstep(WORLD.regionRadius - 10, WORLD.mountainRadius, r);
@@ -537,6 +537,7 @@ export function buildTerrain(ctx) {
   const iceArr = new Float32Array(pos.count);
   const glacArr = new Float32Array(pos.count * 3), gc = [0, 0, 0];
   const wetArr = new Float32Array(pos.count);
+  const wallArr = new Float32Array(pos.count); // the wall's water (v4/mountains.js drainage): the couloirs and their gullies
   const rsec = { ..._cs };
   const cShingle = C('#48443e'), cPale = C('#8a8274'), cSilt = C('#2c2a24');
   const col = new THREE.Color();
@@ -547,12 +548,32 @@ export function buildTerrain(ctx) {
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new THREE.Color();
   const MASSIF_BANDS = MTN_PROFILE !== 'v4', cScreeL = C('#5c5752'), tmp2 = new THREE.Color(); // the massifs' bands
+  // the wall's rock masses (v11): slate, a rust-brown, a dark basalt, a cold lichen-grey; and the damp of the couloirs
+  const cRust = C('#4a3a31'), cBasalt = C('#29262b'), cLichen = C('#3d433a'), cDamp = C('#25282a');
   prepareMap(); // v4 map: trace the leads before the mesh, so it carries the runnels' cuts
   setRegionsCoarse(size / segs); // v4 regions: the mesh takes fine relief's lower envelope (regions.js)
+  // the heights first, so the wall's colour classes can read its slope over 4 cells (below); with them the wall's
+  // water and its fans' mouths (v4/mountains.js WALL_SAMPLE, read straight after each heightAt)
+  const mouthArr = new Float32Array(pos.count), nV = segs + 1, cellW = size / segs;
+  for (let i = 0; i < pos.count; i++) {
+    WALL_SAMPLE.water = 0; WALL_SAMPLE.mouth = 0;
+    pos.setY(i, heightAt(pos.getX(i), pos.getZ(i)));
+    wallArr[i] = WALL_SAMPLE.water; mouthArr[i] = WALL_SAMPLE.mouth;
+  }
+  // the wall's slope from the mesh over ±2 cells (4-6 m): biomeAt's reads a 0.6 m step, so on a face near the scree's
+  // angle the colour classes flipped from vertex to vertex in the pattern of the finest noise, stretched up the face
+  // (the herringbone fur on the faces)
+  const slopeW = (i) => {
+    const ci = i % nV, cj = (i - ci) / nV;
+    const i0 = Math.max(0, ci - 2), i1 = Math.min(segs, ci + 2), j0 = Math.max(0, cj - 2), j1 = Math.min(segs, cj + 2);
+    const gx = (pos.getY(cj * nV + i1) - pos.getY(cj * nV + i0)) / ((i1 - i0) * cellW);
+    const gz = (pos.getY(j1 * nV + ci) - pos.getY(j0 * nV + ci)) / ((j1 - j0) * cellW);
+    return Math.atan(Math.hypot(gx, gz));
+  };
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
-    const y = heightAt(x, z);
-    pos.setY(i, y);
+    const y = pos.getY(i);
+    const wWater = wallArr[i], wMouth = mouthArr[i];
     const b = biomeAt(x, z);
     // base: moor grass to dry grass by noise, heather patches
     const dry = SX.warped2(x * 0.01 + 3, z * 0.01 + 1, 3) * 0.5 + 0.5;
@@ -568,15 +589,22 @@ export function buildTerrain(ctx) {
     col.lerp(cMud, b.marsh * 0.85);
     col.lerp(cShore, b.shore * 0.8);
     col.lerp(cCrys, b.crystal * 0.5);
-    // slope → rock; height → scree then dark rock
-    const rockMix = clamp(b.rock, 0, 1);
+    // slope → rock; height → scree then dark rock (on the massifs' wall, by the slope over 4 cells)
+    const rW = Math.hypot(x, z), mmW = MASSIF_BANDS ? smoothstep(300, 334, rW) : 0, sW = mmW > 0 ? slopeW(i) : b.slope;
+    const rockMix = lerp(clamp(b.rock, 0, 1), clamp(smoothstep(0.55, 0.95, sW) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, rW) * 0.6, 0, 1), mmW);
     tmp.copy(cScree).lerp(cRock, smoothstep(10, 60, y)).lerp(cRockD, smoothstep(60, 160, y));
-    // --- the massifs' bands (begin): on the walls (not ?mountains=v4) the band goes by slope before height: pale
-    // scree on the 30-35° aprons, bare rock on the steep bands, darker rock only where the band is steep and high
+    // --- the massifs' bands (begin): on the walls (not ?mountains=v4) the colour goes by what the rock is and where
+    // water runs, not by height: pale scree on the 30-35° aprons and the couloirs' fans, bare rock on the steep
+    // bands in masses of a few hundred metres (tilted, so they lie across the face like beds, broken by noise),
+    // the couloirs damp and dark, lichen where water seeps
     if (MASSIF_BANDS) {
-      const mm = smoothstep(300, 334, Math.hypot(x, z));
+      const mm = mmW;
       if (mm > 0) {
-        tmp2.copy(cScreeL).lerp(cRock, smoothstep(0.66, 0.9, b.slope)).lerp(cRockD, smoothstep(0.85, 1.15, b.slope) * smoothstep(60, 220, y) * 0.8);
+        const mass = SY.warped2(x * 0.0042 + y * 0.0045, z * 0.0042 - y * 0.003, 3, 0.8), mass2 = SY.fbm2(x * 0.0065 - y * 0.006 + 31, z * 0.0065 + 17, 3);
+        tmp2.copy(cRock).lerp(cRust, smoothstep(0.05, 0.45, mass) * 0.75).lerp(cBasalt, smoothstep(0.1, 0.5, -mass) * 0.6).lerp(cLichen, smoothstep(0.15, 0.5, mass2) * 0.45);
+        tmp2.lerp(cDamp, wWater * 0.7).lerp(cLichen, wWater * smoothstep(0.2, 0.6, mass2 + 0.3) * 0.25);
+        const scree = 1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth);
+        tmp2.lerp(cScreeL, scree).lerp(cScree, scree * wMouth * 0.3);
         tmp.lerp(tmp2, mm);
       }
     }
@@ -613,7 +641,7 @@ export function buildTerrain(ctx) {
     regionsGround(col, x, z, b); // v4 systems: the regions' ground hooks (and the ?regions=1 tint)
     if (!REGIONS_DEBUG) placesGround(col, x, z, cd); // v8-02
     // a little per-vertex variation so the moor isn't flat
-    const v = SX.noise2(x * 0.11, z * 0.11) * 0.06;
+    const v = SX.noise2(x * 0.11, z * 0.11) * 0.06 * (1 - 0.85 * mmW); // (on the wall the shader's grain does this)
     col.r = clamp(col.r + v, 0, 1); col.g = clamp(col.g + v, 0, 1); col.b = clamp(col.b + v, 0, 1);
     colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
   }
@@ -631,13 +659,27 @@ export function buildTerrain(ctx) {
       const lap = (pos.getY(k - 1) + pos.getY(k + 1) + pos.getY(k - n) + pos.getY(k + n) - 4 * pos.getY(k)) / (cell * cell);
       // lap > 0: concave (gully), < 0: convex (crest)
       const crev = clamp(lap * 1.6, -0.6, 1);
-      const f = crev > 0 ? 1 - 0.72 * crev * m : 1 - crev * 0.45 * m;
+      let f = crev > 0 ? 1 - 0.72 * crev * m : 1 - crev * 0.45 * m;
+      // the massifs' wall (v11): the one-cell curvature outlined every crease the mesh holds (it drew the old ledges
+      // as ruled lines); on the wall the curvature is read over ~4 cells, so it shades gullies and ribs, gently
+      const mw = MASSIF_BANDS ? smoothstep(M_START + 10, M_START + 40, r) : 0;
+      if (mw > 0 && j > 5 && i > 5 && j < segs - 5 && i < segs - 5) {
+        const lap2 = (pos.getY(k - 2) + pos.getY(k + 2) + pos.getY(k - 2 * n) + pos.getY(k + 2 * n) - 4 * pos.getY(k)) / (4 * cell * cell);
+        const c2 = clamp(lap2 * 2.2, -0.6, 1);
+        // and over ~12 m, the couloirs dark and the ribs between them light: the cold side's light is mostly the
+        // sky's, which the normals barely vary, so the drainage has to show in the colour
+        const lap6 = (pos.getY(k - 6) + pos.getY(k + 6) + pos.getY(k - 6 * n) + pos.getY(k + 6 * n) - 4 * pos.getY(k)) / (36 * cell * cell);
+        const c6 = clamp(lap6 * 7, -0.7, 1);
+        const fw = (c2 > 0 ? 1 - 0.3 * c2 : 1 - c2 * 0.2) * (c6 > 0 ? 1 - 0.38 * c6 : 1 - c6 * 0.28);
+        f = lerp(f, 1 - (1 - fw) * m, mw);
+      }
       colors[k * 3] *= f; colors[k * 3 + 1] *= f; colors[k * 3 + 2] *= f;
     }
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('aIce', new THREE.BufferAttribute(iceArr, 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(wetArr, 1));
+  geo.setAttribute('aWall', new THREE.BufferAttribute(wallArr, 1));
   geo.setAttribute('aGlac', new THREE.BufferAttribute(glacArr, 3));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
@@ -656,11 +698,11 @@ export function buildTerrain(ctx) {
     Object.assign(shader.uniforms, uniforms);
     mat.userData.shader = shader; // the bands' uniforms, for A/B timing from the console
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying vec3 vGlac;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet; vGlac = aGlac;');
+      .replace('#include <common>', '#include <common>\nattribute float aIce; attribute float aWet; attribute float aWall; attribute vec3 aGlac; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vGlac;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvTPos = (modelMatrix * vec4(position,1.0)).xyz; vTNormal = normalize(mat3(modelMatrix) * normal); vIce = aIce; vWet = aWet; vWallW = aWall; vGlac = aGlac;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying vec3 vGlac;
+        uniform sampler2D uDetail; uniform float uBumpFar; uniform vec2 uFineBand; uniform vec3 uFineMean; varying vec3 vTPos; varying vec3 vTNormal; varying float vIce; varying float vWet; varying float vWallW; varying vec3 vGlac;
         ${GLACIER_GLSL}
         vec3 triplanar(sampler2D t, vec3 p, vec3 n, float s) {
           vec3 w = abs(n); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z);
@@ -679,8 +721,19 @@ export function buildTerrain(ctx) {
           vec3 g = vec3(fpHeight(p + vec3(e, 0.0, 0.0), n) - h0, fpHeight(p + vec3(0.0, e, 0.0), n) - h0, fpHeight(p + vec3(0.0, 0.0, e), n) - h0) / e;
           g -= n * dot(g, n);
           return normalize(n - g * strength);
+        }
+        // the wall's chart (v11): arc round the bowl and height, so a pattern lies on the faces as on a cylinder and
+        // can run down the fall line (the triplanar's two side projections cross on a face turned 45° to the axes and
+        // draw herringbone). K whole tiles go round the circle, so the seam at atan's wrap is invisible; the
+        // gradients come from the position's own derivatives (dp, at the top of main), so the wrap has no mip line.
+        vec4 fpWallTex(vec3 p, float K, float sy, vec3 dpx, vec3 dpy) {
+          float r2 = max(dot(p.xz, p.xz), 1.0), k = K * 0.15915494;
+          vec2 uv = vec2(atan(p.z, p.x) * k, p.y * sy);
+          vec2 gx = vec2((p.x * dpx.z - p.z * dpx.x) / r2 * k, dpx.y * sy), gy = vec2((p.x * dpy.z - p.z * dpy.x) / r2 * k, dpy.y * sy);
+          return textureGrad(uDetail, uv, gx, gy);
         }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
+        vec3 fpDpx = dFdx(vTPos), fpDpy = dFdy(vTPos); // the wall chart's gradients, outside any branch
         {
           vec3 d1 = triplanar(uDetail, vTPos, vTNormal, 0.35);
           vec3 d2 = triplanar(uDetail, vTPos, vTNormal, 0.045);
@@ -699,41 +752,45 @@ export function buildTerrain(ctx) {
           float sheer = smoothstep(0.5, 0.15, vTNormal.y);
           float strata = (sin(vTPos.y * 1.7 + d2.r * 4.0) * 0.5 + 0.5) * (0.12 + 0.2 * sheer) * rocky * strataFade
                        + smoothstep(0.42, 0.5, abs(fract(vTPos.y * 0.55 + d1.g * 0.8) - 0.5)) * 0.25 * sheer * strataFade;
+          float mtn = smoothstep(280.0, 340.0, length(vTPos.xz)) * (1.0 - vIce);
+          #ifdef FP_MASSIFS
+          strata *= 1.0 - mtn; // the massifs' wall has its own bedding below, not level lines
+          if (mtn > 0.0) { // and its grain in its own chart, not the triplanar's herringbone, on the steep rock
+            float gw = mtn * smoothstep(0.85, 0.6, vTNormal.y);
+            float gA = fpWallTex(vTPos, 236.0, 0.083, fpDpx, fpDpy).r, gB = fpWallTex(vTPos, 72.0, 0.025, fpDpx, fpDpy).g;
+            grain = mix(grain, (gA - 0.5) * 0.4 + (gB - 0.5) * 0.35, gw);
+          }
+          #endif
           diffuseColor.rgb *= 1.0 + grain - strata;
+          #ifndef FP_MASSIFS
           // far strata: broad bedding planes on the mountain walls, anti-aliased by their own screen
           // derivative so they fade instead of shimmering, plus darker bands of harder rock
-          float camDist = length(vTPos - cameraPosition);
-          float mtn = smoothstep(280.0, 340.0, length(vTPos.xz)) * (1.0 - vIce);
           float sy = vTPos.y * 0.14 + d2.r * 2.5 + vTPos.x * 0.01;
           float aa = clamp(fwidth(sy) * 1.5, 0.0, 1.0);
           float bed = (smoothstep(0.35, 0.5, abs(fract(sy) - 0.5)) - 0.5) * (1.0 - aa);
           float hard = smoothstep(0.55, 0.75, sin(vTPos.y * 0.035 + d2.g * 3.0) * 0.5 + 0.5);
+          #endif
           #ifdef FP_MASSIFS
-          // --- the massifs' bands (begin): the bedding follows each massif's tilted plane (MASSIFS in
-          // v4/mountains.js, the heightfield's own ledges); each ledge's tread is a pale line, catching the low sun
-          // where the face turns to it, with the riser's shadow below the next; snow lies on the treads high up and
-          // on the flat of the shoulders, not in blotches over the faces
-          float ledgeSnow = 0.0;
-          if (mtn > 0.0) { // the floor (mtn 0 inside r 280) pays nothing for the bands
+          // --- the massifs' bands (begin), v11: nothing on the wall is ruled. The bedding is lenses of rock stretched
+          // along each massif's tilted plane (MASSIFS in v4/mountains.js) and broken by their own noise, faint; streaks
+          // of water-stain and salt run down the fall line, darker in the couloirs (vWallW, the heightfield's drainage);
+          // snow lies on the flats and in the high couloirs, thinner where the low sun reaches
+          float snow = 0.0;
+          if (mtn > 0.0) { // the floor (mtn 0 inside r 280) pays nothing for the wall
             vec3 mb = fpMassifBed(vTPos.xz);
-            float qb = (vTPos.y + dot(vTPos.xz, mb.xy)) / mb.z + (d2.r - 0.5) * 0.12;
-            float aab = clamp(fwidth(qb) * 1.2, 0.0, 1.0);
-            float tb = fract(qb);
-            // each ledge its own strength (a third stand out, the rest faint), and broken along its run
-            float qi = floor(qb), az = atan(vTPos.z, vTPos.x);
-            float prom = 0.5 + 0.5 * smoothstep(0.45, 0.75, fract(sin(qi * 12.9898) * 43758.5453));
-            float run = smoothstep(-0.35, 0.35, sin(az * 41.0 + qi * 2.3 + d2.g * 2.0) * 0.6 + sin(az * 97.0 + qi * 5.1) * 0.4 + 0.75);
-            float tread = (1.0 - smoothstep(0.0, 0.09 + aab, tb)) * (1.0 - aab) * prom * run;
-            float under = smoothstep(0.7, 1.0, tb) * (1.0 - aab) * (0.4 + 0.6 * prom);
-            float sunward = smoothstep(-0.15, 0.45, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
-            float ledge = mtn * smoothstep(0.85, 0.5, vTNormal.y);
-            diffuseColor.rgb *= 1.0 - mtn * (bed * 0.12 + hard * 0.3 * rocky) - ledge * under * (0.18 + 0.22 * sunward);
-            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.6 + vec3(0.035, 0.03, 0.03), ledge * tread * (0.25 + 0.5 * sunward));
-            ledgeSnow = ledge * tread * smoothstep(120.0, 220.0, vTPos.y) * 0.6;
+            vec3 pb = vec3(vTPos.x, vTPos.y + dot(vTPos.xz, mb.xy), vTPos.z); // up the bedding, not the level
+            vec3 pbx = vec3(fpDpx.x, fpDpx.y + dot(fpDpx.xz, mb.xy), fpDpx.z), pby = vec3(fpDpy.x, fpDpy.y + dot(fpDpy.xz, mb.xy), fpDpy.z);
+            float lens = fpWallTex(pb, 10.0, 0.02, pbx, pby).r - 0.5;
+            float stk = fpWallTex(vTPos, 56.0, 0.003, fpDpx, fpDpy).r;
+            float rockW = mtn * smoothstep(0.78, 0.5, vTNormal.y); // bare rock, not the aprons or the shoulders' flats
+            float streak = smoothstep(0.5, 0.78, stk);
+            float salt = smoothstep(0.32, 0.18, stk) * (1.0 - vWallW);
+            diffuseColor.rgb *= 1.0 + rockW * (lens * 0.22 - streak * (0.1 + 0.25 * vWallW) + salt * 0.1);
+            float hi = smoothstep(150.0, 245.0, vTPos.y + (d2.r - 0.5) * 40.0);
+            float flt = smoothstep(0.58, 0.82, vTNormal.y);
+            float lee = 1.0 - 0.45 * smoothstep(0.0, 0.6, dot(normalize(vTNormal.xz + 1e-4), FP_SUN_XZ));
+            snow = mtn * hi * clamp(flt * lee + vWallW * smoothstep(0.3, 0.55, vTNormal.y) * 0.8, 0.0, 1.0) * smoothstep(0.22, 0.42, d1.g + 0.25 * hi);
           }
-          float snowH = smoothstep(160.0, 250.0, vTPos.y + (d2.r - 0.5) * 30.0);
-          float holds = smoothstep(0.6, 0.85, vTNormal.y + max(-vTNormal.z, 0.0) * 0.15);
-          float snow = max(snowH * holds * mtn * smoothstep(0.2, 0.35, d1.g + 0.3 * snowH), ledgeSnow);
           // --- the massifs' bands (end)
           #else
           diffuseColor.rgb *= 1.0 - mtn * (bed * 0.4 + hard * 0.4 * rocky);
@@ -759,6 +816,20 @@ export function buildTerrain(ctx) {
           float bumpStrength = 0.07 * (1.0 - smoothstep(10.0, 60.0, camD));
           vec3 nW = normalize(vTNormal);
           if (camD < uBumpFar) nW = fpBumpWorld(vTPos, nW, bumpStrength);
+          #ifdef FP_MASSIFS
+          // the wall's relief finer than its 2-3 m mesh (v11): flutes down the fall line and blocks of ~10 m, as a
+          // height in metres bumped by its screen derivative, so it holds at 400 m and the mips quiet it beyond
+          float rW = length(vTPos.xz);
+          if (rW > 290.0) {
+            float hW = (fpWallTex(vTPos, 84.0, 0.006, fpDpx, fpDpy).r * 1.1 + fpWallTex(vTPos, 128.0, 0.05, fpDpx, fpDpy).g * 0.7)
+                     * smoothstep(290.0, 330.0, rW) * smoothstep(0.8, 0.5, nW.y) * (1.0 - vIce);
+            vec3 dpx = fpDpx, dpy = fpDpy;
+            float dhx = dFdx(hW), dhy = dFdy(hW);
+            vec3 R1 = cross(dpy, nW), R2 = cross(nW, dpx);
+            float det = dot(dpx, R1);
+            nW = normalize(abs(det) * nW - sign(det) * (dhx * R1 + dhy * R2));
+          }
+          #endif
           normal = normalize(mat3(viewMatrix) * nW);
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
