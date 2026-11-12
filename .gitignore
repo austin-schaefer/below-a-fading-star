@@ -24,3 +24,5 @@ tmp/
 
 # Editor
 .vscode/
+.claude/relay-next
+.claude/relay-fired
