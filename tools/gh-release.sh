@@ -104,6 +104,10 @@ one() {
     return 0
   fi
 
+  # pictures: RELEASES.md points at shots/ by relative path, which GitHub renders in the file; a release body needs
+  # absolute addresses, pinned to the commit the release is tagged at
+  local slug; slug="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+  body="$(printf '%s\n' "$body" | sed -e "s#src=\"shots/#src=\"https://raw.githubusercontent.com/$slug/$sha/shots/#g" -e "s#](shots/#](https://raw.githubusercontent.com/$slug/$sha/shots/#g")"
   tmp="$(mktemp)"; printf '%s\n' "$body" > "$tmp"
   if gh release view "v$v" >/dev/null 2>&1; then
     gh release edit "v$v" --title "$title" --notes-file "$tmp"

@@ -30,6 +30,8 @@ Adds separate volume controls, a strange new waystation on the road, and a first
 
 Known issues: the sleeper in the Lantern Halt can only be seen from the east side, and the things at the foot of the stone are small and dim. The music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
 
+<p><img src="shots/75-lantern-halt-from-the-road.webp" width="24%" alt="The Lantern Halt from the road: a dark slab with a lit globe in its notch"> <img src="shots/75-lantern-halt-near.webp" width="24%" alt="The Lantern Halt up close: a sleeper in the hanging globe, his bundle beside him"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"></p>
+
 ## v8: One world
 
 Released 2026-11-11.

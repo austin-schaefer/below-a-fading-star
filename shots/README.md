@@ -87,6 +87,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 72 | v8 the walk: the orchestrator's 24-stop walk before v8 and after batch 1, six pairs |
 | 73 | v9 fixes: wood light shafts (#19) and the white hillside figure (#16); before and after |
 | 74 | v9 settings menu: sound, quality and position, on desktop and phone |
+| 75 | v9 the Lantern Halt, a waystation on the causeway |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -580,5 +581,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `73-hillside-figure-after.webp` | After, from the same spot: nothing lies or grows on the figure. |
 | `74-settings-desktop.webp` | The settings menu on desktop: sound, quality, mouse and position. |
 | `74-settings-phone.webp` | The settings menu on a phone, with the Go to list. |
+| `75-lantern-halt-from-the-road.webp` | The Lantern Halt from the causeway, 60 m east: a dark slab with a lit globe in its notch. |
+| `75-lantern-halt-near.webp` | The Lantern Halt at 15 m: the globe in its painted arch, the sleeper at the hatch, his bundle on the slab's shoulder. |
+| `75-lantern-halt-sleeper.webp` | Enlarged: the sleeper under a patchwork quilt, the bindle beside him. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
