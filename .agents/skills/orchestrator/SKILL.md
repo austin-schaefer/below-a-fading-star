@@ -65,10 +65,12 @@ When a subagent reports done:
 
 When the milestone is in, in this order:
 
-1. `tools/suite.sh` green on `next`. The repository has no CI: the suite on the working branch is the gate.
-2. The critic's blocking findings fixed (`autonomous-run` skill, `critic.md`).
-3. The renders curated ("Screenshots are the record", below); the curator does not commit, so you commit what it did.
-4. The `RELEASES.md` entry and the `README.md` line, in the release PR (below).
+1. The critic first (`autonomous-run` skill, `critic.md`), as soon as the last brief is merged, with the curator beside it ("Screenshots are the record", below; it needs no browser). While they run, write the `RELEASES.md` entry and the `README.md` line (below). The critic goes before the gate because its findings mean fixes, and fixes mean running the gate again: v8 ran the gate, then the critic, then the gate a second time.
+2. The critic's blocking findings fixed; the curator's work committed (it does not commit).
+3. `tools/suite.sh` green on `next`, once, on everything that will ship. The repository has no CI: the suite on the working branch is the gate.
+4. The release PR.
+
+The tail of a release should take about an hour: the critic and the notes together, the fixes, one gate. If it is taking much longer, say why in Status: usually scope added after the last brief, which is a reason to cut a point release, not to hold this one.
 **A small release goes faster.** A point release (`v<N>.<M>`: one addition or a few fixes, the owner waiting for it) skips steps 2 and 3: no critic, and its renders are curated with the next milestone's. It keeps the suite (step 1), a cold read of the diff, and, for anything a visitor sees, a fresh agent's blind read of the renders ("look before you read", above). The owner, 2026-11-11: "do we need all this cold critic etc etc? i don't want an hour wait to get that live."
 
 5. Open the release PR from `next` to `main` and `gh pr merge --merge` it, then `tools/gh-release.sh <version>` to publish the entry as the GitHub release, then merge `origin/main` back into `next`.

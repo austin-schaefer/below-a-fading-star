@@ -78,6 +78,17 @@ Skills, tools, hooks, tests and `AGENTS.md` are part of the codebase, and improv
 
 Pause a piece of work only for things you truly can't do: it needs money, a credential or an account, an action outside this repository, or a rewrite of pushed history. Put it under a **Waiting on the owner** heading at the top of the current Status, with exactly what you need from them, and carry on with everything else. The run itself never stops for a question.
 
+## After a release: look back
+
+Once the release is live, and not before (it must never hold a release up), spend ten minutes looking back. Write the answers into the milestone doc's Status under "Looking back":
+
+- **What took longest, and did it need to?** What was checked twice, what waited on something that could have run beside it.
+- **What was found late** (by the critic, the owner, or after release) that a test, a tool or a line in a skill would have caught earlier?
+- **What did the owner have to say more than once,** or correct? That belongs in a skill or `AGENTS.md`, in their words.
+- **What worked** that should be done again on purpose?
+
+Then act, small: at most three changes to the harness (a test, a tool, a line in a skill; sharpen before you add), and file as issues, labelled `agent`, any milestone idea the work turned up ("File your own milestone ideas", above; none is fine). The owner asked for this step (2026-11-11) and also said the end of a release takes too long: so it comes after, it is time-boxed, and it is where the release process itself gets shorter.
+
 ## After a release: start clean
 
 A milestone fills the orchestrator's context with renders, reviews and merges that the next milestone does not need. Claude Code gives the model no way to compact or clear its own context (no tool, no hook and no scheduled prompt can run `/compact` or `/clear`; checked against its docs on 2026-11-11). So a new milestone starts in a new session, and your part is to make the handover lossless.
