@@ -8,7 +8,7 @@ import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' 
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
-import { wornAt } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
+import { wornAt, nearestLead } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
 import { clearedBy } from './v8/clearings.js'; // v8-11: the one table of ground kept clear of stones and boulders
 import { commonAt } from './v8/places.js'; // v8-11: the grazed common round the keep keeps few boulders
 
@@ -234,6 +234,7 @@ export async function build(ctx) {
       if (!keepBig(x, z, b, cls, size)) { cut.thinned[cls]++; continue; }
     }
     if (sextonClear(x, z, cls === 'boulder' ? size : 0, size * 0.5)) continue; // the Sexton's graves and heaps (v7/workers/graves.js)
+    if (cls === 'boulder') { const h = nearestLead(x, z, size * 0.75 + 0.3); if (h && h.kind !== 'rivulet') continue; } // v8-09: a boulder's whole bulk off the road, not only its centre
     classes[cls].push(it);
   }
   // Tors: a few stacked outcrops as landmarks of the open moor

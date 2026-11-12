@@ -311,7 +311,7 @@ export function buildTraveller(ctx, U) {
 
   const S = { s: 60, speed: 0.8, yawT: 0, yawW: 0, headYaw: 0, arm: 0, greet: 'idle', greetT: 0, greeted: false, spin: 0, hold: false };
   S.yawT = headingAt(S.s); S.yawW = headingAt(S.s - 5.0);
-  const colT = { x: 0, z: 0, r: 0.75 }, colW = { x: 0, z: 0, r: 1.4 };
+  const colT = { x: 0, z: 0, r: 0.75, moving: true }, colW = { x: 0, z: 0, r: 1.4, moving: true }; // moving: they travel the road (roads-test)
   ctx.addCollider(colT); ctx.addCollider(colW);
   const pub = ctx.traveller = { position: trav.position, wagonPosition: wagon.position, greeting: false };
   const cam = camera.position;
