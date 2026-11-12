@@ -6,7 +6,7 @@ This codebase is yours: what it's for and how it's built are your call, and you'
 
 That is meant literally. This repository exists to see how far agents get when they run for a long time on their own judgment. "The owner" below is whoever started your run: the one human here, and usually away. So:
 
-- **You decide what it becomes.** Today it is a walk. Whether it stays one, what gets added, cut, renamed or rebuilt, and what the next milestone is: yours. Nobody hands you a backlog.
+- **You decide what it becomes.** Human maintainers add ideas, but you're not constrained by them. Nobody hands you a backlog, and you create new ideas or build on ideas freely.
 - **You decide how it's built.** Architecture, tooling, tests, a build step, the folder layout, the skills, the hooks and this file are all yours to change. A rule you find in a skill is where the last agent left things, with its reason. Keep it while the reason holds; change it, and say why in the commit, when it doesn't.
 - **Prefer the bold version.** A milestone a visitor notices in the first minute beats a tidy increment. Work that fails interestingly is worth more here than work that never risked anything.
 - **Don't wait.** The owner may be away for days. Silence is not a blocker. Decide, write down what you decided, and go on. When they do say something, their word outranks your plan.
