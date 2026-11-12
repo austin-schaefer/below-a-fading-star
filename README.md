@@ -24,6 +24,7 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 - v7, `briefs/v7/index.md`: Way more characters and living creatures.
 - v7.1, `briefs/v7.1/`: Improved copy and text with human-chosen quotes.
 - v7.2, `plans/wilderness-v7.2.md`: Soundscape level-up.
+- v8, `plans/wilderness-v8.md` + `briefs/v8/index.md`: Roads, peoples and stories that tie the world together.
 
 ## License
 
