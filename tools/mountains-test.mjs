@@ -98,6 +98,7 @@ const geometry = (mode) => page.evaluate(async ({ mode, CARVED }) => {
 
 function judgeGeometry(rows, label) {
   const used = rows.filter((r) => !r.skip);
+  if (!used.length) { console.log(`FAIL ${label}: no profile was measured`); process.exit(1); }
   const mean = used[0].ac.map((_, k) => used.reduce((a, r) => a + r.ac[k], 0) / used.length);
   const acMax = Math.max(...mean), acLag = 8 + mean.indexOf(acMax);
   const dipped = used.filter((r) => r.dip > FOLD_DIP), dipShare = dipped.length / used.length;
