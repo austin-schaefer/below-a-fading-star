@@ -514,15 +514,16 @@ function buildPit(ctx) {
     im.computeBoundingSphere();
     scene.add(im); meshes.push(im);
   }
-  // the rim's colliders: a ring just outside the edge, so the walker can stand at the lip and look in, and a second
-  // 0.7 m further out, so a hurrying walker cannot slip through the first in one step
+  // the rim's colliders (v10-T1, #15): one ring of small columns whose centres lie 0.45 m inside the edge, so the
+  // walker's body stops 0.3 m outside it, close enough that the eye is over the edge and the throat fills the view.
+  // The columns are 0.45 m apart and 0.3 + 0.45 thick, so a hurrying step (0.33 m) cannot pass between them.
   let colliders = 0;
-  if (ctx.addCollider) for (const out of [0.15, 0.85]) {
+  if (ctx.addCollider) {
     let lx = Infinity, lz = Infinity;
-    for (let b = 0; b < 360; b += 0.5) {
-      const a = (b * Math.PI) / 180, R = pitRim(b) + out, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
-      if (Math.hypot(x - lx, z - lz) < 0.8) continue;
-      ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
+    for (let b = 0; b < 360; b += 0.25) {
+      const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
+      if (Math.hypot(x - lx, z - lz) < 0.45) continue;
+      ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
     }
   }
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
