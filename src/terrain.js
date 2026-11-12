@@ -614,7 +614,9 @@ export function buildTerrain(ctx) {
         tmp2.copy(cSlate).lerp(cRust, smoothstep(0.0, 0.3, mass)).lerp(cBasalt, smoothstep(0.12, 0.4, -mass) * 0.85).lerp(cLichen, smoothstep(0.2, 0.55, mass2) * 0.4);
         tmp2.lerp(cHard, hardArr[i] * 0.85).multiplyScalar(1 - 0.45 * stepArr[i]);
         tmp2.lerp(cDamp, Math.min(1, wWater * 1.2) * 0.85).lerp(cLichen, wWater * smoothstep(0.2, 0.6, mass2 + 0.3) * 0.2);
-        const scree = 1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth);
+        // (scree lies at the foot, on the aprons and the fans; the high shoulders' gentler ground is the rock masses'
+        // own colour, frost-broken, not the aprons' pale: M4, the upper faces read pale and plain)
+        const scree = (1 - smoothstep(0.62, 0.86, sW - 0.12 * wMouth)) * (1 - smoothstep(70, 140, y) * (1 - wMouth));
         tmp2.lerp(cScreeL, scree).lerp(cFan, scree * Math.min(1, wMouth * 1.5) * 0.8);
         tmp.lerp(tmp2, mm);
       }
@@ -808,7 +810,8 @@ export function buildTerrain(ctx) {
             vec3 pbx = vec3(fpDpx.x, fpDpx.y + dot(fpDpx.xz, mb.xy), fpDpx.z), pby = vec3(fpDpy.x, fpDpy.y + dot(fpDpy.xz, mb.xy), fpDpy.z);
             float lens = fpWallTex(pb, 10.0, 0.02, pbx, pby).r - 0.5;
             float stk = fpWallTex(vTPos, 56.0, 0.003, fpDpx, fpDpy).r;
-            float rockW = mtn * smoothstep(0.78, 0.5, vTNormal.y); // bare rock, not the aprons or the shoulders' flats
+            // bare rock, not the aprons; high up (M4) the shoulders' gentler ground carries the rock's lenses and cavities too
+            float rockW = mtn * max(smoothstep(0.78, 0.5, vTNormal.y), smoothstep(110.0, 180.0, vTPos.y) * smoothstep(0.95, 0.7, vTNormal.y) * 0.8);
             float streak = smoothstep(0.5, 0.78, stk);
             float salt = smoothstep(0.32, 0.18, stk) * (1.0 - vWallW);
             // the streaks gather where water runs and fade on the dry ribs, so they do not hang evenly like a curtain
