@@ -213,8 +213,15 @@ function walk({ v, rng, beat, mode, from, to, prior, phrases }) {
     let tt = t;
     seq.forEach(([d, b], i) => {
       const arch = seq.length > 1 ? Math.sin(Math.PI * i / (seq.length - 1)) : 1;
-      const jit = i === 0 ? 0 : (rng() - 0.5) * 2 * rubato * beat;
-      const e = { t: tt + jit, dur: b * beat * legato, ratio: degRatio(mode, d), vel: Math.min(1, vq + (vl - vq) * arch + (rng() - 0.5) * 0.04) };
+      // rubato moves the onset off the grid the roughness check judged, so it is checked again: a jittered note never
+      // starts before the phrase's previous note ends (a melody does not sound two notes at once), and one that would
+      // now sound rough against an earlier voice (an early onset under the end of a held chord) goes back to the grid
+      // (or as near it as the previous note allows)
+      const prevEnd = ph.length ? ph[ph.length - 1].t + ph[ph.length - 1].dur : -Infinity, dur = b * beat * legato;
+      let jit = i === 0 ? 0 : (rng() - 0.5) * 2 * rubato * beat;
+      jit = Math.max(jit, prevEnd - tt);
+      if (jit && !fits(tt + jit, dur, d)) jit = Math.max(0, prevEnd - tt);
+      const e = { t: tt + jit, dur, ratio: degRatio(mode, d), vel: Math.min(1, vq + (vl - vq) * arch + (rng() - 0.5) * 0.04) };
       out.push(e); ph.push(e); tt += b * beat;
     });
     mine.push(ph);
