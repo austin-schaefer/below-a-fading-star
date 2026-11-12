@@ -190,7 +190,8 @@ if (CAND) {
 // something hangs at the crest (HOLD_CREST) and at the cols' floors, so faceAt below ~0.6 of the run, crestAt at the
 // hung bearings, the cols and the Ridge's merlons stay. SPURS push the face toward the bowl along a narrow line from
 // under the crest down to the apron: a ridge that comes down at the viewer, broad at its foot, a lit flank and a dark
-// one, a shoulder where it leaves the crest; only where nothing hangs on the face (HOLD_FACE), and never inside r 345
+// one, a shoulder where it leaves the crest; only where nothing hangs on the face (HOLD_FACE); neither spur nor valley
+// reaches inside r 352 (walkLimit is 348)
 // (walkLimit is 348).
 const HOLD_CREST = [[6, 61], [66, 78], [99, 107], [109, 115], [126, 134], [177, 183], [226, 234], [236, 264], [262, 300], [325, 331]];
 const HOLD_FACE = [[50, 62], [64, 80], [98, 108], [125, 149], [225, 300], [300, 320], [338, 360], [0, 10]];
@@ -254,20 +255,21 @@ function spurPush(b, r, Rc) {
   const t = clamp((Rc - r) / 150, 0, 1); // 0 at the crest, 1 at the foot
   for (const [sb, sp, w0, w1, lean] of SPURS_M) {
     let db = b - sb; if (db > 180) db -= 360; if (db < -180) db += 360;
-    if (Math.abs(db) > 16) continue;
+    if (Math.abs(db) > 24) continue;
+    const edge = 1 - smoothstep(18, 24, Math.abs(db)); // fades out before the cutoff, so a wide foot leaves no step
     const across = Math.abs(db - lean * t + 1.2 * S.noise2(r * 0.013, sb)) * D2R * r;
     const w = lerp(w0, w1, t);
     if (across > w) continue;
     if (sp > 0) {
       const prof = smoothstep(Rc - 8, Rc - 70, r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
-      push = Math.max(push, sp * prof * Math.pow(1 - across / w, 1.15));
+      push = Math.max(push, sp * prof * Math.pow(1 - across / w, 1.15) * edge);
     } else {
       const prof = smoothstep(Rc - 10, Rc - 100, r); // closes under the crest, deepest at the mouth
       const c = across / w;
-      pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c));
+      pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c) * edge);
     }
   }
-  return (push * smoothstep(345, 395, r) - pull * smoothstep(292, 325, r)) * (1 - holdOf(HOLD_FACE, b, 3));
+  return (push * smoothstep(352, 395, r) - pull * smoothstep(352, 390, r)) * (1 - holdOf(HOLD_FACE, b, 3));
 }
 // --- the form (end)
 // --- the massifs (end; applyMassifs and the far ranges' hook below)
@@ -495,7 +497,7 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
     m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
   }
   m = Math.max(m, 0);
-  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it)
+  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {
