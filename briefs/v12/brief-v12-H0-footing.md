@@ -13,12 +13,15 @@ Nothing a visitor sees alone. Three agents after you build a climb up a glacier,
 5. **The high passes by default.** `?cols=high` becomes the default and `?cols=low` the way back. With it on, ground inside the walk limit rises up to 9 m near each pass: run `terrain-probe --diff`, find everything placed on that ground and everything hung on the wall near bearings 112, 180 and 328, re-render it, and fix what floats or sinks. The glacier's notch stays (H2 rebuilds it).
 6. **`tools/heights-test.mjs`, in the gate:** given a registered ascent (a list of points to walk through on the keys), it walks it, asserts the feet stay on it, steps off at three points and asserts a sane landing (on a floor, above the terrain, inside the limit or a corridor), and checks the frame time at the top against the floor's. Ascents register themselves, so H1 to H4 each add a line. Go-to entries may carry a `y`.
 
+7. **Fair footing, then a fall that costs.** The owner: "right now it's pretty easy to slip off the Span without really feeling you had control over it. But if it felt more predictable, having a fall cause a black out, and then awaking somewhere (near keep, perhaps) would create a slight feel of greater consequences." First find out why a walker leaves the Span's deck without meaning to (walk its edges, the kerbs, the stair heads and the crack on the keys and on the touch stick, and say what you found: momentum past a lip, the eye's lag, the kerb a hop clears, the stick's dead zone). Then make an edge predictable: a walker who is not hurrying and has not hopped does not go over a lip they did not steer at; going over on purpose (a hurry, a hop, or walking on at the lip for a moment) stays possible. It has to hold on a walkway 0.9 m wide. Then, behind `?fall=1` and off by default: a fall of more than about 12 m ends in a short blackout (the wind, the view closing, no impact shown) and the visitor wakes lying by the keep's gate with the view opening on the sky. The orchestrator and the owner try both before the flag becomes the default; write it so that switching is one line.
+
 ## Not yours
 
 The four ascents themselves. The glacier's block of `src/terrain.js`. The Span's files (H1 is in them beside you, and needs nothing of yours).
 
 ## Done when
 
+- For 7: frames of a slow walk straight at a lip stopping, and of a hurry going over, on keys and touch; and of the blackout and the waking, at 0.3 s steps.
 - Unit-style checks for 1 to 3 in `heights-test` using test floors behind `?heights=test` (a ramp over a rise, a floor under a floor, a corridor through the limit), each walked on the keys.
 - The before and after sets of `views-v12-heights.json` on all three tiers, and what each fix cost in `perf-test`'s numbers on low. If the shadows from above cannot be had inside the budget on low, say so and do it on medium and high only.
 - `?cols=high` default: the pairs for every hung thing near the three passes; `mountains`, `settings`, `paths`, `roads` green.
