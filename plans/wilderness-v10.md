@@ -26,7 +26,7 @@ The look before planning was the v9 critic's walk of the same day (49 renders, t
 
 ## Status
 
-**2026-11-11, 22:55 PST. Opened; batch 1 dispatched.** `next` is `main` at v9.1 plus the look-back commit. In flight, each in its own worktree under `.claude/worktrees/`, pushing a branch and no PR:
+**2026-11-11, 22:38 PST. Opened; batch 1 dispatched.** `next` is `main` at v9.1 plus the look-back commit. In flight, each in its own worktree under `.claude/worktrees/`, pushing a branch and no PR:
 
 | Brief | Model | Branch / worktree | Port |
 |---|---|---|---|
