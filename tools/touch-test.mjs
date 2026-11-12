@@ -97,7 +97,7 @@ if (mc) {
 const offerUp = await page.evaluate(async () => {
   const fp = window.__fp, t = fp.tally;
   if (!t || !fp.acts || fp.acts.off) return false;
-  const s = t.stand(); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = -0.05;
+  const s = t.stand(2.3); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch;
   for (let i = 0; i < 40 && !fp.acts.offered; i++) await new Promise((r) => setTimeout(r, 150));
   return !!fp.acts.offered;
 });
