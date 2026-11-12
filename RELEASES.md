@@ -10,6 +10,8 @@ Released 2026-11-11.
 
 Ties the world together: roads that lead somewhere, peoples whose buildings and clothes you can tell apart, places that look different from one another, and stories that start in one place and end in another.
 
+### New
+
 - **Roads to every place**: Worn tracks run from the causeway (the old raised road past the keep) out to the named places and join up, marked by waystones carved with a sun sitting in a notch. The same sign turns up on buildings and badges across the map.
 - **Places that look different**: Pale grazed turf round Carcanet Keep (the great stone keep you start beside), a rank green orchard, a shaven lawn, striped terraced fields, a near-black wood with shafts of ember light, redder clay, whiter salt. Before, most of the map was the same violet grass.
 - **The Pomegranate House comes alive**: The inn near the keep is now cream and rose with turquoise domes and strings of coloured lamps. A host bows you in, patrons play a game, a musician turns his back, and the talk and laughter fall silent when the sun gutters (dims for a few seconds).
@@ -17,7 +19,17 @@ Ties the world together: roads that lead somewhere, peoples whose buildings and 
 - **Stories with two ends**: A traveller's boots and pack on the Great Span (the giant bridge), and his body far below; a chair missing from a table laid for twelve; a painter's abandoned canvases along the road that leads to him.
 - **Twk-men**: Thumb-high riders on dragonflies fly out to look at you and squabble over spilt salt.
 - **Hop onto low things**: Low walls, boulders, fallen stones and the bridge's parapet can now be hopped onto and walked along. Mind the parapet: the fall is real.
-- **Calmer rocks**: The white-blotched boulders that could be seen from across the map are now plain weathered stone, there are about a third as many, and they stand in outcrops instead of everywhere. None sit in the graveyard, on the roads or in the lamplighter's way, and the gaps at the tops of the crystals are closed.
+
+### Fixed
+
+- **Calmer rocks**: The white-blotched boulders that could be seen from across the map are now plain weathered stone, there are about a third as many, and they stand in outcrops instead of everywhere. None sit in the graveyard or on the roads.
+- **The lamplighter's rock**: The Leerie, the lamplighter near the keep, no longer walks through a boulder on his row of lamps.
+- **Crystal tops**: The gaps at the tops of the crystals in the Lattice (the crystal field) are closed.
+
+### Behind the scenes
+
+- Every release note was rewritten for visitors, and each version is now published as a GitHub release.
+- The owner's issues are sorted and labelled as they arrive, and the repository takes issues and pull requests from the owner only.
 
 Known issues: the traveller below the Span is very hard to spot from the bridge deck; the Twk-men are tiny unless you are close; a few low things (some grave kerbs, the sunken wall round the lawns, the causeway's edge) still cannot be hopped onto; the wood is very dark away from its shafts of light.
 
