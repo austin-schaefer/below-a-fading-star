@@ -441,6 +441,7 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   r = { offered: await until(() => window.__fp.acts.offered?.def.id === 'halt-seat', 4000), words: await p.evaluate(() => document.getElementById('act-words').textContent) };
   check('then the seat is offered, with its words', r.offered && r.words === 'Take the seat', r);
   const start = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, yaw: window.__fp.player.yaw }; });
+  const tPress = await p.evaluate(() => window.__fp.time.t);
   await p.keyboard.press('KeyE');
   await until(() => window.__fp.tally.ride.phase === 'rising', 4000);
   r = await p.evaluate(() => { const fp = window.__fp, h0 = fp.player.hops, hopped = fp.controls.hop(); return { carried: fp.player.carried, hopped, hops: fp.player.hops - h0, phase: fp.tally.ride.phase }; });
@@ -457,13 +458,16 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   check('with no look input, mid-climb the seat has turned them to face out from the slab (forward . the face\'s normal > 0.5)', r.out > 0.5, r);
   await p.evaluate(() => { window.__fp.sky.flicker.hold = 0.25; });
   const top = await until(() => window.__fp.tally.ride.phase === 'top', 20000);
-  r = await p.evaluate(() => { const fp = window.__fp, q = fp.player.pos, g = fp.tally.ride.sleeper; return { y: q.y, d: Math.hypot(q.x - g.x, q.y - g.y, q.z - g.z) }; });
+  r = await p.evaluate(() => { const fp = window.__fp, q = fp.player.pos, g = fp.tally.ride.sleeper; return { y: q.y, d: Math.hypot(q.x - g.x, q.y - g.y, q.z - g.z), t: fp.time.t }; });
   await p.evaluate(() => { window.__fp.sky.flicker.hold = null; });
-  check('in a gutter the ride goes on, to the top: seven metres or more up, within 2 m of the sleeper', top && r.y - start.y > 7 && r.d < 2, { top, r, start });
+  check('in a gutter the ride goes on, to the top: six metres or more up, his face 2.2 to 2.8 m from the eye', top && r.y - start.y > 6 && r.d > 2.2 && r.d < 2.8, { top, r, start });
+  const whole = await p.evaluate(([t0, t1]) => { const R = window.__fp.tally.ride; return { toTop: +(t1 - t0).toFixed(2), whole: +(t1 - t0 + R.rest).toFixed(2) }; }, [tPress, r.t]);
+  check('the whole ride, press to set-down, is within 30 s of the walk\'s time (measured to the top, the rest as scheduled)', whole.whole <= 30, whole);
   const salt = await until(() => window.__fp.tally.ride.salt > 0, 15000);
-  r = await p.evaluate(() => { const fp = window.__fp, v = fp.tally.ride.sleeper.project(fp.camera); return { answering: fp.tally.ride.answering, salt: fp.tally.ride.salt, head: [+v.x.toFixed(2), +v.y.toFixed(2)] }; });
+  r = await p.evaluate(() => { const fp = window.__fp, R = fp.tally.ride, v = R.sleeper.project(fp.camera), e = fp.camera.position, hd = R.sleeper, hn = R.hand; return { answering: R.answering, salt: R.salt, head: [+v.x.toFixed(2), +v.y.toFixed(2)], dHead: +e.distanceTo(hd).toFixed(2), dHand: +e.distanceTo(hn).toFixed(2), near: fp.camera.near }; });
   check('at the top the sleeper answers: he holds out his hand and salt runs from it', r.answering && salt, r);
   check('with no look input, his head is in the middle third of the view while he answers', Math.abs(r.head[0]) < 1 / 3 && Math.abs(r.head[1]) < 1 / 3, r);
+  check('nothing of him is within a metre of the eye: his head, and his hand held out to them', r.dHead > 1 && r.dHand > 1, r);
   await p.keyboard.down('KeyW'); await until(() => window.__fp.tally.ride.phase === 'down', 8000); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
   const back = await until(() => !window.__fp.player.carried && window.__fp.tally.ride.phase === null, 20000);
   r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });

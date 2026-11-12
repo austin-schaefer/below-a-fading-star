@@ -75,20 +75,44 @@ export async function centralRows({ browser, base, check, watch }) {
   check('door: not offered from the head of the stair', (await offered(p)) === null);
   await standDoor(p, 1.9, Math.PI / 2); await sleep(1500);
   check('door: not offered at its foot facing away', (await offered(p)) === null);
+  check('plate: "Read the plate" is not to be had before there is a plate', !(await p.evaluate(() => window.__fp.acts.may(window.__fp.acts.list.find((h) => h.def.id === 'hypogeum-plate')))));
   await standDoor(p, 1.9); const o2 = await settle(p, 'hypogeum-door');
   check('door: offered in front of it, "Knock"', o2 === 'hypogeum-door' && (await p.evaluate(() => document.getElementById('act-words').textContent)) === 'Knock', o2);
   await p.keyboard.press('KeyE');
+  // while he answers (his hand in the light), with no look input: eased a step back, the lintel's glyphs, the seam and the
+  // sill all in the view
+  await waitFor(p, () => window.__fp.hypogeumAct.hand > 0.5, null, 240000);
+  s = await p.evaluate(() => {
+    const fp = window.__fp, A = fp.hypogeumAct, cam = fp.camera, v = new fp.THREE.Vector3(), o = {};
+    for (const [k, q] of Object.entries(A.points)) { v.set(q[0], q[1], q[2]).project(cam); o[k] = [+v.x.toFixed(2), +v.y.toFixed(2)]; }
+    return { ...o, d: +(fp.hypogeum.door.x - fp.player.pos.x).toFixed(2), carried: fp.player.carried, strikeAt: A.strikeAt };
+  });
+  check('door: while he answers, the visitor is eased back and the lintel\'s glyphs, the seam and the sill are all in the view', s.d > 3 && ['lintel', 'seam', 'sill'].every((k) => Math.abs(s[k][0]) < 0.95 && Math.abs(s[k][1]) < 0.95), s);
+  const gaps = s.strikeAt.slice(1).map((x, i) => x - s.strikeAt[i]);
+  check('door: three knocks, slow enough to count: two seconds and more between them', s.strikeAt.length === 3 && gaps.every((g) => g >= 1.9), s.strikeAt);
   const done = await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 240000);
   s = await p.evaluate(() => { const s = window.__fp.hypogeumAct.state(); return { count: s.count, strikes: s.strikes, answers: s.answers, ringMax: s.ringMax, read: s.read, hand: s.hand, plate: s.plate, spun: s.spun, stored: JSON.parse(localStorage.getItem('fp-acts') || '{}').marks?.['hypogeum-door'] }; });
   check('door: E knocks: the great ring lifted, three strikes, three answers, the row read and turned one place, the hand in the light, the plate out with its glyph kept', done && s.count === 1 && s.strikes === 3 && s.answers === 3 && s.ringMax > 0.9 && s.read > 0.9 && s.spun === 1 && s.hand > 0.9 && s.plate && Number.isInteger(s.stored?.data?.glyph), s);
+  // the plate's act: offered where the knock left them, now the plate is out; done: taken up, turned over, laid down
+  // lantern side up, and so it lies after a reload
+  const o3 = await settle(p, 'hypogeum-plate', 8000);
+  check('plate: once it is out, "Read the plate" is offered where the knock left them', o3 === 'hypogeum-plate' && (await p.evaluate(() => document.getElementById('act-words').textContent)) === 'Read the plate', o3);
+  await p.keyboard.press('KeyE');
+  const lifted = await waitFor(p, () => (window.__fp.hypogeumAct.flip ?? 0) > 0.99, null, 120000);
+  s = await p.evaluate(() => { const fp = window.__fp, A = fp.hypogeumAct, pl = fp.scene.getObjectByName('act-door-plate'); return { reading: A.reading, d: +fp.camera.position.distanceTo(pl.position).toFixed(2), v: pl.position.clone().project(fp.camera).toArray().map((x) => +x.toFixed(2)) }; });
+  check('plate: read: it is taken up into the view, in the middle of it, and turned over', lifted && s.reading > 0 && s.d < 1 && Math.abs(s.v[0]) < 0.4 && Math.abs(s.v[1]) < 0.5, s);
+  await waitFor(p, () => window.__fp.hypogeumAct.reading < 0, null, 120000);
+  s = await p.evaluate(() => ({ n: window.__fp.hypogeumAct.readCount(), backUp: window.__fp.hypogeumAct.backUp, carried: window.__fp.player.carried, offered: window.__fp.acts.offered?.def.id ?? null }));
+  check('plate: done: counted, laid down lantern side up, the visitor let go, nothing more offered', s.n === 1 && s.backUp && !s.carried && s.offered === null, s);
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.hypogeumAct, null, { timeout: 300000 });
   await p.evaluate(() => { document.getElementById('card').classList.add('hidden'); window.__fp.events.dispatchEvent(new CustomEvent('begin')); });
   await standDoor(p, 1.9);
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
-  check('door: after a reload the plate lies there, and the knock is offered again', s.plate === true && (await settle(p, 'hypogeum-door')) === 'hypogeum-door', { plate: s.plate });
+  check('door: after a reload the plate lies there, lantern side up, and the knock is offered again', s.plate === true && s.backUp === true && (await settle(p, 'hypogeum-door')) === 'hypogeum-door', { plate: s.plate, backUp: s.backUp });
   await p.evaluate(() => window.__fp.acts.forget()); await sleep(200);
-  check('door: forgotten: no plate', (await p.evaluate(() => window.__fp.hypogeumAct.state().plate)) === false);
+  s = await p.evaluate(() => window.__fp.hypogeumAct.state());
+  check('door: forgotten: no plate, and the plate\'s reading forgotten', s.plate === false && s.backUp === false, { plate: s.plate, backUp: s.backUp });
   await c.close();
   // the third visit
   ({ c, p } = await open('door3', dURL, () => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('fp-acts', JSON.stringify({ v: 1, marks: { 'hypogeum-door': { n: 2, last: 1, data: { glyph: 5 } } } })); sessionStorage.setItem('seeded', '1'); } } catch (e) { /* */ } }));
