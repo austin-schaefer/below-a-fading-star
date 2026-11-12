@@ -88,6 +88,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 73 | v9 fixes: wood light shafts (#19) and the white hillside figure (#16); before and after |
 | 74 | v9 settings menu: sound, quality and position, on desktop and phone |
 | 75 | v9 the Lantern Halt, a waystation on the causeway |
+| 76 | v10 something to do: chalking the Halt's tally, the rope seat and the sleeper, pouring for the missing diner, the hand on the Lattice, the knock at the Hypogeum, the edges; the first tally kept as the failure |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -584,5 +585,29 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `75-lantern-halt-from-the-road.webp` | The Lantern Halt from the causeway, 60 m east: a dark slab with a lit globe in its notch. |
 | `75-lantern-halt-near.webp` | The Lantern Halt at 15 m: the globe in its painted arch, the sleeper at the hatch, his bundle on the slab's shoulder. |
 | `75-lantern-halt-sleeper.webp` | Enlarged: the sleeper under a patchwork quilt, the bindle beside him. |
+| `76-collation-a-offer.webp` | The long table: the missing diner's hat and spectacles, "Pour for him". |
+| `76-collation-b-pour.webp` | The bottle tipped over his glass. |
+| `76-collation-c-lit.webp` | The other glasses filled and lit, a spark in the air. |
+| `76-collation-d-eleven.webp` | Eleven glasses set out on the stone. |
+| `76-crystal-a-offer.webp` | The great crystal's face, "Lay your hand". |
+| `76-crystal-b-hand.webp` | The handprint, the veins of light racing out from it. |
+| `76-crystal-c-afar.webp` | The crystal ablaze at its tip, seen from the moor. |
+| `76-crystal-d-thread.webp` | A thread of light drawn through the ground toward the crystal. |
+| `76-door-a-offer.webp` | The tomb door's iron ring, "Knock". |
+| `76-door-b-seam.webp` | Light in the door's seam and across the step. |
+| `76-door-c-hand.webp` | A hand's shadow on the lit step below the door. |
+| `76-edges-nave-a-before.webp` | Before: looking down into the Foundered Nave, a black void with shards. |
+| `76-edges-nave-b-after.webp` | After: the same drop with fallen beams and a floor to read. |
+| `76-edges-pit-a-before.webp` | Before: looking down into the Pit, rock faces and a flat tile floor. |
+| `76-edges-pit-b-after.webp` | After: the Pit a deep misted shaft with a far light. |
+| `76-edges-pit-c-lookout.webp` | The lookout at the Pit's lip, the shaft falling away below. |
+| `76-seat-a-offer.webp` | The rope seat come down the tally wall, "Take the seat". |
+| `76-seat-b-rising.webp` | Riding up the slab, the Halt's roof coming level. |
+| `76-sleeper-a-lantern.webp` | At the top: the sleeper curled beside the great lantern. |
+| `76-sleeper-b-knock.webp` | The visitor's fist raised over the sleeper at the lantern. |
+| `76-tally-a-failed.webp` | The first tally: the new stroke one thin line among hundreds. |
+| `76-tally-b-offer.webp` | The rebuilt wall, a lamp-chalk hanging, "Chalk your stroke". |
+| `76-tally-c-drawing.webp` | The chalk drawing its stroke on the wall. |
+| `76-tally-d-done.webp` | The finished stroke, bold beside the old tallies. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
