@@ -4,35 +4,38 @@
 // the thread (below).
 //
 // What answers ("Lay your hand", once a visit):
-//   0-2 s     a handprint of light, a little larger than a hand, lights in the glass where the hand lies, in the middle
-//             of the view, and veins of light run out of it through the glass (act-crystal: the Lattice's A4 swelling);
-//   1.6-5.6 s a band of glacial white climbs the trunk from the print to the apex and into the haze, a trail of light
-//             under it, the tone climbing the harmonic series of A;
-//   5.3 s     the band reaches the top and the sun gutters (ctx.sky.flicker, the world's one shared event, drawn early:
-//             so the Hypogeum's lintel turns too): the crystal has drunk from the sun;
-//   6.5-12 s  the whole crystal glows pale while the light runs out of its foot through every crystal and filament of the
-//             field as one ring, 28 m a second, to the Lattice's edge 175 m off (act-crystal-ring);
-//   6.5-15 s  and out of the foot, on the side toward the Hypogeum, one filament keeps going: a thread of light runs over
-//             the moor, 30 m a second, 250 m to the head of the tomb's stair and down it to the bronze door, whose glyph
-//             row then glows the crystal's blue. The visitor can follow it, and it is still there when they come back;
-//   13-16 s   from the second hand on, the field sends the ring back in from its edge to the foot;
-//   14-17 s   as the sun catches, a coal of its own colour is left in the glass: an ember ring round the trunk.
-// Remembered: show(n) draws n embers (at most nine) round the trunk, the first 7 m up, each 5.5 m above the last (a
-// returning visitor finds the sun they took still in the crystal, and sees from far off how often they have come), the
-// thread lit faintly with a slow pulse running toward the tomb, and the lintel's glyphs blue.
+//   0-2 s     a handprint of light, twice a hand, lights in the glass where the look meets it, and veins of light run out of
+//             it through the glass (act-crystal: the Lattice's A4 swelling);
+//   1.6-5.6 s a band of glacial white climbs the trunk from the print to the apex and on through the haze, shaped by the
+//             glass's veils, the tone climbing the harmonic series of A;
+//   5.3 s     the sun gutters: at the press the sky's own clock is brought forward to then (ctx.sky.flicker.next), so the
+//             music and the Hypogeum's lintel hear it coming: the crystal has drunk from the sun;
+//   6.5-12 s  light in the veils of the whole crystal while a ring runs out through every crystal and filament of the field,
+//             28 m a second, to the Lattice's edge 175 m off (act-crystal-ring);
+//   6.5-15 s  out of the foot, on the side toward the Hypogeum, the thread (src/v10/thread.js): light running in the ground
+//             over the moor, 30 m a second, small crystals pushing up along it, 250 m to the head of the tomb's stair and
+//             down it under the bronze door, whose glyph row then glows the crystal's blue;
+//   from the second hand: the ring comes back in from the field's edge, and when the thread has reached the door an
+//             ember of the sun's colour runs back along it to the foot (the Reckoner's answer), where it becomes the new
+//             ember; on the first hand the ember forms as the sun catches (14-17 s).
+// Remembered: show(n) draws n embers (at most nine; from the tenth hand on all nine stay lit) round the trunk, 7 m up and
+// 5.5 m apart, the thread kept (a dim seam with slow pulses toward the tomb and its crystals standing) and the lintel blue.
+// A forget during an answer holds: the end of the answer lays the place out from the count as it is then.
 //
 // crystalAct(ctx, mother, M, ground) → { uniforms, glsl (the crystals' emissive), filGlsl / filVert (the filaments'),
 // state() }. The thread is built on the first frame after ctx.hypogeum exists (the ruins build after the vegetation),
-// one mesh, drawn only once the hand has been laid; until then and while idle, the update is two comparisons.
+// drawn only once the hand has been laid; until then and while idle, the update is two comparisons.
 import * as THREE from 'three';
 import { hyp } from '../noise.js';
 import { K } from '../vegetation/mother.js';
+import { buildThread } from './thread.js';
 
 const ID = 'mother-hand';
 export const EMBERS = 9;            // embers drawn at most
 export const EMBER_Y = [7, 5.5];    // metres up the trunk of the first, and between them
 export const RING_V = 28, RING_R = 175; // the ring's speed (m/s) and how far it runs
 export const THREAD_V = 30;         // the thread's head, m/s
+export const BACK_V = 45;           // the ember coming back along it from the door (the second hand on), m/s
 export const T = { climb: [1.6, 5.6], gutter: 5.3, top: 6.5, back: 13, ember: [14, 17], end: 18 };
 const BLUE = new THREE.Color('#3fa8d8');
 
@@ -76,11 +79,11 @@ export function crystalAct(ctx, mother, M, ground) {
           float fk = float(k);
           if (fk >= uAct.y) break;
           float hk = ${EMBER_Y[0].toFixed(1)} + fk * ${EMBER_Y[1].toFixed(1)};
-          float dh = (fpHm - hk) / 1.1;
+          float dh = (fpHm - hk) / 1.5;
           fpE += exp(-dh * dh) * clamp(uAct.y - fk, 0.0, 1.0);
         }
         float fpBreath = 0.85 + 0.15 * sin(uTime * 0.7 + fpHm * 0.3);
-        totalEmissiveRadiance += vec3(1.0, 0.34, 0.09) * fpE * fpTrunk * fpBreath * (0.5 + 1.6 * smoothstep(0.3, 0.85, fpVeil)) * (1.0 - 0.5 * fres) * 1.6;
+        totalEmissiveRadiance += vec3(1.0, 0.34, 0.09) * fpE * fpTrunk * fpBreath * (0.5 + 1.6 * smoothstep(0.3, 0.85, fpVeil)) * (1.0 - 0.5 * fres) * 2.4;
       }
       float fpT = uAct.x;
       if (fpT >= 0.0) {
@@ -113,12 +116,12 @@ export function crystalAct(ctx, mother, M, ground) {
         float hc = h0 + (64.0 - h0) * pow(fpU, 1.35);
         float db = (fpHm - hc) / (0.8 + 2.6 * fpU);
         float fpOn = step(${T.climb[0].toFixed(2)}, fpT) * (1.0 - smoothstep(${T.top.toFixed(1)}, ${(T.top + 1).toFixed(1)}, fpT));
-        float fpBand = exp(-db * db) * fpOn * (0.25 + 0.75 * smoothstep(0.04, 0.3, fpU)); // dim while it passes the eye, so the print still reads
-        float fpTrail = step(fpHm, hc) * step(h0 - 1.0, fpHm) * exp(-(hc - fpHm) / 14.0) * 0.18 * fpOn;
+        float fpBand = exp(-db * db) * fpOn * (0.12 + 0.88 * smoothstep(0.06, 0.35, fpU)) * (1.0 - 0.5 * smoothstep(44.0, 64.0, hc)); // dim while it passes the eye (the print still reads) and as it goes into the haze
+        float fpTrail = step(fpHm, hc) * step(h0 - 1.0, fpHm) * exp(-(hc - fpHm) / 10.0) * 0.06 * fpOn * smoothstep(0.35, 0.8, fpVeil);
         // the crystal drinking: all of it pale while the sun is down
-        float fpDrink = smoothstep(5.6, 7.0, fpT) * (1.0 - smoothstep(12.0, 17.0, fpT)) * (0.12 + 0.35 * smoothstep(0.3, 0.8, fpVeil));
-        totalEmissiveRadiance += fpLit * fpTrunk * (fpPrint * 1.6 + fpVein * 1.1 + (fpBand * 2.4 + fpTrail + fpDrink) * (0.4 + core));
-        fpKeep = max(fpBand, fpDrink * 0.5) * fpTrunk; // the band shows through the haze that hides the apex
+        float fpDrink = smoothstep(5.6, 7.0, fpT) * (1.0 - smoothstep(12.0, 17.0, fpT)) * (0.03 + 0.3 * smoothstep(0.45, 0.85, fpVeil)); // light in the veils, not on the faces
+        totalEmissiveRadiance += fpLit * fpTrunk * (fpPrint * 1.0 + fpVein * 0.6 + (fpBand * (0.35 + 1.1 * fpVeil) + fpTrail + fpDrink) * (0.4 + core));
+        fpKeep = max(fpBand * 0.6, fpDrink * 0.4) * fpTrunk; // the band shows through the haze that hides the apex
         // the ring through the field: every crystal it reaches lights as it passes; from the second hand, it comes back
         float fpOut = (fpT - ${T.top.toFixed(1)}) * ${RING_V.toFixed(1)};
         float fpIn = ${RING_R.toFixed(1)} - (fpT - ${T.back.toFixed(1)}) * ${RING_V.toFixed(1)};
@@ -143,80 +146,15 @@ export function crystalAct(ctx, mother, M, ground) {
     }`;
 
   // ---------------------------------------------------------------- the thread, from the foot to the tomb's door
-  // x: the head (m along; -1 none), y: the steady glow of a thread already run (0..1)
-  const uTh = { value: new THREE.Vector2(-1, 0) };
-  let thread = null, threadLen = 0;
-  function buildThread(H) {
-    const end = H.stairTop, door = H.door, Yf = H.floor;
-    const dx0 = end.x - 1.5 - M.x, dz0 = end.z - M.z, L0 = hyp(dx0, dz0);
-    const ux = dx0 / L0, uz = dz0 / L0, px = -uz, pz = ux;
-    const s0 = mother.foot + 1.2, pts = [];
-    const nz = ctx.noise;
-    // over the land: from the foot to a step short of the stair's head, wandering like the field's own filaments
-    for (let s = s0; s <= L0; s += 0.8) {
-      const taper = Math.min(1, (s - s0) / 20, (L0 - s) / 15);
-      const off = (nz.noise2(s * 0.018, 3.7) * 7 + nz.noise2(s * 0.09, 9.1) * 1.2) * Math.max(0, taper);
-      const x = M.x + ux * s + px * off, z = M.z + uz * s + pz * off;
-      const wd = ground.waterDepth(x, z);
-      pts.push({ x, z, y: ground.heightAt(x, z) + Math.max(0, wd) + 0.07 });
-    }
-    // down the stair's middle to the threshold and under the door
-    const xa = end.x - 1.5, xb = door.x - 0.02;
-    const ya = pts[pts.length - 1].y;
-    for (let k = 1; k <= 24; k++) {
-      const u = k / 24, x = xa + (xb - xa) * u;
-      const top = end.y + 0.035, bot = Yf + 0.035;
-      // treads: the thread steps down with them (it was laid on stone, not on a slope)
-      const y = x < end.x ? ya + (top - ya) * Math.max(0, (x - xa) / 1.5) : Math.max(bot, top - Math.floor((x - end.x) / Math.max(0.01, H.treadD ?? 0.32) + 1) * (H.treadRise ?? 0.3));
-      pts.push({ x, z: door.z + 0.0, y: Math.max(y, bot) });
-    }
-    const P = [], A = [], E = [];
-    const W = 0.09;
-    let along = 0;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i], b = pts[i + 1], dx = b.x - a.x, dz = b.z - a.z, l = hyp(dx, dz) || 1, nx = -dz / l * W, nzz = dx / l * W;
-      const l3 = Math.sqrt(dx * dx + dz * dz + (b.y - a.y) ** 2);
-      P.push(a.x + nx, a.y, a.z + nzz, a.x - nx, a.y, a.z - nzz, b.x - nx, b.y, b.z - nzz, a.x + nx, a.y, a.z + nzz, b.x - nx, b.y, b.z - nzz, b.x + nx, b.y, b.z + nzz);
-      A.push(along, along, along + l3, along, along + l3, along + l3);
-      E.push(1, -1, -1, 1, -1, 1);
-      along += l3;
-    }
-    threadLen = st.threadLen = along;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-    g.setAttribute('aAlong', new THREE.Float32BufferAttribute(A, 1));
-    g.setAttribute('aEdge', new THREE.Float32BufferAttribute(E, 1));
-    g.computeBoundingSphere();
-    const u = { uTh, uTime: { value: 0 }, uLen: { value: along } };
-    const m = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: THREE.DoubleSide, toneMapped: false });
-    m.onBeforeCompile = (sh) => {
-      Object.assign(sh.uniforms, u);
-      sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute float aAlong; attribute float aEdge; varying float vAlong; varying float vEdge;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlong = aAlong; vEdge = aEdge;');
-      sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform vec2 uTh; uniform float uTime, uLen; varying float vAlong; varying float vEdge;')
-        .replace('#include <color_fragment>', `#include <color_fragment>
-          {
-            vec3 c = vec3(0.37, 0.82, 1.0);
-            float ahead = uTh.x - vAlong;                       // metres behind the head
-            float run = uTh.x < 0.0 ? 0.0 : step(0.0, ahead);
-            float head = uTh.x < 0.0 ? 0.0 : exp(-abs(ahead) / 3.0) * step(-1.0, ahead);
-            float behind = run * (0.35 + 0.65 * exp(-ahead / 40.0));
-            float slow = pow(0.5 + 0.5 * sin(vAlong * 0.08 - uTime * 1.4), 6.0);  // the kept glow: pulses running to the tomb
-            float kept = uTh.y * (0.28 + 0.9 * slow);
-            float k = max(behind, kept);
-            float edge = 1.0 - vEdge * vEdge;
-            diffuseColor.rgb = c * (k * 1.6 + head * 6.0);
-            diffuseColor.a = edge * clamp(k + head, 0.0, 1.0);
-          }`);
-    };
-    m.customProgramCacheKey = () => 'fp-act-thread';
-    thread = new THREE.Mesh(g, m);
-    thread.name = 'act-crystal-thread'; thread.renderOrder = 2; thread.frustumCulled = true;
-    thread.userData.u = u;
-    ctx.scene.add(thread);
-    st.threadEnd = { x: xb, y: Yf, z: door.z };
+  let thread = null;
+  const lenOf = () => thread?.len ?? 260;
+  // the answer's clock for a hand n: when the thread's head reaches the door, when the ember coming back (n > 1)
+  // reaches the foot, when the new ember is formed, when it is over
+  function times(n) {
+    const arrive = T.top + lenOf() / THREAD_V;
+    const backAt = arrive + 0.8, home = n > 1 ? backAt + lenOf() / BACK_V : 0;
+    const ember = n > 1 ? [home, home + 2.5] : T.ember;
+    return { arrive, backAt, home, ember, end: Math.max(T.end, ember[1] + 1, arrive + 3) };
   }
   function lintel(k) { // the glyph row's glow toward the crystal's blue (k 0..1)
     const gm = ctx.hypogeum?.glyphMat; if (!gm) return;
@@ -224,52 +162,58 @@ export function crystalAct(ctx, mother, M, ground) {
     gm.emissive.copy(gm.userData.fpE0).lerp(BLUE, k);
     st.lintel = k;
   }
+  function keep(count) { // the place as a visit leaves it: embers, the thread kept or gone, the lintel
+    const e = Math.min(count, EMBERS);
+    uAct.value.y = e; st.embers = e; kept = count; st.n = count;
+    if (thread) { thread.group.visible = count > 0; thread.set(-1, count > 0 ? 1 : 0, -1, 0); }
+    lintel(count > 0 ? 1 : 0);
+  }
 
   const flick = ctx.sky?.flicker;
-  let t = -1, fired = 0, n = 0, kept = 0, want = false;
+  let t = -1, fired = 0, n = 0, kept = 0, want = false, tm = times(1);
   const cueAt = { x: M.x, y: g0 + 20, z: M.z };
   ctx.registerUpdate((dt, time) => {
     if (want && !thread) { // the ruins build after the vegetation: lay the thread on the first frame they are there
       if (!ctx.hypogeum) return;
-      buildThread(ctx.hypogeum);
-      thread.visible = kept > 0; uTh.value.y = kept > 0 ? 1 : 0;
-      lintel(kept > 0 ? 1 : 0);
+      thread = buildThread(ctx, M, mother, ground, ctx.hypogeum);
+      st.threadLen = thread.len; st.crystals = thread.crystals; st.path = thread; // for the renders and tests: at(s)
+      if (t < 0) keep(kept); else tm = times(n);
     }
-    if (thread && thread.visible) thread.userData.u.uTime.value = time;
+    if (thread && thread.group.visible) thread.uTh.value.w = time;
     if (t < 0) return; // idle: nothing more per frame
     t += dt;
     const v = uAct.value;
     v.x = t;
-    // the sun gutters as the light reaches the top (unless it is guttering already, or held for a render)
-    if (!(fired & 1) && t >= T.gutter) {
-      fired |= 1;
-      if (flick && flick.phase <= 0 && flick.hold == null) { flick.next = 0; st.gutters++; }
-    }
     if (!(fired & 2) && t >= T.top) { fired |= 2; ctx.audio?.cue('act-crystal-ring', cueAt, { n }); }
     if (!(fired & 4) && n > 1 && t >= T.back) { fired |= 4; ctx.audio?.cue('act-crystal-ring', cueAt, { n, back: true }); }
-    // the thread's head runs from the foot to the door; the lintel turns blue as it arrives
+    // the thread's head runs from the foot to the door; the lintel turns blue as it arrives; from the second hand an
+    // ember comes back along it from the door to the foot
     if (thread) {
-      thread.visible = true;
-      const head = (t - T.top) * THREAD_V;
-      uTh.value.x = head < 0 ? -1 : Math.min(head, threadLen + 4);
-      st.thread = Math.max(0, Math.min(1, head / threadLen));
-      if (head >= threadLen) lintel(Math.max(st.lintel, Math.min(1, (head - threadLen) / 20)));
+      thread.group.visible = true;
+      const head = (t - T.top) * THREAD_V, L = thread.len;
+      const back = n > 1 && t >= tm.backAt ? L - (t - tm.backAt) * BACK_V : -1;
+      thread.set(head < 0 ? -1 : Math.min(head, L + 30), Math.max(0, Math.min(1, kept)), back >= 0 ? back : -1, time);
+      st.thread = Math.max(0, Math.min(1, head / L)); st.back = back;
+      if (head >= L) lintel(Math.max(st.lintel, Math.min(1, (head - L) / 20)));
     }
-    // the new ember forms as the sun catches
+    // the new ember forms as the sun catches (or as the Reckoner's ember reaches the foot); from the tenth hand on, all
+    // nine stay lit and none re-forms
     const e = Math.min(n, EMBERS);
-    v.y = Math.min(e, (e - 1) + THREE.MathUtils.smoothstep(t, T.ember[0], T.ember[1]));
+    v.y = n > EMBERS ? EMBERS : Math.min(e, (e - 1) + THREE.MathUtils.smoothstep(t, tm.ember[0], tm.ember[1]));
     st.embers = v.y;
-    const tEnd = Math.max(T.end, T.top + (threadLen + 24) / THREAD_V);
-    if (t >= tEnd) {
-      t = -1; v.x = -1; v.y = e; st.embers = e; kept = n;
-      uTh.value.set(-1, 1); lintel(1);
+    if (t >= tm.end) {
+      t = -1; v.x = -1;
+      keep(handle?.count ?? n); // the count now, not the one this answer began with: a forget during it holds
     }
     st.t = t;
   });
 
   function start(count, player) {
-    n = count; fired = 0; t = 0; want = true;
+    n = count; fired = 0; t = 0; want = true; tm = times(n);
     const v = uAct.value;
+    // the sun is to gutter as the light reaches the top: brought forward in the sky's own clock (unless it is guttering
+    // already, or held for a render), so everything that listens to the gutter (the music, the lintel) hears it coming
+    if (flick && flick.phase <= 0 && flick.hold == null && flick.next > T.gutter) { flick.next = T.gutter; st.gutters++; }
     v.z = n; v.w = n > 1 ? 1 : 0; v.x = 0; v.y = Math.min(n - 1, EMBERS);
     // the hand: where the look meets the glass (a ray against the mother's pieces), else the trunk toward the visitor
     const dx = player.pos.x - M.x, dz = player.pos.z - M.z, r = hyp(dx, dz) || 1;
@@ -300,17 +244,14 @@ export function crystalAct(ctx, mother, M, ground) {
       if (r < near || r > far || p.pitch < -1.0 || p.pitch > 0.9) return false;
       return (-Math.sin(p.yaw) * dx - Math.cos(p.yaw) * dz) / r >= cosCone;
     },
-    do: (count) => { start(count, P); return Math.max(T.end, T.top + (threadLen + 24) / THREAD_V); },
+    do: (count) => { start(count, P); return tm.end; },
     show: (count) => {
-      const e = Math.min(count, EMBERS);
-      if (t < 0) uAct.value.y = e;
-      kept = count; st.embers = e; st.n = count;
       if (count > 0) want = true;
-      if (thread && t < 0) { thread.visible = count > 0; uTh.value.set(-1, count > 0 ? 1 : 0); lintel(count > 0 ? 1 : 0); }
+      if (t < 0) keep(count); else kept = count; // during an answer: kept at its end (a forget holds)
     },
   });
   ctx.motherAct = st;
   st.handle = handle;
-  st.state = () => ({ t: +st.t.toFixed(2), n: st.n, embers: +st.embers.toFixed(2), gutters: st.gutters, count: handle?.count ?? 0, offered: ctx.acts?.offered?.def.id === ID, thread: st.thread, threadLen: Math.round(st.threadLen), threadShown: !!thread?.visible, lintel: st.lintel });
+  st.state = () => ({ t: +st.t.toFixed(2), n: st.n, embers: +st.embers.toFixed(2), gutters: st.gutters, count: handle?.count ?? 0, offered: ctx.acts?.offered?.def.id === ID, thread: st.thread, threadLen: Math.round(st.threadLen), threadShown: !!thread?.group.visible, lintel: st.lintel, back: st.back ?? -1, crystals: st.crystals ?? 0 });
   return { uniforms, glsl, filGlsl, filVert, state: st.state };
 }
