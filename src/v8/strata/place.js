@@ -110,7 +110,7 @@ export async function build(ctx) {
       const k = i === 0 ? 1 : -1, ex = cx + wx * 10.2 * k, ez = cz + wz * 10.2 * k, dx = ex - p.x, dz = ez - p.z, len = Math.hypot(dx, dz);
       const mx = (p.x + ex) / 2, mz = (p.z + ez) / 2, g = ground.minGround(mx, mz, len / 2) - 0.3, hh = ground.maxGround(mx, mz, len / 2) - g + 1.25;
       P.late.wall(H, F(mx, g, mz, wallYaw(dx / len, dz / len)), { w: len - 0.7, h: hh, d: 0.45, color: i ? 1 : 2 });
-      for (let s = 0.6; s < len - 0.4; s += 0.9) ctx.addCollider({ x: p.x + dx * s / len, z: p.z + dz * s / len, r: 0.4, y: g, h: hh });
+      { const s0 = 0.6, s1 = len - 0.5; ctx.addCollider({ x1: p.x + dx * s0 / len, z1: p.z + dz * s0 / len, x2: p.x + dx * s1 / len, z2: p.z + dz * s1 / len, r: 0.3, y: g, h: hh }); } // v8-10: one capsule, a level top to walk
       if (i === 0) {
         // a tiled niche in the north wing, and the gate's one leaf swung back against it
         const t = 0.35, qx = p.x + dx * t, qz = p.z + dz * t, fx = -dz / len, fz = dx / len, s2 = (fx * ux + fz * uz) > 0 ? 1 : -1;

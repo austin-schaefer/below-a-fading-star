@@ -251,7 +251,7 @@ export async function build(ctx) {
   }
   const gorseMesh = instanced(gorseGeo, gorseMat, gorse, { name: 'highling-gorse' });
   scene.add(gorseMesh); meshes.push(gorseMesh);
-  for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5 });
+  for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5, stand: false }); // v8-10: gorse is not stood on
   // the top sprig of each bush: where a stonechat sits
   const tops = gorse.map((g) => ({ x: g.x, z: g.z, y: g.y + g.sy * gorseTop * 0.97, used: false }));
 

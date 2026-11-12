@@ -350,6 +350,10 @@ function buildCourtV5(ctx, B, env) {
   colliderChain(ctx, pit.x0 + 0.2, pit.z0 + 0.2, pit.x0 + 0.2, pit.z1 + 0.1, 0.45, 1.0);
   colliderChain(ctx, pit.x1 - 0.2, pit.z0 + 0.2, pit.x1 - 0.2, pit.z1 + 0.1, 0.45, 1.0);
   colliderChain(ctx, pit.x0 + 0.2, pit.z1 - 0.1, pit.x1 - 0.2, pit.z1 - 0.1, 0.45, 1.0);
+  // v8-10 (#7): the kerb's three sides at its own height, so a hop puts the walker on the coping above the water
+  { const y = top + kh - 1, h = 1, r = kw / 2;
+    ctx.addCollider({ x1: pit.x0 - kw + r, z1: pit.z1 + r, x2: pit.x1 + kw - r, z2: pit.z1 + r, r, y, h });
+    for (const xs of [pit.x0 - r, pit.x1 + r]) ctx.addCollider({ x1: xs, z1: pit.z0 + r, x2: xs, z2: pit.z1 + r, r, y, h }); }
 
   // ---- materials and meshes
   const extra = (env.extraMeshes ||= []);

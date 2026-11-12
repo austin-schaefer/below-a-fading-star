@@ -292,7 +292,7 @@ export function buildTaverna(ctx, B, env) {
     const tx = rx - 1.3, tz = sz + 4.6, tg = ground.groundAt(tx, tz);
     B.add(B.box(0.75, 0.6, 2.2, { chip: 0.04 }), mat(tx, tg + 0.2, tz), { color: vary(tints.old, rng, 0.05), moss: 0.9, ground: tg, disp: 0.01 });
     B.add(B.box(0.5, 0.02, 1.95), mat(tx, tg + 0.47, tz), { color: new THREE.Color(0.006, 0.007, 0.006), moss: 0, wet: 1, ground: tg - 1 });
-    ctx.addCollider({ x: tx, z: tz - 0.6, r: 0.5 }); ctx.addCollider({ x: tx, z: tz + 0.6, r: 0.5 });
+    ctx.addCollider({ x1: tx, z1: tz - 0.72, x2: tx, z2: tz + 0.72, r: 0.38, y: tg - 1, h: 1.5 }); // v8-10: the trough at its rim
   }
 
   // ---- v8: before the gate, the Late folk's frontage, built of what they found ----
@@ -304,7 +304,7 @@ export function buildTaverna(ctx, B, env) {
     const ax = cx - 5.6, ag = wallY(ax);
     P.late.awning(B, mat(ax, ag, zf, 0, Math.PI, 0), { w: 3.8, d: 2.0, h: 2.7, rng });
     P.late.bench(B, mat(ax, ag - 0.05, zf - 0.3, 0, Math.PI, 0), { w: 3.0, rng });
-    ctx.addCollider({ x: ax - 1, z: zf - 0.3, r: 0.35 }); ctx.addCollider({ x: ax + 1, z: zf - 0.3, r: 0.35 });
+    ctx.addCollider({ x1: ax - 1.25, z1: zf - 0.3, x2: ax + 1.25, z2: zf - 0.3, r: 0.25, y: ag - 1, h: 1.45 }); // v8-10: the bench at its seat
     const tx = ax + 0.3, tz = zf - 2.3, tg = ground.groundAt(tx, tz);
     for (const s of [-1, 1]) {
       B.add(B.box(0.07, 0.95, 0.07), mat(tx + s * 0.32, tg + 0.36, tz - 0.2, 0, 0, s * 0.35), { color: L.paint[2], moss: 0, ground: tg });
@@ -317,14 +317,14 @@ export function buildTaverna(ctx, B, env) {
       const sx = tx + dx, sz = tz + dz, sg = ground.groundAt(sx, sz);
       B.add(B.cyl(0.2, 0.17, 0.42, 6, 1), mat(sx, sg + 0.2, sz, 0, rng(), 0), { color: L.paint[0], moss: 0, ground: sg });
     }
-    ctx.addCollider({ x: tx, z: tz, r: 0.65 });
+    ctx.addCollider({ x: tx, z: tz, r: 0.65, y: tg - 1, h: 1.86 }); // v8-10: the table at its top
     // east of the gate: a Heliarch drum set up as a mounting block with a second for the step, and an upturned
     // capital for a planter, a pomegranate bush in it
     const mx = cx + 4.0, mz = zf - 1.0, mg = ground.minGround(mx, mz, 0.5) - 0.1;
     P.heliarch.drum(B, mat(mx, mg, mz, 0, 0.3, 0), { r: 0.48, h: 0.85, moss: 0.35 });
     P.heliarch.drum(B, mat(mx - 0.75, mg - 0.4, mz - 0.2, 0, 0.1, 0), { r: 0.38, h: 0.8, moss: 0.35 });
     S.place({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'two Heliarch drums for a mounting block', x: mx, y: mg, z: mz, mount: 'ground', r: 0.5 });
-    ctx.addCollider({ x: mx, z: mz, r: 0.5 }); ctx.addCollider({ x: mx - 0.75, z: mz - 0.2, r: 0.4 });
+    ctx.addCollider({ x: mx, z: mz, r: 0.5, y: mg - 1, h: 1.85 }); ctx.addCollider({ x: mx - 0.75, z: mz - 0.2, r: 0.4, y: mg - 1.4, h: 1.8 }); // v8-10: a mounting block, at the drums' tops
     const px = cx + 6.3, pz = zf - 0.9, pg = ground.minGround(px, pz, 0.7) - 0.05;
     P.heliarch.capital(B, mat(px, pg + 0.72, pz, Math.PI, 0.4, 0), { r: 0.42 });
     for (let k = 0; k < 6; k++) {
