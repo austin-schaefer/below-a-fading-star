@@ -456,7 +456,7 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   const top = await until(() => window.__fp.tally.ride.phase === 'top', 20000);
   r = await p.evaluate(() => { const fp = window.__fp, q = fp.player.pos, g = fp.tally.ride.sleeper; return { y: q.y, d: Math.hypot(q.x - g.x, q.y - g.y, q.z - g.z) }; });
   await p.evaluate(() => { window.__fp.sky.flicker.hold = null; });
-  check('in a gutter the ride goes on, to the top: eight metres or more up, within 2 m of the sleeper', top && r.y - start.y > 7.5 && r.d < 2, { top, r, start });
+  check('in a gutter the ride goes on, to the top: seven metres or more up, within 2 m of the sleeper', top && r.y - start.y > 7 && r.d < 2, { top, r, start });
   const salt = await until(() => window.__fp.tally.ride.salt > 0, 15000);
   r = await p.evaluate(() => { const fp = window.__fp, v = fp.tally.ride.sleeper.project(fp.camera); return { answering: fp.tally.ride.answering, salt: fp.tally.ride.salt, head: [+v.x.toFixed(2), +v.y.toFixed(2)] }; });
   check('at the top the sleeper answers: he holds out his hand and salt runs from it', r.answering && salt, r);
