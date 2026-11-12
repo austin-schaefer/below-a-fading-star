@@ -11,6 +11,8 @@ Labels: a kind (`milestone`, `bug`, `tweak`, `harness`), a target (`v8`, `v9`, â
 | #1 Consistency, Coherence, and Conscious Contrast | milestone | **v8**, in progress: `plans/wilderness-v8.md` |
 | #7 Let me jump on more stuff | tweak | v8, brief 10 (`briefs/v8/brief-v8-10-owner-tweaks.md`) |
 | #8 Gaps at top of crystals | bug | v8, brief 10 |
+| #11 Lamplighter walks thru a giant rock | bug | v8, brief 11 (`briefs/v8/brief-v8-11-rocks.md`) |
+| #12 Too many of those goofy dalmation colored rocks | tweak | v8, brief 11 |
 | #3 Improve release notes | harness | done on `next` and on GitHub (all entries rewritten, 19 GitHub releases published, `tools/gh-release.sh`, `.agents/skills/orchestrator/release-notes.md`); closes when v8's entry ships in the same style |
 
 ## Next, in order
