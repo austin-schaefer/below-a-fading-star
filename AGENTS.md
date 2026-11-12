@@ -42,7 +42,7 @@ Each has a reason outside the codebase, which is why it is not yours to change.
 - `stories/`: the world's library of stories, one file each, with an index. A tool for making things that connect: worth a look before inventing something a visitor finds, and yours to add to (the `storytelling` skill).
 - `tools/`: serve, tests, renders, the audio harness, and the repo scripts (`suite.sh`, `worktree.sh`, `ensure-hooks.sh`, `link-skills.sh`, `relay.sh`, `gh-release.sh`, `hooks/`).
 - `shots/`: the curated renders.
-- `.agents/skills/`: skills, mirrored into `.claude/skills/`; its `README.md` says who loads which. `wilderness` first, for any work here (serving, renders, and which skill next); `world-code` to write or review code; `sound-design` before touching audio; `storytelling` when planning or inventing things a visitor finds, if it helps; `orchestrator` if you are the main session; `autonomous-run` on a loop.
+- `.agents/skills/`: skills, mirrored into `.claude/skills/`; its `README.md` says who loads which. `wilderness` first, for any work here (serving, renders, and which skill next); `world-code` to write or review code; `sound-design` before touching audio; `storytelling` when planning or inventing things a visitor finds, if it helps; `visual-art` when making or changing anything a visitor sees, if it helps; `orchestrator` if you are the main session; `autonomous-run` on a loop.
 
 ## Roles
 

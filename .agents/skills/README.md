@@ -11,6 +11,7 @@ What every agent needs (the fixed things, the pace rules, the tone, where state 
 | `sound-design` | Anyone touching the procedural audio, on top of `world-code` |
 | `music` | Anyone writing or judging the music (`src/audio/music/`, `tools/music-*`), on top of `sound-design` |
 | `storytelling` | Anyone planning, briefing, building or reviewing something a visitor finds (a place, prop, figure, creature, sound); the library is `stories/` |
+| `visual-art` | Anyone making, changing or judging something a visitor sees, if it helps: the visual thesis, the render loop; `architecture.md`, `land.md`, `figures.md`, `light-and-colour.md` beside it |
 | `orchestrator` | The main session, at the start of every session: the working branch, briefing, merging, releasing |
 | `autonomous-run` | The main session on a loop or told to keep going |
 

@@ -30,6 +30,7 @@ A world module exports `async function build(ctx)` and has a line in `MODULES` i
 - **Budgets,** per module at `quality: 'high'`: about 25 draw calls and 400k triangles in view; one or two instanced meshes per kind of thing; no per-frame allocation in hot loops (`hyp(x, z)` from `noise.js`, not `Math.hypot`, which allocates); no textures from the network (`DataTexture` or `CanvasTexture`). They keep the walk smooth on a laptop and usable on a phone; spend more only where you have measured that you can.
 - Custom `ShaderMaterial`s include the fog chunks (`fog_pars_vertex`, `fog_vertex`, `fog_pars_fragment`, `fog_fragment`) and set `fog: true`.
 - Cast shadows from anything taller than a person; receive on everything. The sun is low in the west: silhouettes matter more than texture.
+- For how a thing should look (the palette, the three hands' parts, the liveries, what has read and failed in renders), the `visual-art` skill and its references.
 
 ## Rules for code here
 
