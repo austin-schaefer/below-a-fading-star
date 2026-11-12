@@ -14,7 +14,7 @@
 // Registers __fp.paths: { stats(), leadAt(x, z), leads, pit, fall }.
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
-import { PIT, pitEdge, pitRim, PIT_PAVE, FALL } from './paths/ground.js';
+import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
 import { groundOf, stoneGeo } from './regions/common.js';
 import { hexCellsIn, HEX_R } from '../structures/common.js';
 import { smoothstep, clamp } from '../noise.js';
@@ -486,13 +486,16 @@ function buildPit(ctx) {
   // at the scale the terrain's grid cannot draw
   const bits = [];
   for (let b = 0; b < 360; b += low ? 2.6 : 1.5) {
-    const bb = b + (rng() - 0.5) * 1.2, a = (bb * Math.PI) / 180, R = pitRim(bb) + 0.2 + rng() * 1.4;
+    const bb = b + (rng() - 0.5) * 1.2, a = (bb * Math.PI) / 180;
+    // at a lookout the clods sit behind the walker's heels (0.9 m out or more) and small, so the throat is open
+    const lo = PIT_LOOKOUTS.some((l) => Math.abs(((bb - l + 540) % 360) - 180) < PIT_LOOKOUT_ARC);
+    const R = pitRim(bb) + (lo ? 0.9 : 0.2) + rng() * 1.4;
     const x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
     if (road(x, z) < 2.2) continue; // the slabs are there
     const e = pitEdge(x, z);
     const inx = -Math.sin(a), inz = Math.cos(a);
     const lx = x - inx * Math.max(0, -e), lz = z - inz * Math.max(0, -e);
-    const s = 0.25 + Math.pow(rng(), 2) * 0.9;
+    const s = lo ? 0.2 + rng() * 0.15 : 0.25 + Math.pow(rng(), 2) * 0.9;
     bits.push({ x, z, y: terrain.heightAt(lx, lz) - 0.08 - Math.max(0, -e) * 0.4, inx, inz, s, tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
       salt: (ctx.regions?.regionAt(lx, lz).saltings || 0) > 0.3 && rng() < 0.6 });
   }

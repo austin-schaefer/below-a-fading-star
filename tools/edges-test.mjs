@@ -44,7 +44,7 @@ const R = await page.evaluate(async () => {
     return { x: p.pos.x, z: p.pos.z, end: edge(p.pos.x, p.pos.z), minEdge, under, feet: p.pos.y - p.eye };
   }
   const res = [];
-  // the two ragged holes, from six bearings
+  // the two ragged holes, from five bearings
   for (const [name, H, edge, reach] of [['the Foundered Nave', NG.NAVE, NG.naveEdge, 1.0], ['the Pit', PG.PIT, PG.pitEdge, 1.0]]) {
     for (const hurry of [false, true]) {
       let worst = 0, minEdge = Infinity, under = 0, n = 0, at = '';
@@ -58,6 +58,11 @@ const R = await page.evaluate(async () => {
     // a hurrying hop at the lip, five seconds
     const a = 0.3, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry: true, secs: 12, hopAt: 240 });
     res.push({ name, mode: 'hop at the lip', n: 1, worst: r.end, minEdge: r.minEdge, under: r.under, reach: 1.0, at: '' });
+  }
+  // each Pit lookout (v10-T1): a walker coming straight at it reaches the lip within 0.9 m
+  for (const b of PG.PIT_LOOKOUTS) {
+    const a = b * Math.PI / 180, r = walk(PG.PIT.x + Math.sin(a) * 30, PG.PIT.z - Math.cos(a) * 30, PG.PIT.x, PG.PIT.z, PG.pitEdge, { secs: 14 });
+    res.push({ name: `the Pit, lookout ${b}`, mode: 'walk', n: 1, worst: r.end, minEdge: r.minEdge, under: r.under, reach: 0.9, at: '' });
   }
   // the Span's broken edges, on the deck: the lip x of the deck run the walker is on, and which way the gap lies
   const c0 = SPAN.crack.x - SPAN.crack.w / 2, c1 = SPAN.crack.x + SPAN.crack.w / 2, T2 = SPAN.pierT / 2;
