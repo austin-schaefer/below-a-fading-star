@@ -7,10 +7,11 @@
 // over the davit's pulley, steps in through the hatch and sleeps by the lamp, out of reach of whatever walks the moor.
 // Tonight someone is up there, and you can see him: the hatch stands open, his head in a red nightcap lies on a pillow
 // at the sill, his patchwork quilt hangs out over it, one arm and one striped-stockinged leg dangle out into the air.
-// At the foot: the winch with its rope made fast, his clogs side by side, his other stocking drying on the winch, his
-// staff and bundle, and chalk tallies on the slab, one stroke a night, by many hands. The globe sways on its chains,
-// and when the sun gutters the lamp inside is turned up. The sleeper and his quilt take a share of the lamp's glow
-// (channel 1) so their colours hold against the lit cloth behind them.
+// His bindle he took up with him: it leans on the slab's shoulder by his head. At the foot: the winch with its rope
+// made fast, his clogs side by side, his other stocking drying on the winch, and chalk tallies on the slab, one stroke
+// a night, by many hands. The globe sways on its chains, and when the sun gutters the lamp inside is turned up. The
+// sleeper, his quilt and his bindle take a share of the lamp's glow (channel 1) so their colours hold against the
+// lit cloth behind them.
 // The story: stories/the-lantern-halt.md.
 //
 // Three draws: the slab (the Elder material, ctx.strata.mesh), the furniture at its foot (a stone-shader Builder), and
@@ -127,19 +128,30 @@ export async function build(ctx) {
   // the rope's tail made fast round the cheek, and his other stocking hung over the drum to dry: red and cream bands
   for (let k = 0; k < 6; k++) B.add(B.box(0.16, 0.09, 0.05), wM(0.2 + k * 0.012, 1.05 - k * 0.1, 0.24, 0, 0, 0.1), late(k % 2 ? L.cloth[1] : L.cloth[2]));
   B.add(B.box(0.16, 0.12, 0.2), wM(0.27, 0.43, 0.32, 0.2, 0, 0.1), late(L.cloth[2]));
-  // the staff against the other cheek, his bundle at its foot
-  B.add(B.cyl(0.03, 0.035, 1.75, 6, 1), wM(-0.82, 0.8, -0.05, 0.05, 0, 0.3), late(c('#4a3624'), { moss: 0.05 }));
-  B.add(new THREE.IcosahedronGeometry(0.07, 0), wM(-1.08, 1.65, -0.05), late(L.pom));
-  B.add(new THREE.IcosahedronGeometry(0.3, 1), wM(-0.95, 0.24, 0.45, 0, 0.4, 0).multiply(mat(0, 0, 0, 0, 0, 0, 1.05, 0.8, 0.9)), late(c(LIVERY.late.pom), { disp: 0.05 }));
-  for (const s2 of [-1, 1]) B.add(B.cyl(0.0, 0.07, 0.22, 5, 1), wM(-0.95 + s2 * 0.08, 0.55, 0.45, 0, 0.4, -s2 * 0.5), late(c(LIVERY.late.pom))); // its knot's two ears
+  // his bindle: he took it up with him, or it would be gone by morning. The staff leans on the slab's shoulder beside
+  // the globe, by his head, its bundle tied to the top in a red cloth knotted over the stick; the lamp catches it
+  {
+    const bx = -3.3, bz = 0.95, lean = 0.5, len = 1.8;
+    const tip = new THREE.Vector3(bx + Math.sin(lean) * len, shoulder + Math.cos(lean) * len, bz);
+    B.add(B.cyl(0.035, 0.04, len, 6, 1), at(bx + Math.sin(lean) * len / 2, shoulder + Math.cos(lean) * len / 2, bz, 0, 0, -lean), late(c('#8a6a44'), { moss: 0.05 }));
+    const bc = L.cloth[2], glow = { emit: [bc.r * 0.5, bc.g * 0.5, bc.b * 0.5, 1] };
+    const bun = tip.clone().add(new THREE.Vector3(0.12, -0.36, 0));
+    B.add(B.cyl(0.012, 0.012, 0.2, 4, 1), at(tip.x + 0.06, tip.y - 0.1, tip.z, 0, 0, 0.5), late(c('#b09a6a'))); // the knot's neck
+    B.add(new THREE.IcosahedronGeometry(0.3, 2), at(bun.x, bun.y, bun.z).multiply(mat(0, 0, 0, 0, 0.3, 0.15, 1.05, 0.85, 0.95)), late(bc, { disp: 0.04, ...glow }));
+    B.add(B.box(0.2, 0.2, 0.012), at(bun.x - 0.05, bun.y - 0.02, bun.z + 0.27, 0, 0, 0.3), late(L.cloth[0], { emit: [0.35, 0.22, 0.06, 1] })); // a saffron patch
+    for (const s2 of [-1, 1]) B.add(B.cyl(0.0, 0.07, 0.26, 5, 1), at(tip.x + s2 * 0.1, tip.y + 0.02, tip.z, 0, 0, -s2 * 0.9), late(bc, glow)); // the knot's ears
+    B.add(new THREE.IcosahedronGeometry(0.06, 1), at(tip.x - 0.02, tip.y - 0.01, tip.z), late(bc, glow));
+  }
   // his clogs, side by side at the winch, toes to the road: painted saffron, the Late folk's upturned toe
   const clog = (x, z, ry) => {
     const y = gAt(x, z) - foot;
     const cM = (a, b2, d, rx = 0) => at(x + a * Math.cos(ry) + d * Math.sin(ry), y + b2, z - a * Math.sin(ry) + d * Math.cos(ry), rx, ry, 0);
-    B.add(B.box(0.16, 0.12, 0.28, { chip: 0.02 }), cM(0, 0.06, -0.02), late(L.paint[2]));
-    B.add(new THREE.SphereGeometry(0.075, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), cM(0, 0.08, 0.06).multiply(mat(0, 0, 0, 0, 0, 0, 1, 0.9, 1.4)), late(L.paint[2]));
-    B.add(B.cyl(0.0, 0.045, 0.12, 6, 1), cM(0, 0.12, 0.21, 1.1), late(L.paint[2]));
-    B.add(B.box(0.1, 0.012, 0.12), cM(0, 0.105, -0.06), late(c('#2a1a10')));
+    const cl = L.plaster[2]; // saffron, a step paler than the winch's paint so they stand off the turf
+    B.add(B.box(0.17, 0.035, 0.3), cM(0, 0.018, -0.02), late(c('#3a2414'))); // the dark sole, so they read as shoes
+    B.add(B.box(0.16, 0.11, 0.28, { chip: 0.02 }), cM(0, 0.09, -0.02), late(cl));
+    B.add(new THREE.SphereGeometry(0.075, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), cM(0, 0.12, 0.06).multiply(mat(0, 0, 0, 0, 0, 0, 1, 0.9, 1.4)), late(cl));
+    B.add(B.cyl(0.0, 0.045, 0.12, 6, 1), cM(0, 0.16, 0.21, 1.1), late(L.paint[1]));
+    B.add(B.box(0.11, 0.014, 0.13), cM(0, 0.147, -0.07), late(c('#1a0e08'))); // the opening
   };
   {
     const cx = winch.x + hdx * 0.9 + hdz * 0.55, cz = winch.z + hdz * 0.9 - hdx * 0.55;
