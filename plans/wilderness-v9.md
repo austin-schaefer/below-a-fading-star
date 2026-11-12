@@ -6,6 +6,28 @@ Austin, 2026-11-11 (issue #2, "Environmental music"): "v7.2 added a leveled-up s
 
 ## Status
 
+### Looking back (2026-11-11, 22:30 PST)
+
+**What took longest, and did it need to?** The milestone's last brief (M6) reported at about 20:55 and v9 was live at 22:20, v9.1 at 22:27: ninety minutes. The gate ran twice in full (25 minutes each: once before the Halt, once with it) and the critic ran beside the second. The rest was scope that arrived after the last brief: three skills, the roadmap's removal, the release-note changes, a three-way waystation test and then the waystation itself. None of that was wasted, but it made the release a moving target; the owner's "cut v9 and leave this as 9.1" was the right instinct and came too late to use. M1 and M2 ran side by side and still had to be joined by a third brief (M6): a player and the thing that calls it are one brief.
+
+**What was found late?**
+- v9 was released from a stale `next` (a reviewer's `git checkout` in the deploy worktree; twenty commits to no branch; quiet pushes). Found by a 404 on the live site. A check that HEAD is `next` and pushed would have caught it in a second.
+- The settings test was not in the gate, so its count went stale in v8; and when it was added, the run line had the wrong URL and the gate found that 25 minutes later.
+- The music's faults (not tuneful, samey, a piercing flute) were found by the owner's ears after nine tracks, a director and a settings menu were built on them.
+- The first Lantern Halt's bed was not on screen. Its maker did not see that, and the orchestrator repeated the maker's report to the owner before looking.
+- The owner had to ask where the bed was twice.
+
+**What did the owner have to say more than once?** That the craft skills are tools and not constraints (three times, of three different drafts: storytelling, the three ages, the art skill's history of its own test). That harness documents should not record the past for its own sake. That the end of a release is too slow.
+
+**What worked?** The same brief to two agents, with and without a skill, then a side-by-side page: fifteen minutes each, and it changed the skill twice. A fresh agent's blind read of renders. Splitting a point release off a milestone. Filing the owner's spoken ideas as issues at once (#23, #24).
+
+**Acted on (three):**
+1. `tools/release-check.sh` fails on a detached HEAD or an unpushed `next`; the orchestrator skill tells every reviewer never to check out in the deploy worktree, and the release steps read the PR's file list before merging.
+2. `ONLY=name,name tools/suite.sh` runs chosen lines of the gate with the gate's own arguments: for the targeted rerun the softened rule allows, and for trying a new `run` line the moment it is added.
+3. The orchestrator's planning says "one before nine" (build one of a new kind of thing and have it judged before building the rest), and that a change to a craft skill can be tested with a pair of agents.
+
+Not acted on, and why: a shorter gate (it is 25 minutes because every test loads the world in its own browser; a shared page would be a rewrite, worth an issue only if the softened rule proves not to be enough).
+
 **2026-11-11, 22:24 PST. Correction: v9 went out without the Lantern Halt and the late fixes; they ship as v9.1.** At 21:46 a read-only reviewer ran `git checkout` in the deploy worktree and left it on a detached HEAD at `origin/next`. Every commit after that (the Halt's merge, the critic's four fixes, the cut note under the music row, the release pictures and their backfill, the strata fix) went to no branch, and each `git push -q origin next` pushed the unmoved branch and said nothing. Release PR #26 therefore merged `next` at `f72a420`: the sliders, the music off by default, the three owner fixes and the harness work, all covered by the 21:26 gate (31 tests, 30 green, settings rerun alone 66/66). The 22:12 gate and the reruns in the entry below were of the detached tree, which is what v9.1 ships. The orchestrator found it when the live site returned 404 for `src/v9/waystation.js`. Repaired: `next` fast-forwarded to the detached commit and pushed; `RELEASES.md` split to match what went live when (v9 without the Halt; a v9.1 entry for the Halt, the music fixes and the pictures); `tools/release-check.sh` now fails on a detached HEAD or an unpushed `next`; the orchestrator skill tells every reviewer never to check out in the deploy worktree. Between 22:20 and the v9.1 merge the v9 GitHub release page described the Halt, which was not live.
 
 **2026-11-11, 22:19 PST. Released.** What shipped: the three sub-sliders under the master volume; the music, off by default and marked experimental, nine tracks, the frequency setting and `?music=<track>`; the Lantern Halt (`src/v9/waystation.js`, `stories/`), which the owner chose to ride in v9 after a blind read of its renders by a fresh agent found the sleeper and the bed unprompted; the three owner fixes (#16, #17, #19); and the harness work (the `storytelling`, `visual-art` and `world-code` skills, `stories/`, issues as the only roadmap, the release notes split with pictures, the README mirror and `tools/release-check.sh`).
