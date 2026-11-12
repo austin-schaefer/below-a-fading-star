@@ -9,7 +9,7 @@
 export const FOG_TIERS = [
   { name: 'front', r0: 0, r1: 0, amount: 0 },             // the floor and the front range: distance fog only
   { name: 'main', r0: 395, r1: 440, amount: 0.12 },       // the main wall and its crest
-  { name: 'far', r0: 580, r1: 700, amount: 0.24 },        // the first far range (src/v4/mountains.js, tier 2)
+  { name: 'far', r0: 580, r1: 700, amount: 0.18 },        // the first far range (src/v4/mountains.js, tier 2); v11: less, so its lit side shows
   { name: 'farthest', r0: 1080, r1: 1200, amount: 0.22 }, // the last range (tier 3): nearly the sky
 ];
 // Distance fog never goes past this, so the far ranges keep a little of their own shading under the tiers.
