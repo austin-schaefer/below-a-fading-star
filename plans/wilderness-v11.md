@@ -54,7 +54,7 @@ In flight (v11.1):
 |---|---|---|---|
 | W1 fix | `issue-1113-wall-patches` | 8161 | opus |
 | W2 | merged | | |
-| W5 (trial) | `issue-1112-high-passes` | 8162 | opus |
+| W5 (trial) | merged, behind `?cols=high` | | |
 | W3 | merged | | |
 | W4 | merged | | |
 | R | done | | |
@@ -72,6 +72,8 @@ In flight (v11.1):
 **The high passes go with the Heights (the owner, in session: "i think high passes can go with 'the heights'")**: written on #4 with their words. v11.1 ships W5 only as the flag `?cols=high`, default unchanged, if the trial is sound; making it the default is #4's.
 
 **W1 is merged (two rounds), and a blind read sent it back a third time for a fix.** W1 (`6137b8e`): cracked blocks, scars and lichen on the wall inside 200 m (`CLOSE_ROCK_GLSL`, limited by a baked `aRock`), loose stone on the apron (round two; round one was a mosaic), ribs and couloirs lifted on the sunward southern faces; about 1.3 ms more GPU a frame at the wall's foot on low. The blind reader (17 fixed views from `next` as `v11.1-next-*`, plus the agents' close frames), on the close rock: "hard-edged, straight-sided dark polygons and wedge or fan shapes across the slope" (`v11.1-W1-s5-b150-10`), "camouflage patches", "one dark chevron shadow that does not match any object". That is W1's and blocks the release: **in flight, the fix**, `issue-1113-wall-patches`, port 8161, the same opus agent. The reader's other points are older than v11.1 and not taken on: from a distance the faces are "smooth melted wax with vertical drips"; its three least natural things were built ones (the Ridge's merlons, the Vigilant, the Annals' band); the Lamps at 60 m "float in dark space... lanterns, not rooms" (no wall shows behind them in the dark). The release entry, the README line and four keepers (stage 78) are written (`0aec764`); the Known issues will say what the fix leaves.
+
+**W5 is merged as a flag** (`967afad`, `?cols=high`; default proven unchanged by `terrain-probe --diff`, max dh 0, taken before its merge with `next`). Passes at 131, 141 and 149 m. Looked at in pairs (`v11.1-W5-{default,high}-cols-*`): from above, each slot becomes a broad dip with a far ridge behind; from the floor the two modes are nearly the same picture, because nearer ground already hid the cols' floors. The owner put making it the default with the Heights; the findings are on #4. With the flag on, ground inside the walk limit rises up to 9 m near each pass.
 
 Next: check and merge each (W3, W4 as they come; W1, then W2 after it merges `next`), a blind read of the renders, `tools/suite.sh 8123` in full, then the release as `v11.1` (the day's third merge to `main` of six).
 
