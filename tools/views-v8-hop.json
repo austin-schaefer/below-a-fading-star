@@ -1,0 +1,12 @@
+[
+ { "name": "lynchets-wall", "x": -186.4, "z": -138.1, "yaw": 0, "settle": 3000,
+   "js": "const fp=__fp,p=fp.player;let b=null,bd=1e9;for(const c of fp.controls.state.colliders){if(c.mod!=='region-lynchets')continue;const d=Math.hypot(c.x-p.pos.x,c.z-p.pos.z);if(d<bd){bd=d;b=c;}}p.pos.x=b.x;p.pos.z=b.z;p.pos.y=b.y+b.h+b.dh/2+p.eye+0.03;p.yaw=Math.atan2(b.ux,b.uz);p.pitch=-0.22;" },
+ { "name": "parapet-down", "x": -150, "z": 222.4, "yaw": 3.14159, "pitch": -1.0, "settle": 3000,
+   "js": "const p=__fp.player;p.pos.y=57.05+p.eye+0.03;" },
+ { "name": "parapet-along", "x": -150, "z": 222.4, "yaw": -1.75, "pitch": -0.32, "settle": 3000,
+   "js": "const p=__fp.player;p.pos.y=57.05+p.eye+0.03;" },
+ { "name": "boulder", "x": -83.7, "z": 277.2, "yaw": 0.6, "pitch": -0.35, "settle": 3000,
+   "js": "const fp=__fp,p=fp.player;let b=null,bd=1e9;for(const c of fp.controls.state.colliders){if(c.mod!=='rocks')continue;const d=Math.hypot(c.x-p.pos.x,c.z-p.pos.z);if(d<bd){bd=d;b=c;}}p.pos.x=b.x;p.pos.z=b.z;p.pos.y=b.y+b.h+p.eye+0.03;" },
+ { "name": "court-kerb", "x": -40, "z": -155.4, "yaw": 0, "pitch": -0.45, "settle": 3000,
+   "js": "const fp=__fp,p=fp.player;let b=null,bd=1e9;for(const c of fp.controls.state.colliders){if(c.len===undefined||c.mod!=='structures')continue;const d=Math.hypot(c.x-p.pos.x,c.z-p.pos.z);if(d<bd){bd=d;b=c;}}p.pos.y=b.y+b.h+p.eye+0.03;p.yaw=Math.atan2(b.ux,b.uz)+0.5;" }
+]

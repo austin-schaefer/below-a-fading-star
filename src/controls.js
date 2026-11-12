@@ -429,16 +429,15 @@ export function buildControls(ctx) {
         t = along(c, nx, nz); px = c.x1 + c.ux * t; pz = c.z1 + c.uz * t; dx = nx - px; dz = nz - pz;
       }
       const d = hyp(dx, dz);
-      if (d < rad && d > 1e-4) {
-        if (c.h !== undefined) {
-          if (feetNow < c.y - 0.5) continue; // under it
-          const top = topAt(c, t, d);
-          const over = feetNow > top - STEP_UP;
-          const reach = !over && state.hopping && c.stand !== false && top - feetNow <= MANTLE && state.vel.x * dx + state.vel.z * dz < 0;
-          if (over || reach) { if (c.stand !== false && nCand < cand.length) cand[nCand++] = c; continue; }
-        }
-        nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad;
+      if (d >= rad) continue;
+      if (c.h !== undefined) {
+        if (feetNow < c.y - 0.5) continue; // under it
+        const top = topAt(c, t, d);
+        const over = feetNow > top - STEP_UP;
+        const reach = !over && state.hopping && c.stand !== false && top - feetNow <= MANTLE && state.vel.x * dx + state.vel.z * dz < 0;
+        if (over || reach) { if (c.stand !== false && nCand < cand.length) cand[nCand++] = c; continue; }
       }
+      if (d > 1e-4) { nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad; }
     }
     state.pos.x = nx; state.pos.z = nz;
     // the highest top under the feet, within a step (or, rising in a hop, a scramble) of them
