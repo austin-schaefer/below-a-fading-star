@@ -87,3 +87,7 @@ Needs design input before building: AG's sigils, AC's element pairs, any carved 
 - Familiar, by the critic's list: the bulrush fen, a grey tower, the domed Pomegranate House. Nowhere else: the Long Figure, the scaffold hung on the cliff, the sun between the twin arches.
 - No story beat was met on a short walk; the Go-to list's Stories group is what points at them, not the world.
 - The Lantern Halt: no trimmed version at the low tier; the winch may be too tall to hop onto; the sleeper shows only from the east.
+
+## From v10 (2026-11-12), built but switched off
+
+- **Salt for news, as an act** (`?salt=1`; `src/v10/salt.js`, the `'script'` rider case in `src/v8/twk.js`; `stories/salt-for-news.md` marks its beats "written, not built"). Take a pinch at the split sack, pay it at the Twk-men's pile, riders come for it and leave news. A blind reader could not tell what either place was, saw the salt as "a glowing white hexagon stack... a toy" and the news as coloured rectangles; a review found a far rider's guard-up flapping and a gutter dropping the scripted errand. Worth a second try by a stronger agent, starting from what a stranger must see: the sack as a sack, salt as salt, a rider visibly carrying a grain away, and news that is a thing with a meaning. v10 gave it a new end to tie to: the sleeper in the Lantern Halt is the pedlar, and he pours salt past the seat.
