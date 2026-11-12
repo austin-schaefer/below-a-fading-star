@@ -20,6 +20,7 @@ Then carry on. Take the owner's direction if they give any; otherwise work the c
 
 - A milestone is one doc, `plans/wilderness-v<N>.md`, with a Status section, and a `briefs/v<N>/index.md` dispatch plan. The `plans/IDEAS*.md` files are the bank to draw on and add to.
 - Each brief is one subagent's work: one coherent change, testable on its own, reviewable in a single diff. Order them so the foundations land first.
+- **Stories are a tool for this.** The `storytelling` skill and the library in `stories/` help a milestone's additions connect to what is already in the world, so it does not become a variety box. Use them where they help: a look at `stories/README.md` while planning, a story file a brief can point at. Not a requirement.
 - Don't over-plan. Brief the next batch in detail and leave the rest coarse.
 - Every batch names what the owner can see when it lands (a position and yaw on the local server, a render, a sound). A batch they can't see until the end is a smell; split it.
 - Don't split one unit of work across several PRs for tidiness. Tangential tooling made along the way rides along, named in the summary.
@@ -57,7 +58,7 @@ When a subagent reports done:
 
 ## Releases have notes
 
-Each merge to `main` is a release and a Netlify build. Before opening the PR, add an entry at the top of `RELEASES.md` (newest first), written for a stranger who has never taken the walk: a plain title, a sentence or two on what it adds, three to seven bullets on what a visitor can find or will notice, and Known issues only where they matter to a visitor. No process, tests, paths or measurements: those live in the milestone doc. The model, the owner's example and the rules: `release-notes.md`. After the PR merges, `tools/gh-release.sh <version>` publishes the entry as the GitHub release. A shipped milestone also gets one plain line in `README.md`'s Milestones, in the owner's style (`AGENTS.md`); the rest of that file is theirs.
+Each merge to `main` is a release and a Netlify build. Before opening the PR, add an entry at the top of `RELEASES.md` (newest first), written for a stranger who has never taken the walk: a plain title, a sentence or two on what it adds, three to seven bullets on what a visitor can find or will notice, and Known issues only where they matter to a visitor. No process, tests, paths or measurements: those live in the milestone doc. The model, the owner's example and the rules: `release-notes.md`. After the PR merges, `tools/gh-release.sh <version>` publishes the entry as the GitHub release. Every release also gets one line at the top of `README.md`'s Milestones, in the same PR: the entry's title linked to its GitHub release, then one plain sentence in the owner's style (`release-notes.md`, step 2). `tools/release-check.sh`, in the gate, fails when `README.md` and `RELEASES.md` disagree. The rest of that file is the owner's.
 
 ## Screenshots are the record
 

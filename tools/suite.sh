@@ -30,6 +30,9 @@ run() {
   passes+=("$(grep -c '^PASS' "$log")")
 }
 
+echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")")
+run music tools/music-score.mjs all
+run music-selftest tools/music-score-selftest.mjs
 run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
