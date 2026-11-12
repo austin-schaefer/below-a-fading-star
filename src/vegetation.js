@@ -20,6 +20,7 @@ export async function build(ctx) {
   const mats = makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4001)));
   const trees = buildTrees(ctx, ground, mats);
   const fungi = buildToadstools(ctx, ground, mats, trees);
+  ctx.woodTrees = trees.trees.filter((t) => t.kind === 'wood' && !t.hidden); // the Deodand Wood's trees, { x, y, z, h }: the shafts fall from their crowns (v8/shafts.js)
   const tTrees = lap();
   await ctx.progress?.('sowing the heather and the reeds', 0.6);
   const plants = buildPlants(ctx, ground, shared);
