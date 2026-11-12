@@ -1,6 +1,6 @@
 # Stories
 
-The world's library: what has happened in this country, one file a story. Read it before inventing anything a visitor will find; add to it when you do. How to write one, what makes a find a story and not a prop, and how they are made to touch: the `storytelling` skill (`.agents/skills/storytelling/SKILL.md`). The shape of a file: `_template.md`.
+The world's library: what has happened in this country, one file a story. A tool, not a gate: worth a look before inventing something a visitor will find, and yours to add to. How to write one, what makes a find a story and not a prop, and how they are made to touch: the `storytelling` skill (`.agents/skills/storytelling/SKILL.md`). The shape of a file: `_template.md`.
 
 Anyone may add a story, add a beat to another's, or repair one, and says so in that story's Log. A story's file is kept true to what is built in the same commit that builds or changes it.
 

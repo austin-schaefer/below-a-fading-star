@@ -1,6 +1,6 @@
 ---
 name: storytelling
-description: How stories are found, written down and built into the walk. Load when planning a milestone, brainstorming or writing a brief for anything a visitor finds (a place, a prop, a figure, a creature, a sound, a piece of music), and when reviewing such work, on top of `wilderness`. Covers the two jobs a story does (for the visitor, and for the agents designing the world), plain stories and deep ones, what makes a find a story and not a prop, the shared library in `stories/` that every agent reads before inventing and adds to after, and how stories are made to touch each other.
+description: How stories are found, written down and built into the walk. Load when planning a milestone, brainstorming or writing a brief for anything a visitor finds (a place, a prop, a figure, a creature, a sound, a piece of music), and when reviewing such work, on top of `wilderness`. A tool in the toolbox, not a hard constraint. Covers the two jobs a story does (for the visitor, and for the agents designing the world), plain stories and deep ones, what makes a find a story and not a prop, the shared library in `stories/` that every agent reads before inventing and adds to after, and how stories are made to touch each other.
 ---
 
 # Storytelling
@@ -27,14 +27,14 @@ That is not a dealbreaker. The world wants a mix of both. Plain stories are what
 
 ## What makes it a story
 
-A prop is a thing that is there. A story has:
+A prop is a thing that is there. A story usually has:
 
 1. **Someone.** A person, a creature or a people the visitor can picture from what is left: his boots, her slipper, the painter's five tries at the sun. "A chair" is not someone. "Whoever sat here, whose coat this is" is.
 2. **A want.** What they were after: he laid out his cup, his book and his rope in a row as if choosing; the painter wanted the sun to hold still. Petty wants suit this world (vanity, appetite, spite, a wager, saving face): people at the end of the world still cheat at dice.
 3. **A turn.** Something happened and it was not what they wanted, or it was and it cost them. With no turn you have a tableau.
 4. **An ending.** Something that answers the question the first find raised, and ideally asks a smaller, stranger one.
 
-If you cannot say in two sentences who wanted what and what happened, you do not have a story yet.
+A quick check: can you say in two sentences who wanted what and what happened?
 
 ## Tools for telling one
 
@@ -54,11 +54,11 @@ None of these is a rule. They are what has worked; use the ones that serve the s
 
 One file a story, `stories/<slug>.md`, in the shape of `stories/_template.md`. `stories/README.md` is the index: every story, its kind and state, its places, who it touches, the people who have no story yet, the things that travel between stories. It is the world's memory of what has happened in it, and it is shared: any agent may add a story, add a beat to someone else's, deepen or tweak one, and says so in that story's Log.
 
-**Read before you invent.** Before brainstorming anything a visitor will find, read `stories/README.md` and the stories that touch your place or your figures. The cheapest good idea is often the next beat of a story that already exists, or a second story that crosses one.
+How to use it is up to you; this is a tool in the box, not a gate. What tends to pay off:
 
-**Write as you invent.** Coming up with stories is part of brainstorming, not a step after it. A new place, prop, figure or creature arrives with a story or joins one; the story goes into the library when the idea does, as plain prose a person could read aloud, then its beats. An idea with no story yet lives in `plans/IDEAS.md` until it has one.
-
-**Keep it true.** A story's file says what is built and what is only written (each beat has a state), and changes in the same commit as the thing it describes.
+- **A look before you invent.** `stories/README.md` and the stories that touch your place or your figures. The cheapest good idea is often the next beat of a story that already exists, or a second story that crosses one.
+- **Writing stories down as you brainstorm.** When an idea comes with a someone and a want, put it in the library, as plain prose a person could read aloud; a seed of two sentences is welcome. Not everything needs a story: a rock can be a rock.
+- **Keeping a file true** to what is built when you change the thing it describes, so the next agent can trust it.
 
 Kinds: `plain`, `deep`. States: `seed` (a someone and a want, no beats placed), `written` (the whole story and its beats placed on the map, nothing built), `partial` (some beats built, or built with a part of the story missing), `built` (every beat built), and a note beside any of them when it does not do what it was meant to (`built, but the body cannot be found`).
 
@@ -72,11 +72,13 @@ This is the second job. A library of unrelated anecdotes is a list; these are on
 - **The peoples.** The Elder builders, the Heliarchy and the folk here now (`briefs/v8/index.md`) are the long story every short one sits inside.
 - **Disagreement on purpose.** If your story needs another to be different, change that one openly in its file and Log, or make the disagreement the point (two accounts of one event is a very Vancean thing).
 
-Every story file lists its **Connections** and its **Open threads**: loose ends left for the next agent. Leave at least one, and pick one up when you can.
+A story file has room for its **Connections** and **Open threads**: loose ends left for the next agent. Leaving one, and picking one up, is how the library grows together.
 
-## In the working process
+## Where it tends to help
 
-- **Planning a milestone** (`orchestrator`, `autonomous-run`): the milestone doc names the stories it adds or deepens, and says how the new things connect to what is already in the library. A milestone whose additions touch nothing already there is a variety box: look again.
-- **Writing a brief:** a brief for anything findable names its story file. The implementer may improve the beats, keeps the someone, the want and the turn, and updates the file.
-- **Reviewing and the critic:** walk as a stranger. Which finds seemed to be about someone? For a plain story, could you say what happened? For a deep one, did its surface read as anything? Record what you find in the story's file; do not leave a note that is no longer true.
-- **Other crafts:** the music's specials, a creature's behaviour, a sound heard once at a place are all beats. A story can be carried by a sound.
+None of this is required. Reach for it when it makes the work better.
+
+- **Planning a milestone:** asking which stories it adds or deepens, and how the new things connect to what is already here, is a quick test for the variety box.
+- **Writing a brief:** pointing a brief at a story file gives the implementer the someone, the want and the turn in a paragraph, and somewhere to write down what they changed.
+- **Reviewing and the critic:** walking as a stranger and asking which finds seemed to be about someone. For a plain story, could you say what happened? For a deep one, did its surface read as anything?
+- **Other crafts:** the music's specials, a creature's behaviour, a sound heard once at a place can all be beats. A story can be carried by a sound.
