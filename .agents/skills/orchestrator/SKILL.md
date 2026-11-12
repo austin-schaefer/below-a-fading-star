@@ -67,7 +67,7 @@ When the milestone is in, in this order:
 
 1. The critic first (`autonomous-run` skill, `critic.md`), as soon as the last brief is merged, with the curator beside it ("Screenshots are the record", below; it needs no browser). While they run, write the `RELEASES.md` entry and the `README.md` line (below). The critic goes before the gate because its findings mean fixes, and fixes mean running the gate again: v8 ran the gate, then the critic, then the gate a second time.
 2. The critic's blocking findings fixed; the curator's work committed (it does not commit).
-3. `tools/suite.sh` green on `next`, once, on everything that will ship. The repository has no CI: the suite on the working branch is the gate.
+3. `tools/suite.sh` green on `next`, once, on everything that will ship. The repository has no CI: the suite on the working branch is the gate. A small fix after that (one module, or the test tooling) reruns only the tests it touches; a fix in shared code reruns the suite (`AGENTS.md`, the first fixed thing).
 4. The release PR.
 
 The tail of a release should take about an hour: the critic and the notes together, the fixes, one gate. If it is taking much longer, say why in Status: usually scope added after the last brief, which is a reason to cut a point release, not to hold this one.
