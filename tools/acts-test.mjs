@@ -138,7 +138,8 @@ await sleep(100);
 s = await state(page);
 check('E does it: one stroke more, counted and kept', s.visitor === 1 && s.count === 1 && s.strokes === before.strokes + 1 && JSON.parse(s.stored || '{}').marks?.['halt-tally']?.n === 1, { before, s });
 check('the stroke is being drawn, on screen where the visitor looks', s.drawing === true && await onScreen(page, target), s);
-await sleep(2600); // the chalk lifts (0.55 s), draws (1.3 s) and is let go
+{ const t0 = Date.now(); do { await sleep(200); s = await state(page); } while (s.drawing && Date.now() - t0 < 20000); } // the chalk lifts, draws and is let go (on state: robust at a few fps)
+await sleep(300);
 s = await state(page);
 check('the stroke finished drawing; the offer has gone (once a visit)', !s.drawing && s.offered === null, s);
 await shot(page, 'acts-halt2-stroke');
@@ -414,14 +415,25 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   await p.evaluate(() => { const fp = window.__fp, s = fp.tally.seat.stand(); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch; });
   await sleep(1500);
   let r = await p.evaluate(() => ({ offered: window.__fp.acts.offered?.def.id || null, may: window.__fp.acts.may(window.__fp.acts.list.find((h) => h.def.id === 'halt-seat')), mode: window.__fp.tally.seat.mode }));
-  check('the seat is not offered before the stroke is chalked (it hangs at the hatch)', r.offered === null && !r.may && r.mode === 'up', r);
+  check('the seat is not offered before the stroke is chalked (it hangs at the hatch)', r.offered !== 'halt-seat' && !r.may && r.mode === 'up', r);
   await atStroke(p); await waitOffer(p, true);
+  const sx = await p.evaluate(() => { const t = window.__fp.tally, s = t.strokeAt(0), c = t.centre, n = t.normal; return { x: c.x + n.z * s.along, z: c.z - n.x * s.along }; });
   await p.keyboard.press('KeyE');
-  await sleep(600);
-  r = await p.evaluate(() => { const t = window.__fp.tally; return { drawing: t.drawing, stub: t.chalk.stub(), next: { x: t.next.x, y: t.next.y, z: t.next.z } }; });
+  await until(() => { const t = window.__fp.tally; return t.drawing; }, 4000);
+  await sleep(300);
+  r = await p.evaluate((sx) => { const t = window.__fp.tally; return { drawing: t.drawing, stub: t.chalk.stub(), next: sx }; }, sx);
   check('the chalk itself is at the stone while the stroke is drawn', r.drawing && Math.hypot(r.stub.x - r.next.x, r.stub.z - r.next.z) < 0.6, r);
   const down = await until(() => window.__fp.tally.seat.down, 20000);
   check('after the stroke the seat comes down to sitting height', down && (await p.evaluate(() => { const fp = window.__fp, s = fp.tally.seat; return s.y - fp.terrain.heightAt(s.at.x, s.at.z) < 1; })));
+  r = await p.evaluate((sx) => { // from where they chalked, looking where they chalked: the seat is in the view, within reach of the stroke
+    const fp = window.__fp, t = fp.tally, s = t.stand(2.4), pl = fp.player, w = t.seat.world();
+    fp.controls.placeAt(s.x, s.z); pl.yaw = s.yaw; pl.pitch = -0.1; fp.camera.position.copy(pl.pos); fp.camera.rotation.set(-0.1, s.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld();
+    const v = w.clone().project(fp.camera), u = w.clone().setY(w.y + 1.6).project(fp.camera);
+    return { plank: [+v.x.toFixed(2), +v.y.toFixed(2)], cords: [+u.x.toFixed(2), +u.y.toFixed(2)], fromStroke: +Math.hypot(w.x - sx.x, w.z - sx.z).toFixed(2), offered: fp.acts.offered?.def.id || null };
+  }, sx);
+  check('from where they chalked, not moving the look: the seat and its cords are in the view, within a metre of the stroke', Math.abs(r.plank[0]) < 0.9 && Math.abs(r.plank[1]) < 0.95 && Math.abs(r.cords[1]) < 0.95 && r.fromStroke < 1.0, r);
+  r = { offered: await until(() => window.__fp.acts.offered?.def.id === 'halt-seat', 4000) };
+  check('and "Take the seat" is offered there, without turning to look for it', r.offered, r);
   await p.evaluate(() => { const fp = window.__fp, s = fp.tally.seat.stand(); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch; fp.player.vel.set(0, 0, 0); });
   r = { offered: await until(() => window.__fp.acts.offered?.def.id === 'halt-seat', 4000), words: await p.evaluate(() => document.getElementById('act-words').textContent) };
   check('then the seat is offered, with its words', r.offered && r.words === 'Take the seat', r);
@@ -442,10 +454,10 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   r = await p.evaluate(() => { const fp = window.__fp, q = fp.player.pos, g = fp.tally.ride.sleeper; return { y: q.y, d: Math.hypot(q.x - g.x, q.y - g.y, q.z - g.z) }; });
   await p.evaluate(() => { window.__fp.sky.flicker.hold = null; });
   check('in a gutter the ride goes on, to the top: eight metres or more up, within 2 m of the sleeper', top && r.y - start.y > 7.5 && r.d < 2, { top, r, start });
-  await sleep(2500);
-  r = await p.evaluate(() => ({ answering: window.__fp.tally.ride.answering }));
-  check('at the top the sleeper answers', r.answering, r);
-  await p.keyboard.down('KeyW'); await sleep(400); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
+  const salt = await until(() => window.__fp.tally.ride.salt > 0, 15000);
+  r = await p.evaluate(() => ({ answering: window.__fp.tally.ride.answering, salt: window.__fp.tally.ride.salt }));
+  check('at the top the sleeper answers: he holds out his hand and salt runs from it', r.answering && salt, r);
+  await p.keyboard.down('KeyW'); await until(() => window.__fp.tally.ride.phase === 'down', 8000); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
   const back = await until(() => !window.__fp.player.carried && window.__fp.tally.ride.phase === null, 20000);
   r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
   check('pushing to walk lets them down, and the ride ends exactly where it began', back && Math.hypot(r.x - start.x, r.z - start.z) < 0.01 && Math.abs(r.y - start.y) < 0.05, { r, start });
@@ -460,6 +472,22 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   await p.evaluate(() => window.__fp.settings.teleport(0)); await sleep(800);
   r = await p.evaluate(() => { const fp = window.__fp, q = fp.player.pos, pl = fp.settings.places[0]; return { carried: fp.player.carried, d: Math.hypot(q.x - pl.x, q.z - pl.z), mode: fp.tally.seat.mode, g: q.y - fp.terrain.heightAt(q.x, q.z) }; });
   check('a teleport in mid-ride: the visitor is at the place, on the ground, not carried; the seat goes back up', !r.carried && r.d < 6 && r.g < 3 && r.mode === 'hauling', r);
+  // chalked and walked away: the seat waits, then goes back up
+  await until(() => window.__fp.tally.seat.mode === 'up', 30000);
+  await p.evaluate(() => { for (const h of window.__fp.acts.list) h.done = false; window.__fp.acts.act(window.__fp.acts.list.find((h) => h.def.id === 'halt-tally')); });
+  const waitDown = await until(() => window.__fp.tally.seat.down, 30000);
+  await p.evaluate(() => { const fp = window.__fp, a = fp.tally.seat.at; fp.controls.placeAt(a.x + 40, a.z + 10); });
+  const gone = await until(() => window.__fp.tally.seat.mode === 'hauling' || window.__fp.tally.seat.mode === 'up', 60000);
+  check('chalked and walked away: the seat comes down, waits, and goes back up', waitDown && gone, await p.evaluate(() => window.__fp.tally.seat.mode));
+  // a carrier that throws: the carry ends and the player is put back where it began
+  r = await p.evaluate(async () => {
+    const fp = window.__fp, p0 = fp.player.pos.clone();
+    fp.controls.carry({ step(pos) { pos.y += 5; throw new Error('test carrier'); } });
+    await new Promise((res) => setTimeout(res, 600));
+    return { carried: fp.player.carried, d: Math.hypot(fp.player.pos.x - p0.x, fp.player.pos.z - p0.z) };
+  });
+  for (let i = errors.length - 1; i >= 0; i--) if (/carry step failed|test carrier/.test(errors[i])) errors.splice(i, 1); // the throw it logs is the test's own
+  check('a carrier that throws: the carry ends and the player stands where it began', !r.carried && r.d < 0.6, r);
   await c.close();
 }
 // a return visit after a ride: the second pillow is on the sill

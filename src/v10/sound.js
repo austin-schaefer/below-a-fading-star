@@ -10,7 +10,7 @@
 //               lowpassed at 3.2 kHz, so the rasp stays out of the ear's sharpest band. Detail tier, 25 m
 //   act-winch   the Halt's winch turning by itself (src/v10/halt-seat.js): the pawl's clack on each tooth of its
 //               ratchet, as fast as the rope runs (opts.rate, m/s, over opts.dur, s: slow, quick, slow, as the seat
-//               starts and stops), a dry wooden knock under an iron tick, and now and then the rope's creak over the
+//               starts and stops; opts.out: quick, then slowing to a stop), a dry wooden knock under an iron tick, and now and then the rope's creak over the
 //               pulley. Detail tier, 30 m, so it is heard from the seat at the hatch
 //   act-murmur  the sleeper answering a visitor at the hatch: two sleepy syllables, "mm-hm", a low voiced hum on A2
 //               through a moving vowel, with breath. Detail tier, 12 m
@@ -63,7 +63,7 @@ export function startActsSound(a, ctx) {
     const v = voice(pos, { ref: 3, roll: 1, range: 30, dur: dur + 0.5, verb: 0.3, air: 60, gain: 7 }); if (!v) return;
     const out = filt('lowpass', 3600, 0.6); out.connect(v.in);
     const n = Math.min(160, Math.round((rate * dur) / (2 * Math.PI * 0.2) * 8));
-    const ease = (u) => u * u * (3 - 2 * u);
+    const ease = o.out ? (u) => 1 - (1 - u) ** 3 : (u) => u * u * (3 - 2 * u); // opts.out: quick, then slowing (the seat coming down)
     for (let k = 1; k <= n; k++) {
       let lo = 0, hi = 1; const want = k / (n + 1);
       for (let i = 0; i < 14; i++) { const m = (lo + hi) / 2; if (ease(m) < want) lo = m; else hi = m; }

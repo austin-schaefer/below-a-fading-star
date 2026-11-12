@@ -4,13 +4,13 @@
 // Time is the page's own, driven by Playwright's clock once the scene is up, so a frame "0.8 s after E" is 0.8 s of
 // the walk's time however slowly the headless browser draws. Each frame is 1280 x 720 (PHONE=1: 390 x 844, a few
 // frames) into shots/wip/<prefix>-NN-<name>.png. The sun's guttering is held off.
-// Usage: node tools/tally-frames.mjs [base] [prefix=acts-tally2] [part=all|chalk|ride]
+// Usage: node tools/tally-frames.mjs [base] [prefix=acts-tally3] [part=all|chalk|ride|return]
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
-const prefix = process.argv[3] || 'acts-tally2';
+const prefix = process.argv[3] || 'acts-tally3';
 const part = process.argv[4] || 'all';
 const phone = process.env.PHONE === '1';
 const [W, H] = phone ? [390, 844] : [1280, 720];
@@ -31,7 +31,7 @@ await page.evaluate(() => {
   for (const id of ['place', 'hint']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }
   fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1;
 });
-await page.clock.pauseAt(await page.evaluate(() => Date.now() + 20)); // from here the walk's time moves only by runFor
+await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000)); // from here the walk's time moves only by runFor
 let n = 0;
 const run = (ms) => page.clock.runFor(ms);
 const shot = async (name) => {
@@ -48,35 +48,41 @@ const look = (o) => page.evaluate((o) => {
 }, o);
 
 const toward = (w, pitch) => page.evaluate(([w, pitch]) => { const p = window.__fp.player; p.yaw = Math.atan2(-(w.x - p.pos.x), -(w.z - p.pos.z)); p.pitch = pitch ?? Math.atan2(w.y - p.pos.y, Math.hypot(w.x - p.pos.x, w.z - p.pos.z)); }, [w, pitch]);
-if (part === 'all' || part === 'chalk') {
+if (part === 'all' || part === 'chalk' || part === 'ride') {
   await look({ stand: 9, dp: 0.12 }); await run(2500); await shot('approach');
   await look({ stand: 2.4 }); await run(1500); await shot('offer');
+  // E, then the visitor does not touch the mouse: what changes in the view they already have
   await page.keyboard.press('KeyE');
-  for (const [ms, name] of [[300, 'stroke-0.3s'], [500, 'stroke-0.8s'], [700, 'stroke-1.5s'], [2500, 'stroke-4s']]) { await run(ms); await shot(name); }
+  let el = 0;
+  for (const s2 of [0, 0.4, 1, 1.6, 3, 5, 7, 9, 12]) { await run(Math.max(1, (s2 - el) * 1000)); el = s2; await shot(`after-${s2}s`); }
 }
 if (part === 'all' || part === 'ride') {
-  if (part === 'ride') { await look({ stand: 2.4 }); await run(1200); await page.keyboard.press('KeyE'); await run(4000); }
-  // the seat: heard first (the winch), then seen coming down at the right of the view; the visitor turns a little to it
-  await look({ yaw: (await page.evaluate(() => window.__fp.player.yaw)) - 0.35, pitch: 0.25 });
-  await run(2600); await shot('seat-coming');
   for (let i = 0; i < 40 && !(await page.evaluate(() => window.__fp.tally.seat.down)); i++) await run(500);
-  await toward(await page.evaluate(() => window.__fp.tally.seat.at)); await run(600); await shot('seat-arrived');
-  await page.evaluate(() => { const fp = window.__fp, p = fp.player, s = fp.tally.seat.stand(); fp.controls.placeAt(s.x, s.z); p.yaw = s.yaw; p.pitch = s.pitch; p.vel.set(0, 0, 0); });
-  await run(1500); await shot('seat-offer');
+  await run(1200); await shot('seat-offer'); // from where they chalked: is the seat offered without looking for it?
   await page.keyboard.press('KeyE');
   const T = await page.evaluate(() => window.__fp.tally.ride.up);
-  await look({ pitch: -0.5 });
-  await run(1500 + T * 1000 / 3); await shot('ride-third');
+  await run(1800); await shot('ride-board');
+  await page.evaluate(() => { const p = window.__fp.player; p.yaw += 1.0; p.pitch = -0.35; }); await run(T * 1000 / 3); await shot('ride-third');
   await page.evaluate(() => { const p = window.__fp.player; p.yaw += 2.2; p.pitch = -0.15; }); await run(T * 1000 / 3); await shot('ride-two-thirds');
-  await run(T * 1000 / 3 + 300);
-  await toward(await page.evaluate(() => window.__fp.tally.ride.sleeper)); await run(300); await shot('top');
-  await run(1800); await shot('top-sleeper-turns');
-  await run(1300); await shot('top-sleeper-pats');
+  for (let i = 0; i < 300 && (await page.evaluate(() => window.__fp.tally.ride.phase)) !== 'top'; i++) await run(100);
+  await toward(await page.evaluate(() => window.__fp.tally.ride.sleeper));
+  await page.evaluate(() => { window.__fp.player.pitch -= 0.12; });
+  let e2 = 0;
+  for (const s2 of [0, 2, 5, 8]) { await run(Math.max(1, (s2 - e2) * 1000)); e2 = s2; await shot(`top-${s2}s`); }
   await page.evaluate(() => { const p = window.__fp.player; p.yaw += Math.PI * 0.9; p.pitch = -0.1; });
   await run(800); await shot('top-outward');
-  await page.evaluate(() => { const p = window.__fp.player; p.yaw -= Math.PI * 0.9; p.pitch = -1.0; });
-  await run(800); await shot('top-down');
   for (let i = 0; i < 80 && (await page.evaluate(() => !!window.__fp.tally.ride.phase)); i++) await run(500);
   await toward(await page.evaluate(() => window.__fp.tally.next)); await run(800); await shot('set-down');
+  await page.evaluate(() => { const fp = window.__fp, w = fp.tally.seat.winch, p = fp.player; fp.controls.placeAt(w.x + 1.6, w.z + 1.4); });
+  await toward(await page.evaluate(() => window.__fp.tally.seat.winch), -0.35); await run(800); await shot('winch');
+}
+if (part === 'return') { // a return visit after rides: what is new at the top
+  await page.evaluate(() => { const fp = window.__fp; fp.acts.list.find((h) => h.def.id === 'halt-seat').def.show(3); });
+  await look({ stand: 2.4 }); await run(1500); await page.keyboard.press('KeyE');
+  for (let i = 0; i < 40 && !(await page.evaluate(() => window.__fp.tally.seat.down)); i++) await run(500);
+  await run(1200); await page.keyboard.press('KeyE');
+  for (let i = 0; i < 200 && (await page.evaluate(() => window.__fp.tally.ride.phase)) !== 'top'; i++) await run(100);
+  await toward(await page.evaluate(() => window.__fp.tally.ride.sleeper)); await page.evaluate(() => { window.__fp.player.pitch -= 0.12; });
+  await run(300); await shot('return-top');
 }
 await browser.close();

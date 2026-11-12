@@ -102,8 +102,10 @@ export async function build(ctx) {
     B.add(B.box(t, t, len, { seg: 4 }), M0.clone().multiply(new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1))), late(col, o));
   };
   const ropeC = c('#b09a6a');
-  // the davit: a painted arm from the arch's point out over the hatch, a pulley at its end
-  const dR = R + 0.35, dS = 1.6; // out from the axis, and aside, just beyond the hatch's edge on his head's side
+  // the davit: a painted arm from the arch's point out over the hatch, a pulley at its end. Its fall hangs just clear
+  // of the globe at the hatch's edge on his head's side, the side the hatch turns toward the face: the seat comes up
+  // to an arm's length of him, and comes down a hand's breadth out from the stone, beside where the visitor chalks
+  const dR = R + 0.15, dS = -1.1; // out from the axis, and aside, at the hatch's edge
   const pul = new THREE.Vector3(hdx * dR + hdz * dS, apexY - 0.45, hdz * dR - hdx * dS);
   beam(new THREE.Vector3(0, apexY - 0.2, 0), pul.clone().add(new THREE.Vector3(0, 0.28, 0)), 0.16, green);
   beam(new THREE.Vector3(0, apexY - 1.6, 0.2 * hdz), pul.clone().add(new THREE.Vector3(-hdx * 0.4, 0.2, -hdz * 0.4)), 0.09, ox); // its strut
@@ -113,16 +115,25 @@ export async function build(ctx) {
   const seat = new THREE.Vector3(pul.x - hdx * 0.1, sillY - 0.55, pul.z - hdz * 0.1);
   // the hauling end, from the pulley down to the winch at the foot of the face, along it from the seat's fall so the
   // seat comes down beside the winch, not onto it
-  const winch = { x: pul.x + 1.85, z: pul.z + 0.1 };
+  const winch = { x: pul.x - 1.35, z: pul.z + 0.75 };
   const wy = gAt(winch.x, winch.z) - foot;
-  beam(pul.clone().add(new THREE.Vector3(hdz * 0.14, -0.1, -hdx * 0.14)), new THREE.Vector3(winch.x - 0.25, wy + 1.15, winch.z), 0.045, ropeC);
-  // the winch: two painted cheeks on a stone sill, a drum wound with rope, a crank, a pawl; the rope's tail made fast
+  beam(pul.clone().add(new THREE.Vector3(hdz * 0.14, -0.1, -hdx * 0.14)), new THREE.Vector3(winch.x - 0.15, wy + 1.2, winch.z), 0.045, ropeC);
+  // the winch, in the Late folk's hand: a stone sill, two cheeks painted green with an ox-blood fillet and saffron knobs,
+  // chipped to the wood at the edges; iron bosses for the axle and an iron pawl hung on the right cheek over the
+  // ratchet. The drum, its rope, the ratchet and the crank with its worn handle turn (src/v10/halt-seat.js builds them)
   const wM = (x, y, z, rx = 0, ry = 0, rz = 0) => at(winch.x + x * Math.cos(HA) + z * Math.sin(HA), wy + y, winch.z - x * Math.sin(HA) + z * Math.cos(HA), rx, ry - HA, rz);
-  B.add(B.box(1.3, 0.5, 0.7, { chip: 0.04 }), wM(0, -0.1, 0), { color: COLORS.heliarch.stone, moss: 0.4, ground: g0 });
-  for (const sx of [-0.5, 0.5]) B.add(B.box(0.12, 1.15, 0.5), wM(sx, 0.62, 0), late(green));
-  B.add(B.cyl(0.2, 0.2, 0.9, 12, 1), wM(0, 1.0, 0, 0, 0, Math.PI / 2), late(c('#7a6a4a')));
-  for (let k = 0; k < 5; k++) B.add(new THREE.TorusGeometry(0.21, 0.03, 4, 12), wM(-0.3 + k * 0.15, 1.0, 0, 0, Math.PI / 2, 0), late(ropeC));
-  // (the crank turns when the seat is wound: src/v10/halt-seat.js builds it)
+  B.add(B.box(1.5, 0.5, 0.8, { chip: 0.05 }), wM(0, -0.1, 0), { color: COLORS.heliarch.stone, moss: 0.45, ground: g0 });
+  for (const sx of [-0.5, 0.5]) {
+    B.add(B.box(0.13, 1.2, 0.56, { chip: 0.03 }), wM(sx, 0.62, 0), late(green));
+    B.add(B.box(0.15, 1.1, 0.06), wM(sx, 0.6, 0.27), late(ox)); // the ox-blood fillet down the front edge
+    B.add(B.box(0.15, 1.1, 0.06), wM(sx, 0.6, -0.27), late(ox));
+    B.add(B.box(0.14, 0.05, 0.6), wM(sx, 1.24, 0), late(ox));
+    B.add(new THREE.IcosahedronGeometry(0.08, 1), wM(sx, 1.33, 0), late(L.paint[2])); // a saffron knob
+    B.add(B.cyl(0.07, 0.07, 0.2, 8, 1), wM(sx, 1.0, 0, 0, 0, Math.PI / 2), late(iron, { iron: 0.8 })); // the axle's boss
+    for (const [y, z] of [[0.3, 0.2], [0.85, -0.18], [0.5, -0.24]]) B.add(B.box(0.14, 0.06, 0.08), wM(sx, y, z), late(L.wood)); // chips to the bare wood
+  }
+  B.add(B.box(0.04, 0.34, 0.06), wM(0.62, 1.32, -0.06, 0.35, 0, 0), late(iron, { iron: 0.9 })); // the pawl, its tongue on the ratchet
+  B.add(B.cyl(0.03, 0.03, 0.08, 6, 1), wM(0.6, 1.47, -0.12, 0, 0, Math.PI / 2), late(iron, { iron: 0.9 })); // its pin
   // the rope's tail made fast round the cheek, and his other stocking hung over the drum to dry: red and cream bands
   for (let k = 0; k < 6; k++) B.add(B.box(0.16, 0.09, 0.05), wM(0.2 + k * 0.012, 1.05 - k * 0.1, 0.24, 0, 0, 0.1), late(k % 2 ? L.cloth[1] : L.cloth[2]));
   B.add(B.box(0.16, 0.12, 0.2), wM(0.27, 0.43, 0.32, 0.2, 0, 0.1), late(L.cloth[2]));
@@ -165,7 +176,7 @@ export async function build(ctx) {
   }
   const tally = buildTally(ctx, { M0, W, foot, gAt, at, B, late, group, iron });
   // the bench against the slab's face, tiled, and a cup left on it
-  const bench = { x: -2.3, z: W.d / 2 + 0.35 };
+  const bench = { x: 2.0, z: W.d / 2 + 0.35 }; // right of the visitors' place, clear of the seat's fall (v10-A4)
   // its foot sunk below the lowest ground under it and its top 0.45 m over the highest, so no end stands in the air
   let bLo = Infinity, bHi = -Infinity;
   for (let i = 0; i <= 6; i++) for (const dz of [-0.35, 0.35]) { const g = gAt(bench.x - 1.2 + i * 0.4, bench.z + dz); bLo = Math.min(bLo, g); bHi = Math.max(bHi, g); }
@@ -220,6 +231,7 @@ export async function build(ctx) {
   const rimR = R * 0.99;
   for (const th of [TH0, TH1]) edge(Array.from({ length: 9 }, (_, i) => sph(rimR, th, PHh - PH + (i / 8) * 2 * PH)), 0.14, ox);
   for (const ph of [PHh - PH, PHh + PH]) edge(Array.from({ length: 6 }, (_, i) => sph(rimR, TH0 + (i / 5) * (TH1 - TH0), ph)), 0.14, ox);
+  let doorMark = null;
   { // the door: a curved shell hinged on the hatch's road-side edge, swung wide; painted ox-blood, the Late crescent on it
     const door = new THREE.SphereGeometry(R * 1.0, 8, 5, PHh - PH, 2 * PH, TH0, TH1 - TH0);
     const dIn = new THREE.SphereGeometry(R * 0.985, 8, 5, PHh - PH, 2 * PH, TH0, TH1 - TH0); dIn.index.array.reverse();
@@ -233,80 +245,137 @@ export async function build(ctx) {
     Gb.add(Gb.extrude(new THREE.Shape([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => {
       const a = (i / 12) * Math.PI * 2; return new THREE.Vector2(Math.cos(a) * 0.32, Math.sin(a) * 0.32); })), 0.03, 4),
       D.clone().multiply(new THREE.Matrix4().compose(mid, new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), mid.clone().normalize()), new THREE.Vector3(1, 1, 1))), gl(L.gilt));
+    // where the sleeper chalks his guests' visits, on the door below the crescent (src/v10/halt-seat.js draws them)
+    const mp = sph(R, TH1 - 0.3, PHh), mn = mp.clone().normalize();
+    doorMark = { pos: mp.applyMatrix4(D), normal: mn.transformDirection(D) };
   }
-  // the bed: a straw mattress on the floor, his quilt of patches; the quilt's end spills over the sill and hangs down outside
-  Gb.add(Gb.cyl(R * 0.72, R * 0.6, 0.35, 16, 1), O(0, -R * 0.62, 0), gl(c('#c8a050')));
+  // the bed: a straw mattress on the floor, straw spilled about it, his quilt of patches; the quilt's end spills over
+  // the sill and hangs down outside
+  Gb.add(Gb.cyl(R * 0.72, R * 0.6, 0.35, 16, 1), O(0, -R * 0.62, 0), gl(c('#a8803c')));
   const hdV = new THREE.Vector3(hdx, 0, hdz), sideV = new THREE.Vector3(hdz, 0, -hdx);
+  const sv0 = sillY - gcY; // the sill's height, globe-centred
+  const UP = new THREE.Vector3(0, 1, 0);
+  // a frame at globe-local p (x along the side, y up, z out of the hatch; right-handed)
+  const F3 = (p, X = sideV, Y = UP, Z = hdV) => new THREE.Matrix4().makeBasis(X, Y, Z).setPosition(p.x, p.y - drop, p.z);
+  const at3 = (r, s2, y) => hdV.clone().multiplyScalar(r).add(sideV.clone().multiplyScalar(s2)).setY(y);
+  const srng = ctx.makeRng(1005);
+  for (let k = 0; k < 44; k++) { // straw: wisps on the bed toward the hatch, gold in the lamp
+    const p = at3(0.5 + srng() * 0.95, -1.1 + srng() * 2.2, -R * 0.62 + 0.18 + srng() * 0.03);
+    if (Math.hypot(p.x, p.z) > R * 0.7) continue;
+    Gb.add(Gb.box(0.012, 0.008, 0.18 + srng() * 0.16), F3(p).multiply(mat(0, 0, 0, (srng() - 0.5) * 0.3, srng() * Math.PI, 0)), lit(c('#c8a050'), 0.35));
+  }
   const qCols = [L.cloth[0], L.cloth[1], L.cloth[2], L.cloth[3], L.cloth[1], L.cloth[0], L.cloth[2]];
   // its path, in the hatch's plane (u: out from the axis, v: up), from inside over the sill and down
   const sv = sillY - gcY + 0.1;
   const qPath = [[0.2, -R * 0.42], [0.9, -R * 0.36], [sillR - 0.1, sv + 0.06], [sillR + 0.14, sv],
     [sillR + 0.24, sv - 0.32], [sillR + 0.22, sv - 0.7], [sillR + 0.18, sv - 1.1], [sillR + 0.16, sv - 1.5], [sillR + 0.18, sv - 1.75]];
-  const qOff = -0.3; // to the left of the leg as you face it
+  const qOff = 0.3; // between his head and his leg
   for (let i = 0; i < qPath.length - 1; i++) for (let j = 0; j < 3; j++) {
     const [u0, v0] = qPath[i], [u1, v1] = qPath[i + 1];
     const s0 = qOff + (j - 1) * 0.31 + Math.sin(i * 1.7 + j) * 0.03;
     const a = hdV.clone().multiplyScalar(u0).add(sideV.clone().multiplyScalar(s0)).setY(v0);
     const b = hdV.clone().multiplyScalar(u1).add(sideV.clone().multiplyScalar(s0 + (i > 3 ? 0.02 * (j - 1) : 0))).setY(v1);
     const m = new THREE.Matrix4().lookAt(a, b, sideV), q = new THREE.Quaternion().setFromRotationMatrix(m);
-    Gb.add(Gb.box(0.07, 0.32, a.distanceTo(b) + 0.04), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5).add(new THREE.Vector3(0, -drop, 0)), q, new THREE.Vector3(1, 1, 1)), lit(qCols[(i + j * 3) % qCols.length], 0.6));
+    Gb.add(Gb.box(0.07, 0.32, a.distanceTo(b) + 0.04), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5).add(new THREE.Vector3(0, -drop, 0)), q, new THREE.Vector3(1, 1, 1)), lit(qCols[(i + j * 3) % qCols.length], 0.45));
+  }
+  // over him inside, the quilt itself: squares of the Late folk's cloth, faded unevenly, heaped over his chest, each
+  // square's seams stitched in cream thread (seen from the seat, an arm's length off)
+  {
+    const pc = [L.cloth[0], L.cloth[2], L.cloth[3], L.paint[2], L.tile[1], L.cloth[1], L.paint[0], L.tile[2]], P = 0.26;
+    for (let a = 0; a < 6; a++) for (let b = 0; b < 6; b++) {
+      const r = 1.28 - a * P, s2 = 0.72 - b * P;
+      const bump = Math.exp(-((r - 0.55) ** 2) / 0.35 - ((s2 + 0.15) ** 2) / 0.5);
+      const y = sv0 + 0.1 + 0.22 * bump, col = pc[(a * 3 + b * 5 + ((a * b) % 3)) % pc.length].clone().multiplyScalar(0.7 + 0.3 * srng());
+      const tilt = (srng() - 0.5) * 0.12, M = F3(at3(r, s2, y)).multiply(mat(0, 0, 0, tilt, (srng() - 0.5) * 0.08, (srng() - 0.5) * 0.12));
+      Gb.add(Gb.box(P - 0.012, 0.035, P - 0.012), M, lit(col, 0.4));
+      for (let e = 0; e < 4; e++) for (let k = 0; k < 3; k++) { // the stitches: three a side
+        const along = (k - 1) * 0.075, edge = (P - 0.03) / 2, sx = e < 2 ? along : (e === 2 ? edge : -edge), sz = e < 2 ? (e === 0 ? edge : -edge) : along;
+        Gb.add(Gb.box(e < 2 ? 0.035 : 0.009, 0.012, e < 2 ? 0.009 : 0.035), M.clone().multiply(mat(sx, 0.019, sz)), lit(c('#4a2e1c'), 0.15));
+      }
+    }
+  }
+  // his salt-sack on the straw by the hatch, split down one side, a heap of salt run out of it: he is the pedlar whose
+  // sack split on the road (stories/salt-for-news.md), and he keeps what was left of it by him
+  {
+    const sp = at3(0.7, -1.0, -R * 0.62 + 0.17);
+    Gb.add(Gb.lathe([[0, 0], [0.15, 0.02], [0.18, 0.12], [0.16, 0.25], [0.07, 0.33], [0.04, 0.37], [0.06, 0.42], [0, 0.43]], 10), F3(sp).multiply(mat(0, 0, 0, 0.1, 0, -0.18)), lit(c('#c9b893'), 0.45));
+    Gb.add(Gb.box(0.03, 0.22, 0.02), F3(sp).multiply(mat(0.15, 0.14, 0.06, 0, 0.5, -0.1)), gl(c('#2a1a10'))); // the split
+    Gb.add(Gb.cyl(0.0, 0.22, 0.13, 10, 1), F3(at3(0.92, -0.85, -R * 0.62 + 0.22)), lit(c('#d8d2c4'), 0.35)); // the salt
+    Gb.add(Gb.box(0.27, 0.025, 0.04), F3(sp).multiply(mat(0, 0.36, 0, 0, 0.4, 0)), lit(c('#a8302a'), 0.4)); // its red tie
   }
   // him: the quilt heaped over his body inside, and one leg out over the sill in a striped stocking, the foot hanging
   let sleeper = null;
-  Gb.add(new THREE.IcosahedronGeometry(0.55, 1), O(0, 0, 0).multiply(new THREE.Matrix4().makeTranslation(hdx * 0.35 + hdz * 0.15, -R * 0.38, hdz * 0.35 - hdx * 0.15)).multiply(mat(0, 0, 0, 0, -HA + 0.5, 0, 1.5, 0.6, 0.85)), gl(L.cloth[2]));
+  Gb.add(new THREE.IcosahedronGeometry(0.55, 1), O(0, 0, 0).multiply(new THREE.Matrix4().makeTranslation(hdx * 0.35 - hdz * 0.15, -R * 0.42, hdz * 0.35 + hdx * 0.15)).multiply(mat(0, 0, 0, 0, -HA + 0.5, 0, 1.5, 0.4, 0.85)), gl(L.cloth[2]));
   {
-    const sOff = -0.95, knee = hdV.clone().multiplyScalar(sillR + 0.2).add(sideV.clone().multiplyScalar(sOff)).setY(sillY - gcY + 0.16);
+    const sOff = 0.95, knee = hdV.clone().multiplyScalar(sillR + 0.2).add(sideV.clone().multiplyScalar(sOff)).setY(sillY - gcY + 0.16);
     const hip = hdV.clone().multiplyScalar(0.5).add(sideV.clone().multiplyScalar(sOff * 0.5)).setY(-R * 0.4);
     const ankle = knee.clone().add(hdV.clone().multiplyScalar(0.06)).add(sideV.clone().multiplyScalar(0.05)).add(new THREE.Vector3(0, -0.78, 0));
-    const limb = (a, b, r0, r1, n, cA = L.paint[3], cB = L.cloth[2], G = Gb) => { for (let i = 0; i < n; i++) {
+    const limb = (a, b, r0, r1, n, cA = L.paint[3], cB = L.cloth[2], G = Gb, k = 1.3) => { for (let i = 0; i < n; i++) {
       const p = a.clone().lerp(b, i / n), q2 = a.clone().lerp(b, (i + 1) / n);
       const m = new THREE.Matrix4().lookAt(p, q2, new THREE.Vector3(0, 1, 0)), q = new THREE.Quaternion().setFromRotationMatrix(m);
       const rr = r0 + (r1 - r0) * (i + 0.5) / n;
-      G.add(G.cyl(rr, rr, p.distanceTo(q2) + 0.01, 8, 1), new THREE.Matrix4().compose(p.clone().add(q2).multiplyScalar(0.5).add(new THREE.Vector3(0, -drop, 0)), q, new THREE.Vector3(1, 1, 1)).multiply(mat(0, 0, 0, Math.PI / 2, 0, 0)), lit(i % 2 ? cA : cB));
+      G.add(G.cyl(rr, rr, p.distanceTo(q2) + 0.01, 8, 1), new THREE.Matrix4().compose(p.clone().add(q2).multiplyScalar(0.5).add(new THREE.Vector3(0, -drop, 0)), q, new THREE.Vector3(1, 1, 1)).multiply(mat(0, 0, 0, Math.PI / 2, 0, 0)), lit(i % 2 ? cA : cB, k));
     } };
     limb(hip, knee, 0.12, 0.1, 4);
     limb(knee, ankle, 0.1, 0.07, 7);
     Gb.add(new THREE.SphereGeometry(0.11, 8, 6), O(knee.x, knee.y, knee.z), lit(L.cloth[2]));
-    // his arm over the sill on the far side from the seat, limp, a turquoise sleeve and the hand hanging open. The forearm and
-    // hand are a mesh of their own, hinged at the elbow, and his head is another, hinged at the neck: when a visitor
-    // is hauled up beside him he turns his face to them and reaches out in his sleep (src/v10/halt-seat.js)
-    const aOff = -1.15;
-    const sh = hdV.clone().multiplyScalar(0.8).add(sideV.clone().multiplyScalar(aOff * 0.7)).setY(-R * 0.3);
-    const elb = hdV.clone().multiplyScalar(sillR + 0.14).add(sideV.clone().multiplyScalar(aOff)).setY(sillY - gcY + 0.14);
-    const wr = elb.clone().add(hdV.clone().multiplyScalar(0.04)).add(new THREE.Vector3(0, -0.5, 0));
-    limb(sh, elb, 0.1, 0.09, 3, L.cloth[3], L.cloth[3]);
-    const Ga = new Builder(ctx.noise);
-    limb(elb, wr, 0.085, 0.07, 3, L.cloth[3], L.cloth[3], Ga);
-    Gb.add(new THREE.SphereGeometry(0.09, 8, 6), O(elb.x, elb.y, elb.z), lit(L.cloth[3]));
-    Ga.add(new THREE.CylinderGeometry(0.09, 0.08, 0.06, 8), O(wr.x, wr.y + 0.02, wr.z), lit(L.cloth[1])); // the cuff
-    Ga.add(new THREE.SphereGeometry(0.06, 8, 6), O(wr.x, wr.y - 0.1, wr.z).multiply(mat(0, 0, 0, 0, -HA, 0, 0.75, 1.6, 0.45)), lit(c('#c89878')));
-    // his head on a pillow at the sill, beside the seat's side of the hatch, in a long red nightcap pulled down over
-    // his eyes, whose tip droops out over the edge, a gilt tassel on it. Seen from the seat: a broad face, a red
-    // nose, a grey moustache, the mouth a little open; never the eyes
-    const hOff = 0.42, pil = hdV.clone().multiplyScalar(sillR - 0.12).add(sideV.clone().multiplyScalar(hOff)).setY(sillY - gcY + 0.14);
-    Gb.add(Gb.box(0.62, 0.16, 0.42, { chip: 0.04 }), O(pil.x, pil.y, pil.z).multiply(mat(0, 0, 0, 0, -HA, 0.08)), lit(L.cloth[1], 0.8));
-    const head = pil.clone().add(new THREE.Vector3(0, 0.2, 0)).add(hdV.clone().multiplyScalar(0.04));
-    const Gh = new Builder(ctx.noise);
-    Gh.add(new THREE.SphereGeometry(0.18, 10, 8), O(head.x, head.y, head.z).multiply(mat(0, 0, 0, 0, -HA, 0, 1, 0.95, 1.1)), lit(c('#c89878')));
-    Gh.add(new THREE.SphereGeometry(0.055, 6, 5), O(head.x + hdV.x * 0.18, head.y - 0.01, head.z + hdV.z * 0.18).multiply(mat(0, 0, 0, 0, 0, 0, 1, 1, 1.2)), lit(c('#c86a5a'))); // his nose, red with sleep and wine
-    for (const s2 of [-1, 1]) { // the moustache: two grey hanks drooping either side of the mouth
-      const m = head.clone().add(hdV.clone().multiplyScalar(0.165)).add(sideV.clone().multiplyScalar(s2 * 0.055)).add(new THREE.Vector3(0, -0.07, 0));
-      Gh.add(new THREE.SphereGeometry(0.045, 6, 5), O(m.x, m.y, m.z).multiply(mat(0, 0, 0, 0, -HA, s2 * 0.5, 1.6, 0.55, 0.7)), lit(c('#9a9488')));
+    // his far arm over the sill, limp, a turquoise sleeve and the hand hanging open
+    {
+      const aOff = 1.15;
+      const sh = hdV.clone().multiplyScalar(0.8).add(sideV.clone().multiplyScalar(aOff * 0.7)).setY(-R * 0.3);
+      const elb = hdV.clone().multiplyScalar(sillR + 0.14).add(sideV.clone().multiplyScalar(aOff)).setY(sillY - gcY + 0.14);
+      const wr = elb.clone().add(hdV.clone().multiplyScalar(0.04)).add(new THREE.Vector3(0, -0.5, 0));
+      limb(sh, elb, 0.1, 0.09, 3, L.cloth[3], L.cloth[3]);
+      limb(elb, wr, 0.085, 0.07, 3, L.cloth[3], L.cloth[3]);
+      Gb.add(new THREE.SphereGeometry(0.09, 8, 6), O(elb.x, elb.y, elb.z), lit(L.cloth[3]));
+      Gb.add(new THREE.CylinderGeometry(0.09, 0.08, 0.06, 8), O(wr.x, wr.y + 0.02, wr.z), lit(L.cloth[1]));
+      Gb.add(new THREE.SphereGeometry(0.06, 8, 6), O(wr.x, wr.y - 0.1, wr.z).multiply(mat(0, 0, 0, 0, -HA, 0, 0.75, 1.6, 0.45)), lit(c('#c89878')));
     }
-    { const m = head.clone().add(hdV.clone().multiplyScalar(0.17)).add(new THREE.Vector3(0, -0.12, 0)); // the open mouth
-      Gh.add(new THREE.SphereGeometry(0.026, 6, 4), O(m.x, m.y, m.z).multiply(mat(0, 0, 0, 0, -HA, 0, 1.3, 0.8, 0.6)), gl(c('#2a1210'))); }
-    const cap = [head.clone().add(sideV.clone().multiplyScalar(-0.06)).add(new THREE.Vector3(0, 0.07, 0)),
-      head.clone().add(sideV.clone().multiplyScalar(-0.2)).add(hdV.clone().multiplyScalar(0.12)).add(new THREE.Vector3(0, 0.12, 0)),
-      head.clone().add(sideV.clone().multiplyScalar(-0.36)).add(hdV.clone().multiplyScalar(0.22)).add(new THREE.Vector3(0, 0.0, 0)),
-      head.clone().add(sideV.clone().multiplyScalar(-0.46)).add(hdV.clone().multiplyScalar(0.34)).add(new THREE.Vector3(0, -0.3, 0)),
-      head.clone().add(sideV.clone().multiplyScalar(-0.48)).add(hdV.clone().multiplyScalar(0.36)).add(new THREE.Vector3(0, -0.55, 0))];
-    const cr = [0.185, 0.13, 0.09, 0.06, 0.035];
-    for (let i = 0; i < cap.length - 1; i++) limb(cap[i], cap[i + 1], cr[i], cr[i + 1], 2, L.cloth[2], L.cloth[2], Gh);
-    Gh.add(new THREE.SphereGeometry(0.185, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), O(head.x, head.y - 0.03, head.z), lit(L.cloth[2]));
-    // the cap's rolled brim, pulled down to the nose: what of him is never seen is his eyes
-    Gh.add(new THREE.TorusGeometry(0.17, 0.035, 5, 14), O(head.x + hdV.x * 0.02, head.y + 0.03, head.z + hdV.z * 0.02).multiply(new THREE.Matrix4().makeRotationAxis(sideV, 0.2)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), lit(L.cloth[2], 1.1));
-    Gh.add(new THREE.IcosahedronGeometry(0.06, 1), O(cap[4].x, cap[4].y - 0.04, cap[4].z), lit(L.gilt));
-    sleeper = { Ga, Gh, elbow: elb.clone().setY(elb.y - drop), neck: head.clone().add(new THREE.Vector3(0, -0.12, 0)).add(hdV.clone().multiplyScalar(-0.1)).setY(head.y - 0.12 - drop), head: head.clone().setY(head.y - drop), wrist: wr.clone().setY(wr.y - drop), hd: hdV.clone(), side: sideV.clone() };
+    // his near arm, on the seat's side: the forearm out from under the quilt, the hand resting on it, closed on
+    // something. A mesh of its own hinged at the elbow: when a visitor hangs at the hatch he lifts it to them over the
+    // sill and opens it, and salt runs out of it (src/v10/halt-seat.js)
+    const elb = at3(1.15, -0.85, sv0 + 0.2), wr = at3(1.6, -0.78, sv0 + 0.24);
+    const Ga = new Builder(ctx.noise);
+    limb(elb, wr, 0.075, 0.065, 3, L.cloth[3], L.cloth[3], Ga, 0.5);
+    { const fd = wr.clone().sub(elb).normalize(), X = fd.clone().cross(UP).normalize(), Y = X.clone().cross(fd).normalize();
+      const H = (o, x2, y2, z2) => new THREE.Matrix4().makeBasis(X, Y, fd).setPosition(wr.x, wr.y - drop, wr.z).multiply(mat(x2, y2, z2)).multiply(o);
+      const skin = c('#c08a6a');
+      Ga.add(new THREE.CylinderGeometry(0.085, 0.08, 0.06, 8), H(mat(0, 0, 0, Math.PI / 2, 0, 0), 0, 0, 0), lit(L.cloth[1], 0.5)); // the cuff
+      Ga.add(new THREE.SphereGeometry(0.06, 8, 6), H(mat(0, 0, 0, 0, 0, 0, 1.1, 0.8, 1.5), 0, 0.01, 0.1), lit(skin, 0.5)); // the closed hand
+      Ga.add(new THREE.SphereGeometry(0.028, 6, 5), H(mat(0, 0, 0, 0, 0, 0, 1, 1, 1.6), 0.05, 0.03, 0.11), lit(skin, 0.5)); // the thumb over it
+      for (let f = 0; f < 4; f++) Ga.add(new THREE.SphereGeometry(0.022, 5, 4), H(mat(0, 0, 0), -0.04 + f * 0.027, -0.035, 0.15 - Math.abs(f - 1.5) * 0.01), lit(skin, 0.5)); // knuckles
+    }
+    // his head on a pillow at the sill, on the seat's side of the hatch, lying face up, his crown to the hatch: a
+    // broad face, a big red nose, a grey moustache and a short beard, the mouth open; his red nightcap pulled down over
+    // his eyes, its long tip out over the sill with a gilt tassel. What of him is never seen is his eyes
+    const hc = at3(sillR - 0.22, -0.45, sv0 + 0.26);
+    Gb.add(Gb.box(0.5, 0.13, 0.38, { chip: 0.04 }), F3(at3(sillR - 0.22, -0.45, sv0 + 0.1)).multiply(mat(0, 0, 0, 0, 0, -0.06)), lit(c('#8a7458'), 0.45)); // the pillow, ticking gone brown
+    for (const st of [-0.1, 0.1]) Gb.add(Gb.box(0.04, 0.132, 0.385), F3(at3(sillR - 0.22, -0.45 + st, sv0 + 0.1)), lit(c('#3a4a6a'), 0.4)); // its blue stripes
+    // his crown turned in, away from the seat, so a visitor looking down at him from it sees his face the right way up
+    const crown = hdV.clone().multiplyScalar(-0.55).addScaledVector(sideV, 0.83).normalize(), cx3 = UP.clone().cross(crown);
+    const Gh = new Builder(ctx.noise), HF = F3(hc, cx3, UP, crown), hp = (x2, y2, z2) => HF.clone().multiply(mat(x2, y2, z2));
+    const skin = c('#c89070');
+    Gh.add(new THREE.SphereGeometry(0.16, 14, 10), hp(0, 0, 0).multiply(mat(0, 0, 0, 0, 0, 0, 0.95, 0.88, 1.12)), lit(skin, 0.55));
+    Gh.add(new THREE.SphereGeometry(0.048, 8, 6), hp(0, 0.148, -0.025).multiply(mat(0, 0, 0, 0, 0, 0, 0.9, 1.5, 1.15)), lit(c('#c8604e'), 0.6)); // the nose, red with sleep and wine
+    for (const s2 of [-1, 1]) {
+      Gh.add(new THREE.SphereGeometry(0.036, 7, 5), hp(s2 * 0.048, 0.128, -0.085).multiply(mat(0, 0, 0, 0, 0, s2 * 0.45, 1.5, 0.5, 0.6)), lit(c('#8e8678'), 0.35)); // the moustache's hanks
+      Gh.add(new THREE.SphereGeometry(0.038, 6, 5), hp(s2 * 0.155, -0.01, 0.0).multiply(mat(0, 0, 0, 0, 0, 0, 0.5, 1, 1.25)), lit(skin, 0.5)); // an ear
+    }
+    Gh.add(new THREE.SphereGeometry(0.032, 7, 5), hp(0, 0.105, -0.125).multiply(mat(0, 0, 0, 0, 0, 0, 1.35, 0.7, 0.9)), gl(c('#2a1210'))); // the open mouth
+    Gh.add(new THREE.SphereGeometry(0.065, 8, 6), hp(0, 0.06, -0.16).multiply(mat(0, 0, 0, 0, 0, 0, 1.05, 0.7, 0.75)), lit(c('#6e675c'), 0.35)); // the beard, short and grizzled
+    const capR = 0.172, capA = 1.0, pa = Math.atan2(0.83, 0.55); // the cap: a cup over the crown, its rim across the eyes
+    Gh.add(new THREE.SphereGeometry(capR, 16, 8, 0, Math.PI * 2, 0, capA), hp(0, 0, 0).multiply(mat(0, 0, 0, pa, 0, 0)), lit(L.cloth[2], 0.6));
+    Gh.add(new THREE.TorusGeometry(capR * Math.sin(capA), 0.03, 6, 18), hp(0, 0.55 * capR * Math.cos(capA), 0.83 * capR * Math.cos(capA)).multiply(mat(0, 0, 0, -Math.asin(0.55), 0, 0)), lit(c('#8a2420'), 0.6)); // its rolled brim, a darker red
+    const tipPts = [[0, 0.09, 0.16], [0.08, 0.1, 0.27], [0.2, 0.05, 0.33], [0.31, -0.05, 0.35], [0.4, -0.14, 0.35], [0.47, -0.2, 0.34]]; // the tip falls away from the seat, onto the bed
+    const tipR = [0.11, 0.09, 0.07, 0.052, 0.038, 0.03];
+    for (let i = 0; i < tipPts.length - 1; i++) {
+      const a = new THREE.Vector3(...tipPts[i]).applyMatrix4(HF), b = new THREE.Vector3(...tipPts[i + 1]).applyMatrix4(HF);
+      const m = new THREE.Matrix4().lookAt(a, b, UP), q = new THREE.Quaternion().setFromRotationMatrix(m);
+      Gh.add(Gh.cyl(tipR[i + 1], tipR[i], a.distanceTo(b) + 0.03, 10, 1), new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)).multiply(mat(0, 0, 0, Math.PI / 2, 0, 0)), lit(L.cloth[2], 0.6));
+    }
+    Gh.add(new THREE.IcosahedronGeometry(0.055, 1), hp(0.5, -0.22, 0.34), lit(L.gilt, 0.8)); // the tassel
+    const neck = hc.clone().addScaledVector(crown, -0.16).add(new THREE.Vector3(0, -0.05, 0));
+    sleeper = { Ga, Gh, elbow: elb.clone().setY(elb.y - drop), neck: neck.clone().setY(neck.y - drop), head: hc.clone().setY(hc.y - drop), wrist: wr.clone().setY(wr.y - drop), hd: hdV.clone(), side: sideV.clone(), crown };
     // the foot: heel down, toes out to the road, the stocking's red heel and toe
     const fM = O(ankle.x, ankle.y - 0.05, ankle.z).multiply(new THREE.Matrix4().makeRotationY(Math.PI / 2 - HA));
     Gb.add(new THREE.SphereGeometry(0.09, 8, 6), fM.clone().multiply(mat(0, 0, 0.09, -0.15, 0, 0, 1, 0.8, 2.2)), lit(L.paint[3]));
@@ -363,8 +432,9 @@ export async function build(ctx) {
   }
   // a second pillow on the sill beside his, toward the seat: there from the visit after a visitor has ridden up (v10-A4)
   const Gp = new Builder(ctx.noise);
-  { const pp = hdV.clone().multiplyScalar(sillR - 0.42).add(sideV.clone().multiplyScalar(0.98)).setY(sillY - gcY + 0.06);
-    Gp.add(Gp.box(0.5, 0.15, 0.36, { chip: 0.04 }), O(pp.x, pp.y, pp.z).multiply(mat(0, 0, 0, 0, -HA, -0.1)), lit(L.cloth[0], 0.8)); }
+  { const pp = hdV.clone().multiplyScalar(sillR - 0.12).add(sideV.clone().multiplyScalar(-1.0)).setY(sillY - gcY + 0.1);
+    Gp.add(Gp.box(0.42, 0.15, 0.34, { chip: 0.04 }), O(pp.x, pp.y, pp.z).multiply(mat(0, 0, 0, 0, -HA, -0.1)), lit(L.cloth[0], 0.5));
+    Gp.add(Gp.box(0.43, 0.02, 0.06), O(pp.x, pp.y + 0.075, pp.z).multiply(mat(0, 0, 0, 0, -HA, -0.1)), lit(L.cloth[2], 0.5)); }
   const globe = new THREE.Mesh(Gb.build(), glowMat.mat);
   globe.name = 'waystation-globe'; globe.castShadow = true; globe.receiveShadow = true;
   const pivot = new THREE.Group(); pivot.name = 'waystation-pivot';
@@ -376,9 +446,10 @@ export async function build(ctx) {
   // the lamp: one warm light inside, a weaker one in the pendant's shadow at the foot
   const lamp = new THREE.PointLight(c('#ff9a48'), 30, 26, 2);
   lamp.position.set(0, -drop, 0); pivot.add(lamp);
+  const dimmer = { value: 0 };
   // his forearm and his head, hinged so he can answer a visitor hauled up beside him; the second pillow
   const hinge = (G, P, name) => {
-    const m = new THREE.Mesh(G.build(), glowMat.mat); m.name = name; m.castShadow = true; m.receiveShadow = true;
+    const m = new THREE.Mesh(G.build(), glowMat.mat); m.name = name; m.receiveShadow = true; // small, inside the globe: no shadow of its own
     m.position.copy(P).negate(); count(m);
     const h = new THREE.Group(); h.position.copy(P); h.add(m); pivot.add(h); return h;
   };
@@ -388,9 +459,9 @@ export async function build(ctx) {
   group.updateMatrixWorld(true);
   // the seat and its ride (v10-A4, src/v10/halt-seat.js): it comes down for a visitor who has chalked their stroke
   buildSeat(ctx, {
-    M0, group, mat: stone.mat, late, ropeC, iron, gilt: L.gilt, paint: L.paint[2], seat, HA,
+    M0, group, mat: stone.mat, late, ropeC, iron, gilt: L.gilt, paint: L.paint[2], green, seat, HA,
     pul: pul.clone().add(new THREE.Vector3(-hdz * 0.12, -0.1, hdx * 0.12)), ground: (x, z) => gAt(x, z) - foot,
-    crank: wM(0.62, 1.0, 0), winchAt: wM(0, 1.0, 0), sleeper: { forearm, head: headG, wrist: sleeper.wrist, elbow: sleeper.elbow, hd: sleeper.hd, side: sleeper.side }, pillow2,
+    winchAt: wM(0, 1.0, 0), ropeC2: c('#8a7650'), sleeper: { forearm, head: headG, wrist: sleeper.wrist, elbow: sleeper.elbow, hd: sleeper.hd, side: sleeper.side, crown: sleeper.crown }, pillow2, pivot, doorMark, dimmer,
   });
 
   // ------------------------------------------------------------------ colliders
@@ -425,7 +496,7 @@ export async function build(ctx) {
     const k = fl * (1 + 0.9 * gut);
     glowMat.uniforms.uWindow.value = 0.32 * k;
     glowMat.uniforms.uSTime.value = t;
-    lamp.intensity = 30 * k;
+    lamp.intensity = 30 * k * (1 - 0.6 * dimmer.value); // turned low while a guest hangs at the hatch (v10-A4)
   }, { pos: SP, near: 160, hz: 4 });
 
   const ms = Math.round(performance.now() - t0);
