@@ -46,6 +46,8 @@ Nothing, at first: the mountains stop catching the eye. Then, looking at them: r
 
 ## Status
 
+**2026-11-12, 08:11 PST. M3 reported; judged from its frames; held for a second round on the new wall.** `issue-1103-squares` at `ad230d4` (its counts: settings 67, paths 75, roads 44, walk 10, hop 25, edges 101, loading 7, perf 17). The orchestrator looked at `v11-03-after-*.png` (in that worktree's `shots/wip/`). **The Galleries** are right: a ragged prow with one long arm along the rock, no longer a rectangle, and alone on the west wall (`-highling-y1`, `-gal-400`). **The Lamps** moved to the south massif (bearings 190 to 218, over the Span's arches) and follow a cleft: no longer square, but from 400 m they are a thin scatter of sparks and from the foot a trickle; the owner asked for "more impact" and this has less than the square did. Not merged: both follow the ground by code and M1 and M2 are reshaping it, so the round two goes to the same agent after they merge: the Lamps as a city seen from 400 m (a dense lit quarter, windows that read as windows, the outline kept). No cold review or blind read yet; do both on round two. In flight: M1 (8161), M2 (8162).
+
 **2026-11-12, 07:52 PST. Opened and dispatched.** State at opening: `main` is v10 (released 04:59 today); nothing was in flight; `next` holds `main` plus v10's look back. #5 and #6 are labelled `in-progress`, `v11`, with a marked comment each. A read-only survey of the mountain code is summarised in `briefs/v11/index.md` ("Where things are").
 
 In flight (three implementation agents, told of each other):
