@@ -1,6 +1,17 @@
 # Releases
 
 One entry per merge to `main`, newest first. Short: what a visitor to [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/) will notice, and what changed underneath. The screenshot archive in `shots/` carries the pictures; stage numbers refer to its table.
+## v7.2.1: Quieter birds at the keep
+
+Released 2026-11-11.
+
+A small fix to the birds' sounds around the keep, where the walk begins.
+
+- **The rooks on the keep are rarer and quieter**: The rooks, black crows that roost on top of Carcanet Keep (the great stone keep you start beside), used to start cawing seconds into the walk and come back every half minute. Now they wait a while, say one or two short things, rest for minutes at a time, and sound softer.
+- **Birds taking off no longer sound like gunshots**: The small birds that burst out of the grass as you walk, and the flocks that lift off the keep and the gibbet, are much quieter and softer at the start, and the grass birds flush every minute or two of walking instead of several times a minute.
+
+Known issues: the caw itself is unchanged, so when the rooks do call, it may still sound like a horn.
+
 ## v7.2 (2026-11-09) — the sound
 
 A quality pass over every sound, answering Austin's three words for the old mix: random, unpleasant, at once omnipresent and rare; and his second note, that the sun-gutter sound was so unpleasant he played muted. Nothing new in the world. Plan, decisions and the measured baseline: `briefs/v7.2/index.md`; the method agents that cannot hear now follow: `.agents/skills/sound-design/`.

@@ -59,7 +59,7 @@ export function startCues(a) {
   // pair, a breath of pink noise for the hoarseness; 6 dB under their old level, through a voice with the air
   function crows(pos) {
     const pp = pos || { x: 65, y: 34, z: 30 };
-    const v = voice(pp, { ref: 12, roll: 1, range: 400, verb: 0.5, dur: 4.5, air: 140, gain: 25 });
+    const v = voice(pp, { ref: 12, roll: 1, range: 400, verb: 0.5, dur: 4.5, air: 140, gain: 10 }); // v7.2.1: 8 dB down (was 25)
     if (!v) return;
     const out = filt('lowpass', 2400, 0.6); out.connect(v.in);
     let at = v.t0;
@@ -192,9 +192,10 @@ export function startCues(a) {
   // a bird flushed from the heather (v7.2-04): wingbeats as soft pink grains slowing as it climbs (irregular, so no
   // buzz), the rush under a lowpass, and three short alarm chips, falling, 10 ms in
   function flush(pos) {
-    const v = voice(pos, { ref: 6, roll: 1.1, range: 80, verb: 0.2, dur: 0.9, air: 80, gain: 65 }); if (!v) return;
-    const t0 = v.t0, out = filt('lowpass', 2000, 0.6); out.connect(v.in);
-    const g = ac.createGain(); env(g, t0, 0.06, 0.02, 0.5); chain(vNoise(v, pink, t0, 0.6), filt('bandpass', 1000, 0.8), g, out);
+    // v7.2.1 (the owner: "like shotgun blasts"): 12 dB down (gain 65 -> 16), the rush eased in over 90 ms instead of 20, darker
+    const v = voice(pos, { ref: 6, roll: 1.1, range: 80, verb: 0.2, dur: 0.9, air: 80, gain: 16 }); if (!v) return;
+    const t0 = v.t0, out = filt('lowpass', 1500, 0.6); out.connect(v.in);
+    const g = ac.createGain(); env(g, t0, 0.06, 0.09, 0.5); chain(vNoise(v, pink, t0, 0.6), filt('bandpass', 1000, 0.8), g, out);
     for (let at = t0, k = 0; at < t0 + 0.6; k++) { sgrain(v, out, at, jit(1000, 0.1), 1.2, 0.08 * (1 - (at - t0) / 0.7), 0.04, pink, 0.004); at += 0.045 * (1 + k * 0.06) * jit(1, 0.25); }
     for (let k = 0; k < 3; k++) {
       const tt = t0 + 0.1 + k * 0.12 + rng() * 0.06, o = stone(v, out, 'triangle', 1600, tt, 0.01, 0.01, 0.05);
