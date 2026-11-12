@@ -260,7 +260,11 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
             float open = 0.35 + 0.95 * h.w * h2.y;
             o.x += w * fadeL * keep * fpLine(e, 0.02 + 0.04 * h.w * h2.y, fcL) * 0.7 * open;
             // most blocks weathered dark; one in six a fresh scar where a block fell, pale, the face's lightest value
-            o.y += w * fadeL * ((h.z - 0.5) * 0.3 + smoothstep(0.82, 0.9, fract(h.z * 5.37 + h.w)) * 0.75);
+            // most blocks weathered dark; one in ten a fresh scar where a block fell: pale, a hard upper edge (the
+            // joint it broke from), fading down the block in streaks where the dust washed out of it
+            float scar = step(0.9, fract(h.z * 5.37 + h.w));
+            float tail = off.y > 0.0 ? 1.0 : smoothstep(-0.45, 0.05, off.y) * (0.55 + 0.45 * sin(off.x * 17.0 + h.x * 6.3)) * (1.0 - smoothstep(0.1, 0.2, fcL));
+            o.y += w * fadeL * ((h.z - 0.5) * 0.3 + scar * max(tail, 0.0) * 0.7);
             t += w * fadeL * (vec2(h.z, h.w) - 0.5) * vec2(1.3, 0.8);
             // beds inside the block, 0.3-0.7 m, tilted its own way: they stop at its joints
             float bp = 0.3 + 0.4 * fract(h.z * 7.31), bs = uv.y / bp + h.w * 9.0 + uv.x * (h.x - 0.5) * 0.15 / bp;
@@ -285,45 +289,49 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
             }
           }
         }
-        // scree in plan (x, z metres): stones of 0.9 m cells over stones of 0.27 m, each its own angular block
-        // (the cell less a gap of its own width, so some lie apart in gravel), tilted its own way, its own value;
-        // the gravel between, darker
-        void fpScree(vec2 p, float fp, float gF, inout vec4 o, inout vec2 t, float w) {
+        // one layer of loose stones in plan: cells of c metres, a stone in a share occ of them (scaled by den, so the
+        // scree thins out into the plain apron), each a rounded block of its own size, squash and tone, domed (its
+        // slope feeds the normal, so the low sun lights its sunward shoulder) and darker on its far side, with a soft
+        // shadow cast on the grit behind it. Between the stones nothing is drawn: the apron's grit. Returns its cover.
+        float fpStones(vec2 p, float c, float occ, float den, float fp, float gF, inout vec4 o, inout vec2 t, float w) {
+          float fc = fp / c, fade = 1.0 - smoothstep(0.06, 0.16, fc);
+          if (fade <= 0.0 || w <= 0.0) return 0.0;
           vec2 off, h2; vec4 h;
-          // boulders, one 3 m cell in three, for the scree's look from 100 m: darker, fresher rock than the weathered
-          // gravel, domed, and grained; a soft shadow round the foot, not an outline
-          float fB = fp / 3.0, fadeB = 1.0 - smoothstep(0.06, 0.16, fB), bould = 0.0;
-          if (fadeB > 0.0) {
-            float e = fpVoro(fpWarp(p / 3.0 + 31.0, 0.15), 0, off, h, h2);
-            float gap = 0.14 + 0.25 * h.w, on = step(0.66, h.z) * fadeB;
-            bould = smoothstep(gap, gap + 0.05 + fB, e) * on;
-            o.x += w * on * (1.0 - bould) * (1.0 - smoothstep(0.0, 0.12 + fB, gap - e)) * 0.3; // the shadow at its foot
-            o.x += w * bould * ((1.0 - smoothstep(gap, gap + 0.25, e)) * 0.3 + 0.18 + 0.2 * fract(h.z * 9.3) - 0.25 * gF);
-            t += w * bould * ((vec2(h.w, h.x) - 0.5) * 0.6 - off * 0.9);
+          float e = fpVoro(p / c, 0, off, h, h2);
+          float on = step(1.0 - occ * den, h.z), edge = smoothstep(0.0, 0.12, e); // nothing reaches its cell's edge (no straight cut)
+          if (on <= 0.0) return 0.0;
+          float rad = 0.15 + 0.2 * h.w;                                 // its size, in cells (kept inside its cell, with its shadow)
+          // an angular block: five faces round a flat top, at angles of its own; d is how far out, 1 at its edge
+          float ang = h.x * 6.2831853, d = 0.0; vec2 nf = vec2(1.0, 0.0);
+          for (int k = 0; k < 5; k++) {
+            float a = ang + float(k) * 1.2566371 + (fract(h.y * float(k + 3) * 3.7) - 0.5) * 0.7;
+            vec2 nk = vec2(cos(a), sin(a));
+            float dk = dot(off, nk) / (rad * (0.8 + 0.4 * fract(h.w * float(k + 2) * 5.3)));
+            if (dk > d) { d = dk; nf = nk; }
           }
-          w *= 1.0 - 0.65 * bould; // (a boulder keeps a faint crazing of the smaller stones' cracks, not a smooth dome)
-          // stones of 0.8 m, one cell in three
-          float fc = fp / 0.8, fade = 1.0 - smoothstep(0.06, 0.16, fc), cob = 0.0;
-          if (fade > 0.0) {
-            float e = fpVoro(fpWarp(p / 0.8, 0.18), 0, off, h, h2);
-            float gap = 0.06 + 0.3 * h.w * h.w, on = step(0.62, h.z) * fade;
-            cob = smoothstep(gap, gap + 0.04 + fc, e) * on;
-            o.x += w * on * (1.0 - cob) * (1.0 - smoothstep(0.0, 0.1 + fc, gap - e)) * 0.35;
-            o.x += w * cob * ((1.0 - smoothstep(gap, gap + 0.2, e)) * 0.3 - 0.2 * (gF - 0.5));
-            o.y += w * cob * (fract(h.z * 13.1) - 0.5) * 0.7;
-            t += w * cob * ((vec2(h.w, h.x) - 0.5) * 0.5 - off * 1.0);
-          }
-          // and stones of 0.22 m everywhere else, in a darker grit
-          float fs = fp / 0.22, fadeS = (1.0 - smoothstep(0.06, 0.16, fs)) * (1.0 - cob);
-          if (fadeS > 0.0) {
-            float e = fpVoro(fpWarp(p / 0.22 + 5.0, 0.2), 0, off, h, h2);
-            float gap = 0.05 + 0.4 * h.w * h.w * h.w;
-            float inside = smoothstep(gap, gap + 0.05 + fs, e);
-            o.x += w * fadeS * (1.0 - inside) * (0.25 + 0.3 * gF);
-            o.x += w * fadeS * inside * (1.0 - smoothstep(gap, gap + 0.25, e)) * 0.22;
-            o.y += w * fadeS * inside * (fract(h.z * 11.7) - 0.5) * 0.8;
-            t += w * fadeS * inside * ((vec2(h.z, h.w) - 0.5) * 0.5 - off * 1.1);
-          }
+          d += 0.08 * (gF - 0.5);                                       // its edge a little ragged
+          float soft = 0.1 + 1.5 * fc / rad;
+          float inside = (1.0 - smoothstep(1.0 - soft, 1.0, d)) * fade * edge;
+          // flat-faced: the top tilted a little its own way, the sides steep, each face one slope (lit or not by the low sun)
+          float side = smoothstep(0.4, 0.68, d);
+          vec2 sd = mix((vec2(h.y, h.w) - 0.5) * 0.5, nf * 1.6, side);
+          t += w * inside * sd;
+          float away = dot(nf, FP_SUN_XZ) * side;                      // > 0 on its sunward side
+          o.x += w * inside * (smoothstep(0.0, -0.9, away) * 0.22 + 0.1 * (1.0 - gF));
+          o.y += w * inside * ((fract(h.z * 13.1 + h.w) - 0.5) * 0.7 + 0.12 + smoothstep(0.0, 0.8, away) * 0.35 + (1.0 - side) * 0.1);
+          // its shadow on the grit, thrown away from the sun, soft-edged
+          float ds = length(off + FP_SUN_XZ * rad * 0.35) / (rad * 1.05);
+          o.x += w * (1.0 - inside) * (1.0 - smoothstep(0.6, 1.0 + soft, ds)) * fade * edge * 0.32;
+          return inside;
+        }
+        // scree in plan (x, z metres), den its density 0..1: a few big blocks, stones, and many small ones, the
+        // larger hiding the smaller; the fine grit between is the apron's own grain, a little darker
+        void fpScree(vec2 p, float fp, float gF, float den, inout vec4 o, inout vec2 t, float w) {
+          float c1 = fpStones(p + 31.0, 2.4, 0.3, den, fp, gF, o, t, w);
+          float c2 = fpStones(p + 7.0, 0.7, 0.6, den, fp, gF, o, t, w * (1.0 - c1));
+          float c3 = fpStones(p, 0.2, 0.75, den, fp, gF, o, t, w * (1.0 - max(c1, c2)));
+          float fg = fp / 0.05;
+          o.x += w * (1.0 - max(c1, max(c2, c3))) * (1.0 - smoothstep(0.3, 1.0, fg)) * (0.08 + 0.14 * gF) * den;
         }
         // all of it at p (n the normal, fp the footprint, rk the face's and the scree's weights, gr the grains, dry
         // where no water runs): returns (albedo factor, lichen, the bump's weight, the lichen's rust share); g gets
@@ -349,8 +357,8 @@ const CLOSE_ROCK_GLSL = `#ifdef FP_MASSIFS
             }
           }
           if (rk.y > 0.002) {
-            float ws = smoothstep(0.0, 0.35, rk.y) * smoothstep(0.45, 0.7, n.y); // talus spills a little onto the moor at the foot
-            t = vec2(0.0); fpScree(p.xz, fp, gr.x, o, t, ws);
+            float ws = smoothstep(0.0, 0.2, rk.y) * smoothstep(0.45, 0.7, n.y); // talus spills a little onto the moor at the foot
+            t = vec2(0.0); fpScree(p.xz, fp, gr.x, smoothstep(0.02, 0.5, rk.y), o, t, ws);
             g += vec3(t.x, 0.0, t.y);
           }
           float lich = clamp(o.z, 0.0, 1.0);
