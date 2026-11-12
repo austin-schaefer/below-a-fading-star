@@ -102,3 +102,16 @@ Needs design input before building: AG's sigils, AC's element pairs, any carved 
 - Places the critic expected to be offered something and was not: the saint's nest, the cage at the Cardinal Stones, the moss light, the painter, the keep's gate at the spawn.
 - Its one suggestion: make every act point at the next one in sight, the way the bell's candles do.
 - Phone at low: 167 to 263 draw calls, 1.1 to 2.1M triangles.
+
+## From the v11 critic (2026-11-12), not fixed in v11
+
+- The lure fails against other lights: the Collation's is drowned by the Leerie's lamps at 30 m, the Hypogeum's is hidden down its stair. "A lure that rises above the competing lights would do it."
+- The bone-white many-armed cut-out figures on hillsides (Arcature, Foundered Nave, the road, the Collation) read as stickers with no depth.
+- The scaffold grids on the cliffs above spawn and the Stones: too even, too large, competing with the sun.
+- Kenching Flats' ground is near-white and the spawn foreground pale lavender (blown out).
+- The Sunken Court has no sound of its own (within 0.5 dB of the open moor in every band); the Lattice holds a steady 500 Hz band 10 dB over its neighbours: a drone, not a breath.
+- The Collation's pour is over by 15 s and nothing follows; the crystal's hand stalls from 8 to 15 s and where it leads is unclear.
+- Gold from the court: the missing tessera reads only at 3 m looking down; "a glint of gold in the jackdaw's nest would have pulled me in".
+- Expected an offer and got none: the Pit, the Speculum, the Armiger's Tower.
+- "Make each act lead on to a second act or another place, the way the door and the Halt already do."
+- From a blind reader of v11's frames: the speckle on rocks ("glitter-dusted blobs"), hex slabs like stickers, the crystals' flat stripe bands.
