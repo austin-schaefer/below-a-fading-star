@@ -4,7 +4,7 @@
 // Time is the page's own, driven by Playwright's clock once the scene is up, so a frame "0.8 s after E" is 0.8 s of
 // the walk's time however slowly the headless browser draws. Each frame is 1280 x 720 (PHONE=1: 390 x 844, a few
 // frames) into shots/wip/<prefix>-NN-<name>.png. The sun's guttering is held off.
-// Usage: node tools/tally-frames.mjs [base] [prefix=acts-tally3] [part=all|chalk|ride|return]
+// Usage: node tools/tally-frames.mjs [base] [prefix=acts-tally3] [part=all|chalk|ride|return|still]
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -75,6 +75,20 @@ if (part === 'all' || part === 'ride') {
   await toward(await page.evaluate(() => window.__fp.tally.next)); await run(800); await shot('set-down');
   await page.evaluate(() => { const fp = window.__fp, w = fp.tally.seat.winch, p = fp.player; fp.controls.placeAt(w.x + 1.6, w.z + 1.4); });
   await toward(await page.evaluate(() => window.__fp.tally.seat.winch), -0.35); await run(800); await shot('winch');
+}
+if (part === 'still') { // the whole chain with no look input after the first press: what a visitor who never moves the mouse sees
+  await look({ stand: 2.4 }); await run(1500); await page.keyboard.press('KeyE');
+  for (let i = 0; i < 60 && (await page.evaluate(() => window.__fp.acts.offered?.def.id)) !== 'halt-seat'; i++) await run(500);
+  await shot('seat-offer');
+  await page.keyboard.press('KeyE');
+  let k = 0, after = -1;
+  while (k < 40) {
+    await run(2000); k++;
+    const ph = await page.evaluate(() => window.__fp.tally.ride.phase);
+    if (ph === null && after < 0) after = 0;
+    await shot(`t${String(k * 2).padStart(2, '0')}s${ph ? '-' + ph : ''}`);
+    if (after >= 0 && (after += 2) > 6) break;
+  }
 }
 if (part === 'return') { // a return visit after rides: what is new at the top
   await page.evaluate(() => { const fp = window.__fp; fp.acts.list.find((h) => h.def.id === 'halt-seat').def.show(3); });
