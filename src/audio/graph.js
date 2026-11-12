@@ -13,7 +13,7 @@
 //   water's slap), verb (alias of space.rooms.open's convolver), verbOut (the rooms' sum, into master),
 //   space = { open, wood, stone, water (the listener's place now, 0..1; open + wood + stone = 1), at(x, z, out?) (the
 //   same weights anywhere), rooms: { open, wood, stone } ({ conv, send }) },
-//   cueBus (one-shots, with cueAnalyser), dryBus (footsteps), brown / pink / white (looped noise buffers),
+//   cueBus (one-shots, with cueAnalyser), dryBus (footsteps), musicBus (v9 music; musicSend takes its share into the stone room), brown / pink / white (looped noise buffers),
 //   loopSrc(buf, off), burst(buf, dur, off?), burstAt(buf, at, dur), panner(model, ref, roll, maxD?), setPos(p, x, y, z),
 //   send(node, amt) (a reverb send; off a one-shot's voice when node._v, shaped by its distance), setListener(),
 //   distance: { air(d) (the air lowpass's cutoff, Hz), dry(d, o) (the dry gain), wet(d, o) (the send's gain) },
@@ -247,7 +247,11 @@ export function startGraph(ctx, audio, AC) {
   const cueBus = ac.createGain(); cueBus.connect(master);
   const cueAnalyser = ac.createAnalyser(); cueAnalyser.fftSize = 2048; cueBus.connect(cueAnalyser);
   audio.cueAnalyser = cueAnalyser;
-  Object.assign(a, { dryBus, cueBus, cueAnalyser });
+  // the music bus (v9-M2): the player's destination -> master, ducked by the glue with the gutter; its send goes straight
+  // into the stone room's convolver (music is not in the world: its room stays the same as you walk; no fourth convolver)
+  const musicBus = ac.createGain(); musicBus.gain.value = 1; musicBus.connect(master);
+  const musicSend = ac.createGain(); musicSend.gain.value = 0.45; musicBus.connect(musicSend); musicSend.connect(rooms.stone.conv);
+  Object.assign(a, { dryBus, cueBus, cueAnalyser, musicBus, musicSend });
 
   // ---- voices: a hard cap on simultaneous one-shots, the oldest stolen
   // A voice is sources -> in -> [air lowpass] -> [panner] -> gate -> cue bus, with any reverb send off the gate.

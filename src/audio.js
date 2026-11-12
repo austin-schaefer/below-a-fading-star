@@ -16,6 +16,7 @@
 //   cues.js    the cue dispatcher, the older one-shots, the Cardinal Stones, the fall's loop; cues-v2.js the v2 and
 //              v5 one-shots (carillon to kept-fire); living.js v7's figures
 //   regions.js the v4 regions' sound hooks and their kit
+//   music/     v9: the director, the player and the tracks (index.js is the glue; audio.music)
 //   synth.js   noise buffers (looped with a true crossfade at the seam) and the rooms' impulses (makeSpace)
 // This file: build(ctx), the mute button, the ctx.audio surface, and the wiring that starts the parts in the shared
 // stream's order of draws and ticks them at 10 Hz in the same order.
@@ -154,6 +155,8 @@ export async function build(ctx) {
     const insects = startInsects(a);
     const calls = startCalls(a);
     a.house = startHouseSound(a, ctx); // v8-05: the Pomegranate House's voices (its own rng, after every shared draw)
+    let music = null; // v9-M2: the music's glue (audio/music/index.js), loaded on its own so a fault there cannot take the sound down
+    import('./audio/music/index.js').then((m) => { music = audio.music = m.startMusic(a, ctx); }).catch((e) => console.warn('[fp] music failed to load:', e));
 
     // ================================================================ per-frame control
     let tick = 0;
@@ -184,6 +187,7 @@ export async function build(ctx) {
       cues.update(f); // the stones, struck as you come near
       insects.update(f);
       calls.update(f); // frogs, distant calls, the deodand's click
+      music?.update(f); // v9: the director's step, the player's calls
     }
     ctx.registerUpdate(update);
     ctx.log('audio: started');
