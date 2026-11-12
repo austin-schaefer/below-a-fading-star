@@ -16,7 +16,7 @@ You judge from text. A change costs minutes, not a quarter of an hour: the numbe
 1. **Baseline first.** Before any edit, render the poses you are about to change: `node tools/audio-survey.mjs $B --poses=<yours> --out=shots/wip/audio/survey-before` (or `tools/audio-render.mjs` for a cue or one-off). The WAVs, metrics JSON and tables stay in `shots/wip/audio/` (gitignored, never committed). Everything you do is judged against it.
 2. **Name the fault in the metrics' terms** before touching code: "seam click every 7.0 s", "sharpness ratio −6 dB, cap is −12", "onsets 9/min uniform, no rest longer than 22 s", "bed at −21 LUFS, target −30", "the 250 Hz octave 8 dB over its neighbours". If the metrics and the table do not show the fault the designer hears, add a metric (in `tools/audio-metrics.mjs`) that does, and say so in your report.
 3. **Change one thing.** Render again, same poses: `--poses=<yours> --out=shots/wip/audio/survey-after --baseline=shots/wip/audio/survey-before`. The table shows before → after in every cell and each pose's band table the change by band; the `swing` row says which bands move over the render. Write one line in your log: what changed, the before and after numbers, keep or revert. A picture is for a question the text cannot answer (`--images`).
-4. **Run your poses, not the survey.** While you iterate, `--poses=` names only the poses your change touches (and one that must not move, as a control). The full survey and the quality gate are the orchestrator's, once a batch, not yours after every edit. Before you hand back: your poses inside their bands, `tools/audio-test.mjs` at its full count and the wilderness skill's standard tests. Run `tools/audio-quality-test.mjs` only if your brief says to.
+4. **Run your poses, not the survey.** While you iterate, `--poses=` names only the poses your change touches (and one that must not move, as a control). The full survey and the quality gate are the orchestrator's, once a batch, not yours after every edit. Before you hand back: your poses inside their bands, `tools/audio-test.mjs` at its full count and the `world-code` skill's standard tests. Run `tools/audio-quality-test.mjs` only if your brief says to.
 5. **Report for a listener.** Your hand-back names the renders to listen to, in order, and for each what to listen for and what the numbers say. The designer listens; you do not.
 
 ## Rules that bind every edit
@@ -35,7 +35,7 @@ You judge from text. A change costs minutes, not a quarter of an hour: the numbe
 
 ## Working here
 
-- Load the `wilderness` skill too; its pace rules (ports, one browser at a time, `nice -n 10`, tests before pushing) apply.
+- Load the `wilderness` and `world-code` skills too (serving and ports, the module contract, the tests before pushing, the hand-back); `AGENTS.md`'s pace rules apply.
 - Audio renders are WAVs (and PNGs, when you ask for them) in `shots/wip/audio/`, gitignored. Only metrics JSON and the survey's markdown table may be committed, under `briefs/<version>/audio/`.
 - `tools/audio-test.mjs` checks that cues sound; the harness checks how they sound. Both must pass.
 - *What* a thing sounds like and *how* it sounds are both yours; the milestone doc records what you settled.
