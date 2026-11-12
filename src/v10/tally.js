@@ -3,7 +3,7 @@
 // face, in fives, row under row, each in their own hand: the oldest rows high up, washed thin by the rain; lower
 // down, nearer the road. A few counted in boxes, a few had only a coal from the lamp or the red earth by the trough.
 // Above them the Late folk chalked the halt's own sign large, ruled a line, and kept their count of the hundreds.
-// At chest height, left of where the seat's rope comes down, the stone is nearly clear (rubbed for the newcomers):
+// At chest height, right of where the seat's rope comes down, the stone is nearly clear (rubbed for the newcomers):
 // that is where the visitor writes, and a stub of saffron chalk hangs there on a cord from an iron staple driven in
 // over their gate. Standing at the wall and looking at that spot, the visitor is offered it ("Chalk your stroke"):
 // the stub lifts on its cord to the stone, draws a forearm-long stroke top to bottom over a second and more, dust
@@ -128,11 +128,11 @@ export function buildTally(ctx, o) {
   const cursor = { row: 0, x: LEFT };
   const OWN_ROWS = rows - 1; // the last row is left for the visitors who come after
   const rowY = (row, r) => TOP + row * ROW + (r() - 0.5) * 7 * K;
-  // the visitors' place: the stone at chest height left of the seat's fall, kept nearly clear of old marks (a few big
+  // the visitors' place: the stone at chest height right of the seat's fall, kept nearly clear of old marks (a few big
   // old gates stay, washed), so a visitor's strokes have dark stone about them. Canvas px, from local x and the
   // height over the ground.
   const hx = (x) => (x - X0) * M2P, hy = (h) => (0.35 + HM - h) * M2P;
-  const CLR = { x0: hx(-3.5), x1: hx(0.34), y0: hy(1.98), y1: hy(0.36), keep: hx(-2.3) }; // old gates kept only at its far end
+  const CLR = { x0: hx(-1.5), x1: hx(3.6), y0: hy(1.98), y1: hy(0.36), keep: hx(1.7) }; // old gates kept only at its far end
   const inClear = (x0, y0, x1, y1) => x1 > CLR.x0 && x0 < CLR.x1 && y1 > CLR.y0 && y0 < CLR.y1;
   for (let row = 0; row < OWN_ROWS; row++) {
     let x = LEFT + (rng() * 0.18) * M2P;
@@ -146,7 +146,7 @@ export function buildTally(ctx, o) {
       if (x + w > end && !last) break;
       const n = last && x + w * 2.4 > end ? 3 : 5; // the last gate unfinished
       const gy = rowY(row, rng);
-      if (inClear(x, gy, x + w, gy + h.L) && (x + w > CLR.keep || rng() > 0.2)) { if (n < 5) break; x += w + 0.06 * M2P; continue; } // rubbed out: the visitors' place
+      if (inClear(x, gy, x + w, gy + h.L) && (x < CLR.keep || rng() > 0.2)) { if (n < 5) break; x += w + 0.06 * M2P; continue; } // rubbed out: the visitors' place
       for (const st of gate(x, gy, h, n, rng)) stroke(bg, st);
       wall += n;
       cursor.row = row; cursor.x = x + w; cursor.y = TOP + row * ROW;
@@ -197,16 +197,16 @@ export function buildTally(ctx, o) {
   g.drawImage(base, 0, 0);
 
   // ------------------------------------------------------------------ the visitor's strokes: their own gates
-  // In saffron chalk, forearm-long, in gates of five in the clear place: the first gate just left of where the seat
-  // comes down, each next gate to its left, three rows, then over them again. The k-th stroke's place and grain are
+  // In saffron chalk, forearm-long, in gates of five in the clear place: the first gate just right of where the seat
+  // comes down, each next gate to its right, three rows, then over them again. The k-th stroke's place and grain are
   // a pure function of k, so a reload puts each where it was and draws it the same.
   const mine = { L: 0.38 * M2P, w: 0.034 * M2P, gap: 0.085 * M2P, slant: 0.05, jit: 0.04, press: 1.1, hook: 3, bar: 1.1, col: SAFFRON };
-  const gw = gateW(mine) + 0.17 * M2P, VR = [1.8, 1.25, 0.76], GX0 = hx(-0.4);
-  const perRow = Math.floor((GX0 - hx(-3.45)) / gw) + 1;
+  const gw = gateW(mine) + 0.17 * M2P, VR = [1.8, 1.25, 0.76], GX0 = hx(-1.25);
+  const perRow = Math.floor((hx(3.4) - GX0) / gw);
   // gate gi's top-left on the canvas
   function gateAt(gi) {
     const j = gi % perRow, row = Math.floor(gi / perRow) % VR.length, cyc = Math.floor(gi / (perRow * VR.length));
-    return { x: GX0 - j * gw + (cyc % 3) * 0.05 * M2P, y: hy(VR[row]) + (cyc % 2) * 0.05 * M2P };
+    return { x: GX0 + j * gw + (cyc % 3) * 0.05 * M2P, y: hy(VR[row]) + (cyc % 2) * 0.05 * M2P };
   }
   function visitorStroke(k) {
     const gi = Math.floor(k / 5), i = k % 5, G = gateAt(gi);
@@ -257,7 +257,6 @@ export function buildTally(ctx, o) {
   const cord = new THREE.Mesh(cordG, cordM);
   const stubG = new THREE.CylinderGeometry(0.024, 0.029, 0.14, 8, 1); stubG.translate(0, -0.07, 0); // its butt at the origin, its tip down
   const stub = new THREE.Mesh(stubG, stubM);
-  staple.castShadow = stub.castShadow = true;
   rig.add(staple, cord, stub);
   const LC = 0.66, PR = 0.035; // the cord's length; the angle it hangs out from the stone at rest
   const S = new THREE.Vector3(); // the cord's top, under the staple
@@ -350,6 +349,8 @@ export function buildTally(ctx, o) {
     bake(); swing = -1; dust.visible = false; dlife.fill(0); hang(); pose();
   }
   const ease = (x) => x * x * (3 - 2 * x);
+  // the chalk is not drawn from beyond 60 m (three small draws nobody could see)
+  ctx.registerUpdate(() => { const p = ctx.player.pos; rig.visible = (p.x - centre.x) ** 2 + (p.z - centre.z) ** 2 < 3600; }, { pos: { x: centre.x, z: centre.z }, near: 70, hz: 1 });
   ctx.registerUpdate((dt) => {
     if (!drawing && swing < 0 && fresh < 0 && !dust.visible) return; // nothing being done: nothing per frame
     if (drawing) {
