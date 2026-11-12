@@ -378,10 +378,12 @@ export async function build(ctx) {
     stoneG.push(g);
   };
   const gMin = (x, z, r) => { let m = Infinity; for (const [ox, oz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) m = Math.min(m, T.heightAt(x + ox, z + oz)); return m; };
-  const ring = (x, z, half, yaw) => { // colliders over a square footprint
-    cols({ x, z, r: half * 0.98 });
+  // colliders over a square footprint. v8-10 (#7): capped at the footing's top (`top`), so a hop and a scramble
+  // put the walker on the footing; what stands on it (the die, the step) is a collider of its own
+  const ring = (x, z, half, yaw, top, bottom) => {
+    cols({ x, z, r: half * 0.98, y: bottom, h: top - bottom });
     const c = Math.cos(yaw), s = Math.sin(yaw), k = half - 0.95;
-    for (const [a, b] of [[k, k], [k, -k], [-k, k], [-k, -k]]) cols({ x: x + a * c + b * s, z: z - a * s + b * c, r: 1.05 });
+    for (const [a, b] of [[k, k], [k, -k], [-k, k], [-k, -k]]) cols({ x: x + a * c + b * s, z: z - a * s + b * c, r: 1.05, y: bottom, h: top - bottom });
   };
 
   // ---- the figures: kinds dealt so no pair repeats and neighbours differ; a few in bronze
@@ -410,7 +412,10 @@ export async function build(ctx) {
     // the footing and the step
     box(x, (bottom + b + 1.0) / 2, z, 3.5, (b + 1.0 - bottom) / 2, 3.5, yaw);
     box(x, b + 1.35, z, 3.15, 0.35, 3.15, yaw);
-    ring(x, z, 3.5, yaw);
+    ring(x, z, 3.5, yaw, b + 1.0, bottom);
+    // the die (and its step) where one stands, a column; where it fell, the step alone, 0.7 m over the footing
+    if (fate.fate === 'fallen') cols({ x, z, r: 3.05, y: bottom, h: b + 1.7 - bottom });
+    else cols({ x, z, r: 2.9 });
     const fx = -side * PX, fz = -side * PZ; // the figure faced across the road
     if (fate.fate === 'standing') {
       box(x, b + 1.7 + 7.95, z, 2.72, 7.95, 2.72, yaw, 0, 0, 0.92); // the die, battered
@@ -436,7 +441,7 @@ export async function build(ctx) {
       for (let k = 0; k < 5; k++) {
         const r = 4.5 + rng() * 2.2, t = (rng() - 0.5) * 8, bx = x + ox * r + ax * t, bz = z + oz * r + az * t, hs = 0.7 + rng() * 0.8;
         box(bx, T.heightAt(bx, bz) + hs * 0.55, bz, hs * (1.2 + rng() * 0.6), hs, hs * (0.9 + rng() * 0.5), rng() * 6.28, (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.5);
-        if (hs > 1) cols({ x: bx, z: bz, r: hs * 1.1 });
+        if (hs > 1) cols({ x: bx, z: bz, r: hs * 1.1, y: T.heightAt(bx, bz) - 1, h: hs * 1.55 + 1 }); // v8-10: at its top
       }
       const lx = x + ox * 10.5 + ax * 3, lz = z + oz * 10.5 + az * 3;
       lying(F, lx, lz, fate.lie, side);

@@ -112,8 +112,11 @@ export function buildCauseway(ctx, B, env) {
         const fx = x + nx * 1.4 + p.dx * 0.6, fz = z + nz * 1.4 + p.dz * 0.6;
         const fg = ground.groundAt(fx, fz);
         B.add(B.box(0.78, 1.6, 0.78, { chip: 0.18, seed: 3 }), mat(fx, fg + 0.22, fz, Math.PI / 2 - 0.08, yaw + 0.5, 0.1), { color: vary(tints.old, rng, 0.06), course: 0.55, moss: 0.95, ground: fg - 0.3, disp: 0.03 });
+        // v8-10 (#7): the fallen half is a step (0.6 m) up to the broken post's top (1.7 m)
+        const ux = Math.sin(yaw + 0.5) * 0.4, uz = Math.cos(yaw + 0.5) * 0.4;
+        ctx.addCollider({ x1: fx - ux, z1: fz - uz, x2: fx + ux, z2: fz + uz, r: 0.39, y: fg - 1, h: 1.6 });
       }
-      ctx.addCollider({ x, z, r: 0.6 });
+      ctx.addCollider(side < 0 ? { x, z, r: 0.6 } : { x, z, r: 0.6, y: gb, h: gm + 1.7 - gb });
     }
   }
   return { waymarkers: n };

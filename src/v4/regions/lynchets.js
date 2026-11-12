@@ -175,12 +175,12 @@ export async function build(ctx) {
   for (const r of runs) {
     const len = Math.hypot(r.bx - r.ax, r.bz - r.az), dx = (r.bx - r.ax) / len, dz = (r.bz - r.az) / len, yaw = Math.atan2(dx, dz);
     // gaps and slumps along the run, decided per metre
-    let gapLeft = 0, slump = 0;
+    let gapLeft = 0, slump = 0, prev = null;
     for (let s = 0; s < len; s += 0.42) {
       const x = r.ax + dx * s, z = r.az + dz * s;
-      if (roadDist(x, z) < 5.5) continue; // the causeway goes through
-      if (gapLeft > 0) { gapLeft -= 0.42; continue; }
-      if (rng() < 0.008) { gapLeft = 1.8 + rng() * 2.5; continue; }
+      if (roadDist(x, z) < 5.5) { prev = null; continue; } // the causeway goes through
+      if (gapLeft > 0) { gapLeft -= 0.42; prev = null; continue; }
+      if (rng() < 0.008) { gapLeft = 1.8 + rng() * 2.5; prev = null; continue; }
       if (slump <= 0 && rng() < 0.012) slump = 2 + rng() * 5; else slump -= 0.42;
       const g = terrain.heightAt(x, z), fullH = 1.05 + 0.15 * N.noise2(x * 0.2, z * 0.2);
       const H = slump > 0 ? fullH * (0.3 + 0.25 * rng()) : fullH;
@@ -196,7 +196,13 @@ export async function build(ctx) {
       if (slump <= 0) for (let c = 0; c < 2; c++) stones.push({ x: x + dx * c * 0.21, y: g + H + 0.08, z: z + dz * c * 0.21, ry: yaw + (rng() - 0.5) * 0.3, rx: (rng() - 0.5) * 0.35, rz: (rng() - 0.5) * 0.2, sx: 0.5 + rng() * 0.12, sy: 0.32 + rng() * 0.1, sz: 0.2 + rng() * 0.07, tone: rng() * 0.6 });
       // spill at a slump's foot
       if (slump > 0 && rng() < 0.6) { const o = (rng() < 0.5 ? -1 : 1) * (0.5 + rng() * 0.6); stones.push({ x: x + dz * o, y: terrain.heightAt(x + dz * o, z - dx * o) + 0.05, z: z - dx * o, ry: rng() * 6, rx: rng(), rz: rng(), sx: 0.18 + rng() * 0.1, sy: 0.1, sz: 0.15, tone: rng() }); }
-      if (Math.round(s / 0.42) % 2 === 0) coll.push({ x, z, r: 0.45, y: g - 0.5, h: H + 0.5 });
+      // v8-10 (#7): the wall is a run of capsules at its own top (the cope's, or a slump's), so it can be hopped onto
+      // and walked along; a capsule spans two stones' steps and joins the last one unless a gap or the road broke it
+      if (Math.round(s / 0.42) % 2 === 0) {
+        const top = g + H + (slump <= 0 ? 0.2 : 0);
+        if (prev) { const y = Math.min(g, prev.g) - 0.5; coll.push({ x1: prev.x, z1: prev.z, x2: x, z2: z, r: 0.32, y, h: prev.top - y, dh: top - prev.top }); }
+        prev = { x, z, g, top };
+      }
     }
     walls.push({ ...r, len });
   }

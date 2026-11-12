@@ -372,7 +372,7 @@ export function buildPainter(ctx, gy, prospect = true) {
     }
     canvasAt(props, faces, C, a.kind, W, H, rng);
     const c = new THREE.Vector3().applyMatrix4(C);
-    ctx.addCollider({ x: a.x, z: a.z, r: 0.55, y: y - 0.2, h: 1.9 });
+    ctx.addCollider({ x: a.x, z: a.z, r: 0.55, y: y - 0.2, h: 1.9, stand: false }); // v8-10: an easel is not stood on
     ends.attempts.push({ kind: a.kind, x: a.x, z: a.z, y, centre: { x: c.x, y: c.y, z: c.z }, face: yaw, stand: { ...a.stand } });
   }
   // the dropped things on the tracks
@@ -447,7 +447,7 @@ export function buildPainter(ctx, gy, prospect = true) {
     place();
   };
   ctx.registerUpdate(update, { pos: { x: M.x, z: M.z }, near: 40, hz: 2 });
-  ctx.addCollider({ x: M.x, z: M.z, r: 0.75, y: my - 0.2, h: 1.4 });
+  ctx.addCollider({ x: M.x, z: M.z, r: 0.75, y: my - 0.2, h: 1.4, stand: false }); // v8-10: nor is the painter
   ends.man = { x: M.x, z: M.z, y: my, top: my + 1.5, stand: { ...PAINTER.stand }, state: st };
   ends.prospect = { x: PROSPECT.x, z: PROSPECT.z };
   return { meshes, ends, state: st, tex, place };

@@ -79,7 +79,7 @@ export function buildGates(K) {
     for (const zb of [Z - gw + 0.3, Z + gw - 1.1]) metals.push(paint(box(bx0, bx1, sill, gTop, zb, zb + 0.8), '#344236'));
     // colliders: the doors at deck level (stop 0.6 m short of them), and the wall's foot below the deck
     for (let z = Z - SPAN.inner; z <= Z + SPAN.inner + 0.01; z += 1.2) addCol({ x: s * (SPAN.gateX - 0.6 + 1.45), z, r: 1.0, y: Y - 0.5, h: 40 });
-    for (let z = F.z0; z <= F.z1; z += 3) addCol({ x: s * (SPAN.gateX + 1.45), z, r: 1.5, y: BOT - 20, h: Y - 1 - (BOT - 20) });
+    for (let z = F.z0; z <= F.z1; z += 3) addCol({ x: s * (SPAN.gateX + 1.45), z, r: 1.5, y: BOT - 20, h: Y - 1 - (BOT - 20), stand: false });
   }
 
   // the rockfall heaped against the east gate: boulders the size of the keep's towers, a few out across the

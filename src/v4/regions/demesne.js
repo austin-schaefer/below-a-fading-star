@@ -385,6 +385,7 @@ function buildBlocks(ctx, rng, low) {
     const it = { x, y, z, sx, sy, sz, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.25, rz: (rng() - 0.5) * 0.3 };
     list.push(it);
     if (big) { ctx.addCollider({ x, z, r: Math.max(sx, sz) * 0.55, y: y - 1, h: sy * 0.5 + 1 }); perches.push(it); }
+    else ctx.addCollider({ x, z, r: Math.min(sx, sz) * 0.5, y: y - 1, h: sy * 0.5 + 1 }); // v8-10: the small ones are knee high and stood on too
   }
   const mesh = instanced(ctx, g, mat, list, { name: 'demesne-blocks', shadow: true });
   return { mesh, perches, count: list.length };

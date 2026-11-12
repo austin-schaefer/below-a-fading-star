@@ -153,7 +153,7 @@ export function buildSexton(ctx, order) {
   // still says turf there)
   let colliders = 0;
   const collide = (s) => {
-    for (const dx of [-0.5, 0.5]) { ctx.addCollider({ x: s.x + dx, z: s.z, r: 0.55 }); ctx.addCollider({ x: s.x + dx, z: heapZ(s), r: 0.45 }); colliders += 2; }
+    for (const dx of [-0.5, 0.5]) { ctx.addCollider({ x: s.x + dx, z: s.z, r: 0.55 }); const hz = heapZ(s), hy = ctx.terrain.heightAt(s.x + dx, hz); ctx.addCollider({ x: s.x + dx, z: hz, r: 0.45, y: hy - 0.5, h: GRAVE.heapH + 0.5 }); colliders += 2; } // v8-10: the heap at its top
     s.collided = true;
   };
   for (let k = 0; k <= OPEN; k++) collide(order[k]);

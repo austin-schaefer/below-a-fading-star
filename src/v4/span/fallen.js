@@ -14,7 +14,7 @@ export function buildFallen(K) {
   const terrain = ctx.terrain, bays = K.bays, P = SPAN.piers;
   // the crack's two broken faces, below the lip (a hop that lands short still catches the deck)
   { const c0 = SPAN.crack.x - SPAN.crack.w / 2, c1 = SPAN.crack.x + SPAN.crack.w / 2;
-    for (let z = Z - SPAN.inner; z <= Z + SPAN.inner + 0.01; z += 1.2) { addCol({ x: c0 - 1.0, z, r: 1.0, y: SPAN.apexY - 8, h: Y - 1.5 - (SPAN.apexY - 8) }); addCol({ x: c1 + 1.0, z, r: 1.0, y: SPAN.apexY - 8, h: Y - 1.5 - (SPAN.apexY - 8) }); } }
+    for (let z = Z - SPAN.inner; z <= Z + SPAN.inner + 0.01; z += 1.2) { addCol({ x: c0 - 1.0, z, r: 1.0, y: SPAN.apexY - 8, h: Y - 1.5 - (SPAN.apexY - 8), stand: false }); addCol({ x: c1 + 1.0, z, r: 1.0, y: SPAN.apexY - 8, h: Y - 1.5 - (SPAN.apexY - 8), stand: false }); } }
   // ---------------------------------------------------------------- the fallen pieces
   // Each collapsed bay's crown, broken into bay-sized pieces (cut from the arch as it stood, so the triangles
   // run on across them) and laid where the plan puts them (span/plan.js SLABS): in the hollow and the tarn's
