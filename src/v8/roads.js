@@ -60,12 +60,12 @@ export async function build(ctx) {
     const p = shaftG.attributes.position;
     for (let i = 0; i < p.count; i++) { const y = p.getY(i); const k = 1 + 0.04 * Math.sin(y * 9.1 + Math.atan2(p.getZ(i), p.getX(i)) * 3); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); }
   }
-  const collarG = new THREE.CylinderGeometry(0.2, 0.15, 0.1, 6, 1).translate(0, 0.01, 0);
-  const headG = new THREE.ExtrudeGeometry(notchShape(HEAD.W, HEAD.Hh, HEAD.apexY, HEAD.half), { depth: HEAD.D, bevelEnabled: false, curveSegments: 1 }).translate(0, 0.05, -HEAD.D / 2);
+  const collarG = new THREE.CylinderGeometry(0.2, 0.15, 0.1, 6, 1).translate(0, -0.02, 0);
+  const headG = new THREE.ExtrudeGeometry(notchShape(HEAD.W, HEAD.Hh, HEAD.apexY, HEAD.half), { depth: HEAD.D, bevelEnabled: false, curveSegments: 1 }).translate(0, 0, -HEAD.D / 2);
   headG.deleteAttribute('uv');
-  const cutG = new THREE.ExtrudeGeometry(cutShape(), { depth: HEAD.D + 0.012, bevelEnabled: false, curveSegments: 1 }).translate(0, 0.05, -HEAD.D / 2 - 0.006);
+  const cutG = new THREE.ExtrudeGeometry(cutShape(), { depth: HEAD.D + 0.012, bevelEnabled: false, curveSegments: 1 }).translate(0, 0, -HEAD.D / 2 - 0.006);
   cutG.deleteAttribute('uv');
-  const beadG = new THREE.IcosahedronGeometry(HEAD.beadR, low ? 1 : 2).scale(1, 1, 0.7).translate(0, 0.05 + HEAD.beadY, 0);
+  const beadG = new THREE.IcosahedronGeometry(HEAD.beadR, low ? 1 : 2).scale(1, 1, 0.7).translate(0, HEAD.beadY, 0);
   const armG = new THREE.BoxGeometry(0.11, 0.1, 0.62).translate(0, 0, 0.31);
   { // the arm's end cut to a point
     const p = armG.attributes.position;
@@ -88,7 +88,9 @@ export async function build(ctx) {
   const tint = (g, k) => col.copy(STONE).lerp(DARK, (g.seed * 7.3) % 1 * 0.35).lerp(LICHEN, k).multiplyScalar(0.92 + ((g.seed * 13.1) % 1) * 0.16).clone();
   const put = (geo, m, c, ground, moss = 0.55) => B.add(geo.clone(), m, { color: c, moss, ground, disp: 0 , flat: true });
   const woodAt = (x, z) => (ctx.regions?.regionAt ? ctx.regions.regionAt(x, z).wood || 0 : 0);
+  const headMs = []; // every standing head's matrix (its frame: HEAD's), for those who perch on them (v8-07's Twk-men)
   const head = (m, g, ground, c, standing) => {
+    if (standing) headMs.push(m.clone());
     put(collarG, m, c, ground);
     put(headG, m, c, ground, 0.35);
     put(cutG, m, CUT, ground, 0.1);
@@ -166,6 +168,8 @@ export async function build(ctx) {
     gnomons: G.map((g) => ({ x: +g.x.toFixed(2), z: +g.z.toFixed(2), y: +g.y.toFixed(2), top: +g.top.toFixed(2), state: g.state, kind: g.kind, visible: g.visible, arms: g.arms.length, lead: g.lead || null })),
     junctions: P.junctions,
     head: { ...HEAD },
+    // the standing heads' matrices, as an instanced mesh would give them (v8-09: the heads are merged into the stone now)
+    heads: { count: headMs.length, getMatrixAt: (i, out) => out.copy(headMs[i]) },
     stats: () => ({ gnomons: G.length, ...counts, junctions: P.junctions.length, arms, beads: beadN, calls: meshes.length, tris: Math.round(tris), colliders, ms: Math.round(performance.now() - t0) }),
   };
   ctx.log(`roads: ${G.length} gnomons (${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', ')}), ${P.junctions.length} junctions, ${arms} arms in ${(performance.now() - t0).toFixed(0)} ms`);
