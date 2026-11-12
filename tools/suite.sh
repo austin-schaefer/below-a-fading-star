@@ -21,8 +21,11 @@ fi
 
 typeset -a names codes passes
 log="$(mktemp)"
+# ONLY=settings,strata tools/suite.sh runs just those lines, with the gate's own arguments: the way to rerun what a
+# small fix touches, and to try a `run` line when you add it (v9 added one with the wrong URL and found out 25 min later)
 run() {
   local name="$1"; shift
+  if [ -n "$ONLY" ] && [[ ",$ONLY," != *",$name,"* ]]; then return; fi
   echo "=== $name"
   nice -n 10 node "$@" 2>&1 | tee "$log"
   codes+=("${pipestatus[1]}")
@@ -30,7 +33,7 @@ run() {
   passes+=("$(grep -c '^PASS' "$log")")
 }
 
-echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")")
+if [ -z "$ONLY" ] || [[ ",$ONLY," == *",releases,"* ]]; then echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")"); fi
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
