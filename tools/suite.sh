@@ -32,6 +32,7 @@ run() {
 
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
+run music-render tools/music-render.mjs all
 run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
