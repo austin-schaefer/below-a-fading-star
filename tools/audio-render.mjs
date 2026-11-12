@@ -76,17 +76,17 @@ const TAP = `class FpTap extends AudioWorkletProcessor {
 }
 registerProcessor('fp-tap', FpTap);`;
 
-async function pageRender(P) {
+// The page is set up once (pageSetup: settle, begin, the master's fade, the event hooks, the tap's worklet) and then
+// captured any number of times (pageCapture): a survey moves the player between poses on the one page instead of
+// loading the world for each.
+async function pageSetup(P) {
   const fp = window.__fp, a = fp.audio, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const info = { notes: [] };
   // the mix at the level it was made at
   try { a.setMuted(false); a.setVolume(1); } catch (e) { info.notes.push('volume: ' + e); }
   // the sun's gutter: held off unless asked for, so two renders of a pose are a fair pair
   const fl = fp.sky?.flicker;
-  if (fl) {
-    fl.next = 1e9; if (fl.phase > 0) { fl.phase = 0; }
-    if (P.gutterHold != null) fl.hold = P.gutterHold;
-  } else if (P.gutter || P.gutterHold != null) info.notes.push('gutter asked for but the page has no sky (only=?): none rendered');
+  if (fl) { fl.next = 1e9; if (fl.phase > 0) fl.phase = 0; }
   // headless Chromium here: starting the page's audio in the first seconds after body.ready stalls the main thread
   // (frames at 1-15 fps and timers seconds late, so walks crawl and cues fire late); after ~6 s it does not
   await sleep(P.settle * 1000);
@@ -96,35 +96,51 @@ async function pageRender(P) {
   await ac.resume();
   { let n = 0, on = true; const c = () => { n++; if (on) requestAnimationFrame(c); }; requestAnimationFrame(c); await sleep(4500); on = false; info.fpsFade = n / 4.5; } // the master fades in over 4 s
   info.state = ac.state; info.sampleRate = ac.sampleRate;
-
-  // ---- the event log (times on the audio clock; made relative to the first sample at the end)
-  const events = [], cp = fp.camera.position, named = new WeakMap(), seen = new WeakSet();
+  // ---- the event log (times on the audio clock; made relative to the first sample at each capture's end)
+  const R = (window.__rig = { events: [], named: new WeakMap(), seen: new WeakSet(), useWorklet: true, info });
+  const cp = fp.camera.position;
   const dist = (p) => (p && typeof p === 'object' && 'x' in p ? Math.hypot(p.x - cp.x, (p.y ?? cp.y) - cp.y, p.z - cp.z) : null);
-  const cue0 = a.cue;
+  R.cue0 = a.cue; R.step0 = fp.player.onStep;
   a.cue = function (name, pos, opts) {
     const had = new Set(a.voices);
-    events.push({ kind: 'cue', at: ac.currentTime, name, d: dist(pos), opts: opts ?? null });
-    const r = cue0.apply(this, arguments);
-    for (const v of a.voices) if (!had.has(v)) named.set(v, name);
+    R.events.push({ kind: 'cue', at: ac.currentTime, name, d: dist(pos), opts: opts ?? null });
+    const r = R.cue0.apply(this, arguments);
+    for (const v of a.voices) if (!had.has(v)) R.named.set(v, name);
     return r;
   };
-  const step0 = fp.player.onStep;
-  fp.player.onStep = function (h) { events.push({ kind: 'step', at: ac.currentTime, hurrying: !!h }); return step0?.apply(this, arguments); };
-  a.onToe = (t) => events.push({ kind: 'step', at: t, toe: true }); // the hurried step's toe (steps.js)
-  for (const v of a.voices) seen.add(v);
-
-  // ---- the taps
-  let useWorklet = true;
+  fp.player.onStep = function (h) { R.events.push({ kind: 'step', at: ac.currentTime, hurrying: !!h }); return R.step0?.apply(this, arguments); };
+  a.onToe = (t) => R.events.push({ kind: 'step', at: t, toe: true }); // the hurried step's toe (steps.js)
+  // ---- the tap's worklet
   try { await ac.audioWorklet.addModule(URL.createObjectURL(new Blob([P.tapCode], { type: 'application/javascript' }))); }
-  catch (e) { useWorklet = false; info.notes.push('AudioWorklet failed (' + e + '): ScriptProcessor'); }
-  info.tap = useWorklet ? 'AudioWorklet' : 'ScriptProcessor';
-  const frames = Math.round(P.seconds * ac.sampleRate), sink = ac.createGain(); sink.gain.value = 0; sink.connect(ac.destination);
+  catch (e) { R.useWorklet = false; info.notes.push('AudioWorklet failed (' + e + '): ScriptProcessor'); }
+  info.tap = R.useWorklet ? 'AudioWorklet' : 'ScriptProcessor';
+  R.sink = ac.createGain(); R.sink.gain.value = 0; R.sink.connect(ac.destination);
+  return { info };
+}
+
+async function pageCapture(P) {
+  const fp = window.__fp, a = fp.audio, R = window.__rig, ac = a.ctx, sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const info = { notes: [...R.info.notes], sampleRate: ac.sampleRate, state: ac.state, tap: R.info.tap, fpsFade: R.info.fpsFade }, cp = fp.camera.position, fl = fp.sky?.flicker;
+  // ---- move to the pose (as the url's pos= and yaw= would put it), let the bed settle on it
+  if (P.pose) {
+    const pl = fp.player, t = fp.terrain, { x, z } = P.pose;
+    pl.keys.clear(); pl.pos.set(x, t.heightAt(x, z) + pl.eye, z); pl.vel.set(0, 0, 0); pl.vy = 0; pl.onGround = true; pl.hopping = false; pl.onTop = false;
+    if (P.pose.yaw != null) pl.yaw = P.pose.yaw;
+    pl.pitch = P.pose.pitch ?? 0;
+  }
+  if (fl) { fl.next = 1e9; if (fl.phase > 0) fl.phase = 0; fl.hold = P.gutterHold != null ? P.gutterHold : null; }
+  else if (P.gutter || P.gutterHold != null) info.notes.push('gutter asked for but the page has no sky (only=?): none rendered');
+  if (P.between > 0) await sleep(P.between * 1000);
+  R.events.length = 0; for (const v of a.voices) R.seen.add(v);
+  const events = R.events;
+  // ---- the taps
+  const frames = Math.round(P.seconds * ac.sampleRate), sink = R.sink, useWorklet = R.useWorklet;
   const mkTap = (node) => {
     const t = { L: [], R: [], n: 0, t0: null, f0: null, done: false };
     if (useWorklet) {
       const w = new AudioWorkletNode(ac, 'fp-tap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit', channelInterpretation: 'speakers' });
       w.port.onmessage = (e) => { const d = e.data; if (d.t0 != null) { t.t0 = d.t0; t.f0 = d.f0; } if (d.L) { t.L.push(d.L); t.R.push(d.R); t.n += d.L.length; } if (d.done) t.done = true; };
-      node.connect(w); w.connect(sink); t.node = w; t.start = () => w.port.postMessage({ frames });
+      node.connect(w); w.connect(sink); t.node = w; t.src = node; t.start = () => w.port.postMessage({ frames });
     } else {
       const sp = ac.createScriptProcessor(4096, 2, 2); let on = false;
       sp.onaudioprocess = (e) => {
@@ -134,13 +150,14 @@ async function pageRender(P) {
         t.L.push(ib.getChannelData(0).slice(0, m)); t.R.push((ib.numberOfChannels > 1 ? ib.getChannelData(1) : ib.getChannelData(0)).slice(0, m));
         t.n += m; if (t.n >= frames) t.done = true;
       };
-      node.connect(sp); sp.connect(sink); t.node = sp; t.start = () => { on = true; };
+      node.connect(sp); sp.connect(sink); t.node = sp; t.src = node; t.start = () => { on = true; };
     }
     return t;
   };
   // --tap=cue: the cue bus alone (through its analyser, which passes its input on) at the master's gain, so a one-shot
   // reads against silence at the level it reaches the limiter; anything wired past the cue bus is not in it
-  const cueOnly = () => { const g = ac.createGain(); g.gain.value = a.master.gain.value; a.cueAnalyser.connect(g); return g; };
+  let cueGain = null;
+  const cueOnly = () => { cueGain = ac.createGain(); cueGain.gain.value = a.master.gain.value; a.cueAnalyser.connect(cueGain); return cueGain; };
   const taps = [mkTap(P.cueTap ? cueOnly() : P.pre ? a.master : a.vol)];
   if (P.pre) taps.push(mkTap(a.vol));
 
@@ -167,12 +184,12 @@ async function pageRender(P) {
       if (!gut && fl.phase > 0) gut = { kind: 'gutter', at: ac.currentTime, len: fl.len, floorAt: null, endAt: null, minValue: fl.value };
       if (gut) { gut.minValue = Math.min(gut.minValue, fl.value); if (gut.floorAt == null && fl.value < 0.5) gut.floorAt = ac.currentTime; if (gut.endAt == null && fl.phase <= 0) gut.endAt = ac.currentTime; }
     }
-    for (const v of a.voices) if (!seen.has(v)) { seen.add(v); events.push({ kind: 'voice', at: v.t0, name: named.get(v) || '', d: v.d }); }
+    for (const v of a.voices) if (!R.seen.has(v)) { R.seen.add(v); events.push({ kind: 'voice', at: v.t0, name: R.named.get(v) || '', d: v.d }); }
     await sleep(15);
   }
   raf = false;
   if (P.walk) { fp.player.keys.delete('KeyW'); fp.player.keys.delete('ShiftLeft'); }
-  a.cue = cue0; fp.player.onStep = step0;
+  if (fl) { fl.next = 1e9; fl.phase = 0; fl.hold = null; } // a gutter started here does not run on into the next pose
   if (gut) events.push(gut);
   info.wallSeconds = (performance.now() - wall0) / 1000;
   info.fps = frames0 / info.wallSeconds;
@@ -189,47 +206,77 @@ async function pageRender(P) {
   // the PCM, as base64 of Float32 per channel
   const b64 = (chunks, n) => { const f = new Float32Array(n); let o = 0; for (const c of chunks) { f.set(c.subarray(0, Math.min(c.length, n - o)), o); o += c.length; if (o >= n) break; } const u8 = new Uint8Array(f.buffer); let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
   const pcm = taps.map((t) => ({ n: Math.min(t.n, frames), f0: t.f0, t0: t.t0, done: t.done, L: b64(t.L, Math.min(t.n, frames)), R: b64(t.R, Math.min(t.n, frames)) }));
-  taps.forEach((t) => { try { t.node.disconnect(); } catch (e) { /* gone */ } });
+  taps.forEach((t) => { try { t.src.disconnect(t.node); } catch (e) { /* gone */ } try { t.node.disconnect(); } catch (e) { /* gone */ } });
+  if (cueGain) { try { a.cueAnalyser.disconnect(cueGain); } catch (e) { /* gone */ } }
   return { info, events: rel, pcm, startAudioTime: T0, contextTime: ac.currentTime };
 }
 
 // ------------------------------------------------------------------------------------------------ the node side
 const f32 = (b) => { const buf = Buffer.from(b, 'base64'); return new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4); };
-export async function render(browser, url, out, options = {}, { quiet = false } = {}) {
-  const P = plan(options), u = withWalk(url, P), t0 = Date.now();
-  const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
+
+// One page, many captures. `url` is the first pose's page (?q=low&pos=..&yaw=..); each capture takes the options of a
+// render plus `pose: { x, z, yaw, pitch }` to move the player there first, and `between` seconds (default 8) to let the
+// bed settle on the new place before the tap starts. A capture needs the url's own parameters to be the session's
+// (`?speed=` for a walk at other than 3.6 or 6.6 m/s cannot change on a live page): sessionFits() says which do.
+export const BETWEEN = 8;
+export function sessionFits(p) { const P = plan(p); return !P.walk || Math.abs(P.walk / (P.walk > 3.6 ? 6.6 : 3.6) - 1) < 1e-6; }
+export async function openSession(browser, url, first = {}) {
+  const P0 = plan(first), settle = P0.settle, u = withWalk(url, { ...P0, gutter: true }), t0 = Date.now(), page = await browser.newPage({ viewport: { width: 640, height: 360 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 300)); });
+  let up = false;
   try {
     await page.goto(u, { waitUntil: 'load', timeout: 180000 });
     await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
     const loadS = (Date.now() - t0) / 1000;
-    const res = await page.evaluate(pageRender, { ...P, tapCode: TAP });
-    if (res.error) throw new Error(res.error);
-    const sr = res.info.sampleRate, [main, post] = res.pcm;
-    if (!main.done || main.n < Math.round(P.seconds * sr) * 0.98) throw new Error(`tap stopped short: ${main.n} of ${Math.round(P.seconds * sr)} frames`);
-    const chans = (t, skip = 0) => { const L = f32(t.L), R = f32(t.R); return [L.subarray(skip), R.subarray(skip)]; };
-    // the two taps of a --pre render start on their own render quanta: line them up by the frame each began on
-    let skipMain = 0, skipPost = 0;
-    if (post) { const d = (post.f0 ?? 0) - (main.f0 ?? 0); if (d > 0) skipMain = d; else skipPost = -d; }
-    const mono = (c) => { const m = new Float32Array(c[0].length); for (let i = 0; i < m.length; i++) m[i] = (c[0][i] + c[1][i]) / 2; return [m]; };
-    let C = chans(main, skipMain); if (P.mono) C = mono(C);
-    writeWav(out, C, sr, { float: P.pre });
-    let postFile = null;
-    if (post) { let D = chans(post, skipPost); if (P.mono) D = mono(D); const n = Math.min(C[0].length, D[0].length); D = D.map((c) => c.subarray(0, n)); postFile = out.replace(/\.wav$/i, '') + '.post.wav'; writeWav(postFile, D, sr, { float: true }); }
-    const log = {
-      url: u, options: Object.fromEntries(Object.entries(options).filter(([k]) => k !== 'tapCode')), plan: P, sampleRate: sr, seconds: C[0].length / sr,
-      tap: P.pre ? 'master (pre-limiter)' : 'vol (post-limiter)', tapNode: res.info.tap, postFile: postFile && path.basename(postFile), alignedFrames: skipMain || skipPost || 0,
-      startAudioTime: +res.startAudioTime.toFixed(4), rendered: new Date().toISOString(), loadSeconds: +loadS.toFixed(1), wallSeconds: +res.info.wallSeconds.toFixed(1),
-      fps: +res.info.fps.toFixed(1), fpsFade: +res.info.fpsFade.toFixed(1), contextState: res.info.state, pose: res.info.pose, region: res.info.region, gutter: res.info.gutter,
-      seed: P.seed != null ? `${P.seed} (not a page parameter: ignored; renders are reproducible by url, options and length)` : null,
-      notes: [...res.info.notes, ...(res.info.fps < 30 ? [`the page ran at ${res.info.fps.toFixed(1)} fps during the render: walks and frame-driven schedulers ran slow`] : [])], errors, counts: res.events.reduce((m, e) => ((m[e.kind] = (m[e.kind] || 0) + 1), m), {}), events: res.events,
+    const setup = await page.evaluate(pageSetup, { settle, tapCode: TAP });
+    if (setup.error) throw new Error(setup.error);
+    up = true;
+    const S = { page, url: u, loadS, setup: setup.info, errors, captures: 0 };
+    S.capture = async (out, options = {}, { quiet = false } = {}) => {
+      const P = plan({ ...options, settle: undefined });
+      P.pose = options.pose || null; P.between = S.captures === 0 ? 0 : options.between ?? BETWEEN;
+      const res = await page.evaluate(pageCapture, P);
+      S.captures++;
+      if (res.error) throw new Error(res.error);
+      return finish(res, out, options, P, u, S.captures === 1 ? loadS : 0, errors, quiet);
     };
-    fs.writeFileSync(out.replace(/\.wav$/i, '') + '.json', JSON.stringify(log, null, 1));
-    if (!quiet) console.log(`${out}: ${log.seconds.toFixed(2)} s at ${sr} Hz (${log.tap}, ${log.tapNode}), load ${log.loadSeconds} s, ${log.fpsFade}/${log.fps} fps; events ${JSON.stringify(log.counts)}${typeof log.gutter === 'object' && log.gutter.start != null ? `; gutter ${log.gutter.start.toFixed(1)}-${log.gutter.end?.toFixed(1)} s` : ''}${postFile ? '; post: ' + postFile : ''}${errors.length ? `; ${errors.length} page errors` : ''}`);
-    return log;
-  } finally { await page.close(); }
+    S.close = () => page.close();
+    return S;
+  } catch (e) { await page.close(); throw e; }
+}
+
+// the WAVs and the log from a capture's result
+function finish(res, out, options, P, u, loadS, errors, quiet) {
+  const sr = res.info.sampleRate, [main, post] = res.pcm;
+  if (!main.done || main.n < Math.round(P.seconds * sr) * 0.98) throw new Error(`tap stopped short: ${main.n} of ${Math.round(P.seconds * sr)} frames`);
+  const chans = (t, skip = 0) => { const L = f32(t.L), R = f32(t.R); return [L.subarray(skip), R.subarray(skip)]; };
+  // the two taps of a --pre render start on their own render quanta: line them up by the frame each began on
+  let skipMain = 0, skipPost = 0;
+  if (post) { const d = (post.f0 ?? 0) - (main.f0 ?? 0); if (d > 0) skipMain = d; else skipPost = -d; }
+  const mono = (c) => { const m = new Float32Array(c[0].length); for (let i = 0; i < m.length; i++) m[i] = (c[0][i] + c[1][i]) / 2; return [m]; };
+  let C = chans(main, skipMain); if (P.mono) C = mono(C);
+  writeWav(out, C, sr, { float: P.pre });
+  let postFile = null;
+  if (post) { let D = chans(post, skipPost); if (P.mono) D = mono(D); const n = Math.min(C[0].length, D[0].length); D = D.map((c) => c.subarray(0, n)); postFile = out.replace(/\.wav$/i, '') + '.post.wav'; writeWav(postFile, D, sr, { float: true }); }
+  const log = {
+    url: u, options: Object.fromEntries(Object.entries(options).filter(([k]) => k !== 'tapCode')), plan: P, sampleRate: sr, seconds: C[0].length / sr,
+    tap: P.pre ? 'master (pre-limiter)' : 'vol (post-limiter)', tapNode: res.info.tap, postFile: postFile && path.basename(postFile), alignedFrames: skipMain || skipPost || 0,
+    startAudioTime: +res.startAudioTime.toFixed(4), rendered: new Date().toISOString(), loadSeconds: +loadS.toFixed(1), wallSeconds: +res.info.wallSeconds.toFixed(1),
+    fps: +res.info.fps.toFixed(1), fpsFade: +res.info.fpsFade.toFixed(1), contextState: res.info.state, pose: res.info.pose, region: res.info.region, gutter: res.info.gutter,
+    seed: P.seed != null ? `${P.seed} (not a page parameter: ignored; renders are reproducible by url, options and length)` : null,
+    notes: [...res.info.notes, ...(res.info.fps < 30 ? [`the page ran at ${res.info.fps.toFixed(1)} fps during the render: walks and frame-driven schedulers ran slow`] : [])], errors: errors.slice(), counts: res.events.reduce((m, e) => ((m[e.kind] = (m[e.kind] || 0) + 1), m), {}), events: res.events,
+  };
+  fs.writeFileSync(out.replace(/\.wav$/i, '') + '.json', JSON.stringify(log, null, 1));
+  if (!quiet) console.log(`${out}: ${log.seconds.toFixed(2)} s at ${sr} Hz (${log.tap}, ${log.tapNode}), load ${log.loadSeconds} s, ${log.fpsFade}/${log.fps} fps; events ${JSON.stringify(log.counts)}${typeof log.gutter === 'object' && log.gutter.start != null ? `; gutter ${log.gutter.start.toFixed(1)}-${log.gutter.end?.toFixed(1)} s` : ''}${postFile ? '; post: ' + postFile : ''}${errors.length ? `; ${errors.length} page errors` : ''}`);
+  return log;
+}
+
+// one render on a page of its own (the old path; a survey pose that cannot share a page, or --fresh)
+export async function render(browser, url, out, options = {}, { quiet = false } = {}) {
+  const S = await openSession(browser, url, options);
+  try { return await S.capture(out, options, { quiet }); } finally { await S.close(); }
 }
 
 async function main() {

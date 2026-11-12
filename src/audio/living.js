@@ -196,7 +196,7 @@ export function startLiving(k) {
     if (L.out) return;
     L.out = gainOf(0.0001);
     L.pan = ac.createPanner(); L.pan.panningModel = 'equalpower'; L.pan.distanceModel = 'linear'; L.pan.refDistance = o.ref; L.pan.rolloffFactor = 1; L.pan.maxDistance = L.range;
-    chain(L.out, L.pan, k.cueBus); if (o.verb) chain(L.pan, gainOf(o.verb), k.verbIn);
+    chain(L.out, L.pan, k.cueBus); if (o.verb) chain(L.pan, gainOf(o.verb), k.fxVerb); // a figure: the Effects slider
     L.into = o.build(L.out);
   }
   function open(L) {

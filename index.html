@@ -100,6 +100,19 @@
   .set-choice { display: flex; gap: 8px; }
   .set-choice button { flex: 1; }
   .set-note { margin: 0.4em 0 0; font-style: italic; font-size: 0.85rem; color: rgba(219, 170, 134, 0.6); }
+  /* the Sound group (v9-M6): the volume and mute first and full-size; under them, set in behind a rule, its three parts, smaller and lighter */
+  .set-parts { margin: 4px 0 0 4px; padding-left: 12px; border-left: 1px solid rgba(255, 154, 92, 0.22); }
+  .set-part { display: flex; align-items: center; gap: 10px; }
+  .set-part label { flex: 0 0 7.4em; font-size: 0.85rem; line-height: 1.1; color: rgba(217, 205, 180, 0.72); }
+  .set-part label small { display: block; font-size: 0.72rem; font-style: italic; color: rgba(219, 170, 134, 0.55); }
+  .set-part input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: #b8714a; touch-action: manipulation; }
+  .set-part output { min-width: 2.4em; text-align: right; font-size: 0.8rem; font-variant-numeric: tabular-nums; color: rgba(219, 170, 134, 0.6); }
+  .set-part-sub { padding-left: calc(6.3rem + 10px); }
+  .set-part-sub .set-choice { gap: 6px; }
+  #settings-panel .set-part-sub button { flex: 1; font-size: 0.82rem; padding: 0.2em 0.3em; color: rgba(255, 233, 219, 0.8); border-color: rgba(255, 154, 92, 0.28); }
+  .set-part-sub .set-note { margin-top: 0.3em; font-size: 0.78rem; }
+  .set-dim { opacity: 0.38; transition: opacity 0.3s; }
+  @media (max-width: 420px) { .set-part-sub { padding-left: 0; } }
   #set-pos { font-family: ui-monospace, monospace; font-size: 0.8rem; color: rgba(217, 205, 180, 0.75); margin: 0 0 0.2em; min-height: 1.2em; }
   #set-places h4 { grid-column: 1 / -1; margin: 0.7em 0 0.1em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 0.72rem; letter-spacing: 0.2em; color: rgba(217, 205, 180, 0.5); }
   #posline { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); display: none; font-family: 'Alegreya', serif; font-size: 0.8rem; letter-spacing: 0.06em; color: rgba(219,170,134,0.45); text-shadow: 0 1px 6px rgba(0,0,0,0.8); pointer-events: none; z-index: 5; }
@@ -160,6 +173,13 @@
   <div id="set-pos" aria-live="off"></div>
   <h3>Sound</h3>
   <div class="set-row"><input id="set-volume" type="range" min="0" max="100" step="1" value="100" aria-label="volume"><output id="set-volume-out" for="set-volume">100</output><button id="set-mute" type="button" aria-pressed="false">Mute</button></div>
+  <div class="set-parts" role="group" aria-label="parts of the sound">
+    <div class="set-part"><label for="set-level-effects">Sound effects</label><input id="set-level-effects" data-level="effects" type="range" min="0" max="100" step="1" value="100"><output for="set-level-effects">100</output></div>
+    <div class="set-part"><label for="set-level-ambience">Ambience</label><input id="set-level-ambience" data-level="ambience" type="range" min="0" max="100" step="1" value="100"><output for="set-level-ambience">100</output></div>
+    <div class="set-part"><label for="set-level-music">Music <small>(experimental)</small></label><input id="set-level-music" data-level="music" type="range" min="0" max="100" step="1" value="100"><output for="set-level-music">100</output></div>
+    <div class="set-part-sub"><div class="set-choice" id="set-music" role="group" aria-label="music: off, or how often it comes"></div>
+    <p class="set-note">Early pieces by the agents who built this place, still being worked on. Off unless you turn it on.</p></div>
+  </div>
   <h3>Quality</h3>
   <div class="set-choice" id="set-quality" role="group" aria-label="quality"></div>
   <p class="set-note">Reloads the page and brings you back to where you stand.</p>

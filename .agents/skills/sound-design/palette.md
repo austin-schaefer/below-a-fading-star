@@ -32,6 +32,7 @@ The living (`src/audio/living.js`) each have a signature made of two or three ev
 - Not a nature documentary: no birdsong chorus, no crickets at the ear, no cheerful water.
 - Not a horror drone: the drone is a floor you forget, not a wall.
 - Not musical: no melody, no chord progression, no pulse. The carillon is the one thing that nearly is, and only when you run its row.
+- Music (v9) is the one exception, and it is not in the world: its own rules, gates and tools are in the `music` skill (`.agents/skills/music/SKILL.md`).
 - Not a crowd: never more than two or three things at once that are not the bed.
 
 ## Levels, in words

@@ -11,11 +11,28 @@ Released <YYYY-MM-DD>.
 
 <One or two plain sentences on what the release adds.>
 
-- **<What a visitor finds or notices, in plain words>**: <One or two sentences: what it is and where.>
-- ... three to seven of these; a small hotfix may have one.
+### New
+
+- **<What a visitor can now find or do, in plain words>**: <One or two sentences: what it is and where.>
+
+### Fixed
+
+- **<What was wrong, as a visitor saw it>**: <What it is like now.>
+
+### Behind the scenes
+
+- <One line each: changes to how the walk is built that no visitor sees (the harness, tools, skills, release process).>
 
 Known issues: <one to three plain items, only if they matter to a visitor>.
 ```
+
+Three kinds of thing, kept apart (the owner, 2026-11-11: "right now release notes mix new things, harness work, and bugs. let's split them out"):
+
+- **New**: things added for a visitor. Three to seven bullets in a milestone.
+- **Fixed**: bugs and tweaks, the owner's small issues among them. A changed look counts as a fix when it answers a complaint ("the boulders were too loud"), as new when it adds something to find.
+- **Behind the scenes**: the harness. Short, one line each, still in plain words; engineering detail stays in the milestone doc.
+
+Leave out a heading that has nothing under it: a hotfix is usually only **Fixed**, and with a single kind and one or two bullets the heading may be dropped. Headings are `###`, never `##` (the release tools read `## v` as the start of an entry).
 
 The owner's example:
 
@@ -50,6 +67,7 @@ And for what fell short (v7.2), don't: "**Known and left:** the places' rooms ar
 ## Steps
 
 1. Write the entry at the top of `RELEASES.md` in the release PR, from the milestone doc's Status.
-2. Check it: `tools/gh-release.sh --dry-run <version>` shows the notes as GitHub will.
-3. After the release PR merges, run `tools/gh-release.sh <version>`: it creates the release and its tag on the merge commit (or edits the release if it exists).
-4. Close the issues the release ships, linking the release.
+2. In the same PR, add the release's line at the top of `README.md`'s Milestones: `- [v<N>: <the entry's title>](https://github.com/<owner>/<repo>/releases/tag/v<N>). <One plain sentence.>` The title is the entry's, exactly; the sentence is the shortest plain summary, in the owner's voice ("Soundscape level-up.", "Fixed the peafowl."). Every release has one, a hotfix included. `tools/release-check.sh` (run by the gate) checks every entry has its line and the newest is first.
+3. Check it: `tools/gh-release.sh --dry-run <version>` shows the notes as GitHub will.
+4. After the release PR merges, run `tools/gh-release.sh <version>`: it creates the release and its tag on the merge commit (or edits the release if it exists).
+5. Close the issues the release ships, linking the release.

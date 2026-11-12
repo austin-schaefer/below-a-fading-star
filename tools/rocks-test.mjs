@@ -2,7 +2,8 @@
 // v8-11, the rocks (src/rocks.js, src/v8/clearings.js; issues #11 and #12): at each tier, no stone's or boulder's footprint
 // (ctx.rocks: centre and radius) reaches the Leerie's walked line or his standards (2 m to spare), the Thurifer's P3
 // (2 m), any other road's tread (0.5 m), the causeway (2.5 m from its line), or a built place (the two graveyards, the
-// Pomegranate House and its gate, the Collation, the shrine, the court, the keep, the Demesne lawn); the common keeps
+// Pomegranate House and its gate, the Collation, the shrine, the court, the keep, the Demesne lawn); nothing, pebbles and
+// trees included, within a metre of the Long Figure's chalk (v9, #16; its shape from figure.js); the common keeps
 // at most COMMON_MAX boulders and the map at most a BIG_SHARE of what ?rockcut=0 places; the lichen's full patch is
 // under LICHEN_MAX times the stone's luminance (rocks.js and the regions' shared stone), where v8-10's was about 11x.
 // The geometry is taken from the places' own modules, not from clearings.js, so the table is checked, not echoed.
@@ -40,6 +41,7 @@ const survey = async (page) => page.evaluate(async () => {
   const { COLLATION } = await import('/src/v5/dressing/collation.js');
   const { commonAt } = await import('/src/v8/places.js');
   const { LICHEN_CAP } = await import('/src/v4/regions/common.js');
+  const { onFigure } = await import('/src/v4/dressing/figure.js');
   const segD = (x, z, ax, az, bx, bz) => { const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2)); return Math.hypot(x - ax - ex * t, z - az - ez * t); };
   const lineD = (x, z, S) => { let d = Infinity; for (let i = 0; i < S.length - 1; i++) d = Math.min(d, segD(x, z, S[i].x, S[i].z, S[i + 1].x, S[i + 1].z)); return d; };
   // the Leerie's line and his standards' line (lights.js and leerie.js: the standards LEERIE.side east of K1, he 0.6 m nearer)
@@ -71,6 +73,11 @@ const survey = async (page) => page.evaluate(async () => {
     if (fp.terrain.causewayDistance(x, z) - r < 2.5) bad.causeway.push(tag);
     for (const [name, f] of places) if (f(x, z, r)) (bad.places[name] ||= []).push(tag);
   }
+  // the Long Figure (v9, #16): every rock class, and every drawn tree's trunk, a metre clear of his chalk
+  const onHim = [...items, ...(R.pebbles || []).map((b) => ({ ...b, cls: 'pebble' }))].filter((it) => onFigure(it.x, it.z, it.r + 1, fp.terrain)).map((it) => `${it.cls} (${it.x}, ${it.z}) r ${it.r}`);
+  const veg = window.__vegParts?.trees?.trees;
+  const treesOnHim = veg ? veg.filter((t) => !t.hidden && onFigure(t.x, t.z, 1, fp.terrain)).map((t) => `${t.kind} (${t.x.toFixed(1)}, ${t.z.toFixed(1)})`) : null;
+  bad.figure = { rocks: onHim, pebbles: !!R.pebbles, trees: treesOnHim };
   const common = R.boulders.filter((b) => fp.regions.regionAt(b.x, b.z).moor > 0.5 && commonAt(b.x, b.z, fp.terrain.causewayDistance(b.x, b.z)) > 0.5).length;
   const C = new fp.THREE.Color(R.rock), Y = [0.2126, 0.7152, 0.0722], lum = (c) => c[0] * Y[0] + c[1] * Y[1] + c[2] * Y[2];
   const stone = [C.r, C.g, C.b], lic = R.lichen;
@@ -97,6 +104,8 @@ for (const q of tiers) {
   ok(!s.bad.causeway.length, `${q}: nor within 2.5 m of the causeway's line${list(s.bad.causeway)}`);
   const pl = Object.entries(s.bad.places);
   ok(!pl.length, `${q}: none in a built place${pl.length ? ': ' + pl.map(([k, v]) => `${k} ${v.length} (${v[0]})`).join('; ') : ''}`);
+  ok(s.bad.figure.pebbles && !s.bad.figure.rocks.length, `${q}: no rock, pebbles included, within 1 m of the Long Figure's chalk${list(s.bad.figure.rocks)}`);
+  ok(s.bad.figure.trees && !s.bad.figure.trees.length, `${q}: nor any tree${list(s.bad.figure.trees || ['vegetation not loaded'])}`);
   ok(s.common <= COMMON_MAX, `${q}: ${s.common} boulders on the grazed common (at most ${COMMON_MAX})`);
   ok(s.bloom !== null && s.bloom < LICHEN_MAX, `${q}: the lichen's full patch is ${s.bloom}x the stone's luminance (under ${LICHEN_MAX}; v8-10's was ${s.old}x)`);
   ok(s.rust !== null && s.rust < LICHEN_MAX, `${q}: the rust crust's is ${s.rust}x`);

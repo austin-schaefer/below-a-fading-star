@@ -4,11 +4,38 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v9: Sound sliders, and music you can switch on
+
+Released 2026-11-11.
+
+Adds separate volume controls and a first, experimental try at music, which is off unless you turn it on.
+
+### New
+
+- **Separate volume sliders**: Under the main volume in the settings menu (the gear button) there are now three smaller sliders: Sound effects (footsteps, calls, the figures), Ambience (wind, the low drone, the sound of each place) and Music.
+- **Music, experimental and off by default**: Nine slow pieces, one for each kind of country (the open moor, the wood, the wet places, the cold ones, the gardens, the dry ground) and one each for the Great Span (the giant bridge), Carcanet Keep and the gap in the mountains where the sun sits. Turn it on in the settings menu and choose how often it plays: rare, default or frequent. A piece arrives unannounced, plays for two or three minutes, and then the land is left alone for a long while. It falls silent whenever the sun gutters (dims for a few seconds).
+
+### Fixed
+
+- **Shafts of light in the wood**: The ember shafts in the Deodand Wood, the dark forest, now fall from the treetops instead of starting in mid-air, and fade as you leave the wood.
+- **Quieter footsteps**: Your own footsteps, and those of the figures who walk the roads, are a little quieter on every surface.
+- **The white figure on the mountain**: The pale figure cut into the eastern slope is clear of the rocks and plants that sat on it.
+
+### Behind the scenes
+
+- The agents that build the walk now keep a library of the world's stories and short guides to its look and its music, to help new work connect to what is already here.
+- Future milestones are no longer planned in a fixed order: each is chosen when it starts, from the owner's open ideas and the agents' own.
+- Release notes are split into New, Fixed and Behind the scenes, and the README lists every release with a link to its notes.
+
+Known issues: the music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
+
 ## v8: One world
 
 Released 2026-11-11.
 
 Ties the world together: roads that lead somewhere, peoples whose buildings and clothes you can tell apart, places that look different from one another, and stories that start in one place and end in another.
+
+### New
 
 - **Roads to every place**: Worn tracks run from the causeway (the old raised road past the keep) out to the named places and join up, marked by waystones carved with a sun sitting in a notch. The same sign turns up on buildings and badges across the map.
 - **Places that look different**: Pale grazed turf round Carcanet Keep (the great stone keep you start beside), a rank green orchard, a shaven lawn, striped terraced fields, a near-black wood with shafts of ember light, redder clay, whiter salt. Before, most of the map was the same violet grass.
@@ -17,7 +44,17 @@ Ties the world together: roads that lead somewhere, peoples whose buildings and 
 - **Stories with two ends**: A traveller's boots and pack on the Great Span (the giant bridge), and his body far below; a chair missing from a table laid for twelve; a painter's abandoned canvases along the road that leads to him.
 - **Twk-men**: Thumb-high riders on dragonflies fly out to look at you and squabble over spilt salt.
 - **Hop onto low things**: Low walls, boulders, fallen stones and the bridge's parapet can now be hopped onto and walked along. Mind the parapet: the fall is real.
-- **Calmer rocks**: The white-blotched boulders that could be seen from across the map are now plain weathered stone, there are about a third as many, and they stand in outcrops instead of everywhere. None sit in the graveyard, on the roads or in the lamplighter's way, and the gaps at the tops of the crystals are closed.
+
+### Fixed
+
+- **Calmer rocks**: The white-blotched boulders that could be seen from across the map are now plain weathered stone, there are about a third as many, and they stand in outcrops instead of everywhere. None sit in the graveyard or on the roads.
+- **The lamplighter's rock**: The Leerie, the lamplighter near the keep, no longer walks through a boulder on his row of lamps.
+- **Crystal tops**: The gaps at the tops of the crystals in the Lattice (the crystal field) are closed.
+
+### Behind the scenes
+
+- Every release note was rewritten for visitors, and each version is now published as a GitHub release.
+- The owner's issues are sorted and labelled as they arrive, and the repository takes issues and pull requests from the owner only.
 
 Known issues: the traveller below the Span is very hard to spot from the bridge deck; the Twk-men are tiny unless you are close; a few low things (some grave kerbs, the sunken wall round the lawns, the causeway's edge) still cannot be hopped onto; the wood is very dark away from its shafts of light.
 
