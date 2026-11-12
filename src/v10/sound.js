@@ -17,6 +17,7 @@
 import { softKit } from '../audio/cues-v2.js';
 import { startCentralSound } from './sound-central.js'; // v10-A1: act-crystal, act-crystal-ring, act-knock, act-answer, act-plate
 import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, act-pinch, act-tribute
+import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -90,10 +91,12 @@ export function startActsSound(a, ctx) {
     }
   }
 
+  const bell = startBellSound(a, ctx); // its own rng
   const central = startCentralSound(a, ctx); // v10-A1
   function cue(name, pos, opts) {
     if (central.cue(name, pos, opts)) return; // v10-A1
-    if (name === 'act-offer') offer(pos);
+    if (name.startsWith('act-bell')) bell.cue(name, pos, opts);
+    else if (name === 'act-offer') offer(pos);
     else if (name === 'act-chalk') chalk(pos, opts);
     else if (name === 'act-winch') winch(pos, opts);
     else if (name === 'act-murmur') murmur(pos);

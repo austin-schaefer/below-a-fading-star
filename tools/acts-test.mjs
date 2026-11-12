@@ -504,6 +504,84 @@ await seeded('ridden', () => { try { if (!sessionStorage.getItem('seeded')) { lo
   });
 // ------------------------------------------------------------------ v10-A1: the crystal and the door (tools/acts-central.mjs)
 if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).centralRows({ browser, base, check, watch });
+// ------------------------------------------------------------------ v10-A3 the bell under the Span (src/v10/bell.js)
+{
+  const c = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const p = await c.newPage(); watch(p, 'bell');
+  await p.goto(`${base}/?q=low&pos=-33,204`, { waitUntil: 'load', timeout: 60000 });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.bell && window.__fp.acts, null, { timeout: 300000 });
+  await begin(p);
+  const bs = () => p.evaluate(() => { const fp = window.__fp; let stored = null; try { stored = JSON.parse(localStorage.getItem('fp-acts') || 'null')?.marks?.['span-bell']?.n ?? null; } catch (e) { stored = 'throws'; }
+    return { offered: fp.acts.offered?.def.id || null, words: document.getElementById('act-words').textContent, count: fp.acts.count('span-bell'), stored, ...fp.bell.state, lit: fp.bell.candles().length }; });
+  const bstand = (o = {}) => p.evaluate((o) => { const fp = window.__fp, s = fp.bell.stand(o.back || 0), pl = fp.player; fp.controls.placeAt(o.x ?? s.x, o.z ?? s.z); pl.yaw = s.yaw + (o.turn || 0); pl.pitch = s.pitch; pl.vel.set(0, 0, 0); }, o);
+  const bwait = async (want, ms = 4000) => { const t0 = Date.now(); let s; do { s = await bs(); if ((s.offered === 'span-bell') === want) return s; await sleep(150); } while (Date.now() - t0 < ms); return s; };
+  let b = await bs();
+  check('bell: registered as an act, nothing remembered, no candles round him', b.count === 0 && b.standing === 0 && b.lit === 0 && b.stones === 0, b);
+  await bstand({ back: 28 }); b = await bwait(false, 2000);
+  check('bell: not offered from 28 m up the track', b.offered !== 'span-bell', b);
+  await bstand({ turn: Math.PI }); b = await bwait(false, 2000);
+  check('bell: not offered at the post facing away from the bell', b.offered !== 'span-bell', b);
+  await p.evaluate(() => { const fp = window.__fp, pl = fp.player; fp.controls.placeAt(fp.bell.site.x + 2, fp.bell.site.z + 9); pl.yaw = 0; pl.pitch = 0.3; });
+  b = await bwait(false, 2000);
+  check('bell: not offered from beyond the bell, south of it, looking back', b.offered !== 'span-bell', b);
+  await bstand(); b = await bwait(true);
+  check('bell: at the post, looking at the ram and the bell: offered, "Ring the bell"', b.offered === 'span-bell' && b.words === 'Ring the bell', b);
+  check('bell: the ram\'s head and the bell are in view from there', await onScreen(p, await p.evaluate(() => ({ x: window.__fp.bell.headX, y: window.__fp.bell.ramY, z: window.__fp.bell.site.z }))) && await onScreen(p, await p.evaluate(() => ({ x: window.__fp.bell.site.x, y: window.__fp.bell.lip + 4, z: window.__fp.bell.site.z }))));
+  if (shots) await shot(p, 'acts-bell-offer');
+  const bt = (cond, ms = 30000) => p.waitForFunction(cond, null, { timeout: ms, polling: 50 }).then(() => true, () => false); // state-based waits
+  await p.keyboard.press('KeyE');
+  await bt('window.__fp.bell.state.ram > 1.5', 8000);
+  b = await bs();
+  check('bell: E does it: counted and kept, the ram hauled back metres on its rope', b.count === 1 && b.stored === 1 && b.active && b.ram > 1.5, b);
+  await bt('window.__fp.bell.state.rang'); await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 0.5');
+  b = await bs();
+  check('bell: the ram comes in and strikes: dust falls, a fresh stone or two from the crack', b.rang && b.dust && b.stones === 2, b);
+  if (shots) await shot(p, 'acts-bell-struck');
+  await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 6');
+  b = await bs();
+  check('bell: knocked off plumb, it swings (over half a degree six seconds on)', b.sway > 0.009, b);
+  await p.evaluate(() => window.__fp.bell.ff(window.__fp.bell.call + 4 - window.__fp.bell.state.t));
+  b = await bs();
+  const onFen = await p.evaluate(() => window.__fp.bell.candles().filter((q) => q.x > 15).length);
+  check('bell: a few seconds on, candles kindle out on the fen', onFen >= 1, { onFen, b });
+  await p.keyboard.press('KeyE'); await sleep(300);
+  check('bell: a second E while it rings does nothing', (await bs()).count === 1);
+  // the visitor walks off: the candles gather in the bell's mouth and wait for them
+  await p.evaluate(() => { const fp = window.__fp; fp.controls.placeAt(fp.bell.site.x, fp.bell.site.z - 80); });
+  await p.evaluate(() => window.__fp.bell.ff(70));
+  b = await bs();
+  check('bell: with the visitor gone off, the nine gather in the bell\'s mouth and wait', b.active && b.waiting === 9 && !b.going && b.glow > 0.2, b);
+  await bstand(); await sleep(200);
+  await p.evaluate(() => window.__fp.bell.ff(120));
+  b = await bs();
+  const round = await p.evaluate(() => { const fp = window.__fp, bd = fp.bell.body; return fp.bell.candles().map((q) => Math.hypot(q.x - bd.x, q.z - bd.z)); });
+  check('bell: with the visitor back, they go on and stand round the traveller: nine in a ring, the ringing done', !b.active && b.standing === 9 && round.length === 9 && round.every((d) => d > 1.4 && d < 3.5), { b, round });
+  // the last beat, at him
+  const lp = () => p.evaluate(() => { const L = window.__fp.bell.letters(), m = new window.__fp.THREE.Matrix4(), v = new window.__fp.THREE.Vector3(); let near = 0; for (let k = 0; k < L.count; k++) { L.getMatrixAt(k, m); v.setFromMatrixPosition(m); if (v.distanceTo(L.userData.chest) < 0.4) near++; } return { n: L.count, near }; });
+  await p.evaluate(() => { const fp = window.__fp, s = fp.bell.standBody(); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch; });
+  b = await (async () => { const t0 = Date.now(); let r; do { r = await bs(); if (r.offered === 'span-letters') break; await sleep(150); } while (Date.now() - t0 < 4000); return r; })();
+  check('bell: at the traveller, the candles round him: offered "Gather his letters"', b.offered === 'span-letters' && b.words === 'Gather his letters', b);
+  await p.keyboard.press('KeyE');
+  await bt('window.__fp.bell.state.gathered', 20000);
+  let lt = await lp(); b = await bs();
+  check('bell: E gathers them: every letter laid on his chest, and the candles go up', lt.near === lt.n && b.gathered && b.ascending, { lt, b });
+  await bt('!window.__fp.bell.state.ascending', 60000);
+  b = await bs();
+  check('bell: gone up, all but the one that keeps watch over his head', b.lit === 1, b);
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.bell, null, { timeout: 300000 });
+  await begin(p); await bt('window.__fp.threads?.traveller?.letters', 20000); await sleep(500);
+  b = await bs(); lt = await lp();
+  check('bell: after a reload: one candle over him, his letters on his chest, the stones under the crack', b.count === 1 && b.gathered && b.lit === 1 && lt.near === lt.n && b.stones === 2, { b, lt });
+  await bstand(); b = await bwait(true);
+  check('bell: after a reload it is offered again (a new visit); the letters are not (once)', b.offered === 'span-bell' && await p.evaluate(() => !window.__fp.acts.may(window.__fp.acts.list.find((h) => h.def.id === 'span-letters'))), b);
+  await p.evaluate(() => { window.__fp.settings.open(); document.getElementById('set-forget').scrollIntoView({ block: 'center' }); }); await sleep(500);
+  await p.click('#set-forget'); await sleep(300);
+  await p.evaluate(() => window.__fp.settings.close());
+  b = await bs(); lt = await lp();
+  check('bell: forgetting puts out the candles, clears the stones and scatters his letters again', b.count === 0 && b.standing === 0 && b.lit === 0 && b.stones === 0 && !b.gathered && lt.near === 0, { b, lt });
+  await c.close();
+}
 
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
