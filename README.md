@@ -18,6 +18,7 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 Each release, newest first, linked to its release notes. The full notes are in [`RELEASES.md`](RELEASES.md).
 
+- [v11: Better mountains](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v11). The mountains around the valley finally look like mountains, and the city of windows moved somewhere better.
 - [v10: Things to do](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v10). The first things you can do, not just see: chalk a tally, ring a great bell, knock on a tomb door.
 - [v9.1: The Lantern Halt](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v9.1). A strange waystation on the road, and the music is easier to try.
 - [v9: Sound sliders, and music you can switch on](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v9). Volume sliders, a few fixes, and experimental music that is off by default.

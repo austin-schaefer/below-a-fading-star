@@ -4,6 +4,35 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v11: Better mountains
+
+Released 2026-11-12.
+
+The mountains that ring the valley are in almost every view, and they have looked wrong in every release. This one rebuilds them so they look like mountains and stay in the background.
+
+### New
+
+- **A city of windows above the Great Span**: The Escarpment Lamps, hundreds of lit windows on a cliff, used to sit in a square block on the west wall. They are now a city climbing a ravine in the southern mountains, over the arches of the Great Span (the giant bridge): terraces of windows, a stair of lights up one side, a string along a ledge, and one great lit arch. Look south from Lees Tarn (the lake by where you start), or up from the bridge's deck.
+
+### Fixed
+
+- **The mountains looked ruled and artificial**: Every cliff was covered in evenly spaced horizontal lines, like a quarry or a contour map, crossed by rows of identical fins. Those are gone. The faces are now weathered rock: gullies running down them, ribs between, fans of fallen stone at the foot, bands of rust, slate and pale rock.
+- **Every mountain was the same smooth hump**: Each now has its own outline, with peaks, notches, a steep side and a long side, and spurs running down toward the valley. The far ranges behind them were flat cut-outs and are now ridged ranges catching the sun.
+- **The mountains fought with everything in front of them**: Away from the sun they now sit back in cool haze, so the keep, the bridge and the ruins stand out against them.
+- **Two big square things side by side on the west wall**: The Galleries of Durance (old iron walkways bolted to the cliff) have the wall to themselves, and are no longer a rectangle: a ragged stack of tiers with one long arm reaching out along the rock and a run that has fallen away.
+- **Places in the settings menu that dropped you somewhere useless**: The Pit's entry stood you at the bottom of the pit, and several others faced a wall or an empty slope. Each now shows its place, and the city of windows has an entry of its own.
+- **The bell's flash**: Ringing the bell under the Great Span threw up a hard-edged box of light. It is a soft drift of dust now.
+- **Loading is a little faster**: the ground and mountains are built about a fifth quicker than before.
+
+### Behind the scenes
+
+- The release tests now measure the mountains for ruled lines and folded rock, in the shape of the ground and in two pictures, so the old look cannot come back unnoticed.
+- Each change to the mountains was shown to a reviewer who was told nothing and asked what looked artificial. The first version without the lines came back as "smooth plasticine", and was sent round again.
+
+Known issues: the mountains toward the sun are still smoother than the rest. Up close, at the foot of a cliff, the rock is plain. The city's windows are small squares of light if you get near them. The yellow sparks that mark things to do are still hard to see where other lights are near (the long table, the tomb door).
+
+<p><img src="shots/77-mountains-high-y0-before.webp" width="24%" alt="Before: the mountains from above the valley, their faces ruled with horizontal lines"> <img src="shots/77-mountains-high-y0-after.webp" width="24%" alt="After: the same view, the faces now weathered rock under sharper peaks"> <img src="shots/77-mountains-foreland-y2-after.webp" width="24%" alt="From the ice field at walking height: jagged mountains across the valley, paler ranges behind"> <img src="shots/77-lamps-400-warm.webp" width="24%" alt="The city of windows climbing a ravine above the arches of the Great Span"></p>
+
 ## v10: Things to do
 
 Released 2026-11-12.

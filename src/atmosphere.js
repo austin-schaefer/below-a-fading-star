@@ -53,8 +53,15 @@ export function installAtmosphere() {
       const vec3 FP_HAZE = vec3(${hexToVec(PALETTE.haze)});
       const vec3 FP_TIER_AWAY = vec3(${hexToVec(PALETTE.skyHorizonAway)}) * 1.25 + vec3(0.0, 0.004, 0.018);
       const vec3 FP_TIER_SUN = vec3(${hexToVec(PALETTE.skyHorizonSun)});
+      const vec3 FP_WALL_AIR = vec3(${hexToVec('#4a4a66')}); // v11: the cool pale air on the walls turned from the sun
+      // (M4) toward the sun the haze on the near wall (and the main tier's) is laid on as a screen, not a mix: the
+      // glow lifts the dark rock about as much, but the face's detail is scaled by (1 - haze * amount) rather than
+      // (1 - amount), so couloirs stay darker than ribs in the light (the south massifs in high-y3 went smooth)
+      const float FP_SUN_POW = 1.5;
+      vec3 fpScreen(vec3 c, vec3 h, float a) { return 1.0 - (1.0 - c) * (1.0 - h * a); }
       vec3 fpTierCol(vec3 rd, float flick) {
-        float toSun = max(dot(normalize(vec3(rd.x, 0.0, rd.z)), normalize(vec3(FP_SUN_DIR.x, 0.0, FP_SUN_DIR.z))), 0.0);
+        vec2 fpH = rd.xz; float fpHl = length(fpH); // looking straight up or down there is no horizontal direction
+        float toSun = fpHl > 1e-4 ? max(dot(fpH / fpHl, normalize(FP_SUN_DIR.xz)), 0.0) : 0.0;
         float s = max(dot(rd, FP_SUN_DIR), 0.0);
         return mix(FP_TIER_AWAY, FP_TIER_SUN, pow(toSun, 1.6)) * (0.6 + 0.4 * flick) + FP_SUN_GLOW * (pow(s, 6.0) * 0.3 + pow(s, 24.0) * 0.4) * flick;
       }
@@ -87,11 +94,34 @@ export function installAtmosphere() {
       // ground mist: cold violet-grey, warmed only close to the sun's line, so the low ground does not go to peach dust
       vec3 lowMist = mix(fogColor, vec3(0.28, 0.29, 0.38), 0.5) + FP_SUN_GLOW * pow(sunAmt, 4.0) * 0.16;
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
+      // (M1) on the near wall the distance fog a third lighter, so its couloirs and crags read through the warm haze
+      // toward the sun as well; the cool air below and the tiers still set it back
+      float fpNear = smoothstep(300.0, 345.0, length(vFogWorldPos.xz)) * (1.0 - smoothstep(540.0, 600.0, length(vFogWorldPos.xz)));
+      float fpFogA = fogFactor * (1.0 - 0.32 * fpNear);
+      vec2 fpSh = fpDir.xz; float fpShl = length(fpSh);
+      float fpSunW = (fpShl > 1e-4 ? pow(max(dot(fpSh / fpShl, normalize(FP_SUN_DIR.xz)), 0.0), FP_SUN_POW) : 0.0) * fpNear;
+      gl_FragColor.rgb = mix(mix( gl_FragColor.rgb, haze, fpFogA ), fpScreen(gl_FragColor.rgb, haze, fpFogA), fpSunW);
+      float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
+      // v11: the walls recede in the cold light. Beyond the bowl (world radius past 300 m), by distance from the eye,
+      // a cool pale air over everything turned from the sun, so the near wall at 400 m sits behind what stands in
+      // front of it, lower in contrast and bluer than the ground at 50 m; toward the sun the glow already does this.
+      float fpWallR = length(vFogWorldPos.xz);
+      if (fpWallR > 300.0) {
+        float fpHl = length(fpDir.xz);
+        float fpAway = fpHl > 1e-4 ? 1.0 - pow(max(dot(fpDir.xz / fpHl, normalize(FP_SUN_DIR.xz)), 0.0), 1.5) : 1.0;
+        float fpWall = smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(180.0, 560.0, fpDist) * fpAway;
+        fpWall *= 1.0 - smoothstep(0.3, 0.8, max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b))); // lamps and lit windows on the wall keep their warmth
+        // (M1) it compresses the wall's values rather than erasing them: a lighter air (0.16 at most) and a cool cast
+        // laid over by multiplication, which keeps the couloirs darker than the ribs; at 0.3 of plain mix the faces
+        // went to one lavender
+        vec3 fpAir = FP_WALL_AIR * (0.55 + 0.45 * fpFl);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * normalize(fpAir) * 1.73, 0.35 * fpWall);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, fpAir, 0.16 * fpWall);
+      }
       float fpTier = fpTierAmt(vFogWorldPos);
       if (fpTier > 0.0) {
-        float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, fpTierCol(fpDir, fpFl), fpTier);
+        vec3 fpTc = fpTierCol(fpDir, fpFl);
+        gl_FragColor.rgb = mix(mix(gl_FragColor.rgb, fpTc, fpTier), fpScreen(gl_FragColor.rgb, fpTc, fpTier), fpSunW);
         gl_FragColor.rgb = min(gl_FragColor.rgb, max(fpSkyBehind(fpDir, fpFl) * 0.88, FP_HAZE * 1.4));
       }
     #endif`;

@@ -1,8 +1,11 @@
 // AL The Galleries of Durance [Proposed] (plans/IDEAS-v4.md AL; plans/wilderness-v4.md: "make the whole thing active: no figures
 // seen, but machinery turns, chains move up and down, gantries shift, animation with no visible animating force"; site in
 // plans/wilderness-v4-placement.md section 5, key `galleries`, (-390, -80), 60-260 m up, r 70, the west wall).
-// North of the sun's saddle the west wall's face carries eleven tiers of galleries between 68 and 245 m up (bearings
-// 268-296, densest 271.5-292.5, thinning into fragments beyond) and four catwalks, each a run of
+// North of the sun's saddle the west wall's face carries thirteen tiers of galleries between 68 and 247 m up and four
+// catwalks (v11: the Lamps are gone to the south wall, so the Galleries stand alone). The outline is a prow, not a slab:
+// broad at the foot (265.8-293.4), each run starting further along the face as it climbs so the whole leans north, one thin
+// gallery reaching out along the rock to 318.6 as a long arm that stops mid-work, a run that has fallen in the middle,
+// fragments left far out and up (see RUNS). Each run is a run of
 // one repeated bay (a deck, a post, a lintel, a roof beam into the rock, a lattice screen in some bays) laid along the
 // face's most protruding line, so where the face falls back into a cleft the gallery runs straight across it as a bridge
 // on a truss. Some runs stop mid-work: posts with no lintel, a deck with nothing on it, a beam ending in the air.
@@ -488,17 +491,19 @@ export async function build(ctx) {
 
   // ---- the galleries: eleven tiers and four catwalks. Each tier: [y, from bearing, to bearing, depth, height,
   // which end stops mid-work (-1 the first, 1 the last, 0 neither)]
+  // The outline is a prow: broad at the foot, each run starting a little further along the face as it climbs, so the whole
+  // leans to the north, a long thin arm reaching out along the rock at the fourth tier, a run that has fallen in the middle,
+  // fragments left far out and up. [y, from, to, depth, height, stop]. `stop`: the end that stops mid-work.
   const tiers = [];
-  for (let y = 68, i = 0; y <= 248; y += 16 + rng() * 5, i++) {
-    // ragged: each tier starts and stops where it was left, some broken into two runs; one end of every other one
-    // stops mid-work
-    const b0 = 267.6 + Math.pow(rng(), 1.4) * 11, b1 = 296.2 - Math.pow(rng(), 1.4) * 11;
-    const D = 5 + rng() * 2.5, H = 8.5 + rng() * 3.5, stop = i % 2 ? (rng() < 0.5 ? 1 : -1) : 0;
-    if (b1 - b0 > 12 && rng() < 0.4) {
-      const m = lerp(b0 + 4, b1 - 4, rng()), gap = 1.2 + rng() * 2;
-      tiers.push([y, b0, m - gap / 2, D, H, 1], [y, m + gap / 2, b1, D, H, -1]);
-    } else tiers.push([y, b0, b1, D, H, stop]);
-  }
+  const RUNS = [
+    [68, 265.8, 293.4, 6.6, 11.5, 0], [85, 267.2, 279.4, 6.0, 10.5, 1], [86, 281.0, 291.0, 6.0, 10.5, -1],
+    [101, 269.6, 295.8, 6.8, 12, 0], [114, 292.4, 318.6, 3.6, 7.5, 1],  // the arm: a thin gallery running out along the rock
+    [118, 270.8, 283.2, 5.4, 10, 0], [135, 273.4, 297.6, 6.0, 11, -1], [152, 275.6, 281.4, 5.4, 9.5, 1],
+    [168, 277.8, 299.4, 6.5, 11, 0], [184, 281.0, 292.2, 5.8, 10, 1], [200, 280.2, 293.4, 6.2, 11.5, 0],
+    [216, 285.0, 292.0, 5.2, 9.5, -1], [232, 286.6, 292.2, 5.0, 9, 1], [247, 288.4, 291.6, 4.6, 8.5, -1],
+    [150, 303.6, 308.4, 4.2, 8, -1], [92, 298.0, 302.6, 4.4, 8, 1], [226, 275.4, 278.8, 4.4, 8, 1], // fragments, far out
+  ];
+  for (const [y, b0, b1, D, H, stop] of RUNS) tiers.push([y + (rng() - 0.5) * 3, b0, b1, D, H, stop]);
   // catwalks between the tiers, across the clefts
   for (const [y, b0, b1] of [[124, 283.4, 288.2], [158, 274.4, 279.8], [194, 279.0, 283.0], [229, 284.0, 288.4]]) tiers.push([y, b0, b1, 2.6, 4, 0]);
   const furnaceTiers = new Set([0, 3]);
@@ -531,9 +536,9 @@ export async function build(ctx) {
         const a = F(k, yy), b = F(k + 1, yy), a2 = K(k, yy), b2 = K(k + 1, yy);
         if (keep.some((q) => Math.min(segDist(a, b, q.a, q.b), segDist(a2, b2, q.a, q.b), segDist(mix(a, a2, 0.5), mix(b, b2, 0.5), q.a, q.b)) < q.r)) hit = true;
       }
-      // beyond the core (bearings 271.5-292.5) the bays thin out into fragments
-      const bm = (bs[k] + bs[k + 1]) / 2, edge = Math.max(0, 271.5 - bm, bm - 292.5);
-      if (edge > 0 && rng() < edge / 4.5) hit = true;
+      // at either end of a run the bays thin out into fragments
+      const bm = (bs[k] + bs[k + 1]) / 2, edge = Math.max(0, b0 + 3.2 - bm, bm - (b1 - 3.2));
+      if (edge > 0 && !cat && rng() < edge / 4.5) hit = true;
       open.push(hit);
     }
     // the unfinished end: its last bays carry less and less
@@ -617,8 +622,8 @@ export async function build(ctx) {
   sg.setAttribute('iU', new THREE.InstancedBufferAttribute(iU, 3));
   sg.setAttribute('iS', new THREE.InstancedBufferAttribute(iS, 4));
   sg.instanceCount = nS;
-  const centre = P(281.6, 425, 150);
-  const bound = new THREE.Sphere(new THREE.Vector3(...centre), 175);
+  const centre = P(290, 425, 150);
+  const bound = new THREE.Sphere(new THREE.Vector3(...centre), 275);
   sg.boundingSphere = bound;
 
   const U = {
@@ -648,7 +653,7 @@ export async function build(ctx) {
   cg.setAttribute('cW', new THREE.InstancedBufferAttribute(cW, 4));
   cg.setAttribute('cL', new THREE.InstancedBufferAttribute(cL, 4));
   cg.instanceCount = nL;
-  cg.boundingSphere = new THREE.Sphere(new THREE.Vector3(...P(281.6, 410, 130)), 200);
+  cg.boundingSphere = new THREE.Sphere(new THREE.Vector3(...P(290, 410, 130)), 290);
   const linkMat = ironMaterial(U, 'link');
   linkMat.color.set('#241b15'); linkMat.metalness = 0.65; linkMat.roughness = 0.5;
   const linkMesh = new THREE.Mesh(cg, linkMat);
