@@ -13,7 +13,7 @@ import { softKit } from '../audio/cues-v2.js';
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
   const rng = ctx.makeRng(1010);
-  const { sgrain, stone, jit } = softKit(a);
+  const { sgrain, stone, jit } = softKit({ ...a, rng }); // its jitter from this module's own stream, not the shared one
   const D4 = 293.66;
 
   function offer(pos) {
