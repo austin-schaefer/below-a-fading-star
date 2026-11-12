@@ -58,6 +58,7 @@ run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
 run grass tools/grass-flicker-test.mjs low $B
 run touch tools/touch-test.mjs "$B/?q=low"
+run acts tools/acts-test.mjs $B
 run gutter tools/gutter-test.mjs $B
 run treelod tools/tree-lod-test.mjs $B
 run stair tools/stair-test.mjs "$B/?q=low"
