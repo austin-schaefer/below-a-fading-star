@@ -4,16 +4,39 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v9.1: The Lantern Halt
+
+Released 2026-11-11.
+
+Adds a strange new waystation on the road, and makes the experimental music easier to try.
+
+### New
+
+- **The Lantern Halt**: A new stop beside the causeway (the old raised road), about halfway between Carcanet Keep and the Cardinal Stones: a dark stone slab ten metres tall with a glowing globe hung in the notch at its top. The globe is a bed. A traveller is asleep in it tonight under a patchwork quilt, his bundle beside him, with the winch he hauled himself up by at the foot of the stone.
+
+### Fixed
+
+- **Music starts when you switch it on**: Turning the experimental music on in the settings menu now brings a piece within a few seconds. Before, nothing played for a minute or more, and nothing at all while you stood still.
+- **Quieter music**: The music sits lower against the sound of each place.
+- **Tidier sound settings**: The three smaller volume sliders match the main one, and the line of explanation under the music setting is gone.
+
+### Behind the scenes
+
+- Release notes now end with a few screenshots, on every release that has something to show.
+
+Known issues: the sleeper in the Lantern Halt can only be seen from the east side, and the things at the foot of the stone are small and dim.
+
+<p><img src="shots/75-lantern-halt-from-the-road.webp" width="24%" alt="The Lantern Halt from the road: a dark slab with a lit globe in its notch"> <img src="shots/75-lantern-halt-near.webp" width="24%" alt="The Lantern Halt up close: a sleeper in the hanging globe, his bundle beside him"> <img src="shots/75-lantern-halt-sleeper.webp" width="24%" alt="The sleeper under a patchwork quilt, enlarged"></p>
+
 ## v9: Sound sliders, and music you can switch on
 
 Released 2026-11-11.
 
-Adds separate volume controls, a strange new waystation on the road, and a first, experimental try at music, which is off unless you turn it on.
+Adds separate volume controls and a first, experimental try at music, which is off unless you turn it on.
 
 ### New
 
 - **Separate volume sliders**: Under the main volume in the settings menu (the gear button) there are now three smaller sliders: Sound effects (footsteps, calls, the figures), Ambience (wind, the low drone, the sound of each place) and Music.
-- **The Lantern Halt**: A new stop beside the causeway (the old raised road), about halfway between Carcanet Keep and the Cardinal Stones: a dark stone slab ten metres tall with a glowing globe hung in the notch at its top. The globe is a bed. A traveller is asleep in it tonight under a patchwork quilt, his bundle beside him, with the winch he hauled himself up by at the foot of the stone.
 - **Music, experimental and off by default**: Nine slow pieces, one for each kind of country (the open moor, the wood, the wet places, the cold ones, the gardens, the dry ground) and one each for the Great Span (the giant bridge), Carcanet Keep and the gap in the mountains where the sun sits. Turn it on in the settings menu and choose how often it plays: rare, default or frequent. A piece arrives unannounced, plays for two or three minutes, and then the land is left alone for a long while. It falls silent whenever the sun gutters (dims for a few seconds).
 
 ### Fixed
@@ -28,9 +51,9 @@ Adds separate volume controls, a strange new waystation on the road, and a first
 - Future milestones are no longer planned in a fixed order: each is chosen when it starts, from the owner's open ideas and the agents' own.
 - Release notes are split into New, Fixed and Behind the scenes, and the README lists every release with a link to its notes.
 
-Known issues: the sleeper in the Lantern Halt can only be seen from the east side, and the things at the foot of the stone are small and dim. The music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
+Known issues: the music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
 
-<p><img src="shots/75-lantern-halt-from-the-road.webp" width="24%" alt="The Lantern Halt from the road: a dark slab with a lit globe in its notch"> <img src="shots/75-lantern-halt-near.webp" width="24%" alt="The Lantern Halt up close: a sleeper in the hanging globe, his bundle beside him"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"></p>
+<p><img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"> <img src="shots/74-settings-phone.webp" width="24%" alt="The same menu on a phone"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/73-hillside-figure-after.webp" width="24%" alt="The white figure on the hillside, cleared of rocks and plants"></p>
 
 ## v8: One world
 

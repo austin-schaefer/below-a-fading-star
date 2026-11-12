@@ -57,7 +57,7 @@ When a subagent reports done:
 
 1. Read its report and look at its renders. Look before you read: say what each picture shows, then compare with what the report claims. A report describes what the agent meant to make, and it is easy to repeat it; for anything whose point is an idea (a story beat, a strange building), give a fresh agent the render alone and ask what it sees.
 2. Run the checks yourself. "Tests pass" in a report is a claim, not evidence. A run that reports zero tests is a failure to investigate.
-3. A second agent reviews the diff cold, read-only, against the brief (`world-code`, "Reviewing a branch"); blockers go back to the author.
+3. A second agent reviews the diff cold, read-only, against the brief (`world-code`, "Reviewing a branch"); blockers go back to the author. Tell every reviewer, critic and reader in its prompt: never `git checkout`, `switch`, `stash` or `reset` in the deploy worktree; read other branches with `git diff` and `git show <branch>:<path>`. (A reviewer once checked a branch out there to run one script and left a detached HEAD; twenty commits and a release then went to no branch.)
 4. Merge in the deploy worktree with `git merge --no-edit origin/<branch>`, push `next`, and remove the agent's worktree (`tools/worktree.sh rm`, which first gathers its renders into the deploy worktree's `shots/wip/`). Run `tools/suite.sh` once per batch.
 5. If it isn't good: send it back with specific feedback, or re-brief a fresh subagent, possibly on a stronger model.
 
@@ -73,7 +73,7 @@ When the milestone is in, in this order:
 The tail of a release should take about an hour: the critic and the notes together, the fixes, one gate. If it is taking much longer, say why in Status: usually scope added after the last brief, which is a reason to cut a point release, not to hold this one.
 **A small release goes faster.** A point release (`v<N>.<M>`: one addition or a few fixes, the owner waiting for it) skips steps 2 and 3: no critic, and its renders are curated with the next milestone's. It keeps the suite (step 1), a cold read of the diff, and, for anything a visitor sees, a fresh agent's blind read of the renders ("look before you read", above). The owner, 2026-11-11: "do we need all this cold critic etc etc? i don't want an hour wait to get that live."
 
-5. Open the release PR from `next` to `main` and `gh pr merge --merge` it, then `tools/gh-release.sh <version>` to publish the entry as the GitHub release, then merge `origin/main` back into `next`.
+5. Run `tools/release-check.sh` once more (it checks that you are on `next` and that `next` is pushed) and look at the PR's diff stat to see that what you mean to ship is in it. Open the release PR from `next` to `main` and `gh pr merge --merge` it, then `tools/gh-release.sh <version>` to publish the entry as the GitHub release, then merge `origin/main` back into `next`.
 
 ## Releases have notes
 
