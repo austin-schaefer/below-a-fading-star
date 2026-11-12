@@ -95,6 +95,17 @@ export function buildDeck(K) {
     const r = (zB - zA) / 2, zc = (zA + zB) / 2, e = Math.min(r, (x1 - x0) / 2);
     addCol({ x1: x0 + e, z1: zc, x2: x1 - e, z2: zc, r, y: Y - 0.5, h: top + 0.5 });
   }
+  // v10-T1 (#15): a low kerb along each broken edge (the crack's two lips, the three fallen bays' ends), its top 0.14 m
+  // over the deck: a walker who walks on stops 0.3 m short of the edge and can look down into the gap, and a hop
+  // (feet more than 0.02 m up) goes over it as before, to clear the crack or to drop. Its axis lies 0.45 m out over the
+  // gap, so the push on a walker on the deck is back along the deck.
+  K.kerbs = [];
+  for (const [x0, x1] of deckRuns) for (const [x, dir] of [[x0, 1], [x1, -1]]) {
+    if (Math.abs(x) > SPAN.gateX - 1) continue;
+    const kx = x - dir * 0.45; // dir 1: the run starts here (its gap lies to -x)
+    K.kerbs.push(kx);
+    addCol({ x1: kx, z1: Z - SPAN.inner, x2: kx, z2: Z + SPAN.inner, r: 0.3, y: Y - 0.5, h: 0.64, stand: false });
+  }
   // the piers and abutments at ground level, up to just under the deck
   const footY = (x) => Math.min(H(x - 6, Z), H(x + 6, Z), H(x, Z - 8), H(x, Z + 8)) - 3;
   for (let i = 0; i < P.length; i++) {
