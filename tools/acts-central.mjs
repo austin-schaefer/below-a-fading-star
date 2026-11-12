@@ -1,9 +1,11 @@
 // The crystal and the door (v10-A1): acts-test.mjs's rows for the hand on the mother crystal (src/v10/crystal.js) and
 // the knock at the Hypogeum's door (src/v10/door.js), called from tools/acts-test.mjs with its browser and check().
 // Each act: not offered from far off or facing away, offered at its place, done (and the answer runs: for the crystal
-// the print, the climb, the gutter it draws, the thread to the door and the lintel turned blue; for the door the ring
-// lifted, three strikes, three answers, a tessera pushed out with a glyph), remembered after a reload and offered
-// again, forgotten on a forget. The door's third visit: the knocks land just behind it and the row turns a whole turn.
+// the print, the climb, the gutter it draws, the thread to the door and the lintel turned blue, its crystals; for the
+// door the great ring lifted, three strikes, three answers, the glyph row read and turned, the hand in the light, the
+// plate pushed out with its glyph kept), remembered after a reload and offered again, forgotten on a forget. The door's
+// third visit: the row turns a whole turn. ?acts=0: the old ring as it was, no plate, no thread. Every wait is on the
+// page's state with a long ceiling, so a slow frame rate only makes it slower.
 export async function centralRows({ browser, base, check, watch }) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const open = async (tag, url, init) => {
@@ -39,12 +41,12 @@ export async function centralRows({ browser, base, check, watch }) {
   await p.keyboard.press('KeyE'); await sleep(400);
   s = await p.evaluate(() => ({ ...window.__fp.motherAct.state(), hit: window.__fp.motherAct.hit }));
   check('crystal: E lays the hand: counted, the answer running, the print where the look meets the glass', s.count === 1 && s.t > 0 && s.hit === true, s);
-  const gut = await waitFor(p, () => window.__fp.motherAct.gutters > 0 && window.__fp.sky.flicker.phase > 0, null, 12000);
+  const gut = await waitFor(p, () => window.__fp.motherAct.gutters > 0 && window.__fp.sky.flicker.phase > 0, null, 60000);
   check('crystal: the sun gutters as the light reaches the top', gut);
-  const ran = await waitFor(p, () => { const s = window.__fp.motherAct.state(); return s.thread >= 1 && s.lintel >= 1; }, null, 25000);
+  const ran = await waitFor(p, () => { const s = window.__fp.motherAct.state(); return s.thread >= 1 && s.lintel >= 1; }, null, 180000);
   s = await p.evaluate(() => window.__fp.motherAct.state());
-  check('crystal: the thread runs to the Hypogeum\'s door (over 150 m) and its glyphs turn blue', ran && s.threadLen > 150 && s.threadShown, s);
-  await waitFor(p, () => window.__fp.motherAct.state().t < 0, null, 8000);
+  check('crystal: the thread runs to the Hypogeum\'s door (over 150 m), crystals along it, and its glyphs turn blue', ran && s.threadLen > 150 && s.threadShown && s.crystals > 40, s);
+  await waitFor(p, () => window.__fp.motherAct.state().t < 0, null, 120000);
   s = await p.evaluate(() => window.__fp.motherAct.state());
   check('crystal: when it is over, one ember is left in the glass and nothing more is offered this visit', s.t < 0 && s.embers === 1 && (await offered(p)) === null, s);
   await p.reload({ waitUntil: 'load' });
@@ -68,7 +70,7 @@ export async function centralRows({ browser, base, check, watch }) {
   const dURL = `${base}/?q=low&only=ruins2,acts&pos=215,-112`;
   ({ c, p } = await open('door', dURL));
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
-  check('door: registered, no tessera on a fresh page', s.count === 0 && s.drawn === 0, { count: s.count, drawn: s.drawn });
+  check('door: registered, no plate on a fresh page, the great ring hung in the old one\'s place', s.count === 0 && s.plate === false && !(await p.evaluate(() => window.__fp.hypogeum.ring.visible)) && !!(await p.evaluate(() => window.__fp.scene.getObjectByName('act-door-ring'))), { count: s.count, plate: s.plate });
   await standDoor(p, 7); await sleep(1500);
   check('door: not offered from the head of the stair', (await offered(p)) === null);
   await standDoor(p, 1.9, Math.PI / 2); await sleep(1500);
@@ -76,26 +78,31 @@ export async function centralRows({ browser, base, check, watch }) {
   await standDoor(p, 1.9); const o2 = await settle(p, 'hypogeum-door');
   check('door: offered in front of it, "Knock"', o2 === 'hypogeum-door' && (await p.evaluate(() => document.getElementById('act-words').textContent)) === 'Knock', o2);
   await p.keyboard.press('KeyE');
-  const done = await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 20000);
-  s = await p.evaluate(() => { const s = window.__fp.hypogeumAct.state(); return { count: s.count, strikes: s.strikes, answers: s.answers, ringMax: s.ringMax, drawn: s.drawn, spun: s.spun, stored: JSON.parse(localStorage.getItem('fp-acts') || '{}').marks?.['hypogeum-door'] }; });
-  check('door: E knocks: the ring lifted, three strikes, three answers, a tessera pushed out with its glyph kept', done && s.count === 1 && s.strikes === 3 && s.answers === 3 && s.ringMax > 0.9 && s.drawn === 1 && s.stored?.data?.forms?.length === 1 && s.spun === 0, s);
+  const done = await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 240000);
+  s = await p.evaluate(() => { const s = window.__fp.hypogeumAct.state(); return { count: s.count, strikes: s.strikes, answers: s.answers, ringMax: s.ringMax, read: s.read, hand: s.hand, plate: s.plate, spun: s.spun, stored: JSON.parse(localStorage.getItem('fp-acts') || '{}').marks?.['hypogeum-door'] }; });
+  check('door: E knocks: the great ring lifted, three strikes, three answers, the row read and turned one place, the hand in the light, the plate out with its glyph kept', done && s.count === 1 && s.strikes === 3 && s.answers === 3 && s.ringMax > 0.9 && s.read > 0.9 && s.spun === 1 && s.hand > 0.9 && s.plate && Number.isInteger(s.stored?.data?.glyph), s);
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.hypogeumAct, null, { timeout: 300000 });
   await p.evaluate(() => { document.getElementById('card').classList.add('hidden'); window.__fp.events.dispatchEvent(new CustomEvent('begin')); });
   await standDoor(p, 1.9);
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
-  check('door: after a reload the tessera lies there, and the knock is offered again', s.drawn === 1 && (await settle(p, 'hypogeum-door')) === 'hypogeum-door', { drawn: s.drawn });
+  check('door: after a reload the plate lies there, and the knock is offered again', s.plate === true && (await settle(p, 'hypogeum-door')) === 'hypogeum-door', { plate: s.plate });
   await p.evaluate(() => window.__fp.acts.forget()); await sleep(200);
-  check('door: forgotten: no tessera', (await p.evaluate(() => window.__fp.hypogeumAct.state().drawn)) === 0);
+  check('door: forgotten: no plate', (await p.evaluate(() => window.__fp.hypogeumAct.state().plate)) === false);
   await c.close();
   // the third visit
-  ({ c, p } = await open('door3', dURL, () => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('fp-acts', JSON.stringify({ v: 1, marks: { 'hypogeum-door': { n: 2, last: 1, data: { forms: [3, 5] } } } })); sessionStorage.setItem('seeded', '1'); } } catch (e) { /* */ } }));
+  ({ c, p } = await open('door3', dURL, () => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('fp-acts', JSON.stringify({ v: 1, marks: { 'hypogeum-door': { n: 2, last: 1, data: { glyph: 5 } } } })); sessionStorage.setItem('seeded', '1'); } } catch (e) { /* */ } }));
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
-  check('door: a return after two knocks: two tesserae', s.drawn === 2, { drawn: s.drawn });
+  check('door: a return after two knocks: the plate lies there', s.plate === true && s.n === 2, { plate: s.plate, n: s.n });
   await standDoor(p, 1.9); await settle(p, 'hypogeum-door');
   await p.keyboard.press('KeyE');
-  await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 20000);
+  await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 240000);
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
-  check('door: the third knock: the row turns a whole turn and a third tessera comes out', s.count === 3 && s.spun === 1 && s.drawn === 3, { count: s.count, spun: s.spun, drawn: s.drawn });
+  check('door: the third knock: the row turns a whole turn (eleven places) and the plate comes out again', s.count === 3 && s.spun === 11 && s.plate === true, { count: s.count, spun: s.spun, plate: s.plate });
+  await c.close();
+  // ?acts=0: the door as it was
+  ({ c, p } = await open('door0', `${base}/?q=low&acts=0&only=vegetation,ruins2,acts&pos=215,-112`));
+  s = await p.evaluate(() => { const fp = window.__fp, H = fp.hypogeum; return { act: !!fp.hypogeumAct, ring: H.ring.visible && H.ring.material === H.doorMesh.material, great: !!fp.scene.getObjectByName('act-door-ring'), plate: !!fp.scene.getObjectByName('act-door-plate'), thread: !!fp.scene.getObjectByName('act-crystal-thread-group')?.visible }; });
+  check('?acts=0: the old ring in its own material, no great ring, no plate, no thread', !s.act && s.ring && !s.great && !s.plate && !s.thread, s);
   await c.close();
 }
