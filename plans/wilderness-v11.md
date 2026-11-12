@@ -60,6 +60,8 @@ In flight (v11.1):
 
 **R is in (14:50): no blockers in M4, F1 or F2**, read from the diffs. Fixed from it on `next` (test tooling, syntax-checked, not rerun): `mountains-test` fails plainly when no profile is measured; an unused variable out of `goto-views.mjs`. Left: `terrain.js:585` bakes colour from the mesh's `y` where `biomeAt` used `heightAt` (the same unless a pass moved vertices); the gate runs `mountains` without `--self-check`; no test covers the wall close up (W1's views are the evidence).
 
+**The working frames are cleared (the owner, in session: "yes of course clear out the huge pile of old wip screenshots")**: everything in the deploy worktree's `shots/wip/` older than v11.1's opening, about 4,200 files and 7.7 GB (v8 to v11, the acts, the critics'). The keepers under `shots/` are untouched; v11.1's frames are in the agents' worktrees.
+
 Next: check and merge each (W3, W4 as they come; W1, then W2 after it merges `next`), a blind read of the renders, `tools/suite.sh 8123` in full, then the release as `v11.1` (the day's third merge to `main` of six).
 
 **2026-11-12, 11:34 PST. Released.** PR #32 merged to `main` at `b47f683` (the day's second merge of six); the GitHub release `v11` is published; #5 and #6 are closed from it; `origin/main` is merged back into `next`; no agent is in flight and no worktree but the deploy one exists. What shipped and what is weak: the entry below this one.
