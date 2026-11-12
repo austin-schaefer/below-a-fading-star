@@ -16,7 +16,7 @@ Agents default to the familiar, and a skill that describes what already exists c
 1. **Write the first idea down and set it aside.** It is the one any fantasy game would have.
 2. **Write two more: one stranger, one much bigger** than feels safe (a thing a visitor sees from 200 m and walks toward to find out what it is). Ask what only this world would have here: old, once rich, baroque, a little absurd, made by people with odd reasons.
 3. **Build the strangest one that still belongs.** Belonging comes second and is the easier half: the rest of this skill is for that.
-4. **Then make it read up close.** A bold shape with a muddy surface and a confused door is half done; the builders' ready-made parts give clean detail cheaply. Small human marks (a tally of travellers scratched by a door) carry more world than ornament.
+4. **Then make it read up close.** A bold shape with a muddy surface and a confused door is half done; the builders' ready-made parts give clean detail cheaply. Small human marks, the trace of someone having been there, carry more world than ornament.
 
 ## What the owner has seen, across milestones
 
