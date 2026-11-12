@@ -89,7 +89,9 @@ export function installAtmosphere() {
       // ground mist: cold violet-grey, warmed only close to the sun's line, so the low ground does not go to peach dust
       vec3 lowMist = mix(fogColor, vec3(0.28, 0.29, 0.38), 0.5) + FP_SUN_GLOW * pow(sunAmt, 4.0) * 0.16;
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
+      // (M1) on the near wall the distance fog a third lighter, so its couloirs and crags read through the warm haze
+      // toward the sun as well; the cool air below and the tiers still set it back
+      gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor * (1.0 - 0.32 * smoothstep(300.0, 345.0, length(vFogWorldPos.xz)) * (1.0 - smoothstep(540.0, 600.0, length(vFogWorldPos.xz)))) );
       float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
       // v11: the walls recede in the cold light. Beyond the bowl (world radius past 300 m), by distance from the eye,
       // a cool pale air over everything turned from the sun, so the near wall at 400 m sits behind what stands in
@@ -98,9 +100,14 @@ export function installAtmosphere() {
       if (fpWallR > 300.0) {
         float fpHl = length(fpDir.xz);
         float fpAway = fpHl > 1e-4 ? 1.0 - pow(max(dot(fpDir.xz / fpHl, normalize(FP_SUN_DIR.xz)), 0.0), 1.5) : 1.0;
-        float fpWall = 0.3 * smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(90.0, 430.0, fpDist) * fpAway;
+        float fpWall = smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(180.0, 560.0, fpDist) * fpAway;
         fpWall *= 1.0 - smoothstep(0.3, 0.8, max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b))); // lamps and lit windows on the wall keep their warmth
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, FP_WALL_AIR * (0.55 + 0.45 * fpFl), fpWall);
+        // (M1) it compresses the wall's values rather than erasing them: a lighter air (0.16 at most) and a cool cast
+        // laid over by multiplication, which keeps the couloirs darker than the ribs; at 0.3 of plain mix the faces
+        // went to one lavender
+        vec3 fpAir = FP_WALL_AIR * (0.55 + 0.45 * fpFl);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * normalize(fpAir) * 1.73, 0.35 * fpWall);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, fpAir, 0.16 * fpWall);
       }
       float fpTier = fpTierAmt(vFogWorldPos);
       if (fpTier > 0.0) {
