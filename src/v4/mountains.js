@@ -122,7 +122,7 @@ for (let i = 0; i <= N; i++) {
   // the Vigilant (skylife/vigilant.js) sits on the crest at bearing 72°, r 476: the crest bends out to meet it
   const vig = 1 - smoothstep(4, 11, Math.min(Math.abs(b - 72), 360 - Math.abs(b - 72)));
   T_CR[i] = lerp(452 + 17 * ring(az, 1.6, 3.1) + 7 * ring(az, 5.0, 7.3), 476, vig);
-  // the north-west, where the Escarpment Lamps and the Galleries will hang, stands taller
+  // the north-west, where the Galleries hang, stands taller
   const nw = smoothstep(262, 285, b) * (1 - smoothstep(330, 345, b));
   T_CS[i] = 186 + 34 * ring(az, 2.2, 11.7) + 14 * ring(az, 6.5, 13.3) + 40 * nw;
   T_CH[i] = T_CS[i] + peakAt(b);

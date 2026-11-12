@@ -76,7 +76,7 @@ Tree LOD (`vegetation/trees.js`): near, mid and far at 24 and 72 m (18 and 55 at
 
 ### v5 wonders
 
-- `lamps=0` (the north-west wall without AO's Escarpment Lamps; `lamps=dark=N` starts with N already out)
+- `lamps=0` (the south wall without AO's Escarpment Lamps; `lamps=dark=N` starts with N already out)
 - `thrones=0` (the sun's saddle without AM's two crawling colossi of `src/v5/thrones.js`; their seats stay, empty)
 - `galleries=0` (the west wall without the Galleries of Durance, `src/v5/galleries.js`)
 - `hawser=0` (leaves out BA the Hawser, `src/v5/hawser.js`)

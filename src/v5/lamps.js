@@ -48,7 +48,7 @@ export async function build(ctx) {
   const rej = { sun: 0, slope: 0, apron: 0, off: 0 };
   let tries = 0, litByLocal = 0;
   const colorPick = () => { let u = rng(), a = 0; for (let i = 0; i < PALETTE.length; i++) { a += PALETTE[i][2]; if (u < a) return i; } return 0; };
-  function place(b, y, ci, size, kind = 0) {
+  function place(b, y, ci, size, kind = 0, dim = 1) {
     tries++;
     if (b < S.bearings[0] || b > S.bearings[1] || y < S.y[0] || y > S.y[1]) { rej.off++; return false; }
     const a = az(b), cx = Math.cos(a), cz = Math.sin(a);
@@ -67,7 +67,7 @@ export async function build(ctx) {
     // the sun never reaches this face: a light whose rock faces the sun (3-D normal . sun direction > 0.2, a face turned well toward the sun) is rejected
     if (tmp.x * SUN.dir.x + tmp.y * SUN.dir.y + tmp.z * SUN.dir.z > 0.2) { rej.sun++; return false; }
     const proud = 0.3 + 0.2 * rng();
-    P.push({ x: x + tmp.x * proud, y: y + tmp.y * proud, z: z + tmp.z * proud, ci, size, kind });
+    P.push({ x: x + tmp.x * proud, y: y + tmp.y * proud, z: z + tmp.z * proud, ci, size, kind, dim, n: [tmp.x, tmp.y, tmp.z] });
     return true;
   }
   const b0 = S.bearings[0], b1 = S.bearings[1];
@@ -125,7 +125,7 @@ export async function build(ctx) {
       if (rng() > lit) continue;
       const b = cen + k * step + (rng() - 0.5) * 0.08;
       if (inVoid(b, y)) continue;
-      place(b, y + tip * k * step + (rng() - 0.5) * 0.4, rng() < 0.12 ? colorPick() : rng() < 0.3 ? ci2 : ci, sz * (0.85 + 0.3 * rng()));
+      place(b, y + tip * k * step + (rng() - 0.5) * 0.4, rng() < 0.12 ? colorPick() : rng() < 0.3 ? ci2 : ci, sz * (0.85 + 0.3 * rng()) * (1.2 - 0.45 * (y - yLo) / RANGE), 0, rng() < 0.33 ? 0.5 : 1);
     }
   };
   for (let y = yLo + 3; y < yLo + 0.7 * RANGE; y += 5.2 + rng() * 0.8) {
@@ -159,7 +159,7 @@ export async function build(ctx) {
   // the great opening: one tall lit arch in the face at the heart of the dense quarter, where the eye goes first
   for (let t = 0; t < 40 && !P.some((q) => q.kind === 1); t++) {
     const y = yLo + 0.33 * RANGE + (rng() - 0.5) * 14;
-    place(spineAt(y) + (rng() - 0.5) * 1.2, y, 0, 15, 1);
+    place(spineAt(y) + (rng() - 0.5) * 1.2, y, 0, 15, 1, 1);
   }
   const NALL = P.length;
 
@@ -171,27 +171,25 @@ export async function build(ctx) {
   order.forEach((idx, r) => { rank[idx] = P[idx].kind ? 1e6 : r; });
 
   // low draws every other lamp; ranks stay the high set's, so the k-th lamp to go out is the same lamp on every tier
-  const keep = P.map((_, i) => i).filter((i) => !low || i % 2 === 0 || P[i].kind);
+  const keep = P.map((_, i) => i).filter((i) => !P[i].kind && (!low || i % 2 === 0)); // the great opening is a mesh, below
   const N = keep.length;
-  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3), kind = new Float32Array(N);
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), meta = new Float32Array(N * 3);
   keep.forEach((src, i) => {
     const p = P[src];
     pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
-    const c = PALETTE[p.ci][1]; col[i * 3] = c[0]; col[i * 3 + 1] = c[1]; col[i * 3 + 2] = c[2];
-    meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng(); kind[i] = p.kind;
+    const c = PALETTE[p.ci][1]; col[i * 3] = c[0] * p.dim; col[i * 3 + 1] = c[1] * p.dim; col[i * 3 + 2] = c[2] * p.dim;
+    meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng();
   });
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aCol', new THREE.BufferAttribute(col, 3));
   geo.setAttribute('aMeta', new THREE.BufferAttribute(meta, 3));
-  geo.setAttribute('aKind', new THREE.BufferAttribute(kind, 1));
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(S.x, 140, S.z), 260);
 
   const U = { uTime: { value: 0 }, uDark: { value: seen0 }, uH: { value: 720 } };
   const vs = /* glsl */`
     uniform float uTime, uDark, uH;
     attribute vec3 aCol, aMeta;
-    attribute float aKind;
     varying vec3 vCol; varying float vA, vWin, vKind;
     #include <fog_pars_vertex>
     float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
@@ -204,12 +202,14 @@ export async function build(ctx) {
       gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 2.0, 0.0));
       float sc = uH * 0.5 * projectionMatrix[1][1], px = uH / 720.0;
       float phys = aMeta.x * sc / max(depth, 1.0);
-      // a window (0.68 as wide as tall) held to 4.5-10 px tall, or for the great opening 12-70; its point is 2.4 times that,
-      // so the sill and the glow round it have room
-      float win = aKind > 0.5 ? clamp(phys, 12.0 * px, 70.0 * px) : clamp(phys, 4.5 * px, 10.0 * px);
+      // a window (0.68 as wide as tall) held to 4.5-10 px tall; its point is 2.4 times that so the sill and the glow round
+      // it have room, and never over 60 px (some GPUs clamp points at 64): the window is then what fits
+      float win = clamp(phys, 4.5 * px, 10.0 * px);
+      float ps = min(win * 2.4, 60.0);
+      win = ps / 2.4;
       float s = win;
-      gl_PointSize = win * 2.4;
-      vWin = win; vKind = aKind;  // (set to 0 below when the lamp is out)
+      gl_PointSize = ps;
+      vWin = win; vKind = 0.0;  // (set to 0 below when the lamp is out)
       // a slow flicker of its own: two incommensurate sines on a hash of the index, and now and then a brief sag
       float i = aMeta.z * 91.7;
       float fl = 0.80 + 0.20 * sin(uTime * (0.25 + 0.5 * h11(i)) + i * 6.28) * sin(uTime * (0.11 + 0.2 * h11(i + 3.0)) + i * 3.1);
@@ -222,7 +222,7 @@ export async function build(ctx) {
       // energy: a window smaller than its dot is dimmer than the dot would be
       float k = pow(min(1.0, phys / s), 0.5);
       if (lit <= 0.0) gl_PointSize = 0.0;
-      vA = fl * lit * mix(0.5, 1.0, k) * (aKind > 0.5 ? 2.2 : 2.6);
+      vA = fl * lit * mix(0.5, 1.0, k) * 2.6;
       vCol = mix(aCol, aCol * aCol, 0.5);
     }`;
   const fs = /* glsl */`
@@ -258,10 +258,44 @@ export async function build(ctx) {
   });
   Object.assign(mat.uniforms, U);
   mat.customProgramCacheKey = () => 'escarpment-lamps-v11';
+  const blend = { transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor };
   const points = new THREE.Points(geo, mat);
   points.name = 'escarpment-lamps'; points.frustumCulled = true; points.renderOrder = 24;
   points.onBeforeRender = (r) => { U.uH.value = r.domElement.height; };
   scene.add(points);
+
+  // the great opening: one tall lit arch (15 m) in the face, a quad with the windows' look (a point would be over any GPU's
+  // size limit), set 1.5 m off the rock facing out; the shader nudges it 3 m toward the eye as the points are
+  const great = P.find((q) => q.kind === 1);
+  if (great) {
+    const n = new THREE.Vector3(...great.n).normalize(), xa = new THREE.Vector3(0, 1, 0).cross(n).normalize(), ya = n.clone().cross(xa);
+    const gm = new THREE.Mesh(new THREE.PlaneGeometry(great.size * 2.4, great.size * 2.4), new THREE.ShaderMaterial({
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uH: U.uH, uTime: U.uTime, uCol: { value: new THREE.Vector3(...PALETTE[great.ci][1]) } }]),
+      vertexShader: /* glsl */`
+        uniform float uH, uTime; uniform vec3 uCol;
+        varying vec3 vCol; varying float vA, vWin, vKind; varying vec2 vUv;
+        #include <fog_pars_vertex>
+        void main() {
+          vec3 transformed = position;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          #include <fog_vertex>
+          vec4 centre = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+          gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 3.0, 0.0));
+          vUv = uv; vKind = 1.0;
+          vWin = max(${great.size.toFixed(2)} * uH * 0.5 * projectionMatrix[1][1] / max(-centre.z, 1.0), 2.0);
+          vA = 2.0 * (0.9 + 0.1 * sin(uTime * 0.4));
+          vCol = mix(uCol, uCol * uCol, 0.5);
+        }`,
+      fragmentShader: fs.replace('varying vec3 vCol;', 'varying vec2 vUv; varying vec3 vCol;').replace('gl_PointCoord', 'vUv'),
+      fog: true, ...blend,
+    }));
+    gm.matrixAutoUpdate = false;
+    gm.matrix.makeBasis(xa, ya, n).setPosition(great.x + n.x * 1.5, great.y + n.y * 1.5 + great.size * 0.1, great.z + n.z * 1.5);
+    gm.name = 'escarpment-lamps-great'; gm.frustumCulled = false; gm.renderOrder = 24;
+    gm.material.customProgramCacheKey = () => 'escarpment-lamps-great';
+    scene.add(gm);
+  }
 
   // ---- the gutter: each falling edge through 0.85 puts out the next lamp, and it stays out
   const flick = ctx.sky.flicker;

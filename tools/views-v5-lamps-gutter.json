@@ -1,4 +1,20 @@
 [
- {"name":"gutter-before","x":-40,"z":22,"yaw":0.785,"pitch":0.2,"settle":3000},
- {"name":"gutter-after","x":-40,"z":22,"yaw":0.785,"pitch":0.2,"js":"window.__fp.lamps.gutter();","settle":9000,"pre":"(()=>{const fp=window.__fp,o=fp.lamps.order,V=new fp.THREE.Vector3(); window.__gone=[0].map(k=>{fp.lamps.position(o[k],V);const q=V.clone().project(fp.camera);return [o[k],Math.round((q.x*0.5+0.5)*1280),Math.round((0.5-q.y*0.5)*720)]});console.warn('GONE '+JSON.stringify(window.__gone));})()"}
+ {
+  "name": "gutter-before",
+  "x": -40,
+  "z": 22,
+  "yaw": -3.3,
+  "pitch": 0.3,
+  "settle": 3000
+ },
+ {
+  "name": "gutter-after",
+  "x": -40,
+  "z": 22,
+  "yaw": -3.3,
+  "pitch": 0.3,
+  "js": "window.__fp.lamps.gutter();",
+  "settle": 9000,
+  "pre": "(()=>{const fp=window.__fp,o=fp.lamps.order,V=new fp.THREE.Vector3(); window.__gone=[0].map(k=>{fp.lamps.position(o[k],V);const q=V.clone().project(fp.camera);return [o[k],Math.round((q.x*0.5+0.5)*1280),Math.round((0.5-q.y*0.5)*720)]});console.warn('GONE '+JSON.stringify(window.__gone));})()"
+ }
 ]
