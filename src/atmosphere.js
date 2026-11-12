@@ -53,6 +53,7 @@ export function installAtmosphere() {
       const vec3 FP_HAZE = vec3(${hexToVec(PALETTE.haze)});
       const vec3 FP_TIER_AWAY = vec3(${hexToVec(PALETTE.skyHorizonAway)}) * 1.25 + vec3(0.0, 0.004, 0.018);
       const vec3 FP_TIER_SUN = vec3(${hexToVec(PALETTE.skyHorizonSun)});
+      const vec3 FP_WALL_AIR = vec3(${hexToVec('#4a4a66')}); // v11: the cool pale air on the walls turned from the sun
       vec3 fpTierCol(vec3 rd, float flick) {
         float toSun = max(dot(normalize(vec3(rd.x, 0.0, rd.z)), normalize(vec3(FP_SUN_DIR.x, 0.0, FP_SUN_DIR.z))), 0.0);
         float s = max(dot(rd, FP_SUN_DIR), 0.0);
@@ -88,9 +89,18 @@ export function installAtmosphere() {
       vec3 lowMist = mix(fogColor, vec3(0.28, 0.29, 0.38), 0.5) + FP_SUN_GLOW * pow(sunAmt, 4.0) * 0.16;
       gl_FragColor.rgb = mix( gl_FragColor.rgb, lowMist, hf * 0.78 );
       gl_FragColor.rgb = mix( gl_FragColor.rgb, haze, fogFactor );
+      float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
+      // v11: the walls recede in the cold light. Beyond the bowl (world radius past 300 m), by distance from the eye,
+      // a cool pale air over everything turned from the sun, so the near wall at 400 m sits behind what stands in
+      // front of it, lower in contrast and bluer than the ground at 50 m; toward the sun the glow already does this.
+      float fpWallR = length(vFogWorldPos.xz);
+      if (fpWallR > 300.0) {
+        float fpAway = 1.0 - pow(max(dot(normalize(vec3(fpDir.x, 0.0, fpDir.z)), normalize(vec3(FP_SUN_DIR.x, 0.0, FP_SUN_DIR.z))), 0.0), 1.5);
+        float fpWall = 0.3 * smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(90.0, 430.0, fpDist) * fpAway;
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, FP_WALL_AIR * (0.55 + 0.45 * fpFl), fpWall);
+      }
       float fpTier = fpTierAmt(vFogWorldPos);
       if (fpTier > 0.0) {
-        float fpFl = dot(fogColor, vec3(1.0)) / dot(FP_HAZE, vec3(1.0));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, fpTierCol(fpDir, fpFl), fpTier);
         gl_FragColor.rgb = min(gl_FragColor.rgb, max(fpSkyBehind(fpDir, fpFl) * 0.88, FP_HAZE * 1.4));
       }
