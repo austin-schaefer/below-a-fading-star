@@ -29,20 +29,23 @@ export const LEADS = [
   { id: 'P1', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, Demesne turf to moor', pts: [[6, 36], [-14, 41], [-36, 44]] },
   { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-101, 50], [-122, 60], [-135, 62]] },
   { id: 'P3', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track along the Lynchets\' east wall (the Thurifer\'s track), drystone footings', near: { region: 'lynchets', within: 6 },
-    pts: [[-108, -126], [-135, -120], [-157, -113], [-178, -79], [-163, -58], [-152, -44]] },
-  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-128, -113], [-148, -107], [-167, -105]] },
+    pts: [[-110.5, -124], [-135, -120], [-157, -113], [-178, -79], [-166, -66], [-156, -60], [-152, -44]] }, // v8-09: off the shrine's apse at its head, and east of the Stones' fallen uprights
+  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-128, -113], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall
   { id: 'P5', kind: 'path', cls: 'trod', w: 0.5, brief: 'worn path, moor', pts: [[-106, -131], [-90, -141], [-72, -149]] },
   { id: 'P6', kind: 'path', cls: 'way', w: 1.0, brief: 'gravel trod across the Outwash\'s channels', pts: [[-8, -181], [10, -188], [22, -214]] },
-  { id: 'P7', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in the blackthorn, Bletting grass', pts: [[100, -195], [118, -170], [130, -150], [131, -120], [130, -100]] },
-  { id: 'P8', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard track, honey-stone wall gaps', pts: [[148, -100], [184, -118], [212, -102], [238, -118], [270, -160]] },
+  { id: 'P7', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in the blackthorn, Bletting grass', pts: [[100, -195], [102, -184], [110, -174], [118, -170], [130, -150], [128.6, -144], [131, -120], [130, -100]] }, // v8-09: round the ruin and the boulder below the blackthorn, past the field wall's end, not over it
+  { id: 'P8', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard track, honey-stone wall gaps', pts: [[148, -100], [178.7, -115.1], [184, -118], [212, -102], [216, -114], [222, -119], [230, -119.5], [238, -118], [270, -160]] }, // v8-09: through Medlar Close's wicket, and south round the Hypogeum's cut
   { id: 'P9', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, Demesne turf then Bletting grass', pts: [[73, -26], [69, -42], [67, -52], [76, -62], [92, -66], [112, -82]] },
   { id: 'K1', kind: 'kerb', w: 0.22, brief: 'old kerb (the Leerie\'s row)', pts: [[110, -25], [145, 35]] },
   { id: 'P10', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather track with clitter', pts: [[230, -100], [233, -60], [236, -36]], parts: [[[234, -62], [261, -77]]] },
   { id: 'P11', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track, heather to moor', pts: [[250, 5], [240, 12], [226, 28], [204, 46], [182, 57]] },
   { id: 'P12', kind: 'path', cls: 'trod', w: 0.5, brief: 'worn crust', pts: [[216, 176], [219.5, 168]] },
-  { id: 'P13', kind: 'path', cls: 'trod', w: 0.5, brief: 'rim path, shingle', pts: [[188, 197], [175, 207], [165, 215], [174, 224], [186, 232], [197, 233], [211, 237]] },
-  { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [105, 222], [86, 240], [70, 258], [40, 261], [9, 252]] },
-  { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-65, 226], [-95, 209], [-75, 189], [-50, 166]] },
+  // v8-09: the canyon's rim joined: from the worn crust's head (P12, P44) up the bank east of the pit, under the Span
+  // between its last two piers, and along the rim to the lip over the Wrong Colour and the Cutting; a branch to the
+  // brink over the Speculum
+  { id: 'P13', kind: 'path', cls: 'trod', w: 0.5, brief: 'rim path, shingle', pts: [[219.5, 168], [220, 178], [220, 190], [217, 198], [210, 204], [204, 210], [197, 217], [190, 224], [184, 229], [180, 231.5]], parts: [[[197, 217], [210, 224], [216, 232], [215, 238], [214, 242], [213.6, 244.2]], [[190, 224], [190, 232.5]]] },
+  { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [92, 236], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
+  { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 238], [-52, 235], [-47, 226], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: by the traveller's approach (it looks along it to him), then under the Span between piers -70 and -22, not through the fallen bay
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196]] },
   { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
@@ -66,7 +69,7 @@ export const LEADS = [
   { id: 'P27', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Leaning Yard\'s gate', pts: [[184, -118], [194, -117]] },
   { id: 'P28', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Gradine\'s foot', pts: [[270, -160], [274, -166]] },
   { id: 'P29', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the tower\'s lit door', pts: [[-237, -110], [-245, -118]] },
-  { id: 'P30', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the Link-Boy\'s post to the causeway', pts: [[-167, -105], [-185, -98], [-201, -90]] },
+  { id: 'P30', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the Link-Boy\'s post to the causeway', pts: [[-168.2, -101.3], [-185, -98], [-201, -90]] }, // v8-09: from the wall's gap
   { id: 'P31', kind: 'path', cls: 'trod', w: 0.5, brief: 'red clay trod to the Galleries\' foot', pts: [[-264, -48], [-282, -58], [-298, -67]] },
   { id: 'P32', kind: 'path', cls: 'way', w: 1.0, brief: 'the wood way, the byre through the Deodand Wood to the Span\'s west stair', pts: [[-135, 62], [-160, 86], [-188, 112], [-212, 140], [-214, 172], [-205, 176], [-195, 180], [-194, 196]] },
   { id: 'P33', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out of the wood to the Thrones and the causeway\'s west end', pts: [[-214, 172], [-240, 140], [-268, 118], [-298, 100]] },
@@ -76,7 +79,7 @@ export const LEADS = [
   { id: 'P37', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the Sward to the tarn', pts: [[-36, 44], [-40, 62]] },
   { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [2, 237], [-18, 231], [-36, 246]] },
   { id: 'P39', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the reed gap north round the Span\'s pier to the rim way', slabs: true, pts: [[125, 205], [133, 186], [150, 166], [176, 146]] },
-  { id: 'P40', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the foot of the Span\'s fallen bay, looking over the canyon (the rim beyond is walled off by the fall: P13)', pts: [[176, 146], [170, 162], [166, 176]] },
+  { id: 'P40', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the foot of the Span\'s fallen bay, looking over the canyon (the rim beyond is reached by P13, from the worn crust)', pts: [[176, 146], [170, 162], [166, 176]] },
   { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [56, -38], [66, -32], [73, -26]] },
   { id: 'P42', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'the fen way on stepping slabs, the Demesne to the Saltings', pts: [[110, 40], [95, 80], [80, 120], [70, 160], [56, 184], [48, 193], [42, 200], [41, 207], [44, 214], [46, 221], [48, 228], [52, 242], [56, 259]] },
   { id: 'P43', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod across the Sunken Court\'s floor, between the piers, south of the shaft and round the fallen pier\'s end', pts: [[-72, -149], [-64, -153], [-56, -153], [-48, -153], [-40, -153], [-32, -153], [-27, -151.5], [-23.5, -144], [-23.5, -141], [-17.5, -141], [-10, -141], [0, -143], [12, -146]] },

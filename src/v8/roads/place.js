@@ -145,7 +145,9 @@ export function placeGnomons() {
       if (placed) break;
     }
     if (!placed) continue;
-    const g = make(placed.x, placed.z, Math.sin(mid), Math.cos(mid), 'junction');
+    // its head's notch faces the crossing, so a walker there sees the V face on (v8-09; it faced the widest gap)
+    const jd = Math.hypot(j.x - placed.x, j.z - placed.z) || 1;
+    const g = make(placed.x, placed.z, (j.x - placed.x) / jd, (j.z - placed.z) / jd, 'junction');
     // arms: one toward each branch, as bearings from the gnomon
     for (const b of br) {
       const px = j.x + Math.sin(b) * 12, pz = j.z + Math.cos(b) * 12;

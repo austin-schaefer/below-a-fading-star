@@ -50,11 +50,11 @@ export async function build(ctx) {
   // ================================================================ where: the stations
   // the gnomons are another module's, built in parallel: wait for them unless they are left out
   const roadsOn = loaded('roads') && new URL(location.href).searchParams.get('roads') !== '0';
-  if (roadsOn) await waitFor(() => ctx.roads && scene.getObjectByName('roads-gnomon-heads'));
+  if (roadsOn) await waitFor(() => ctx.roads?.heads); // v8-09: the heads are in the roads' merged stone; ctx.roads.heads gives their matrices
   const T = tracks();
   const nearestTrack = (x, z) => { let best = null, bd = Infinity, bs = 0; for (const t of T) { const r = nearestOn(t, x, z); if (r.d < bd) { bd = r.d; best = t; bs = r.s; } } return { T: best, d: bd, s: bs }; };
   const stations = [];
-  const heads = scene.getObjectByName('roads-gnomon-heads');
+  const heads = ctx.roads?.heads;
   const G = (ctx.roads?.gnomons || []).filter((g) => g.state === 'stand');
   const _m = new THREE.Matrix4(), _v = new THREE.Vector3(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3();
   const HEAD = ctx.roads?.head;

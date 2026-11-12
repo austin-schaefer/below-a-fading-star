@@ -233,15 +233,20 @@ if (mc) {
   await touch('touchStart', [[45, r.home.x, r.home.y]]);
   await touch('touchMove', [[45, r.home.x - 30, r.home.y - 30]]);
   const fHeld = await read();
-  await page.setViewportSize({ width: 844, height: 390 });
-  await page.waitForTimeout(400);
+  // wait on the resize event itself (and a frame after it), not a timer: under load 400 ms was sometimes too short (#100)
+  const resized = async (w, h) => {
+    await page.evaluate(() => { window.__fpResized = new Promise((res) => addEventListener('resize', () => requestAnimationFrame(() => requestAnimationFrame(res)), { once: true })); });
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForFunction(([w, h]) => innerWidth === w && innerHeight === h, [w, h], { timeout: 60000 });
+    await page.evaluate(() => Promise.race([window.__fpResized, new Promise((res) => setTimeout(res, 30000))]));
+  };
+  await resized(844, 390);
   const fTurned = await read();
   const landHome = await page.evaluate(() => { const el = document.getElementById('stick');
     const keep = [el.style.left, el.style.top, el.style.bottom]; el.style.left = el.style.top = el.style.bottom = '';
     const b = el.getBoundingClientRect(); [el.style.left, el.style.top, el.style.bottom] = keep; return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
   await touch('touchEnd', []);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(400);
+  await resized(390, 844);
   const fBack = await read();
   check('#100 resize mid-drag: walking before', fHeld.moveId === 45 && fHeld.mag > 0.5, fHeld);
   check('#100 resize mid-drag: the ring moves to the landscape home, on screen', near(fTurned.ring, landHome, 1.5) && near(fTurned.el, landHome, 1.5) && fTurned.mag === 0, { fTurned, landHome });

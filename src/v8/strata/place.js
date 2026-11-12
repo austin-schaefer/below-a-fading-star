@@ -65,22 +65,22 @@ export async function build(ctx) {
   // ---------------------------------------------------------------- the Heliarch roundel
   {
     // the keep's gate lintel, its west face, on the uncracked south half: the keep is giant, so is its roundel
-    const ks = 3.0, kd = ks * 0.22;
+    const ks = 3.4, kd = ks * 0.22; // v8-09: 3.0 read as a dot from the causeway
     P.heliarch.roundel(H, F(6.8 - kd / 2 + 0.01, 42.7, 31.2, yawTo(-1, 0)), { size: ks, disc: 'ember' });
     sign('heliarch', "Carcanet Keep's gate", 6.8 - kd / 2, 42.7 + ks * 0.5, 31.2, [-1, 0], 'wall', { size: ks });
     // over the Armiger's Tower's door (the south fin's end face at z -120; its sill at 34.1, the door 5.8 m)
     const ty = ground.groundAt(-250, -120) + 5.8 + 0.45;
-    P.heliarch.roundel(H, F(-250, ty, -120 + 0.11, 0), { size: 1.0, disc: 'ember' });
-    sign('heliarch', "the Armiger's Tower's door", -250, ty + 0.5, -120 + 0.11, [0, 1], 'wall', { size: 1.0 });
+    P.heliarch.roundel(H, F(-250, ty, -120 + 0.11, 0), { size: 1.35, disc: 'ember' });
+    sign('heliarch', "the Armiger's Tower's door", -250, ty + 0.65, -120 + 0.11, [0, 1], 'wall', { size: 1.35 });
     // the Hypogeum's cornice, against the cut's east wall above the lintel, facing down the stair
     const hx = 230.27, hy = 4.505, hz = -112; // the door's face at x 230.69, the cornice's top 4.5 (the floor + 3.31)
-    P.heliarch.roundel(H, F(hx, hy, hz, yawTo(-1, 0)), { size: 0.9, disc: 'bronze' });
-    sign('heliarch', "the Hypogeum's lintel", hx, hy + 0.3, hz, [-1, 0], 'top', { foot: hy, size: 0.9 });
+    P.heliarch.roundel(H, F(hx, hy, hz, yawTo(-1, 0)), { size: 1.15, disc: 'bronze' });
+    sign('heliarch', "the Hypogeum's lintel", hx, hy + 0.4, hz, [-1, 0], 'top', { foot: hy, size: 1.15 });
     // the Sunken Court's stair head: one on each newel, a pair, as the Heliarchy liked things
     for (const nx of [-45.6, -34.4]) {
       const ny = 0.673, nz = -176.8;
-      P.heliarch.roundel(H, F(nx, ny, nz, yawTo(0, -1)), { size: 0.9, disc: 'ember' });
-      sign('heliarch', `the Sunken Court's stair head (${nx < -40 ? 'west' : 'east'} newel)`, nx, ny + 0.3, nz, [0, -1], 'top', { foot: ny, size: 0.9 });
+      P.heliarch.roundel(H, F(nx, ny, nz, yawTo(0, -1)), { size: 1.1, disc: 'ember' });
+      sign('heliarch', `the Sunken Court's stair head (${nx < -40 ? 'west' : 'east'} newel)`, nx, ny + 0.38, nz, [0, -1], 'top', { foot: ny, size: 1.1 });
     }
   }
 
