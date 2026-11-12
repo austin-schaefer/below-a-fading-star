@@ -7,11 +7,16 @@
 // shots/wip/music-<track>.wav (gitignored) at the stem's level and shots/wip/music/<track>-listen.wav, the same gained
 // to a -6 dBFS peak, for the owner's ear. The bands and what each number means: the `music` skill.
 //
-//   node tools/music-render.mjs <track|all|path/to/track.js> [--wav] [--q=low] [--seed=n] [--patches=fixture.js] [--solo=voice,...] [--json]
+//   node tools/music-render.mjs <track|all|path/to/track.js> [--wav] [--tag=v3] [--q=low] [--seed=n] [--patches=fixture.js] [--solo=voice,...] [--voices] [--json]
 //
 // --patches serves a fixture module in place of src/audio/music/patches.js (it imports the real one as
 // /src/audio/music/patches.js?real and swaps a patch for a broken one: tools/music-fixtures/patches-*.js), to show the
-// gates catch a bad patch. --solo renders only those voices of the track (to find which one a number comes from). Exit 1 on any FAIL.
+// gates catch a bad patch. --solo renders only those voices of the track (to find which one a number comes from).
+// --voices (v9-M6) renders each voice alone after the whole and prints a harshness row a voice: its loudness against
+// the stem's, its own sharp_db (2-5 kHz over 100-8000 Hz in that voice alone, so an abrasive instrument cannot hide
+// in a quiet mix), its 2-5 kHz energy against the whole stem's, and its peak; gated at the stem's sharp_db band for
+// every voice within 20 dB of the stem (one further under is shown: a far bell's strike reads sharp alone and is not heard so).
+// --tag=v3 names the listening copy shots/wip/music/v3-<track>-listen.wav. Exit 1 on any FAIL.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -89,7 +94,7 @@ async function renderTrack(page, file, o) {
     const t0 = performance.now();
     const buf = await ac.startRendering();
     window.__buf = [buf.getChannelData(0), buf.getChannelData(1)];
-    return { name: track.name, sr, frames, seconds: frames / sr, plan: h.plan, dropped: h.dropped, stolen: h.stolen, events: events.length, ms: Math.round(performance.now() - t0), ended: h.ended };
+    return { name: track.name, ids: track.voices.map((v) => [v.id, v.patch]), sr, frames, seconds: frames / sr, plan: h.plan, dropped: h.dropped, stolen: h.stolen, events: events.length, ms: Math.round(performance.now() - t0), ended: h.ended };
   }, { url, quality: o.q || 'high', seed: o.seed != null ? Number(o.seed) : null, sr: SR, solo: o.solo ? String(o.solo).split(',') : null });
   const ch = await pull(page, '__buf', info.frames);
   return { info, ch };
@@ -204,11 +209,30 @@ async function main() {
       if (o.wav) {
         wavPath = path.join(ROOT, 'shots/wip', `music-${name}.wav`); writeWav(wavPath, ch, info.sr);
         // the listening copy: the same audio gained to a -6 dBFS peak (the stem alone is too quiet to audition)
-        listenPath = path.join(ROOT, 'shots/wip/music', `${name}-listen.wav`); writeWav(listenPath, loud, info.sr);
+        listenPath = path.join(ROOT, 'shots/wip/music', `${o.tag ? o.tag + '-' : ''}${name}-listen.wav`); writeWav(listenPath, loud, info.sr);
       }
       const r = report(name, info, m, bands, wavPath && `${wavPath}\n  listen: ${listenPath} (gained ${(20 * Math.log10(k)).toFixed(1)} dB to a -6 dBFS peak)`);
       console.log(r.text);
       fail += r.fail;
+      if (o.voices && !o.solo) {
+        // each voice alone: is one of them abrasive, however quiet the mix makes it?
+        const sharpOf = (b) => b.find((x) => x.lo === 2000).db;
+        const energy = (ch) => { let e = 0; for (const c of ch) for (let i = 0; i < c.length; i++) e += c[i] * c[i]; return 10 * Math.log10(Math.max(e, 1e-30)); };
+        const whole = sharpOf(bands) + energy(ch);
+        console.log('  per voice (alone): level re the stem, own sharp_db, its 2-5k energy re the stem\'s, peak');
+        for (const [id, patch] of info.ids) {
+          const r = await renderTrack(page, f, { ...o, solo: id });
+          const mv = measure({ sr: r.info.sr, ch: r.ch, frames: r.info.frames });
+          const bv = bandTable(r.ch, r.info.sr);
+          // the voice's 2-5k energy against the whole stem's (its band share of its own energy, against the stem's)
+          const rel = +(sharpOf(bv) + energy(r.ch) - whole).toFixed(1);
+          const gated = mv.lufs_i != null && m.lufs_i != null && mv.lufs_i - m.lufs_i > -20;
+          const ok = !gated || mv.sharp_db == null || mv.sharp_db < -16;
+          if (!ok) fail++;
+          console.log(`${!gated ? '(shown)' : ok ? 'PASS' : 'FAIL'} ${name} voice ${(id + ' (' + patch + ')').padEnd(18)} level ${mv.lufs_i == null ? '-' : (mv.lufs_i - m.lufs_i).toFixed(1).padStart(5)} dB  sharp_db ${String(mv.sharp_db).padStart(6)} (< -16)  2-5k ${String(rel).padStart(5)} dB re the stem's  peak ${mv.peak_dbfs} dBFS`);
+          results.push({ name: `${name}/${id}`, voice: id, patch, metrics: { ...mv, detail: undefined }, bands: bv, rel_sharp_db: rel });
+        }
+      }
       if (!o.solo) {
         const c = await interruptCheck(page, f, o);
         const lines = [
