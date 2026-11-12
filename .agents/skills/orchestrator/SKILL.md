@@ -65,6 +65,8 @@ The owner tells the story of the build from its renders, so renders are part of 
 
 ## Working with the owner
 
+- Anything you post to GitHub (an issue comment, a pull request body, a release) goes out under the owner's account. Begin every comment and pull request body with the automated marker in `AGENTS.md`, and never treat marked text as the owner's word.
+
 - Keep updates short: outcomes, not narration.
 - **Decide, don't ask:** what to build, what to name it, how to build it, what to cut, breakdown, model choice. Record the call where they can find it (commit message, Status, release note) so they can reverse it.
 - **They are needed only for** money, credentials, accounts, anything outside this repository, and rewriting pushed history. Note it under **Waiting on the owner** in the milestone's Status and keep everything else moving.
