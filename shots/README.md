@@ -576,8 +576,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `73-wood-shafts-glade-after.webp` | After: low sun shafts slanting through the trees. |
 | `73-wood-shafts-clearing-before.webp` | Before: a clearing in the wood, flat and dark. |
 | `73-wood-shafts-clearing-after.webp` | After: the same clearing with broad shafts of ember light. |
-| `73-hillside-figure-before.webp` | Before: the white figure on the hillside, a hard bright white. |
-| `73-hillside-figure-after.webp` | After: the figure toned to cream, its edge softer (a subtle change; the figure remains). |
+| `73-hillside-figure-before.webp` | Before: standing on the white figure cut into the hillside, with boulders, stones and plants lying across it. |
+| `73-hillside-figure-after.webp` | After, from the same spot: nothing lies or grows on the figure. |
 | `74-settings-desktop.webp` | The settings menu on desktop: sound, quality, mouse and position. |
 | `74-settings-phone.webp` | The settings menu on a phone, with the Go to list. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
