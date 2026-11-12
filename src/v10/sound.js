@@ -9,6 +9,7 @@
 //               a longer drag. Bandpassed pink grains centred low (900-1600 Hz) and
 //               lowpassed at 3.2 kHz, so the rasp stays out of the ear's sharpest band. Detail tier, 25 m
 import { softKit } from '../audio/cues-v2.js';
+import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -48,8 +49,10 @@ export function startActsSound(a, ctx) {
     drag(v.t0, len, 0.05);
   }
 
+  const bell = startBellSound(a, ctx); // its own rng
   function cue(name, pos, opts) {
-    if (name === 'act-offer') offer(pos);
+    if (name.startsWith('act-bell')) bell.cue(name, pos, opts);
+    else if (name === 'act-offer') offer(pos);
     else if (name === 'act-chalk') chalk(pos, opts);
   }
   return { cue };
