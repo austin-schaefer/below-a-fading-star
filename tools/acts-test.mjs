@@ -287,6 +287,9 @@ await seeded('throws', () => { for (const k of ['getItem', 'setItem', 'removeIte
   await c.close();
 }
 
+// ------------------------------------------------------------------ v10-A1: the crystal and the door (tools/acts-central.mjs)
+if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).centralRows({ browser, base, check, watch });
+
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
 console.log(`${passes} passed, ${fails} failed`);

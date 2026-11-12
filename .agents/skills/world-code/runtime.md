@@ -139,6 +139,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v10
 
 - `acts=0`: no acts (`src/v10/acts.js`): nothing offered, nothing read from or written to `fp-acts`, and each place draws as it did before (the tally its own strokes only). The settings panel's Marks row ("Forget my marks") clears `fp-acts` and redraws every act's place. `node tools/acts-test.mjs <base>` checks the offer (not from the road, 30 m off, facing away or away from the row's end; offered in front of it, nothing behind the paused card or the settings panel), `E` and not Ctrl+E, the stored mark, the stroke drawn in view, once a visit, busy, `when()`, `at.y`, `data`, the stroke after a reload, the forget row, corrupt, tampered and refused storage, `?acts=0` and the tap on a touch page, and renders `shots/wip/acts-halt2-*.png`
+- v10-A1: `tools/acts-central.mjs` adds the crystal's and the door's rows to `acts-test` (offered at each, not from far or facing away, done and the answer run through, remembered after a reload, forgotten; the door's third knock); `CENTRAL=0` skips them. With `?acts=0` neither is offered and there is no ember, thread, blue lintel or tessera
 
 ### v8
 
