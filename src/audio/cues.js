@@ -321,6 +321,7 @@ export function startCues(a) {
       else if (name === 'linkboy-step') a.living.linkboyStep(position);
       else if (name === 'bather-pour') a.living.batherPour(position);
       else if (name.startsWith('house-')) a.house?.cue(name, position, opts); // v8-05
+      else if (name.startsWith('twk-')) a.twk?.cue(name, position, opts); // v8-07
       else a.regionSnd?.cue(name, position, opts);
     } catch (e) { if (audio.debug) throw e; }
   }
