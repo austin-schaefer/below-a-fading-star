@@ -13,7 +13,7 @@
 // | the Demesne | shaven bright lawn, a crisp edge | turf a few cm high, nothing else | palest: 1.28, 1.1, 0.94, 0 |
 // | the Lynchets | striped strips, each a different crop's ghost | stubble rows and fallow | 1.06, 1.05, 1.0, +0.02 |
 // | the Deodand Wood | leaf litter, near black | almost nothing under the canopy | darkest, ember-warm: 0.8, 0.95, 1.1, +0.1 |
-// | Corpse-Candle Fen | black mud | tall reeds in stands, open black water between | dark, cold: 0.74, 0.8, 1.12, -0.12 |
+// | Corpse-Candle Fen | black mud | tall reeds in stands, open black water between | cold, not dark (it is black mud and fog already): 1.0, 0.85, 1.04, -0.1 |
 // | the Adust | red clay | none | hot: 1.06, 1.12, 1.06, +0.04 |
 // | the Saltings | white crust | none | palest, washed out: 1.32, 0.72, 0.92, 0 |
 // | the Outwash | grey-blue gravel | ankle grass, sparse | cold: 1.08, 0.8, 1.0, -0.05 |
@@ -41,7 +41,7 @@ export const GRADE = {
   demesne: [1.28, 1.1, 0.94, 0],
   lynchets: [1.06, 1.05, 1.0, 0.02],
   wood: [0.8, 0.95, 1.1, 0.1],
-  fen: [0.74, 0.8, 1.12, -0.12],
+  fen: [1.0, 0.85, 1.04, -0.1],
   adust: [1.06, 1.12, 1.06, 0.04],
   saltings: [1.32, 0.72, 0.92, 0],
   outwash: [1.08, 0.8, 1.0, -0.05],
@@ -103,7 +103,7 @@ const N = makeSimplex(20261111 + 802);
 // the common: pale grazed turf, sage to straw, with bare trodden earth near the road and the keep's gate
 const cTurf = new THREE.Color('#7c8a56'), cTurf2 = new THREE.Color('#969a68'), cTrod = new THREE.Color('#7c6a52');
 // the wood: leaf litter, rust-brown to near black; the fen: black mud
-const cLitter = new THREE.Color('#3a2414'), cLitter2 = new THREE.Color('#1c140e'), cMud = new THREE.Color('#0f110e');
+const cLitter = new THREE.Color('#3a2414'), cLitter2 = new THREE.Color('#1c140e'), cMud = new THREE.Color('#1c2220');
 const _gp = { ..._p }, _c = new THREE.Color();
 export function trodAt(x, z, cd) {
   const near = Math.max(1 - smoothstep(5, 16, cd), 1 - smoothstep(40, 62, hyp(x - K.x, z - K.z)));
@@ -117,6 +117,6 @@ export function ground(col, x, z, cd) {
     col.lerp(_c, com * 0.85);
   }
   if (wood > 0.001) { _c.copy(cLitter).lerp(cLitter2, smoothstep(0.3, 0.7, N.fbm2(x * 0.07 - 3, z * 0.07, 2) * 0.5 + 0.5)); col.lerp(_c, wood * 0.85); }
-  if (fen > 0.001) col.lerp(cMud, fen * 0.75);
+  if (fen > 0.001) col.lerp(cMud, fen * 0.6);
   return col;
 }
