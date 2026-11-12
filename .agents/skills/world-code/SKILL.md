@@ -24,6 +24,18 @@ A world module exports `async function build(ctx)` and has a line in `MODULES` i
 
 `ctx` is assembled in `src/main.js`, and the comment above `const ctx = {` lists its fields (the terrain's queries, the mountains, the regions, the kit, the lights, the sky's flicker, the player, the profiler). Read it before you reach for a field; it is the one list, so a module that adds a shared field adds its line there.
 
+## Acts
+
+An act (v10) is the one small thing a visitor can do at a place: they come close, face the thing, are offered a few words at the bottom of the view, and press `E`, click with the mouse captured, or tap the offer on touch. `src/v10/acts.js` owns the offer, the input, the memory (`localStorage` `fp-acts`, read before any module builds) and the settings row that forgets it; the place's own module owns what the act draws and does. Register it from your `build(ctx)` with `ctx.acts.add(def)`:
+
+- `id` (stable: it is the storage key), `at: { x, y, z }` (the thing), `reach` (metres, horizontal, default 2.5), `face: { x, z }` (its front: offered only from that side), and either `cone` (radians the look may be off `at`, default 0.6) or `facing(player) → bool` for a wide thing;
+- `words`: two or three, in the world's voice ("Chalk your stroke");
+- `every`: `'once'` (ever), `'visit'` (once a page load) or `'free'`;
+- `do(n)`: what happens, with the count after this one (draw it over a moment, cue its sound: `ctx.audio.cue('act-…')`, voiced in `src/v10/sound.js` with a row in `tools/audio-test.mjs`);
+- `show(n)`: draw the remembered marks; called at `add()` with the stored count, and with 0 when the visitor forgets them. Read the count here, not in `build`, so a forget redraws the place.
+
+`add()` returns `{ count, done, def }`; `?acts=0` makes it a handle with count 0, so the place builds as it did before acts. Only the nearest act that is in reach and faced is offered, after about half a second; the check is a squared distance per act, so keep acts rare (five to seven on the map) and do nothing per frame yourself while no act of yours is being done. The example is the tally at the Lantern Halt, `src/v10/tally.js` (registered from `src/v9/waystation.js`): a `facing` that takes the wall's width, `every: 'visit'`, `show` redraws the strokes from the count, `do` draws the next one over half a second with `act-chalk`. Add your act's checks to `tools/acts-test.mjs`: offered at its place, not from far off or facing away, done, found again after a reload.
+
 ## Light and budgets
 
 - **Point lights:** add and animate `PointLight`s freely. After the build, `lights.js` copies the nearest sources into three fixed slot lights each frame, so a light costs nothing away from it. Give each a real `distance`.

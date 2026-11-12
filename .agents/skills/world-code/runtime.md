@@ -136,6 +136,10 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 - `waystation=0` leaves out the Lantern Halt on the causeway (`src/v9/waystation.js`; its rock clearing stays)
 
+### v10
+
+- `acts=0`: no acts (`src/v10/acts.js`): nothing offered, nothing read from or written to `fp-acts`, and each place draws as it did before (the tally its own strokes only). The settings panel's Marks row ("Forget my marks") clears `fp-acts` and redraws every act's place. `node tools/acts-test.mjs <base>` checks the offer (not 30 m off, not facing away, offered at the foot), `E`, the stored mark, once a visit, the stroke after a reload, the forget row, `?acts=0` and the tap on a touch page, and renders `shots/wip/acts-*.png`
+
 ### v8
 
 - `strata=0` (v8-03: no `strata` module, no signs or spolia, and the Pomegranate House, the byre, the shrine and the Leaning Yard as in v7)
