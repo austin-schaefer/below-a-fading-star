@@ -59,6 +59,9 @@ const CUES = [
   ['house-murmur', { dx: 3, dy: -0.5, dz: -3 }, { voice: 0, n: 6 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { n: 5 }, 1500, 1000], ['house-laugh', { dx: 3, dy: -0.5, dz: -3 }, { nervous: true }], ['house-pluck', { dx: 2, dy: -1, dz: -2 }, { note: 3, v: 0.8 }, 1000, 2000], ['house-cup', { dx: 2, dy: -0.9, dz: -2 }], ['house-tick', { dx: 1, dy: 0.8, dz: -1 }],
   // v10 the acts (src/v10/sound.js)
   ['act-offer', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1200], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, null, 1000, 1000], ['act-chalk', { dx: 1.5, dy: -0.3, dz: -1.5 }, { bar: true }, 1000, 1000],
+  // v10-A1 the crystal and the door (src/v10/sound-central.js)
+  ['act-crystal', { dx: 1.5, dy: -0.3, dz: -1.5 }, { n: 1 }, 2500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 1 }, 1500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 2, back: true }, 3000, 5000],
+  ['act-knock', { dx: 1, dy: -0.5, dz: -1 }, null, 800, 800], ['act-answer', { dx: 2, dy: -2, dz: -2 }, { near: 0 }, 1500, 1500], ['act-answer', { dx: 1, dy: -0.5, dz: -1 }, { near: 1 }, 1000, 1500], ['act-tessera', { dx: 0.6, dy: -1.6, dz: -0.6 }, null, 1200, 600],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });

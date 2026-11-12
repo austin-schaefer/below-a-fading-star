@@ -9,6 +9,7 @@
 //               a longer drag. Bandpassed pink grains centred low (900-1600 Hz) and
 //               lowpassed at 3.2 kHz, so the rasp stays out of the ear's sharpest band. Detail tier, 25 m
 import { softKit } from '../audio/cues-v2.js';
+import { startCentralSound } from './sound-central.js'; // v10-A1: act-crystal, act-crystal-ring, act-knock, act-answer, act-tessera
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -48,7 +49,9 @@ export function startActsSound(a, ctx) {
     drag(v.t0, len, 0.05);
   }
 
+  const central = startCentralSound(a, ctx); // v10-A1
   function cue(name, pos, opts) {
+    if (central.cue(name, pos, opts)) return; // v10-A1
     if (name === 'act-offer') offer(pos);
     else if (name === 'act-chalk') chalk(pos, opts);
   }
