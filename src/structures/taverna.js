@@ -15,6 +15,7 @@ export const TAVERNA = { x: 95, z: -45, half: 13 };
 // v8-03: the empty lamp brackets, world space: { x, y, z (the hook), face: [fx, fz] (out from the wall) }
 export const TAVERNA_BRACKETS = [];
 
+const LOW_TIER = (ctx) => ctx.quality === 'low'; // v8-09: the house's low-tier savings (brief 09 item 5)
 export function buildTaverna(ctx, B, env) {
   const { rng, ground, tints } = env;
   const { x: cx, z: cz, half } = TAVERNA;
@@ -97,10 +98,11 @@ export function buildTaverna(ctx, B, env) {
     sh.lineTo(-r * 0.82, spring - 0.4); sh.lineTo(-r * 0.82, 0); sh.lineTo(-frameW / 2, 0);
     B.add(B.extrude(sh, th + 0.6, 18), mat(cx, gm - 0.3, z, 0, 0, 0), { color: vary(plaster, rng, 0.03), moss: S ? 0.08 : 0.35, ground: gm, disp: 0.012, dispScale: 3 });
     // voussoirs picked out in alternating stone, as in the old mosques (v8: pomegranate red and cream)
-    for (let k = 0; k < 15; k++) {
-      const a = -0.45 + (k + 0.5) / 15 * (Math.PI + 0.9);
+    const nv = LOW_TIER(ctx) ? 9 : 15; // v8-09: fewer, wider voussoirs on the low tier, the same ring
+    for (let k = 0; k < nv; k++) {
+      const a = -0.45 + (k + 0.5) / nv * (Math.PI + 0.9);
       const col = k % 2 ? (S ? L.tile[1] : new THREE.Color('#6a2a1a')) : vary(S ? L.plaster[3] : tints.old, rng, 0.04);
-      B.add(B.box(0.3, 0.42, th + 0.66), mat(cx + Math.cos(a) * (r + 0.22), gm - 0.3 + spring + Math.sin(a) * (r + 0.22), z, 0, 0, a - Math.PI / 2), { color: col, moss: 0.3, ground: gm });
+      B.add(B.box(0.3 * 15 / nv, 0.42, th + 0.66), mat(cx + Math.cos(a) * (r + 0.22), gm - 0.3 + spring + Math.sin(a) * (r + 0.22), z, 0, 0, a - Math.PI / 2), { color: col, moss: 0.3, ground: gm });
     }
     // the alfiz moulding and a band of carved interlace above
     const zf = z - (th + 0.6) / 2;
@@ -170,7 +172,7 @@ export function buildTaverna(ctx, B, env) {
         // geometric lattice screens in some bays
         if ((i + si) % 3 === 1 && rng() > 0.2) lattice.push({ x: ax, z: az, g: ag, yaw, w: b - 0.4 });
         // a carved star-band along the gallery front
-        if (rng() < 0.9) for (let k = 0; k < 3; k++) {
+        if (rng() < 0.9 && !LOW_TIER(ctx)) for (let k = 0; k < 3; k++) { // v8-09: not on the low tier (2.3k triangles of 22 cm carving)
           const kk = (k - 1) * 0.5;
           B.add(B.box(0.22, 0.03, 0.02), mat(ax + tx * kk + nx * 0.22, ag + colH + 1.05, az + tz * kk + nz * 0.22, 0, yaw, 0.785), { color: carveC, moss: 0.1, ground: ag });
           B.add(B.box(0.22, 0.03, 0.02), mat(ax + tx * kk + nx * 0.22, ag + colH + 1.05, az + tz * kk + nz * 0.22, 0, yaw, -0.785), { color: carveC, moss: 0.1, ground: ag });
@@ -188,7 +190,7 @@ export function buildTaverna(ctx, B, env) {
         if (S && t < 3) S.parts.late.awning(B, mat(cx + mx + tx * (t + 3) - nx * (depth / 2 + 0.15), gm + roofY - 0.2, cz + mz + tz * (t + 3) - nz * (depth / 2 + 0.15), 0, Math.atan2(nx, nz), 0), { w: 6.1, d: depth + 0.3, h: 0.45, poles: false, rng });
         continue;
       }
-      B.add(B.box(w + 0.02, 0.3, depth + 0.3), mat(cx + mx + tx * (t + w / 2), gm + roofY + 0.12, cz + mz + tz * (t + w / 2), 0, yaw, 0), { color: vary(S ? L.paint[1] : plasterD, rng, 0.05), moss: S ? 0.2 : 0.8, ground: gm });
+      B.add(B.box(w + 0.02, 0.3, depth + 0.3, LOW_TIER(ctx) ? { seg: 4 } : {}), mat(cx + mx + tx * (t + w / 2), gm + roofY + 0.12, cz + mz + tz * (t + w / 2), 0, yaw, 0), { color: vary(S ? L.paint[1] : plasterD, rng, 0.05), moss: S ? 0.2 : 0.8, ground: gm });
     }
     // a dado of glazed tiles along the inner wall, faded and broken
     const tiles = S ? [L.tile[0], L.tile[3], L.tile[1], L.tile[2]] : [new THREE.Color('#1f4a44'), new THREE.Color('#6a3a1e'), new THREE.Color('#8a7a5a'), new THREE.Color('#2a2430')];
@@ -198,7 +200,9 @@ export function buildTaverna(ctx, B, env) {
         if (rng() < (S ? 0.03 : 0.12)) continue;
         const px = cx + (s.ax + s.bx) / 2 * (inner - 0.02) / half + tx * t, pz = cz + (s.az + s.bz) / 2 * (inner - 0.02) / half + tz * t;
         const pg = ground.groundAt(px, pz);
-        B.add(B.box(0.3, 0.3, 0.025), mat(px + nx * 0.01, pg + 0.35 + row * 0.33, pz + nz * 0.01, 0, yaw, 0), { color: vary(tiles[(((row + Math.floor(t / 0.34)) % 4) + 4) % 4], rng, 0.1), moss: 0.15, ground: pg, wet: 0.5 });
+        // v8-09: on the low tier each tile is its face alone (2 triangles, not 12): the dado was 12k of the house's triangles there
+        const tileG = LOW_TIER(ctx) ? new THREE.PlaneGeometry(0.3, 0.3) : B.box(0.3, 0.3, 0.025), tileOff = LOW_TIER(ctx) ? 0.0225 : 0.01;
+        B.add(tileG, mat(px + nx * tileOff, pg + 0.35 + row * 0.33, pz + nz * tileOff, 0, yaw, 0), { color: vary(tiles[(((row + Math.floor(t / 0.34)) % 4) + 4) % 4], rng, 0.1), moss: 0.15, ground: pg, wet: 0.5 });
       }
     }
   }
@@ -209,6 +213,7 @@ export function buildTaverna(ctx, B, env) {
     // diagonal slats clipped to the frame: each is the chord of the rectangle along a 45° line
     const hw = l.w / 2 - 0.05, hh = h / 2 - 0.05;
     for (let k = -9; k <= 9; k++) {
+      if (LOW_TIER(ctx) && k % 2) continue; // v8-09: the low tier's lattice at 0.4 m, not 0.2
       for (const dir of [1, -1]) {
         const off = k * 0.2;
         // points (off + t, dir * t) inside |x| <= hw, |y| <= hh
@@ -329,9 +334,9 @@ export function buildTaverna(ctx, B, env) {
     P.heliarch.capital(B, mat(px, pg + 0.72, pz, Math.PI, 0.4, 0), { r: 0.42 });
     for (let k = 0; k < 6; k++) {
       const a = rng() * 6.28, d = rng() * 0.35;
-      B.add(B.rock(0.32 + rng() * 0.12, 1, 1, 0.9, 1), mat(px + Math.cos(a) * d, pg + 0.95 + rng() * 0.5, pz + Math.sin(a) * d, rng() * 3, rng() * 3, 0), { color: vary(new THREE.Color('#34502a'), rng, 0.15), moss: 0, ground: pg, flat: true });
+      B.add(B.rock(0.32 + rng() * 0.12, LOW_TIER(ctx) ? 0 : 1, 1, 0.9, 1), mat(px + Math.cos(a) * d, pg + 0.95 + rng() * 0.5, pz + Math.sin(a) * d, rng() * 3, rng() * 3, 0), { color: vary(new THREE.Color('#34502a'), rng, 0.15), moss: 0, ground: pg, flat: true });
     }
-    for (let k = 0; k < 7; k++) { const a = rng() * 6.28; B.add(new THREE.IcosahedronGeometry(0.06, 1), mat(px + Math.cos(a) * 0.42, pg + 1.0 + rng() * 0.6, pz + Math.sin(a) * 0.42), { color: L.pom, moss: 0, ground: pg }); }
+    for (let k = 0; k < 7; k++) { const a = rng() * 6.28; B.add(new THREE.IcosahedronGeometry(0.06, LOW_TIER(ctx) ? 0 : 1), mat(px + Math.cos(a) * 0.42, pg + 1.0 + rng() * 0.6, pz + Math.sin(a) * 0.42), { color: L.pom, moss: 0, ground: pg }); }
     S.place({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a Heliarch capital, upturned, for a planter', x: px, y: pg, z: pz, mount: 'ground', r: 0.75 });
     ctx.addCollider({ x: px, z: pz, r: 0.75 });
     S.place({ hand: 'late', from: 'heliarch', kind: 'spolia', name: "the gallery's columns, set on Heliarch drums", x: cx - 1.37, y: ground.groundAt(cx - 1.37, cz - 9.6) - 0.15, z: cz - 9.6, mount: 'ground', r: 0.3 });
