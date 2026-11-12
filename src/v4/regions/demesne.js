@@ -180,12 +180,14 @@ export const sound = {
     const kd = () => Math.hypot(px - K.x, pz - K.z);
     function talk(pos, gain) {
       const cp = camera.position, d = Math.hypot(pos.x - cp.x, pos.y - cp.y, pos.z - cp.z);
-      const n = 1 + Math.floor(rng() * 3), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5, gain: 60 }); // v7.2-07: a punctuation cue, about -9 dBFS at 41 m
+      const n = 1 + Math.floor(rng() * 2), v = voice(pos, { ref: 25, roll: 1, range: 260, air: 70, verb: k.wetBy(d), dur: n * 0.6 + 0.5, gain: 60 }); // v7.2-07: a punctuation cue, about -9 dBFS at 41 m
       if (!v) return;
-      const out = ac.createGain(); out.gain.value = 0.55 * gain * (1 - (k.hush?.(top) ?? 0)); out.connect(v.in); // v5: hushed under the Occultation's band
+      const out = ac.createGain(); out.gain.value = 0.25 * gain * (1 - (k.hush?.(top) ?? 0)); // v7.2.1: 7 dB down (was 0.55); at the spawn, 30 m under the roosts, the caws read as a horn out.connect(v.in); // v5: hushed under the Occultation's band
       for (let i = 0; i < n; i++) cawInto(ac, filt, rng, out, v.t0 + i * (0.3 + rng() * 0.25), pitch);
     }
-    const rooks = k.caller(rng, { bout: [2, 4], gap: [1.5, 4], rest: [30, 0.6, 10, 180], first: [2, 10], answer: { p: 0.5, delay: [0.8, 2], gain: 0.71 },
+    // v7.2.1 (the owner: "honking non-stop near keep like a bicycle horn"): one or two groups of one or two caws, then a rest of
+    // minutes, not half a minute (median 150 s, never under 60; was 30 and 10), the first not before 40 s, an answer one time in four
+    const rooks = k.caller(rng, { bout: [1, 2], gap: [2, 5], rest: [150, 0.6, 60, 600], first: [40, 120], answer: { p: 0.25, delay: [0.8, 2], gain: 0.71 },
       when: () => {
         const d = kd();
         if (d > 230) return false;
