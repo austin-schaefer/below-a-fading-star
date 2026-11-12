@@ -1,7 +1,8 @@
 #!/bin/zsh
 # The relay: one ordinary, interactive Claude Code session per milestone, in this terminal.
 #
-#   tools/relay.sh [prompt]        default prompt: "/loop 30m /autonomous-run"
+#   tools/relay.sh [prompt] [-- <claude flags>]     default prompt: "/loop 30m /autonomous-run"
+#   e.g. tools/relay.sh -- --permission-mode acceptEdits     (flags after -- go to every session it starts)
 #
 # Run it from the main checkout instead of typing `claude`. It starts a normal session with the prompt already
 # entered; you can watch it, type into it and interrupt it as usual. When the orchestrator has shipped a milestone
@@ -17,7 +18,9 @@
 # autonomous-run skill, "After a release: start clean".
 
 cd "$(dirname "$0")/.."
-prompt="${1:-/loop 30m /autonomous-run}"
+prompt="/loop 30m /autonomous-run"
+if [ $# -gt 0 ] && [ "$1" != "--" ]; then prompt="$1"; shift; fi
+[ "$1" = "--" ] && shift
 export BAFS_RELAY=1
 round=0
 while :; do
@@ -25,7 +28,7 @@ while :; do
   rm -f .claude/relay-next .claude/relay-fired
   round=$((round + 1))
   echo "relay: session $round, $(date)"
-  claude "$prompt"
+  claude "$@" "$prompt"
   if [ ! -e .claude/relay-fired ]; then
     echo "relay: the session ended without the orchestrator's marker (you quit, or it crashed); stopping. Run tools/relay.sh again to resume."
     break
