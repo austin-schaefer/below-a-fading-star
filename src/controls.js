@@ -20,7 +20,7 @@ export function buildControls(ctx) {
     eye: 1.72, bob: 0, bobAmt: 0, speed: 0, onGround: true, vy: 0,
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
-    onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0,
+    onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0, lookQuiet: 0,
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -106,6 +106,7 @@ export function buildControls(ctx) {
   window.addEventListener('mouseup', () => { dragging = false; });
   document.addEventListener('mousemove', (e) => {
     if (!state.locked && !dragging) return;
+    if (e.movementX || e.movementY) state.lookQuiet = 0; // the visitor is steering the look (a carrier stops turning it)
     state.yaw -= e.movementX * 0.0021;
     state.pitch = clamp(state.pitch - e.movementY * 0.0021, -1.45, 1.45);
   });
@@ -232,6 +233,7 @@ export function buildControls(ctx) {
         const dxp = t.clientX - lookTouch.x, dyp = t.clientY - lookTouch.y;
         if (lookTouch.corner && Math.hypot(t.clientX - lookTouch.sx, t.clientY - lookTouch.sy) > 14) { lookTouch.corner = false; clearTimeout(cornerTimer); }
         const dYaw = -dxp * LOOK_SENS, dPitch = -dyp * LOOK_SENS;
+        if (dxp || dyp) state.lookQuiet = 0;
         state.yaw += dYaw;
         state.pitch = clamp(state.pitch + dPitch, -1.45, 1.45);
         const now = performance.now(), dtm = Math.max(1, now - lastLookT) / 1000;
@@ -366,7 +368,9 @@ export function buildControls(ctx) {
   // how hard the visitor is pushing to move, for the carrier to read. The carrier gives them back by calling
   // release() and then placing them (placeAt, or pos itself). A teleport (placeAt, or pos moved more than 1.5 m by
   // anyone else) ends the carry and calls drop(), so the carrier can let go of its end; a step() that throws ends it
-  // too, and puts the player back where the carry began.
+  // too, and puts the player back where the carry began. A carrier may also turn the view: look(dt, quiet) → null or
+  // { yaw, pitch, rate }, where quiet is the seconds since the visitor last moved the look themselves; the look eases
+  // toward that yaw and pitch at rate (1/s), and the visitor's own mouse or drag still adds to it.
   let carried = null, carryAt = null;
   const carryFrom = new THREE.Vector3(); // where the carry began: a carrier that throws puts them back here
   function carry(c) {
@@ -387,6 +391,7 @@ export function buildControls(ctx) {
   function update(dt) {
     syncLock();
     dt = Math.min(dt, 0.05);
+    state.lookQuiet += dt;
     const k = state.keys;
     let mx = 0, mz = 0;
     if (state.enabled) {
@@ -410,6 +415,12 @@ export function buildControls(ctx) {
         try { carried.step(state.pos, dt); }
         catch (e) { console.error('[fp] carry step failed:', e); dropCarry(); placeAt(carryFrom.x, carryFrom.z); return; }
         (carryAt ||= new THREE.Vector3()).copy(state.pos);
+        const L = carried.look ? carried.look(dt, state.lookQuiet) : null;
+        if (L && L.rate > 0) {
+          const k = 1 - Math.exp(-L.rate * dt);
+          state.yaw += Math.atan2(Math.sin(L.yaw - state.yaw), Math.cos(L.yaw - state.yaw)) * k;
+          state.pitch = clamp(state.pitch + (L.pitch - state.pitch) * k, -1.45, 1.45);
+        }
         state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
         state.moving = false; state.speed = 0; state.bobAmt = 0; state.wading = 0;
         eyeOff = 0; lastY = state.pos.y; state.eyeY = state.pos.y;

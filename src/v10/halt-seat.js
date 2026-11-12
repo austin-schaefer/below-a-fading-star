@@ -24,7 +24,7 @@ import * as THREE from 'three';
 import { Builder } from '../structures/geo.js';
 
 const ID = 'halt-seat';
-const LOWER = 7.5, RISE = 11, TOP = 10, DOWN = 8, BOARD = 1.0, ALIGHT = 0.9, HAUL = 8; // seconds
+const LOWER = 7.5, RISE = 11, TOP = 12, DOWN = 8, BOARD = 1.0, ALIGHT = 1.6, HAUL = 8; // seconds
 const EYE = 0.8, LEAN = 0.12, TUCK = 0.13; // a sitter's eye over the plank, leant out from the stone on the way up, and
 // at the top tucked toward it, so the seat's cord on his side stands clear of the line from the eye to his face
 const STOP = 0.8; // the plank's height over the ground when down: in the view from where the visitor chalked
@@ -81,7 +81,7 @@ export function buildSeat(ctx, o) {
   const XAX = new THREE.Vector3(1, 0, 0), qSpin = new THREE.Quaternion();
 
   // where the seat is: its top (where it hangs at the hatch) and its foot (in the view from where the visitor chalked)
-  const top = o.seat.clone().add(new THREE.Vector3(0, 0.35, 0)), yTop = top.y, yLow = o.ground(top.x, top.z) + STOP;
+  const top = o.seat.clone(), yTop = top.y, yLow = o.ground(top.x, top.z) + STOP;
   const at = new THREE.Vector3(top.x, yLow, top.z).applyMatrix4(M0); // the act's place: the plank when down
   const winchW = new THREE.Vector3().setFromMatrixPosition(o.winchAt);
   const P = ctx.player;
@@ -127,7 +127,27 @@ export function buildSeat(ctx, o) {
       else pos.copy(eye);
     },
     drop() { release = null; sleepEnd(); haul(1.2); }, // a teleport (or a fault): the seat goes back up empty
+    // the seat turns the sitter, as a rope seat does: out from the slab for the climb, round to him at the top for his
+    // answer, out again for the view, and back to where they were looking when they sat, for the set-down. If the
+    // visitor moves the look themselves it stops turning them, and after 3 s quiet turns them only for those two beats
+    look(dt, quiet) {
+      if (mode !== 'boarding' && quiet < 0.05) took = true;
+      const answer = mode === 'top' && sleepT >= 0 && sleepT < 8.6, setdown = mode === 'alighting' && t > 0.5; // turned back once stepping off and away from the stone, never nose to it
+      if (took ? !(quiet > 3 && (answer || setdown)) : quiet < 0.3) return null;
+      if (setdown) { view.yaw = startYaw; view.pitch = startPitch; view.rate = 2.5; return view; }
+      if (answer) {
+        hd.getWorldPosition(dv); const px = P.pos.x, pz = P.pos.z;
+        view.yaw = Math.atan2(-(dv.x - px), -(dv.z - pz)); view.pitch = Math.atan2(dv.y + 0.08 - P.pos.y, Math.hypot(dv.x - px, dv.z - pz)); view.rate = 1.6;
+        return view;
+      }
+      view.yaw = outYaw; view.pitch = mode === 'top' ? -0.1 : -0.18; view.rate = mode === 'top' ? 0.6 : mode === 'boarding' ? 1.4 : 1.0;
+      return view;
+    },
   };
+  // facing out from the slab, turned a little toward the visitor's own tallies so they slide past at the view's edge
+  const outW = new THREE.Vector3(Math.sin(0.75), 0, Math.cos(0.75)).transformDirection(M0), outYaw = Math.atan2(-outW.x, -outW.z);
+  const view = { yaw: 0, pitch: 0, rate: 0 };
+  let took = false, startYaw = 0, startPitch = 0;
   function haul(wait) { mode = 'hauling'; t = -wait; hauled = false; }
   function sleepEnd() { if (sleepT >= 0 && sleepT < 6.8) sleepT = Math.max(sleepT, 6.8); }
 
@@ -208,6 +228,7 @@ export function buildSeat(ctx, o) {
     if (mode === 'alighting' && t >= ALIGHT) {
       release?.(); release = null;
       P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
+      if (!took || P.lookQuiet > 3) { P.yaw = startYaw; P.pitch = startPitch; } // set down as they stood, looking where they looked
       haul(1.5);
     }
     if (mode === 'hauling' && t >= 0 && !hauled) { hauled = true; move(yTop, HAUL); }
@@ -264,7 +285,7 @@ export function buildSeat(ctx, o) {
     when: () => mode === 'waiting',
     show(n) { if (o.pillow2) o.pillow2.visible = n > 0; drawDoor(n); },
     do() {
-      start.copy(P.pos); boardFrom.copy(P.pos);
+      start.copy(P.pos); boardFrom.copy(P.pos); startYaw = P.yaw; startPitch = P.pitch; took = false;
       release = ctx.controls.carry(carrier);
       mode = 'boarding'; t = 0; swayT = 0; swayA = 0.5; y -= 0.06; // the plank gives under them
       return new Promise((resolve) => { const w = () => (mode === 'up' || mode === 'hauling' ? resolve() : setTimeout(w, 250)); w(); });
