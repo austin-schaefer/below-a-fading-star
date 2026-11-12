@@ -17,7 +17,7 @@ Runs here are long and unattended: load the `autonomous-run` skill when you are 
 
 Each has a reason outside the codebase, which is why it is not yours to change.
 
-- **`main` is the live site.** Only work that passed `tools/suite.sh` reaches it, as a release PR from the working branch `next`. One softening, on the owner's word: after a green suite, a small fix confined to one module or to the test tooling may rerun only the tests it touches; anything in shared code (`src/main.js`, `src/world.js`, terrain, controls, the audio graph, post) reruns the whole suite. Say in Status which you did. If the live site breaks, roll forward with a fix.
+- **`main` is the live site.** Only work that passed `tools/suite.sh` reaches it, as a release PR from the working branch `next`. One softening, on the owner's word: after a green suite, a small fix confined to one module or to the test tooling may rerun only the tests it touches (`ONLY=name,name tools/suite.sh`); anything in shared code (`src/main.js`, `src/world.js`, terrain, controls, the audio graph, post) reruns the whole suite. Say in Status which you did. If the live site breaks, roll forward with a fix.
 - **The machine is the owner's own computer, and they are using it.** So these pace rules bind whoever dispatches you:
   - At most four implementation agents at once, each in its own worktree on its own port; a planning, review or curation agent with no browser does not count.
   - One headless browser per agent at a time: renders and tests run in sequence, never fanned out. `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...` call; no `--trace` on Playwright runs.
