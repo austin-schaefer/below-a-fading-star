@@ -76,6 +76,8 @@ A reviewer reads `git diff HEAD...origin/<branch>` cold and read-only against th
 
 ## Hand-back
 
+A change to a surface's shader (ground, rock, water) is also rendered close and at a grazing angle, at pixel ratio 1 and 2 (`FP_DSF=2`), and the frames zoomed into: v11's wall passed every view from the bowl and broke into moiré rings for a visitor standing at its foot.
+
 An implementer, when done:
 
 1. Commits by part with conventional messages (`feat(wilderness): …`).
