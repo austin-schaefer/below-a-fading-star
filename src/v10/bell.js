@@ -296,7 +296,7 @@ export async function build(ctx) {
     vertexShader: `uniform float uScale; attribute float aA, aS; varying float vA; varying float vS;
       #include <fog_pars_vertex>
       void main() { vec3 transformed = position; vec4 mvPosition = viewMatrix * vec4(transformed, 1.0); gl_Position = projectionMatrix * mvPosition;
-        vA = aA; vS = aS; gl_PointSize = aA > 0.0 ? clamp(aS * uScale / max(-mvPosition.z, 0.1), 1.5, 220.0) : 0.0;
+        vA = aA * smoothstep(1.0, 6.0, -mvPosition.z); vS = aS; gl_PointSize = aA > 0.0 ? clamp(aS * uScale / max(-mvPosition.z, 0.1), 1.5, 160.0) : 0.0; // fades out within 6 m of the eye: no big flat sprite at arm's length
         #include <fog_vertex>
       }`,
     fragmentShader: `varying float vA; varying float vS;
@@ -319,7 +319,7 @@ export async function build(ctx) {
   wGeo.setAttribute('aS', new THREE.BufferAttribute(wS, 1));
   wGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(BX, 0, BZ), 140);
   const wMat = dMat.clone(); wMat.uniforms = dMat.uniforms; // the same uniforms (its scale), its own colour below
-  wMat.fragmentShader = dMat.fragmentShader.replace('vec3(0.24, 0.28, 0.23), vec3(0.36, 0.33, 0.29)', 'vec3(0.6, 0.55, 0.46), vec3(0.6, 0.55, 0.46)');
+  wMat.fragmentShader = dMat.fragmentShader.replace('vec3(0.24, 0.28, 0.23), vec3(0.36, 0.33, 0.29)', 'vec3(0.40, 0.36, 0.31), vec3(0.40, 0.36, 0.31)');
   const wave = new THREE.Points(wGeo, wMat); wave.visible = false; wave.name = 'bell-wave'; wave.r = 0; scene.add(wave);
   function stepWave(T) {
     const age = T - STRIKE - 0.2;
@@ -330,8 +330,8 @@ export async function build(ctx) {
     for (let i = 0; i < NW; i++) {
       const a = (i / NW) * Math.PI * 2, rr = r * (1 + 0.03 * Math.sin(i * 7.3 + age * 3)) - wJ[i] * 2.5;
       const x = BX + Math.sin(a) * rr, z = BZ + Math.cos(a) * rr;
-      wPos[i * 3] = x; wPos[i * 3 + 1] = H(x, z) + 0.5 + wJ[i] * 0.8; wPos[i * 3 + 2] = z; wA[i] = fade * (0.6 + 0.4 * wJ[i]);
-      wS[i] = 3 + r * 0.05;
+      wS[i] = 1.6 + r * 0.03; // small puffs, each standing clear of the turf so no quad edge is cut by the ground
+      wPos[i * 3] = x; wPos[i * 3 + 1] = H(x, z) + wS[i] * 0.5 + wJ[i] * 0.6; wPos[i * 3 + 2] = z; wA[i] = fade * (0.6 + 0.4 * wJ[i]);
     }
     wGeo.attributes.position.needsUpdate = true; wGeo.attributes.aA.needsUpdate = true; wGeo.attributes.aS.needsUpdate = true;
   }

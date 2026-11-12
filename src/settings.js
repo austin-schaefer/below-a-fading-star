@@ -14,20 +14,29 @@ const TIERS = ['low', 'medium', 'high'];
 // Names are LANDMARKS' and SITES' [Proposed] placeholders. An entry is { name, group, x, z, yaw | look, pitch? }.
 const HAND = { // stand points kept from the first list; look: a point, a landmark, or 'sun'
   castle: { x: -40, z: 22, look: LANDMARKS.castle },
-  tower: { x: -228, z: -135, look: LANDMARKS.tower },
+  tower: { x: -167, z: -90, look: LANDMARKS.tower, pitch: 0.4 }, // v11-F2: 95 m back on the grass, the spire on its mound under the rock (22 m out was a wall at arm's length)
   court: { x: LANDMARKS.court.x, z: LANDMARKS.court.z, look: 'sun' },
   arcature: { x: LANDMARKS.arcature.x, z: LANDMARKS.arcature.z, look: { x: 200, z: 60 } },
   // v10-F1: the places with an act land about 9 m back from it, facing it, its lure in view (src/v10/lure.js)
   moraine: { x: 39, z: -245, look: { x: 37.5, z: -255.3 }, pitch: 0.12 }, // the mother crystal's foot, where the hand goes
   hypogeum: { x: 221.5, z: -112, look: { x: 230.6, z: -112 } }, // down the stair, facing the bronze door
   collation: { x: 135.4, z: -73.8, look: { x: 138.9, z: -65.5 } }, // the twelfth place and its bottle
-  pit: { x: 192, z: 193, look: LANDMARKS.pit }, // the lip's south-west side
-  gradine: { x: LANDMARKS.gradine.x, z: LANDMARKS.gradine.z, look: { x: 287.8, z: -192.6 } },
+  pit: { x: 194.2, z: 201, look: LANDMARKS.pit, pitch: -0.45 }, // v11-F2: on the rim at the south lookout (bearing 200, 17 m out), looking in and down; (192, 193) stood on the pit floor
+  gradine: { x: 235, z: -110, look: LANDMARKS.gradine, pitch: 0.35 }, // v11-F2: from the grass 70 m off, the stair climbing the wall
   wood: { x: SITES.lightMoss.x + 6, z: SITES.lightMoss.z, look: SITES.lightMoss },
-  bridge: { x: LANDMARKS.bridge.at.x, z: LANDMARKS.bridge.at.z, look: { x: 257, z: 215 } },
+  bridge: { x: -60, z: 150, look: { x: 60, z: 215 }, pitch: 0.25 }, // v11-F2: on the open ground south of the arches, the Span's arcade in view (the old stand was in the woods)
   tarn: { x: -90, z: 50, look: LANDMARKS.tarn },
 };
+// v11-F2: the card places (no `at`, no hand stand) were r + 6 m from their centre toward spawn: grass at the foot of a wall
+const CARD_POSES = {
+  galleries: { x: -120, z: -70, look: { x: -338, z: -69 }, pitch: 0.38 }, // the whole ragged prow over the tarn's west shore
+  hawser: { x: -102, z: -134, look: { x: -80, z: -272 }, pitch: 0.28 }, // the chain running off to the crystals and the arch
+};
 // v10-F1: places with an act and no landmark of their own, 9 m out in front of it, facing it
+// v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground
+const FAR_PLACES = [
+  { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
+];
 const ACT_PLACES = [
   { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
   { name: 'The bell under the Span', x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
@@ -67,6 +76,8 @@ function buildPlaces() {
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
   for (const a of ACT_PLACES) out.push({ ...a, group: 'Places' });
+  for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
+  for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
   for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];
