@@ -9,7 +9,7 @@ import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's 
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
 import { wornAt, nearestLead } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
-import { clearedBy } from './v8/clearings.js'; // v8-11: the one table of ground kept clear of stones and boulders
+import { clearedBy, offFigure } from './v8/clearings.js'; // v8-11: the one table of ground kept clear of stones and boulders
 import { commonAt } from './v8/places.js'; // v8-11: the grazed common round the keep keeps few boulders
 
 const PARAMS = new URL(location.href).searchParams;
@@ -242,6 +242,7 @@ export async function build(ctx) {
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
     if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
+    if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue; // v9 (#16): nothing on the Long Figure, pebbles included, cut or not
     if (CUT && cls !== 'pebble') { // v8-11: off the cleared ground by its whole footprint, then into outcrops
       if (clear(x, z, size * reachOf[it.variant])) continue;
       if (!keepBig(x, z, b, cls, size)) { cut.thinned[cls]++; continue; }
@@ -262,6 +263,7 @@ export async function build(ctx) {
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
       const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
       if (plinthsClear(x, z) || naveClear(x, z)) continue; // after the draws, as above
+      if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue;
       if (CUT && clear(x, z, size * reachOf[it.variant])) { cut.thinned.tor++; continue; }
       classes.boulder.push(it);
     }
@@ -400,7 +402,7 @@ export async function build(ctx) {
   // v8-11: what tools/rocks-test.mjs reads: every stone and boulder's place and footprint, the lichen, the cut
   const foot = (list) => list.map((it) => ({ x: +it.x.toFixed(2), z: +it.z.toFixed(2), size: +it.size.toFixed(3), r: +(it.size * reachOf[it.variant]).toFixed(3) }));
   ctx.rocks = {
-    cut: CUT, lichen: LICHEN, rock: palette.rock, boulders: foot(classes.boulder), stones: foot(classes.stone),
+    cut: CUT, lichen: LICHEN, rock: palette.rock, boulders: foot(classes.boulder), stones: foot(classes.stone), pebbles: foot(classes.pebble),
     stats: () => ({ pebbles: classes.pebble.length, stones: classes.stone.length, boulders: classes.boulder.length, colliders: rockColliders, drawCalls, tris: Math.round(tris), cleared: cut.cleared, thinned: cut.thinned }),
   };
   ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders, ${rockColliders} colliders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);

@@ -15,6 +15,7 @@ import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story thread
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
 import { coarseLowering } from '../v4/regions/skin.js';
+import { onFigure } from '../v4/dressing/figure.js'; // v9 (#16): no tree on the Long Figure
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
@@ -146,7 +147,9 @@ export function makeGround(ctx) {
   // they were everywhere else) but not drawn and not collided (trees.js)
   // Trees placed here are neither drawn nor collided, but keep their place in the placement rng so that every other tree
   // stays where it is: under the court's piers (39 m), inside the lens mount's fins (17 m; 12 when ?tower=v2) the armillary (LANDMARKS.arcature.r) and the mother crystal's foot (MOTHER_FOOT).
+  // v9 (#16): and on the Long Figure, a tree's trunk a crown's reach (6 m) off his chalk, so no crown hangs over him
+  const FIG_CROWN = 6;
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
-  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z);
+  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || onFigure(x, z, FIG_CROWN, terrain);
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

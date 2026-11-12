@@ -7,6 +7,7 @@
 //   box    { x0, x1, z0, z1 }            an axis-aligned block (the Sexton's field)
 //   strip  { a: [x, z], b: [x, z], half } a straight band, `half` metres either side of a-b
 //   region { key, w }                     wherever ctx.regions gives that region more than w at the rock's centre
+//   figure { pad }                        the Long Figure's cut chalk, pad metres round it (v9, #16; needs ctx.terrain)
 // The leads: every non-rivulet lead's tread plus LEAD_PAD (the Thurifer's P3 more: his train drags behind him).
 // The causeway: CAUSEWAY_CLEAR metres from its centre line, plus the footprint.
 // ?rockcut=0 (read by rocks.js) leaves rocks where v8-10 put them.
@@ -16,6 +17,7 @@ import { BARE } from './house/clear.js';
 import { COLLATION } from '../v5/dressing/collation.js';
 import { LEERIE } from '../v5/lights.js';
 import { leads } from '../v4/paths/routes.js';
+import { onFigure } from '../v4/dressing/figure.js';
 
 // the Leerie's row: the kerb K1 from SITES.leerie.from to .to; the standards stand LEERIE.side east of it and he walks
 // 0.6 m on the kerb's side of their feet. The strip covers both lines with 2 m to spare, and 3 m past each end.
@@ -40,6 +42,7 @@ export const CLEARINGS = [
   { name: "the grazers' home", kind: 'disc', x: 22, z: 78, r: 17 }, // fauna.js: home [22, 78], strays 2-13 m and ambles
   { name: "the orchard herd's home", kind: 'disc', x: 183, z: -76, r: 17 }, // fauna.js: home [183, -76]
   { name: 'the Demesne lawn', kind: 'region', key: 'demesne', w: 0.15 }, // the shaven lawn (v8-02), wherever the region reaches
+  { name: 'the Long Figure', kind: 'figure', pad: 1 }, // v9 (#16): nothing lies on him; rocks.js also keeps pebbles off, with or without the cut
 ];
 export const LEAD_PAD = 0.6, LEAD_PADS = { P3: 2.0 };
 export const CAUSEWAY_CLEAR = 3.0; // the paving's ragged edge is 1.75-2.05 m from the line, its kerbs a little more
@@ -50,6 +53,7 @@ function segD(x, z, ax, az, bx, bz) {
   return Math.hypot(x - ax - ex * t, z - az - ez * t);
 }
 function inEntry(C, x, z, r, ctx) {
+  if (C.kind === 'figure') return !!ctx?.terrain && onFigure(x, z, r + C.pad, ctx.terrain);
   if (C.kind === 'region') return !!ctx?.regions && ctx.regions.regionAt(x, z)[C.key] > C.w;
   if (C.kind === 'disc') return Math.hypot(x - C.x, z - C.z) < C.r + r;
   if (C.kind === 'box') return x > C.x0 - r && x < C.x1 + r && z > C.z0 - r && z < C.z1 + r;
@@ -83,6 +87,9 @@ export function leadUnder(x, z, r = 0) {
   for (const s of c) if (segD(x, z, s.ax, s.az, s.bx, s.bz) < s.w + Math.min(r, MAX_R)) return s.id;
   return null;
 }
+
+// v9 (#16): whether a footprint of radius r at (x, z) lies on the Long Figure (its entry above), for every rock class
+export const offFigure = (x, z, r, ctx) => inEntry(CLEARINGS.find((C) => C.kind === 'figure'), x, z, r, ctx);
 
 // What keeps a footprint of radius r at (x, z) off the ground, or null. ctx: for its terrain (the causeway's distance)
 // and regions (the Demesne); without it those two entries are skipped.
