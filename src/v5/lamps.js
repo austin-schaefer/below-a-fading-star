@@ -154,7 +154,7 @@ export async function build(ctx) {
   // windows' layout does not move with it.
   {
     const lr = ctx.makeRng(5519);
-    const sy = yLo + 0.3 * RANGE, ci = warmPick();
+    const sy = yLo + 0.3 * RANGE, ci = lr() < 0.7 ? 0 : 1; // amber, some ember
     let b = spineAt(sy) + 3.0, y = sy;
     for (let k = 0; k < 64 && b < b1 - 0.4; k++) {
       b += arcDeg(1.8 + 5.5 * lr() * lr() + 0.8);              // mostly short steps, now and then a long one
@@ -163,7 +163,7 @@ export async function build(ctx) {
       const fade = k > 34 ? 0.55 : 1;
       if (lr() > fade) continue;
       const out = lr() < 0.22;                                    // the lamp is out; the post stays
-      place(b, y, lr() < 0.08 ? colorPick() : ci, 2.4, out ? 3 : 2, 1);
+      place(b, y, ci, 2.4, out ? 3 : 2, 1);
     }
   }
   // outliers: single lights far up and far out, on their own (a watch-room, a hermit's window)
@@ -192,7 +192,7 @@ export async function build(ctx) {
   keep.forEach((src, i) => {
     const p = P[src];
     pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
-    const c = PALETTE[p.ci][1]; col[i * 3] = c[0] * p.dim; col[i * 3 + 1] = c[1] * p.dim; col[i * 3 + 2] = c[2] * p.dim;
+    const c = PALETTE[p.ci > 3 ? p.ci - 4 : p.ci][1]; col[i * 3] = c[0] * p.dim; col[i * 3 + 1] = c[1] * p.dim; col[i * 3 + 2] = c[2] * p.dim;
     meta[i * 3] = p.size; meta[i * 3 + 1] = rank[src]; meta[i * 3 + 2] = rng();
     nor.set(p.n, i * 3); kin[i] = p.kind;
   });
@@ -210,7 +210,7 @@ export async function build(ctx) {
   const vs = /* glsl */`
     uniform float uTime, uDark, uH;
     attribute vec3 aCol, aMeta, aN; attribute float aKind;
-    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift;
+    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed, vRoom; varying vec2 vShape, vShift, vOld;
     #include <fog_pars_vertex>
     float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
     void main() {
@@ -225,13 +225,13 @@ export async function build(ctx) {
       // a window held to 4.5-10 px tall; its point is 2.4 times that so the sill and the glow round it have room, and never
       // over 60 px (some GPUs clamp points at 64): the window is then what fits.
       // v11-F2: nearer than ~250 m a window is a small thing with a warm core, not a slab: its cap falls from 10 px at 250 m
-      // to 7 px at 160 m, and its fill dims with it (vNear 0 close, 1 far).
+      // to 5.5 px at 60 m, and its fill dims with it (vNear 0 close, 1 far).
       // v11.1-W3: inside 160 m it grows again (the walk ends about 100 m from the foot: r 348 against a wall at r 420 and
       // up), to 13 px at 100 m, 19 px at 45 m and 25 px (a 60 px point) inside 15 m, because what is drawn there is a room (a back wall, reveal faces that
       // slide as you walk, a sill, a lintel, a shadow within), not a lit patch; vNear still dims the fill.
       float near = smoothstep(60.0, 250.0, depth);
       float close = 1.0 - smoothstep(30.0, 160.0, depth);
-      float cap = mix(7.0, 10.0, near) + 12.0 * close + 6.0 * (1.0 - smoothstep(15.0, 45.0, depth));
+      float cap = mix(5.5, 10.0, near) + 12.0 * close + 6.0 * (1.0 - smoothstep(15.0, 45.0, depth));
       if (aKind > 1.5) cap = cap * 1.35 + 2.0; // a post and its lantern need the room to show
       float win = clamp(phys, 4.5 * px, cap * px);
       float ps = min(win * 2.4, 60.0);
@@ -243,6 +243,8 @@ export async function build(ctx) {
       float hz = h11(aMeta.z * 53.3 + 7.0), hw = h11(aMeta.z * 17.9 + 2.0), sub = h11(aMeta.z * 31.7 + 11.0);
       vSub = sub < 0.52 ? 0.0 : sub < 0.70 ? 1.0 : sub < 0.80 ? 2.0 : sub < 0.90 ? 3.0 : 4.0;
       vShape = vec2(0.24 + 0.2 * hw, 0.34 + 0.2 * h11(aMeta.z * 29.1));
+      vOld = vec2(0.24 + 0.2 * hw, hz > 0.84 ? 0.08 : vShape.y); // the window as it was before the rooms: all it is beyond ~200 m
+      vRoom = 1.0 - smoothstep(110.0, 200.0, depth);
       if (vSub > 0.5 && vSub < 1.5) vShape = vec2(0.27 + 0.08 * hw, 0.5);
       if (vSub > 1.5 && vSub < 2.5) vShape = vec2(0.10 + 0.04 * hw, 0.52);
       // the depth of the wall: the room's back wall stands 1.3 m behind the opening, and slides across it as the eye moves
@@ -263,12 +265,12 @@ export async function build(ctx) {
       // energy: a window smaller than its dot is dimmer than the dot would be
       float k = pow(min(1.0, phys / s), 0.5);
       if (aKind > 2.5) lit = 1.0; // a post stands lit or not
-      vA = fl * lit * mix(0.5, 1.0, k) * 2.6 * mix(0.5, 1.0, near * near);
-      if (aKind > 1.5) vA = fl * lit * 2.2 * mix(0.6, 1.0, near);
+      vA = fl * lit * mix(0.5, 1.0, k) * 2.6 * mix(0.36, 1.0, near * near);
+      if (aKind > 1.5) vA = fl * lit * 2.2 * mix(0.6, 1.0, near) * (1.0 - 0.75 * smoothstep(200.0, 340.0, depth)); // the string is for near; far off it thins to a few sparks
       vCol = mix(aCol, aCol * aCol, 0.5);
     }`;
   const FS_HEAD = /* glsl */`
-    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift;
+    varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed, vRoom; varying vec2 vShape, vShift, vOld;
     ${fogPars}
     float h11(float n) { return fract(sin(n * 127.1) * 43758.5453); }
     // an opening: a rectangle, or an arch (the top a half round), as a signed distance in window heights
@@ -279,6 +281,26 @@ export async function build(ctx) {
       return sd;
     }`;
   const fs = FS_HEAD + /* glsl */`
+    // the window as v11-F2 drew it (a warm core in a dark reveal): what is seen beyond ~200 m, blended into the room inside
+    vec4 oldWin(vec2 p, float ew, float vis, float fa) {
+      vec2 hh = vOld;
+      vec2 q = abs(p) - hh;
+      float sd = max(q.x, q.y);
+      float inside = 1.0 - smoothstep(-ew, ew, sd);
+      vec2 lc = (p - vec2(0.0, -0.18 * hh.y)) / hh;
+      float core = exp(-dot(lc, lc) * 2.2);
+      float fill = mix(0.30, 0.62, vNear);
+      float glowy = fill + (1.0 - fill) * core;
+      float mull = 1.0;
+      if (vWin > 6.5 && hh.y > 0.2) mull = 1.0 - 0.7 * (1.0 - smoothstep(0.012, 0.035, abs(p.x)));
+      float lum = inside * glowy * mull;
+      float reveal = (1.0 - smoothstep(0.02, 0.17, sd)) * (1.0 - inside);
+      float spill = (1.0 - smoothstep(0.55, 1.2, length(p)));
+      float halo = exp(-max(sd, 0.0) * 3.4) * (1.0 - inside) * step(0.0, sd) * 0.30 * spill;
+      vec3 warm = vCol * vec3(1.0, 0.78, 0.55);
+      vec3 c = (vCol * lum * vA + mix(warm, vCol, vNear * 0.5) * halo * vA * 0.7) * vis;
+      return vec4(c, reveal * 0.55 * fa);
+    }
     void main() {
       ${fogAtten}
       // p in window heights, the window centred
@@ -318,6 +340,7 @@ export async function build(ctx) {
         gl_FragColor = vec4(c, body * 0.8 * fogAtten);
         return;
       }
+      if (vKind < 0.5 && vRoom < 0.005) { gl_FragColor = oldWin(p, ew, vis, fogAtten); return; }
       bool great = vKind > 0.5;
       float hx = great ? 0.34 : vShape.x, hy = great ? 0.5 : vShape.y;
       bool arch = great || (vSub > 0.5 && vSub < 1.5);
@@ -361,7 +384,8 @@ export async function build(ctx) {
       float halo = exp(-length(max(abs(p) - vec2(hx, hy) * 0.6, 0.0)) * 3.6) * (1.0 - inside) * step(0.0, sd) * 0.28 * spill * smoothstep(0.0, 0.12, sd);
       vec3 warm = vCol * vec3(1.0, 0.78, 0.55); // the rock's glow is warmer than the lamp
       vec3 c = (vCol * lum * vA + mix(warm, vCol, vNear * 0.5) * (halo + sill * 0.9 * (0.35 + pool)) * vA * 0.7) * vis;
-      gl_FragColor = vec4(c, clamp(rev * 0.55 + lint * 0.5, 0.0, 0.8) * fogAtten);
+      vec4 nw = vec4(c, clamp(rev * 0.55 + lint * 0.5, 0.0, 0.8) * fogAtten);
+      gl_FragColor = vKind < 0.5 ? mix(oldWin(p, ew, vis, fogAtten), nw, vRoom) : nw;
     }`;
   const mat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, U]), vertexShader: vs, fragmentShader: fs, fog: true,
@@ -387,7 +411,7 @@ export async function build(ctx) {
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uH: U.uH, uTime: U.uTime, uCol: { value: new THREE.Vector3(...PALETTE[great.ci][1]) } }]),
       vertexShader: /* glsl */`
         uniform float uH, uTime; uniform vec3 uCol;
-        varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed; varying vec2 vShape, vShift; varying vec2 vUv;
+        varying vec3 vCol; varying float vA, vWin, vKind, vNear, vSub, vSeed, vRoom; varying vec2 vShape, vShift, vOld; varying vec2 vUv;
         #include <fog_pars_vertex>
         void main() {
           vec3 transformed = position;
@@ -395,7 +419,7 @@ export async function build(ctx) {
           #include <fog_vertex>
           vec4 centre = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
           gl_Position = projectionMatrix * (mvPosition + vec4(0.0, 0.0, 3.0, 0.0));
-          vUv = uv; vKind = 1.0; vNear = 1.0; vSub = 1.0; vSeed = 0.3; vShift = vec2(0.0); vShape = vec2(0.34, 0.5);
+          vUv = uv; vKind = 1.0; vNear = 1.0; vSub = 1.0; vSeed = 0.3; vRoom = 1.0; vOld = vec2(0.34, 0.5); vShift = vec2(0.0); vShape = vec2(0.34, 0.5);
           vWin = max(${great.size.toFixed(2)} * uH * 0.5 * projectionMatrix[1][1] / max(-centre.z, 1.0), 2.0);
           vA = 2.0 * (0.9 + 0.1 * sin(uTime * 0.4));
           vCol = mix(uCol, uCol * uCol, 0.5);
