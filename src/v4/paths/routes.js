@@ -45,7 +45,7 @@ export const LEADS = [
   // brink over the Speculum
   { id: 'P13', kind: 'path', cls: 'trod', w: 0.5, brief: 'rim path, shingle', pts: [[219.5, 168], [220, 178], [220, 190], [217, 198], [210, 204], [204, 210], [197, 217], [190, 224], [184, 229], [180, 231.5]], parts: [[[197, 217], [210, 224], [216, 232], [215, 238], [214, 242], [213.6, 244.2]], [[190, 224], [190, 232.5]]] },
   { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [92, 236], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
-  { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 232], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: under the Span between piers -70 and -22, not through the fallen bay
+  { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 238], [-52, 235], [-47, 226], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: by the traveller's approach (it looks along it to him), then under the Span between piers -70 and -22, not through the fallen bay
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196]] },
   { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
