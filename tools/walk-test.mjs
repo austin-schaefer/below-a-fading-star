@@ -64,7 +64,7 @@ const results = await page.evaluate(() => {
     const route = [[-205, 200], [-236, 200], [-239.5, 197], [-239.5, 193], [-236, 193], [-208, 193], [-204.5, 190], [-204.5, 186], [-208, 186], [-243, 186], [-246.5, 186], [-246.5, 207], [-246.5, 212], [-200, 213]];
     out.stairDone = walkTo(route, false);
     out.stairEnd = { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), feet: +feet().toFixed(2), deck: fp.span.deckAt(p.pos.x, p.pos.z) };
-    // the crack at x -45: a running hop at its lip clears it; walking on without one falls
+    // the crack at x -45: a running hop at its lip clears it; walking on without one is stopped at the lip (v10-T1, #15: a kerb 0.3 m short of the edge)
     const crack = fp.span.plan.crack, lip = crack.x - crack.w / 2;
     const jump = (hop) => {
       p.pos.set(lip - 9, 56 + p.eye, 215); p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true; p.yaw = -Math.PI / 2;
@@ -113,7 +113,7 @@ const checks = [
   ['collider stops the player (~2.45m)', results.colliderStop > 2.3 && results.colliderStop < 2.7],
   ['landmark card shows at the stones', results.placeShown && /Cardinal/.test(results.placeName)],
   ['the west stair climbs to the Span\'s deck (y 56) and the deck walks east', !!results.stairDone && Math.abs(results.stairEnd.feet - 56) < 0.3 && results.stairEnd.x > -202],
-  ['the crack: a running hop clears it, a walk falls through', !!results.crackRun && results.crackRun.hopped && results.crackRun.x > -40 && Math.abs(results.crackRun.feet - 56) < 0.3 && results.crackWalk.feet < 30],
+  ['the crack: a running hop clears it, a walk stops at the lip', !!results.crackRun && results.crackRun.hopped && results.crackRun.x > -40 && Math.abs(results.crackRun.feet - 56) < 0.3 && Math.abs(results.crackWalk.feet - 56) < 0.3 && results.crackWalk.x < -46 && results.crackWalk.x > -47.6],
   ['the deck\'s west half walks to the west gate without a block (3 lines)', !!results.deckWest && results.deckWest.reached === 3 && results.deckWest.blocks.length === 0],
   ['no page errors', errors.length === 0],
 ];

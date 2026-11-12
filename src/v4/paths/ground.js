@@ -21,6 +21,10 @@ export function pitRim(b) {
   for (let k = 0; k < 6; k++) { r += amp * SN.noise2(c * f + 11.3 * k, s * f - 7.1 * k); amp *= 0.56; f *= 2.05; }
   return PIT.r + r;
 }
+// v10-T1 (#15): the lookouts, compass bearings on the rim where no clod of the lip stands between the walker and the
+// throat: beside where the road comes to the pit (its last slabs hang over the throat), on the lip arc facing the fall, and on the east side
+export const PIT_LOOKOUTS = [312, 200, 90];
+export const PIT_LOOKOUT_ARC = 14; // degrees either side
 // the bearing (compass degrees, clockwise from north) of (x, z) from the pit's centre
 export const pitBearing = (x, z) => ((Math.atan2(x - PIT.x, -(z - PIT.z)) * 180) / Math.PI + 360) % 360;
 // signed distance to the rim (< 0 over the hole)

@@ -14,7 +14,7 @@
 // Registers __fp.paths: { stats(), leadAt(x, z), leads, pit, fall }.
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
-import { PIT, pitEdge, pitRim, PIT_PAVE, FALL } from './paths/ground.js';
+import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
 import { groundOf, stoneGeo } from './regions/common.js';
 import { hexCellsIn, HEX_R } from '../structures/common.js';
 import { smoothstep, clamp } from '../noise.js';
@@ -486,13 +486,16 @@ function buildPit(ctx) {
   // at the scale the terrain's grid cannot draw
   const bits = [];
   for (let b = 0; b < 360; b += low ? 2.6 : 1.5) {
-    const bb = b + (rng() - 0.5) * 1.2, a = (bb * Math.PI) / 180, R = pitRim(bb) + 0.2 + rng() * 1.4;
+    const bb = b + (rng() - 0.5) * 1.2, a = (bb * Math.PI) / 180;
+    // at a lookout the clods sit behind the walker's heels (0.9 m out or more) and small, so the throat is open
+    const lo = PIT_LOOKOUTS.some((l) => Math.abs(((bb - l + 540) % 360) - 180) < PIT_LOOKOUT_ARC);
+    const R = pitRim(bb) + (lo ? 0.9 : 0.2) + rng() * 1.4;
     const x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
     if (road(x, z) < 2.2) continue; // the slabs are there
     const e = pitEdge(x, z);
     const inx = -Math.sin(a), inz = Math.cos(a);
     const lx = x - inx * Math.max(0, -e), lz = z - inz * Math.max(0, -e);
-    const s = 0.25 + Math.pow(rng(), 2) * 0.9;
+    const s = lo ? 0.2 + rng() * 0.15 : 0.25 + Math.pow(rng(), 2) * 0.9;
     bits.push({ x, z, y: terrain.heightAt(lx, lz) - 0.08 - Math.max(0, -e) * 0.4, inx, inz, s, tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
       salt: (ctx.regions?.regionAt(lx, lz).saltings || 0) > 0.3 && rng() < 0.6 });
   }
@@ -514,15 +517,16 @@ function buildPit(ctx) {
     im.computeBoundingSphere();
     scene.add(im); meshes.push(im);
   }
-  // the rim's colliders: a ring just outside the edge, so the walker can stand at the lip and look in, and a second
-  // 0.7 m further out, so a hurrying walker cannot slip through the first in one step
+  // the rim's colliders (v10-T1, #15): one ring of small columns whose centres lie 0.45 m inside the edge, so the
+  // walker's body stops 0.3 m outside it, close enough that the eye is over the edge and the throat fills the view.
+  // The columns are 0.45 m apart and 0.3 + 0.45 thick, so a hurrying step (0.33 m) cannot pass between them.
   let colliders = 0;
-  if (ctx.addCollider) for (const out of [0.15, 0.85]) {
+  if (ctx.addCollider) {
     let lx = Infinity, lz = Infinity;
-    for (let b = 0; b < 360; b += 0.5) {
-      const a = (b * Math.PI) / 180, R = pitRim(b) + out, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
-      if (Math.hypot(x - lx, z - lz) < 0.8) continue;
-      ctx.addCollider({ x, z, r: 0.5 }); colliders++; lx = x; lz = z;
+    for (let b = 0; b < 360; b += 0.25) {
+      const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
+      if (Math.hypot(x - lx, z - lz) < 0.45) continue;
+      ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
     }
   }
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
