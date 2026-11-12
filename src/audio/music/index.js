@@ -29,7 +29,7 @@ export const MUSIC_KEY = 'fp-music';
 export const SETTINGS = ['off', 'rare', 'default', 'frequent']; // director.js's SETTINGS, kept here so off loads nothing
 export const DEFAULT_SETTING = 'off';
 export const TRACK_NAMES = ['moor', 'wood', 'wet', 'cold', 'garden', 'dry', 'span', 'keep', 'gates']; // catalog.js's, in order
-export const MIX = 4;
+export const MIX = 2; // v9 critic: at 4 a piece sat 9 dB over the wood's bed; 2 is 6 dB lower
 export const readSetting = () => { try { const s = localStorage.getItem(MUSIC_KEY); if (SETTINGS.includes(s)) return s; } catch (e) { /* private mode */ } return DEFAULT_SETTING; };
 export const writeSetting = (s) => { try { localStorage.setItem(MUSIC_KEY, s); } catch (e) { /* private mode */ } };
 
@@ -51,13 +51,14 @@ export function startMusic(a, ctx, load = loadAll) {
 
   // ---- the modules, loaded once, the first time music is wanted
   let mods = null, booting = null, dir = null;
+  let byHand = false; // true while a build was asked for by the settings menu, not by the page's load
   function boot() {
     if (booting) return booting;
     booting = load().then(([S, C, D, P]) => {
       mods = { compose: S.compose, BY_NAME: C.BY_NAME, CATALOG: C.CATALOG, play: P.play };
       music.player = 'player';
       musicBus.gain.value = MIX;
-      dir = music.director = D.makeDirector({ catalog: C.CATALOG, setting: forced !== null ? 'off' : setting, seed: 4242 });
+      dir = music.director = D.makeDirector({ catalog: C.CATALOG, setting: forced !== null || byHand ? 'off' : setting, seed: 4242 });
       lastNow = ac.currentTime;
       // hearing nothing from a hidden tab is the browser's; coming back mid-phrase is ours to avoid
       if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden && forced === null) { dir.interrupt(0.5); stop(0.5); } });
@@ -73,7 +74,9 @@ export function startMusic(a, ctx, load = loadAll) {
     setting = music.setting = s; writeSetting(s);
     if (forced !== null) return;
     if (s === 'off') { if (dir) dir.setSetting(s); stop(2); return; } // the director's own stop would be lost in its next step
-    if (dir) dir.setSetting(s); else boot();
+    // switched on by hand before anything was built: build it as off and switch it on, so the director gives its
+    // first piece in a few seconds (director.js SWITCH_ON) and the visitor at the menu hears that it works
+    if (dir) dir.setSetting(s); else { byHand = true; boot().then(() => { byHand = false; if (dir && setting !== 'off') dir.setSetting(setting); }); }
   }
 
   let handle = null;

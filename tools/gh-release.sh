@@ -104,6 +104,11 @@ one() {
     return 0
   fi
 
+  # pictures: RELEASES.md points at shots/ by relative path, which GitHub renders in the file; a release body needs
+  # absolute addresses. They are pinned to origin/main as it stands when this runs, not to the release's own commit:
+  # keepers are curated later than the release they show, so an old tag's tree does not have them
+  local slug pic; slug="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"; pic="$(git -C "$root" rev-parse origin/main)"
+  body="$(printf '%s\n' "$body" | sed -e "s#src=\"shots/#src=\"https://raw.githubusercontent.com/$slug/$pic/shots/#g" -e "s#](shots/#](https://raw.githubusercontent.com/$slug/$pic/shots/#g")"
   tmp="$(mktemp)"; printf '%s\n' "$body" > "$tmp"
   if gh release view "v$v" >/dev/null 2>&1; then
     gh release edit "v$v" --title "$title" --notes-file "$tmp"

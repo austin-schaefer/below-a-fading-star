@@ -18,6 +18,7 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 Each release, newest first, linked to its release notes. The full notes are in [`RELEASES.md`](RELEASES.md).
 
+- [v9.1: The Lantern Halt](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v9.1). A strange waystation on the road, and the music is easier to try.
 - [v9: Sound sliders, and music you can switch on](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v9). Volume sliders, a few fixes, and experimental music that is off by default.
 - [v8: One world](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v8). Roads, peoples and stories that tie the world together.
 - [v7.2.1: Quieter birds at the keep](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v7.2.1). Quieter, rarer bird sounds near the start.

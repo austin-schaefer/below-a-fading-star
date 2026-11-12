@@ -37,6 +37,7 @@ export const SETTINGS = ['off', 'rare', 'default', 'frequent'];
 // per setting: scale on the first delay, on the silences
 const SCALE = { off: [Infinity, Infinity], rare: [1.5, 1.8], default: [1, 1], frequent: [0.7, 0.5] };
 export const FIRST = [60, 150]; // s into the walk
+export const SWITCH_ON = 6; // s from switching music on by hand to its first piece
 export const SILENCE = { median: 360, sigma: 0.28, min: 240, max: 540 }; // s between tracks, lognormal
 export const GUTTER_CLEAR = 20; // s a start needs before the next gutter
 export const SPECIAL_DWELL = 15; // s in the place before a special
@@ -92,7 +93,11 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
     setSetting(s) {
       if (!SCALE[s] || s === S.setting) return;
       if (s === 'off' && S.mode === 'playing') end(2); // ended on the old setting's scale, so its wait stays finite
+      const wasOff = S.setting === 'off';
       S.setting = s;
+      // switched on by hand: a piece within a few seconds, moving or not (the visitor is standing at the menu and
+      // would otherwise hear nothing for a minute or more and take it for broken); gutters are still respected
+      if (wasOff && s !== 'off' && S.mode !== 'playing') { S.timer = SWITCH_ON; S.eager = true; return; }
       // a wait drawn while off is infinite (off never plays): coming back on draws a fresh one
       if (s !== 'off' && !isFinite(S.timer)) S.timer = S.started ? silence() : firstDelay();
     },
@@ -134,7 +139,8 @@ export function makeDirector({ catalog = [], setting = 'default', seed = 1 } = {
       let c = pick(S.pool), stray = false;
       if (!c && S.started === 0) { c = pick('moor'); stray = true; }
       if (!c) { S.timer = 20; return acts; } // this pool has no track yet: look again in a while, never moor's music in the wood
-      if (!moving || gutterIn < GUTTER_CLEAR || swellSm > 0.02) { S.timer = 0.5; return acts; }
+      if ((!moving && !S.eager) || gutterIn < GUTTER_CLEAR || swellSm > 0.02) { S.timer = 0.5; return acts; }
+      S.eager = false;
       begin(c, stray);
       return acts;
     },

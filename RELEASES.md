@@ -4,6 +4,30 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v9.1: The Lantern Halt
+
+Released 2026-11-11.
+
+Adds a strange new waystation on the road, and makes the experimental music easier to try.
+
+### New
+
+- **The Lantern Halt**: A new stop beside the causeway (the old raised road), about halfway between Carcanet Keep and the Cardinal Stones: a dark stone slab ten metres tall with a glowing globe hung in the notch at its top. The globe is a bed. A traveller is asleep in it tonight under a patchwork quilt, his bundle beside him, with the winch he hauled himself up by at the foot of the stone.
+
+### Fixed
+
+- **Music starts when you switch it on**: Turning the experimental music on in the settings menu now brings a piece within a few seconds. Before, nothing played for a minute or more, and nothing at all while you stood still.
+- **Quieter music**: The music sits lower against the sound of each place.
+- **Tidier sound settings**: The three smaller volume sliders match the main one, and the line of explanation under the music setting is gone.
+
+### Behind the scenes
+
+- Release notes now end with a few screenshots, on every release that has something to show.
+
+Known issues: the sleeper in the Lantern Halt can only be seen from the east side, and the things at the foot of the stone are small and dim.
+
+<p><img src="shots/75-lantern-halt-from-the-road.webp" width="24%" alt="The Lantern Halt from the road: a dark slab with a lit globe in its notch"> <img src="shots/75-lantern-halt-near.webp" width="24%" alt="The Lantern Halt up close: a sleeper in the hanging globe, his bundle beside him"> <img src="shots/75-lantern-halt-sleeper.webp" width="24%" alt="The sleeper under a patchwork quilt, enlarged"></p>
+
 ## v9: Sound sliders, and music you can switch on
 
 Released 2026-11-11.
@@ -28,6 +52,8 @@ Adds separate volume controls and a first, experimental try at music, which is o
 - Release notes are split into New, Fixed and Behind the scenes, and the README lists every release with a link to its notes.
 
 Known issues: the music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
+
+<p><img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"> <img src="shots/74-settings-phone.webp" width="24%" alt="The same menu on a phone"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/73-hillside-figure-after.webp" width="24%" alt="The white figure on the hillside, cleared of rocks and plants"></p>
 
 ## v8: One world
 
@@ -57,6 +83,8 @@ Ties the world together: roads that lead somewhere, peoples whose buildings and 
 - The owner's issues are sorted and labelled as they arrive, and the repository takes issues and pull requests from the owner only.
 
 Known issues: the traveller below the Span is very hard to spot from the bridge deck; the Twk-men are tiny unless you are close; a few low things (some grave kerbs, the sunken wall round the lawns, the causeway's edge) still cannot be hopped onto; the wood is very dark away from its shafts of light.
+
+<p><img src="shots/61-roads-spawn-after.webp" width="24%" alt="The start of the walk with a worn track leading past a waystone toward the pond, the red sun in its gap between the mountains"> <img src="shots/63-strata-house-gate-after.webp" width="24%" alt="The Pomegranate House's gate in cream and rose limewash with turquoise domes, seen across tall grass"> <img src="shots/65-house-court-after.webp" width="24%" alt="The inn's courtyard under strings of coloured lamps, with a fountain and tables"> <img src="shots/67-twk-gnomon-after.webp" width="24%" alt="Carcanet Keep's gate, a tall wall of coursed stone with narrow slots, at the end of a path of hexagonal paving"></p>
 
 ## v7.2.1: Quieter birds at the keep
 
@@ -97,6 +125,8 @@ Makes the characters added in v7 easier to find, steadies the water and salt tha
 - **A softer keening**: The high sound when the sun gutters (dims for a few seconds) is slower, gentler and quieter.
 - **A better menu**: The settings menu can show your position, lists every place and character as somewhere to jump to, and no longer shifts the pause card when it opens.
 
+<p><img src="shots/56-river-flow-after.webp" width="24%" alt="The river's white water breaking into ripples as it runs down a rocky channel"> <img src="shots/58-erratic-glyph-after.webp" width="24%" alt="The same carved boulder, now with a clear sun sign cut deep into its face"> <img src="shots/57-pawns-spawn-span-after.webp" width="24%" alt="The view from the start across the pond to the Great Span's dark arches under the red sun"> <img src="shots/58-bather-swap-after.webp" width="24%" alt="A pale hand and arm floating in a dark pool, the stepping-stones gone from the water"></p>
+
 ## v7: The living
 
 Released 2026-11-08.
@@ -112,6 +142,8 @@ Adds far more life to the world, with 18 new characters, creatures and signs to 
 - **Sounds for all of them**: Seventeen new sounds follow the figures, among them the Coheirs' hum, the Taker's murmur and the Bather's pouring water, heard from far off. The Link-Boy never speaks.
 
 Known issues: the Coheirs sit in deep shade and are hard to see until you are close; the Accrescent's trail is faint from a distance.
+
+<p><img src="shots/52-still-stylite-offer.webp" width="24%" alt="A stack of round stones against a cliff, with a glowing, speckled growth beside it"> <img src="shots/52-still-accrescent-trail.webp" width="24%" alt="Boulders on the dark moor crossed by thin glowing threads of glassy light"> <img src="shots/51-workers-taker-road.webp" width="24%" alt="A field of small stone cairns on cracked ground below the cliff, with the keep on the horizon"> <img src="shots/53-glyphs-erratic-after.webp" width="24%" alt="A large boulder carved with a small pale sun sign, with ruined columns behind it"></p>
 
 ## v6.7: Two more place names
 
@@ -132,6 +164,8 @@ Adds a settings menu, opened from a gear button beside the sound button on every
 - **Mouse**: Choose between capturing the mouse on click or dragging to look.
 - **Go to**: Jump to ten places, among them the start, Carcanet Keep, the Armiger's Tower, the Sunken Court, the Lattice of crystals, the moss light in the Deodand Wood, the Great Span's west gate and Lees Tarn.
 - **Remembered, and phone-friendly**: Volume, mute and the mouse choice are remembered between visits. On a phone the menu is finger-sized and the mouse section is hidden.
+
+<p><img src="shots/49-settings-title-card.webp" width="24%" alt="The title card with its two paragraphs of introduction, a Go out button and the gear button"> <img src="shots/49-settings-desktop.webp" width="24%" alt="The settings menu on a computer, with sound, quality and mouse choices and a list of places to go to"> <img src="shots/49-settings-touch.webp" width="24%" alt="The settings menu on a phone, with the list of places below the quality row"></p>
 
 ## v6.5: New words
 
@@ -154,6 +188,8 @@ Fixes the white peafowl on the keep's lawns, which looked like loose pieces floa
 - **A train that stays on**: The ragged, moulting tail, with three eyed feathers left, stays attached through every bob, turn and cry.
 - **An old, dingy white**: The birds are still white, as they always were, but a dim, aged white instead of a glare.
 
+<p><img src="shots/48-peafowl-front.webp" width="24%" alt="A white peafowl standing on a block, seen from the front, with its neck, wing and small crest"> <img src="shots/48-peafowl-rear.webp" width="24%" alt="A peafowl seen from behind, its long train trailing over a block, the keep below"> <img src="shots/48-peafowl-cry.webp" width="24%" alt="A peafowl in profile on a rock, its tail drooping, with the keep's lawns behind"></p>
+
 ## v6.3: The yews grow out
 
 Released 2026-11-08.
@@ -161,6 +197,8 @@ Released 2026-11-08.
 Fixes the yew trees on the keep's lawns, which looked like pale-green party hats.
 
 - **Dark, shaggy yews**: The ring of yews round the keep and the rows framing its garden are now near-black green and needled, with sprigs and long shoots sagging out of their old clipped shapes, and no two alike. Up close you can still tell the cones and urns a gardener once cut.
+
+<p><img src="shots/47-yews-far-before.webp" width="24%" alt="Before: a row of flat green cones on the far ridge"> <img src="shots/47-yews-far-after.webp" width="24%" alt="After: the same row as dark, feathery yews"> <img src="shots/47-yews-near-after.webp" width="24%" alt="After: yews near the path with dark foliage and a reddish crown"></p>
 
 ## v6.2: Round glints
 
@@ -170,6 +208,8 @@ Finishes the fix for lights drawn as squares, which v6 left visible in desktop C
 
 - **Round lights everywhere**: Glints on water, lamps and floating motes now glow as soft round lights in every browser, about as bright as before.
 - **No more crawling dots**: A thin bright line, such as sunlight along a stream, no longer breaks into a row of dots that crawl as you move.
+
+<p><img src="shots/46-glints-sun-before.webp" width="24%" alt="Before: the sun's path on the pond with hard square glints along the grass"> <img src="shots/46-glints-sun-after.webp" width="24%" alt="After: the same view with the glints soft and round"></p>
 
 ## v6.1: The thumbstick stays home
 
@@ -194,6 +234,8 @@ Smooths the picture: trees, plants and rocks fade between levels of detail inste
 
 Known issues: on phones the picture is drawn a little below the screen's resolution, so some edges can still look jagged.
 
+<p><img src="shots/43-fxaa-lattice-off.webp" width="24%" alt="Before: crystals and glowing lines with stair-stepped, jagged edges"> <img src="shots/43-fxaa-lattice-on.webp" width="24%" alt="After: the same crystals with smooth edges"> <img src="shots/44-rocks-ling-before.webp" width="24%" alt="Before: boulders on the heath ending in a visible ring"> <img src="shots/44-rocks-ling-after.webp" width="24%" alt="After: the same boulders blending into their distant versions"></p>
+
 ## v5: The built
 
 Released 2026-11-08.
@@ -210,6 +252,8 @@ Makes the old buildings larger and stranger, hangs giant wonders on the mountain
 
 Known issues: the lost slipper is easy to miss, and the window-lights on the west face are too small to make out from the valley floor.
 
+<p><img src="shots/30-thrones-gutter-spawn-after.webp" width="24%" alt="Two headless giants crawling out of the mountain wall either side of the dimmed sun"> <img src="shots/28-court-moraine-after.webp" width="24%" alt="Two enormous stone piers reaching for an arch that was never closed, with a giant chain at the right"> <img src="shots/31-hawser-measure-after.webp" width="24%" alt="A link of the giant chain, taller than a person, in front of the sun"> <img src="shots/35-keptfire-flare-after.webp" width="24%" alt="A small fire in a ring of stones on pale shingle, flaring with sparks"></p>
+
 ## v4: The land and the Great Span
 
 Released 2026-11-08.
@@ -225,6 +269,8 @@ Divides the valley into eight distinct regions, replaces the old bridge with the
 
 Known issues: the waterfall cannot be seen from the causeway, and the surveyor's pegs are hard to find unless you are close.
 
+<p><img src="shots/21-systems-sun-after.webp" width="24%" alt="The red sun in a gap between mountain ranges, hazing paler range by range"> <img src="shots/23-span-spawn-after.webp" width="24%" alt="The Great Span's dark arches crossing the south of the valley, seen past the keep's wall"> <img src="shots/24-map-pool-after.webp" width="24%" alt="The Tumbling Water, a very tall thin waterfall dropping into mist in a narrow ravine"> <img src="shots/22-saltings-rim-after.webp" width="24%" alt="Pale salt plates with curled edges and tall reeds along the edge of the salt flats"></p>
+
 ## v3: Running cooler, and a medium quality
 
 Released 2026-11-07.
@@ -238,6 +284,8 @@ Makes the walk lighter on laptops: little looks different, on purpose.
 
 Known issues: the high quality setting has no smoothing of jagged edges yet.
 
+<p><img src="shots/17-tier-spawn-before.webp" width="24%" alt="The start of the walk at high quality"> <img src="shots/17-tier-spawn-after.webp" width="24%" alt="The same view at the new medium quality, close to identical"> <img src="shots/16-flicker-fen-east-before.webp" width="24%" alt="Before: reed heads floating off their stems at the fen's edge"> <img src="shots/16-flicker-fen-east-after.webp" width="24%" alt="After: the same edge with the heads fixed to their stems"></p>
+
 ## v2.2: A hop and a hush for phones
 
 Released 2026-11-07.
@@ -248,6 +296,8 @@ Better controls on phones.
 - **A mute button**: A faint button at the top right silences or restores the sound, and is remembered.
 - **A steadier thumbstick**: In mobile Safari the stick no longer jumps to your other finger when walking and looking change hands quickly.
 
+<p><img src="shots/20-touch-phone-controls.webp" width="24%" alt="A phone screen after Go out, with the thumbstick ring at bottom right, the hop ring beside it and a faint mute button at top right"></p>
+
 ## v2.1: A loading bar
 
 Released 2026-11-07.
@@ -257,6 +307,8 @@ A loading bar, and tools for anyone curious how the walk performs.
 - **A loading bar**: A thin line on the title card fills as the world is built, naming each step ("shaping the moor", "growing the wood", "raising the keep"), and "Go out" waits until it is ready.
 - **A performance overlay**: Add `?perf=1` to the address to see frame times and what the graphics card is busy with.
 - **A benchmark walk**: Add `?bench=1` for a fixed 45-second walk along the causeway to the lake and back that ends with a summary.
+
+<p><img src="shots/14-loading-card-midload.webp" width="24%" alt="The title card while loading, with a thin bar and the words lighting the sun beneath it"> <img src="shots/14-perf-overlay-spawn.webp" width="24%" alt="The performance overlay at the start of the walk, listing frame times and counts"></p>
 
 ## v2: The river's people, and more life everywhere
 
@@ -271,6 +323,8 @@ Adds a waterfall and river, a dozen new places and new inhabitants, and ties the
 - **The sky**: A city appears in the sun's saddle, solid only while the sun gutters; a giant figure crouches on the east wall, turning its head when you are not watching; a procession of lights and a still star that creeps while you stand.
 - **Sound and controls**: Twenty new sounds placed in the world and a waterfall that swells as you approach; faster walking, a thumbstick on phones and dragging to look where the mouse cannot be captured.
 
+<p><img src="shots/12-river-speculum-young-sun.webp" width="24%" alt="A waterfall falling into a round blue pool that reflects a young sun and clouds"> <img src="shots/13-sky-parhelion-gutter-solid.webp" width="24%" alt="A city of needle spires standing against the dimmed sun in the mountain gap"> <img src="shots/13-inhabitants-galley-crossing.webp" width="24%" alt="A black galley crossing the lake through the reeds, the sun in the gap beyond"> <img src="shots/13-riverlife-pedlars-slow-reach.webp" width="24%" alt="Pale riders on dragonflies over the slow water, with glints on the reeds"></p>
+
 ## v1: The moor, the keep, the things between
 
 Released 2026-11-07.
@@ -281,3 +335,5 @@ The first release: a first-person walk across a moor in a valley ringed by mount
 - **Places to walk to**: Carcanet Keep and its causeway, standing stones, a medlar orchard, the Sunken Court, a field of crystals (the Lattice), the Armiger's Tower, the Arcature, the Pomegranate House (an inn), a bridge, a wayside shrine and the Leaning Yard.
 - **Strange inhabitants**: Crows, grazers and a creature in the wood; a woman in the lake, a floating traveller with his wagon, a man in a cloak of eyes, a slinking thing, and a growth of tiles that creeps across the ground.
 - **Sound and controls**: Sound made on the fly, and first-person controls with the mouse and keys or by touch.
+
+<p><img src="shots/07-full-causeway.webp" width="24%" alt="The first view: a causeway, a line of trees and the swollen red sun in the saddle of the mountains"> <img src="shots/05-structures-keep-courtyard.webp" width="24%" alt="Carcanet Keep's wall and gate arch in silhouette against the setting sun"> <img src="shots/09-uncanny-woman-tarn.webp" width="24%" alt="A woman standing far out in the lake, her long shadow across the water"> <img src="shots/10-refine-lattice-tamed-after.webp" width="24%" alt="A field of tall blue crystals with glowing lines across the ground and long shadows"></p>

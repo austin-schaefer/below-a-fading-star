@@ -105,7 +105,7 @@
   .set-part { display: flex; align-items: center; gap: 10px; }
   .set-part label { flex: 0 0 7.4em; font-size: 0.85rem; line-height: 1.1; color: rgba(217, 205, 180, 0.72); }
   .set-part label small { display: block; font-size: 0.72rem; font-style: italic; color: rgba(219, 170, 134, 0.55); }
-  .set-part input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: #b8714a; touch-action: manipulation; }
+  .set-part input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--wordmark); opacity: 0.72; touch-action: manipulation; }
   .set-part output { min-width: 2.4em; text-align: right; font-size: 0.8rem; font-variant-numeric: tabular-nums; color: rgba(219, 170, 134, 0.6); }
   .set-part-sub { padding-left: calc(6.3rem + 10px); }
   .set-part-sub .set-choice { gap: 6px; }
@@ -177,8 +177,7 @@
     <div class="set-part"><label for="set-level-effects">Sound effects</label><input id="set-level-effects" data-level="effects" type="range" min="0" max="100" step="1" value="100"><output for="set-level-effects">100</output></div>
     <div class="set-part"><label for="set-level-ambience">Ambience</label><input id="set-level-ambience" data-level="ambience" type="range" min="0" max="100" step="1" value="100"><output for="set-level-ambience">100</output></div>
     <div class="set-part"><label for="set-level-music">Music <small>(experimental)</small></label><input id="set-level-music" data-level="music" type="range" min="0" max="100" step="1" value="100"><output for="set-level-music">100</output></div>
-    <div class="set-part-sub"><div class="set-choice" id="set-music" role="group" aria-label="music: off, or how often it comes"></div>
-    <p class="set-note">Early pieces by the agents who built this place, still being worked on. Off unless you turn it on.</p></div>
+    <div class="set-part-sub"><div class="set-choice" id="set-music" role="group" aria-label="music: off, or how often it comes"></div></div>
   </div>
   <h3>Quality</h3>
   <div class="set-choice" id="set-quality" role="group" aria-label="quality"></div>

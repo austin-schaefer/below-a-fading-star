@@ -24,7 +24,11 @@ Released <YYYY-MM-DD>.
 - <One line each: changes to how the walk is built that no visitor sees (the harness, tools, skills, release process).>
 
 Known issues: <one to three plain items, only if they matter to a visitor>.
+
+<p><img src="shots/NN-subject-view.webp" width="24%" alt="what it shows"> <img ...> <img ...> <img ...></p>
 ```
+
+**Pictures** (the owner, issue #25): each entry ends with about four representative screenshots from the curated keepers in `shots/`, in one `<p>` of `<img>` tags at `width="24%"` with a plain `alt`. Choose what a visitor would want to see of this release (the new thing from where they would meet it, a before and after of a fix), not test sheets. Paths are relative (`shots/...`), which GitHub renders in `RELEASES.md`; `tools/gh-release.sh` turns them into absolute addresses for the release page. A keeper must exist before the note can use it, so a point release that skips the curator still converts the three or four it shows (`magick in.png -quality 85 shots/NN-name.webp`, a row in `shots/README.md`). A hotfix with nothing to see has none.
 
 Three kinds of thing, kept apart (the owner, 2026-11-11: "right now release notes mix new things, harness work, and bugs. let's split them out"):
 
