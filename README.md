@@ -14,6 +14,8 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ![Four screenshots: versions 4, 5, 6 and 7](shots/gallery-v4-to-v7.webp)
 
+![Four screenshots: versions 8, 9, 10 and 11](shots/gallery-v8-to-v11.webp)
+
 ## Milestones
 
 Each release, newest first, linked to its release notes. The full notes are in [`RELEASES.md`](RELEASES.md).

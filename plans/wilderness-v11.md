@@ -53,10 +53,19 @@ In flight (v11.1):
 | Brief | Branch / worktree | Port | Model |
 |---|---|---|---|
 | W1 | `issue-1108-wall-close` | 8161 | opus |
-| W2 | `issue-1109-ne-wall-horn` | 8162 | opus |
-| W3 | `issue-1110-lamps-near` | 8163 | sonnet |
+| W2 | merged | | |
+| W5 (trial) | `issue-1112-high-passes` | 8162 | opus |
+| W3 | merged | | |
 | W4 | `issue-1111-poses-bell` | 8164 | sonnet |
-| R | read-only, no worktree | none | sonnet |
+| R | done | | |
+
+**R is in (14:50): no blockers in M4, F1 or F2**, read from the diffs. Fixed from it on `next` (test tooling, syntax-checked, not rerun): `mountains-test` fails plainly when no profile is measured; an unused variable out of `goto-views.mjs`. Left: `terrain.js:585` bakes colour from the mesh's `y` where `biomeAt` used `heightAt` (the same unless a pass moved vertices); the gate runs `mountains` without `--self-check`; no test covers the wall close up (W1's views are the evidence).
+
+**The working frames are cleared (the owner, in session: "yes of course clear out the huge pile of old wip screenshots")**: everything in the deploy worktree's `shots/wip/` older than v11.1's opening, about 4,200 files and 7.7 GB (v8 to v11, the acts, the critics'). The keepers under `shots/` are untouched; v11.1's frames are in the agents' worktrees.
+
+**15:20. W3 and W2 are merged; a trial is out on the owner's question about the cols.** W3 (`824a37c`, two rounds: rooms inside 200 m, the far view as before, no cold colours) and W2 (`fdb9c74`: buttresses, a notch and a rib on the north-east wall, the Horn a pyramid; zero change inside the walk limit) are on `next`; each ran its own tests, not rerun here. Still weak: the north-east face from the bowl's centre, the Horn's left flank, the Lamps' windows at 20 m. The owner, in session: "one thing i've always found curious is that we have like three saddles in the wall. one has huge significance: where the sun sets, the exit to the vallye. the others are... there. i wonder if the part of our mountain problem is that these other saddles make the topography feel more absurd, and also compete with the main saddle for specialness / consider, don't just treat this as gospel". Considered: the cols (east 62 m, south-east 40 m, north-west 69 m, against 300 m massifs and the saddle's 22 m) do make five teeth and do compete; they exist because the owner asked for a barrier "stooping almost to valley floor perhaps in places". The trial, **W5** (`issue-1112-high-passes`, port 8162, opus): the three cols as high passes at 40 to 55 % of the massifs' height behind `?cols=high`, default unchanged, the glacier's notch kept; the owner judges the pair. Also in from the owner: the README's Progress box for v8 to v11 and the check that keeps it (`8164af0`).
+
+**The glacier (the owner, in session, 15:25):** "the glacier has always looked kinda ass fwiw, and it's felt weird you can't climb it. if we keep the glaicer, it should be more... glacial. chasms and such things." and, of the case for keeping some dip in the wall and the far ranges' depth, "your other pushback resonates". And then: "Perhaps glacier is high up, spills down a bit, but alos the crystals sort of climb up it. a way fo connecting the valley floor to the mountains. maybe even there's some high crystaline structure you can't get to but can see is cnnected to the ground-level crystal formation." (on #35 as a comment). Decided: not in v11.1 (it moves the walk limit; the point release stays the weak spots and the cols); filed as #35 with their words, and it is the orchestrator's pick for the next milestone unless they pin another. W5 keeps the glacier's notch as it is.
 
 Next: check and merge each (W3, W4 as they come; W1, then W2 after it merges `next`), a blind read of the renders, `tools/suite.sh 8123` in full, then the release as `v11.1` (the day's third merge to `main` of six).
 
