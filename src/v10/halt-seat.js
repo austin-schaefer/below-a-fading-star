@@ -24,9 +24,14 @@ import * as THREE from 'three';
 import { Builder } from '../structures/geo.js';
 
 const ID = 'halt-seat';
-const LOWER = 7.5, RISE = 11, TOP = 12, DOWN = 8, BOARD = 1.0, ALIGHT = 1.6, HAUL = 8; // seconds
-const EYE = 0.8, LEAN = 0.12, TUCK = 0.13; // a sitter's eye over the plank, leant out from the stone on the way up, and
-// at the top tucked toward it, so the seat's cord on his side stands clear of the line from the eye to his face
+const LOWER = 7.5, RISE = 8, TOP = 9.4, DOWN = 5, BOARD = 1.6, ALIGHT = 1.4, HAUL = 8; // seconds: press to set-down 25 s
+const EYE = 0.8, BACK = 0.42; // a sitter's eye over the plank, and sat back from its cords, so they stand up either side
+const FAR = 2.35, BELOW = 0.4, ASIDE = 0.22; // at the top the eye hangs this far out from his face and this far under it: the whole
+// lantern mouth in the frame (cap to hand, the quilt, the lamp), nothing of his within a metre; and aside, to the
+// sitter's left, so the hauling rope (pulley to winch) hangs beside his face and not across it
+const SPIN = 4.2, SWING = 2.6; // s the seat takes to turn them round to the country; m of the climb it swings out over
+const VIEW_AT = { x: 40, z: 30 }; // the keep (src/structures/keep/v2.js): the climb looks out a little right of it, the
+// causeway running to it and the Span's arches beyond, the ground falling away at the bottom of the frame
 const STOP = 0.8; // the plank's height over the ground when down: in the view from where the visitor chalked
 const AWAY = 25, AWAY_T = 20, WAIT_T = 150; // the seat goes back up: 20 s with nobody within 25 m, or 150 s untaken
 
@@ -87,6 +92,11 @@ export function buildSeat(ctx, o) {
   const P = ctx.player;
   let y = yTop, mode = 'up', t = 0, from = yTop, dur = 1, target = yTop, profile = 0, travel = 0, swayT = -1, swayA = 0;
   let release = null, sleepT = -1, turned = 0, pending = -1, waited = 0, alone = 0, hauled = false;
+  // the ride's top, measured from his head when a visitor sits (the globe swings, a little): the seat rises to yRide and
+  // over the last SWING metres swings out (offX, offZ) from under the pulley to hang FAR out from his face. spin: the
+  // seat's turn on its rope; the sitter faces its local +z turned by spin (pi: facing the stone, as they sat down)
+  let yRide = yTop, offX = 0, offZ = 0, spin = 0, spinB = 0, spinH = 0, spinFrom = 0;
+  const invM0 = M0.clone().invert(), hl = new THREE.Vector3();
   const start = new THREE.Vector3(), boardFrom = new THREE.Vector3();
   const sw = { x: 0, rot: 0 };
   const out = new THREE.Vector3(0, 0, 1).transformDirection(M0); // away from the stone
@@ -98,8 +108,9 @@ export function buildSeat(ctx, o) {
     const s = swayT >= 0 ? swayA * Math.exp(-swayT / 3) : 0;
     sw.x = s * 0.1 * Math.sin(swayT * 2 * Math.PI / 3.2);
     sw.rot = s * 0.3 * Math.sin(swayT * 2 * Math.PI / 2.4);
-    seat.position.set(top.x + sw.x, y, top.z);
-    seat.rotation.set(0, sw.rot, 0); // the plank along the stone
+    const k = mode === 'rising' || mode === 'top' || mode === 'down' ? ease((y - (yRide - SWING)) / SWING) : 0;
+    seat.position.set(top.x + sw.x + offX * k, y, top.z + offZ * k);
+    seat.rotation.set(0, sw.rot + spin, 0); // the plank along the stone, turned on its rope
     ringW.copy(ringP).applyEuler(seat.rotation).add(seat.position);
     dv.copy(ringW).sub(rope.position); const len = dv.length();
     rope.quaternion.setFromUnitVectors(DN, dv.divideScalar(len || 1)); rope.scale.set(1, len, 1);
@@ -120,8 +131,7 @@ export function buildSeat(ctx, o) {
   // the carry: the eye where the ride puts it
   const carrier = {
     step(pos) {
-      seatWorld(eye); eye.y += EYE;
-      const k = ease((y - yLow - 6.5) / 2); eye.addScaledVector(out, LEAN * (1 - k) - TUCK * k);
+      eye.set(seat.position.x - Math.sin(spin) * BACK, seat.position.y + EYE, seat.position.z - Math.cos(spin) * BACK).applyMatrix4(M0);
       if (mode === 'boarding') pos.copy(boardFrom).lerp(eye, ease(t / BOARD));
       else if (mode === 'alighting') pos.copy(eye).lerp(start, ease(t / ALIGHT));
       else pos.copy(eye);
@@ -132,20 +142,43 @@ export function buildSeat(ctx, o) {
     // visitor moves the look themselves it stops turning them, and after 3 s quiet turns them only for those two beats
     look(dt, quiet) {
       if (mode !== 'boarding' && quiet < 0.05) took = true;
-      const answer = mode === 'top' && sleepT >= 0 && sleepT < 8.6, setdown = mode === 'alighting' && t > 0.5; // turned back once stepping off and away from the stone, never nose to it
+      const answer = mode === 'top' || (mode === 'rising' && t > RISE - 2.4), setdown = mode === 'alighting' && t > 0.4; // turned back once stepping off and away from the stone, never nose to it
       if (took ? !(quiet > 3 && (answer || setdown)) : quiet < 0.3) return null;
       if (setdown) { view.yaw = startYaw; view.pitch = startPitch; view.rate = 2.5; return view; }
-      if (answer) {
-        hd.getWorldPosition(dv); const px = P.pos.x, pz = P.pos.z;
-        view.yaw = Math.atan2(-(dv.x - px), -(dv.z - pz)); view.pitch = Math.atan2(dv.y + 0.08 - P.pos.y, Math.hypot(dv.x - px, dv.z - pz)); view.rate = 1.6;
+      const px = P.pos.x, pz = P.pos.z;
+      if (mode === 'boarding' && t < 0.6) { // the plank they are about to sit on
+        seatWorld(dv); view.yaw = Math.atan2(-(dv.x - px), -(dv.z - pz)); view.pitch = Math.atan2(dv.y - P.pos.y, Math.hypot(dv.x - px, dv.z - pz)); view.rate = 4;
         return view;
       }
-      view.yaw = outYaw; view.pitch = mode === 'top' ? -0.1 : -0.18; view.rate = mode === 'top' ? 0.6 : mode === 'boarding' ? 1.4 : 1.0;
+      if (mode === 'top' || answer) { // the lantern's mouth: him, cap to hand, the quilt and the lamp
+        hd.getWorldPosition(dv);
+        const k = mode === 'top' ? 1 : ease((t - (RISE - 2.4)) / 2.4);
+        view.yaw = mode === 'top' ? Math.atan2(-(dv.x - px), -(dv.z - pz)) - 0.1 : yawOf(spin); // him a little left of the middle, the country to his right
+        const ph = Math.atan2(dv.y + 0.12 - P.pos.y, Math.hypot(dv.x - px, dv.z - pz));
+        view.pitch = OUT_PITCH + (ph - OUT_PITCH) * k; view.rate = mode === 'top' ? 3 : 6;
+        return view;
+      }
+      // sat down facing the stone, then turned with the seat to the country: the look goes with the seat
+      view.yaw = yawOf(spin); view.rate = mode === 'boarding' ? 3.5 : 6;
+      view.pitch = mode === 'rising' ? SIT_PITCH + (OUT_PITCH - SIT_PITCH) * ease(t / 3) : mode === 'boarding' ? SIT_PITCH : OUT_PITCH;
       return view;
     },
   };
-  // facing out from the slab, turned a little toward the visitor's own tallies so they slide past at the view's edge
-  const outW = new THREE.Vector3(Math.sin(0.75), 0, Math.cos(0.75)).transformDirection(M0), outYaw = Math.atan2(-outW.x, -outW.z);
+  const SIT_PITCH = -0.62, OUT_PITCH = 0.04; // sat: the plank and the cords; out: level, a little up
+  const yaw0 = (() => { dv.set(0, 0, 1).transformDirection(M0); return Math.atan2(-dv.x, -dv.z); })();
+  const yawOf = (sp) => yaw0 + sp; // the view's yaw for a seat turned by sp
+  const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  // the ride's top and the seat's turns, measured when a visitor sits
+  function measure() {
+    hd.getWorldPosition(hl); hl.applyMatrix4(invM0);
+    let ux = top.x - hl.x, uz = top.z - hl.z; const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+    yRide = hl.y - BELOW - EYE;
+    offX = hl.x + ux * (FAR - BACK) - uz * ASIDE - top.x; offZ = hl.z + uz * (FAR - BACK) + ux * ASIDE - top.z; // left of facing him: (-uz, ux)
+    const vk = new THREE.Vector3(VIEW_AT.x, 0, VIEW_AT.z), sw0 = seatWorld(new THREE.Vector3());
+    const B = Math.atan2(-(vk.x - sw0.x), -(vk.z - sw0.z)) - 0.5; // the keep half a radian left of the middle
+    spinB = Math.PI + wrap(B - yaw0 - Math.PI);
+    spinH = spinB + wrap(Math.atan2(-ux, -uz) - spinB);
+  }
   const view = { yaw: 0, pitch: 0, rate: 0 };
   let took = false, startYaw = 0, startPitch = 0;
   function haul(wait) { mode = 'hauling'; t = -wait; hauled = false; }
@@ -222,9 +255,15 @@ export function buildSeat(ctx, o) {
       }
     }
     if (mode === 'waiting') checkWait(go ? dt : 0);
-    if (mode === 'boarding' && t >= BOARD) { mode = 'rising'; t = -0.5; from = y; target = yTop; dur = RISE; profile = 0; ctx.audio?.cue('act-winch', { x: winchW.x, y: winchW.y, z: winchW.z }, { dur: RISE + 0.5, rate: (yTop - yLow) / RISE }); }
-    if (mode === 'rising' && t > 0.6 && P.intent > 0.3) { move(yLow, DOWN); mode = 'down'; } // the visitor wants down: from where they are
-    if (mode === 'top' && (t >= TOP || (t > 1.5 && P.intent > 0.3))) { move(yLow, DOWN); mode = 'down'; sleepEnd(); }
+    if (mode === 'boarding' && t >= BOARD) { mode = 'rising'; t = -0.5; from = y; target = yRide; dur = RISE; profile = 0; ctx.audio?.cue('act-winch', { x: winchW.x, y: winchW.y, z: winchW.z }, { dur: RISE + 0.5, rate: (yRide - yLow) / RISE }); }
+    if (mode === 'rising' && t > 0.6 && P.intent > 0.3) { move(yLow, DOWN); mode = 'down'; spinFrom = spin; } // the visitor wants down: from where they are
+    if (mode === 'top' && (t >= TOP || (t > 1.5 && P.intent > 0.3))) { move(yLow, DOWN); mode = 'down'; spinFrom = spin; sleepEnd(); }
+    // the seat's turn on its rope: round from the stone to the country as it starts up, to him for the last of the climb,
+    // back to the country on the way down; empty, it settles back along the stone
+    if (mode === 'rising') { const s1 = Math.PI + (spinB - Math.PI) * ease((t + 0.5) / SPIN); spin = s1 + (spinH - s1) * ease((t - (RISE - 2.4)) / 2.4); }
+    else if (mode === 'top') spin = spinH;
+    else if (mode === 'down') spin = spinFrom + (spinB - spinFrom) * ease(t / 2);
+    else if (mode === 'hauling' || mode === 'up') spin += (Math.round(spin / Math.PI) * Math.PI - spin) * Math.min(1, dt * 0.6);
     if (mode === 'alighting' && t >= ALIGHT) {
       release?.(); release = null;
       P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
@@ -286,6 +325,7 @@ export function buildSeat(ctx, o) {
     show(n) { if (o.pillow2) o.pillow2.visible = n > 0; drawDoor(n); },
     do() {
       start.copy(P.pos); boardFrom.copy(P.pos); startYaw = P.yaw; startPitch = P.pitch; took = false;
+      measure(); spin = Math.PI; // sat facing the stone (the plank is the same either way round)
       release = ctx.controls.carry(carrier);
       mode = 'boarding'; t = 0; swayT = 0; swayA = 0.5; y -= 0.06; // the plank gives under them
       return new Promise((resolve) => { const w = () => (mode === 'up' || mode === 'hauling' ? resolve() : setTimeout(w, 250)); w(); });
@@ -307,8 +347,9 @@ export function buildSeat(ctx, o) {
     };
     ctx.tally.ride = {
       get phase() { return mode === 'up' || mode === 'waiting' || mode === 'lowering' || mode === 'hauling' ? null : mode; },
-      up: RISE, top: TOP, get start() { return start.clone(); }, get sleeper() { return headW(); },
+      up: RISE, top: TOP, board: BOARD, get start() { return start.clone(); }, get sleeper() { return headW(); },
       get answering() { return sleepT >= 0; }, get salt() { return slive; },
+      get hand() { return fa.localToWorld(new THREE.Vector3().copy(handLocal)); }, length: BOARD + RISE + TOP + DOWN + ALIGHT, rest: TOP + DOWN + ALIGHT,
     };
   }
   return { draws: 5 };
