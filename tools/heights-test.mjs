@@ -184,7 +184,16 @@ const HELPERS = `(() => {
       place(-200, zp, Y + 1.05); const outStop = run(30, ['KeyW'], () => Math.PI);
       place(-200, zp, Y + 1.05); const outPress = run(90, ['KeyW'], () => Math.PI);
       const landed = settle(); const s = sane();
-      out.parapet = { top, along, outStop, outPress, landed, sane: s };
+      // the slip the owner felt: hurrying along the deck, drifting 0.15 rad toward the parapet, hopping every 1.5 s
+      // (each hop scrambles onto the parapet's top; the next carried them off it, 56 m down)
+      let hopFalls = 0, hopUp = 0;
+      for (const z0 of [212, 214, 216, 218]) {
+        fp.controls.placeAt(-230, z0, Y); p.vel.set(0, 0, 0); p.yaw = -Math.PI / 2 - 0.15; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+        let up = false, fell = false;
+        for (let i = 0; i < 60 * 20 && p.pos.x < -125; i++) { if (i % 90 === 89) fp.controls.hop(); fp.controls.update(1 / 60); if (feet() > Y + 0.3 && p.onGround) up = true; if (feet() < Y - 3) { fell = true; break; } }
+        p.keys.clear(); hopFalls += fell; hopUp += up;
+      }
+      out.parapet = { top, along, outStop, outPress, landed, sane: s, hopFalls, hopUp };
     }
     return out;
   });
@@ -218,6 +227,7 @@ const HELPERS = `(() => {
   check(P.top > 56.3 && P.top < 57.1, 'the Span: placeAt with a height stands the walker on a parapet\'s top', `feet ${f2(P.top)}`);
   check(P.along.minF > 56.2, 'the Span: walking along the parapet drifting outward stays on it', `lowest ${f2(P.along.minF)}`);
   check(P.outStop.minF > 56.2, 'the Span: a slow walk straight out stops at the parapet\'s outer lip', `lowest ${f2(P.outStop.minF)}`);
+  check(P.hopFalls === 0, 'the Span: hurrying along the deck drifting toward the parapet and hopping, nobody goes over', `${P.hopUp} of 4 scrambled onto the parapet, ${P.hopFalls} fell`);
   check(P.sane.feet < 50 && P.landed && P.sane.ok, 'the Span: pressing on goes over, and lands sane', P.sane);
   check(errors.length === 0, 'no page errors (test floors)', errors.slice(0, 3).join(' | '));
 

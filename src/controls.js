@@ -534,17 +534,23 @@ export function buildControls(ctx) {
     let mv = resolve(ox + state.vel.x * dt, oz + state.vel.z * dt, feet0, mvA);
     // the edge-guard (v12): a held edge (a stacked floor's keep) stops a walker on the ground as a wall does; a lip
     // (a drop of more than LIP) stops one who is not steering at it, and one who is, until they press on for DWELL
-    // (or at once with Shift). Stopped, they slide along the edge. Not in the air: a hop goes where it goes.
+    // (or at once with Shift). Stopped, they slide along the edge. In a hop the same, but a hop steered at the lip goes
+    // over at once: a hop drifting along a parapet's top lands on it again, as it did not before (the Span's slips).
+    // A fall (in the air, not hopping) is not steered.
     let leaning = false;
-    if (state.onGround && !state.hopping) {
+    const inHop = state.hopping && !state.onGround;
+    if ((state.onGround && !state.hopping) || inHop) {
       const kind = edgeKind(mv, feet0);
       if (kind) {
         edgeNormal(ox, oz, feet0, mv.x - ox, mv.z - oz);
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
         let over = false;
         if (kind === LIP_SOFT && aim > AIM) {
-          leaning = true; lipDwell += dt;
-          if (k.has('ShiftLeft') || k.has('ShiftRight') || lipDwell >= DWELL) over = true;
+          if (inHop) over = true; // a hop at the lip is meant
+          else {
+            leaning = true; lipDwell += dt;
+            if (k.has('ShiftLeft') || k.has('ShiftRight') || lipDwell >= DWELL) over = true;
+          }
         }
         if (!over) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
