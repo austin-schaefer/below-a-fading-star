@@ -425,7 +425,7 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
     startFlight, flierPos: () => fPos,
     anchor(world) { anchor = world.clone(); H0 = 0; thread.material.uniforms.uH0.value = 0; thread.material.uniforms.uIn.value.set(0, 0.003); climb.f = 0; },
     dirs: {
-      hull: () => hullDir, thread: () => tb.clone().setY(0.35).normalize(),
+      hull: () => hullDir, thread: () => (anchor ? anchor.clone().sub(cam.position).add(up.clone().multiplyScalar(300)).normalize() : tb.clone().setY(0.35).normalize()), // anchored: 300 m up the thread from its foot
       worm: () => headWorld.clone().normalize(), lamp: () => wan.cur.clone().normalize(),
       flier: () => fPos.clone().normalize(),
     },

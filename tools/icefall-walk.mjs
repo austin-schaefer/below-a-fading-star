@@ -8,14 +8,14 @@
 // (the block's side low down and near its head, the stair's upper flight near the top, the shelf's front) and says where the walker lands.
 // With `touch` it does the climb on a phone-sized touch page with the stick only (one finger holds it up, a second
 // drags to steer), and takes its frames, without the falls.
-//   node tools/icefall-walk.mjs [base=http://localhost:8123] [keys|touch] [prefix=h2-walk]
+//   node tools/icefall-walk.mjs [base=http://localhost:8123] [keys|touch] [prefix=h2-walk] [extra query, e.g. &fall=1]   (Q=medium for another tier)
 // Frames go to shots/wip/<prefix>-NN-<what>.png in order. Prints progress, each frame, the falls and a last line
 // `climbed: yes|no`.
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
-const [base = 'http://localhost:8123', mode = 'keys', prefix = 'h2-walk'] = process.argv.slice(2);
+const [base = 'http://localhost:8123', mode = 'keys', prefix = 'h2-walk', extra = ''] = process.argv.slice(2);
 const touch = mode === 'touch';
 const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
@@ -23,7 +23,7 @@ const page = await context.newPage();
 page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(`${base}/?q=low&pos=58,-279&yaw=-1.2`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${base}/?q=${process.env.Q || 'low'}&pos=58,-279&yaw=-1.2${extra}`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.icefall, null, { timeout: 300000 });
 await page.evaluate(() => { const fp = window.__fp; fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1; });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -45,10 +45,10 @@ console.log(touch ? 'touch page' : `pointer captured: ${s0.locked}${s0.locked ? 
 // the route: the registered ascent, filled in every 1.5 m, its checkpoints tagged by the nearest plan point
 const route = await page.evaluate(() => {
   const P = window.__fp.icefall.path, R = [];
-  const tags = { 3: 'mouth', 6: 'slot-mid', 9: 'slot-end', 12: 't1', 16: 'block-foot', 18: 'block-top', 20: 'bridge-end', 22: 't2', 23: 'stair-foot', 25: 'landing', 27: 'stair-top', 30: 'shelf', 32: 'lip' };
+  const tags = { 3: 'mouth', 6: 'slot-pinch', 7: 'slot-chock', 8: 'slot-crystal', 9: 'slot-mid', 10: 'slot-end', 14: 't1', 17: 'block-foot', 19: 'block-top', 21: 'bridge-end', 23: 't2', 24: 'stair-foot', 26: 'landing', 28: 'stair-top', 31: 'shelf', 33: 'lip' };
   for (let i = 1; i < P.length; i++) {
     const a = P[i - 1], b = P[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 1.5));
-    for (let k = 1; k <= n; k++) R.push({ x: a[0] + (b[0] - a[0]) * k / n, z: a[1] + (b[1] - a[1]) * k / n, tag: k === n ? tags[i] || null : (k === Math.ceil(n / 2) && i === 20 ? 'bridge-mid' : null) });
+    for (let k = 1; k <= n; k++) R.push({ x: a[0] + (b[0] - a[0]) * k / n, z: a[1] + (b[1] - a[1]) * k / n, tag: k === n ? tags[i] || null : (k === Math.ceil(n / 2) && i === 21 ? 'bridge-mid' : null) });
   }
   return R;
 });
@@ -97,6 +97,9 @@ async function pause(fn) { await walkOn(false); await sleep(400); await fn(); aw
 // what to look at, as turns from the walking direction (yaw) and a pitch
 const LOOKS = {
   mouth: [['ahead', 0, 0.25]],
+  'slot-pinch': [['ahead', 0, 0.05]],
+  'slot-chock': [['up', 0, 0.85], ['ahead', 0, 0.1]],
+  'slot-crystal': [['back', Math.PI, 0.05]],
   'slot-mid': [['ahead', 0, 0.1], ['up', 0.2, 0.9]],
   'slot-end': [['back', Math.PI, -0.35]],
   t1: [['ahead', 0, 0.05], ['down-slot', 1.3, -0.6]],
@@ -109,7 +112,7 @@ const LOOKS = {
   landing: [['out', -1.4, -0.3], ['down', -1.4, -0.9]],
   'stair-top': [['out', 1.8, -0.15]],
   shelf: [['south', Math.PI, -0.1], ['plummet', 0.9, 0.5]],
-  lip: [['down', 0.8, -0.95], ['plummet', 0.8, 0.55], ['find', 2.1, -0.5], ['valley', -2.25, -0.25]],
+  lip: [['down', 0.8, -0.95], ['plummet', 0.8, 0.55], ['find', 2.4, -0.45], ['valley', -2.25, -0.25]],
 };
 await shot('start');
 await walkOn(true);
@@ -141,6 +144,7 @@ if (climbed && !touch) {
       { name: 'middle: off the block near its head', at: I.falls.bridge },
       { name: 'top: off the stair\'s upper flight', at: I.falls.stair },
       { name: 'top: off the shelf\'s front', at: I.falls.shelf },
+      { name: 'middle: off the bridge over R2 (held)', at: I.falls.bridgeMid },
     ];
   });
   for (const f of spots) {
@@ -148,9 +152,13 @@ if (climbed && !touch) {
     await sleep(900);
     const from = await st();
     await page.keyboard.down('ShiftLeft'); await page.keyboard.down('KeyW'); await sleep(1500); await page.keyboard.up('KeyW'); await page.keyboard.up('ShiftLeft');
-    let s = await st(), n = 0;
-    while (n++ < 60 && !s.ground) { await sleep(150); s = await st(); }
+    let s = await st(), n = 0, blackout = false;
+    while (n++ < 60 && !s.ground) { await sleep(150); s = await st(); if (await page.evaluate(() => (window.__fp.fall?.falls || 0))) blackout = true; }
     await sleep(600);
+    // with ?fall=1 a long fall shuts the view and wakes the walker at the keep's gate: wait for the waking
+    const fell = await page.evaluate(() => window.__fp.fall?.falls || 0);
+    if (fell) { blackout = true; let m = 0; while (m++ < 80 && (await page.evaluate(() => window.__fp.fall.phase)) !== 'idle') await sleep(200); await sleep(500); await page.evaluate(() => { window.__fp.fall.falls = 0; }); }
+    s = await st();
     await shot(`fall-${f.name.split(':')[0]}-landed`);
     s = await st();
     const info = await page.evaluate(([x, z]) => ({ g: window.__fp.terrain.heightAt(x, z), inWalk: window.__fp.mountains.inWalk(x, z) || Math.hypot(x, z) <= window.__fp.mountains.walkLimit(x, z) }), [s.x, s.z]);
@@ -161,10 +169,10 @@ if (climbed && !touch) {
       const b = await st(); await page.keyboard.down('KeyW'); await sleep(700); await page.keyboard.up('KeyW'); await sleep(200);
       const c = await st(); if (Math.hypot(c.x - b.x, c.z - b.z) > 1) { moves = true; break; }
     }
-    falls.push({ where: f.name, from: +from.feet.toFixed(1), x: +s.x.toFixed(1), z: +s.z.toFixed(1), feet: +s.feet.toFixed(2), ground: +info.g.toFixed(2), inside: info.inWalk, onGround: s.ground, stack: s.stack, walksAway: moves });
+    falls.push({ where: f.name, blackout, from: +from.feet.toFixed(1), x: +s.x.toFixed(1), z: +s.z.toFixed(1), feet: +s.feet.toFixed(2), ground: +info.g.toFixed(2), inside: info.inWalk, onGround: s.ground, stack: s.stack, walksAway: moves });
   }
 }
-for (const f of falls) console.log(`fall ${f.where}: from feet ${f.from} landed at (${f.x}, ${f.z}) feet ${f.feet} (terrain ${f.ground}) ${f.stack || 'on the ground'}; inside ${f.inside}, walks away ${f.walksAway}`);
+for (const f of falls) console.log(`fall ${f.where}: ${f.blackout ? 'BLACKOUT, woke ' : ''}from feet ${f.from} landed at (${f.x}, ${f.z}) feet ${f.feet} (terrain ${f.ground}) ${f.stack || 'on the ground'}; inside ${f.inside}, walks away ${f.walksAway}`);
 if (errors.length) console.log('page errors:', errors.slice(0, 3).join(' | '));
 console.log(`climbed: ${climbed ? 'yes' : 'no'}`);
 await browser.close();
