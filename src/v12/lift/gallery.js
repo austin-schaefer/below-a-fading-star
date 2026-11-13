@@ -353,8 +353,8 @@ export function buildGallery(ctx, o) {
   coinMesh.name = 'lift-gallery-coin'; coinMesh.renderOrder = 12;
   group.add(coinMesh);
   // the sun's eye: a bead of the sun at the bore's end, seen down the bore
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 0.9, 0.3), fog: false }));
-  eye.position.copy(bore).addScaledVector(L, -0.42);
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 0.85, 0.22), fog: false }));
+  eye.position.copy(bore).addScaledVector(L, -0.12);
   eye.name = 'lift-gallery-sun-eye';
   group.add(eye);
   // the dark of the bore round it
