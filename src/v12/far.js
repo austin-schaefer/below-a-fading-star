@@ -13,7 +13,9 @@
 //   while the scene renders (scene.onBeforeRender / onAfterRender), so every module, tool and toggle sees it as built.
 // - Single meshes under 6 m across with no children: hidden, or their world matrix scaled about their centre, for the
 //   render only, and restored after it.
-// Core objects (the terrain, the sky, the ranges) and anything not added by a world module are left alone.
+// Core objects (the terrain, the sky, the ranges) and anything not added by a world module are left
+// alone; anything that glows (a bright unlit material, additive blending, an emissive colour) goes only at a
+// quarter of the band's size, so a lamp still reads as a point from a top.
 // Tiers: low shrinks from 2 px and drops at 1 px, medium from 1 px to 0.5 px, high is untouched. ?far=0 off at every
 // tier; ?far=lo,hi (pixels) sets both at any tier. installFar runs after the modules build and before the
 // warm-up (which draws every stand-in once, full, so none uploads later); start() after the warm-up turns it on.
@@ -21,6 +23,7 @@
 const TIERS = { low: [1.0, 2.0], medium: [0.5, 1.0], high: null };
 const MIN_INST = 2, MAX_INST_R = 2, MAX_MESH_R = 3, STEP = 2;
 const M3 = [0, 1, 2, 4, 5, 6, 8, 9, 10]; // the 3x3 of a world matrix
+const GLOW = 4; // a light is kept down to a quarter of the band: a lamp reads as a point long after its body would
 const BUDGET = 9000; // instances packed a frame at most (round robin over the meshes that want it)
 
 export function installFar(ctx, url) {
@@ -36,17 +39,22 @@ export function installFar(ctx, url) {
   const inst = [], singles = [];
   const v3 = new THREE.Vector3(), m4 = new THREE.Matrix4(), size = new THREE.Vector2();
 
+  // a light (a lamp, a lit window, a glow) stays at every distance: a point of light is what reads from a top
+  const glows = (m) => (Array.isArray(m) ? m.some(glows) : !!m && (m.blending === THREE.AdditiveBlending
+    || (m.isMeshBasicMaterial && Math.max(m.color.r, m.color.g, m.color.b) > 0.5)
+    || (m.emissive && m.emissive.r + m.emissive.g + m.emissive.b > 0.05 && (m.emissiveIntensity ?? 1) > 0)));
   // --- what is managed
   for (const [, m] of ctx.perf._mods) {
     if (!m.world) continue;
     for (const root of m.objects) root.traverse((o) => {
       if (o.userData.noFar) return;
-      if (o.isInstancedMesh) { const e = instEntry(o); if (e) inst.push(e); return; }
+      const boost = glows(o.material) ? GLOW : 1;
+      if (o.isInstancedMesh) { const e = instEntry(o); if (e) { e.boost = boost; inst.push(e); } return; }
       if (!o.isMesh || o.isBatchedMesh || o.isSkinnedMesh || o.children.length || o.frustumCulled === false) return;
       const g = o.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
       o.updateWorldMatrix(true, false);
       if (g.boundingSphere.radius * o.matrixWorld.getMaxScaleOnAxis() > MAX_MESH_R) return;
-      singles.push({ o, saved: new Float32Array(16), hidden: false, scaled: false });
+      singles.push({ o, boost, saved: new Float32Array(16), hidden: false, scaled: false });
     });
   }
 
@@ -94,7 +102,7 @@ export function installFar(ctx, url) {
       const lx = a[j] * c.x + a[j + 4] * c.y + a[j + 8] * c.z + a[j + 12], ly = a[j + 1] * c.x + a[j + 5] * c.y + a[j + 9] * c.z + a[j + 13], lz = a[j + 2] * c.x + a[j + 6] * c.y + a[j + 10] * c.z + a[j + 14];
       e.cx[i] = w[0] * lx + w[4] * ly + w[8] * lz + w[12]; e.cy[i] = w[1] * lx + w[5] * ly + w[9] * lz + w[13]; e.cz[i] = w[2] * lx + w[6] * ly + w[10] * lz + w[14];
       const s = Math.sqrt(Math.max(a[j] * a[j] + a[j + 1] * a[j + 1] + a[j + 2] * a[j + 2], a[j + 4] * a[j + 4] + a[j + 5] * a[j + 5] + a[j + 6] * a[j + 6], a[j + 8] * a[j + 8] + a[j + 9] * a[j + 9] + a[j + 10] * a[j + 10]));
-      e.cr[i] = e.r0 * s * ws;
+      e.cr[i] = e.r0 * s * ws * e.boost;
     }
     o.computeBoundingSphere(); // the stand-in's culling sphere: every instance the module has (the packed ones are among them)
     e.c.boundingSphere = o.boundingSphere;
@@ -165,9 +173,9 @@ export function installFar(ctx, url) {
     for (const e of singles) {
       const o = e.o;
       if (!o.visible || !shown(o)) continue;
-      const g = o.geometry, w = o.matrixWorld.elements;
+      const g = o.geometry, w = o.matrixWorld.elements, rad = g.boundingSphere.radius * o.matrixWorld.getMaxScaleOnAxis();
       v3.copy(g.boundingSphere.center).applyMatrix4(o.matrixWorld);
-      const px = (g.boundingSphere.radius * o.matrixWorld.getMaxScaleOnAxis() * K) / Math.max(1e-3, v3.distanceTo(P));
+      const px = (rad * e.boost * K) / Math.max(1e-3, v3.distanceTo(P));
       if (px >= HI) continue;
       if (px <= LO) { o.visible = false; e.hidden = true; changed.push(e); continue; }
       const t = (px - LO) / (HI - LO), f = t * t * (3 - 2 * t);

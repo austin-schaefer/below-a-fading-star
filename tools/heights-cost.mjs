@@ -61,7 +61,7 @@ await page.evaluate(() => {
   acc.hookAll();
   const comp = fp.post.composer, render = comp.render.bind(comp);
   acc.frames = 0;
-  comp.render = (...a) => { acc.main = {}; acc.shadow = {}; if (acc.wantObjs) acc.objs = {}; render(...a); acc.last = { calls: info.calls, tris: info.triangles, main: acc.main, shadow: acc.shadow, objs: acc.objs }; acc.objs = null; acc.frames++; };
+  comp.render = (...a) => { acc.main = {}; acc.shadow = {}; if (acc.wantObjs) acc.objs = {}; if (acc.force) { fp.renderer.shadowMap.needsUpdate = true; acc.force = false; } render(...a); acc.last = { calls: info.calls, tris: info.triangles, main: acc.main, shadow: acc.shadow, objs: acc.objs }; acc.objs = null; acc.frames++; };
 });
 const frames = (n) => page.evaluate((n) => new Promise((res) => { const f0 = window.__cost.frames; const w = () => (window.__cost.frames >= f0 + n ? res() : requestAnimationFrame(w)); w(); }), n);
 const results = {};
@@ -85,15 +85,10 @@ for (const s of STATIONS) {
     const yaw = (i * Math.PI) / 4;
     await page.evaluate(([yaw, pitch]) => { const p = window.__fp.player; p.yaw = yaw; p.pitch = pitch; }, [yaw, s.pitch]);
     await frames(8);
-    await page.evaluate((w) => { window.__cost.hookAll(); window.__cost.wantObjs = w; window.__fp.renderer.shadowMap.needsUpdate = true; }, !!flags.objects);
-    await frames(1);
-    let r = await page.evaluate(() => JSON.parse(JSON.stringify(window.__cost.last)));
-    if (!Object.keys(r.shadow).length) { // the cadence took the redraw a frame later: take that frame
-      await page.evaluate(() => { window.__fp.renderer.shadowMap.needsUpdate = true; });
-      await frames(1);
-      const r2 = await page.evaluate(() => JSON.parse(JSON.stringify(window.__cost.last)));
-      if (r2.calls > r.calls) r = r2;
-    }
+    // the next render redraws the shadow map (set in the composer's wrapper, so no frame slips in between)
+    const f0 = await page.evaluate((w) => { window.__cost.hookAll(); window.__cost.wantObjs = w; window.__cost.force = true; return window.__cost.frames; }, !!flags.objects);
+    await page.evaluate((f0) => new Promise((res) => { const w = () => (window.__cost.frames > f0 ? res() : requestAnimationFrame(w)); w(); }), f0);
+    const r = await page.evaluate(() => JSON.parse(JSON.stringify(window.__cost.last)));
     rows.push({ yaw: +yaw.toFixed(2), ...r }); if (!flags.objects) delete r.objs;
   }
   const worstT = rows.reduce((a, b) => (b.tris > a.tris ? b : a));
