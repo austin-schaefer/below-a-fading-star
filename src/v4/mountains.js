@@ -47,13 +47,76 @@ export function saddleFloor(r) {
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
 export function saddleWeight(az) { return 1 - smoothstep(SADDLE.full, SADDLE.wall, Math.abs(angDiff(az, SADDLE.azimuth))); }
 
-// How far out a walker may go at (x, z): the region's edge (regionRadius + 48) everywhere but the saddle's
-// wedge, which runs out to the road's start.
+// The walk limit (v12 H0): a circle at r 348 (regionRadius + 48) plus corridors that let a walker past it. A corridor
+// is a wedge { wedge: { az, half, taper, r } } (out to r within ±half of the azimuth az, easing back to the circle
+// over taper; radians, world azimuth from +x toward +z) or a band { pts: [[x, z], ...], half } (within half metres of
+// the polyline, round at its ends). The saddle's wedge is the first. addCorridor(c) registers one and returns a remover.
+// walkLimit(x, z) is how far out a walker may go along the line through (x, z): a point is inside where
+// hypot(x, z) <= walkLimit(x, z). clampWalk(x, z, out) puts (x, z) back inside: radially onto the circle or a wedge,
+// as the circle always has, or onto the nearer side of a band it has just left, so a walker who steps sideways out of
+// a corridor beyond the circle stops at the corridor's side.
 const BASE_LIMIT = WORLD.regionRadius + 48;
+export const WALK_R = BASE_LIMIT;
+const CORRIDORS = [];
+export function addCorridor(c) {
+  if (c.pts) {
+    c.segs = [];
+    for (let i = 0; i + 1 < c.pts.length; i++) {
+      const [x1, z1] = c.pts[i], [x2, z2] = c.pts[i + 1], dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz) || 1e-6;
+      c.segs.push({ x1, z1, ux: dx / len, uz: dz / len, len });
+    }
+    if (c.pts.length === 1) c.segs.push({ x1: c.pts[0][0], z1: c.pts[0][1], ux: 1, uz: 0, len: 0 });
+  }
+  CORRIDORS.push(c);
+  return () => { const i = CORRIDORS.indexOf(c); if (i >= 0) CORRIDORS.splice(i, 1); };
+}
+export const corridors = CORRIDORS;
+addCorridor({ name: 'saddle', wedge: { az: SADDLE.azimuth, half: SADDLE.walkHalf, taper: 1.5 * D2R, r: SADDLE.walkR } });
+function wedgeLimit(w, x, z) {
+  const d = Math.abs(angDiff(Math.atan2(z, x), w.az));
+  if (d > w.half + w.taper) return BASE_LIMIT;
+  return lerp(w.r, BASE_LIMIT, smoothstep(w.half, w.half + w.taper, d));
+}
+// the nearest point of a band's polyline to (x, z), into _near; returns the distance
+const _near = { x: 0, z: 0 };
+function bandDist(c, x, z) {
+  let best = Infinity;
+  for (const s of c.segs) {
+    let t = (x - s.x1) * s.ux + (z - s.z1) * s.uz; t = t < 0 ? 0 : t > s.len ? s.len : t;
+    const px = s.x1 + s.ux * t, pz = s.z1 + s.uz * t, ex = x - px, ez = z - pz, d = Math.sqrt(ex * ex + ez * ez);
+    if (d < best) { best = d; _near.x = px; _near.z = pz; }
+  }
+  return best;
+}
+// the circle and the wedges alone: how far out along the line through (x, z)
+function radialLimit(x, z) {
+  let L = BASE_LIMIT;
+  for (const c of CORRIDORS) if (c.wedge) { const l = wedgeLimit(c.wedge, x, z); if (l > L) L = l; }
+  return L;
+}
 export function walkLimit(x, z) {
-  const d = Math.abs(angDiff(Math.atan2(z, x), SADDLE.azimuth));
-  if (d > SADDLE.walkHalf + 1.5 * D2R) return BASE_LIMIT;
-  return lerp(SADDLE.walkR, BASE_LIMIT, smoothstep(SADDLE.walkHalf, SADDLE.walkHalf + 1.5 * D2R, d));
+  const L = radialLimit(x, z), r = Math.sqrt(x * x + z * z);
+  if (r <= L) return L;
+  for (const c of CORRIDORS) if (c.segs && bandDist(c, x, z) <= c.half) return r;
+  return L;
+}
+// (x, z) put back inside the limit, into out; returns true if it moved
+export function clampWalk(x, z, out) {
+  const r = Math.sqrt(x * x + z * z), L = radialLimit(x, z);
+  out.x = x; out.z = z;
+  if (r <= L) return false;
+  let bx = x * L / r, bz = z * L / r, bd = r - L;
+  for (const c of CORRIDORS) {
+    if (!c.segs) continue;
+    const d = bandDist(c, x, z);
+    if (d <= c.half) return false;
+    if (d - c.half < bd && d > 1e-6) {
+      const k = (c.half - 1e-3) / d;
+      bx = _near.x + (x - _near.x) * k; bz = _near.z + (z - _near.z) * k; bd = d - c.half;
+    }
+  }
+  out.x = bx; out.z = bz;
+  return true;
 }
 
 // --- v4 systems: AM's seats (begin). Two flat benches cut into the saddle's flanks for the crawling colossi
@@ -887,7 +950,7 @@ export function buildMountains(ctx) {
   const azOf = (bearing) => (bearing - 90) * D2R;
   return {
     saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR, profile: PROFILE,
-    walkLimit, saddleWeight, saddleFloor,
+    walkLimit, clampWalk, addCorridor, corridors: CORRIDORS, saddleWeight, saddleFloor,
     // the main crest along a compass bearing: its radius and the ground's height there
     crestAt(bearing, out = { x: 0, z: 0, r: 0, y: 0 }) {
       const az = azOf(bearing); sampleBearing(az);
