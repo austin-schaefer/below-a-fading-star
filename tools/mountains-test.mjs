@@ -42,7 +42,9 @@ const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`${base}/?q=low&pos=0,0&yaw=0`, { waitUntil: 'load', timeout: 120000 });
+// stair=0: the Diffident Stair's lattice foot (v12) hangs in front of the wall in high-y4's first box, and its struts are
+// ruled lines that are not the mountain's
+await page.goto(`${base}/?q=low&pos=0,0&yaw=0&stair=0`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 
 // ---------------------------------------------------------------- geometry
