@@ -160,7 +160,8 @@ const results = await page.evaluate(async () => {
   if (fp.span) {
     // v12-H1: the feet and the eye agree on each way: a ray down just inside the walkable's edge (hw - 0.08) meets drawn
     // stone or metal within 0.12 m of the walkable's height, and one just outside it (hw + 0.1) meets nothing within
-    // 0.4 m of it. Samples a metre in from each lip (the west way's stride of air and the strut's stub excepted).
+    // 0.4 m under it; 90% of samples each. Samples a metre in from each lip (the strut's stub, the fen's slots and the
+    // coping's break excepted).
     const THREE = fp.THREE, rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), o = new THREE.Vector3();
     const ms = fp.span.meshes.filter((m) => m.isMesh); for (const m of ms) m.updateMatrixWorld();
     const hitY = (x, z, y0) => { o.set(x, y0 + 3, z); rc.set(o, down); rc.far = 6; const h = rc.intersectObjects(ms, false)[0]; return h ? h.point.y : null; };
@@ -169,7 +170,6 @@ const results = await page.evaluate(async () => {
     out.agree = [...fp.span.vestiges, fp.span.crackWay].map((v) => {
       let n = 0, inOk = 0, outBad = 0; const worst = [];
       for (let x = v.a + 1; x <= v.b - 1; x += (v.b - v.a - 2) / 23) {
-        if (v.name === 'west' && Math.abs(x + 100) < 0.7) continue;
         if (v.name === 'river' && Math.abs(x - 145.55) < 1.2) continue;
         if (v.name === 'fen' && inSlot(x)) continue;
         if (v.name === 'crack' && Math.abs(x - fp.span.plan.crack.x) < 0.15) continue; // where it broke in two
@@ -203,7 +203,7 @@ const checks = [
   ['the deck\'s west half walks to the west gate without a block (3 lines)', !!results.deckWest && results.deckWest.reached === 3 && results.deckWest.blocks.length === 0],
   ['the whole Span on the keys, walking (no hop, no Shift): stair up, the three bays on their thin ways, the crack on its fallen coping, the east stair down to its foot', !!results.crossing && results.crossing.stairUp && results.crossing.bays.every(Boolean) && results.crossing.crackWalked && results.crossing.eastDown && results.crossing.minFeet > 52.5 && results.crossing.maxStep < 0.13 && Math.hypot(results.crossing.end.x - results.crossing.end.foot.x, results.crossing.end.z - results.crossing.end.foot.z) < 5 && Math.abs(results.crossing.end.feet - results.crossing.end.ground) < 0.3],
   ['a step off each way falls to what is below, and a walk from there reaches the ground, in the bowl', !!results.falls && results.falls.length === 3 && results.falls.every((f) => f.airTicks > 15 && f.onGround && f.finite && f.r < 352 && f.land.feet > -8 && Math.abs(f.after.off) < 0.3)],
-  ['the feet and the eye agree on each way (the drawn top within 0.1 m of the walkable\'s edge, 90% of samples either side; the fen way\'s slots between its stones and the stride of air on the west way are not sampled)', !!results.agree && results.agree.length === 4 && results.agree.every((a) => a.inOk >= 0.9 * a.n && a.outBad <= 0.1 * a.n)],
+  ['the feet and the eye agree on each way: 90% of rays 0.08 m inside the walkable\'s edge meet stone or metal within 0.12 m of its height, and 90% of rays 0.1 m outside it meet nothing within 0.4 m under it (the fen way\'s 0.24 m slots between its stones, narrower than a foot, are not sampled)', !!results.agree && results.agree.length === 4 && results.agree.every((a) => a.inOk >= 0.9 * a.n && a.outBad <= 0.1 * a.n)],
   ['no page errors', errors.length === 0],
 ];
 let fail = 0;

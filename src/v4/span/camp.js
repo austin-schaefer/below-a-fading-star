@@ -10,14 +10,14 @@ import * as THREE from 'three';
 import { SPAN } from './plan.js';
 import { box, clean } from './geo.js';
 import { mergeGeometries } from '../kit/merge.js';
-import { travellerCloth, sheet } from './cloth.js';
+import { travellerCloth, swayingCloth, sheet } from './cloth.js';
 
 const Y = SPAN.deckY;
 
 export const CAMP = { x: 88.5, z: 210.3, block: [86.0, 91.6], days: 41 };
 
 export function buildCamp(K) {
-  const { ctx, rng, jit, body, addCol } = K;
+  const { ctx, rng, jit, body, addCol, hi } = K;
   const cloth = [], dark = [], pale = [], tin = [];
   const cyl = (list, x, y, z, r, h, rot = [0, 0, 0], seg = 8) => { const g = new THREE.CylinderGeometry(r, r, h, seg); g.rotateX(rot[0]); g.rotateY(rot[1]); g.rotateZ(rot[2]); g.translate(x, y, z); list.push(clean(g)); };
 
@@ -55,6 +55,9 @@ export function buildCamp(K) {
     g.applyMatrix4(new THREE.Matrix4().lookAt(B, A, new THREE.Vector3(0, 1, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)));
     g.translate(B.x, B.y, B.z); dark.push(clean(g));
     const st = new THREE.BoxGeometry(0.3, 0.2, 0.26); st.rotateY(rng()); st.translate(gx, Y + 0.1, RZ + 1.55); body.push(clean(st));
+    // a walker does not pass through the rope, its stone or the pole: a low line along the rope's foot, the stone, the pole
+    addCol({ x1: px, z1: RZ, x2: gx, z2: RZ + 1.5, r: 0.08, y: Y - 0.3, h: 1.2, stand: false });
+    addCol({ x: px, z: RZ, r: 0.1, y: Y - 0.3, h: RY - Y + 0.3, stand: false });
   }
   // the bedroll (rolled, grey-brown), a blanket across it, the book, the cup
   cyl(dark, 88.3, Y + 0.19, 210.0, 0.19, 1.7, [0, 0, Math.PI / 2], 10);
@@ -71,16 +74,17 @@ export function buildCamp(K) {
   cyl(dark, 87.9, Y + 0.05, 213.45, 0.02, 0.4, [0, 0, 1.45]); cyl(dark, 88.15, Y + 0.05, 213.3, 0.018, 0.34, [0, 0.8, 1.5]);
   // the staff with its streamer, at the west end of the deck where the fen's way comes up, so that he would see it from
   // the far lip: a strip of the cloth two and a half metres long, tied at the top, flying out over the deck on the air
-  // off the canyon, rippling (it moves, near; it is its own small mesh). From the camp it is twenty metres back west.
+  // off the canyon; it moves by the swaying cloth's shader (cloth.js), no work a frame. From the camp it is twenty metres
+  // back west.
   const SX = 66.6, SY = Y + 3.4, SZ = 210.9, SL = 2.5, SW = 0.3, NU = 2, NV = 16;
   cyl(dark, SX, Y + 1.75, SZ, 0.03, 3.5, [0.02, 0, -0.03]);
-  const streamAt = (u, v, t) => { // v 1 at the knot, 0 the torn tail; it streams east and a little south, sagging
-    const d = 1 - v, gust = 0.75 + 0.15 * Math.sin(t * 0.6) + 0.1 * Math.sin(t * 1.7 + 1);
-    const wave = 0.16 * d * Math.sin(d * 7 - t * 3.4) + 0.05 * d * Math.sin(d * 15 - t * 6.1);
+  const streamAt = (u, v) => { // v 1 at the knot, 0 the torn tail; it streams east and a little south, sagging, in waves
+    const d = 1 - v, gust = 0.82;
+    const wave = 0.16 * d * Math.sin(d * 7) + 0.05 * d * Math.sin(d * 15 + 1);
     const out = SL * d * gust, droop = SL * d * d * (1.05 - gust) * 0.9;
     return [SX + out * 0.92, SY - droop + (u - 0.5) * SW * (1 - 0.3 * d) * 0.85 + wave * 0.5, SZ + out * 0.38 + wave + (u - 0.5) * SW * 0.5];
   };
-  const streamer = sheet((u, v) => streamAt(u, v, 0), NU, NV);
+  const streamer = sheet(streamAt, NU, NV);
   addCol({ x: SX, z: SZ, r: 0.12, y: Y - 0.3, h: 3.4 });
   // the lean-to is not a floor and not a doorway
   addCol({ x1: 87.0, z1: 210.4, x2: 90.2, z2: 210.4, r: 0.55, y: Y - 0.3, h: 1.1, stand: false });
@@ -90,22 +94,14 @@ export function buildCamp(K) {
     if (!geos.length) return;
     const g = mergeGeometries(geos); for (const q of geos) q.dispose();
     g.computeBoundingSphere();
-    const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = name !== 'camp-pale'; m.receiveShadow = true;
+    const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = hi && name !== 'camp-pale'; m.receiveShadow = true;
     m.matrixAutoUpdate = false; m.updateMatrix(); ctx.scene.add(m); meshes.push(m);
   };
   add(cloth, travellerCloth(), 'camp-cloth');
   {
-    const m = new THREE.Mesh(streamer, travellerCloth()); m.name = 'camp-streamer'; m.castShadow = true; m.receiveShadow = true;
-    ctx.scene.add(m); meshes.push(m);
-    // rebuild the strip's grid each frame within 40 m; beyond it the strip holds still
-    const grid = new Float32Array((NU + 1) * (NV + 1) * 3), pos = streamer.attributes.position;
-    const quad = [[0, 0], [1, 0], [1, 1], [0, 0], [1, 1], [0, 1]];
-    ctx.registerUpdate((dt, t) => {
-      for (let j = 0, k = 0; j <= NV; j++) for (let i = 0; i <= NU; i++, k += 3) { const p = streamAt(i / NU, j / NV, t); grid[k] = p[0]; grid[k + 1] = p[1]; grid[k + 2] = p[2]; }
-      let o = 0;
-      for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) for (const [a, b] of quad) { const k = ((j + b) * (NU + 1) + i + a) * 3; pos.array[o++] = grid[k]; pos.array[o++] = grid[k + 1]; pos.array[o++] = grid[k + 2]; }
-      pos.needsUpdate = true; streamer.computeVertexNormals();
-    }, { pos: { x: SX, z: SZ }, near: 60, hz: 0 });
+    const m = new THREE.Mesh(streamer, swayingCloth()); m.name = 'camp-streamer'; m.castShadow = hi; m.receiveShadow = true;
+    streamer.computeBoundingSphere(); streamer.boundingSphere.radius += 0.6; // (the sway moves it up to half a metre)
+    m.matrixAutoUpdate = false; ctx.scene.add(m); meshes.push(m);
   }
   add(dark, new THREE.MeshStandardMaterial({ color: '#40342b', roughness: 0.95 }), 'camp-dark');
   add(pale, new THREE.MeshStandardMaterial({ color: '#c9bfa6', roughness: 1 }), 'camp-pale');
