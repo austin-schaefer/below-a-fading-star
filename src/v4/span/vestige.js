@@ -27,11 +27,6 @@ function slab(v, xc, len, wid, th, drop = 0.03, dy = 0, dzr = 0) {
   g.translate(xc, v.y(xc) - drop + dy, v.zc(xc));
   return clean(g);
 }
-const cloth = { mat: null };
-// the Late folk's saffron, faded; shared with the camp
-export function saffronMaterial() {
-  return cloth.mat || (cloth.mat = new THREE.MeshStandardMaterial({ color: '#a87a38', emissive: new THREE.Color('#3a2410'), emissiveIntensity: 0.5, roughness: 0.95, metalness: 0, side: THREE.DoubleSide }));
-}
 // the pointed arch's ring between intrados and extrados, as one outline in x-y
 function ringOutline(A) {
   const pts = [], n = 14, m = A.m;
