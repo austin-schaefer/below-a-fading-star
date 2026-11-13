@@ -1,0 +1,10 @@
+[
+ {"name": "east-gate", "x": 215, "z": 150, "yaw": -2.57, "pitch": 0.08},
+ {"name": "east-pass", "x": 150, "z": 30, "yaw": -1.95, "pitch": 0.1},
+ {"name": "south-lamps", "x": 20, "z": 230, "yaw": 2.8, "pitch": 0.15},
+ {"name": "south-pass", "x": 0, "z": 250, "yaw": 3.14, "pitch": 0.12},
+ {"name": "nw-galleries", "x": -120, "z": -110, "yaw": 0.79, "pitch": 0.15},
+ {"name": "nw-pass", "x": -110, "z": -170, "yaw": 0.55, "pitch": 0.1},
+ {"name": "hawser", "x": -100, "z": -230, "yaw": 0.3, "pitch": 0.2},
+ {"name": "nw-foot", "x": -150, "z": -250, "yaw": 0.55, "pitch": -0.05}
+]
