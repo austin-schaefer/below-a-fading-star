@@ -26,7 +26,7 @@ import { buildDust } from './stair/dust.js';
 import { buildTop } from './stair/top.js';
 
 export const STAIR_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('stair') === '0';
-const NEAR = 2.6, LEAD = 1.15;           // m of path called round the walker; s of their way along it called ahead of them
+const NEAR = 2.6, TAIL = 4.2, LEAD = 1.15; // m of path called round the walker (TAIL behind them); s of their way called ahead
 const T_ARRIVE = 1.3, T_LEAVE = 4.2;     // s for a slab to come up from its bed, and to go back down to it
 const LINGER = 1.1, RIPPLE = 0.07;       // s a slab stays after it leaves the window; s between one slab starting and the next
 
@@ -229,7 +229,7 @@ export async function build(ctx) {
     const up = Math.max(0, vUp) * LEAD * T_ARRIVE, down = Math.max(0, -vUp) * LEAD * T_ARRIVE;
     for (let i = 0; i < N; i++) {
       if (fixed(E[i])) continue;
-      const w = s0 !== null && E[i].s >= s0 - NEAR - down - E[i].hd && E[i].s <= s0 + NEAR + up + E[i].hd ? 1 : 0;
+      const w = s0 !== null && E[i].s >= s0 - (vUp >= 0 ? TAIL : NEAR) - down - E[i].hd && E[i].s <= s0 + (vUp < 0 ? TAIL : NEAR) + up + E[i].hd ? 1 : 0;
       if (w !== want[i]) { want[i] = w; wait[i] = w ? Math.abs(E[i].s - (s0 ?? 0)) * 0.0 : LINGER + Math.abs(E[i].s - (s0 ?? E[i].s)) * 0.08; }
     }
     // move them: arrivals one at a time on the ripple (nearest first), leavings after their linger

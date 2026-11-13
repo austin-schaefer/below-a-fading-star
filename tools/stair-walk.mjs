@@ -6,7 +6,8 @@
 // deck and the lattice's member). Frames, in order, to shots/wip/<prefix>-NN-<what>.png:
 //   - from the turf, the stub; then, on the first flight and again on the fourth, a frame every 0.3 s for 4.2 s while
 //     walking, looking up the stair (the slabs coming);
-//   - at landings: ahead, straight down, back; at the switchback, what is ahead before the next flight comes;
+//   - (keys) stops: back from the first landing, at once and 2.6 s on (the flight going); down past a flight's edge;
+//     at the switchback, ahead (nothing) and then behind (the next flight coming); on touch only the first sequence;
 //   - at the top: the landing, the deck, the view west.
 // It says where the walker waited at the stair's end (held), and the time of the climb. With `falls` it then puts the
 // walker on the stair at three heights and steps off sideways with a hurry, and says where they land (run it once
@@ -72,7 +73,10 @@ async function turn(dyaw, dpitch = 0) {
     const was = stickDown, sx = 195, sy = 300, n = 6;
     if (was) await walkOn(false);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 7, x: sx, y: sy }] });
-    for (let i = 1; i <= n; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 7, x: sx + px * i / n, y: sy + py * i / n }] });
+    // the page's clock is held: let it move between the drag's steps, and hold the finger still before lifting it
+    // (as a person does), or the page reads a fling and the view spins on
+    for (let i = 1; i <= n; i++) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 7, x: sx + px * i / n, y: sy + py * i / n }] }); await run(16); }
+    await run(120);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     if (was) await walkOn(true);
     return;
@@ -132,38 +136,60 @@ const route = await page.evaluate(() => {
   const land = new Set(E.filter((e) => e.kind === 1).map((e) => `${e.cx.toFixed(2)},${e.cz.toFixed(2)}`));
   return a.path.map(([x, z, y], i) => ({ x, z, y, landing: land.has(`${x.toFixed(2)},${z.toFixed(2)}`), i }));
 });
-const landings = route.filter((r) => r.landing);
-const SEQ = new Set([1, 10]); // waypoints at which the arriving sequence runs (the stub's foot; the fourth flight's foot)
-const LOOKS = { 0: [['ahead', 0, 0.12], ['down', 0.5, -1.25], ['back', Math.PI, -0.15]], 2: [['ahead', 0, 0.05], ['back', Math.PI, -0.35]], 3: [['ahead', 0, 0.0], ['down', -0.9, -1.25], ['back', Math.PI, -0.2]], 5: [['ahead', 0, 0.05], ['down', 0.4, -1.3]] };
+const SEQ = new Set(touch ? [1] : [1, 10]); // waypoints at which the arriving sequence runs (the stub's foot; the fourth flight's foot)
+// at these waypoints, stop and look: [what, turn from the way they are going, pitch, wait before (s), action]
+// 'side' turns to the left, steps half a metre toward the flight's edge and looks down past it, and comes back
+const STOPS = {
+  3: [['back', Math.PI, -0.3, 0.2], ['back-later', Math.PI, -0.4, 2.6], ['ahead', 0, 0.05, 0.2]],
+  5: [['side-down', Math.PI / 2, -1.1, 0.2, 'side']],
+  9: [['out', -Math.PI / 2, -0.05, 0.3], ['back', Math.PI, -0.3, 0.2]],
+  12: [['ahead', 0, -0.05, 0.1], ['behind-it-comes', 'next', 0.15, 0.6]],
+  18: [['ahead', 0, 0.1, 0.3], ['down', Math.PI / 2, -1.1, 0.2, 'side']],
+};
 await shot('from-the-turf');
 await walkOn(true);
 let i = 1, held = 0, heldAt = [], stuck = 0, last = null, fell = false;
 const tStart = (await st()).t;
 let hiFeet = -99;
+let loops = 0;
 while (i < route.length) {
   const s = await st();
+  if (++loops % 100 === 0) console.log(`  ... heading for ${i} at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(1)} pitch ${s.pitch.toFixed(2)}`);
+  if (s.t - tStart > 400) { console.log('out of time'); break; }
   hiFeet = Math.max(hiFeet, s.feet);
   if (hiFeet > 12 && s.feet < hiFeet - 6) { console.log(`fell at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(1)}, heading for ${i}`); fell = true; break; }
   const w = route[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
   if (d < 0.6) {
-    const li = landings.indexOf(w);
-    if (li >= 0 && LOOKS[li]) {
-      await walkOn(false); await run(300);
-      for (const [what, dyw, p] of LOOKS[li]) { await lookAt(dyw, p); await run(700); await shot(`landing${li}-${what}`); await lookAt(-dyw, 0); }
+    if (STOPS[i] && !touch) {
+      await walkOn(false); await run(150);
+      const base = (await st()).yaw;
+      for (const [what, dyw, p, wait, act] of STOPS[i]) {
+        await run(wait * 1000);
+        const sNow = await st();
+        const want = dyw === 'next' ? Math.atan2(-(route[i + 2].x - sNow.x), -(route[i + 2].z - sNow.z)) : base + dyw;
+        await turn(wrap(want - sNow.yaw), p - sNow.pitch);
+        if (act === 'side') { await turn(0, -p); await page.keyboard.down('KeyW'); await run(170); await page.keyboard.up('KeyW'); await run(200); await turn(0, p); }
+        await run(350); await shot(`${String(i).padStart(2, '0')}-${what}`);
+        if (act === 'side') { await turn(0, -p); await page.keyboard.down('KeyS'); await run(170); await page.keyboard.up('KeyS'); await run(150); }
+      }
+      const sNow = await st(); await turn(wrap(base - sNow.yaw), -sNow.pitch);
       await walkOn(true);
     }
     if (SEQ.has(i)) {
       // the arriving: look up the stair and walk on, a frame every 0.3 s for 4.2 s
       const nx = route[i + 1];
       const sy = await st();
-      await turn(wrap(Math.atan2(-(nx.x - sy.x), -(nx.z - sy.z)) - sy.yaw), 0.18 - sy.pitch);
+      await turn(wrap(Math.atan2(-(nx.x - sy.x), -(nx.z - sy.z)) - sy.yaw), touch ? 0 : 0.18 - sy.pitch); // (a drag's pitch carries on with the touch look's inertia)
       for (let k = 0; k <= 14; k++) { await shot(`arrive-${String(k * 3).padStart(2, '0')}`); await run(300); }
-      await turn(0, -0.18);
+      if (!touch) await turn(0, -0.18);
     }
     i++; continue;
   }
   const want = Math.atan2(-dx, -dz), dyw = wrap(want - s.yaw);
-  if (Math.abs(dyw) > (touch ? 0.06 : 0.025)) await turn(dyw, -s.pitch * 0.5);
+  // on touch a big turn is made standing (thumb off the stick, the drag, a moment for the look's inertia to die), as a
+  // person on a phone does at a corner; a small one on the move
+  if (touch && Math.abs(dyw) > 0.5) { await walkOn(false); await turn(dyw, 0); await run(200); await walkOn(true); continue; }
+  if (Math.abs(dyw) > (touch ? 0.06 : 0.025)) await turn(dyw, touch ? 0 : -s.pitch * 0.5);
   await run(d < 2 ? 60 : 120);
   if (last && Math.hypot(s.x - last.x, s.z - last.z) < 0.005) {
     held++; if (!heldAt.length || Math.hypot(heldAt[heldAt.length - 1][0] - s.x, heldAt[heldAt.length - 1][1] - s.z) > 1) heldAt.push([+s.x.toFixed(1), +s.z.toFixed(1), s.el]);

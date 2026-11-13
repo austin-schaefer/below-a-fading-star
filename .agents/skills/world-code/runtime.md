@@ -158,6 +158,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `heights=test` (v12-H0): the test floors east of the Moot (a bridge with held edges, a deck under a 0.9 m beam, a perch 18 m up, a cut under the ground, a corridor through the limit on bearing 140) and their ascents (`src/v12/heights.js`); `tools/heights-test.mjs` loads it
 - `fall=1` (v12-H0, a trial): a fall of more than 12 m blacks out and wakes the walker at the keep's gate (`src/v12/fall.js`); `fall=0` keeps it off once it is the default
 - `above=0` (v12-H0): the old shadow box (±95 m, 40 m ahead of the eye) and haze at any height, for a before and after (`src/v12/above.js`); renders from above: `tools/views-v12-heights.json`
+- `stair=0` (v12-H3): leaves out the Diffident Stair and its top (`src/v12/stair.js`); `tools/stair-walk.mjs <base> keys|touch|falls` climbs it by hand on Playwright's clock
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
 
 ## Quality tiers

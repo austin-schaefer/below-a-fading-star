@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from '../../v4/kit/merge.js';
 
 const C = (h) => new THREE.Color(h);
-const STONE = C('#8c8592'), DARK = C('#6e6878'), CUT = C('#2a2430'), BRONZE = C('#3f6a5a'), POLISH = C('#9a7a48'), EMBER = C('#5a1a08');
+const STONE = C('#8c8592'), DARK = C('#6e6878'), CUT = C('#2a2430'), BRONZE = C('#3f6a5a').lerp(C('#4a3a22'), 0.45), POLISH = C('#9a7a48'), EMBER = C('#5a1a08');
 
 // paint a geometry one colour (and its emissive weight), as attributes for merging
 function paint(g, col, em = 0) {
@@ -41,7 +41,7 @@ function slab(w, d, t, wear, rng) {
     p.setXYZ(i, x, y, z);
     // worn top paler and smoother, the sides darker toward the bottom, the underside the dark of cut stone
     const top = y > -0.06 ? 1 : 0, under = y < -t + 0.001 ? 1 : 0;
-    const k = top ? 1.08 + 0.12 * Math.exp(-(((x + w * 0.06) / (w * 0.3)) ** 2)) : under ? 0.55 : 0.78 + 0.22 * (1 + y / t);
+    const k = top ? 0.82 + 0.14 * Math.exp(-(((x + w * 0.06) / (w * 0.3)) ** 2)) : under ? 0.55 : 0.78 + 0.22 * (1 + y / t);
     const c = top ? STONE : DARK;
     col[i * 3] = c.r * k * tint; col[i * 3 + 1] = c.g * k * tint; col[i * 3 + 2] = c.b * k * tint;
   }
@@ -99,15 +99,15 @@ export function landingGeometry(rng, w, d) {
     const z = -d / 2 + m + R + j * dz; if (z > d / 2 - m - R * 0.86) break;
     for (let i = 0; ; i++) {
       const x = -w / 2 + m + R + i * dx + (j % 2 ? dx / 2 : 0); if (x > w / 2 - m - R * 0.86) break;
-      const g = new THREE.CylinderGeometry(R - 0.012, R - 0.012, 0.05, 6); g.rotateY(Math.PI / 6);
+      const g = new THREE.CylinderGeometry(R - 0.006, R - 0.006, 0.05, 6); g.rotateY(Math.PI / 6);
       g.translate(x, -0.022 + (rng() - 0.5) * 0.01 - (rng() < 0.08 ? 0.015 : 0), z);
       const worn = Math.exp(-((x / (w * 0.3)) ** 2) - ((z / (d * 0.3)) ** 2));
-      parts.push(paint(g, STONE.clone().multiplyScalar(0.82 + rng() * 0.26 + worn * 0.14).lerp(POLISH, rng() < 0.05 ? 0.5 : 0)));
+      parts.push(paint(g, DARK.clone().multiplyScalar(0.72 + rng() * 0.3 + worn * 0.12).lerp(POLISH, rng() < 0.05 ? 0.35 : 0)));
     }
   }
   // the joints: the slab's top under the pavers, darker
   const joint = new THREE.PlaneGeometry(w - 2 * m + 0.02, d - 2 * m + 0.02); joint.rotateX(-Math.PI / 2); joint.translate(0, -0.027, 0);
-  parts.push(paint(joint, CUT));
+  parts.push(paint(joint, DARK.clone().multiplyScalar(0.45)));
   // a bronze band round the field
   for (const [bw, bd, x, z] of [[w - 2 * m + 0.06, 0.04, 0, d / 2 - m + 0.02], [w - 2 * m + 0.06, 0.04, 0, -d / 2 + m - 0.02], [0.04, d - 2 * m + 0.06, w / 2 - m + 0.02, 0], [0.04, d - 2 * m + 0.06, -w / 2 + m - 0.02, 0]]) {
     const b = new THREE.BoxGeometry(bw, 0.016, bd); b.translate(x, -0.012, z); parts.push(paint(b, BRONZE));
@@ -165,7 +165,7 @@ float tNoise(vec3 x) {
 }`).replace('#include <color_fragment>', `#include <color_fragment>
   float tm = tNoise(vSP) * 0.6 + tNoise(vSP * 3.7) * 0.4;
   float lich = smoothstep(0.62, 0.8, tNoise(vSP * 0.8 + 7.0));
-  diffuseColor.rgb *= 0.78 + 0.4 * tm;
+  diffuseColor.rgb *= 0.62 + 0.55 * tm;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.27, 0.16), lich * 0.35 * (1.0 - vEm));`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
   totalEmissiveRadiance += vec3(3.2, 0.9, 0.22) * vEm;`);
