@@ -1,6 +1,6 @@
 # Brief v12 H1: the Span, end to end
 
-Worktree: written in at dispatch (`tools/worktree.sh new 1201 span-whole`, port 8162). Work only there. Read `briefs/v12/_common.md` first, then `stories/the-traveller-on-the-span.md` and `stories/the-bell-under-the-span.md`.
+Worktree: `.claude/worktrees/issue-1201-span-whole` (branch `issue-1201-span-whole`, port 8162). Work only there. Read `briefs/v12/_common.md` first, then `stories/the-traveller-on-the-span.md` and `stories/the-bell-under-the-span.md`.
 
 ## Goal
 

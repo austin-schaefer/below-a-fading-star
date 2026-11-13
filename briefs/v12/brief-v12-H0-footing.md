@@ -1,6 +1,6 @@
 # Brief v12 H0: the footing
 
-Worktree: written in at dispatch (`tools/worktree.sh new 1200 footing`, port 8161). Work only there. Read `briefs/v12/_common.md` first. Model: strong.
+Worktree: `.claude/worktrees/issue-1200-footing` (branch `issue-1200-footing`, port 8161). Work only there. Read `briefs/v12/_common.md` first. Model: strong.
 
 ## Goal
 

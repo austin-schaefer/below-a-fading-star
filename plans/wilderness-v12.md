@@ -71,3 +71,12 @@ Seeds, each for its brief to take or replace (the `storytelling` skill; a file i
 Nothing is in flight for v12. Written and waiting: `briefs/v12/_common.md`, `brief-v12-H0-footing.md`, `brief-v12-H1-span.md`. Next, in order: wait for v11.1 to reach `main` (`RELEASES.md` on `origin/main` has its entry); check the two briefs' file and line references against the code as shipped; `tools/worktree.sh new` for each; dispatch H0 (opus, 8161) and H1 (8162) together; judge H1 moving and put it in front of the owner before H2 to H4 go out.
 
 **2026-11-12, 15:51 PST. The owner answered the three questions** (their words are under "Calls made"): the four ascents are the orchestrator's to choose and add to; a fall should cost a blackout and a waking elsewhere, but only once slipping off the Span stops feeling out of the walker's control; the glacier's height is the orchestrator's call. H0's brief now carries the footing and the fall. Still nothing in flight; a background watch in the orchestrator's session waits for v11.1 on `origin/main`.
+
+**2026-11-12, 16:26 PST. v11.1 is on `main` (`87511e6`); batch 1 is dispatched.**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| H0 the footing (`brief-v12-H0-footing.md`) | `issue-1200-footing` | 8161 | opus |
+| H1 the Span, end to end (`brief-v12-H1-span.md`) | `issue-1201-span-whole` | 8162 | sonnet |
+
+Next: when H1 reports, look at its frames, walk the crossing in a real browser, a blind reader on the fen frame and the find, a cold review of the diff, merge, and put the crossing to the owner (`http://localhost:8123/?pos=-205,200`). When H0 reports: its view pairs, the footing frames, a cold review, the whole suite (shared code), merge; then try `?fall=1` on the vestige. Then write H2 to H4 with what both taught.
