@@ -8,6 +8,7 @@ import { injectOccultFog } from './v5/occultation.js'; // v5 wonders: AR the Occ
 
 export function installAtmosphere() {
   const d = SUN.dir;
+  const above = typeof location === 'undefined' || new URLSearchParams(location.search).get('above') !== '0'; // v12 (src/v12/above.js)
   const sunDir = `vec3(${d.x.toFixed(5)}, ${d.y.toFixed(5)}, ${d.z.toFixed(5)})`;
   THREE.ShaderChunk.fog_pars_vertex = `
     #ifdef USE_FOG
@@ -111,6 +112,7 @@ export function installAtmosphere() {
         float fpAway = fpHl > 1e-4 ? 1.0 - pow(max(dot(fpDir.xz / fpHl, normalize(FP_SUN_DIR.xz)), 0.0), 1.5) : 1.0;
         float fpWall = smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(180.0, 560.0, fpDist) * fpAway;
         fpWall *= 1.0 - smoothstep(0.3, 0.8, max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b))); // lamps and lit windows on the wall keep their warmth
+        ${above ? 'fpWall *= 1.0 - 0.65 * smoothstep(60.0, 180.0, cameraPosition.y); // v12: an eye high over the bowl looks across thinner air' : ''}
         // (M1) it compresses the wall's values rather than erasing them: a lighter air (0.16 at most) and a cool cast
         // laid over by multiplication, which keeps the couloirs darker than the ribs; at 0.3 of plain mix the faces
         // went to one lavender
