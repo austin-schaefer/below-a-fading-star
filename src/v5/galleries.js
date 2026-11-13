@@ -35,7 +35,9 @@ import * as THREE from 'three';
 import { clamp, lerp } from '../noise.js';
 import { SITES } from '../world.js';
 
-const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('galleries') === '0';
+const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
+const OFF = Q.get('galleries') === '0';
+const LIFT = !OFF && Q.get('lift') !== '0'; // v12-H4: the lift ridden (src/v12/lift.js); ?lift=0, the carriage in the shader as before
 const D2R = Math.PI / 180;
 export const GALLERIES = {
   link: 2.5,      // a chain link's length (m): the measure, 28 links to the lens mount's 70 m shaft
@@ -451,9 +453,14 @@ export async function build(ctx) {
     wheel({ C: d.at, axis: along(d.b), R: d.r, spokes: 4, depth: 0.6, rim: 0.35, rimSeg: 12, W: [2, 0, 0, 0], W2: [...c.wind, -d.r] });
   }
 
-  let liftTravel = [0, 0, 0];
-  // ---- the lift: two rails straight up the face from the lowest tier to the highest, in front of every gallery, rungs
-  // every 6 m, braced back to the rock; a carriage climbs and descends it (travelling group 2)
+  let liftTravel = [0, 0, 0], liftGeo = null;
+  const tierData = [];
+  const liftRungs = []; // the lift's rungs and diagonals, kept back until the walked tier's height is known (the landing)
+  // ---- the lift: two rails straight up the face from the floor to the highest tier, in front of every gallery, rungs
+  // every 6 m, braced back to the rock above 66 m and standing on trestles below it, down the talus to where the rails
+  // go into the ground beside the lower station (v12-H4, src/v12/lift.js). Before v12 a carriage climbed and descended it
+  // in the shader (travelling group 2); with the lift on (the default; ?lift=0 for the old) the carriage is a real cage
+  // that lift.js rides, so it is not drawn here.
   {
     const b = 273.6, y0 = 66, y1 = 246, gap = 3.2;
     const need = (y) => Math.min(faceR(b - 0.5, y), faceR(b, y), faceR(b + 0.5, y)) - 12;
@@ -463,30 +470,55 @@ export async function build(ctx) {
     const al = along(b), io = inward(b);
     const rail = (u, s) => add(P(b, lerp(r0, r1, u), lerp(y0, y1, u)), mul(al, s * gap));
     const dir = norm(sub(rail(1, 0), rail(0, 0)));
-    for (const s of [-1, 1]) strut(rail(0, s), rail(1, s), 0.8, 0.8, io);
     const runLen = len(sub(rail(1, 0), rail(0, 0)));
-    const nR = Math.round(runLen / 6);
-    for (let k = 0; k <= nR; k++) {
+    const nR = Math.round(runLen / 6), du = 1 / nR;
+    // where the rails meet the ground, going on 0.6 m into it (the lower station's pit)
+    let uF = 0;
+    if (LIFT) { while (uF > -1 && rail(uF, 0)[1] > groundAt(rail(uF, 0)) - 0.6) uF -= 0.0005; }
+    for (const s of [-1, 1]) strut(rail(uF, s), rail(1, s), 0.8, 0.8, io);
+    // the counterweight's guide, 5 m north of the rails' middle, tied to the north rail at every third rung
+    const WG = 5.0 / gap;
+    if (LIFT) strut(rail(uF, WG), rail(1, WG), 0.4, 0.4, io);
+    for (let k = Math.ceil(uF / du); k <= nR; k++) {
       const u = k / nR;
-      strut(rail(u, -1), rail(u, 1), 0.35, 0.35, io);
-      if (k % 3 === 0) for (const s of [-1, 1]) {
+      liftRungs.push([rail(u, -1), rail(u, 1), 0.35, 0.35, io]);
+      if (LIFT && k % 3 === 0) strut(rail(u, 1), rail(u, WG), 0.25, 0.25, io);
+      if (k >= 0 && k % 3 === 0) for (const s of [-1, 1]) {
         const p = rail(u, s), y = p[1];
         strut(p, add(P(b, faceR(b, y) + 0.5, y), mul(al, s * gap)), 0.4, 0.4, UP);
       }
-      if (!low && k < nR && k % 2 === 0) strut(rail(u, -1), rail((k + 1) / nR, 1), 0.22, 0.22, io);
+      if (!low && k < nR && k % 2 === 0) liftRungs.push([rail(u, -1), rail((k + 1) / nR, 1), 0.22, 0.22, io]);
+      // the trestles under the rails, from the station's pit out to where the rock takes them: a pair of legs every
+      // other rung down to the ground, tied at their middles, crossed, and braced to the next pair's foot
+      const hAbove = rail(u, 0)[1] - groundAt(rail(u, 0));
+      if (LIFT && k < 0 && k % 2 === 0 && hAbove > 1.6) {
+        const leg = (s) => { const p = rail(u, s); return [p, [p[0], groundAt(p) - 0.5, p[2]]]; };
+        const [ta, fa] = leg(-1), [tb, fb] = leg(1);
+        strut(fa, ta, 0.55, 0.55, io); strut(fb, tb, 0.55, 0.55, io);
+        const nT = Math.max(1, Math.round(hAbove / 9));
+        for (let j = 1; j <= nT; j++) {
+          const f = j / (nT + 1), A = mix(fa, ta, f), B = mix(fb, tb, f);
+          strut(A, B, 0.3, 0.3, io);
+          if (!low) { strut(mix(fa, ta, f - 1 / (nT + 1)), B, 0.18, 0.18, io); strut(mix(fb, tb, f - 1 / (nT + 1)), A, 0.18, 0.18, io); }
+        }
+        if (k - 2 >= Math.ceil(uF / du)) { const un = (k - 2) / nR; for (const s of [-1, 1]) { const q = rail(un, s); strut([q[0], groundAt(q) - 0.3, q[2]], rail(u, s), 0.22, 0.22, al); } }
+      }
     }
-    // the carriage: a cage riding the rails' face, from a fifth of the way up to near three fifths
-    const c0 = rail(0.2, 0), up = norm(cross(al, dir));
-    const corner = (sx, sz, h) => add(add(c0, mul(al, sx * (gap - 0.4))), add(mul(up, -sz * 3.2 - 0.8), mul(dir, h)));
-    for (const h of [0, 6]) {
-      strut(corner(-1, 0, h), corner(1, 0, h), 0.4, 0.4, dir, 2); strut(corner(-1, 1, h), corner(1, 1, h), 0.4, 0.4, dir, 2);
-      strut(corner(-1, 0, h), corner(-1, 1, h), 0.4, 0.4, dir, 2); strut(corner(1, 0, h), corner(1, 1, h), 0.4, 0.4, dir, 2);
+    if (!LIFT) {
+      // the carriage: a cage riding the rails' face, from a fifth of the way up to near three fifths
+      const c0 = rail(0.2, 0), up = norm(cross(al, dir));
+      const corner = (sx, sz, h) => add(add(c0, mul(al, sx * (gap - 0.4))), add(mul(up, -sz * 3.2 - 0.8), mul(dir, h)));
+      for (const h of [0, 6]) {
+        strut(corner(-1, 0, h), corner(1, 0, h), 0.4, 0.4, dir, 2); strut(corner(-1, 1, h), corner(1, 1, h), 0.4, 0.4, dir, 2);
+        strut(corner(-1, 0, h), corner(-1, 1, h), 0.4, 0.4, dir, 2); strut(corner(1, 0, h), corner(1, 1, h), 0.4, 0.4, dir, 2);
+      }
+      for (const sx of [-1, 1]) for (const sz of [0, 1]) strut(corner(sx, sz, 0), corner(sx, sz, 6), 0.4, 0.4, al, 2);
+      strut(corner(-1, 1, 0), corner(1, 1, 6), 0.25, 0.25, up, 2);
+      // a lamp in the cage
+      strut(add(corner(0, 0.5, 2.6), [0, -0.4, 0]), add(corner(0, 0.5, 2.6), [0, 0.4, 0]), 0.7, 0.7, al, 2, 1.37);
+      liftTravel = mul(dir, runLen * 0.38);
     }
-    for (const sx of [-1, 1]) for (const sz of [0, 1]) strut(corner(sx, sz, 0), corner(sx, sz, 6), 0.4, 0.4, al, 2);
-    strut(corner(-1, 1, 0), corner(1, 1, 6), 0.25, 0.25, up, 2);
-    // a lamp in the cage
-    strut(add(corner(0, 0.5, 2.6), [0, -0.4, 0]), add(corner(0, 0.5, 2.6), [0, 0.4, 0]), 0.7, 0.7, al, 2, 1.37);
-    liftTravel = mul(dir, runLen * 0.38);
+    liftGeo = { b, y0, y1, r0, r1, gap, dir, al, io, runLen, uF, rail, foot: rail(uF, 0) };
   }
 
   // ---- the galleries: eleven tiers and four catwalks. Each tier: [y, from bearing, to bearing, depth, height,
@@ -507,6 +539,19 @@ export async function build(ctx) {
   // catwalks between the tiers, across the clefts
   for (const [y, b0, b1] of [[124, 283.4, 288.2], [158, 274.4, 279.8], [194, 279.0, 283.0], [229, 284.0, 288.4]]) tiers.push([y, b0, b1, 2.6, 4, 0]);
   const furnaceTiers = new Set([0, 3]);
+  // v12-H4: the walked tier (the run at 135 m from the lift north): its first WALK.end bays are the gallery a visitor
+  // walks, drawn here as posts, lintels, screens and roof beams, finished at the lift's end, with no deck and no rail
+  // (src/v12/lift/gallery.js lays the deck that is walked, its rail and its cells), and its last walked bay torn off
+  // short with no post at its end: the ragged end, where the gallery has fallen away. The rungs leave a landing there.
+  const WALK = { ti: 6, end: 13 };
+  {
+    const landY = tiers[WALK.ti][0];
+    for (const [A, B, w, h, u] of liftRungs) {
+      const lo = Math.min(A[1], B[1]), hi = Math.max(A[1], B[1]);
+      if (LIFT && hi > landY - 0.1 && lo < landY + 2.9) continue;
+      strut(A, B, w, h, u);
+    }
+  }
   const lampP = low ? 0.1 : 0.14;
   tiers.forEach(([y, b0, b1, D, H, stop], ti) => {
     const cat = D < 3;
@@ -525,6 +570,7 @@ export async function build(ctx) {
       const nb = [back[k - 1], back[k + 1]].filter((v) => v !== undefined);
       back[k] = Math.min(back[k], nb.reduce((a, v) => a + v, 0) / nb.length + 1.5);
     }
+    tierData.push({ ti, y, b0, b1, D, H, stop, bs, back, open: null });
     const F = (k, yy) => P(bs[k], back[k] - D, yy);
     const K = (k, yy) => P(bs[k], back[k] + 1, yy);
     const io = (k) => inward(bs[k]);
@@ -541,21 +587,26 @@ export async function build(ctx) {
       if (edge > 0 && !cat && rng() < edge / 4.5) hit = true;
       open.push(hit);
     }
+    const walk = LIFT && ti === WALK.ti, td = tierData[tierData.length - 1];
+    if (walk) { for (let k = 0; k < WALK.end; k++) open[k] = false; Object.assign(td, { walk: WALK.end, screens: [], mullions: [], posts: [] }); }
+    td.open = open;
     // the unfinished end: its last bays carry less and less
-    const unfinished = (k) => (stop === 1 ? k - (nB - 3) : stop === -1 ? 2 - k : -1); // 0..2 within the last three bays
+    const unfinished = (k) => (walk && k < WALK.end ? (k === WALK.end - 1 ? 1 : -1) : stop === 1 ? k - (nB - 3) : stop === -1 ? 2 - k : -1); // 0..2 within the last three bays
+    const walked = (k) => walk && k < WALK.end;
     const postAt = new Set();
     for (let k = 0; k < nB; k++) {
       if (open[k]) continue;
       const uf = unfinished(k);
       const bridge = raw((bs[k] + bs[k + 1]) / 2) - (back[k] + back[k + 1]) / 2 > 3.5;
       // the deck (left out of the very last bay of an unfinished end: only the posts stand there)
-      if (uf < 2) strut(mix(F(k, y - 0.55), K(k, y - 0.55), 0.5), mix(F(k + 1, y - 0.55), K(k + 1, y - 0.55), 0.5), D + 1, 1.1, UP);
+      if (uf < 2 && !walked(k)) strut(mix(F(k, y - 0.55), K(k, y - 0.55), 0.5), mix(F(k + 1, y - 0.55), K(k + 1, y - 0.55), 0.5), D + 1, 1.1, UP);
       postAt.add(k); postAt.add(k + 1);
       if (uf < 1) {
         strut(F(k, y + H), F(k + 1, y + H), 1.0, 1.3, UP);                      // the lintel
-        if (!low) strut(F(k, y + 1.2), F(k + 1, y + 1.2), 0.22, 0.22, UP);      // the rail
-        if (!cat && !low) strut(mix(F(k, y), F(k + 1, y), 0.5), mix(F(k, y + H), F(k + 1, y + H), 0.5), 0.4, 0.4, io(k)); // a mullion
+        if (!low && !walked(k)) strut(F(k, y + 1.2), F(k + 1, y + 1.2), 0.22, 0.22, UP); // the rail
+        if (!cat && !low) { strut(mix(F(k, y), F(k + 1, y), 0.5), mix(F(k, y + H), F(k + 1, y + H), 0.5), 0.4, 0.4, io(k)); if (walked(k)) td.mullions.push(k); } // a mullion
         if (!cat && rng() < 0.45) {                                             // a lattice screen
+          if (walked(k)) td.screens.push(k);
           strut(F(k, y), F(k + 1, y + H), 0.3, 0.3, io(k)); strut(F(k + 1, y), F(k, y + H), 0.3, 0.3, io(k));
         }
       } else if (uf === 1) {
@@ -594,6 +645,8 @@ export async function build(ctx) {
     }
     // posts at every boundary a bay uses; brackets under them to the rock where it is near
     for (const k of postAt) {
+      if (walk && k === WALK.end) continue; // the ragged end: its post is gone with the deck
+      if (walked(k) || (walk && k === WALK.end - 1)) td.posts.push(k);
       const uf = unfinished(Math.min(k, nB - 1));
       const h = uf >= 2 ? H * (0.45 + 0.3 * rng()) : H;
       strut(F(k, y - 1.1), F(k, y + h), cat ? 0.4 : 0.9, cat ? 0.4 : 0.9, io(k));
@@ -755,6 +808,7 @@ export async function build(ctx) {
       return { calls: 5, tris, struts: nS, links: nL, chains: chains.length, longest: Math.max(...chains.map((c) => (c.mode ? 0 : c.n * L))), nearestR: Math.min(...chains.map((c) => Math.hypot(c.A[0], c.A[2]))), wheelBoxes: nWB, halos: halos.length, light: !!light };
     },
   };
+  G.geo = { faceR, P, inward, along, azOf, keep, tiers: tierData, lift: liftGeo, booms, chains, struts, low };
   ctx.galleries = G;
   const flick = ctx.sky?.flicker;
   const update = (dt, t) => {
