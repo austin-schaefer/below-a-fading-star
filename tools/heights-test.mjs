@@ -78,7 +78,7 @@ const HELPERS = `(() => {
     // corridor, inside no collider, and able to walk off (one of four directions moves them a metre)
     sane() {
       const x = p.pos.x, z = p.pos.z, ft = feet(), g = T.heightAt(x, z);
-      const inside = Math.hypot(x, z) <= fp.mountains.walkLimit(x, z) + 0.01;
+      const inside = fp.mountains.inWalk(x, z) || Math.hypot(x, z) <= fp.mountains.walkLimit(x, z) + 0.01;
       const under = !p.onStack && ft < g - 0.15;
       let inCol = null;
       for (const c of p.colliders) {
@@ -195,7 +195,52 @@ const HELPERS = `(() => {
       }
       out.parapet = { top, along, outStop, outPress, landed, sane: s, hopFalls, hopUp };
     }
+    // 7. hops the guard must not touch: off the 1 m step (keys let go at the edge, and strafing off it), and down a
+    // steep bank with no keys or strafing (the drop over a hop's length is far more than 1.5 m, but the floor is unbroken)
+    {
+      const St = S.step, zc = (St.z0 + St.z1) / 2, yawE = -Math.PI / 2; // facing +x
+      const offStep = () => ({ x: p.pos.x, f: feet(), ground: T.heightAt(p.pos.x, p.pos.z), on: p.onGround, stack: p.onStack?.name || null });
+      place(St.x1 - 1.6, zc, St.y); p.yaw = yawE; run(20, ['KeyW']); run(90, [], undefined, 0); const a = offStep();
+      place(St.x1 - 1.0, zc, St.y); p.yaw = 0; run(90, ['KeyD'], undefined, 3); // yaw 0 faces -z; right (D) is +x
+      const b = offStep();
+      // a bank: the steepest ground between 0.45 and 0.8 rad within 120 m of the site, downhill
+      let bank = null;
+      for (let dx = -120; dx <= 120 && !bank; dx += 6) for (let dz = -120; dz <= 120; dz += 6) {
+        const x = S.x + dx, z = S.z + dz, sl = T.slopeAt(x, z);
+        if (sl > 0.45 && sl < 0.8 && T.waterLevelAt(x, z) === null && Math.hypot(x, z) < 330) { bank = { x, z, sl }; break; }
+      }
+      const res = { off: { ...a, edge: St.x1, y: St.y }, strafe: { ...b, edge: St.x1, y: St.y }, bank };
+      if (bank) {
+        const n = T.normalAt(bank.x, bank.z), hl = Math.hypot(n.x, n.z), dx = n.x / hl, dz = n.z / hl; // downhill
+        place(bank.x, bank.z); p.yaw = Math.atan2(-dx, -dz);
+        p.vel.set(dx * 3, 0, dz * 3); fp.controls.hop(); const x0 = p.pos.x, z0 = p.pos.z;
+        run(40, []); res.bankFree = Math.hypot(p.pos.x - x0, p.pos.z - z0);
+        place(bank.x, bank.z); p.yaw = Math.atan2(-dz, dx); // facing across the slope, so strafing right goes downhill
+        const s0x = p.pos.x, s0z = p.pos.z; run(1, ['KeyD']); fp.controls.hop(); run(40, ['KeyD']);
+        res.bankStrafe = Math.hypot(p.pos.x - s0x, p.pos.z - s0z);
+      }
+      out.hops = res;
+    }
+    out.noFall = !fp.fall && !document.getElementById('fall');
     return out;
+  });
+  // the view from above, on the page's own frames: at walking height and on the Span's deck nothing changes; held
+  // 120 m up the box grows and the eye stays inside it; turning in place there redraws the map no more than on the ground
+  const V = await page.evaluate(async () => {
+    const { fp, p } = window.H, sc = fp.sun.light.shadow.camera, tgt = fp.sun.light.target.position, cad = fp.shadowCadence.stats;
+    const frames = (n) => new Promise((r) => { let k = 0; const f = () => (++k >= n ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+    const at = async (x, z, y, held) => {
+      let rel = null;
+      fp.controls.placeAt(x, z, y);
+      if (held) { const Y = fp.terrain.heightAt(x, z) + held + p.eye; rel = fp.controls.carry({ step(pos) { pos.set(x, Y, z); } }); }
+      p.pitch = -0.3; await frames(20);
+      const turn0 = cad.redraws;
+      for (let i = 0; i < 90; i++) { p.yaw += (Math.PI * 2) / 90; await frames(1); }
+      const r = { box: sc.right, density: fp.scene.fog.density, redraws: cad.redraws - turn0, eyeToCentre: Math.hypot(tgt.x - p.pos.x, tgt.z - p.pos.z) };
+      rel?.();
+      return r;
+    };
+    return { ground: await at(0, 60), deck: await at(-200, 215, 56), high: await at(0, 0, undefined, 120) };
   });
   const B = U.bridge;
   check(Math.abs(B.peak - B.top) < 0.15, 'stacked: the bridge carries the walker up off the ground to its top', `peak ${f2(B.peak)}, top ${f2(B.top)}`);
@@ -229,6 +274,16 @@ const HELPERS = `(() => {
   check(P.outStop.minF > 56.2, 'the Span: a slow walk straight out stops at the parapet\'s outer lip', `lowest ${f2(P.outStop.minF)}`);
   check(P.hopFalls === 0, 'the Span: hurrying along the deck drifting toward the parapet and hopping, nobody goes over', `${P.hopUp} of 4 scrambled onto the parapet, ${P.hopFalls} fell`);
   check(P.sane.feet < 50 && P.landed && P.sane.ok, 'the Span: pressing on goes over, and lands sane', P.sane);
+  const Hp = U.hops;
+  check(Hp.off.x > Hp.off.edge && Hp.off.on && !Hp.off.stack && Math.abs(Hp.off.f - Hp.off.ground) < 0.05, 'hops: off the 1 m step with the keys let go, the hop carries on off it', Hp.off);
+  check(Hp.strafe.x > Hp.strafe.edge && Hp.strafe.on && !Hp.strafe.stack && Math.abs(Hp.strafe.f - Hp.strafe.ground) < 0.05, 'hops: strafing off the 1 m step, untouched', Hp.strafe);
+  check(!!Hp.bank && Hp.bankFree > 0.75, 'hops: down a steep bank with no keys, untouched (3 m/s downhill, air drag alone: 0.86 m)', Hp.bank ? `slope ${f2(Hp.bank.sl)} rad, carried ${f2(Hp.bankFree)} m` : 'no bank found');
+  check(!!Hp.bank && Hp.bankStrafe > 1.2, 'hops: strafing down a steep bank, untouched', `moved ${f2(Hp.bankStrafe)} m`);
+  check(U.noFall, 'fall: without ?fall=1 nothing is installed');
+  check(V.ground.box === 95 && Math.abs(V.ground.density - 0.0022) < 1e-7, 'from above: at walking height the shadow box and the haze are as before', V.ground);
+  check(V.deck.box === 95 && Math.abs(V.deck.density - 0.0022) < 1e-7, 'from above: on the Span\'s deck (56 m over the valley) too', V.deck);
+  check(V.high.box >= 200 && V.high.eyeToCentre <= V.high.box - 30, 'from above: held 120 m up the box grows and the eye stays well inside it', V.high);
+  check(V.high.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning in place 120 m up redraws the shadow map no more than on the ground', `120 m ${V.high.redraws}, deck ${V.deck.redraws}, ground ${V.ground.redraws} redraws in a 3 s turn`);
   check(errors.length === 0, 'no page errors (test floors)', errors.slice(0, 3).join(' | '));
 
   // ---------------------------------------------------------------- every registered ascent

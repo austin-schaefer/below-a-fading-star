@@ -2,7 +2,7 @@
 // module (vegetation, structures, water, particles, fauna, audio) to build itself against a
 // shared context, and runs the frame loop. Modules register per-frame updates via ctx.registerUpdate.
 import * as THREE from 'three';
-import { installAtmosphere } from './atmosphere.js';
+import { installAtmosphere, FOG_DENSITY } from './atmosphere.js';
 import { buildTerrain } from './terrain.js';
 import { buildSky } from './sky.js';
 import { buildControls } from './controls.js';
@@ -135,7 +135,7 @@ async function start() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.haze), 0.0022);
+  scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.haze), FOG_DENSITY);
   const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.08, 2600);
 
   const events = new EventTarget();
@@ -315,13 +315,14 @@ async function start() {
   const P = () => ctx.player.pos;
   function runUpdates(dt, t) {
     const p = P();
-    const ay = above && above.alt > 25 ? above.alt * above.alt : 0; // v12: high over the ground, the true distance (the eye's height over it)
+    const high = !!above && above.alt > 25; // v12: high over the floor underfoot, the true distance (a thing's own y where it has one)
     for (const u of updates) {
       const m = u.meta;
       if (!m || !throttle) { u.fn(dt, t); continue; }
       u.acc += dt;
       const q = m.at ? m.at() : m.pos;
-      const ex = q.x - p.x, ez = q.z - p.z, d = Math.sqrt(ex * ex + ez * ez + ay) - (m.r || 0); // Math.hypot allocates
+      const ex = q.x - p.x, ez = q.z - p.z, ey = !high ? 0 : q.y !== undefined ? q.y - p.y : above.alt;
+      const d = Math.sqrt(ex * ex + ez * ez + ey * ey) - (m.r || 0); // Math.hypot allocates
       if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
       else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
       else u.held = true;
@@ -397,7 +398,7 @@ async function start() {
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
     // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
-    if (ctx.shadowCadence.update(dt, shadowTarget)) {
+    if (ctx.shadowCadence.update(dt, shadowTarget) || (above && above.take())) { // (a step in the box's size moves the light at once)
       sunLight.target.position.copy(shadowTarget);
       sunLight.position.copy(shadowTarget).addScaledVector(sunDir, above ? above.lightDist : 260);
     }

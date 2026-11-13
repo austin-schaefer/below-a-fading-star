@@ -6,6 +6,9 @@ import { SUN, PALETTE } from './world.js';
 import { FOG_TIER_GLSL, FOG_CAP } from './v4/kit/fog.js';
 import { injectOccultFog } from './v5/occultation.js'; // v5 wonders: AR the Occultation's band in the haze
 
+// the distance fog's density at walking height (main.js's FogExp2; src/v12/above.js thins it for a high eye)
+export const FOG_DENSITY = 0.0022;
+
 export function installAtmosphere() {
   const d = SUN.dir;
   const above = typeof location === 'undefined' || new URLSearchParams(location.search).get('above') !== '0'; // v12 (src/v12/above.js)
@@ -112,7 +115,9 @@ export function installAtmosphere() {
         float fpAway = fpHl > 1e-4 ? 1.0 - pow(max(dot(fpDir.xz / fpHl, normalize(FP_SUN_DIR.xz)), 0.0), 1.5) : 1.0;
         float fpWall = smoothstep(300.0, 345.0, fpWallR) * (1.0 - smoothstep(520.0, 600.0, fpWallR)) * smoothstep(180.0, 560.0, fpDist) * fpAway;
         fpWall *= 1.0 - smoothstep(0.3, 0.8, max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b))); // lamps and lit windows on the wall keep their warmth
-        ${above ? 'fpWall *= 1.0 - 0.65 * smoothstep(60.0, 180.0, cameraPosition.y); // v12: an eye high over the bowl looks across thinner air' : ''}
+        ${above ? `#ifdef FOG_EXP2
+        fpWall *= 1.0 - 0.65 * smoothstep(0.1, 0.32, 1.0 - fogDensity / ${FOG_DENSITY.toFixed(5)}); // v12: an eye high over the floor looks across thinner air (src/v12/above.js thins the density by the same height)
+        #endif` : ''}
         // (M1) it compresses the wall's values rather than erasing them: a lighter air (0.16 at most) and a cool cast
         // laid over by multiplication, which keeps the couloirs darker than the ribs; at 0.3 of plain mix the faces
         // went to one lavender

@@ -11,7 +11,7 @@
 //   a bridge (a stacked floor with held edges) that leaves the ground, rises 6 m and comes back down to it;
 //   a deck 3 m up reached by a ramp, and over it a beam 0.9 m wide at 7 m (a floor over a floor, the edge-guard's
 //   narrow walkway), reached by a second ramp from the deck; a perch 18 m up at the beam's far end (for the fall);
-//   a cut 3 m under the ground with held sides, entered and left by ramps (a walkway under higher ground);
+//   a step 1 m up (hops off it); a cut 3 m under the ground with held sides, entered and left by ramps (a walkway under higher ground);
 //   and a corridor through the walk limit on bearing 140, 3 m either side of its line, carrying a walkway 8 m wide
 //   (so the corridor, not the walkway's edge, is what stops a walker stepping sideways past r 348).
 import * as THREE from 'three';
@@ -99,6 +99,14 @@ function buildTest(ctx) {
     site.beam = { x: sx, z0: dz0 - 11.55, z1: dz1 + 8, y: by, w: 0.9 };
     site.perch = { x: sx, z: dz1 + 10, y: g0 + 18 };
     ctx.ascents.add({ id: 'test-beam', test: true, path: [[dx0 - 15, sz + 2], [dx0 - 4, sz + 2], [dx1 - 1, sz + 2, dy], [dx1 - 1, dz0 - 1, dy], [dx1 - 1, dz0 - 11.5], [dx1 - 1, dz0 - 12, by], [sx, dz0 - 12, by], [sx, sz, by], [sx, dz1 + 6, by]], offs: [0.6, 0.8, 0.97] });
+  }
+  // 2b. a step: a 6 x 6 m block 1 m up, south-west of the deck (a hop off it, steered or not, must go as it always did)
+  {
+    const x0 = sx - 22, z0 = sz - 3, y = H(x0 + 3, z0 + 3) + 1;
+    const P = [{ x0, x1: x0 + 6, z0, z1: z0 + 6, ax: 'x', y0: y, y1: y }];
+    ctx.addWalkable(floor(P), { stack: true, name: 'test-step' });
+    draw(P, 1.4);
+    site.step = { x0, x1: x0 + 6, z0, z1: z0 + 6, y };
   }
   // 3. the cut: along +x at z sz + 16, 3 m under the ground, ramps down and up, its sides held
   {

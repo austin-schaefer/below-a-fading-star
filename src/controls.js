@@ -123,7 +123,7 @@ export function buildControls(ctx) {
   // 40% x 45% of the screen, so in portrait a look drag from mid-screen grabbed the stick and
   // carried the ring there: #100.)
   const ZONE_R = 110;
-  const moveVec = { x: 0, y: 0, mag: 0 }; // y positive = pulled down
+  const moveVec = { x: 0, y: 0, mag: 0, raw: 0 }; // y positive = pulled down; raw: the thumb's throw before the dead zone
   let moveTouch = null, lookTouch = null, cornerTimer = 0;
   let ringX = 0, ringY = 0;                // current ring centre, css px
   let homeX = 0, homeY = 0;                // the ring's CSS home, css px, measured at each touchstart
@@ -167,7 +167,7 @@ export function buildControls(ctx) {
   // browser no longer lists, and a touchstart that reuses a tracked id releases the old owner.
   function releaseMove() {
     if (!moveTouch) return;
-    moveTouch = null; moveVec.x = moveVec.y = moveVec.mag = 0; setKnob(0, 0);
+    moveTouch = null; moveVec.x = moveVec.y = moveVec.mag = moveVec.raw = 0; setKnob(0, 0);
     stickEl.classList.remove('active'); ringHome();
   }
   function releaseLook() {
@@ -220,7 +220,7 @@ export function buildControls(ctx) {
     setKnob(dx, dy);
     // a dead zone at the centre (v12): a thumb resting on the stick no longer creeps the walker toward an edge
     const m = Math.min(1, d / RING_R), k = m > STICK_DEAD ? (m - STICK_DEAD) / (1 - STICK_DEAD) / m : 0;
-    moveVec.x = (dx / RING_R) * k; moveVec.y = (dy / RING_R) * k; moveVec.mag = m * k;
+    moveVec.x = (dx / RING_R) * k; moveVec.y = (dy / RING_R) * k; moveVec.mag = m * k; moveVec.raw = m; // raw: the auto-hurry's point stays at 0.8 of the throw
   }
   el.addEventListener('touchmove', (e) => {
     reconcile(e);
@@ -449,8 +449,8 @@ export function buildControls(ctx) {
   const carryFrom = new THREE.Vector3(); // where the carry began: a carrier that throws puts them back here
   function carry(c) {
     if (carried) dropCarry();
-    carried = c; carryAt = null; state.carried = true; state.intent = 0; carryFrom.copy(state.pos);
-    return () => { if (carried === c) { carried = null; carryAt = null; state.carried = false; } };
+    carried = c; carryAt = null; state.carried = true; state.intent = 0; carryFrom.copy(state.pos); state.onStack = null;
+    return () => { if (carried === c) { carried = null; carryAt = null; state.carried = false; state.onStack = null; } };
   }
   function dropCarry() {
     const c = carried; carried = null; carryAt = null; state.carried = false;
@@ -504,7 +504,7 @@ export function buildControls(ctx) {
         return;
       }
     }
-    const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.mag > AUTO_HURRY;
+    const hurry = k.has('ShiftLeft') || k.has('ShiftRight') || moveVec.raw > AUTO_HURRY;
     state.hurrying = hurry;
     const maxSpeed = (hurry ? HURRY : WALK) * speedMul;
     fwd.set(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
@@ -531,32 +531,35 @@ export function buildControls(ctx) {
     }
 
     const ox = state.pos.x, oz = state.pos.z, feet0 = state.pos.y - state.eye;
+    guardT += dt;
     let mv = resolve(ox + state.vel.x * dt, oz + state.vel.z * dt, feet0, mvA);
     // the edge-guard (v12): a held edge (a stacked floor's keep) stops a walker on the ground as a wall does; a lip
     // (a drop of more than LIP) stops one who is not steering at it, and one who is, until they press on for DWELL
-    // (or at once with Shift). Stopped, they slide along the edge. In a hop the same, but a hop steered at the lip goes
-    // over at once: a hop drifting along a parapet's top lands on it again, as it did not before (the Span's slips).
-    // A fall (in the air, not hopping) is not steered.
+    // (or at once with a hurry: Shift, or the touch stick pushed past 0.8). Stopped, they slide along the edge. In a hop
+    // the same, but a hop steered at the lip goes over at once: a hop drifting along a parapet's top lands on it again,
+    // as it did not before (the Span's slips). In a hop the drop is measured from the floor under the last position
+    // (floorBelow), not from the feet in the air, so only a break in the floor counts: a hop off a 1 m step or down a
+    // bank, steered or not, goes as it always did. A fall (in the air, not hopping) is not steered.
     let leaning = false;
     const inHop = state.hopping && !state.onGround;
     if ((state.onGround && !state.hopping) || inHop) {
-      const kind = edgeKind(mv, feet0);
+      const ref = inHop ? state.floorBelow : feet0;
+      const kind = edgeKind(mv, ref);
       if (kind) {
-        edgeNormal(ox, oz, feet0, mv.x - ox, mv.z - oz);
+        edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
         let over = false;
         if (kind === LIP_SOFT && aim > AIM) {
-          if (inHop) over = true; // a hop at the lip is meant
-          else {
-            leaning = true; lipDwell += dt;
-            if (k.has('ShiftLeft') || k.has('ShiftRight') || lipDwell >= DWELL) over = true;
-          }
+          // a hop or a hurry squarely at the lip is meant; one glancing at a corner (a notch between two parapet
+          // pieces' rounded ends, 45 degrees off the line of travel) is not
+          if (inHop || hurry) { if (aim > AIM_AT_ONCE) over = true; }
+          else { leaning = true; lipDwell += dt; if (lipDwell >= DWELL) over = true; }
         }
         if (!over) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
           const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
           mv = resolve(sx, sz, feet0, mvB);
-          if (edgeKind(mv, feet0)) mv = resolve(ox, oz, feet0, mvB);
+          if (edgeKind(mv, ref)) mv = resolve(ox, oz, feet0, mvB);
           const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
           if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
         }
@@ -633,7 +636,7 @@ export function buildControls(ctx) {
   }
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
   // there (onto nothing within a step, down or up: out of a cut is a wall); LIP_SOFT: down more than LIP; 0: neither.
-  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, DWELL = 0.5, AIM = 0.7;
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, DWELL = 0.5, AIM = 0.7, AIM_AT_ONCE = 0.87; // cosines: 45 and 30 degrees
   let lipDwell = 0, lipQuiet = 0, lipLean = 0;
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {
@@ -641,22 +644,28 @@ export function buildControls(ctx) {
     if (on && on.keep && m.stack !== on && (m.y < feet - 0.6 || m.y > feet + STACK_UP) && (on.keep === true || on.keep(m.x, m.z))) return EDGE_HELD;
     return m.y < feet - LIP ? LIP_SOFT : 0;
   }
-  // the edge's outward normal into lipN: the mean of the directions round (x, z), 0.35 m out, in which a step goes
-  // over it; where both sides drop (a beam narrower than 0.7 m) the move's own direction less the beam's line
+  // the edge's outward normal into lipN: the mean of the eight directions round (x, z), 0.35 m out, in which a step
+  // goes over it (ref: the floor the drop is measured from; feet: for which floors count; tops: collider tops too, only
+  // where the walker stands on one or is in a hop); where no side or both sides drop (a beam narrower than 0.7 m), the
+  // move's own direction. Kept while the walker stays within 0.25 m of where it was found at the same height, so
+  // pressing at a lip or sliding along a straight one probes about every fourth frame at a walk.
   const probe = { y: 0, ground: 0, stack: null, top: false, wl: null }, pm = { x: 0, z: 0, y: 0, stack: null };
-  function edgeNormal(x, z, feet, mx, mz) {
+  const nAt = { x: Infinity, z: 0, ref: 0, t: -1 };
+  let guardT = 0;
+  const DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
+  function edgeNormal(x, z, ref, feet, mx, mz, tops) {
+    if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; return; }
     let sx = 0, sz = 0, n = 0;
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2, cx = Math.cos(a), cz = Math.sin(a);
+    for (const [cx, cz] of DIRS) {
       pm.x = x + cx * 0.35; pm.z = z + cz * 0.35;
-      floorAt(pm.x, pm.z, feet, true, probe, state.onStack);
+      floorAt(pm.x, pm.z, feet, tops, probe, state.onStack);
       pm.y = probe.y; pm.stack = probe.stack;
-      if (edgeKind(pm, feet)) { sx += cx; sz += cz; n++; }
+      if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; }
     }
     const l = hyp(sx, sz);
-    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; return; }
+    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; return; }
     const ml = hyp(mx, mz) || 1;
-    lipN.x = mx / ml; lipN.z = mz / ml;
+    lipN.x = mx / ml; lipN.z = mz / ml; nAt.x = Infinity;
   }
 
   // the vertical and the eye, after the move

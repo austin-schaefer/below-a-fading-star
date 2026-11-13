@@ -51,8 +51,9 @@ export function saddleWeight(az) { return 1 - smoothstep(SADDLE.full, SADDLE.wal
 // is a wedge { wedge: { az, half, taper, r } } (out to r within ±half of the azimuth az, easing back to the circle
 // over taper; radians, world azimuth from +x toward +z) or a band { pts: [[x, z], ...], half } (within half metres of
 // the polyline, round at its ends). The saddle's wedge is the first. addCorridor(c) registers one and returns a remover.
-// walkLimit(x, z) is how far out a walker may go along the line through (x, z): a point is inside where
-// hypot(x, z) <= walkLimit(x, z). clampWalk(x, z, out) puts (x, z) back inside: radially onto the circle or a wedge,
+// walkLimit(x, z) is how far the open ground runs along the line through (x, z) (the circle and the wedges; a band
+// corridor does not widen it, so a module keeping things on the floor stays off the ways up); inWalk(x, z) says whether a
+// walker may stand there, bands included. clampWalk(x, z, out) puts (x, z) back inside: radially onto the circle or a wedge,
 // as the circle always has, or onto the nearer side of a band it has just left, so a walker who steps sideways out of
 // a corridor beyond the circle stops at the corridor's side.
 const BASE_LIMIT = WORLD.regionRadius + 48;
@@ -94,11 +95,14 @@ function radialLimit(x, z) {
   for (const c of CORRIDORS) if (c.wedge) { const l = wedgeLimit(c.wedge, x, z); if (l > L) L = l; }
   return L;
 }
-export function walkLimit(x, z) {
-  const L = radialLimit(x, z), r = Math.sqrt(x * x + z * z);
-  if (r <= L) return L;
-  for (const c of CORRIDORS) if (c.segs && bandDist(c, x, z) <= c.half) return r;
-  return L;
+// the circle and the wedges: how far out the open ground runs along the line through (x, z). What modules that spread
+// things over the floor (paving, grazers) mean by "inside": a band corridor is a way up, not more floor.
+export function walkLimit(x, z) { return radialLimit(x, z); }
+// may a walker stand at (x, z)? Inside the circle or a wedge, or in a band corridor
+export function inWalk(x, z) {
+  if (Math.sqrt(x * x + z * z) <= radialLimit(x, z)) return true;
+  for (const c of CORRIDORS) if (c.segs && bandDist(c, x, z) <= c.half) return true;
+  return false;
 }
 // (x, z) put back inside the limit, into out; returns true if it moved
 export function clampWalk(x, z, out) {
@@ -950,7 +954,7 @@ export function buildMountains(ctx) {
   const azOf = (bearing) => (bearing - 90) * D2R;
   return {
     saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR, profile: PROFILE,
-    walkLimit, clampWalk, addCorridor, corridors: CORRIDORS, saddleWeight, saddleFloor,
+    walkLimit, inWalk, clampWalk, addCorridor, corridors: CORRIDORS, saddleWeight, saddleFloor,
     // the main crest along a compass bearing: its radius and the ground's height there
     crestAt(bearing, out = { x: 0, z: 0, r: 0, y: 0 }) {
       const az = azOf(bearing); sampleBearing(az);
