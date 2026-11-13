@@ -39,9 +39,9 @@ async function open(q, phone) {
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
   return { page, ctxB, cdp: phone ? await ctxB.newCDPSession(page) : null };
 }
-async function stand(page, yaw, pitch = -0.35, at = PAR) {
+async function stand(page, yaw, pitch = -0.85, at = PAR) {
   await page.evaluate(([at, yaw, pitch]) => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(at.x, at.z, at.y); p.yaw = yaw; p.pitch = pitch; }, [at, yaw, pitch]);
-  await page.clock.runFor(1200);
+  await page.clock.runFor(2500); // the title card gone
 }
 function shooter(page, part) {
   let n = 0;
@@ -92,7 +92,7 @@ if (parts.includes('touch')) {
 }
 if (parts.includes('fall')) {
   const { page, ctxB } = await open('&fall=1');
-  await stand(page, OUT, -0.2);
+  await stand(page, OUT, -0.6);
   const K = page.keyboard;
   await sequence(page, 'fall', async () => { await K.down('ShiftLeft'); await K.down('KeyW'); }, async () => { await K.up('KeyW'); await K.up('ShiftLeft'); }, 0.3, 8.4, 0.6);
   await ctxB.close();

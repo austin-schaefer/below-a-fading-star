@@ -8,7 +8,7 @@
 // No sound yet: the wind of the fall wants the `sound-design` pass (a cue in src/v10/sound.js and a row in audio-test).
 const FALL_DEFAULT = false; // the owner's call: true makes the blackout the default, ?fall=0 the way back
 const FALL_M = 12;          // m: a drop of more than this blacks out
-const CLOSE_S = 0.55, DARK_S = 1.4, WAKE_S = 3.2;
+const CLOSE_S = 0.55, DARK_S = 1.4, WAKE_S = 3.2; // s: the shortest close (a long fall closes over 0.8 of its time), the dark, the waking
 
 export async function build(ctx) {
   const q = new URLSearchParams(location.search).get('fall');
@@ -28,7 +28,7 @@ export async function build(ctx) {
       : `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, rgba(0,0,0,0) 55%, rgba(4,2,6,${(0.6 + 0.4 * a).toFixed(3)}) 100%), rgba(0,0,0,${(a * a * 0.85).toFixed(3)})`;
   }
   const p = ctx.player, SP = ctx.spawn;
-  let phase = 'idle', t = 0, amount = 0, release = null;
+  let phase = 'idle', t = 0, amount = 0, release = null, closeS = CLOSE_S;
   const hold = new ctx.THREE.Vector3();
   const state = ctx.fall = { get phase() { return phase; }, get amount() { return amount; }, falls: 0, FALL_M };
   const ease = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
@@ -64,13 +64,18 @@ export async function build(ctx) {
     if (phase === 'idle') {
       if (p.onGround || p.carried || p.vy > -3) return;
       const total = p.fallTop - p.floorBelow, fallen = p.fallTop - (p.pos.y - p.eye);
-      if (total > FALL_M && fallen > 1) { phase = 'falling'; t = 0; }
+      if (total > FALL_M && fallen > 1) {
+        // shut over most of the time left to the ground (the visitor sees the fall begin), and well before it
+        const v = -p.vy, rem = total - fallen;
+        closeS = Math.max(CLOSE_S, 0.8 * (-v + Math.sqrt(v * v + 24 * rem)) / 12);
+        phase = 'falling'; t = 0;
+      }
       return;
     }
     t += dt;
     if (phase === 'falling') {
       const total = Math.max(1, p.fallTop - p.floorBelow), fallen = p.fallTop - (p.pos.y - p.eye);
-      amount = Math.max(amount, Math.min(1, t / CLOSE_S), clamp01((fallen - 1) / Math.max(1, total * 0.7 - 1)));
+      amount = Math.max(amount, Math.min(1, t / closeS), clamp01((fallen - 1) / Math.max(1, total * 0.85 - 1)));
       lids(amount);
       if (p.onGround && phase === 'falling') { if (p.fallTop - (p.pos.y - p.eye) > FALL_M) dark(); else phase = 'opening'; }
     } else if (phase === 'opening') {
