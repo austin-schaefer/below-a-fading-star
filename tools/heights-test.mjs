@@ -231,7 +231,7 @@ const HELPERS = `(() => {
     out.noFall = !fp.fall && !document.getElementById('fall');
     return out;
   });
-  // the view from above, on the page's own frames: at walking height and on the Span's deck nothing changes; held
+  // the view from above, on the page's own frames: at walking height nothing changes; on the Span's deck a step (H5); held
   // 120 m up the box grows and the eye stays inside it; turning in place there redraws the map no more than on the ground
   const V = await page.evaluate(async () => {
     const { fp, p } = window.H, sc = fp.sun.light.shadow.camera, tgt = fp.sun.light.target.position, cad = fp.shadowCadence.stats;
@@ -288,7 +288,10 @@ const HELPERS = `(() => {
   check(!!Hp.bank && Hp.bankStrafe > 1.2, 'hops: strafing down a steep bank, untouched', `moved ${f2(Hp.bankStrafe)} m`);
   check(U.noFall, 'fall: without ?fall=1 nothing is installed');
   check(V.ground.box === 95 && Math.abs(V.ground.density - 0.0022) < 1e-7, 'from above: at walking height the shadow box and the haze are as before', V.ground);
-  check(V.deck.box === 95 && Math.abs(V.deck.density - 0.0022) < 1e-7, 'from above: on the Span\'s deck (56 m over the valley) too', V.deck);
+  // v12-H5: a top looks down through its height over the ground (src/v12/above.js, \`over\`): on the deck the box is one
+  // step up (140) with the eye well inside it, the haze a little thinner, and turning there redraws no more than on the ground
+  check(V.deck.box === 140 && V.deck.eyeToCentre <= V.deck.box - 30 && V.deck.density < 0.0022 && V.deck.density > 0.0018, 'from above: on the Span\'s deck (56 m over the valley) the box is one step up and the haze a little thinner', V.deck);
+  check(V.deck.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning on the deck redraws the shadow map no more than on the ground', `deck ${V.deck.redraws}, ground ${V.ground.redraws}`);
   check(V.high.box >= 200 && V.high.eyeToCentre <= V.high.box - 30, 'from above: held 120 m up the box grows and the eye stays well inside it', V.high);
   check(V.high.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning in place 120 m up redraws the shadow map no more than on the ground', `120 m ${V.high.redraws}, deck ${V.deck.redraws}, ground ${V.ground.redraws} redraws in a 3 s turn`);
   check(errors.length === 0, 'no page errors (test floors)', errors.slice(0, 3).join(' | '));
