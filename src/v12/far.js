@@ -16,14 +16,14 @@
 // Core objects (the terrain, the sky, the ranges) and anything not added by a world module are left
 // alone; anything that glows (a bright unlit material, additive blending, an emissive colour) goes only at a
 // quarter of the band's size, so a lamp still reads as a point from a top.
-// Tiers: low shrinks from 2 px and drops at 1 px, medium from 1 px to 0.5 px, high is untouched. ?far=0 off at every
+// Tiers: low shrinks from 2.4 px and drops at 1.2 px, medium from 1 px to 0.5 px, high is untouched. ?far=0 off at every
 // tier; ?far=lo,hi (pixels) sets both at any tier. installFar runs after the modules build and before the
 // warm-up (which draws every stand-in once, full, so none uploads later); start() after the warm-up turns it on.
 // ctx.far: { stats(), active }.
-const TIERS = { low: [1.0, 2.0], medium: [0.5, 1.0], high: null };
+const TIERS = { low: [1.2, 2.4], medium: [0.5, 1.0], high: null };
 const MIN_INST = 2, MAX_INST_R = 2, MAX_MESH_R = 3, STEP = 2;
 const M3 = [0, 1, 2, 4, 5, 6, 8, 9, 10]; // the 3x3 of a world matrix
-const GLOW = 4; // a light is kept down to a quarter of the band: a lamp reads as a point long after its body would
+const GLOW = 2; // a light is kept down to half the band: a lamp reads as a point long after its body would
 const BUDGET = 9000; // instances packed a frame at most (round robin over the meshes that want it)
 
 export function installFar(ctx, url) {
