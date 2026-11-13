@@ -19,6 +19,9 @@ import { buildGates, boulderGeometry } from './span/gates.js';
 import { buildPostern } from './span/postern.js';
 import { buildStairs } from './span/stairs.js';
 import { buildFallen } from './span/fallen.js';
+import { buildVestige } from './span/vestige.js';
+import { buildCamp } from './span/camp.js';
+import { vestigeAt, VESTIGES } from './span/vestige-plan.js';
 
 const Y = SPAN.deckY;
 
@@ -75,6 +78,8 @@ export async function build(ctx) {
   buildStairs(K);
   await ctx.progress?.('raising the span', 0.6);
   buildFallen(K);
+  buildVestige(K); buildCamp(K); // v12-H1: the thin ways over the fallen bays and the find on the middle deck
+  ctx.addWalkable(vestigeAt);
   await ctx.progress?.('raising the span', 0.85);
   const { boulders = [], stairInfo = {}, walkParts = [], partY = () => null, slabInfo = [] } = K;
 
@@ -113,12 +118,13 @@ export async function build(ctx) {
   // ---------------------------------------------------------------- ctx.span
   const floorAt = (x, z) => {
     let best = deckAt(x, z);
+    const vy = vestigeAt(x, z); if (vy !== null && (best === null || vy > best)) best = vy;
     for (const w of walkParts) { const y = partY(w, x, z); if (y !== null && (best === null || y > best)) best = y; }
     return best;
   };
   const trisOf = (m) => { const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position.count) / 3; return t * (m.isInstancedMesh ? m.count : 1); };
   ctx.span = {
-    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, floorAt, meshes, colliders,
+    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, vestigeAt, vestiges: VESTIGES, floorAt, meshes: meshes.concat(K.vestigeMeshes || [], K.campMeshes || []), colliders,
     stats: () => ({ calls: meshes.length, shadowCalls: meshes.filter((m) => m.castShadow).length, tris: meshes.reduce((s, m) => s + trisOf(m), 0), colliders: colliders.length, boulders: boulders.length, rubble: rubble.length, slabs: slabInfo.length }),
   };
   ctx.log?.('span', JSON.stringify(ctx.span.stats()));
