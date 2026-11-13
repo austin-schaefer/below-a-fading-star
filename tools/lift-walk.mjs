@@ -90,10 +90,14 @@ async function press() { // E, a click with the mouse captured, or a tap on the 
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const yawTo = (s, x, z) => Math.atan2(-(x - s.x), -(z - s.z));
 async function face(x, z, pitch = null, y = null) {
-  const s = await st();
-  const dy = wrap(yawTo(s, x, z) - s.yaw);
-  const want = pitch !== null ? pitch : y !== null ? Math.atan2(y - s.y, Math.hypot(x - s.x, z - s.z)) : s.pitch;
-  await turn(dy, want - s.pitch);
+  for (let k = 0; k < 3; k++) { // a drag's inertia carries the look on a little on touch: settle, look again
+    const s = await st();
+    const dy = wrap(yawTo(s, x, z) - s.yaw);
+    const want = pitch !== null ? pitch : y !== null ? Math.atan2(y - s.y, Math.hypot(x - s.x, z - s.z)) : s.pitch;
+    if (Math.abs(dy) < 0.05 && Math.abs(want - s.pitch) < 0.05) return;
+    await turn(dy, want - s.pitch);
+    await sleep(touch ? 350 : 60);
+  }
 }
 let frame = 0;
 async function shot(what) {
