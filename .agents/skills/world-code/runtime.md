@@ -159,6 +159,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `fall=1` (v12-H0, a trial): a fall of more than 12 m blacks out and wakes the walker at the keep's gate (`src/v12/fall.js`); `fall=0` keeps it off once it is the default
 - `icefall=0` (v12-H2): the icefall's drawn ice, crystals, leads and floors left out (the terrain keeps the icefall's shape, `src/v12/icefall.js`); `node tools/icefall-walk.mjs <base> [keys|touch] [prefix]` climbs it by hand with frames and falls (a judge's tool, not in the suite)
 - `above=0` (v12-H0): the old shadow box (±95 m, 40 m ahead of the eye) and haze at any height, for a before and after (`src/v12/above.js`); renders from above: `tools/views-v12-heights.json`
+- `stair=0` (v12-H3): leaves out the Diffident Stair and its top (`src/v12/stair.js`); `tools/stair-walk.mjs <base> keys|touch|falls` climbs it by hand on Playwright's clock
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
 
 ## Quality tiers

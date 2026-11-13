@@ -14,6 +14,7 @@ import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { Mesher, flapMaterial, flapInstanced } from '../../fauna/geo.js';
 import { groundOf, stoneGeo, instanced, stoneMaterial, airMotes, meshStats, compose } from './common.js';
 import { nearestLead } from '../paths/routes.js'; // v8-09: no stone or bush across a road (called at build time)
+import { stairClear, stairSight } from '../../v12/stair/plan.js'; // v12-H3: none on the Diffident Stair's slabs (after the draws)
 const onRoad = (x, z, r) => { const h = nearestLead(x, z, r + 0.3); return !!h && h.kind !== 'rivulet'; };
 
 const KEY = 'highLing';
@@ -201,13 +202,14 @@ export async function build(ctx) {
     const s = (0.25 + Math.pow(rng(), 2) * 1.0) * (1 - r / (24 + H) * 0.5);
     if (onRoad(x, z, s * 0.8)) continue;
     clitter.push({ x, y: G.heightAt(x, z) + s * 0.1, z, s, sx: s * (1 + rng() * 0.5), sy: s * (0.7 + rng() * 0.4), sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.6, rz: (rng() - 0.5) * 0.6, c: pinkish(0.9) });
-    if (s > 0.8) ctx.addCollider({ x, z, r: s * 0.8 });
+    if (s > 0.8 && !stairClear(x, z, s) && !stairSight(x, z)) ctx.addCollider({ x, z, r: s * 0.8 });
   }
   for (let z = -104; z < 10; z += 1.6) { // the scarp's lip: granite breaking through the turf where it is steep
     if (scarpWidth(z) > 6.5 || rng() < 0.35) continue;
     const x = edgeX(z) + 0.6 + rng() * 2.2, s = 0.4 + rng() * 0.8;
     clitter.push({ x, y: G.heightAt(x, z) - s * 0.25, z, s, sx: s * 1.4, sy: s * 0.8, sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.5, rz: (rng() - 0.5) * 0.5, c: pinkish(0.85) });
   }
+  for (let i = clitter.length - 1; i >= 0; i--) if (stairClear(clitter[i].x, clitter[i].z, clitter[i].s) || stairSight(clitter[i].x, clitter[i].z)) clitter.splice(i, 1);
   const clitMesh = instanced(clitGeo, granite, clitter, { name: 'highling-clitter', colors: true });
   scene.add(clitMesh); meshes.push(clitMesh);
 
@@ -253,6 +255,7 @@ export async function build(ctx) {
     if (onRoad(x, z, s * 0.8)) continue;
     gorse.push({ x, y: G.heightAt(x, z) - 0.05, z, s, sx: s * (1 + rng() * 0.4), sy: s * (0.9 + rng() * 0.6), sz: s * (1 + rng() * 0.3), ry: rng() * 6.28 });
   }
+  for (let i = gorse.length - 1; i >= 0; i--) if (stairClear(gorse[i].x, gorse[i].z, gorse[i].s) || stairSight(gorse[i].x, gorse[i].z)) gorse.splice(i, 1);
   const gorseMesh = instanced(gorseGeo, gorseMat, gorse, { name: 'highling-gorse' });
   scene.add(gorseMesh); meshes.push(gorseMesh);
   for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5, stand: false }); // v8-10: gorse is not stood on
