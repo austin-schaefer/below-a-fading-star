@@ -12,6 +12,7 @@ Rules for this milestone:
 - **Fall off it on purpose,** from the bottom, the middle and the top. Say where you land and how you get back. Nobody may land inside geometry, under the ground, outside the walk limit with no way back, or in a loop.
 - **Look down from the top** in renders on low, medium and high, and say what looks wrong with the valley from there, whether or not it is yours to fix (it goes to H5).
 - **The find at the top belongs to someone already here** where it can (`stories/README.md`, "People who could be the same person"; the seeds in the milestone doc). Write or update its story file in the commit that builds it.
+- **No tallies.** The owner: "let's have only one tally in the whole deely bopper please". The Lantern Halt's chalk wall is the one. Nothing else counts in strokes: show time passed some other way.
 - **Phones.** The touch stick has to manage the climb: nothing that needs a running hop to proceed. Render the low tier; keep inside the module budgets (`world-code`).
 - **Others are at work beside you.** `src/controls.js`, `src/v4/mountains.js` and `src/terrain.js` belong to H0 (the glacier's block of `terrain.js` to H2). Keep edits there, and in `src/main.js`, `src/world.js`, `src/settings.js` and the skill references, to a line or two; new code goes in new files.
 - One headless browser at a time; `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...`; never delete a render.
