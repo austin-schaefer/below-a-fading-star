@@ -17,8 +17,9 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The bell under the Span](the-bell-under-the-span.md) | plain | built | the traveller, and the fen's candles that come for him | the Span's cracked bay, the fen, the slope below | the traveller on the Span; the Late folk's saffron |
 | [The wait on the Span](the-wait-on-the-span.md) | plain | built | whoever crossed the thin ways to wait for the traveller; a camp, a deep drift of ash and a lane worn pale to her watching-stone | the Span's middle deck | the traveller on the Span (his book's twin, his cup's twin) |
 | [Until the sun goes out](until-the-sun-goes-out.md) | plain | built | the last one kept in the Galleries of Durance, who dug a hand-wide bore through the mountain with a spoon to watch for the sun's end, their release; and the warders' round the lift still makes | the Galleries of Durance: the lift, the gallery at 135 m, the locked cell | the Reckoner (the same wait, counted) |
+| [The tender of the lattices](the-tender-of-the-lattices.md) | plain | built | the one who tends the lattices in the sky, never seen: a home on the foot of a lattice come low, a chair to the sun, an oil can too big for anyone; their lamp comes down the ladder | the Diffident Stair on the east moor, its top 100 m up | the Leerie (the ground's lamps, the sky's); the lattices; the sign of the sun |
 
-Ten plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Eleven plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -29,6 +30,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The pedlar whose sack split: the sleeper in the Lantern Halt (v10-A4).
 - The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
 - The Reckoner, behind the Hypogeum's door: heard knocking, never seen.
+- The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton, the Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet.
 
 ## Things that travel

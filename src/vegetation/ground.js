@@ -10,6 +10,7 @@ import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collati
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { sextonClear } from '../v7/workers/graves.js'; // v7: CF the Sexton's graves and heaps
+import { stairClear } from '../v12/stair/plan.js'; // v12-H3: the Diffident Stair's slabs in the turf
 import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate House's court and its trampled gate
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
@@ -136,6 +137,7 @@ export function makeGround(ctx) {
     if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
+    if (margin < 0 && stairClear(x, z, 0.15)) return true; // v12-H3: nothing grows through the stair's slabs (trees: hiddenAt)
     if (margin < 0 && houseClear(x, z)) return true; // v8-05: the house's court swept, the ground before its gate trampled
     if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)
     if (margin < 0 && threadsClear(x, z)) return true; // v8-04: ground cover keeps off the threads' props (after the draws)
@@ -150,6 +152,6 @@ export function makeGround(ctx) {
   // v9 (#16): and on the Long Figure, a tree's trunk a crown's reach (6 m) off his chalk, so no crown hangs over him
   const FIG_CROWN = 6;
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
-  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || onFigure(x, z, FIG_CROWN, terrain);
+  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || onFigure(x, z, FIG_CROWN, terrain);
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }
