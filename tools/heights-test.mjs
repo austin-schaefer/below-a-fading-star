@@ -20,6 +20,7 @@
 //   - the Diffident Stair (v12-H3, when built): a slab that has not come does not hold (its place is a held edge); with
 //     its clock the walker climbs; ahead of the feet the slabs have come, 6 m behind they have gone; standing still is safe;
 //     at 30 and 20 fps a walk is never held; down from the deck to the turf; turning back mid-flight; the columns it caps;
+//   - v12-H5: draw calls and triangles at the four tops on low, within 1.3x the floor's worst (tools/heights-cost.mjs);
 //   - ?fall=1: a fall from the perch (18 m) closes the view, holds it dark and wakes the walker at the keep's gate,
 //     lying and getting up; a 7 m drop does not.
 // Usage: node tools/heights-test.mjs [base=http://localhost:8123]
@@ -471,5 +472,16 @@ const HELPERS = `(() => {
   await page.close();
 }
 await browser.close();
+// v12-H5: the cost at the four tops on low, against the floor's worst (tools/heights-cost.mjs, its own browser, after this one)
+{
+  const { spawnSync } = await import('node:child_process');
+  const tool = new URL('./heights-cost.mjs', import.meta.url).pathname;
+  const r = spawnSync(process.execPath, [tool, base, 'low', '', '--modules=0'], { env: { ...process.env, BOUND: '1' }, encoding: 'utf8', timeout: 900000 });
+  const lines = (r.stdout || '').split('\n');
+  for (const l of lines) if (l && !/^(PASS|FAIL) /.test(l)) console.log('  ' + l);
+  const rows = lines.filter((l) => /^(PASS|FAIL) /.test(l));
+  for (const l of rows) check(l.startsWith('PASS'), 'cost: ' + l.slice(5));
+  check(rows.length >= 8, 'cost: the four tops measured', `${rows.length} rows, exit ${r.status}${r.stderr ? ' ' + r.stderr.slice(-300) : ''}`);
+}
 console.log(`${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);

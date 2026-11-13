@@ -1,0 +1,122 @@
+[
+ {
+  "name": "spawn-off",
+  "x": -60,
+  "z": 20,
+  "yaw": 1.9,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-60,20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "spawn-on",
+  "x": -60,
+  "z": 20,
+  "yaw": 1.9,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-60,20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ },
+ {
+  "name": "meadow-off",
+  "x": -190,
+  "z": 165,
+  "yaw": -0.8,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-190,165);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.8;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "meadow-on",
+  "x": -190,
+  "z": 165,
+  "yaw": -0.8,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-190,165);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.8;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ },
+ {
+  "name": "lattice-off",
+  "x": 40,
+  "z": -230,
+  "yaw": 3.14,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(40,-230);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.14;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "lattice-on",
+  "x": 40,
+  "z": -230,
+  "yaw": 3.14,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(40,-230);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.14;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ },
+ {
+  "name": "tarn-off",
+  "x": -40,
+  "z": 22,
+  "yaw": 2.3,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-40,22);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.3;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "tarn-on",
+  "x": -40,
+  "z": 22,
+  "yaw": 2.3,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-40,22);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.3;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ },
+ {
+  "name": "moor-off",
+  "x": 200,
+  "z": -20,
+  "yaw": 1.57,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(200,-20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.57;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "moor-on",
+  "x": 200,
+  "z": -20,
+  "yaw": 1.57,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(200,-20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.57;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ },
+ {
+  "name": "wood-off",
+  "x": -195,
+  "z": 128,
+  "yaw": 3.7,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-195,128);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.7;p.pitch=0;window.__fp.far.active=false;})()",
+  "settle": 3000
+ },
+ {
+  "name": "wood-on",
+  "x": -195,
+  "z": 128,
+  "yaw": 3.7,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-195,128);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.7;p.pitch=0;window.__fp.far.active=true;})()",
+  "settle": 400
+ }
+]

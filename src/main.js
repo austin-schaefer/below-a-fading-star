@@ -25,6 +25,7 @@ import { installStrata } from './v8/strata.js';
 import { installActs } from './v10/acts.js'; // v10: acts, registered by the places' modules
 import { installHeights } from './v12/heights.js'; // v12: ctx.ascents, and the test floors behind ?heights=test
 import { shadowFrame } from './v12/above.js'; // v12: the shadow box and the haze for an eye high over the ground
+import { installFar } from './v12/far.js'; // v12-H5: small things far off drawn smaller, then not at all (by their size on the screen)
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -246,6 +247,7 @@ async function start() {
     } finally { settled++; within = 0; progress(); }
   }));
   results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
+  installFar(ctx, url); // v12-H5: ctx.far (src/v12/far.js); on after the warm-up
 
   // Post
   ctx.post = buildPost(ctx);
@@ -307,6 +309,7 @@ async function start() {
     const w = warmUp(ctx);
     if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
   }
+  ctx.far.start();
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it

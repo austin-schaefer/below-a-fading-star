@@ -159,6 +159,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `fall=1` (v12-H0, a trial): a fall of more than 12 m blacks out and wakes the walker at the keep's gate (`src/v12/fall.js`); `fall=0` keeps it off once it is the default
 - `above=0` (v12-H0): the old shadow box (±95 m, 40 m ahead of the eye) and haze at any height, for a before and after (`src/v12/above.js`); renders from above: `tools/views-v12-heights.json`
 - `stair=0` (v12-H3): leaves out the Diffident Stair and its top (`src/v12/stair.js`); `tools/stair-walk.mjs <base> keys|touch|falls` climbs it by hand on Playwright's clock
+- `far=0` (v12-H5): every small thing drawn at every distance, as before (`src/v12/far.js`); `far=lo,hi` sets the band in pixels at any tier (default low 1,2; medium 0.5,1; high off). `node tools/heights-cost.mjs <base> [low|medium] [out.json] [--objects=40] [--extra=&far=0]` measures draw calls and triangles per module at the four tops and three floor places, eight headings each, with the shadow map redrawn; heights-test runs it on low with `BOUND=1` (each top within 1.3x the floor's worst). Renders: `tools/views-v12-tops.json`, `tools/views-v12-climb.json` (5 m steps up the stair and beside the Span's west stair), `tools/views-v12-climb-pair.json` (the same, far off and on in one load)
 - `mountains=v4` builds the v4 wall and its far ranges (a steep face to a fractal crest, a front range) instead of the massifs (`src/v4/mountains.js`; `plans/wilderness-v5.md`, "The massifs"), to compare
 
 ## Quality tiers

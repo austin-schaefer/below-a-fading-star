@@ -1,0 +1,102 @@
+[
+ {
+  "name": "span-north",
+  "x": 98,
+  "z": 213,
+  "yaw": 0,
+  "pitch": -0.12,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(98,213,56);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-56)>1.5){const Y=56+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(98,Y,213);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=0;p.pitch=-0.12;})()",
+  "settle": 4000
+ },
+ {
+  "name": "span-stair",
+  "x": 98,
+  "z": 213,
+  "yaw": -0.45,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(98,213,56);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-56)>1.5){const Y=56+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(98,Y,213);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.45;p.pitch=-0.15;})()",
+  "settle": 4000
+ },
+ {
+  "name": "span-down",
+  "x": 98,
+  "z": 213,
+  "yaw": -0.3,
+  "pitch": -0.85,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(98,213,56);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-56)>1.5){const Y=56+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(98,Y,213);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.3;p.pitch=-0.85;})()",
+  "settle": 4000
+ },
+ {
+  "name": "stair-west",
+  "x": 228.6,
+  "z": -55,
+  "yaw": 1.57,
+  "pitch": -0.2,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(228.6,-55,108);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-108)>1.5){const Y=108+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(228.6,Y,-55);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.57;p.pitch=-0.2;})()",
+  "settle": 4000
+ },
+ {
+  "name": "stair-span",
+  "x": 228.6,
+  "z": -55,
+  "yaw": 2.44,
+  "pitch": -0.25,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(228.6,-55,108);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-108)>1.5){const Y=108+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(228.6,Y,-55);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.44;p.pitch=-0.25;})()",
+  "settle": 4000
+ },
+ {
+  "name": "stair-down",
+  "x": 228.6,
+  "z": -55,
+  "yaw": 1.9,
+  "pitch": -0.9,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(228.6,-55,108);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-108)>1.5){const Y=108+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(228.6,Y,-55);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.9;})()",
+  "settle": 4000
+ },
+ {
+  "name": "shelf-south",
+  "x": 40,
+  "z": -390,
+  "yaw": 3.14,
+  "pitch": -0.2,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(40,-390,95);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-95)>1.5){const Y=95+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(40,Y,-390);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.14;p.pitch=-0.2;})()",
+  "settle": 4000
+ },
+ {
+  "name": "shelf-down",
+  "x": 40,
+  "z": -390,
+  "yaw": 3.0,
+  "pitch": -0.8,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(40,-390,95);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-95)>1.5){const Y=95+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(40,Y,-390);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.0;p.pitch=-0.8;})()",
+  "settle": 4000
+ },
+ {
+  "name": "gallery-east",
+  "x": -320,
+  "z": -60,
+  "yaw": 4.71,
+  "pitch": -0.25,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-320,-60,135);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-135)>1.5){const Y=135+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-320,Y,-60);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=4.71;p.pitch=-0.25;})()",
+  "settle": 4000
+ },
+ {
+  "name": "gallery-down",
+  "x": -320,
+  "z": -60,
+  "yaw": 4.4,
+  "pitch": -0.8,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-320,-60,135);for(let i=0;i<4;i++)fp.controls.update(1/60);if(Math.abs(p.pos.y-p.eye-135)>1.5){const Y=135+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-320,Y,-60);}});}})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=4.4;p.pitch=-0.8;})()",
+  "settle": 4000
+ }
+]
