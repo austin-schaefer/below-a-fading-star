@@ -99,6 +99,62 @@ const results = await page.evaluate(() => {
       if (p.pos.x <= -253 && Math.abs(feet() - 56) < 0.3) out.deckWest.reached++;
     }
   }
+  if (fp.span) {
+    // v12-H1: the whole crossing on the keys, gate to gate: the west stair up, the three fallen bays on their thin ways (walked,
+    // never a hop), the crack at x -45 by a running hop, the east stair down to its foot. Nothing is teleported after the first placeAt.
+    const S = fp.span.stairs.west, plan = fp.span.plan;
+    fp.controls.placeAt(S.foot.x + 3, S.foot.z); p.vel.set(0, 0, 0); p.vy = 0;
+    const walk = (pts, o = {}) => {
+      p.keys.clear(); p.keys.add('KeyW'); if (o.run) p.keys.add('ShiftLeft');
+      let i = 0, ticks = 0, hopped = false;
+      for (; i < pts.length && ticks < 6000; ticks++) {
+        const [tx, tz] = pts[i], dx = tx - p.pos.x, dz = tz - p.pos.z;
+        if (Math.hypot(dx, dz) < 0.6) { i++; continue; }
+        p.yaw = Math.atan2(-dx, -dz);
+        if (o.hopX !== undefined && !hopped && p.pos.x > o.hopX) hopped = fp.controls.hop();
+        const f0 = p.pos.y - p.eye; fp.controls.update(0.05);
+        if (o.log) o.log(f0, hopped);
+      }
+      p.keys.clear();
+      return i === pts.length;
+    };
+    const route = [[-205, 200], [-236, 200], [-239.5, 197], [-239.5, 193], [-236, 193], [-208, 193], [-204.5, 190], [-204.5, 186], [-208, 186], [-243, 186], [-246.5, 186], [-246.5, 207], [-246.5, 212], [-200, 213]];
+    const cr = { stairUp: walk(route), bays: [], minFeet: 99, maxStep: 0, crackHop: false };
+    const hold = { x: p.pos.x };
+    let lastFeet = null;
+    const track = (f0, hopped) => { if (hopped) return; const f = p.pos.y - p.eye; if (f < cr.minFeet) cr.minFeet = f; if (lastFeet !== null) cr.maxStep = Math.max(cr.maxStep, f - lastFeet); lastFeet = f; };
+    // each bay: along the deck to its way, along the way's own line to the far deck end, a few strides on
+    const ways = fp.span.vestiges;
+    const wayPts = (v) => { const o = [[v.a - 6, v.zc(v.a)]]; for (let x = v.a; x <= v.b; x += 2) o.push([x, v.zc(x)]); o.push([v.b, v.zc(v.b)], [v.b + 5, v.zc(v.b)]); return o; };
+    const approach = (v) => [[v.a - 12, v.zc(v.a)]];
+    cr.bays.push(walk([[-125, 213], ...approach(ways[0]), ...wayPts(ways[0])], { log: track }));
+    const lip = plan.crack.x - plan.crack.w / 2;
+    cr.bays.push(walk([[lip - 9, 215], [lip - 0.5, 215], [-10, 215], [ways[1].a - 12, ways[1].zc(ways[1].a)], ...wayPts(ways[1])], { run: true, hopX: lip - 0.6, log: track }));
+    cr.crackHop = p.pos.x > lip;
+    cr.bays.push(walk([[ways[1].b + 12, 215], ...approach(ways[2]), ...wayPts(ways[2])], { log: track }));
+    cr.farDeck = { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), feet: +(p.pos.y - p.eye).toFixed(2) };
+    cr.eastDown = walk([[200, 214], [243, 213], [243, 209], [239, 206], [239, 201], [239, 170], [235, 165], [232, 166], [232, 198], [228, 202], [225, 200], [225, 167], [225, 161]]);
+    const E = fp.span.stairs.east.foot;
+    cr.end = { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), feet: +(p.pos.y - p.eye).toFixed(2), ground: +fp.terrain.heightAt(p.pos.x, p.pos.z).toFixed(2), foot: E };
+    out.crossing = cr;
+    // the fall: from the middle of each way, one step off its side; where the walker lands
+    out.falls = ways.map((v) => {
+      const xm = (v.a + v.b) / 2, zc = v.zc(xm);
+      p.pos.set(xm, v.y(xm) + p.eye, zc); p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true;
+      p.yaw = Math.PI; p.keys.clear(); p.keys.add('KeyW'); // forward is +z: off the south side (the north side, for the river's)
+      if (v.name === 'river') p.yaw = 0;
+      let airTicks = 0, ticks = 0;
+      for (; ticks < 400; ticks++) { fp.controls.update(0.05); if (!p.onGround) airTicks++; if (p.onGround && airTicks > 5) break; }
+      p.keys.clear();
+      for (let t = 0; t < 20; t++) fp.controls.update(0.05);
+      const g = fp.terrain.heightAt(p.pos.x, p.pos.z), land = { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), feet: +(p.pos.y - p.eye).toFixed(2), ground: +g.toFixed(2) };
+      // then walk back toward the stairs' side (north-west of the Span, toward the bowl's middle): off whatever caught them, to the ground
+      p.yaw = Math.atan2(-(0 - p.pos.x), -(100 - p.pos.z)); p.keys.add('KeyW');
+      for (let t = 0; t < 300; t++) fp.controls.update(0.05);
+      p.keys.clear();
+      return { way: v.name, land, airTicks, r: +Math.hypot(p.pos.x, p.pos.z).toFixed(0), onGround: p.onGround, finite: Number.isFinite(p.pos.y), after: { x: +p.pos.x.toFixed(1), z: +p.pos.z.toFixed(1), off: +(p.pos.y - p.eye - fp.terrain.heightAt(p.pos.x, p.pos.z)).toFixed(2) } };
+    });
+  }
   out.colliders = fp.controls.state.colliders.length;
   out.calls = fp.renderer.info.render.calls; out.tris = fp.renderer.info.render.triangles;
   return out;
@@ -115,6 +171,8 @@ const checks = [
   ['the west stair climbs to the Span\'s deck (y 56) and the deck walks east', !!results.stairDone && Math.abs(results.stairEnd.feet - 56) < 0.3 && results.stairEnd.x > -202],
   ['the crack: a running hop clears it, a walk stops at the lip', !!results.crackRun && results.crackRun.hopped && results.crackRun.x > -40 && Math.abs(results.crackRun.feet - 56) < 0.3 && Math.abs(results.crackWalk.feet - 56) < 0.3 && results.crackWalk.x < -46 && results.crackWalk.x > -47.6],
   ['the deck\'s west half walks to the west gate without a block (3 lines)', !!results.deckWest && results.deckWest.reached === 3 && results.deckWest.blocks.length === 0],
+  ['the whole Span on the keys: stair up, the three bays on their thin ways, the crack by a hop, the east stair down to its foot', !!results.crossing && results.crossing.stairUp && results.crossing.bays.every(Boolean) && results.crossing.crackHop && results.crossing.eastDown && results.crossing.minFeet > 52.5 && results.crossing.maxStep < 0.13 && Math.hypot(results.crossing.end.x - results.crossing.end.foot.x, results.crossing.end.z - results.crossing.end.foot.z) < 5 && Math.abs(results.crossing.end.feet - results.crossing.end.ground) < 0.3],
+  ['a step off each way falls to what is below, and a walk from there reaches the ground, in the bowl', !!results.falls && results.falls.length === 3 && results.falls.every((f) => f.airTicks > 15 && f.onGround && f.finite && f.r < 352 && f.land.feet > -8 && Math.abs(f.after.off) < 0.3)],
   ['no page errors', errors.length === 0],
 ];
 let fail = 0;
