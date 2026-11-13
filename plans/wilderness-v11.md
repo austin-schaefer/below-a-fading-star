@@ -46,7 +46,7 @@ Nothing, at first: the mountains stop catching the eye. Then, looking at them: r
 
 ## Status
 
-**2026-11-12, 16:24 PST. v11.1 is released.** PR #37 merged to `main` at `87511e6` (the day's third merge of six); the GitHub release `v11.1` is published; `main` is merged back into `next`. No agent is in flight and no worktree but the deploy one exists. The next milestone, v12 (the Heights), is open for planning in `plans/wilderness-v12.md`, written by another session.
+**2026-11-12, 16:22 PST. v11.1 is released.** PR #37 merged to `main` at `87511e6` (the day's third merge of six); the GitHub release `v11.1` is published; `main` is merged back into `next`. No agent is in flight and no worktree but the deploy one exists. The next milestone, v12 (the Heights), is open for planning in `plans/wilderness-v12.md`, written by another session.
 
 **Waiting on the owner:** #22 (Umami tracking) still needs them to create the site and paste its snippet.
 
