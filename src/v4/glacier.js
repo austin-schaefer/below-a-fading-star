@@ -103,16 +103,13 @@ export const GLACIER_GLSL = /* glsl */`
     float um = dz + 38.0 * abs(a) + d2.g * 2.0;
     float crm = fpCrev(um, 4.2, 0.04) * smoothstep(0.55, 0.8, abs(a)) * step(0.35, fpHash(floor(um / 4.2) * 3.7 + sign(a)));
     // v12-H2: up the icefall (dz past ~70 m, src/v12/icefall) the tongue's crevasse rows give way to the terraces'
-    // old firn: wind-scoured, grit in streaks along the flow, and a few long cracks across it
-    float fall = smoothstep(60.0, 78.0, dz);
+    // old firn: wind-scoured, grit in streaks along the flow (drawn cracks read as doodles: the icefall's own crevasses are geometry)
+    float fall = smoothstep(70.0, 82.0, dz); // with the heights' handover (s 4 to 14: dz about 68 to 84 across the tongue)
     float crev = max(cr, crm) * smoothstep(0.5, 3.0, dz) * (1.0 - fall);
     c = mix(c, vec3(0.015, 0.04, 0.08), crev * 0.92);
     if (fall > 0.0) {
       vec3 firn = vec3(0.37, 0.355, 0.40) * (0.84 + 0.22 * d1.g) * (0.94 + 0.12 * d2.b);
       firn = mix(firn, vec3(0.17, 0.15, 0.15), smoothstep(0.52, 0.78, d2.r) * 0.55 * (0.6 + 0.4 * sin(a * 40.0 + d1.r * 4.0)));
-      float cu = dz + 4.0 * sin(a * 7.0 + d2.g * 3.0);
-      float crack = fpCrev(cu, 11.0, 0.018) * step(0.5, fpHash(floor(cu / 11.0) * 5.1 + floor(a * 2.5 + d2.r)));
-      firn = mix(firn, vec3(0.02, 0.06, 0.11), crack * 0.85);
       // a steep bit of terrain up the icefall (a riser's margin where no face is drawn): grey-blue ice
       firn = mix(firn, vec3(0.13, 0.19, 0.26) * (0.85 + 0.3 * d1.g), smoothstep(0.8, 0.55, n.y));
       c = mix(c, firn, fall);

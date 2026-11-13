@@ -44,7 +44,8 @@ export const CLEARINGS = [
   { name: "the orchard herd's home", kind: 'disc', x: 183, z: -76, r: 17 }, // fauna.js: home [183, -76]
   { name: 'the Demesne lawn', kind: 'region', key: 'demesne', w: 0.15 }, // the shaven lawn (v8-02), wherever the region reaches
   { name: 'the Lantern Halt', kind: 'disc', x: WAYSTATION.x, z: WAYSTATION.z, r: WAYSTATION.r }, // v9 (#934): the slab, its foot and the winch
-  { name: 'the icefall', kind: 'box', x0: -40, x1: 130, z0: -520, z1: -289 }, // v12-H2: its seracs are its stones (src/v12/icefall.js)
+  { name: "the icefall's approach", kind: 'strip', a: [48, -258], b: [74, -292], half: 9 }, // v12-H2: the way from the mother crystal to the cleft, seen clear
+  { name: 'the icefall', kind: 'box', x0: -12, x1: 112, z0: -520, z1: -289 }, // v12-H2: the ice's full width; its seracs are its stones (src/v12/icefall.js); the notch's walls keep theirs
   { name: 'the Long Figure', kind: 'figure', pad: 1 }, // v9 (#16): nothing lies on him; rocks.js also keeps pebbles off, with or without the cut
 ];
 export const LEAD_PAD = 0.6, LEAD_PADS = { P3: 2.0 };
