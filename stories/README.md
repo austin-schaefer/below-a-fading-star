@@ -15,7 +15,7 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The Lantern Halt](the-lantern-halt.md) | plain | built | a traveller asleep in a hung lantern, half out of its hatch; chalk your stroke and the seat hauls you up to him | the causeway, halfway | the sign of the sun; the traveller's boots; shoes left by the winch |
 | [The Reckoner under the door](the-reckoner.md) | plain | built | the Reckoner, who keeps the count of the sun's failures behind the Hypogeum's door; never seen | the Hypogeum, the mother crystal, the thread between | the gold from the court; the Moles' tessera; the Scriveners; the Lantern Halt (on his plate's back) |
 | [The bell under the Span](the-bell-under-the-span.md) | plain | built | the traveller, and the fen's candles that come for him | the Span's cracked bay, the fen, the slope below | the traveller on the Span; the Late folk's saffron |
-| [The wait on the Span](the-wait-on-the-span.md) | plain | built | whoever crossed the thin ways to wait for the traveller; a camp, forty-one days of chalk | the Span's middle deck | the traveller on the Span (his book's twin, his cup's twin) |
+| [The wait on the Span](the-wait-on-the-span.md) | plain | built | whoever crossed the thin ways to wait for the traveller; a camp, a deep drift of ash and a lane worn pale to her watching-stone | the Span's middle deck | the traveller on the Span (his book's twin, his cup's twin) |
 
 Nine plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 

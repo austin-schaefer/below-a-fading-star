@@ -83,7 +83,7 @@ function paintAtlas(rng) {
     blob(g, 128, 108, 17, '#d8401e'); // the fifth, half down in the notch, fresh and thick
     g.save(); g.beginPath(); g.moveTo(104, 78); g.lineTo(128, 112); g.lineTo(152, 78); g.lineTo(256, 78); g.lineTo(256, CH); g.lineTo(0, CH); g.lineTo(0, 78); g.closePath(); g.clip();
     ridge(g, CH, '#5a3c5c', 112); g.restore();
-    g.fillStyle = 'rgba(30,20,30,0.85)'; g.font = 'bold 16px serif'; g.fillText('V', 222, 182); // his tally
+    g.fillStyle = 'rgba(30,20,30,0.85)'; g.font = 'bold 16px serif'; g.fillText('V', 222, 182); // his initial
   });
   // 2: the keep under the sun, quite good (the slash is in the geometry)
   at(CELL.slash, (g) => {

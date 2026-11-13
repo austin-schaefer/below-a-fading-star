@@ -3,9 +3,9 @@
 // here to wait for the traveller who stopped at the first lip (the-traveller-on-the-span.md): a lean-to of his people's
 // cloth (saffron, cream lining, madder border: cloth.js) over a rope between two poles against a fallen coping stone,
 // with a torn valance and a wind-break, guyed to stones; a bedroll and a blanket of the same cloth, his tin cup's twin,
-// the other volume of his book face down, a cold hearth, forty-one days of chalk on the stone; and twenty metres west,
+// the other volume of his book face down, a cold hearth in a drift of ash, a lane worn pale to a seat on the stone; and twenty metres west,
 // at the deck's west end where the fen's way arrives, a staff with a streamer of the cloth flying. Stone goes into the
-// span's masonry mesh; cloth, the streamer, dark things, pale things and tin are five small meshes.
+// span's masonry mesh; cloth, the streamer, dark things, pale things, wear, ash and tin are seven small meshes.
 import * as THREE from 'three';
 import { SPAN } from './plan.js';
 import { box, clean } from './geo.js';
@@ -14,22 +14,31 @@ import { travellerCloth, swayingCloth, sheet } from './cloth.js';
 
 const Y = SPAN.deckY;
 
-export const CAMP = { x: 88.5, z: 210.3, block: [86.0, 91.6], days: 41 };
+export const CAMP = { x: 88.5, z: 210.3, block: [86.0, 91.6] };
 
 export function buildCamp(K) {
   const { ctx, rng, jit, body, addCol, hi } = K;
-  const cloth = [], dark = [], pale = [], tin = [];
+  const cloth = [], dark = [], pale = [], tin = [], worn = [], ash = [];
   const cyl = (list, x, y, z, r, h, rot = [0, 0, 0], seg = 8) => { const g = new THREE.CylinderGeometry(r, r, h, seg); g.rotateX(rot[0]); g.rotateY(rot[1]); g.rotateZ(rot[2]); g.translate(x, y, z); list.push(clean(g)); };
 
-  // the coping stone against the parapet, in two pieces; its south face carries the days
+  // the coping stone against the parapet, in two pieces
   body.push(box(86.0, 89.0, Y, Y + 0.92, 208.35, 209.2), box(89.05, 91.6, Y, Y + 0.76, 208.35, 209.15));
   addCol({ x1: 86.4, z1: 208.8, x2: 91.2, z2: 208.8, r: 0.45, y: Y - 0.3, h: 1.2 });
-  // forty-one strokes, in fives with the fifth across; the second row begins under the first
-  for (let d = 0; d < CAMP.days; d++) {
-    const gi = Math.floor(d / 5), k = d % 5, row = gi < 5 ? 0 : 1, gx = 86.3 + (gi % 5) * 0.64, y = Y + (row ? 0.28 : 0.56);
-    if (k < 4) { const g = new THREE.BoxGeometry(0.018, 0.2 + jit(0.015), 0.012); g.rotateZ(jit(0.05)); g.translate(gx + k * 0.1, y, 209.205); pale.push(clean(g)); }
-    else { const g = new THREE.BoxGeometry(0.46, 0.018, 0.012); g.rotateZ(-0.5); g.translate(gx + 0.15, y, 209.208); pale.push(clean(g)); }
+  // the wait, shown by wear: a lane trodden pale across the paving from the lean-to's front west to the flat stone where
+  // she sat to watch the far lip (rubbed smooth, a hand wide at its edges, where she walked every day), the stone's top
+  // polished; and by fire: ash heaped and spilled round the hearth, a drift of many fires with their char ends
+  for (let i = 0; i < 30; i++) {
+    const u = i / 29, x = 86.6 - 10.6 * u, z = 212.9 + 1.3 * u + 0.35 * Math.sin(u * 5.2) + jit(0.12);
+    const g = new THREE.CylinderGeometry(0.34 + rng() * 0.16, 0.34 + rng() * 0.16, 0.004, 9); g.translate(x, Y + 0.002 + i * 0.00012, z); worn.push(clean(g));
   }
+  { const g = new THREE.BoxGeometry(0.7, 0.2, 0.5); g.rotateY(0.3); g.translate(75.6, Y + 0.1, 214.5); body.push(clean(g)); // her seat
+    const t = new THREE.BoxGeometry(0.62, 0.012, 0.42); t.rotateY(0.3); t.translate(75.6, Y + 0.206, 214.5); worn.push(clean(t)); }
+  for (let i = 0; i < 26; i++) { // the drift: flat grey-white discs thrown out from the hearth, thinning with distance
+    const a = rng() * 6.283, d = Math.sqrt(rng()) * 1.35, r = 0.2 + rng() * 0.3 * (1.2 - d / 1.6);
+    const g = new THREE.CylinderGeometry(r, r * 1.1, 0.006, 9); g.translate(88.0 + Math.cos(a) * d, Y + 0.004 + i * 0.00015, 213.4 + Math.sin(a) * d * 0.9); ash.push(clean(g));
+  }
+  for (let i = 0; i < 3; i++) { const g = new THREE.SphereGeometry(0.3 - i * 0.07, 9, 5); g.scale(1, 0.22, 0.9); g.translate(88.0 + (i - 1) * 0.1, Y + 0.025 + i * 0.03, 213.4 + (i - 1) * 0.08); ash.push(clean(g)); } // the heap in the ring
+  for (let i = 0; i < 14; i++) { const a = rng() * 6.283, d = 0.15 + rng() * 0.9, g = new THREE.BoxGeometry(0.22 + rng() * 0.2, 0.025, 0.04); g.rotateY(rng() * 3); g.translate(88.0 + Math.cos(a) * d, Y + 0.03, 213.4 + Math.sin(a) * d); dark.push(clean(g)); } // char ends
   // the lean-to: two poles forward with a rope between their tops, the sheet thrown over the rope and pegged back on the
   // stone, bellied between the poles; in front of the rope a hand of it hangs down as a valance, its hem torn. At the
   // west end a second, narrower piece is tied to the pole and hangs to the deck as a wind-break, gathered and torn.
@@ -94,7 +103,7 @@ export function buildCamp(K) {
     if (!geos.length) return;
     const g = mergeGeometries(geos); for (const q of geos) q.dispose();
     g.computeBoundingSphere();
-    const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = hi && name !== 'camp-pale'; m.receiveShadow = true;
+    const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = hi && name !== 'camp-pale' && name !== 'camp-worn' && name !== 'camp-ash'; m.receiveShadow = true;
     m.matrixAutoUpdate = false; m.updateMatrix(); ctx.scene.add(m); meshes.push(m);
   };
   add(cloth, travellerCloth(), 'camp-cloth');
@@ -105,6 +114,8 @@ export function buildCamp(K) {
   }
   add(dark, new THREE.MeshStandardMaterial({ color: '#40342b', roughness: 0.95 }), 'camp-dark');
   add(pale, new THREE.MeshStandardMaterial({ color: '#c9bfa6', roughness: 1 }), 'camp-pale');
+  add(worn, new THREE.MeshStandardMaterial({ color: '#968b76', roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 'camp-worn');
+  add(ash, new THREE.MeshStandardMaterial({ color: '#77716a', roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), 'camp-ash');
   add(tin, new THREE.MeshStandardMaterial({ color: '#8c8f8d', roughness: 0.45, metalness: 0.7 }), 'camp-tin');
   K.campMeshes = meshes;
 }

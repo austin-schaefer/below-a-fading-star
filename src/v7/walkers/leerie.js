@@ -55,7 +55,7 @@ function paint(n2, low) {
   } else {
     // v8-06 the livery: the Heliarch collar (his was the pattern), the stole worn as a sash from the left shoulder to
     // the right hip, its end hanging; the formal sign its brooch; and at his left hip an oil flask in the Pomegranate
-    // House's ruby lamp glass, which he has not paid for (the tally is on his first standard: src/v8/livery/props.js)
+    // House's ruby lamp glass, which he has not paid for (his account of it is on his first standard: src/v8/livery/props.js)
     collar(P, 0, 1.43, 0.01, 0.1, 0.15, COAT, { sides: low ? 10 : 14, gap: 0.45 });
     const front = (y) => { const v = clamp((y - 0.04) / 1.43, 0, 1); return table(R_COAT, v) * lerp(0.82, 0.62, smoothstep(0.6, 0.95, v)) * 1.07 + 0.02 * v + 0.012; };
     const sash = [[0.15, 1.3, -0.14], [0.19, 1.43, -0.04], [0.17, 1.44, 0.07], [0.1, 1.36, front(1.36)], [0.0, 1.24, front(1.24)], [-0.1, 1.12, front(1.12)], [-0.19, 1.0, front(1.0) - 0.04], [-0.235, 0.94, 0.0]];
