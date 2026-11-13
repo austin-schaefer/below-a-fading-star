@@ -218,7 +218,7 @@ export function buildSettings(ctx) {
     if (typeof pl === 'number') pl = PLACES[pl];
     if (!pl || (pl.thread && !ctx.threads?.[pl.thread])) return false; // v8-04: a story's end only when its thread was built
     const p = ctx.player;
-    const at = pl.y != null ? (p.pos.set(pl.x, pl.y + p.eye, pl.z), p.vel.set(0, 0, 0), p.vy = 0, { x: pl.x, z: pl.z }) : ctx.controls.placeAt(pl.x, pl.z); // v8-04: y, a floor above the ground (the Span's deck)
+    const at = ctx.controls.placeAt(pl.x, pl.z, pl.y); // y (v8-04, v12): the floor at that height there (the Span's deck, a gallery), else the ground
     if (pl.look === 'sun') p.yaw = yawToward(0, 0, SUN.dir.x, SUN.dir.z);
     else if (pl.look) p.yaw = yawToward(at.x, at.z, pl.look.x, pl.look.z);
     else p.yaw = pl.yaw;

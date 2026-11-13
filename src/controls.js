@@ -3,12 +3,13 @@
 import * as THREE from 'three';
 import { clamp, smoothstep, hyp } from './noise.js';
 import { SPAWN } from './world.js';
-import { walkLimit } from './v4/mountains.js'; // v4 systems: the saddle's walkable wedge
+import { clampWalk } from './v4/mountains.js'; // the walk limit and its corridors (the saddle's wedge, v12)
 
 const WALK = 3.6, HURRY = 6.6;      // m/s (4.2/7.6 in v2 was a shade too fast, Austin)
 const STEPS_WALK = 1.7, STEPS_HURRY = 2.4; // footsteps per second at full speed
 const LOOK_SENS = 0.005;            // rad per css px of touch drag
 const AUTO_HURRY = 0.8;             // stick pulled past this fraction hurries
+const STICK_DEAD = 0.12;            // the stick's dead zone, a fraction of its throw
 
 export function buildControls(ctx) {
   const { camera, renderer, terrain } = ctx;
@@ -21,6 +22,7 @@ export function buildControls(ctx) {
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
     onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0, lookQuiet: 0,
+    onStack: null, fallTop: 0, floorBelow: 0, edgeDwell: 0, // v12: the stacked floor underfoot, the fall's top, the floor under the feet, a lip's press
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -216,7 +218,9 @@ export function buildControls(ctx) {
     const d = Math.hypot(dx, dy);
     if (d > RING_R) { dx *= RING_R / d; dy *= RING_R / d; }
     setKnob(dx, dy);
-    moveVec.x = dx / RING_R; moveVec.y = dy / RING_R; moveVec.mag = Math.min(1, d / RING_R);
+    // a dead zone at the centre (v12): a thumb resting on the stick no longer creeps the walker toward an edge
+    const m = Math.min(1, d / RING_R), k = m > STICK_DEAD ? (m - STICK_DEAD) / (1 - STICK_DEAD) / m : 0;
+    moveVec.x = (dx / RING_R) * k; moveVec.y = (dy / RING_R) * k; moveVec.mag = m * k;
   }
   el.addEventListener('touchmove', (e) => {
     reconcile(e);
@@ -280,43 +284,113 @@ export function buildControls(ctx) {
   };
 
   // --- walkable floors: fn(x, z) -> world y of a floor, or null
-  // Walkable floors. Default: a floor can only raise the ground (decks, ramps). With
-  // { replace: true } the floor replaces the terrain wherever it returns a value (a cut, a pit,
-  // stairs going down), so the player can descend below the heightfield.
-  const walkables = [], replacers = [];
-  function addWalkable(fn, opts) { (opts && opts.replace ? replacers : walkables).push(fn); }
+  // Three kinds (the `world-code` skill, "Floors, corridors and edges"):
+  // - raise-only (the default): a floor can only raise the ground (decks, ramps); it counts from 1.2 m below the feet
+  //   to 0.6 m above them, and the highest of it and the ground wins.
+  // - { replace: true }: the floor replaces the terrain wherever it returns a value (a cut, a pit, stairs going down),
+  //   so the player can descend below the heightfield.
+  // - { stack: true } (v12): the floor is chosen by where the feet are, not by which is highest: of the stacked floors
+  //   at or below the feet (up to STACK_UP over them, a stair's riser), the highest holds them, and the ground beats
+  //   it only where the ground is higher and the walker is not already on that stacked floor. So a walker steps onto a
+  //   stacked floor where it is at or over the ground and it holds them until it ends: a walkway may pass under higher
+  //   ground (a cut in a cliff, a ledge under an overhang, a crevasse's floor), one floor may run under another, and a
+  //   stair may leave the ground and come back to it. A stacked floor counts as level (no slope push) and no wading.
+  //   `keep`: its edges hold (true), or hold where keep(x, z) is true at the point just past the edge; an edge onto a
+  //   floor or the ground within a step is always open. A held edge stops the walker as a wall does, sliding along it,
+  //   at the cost of one call of fn a frame (the edge-guard below).
+  const walkables = [], replacers = [], stacks = [];
+  const STACK_UP = 0.6, STACK_ENTER = 0.15; // a riser up onto one; how far under the ground one may start and still be stepped onto
+  function addWalkable(fn, opts) {
+    if (opts && opts.stack) { const s = { fn, keep: opts.keep ?? null, name: opts.name || '' }; stacks.push(s); return () => { const i = stacks.indexOf(s); if (i >= 0) stacks.splice(i, 1); }; }
+    const list = opts && opts.replace ? replacers : walkables;
+    list.push(fn);
+    return () => { const i = list.indexOf(fn); if (i >= 0) list.splice(i, 1); };
+  }
   function baseFloor(x, z) {
     for (const fn of replacers) { const h = fn(x, z); if (h !== null && h !== undefined) return h; }
     return terrain.heightAt(x, z);
   }
   ctx.addWalkable = addWalkable;
+  // The floor under feet at height `feet` at (x, z): the ground (or a replacing floor, or wading depth), the raise-only
+  // walkables in their window, the stacked floors at or under the feet, and (with `tops`) the standable collider tops
+  // within a step. Writes into fl: { y, ground (the ground's y), stack (the stacked floor that holds them, or null),
+  // top (a collider top holds them), wl (the water level where the floor is the ground, or null) }.
+  const fl = { y: 0, ground: 0, stack: null, top: false, wl: null };
+  function floorAt(x, z, feet, tops, out = fl, on = null) {
+    const groundY = baseFloor(x, z);
+    const wl = replacers.length && groundY !== terrain.heightAt(x, z) ? null : terrain.waterLevelAt(x, z);
+    let y = groundY, ry = -Infinity;
+    if (wl !== null && groundY < wl) y = Math.max(groundY, wl - 1.1); // wade, don't sink
+    for (const fn of walkables) {
+      const h = fn(x, z);
+      if (h !== null && h !== undefined && h <= feet + 0.6 && h >= feet - 1.2 && h > ry) ry = h;
+    }
+    if (ry > y) y = ry;
+    let sy = -Infinity, sref = null;
+    for (const s of stacks) {
+      const h = s.fn(x, z);
+      if (h !== null && h !== undefined && h <= feet + STACK_UP && h > sy) { sy = h; sref = s; }
+    }
+    out.stack = null; out.wl = wl; out.ground = groundY; out.top = false;
+    // the stacked floor the walker is on holds them while it goes on, whatever the ground does; another holds where it
+    // is at or over the ground (or within STACK_ENTER under it: a ramp down into a cut), or the ground is out of reach over it (`on`: the stacked floor underfoot last frame)
+    if (sref && (sref === on || sy >= y - STACK_ENTER || y > feet + STACK_UP)) { y = Math.max(sy, ry); if (sy >= ry) { out.stack = sref; out.wl = null; } }
+    if (tops) { const t = standAt(x, z, feet); if (t > y) { y = t; out.top = true; out.stack = null; } }
+    out.y = y;
+    return out;
+  }
+  // the highest standable collider top over (x, z) within a step of the feet (the rule at addCollider), or -Infinity
+  function standAt(x, z, feet) {
+    let best = -Infinity;
+    for (const c of state.colliders) {
+      if (c.h === undefined || c.stand === false) continue;
+      const lim = c.r + FOOT;
+      if (c.len === undefined) { if (x - c.x > lim || c.x - x > lim || z - c.z > lim || c.z - z > lim) continue; }
+      else if (x - c.x > c.ex + FOOT || c.x - x > c.ex + FOOT || z - c.z > c.ez + FOOT || c.z - z > c.ez + FOOT) continue;
+      if (feet < c.y - 0.5) continue;
+      const t = along(c, x, z), d = c.len === undefined ? hyp(x - c.x, z - c.z) : hyp(x - c.x1 - c.ux * t, z - c.z1 - c.uz * t);
+      if (d >= lim) continue;
+      const top = topAt(c, t, Math.min(d, c.r));
+      if (top <= feet + STEP_UP && top > best) best = top;
+    }
+    return best;
+  }
 
-  // Put the player at (x, z) at ground height: inside the region, pushed out of colliders. A teleport: it ends a carry.
-  function placeAt(x, z) {
+  // Put the player at (x, z): inside the walk limit (or a corridor), pushed out of colliders, on the ground; or, given
+  // y, on the floor that holds feet at y there (a deck, a gallery, a stacked floor: floorAt's rule, collider tops
+  // included). A teleport: it ends a carry.
+  const _cw = { x: 0, z: 0 };
+  function placeAt(x, z, y) {
     if (carried) dropCarry();
+    const atY = y !== undefined && y !== null && isFinite(y);
     for (let iter = 0; iter < 8; iter++) {
       let moved = false;
-      const rr = Math.hypot(x, z), limit = walkLimit(x, z);
-      if (rr > limit) { x *= limit / rr; z *= limit / rr; moved = true; }
+      if (clampWalk(x, z, _cw)) { x = _cw.x; z = _cw.z; moved = true; }
       for (const c of state.colliders) {
         const t = along(c, x, z), px = c.len === undefined ? c.x : c.x1 + c.ux * t, pz = c.len === undefined ? c.z : c.z1 + c.uz * t;
         const dx = x - px, dz = z - pz, rad = c.r + 0.6;
         const d = Math.hypot(dx, dz);
         if (d < rad) {
-          if (c.h !== undefined && c.y + c.h < terrain.heightAt(x, z)) continue;
+          if (atY) { if (c.h !== undefined && (y >= topAt(c, t, Math.min(d, c.r)) - STEP_UP || y + 1.7 < c.y)) continue; }
+          else if (c.h !== undefined && c.y + c.h < terrain.heightAt(x, z)) continue;
           const nx = d > 1e-4 ? dx / d : 1, nz = d > 1e-4 ? dz / d : 0;
           x = px + nx * rad; z = pz + nz * rad; moved = true;
         }
       }
       if (!moved) break;
     }
-    const g = baseFloor(x, z), wl = g !== terrain.heightAt(x, z) ? null : terrain.waterLevelAt(x, z);
-    let floor = g;
-    if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
+    let floor, on = null;
+    if (atY) { floorAt(x, z, y, true); floor = fl.y; on = fl.stack; }
+    else {
+      const g = baseFloor(x, z), wl = g !== terrain.heightAt(x, z) ? null : terrain.waterLevelAt(x, z);
+      floor = g;
+      if (wl !== null && g < wl) floor = Math.max(g, wl - 1.1);
+    }
     state.pos.set(x, floor + state.eye, z);
     state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
+    state.fallTop = floor; state.onStack = on; lipDwell = 0;
     eyeOff = 0; lastY = null;
-    return { x, z };
+    return { x, z, y: floor };
   }
 
   function lock() {
@@ -441,8 +515,8 @@ export function buildControls(ctx) {
     state.moving = len > 0.05;
 
     // slope slows you and stops you on the steep stuff; a raised floor (a deck, a stair) more than a metre
-    // above the ground is level, whatever the slope beneath it
-    const raised = state.onTop || state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
+    // above the ground is level, whatever the slope beneath it, and so is a stacked floor
+    const raised = state.onTop || state.onStack || state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
     const n = raised ? UP : terrain.normalAt(state.pos.x, state.pos.z);
     const slope = raised ? 0 : Math.acos(clamp(n.y, -1, 1));
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
@@ -456,14 +530,63 @@ export function buildControls(ctx) {
       state.vel.x += n.x * 9 * dt; state.vel.z += n.z * 9 * dt;
     }
 
-    let nx = state.pos.x + state.vel.x * dt;
-    let nz = state.pos.z + state.vel.z * dt;
-    // region boundary (the mountains are impassable but for the saddle's wedge, v4 systems)
-    const rr = hyp(nx, nz);
-    const limit = walkLimit(nx, nz);
-    if (rr > limit) { nx *= limit / rr; nz *= limit / rr; }
-    // colliders (the rule for standing on them is at addCollider)
-    const feetNow = state.pos.y - state.eye;
+    const ox = state.pos.x, oz = state.pos.z, feet0 = state.pos.y - state.eye;
+    let mv = resolve(ox + state.vel.x * dt, oz + state.vel.z * dt, feet0, mvA);
+    // the edge-guard (v12): a held edge (a stacked floor's keep) stops a walker on the ground as a wall does; a lip
+    // (a drop of more than LIP) stops one who is not steering at it, and one who is, until they press on for DWELL
+    // (or at once with Shift). Stopped, they slide along the edge. Not in the air: a hop goes where it goes.
+    let leaning = false;
+    if (state.onGround && !state.hopping) {
+      const kind = edgeKind(mv, feet0);
+      if (kind) {
+        edgeNormal(ox, oz, feet0, mv.x - ox, mv.z - oz);
+        const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
+        let over = false;
+        if (kind === LIP_SOFT && aim > AIM) {
+          leaning = true; lipDwell += dt;
+          if (k.has('ShiftLeft') || k.has('ShiftRight') || lipDwell >= DWELL) over = true;
+        }
+        if (!over) {
+          const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
+          const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
+          mv = resolve(sx, sz, feet0, mvB);
+          if (edgeKind(mv, feet0)) mv = resolve(ox, oz, feet0, mvB);
+          const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
+          if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
+        }
+      }
+    }
+    if (leaning) lipQuiet = 0; else if ((lipQuiet += dt) > 0.25) lipDwell = 0;
+    lipLean += ((leaning ? Math.min(1, lipDwell / DWELL) : 0) - lipLean) * Math.min(1, dt * 8);
+    state.pos.x = mv.x; state.pos.z = mv.z;
+    state.onStack = mv.stack;
+    state.edgeDwell = lipDwell;
+    let floorY = mv.y;
+    const onTop = mv.onTop, groundY = mv.ground, wl = mv.wl;
+    const wasOnGround = state.onGround;
+    state.vy -= 12 * dt;
+    let feet = state.pos.y - state.eye + state.vy * dt;
+    // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too
+    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6) feet = floorY;
+    if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; state.hopping = false; } else state.onGround = false;
+    state.onTop = onTop && state.onGround;
+    state.floorBelow = floorY;
+    // how far the walker has fallen: the highest the feet have been since they last stood (for v12/fall.js)
+    if (wasOnGround) state.fallTop = feet0;
+    else if (feet0 > state.fallTop) state.fallTop = feet0;
+    if (!wasOnGround && state.onGround) {
+      const drop = state.fallTop - feet;
+      state.fallTop = feet;
+      if (drop > 2) ctx.events.dispatchEvent(new CustomEvent('land', { detail: { drop, x: state.pos.x, y: feet, z: state.pos.z } }));
+    }
+    finish(dt, hurry, maxSpeed, wasOnGround, feet, groundY, wl);
+  }
+
+  // The move to (nx, nz) with feet at `feet`: the walk limit (and its corridors), the colliders (the rule for standing
+  // on them is at addCollider) and the floor there. Writes { x, z, y (the floor), onTop, stack, ground, wl } into out.
+  const mvA = { x: 0, z: 0, y: 0, onTop: false, stack: null, ground: 0, wl: null }, mvB = { ...mvA };
+  function resolve(nx, nz, feetNow, out) {
+    if (clampWalk(nx, nz, _cw)) { nx = _cw.x; nz = _cw.z; }
     let nCand = 0;
     for (const c of state.colliders) {
       const rad = c.r + BODY;
@@ -485,7 +608,6 @@ export function buildControls(ctx) {
       }
       if (d > 1e-4) { nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad; }
     }
-    state.pos.x = nx; state.pos.z = nz;
     // the highest top under the feet, within a step (or, rising in a hop, a scramble) of them
     let standY = -Infinity;
     for (let i = 0; i < nCand; i++) {
@@ -495,27 +617,44 @@ export function buildControls(ctx) {
       const top = topAt(c, t, Math.min(d, c.r));
       if (top > standY && top <= feetNow + (state.hopping ? MANTLE : STEP_UP)) standY = top;
     }
-
-    // vertical: follow the ground, with a small jump
-    const groundY = baseFloor(state.pos.x, state.pos.z);
-    const wl = replacers.length && groundY !== terrain.heightAt(state.pos.x, state.pos.z) ? null : terrain.waterLevelAt(state.pos.x, state.pos.z);
-    let floorY = groundY;
-    if (wl !== null && groundY < wl) floorY = Math.max(groundY, wl - 1.1); // wade, don't sink
-    // walkable floors (decks, ramps): within 1.2 m below the feet or 0.6 m above
-    const feet0 = state.pos.y - state.eye;
-    for (const fn of walkables) {
-      const h = fn(state.pos.x, state.pos.z);
-      if (h !== null && h !== undefined && h <= feet0 + 0.6 && h >= feet0 - 1.2 && h > floorY) floorY = h;
+    // the floor: the ground, the walkables (decks, ramps: within 1.2 m below the feet or 0.6 m above), stacked floors
+    floorAt(nx, nz, feetNow, false, fl, state.onStack);
+    out.x = nx; out.z = nz; out.ground = fl.ground; out.wl = fl.wl;
+    out.onTop = standY > fl.y;
+    out.y = out.onTop ? standY : fl.y;
+    out.stack = out.onTop ? null : fl.stack;
+    return out;
+  }
+  // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
+  // there (onto nothing within a step, down or up: out of a cut is a wall); LIP_SOFT: down more than LIP; 0: neither.
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, DWELL = 0.5, AIM = 0.7;
+  let lipDwell = 0, lipQuiet = 0, lipLean = 0;
+  const lipN = { x: 0, z: 0 };
+  function edgeKind(m, feet) {
+    const on = state.onStack;
+    if (on && on.keep && m.stack !== on && (m.y < feet - 0.6 || m.y > feet + STACK_UP) && (on.keep === true || on.keep(m.x, m.z))) return EDGE_HELD;
+    return m.y < feet - LIP ? LIP_SOFT : 0;
+  }
+  // the edge's outward normal into lipN: the mean of the directions round (x, z), 0.35 m out, in which a step goes
+  // over it; where both sides drop (a beam narrower than 0.7 m) the move's own direction less the beam's line
+  const probe = { y: 0, ground: 0, stack: null, top: false, wl: null }, pm = { x: 0, z: 0, y: 0, stack: null };
+  function edgeNormal(x, z, feet, mx, mz) {
+    let sx = 0, sz = 0, n = 0;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2, cx = Math.cos(a), cz = Math.sin(a);
+      pm.x = x + cx * 0.35; pm.z = z + cz * 0.35;
+      floorAt(pm.x, pm.z, feet, true, probe, state.onStack);
+      pm.y = probe.y; pm.stack = probe.stack;
+      if (edgeKind(pm, feet)) { sx += cx; sz += cz; n++; }
     }
-    const onTop = standY > floorY;
-    if (onTop) floorY = standY;
-    const wasOnGround = state.onGround;
-    state.vy -= 12 * dt;
-    let feet = state.pos.y - state.eye + state.vy * dt;
-    // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too
-    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6) feet = floorY;
-    if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; state.hopping = false; } else state.onGround = false;
-    state.onTop = onTop && state.onGround;
+    const l = hyp(sx, sz);
+    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; return; }
+    const ml = hyp(mx, mz) || 1;
+    lipN.x = mx / ml; lipN.z = mz / ml;
+  }
+
+  // the vertical and the eye, after the move
+  function finish(dt, hurry, maxSpeed, wasOnGround, feet, groundY, wl) {
     // smooth the ground-follow a touch when walking
     const speed = hyp(state.vel.x, state.vel.z);
     state.speed = speed;
@@ -539,7 +678,9 @@ export function buildControls(ctx) {
     lastY = state.pos.y;
     state.eyeY = state.pos.y + eyeOff;
 
-    camera.position.set(state.pos.x + right.x * bobX, state.eyeY + bobY - wading * 0.15, state.pos.z + right.z * bobX);
+    // at a lip, pressing on: the eye leans out over it (v12 edge-guard)
+    const lean = lipLean * 0.22;
+    camera.position.set(state.pos.x + right.x * bobX + lipN.x * lean, state.eyeY + bobY - wading * 0.15 - lean * 0.2, state.pos.z + right.z * bobX + lipN.z * lean);
     camera.rotation.order = 'YXZ';
     camera.rotation.set(state.pitch, state.yaw, Math.sin(state.bob * 0.5) * 0.004 * state.bobAmt);
     state.wading = wading;
