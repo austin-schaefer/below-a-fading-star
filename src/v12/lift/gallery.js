@@ -49,8 +49,8 @@ export function buildGallery(ctx, o) {
   // the deck's front and rear at bearing b (bays interpolated in bearing; an 8 m bay's arc is within 2 cm of its chord)
   const bayOf = (b) => { for (let k = 0; k < nW; k++) if (b <= bs[k + 1]) return k; return nW - 1; };
   const backAt = (k, f) => back[k] + (back[k + 1] - back[k]) * f;
-  const bEnd = bs[nW - 1] + (bs[nW] - bs[nW - 1]) * RAGGED;
-  const raggedF = (r, k) => RAGGED + 0.12 * Math.sin(r * 2.7 + 1.3) + 0.06 * Math.sin(r * 7.1); // the torn edge
+  const EDGE = RAGGED + 0.1; // the walk ends where the last plates drawn end (a plate may be gone there, its grating left)
+  const bEnd = bs[nW - 1] + (bs[nW] - bs[nW - 1]) * EDGE;
 
   // ---- the cells: a box of rubble stone against the rear of the deck in their bays, its door to the walkway
   const cells = [];
@@ -79,7 +79,7 @@ export function buildGallery(ctx, o) {
     const k = bayOf(b), f = (b - bs[k]) / (bs[k + 1] - bs[k]);
     const r = hyp(x, z), bk = backAt(k, f);
     if (r < bk - D - 0.15 || r > bk - REAR) return null;
-    if (k === nW - 1 && f > raggedF(r, k)) return null;
+    if (k === nW - 1 && f > EDGE) return null;
     const cl = cellAt(x, z);
     if (cl) { const dep = (x - cl.c.x) * cl.n.x + (z - cl.c.z) * cl.n.z; if (dep < 0.02) return null; } // the cell's rear wall, square to it
     return y;
@@ -88,7 +88,7 @@ export function buildGallery(ctx, o) {
   const keep = (x, z) => {
     const b = bear(x, z);
     if (b < bs[0]) return true;
-    if (b > bEnd - 0.4) return false; // the ragged end: open
+    if (b > bEnd - 0.05) return false; // the ragged end: open
     const k = bayOf(b), f = (b - bs[k]) / (bs[k + 1] - bs[k]);
     const r = hyp(x, z), bk = backAt(k, f);
     if (r > bk - D - 0.15) return true; // the rear, or a cell's wall
