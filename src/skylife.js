@@ -82,6 +82,7 @@ export async function build(ctx) {
     group, uniforms: U, lattices: lat.info, colours: METEOR_COLOURS.map(([h]) => h),
     drawCalls: group.children.length + 3, triangles: lat.tris + met.tris + rem.api.tris + city.tris + vig.tris, webSegments: lat.webs,
     added: { drawCalls: group.children.length - baseDraws + 3, triangles: city.tris + vig.tris, points: om.api.points },
+    anchorThread: (world) => rem.api.anchor(world), // v12-H2: the thread stands on the Plummet
     omens: om.api, startProcession: (dir = null) => { if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y = Math.max(dir.y, 0.6); dir.normalize(); } om.api.startProcession(T, dir); },
     spawnMeteor: (colourIndex, at = 0.6, dir = null) => {
       if (!dir) { camera.getWorldDirection(viewDir); dir = viewDir.clone(); dir.y += 0.12; }

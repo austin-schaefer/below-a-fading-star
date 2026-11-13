@@ -292,6 +292,21 @@ const HELPERS = `(() => {
   check(V.high.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning in place 120 m up redraws the shadow map no more than on the ground', `120 m ${V.high.redraws}, deck ${V.deck.redraws}, ground ${V.ground.redraws} redraws in a 3 s turn`);
   check(errors.length === 0, 'no page errors (test floors)', errors.slice(0, 3).join(' | '));
 
+  // ---------------------------------------------------------------- the ground the feet use is the ground drawn
+  // (v12-H2: nothing a module does after the terrain is baked may move heightAt; sampled over the icefall's notch)
+  const GB = await page.evaluate(() => {
+    const T = window.__fp.terrain, m = T.mesh, pos = m.geometry.attributes.position, v = new window.__fp.THREE.Vector3();
+    let n = 0, worst = 0, at = null;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      if (v.x < -15 || v.x > 115 || v.z > -285 || v.z < -420) continue;
+      const d = Math.abs(T.heightAt(v.x, v.z) - v.y); n++;
+      if (d > worst) { worst = d; at = [+v.x.toFixed(1), +v.z.toFixed(1)]; }
+    }
+    return { n, worst, at };
+  });
+  check(GB.n > 500 && GB.worst < 0.02, 'the icefall\'s heightAt after load equals the baked mesh at its vertices', `${GB.n} vertices, worst ${f2(GB.worst)} m${GB.at ? ' at ' + GB.at.join(', ') : ''}`);
+
   // ---------------------------------------------------------------- every registered ascent
   const A = await page.evaluate(async () => {
     const { fp, p, T, feet, place, run, walkTo, settle, sane } = window.H, res = [];
