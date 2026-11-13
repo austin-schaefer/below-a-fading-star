@@ -12,14 +12,16 @@
 // It says where the walker waited at the stair's end (held), and the time of the climb. With `falls` it then puts the
 // walker on the stair at three heights and steps off sideways with a hurry, and says where they land (run it once
 // with base ...?fall=1 too: then the view blacks out and they wake at the keep's gate).
-//   node tools/stair-walk.mjs [base=http://localhost:8162] [keys|touch|falls] [prefix=h3-walk] [extra query, e.g. &fall=1]
+//   `down`: from the tender's deck back down to the turf on the keys (frames down the flights, at the switchback, and a
+//   sequence of the slabs below rising to meet the feet).
+//   node tools/stair-walk.mjs [base=http://localhost:8162] [keys|touch|falls|down] [prefix=h3-walk] [extra query, e.g. &fall=1]
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base0 = 'http://localhost:8162', mode = 'keys', prefix = 'h3-walk', extra = ''] = process.argv.slice(2);
 const base = base0.replace(/\/?(\?.*)?$/, '');
-const touch = mode === 'touch', falls = mode === 'falls';
+const touch = mode === 'touch', falls = mode === 'falls', down = mode === 'down';
 const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
@@ -131,15 +133,20 @@ if (falls) {
 }
 
 // ---------------------------------------------------------------- the climb
-const route = await page.evaluate(() => {
-  const a = window.__fp.ascents.list.find((q) => q.id === 'stair'), E = window.__fp.stair.plan.els;
+const route = await page.evaluate((down) => {
+  const fp = window.__fp, a = fp.ascents.list.find((q) => q.id === 'stair'), E = fp.stair.plan.els;
   const land = new Set(E.filter((e) => e.kind === 1).map((e) => `${e.cx.toFixed(2)},${e.cz.toFixed(2)}`));
-  return a.path.map(([x, z, y], i) => ({ x, z, y, landing: land.has(`${x.toFixed(2)},${z.toFixed(2)}`), i }));
-});
-const SEQ = new Set(touch ? [1] : [1, 10]); // waypoints at which the arriving sequence runs (the stub's foot; the fourth flight's foot)
+  const R = a.path.map(([x, z, y], i) => ({ x, z, y, landing: land.has(`${x.toFixed(2)},${z.toFixed(2)}`), i }));
+  if (!down) return R;
+  // down: from the tender's deck (where the settings map puts a visitor) back along the stair to the turf
+  const d = fp.stair.top.deck; fp.controls.placeAt((d.A.x0 + d.A.x1) / 2, (d.A.z0 + d.A.z1) / 2, d.y);
+  return R.slice(0, R.length - fp.stair.top.path.length).reverse().map((q, i) => ({ ...q, i }));
+}, down);
+if (down) { await run(1500); }
+const SEQ = new Set(down ? [3] : touch ? [1] : [1, 10]); // waypoints at which the arriving sequence runs (the stub's foot; the fourth flight's foot)
 // at these waypoints, stop and look: [what, turn from the way they are going, pitch, wait before (s), action]
 // 'side' turns to the left, steps half a metre toward the flight's edge and looks down past it, and comes back
-const STOPS = {
+const STOPS = down ? { 1: [['down-the-last-flight', 0, -0.45, 0.3]], 9: [['down-ahead', 0, -0.5, 0.3], ['back-up', Math.PI, 0.35, 0.3]], 12: [['switchback-down', 'next', -0.4, 0.4]] } : {
   3: [['back', Math.PI, -0.3, 0.2], ['back-later', Math.PI, -0.4, 2.6], ['ahead', 0, 0.05, 0.2]],
   5: [['side-down', Math.PI / 2, -1.1, 0.2, 'side']],
   9: [['out', -Math.PI / 2, -0.05, 0.3], ['back', Math.PI, -0.3, 0.2]],
@@ -157,7 +164,7 @@ while (i < route.length) {
   if (++loops % 100 === 0) console.log(`  ... heading for ${i} at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(1)} pitch ${s.pitch.toFixed(2)}`);
   if (s.t - tStart > 400) { console.log('out of time'); break; }
   hiFeet = Math.max(hiFeet, s.feet);
-  if (hiFeet > 12 && s.feet < hiFeet - 6) { console.log(`fell at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(1)}, heading for ${i}`); fell = true; break; }
+  if (!down && hiFeet > 12 && s.feet < hiFeet - 6) { console.log(`fell at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(1)}, heading for ${i}`); fell = true; break; }
   const w = route[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
   if (d < 0.6) {
     if (STOPS[i] && !touch) {
@@ -179,9 +186,9 @@ while (i < route.length) {
       // the arriving: look up the stair and walk on, a frame every 0.3 s for 4.2 s
       const nx = route[i + 1];
       const sy = await st();
-      await turn(wrap(Math.atan2(-(nx.x - sy.x), -(nx.z - sy.z)) - sy.yaw), touch ? 0 : 0.18 - sy.pitch); // (a drag's pitch carries on with the touch look's inertia)
+      await turn(wrap(Math.atan2(-(nx.x - sy.x), -(nx.z - sy.z)) - sy.yaw), touch ? 0 : (down ? -0.45 : 0.18) - sy.pitch); // (a drag's pitch carries on with the touch look's inertia)
       for (let k = 0; k <= 14; k++) { await shot(`arrive-${String(k * 3).padStart(2, '0')}`); await run(300); }
-      if (!touch) await turn(0, -0.18);
+      if (!touch) await turn(0, -(await st()).pitch);
     }
     i++; continue;
   }
@@ -200,7 +207,7 @@ while (i < route.length) {
 }
 await walkOn(false);
 const top = i >= route.length;
-if (top) {
+if (top && !down) {
   await run(500);
   const s = await st();
   for (const [what, dyw, p] of [['top-north', 0, -0.1], ['top-west', -Math.PI / 2, 0.02], ['top-down', -Math.PI / 2, -1.2], ['home', Math.PI * 0.75, -0.15]]) { await lookAt(wrap(s.yaw + dyw - (await st()).yaw), p); await run(600); await shot(what); }

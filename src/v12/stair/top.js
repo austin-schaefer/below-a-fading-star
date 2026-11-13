@@ -318,7 +318,7 @@ export function buildTop(ctx, P, { low }) {
   // the foot node and the members that rise from it and from the far node: walls to the sky
   const wall = (x0, z0, x1, z1) => ctx.addCollider({ x1: x0, z1: z0, x2: x1, z2: z1, r: 0.12 });
   wall(nx0, nz0, nx1, nz0); wall(nx1, nz0, nx1, n0.z + NODE / 2); wall(nx1, n0.z + NODE / 2, nx0, n0.z + NODE / 2); wall(nx0, n0.z + NODE / 2, nx0, nz0);
-  ctx.addCollider({ x: far[0], z: far[2], r: TH * 0.7 });
+  ctx.addCollider({ x: far[0], z: far[2], r: TH * 0.7, stair: true });
   // the cot, the stove, the oil can, the chair: low things on the deck
   for (const [x, z, r, h] of [[lx0 + 0.55, cz - 1.8, 0.5, 0.4], [sx, sz, 0.38, 1.0], [A.x0 + 0.7, A.z0 + 1.2, 0.52, 1.5], [A.x0 + 1.4, A.z1 - 1.1, 0.34, 1.6]]) ctx.addCollider({ x, z, r, y: yd, h, stand: false });
 

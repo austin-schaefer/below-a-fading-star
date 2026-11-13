@@ -10,26 +10,25 @@
 // Coordinates: +x east, +z south. A walker facing (ux, uz) has their right at (-uz, ux).
 
 export const RISE = 0.32, GOING = 0.33, WIDTH = 2.2;
-export const FOOT = { x: 288, z: -12 }; // the stub's lowest tread; the stair climbs west from here
-export const STUB = 9; // treads that always stand
+export const FOOT = { x: 288, z: -4 }; // the stub's lowest tread; the stair climbs north from here (so the road and the Nave, west and south-west, see the stub side on)
+export const STUB = 30; // treads that always stand: 9.6 m of steps on their masonry, ending in air
 
 // the route: flights (n treads) and landings (turn: 'S' straight on, 'L', 'R', or 'BL'/'BR' a switchback to that side)
 export const ROUTE = [
-  { n: 40 }, { turn: 'R' }, // west from the stub; then north
-  { n: 56 }, { turn: 'L' }, // then west
-  { n: 32 }, { turn: 'L' }, // then south
-  { n: 40 }, { turn: 'BR' }, // the switchback: straight on is nothing; the next flight is behind, to the right (west)
+  { n: 48 }, { turn: 'L' }, // north from the stub; then west
+  { n: 50 }, { turn: 'L' }, // then south
+  { n: 32 }, { turn: 'BR' }, // the switchback: straight on is nothing; the next flight is behind, to the right (west)
   { n: 60 }, { turn: 'L' }, // north; then west
   { n: 28 }, { turn: 'R' }, // then north
-  { n: 44 }, { turn: 'L' }, // then west, into the sun
-  { n: 30 }, { top: true },
+  { n: 50 }, { turn: 'L' }, // then west, into the sun
+  { n: 56 }, { top: true },
 ];
 
 export const KIND = { TREAD: 0, LANDING: 1, STUB: 2, TOP: 3 };
 
 export function buildPlan(heightAt) {
   const els = [];
-  let px = FOOT.x + GOING / 2, pz = FOOT.z, ux = -1, uz = 0; // the cursor: the back edge of the next element
+  let px = FOOT.x, pz = FOOT.z + GOING / 2, ux = 0, uz = -1; // the cursor: the back edge of the next element
   let y = heightAt(FOOT.x, FOOT.z) + 0.05; // the floor the first riser rises from
   let s = 0; // the path length to the cursor
   const y0 = y;
@@ -86,7 +85,7 @@ export function buildPlan(heightAt) {
       if (overlaps(o, e)) { if (!on || o.rest.y > on.rest.y) on = o; }
     }
     // sunk into the turf by most of its thickness; a slab on a slab lies on it, a little askew
-    e.rest = on ? { y: on.rest.y + on.thick, on: on.i } : { y: e.ground + e.thick * 0.25, on: -1 };
+    e.rest = on ? { y: on.rest.y + on.thick, on: on.i } : { y: e.ground + e.thick * 0.55, on: -1 }; // proud of the turf, so the line of them reads
   }
   const top = els[els.length - 1];
   return { els, y0, top, length: s, count: els.length };
@@ -123,12 +122,27 @@ export function inside(e, x, z, m = 0) {
 // Is (x, z) on the stair's ground: under a slab's bed or the stub, grown by m (read by rocks.js and the vegetation's
 // ground, so nothing grows through the slabs lying in the turf)? False with ?stair=0.
 let clearIdx = null, clearEls = null;
+const CLEAR_MAX = 6; // the widest margin a caller may ask (a boulder's reach); a larger one is clamped to it
 const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('stair') === '0';
 export function stairClear(x, z, m = 0.6) {
   if (OFF) return false;
-  if (!clearIdx) { clearEls = buildPlan(() => 0).els; clearIdx = makeIndex(clearEls.map((e) => ({ ...e, hw: e.hw + 1.5, hd: e.hd + 1.5 }))); }
-  if (x < 210 || x > 300 || z < -75 || z > 0) return false;
-  const L = clearIdx(x, z);
-  for (let k = 0; k < L.length; k++) { const e = clearEls[L[k]]; if (e.kind !== KIND.TOP && inside(e, x, z, m)) return true; }
+  if (!clearIdx) { clearEls = buildPlan(() => 0).els; clearIdx = makeIndex(clearEls.map((e) => ({ ...e, hw: e.hw + CLEAR_MAX, hd: e.hd + CLEAR_MAX }))); }
+  if (x < 205 || x > 305 || z < -80 || z > 5) return false;
+  const L = clearIdx(x, z), mm = Math.min(m, CLEAR_MAX);
+  for (let k = 0; k < L.length; k++) { const e = clearEls[L[k]]; if (e.kind !== KIND.TOP && inside(e, x, z, mm)) return true; }
+  return false;
+}
+
+// The sightlines to the stub from the road and the Nave: no gorse or clitter in a band 5 m either side of each, so the
+// stub is seen whole from both (read by the High Ling, with stairClear)
+const SIGHTS = [[[236, -22], [287, -6]], [[255, 30], [287, -6]]];
+export function stairSight(x, z) {
+  if (OFF) return false;
+  for (const [[ax, az], [bx, bz]] of SIGHTS) {
+    const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+    const ex = x - ax - dx * t, ez = z - az - dz * t;
+    if (ex * ex + ez * ez < 25) return true;
+  }
   return false;
 }

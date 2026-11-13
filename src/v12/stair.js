@@ -19,6 +19,7 @@
 // (top.js). One stacked floor (`stair`), no colliders on the stair itself. ctx.stair: { plan, state, stats(), ... }.
 // ?stair=0 leaves it out.
 import * as THREE from 'three';
+import { hyp } from '../noise.js';
 import { buildPlan, makeIndex, inside, KIND, RISE, GOING, WIDTH, STUB } from './stair/plan.js';
 import { treadGeometry, landingGeometry, kerbGeometry, bedGeometry, slabMaterial } from './stair/treads.js';
 import { buildStub } from './stair/stub.js';
@@ -26,6 +27,7 @@ import { buildDust } from './stair/dust.js';
 import { buildTop } from './stair/top.js';
 
 export const STAIR_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('stair') === '0';
+const TP = new THREE.Vector3();
 const NEAR = 2.6, TAIL = 4.2, LEAD = 1.15; // m of path called round the walker (TAIL behind them); s of their way called ahead
 const T_ARRIVE = 1.3, T_LEAVE = 4.2;     // s for a slab to come up from its bed, and to go back down to it
 const LINGER = 1.1, RIPPLE = 0.07;       // s a slab stays after it leaves the window; s between one slab starting and the next
@@ -165,24 +167,46 @@ export async function build(ctx) {
     M.compose(V, Q, sc || S);
   }
   const SL = new THREE.Vector3();
+  // where each element is drawn: its mesh's record and its slot there; the kerbs of each landing
+  const slotOf = new Array(N).fill(null), kerbsOf = new Array(N).fill(null);
+  TR.list.forEach((e, j) => { slotOf[e.i] = { R: TR, j }; });
+  for (const LA of LAS) LA.list.forEach((e, j) => { slotOf[e.i] = { R: LA, j }; });
   function writeAll() {
     for (let j = 0; j < TR.list.length; j++) { const e = TR.list[j]; pose(e, a[e.i]); TR.m.setMatrixAt(j, M); }
-    for (const LA of LAS) { for (let j = 0; j < LA.list.length; j++) { const e = LA.list[j]; pose(e, a[e.i]); LA.m.setMatrixAt(j, M); } LA.m.instanceMatrix.needsUpdate = true; }
-    writeKerbs();
-    TR.m.instanceMatrix.needsUpdate = true;
+    for (const LA of LAS) { for (let j = 0; j < LA.list.length; j++) { const e = LA.list[j]; pose(e, a[e.i]); LA.m.setMatrixAt(j, M); } LA.m.instanceMatrix.clearUpdateRanges(); LA.m.instanceMatrix.needsUpdate = true; }
+    for (let j = 0; j < kerbs.length; j++) writeKerb(j);
+    TR.m.instanceMatrix.clearUpdateRanges(); TR.m.instanceMatrix.needsUpdate = true;
+    KM.instanceMatrix.clearUpdateRanges(); KM.instanceMatrix.needsUpdate = true;
+  }
+  // only the elements that moved this frame: their matrices and glow, and an update range over their slots per mesh
+  const recs = [TR, ...LAS];
+  for (const R of recs) { R.lo = Infinity; R.hi = -1; }
+  let kLo = Infinity, kHi = -1;
+  function writeOne(i) {
+    const sl = slotOf[i]; if (!sl) return;
+    pose(E[i], a[i]); sl.R.m.setMatrixAt(sl.j, M); sl.R.glow.array[sl.j] = GL[i];
+    if (sl.j < sl.R.lo) sl.R.lo = sl.j; if (sl.j > sl.R.hi) sl.R.hi = sl.j;
+    const ks = kerbsOf[i]; if (ks) for (const j of ks) { writeKerb(j); if (j < kLo) kLo = j; if (j > kHi) kHi = j; }
+  }
+  function flush() {
+    for (const R of recs) {
+      if (R.hi < 0) continue;
+      const im = R.m.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(R.lo * 16, (R.hi - R.lo + 1) * 16); im.needsUpdate = true;
+      R.glow.clearUpdateRanges(); R.glow.addUpdateRange(R.lo, R.hi - R.lo + 1); R.glow.needsUpdate = true;
+      R.lo = Infinity; R.hi = -1;
+    }
+    if (kHi >= 0) { const im = KM.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(kLo * 16, (kHi - kLo + 1) * 16); im.needsUpdate = true; kLo = Infinity; kHi = -1; }
   }
   const KL = new THREE.Matrix4(), KS = new THREE.Vector3(), KQ = new THREE.Quaternion(), KV = new THREE.Vector3();
-  function writeKerbs() {
-    for (let j = 0; j < kerbs.length; j++) {
-      const k = kerbs[j];
-      pose(k.e, a[k.e.i]);
-      // the kerb in the landing's frame: x is the walker's left (-r), z forward (f)
-      KQ.identity(); if (!k.across) KQ.setFromAxisAngle(AY, Math.PI / 2);
-      KL.compose(KV.set(-k.r, 0, k.f), KQ, KS.set(k.len, 1, 1));
-      M.multiply(KL);
-      KM.setMatrixAt(j, M);
-    }
-    KM.instanceMatrix.needsUpdate = true;
+  kerbs.forEach((k, j) => { (kerbsOf[k.e.i] ||= []).push(j); });
+  function writeKerb(j) {
+    const k = kerbs[j];
+    pose(k.e, a[k.e.i]);
+    // the kerb in the landing's frame: x is the walker's left (-r), z forward (f)
+    KQ.identity(); if (!k.across) KQ.setFromAxisAngle(AY, Math.PI / 2);
+    KL.compose(KV.set(-k.r, 0, k.f), KQ, KS.set(k.len, 1, 1));
+    M.multiply(KL);
+    KM.setMatrixAt(j, M);
   }
   for (let j = 0; j < bedEls.length; j++) {
     const e = bedEls[j];
@@ -195,6 +219,7 @@ export async function build(ctx) {
   scene.add(BM);
   writeAll();
 
+  const GL = new Float32Array(N); // the ember's glow per element
   // ------------------------------------------------------------------ the stub, the dust, the top
   const stub = buildStub(ctx, P, E.slice(0, STUB));
   const dust = buildDust(ctx, low);
@@ -211,8 +236,7 @@ export async function build(ctx) {
     for (let k = 0; k < L.length; k++) { const e = E[L[k]]; if (inside(e, fx, fz, 0.05) && feet > e.y - 0.4 && feet < e.y + 1.4 && (best < 0 || e.y > E[best].y)) best = e.i; }
     return best;
   }
-  let moving = 0, rippleT = 0, sinceMove = 99;
-  const GL = new Float32Array(N); // the ember's glow per element
+  let moving = 0, rippleT = 0, tockT = 0, simTicked = false;
   function tick(dt) {
     dt = Math.min(dt, 0.1);
     const u = underfoot();
@@ -220,7 +244,7 @@ export async function build(ctx) {
       // the way they are going along the path, and how fast (smoothed), from their velocity and the element's forward
       const e = E[u], vf = player.vel.x * e.ux + player.vel.z * e.uz;
       const turnLanding = e.kind !== KIND.TREAD && e.kind !== KIND.STUB;
-      const sp = turnLanding ? Math.hypot(player.vel.x, player.vel.z) : Math.abs(vf);
+      const sp = turnLanding ? hyp(player.vel.x, player.vel.z) : Math.abs(vf);
       const dir = turnLanding ? (vUp >= 0 ? 1 : -1) : Math.sign(vf);
       vUp += ((sp > 0.3 ? dir * sp : vUp * 0.98) - vUp) * Math.min(1, dt * 3);
       s0 = e.s; lost = 0; lastEl = u;
@@ -231,41 +255,40 @@ export async function build(ctx) {
     for (let i = 0; i < N; i++) {
       if (fixed(E[i])) continue;
       const w = s0 !== null && E[i].s >= s0 - (vUp >= 0 ? TAIL : NEAR) - down - E[i].hd && E[i].s <= s0 + (vUp < 0 ? TAIL : NEAR) + up + E[i].hd ? 1 : 0;
-      if (w !== want[i]) { want[i] = w; wait[i] = w ? Math.abs(E[i].s - (s0 ?? 0)) * 0.0 : LINGER + Math.abs(E[i].s - (s0 ?? E[i].s)) * 0.08; }
+      if (w !== want[i]) { want[i] = w; wait[i] = w ? 0 : LINGER + Math.abs(E[i].s - (s0 ?? E[i].s)) * 0.08; }
     }
-    // move them: arrivals one at a time on the ripple (nearest first), leavings after their linger
-    rippleT -= dt;
+    // move them: arrivals one at a time on the ripple (nearest first; as many in a frame as the ripple allows, so the
+    // stair grows as fast at 20 fps as at 60), leavings after their linger
+    rippleT = Math.max(rippleT - dt, -RIPPLE * 4);
+    tockT -= dt;
     moving = 0;
-    let changed = false;
     for (let i = 0; i < N; i++) {
       if (fixed(E[i])) continue;
-      const g0 = GL[i];
+      const g0 = GL[i], a0 = a[i];
       if (want[i] && a[i] < 1) {
         if (a[i] === 0) {
           if (rippleT > 0 || !nextUp(i)) continue;
-          rippleT = RIPPLE;
+          rippleT += RIPPLE;
           dust.puff(E[i].cx, E[i].rest.y + 0.1, E[i].cz, 10, 0); // torn out of the turf
         }
         a[i] = Math.min(1, a[i] + dt / (T_ARRIVE * (0.9 + seed[i] * 0.25)));
         GL[i] = 1;
-        if (a[i] >= 1) { dust.shake(E[i], 8); ctx.events?.dispatchEvent(new CustomEvent('stair', { detail: { i, settled: true } })); }
-        changed = true; moving++;
+        if (a[i] >= 1) {
+          dust.shake(E[i], 8);
+          // a stone tock as a slab settles ahead of the walker: one now and then, not one a slab
+          if (tockT <= 0 && s0 !== null && E[i].s > s0) { tockT = 0.55 + seed[i] * 0.5; TP.set(E[i].cx, E[i].y, E[i].cz); ctx.audio?.cue?.('lamp-tick', TP); }
+        }
+        moving++;
       } else if (!want[i] && a[i] > 0) {
-        if ((wait[i] -= dt) > 0) { GL[i] = Math.max(0, GL[i] - dt * 0.8); continue; }
+        if ((wait[i] -= dt) > 0) { GL[i] = Math.max(0, GL[i] - dt * 0.8); if (GL[i] !== g0) writeOne(i); continue; }
         a[i] = Math.max(0, a[i] - dt / T_LEAVE);
         GL[i] = Math.min(1, 0.25 + (1 - a[i]) * 0.9);
         if (a[i] === 0) { GL[i] = 0; dust.puff(E[i].cx, E[i].rest.y + 0.1, E[i].cz, 6, 1); }
-        changed = true; moving++;
+        moving++;
       } else if (GL[i] > 0) { GL[i] = Math.max(0, GL[i] - dt * 0.6); }
-      if (GL[i] !== g0) changed = true;
+      if (GL[i] !== g0 || a[i] !== a0) writeOne(i);
     }
-    sinceMove = moving ? 0 : sinceMove + dt;
-    if (changed || sinceMove < 0.2) {
-      writeAll();
-      for (let j = 0; j < TR.list.length; j++) TR.glow.array[j] = GL[TR.list[j].i];
-      for (const LA of LAS) { for (let j = 0; j < LA.list.length; j++) LA.glow.array[j] = GL[LA.list[j].i]; LA.glow.needsUpdate = true; }
-      TR.glow.needsUpdate = true;
-    }
+    flush();
   }
   // the next to come is the lowest-numbered called slab nearer the walker than this one that has not started: arrivals
   // go outward from the feet in order, so the stair is always whole from the walker to its end
@@ -275,26 +298,40 @@ export async function build(ctx) {
     for (let j = i - dir; j >= 0 && j < N && (dir > 0 ? E[j].s >= s0 : E[j].s <= s0); j -= dir) if (want[j] && a[j] === 0 && !fixed(E[j])) return false;
     return true;
   }
-  // a column to the sky (an uncapped collider: a tree, a post) under the stair would stop a walker a hundred metres
-  // over it: on the first frame, after every module has registered its colliders, cap those under the stair's
-  // footprint just under the lowest tread over them
-  let capped = -1;
+  // A column to the sky (an uncapped collider: a post, a rock) under the stair would stop a walker high over it. So
+  // uncapped colliders under the footprint get a top just under the lowest tread over them, where that tread is more
+  // than 3 m over the ground (lower, the column stays a column: a walker on the turf beside the stub is still stopped).
+  // Moving ones (the figures who walk: their x, z change) are left alone: their place is noted on the first frame and
+  // a collider that has moved by the second look is skipped. Colliders registered later are looked at every 5 s.
+  let capped = 0, looks = 0, lookT = 0;
+  const seenAt = new WeakMap(), done = new WeakSet(), cappedList = [];
   function capColumns() {
-    capped = 0;
+    let n = 0;
     for (const c of ctx.controls.state.colliders) {
-      if (c.h !== undefined || c.x2 !== undefined || c.stair) continue;
-      // the lowest element over it (within its radius and half a stride)
+      if (done.has(c)) continue;
+      if (c.h !== undefined || c.x2 !== undefined || c.stair) { done.add(c); continue; }
+      const was = seenAt.get(c);
+      if (!was) { seenAt.set(c, [c.x, c.z]); continue; } // first seen: decided at the next look
+      done.add(c);
+      if (was[0] !== c.x || was[1] !== c.z) continue; // it walks
       let lo = Infinity;
       for (const [ox, oz] of [[0, 0], [c.r + 0.5, 0], [-c.r - 0.5, 0], [0, c.r + 0.5], [0, -c.r - 0.5]]) {
         const L = find(c.x + ox, c.z + oz);
         for (let k = 0; k < L.length; k++) if (inside(E[L[k]], c.x, c.z, c.r + 0.5)) lo = Math.min(lo, E[L[k]].y);
       }
-      if (lo === Infinity) continue;
       const g = T.heightAt(c.x, c.z);
-      c.y = g - 2; c.h = Math.max(1, lo - 0.6 - c.y); c.stand = false; capped++;
+      if (lo === Infinity || lo - g < 3) continue;
+      c.y = g - 2; c.h = lo - 0.6 - c.y; c.stand = false; n++; cappedList.push({ c, lo, g });
     }
+    capped += n;
+    if (n) ctx.log(`stair: capped ${n} column${n > 1 ? 's' : ''} under the stair (${capped} in all)`);
   }
-  ctx.registerUpdate((dt, t) => { if (capped < 0) capColumns(); tick(dt); dust.update(dt, t); top.update(dt, t); });
+  function columns(dt) {
+    looks++;
+    if (looks === 1 || looks === 30) capColumns(); // note where each is; then cap the ones that have not moved
+    else if (looks > 30 && (lookT += dt) > 5) { lookT = 0; capColumns(); } // and those registered later, the same way
+  }
+  ctx.registerUpdate((dt, t) => { columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t); });
 
   // ------------------------------------------------------------------ the ascent, and the API
   // the path heights-test walks: the turf east of the stub, each flight's first and last tread (steering only), each
@@ -313,8 +350,9 @@ export async function build(ctx) {
 
   const tris = (g, n) => (g.attributes.position.count / 3) * n;
   ctx.stair = {
-    plan: P, a, want, find, floor, keep, top, stub, dust, removeFloor, capped: () => capped,
-    tick(dt) { if (capped < 0) capColumns(); tick(dt); },
+    plan: P, a, want, find, floor, keep, top, stub, dust, removeFloor, capped: () => capped, cappedList: () => cappedList,
+    // a test's own simulated frame (heights-test): the stair moves on with it, and the next real frame does not move it again
+    tick(dt) { columns(dt); tick(dt); simTicked = true; },
     at: () => s0, el: () => lastEl,
     // call every slab (true) or none (false) at once, for renders of the whole stair; null gives them back to the walker
     all(v) { for (let i = 0; i < N; i++) if (!fixed(E[i])) a[i] = v ? 1 : 0; writeAll(); },

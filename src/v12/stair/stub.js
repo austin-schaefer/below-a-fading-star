@@ -30,7 +30,7 @@ export function buildStub(ctx, P, stub) {
     }
   }
   // the cheek walls: a course of ashlar either side of the steps, its top stepping up with them 0.7 m over the treads
-  const CH = 0.7, CW = 0.42;
+  const CH = 0.16, CW = 0.62; // a curb, not a wall: from the side the steps read as steps
   for (const e of stub) for (const s of [-1, 1]) {
     const g0 = T.heightAt(e.cx + X.x * s * (e.hw + CW / 2), e.cz + X.z * s * (e.hw + CW / 2)) - 0.4;
     const h = e.y + CH - g0;
@@ -41,29 +41,29 @@ export function buildStub(ctx, P, stub) {
   }
   // the posts on the cheek walls at the top: 7.5 m of ashlar shaft, a notched head, a bronze disc with an ember glass
   const top = stub[stub.length - 1];
-  const H = 7.5, PX = top.hw + CW / 2;
+  const H = 10, PX = top.hw + CW / 2;
   for (const s of [-1, 1]) {
     const sx = s * PX;
-    const plinth = slab(0.78, 0.78, 1.3, 0, rng); plinth.translate(sx, CH + 1.3, 0);
+    const plinth = slab(1.0, 1.0, 1.3, 0, rng); plinth.translate(sx, CH + 1.3, 0);
     parts.push(place(plinth, top));
-    const post = slab(0.5, 0.5, H - 1.3, 0, rng); post.translate(sx, H, 0);
+    const post = slab(0.7, 0.7, H - 1.3, 0, rng); post.translate(sx, H, 0);
     parts.push(place(post, top));
-    for (let k = 1; k < 6; k++) { const band = slab(0.56, 0.56, 0.06, 0, rng); band.translate(sx, CH + 1.3 + k * (H - 2.2) / 6, 0); parts.push(place(band, top)); }
+    for (let k = 1; k < 6; k++) { const band = slab(0.78, 0.78, 0.08, 0, rng); band.translate(sx, CH + 1.3 + k * (H - 2.2) / 6, 0); parts.push(place(band, top)); }
     // the head: two blocks leaning apart (the notch), the disc seated between them
     for (const k of [-1, 1]) {
-      const h = paint(new THREE.BoxGeometry(0.34, 1.0, 0.44), DARK);
-      h.rotateZ(-k * 0.5); h.translate(sx + k * 0.34, H + CH + 0.45, 0);
+      const h = paint(new THREE.BoxGeometry(0.46, 1.4, 0.6), DARK);
+      h.rotateZ(-k * 0.5); h.translate(sx + k * 0.48, H + CH + 0.6, 0);
       parts.push(place(h, top));
     }
-    const disc = paint(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 24), BRONZE); disc.rotateX(Math.PI / 2); disc.translate(sx, H + CH + 0.62, 0);
+    const disc = paint(new THREE.CylinderGeometry(0.78, 0.78, 0.14, 24), BRONZE); disc.rotateX(Math.PI / 2); disc.translate(sx, H + CH + 0.85, 0);
     parts.push(place(disc, top));
-    for (const fz of [-0.065, 0.065]) {
-      const glass = paint(new THREE.CircleGeometry(0.3, 18), EMBER, 0.9);
+    for (const fz of [-0.075, 0.075]) {
+      const glass = paint(new THREE.CircleGeometry(0.44, 18), EMBER, 0.9);
       if (fz < 0) glass.rotateY(Math.PI);
-      glass.translate(sx, H + CH + 0.62, fz);
+      glass.translate(sx, H + CH + 0.85, fz);
       parts.push(place(glass, top));
     }
-    const ring = paint(new THREE.TorusGeometry(0.55, 0.05, 5, 24), POLISH); ring.translate(sx, H + CH + 0.62, 0);
+    const ring = paint(new THREE.TorusGeometry(0.78, 0.07, 5, 24), POLISH); ring.translate(sx, H + CH + 0.85, 0);
     parts.push(place(ring, top));
   }
   const geo = finish(parts);
@@ -79,6 +79,6 @@ export function buildStub(ctx, P, stub) {
   const fx = b.cx + Z.x * (b.hd + 0.12), fz = b.cz + Z.z * (b.hd + 0.12);
   ctx.addCollider({ x1: fx + X.x * b.hw, z1: fz + X.z * b.hw, x2: fx - X.x * b.hw, z2: fz - X.z * b.hw, r: 0.12, y: lowest, h: b.y - 0.35 - lowest, stand: false });
   // the posts: columns to the sky
-  for (const s of [-1, 1]) ctx.addCollider({ x: b.cx + X.x * s * PX, z: b.cz + X.z * s * PX, r: 0.45, stair: true });
+  for (const s of [-1, 1]) ctx.addCollider({ x: b.cx + X.x * s * PX, z: b.cz + X.z * s * PX, r: 0.55, stair: true });
   return { mesh, calls: 1, tris: geo.attributes.position.count / 3, posts: H + CH };
 }
