@@ -540,7 +540,7 @@ export function buildControls(ctx) {
     // as it did not before (the Span's slips). In a hop the drop is measured from the floor under the last position
     // (floorBelow), not from the feet in the air, so only a break in the floor counts: a hop off a 1 m step or down a
     // bank, steered or not, goes as it always did. A fall (in the air, not hopping) is not steered.
-    let leaning = false;
+    let leaning = false, stuck = false;
     const inHop = state.hopping && !state.onGround;
     if ((state.onGround && !state.hopping) || inHop) {
       const ref = inHop ? state.floorBelow : feet0;
@@ -555,17 +555,26 @@ export function buildControls(ctx) {
           if (inHop || hurry) { if (aim > AIM_AT_ONCE) over = true; }
           else { leaning = true; lipDwell += dt; if (lipDwell >= DWELL) over = true; }
         }
+        // pushing on, held at an outer corner (the drop on more than half the sides round them: no way along either edge)
+        // for DWELL: over, whichever way they push, so nobody is kept on a block they landed on
+        if (kind === LIP_SOFT && !over && stuckT >= DWELL) over = true;
         if (!over) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
           const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
           mv = resolve(sx, sz, feet0, mvB);
-          if (edgeKind(mv, ref)) mv = resolve(ox, oz, feet0, mvB);
+          // the slide still goes over (a notch where two pieces' rounded ends meet): the same, a few cm in from the edge
+          if (edgeKind(mv, ref)) mv = resolve(sx - lipN.x * 0.08, sz - lipN.z * 0.08, feet0, mvB);
+          if (edgeKind(mv, ref)) {
+            mv = resolve(ox, oz, feet0, mvB);
+            if (len > 0.05 && kind === LIP_SOFT && nDrops >= 5) { stuck = true; stuckT += dt; }
+          }
           const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
           if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
         }
       }
     }
     if (leaning) lipQuiet = 0; else if ((lipQuiet += dt) > 0.25) lipDwell = 0;
+    if (!stuck) stuckT = 0;
     lipLean += ((leaning ? Math.min(1, lipDwell / DWELL) : 0) - lipLean) * Math.min(1, dt * 8);
     state.pos.x = mv.x; state.pos.z = mv.z;
     state.onStack = mv.stack;
@@ -637,7 +646,7 @@ export function buildControls(ctx) {
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
   // there (onto nothing within a step, down or up: out of a cut is a wall); LIP_SOFT: down more than LIP; 0: neither.
   const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, DWELL = 0.5, AIM = 0.7, AIM_AT_ONCE = 0.87; // cosines: 45 and 30 degrees
-  let lipDwell = 0, lipQuiet = 0, lipLean = 0;
+  let lipDwell = 0, lipQuiet = 0, lipLean = 0, stuckT = 0, nDrops = 0;
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {
     const on = state.onStack;
@@ -650,11 +659,11 @@ export function buildControls(ctx) {
   // move's own direction. Kept while the walker stays within 0.25 m of where it was found at the same height, so
   // pressing at a lip or sliding along a straight one probes about every fourth frame at a walk.
   const probe = { y: 0, ground: 0, stack: null, top: false, wl: null }, pm = { x: 0, z: 0, y: 0, stack: null };
-  const nAt = { x: Infinity, z: 0, ref: 0, t: -1 };
+  const nAt = { x: Infinity, z: 0, ref: 0, t: -1, n: 0 };
   let guardT = 0;
   const DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
   function edgeNormal(x, z, ref, feet, mx, mz, tops) {
-    if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; return; }
+    if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; nDrops = nAt.n; return; }
     let sx = 0, sz = 0, n = 0;
     for (const [cx, cz] of DIRS) {
       pm.x = x + cx * 0.35; pm.z = z + cz * 0.35;
@@ -663,7 +672,8 @@ export function buildControls(ctx) {
       if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; }
     }
     const l = hyp(sx, sz);
-    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; return; }
+    nDrops = n;
+    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return; }
     const ml = hyp(mx, mz) || 1;
     lipN.x = mx / ml; lipN.z = mz / ml; nAt.x = Infinity;
   }
