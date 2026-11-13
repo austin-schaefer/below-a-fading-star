@@ -4,17 +4,22 @@
 //         on three spandrel stubs and the arch's own rib, which is all of the bay that is left
 //   fen:  the cornice and kerb stones of the south side, a dozen slabs hung from an iron tie-bar by straps, daylight
 //         between them, two corbel arms out of the piers meeting crooked
-//   river: not stone: a strut of the Lattice come down out of the sky, bowed, slung from pier to pier and lashed
-//         with bronze, rags of saffron on the lashings (the Late folk's work)
-// The stone goes into the span's own masonry mesh (K.body), the iron into its metal mesh (K.metals); the strut and the
-// rags are two meshes of their own and one cold light. The walkable is vestigeAt (vestige-plan.js).
+//   river: not stone: a member of a Lattice come down out of the sky, a bowed box truss (strut.js)
+//   crack: a length of the south parapet's coping, fallen across it and broken in two
+// The one who crossed to wait on the middle deck (stories/the-wait-on-the-span.md) marked the way for the one who was to
+// follow: strips of their saffron cloth tied every few strides along each way's edge, hanging and moving in the air, so
+// that from the valley floor each gap still shows a thin line with rags under it; and at each way's lips a staff in
+// three stones with a strip on it. The stone ways and the coping carry a paler line worn by feet down their middle.
+// The stone goes into the span's own masonry mesh (K.body), the iron and the staffs into its metal mesh (K.metals); the
+// strips are one swaying mesh (cloth.js), the worn lines one small mesh, the strut its own (strut.js).
+// The walkable is vestigeAt (vestige-plan.js).
 import * as THREE from 'three';
 import { SPAN, bayArch, intrados, RING } from './plan.js';
 import { VESTIGES, vestigeAt, fenSlabs, FEN_GAP, FEN_LET_GO, CRACK_WAY } from './vestige-plan.js';
 import { box, extrudeXY, clean } from './geo.js';
 import { mergeGeometries } from '../kit/merge.js';
 import { buildStrut } from './strut.js';
-import { travellerCloth } from './cloth.js';
+import { travellerCloth, swayingCloth, sheet } from './cloth.js';
 
 const Y = SPAN.deckY;
 
@@ -40,7 +45,9 @@ function ringOutline(A) {
 export function buildVestige(K) {
   const { ctx, hi, rng, jit, body, metals, paint, addCol } = K;
   const [W, F, R] = VESTIGES;
-  const metalParts = [];
+  const worn = [];
+  // a paler line worn down the middle of a way by feet, 0.45 m wide, laid on its top from x0 to x1
+  const wornLine = (v, x0, x1, step = 0.8) => { for (let x = x0; x < x1 - 0.05; x += step) { const xb = Math.min(x1, x + step); worn.push(slab(v, (x + xb) / 2, xb - x + 0.02, 0.4 + 0.1 * Math.sin(x * 3.1), 0.05, 0.026)); } }; // (thick enough to sit on every stone)
   const iron = (g, hex = '#4a3a30') => metals.push(paint(g, hex));
 
   // ---------------------------------------------------------------- west: the footing on its rib
@@ -54,8 +61,8 @@ export function buildVestige(K) {
       body.push(extrudeXY(pts, W.zc(xc) - 0.7, W.zc(xc) + 0.7));
     }
     // the footing: an upper row of long stones, a lower row set back and broken, two stones of it fallen away. At x -100
-    // one is gone from both rows: a stride of air (0.6 m) you step over with the tarn's shallows under it; the stone
-    // after it has tipped on its bed toward the south, its outer edge 0.07 m down.
+    // one has broken and gone from both rows; a piece of it is wedged in the gap, sunk and canted, daylight either side of
+    // it (you step down on it); the stone after it has tipped on its bed toward the south, its outer edge 0.07 m down.
     const GAP = [-100.3, -99.7];
     let gapDone = false, tipped = false;
     for (let x = W.x0, i = 0; x < W.x1 - 0.5; i++) {
@@ -71,6 +78,11 @@ export function buildVestige(K) {
       x += len;
       if (!gapDone && x >= GAP[0] - 1e-6) { gapDone = true; x = GAP[1]; }
     }
+    { // the wedged piece: narrower than the gap along the way, as wide as the way, its top 0.04 to 0.11 m under it
+      const xc = (GAP[0] + GAP[1]) / 2, g = new THREE.BoxGeometry(0.5, 0.42, 1.44); g.translate(0, -0.21, 0);
+      g.rotateZ(0.13); g.rotateX(-0.03); g.translate(xc, W.y(xc) - 0.075, W.zc(xc)); body.push(clean(g));
+    }
+    wornLine(W, W.a - 0.4, GAP[0]); wornLine(W, GAP[1], W.b + 0.4);
   }
 
   // ---------------------------------------------------------------- fen: the cornice and kerb stones on their iron
@@ -108,6 +120,8 @@ export function buildVestige(K) {
     }
   }
 
+  { const fs = fenSlabs(); for (let i = 0; i < fs.n; i++) if (i !== FEN_LET_GO.i) wornLine(F, fs.xc(i) - fs.len / 2 + 0.05, fs.xc(i) + fs.len / 2 - 0.05, 0.7); }
+
   // ---------------------------------------------------------------- the crack: a parapet's coping, fallen across it
   {
     const C = CRACK_WAY, cx = SPAN.crack.x, half = C.L / 2;
@@ -120,6 +134,16 @@ export function buildVestige(K) {
         q.rotateZ(Math.atan((C.y(xb) - C.y(xa)) / (xb - xa))); q.rotateY(-C.yaw);
         q.translate(xm, (C.y(xa) + C.y(xb)) / 2 - 0.02, C.zc(xm));
         body.push(clean(q));
+      }
+    }
+    // the worn line on it, and leading to it on the deck from each side, as if it had always been the way
+    for (const sgn of [-1, 1]) {
+      const xa = cx + sgn * 0.1, xb = cx + sgn * (half + 2.5);
+      for (let k = 0; k < 8; k++) {
+        const u0 = k / 8, u1 = (k + 1) / 8, x0 = xa + (xb - xa) * u0, x1 = xa + (xb - xa) * u1, xm = (x0 + x1) / 2;
+        const g = new THREE.BoxGeometry(Math.abs(x1 - x0) + 0.02, 0.012, 0.42 - 0.12 * Math.max(0, (Math.abs(xm - cx) - half) / 2.5));
+        g.rotateZ(Math.atan((C.y(x1) - C.y(x0)) / (x1 - x0))); g.rotateY(-C.yaw);
+        g.translate(xm, Math.abs(xm - cx) > half ? Y + 0.002 : C.y(xm) - 0.014, C.zc(xm)); worn.push(clean(g));
       }
     }
     // the lips under its ends, spalled: a few chips on the deck beside it
@@ -139,7 +163,38 @@ export function buildVestige(K) {
     const rm = new THREE.Mesh(rg, travellerCloth()); rm.name = 'span-rags'; rm.castShadow = false; rm.receiveShadow = true;
     ctx.scene.add(rm); strutMeshes.push(rm);
   }
-  void metalParts; void hi; void addCol;
+  // ---------------------------------------------------------------- the way marked: strips of the cloth, and staffs at the lips
+  const strips = [];
+  const strip = (x, y, z, len, w, ang) => strips.push(sheet((u, v) => {
+    const d = 1 - v; return [x + Math.cos(ang) * (u - 0.5) * w * (1 - 0.25 * d), y - len * d, z + Math.sin(ang) * (u - 0.5) * w * (1 - 0.25 * d)];
+  }, 1, hi ? 6 : 3));
+  const every = hi ? 1 : 2;
+  // (long enough, 2 to 3.6 m, and many enough to read from the valley floor as a fringe under a thin line)
+  [[W, 2.3, 0.78, 0.0], [F, 2.1, 0.78, 0.0], [R, 2.2, 0.72, 1.5]].forEach(([v, pitch, out, down], wi) => {
+    for (let x = v.a + 1.2, i = 0; x < v.b - 1.0; x += pitch, i++) {
+      if (i % every) continue;
+      const side = (i + wi) % 2 ? 1 : -1, len = 2.0 + rng() * 1.6;
+      strip(x + jit(0.4), v.y(x) - down - 0.04, v.zc(x) + side * out, len, 0.55 + rng() * 0.25, 0.8 + jit(0.35)); // (turned to take the low sun and face the valley)
+    }
+  });
+  const staff = (x, z, yb) => {
+    const g = new THREE.CylinderGeometry(0.03, 0.04, 1.5, 6); g.rotateZ(jit(0.08)); g.rotateX(jit(0.08)); g.translate(x, yb + 0.75, z); iron(clean(g), '#3d3026');
+    for (let k = 0; k < 3; k++) { const a = k * 2.1 + rng(), q = new THREE.BoxGeometry(0.26, 0.2, 0.24); q.rotateY(rng() * 3); q.translate(x + Math.cos(a) * 0.2, yb + 0.1, z + Math.sin(a) * 0.2); body.push(clean(q)); }
+    strip(x, yb + 1.46, z, 0.95, 0.24, 0.3 + jit(0.4));
+    addCol({ x, z, r: 0.32, y: yb - 0.2, h: 0.5 });
+  };
+  for (const v of [W, F, R, CRACK_WAY]) for (const [x, dir] of [[v.a, -1], [v.b, 1]]) staff(x + dir * 1.4, v.zc(x) + (v === CRACK_WAY ? -1.25 : 1.25), Y); // (south of the line, out of the deck's walk; the coping's north)
+  {
+    const g = mergeGeometries(strips); for (const q of strips) q.dispose(); g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, swayingCloth()); m.name = 'span-way-strips'; m.castShadow = false; m.receiveShadow = hi;
+    ctx.scene.add(m); strutMeshes.push(m);
+    const uT = swayingCloth().userData.uT; ctx.registerUpdate((dt, t) => { uT.value = t; });
+  }
+  {
+    const g = mergeGeometries(worn); for (const q of worn) q.dispose(); g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#8f877a', roughness: 0.85 })); m.name = 'span-worn';
+    m.receiveShadow = true; m.matrixAutoUpdate = false; ctx.scene.add(m); strutMeshes.push(m);
+  }
   K.vestigeMeshes = strutMeshes;
   return { at: vestigeAt, ways: VESTIGES };
 }

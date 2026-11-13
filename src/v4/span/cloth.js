@@ -5,9 +5,36 @@
 // cloth, v = 0 the torn hem), so a geometry made here goes through `sheet`, not geo.js's clean(), which strips uv.
 import * as THREE from 'three';
 
-let mat = null;
+let mat = null, tex = null;
 export function travellerCloth() {
   if (mat) return mat;
+  mat = new THREE.MeshStandardMaterial({ map: clothTexture(), emissiveMap: clothTexture(), emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.16, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, alphaTest: 0.5 });
+  mat.onBeforeCompile = (sh) => { sh.fragmentShader = lining(sh.fragmentShader); };
+  return mat;
+}
+const lining = (fs) => fs.replace('#include <map_fragment>', '#include <map_fragment>\n  if (!gl_FrontFacing) diffuseColor.rgb = vec3(0.30, 0.24, 0.14);');
+// The same cloth for strips that hang free and move in the air: each sways about its knot (uv v = 1) by a vertex
+// shader on one uniform, so a hundred strips cost one draw and one number a frame. Brighter, for being seen from below.
+let sway = null;
+export function swayingCloth() {
+  if (sway) return sway;
+  const uT = { value: 0 };
+  sway = new THREE.MeshStandardMaterial({ map: clothTexture(), emissiveMap: clothTexture(), emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.42, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, alphaTest: 0.5 });
+  sway.userData.uT = uT;
+  sway.customProgramCacheKey = () => 'cloth-sway';
+  sway.onBeforeCompile = (sh) => {
+    sh.uniforms.uT = uT;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+  { float d = 1.0 - uv.y, ph = position.x * 0.37 + position.z * 0.91;
+    float w = sin(uT * 1.1 + ph) * 0.6 + sin(uT * 2.7 + ph * 1.7) * 0.25;
+    transformed.x += w * 0.32 * d * d; transformed.z += sin(uT * 0.8 + ph * 1.3) * 0.18 * d * d; transformed.y += abs(w) * 0.06 * d; }`);
+    sh.fragmentShader = lining(sh.fragmentShader);
+  };
+  return sway;
+}
+function clothTexture() {
+  if (tex) return tex;
   const N = 128, cv = document.createElement('canvas'); cv.width = cv.height = N;
   const g = cv.getContext('2d'), img = g.createImageData(N, N), d = img.data;
   let s = 7331; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
@@ -28,12 +55,8 @@ export function travellerCloth() {
     const i = (y * N + x) * 4; d[i] = r * k; d[i + 1] = gg * k; d[i + 2] = b * k; d[i + 3] = a;
   }
   g.putImageData(img, 0, 0);
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  mat = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.16, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, alphaTest: 0.5 });
-  mat.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n  if (!gl_FrontFacing) diffuseColor.rgb = vec3(0.30, 0.24, 0.14);');
-  };
-  return mat;
+  tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  return tex;
 }
 
 // a cloth piece from a grid: f(u, v) -> [x, y, z] for u, v in 0..1 (v = 0 the torn hem); nu by nv quads.

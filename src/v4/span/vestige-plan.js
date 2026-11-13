@@ -30,10 +30,11 @@ export function fenSlabs() {
   return { n, len, xc: (i) => x0 + len / 2 + i * (len + FEN_GAP) };
 }
 export const FEN_LET_GO = { i: 4, drop: 0.12 }; // its east strap gave: the slab hangs 0.12 m down at that end
+let DIP = null; // [a, b, len], worked out once
 function fenDip(x) {
-  const f = fenSlabs(), c = f.xc(FEN_LET_GO.i), a = c - f.len / 2, b = c + f.len / 2 + FEN_GAP;
-  if (x <= a || x >= b) return 0;
-  return FEN_LET_GO.drop * Math.min(1, (x - a) / f.len);
+  if (!DIP) { const f = fenSlabs(), c = f.xc(FEN_LET_GO.i); DIP = [c - f.len / 2, c + f.len / 2 + FEN_GAP, f.len]; }
+  if (x <= DIP[0] || x >= DIP[1]) return 0;
+  return FEN_LET_GO.drop * Math.min(1, (x - DIP[0]) / DIP[2]);
 }
 export const VESTIGES = [
   // north side, 210.4 jogging to 211.6 about the crown: the footing course on its rib

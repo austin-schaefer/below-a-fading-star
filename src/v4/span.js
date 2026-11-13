@@ -122,10 +122,11 @@ export async function build(ctx) {
     for (const w of walkParts) { const y = partY(w, x, z); if (y !== null && (best === null || y > best)) best = y; }
     return best;
   };
+  const all = meshes.concat(K.vestigeMeshes || [], K.campMeshes || []); // (the ways', the strut's and the camp's draws too)
   const trisOf = (m) => { const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position.count) / 3; return t * (m.isInstancedMesh ? m.count : 1); };
   ctx.span = {
-    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, vestigeAt, vestiges: VESTIGES, crackWay: CRACK_WAY, floorAt, meshes: meshes.concat(K.vestigeMeshes || [], K.campMeshes || []), colliders,
-    stats: () => ({ calls: meshes.length, shadowCalls: meshes.filter((m) => m.castShadow).length, tris: meshes.reduce((s, m) => s + trisOf(m), 0), colliders: colliders.length, boulders: boulders.length, rubble: rubble.length, slabs: slabInfo.length }),
+    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, vestigeAt, vestiges: VESTIGES, crackWay: CRACK_WAY, floorAt, meshes: all, colliders,
+    stats: () => ({ calls: all.length, shadowCalls: all.filter((m) => m.castShadow).length, tris: all.reduce((s, m) => s + (m.isMesh ? trisOf(m) : 0), 0), colliders: colliders.length, boulders: boulders.length, rubble: rubble.length, slabs: slabInfo.length }),
   };
   ctx.log?.('span', JSON.stringify(ctx.span.stats()));
 }
