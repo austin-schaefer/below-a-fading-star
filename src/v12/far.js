@@ -84,7 +84,7 @@ export function installFar(ctx, url) {
     for (const gr of g.groups) pg.addGroup(gr.start, gr.count, gr.materialIndex);
     pg.drawRange = g.drawRange; pg.boundingSphere = g.boundingSphere; pg.boundingBox = g.boundingBox;
     const c = new THREE.InstancedMesh(pg, o.material, n);
-    c.name = o.name; c.userData.farOf = o;
+    c.name = 'far:' + o.name; c.userData.farOf = o; // not the module's name: tests that look a module's meshes up by name must not find it
     c.instanceMatrix.setUsage(THREE.DynamicDrawUsage); c.instanceMatrix.array.set(o.instanceMatrix.array);
     if (o.instanceColor) { c.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(o.instanceColor.array.length), 3); c.instanceColor.setUsage(THREE.DynamicDrawUsage); c.instanceColor.array.set(o.instanceColor.array); }
     c.count = o.count; c.visible = false; c.matrixAutoUpdate = false; c.matrixWorldAutoUpdate = false;
