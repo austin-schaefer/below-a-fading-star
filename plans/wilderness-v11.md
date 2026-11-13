@@ -46,6 +46,18 @@ Nothing, at first: the mountains stop catching the eye. Then, looking at them: r
 
 ## Status
 
+**2026-11-12, 16:24 PST. v11.1 is released.** PR #37 merged to `main` at `87511e6` (the day's third merge of six); the GitHub release `v11.1` is published; `main` is merged back into `next`. No agent is in flight and no worktree but the deploy one exists. The next milestone, v12 (the Heights), is open for planning in `plans/wilderness-v12.md`, written by another session.
+
+**Waiting on the owner:** #22 (Umami tracking) still needs them to create the site and paste its snippet.
+
+### Looking back (v11.1)
+
+- **What took longest, and did it need to?** W1: three rounds (a mosaic, then black polygons, then the fix). The first two were visible in its own frames; its brief asked for close views and it took them, and still reported the mosaic only as "a little like crazed glaze". The orchestrator merged round two having seen the dark patches and named them weak, and the blind reader then called them broken. A hard-edged dark shape in a close frame is a stop, not a note.
+- **What was found late?** The dark polygons, by the blind read after the merge. Running the blind read on each agent's close frames before merging would have saved a worktree and half an hour. The cold read of the diff was nearly skipped: it was dispatched after the gate, on remembering the point-release rule.
+- **What did the owner say more than once?** Nothing twice. Two estimated times went into Status and were taken out again: `date`, every time.
+- **What worked?** A trial behind a flag for a question the owner asked to have considered: it answered the question (the cols matter from above, not from the floor) without changing what ships. Recording the owner's sentences on the issue they belong to as they were said.
+- **Changed in the harness:** the README's Progress boxes have a tool and a check (the owner's note). One line for the `orchestrator` skill: the blind read comes before the merge of anything a visitor sees close up, not after the batch.
+
 **2026-11-12, 16:21 PST. v11.1: the gate is green and the diff is read; releasing.** `tools/suite.sh 8123` in full on `e114c9e`, which holds all of v11.1's code: 34 tests, 0 failed (mountains 4, dressing 24, settings 68, acts 140, edges 101, perf 17, walk 10, paths 75, roads 44, regions 56, the rest as before). Four commits after it on `next` are v12's planning docs from another session (`plans/wilderness-v12.md`, `briefs/v12/`): nothing served, so the gate stands and they ride in the PR. A cold read of `origin/main...next` in `src` and `tools`: no blockers (the shader valid GLSL ES 3.00, no derivative in a branch, `aRock` only on the terrain geometry, `?cols=high` guarded at every use, no test weakened but the Cutting's exemption). Left from it, comments only, not touched after the gate: `mountains.js:157` speaks of ground rising 9 m with the flag where the reviewer found no such code (W5's report says it does rise: check before the Heights makes it the default); a stale "one in six" comment in `fpFace`; a no-op factor on the `sill` line in `lamps.js`.
 
 Shipped weaker than meant (v11.1): the rock up close is quieter than round two's cracked blocks (the fix for the dark polygons capped the tilt); from far off the faces still read to a cold eye as "smooth melted wax with vertical drips"; the north-east wall is a wall from the bowl's centre; the Lamps near to read as lanterns against the dark, and the walk stops 100 m short of them; the scree's stones are flat chips of one size to the blind reader.
