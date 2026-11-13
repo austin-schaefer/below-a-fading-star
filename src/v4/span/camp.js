@@ -43,9 +43,11 @@ export function buildCamp(K) {
     return [x, ridge(u) * (1 - w) + (Y + 0.95) * w - belly, RZ + (208.95 - RZ) * w];
   }, 18, 10));
   cloth.push(sheet((u, v) => { // the wind-break, tied high at the west pole and pulled back to the stone's end
-    const d = 1 - v, x = P0 - 0.1 - 0.2 * Math.sin(u * 5.5) * (0.4 + d), z = RZ - 0.1 - 2.6 * u * (0.65 + 0.35 * v);
-    return [x - 0.05 * d * Math.sin(u * 13), RY - 0.08 - 1.55 * d * (1 - 0.25 * u * u), z];
-  }, 10, 8));
+    // hung from the rope's end and the stone's corner, it falls in deep vertical folds and gathers where it is tied
+    const d = 1 - v, fold = (0.16 + 0.1 * d) * Math.sin(u * 19) * (0.3 + 0.7 * Math.sin(Math.PI * u));
+    const x = P0 - 0.12 + fold - 0.15 * d * d, z = RZ - 0.1 - 2.5 * u * (0.6 + 0.4 * v) + 0.06 * Math.sin(u * 19 + 1.5);
+    return [x, RY - 0.08 - 1.6 * d * (1 - 0.3 * u * u) - 0.1 * Math.sin(Math.PI * u) * v, z];
+  }, 24, 8));
   // guy ropes from the pole tops forward to stones on the deck
   for (const [px, gx] of [[P0, 85.7], [P1, 91.6]]) {
     const A = new THREE.Vector3(px, RY, RZ), B = new THREE.Vector3(gx, Y + 0.1, RZ + 1.5), L = A.distanceTo(B);
