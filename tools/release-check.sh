@@ -14,6 +14,14 @@ rm -f /tmp/release-check.$$
 m=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -c '^- \[v')
 if [ "$m" = "$n" ]; then echo "PASS $n releases, $m README lines"; else echo "FAIL $n releases in RELEASES.md, $m lines in README.md Milestones"; fail=1; fi
 first=$(grep -m1 '^## v' RELEASES.md | sed 's/^## //'); top=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -m1 '^- \[v')
+# every major release (v<N>) has its picture in README.md's Progress boxes: the alt texts list the versions shown
+prog=$(sed -n '/^## Progress/,/^## Milestones/p' README.md | grep '^!\[' )
+shown=$(printf '%s\n' "$prog" | sed 's/\](.*//' | grep -oE '[0-9]+' | tr '\n' ' ')
+for N in $(grep -oE '^## v[0-9]+:' RELEASES.md | grep -oE '[0-9]+'); do
+  case " $shown " in *" $N "*) ;; *) echo "FAIL README.md Progress has no picture for v$N (tools/gallery.sh; release-notes.md, step 2)"; fail=1; miss=1;; esac
+done
+[ -z "$miss" ] && echo "PASS every major release has its picture in README.md Progress"
+for f in $(printf '%s\n' "$prog" | grep -oE 'shots/[^)]+'); do [ -f "$f" ] || { echo "FAIL README.md Progress shows $f, which does not exist"; fail=1; }; done
 # the working branch is checked out and pushed: a detached HEAD in the deploy worktree commits to nothing, and
 # `git push origin next` then reports nothing wrong (v9 was released from a stale `next` this way)
 br=$(git symbolic-ref --short -q HEAD || echo DETACHED)

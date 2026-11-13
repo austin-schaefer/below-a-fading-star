@@ -12,7 +12,7 @@ const page = await browser.newPage();
 await page.goto(`${base}/?q=low`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready') && window.__fp.settings, null, { timeout: 300000 });
 const out = await page.evaluate(() => {
-  const fp = window.__fp, SUN = fp.sky?.sunDir || null;
+  const fp = window.__fp;
   const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const yawToward = (fx, fz, tx, tz) => Math.atan2(-(tx - fx), -(tz - fz));
   return fp.settings.places.map((pl, i) => {

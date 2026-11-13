@@ -1,0 +1,8 @@
+# Brief: v11.1 W1, the wall close up and the sunward faces
+
+Goal: a visitor who walks to the foot of the wall and looks up sees rock, not a smooth painted slope: at 100 m, 40 m and 10 m there is something at each scale (beds, joints, cracks, lichen, rubble at the foot), and it does not shimmer or ring at grazing angles. And the southern massifs toward the sun (bearings about 190 to 260, seen from the bowl's centre and the causeway) stop reading smooth: v11's erosion shows on the north and east and washes out in the sun's glare and warm light. Three values on a face, there too.
+
+Read: `plans/wilderness-v11.md` Status (F1's entry on `fpWallSlope` and why the moiré happened: do not bring it back), `briefs/v11/brief-v11-M1-rock.md`, `visual-art` skill and its `land.md`, issue #33's body for the direction (`gh issue view 33 --json body --jq .body`).
+Files: `src/terrain.js`, the wall block only (bake and shader). The mesh is 2 to 3 m; close detail is the shader's (triplanar or footprint-filtered procedural detail fading in under about 150 m), unless you find a cheap way to add real relief. The material is shared with the regions' ground: confine changes to the wall and prove the bowl's ground unchanged (pixel diffs of bowl views).
+Done when: before/after of `tools/views-v11-mountains.json`; new close views (at least six: foot of the wall at three bearings, each at 100, 40 and 10 m, at a grazing angle too, at `SHOT_DPR` 1 and 2) with no moiré; the southern views show structure; `perf` not slower (say the numbers); `ONLY=mountains,perf,contrast,strata,edges,walk tools/suite.sh <port>` green.
+Others: W2 is reshaping the north-east wall and the Horn in `src/v4/mountains.js`; stay out of that file.

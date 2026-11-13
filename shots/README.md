@@ -90,8 +90,9 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 75 | v9 the Lantern Halt, a waystation on the causeway |
 | 76 | v10 something to do: chalking the Halt's tally, the rope seat and the sleeper, pouring for the missing diner, the hand on the Lattice, the knock at the Hypogeum, the edges; the first tally kept as the failure |
 | 77 | v11 the mountains: the ruled contours and fins replaced by eroded rock, new outlines and far ranges, the Escarpment Lamps as a city of windows on the south massif, the Galleries' ragged outline, the fitting pass; before and after from the same views, two failed intermediates kept |
+| 78 | v11.1 the mountains' weak spots (a point release, four keepers converted by hand): the wall close up, the north-east wall's buttresses and notch, the Lamps as rooms near to |
 
-`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp` and `gallery-v4-to-v7.webp` are the two labelled 2×2 grids the top-level `README.md` shows, built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
+`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` and `gallery-v8-to-v11.webp` are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
 ## Index
 
@@ -640,5 +641,9 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `77-mountains-span-far.webp` | From the reeds below the Span, the new outline of the ring mountains behind the gate. |
 | `77-mountains-spawn-y1-after.webp` | After: the spawn view from the tarn; the massif is one eroded face and the Galleries sit in it. |
 | `77-mountains-spawn-y1-before.webp` | Before: the same view with the ruled wall and the Galleries hung on it. |
+| `78-lamps-near.webp` | The Escarpment Lamps from 100 m below: framed windows, arches and shutters, lanterns along the ledge. |
+| `78-ne-wall-from-the-moor.webp` | The north-east wall from the moor: buttresses, a deep notch, the Vigilant on its shoulder. |
+| `78-wall-close-after.webp` | After: the foot of the wall at a grazing angle; jointed rock on the face, loose stone on the apron. |
+| `78-wall-close-before.webp` | Before: the same view, the face and the apron smooth. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

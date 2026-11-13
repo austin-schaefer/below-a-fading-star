@@ -14,10 +14,13 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ![Four screenshots: versions 4, 5, 6 and 7](shots/gallery-v4-to-v7.webp)
 
+![Four screenshots: versions 8, 9, 10 and 11](shots/gallery-v8-to-v11.webp)
+
 ## Milestones
 
 Each release, newest first, linked to its release notes. The full notes are in [`RELEASES.md`](RELEASES.md).
 
+- [v11.1: The mountains, up close](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v11.1). The mountains hold up when you walk right up to them.
 - [v11: Better mountains](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v11). The mountains around the valley finally look like mountains, and the city of windows moved somewhere better.
 - [v10: Things to do](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v10). The first things you can do, not just see: chalk a tally, ring a great bell, knock on a tomb door.
 - [v9.1: The Lantern Halt](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v9.1). A strange waystation on the road, and the music is easier to try.
