@@ -71,10 +71,15 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
 {
   const page = await open();
   const R = await page.evaluate(async () => {
-    const { fp, p, L, feet, place, run, walkTo, ticks, until, sane } = window.H, out = {};
+    const { fp, p, L, feet, place, run, walkTo, ticks, until, sane, tick } = window.H, out = {};
     const settle = () => new Promise((r) => setTimeout(r, 250)); // an act's promise settles (it is busy until then, and 0.1 s after)
     const st = L.stats();
-    out.built = { where: L.where(), S0: L.S0, SG: L.SG, rise: L.gal.y - L.floorY0, calls: st.calls, tris: st.tris, wedge: fp.mountains.corridors.some((c) => c.name === 'lift') };
+    const D2R = Math.PI / 180, tal = [Math.sin(280 * D2R) * 360, -Math.cos(280 * D2R) * 360];
+    out.built = { where: L.where(), S0: L.S0, SG: L.SG, rise: L.gal.y - L.floorY0, calls: st.calls, tris: st.tris, bands: fp.mountains.corridors.filter((c) => c.name === 'lift' && c.segs).length, wedge: fp.mountains.corridors.some((c) => c.name === 'lift' && c.wedge), floorLimit: fp.mountains.walkLimit(tal[0], tal[1]), inWalk: fp.mountains.inWalk(tal[0], tal[1]) };
+    // the draws in view at the top landing, looking north along the gallery and east over the valley
+    { const g = L.gal.landing; place(g.x - L.io.x * 1.2, g.z - L.io.z * 1.2, L.gal.y); const cam = fp.camera; const n = [];
+      for (const yaw of [Math.atan2(-L.al.x, -L.al.z), Math.atan2(-L.io.x, -L.io.z), Math.atan2(L.io.x, L.io.z)]) { p.yaw = yaw; p.pitch = -0.1; tick(); cam.position.copy(p.pos); cam.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); cam.updateMatrixWorld(); n.push(L.drawn(cam)); }
+      out.built.drawnTop = n; }
     // the station: from the path, up the stair, onto the platform
     const C0 = L.C0, al = L.al, io = L.io, S = L.station;
     const W = (x, z) => ({ x: C0.x + al.x * x + io.x * z, z: C0.z + al.z * x + io.z * z });
@@ -137,12 +142,20 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
     const hurryAt = (k, f, d, dir) => { const q = at(k, f, d); place(q.x, q.z, L.gal.y); p.yaw = dir; const r = run(150, ['KeyW', 'ShiftLeft']); return r.f; };
     const outY = Math.atan2(-io.x, -io.z), inY = Math.atan2(io.x, io.z);
     out.held = { rail: hurryAt(2, 0.4, 4.0, outY), rear: hurryAt(3, 0.5, 2.2, inY), want: L.gal.y };
+    // the deck's outer edge walked end to end, 0.55 m in from its lip (past the posts), the feet on the deck throughout
+    { const D = L.gal.D, edge = []; for (let k = 0; k < L.gal.nW; k++) for (const f of [0.1, 0.35, 0.65, 0.9]) { if (k === L.gal.nW - 1 && f > 0.4) continue; const q = at(k, f, D - 0.6 - 0.55 + 0.15); edge.push(q); }
+      place(edge[0].x, edge[0].z, L.gal.y); let low = Infinity, reached = 0;
+      for (const q of edge) { const w = walkTo(q.x, q.z, 400, 0.6); if (w.reached) reached++; low = Math.min(low, feet()); }
+      out.edgeWalk = { points: edge.length, reached, low, want: L.gal.y }; }
     // the odd cell's grille holds: walk at it from outside
     const o = L.gal.odd, og = o.c.clone().addScaledVector(o.n, 3.6).addScaledVector(o.u, o.door ?? 0.8);
     place(og.x, og.z, L.gal.y); p.yaw = Math.atan2(o.n.x, o.n.z);
     run(150, ['KeyW']);
     const dep = (p.pos.x - o.c.x) * o.n.x + (p.pos.z - o.c.z) * o.n.z;
     out.grille = { depth: dep, front: 2.5 };
+    // the gallery's bell is offered while the carriage is out on its own round
+    L.jump(L.SG); L.roam(); ticks(60 * 12);
+    { const bt0 = L.stand.top(); place(bt0.x, bt0.z, L.gal.y); p.yaw = bt0.yaw; out.roundBell = { moving: L.moving, s: L.s, may: fp.acts.may(fp.acts.list.find((h) => h.def.id === 'lift-call-top')) }; }
     // no trap: the carriage gone from the gallery; the gangway's end holds; the gallery's bell brings it back
     L.jump(L.S0);
     const gw = L.CG.clone().addScaledVector(io, -2.9);
@@ -183,7 +196,8 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
   });
   const B = R.built;
   check(B.where === 'gallery', 'built: the carriage rests at the gallery on load', B);
-  check(B.wedge, 'built: a wedge through the walk limit over the gallery');
+  check(B.bands >= 10 && !B.wedge && Math.abs(B.floorLimit - 348) < 0.01 && B.inWalk, 'built: band corridors over the gallery and its talus, the open floor (walkLimit) left at 348', B);
+  check(Math.max(...B.drawnTop) <= 25, 'built: draws of the lift in view at the top landing, three ways (25 at most)', B.drawnTop.join(', '));
   check(B.rise >= 100, 'built: the gallery stands 100 m and more over the station', `${f2(B.rise)} m`);
   check(B.calls <= 25 && B.tris < 400000, 'built: within the module budget (25 draws, 400k triangles)', `${B.calls} draws, ${Math.round(B.tris / 1000)}k tris`);
   check(R.stair.reached && Math.abs(R.stair.f - R.stair.want) < 0.05 && R.stair.maxAir < 0.3, 'station: walked up the stair from the path onto the platform', R.stair);
@@ -200,7 +214,9 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
   check(!U.ridden && !U.carried && U.where === 'gallery' && U.doors.w === 1 && Math.abs(U.f - U.want) < 0.05, 'ride up: set down on the cage floor at the gallery, the west grille open, pushing to walk mid-ride did nothing', U);
   check(R.gallery.reached === R.gallery.points && R.gallery.fellAt === null, 'gallery: walked out over the gangway and along the deck to the ragged end, the feet on it', R.gallery);
   check(Math.abs(R.held.rail - R.held.want) < 0.05 && Math.abs(R.held.rear - R.held.want) < 0.05, 'gallery: a hurry at the rail where it stands, and at the rock, stays on', R.held);
+  check(R.edgeWalk.low > R.edgeWalk.want - 0.05 && R.edgeWalk.reached >= R.edgeWalk.points - 3, 'gallery: its outer edge walked end to end, the deck under the feet all the way', R.edgeWalk);
   check(R.grille.depth > 2.5 + 0.3, 'gallery: the odd cell\'s locked grille holds the walker outside', R.grille);
+  check(R.roundBell.may && R.roundBell.s < 147, 'no trap: the gallery\'s bell is offered while the carriage is out on its round', R.roundBell);
   check(Math.abs(R.gangEnd.f - R.gangEnd.want) < 0.05, 'no trap: with the carriage gone the gangway\'s end holds', R.gangEnd);
   check(R.topBell.may && R.topBell.t > 0, 'no trap: the gallery\'s bell is offered and brings the carriage back up', R.topBell);
   check(R.inTop.inCage && R.inTop.may, 'ride down: the lever offered in the cage at the gallery', R.inTop);
@@ -225,17 +241,24 @@ for (const q of ['', '&fall=1']) {
       place(q.x, q.z, L.gal.y);
       if (yaw === null) { const e = L.gal.end; p.yaw = Math.atan2(-(e.x - q.x), -(e.z - q.z)); } else p.yaw = yaw;
       const fromY = p.pos.y;
-      if (!blackout) { run(240, ['KeyW', 'ShiftLeft']); const s = sane(); out.push({ name, dropped: +(fromY - p.pos.y).toFixed(1), ...s }); continue; }
+      if (!blackout) {
+        run(240, ['KeyW', 'ShiftLeft']); const s = sane(), dropped = +(fromY - p.pos.y).toFixed(1);
+        // and walks down the talus to the floor, toward the station (no slide loop at the slope's limit)
+        const w = window.H.walkTo(L.C0.x, L.C0.z, 60 * 120, 2); const r = Math.hypot(p.pos.x, p.pos.z);
+        out.push({ name, dropped, ...s, down: { reached: w.reached, r: +r.toFixed(1) } }); continue;
+      }
       // with the blackout, on the page's own frames (the fall's module runs there)
       p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
       await wait(1500); p.keys.clear();
       await wait(9000); await frames(5);
       out.push({ name, dropped: +(fromY - p.pos.y).toFixed(1), keep: +Math.hypot(p.pos.x - fp.spawn.x, p.pos.z - fp.spawn.z).toFixed(1), on: p.onGround, carried: p.carried });
     }
+    if (blackout) { const fb = L.stand.foot(); place(fb.x, fb.z, L.floorY0); p.yaw = fb.yaw; out.push({ footBell: { where: L.where(), may: fp.acts.may(fp.acts.list.find((h) => h.def.id === 'lift-call')) } }); }
     return out;
   }, !!q);
   for (const f of F) {
-    if (!q) check(f.ok && f.dropped > 20, `fall (no ?fall): off the gallery at the ${f.name}, a sane landing`, f);
+    if (f.footBell) { check(f.footBell.may, 'fall (?fall=1): walked back to the station, the carriage left up the face, its bell is offered', f.footBell); continue; }
+    if (!q) check(f.ok && f.dropped > 20 && f.down.reached, `fall (no ?fall): off the gallery at the ${f.name}, a sane landing, and walked down to the station`, f);
     else check(f.keep < 12 && f.on, `fall (?fall=1): off the gallery at the ${f.name}: blacked out and woken at the keep's gate`, f);
   }
   await page.close();

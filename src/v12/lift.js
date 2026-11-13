@@ -11,15 +11,19 @@
 // breadth before it goes on. At the top the west grille opens on a gangway to the gallery at 135 m
 // (src/v12/lift/gallery.js): about 100 m of iron walkway on the cliff, the cells against the rock, the valley east, to
 // the ragged end. Ride down the same way, or ring for it there. No trap: the carriage waits at a landing while the
-// visitor is near; either landing's bell brings it; a fall from the gallery lands on the talus inside the wedge this
-// opens through the walk limit (or, with ?fall=1, blacks out and wakes at the keep's gate).
+// visitor is near; either landing's bell always brings it, whatever it is doing; a fall from the gallery lands on the
+// talus inside the band corridors laid from the gallery down to the walk limit (they let a walker stand there without
+// adding open floor), and walks down (or, with ?fall=1, blacks out and wakes at the keep's gate). Sounds:
+// src/v12/lift-sound.js. The carriage's update runs every frame within 140 m and at 15 Hz beyond (it is seen moving
+// from the floor); the gallery's only within 90 m of it.
 //
 // The ride is ctx.controls.carry (the look free, turned at the beats while the visitor leaves it alone; the paused card
 // and the settings panel hold the carriage where it is). Three acts: 'lift-call' (the station's bell), 'lift-lever' (in
 // the cage, at either landing) and 'lift-call-top' (the gallery's bell). Floors: the station's plinth and stair, the
 // cage's floor wherever it rests, the gangway, the gallery: stacked, edges held (an edge onto another floor is open).
 // ?lift=0 leaves it out (and src/v5/galleries.js draws the carriage in the shader as before).
-// ctx.lift: { state(), cage, station, gallery, call(where), ride(), S0, SG, stats() } for the tests and tools/lift-walk.mjs.
+// ctx.lift: { where(), heading(), cage, gal, station, call(where), ride(), jump(), tick(), S0, SG, stats(), drawn(camera) } for
+// the tests and tools/lift-walk.mjs.
 import * as THREE from 'three';
 import { makeStoneMaterial } from '../structures/materials.js';
 import { Builder } from '../structures/geo.js';
@@ -54,6 +58,7 @@ export async function build(ctx) {
 
   // ---- the gallery, and where the carriage stops: the foot (its floor FOOT_CLEAR over the ground under it), the gallery
   const gal = buildGallery(ctx, { geo, stone, iron, low });
+  group.add(gal.group); // one group for the module (its draws are counted together)
   const SG = sOfY(gal.y);
   const footprint = (s) => { const c = cageAt(s); let g = -Infinity; for (const a of [-w2, 0, w2]) for (const b of [-d2, 0, d2]) g = Math.max(g, T.heightAt(c.x + al.x * a + io.x * b, c.z + al.z * a + io.z * b)); return c.y - g; };
   let S0 = 1; while (S0 < 20 && footprint(S0) < FOOT_CLEAR) S0 += 0.05;
@@ -76,7 +81,7 @@ export async function build(ctx) {
   for (let it = 0; it < 4; it++) { const p = toW(0, 0, PLAT.z1 + nSteps * tread), g = T.heightAt(p.x, p.z); nSteps = Math.max(4, Math.ceil((floorY0 - g) / 0.25)); rise = (floorY0 - g) / nSteps; }
   const STAIR = { x: 1.6, z0: PLAT.z1, z1: PLAT.z1 + nSteps * tread, n: nSteps, rise, tread };
   const stationFloor = (x, z) => {
-    if (x > -270 || x < -330) return null;
+    const ex = x - C0.x, ez = z - C0.z; if (ex * ex + ez * ez > 900) return null;
     const [lx, lz] = loc(x, z, C0);
     if (lz >= PLAT.z0 && lz <= PLAT.z1 && Math.abs(lx) <= PLAT.x) return floorY0;
     if (lz >= d2 - 0.06 && lz < PLAT.z0 && Math.abs(lx) <= PLAT.door) return floorY0; // the step to the cage's east door
@@ -89,7 +94,7 @@ export async function build(ctx) {
   const landL = loc(gal.landing.x, gal.landing.z, CG);
   const GANG = { x: 0.8, z0: landL[1] - 0.35, z1: -OUT - 0.32 };
   const gangFloor = (x, z) => {
-    if (x > -350) return null;
+    const ex = x - CG.x, ez = z - CG.z; if (ex * ex + ez * ez > 64) return null;
     const [lx, lz] = loc(x, z, CG);
     return Math.abs(lx) <= GANG.x && lz >= GANG.z0 && lz <= GANG.z1 ? gal.y : null;
   };
@@ -112,7 +117,7 @@ export async function build(ctx) {
   ctx.addWalkable(cageFloor, { stack: true, keep: true, name: 'lift-cage' });
 
   // ---- the station's stone and iron (frame: x along al, z out along io from C0; y world)
-  const B = new Builder(ctx.noise), Bi = new Builder(ctx.noise); // the station's stone, and its iron
+  const B = new Builder(ctx.noise), Bi = new Builder(ctx.noise), Bg = new Builder(ctx.noise); // the station's stone and iron; the gangway's (135 m up, culled apart)
   const stoneC = new THREE.Color('#77706a'), darkC = new THREE.Color('#4e4a46'), ironC = new THREE.Color('#2e241c'), bronze = new THREE.Color('#7a5a2c'), ropeC = new THREE.Color('#8a7656'), woodC = new THREE.Color('#5a3e26');
   const qS = new THREE.Quaternion().setFromRotationMatrix(basis);
   const put = (g, x, y, z, o, rx = 0, ry = 0, rz = 0) => (o.iron > 0.3 ? Bi : B).add(g, new THREE.Matrix4().compose(toW(x, y, z), qS.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz))), new THREE.Vector3(1, 1, 1)), o);
@@ -139,10 +144,19 @@ export async function build(ctx) {
     put(B.box(1.2, 1.0, 1.6, { chip: 0.06 }), lp[0], T.heightAt(p.x, p.z) - 0.2, lp[1], { color: darkC, course: 0, moss: 0.8 });
     put(B.box(0.5, 0.5, 0.5), lp[0], T.heightAt(p.x, p.z) + 0.45, lp[1] + 0.4, { color: ironC, iron: 1, moss: 0 });
   }
+  // under the cage at rest: a block of stone the carriage settles over, so nobody stands under it as it lands
+  {
+    const g0 = groundMin(-w2, w2, -d2 + 0.4, d2) - 0.8, top = floorY0 - 0.4;
+    put(B.box(CAGE.W + 0.2, top - g0, CAGE.D - 0.4, { chip: 0.05, seg: 1.2 }), 0, (top + g0) / 2, 0.2, { color: darkC, course: 0.5, moss: 0.6, ground: g0 + 0.8 });
+    const a = toW(-w2, 0, 0.2), b = toW(w2, 0, 0.2);
+    ctx.addCollider({ x1: a.x, z1: a.z, x2: b.x, z2: b.z, r: (CAGE.D - 0.4) / 2, y: g0, h: top - g0, stand: false });
+  }
   // the counterweight's pit: a kerb of four stones round a square of dark where the weight sinks
   const pitC = railAt(0).addScaledVector(al, WEIGHT_AL).addScaledVector(io, 0.3);
   const pitL = loc(pitC.x, pitC.z, C0), pitG = T.heightAt(pitC.x, pitC.z);
   for (const [dx, dz, w, d] of [[0, -1.25, 2.6, 0.5], [0, 1.25, 2.6, 0.5], [-1.15, 0, 0.5, 2.0], [1.15, 0, 0.5, 2.0]]) put(B.box(w, 0.9, d, { chip: 0.06 }), pitL[0] + dx, pitG + 0.05, pitL[1] + dz, { color: darkC, course: 0, moss: 0.8 });
+  ctx.addCollider({ x: pitC.x, z: pitC.z, r: 1.45, y: pitG - 2, h: 2.5, stand: false }); // the pit and the weight in it
+  for (const f of Lg.trestleFeet || []) ctx.addCollider({ x: f[0], z: f[2], r: 0.4, y: f[1] - 1, h: 80, stand: false }); // the trestles' legs
   // the arch over the platform's west end, a bell in its crown, the pull hanging by its south post
   const ARCH = { z: PLAT.z0 + 0.35, x: 2.3, h: 4.6 };
   for (const s of [-1, 1]) {
@@ -164,7 +178,7 @@ export async function build(ctx) {
   // the gangway at the top: iron plates on two stringers from the deck's lip to the rails, a handrail each side
   {
     const toG = (x, y, z) => CG.clone().addScaledVector(al, x).addScaledVector(io, z).setY(y);
-    const putG = (g, x, y, z, o) => Bi.add(g, new THREE.Matrix4().compose(toG(x, y, z), qS, new THREE.Vector3(1, 1, 1)), o);
+    const putG = (g, x, y, z, o) => Bg.add(g, new THREE.Matrix4().compose(toG(x, y, z), qS, new THREE.Vector3(1, 1, 1)), o);
     const L = GANG.z1 - GANG.z0, zc = (GANG.z0 + GANG.z1) / 2, gy = gal.y;
     const n = Math.round(L / 0.6);
     for (let i = 0; i < n; i++) putG(new THREE.BoxGeometry(GANG.x * 2, 0.05, L / n - 0.03), 0, gy - 0.025, GANG.z0 + (i + 0.5) * L / n, { color: i % 4 === 1 ? new THREE.Color('#33211a') : ironC, iron: 0.4, moss: 0 });
@@ -185,9 +199,10 @@ export async function build(ctx) {
   // the bells: one at the station's arch, one at the gallery's landing, each swung on a yoke by its pull
   const bellGeo = (() => {
     const Bb = new Builder(ctx.noise);
-    Bb.add(Bb.cyl(0.13, 0.32, 0.5, 14, 2, true), new THREE.Matrix4().setPosition(0, -0.35, 0), { color: bronze, iron: 0.5, moss: 0 });
-    Bb.add(Bb.cyl(0.13, 0.13, 0.08, 14, 1), new THREE.Matrix4().setPosition(0, -0.1, 0), { color: bronze, iron: 0.5, moss: 0 });
-    Bb.add(new THREE.SphereGeometry(0.06, 8, 6), new THREE.Matrix4().setPosition(0, -0.62, 0), { color: ironC, iron: 1, moss: 0 });
+    Bb.add(Bb.cyl(0.17, 0.42, 0.66, 16, 3, true), new THREE.Matrix4().setPosition(0, -0.43, 0), { color: bronze, iron: 0.5, moss: 0 });
+    Bb.add(Bb.cyl(0.46, 0.44, 0.06, 16, 1), new THREE.Matrix4().setPosition(0, -0.77, 0), { color: bronze, iron: 0.5, moss: 0 }); // its lip
+    Bb.add(Bb.cyl(0.17, 0.17, 0.1, 14, 1), new THREE.Matrix4().setPosition(0, -0.1, 0), { color: bronze, iron: 0.5, moss: 0 });
+    Bb.add(new THREE.SphereGeometry(0.08, 8, 6), new THREE.Matrix4().setPosition(0, -0.78, 0), { color: ironC, iron: 1, moss: 0 });
     Bb.add(new THREE.BoxGeometry(0.06, 0.06, 0.9), new THREE.Matrix4().setPosition(0, -0.04, 0), { color: woodC, moss: 0 }); // the yoke
     Bb.add(new THREE.BoxGeometry(0.05, 0.05, 1.45), new THREE.Matrix4().setPosition(0, -0.04, 1.1), { color: ironC, iron: 1, moss: 0 }); // the lever arm the pull hangs from
     return Bb.build();
@@ -196,38 +211,45 @@ export async function build(ctx) {
   const makeBell = (key, pos, quat, cordLen) => {
     const pivot = new THREE.Group(); pivot.position.copy(pos); pivot.quaternion.copy(quat);
     const m = new THREE.Mesh(bellGeo, iron); m.castShadow = true; pivot.add(m);
-    const cordG = new THREE.CylinderGeometry(0.014, 0.014, 1, 5, 1); cordG.translate(0, -0.5, 0);
-    const cord = new THREE.Mesh(cordG, new THREE.MeshStandardMaterial({ color: ropeC, roughness: 1 }));
-    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 6), new THREE.MeshStandardMaterial({ color: '#c8a878', roughness: 0.8 }));
-    group.add(pivot, cord, handle);
-    const b = bells[key] = { pivot, cord, handle, len: cordLen, swing: -1, arm: new THREE.Vector3(0, -0.04, 1.8), handleAt: new THREE.Vector3() };
+    // the pull: a rope from the arm and a turned wooden handle, one draw, hung from its top and moved down as it is pulled
+    const Bp = new Builder(ctx.noise);
+    Bp.add(new THREE.CylinderGeometry(0.02, 0.02, cordLen, 5, 1), new THREE.Matrix4().setPosition(0, -cordLen / 2, 0), { color: ropeC, moss: 0 });
+    Bp.add(new THREE.CylinderGeometry(0.04, 0.045, 0.26, 8), new THREE.Matrix4().setPosition(0, -cordLen - 0.1, 0), { color: new THREE.Color('#c8a878'), moss: 0 });
+    Bp.add(new THREE.TorusGeometry(0.05, 0.012, 4, 10), new THREE.Matrix4().setPosition(0, -cordLen + 0.05, 0), { color: ropeC, moss: 0 });
+    const cord = new THREE.Mesh(Bp.build(), iron); cord.castShadow = true;
+    group.add(pivot, cord);
+    const b = bells[key] = { pivot, cord, len: cordLen, swing: -1, arm: new THREE.Vector3(0, -0.04, 1.8), handleAt: new THREE.Vector3() };
+    bellList.push(b);
     placeCord(b, 0);
     return b;
   };
-  const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), DN = new THREE.Vector3(0, -1, 0);
+  const tmpA = new THREE.Vector3(), bellList = [];
   function placeCord(b, pull) {
     b.pivot.updateMatrixWorld();
     tmpA.copy(b.arm).applyMatrix4(b.pivot.matrixWorld);
-    tmpB.copy(tmpA); tmpB.y -= b.len + pull;
-    b.cord.position.copy(tmpA); b.cord.scale.set(1, b.len + pull, 1); b.cord.quaternion.identity();
-    b.handle.position.copy(tmpB); b.handleAt.copy(tmpB);
+    if (b.top === undefined) b.top = tmpA.clone(); // where it hangs from at rest; the swing does not carry the rope
+    b.cord.position.copy(b.top); b.cord.position.y -= pull;
+    b.handleAt.copy(b.top); b.handleAt.y -= b.len + 0.1;
   }
   const bellQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(io, UP, al.clone().negate())); // the yoke along al, its arm south
   makeBell('foot', toW(0, floorY0 + ARCH.h + 0.62, ARCH.z), bellQ, ARCH.h + 0.62 - 0.04 - 1.25);
   // the gallery's bell: hung from a little iron gallows on the deck north of the gangway, its pull beside it
   {
     const foot2 = new THREE.Vector3(gal.landing.x, gal.y, gal.landing.z).addScaledVector(al, 0.9).addScaledVector(io, -3.9);
-    const tb = new Builder(ctx.noise);
+    const tb = Bg;
     const q = (x, y, z) => foot2.clone().addScaledVector(io, x).addScaledVector(al, z).add(new THREE.Vector3(0, y, 0));
     tb.add(new THREE.BoxGeometry(0.12, 3.9, 0.12), new THREE.Matrix4().compose(q(-0.4, 1.95, 0), qS, new THREE.Vector3(1, 1, 1)), { color: ironC, iron: 1, moss: 0 });
     tb.add(new THREE.BoxGeometry(0.6, 0.1, 0.1), new THREE.Matrix4().compose(q(-0.15, 3.85, 0), qS, new THREE.Vector3(1, 1, 1)), { color: ironC, iron: 1, moss: 0 });
     tb.add(new THREE.BoxGeometry(0.06, 0.6, 0.06), new THREE.Matrix4().compose(q(-0.35, 3.5, 0), qS.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, 0.8))), new THREE.Vector3(1, 1, 1)), { color: ironC, iron: 1, moss: 0 });
-    const br = new THREE.Mesh(tb.build(), iron); br.name = 'lift-gallery-bell-gallows'; br.castShadow = true; group.add(br);
     const pp = q(-0.4, 0, 0); ctx.addCollider({ x: pp.x, z: pp.z, r: 0.12, y: gal.y, h: 4, stand: false });
     const topQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(io.clone().negate(), UP, al)); // its arm north
     makeBell('top', q(0, 3.75, 0), topQ, 3.75 - 0.04 - 1.25);
     bells.top.q = topQ;
   }
+
+  const gangMesh = new THREE.Mesh(Bg.build(), iron);
+  gangMesh.name = 'lift-gangway'; gangMesh.castShadow = true; gangMesh.receiveShadow = true;
+  group.add(gangMesh);
 
   // ---- the counterweight: a block of iron on its own guide north of the rails, the sun-in-the-notch cast on its face;
   // it hangs from the other end of the cable, so it rises as the carriage comes down
@@ -258,7 +280,8 @@ export async function build(ctx) {
     const m = new THREE.Mesh(Bh.build(), iron); m.name = 'lift-head';
     return m;
   })();
-  const headAt = headP.clone().addScaledVector(io, 0.42 + 1.1 * 0.0).add(new THREE.Vector3(0, 1.1, 0));
+  const headAt = headP.clone().addScaledVector(io, 0.42).add(new THREE.Vector3(0, 1.1, 0));
+  const headC = headAt.clone().addScaledVector(io, 1.0).add(new THREE.Vector3(0, 0.3, 0)), headW = headC.clone().addScaledVector(al, WEIGHT_AL);
   head.position.copy(headAt); head.quaternion.setFromRotationMatrix(basis);
   group.add(head);
   // the cables: the carriage's from its yoke to the head, the weight's from the head to its ring (one instanced draw)
@@ -268,13 +291,13 @@ export async function build(ctx) {
   group.add(cables);
 
   // ---- the motion: s along the rails (0 at the rails' foot), its speed, a queue of steps, the jolts
-  let s = SG, v = 0, t = 0, seq = [], cur = null, shake = 0, shakeT = 9, nextJudder = 6, judderAmp = 0;
+  let runT = 0, s = SG, v = 0, seq = [], cur = null, shake = 0, shakeT = 9, nextJudder = 6, callTo = null;
   let ridden = false, release = null, rideEnd = null, took = false, rideT = 0, rideDir = 0, idleFoot = 0, idleTop = 0, roamWait = 50;
   const rng = ctx.makeRng(1207);
   const off = new THREE.Vector3(); // the rider's eye from the cage's floor middle
   const lookV = { yaw: 0, pitch: 0, rate: 0 };
-  let keysA = 0, keysV = 0, keysB = 0, keysVB = 0, lastV = 0, leverT = -1, headTurn = 0;
-  const go = (to, o = {}) => seq.push({ k: 'move', to, ...o });
+  let keysA = 0, keysV = 0, keysB = 0, keysVB = 0, lastV = 0, leverT = -1;
+  const go = (to, o = {}) => seq.push({ k: 'move', to, lo: o.slow ? Math.min(...o.slow) : 0, hi: o.slow ? Math.max(...o.slow) : -1 });
   const wait = (sec, f) => seq.push({ k: 'wait', sec, f });
   const door = (which, open) => seq.push({ k: 'door', which, open });
   const fn = (f) => seq.push({ k: 'fn', f });
@@ -283,11 +306,13 @@ export async function build(ctx) {
   const heading = () => { const q = [cur, ...seq].filter((x) => x && x.k === 'move').pop(); return q ? q.to : null; };
   // the round it makes by itself: down past the lower tiers, a stop at each, and back to the gallery
   function round() {
+    callTo = null;
     door('w', false);
     for (const sr of sRound) { go(sr); wait(9 + rng() * 6); }
     go(SG); door('w', true);
   }
   function call(to) {
+    callTo = to;
     seq = []; // whatever it was doing next is dropped: it finishes the step it is in, if that is a move it is turned
     if (cur && cur.k === 'move') cur.to = to; else if (cur && cur.k === 'wait') cur = null;
     const here = to === S0 ? 'e' : 'w', there = to === S0 ? 'w' : 'e';
@@ -302,7 +327,7 @@ export async function build(ctx) {
   function ride() {
     const up = where() === 'foot';
     const to = up ? SG : S0;
-    ridden = true; took = false; rideT = 0; rideDir = up ? 1 : -1;
+    ridden = true; took = false; rideT = 0; rideDir = up ? 1 : -1; callTo = to;
     off.copy(P.pos).sub(cc);
     let lx = off.x * al.x + off.z * al.z, lz = off.x * io.x + off.z * io.z;
     lx = Math.max(-w2 + 0.6, Math.min(w2 - 0.45, lx)); lz = Math.max(-d2 + 0.45, Math.min(d2 - 0.45, lz));
@@ -318,7 +343,7 @@ export async function build(ctx) {
     if (up) {
       const sStop = sOfY(92);
       go(sStop, { slow: [sOfY(38), sOfY(52)] });
-      wait(4.0, () => { ctx.audio?.cue('act-lift-creak', cageAt(s)); });
+      wait(1.4); fn(() => ctx.audio?.cue('act-lift-creak', cageAt(s))); wait(2.6); // the stop: silence, then the iron groans
       fn(() => { jolt(0.09); s -= 0.14; }); wait(0.9);
       go(to);
     } else go(to, { slow: [sOfY(52), sOfY(38)] });
@@ -326,6 +351,7 @@ export async function build(ctx) {
     fn(() => { if (release) { release(); release = null; P.vel.set(0, 0, 0); P.vy = 0; } ridden = false; rideEnd?.(); rideEnd = null; });
     return new Promise((res) => { rideEnd = res; });
   }
+  const yawTo = (x, z) => Math.atan2(-(x - P.pos.x), -(z - P.pos.z));
   const carrier = {
     step(pos) { pos.copy(cc).add(off); },
     drop() { release = null; ridden = false; rideEnd?.(); rideEnd = null; }, // a teleport: the carriage goes on to its landing and waits
@@ -337,11 +363,10 @@ export async function build(ctx) {
       const beat = crossing || arriving;
       if (took ? !(quiet > 3 && beat) : quiet < 0.3) return null;
       const px = P.pos.x, pz = P.pos.z;
-      const yawTo = (x, z) => Math.atan2(-(x - px), -(z - pz));
-      if (arriving && rideDir > 0) { const g = new THREE.Vector3(gal.landing.x, 0, gal.landing.z); lookV.yaw = yawTo(g.x, g.z); lookV.pitch = 0.02; lookV.rate = 1.6; return lookV; }
+      if (arriving && rideDir > 0) { lookV.yaw = yawTo(gal.landing.x, gal.landing.z); lookV.pitch = 0.02; lookV.rate = 1.6; return lookV; }
       if (arriving) { lookV.yaw = yawTo(px + io.x, pz + io.z); lookV.pitch = -0.12; lookV.rate = 1.4; return lookV; }
       if (crossing) { // the counterweight going down past them, close on the north side
-        const w = railAt(SG - s).addScaledVector(al, WEIGHT_AL);
+        const w = railAt(SG - s, _lk).addScaledVector(al, WEIGHT_AL);
         lookV.yaw = yawTo(w.x, w.z); lookV.pitch = Math.atan2(w.y - 1.5 - P.pos.y, hyp(w.x - px, w.z - pz)); lookV.rate = 1.2; return lookV;
       }
       if (tiers) { lookV.yaw = yawTo(px + al.x * 10 - io.x * 2.5, pz + al.z * 10 - io.z * 2.5); lookV.pitch = 0.12; lookV.rate = 0.7; return lookV; }
@@ -357,8 +382,8 @@ export async function build(ctx) {
 
   // where the lever is (in the world), for its act
   const leverAt = { x: 0, y: 0, z: 0 };
-  const _lv = new THREE.Vector3();
-  function leverWorld() { _lv.copy(cage.lever.position); _lv.y += 1.2; return _lv.applyMatrix4(cage.group.matrix); }
+  const _lv = new THREE.Vector3(), _lk = new THREE.Vector3();
+  function leverWorld() { return _lv.copy(cage.leverAt).applyMatrix4(cage.group.matrix); }
   const inCage = () => {
     const dx = P.pos.x - cc.x, dz = P.pos.z - cc.z, lx = dx * al.x + dz * al.z, lz = dx * io.x + dz * io.z;
     return Math.abs(lx) < w2 && Math.abs(lz) < d2 && Math.abs(P.pos.y - P.eye - cc.y) < 0.4;
@@ -368,7 +393,7 @@ export async function build(ctx) {
   const card = typeof document !== 'undefined' ? document.getElementById('card') : null;
   const open = () => P.enabled && !ctx.settings?.shown && (!card || card.classList.contains('hidden'));
   const _c = new THREE.Vector3(), _w = new THREE.Vector3(), _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(1, 1, 1);
-  const flick = ctx.sky?.flicker;
+  const _y = new THREE.Vector3(), _d = new THREE.Vector3(), XA = new THREE.Vector3(1, 0, 0);
 
   function step(dt) {
     if (!cur) cur = seq.shift() || null;
@@ -386,11 +411,13 @@ export async function build(ctx) {
       if (!cur.started) { cur.started = true; moving = true; jolt(0.04); }
       const d = cur.to - s, sg = Math.sign(d);
       let vmax = V.max;
-      if (cur.slow && s > Math.min(...cur.slow) && s < Math.max(...cur.slow)) vmax = V.slow;
+      if (s > cur.lo && s < cur.hi) vmax = V.slow;
       const want = sg * Math.min(vmax, Math.sqrt(2 * V.acc * 0.9 * Math.abs(d)));
       v += Math.sign(want - v) * Math.min(Math.abs(want - v), V.acc * dt);
       s += v * dt;
       if ((sg > 0 && s >= cur.to) || (sg < 0 && s <= cur.to) || (Math.abs(d) < 0.01)) { s = cur.to; v = 0; moving = false; jolt(0.05); cur = null; }
+      // its running, cued again every 1.2 s where it is, so the sound travels with it
+      if (moving && (runT -= dt) <= 0) { runT = 1.2; if (Math.abs(v) > 0.3) ctx.audio?.cue('act-lift-run', cageAt(s), { speed: Math.abs(v) }); }
       // a judder now and then on the way
       if (moving && (nextJudder -= dt) < 0) { nextJudder = 4 + rng() * 6; jolt(0.025 + rng() * 0.02); }
     }
@@ -405,44 +432,44 @@ export async function build(ctx) {
     cc.copy(_c);
     _m.copy(basis).setPosition(_c);
     cage.group.matrix.copy(_m); cage.group.matrixWorldNeedsUpdate = true;
-    // the doors slide north along their walls
-    cage.doors.e.position.x = doorOpen.e * (CAGE.DOOR * 0.98); cage.doors.w.position.x = doorOpen.w * (CAGE.DOOR * 0.98);
-    cage.sill.rotation.x = (1 - Math.min(1, doorOpen.w * 1.3)) * Math.PI / 2;
+    // the doors slide north along their walls; the sill folds down onto the gangway as the west one opens
+    const PU = cage.PU;
+    PU.uDoor.value.set(doorOpen.e * (CAGE.DOOR * 0.98), doorOpen.w * (CAGE.DOOR * 0.98));
+    PU.uSill.value = (1 - Math.min(1, doorOpen.w * 1.3)) * Math.PI / 2;
     // the lever thrown back and settling
-    if (leverT >= 0) { leverT += dt; const k = Math.min(1, leverT / 0.35); cage.lever.userData.handle.rotation.x = 0.45 - 0.9 * k + (leverT > 2.5 ? 0.9 * Math.min(1, (leverT - 2.5) / 1.2) : 0); if (leverT > 3.8) leverT = -1; }
+    if (leverT >= 0) { leverT += dt; const k = Math.min(1, leverT / 0.35); PU.uLever.value = 0.45 - 0.9 * k + (leverT > 2.5 ? 0.9 * Math.min(1, (leverT - 2.5) / 1.2) : 0); if (leverT > 3.8) leverT = -1; }
     // the keys swing: a pendulum kicked by the cage's acceleration and its jolts
     const acc = (v - lastV) / Math.max(dt, 1e-3); lastV = v;
     keysV += (-36 * keysA - 1.4 * keysV + acc * 1.1 + sh * 40) * dt; keysA += keysV * dt;
     keysVB += (-36 * keysB - 1.4 * keysVB + sh2 * 50) * dt; keysB += keysVB * dt;
-    cage.keys.rotation.set(keysA * 0.9, 0, keysB);
-    // the lamp burns lower while the sun gutters? no: it is lit by its own oil, and only flickers when the cage is jolted
+    PU.uKeys.value.set(keysA * 0.9, keysB);
+    // the lamp is lit by its own oil (it does not answer the sun's gutter); it flickers when the cage is jolted
     cage.light.intensity = 3.2 * (1 - Math.min(0.6, Math.abs(sh) * 8));
     cage.haloU.uScale.value = ctx.renderer.domElement.height / (2 * Math.tan((ctx.camera.fov * Math.PI / 180) / 2));
     // the counterweight, the cables, the head turning with the cable run
     const sw = SG - s;
     railAt(sw, _w).addScaledVector(al, WEIGHT_AL).addScaledVector(io, 0.75);
     weight.matrix.copy(wBasis).setPosition(_w); weight.matrixWorldNeedsUpdate = true;
-    const yoke = _c.clone().addScaledVector(al, cage.yokeL.x).addScaledVector(io, cage.yokeL.z); yoke.y += cage.yokeL.y;
-    const headC = headAt.clone().addScaledVector(io, 1.0).add(new THREE.Vector3(0, 0.3, 0)), headW = headC.clone().addScaledVector(al, WEIGHT_AL);
-    setCable(0, yoke, headC);
-    setCable(1, _w.clone().addScaledVector(wDir, 0.05), headW);
-    head.rotation.set(0, 0, 0); head.quaternion.setFromRotationMatrix(basis).multiply(_q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -s / 1.1));
+    _y.copy(_c).addScaledVector(al, cage.yokeL.x).addScaledVector(io, cage.yokeL.z); _y.y += cage.yokeL.y;
+    setCable(0, _y, headC);
+    _d.copy(_w).addScaledVector(wDir, 0.05);
+    setCable(1, _d, headW);
+    head.quaternion.copy(qS).multiply(_q.setFromAxisAngle(XA, -s / 1.1));
     // the bells' swing
-    for (const b of Object.values(bells)) {
+    for (const b of bellList) {
       if (b.swing < 0) continue;
       b.swing += dt;
       const a = Math.exp(-b.swing / 1.6) * Math.sin(b.swing * 2 * Math.PI * 0.9) * 0.6;
-      b.pivot.quaternion.copy(b.q || bellQ).multiply(_q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), a));
+      b.pivot.quaternion.copy(b.q || bellQ).multiply(_q.setFromAxisAngle(XA, a));
       placeCord(b, b.swing < 0.4 ? Math.sin(b.swing / 0.4 * Math.PI) * 0.3 : 0);
       if (b.swing > 8) { b.swing = -1; b.pivot.quaternion.copy(b.q || bellQ); placeCord(b, 0); }
     }
     // the lever's act stands where the lever is
     const lw = leverWorld(); leverAt.x = lw.x; leverAt.y = lw.y; leverAt.z = lw.z;
-    void tt; void flick;
   }
-  const _cm = new THREE.Matrix4(), _cq = new THREE.Quaternion();
+  const _cm = new THREE.Matrix4(), _cq = new THREE.Quaternion(), _cd = new THREE.Vector3();
   function setCable(i, a, b) {
-    const d = b.clone().sub(a), l = d.length();
+    const d = _cd.copy(b).sub(a), l = d.length();
     _cq.setFromUnitVectors(UP, d.divideScalar(l || 1));
     _cm.compose(a, _cq, _s.set(1, l, 1)); cables.setMatrixAt(i, _cm); _s.set(1, 1, 1);
     cables.instanceMatrix.needsUpdate = true;
@@ -457,13 +484,13 @@ export async function build(ctx) {
   const callFoot = ctx.acts?.add({
     id: 'lift-call', at: { x: footCord.x, y: footCord.y + 0.2, z: footCord.z }, reach: 2.4, rise: 2.4, face: { x: io.x, z: io.z },
     words: 'Ring for the carriage', every: 'free',
-    when: () => !ridden && where() !== 'foot' && heading() !== S0,
+    when: () => !ridden && where() !== 'foot' && callTo !== S0 && !(pendingCall && pendingCall.to === S0),
     do() { ring('foot'); callAfter(S0, 1.2); return 2.4; },
   });
   const callTop = ctx.acts?.add({
     id: 'lift-call-top', at: { x: topCord.x, y: topCord.y + 0.2, z: topCord.z }, reach: 2.4, rise: 2.4, face: { x: -io.x, z: -io.z },
     words: 'Ring for the carriage', every: 'free',
-    when: () => !ridden && where() !== 'gallery' && heading() !== SG,
+    when: () => !ridden && where() !== 'gallery' && callTo !== SG && !(pendingCall && pendingCall.to === SG),
     do() { ring('top'); callAfter(SG, 1.2); return 2.4; },
   });
   const leverAct = ctx.acts?.add({
@@ -475,12 +502,16 @@ export async function build(ctx) {
   let pendingCall = null;
   function callAfter(to, sec) { pendingCall = { to, t: sec }; }
 
-  // ---- the walk limit: a wedge through it over the gallery's bearings, out past the gallery's rear (a fall from it
-  // lands on the talus inside the wedge, and walks down to the floor)
-  const az = (b) => (b - 90) * Math.PI / 180;
-  const b0 = Math.min(Lg.b, gal.bs[0]) - 0.6, b1 = gal.end.b + 2.4;
-  const rMax = Math.max(...gal.back.slice(0, gal.nW + 1)) + 1.5;
-  const removeCorridor = ctx.mountains.addCorridor({ name: 'lift', wedge: { az: az((b0 + b1) / 2), half: az(b1) - az((b0 + b1) / 2), taper: Math.PI / 180, r: rMax } });
+  // ---- the walk limit: band corridors, not open floor (walkLimit, what grazers and paving spread over, is unchanged).
+  // One along the gallery's deck, and spokes from the deck's rear down the face to just inside the circle at every bay's
+  // end, 5 m either side, overlapping: a walker on the gallery may stand there, and one who falls lands on the talus
+  // between deck and floor inside a band and can walk down it to the floor
+  const spokes = [];
+  const spoke = (b) => { const a = (b - 90) * Math.PI / 180, cx = Math.cos(a), cz = Math.sin(a); const bk = gal.backAt(b); spokes.push(ctx.mountains.addCorridor({ name: 'lift', pts: [[cx * (bk + 1), cz * (bk + 1)], [cx * 344, cz * 344]], half: 5 })); };
+  for (let k = 0; k <= gal.nW; k++) spoke(gal.bs[k]);
+  spoke(gal.bs[0] - 0.5); spoke((gal.bs[gal.nW - 1] + gal.end.b) / 2); spoke(gal.end.b + 0.8); spoke(gal.end.b + 1.6);
+  spokes.push(ctx.mountains.addCorridor({ name: 'lift', pts: gal.deckLine, half: gal.D / 2 + 1.5 }));
+  const removeCorridor = () => { for (const r of spokes) r(); };
 
   // ---- the ascent: the gallery walked from the gangway to the ragged end; stepped off where the rail is gone
   const gw = new THREE.Vector3(CG.x, 0, CG.z).addScaledVector(io, GANG.z1 - 0.3);
@@ -496,7 +527,9 @@ export async function build(ctx) {
     if (manual) return; // a test steps it with tick()
     if (!open()) { place(0, tt); return; }
     advance(dt, tt);
-  });
+  }, { at: () => cc, near: 140, hz: 15 });
+  const galMid = gal.at(Math.floor(gal.nW / 2), 0.5, 2);
+  ctx.registerUpdate((dt, tt) => { if (!manual) gal.update(dt, tt); }, { pos: { x: galMid.x, z: galMid.z }, near: 90, hz: 0 });
   function advance(dt, tt) {
     if (pendingCall && (pendingCall.t -= dt) <= 0) { const to = pendingCall.to; pendingCall = null; call(to); }
     if (ridden) rideT += dt;
@@ -504,16 +537,16 @@ export async function build(ctx) {
     const atW = where();
     if (!ridden && !cur && seq.length === 0) {
       const pf = hyp(P.pos.x - C0.x, P.pos.z - C0.z), pt = hyp(P.pos.x - CG.x, P.pos.z - CG.z);
-      if (atW === 'foot') { idleFoot = pf > AWAY.foot[0] ? idleFoot + dt : 0; if (idleFoot > AWAY.foot[1]) { idleFoot = 0; door('e', false); go(SG); door('w', true); } }
+      if (atW === 'foot') { idleFoot = pf > AWAY.foot[0] ? idleFoot + dt : 0; if (idleFoot > AWAY.foot[1]) { idleFoot = 0; callTo = SG; door('e', false); go(SG); door('w', true); } }
       else if (atW === 'gallery') {
         const near = pt < AWAY.top[0] * 3 && P.pos.y > gal.y - 30;
         idleTop = near ? 0 : idleTop + dt;
         if (idleTop > roamWait) { idleTop = 0; roamWait = 40 + rng() * 40; round(); }
-      } else go(SG);
+      } else { callTo = SG; go(SG); }
     }
     step(dt);
     place(dt, tt);
-    gal.update(dt, tt);
+    if (manual) gal.update(dt, tt);
   }
   place(0, 0);
   doorOpen.w = 1; place(0, 0);
@@ -523,16 +556,28 @@ export async function build(ctx) {
     get s() { return s; }, get v() { return v; }, get moving() { return moving; }, get ridden() { return ridden; }, get doors() { return { ...doorOpen }; },
     where, heading, call: (w) => call(w === 'foot' ? S0 : SG), ride, inCage, removeCorridor, sOfY,
     // for renders and tests: the carriage put at s at once, standing, the doors as given
-    jump(sv, doors = {}) { s = sv; v = 0; cur = null; seq = []; moving = false; doorOpen.e = doors.e ?? (Math.abs(sv - S0) < 0.05 ? 1 : 0); doorOpen.w = doors.w ?? (Math.abs(sv - SG) < 0.05 ? 1 : 0); idleFoot = idleTop = 0; roamWait = 1e9; place(0, lastT); },
+    jump(sv, doors = {}) { s = sv; v = 0; cur = null; seq = []; callTo = null; pendingCall = null; moving = false; doorOpen.e = doors.e ?? (Math.abs(sv - S0) < 0.05 ? 1 : 0); doorOpen.w = doors.w ?? (Math.abs(sv - SG) < 0.05 ? 1 : 0); idleFoot = idleTop = 0; roamWait = 1e9; place(0, lastT); },
     // for tests: step the carriage by hand, in lockstep with controls.update (the page's own frames leave it alone)
     set manual(on) { manual = !!on; }, get manual() { return manual; }, tick(dt) { lastT += dt; advance(dt, lastT); },
     get rideT() { return rideT; },
+    roam() { round(); }, // for tests: start its round now
     cageCentre: () => cc.clone(), lever: () => leverWorld().clone(), weight: () => railAt(SG - s).addScaledVector(al, WEIGHT_AL),
     stand: { // where a visitor stands for each act, and the yaw that faces it
       foot() { const p = toW(-ARCH.x + 0.9, floorY0, ARCH.z + 1.4); const h = bells.foot.handleAt; return { x: p.x, z: p.z, y: floorY0, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },
       top() { const h = bells.top.handleAt, p = h.clone().addScaledVector(io, -0.9).addScaledVector(al, -0.8); return { x: p.x, z: p.z, y: gal.y, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },
     },
-    stats: () => ({ calls: 9 + 7 + 6, tris: cage.tris + gal.tris + (stationMesh.geometry.index.count + stationIron.geometry.index.count + weight.geometry.index.count + head.geometry.index.count) / 3, colliders: gal.colliders + 2 }),
+    stats() { // the draws and triangles the module adds, counted from the scene
+      let calls = 0, tris = 0;
+      group.traverse((o) => { if (!o.isMesh && !o.isPoints) return; calls++; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1) * (o.isPoints ? 0 : 1); });
+      return { calls, tris, colliders: gal.colliders + 4 };
+    },
+    // the draws in view from a camera (its frustum against each draw's bounds), for the tests
+    drawn(camera) {
+      camera.updateMatrixWorld(); const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+      let n = 0; group.updateMatrixWorld(true);
+      group.traverse((o) => { if ((!o.isMesh && !o.isPoints) || !o.visible) return; if (o.frustumCulled === false) { n++; return; } if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const sp = o.geometry.boundingSphere.clone().applyMatrix4(o.matrixWorld); if (fr.intersectsSphere(sp)) n++; });
+      return n;
+    },
     get t() { return lastT; },
   };
   ctx.log?.(`lift: foot at s ${S0.toFixed(2)} (floor ${floorY0.toFixed(2)}), gallery at s ${SG.toFixed(2)} (${gal.y.toFixed(1)} m), ${STAIR.n} steps; gallery ${gal.nW} bays, ${gal.cells.length} cells, ${gal.colliders} colliders; ${Math.round(ctx.lift.stats().tris / 1000)}k tris`);

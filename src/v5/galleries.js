@@ -455,7 +455,8 @@ export async function build(ctx) {
 
   let liftTravel = [0, 0, 0], liftGeo = null;
   const tierData = [];
-  const liftRungs = []; // the lift's rungs and diagonals, kept back until the walked tier's height is known (the landing)
+  const liftRungs = [];
+  const trestleFeet = []; // the trestles' legs' feet, for lift.js's colliders // the lift's rungs and diagonals, kept back until the walked tier's height is known (the landing)
   // ---- the lift: two rails straight up the face from the floor to the highest tier, in front of every gallery, rungs
   // every 6 m, braced back to the rock above 66 m and standing on trestles below it, down the talus to where the rails
   // go into the ground beside the lower station (v12-H4, src/v12/lift.js). Before v12 a carriage climbed and descended it
@@ -494,6 +495,7 @@ export async function build(ctx) {
       if (LIFT && k < 0 && k % 2 === 0 && hAbove > 1.6) {
         const leg = (s) => { const p = rail(u, s); return [p, [p[0], groundAt(p) - 0.5, p[2]]]; };
         const [ta, fa] = leg(-1), [tb, fb] = leg(1);
+        trestleFeet.push(fa, fb);
         strut(fa, ta, 0.55, 0.55, io); strut(fb, tb, 0.55, 0.55, io);
         const nT = Math.max(1, Math.round(hAbove / 9));
         for (let j = 1; j <= nT; j++) {
@@ -518,7 +520,7 @@ export async function build(ctx) {
       strut(add(corner(0, 0.5, 2.6), [0, -0.4, 0]), add(corner(0, 0.5, 2.6), [0, 0.4, 0]), 0.7, 0.7, al, 2, 1.37);
       liftTravel = mul(dir, runLen * 0.38);
     }
-    liftGeo = { b, y0, y1, r0, r1, gap, dir, al, io, runLen, uF, rail, foot: rail(uF, 0) };
+    liftGeo = { b, y0, y1, r0, r1, gap, dir, al, io, runLen, uF, rail, foot: rail(uF, 0), trestleFeet };
   }
 
   // ---- the galleries: eleven tiers and four catwalks. Each tier: [y, from bearing, to bearing, depth, height,
@@ -543,7 +545,7 @@ export async function build(ctx) {
   // walks, drawn here as posts, lintels, screens and roof beams, finished at the lift's end, with no deck and no rail
   // (src/v12/lift/gallery.js lays the deck that is walked, its rail and its cells), and its last walked bay torn off
   // short with no post at its end: the ragged end, where the gallery has fallen away. The rungs leave a landing there.
-  const WALK = { ti: 6, end: 13 };
+  const WALK = { ti: 6, end: 13, open: [5, 8, 9] }; // open: bays left with no mullion or screen, where the walked rail is gone (the valley seen whole)
   {
     const landY = tiers[WALK.ti][0];
     for (const [A, B, w, h, u] of liftRungs) {
@@ -604,8 +606,9 @@ export async function build(ctx) {
       if (uf < 1) {
         strut(F(k, y + H), F(k + 1, y + H), 1.0, 1.3, UP);                      // the lintel
         if (!low && !walked(k)) strut(F(k, y + 1.2), F(k + 1, y + 1.2), 0.22, 0.22, UP); // the rail
-        if (!cat && !low) { strut(mix(F(k, y), F(k + 1, y), 0.5), mix(F(k, y + H), F(k + 1, y + H), 0.5), 0.4, 0.4, io(k)); if (walked(k)) td.mullions.push(k); } // a mullion
-        if (!cat && rng() < 0.45) {                                             // a lattice screen
+        const bare = walked(k) && WALK.open.includes(k);
+        if (!cat && !low && !bare) { strut(mix(F(k, y), F(k + 1, y), 0.5), mix(F(k, y + H), F(k + 1, y + H), 0.5), 0.4, 0.4, io(k)); if (walked(k)) td.mullions.push(k); } // a mullion
+        if (!cat && rng() < 0.45 && !bare) {                                    // a lattice screen
           if (walked(k)) td.screens.push(k);
           strut(F(k, y), F(k + 1, y + H), 0.3, 0.3, io(k)); strut(F(k + 1, y), F(k, y + H), 0.3, 0.3, io(k));
         }

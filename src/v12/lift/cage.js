@@ -5,8 +5,8 @@
 // gallery's), each a grille sliding along the wall. A lamp under the dome, a bench in worn red velvet, a brass lever
 // by the west door, a ring of keys swinging from a rib, a little bell on the dome that answers the call.
 //
-// buildCage(ctx, { stone, low, railZ, dirL, gap }) → { group, doors: { e, w }, lever, keys, bell, lamp, glassMat, draws,
-// tris, dims, yokeLocal } where railZ is the rails' plane's z at the floor (negative), dirL the rails' direction in this frame.
+// buildCage(ctx, { iron, low, railZ, dirL, gap }) → { group, PU (the moving parts' uniforms: uDoor, uSill, uLever, uKeys),
+// leverAt, light, haloU, glassMat, tris, dims, yokeL }
 import * as THREE from 'three';
 import { Builder } from '../../structures/geo.js';
 
@@ -102,6 +102,8 @@ export function buildCage(ctx, o) {
   // the little answering bell on the dome's west shoulder
   const bellL = V(0, H + 0.55, -d2 + 0.35);
   B.add(B.cyl(0.03, 0.12, 0.16, 10, 1, true), new THREE.Matrix4().setPosition(bellL), iron(C.brass));
+  B.add(B.cyl(0.07, 0.11, 0.8, 8, 1), new THREE.Matrix4().setPosition(DOOR / 2 + 0.35, 0.4, -d2 + 0.32), iron(C.iron)); // the lever's pedestal
+  B.add(B.box(0.22, 0.08, 0.3), new THREE.Matrix4().setPosition(DOOR / 2 + 0.35, 0.82, -d2 + 0.32), iron(C.dark));
   const ironMesh = new THREE.Mesh(B.build(), stone);
   ironMesh.name = 'lift-cage-iron'; ironMesh.castShadow = true; ironMesh.receiveShadow = true;
   group.add(ironMesh);
@@ -144,87 +146,111 @@ export function buildCage(ctx, o) {
   floorM.name = 'lift-cage-floor'; floorM.castShadow = true;
   group.add(floorM);
 
-  // the doors: a grille each, sliding along its wall to the north to open
-  const doorGeo = (() => {
+  // the parts that move (the two door grilles, the west door's sill, the lever's handle, the keys) and the lamp's glass,
+  // in one draw: each vertex says which part it is (aPart) and the vertex shader moves it by that part's uniform
+  const LAMP_Y = H + DOME - 0.7, SILL_P = V(0, 0, -d2 - 0.04), LEVER_P = V(DOOR / 2 + 0.35, 0.86, -d2 + 0.32), KEYS_P = V(0.85, H + 0.6, 0.6);
+  const parts = [];
+  const part = (id, Bp) => { parts.push([id, Bp.build()]); };
+  for (const [id, z] of [[1, d2 + 0.06], [2, -d2 - 0.06]]) { // the grilles, at rest (shut); they slide north (+x)
     const Bd = new Builder(ctx.noise);
-    for (let i = 0; i <= 5; i++) Bd.add(new THREE.BoxGeometry(0.022, 2.0, 0.022), new THREE.Matrix4().setPosition(-DOOR / 2 + (DOOR * i) / 5, 1.02, 0), iron(C.dark));
-    for (const y of [0.06, 1.0, 1.98]) Bd.add(new THREE.BoxGeometry(DOOR, 0.05, 0.04), new THREE.Matrix4().setPosition(0, y, 0), iron(C.iron));
-    Bd.add(new THREE.BoxGeometry(0.05, 0.22, 0.08), new THREE.Matrix4().setPosition(-DOOR / 2 + 0.08, 1.05, 0.03), iron(C.brass));
-    return Bd.build();
-  })();
-  const doors = {};
-  for (const [k, z] of [['e', d2 + 0.06], ['w', -d2 - 0.06]]) {
-    const m = new THREE.Mesh(doorGeo, stone); m.name = `lift-cage-door-${k}`; m.castShadow = true;
-    m.position.set(0, 0, z); m.userData.z = z;
-    group.add(m); doors[k] = m;
+    for (let i = 0; i <= 5; i++) Bd.add(new THREE.BoxGeometry(0.022, 2.0, 0.022), new THREE.Matrix4().setPosition(-DOOR / 2 + (DOOR * i) / 5, 1.02, z), iron(C.dark));
+    for (const y of [0.06, 1.0, 1.98]) Bd.add(new THREE.BoxGeometry(DOOR, 0.05, 0.04), new THREE.Matrix4().setPosition(0, y, z), iron(C.iron));
+    Bd.add(new THREE.BoxGeometry(0.05, 0.22, 0.08), new THREE.Matrix4().setPosition(-DOOR / 2 + 0.08, 1.05, z + 0.03), iron(C.brass));
+    part(id, Bd);
   }
-  // the sill at the west door: an iron plate hinged at the floor's edge, folded up against the door while the cage
-  // moves and let down onto the gangway when the door opens at the gallery
-  const sill = new THREE.Group(); sill.name = 'lift-cage-sill';
-  {
+  { // the sill, laid flat (down); it is folded up by uSill about its hinge
     const Bs = new Builder(ctx.noise);
-    Bs.add(new THREE.BoxGeometry(DOOR - 0.06, 0.05, 0.98), new THREE.Matrix4().setPosition(0, -0.025, -0.49), iron(C.iron));
-    for (const x of [-0.4, 0, 0.4]) Bs.add(new THREE.BoxGeometry(0.04, 0.02, 0.9), new THREE.Matrix4().setPosition(x, 0.005, -0.5), iron(C.dark));
-    const m = new THREE.Mesh(Bs.build(), stone); m.castShadow = true; sill.add(m);
+    Bs.add(new THREE.BoxGeometry(DOOR - 0.06, 0.05, 0.98), new THREE.Matrix4().setPosition(SILL_P.x, SILL_P.y - 0.025, SILL_P.z - 0.49), iron(C.iron));
+    for (const x of [-0.4, 0, 0.4]) Bs.add(new THREE.BoxGeometry(0.04, 0.02, 0.9), new THREE.Matrix4().setPosition(x, SILL_P.y + 0.005, SILL_P.z - 0.5), iron(C.dark));
+    part(3, Bs);
   }
-  sill.position.set(0, 0, -d2 - 0.04); sill.rotation.x = Math.PI / 2;
-  group.add(sill);
-  // the lever: a brass lever on a cast pedestal north of the west door; it is thrown back (toward the west) to go
-  const lever = new THREE.Group(); lever.name = 'lift-cage-lever';
-  {
-    const Bl = new Builder(ctx.noise);
-    Bl.add(Bl.cyl(0.07, 0.11, 0.8, 8, 1), new THREE.Matrix4().setPosition(0, 0.4, 0), iron(C.iron));
-    Bl.add(Bl.box(0.22, 0.08, 0.3), new THREE.Matrix4().setPosition(0, 0.82, 0), iron(C.dark));
-    const ped = new THREE.Mesh(Bl.build(), stone); ped.castShadow = true;
-    lever.add(ped);
+  { // the lever's handle, upright; uLever leans it (0.45 at rest, toward the east)
     const Bh = new Builder(ctx.noise);
-    Bh.add(Bh.cyl(0.018, 0.022, 0.55, 6, 1), new THREE.Matrix4().setPosition(0, 0.275, 0), iron(C.brass));
-    Bh.add(new THREE.SphereGeometry(0.045, 8, 6), new THREE.Matrix4().setPosition(0, 0.57, 0), { color: C.wood, moss: 0, ground: -3 });
-    const handle = new THREE.Mesh(Bh.build(), stone); handle.position.set(0, 0.86, 0); handle.rotation.x = 0.45; // rest: leaning east
-    lever.add(handle); lever.userData.handle = handle;
+    Bh.add(Bh.cyl(0.018, 0.022, 0.55, 6, 1), new THREE.Matrix4().setPosition(LEVER_P.x, LEVER_P.y + 0.275, LEVER_P.z), iron(C.brass));
+    Bh.add(new THREE.SphereGeometry(0.045, 8, 6), new THREE.Matrix4().setPosition(LEVER_P.x, LEVER_P.y + 0.57, LEVER_P.z), { color: C.wood, moss: 0, ground: -3 });
+    part(4, Bh);
   }
-  lever.position.set(DOOR / 2 + 0.35, 0, -d2 + 0.32);
-  group.add(lever);
-  // the keys: a ring of them on a hook from the dome's north-east rib, swinging as the cage moves
-  const keys = new THREE.Group(); keys.name = 'lift-cage-keys';
-  {
-    const Bk = new Builder(ctx.noise);
-    Bk.add(new THREE.TorusGeometry(0.07, 0.008, 4, 14), new THREE.Matrix4().setPosition(0, -0.3, 0), iron(C.key));
-    Bk.add(new THREE.BoxGeometry(0.008, 0.3, 0.008), new THREE.Matrix4().setPosition(0, -0.15, 0), iron(C.dark));
+  { // the keys on their hook
+    const Bk = new Builder(ctx.noise), K = (x, y, z) => KEYS_P.clone().add(V(x, y, z));
+    Bk.add(new THREE.TorusGeometry(0.07, 0.008, 4, 14), new THREE.Matrix4().setPosition(K(0, -0.3, 0)), iron(C.key));
+    Bk.add(new THREE.BoxGeometry(0.008, 0.3, 0.008), new THREE.Matrix4().setPosition(K(0, -0.15, 0)), iron(C.dark));
     for (let i = 0; i < 7; i++) {
       const a = (i / 7) * Math.PI * 2, len = 0.11 + (i % 3) * 0.035;
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, a));
-      const p = V(Math.cos(a - Math.PI / 2) * 0.07, -0.3 + Math.sin(a - Math.PI / 2) * 0.07, 0);
+      const p = K(Math.cos(a - Math.PI / 2) * 0.07, -0.3 + Math.sin(a - Math.PI / 2) * 0.07, 0);
       const dn = V(Math.cos(a - Math.PI / 2), Math.sin(a - Math.PI / 2), 0);
       Bk.add(new THREE.BoxGeometry(0.012, len, 0.006), new THREE.Matrix4().compose(p.clone().addScaledVector(dn, len / 2), q, V(1, 1, 1)), iron(C.key));
       Bk.add(new THREE.BoxGeometry(0.03, 0.02, 0.006), new THREE.Matrix4().compose(p.clone().addScaledVector(dn, len - 0.01).add(V(0.012, 0, 0)), q, V(1, 1, 1)), iron(C.key));
     }
-    const km = new THREE.Mesh(Bk.build(), stone); km.castShadow = false;
-    keys.add(km);
+    part(5, Bk);
   }
-  keys.position.set(0.85, H + 0.6, 0.6);
-  group.add(keys);
-  // the lamp: a little cage of amber glass under the dome, lit
-  const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.26, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(2.0, 1.2, 0.5) }));
-  lamp.position.set(0, H + DOME - 0.7, 0); lamp.name = 'lift-cage-lamp';
-  group.add(lamp);
+  { // the lamp's amber glass, lit
+    const Bm = new Builder(ctx.noise);
+    Bm.add(new THREE.CylinderGeometry(0.1, 0.13, 0.26, 8), new THREE.Matrix4().setPosition(0, LAMP_Y, 0), { color: new THREE.Color('#ffc070'), moss: 0, ground: -3 });
+    part(6, Bm);
+  }
+  const pg = (() => {
+    const P = [], N = [], Cl = [], A = [], I = []; let base = 0;
+    for (const [id, g] of parts) {
+      const n = g.attributes.position.count;
+      P.push(...g.attributes.position.array); N.push(...g.attributes.normal.array); Cl.push(...g.attributes.color.array);
+      for (let i = 0; i < n; i++) A.push(id);
+      for (const i of g.index.array) I.push(i + base);
+      base += n; g.dispose();
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('aPart', new THREE.Float32BufferAttribute(A, 1));
+    g.setIndex(I); g.computeBoundingSphere(); g.boundingSphere.radius += 1.5;
+    return g;
+  })();
+  const PU = { uDoor: { value: new THREE.Vector2() }, uSill: { value: Math.PI / 2 }, uLever: { value: 0.45 }, uKeys: { value: new THREE.Vector2() },
+    uSillP: { value: SILL_P }, uLeverP: { value: LEVER_P }, uKeysP: { value: KEYS_P } };
+  const partMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.45 });
+  partMat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, PU);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+      attribute float aPart; varying float vPart;
+      uniform vec2 uDoor, uKeys; uniform float uSill, uLever; uniform vec3 uSillP, uLeverP, uKeysP;
+      vec3 rX(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x, v.y * c - v.z * s, v.y * s + v.z * c); }
+      vec3 rZ(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x * c - v.y * s, v.x * s + v.y * c, v.z); }`)
+      .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+      vPart = aPart;
+      if (aPart > 2.5 && aPart < 3.5) objectNormal = rX(objectNormal, uSill);
+      else if (aPart > 3.5 && aPart < 4.5) objectNormal = rX(objectNormal, uLever);
+      else if (aPart > 4.5 && aPart < 5.5) objectNormal = rZ(rX(objectNormal, uKeys.x), uKeys.y);`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+      if (aPart > 0.5 && aPart < 1.5) transformed.x += uDoor.x;
+      else if (aPart > 1.5 && aPart < 2.5) transformed.x += uDoor.y;
+      else if (aPart > 2.5 && aPart < 3.5) transformed = uSillP + rX(transformed - uSillP, uSill);
+      else if (aPart > 3.5 && aPart < 4.5) transformed = uLeverP + rX(transformed - uLeverP, uLever);
+      else if (aPart > 4.5 && aPart < 5.5) transformed = uKeysP + rZ(rX(transformed - uKeysP, uKeys.x), uKeys.y);`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vPart;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nif (vPart > 5.5) totalEmissiveRadiance += vec3(2.0, 1.2, 0.5);');
+  };
+  partMat.customProgramCacheKey = () => 'lift-cage-parts';
+  const partMesh = new THREE.Mesh(pg, partMat);
+  partMesh.name = 'lift-cage-parts';
+  group.add(partMesh);
+  // the lever's cast pedestal (still) goes in with the cage's iron
   const light = new THREE.PointLight(new THREE.Color('#ffae5a'), 3.2, 8, 2);
-  light.position.copy(lamp.position); light.name = 'lift-cage-light';
+  light.position.set(0, LAMP_Y, 0); light.name = 'lift-cage-light';
   group.add(light);
 
   // its glow as seen from far off: a soft point about the lamp, gone when near (so the cage is found on the cliff from
   // the floor, as the Galleries' own lamps are)
   const haloU = { uScale: { value: 600 } };
-  const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute([0, H + DOME - 0.7, 0], 3));
+  const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute([0, LAMP_Y, 0], 3));
   const halo = new THREE.Points(hg, new THREE.ShaderMaterial({
     uniforms: haloU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */`uniform float uScale; varying float vA;
-      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = -mv.z; gl_PointSize = max(3.0, 6.0 * uScale / d); vA = smoothstep(18.0, 40.0, d) * exp(-d * 0.0012); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: /* glsl */`varying float vA; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r2 = dot(q, q); if (r2 > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.66, 0.32) * exp(-r2 * 4.5) * vA * 0.8, 1.0); }`,
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = -mv.z; gl_PointSize = max(5.0, 11.0 * uScale / d); vA = smoothstep(18.0, 40.0, d) * exp(-d * 0.0007); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: /* glsl */`varying float vA; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r2 = dot(q, q); if (r2 > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.66, 0.32) * exp(-r2 * 4.0) * vA * 1.3, 1.0); }`,
   }));
   halo.name = 'lift-cage-halo'; halo.frustumCulled = false;
   group.add(halo);
 
-  const tris = [ironMesh, glass, floorM, doors.e, doors.e, lever.children[0], lever.children[1], keys.children[0], lamp].reduce((a, m) => a + (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3, 0);
-  return { group, doors, sill, lever, keys, lamp, light, bellL, glassMat, yokeL, haloU, draws: 10, tris, dims: { W, D, H, DOOR } };
+  const tris = [ironMesh, glass, floorM, partMesh].reduce((a, m) => a + m.geometry.index.count / 3, 0) + 1;
+  const leverAt = LEVER_P.clone().add(V(0, 0.35, 0)); // where the hand goes, in the cage's frame
+  return { group, PU, leverAt, light, bellL, glassMat, yokeL, haloU, tris, dims: { W, D, H, DOOR } };
 }

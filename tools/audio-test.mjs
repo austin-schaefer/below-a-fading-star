@@ -70,6 +70,11 @@ const CUES = [
   ['act-bell-haul', { dx: 2, dy: 0, dz: -3 }, null, 1000, 1000], ['act-bell-candles', { dx: 60, dy: -2, dz: -40 }, null, 2500, 1500],
   ['act-bell-hum', { dx: 4, dy: 3, dz: -6 }, null, 2500, 1500], ['act-bell-rest', { dx: 6, dy: 0, dz: -8 }, null, 1500, 1500],
   ['act-bell-letters', { dx: 2, dy: -1, dz: -2 }, null, 1500, 1500], ['act-bell-ascend', { dx: 4, dy: 3, dz: -6 }, null, 3000, 1500],
+  // v12-H4 the lift (src/v12/lift-sound.js)
+  ['act-lift-bell', { dx: 1.5, dy: 3, dz: -1.5 }, null, 1500, 4000], ['act-lift-answer', { dx: 30, dy: 60, dz: -20 }, null, 1500, 2000],
+  ['act-lift-run', { dx: 4, dy: 6, dz: -4 }, { speed: 4 }, 1500, 500], ['act-lift-clank', { dx: 2, dy: 0, dz: -2 }, { amp: 0.06 }, 1000, 800],
+  ['act-lift-door', { dx: 1.5, dy: 0, dz: -1.5 }, { open: true }, 1500, 800], ['act-lift-lever', { dx: 0.8, dy: -0.5, dz: -0.8 }, null, 800, 500],
+  ['act-lift-creak', { dx: 2, dy: 1, dz: -2 }, null, 2000, 1000],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
   ['act-bell', { dx: 6, dy: 2, dz: -8 }, { n: 1 }, 1500, 1500], // v10-A3: last, its minute of tail would be the bed of any row after it
 ];

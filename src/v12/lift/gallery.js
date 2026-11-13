@@ -18,9 +18,10 @@ import { SUN } from '../../world.js';
 
 const D2R = Math.PI / 180;
 const C = {
-  iron: new THREE.Color('#2e241c'), ironDark: new THREE.Color('#1e1712'), rust: new THREE.Color('#47291b'),
-  stone: new THREE.Color('#3a2e25'), strap: new THREE.Color('#231a14'), lining: new THREE.Color('#15110e'), cloth: new THREE.Color('#4a1a1c'),
-  spoil: new THREE.Color('#5a524a'), pewter: new THREE.Color('#7c7872'),
+  iron: new THREE.Color('#4a3c30'), ironDark: new THREE.Color('#2a2119'), rust: new THREE.Color('#6a4028'),
+  stone: new THREE.Color('#5a4838'), strap: new THREE.Color('#2e241c'), lining: new THREE.Color('#15110e'), cloth: new THREE.Color('#4a1a1c'),
+  spoil: new THREE.Color('#6a625a'), pewter: new THREE.Color('#a8a29a'), worn: new THREE.Color('#9c8466'), wood: new THREE.Color('#4a3424'),
+  floorWorn: new THREE.Color('#4e4238'),
 };
 const REAR = 0.6;          // the deck stops this far short of the line the galleries call the face (`back`)
 const CELL_D = 2.5;        // a cell's depth, wall to wall, from the rear of the deck
@@ -73,7 +74,7 @@ export function buildGallery(ctx, o) {
   // ---- the floor: a stacked floor; its held edges are the rear (the rock, the cells' rear walls), the south end, and
   // the front where the rail stands or a screen closes the bay; open where the rail is gone and at the ragged end
   const floor = (x, z) => {
-    if (x > -330) return null;
+    const rr = x * x + z * z; if (rr < 340 * 340 || rr > 405 * 405) return null;
     const b = bear(x, z);
     if (b < bs[0] - 0.01 || b > bEnd + 0.2) return null;
     const k = bayOf(b), f = (b - bs[k]) / (bs[k + 1] - bs[k]);
@@ -140,6 +141,22 @@ export function buildGallery(ctx, o) {
       const hinge = at(k, f, dd, -0.02), u = al(bs[k]), n = io(bs[k]);
       const drop = 0.9 + j * 0.25, tilt = 0.5 + j * 0.3;
       hexa((sx, sy, sz) => hinge.clone().addScaledVector(u, (sx + 1) * 0.5 * Math.cos(tilt) * 1.05).add(new THREE.Vector3(0, -(sx + 1) * 0.5 * Math.sin(tilt) * drop * 1.2 + sy * 0.03, 0)).addScaledVector(n, sz * 0.8), C.rust);
+    }
+    // the rest of the bay: a whole section of deck torn down and hanging off the edge by its rear runner, steep, its
+    // rail still on it, with the drop under it: what the gallery looks like where it gave way
+    {
+      const u = al(bs[k]), n = io(bs[k]), down = new THREE.Vector3(0, -1, 0);
+      const hang = u.clone().multiplyScalar(Math.cos(1.15)).add(down.clone().multiplyScalar(Math.sin(1.15))).addScaledVector(n, 0.25).normalize();
+      const twist = n.clone().multiplyScalar(0.0);
+      const len = 4.4, dep = depth(k, EDGE) * 0.92;
+      const h0 = at(k, EDGE + 0.01, dep * 0.04, -0.08);
+      const corner = (sx, sy, sz) => h0.clone().addScaledVector(hang, (sx + 1) / 2 * len).addScaledVector(n, (sz + 1) / 2 * dep * (1 - 0.18 * (sx + 1) / 2)).add(new THREE.Vector3(0, sy * 0.08, 0)).add(twist);
+      hexa(corner, C.rust);
+      for (let i = 0; i <= 4; i++) { const f = i / 4; hexa((sx, sy, sz) => h0.clone().addScaledVector(hang, f * len + sx * 0.06).addScaledVector(n, (sz + 1) / 2 * dep * (1 - 0.18 * f)).add(new THREE.Vector3(0, -0.14 + sy * 0.07, 0)).addScaledVector(hang.clone().cross(n).normalize(), 0.12), C.ironDark); }
+      // its rail, on the front edge of the hanging section, bent away
+      const fr = (f, hgt) => h0.clone().addScaledVector(hang, f * len).addScaledVector(n, dep * (1 - 0.18 * f)).add(new THREE.Vector3(0, hgt, 0)).addScaledVector(u, -0.25 * f);
+      for (let i = 0; i <= 6; i++) { const f = i / 6; hexa((sx, sy, sz) => fr(f, 0).addScaledVector(u, sx * 0.025).add(new THREE.Vector3(0, (sy + 1) / 2 * 1.0, 0)).addScaledVector(n, sz * 0.025), C.ironDark); }
+      hexa((sx, sy, sz) => fr(sx < 0 ? 0 : 1, 1.0 + sy * 0.04).addScaledVector(n, sz * 0.04), C.rust);
     }
     const p0 = at(k, RAGGED - 0.05, 0.2, -0.26), dirB = al(bs[k]).multiplyScalar(2.6).add(new THREE.Vector3(0, -1.9, 0)).addScaledVector(io(bs[k]), 0.6);
     hexa((sx, sy, sz) => p0.clone().addScaledVector(dirB, (sx + 1) / 2).add(new THREE.Vector3(0, sy * 0.13, 0)).addScaledVector(io(bs[k]), sz * 0.1), C.ironDark);
@@ -218,7 +235,7 @@ export function buildGallery(ctx, o) {
   const odd = cells.find((cl) => cl.odd);
   const L = new THREE.Vector3(-SUN.dir.x, -SUN.dir.y, -SUN.dir.z); // the light's way: from the sun, east, down and north
   const Ln = L.x * odd.n.x + L.z * odd.n.z, Lu = L.x * odd.u.x + L.z * odd.u.z;
-  const BORE_H = 1.35, tFront = (CELL_D - WALL / 2) / Ln;
+  const BORE_H = 1.2, tFront = (CELL_D - WALL / 2) / Ln;
   const boreLat = odd.door - Lu * tFront; // so the rod goes out through the middle of the door
   const bore = odd.c.clone().addScaledVector(odd.u, boreLat).add(new THREE.Vector3(0, BORE_H, 0));
   const tLand = BORE_H / -L.y;
@@ -255,7 +272,7 @@ export function buildGallery(ctx, o) {
     ironBox(cl, dl - 0.08, dr + 0.08, FD - 0.02, FD + 0.06, 2.05, 2.15);
     // a stone bench along a side wall, a ring in the rear wall
     const bs0 = cl.odd ? -1 : (rng() < 0.5 ? -1 : 1);
-    cellBox(cl, bs0 < 0 ? -W2 + WALL : W2 - WALL - 0.75, bs0 < 0 ? -W2 + WALL + 0.75 : W2 - WALL, 0.03, FD - WALL - 0.1, 0, 0.45, C.spoil, { iron: 0, moss: 0.3, course: 0 });
+    if (!cl.odd) cellBox(cl, bs0 < 0 ? -W2 + WALL : W2 - WALL - 0.75, bs0 < 0 ? -W2 + WALL + 0.75 : W2 - WALL, 0.03, FD - WALL - 0.1, 0, 0.45, C.spoil, { iron: 0, moss: 0.3, course: 0 });
     ironBox(cl, 0.3, 0.45, 0.03, 0.12, 1.1, 1.18);
     // the grille: shut and locked in the odd cell; elsewhere swung open against the wall, hanging by one hinge, or down
     const gx = (cl.odd ? 0 : cells.indexOf(cl) % 3);
@@ -286,21 +303,43 @@ export function buildGallery(ctx, o) {
       const a = (i / 7) * Math.PI * 2, p = bore.clone().addScaledVector(cl.u, Math.cos(a) * 0.15).add(new THREE.Vector3(0, Math.sin(a) * 0.15, 0)).addScaledVector(cl.n, 0.04);
       Bc.add(Bc.rock(0.07, 0, 1, 1, 0.6), new THREE.Matrix4().setPosition(p), { color: C.spoil, moss: 0 });
     }
-    // the spoil: swept into a heap under the bore, grey chips of the mountain
-    for (let i = 0; i < 9; i++) {
-      const p = cl.c.clone().addScaledVector(cl.u, boreLat + (rng() - 0.5) * 0.7).addScaledVector(cl.n, 0.25 + rng() * 0.5);
-      p.y = y + 0.05 + rng() * 0.12;
-      Bc.add(Bc.rock(0.08 + rng() * 0.1, 0, 1, 0.6, 1), new THREE.Matrix4().setPosition(p), { color: C.spoil, moss: 0 });
+    // the spoil: a mountain's worth of grey chips swept into the far corner, heaped to the knee, more than a cell can
+    // hold: what came out of the bore, a handful a day
+    const heapL = W2 - WALL - 0.55;
+    Bc.add(Bc.rock(0.7, 1, 1.0, 0.75, 0.9), new THREE.Matrix4().setPosition(cl.c.clone().addScaledVector(cl.u, heapL).addScaledVector(cl.n, 0.6).add(new THREE.Vector3(0, 0.05, 0))), { color: C.spoil, moss: 0, disp: 0.05 });
+    for (let i = 0; i < 26; i++) {
+      const a = rng() * Math.PI * 2, r = 0.5 + rng() * 0.5;
+      const p = cl.c.clone().addScaledVector(cl.u, heapL + Math.cos(a) * r * 0.9).addScaledVector(cl.n, 0.7 + Math.sin(a) * r);
+      p.y = y + 0.04 + rng() * 0.08;
+      Bc.add(Bc.rock(0.05 + rng() * 0.08, 0, 1, 0.6, 1), new THREE.Matrix4().setPosition(p), { color: C.spoil, moss: 0 });
     }
-    // the spoon, worn to a stub of its bowl, on the bench's end by the spoil
-    const sp = cl.c.clone().addScaledVector(cl.u, -W2 + WALL + 0.45).addScaledVector(cl.n, 0.25).add(new THREE.Vector3(0, 0.47, 0));
+    // and a fan of it under the hole, the last of it, not yet swept
+    for (let i = 0; i < 8; i++) {
+      const p = cl.c.clone().addScaledVector(cl.u, boreLat + (rng() - 0.5) * 0.5).addScaledVector(cl.n, 0.12 + rng() * 0.25);
+      p.y = y + 0.03; Bc.add(Bc.rock(0.04 + rng() * 0.04, 0, 1, 0.5, 1), new THREE.Matrix4().setPosition(p), { color: C.spoil, moss: 0 });
+    }
+    // the stool, square to the bore: three legs, the seat worn to a pale dish, the floor round it worn pale
+    const st = cl.c.clone().addScaledVector(cl.u, boreLat).addScaledVector(cl.n, 0.62);
+    Bc.add(Bc.cyl(0.19, 0.18, 0.06, 12, 1), new THREE.Matrix4().setPosition(st.clone().add(new THREE.Vector3(0, 0.45, 0))), { color: C.worn, moss: 0 });
+    for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2; Bc.add(Bc.cyl(0.022, 0.03, 0.44, 5, 1), new THREE.Matrix4().compose(st.clone().add(new THREE.Vector3(Math.cos(a) * 0.12, 0.21, Math.sin(a) * 0.12)), new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(a) * 0.16, 0, -Math.cos(a) * 0.16)), new THREE.Vector3(1, 1, 1)), { color: C.wood, moss: 0 }); }
+    Bc.add(Bc.cyl(0.55, 0.6, 0.012, 16, 1), new THREE.Matrix4().setPosition(st.clone().add(new THREE.Vector3(0, 0.03, 0))), { color: C.floorWorn, moss: 0 });
+    // the spoon, worn to a stub of its bowl, on the floor by the stool's foot
+    const sp = st.clone().addScaledVector(cl.u, 0.3).addScaledVector(cl.n, -0.15).add(new THREE.Vector3(0, 0.035, 0));
     const sq = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(cl.n.x, cl.n.z) + 0.4);
     Bc.add(new THREE.BoxGeometry(0.018, 0.01, 0.16), new THREE.Matrix4().compose(sp, sq, new THREE.Vector3(1, 1, 1)), { color: C.pewter, iron: 0.2, moss: 0 });
     Bc.add(new THREE.SphereGeometry(0.022, 6, 4), new THREE.Matrix4().compose(sp.clone().add(new THREE.Vector3(0, 0, 0)).addScaledVector(cl.n, 0.08), sq, new THREE.Vector3(1, 0.4, 1.2)), { color: C.pewter, iron: 0.2, moss: 0 });
-    // the blanket folded at the bench's head, under the bore, where the head lay to watch it
-    const bl = cl.c.clone().addScaledVector(cl.u, -W2 + WALL + 0.38).addScaledVector(cl.n, 0.45).add(new THREE.Vector3(0, 0.52, 0));
+    // the blanket folded on the floor against the north wall, where they slept with the spoil at their head
+    const bl = cl.c.clone().addScaledVector(cl.u, W2 - WALL - 0.35).addScaledVector(cl.n, 1.75).add(new THREE.Vector3(0, 0.07, 0));
     Bc.add(Bc.box(0.6, 0.12, 0.45, { chip: 0.02 }), new THREE.Matrix4().compose(bl, sq, new THREE.Vector3(1, 1, 1)), { color: C.cloth, moss: 0 });
     odd.bore = bore; odd.coin = coin; odd.L = L;
+  }
+  // the warders' lamps under a few lintels (their chains here, their glass with the sun's eye below), and the bore's dark
+  const LAMP_BAYS = [0, 2, 4, 6, 8], lampPts = LAMP_BAYS.map((k) => at(k, 0.5, depth(k, 0.5) - 0.6, 3.1));
+  for (const p of lampPts) Bc.add(new THREE.CylinderGeometry(0.015, 0.015, t.H - 3.3, 4), new THREE.Matrix4().setPosition(p.x, p.y + 0.16 + (t.H - 3.3) / 2, p.z), { color: C.ironDark, iron: 0.5, moss: 0 });
+  {
+    const g = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 10, 1, true); g.translate(0, -0.25, 0);
+    const ix = g.index.array; for (let i = 0; i < ix.length; i += 3) { const tmp = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = tmp; } // turned inside out: its inside is what is seen
+    Bc.add(g, new THREE.Matrix4().compose(bore, new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), L), new THREE.Vector3(1, 1, 1)), { color: new THREE.Color('#050403'), moss: 0, iron: 0 });
   }
   const cellMesh = new THREE.Mesh(Bc.build(), stone);
   cellMesh.name = 'lift-gallery-cells'; cellMesh.castShadow = true; cellMesh.receiveShadow = true;
@@ -310,7 +349,7 @@ export function buildGallery(ctx, o) {
   const flick = ctx.sky?.flicker;
   const U = { uT: { value: 0 }, uSun: { value: 1 } };
   const rodLen = tLand;
-  const rodG = new THREE.CylinderGeometry(0.045, 0.06, rodLen, 10, 1, true); rodG.translate(0, rodLen / 2, 0);
+  const rodG = new THREE.CylinderGeometry(0.075, 0.1, rodLen, 12, 1, true); rodG.translate(0, rodLen / 2, 0);
   const rodMat = new THREE.ShaderMaterial({
     uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
     vertexShader: /* glsl */`
@@ -322,7 +361,7 @@ export function buildGallery(ctx, o) {
         float edge = pow(abs(dot(vN, vV)), 1.6);
         float dust = 0.75 + 0.25 * sin(vA * 40.0 - uT * 0.7) * sin(vA * 17.0 + uT * 0.3);
         float a = edge * dust * smoothstep(0.0, 0.06, vA) * (1.0 - 0.6 * smoothstep(0.85, 1.0, vA)) * uSun;
-        gl_FragColor = vec4(vec3(1.0, 0.11, 0.02) * a * 0.5, 1.0);
+        gl_FragColor = vec4(vec3(1.0, 0.16, 0.03) * a * 0.55, 1.0);
       }`,
   });
   const rod = new THREE.Mesh(rodG, rodMat);
@@ -352,42 +391,41 @@ export function buildGallery(ctx, o) {
   coinMesh.rotation.y = Math.atan2(along2.x, along2.z);
   coinMesh.name = 'lift-gallery-coin'; coinMesh.renderOrder = 12;
   group.add(coinMesh);
+  // the dust in the rod: motes turning slowly in it, lit only where the sun is
+  const NM = 70, mpos = new Float32Array(NM * 3), mseed = new Float32Array(NM);
+  const mrng = ctx.makeRng(1209);
+  for (let i = 0; i < NM; i++) { const u = mrng(); const p = bore.clone().addScaledVector(L, 0.2 + u * (rodLen - 0.3)); mpos.set([p.x, p.y, p.z], i * 3); mseed[i] = mrng(); }
+  const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mpos, 3)); mg.setAttribute('aSeed', new THREE.BufferAttribute(mseed, 1));
+  const motes = new THREE.Points(mg, new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+    vertexShader: /* glsl */`uniform float uT; attribute float aSeed; varying float vA;
+      void main() { vec3 p = position + vec3(sin(uT * 0.3 + aSeed * 40.0), cos(uT * 0.23 + aSeed * 17.0), sin(uT * 0.27 + aSeed * 9.0)) * 0.05;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_PointSize = clamp(14.0 / -mv.z, 1.5, 5.0); vA = 0.5 + 0.5 * sin(uT * (0.6 + aSeed) + aSeed * 30.0); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: /* glsl */`uniform float uSun; varying float vA; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r2 = dot(q, q); if (r2 > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.5, 0.25) * exp(-r2 * 3.0) * vA * uSun * 0.9, 1.0); }`,
+  }));
+  motes.name = 'lift-gallery-motes'; motes.frustumCulled = false; motes.renderOrder = 13;
+  group.add(motes);
   // the sun's eye: a bead of the sun at the bore's end, seen down the bore
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 0.85, 0.22), fog: false }));
-  eye.position.copy(bore).addScaledVector(L, -0.12);
-  eye.name = 'lift-gallery-sun-eye';
+  const Be = new Builder(ctx.noise);
+  for (const p of lampPts) Be.add(new THREE.CylinderGeometry(0.13, 0.17, 0.38, 6), new THREE.Matrix4().setPosition(p), { color: new THREE.Color(1.7, 1.0, 0.42), moss: 0 });
+  Be.add(new THREE.SphereGeometry(0.085, 12, 8), new THREE.Matrix4().setPosition(bore.clone().addScaledVector(L, -0.12)), { color: new THREE.Color(3.2, 0.85, 0.22), moss: 0 });
+  const eye = new THREE.Mesh(Be.build(), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+  eye.name = 'lift-gallery-lights'; // the lamps' glass and the sun's eye down the bore
   group.add(eye);
-  // the dark of the bore round it
-  const boreG = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 10, 1, true); boreG.translate(0, -0.25, 0);
-  const boreM = new THREE.Mesh(boreG, new THREE.MeshBasicMaterial({ color: '#050403', side: THREE.BackSide }));
-  boreM.position.copy(bore); boreM.quaternion.copy(rod.quaternion); boreM.name = 'lift-gallery-bore';
-  group.add(boreM);
+
   // a red light where it lands, on the grille, the door's jambs and the deck about it
-  const glow = new THREE.PointLight(new THREE.Color('#ff5a26'), 3.0, 4.5, 2);
+  const glow = new THREE.PointLight(new THREE.Color('#ff5a26'), 5.0, 5, 2);
   glow.position.copy(coin).add(new THREE.Vector3(0, 0.25, 0)).addScaledVector(L, -0.6);
   glow.name = 'lift-gallery-coin-light';
   group.add(glow);
   // and inside, faintly, where the rod passes over the bench: the spoil, the spoon, the blanket
-  const inner = new THREE.PointLight(new THREE.Color('#ff4a1c'), 3.2, 3.6, 2);
-  inner.position.copy(bore).addScaledVector(L, 1.2).add(new THREE.Vector3(0, -0.3, 0));
+  const inner = new THREE.PointLight(new THREE.Color('#ff5a26'), 7, 3.8, 2);
+  inner.position.copy(bore).addScaledVector(L, 0.9).add(new THREE.Vector3(0, -0.25, 0));
   inner.name = 'lift-gallery-cell-light';
   group.add(inner);
   // the warders' lamps, still lit, under the lintels of a few bays from the landing; none near the end, where the only
   // light is the sun's coin
-  const LAMP_BAYS = [0, 2, 4, 6, 8];
-  const lampMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.13, 0.17, 0.38, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.7, 1.0, 0.42) }), LAMP_BAYS.length);
-  const chainG = new THREE.CylinderGeometry(0.015, 0.015, 1, 4); chainG.translate(0, 0.5, 0);
-  const chainMesh = new THREE.InstancedMesh(chainG, new THREE.MeshStandardMaterial({ color: '#1a1410', roughness: 0.6, metalness: 0.5 }), LAMP_BAYS.length);
-  const lamps = [], _lm = new THREE.Matrix4();
-  LAMP_BAYS.forEach((k, i) => {
-    const p = at(k, 0.5, depth(k, 0.5) - 0.6, 3.1);
-    lampMesh.setMatrixAt(i, _lm.makeTranslation(p.x, p.y, p.z));
-    chainMesh.setMatrixAt(i, _lm.compose(p.clone().add(new THREE.Vector3(0, 0.16, 0)), new THREE.Quaternion(), new THREE.Vector3(1, t.H - 3.3, 1)));
-    const l = new THREE.PointLight(new THREE.Color('#ffa24e'), 22, 13, 2); l.position.copy(p).add(new THREE.Vector3(0, -0.3, 0)); l.name = 'lift-gallery-lamp-light'; group.add(l);
-    lamps.push(l);
-  });
-  lampMesh.name = 'lift-gallery-lamps'; chainMesh.name = 'lift-gallery-lamp-chains';
-  group.add(lampMesh, chainMesh);
+  for (const p of lampPts) { const l = new THREE.PointLight(new THREE.Color('#ffa24e'), 22, 13, 2); l.position.copy(p).add(new THREE.Vector3(0, -0.3, 0)); l.name = 'lift-gallery-lamp-light'; group.add(l); }
 
   // ---- colliders: the posts and mullions at the front, the cells' walls (the odd cell's grille shut)
   const cols = [];
@@ -428,13 +466,15 @@ export function buildGallery(ctx, o) {
     U.uT.value = tt;
     const f = flick ? flick.value : 1;
     U.uSun.value = Math.max(0.12, f);
-    glow.intensity = 3.0 * U.uSun.value; inner.intensity = 3.2 * U.uSun.value;
+    glow.intensity = 5.0 * U.uSun.value; inner.intensity = 7 * U.uSun.value;
   }
   update(0, 0);
 
   const tris = (m) => (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3;
   return {
+    backAt: (b) => { const k = bayOf(b), f = Math.max(0, Math.min(1, (b - bs[k]) / (bs[k + 1] - bs[k]))); return backAt(k, f); },
+    deckLine: (() => { const L = []; for (let k = 0; k < nW; k++) for (const f of [0, 0.5]) { const p = at(k, f, (D - REAR) / 2); L.push([p.x, p.z]); } const e = at(nW - 1, EDGE, (D - REAR) / 2); L.push([e.x, e.z]); return L; })(),
     y, floor, keep, landing, path, cells, odd, end: { x: endP.x, z: endP.z, b: bEnd }, bs, back, D, nW, at, update, group,
-    railGone, broken: BROKEN, draws: 9, tris: [deckIron, grating, cellMesh, rod, coinMesh, eye, boreM].reduce((a, m) => a + tris(m), 0), colliders: cols.length,
+    railGone, broken: BROKEN, tris: [deckIron, grating, cellMesh, rod, coinMesh, eye].reduce((a, m) => a + tris(m), 0), colliders: cols.length,
   };
 }

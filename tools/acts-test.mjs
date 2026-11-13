@@ -728,7 +728,8 @@ if (process.env.FIND !== '0') {
   await p.evaluate(() => window.__fp.controls.placeAt(-200, -40)); await sleep(400);
   await p.evaluate(() => window.__fp.lift.jump(window.__fp.lift.S0));
   check('lift: the gallery\'s bell is offered at its pull with the carriage away', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) === 'lift-call-top');
-  check('lift: the station\'s bell is not offered up on the gallery', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) !== 'lift-call');
+  await p.evaluate(() => window.__fp.lift.jump(window.__fp.lift.SG));
+  check('lift: the gallery\'s bell is not offered while the carriage stands at the gallery', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) !== 'lift-call-top');
   // found again after a reload: the counts kept, the bell offered again
   await p.reload({ waitUntil: 'load' });
   await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.lift, null, { timeout: 300000 });
