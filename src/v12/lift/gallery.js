@@ -334,7 +334,7 @@ export function buildGallery(ctx, o) {
     odd.bore = bore; odd.coin = coin; odd.L = L;
   }
   // the warders' lamps under a few lintels (their chains here, their glass with the sun's eye below), and the bore's dark
-  const LAMP_BAYS = [0, 2, 4, 6, 8], lampPts = LAMP_BAYS.map((k) => at(k, 0.5, depth(k, 0.5) - 0.6, 3.1));
+  const LAMP_BAYS = [0, 2, 4, 6, 8, 12], lampPts = LAMP_BAYS.map((k) => at(k, k === 12 ? 0.18 : 0.5, depth(k, 0.5) - 0.6, 3.1)); // the last hangs from the torn lintel's stub over the ragged end
   for (const p of lampPts) Bc.add(new THREE.CylinderGeometry(0.015, 0.015, t.H - 3.3, 4), new THREE.Matrix4().setPosition(p.x, p.y + 0.16 + (t.H - 3.3) / 2, p.z), { color: C.ironDark, iron: 0.5, moss: 0 });
   {
     const g = new THREE.CylinderGeometry(0.1, 0.1, 0.5, 10, 1, true); g.translate(0, -0.25, 0);
@@ -360,7 +360,7 @@ export function buildGallery(ctx, o) {
       void main() {
         float edge = pow(abs(dot(vN, vV)), 1.6);
         float dust = 0.75 + 0.25 * sin(vA * 40.0 - uT * 0.7) * sin(vA * 17.0 + uT * 0.3);
-        float a = edge * dust * smoothstep(0.0, 0.06, vA) * (1.0 - 0.6 * smoothstep(0.85, 1.0, vA)) * uSun;
+        float a = edge * dust * smoothstep(0.03, 0.16, vA) * (1.0 - 0.6 * smoothstep(0.85, 1.0, vA)) * uSun;
         gl_FragColor = vec4(vec3(1.0, 0.16, 0.03) * a * 0.55, 1.0);
       }`,
   });
@@ -408,7 +408,7 @@ export function buildGallery(ctx, o) {
   // the sun's eye: a bead of the sun at the bore's end, seen down the bore
   const Be = new Builder(ctx.noise);
   for (const p of lampPts) Be.add(new THREE.CylinderGeometry(0.13, 0.17, 0.38, 6), new THREE.Matrix4().setPosition(p), { color: new THREE.Color(1.7, 1.0, 0.42), moss: 0 });
-  Be.add(new THREE.SphereGeometry(0.085, 12, 8), new THREE.Matrix4().setPosition(bore.clone().addScaledVector(L, -0.12)), { color: new THREE.Color(3.2, 0.85, 0.22), moss: 0 });
+  Be.add(new THREE.SphereGeometry(0.06, 12, 8), new THREE.Matrix4().setPosition(bore.clone().addScaledVector(L, -0.42)), { color: new THREE.Color(3.2, 0.85, 0.22), moss: 0 });
   const eye = new THREE.Mesh(Be.build(), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
   eye.name = 'lift-gallery-lights'; // the lamps' glass and the sun's eye down the bore
   group.add(eye);

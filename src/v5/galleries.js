@@ -455,8 +455,8 @@ export async function build(ctx) {
 
   let liftTravel = [0, 0, 0], liftGeo = null;
   const tierData = [];
-  const liftRungs = [];
-  const trestleFeet = []; // the trestles' legs' feet, for lift.js's colliders // the lift's rungs and diagonals, kept back until the walked tier's height is known (the landing)
+  const liftRungs = []; // the lift's rungs and diagonals, kept back until the walked tier's height is known (the landing)
+  const trestleFeet = []; // the trestles' legs' feet, for lift.js's colliders
   // ---- the lift: two rails straight up the face from the floor to the highest tier, in front of every gallery, rungs
   // every 6 m, braced back to the rock above 66 m and standing on trestles below it, down the talus to where the rails
   // go into the ground beside the lower station (v12-H4, src/v12/lift.js). Before v12 a carriage climbed and descended it
