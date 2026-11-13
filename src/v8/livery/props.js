@@ -4,7 +4,7 @@
 //
 //   the slate    on the Leerie's first standard, the one nearest the Pomegranate House (SITES.leerie.from), a little
 //                board in the house's saffron and pomegranate hangs on a nail, facing the causeway, chalked with the
-//                Leerie's account for lamp oil: twenty-three strokes in fives, nothing crossed off
+//                Leerie's account for lamp oil: a flask drawn in chalk and the sum, 23, nothing crossed off
 //   the peg      at the Kept Fire, between the hearth and P6, a forked stake with a spare ember stole hung over it, the
 //                sign pinned to it, for the keeper who is never there; someone has sewn the Late sign onto its end
 //
@@ -38,16 +38,17 @@ function slate(P) {
   P.paint('#2a2a26', 0, 0.97); P.box(0, top - H / 2 - 0.03, 0.03, W - 0.04, H - 0.11, 0.004); // the slate ground
   P.paint(LIVERY.late.pom, 0, 0.7); P.blob(0, top - 0.04, 0.032, 0.025, 0.025, 0.012, 6, 4);
   P.paint('#3a6a2a', 0, 0.8); P.blob(0, top - 0.01, 0.032, 0.012, 0.008, 0.006, 4, 3);
-  // the account: chalk strokes in fives, the fifth across; 23 of them, in rows of three fives
+  // the account: a flask drawn in chalk, the ruby glass he has not paid for, and its sum written out, 23 (no marks to
+  // count: a figure the Leerie owes); under it a ruled line with nothing crossed off
   P.paint('#e6e0cc', 0, 0.9, 0.15);
-  const x0 = -0.11, y0 = top - 0.11, dy = 0.075, sw = 0.016, gw = 0.075;
-  for (let k = 0; k < 23; k++) {
-    const g = Math.floor(k / 5), r = Math.floor(g / 3), c = g % 3, i = k % 5;
-    const gx = x0 + c * gw, gy = y0 - r * dy;
-    const j = ((k * 37) % 7) / 7 - 0.5; // the hand's wobble
-    if (i < 4) { const x = gx + i * sw; P.loft([[x, gy - 0.026, 0.034], [x + 0.006 * j, gy + 0.026, 0.034]], [0.0028, 0.0028], 3, 0, false); }
-    else P.loft([[gx - 0.008, gy - 0.02, 0.035], [gx + 3 * sw + 0.008, gy + 0.018 + 0.006 * j, 0.035]], [0.0028, 0.0028], 3, 0, false);
-  }
+  const fy = top - 0.155, T = 0.0028;
+  P.loft([[-0.07, fy - 0.05, 0.034], [-0.093, fy - 0.03, 0.034], [-0.093, fy - 0.005, 0.034], [-0.075, fy + 0.012, 0.034], [-0.075, fy + 0.04, 0.034], [-0.057, fy + 0.04, 0.034], [-0.057, fy + 0.012, 0.034], [-0.039, fy - 0.005, 0.034], [-0.039, fy - 0.03, 0.034], [-0.07, fy - 0.05, 0.034]], Array(10).fill(T), 3, 0, false);
+  P.paint('#8a1a26', 0, 0.55, 0.2); P.blob(-0.066, fy - 0.026, 0.035, 0.016, 0.016, 0.003, 6, 4); // a little of the ruby, filled in
+  P.paint('#e6e0cc', 0, 0.9, 0.15);
+  const num = (pts, ox) => P.loft(pts.map(([u, v]) => [ox + u * 0.04, fy - 0.045 + v * 0.085, 0.034]), Array(pts.length).fill(T), 3, 0, false);
+  num([[0, 0.78], [0.2, 0.96], [0.55, 1], [0.88, 0.88], [0.9, 0.68], [0.6, 0.42], [0.05, 0.02], [1, 0]], 0.01);
+  num([[0, 0.9], [0.5, 1], [0.9, 0.86], [0.5, 0.56], [0.95, 0.36], [0.9, 0.1], [0.5, 0], [0, 0.1]], 0.065);
+  P.loft([[-0.11, fy - 0.075, 0.034], [0.0, fy - 0.078, 0.034], [0.11, fy - 0.074, 0.034]], [T, T, T], 3, 0, false);
 }
 
 // the peg at the Kept Fire: a forked stake, a stole hung over the fork, the sign pinned to it. Local frame: the stake

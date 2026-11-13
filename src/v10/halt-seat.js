@@ -18,7 +18,7 @@
 // the pulley, local), HA, ground(x, z) (local), winchAt (the drum's world matrix), sleeper: { forearm, head (groups
 // hinged at the elbow and the neck, in the globe's pivot), wrist, elbow, hd, side }, pillow2, pivot, doorMark: { pos,
 // normal } (in the pivot), dimmer: { value } (the lamp's turn-down) }). Five draws (the seat, its rope, the drum and
-// crank, the salt while it falls, the door's chalk once there is some); per frame only while the seat moves, waits
+// crank, the salt while it falls, the door's saffron smears once there are some); per frame only while the seat moves, waits
 // or carries, or the sleeper answers. Sets ctx.tally.seat and ctx.tally.ride (for the tests and tools/tally-frames.mjs).
 import * as THREE from 'three';
 import { Builder } from '../structures/geo.js';
@@ -293,7 +293,8 @@ export function buildSeat(ctx, o) {
     pending = (ctx.tally?.strokeEnd?.() ?? 1.85) + 0.3;
   });
 
-  // the door's chalk: a saffron stroke for each ride before this visit, in gates of five, on both faces of the door
+  // the door's saffron: chalk-dust rubbed into the wood where hands push, a smear more for each ride before this visit, so the
+  // patch widens and deepens on both faces of the door (a stain, not a count)
   const dcv = document.createElement('canvas'); dcv.width = dcv.height = 128;
   const dtex = new THREE.CanvasTexture(dcv); dtex.colorSpace = THREE.SRGBColorSpace;
   const dmat = new THREE.MeshStandardMaterial({ map: dtex, transparent: true, depthWrite: false, roughness: 1, emissive: new THREE.Color('#ffd890'), emissiveMap: dtex, emissiveIntensity: 0.35 });
@@ -307,13 +308,12 @@ export function buildSeat(ctx, o) {
   }
   function drawDoor(n) {
     const g = dcv.getContext('2d'); g.clearRect(0, 0, 128, 128);
-    g.strokeStyle = 'rgb(255,214,132)'; g.lineWidth = 7; g.lineCap = 'round';
-    const k = Math.min(n, 15);
-    for (let i = 0; i < k; i++) {
-      const gate = Math.floor(i / 5), j = i % 5, gx = 10 + (gate % 2) * 60, gy = 12 + Math.floor(gate / 2) * 58;
-      g.beginPath();
-      if (j < 4) { g.moveTo(gx + j * 12 + 2, gy); g.lineTo(gx + j * 12, gy + 44); } else { g.moveTo(gx - 6, gy + 34); g.lineTo(gx + 50, gy + 8); }
-      g.stroke();
+    const k = Math.min(n, 15), r2 = ctx.makeRng(1331);
+    for (let i = 0; i < k; i++) { // each ride a wide soft smear of dust, scattered about the push-point, a little higher than it is wide
+      const a = r2() * 6.28, d = r2() * (12 + k * 2.2), x = 64 + Math.cos(a) * d, y = 70 + Math.sin(a) * d * 1.3, rad = 16 + r2() * 12;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, 'rgba(255,214,132,0.30)'); gr.addColorStop(0.6, 'rgba(255,200,110,0.14)'); gr.addColorStop(1, 'rgba(255,200,110,0)');
+      g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
     }
     dtex.needsUpdate = true;
     for (const m of marks) m.visible = n > 0;
