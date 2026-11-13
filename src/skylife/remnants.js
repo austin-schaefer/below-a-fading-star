@@ -160,11 +160,11 @@ const THREAD_VS = /* glsl */`
   }`;
 const THREAD_FS = /* glsl */`
   ${SKY_GLSL}
-  uniform vec3 uCol;
+  uniform vec3 uCol; uniform vec2 uIn;
   varying float vF; varying vec3 vW;
   void main() {
     vec3 d = normalize(vW - cameraPosition);
-    float a = smoothstep(0.02, 0.22, vF) * (1.0 - smoothstep(0.3, 0.95, vF));
+    float a = smoothstep(uIn.x, uIn.y, vF) * (1.0 - smoothstep(0.3, 0.95, vF));
     float run = 0.82 + 0.18 * sin(vF * 140.0 - uT * 0.9) * sin(vF * 23.0 + uT * 0.13);
     float lit = 0.75 + 0.25 * uFlicker;
     gl_FragColor = vec4(uCol * a * run * lit * sl_trans(d, 0.07), 1.0);
@@ -338,14 +338,17 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
     hull.quaternion.multiply(hq1).multiply(hq0);
   }
 
-  // ---------- thread rising beyond the glacier pass
+  // ---------- thread rising beyond the glacier pass. v12-H2: anchor(world) stands it on something in the world (the
+  // Plummet's eye, src/v12/icefall/plummet.js): its foot is then that point, held as the camera moves, and it shows
+  // from its foot; the climber leaves from the foot.
   const tb = dirFrom(8, 0); const threadBase = new THREE.Vector3(tb.x * 1250, 0, tb.z * 1250);
+  let anchor = null;
   const tside = new THREE.Vector3().crossVectors(up, tb).normalize();
   const tgeo = new THREE.BufferGeometry();
   { const pos = [], idx = []; const n = 40; for (let k = 0; k <= n; k++) pos.push(-1, k / n, 0, 1, k / n, 0); for (let k = 0; k < n; k++) { const a = k * 2; idx.push(a, a + 1, a + 3, a, a + 3, a + 2); } tgeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tgeo.setIndex(idx); }
-  const H0 = -250, H1 = 2150;
+  let H0 = -250; const H1 = 2150;
   const thread = new THREE.Mesh(tgeo, new THREE.ShaderMaterial({
-    uniforms: withSky(U, { uBase: { value: threadBase }, uSide: { value: tside }, uH0: { value: H0 }, uH1: { value: H1 }, uCol: { value: new THREE.Color('#ffe0b0').multiplyScalar(0.3) } }),
+    uniforms: withSky(U, { uBase: { value: threadBase }, uSide: { value: tside }, uH0: { value: H0 }, uH1: { value: H1 }, uIn: { value: new THREE.Vector2(0.02, 0.22) }, uCol: { value: new THREE.Color('#ffe0b0').multiplyScalar(0.3) } }),
     vertexShader: THREAD_VS, fragmentShader: THREAD_FS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide,
   }));
   thread.frustumCulled = false; thread.name = 'skylife-thread'; thread.renderOrder = 2;
@@ -407,20 +410,22 @@ export function buildRemnants(ctx, group, U, rng, lat, skyline) {
     lpos[0] = headWorld.x; lpos[1] = headWorld.y; lpos[2] = headWorld.z;
     li[0] = (0.7 + 0.3 * Math.sin(t * 0.7)) * (1 + 1.6 * gut) * (W.phase === 3 ? 1.35 : 1);
     lpos[3] = wan.cur.x; lpos[4] = wan.cur.y; lpos[5] = wan.cur.z;
+    if (anchor) threadBase.set(anchor.x - cam.position.x, anchor.y - cam.position.y, anchor.z - cam.position.z);
     // the climber: up the thread over five minutes, gone at the top, back at the bottom
     climb.f += dt / 300;
-    if (climb.f > 0.62) climb.f = 0.04;
+    if (climb.f > 0.62) climb.f = anchor ? 0 : 0.04;
     const cy = THREE.MathUtils.lerp(H0, H1, climb.f);
-    lpos[6] = threadBase.x; lpos[7] = cy; lpos[8] = threadBase.z;
-    li[2] = 0.8 * THREE.MathUtils.smoothstep(climb.f, 0.04, 0.09) * (1 - THREE.MathUtils.smoothstep(climb.f, 0.5, 0.62));
+    lpos[6] = threadBase.x; lpos[7] = threadBase.y + cy; lpos[8] = threadBase.z;
+    li[2] = 0.8 * (anchor ? THREE.MathUtils.smoothstep(climb.f, 0, 0.004) : THREE.MathUtils.smoothstep(climb.f, 0.04, 0.09)) * (1 - THREE.MathUtils.smoothstep(climb.f, 0.5, 0.62));
     lpa.needsUpdate = true; lia.needsUpdate = true;
   }
 
   const api = {
     flier, worm, hull, thread, lamps, wormState: W, climb,
     startFlight, flierPos: () => fPos,
+    anchor(world) { anchor = world.clone(); H0 = 0; thread.material.uniforms.uH0.value = 0; thread.material.uniforms.uIn.value.set(0, 0.003); climb.f = 0; },
     dirs: {
-      hull: () => hullDir, thread: () => tb.clone().setY(0.35).normalize(),
+      hull: () => hullDir, thread: () => (anchor ? anchor.clone().sub(cam.position).add(up.clone().multiplyScalar(300)).normalize() : tb.clone().setY(0.35).normalize()), // anchored: 300 m up the thread from its foot
       worm: () => headWorld.clone().normalize(), lamp: () => wan.cur.clone().normalize(),
       flier: () => fPos.clone().normalize(),
     },
