@@ -689,6 +689,55 @@ if (process.env.FIND !== '0') {
   await z.close();
 }
 
+// v12-H4, the lift (src/v12/lift.js; the ride itself is tools/lift-test.mjs): the station's bell, the cage's lever, the
+// gallery's bell, each offered at its place and not from far off, behind it or from the wrong level, done, and found
+// again after a reload
+{
+  const c = await browser.newContext({ viewport: { width: 640, height: 360 } }); const p = await c.newPage(); watch(p, 'lift');
+  await p.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.lift, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  const offAt = (x, z, y, yaw, pitch = 0) => p.evaluate(async ([x, z, y, yaw, pitch]) => {
+    const fp = window.__fp; fp.controls.placeAt(x, z, y); const pl = fp.player; pl.yaw = yaw; pl.pitch = pitch; pl.vel.set(0, 0, 0);
+    await new Promise((r) => setTimeout(r, 900));
+    return fp.acts.offered?.def.id || null;
+  }, [x, z, y, yaw, pitch]);
+  const L = await p.evaluate(() => { const L = window.__fp.lift, f = L.stand.foot(), t = L.stand.top(); return { f, t, floor: L.floorY0, galY: L.gal.y, io: { x: L.io.x, z: L.io.z } }; });
+  check('lift: the station\'s bell is offered at its pull', (await offAt(L.f.x, L.f.z, L.floor, L.f.yaw, 0.1)) === 'lift-call');
+  check('lift: not with the back to it', (await offAt(L.f.x, L.f.z, L.floor, L.f.yaw + Math.PI)) !== 'lift-call');
+  check('lift: not from the path 20 m off', (await offAt(L.f.x - L.io.x * 20, L.f.z - L.io.z * 20, undefined, L.f.yaw)) !== 'lift-call');
+  check('lift: not from under the platform (another level)', (await offAt(L.f.x - L.io.x * 0.5, L.f.z - L.io.z * 0.5, L.floor - 6.5, L.f.yaw)) !== 'lift-call');
+  // done with E: the carriage answers, and comes down (it is put at the foot at once: the descent is lift-test's)
+  await offAt(L.f.x, L.f.z, L.floor, L.f.yaw, 0.1);
+  await p.keyboard.press('KeyE'); await sleep(2600);
+  let r = await p.evaluate(() => ({ n: window.__fp.acts.count('lift-call'), heading: window.__fp.lift.heading(), S0: window.__fp.lift.S0, moving: window.__fp.lift.moving }));
+  check('lift: E rings the bell, and the carriage is bound down to the foot', r.n === 1 && r.heading === r.S0, r);
+  await p.evaluate(() => window.__fp.lift.jump(window.__fp.lift.S0));
+  check('lift: the bell is not offered while the carriage stands at the foot', (await offAt(L.f.x, L.f.z, L.floor, L.f.yaw, 0.1)) !== 'lift-call');
+  // the lever: not from the platform outside, offered inside facing it
+  const lv = await p.evaluate(() => { const L = window.__fp.lift, c = L.cageCentre(), v = L.lever(); return { c: { x: c.x, z: c.z }, v: { x: v.x, y: v.y, z: v.z } }; });
+  const yawTo = (a, b) => Math.atan2(-(b.x - a.x), -(b.z - a.z));
+  const plat = { x: lv.c.x + L.io.x * 2.6, z: lv.c.z + L.io.z * 2.6 };
+  check('lift: the lever is not offered from the platform, through the door', (await offAt(plat.x, plat.z, L.floor, yawTo(plat, lv.v), -0.3)) !== 'lift-lever');
+  const inside = { x: lv.c.x + L.io.x * 0.4, z: lv.c.z + L.io.z * 0.4 };
+  check('lift: the lever is offered inside the cage, facing it', (await offAt(inside.x, inside.z, L.floor, yawTo(inside, lv.v), -0.45)) === 'lift-lever');
+  await p.keyboard.press('KeyE'); await sleep(1500);
+  r = await p.evaluate(() => ({ carried: window.__fp.player.carried, ridden: window.__fp.lift.ridden, n: window.__fp.acts.count('lift-lever') }));
+  check('lift: E throws the lever: the visitor is carried', r.carried && r.ridden && r.n === 1, r);
+  // the gallery's bell: offered while the carriage is away from the gallery (it is riding down from... the foot now)
+  await p.evaluate(() => window.__fp.controls.placeAt(-200, -40)); await sleep(400);
+  await p.evaluate(() => window.__fp.lift.jump(window.__fp.lift.S0));
+  check('lift: the gallery\'s bell is offered at its pull with the carriage away', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) === 'lift-call-top');
+  check('lift: the station\'s bell is not offered up on the gallery', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) !== 'lift-call');
+  // found again after a reload: the counts kept, the bell offered again
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.lift, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  r = await p.evaluate(() => ({ call: window.__fp.acts.count('lift-call'), lever: window.__fp.acts.count('lift-lever') }));
+  check('lift: after a reload the acts are remembered and the bell is offered again', r.call === 1 && r.lever === 1 && (await offAt(L.f.x, L.f.z, L.floor, L.f.yaw, 0.1)) === 'lift-call', r);
+  await c.close();
+}
+
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
 console.log(`${passes} passed, ${fails} failed`);

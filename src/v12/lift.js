@@ -467,7 +467,7 @@ export async function build(ctx) {
     do() { ring('top'); callAfter(SG, 1.2); return 2.4; },
   });
   const leverAct = ctx.acts?.add({
-    id: 'lift-lever', at: leverAt, reach: 1.7, rise: 2.2, cone: 0.85, lure: false, ease: false,
+    id: 'lift-lever', at: leverAt, reach: 2.4, rise: 2.2, cone: 0.85, lure: false, ease: false,
     words: 'Throw the lever', every: 'free',
     when: () => !ridden && (where() === 'foot' || where() === 'gallery') && !cur && seq.length === 0 && inCage(),
     do() { return ride(); },
