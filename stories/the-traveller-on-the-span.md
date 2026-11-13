@@ -27,7 +27,7 @@ Whether he climbed down the rope and it ended, or simply stepped.
 ## Open threads
 
 - Beat 2 is seen from sixty metres up only after the bell is rung (`the-bell-under-the-span.md`); before that it is still a few pixels.
-- His book. Somebody could have the other volume.
+- His book: the other volume is face down on a blanket on the Span's middle deck (`the-wait-on-the-span.md`).
 - Who was he walking to? A saffron thread on someone living would answer it.
 
 ## Log
@@ -35,4 +35,5 @@ Whether he climbed down the rope and it ended, or simply stepped.
 - 2026-11-11, v8 brief 04: built. First round the body could not be found at all; one fix round moved it into the sun.
 - 2026-11-11, v8 critic: from the lip "the body is a few coloured pixels". Noted in its state.
 - 2026-11-12, v10-A3: the bell under the Span tolls for him; the fen's candles come and stand round him, and stay.
+- 2026-11-12, v12-H1: someone crossed the thin ways and waited for him on the middle deck (`the-wait-on-the-span.md`): the other volume of his book, a twin of his cup.
 - 2026-11-12, v10-A3 second round: redrawn so a stranger reads a man (the coat on him, not flung flat; the parasol smaller and further off); his letters sealed in red, in a case by his hand, and gathered by a visitor once the bell has been rung (`the-bell-under-the-span.md`).

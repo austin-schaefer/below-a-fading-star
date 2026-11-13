@@ -15,8 +15,9 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The Lantern Halt](the-lantern-halt.md) | plain | built | a traveller asleep in a hung lantern, half out of its hatch; chalk your stroke and the seat hauls you up to him | the causeway, halfway | the sign of the sun; the traveller's boots; shoes left by the winch |
 | [The Reckoner under the door](the-reckoner.md) | plain | built | the Reckoner, who keeps the count of the sun's failures behind the Hypogeum's door; never seen | the Hypogeum, the mother crystal, the thread between | the gold from the court; the Moles' tessera; the Scriveners; the Lantern Halt (on his plate's back) |
 | [The bell under the Span](the-bell-under-the-span.md) | plain | built | the traveller, and the fen's candles that come for him | the Span's cracked bay, the fen, the slope below | the traveller on the Span; the Late folk's saffron |
+| [The wait on the Span](the-wait-on-the-span.md) | plain | built | whoever crossed the thin ways to wait for the traveller; a camp, forty-one days of chalk | the Span's middle deck | the traveller on the Span (his book's twin, his cup's twin) |
 
-Eight plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Nine plain, one deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -31,7 +32,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 
 ## Things that travel
 
-- Saffron cloth with a cream lining and a madder border (the traveller).
+- Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited).
 - Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown.
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.

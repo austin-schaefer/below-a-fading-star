@@ -40,6 +40,7 @@ const CARD_POSES = {
 // v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
+  { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
 ];
 const ACT_PLACES = [
   { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
