@@ -39,9 +39,9 @@ export async function build(ctx) {
   parts.push(['slot-walls', G.p.length / 9]);
   for (const sgn of [1, -1]) {
     wall(G, rng, noise, slotS, {
-      sgn, half: slotHalf, thick: 2.4, lean: 0.9, leanVary: true, rows: low ? 7 : 11, scallop: 0.32, icicles: 0.55, deepMax: 0.58, strata: 0.75, // deep enough to be blue at the foot, not so deep the bands go black at eye height
-      top: (i, s, nx, nz) => Math.max(s.y + 3.4, iceAt(s.x + nx * (SLOT.half + 2.4), s.z + nz * (SLOT.half + 2.4)) + 0.7),
-      ground: (i, s, nx, nz) => H(s.x + nx * (SLOT.half + 3.2), s.z + nz * (SLOT.half + 3.2)),
+      sgn, half: slotHalf, thick: 4.4, outerKerb: sgn > 0, lean: 0.9, // the kerb on the north (T1) side only: the south side's outer edge crosses the cleft leanVary: true, rows: low ? 7 : 11, scallop: 0.32, icicles: 0.55, deepMax: 0.58, strata: 0.75, // deep enough to be blue at the foot, not so deep the bands go black at eye height
+      top: (i, s, nx, nz) => Math.max(s.y + 3.4, iceAt(s.x + nx * (SLOT.half + 4.4), s.z + nz * (SLOT.half + 4.4)) + 0.7),
+      ground: (i, s, nx, nz) => H(s.x + nx * (SLOT.half + 6.4), s.z + nz * (SLOT.half + 6.4)),
     }, colliders);
   }
   parts.push(['slot-floor', G.p.length / 9]);
@@ -58,6 +58,14 @@ export async function build(ctx) {
     serac(G, rng, { x: sd.x - sd.tz * off * side, y: sd.y, z: sd.z + sd.tx * off * side, w, d: w * (0.6 + rng() * 0.5), h: w * (0.4 + rng() * 0.7), rot: rng() * 3, slant: (rng() - 0.5) * w * 0.5, sink: 0.3, deepTop: sd.y + 6, deepRange: 10 });
   }
   parts.push(['chock', G.p.length / 9]);
+  // chips of ice and grit across the floor, where feet go (too small to trip on)
+  for (let i = 0; i < slotS.length; i += low ? 2 : 1) {
+    const sd = slotS[i];
+    for (let k = 0; k < (low ? 3 : 5); k++) {
+      const off = (rng() * 2 - 1) * (slotHalf(sd.d) - 0.2), w = 0.08 + rng() * rng() * 0.3;
+      serac(G, rng, { x: sd.x - sd.tz * off + sd.tx * (rng() - 0.5) * 0.8, y: sd.y + 0.02, z: sd.z + sd.tx * off + sd.tz * (rng() - 0.5) * 0.8, w, d: w * (0.6 + rng() * 0.6), h: w * (0.3 + rng() * 0.5), rot: rng() * 3, slant: (rng() - 0.5) * w * 0.4, sink: 0.05, deepTop: sd.y + 4, deepRange: 8, dirt: 0.3 + rng() * 0.5 });
+    }
+  }
   // the chockstone: a block fallen in and wedged between the walls, 5 m over the way
   {
     const sd = slotS.reduce((a, q) => (Math.abs(q.d - 42) < Math.abs(a.d - 42) ? q : a));
@@ -210,7 +218,7 @@ export async function build(ctx) {
   const kerb = (pts, open, y0, h) => {
     for (let i = 0; i < pts.length - 2; i += 2) {
       const a = pts[i], b = pts[i + 2], mx = (a[0] + b[0]) / 2;
-      if (open(mx)) continue;
+      if (open(mx) || Math.abs(b[0] - a[0]) > 7) continue; // nor across the gap between two pieces of one face (the cleft)
       colliders.push({ x1: a[0], z1: a[1], x2: b[0], z2: b[1], r: 0.45, y: Math.min(y0(a), y0(b)), h, stand: false });
     }
   };
@@ -489,15 +497,15 @@ export async function build(ctx) {
   walkLine(LANES.t2, 6, (x, z, tx, tz) => cluster(x + tz * 2.3, z - tx * 2.3, 2, 1.7));
   // the stair: out of the cut above head height, pointing out over the treads
   for (const f of SP.fl) {
-    for (let a = 1.5; a < f.L; a += 3.2) {
-      along += 3.2;
+    for (let a = 1.5; a < f.L; a += 2.2) { // a post every 2.2 m: a path of lamps up the hillside
+      along += 2.2;
       const so = f.vz > 0 ? 1 : -1, c = -(STAIR.half + 0.1);
       const x = f.a[0] + f.ux * a + f.vx * c * so, z = f.a[1] + f.uz * a + f.vz * c * so, y = treadY(f, a, 0) + 2.3 + rng() * 0.6;
       cr(x, y, z, 0.9 + rng() * 0.9, 0.12, [f.vx * so * 0.8, 0.6, f.vz * so * 0.8], rng());
       // and a post of glass at its outer edge every 3 m: the flights' line in silhouette from below
       const co = STAIR.half + 0.25 + (f.k === 2 && a > f.L * STAIR.crack ? STAIR.shift : 0);
       const px = f.a[0] + f.ux * a + f.vx * co * so, pz = f.a[1] + f.uz * a + f.vz * co * so;
-      cr(px, treadY(f, a, STAIR.half) - 0.4, pz, 3.2 + rng() * 2.0, 0.3, [f.vx * so * 0.15, 1, f.vz * so * 0.15], 1.0);
+      cr(px, treadY(f, a, STAIR.half) - 0.4, pz, 3.6 + rng() * 1.2, 0.34, [f.vx * so * 0.15, 1, f.vz * so * 0.15], 1.0);
     }
   }
   cr(44.2, SP.landing.y - 0.3, -357.6, 8, 0.8, [0.15, 1, 0.3], 0.85);
@@ -594,7 +602,7 @@ export async function build(ctx) {
     bridgeMid: at(BRIDGE.pts[0][0] + (BRIDGE.pts[1][0] - BRIDGE.pts[0][0]) * 0.6, BRIDGE.pts[0][1] + (BRIDGE.pts[1][1] - BRIDGE.pts[0][1]) * 0.6, -Math.PI / 2),
   };
   ctx.icefall = {
-    group, eyeTop, tip: { ...tip, y: tipY }, find: FIND, path, falls, parts, ice,
+    group, eyeTop, tip: { ...tip, y: tipY }, find: FIND, path, falls, parts, ice, slotFloor: lineFloor(SLOT.pts, 3),
     stats: () => ({ drawCalls: group.children.length, triangles: Math.round(tris), iceTris: Math.round(iceGeo.attributes.position.count / 3), seracs: nSer, faces: nFaces, crystals: C.length }),
   };
   ctx.log?.(`icefall: ${Math.round(tris)} tris, ${nSer} seracs, ${C.length} crystals`);

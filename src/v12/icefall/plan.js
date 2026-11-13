@@ -107,7 +107,7 @@ export function iceY(x, z) {
 // Its floor's y: the cleft's mouth on the tongue (measured: heightAt there), a level turn at the cleft's back (three
 // points at one height, so the floor has no step where the nearest segment changes), the end level with T1;
 // levels() fills the rest by length.
-export const SLOT = { half: 1.7, pts: [[72.5, -293, 16.06], [72, -307.2, 0], [72, -310, 0], [69.2, -310, 0], [60, -311.4, 0], [50, -309.6, 0], [40, -311.4, 0], [31, -310, 0], [24, -311, 0]], cut: true, taper: [true, true] };
+export const SLOT = { half: 1.7, pts: [[72.5, -293, 16.06], [72, -307.2, 0], [72, -310, 0], [69.2, -310, 0], [60, -310.8, 0], [50, -309.6, 0], [40, -310.9, 0], [31, -310, 0], [24, -311, 0]], cut: true, taper: [true, true] };
 // the slot's width by metres along it: 1.7 either side, pinched to 1.15 where the walls lean together and to 1.3
 // where a crystal grows out of the north wall (CRYSTAL_AT) and the walker goes round it
 export const SLOT_PINCH = [[33, 4, 1.15], [55, 3, 1.3]];
@@ -132,7 +132,7 @@ export const STAIR = {
 };
 // the lanes across the terraces and the shelf (no floors: kept clear of seracs, marked by crystals)
 export const LANES = {
-  t1: [[21, -316.5], [40, -317.2], [70, -317.5], [96.5, -317.5], [99.2, -321]],
+  t1: [[21, -318], [40, -318], [70, -318], [96.5, -318], [99.2, -321]],
   t2: [[53, -340], [40, -344], [20, -347.5], [6, -351]],
   shelf: [[8, -370.5], [4.5, -371.5], [8, -376.5], [22, -380], [40, -388], [50, -397]],
   approach: [[58, -279], [66, -285], [72.5, -291]],
@@ -167,17 +167,19 @@ export function levels() {
 
 // the carve: the terrain is pulled down under the slot and the stair, so neither has ground standing in it
 const CUTS = [];
-function addCut(pts, half, taper) {
+function addCut(pts, half, taper, full = 0.5, blend = 1.3) {
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, L = 0;
   for (let i = 0; i < pts.length; i++) { const p = pts[i]; x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); if (i) L += hyp(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]); }
-  const m = half + 3;
-  CUTS.push({ pts, half, taper: taper || [false, false], L, x0: x0 - m, x1: x1 + m, z0: z0 - m, z1: z1 + m });
+  const m = half + blend + 0.5;
+  CUTS.push({ pts, half, full, blend, taper: taper || [false, false], L, x0: x0 - m, x1: x1 + m, z0: z0 - m, z1: z1 + m });
 }
 let cutsReady = false;
 function readyCuts() {
   cutsReady = true;
   levels();
-  addCut(SLOT.pts, SLOT.half, SLOT.taper);
+  // the slot: carved well past its walls, so no vertex of the terrain's mesh (2.1 to 3.1 m apart) stands in it: a
+  // mesh drawn over a narrower cut sliced the slot with flat planes of ground; the walls' tops and outer faces cover the rest
+  addCut(SLOT.pts, SLOT.half, SLOT.taper, 3.0, 4.5);
   addCut(BRIDGE.pts, BRIDGE.half + 0.6, BRIDGE.taper);
   addCut([...STAIR.f1, ...STAIR.f2], STAIR.half, [true, true]);
 }
@@ -201,7 +203,7 @@ export function carve(x, z, y) {
   for (const c of CUTS) {
     if (x < c.x0 || x > c.x1 || z < c.z0 || z > c.z1) continue;
     nearest(c.pts, x, z, _nr);
-    const w = 1 - smoothstep(c.half + 0.5, c.half + 1.3, _nr[0]); // full under the floor and the walls' inner faces; the walls stand on the rest
+    const w = 1 - smoothstep(c.half + c.full, c.half + c.blend, _nr[0]);
     if (w <= 0) continue;
     // at an end that meets the ground (a tapered end), the cut shallows to nothing over its last 5 m
     let depth = 1.2;

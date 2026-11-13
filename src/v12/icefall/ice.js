@@ -56,13 +56,23 @@ export function iceMaterial(ctx) {
           vec3 top = vec3(0.40, 0.385, 0.43) * (0.72 + 0.45 * mott) * (0.82 + 0.3 * smoothstep(0.3, 0.7, sas));
 
           top = mix(top, vec3(0.16, 0.14, 0.14), clamp(vIce.z * 0.7 + grit * 0.45, 0.0, 0.85));
+          // a crevasse's floor (vIce.z about 0.55: old snow and grit in the shade): rough at the scale of a foot, pocked
+          // and gritty, so it reads underfoot in the little light it gets
+          float fl = smoothstep(0.5, 0.52, vIce.z) * (1.0 - smoothstep(0.58, 0.6, vIce.z));
+          float pock = icN(vIceW.xz * 3.1) * 0.5 + icN(vIceW.xz * 7.3 + 2.0) * 0.5;
+          top *= 1.0 + fl * (0.9 * (pock - 0.5) + 0.35 * (sas - 0.5));
+          top = mix(top, vec3(0.08, 0.07, 0.07), fl * smoothstep(0.62, 0.75, icN(vIceW.xz * 1.9 + 7.0)) * 0.8);
           icDeep = deep;
           diffuseColor.rgb = mix(face, top, icUp * (1.0 - deep * 0.8));
+          // frost: a slot wall's lip (thin, cold, near the sky) furred pale in patches
+          float frost = vIce.z * smoothstep(0.12, 0.0, deep) * smoothstep(0.45, 0.75, icN(vIceW.xz * 2.3 + vIceW.y * 1.7)) * (1.0 - icUp);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.6, 0.68), frost * 0.7);
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         // glassy where the ice is thin and lit; deep ice and shadowed walls not a mirror (a dark glossy wall shows only
         // the violet sky, flat: the slot read as an unlit corridor)
-        roughnessFactor = mix(mix(0.22, 0.62, smoothstep(0.2, 0.8, icDeep)), 0.8, icUp);`)
+        roughnessFactor = mix(mix(0.22, 0.62, smoothstep(0.2, 0.8, icDeep)), 0.8, icUp);
+        roughnessFactor = mix(roughnessFactor, 0.06, step(vIce.z, 0.01) * smoothstep(0.55, 0.6, icDeep)); // the refrozen melt: wet glass, the sky strip in it`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // light in the ice: a cold blue from within a face turned from the sun, more where it is deep; the violet sky
         // on it at a graze, as glass shows it
@@ -72,6 +82,8 @@ export function iceMaterial(ctx) {
           totalEmissiveRadiance += vec3(0.006, 0.042, 0.085) * side * icPat * (0.25 + 0.9 * icShade + 1.4 * smoothstep(0.3, 1.0, icDeep) + 1.2 * vIce.z * icShade);
           // a wall that shows its years (the slot's) is thin near its lip: the sky's light comes through it there
           totalEmissiveRadiance += vec3(0.02, 0.075, 0.12) * side * vIce.z * (1.0 - smoothstep(0.0, 0.55, icDeep)) * icPat;
+          // the refrozen melt holds a little of the slot's blue light
+          totalEmissiveRadiance += vec3(0.01, 0.05, 0.09) * step(vIce.z, 0.01) * smoothstep(0.55, 0.6, icDeep) * (0.6 + 0.8 * icN(vIceW.xz * 2.0));
           totalEmissiveRadiance += vec3(0.05, 0.035, 0.085) * graze * side * (1.0 - icDeep) * 0.4 * (1.0 - smoothstep(0.5, 0.7, vIce.z)); // not on a slot's walls: seen along them it washed them flat violet
         }`);
   };

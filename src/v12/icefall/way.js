@@ -67,6 +67,12 @@ export function wall(G, rng, noise, S, o, colliders) {
   // the top: from the inner top to the outer top; the outer face down to the ground
   const T = [P[rows], outer.map((c) => c[0]), outer.map((c) => c[1])], TQ = [Q[rows].map((q) => [0, q[1], 0.3]), qOut.map((c) => c[0]), qOut.map((c) => c[1])];
   G.grid(T, TQ, sgn > 0);
+  // a kerb along the outer edge of its top (where the ground beyond meets it): nobody walks onto the wall's top
+  if (colliders && o.outerKerb) for (let i = 0; i < S.length - 1; i += 3) {
+    const a = S[i], b = S[Math.min(S.length - 1, i + 3)], na = [-a.tz * sgn, a.tx * sgn], nb = [-b.tz * sgn, b.tx * sgn], ea = halfAt(a.d) + thick + 0.3, eb = halfAt(b.d) + thick + 0.3;
+    const ga = o.ground(i, a, na[0], na[1]), gb = o.ground(i, b, nb[0], nb[1]);
+    colliders.push({ x1: a.x + na[0] * ea, z1: a.z + na[1] * ea, x2: b.x + nb[0] * eb, z2: b.z + nb[1] * eb, r: 0.3, y: Math.min(ga, gb) - 2, h: 5, stand: false });
+  }
   // colliders: capsules along the inner face, each its own height
   if (colliders) for (let i = 0; i < S.length - 1; i += 3) {
     const a = S[i], b = S[Math.min(S.length - 1, i + 3)];

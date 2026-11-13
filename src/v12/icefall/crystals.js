@@ -3,7 +3,7 @@
 // thickens again into a crown. They are the climb's way-marks: grown out of the slot's walls, along the block's edge,
 // beside the lanes, out of the stair's cut, so the eye follows them up and the feet can too.
 // Light climbs them: a pulse runs up the line from the mother crystal (each crystal's `along`, metres up the line),
-// every 9 s, arrives in the Plummet's point and climbs it to its eye (icefall.js runs the Plummet's along on from
+// every 14 s, arrives in the Plummet's point and climbs it to its eye (icefall.js runs the Plummet's along on from
 // the line's end); the mote that climbs the thread from the eye is the sky's own (remnants.js). One InstancedMesh; the material is the Lattice's look
 // (src/vegetation/lattice.js: deep and pale blue, a fresnel rim, a band of light) without its batching.
 import * as THREE from 'three';
@@ -60,13 +60,13 @@ export function crystalMaterial(ctx, uTime, instanced) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         {
           float fres = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 4.0);
-          // the pulse up the line: a crest every 9 s, 360 m apart, running up at 40 m/s; the line glows a little between
-          float ph = vAlong / 360.0 - uTime / 9.0;
+          // the pulse up the line: a crest every 14 s, 280 m apart, running up at 20 m/s; the line glows a little between
+          float ph = vAlong / 280.0 - uTime / 14.0; // slower: seen to travel up
           float crest = pow(0.5 + 0.5 * cos(6.2832 * ph), 18.0);
           float slow = 0.5 + 0.5 * sin(uTime * 0.4 - vAlong * 0.02);
           // a way-mark (a high tint) holds a steady glow, so a still shows the line and not only the pulse
-          totalEmissiveRadiance += uPale * 0.22 * smoothstep(0.8, 1.0, vTint) * (0.6 + 0.4 * crVeil) * uGain;
-          totalEmissiveRadiance += (uDeep * (0.08 + 0.18 * slow) * (0.5 + crVeil) + uPale * fres * 0.35 + uPale * crest * (0.9 + 1.1 * crVeil)) * (0.7 + 0.6 * vTint) * uGain;
+          totalEmissiveRadiance += uPale * 0.5 * smoothstep(0.8, 1.0, vTint) * (0.6 + 0.4 * crVeil) * uGain;
+          totalEmissiveRadiance += (uDeep * (0.08 + 0.18 * slow) * (0.5 + crVeil) + uPale * fres * 0.35 + uPale * crest * (1.6 + 1.6 * crVeil)) * (0.7 + 0.6 * vTint) * uGain;
           // dark glass (the Plummet, the old leads) is lit from inside: veins of the deep blue, brighter low down
           totalEmissiveRadiance += (uDeep * 1.1 + uPale * 0.25) * (1.0 - vTint) * smoothstep(0.55, 0.9, crVeil) * (0.6 + 0.6 * slow) * uGain;
         }`);
