@@ -81,6 +81,7 @@ const MODULES = [
   ['bell', () => import('./v10/bell.js')], // v10-A3: the bell under the Span, its ram, and the candles it calls (?bell=0)
   ['acts', () => import('./v10/acts.js')], // v10 (#24): the offer, its input and the marks' memory for every act (?acts=0)
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
+  ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
