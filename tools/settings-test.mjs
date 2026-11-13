@@ -110,7 +110,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the Escarpment Lamps, the middle of the Span (56 m up), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 1 + 3 + 18 - 1 + 8 + 1, n);
+  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the Escarpment Lamps, the middle of the Span (56 m up), the Diffident Stair and the tender\'s deck (100 m up), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 1 + 3 + 18 - 1 + 8 + 1 + 2, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;

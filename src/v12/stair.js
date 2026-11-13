@@ -72,7 +72,7 @@ export async function build(ctx) {
   // ------------------------------------------------------------------ the slabs
   const mat = slabMaterial(true);
   const treads = E.filter((e) => e.kind === KIND.TREAD || e.kind === KIND.STUB);
-  const lands = E.filter((e) => e.kind === KIND.LANDING);
+  const lands = E.filter((e) => e.kind === KIND.LANDING || e.kind === KIND.TOP); // the top never moves (fixed: a = 1)
   function instanced(geo, list, name) {
     const m = new THREE.InstancedMesh(geo, mat, list.length);
     const glow = new THREE.InstancedBufferAttribute(new Float32Array(list.length), 1); glow.setUsage(THREE.DynamicDrawUsage);
@@ -96,6 +96,7 @@ export async function build(ctx) {
     const mouths = E.filter((o) => (o.i === e.i - 1 || o.i === e.i + 1) && o.kind !== KIND.LANDING);
     // the four sides in the landing's frame: forward (+f), back (-f), left (+r... the walker's right is r)
     for (const [fx, rx] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      if (e.kind === KIND.TOP && fx === 1) continue; // the top's far side opens onto the tender's deck
       const along = fx !== 0 ? e.hw : e.hd, cf = fx * (e.hd - 0.12), cr = rx * (e.hw - 0.12);
       // the open stretches on this side: where a neighbouring flight's tread touches it (a switchback has two)
       const opens = [];

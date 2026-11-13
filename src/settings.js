@@ -41,7 +41,7 @@ const CARD_POSES = {
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
   { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
-  { name: 'The Diffident Stair', x: 296, z: -6, look: { x: 287, z: -12 }, pitch: 0.12 }, // v12-H3: its stub and posts from the turf to the east, the sun between the posts
+  { name: 'The Diffident Stair', x: 274, z: -3, look: { x: 287, z: -12 }, pitch: 0.1 }, // v12-H3: its stub and posts from the moor to the west, lit by the sun behind the walker, its slabs lying in the turf between
   { name: 'The tender\'s deck', x: 233.5, y: 109.5, z: -53.5, look: { x: 200, z: -40 }, pitch: -0.1 }, // v12-H3: the top of the stair, 100 m up on the lattice's foot, toward the sun
 ];
 const ACT_PLACES = [

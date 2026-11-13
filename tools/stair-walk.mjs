@@ -105,7 +105,7 @@ if (falls) {
     const p0 = await page.evaluate((frac) => {
       const fp = window.__fp, S = fp.stair, E = S.plan.els;
       // a tread in a flight about that far up, its flight's direction
-      let i = Math.round(frac * (E.length - 1)); while (E[i].kind !== 0) i--;
+      let i = Math.round(frac * (E.length - 1)); const mid = (j) => { for (let k = j - 6; k <= j + 6; k++) if (E[k].kind !== 0) return false; return true; }; while (!mid(i)) i--;
       S.all(true); fp.controls.placeAt(E[i].cx, E[i].cz, E[i].y); const p = fp.player; p.vel.set(0, 0, 0); p.vy = 0;
       p.yaw = Math.atan2(-E[i].ux, -E[i].uz); p.pitch = -0.2;
       return { i, x: E[i].cx, z: E[i].cz, y: E[i].y, ground: fp.terrain.heightAt(E[i].cx, E[i].cz) };

@@ -364,7 +364,7 @@ const HELPERS = `(() => {
     run(300, ['KeyW']); // up the first flight to its landing (whose far side is held)
     out.climbed = { feet: feet(), el: S.el() };
     // ahead within 1.5 m of path of the feet, everything has come; behind, past 8 m, after its linger, everything has gone
-    run(240, []);
+    run(480, []); // (a slab lingers a moment, then takes 4 s to sink)
     const s0 = E[S.el()].s;
     out.ahead = E.filter((e) => e.s > s0 && e.s < s0 + 1.5).every((e) => S.a[e.i] === 1);
     out.behindGone = E.filter((e) => e.kind !== 2 && e.s < s0 - 8).every((e) => S.a[e.i] === 0);
