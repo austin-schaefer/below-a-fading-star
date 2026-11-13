@@ -1,16 +1,17 @@
 // The river bay's way (v12 H1): a member of one of the Lattices that hang in the high air (src/skylife/lattices.js),
 // come down and lying across the 47 m of air between the deck ends at x 122 and 169. Seen from the meadow it is a thin
 // line joining the piers; at arm's length it is a built thing: a box truss 1.4 m wide and 1.5 m deep, four chords of
-// old metal with cross-bars every half-stride across its top (a grating left on some panels, bare in others, so the
-// river shows through between the bars), Warren diagonals down its sides and an X under its belly. It bows 3.2 m at the middle.
+// old metal with round bars every half-stride across its top (a grating left on some panels, bare in others, so the
+// river shows through between the bars), Warren diagonals down its sides and an X under its belly; at every node a cube
+// of paler, harder metal with a seam of cold light round it, a joint nobody in the valley could make. It bows 3.2 m.
 // At the west it broke off: for its last three metres only the two top chords and their bars reach the lip, and what
 // is left of the sides hangs from the torn end. At the east it went into the pier: its end is bitten into the deck's
 // broken edge with spalled stone heaped round it. Half-way over, at one of its nodes, the stub of a side member stands
-// up beside the bars, snapped and bent over, and another goes out sideways and stops; a square web the Lattices string
-// across their cells hangs in rags between them. Faces the low sun finds are copper, the rest dust and verdigris; one
-// member in eight is still polished; the seams between its sections hold a little of the sky's cold light.
-// Draws: the metal (one mesh, vertex colours), the seams (one), the web (one LineSegments), the rags (the shared
-// saffron mesh, via K). The walkable is vestigeAt (vestige-plan.js): the top face, exactly as drawn (±0.7 m).
+// up beside the bars, snapped and bent over, and another goes out sideways and stops; a rag of the square web the
+// Lattices string across their cells still hangs from the bottom chords. Dust and verdigris, worn copper only where the
+// low sun finds it; one member in eight still polished pale.
+// Draws: the metal (one mesh, vertex colours; casts no shadow on low), the seams (one), the web (one LineSegments), the
+// rags (returned, for the shared cloth mesh). On low: fewer gratings, less web, the seams updated at 2 Hz. The walkable is vestigeAt (vestige-plan.js): the top face, exactly as drawn (±0.7 m).
 import * as THREE from 'three';
 import { SUN } from '../../world.js';
 import { mergeGeometries } from '../kit/merge.js';
@@ -54,20 +55,30 @@ float sNoise(vec3 x) {
   float verd = smoothstep(0.5, 0.78, sNoise(vSW * 0.7 + 9.0) * 0.55 + sm * 0.45);
   diffuseColor.rgb *= 0.62 + 0.62 * sm;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.10, 0.20, 0.16), verd * 0.8);
-  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.07, 0.035), smoothstep(0.55, 0.9, streak) * 0.55);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.08, 0.05), smoothstep(0.55, 0.9, streak) * 0.35);
   diffuseColor.rgb *= 1.0 - 0.3 * pit;
   float sRough = 0.12 * pit + 0.25 * verd;`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = min(1.0, roughnessFactor + sRough);');
   };
   return m;
 }
 
+// a round bar from A to B
+const _up = new THREE.Vector3(0, 1, 0), _q = new THREE.Quaternion();
+function rod(A, B, r, seg = 7) {
+  _z.subVectors(B, A); const len = _z.length();
+  const g = new THREE.CylinderGeometry(r, r, len, seg, 1);
+  _q.setFromUnitVectors(_up, _z.divideScalar(len));
+  g.applyQuaternion(_q); g.translate((A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2);
+  return clean(g);
+}
+
 export function buildStrut(K, R) {
-  const { ctx, rng, jit, addCol } = K;
+  const { ctx, rng, jit, addCol, hi } = K;
   const metal = [], seams = [], web = [], rags = [];
   const polished = new Set();
   const V = (x, side = 0, down = 0) => new THREE.Vector3(x, R.y(x) - down, R.zc(x) + side);
   const add = (g, list = metal, tag = 0) => { g.userData.tag = tag; list.push(g); return g; };
-  const MEMBERS = { chord: 1, bar: 2, plate: 3, side: 4, stub: 5, torn: 6 };
+  const MEMBERS = { chord: 1, bar: 2, plate: 3, side: 4, stub: 5, torn: 6, node: 7 };
 
   const xT = 124.4;            // the torn end of the truss proper; west of it only the top chords and bars go on
   const xW = R.a - 0.9, xE = R.b + 1.6; // the chords lie a little into the west deck, and bite 1.6 m into the east one
@@ -86,7 +97,6 @@ export function buildStrut(K, R) {
         const g = add(member(V(a, s * SC, CH / 2 + 0.002), V(b, s * SC, CH / 2 + 0.002), CH, CH), metal, MEMBERS.chord);
         if (i % 8 === 3 && s > 0) polished.add(g);
       }
-      if (i > 0) seams.push(member(V(x0 - 0.008, s * SC, CH / 2), V(x0 + 0.008, s * SC, CH / 2), CH + 0.008, CH + 0.008));
     }
     // bottom chords, from the torn end to the bite
     for (let i = 0; i < nodes.length - 1; i++) {
@@ -95,8 +105,16 @@ export function buildStrut(K, R) {
         const a = x0 + (x1 - x0) * k / 3, b = x0 + (x1 - x0) * (k + 1) / 3;
         add(member(V(a, s * SC, DEPTH - CH / 2), V(b, s * SC, DEPTH - CH / 2), CH, CH), metal, MEMBERS.chord);
       }
-      if (i > 0) seams.push(member(V(x0 - 0.008, s * SC, DEPTH - CH / 2), V(x0 + 0.008, s * SC, DEPTH - CH / 2), CH + 0.008, CH + 0.008));
     }
+  }
+
+  // ---------------------------------------------------------------- the nodes: where the Lattice's members meet, a cube on
+  // each chord, flush with the top, wider than the chord, a seam of the sky's cold light round its middle (no one here
+  // makes a joint like it)
+  const NB = 0.36; // (its outer face 0.07 m past the walkable's edge, below the top)
+  for (const x of nodes.slice(0, -1)) for (const s of [-1, 1]) for (const dn of [NB / 2, DEPTH - NB / 2]) {
+    add(member(V(x - NB / 2, s * SC, dn), V(x + NB / 2, s * SC, dn), NB, NB), metal, MEMBERS.node);
+    for (const o of [-0.09, 0.09]) seams.push(member(V(x + o - 0.007, s * SC, dn), V(x + o + 0.007, s * SC, dn), NB + 0.01, NB + 0.01));
   }
 
   // ---------------------------------------------------------------- the bars across the top, and what plating is left
@@ -106,15 +124,14 @@ export function buildStrut(K, R) {
     const gone = x > R.a + 1.5 && x < R.b - 1.5 && ((i * 7) % 17 === 3 || (i * 5) % 23 === 11);
     if (gone) continue;
     bars.push(x);
-    const g = add(member(V(x, -SC + CH / 2, 0.065), V(x, SC - CH / 2, 0.065), 0.13, 0.1, new THREE.Vector3(1, 0, 0)), metal, MEMBERS.bar);
-    void g;
+    add(rod(V(x, -SC + CH / 2, 0.055), V(x, SC - CH / 2, 0.055), 0.055), metal, MEMBERS.bar);
   }
   // a grating over some panels: lengthwise slats with slots of air between, some slats gone, their ends torn ragged
   // (their top level with the chords', so the feet see what they stand on)
   for (let i = 0; i < nodes.length - 1; i++) {
     const x0 = nodes[i], x1 = nodes[i + 1];
     if (x1 > R.b - 0.5) continue;
-    if (rng() < 0.45) continue; // bare bars: the river under them
+    if (rng() < (hi ? 0.45 : 0.7)) continue; // bare bars: the river under them (more of them on low)
     const inner = SC - CH / 2, n = 5, w = (2 * inner) / n;
     for (let k = 0; k < n; k++) {
       if (rng() < 0.25) continue;
@@ -181,7 +198,7 @@ export function buildStrut(K, R) {
     }
     seams.push(member(bend.clone().add(new THREE.Vector3(0, -0.03, 0)), bend.clone().add(new THREE.Vector3(0, 0.03, 0)), 0.48, 0.48, new THREE.Vector3(1, 0, 0)));
     // a collar where it joins the chords
-    add(member(V(xn - 0.35, s * (HW + 0.02), 0.2), V(xn + 0.35, s * (HW + 0.02), 0.2), 0.12, 0.6), metal, MEMBERS.side);
+    add(member(V(xn - 0.35, s * (HW + 0.12), 0.34), V(xn + 0.35, s * (HW + 0.12), 0.34), 0.12, 0.6), metal, MEMBERS.side); // (clear of the walkable: its inner face 0.06 m out, its top 0.04 m under)
     // out: from the bottom chords' node, south and a little down, 5.5 m, then nothing
     const o0 = V(xn, s * (HW + 0.1), DEPTH - 0.3), o1 = o0.clone().add(new THREE.Vector3(0.3, -0.95, 5.5 * s));
     add(member(o0, o1, 0.5, 0.5, new THREE.Vector3(1, 0, 0)), metal, MEMBERS.stub);
@@ -189,32 +206,10 @@ export function buildStrut(K, R) {
       const o = o1.clone().add(new THREE.Vector3(jit(0.15), jit(0.15), 0.05));
       add(member(o, o.clone().add(new THREE.Vector3(jit(0.25), jit(0.25), s * (0.25 + rng() * 0.4))), 0.06, 0.06, new THREE.Vector3(1, 0, 0)), metal, MEMBERS.torn);
     }
-    // the web: a square net in the plane x = xn between the up stub and the out stub, mostly gone, rags of it hanging
-    const ys = [], nz = 30, ny = 26;
-    const zA = base.z + 0.25, zB = o1.z, yA = o1.y + 0.2, yB = bend.y;
-    const inCell = (z, y) => { // keep the part near the corner the two stubs make, torn on a ragged diagonal
-      const u = (z - zA) / (zB - zA), v = (yB - y) / (yB - yA);
-      return u + v < 1.05 + 0.25 * Math.sin(u * 9 + v * 5) && u >= 0 && v >= 0 && u <= 1 && v <= 1;
-    };
-    const wob = (z, y) => [0.05 * Math.sin(z * 5.1 + y * 2.3) + 0.03 * Math.sin(y * 9.7), 0.06 * Math.sin(z * 3.3 - y * 4.1)];
-    const P = (z, y) => { const w = wob(z, y), u = (z - zA) / (zB - zA); return [xn + jit(0.02) + 0.25 * Math.sin(Math.PI * u), y + w[1] - 0.25 * Math.sin(Math.PI * u) * ((yB - y) / (yB - yA)), z + w[0]]; };
-    for (let j = 0; j <= ny; j++) for (let i = 0; i < nz; i++) { // the horizontals, each strand sagging, some broken
-      const y = yB - (yB - yA) * j / ny, z0 = zA + (zB - zA) * i / nz, z1 = zA + (zB - zA) * (i + 1) / nz;
-      if (!inCell(z0, y) || !inCell(z1, y) || rng() < 0.2) continue;
-      const sag = 0.03 + 0.02 * rng();
-      ys.push(...P(z0, y), ...P((z0 + z1) / 2, y - sag), ...P((z0 + z1) / 2, y - sag), ...P(z1, y));
-    }
-    for (let i = 0; i <= nz; i++) for (let j = 0; j < ny; j++) {
-      const z = zA + (zB - zA) * i / nz, y0 = yB - (yB - yA) * j / ny, y1 = yB - (yB - yA) * (j + 1) / ny;
-      if (!inCell(z, y0)) continue;
-      if (!inCell(z, y1)) { if (rng() < 0.5) ys.push(...P(z, y0), ...P(z + jit(0.05), y0 - 0.3 - rng() * 0.6)); continue; } // a loose thread
-      if (rng() < 0.18) continue;
-      ys.push(...P(z, y0), ...P(z, y1));
-    }
-    web.push(ys);
-    // a rag of web under the belly too, sagging between the bottom chords over three panels
+    // a rag of the square web the Lattices string across their cells, still tied to the bottom chords, sagging under the
+    // belly over a few panels (on low, two)
     const wb = [];
-    for (let i = 3; i < 6; i++) {
+    for (let i = 3; i < (hi ? 7 : 5); i++) {
       const x0 = nodes[i], x1 = nodes[i + 1];
       for (let k = 0; k <= 8; k++) {
         const x = x0 + (x1 - x0) * k / 8;
@@ -257,7 +252,7 @@ export function buildStrut(K, R) {
       const side = k % 2 ? 1 : -1, d = 1.05 + rng() * 1.4;
       const sx = 0.35 + rng() * 0.5, sy = 0.25 + rng() * 0.35, sz = 0.3 + rng() * 0.5;
       const g = new THREE.BoxGeometry(sx, sy, sz); g.rotateX(jit(0.5)); g.rotateY(rng() * 3); g.rotateZ(jit(0.5));
-      if (k < 6) g.translate(x + 0.3 + rng() * 1.8, y + sy * 0.3, z + side * d); // on the deck, off the way
+      if (k < 6) { const sx0 = x + 0.3 + rng() * 1.8; g.translate(sx0, y + sy * 0.3, z + side * d); addCol({ x: sx0, z: z + side * d, r: Math.max(sx, sz) * 0.5, y: y - 0.2, h: sy * 0.8 + 0.2 }); } // on the deck, off the way; a walker steps up on or round them
       else g.translate(x - 0.3 - rng() * 0.6, y - DEPTH - 0.3 - rng() * 1.2, z + side * (0.5 + rng() * 0.8)); // wedged under the bite
       spall.push(clean(g));
     }
@@ -269,12 +264,10 @@ export function buildStrut(K, R) {
       const g = new THREE.BoxGeometry(0.5, 0.5 + rng() * 0.3, 0.45); g.rotateX(a); g.rotateZ(jit(0.3));
       g.translate(x - 0.15, yy, zz); spall.push(clean(g));
     }
-    addCol({ x1: x + 0.4, z1: z - 1.7, x2: x + 2.3, z2: z - 1.9, r: 0.45, y: y - 0.2, h: 0.55 });
-    addCol({ x1: x + 0.4, z1: z + 1.7, x2: x + 2.3, z2: z + 1.9, r: 0.45, y: y - 0.2, h: 0.55 });
   }
 
   // ---------------------------------------------------------------- colour: old metal; copper where the sun finds it
-  const dark = new THREE.Color('#40342e'), verd = new THREE.Color('#4a7462'), dust = new THREE.Color('#6a6253'), copper = new THREE.Color('#a35a32'), polish = new THREE.Color('#d39a5a'), c = new THREE.Color();
+  const dark = new THREE.Color('#3b3a37'), verd = new THREE.Color('#4f7d6b'), dust = new THREE.Color('#77715f'), copper = new THREE.Color('#8f5d3e'), polish = new THREE.Color('#c4bea6'), nodeMetal = new THREE.Color('#8e9796'), c = new THREE.Color();
   const n3 = new THREE.Vector3(), A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
   for (const g of metal) {
     const p = g.attributes.position, col = new Float32Array(p.count * 3);
@@ -283,11 +276,12 @@ export function buildStrut(K, R) {
       n3.subVectors(C, B).cross(B.clone().sub(A)).normalize().negate();
       const mx = (A.x + B.x + C.x) / 3, my = (A.y + B.y + C.y) / 3, mz = (A.z + B.z + C.z) / 3;
       const vg = 0.5 + 0.5 * Math.sin(mx * 0.71 + mz * 2.3) * Math.sin(mx * 0.23 + my * 1.7 + 0.8);
-      c.copy(dark).lerp(verd, Math.max(0, vg - 0.35) * 1.1);
-      if (n3.y > 0.6) c.lerp(dust, 0.55);                       // dust on what faces up
+      c.copy(dark).lerp(verd, Math.min(0.85, Math.max(0, vg - 0.25) * 1.4));
+      if (g.userData.tag === MEMBERS.node) c.lerp(nodeMetal, 0.55);   // the nodes: a paler, harder metal, barely worn
+      if (n3.y > 0.6) c.lerp(dust, 0.6);                        // dust on what faces up
       if (n3.y < -0.6) c.multiplyScalar(0.7);                   // the undersides darker
       const sunw = Math.max(0, n3.dot(sunN));
-      c.lerp(polished.has(g) ? polish : copper, Math.min(1, sunw * 1.1) * (polished.has(g) ? 1 : 0.6));
+      c.lerp(polished.has(g) ? polish : copper, Math.min(1, sunw * 1.1) * (polished.has(g) ? 0.9 : 0.35));
       if (g.userData.tag === 9) c.set('#6b5530');               // the bronze band under the rags
       for (let q = 0; q < 3; q++) { col[(t + q) * 3] = c.r; col[(t + q) * 3 + 1] = c.g; col[(t + q) * 3 + 2] = c.b; }
     }
@@ -300,14 +294,14 @@ export function buildStrut(K, R) {
     const m = new THREE.Mesh(g, mat); m.name = name; m.castShadow = shadow; m.receiveShadow = true;
     m.matrixAutoUpdate = false; m.updateMatrix(); ctx.scene.add(m); meshes.push(m); return m;
   };
-  mk(metal, strutMaterial(), 'span-strut', true);
+  mk(metal, strutMaterial(), 'span-strut', hi); // (no shadow on low)
   const seamMat = new THREE.MeshStandardMaterial({ color: '#1c2630', emissive: new THREE.Color('#4f86b8'), emissiveIntensity: 0.3, roughness: 0.6 });
   mk(seams, seamMat, 'span-strut-seams', false);
   // like the Lattices overhead, the seams breathe a little, and give back light when the sun gutters
   ctx.registerUpdate((dt, t) => {
     const f = ctx.sky?.flicker?.value ?? 1, gut = Math.min(1, Math.max(0, (0.88 - f) / 0.5));
     seamMat.emissiveIntensity = 0.24 + 0.08 * Math.sin(t * 0.8) + 0.9 * gut;
-  }, { pos: { x: 145.5, z: 215 }, near: 120, hz: 0 });
+  }, { pos: { x: 145.5, z: 215 }, near: hi ? 120 : 0, hz: hi ? 4 : 2 });
   for (const s of spall) K.body.push(s);
   const wpos = web.flat();
   const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wpos, 3)); wg.computeBoundingSphere();
