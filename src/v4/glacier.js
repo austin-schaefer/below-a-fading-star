@@ -15,6 +15,18 @@
 //   splaying at the snout; chevron crevasses at the margins; the snout's face banded with debris and glassy blue.
 import { makeSimplex, smoothstep } from '../noise.js';
 import { WORLD, LANDMARKS } from '../world.js';
+import { iceY, carve, sOf } from '../v12/icefall/plan.js'; // v12-H2: the icefall's heights and the climb's carve
+
+// v12-H2: up the notch the ice is the icefall's (src/v12/icefall/plan.js): from s 4 to 14 (z -289 to -299) the old
+// ramp (`old`, terrain.js's) hands over to it, and the tongue's own thickness fades out over the same metres.
+// h: the floor under the walls; returns the ice's height over h (applyMountains lerps to it by glacierMask)
+const hand = (z) => smoothstep(4, 14, sOf(z));
+export function glacierBedH(x, z, h, ramp, old) {
+  const w = hand(z);
+  if (w <= 0) return old;
+  return old + (iceY(x, z) - h - old) * w;
+}
+export function glacierCarve(x, z, h) { return z < -285 ? carve(x, z, h) : h; }
 
 const SX = makeSimplex(WORLD.seed); // the same stream as terrain.js's, so the wobble matches glacierMask's
 const L = LANDMARKS.moraine;
@@ -43,7 +55,7 @@ export function glacierTongue(h, x, z, ramp) {
   // ogives: low swells in arcs, bowed down-glacier like the crevasses
   T += 0.35 * Math.sin((dz + 16 * a * a) * 0.28) * smoothstep(8, 22, dz);
   T += SX.fbm2(x * 0.03, z * 0.03, 3) * 0.5 * smoothstep(4, 12, dz);
-  return h + T * prof * (1 - ramp);
+  return h + T * prof * (1 - ramp) * (1 - hand(z));
 }
 
 export function glacierIce(x, z) {
@@ -90,8 +102,21 @@ export const GLACIER_GLSL = /* glsl */`
     // marginal crevasses: chevrons pointing up-glacier near the sides
     float um = dz + 38.0 * abs(a) + d2.g * 2.0;
     float crm = fpCrev(um, 4.2, 0.04) * smoothstep(0.55, 0.8, abs(a)) * step(0.35, fpHash(floor(um / 4.2) * 3.7 + sign(a)));
-    float crev = max(cr, crm) * smoothstep(0.5, 3.0, dz);
+    // v12-H2: up the icefall (dz past ~70 m, src/v12/icefall) the tongue's crevasse rows give way to the terraces'
+    // old firn: wind-scoured, grit in streaks along the flow, and a few long cracks across it
+    float fall = smoothstep(60.0, 78.0, dz);
+    float crev = max(cr, crm) * smoothstep(0.5, 3.0, dz) * (1.0 - fall);
     c = mix(c, vec3(0.015, 0.04, 0.08), crev * 0.92);
+    if (fall > 0.0) {
+      vec3 firn = vec3(0.37, 0.355, 0.40) * (0.84 + 0.22 * d1.g) * (0.94 + 0.12 * d2.b);
+      firn = mix(firn, vec3(0.17, 0.15, 0.15), smoothstep(0.52, 0.78, d2.r) * 0.55 * (0.6 + 0.4 * sin(a * 40.0 + d1.r * 4.0)));
+      float cu = dz + 4.0 * sin(a * 7.0 + d2.g * 3.0);
+      float crack = fpCrev(cu, 11.0, 0.018) * step(0.5, fpHash(floor(cu / 11.0) * 5.1 + floor(a * 2.5 + d2.r)));
+      firn = mix(firn, vec3(0.02, 0.06, 0.11), crack * 0.85);
+      // a steep bit of terrain up the icefall (a riser's margin where no face is drawn): grey-blue ice
+      firn = mix(firn, vec3(0.13, 0.19, 0.26) * (0.85 + 0.3 * d1.g), smoothstep(0.8, 0.55, n.y));
+      c = mix(c, firn, fall);
+    }
     // the snout's face: debris bands and clean glassy blue between them
     float steep = smoothstep(0.88, 0.62, n.y) * face;
     float band = smoothstep(0.3, 0.48, abs(fract(p.y * 1.15 + d2.r * 0.9 + a * 2.0) - 0.5));
