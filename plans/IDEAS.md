@@ -115,3 +115,16 @@ Needs design input before building: AG's sigils, AC's element pairs, any carved 
 - Expected an offer and got none: the Pit, the Speculum, the Armiger's Tower.
 - "Make each act lead on to a second act or another place, the way the door and the Halt already do."
 - From a blind reader of v11's frames: the speckle on rocks ("glitter-dusted blobs"), hex slabs like stickers, the crystals' flat stripe bands.
+
+## From v12-H5, the valley from above (2026-11-13), not fixed in H5
+
+H5 fixed five things seen from the tops (the haze and the sun's shadows under a top, a grade from a top, the Adust's rectangle, black water). The rest, worst first (frames `h5-07-heights-medium-*`, `h5-08-after-*`, `h5-11-see-*` in the H5 worktree's `shots/wip/`):
+
+- The Diffident Stair cannot be picked out from any other top: from the Span (295 m) the lattice it climbs to hangs over the east wall, but no stair and no light; from the gallery and the shelf nothing. A lamp on the tender's deck with a halo that never shrinks under two pixels (as the house's lamps do), or lit posts up the flights, would make it a thing to go to.
+- The Span's ragged ways do not read from the stair's top (300 m): the arches do, the strips and the truss do not. A lamp at the camp would.
+- Looking away from the sun the whole valley is still one violet, the grade from a top only eases it: the places differ by colour mostly toward the sun.
+- Boulders' long low-sun shadows read as black blots from 100 m and more, scattered over every place.
+- The Adust's red is still the loudest colour on the floor from the Galleries, now with a ragged edge; its inside reads flat (the cracks fade out by 30 m).
+- The fen at a grazing angle and the far river read as pale lavender sheets (the sky's reflection, no texture at that distance); from straight above the fen is a dark mottle.
+- The Diffident Stair draws 324 treads (76k triangles, 130k with its landings) from anywhere on the map, even lying in the turf; most are under a pixel from everywhere but its own climb.
+- From high, ground cover leaves no mark: the moor's heather, the Bletting's tall grass and the common's turf read as one mottled green-brown; larger-scale colour by place (the Lynchets' strips do read) would make the country legible.
