@@ -10,9 +10,11 @@
 // rags are two meshes of their own and one cold light. The walkable is vestigeAt (vestige-plan.js).
 import * as THREE from 'three';
 import { SPAN, bayArch, intrados, RING } from './plan.js';
-import { VESTIGES, vestigeAt } from './vestige-plan.js';
+import { VESTIGES, vestigeAt, fenSlabs, FEN_GAP, FEN_LET_GO, CRACK_WAY } from './vestige-plan.js';
 import { box, extrudeXY, clean } from './geo.js';
 import { mergeGeometries } from '../kit/merge.js';
+import { buildStrut } from './strut.js';
+import { travellerCloth } from './cloth.js';
 
 const Y = SPAN.deckY;
 
@@ -56,32 +58,52 @@ export function buildVestige(K) {
       const pts = [[xc - w / 2 - jit(0.3), yb], [xc + w / 2, yb], [xc + w / 2 - 0.5 + jit(0.4), yt], [xc - w / 2 + 0.4 + jit(0.4), yt]];
       body.push(extrudeXY(pts, W.zc(xc) - 0.7, W.zc(xc) + 0.7));
     }
-    // the footing: an upper row of long stones, a lower row set back and broken, two stones of it fallen away
+    // the footing: an upper row of long stones, a lower row set back and broken, two stones of it fallen away. At x -100
+    // one is gone from both rows: a stride of air (0.6 m) you step over with the tarn's shallows under it; the stone
+    // after it has tipped on its bed toward the south, its outer edge 0.07 m down.
+    const GAP = [-100.3, -99.7];
+    let gapDone = false, tipped = false;
     for (let x = W.x0, i = 0; x < W.x1 - 0.5; i++) {
-      const len = Math.min(W.x1 - x, 2.6 + rng() * 1.3), xc = x + len / 2;
-      body.push(slab(W, xc, len - 0.05, 1.5, 0.82, 0.03 + rng() * 0.02, 0, jit(0.03)));
-      if (!(i === 4 || i === 7)) body.push(slab(W, xc + 1.1, len - 0.1, 1.34, 0.6, 0.85 + rng() * 0.04, 0, jit(0.04)));
+      let len = Math.min(W.x1 - x, 2.6 + rng() * 1.3);
+      if (!gapDone && x + len > GAP[0] - 1.2) len = GAP[0] - x; // (never a sliver before the gap)
+      const xc = x + len / 2;
+      const g = slab(W, xc, len - 0.05, 1.5, 0.82, 0.03 + rng() * 0.02, 0, jit(0.03));
+      const tip = gapDone && !tipped;
+      if (tip) { tipped = true; g.translate(-xc, -W.y(xc), -W.zc(xc)); g.rotateX(0.09); g.translate(xc, W.y(xc) - 0.01, W.zc(xc)); }
+      body.push(g);
+      const lx0 = xc + 1.1 - len / 2, lx1 = xc + 1.1 + len / 2;
+      if (!(i === 2 || i === 7 || tip || (lx1 > GAP[0] - 0.6 && lx0 < GAP[1] + 0.6))) body.push(slab(W, xc + 1.1, len - 0.1, 1.34, 0.6, 0.85 + rng() * 0.04, 0, jit(0.04)));
       x += len;
+      if (!gapDone && x >= GAP[0] - 1e-6) { gapDone = true; x = GAP[1]; }
     }
   }
 
   // ---------------------------------------------------------------- fen: the cornice and kerb stones on their iron
   {
-    const gap = 0.24, pitch = 2.7 + gap;
-    const n = Math.round((F.x1 - F.x0 + gap) / pitch);
-    const len = (F.x1 - F.x0 + gap) / n - gap;
+    const fs = fenSlabs(), len = fs.len, gap = FEN_GAP, n = fs.n;
     for (let i = 0; i < n; i++) {
-      const xc = F.x0 + len / 2 + i * (len + gap);
-      body.push(slab(F, xc, len, 1.5, 0.55, 0.03 + rng() * 0.04, 0, jit(0.05)));
+      const xc = fs.xc(i), zc = F.zc(xc), letGo = i === FEN_LET_GO.i;
+      const g = slab(F, xc, len, 1.5, 0.55, letGo ? 0.02 : 0.03 + rng() * 0.04, 0, jit(0.05));
+      if (letGo) { // tipped down at its east end where the strap gave, and over a little to the south; cracked across
+        const t = Math.atan(FEN_LET_GO.drop / len);
+        const xa = xc - len / 2; // about its west end, which the other strap still holds
+        g.translate(-xa, -F.y(xa), -zc); g.rotateZ(-t); g.rotateX(0.035); g.translate(xa, F.y(xa), zc);
+      }
+      body.push(g);
       // the strap from the tie-bar up to the stone's underside, and the tie-bar between straps
-      const yb = F.y(xc) - 1.55, zc = F.zc(xc);
-      iron(box(xc - 0.07, xc + 0.07, yb, F.y(xc) - 0.5, zc - 0.7, zc + 0.7), '#5a3a26');
+      const yb = F.y(xc) - 1.55;
+      if (!letGo) iron(box(xc - 0.07, xc + 0.07, yb, F.y(xc) - 0.5, zc - 0.7, zc + 0.7), '#5a3a26');
+      else { // the strap has let go: torn at its top, it hangs off the bar, swung out under the slab
+        const sg = new THREE.BoxGeometry(0.14, 1.3, 0.1); sg.translate(0, -0.65, 0); sg.rotateZ(0.5); sg.rotateX(-0.35);
+        sg.translate(xc + 0.4, yb + 0.06, zc + 0.55); iron(clean(sg), '#5e3c26');
+        const s2 = new THREE.BoxGeometry(0.14, 0.42, 0.1); s2.rotateZ(0.15); s2.translate(xc, F.y(xc) - 0.75, zc - 0.6); iron(clean(s2), '#5a3a26'); // the stub still on the stone
+      }
       const x2 = xc + len / 2 + gap / 2, cx = xc + (len + gap) / 2, s = F.y(cx + 1) - F.y(cx - 1);
       const bar = new THREE.BoxGeometry(len + gap + 0.1, 0.16, 0.16); bar.rotateZ(Math.atan(s / 2));
       bar.translate(cx, F.y(cx) - 1.61, F.zc(cx));
       iron(clean(bar), '#4d3626');
-      // a bronze cramp across the joint on the upper face
-      if (i < n - 1) iron(box(x2 - 0.3, x2 + 0.3, F.y(x2) - 0.01, F.y(x2) + 0.035, zc - 0.32, zc + 0.32), '#6b5a2e');
+      // a bronze cramp across the joint on the upper face (the one into the tipped slab has pulled out)
+      if (i < n - 1 && !letGo) for (const dz of [-0.4, 0.4]) iron(box(x2 - 0.22, x2 + 0.22, F.y(x2) - 0.01, F.y(x2) + 0.03, zc + dz - 0.08, zc + dz + 0.08), '#8a6f36');
     }
     // two corbel arms out of each pier face, the first three courses stepping out under the first stones
     for (const [dir, x] of [[1, F.a], [-1, F.b]]) for (let c = 0; c < 3; c++) {
@@ -91,81 +113,36 @@ export function buildVestige(K) {
     }
   }
 
-  // ---------------------------------------------------------------- river: the Lattice's strut
-  const strutMeshes = [];
+  // ---------------------------------------------------------------- the crack: a parapet's coping, fallen across it
   {
-    const prof = [[-0.62, 0], [0.62, 0], [0.84, -0.3], [0.7, -0.86], [0, -1.14], [-0.7, -0.86], [-0.84, -0.3]];
-    const st = [];
-    const n = Math.round((R.x1 - R.x0) / 1.6);
-    for (let i = 0; i <= n; i++) {
-      const x = R.x0 + (R.x1 - R.x0) * (i / n);
-      const sw = 1 + 0.07 * Math.sin(i * 1.7) + 0.05 * Math.sin(i * 0.6 + 1);
-      const ends = i === 0 || i === n ? 1.25 : 1; // the ends are thicker, where the lashings take them
-      st.push({ x, y: R.y(x), z: R.zc(x), sw: Math.max(1, sw) * ends, sh: (0.92 + 0.12 * Math.sin(i * 2.1)) * ends });
-    }
-    const pos = [], col = [];
-    const dust = new THREE.Color('#7b7664'), lichen = new THREE.Color('#66714f'), glass = new THREE.Color('#6f98b8'), deep = new THREE.Color('#4a679a'), rust = new THREE.Color('#6a4a38'), c = new THREE.Color();
-    // chips: every vertex of every station is a little off its profile, so no edge runs straight; the top is held near level
-    const jt = st.map(() => prof.map((q, j) => [jit(j < 2 ? 0.03 : 0.07), j < 2 ? jit(0.02) : jit(0.09)]));
-    const P = (s, j) => { const i = st.indexOf(s); return [s.x, s.y + prof[j][1] * s.sh + jt[i][j][1], s.z + prof[j][0] * s.sw + jt[i][j][0]]; };
-    const tri = (a, b, d, ca, cb, cd) => { pos.push(...a, ...b, ...d); col.push(...ca, ...cb, ...cd); };
-    // worn: dust and lichen across the top in patches, glass showing at the flanks, rust under the lashings, the lower side dark
-    const hue = (j, i) => {
-      const x = st[i].x, w = 0.5 + 0.5 * Math.sin(x * 0.83 + j * 1.9) * Math.sin(x * 0.29 + 1.3), l = 0.5 + 0.5 * Math.sin(x * 0.47 + j * 3.1);
-      if (j === 0 || j === 1) c.copy(dust).lerp(lichen, l * 0.7).lerp(glass, 0.12 * (1 - w));
-      else if (j === 2 || j === 6) c.copy(glass).lerp(dust, 0.1 + 0.3 * w);
-      else c.copy(deep).lerp(rust, 0.25 * w);
-      return c.toArray();
-    };
-    for (let i = 0; i < n; i++) for (let j = 0; j < prof.length; j++) {
-      const k = (j + 1) % prof.length;
-      const a = P(st[i], j), b = P(st[i], k), d = P(st[i + 1], k), e = P(st[i + 1], j);
-      const cj = hue(j, i), cj2 = hue(j, i + 1);
-      tri(a, e, d, cj, cj2, cj2); tri(a, d, b, cj, cj2, cj);
-    }
-    for (const [s, flip] of [[st[0], true], [st[n], false]]) for (let j = 1; j < prof.length - 1; j++) {
-      const a = P(s, 0), b = P(s, j), d = P(s, j + 1), cc = glass.toArray();
-      flip ? tri(a, d, b, cc, cc, cc) : tri(a, b, d, cc, cc, cc);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    g.computeVertexNormals();
-    // (winding fixed by the top face: its normal must point up)
-    const nr = g.attributes.normal; if (nr.getY(0) < 0) { for (let i = 0; i < pos.length; i += 9) for (let q = 0; q < 3; q++) { const a = pos[i + 3 + q]; pos[i + 3 + q] = pos[i + 6 + q]; pos[i + 6 + q] = a; const b = col[i + 3 + q]; col[i + 3 + q] = col[i + 6 + q]; col[i + 6 + q] = b; } g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); }
-    g.computeBoundingSphere();
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.32, metalness: 0.15, emissive: new THREE.Color('#2f5a86'), emissiveIntensity: 0.14, flatShading: true });
-    const m = new THREE.Mesh(g, mat); m.name = 'span-strut'; m.castShadow = true; m.receiveShadow = true;
-    ctx.scene.add(m); strutMeshes.push(m);
-    // bronze lashings (a flat band over the top, two cheek plates) and the rags tied to them
-    const rags = [], bands = [-1, 0.14, 0.27, 0.5, 0.62, 0.78, 1.1].filter((u) => u > 0 && u < 1);
-    for (const u of bands) {
-      const x = R.x0 + 0.6 + (R.x1 - R.x0 - 1.2) * u, y = R.y(x), z = R.zc(x), sl = Math.atan((R.y(x + 0.5) - R.y(x - 0.5)));
-      for (const [bx, by, bz, sx, sy, sz] of [[0, 0.03, 0, 0.34, 0.07, 1.62], [0, -0.55, 0.86, 0.34, 0.9, 0.07], [0, -0.55, -0.86, 0.34, 0.9, 0.07]]) {
-        const bg = new THREE.BoxGeometry(sx, sy, sz); bg.rotateZ(sl); bg.translate(x + bx, y + by, z + bz); iron(clean(bg), '#6a5a34');
-      }
-      for (const side of [1, -1]) if (rng() < 0.7) { // a rag, hung from the cheek plate, ragged at the foot
-        const w = 0.22 + rng() * 0.12, h = 0.5 + rng() * 0.5;
-        const pg = new THREE.PlaneGeometry(w, h, 1, 2);
-        const pp = pg.attributes.position; for (let q = 0; q < pp.count; q++) if (pp.getY(q) < 0) pp.setX(q, pp.getX(q) + jit(0.06));
-        pg.rotateY(Math.PI / 2 + jit(0.4)); pg.rotateZ(jit(0.2)); pg.translate(x, y - 0.4 - h / 2, z + side * 0.9);
-        rags.push(clean(pg));
+    const C = CRACK_WAY, cx = SPAN.crack.x, half = C.L / 2;
+    for (const s of [-1, 1]) { // two halves, broken at the middle, each sagging into the crack
+      const xa = cx + s * 0.04, xb = cx + s * half, xm = (xa + xb) / 2, ln = Math.abs(xb - xa);
+      const g = new THREE.BoxGeometry(ln, 0.46, 2 * C.hw); g.translate(0, -0.23, 0);
+      // the coping's moulding: a roll along its south edge, half its thickness down
+      const roll = new THREE.CylinderGeometry(0.13, 0.13, ln, 8); roll.rotateZ(Math.PI / 2); roll.translate(0, -0.32, C.hw - 0.06);
+      for (const q of [g, roll]) {
+        q.rotateZ(Math.atan((C.y(xb) - C.y(xa)) / (xb - xa))); q.rotateY(-C.yaw);
+        q.translate(xm, (C.y(xa) + C.y(xb)) / 2 - 0.02, C.zc(xm));
+        body.push(clean(q));
       }
     }
-    // the slings at each end: an iron eye in the pier's face and a chain down to the strut's end
-    for (const [x, dir] of [[R.a, 1], [R.b, -1]]) {
-      const y = R.y(x), z = R.zc(x);
-      iron(box(x - 0.5 * dir - 0.25, x - 0.5 * dir + 0.25, y - 1.0, y - 0.4, z - 0.4, z + 0.4), '#3e3a36');
-      for (let k = 0; k < 5; k++) iron(box(x + dir * (0.4 + k * 0.5) - 0.1, x + dir * (0.4 + k * 0.5) + 0.1, y - 1.1 - k * 0.45, y - 0.9 - k * 0.45, z - 0.07, z + 0.07), '#3a3430');
+    // the lips under its ends, spalled: a few chips on the deck beside it
+    for (let k = 0; k < 6; k++) {
+      const side = k % 2 ? 1 : -1, x = cx + (k < 3 ? -1 : 1) * (half - 0.4 - rng() * 1.4);
+      const g = new THREE.BoxGeometry(0.2 + rng() * 0.25, 0.12 + rng() * 0.12, 0.2 + rng() * 0.2);
+      g.rotateY(rng() * 3); g.rotateX(jit(0.3)); g.translate(x, Y + 0.04, C.zc(x) + side * (C.hw + 0.35 + rng() * 0.5));
+      body.push(clean(g));
     }
-    if (rags.length) {
-      const rg = mergeGeometries(rags); for (const q of rags) q.dispose();
-      const rm = new THREE.Mesh(rg, saffronMaterial()); rm.name = 'span-rags'; rm.castShadow = false; rm.receiveShadow = true;
-      ctx.scene.add(rm); strutMeshes.push(rm);
-    }
-    // the cold light of it: the strut glows enough to see by at the middle
-    const light = new THREE.PointLight(new THREE.Color('#6f9fd0'), 3, 20, 2);
-    light.position.set(145.5, R.y(145.5) - 0.9, R.zc(145.5)); ctx.scene.add(light);
+  }
+
+  // ---------------------------------------------------------------- river: the Lattice's strut (strut.js)
+  const strut = buildStrut(K, R);
+  const strutMeshes = strut.meshes;
+  if (strut.rags.length) {
+    const rg = mergeGeometries(strut.rags); for (const q of strut.rags) q.dispose();
+    const rm = new THREE.Mesh(rg, travellerCloth()); rm.name = 'span-rags'; rm.castShadow = false; rm.receiveShadow = true;
+    ctx.scene.add(rm); strutMeshes.push(rm);
   }
   void metalParts; void hi; void addCol;
   K.vestigeMeshes = strutMeshes;

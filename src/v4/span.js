@@ -2,14 +2,14 @@
 // bowl along z = 215, from a shut gate in the west wall to a gate blocked by rockfall in the east, its deck at
 // y 56 on ten piers, cyclopean engineering etched with triangles that each hold three more (span/etch.js).
 // Three bays have fallen (the old Span's hollow and the tarn's south bay, the fen's south reach, the canyon's
-// mouth) and lie below in bay-sized pieces; a crack at x -45 can be jumped at a run. A stair climbs to the deck
+// mouth) and lie below in bay-sized pieces; a crack at x -45 can be jumped at a run, or crossed on a fallen coping. A stair climbs to the deck
 // beside each gate in switchbacks; at the foot of the west gate a door of human size stands ajar, the Postern
 // (BG), plainly made later and smaller by someone else. The plan (every measure) is span/plan.js; the terrain's
 // marked blocks call its spanGround(), the vegetation keeps off spanClear().
 //
 // Draw calls at high: the body, the gates, the crags, the stairs, the doors, the metal, the Postern's frame, the
 // boulders, the rubble. The parts are span/deck.js, gates.js, postern.js, stairs.js, fallen.js, each filling the shared lists in K.
-// ctx.span: { plan, stairs, slabs, deckAt(x, z), floorAt(x, z), stats(), meshes, colliders }.
+// ctx.span: { plan, stairs, slabs, deckAt(x, z), vestigeAt(x, z), vestiges (the three bays' ways), crackWay, floorAt(x, z), stats(), meshes, colliders }.
 import * as THREE from 'three';
 import { SPAN, BOT, deckAt } from './span/plan.js';
 import { mergeGeometries } from './kit/merge.js';
@@ -21,7 +21,7 @@ import { buildStairs } from './span/stairs.js';
 import { buildFallen } from './span/fallen.js';
 import { buildVestige } from './span/vestige.js';
 import { buildCamp } from './span/camp.js';
-import { vestigeAt, VESTIGES } from './span/vestige-plan.js';
+import { vestigeAt, VESTIGES, CRACK_WAY } from './span/vestige-plan.js';
 
 const Y = SPAN.deckY;
 
@@ -124,7 +124,7 @@ export async function build(ctx) {
   };
   const trisOf = (m) => { const g = m.geometry, t = (g.index ? g.index.count : g.attributes.position.count) / 3; return t * (m.isInstancedMesh ? m.count : 1); };
   ctx.span = {
-    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, vestigeAt, vestiges: VESTIGES, floorAt, meshes: meshes.concat(K.vestigeMeshes || [], K.campMeshes || []), colliders,
+    plan: SPAN, stairs: stairInfo, slabs: slabInfo, deckAt, vestigeAt, vestiges: VESTIGES, crackWay: CRACK_WAY, floorAt, meshes: meshes.concat(K.vestigeMeshes || [], K.campMeshes || []), colliders,
     stats: () => ({ calls: meshes.length, shadowCalls: meshes.filter((m) => m.castShadow).length, tris: meshes.reduce((s, m) => s + trisOf(m), 0), colliders: colliders.length, boulders: boulders.length, rubble: rubble.length, slabs: slabInfo.length }),
   };
   ctx.log?.('span', JSON.stringify(ctx.span.stats()));
