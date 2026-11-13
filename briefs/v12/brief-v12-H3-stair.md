@@ -1,6 +1,6 @@
 # Brief v12 H3: the stair that appears
 
-Worktree: written in at dispatch. Work only there. Read `briefs/v12/_common.md` first; `src/skylife/lattices.js` and `remnants.js`.
+Worktree: `.claude/worktrees/issue-1204-stair` (branch `issue-1204-stair`, port 8162). Work only there. Read `briefs/v12/_common.md` first; `src/skylife/lattices.js` and `remnants.js`.
 
 ## Goal
 

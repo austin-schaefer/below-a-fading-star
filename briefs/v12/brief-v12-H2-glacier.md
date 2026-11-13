@@ -1,6 +1,6 @@
 # Brief v12 H2: the glacier
 
-Worktree: written in at dispatch. Work only there. Read `briefs/v12/_common.md` first; `visual-art`'s `land.md`; `stories/the-reckoner.md`. Model: strong.
+Worktree: `.claude/worktrees/issue-1203-glacier` (branch `issue-1203-glacier`, port 8161). Work only there. Read `briefs/v12/_common.md` first; `visual-art`'s `land.md`; `stories/the-reckoner.md`. Model: strong.
 
 ## Goal
 

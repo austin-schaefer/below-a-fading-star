@@ -1,6 +1,6 @@
 # Brief v12 H4: the lift
 
-Worktree: written in at dispatch. Work only there. Read `briefs/v12/_common.md` first; `src/v5/galleries.js` (its header says what the Galleries are); `src/v10/halt-seat.js` (a ride built on `ctx.controls.carry`). Model: strong.
+Worktree: `.claude/worktrees/issue-1205-lift` (branch `issue-1205-lift`, port 8163). Work only there. Read `briefs/v12/_common.md` first; `src/v5/galleries.js` (its header says what the Galleries are); `src/v10/halt-seat.js` (a ride built on `ctx.controls.carry`). Model: strong.
 
 ## Goal
 
