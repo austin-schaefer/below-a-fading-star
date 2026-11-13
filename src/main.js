@@ -296,6 +296,7 @@ async function start() {
   // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
   ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
   const above = shadowFrame(ctx, url, sunLight, sunDir, sb); // v12: from above, a box on the ground seen (null with ?above=0)
+  ctx.above = above; // v12-H5: post.js reads `over` (the eye's height over the ground) for the grade from a top
   // a tier change at runtime resizes the shadow map (three re-creates it at the new size on the next draw)
   ctx.setShadowMapSize = (n) => {
     if (n === sm) return;

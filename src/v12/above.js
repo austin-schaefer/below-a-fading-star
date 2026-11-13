@@ -10,8 +10,12 @@
 //   own surroundings are always in it. The centre is snapped to a world grid a fifth of the box wide, so turning in
 //   place does not move it (and redraw the map) until the look has swept that far over the ground. A step in size
 //   moves the light at once (main.js reads `stepped`) and redraws once. ?above=0 keeps the old box and haze.
+// - (H5) Height over the ground (`over`): the eye over the terrain under it, wherever the feet are. On a top (the Span's
+//   deck, the Diffident Stair's, a gallery) `alt` is a walker's but `over` is 56 to 135 m: the haze and the box's size
+//   read it (the box at `over` less 30 m, never less than by `alt`), so the valley under a top is seen through thinner
+//   air and has its shadows; throttling (main.js) still reads `alt`.
 // - The haze: the distance fog (FogExp2) is the air near the ground; an eye high over it looks down through thinner
-//   air, so its density is scaled by the mean of an exponential atmosphere (scale height 90 m) over `alt` less 20 m.
+//   air, so its density is scaled by the mean of an exponential atmosphere (scale height 90 m) over `over` less 20 m.
 //   The wall's cool air (atmosphere.js) eases off by the same scaled density, so the two always agree.
 const STEPS = [[25, 95], [70, 140], [140, 200], [Infinity, 280]];
 const HS = 90, FREE = 20;
@@ -22,18 +26,24 @@ export function shadowFrame(ctx, url, light, sunDir, sb0) {
   const sc = light.shadow.camera, far0 = sc.far;
   let sb = sb0;
   const out = {
-    alt: 0, lightDist: 260, stepped: false,
+    alt: 0, over: 0, lightDist: 260, stepped: false,
     // main.js: true once after a step in size (move the light to the new centre now)
     take() { const s = out.stepped; out.stepped = false; return s; },
     frame(target, fwd) {
       const p = ctx.player;
-      const under = p.carried || !Number.isFinite(p.floorBelow) ? T.heightAt(cam.position.x, cam.position.z) : p.floorBelow;
+      const ground = T.heightAt(cam.position.x, cam.position.z);
+      const under = p.carried || !Number.isFinite(p.floorBelow) ? ground : p.floorBelow;
       const alt = out.alt = cam.position.y - under;
+      // (H5) the air below: on a deck, a stair or a gallery the eye still looks down through the height to the ground
+      const over = out.over = cam.position.y - ground;
       // the haze
-      const a = alt - FREE;
+      const a = over - FREE;
       fog.density = a > 1 ? density0 * Math.sqrt(HS * (1 - Math.exp(-a / HS)) / a) : density0;
-      // the box: its size by the height, stepped (with 10 m of hysteresis going down)
-      const up = STEPS.find(([h]) => alt < h)[1], down = STEPS.find(([h]) => alt + 10 < h)[1];
+      // the box: its size by the height, stepped (with 10 m of hysteresis going down); on a floor high over the ground a
+      // step or two less than that height asks (the floor's own shadows stay fine: 0.14 m a texel on the Span's deck,
+      // 0.2 m on the stair's), so the valley under a top has the sun's shadows
+      const hb = Math.max(alt, over - 30);
+      const up = STEPS.find(([h]) => hb < h)[1], down = STEPS.find(([h]) => hb + 10 < h)[1];
       const want = up > sb ? up : down < sb ? down : sb;
       if (want === sb0 && sb === sb0) return sb; // at walking height: exactly as before
       if (want !== sb) {
@@ -48,7 +58,7 @@ export function shadowFrame(ctx, url, light, sunDir, sb0) {
       if (sb === sb0) return sb;
       // toward where the view's centre line meets the ground, the eye kept well inside; snapped to a fifth of the box
       const pitch = p.pitch, lead = sb - 60;
-      const d = pitch < -0.05 ? Math.min(lead, Math.max(40, alt / Math.tan(-pitch))) : lead;
+      const d = pitch < -0.05 ? Math.min(lead, Math.max(40, over / Math.tan(-pitch))) : lead;
       const g = sb * 0.2;
       const tx = Math.round((cam.position.x + fwd.x * d) / g) * g, tz = Math.round((cam.position.z + fwd.z * d) / g) * g;
       target.set(tx, T.heightAt(tx, tz), tz);

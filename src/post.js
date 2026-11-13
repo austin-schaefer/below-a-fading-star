@@ -62,7 +62,7 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel; uniform vec4 uPlace;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel; uniform vec4 uPlace; uniform float uHigh;`;
 
 // FXAA (three's FXAAShader, r170, after Catlike Coding's; written for GLSL ES 1.00, which the finish's raw
 // material compiles as): the edge search runs on the scene's luminance (the exposure applied, square-rooted
@@ -133,7 +133,7 @@ const GRADE_MAIN = `
     // grade: lift shadows violet, warm the highlights, gently crush
     float l = lum(col);
     vec3 shadowTint = vec3(0.06, 0.05, 0.15);
-    col = col + shadowTint * (1.0 - smoothstep(0.0, 0.3, l)) * 0.36;
+    col = col + shadowTint * (1.0 - smoothstep(0.0, 0.3, l)) * 0.36 * (1.0 - 0.6 * uHigh); // v12-H5: less violet from a top
     // mid-tones: pull orange toward a sullen crimson-olive split (less red-planet dust)
     float mid = smoothstep(0.05, 0.25, l) * (1.0 - smoothstep(0.45, 0.9, l));
     col = mix(col, col * vec3(0.97, 1.02, 0.98), mid * 0.5);
@@ -147,6 +147,10 @@ const GRADE_MAIN = `
     col = max(mix(vec3(lum(col)), col, uPlace.y), 0.0);
     col = 0.18 * pow(col / 0.18, vec3(uPlace.z));
     col *= vec3(1.0 + uPlace.w, 1.0 + uPlace.w * 0.15, 1.0 - uPlace.w * 1.2);
+    // v12-H5: from a top (uHigh: 0 under 30 m over the ground, 1 from 90 m; src/v12/above.js) the valley a little more
+    // saturated and contrasted, so the places read as themselves through the air; at walking height nothing changes
+    col = max(mix(vec3(lum(col)), col, 1.0 + 0.16 * uHigh), 0.0);
+    col = 0.18 * pow(col / 0.18, vec3(1.0 + 0.07 * uHigh));
 
     // wading tint
     col = mix(col, col * vec3(0.5, 0.65, 0.6), uWade * 0.5);
@@ -191,7 +195,7 @@ function makeUniforms() {
   return {
     tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
-    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uPlace: { value: new THREE.Vector4(1, 1, 1, 0) }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
+    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uPlace: { value: new THREE.Vector4(1, 1, 1, 0) }, uHigh: { value: 0 }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
     uResolution: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
   };
 }
@@ -397,6 +401,7 @@ export function buildPost(ctx) {
     u.uFlicker.value = ctx.sky.flicker.value;
     u.uWade.value = ctx.controls.state.wading || 0;
     if (ctx.places) ctx.places.gradeAt(camera.position.x, camera.position.z, ctx.terrain.causewayDistance(camera.position.x, camera.position.z), u.uPlace.value); // v8-02
+    { const o = ctx.above?.over ?? 0, k = Math.min(1, Math.max(0, (o - 30) / 60)); u.uHigh.value = k * k * (3 - 2 * k); } // v12-H5
     u.uResolution.value.set(size.x, size.y);
     renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
     u.uTexel.value.set(1 / u.uTexel.value.x, 1 / u.uTexel.value.y);
