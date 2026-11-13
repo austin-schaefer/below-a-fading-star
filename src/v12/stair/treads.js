@@ -52,17 +52,21 @@ function slab(w, d, t, wear, rng) {
   return g.toNonIndexed();
 }
 
-// the sign of the sun in its notch, cut into an underside at y: a disc of ember glass seated in a V, a ring round it
+// the sign of the sun in its notch, cut into an underside at y: a disc of ember glass seated in the mouth of a V
+// (the notch in the hills where the sun stands), the V's arms a third of the disc's width; down the stair is -z
 function sign(y, r) {
   const parts = [];
-  const disc = new THREE.CircleGeometry(r * 0.42, 16); disc.rotateX(Math.PI / 2); disc.translate(0, y - 0.004, r * 0.12);
-  parts.push(paint(disc, EMBER, 1));
-  const ring = new THREE.RingGeometry(r * 0.86, r, 24); ring.rotateX(Math.PI / 2); ring.translate(0, y - 0.003, 0);
-  parts.push(paint(ring, EMBER, 0.7));
-  for (const s of [-1, 1]) {
-    const bar = new THREE.PlaneGeometry(r * 0.09, r * 0.95); bar.rotateX(Math.PI / 2);
-    bar.rotateY(s * 0.62); bar.translate(s * r * 0.26, y - 0.004, -r * 0.18);
-    parts.push(paint(bar, EMBER, 1));
+  // the sun: a ring of glass with a darker gap and a bright core, big in the V's mouth
+  const core = new THREE.CircleGeometry(r * 0.3, 20); core.rotateX(Math.PI / 2); core.translate(0, y - 0.005, r * 0.32);
+  parts.push(paint(core, EMBER, 1));
+  const ring = new THREE.RingGeometry(r * 0.42, r * 0.54, 24); ring.rotateX(Math.PI / 2); ring.translate(0, y - 0.005, r * 0.32);
+  parts.push(paint(ring, EMBER, 0.9));
+  // the notch: two arms meeting below the sun, open wide above it, thin
+  const tip = -r * 0.62, arm = r * 1.3, th = r * 0.09, ang = 0.78;
+  for (const sd of [-1, 1]) {
+    const bar = new THREE.PlaneGeometry(th, arm); bar.rotateX(Math.PI / 2);
+    bar.translate(0, 0, arm / 2); bar.rotateY(sd * ang); bar.translate(0, y - 0.004, tip);
+    parts.push(paint(bar, EMBER, 0.75));
   }
   return parts;
 }
@@ -86,12 +90,28 @@ export function treadGeometry(rng, going, width) {
 
 export function landingGeometry(rng, w, d) {
   const t = 0.42;
-  const parts = [slab(w, d, t, 0.02, rng)];
-  // a border of bronze let in a hand's breadth from the edge, and a hexagon at the middle
-  for (const [bw, bd, x, z] of [[w - 0.3, 0.05, 0, d / 2 - 0.15], [w - 0.3, 0.05, 0, -d / 2 + 0.15], [0.05, d - 0.3, w / 2 - 0.15, 0], [0.05, d - 0.3, -w / 2 + 0.15, 0]]) {
-    const b = new THREE.BoxGeometry(bw, 0.012, bd); b.translate(x, -0.02, z); parts.push(paint(b, BRONZE));
+  const base = slab(w, d, t - 0.03, 0.0, rng); base.translate(0, -0.03, 0);
+  const parts = [base];
+  // the field: hexagonal pavers (the Heliarchs' own), a hand's breadth of plain stone round them, each paver its own
+  // shade, a few sunk or lifted, the ones where feet cross worn paler
+  const R = 0.19, dx = R * Math.sqrt(3), dz = R * 1.5, m = 0.16;
+  for (let j = 0; ; j++) {
+    const z = -d / 2 + m + R + j * dz; if (z > d / 2 - m - R * 0.86) break;
+    for (let i = 0; ; i++) {
+      const x = -w / 2 + m + R + i * dx + (j % 2 ? dx / 2 : 0); if (x > w / 2 - m - R * 0.86) break;
+      const g = new THREE.CylinderGeometry(R - 0.012, R - 0.012, 0.05, 6); g.rotateY(Math.PI / 6);
+      g.translate(x, -0.022 + (rng() - 0.5) * 0.01 - (rng() < 0.08 ? 0.015 : 0), z);
+      const worn = Math.exp(-((x / (w * 0.3)) ** 2) - ((z / (d * 0.3)) ** 2));
+      parts.push(paint(g, STONE.clone().multiplyScalar(0.82 + rng() * 0.26 + worn * 0.14).lerp(POLISH, rng() < 0.05 ? 0.5 : 0)));
+    }
   }
-  const hex = new THREE.CylinderGeometry(0.42, 0.42, 0.012, 6); hex.translate(0, -0.018, 0); parts.push(paint(hex, POLISH));
+  // the joints: the slab's top under the pavers, darker
+  const joint = new THREE.PlaneGeometry(w - 2 * m + 0.02, d - 2 * m + 0.02); joint.rotateX(-Math.PI / 2); joint.translate(0, -0.027, 0);
+  parts.push(paint(joint, CUT));
+  // a bronze band round the field
+  for (const [bw, bd, x, z] of [[w - 2 * m + 0.06, 0.04, 0, d / 2 - m + 0.02], [w - 2 * m + 0.06, 0.04, 0, -d / 2 + m - 0.02], [0.04, d - 2 * m + 0.06, w / 2 - m + 0.02, 0], [0.04, d - 2 * m + 0.06, -w / 2 + m - 0.02, 0]]) {
+    const b = new THREE.BoxGeometry(bw, 0.016, bd); b.translate(x, -0.012, z); parts.push(paint(b, BRONZE));
+  }
   parts.push(...sign(-t, Math.min(w, d) * 0.36));
   return finish(parts);
 }

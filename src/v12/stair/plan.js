@@ -11,7 +11,7 @@
 
 export const RISE = 0.32, GOING = 0.33, WIDTH = 2.2;
 export const FOOT = { x: 288, z: -12 }; // the stub's lowest tread; the stair climbs west from here
-export const STUB = 7; // treads that always stand
+export const STUB = 9; // treads that always stand
 
 // the route: flights (n treads) and landings (turn: 'S' straight on, 'L', 'R', or 'BL'/'BR' a switchback to that side)
 export const ROUTE = [
@@ -118,4 +118,17 @@ export function inside(e, x, z, m = 0) {
   const dx = x - e.cx, dz = z - e.cz;
   const f = dx * e.ux + dz * e.uz, r = dx * -e.uz + dz * e.ux;
   return Math.abs(f) <= e.hd + m && Math.abs(r) <= e.hw + m;
+}
+
+// Is (x, z) on the stair's ground: under a slab's bed or the stub, grown by m (read by rocks.js and the vegetation's
+// ground, so nothing grows through the slabs lying in the turf)? False with ?stair=0.
+let clearIdx = null, clearEls = null;
+const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('stair') === '0';
+export function stairClear(x, z, m = 0.6) {
+  if (OFF) return false;
+  if (!clearIdx) { clearEls = buildPlan(() => 0).els; clearIdx = makeIndex(clearEls.map((e) => ({ ...e, hw: e.hw + 1.5, hd: e.hd + 1.5 }))); }
+  if (x < 210 || x > 300 || z < -75 || z > 0) return false;
+  const L = clearIdx(x, z);
+  for (let k = 0; k < L.length; k++) { const e = clearEls[L[k]]; if (e.kind !== KIND.TOP && inside(e, x, z, m)) return true; }
+  return false;
 }

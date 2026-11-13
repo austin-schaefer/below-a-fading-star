@@ -34,10 +34,10 @@ float lNoise(vec3 x) {
   return mix(mix(mix(lHash(i), lHash(i + vec3(1,0,0)), f.x), mix(lHash(i + vec3(0,1,0)), lHash(i + vec3(1,1,0)), f.x), f.y),
              mix(mix(lHash(i + vec3(0,0,1)), lHash(i + vec3(1,0,1)), f.x), mix(lHash(i + vec3(0,1,1)), lHash(i + vec3(1,1,1)), f.x), f.y), f.z);
 }`).replace('#include <color_fragment>', `#include <color_fragment>
-  float lm = lNoise(vLW * 0.9) * 0.6 + lNoise(vLW * 3.3) * 0.4;
+  float lm = lNoise(vLW * 1.7) * 0.55 + lNoise(vLW * 6.1) * 0.45;
   float streak = lNoise(vec3(vLW.x * 5.0, vLW.y * 0.25, vLW.z * 5.0));
   float verd = smoothstep(0.52, 0.8, lNoise(vLW * 0.35 + 9.0) * 0.55 + lm * 0.45);
-  diffuseColor.rgb *= 0.6 + 0.65 * lm;
+  diffuseColor.rgb *= 0.5 + 0.85 * lm;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.10, 0.20, 0.16), verd * 0.7);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.12, 0.07, 0.05), smoothstep(0.55, 0.9, streak) * 0.4);
   float lRough = 0.3 * verd;`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = min(1.0, roughnessFactor + lRough);');
@@ -96,6 +96,16 @@ export function buildTop(ctx, P, { low }) {
   for (const [i, j, k] of nodes) { const [x, y, z] = node(i, j, k); parts.push(box(x, y, z, NODE, NODE, NODE, col('#3e322c'))); }
   // the seams round the foot node's faces: thin bands of paler metal
   for (const dy of [-NODE / 2 + 0.3, NODE / 2 - 0.3]) parts.push(box(n0.x, n0.y + dy, n0.z, NODE + 0.06, 0.08, NODE + 0.06, METAL_P));
+  // the north member's top, where a walker goes: plates a stride and a half long, their seams dark, each its own shade,
+  // a row of rivet heads along each seam; one plate in five worn bright down the middle
+  {
+    const x0 = n0.x - TH / 2, z0 = n0.z - NODE / 2, z1 = n0.z - CELL + NODE / 2;
+    for (let z = z0; z > z1 + 0.4; z -= 1.5) {
+      const zz = Math.max(z1, z - 1.46), bright = rng() < 0.2;
+      parts.push(box(n0.x, n0.y + TH / 2 + 0.012, (z + zz) / 2, TH - 0.08, 0.024, z - zz - 0.05, (bright ? METAL_P : METAL).clone().multiplyScalar(0.8 + rng() * 0.4)));
+      for (let k = 0; k < 7; k++) parts.push(box(x0 + 0.25 + k * (TH - 0.5) / 6, n0.y + TH / 2 + 0.03, zz + 0.05, 0.05, 0.03, 0.05, METAL_P));
+    }
+  }
   const latGeo = mergeGeometries(parts);
   const lattice = new THREE.Mesh(latGeo, metalMaterial());
   lattice.castShadow = true; lattice.receiveShadow = true; lattice.name = 'stair-lattice';

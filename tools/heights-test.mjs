@@ -17,6 +17,8 @@
 //     point's y, never falling), stepped off at each `off` with a hurry and landing sane (on a floor, not under the
 //     ground, inside the limit or a corridor, not inside a collider, able to walk away), the frame time at the top
 //     no worse than 1.5x the floor's plus 4 ms;
+//   - the Diffident Stair (v12-H3, when built): a slab that has not come does not hold (its place is a held edge); with
+//     its clock the walker climbs; ahead of the feet the slabs have come, 8 m behind they have gone; standing still is safe;
 //   - ?fall=1: a fall from the perch (18 m) closes the view, holds it dark and wakes the walker at the keep's gate,
 //     lying and getting up; a 7 m drop does not.
 // Usage: node tools/heights-test.mjs [base=http://localhost:8123]
@@ -43,9 +45,12 @@ async function open(q) {
 const HELPERS = `(() => {
   const fp = window.__fp, p = fp.player, T = fp.terrain, DT = 1 / 60;
   fp.events.dispatchEvent(new CustomEvent('begin'));
+  // an ascent that changes with time (the Diffident Stair's slabs) moves on with the walker's own simulated frames
+  const rawUpdate = fp.controls.update;
+  fp.controls.update = (dt) => { rawUpdate(dt); for (const a of fp.ascents.list) a.tick?.(dt); };
   const feet = () => p.pos.y - p.eye;
   const yawTo = (tx, tz) => Math.atan2(-(tx - p.pos.x), -(tz - p.pos.z));
-  const H = window.H = { fp, p, T, feet, yawTo,
+  const H = window.H = { fp, p, T, feet, yawTo, rawUpdate,
     place(x, z, y) { fp.controls.placeAt(x, z, y); p.vel.set(0, 0, 0); p.keys.clear(); for (let i = 0; i < 3; i++) fp.controls.update(DT); },
     // n ticks with these keys (and the yaw held, or steered by steer() each tick); log the lowest feet and air time
     run(n, keys, steer, hopAt) {
@@ -338,6 +343,45 @@ const HELPERS = `(() => {
     check(a.msTop <= a.msFloor * 1.5 + 4, `ascent ${a.id}: the frame time at the top is not much worse than on the floor`, `floor ${f2(a.msFloor)} ms, top ${f2(a.msTop)} ms`);
   }
   check(errors.length === 0, 'no page errors (ascents)', errors.slice(0, 3).join(' | '));
+
+  // ---------------------------------------------------------------- the Diffident Stair (v12-H3): the feet and the eye agree
+  const SD = await page.evaluate(() => {
+    const { fp, p, feet, place, run, rawUpdate } = window.H, S = fp.stair;
+    if (!S || S.off) return null;
+    const E = S.plan.els, out = {}, DT = 1 / 60;
+    S.all(false); S.tick(DT);
+    const top = E.find((e) => e.kind === 2 && E[e.i + 1].kind === 0); // the stub's last tread
+    place(top.cx, top.cz, top.y); p.yaw = Math.atan2(-top.ux, -top.uz);
+    // without the stair's clock the next slab never comes: pressing on, the walker stays on the stub's top
+    const f0 = feet();
+    p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+    for (let i = 0; i < 60; i++) rawUpdate(DT);
+    p.keys.clear();
+    const fwd = (p.pos.x - top.cx) * top.ux + (p.pos.z - top.cz) * top.uz;
+    out.held = { feet: feet(), f0, past: fwd - top.hd, onGround: p.onGround, nextA: S.a[top.i + 1] };
+    // with it, they climb: the slabs come ahead of them
+    p.yaw = Math.atan2(-top.ux, -top.uz);
+    run(300, ['KeyW']); // up the first flight to its landing (whose far side is held)
+    out.climbed = { feet: feet(), el: S.el() };
+    // ahead within 1.5 m of path of the feet, everything has come; behind, past 8 m, after its linger, everything has gone
+    run(240, []);
+    const s0 = E[S.el()].s;
+    out.ahead = E.filter((e) => e.s > s0 && e.s < s0 + 1.5).every((e) => S.a[e.i] === 1);
+    out.behindGone = E.filter((e) => e.kind !== 2 && e.s < s0 - 8).every((e) => S.a[e.i] === 0);
+    out.behindCount = E.filter((e) => e.kind !== 2 && e.s < s0 - 8).length;
+    // standing still 12 s on the stair: the feet stay where they were
+    const fs = feet(), xs = p.pos.x, zs = p.pos.z;
+    run(720, []);
+    out.still = { moved: Math.hypot(p.pos.x - xs, p.pos.z - zs), dy: feet() - fs, on: p.onStack?.name };
+    S.all(false); S.tick(DT);
+    return out;
+  });
+  if (SD) {
+    check(SD.held.past < 0.05 && Math.abs(SD.held.feet - SD.held.f0) < 0.05 && SD.held.onGround, 'stair: a slab that has not come does not hold; its place holds the walker at the stair\'s end', SD.held);
+    check(SD.climbed.feet > SD.held.f0 + 2, 'stair: with its clock the slabs come and the walker climbs', SD.climbed);
+    check(SD.ahead && SD.behindGone && SD.behindCount > 5, 'stair: the slabs ahead of the feet have come, those 8 m behind have gone back', { ahead: SD.ahead, behindGone: SD.behindGone, behind: SD.behindCount });
+    check(SD.still.moved < 0.05 && Math.abs(SD.still.dy) < 0.05 && SD.still.on === 'stair', 'stair: a walker who stands still on it is safe', SD.still);
+  }
   await page.close();
 }
 

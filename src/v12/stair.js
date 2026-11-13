@@ -12,7 +12,8 @@
 // come is a held edge (a stacked floor's keep), so a walker who outruns the stair stops at its end and waits; a
 // landing's sides are held; a flight's sides are not, so a walker who steers off one falls (the edge-guard keeps a
 // walker who is not steering at it on). Coming down is the same, the slabs below rising to meet the feet.
-// The window: everything within AHEAD m up the path and BEHIND m down it from the walker's element is called.
+// The window: everything within NEAR m of the walker's element along the path is called, and, the way they are going,
+// as far again as they cover while a slab comes up (so the slabs are seen to arrive a few strides ahead at a walk).
 //
 // Draws: treads, landings, kerbs, beds (one instanced mesh each), the stub (one), the dust (one points), and the top's
 // (top.js). One stacked floor (`stair`), no colliders on the stair itself. ctx.stair: { plan, state, stats(), ... }.
@@ -25,7 +26,7 @@ import { buildDust } from './stair/dust.js';
 import { buildTop } from './stair/top.js';
 
 export const STAIR_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('stair') === '0';
-const AHEAD = 4.6, BEHIND = 3.4;         // m of path called ahead of and behind the walker
+const NEAR = 2.6, LEAD = 1.15;           // m of path called round the walker; s of their way along it called ahead of them
 const T_ARRIVE = 1.3, T_LEAVE = 4.2;     // s for a slab to come up from its bed, and to go back down to it
 const LINGER = 1.1, RIPPLE = 0.07;       // s a slab stays after it leaves the window; s between one slab starting and the next
 
@@ -85,9 +86,10 @@ export async function build(ctx) {
   }
   const tGeo = treadGeometry(ctx.makeRng(12302), GOING, WIDTH);
   const TR = instanced(tGeo, treads, 'stair-treads');
-  // landings come in two sizes (a turn's square and a switchback's long one): one geometry each, scaled from the square
-  const lw = lands[0] ? lands[0].hw * 2 : 2.8;
-  const LA = instanced(landingGeometry(ctx.makeRng(12303), lw, lw), lands, 'stair-landings');
+  // landings come in two sizes (a turn's square and a switchback's long one): one instanced mesh for each
+  const sizes = new Map();
+  for (const e of lands) { const k = `${e.hw.toFixed(2)}x${e.hd.toFixed(2)}`; if (!sizes.has(k)) sizes.set(k, []); sizes.get(k).push(e); }
+  const LAS = [...sizes.values()].map((list, n) => instanced(landingGeometry(ctx.makeRng(12303 + n), list[0].hw * 2, list[0].hd * 2), list, `stair-landings-${n}`));
   // the kerbs: along each landing's sides, open where a flight meets it
   const kerbs = [];
   for (const e of lands) {
@@ -164,9 +166,9 @@ export async function build(ctx) {
   const SL = new THREE.Vector3();
   function writeAll() {
     for (let j = 0; j < TR.list.length; j++) { const e = TR.list[j]; pose(e, a[e.i]); TR.m.setMatrixAt(j, M); }
-    for (let j = 0; j < LA.list.length; j++) { const e = LA.list[j]; pose(e, a[e.i], SL.set(e.hw / (lw / 2), 1, e.hd / (lw / 2))); LA.m.setMatrixAt(j, M); }
+    for (const LA of LAS) { for (let j = 0; j < LA.list.length; j++) { const e = LA.list[j]; pose(e, a[e.i]); LA.m.setMatrixAt(j, M); } LA.m.instanceMatrix.needsUpdate = true; }
     writeKerbs();
-    TR.m.instanceMatrix.needsUpdate = true; LA.m.instanceMatrix.needsUpdate = true;
+    TR.m.instanceMatrix.needsUpdate = true;
   }
   const KL = new THREE.Matrix4(), KS = new THREE.Vector3(), KQ = new THREE.Quaternion(), KV = new THREE.Vector3();
   function writeKerbs() {
@@ -199,7 +201,7 @@ export async function build(ctx) {
 
   // ------------------------------------------------------------------ the walker and the window
   const player = ctx.player;
-  let s0 = null, lost = 0, lastEl = -1;
+  let s0 = null, lost = 0, lastEl = -1, vUp = 0;
   // the element the walker stands on (or is just over, in a hop): its index, or -1
   function underfoot() {
     const fx = player.pos.x, fz = player.pos.z, feet = player.pos.y - player.eye;
@@ -213,12 +215,21 @@ export async function build(ctx) {
   function tick(dt) {
     dt = Math.min(dt, 0.1);
     const u = underfoot();
-    if (u >= 0) { s0 = E[u].s; lost = 0; lastEl = u; }
+    if (u >= 0) {
+      // the way they are going along the path, and how fast (smoothed), from their velocity and the element's forward
+      const e = E[u], vf = player.vel.x * e.ux + player.vel.z * e.uz;
+      const turnLanding = e.kind !== KIND.TREAD && e.kind !== KIND.STUB;
+      const sp = turnLanding ? Math.hypot(player.vel.x, player.vel.z) : Math.abs(vf);
+      const dir = turnLanding ? (vUp >= 0 ? 1 : -1) : Math.sign(vf);
+      vUp += ((sp > 0.3 ? dir * sp : vUp * 0.98) - vUp) * Math.min(1, dt * 3);
+      s0 = e.s; lost = 0; lastEl = u;
+    }
     else if (s0 !== null && (lost += dt) > 0.8) s0 = null;
-    // who is called: the window about s0, and the fixed ones always
+    // who is called: the window about s0, longer the way they are going, and the fixed ones always
+    const up = Math.max(0, vUp) * LEAD * T_ARRIVE, down = Math.max(0, -vUp) * LEAD * T_ARRIVE;
     for (let i = 0; i < N; i++) {
       if (fixed(E[i])) continue;
-      const w = s0 !== null && E[i].s >= s0 - BEHIND - E[i].hd && E[i].s <= s0 + AHEAD + E[i].hd ? 1 : 0;
+      const w = s0 !== null && E[i].s >= s0 - NEAR - down - E[i].hd && E[i].s <= s0 + NEAR + up + E[i].hd ? 1 : 0;
       if (w !== want[i]) { want[i] = w; wait[i] = w ? Math.abs(E[i].s - (s0 ?? 0)) * 0.0 : LINGER + Math.abs(E[i].s - (s0 ?? E[i].s)) * 0.08; }
     }
     // move them: arrivals one at a time on the ripple (nearest first), leavings after their linger
@@ -251,8 +262,8 @@ export async function build(ctx) {
     if (changed || sinceMove < 0.2) {
       writeAll();
       for (let j = 0; j < TR.list.length; j++) TR.glow.array[j] = GL[TR.list[j].i];
-      for (let j = 0; j < LA.list.length; j++) LA.glow.array[j] = GL[LA.list[j].i];
-      TR.glow.needsUpdate = true; LA.glow.needsUpdate = true;
+      for (const LA of LAS) { for (let j = 0; j < LA.list.length; j++) LA.glow.array[j] = GL[LA.list[j].i]; LA.glow.needsUpdate = true; }
+      TR.glow.needsUpdate = true;
     }
   }
   // the next to come is the lowest-numbered called slab nearer the walker than this one that has not started: arrivals
@@ -270,7 +281,7 @@ export async function build(ctx) {
   function capColumns() {
     capped = 0;
     for (const c of ctx.controls.state.colliders) {
-      if (c.h !== undefined || c.x2 !== undefined) continue;
+      if (c.h !== undefined || c.x2 !== undefined || c.stair) continue;
       // the lowest element over it (within its radius and half a stride)
       let lo = Infinity;
       for (const [ox, oz] of [[0, 0], [c.r + 0.5, 0], [-c.r - 0.5, 0], [0, c.r + 0.5], [0, -c.r - 0.5]]) {
@@ -296,7 +307,7 @@ export async function build(ctx) {
   if (top.path) for (const q of top.path) pts.push(q);
   ctx.ascents?.add({
     id: 'stair', path: pts.map(([x, z, y]) => (y === undefined ? [x, z] : [x, z, y])),
-    offs: [0.2, 0.55, 0.86], tick: (dt) => ctx.stair.tick(dt),
+    offs: [0.1, 0.55, 0.86], tick: (dt) => ctx.stair.tick(dt),
   });
 
   const tris = (g, n) => (g.attributes.position.count / 3) * n;
@@ -307,8 +318,8 @@ export async function build(ctx) {
     // call every slab (true) or none (false) at once, for renders of the whole stair; null gives them back to the walker
     all(v) { for (let i = 0; i < N; i++) if (!fixed(E[i])) a[i] = v ? 1 : 0; writeAll(); },
     stats: () => ({
-      calls: 4 + stub.calls + dust.calls + top.calls,
-      tris: Math.round(tris(tGeo, treads.length) + tris(LA.m.geometry, lands.length) + tris(KM.geometry, kerbs.length) + tris(BM.geometry, bedEls.length) + stub.tris + top.tris),
+      calls: 3 + LAS.length + stub.calls + dust.calls + top.calls,
+      tris: Math.round(tris(tGeo, treads.length) + LAS.reduce((n, L) => n + tris(L.m.geometry, L.list.length), 0) + tris(KM.geometry, kerbs.length) + tris(BM.geometry, bedEls.length) + stub.tris + top.tris),
       treads: treads.length, landings: lands.length, kerbs: kerbs.length, beds: bedEls.length, height: +(P.top.y - P.y0).toFixed(1),
       top: { x: +P.top.cx.toFixed(1), z: +P.top.cz.toFixed(1), y: +P.top.y.toFixed(1) },
       moving,
