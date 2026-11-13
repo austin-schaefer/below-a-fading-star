@@ -29,7 +29,7 @@ export function iceMaterial(ctx) {
         {
           icNw = normalize(vIceN) * (gl_FrontFacing ? 1.0 : -1.0);
           float deep = clamp(vIce.x, 0.0, 1.0);
-          icUp = smoothstep(0.6, 0.86, icNw.y);
+          icUp = smoothstep(0.6, 0.86, icNw.y) * (1.0 - smoothstep(0.5, 0.8, deep)); // a wall's foot that slopes out is still the wall, not snow
           icShade = smoothstep(0.2, -0.35, dot(icNw, uSun));
           // across the face (its horizontal tangent) and down it: the flutes and bands are drawn in those
           vec2 tH = normalize(vec2(-icNw.z, icNw.x) + 1e-4);
@@ -43,8 +43,9 @@ export function iceMaterial(ctx) {
           vec3 face = mix(vec3(0.15, 0.25, 0.37), vec3(0.06, 0.15, 0.27), smoothstep(0.0, 0.55, deep));
           face = mix(face, vec3(0.012, 0.05, 0.11), smoothstep(0.55, 1.0, deep));
           face *= 0.93 + 0.14 * flute;
-          icPat = (0.7 + 0.6 * flute) * (1.0 - 0.75 * band);
-          face = mix(face, vec3(0.08, 0.065, 0.06), band * (0.3 + 0.5 * vIce.z) * (1.0 - smoothstep(0.7, 1.0, deep)));
+          // in shade the wall shows only by its own light: so its flutes, bands and strata are in that light too
+          icPat = (0.45 + 1.1 * flute) * (1.0 - 0.8 * band * (0.4 + vIce.z)) * (1.0 - 0.45 * vIce.z * smoothstep(0.3, 0.5, abs(fract(bandY * 1.3) - 0.5)));
+          face = mix(face, vec3(0.08, 0.065, 0.06), band * 0.7 * vIce.z * (1.0 - smoothstep(0.7, 1.0, deep))); // bands only where a wall shows its years (the slot), not dashes on every block
           // fine strata between the bands (a crevasse's wall shows its years)
           face *= 1.0 - 0.12 * vIce.z * smoothstep(0.3, 0.5, abs(fract(bandY * 1.3) - 0.5));
           // a top: old firn, wind-scoured, dusted with the moraine's grit in streaks
@@ -53,25 +54,28 @@ export function iceMaterial(ctx) {
           // sastrugi: ridges the wind cut, streaked one way; cracks across
           float sas = icN(vec2(dot(vIceW.xz, vec2(0.9, 0.25)), dot(vIceW.xz, vec2(-0.08, 0.3))));
           vec3 top = vec3(0.40, 0.385, 0.43) * (0.72 + 0.45 * mott) * (0.82 + 0.3 * smoothstep(0.3, 0.7, sas));
-          float crk = 1.0 - smoothstep(0.0, 0.06, abs(icN(vIceW.xz * 0.18 + 5.0) - 0.5));
-          top = mix(top, vec3(0.03, 0.08, 0.14), crk * 0.6);
+
           top = mix(top, vec3(0.16, 0.14, 0.14), clamp(vIce.z * 0.7 + grit * 0.45, 0.0, 0.85));
           icDeep = deep;
           diffuseColor.rgb = mix(face, top, icUp * (1.0 - deep * 0.8));
         }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        roughnessFactor = mix(0.16, 0.8, icUp);`)
+        // glassy where the ice is thin and lit; deep ice and shadowed walls not a mirror (a dark glossy wall shows only
+        // the violet sky, flat: the slot read as an unlit corridor)
+        roughnessFactor = mix(mix(0.22, 0.62, smoothstep(0.2, 0.8, icDeep)), 0.8, icUp);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // light in the ice: a cold blue from within a face turned from the sun, more where it is deep; the violet sky
         // on it at a graze, as glass shows it
         {
           float graze = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), 2.5);
           float side = 1.0 - icUp;
-          totalEmissiveRadiance += vec3(0.006, 0.042, 0.085) * side * icPat * (0.25 + 0.9 * icShade + 1.4 * smoothstep(0.3, 1.0, icDeep));
-          totalEmissiveRadiance += vec3(0.05, 0.035, 0.085) * graze * side * (1.0 - icDeep);
+          totalEmissiveRadiance += vec3(0.006, 0.042, 0.085) * side * icPat * (0.25 + 0.9 * icShade + 1.4 * smoothstep(0.3, 1.0, icDeep) + 1.2 * vIce.z * icShade);
+          // a wall that shows its years (the slot's) is thin near its lip: the sky's light comes through it there
+          totalEmissiveRadiance += vec3(0.02, 0.075, 0.12) * side * vIce.z * (1.0 - smoothstep(0.0, 0.55, icDeep)) * icPat;
+          totalEmissiveRadiance += vec3(0.05, 0.035, 0.085) * graze * side * (1.0 - icDeep) * 0.4 * (1.0 - smoothstep(0.5, 0.7, vIce.z)); // not on a slot's walls: seen along them it washed them flat violet
         }`);
   };
-  mat.customProgramCacheKey = () => 'fp-icefall-ice-v3';
+  mat.customProgramCacheKey = () => 'fp-icefall-ice-v4';
   return mat;
 }
 
@@ -129,7 +133,7 @@ export function serac(G, rng, o) {
   const { x, y, z, w, d, h } = o, rot = o.rot ?? 0, lx = o.lx ?? 0, lz = o.lz ?? 0, slant = o.slant ?? 0, sink = o.sink ?? 2;
   const seed = rng(), dirt = o.dirt ?? rng() * 0.5;
   const c = Math.cos(rot), s = Math.sin(rot);
-  const n = 5 + Math.floor(rng() * 3);
+  const n = 7 + Math.floor(rng() * 3);
   const ang = [], rad = [];
   let acc = 0; for (let k = 0; k < n; k++) { const g = 0.6 + rng() * 0.8; ang.push(g); acc += g; }
   { let t = rng() * 6.28; for (let k = 0; k < n; k++) { const a = t; t += (ang[k] / acc) * Math.PI * 2; ang[k] = a; rad.push(0.8 + rng() * 0.4); } }
@@ -148,15 +152,18 @@ export function serac(G, rng, o) {
     }
     return out;
   };
-  const R0 = ring(0, 1.0, 0.2, -sink, false), R1 = ring(0.5, 1.03, 0.22, h * 0.5, false), R2 = ring(1, 0.9, 0.25, h, true);
+  // the sides rounded by melt (smooth normals over the rings) under a shoulder that turns in to the top: ice, not glass
+  const R0 = ring(0, 1.0, 0.2, -sink, false), R1 = ring(0.45, 1.04, 0.22, h * 0.45, false), R2 = ring(0.85, 0.97, 0.2, h * 0.84, false), R3 = ring(1, 0.82, 0.22, h, true);
+  for (let k = 0; k < n; k++) { const a = R2[k], b = R3[k]; if (b[1] > a[1] - 0.05) b[1] = Math.max(a[1] + 0.05, b[1]); }
   const deepOf = (yy) => Math.max(0, Math.min(1, (o.deepTop ?? (y + h) - yy) / Math.max(4, o.deepRange ?? h * 1.4)));
-  const att = (P) => [deepOf(P[1]), seed, dirt * 0.4];
-  const band = (A, B) => { for (let k = 0; k < n; k++) { const k1 = (k + 1) % n; G.quad(A[k], B[k], B[k1], A[k1], att(A[k]), att(B[k]), att(B[k1]), att(A[k1])); } };
-  band(R0, R1); band(R1, R2);
+  const att = (P) => [deepOf(P[1]), seed, dirt * 0.15];
+  const rings = [R0, R1, R2, R3], P = rings.map((r) => [...r, r[0]]), Q = P.map((r) => r.map(att));
+  G.grid(P, Q, true, true);
+  const R2top = R3;
   // the top: a fan from a point off centre on the high side of the fracture
-  let cx = 0, cy = 0, cz = 0; for (const P of R2) { cx += P[0]; cy += P[1]; cz += P[2]; }
+  let cx = 0, cy = 0, cz = 0; for (const Pp of R2top) { cx += Pp[0]; cy += Pp[1]; cz += Pp[2]; }
   const T = [cx / n + (rng() - 0.5) * w * 0.2, cy / n + (fd ? fd * 0.5 : 0) + (rng() - 0.3) * h * 0.06, cz / n + (rng() - 0.5) * d * 0.2];
   const at = [0, seed, dirt];
-  for (let k = 0; k < n; k++) G.tri(R2[(k + 1) % n], R2[k], T, at, at, at); // wound outward
-  return R2;
+  for (let k = 0; k < n; k++) G.tri(R2top[(k + 1) % n], R2top[k], T, at, at, at); // wound outward
+  return R2top;
 }

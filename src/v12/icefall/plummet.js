@@ -1,6 +1,6 @@
 // The Plummet and the old leads (v12 H2; stories/the-soundings.md). Whoever is up there sounds the world as a
 // leadsman sounds a sea: a lead of crystal let down on a line, to learn how far below them the floor has sunk as the
-// sun fails. The newest lead hangs over the head of the glacier on the thread out of the dark, point down, 105 m from
+// sun fails. The newest lead hangs over the head of the glacier on the thread out of the dark, point down, 180 m from
 // its point to the bronze eye at its top; its point has gone into the ice and the ice has it. The older ones are in
 // the ice below: the glacier takes each down the notch and turns it over as it goes. One shows in R3's face beside
 // the stair (turned half over), one lies in R2's face, one lies across R2's lip as the climb's bridge, and the oldest

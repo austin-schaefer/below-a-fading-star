@@ -27,24 +27,35 @@ export function samples(pts, step) {
 // top(i), its outer face `thick` further out going down to ground(i); leans in at the top by `lean`. Deep blue down
 // its inner face. Colliders along its inner face. Returns nothing; pushes into G.
 export function wall(G, rng, noise, S, o, colliders) {
-  const { sgn, half, thick, lean } = o;
+  const { sgn, thick } = o;
+  const halfAt = typeof o.half === 'function' ? o.half : () => o.half;
   const seed = rng();
   const inner = [], outer = [], qIn = [], qOut = [];
-  const rows = 5;
+  const rows = o.rows ?? 5;
   for (let i = 0; i < S.length; i++) {
-    const s = S[i], nx = -s.tz * sgn, nz = s.tx * sgn; // outward from the way
+    const s = S[i], nx = -s.tz * sgn, nz = s.tx * sgn, half = halfAt(s.d); // outward from the way
     const bottom = s.y - 1.0, top = o.top(i, s, nx, nz) + Math.max(0, noise.noise2(s.d * 0.33 + seed * 5, sgn * 3.1)) * 1.8;
+    // the lean over the way comes and goes along it: an overhang in places, a wall nearly plumb in others
+    const lean = o.lean * (o.leanVary ? 0.35 + 1.3 * Math.max(0, noise.noise2(s.d * 0.05 + seed * 3, sgn + 1.7) + 0.4) : 1);
     const colI = [], colQ = [];
     for (let r = 0; r <= rows; r++) {
       const v = r / rows, y = bottom + (top - bottom) * v;
-      // the face: outward only below head height; leans in above it
-      const bul = Math.abs(noise.noise2(s.d * 0.21 + seed, y * 0.12)) * 0.5 + Math.max(0, noise.noise2(s.d * 0.06, y * 0.05 + sgn) + 0.2) * 1.3;
+      // the face: outward only below head height; leans in above it; scalloped (melt's shallow cups) where asked
+      const bul = Math.abs(noise.noise2(s.d * 0.21 + seed, y * 0.12)) * 0.5 + Math.max(0, noise.noise2(s.d * 0.06, y * 0.05 + sgn) + 0.2) * 1.3
+        + (o.scallop ? Math.abs(Math.sin(s.d * 1.7 + noise.noise2(y * 0.4, s.d * 0.3 + seed) * 2.2)) * Math.abs(Math.sin(y * 1.3 + s.d * 0.4)) * o.scallop : 0);
       const lin = y > s.y + 2.3 ? -lean * Math.min(1, (y - s.y - 2.3) / Math.max(1, top - s.y - 2.3)) : 0;
       const off = half + bul + lin;
       colI.push([s.x + nx * off, y, s.z + nz * off]);
       colQ.push([Math.min(1, Math.max(0, (top - y) / 10)) * (o.deepMax ?? 0.65), seed, o.strata ?? 0.6]);
     }
     inner.push(colI); qIn.push(colQ);
+    // icicles off the wall's lip, hanging into the way
+    if (o.icicles && i % 2 === 1 && rng() < o.icicles) {
+      const t = colI[rows], len = 0.5 + rng() * rng() * 2.4, w = 0.08 + rng() * 0.1, q = [0.15, seed, 0];
+      const a = [t[0] - nx * 0.15 - s.tx * w, t[1] - 0.1, t[2] - nz * 0.15 - s.tz * w], b = [t[0] - nx * 0.15 + s.tx * w, t[1] - 0.1, t[2] - nz * 0.15 + s.tz * w], c = [t[0] - nx * (0.15 + w * 1.6), t[1] - 0.1, t[2] - nz * (0.15 + w * 1.6)];
+      const tip = [t[0] - nx * (0.2 + w), t[1] - 0.1 - len, t[2] - nz * (0.2 + w)];
+      G.tri(a, b, tip, q, q, q); G.tri(b, c, tip, q, q, q); G.tri(c, a, tip, q, q, q);
+    }
     const g = o.ground(i, s, nx, nz), off2 = half + thick + noise.noise2(s.d * 0.2, 7 + sgn) * 0.6;
     outer.push([[s.x + nx * off2, top - 0.3, s.z + nz * off2], [s.x + nx * (off2 + 0.6), g - 2, s.z + nz * (off2 + 0.6)]]);
     qOut.push([[0.05, seed, 0.2], [0.4, seed, 0.2]]);
@@ -59,8 +70,8 @@ export function wall(G, rng, noise, S, o, colliders) {
   // colliders: capsules along the inner face, each its own height
   if (colliders) for (let i = 0; i < S.length - 1; i += 3) {
     const a = S[i], b = S[Math.min(S.length - 1, i + 3)];
-    const na = [-a.tz * sgn, a.tx * sgn], nb = [-b.tz * sgn, b.tx * sgn], r = 0.4;
-    colliders.push({ x1: a.x + na[0] * (half + r), z1: a.z + na[1] * (half + r), x2: b.x + nb[0] * (half + r), z2: b.z + nb[1] * (half + r), r, y: Math.min(a.y, b.y) - 1.5, h: 30, stand: false });
+    const na = [-a.tz * sgn, a.tx * sgn], nb = [-b.tz * sgn, b.tx * sgn], r = 0.4, ha = halfAt(a.d), hb = halfAt(b.d);
+    colliders.push({ x1: a.x + na[0] * (ha + r), z1: a.z + na[1] * (ha + r), x2: b.x + nb[0] * (hb + r), z2: b.z + nb[1] * (hb + r), r, y: Math.min(a.y, b.y) - 1.5, h: 30, stand: false });
   }
 }
 
@@ -76,15 +87,18 @@ export function ribbon(G, S, half, lift, deep, dirt) {
 
 // ---------------------------------------------------------------- floors
 // a polyline floor: within half of the line, at the line's y (linear between points), or null
+// `half` a number, or a function of metres along the line (a slot that pinches)
 export function lineFloor(pts, half, extra) {
+  const halfAt = typeof half === 'function' ? half : null, hmax = halfAt ? 3 : half;
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   for (const p of pts) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
-  x0 -= half; x1 += half; z0 -= half; z1 += half;
+  x0 -= hmax; x1 += hmax; z0 -= hmax; z1 += hmax;
+  const acc = [0]; for (let i = 1; i < pts.length; i++) acc.push(acc[i - 1] + hyp(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   const nr = [0, 0, 0, 0];
   return (x, z) => {
     if (x < x0 || x > x1 || z < z0 || z > z1) return null;
     nearest(pts, x, z, nr);
-    if (nr[0] > half) return null;
+    if (nr[0] > (halfAt ? halfAt(acc[nr[3]] + nr[2] * (acc[nr[3] + 1] - acc[nr[3]])) : half)) return null;
     // past either end along the line: no floor (nearest clamps t; a point beyond the end is off it)
     const i = nr[3], A = pts[i], B = pts[i + 1];
     if ((i === 0 && nr[2] <= 0 && ((x - A[0]) * (B[0] - A[0]) + (z - A[1]) * (B[1] - A[1])) < 0) ||

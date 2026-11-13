@@ -8,7 +8,7 @@
 //          T2, the stair and the shelf; the ascent `icefall` for tools/heights-test.mjs
 //   ?icefall=0 leaves it out (the terrain keeps the icefall's shape)
 import * as THREE from 'three';
-import { SLOT, BLOCK, BRIDGE, STAIR, LANES, LIP, RISERS, UPPER, CREVASSE, levels, riserSpan, upperFoot, zOf, sOf, axisX, iceY, nearest, slumpW } from './icefall/plan.js';
+import { SLOT, SLOT_CRYSTAL_AT, slotHalf, BLOCK, BRIDGE, STAIR, LANES, LIP, RISERS, UPPER, CREVASSE, levels, riserSpan, upperFoot, zOf, sOf, axisX, iceY, nearest, slumpW } from './icefall/plan.js';
 import { iceMaterial, IceGeo, serac } from './icefall/ice.js';
 import { buildFaces } from './icefall/faces.js';
 import { samples, wall, ribbon, lineFloor, blockFrame, blockFloor, stairPlan, treadY, stairFloor } from './icefall/way.js';
@@ -24,29 +24,63 @@ export async function build(ctx) {
   const T = ctx.terrain, H = (x, z) => T.heightAt(x, z), low = ctx.quality === 'low';
   const rng = ctx.makeRng(1203), noise = ctx.noise;
   const G = new IceGeo();
+  const parts = []; // [name, first triangle]: which builder drew what (ctx.icefall.parts, for a probe)
   const colliders = [];
   const group = new THREE.Group(); group.name = 'icefall';
   ctx.scene.add(group);
 
   // ---------------------------------------------------------------- the floors and their drawn pieces
-  // the slot
-  const slotS = samples(SLOT.pts, low ? 1.6 : 1.1);
+  // the slot: inside the ice. Walls that bend out of sight, pinch and lean over, scalloped by melt and banded by
+  // the years, blue deepening downward and lit from the strip of sky; icicles off the lips, a block wedged overhead,
+  // a crystal grown out of the north wall that the way goes round; a floor of old snow and rubble with a refrozen
+  // melt channel down it
+  const slotS = samples(SLOT.pts, low ? 1.3 : 0.8);
   const iceAt = (x, z) => iceY(x, z);
+  parts.push(['slot-walls', G.p.length / 9]);
   for (const sgn of [1, -1]) {
     wall(G, rng, noise, slotS, {
-      sgn, half: SLOT.half, thick: 2.4, lean: 0.45,
+      sgn, half: slotHalf, thick: 2.4, lean: 0.9, leanVary: true, rows: low ? 7 : 11, scallop: 0.32, icicles: 0.55, deepMax: 0.58, strata: 0.75, // deep enough to be blue at the foot, not so deep the bands go black at eye height
       top: (i, s, nx, nz) => Math.max(s.y + 3.4, iceAt(s.x + nx * (SLOT.half + 2.4), s.z + nz * (SLOT.half + 2.4)) + 0.7),
       ground: (i, s, nx, nz) => H(s.x + nx * (SLOT.half + 3.2), s.z + nz * (SLOT.half + 3.2)),
     }, colliders);
   }
-  ribbon(G, slotS, SLOT.half + 0.2, 0.02, 0.35, 0.45);
-  // the slot's floor: old snow, and ice fallen from its walls lying along their feet
-  for (let i = 1; i < slotS.length; i += 2) {
-    const sd = slotS[i], side = rng() < 0.5 ? 1 : -1, off = SLOT.half - 0.15 - rng() * 0.35, w = 0.35 + rng() * 0.7;
+  parts.push(['slot-floor', G.p.length / 9]);
+  ribbon(G, slotS, SLOT.half + 0.2, 0.02, 0.3, 0.55);
+  // the melt channel: a glassy blue strip, refrozen, wandering a little down the middle
+  {
+    const M = slotS.map((q) => ({ ...q, x: q.x - q.tz * 0.35 * noise.noise2(q.d * 0.08, 3.3), z: q.z + q.tx * 0.35 * noise.noise2(q.d * 0.08, 3.3) }));
+    ribbon(G, M, 0.32, 0.035, 0.62, 0.0);
+  }
+  // rubble along the walls' feet, more where they lean
+  for (let i = 1; i < slotS.length; i += low ? 2 : 1) {
+    if (rng() < 0.35) continue;
+    const sd = slotS[i], side = rng() < 0.5 ? 1 : -1, off = slotHalf(sd.d) - 0.1 - rng() * 0.45, w = 0.25 + rng() * rng() * 0.9;
     serac(G, rng, { x: sd.x - sd.tz * off * side, y: sd.y, z: sd.z + sd.tx * off * side, w, d: w * (0.6 + rng() * 0.5), h: w * (0.4 + rng() * 0.7), rot: rng() * 3, slant: (rng() - 0.5) * w * 0.5, sink: 0.3, deepTop: sd.y + 6, deepRange: 10 });
   }
-  ctx.addWalkable(lineFloor(SLOT.pts, SLOT.half), { stack: true, keep: true, name: 'icefall-slot' });
+  parts.push(['chock', G.p.length / 9]);
+  // the chockstone: a block fallen in and wedged between the walls, 5 m over the way
+  {
+    const sd = slotS.reduce((a, q) => (Math.abs(q.d - 42) < Math.abs(a.d - 42) ? q : a));
+    serac(G, rng, { x: sd.x, y: sd.y + 5.2, z: sd.z, w: 1.5, d: 4.4, h: 2.1, rot: Math.atan2(sd.tx, sd.tz), slant: 0.5, sink: 0.4, lx: 0, lz: 0, deepTop: sd.y + 8, deepRange: 6 });
+  }
+  // the crystal out of the north wall (left of the way going west), at chest height, slanting up into the way
+  const slotCrystal = (() => {
+    const sd = slotS.reduce((a, q) => (Math.abs(q.d - SLOT_CRYSTAL_AT) < Math.abs(a.d - SLOT_CRYSTAL_AT) ? q : a));
+    const nx = -sd.tz, nz = sd.tx, h0 = slotHalf(sd.d); // north
+    const base = [sd.x + nx * (h0 + 0.9), sd.y + 0.5, sd.z + nz * (h0 + 0.9)], dir = [-nx * 0.8 - sd.tx * 0.25, 0.55, -nz * 0.8 - sd.tz * 0.25];
+    // it reaches 0.9 m into the way: the walker goes round it on the south side
+    colliders.push({ x: sd.x + nx * (h0 - 0.55), z: sd.z + nz * (h0 - 0.55), r: 0.45, y: sd.y - 0.5, h: 3.2, stand: false });
+    return { x: base[0], y: base[1], z: base[2], h: 3.4, r: 0.4, dir, rot: 0.3, tint: 0.95 };
+  })();
+  ctx.addWalkable(lineFloor(SLOT.pts, slotHalf), { stack: true, keep: true, name: 'icefall-slot' });
+  // the cleft's mouth glows: a cold light just inside, so the gate in the ice front reads from the Lattice
+  {
+    const L = new THREE.PointLight(new THREE.Color(ctx.palette.crystal), 60, 30, 2);
+    L.position.set(SLOT.pts[0][0] - 0.3, 20.5, -301); L.name = 'icefall-cleft-light';
+    group.add(L);
+  }
 
+  parts.push(['block', G.p.length / 9]);
   // the block
   const B = blockFrame();
   {
@@ -86,18 +120,15 @@ export async function build(ctx) {
     }
     colliders.push({ x1: B.hx - B.vx * B.half, z1: B.hz - B.vz * B.half, x2: B.hx + B.vx * B.half, z2: B.hz + B.vz * B.half, r: 0.5, y: H(B.hx, B.hz) - 1, h: B.hy - H(B.hx, B.hz) - 0.4, stand: false });
   }
-  // the block: its north side (the gap against R2's foot) and its head held; off its south side a walker drops onto T1
-  ctx.addWalkable(blockFloor(), { stack: true, keep: (x, z) => { const dx = x - B.fx, dz = z - B.fz; return dx * B.vx + dz * B.vz > 0 || dx * B.ux + dz * B.uz > B.L; }, name: 'icefall-block' });
+  // the block: its north side (the gap against R2's foot), its head and its south side above 11 m along (6 m up) held;
+  // off its low south side a walker steps down onto T1 on purpose
+  ctx.addWalkable(blockFloor(), { stack: true, keep: (x, z) => { const dx = x - B.fx, dz = z - B.fz, a = dx * B.ux + dz * B.uz; return dx * B.vx + dz * B.vz > 0 || a > B.L || a > 11; }, name: 'icefall-block' });
 
-  // the bridge: its start on the block's top near its head, its floor the lead's top facet
-  {
-    const bf = blockFloor();
-    BRIDGE.pts[0][0] = B.hx + B.ux * -1.2 + B.vx * -0.6; BRIDGE.pts[0][1] = B.hz + B.uz * -1.2 + B.vz * -0.6;
-    BRIDGE.pts[0][2] = bf(BRIDGE.pts[0][0], BRIDGE.pts[0][1]) ?? B.hy;
-  }
+  // the bridge: its start on the block's top near its head (plan.levels()), its floor the lead's top facet
   // the bridge: held where it lies over R2's face (below is the face, not a floor); its ends open onto T1 and T2
   ctx.addWalkable(lineFloor(BRIDGE.pts, BRIDGE.half), { stack: true, keep: (x, z) => { const s = sOf(z); return s > 39.6 && s < 54.5; }, name: 'icefall-bridge' });
 
+  parts.push(['stair', G.p.length / 9]);
   // the stair
   const SP = stairPlan();
   {
@@ -147,6 +178,7 @@ export async function build(ctx) {
   // the stair: its outer edge open (off it, the slump's slope or T2 below); the cut on its inner side is a wall
   ctx.addWalkable(stairFloor(), { stack: true, name: 'icefall-stair' });
 
+  parts.push(['trodden', G.p.length / 9]);
   // the way worn into the ice: a faint trodden line up the block's ramp and across the terraces and the shelf (grit
   // and old footing, darker than the firn), so a walker can see where it goes
   {
@@ -165,6 +197,7 @@ export async function build(ctx) {
     for (const L of [LANES.t1, LANES.t2.slice(0, -1), LANES.shelf.slice(1), LANES.approach.slice(1)]) tread(L, 0.6, (x, z) => H(x, z) + lift);
   }
 
+  parts.push(['faces', G.p.length / 9]);
   // ---------------------------------------------------------------- the faces of the steps
   const bridgeX = (z) => BRIDGE.pts[0][0] + (BRIDGE.pts[1][0] - BRIDGE.pts[0][0]) * ((z - BRIDGE.pts[0][1]) / (BRIDGE.pts[1][1] - BRIDGE.pts[0][1]));
   const r2top = zOf(RISERS[1][0] + RISERS[1][1]);
@@ -181,13 +214,14 @@ export async function build(ctx) {
       colliders.push({ x1: a[0], z1: a[1], x2: b[0], z2: b[1], r: 0.45, y: Math.min(y0(a), y0(b)), h, stand: false });
     }
   };
-  kerb(lines.feet[0], (x) => x > 86 && x < 95, (p) => p[2], 9);
+  kerb(lines.feet[0], (x) => Math.abs(x - SLOT.pts[0][0]) < 4.5, (p) => p[2], 9);
   kerb(lines.feet[1], (x) => Math.abs(x - bridgeX(r2top)) < 4, (p) => p[2], 9);
   kerb(lines.feet[2], (x) => slumpW(x) > 0.02, (p) => p[2], 9);
-  kerb(lines.lips[0], (x) => x > 12 && x < 100, (p) => H(p[0], p[1]) - 1, 2.8);
+  kerb(lines.lips[0], () => false, (p) => H(p[0], p[1]) - 1, 2.8); // all along, the ledge south of the slot too (the cleft is a gap in the face: no lip there)
   kerb(lines.lips[1], (x) => Math.abs(x - bridgeX(r2top)) < 3.5, (p) => H(p[0], p[1]) - 1, 2.8);
   kerb(lines.lips[2], () => false, (p) => H(p[0], p[1]) - 1, 2.8);
 
+  parts.push(['seracs', G.p.length / 9]);
   // ---------------------------------------------------------------- the seracs
   const lanePts = [...Object.values(LANES), SLOT.pts.map((p) => [p[0], p[1]]), BRIDGE.pts.map((p) => [p[0], p[1]]), [...STAIR.f1, ...STAIR.landing, ...STAIR.f2].map((p) => [p[0], p[1]])];
   const nr = [0, 0, 0, 0];
@@ -210,6 +244,7 @@ export async function build(ctx) {
     for (let x = ax - 72; x < ax + 66; x += 4.5 + rng() * 3.5) {
       if (k === 0 && x > 14 && x < 98) continue; // the slot runs behind R1's lip
       if (k === 1 && x > 44 && x < 64) continue; // the bridge's landing
+      if (k === 1 && x > -4 && x < 44 && rng() < 0.65) continue; // thinned in front of the stair
       if (k === 2 && slumpW(x) > 0.05) continue; // the stair's slump
       riserSpan(k, x, zc, sp);
       // the front row leans out over the lip, some far; a second row behind stands up
@@ -225,7 +260,7 @@ export async function build(ctx) {
       const rise = RISERS[k][2];
       const s = sp[0] - 1.5 - rng() * 3, z = zOf(s);
       const w = 6 + rng() * 7, h = rise * (0.25 + rng() * 0.35);
-      if (nearWay(x, z, 3 + w * 0.5) || (k === 2 && slumpW(x) > 0.05) || (k === 0 && x > 80 && x < 100)) continue;
+      if (nearWay(x, z, 3 + w * 0.5) || (k === 2 && slumpW(x) > 0.05) || (k === 0 && Math.abs(x - SLOT.pts[0][0]) < 10)) continue;
       if (k === 0 && hyp(x - 40, z + 265) < 20) continue; // the mother crystal
       place(x, z, { w, d: 4 + rng() * 5, h, rot: rng() * 3.14, lx: (rng() - 0.5) * 2, lz: -(0.5 + rng() * 2), slant: (rng() - 0.5) * w * 0.4 }, k > 0);
       for (let j = 0; j < 3; j++) {
@@ -246,6 +281,7 @@ export async function build(ctx) {
         const z = zOf(s), ax = axisX(z);
         if (Math.abs(x - ax) > 58) continue;
         if (k === 2 && x > 10 && x < 84) continue; // the shelf stays open: the view, and the way to the lip
+        if (k === 1 && x > -6 && x < 52) continue; // T2 under the stair: open, so the stair shows from below
         const w = 2.5 + rng() * 5, h = 1.5 + rng() * 5;
         if (nearWay(x, z, 3.5 + w * 0.5)) continue;
         place(x + (rng() - 0.5) * 3, z, { w, d: w * (0.6 + rng() * 0.6), h, rot: rng() * 3, lx: (rng() - 0.5) * h * 0.3, lz: (rng() - 0.5) * h * 0.3, slant: (rng() - 0.5) * w * 0.5, sink: 1.2 }, true);
@@ -261,7 +297,7 @@ export async function build(ctx) {
   const tip = { x: 58, z: -482 };
   for (let x = axisX(zOf(CREVASSE.far)) - 64; x < axisX(zOf(CREVASSE.far)) + 60; x += 5 + rng() * 4) {
     const z = zOf(CREVASSE.far + 1.5 + rng() * 3);
-    if (Math.abs(x - 52) < 5) continue; // where the needles land
+    if (Math.abs(x - 55) < 14) continue; // where the needles land, and the sight of the Plummet's point from the lip
     place(x, z, { w: 4 + rng() * 5, d: 3 + rng() * 3, h: 4 + rng() * 7, rot: rng() * 3, lz: 0.4 + rng() * 1.5, lx: (rng() - 0.5) * 2, slant: (rng() - 0.5) * 2 }, false);
   }
   for (let k = 0; k < UPPER.n; k++) {
@@ -307,11 +343,19 @@ export async function build(ctx) {
     for (const g of collar(R, res.neckY, o)) { g.applyMatrix4(M); bronze.push(g); }
     return { M, neckY: res.neckY };
   };
-  // the Plummet: point down in the ice at the head of the glacier, 105 m to its eye
-  const tipY = H(tip.x, tip.z) - 7;
-  const PL = { R: 15, L: 124 };
+  // the Plummet: point down in the ice at the head of the glacier, 180 m from its point to its eye (R 21, L 170, the collar on top)
+  const tipY = H(tip.x, tip.z) - 10;
+  const PL = { R: 21, L: 170 };
+  const plumV0 = LP.length / 3;
   const plum = leadAt(new THREE.Vector3(tip.x, tipY, tip.z), up, PL.R, PL.L, 620, 0.12);
+  const plumV1 = LP.length / 3; // its vertices: the pulse is run up them from the line's end (below)
   const eyeTop = new THREE.Vector3(tip.x, tipY + plum.neckY + PL.R * 0.62, tip.z);
+  // where its point has gone in, the ice is split and lit from below: a cold light, and cracks of glass running out
+  {
+    const L = new THREE.PointLight(new THREE.Color(ctx.palette.crystal), 400, 70, 2);
+    L.position.set(tip.x, H(tip.x, tip.z) + 2, tip.z); L.name = 'icefall-plummet-light';
+    group.add(L);
+  }
   // R3's lead, turned half over: its point out of the face, down and toward the valley, its collar in the ice
   {
     const x = 72, zc = zOf(RISERS[2][0] + RISERS[2][1] / 2); riserSpan(2, x, zc, sp);
@@ -352,7 +396,7 @@ export async function build(ctx) {
   group.add(leads);
 
   // the find: an eye broken off a lead, lying at the lip of the last crevasse, the glyphs of the lintel on its band
-  const FIND = { x: 37.5, z: -395.0, R: 4.6 };
+  const FIND = { x: 41, z: -395.5, R: 6.4 }; // where the way ends at the lip, beside it
   let findMesh = null;
   {
     const y = H(FIND.x, FIND.z);
@@ -364,7 +408,7 @@ export async function build(ctx) {
     band.translate(0, FIND.R * 0.05, 0); band.applyMatrix4(M);
     const tex = glyphBand(ctx); tex.repeat.set(2, 1);
     // the glyphs glow the crystal's blue, as the Reckoner's lintel does since the crystal's light reached it
-    const bm = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, metalness: 0.5, roughness: 0.55, emissive: new THREE.Color('#5fc0ff'), emissiveIntensity: 0.55 });
+    const bm = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, metalness: 0.5, roughness: 0.55, emissive: new THREE.Color('#5fc0ff'), emissiveIntensity: 1.4 });
     findMesh = new THREE.Mesh(band, bm); findMesh.name = 'icefall-find'; findMesh.castShadow = true; findMesh.receiveShadow = true;
     group.add(findMesh);
     // its line: a cord knotted through the eye, trailing to the lip and over it, its end frayed and still faintly lit
@@ -382,6 +426,7 @@ export async function build(ctx) {
     const cord = new THREE.Mesh(tube, cordMat); cord.castShadow = true; cord.name = 'icefall-cord';
     group.add(cord);
     ctx.addCollider({ x: FIND.x, z: FIND.z, r: FIND.R * 0.5, y: y - 1, h: 1.6, stand: false });
+    const fl = new THREE.PointLight(new THREE.Color('#7fd0ff'), 6, 9, 2); fl.position.set(FIND.x, y + 1.2, FIND.z); fl.name = 'icefall-find-light'; group.add(fl);
   }
   const bg = mergeGeometries(bronze);
   bg.computeVertexNormals();
@@ -411,18 +456,20 @@ export async function build(ctx) {
   // from the mother crystal to the cleft: clusters beside the way, alternating
   walkLine(LANES.approach, 4.5, (x, z, tx, tz) => { side = -side; cluster(x - tz * side * 2.2, z + tx * side * 2.2, 3, 2.2); });
   // the cleft: a pair of giants either side of its mouth
-  for (const [x, z, h] of [[85.6, -294.8, 15], [95.4, -294.2, 11], [84.0, -297.6, 6], [97.0, -297.0, 5]]) cr(x, H(x, z) - 0.4, z, h, h * 0.1, [(x - 90.5) * 0.04, 1, 0.08], 0.8);
+  for (const [dx, z, h] of [[-4.9, -294.8, 15], [4.9, -294.2, 11], [-6.5, -297.6, 6], [6.5, -297.0, 5]]) { const x = SLOT.pts[0][0] + dx; cr(x, H(x, z) - 0.4, z, h, h * 0.1, [dx * 0.04, 1, 0.08], 0.8); }
+  C.push({ ...slotCrystal, along: 40 });
   // the slot: out of its walls into the way and up, and along its outer wall's top (seen from below over R1's lip)
   {
     const S = samples(SLOT.pts, 1);
     for (let i = 2; i < S.length; i += 3) {
       const s = S[i]; along += 3; side = -side;
-      const nx = -s.tz * side, nz = s.tx * side, y = s.y + 1.2 + rng() * 2;
-      cr(s.x + nx * (SLOT.half + 0.15), y, s.z + nz * (SLOT.half + 0.15), 1.0 + rng() * 1.2, 0.14 + rng() * 0.08, [-nx * 0.7, 0.75, -nz * 0.7], rng());
-      if (i % 9 === 2 && i > 18) {
-        const ox = s.x + s.tz * (SLOT.half + 1.4), oz = s.z - s.tx * (SLOT.half + 1.4); // the outer (south) wall's top
+      const nx = -s.tz * side, nz = s.tx * side, y = s.y + 2.4 + rng() * 1.6; // above the head
+      cr(s.x + nx * (slotHalf(s.d) + 0.15), y, s.z + nz * (SLOT.half + 0.15), 1.0 + rng() * 1.2, 0.14 + rng() * 0.08, [-nx * 0.7, 0.75, -nz * 0.7], rng());
+      // beacons on the outer (south) wall's top, every 4 m: from the floor a line of glass up the ice front's lip
+      if (i % 4 === 2 && i > 18) {
+        const ox = s.x + s.tz * (SLOT.half + 1.4), oz = s.z - s.tx * (SLOT.half + 1.4);
         const top = Math.max(s.y + 3.4, iceAt(s.x + s.tz * (SLOT.half + 2.4), s.z - s.tx * (SLOT.half + 2.4)) + 0.7);
-        cr(ox, top - 0.5, oz, 4.5 + rng() * 3, 0.5, [0.1, 1, 0.35], 0.85);
+        cr(ox, top - 0.8, oz, 8 + rng() * 4, 0.85, [0.1, 1, 0.35], 1.0);
       }
     }
   }
@@ -434,11 +481,11 @@ export async function build(ctx) {
     for (const sgn of [1, -1]) {
       if (rng() < 0.35) continue;
       const c = sgn * (B.half - 0.15), x = B.fx + B.ux * a + B.vx * c, z = B.fz + B.uz * a + B.vz * c, y = B.fy + (B.hy - B.fy) * (a / B.L);
-      cr(x, y - 0.2, z, 1.2 + rng() * 2.2, 0.17, [B.vx * sgn * 0.5, 1, B.vz * sgn * 0.5], 0.4 + rng() * 0.5);
+      cr(x, y - 0.2, z, 1.8 + rng() * 2.6, 0.22, [B.vx * sgn * 0.5, 1, B.vz * sgn * 0.5], 0.8 + rng() * 0.2);
     }
   }
   along += 18; // the bridge (the lead)
-  cluster(BRIDGE.pts[1][0] - 1.8, BRIDGE.pts[1][1] - 2.2, 5, 6.0);
+  cluster(BRIDGE.pts[1][0] - 1.8, BRIDGE.pts[1][1] - 2.2, 5, 9.0);
   walkLine(LANES.t2, 6, (x, z, tx, tz) => cluster(x + tz * 2.3, z - tx * 2.3, 2, 1.7));
   // the stair: out of the cut above head height, pointing out over the treads
   for (const f of SP.fl) {
@@ -447,12 +494,16 @@ export async function build(ctx) {
       const so = f.vz > 0 ? 1 : -1, c = -(STAIR.half + 0.1);
       const x = f.a[0] + f.ux * a + f.vx * c * so, z = f.a[1] + f.uz * a + f.vz * c * so, y = treadY(f, a, 0) + 2.3 + rng() * 0.6;
       cr(x, y, z, 0.9 + rng() * 0.9, 0.12, [f.vx * so * 0.8, 0.6, f.vz * so * 0.8], rng());
+      // and a post of glass at its outer edge every 3 m: the flights' line in silhouette from below
+      const co = STAIR.half + 0.25 + (f.k === 2 && a > f.L * STAIR.crack ? STAIR.shift : 0);
+      const px = f.a[0] + f.ux * a + f.vx * co * so, pz = f.a[1] + f.uz * a + f.vz * co * so;
+      cr(px, treadY(f, a, STAIR.half) - 0.4, pz, 3.2 + rng() * 2.0, 0.3, [f.vx * so * 0.15, 1, f.vz * so * 0.15], 1.0);
     }
   }
   cr(44.2, SP.landing.y - 0.3, -357.6, 8, 0.8, [0.15, 1, 0.3], 0.85);
   cr(STAIR.f2[1][0] - 2.5, STAIR.f2[1][2] - 0.3, STAIR.f2[1][1] + 1.5, 10, 0.95, [-0.1, 1, 0.25], 0.85); // the stair's head, seen from below
-  walkLine(LANES.shelf, 5.5, (x, z, tx, tz) => { side = -side; cluster(x - tz * side * 2.4, z + tx * side * 2.4, 2, 1.6 + along * 0.002); });
-  cluster(48.5, -396.6, 5, 3.2); cluster(53.5, -396.8, 4, 2.6);
+  walkLine(LANES.shelf, 5.5, (x, z, tx, tz) => { side = -side; const cx = x - tz * side * 2.4, cz = z + tx * side * 2.4; if (hyp(cx - FIND.x, cz - FIND.z) > FIND.R + 2) cluster(cx, cz, 2, 1.6 + along * 0.002); });
+  cluster(56, -396.8, 5, 3.2); cluster(60.5, -396.6, 4, 2.6);
   // across the last crevasse: needles, three strands from the lip to the far wall, too thin to bear anyone
   {
     const a0 = new THREE.Vector3(51, H(51, LIP.z + 0.6) - 0.3, LIP.z + 0.6), a1 = new THREE.Vector3(53, H(53, zOf(CREVASSE.far + 0.8)) - 0.5, zOf(CREVASSE.far + 0.8));
@@ -480,6 +531,23 @@ export async function build(ctx) {
       const a = (k / 16) * 6.28 + rng() * 0.3, d = 9 + rng() * 9, x = tip.x + Math.cos(a) * d, z = tip.z + Math.sin(a) * d, h = 8 + rng() * 16;
       cr(x, H(x, z) - 1, z, h, h * 0.1, [Math.cos(a) * 0.45, 1, Math.sin(a) * 0.45], 0.5 + rng() * 0.4);
     }
+    // the ice split round the point: glass lying in the cracks, radiating out over the ice
+    for (let k = 0; k < 11; k++) {
+      const a = (k / 11) * 6.28 + rng() * 0.4;
+      let x = tip.x + Math.cos(a) * (PL.R * 0.6), z = tip.z + Math.sin(a) * (PL.R * 0.6);
+      for (let j = 0; j < 3; j++) {
+        const L = 6 + rng() * 6, aa = a + (rng() - 0.5) * 0.5, x2 = x + Math.cos(aa) * L, z2 = z + Math.sin(aa) * L;
+        C.push({ x, y: H(x, z) - 0.15, z, h: L * 1.1, r: 0.18 + rng() * 0.15, dir: [x2 - x, H(x2, z2) - H(x, z), z2 - z], rot: 0, along, tint: 0.95 });
+        x = x2; z = z2;
+      }
+    }
+  }
+  // the pulse that climbs the line arrives in the Plummet's point and climbs it to the eye: its along runs on from the
+  // line's end by height
+  {
+    const a = lg.attributes.aAlong;
+    for (let i = plumV0; i < plumV1; i++) a.array[i] = along + (LP[i * 3 + 1] - tipY);
+    a.needsUpdate = true;
   }
   const crys = crystalMesh(ctx, C, glassI.mat, rng);
   group.add(crys.mesh);
@@ -503,11 +571,12 @@ export async function build(ctx) {
   ];
   ctx.ascents?.add({ id: 'icefall', path, offs: [0.12, 0.3, 0.5, 0.7, 0.97] });
 
-  // the thread stands on the Plummet's eye
-  ctx.skylife?.anchorThread?.(eyeTop);
+  // the thread stands on the Plummet's eye: on the first frame the sky is there (the modules build side by side)
+  let anchored = false;
 
   // per frame: the crystals' clock, their gain in a gutter
   ctx.registerUpdate((dt) => {
+    if (!anchored && ctx.skylife?.anchorThread) { ctx.skylife.anchorThread(eyeTop); anchored = true; }
     uTime.value += dt;
     const g = 1 + 0.9 * (1 - (ctx.sky?.flicker?.value ?? 1));
     glassV.uni.uGain.value = g; glassI.uni.uGain.value = g;
@@ -522,9 +591,10 @@ export async function build(ctx) {
     bridge: at(B.fx + B.ux * (B.L - 4) - B.vx * (B.half - 0.6), B.fz + B.uz * (B.L - 4) - B.vz * (B.half - 0.6), Math.atan2(B.vx, B.vz)),
     stair: at(f2.a[0] + f2.ux * f2.L * 0.8 - f2.vx * 0.6, f2.a[1] + f2.uz * f2.L * 0.8 - f2.vz * 0.6, Math.atan2(f2.vx, f2.vz)),
     shelf: at(72, zOf(riserSpan(2, 72, zOf(77), [0, 0])[1] + 3), Math.PI),
+    bridgeMid: at(BRIDGE.pts[0][0] + (BRIDGE.pts[1][0] - BRIDGE.pts[0][0]) * 0.6, BRIDGE.pts[0][1] + (BRIDGE.pts[1][1] - BRIDGE.pts[0][1]) * 0.6, -Math.PI / 2),
   };
   ctx.icefall = {
-    group, eyeTop, tip: { ...tip, y: tipY }, find: FIND, path, falls,
+    group, eyeTop, tip: { ...tip, y: tipY }, find: FIND, path, falls, parts, ice,
     stats: () => ({ drawCalls: group.children.length, triangles: Math.round(tris), iceTris: Math.round(iceGeo.attributes.position.count / 3), seracs: nSer, faces: nFaces, crystals: C.length }),
   };
   ctx.log?.(`icefall: ${Math.round(tris)} tris, ${nSer} seracs, ${C.length} crystals`);

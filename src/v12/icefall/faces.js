@@ -65,8 +65,8 @@ export function buildFaces(G, rng, H, noise, low, cutouts, lines) {
   for (let k = 0; k < 3; k++) { lines.feet[k] = []; lines.lips[k] = []; }
   const zMid = (k) => zOf(RISERS[k][0] + RISERS[k][1] / 2);
   const ax = (z) => axisX(z);
-  // R1: open at the slot's cleft (x 87..94)
-  for (const [xa, xb] of [[ax(zMid(0)) - 78, 86.6], [94.2, ax(zMid(0)) + 72]])
+  // R1: open at the slot's cleft (x 69..76)
+  for (const [xa, xb] of [[ax(zMid(0)) - 78, 68.6], [76.2, ax(zMid(0)) + 72]])
     n += face(G, rng, H, noise, { xa, xb, dx, span: (x, o) => riserSpan(0, x, zMid(0), o), feet: lines.feet[0], lips: lines.lips[0], lipBack: (x) => (x > 12 && x < 100 ? 0.3 : 2.6) }); // over the slot the lip row stops short of it
   // R2: whole, its top kept under the bridge where the bridge lies on it
   n += face(G, rng, H, noise, { xa: ax(zMid(1)) - 78, xb: ax(zMid(1)) + 72, dx, span: (x, o) => riserSpan(1, x, zMid(1), o), under: cutouts.r2, feet: lines.feet[1], lips: lines.lips[1] });

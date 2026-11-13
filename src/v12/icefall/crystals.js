@@ -3,7 +3,8 @@
 // thickens again into a crown. They are the climb's way-marks: grown out of the slot's walls, along the block's edge,
 // beside the lanes, out of the stair's cut, so the eye follows them up and the feet can too.
 // Light climbs them: a pulse runs up the line from the mother crystal (each crystal's `along`, metres up the line),
-// every 9 s, and goes on into the Plummet and up its thread. One InstancedMesh; the material is the Lattice's look
+// every 9 s, arrives in the Plummet's point and climbs it to its eye (icefall.js runs the Plummet's along on from
+// the line's end); the mote that climbs the thread from the eye is the sky's own (remnants.js). One InstancedMesh; the material is the Lattice's look
 // (src/vegetation/lattice.js: deep and pale blue, a fresnel rim, a band of light) without its batching.
 import * as THREE from 'three';
 
@@ -53,7 +54,7 @@ export function crystalMaterial(ctx, uTime, instanced) {
           vec3 Vw = normalize(vCrW - cameraPosition);
           crVeil = crN(vCrW * vec3(0.9, 0.3, 0.9) + Vw * 0.9) * 0.6 + crN(vCrW * 2.3 + 3.1) * 0.4;
           vec3 inner = mix(uDeep * 0.16, uDeep * 0.7 + uPale * 0.08, smoothstep(0.35, 0.8, crVeil));
-          diffuseColor.rgb = mix(uPale * 0.22, inner, smoothstep(0.05, 0.75, facing)) * (0.35 + 0.9 * vTint); // a low tint is dark glass (the Plummet)
+          diffuseColor.rgb = mix(uPale * 0.22, inner, smoothstep(0.05, 0.75, facing)) * (0.12 + 1.1 * vTint); // a low tint is dark glass (the Plummet)
           roughnessFactor = mix(0.05, 0.4, crVeil) + (1.0 - vTint) * 0.4; // dark glass is not a mirror for the sky
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
@@ -63,7 +64,11 @@ export function crystalMaterial(ctx, uTime, instanced) {
           float ph = vAlong / 360.0 - uTime / 9.0;
           float crest = pow(0.5 + 0.5 * cos(6.2832 * ph), 18.0);
           float slow = 0.5 + 0.5 * sin(uTime * 0.4 - vAlong * 0.02);
-          totalEmissiveRadiance += (uDeep * (0.08 + 0.18 * slow) * (0.5 + crVeil) + uPale * fres * 0.35 + uPale * crest * (0.55 + 0.6 * crVeil)) * (0.7 + 0.6 * vTint) * uGain;
+          // a way-mark (a high tint) holds a steady glow, so a still shows the line and not only the pulse
+          totalEmissiveRadiance += uPale * 0.22 * smoothstep(0.8, 1.0, vTint) * (0.6 + 0.4 * crVeil) * uGain;
+          totalEmissiveRadiance += (uDeep * (0.08 + 0.18 * slow) * (0.5 + crVeil) + uPale * fres * 0.35 + uPale * crest * (0.9 + 1.1 * crVeil)) * (0.7 + 0.6 * vTint) * uGain;
+          // dark glass (the Plummet, the old leads) is lit from inside: veins of the deep blue, brighter low down
+          totalEmissiveRadiance += (uDeep * 1.1 + uPale * 0.25) * (1.0 - vTint) * smoothstep(0.55, 0.9, crVeil) * (0.6 + 0.6 * slow) * uGain;
         }`);
   };
   mat.customProgramCacheKey = () => 'fp-icefall-crystal-' + (instanced ? 'i' : 'v');
