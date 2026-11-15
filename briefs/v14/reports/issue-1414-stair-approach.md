@@ -69,3 +69,11 @@ Merged `origin/next` first.
 
 - My walks follow a script; no one walked them without knowing the place.
 - The canted slabs overlap one another where two cant into each other.
+
+## Round 3 (the cold review)
+
+- **Blocker fixed:** the bed lies flat on the turf, following its slope but not the slab's cant or skew, 1 cm up. A lying slab's top centre is 6 cm up (a tread) or 7 cm up (a landing), so the stone shows. A risen slab leaves a flat dark patch with no raised edge. Frames: `shots/wip/b6r3-slabs-lying.png` and `b6r3-beds-risen.png` (every slab called with `stair.all(true)`).
+- A buried slab's top is 0.45 m down, with only a little skew and no cant. A slab stacked on a buried one is buried with it.
+- The comments in `plan.js`, `routes.js` (P51, P52) and `roads-test` are in the present tense.
+- `FEET_OPEN`: the exempted ways up are now checked too. The check fails once a track reaches the foot of one, so the exemption has to be dropped then.
+- `ONLY=stair,roads,paths`: stair 5, roads 59, paths 79, all ok. `ONLY=heights`: 111, ok.

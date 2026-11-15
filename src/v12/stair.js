@@ -140,8 +140,9 @@ export async function build(ctx) {
     if (!e.rest) continue;
     const g = (f, r) => T.heightAt(e.cx + e.ux * f - e.uz * r, e.cz + e.uz * f + e.ux * r);
     const [tp, tr, ty] = e.rest.tilt; // the plan's cant: a fallen tread, not a laid flag (v14-B6)
-    e.rest.pitch = Math.atan2(g(e.hd, 0) - g(-e.hd, 0), 2 * e.hd) * (e.rest.on < 0 ? 1 : 0.3) + tp;
-    e.rest.roll = Math.atan2(g(0, e.hw) - g(0, -e.hw), 2 * e.hw) * (e.rest.on < 0 ? 1 : 0.3) + tr;
+    e.rest.gp = Math.atan2(g(e.hd, 0) - g(-e.hd, 0), 2 * e.hd); e.rest.gr = Math.atan2(g(0, e.hw) - g(0, -e.hw), 2 * e.hw); // the turf's slope (the bed lies on it)
+    e.rest.pitch = e.rest.gp * (e.rest.on < 0 ? 1 : 0.3) + tp;
+    e.rest.roll = e.rest.gr * (e.rest.on < 0 ? 1 : 0.3) + tr;
     e.rest.yaw = (seed[e.i] - 0.5) * (e.rest.on < 0 ? 0.06 : 0.3) + ty;
   }
   // write the pose of element e at a (0 bed .. 1 place) into M; sc: the instance's scale
@@ -211,11 +212,14 @@ export async function build(ctx) {
   }
   for (let j = 0; j < bedEls.length; j++) {
     const e = bedEls[j];
-    pose(e, 0);
+    // the bed lies flat on the turf (its slope, not the slab's cant or skew), 1 cm up, under the lying slab's top (6 to
+    // 7 cm up at its centre), so the stone shows; once the slab goes it is the dark earth it came out of. A buried
+    // slab's bed is under the turf with it: no outline in the grass
+    Z.set(e.ux, 0, e.uz); X.set(e.uz, 0, -e.ux); basis.makeBasis(X, Y, Z); Q.setFromRotationMatrix(basis);
+    Qt.setFromAxisAngle(AX, -e.rest.gp); Q.multiply(Qt);
+    Qt.setFromAxisAngle(Z.set(0, 0, 1), e.rest.gr); Q.multiply(Qt);
     const sc = e.kind === KIND.LANDING ? SL.set((e.hw * 2) / WIDTH, 1, (e.hd * 2) / GOING) : null;
-    // the bed sits a little under the slab's top as it lies (the slab hides it until it goes)
-    // (a buried slab's bed is under the turf too: no outline in the grass)
-    M.compose(V.set(e.cx, e.ground + (e.rest.buried ? -0.4 : 0.03), e.cz), Q, sc || S);
+    M.compose(V.set(e.cx, e.ground + (e.rest.buried ? -0.6 : 0.01), e.cz), Q, sc || S);
     BM.setMatrixAt(j, M);
   }
   scene.add(BM);
