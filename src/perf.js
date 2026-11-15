@@ -511,7 +511,8 @@ export function createPerf(ctx) {
   // route (fractions of it) and one in each leg, once the place has streamed in.
   const LEGS = ['route', 'top', 'wake'];
   const ROUTE_STATIONS = [0.1, 0.3, 0.5, 0.7, 0.9];
-  const TOP_PLACE = 'The middle of the Span';
+  const TOP_PLACE = 'The Long Wait'; // v14-B3: the middle deck's camp, 56 m up (the settings map's name for it)
+  let topFound = false;
   function makeBench(param) {
     const duration = param > 1 ? param : 45;
     const warm = Math.min(2, duration * 0.1); // held at spawn first, unrecorded, while shaders settle
@@ -527,7 +528,8 @@ export function createPerf(ctx) {
       b.phase = name; b.leg = LEGS.indexOf(name); legStart = now; legCut = now; legStation = false; teleported = true;
       if (name === 'top') {
         const i = ctx.settings?.places ? ctx.settings.places.findIndex((pl) => pl.name === TOP_PLACE) : -1;
-        if (i < 0 || !ctx.settings.teleport(i)) { ctx.controls.placeAt(98, 213, 56); p.yaw = 1.8; p.pitch = 0.02; } // no settings panel: the same place
+        topFound = i >= 0 && ctx.settings.teleport(i);
+        if (!topFound) { ctx.controls.placeAt(98, 213, 56); p.yaw = 1.8; p.pitch = 0.02; } // no settings panel (or no such place): the same deck
       } else if (ctx.fall?.wake) ctx.fall.wake(); // src/v12/fall.js's own waking: the lids, the gate, the look from the sky, its release
       else { ctx.controls.placeAt(ctx.spawn.x, ctx.spawn.z); p.yaw = ctx.spawn.yaw; p.pitch = 0; } // no fall module (?only=)
     }
@@ -625,7 +627,7 @@ export function createPerf(ctx) {
           rows: avg(b.legCpu[k].cpu, b.legCpu[k].n), // ms a frame, every row: modules and the unowned costs
         };
       });
-      legs.top.place = TOP_PLACE;
+      legs.top.place = topFound ? TOP_PLACE : 'fallback'; // perf-test fails on 'fallback'
       // what of a median frame no row names: the gaps between the timed calls (main.js's loop, the update throttle)
       const un = dist(legValues(L, 'un', -1, ST));
       let sumJs = 0, sumUn = 0; for (let i = 0; i < L.n; i++) if (!(L.ev[i] & ST)) { sumJs += L.js[i]; sumUn += L.un[i]; }

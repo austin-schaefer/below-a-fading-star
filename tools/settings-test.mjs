@@ -164,19 +164,29 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   });
   check('teleport: the Lantern Halt, the bell (the Tocsin), the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
 
-  // v14-B3 (#52, the class: a way up whose top has no name): every ascent's top (its last point, and the first point at its
-  // greatest height) lies inside a named place card, and a card with `feet` holds that height
-  const tops = await page.evaluate(async () => {
-    const { landmarkDistance } = await import('/src/world.js');
-    const fp = window.__fp, L = Object.values(fp.landmarks).filter((q) => q.card && q.name);
-    return fp.ascents.list.filter((a) => !a.test).map((a) => {
-      const P = a.path, hi = P.reduce((m, q) => (q[2] !== undefined && (m === null || q[2] > m[2]) ? q : m), null);
-      const named = (q) => L.filter((c) => landmarkDistance(c, q[0], q[1]) < 0 && (!c.feet || q[2] === undefined || (q[2] >= c.feet[0] && q[2] <= c.feet[1]))).map((c) => c.name);
-      const at = [P[P.length - 1], hi].filter(Boolean).map((q) => ({ q: q.map((v) => +(+v).toFixed(1)), names: named(q) }));
-      return { id: a.id, ok: at.some((t) => t.names.length), at };
-    });
+  // v14-B3 (#52, the class: a way up whose top has no name): stood where each ascent ends (its last point, on the floor
+  // that holds the walk there: the path's y, or the floor nearest its highest y when the point has none), the HUD shows a
+  // name card; and both ends of the walked gallery (its first point too) show the Remand
+  const tB = Date.now();
+  const tops = await page.evaluate(() => {
+    const fp = window.__fp, p = fp.player, out = [];
+    const card = (q, hi) => {
+      fp.controls.placeAt(0, 0); fp.hud.update(0.1); // off any card, so the next one is new
+      fp.controls.placeAt(q[0], q[1], q[2] ?? hi);
+      fp.hud.update(0.1);
+      const shown = document.getElementById('place').classList.contains('shown');
+      return { at: [q[0], q[1], +(p.pos.y - p.eye).toFixed(1)].map((v) => +(+v).toFixed(1)), name: shown ? document.getElementById('place-name').textContent : null };
+    };
+    for (const a of fp.ascents.list.filter((a) => !a.test)) {
+      const hi = Math.max(...a.path.filter((q) => q[2] !== undefined).map((q) => q[2]));
+      out.push({ id: a.id, end: 'last', ...card(a.path[a.path.length - 1], hi) });
+      if (a.id === 'lift-gallery') out.push({ id: a.id, end: 'first', ...card(a.path[0], hi) });
+    }
+    return out;
   });
-  check('names: every way up has a named place at its top (the icefall, the Diffident Stair, the lift\'s gallery)', tops.length >= 3 && tops.every((t) => t.ok), tops);
+  const want = { stair: 'The Hanging Croft', icefall: 'The Bitter End', 'lift-gallery': 'The Remand' };
+  check('names: stood at the end of every way up the HUD names it (the icefall, the Diffident Stair, the lift\'s gallery at both ends); a new way up with no name fails', tops.length >= 4 && tops.every((t) => t.name && (!want[t.id] || t.name === want[t.id])), tops);
+  console.log(`   (the names checks: ${((Date.now() - tB) / 1000).toFixed(1)} s)`);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
   await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });

@@ -72,7 +72,7 @@ const res = await page.evaluate(async () => {
       const d = L.axis ? W.landmarkDistance(L, x, z) : Math.hypot(x - L.x, z - L.z) - Math.max(L.r, 15);
       if (d < best) { best = d; by = t.id; }
     }
-    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null });
+    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null, high: !!(L.feet && L.feet[0] > 20), edge: Math.hypot(L.x, L.z) > 320 });
   }
   // ---- in sight: every 4 m, a visible gnomon within SIGHT m over the terrain
   const G = R.gnomons.filter((g) => g.visible);
@@ -193,10 +193,17 @@ const modErr = errors.filter((e) => /roads|paths/.test(e));
 check(!modErr.length, 'roads and paths loaded without errors', modErr[0] || '');
 check(res.startD < 6 && res.unjoined.length === 0, 'one network: every track joined to the spawn\'s', `${res.n} tracks from ${res.start} (${res.startD} m from the spawn); ways ${res.lengths.ways} m, trods ${res.lengths.trods} m; unjoined: ${res.unjoined.join(', ') || 'none'}`);
 // The Galleries and the Thrones hang on the mountain wall: no track reaches them (a track looks up at them).
-const EXEMPT = {};
+// v14-B3: places on open ground a short walk off a track, each with how far past its reach the nearest track may lie
+const EXEMPT = {
+  escalade: { why: 'the Span\'s west stair, in the wood\'s fringe', max: 20 },
+  soundings: { why: 'the icefall\'s foot, across the Lattice\'s floor', max: 50 },
+  diffident: { why: 'the stair\'s stub, on the moor beside the road', max: 25 },
+};
 for (const p of res.places) {
-  if (p.reached) { check(true, `${p.name}: reached by ${p.reached}, not a track`, `${p.d} m from ${p.by}`); continue; } // v14-B3: a deck, a top, a gallery, the walk's edge (world.js)
-  if (EXEMPT[p.k]) check(p.d <= 25 - 15, `${p.name}: exempt (${EXEMPT[p.k]}); a track looks at it`, `${p.d} m past 15 m, ${p.by}`);
+  // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the
+  // gallery: its card's feet over 20 m) or at the walk's edge (the passes); a `reached` on the ground fails
+  if (p.reached) { check(p.high || p.edge, `${p.name}: reached by ${p.reached}, not a track (it is ${p.high ? 'up' : p.edge ? 'at the walk\'s edge' : 'on the ground: give it a track'})`, `${p.d} m from ${p.by}`); continue; }
+  if (EXEMPT[p.k]) check(p.d <= EXEMPT[p.k].max, `${p.name}: exempt (${EXEMPT[p.k].why}); the nearest track within ${EXEMPT[p.k].max} m of its reach`, `${p.d} m, ${p.by}`);
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }
 check(res.blind.length === 0, 'a standing gnomon in sight (80 m, over the terrain) every 4 m', `${res.samples} samples, ${res.blind.length} blind ${res.blind.slice(0, 8).join(' ')}`);

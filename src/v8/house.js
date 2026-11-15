@@ -92,8 +92,8 @@ export async function build(ctx) {
   ctx.scene.add(lampM, glowM);
   const gutter = makeGutter(rng);
   // the court's light: the house's own east-gallery lantern keeps its glass, and its light moves to the hearth in the
-  // south gallery (v14-B3; it was over the mast, from no source you could see), so the one real light in the court is a
-  // fire you can see, and the count of point lights near the paths stays what it was
+  // south gallery (v14-B3), so the one real light in the court is a fire you can see, and the count of point lights
+  // near the paths stays within the three walkers-test allows
   const old = (await ctx.built('structures')) ? ctx.scene.getObjectByName('taverna-court-lantern') || null : null;
   old?.removeFromParent();
   const courtLight = new THREE.PointLight(new THREE.Color('#ff9048'), 0, 16, 2);

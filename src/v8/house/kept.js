@@ -57,7 +57,7 @@ export function keptHouse(ctx, B, G, S) {
     // the fire: a ring of stones, the coals, an iron trivet and a copper pot
     const hx = HEARTH.x, hz = HEARTH.z, hg = G(hx, hz);
     for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2 + rng() * 0.3; B.add(B.rock(0.11 + rng() * 0.05, 0, 1, 0.7, 1), mat(hx + Math.cos(a) * 0.42, hg + 0.05, hz + Math.sin(a) * 0.42, rng() * 3, rng() * 3, 0), { color: Hc.stone.clone().multiplyScalar(0.55), moss: 0, ground: hg }); }
-    B.add(B.cyl(0.36, 0.38, 0.03, 10, 1), mat(hx, hg + 0.015, hz), o(SOOT, hg));
+    B.add(B.cyl(0.36, 0.38, 0.03, 10, 1), mat(hx, hg + 0.04, hz), o(SOOT, hg)); // clear of the swept floor (+0.02)
     for (let k = 0; k < (low ? 5 : 9); k++) { const a = rng() * 6.28, d = rng() * 0.22; B.add(B.rock(0.05 + rng() * 0.04, 0, 1, 0.6, 1), mat(hx + Math.cos(a) * d, hg + 0.05, hz + Math.sin(a) * d, rng() * 3, rng() * 3, 0), o(COAL, hg, { emit: [2.2 + rng() * 0.8, 0.55 + rng() * 0.25, 0.08, 1] })); }
     for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + 0.4; rod(B, [hx + Math.cos(a) * 0.34, hg, hz + Math.sin(a) * 0.34], [hx + Math.cos(a) * 0.2, hg + 0.42, hz + Math.sin(a) * 0.2], 0.012, { color: L.iron, iron: 0.9, moss: 0, ground: hg }, 4); }
     B.add(new THREE.TorusGeometry(0.21, 0.012, 4, 12), mat(hx, hg + 0.42, hz, Math.PI / 2, 0, 0), { color: L.iron, iron: 0.9, moss: 0, ground: hg });
@@ -103,9 +103,9 @@ export function keptHouse(ctx, B, G, S) {
     const n = low ? 14 : 28;
     for (let i = 0; i < n; i++) {
       const za = z0 + (z1 - z0) * i / n, zb = z0 + (z1 - z0) * (i + 1) / n, zm = (za + zb) / 2;
-      B.add(B.box(x1 - x0, 0.012, zb - za + 0.002), mat((x0 + x1) / 2, G((x0 + x1) / 2, zm) + 0.03, zm), o(cols[i % cols.length].clone().multiplyScalar(1.0 + 0.3 * rng()), g));
+      B.add(B.box(x1 - x0, 0.012, zb - za + 0.002), mat((x0 + x1) / 2, G((x0 + x1) / 2, zm) + 0.05, zm), o(cols[i % cols.length].clone().multiplyScalar(1.0 + 0.3 * rng()), g));
     }
-    B.add(B.box(0.12, 0.014, z1 - z0), mat(x1 - 0.06, G(x1, CZ) + 0.035, (z0 + z1) / 2), o(OCHRE.clone().multiplyScalar(0.8), g)); // the border
+    B.add(B.box(0.12, 0.014, z1 - z0), mat(x1 - 0.06, G(x1, CZ) + 0.055, (z0 + z1) / 2), o(OCHRE.clone().multiplyScalar(0.8), g)); // the border
     // bolsters along the wall, cushions in front
     for (let k = 0; k < 4; k++) {
       const z = z0 + 0.8 + k * 2.1, bg = G(CX - 12.2, z);
@@ -196,10 +196,13 @@ export function keptHouse(ctx, B, G, S) {
   for (const [x, z, h] of HUNG) { const g = G(x, z); rod(B, [x, g + 3.92, z], [x, g + h, z], 0.006, { color: L.iron, iron: 0.9, moss: 0, ground: g }, 3); }
 
   // ---------------------------------------------------------------- what a walker does not walk through
-  const col = (x, z, r, h) => { const g = G(x, z); ctx.addCollider({ x, z, r, y: g - 1, h: h + 1 }); };
-  col(CX + 5.5, CZ + 11.55, 0.66, 1.15); // the oven
+  // the fire, the oven and the ladder are walls (`stand: false`): nobody climbs onto an oven or stands in the coals
+  const col = (x, z, r, h, stand) => { const g = G(x, z); ctx.addCollider({ x, z, r, y: g - 1, h: h + 1, ...(stand === false ? { stand: false } : {}) }); };
+  col(CX + 5.5, CZ + 11.55, 0.66, 1.15, false); // the oven
+  col(HEARTH.x, HEARTH.z, 0.55, 0.8, false); // the fire, its stones and the pot
   col(CX - 0.2, CZ + 12.1, 0.34, 1.0); // the jar
   col(CX + 7.2, CZ + 11.9, 0.5, 0.6); // the wood
   col(CX - 10.9, CZ - 1.3, 0.42, 0.36); // the tray
   col(CX + 12.0, CZ - 2.4, 0.45, 0.5); // the chest
+  { const lx = CX - 0.6, z = CZ + 9.2, g = G(lx, z); ctx.addCollider({ x1: lx - 0.22, z1: z, x2: lx + 0.22, z2: z, r: 0.2, y: g - 1, h: 5, stand: false }); } // the ladder
 }

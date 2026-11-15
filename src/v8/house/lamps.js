@@ -195,7 +195,7 @@ const GLOW_VS = /* glsl */`
       vFar = clamp((minS - s) / max(minS, 1e-4), 0.0, 1.0);
       s = max(s, minS);
       mvPosition.xy += aCorner * s;
-      vCol = aColor * k * (1.0 + 1.6 * vFar); // v14-B3: a far lamp a point, not a bulb (was 3.5)
+      vCol = aColor * k * (1.0 + 1.6 * vFar); // v14-B3: a far lamp a point, not a bulb
     } else {
       mvPosition = viewMatrix * vec4(position, 1.0);
       vCol = aColor * k * uPool;
