@@ -2,7 +2,7 @@
 // The load's yardstick (v13-P0): navigation to "Go out", phase by phase, cold and repeat, with and without a CPU
 // throttle. It reads src/startup.js's report (window.__fp_startup.report()) and counts the network over CDP.
 //   node tools/load-probe.mjs <base> [--q=low|medium|high] [--runs=3] [--throttle=4] [--net=fast4g|slow4g|3g]
-//                                    [--serial=0] [--params=a=1&b=2] [--json=path]
+//                                    [--serial=0] [--params=a=1&b=2] [--json=path] [--between=<cmd>]
 //   node tools/load-probe.mjs <base> --profile [--q=low] [--interval=200] [--inclusive=heightAt,slopeAt,...] [--out=path]
 //     where the CPU goes instead (v13-P2, tools/load-profile.mjs says how): self time by function and by file,
 //     inclusive time for named functions, per phase and per module build, with heightAt's call counts.
@@ -23,17 +23,21 @@
 // With a service worker (v13-L1, sw.js; on localhost it needs --params=sw=1 and a server that stamps the commit:
 // tools/sw-site.mjs), the repeat is served by it: 'over the wire' counts the page's requests no cache answered plus
 // the worker's own (commit.json, and what its cache lacked). The cold load waits for the worker's fill.
+// --between='<shell command>' runs between each run's cold load and its repeat: with tools/sw-site.mjs serving a built
+// copy, rewriting its commit.json is a deploy that changes nothing but the commit (every file restamped), the first
+// return after a release (v13-L1).
 // --net emulates a link over CDP (fast4g: 60 ms latency, 9 Mbit/s down, 1.5 up; slow4g: 150 ms, 1.6, 0.75; 3g:
 // 300 ms, 0.4, 0.4): on localhost it adds latency and bandwidth but still not compression or HTTP/2.
 // --throttle=N slows the page's CPU N times over CDP: 4 is the stand-in for a phone, and only a stand-in.
 // Headless WebGL is ANGLE (SHOT_ANGLE=metal) or software: compile and warm-up times are this machine's, not a GPU's.
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', runs: '3', throttle: '1', net: '', serial: '1', params: '', json: '', profile: '', interval: '200', inclusive: '', out: '' };
+const opts = { q: 'low', runs: '3', throttle: '1', net: '', serial: '1', params: '', json: '', profile: '', interval: '200', inclusive: '', out: '', between: '' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
   const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
@@ -132,6 +136,7 @@ try { for (let i = 0; i < runs; i++) {
   if (net) await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: net[0], downloadThroughput: net[1] * 125000, uploadThroughput: net[2] * 125000 });
   const run = {};
   run.cold = await load(page, cdp, 'cold', () => page.goto(url, { waitUntil: 'commit', timeout: 300000 }));
+  if (opts.between) execSync(opts.between, { stdio: 'inherit', shell: '/bin/bash' }); // a deploy between the two, say
   run.repeat = await load(page, cdp, 'repeat', () => page.reload({ waitUntil: 'commit', timeout: 300000 }));
   if (opts.serial !== '0' && run.cold.kind !== 'probe-fallback') run.serial = await load(page, cdp, 'serial', () => page.goto(`${url}&serial=1`, { waitUntil: 'commit', timeout: 300000 }));
   out.push(run);

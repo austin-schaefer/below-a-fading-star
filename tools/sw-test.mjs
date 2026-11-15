@@ -12,7 +12,7 @@
 // module and on the page itself, never mixes (one reload into the new release); a second refusal on that reload turns
 // the worker off until the next commit, after which it comes back; two tabs on two commits each stay whole, the older
 // tab's cache is kept while it lives and dropped after; two tabs on one commit keep their bindings through a stopped
-// worker; a slow commit.json (past 3 s) and offline serve the last release whole; commit.json as HTML goes to the
+// worker; a slow commit.json (past 1.5 s) and offline serve the last release whole; commit.json as HTML goes to the
 // network; a first visit whose fill reads an older page files it under that page's commit; a cut-off or error answer
 // is not kept; a Worker's imports are its page's release; bindings lost mean a reload, never a pass-through; a host
 // that stops stamping, and a replacement sw.js that removes itself, leave no worker and no cache; ?sw=0 likewise.
@@ -56,12 +56,13 @@ const t0 = Date.now();
 const MIX = `const seen = (n, x) => { (window.__seen ||= []).push(n + ':' + x); if (x !== window.__v) { const m = JSON.parse(localStorage.getItem('fp-mixed') || '[]'); m.push(window.__v + ' page ran ' + n + ' of ' + x); localStorage.setItem('fp-mixed', JSON.stringify(m)); } };`;
 const site = (v) => ({
   '/index.html': `<!doctype html><meta charset="utf-8"><title>${v}</title><script>window.__v = '${v}';</script>${register}<script type="module" src="./src/main.js"></script><body>`,
-  '/src/main.js': `import { v as bv } from './b.js'; import { same } from './same.js';\n${MIX}\nconst v = '${v}'; seen('main', v); seen('b', bv); window.__same = same;\nwindow.loadLate = async () => { const m = await import('./late.js'); seen('late', m.v); return m.v; };\nconst q = new URL(location.href).searchParams;\nif (q.get('late') === '1') await window.loadLate();\nif (q.get('w') === '1') { const w = new Worker(new URL('./w.js', import.meta.url), { type: 'module' }); const got = await new Promise((r, no) => { w.onmessage = (e) => r(e.data); w.onerror = no; }); seen('w', got.w); seen('wb', got.wb); }\ndocument.body.classList.add('ready'); window.__ready = true;\n`,
+  '/src/main.js': `import { v as bv } from './b.js'; import { same } from './same.js';\n${MIX}\nconst v = '${v}'; seen('main', v); seen('b', bv); window.__same = same;\nwindow.loadLate = async () => { const m = await import('./late.js'); seen('late', m.v); return m.v; };\nconst q = new URL(location.href).searchParams;\nif (q.get('late') === '1') await window.loadLate();\nif (q.get('w') === '1') { const w = new Worker(new URL('./w.js', import.meta.url), { type: 'module' }); const got = await new Promise((r, no) => { w.onmessage = (e) => r(e.data); w.onerror = no; }); seen('w', got.w); seen('wb', got.wb); seen('wc', got.wc); (window.__fp_fill_extra ||= []).push(...got.files); }\ndocument.body.classList.add('ready'); window.__ready = true;\n`,
   '/src/b.js': `export const v = '${v}'; // ${'b'.repeat(4000)}\n`,
   '/src/same.js': `export const same = 'the same in every release';\n`,
   '/src/late.js': `export const v = '${v}';\n`,
-  '/src/w.js': `import { v as wb } from './wb.js'; postMessage({ w: '${v}', wb });\n`,
+  '/src/w.js': `import { v as wb } from './wb.js'; import { v as wc } from './wc.js'; postMessage({ w: '${v}', wb, wc, files: performance.getEntriesByType('resource').map((e) => e.name) });\n`,
   '/src/wb.js': `export const v = '${v}';\n`,
+  '/src/wc.js': `export const v = '${v}';\n`,
   '/commit.json': JSON.stringify({ commit: v }),
 });
 // a replacement sw.js that takes itself and its caches away (DEPLOY.md, "Turning it off")
@@ -252,7 +253,7 @@ try {
   c = await cachesOf(page);
   check(releases(c).join() === 'fp1-iiiiiii', 'once no tab uses an old commit, its cache is gone', Object.keys(c).join(' '));
 
-  // 6. offline, and a commit.json slower than 3 s: the last release, whole
+  // 6. offline, and a commit.json slower than 1.5 s: the last release, whole
   down = true;
   await page.goto(`${B}/?sw=1`).catch(() => {});
   s = await settle(page, 'iiiiiii');
@@ -268,7 +269,7 @@ try {
   const took = Date.now() - ts;
   h.release();
   await nav3;
-  check(whole(s, 'iiiiiii') && took >= 2900, 'commit.json past 3 s: the cached release, whole, after the timeout', `${took} ms`);
+  check(whole(s, 'iiiiiii') && took >= 1400, 'commit.json past 1.5 s: the cached release, whole, after the timeout', `${took} ms`);
   await page.goto(`${B}/?sw=1`);
   s = await settle(page, cur);
   check(whole(s, cur), 'and the next navigation that hears commit.json is the new release', s && s.seen.join(' '));
@@ -300,7 +301,7 @@ try {
   cur = 'lllllll';
   await page.goto(`${B}/?sw=1&w=1`);
   s = await settle(page, cur);
-  check(whole(s, cur, 4), 'a page whose Worker imports a module: the Worker is bound to the page\'s release, whole', s && s.seen.join(' '));
+  check(whole(s, cur, 5), 'a page whose Worker imports a module: the Worker is bound to the page\'s release, whole', s && s.seen.join(' '));
   if (CDP) {
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('ServiceWorker.enable');
@@ -317,12 +318,15 @@ try {
     for (let i = 0; i < 30 && (srv.counts.get('/commit.json') || 0) === navs; i++) await sleep(100);
     await sleep(200);
     s = await settle(page, cur);
-    check(got === 'refused' && (srv.counts.get('/commit.json') || 0) > navs && whole(s, cur, 4), 'a page whose release the worker cannot place gets no file from the network; it reloads, whole', `${got}, ${s && s.seen.join(' ')}`);
+    check(got === 'refused' && (srv.counts.get('/commit.json') || 0) > navs && whole(s, cur, 5), 'a page whose release the worker cannot place gets no file from the network; it reloads, whole', `${got}, ${s && s.seen.join(' ')}`);
     await dump(page);
   } else console.log(`SKIP the worker stopped, the bindings lost (CDP is Chromium's; not run in ${ENGINE})`);
 
   // 9. the breaker: a reload the worker caused is refused again → the worker off until the next commit
   await page.goto(`${B}/?sw=1`); await settle(page, cur);
+  const side = await ctx.newPage(); // another tab, open on this release while the first trips the breaker
+  const sideV = cur;
+  await side.goto(`${B}/?sw=1`); await settle(side, sideV);
   cur = 'mmmmmmm';
   const h1 = hold('/src/b.js'); // this load's b.js
   const h2 = hold('/src/b.js', 3); // after the re-ask past the HTTP cache, the reload's b.js
@@ -334,6 +338,10 @@ try {
   await sleep(500);
   const flag = await page.evaluate(() => localStorage.getItem('fp-sw'));
   check(whole(s, cur) && !s.controlled && s.sw?.reloaded === 2 && (await regsOf(page)) === 0 && flag === 'fail:ooooooo', 'refused again on its reload: the worker unregisters, the page loads whole from the network, flagged off', `${s && s.seen.join(' ')}; reloaded ${s?.sw?.reloaded}; flag ${flag}`);
+  let sl = await side.evaluate(() => window.loadLate().catch(() => 'refused')).catch(() => 'reloaded');
+  let ss = await settle(side, sl === sideV ? sideV : cur);
+  check((sl === sideV && whole(ss, sideV, true)) || whole(ss, cur), 'a second tab open through the trip keeps its own release or reloads into the new one, never both', `${sl}; ${ss && ss.v} ${ss && ss.seen.join(' ')}`);
+  await side.close();
   await page.goto(`${B}/?sw=1`); await settle(page, cur); await sleep(400);
   check((await regsOf(page)) === 0, 'and on the same commit it stays off');
   cur = 'ppppppp';
@@ -367,12 +375,20 @@ try {
   // 12. ?sw=0 leaves nothing behind
   ({ s, sw } = await firstVisit(page, `${B}/?sw=1`, cur));
   await page.goto(`${B}/?sw=1`); await settle(page, cur);
+  const side2 = await ctx.newPage(); // a tab open on this release while another turns the worker off
+  const side2V = cur;
+  await side2.goto(`${B}/?sw=1`); await settle(side2, side2V);
   await page.goto(`${B}/?sw=0`);
   await sleep(800);
   await page.goto(`${B}/?q=1`);
   await sleep(500);
   const left = await page.evaluate(async () => ({ regs: (await navigator.serviceWorker.getRegistrations()).length, keys: (await caches.keys()).filter((k) => /^fp/.test(k)), ctl: !!navigator.serviceWorker.controller }));
   check(left.regs === 0 && left.keys.length === 0 && !left.ctl, '?sw=0: no worker, no cache, the next load not controlled', JSON.stringify(left));
+  cur = 'sssssss';
+  sl = await side2.evaluate(() => window.loadLate().catch(() => 'refused')).catch(() => 'reloaded');
+  ss = await settle(side2, cur);
+  check(sl !== 'sssssss' && whole(ss, cur), 'after ?sw=0 in another tab and a deploy, an open tab\'s later import is refused, not mixed: it reloads whole', `${sl}; ${ss && ss.v} ${ss && ss.seen.join(' ')}`);
+  await side2.close();
   check(!(await page.evaluate(() => localStorage.getItem('fp-mixed'))), 'no page ever ran a module of another release');
   await ctx.close();
 
@@ -394,7 +410,46 @@ try {
   check(whole(s, cur, true) && s.controlled, 'and the next navigation is the newer release, whole', s && s.seen.join(' '));
   await ctx2.close();
 
-  // 14. a context with no ?sw=1 on localhost (every other test): nothing registers
+  // 14. a worker registered but never proven (its first page closed before the probe answered): a controlled page proves it
+  const ctx3 = await browser.newContext();
+  const p4 = await ctx3.newPage();
+  await p4.goto(`${B}/`); await settle(p4, cur);
+  await p4.evaluate(async () => {
+    const reg = await navigator.serviceWorker.register('./sw.js'); await navigator.serviceWorker.ready;
+    for (let i = 0; i < 50 && reg.active?.state !== 'activated'; i++) await new Promise((r) => setTimeout(r, 50));
+  });
+  await p4.goto(`${B}/?sw=1&late=1`);
+  s = await settle(p4, cur);
+  for (let i = 0; i < 80 && !(await p4.evaluate(() => window.__fp_sw?.filled || window.__fp_sw?.proven === false).catch(() => false)); i++) await sleep(100);
+  const sw4 = await p4.evaluate(() => window.__fp_sw);
+  // Chromium and WebKit put the page under the unproven worker (the controlled path proves it); Firefox does not control
+  // a page whose navigation the worker left alone, so the first-visit path proves it. Either way it ends proven.
+  check(whole(s, cur, true) && sw4?.proven === true && sw4?.filled?.kept >= 4 && (s.controlled || ENGINE === 'firefox'), 'a worker registered but never proven: the next page proves it and fills it', JSON.stringify(sw4));
+  reset();
+  await p4.goto(`${B}/?sw=1&late=1`);
+  s = await settle(p4, cur);
+  check(whole(s, cur, true) && onlyCheck(reqs()), 'and the next visit asks for commit.json only', fmt(reqs()));
+  await ctx3.close();
+
+  // 15. a page that starts a module Worker importing two files: first visit, a controlled repeat, a new commit
+  const ctx5 = await browser.newContext();
+  const p5 = await ctx5.newPage();
+  ({ s, sw } = await firstVisit(p5, `${B}/?sw=1&w=1`, cur));
+  check(whole(s, cur, 5) && sw?.filled?.kept >= 6, 'a module Worker on a first visit: whole, and its own imports kept (the page passes on its resource list)', `${s && s.seen.join(' ')}; ${JSON.stringify(sw?.filled)}`);
+  reset();
+  await p5.goto(`${B}/?sw=1&w=1`);
+  s = await settle(p5, cur);
+  check(whole(s, cur, 5) && s.controlled && onlyCheck(reqs()), 'a controlled repeat: the page and its Worker\'s graph from the cache, the network asked for commit.json only', fmt(reqs()));
+  cur = 'ttttttt';
+  reset();
+  await p5.goto(`${B}/?sw=1&w=1`);
+  s = await settle(p5, cur);
+  const wt = await traceOf(p5);
+  check(whole(s, cur, 5) && (reqs()['/src/wb.js'] || 0) >= 1 && (reqs()['/src/wc.js'] || 0) >= 1, 'a new commit: the Worker\'s graph is all the new release, never mixed', `${s && s.seen.join(' ')}; ${fmt(reqs())}`);
+  console.log(`  ${ENGINE}: Workers bound by their script's resultingClientId ${wt?.workers?.bound}, files fetched for a Worker without one ${wt?.workers?.fallback}`);
+  await ctx5.close();
+
+  // 16. a context with no ?sw=1 on localhost (every other test): nothing registers
   const plain = await browser.newContext();
   const p3 = await plain.newPage();
   await p3.goto(`${B}/`);

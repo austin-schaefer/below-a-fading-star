@@ -278,12 +278,6 @@
       });
       sw.startMessages();
       window.__fp_sw = { controlled: !!sw.controller, reloaded: swr };
-      if (sw.controller) { // the bench names its commit (perf.js): ask the worker which release this page is
-        var ch = new MessageChannel();
-        ch.port1.onmessage = function (e) { if (e.data && e.data.commit && !window.__fp_commit) window.__fp_commit = e.data.commit; };
-        sw.controller.postMessage({ type: 'fp-commit' }, [ch.port2]);
-        return;
-      }
       // Not controlled (a first visit): register where the deploy stamps its commit; prove the worker can bind this
       // browser's pages (a hidden frame on its probe); then, once the walk is ready, hand it the list of what this page
       // fetched, so the next visit is served from its cache.
@@ -313,11 +307,34 @@
       var fill = function (reg) {
         var when = function () {
           if (!document.body.classList.contains('ready')) return setTimeout(when, 500);
-          var urls = performance.getEntriesByType('resource').map(function (r) { return r.name; });
+          // window.__fp_fill_extra: URLs a module adds, such as a dedicated Worker's own imports (its resource list,
+          // posted to the page), which the page's resource timing does not see
+          var urls = performance.getEntriesByType('resource').map(function (r) { return r.name; }).concat(window.__fp_fill_extra || []);
           ask(reg.active, { type: 'fp-fill', page: location.href, urls: urls }, 60000).then(function (n) { window.__fp_sw.filled = n; });
         };
         when();
       };
+      if (sw.controller) { // the bench names its commit (perf.js): ask the worker which release this page is
+        var ch = new MessageChannel();
+        ch.port1.onmessage = function (e) { if (e.data && e.data.commit && !window.__fp_commit) window.__fp_commit = e.data.commit; };
+        sw.controller.postMessage({ type: 'fp-commit' }, [ch.port2]);
+        // A worker never proven (its first page closed before the probe answered) answers nothing and would stay so:
+        // prove it now, or take it away.
+        var ctl = sw.controller;
+        ask(ctl, { type: 'fp-proof' }, 3000).then(function (r) {
+          if (r && r.proven === true) return;
+          var go = function () {
+            Promise.all([sw.getRegistration(), fetch('./commit.json', { cache: 'no-store' }).then(function (x) { return x.ok ? x.headers.get('x-fp-commit') : null; }, function () { return null; })]).then(function (a) {
+              var reg = a[0], s = a[1];
+              if (!reg || !s) return;
+              if (r && r.proven === false) { set('fail:' + s); off(); return; }
+              prove(reg, s).then(function (ok) { if (ok) fill(reg); });
+            });
+          };
+          if (document.readyState === 'complete') go(); else addEventListener('load', go);
+        });
+        return;
+      }
       addEventListener('load', function () {
         fetch('./commit.json', { cache: 'no-store' }).then(function (r) {
           var s = r.ok && r.headers.get('x-fp-commit');

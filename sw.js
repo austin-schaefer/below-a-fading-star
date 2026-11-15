@@ -9,12 +9,14 @@
 // - Proven first. Until this browser has shown that it names the page a navigation makes (the probe below), the
 //   worker answers nothing: a browser that cannot bind pages gets the site as if no worker were there, and the page
 //   unregisters it for good (index.html).
-// - A navigation to the page asks the network for commit.json (no-store, 3 s). The same commit as a cache that holds
+// - A navigation to the page asks the network for commit.json (no-store, 1.5 s). The same commit as a cache that holds
 //   the page: the page and every file it asks for are served from that cache. Another commit: the page comes from
 //   the network and the caches no open tab still uses are dropped. No answer (offline, the timeout): the newest
-//   cache as it is. An answer that is not a commit (an error, HTML): the network for this visit. A commit.json with
-//   no stamp (a host that does not send it, or the stamp removed on purpose): every cache is deleted and the worker
-//   unregisters itself, so it behaves as not installed; index.html registers only where the stamp is.
+//   cache as it is. An answer that is not a commit (an error, HTML, a stamp that disagrees with the body): the
+//   network for this visit. A commit.json with no stamp (a host that does not send it, or the stamp removed on
+//   purpose): every cache is deleted and the worker unregisters itself; pages it already serves keep their own
+//   release (each file checked) until they go, new ones get the plain network; index.html registers only where the
+//   stamp is.
 // - Each page (client) is bound to the commit its page came from. A file the client asks for that its commit's
 //   cache lacks is fetched; if its stamp is another commit (a deploy landed mid-load), it is fetched once more past
 //   the HTTP cache, and if that is another commit too, the request fails and the page is told to reload
@@ -38,7 +40,7 @@ const BASE = new URL(SCOPE).pathname;
 const PAGE = SCOPE; // index.html is kept under the scope's own URL, whatever the query
 const PROBE = BASE + '__fp-probe';
 const STAMP = 'x-fp-commit';
-const TIMEOUT = 3000;
+const TIMEOUT = 1500;
 const RECENT = 2000; // a binding younger than this is kept even before its client is listed
 const LATER = 3000; // and the caches are looked at again this long after a navigation, once the tab it replaced is gone
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -48,7 +50,9 @@ const bound = new Map(); // clientId → { commit (null: pass through), t }
 let latest = null; // the commit of the newest cache, for an offline navigation
 let proven = null; // true once the probe showed this browser binds pages; false if it showed it does not
 let loaded = null, ready = false;
-let stopped = false; // ?sw=0, or no stamp: nothing is written again by this worker
+// ?sw=0, no stamp, or the page's breaker: no navigation is answered again and nothing is written; a page already
+// bound keeps its own release (each file still checked against it) until it goes, so no open tab can mix
+let stopped = false;
 // replaced by a newer sw.js (say, one that removes itself): this one writes nothing more either
 const gone = () => stopped || (self.serviceWorker && self.serviceWorker.state === 'redundant');
 const probes = new Set(); // client ids the probe's navigations made
@@ -109,19 +113,25 @@ async function prune(keep) {
     if (live.has(id) || Date.now() - b.t < RECENT) { if (b.commit) used.add(b.commit); } else bound.delete(id);
   }
   await saveMeta();
-  for (const k of await caches.keys()) if (k.startsWith(`${V}-`) && k !== META && !used.has(k.slice(V.length + 1))) { T('drop', k); await caches.delete(k); }
+  for (const k of await caches.keys()) if (k.startsWith(`${V}-`) && k !== META && !used.has(k.slice(V.length + 1))) { T('drop', k); opened.delete(k); await caches.delete(k); }
 }
 async function clearAll() {
-  bound.clear(); latest = null;
+  latest = null;
+  opened.clear();
   for (const k of await caches.keys()) if (/^fp\d*-/.test(k)) await caches.delete(k);
 }
-// Stop for good: nothing kept, nothing answered, the registration gone (the page decides whether it comes back).
+// Stop for good: nothing kept, no new page answered, the registration gone (the page decides whether it comes back).
+// The bindings stay in memory: an open page's later files come from the network only if their stamp is its own
+// release; any other and it is sent round, to a reload the unregistered worker no longer controls.
+let puts = 0;
 async function stop(why) {
   T('stop', why);
   stopped = true;
   await saving;
   await clearAll();
   await self.registration.unregister();
+  for (let i = 0; i < 50 && puts > 0; i++) await sleep(20); // a put already under way could make a cache again
+  await clearAll();
 }
 
 // --- what may be kept
@@ -145,14 +155,28 @@ async function netCommit() {
     let j;
     try { j = JSON.parse(await r.text()); } catch (e) { return e && e.name === 'AbortError' ? { kind: 'offline' } : { kind: 'error' }; }
     if (!j || !j.commit) return { kind: 'error' };
-    if (stampOf(r) !== String(j.commit)) return { kind: 'unstamped' };
+    const st = stampOf(r);
+    if (!st) return { kind: 'unstamped' }; // the stamp removed: the kill switch
+    if (st !== String(j.commit)) return { kind: 'error' }; // a stamp that disagrees with the body: the network, this visit
+
     return { kind: 'commit', commit: String(j.commit) };
   } finally { clearTimeout(timer); }
 }
 
+const opened = new Map(); // cache name → open cache (forgotten when caches are deleted)
+const workers = { bound: 0, fallback: 0 }; // Workers bound by their script's resultingClientId, and files fetched without one
+const direct = new Set(); // commits whose files are fetched past the HTTP cache (its 304s came back without a stamp)
 async function fromCache(commit, key) {
-  if (!commit || !(await caches.has(cacheName(commit)))) return null;
-  return (await (await caches.open(cacheName(commit))).match(key)) || null;
+  if (!commit) return null;
+  const name = cacheName(commit);
+  let c = opened.get(name);
+  if (!c) { if (!(await caches.has(name))) return null; c = await caches.open(name); opened.set(name, c); }
+  return (await c.match(key)) || null;
+}
+function keepIn(commit, key, res) {
+  if (gone()) return Promise.resolve();
+  puts++;
+  return caches.open(cacheName(commit)).then((c) => c.put(key, res)).catch(() => {}).finally(() => { puts--; });
 }
 
 // --- the page
@@ -175,7 +199,7 @@ async function navigate(event) {
   if (!full(res)) { event.waitUntil(bind(id, null)); return res; }
   let s = stampOf(res);
   if (n.kind === 'commit' && s !== commit) { // a page revalidated from the HTTP cache keeps its first stamp: ask past it
-    const again = await fetch(req.url, { cache: 'no-store', credentials: 'same-origin' }).catch(() => null);
+    const again = await fetch(req.url, { cache: 'reload', credentials: 'same-origin' }).catch(() => null);
     if (!full(again)) { event.waitUntil(bind(id, null)); return res; } // not sure which release this page is: the network
     res = again; s = stampOf(res);
   }
@@ -183,7 +207,7 @@ async function navigate(event) {
   // the page's own stamp is its release, even if a deploy landed since commit.json answered
   const keep = res.clone();
   event.waitUntil(bind(id, s).then(async () => {
-    if (!gone()) await (await caches.open(cacheName(s))).put(PAGE, keep).catch(() => {});
+    await keepIn(s, PAGE, keep);
     await prune(s);
     await sleep(LATER);
     await prune(s);
@@ -202,40 +226,60 @@ async function sendRound(id, commit, why) {
   return Response.error();
 }
 async function file(event, url) {
-  if (!event.clientId) return fetch(event.request); // no page to bind or to send round: through, unkept
+  if (!event.clientId) return fetch(event.request); // no page to bind or to send round (the probe shows pages have one)
   const b = bound.get(event.clientId);
   // a page this worker controls but cannot place (its binding lost with the browser's storage, say): its release is
   // unknown, so no file can be checked against it. Round it goes, rather than risk a file from another release.
-  if (!b) return sendRound(event.clientId, null, url.pathname + ' from a page of unknown release');
+  if (!b) {
+    // a dedicated Worker the browser gave no binding (no resultingClientId on its script): its files come from the
+    // network, kept nowhere, and only if their stamp is the newest release this worker knows; else they fail
+    const c = await self.clients.get(event.clientId);
+    if (c && c.type !== 'window') {
+      workers.fallback++;
+      const r = await fetch(new Request(event.request, { cache: 'reload' })).catch(() => null);
+      return full(r) && latest && stampOf(r) === latest ? r : Response.error();
+    }
+    return sendRound(event.clientId, null, url.pathname + ' from a page of unknown release');
+  }
   if (!b.commit) return fetch(event.request); // this page's release is unknown to the network too: as if no worker
   const commit = b.commit, key = url.href;
   // a Worker's script: the Worker is a client of its own, of its page's release
-  if (event.resultingClientId) event.waitUntil(bind(event.resultingClientId, commit));
+  if (event.resultingClientId) { workers.bound++; event.waitUntil(bind(event.resultingClientId, commit)); }
   const hit = await fromCache(commit, key);
   if (hit) return hit;
-  let res = await fetch(event.request);
+  // Once this release has shown that the host's 304s carry no stamp, its other files are fetched whole at once
+  // ('reload' also refreshes the HTTP cache): one request each, not a conditional one and then a whole one.
+  let res = await fetch(direct.has(commit) ? new Request(event.request, { cache: 'reload' }) : event.request);
   if (!full(res)) return res; // a 404, a 206, an error: served as it came, never kept
   if (stampOf(res) !== commit) {
-    const again = await fetch(new Request(event.request, { cache: 'no-store' })).catch(() => null);
+    const again = await fetch(new Request(event.request, { cache: 'reload' })).catch(() => null);
     // a deploy landed while this page was loading: this file is another release's. Fail it and send the page round.
     if (!full(again) || stampOf(again) !== commit) return sendRound(event.clientId, commit, `${url.pathname} is ${(again && stampOf(again)) || stampOf(res)}`);
+    direct.add(commit);
     res = again;
   }
-  const keep = res.clone();
-  if (!gone()) event.waitUntil(caches.open(cacheName(commit)).then((c) => c.put(key, keep)).catch(() => {}));
+  event.waitUntil(keepIn(commit, key, res.clone()));
   return res;
 }
 
 // The probe: index.html opens a hidden frame on PROBE once the worker is active. Its navigation's resultingClientId is
 // noted; the frame's page (answered here, no network) says hello from its own client. The same id: this browser
 // binds pages, and the worker may answer them. Anything else, or nothing: it never will.
-const PROBE_PAGE = '<!doctype html><meta charset="utf-8"><script>var w=navigator.serviceWorker&&navigator.serviceWorker.controller;if(w)w.postMessage({type:"fp-hello"});</script>';
+// The page also fetches PROBE-sub, so the proof covers its files carrying its clientId too.
+const PROBE_PAGE = '<!doctype html><meta charset="utf-8"><script>var w=navigator.serviceWorker&&navigator.serviceWorker.controller;if(w)fetch("./__fp-probe-sub",{cache:"no-store"}).then(function(){w.postMessage({type:"fp-hello"});},function(){w.postMessage({type:"fp-hello"});});</script>';
+const subs = new Set(); // client ids PROBE-sub was fetched by
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET' || stopped) return;
+  if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (url.origin === location.origin && url.pathname === PROBE + '-sub' && req.mode !== 'navigate') {
+    if (event.clientId) subs.add(event.clientId);
+    event.respondWith(new Response('', { headers: { 'cache-control': 'no-store' } }));
+    return;
+  }
   if (req.mode === 'navigate') {
+    if (stopped) { if (event.resultingClientId) bound.set(event.resultingClientId, { commit: null, t: Date.now() }); return; } // a page after the stop: the plain network
     if (url.origin === location.origin && url.pathname === PROBE) {
       if (event.resultingClientId) probes.add(event.resultingClientId);
       T('probe', (event.resultingClientId || 'none').slice(0, 4));
@@ -250,7 +294,7 @@ self.addEventListener('fetch', (event) => {
   }
   if (req.headers.has('range') || !keepable(url)) return;
   if (ready && proven !== true) return;
-  event.respondWith(loadMeta().then(() => (proven === true && !stopped ? file(event, url) : fetch(req))));
+  event.respondWith(loadMeta().then(() => (proven === true ? file(event, url) : fetch(req))));
 });
 
 // --- messages from the page (index.html) and the probe
@@ -260,7 +304,7 @@ self.addEventListener('message', (event) => {
   if (d.type === 'fp-off') { stopped = true; T('off from the page'); return; } // the page unregisters this worker
   if (d.type === 'fp-hello') {
     event.waitUntil(loadMeta().then(() => {
-      const ok = !!(event.source && probes.has(event.source.id));
+      const ok = !!(event.source && probes.has(event.source.id) && subs.has(event.source.id));
       if (proven !== true) proven = ok; // once proven, a stray hello does not unprove it
       T('hello', ok);
       return saveMeta();
@@ -270,7 +314,7 @@ self.addEventListener('message', (event) => {
   } else if (d.type === 'fp-commit') {
     event.waitUntil(loadMeta().then(() => reply({ commit: bound.get(event.source && event.source.id)?.commit || null })));
   } else if (d.type === 'fp-trace') {
-    reply({ trace, latest, proven, bound: [...bound].map(([id, b]) => `${id.slice(0, 4)}=${b.commit}`) });
+    reply({ trace, latest, proven, workers, bound: [...bound].map(([id, b]) => `${id.slice(0, 4)}=${b.commit}`) });
   } else if (d.type === 'fp-fill' && Array.isArray(d.urls)) {
     event.waitUntil(loadMeta().then(() => (proven === true && !stopped ? fill(d.page, d.urls) : { kept: 0, skipped: 0, commit: null, proven })).then(reply));
   }
