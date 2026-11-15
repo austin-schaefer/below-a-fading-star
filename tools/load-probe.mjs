@@ -59,9 +59,9 @@ async function load(page, cdp, kind, go) {
   cdp.on('Network.requestServedFromCache', onCache); cdp.on('Network.loadingFinished', onDone);
   const t0 = Date.now();
   await go();
-  await page.waitForFunction(() => document.body.classList.contains('ready') && window.__fp_startup?.report().ready != null, null, { timeout: 900000, polling: 250 });
+  await page.waitForFunction(() => document.body?.classList.contains('ready') && (!window.__fp_startup || window.__fp_startup.report().ready != null), null, { timeout: 900000, polling: 250 });
   await page.waitForTimeout(300); // let the last loadingFinished events in
-  const rep = await page.evaluate(() => window.__fp_startup.report());
+  const rep = await page.evaluate(() => (window.__fp_startup ? window.__fp_startup.report() : window.__probe.report()));
   cdp.off('Network.requestWillBeSent', onReq); cdp.off('Network.responseReceived', onResp);
   cdp.off('Network.requestServedFromCache', onCache); cdp.off('Network.loadingFinished', onDone);
   const list = [...reqs.values()];
@@ -76,6 +76,20 @@ const out = [];
 for (let i = 0; i < runs; i++) {
   const context = await browser.newContext({ viewport: { width: 960, height: 540 } });
   const page = await context.newPage();
+  // A tree from before v13-P0 (the live site until it is released) has no src/startup.js: then this stands in for
+  // its report, with time to ready, long tasks and the paint, and no phases.
+  await page.addInitScript(() => {
+    const lt = []; let ready = null, ob = null;
+    try { ob = new PerformanceObserver((l) => { for (const e of l.getEntries()) lt.push({ t: e.startTime, ms: e.duration }); }); ob.observe({ type: 'longtask', buffered: true }); } catch { /* */ }
+    const iv = setInterval(() => { if (ready == null && document.body?.classList.contains('ready')) { ready = performance.now(); clearInterval(iv); } }, 10);
+    window.__probe = { report: () => {
+      const n = performance.getEntriesByType('navigation')[0], fcp = performance.getEntriesByType('paint').find((e) => e.name === 'first-contentful-paint');
+      const tasks = lt.filter((e) => e.t <= ready).map((e) => ({ t: Math.round(e.t), ms: Math.round(e.ms), phase: null }));
+      return { kind: 'probe-fallback', ready: Math.round(ready), at: {}, phases: {}, extra: {}, serial: false, modules: [],
+        nav: { html: Math.round(n.responseEnd), domInteractive: Math.round(n.domInteractive), fcp: fcp ? Math.round(fcp.startTime) : null, type: n.type },
+        longTasks: tasks, longest: tasks.reduce((a, e) => (!a || e.ms > a.ms ? e : a), null) };
+    } };
+  });
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 200)); });
   const cdp = await context.newCDPSession(page);
@@ -85,7 +99,7 @@ for (let i = 0; i < runs; i++) {
   const run = {};
   run.cold = await load(page, cdp, 'cold', () => page.goto(url, { waitUntil: 'commit', timeout: 300000 }));
   run.repeat = await load(page, cdp, 'repeat', () => page.reload({ waitUntil: 'commit', timeout: 300000 }));
-  if (opts.serial !== '0') run.serial = await load(page, cdp, 'serial', () => page.goto(`${url}&serial=1`, { waitUntil: 'commit', timeout: 300000 }));
+  if (opts.serial !== '0' && run.cold.kind !== 'probe-fallback') run.serial = await load(page, cdp, 'serial', () => page.goto(`${url}&serial=1`, { waitUntil: 'commit', timeout: 300000 }));
   out.push(run);
   console.log(`run ${i + 1}/${runs}: cold ${run.cold.ready} ms, repeat ${run.repeat.ready} ms${run.serial ? `, serial ${run.serial.ready} ms` : ''}`);
   await context.close();

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Loading bar test: the card shows a partly filled bar, a step label and a disabled button mid-load;
-// once body.ready the button enables; the fill width never decreases. Usage: node tools/loading-test.mjs [url]
+// once body.ready the button enables; the fill width never decreases; the startup marks are set and in order. Usage: node tools/loading-test.mjs [url]
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -26,6 +26,14 @@ const end = await page.evaluate(() => ({ disabled: document.getElementById('begi
 await page.screenshot({ path: 'shots/wip/loading-01-card-ready.png', timeout: 240000 });
 console.log('end', end);
 const samples = await page.evaluate(() => window.__samples);
+// v13-P0: the startup marks (src/startup.js) all set, in order, and in the browser's own measures
+const marks = await page.evaluate(() => {
+  const want = ['module', 'tier', 'renderer', 'terrain', 'mountains', 'scaffold', 'imports', 'modules', 'post', 'programs', 'warmup', 'ready'];
+  const at = window.__fp_startup?.report().at || {};
+  const ms = new Set(performance.getEntriesByType('measure').map((e) => e.name));
+  let ordered = true; for (let i = 1; i < want.length; i++) if (!(at[want[i]] >= at[want[i - 1]])) ordered = false;
+  return { all: want.every((k) => at[k] != null && ms.has('fp:' + k)), ordered, ready: at.ready };
+});
 let mono = true; for (let i = 1; i < samples.length; i++) if (samples[i].w < samples[i - 1].w) mono = false;
 console.log('labels', [...new Set(samples.map((s) => s.label))]);
 const checks = [
@@ -35,6 +43,7 @@ const checks = [
   ['ready: button enabled', end.disabled === false],
   ['ready: bar faded', parseFloat(end.opacity) < 0.05],
   ['fill never decreased (' + samples.length + ' samples)', mono],
+  ['startup marks set, in order, as measures (ready at ' + Math.round(marks.ready) + ' ms)', marks.all && marks.ordered],
   ['button disabled in every pre-ready sample', samples.filter((s) => !s.ready).every((s) => s.disabled)],
 ];
 for (const [n, ok] of checks) console.log(ok ? 'PASS' : 'FAIL', n);
