@@ -6,7 +6,7 @@
 // key is the caller's string (the tier, the URL's switches: queryKey()) and the tree, what the code was:
 //   - 'commit:<sha>' where commit.json (the Netlify build's, and build-artifact.mjs's) names one: the same commit
 //     runs the same code, so the record holds;
-//   - 'src' where it does not (tools/serve.sh, a local copy): the record lists every script the computing context had
+//   - 'src' where it does not, and on localhost without ?kept=commit (tools/serve.sh): the record lists every script the computing context had
 //     loaded with a hash of its text, and holds only while each of them still hashes the same (they are fetched
 //     again to check, once a load each). A test's fresh browser context starts with an empty store either way.
 // A put replaces whatever was in its slot (so an old key is gone); prune() deletes every record of another tree.
@@ -88,7 +88,11 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
       r.onblocked = () => { note('errors', 'open: blocked'); res(null); };
     } catch (e) { note('errors', `open: ${e?.name || e}`); res(null); }
   }), WAIT).then((d) => { if (!d) note('errors', 'open: no database (timed out or refused)'); return d; }));
+  // on this machine's own server (tools/serve.sh has no commit.json, and asking for it logs a 404 the tests count as a
+  // page error) the scripts' text decides, unless ?kept=commit says a local copy does have one (a _site/ build)
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(new URL(base).hostname) && !/[?&]kept=commit\b/.test(globalThis.location?.search || '');
   const tree = (async () => {
+    if (local) return 'src';
     try {
       const r = await timeout(fetch(new URL('commit.json', base), { cache: 'no-store' }), WAIT);
       if (r && r.ok) { const j = await r.json(); if (j && typeof j.commit === 'string' && j.commit) return `commit:${j.commit}`; }

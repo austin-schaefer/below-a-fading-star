@@ -21,7 +21,7 @@ Low 1x is the last pair (`v13-L3-probe-{base2,after2}-low-1x`); the other rows a
 
 ## The store
 
-IndexedDB `fp-kept`, one record a slot (`bake:<segs>`, `kept:<name>:<tier>`), key = the tier and every URL switch but the view-only ones; tree = `commit:<sha>` from `commit.json`, else (`tools/serve.sh`) `src`: the record lists every script its context loaded with a hash of its text and holds only while all still hash the same (refetched once a load); a checksum of all it holds; format number. A put replaces its slot; `prune()` deletes other trees. Any miss, error or 2.5 s timeout computes. The suite relies on Playwright's fresh context per test (an empty store) and, within a test, on the `src` keying (a store written by another tree misses). Broken on purpose in `loading-test` (13 new checks): a new key replaces the old (the old then misses), another tree's record pruned, a changed height (`corrupt`), another format, a record cut short, a changed script hash (`scripts changed`): each refused and baked again; `?kept=0`, `?worker=0&kept=0`.
+IndexedDB `fp-kept`, one record a slot (`bake:<segs>`, `kept:<name>:<tier>`), key = the tier and every URL switch but the view-only ones; tree = `commit:<sha>` from `commit.json`, else (`tools/serve.sh`) `src`: the record lists every script its context loaded with a hash of its text and holds only while all still hash the same (refetched once a load); a checksum of all it holds; format number. A put replaces its slot; `prune()` deletes other trees. Any miss, error or 2.5 s timeout computes. The suite relies on Playwright's fresh context per test (an empty store) and, within a test, on the `src` keying (a store written by another tree misses). Broken on purpose in `loading-test` (12 new checks): a new key replaces the old (the old then misses), another tree's record pruned, a changed height (`corrupt`), another format, a record cut short, a changed script hash (`scripts changed`): each refused and baked again; `?kept=0`, `?worker=0&kept=0`.
 
 ## ctx.kept: rocks
 
@@ -40,7 +40,7 @@ IndexedDB `fp-kept`, one record a slot (`bake:<segs>`, `kept:<name>:<tier>`), ke
 - `node tools/height-check.mjs check <rec>` against a recording at `9ca6842`: all PASS (1,427,272 points × 58, 2 bakes). New `purebake` (three refused, no location, nothing sampled first): every position and baked attribute, low and medium, 0 differ (14 PASS).
 - `node tools/build-check.mjs <B> --against=<base rec>`: low and medium, 1x (`--runs=3`, no unstable entry), 4x, 6x (low), and `--repeat`: 54 of 55 IDENTICAL, the one MOVED the cloak.
 - Firefox and WebKit: a cold load bakes in the module worker and keeps; the reload takes the bake and rocks from the store.
-- `loading-test`: 21 PASS. Render pairs and the whole suite: below.
+- `loading-test`: 20 PASS. Render pairs and the whole suite: below.
 
 ## Defaults taken
 
