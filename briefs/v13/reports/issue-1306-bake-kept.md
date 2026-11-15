@@ -59,7 +59,7 @@ Cold −18% / −25%, repeat −27% / −34%. The longest stall now falls in the
 - Firefox and WebKit: a cold load bakes in the module worker and keeps; the reload takes the bake and rocks from the store.
 - `loading-test`: 26 PASS.
 - Render pairs at `tools/views-perf.json`, low and medium (`shots/wip/v13-L3-{base-a,base-b,after}-<q>-*.png`, `v13-L3-pairs.txt`): every station within two base renders' spread except low wrongcolour (98 vs 58 px; the diff is the fall's spray and water) and medium tarn (139 vs 46; after against the second base render: 11).
-- The whole suite, `SHOT_ANGLE=metal tools/suite.sh 8163`, next merged (L1's sw.js round three included): 37 tests, 36 ok, 1596 PASS lines; `releases` fails only on "HEAD is not next" and "commits not on origin/next", as on any branch.
+- The whole suite, `SHOT_ANGLE=metal tools/suite.sh 8163`, next merged (L1's sw.js round three included): 37 tests, 36 ok, 1596 PASS lines; `releases` fails only on "HEAD is not next" and "commits not on origin/next", as on any branch. After a last merge of `next` (perf.js, shadows.js, far.js from another brief): `ONLY=loading,perf,pan,walk,settings,touch,record`: 7 of 7 ok (settings 73, walk 13, loading 26, perf 28, touch 43, pan 1, record 16 ok lines).
 
 ## Defaults taken
 
