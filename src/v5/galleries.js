@@ -160,17 +160,20 @@ function ironMaterial(U, kind) {
 }
 
 // ---------------------------------------------------------------- the link: a stadium ring, long axis y, in link lengths
+// Links are laid a link length apart (cL.z), so for them to hang through one another the hole of each is a link length
+// long and the wire's ends reach T past it into the next (#51: an outer length of 1 left them meeting end to end, and
+// sampling the ends off their tips shortened each further, so a gap showed between every two)
 function linkGeometry(low) {
-  const nP = low ? 6 : 8, nT = low ? 3 : 4;
-  const L = 1, W = 0.6, T = 0.17; // outer length, outer width, wire thickness (link lengths)
+  const m = low ? 3 : 4, nT = 4; // points on each end's half-circle (both ends of it included), round the wire
+  const T = 0.14, W = 0.62, L = 1 + 2 * T; // wire thickness, outer width, outer length (link lengths)
   const rr = (W - T) / 2, straight = L - W; // the centreline's end radius and straight run
-  // the centreline: two half-circles joined by straights, sampled at nP points
+  // the centreline: each end a half-circle from one side to the other, joined by the sides
   const path = [];
-  for (let i = 0; i < nP; i++) {
-    const a = (i / nP) * Math.PI * 2;
-    const cy = (Math.sin(a) >= 0 ? 1 : -1) * straight / 2;
-    path.push([Math.cos(a) * rr, Math.sin(a) * rr + cy, Math.cos(a), Math.sin(a)]);
+  for (const end of [1, -1]) for (let i = 0; i <= m; i++) {
+    const a = (end > 0 ? 0 : Math.PI) + (i / m) * Math.PI;
+    path.push([Math.cos(a) * rr, Math.sin(a) * rr + end * straight / 2, Math.cos(a), Math.sin(a)]);
   }
+  const nP = path.length;
   const pos = [], nor = [], idx = [];
   for (let i = 0; i < nP; i++) {
     const [px, py, nx, ny] = path[i];

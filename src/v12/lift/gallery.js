@@ -52,6 +52,21 @@ export function buildGallery(ctx, o) {
   const backAt = (k, f) => back[k] + (back[k + 1] - back[k]) * f;
   const EDGE = RAGGED + 0.1; // the walk ends where the last plates drawn end (a plate may be gone there, its grating left)
   const bEnd = bs[nW - 1] + (bs[nW] - bs[nW - 1]) * EDGE;
+  // the Galleries' hanging chains that come down past the deck (the middle boom's tip chain at 276.3, in the gap between
+  // the deck's rear and the rock): the deck's rear is notched round each, its plates and rear runner cut back, so the
+  // links (1.55 m wide, swaying a little) go down beside the iron and not through it (#51)
+  const CHAIN_R = 0.62 * 2.5 / 2 + 0.2; // a link's half-width and its sway
+  const notches = [];
+  for (const ch of geo.chains) {
+    if (ch.mode !== 0 || ch.A[1] < y || ch.A[1] - ch.n * 2.5 > y + 2) continue;
+    const b = bear(ch.A[0], ch.A[2]);
+    if (b < bs[0] || b > bEnd) continue;
+    const k = bayOf(b), f = (b - bs[k]) / (bs[k + 1] - bs[k]), r = hyp(ch.A[0], ch.A[2]), rear = backAt(k, f) - REAR;
+    if (r < rear - D - 1 || r > rear + REAR + CHAIN_R) continue;
+    const bayLen = P(bs[k], backAt(k, 0), y).distanceTo(P(bs[k + 1], backAt(k, 1), y));
+    notches.push({ x: ch.A[0], z: ch.A[2], k, f, half: (CHAIN_R + 0.15) / bayLen, depth: Math.max(0, rear - (r - CHAIN_R)) + 0.1 });
+  }
+  const notchAt = (k, f0, f1) => { let d = 0; for (const n of notches) if (n.k === k && f1 > n.f - n.half && f0 < n.f + n.half) d = Math.max(d, n.depth); return d; };
 
   // ---- the cells: a box of rubble stone against the rear of the deck in their bays, its door to the walkway
   const cells = [];
@@ -81,6 +96,7 @@ export function buildGallery(ctx, o) {
     const r = hyp(x, z), bk = backAt(k, f);
     if (r < bk - D - 0.15 || r > bk - REAR) return null;
     if (k === nW - 1 && f > EDGE) return null;
+    if (notches.length && r > bk - REAR - notchAt(k, f, f)) return null; // the notch round a chain
     const cl = cellAt(x, z);
     if (cl) { const dep = (x - cl.c.x) * cl.n.x + (z - cl.c.z) * cl.n.z; if (dep < 0.02) return null; } // the cell's rear wall, square to it
     return y;
@@ -117,9 +133,9 @@ export function buildGallery(ctx, o) {
       let f0 = i / nA, f1 = (i + 1) / nA;
       if (k === nW - 1) { if (f0 > RAGGED + 0.08) continue; f1 = Math.min(f1, RAGGED + 0.1); }
       const missing = rng() < (k === nW - 1 ? 0.3 : 0.1) && !(k === 0 && i < 2);
-      const d0 = (j / plateRows), d1 = ((j + 1) / plateRows);
+      const d0 = (j / plateRows), d1 = ((j + 1) / plateRows), cut = j === 0 ? notchAt(k, f0, f1) : 0;
       const corner = (sx, sy, sz) => {
-        const f = sx < 0 ? f0 + 0.004 : f1 - 0.004, dd = (sz < 0 ? d0 : d1) * depth(k, f) + (sz < 0 ? 0.015 : -0.015);
+        const f = sx < 0 ? f0 + 0.004 : f1 - 0.004, dd = Math.max(cut, (sz < 0 ? d0 : d1) * depth(k, f)) + (sz < 0 ? 0.015 : -0.015);
         return at(k, f, dd, sy < 0 ? -0.07 : (rng() - 0.5) * 0.012);
       };
       if (missing) { gratingQuads.push([at(k, f0, d0 * depth(k, f0), -0.09), at(k, f1, d0 * depth(k, f1), -0.09), at(k, f1, d1 * depth(k, f1), -0.09), at(k, f0, d1 * depth(k, f0), -0.09)]); continue; }
@@ -127,7 +143,7 @@ export function buildGallery(ctx, o) {
       hexa(corner, tone < 0.3 ? C.rust : tone < 0.8 ? C.iron : C.ironDark);
     }
     // the runners under the front and the rear, a joist at each post
-    for (const dd of [0.2, depth(k, 0.5) - 0.25]) {
+    for (const dd of [0.2 + notchAt(k, 0, 1), depth(k, 0.5) - 0.25]) {
       const f1 = k === nW - 1 ? RAGGED - 0.05 : 1;
       hexa((sx, sy, sz) => at(k, sx < 0 ? 0 : f1, dd + sz * 0.11, -0.1 + sy * 0.16 - 0.16), C.ironDark);
     }
@@ -439,14 +455,8 @@ export function buildGallery(ctx, o) {
     wall(cl, -W2, fz, dl, fz); wall(cl, dr, fz, W2, fz);
     if (!cl.open) wall(cl, dl, FD + 0.1, dr, FD + 0.1);
   }
-  // the chain from the short boom's tip that hangs past the deck's rear at 276.3 (src/v5/galleries.js)
-  for (const ch of geo.chains) {
-    if (ch.mode !== 0) continue;
-    const b = bear(ch.A[0], ch.A[2]);
-    if (b < bs[0] || b > bEnd || ch.A[1] < y || ch.A[1] - ch.n * 2.5 > y + 2) continue;
-    if (floor(ch.A[0] * 0.995, ch.A[2] * 0.995) === null && floor(ch.A[0], ch.A[2]) === null) continue;
-    cols.push({ x: ch.A[0], z: ch.A[2], r: 0.5, y: y - 1, h: 14, stand: false });
-  }
+  // the chains down past the deck's rear (the notches): walkers kept off the links
+  for (const n of notches) cols.push({ x: n.x, z: n.z, r: CHAIN_R, y: y - 1, h: 14, stand: false });
   for (const c of cols) ctx.addCollider(c);
 
   // ---- the walk, for the ascent and the tests: the deck's middle from the landing to the ragged end
@@ -475,6 +485,6 @@ export function buildGallery(ctx, o) {
     backAt: (b) => { const k = bayOf(b), f = Math.max(0, Math.min(1, (b - bs[k]) / (bs[k + 1] - bs[k]))); return backAt(k, f); },
     deckLine: (() => { const L = []; for (let k = 0; k < nW; k++) for (const f of [0, 0.5]) { const p = at(k, f, (D - REAR) / 2); L.push([p.x, p.z]); } const e = at(nW - 1, EDGE, (D - REAR) / 2); L.push([e.x, e.z]); return L; })(),
     y, floor, keep, landing, path, cells, odd, end: { x: endP.x, z: endP.z, b: bEnd }, bs, back, D, nW, at, update, group,
-    railGone, broken: BROKEN, tris: [deckIron, grating, cellMesh, rod, coinMesh, eye].reduce((a, m) => a + tris(m), 0), colliders: cols.length,
+    railGone, broken: BROKEN, notches, tris: [deckIron, grating, cellMesh, rod, coinMesh, eye].reduce((a, m) => a + tris(m), 0), colliders: cols.length,
   };
 }
