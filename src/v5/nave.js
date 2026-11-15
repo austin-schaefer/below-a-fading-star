@@ -16,8 +16,8 @@ import * as THREE from 'three';
 import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js';
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
 import { approach, angDiff, makeGround } from '../fauna/uncanny/kit.js';
-import { installBelow, underMaterial, boxBelow } from '../v14/under.js'; // v14-D0: the kit for places under the ground
-import { SZ, SHALF, DOOR, candles, FLAME_Y, ROAD_Y, nearRoad } from '../v14/coffin-road/plan.js'; // v14-D0: the Coffin Road
+import { installBelow, underMaterial, boxBelow, belowLit } from '../v14/under.js'; // v14-D0: the kit for places under the ground
+import { SZ, SHALF, DOOR, candles, FLAME_Y, ROAD_Y, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Coffin Road
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
 // the roof's underside at (x, z): level at NAVE.ceil, sunk with the moor wherever the moor lies lower than the cover
@@ -221,13 +221,7 @@ const WATER_FRAG = /* glsl */`
   }`;
 
 // ---------------------------------------------------------------- the module
-// v14-D0: the modules build side by side; the Coffin Road waits on this for ctx.nave (its light, its roof)
-let built = null;
-export const naveBuilt = new Promise((r) => { built = r; });
 export async function build(ctx) {
-  try { await buildNave(ctx); } finally { built(); }
-}
-async function buildNave(ctx) {
   if (NAVE_OFF) { ctx.nave = { off: true, stats: () => ({ calls: 0, tris: 0 }) }; return; }
   const { scene, terrain: T, camera, player } = ctx;
   const low = ctx.quality === 'low';
@@ -378,11 +372,11 @@ async function buildNave(ctx) {
       const z = CZ + side * HALF;
       const xs = [];
       for (let i = 0; i <= n; i++) xs.push(NAVE.x0 + (i / n) * (NAVE.x1 - NAVE.x0));
-      if (side > 0) { xs.push(dx0, dx1); xs.sort((a, b) => a - b); }
+      if (side > 0 && !CR_OFF) { xs.push(dx0, dx1); xs.sort((a, b) => a - b); }
       for (let i = 0; i < xs.length - 1; i++) {
         const xa = xs[i], xb = xs[i + 1]; if (xb - xa < 1e-3) continue;
         const A = bands(ceilAt(xa, z)), Bb = bands(ceilAt(xb, z));
-        if (side > 0 && xa >= dx0 - 1e-3 && xb <= dx1 + 1e-3) {
+        if (side > 0 && !CR_OFF && xa >= dx0 - 1e-3 && xb <= dx1 + 1e-3) {
           // the door: the wall under the sill (down into the water) and over the lintel
           H.quad([xa, A[0], z], [xb, Bb[0], z], [xb, DOOR.sill, z], [xa, DOOR.sill, z], STONE_D, [0, 0, -side], 0.1);
           H.quad([xa, dTop, z], [xb, dTop, z], [xb, Bb[2], z], [xa, A[2], z], STONE_D, [0, 0, -side], 0.1);
@@ -578,7 +572,7 @@ async function buildNave(ctx) {
     }
     sgeo.computeVertexNormals();
   }
-  const smat = new THREE.MeshStandardMaterial({ color: '#060606', roughness: 0.22, metalness: 0.05 });
+  const smat = belowLit(new THREE.MeshStandardMaterial({ color: '#060606', roughness: 0.22, metalness: 0.05 }), 'nave-shapes'); // (v14-D0: the hall's sky light, by the kit's volumes)
   const shapesMesh = new THREE.InstancedMesh(sgeo, smat, 3);
   shapesMesh.name = 'nave-shapes'; shapesMesh.frustumCulled = false; shapesMesh.visible = false; shapesMesh.castShadow = false;
   scene.add(shapesMesh);
@@ -593,7 +587,7 @@ async function buildNave(ctx) {
     for (let b = 0; b < 360; b += 0.25) {
       const R = naveRim(b) - 0.45, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
-      if (x > CX && Math.abs(z - SZ) < SHALF + 0.2) continue;
+      if (!CR_OFF && x > CX && Math.abs(z - SZ) < SHALF + 0.2) continue;
       const g = T.heightAt(x, z);
       ctx.addCollider({ x, z, r: 0.3, y: g - 1, h: 3, stand: false }); colliders++; lx = x; lz = z;
     }
@@ -711,9 +705,13 @@ async function buildNave(ctx) {
   const tris = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   const stats = () => ({ calls: 2 + (shapesMesh.visible ? 1 : 0), tris: Math.round(tris(hallGeo) + 2 + (shapesMesh.visible ? 3 * tris(sgeo) : 0)), hall: Math.round(tris(hallGeo)), lip: lipTris, columns: columns.length, slabs: SLABS.length, colliders, terrainCut: cut });
   // v14-D0: under the roof, and down the hole's shaft below the rim, is under the ground (v14/under.js)
-  installBelow(ctx).add(boxBelow(NAVE.x0, NAVE.x1, CZ - HALF, CZ + HALF, (x, z) => Math.min(ceilAt(x, z), RIM_Y), 3, 1.0));
+  const below = installBelow(ctx);
+  below.add(boxBelow(NAVE.x0, NAVE.x1, CZ - HALF, CZ + HALF, (x, z) => Math.min(ceilAt(x, z), RIM_Y), 3, 1.0), { size: 1 });
+  // the seal: under the roof the moor is drawn only through the hole (its disc at the rim, the widest radius)
+  { let rmax = 0; for (let b = 0; b < 360; b += 5) rmax = Math.max(rmax, naveRim(b)); below.opening({ x: CX, y: RIM_Y + 0.5, z: CZ, r: rmax + 1 }); }
+  below.keep(hall); below.keep(water); below.keep(shapesMesh);
   ctx.nave = {
-    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge, litAt, waterFlames: candU, // (v14-D0: the Coffin Road writes its nearest flames here) ceilAt: (x, z) => ceilAt(x, z),
+    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge, litAt, waterFlames: candU, ceilAt: (x, z) => ceilAt(x, z), // (v14-D0: the Coffin Road writes its nearest flames into waterFlames)
     // test hooks: a splash at shape i (or at (x, z)), shape i surfacing now, shape i placed at (x, z), hold the life still
     splash(i = 0, x, z) { const sh = S.shapes[i]; splashAt(x ?? sh.x, z ?? sh.z, 1, WU.uT.value, true); sh.flick = 0.6; return { x: x ?? sh.x, z: z ?? sh.z }; },
     surface(i = 0) { surface(S.shapes[i], WU.uT.value); },

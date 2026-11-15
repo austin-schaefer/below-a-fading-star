@@ -159,7 +159,7 @@ export function startGraph(ctx, audio, AC) {
   const L = landmarks, hy = (x, z) => Math.hypot(x, z);
   const ring = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => [Math.cos(i * Math.PI / 4), Math.sin(i * Math.PI / 4)]);
   const near1 = (d, r0, r1) => 1 - smoothstep(r0, r1, d);
-  function at(x, z, out = {}, y = camera.position.y) {
+  function at(x, z, out = {}, y = null) { // y: the listener's height (v14-D0: under the ground is stone); none, the surface
     const w = ctx.regions?.soundAt?.(x, z), b = terrain.biomeAt(x, z), g = terrain.heightAt(x, z);
     let stone = 0;
     if (L.castle) stone = Math.max(stone, near1(hy(x - L.castle.x, z - L.castle.z), L.castle.r - 6, L.castle.r + 4) * (g < 20 ? 1 : 0));
@@ -174,7 +174,7 @@ export function startGraph(ctx, audio, AC) {
     }
     const wl0 = terrain.waterLevelAt(x, z);
     if (wl0 !== null && wl0 > g - 0.5) wet += 2;
-    stone = Math.max(stone, smoothstep(4.5, 7, walls), 0.35 * (w?.demesne || 0), 0.2 * (w?.lattice || 0), ctx.below?.inside(x, y, z) || 0); // v14-D0: under the ground is stone
+    stone = Math.max(stone, smoothstep(4.5, 7, walls), 0.35 * (w?.demesne || 0), 0.2 * (w?.lattice || 0), y !== null ? ctx.below?.inside(x, y, z) || 0 : 0); // v14-D0: under the ground is stone
     const wood = clamp(Math.max(w?.wood || 0, b.wood), 0, 1) * (1 - stone);
     out.stone = stone; out.wood = wood; out.open = Math.max(0, 1 - stone - wood);
     out.water = clamp(Math.max(wet / 6, (w?.fen || 0) * 0.6, (w?.saltings || 0) * 0.7, (w?.strandline || 0) * 0.7, b.shore * 0.7), 0, 1);
@@ -192,6 +192,7 @@ export function startGraph(ctx, audio, AC) {
     for (const k of ['open', 'wood', 'stone', 'water']) space[k] = _sp[k];
     const glide = (prm, v) => { if (first) prm.setValueAtTime(v, now); else prm.setTargetAtTime(v, now, 0.6); };
     glide(rooms.open.send.gain, _sp.open); glide(rooms.wood.send.gain, _sp.wood); glide(rooms.stone.send.gain, _sp.stone);
+    glide(rooms.stone.out.gain, ROOM_OUT.stone * (ctx.below ? 0.4 + 0.6 * ctx.below.size(p.x, p.y, p.z) : 1)); // v14-D0: a narrow passage (ctx.below's size) answers with less tail than the hall
     glide(slapIn.gain, _sp.water * 0.9);
     for (const h of held) h.update(now);
   }
