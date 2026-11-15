@@ -31,6 +31,48 @@ Known issues: phones were not measured, only a laptop slowed down to stand in fo
 
 <p><img src="shots/87-first-view-medium.webp" width="24%" alt="The first view after setting out: the dying sun between two great figures, the keep, a pool, and tiers of lit windows on a cliff"> <img src="shots/87-door-loading-bar.webp" width="24%" alt="The title card while the walk loads"> <img src="shots/87-measure-row-phone.webp" width="24%" alt="The settings menu on a phone, with the new Measure row"> <img src="shots/87-measure-panel-phone.webp" width="24%" alt="The result of a Measure run on a phone: how long each frame took, and the slowest moments"></p>
 
+### Stats
+
+- **Time:** 11 hours 48 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 22 sub-agents.
+- **Tokens:** 479.0 million read and written in all; 14.9 million not counting what was reread from the cache, 1.6 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 366.9M | 12.4M | 1.2M |
+| Fable 5.2 | 107.4M | 2.3M | 390k |
+| Sonnet 5.5 | 4.7M | 212k | 28k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 92.4M | 861k | 188k |
+| v13 L3 bake in worker, kept | Opus 5.5 | 102.3M | 1.7M | 222k |
+| v13 L2 height core | Opus 5.5 | 57.1M | 1.7M | 169k |
+| v13 L1 service worker | Opus 5.5 | 54.0M | 970k | 239k |
+| v13 L4 kept builders | Opus 5.5 | 50.9M | 3.3M | 132k |
+| v13 L5 other builders | Opus 5.5 | 42.8M | 1.4M | 120k |
+| v13 P1 frame yardstick | Opus 5.5 | 26.8M | 1.7M | 126k |
+| v13 critic: differences from v12 | Opus 5.5 | 15.3M | 288k | 50k |
+| v13 P0 load yardstick | Opus 5.5 | 9.1M | 590k | 42k |
+| Shorten the suite safely | Opus 5.5 | 5.5M | 491k | 24k |
+| Suite speed audit, read-only | Fable 5.2 | 4.9M | 239k | 33k |
+| v13 F2 the owners | Sonnet 5.5 | 4.0M | 130k | 22k |
+| Cold review L2 diff | Fable 5.2 | 3.5M | 222k | 30k |
+| v13 P2 load CPU profile | Opus 5.5 | 3.1M | 241k | 25k |
+| Cold review L3 diff | Fable 5.2 | 2.0M | 184k | 28k |
+| Cold review L4 diff | Fable 5.2 | 1.2M | 131k | 21k |
+| Cold review L5 diff | Fable 5.2 | 919k | 122k | 16k |
+| Cold review P1 diff | Fable 5.2 | 852k | 151k | 19k |
+| v13 curator | Sonnet 5.5 | 657k | 83k | 6k |
+| Survey backlog for next milestone | Fable 5.2 | 507k | 98k | 8k |
+| Cold review L1 service worker | Fable 5.2 | 448k | 127k | 21k |
+| Cold review P0 diff | Fable 5.2 | 376k | 87k | 9k |
+| Second cold review L1 final | Fable 5.2 | 305k | 107k | 17k |
+
+</details>
+
 ## v12: The Heights
 
 Released 2026-11-14.
@@ -65,6 +107,58 @@ Until now the walk was a valley floor with a wall of mountains round it. This re
 Known issues: the ways up are hard to find. Nothing at ground level says where each one starts: the stair onto the Great Span is at its west end in the Deodand Wood, the lift's station is under the western cliff beyond the Armiger's Tower, the icefall's cleft is in the ice front behind the Lattice, and the Diffident Stair is on the eastern moor (the settings menu's map will take you to each). The high views are the heaviest places for a phone, and may run slowly on an older one. A long fall has no sound yet. The yellow sparks that mark things to do are still too bright, and the other small faults reported since the last release (the seat at the inn, the bell's ring on the ground, the lamp that flickers, the Pomegranate House) are not fixed in this one.
 
 <p><img src="shots/80-span-orch-river-ahead.webp" width="24%" alt="On the Great Span: a narrow truss of rungs crossing a fallen stretch high over the river"> <img src="shots/82-icefall-shelf-plummet.webp" width="24%" alt="From the shelf at the top of the icefall: blocks of blue ice and a long crystal hanging over the valley"> <img src="shots/83-stair-slab-rising.webp" width="24%" alt="The Diffident Stair: a stone slab risen out of the turf, a sign of the sun burning on it"> <img src="shots/84-lift-orch-gallery-east.webp" width="24%" alt="Stepping out of the lift onto the gallery, the carriage behind and the valley far below"></p>
+
+### Stats
+
+- **Time:** 2 days 6 hours, from the first plan to live.
+- **Agents:** one orchestrator and 32 sub-agents.
+- **Tokens:** 847.7 million read and written in all; 35.8 million not counting what was reread from the cache, 2.2 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 751.3M | 33.1M | 1.8M |
+| Fable 5.2 | 67.1M | 1.2M | 213k |
+| Sonnet 5.5 | 29.2M | 1.4M | 168k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 64.9M | 853k | 184k |
+| H5 the valley from above | Opus 5.5 | 183.3M | 12.2M | 204k |
+| H4 the lift | Opus 5.5 | 154.7M | 8.4M | 354k |
+| H2 the glacier | Opus 5.5 | 131.5M | 4.6M | 357k |
+| H3 the stair that appears | Opus 5.5 | 92.6M | 3.1M | 239k |
+| H0 the footing | Opus 5.5 | 85.4M | 1.6M | 224k |
+| H1 round two, Span | Opus 5.5 | 44.4M | 866k | 152k |
+| Critic's blocking fixes v12 | Opus 5.5 | 22.2M | 616k | 62k |
+| H1 the Span whole | Sonnet 5.5 | 13.1M | 331k | 85k |
+| Cold critic before v12 release | Opus 5.5 | 12.6M | 289k | 54k |
+| H5 round two: far.js fixes | Opus 5.5 | 10.5M | 503k | 42k |
+| One tally in the world | Sonnet 5.5 | 8.9M | 367k | 36k |
+| Curate v12 screenshots | Sonnet 5.5 | 3.4M | 164k | 22k |
+| Cold review of glacier diff | Opus 5.5 | 3.3M | 170k | 31k |
+| Cold review of lift diff | Opus 5.5 | 3.1M | 186k | 32k |
+| Fall setting in the menu | Sonnet 5.5 | 2.5M | 113k | 14k |
+| Cold review of H0 footing | Opus 5.5 | 1.9M | 125k | 24k |
+| Cold review of Span diff | Opus 5.5 | 1.6M | 118k | 18k |
+| Cold review of stair diff | Opus 5.5 | 1.6M | 114k | 22k |
+| Cold review H5 from-above | Opus 5.5 | 1.5M | 128k | 18k |
+| Cold review H4 lift | Opus 5.5 | 1.2M | 140k | 14k |
+| Survey frame loop costs | Fable 5.2 | 1.2M | 170k | 11k |
+| Survey loading path | Fable 5.2 | 695k | 113k | 11k |
+| Cold review of v11.1 diff | Sonnet 5.5 | 602k | 80k | 5k |
+| Survey load path statically | Fable 5.2 | 372k | 87k | 7k |
+| Cold read of ground renders | Sonnet 5.5 | 123k | 45k | 0k |
+| Cold read: road and top | Sonnet 5.5 | 123k | 45k | 0k |
+| Cold read of two renders | Sonnet 5.5 | 122k | 44k | 1k |
+| Blind read of Span frames | Sonnet 5.5 | 100k | 65k | 3k |
+| Blind read of floor frames | Sonnet 5.5 | 81k | 46k | 1k |
+| Second blind read of floor frames | Sonnet 5.5 | 80k | 25k | 1k |
+| Blind read of two frames | Sonnet 5.5 | 79k | 44k | 1k |
+| Third blind read of floor frames | Sonnet 5.5 | 78k | 44k | 1k |
+
+</details>
 
 ## v11.1: The mountains, up close
 
@@ -120,6 +214,38 @@ Known issues: the mountains toward the sun are still smoother than the rest. Up 
 
 <p><img src="shots/77-mountains-high-y0-before.webp" width="24%" alt="Before: the mountains from above the valley, their faces ruled with horizontal lines"> <img src="shots/77-mountains-high-y0-after.webp" width="24%" alt="After: the same view, the faces now weathered rock under sharper peaks"> <img src="shots/77-mountains-foreland-y2-after.webp" width="24%" alt="From the ice field at walking height: jagged mountains across the valley, paler ranges behind"> <img src="shots/77-lamps-400-warm.webp" width="24%" alt="The city of windows climbing a ravine above the arches of the Great Span"></p>
 
+### Stats
+
+- **Time:** 3 hours 41 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 12 sub-agents.
+- **Tokens:** 143.4 million read and written in all; 3.3 million not counting what was reread from the cache, 624 thousand of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 92.5M | 2.1M | 439k |
+| Sonnet 5.5 | 36.3M | 925k | 131k |
+| Fable 5.2 | 14.6M | 211k | 53k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 14.6M | 211k | 53k |
+| v11 M1 the rock | Opus 5.5 | 42.0M | 908k | 177k |
+| v11 F2 critic fixes | Sonnet 5.5 | 20.3M | 279k | 48k |
+| v11 M2 the form | Opus 5.5 | 18.6M | 351k | 84k |
+| v11 M4 fitting and test | Opus 5.5 | 15.7M | 315k | 77k |
+| v11 M3 the two squares | Sonnet 5.5 | 14.3M | 446k | 66k |
+| v11 F1 wall moire fix | Opus 5.5 | 6.7M | 183k | 36k |
+| v11 cold critic | Opus 5.5 | 6.1M | 159k | 28k |
+| Cold review of M1 diff | Opus 5.5 | 2.2M | 125k | 22k |
+| Cold review of M2 diff | Opus 5.5 | 1.2M | 82k | 15k |
+| v11 curator | Sonnet 5.5 | 1.0M | 88k | 9k |
+| Cold review of M3 diff | Sonnet 5.5 | 622k | 53k | 6k |
+| Blind read of M1 frames | Sonnet 5.5 | 94k | 59k | 3k |
+
+</details>
+
 ## v10: Things to do
 
 Released 2026-11-12.
@@ -147,6 +273,48 @@ Until now you could only walk and look. This release adds the first things you c
 Known issues: the yellow sparks are hard to see at the great crystal until you are about twenty metres from it, and faint at the long table and at the traveller. The figures you meet up close (the sleeper, the man below the bridge) are blocky. The Hypogeum's doorway is dim. Your marks live in your browser only: clearing its data, or visiting on another device, starts you again.
 
 <p><img src="shots/76-tally-c-drawing.webp" width="24%" alt="The chalk on its cord drawing a stroke on the tally wall at the Lantern Halt"> <img src="shots/76-sleeper-c-from-the-seat.webp" width="24%" alt="From the rope seat at the top of the slab: the sleeper in the hanging lantern, the country behind"> <img src="shots/76-bell-b-candles.webp" width="24%" alt="The great bell under the Span after it is rung, corpse-candles gathered in its mouth"> <img src="shots/76-crystal-b-hand.webp" width="24%" alt="A handprint of light on the great crystal, veins of light running out from it"></p>
+
+### Stats
+
+- **Time:** 6 hours 22 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 22 sub-agents.
+- **Tokens:** 439.0 million read and written in all; 12.6 million not counting what was reread from the cache, 1.5 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 308.6M | 10.6M | 1.1M |
+| Fable 5.2 | 82.4M | 609k | 149k |
+| Sonnet 5.5 | 48.1M | 1.3M | 248k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 82.4M | 609k | 149k |
+| v10-A3 a great bell to ring | Opus 5.5 | 85.0M | 3.7M | 255k |
+| v10-A4 tally rebuilt with ride | Opus 5.5 | 84.1M | 2.4M | 250k |
+| v10-A1 crystal and door acts | Opus 5.5 | 43.5M | 1.7M | 189k |
+| v10-A2 glass and salt acts | Sonnet 5.5 | 33.7M | 493k | 148k |
+| v10-A0 acts framework and tally | Opus 5.5 | 30.0M | 867k | 138k |
+| v10-F2 seat ride view and knock | Opus 5.5 | 27.3M | 403k | 109k |
+| v10-F1 make acts findable | Opus 5.5 | 20.5M | 817k | 81k |
+| v10-T1 walk to pit edges | Sonnet 5.5 | 10.6M | 257k | 57k |
+| Cold critic before v10 release | Opus 5.5 | 10.5M | 352k | 40k |
+| Cold review of bell branch | Opus 5.5 | 3.0M | 131k | 21k |
+| Cold review of A1 branch | Opus 5.5 | 2.5M | 116k | 20k |
+| Curate v10 screenshots | Sonnet 5.5 | 1.6M | 124k | 11k |
+| Cold review of A4 branch | Opus 5.5 | 1.6M | 131k | 20k |
+| Cold review of A2 branch | Sonnet 5.5 | 1.2M | 94k | 12k |
+| Cold review of acts branch | Opus 5.5 | 689k | 79k | 10k |
+| Cold review of edges branch | Sonnet 5.5 | 293k | 42k | 4k |
+| Blind read of A2 frame sequences | Sonnet 5.5 | 174k | 61k | 4k |
+| Blind read of A1 frame sequences | Sonnet 5.5 | 171k | 61k | 4k |
+| Blind read of bell frames | Sonnet 5.5 | 94k | 40k | 2k |
+| Blind read of door and crystal round two | Sonnet 5.5 | 94k | 59k | 2k |
+| Blind read of bell round two | Sonnet 5.5 | 91k | 56k | 2k |
+| Blind read of act renders | Sonnet 5.5 | 87k | 52k | 2k |
+
+</details>
 
 ## v9.1: The Lantern Halt
 
@@ -198,6 +366,77 @@ Adds separate volume controls and a first, experimental try at music, which is o
 Known issues: the music is an early attempt. The pieces are not very tuneful and several sound alike, which is why it is off by default; a second try is planned.
 
 <p><img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"> <img src="shots/74-settings-phone.webp" width="24%" alt="The same menu on a phone"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/73-hillside-figure-after.webp" width="24%" alt="The white figure on the hillside, cleared of rocks and plants"></p>
+
+### Stats
+
+- **Time:** 8 hours 13 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 50 sub-agents.
+- **Tokens:** 676.2 million read and written in all; 12.9 million not counting what was reread from the cache, 2.6 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 477.2M | 9.6M | 2.0M |
+| Fable 5.2 | 164.3M | 1.1M | 345k |
+| Sonnet 5.5 | 34.3M | 2.1M | 259k |
+| Haiku 5.5 | 406k | 102k | 9k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 164.3M | 1.1M | 345k |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M | 514k | 137k |
+| v8-04 story threads | Opus 5.5 | 52.2M | 890k | 164k |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M | 1.4M | 166k |
+| v8-07 Twk-men | Opus 5.5 | 45.3M | 497k | 153k |
+| v8-06 liveries | Opus 5.5 | 33.9M | 409k | 108k |
+| v8-01 roads | Opus 5.5 | 31.5M | 353k | 122k |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M | 653k | 99k |
+| v9-M6 music settings | Opus 5.5 | 19.4M | 572k | 81k |
+| v8-03 three strata | Opus 5.5 | 19.4M | 265k | 94k |
+| v8-11 the rocks | Opus 5.5 | 17.5M | 302k | 75k |
+| v8-02 ground contrast | Opus 5.5 | 17.5M | 150k | 44k |
+| v9-M1 patches and player | Opus 5.5 | 17.4M | 351k | 112k |
+| v9-T1 owner tweaks | Opus 5.5 | 17.1M | 458k | 56k |
+| v8-08 the painter | Opus 5.5 | 12.9M | 359k | 106k |
+| Finish the Lantern Halt | Opus 5.5 | 12.0M | 273k | 77k |
+| v9-M5 cheaper sound harness | Sonnet 5.5 | 11.7M | 402k | 67k |
+| Waystation C (revised skills, clean) | Opus 5.5 | 9.3M | 254k | 56k |
+| Write the visual art skill | Opus 5.5 | 6.9M | 256k | 33k |
+| v9-M2 director and bus | Sonnet 5.5 | 6.6M | 178k | 43k |
+| Cold critic for v9 | Opus 5.5 | 6.2M | 168k | 27k |
+| Waystation B (no craft skills) | Opus 5.5 | 5.9M | 203k | 54k |
+| Waystation A (with craft skills) | Opus 5.5 | 5.0M | 200k | 47k |
+| Split the wilderness skill | Opus 5.5 | 3.9M | 151k | 32k |
+| v9-M0 the score | Opus 5.5 | 3.9M | 207k | 64k |
+| Cold critic for v8 | Opus 5.5 | 3.8M | 192k | 24k |
+| Curate v8 renders | Sonnet 5.5 | 3.1M | 173k | 25k |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M | 138k | 33k |
+| Cold review v9-M6 | Opus 5.5 | 2.4M | 96k | 13k |
+| v9-M3 region tracks | Sonnet 5.5 | 2.3M | 96k | 25k |
+| v9-M4 special tracks | Sonnet 5.5 | 2.0M | 77k | 18k |
+| Backfill release-note pictures | Sonnet 5.5 | 1.5M | 119k | 15k |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M | 91k | 17k |
+| Waystation C (revised skills) | Opus 5.5 | 1.1M | 86k | 5k |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k | 86k | 8k |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k | 88k | 7k |
+| Cold review v9-M1 | Opus 5.5 | 737k | 159k | 14k |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k | 94k | 7k |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k | 83k | 6k |
+| Cold review Lantern Halt | Sonnet 5.5 | 604k | 71k | 4k |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k | 71k | 4k |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k | 67k | 4k |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k | 90k | 5k |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k | 75k | 3k |
+| Can a session self-compact | Haiku 5.5 | 406k | 102k | 9k |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k | 63k | 5k |
+| Curate v9 renders | Sonnet 5.5 | 355k | 65k | 3k |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k | 68k | 2k |
+| Cold review v9-T1 | Sonnet 5.5 | 298k | 62k | 3k |
+| Cold review v9-M0 | Sonnet 5.5 | 218k | 48k | 3k |
+| Blind read of renders | Sonnet 5.5 | 83k | 31k | 2k |
+
+</details>
 
 ## v8: One world
 
