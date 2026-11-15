@@ -10,15 +10,15 @@
 // to a gatehouse standing out of the Pit's wall at its floor). The story: stories/the-wellward-way.md. Dark, sealed
 // and stone-sounding by the kit (v14/under.js).
 // Draws: the way (one mesh a stretch: five), the room's things, the gold, the portal, the lights' and the rime's
-// points (one Points): nine. Lights: fourteen PointLights, each with its owner (lights.js keeps the nearest three).
-// It opens D0's fall of blocks behind the door (their triangles in the Coffin Road's mesh made degenerate), the Pit's
+// points (one Points): eight. Lights: fifteen PointLights, each with its owner (lights.js keeps the nearest three).
+// It opens D0's fall of blocks behind the door (their triangles in the hall's road mesh made degenerate), the Pit's
 // throat, the Pit's own rock and the terrain where the portal stands (the same), and leaves heightAt alone.
 // ?passage=0 leaves it out.
 import * as THREE from 'three';
 import { UnderBuilder, underMaterial, installBelow } from './under.js';
 import { makePlan, PASSAGE_OFF, KA, KF, MOUTH, START } from './passage/plan.js';
 import { DOOR, ROAD_Y } from './coffin-road/plan.js';
-import { PIT, pitRim } from '../v4/paths/ground.js';
+import { PIT, pitRim, pitEdge, pitBearing } from '../v4/paths/ground.js';
 import { lintelForms, prims } from '../v7/glyphs/forms.js';
 
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
@@ -28,7 +28,7 @@ const GOLDS = [C('#d8ac3c'), C('#ecc456'), C('#c09432'), C('#f2d070')], RED = C(
 const WICKER = C('#5e4a2e'), CLOTH = C('#4a1c18'), BRONZE = C('#6b4f2a'), CUT = C('#221e1b');
 const DAY = '#f4ead0', COLD = '#bcd2ff', WARM = '#ffc47e'; // stored daylight (the fourth people's, failing), the sounder's lamps (the Pit's starlight), the Reckoner's lamp
 const KIND_COL = [DAY, COLD, WARM];
-const MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C('#8a8070'), AMBER = C('#8a5a1c'), AMBER_L = C('#b4802e'), OXBLOOD = C('#5e1c16'), LENS = C('#fff6dc'), LENS_D = C('#5f6c63');
+const HELIO = C('#8e7654'), MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C('#8a8070'), AMBER = C('#8a5a1c'), AMBER_L = C('#b4802e'), OXBLOOD = C('#5e1c16'), LENS = C('#fff6dc'), LENS_D = C('#5f6c63');
 
 export async function build(ctx) {
   if (PASSAGE_OFF) { ctx.passage = { off: true }; return; }
@@ -60,7 +60,7 @@ export async function build(ctx) {
   const pitLight = (x, y, z) => { const r = rOf(x, z); return r > P.rf + 14 ? 0 : 0.55 * Math.pow(ss(P.rf + 14, P.rf - 1, r), 1.6); };
   const litFor = (kinds, R, k, mouth = false) => { const G = glow(kinds, R, k); return (x, y, z, out) => { out[0] = 0.012; out[1] = 0; out[2] = Math.min(1.2, G(x, y, z) + (mouth ? pitLight(x, y, z) : 0)); return out; }; };
   const builders = {
-    flight: new UnderBuilder(litFor([0], 7, 0.62)),
+    line: new UnderBuilder(litFor([0], 7, 0.62)),
     flute: new UnderBuilder(litFor([1], 8.5, 0.95)),
     sun: new UnderBuilder(litFor([2], 13.5, 0.95)),
     gulf: new UnderBuilder(litFor([1], 8, 1.0)),
@@ -71,7 +71,7 @@ export async function build(ctx) {
   // ---- the colours: dressed blocks in courses; the Flute's rock banded along its flutes, its grit in ripples; the room
   const hsh = P.hsh;
   function colour(kind, s, k, v, i, floorStrip) {
-    if (kind === 'flight') {
+    if (kind === 'line') {
       // the Line: milk resin, crazed (a fine darker web), clouded toward its foot; silt drifted in its floor
       if (floorStrip) { const j = 0.85 + 0.25 * hsh(i * 7 + k) + (i % 4 === 0 ? -0.08 : 0); return [SILT[0] * j, SILT[1] * j, SILT[2] * j]; }
       // (the crazing a slow clouding along and round it, not quad by quad)
@@ -158,7 +158,7 @@ export async function build(ctx) {
   // in its nodes (sealed vessels of bottle amber, an ox-blood band round each, one cracked and silted), and its broken
   // end where the wind's bore begins (shards of the tube standing out of the rock)
   {
-    const Bd = builders.flight, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3();
+    const Bd = builders.line, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3();
     const place = (x, y, z, dir, up = [0, 1, 0]) => { const f = new THREE.Vector3(...dir).normalize(), u = new THREE.Vector3(...up); const r = new THREE.Vector3().crossVectors(u, f).normalize(); u.crossVectors(f, r); M4.makeBasis(r, u, f); M4.setPosition(x, y, z); return M4.clone(); };
     const inward = (s, d, v) => { const p = P.at(s), l = Math.hypot(p.tx, p.tz), c = P.section(s); void c; const [x, y, z] = P.world(s, d, v), [cx, cy, cz] = P.world(s, 0, 1.6); return [cx - x, cy - y, cz - z]; };
     const lens = (s, d, v, lit) => {
@@ -167,8 +167,8 @@ export async function build(ctx) {
       Bd.geo(new THREE.SphereGeometry(0.2, 10, 7), place(x + n[0] * 0.03, y + n[1] * 0.03, z + n[2] * 0.03, n), lit ? LENS : LENS_D, 0.04);
     };
     for (const l of P.lamps) if (l.kind === 0) lens(l.s, l.d, l.v, true);
-    lens(P.OUT_CANDLE[0], P.OUT_CANDLE[1], P.OUT_CANDLE[2], false);
-    for (let s = 5.5; s < SP.FLIGHT - 3; s += 7.2) if (!P.lamps.some((l) => l.kind === 0 && Math.abs(l.s - s) < 2.5)) lens(s, (Math.floor(s) % 2 ? 1 : -1) * 1.3, 2.6, false);
+    lens(P.DARK_LENS[0], P.DARK_LENS[1], P.DARK_LENS[2], false);
+    for (let s = 5.5; s < SP.LINE - 3; s += 7.2) if (!P.lamps.some((l) => l.kind === 0 && Math.abs(l.s - s) < 2.5)) lens(s, (Math.floor(s) % 2 ? 1 : -1) * 1.3, 2.6, false);
     // the carriers: one lying along the first node's side, one rolled and cracked in the second, silt drifted on it
     const carrier = (s, d, roll, crack) => {
       const p = P.at(s), l = Math.hypot(p.tx, p.tz), dir = [p.tx / l, 0, p.tz / l], y = P.yAt(s);
@@ -187,7 +187,7 @@ export async function build(ctx) {
     carrier(n2, -1.5, 0.9, true);
     // the broken end: shards of the tube's wall standing out of the rock round the bore's mouth
     for (let k = 0; k < (low ? 9 : 14); k++) {
-      const a = (k / 14) * Math.PI * 2 + rng() * 0.3, s0 = SP.FLIGHT + 0.3 + rng() * 0.6, R = 2.05;
+      const a = (k / 14) * Math.PI * 2 + rng() * 0.3, s0 = SP.LINE + 0.3 + rng() * 0.6, R = 2.05;
       const d = Math.cos(a) * R, v = 1.45 + Math.sin(a) * R; if (v < 0.2) continue;
       const [x, y, z] = P.world(s0, d, v), [x2, y2, z2] = P.world(s0 + 0.6 + rng() * 0.9, d * 0.92, 1.45 + (v - 1.45) * 0.92);
       Bd.beam([x, y, z], [x2, y2, z2], 0.05 + rng() * 0.05, MILK_D, 0.1);
@@ -323,6 +323,7 @@ export async function build(ctx) {
     const [bkx, bkz] = sunW(3.7, workA - 0.18);
     const ringB = []; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; ringB.push([bkx + Math.cos(a) * 0.27, bkz + Math.sin(a) * 0.27]); }
     RB.prism(ringB, fy, fy + 0.14, WICKER, WICKER, 0.18);
+    ctx.addCollider?.({ x: bkx, z: bkz, r: 0.32, y: fy, h: 0.25, stand: false }); // the basket
     for (let i = 0; i < (low ? 40 : 70); i++) {
       const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * 0.24, h = (1 - (r / 0.25) ** 2) * 0.08;
       const col = i % 23 === 0 ? RED : i % 31 === 0 ? OCHRE : i === 7 ? SLATE : GOLDS[i % 4];
@@ -350,7 +351,7 @@ export async function build(ctx) {
 
   // ---- the Pit's door: a gatehouse of dressed stone standing out of the wall at its foot, the way through it, the old
   // sun over the lintel (its gold gone), one of the sounder's lamps on a bracket by it; seen from the Pit's floor
-  const glowPO = glow([1], 8, 0.5);
+  const glowPO = glow([2], 8, 0.55); // the warm lamp by the door
   const PO = new UnderBuilder((x, y, z, out) => { out[0] = 0.2; out[1] = 0.18; out[2] = glowPO(x, y, z); return out; });
   const portal = (() => {
     const M = P.M, Y = P.YM, rx = -oz, rz = ox; // across the mouth (its right, looking out of the passage... any)
@@ -372,7 +373,7 @@ export async function build(ctx) {
     box(mid + 0.35, 0, top + 0.12, depth - 0.35, order, 0.12, STONE_D);
     box(f0 - 0.12, 0, Y + 6.9, 0.2, outer + 0.3, 0.22, STONE_D);
     for (let i = 0; i < 14; i++) { const lat = (rng() - 0.5) * 2 * (outer + 0.6), h = 0.3 + rng() * 0.5; box(f0 + 0.2 + rng() * 0.6, lat, Y + 7.2 + rng() * 0.9, 0.5, 0.4 + rng() * 0.5, h, STONE_D); }
-    // the sun over the door: a boss and its rays in relief, its sockets empty
+    // the sun over the door: a boss and its rays in relief, its sockets empty (the Heliarchs')
     const [sx, , sz] = W(f0 - 0.06, 0, 0), sy = top + 1.95, R = 0.62;
     const P3 = (r, a) => [sx + rx * Math.cos(a) * r, sy + Math.sin(a) * r, sz + rz * Math.cos(a) * r];
     for (let i = 0; i < 20; i++) {
@@ -390,13 +391,36 @@ export async function build(ctx) {
     for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) PO.beam([lampAt[0] + a * 0.07, Y + 2.38, lampAt[2] + b * 0.07], [lampAt[0] + a * 0.07, Y + 2.66, lampAt[2] + b * 0.07], 0.008, IRON, 0.03);
     PO.box(lampAt[0], Y + 2.37, lampAt[2], 0.09, 0.012, 0.09, 0, IRON); PO.box(lampAt[0], Y + 2.67, lampAt[2], 0.09, 0.012, 0.09, 0, IRON);
     PO.beam([lampAt[0], Y + 2.67, lampAt[2]], [lampAt[0], Y + 2.85, lampAt[2]], 0.006, IRON, 0.02);
-    return { W, f0, f1, open, top, outer, lamp: { x: lampAt[0], y: Y + 2.5, z: lampAt[2] } };
+    // the Heliarchs' frame round the mouth, so it is found from across the floor: their hexagon (flat-topped, its
+    // foot under the floor) in raised warm stone on the face, a roundel at each of its corners
+    const hx = (lat, y) => [M[0] + ox * (f0 - 0.1) + rx * lat, y, M[1] + oz * (f0 - 0.1) + rz * lat];
+    const HEX = [[-1.45, Y - 0.61], [-2.9, Y + 1.9], [-1.45, Y + 4.41], [1.45, Y + 4.41], [2.9, Y + 1.9], [1.45, Y - 0.61]];
+    for (let i = 0; i < 5; i++) PO.beam(hx(...HEX[i]), hx(...HEX[i + 1]), 0.11, HELIO, 0.06);
+    const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(rx, 0, rz), new THREE.Vector3(-ox, 0, -oz), new THREE.Vector3(0, 1, 0));
+    for (const [lat, y] of HEX.slice(1, 5)) {
+      const [x0, y0, z0] = hx(lat, y), m = face.clone().setPosition(x0 - ox * 0.06, y0, z0 - oz * 0.06);
+      PO.geo(new THREE.CylinderGeometry(0.34, 0.38, 0.16, 18), m, HELIO, 0.05);
+      PO.geo(new THREE.CylinderGeometry(0.14, 0.16, 0.24, 12), m, STONE_D, 0.05);
+    }
+    // what stops a walker (walls of capsules from under the floor to over the lintel): each pier's face, its outer side
+    // running on back into the wall, the recess's side, the inner jamb's face and the reveal of the way through
+    if (ctx.addCollider) {
+      const wall = (a0, l0, a1, l1, r = 0.18) => { const [x1, , z1] = W(a0, l0, 0), [x2, , z2] = W(a1, l1, 0); ctx.addCollider({ x1, z1, x2, z2, r, y: Y - 1, h: 10, stand: false }); };
+      for (const s of [-1, 1]) {
+        wall(f0 + 0.18, s * order, f0 + 0.18, s * (outer + 0.1));
+        wall(f0, s * (outer + 0.18), f1 + 3, s * (outer + 0.18));
+        wall(f0 + 0.1, s * (order + 0.15), f0 + 0.6, s * (order + 0.15));
+        wall(f0 + 0.85, s * open, f0 + 0.85, s * order);
+        wall(f0 + 0.7, s * (open + 0.15), f1 + 0.3, s * (open + 0.15));
+      }
+    }
+    return { W, f0, f1, open, order, top, outer, lamp: { x: lampAt[0], y: Y + 2.5, z: lampAt[2] } };
   })();
 
   // ---- the meshes: one a stretch, each its own glow colour; far fades each to black
   const meshes = [];
-  const FAR = { flight: [12, 30], flute: [14, 34], sun: [16, 36], gulf: [9, 26], gate: [14, 34] };
-  const GLOWC = { flight: DAY, flute: COLD, sun: WARM, gulf: COLD, gate: COLD };
+  const FAR = { line: [12, 30], flute: [14, 34], sun: [16, 36], gulf: [9, 26], gate: [14, 34] };
+  const GLOWC = { line: DAY, flute: COLD, sun: WARM, gulf: COLD, gate: COLD };
   for (const [name, Bd] of Object.entries(builders)) {
     const mat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0.02 }), 'passage-' + name, GLOWC[name], { far: FAR[name] });
     const m = new THREE.Mesh(Bd.geometry(), mat); m.name = 'passage-' + name; m.castShadow = false; m.receiveShadow = true;
@@ -404,23 +428,23 @@ export async function build(ctx) {
   }
   const gmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.85 }), 'passage-gold', WARM, { far: [14, 34] });
   const gold = new THREE.Mesh(G.geometry(), gmat); gold.name = 'passage-gold'; gold.receiveShadow = true; scene.add(gold); meshes.push(gold);
-  const pmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02 }), 'passage-portal', COLD);
+  const pmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02 }), 'passage-portal', WARM);
   const portalMesh = new THREE.Mesh(PO.geometry(), pmat); portalMesh.name = 'passage-portal'; portalMesh.castShadow = true; portalMesh.receiveShadow = true; scene.add(portalMesh); meshes.push(portalMesh);
   await ctx.progress?.('the wellward way', 0.75);
 
   // ---- the points: the flames and the beads of the lamps; the Flute's rime; the Gulf's motes going up
-  const PT = []; // [x, y, z, size, phase, kind] kind 0 green flame, 1 cold bead, 2 warm flame, 3 rime, 4 mote
+  const PT = []; // [x, y, z, size, phase, kind] kind 0 a lens's stored daylight, 1 cold bead, 2 warm flame, 3 rime, 4 mote
   for (const l of P.lamps) PT.push([l.x, l.y + (l.kind === 1 ? -0.08 : 0), l.z, l.kind === 1 ? 0.12 : l.kind === 2 ? 0.17 : 0.16, rng() * 40, l.kind]);
   {
     const n = low ? 420 : 760;
     for (let i = 0; i < n; i++) {
-      const s = SP.FLIGHT + 1.5 + rng() * (SP.SUN - SP.RC - SP.FLIGHT - 1.5), sec = P.section(s);
+      const s = SP.LINE + 1.5 + rng() * (SP.SUN - SP.RC - SP.LINE - 1.5), sec = P.section(s);
       const k = 2 + Math.floor(rng() * (KA - 4)), f = rng(), a = sec.pts[k], b = sec.pts[k + 1];
       const u = (a[0] + (b[0] - a[0]) * f) * 0.985, v = (a[1] + (b[1] - a[1]) * f) * 0.985 + 0.01;
       if (v < 0.25) continue;
       const [x, y, z] = P.world(s, u, v), big = rng() < 0.06;
       // thicker toward the Pit (the wind's end of it), and in drifts along the flutes
-      if (rng() > 0.35 + 0.65 * (s - SP.FLIGHT) / (SP.SUN - SP.RC - SP.FLIGHT) && !big) continue;
+      if (rng() > 0.35 + 0.65 * (s - SP.LINE) / (SP.SUN - SP.RC - SP.LINE) && !big) continue;
       PT.push([x, y, z, big ? 0.035 : 0.016 + rng() * 0.012, rng() * 40, 3]);
     }
     for (let i = 0; i < (low ? 70 : 130); i++) {
@@ -469,7 +493,7 @@ export async function build(ctx) {
   // ---- the lights: one at each flame and bead, its owner's colour
   const lights = [];
   for (const l of P.lamps) {
-    const [i, d] = l.kind === 0 ? [1.3, 8] : l.kind === 2 ? [5.5, 13] : l.outside ? [3.2, 11] : [2.3, 10];
+    const [i, d] = l.outside ? [3.6, 12] : l.kind === 0 ? [1.3, 8] : l.kind === 2 ? [5.5, 13] : [2.3, 10];
     const L = new THREE.PointLight(new THREE.Color(KIND_COL[l.kind]), i, d, 2); L.position.set(l.x, l.y + 0.05, l.z); L.name = 'passage-light';
     scene.add(L); lights.push({ L, i, ph: rng() * 6, kind: l.kind });
   }
@@ -524,21 +548,30 @@ export async function build(ctx) {
     cuts.terrain = cutIdx(T.mesh.geometry, tcut);
     cutIdx(scene.getObjectByName('saltings-crust')?.geometry, tcut);
   }
+  // loud, not silent: each cut is into another module's mesh by name and place; one that removed nothing means a name
+  // or a shape moved under it (edges-test checks the same). The terrain's may be 0 when the Pit's own cut took them.
+  for (const [k, name] of [['fall', 'the hall road\'s fall of blocks (coffin-road)'], ['throat', 'the Pit\'s throat (paths-pit-throat)'], ['pitRock', 'the Pit\'s rock (pit-floor)']]) {
+    if (k === 'pitRock' && (!ctx.pit || ctx.pit.off)) continue;
+    if (!cuts[k]) console.warn(`[fp] passage: the cut of ${name} removed nothing: a mesh's name or shape has moved`);
+  }
 
   // ---- the floors: the passage's (one stacked floor with held edges, the bridge's deck in the Gulf), and a catch at
   // the bottom of the Gulf that gives a walker back to the bridge
   ctx.addWalkable(P.floor, { stack: true, keep: true, name: 'passage' });
   ctx.addWalkable(P.catchFloor, { stack: true, keep: true, name: 'passage-gulf' });
-  // what stands on the moor over the way: an uncapped collider is a column to the sky and down through the ground
-  // (the Pit's rim ring stands across the Gate), so each one whose foot is within reach of the way is given a bottom
-  // 1.5 m under the ground it stands on (as the trees' and rocks' are): the same above the ground, nothing below. Run
-  // again once every module is built, for the colliders added after this one.
+  // what stands over the way: an uncapped collider is a column to the sky and down through the ground. The only ones
+  // over this way are the Pit's rim ring (v4/paths.js), which stands across the Gate; capOver touches those alone: a
+  // round uncapped collider within 1.5 m of the rim, within 25 degrees of the mouth's bearing, and within reach of the
+  // way, gets a bottom 1.5 m under the ground it stands on (the same above the ground, nothing below). Any other
+  // uncapped collider found over the way is a fault for its module, and edges-test fails it. Run again once every
+  // module is built, for rim colliders added after this one.
   const _c = { i: 0, s: 0, d: 0, e: 0, t: 0 }, CX0 = Math.min(...P.X) - 20, CX1 = Math.max(...P.X) + 20, CZ0 = Math.min(...P.Z) - 20, CZ1 = Math.max(...P.Z) + 20;
   const capOver = () => {
     let n = 0;
     for (const c of ctx.controls?.state?.colliders || []) {
-      if (c.y !== undefined) continue;
-      const pts = c.x1 !== undefined ? [[c.x1, c.z1], [c.x, c.z], [c.x2, c.z2]] : [[c.x, c.z]];
+      if (c.y !== undefined || c.x1 !== undefined) continue;
+      if (Math.abs(pitEdge(c.x, c.z)) > 1.5 || Math.abs(((pitBearing(c.x, c.z) - MOUTH.b + 540) % 360) - 180) > 25) continue;
+      const pts = [[c.x, c.z]];
       let hit = false;
       for (const [x, z] of pts) {
         if (x < CX0 || x > CX1 || z < CZ0 || z > CZ1) continue;
@@ -554,7 +587,7 @@ export async function build(ctx) {
   };
   cuts.colliders = capOver();
   ctx.built?.().then(() => { cuts.colliders += capOver(); });
-  // the room's things a walker would walk through: his lamp, the basket
+  // the room's things a walker would walk through: his lamp (the basket's is with it, above)
   if (ctx.addCollider) {
     const L2 = P.lamps.find((l) => l.kind === 2);
     ctx.addCollider({ x: L2.x, z: L2.z, r: 0.25, y: sun.y, h: 0.7, stand: false });
@@ -577,8 +610,8 @@ export async function build(ctx) {
     return v;
   };
   const vols = [
-    below.add(vol(0, SP.FLIGHT, 1.3, 4.5), { size: 0.35 }),
-    below.add(vol(SP.FLIGHT, SP.SUN - SP.RC, 2.6, 4.5), { size: 0.45 }),
+    below.add(vol(0, SP.LINE, 1.3, 4.5), { size: 0.35 }),
+    below.add(vol(SP.LINE, SP.SUN - SP.RC, 2.6, 4.5), { size: 0.45 }),
     below.add(vol(SP.SUN - SP.RC, SP.NECK0, SP.RC + 0.5, 9.5), { size: 0.75 }),
     below.add(vol(SP.NECK0, SP.GULF0, 1.3, 4.0), { size: 0.35 }),
     below.add(vol(SP.GULF0, SP.GULF1, 15, 11), { size: 1 }),
@@ -591,10 +624,10 @@ export async function build(ctx) {
   for (const m of meshes) below.keep(m);
   below.keep(points);
 
-  // the way, for heights-test and edges-test: from the Coffin Road's door spur through the door, down the Flight, the
+  // the way, for heights-test and edges-test: from the hall's road by the south door, through the door, down the Line, the
   // Flute, across the room, over the Gulf, down the Gate and out onto the Pit's floor
   const path = [[DOOR.x, DOOR.z - 1.6, ROAD_Y], [DOOR.x, DOOR.z + 1.0, DOOR.sill], [DOOR.x, 59.0, START.y]];
-  for (const s of [1, 4, 8, 12, 16, 20, SP.FLIGHT, SP.FLIGHT + 8, SP.FLIGHT + 16, SP.FLIGHT + 24, SP.FLIGHT + 32, SP.SUN - SP.RC - 0.5, SP.SUN, SP.NECK0 + 1, SP.GULF0 + 4, SP.GULF0 + 11, SP.GULF1 - 2, SP.GULF1 + 4, SP.GULF1 + 9, P.L - 2, P.L - 0.3]) {
+  for (const s of [1, 4, 8, 12, 16, 20, SP.LINE, SP.LINE + 8, SP.LINE + 16, SP.LINE + 24, SP.LINE + 32, SP.SUN - SP.RC - 0.5, SP.SUN, SP.NECK0 + 1, SP.GULF0 + 4, SP.GULF0 + 11, SP.GULF1 - 2, SP.GULF1 + 4, SP.GULF1 + 9, P.L - 2, P.L - 0.3]) {
     const p = P.at(s); path.push([p.x, p.z, P.yAt(s)]);
   }
   path.push([P.M[0] + P.IN[0] * 1.6, P.M[1] + P.IN[1] * 1.6]); // out onto the Pit's floor

@@ -173,8 +173,29 @@ const R = await page.evaluate(async () => {
   // floor, never under it, and a hop's eye never within 0.15 m of the vault over it (the camera's near plane);
   // dropped into the Gulf off the bridge, put back on the bridge within three seconds; and no uncapped collider of
   // the moor's still stands across the way (each is given a bottom under its ground)
+  if (!fp.passage || fp.passage.off) res.push({ bwOff: true, why: fp.passage ? 'off (no road in the hall to leave from, or ?passage=0)' : 'not built' });
   if (fp.passage && !fp.passage.off) {
     const PS = fp.passage, P = PS.plan, SP = P.SP, q = { i: 0, s: 0, d: 0, e: 0, t: 0 };
+    // its cuts into other modules' meshes each removed something (a renamed or reshaped mesh makes one a silent no-op)
+    res.push({ bwCuts: true, cuts: { ...PS.cuts }, pit: !!(fp.pit && !fp.pit.off) });
+    // the gatehouse from the Pit's side: a hurry at each pier's face and outer corner from 6 m out on the floor never
+    // puts the walker inside a pier or behind it, nor drops them into the trench
+    { const po = PS.portal, ox = -P.IN[0], oz = -P.IN[1], rx = -oz, rz = ox, M = P.M;
+      const loc = (x, z) => { const dx = x - M[0], dz = z - M[1]; return [dx * ox + dz * oz, dx * rx + dz * rz]; };
+      for (const lat of [-3.7, -2.7, -1.9, 1.9, 2.7, 3.7]) {
+        const sa = po.f0 - 6, [sx, , sz] = po.W(sa, lat * 0.6, 0), [tx, , tz] = po.W(po.f1 + 2, lat, 0);
+        fp.controls.placeAt(sx, sz); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+        const f0 = p.pos.y - p.eye; let inside = 0, drop = 0, far = -Infinity;
+        for (let i = 0; i < 240; i++) {
+          p.yaw = Math.atan2(-(tx - p.pos.x), -(tz - p.pos.z)); fp.controls.update(DT);
+          const [al, la] = loc(p.pos.x, p.pos.z), A = Math.abs(la);
+          if ((al > po.f0 + 0.05 && A > po.open + 0.05 && A < po.outer + 0.3) || (al > po.f1 && A > po.open + 0.05 && A < po.outer + 3)) inside++;
+          drop = Math.max(drop, f0 - (p.pos.y - p.eye)); far = Math.max(far, al);
+        }
+        p.keys.clear();
+        res.push({ bwPier: `at the gatehouse from the Pit's floor, aimed ${lat > 0 ? 'right' : 'left'} of the door at ${Math.abs(lat)} m`, inside, drop, far });
+      }
+    }
     const side = (s, sgn, hop, secs = 2) => {
       const a = P.at(s), l = Math.hypot(a.tx, a.tz), rx = -a.tz / l, rz = a.tx / l;
       fp.controls.placeAt(a.x, a.z, P.yAt(s) + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
@@ -189,7 +210,7 @@ const R = await page.evaluate(async () => {
       p.keys.clear();
       return { off, low, head, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
     };
-    const where = [[6, 'the Line\'s first node'], [14, 'the Line\'s slope'], [SP.FLIGHT + 8, 'the Flute'], [SP.FLIGHT + 22, 'the Flute, further'], [SP.SUN + 1.5, 'the Laid Sun'], [SP.NECK0 + 1.2, 'the neck'], [SP.GULF0 + 5, 'the Gulf\'s bridge'], [SP.GULF0 + 16, 'the Gulf\'s bridge, further'], [SP.GULF1 + 6, 'the Gate\'s stair'], [P.L - 3, 'the Gate by the Pit\'s door']];
+    const where = [[6, 'the Line\'s first node'], [14, 'the Line\'s slope'], [SP.LINE + 8, 'the Flute'], [SP.LINE + 22, 'the Flute, further'], [SP.SUN + 1.5, 'the Laid Sun'], [SP.NECK0 + 1.2, 'the neck'], [SP.GULF0 + 5, 'the Gulf\'s bridge'], [SP.GULF0 + 16, 'the Gulf\'s bridge, further'], [SP.GULF1 + 6, 'the Gate\'s stair'], [P.L - 3, 'the Gate by the Pit\'s door']];
     for (const [s, name] of where) for (const sgn of [-1, 1]) for (const hop of [false, true]) {
       const r = side(s, sgn, hop);
       res.push({ bw: `off ${name} (s ${s.toFixed(0)}) to the ${sgn > 0 ? 'right' : 'left'}, ${hop ? 'hopping' : 'hurrying'}`, ...r });
@@ -278,6 +299,9 @@ const f = (v) => v.toFixed(2);
 for (const r of R) {
   if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Coffin Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
   if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.bwOff) { check(false, 'the Wellward Way is built (its edges rows run)', r.why); continue; }
+  if (r.bwCuts) { const need = ['fall', 'throat'].concat(r.pit ? ['pitRock'] : []); check(need.every((k) => r.cuts[k] > 0), 'the Wellward Way: each of its cuts into another module\'s mesh removed something', need.map((k) => `${k} ${r.cuts[k]}`).join(', ') + `; terrain ${r.cuts.terrain} (may be 0), colliders ${r.cuts.colliders}`); continue; }
+  if (r.bwPier) { check(r.inside === 0 && r.drop < 1, `the Wellward Way: ${r.bwPier}: never inside or behind a pier, never dropped`, `${r.inside} ticks inside, dropped ${f(r.drop)} m, got to ${f(r.far)} m along`); continue; }
   if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Wellward Way: ${r.bw}: held on its floor, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
   if (r.gulf) { check(r.caught && r.back !== null && r.back <= 3 && r.low > -0.15, 'the Wellward Way: dropped into the Gulf off the bridge, caught and put back on the bridge within 3 s', `${r.caught ? 'caught' : 'not caught'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.low)} m under the catch`); continue; }
   if (r.cols) { check(r.n === 0, 'the Wellward Way: no uncapped collider of the moor\'s stands down through the way', `${r.capped} given a bottom; ${r.n} left${r.left.length ? ' at ' + r.left.map((a) => a.join(', ')).join('; ') : ''}`); continue; }

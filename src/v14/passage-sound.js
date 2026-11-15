@@ -3,7 +3,7 @@
 // (v14/pit-sound.js, heard in the passage within ~60 m of the Pit). All in D (palette.md). No cues: both are the
 // place's, started and scheduled here by where the listener is.
 //
-//   the drip    at the foot of the door's three steps, where the Nave's wet comes through the fallen vault: drops into a
+//   the drip    at the foot of the door's three steps, where the Nave's water seeps through the old stair's broken vault: drops into a
 //               puddle in phrases (one to three, a breath apart, then 7-17 s of nothing), pitched on A5, D6 and F6 a
 //               little out of true, a small tick of water under each, through the stone room. Detail, 22 m: heard
 //               in the Line as far as its first node, gone by the second
@@ -11,7 +11,7 @@
 //               notes (A2 and D3, narrow bands of noise, never a tone), at the nearest point of the Flute or the Gulf
 //               a few metres toward the Pit (in the Gulf, from below the bridge). It breathes in slow surges (10-16
 //               s). Its level by where the listener is: nothing in the Line's first half and above the ground, a
-//               little at the cut's end, most in the Flute, less in the room, all of it over the Gulf, and fading
+//               little where the Line breaks into the bore, most in the Flute, less in the room, all of it over the Gulf, and fading
 //               out down the Gate as the Pit's own breath comes up. Bed, under the steps
 const A2 = 110.0, D3 = 146.83, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;
 
@@ -76,8 +76,8 @@ export function startPassageSound(a, ctx) {
       P.near(cam.x, cam.z, q);
       if (q.e < 16) {
         s = q.s;
-        lvl = s < SP.FLIGHT ? 0.35 * ss(SP.FLIGHT * 0.5, SP.FLIGHT, s)
-          : s < SP.SUN - SP.RC ? 0.55 + 0.25 * ss(SP.FLIGHT, SP.SUN - SP.RC, s)
+        lvl = s < SP.LINE ? 0.35 * ss(SP.LINE * 0.5, SP.LINE, s)
+          : s < SP.SUN - SP.RC ? 0.55 + 0.25 * ss(SP.LINE, SP.SUN - SP.RC, s)
           : s < SP.GULF0 ? 0.5
           : s < SP.GULF1 ? 1.0
           : 1 - 0.75 * ss(SP.GULF1, P.L, s);
@@ -96,12 +96,12 @@ export function startPassageSound(a, ctx) {
     if (lvl > 0.001 && !B.on) start();
     if (!B.on) return;
     const Pp = B.parts;
-    const ssrc = clamp(s + 6, SP.FLIGHT, SP.GULF1), a0 = P.at(ssrc), inGulf = ssrc > SP.GULF0 && ssrc < SP.GULF1;
+    const ssrc = clamp(s + 6, SP.LINE, SP.GULF1), a0 = P.at(ssrc), inGulf = ssrc > SP.GULF0 && ssrc < SP.GULF1;
     setPos(Pp.p, a0.x, P.yAt(ssrc) + (inGulf ? -9 : 1.6), a0.z);
     const w1 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.07, 41.7), w2 = 0.5 + 0.5 * ctx.noise.noise2(t * 0.17, 9.1);
     const surge = 0.4 + 0.6 * w1 * w1;
     Pp.out.gain.setTargetAtTime(0.0001 + 0.3 * lvl * surge, now, 0.7);
-    Pp.hG.gain.setTargetAtTime((1.4 + 1.8 * w1) * (s > SP.FLIGHT && s < SP.SUN - SP.RC ? 1.3 : 0.8), now, 0.9);
+    Pp.hG.gain.setTargetAtTime((1.4 + 1.8 * w1) * (s > SP.LINE && s < SP.SUN - SP.RC ? 1.3 : 0.8), now, 0.9);
     Pp.hA.frequency.setTargetAtTime(A2 * (1 + 0.005 * (w2 - 0.5)), now, 1.5);
     Pp.rush.frequency.setTargetAtTime(330 + 260 * w1, now, 0.8);
     Pp.rushG.gain.setTargetAtTime(0.35 + 0.3 * w2, now, 0.7);

@@ -3,7 +3,7 @@
 // tests. Everything is laid along one centreline, sampled every DS m: s is the distance along it from the door, d
 // the signed distance across it (+ to the walker's right going toward the Pit), y(s) the floor.
 //
-//   the Line             s 0 .. FLIGHT   the fourth people's tube going on south from the Nave: round, ribbed,
+//   the Line             s 0 .. LINE   the fourth people's tube going on south from the Nave: round, ribbed,
 //                                         seamless milk-white resin, silted, crazed, two nodes (swellings where it
 //                                         levels) with a stalled carrier in each, lit by what stored daylight is left
 //                                         in its lenses; it ends broken where the wind's bore begins
@@ -19,7 +19,7 @@
 //                                         Pit's wall at its floor on bearing MOUTH.b (D2's plan keeps it clear)
 import { PIT, pitRim } from '../../v4/paths/ground.js';
 import { DOOR } from '../coffin-road/plan.js';
-import { makeFloor as pitFloor } from '../pit/plan.js'; // v14-D2: the Pit's bowl, whose edge the mouth meets
+import { makeFloor as pitFloor, FLOOR as PIT_FLOOR } from '../pit/plan.js'; // v14-D2: the Pit's bowl, whose edge the mouth meets
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 export const PASSAGE_OFF = !!Q && (Q.get('passage') === '0' || (Q.get('skip') || '').split(',').includes('passage') || (Q.get('only') !== null && !Q.get('only').split(',').includes('passage')));
@@ -31,7 +31,7 @@ const dirOf = (b) => { const a = (b * Math.PI) / 180; return [Math.sin(a), -Math
 // The mouth: where the passage's floor meets the Pit's, on bearing b, at the wall's foot (D2's v14/pit/plan.js FLOOR.out
 // = 3.4 m in from the rim, where its bowl meets the terrain: there both floors are heightAt). The portal stands
 // PORTAL m out from there on the Pit's floor. Change b (or out) and the last straight, the portal and the cuts follow.
-export const MOUTH = { b: 20, out: 3.4, portal: 1.9, straight: 12 };
+export const MOUTH = { b: 20, out: PIT_FLOOR?.out ?? 3.4, portal: 1.9, straight: 12 }; // out: D2's FLOOR.out, the bowl's edge in from the rim
 // the door: D0's passage behind the Nave's south door ends at z = DOOR.z + DOOR.depth + 2.5 (its walls and vault to
 // there), its floor DOOR.treads below the sill
 export const START = { x: DOOR.x, z: DOOR.z + DOOR.depth + 2.5, y: DOOR.sill - DOOR.rise * DOOR.treads, half: DOOR.half, h: DOOR.h + DOOR.rise * DOOR.treads };
@@ -89,15 +89,15 @@ export function makePlan(T) {
   const sAt = (x, z) => { let bi = 0, bd = Infinity; for (let i = 0; i < N; i++) { const d = (X[i] - x) ** 2 + (Z[i] - z) ** 2; if (d < bd) { bd = d; bi = i; } } return S[bi]; };
 
   // ---- the spaces along s
-  const FLIGHT = sAt(P1[4][0], P1[4][1]), SUN = sAt(SUNC[0], SUNC[1]);
+  const LINE = sAt(P1[4][0], P1[4][1]), SUN = sAt(SUNC[0], SUNC[1]);
   const NECK0 = SUN + RC, GULF0 = SUN + RC + 2.4, GULF1 = GULF0 + 22, GATE_STAIR = [GULF1 + 2.2, GULF1 + 12.2];
-  const SP = { FLIGHT, SUN, RC, NECK0, GULF0, GULF1, L, RF: rf };
+  const SP = { LINE, SUN, RC, NECK0, GULF0, GULF1, L, RF: rf };
   // ---- the floor: knots (s, y); stairs where `stair` says (treads drawn over the slope)
   const Y0 = START.y, YF = -21.4, YS = -28.0, YB = -30.4;
   // the Pit's floor at the mouth: D2's bowl at its edge on the mouth's bearing (its FLOOR.edge), read from its own floor
   // a hand inside the edge; the terrain only if the bowl has nothing there
   const YM = (() => { const r = rf - 0.02; try { const y = pitFloor(T, null).y(C.x + ox * r, C.z + oz * r); if (y !== null && y !== undefined && isFinite(y)) return y; } catch (e) { /* no Pit */ } return T.heightAt(M[0], M[1]); })();
-  const fl = FLIGHT;
+  const fl = LINE;
   // the Line: level at the door's end and at its two nodes (NODES), a slope of silt between (no stair: a tube has none)
   const land = [[0, Y0], [2.0, Y0]];
   { const a = 2.0, n = 3, lw = 3.2, run = (fl - a - lw * (n - 1)) / n, dy = (YF - Y0) / n; let s = a, y = Y0;
@@ -110,7 +110,7 @@ export function makePlan(T) {
     return KN[KN.length - 1][1];
   };
   const stairAt = (s) => { for (const st of STAIRS) if (s >= st[0] && s <= st[1]) return st; return null; };
-  const kindAt = (s) => (s < FLIGHT ? 'flight' : s < SUN - RC ? 'flute' : s < NECK0 ? 'sun' : s < GULF0 ? 'neck' : s < GULF1 ? 'gulf' : 'gate');
+  const kindAt = (s) => (s < LINE ? 'line' : s < SUN - RC ? 'flute' : s < NECK0 ? 'sun' : s < GULF0 ? 'neck' : s < GULF1 ? 'gulf' : 'gate');
 
   // ---- the sections: KA points round the walls and vault, right floor end (u > 0) over the top to the left, as [u, v]
   // from the floor at y(s), and v0, the floor strip's v (the floor strip runs between the two ends)
@@ -191,8 +191,8 @@ export function makePlan(T) {
   }
   function section0(s, v0) {
     if (s < 1.6) return lerpSec(rect(START.half, START.h, START.h, v0), tube(s), ss(0, 1.6, s)); // the door opens into the tube
-    if (s < FLIGHT - 1.5) return tube(s);
-    if (s < FLIGHT + 2.5) return lerpSec(tube(s), flute(s, 0), ss(FLIGHT - 1.5, FLIGHT + 2.5, s)); // the tube broken where the bore begins
+    if (s < LINE - 1.5) return tube(s);
+    if (s < LINE + 2.5) return lerpSec(tube(s), flute(s, 0), ss(LINE - 1.5, LINE + 2.5, s)); // the tube broken where the bore begins
     if (s < SUN - RC) return flute(s, 0);
     if (s < NECK0) return lerpSec(flute(s, 0), room(roomW(s)), ss(1.85, 2.9, roomW(s)));
     if (s < GULF0) { const neck = rect(1.05, 2.7, 3.4, 0); return s < NECK0 + 0.5 ? lerpSec(room(Math.max(1.05, roomW(s))), neck, ss(NECK0 - 0.1, NECK0 + 0.5, s)) : neck; }
@@ -204,7 +204,7 @@ export function makePlan(T) {
   const BRIDGE = 0.85;
   function walkHalf(s) {
     if (s < 0 || s > L) return -1;
-    if (s < FLIGHT - 1) return s < 1.6 ? 0.78 : 0.95 + 1.05 * nodeAt(s);
+    if (s < LINE - 1) return s < 1.6 ? 0.78 : 0.95 + 1.05 * nodeAt(s);
     if (s < SUN - RC) return 1.25;
     if (s < NECK0) return Math.max(1.25, roomW(s) - 0.9); // off the bench round the drum
     if (s < GULF0) return 0.72;
@@ -267,21 +267,22 @@ export function makePlan(T) {
   const n1 = (NODES[0][0] + NODES[0][1]) / 2, n2 = (NODES[1][0] + NODES[1][1]) / 2;
   const LAMPS = [
     [2.2, 1.05, 2.45, 0], [n1, -2.35, 2.5, 0], [n2, 2.35, 2.5, 0], [(n1 + n2) / 2, -1.25, 2.6, 0],
-    [FLIGHT + 5.0, -1.55, 2.0, 1], [FLIGHT + 14.5, 1.6, 2.0, 1], [FLIGHT + 24.5, -1.6, 2.0, 1], [FLIGHT + 34.5, 1.55, 2.0, 1],
+    [LINE + 5.0, -1.55, 2.0, 1], [LINE + 14.5, 1.6, 2.0, 1], [LINE + 24.5, -1.6, 2.0, 1], [LINE + 34.5, 1.55, 2.0, 1],
     [SUN + 0.9, 3.1, 0.62, 2],
     [GULF0 + 0.7, 0.95, 1.45, 1], [GULF0 + 11.0, -0.95, 1.45, 1], [GULF1 - 0.7, 0.95, 1.45, 1],
     [GULF1 + 5.0, -1.0, 2.1, 1], [L - 5.5, 1.0, 2.1, 1],
   ];
   // the Line's last lens, where it is broken, dark
-  const OUT_CANDLE = [FLIGHT - 2.2, 1.3, 2.4];
+  const DARK_LENS = [LINE - 2.2, 1.3, 2.4];
   const lamps = LAMPS.map(([s, d, v, k]) => { const [x, y, z] = world(s, d, v); return { s, d, v, kind: k, x, y, z }; });
-  // the sounder's lamp outside, on a bracket off the portal's right pier (looking out of the passage), seen from the Pit
-  { const al = -MOUTH.portal - 0.75, lat = 2.0, rx = -oz, rz = ox; lamps.push({ s: L - al, d: -lat, v: 2.5, kind: 1, outside: true, x: M[0] + ox * al + rx * lat, y: YM + 2.5, z: M[1] + oz * al + rz * lat }); }
+  // the Reckoner's lamp outside, warm, on a bracket off the portal's right pier (looking out of the passage): the way
+  // he comes; it is what finds the door from across the Pit's floor
+  { const al = -MOUTH.portal - 0.75, lat = 2.0, rx = -oz, rz = ox; lamps.push({ s: L - al, d: -lat, v: 2.5, kind: 2, outside: true, x: M[0] + ox * al + rx * lat, y: YM + 2.5, z: M[1] + oz * al + rz * lat }); }
 
   // ---- the Laid Sun: the room's centre, its axis, the sun's radius in the floor, where the work stands
   const sun = { x: SUNC[0], z: SUNC[1], y: YS, ux: U[0], uz: U[1], r: 3.3, rc: RC };
   return {
     L, N, step, X, Z, TX, TZ, S, M, YM, rf, IN, SP, kindAt, yAt, stairAt, STAIRS, section, walkHalf, ceilAt, near, floor, catchFloor, at, world,
-    lamps, OUT_CANDLE, NODES, nodeAt, sun, TREAD_DROP, BRIDGE, roomW, nz, hsh,
+    lamps, DARK_LENS, NODES, nodeAt, sun, TREAD_DROP, BRIDGE, roomW, nz, hsh,
   };
 }

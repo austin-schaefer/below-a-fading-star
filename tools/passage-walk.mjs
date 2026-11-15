@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // The Wellward Way walked (v14-D1): a judge's tool, not a gate (the model: tools/coffin-walk.mjs). One page: press
-// "Go out" on the Coffin Road by the Nave's south door, click the view so the mouse is captured (new headless
+// "Go out" on the hall's road by the Nave's south door, click the view so the mouse is captured (new headless
 // Chromium grants it; if refused, the page's drag-to-look fallback, and it says so), then hold W and steer with the
-// mouse alone (moves read back from the page only to aim the next) through the door, down the Flight, the Flute,
+// mouse alone (moves read back from the page only to aim the next) through the door, down the Line, the Flute,
 // across the Laid Sun, over the Gulf, down the Gate and out onto the Pit's floor; then back the whole way to the door.
 // A frame about every 10 m looking where the walker goes, and at five points a look back and up. With `touch`, the
 // same on a phone-sized touch page with the stick only: one finger holds the stick up, a second drags to steer.
@@ -36,7 +36,7 @@ if (touch) {
   await page.mouse.click(W / 2, H / 2);
 }
 await sleep(1200);
-// stand on the Coffin Road's door spur, facing the door (a teleport to the start only: the walk itself is on the input)
+// stand on the hall's road by the south door, facing the door (a teleport to the start only: the walk itself is on the input)
 await page.evaluate(async () => { const fp = window.__fp, CR = await import('/src/v14/coffin-road/plan.js'); fp.controls.placeAt(CR.DOOR.x, CR.DOOR.z - 2.2, CR.ROAD_Y + 0.02); fp.player.yaw = Math.PI; fp.player.pitch = 0; });
 await sleep(1500);
 const st = () => page.evaluate(() => { const fp = window.__fp, p = fp.player, P = fp.passage.plan, f = P.floor(p.pos.x, p.pos.z); return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan: f, s: P.near(p.pos.x, p.pos.z, { i: 0, s: 0, d: 0, e: 0, t: 0 }).s }; });
@@ -49,7 +49,7 @@ const route = await page.evaluate(() => {
   const push = (s, tag, look) => { const a = P.at(Math.min(P.L, s)); R.push({ x: a.x, z: a.z, s, tag, look }); };
   R.push({ x: P.X[0], z: 56.4, s: -5, tag: 'door' });
   for (let s = 0; s <= P.L - 1; s += 10) push(s, `s${String(Math.round(s)).padStart(3, '0')}`);
-  for (const [s, tag] of [[SP.FLIGHT + 0.5, 'flute-begins'], [SP.SUN - SP.RC + 0.5, 'room-in'], [SP.SUN, 'room'], [SP.GULF0 + 0.5, 'bridge'], [SP.GULF1 + 0.3, 'bridge-end'], [P.L - 0.5, 'mouth']]) push(s, tag);
+  for (const [s, tag] of [[SP.LINE + 0.5, 'flute-begins'], [SP.SUN - SP.RC + 0.5, 'room-in'], [SP.SUN, 'room'], [SP.GULF0 + 0.5, 'bridge'], [SP.GULF1 + 0.3, 'bridge-end'], [P.L - 0.5, 'mouth']]) push(s, tag);
   R.sort((a, b) => a.s - b.s);
   const out = { x: P.M[0] + P.IN[0] * 4, z: P.M[1] + P.IN[1] * 4, s: P.L + 4, tag: 'pit-floor' };
   R.push(out);
