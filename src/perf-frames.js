@@ -53,14 +53,17 @@ export function hitchLog(L, legs, rows, cbs, keep = 60) {
   const idx = [];
   for (let i = 0; i < L.n; i++) if (L.js[i] > thr) idx.push(i);
   idx.sort((a, b) => L.js[b] - L.js[a]);
-  const worst = idx.slice(0, keep).map((i) => ({
+  // the ten slowest frames whatever the rule says, so a run with no hitch still names its worst
+  const ten = [];
+  for (let i = 0; i < L.n; i++) { if (ten.length < 10) { ten.push(i); ten.sort((a, b) => L.js[b] - L.js[a]); } else if (L.js[i] > L.js[ten[9]]) { ten[9] = i; ten.sort((a, b) => L.js[b] - L.js[a]); } }
+  const row = (i) => ({
     ms: r1(L.js[i]), intervalMs: r1(L.iv[i]), t: r2(L.t[i]), leg: legs[L.leg[i]], x: Math.round(L.x[i]), y: Math.round(L.y[i]), z: Math.round(L.z[i]),
     top: L.top[i] >= 0 ? rows[L.top[i]]?.name ?? '?' : null, topMs: r1(L.topMs[i]),
     callback: L.cb[i] >= 0 ? cbs[L.cb[i]]?.label ?? '?' : null, callbackMs: r1(L.cbMs[i]),
     unattributedMs: r1(L.un[i]),
     events: evNames(L.ev[i]), texUploads: L.tex[i], bufferKB: r1(L.bufKB[i]), farInstances: L.far[i], programs: L.programs[i],
-  }));
-  return { rule: `JS over ${r1(thr)} ms (50 ms, or 3x the run's median ${med} ms, whichever is less)`, thresholdMs: r1(thr), count: idx.length, worst };
+  });
+  return { rule: `JS over ${r1(thr)} ms (50 ms, or 3x the run's median ${med} ms, whichever is less)`, thresholdMs: r1(thr), count: idx.length, worst: idx.slice(0, keep).map(row), worstTen: ten.map(row) };
 }
 
 // calls and triangles per module, on the frames asked for (begin()); the colour pass on the next render, the shadow
@@ -186,7 +189,9 @@ export function benchLines(res, { hitches = 10, rows = 14, modules = 4 } = {}) {
   out.push(`frame interval, ms (the GPU and the browser too; not trustworthy headless): ${names.map((n) => `${n} median ${L[n].interval.medianMs} · worst ${L[n].interval.worstMs}`).join(' · ')}`);
   const h = res.hitches;
   out.push(`hitches, ${h.rule}: ${h.count}`);
-  h.worst.slice(0, hitches).forEach((w, i) => out.push(`  ${i + 1}. ${w.ms} ms, ${w.leg} at ${w.t} s (${w.x}, ${w.y}, ${w.z}): ${w.top} ${w.topMs}${w.callback ? ` · ${w.callback} ${w.callbackMs}` : ''}${w.events.length ? ` · ${w.events.join(', ')}` : ''}${w.programs ? ` · ${w.programs} programs` : ''}${w.farInstances ? ` · far ${w.farInstances}` : ''}${w.bufferKB ? ` · ${w.bufferKB} KB sent` : ''}`));
+  const list = h.worst.length ? h.worst : (h.worstTen || []);
+  if (!h.worst.length && list.length) out.push('  none; the ten slowest frames:');
+  list.slice(0, hitches).forEach((w, i) => out.push(`  ${i + 1}. ${w.ms} ms, ${w.leg} at ${w.t} s (${w.x}, ${w.y}, ${w.z}): ${w.top} ${w.topMs}${w.callback ? ` · ${w.callback} ${w.callbackMs}` : ''}${w.events.length ? ` · ${w.events.join(', ')}` : ''}${w.programs ? ` · ${w.programs} programs` : ''}${w.farInstances ? ` · far ${w.farInstances}` : ''}${w.bufferKB ? ` · ${w.bufferKB} KB sent` : ''}`));
   const u = res.unattributed;
   out.push(`unattributed (no row names it): ${u.medianUnattributedMs} ms of the median frame's ${u.medianFrameMs} · ${u.shareOfAllJs != null ? `${Math.round(u.shareOfAllJs * 1000) / 10}% of all JS` : ''} · main.js's own (frame) ${u.mainOwnMs ?? '–'} ms`);
   out.push(`rows, ms a frame (${names.join(' / ')}):`);
@@ -224,7 +229,7 @@ export function benchBrief(res) {
     tierSteps: res.tier?.steps?.length ?? null,
     summary: { avgFps: res.summary.avgFps, low1Fps: res.summary.low1Fps, avgFrameMs: res.summary.avgFrameMs, low1FrameMs: res.summary.low1FrameMs, frames: res.summary.frames, calls: res.summary.calls, tris: res.summary.tris, gpuMs: res.summary.gpuMs },
     js: res.js, interval: res.interval, legs, unattributed: res.unattributed,
-    hitches: res.hitches && { rule: res.hitches.rule, count: res.hitches.count, worst: res.hitches.worst.slice(0, 10) },
+    hitches: res.hitches && { rule: res.hitches.rule, count: res.hitches.count, worst: res.hitches.worst.slice(0, 10), worstTen: res.hitches.worstTen },
     memory: { start: mem(res.memory?.start), end: mem(res.memory?.end) },
     draws: (res.draws || []).map((s) => ({ name: s.name, x: s.x, y: s.y, z: s.z, calls: s.calls, tris: s.tris, colour: s.colour, shadow: s.shadow, other: s.other, modules: s.modules.slice(0, 6) })),
   };

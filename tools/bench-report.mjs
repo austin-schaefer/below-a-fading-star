@@ -6,6 +6,7 @@
 // JS ms, counts and ratios are real.
 //   node tools/bench-report.mjs <url> [out.json] [width=960] [height=540] [--against=before.json]
 //   node tools/bench-report.mjs <saved.json> [--against=before.json]     (print a saved report, or diff two)
+// --throttle=4: Chromium's CPU throttle from the moment the page is ready (the bench's warm-up), a stand-in for a phone
 // A saved file may be a report (tools output), a bench result, or the panel's Copy (the brief).
 // e.g. node tools/bench-report.mjs "http://localhost:8123/?bench=45&perf=1&q=low" shots/wip/bench-low.json --against=shots/wip/v13-P1-baseline-low-1.json
 import { createRequire } from 'node:module';
@@ -31,14 +32,17 @@ else {
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 300)); });
   await page.goto(url, { waitUntil: 'load', timeout: 60000 });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
+  if (flags.throttle) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +flags.throttle }); }
   await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 900000, polling: 1000 });
   const rep = await page.evaluate(() => ({ headless: true, url: location.href, ...window.__fp.perf.report() }));
+  if (flags.throttle) rep.bench.cpuThrottle = +flags.throttle;
   extra = { firstBlock: rep.firstBlock };
   await browser.close();
   if (out) { writeFileSync(out, JSON.stringify(rep, null, 1)); console.log('[saved]', out); }
   res = rep.bench;
 }
 
+if (res.cpuThrottle) console.log(`CPU throttled ${res.cpuThrottle}x (a stand-in for a phone)`);
 for (const l of benchLines(res, { hitches: 10, rows: 16, modules: 5 })) console.log(l);
 if (res.summary?.cpuCallbacks) console.log('callbacks, ms a frame (the round): ' + Object.entries(res.summary.cpuCallbacks).slice(0, 8).map(([k, v]) => `${k} ${v}`).join(' · '));
 if (extra?.firstBlock) console.log('first block:', JSON.stringify(extra.firstBlock));
