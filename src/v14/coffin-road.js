@@ -302,7 +302,7 @@ export async function build(ctx) {
   // colliders: the stair's sides where it is still within a step of the turf, the shears' feet, the waiting coffin
   let colliders = 0;
   if (ctx.addCollider) {
-    for (const s of [-1, 1]) for (let x = xRim - 4.5; x <= xLand + 0.2; x += 0.4) { ctx.addCollider({ x, z: SZ + s * (SHALF + 0.32), r: 0.28, y: g(x, SZ) - 1.2, h: 3.2, stand: false }); colliders++; }
+    for (const s of [-1, 1]) for (let x = xRim - 4.5; x <= xRim + 0.5; x += 0.4) { ctx.addCollider({ x, z: SZ + s * (SHALF + 0.32), r: 0.28, y: g(x, SZ) - 1.2, h: 3.2, stand: false }); colliders++; }
     for (const [fx, fz] of feet) { ctx.addCollider({ x: fx, z: fz, r: 0.5, y: g(fx, fz) - 0.5, h: 3 }); colliders++; }
     ctx.addCollider({ x1: wait.x - 0.95, z1: wait.z, x2: wait.x + 0.95, z2: wait.z, r: 0.45, y: g(wait.x, wait.z) - 0.2, h: 1.5, stand: false }); colliders++;
   }
