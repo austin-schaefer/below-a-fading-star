@@ -117,11 +117,23 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
     out.inCage = { reached: w2.reached, inCage: L.inCage(), may: fp.acts.may(hl), f: feet(), floor: L.floorY0 };
     // the ride up
     fp.acts.act(hl);
-    const startY = p.pos.y, track = { maxJump: 0, outside: 0, stillMax: 0, n: 0, minY: Infinity, maxY: -Infinity, pushes: 0 };
+    const startY = p.pos.y, track = { maxJump: 0, outside: 0, stillMax: 0, n: 0, minY: Infinity, maxY: -Infinity, pushes: 0, relMax: 0, dips: 0, dipMax: 0, yawRate: 0, yawAll: 0 };
     let prev = p.pos.clone(), still = 0, t = 0;
-    for (let i = 0; i < 60 * 90 && (L.ridden || i < 5); i++) {
+    // #50: the frame time wanders as a real page's does (11 to 33 ms); the eye against the cage it stands in (at rest:
+    // the jolt's rattle is the cage's), its height's dips while it climbs, and the look's turning, all with no look input
+    const DTS = [1 / 60, 1 / 30, 1 / 90, 1 / 45, 1 / 60, 1 / 40, 1 / 75];
+    const rel0 = p.pos.clone().sub(L.cageRest()), rel = p.pos.clone();
+    let peak = p.pos.y, yaw0 = p.yaw;
+    for (let i = 0; i < 60 * 120 && (L.ridden || i < 5); i++) {
       if (i > 600 && i < 700) p.keys.add('KeyW'); else p.keys.delete('KeyW'); // pushing to walk mid-ride
-      window.H.tick(); t += 1 / 60;
+      const dt = DTS[i % DTS.length];
+      fp.controls.update(dt); L.tick(dt); t += dt;
+      if (L.ridden && i > 2) {
+        rel.copy(p.pos).sub(L.cageRest()); track.relMax = Math.max(track.relMax, rel.distanceTo(rel0)); rel0.copy(rel);
+        if (p.pos.y > peak) peak = p.pos.y; else if (peak - p.pos.y > 0.03) { track.dips++; track.dipMax = Math.max(track.dipMax, peak - p.pos.y); peak = p.pos.y; }
+        const dy = Math.abs(Math.atan2(Math.sin(p.yaw - yaw0), Math.cos(p.yaw - yaw0))); track.yawRate = Math.max(track.yawRate, dy / dt); track.yawAll += dy;
+      } else rel0.copy(p.pos).sub(L.cageRest());
+      yaw0 = p.yaw;
       const d = p.pos.distanceTo(prev); track.maxJump = Math.max(track.maxJump, d);
       if (d < 0.004 && L.ridden && t > 3) { still += 1 / 60; track.stillMax = Math.max(track.stillMax, still); } else still = 0;
       const c = L.cageCentre(), lx = (p.pos.x - c.x) * al.x + (p.pos.z - c.z) * al.z, lz = (p.pos.x - c.x) * io.x + (p.pos.z - c.z) * io.z;
@@ -210,6 +222,9 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
   check(U.rise >= 100, 'ride up: rises 100 m and more', `${f2(U.rise)} m`);
   check(U.outside === 0, 'ride up: the rider stays inside the cage, on its floor, all the way', `${U.outside} frames outside`);
   check(U.maxJump < 0.25, 'ride up: the eye never jumps more than 0.25 m a frame (a jolt, not a teleport)', `${f2(U.maxJump)} m`);
+  check(U.relMax < 0.025, 'ride up (#50): the eye keeps its place in the cage under a wandering frame time (no lag behind the cage it draws)', `${(U.relMax * 100).toFixed(1)} cm a frame at most`);
+  check(U.dips <= 1, 'ride up (#50): the eye never drops back more than 3 cm on the way up, but for the slip at the stop', `${U.dips} dips, the deepest ${(U.dipMax * 100).toFixed(1)} cm`);
+  check(U.yawRate < 0.8 && U.yawAll < 4 * Math.PI, 'ride up (#50): with no look input the carrier turns the view at under 0.8 rad/s, and less than twice round in all', `${f2(U.yawRate)} rad/s at most, ${Math.round(U.yawAll * 180 / Math.PI)}° in all`);
   check(U.stillMax >= 3, 'ride up: it stops once on the way for 3 s and more', `${f2(U.stillMax)} s still`);
   check(!U.ridden && !U.carried && U.where === 'gallery' && U.doors.w === 1 && Math.abs(U.f - U.want) < 0.05, 'ride up: set down on the cage floor at the gallery, the west grille open, pushing to walk mid-ride did nothing', U);
   check(R.gallery.reached === R.gallery.points && R.gallery.fellAt === null, 'gallery: walked out over the gangway and along the deck to the ragged end, the feet on it', R.gallery);
