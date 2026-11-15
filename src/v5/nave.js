@@ -50,7 +50,7 @@ function litAt(x, y, z, out) {
 }
 
 // the Coffin Road's candles' light, baked: their cold glow on the columns, the walls and the water's edge
-const CANDLES = candles().map(([x, z, k]) => [x, ROAD_Y + FLAME_Y[k], z, [0.8, 1.0, 1.4][k]]);
+const CANDLES = candles().map(([x, z, k]) => [x, ROAD_Y + FLAME_Y[k], z, [0.8, 1.0, 1.4, 0.9, 1.1][k]]);
 export function glowAt(x, y, z) {
   let g = 0;
   for (const [cx, cy, cz, s] of CANDLES) {
@@ -112,11 +112,11 @@ function hallMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vNW;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvNW = (modelMatrix * vec4(position, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vNW; varying vec3 vNN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvNW = (modelMatrix * vec4(position, 1.0)).xyz; vNN = normal;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying vec3 vNW;
+        varying vec3 vNW; varying vec3 vNN;
         float nvH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
         float nvN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
           return mix(mix(mix(nvH(i), nvH(i + vec3(1,0,0)), f.x), mix(nvH(i + vec3(0,1,0)), nvH(i + vec3(1,1,0)), f.x), f.y),
@@ -124,7 +124,20 @@ function hallMaterial() {
       .replace('#include <color_fragment>', `#include <color_fragment>
         // worn, stained, damp toward the water: no texture, only the world position
         diffuseColor.rgb *= 0.72 + 0.4 * nvN(vNW * 0.9) * (0.6 + 0.4 * nvN(vNW * 3.7 + 11.0));
-        diffuseColor.rgb *= 1.0 - 0.35 * smoothstep(${(WY + 6).toFixed(1)}, ${(WY + 0.2).toFixed(1)}, vNW.y);`);
+        diffuseColor.rgb *= 1.0 - 0.35 * smoothstep(${(WY + 6).toFixed(1)}, ${(WY + 0.2).toFixed(1)}, vNW.y);
+        // v14-D0: on the upright stone (columns, walls): the drums' joints; the old plaster flaking off, a trace of its
+        // colours left (a faded red, a blue-grey, an ochre); the water's marks: a dark wet band, and the pale tide line
+        float vert = 1.0 - abs(vNN.y), wy = vNW.y - ${WY.toFixed(1)};
+        float jt = abs(fract((vNW.y + 0.35) / 1.15) - 0.5);
+        diffuseColor.rgb *= 1.0 - 0.45 * vert * smoothstep(0.455, 0.492, jt);
+        float pl = smoothstep(0.66, 0.74, nvN(vNW * vec3(2.6, 1.3, 2.6) + 5.0)) * smoothstep(0.35, 0.6, nvN(vNW * 0.45 + 9.0)) * vert * smoothstep(1.4, 2.4, wy);
+        float hue = nvN(vNW * 0.18 + 31.0);
+        vec3 paint = hue < 0.4 ? vec3(0.56, 0.3, 0.24) : hue < 0.6 ? vec3(0.38, 0.42, 0.5) : vec3(0.62, 0.5, 0.3);
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.5, 0.47, 0.42), paint, 0.55 * smoothstep(0.3, 0.7, nvN(vNW * 2.3))), pl * 0.45);
+        float wet = vert * (1.0 - smoothstep(1.0, 1.6 + 0.5 * nvN(vNW * 1.7), wy)) * step(0.0, wy);
+        diffuseColor.rgb *= 1.0 - 0.5 * wet;
+        float tide = vert * smoothstep(0.03, 0.08, wy) * (1.0 - smoothstep(0.2, 0.3, wy));
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.52, 0.5, 0.4), tide * 0.75);`);
   };
   m.customProgramCacheKey = () => 'fp-nave-hall';
   // v14-D0: the sun and the sky's light scaled by how much of the hole's light reaches each vertex, the haze by how
@@ -151,7 +164,7 @@ const WATER_FRAG = /* glsl */`
   uniform vec4 uShape[3];   // x, z, heading, how near the surface (0 gone .. 1 just under)
   uniform vec2 uSize[3];    // half length, half width
   uniform vec4 uSplash[3];  // x, z, start time, strength
-  uniform vec4 uCand[8];    // v14-D0: the nearest of the Coffin Road's flames (xyz, strength), doubled in the water
+  uniform vec4 uCand[8];    // v14-D0: the nearest of the Coffin Road's flames (xyz, strength), doubled in the water (CAND_N of them: 4 on low)
   uniform vec3 uCandCol;
   varying vec3 vWorld;
   #include <fog_pars_fragment>
@@ -193,6 +206,13 @@ const WATER_FRAG = /* glsl */`
       float soft = mix(0.95, 0.35, uShape[i].w);
       dark = max(dark, (1.0 - smoothstep(1.0 - soft, 1.0 + soft * 0.4, k)) * uShape[i].w);
     }
+    // v14-D0: water dripping from the roof here and there under it: a slow ring every few seconds
+    for (int i = 0; i < 4; i++) {
+      vec3 D = i == 0 ? vec3(262.4, 44.1, 4.7) : i == 1 ? vec3(281.2, 37.3, 6.3) : i == 2 ? vec3(292.1, 45.7, 5.1) : vec3(251.2, 33.6, 7.4);
+      float age = mod(uT + float(i) * 1.7, D.z); vec2 q = p - D.xy; float r = length(q) + 1e-4, w = r - age * 0.55;
+      float ring = sin(w * 11.0) * exp(-w * w * 6.0) * exp(-age * 0.7);
+      slope += q / r * ring * 0.05; glint += max(ring, 0.0) * 0.12 * exp(-r * 0.4);
+    }
     slope *= 1.0 - 0.6 * dark;
     vec3 N = normalize(vec3(-slope.x, 1.0, -slope.y));
     vec3 V = normalize(vWorld - cameraPosition);
@@ -204,15 +224,22 @@ const WATER_FRAG = /* glsl */`
       open = 1.0 - smoothstep(-1.2, 0.3, length(q) - rimAt(q));
     }
     vec3 refl = mix(vec3(0.004, 0.004, 0.005), uSky, open);
-    float F = 0.3 + 0.7 * pow(1.0 - max(dot(-V, N), 0.0), 4.0);
-    vec3 body = vec3(0.010, 0.013, 0.012) * lit;
+    // v14-D0: water's own Fresnel (2% straight down, a mirror at a glance), so from the stair it is black, along the
+    // road it mirrors; the body black
+    float F = 0.03 + 0.97 * pow(1.0 - max(dot(-V, N), 0.0), 5.0);
+    vec3 body = vec3(0.004, 0.006, 0.006) * lit;
     vec3 col = body * (1.0 - 0.8 * dark) + refl * F * (1.0 - 0.94 * dark);
     col = mix(col, uSky * 1.6 + 0.03, clamp(glint * 0.55, 0.0, 0.85) * lit);
     // the candles' flames in the black water, broken by its shiver and the rings
-    for (int i = 0; i < 8; i++) {
+    // each flame's image under the surface (its mirror point), seen along the eye's ray bent by the shiver: a streak,
+    // long up and down and thin across, as flames on still water are
+    vec3 Vb = normalize(V + vec3(slope.x, 0.0, slope.y) * 1.6);
+    for (int i = 0; i < CAND_N; i++) {
       if (uCand[i].w <= 0.0) continue;
-      vec3 tc = uCand[i].xyz - vWorld; float a = max(dot(R, normalize(tc)), 0.0);
-      col += uCandCol * uCand[i].w * (pow(a, 1200.0) * 4.0 + pow(a, 90.0) * 0.08) * (1.0 - 0.9 * dark);
+      vec3 m = vec3(uCand[i].x, ${(2 * WY).toFixed(2)} - uCand[i].y, uCand[i].z);
+      vec3 a = Vb - normalize(m - cameraPosition);
+      float I = exp(-dot(a.xz, a.xz) / 0.00003 - a.y * a.y / 0.0009);
+      col += uCandCol * uCand[i].w * I * 2.2 * (1.0 - 0.9 * dark);
     }
     gl_FragColor = vec4(col, 1.0);
     vec3 preFog = gl_FragColor.rgb;
@@ -412,7 +439,7 @@ export async function build(ctx) {
   const RC = 1 / Math.cos(Math.PI / 8);
   // what the roof's fall did to the columns under the hole: one gone (its drums lie in the water), one broken at
   // mid-height, one broken off where the cone now buries it
-  const FATE = { '0:4.5': { gone: true }, '1:-4.5': { top: YC - 7.4 }, '-1:-4.5': { top: WY + 4.6 } };
+  const FATE = { '0:4.5': { gone: true }, '1:-4.5': { top: YC - 7.4 }, '-1:-4.5': { top: WY + 4.6 }, '5:-11': { gone: true } }; // (v14-D0: 5:-11 lies in the water, below)
   const broken = { x: CX + NAVE.bay, z: CZ - 4.5 };
   for (const rz of NAVE.rows) for (let k = -3; ; k++) {
     const x = CX + k * NAVE.bay; if (x > NAVE.x1 - 2) break; if (x < NAVE.x0 + 4) continue;
@@ -464,6 +491,16 @@ export async function build(ctx) {
       H.geo(new THREE.BoxGeometry(COL.capW, COL.cap, COL.capW), M, STONE);
     }
     columns.push({ x, z });
+  }
+  // v14-D0: the north aisle's column at (282.5, 29) is down: its shaft lies in the water across the aisle, half
+  // under, its capital beyond; seen from the road by the wall's candles
+  {
+    const a = [283.6, 30.9], b = [273.0, 32.7], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    E.set(0, -Math.atan2(b[1] - a[1], b[0] - a[0]), Math.PI / 2, 'YXZ');
+    M.compose(V.set((a[0] + b[0]) / 2, WY + 0.15, (a[1] + b[1]) / 2), Q.setFromEuler(E), S1);
+    H.geo(new THREE.CylinderGeometry(0.82, 0.9, len, 8, 4), M, STONE, 0.1);
+    E.set(0.3, 0.7, 0.15, 'YXZ'); M.compose(V.set(271.3, WY + 0.05, 33.4), Q.setFromEuler(E), S1);
+    H.geo(new THREE.BoxGeometry(COL.capW, COL.cap, COL.capW), M, STONE, 0.1);
   }
   await ctx.progress?.('the foundered nave', 0.65);
 
@@ -548,7 +585,7 @@ export async function build(ctx) {
   const candU = Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 0, 0)), candCol = new THREE.Color('#9fe8c2');
   const shapeU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)), sizeU = [0, 1, 2].map(() => new THREE.Vector2(1, 0.5)), splashU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, -100, 0));
   const skyU = new THREE.Color('#5a5470');
-  const wmat = new THREE.ShaderMaterial({
+  const wmat = new THREE.ShaderMaterial({ defines: { CAND_N: low ? 4 : 8 },
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uCand: { value: candU }, uCandCol: { value: candCol } }]),
     vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, fog: true,
   });
