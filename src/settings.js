@@ -36,21 +36,32 @@ const CARD_POSES = {
   cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
   prospect: { x: 247, z: -36, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
 };
-// v10-F1: places with an act and no landmark of their own, 9 m out in front of it, facing it
-// v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground
+// v11-F2: places that stand on the wall or in the air with no landmark; each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
-  { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
-  { name: 'The Diffident Stair', x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // v12-H3: the stub side on, its steps going up to nothing between the posts, the slabs lying in the turf beyond
-  { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
-  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice and their glass posts over it
-  { name: 'The Span\'s west stair', x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // v12-C1: at its foot in the wood's southern fringe, the first flight climbing west between its walls (dark under the trees)
-  { name: 'The tender\'s deck', x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // v12-H3: on the deck at the top, 100 m up: the lean-to, the stove, the chair and the ladder against the lattice's foot
 ];
-const ACT_PLACES = [
-  { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
-  { name: 'The bell under the Span', x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
-];
+// v14-B3 (#52): the named places of v9 to v12 (LANDMARKS' cards), each where it reads: the ways up from their feet, the
+// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1)
+const NAMED_POSES = {
+  halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
+  tocsin: { x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
+  escalade: { x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // at its foot in the wood's southern fringe, the first flight climbing west between its walls
+  footing: { x: -72, y: 56, z: 212, look: { x: -113, z: 211 }, pitch: -0.08 }, // on the deck at its east lip, the footing course running off west on its rib
+  coping: { x: -36, y: 56, z: 219, look: { x: -45, z: 219 }, pitch: -0.3 }, // the crack and the coping fallen across it, the bell's crown under
+  cornice: { x: 68, y: 56, z: 216, look: { x: 32, z: 219.5 }, pitch: -0.08 }, // from the middle deck's west end, the cornice stones hung on iron going back west
+  wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
+  spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
+  soundings: { x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
+  lead: { x: 97, z: -318, look: { x: 60, z: -322.3 }, pitch: 0.2 }, // on the first terrace, the old lead lying across the gap up to the second
+  bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
+  diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
+  croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
+  landing: { x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
+  remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
+  prime: { x: 278, z: 112, look: { x: 320, z: 129 }, pitch: 0.15 }, // 300 m out on bearing 112, the pass's long foot rising to its saddle
+  sext: { x: 0, z: 300, look: { x: 0, z: 345 }, pitch: 0.15 }, // 300 m out due south
+  compline: { x: -153, z: -245, look: { x: -183, z: -293 }, pitch: 0.17 }, // 289 m out on bearing 328 (at 300 the pass's foot rings it round)
+};
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
   ['taker', -275.35, 13.29, -1.222, -0.04], // workers-taker-road
@@ -80,12 +91,11 @@ function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
     if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
-    const h = HAND[key];
+    const h = HAND[key] || NAMED_POSES[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
-  for (const a of ACT_PLACES) out.push({ ...a, group: 'Places' });
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
   for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });

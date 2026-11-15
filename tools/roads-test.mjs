@@ -72,7 +72,7 @@ const res = await page.evaluate(async () => {
       const d = L.axis ? W.landmarkDistance(L, x, z) : Math.hypot(x - L.x, z - L.z) - Math.max(L.r, 15);
       if (d < best) { best = d; by = t.id; }
     }
-    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card });
+    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null });
   }
   // ---- in sight: every 4 m, a visible gnomon within SIGHT m over the terrain
   const G = R.gnomons.filter((g) => g.visible);
@@ -184,6 +184,7 @@ check(res.startD < 6 && res.unjoined.length === 0, 'one network: every track joi
 // The Galleries and the Thrones hang on the mountain wall: no track reaches them (a track looks up at them).
 const EXEMPT = {};
 for (const p of res.places) {
+  if (p.reached) { check(true, `${p.name}: reached by ${p.reached}, not a track`, `${p.d} m from ${p.by}`); continue; } // v14-B3: a deck, a top, a gallery, the walk's edge (world.js)
   if (EXEMPT[p.k]) check(p.d <= 25 - 15, `${p.name}: exempt (${EXEMPT[p.k]}); a track looks at it`, `${p.d} m past 15 m, ${p.by}`);
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }

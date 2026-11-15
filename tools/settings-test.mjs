@@ -110,7 +110,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the Escarpment Lamps, the middle of the Span (56 m up), the Diffident Stair and the tender\'s deck (100 m up), the feet of the other ways up (the lift\'s lower station, the icefall, the Span\'s west stair), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 1 + 3 + 18 - 1 + 8 + 1 + 2 + 3, n);
+  // v14-B3: the places of v9 to v12 (the Lantern Halt, the bell, the Span's ways and camp, the ways up and their tops, the passes) are named landmarks now
+  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps, the three region cards, the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) - 1 + 1 + 3 + 18 + 8, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -152,7 +153,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};
-    for (const [name, id] of [['The Lantern Halt', 'halt-tally'], ['The bell under the Span', 'span-bell'], ['The Lattice', 'mother-hand'], ['The Hypogeum', 'hypogeum-door'], ['The Collation', 'collation-twelfth']]) {
+    for (const [name, id] of [['The Lantern Halt', 'halt-tally'], ['The Tocsin', 'span-bell'], ['The Lattice', 'mother-hand'], ['The Hypogeum', 'hypogeum-door'], ['The Collation', 'collation-twelfth']]) {
       const pl = fp.settings.places.find((q) => q.name === name), h = fp.acts?.list.find((q) => q.def.id === id);
       if (!pl || !h) { out[name] = null; continue; }
       fp.settings.teleport(pl);
@@ -161,7 +162,21 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     }
     return out;
   });
-  check('teleport: the Lantern Halt, the bell, the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
+  check('teleport: the Lantern Halt, the bell (the Tocsin), the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
+
+  // v14-B3 (#52, the class: a way up whose top has no name): every ascent's top (its last point, and the first point at its
+  // greatest height) lies inside a named place card, and a card with `feet` holds that height
+  const tops = await page.evaluate(async () => {
+    const { landmarkDistance } = await import('/src/world.js');
+    const fp = window.__fp, L = Object.values(fp.landmarks).filter((q) => q.card && q.name);
+    return fp.ascents.list.filter((a) => !a.test).map((a) => {
+      const P = a.path, hi = P.reduce((m, q) => (q[2] !== undefined && (m === null || q[2] > m[2]) ? q : m), null);
+      const named = (q) => L.filter((c) => landmarkDistance(c, q[0], q[1]) < 0 && (!c.feet || q[2] === undefined || (q[2] >= c.feet[0] && q[2] <= c.feet[1]))).map((c) => c.name);
+      const at = [P[P.length - 1], hi].filter(Boolean).map((q) => ({ q: q.map((v) => +(+v).toFixed(1)), names: named(q) }));
+      return { id: a.id, ok: at.some((t) => t.names.length), at };
+    });
+  });
+  check('names: every way up has a named place at its top (the icefall, the Diffident Stair, the lift\'s gallery)', tops.length >= 3 && tops.every((t) => t.ok), tops);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
   await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });
@@ -216,6 +231,12 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   await page.evaluate(() => { const p = window.__fp.player; p.pos.set(128, window.__fp.terrain.heightAt(128, 5) + p.eye, 5); window.__fp.hud.update(0.1); });
   const lee = await page.evaluate(() => { const l = document.getElementById('place-line'); return { name: document.getElementById('place-name').textContent, lines: Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)), text: l.textContent }; });
   check('cards: (128, 5) A Lamplighter\u2019s Standards, the line on two lines', lee.name === 'A Lamplighter\u2019s Standards' && lee.lines === 2 && lee.text.includes('\n'), lee);
+  // v14-B3: a card on a deck shows on the deck and not on the floor under it; a name with no line shows the name alone
+  const at = (x, z, y) => page.evaluate(([x, z, y]) => { const fp = window.__fp, p = fp.player; p.pos.set(x, (y ?? fp.terrain.heightAt(x, z)) + p.eye, z); fp.hud.update(0.1); const l = document.getElementById('place-line'); return { name: document.getElementById('place').classList.contains('shown') ? document.getElementById('place-name').textContent : null, line: l.style.display === 'none' ? '' : l.textContent }; }, [x, z, y]);
+  await at(0, 0); const deck = await at(88, 211, 56); await at(0, 0); const under = await at(88, 211);
+  check('cards: on the Span\u2019s middle deck (56 m) The Long Wait, name alone; on the ground under it not', deck.name === 'The Long Wait' && deck.line === '' && under.name !== 'The Long Wait', { deck, under });
+  await at(0, 0); const croft = await at(226, -55, 107.9); await at(0, 0); const moor = await at(226, -55);
+  check('cards: on the tender\u2019s deck (108 m) The Hanging Croft; on the moor under it not', croft.name === 'The Hanging Croft' && moor.name !== 'The Hanging Croft', { croft, moor });
   await context.close();
 }
 
