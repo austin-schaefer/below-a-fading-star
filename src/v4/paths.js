@@ -553,7 +553,7 @@ function buildPit(ctx) {
       const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
       if (inStairHead(b, R, 0.35)) continue; // v14-D2: the way onto the stair's landing (its own edges are held)
-      ctx.addCollider({ x, z, r: 0.3, ...(PIT_D2 ? { y: terrain.heightAt(x, z) - 2, h: 5 } : {}) }); colliders++; lx = x; lz = z; // v14-D2: from 2 m under the turf to 3 m over it, so nothing down the throat or on its floor (the passage's mouth) meets them
+      ctx.addCollider({ x, z, r: 0.3, ...(PIT_D2 ? { y: terrain.heightAt(PIT.x + Math.sin(a) * (R + 1.05), PIT.z - Math.cos(a) * (R + 1.05)) - 2, h: 5 } : {}) }); colliders++; lx = x; lz = z; // v14-D2: from 2 m under the turf at the lip to 3 m over it (measured outside the rim: inside it the ground is already falling away), so nothing down the throat or on its floor (the passage's mouth) meets them
     }
   }
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
