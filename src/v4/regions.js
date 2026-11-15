@@ -126,49 +126,86 @@ for (const k of REGION_KEYS) {
   BOX[k] = [Math.min(...pts.map((p) => p[0])) - pad, Math.max(...pts.map((p) => p[0])) + pad, Math.min(...pts.map((p) => p[1])) - pad, Math.max(...pts.map((p) => p[1])) + pad];
 }
 
+// (v13 L2) the tight boxes, for the regions' own blend (blend 1, the ground's and the height's): outside one, the
+// shape's distance is at least the region's half-blend, so its weight is exactly 0 and the distance is not taken.
+// Each shape's own bound: a circle's and a polygon's distance is true (the box is the shape's, padded by hb); a strip's
+// is at least the distance to its spine less the widest half-width; an ellipse's (k - 1) min(rx, rz) passes hb only
+// where k passes 1 + hb / min(rx, rz); an annulus's at least r - r1. Clips and yields only add to a distance. One more
+// metre of pad for the rounding.
+const TIGHT = {};
+for (const k of REGION_KEYS) {
+  const s = REGIONS[k].shape, hb = REGIONS[k].blend / 2, pad = hb + 1;
+  let b;
+  if (s.circle) b = [s.circle.x - s.circle.r - pad, s.circle.x + s.circle.r + pad, s.circle.z - s.circle.r - pad, s.circle.z + s.circle.r + pad];
+  else if (s.ellipse) { const e = s.ellipse, g = 1 + hb / Math.min(e.rx, e.rz); b = [e.x - e.rx * g - 1, e.x + e.rx * g + 1, e.z - e.rz * g - 1, e.z + e.rz * g + 1]; }
+  else if (s.annulus) { const a = s.annulus; b = [a.x - a.r1 - pad, a.x + a.r1 + pad, a.z - a.r1 - pad, a.z + a.r1 + pad]; }
+  else {
+    const pts = s.poly || s.strip, w = s.strip ? Math.max(...pts.map((p) => p[2])) : 0;
+    b = [Math.min(...pts.map((p) => p[0])) - w - pad, Math.max(...pts.map((p) => p[0])) + w + pad, Math.min(...pts.map((p) => p[1])) - w - pad, Math.max(...pts.map((p) => p[1])) + w + pad];
+  }
+  TIGHT[k] = b;
+}
+
 export function regionDistance(key, x, z) { return SHAPES[key](x, z); }
 
 const _w = Object.fromEntries([...REGION_KEYS, ...PLACE_KEYS, 'moor', 'primary'].map((k) => [k, k === 'primary' ? 'moor' : 0]));
-export function regionAt(x, z, out = _w, blend = 1) {
+// (v13 L2) the weights are worked in flat arrays, by index (regions, then places, then moor), and written to the
+// object once: the same arithmetic in the same order as the keyed loops it replaces, so the same bits
+const NR = REGION_KEYS.length, NP = PLACE_KEYS.length, MOOR = NR + NP;
+const W_KEYS = [...REGION_KEYS, ...PLACE_KEYS, 'moor'];
+const R_SHAPE = REGION_KEYS.map((k) => SHAPES[k]), R_BLEND = new Float64Array(REGION_KEYS.map((k) => REGIONS[k].blend));
+const R_TIGHT = new Float64Array(REGION_KEYS.flatMap((k) => TIGHT[k])), R_BOX = new Float64Array(REGION_KEYS.flatMap((k) => BOX[k]));
+const P_DEF = new Float64Array(PLACE_KEYS.flatMap((k) => [PLACES[k].x, PLACES[k].z, PLACES[k].r, PLACES[k].blend]));
+// fills W (NR + NP + 1) with the weights at (x, z); returns the primary's index in W_KEYS
+function weights(x, z, blend, W) {
   // the places first: they win inside their limits
   let placeSum = 0;
-  for (const k of PLACE_KEYS) {
-    const P = PLACES[k], d = Math.sqrt((x - P.x) ** 2 + (z - P.z) ** 2) - P.r, hb = (P.blend * blend) / 2;
+  for (let i = 0; i < NP; i++) {
+    const px = P_DEF[4 * i], pz = P_DEF[4 * i + 1];
+    const d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2], hb = (P_DEF[4 * i + 3] * blend) / 2;
     const w = 1 - smoothstep(-hb, hb, d);
-    out[k] = w; placeSum += w;
+    W[NR + i] = w; placeSum += w;
   }
   const free = Math.max(0, 1 - Math.min(1, placeSum));
   let sum = 0;
-  for (const k of REGION_KEYS) {
-    const b = BOX[k];
-    if (x < b[0] || x > b[1] || z < b[2] || z > b[3]) { out[k] = 0; continue; }
-    const hb = (REGIONS[k].blend * blend) / 2, w = 1 - smoothstep(-hb, hb, SHAPES[k](x, z));
-    out[k] = w; sum += w;
+  const B = blend === 1 ? R_TIGHT : R_BOX;
+  for (let i = 0; i < NR; i++) {
+    if (x < B[4 * i] || x > B[4 * i + 1] || z < B[4 * i + 2] || z > B[4 * i + 3]) { W[i] = 0; continue; }
+    const hb = (R_BLEND[i] * blend) / 2, w = 1 - smoothstep(-hb, hb, R_SHAPE[i](x, z));
+    W[i] = w; sum += w;
   }
   // regions share what the places leave; where two overlap they split it; the remainder is plain moor
   const scale = sum > 1 ? free / sum : free;
-  let best = 'moor', bw = 0;
-  for (const k of REGION_KEYS) { out[k] *= scale; if (out[k] > bw) { bw = out[k]; best = k; } }
-  if (placeSum > 1) for (const k of PLACE_KEYS) out[k] /= placeSum;
-  for (const k of PLACE_KEYS) if (out[k] > bw) { bw = out[k]; best = k; }
-  out.moor = Math.max(0, 1 - Math.min(1, placeSum) - sum * scale);
-  if (out.moor > bw) best = 'moor';
-  out.primary = best;
+  let best = MOOR, bw = 0;
+  for (let i = 0; i < NR; i++) { W[i] *= scale; if (W[i] > bw) { bw = W[i]; best = i; } }
+  if (placeSum > 1) for (let i = NR; i < MOOR; i++) W[i] /= placeSum;
+  for (let i = NR; i < MOOR; i++) if (W[i] > bw) { bw = W[i]; best = i; }
+  W[MOOR] = Math.max(0, 1 - Math.min(1, placeSum) - sum * scale);
+  if (W[MOOR] > bw) best = MOOR;
+  return best;
+}
+const _wa = new Float64Array(MOOR + 1);
+export function regionAt(x, z, out = _w, blend = 1) {
+  const best = weights(x, z, blend, _wa);
+  for (let i = 0; i <= MOOR; i++) out[W_KEYS[i]] = _wa[i];
+  out.primary = W_KEYS[best];
   return out;
 }
 
 // ---------------------------------------------------------------- hooks for the shared systems
 const HEIGHT_KEYS = REGION_KEYS.filter((k) => typeof HOOKS[k].height === 'function');
 const GROUND_KEYS = REGION_KEYS.filter((k) => typeof HOOKS[k].ground === 'function');
-const _hw = { ..._w };
+const H_IDX = HEIGHT_KEYS.map((k) => REGION_KEYS.indexOf(k)), H_FN = HEIGHT_KEYS.map((k) => HOOKS[k].height);
+const H_TIGHT = new Float64Array(HEIGHT_KEYS.flatMap((k) => TIGHT[k])), NH = HEIGHT_KEYS.length;
+const _hw = new Float64Array(MOOR + 1);
 // terrain.js's marked block: each region's height hook, by its weight
 export function regionsHeight(h, x, z) {
-  if (!HEIGHT_KEYS.length) return h;
+  if (!NH) return h;
   let any = false;
-  for (const k of HEIGHT_KEYS) { const b = BOX[k]; if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]) { any = true; break; } }
+  for (let i = 0; i < NH; i++) if (x >= H_TIGHT[4 * i] && x <= H_TIGHT[4 * i + 1] && z >= H_TIGHT[4 * i + 2] && z <= H_TIGHT[4 * i + 3]) { any = true; break; }
   if (!any) return h;
-  const w = regionAt(x, z, _hw);
-  for (const k of HEIGHT_KEYS) if (w[k] > 0) h = HOOKS[k].height(h, x, z, w[k], COARSE);
+  weights(x, z, 1, _hw);
+  for (let i = 0; i < NH; i++) { const w = _hw[H_IDX[i]]; if (w > 0) h = H_FN[i](h, x, z, w, COARSE); }
   return h;
 }
 // The coarse pass (v4 regions): while terrain.js lays its mesh (2-3 m cells) it calls setRegionsCoarse(cell), and

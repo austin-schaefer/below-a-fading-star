@@ -380,15 +380,18 @@ function sampleForm(az) {
   const q = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(q))), f = q - i;
   return T_FM[i] + (T_FM[i + 1] - T_FM[i]) * f;
 }
-function spurPush(b, r, Rc) {
+function spurPush(b, r, Rc, hold = holdOf(HOLD_FACE, b, 3)) {
   let push = 0, pull = 0;
   const t = clamp((Rc - r) / 150, 0, 1); // 0 at the crest, 1 at the foot
   for (const [sb, sp, w0, w1, lean, o] of SPURS_M) {
     let db = b - sb; if (db > 180) db -= 360; if (db < -180) db += 360;
     if (Math.abs(db) > 24) continue;
+    const w = lerp(w0, w1, t);
+    // (v13 L2) the noise moves the line by at most 1.2 x 1.1 degrees (|noise2| < 1): a spur certainly out of reach is
+    // skipped before its noise is taken
+    if ((Math.abs(db - lean * t) - 1.32) * D2R * r > w * 1.001 + 1e-6) continue;
     const edge = 1 - smoothstep(18, 24, Math.abs(db)); // fades out before the cutoff, so a wide foot leaves no step
     const across = Math.abs(db - lean * t + 1.2 * S.noise2(r * 0.013, sb)) * D2R * r;
-    const w = lerp(w0, w1, t);
     if (across > w) continue;
     if (sp > 0) {
       const r0 = Rc - 8 - (o?.drop ?? 0), prof = smoothstep(r0, r0 - (o?.shoulder ?? 62), r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
@@ -399,7 +402,7 @@ function spurPush(b, r, Rc) {
       pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c) * edge * smoothstep(352, 352 + (o?.ramp ?? 38), r));
     }
   }
-  return (push * smoothstep(352, 395, r) - pull) * (1 - holdOf(HOLD_FACE, b, 3));
+  return (push * smoothstep(352, 395, r) - pull) * (1 - hold);
 }
 // --- the form (end)
 // --- the massifs (end; applyMassifs and the far ranges' hook below)
@@ -560,13 +563,14 @@ const FAM = [[16, 50, 0.5, 0, 1.7, 1], [46, 16, 0.42, 1, 3.3, 0.7]];
 const _dn = { cut: 0, water: 0, fan: -Infinity, mouth: 0 }, _cc = new Float64Array(5), _fm = { cut: 0, water: 0, fan: -Infinity, mouth: 0, nq: 9, nd: 0, nb: 0 };
 function family(F, x, z, az, r, u, uw, steep, Ha, ra) {
   const [NF, DEP, WID, salt, sf, fs] = F;
+  // the family's sectors: long stretches with none, others gathered (a ring noise by bearing)
+  const sector = smoothstep(-0.25, 0.35, ring(az, sf, 61.7 + salt * 13));
+  _fm.cut = 0; _fm.water = 0; _fm.fan = -Infinity; _fm.mouth = 0; _fm.nq = 9;
+  if (sector === 0) return _fm; // every line's k1 is 0 here (v13 L2: before the wander's noise)
   // the lines wander as they climb (world-space noise, so the bowl has no seam), unevenly spaced
   const t = ((az + Math.PI) / TAU) * NF + 0.55 * S.fbm2(x * 0.0042 + 17.3 + salt * 9, z * 0.0042 - 4.1, 3);
   const L = (TAU * r) / NF, i0 = Math.floor(t);
   for (let j = 0; j < 5; j++) { const k = i0 - 2 + j; _cc[j] = k + 0.5 + 0.75 * (hash2(((k % NF) + NF) % NF, 517 + salt) - 0.5); }
-  // the family's sectors: long stretches with none, others gathered (a ring noise by bearing)
-  const sector = smoothstep(-0.25, 0.35, ring(az, sf, 61.7 + salt * 13));
-  _fm.cut = 0; _fm.water = 0; _fm.fan = -Infinity; _fm.mouth = 0; _fm.nq = 9;
   for (let j = 0; j < 5; j++) {
     const kk = (((i0 - 2 + j) % NF) + NF) % NF, d = t - _cc[j];
     const str = hash2(kk, 733 + salt);
@@ -655,6 +659,7 @@ function crags(x, z, az, r, y, ui, rock, water) {
 // heightfield into rows of fins (v10).
 function faceDr(x, z, az, r, u, steep, face, dn) {
   let dr = -dn.cut * smoothstep(0.03, 0.2, u) * (1 - smoothstep(0.95, 1.02, u)); // the drainage, crest to apron
+  if (face === 0 && dr !== 0) return dr; // every term below is weighted by face: ±0 each (v13 L2)
   const rho = 4.95 + (r - 450) * 0.0045; // ribs and bays, 2.4:1 down the fall line
   dr += S.fbm2(Math.cos(az) * rho + 1.3, Math.sin(az) * rho - 2.1, 3) * 12 * face;
   // arêtes: creases of ridged noise in the same chart (~40 m across, 90 m down, and ~17 m by 38 m low on the face)
@@ -705,7 +710,8 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
   const b = bearingOf(az);
-  const r = rTrue + spurPush(b, rTrue, Rc); // v11 the form: a spur is the face pushed toward the bowl (the face's code sees it as nearer the crest)
+  const holdF = holdOf(HOLD_FACE, b, 3); // (once: spurPush and the form below read it)
+  const r = rTrue <= 352 ? rTrue : rTrue + spurPush(b, rTrue, Rc, holdF); // (inside r 352 a spur's push is +0: v13 L2) v11 the form: a spur is the face pushed toward the bowl (the face's code sees it as nearer the crest)
   const slope = lerp(CAND.slope[0], CAND.slope[1], smoothstep(70, 280, Hc)) * D2R;
   const foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3)); // the apron's toe
   const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
@@ -748,9 +754,12 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   // rounded); the broad roll and the fine noise, low
   const up = smoothstep(0.6, 1.0, u);
   const rEnv = RIDGE_ON ? ridgeEnv(b) : 0; // AP's run, as in applyMountains
-  m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
-  m += S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
-  m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  // (each term weighted 0 adds ±0, which leaves any m but ±0 as it was, so its noise is skipped: v13 L2)
+  if (up !== 0 || m === 0) m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
+  if (u !== 0 || m === 0) {
+    m += S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
+    m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  }
   // the couloirs' fans: cones of scree spread from each mouth over the apron
   if (dn.fan > 0) m = smax(m, dn.fan, 5);
   // the apron meets the band in a crease, its top soft
@@ -759,10 +768,10 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
     m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
   }
   m = Math.max(m, 0);
-  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
+  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdF) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
   // v11.1 the Horn: the pyramid, with the face's relief (the height dr makes on the profile, at 0.8, held to -45..+10 m) and the
   // crags, so the couloirs and crags stay cut into it
-  { const hz = hornAt(x, z) + clamp(0.8 * (P(re + dr) - P(re)), -45, 10) + crg; if (hz > m) m += (hz - m) * smoothstep(352, 400, rTrue) * (1 - smoothstep(169, 177, b)); } // the col at 180 stays
+  { const hn = hornAt(x, z), hz = hn === -Infinity ? hn : hn + clamp(0.8 * (P(re + dr) - P(re)), -45, 10) + crg; if (hz > m) m += (hz - m) * smoothstep(352, 400, rTrue) * (1 - smoothstep(169, 177, b)); } // the col at 180 stays
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {

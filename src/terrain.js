@@ -36,6 +36,18 @@ export function causewayDistance(x, z) {
   }
   return d;
 }
+// causewayDistance where it is under lim - 0.5: the same number; elsewhere lim or more. A segment whose box is lim or
+// more away is never measured, so far from the road this is a few box tests (heightAt's road bed reads under 7.5).
+function causewayNear(x, z, lim) {
+  let d = lim;
+  for (let i = 0; i < ROAD.length; i++) {
+    const S = ROAD[i], x0 = S[4], x1 = S[5], z0 = S[6], z1 = S[7];
+    const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0, ez = z < z0 ? z0 - z : z > z1 ? z - z1 : 0;
+    if (ex * ex + ez * ez >= d * d) continue;
+    d = Math.min(d, distToSegment(x, z, S[0], S[1], S[2], S[3]));
+  }
+  return d;
+}
 
 // Flatten toward a target height inside r, blending out over `fall` metres.
 function flatten(h, x, z, cx, cz, r, fall, target) {
@@ -43,10 +55,15 @@ function flatten(h, x, z, cx, cz, r, fall, target) {
   const m = 1 - smoothstep(r, r + fall, d);
   return lerp(h, target, m);
 }
+// Whether (x, z) lies certainly beyond reach R of (cx, cz), and h is not ±0: there a block whose every term is
+// weighted by smoothsteps that are 0 past R leaves h exactly as it was (h + 0 is h for any h but -0), so heightAt
+// skips its noise. The squared test keeps a margin, so a point the hypot would put within R is never skipped.
+const beyond = (h, x, z, cx, cz, R) => { const dx = x - cx, dz = z - cz; return dx * dx + dz * dz > R * R * 1.0001 + 1 && h !== 0; };
 
 // Glacier channel mask: a notch in the northern mountain wall, 0..1
 export function glacierMask(x, z) {
   const L = LANDMARKS.moraine;
+  if (z >= -200) return 0; // along is 0 (v13 L2)
   const wobble = SX.fbm2(z * 0.004, 3.1, 3) * 40;
   const across = 1 - smoothstep(55, 95, Math.abs(x - L.x - wobble));
   const along = smoothstep(-200, -250, z);
@@ -528,33 +545,36 @@ export function heightAt(x, z) {
 
   // Landmark shaping
   const L = LANDMARKS;
+  // (each block is skipped where it is certainly out of reach: beyond(), above)
   // Castle hill: flat crown, steep-ish sides
-  h = flatten(h, x, z, L.castle.x, L.castle.z, 40, 55, L.castle.y + SX.noise2(x * 0.05, z * 0.05) * 0.4);
+  if (!beyond(h, x, z, L.castle.x, L.castle.z, 95)) h = flatten(h, x, z, L.castle.x, L.castle.z, 40, 55, L.castle.y + SX.noise2(x * 0.05, z * 0.05) * 0.4);
   // Tower hill
-  h = flatten(h, x, z, L.tower.x, L.tower.z, 18, 48, L.tower.y + SX.noise2(x * 0.07, z * 0.07) * 0.5);
+  if (!beyond(h, x, z, L.tower.x, L.tower.z, 66)) h = flatten(h, x, z, L.tower.x, L.tower.z, 18, 48, L.tower.y + SX.noise2(x * 0.07, z * 0.07) * 0.5);
   // Stones shelf
-  h = flatten(h, x, z, L.stones.x, L.stones.z, 30, 28, L.stones.y + SX.noise2(x * 0.08, z * 0.08) * 0.25);
+  if (!beyond(h, x, z, L.stones.x, L.stones.z, 58)) h = flatten(h, x, z, L.stones.x, L.stones.z, 30, 28, L.stones.y + SX.noise2(x * 0.08, z * 0.08) * 0.25);
   // Sunken court
-  h = flatten(h, x, z, L.court.x, L.court.z, 34, 26, L.court.y + SX.noise2(x * 0.1, z * 0.1) * 0.2);
+  if (!beyond(h, x, z, L.court.x, L.court.z, 60)) h = flatten(h, x, z, L.court.x, L.court.z, 34, 26, L.court.y + SX.noise2(x * 0.1, z * 0.1) * 0.2);
   // Tarn basin: flatten then dish
-  {
+  if (!beyond(h, x, z, L.tarn.x, L.tarn.z, 96)) {
     // A shelving shore: the floor crosses the water level (-4.6) at about r 58, then deepens to -12.5
     const d = Math.hypot(x - L.tarn.x, z - L.tarn.z);
     h = flatten(h, x, z, L.tarn.x, L.tarn.z, 62, 34, -4.0 + SX.noise2(x * 0.05, z * 0.05) * 0.25);
     const bowl = 1 - smoothstep(36, 60, d);
     h -= bowl * 8.5 + SX.noise2(x * 0.03, z * 0.03) * 0.5 * (1 - smoothstep(40, 70, d));
-    h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
   }
+  h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
   // Fen: broad, flat, pocked with pools
-  {
+  if (!beyond(h, x, z, L.fen.x, L.fen.z, 115)) {
     const d = Math.hypot(x - L.fen.x, z - L.fen.z);
     h = flatten(h, x, z, L.fen.x, L.fen.z, 70, 45, L.fen.y);
     const inFen = 1 - smoothstep(60, 85, d);
-    const pools = SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
-    h -= inFen * (smoothstep(0.05, 0.45, pools) * 2.2 + 0.3);
+    if (inFen !== 0 || h === 0) {
+      const pools = SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
+      h -= inFen * (smoothstep(0.05, 0.45, pools) * 2.2 + 0.3);
+    }
   }
   // Orchard terraces: faint steps
-  {
+  if (!beyond(h, x, z, L.orchard.x, L.orchard.z, 65)) {
     const d = Math.hypot(x - L.orchard.x, z - L.orchard.z);
     const m = 1 - smoothstep(40, 65, d);
     const terraced = Math.floor((h + 100) / 1.2) * 1.2 - 100;
@@ -562,7 +582,7 @@ export function heightAt(x, z) {
   }
   // Causeway: a raised, level-ish bed
   {
-    const cd = causewayDistance(x, z);
+    const cd = causewayNear(x, z, 8); // the exact distance where it is under 7.5 (all the bed reads), else 8 or more
     const m = 1 - smoothstep(3.2, 7.5, cd);
     if (m > 0) {
       // level across the road by sampling base height at the nearest road axis is expensive; approximate with a mild lift
@@ -588,17 +608,21 @@ export function heightAt(x, z) {
   return mapHeight(spanGround(carveRiver(h, x, z), x, z), x, z, RIVER); // v4: the Great Span's marked blocks (src/v4/span/plan.js), then the map's pit and the fall's face
 }
 
-// Analytic-ish normal by central differences.
+// Analytic-ish normal by central differences. The arithmetic is THREE.Vector3's set().normalize() written out (x, y, z
+// times 1 / (length || 1)), so out may be any { x, y, z }; slopeAt takes the same y without an object.
 const _n = new THREE.Vector3();
 export function normalAt(x, z, out = _n, eps = 0.6) {
   const hl = heightAt(x - eps, z), hr = heightAt(x + eps, z);
   const hd = heightAt(x, z - eps), hu = heightAt(x, z + eps);
-  out.set(hl - hr, 2 * eps, hd - hu).normalize();
+  const nx = hl - hr, ny = 2 * eps, nz = hd - hu, k = 1 / (Math.sqrt(nx * nx + ny * ny + nz * nz) || 1);
+  out.x = nx * k; out.y = ny * k; out.z = nz * k;
   return out;
 }
 export function slopeAt(x, z) {
-  const n = normalAt(x, z, new THREE.Vector3());
-  return Math.acos(clamp(n.y, -1, 1)); // radians from vertical
+  const hl = heightAt(x - 0.6, z), hr = heightAt(x + 0.6, z);
+  const hd = heightAt(x, z - 0.6), hu = heightAt(x, z + 0.6);
+  const nx = hl - hr, ny = 2 * 0.6, nz = hd - hu;
+  return Math.acos(clamp(ny * (1 / (Math.sqrt(nx * nx + ny * ny + nz * nz) || 1)), -1, 1)); // radians from vertical
 }
 
 // Biome weights at a point. Not normalised; each is 0..1.
@@ -613,7 +637,8 @@ function biomeWith(x, z, h, slope, rv) {
   const rock = smoothstep(0.55, 0.95, slope) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, r) * 0.6;
   const ice = glacierIce(x, z); // v4 regions: the tongue's width, cut sharp at the snout
   const dWood = Math.hypot(x - L.wood.x, z - L.wood.z);
-  const wood = (1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood)) * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
+  // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
+  const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
   const dFen = Math.hypot(x - L.fen.x, z - L.fen.z);
   const marsh = 1 - smoothstep(L.fen.r - 15, L.fen.r + 25, dFen);
   const dTarn = Math.hypot(x - L.tarn.x, z - L.tarn.z);
@@ -622,7 +647,7 @@ function biomeWith(x, z, h, slope, rv) {
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
   const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z);
   // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11)
-  const crystal = (1 - smoothstep(42, 64, dMor)) * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
+  const cIn = 1 - smoothstep(42, 64, dMor), crystal = cIn === 0 ? 0 : cIn * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
   // the river: bare shingle along the canyon floor, a reedy margin where it slows toward the fen
   const rockR = clamp(rock + rv.shingle * 0.75, 0, 1.6);
@@ -761,8 +786,8 @@ export function buildTerrain(ctx) {
     // peat hags and moss cushions break up the moor
     const peat = smoothstep(0.35, 0.6, SX.warped2(x * 0.02 + 70, z * 0.02 + 33, 3));
     col.lerp(cPeat, peat * 0.7 * b.moor);
-    const moss = smoothstep(0.3, 0.55, SX.warped2(x * 0.05 - 40, z * 0.05 + 12, 3)) * smoothstep(2, -2, y);
-    col.lerp(cMoss, moss * 0.5);
+    const mossLow = smoothstep(2, -2, y); // (0 at y 2 and above: the lerp by +0 leaves the colour, so no noise)
+    if (mossLow !== 0) col.lerp(cMoss, smoothstep(0.3, 0.55, SX.warped2(x * 0.05 - 40, z * 0.05 + 12, 3)) * mossLow * 0.5);
     col.lerp(cWood, b.wood * 0.8);
     col.lerp(cOrch, b.orchard * 0.5);
     col.lerp(cMud, b.marsh * 0.85);
