@@ -180,7 +180,7 @@ const AIRB = 25 / 8;
 const GROUPS = [['heightAt', 1], ['WALL_SAMPLE', 4], ['slopeAt', 1], ['normalAt', 3], ['biomeAt', BKEYS.length], ['regionAt', RKEYS.length + 1],
   ['regionAt (the air\'s blend, a caller\'s out)', RKEYS.length + 1], ['water+causeway+river', 3 + RIV.length], ['heightAt coarse', CELLS.length]];
 const WIDTH = GROUPS.reduce((a, g) => a + g[1], 0), OFF = []; GROUPS.reduce((a, g) => (OFF.push(a), a + g[1]), 0);
-const nv = { x: 0, y: 0, z: 0 }, outA = {};
+const nv = PURE ? { x: 0, y: 0, z: 0 } : new THREE.Vector3(), outA = {}; // (a tree from before v13 L2 sets a Vector3)
 function sampleInto(x, z, V, o) {
   WALL_SAMPLE.water = WALL_SAMPLE.mouth = WALL_SAMPLE.hard = WALL_SAMPLE.step = -1;
   V[o++] = T.heightAt(x, z);
