@@ -21,9 +21,9 @@ import { lintelForms, prims } from '../v7/glyphs/forms.js';
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const STONE = C('#6e655c'), STONE_D = C('#4c453f'), ROCK = C('#77707c'), GRIT = C('#8e877a'), ROOM = C('#5b534b'), DOME = C('#4a4440');
 const GULF = C('#2f2a26'), IRON = C('#26221f'), WAX = C('#6f6a58'), TIMBER = C('#2a2018'), BED = C('#8c8576'), CHALK = C('#cfc6b2');
-const GOLDS = [C('#c8962e'), C('#d9a843'), C('#b38428'), C('#e0b450')], RED = C('#6a2a1c'), OCHRE = C('#8a6420'), SLATE = C('#4d5a63');
+const GOLDS = [C('#d8ac3c'), C('#ecc456'), C('#c09432'), C('#f2d070')], RED = C('#6a2a1c'), OCHRE = C('#8a6420'), SLATE = C('#4d5a63');
 const WICKER = C('#5e4a2e'), CLOTH = C('#4a1c18'), BRONZE = C('#6b4f2a'), CUT = C('#221e1b');
-const GREEN = '#9fe8c2', COLD = '#bcd2ff', WARM = '#ffb36b'; // the Sexton's corpse-candles, the sounder's lamps (the Pit's starlight), the Reckoner's lamp
+const GREEN = '#9fe8c2', COLD = '#bcd2ff', WARM = '#ffc47e'; // the Sexton's corpse-candles, the sounder's lamps (the Pit's starlight), the Reckoner's lamp
 const KIND_COL = [GREEN, COLD, WARM];
 
 export async function build(ctx) {
@@ -58,7 +58,7 @@ export async function build(ctx) {
   const builders = {
     flight: new UnderBuilder(litFor([0], 7, 1.15)),
     flute: new UnderBuilder(litFor([1], 8.5, 0.95)),
-    sun: new UnderBuilder(litFor([2], 11, 0.8)),
+    sun: new UnderBuilder(litFor([2], 13.5, 0.95)),
     gulf: new UnderBuilder(litFor([1], 8, 1.0)),
     gate: new UnderBuilder(litFor([1], 8, 1.0, true)),
   };
@@ -337,17 +337,25 @@ export async function build(ctx) {
   // ---- the Pit's door: a gatehouse of dressed stone standing out of the wall at its foot, the way through it, the old
   // sun over the lintel (its gold gone), one of the sounder's lamps on a bracket by it; seen from the Pit's floor
   const glowPO = glow([1], 8, 0.5);
-  const PO = new UnderBuilder((x, y, z, out) => { out[0] = 0.22; out[1] = 0.35; out[2] = glowPO(x, y, z); return out; });
+  const PO = new UnderBuilder((x, y, z, out) => { out[0] = 0.2; out[1] = 0.18; out[2] = glowPO(x, y, z); return out; });
   const portal = (() => {
     const M = P.M, Y = P.YM, rx = -oz, rz = ox; // across the mouth (its right, looking out of the passage... any)
     const W = (along, lat, y) => [M[0] + ox * along + rx * lat, y, M[1] + oz * along + rz * lat];
     const yaw = Math.atan2(ox, oz) - Math.PI / 2;
     const f0 = -MOUTH.portal, f1 = 1.6, depth = (f1 - f0) / 2, mid = (f0 + f1) / 2;
     const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const [x, , z] = W(along, lat, 0); PO.box(x, y, z, ha, hy, hl, yaw, col, colTop, 0.1); };
-    const open = 1.2, top = Y + 3.25, outer = 3.1;
-    // the piers and the lintel block (the way through is between them), the cornice, the face's rough surround
-    for (const s of [-1, 1]) box(mid, s * (open + (outer - open) / 2), Y + 3.4, depth, (outer - open) / 2, 4.0, STONE, STONE_D);
-    box(mid, 0, top + 2.1, depth, open, 2.1, STONE, STONE_D);
+    const open = 1.2, top = Y + 3.25, outer = 3.1, order = 1.75;
+    // the piers in courses of dressed blocks (the way through is between them), an inner order of jambs and a lintel
+    // stepped in from the face, the lintel block over all, the cornice, the face's rough surround
+    let ci = 0;
+    for (const s of [-1, 1]) for (let y0 = Y - 0.6; y0 < Y + 7.4; y0 += 0.62) {
+      const hy = Math.min(0.31, (Y + 7.4 - y0) / 2), j = 0.78 + 0.32 * hsh(ci++ * 7.3 + s), c = [STONE[0] * j, STONE[1] * j, STONE[2] * j];
+      const inner = y0 < top ? order : open; // below the lintel the face steps in to the inner order
+      box(mid, s * (inner + (outer - inner) / 2), y0 + hy, depth, (outer - inner) / 2, hy, c, c);
+      if (y0 < top) box(mid + 0.35, s * (open + (order - open) / 2), y0 + hy, depth - 0.35, (order - open) / 2, hy, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8]);
+    }
+    box(mid, 0, top + 2.1, depth, open + 0.02, 2.1, STONE, STONE_D);
+    box(mid + 0.35, 0, top + 0.12, depth - 0.35, order, 0.12, STONE_D);
     box(f0 - 0.12, 0, Y + 6.9, 0.2, outer + 0.3, 0.22, STONE_D);
     for (let i = 0; i < 14; i++) { const lat = (rng() - 0.5) * 2 * (outer + 0.6), h = 0.3 + rng() * 0.5; box(f0 + 0.2 + rng() * 0.6, lat, Y + 7.2 + rng() * 0.9, 0.5, 0.4 + rng() * 0.5, h, STONE_D); }
     // the sun over the door: a boss and its rays in relief, its sockets empty

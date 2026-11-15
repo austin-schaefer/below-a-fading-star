@@ -41,9 +41,10 @@ if (set === 'route') {
 } else if (set === 'mouth') {
   v('gate-out', SP.L - 9, 'ahead');
   v('gate-sill', SP.L - 2, 'ahead', { pitch: -0.1 });
-  v('pit-floor', SP.L + 6, 'back', { pitch: 0.1 });
-  v('pit-far', SP.L + 14, 'back', { pitch: 0.15 });
-  v('pit-side', SP.L + 5, 'back', { yawOff: 0.7, pitch: 0.1, d: 4 });
+  v('pit-floor', SP.L + 6, 'back', { pitch: 0.12 });
+  v('pit-across', 0, 'at', { b: 200, r: 8.5, pitch: 0.12 });
+  v('pit-west', 0, 'at', { b: 320, r: 8, pitch: 0.1 });
+  v('pit-east', 0, 'at', { b: 90, r: 8, pitch: 0.1 });
   v('pit-up', SP.L + 3, 'back', { pitch: 0.95 });
 }
 const prefix2 = `${prefix}-${set}-${q}`;
@@ -54,14 +55,17 @@ for (const w of views) {
     const fp = window.__fp, P = fp.passage.plan, p = fp.player;
     // beyond the line's ends: along its end directions (before s 0 the door's way north; past L out onto the Pit's floor)
     let x, z, y, tx, tz;
-    if (w.s < 0) { const a = P.at(0); tx = a.tx; tz = a.tz; x = a.x + tx * w.s; z = a.z + tz * w.s; y = null; }
+    if (w.dir === 'at') { // on the Pit's floor on bearing b, r m from its centre, looking at the portal
+      const a = (w.b * Math.PI) / 180; x = 200 + Math.sin(a) * w.r; z = 185 - Math.cos(a) * w.r; y = null;
+      tx = P.M[0] - x; tz = P.M[1] - z; const l = Math.hypot(tx, tz); tx /= l; tz /= l;
+    } else if (w.s < 0) { const a = P.at(0); tx = a.tx; tz = a.tz; x = a.x + tx * w.s; z = a.z + tz * w.s; y = null; }
     else if (w.s > P.L) { const a = P.at(P.L); tx = a.tx; tz = a.tz; x = a.x + tx * (w.s - P.L); z = a.z + tz * (w.s - P.L); y = null; }
     else { const a = P.at(w.s); tx = a.tx; tz = a.tz; x = a.x; z = a.z; y = P.yAt(w.s); }
     if (w.d) { const l = Math.hypot(tx, tz); x += (-tz / l) * w.d; z += (tx / l) * w.d; }
     fp.controls.placeAt(x, z, y === null ? undefined : y + 0.02);
     const at = p.pos.clone();
     const rel = fp.controls.carry({ step(pos) { pos.copy(at); } });
-    const D = { ahead: [0, 0], right: [-Math.PI / 2, 0], back: [Math.PI, 0], left: [Math.PI / 2, 0], up: [0, 1.25], down: [0, -1.1], backup: [Math.PI, 0.55], aheadup: [0, 0.55] }[w.dir];
+    const D = { at: [0, 0], ahead: [0, 0], right: [-Math.PI / 2, 0], back: [Math.PI, 0], left: [Math.PI / 2, 0], up: [0, 1.25], down: [0, -1.1], backup: [Math.PI, 0.55], aheadup: [0, 0.55] }[w.dir];
     p.yaw = Math.atan2(-tx, -tz) + D[0] + (w.yawOff || 0); p.pitch = w.pitch ?? D[1];
     await new Promise((res) => setTimeout(res, w.settle ?? 1800));
     fp.renderer.shadowMap.needsUpdate = true;
