@@ -410,7 +410,7 @@ async function start() {
   }
 
   // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
-  // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
+  // says so; 0 = uncapped, as before). About 10 fps while the title card or the settings panel (the pause; not for 1.5 s after a change in it) shows or the window has
   // been unfocused for 3 s (read from document.hasFocus() each frame, not from blur and focus events, which can
   // be missed); never while the pointer is locked, a movement key is down or a touch is active; nothing while the tab is hidden. Time and the updates run once per rendered
   // frame with the real (clamped) dt, so the world and the audio mix keep going at the slower rate.
@@ -430,7 +430,7 @@ async function start() {
     if (document.hasFocus()) blurredAt = null; else if (blurredAt === null) blurredAt = now;
     const pl = ctx.player, tc = ctx.controls.touch;
     const active = pl.locked || pl.keys.size > 0 || !!(tc && (tc.moveId != null || tc.lookId != null));
-    pacing.idle = idle && !benching && !active && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
+    pacing.idle = idle && !benching && !active && (!cardEl.classList.contains('hidden') || ctx.settings?.idle || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
     return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
   }
   ctx.pacing = pacing;

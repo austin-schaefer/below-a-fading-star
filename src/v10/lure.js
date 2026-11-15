@@ -5,7 +5,7 @@
 // round it and settling again. When the act is done they go up off it in a flurry, and they are not there again
 // until it can be done again. So the sign is a living thing of the place, on the thing itself: from 30 m nothing
 // but a fleck that moves now and then, from 10 m a few pale flecks on the stone, from 2 m plainly moths sat where
-// your hand is wanted. No glow, no light, nothing brighter far off than near (v10-F1's thread of motes rose 4.6 m,
+// your hand is wanted. No glow, no light of their own (lit as the stone they sit on is), nothing brighter far off than near (v10-F1's thread of motes rose 4.6 m,
 // drew a halo and was brightened with distance; the owner found it "insanely visible", v12's critic "a pale
 // many-armed creature").
 //
@@ -13,14 +13,17 @@
 // `lure: { x, y, z, face: {x, z} | null }`: where they sit (world coordinates) and the surface's outward normal (null:
 // they sit on a level top). Without it they sit at `at`, on the vertical face `face` when the def has one, else on a
 // level top. One InstancedMesh (two triangles a moth) for every act, no light; per frame only the moths of acts within
-// SEE m of the eye are moved (a few dozen matrices). Hidden under ?acts=0 (acts.js never builds it).
+// SEE m of the eye are moved (a few dozen matrices). Lit by the scene (Lambert, in shadow where the place is); found
+// by movement, not light: each moth flies one short loop every CYCLE s, staggered so one of the five is nearly always up. Hidden under ?acts=0 (acts.js never builds it).
 // ctx.acts.lure: { mesh, state() → [{ id, want, on, at, near }] } for the tests.
 import * as THREE from 'three';
 
 const MAXL = 16, M = 5; // act slots, moths a slot
 const FADE = 1.6; // s for the moths to come to a thing or leave it
 const SEE = 42, GONE = 34; // m: beyond SEE nothing is moved or drawn; from GONE to SEE they shrink to nothing
-const SZ = 0.06; // m, half a wingspan: a big moth, 12 cm across, so a few of them are flecks at 10 m and not nothing
+const SZ = 0.07; // m, half a wingspan: a big moth, 14 cm across
+const CYCLE = 12, FLY = 2.2; // s: each moth flies one short loop in every CYCLE, the five staggered, so one is nearly always
+// in the air: pale movement read from about 15 m, while the light on them is only the scene's (v14-B1 review)
 const SPREAD = 0.22; // m: how far from the spot they sit
 
 export function buildLure(ctx, acts) {
@@ -40,14 +43,17 @@ export function buildLure(ctx, acts) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
-  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, fog: true });
+  g.computeVertexNormals();
+  // lit by the scene like everything round them (in the arch's shadow they are in shadow): a moth, never a glow
+  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, fog: true });
   const mesh = new THREE.InstancedMesh(g, mat, MAXL * M);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
-  mesh.frustumCulled = false; mesh.count = 0; mesh.name = 'act-lures'; mesh.visible = false;
+  mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.count = 0; mesh.name = 'act-lures'; mesh.visible = false;
   ctx.scene.add(mesh);
   // chalk-dusted wings: bone with saffron, a little darker underneath (seen in flight from below)
-  const dusted = new THREE.Color('#d9b778'), bone = new THREE.Color('#c8bba2'), col = new THREE.Color();
+  // pale as moths are: the palest thing on dark stone, by the same light as it
+  const dusted = new THREE.Color('#f2dcaa'), bone = new THREE.Color('#efe7d6'), col = new THREE.Color();
 
   const slots = new Map(); // handle -> slot
   const list = [];
@@ -67,7 +73,7 @@ export function buildLure(ctx, acts) {
       const sx = face ? x - nz * u + nx * 0.012 : x + u, sz = face ? z + nx * u + nz * 0.012 : z + v, sy = face ? y + v : y + 0.012;
       s.moths.push({
         sx, sy, sz, head: face ? rng() * 0.9 - 0.45 : rng() * 6.28, // a sitter's heading: up the wall give or take, or any way on a top
-        mode: 0, t: rng() * 6, sit: 3 + rng() * 6, // 0 sitting, 1 flying a loop
+        mode: 0, t: 0, sit: (i / M) * CYCLE + 0.5, // 0 sitting, 1 flying a loop; the first flights staggered
         ph: rng() * 6.28, ph2: rng() * 6.28, w: (0.8 + rng() * 0.8) * (rng() < 0.5 ? -1 : 1), flap: 24 + rng() * 10,
         p: new THREE.Vector3(sx, sy, sz), prev: new THREE.Vector3(sx, sy, sz), yaw: 0, tint: rng(),
         out: new THREE.Vector3((rng() - 0.5) * 2, 2.2 + rng() * 1.6, (rng() - 0.5) * 2), // where it goes when the act is done
@@ -115,15 +121,15 @@ export function buildLure(ctx, acts) {
       if (coming && s.on > 0.95) { m.mode = 0; m.t = 0; }
     } else if (m.mode === 0) { // sitting on the spot
       m.p.set(m.sx, m.sy, m.sz);
-      if (m.t > m.sit) { m.mode = 1; m.t = 0; m.sit = 1.4 + Math.abs(m.w) * 1.5; }
+      if (m.t > m.sit) { m.mode = 1; m.t = 0; m.sit = FLY; }
     } else { // a short loop round the spot, out from the surface, and back to its place
       const u = Math.min(1, m.t / m.sit), lift = Math.sin(u * Math.PI);
       const a = m.ph + u * Math.PI * 2 * m.w;
-      const ox = Math.cos(a) * 0.3 * lift, oy = (0.12 + 0.18 * Math.sin(t * 2.3 + m.ph2)) * lift;
-      if (s.wall) tgt.set(m.sx - s.nz * ox + s.nx * 0.3 * lift, m.sy + oy, m.sz + s.nx * ox + s.nz * 0.3 * lift);
+      const ox = Math.cos(a) * 0.45 * lift, oy = (0.2 + 0.25 * Math.sin(t * 2.3 + m.ph2)) * lift;
+      if (s.wall) tgt.set(m.sx - s.nz * ox + s.nx * 0.5 * lift, m.sy + oy, m.sz + s.nx * ox + s.nz * 0.5 * lift); // out off the stone into the light
       else tgt.set(m.sx + ox, m.sy + 0.25 * lift + oy, m.sz + Math.sin(a) * 0.3 * lift);
       m.p.lerp(tgt, Math.min(1, dt * 10));
-      if (u >= 1) { m.mode = 0; m.t = 0; m.sit = 4 + 6 * m.tint; }
+      if (u >= 1) { m.mode = 0; m.t = 0; m.sit = CYCLE - FLY; }
     }
     flying = leaving || coming || m.mode === 1;
     if (flying) {

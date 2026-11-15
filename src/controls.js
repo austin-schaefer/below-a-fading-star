@@ -55,11 +55,13 @@ export function buildControls(ctx) {
 
   // One place decides whether the mouse is captured. Called on the browser's event and again
   // every frame, because Firefox has been seen to drop or keep the capture without telling us.
+  let lastUnlock = -1e9; // when the capture was last let go (lock(), below)
   function syncLock() {
     const held = document.pointerLockElement === el;
     if (held === state.locked) return;
     state.locked = held;
     if (held) state.everLocked = true;
+    else { state.keys.clear(); lastUnlock = performance.now(); } // Escape: a key held now is let go in the panel, where the walk never hears it (v14-B1)
     ctx.events.dispatchEvent(new CustomEvent('lock', { detail: held }));
   }
   document.addEventListener('pointerlockchange', syncLock);
@@ -99,7 +101,7 @@ export function buildControls(ctx) {
     state.lockFailed = true;
     ctx.events.dispatchEvent(new CustomEvent('lockfail'));
   }
-  document.addEventListener('pointerlockerror', onLockFail);
+  document.addEventListener('pointerlockerror', () => refused());
   el.addEventListener('mousedown', (e) => {
     if (e.button !== 0 || state.locked) return;
     if (state.enabled && state.lockFailed) { dragging = true; e.preventDefault(); }
@@ -393,11 +395,14 @@ export function buildControls(ctx) {
     return { x, z, y: floor };
   }
 
+  // A browser refuses a capture asked for within about a second of the last let-go (Chrome): a refusal then is not the
+  // capture failing, so the walk does not fall back to drag-look for it; the next click on the view asks again (v14-B1)
+  const refused = () => { if (performance.now() - lastUnlock < 1500) return; onLockFail(); };
   function lock() {
     if (state.lockFailed || !el.requestPointerLock) { if (!el.requestPointerLock) onLockFail(); return; }
     let r;
-    try { r = el.requestPointerLock(); } catch (e) { onLockFail(); return; }
-    if (r && typeof r.catch === 'function') r.catch(onLockFail);
+    try { r = el.requestPointerLock(); } catch (e) { refused(); return; }
+    if (r && typeof r.catch === 'function') r.catch(refused);
     // No change event within a moment means the request was quietly dropped: fall back.
     setTimeout(() => { if (!state.locked && !state.everLocked) onLockFail(); }, 1500);
   }

@@ -125,7 +125,8 @@ export function buildSettings(ctx) {
   const slider = $('set-volume'), sliderOut = $('set-volume-out'), muteBtn = $('set-mute');
   const posEl = $('set-pos'), posToggle = $('set-showpos'), posHud = $('posline');
   const qualityEl = $('set-quality'), captureEl = $('set-capture-choice'), placesEl = $('set-places');
-  const api = { open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
+  let touched = -1e9; // the last change made in the panel: the frame stays full for a moment after it (a slider's preview)
+  const api = { get idle() { return open_ && performance.now() - touched > 1500; }, open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
   ctx.settings = api;
   let open_ = false, openedAt = -1e9;
 
@@ -276,6 +277,7 @@ export function buildSettings(ctx) {
   // --- open and close
   function open(o) {
     if (open_) return;
+    ctx.player?.keys?.clear(); // a key held as the panel opens is let go in it, where the walk never hears it: the walker stops
     open_ = true; openedAt = o?.paused ? performance.now() : -1e9; // opened by Escape (hud.js): that Escape is not also the one that shuts it
     document.getElementById('card')?.classList.add('hidden'); // the one panel: never the old paused card behind it
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
@@ -309,6 +311,7 @@ export function buildSettings(ctx) {
     if (open_ && e.code === 'Escape' && performance.now() - openedAt > 300) { e.preventDefault(); e.stopImmediatePropagation(); close(); }
   }, true);
   const swallow = (e) => { if (e.code !== 'Escape') e.stopPropagation(); };
+  for (const ev of ['input', 'pointerdown']) root.addEventListener(ev, () => { touched = performance.now(); });
   root.addEventListener('keydown', swallow); root.addEventListener('keyup', swallow);
   syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
   return api;

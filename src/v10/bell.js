@@ -229,7 +229,7 @@ export async function build(ctx) {
   const SHEAVE = new THREE.Vector3(A.fl + 0.45, RAMY + 0.05, BZ), CORNER = new THREE.Vector3(A.fl + 0.45, RAMY + 0.05, 206.8);
   const POST = { x: A.fl + 2.4, z: 203.4 }; POST.y = H(POST.x, POST.z);
   const RING = new THREE.Vector3(POST.x, POST.y + 0.95, POST.z);
-  const ropeMat = new THREE.MeshStandardMaterial({ color: '#a08a60', roughness: 0.95 });
+  const ropeMat = new THREE.MeshStandardMaterial({ color: '#c4ae82', roughness: 0.95 }); // hemp worn pale by hands
   const ropeGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 6).translate(0, 0.5, 0);
   const rope = new THREE.Mesh(ropeGeo, ropeMat); rope.castShadow = true; rope.name = 'bell-rope'; scene.add(rope);
   const NT = 8; // turns in the pile when the ram is hauled right back (one lies there at rest: the rope's end)
@@ -238,18 +238,18 @@ export async function build(ctx) {
   const rT = ctx.makeRng(10045), turnJ = Array.from({ length: NT }, () => [(rT() - 0.5) * 0.1, (rT() - 0.5) * 0.1, (rT() - 0.5) * 0.18, (rT() - 0.5) * 0.18, 0.92 + rT() * 0.16]), tE = new THREE.Euler();
   {
     const parts = [];
-    const stone = new THREE.CylinderGeometry(0.32, 0.42, 1.0, 7, 2); { const p = stone.attributes.position; for (let i = 0; i < p.count; i++) { const d = 1 + 0.12 * N2(p.getX(i) * 3, p.getY(i) * 3 + p.getZ(i) * 2); p.setX(i, p.getX(i) * d); p.setZ(i, p.getZ(i) * d); } }
-    stone.translate(POST.x, POST.y + 0.42, POST.z); parts.push(cols(stone, '#7c7466'));
+    const stone = new THREE.CylinderGeometry(0.3, 0.42, 1.3, 7, 2); // v14-B1: stands a head over the tall grass, and pale with handling, so it reads at 10 m { const p = stone.attributes.position; for (let i = 0; i < p.count; i++) { const d = 1 + 0.12 * N2(p.getX(i) * 3, p.getY(i) * 3 + p.getZ(i) * 2); p.setX(i, p.getX(i) * d); p.setZ(i, p.getZ(i) * d); } }
+    stone.translate(POST.x, POST.y + 0.57, POST.z); parts.push(cols(stone, '#a49a86'));
     const ringG = new THREE.TorusGeometry(0.13, 0.03, 5, 10); ringG.rotateY(0.6); ringG.translate(RING.x, RING.y - 0.08, RING.z); parts.push(cols(ringG, '#2a221c'));
     // the sheave: an iron wheel in a bracket on the pier's face; the ring at the mouth; the fixed runs of rope between
     const wheel = new THREE.CylinderGeometry(0.42, 0.42, 0.14, 14); wheel.rotateX(Math.PI / 2); wheel.translate(SHEAVE.x + 0.1, SHEAVE.y, SHEAVE.z); parts.push(cols(wheel, '#2a221c'));
     const brk = new THREE.BoxGeometry(0.7, 0.16, 0.5); brk.translate(SHEAVE.x - 0.25, SHEAVE.y + 0.5, SHEAVE.z); parts.push(cols(brk, '#1e1814'));
     const eye = new THREE.TorusGeometry(0.16, 0.04, 5, 10); eye.rotateY(Math.PI / 2); eye.translate(CORNER.x, CORNER.y, CORNER.z); parts.push(cols(eye, '#2a221c'));
-    const run = (A2, B2) => { const d = new THREE.Vector3().subVectors(B2, A2), l = d.length(), g = new THREE.CylinderGeometry(0.05, 0.05, l, 6); g.translate(0, l / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.normalize())); g.translate(A2.x, A2.y, A2.z); parts.push(cols(g, '#a08a60')); };
+    const run = (A2, B2) => { const d = new THREE.Vector3().subVectors(B2, A2), l = d.length(), g = new THREE.CylinderGeometry(0.05, 0.05, l, 6); g.translate(0, l / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.normalize())); g.translate(A2.x, A2.y, A2.z); parts.push(cols(g, '#c4ae82')); };
     run(SHEAVE, CORNER); run(CORNER, RING);
     const post = new THREE.Mesh(mergeAll(parts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.2 }));
     post.castShadow = true; post.receiveShadow = true; post.name = 'bell-post'; scene.add(post);
-    ctx.addCollider?.({ x: POST.x, z: POST.z, r: 0.4, y: POST.y - 0.2, h: 1.1 });
+    ctx.addCollider?.({ x: POST.x, z: POST.z, r: 0.4, y: POST.y - 0.2, h: 1.45 });
   }
   const lugP = new THREE.Vector3(), tail = new THREE.Vector3();
   function placeRam(s) { // s: metres the ram stands back (west, -x) of its rest; negative is past it, toward the bell

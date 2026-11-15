@@ -3,8 +3,8 @@
 // Lantern Halt (src/v10/tally.js), and on test acts registered in the page for the contract's parts. Desktop: the act
 // is not offered from the road, 30 m off, facing away, or facing the wall far from where the next stroke goes; is
 // offered in front of it; E does it (the stroke, the count, the stored mark) and the stroke is drawn on screen; a
-// second E or a click does nothing (once a visit); Ctrl+E does nothing; nothing is offered or done behind the paused
-// card or the settings panel; after a reload the stroke is there and the act offered again; the settings row forgets
+// second E or a click does nothing (once a visit); Ctrl+E does nothing; nothing is offered or done behind the pause
+// (Escape: the settings panel) or the panel opened by the gear; after a reload the stroke is there and the act offered again; the settings row forgets
 // it. The contract: busy (a 'free' act whose do returns seconds cannot fire twice), when(), at.y (another level),
 // data kept beside the count. Memory: corrupt JSON, a tampered count (clamped), storage that throws; ?acts=0. Touch:
 // the offer clear of the stick and the hop button, a tap does the act and reaches neither. v10-A4, the Halt's second half: the
@@ -105,20 +105,20 @@ await atStroke(page, 2.1, 0, 3.2);
 s = await waitOffer(page, false);
 check('at the wall 3 m along from the row\'s end: not offered (the stroke would land out of sight)', s.offered === null, s);
 
-// the paused card and the settings panel
+// the pause (Escape: the settings panel) and the panel opened by the gear
 await atStroke(page);
 await waitOffer(page, true);
-await page.evaluate(() => { const c = document.getElementById('card'); c.classList.remove('hidden'); c.classList.add('paused'); }); // what Esc does
+await page.evaluate(() => { window.__fp.player.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); }); // what Escape does: the capture let go, the settings panel (the pause) up (v14-B1)
 await sleep(250);
 s = await state(page);
-check('behind the paused card: the offer gone at once', s.offered === null && !s.visible, s);
+check('behind the pause (Escape: the settings panel): the offer gone at once', s.offered === null && !s.visible, s);
 await page.keyboard.press('KeyE'); await sleep(150);
 s = await state(page);
-check('behind the paused card: E does nothing', s.visitor === 0 && s.count === 0, s);
+check('behind the pause: E does nothing', s.visitor === 0 && s.count === 0, s);
 await shot(page, 'acts-halt2-paused');
-await page.evaluate(() => document.getElementById('card').classList.add('hidden'));
+await page.evaluate(() => window.__fp.settings.close());
 s = await waitOffer(page, true);
-check('the card gone: offered again', s.offered === 'halt-tally', s);
+check('the pause shut: offered again', s.offered === 'halt-tally', s);
 await page.evaluate(() => window.__fp.settings.open());
 await sleep(100);
 s = await state(page);
@@ -461,9 +461,9 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   r = await p.evaluate(() => { const fp = window.__fp, h0 = fp.player.hops, hopped = fp.controls.hop(); return { carried: fp.player.carried, hopped, hops: fp.player.hops - h0, phase: fp.tally.ride.phase }; });
   check('E takes the seat: the visitor is carried and cannot hop off', r.carried && r.phase === 'rising' && !r.hopped && r.hops === 0, r);
   // pause and the settings panel hold the ride; the sun's gutter does not
-  await p.evaluate(() => { const c2 = document.getElementById('card'); c2.classList.remove('hidden'); c2.classList.add('paused'); });
+  await p.evaluate(() => { window.__fp.player.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); }); // Escape (v14-B1: the settings panel is the pause)
   const y0 = await p.evaluate(() => window.__fp.player.pos.y); await sleep(1200); const y1 = await p.evaluate(() => window.__fp.player.pos.y);
-  await p.evaluate(() => document.getElementById('card').classList.add('hidden'));
+  await p.evaluate(() => window.__fp.settings.close());
   await p.evaluate(() => window.__fp.settings.open()); await sleep(1000); const y2 = await p.evaluate(() => window.__fp.player.pos.y);
   await p.evaluate(() => window.__fp.settings.close());
   check('paused, and with the settings panel open, the ride holds where it is', Math.abs(y1 - y0) < 0.02 && Math.abs(y2 - y1) < 0.02, { y0, y1, y2 });

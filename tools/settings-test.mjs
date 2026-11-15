@@ -66,6 +66,17 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('pause: the Escape that opened it does not also shut it', await shown(page));
   await page.click('#set-close');
   check('pause: "Back to the moor" shuts it', !(await shown(page)));
+  // a key held as Escape is pressed is let go inside the panel: the walker stops, and nothing is still held after it shuts
+  await page.evaluate(() => { const fp = window.__fp, s = fp.settings.places[0]; fp.controls.placeAt(s.x, s.z); });
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(400);
+  await page.evaluate(() => window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })));
+  const held0 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
+  await page.keyboard.up('KeyW'); await page.waitForTimeout(600);
+  const held1 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
+  await page.click('#set-close'); await page.waitForTimeout(800);
+  const held2 = await page.evaluate(() => { const q = window.__fp.player.pos; return { p: [q.x, q.z], keys: [...window.__fp.player.keys] }; });
+  const mv = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  check('pause: W held through Escape and let go in the panel: the walker stands still in it and after it, no key held', mv(held0, held1) < 0.05 && mv(held1, held2.p) < 0.05 && held2.keys.length === 0, { held0, held1, held2 });
 
   // volume and mute, on the output gain after the mute gain
   await page.click('#gear');
@@ -270,7 +281,14 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await page.evaluate(() => window.__fp.settings.open()); await page.waitForTimeout(800);
   const o = await page.evaluate(() => ({ idle: window.__fp.pacing.idle, hidden: document.getElementById('card').classList.contains('hidden') }));
-  check('panel: opening it does not raise the pause card or idle the frame', o.hidden && o.idle === false, o);
+  check('panel: opening it does not raise the pause card', o.hidden, o);
+  // v14-B1: the panel is the pause, so the frame idles under it as it did under the card; for a moment after a change in
+  // it (a slider's preview) it does not
+  await page.waitForTimeout(1200);
+  const o2 = await page.evaluate(() => ({ idle: window.__fp.pacing.idle }));
+  await page.locator('#set-volume').fill('70'); await page.waitForTimeout(150);
+  const o3 = await page.evaluate(() => ({ idle: window.__fp.pacing.idle }));
+  check('panel: the frame idles under it, and not just after a change in it', o2.idle === true && o3.idle === false, { o2, o3 });
   await page.evaluate(() => window.__fp.settings.close());
   const t = await page.evaluate(() => {
     const fp = window.__fp, P = fp.pacing; let r = {};

@@ -10,10 +10,7 @@
 //   AFTER=0.3,1,2,5 (default) · Q=low · HOLD=1 keeps holding W through the frames · STOP=m stops walking that far out
 //   even if no offer rose · NOE=1 never presses E (the lure on its own) · STILL_MARKS=1 stops for each distance frame
 //   THEN=id AFTER2=... a second act the first brings (the Halt's seat), pressed where they stand once offered
-import { createRequire } from 'node:module';
-let chromium;
-try { ({ chromium } = await import('playwright')); }
-catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
+import { chromium } from 'playwright'; // npm install --no-save playwright@1.63.0 in the worktree (the wilderness skill)
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const id = process.argv[3];
 const prefix = process.argv[4] || `actwalk-${id}`;
@@ -68,7 +65,7 @@ const legs = [...via.map(([x, z]) => ({ x, z })), target];
 await turn(legs[0], 0); await run(1500);
 let s = await info();
 console.log('[start]', JSON.stringify(s));
-const marks = [30, 10, 2].filter((m) => m <= s.d + 0.5);
+const marks = [30, 15, 10, 2].filter((m) => m <= s.d + 0.5);
 await shot(`at-${Math.round(s.d)}m`); marks.shift();
 const stopAt = +(process.env.STOP || 0);
 await page.keyboard.down('KeyW');
