@@ -78,7 +78,9 @@ export function buildHud(ctx) {
     for (const [key, L] of landmarkList) {
       if (L.feet && (feet < L.feet[0] || feet > L.feet[1])) continue; // v14-B3: a deck's card is not the floor's under it
       const d = landmarkDistance(L, p.x, p.z);
-      const k = L.card && d < 6 ? d - 1000 : d; // a name card lying inside a broad landmark wins there
+      // a name card lying inside a broad landmark wins there; a broad card (v14-B5: Titan's Causeway, the whole deck)
+      // wins over landmarks but gives way to every other card inside it
+      const k = L.card && d < 6 ? d - (L.broad ? 500 : 1000) : d;
       if (k < bestD) { bestD = k; best = key; }
     }
     let near = bestD < 6 ? best : null;

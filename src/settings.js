@@ -35,35 +35,40 @@ const CARD_POSES = {
   // v11.1-W4: the canyon's three were a rock at arm's length or a wall; each now on dry ground with the thing across open air
   river: { x: 208, z: 240, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the slope 26 m off
   cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
-  prospect: { x: 247, z: -36, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
+  orchard: { x: 80, z: -100, look: { x: 130, z: -90 }, pitch: 0.05 }, // v14-B4: from the grove's west side, the medlars and the path through (the old stand put a trunk across the frame)
+  byre: { x: -160, z: 48, look: { x: -148, z: 64 }, pitch: 0.05 }, // v14-B4: 21 m off, the roof clear of the wood's trunks
+  plinths: { x: 175, z: -160, look: { x: 148, z: -220 }, pitch: 0.1 }, // v14-B4: beside the road's foot, the plinths running off in file (the old stand was at a wall's foot)
+  nave: { x: 251, z: 24, look: { x: 255, z: 40 }, pitch: -0.4 }, // v14-B4: on the hole's north rim, looking down on the capitals (the old stand looked across the turf)
+  thrones: { x: -290, z: 85, look: { x: -324, z: 118 }, pitch: 0.3 }, // v14-B4: out of the wood's edge, the thrones against the sunset (the old stand looked into black trunks)
+  leerie: { x: 110, z: -12, look: { x: 128, z: 5 }, pitch: 0.05 }, // v14-B4: the standards and their lamplighter, the arch behind
+  prospect: { x: 248, z: -30, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
+};
+// v14-B4: a region card's stand (default: its card point, facing the spawn's way)
+const REGION_STANDS = {
+  lynchets: { x: -170, z: -95, look: { x: -200, z: -135 }, pitch: 0.1 }, // the terraced walls climbing the slope
 };
 // v11-F2: places that stand on the wall or in the air with no landmark; each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
+  // v14-B5: two places whose cards the owner cut (#52) keep the stands and names they had before v14-B3
+  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
+  { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
 ];
 // v14-B3 (#52): the named places of v9 to v12 (LANDMARKS' cards), each where it reads: the ways up from their feet, the
-// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1)
+// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1); v14-B5: the owner's cuts and renames
 const NAMED_POSES = {
   halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
-  tocsin: { x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
-  escalade: { x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // at its foot in the wood's southern fringe, the first flight climbing west between its walls
-  footing: { x: -72, y: 56, z: 212, look: { x: -113, z: 211 }, pitch: -0.08 }, // on the deck at its east lip, the footing course running off west on its rib
-  coping: { x: -36, y: 56, z: 219, look: { x: -45, z: 219 }, pitch: -0.3 }, // the crack and the coping fallen across it, the bell's crown under
-  cornice: { x: 68, y: 56, z: 216, look: { x: 32, z: 219.5 }, pitch: -0.08 }, // from the middle deck's west end, the cornice stones hung on iron going back west
+  tocsin: { x: -60.6, z: 194.2, look: { x: -57.2, z: 203.4 }, pitch: 0.2 }, // 9 m from the ringing post (the act's lure, 20 degrees off the look) so the bell, hung to the east of it, and its arch are in the frame
+  escalade: { x: -120, z: 175, look: { x: -226, z: 195 }, pitch: 0.3 }, // from the tarn's side, 100 m off: the gate's masonry against the last of the sky (at its foot, in the wood, the stair stands in its own deep shade and the frame is black)
+  causeway: { x: -150, y: 56, z: 213, look: { x: -60, z: 215 }, pitch: -0.04 }, // on the west deck between piers, running off east to the fallen bay and the footing course (nearer the stair's top the wall's shoulder rings the stand: the hole check)
   wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
   spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
-  soundings: { x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
-  lead: { x: 97, z: -318, look: { x: 60, z: -322.3 }, pitch: 0.2 }, // on the first terrace, the old lead lying across the gap up to the second
   bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
   diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
   coffinroad: { x: 250.4, y: -16.6, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D0: on the coffins 16 m under the moor, looking east along the road into the dark under the roof, the candles going away
   nadir: { x: 203.08, y: -32.58, z: 176.54, look: { x: 200, z: 185 }, pitch: 0.12 }, // v14-D2: on the Pit's floor where the passage comes in, the down-reel and the sheers over the Nadir ahead, the slabs going up the wall behind them
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
-  landing: { x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
-  prime: { x: 278, z: 112, look: { x: 320, z: 129 }, pitch: 0.15 }, // 300 m out on bearing 112, the pass's long foot rising to its saddle
-  sext: { x: 0, z: 300, look: { x: 0, z: 345 }, pitch: 0.15 }, // 300 m out due south
-  compline: { x: -153, z: -245, look: { x: -183, z: -293 }, pitch: 0.17 }, // 289 m out on bearing 328 (at 300 the pass's foot rings it round)
 };
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
@@ -101,7 +106,7 @@ function buildPlaces() {
   }
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
-  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
+  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw, ...REGION_STANDS[R.region] });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];
     if (x != null) out.push({ name: S.name, group: 'The living', x, z, yaw, pitch });
