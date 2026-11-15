@@ -59,3 +59,20 @@ Next: as each reports, look at its frames with the report shut, run its tests on
 - No whole suite has run on `next` since v13: it runs once when B1 and D0 are in.
 
 Next: merge B1 when its fixes are in; judge D0 when it reports (walk it in a real browser, a blind reader on its renders, a cold review); the whole suite on `next`; then write batch 2 (D1 the passage and the Pit, D2 what is found) from what D0 taught.
+
+**2026-11-15, 11:36 PST. Batch 1's three fault briefs are merged; D0 is judged and back for round 2; batch 2 is written.**
+
+- **B1 (the acts' faults) is merged** (`9536d2f`): #38 (the lure is five moths at rest where the hand goes, lit by the scene, one usually flying a short loop), #39 (the seat stands off the slab while sat on, and advances in the carrier's step), #40 (the "ring" was the rope coil scaled to four times its height: now rope piling at a taller, paler post), #43 (the hand's shadow pushes the plate out at 15 s), #46 (Escape opens the settings panel, which is the pause; it idles at 10 fps; held keys are cleared). Rerun by the orchestrator 5 of 5 before the review fixes; the author's last run was 4 of 5 then `settings` alone 83 of 83 after a test-only fix. **Weak, and said by its author:** the moths do not make an act findable from 15 m; what makes the bell findable is its post. The critic is to say, act by act, whether the thing itself reads from a distance.
+- So all thirteen of the owner's faults are in `next`. The names list is on #52 with a picture and a number for each row (the owner asked for both in session; the pictures are `shots/places/`, committed by the orchestrator, not stage keepers).
+- **D0 (the first descent) is judged, not merged.** The Sexton's shears on the Nave's south-east rim, a stair hung on chains 17 m down through the hole, a road of forty coffins lashed in pairs on the water with a candle on each pair, a sun in tesserae on the east wall, a fallen door in the south wall (x 246.7, sill y -16.7). The kit: `src/v14/under.js` (`ctx.below`, `underMaterial`, `UnderBuilder`, `boxBelow`), post and audio switched below. The orchestrator's rerun: 11 of 11. **A blind reader and the orchestrator agree on what does not read:** the coffins look like "a railway or duckboard track", the water like "a matte fog-floor", the sun like "bunting", the columns like "cardboard", and off the road several frames are black with no direction. **The cold review's blocker:** the hall floor costs up to 1 ms more JS than the rim (the moor is still drawn). Round 2 is with the same agent (`issue-1400-first-descent`, port 8161): part A the kit (the moor hidden below, a volume that follows a path, a fade to black, a smaller stone room, `ctx.nave.ceilAt`), pushed first so the passage can start on it; part B the look.
+- **Batch 2:**
+
+| Brief | Branch / worktree | Port | Model | State |
+|---|---|---|---|---|
+| D2 the Pit, from the bottom (`brief-v14-D2-the-pit.md`) | `issue-1411-the-pit` (from D0's branch) | 8163 | opus | out now |
+| B4 stands that face a wall (`brief-v14-B4-stands.md`) | `issue-1412-stands` | 8164 | sonnet | out now |
+| D1 the passage under the moor (`brief-v14-D1-the-passage.md`) | `issue-1410-the-passage` (from D0's branch) | 8162 | opus | goes out when D0's kit (part A) is pushed |
+
+- No whole suite has run on `next` since v13; B1 touched `src/main.js` (one condition). It runs when D0 is merged.
+
+Next: dispatch D1 on D0's kit push; judge D0's round 2 (the same three sets of frames, a second blind reader) and merge it; the whole suite on `next`; then D2, D1 and B4 as they report.
