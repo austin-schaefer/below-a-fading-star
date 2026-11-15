@@ -164,7 +164,7 @@ function ironMaterial(U, kind) {
 // long and the wire's ends reach T past it into the next (#51: an outer length of 1 left them meeting end to end, and
 // sampling the ends off their tips shortened each further, so a gap showed between every two)
 function linkGeometry(low) {
-  const m = low ? 3 : 4, nT = 4; // points on each end's half-circle (both ends of it included), round the wire
+  const m = low ? 4 : 6, nT = 4; // segments on each end's half-circle (both its ends and its tip on it), round the wire
   const T = 0.14, W = 0.62, L = 1 + 2 * T; // wire thickness, outer width, outer length (link lengths)
   const rr = (W - T) / 2, straight = L - W; // the centreline's end radius and straight run
   // the centreline: each end a half-circle from one side to the other, joined by the sides

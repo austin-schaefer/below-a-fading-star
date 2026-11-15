@@ -539,6 +539,34 @@ const HELPERS = `(() => {
     check(FL.stale === 0 && FL.moved > 20 && (!SD || FL.stairMoved > 20), 'far: a stand-in drawn the frame its module wrote its instances draws what the module has (the stair\'s slabs rising, grazers walking)', FL);
     check(FL.culled === 0, 'far: every stand-in drawn culls as its source does (frustumCulled)', `${FL.culled} mismatches over ${FL.checks} renders`);
   }
+  // v14-B2 (#47, #49, #41's kind): the heights' glass and lamps drawn whole. The icefall's leads are closed solids
+  // wound outward (their signed volume positive: the bridge's lead was drawn inside out, its near faces culled); the
+  // lamps (the lamp-tender's, the lift's cage, the gallery's warders') have no two faces in one plane fighting for the
+  // pixel (tools/coplanar.js); the lamp-tender's halo is round and soft (a shader with gl_PointCoord, not a square point)
+  const GL = await page.evaluate(async () => {
+    const fp = window.H.fp, scene = fp.scene, { coplanar } = await import('/tools/coplanar.js');
+    const vol = (m) => { if (!m) return null; const P = m.geometry.attributes.position, I = m.geometry.index, n = I ? I.count : P.count; let v = 0; const g = (i) => [P.getX(i), P.getY(i), P.getZ(i)];
+      for (let t = 0; t < n; t += 3) { const a = g(I ? I.getX(t) : t), b = g(I ? I.getX(t + 1) : t + 1), c = g(I ? I.getX(t + 2) : t + 2); v += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6; } return v; };
+    const leads = scene.getObjectByName('icefall-leads');
+    const out = { leadsVol: vol(leads), faces: {} };
+    const lamp = scene.getObjectByName('stair-lamp');
+    if (lamp) { lamp.updateWorldMatrix(true, false); const c = lamp.getWorldPosition(new fp.THREE.Vector3()); out.faces['stair-lamp'] = coplanar(lamp, c, 0.6).length; }
+    const halo = scene.getObjectByName('stair-lamp-halo');
+    out.halo = halo ? { shader: !!halo.material.fragmentShader, round: /gl_PointCoord/.test(halo.material.fragmentShader || '') } : null;
+    const L = fp.lift;
+    if (L) {
+      const cl = scene.getObjectByName('lift-cage-light'), c = cl.getWorldPosition(new fp.THREE.Vector3());
+      L.cage.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh) out.faces[o.name || 'lift-cage'] = (out.faces[o.name || 'lift-cage'] || 0) + coplanar(o, c, 0.8).length; });
+      const gl = []; scene.traverse((o) => { if (o.name === 'lift-gallery-lamp-light') gl.push(o.getWorldPosition(new fp.THREE.Vector3()).add(new fp.THREE.Vector3(0, 0.3, 0))); });
+      L.gal.group.traverse((o) => { if (!o.isMesh || o.isInstancedMesh) return; let k = 0; for (const p of gl) k += coplanar(o, p, 0.6).length; if (k) out.faces[o.name] = (out.faces[o.name] || 0) + k; else out.faces[o.name] ??= 0; });
+      out.galleryLamps = gl.length;
+    }
+    return out;
+  });
+  check(GL.leadsVol > 0, 'icefall (#47): the leads (the bridge, R2\'s, R3\'s, the Plummet) are wound outward (signed volume positive)', `${f2(GL.leadsVol)} m³`);
+  check(GL.halo?.shader && GL.halo.round, 'stair (#49): the lamp-tender\'s halo is a round soft point, not a square', GL.halo);
+  const bad = Object.entries(GL.faces).filter(([, v]) => v > 0);
+  check(Object.keys(GL.faces).length >= 3 && GL.galleryLamps >= 3 && !bad.length, 'lamps (#41\'s kind): no two faces of the stair\'s lamp, the cage\'s or the gallery\'s warders\' lamps lie in one plane', bad.length ? bad : `${Object.keys(GL.faces).length} meshes, ${GL.galleryLamps} gallery lamps`);
   await page.close();
 }
 

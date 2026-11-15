@@ -273,7 +273,7 @@ export function buildTop(ctx, P, { low }) {
       uniforms: haloU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true,
       vertexShader: /* glsl */`uniform float uScale; uniform float uOn; varying float vA;
         #include <fog_pars_vertex>
-        void main() { vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); float d = -mvPosition.z;
+        void main() { vec3 transformed = position; vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0); float d = -mvPosition.z;
           gl_PointSize = max(3.0, 0.9 * uScale / max(d, 0.1)); vA = uOn * smoothstep(5.0, 14.0, d); gl_Position = projectionMatrix * mvPosition;
           #include <fog_vertex>
         }`,

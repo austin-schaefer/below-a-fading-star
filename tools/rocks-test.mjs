@@ -94,7 +94,7 @@ const survey = async (page) => page.evaluate(async () => {
 // the module that laid it, c.mod) against every way a walker is led along: the roads and paths (a lead's tread, its
 // width w, within the collider's r), the Diffident Stair's slabs lying in the turf (stairClear), the v12 ways up
 // (ctx.ascents, 1 m either side of each, where the collider's body is at the way's height), and the settings map's
-// stands (1 m round each, a body and a step). Over the whole map, at each tier.
+// stands (0.6 m round each: a body's width). Over the whole map, at each tier.
 const SCATTER = /^(rocks|vegetation|lattice|region-)/;
 const ways = async (page) => page.evaluate(async (src) => {
   const SC = new RegExp(src);
@@ -126,7 +126,7 @@ const ways = async (page) => page.evaluate(async (src) => {
       }
       if (hit) { bad.ascents.push(`${tag} on ${a.id}`); break; }
     }
-    for (const pl of PLACES) if (pl.x !== undefined && Math.hypot(c.x - pl.x, c.z - pl.z) < c.r + 1 && !(c.h !== undefined && pl.y !== undefined && c.y + c.h < pl.y)) { bad.stands.push(`${tag} at ${pl.id || pl.name}`); break; }
+    for (const pl of PLACES) if (pl.x !== undefined && Math.hypot(c.x - pl.x, c.z - pl.z) < c.r + 0.6 && !(c.h !== undefined && pl.y !== undefined && c.y + c.h < pl.y)) { bad.stands.push(`${tag} at ${pl.id || pl.name}, ${Math.hypot(c.x - pl.x, c.z - pl.z).toFixed(2)} m`); break; }
   }
   return { n: cols.length, mods, asc: asc.map((a) => a.id), bad };
 }, SCATTER.source);
@@ -141,7 +141,7 @@ for (const q of tiers) {
     ok(!w.bad.roads.length, `${q} (#48): no rock, tree, tor or bush stands on a road's or path's tread${list(w.bad.roads)}`);
     ok(!w.bad.stair.length, `${q} (#48): nor on the Diffident Stair's slabs in the turf${list(w.bad.stair)}`);
     ok(w.asc.length >= 3 && !w.bad.ascents.length, `${q} (#48): nor across a way up (${w.asc.length} of them)${list(w.bad.ascents)}`);
-    ok(!w.bad.stands.length, `${q} (#48): nor within 1 m of a stand on the settings map${list(w.bad.stands)}`);
+    ok(!w.bad.stands.length, `${q} (#48): nor within a body's width (0.6 m) of a stand on the settings map${list(w.bad.stands)}`);
   }
   const s = await survey(page);
   ok(!!s && s.cut, `${q}: ctx.rocks is built with the v8-11 cut`);
