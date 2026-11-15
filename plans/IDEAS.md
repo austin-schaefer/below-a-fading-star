@@ -156,3 +156,13 @@ H5 fixed five things seen from the tops (the haze and the sun's shadows under a 
 - **Compile and warm-up** (0.5 to 1.0 s of the load) were left: the main thread waits on the GPU process while 218 programs link. Fewer program variants would shorten it.
 - **The Measure row, finished**: while it runs the profiler's overlay sits on the title's wordmark; Close reloads to the title card and loses the visitor's place (bring them back to where they stood, as the Quality row does); the result is a diagnostic panel, which is right for the Copy button and wrong for the first thing a visitor reads: one plain sentence first ("the walk ran smoothly here" / "the walk struggled here, most at the ..."), the table beneath.
 - **On a local server the kept store refetches every loaded script** to hash its text (there is no commit stamp there), so the owner's view on 8123 fetches everything twice. Hash from the HTTP cache (`force-cache`), or key by `git rev-parse` written by `tools/serve.sh`.
+
+## A shorter suite (from v13's audit; estimates by reading, not measured)
+
+World loading is now a small share of the gate's 39 minutes; two tests hold about 40% of it in real-time waiting: `acts` (about 10 min) and `audio` (about 7 min, 226 s of it fixed settle sleeps). `tools/suite.sh` prints each test's seconds: check these against it before starting.
+
+- **`audio-test.mjs`'s settle after each cue** (about 2 min): wait until the cue's voices have left and the cue bus is back to the bed, capped at the fixed settle. Risk: a delayed part bleeding into the next bed; this test has flaked by 0.5 dB before.
+- **Fast-forward hooks for the acts** (about 2.5 min): the seat's ride, the pours and the "find" walks run in real time. Needs source changes, and changes what the test proves; keep one act in real time.
+- **`contrast-survey.mjs` in a gate mode** (about 50 s): the gate reads 13 of the 19 poses' frames.
+- **One browser profile for the suite** (about 1 min): every test after the first loads from the kept store. Most tests would then prove the world built from tapes, not cold; `loading`, `sw`, `perf`, `pan`, `record` must stay cold.
+- **Two browsers for the gate when nothing else runs**: the owner's call (the pace rule is one browser an agent); it would roughly halve the gate.
