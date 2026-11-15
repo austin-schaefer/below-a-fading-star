@@ -302,6 +302,7 @@ export async function build(ctx) {
   const wait = (sec, f) => seq.push({ k: 'wait', sec, f });
   const door = (which, open) => seq.push({ k: 'door', which, open });
   const fn = (f) => seq.push({ k: 'fn', f });
+  const slip = (d, sec) => seq.push({ k: 'slip', d, sec }); // it gives back d along the rails over sec, eased (not in one frame: #50)
   const jolt = (a = 0.05) => { shake = a; shakeT = 0; ctx.audio?.cue('act-lift-clank', cageAt(s), { amp: a }); };
   const where = () => (Math.abs(s - S0) < 0.05 && !moving ? 'foot' : Math.abs(s - SG) < 0.05 && !moving ? 'gallery' : null);
   const heading = () => { const q = [cur, ...seq].filter((x) => x && x.k === 'move').pop(); return q ? q.to : null; };
@@ -345,41 +346,78 @@ export async function build(ctx) {
       const sStop = sOfY(92);
       go(sStop, { slow: [sOfY(38), sOfY(52)] });
       wait(1.4); fn(() => ctx.audio?.cue('act-lift-creak', cageAt(s))); wait(2.6); // the stop: silence, then the iron groans
-      fn(() => { jolt(0.09); s -= 0.14; }); wait(0.9);
+      fn(() => jolt(0.09)); slip(0.14, 0.3); wait(0.6);
       go(to);
     } else go(to, { slow: [sOfY(52), sOfY(38)] });
     door(up ? 'w' : 'e', true);
-    fn(() => { if (release) { release(); release = null; P.vel.set(0, 0, 0); P.vy = 0; } ridden = false; rideEnd?.(); rideEnd = null; });
+    fn(() => { if (inStep) ending = true; else endRide(); });
     return new Promise((res) => { rideEnd = res; });
   }
+  function endRide() {
+    ending = false;
+    if (release) { release(); release = null; P.vel.set(0, 0, 0); P.vy = 0; }
+    ridden = false; lkY = null; rideEnd?.(); rideEnd = null;
+  }
   const yawTo = (x, z) => Math.atan2(-(x - P.pos.x), -(z - P.pos.z));
+  // The rider (#50). controls.update places the eye before the modules' updates run, so a carriage advanced in its own
+  // update would carry the eye one frame behind the cage it draws: the bars and floor jumping round the head by v·dt,
+  // unevenly as the frame time wanders. So while ridden the carriage is advanced here, in the carrier's step, by the
+  // frame's own dt, and its update skips that frame. The eye rides the cage's travel and only a little (RIDER_SHAKE) of its rattle
+  // (the body takes the rest: the cage, the lamp and the keys still show the jolt in full).
+  const RIDER_SHAKE = 0.15;
+  let inStep = false, stepped = false, ending = false;
+  const cE = new THREE.Vector3();
   const carrier = {
-    step(pos) { pos.copy(cc).add(off); },
-    drop() { release = null; ridden = false; rideEnd?.(); rideEnd = null; }, // a teleport: the carriage goes on to its landing and waits
-    look(dt, quiet) {
-      if (quiet < 0.05 && rideT > 0.4) took = true;
-      const crossing = Math.abs(s - (SG - s)) < 16 && rideDir > 0 && moving;
-      const arriving = rideDir > 0 ? s > SG - 9 : s < S0 + 7;
-      const tiers = rideDir > 0 && s > SG - 40 && !arriving; // the tiers, the chains and the lesser wheel going by, to the north
-      const beat = crossing || arriving;
-      if (took ? !(quiet > 3 && beat) : quiet < 0.3) return null;
-      const px = P.pos.x, pz = P.pos.z;
-      if (arriving && rideDir > 0) { lookV.yaw = yawTo(gal.landing.x, gal.landing.z); lookV.pitch = 0.02; lookV.rate = 1.6; return lookV; }
-      if (arriving) { lookV.yaw = yawTo(px + io.x, pz + io.z); lookV.pitch = -0.12; lookV.rate = 1.4; return lookV; }
-      if (crossing) { // the counterweight going down past them, close on the north side
-        const w = railAt(SG - s, _lk).addScaledVector(al, WEIGHT_AL);
-        lookV.yaw = yawTo(w.x, w.z); lookV.pitch = Math.atan2(w.y - 1.5 - P.pos.y, hyp(w.x - px, w.z - pz)); lookV.rate = 1.2; return lookV;
-      }
-      if (tiers) { lookV.yaw = yawTo(px + al.x * 10 - io.x * 2.5, pz + al.z * 10 - io.z * 2.5); lookV.pitch = 0.12; lookV.rate = 0.7; return lookV; }
-      // out over the valley through the glass beside the door, looking down a little more the higher they go; at the
-      // stop, down past their feet
-      const stopped = !moving && rideT > 3 && rideDir > 0;
-      lookV.yaw = yawTo(px + io.x * 10 - al.x * 6.5, pz + io.z * 10 - al.z * 6.5);
-      lookV.pitch = stopped ? -0.62 : rideDir > 0 ? -0.18 - 0.2 * Math.min(1, (s - S0) / (SG - S0)) : -0.25;
-      lookV.rate = rideT < 2 ? 0.6 : 0.9;
-      return lookV;
+    step(pos, dt) {
+      if (!stepped && (manual || open())) { inStep = true; try { advance(manual ? dt : ctx.time?.dt ?? dt, manual ? lastT + dt : ctx.time?.t ?? lastT); if (manual) lastT += dt; } finally { inStep = false; } stepped = true; }
+      cageAt(s, cE).lerp(cc, RIDER_SHAKE);
+      pos.copy(cE).add(off);
     },
+    drop() { release = null; ridden = false; lkY = null; rideEnd?.(); rideEnd = null; }, // a teleport: the carriage goes on to its landing and waits
+    look(dt, quiet) { const L = beat(dt, quiet); if (!L) { lkY = null; return null; } return steer(dt, L); },
   };
+  // the look the carrier asks for is reached by a goal that turns at most TURN rad/s (eased in and out), which the view
+  // follows: a beat changing, or a target passing overhead (the counterweight), never spins the visitor round (#50)
+  const TURN = 0.55, TURN_A = 0.9; // rad/s, rad/s²
+  let lkY = null, lkP = 0, lkV = 0;
+  const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const steerV = { yaw: 0, pitch: 0, rate: 0 };
+  function steer(dt, L) {
+    if (lkY === null) { lkY = P.yaw; lkP = P.pitch; lkV = 0; }
+    const d = wrapA(L.yaw - lkY);
+    const vWant = Math.sign(d) * Math.min(TURN * Math.min(1, L.rate / 1.2 + 0.2), Math.sqrt(2 * TURN_A * Math.abs(d)));
+    lkV += Math.max(-TURN_A * dt, Math.min(TURN_A * dt, vWant - lkV));
+    lkY += Math.abs(lkV * dt) > Math.abs(d) ? d : lkV * dt;
+    const mp = TURN * 0.6 * dt; lkP += Math.max(-mp, Math.min(mp, L.pitch - lkP));
+    steerV.yaw = lkY; steerV.pitch = lkP; steerV.rate = 3;
+    return steerV;
+  }
+  function beat(dt, quiet) {
+    if (quiet < 0.05 && rideT > 0.4) took = true;
+    const crossing = Math.abs(s - (SG - s)) < 16 && rideDir > 0 && moving;
+    const arriving = rideDir > 0 ? s > SG - 9 : s < S0 + 7;
+    const tiers = rideDir > 0 && s > SG - 40 && !arriving; // the tiers, the chains and the lesser wheel going by, to the north
+    const key = crossing || arriving;
+    if (took ? !(quiet > 3 && key) : quiet < 0.3) return null;
+    const px = P.pos.x, pz = P.pos.z;
+    if (arriving && rideDir > 0) { lookV.yaw = yawTo(gal.landing.x, gal.landing.z); lookV.pitch = 0.02; lookV.rate = 1.6; return lookV; }
+    if (arriving) { lookV.yaw = yawTo(px + io.x, pz + io.z); lookV.pitch = -0.12; lookV.rate = 1.4; return lookV; }
+    if (crossing) { // the counterweight going down past them, close on the north side: the look held on its guide (a
+      // bearing along the face, not at the weight itself, which passes nearly overhead and would swing the yaw round)
+      // and lifted or lowered toward it
+      const w = railAt(SG - s, _lk).addScaledVector(al, WEIGHT_AL);
+      lookV.yaw = yawTo(px + al.x * 10 + io.x * 1.5, pz + al.z * 10 + io.z * 1.5);
+      lookV.pitch = Math.max(-0.55, Math.min(0.55, Math.atan2(w.y - 1.5 - P.pos.y, Math.max(6, hyp(w.x - px, w.z - pz))))); lookV.rate = 1.2; return lookV;
+    }
+    if (tiers) { lookV.yaw = yawTo(px + al.x * 10 - io.x * 2.5, pz + al.z * 10 - io.z * 2.5); lookV.pitch = 0.12; lookV.rate = 0.7; return lookV; }
+    // out over the valley through the glass beside the door, looking down a little more the higher they go; at the
+    // stop, down past their feet
+    const stopped = !moving && rideT > 3 && rideDir > 0;
+    lookV.yaw = yawTo(px + io.x * 10 - al.x * 6.5, pz + io.z * 10 - al.z * 6.5);
+    lookV.pitch = stopped ? -0.62 : rideDir > 0 ? -0.18 - 0.2 * Math.min(1, (s - S0) / (SG - S0)) : -0.25;
+    lookV.rate = rideT < 2 ? 0.6 : 0.9;
+    return lookV;
+  }
 
   // where the lever is (in the world), for its act
   const leverAt = { x: 0, y: 0, z: 0 };
@@ -401,6 +439,7 @@ export async function build(ctx) {
     if (!cur) return;
     if (cur.k === 'wait') { cur.t = (cur.t || 0) + dt; if (cur.f && !cur.fired) { cur.fired = true; cur.f(); } if (cur.t >= cur.sec) cur = null; return; }
     if (cur.k === 'fn') { cur.f(); cur = null; return; }
+    if (cur.k === 'slip') { const t0 = cur.t || 0, t1 = cur.t = Math.min(cur.sec, t0 + dt), e = (u) => u * u * (3 - 2 * u); s -= cur.d * (e(t1 / cur.sec) - e(t0 / cur.sec)); if (t1 >= cur.sec) cur = null; return; }
     if (cur.k === 'door') {
       const k = cur.which, to = cur.open ? 1 : 0;
       if (!cur.started) { cur.started = true; if (doorOpen[k] !== to) ctx.audio?.cue('act-lift-door', cageAt(s), { open: cur.open }); }
@@ -538,6 +577,7 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, tt) => {
     lastT = tt;
     if (manual) return; // a test steps it with tick()
+    if (stepped) { stepped = false; if (ending) endRide(); return; } // the rider's step advanced it this frame
     if (!open()) { place(0, tt); return; }
     advance(dt, tt);
   }, { at: () => cc, near: 140, hz: 15 });
@@ -571,10 +611,11 @@ export async function build(ctx) {
     // for renders and tests: the carriage put at s at once, standing, the doors as given
     jump(sv, doors = {}) { s = sv; v = 0; cur = null; seq = []; callTo = null; pendingCall = null; moving = false; doorOpen.e = doors.e ?? (Math.abs(sv - S0) < 0.05 ? 1 : 0); doorOpen.w = doors.w ?? (Math.abs(sv - SG) < 0.05 ? 1 : 0); idleFoot = idleTop = 0; roamWait = 1e9; place(0, lastT); },
     // for tests: step the carriage by hand, in lockstep with controls.update (the page's own frames leave it alone)
-    set manual(on) { manual = !!on; }, get manual() { return manual; }, tick(dt) { lastT += dt; advance(dt, lastT); },
+    set manual(on) { manual = !!on; }, get manual() { return manual; }, tick(dt) { if (stepped) { stepped = false; if (ending) endRide(); return; } lastT += dt; advance(dt, lastT); },
     get rideT() { return rideT; },
     roam() { round(); }, // for tests: start its round now
-    cageCentre: () => cc.clone(), lever: () => leverWorld().clone(), weight: () => railAt(SG - s).addScaledVector(al, WEIGHT_AL),
+    cageCentre: () => cc.clone(), cageRest: () => cageAt(s), // the cage's floor middle, drawn (with its shake) and at rest
+    lever: () => leverWorld().clone(), weight: () => railAt(SG - s).addScaledVector(al, WEIGHT_AL),
     stand: { // where a visitor stands for each act, and the yaw that faces it
       foot() { const p = toW(-ARCH.x + 0.9, floorY0, ARCH.z + 1.4); const h = bells.foot.handleAt; return { x: p.x, z: p.z, y: floorY0, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },
       top() { const h = bells.top.handleAt, p = h.clone().addScaledVector(io, -0.9).addScaledVector(al, -0.8); return { x: p.x, z: p.z, y: gal.y, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },

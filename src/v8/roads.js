@@ -37,11 +37,16 @@ function notchShape(W, Hh, apexY, half, ch = 0.04) {
   s.lineTo(-half, Hh); s.lineTo(-W + ch, Hh); s.lineTo(-W, Hh - ch); s.lineTo(-W, 0);
   return s;
 }
-// the notch's cut: a thin dark lining on each flank, standing just proud of the face, so the V reads dark on any ground
+// the notch's cut: a thin dark lining on each flank, standing just proud of the face, so the V reads dark on any ground.
+// Its inner faces stand LIFT (m) out from the head's own flanks into the notch: laid on them exactly, the two were drawn
+// in the same plane and fought for the pixel, the lining and the stone flickering in turn as the walker moved (#41)
+const LIFT = 0.008;
 function cutShape() {
-  const { apexY, half, Hh } = HEAD, t = 0.035, k = t / Math.cos((35 * Math.PI) / 180);
+  const { apexY, Hh } = HEAD, t = 0.035, tan = Math.tan((35 * Math.PI) / 180), k = t / Math.cos((35 * Math.PI) / 180);
+  const a = apexY + LIFT / Math.sin((35 * Math.PI) / 180), h = (Hh - a) * tan; // the V moved up LIFT off each flank
+  const T = Hh + LIFT / 2, hT = h + LIFT / 2 * tan; // and its top just over the shoulders' (the same fight, on the top face)
   const s = new THREE.Shape();
-  s.moveTo(-half, Hh); s.lineTo(0, apexY); s.lineTo(half, Hh); s.lineTo(half + k, Hh); s.lineTo(0, apexY - k * 1.2); s.lineTo(-half - k, Hh); s.lineTo(-half, Hh);
+  s.moveTo(-hT, T); s.lineTo(0, a); s.lineTo(hT, T); s.lineTo(hT + k + LIFT, T); s.lineTo(0, a - k * 1.2 - LIFT * 1.2); s.lineTo(-hT - k - LIFT, T); s.lineTo(-hT, T);
   return s;
 }
 
