@@ -21,6 +21,6 @@ export function hazed(mat) {
 
 // the share at an eye height y over a Pit whose lip is near lipY and floor near floorY
 export function hazeAt(y, lipY = -4, floorY = -29) {
-  const t = Math.min(1, Math.max(0, (lipY - 6 - y) / (lipY - 6 - (floorY + 6))));
+  const t = Math.min(1, Math.max(0, (lipY - 2 - y) / (lipY - 2 - (floorY + 8)))); // clearing from just under the lip, so the slabs' way down reads
   return 1 - 0.78 * t * t * (3 - 2 * t);
 }
