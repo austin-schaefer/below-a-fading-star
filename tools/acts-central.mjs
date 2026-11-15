@@ -91,7 +91,9 @@ export async function centralRows({ browser, base, check, watch }) {
   const gaps = s.strikeAt.slice(1).map((x, i) => x - s.strikeAt[i]);
   check('door: three knocks, slow enough to count: two seconds and more between them', s.strikeAt.length === 3 && gaps.every((g) => g >= 1.9), s.strikeAt);
   const done = await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 240000);
-  s = await p.evaluate(() => { const s = window.__fp.hypogeumAct.state(); return { count: s.count, strikes: s.strikes, answers: s.answers, ringMax: s.ringMax, read: s.read, hand: s.hand, plate: s.plate, spun: s.spun, stored: JSON.parse(localStorage.getItem('fp-acts') || '{}').marks?.['hypogeum-door'] }; });
+  s = await p.evaluate(() => { const s = window.__fp.hypogeumAct.state(); return { count: s.count, strikes: s.strikes, answers: s.answers, ringMax: s.ringMax, read: s.read, hand: s.hand, plate: s.plate, spun: s.spun, handAt: s.handAt, slideAt: s.slideAt, stored: JSON.parse(localStorage.getItem('fp-acts') || '{}').marks?.['hypogeum-door'] }; });
+  // v14-B1 (#43): the hand pushes the plate: its fingertips come out into the light within a beat of the plate starting out
+  check('door: the hand and the plate come together: the fingertips out from under the door within half a second of the plate starting out', s.handAt >= 0 && s.slideAt >= 0 && Math.abs(s.handAt - s.slideAt) <= 0.5, { handAt: s.handAt, slideAt: s.slideAt });
   check('door: E knocks: the great ring lifted, three strikes, three answers, the row read and turned one place, the hand in the light, the plate out with its glyph kept', done && s.count === 1 && s.strikes === 3 && s.answers === 3 && s.ringMax > 0.9 && s.read > 0.9 && s.spun === 1 && s.hand > 0.9 && s.plate && Number.isInteger(s.stored?.data?.glyph), s);
   // the plate's act: offered where the knock left them, now the plate is out; done: taken up, turned over, laid down
   // lantern side up, and so it lies after a reload

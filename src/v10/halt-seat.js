@@ -96,6 +96,9 @@ export function buildSeat(ctx, o) {
   // over the last SWING metres swings out (offX, offZ) from under the pulley to hang FAR out from his face. spin: the
   // seat's turn on its rope; the sitter faces its local +z turned by spin (pi: facing the stone, as they sat down)
   let yRide = yTop, offX = 0, offZ = 0, spin = 0, spinB = 0, spinH = 0, spinFrom = 0;
+  // the face of the stone the seat hangs before (local z, the slab's half depth), and how far a sitter's eye keeps off it
+  const faceZ = o.faceZ ?? top.z - 0.25, CLEAR = 0.45;
+  let push = 0, lastDt = 0; // m the seat stands out from where it hangs, pushed off the face by the sitter
   const invM0 = M0.clone().invert(), hl = new THREE.Vector3();
   const start = new THREE.Vector3(), boardFrom = new THREE.Vector3();
   const sw = { x: 0, rot: 0 };
@@ -111,6 +114,14 @@ export function buildSeat(ctx, o) {
     const k = mode === 'rising' || mode === 'top' || mode === 'down' ? ease((y - (yRide - SWING)) / SWING) : 0;
     seat.position.set(top.x + sw.x + offX * k, y, top.z + offZ * k);
     seat.rotation.set(0, sw.rot + spin, 0); // the plank along the stone, turned on its rope
+    // v14-B1 (#39): a sitter's eye is sat BACK behind the cords, so as the seat turns them out to the country it went
+    // into the stone (the seat hangs a hand's breadth off the face). A sitter pushes off with their feet: while anyone
+    // sits, the seat stands out from the face as far as keeps the eye CLEAR of it, eased so it is never seen to jump
+    const sitting = release !== null;
+    const need = sitting ? faceZ + CLEAR - (seat.position.z - Math.cos(spin) * BACK) : 0;
+    push = Math.max(need, push + (Math.max(0, need) - push) * Math.min(1, lastDt * 2));
+    if (push < 0.001 && !sitting) push = 0;
+    seat.position.z += push;
     ringW.copy(ringP).applyEuler(seat.rotation).add(seat.position);
     dv.copy(ringW).sub(rope.position); const len = dv.length();
     rope.quaternion.setFromUnitVectors(DN, dv.divideScalar(len || 1)); rope.scale.set(1, len, 1);
@@ -129,8 +140,13 @@ export function buildSeat(ctx, o) {
   const open = () => P.enabled && !ctx.settings?.shown && (!card || card.classList.contains('hidden'));
 
   // the carry: the eye where the ride puts it
+  // The rider (v14-B1, after B2's #50 on the lift): controls.update places the eye before the modules' updates run, so
+  // a seat advanced in its own update carried the eye a frame behind the plank it draws. While ridden the seat is
+  // advanced here, in the carrier's step, by the frame's own dt, and its update skips that frame; the set-down, which
+  // ends the carry, waits for the update
   const carrier = {
-    step(pos) {
+    step(pos, dt) {
+      if (!stepped) { inStep = true; try { tick(ctx.time?.dt ?? dt); } finally { inStep = false; } stepped = true; }
       eye.set(seat.position.x - Math.sin(spin) * BACK, seat.position.y + EYE, seat.position.z - Math.cos(spin) * BACK).applyMatrix4(M0);
       if (mode === 'boarding') pos.copy(boardFrom).lerp(eye, ease(t / BOARD));
       else if (mode === 'alighting') pos.copy(eye).lerp(start, ease(t / ALIGHT));
@@ -234,7 +250,20 @@ export function buildSeat(ctx, o) {
     if (T > 8.8 && turned < 0.01 && slive === 0) { sleepT = -1; fa.quaternion.identity(); hd.quaternion.identity(); salt.visible = false; }
   }
 
+  let inStep = false, stepped = false, alight = false;
   ctx.registerUpdate((dt) => {
+    if (stepped) { stepped = false; if (alight) setDown(); return; } // advanced in the carrier's step this frame
+    tick(dt);
+  }, { pos: { x: at.x, z: at.z }, near: 80, hz: 4 });
+  function setDown() {
+    alight = false;
+    release?.(); release = null;
+    P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
+    if (!took || P.lookQuiet > 3) { P.yaw = startYaw; P.pitch = startPitch; } // set down as they stood, looking where they looked
+    haul(1.5);
+  }
+  function tick(dt) {
+    lastDt = dt;
     if (mode === 'up' && sleepT < 0 && pending < 0 && o.dimmer.value === 0) return; // at rest at the hatch: nothing per frame
     if (mode === 'waiting' && swayT < 0 && sleepT < 0) { if (open()) checkWait(dt); return; } // waiting still: a distance a frame
     const go = open();
@@ -264,12 +293,7 @@ export function buildSeat(ctx, o) {
     else if (mode === 'top') spin = spinH;
     else if (mode === 'down') spin = spinFrom + (spinB - spinFrom) * ease(t / 2);
     else if (mode === 'hauling' || mode === 'up') spin += (Math.round(spin / Math.PI) * Math.PI - spin) * Math.min(1, dt * 0.6);
-    if (mode === 'alighting' && t >= ALIGHT) {
-      release?.(); release = null;
-      P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
-      if (!took || P.lookQuiet > 3) { P.yaw = startYaw; P.pitch = startPitch; } // set down as they stood, looking where they looked
-      haul(1.5);
-    }
+    if (mode === 'alighting' && t >= ALIGHT && !alight) { if (inStep) alight = true; else setDown(); }
     if (mode === 'hauling' && t >= 0 && !hauled) { hauled = true; move(yTop, HAUL); }
     // the lamp turned low while a guest hangs near it, so the light on him is warm and not blinding
     const near = mode === 'rising' || mode === 'top' || mode === 'down' ? Math.min(1, Math.max(0, (y - yLow - 4) / 3)) : 0;
@@ -277,7 +301,7 @@ export function buildSeat(ctx, o) {
     if (o.dimmer.value < 0.002 && near === 0) o.dimmer.value = 0;
     place();
     stepSleeper(go ? dt : 0);
-  }, { pos: { x: at.x, z: at.z }, near: 80, hz: 4 });
+  }
   // untaken: back up after a while, sooner if the visitor has gone away
   function checkWait(dt) {
     waited += dt;

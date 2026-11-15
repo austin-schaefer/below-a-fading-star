@@ -459,7 +459,7 @@ export async function build(ctx) {
   group.updateMatrixWorld(true);
   // the seat and its ride (v10-A4, src/v10/halt-seat.js): it comes down for a visitor who has chalked their stroke
   buildSeat(ctx, {
-    M0, group, mat: stone.mat, late, ropeC, iron, gilt: L.gilt, paint: L.paint[2], green, seat, HA,
+    M0, group, mat: stone.mat, late, ropeC, faceZ: W.d / 2, iron, gilt: L.gilt, paint: L.paint[2], green, seat, HA,
     pul: pul.clone().add(new THREE.Vector3(-hdz * 0.12, -0.1, hdx * 0.12)), ground: (x, z) => gAt(x, z) - foot,
     winchAt: wM(0, 1.0, 0), ropeC2: c('#8a7650'), sleeper: { forearm, head: headG, wrist: sleeper.wrist, elbow: sleeper.elbow, hd: sleeper.hd, side: sleeper.side, crown: sleeper.crown }, pillow2, pivot, doorMark, dimmer,
   });

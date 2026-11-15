@@ -1,4 +1,5 @@
-// The settings panel (v7-08): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
+// The settings panel (v7-08), which is also the pause (v14-B1, #46: Escape opens it, as the gear does; "Back to the
+// moor" shuts it and takes the mouse again): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
 // parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture and a list of
 // places to teleport to, and (v13) Measure, which reloads into the bench. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
@@ -125,9 +126,10 @@ export function buildSettings(ctx) {
   const slider = $('set-volume'), sliderOut = $('set-volume-out'), muteBtn = $('set-mute');
   const posEl = $('set-pos'), posToggle = $('set-showpos'), posHud = $('posline');
   const qualityEl = $('set-quality'), captureEl = $('set-capture-choice'), placesEl = $('set-places');
-  const api = { open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
+  let touched = -1e9; // the last change made in the panel: the frame stays full for a moment after it (a slider's preview)
+  const api = { get idle() { return open_ && performance.now() - touched > 1500; }, open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
   ctx.settings = api;
-  let open_ = false;
+  let open_ = false, openedAt = -1e9;
 
   // --- sound
   const audio = () => ctx.audio;
@@ -274,9 +276,11 @@ export function buildSettings(ctx) {
   }
 
   // --- open and close
-  function open() {
+  function open(o) {
     if (open_) return;
-    open_ = true;
+    ctx.player?.keys?.clear(); // a key held as the panel opens is let go in it, where the walk never hears it: the walker stops
+    open_ = true; openedAt = o?.paused ? performance.now() : -1e9; // opened by Escape (hud.js): that Escape is not also the one that shuts it
+    document.getElementById('card')?.classList.add('hidden'); // the one panel: never the old paused card behind it
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
     syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos(); syncFall();
     for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
@@ -294,14 +298,21 @@ export function buildSettings(ctx) {
   }
   function toggle() { if (open_) close(); else open(); }
   gear.addEventListener('click', toggle);
-  $('set-close').addEventListener('click', close);
+  // Back to the moor: shut it and, on a desktop with the mouse captured on click, take the mouse again (the click is the
+  // gesture the browser asks for; Escape is not one, so after Escape a click on the view takes it, as before)
+  $('set-close').addEventListener('click', () => {
+    close();
+    const pl = ctx.player;
+    if (pl?.enabled && !pl.locked && !pl.lockFailed && !pl.dragLook && !(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) ctx.controls.lock();
+  });
   root.addEventListener('mousedown', (e) => { if (e.target === root) { e.preventDefault(); panel.focus({ preventScroll: true }); } });
   // Escape closes the panel before the pause toggle (drag-look mode) sees it; while the mouse is captured the
   // browser takes Escape for itself and the panel stays shut. Other keys typed in the panel are the panel's, not the walk's.
   window.addEventListener('keydown', (e) => {
-    if (open_ && e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); }
+    if (open_ && e.code === 'Escape' && performance.now() - openedAt > 300) { e.preventDefault(); e.stopImmediatePropagation(); close(); }
   }, true);
   const swallow = (e) => { if (e.code !== 'Escape') e.stopPropagation(); };
+  for (const ev of ['input', 'pointerdown']) root.addEventListener(ev, () => { touched = performance.now(); });
   root.addEventListener('keydown', swallow); root.addEventListener('keyup', swallow);
   syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
   return api;
