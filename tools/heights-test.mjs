@@ -452,6 +452,57 @@ const HELPERS = `(() => {
     check(SD.turnBack.ok && SD.turnBack.maxAir < 0.45 && Math.abs(SD.turnBack.feet - SD.turnBack.want) < 0.3, 'stair: turning back half-way up a flight, down to its foot and up again', SD.turnBack);
     check(SD.cols.bad === 0, 'stair: columns capped under it only where it is 3 m and more over the ground, under its treads', SD.cols);
   }
+
+  // ---------------------------------------------------------------- v12-H5: far.js's stand-ins never lag their module
+  // While the walker climbs the Diffident Stair (each simulated frame rendered at once) and then over real frames
+  // (grazers, birds, anything that writes its instances), every stand-in whose module wrote its instances that frame
+  // draws only matrices the module has now (by position: a shrunk copy keeps its source's translation), and every
+  // stand-in drawn takes its source's frustumCulled.
+  const FL = await page.evaluate(async () => {
+    const { fp, p, place, run } = window.H, S = fp.stair, scene = fp.scene, DT = 1 / 60;
+    if (!fp.far?.active) return { off: true };
+    const ins = scene.children.filter((o) => o.userData.farOf);
+    const last = new Map(ins.map((c) => [c, -1]));
+    const out = { stand: ins.length, checks: 0, moved: 0, stale: 0, worst: null, culled: 0, stairMoved: 0 };
+    const key = (a, j) => a[j + 12] + ',' + a[j + 13] + ',' + a[j + 14];
+    const prev = scene.onAfterRender;
+    scene.onAfterRender = (r, s, cam) => {
+      if (cam === fp.camera) {
+        out.checks++;
+        for (const c of ins) {
+          const o = c.userData.farOf;
+          if (!c.visible) continue;
+          if (c.frustumCulled !== o.frustumCulled) out.culled++;
+          const v = o.instanceMatrix.version;
+          if (v === last.get(c)) continue;
+          last.set(c, v);
+          out.moved++; if (/^stair-/.test(o.name)) out.stairMoved++;
+          const src = new Set(), a = o.instanceMatrix.array, b = c.instanceMatrix.array;
+          for (let i = 0; i < o.count; i++) src.add(key(a, i * 16));
+          for (let j = 0; j < c.count; j++) if (!src.has(key(b, j * 16))) { out.stale++; out.worst ??= { name: o.name || o.parent?.name || '?', j, count: c.count }; break; }
+        }
+      }
+      prev(r, s, cam);
+    };
+    if (S && !S.off) {
+      // up the stair from its stub at a hurry, each frame drawn: the slabs rise ahead and sink behind, and the eye's
+      // moving sets every stand-in packing again (with far.js before v12-H5 round two, stair-treads lagged 9 frames of 600)
+      const E = S.plan.els;
+      S.all(false); S.tick(DT);
+      place(E[0].cx - E[0].ux * 1.6, E[0].cz - E[0].uz * 1.6); p.yaw = Math.atan2(-E[0].ux, -E[0].uz);
+      for (let i = 0; i < 600; i++) { run(1, ['KeyW', 'ShiftLeft']); fp.renderer.render(scene, fp.camera); }
+    }
+    // then real frames, the walker standing
+    const t0 = performance.now();
+    while (performance.now() - t0 < 4000) await new Promise(requestAnimationFrame);
+    scene.onAfterRender = prev;
+    if (S && !S.off) { S.all(false); S.tick(DT); }
+    return out;
+  });
+  if (!FL.off) {
+    check(FL.stale === 0 && FL.moved > 20 && (!SD || FL.stairMoved > 20), 'far: a stand-in drawn the frame its module wrote its instances draws what the module has (the stair\'s slabs rising, grazers walking)', FL);
+    check(FL.culled === 0, 'far: every stand-in drawn culls as its source does (frustumCulled)', `${FL.culled} mismatches over ${FL.checks} renders`);
+  }
   await page.close();
 }
 

@@ -8,18 +8,22 @@
 // goes to nothing; below `lo` it is not drawn. Nothing pops: a thing leaves at a pixel or two, already shrinking.
 // - Instanced meshes (two instances or more, each under 4 m across): a stand-in InstancedMesh (same material,
 //   the geometry's index and per-vertex attributes shared, its own per-instance ones) is drawn in the original's place,
-//   holding only the instances big enough to see, packed again when the eye has moved 2 m or the module has written
-//   its instances (a version change). The module's own mesh and buffers are never touched: it is swapped out only
-//   while the scene renders (scene.onBeforeRender / onAfterRender), so every module, tool and toggle sees it as built.
+//   holding only the instances big enough to see. A set the module has written (a version change: the stair's slabs
+//   rising, grazers walking) is packed again that same frame, ahead of everything else, so the copy never lags the
+//   module (and its colliders) by a frame; the rest are packed again when the eye has moved 2 m, round robin within
+//   a budget of instances a frame. The stand-in takes the module's frustumCulled each frame (a set the module draws
+//   unculled is drawn unculled). The module's own mesh and buffers are never touched: it is swapped out only while
+//   the scene renders (scene.onBeforeRender / onAfterRender), so every module, tool and toggle sees it as built.
 // - Single meshes under 6 m across with no children: hidden, or their world matrix scaled about their centre, for the
 //   render only, and restored after it.
 // Core objects (the terrain, the sky, the ranges) and anything not added by a world module are left
-// alone; anything that glows (a bright unlit material, additive blending, an emissive colour) goes only at a
-// quarter of the band's size, so a lamp still reads as a point from a top.
-// Tiers: low shrinks from 2.4 px and drops at 1.2 px, medium from 1 px to 0.5 px, high is untouched. ?far=0 off at every
-// tier; ?far=lo,hi (pixels) sets both at any tier. installFar runs after the modules build and before the
-// warm-up (which draws every stand-in once, full, so none uploads later); start() after the warm-up turns it on.
-// ctx.far: { stats(), active }.
+// alone; anything that glows (a bright unlit material, additive blending, an emissive colour) goes only at half the
+// band's size, so a lamp still reads as a point from a top.
+// Tiers: low shrinks from 2.4 px and drops at 1.2 px, medium from 1 px to 0.5 px, high is untouched. The band follows
+// ctx.quality every frame (high and medium switch live: a high start that drops to medium gets medium's band). ?far=0
+// off at every tier; ?far=lo,hi (pixels) sets both at any tier. installFar runs after the modules build and before
+// the warm-up (which draws every stand-in once, full, so none uploads later); start() after the warm-up turns it on.
+// ctx.far: { stats(), active }; stats().urgent: the instances packed last frame because their module wrote them.
 const TIERS = { low: [1.2, 2.4], medium: [0.5, 1.0], high: null };
 const MIN_INST = 2, MAX_INST_R = 2, MAX_MESH_R = 3, STEP = 2;
 const M3 = [0, 1, 2, 4, 5, 6, 8, 9, 10]; // the 3x3 of a world matrix
@@ -28,13 +32,18 @@ const BUDGET = 9000; // instances packed a frame at most (round robin over the m
 
 export function installFar(ctx, url) {
   const p = url.searchParams.get('far');
-  let band = TIERS[ctx.quality] || null;
-  if (p === '0') band = null;
-  else if (p && /^[\d.]+,[\d.]+$/.test(p)) band = p.split(',').map(Number);
+  const fixed = p && /^[\d.]+,[\d.]+$/.test(p) ? p.split(',').map(Number) : null;
   const api = { active: false, start() {}, stats: () => ({ off: true }) };
   ctx.far = api;
-  if (!band) return api;
-  const [LO, HI] = band;
+  if (p === '0') return api;
+  let LO = 0, HI = 0, bandOf = null, gen = 0;
+  // the band now: the fixed one, or the tier's (null: draw every module's own)
+  const band = () => {
+    const b = fixed || TIERS[ctx.quality] || null;
+    if (b !== bandOf) { bandOf = b; gen++; if (b) { LO = b[0]; HI = b[1]; } }
+    return b;
+  };
+  band();
   const THREE = ctx.THREE, scene = ctx.scene, renderer = ctx.renderer, camera = ctx.camera;
   const inst = [], singles = [];
   const v3 = new THREE.Vector3(), m4 = new THREE.Matrix4(), size = new THREE.Vector2();
@@ -90,10 +99,14 @@ export function installFar(ctx, url) {
     c.count = o.count; c.visible = false; c.matrixAutoUpdate = false; c.matrixWorldAutoUpdate = false;
     c.castShadow = o.castShadow; c.receiveShadow = o.receiveShadow;
     scene.add(c);
-    return { o, c, n, r0, own, im: o.instanceMatrix, ic: o.instanceColor, ver: -1, cx: new Float32Array(n), cy: new Float32Array(n), cz: new Float32Array(n), cr: new Float32Array(n), at: new THREE.Vector3(1e9, 0, 0), k: 0, srcCount: -1, vis: false, dead: false };
+    return { o, c, n, r0, own, im: o.instanceMatrix, ic: o.instanceColor, ver: -1, gen: -1, cx: new Float32Array(n), cy: new Float32Array(n), cz: new Float32Array(n), cr: new Float32Array(n), at: new THREE.Vector3(1e9, 0, 0), k: 0, srcCount: -1, vis: false, dead: false };
   }
 
-  const verOf = (e) => e.o.instanceMatrix.version + (e.o.instanceColor ? e.o.instanceColor.version * 7 : 0) + e.own.reduce((s, [a]) => s + a.version * 13, 0) + e.o.count * 101;
+  const verOf = (e) => {
+    let s = e.o.instanceMatrix.version + (e.o.instanceColor ? e.o.instanceColor.version * 7 : 0) + e.o.count * 101;
+    for (let q = 0; q < e.own.length; q++) s += e.own[q][0].version * 13;
+    return s;
+  };
   // per-instance centres and radii in world space, from the module's own matrices
   function measure(e) {
     const o = e.o, a = o.instanceMatrix.array, w = o.matrixWorld.elements, c = o.geometry.boundingSphere.center, ws = o.matrixWorld.getMaxScaleOnAxis();
@@ -127,7 +140,7 @@ export function installFar(ctx, url) {
         dst[d + 12] = src[s + 12]; dst[d + 13] = src[s + 13]; dst[d + 14] = src[s + 14]; dst[d + 15] = src[s + 15];
       }
       if (sc) { dc[j * 3] = sc[i * 3]; dc[j * 3 + 1] = sc[i * 3 + 1]; dc[j * 3 + 2] = sc[i * 3 + 2]; }
-      for (const [a, b] of e.own) { const n = a.itemSize; for (let q = 0; q < n; q++) b.array[j * n + q] = a.array[i * n + q]; }
+      for (let w = 0; w < e.own.length; w++) { const a = e.own[w][0].array, b = e.own[w][1].array, n = e.own[w][0].itemSize; for (let q = 0; q < n; q++) b[j * n + q] = a[i * n + q]; }
       j++;
     }
     c.count = j;
@@ -136,26 +149,36 @@ export function installFar(ctx, url) {
       if (dc) { c.instanceColor.clearUpdateRanges(); c.instanceColor.addUpdateRange(0, j * 3); c.instanceColor.needsUpdate = true; }
       for (const [a, b] of e.own) { b.clearUpdateRanges(); b.addUpdateRange(0, j * a.itemSize); b.needsUpdate = true; }
     }
-    e.at.copy(cam); e.k = K;
+    e.at.copy(cam); e.k = K; e.gen = gen;
   }
   const shown = (o) => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
 
   // --- each render of the scene from the walker's camera
-  let rr = 0, packs = 0, packed = 0;
+  let rr = 0, packs = 0, packed = 0, urgent = 0, live = false;
   const changed = [];
   scene.onBeforeRender = (r, s, cam) => {
-    if (!api.active || cam !== camera) return;
+    live = false;
+    if (!api.active || cam !== camera || !band()) return;
+    live = true;
     renderer.getDrawingBufferSize(size);
     const K = size.y / ((camera.fov * Math.PI) / 180), P = camera.position;
-    // instanced: pack what needs it, within the budget
-    let budget = BUDGET;
-    for (let q = 0; q < inst.length && budget > 0; q++) {
-      const e = inst[(rr + q) % inst.length];
+    // instanced: first every set its module has written since its last pack (the stair's slabs, grazers walking),
+    // whatever the budget, so a copy that is drawn is never a frame behind its source
+    urgent = 0;
+    for (let q = 0; q < inst.length; q++) {
+      const e = inst[q];
       if (e.dead) continue;
       if (e.o.instanceMatrix !== e.im || e.o.instanceColor !== e.ic) { e.dead = true; e.c.visible = false; continue; } // the module swapped its buffers: draw its own
-      if (e.at.distanceToSquared(P) > STEP * STEP || Math.abs(e.k - K) > 0.05 * K || verOf(e) !== e.ver) { pack(e, K); budget -= e.o.count; packs++; packed += e.o.count; }
+      if (verOf(e) !== e.ver && shown(e.o)) { pack(e, K); packs++; packed += e.o.count; urgent += e.o.count; }
     }
-    rr = (rr + 1) % Math.max(1, inst.length);
+    // then the rest that the eye has moved away from (or a new band or view), round robin within the budget
+    let budget = BUDGET, q = 0;
+    for (; q < inst.length && budget > 0; q++) {
+      const e = inst[(rr + q) % inst.length];
+      if (e.dead) continue;
+      if (e.gen !== gen || e.at.distanceToSquared(P) > STEP * STEP || Math.abs(e.k - K) > 0.05 * K) { pack(e, K); budget -= e.o.count; packs++; packed += e.o.count; }
+    }
+    rr = (rr + Math.max(1, q)) % Math.max(1, inst.length); // the next frame starts where this one stopped
     changed.length = 0;
     for (const e of inst) {
       if (e.dead) continue;
@@ -165,13 +188,14 @@ export function installFar(ctx, url) {
       o.visible = false; // the module's own is out for this render; the stand-in draws in its place
       c.visible = c.count > 0;
       c.matrixWorld.copy(o.matrixWorld);
+      c.frustumCulled = o.frustumCulled;
       c.material = o.material; c.castShadow = o.castShadow; c.receiveShadow = o.receiveShadow; c.renderOrder = o.renderOrder;
       c.customDepthMaterial = o.customDepthMaterial; c.customDistanceMaterial = o.customDistanceMaterial; c.layers.mask = o.layers.mask;
       c.onBeforeRender = o.onBeforeRender; c.onAfterRender = o.onAfterRender;
     }
     // single meshes: hidden, or shrunk about their centre, for this render
-    for (const e of singles) {
-      const o = e.o;
+    for (let q = 0; q < singles.length; q++) {
+      const e = singles[q], o = e.o;
       if (!o.visible || !shown(o)) continue;
       const g = o.geometry, w = o.matrixWorld.elements, rad = g.boundingSphere.radius * o.matrixWorld.getMaxScaleOnAxis();
       v3.copy(g.boundingSphere.center).applyMatrix4(o.matrixWorld);
@@ -186,7 +210,8 @@ export function installFar(ctx, url) {
     }
   };
   scene.onAfterRender = (r, s, cam) => {
-    if (!api.active || cam !== camera) return;
+    if (!live || cam !== camera) return;
+    live = false;
     for (const e of inst) if (!e.dead && e.vis) { e.o.visible = true; e.c.visible = false; }
     for (const e of changed) {
       if (e.hidden) { e.o.visible = true; e.hidden = false; }
@@ -199,7 +224,7 @@ export function installFar(ctx, url) {
   api.stats = () => {
     let drawn = 0, total = 0;
     for (const e of inst) { if (e.dead) continue; drawn += e.c.count; total += e.o.count; }
-    return { band: [LO, HI], instanced: inst.length, dead: inst.filter((e) => e.dead).length, instances: { drawn, total }, singles: singles.length, packs, packed };
+    return { band: bandOf ? [LO, HI] : null, urgent, instanced: inst.length, dead: inst.filter((e) => e.dead).length, instances: { drawn, total }, singles: singles.length, packs, packed };
   };
   // before start (the warm-up), every stand-in is drawn full so its buffers upload behind the title card
   for (const e of inst) e.c.visible = true;
