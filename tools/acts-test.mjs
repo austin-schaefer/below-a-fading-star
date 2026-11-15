@@ -556,6 +556,15 @@ if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).cent
   await bt('window.__fp.bell.state.ram > 1.5', 8000);
   b = await bs();
   check('bell: E does it: counted and kept, the ram hauled back metres on its rope', b.count === 1 && b.stored === 1 && b.active && b.ram > 1.5, b);
+  // v14-B1 (#40): what the haul takes in is rope, falling in turns at the post: each turn rope-sized (never a ring
+  // stretched up out of the grass), in the arch's shadow like the post, and a rope down to it from the post's ring
+  const coil = await p.evaluate(() => {
+    const fp = window.__fp, T = fp.THREE, c = fp.scene.getObjectByName('bell-coil'), d = fp.scene.getObjectByName('bell-rope-drop'), M = new T.Matrix4(), P = new T.Vector3(), Q = new T.Quaternion(), S = new T.Vector3();
+    if (!c?.isInstancedMesh) return { instanced: false };
+    let turns = 0, tall = 0; for (let i = 0; i < c.count; i++) { c.getMatrixAt(i, M); M.decompose(P, Q, S); if (S.x > 0.01) { turns++; tall = Math.max(tall, S.y); } }
+    return { instanced: true, turns, tall: +tall.toFixed(2), shade: c.receiveShadow, drop: !!d?.visible && d.receiveShadow };
+  });
+  check('bell: hauled, the rope taken in lies in turns at the post (two or more, none stretched), in shadow, with its rope down from the ring', coil.instanced && coil.turns >= 2 && coil.tall <= 1.05 && coil.shade && coil.drop, coil);
   await bt('window.__fp.bell.state.rang'); await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 0.5');
   b = await bs();
   check('bell: the ram comes in and strikes: dust falls, a fresh stone or two from the crack', b.rang && b.dust && b.stones === 2, b);
