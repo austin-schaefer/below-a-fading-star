@@ -15,10 +15,11 @@
 //   6-10 s    the lamp comes up behind the door: the seam and the fan under it brighten, and the light passes behind the
 //             glyph row from left to right, lighting each glyph in turn (his voice); then the row turns: one place, or from
 //             the third visit a whole turn of eleven;
-//   9.5-13 s  the shadow of a hand comes into the fan of light from under the door and lies flat, fingers spread (as the
-//             visitor's lies on the crystal);
-//   12.5-14 s a bronze plate is pushed out under the door and slides to the visitor's feet (act-plate): the door's last glyph
-//             cut large in it, and beside it his reckoning of them, a bead a visit on a spiral wire;
+//   15-17.4 s a bronze plate is pushed out under the door by a hand whose shadow comes into the fan of light with it, the
+//             fingertips on the plate's edge, as far as an arm reaches under a door; it slides on to the visitor's feet
+//             (act-plate) while the hand lies flat, fingers spread (as the visitor's lies on the crystal), and goes back
+//             (v14-B1, #43: the hand came three seconds before the plate, and they read as two things). On the plate:
+//             the door's last glyph cut large, and beside it his reckoning of them, a bead a visit on a spiral wire;
 //   15-21 s   the lamp goes back down: the light sinks down the seam and the fan dims to its first glow.
 // Remembered: show(n) lays the plate (n > 0) with n beads and its glyph (the act's data). Once the mother crystal's
 // thread has come down the stair (src/v10/crystal.js) his light is the crystal's blue.
@@ -28,8 +29,9 @@ import { glyphStrokes } from '../v2/ruins/hypogeum.js';
 import { doorsLast } from '../v7/glyphs/forms.js';
 
 const ID = 'hypogeum-door';
-export const T = { strikes: [1.5, 3.7, 5.9], answers: [7.4, 8.3, 9.2], lamp: [9.6, 19.6], read: [10.2, 13.2], turn: 13.4, hand: [13.0, 17.0], slide: [16.2, 17.6], sink: [19.6, 25.0], end: 25.5 };
+export const T = { strikes: [1.5, 3.7, 5.9], answers: [7.4, 8.3, 9.2], lamp: [9.6, 19.6], read: [10.2, 13.2], turn: 13.4, hand: [15.0, 17.4], slide: [15.0, 16.4], sink: [19.6, 25.0], end: 25.5 };
 const LIFT = 0.8, HOLD = 0.4, FALL = 0.14; // s: the ring hauled up and out, held clear, and falling back: one knock in 2.2 s
+const REACH = 0.25, HAND_TIP = 0.17; // m: how far out from the door his fingertips reach; tips out from the shadow's origin
 const STEP = 3.4; // m from the door's face: where the visitor is eased back to as the door jolts out at them, from which
 // the lintel's glyphs, the seam, the sill and the plate at their feet are all in the view
 const HINGE = new THREE.Vector3(Math.sin(0.9), 0, Math.cos(0.9)); // the ring's swing: out toward the visitor and wide to
@@ -236,7 +238,7 @@ export function doorAct(ctx, H, meshes) {
   // ---- the act
   let t = -1, n = 0, fired = 0, form = 0, jolt = 0, joltV = 0, flash = 0, glow = 0; // glow: the new plate catching his light as it comes
   const cueRing = { x: xd - 0.05, y: yp - 2 * RR, z: zr }, cueIn = { x: x1 + 2, y: Yf - 1, z: zc };
-  const st = { strikeAt: [], points: { lintel: [x1 - 0.21, Yf + 2.86, zc], seam: [xd, Yf + HD / 2, zc], sill: [xd, Yf, zc] }, t: -1, n: 0, strikes: 0, answers: 0, ring: 0, ringMax: 0, read: 0, spun: 0, hand: 0, plate: false, light: 0, jolt: 0 };
+  const st = { strikeAt: [], points: { lintel: [x1 - 0.21, Yf + 2.86, zc], seam: [xd, Yf + HD / 2, zc], sill: [xd, Yf, zc] }, t: -1, n: 0, strikes: 0, answers: 0, ring: 0, ringMax: 0, read: 0, spun: 0, hand: 0, plate: false, light: 0, jolt: 0, handAt: -1, slideAt: -1 };
   const near = (i) => Math.min(1, Math.max(0, (n - 1) * 0.4 + i * 0.12)); // how near the inside's i-th knock lands
   const sstep = THREE.MathUtils.smoothstep;
   // ---- the visitor's view while he answers (ctx.controls.carry, as the Halt's seat): held where they knocked, the look on
@@ -364,14 +366,18 @@ export function doorAct(ctx, H, meshes) {
       st.read = r > 0 && r < 1 ? r : st.read;
     }
     if (!(fired & 64) && t >= T.turn) { fired |= 64; H.spin(n >= 3 ? 11 : 1); st.spun = n >= 3 ? 11 : 1; ctx.audio?.cue('glyph-shift', { x: x1 - 0.21, y: Yf + 2.86, z: zc }); }
-    // the hand in the light: coming out from under the door, stopping, spreading flat, going back
-    const hIn = sstep(t, T.hand[0], T.hand[0] + 1.6), hOut = sstep(t, T.hand[1] - 0.8, T.hand[1]);
-    uFan.uHandS.value.set(-0.35 + 0.6 * hIn - 0.6 * hOut, sstep(t, T.hand[0] + 1.6, T.hand[0] + 2.4), (hIn > 0.01 && hOut < 0.99) ? 0.92 : 0);
-    st.hand = Math.max(st.hand, hIn * (1 - hOut));
     // the plate, pushed out under the door: over the threshold, off its lip, over the flags to the visitor's feet
-    const u = (t - T.slide[0]) / (T.slide[1] - T.slide[0]);
-    if (u >= 0 && !(fired & 128)) { fired |= 128; drawPlate(n, form); plate.visible = true; ctx.audio?.cue('act-plate', { x: x1, y: Yf + 0.1, z: zc }); }
-    if (u >= 0 && rt < 0) { const w = Math.min(1, u), e = 1 - (1 - w) ** 3; placePlate(xd + PD / 2 + (restX - (xd + PD / 2)) * e); st.plate = w >= 1; }
+    const u = (t - T.slide[0]) / (T.slide[1] - T.slide[0]), e = 1 - (1 - Math.min(1, Math.max(0, u))) ** 3;
+    if (u >= 0 && !(fired & 128)) { fired |= 128; drawPlate(n, form); plate.visible = true; ctx.audio?.cue('act-plate', { x: x1, y: Yf + 0.1, z: zc }); st.slideAt = t; }
+    if (u >= 0 && rt < 0) { placePlate(xd + PD / 2 + (restX - (xd + PD / 2)) * e); st.plate = u >= 1; }
+    // the hand that pushes it: its fingertips on the plate's back edge (metres out from the door) as far as an arm reaches
+    // under a door, then flat in the light, fingers spread, while the plate slides on; then back under. The shadow's
+    // fingertips lie HAND_TIP out from uHandS.x (the fan's shader)
+    const backOut = -PD + (xd + PD / 2 - restX) * e, hOut = sstep(t, T.hand[1] - 0.8, T.hand[1]);
+    const on = t >= T.hand[0] && hOut < 0.99;
+    uFan.uHandS.value.set(Math.min(backOut, REACH) - HAND_TIP - 0.6 * hOut, sstep(t, T.slide[0] + 0.5, T.slide[0] + 1.1), on ? 0.92 : 0);
+    if (on && st.handAt < 0 && backOut > 0) st.handAt = t; // the fingertips out from under the door into the light
+    st.hand = Math.max(st.hand, on ? sstep(backOut, -0.1, 0.15) * (1 - hOut) : 0);
     glow = u >= 0 ? 1.1 * (1 - sstep(t, T.slide[1] + 1, T.end)) : 0;
     if (t >= T.end) {
       t = -1; st.t = -1; jolt = joltV = flash = 0;
@@ -394,7 +400,7 @@ export function doorAct(ctx, H, meshes) {
     reach: 2.8, rise: 1.4, cone: 0.75,
     words: 'Knock',
     do: (count) => {
-      n = count; t = 0; fired = 0; jolt = joltV = flash = 0; st.strikes = st.answers = 0; st.strikeAt = []; st.ringMax = 0; st.hand = 0; st.read = 0; st.spun = 0;
+      n = count; t = 0; fired = 0; jolt = joltV = flash = 0; st.strikes = st.answers = 0; st.strikeAt = []; st.ringMax = 0; st.hand = 0; st.read = 0; st.spun = 0; st.handAt = -1; st.slideAt = -1;
       form = doorsLast(ctx, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
       handle.setData({ glyph: form });
       plate.visible = false; backUp = false; // his plate goes back in, to come out again with one more bead, his side up
@@ -410,6 +416,7 @@ export function doorAct(ctx, H, meshes) {
     id: 'hypogeum-plate',
     at: { x: restX, y: Yf + 0.05, z: zc - 0.05 },
     face: { x: -1, z: 0 },
+    lure: { y: Yf + PT, face: null }, // the moths (src/v10/lure.js) sit flat on the plate, not stood up in the air over it
     reach: 3.3, rise: 2.2, cone: 0.75,
     words: 'Read the plate',
     when: () => st.knocked && st.plate && rt < 0 && !(t >= 0 && t < T.slide[1]),

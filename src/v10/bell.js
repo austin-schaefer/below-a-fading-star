@@ -223,28 +223,33 @@ export async function build(ctx) {
   ramChains.name = 'bell-ram-chains'; ramChains.castShadow = true; scene.add(ramChains);
   // the hauling rope: from the tail's eye west to a sheave bolted to pier -70's face, along the face to a ring at the
   // arch's mouth, and down to an iron ring on a squat stone by the pier's foot, where the visitor stands. Hauled, the
-  // tail comes toward the sheave and the taken-in rope falls in a coil at the post.
+  // tail comes toward the sheave and the taken-in rope comes down through the post's ring and falls at its foot, a turn
+  // at a time, into a pile of loose turns; let go, the ram's swing runs it back out up through the ring (v14-B1, #40:
+  // it was one torus stretched four times its height, a ring that swelled out of the grass for no reason anyone saw).
   const SHEAVE = new THREE.Vector3(A.fl + 0.45, RAMY + 0.05, BZ), CORNER = new THREE.Vector3(A.fl + 0.45, RAMY + 0.05, 206.8);
   const POST = { x: A.fl + 2.4, z: 203.4 }; POST.y = H(POST.x, POST.z);
   const RING = new THREE.Vector3(POST.x, POST.y + 0.95, POST.z);
-  const ropeMat = new THREE.MeshStandardMaterial({ color: '#a08a60', roughness: 0.95 });
+  const ropeMat = new THREE.MeshStandardMaterial({ color: '#c4ae82', roughness: 0.95 }); // hemp worn pale by hands
   const ropeGeo = new THREE.CylinderGeometry(0.05, 0.05, 1, 6).translate(0, 0.5, 0);
   const rope = new THREE.Mesh(ropeGeo, ropeMat); rope.castShadow = true; rope.name = 'bell-rope'; scene.add(rope);
-  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.06, 5, 14).rotateX(Math.PI / 2), ropeMat); coil.name = 'bell-coil'; scene.add(coil);
+  const NT = 8; // turns in the pile when the ram is hauled right back (one lies there at rest: the rope's end)
+  const coil = new THREE.InstancedMesh(new THREE.TorusGeometry(0.3, 0.05, 5, 16).rotateX(Math.PI / 2), ropeMat, NT); coil.name = 'bell-coil'; coil.castShadow = true; coil.receiveShadow = true; scene.add(coil); // in the arch's shadow with the post (it was lit there: a pale ring in the dark grass)
+  const drop = new THREE.Mesh(ropeGeo, ropeMat); drop.name = 'bell-rope-drop'; drop.castShadow = true; drop.receiveShadow = true; scene.add(drop); // ring to pile
+  const rT = ctx.makeRng(10045), turnJ = Array.from({ length: NT }, () => [(rT() - 0.5) * 0.1, (rT() - 0.5) * 0.1, (rT() - 0.5) * 0.18, (rT() - 0.5) * 0.18, 0.92 + rT() * 0.16]), tE = new THREE.Euler();
   {
     const parts = [];
-    const stone = new THREE.CylinderGeometry(0.32, 0.42, 1.0, 7, 2); { const p = stone.attributes.position; for (let i = 0; i < p.count; i++) { const d = 1 + 0.12 * N2(p.getX(i) * 3, p.getY(i) * 3 + p.getZ(i) * 2); p.setX(i, p.getX(i) * d); p.setZ(i, p.getZ(i) * d); } }
-    stone.translate(POST.x, POST.y + 0.42, POST.z); parts.push(cols(stone, '#7c7466'));
+    const stone = new THREE.CylinderGeometry(0.3, 0.42, 1.3, 7, 2); // v14-B1: stands a head over the tall grass, and pale with handling, so it reads at 10 m { const p = stone.attributes.position; for (let i = 0; i < p.count; i++) { const d = 1 + 0.12 * N2(p.getX(i) * 3, p.getY(i) * 3 + p.getZ(i) * 2); p.setX(i, p.getX(i) * d); p.setZ(i, p.getZ(i) * d); } }
+    stone.translate(POST.x, POST.y + 0.57, POST.z); parts.push(cols(stone, '#a49a86'));
     const ringG = new THREE.TorusGeometry(0.13, 0.03, 5, 10); ringG.rotateY(0.6); ringG.translate(RING.x, RING.y - 0.08, RING.z); parts.push(cols(ringG, '#2a221c'));
     // the sheave: an iron wheel in a bracket on the pier's face; the ring at the mouth; the fixed runs of rope between
     const wheel = new THREE.CylinderGeometry(0.42, 0.42, 0.14, 14); wheel.rotateX(Math.PI / 2); wheel.translate(SHEAVE.x + 0.1, SHEAVE.y, SHEAVE.z); parts.push(cols(wheel, '#2a221c'));
     const brk = new THREE.BoxGeometry(0.7, 0.16, 0.5); brk.translate(SHEAVE.x - 0.25, SHEAVE.y + 0.5, SHEAVE.z); parts.push(cols(brk, '#1e1814'));
     const eye = new THREE.TorusGeometry(0.16, 0.04, 5, 10); eye.rotateY(Math.PI / 2); eye.translate(CORNER.x, CORNER.y, CORNER.z); parts.push(cols(eye, '#2a221c'));
-    const run = (A2, B2) => { const d = new THREE.Vector3().subVectors(B2, A2), l = d.length(), g = new THREE.CylinderGeometry(0.05, 0.05, l, 6); g.translate(0, l / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.normalize())); g.translate(A2.x, A2.y, A2.z); parts.push(cols(g, '#a08a60')); };
+    const run = (A2, B2) => { const d = new THREE.Vector3().subVectors(B2, A2), l = d.length(), g = new THREE.CylinderGeometry(0.05, 0.05, l, 6); g.translate(0, l / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, d.normalize())); g.translate(A2.x, A2.y, A2.z); parts.push(cols(g, '#c4ae82')); };
     run(SHEAVE, CORNER); run(CORNER, RING);
     const post = new THREE.Mesh(mergeAll(parts), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.2 }));
     post.castShadow = true; post.receiveShadow = true; post.name = 'bell-post'; scene.add(post);
-    ctx.addCollider?.({ x: POST.x, z: POST.z, r: 0.4, y: POST.y - 0.2, h: 1.1 });
+    ctx.addCollider?.({ x: POST.x, z: POST.z, r: 0.4, y: POST.y - 0.2, h: 1.45 });
   }
   const lugP = new THREE.Vector3(), tail = new THREE.Vector3();
   function placeRam(s) { // s: metres the ram stands back (west, -x) of its rest; negative is past it, toward the bell
@@ -256,8 +261,21 @@ export async function build(ctx) {
     tail.set(HEADX - s - RAM.len - 0.1, RAMY + lift, BZ);
     dir.subVectors(SHEAVE, tail); const l = dir.length();
     rope.position.copy(tail); rope.quaternion.setFromUnitVectors(up, dir.multiplyScalar(1 / l)); rope.scale.set(1, l, 1);
-    const taken = clamp(s / RAM.back, 0, 1); // the coil at the post grows with the rope taken in
-    coil.position.set(POST.x + 0.55, POST.y + 0.06 + 0.1 * taken, POST.z - 0.45); coil.scale.set(1 + 0.5 * taken, 1 + 3 * taken, 1 + 0.5 * taken);
+    // the pile at the post: a turn for each part of the haul, each coming down from the ring as it is taken in
+    const taken = clamp(s / RAM.back, 0, 1) * (NT - 1) + 1, px = POST.x + 0.6, pz = POST.z - 0.45, gy = H(px, pz) + 0.04;
+    let top = gy;
+    for (let i = 0; i < NT; i++) {
+      const [jx, jz, rx, rz, sc] = turnJ[i], u = clamp(taken - i, 0, 1), y = gy + i * 0.07;
+      if (u <= 0) { tmpM.makeScale(0, 0, 0); coil.setMatrixAt(i, tmpM); continue; }
+      tv.set(lerp(RING.x, px + jx, u), lerp(RING.y - 0.25, y, u), lerp(RING.z, pz + jz, u)); // from under the ring to its place
+      tq.setFromEuler(tE.set(rx * u, i * 1.3, rz * u)); ts.set(sc * (0.3 + 0.7 * u), 1, sc * (0.3 + 0.7 * u));
+      tmpM.compose(tv, tq, ts); coil.setMatrixAt(i, tmpM);
+      top = Math.max(top, tv.y);
+    }
+    coil.instanceMatrix.needsUpdate = true; coil.computeBoundingSphere();
+    // the rope from the ring down to the top of the pile, on the side nearer the post
+    tail.set(px - 0.28, top + 0.03, pz + 0.12); dir.set(RING.x, RING.y - 0.12, RING.z).sub(tail); const ld = dir.length();
+    drop.position.copy(tail); drop.quaternion.setFromUnitVectors(up, dir.multiplyScalar(1 / ld)); drop.scale.set(0.8, ld, 0.8);
   }
   placeRam(0);
 
