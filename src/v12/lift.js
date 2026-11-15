@@ -316,9 +316,9 @@ export async function build(ctx) {
     seq = []; // whatever it was doing next is dropped: it finishes the step it is in, if that is a move it is turned
     if (cur && cur.k === 'move') cur.to = to; else if (cur && cur.k === 'wait') cur = null;
     const here = to === S0 ? 'e' : 'w', there = to === S0 ? 'w' : 'e';
-    if (doorOpen[there] > 0) door(there, false);
-    fn(() => ctx.audio?.cue('act-lift-answer', cageAt(s).add(new THREE.Vector3(0, CAGE.H + 0.6, 0))));
-    wait(1.4);
+    // it answers at once (its bell, its lamp woken), then shuts the grille it stands open at and comes
+    fn(() => { ctx.audio?.cue('act-lift-answer', cageAt(s).add(new THREE.Vector3(0, CAGE.H + 0.6, 0))); wake(); });
+    if (doorOpen[there] > 0) door(there, false); else wait(0.9);
     go(to);
     door(here, true);
     if (to === S0) idleFoot = 0; else idleTop = 0;
@@ -444,11 +444,16 @@ export async function build(ctx) {
     keysVB += (-36 * keysB - 1.4 * keysVB + sh2 * 50) * dt; keysB += keysVB * dt;
     PU.uKeys.value.set(keysA * 0.9, keysB);
     // the lamp is lit by its own oil (it does not answer the sun's gutter); it flickers when the cage is jolted
-    cage.light.intensity = 3.2 * (1 - Math.min(0.6, Math.abs(sh) * 8));
+    if (wakeT >= 0) { wakeT += dt; if (wakeT > 6) wakeT = -1; }
+    const fw = (wakeT >= 0 ? Math.min(1, wakeT / 0.18) * Math.exp(-wakeT / 2.2) : 0) + (moving && callTo !== null ? 0.3 : 0);
+    flare += (fw - flare) * Math.min(1, dt * 10);
+    cage.haloU.uFlare.value = flare;
+    cage.light.intensity = 3.2 * (1 + flare * 1.6) * (1 - Math.min(0.6, Math.abs(sh) * 8));
     cage.haloU.uScale.value = ctx.renderer.domElement.height / (2 * Math.tan((ctx.camera.fov * Math.PI / 180) / 2));
     // the counterweight, the cables, the head turning with the cable run
     const sw = SG - s;
     railAt(sw, _w).addScaledVector(al, WEIGHT_AL).addScaledVector(io, 0.75);
+    if (wakeT >= 0 && wakeT < 2.5) _w.addScaledVector(wDir, 0.16 * Math.exp(-wakeT / 0.45) * Math.sin(wakeT * 2 * Math.PI * 2.6) + 0.06 * Math.min(1, wakeT * 6) * Math.exp(-wakeT / 1.2));
     weight.matrix.copy(wBasis).setPosition(_w); weight.matrixWorldNeedsUpdate = true;
     _y.copy(_c).addScaledVector(al, cage.yokeL.x).addScaledVector(io, cage.yokeL.z); _y.y += cage.yokeL.y;
     setCable(0, _y, headC);
@@ -459,9 +464,11 @@ export async function build(ctx) {
     for (const b of bellList) {
       if (b.swing < 0) continue;
       b.swing += dt;
-      const a = Math.exp(-b.swing / 1.6) * Math.sin(b.swing * 2 * Math.PI * 0.9) * 0.6;
+      // the pull hauls the arm down and the bell over; it swings back and on, decaying, and the pull rides the arm (v12-C1:
+      // drawn down at once and bobbing with each swing, so the ring is seen done at the hand as well as overhead)
+      const a = -Math.exp(-b.swing / 1.9) * Math.sin(Math.min(b.swing / 0.12, 1) * Math.PI / 2 + Math.max(0, b.swing - 0.12) * 2 * Math.PI * 0.9) * 0.62;
       b.pivot.quaternion.copy(b.q || bellQ).multiply(_q.setFromAxisAngle(XA, a));
-      placeCord(b, b.swing < 0.4 ? Math.sin(b.swing / 0.4 * Math.PI) * 0.3 : 0);
+      placeCord(b, -Math.sin(a) * b.arm.z * 0.42);
       if (b.swing > 8) { b.swing = -1; b.pivot.quaternion.copy(b.q || bellQ); placeCord(b, 0); }
     }
     // the lever's act stands where the lever is
@@ -478,6 +485,11 @@ export async function build(ctx) {
     const b = bells[key]; b.swing = 0;
     ctx.audio?.cue('act-lift-bell', b.pivot.position);
   }
+  // the machine answering a bell (v12-C1: the cause seen beside the effect, at once): the carriage's lamp, a speck far up
+  // the face, flares as a light that has woken and stays brighter while it runs; the counterweight in its pit (or
+  // wherever it hangs) jerks on its cable as the strain is taken, and the cable shivers with it
+  let wakeT = -1, flare = 0;
+  function wake() { wakeT = 0; }
 
   // ---- the acts
   const footCord = bells.foot.handleAt, topCord = bells.top.handleAt;
@@ -485,13 +497,13 @@ export async function build(ctx) {
     id: 'lift-call', at: { x: footCord.x, y: footCord.y + 0.2, z: footCord.z }, reach: 2.4, rise: 2.4, face: { x: io.x, z: io.z },
     words: 'Ring for the carriage', every: 'free',
     when: () => !ridden && where() !== 'foot' && callTo !== S0 && !(pendingCall && pendingCall.to === S0),
-    do() { ring('foot'); callAfter(S0, 1.2); return 2.4; },
+    do() { ring('foot'); callAfter(S0, 0.55); return 2.4; },
   });
   const callTop = ctx.acts?.add({
     id: 'lift-call-top', at: { x: topCord.x, y: topCord.y + 0.2, z: topCord.z }, reach: 2.4, rise: 2.4, face: { x: -io.x, z: -io.z },
     words: 'Ring for the carriage', every: 'free',
     when: () => !ridden && where() !== 'gallery' && callTo !== SG && !(pendingCall && pendingCall.to === SG),
-    do() { ring('top'); callAfter(SG, 1.2); return 2.4; },
+    do() { ring('top'); callAfter(SG, 0.55); return 2.4; },
   });
   const leverAct = ctx.acts?.add({
     id: 'lift-lever', at: leverAt, reach: 2.4, rise: 2.2, cone: 0.85, lure: false, ease: false,

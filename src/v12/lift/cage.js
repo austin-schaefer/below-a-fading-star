@@ -239,12 +239,12 @@ export function buildCage(ctx, o) {
 
   // its glow as seen from far off: a soft point about the lamp, gone when near (so the cage is found on the cliff from
   // the floor, as the Galleries' own lamps are)
-  const haloU = { uScale: { value: 600 } };
+  const haloU = { uScale: { value: 600 }, uFlare: { value: 0 } }; // uFlare: 0 .. 1, the lamp woken by a bell (lift.js)
   const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.Float32BufferAttribute([0, LAMP_Y, 0], 3));
   const halo = new THREE.Points(hg, new THREE.ShaderMaterial({
     uniforms: haloU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    vertexShader: /* glsl */`uniform float uScale; varying float vA;
-      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = -mv.z; gl_PointSize = max(5.0, 11.0 * uScale / d); vA = smoothstep(18.0, 40.0, d) * exp(-d * 0.0007); gl_Position = projectionMatrix * mv; }`,
+    vertexShader: /* glsl */`uniform float uScale; uniform float uFlare; varying float vA;
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = -mv.z; gl_PointSize = max(5.0, 11.0 * uScale / d) * (1.0 + uFlare * 1.4); vA = smoothstep(18.0, 40.0, d) * exp(-d * 0.0007) * (1.0 + uFlare * 2.2); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: /* glsl */`varying float vA; void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r2 = dot(q, q); if (r2 > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.66, 0.32) * exp(-r2 * 4.0) * vA * 1.3, 1.0); }`,
   }));
   halo.name = 'lift-cage-halo'; halo.frustumCulled = false;
