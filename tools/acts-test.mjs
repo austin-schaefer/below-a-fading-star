@@ -442,6 +442,20 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   check('then the seat is offered, with its words', r.offered && r.words === 'Take the seat', r);
   const start = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, yaw: window.__fp.player.yaw }; });
   const tPress = await p.evaluate(() => window.__fp.time.t);
+  // v14-B1 (#39): from the press to the set-down, every frame, the eye is never inside a collider (the slab's capsule
+  // stands 0.2 m proud of its faces, so inside it is the stone's face at the camera's nose or behind it)
+  await p.evaluate(() => {
+    const fp = window.__fp, C = fp.player.colliders, W = { worst: 0, at: null, frames: 0 };
+    const inside = (c, e) => {
+      if (c.y !== undefined && (e.y < c.y || e.y > c.y + (c.h ?? 0) + (c.dh ?? 0))) return 0;
+      let d;
+      if (c.x2 !== undefined) { const dx = c.x2 - c.x1, dz = c.z2 - c.z1, L = dx * dx + dz * dz || 1e-9, u = Math.max(0, Math.min(1, ((e.x - c.x1) * dx + (e.z - c.z1) * dz) / L)); d = Math.hypot(e.x - c.x1 - dx * u, e.z - c.z1 - dz * u); }
+      else d = Math.hypot(e.x - c.x, e.z - c.z);
+      return c.r - d;
+    };
+    const tick = () => { if (!fp.player.carried && W.frames > 30) { W.done = true; return; } if (fp.player.carried) { W.frames++; const e = fp.camera.position; for (const c of C) { const k = inside(c, e); if (k > W.worst) { W.worst = +k.toFixed(3); W.at = { phase: fp.tally.ride.phase, mod: c.mod, eye: [+e.x.toFixed(2), +e.y.toFixed(2), +e.z.toFixed(2)] }; } } } requestAnimationFrame(tick); };
+    window.__seatEye = W; requestAnimationFrame(tick);
+  });
   await p.keyboard.press('KeyE');
   await until(() => window.__fp.tally.ride.phase === 'rising', 4000);
   r = await p.evaluate(() => { const fp = window.__fp, h0 = fp.player.hops, hopped = fp.controls.hop(); return { carried: fp.player.carried, hopped, hops: fp.player.hops - h0, phase: fp.tally.ride.phase }; });
@@ -471,6 +485,8 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   await p.keyboard.down('KeyW'); await until(() => window.__fp.tally.ride.phase === 'down', 8000); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
   const back = await until(() => !window.__fp.player.carried && window.__fp.tally.ride.phase === null, 20000);
   r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
+  r = await p.evaluate(() => window.__seatEye);
+  check('the ride, press to set-down: the eye is never inside a collider (the slab\'s stone)', r.frames > 60 && r.worst <= 0, r);
   check('pushing to walk lets them down, and the ride ends exactly where it began', back && Math.hypot(r.x - start.x, r.z - start.z) < 0.01 && Math.abs(r.y - start.y) < 0.05, { r, start });
   await sleep(500);
   r = await p.evaluate(() => { const q = window.__fp.player; return { x: q.pos.x, z: q.pos.z, onGround: q.onGround }; });

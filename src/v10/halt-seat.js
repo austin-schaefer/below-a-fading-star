@@ -96,6 +96,9 @@ export function buildSeat(ctx, o) {
   // over the last SWING metres swings out (offX, offZ) from under the pulley to hang FAR out from his face. spin: the
   // seat's turn on its rope; the sitter faces its local +z turned by spin (pi: facing the stone, as they sat down)
   let yRide = yTop, offX = 0, offZ = 0, spin = 0, spinB = 0, spinH = 0, spinFrom = 0;
+  // the face of the stone the seat hangs before (local z, the slab's half depth), and how far a sitter's eye keeps off it
+  const faceZ = o.faceZ ?? top.z - 0.25, CLEAR = 0.45;
+  let push = 0, lastDt = 0; // m the seat stands out from where it hangs, pushed off the face by the sitter
   const invM0 = M0.clone().invert(), hl = new THREE.Vector3();
   const start = new THREE.Vector3(), boardFrom = new THREE.Vector3();
   const sw = { x: 0, rot: 0 };
@@ -111,6 +114,14 @@ export function buildSeat(ctx, o) {
     const k = mode === 'rising' || mode === 'top' || mode === 'down' ? ease((y - (yRide - SWING)) / SWING) : 0;
     seat.position.set(top.x + sw.x + offX * k, y, top.z + offZ * k);
     seat.rotation.set(0, sw.rot + spin, 0); // the plank along the stone, turned on its rope
+    // v14-B1 (#39): a sitter's eye is sat BACK behind the cords, so as the seat turns them out to the country it went
+    // into the stone (the seat hangs a hand's breadth off the face). A sitter pushes off with their feet: while anyone
+    // sits, the seat stands out from the face as far as keeps the eye CLEAR of it, eased so it is never seen to jump
+    const sitting = release !== null;
+    const need = sitting ? faceZ + CLEAR - (seat.position.z - Math.cos(spin) * BACK) : 0;
+    push = Math.max(need, push + (Math.max(0, need) - push) * Math.min(1, lastDt * 2));
+    if (push < 0.001 && !sitting) push = 0;
+    seat.position.z += push;
     ringW.copy(ringP).applyEuler(seat.rotation).add(seat.position);
     dv.copy(ringW).sub(rope.position); const len = dv.length();
     rope.quaternion.setFromUnitVectors(DN, dv.divideScalar(len || 1)); rope.scale.set(1, len, 1);
@@ -235,6 +246,7 @@ export function buildSeat(ctx, o) {
   }
 
   ctx.registerUpdate((dt) => {
+    lastDt = dt;
     if (mode === 'up' && sleepT < 0 && pending < 0 && o.dimmer.value === 0) return; // at rest at the hatch: nothing per frame
     if (mode === 'waiting' && swayT < 0 && sleepT < 0) { if (open()) checkWait(dt); return; } // waiting still: a distance a frame
     const go = open();
