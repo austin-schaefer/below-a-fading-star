@@ -13,7 +13,7 @@
 //   the road: seven carriers nose to tail east along the nave on z = 42, past the cone's toe, under the hole's light
 //     and through the hoops of the broken line, into the dark under the moor to the east wall and the sun on it
 import { NAVE, naveEdge } from '../../v5/nave/ground.js';
-import { gapX, MAIN } from '../noon-road/plan.js';
+import { gapX, MAIN, HOOPS, LINE } from '../noon-road/plan.js';
 
 // ?coffinroad=0, or the module skipped or left out by ?only=: the Nave keeps its rim's colliders and south wall whole
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
@@ -50,7 +50,10 @@ export const spurY = (z) => ROAD_Y + (DOOR.sill - ROAD_Y) * Math.min(1, Math.max
 // edges, so there the floor is as wide as the planks, and it widens back to the road's over PATCH.ease m of the backs
 export const PATCH = { half: 0.48, w: 1.4, e: 1.45, ease: 0.85, ends: [[ROAD.x0 - 1, ROAD.x0 + 1.2], [ROAD.x1 - 1.45, ROAD.x1 + 1]] };
 const RHALF = (ROAD.z1 - ROAD.z0) / 2, NARROW = PATCH.half + 0.07;
-const SPANS = [...MAIN.slice(1).map((_, i) => [gapX(i) - PATCH.w, gapX(i) + PATCH.e]), ...PATCH.ends];
+// and beside each standing hoop's south limb, and through the bay of the line's wall, so the eye keeps a hand clear of
+// the glaze (the camera's near plane is 0.08 m)
+const SPANS = [...MAIN.slice(1).map((_, i) => [gapX(i) - PATCH.w, gapX(i) + PATCH.e]), ...PATCH.ends,
+  ...HOOPS.filter((h) => h.a0 === undefined || h.wall).map((h) => [h.x - LINE.t - 0.15, h.x + (h.wall ? h.wall.len : 0) + LINE.t + 0.15])];
 export function roadHalf(x) {
   let d = Infinity; for (const [a, b] of SPANS) d = Math.min(d, x < a ? a - x : x > b ? x - b : 0);
   return NARROW + (RHALF - NARROW) * Math.min(1, d / PATCH.ease);

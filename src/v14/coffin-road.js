@@ -25,6 +25,8 @@ import { NOON } from '../v8/strata/noon.js';
 
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const TIMBER = C('#1f1813'), TIMBER_L = C('#3d3026'), BOARD = C('#231b15'), ROPE = C('#6d5f48');
+// the boards laid over the couplings: old timber gone silver-grey and pale with the damp, each its own shade
+const DRIFT = [C('#6e6253'), C('#7f7262'), C('#5f5548')];
 const IRON = C('#26221f'), STONE = C('#6e655c'), STONE_D = C('#4c453f'), RUBBLE = C('#5d554c');
 const MORTAR = C('#4a3a26'), GOLD = C('#c8962e'), GOLD_D = C('#8a6420'), RED = C('#6a2a1c'), BLACK = C('#050505');
 const FLAME = NOON.lightHex; // stored daylight (the fourth hand's one light)
@@ -166,13 +168,28 @@ export async function build(ctx) {
   planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, SLOPE.z1, DOOR.z + 0.05, 'z', 4, DOOR.sill + 0.03, DOOR.sill + 0.03);
   for (let z = SLOPE.z0 + 0.5; z < SLOPE.z1; z += 0.62) B.box(DOOR.x, spurY(z) + 0.02, z, 0.72, 0.022, 0.03, 0, TIMBER, TIMBER, 0.2);
   // the road: planks over each coupling, from one back to the next, lashed to the coupling's ring
-  planks(ROAD.x0, ROAD.x0 + 1.2, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true);
+  // two pale boards a patch, laid on by someone else: odd lengths, not quite square to the line or to each other, one
+  // proud of the other where it bows, a cord bound round both at each end and down to the coupling's ring
+  const patch = (x0, x1, salt) => {
+    const hw = PATCH.half / 2 - 0.015;
+    for (const s of [-1, 1]) {
+      const a = x0 + rng() * 0.14, b = x1 - rng() * 0.14, z = ROAD.zc + s * (hw + 0.012), sk = (rng() - 0.5) * 0.03, col = DRIFT[(salt + (s > 0 ? 1 : 0)) % 3];
+      const bow = s > 0 ? 0.012 + rng() * 0.012 : 0;
+      B.box((a + b) / 2, top - 0.03 + bow, z, (b - a) / 2, 0.026, hw, sk, col, col, 0.25);
+      B.box((a + b) / 2, top - 0.03 + bow * 1.6, z, (b - a) / 6, 0.027, hw * 0.98, sk, col, col, 0.25); // where it bows most
+    }
+    for (const x of [x0 + 0.22, x1 - 0.22]) {
+      lash([x, top + 0.006, ROAD.zc - PATCH.half - 0.02], [x + 0.03, top + 0.006, ROAD.zc + PATCH.half + 0.02]);
+      for (const s of [-1, 1]) lash([x, top - 0.02, ROAD.zc + s * (PATCH.half + 0.02)], [x + 0.05, top - 0.45, ROAD.zc + s * (PATCH.half + 0.3)]);
+    }
+  };
+  patch(ROAD.x0, ROAD.x0 + 1.2, 0);
   for (let i = 0; i < MAIN.length - 1; i++) {
     const x = gapX(i);
-    planks(x - PATCH.w, x + PATCH.e, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true); // a patch: the carriers are the road
+    patch(x - PATCH.w, x + PATCH.e, i + 1); // a patch: the carriers are the road
     for (const s of [-1, 1]) lash([x - 0.2, top - 0.06, ROAD.zc + s * 0.47], [x - 0.15, top - 0.75, ROAD.zc + s * 1.2]);
   }
-  planks(ROAD.x1 - 1.45, ROAD.x1, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true);
+  patch(ROAD.x1 - 1.45, ROAD.x1, 2);
   // things floating: a few boards got loose
   for (const [x, z, yaw, len] of [[263.5, 45.6, 0.4, 1.6], [287.2, 44.9, -0.8, 1.1], [253.8, 45.2, 1.9, 0.9], [292.5, 37.2, 0.2, 1.3]]) B.box(x, WY + 0.015, z, len / 2, 0.025, 0.1, yaw, TIMBER_L, TIMBER_L, 0.3);
   await ctx.progress?.('the noon road', 0.55);
@@ -264,7 +281,7 @@ export async function build(ctx) {
   // ---- the glints: one Points draw: a soft round halo on the flask in the shears' cage (never under 3 px, so it is
   // the thing seen from the moor), the bulb on the trestle, and each lamp of stored light down below
   const lanternAt = [apex[0], apex[1] - 2.25, SZ];
-  const F = [[...lanternAt, 0.3, 1], [extras[0].at[0], extras[0].at[1], extras[0].at[2], 0.5, 1], ...noon.lamps.map(([x, y, z, k]) => [x, y - 0.3, z, 0.5 + 0.9 * k, 0])];
+  const F = [[...lanternAt, 0.3, 1], [extras[0].at[0], extras[0].at[1], extras[0].at[2], 0.5, 1], ...noon.lamps.map(([x, y, z, k]) => (Math.abs(z - ROAD.zc) < 1.5 && x > ROAD.x0 && x < ROAD.x1 ? [x, NAVE.water + 0.8, z + 2.0, 0.5 + 0.9 * k, 0] : [x, y - 0.3, z, 0.5 + 0.9 * k, 0]))]; // (a walked carrier's glint low on its south flank, off the eye's path)
   const fpos = new Float32Array(F.length * 3), fattr = new Float32Array(F.length * 4);
   const la = [0, 0, 0];
   F.forEach(([x, y, z, s, far], i) => { fpos.set([x, y, z], i * 3); litAt(x, y, z, la); fattr.set([s, i * 7.31, far ? 1 : la[1], far ? 2 : 0], i * 4); });

@@ -18,6 +18,8 @@ import * as THREE from 'three';
 const c = (h) => new THREE.Color(h);
 export const NOON = {
   milk: c('#c9c3b0'), cloud: c('#9a9685'), bone: c('#aaa48f'), amber: c('#8a5418'), honey: c('#d9a04a'), biscuit: c('#6a6051'), celadon: c('#8fb09c'), oxblood: c('#701c16'),
+  // the glazes as fields: a deep celadon pooled thick, a thin one broken over a rim, ox-blood fired dark, amber glass
+  celadonD: c('#5d8a77'), celadonT: c('#a3bba7'), oxbloodD: c('#561510'), amberG: c('#9a5c1a'),
   lime: c('#d4cfbb'), silt: c('#3a382f'), dark: c('#0b0a08'), strand: c('#b9b4a2'),
   light: [1.0, 0.93, 0.74], lightHex: '#ffedbd',
 };
@@ -32,10 +34,12 @@ export function put(B, g, M, p = {}) {
   if (typeof B.vert === 'function') {
     const ng = g.index ? g.toNonIndexed() : g;
     if (!ng.attributes.normal) ng.computeVertexNormals();
+    const LP = p.paint ? ng.attributes.position.array.slice() : null; // the part's own frame, for its glaze
     ng.applyMatrix4(M);
-    const P = ng.attributes.position.array, N = ng.attributes.normal.array, base = [col.r, col.g, col.b];
+    const P = ng.attributes.position.array, N = ng.attributes.normal.array, base = [col.r, col.g, col.b], pc = [0, 0, 0];
     for (let i = 0; i < P.length; i += 3) {
-      const cc = p.wear ? p.wear(P[i], P[i + 1], P[i + 2], N[i + 1], base, _col) : base;
+      const b0 = LP ? p.paint(LP[i], LP[i + 1], LP[i + 2], pc) : base;
+      const cc = p.wear ? p.wear(P[i], P[i + 1], P[i + 2], N[i + 1], b0, _col) : b0;
       B.vert(P[i], P[i + 1], P[i + 2], N[i], N[i + 1], N[i + 2], cc, p.jit ?? 0.03);
       if (p.glow != null) B.u[B.u.length - 1] += typeof p.glow === 'function' ? p.glow(P[i], P[i + 1], P[i + 2]) : p.glow;
     }
@@ -56,13 +60,48 @@ function ringZ(R, r, a0 = -Math.PI, a1 = Math.PI, seg = 40, sec = 8) {
   return g.rotateZ(Math.PI / 2 - a1); // torus arc runs from +x counter-clockwise; ours from the crown clockwise
 }
 
+// ---------------------------------------------------------------- the glaze
+// A thrown or blown thing is glazed in fields, not painted in panels: a body dipped in celadon or ox-blood, a band
+// brushed round it, the milk-white body showing where the glaze broke thin over a rim or wore through. They were fired
+// standing on their tails, so every edge of a glaze ran toward the tail and froze in drips. paint(x, y, z, out) gives
+// a part's colour in its own frame (put's `paint`); the material's crazing, staining and wear lie over it.
+const setC = (out, C, k = 1) => { out[0] = C.r * k; out[1] = C.g * k; out[2] = C.b * k; return out; };
+const mixC = (out, A, Bc, f) => { out[0] = A.r + (Bc.r - A.r) * f; out[1] = A.g + (Bc.g - A.g) * f; out[2] = A.b + (Bc.b - A.b) * f; return out; };
+const hash1 = (a) => { const v = Math.sin(a * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+// drips: how far (in the same unit as the edge) a glaze edge ran at angle a round the axis
+const drip = (a, seed, n = 9) => { const k = Math.floor(((a / (Math.PI * 2)) % 1 + 1) % 1 * n * 3), f = ((a / (Math.PI * 2)) % 1 + 1) % 1 * n * 3 - k; const h = hash1(k + seed * 17); return h > 0.62 ? Math.sin(f * Math.PI) ** 2 * (h - 0.55) * 2.2 : 0; };
+// throwing rings: the faint ridges a wheel leaves, as a light-dark ripple of `pitch` m
+const thrown = (u, pitch = 0.11) => 0.93 + 0.07 * Math.sin(u / pitch * Math.PI * 2);
+// the glaze schemes a carrier, a collar or a length of line is dipped in: [field, band, rim]
+export const GLAZES = [
+  [NOON.celadonD, NOON.oxblood, NOON.amberG],
+  [NOON.oxbloodD, NOON.celadonT, NOON.amberG],
+  [NOON.amberG, NOON.oxblood, NOON.celadonD],
+  [NOON.celadon, NOON.oxbloodD, NOON.honey],
+];
+
 // ---------------------------------------------------------------- the blown and cast
 // collar: the thick ring where two lengths were joined (a gall on the line), a band of ox-blood glaze beside it.
 // o: r (3: the centre-line radius), t (0.26: its section), a0, a1 (the arc left standing, from the crown), band (true)
+// glaze: [field, band, rim] (GLAZES) paints it as a thrown ring: the field on its faces in throwing rings, the glaze
+// broken thin to milk over its outer rim, a run of drips from the field's edge; cells: n amber bull's-eyes in a row
+// round each face (the collector's register)
 function collar(B, M, o = {}) {
-  const r = o.r ?? 3, t = o.t ?? r * 0.085, a0 = o.a0 ?? -Math.PI, a1 = o.a1 ?? Math.PI, seg = o.seg ?? 44;
-  put(B, ringZ(r, t, a0, a1, seg, o.sec ?? 8), M, { color: o.color || NOON.milk, wear: o.wear, glow: o.glow });
-  if (o.band !== false) put(B, ringZ(r + t * 0.15, t * 0.62, a0, a1, seg, 6), T(M, 0, 0, t * 0.95), { color: NOON.oxblood, wear: o.wear, glow: o.glow });
+  const r = o.r ?? 3, t = o.t ?? r * 0.085, a0 = o.a0 ?? -Math.PI, a1 = o.a1 ?? Math.PI, seg = o.seg ?? 44, G = o.glaze;
+  const paint = G ? (x, y, z, out) => {
+    const rr = Math.hypot(x, y), a = Math.atan2(x, y), u = (rr - r) / t, v = z / t; // u out across the section, v along the axis
+    if (u > 0.55 + 0.25 * drip(a, 3, 14)) return setC(out, NOON.milk, thrown(a * r, 0.5)); // the rim: the glaze broke thin, the milk body
+    return setC(out, G[0], thrown(rr, 0.07) * (0.9 + 0.12 * Math.abs(v)));
+  } : null;
+  put(B, ringZ(r, t, a0, a1, seg, o.sec ?? 8), M, { color: o.color || NOON.milk, wear: o.wear, glow: o.glow, paint });
+  // the cells were set by hand, not by a jig: each its own size and a little off the line, some fallen out (a dark socket)
+  const crng = mulberry(Math.round(r * 1000 + a0 * 97));
+  if (G && o.cells) for (const s of [-1, 1]) for (let i = 0; i < o.cells; i++) {
+    const a = a0 + (a1 - a0) * (i + (s > 0 ? 0.25 : 0.75) + (crng() - 0.5) * 0.3) / o.cells, gone = crng() < 0.22, cr = t * (0.48 + 0.24 * crng()), off = (crng() - 0.5) * t * 0.5;
+    if (a1 - a0 < 6.2 && (a - a0 < 0.12 || a1 - a < 0.12)) continue;
+    lens(B, T(M, Math.sin(a) * (r + off), Math.cos(a) * (r + off), s * t * 0.97, s > 0 ? 0 : Math.PI, 0, 0), { r: cr, lit: gone ? 0 : o.cellLit ?? 0.12, wear: o.wear, rim: G[1], glass: gone ? NOON.dark : crng() < 0.3 ? NOON.amberG : NOON.honey, cheap: true, bulge: gone ? 6 : 2.2 });
+  }
+  if (o.band !== false) put(B, ringZ(r + t * 0.15, t * 0.62, a0, a1, seg, 6), T(M, 0, 0, t * 0.95), { color: G ? G[1] : NOON.oxblood, wear: o.wear, glow: o.glow });
   // a broken end is a clean shell-fracture: a dark disc across the section
   if (a1 - a0 < 6.2) for (const a of [a0, a1]) put(B, new THREE.CircleGeometry(t * 0.98, 8), T(M, Math.sin(a) * r, Math.cos(a) * r, 0, 0, 0, -a).multiply(new THREE.Matrix4().makeRotationY(a === a0 ? -Math.PI / 2 : Math.PI / 2)), { color: NOON.cloud, wear: o.wear });
 }
@@ -84,19 +123,29 @@ function tube(B, M, o = {}) {
   }
   for (let j = 0; j < nz; j++) for (let i = 0; i < nt; i++) { const a = j * (nt + 1) + i, b = a + 1, d = a + nt + 1, e = d + 1; idx.push(a, d, b, b, d, e); }
   const wall = () => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g; };
-  put(B, wall(), M, { color: o.color || NOON.milk, wear: o.wear, glow: o.lit ? 0.55 * o.lit : null });
+  // glazed in fields round the line: dipped in G[0] from the collar, a broad band of G[1] brushed round it, its edges
+  // run in drips; where the glaze wore off, the milk body. Throwing rings along it, where it was drawn on the wheel
+  const G = o.glaze, sd = o.seed ?? 1;
+  const paint = G ? (x, y, z, out) => {
+    const a = Math.atan2(x, y), zb = len * (0.45 + 0.2 * hash1(sd)), wb = 0.55 + 0.4 * hash1(sd + 3);
+    const k = thrown(z, 0.16), dz = z - zb;
+    if (Math.abs(dz) < wb + 0.35 * drip(a, sd, 11)) return setC(out, G[1], k);
+    if (z > len * 0.85 + 0.6 * drip(a, sd + 5, 7)) return setC(out, NOON.milk, k);
+    return setC(out, G[0], k * (0.92 + 0.1 * Math.sin(a * 2 + sd)));
+  } : null;
+  put(B, wall(), M, { color: o.color || NOON.milk, wear: o.wear, glow: o.lit ? 0.55 * o.lit : null, paint });
   if (typeof B.vert !== 'function') { const g = wall().scale(0.985, 0.985, 1); g.setIndex(idx.map((_, k) => idx[k - (k % 3) + [0, 2, 1][k % 3]])); put(B, g, M, { color: NOON.cloud }); } // (single-sided stone: its inside)
-  const every = o.rib ?? 1.1;
+  const every = o.rib ?? (G ? 0 : 1.1);
   if (every > 0) for (let z = every; z < len - 0.3 - rag; z += every) put(B, ringZ(r + 0.03, r * 0.022, a0 + rag * 0.2, a1 - rag * 0.2, o.seg ?? 40, 5), T(M, 0, 0, z), { color: NOON.bone, wear: o.wear, glow: o.lit ? 0.2 * o.lit : null });
-  if (o.collar !== false) collar(B, M, { r: r + r * 0.06, t: r * 0.085, a0, a1, wear: o.wear, seg: o.seg });
+  if (o.collar !== false) collar(B, M, { r: r + r * 0.06, t: r * 0.085, a0, a1, wear: o.wear, seg: o.seg, glaze: G, cells: o.cells });
 }
 // lens: a bull's-eye, facing +z: a low dome of amber or clear glass in a rolled rim. o: r (0.55), lit, glass
 function lens(B, M, o = {}) {
   const r = o.r ?? 0.55, k = o.lit ?? 0;
-  const q = o.bulge ?? 2.6, dome = new THREE.SphereGeometry(r * q, 14, 5, 0, Math.PI * 2, 0, Math.asin(1 / q)).rotateX(Math.PI / 2).translate(0, 0, -r * q * Math.cos(Math.asin(1 / q)));
+  const q = o.bulge ?? 2.6, lo = !!o.cheap, dome = new THREE.SphereGeometry(r * q, lo ? 9 : 14, lo ? 3 : 5, 0, Math.PI * 2, 0, Math.asin(1 / q)).rotateX(Math.PI / 2).translate(0, 0, -r * q * Math.cos(Math.asin(1 / q)));
   put(B, dome, M, { color: o.glass || (k > 0 ? NOON.honey : NOON.amber), wear: o.wear, glow: k > 0 ? 0.75 * k : null, jit: 0.02 });
-  put(B, ringZ(r * 1.04, r * 0.13, -Math.PI, Math.PI, 20, 6), M, { color: o.rim || NOON.oxblood, wear: o.wear, glow: k > 0 ? 0.25 * k : null });
-  put(B, ringZ(r * 0.45, r * 0.05, -Math.PI, Math.PI, 14, 4), T(M, 0, 0, r * 0.19), { color: NOON.bone, glow: k > 0 ? 0.5 * k : null });
+  put(B, ringZ(r * 1.04, r * 0.13, -Math.PI, Math.PI, lo ? 10 : 20, lo ? 4 : 6), M, { color: o.rim || NOON.oxblood, wear: o.wear, glow: k > 0 ? 0.25 * k : null });
+  if (!lo) put(B, ringZ(r * 0.45, r * 0.05, -Math.PI, Math.PI, 14, 4), T(M, 0, 0, r * 0.19), { color: NOON.bone, glow: k > 0 ? 0.5 * k : null });
 }
 // mark: their mark, the empty ring, lying on a surface (facing +z). o: r (0.16), n (1: a row of them along +x), gap
 function mark(B, M, o = {}) {
@@ -143,7 +192,29 @@ function carrier(B, M, o = {}) {
   for (let i = 0; i <= n; i++) prof.push([rt(i / n), zt(i / n)]);
   prof.push([rN * 1.02, h - R * 0.06], [rN * 1.22, h - R * 0.02], [rN * 1.22, h], [rN * 0.9, h + R * 0.02], [0, h - R * 0.03]);
   const wear = o.wear, glow = k > 0 ? (o.glowFn || k * 0.6) : null, part = (c, g) => ({ color: c, wear, glow: k > 0 ? k * g : null });
-  put(B, latheZ(prof, seg), MR, { color: o.color || NOON.milk, wear, glow });
+  // its glaze (GLAZES[o.glazes], else by its seed): the foot left bare as a potter leaves it, milk in throwing rings;
+  // a dead one dipped to the shoulder in its field, the edge run toward the tail in drips; a broad band brushed round
+  // the belly; the shoulder and neck in amber glass. One still holding light is milk glass: the light shows through
+  // it, the band and the shoulder dark shapes on it
+  const G = GLAZES[(o.glazes ?? Math.floor(rng() * GLAZES.length)) % GLAZES.length], sd = (o.seed ?? 1) % 97;
+  const tb = form === 'drop' ? 0.72 : 0.27, tl = form === 'drop' ? 0.6 : form === 'gourd' ? 0.33 : form === 'waist' ? 0.7 : 0.56;
+  const paint = o.glazes === false ? null : (x, y, z, out) => {
+    const t = (z + h) / body, a = Math.atan2(x, y), kr = thrown(z, 0.13);
+    if (t < 0.08 + 0.05 * drip(a, sd, 10)) return setC(out, NOON.milk, kr);                                  // the bare foot
+    if (t > tb - 0.075 - 0.07 * drip(a, sd + 2, 12) && t < tb + 0.075) return setC(out, G[1], kr);                // the band, run toward the tail
+    if (t > 0.88 - 0.05 * drip(a, sd + 4, 9)) return setC(out, G[2], kr);                                     // shoulder and neck: amber glass
+    if (k > 0) return mixC(out, NOON.milk, NOON.honey, 0.22);                                                // milk glass, warm, lit through
+    return t > 0.16 - 0.06 * drip(a, sd + 6, 10) ? setC(out, G[0], kr * (0.93 + 0.08 * Math.sin(a * 3 + sd))) : setC(out, NOON.milk, kr);
+  };
+  // not quite true: blown, it slumped as it set, a little narrower than it is deep and never twice the same
+  const sag = new THREE.Matrix4().makeScale(0.9 + 0.02 * rng(), 0.99, 1); // (narrower than round: clear of the arcade)
+  put(B, latheZ(prof, seg), MR.clone().multiply(sag), { color: o.color || NOON.milk, wear, glow, paint });
+  // a spiral of pulled glass trailed round the shoulder, amber, as a glassblower winds a thread on a hot vessel
+  {
+    const t0 = 0.8, t1 = 0.96, turns = 2.6 + rng(), ph = rng() * 6.28, pts = [];
+    for (let i = 0; i <= 64; i++) { const f = i / 64, t = t0 + (t1 - t0) * f, a = ph + f * turns * Math.PI * 2, rr = rt(Math.min(1, t)) * 1.01 + R * 0.012; pts.push(new THREE.Vector3(Math.sin(a) * rr * 1.03, Math.cos(a) * rr, zt(Math.min(1, t)))); }
+    put(B, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), o.full === false ? 40 : 64, R * 0.022, 4, false), MR, part(NOON.amberG, 0.4));
+  }
   // the pontil scar in the punt: where it was broken from the rod, rough and dark, a bead left in it
   put(B, new THREE.CircleGeometry(rT * 0.3, 10), T(MR, 0, 0, -h + rT * 0.49, 0, Math.PI, 0), { color: NOON.silt, wear });
   put(B, new THREE.SphereGeometry(rT * 0.1, 8, 6), T(MR, 0, 0, -h + rT * 0.44), { color: NOON.amber, wear });
@@ -152,8 +223,7 @@ function carrier(B, M, o = {}) {
   if (form === 'waist') collar(B, T(MR, 0, 0, zt(0.5)), { r: R * 0.97, t: R * 0.085, seg, band: false, wear, color: NOON.bone });
   put(B, ringZ(rN * 1.24, R * 0.06, -Math.PI, Math.PI, 18, 6), T(MR, 0, 0, h - R * 0.01), part(NOON.oxblood, 0));
   const top = o.full === false ? (a) => Math.abs(a) < 0.7 || Math.abs(a - Math.PI * 2) < 0.7 : null;
-  const tb = form === 'drop' ? 0.72 : 0.27, tl = form === 'drop' ? 0.6 : form === 'waist' ? 0.7 : form === 'gourd' ? 0.33 : 0.56;
-  band(B, T(MR, 0, 0, zt(tb)), { r: rt(tb) + R * 0.004, w: R * 0.12, seg, color: o.glaze || NOON.oxblood, wear, only: top, glow: k > 0 ? k * 0.2 : null });
+  band(B, T(MR, 0, 0, zt(tb)), { r: rt(tb) + R * 0.004, w: R * 0.12, seg, color: o.glaze || (k > 0 ? NOON.oxblood : G[2]), wear, only: top, glow: k > 0 ? k * 0.2 : null });
   if (o.full !== false) band(B, T(MR, 0, 0, zt(form === 'gourd' ? 0.6 : 0.82)), { r: rt(form === 'gourd' ? 0.6 : 0.82) + R * 0.004, w: R * 0.06, seg, marks: 0, color: NOON.celadon, wear, glow: k > 0 ? k * 0.3 : null });
   // the bull's-eye in its back (and one in its flank, mostly under water afloat)
   const eye = (a, t, r) => lens(B, T(MR, 0, 0, zt(t), 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rt(t) - r * 0.05, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { r, lit: k, wear });

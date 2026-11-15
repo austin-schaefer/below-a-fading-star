@@ -589,7 +589,9 @@ export async function build(ctx) {
   const rimU = new Array(36); for (let i = 0; i < 36; i++) rimU[i] = naveRim(i * 10);
   const shapeU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)), sizeU = [0, 1, 2].map(() => new THREE.Vector2(1, 0.5)), splashU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, -100, 0));
   const skyU = new THREE.Color('#5a5470');
-  const HULL_N = low ? 8 : 16, HL = (CR_OFF ? [] : hulls()).slice(0, HULL_N);
+  // (on low, the six brightest lit hulls and two dark ones adrift, so the dark water still holds a shape or two)
+  const HULL_N = low ? 8 : 16, HA = CR_OFF ? [] : hulls();
+  const HL = low ? [...HA.filter((h) => h[6] > 0).slice(0, 6), ...HA.filter((h) => !(h[6] > 0) && h[7]).slice(0, 2)] : HA.slice(0, HULL_N);
   const hullA = Array.from({ length: HULL_N }, (_, i) => new THREE.Vector4(...(HL[i] ? HL[i].slice(0, 4) : [0, 0, 0, 0])));
   const hullB = Array.from({ length: HULL_N }, (_, i) => (HL[i] ? new THREE.Vector4(HL[i][4], HL[i][5], HL[i][6], 0) : new THREE.Vector4(0, 0, 0, 0)));
   const hullCol = new THREE.Color(NOON.lightHex);

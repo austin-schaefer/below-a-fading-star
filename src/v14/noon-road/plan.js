@@ -63,13 +63,13 @@ export function lamps() {
   L.push([NODE.x - 1.2, FLOOR_Y + 0.2, NODE.z + 1.9, NODE.lit, 9]);
   return L;
 }
-// the hulls as the water sees them, lit ones first: [x1, z1, x2, z2, r, depth of the axis under the water, light]
+// the hulls as the water sees them, lit ones first: [x1, z1, x2, z2, r, depth of the axis under the water, light, adrift]
 export function hulls() {
   const H = VESSELS.filter((v) => Math.abs(v.pitch || 0) < 0.5).map((v) => {
     const h = Math.max(0, v.len / 2 - v.r * 0.8), c = Math.cos(v.a), s = Math.sin(v.a);
-    return [v.x - c * h, v.z - s * h, v.x + c * h, v.z + s * h, v.r * 0.98, WY - yOf(v), v.lit || 0];
+    return [v.x - c * h, v.z - s * h, v.x + c * h, v.z + s * h, v.r * 0.9, WY - yOf(v), v.lit || 0, v.walked ? 0 : 1];
   });
-  for (const v of VESSELS) if (Math.abs(v.pitch || 0) >= 0.5) H.push([v.x, v.z, v.x + 0.01, v.z, v.r * 0.8, 0.3, v.lit || 0]);
-  H.push([NODE.x, NODE.z, NODE.x + 0.01, NODE.z, NODE.r, WY - NODE.y, NODE.lit]);
+  for (const v of VESSELS) if (Math.abs(v.pitch || 0) >= 0.5) H.push([v.x, v.z, v.x + 0.01, v.z, v.r * 0.8, 0.3, v.lit || 0, 1]);
+  H.push([NODE.x, NODE.z, NODE.x + 0.01, NODE.z, NODE.r, WY - NODE.y, NODE.lit, 0]);
   return H.sort((p, q) => q[6] - p[6]);
 }
