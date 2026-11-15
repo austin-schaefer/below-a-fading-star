@@ -28,7 +28,7 @@ Until now the walk was a valley floor with a wall of mountains round it. This re
 
 - **Walking into the tors**: The stacked stones on the eastern moor let you walk into their upper halves. They are solid now.
 - **Three misspelt place cards**, and on a phone the card of a place no longer sits under the walking stick.
-- **Four more places in the settings menu**: the middle of the Great Span, the Diffident Stair, the lift's station and the foot of the icefall, and the Span's west stair.
+- **Five more places in the settings menu**: the middle of the Great Span, its west stair, the Diffident Stair, the lift's station and the foot of the icefall.
 
 ### Behind the scenes
 
