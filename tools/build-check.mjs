@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // What every module built, as one fingerprint a module (v13-L5): for a change to a builder that must not change
 // what is seen. terrain-probe's idea, for the whole scene.
-//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--record=path.json] [--against=path.json] [--only=a,b]
+//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b]
 // It loads <base>/?q=<q>&<params> and, at the "ready" mark (src/startup.js), synchronously, before the first frame
 // has run any update, walks the objects each module added to the scene (the profiler's tagging, ctx.perf._mods;
 // what no module claimed is 'core': the terrain, the sky, the lights) and hashes, bit for bit: every geometry
@@ -20,7 +20,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', params: '', record: '', against: '', only: '' };
+const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
   const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
@@ -151,8 +151,13 @@ function install() {
       // a root's hash is its subtree's entries without the root's index; the module's is over its roots' hashes
       // sorted, so the order roots were added in (async builds race) does not move it
       const rootHashes = [];
-      list.forEach((o, i) => {
-        const e0 = entries.length, p = String(i);
+      // a root is keyed by its type and name and how many roots before it share them, so a key does not shift when
+      // another root is added earlier
+      const seenRoot = new Map();
+      list.forEach((o) => {
+        const id = `${o.type}${o.name ? ' ' + o.name : ''}`, nth = seenRoot.get(id) || 0;
+        seenRoot.set(id, nth + 1);
+        const e0 = entries.length, p = `#${nth}`;
         walk(o, p);
         rootHashes.push(hashStr(entries.slice(e0).map((e) => e.k.slice(p.length) + '=' + e.h).join('\n')));
       });
@@ -171,24 +176,51 @@ function install() {
 }
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
-page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.addInitScript(install);
-const t0 = Date.now();
-await page.goto(url);
-await page.waitForFunction(() => window.__buildCheck, null, { timeout: 900000, polling: 500 });
-const res = await page.evaluate(() => window.__buildCheck);
+async function once() {
+  const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+  page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+  await page.addInitScript(install);
+  const t0 = Date.now();
+  await page.goto(url);
+  await page.waitForFunction(() => window.__buildCheck, null, { timeout: 900000, polling: 500 });
+  const r = await page.evaluate(() => window.__buildCheck);
+  await page.close();
+  if (r.error) { console.log('FAIL fingerprint threw:', r.error); process.exit(1); }
+  r.wall = Date.now() - t0;
+  return r;
+}
+// --runs=N loads N times, one after another; an entry whose hash differs between the loads is unstable (a module
+// that packs by time or waits on another module's build: region-bletting waits up to 15 s for vegetation's trees),
+// recorded as such and skipped by --against, and the module's fingerprint is taken without it.
+const runs = Math.max(1, +opts.runs || 1);
+const res = await once();
+const unstable = new Map(); // module -> Set of keys
+for (let k = 1; k < runs; k++) {
+  const r = await once();
+  for (const [n, m] of Object.entries(res.mods)) {
+    const other = new Map((r.mods[n]?.entries || []).map((e) => [e.k, e.h]));
+    const keys = new Set([...m.entries.map((e) => e.k), ...other.keys()]);
+    for (const key of keys) if (other.get(key) !== m.entries.find((e) => e.k === key)?.h) { if (!unstable.has(n)) unstable.set(n, new Set()); unstable.get(n).add(key); }
+  }
+}
 await browser.close();
-if (res.error) { console.log('FAIL fingerprint threw:', res.error); process.exit(1); }
+const hashStr = (s) => { let a = 0x811c9dc5 | 0; for (let i = 0; i < s.length; i++) a = Math.imul(a ^ s.charCodeAt(i), 0x01000193); return (a >>> 0).toString(16).padStart(8, '0'); };
+const stableHash = (m, skip) => (skip && skip.size ? 's' + hashStr(m.entries.filter((e) => !skip.has(e.k)).map((e) => e.k + '=' + e.h).sort().join('\n')) : m.h);
+for (const [n, keys] of unstable) {
+  const m = res.mods[n];
+  m.unstable = [...keys];
+  for (const e of m.entries) if (keys.has(e.k)) e.h = 'unstable';
+  m.h = stableHash(m, keys);
+}
 const only = opts.only ? new Set(opts.only.split(',')) : null;
 const names = Object.keys(res.mods).filter((n) => !only || only.has(n)).sort();
-console.log(`build-check ${url} · ready in ${((Date.now() - t0) / 1000).toFixed(1)} s · fingerprinted in ${res.ms} ms`);
+console.log(`build-check ${url} · ready in ${(res.wall / 1000).toFixed(1)} s · fingerprinted in ${res.ms} ms${runs > 1 ? ` · ${runs} loads` : ''}`);
 for (const n of names) {
   const m = res.mods[n];
-  console.log(`  ${n.padEnd(22)} ${m.h}  ${String(m.objs).padStart(5)} objects ${String(m.attrs).padStart(5)} attributes ${String(m.texs).padStart(3)} textures ${String(m.mb).padStart(6)} MB`);
+  console.log(`  ${n.padEnd(22)} ${m.h}  ${String(m.objs).padStart(5)} objects ${String(m.attrs).padStart(5)} attributes ${String(m.texs).padStart(3)} textures ${String(m.mb).padStart(6)} MB${m.unstable ? `  (${m.unstable.length} entries unstable between loads: ${m.unstable.slice(0, 3).join(', ')}${m.unstable.length > 3 ? ', ...' : ''})` : ''}`);
 }
 if (opts.record) {
-  writeFileSync(opts.record, JSON.stringify({ kind: 'fading-planet-build-check', url, date: new Date().toISOString(), mods: res.mods }));
+  writeFileSync(opts.record, JSON.stringify({ kind: 'fading-planet-build-check', url, runs, date: new Date().toISOString(), mods: res.mods }));
   console.log('[recorded]', opts.record);
 }
 if (opts.against) {
@@ -197,16 +229,18 @@ if (opts.against) {
   for (const n of [...new Set([...names, ...Object.keys(ref).filter((n) => !only || only.has(n))])].sort()) {
     const a = ref[n], b = res.mods[n];
     if (!a || !b) { console.log(`MOVED ${n}: only in the ${a ? 'recording' : 'this load'}`); moved++; continue; }
-    if (a.h === b.h) { console.log(`IDENTICAL ${n}`); same++; continue; }
+    const skip = new Set([...(a.unstable || []), ...(b.unstable || [])]);
+    if (stableHash(a, skip) === stableHash(b, skip)) { console.log(`IDENTICAL ${n}${skip.size ? ` (${skip.size} unstable entries skipped)` : ''}`); same++; continue; }
     moved++;
     const A = new Map(a.entries.map((e) => [e.k, e])), B = new Map(b.entries.map((e) => [e.k, e]));
     const diffs = [];
     for (const [k, e] of A) {
+      if (skip.has(k)) continue;
       const f = B.get(k);
       if (!f) diffs.push(`gone ${k}`);
       else if (f.h !== e.h) diffs.push(`${k}${e.s != null ? ` (sum ${e.s.toPrecision(10)} -> ${f.s.toPrecision(10)}, n ${e.n} -> ${f.n})` : ''}`);
     }
-    for (const k of B.keys()) if (!A.has(k)) diffs.push(`new ${k}`);
+    for (const k of B.keys()) if (!A.has(k) && !skip.has(k)) diffs.push(`new ${k}`);
     console.log(`MOVED ${n}: ${diffs.length} of ${a.entries.length} entries`);
     for (const d of diffs.slice(0, 8)) console.log(`    ${d}`);
   }
