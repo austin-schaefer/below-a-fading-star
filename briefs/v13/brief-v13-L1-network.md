@@ -1,0 +1,28 @@
+# Brief v13 L1: the files, kept
+
+Worktree: `.claude/worktrees/issue-1305-kept-files` (branch `issue-1305-kept-files`, port 8165). Work only there. Read `briefs/v13/_common.md` first. Model: strong (the risk is a visitor stuck on an old release).
+
+## Goal
+
+The owner (#34): "perhaps to cache/local store after first load, since right now a refresh needs you to load everything anew." The load is mostly compute (other briefs have that), but the network share is real on the live site: 287 requests and 1.85 MB over the wire on a first visit, about 0.9 s of 9.0 s; a repeat visit makes 281 revalidations and saves about 1.0 s only (`plans/wilderness-v13.md`, Status; `node tools/load-probe.mjs https://below-a-fading-star.netlify.app --q=low --runs=3`). Make a repeat visit fetch almost nothing, and trim the first visit, **without a build step and without ever serving an old release**.
+
+1. **A service worker keyed by the commit** (`sw.js` at the site root). The Netlify build already writes `commit.json` with the short hash. On each navigation the worker asks the network for `commit.json` (no-store, a short timeout): the same commit as its cache means every file under `src/`, `vendor/`, `index.html` and the icons is served from its cache with no request; a different commit means the old cache is dropped, this load goes to the network and fills a new cache; no answer (offline, a timeout) means the cache is served as it is, so the walk also opens offline. Fill the cache from what the page actually fetches (cache on fetch), not from a list that can rot. It never caches `commit.json`, an error response, a partial response or anything cross-origin except the font files if you choose to keep those. It registers only where `commit.json` exists (so never on `tools/serve.sh`, the tests or a worktree: check that every test still runs with no worker), and a `?sw=0` switch unregisters it and clears its caches: the way out if it ever misbehaves, said in `DEPLOY.md`.
+2. **Prove the stale case.** A test with no world in it: a tiny static server in node serving two versions of a three-file site with different `commit.json`, a real browser (Playwright; service workers need a secure context: `localhost` counts), and the checks: second load of the same commit makes no requests but `commit.json`; after the server switches commit, the very next navigation shows the new version in full (no mix of old and new modules, which is the failure that breaks an ES-module site); offline shows the old one; `?sw=0` leaves nothing behind; a failed fetch mid-fill does not poison the cache. It runs in a few seconds, so it may have a `run` line in `tools/suite.sh` (say what it adds to the wall time). Mixed versions are the thing to be paranoid about: a module graph half from one commit and half from another must be impossible, including when a deploy lands while a visitor is mid-load.
+3. **The deploy.** `sw.js` goes into the build's `cp` list and the `ignore` list in `netlify.toml`; `sw.js` itself must be revalidated by the browser (`Cache-Control: no-cache` for `/sw.js` and `/commit.json` in `[[headers]]`); `DEPLOY.md` says what the worker does, how a release replaces it, and how to turn it off. `tools/build-artifact.mjs` builds a self-contained copy: check it still works and does not ship a worker that would misfire there.
+4. **The first visit's small things**, each measured with the probe against a local server with `--net=fast4g` (the local server hides latency; network emulation shows request waterfalls) and kept only if it helps: the Google Fonts stylesheet off the critical path (the title card should paint with the fallback and swap; no layout jump in the title: look at a frame before and after the swap); `modulepreload` for the handful of modules at the top of the static graph (three, `main.js`, terrain) if it shortens time to the first module; the ~54 module imports started before the terrain bake so their fetches overlap the bake (they start after it today, `src/main.js`: one or two lines; another brief will rework that startup after you, so keep it to that).
+5. **Not a bundle.** 287 requests on HTTP/2 cost about a second once; the worker removes them on every later visit. A bundle step would change how every test and tool loads the site for less than that. If your numbers say otherwise, say so in the report with the number; do not build it.
+
+## Target, in a visitor's terms
+
+A repeat visit on the live site makes at most 2 requests (the page's navigation check and `commit.json`) and transfers under 5 KB; the network share of a repeat load goes to about nothing (it is about 1.0 s of 8.0 s today). A first visit's time to the title card and to the first module no worse, and better under `--net=fast4g`. Since the live site only gets this at release, measure with `tools/build-artifact.mjs`'s output (or a copy of `_site/` built by the `netlify.toml` command) served locally with a `commit.json`.
+
+## Not yours
+
+`src/terrain.js`, the height path, the module builds (L2, L5 are in them). `src/main.js` beyond the registration line and the import-order lines. Anything stored about the world's computed data (the next brief).
+
+## Done when
+
+- The stale-case test passes, and you have tried to break it (a deploy mid-load, two tabs on different commits, a cache half filled).
+- The probe's requests and bytes, cold and repeat, before and after, on the served copy; with `--net=fast4g` too.
+- Every existing test runs with no worker registered: `ONLY=loading,settings,perf,touch,artifact tools/suite.sh 8165` green with counts; the whole suite once, since `index.html` and `main.js` are shared.
+- `DEPLOY.md`, `netlify.toml` and `world-code/runtime.md` (`?sw=0`) are true to it.
