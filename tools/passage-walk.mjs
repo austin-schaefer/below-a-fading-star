@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The Bearers' Way walked (v14-D1): a judge's tool, not a gate (the model: tools/coffin-walk.mjs). One page: press
+// The Wellward Way walked (v14-D1): a judge's tool, not a gate (the model: tools/coffin-walk.mjs). One page: press
 // "Go out" on the Coffin Road by the Nave's south door, click the view so the mouse is captured (new headless
 // Chromium grants it; if refused, the page's drag-to-look fallback, and it says so), then hold W and steer with the
 // mouse alone (moves read back from the page only to aim the next) through the door, down the Flight, the Flute,

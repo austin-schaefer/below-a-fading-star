@@ -1,4 +1,4 @@
-// The Bearers' Way's sounds (v14-D1): the passage's own, beside what the kit gives every place under the ground (the
+// The Wellward Way's sounds (v14-D1): the passage's own, beside what the kit gives every place under the ground (the
 // stone room sized by the volume the listener is in, the wind sheltered, the hard step) and the Pit's breath ahead
 // (v14/pit-sound.js, heard in the passage within ~60 m of the Pit). All in D (palette.md). No cues: both are the
 // place's, started and scheduled here by where the listener is.
@@ -6,11 +6,11 @@
 //   the drip    at the foot of the door's three steps, where the Nave's wet comes through the fallen vault: drops into a
 //               puddle in phrases (one to three, a breath apart, then 7-17 s of nothing), pitched on A5, D6 and F6 a
 //               little out of true, a small tick of water under each, through the stone room. Detail, 22 m: heard
-//               on the Flight's first flight, gone by the second landing
+//               in the Line as far as its first node, gone by the second
 //   the draught the wind from under the world going up the way: a soft rush of air and, in it, the Flute's two hollow
 //               notes (A2 and D3, narrow bands of noise, never a tone), at the nearest point of the Flute or the Gulf
 //               a few metres toward the Pit (in the Gulf, from below the bridge). It breathes in slow surges (10-16
-//               s). Its level by where the listener is: nothing on the Flight's first half and above the ground, a
+//               s). Its level by where the listener is: nothing in the Line's first half and above the ground, a
 //               little at the cut's end, most in the Flute, less in the room, all of it over the Gulf, and fading
 //               out down the Gate as the Pit's own breath comes up. Bed, under the steps
 const A2 = 110.0, D3 = 146.83, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;

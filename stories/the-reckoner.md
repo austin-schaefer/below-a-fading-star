@@ -4,7 +4,7 @@
 - **State:** built: beats 0 to 5 and 7. Beat 6 is a seed
 - **Someone:** the Reckoner, who keeps the count of the sun's failures behind the Hypogeum's bronze door and has not come up in a very long time. Never seen
 - **Places:** the Hypogeum (its stair, door and lintel); the mother crystal at the heart of the Lattice; the thread of light between them; the Lantern Halt (on the back of his plate)
-- **Touches:** [The Bearers' Way](the-bearers-way.md) (his room under the moor between the Nave and the Pit, where he is laying a new sun into the floor in the gold picked out of the others; his glyphs round its rim, his lamp, a wire of beads); [The soundings](the-soundings.md) (the mother crystal is the oldest of the leads let down from the sky; the eye on the icefall's shelf carries his eleven glyphs); [The Lantern Halt](the-lantern-halt.md) (he reckons the strokes chalked on its slab too, in beads on a wire); [The gold from the court](the-gold-from-the-court.md) (gold tesserae); the Tesserine Moles' tessera with a glyph on the Demesne's lawn and the Scriveners in Lees Tarn (`src/v7/glyphs/`), which both carry the door's glyphs
+- **Touches:** [The Wellward Way](the-wellward-way.md) (his room under the moor between the Nave and the Pit, where he is laying a new sun into the floor in the gold picked out of the others; his glyphs round its rim, his lamp, a wire of beads); [The soundings](the-soundings.md) (the mother crystal is the oldest of the leads let down from the sky; the eye on the icefall's shelf carries his eleven glyphs); [The Lantern Halt](the-lantern-halt.md) (he reckons the strokes chalked on its slab too, in beads on a wire); [The gold from the court](the-gold-from-the-court.md) (gold tesserae); the Tesserine Moles' tessera with a glyph on the Demesne's lawn and the Scriveners in Lees Tarn (`src/v7/glyphs/`), which both carry the door's glyphs
 
 ## The story
 
@@ -38,12 +38,12 @@ His name, how far down the stair goes, what he eats, and what happens at the gut
 ## Open threads
 
 - The astronomer walks the world without a story: he may be the Reckoner's correspondent, or his successor in waiting.
-- The tesserae are gold from a mosaic floor: the Sunken Court's sun lost its gold to the jackdaw. Two floors, or one? (v14-D1: a third, going down in the room on the Bearers' Way.)
+- The tesserae are gold from a mosaic floor: the Sunken Court's sun lost its gold to the jackdaw. Two floors, or one? (v14-D1: a third, going down in the room on the Wellward Way.)
 - The lens mount's door, elsewhere, stands ajar and lit: someone did come out of somewhere.
 
 ## Log
 
-- 2026-11-15, v14-D1: his room on the Bearers' Way (`the-bearers-way.md`): the gold of the valley's suns going into a new one in its floor, his eleven glyphs round its rim, his work-lamp burning.
+- 2026-11-15, v14-D1: his room on the Wellward Way (`the-wellward-way.md`): the gold of the valley's suns going into a new one in its floor, his eleven glyphs round its rim, his work-lamp burning.
 - 2026-11-12, v10-A1: written with the acts at the door and the crystal (`src/v10/door.js`, `src/v10/crystal.js`).
 - 2026-11-12, v10-A1 second round: the door reworked (the great ring, his lamp, the read row, the hand in the light, the plate in place of the tesserae); the thread in the ground with its crystals; the ember sent back on the second hand.
 - 2026-11-12, v10-F2 (a cold critic: "a pale halo ring... looks like UI more than a knock... nowhere to go"): the ripple of light is gone; the ring swings up and out wide, held a beat, three falls two seconds apart; a short hold eases the visitor a step back as the door jolts out at them, so the lintel, the seam, the hand in the light and the plate at the sill are one picture; the plate is larger and glows as it comes. The plate is now a second act, and its back points to the Lantern Halt: his count of their strokes there.

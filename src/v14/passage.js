@@ -1,16 +1,19 @@
-// The Bearers' Way (v14-D1): the walk's first tunnel, from the door in the Foundered Nave's south wall under the moor
-// to the floor of the Pit, about 130 m and 16 m down. The old people who laid their dead in the Nave carried them in
-// this way from where the old road ends; the wind that comes up the Pit from under the world has used it since, and
-// scoured the middle of it round; the Reckoner has taken the room on the way to lay a new sun in its floor. Four
-// kinds of space (v14/passage/plan.js says where): the Bearers' Flight (cut, square, a stair, the Sexton's candles),
-// the Flute (a round bore fluted by the wind, its walls rimed with points of cold light), the Laid Sun (a domed room,
-// the Reckoner's gold going into its floor, his lamp), the Gulf (a crack across the way, crossed by a stair on one
-// arch, black below), then the Gate (square again, a stair down to a portal standing out of the Pit's wall at its
-// floor). The story: stories/the-bearers-way.md. Dark, sealed and stone-sounding by the kit (v14/under.js).
+// The Wellward Way (v14-D1): the walk's first tunnel, from the door in the Foundered Nave's south wall under the moor
+// to the floor of the Pit, about 120 m and 14 m down. The Heliarchs cut a way from their hall to the well where the
+// old road ends (the Gate with their sun over its door, the bridge over the Gulf, the round room); the wind that comes
+// up the Pit from under the world scoured the middle of it round; the fourth people laid one of their tubes, the Line,
+// down it from the Nave, and it broke where the wind's bore begins; the Reckoner has taken the round room to lay a new
+// sun in its floor. Its spaces (v14/passage/plan.js says where): the Line (the tube: ribbed, silted, two nodes with a
+// stalled carrier each, lenses of failing stored daylight), the Flute (a round bore fluted by the wind, its walls
+// rimed with points of cold light), the Laid Sun (a domed room, the Reckoner's gold going into its floor, his lamp),
+// the Gulf (a crack across the way, crossed by a stair on one arch, black below), then the Gate (square, a stair down
+// to a gatehouse standing out of the Pit's wall at its floor). The story: stories/the-wellward-way.md. Dark, sealed
+// and stone-sounding by the kit (v14/under.js).
 // Draws: the way (one mesh a stretch: five), the room's things, the gold, the portal, the lights' and the rime's
-// points (one Points): nine. Lights: thirteen PointLights, each with its owner (lights.js keeps the nearest three).
+// points (one Points): nine. Lights: fourteen PointLights, each with its owner (lights.js keeps the nearest three).
 // It opens D0's fall of blocks behind the door (their triangles in the Coffin Road's mesh made degenerate), the Pit's
-// throat and the terrain where the portal stands (the same), and leaves heightAt alone. ?passage=0 leaves it out.
+// throat, the Pit's own rock and the terrain where the portal stands (the same), and leaves heightAt alone.
+// ?passage=0 leaves it out.
 import * as THREE from 'three';
 import { UnderBuilder, underMaterial, installBelow } from './under.js';
 import { makePlan, PASSAGE_OFF, KA, KF, MOUTH, START } from './passage/plan.js';
@@ -36,7 +39,7 @@ export async function build(ctx) {
   const { scene, terrain: T } = ctx;
   const low = ctx.quality === 'low';
   const rng = ctx.makeRng(14101);
-  await ctx.progress?.('the bearers\' way', 0);
+  await ctx.progress?.('the wellward way', 0);
   const P = makePlan(T), SP = P.SP;
   const ss = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
   const [ox, oz] = [-P.IN[0], -P.IN[1]]; // out from the Pit's centre along the mouth's bearing
@@ -126,7 +129,7 @@ export async function build(ctx) {
     const w = P.section(sa).w, y = P.yAt(ys), Bd = builders[meshOf((sa + sb) / 2)];
     Bd.quad(P.world(sa, -w, 0).map((v, j) => (j === 1 ? y : v)), P.world(sa, w, 0).map((v, j) => (j === 1 ? y : v)), P.world(sb, w, 0).map((v, j) => (j === 1 ? y : v)), P.world(sb, -w, 0).map((v, j) => (j === 1 ? y : v)), colour(kind, sa, 1, 0, 0, true), [0, 1, 0], 0);
   }
-  await ctx.progress?.('the bearers\' way', 0.25);
+  await ctx.progress?.('the wellward way', 0.25);
 
   // ---- the stairs: treads over the slope, each top at the floor's height at its middle, a riser at its far edge
   let treads = 0;
@@ -240,7 +243,7 @@ export async function build(ctx) {
       Bd.beam([hx, yb + 1.9, hz], [hx, l.y + 0.16, hz], 0.006, IRON, 0.02);
     }
   }
-  await ctx.progress?.('the bearers\' way', 0.45);
+  await ctx.progress?.('the wellward way', 0.45);
 
   // ---- the Laid Sun: the Reckoner's new sun going into the room's floor, in the gold picked out of the others
   const G = new UnderBuilder(litFor([2], 11, 0.75));
@@ -334,7 +337,7 @@ export async function build(ctx) {
     for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2 + 0.3; RB.beam([L2.x + Math.cos(a) * 0.17, fy, L2.z + Math.sin(a) * 0.17], [L2.x + Math.cos(a) * 0.03, L2.y - 0.12, L2.z + Math.sin(a) * 0.03], 0.012, BRONZE, 0.04); }
     const bowl = []; for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; bowl.push([L2.x + Math.cos(a) * 0.09, L2.z + Math.sin(a) * 0.09]); }
     RB.prism(bowl, L2.y - 0.13, L2.y - 0.05, BRONZE, BRONZE, 0.06);
-    // the bearers' bench round the drum, broken at the two ways in
+    // the Heliarchs' bench round the drum, broken at the two ways in
     const nb = 40;
     for (let i = 0; i < nb; i++) {
       const a0 = (i / nb) * Math.PI * 2, a1 = ((i + 1) / nb) * Math.PI * 2, am = (a0 + a1) / 2;
@@ -343,7 +346,7 @@ export async function build(ctx) {
       RB.prism(q, fy, fy + 0.44, STONE_D, STONE, 0.1);
     }
   }
-  await ctx.progress?.('the bearers\' way', 0.6);
+  await ctx.progress?.('the wellward way', 0.6);
 
   // ---- the Pit's door: a gatehouse of dressed stone standing out of the wall at its foot, the way through it, the old
   // sun over the lintel (its gold gone), one of the sounder's lamps on a bracket by it; seen from the Pit's floor
@@ -403,7 +406,7 @@ export async function build(ctx) {
   const gold = new THREE.Mesh(G.geometry(), gmat); gold.name = 'passage-gold'; gold.receiveShadow = true; scene.add(gold); meshes.push(gold);
   const pmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02 }), 'passage-portal', COLD);
   const portalMesh = new THREE.Mesh(PO.geometry(), pmat); portalMesh.name = 'passage-portal'; portalMesh.castShadow = true; portalMesh.receiveShadow = true; scene.add(portalMesh); meshes.push(portalMesh);
-  await ctx.progress?.('the bearers\' way', 0.75);
+  await ctx.progress?.('the wellward way', 0.75);
 
   // ---- the points: the flames and the beads of the lamps; the Flute's rime; the Gulf's motes going up
   const PT = []; // [x, y, z, size, phase, kind] kind 0 green flame, 1 cold bead, 2 warm flame, 3 rime, 4 mote
@@ -557,7 +560,7 @@ export async function build(ctx) {
     ctx.addCollider({ x: L2.x, z: L2.z, r: 0.25, y: sun.y, h: 0.7, stand: false });
   }
 
-  // ---- under the ground: one volume a stretch (each its own size: the Flight and the Gate narrow, the room larger,
+  // ---- under the ground: one volume a stretch (each its own size: the Line and the Gate narrow, the room larger,
   // the Gulf a hall), easing out toward the Pit's door over the Gate's last 13 m
   const below = installBelow(ctx);
   const bbox = { x0: Math.min(...P.X) - 16, x1: Math.max(...P.X) + 16, z0: Math.min(...P.Z) - 16, z1: Math.max(...P.Z) + 16 };
@@ -595,7 +598,7 @@ export async function build(ctx) {
     const p = P.at(s); path.push([p.x, p.z, P.yAt(s)]);
   }
   path.push([P.M[0] + P.IN[0] * 1.6, P.M[1] + P.IN[1] * 1.6]); // out onto the Pit's floor
-  ctx.ascents?.add({ id: 'bearers-way', held: true, offs: [0.08, 0.3, 0.5, 0.62, 0.72, 0.9], path: path.map((q) => q.filter((v) => v !== undefined)) });
+  ctx.ascents?.add({ id: 'wellward-way', held: true, offs: [0.08, 0.3, 0.5, 0.62, 0.72, 0.9], path: path.map((q) => q.filter((v) => v !== undefined)) });
 
   // ---- per frame, near: the points' clock and scale, the lights' flicker, the catch
   const ds = new THREE.Vector2(), pl = ctx.player;
@@ -629,7 +632,7 @@ export async function build(ctx) {
     off: false, plan: P, floor: P.floor, meshes, points, lights: lights.map((l) => l.L), portal, cuts, state: S, vols,
     stats: () => ({ calls: meshes.length + 1, tris: Math.round(tris), treads, lights: lights.length, points: PT.length, cuts }),
   };
-  ctx.log?.(`bearers' way: ${P.L.toFixed(0)} m from ${START.y.toFixed(1)} to ${P.YM.toFixed(1)}, ${Math.round(tris)} tris, ${treads} treads, ${lights.length} lights, ${PT.length} points, cut ${cuts.fall}/${cuts.throat}/${cuts.terrain}, ${(performance.now() - t0).toFixed(0)} ms`);
+  ctx.log?.(`wellward way: ${P.L.toFixed(0)} m from ${START.y.toFixed(1)} to ${P.YM.toFixed(1)}, ${Math.round(tris)} tris, ${treads} treads, ${lights.length} lights, ${PT.length} points, cut ${cuts.fall}/${cuts.throat}/${cuts.terrain}, ${(performance.now() - t0).toFixed(0)} ms`);
 }
 
 // the Pit's lip on the mouth's side (the opening's plane)

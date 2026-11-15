@@ -1,4 +1,4 @@
-// The Bearers' Way's plan (v14-D1): the passage under the moor from the Foundered Nave's south door to the floor of
+// The Wellward Way's plan (v14-D1): the passage under the moor from the Foundered Nave's south door to the floor of
 // the Pit, in world metres. Shared by v14/passage.js (draws it, its floors, its lights), v14/passage-sound.js and the
 // tests. Everything is laid along one centreline, sampled every DS m: s is the distance along it from the door, d
 // the signed distance across it (+ to the walker's right going toward the Pit), y(s) the floor.
@@ -206,7 +206,7 @@ export function makePlan(T) {
     if (s < 0 || s > L) return -1;
     if (s < FLIGHT - 1) return s < 1.6 ? 0.78 : 0.95 + 1.05 * nodeAt(s);
     if (s < SUN - RC) return 1.25;
-    if (s < NECK0) return Math.max(1.25, roomW(s) - 0.9); // off the bearers' bench round the drum
+    if (s < NECK0) return Math.max(1.25, roomW(s) - 0.9); // off the bench round the drum
     if (s < GULF0) return 0.72;
     if (s < GULF1) return BRIDGE - 0.15;
     return 0.8;

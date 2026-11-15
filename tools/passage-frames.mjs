@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Stills along the Bearers' Way (v14-D1): a judge's tool, not a gate. One page load; the eye held at walking height on
+// Stills along the Wellward Way (v14-D1): a judge's tool, not a gate. One page load; the eye held at walking height on
 // the passage's floor at distances s along it (src/v14/passage/plan.js), looking ahead, back, up, down or round, the
 // sun's guttering held off as tools/views.mjs does. Stills only: the walked frames are tools/passage-walk.mjs's.
 //   node tools/passage-frames.mjs [base=http://localhost:8123] [set=route|around|chamber|mouth] [q=low] [prefix=passage]
