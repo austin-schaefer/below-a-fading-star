@@ -296,6 +296,9 @@ export function buildCloak(ctx, U) {
   ctx.addCollider(collider);
   let lookT = 0, settled = false;
   function moveTo(x, z) { g.position.set(x, ground.at(x, z) - 0.04, z); collider.x = x; collider.z = z; }
+  // (v13 L3) his spot once every module has built (the shrine's note and every collider in), before the walk begins:
+  // where he used to move to 2 s into it, so every load starts him in the same place
+  ctx.built?.().then(() => { const n = shrineNote(); placedFrom = n; settled = true; const p = n ? spot(n.x, n.z) : spot(SH.x - 4.2, SH.z - 1.2); moveTo(p[0], p[1]); });
 
   const state = { position: g.position, closed: false, distance: 99, facingPlayer: false };
   const cam = camera.position;

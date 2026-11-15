@@ -236,11 +236,10 @@ export function meshStats(meshes) {
 }
 
 // The vegetation module's trees, once it has built them (modules build in parallel); null if it is not loaded.
-export async function vegetationTrees(timeoutMs = 15000) {
-  const q = new URL(location.href).searchParams, only = q.get('only'), skip = (q.get('skip') || '').split(',');
-  if ((only && !only.split(',').includes('vegetation')) || skip.includes('vegetation')) return null;
-  const t0 = performance.now();
-  while (!window.__vegParts?.trees && performance.now() - t0 < timeoutMs) await new Promise((r) => setTimeout(r, 40));
+export async function vegetationTrees(ctx) {
+  // (v13 L3) after vegetation's build has settled, however long it takes (it was a 15 s poll: a slow load built the
+  // Bletting without its windfalls and snails); null when vegetation is not loaded or failed
+  if (!(await ctx.built('vegetation'))) return null;
   return window.__vegParts?.trees?.trees || null;
 }
 

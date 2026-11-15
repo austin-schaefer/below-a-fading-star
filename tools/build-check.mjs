@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // What every module built, as one fingerprint a module (v13-L5): for a change to a builder that must not change
 // what is seen. terrain-probe's idea, for the whole scene.
-//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b] [--allowunstable]
+//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b] [--allowunstable] [--repeat]
+// --repeat (v13 L3): each load is a repeat visit: a load, its kept store written (src/v13/kept.js), then a reload in the
+// same context, fingerprinted; it fails unless the reload's terrain came from the store, so what is checked is the
+// walk built from what was kept.
 // It loads <base>/?q=<q>&<params> and, at the "ready" mark (src/startup.js), synchronously, before the first frame
 // has run any update, walks the objects each module added to the scene (the profiler's tagging, ctx.perf._mods;
 // what no module claimed is 'core': the terrain, the sky, the lights) and hashes, bit for bit: every geometry
@@ -22,7 +25,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1', allowunstable: '' };
+const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1', allowunstable: '', repeat: '' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
   const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
@@ -197,6 +200,14 @@ async function once() {
   const t0 = Date.now();
   await page.goto(url);
   await page.waitForFunction(() => window.__buildCheck, null, { timeout: 900000, polling: 500 });
+  if (opts.repeat) {
+    await page.waitForFunction(() => window.__fp?.keptDone, null, { timeout: 120000, polling: 250 });
+    await page.reload();
+    await page.waitForFunction(() => window.__buildCheck, null, { timeout: 900000, polling: 500 });
+    const how = await page.evaluate(() => ({ bake: window.__fp_startup.report().extra.bake?.source, hits: window.__fp.keptStats?.hits }));
+    console.log(`  (repeat: the terrain from ${how.bake}; kept hits ${JSON.stringify(how.hits)})`);
+    if (how.bake !== 'kept') { console.log('FAIL --repeat: the reload did not take its terrain from the store'); process.exit(1); }
+  }
   const r = await page.evaluate(() => window.__buildCheck);
   await page.close();
   if (r.error) { console.log('FAIL fingerprint threw:', r.error); process.exit(1); }

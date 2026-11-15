@@ -68,6 +68,9 @@ export function built(name, t1) {
   if (m) m.build = now() - t1;
 }
 export function setSerial(on) { serial = !!on; }
+// note(name, data): something the load wants reported that is not a boundary (v13 L3: the bake's way and times), as
+// report().extra[name]
+export function note(name, data) { extra[name] = data; }
 // the load failed: stop listening
 export function abort() { stop(); }
 
@@ -131,6 +134,6 @@ export function report() {
   };
 }
 
-const api = { mark, imported, built, setSerial, report };
+const api = { mark, imported, built, setSerial, note, report };
 if (typeof window !== 'undefined') window.__fp_startup = api;
 export default api;

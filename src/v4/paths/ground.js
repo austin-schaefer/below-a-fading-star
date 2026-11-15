@@ -3,7 +3,7 @@
 // terrain.js can call mapHeight() at the end of heightAt() and everything that samples the ground agrees.
 import { SITES, WATER } from '../../world.js';
 import { makeSimplex, smoothstep, lerp } from '../../noise.js';
-import { runnelCut, leads } from './routes.js';
+import { runnelCut, leads, setLeads } from './routes.js';
 
 const SN = makeSimplex(20261108);
 
@@ -112,4 +112,6 @@ export function mapHeight(h, x, z, RV) {
 }
 // terrain.js calls this before it lays its mesh: the leads are traced on the uncut ground, then the rivulets' cuts
 // are in every heightAt() after
-export function prepareMap() { leads(); }
+export function prepareMap() { return leads(); }
+// (v13 L3) the leads traced in the bake's worker or kept in the store, instead of tracing them here
+export { setLeads };

@@ -140,7 +140,7 @@ export async function build(ctx) {
   const meshes = [];
 
   // the trees round here: Medlar Close's own (vegetation) and the ones this region planted
-  const vt = ((await vegetationTrees()) || []).filter((t) => (t.kind === 'orchard' || t.kind === 'region') && inRegion(t.x, t.z, 0.3));
+  const vt = ((await vegetationTrees(ctx)) || []).filter((t) => (t.kind === 'orchard' || t.kind === 'region') && inRegion(t.x, t.z, 0.3));
   const spots = vt.length ? vt.map((t) => [t.x, t.z, t.s]) : plantTrees(null, ctx.makeRng(5100 + 1), regions.regionAt).filter((t) => t.kind === 'medlar').map((t) => [t.x, t.z, t.s]);
   for (const s of spots) DROPS.push(s);
 

@@ -306,6 +306,14 @@ export function leads() {
   return BUILT;
 }
 
+// (v13 L3) leads traced elsewhere (the bake's worker, or the store): the same object leads() returns, cloned. Only
+// before any heightAt that would see them (runnelCut reads them), and only once.
+export function setLeads(B) {
+  if (BUILT) throw new Error('setLeads: the leads are already traced');
+  if (!B || !Array.isArray(B.list) || !(B.grid instanceof Map)) throw new Error('setLeads: not a leads() object');
+  BUILT = B;
+}
+
 // The nearest lead at (x, z), if (x, z) is on it: { id, kind, material (key), name (MATERIALS), d, s, along } or null
 const _hit = { id: '', kind: '', material: '', name: '', d: 0, s: 0, w: 0, open: 1 };
 export function nearestLead(x, z, pad = 0, out = _hit) {
