@@ -66,11 +66,11 @@ export function hitchLog(L, legs, rows, cbs, keep = 60) {
 }
 
 // A module's documented budget (world-code, "Light and budgets"): about 25 draw calls and 400k triangles in view, colour
-// pass. overBudget() names every module past it at any station; the bench report prints them. No gate.
+// pass. overBudget() names every module past it (not `core:` rows: terrain and the sky are shared costs, not a module's) at any station; the bench report prints them. No gate.
 export const MODULE_BUDGET = { calls: 25, tris: 400000 };
 export function overBudget(draws) {
   const out = [];
-  for (const st of draws || []) for (const [module, calls, tris] of st.modules || []) if (calls > MODULE_BUDGET.calls || tris > MODULE_BUDGET.tris) out.push({ module, station: st.name, calls, tris });
+  for (const st of draws || []) for (const [module, calls, tris] of st.modules || []) if (!module.startsWith('core:') && (calls > MODULE_BUDGET.calls || tris > MODULE_BUDGET.tris)) out.push({ module, station: st.name, calls, tris });
   return out.sort((a, b) => a.module.localeCompare(b.module) || a.station.localeCompare(b.station));
 }
 
