@@ -68,15 +68,18 @@ When a subagent reports done:
 
 ## Releasing to `main`
 
-When the milestone is in, in this order:
+When the last brief is merged, start three things at once and write the notes while they run:
 
-1. Read the milestone doc's "Done when" line by line and check each against what is merged, before the critic goes out: what is not met is fixed now, or said in the note. (v12 promised that a fresh eye could point at three of four ways up from the floor; nobody checked until the critic found none.) Then the critic (`autonomous-run` skill, `critic.md`), as soon as the last brief is merged, with the curator beside it ("Screenshots are the record", below; it needs no browser). While they run, write the `RELEASES.md` entry and the `README.md` line (below). The critic goes before the gate because its findings mean fixes, and fixes mean running the gate again: v8 ran the gate, then the critic, then the gate a second time.
-2. The critic's blocking findings fixed; the curator's work committed (it does not commit).
-3. `tools/suite.sh` green on `next`, once, on everything that will ship. The repository has no CI: the suite on the working branch is the gate. A small fix after that (one module, or the test tooling) reruns only the tests it touches; a fix in shared code reruns the suite (`AGENTS.md`, the first fixed thing).
+1. **The gate**: `tools/suite.sh` on `next`, on everything that will ship. The repository has no CI: this run is the gate. It is also the last batch's run, so it starts the minute the last merge is in.
+2. **The critic** (`autonomous-run` skill, `critic.md`) and **the curator** ("Screenshots are the record", below; no browser). The critic's browser runs beside the gate's; a test that fails beside it is rerun alone (`ONLY=name`) before it is believed.
+3. Meanwhile: read the milestone doc's "Done when" line by line against what is merged (what is not met is fixed now or said in the note), and write the `RELEASES.md` entry and the `README.md` line (below).
+
+Then the critic's blocking findings are fixed and the curator's work committed (it does not commit). A fix confined to one module or to the test tooling reruns only the tests it touches; a fix in shared code reruns the suite (`AGENTS.md`, the first fixed thing). So the gate is run a second time only when a blocking fix lands in shared code, which is the same cost the old order (critic, fixes, then the gate) paid every time.
+
 4. The release PR.
 
-The tail of a release should take about an hour: the critic and the notes together, the fixes, one gate. If it is taking much longer, say why in Status: usually scope added after the last brief, which is a reason to cut a point release, not to hold this one.
-**A small release goes faster.** A point release (`v<N>.<M>`: one addition or a few fixes, the owner waiting for it) skips steps 2 and 3: no critic, and its renders are curated with the next milestone's. It keeps the suite (step 1), a cold read of the diff, and, for anything a visitor sees, a fresh agent's blind read of the renders ("look before you read", above). The owner, 2026-11-11: "do we need all this cold critic etc etc? i don't want an hour wait to get that live."
+The tail of a release should take under an hour: the gate, the critic and the notes together (about 45 minutes), the fixes, the PR. If it is taking much longer, say why in Status: usually scope added after the last brief, which is a reason to cut a point release, not to hold this one.
+**A small release goes faster.** A point release (`v<N>.<M>`: one addition or a few fixes, the owner waiting for it) skips the critic and the curator (its renders are curated with the next milestone's). It keeps the suite, a cold read of the diff, and, for anything a visitor sees, a fresh agent's blind read of the renders ("look before you read", above). The owner, 2026-11-11: "do we need all this cold critic etc etc? i don't want an hour wait to get that live."
 
 5. Run `tools/release-check.sh` once more (it checks that you are on `next` and that `next` is pushed) and look at the PR's diff stat to see that what you mean to ship is in it. Open the release PR from `next` to `main` and `gh pr merge --merge` it, then `tools/gh-release.sh <version>` to publish the entry as the GitHub release, then merge `origin/main` back into `next`.
 
