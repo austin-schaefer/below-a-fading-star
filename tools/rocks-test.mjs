@@ -89,8 +89,60 @@ const survey = async (page) => page.evaluate(async () => {
   };
 });
 
+// #48 ("Path running thru boulders? We need better / more careful guards in general on this kinda thing"): every
+// collider the scatter lays (the rocks, the trees, the regions' tors, clitter and bushes, the Lattice's crystals: by
+// the module that laid it, c.mod) against every way a walker is led along: the roads and paths (a lead's tread, its
+// width w, within the collider's r), the Diffident Stair's slabs lying in the turf (stairClear), the v12 ways up
+// (ctx.ascents, 1 m either side of each, where the collider's body is at the way's height), and the settings map's
+// stands (1 m round each, a body and a step). Over the whole map, at each tier.
+const SCATTER = /^(rocks|vegetation|lattice|region-)/;
+const ways = async (page) => page.evaluate(async (src) => {
+  const SC = new RegExp(src);
+  const fp = window.__fp, T = fp.terrain;
+  const { leads } = await import('/src/v4/paths/routes.js');
+  const { stairClear } = await import('/src/v12/stair/plan.js');
+  const { PLACES } = await import('/src/settings.js');
+  const segD = (x, z, ax, az, bx, bz) => { const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2)); return [Math.hypot(x - ax - ex * t, z - az - ez * t), t]; };
+  const all = leads().list.filter((l) => l.kind !== 'rivulet');
+  const cols = fp.controls.state.colliders.filter((c) => c.mod && SC.test(c.mod) && c.x1 === undefined);
+  const mods = {}; for (const c of cols) mods[c.mod] = (mods[c.mod] || 0) + 1;
+  const asc = (fp.ascents?.list || []).filter((a) => !a.test);
+  const bad = { roads: [], stair: [], ascents: [], stands: [] };
+  for (const c of cols) {
+    const tag = `${c.mod} (${c.x.toFixed(1)}, ${c.z.toFixed(1)}) r ${c.r.toFixed(2)}`;
+    for (const L of all) {
+      let d = Infinity; for (const S of L.lines) for (let i = 0; i < S.length - 1; i++) d = Math.min(d, segD(c.x, c.z, S[i].x, S[i].z, S[i + 1].x, S[i + 1].z)[0]);
+      if (d < c.r + L.w) { bad.roads.push(`${tag} on ${L.id}`); break; }
+    }
+    if (stairClear(c.x, c.z, c.r)) bad.stair.push(tag);
+    for (const a of asc) {
+      let hit = false;
+      for (let i = 0; i < a.path.length - 1 && !hit; i++) {
+        const A = a.path[i], B = a.path[i + 1], [d, t] = segD(c.x, c.z, A[0], A[1], B[0], B[1]);
+        if (d > c.r + 1) continue;
+        const ya = A[2] ?? T.heightAt(A[0], A[1]), yb = B[2] ?? T.heightAt(B[0], B[1]), y = ya + (yb - ya) * t;
+        if (c.h !== undefined && (c.y + c.h < y + 0.3 || c.y > y + 1.8)) continue;
+        hit = true;
+      }
+      if (hit) { bad.ascents.push(`${tag} on ${a.id}`); break; }
+    }
+    for (const pl of PLACES) if (pl.x !== undefined && Math.hypot(c.x - pl.x, c.z - pl.z) < c.r + 1 && !(c.h !== undefined && pl.y !== undefined && c.y + c.h < pl.y)) { bad.stands.push(`${tag} at ${pl.id || pl.name}`); break; }
+  }
+  return { n: cols.length, mods, asc: asc.map((a) => a.id), bad };
+}, SCATTER.source);
+
 for (const q of tiers) {
   const { page, errors } = await load(q);
+  {
+    const w = await ways(page);
+    const list = (a) => a.length ? `: ${a.slice(0, 5).join('; ')}${a.length > 5 ? ` (+${a.length - 5})` : ''}` : '';
+    console.log(`  ${q}: ${w.n} scatter colliders (${Object.entries(w.mods).map(([k, v]) => `${k} ${v}`).join(', ')}); ways up: ${w.asc.join(', ')}`);
+    ok(w.n > 1000, `${q} (#48): the scatter's colliders are found by their module (${w.n})`);
+    ok(!w.bad.roads.length, `${q} (#48): no rock, tree, tor or bush stands on a road's or path's tread${list(w.bad.roads)}`);
+    ok(!w.bad.stair.length, `${q} (#48): nor on the Diffident Stair's slabs in the turf${list(w.bad.stair)}`);
+    ok(w.asc.length >= 3 && !w.bad.ascents.length, `${q} (#48): nor across a way up (${w.asc.length} of them)${list(w.bad.ascents)}`);
+    ok(!w.bad.stands.length, `${q} (#48): nor within 1 m of a stand on the settings map${list(w.bad.stands)}`);
+  }
   const s = await survey(page);
   ok(!!s && s.cut, `${q}: ctx.rocks is built with the v8-11 cut`);
   if (!s) { await page.close(); continue; }
