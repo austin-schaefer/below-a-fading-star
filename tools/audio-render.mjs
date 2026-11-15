@@ -88,7 +88,6 @@ async function pageSetup(P) {
   // the sun's gutter: held off unless asked for, so two renders of a pose are a fair pair
   const fl = fp.sky?.flicker;
   if (fl) { fl.next = 1e9; if (fl.phase > 0) fl.phase = 0; }
-  if (P.y !== null && P.y !== undefined) { const p = fp.player, yaw = p.yaw; fp.controls.placeAt(p.pos.x, p.pos.z, P.y); p.yaw = yaw; } // (v14-D0: --y)
   // headless Chromium here: starting the page's audio in the first seconds after body.ready stalls the main thread
   // (frames at 1-15 fps and timers seconds late, so walks crawl and cues fire late); after ~6 s it does not
   await sleep(P.settle * 1000);
@@ -130,6 +129,8 @@ async function pageCapture(P) {
     if (P.pose.yaw != null) pl.yaw = P.pose.yaw;
     pl.pitch = P.pose.pitch ?? 0;
   }
+  // v14-D0: --y, the feet on a floor at that height (under the ground); the place's sound glides in for 4 s first
+  if (P.y !== null && P.y !== undefined) { const pl = fp.player, yaw = pl.yaw; fp.controls.placeAt(pl.pos.x, pl.pos.z, P.y); pl.yaw = yaw; await sleep(4000); }
   if (fl) { fl.next = 1e9; if (fl.phase > 0) fl.phase = 0; fl.hold = P.gutterHold != null ? P.gutterHold : null; }
   else if (P.gutter || P.gutterHold != null) info.notes.push('gutter asked for but the page has no sky (only=?): none rendered');
   if (P.between > 0) await sleep(P.between * 1000);
