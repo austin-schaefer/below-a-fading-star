@@ -162,7 +162,7 @@ export async function build(ctx) {
     return (fx * dx + fz * dz) / r >= Math.cos(d.cone) ? r2 : -1;
   }
   const lure = acts.lure = buildLure(ctx, acts);
-  const lureWant = (h) => h !== shown && acts.may(h); // can be done now and not already on offer
+  const lureWant = (h) => acts.may(h); // v14-B1: can be done now (the moths stay on it while it is offered: that is when they are plain)
   ctx.registerUpdate((dt, t) => {
     if (!open()) { cand = null; held = 0; away = 0; if (shown) show(null); lure.step(dt, t, lureWant); return; } // gone at once behind a card or the panel
     let best = null, bd = Infinity;
