@@ -138,6 +138,8 @@ try { for (let i = 0; i < runs; i++) {
   const run = {};
   run.cold = await load(page, cdp, 'cold', () => page.goto(url, { waitUntil: 'commit', timeout: 300000 }));
   if (opts.between) execSync(opts.between, { stdio: 'inherit', shell: '/bin/bash' }); // a deploy between the two, say
+  // (v13 L4) a repeat is a later visit: the cold load's kept records are written first (after ready, in idle slots)
+  await page.waitForFunction(() => window.__fp?.keptDone || window.__fp?.keptStats?.off, null, { timeout: 15000, polling: 100 }).catch(() => {});
   run.repeat = await load(page, cdp, 'repeat', () => page.reload({ waitUntil: 'commit', timeout: 300000 }));
   if (opts.serial !== '0' && run.cold.kind !== 'probe-fallback') run.serial = await load(page, cdp, 'serial', () => page.goto(`${url}&serial=1`, { waitUntil: 'commit', timeout: 300000 }));
   out.push(run);

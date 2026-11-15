@@ -496,7 +496,7 @@ async function start() {
   document.body.classList.add('ready');
   startup.mark('ready');
   // v13 L3: the page's own bake (if the worker failed) is kept just after ready, then the modules' records, one an idle slot (L4); then the other trees' records go
-  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; await idle(); await (typeof f === 'function' ? f() : f); keepLater[i] = null; } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
+  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); let dl = null; for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; if (!(dl?.timeRemaining?.() > 8)) dl = await idle(); await (typeof f === 'function' ? f() : f); keepLater[i] = null; } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
   ctx.keptStats = store.stats;
 }
 
