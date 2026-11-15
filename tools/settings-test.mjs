@@ -159,8 +159,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const wl = T.waterLevelAt(p.pos.x, p.pos.z), inCol = fp.player.colliders.some((c) => Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < c.r + 0.3 && !(c.h !== undefined && c.y + c.h < Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1))); // (a collider under the deck is not one you stand in)
       // v11-F2: never stand in a hole: the mean of the ground in a 30 m ring against the ground underfoot (the Pit's old entry stood 29 m down)
       let ring = 0; for (let k = 0; k < 16; k++) ring += T.heightAt(p.pos.x + 30 * Math.cos(k * Math.PI / 8), p.pos.z + 30 * Math.sin(k * Math.PI / 8)); const basin = ring / 16 - T.heightAt(p.pos.x, p.pos.z);
-      const under = pl.y !== undefined && pl.y < T.heightAt(p.pos.x, p.pos.z) - 3; // v14-D0: a stand under the ground (the Coffin Road) is measured from its own floor
-      return { name: pl.name, under, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && Math.abs(pl.y - T.heightAt(p.pos.x, p.pos.z)) > 3 ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
+      const under = pl.y !== undefined && pl.y < T.heightAt(p.pos.x, p.pos.z) - 0.2; // v14-D0: a stand under the ground (the Coffin Road; v14-D2: the Pit's floor, a bowl walked under the old ground) is measured from its own floor
+      return { name: pl.name, under, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && Math.abs(pl.y - T.heightAt(p.pos.x, p.pos.z)) > 0.2 ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
     detail.push(r);
     if (r.d > 1) allNear = false;
@@ -260,7 +260,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 // ---- region cards (v7.1): the bottom-of-screen card for the Adust, the Lynchets and Kenching Flats, and Medlar Close beating the Bletting
 {
   const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
-  for (const [x, z, want] of [[-275, -15, 'The Taker of Altitudes'], [130, -60, 'Medlar Close'], [-195, -113, 'The Lynchets'], [60, 250, 'Kenching Flats'], [55, 274, 'Rest in Starlight'], [185, -70, 'Sleeper\u2019s Orchard'], [195, -100, 'Sleeper\u2019s Orchard'], [200, 185, 'The Pit']]) {
+  for (const [x, z, want] of [[-275, -15, 'The Taker of Altitudes'], [130, -60, 'Medlar Close'], [-195, -113, 'The Lynchets'], [60, 250, 'Kenching Flats'], [55, 274, 'Rest in Starlight'], [185, -70, 'Sleeper\u2019s Orchard'], [195, -100, 'Sleeper\u2019s Orchard'], [194.2, 201, 'The Pit'], [203.08, 176.54, 'The Nadir']] /* v14-D2: the Pit's card is the lip's; its floor is the Nadir's */) {
     await page.evaluate(([x, z]) => { const p = window.__fp.player; p.pos.set(x, window.__fp.terrain.heightAt(x, z) + p.eye, z); window.__fp.hud.update(0.1); }, [x, z]);
     const got = await page.textContent('#place-name');
     check(`cards: (${x}, ${z}) shows ${want}`, got === want, got);

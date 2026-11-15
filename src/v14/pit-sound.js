@@ -113,7 +113,7 @@ export function startPitSound(a, ctx) {
   }
   function breath(pos, o = {}) {
     const dur = clamp(o.dur || 12, 4, 16);
-    const v = voice(pos, { ref: 8, roll: 0.8, range: 150, dur: dur + 1, verb: 0.55, air: 150, gain: 8 }); if (!v) return;
+    const v = voice(pos, { ref: 8, roll: 0.8, range: 150, dur: dur + 1, verb: 0.55, air: 150, gain: 0.5 }); if (!v) return; // (the brown noise's body is loud: at gain 8 it rendered 3.1 rms against the bell's 0.29)
     const t0 = v.t0, out = filt('lowpass', 3200, 0.6); out.connect(v.in);
     // the air: a swell over a second, held, falling away; brightening as it comes up
     const g = a.ac.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.11, t0 + 1.2); g.gain.linearRampToValueAtTime(0.08, t0 + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); g.gain.linearRampToValueAtTime(0, t0 + dur + 0.02);
