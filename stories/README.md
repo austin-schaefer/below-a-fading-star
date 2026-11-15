@@ -20,7 +20,9 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The soundings](the-soundings.md) | deep (plain surface: a crystal hung from the sky, stuck in the ice) | built | the leadsmen at the top of the thread, sounding the world; never seen | the Plummet, the old leads in the icefall, the bridge, the eye on the shelf, the mother crystal | the Reckoner (his eleven glyphs on the eye's band; the mother crystal the oldest lead); the thread |
 | [The tender of the lattices](the-tender-of-the-lattices.md) | plain | built | the one who tends the lattices in the sky, never seen: a home on the foot of a lattice come low, a chair to the sun, an oil can too big for anyone; their lamp comes down the ladder | Lonely Staircase on the east moor, its top 100 m up | the Leerie (the ground's lamps, the sky's); the lattices; the sign of the sun |
 
-Eleven plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+| [The Coffin Road](the-coffin-road.md) | plain (a deep end) | built; the door's passage fallen in | the Sexton, never seen here: his shears, his stair, forty coffins lashed on the Nave's water, a candle on each pair | the Foundered Nave: its rim, its stair, its nave, its east wall and south door | the twelfth chair (his other forty graves); the Reckoner (the tesserae) |
+
+Twelve plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -33,7 +35,8 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The Reckoner, behind the Hypogeum's door: heard knocking, never seen.
 - The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: unknown.
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
-- The Sexton, the Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet. The host lives in his house (v14): his hearth and bread oven, his curtained pallet, a chest, his own plain slippers set side by side, washing on a line, a ladder and limewash for the walls.
+- The Sexton: his other forty graves are the Coffin Road's forty (`the-coffin-road.md`); never seen at the Nave.
+- The Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet. The host lives in his house (v14): his hearth and bread oven, his curtained pallet, a chest, his own plain slippers set side by side, washing on a line, a ladder and limewash for the walls.
 
 ## Things that travel
 
