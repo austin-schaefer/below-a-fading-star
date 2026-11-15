@@ -209,10 +209,10 @@ for (let g = 0; g < GROUPS.length; g++) {
 }
 for (const q of TIERS) for (const k of ATTRS) {
   const A = want[`${q}.${k}`], B = got.bakes[q][k];
-  let count = 0, maxd = 0, first = -1;
+  let count = 0, maxd = 0, first = -1, big = 0, sum = 0;
   const ua = new Uint32Array(A.buffer), ub = new Uint32Array(B.buffer);
-  for (let i = 0; i < A.length; i++) if (ua[i] !== ub[i]) { count++; maxd = Math.max(maxd, Math.abs(A[i] - B[i])); if (first < 0) first = i; }
-  line(count === 0 && A.length === B.length, `bake ${q} ${k}: ${A.length} values, ${count} differ${count ? ` (max |d| ${maxd.toExponential(2)}, first at index ${first})` : ''}`);
+  for (let i = 0; i < A.length; i++) if (ua[i] !== ub[i]) { count++; const d = Math.abs(A[i] - B[i]); maxd = Math.max(maxd, d); sum += d; if (d > 1 / 255) big++; if (first < 0) first = i; }
+  line(count === 0 && A.length === B.length, `bake ${q} ${k}: ${A.length} values, ${count} differ${count ? ` (max |d| ${maxd.toExponential(2)}, mean |d| of those ${(sum / count).toExponential(2)}, ${big} by more than 1/255; first at index ${first})` : ''}`);
 }
 console.log(`height-check: ${fails ? fails + ' FAIL' : 'all PASS'} (${n} points, ${TIERS.length} bakes; ${secs} s; recording ${file})`);
 process.exit(fails ? 1 : 0);

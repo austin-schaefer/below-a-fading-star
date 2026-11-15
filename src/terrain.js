@@ -722,6 +722,7 @@ const BANDS = new URL(location.href).searchParams.get('bands') !== '0';
 
 const C = (hex) => new THREE.Color(hex);
 const REGIONS_DEBUG = new URL(location.href).searchParams.get('regions') === '1';
+const MESH_SLOPE = new URL(location.href).searchParams.get('bakeslope') === 'mesh';
 
 export function buildTerrain(ctx) {
   const { scene } = ctx;
@@ -767,6 +768,15 @@ export function buildTerrain(ctx) {
     const gz = (pos.getY(j1 * nV + ci) - pos.getY(j0 * nV + ci)) / ((j1 - j0) * cellW);
     return Math.atan(Math.hypot(gx, gz));
   };
+  // ?bakeslope=mesh (v13 L2, a trial, off): the biome's slope from the mesh's own heights a cell either side, as
+  // slopeAt's normal is from 0.6 m either side, so the bake makes no heightAt of its own for it. It is not the same
+  // slope (a 2-3 m baseline smooths what 0.6 m sees), so the colours move: the orchestrator's call, not a default.
+  const slopeMesh = (i) => {
+    const ci = i % nV, cj = (i - ci) / nV;
+    const i0 = Math.max(0, ci - 1), i1 = Math.min(segs, ci + 1), j0 = Math.max(0, cj - 1), j1 = Math.min(segs, cj + 1);
+    const gx = (pos.getY(cj * nV + i0) - pos.getY(cj * nV + i1)) / ((i1 - i0) * cellW), gz = (pos.getY(j0 * nV + ci) - pos.getY(j1 * nV + ci)) / ((j1 - j0) * cellW);
+    return Math.acos(clamp(1 / Math.sqrt(gx * gx + 1 + gz * gz), -1, 1));
+  };
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
     const y = pos.getY(i);
@@ -778,7 +788,7 @@ export function buildTerrain(ctx) {
     const rW = Math.hypot(x, z), mmW = MASSIF_BANDS ? smoothstep(300, 334, rW) : 0, sW = mmW > 0 ? slopeW(i) : 0;
     const wallRock = clamp(smoothstep(0.55, 0.95, sW) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, rW) * 0.6, 0, 1);
     let b = mmW === 1 && wallRock === 1 && !(r.shingle > 0) ? biomeWith(x, z, y, 0, r) : null;
-    if (!b || b.ice > 0) b = biomeWith(x, z, y, slopeAt(x, z), r);
+    if (!b || b.ice > 0) b = biomeWith(x, z, y, MESH_SLOPE ? slopeMesh(i) : slopeAt(x, z), r);
     // base: moor grass to dry grass by noise, heather patches
     const dry = SX.warped2(x * 0.01 + 3, z * 0.01 + 1, 3) * 0.5 + 0.5;
     col.copy(cMoor).lerp(cDry, dry);
