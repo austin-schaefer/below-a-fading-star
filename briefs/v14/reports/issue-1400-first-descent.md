@@ -49,7 +49,7 @@ Also run alone before the suite, on this branch: `edges` 124 PASS 0 FAIL (21 new
 - The hall's floor is **the coffins on the water**, not a dried floor: the water stays (its shapes, its splashes) and the walk is held on the road; a fall in is caught and put back on the road after 0.9 s (with `?fall=1` there is no route to a 12 m fall: the rim's colliders and the held edges stop it; untested by teleport).
 - The rim's colliders now stand from 1 m under the turf to 2 m over it (so they do not reach the road under the hole).
 - The passage **fallen in**, not sealed: three steps down, then the vault's blocks.
-- The settings map's stand "The Coffin Road" on the road at (250.4, 42), looking east; settings-test measures a stand under the ground from its own floor.
+- A landmark "The Coffin Road" in `world.js` (B3's scheme, merged from `next`: an axis along the road, `feet: [-22, -8]` so the card is the road's only down there and the Nave's stays the rim's, `reached: 'the Sexton’s stair'`) and its stand in `settings.js` NAMED_POSES on the road at (250.4, 42), looking east; settings-test measures a stand under the ground from its own floor and does not call it a hole.
 - The grade under the ground lifts exposure 1.25 (not darker): navy, not black, on a phone.
 - Two slabs and the fallen column's drums moved off the road (drums 3.2 m north).
 
