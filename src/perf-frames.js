@@ -65,6 +65,15 @@ export function hitchLog(L, legs, rows, cbs, keep = 60) {
   return { rule: `JS over ${r1(thr)} ms (50 ms, or 3x the run's median ${med} ms, whichever is less)`, thresholdMs: r1(thr), count: idx.length, worst: idx.slice(0, keep).map(row), worstTen: ten.map(row) };
 }
 
+// A module's documented budget (world-code, "Light and budgets"): about 25 draw calls and 400k triangles in view, colour
+// pass. overBudget() names every module past it at any station; the bench report prints them. No gate.
+export const MODULE_BUDGET = { calls: 25, tris: 400000 };
+export function overBudget(draws) {
+  const out = [];
+  for (const st of draws || []) for (const [module, calls, tris] of st.modules || []) if (calls > MODULE_BUDGET.calls || tris > MODULE_BUDGET.tris) out.push({ module, station: st.name, calls, tris });
+  return out.sort((a, b) => a.module.localeCompare(b.module) || a.station.localeCompare(b.station));
+}
+
 // calls and triangles per module, on the frames asked for (begin()); the colour pass on the next render, the shadow
 // pass on the next render that redraws the map. The hooks go on every drawable at begin() and come off when the station
 // is done, so no other frame pays for them (the station's frames carry EV.station). The post chain's full-screen passes
@@ -242,6 +251,6 @@ export function benchBrief(res) {
     js: res.js, interval: res.interval, legs, unattributed: res.unattributed,
     hitches: res.hitches && { rule: res.hitches.rule, count: res.hitches.count, worst: res.hitches.worst.slice(0, 10), worstTen: res.hitches.worstTen },
     memory: { start: mem(res.memory?.start), end: mem(res.memory?.end) },
-    draws: (res.draws || []).map((s) => ({ name: s.name, x: s.x, y: s.y, z: s.z, calls: s.calls, tris: s.tris, colour: s.colour, shadow: s.shadow, other: s.other, modules: s.modules.slice(0, 6) })),
+    draws: (res.draws || []).map((s) => ({ name: s.name, x: s.x, y: s.y, z: s.z, calls: s.calls, tris: s.tris, colour: s.colour, shadow: s.shadow, other: s.other, modules: s.modules.filter((m, i) => i < 6 || m[1] > MODULE_BUDGET.calls || m[2] > MODULE_BUDGET.tris) })), // the top six, and any module over its budget
   };
 }
