@@ -6,7 +6,7 @@
 // cue log (every audio.cue call, every new one-shot voice, every footstep, the gutter) in seconds from the render's
 // first sample. Used by tools/audio-survey.mjs and audio-quality-test.mjs through render().
 // Usage: node tools/audio-render.mjs <url> <out.wav> [--seconds=20] [--cue=name[,name]] [--at=dx,dy,dz] [--opts=<json>]
-//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>]
+//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>] [--y=<feet y>]
 // --cue fires 1 s in at the camera plus --at (world axes, as tools/audio-test.mjs's offsets), --every repeats it.
 // --walk holds W at that speed (over 3.6 m/s it hurries: Shift, the speed scaled from 6.6); --steps fires n of the
 // walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own course, its length pinned at 14 s by ?gutter=14,600); without
@@ -45,6 +45,7 @@ export function plan(o = {}) {
     walk: o.walk ? Number(o.walk) : 0, steps: o.steps ? Number(o.steps) : 0,
     gutter: !!o.gutter && o.gutter !== 'false', gutterHold: o['gutter-hold'] != null ? Number(o['gutter-hold']) : null,
     pre: !!o.pre, cueTap: o.tap === 'cue', mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
+    y: o.y != null ? Number(o.y) : null, // v14-D0: the feet's height at the url's pos (a floor under the ground: placeAt(x, z, y))
   };
 }
 // the page's url for a plan: ?gutter=14,600 with --gutter, ?render=0 (the frame's updates without the draw, so software GL cannot starve the
@@ -87,6 +88,7 @@ async function pageSetup(P) {
   // the sun's gutter: held off unless asked for, so two renders of a pose are a fair pair
   const fl = fp.sky?.flicker;
   if (fl) { fl.next = 1e9; if (fl.phase > 0) fl.phase = 0; }
+  if (P.y !== null && P.y !== undefined) { const p = fp.player, yaw = p.yaw; fp.controls.placeAt(p.pos.x, p.pos.z, P.y); p.yaw = yaw; } // (v14-D0: --y)
   // headless Chromium here: starting the page's audio in the first seconds after body.ready stalls the main thread
   // (frames at 1-15 fps and timers seconds late, so walks crawl and cues fire late); after ~6 s it does not
   await sleep(P.settle * 1000);

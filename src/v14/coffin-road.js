@@ -19,7 +19,7 @@ import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, PAIRS, DOOR, stair
 
 const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('coffinroad') === '0';
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
-const TIMBER = C('#2b211a'), TIMBER_L = C('#3d3026'), LID = C('#352920'), LEAD = C('#5c605d'), ROPE = C('#6d5f48');
+const TIMBER = C('#2b211a'), TIMBER_L = C('#3d3026'), LID = C('#352920'), LEAD = C('#3f4341'), ROPE = C('#6d5f48');
 const IRON = C('#26221f'), WAX = C('#8f876f'), STONE = C('#6e655c'), STONE_D = C('#4c453f'), RUBBLE = C('#5d554c');
 const MORTAR = C('#4a3a26'), GOLD = C('#c8962e'), GOLD_D = C('#8a6420'), RED = C('#6a2a1c'), BLACK = C('#050505');
 const FLAME = '#9fe8c2'; // corpse-candle green (the palette's wisp)
@@ -110,7 +110,9 @@ export async function build(ctx) {
   const coffin = (cx, cz, yaw, top, sc = 1) => {
     const body = coffinRing(cx, cz, yaw, sc), lid = coffinRing(cx, cz, yaw, sc * 1.04);
     B.prism(body, top - 0.58, top - 0.05, TIMBER, TIMBER, 0.15);
-    B.prism(lid, top - 0.05, top, LID, LID, 0.18);
+    B.prism(lid, top - 0.05, top - 0.012, LID, LID, 0.18);
+    // the lid's raised panel, its edge a coffin's shape inside the coffin's: what reads from the stair
+    B.prism(coffinRing(cx, cz, yaw, sc * 0.8), top - 0.02, top, TIMBER_L, LID, 0.12);
     // the lead plate on the lid, toward the head
     const c = Math.cos(yaw), s = Math.sin(yaw), px = cx - c * 0.45 * sc, pz = cz - s * 0.45 * sc;
     B.box(px, top + 0.006, pz, 0.16, 0.008, 0.11, -yaw, LEAD, LEAD, 0.1);
