@@ -276,8 +276,9 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('cards: (128, 5) A Lamplighter\u2019s Standards, the line on two lines', lee.name === 'A Lamplighter\u2019s Standards' && lee.lines === 2 && lee.text.includes('\n'), lee);
   // v14-B3: a card on a deck shows on the deck and not on the floor under it; a name with no line shows the name alone
   const at = (x, z, y) => page.evaluate(([x, z, y]) => { const fp = window.__fp, p = fp.player; p.pos.set(x, (y ?? fp.terrain.heightAt(x, z)) + p.eye, z); fp.hud.update(0.1); const l = document.getElementById('place-line'); return { name: document.getElementById('place').classList.contains('shown') ? document.getElementById('place-name').textContent : null, line: l.style.display === 'none' ? '' : l.textContent }; }, [x, z, y]);
-  await at(0, 0); const deck = await at(88, 211, 56); await at(0, 0); const under = await at(88, 211);
+  await at(0, 0); const deck = await at(88, 211, 56);
   const waitLines = await page.evaluate(() => { const l = document.getElementById('place-line'); return Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)); });
+  await at(0, 0); const under = await at(88, 211);
   check('cards: on the Span\u2019s middle deck (56 m) The Long Wait, its two lines one above the other, each in its own quotation marks (v14-B5, #52); on the ground under it not', deck.name === 'The Long Wait' && deck.line === '\u201cA bitter night for travelers.\u201d\n\u201cA bitter night for musing on the stars.\u201d' && waitLines === 2 && under.name !== 'The Long Wait', { deck, waitLines, under });
   // v14-B5: the deck is Titan's Causeway between the places on it, and the places on it win inside it; not on the ground
   await at(0, 0); const mid = await at(-160, 215, 56); await at(0, 0); const splice = await at(145, 215, 56); await at(0, 0); const floor = await at(-160, 200);

@@ -50,7 +50,7 @@ const NAMED_POSES = {
   halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
   tocsin: { x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
   escalade: { x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // at its foot in the wood's southern fringe, the first flight climbing west between its walls
-  causeway: { x: -238, y: 56, z: 213, look: { x: -150, z: 215 }, pitch: 0 }, // on the deck just past the west stair's top, running off east between its parapets
+  causeway: { x: -150, y: 56, z: 213, look: { x: -60, z: 215 }, pitch: -0.04 }, // on the west deck between piers, running off east to the fallen bay and the footing course (nearer the stair's top the wall's shoulder rings the stand: the hole check)
   wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
   spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
   bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
