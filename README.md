@@ -16,10 +16,13 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ![Four screenshots: versions 8, 9, 10 and 11](shots/gallery-v8-to-v11.webp)
 
+![One screenshot: version 12](shots/gallery-v12.webp)
+
 ## Milestones
 
 Each major release in bold, newest first, with its point releases beneath it. Every title links to its release notes; the full notes are in [`RELEASES.md`](RELEASES.md).
 
+- **[v12: The Heights](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v12)**. Four ways to climb up out of the valley floor, and the whole valley to look down on.
 - **[v11: Better mountains](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v11)**. The mountains around the valley finally look like mountains, and the city of windows moved somewhere better.
   - [v11.1: The mountains, up close](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v11.1). The mountains hold up when you walk right up to them.
 - **[v10: Things to do](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v10)**. The first things you can do, not just see: chalk a tally, ring a great bell, knock on a tomb door.
