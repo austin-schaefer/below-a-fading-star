@@ -184,6 +184,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### v14
 
+- `node tools/coffin-walk.mjs <base> keys|touch [q] [prefix]` (v14-D0, a judge's tool, not in the suite): from the trod north of the Nave to the shears, down the stair, the road to the sun, back up and out, on the keys (mouse-steered) or the touch stick, with frames at each checkpoint; renders: `tools/views-v14-descent.json` (moor to door), `tools/views-v14-around.json` (four floor points, four headings, up and down)
 - `coffinroad=0` (v14-D0): leaves out the Coffin Road (`src/v14/coffin-road.js`): the shears, the stair, the forty coffins, their candles and lights, the door's passage; the Nave keeps its door gap and the gap in its rim's colliders (a test switch)
 
 **Under the ground** (v14-D0, `src/v14/under.js`): how the next room is made dark, sealed and stone-sounding.
