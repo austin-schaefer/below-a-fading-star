@@ -26,12 +26,13 @@ What each module under `src/` owns. Every agent that adds a module extends this 
 | `rocks.js` | pebbles, stones, boulders, tors; pebbles and stones fade over their reach's last 15% and fine boulders cross to their coarse twin over 132-140 m (the fade kit; `?rockfade=0`); each mesh repacks after 2 m, one a frame when `ctx.packToken` is free, uploading only the changed range (`?packstep=6`); v8-11: boulders kept to outcrops (a low-frequency field read after the draws, fewer on the grazed common), nothing bigger than a pebble on the ground `v8/clearings.js` lists (the one table: built places, the walkers' lines, the grazers' homes, every road and the causeway, by the stone's whole footprint at every tier), the lichen a low grey-green bloom made from the stone's own luminance; `ctx.rocks` (`boulders`, `stones`, `lichen`, `stats()`); `?rockcut=0`; `tools/rocks-test.mjs` |
 | `settings.js` | the gear and the settings panel: volume, mute, quality tier, mouse capture, teleport to ten named places (`runtime.md`, "Settings") |
 | `debug.js` | teleport panel, live position, on/off rows |
-| `perf.js` | profiler overlay, bench path, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads) |
+| `perf.js` | profiler overlay, bench path and legs, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads); the rows for the costs no module owns (render, shadow.pass, far, ...) |
+| `perf-frames.js` | the bench's per-frame log, distribution, hitch log, draw cost per module, geometry bytes and JS heap, and its panel lines and short copy (also read by `tools/bench-report.mjs`) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |
 | `shadows.js` | shadow-map cadence and the far cut-off for creatures' shadows |
 | `startup.js` | the load's marks from navigation to ready, its long tasks and each module's import and build ms (`report()`, `window.__fp_startup`; v13-P0) |
 | `tier.js` | quality tier choice, the adaptive pixel ratio, the debug panel's quality rows |
-| `gpumem.js` | texture and render-target bytes and per-frame uploads, for the profiler |
+| `gpumem.js` | texture and render-target bytes, per-frame texture and buffer uploads, for the profiler |
 | `fade.js` | the fade kit for cross-fades: `FADE_GLSL` (`fpFadeKeep(f, side)`, a still screen-space dither: side 0 keeps a share f of the pixels, side 1 the rest), `withFade(material, { key, attribute \| vertex \| fadeExpr })`, `fadeDepthMaterial(opts)` for the shadow pass; `node tools/fade-test.mjs <base>` checks it |
 | `v2/flora.js` | the Heliotrope Sward; grey reeds at the Wrong Colour |
 | `v2/ruins.js` | the Hypogeum, the Gradine, the Cutting, the Carillon Flags |

@@ -24,6 +24,8 @@
 // off at every tier; ?far=lo,hi (pixels) sets both at any tier. installFar runs after the modules build and before
 // the warm-up (which draws every stand-in once, full, so none uploads later); start() after the warm-up turns it on.
 // ctx.far: { stats(), active }; stats().urgent: the instances packed last frame because their module wrote them.
+// The profiler times this file's onBeforeRender and onAfterRender as its `far` row (perf.js) and counts the instances
+// packed a frame as `far.instances`.
 const TIERS = { low: [1.2, 2.4], medium: [0.5, 1.0], high: null };
 const MIN_INST = 2, MAX_INST_R = 2, MAX_MESH_R = 3, STEP = 2;
 const M3 = [0, 1, 2, 4, 5, 6, 8, 9, 10]; // the 3x3 of a world matrix
@@ -179,6 +181,7 @@ export function installFar(ctx, url) {
       if (e.gen !== gen || e.at.distanceToSquared(P) > STEP * STEP || Math.abs(e.k - K) > 0.05 * K) { pack(e, K); budget -= e.o.count; packs++; packed += e.o.count; }
     }
     rr = (rr + Math.max(1, q)) % Math.max(1, inst.length); // the next frame starts where this one stopped
+    if (budget < BUDGET || urgent) ctx.perf?.count('far.instances', urgent + BUDGET - budget); // the bench's hitch log names a frame that packed (v13)
     changed.length = 0;
     for (const e of inst) {
       if (e.dead) continue;

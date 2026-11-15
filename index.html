@@ -146,11 +146,12 @@
   /* profiler overlay (perf.js): top-left, under the hint line */
   #perf { position: fixed; top: calc(44px + env(safe-area-inset-top, 0px)); left: calc(10px + env(safe-area-inset-left, 0px)); max-width: calc(100vw - 20px); display: none; margin: 0; padding: 6px 9px; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.74rem; line-height: 1.35; color: rgba(255, 233, 219, 0.82); background: rgba(11, 6, 9, 0.5); border: 1px solid rgba(217, 205, 180, 0.18); border-radius: 2px; z-index: 11; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
   #perf.shown { display: block; }
-  #perf-bench { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100vw - 32px)); box-sizing: border-box; padding: 14px 18px; background: rgba(11, 6, 9, 0.88); border: 1px solid rgba(255, 154, 92, 0.45); border-radius: 2px; color: var(--ink); z-index: 15; }
+  body:has(#perf-bench) #perf.shown { display: none; } /* the overlay steps aside for a finished bench's panel */
+  #perf-bench { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box; padding: 14px 18px 0; background: #0b0609; border: 1px solid rgba(255, 154, 92, 0.45); border-radius: 2px; color: var(--ink); z-index: 15; }
   #perf-bench h2 { margin: 0 0 0.4em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 1.1rem; letter-spacing: 0.18em; color: var(--wordmark); }
   #perf-bench pre { margin: 0; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.85rem; line-height: 1.45; color: var(--muted); }
-  #perf-bench .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  #perf-bench button { font: inherit; font-size: 0.9rem; padding: 0.35em 1.1em; color: var(--ink); background: transparent; border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; }
+  #perf-bench .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; position: sticky; bottom: 0; z-index: 1; padding: 10px 0 14px; background: #0b0609; } /* the buttons stay in reach while the summary scrolls */
+  #perf-bench button { font: inherit; font-size: 0.9rem; min-height: 44px; padding: 0.35em 1.1em; touch-action: manipulation; color: var(--ink); background: transparent; border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; }
   #perf-bench button:hover { background: rgba(232, 89, 26, 0.18); }
   @media (max-width: 700px) { #card .keys { display: none; } #fps { display: none; } }
 </style>
@@ -202,6 +203,9 @@
   <p class="set-note">When on, fall far and you wake by the keep.</p>
   <h3>Marks</h3>
   <div class="set-row"><span class="set-label">What you have left on the moor, kept by this browser</span><button id="set-forget" type="button">Forget my marks</button></div>
+  <h3>Measure</h3>
+  <div class="set-row"><span class="set-label">Walk a set round on its own, timing how smoothly it draws</span><button id="set-measure" type="button">Measure</button></div>
+  <p class="set-note">Reloads the page and takes about a minute. At the end, Copy takes the numbers for pasting.</p>
   <h3>Go to</h3>
   <div id="set-places"></div>
 </div></div>

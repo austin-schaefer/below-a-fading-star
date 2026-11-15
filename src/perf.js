@@ -2,9 +2,22 @@
 // - Profiler (?perf=1, or the debug panel's "profiler" row): frame time (rolling ~2 s average and 1% low),
 //   CPU per module inside the update loop, GPU time per pass (EXT_disjoint_timer_query_webgl2 where the
 //   browser has it, else n/a), draw calls, triangles, memory counts, lights, pixel ratio and render size.
+//   v13: the costs no module owns are rows of their own, timed by wrapping the call where it is made (installed at
+//   the first frame the profiler is on, never before): render (the composer's render, three's traversal, sorting and
+//   GL calls, less what is named inside it), shadow.pass (the shadow map's CPU, on the frames it is redrawn), far
+//   (src/v12/far.js's packing in scene.onBeforeRender), controls, sky, hud, post.update, shadow.cadence, lights.slots,
+//   bench.drive (the bench moving the walker, a teleport's placeAt included) and perf (the profiler's own). `frame` is
+//   what is left of main.js's own work.
 // - Bench (?bench=1 for 45 s, ?bench=<seconds> for a shorter run of the same path): a fixed camera path,
 //   spawn → causeway → the tarn's shore → the fen's edge → spawn, controls off, the gutter held off,
-//   sampled every 500 ms, then a summary with the JSON to download. ctx.perf.report() returns it all.
+//   sampled every 500 ms (`summary` is this route alone; its avg, 1% low and world modules' cpuMs compare with older
+//   reports, while v13 splits the old `frame` row into the named rows below and adds render, shadow.pass, far and perf;
+//   tools/bench-report.mjs --against knows the difference). v13: then two legs a
+//   visitor makes, each a teleport and a few seconds standing: `top` (the settings map's Go to, onto the Span's deck,
+//   56 m up) and `wake` (the fall's waking at the keep's gate, src/v12/fall.js's placing and look). Every frame's JS
+//   time is kept (perf-frames.js): the distribution per leg, a hitch log, memory at the start and end, and calls and
+//   triangles per module at stations along it. Then a panel with the summary, Copy (a short JSON for an issue) and
+//   Download (all of it). ctx.perf.report() returns it all.
 // - Recorder (?record=<seconds>, or ctx.perf.record(seconds) from the console; implies ?perf=1): once the walker
 //   is out (the card hidden, the pointer locked or drag-look or touch engaged) it records every frame's duration,
 //   timestamp and yaw into preallocated typed arrays, and every 250 ms a sample (GPU passes, draw calls, pixel
@@ -23,6 +36,7 @@ const BENCH_CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
 ];
 import { installGpuMem } from './gpumem.js';
+import { EV, dist, makeFrameLog, legValues, hitchLog, makeDrawCost, geometryBytes, jsHeap, jsHeapPrecise, benchLines, benchBrief } from './perf-frames.js';
 import { report as startupReport } from './startup.js'; // v13-P0: the load's phases, as `startup`
 
 const BLOCK_MS = 500; // one sample block
@@ -48,10 +62,10 @@ export function createPerf(ctx) {
   const { renderer, scene } = ctx;
 
   // --- modules: name -> { cpu (ms this block), enabled, world, objects, hidden }
-  const mods = new Map();
+  const mods = new Map(), modList = []; // modList: the same rows as an array, walked every frame while the bench records
   function mod(name) {
     let m = mods.get(name);
-    if (!m) { m = { name, cpu: 0, tot: 0, enabled: true, world: false, updates: 0, objects: new Set(), hidden: null }; mods.set(name, m); }
+    if (!m) { m = { name, cpu: 0, tot: 0, f0: 0, enabled: true, world: false, updates: 0, objects: new Set(), hidden: null }; mods.set(name, m); modList.push(m); }
     return m;
   }
   const rawRegister = ctx.registerUpdate;
@@ -68,7 +82,7 @@ export function createPerf(ctx) {
   }
   function wrapUpdate(m, fn) {
     m.updates++;
-    const cb = { label: `${m.name} ${site()}`, cpu: 0 };
+    const cb = { label: `${m.name} ${site()}`, cpu: 0, tot: 0, f0: 0 };
     cbs.push(cb);
     return (dt, t) => {
       if (!m.enabled) return;
@@ -76,7 +90,7 @@ export function createPerf(ctx) {
       const t0 = performance.now();
       fn(dt, t);
       const d = performance.now() - t0;
-      m.cpu += d; m.tot += d; cb.cpu += d;
+      m.cpu += d; m.tot += d; cb.cpu += d; cb.tot += d;
     };
   }
   // updates registered outside a module build (terrain, sky, controls...) count as 'core'
@@ -219,22 +233,73 @@ export function createPerf(ctx) {
     return { totals, lastFrame };
   }
 
+  // --- v13: the unowned costs as rows. Each named call is wrapped where main.js (or three) makes it; a wrapped call's
+  // time is a row of its own and is taken out of the row timed around it (`nest`), so nothing is counted twice. Put in
+  // at the first frame the profiler is on (frameBegin), so with ?perf absent and the row off nothing is wrapped.
+  let hooked = false, nest = 0, fb0 = 0, beginOwn = 0, shadowDrew = false;
+  let rowRender = null, rowPerf = null, rowDrive = null;
+  function section(name, obj, key) {
+    if (!obj || typeof obj[key] !== 'function') return;
+    const m = mod(name), fn = obj[key];
+    obj[key] = function (a, b, c, d) {
+      if (!api.active) return fn.call(this, a, b, c, d);
+      const t0 = performance.now();
+      const r = fn.call(this, a, b, c, d);
+      const dd = performance.now() - t0;
+      m.cpu += dd; m.tot += dd; nest += dd;
+      return r;
+    };
+  }
+  function installHooks() {
+    hooked = true;
+    rowRender = mod('render'); rowPerf = mod('perf'); rowDrive = mod('bench.drive');
+    instrumentPost(ctx.post); // the GPU timer queries (where the browser has them)
+    section('controls', ctx.controls, 'update');
+    section('sky', ctx.sky, 'update');
+    section('hud', ctx.hud, 'update');
+    section('post.update', ctx.post, 'update');
+    section('shadow.cadence', ctx.shadowCadence, 'update');
+    section('lights.slots', ctx.lightSlots, 'update');
+    section('far', scene, 'onBeforeRender'); // src/v12/far.js packs and swaps in here, and puts back after
+    section('far', scene, 'onAfterRender');
+    // the shadow map's CPU (three's caster traversal, its depth materials, the draw calls), on the frames it is redrawn
+    const sm = renderer.shadowMap, smRender = sm.render, rowShadow = mod('shadow.pass');
+    sm.render = function (lights, s, cam) {
+      if (!api.active || !sm.enabled || (!sm.autoUpdate && !sm.needsUpdate) || !lights.length) return smRender.call(this, lights, s, cam);
+      const t0 = performance.now();
+      smRender.call(this, lights, s, cam);
+      const dd = performance.now() - t0;
+      rowShadow.cpu += dd; rowShadow.tot += dd; nest += dd; shadowDrew = true;
+    };
+  }
+
   function frameBegin() {
     const now = performance.now();
+    fb0 = now; nest = 0; shadowDrew = false;
     if (bench) bench.drive(now);
     if (!api.active) { lastStart = 0; return; }
+    if (!hooked) installHooks();
+    const t1 = performance.now();
+    if (bench) { const d = t1 - now; rowDrive.cpu += d; rowDrive.tot += d; }
     if (lastStart) block.frameMs.push(now - lastStart);
-    lastStart = now; mark = now;
+    lastStart = now;
     gpuPoll();
     if (rec) recBegin(now);
+    mark = performance.now();
+    beginOwn = mark - t1;
   }
-  function cpu(name) { if (!api.active) return; const now = performance.now(), m = mod(name), d = now - mark; m.cpu += d; m.tot += d; mark = now; }
-  function markNow() { if (api.active) mark = performance.now(); }
+  function cpu(name) { if (!api.active) return; const now = performance.now(), m = mod(name), d = now - mark - nest; m.cpu += d; m.tot += d; mark = now; nest = 0; }
+  function markNow() { if (api.active) { mark = performance.now(); nest = 0; } }
   function frameEnd() {
     ctx.gpumem?.frame();
-    if (!api.active) return;
+    if (!api.active || !hooked) return;
+    const tE0 = performance.now();
+    const rd = tE0 - mark - nest; // the composer's render (or ?render=0's matrix update), less the rows named inside it
+    if (rd > 0) { rowRender.cpu += rd; rowRender.tot += rd; }
     gpuEndFrame();
     countUploads();
+    const recording = !!bench && bench.recording;
+    const ev = recording ? frameEvents() : 0;
     for (let i = 0; i < clist.length; i++) { const c = clist[i]; c.last = c.frame; c.frame = 0; }
     const r = renderer.info.render;
     last.calls = r.calls; last.tris = r.triangles; last.points = r.points; last.lines = r.lines;
@@ -242,9 +307,30 @@ export function createPerf(ctx) {
     if (r.calls > block.calls[1]) block.calls[1] = r.calls;
     if (r.triangles < block.tris[0]) block.tris[0] = r.triangles;
     if (r.triangles > block.tris[1]) block.tris[1] = r.triangles;
-    const now = performance.now();
     if (rec?.on && rec.prev) recEnd(r);
+    if (bench?.draws?.busy) bench.station(bench.draws.end(r.calls, r.triangles, shadowDrew));
+    const now = performance.now(), own = now - tE0 + beginOwn;
+    rowPerf.cpu += own; rowPerf.tot += own;
+    if (recording) bench.frame(fb0, now, ev);
+    // the block close (every 500 ms: the summary, the overlay's text) falls outside the frame's JS window
     if (now - block.t0 >= BLOCK_MS) closeBlock(now);
+  }
+  // what else happened this frame, from the counters (before they are reset) and the GL hooks
+  const cnt = (k) => { const c = counters[k]; return c ? c.frame : 0; };
+  function frameEvents() {
+    let ev = 0;
+    if (shadowDrew) ev |= EV.shadow;
+    if (cnt('plants.repacks')) ev |= EV.plants;
+    if (cnt('rocks.packs')) ev |= EV.rocks;
+    if (cnt('far.instances')) ev |= EV.far;
+    if (cnt('uploads.texFirst') || cnt('uploads.textures')) ev |= EV.texFirst;
+    if (cnt('uploads.texData')) ev |= EV.texData;
+    if (cnt('uploads.geometries')) ev |= EV.geometry;
+    if (cnt('uploads.programs')) ev |= EV.program;
+    if (cnt('tier.steps')) ev |= EV.tier;
+    if (ctx.gpumem?.lastBufBytes) ev |= EV.buffer;
+    if (bench?.draws?.busy) ev |= EV.station;
+    return ev;
   }
   function closeBlock(now) {
     for (const m of mods.values()) { block.cpu[m.name] = m.cpu; m.cpu = 0; }
@@ -369,7 +455,6 @@ export function createPerf(ctx) {
   }
   function attach() {
     overlay = document.getElementById('perf');
-    instrumentPost(ctx.post);
     scene.traverse((o) => { if (o.isLight && o.castShadow) shadowLights.push(o); });
     toggles.profiler = { get: () => api.active, set: setActive };
     toggles.bloom = { get: () => ctx.post.bloom.enabled, set: setBloom };
@@ -419,13 +504,31 @@ export function createPerf(ctx) {
     }
     return { pts, length, at };
   }
+  // v13: after the route, the legs a visitor makes, each a teleport and then standing: onto the Span's deck by the
+  // settings map's Go to, and the fall's waking at the keep's gate. Draw cost is taken at the stations: five along the
+  // route (fractions of it) and one in each leg, once the place has streamed in.
+  const LEGS = ['route', 'top', 'wake'];
+  const ROUTE_STATIONS = [0.1, 0.3, 0.5, 0.7, 0.9];
+  const TOP_PLACE = 'The middle of the Span';
   function makeBench(param) {
     const duration = param > 1 ? param : 45;
     const warm = Math.min(2, duration * 0.1); // held at spawn first, unrecorded, while shaders settle
+    const legS = r2(Math.max(1.5, Math.min(8, duration * 0.15))); // each leg's standing time (6.75 s at 45 s)
     const path = benchPath();
-    const b = { duration, warm, length: path.length, phase: 'warm', t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, cb: {}, result: null, done: false };
+    const b = { duration, warm, legS, length: path.length, phase: 'warm', leg: 0, t0: 0, samples: [], frameMs: [], calls: [Infinity, -Infinity], tris: [Infinity, -Infinity], gpu: {}, gpuN: 0, cpu: {}, cpuN: 0, cb: {}, legCpu: LEGS.map(() => ({ cpu: {}, n: 0 })), result: null, done: false, recording: false, draws: null, stations: [], memory: {} };
+    const log = b.log = makeFrameLog(Math.ceil((duration + 2 * legS + 4) * 200));
     const p = ctx.player, here = { x: 0, z: 0 }, ahead = { x: 0, z: 0 };
-    let prevHold = null, runStart = 0, lastNow = 0;
+    let prevHold = null, runStart = 0, lastNow = 0, legStart = 0, stationI = 0, legStation = false, teleported = false, lastFb = 0, legCut = 0;
+    const memNow = () => { const m = { jsHeap: jsHeap(), geometry: geometryBytes(scene, mods), gpu: ctx.gpumem?.stats() ?? null, counts: { geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, programs: renderer.info.programs?.length ?? null } }; jsHeapPrecise(m.jsHeap); return m; };
+    const station = (name) => b.draws?.begin({ name, leg: LEGS[b.leg], t: r2((performance.now() - runStart) / 1000), x: Math.round(p.pos.x), y: Math.round(p.pos.y - p.eye), z: Math.round(p.pos.z), yaw: r2(p.yaw) }); // y: the feet
+    function startLeg(name, now) {
+      b.phase = name; b.leg = LEGS.indexOf(name); legStart = now; legCut = now; legStation = false; teleported = true;
+      if (name === 'top') {
+        const i = ctx.settings?.places ? ctx.settings.places.findIndex((pl) => pl.name === TOP_PLACE) : -1;
+        if (i < 0 || !ctx.settings.teleport(i)) { ctx.controls.placeAt(98, 213, 56); p.yaw = 1.8; p.pitch = 0.02; } // no settings panel: the same place
+      } else if (ctx.fall?.wake) ctx.fall.wake(); // src/v12/fall.js's own waking: the lids, the gate, the look from the sky, its release
+      else { ctx.controls.placeAt(ctx.spawn.x, ctx.spawn.z); p.yaw = ctx.spawn.yaw; p.pitch = 0; } // no fall module (?only=)
+    }
     b.drive = (now) => {
       if (b.done) return;
       if (!b.t0) {
@@ -433,48 +536,107 @@ export function createPerf(ctx) {
         document.getElementById('card')?.classList.add('hidden');
         p.enabled = false;
         prevHold = ctx.sky.flicker.hold; ctx.sky.flicker.hold = 1;
+        // in the warm-up, unrecorded: the draw hooks on every drawable, and the memory at the start
+        b.draws = makeDrawCost(ctx, mods); // its hooks go on only at a station
+        b.memory.start = memNow();
       }
       const el = (now - b.t0) / 1000;
-      if (b.phase === 'warm' && el >= warm) { b.phase = 'run'; runStart = now; resetWindow(); }
+      if (b.phase === 'warm' && el >= warm) {
+        b.phase = 'run'; runStart = now; resetWindow(); b.recording = true;
+        for (const m of modList) m.f0 = m.tot;
+        for (const c of cbs) c.f0 = c.tot;
+      }
       if (b.phase === 'run' && lastNow) b.frameMs.push(now - lastNow);
       if (b.phase === 'run') lastNow = now;
-      const u = b.phase === 'run' ? Math.min(1, (now - runStart) / 1000 / duration) : 0;
-      const s = u * path.length;
-      path.at(s, here); path.at(s + 10, ahead);
-      let dx = ahead.x - here.x, dz = ahead.z - here.z;
-      if (Math.hypot(dx, dz) < 0.5) { path.at(s - 10, ahead); dx = here.x - ahead.x; dz = here.z - ahead.z; }
-      p.pos.x = here.x; p.pos.z = here.z; p.vel.set(0, 0, 0);
-      p.yaw = Math.atan2(-dx, -dz); p.pitch = -0.04;
-      if (u >= 1) finish();
+      if (b.phase === 'warm' || b.phase === 'run') {
+        const u = b.phase === 'run' ? Math.min(1, (now - runStart) / 1000 / duration) : 0;
+        const s = u * path.length;
+        path.at(s, here); path.at(s + 10, ahead);
+        let dx = ahead.x - here.x, dz = ahead.z - here.z;
+        if (Math.hypot(dx, dz) < 0.5) { path.at(s - 10, ahead); dx = here.x - ahead.x; dz = here.z - ahead.z; }
+        p.pos.x = here.x; p.pos.z = here.z; p.vel.set(0, 0, 0);
+        p.yaw = Math.atan2(-dx, -dz); p.pitch = -0.04;
+        if (b.phase === 'run' && stationI < ROUTE_STATIONS.length && u >= ROUTE_STATIONS[stationI] && !b.draws.busy) station(`route ${++stationI}`);
+        if (u >= 1) startLeg('top', now);
+        return;
+      }
+      const lt = (now - legStart) / 1000;
+      if (!legStation && lt >= Math.min(3.5, legS * 0.6) && !b.draws.busy) { legStation = true; station(b.phase === 'top' ? 'top: the Span\'s deck' : 'wake: the keep\'s gate'); }
+      if (lt >= legS) { if (b.phase === 'top') startLeg('wake', now); else finish(); }
     };
+    // one frame, from frameBegin to frameEnd: its JS, the largest row and callback, and what else happened
+    b.frame = (t0, t1, ev) => {
+      const L = log, i = L.n;
+      if (i >= L.cap) { L.truncated = true; return; }
+      L.n++;
+      L.js[i] = t1 - t0; L.iv[i] = lastFb ? t0 - lastFb : 0; lastFb = t0;
+      L.t[i] = (t0 - runStart) / 1000; L.leg[i] = b.leg;
+      L.x[i] = p.pos.x; L.y[i] = p.pos.y - p.eye; L.z[i] = p.pos.z;
+      let sum = 0, top = -1, topMs = 0;
+      for (let k = 0; k < modList.length; k++) { const m = modList[k], d = m.tot - m.f0; m.f0 = m.tot; sum += d; if (d > topMs) { topMs = d; top = k; } }
+      let cb = -1, cbMs = 0;
+      for (let k = 0; k < cbs.length; k++) { const c = cbs[k], d = c.tot - c.f0; c.f0 = c.tot; if (d > cbMs) { cbMs = d; cb = k; } }
+      L.top[i] = top; L.topMs[i] = topMs; L.cb[i] = cb; L.cbMs[i] = cbMs;
+      L.un[i] = L.js[i] - sum;
+      if (teleported) { ev |= EV.teleport; teleported = false; }
+      L.ev[i] = ev;
+      const gm = ctx.gpumem;
+      L.tex[i] = gm ? gm.lastTexUploads : 0; L.bufKB[i] = gm ? gm.lastBufBytes / 1024 : 0;
+      const fc = counters['far.instances'], pc = counters['uploads.programs'];
+      L.far[i] = fc ? fc.last : 0; L.programs[i] = pc ? pc.last : 0;
+    };
+    b.station = (s) => { if (s) b.stations.push(s); };
     // frame-weighted totals for the summary, straight from each closed block
     b.add = (blk) => {
+      if (b.phase === 'warm' || b.done) return;
+      if (blk.t0 < legCut) return; // began in the leg before: in neither leg's rows (nor the round's)
+      const lc = b.legCpu[b.leg]; lc.n += blk.frameMs.length; for (const k in blk.cpu) lc.cpu[k] = (lc.cpu[k] || 0) + blk.cpu[k];
       if (b.phase !== 'run') return;
       b.cpuN += blk.frameMs.length; for (const k in blk.cpu) b.cpu[k] = (b.cpu[k] || 0) + blk.cpu[k];
       for (const k in blk.cb) b.cb[k] = (b.cb[k] || 0) + blk.cb[k];
       b.gpuN += blk.gpuFrames; for (const k in blk.gpu) b.gpu[k] = (b.gpu[k] || 0) + blk.gpu[k];
     };
     b.sample = (s) => {
-      if (b.phase !== 'run') return;
+      if (b.phase === 'warm' || b.done) return;
       const t = r2((performance.now() - runStart) / 1000);
-      b.samples.push({ t, x: Math.round(p.pos.x), z: Math.round(p.pos.z), ...s });
+      b.samples.push({ t, leg: LEGS[b.leg], x: Math.round(p.pos.x), z: Math.round(p.pos.z), ...s });
+      if (b.phase !== 'run') return;
       if (s.calls) { b.calls[0] = Math.min(b.calls[0], s.calls[0]); b.calls[1] = Math.max(b.calls[1], s.calls[1]); }
       if (s.tris) { b.tris[0] = Math.min(b.tris[0], s.tris[0]); b.tris[1] = Math.max(b.tris[1], s.tris[1]); }
     };
     function finish() {
-      b.done = true; b.phase = 'done';
+      b.done = true; b.phase = 'done'; b.recording = false;
       ctx.sky.flicker.hold = prevHold;
+      b.memory.end = memNow();
       const f = frameStats(b.frameMs);
-      const avg = (o, n) => { const r = {}; for (const k of Object.keys(o)) r[k] = r2(o[k] / Math.max(1, n)); return r; };
+      const avg = (o, n) => { const r = {}; for (const k of Object.keys(o).sort((x, y) => o[y] - o[x])) r[k] = r2(o[k] / Math.max(1, n)); return r; };
       const size = renderSize();
+      // the distributions leave out the draw-cost stations' frames (EV.station: hooked, a scene walk); the hitch log keeps them, marked
+      const L = log, ST = EV.station, all = dist(legValues(L, 'js', -1, ST));
+      const legs = {};
+      LEGS.forEach((name, k) => {
+        const js = legValues(L, 'js', k, ST), un = legValues(L, 'un', k, ST);
+        legs[name] = {
+          seconds: name === 'route' ? duration : legS, frames: js.length,
+          js: dist(js), interval: dist(legValues(L, 'iv', k, ST).subarray(name === 'route' ? 1 : 0)),
+          unattributedMs: dist(un).medianMs,
+          rows: avg(b.legCpu[k].cpu, b.legCpu[k].n), // ms a frame, every row: modules and the unowned costs
+        };
+      });
+      legs.top.place = TOP_PLACE;
+      // what of a median frame no row names: the gaps between the timed calls (main.js's loop, the update throttle)
+      const un = dist(legValues(L, 'un', -1, ST));
+      let sumJs = 0, sumUn = 0; for (let i = 0; i < L.n; i++) if (!(L.ev[i] & ST)) { sumJs += L.js[i]; sumUn += L.un[i]; }
+      const unat = { medianFrameMs: all.medianMs, medianUnattributedMs: un.medianMs, shareOfMedianFrame: all.medianMs ? r2(un.medianMs / all.medianMs) : null, shareOfAllJs: sumJs ? Math.round((sumUn / sumJs) * 1000) / 1000 : null, mainOwnMs: legs.route.rows.frame ?? null };
       b.result = {
-        kind: 'fading-planet-bench', date: new Date().toISOString(),
+        kind: 'fading-planet-bench', version: 2, date: new Date().toISOString(),
         ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
         ...(machine ? { machine } : {}),
         settings: settings(), startup: startupReport(),
         userAgent: navigator.userAgent, quality: ctx.quality, tier: ctx.tier?.stats() ?? null, gpuMemory: ctx.gpumem?.stats() ?? null, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
-        renderSize: size, url: location.search, duration, warmup: warm, pathMetres: Math.round(path.length),
+        renderSize: size, url: location.search, duration, warmup: warm, legSeconds: legS, pathMetres: Math.round(path.length),
         gpuTimer: gpu.ok, toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
+        // the round alone; avg and 1% low as before v13, cpuMs with v13's rows (the old frame row split; see the header)
         summary: {
           avgFps: f.fps, low1Fps: f.low1Fps, avgFrameMs: f.avgMs, low1FrameMs: f.low1Ms, frames: f.frames,
           gpuMs: gpu.ok ? (b.gpuN ? gpuOut(b.gpu, b.gpuN) : null) : 'n/a',
@@ -482,9 +644,24 @@ export function createPerf(ctx) {
           cpuCallbacks: topCallbacks(b.cb, Math.max(1, b.cpuN), 20),
           calls: isFinite(b.calls[0]) ? b.calls : null, tris: isFinite(b.tris[0]) ? b.tris : null,
         },
+        // v13: every frame's JS (frameBegin to frameEnd: the trustworthy number headless), over the whole run and per leg
+        js: all, interval: dist(legValues(L, 'iv', -1, ST).subarray(1)), framesTruncated: L.truncated,
+        stationFrames: L.n - all.frames,
+        legs, unattributed: unat,
+        hitches: hitchLog(L, LEGS, modList, cbs),
+        memory: b.memory,
+        draws: b.stations,
         samples: b.samples,
       };
       showSummary(b.result);
+      // started from the settings panel's Measure row: the URL is clean again, and Close reloads it (the profiler off)
+      const measure = url.searchParams.get('measure');
+      if (measure) {
+        const u = new URL(location.href);
+        for (const k of ['bench', 'perf', 'measure']) u.searchParams.delete(k);
+        if (measure === '1') u.searchParams.delete('q'); // the tier the visitor had not pinned stays unpinned
+        try { history.replaceState(history.state, '', u.href); } catch { /* ignore */ }
+      }
     }
     return b;
   }
@@ -560,10 +737,7 @@ export function createPerf(ctx) {
   function recFinish() {
     recSample();
     const R = rec; rec = null;
-    const n = R.n, ms = R.ms.subarray(0, n), sorted = Float32Array.from(ms).sort();
-    const q = (f) => (n ? sorted[Math.min(n - 1, Math.floor(f * n))] : null);
-    const med = q(0.5) ?? 0;
-    let over2 = 0, over3 = 0; for (let i = 0; i < n; i++) { if (ms[i] > 2 * med) over2++; if (ms[i] > 3 * med) over3++; }
+    const n = R.n, ms = R.ms.subarray(0, n), D = dist(ms, n); // the distribution, shared with the bench (perf-frames.js)
     const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => ms[b] - ms[a]).slice(0, 10);
     const sampleOf = (t) => { let k = 0; while (k < R.samples.length - 1 && R.samples[k + 1].t <= t) k++; return k; };
     const worst = order.map((i, rank) => {
@@ -588,8 +762,8 @@ export function createPerf(ctx) {
       dpr: renderer.getPixelRatio(), devicePixelRatio, renderSize: size, url: location.search, gpuTimer: gpu.ok,
       requestedSeconds: R.seconds, recordedSeconds: r2(R.el / 1000), idleSeconds: r2(Math.max(0, wall - R.el) / 1000),
       summary: {
-        frames: n, fps: r1(n ? n / (R.el / 1000) : null), medianMs: r2(med), p95Ms: r2(q(0.95)), p99Ms: r2(q(0.99)), worstMs: r2(n ? sorted[n - 1] : null),
-        over2xMedian: over2, over3xMedian: over3, worst, tierStepsDuring: steps,
+        frames: n, fps: r1(n ? n / (R.el / 1000) : null), medianMs: D.medianMs, p95Ms: D.p95Ms, p99Ms: D.p99Ms, worstMs: D.worstMs,
+        over2xMedian: D.over2xMedian, over3xMedian: D.over3xMedian, worst, tierStepsDuring: steps,
       },
       samples: R.samples,
       frames: { note: 'per frame: ms = duration, t = offset in recorded time (ms, idle excluded), yaw = view yaw (rad)', ms: Array.from(ms, r2), t: Array.from(R.t.subarray(0, n), r1), yaw: Array.from(R.yaw.subarray(0, n), (v) => Math.round(v * 1000) / 1000) },
@@ -612,28 +786,25 @@ export function createPerf(ctx) {
   }
 
   function benchView(res) {
-    const s = res.summary;
-    const g = s.gpuMs === 'n/a' ? 'n/a (no timer query in this browser)' : s.gpuMs ? Object.entries(s.gpuMs).filter(([k]) => k !== 'available' && k !== 'frames').map(([k, v]) => `${k} ${v}`).join(' · ') + ` ms (${s.gpuMs.frames} frames timed)` : 'no results';
-    const rng = (a, k = 1) => (a ? `${Math.round(a[0] / k)}–${Math.round(a[1] / k)}` : '–');
-    return { title: 'Bench done', prefix: 'bench', unhide: true, text: [
-      `${res.duration} s · ${res.pathMetres} m · q=${res.quality} · dpr ${res.dpr} · ${res.renderSize.buffer.join('×')} px`,
-      `avg ${s.avgFps ?? '–'} fps (${s.avgFrameMs ?? '–'} ms) · 1% low ${s.low1Fps ?? '–'} fps (${s.low1FrameMs ?? '–'} ms) · ${s.frames} frames`,
-      `gpu ${g}`,
-      `calls ${rng(s.calls)} · tris ${rng(s.tris, 1000)}k`,
-      'or paste the output of __fp.perf.report() from the console',
-    ].join('\n') };
+    return { title: 'Measured', prefix: 'bench', unhide: true, copy: () => JSON.stringify(benchBrief(res)), copyLabel: 'Copy', text: benchLines(res).join('\n') };
   }
-  // The panel for a finished bench or record: the summary as text, the result as JSON to download or copy.
+  // The panel for a finished bench or record: the summary as text, the result as JSON to download or copy (the bench
+  // copies its short form, benchBrief: small enough for an issue; Download keeps everything)
   function showSummary(res, view = benchView(res)) {
     const el = document.createElement('div');
     el.id = 'perf-bench';
-    el.innerHTML = '<h2></h2><pre></pre><div class="row"><button type="button" data-a="dl">Download JSON</button><button type="button" data-a="copy">Copy JSON</button><button type="button" data-a="close">Close</button></div>';
+    el.innerHTML = '<h2></h2><pre></pre><div class="row"><button type="button" data-a="dl">Download JSON</button><button type="button" data-a="copy"></button><button type="button" data-a="close">Close</button></div>';
     el.querySelector('h2').textContent = view.title;
     el.querySelector('pre').textContent = view.text;
+    el.querySelector('[data-a=copy]').textContent = view.copyLabel || 'Copy JSON';
     const json = () => JSON.stringify(res, null, 1);
+    const copyText = view.copy || json;
     el.addEventListener('click', async (e) => {
       const a = e.target?.dataset?.a;
-      if (a === 'close') { el.remove(); if (view.unhide) document.getElementById('card')?.classList.remove('hidden'); }
+      if (a === 'close') {
+        if (view.unhide && url.searchParams.get('measure')) { location.reload(); return; } // a Measure run: back to the clean URL, nothing left hooked
+        el.remove(); if (view.unhide) document.getElementById('card')?.classList.remove('hidden');
+      }
       else if (a === 'dl') {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
@@ -642,7 +813,7 @@ export function createPerf(ctx) {
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(link.href), 5000);
       } else if (a === 'copy') {
-        try { await navigator.clipboard.writeText(json()); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy failed: use report()'; }
+        try { await navigator.clipboard.writeText(copyText()); e.target.textContent = 'Copied'; } catch { e.target.textContent = 'Copy failed: use Download'; }
       }
     });
     document.body.appendChild(el);
@@ -665,7 +836,10 @@ export function createPerf(ctx) {
       date: new Date().toISOString(), active: api.active,
       ...(current || summarise(win.length ? win : [block])),
       render: { calls: r.calls, triangles: r.tris, points: r.points, lines: r.lines },
-      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null, gpu: ctx.gpumem?.stats() ?? null },
+      // v13: one memory object: counts, GPU bytes (gpumem.js: textures, renderbuffers, the canvas), the geometry bytes per
+      // module and the JS heap where the browser gives it (perf-frames.js)
+      // (geometry is a getter: the scene walk happens only when it is read, so report().gpu mid-run costs nothing extra)
+      memory: { geometries: mem.geometries, textures: mem.textures, programs: renderer.info.programs?.length ?? null, gpu: ctx.gpumem?.stats() ?? null, get geometry() { return geometryBytes(scene, mods); }, jsHeap: jsHeap() },
       tier: ctx.tier?.stats() ?? null, counters: countersOut(),
       lights: lightsByType(), pixelRatio: renderer.getPixelRatio(), size: renderSize(), quality: ctx.quality,
       settings: settings(), ...(machine ? { machine } : {}),
@@ -681,7 +855,8 @@ export function createPerf(ctx) {
   const api = {
     active: false, gpuTimer: gpu.ok, count, counters, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
     record, lastRecord: () => lastRec, get recording() { return !!rec; }, setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
-    get bench() { return bench; },
+    get bench() { return bench; }, get hooked() { return hooked; },
+    brief: () => (bench?.result ? benchBrief(bench.result) : null), // the panel's Copy
   };
   return api;
 }

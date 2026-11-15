@@ -9,7 +9,8 @@
 // Each run, in a new browser context (empty cache): a cold load; a repeat load (a reload in that context, as a
 // visitor's refresh); then, unless --serial=0, a third load in the same context with ?serial=1, which imports every
 // module first and builds them one at a time, so each module's build time is its own (startup.js says how).
-// It prints one table: each phase's ms (median and range over the runs), time to ready, the longest stall of the
+// Each run has its own browser, so the cold load is cold in the shader cache too. It exits 1 on a timeout or a page
+// error, after printing what finished. It prints one table: each phase's ms (median and range over the runs), time to ready, the longest stall of the
 // title card (a main-thread task over 50 ms, with its phase), requests and kilobytes over the wire, requests
 // answered from the cache or by a 304 on the repeat, the ten modules with the longest own build, and how far their
 // serial sum is from the parallel 'modules' phase.
@@ -43,7 +44,9 @@ if (opts.net && !net) { console.error(`--net: one of ${Object.keys(NETS).join(',
 const query = `q=${opts.q}${opts.params ? '&' + opts.params : ''}`;
 const url = `${base}/?${query}`;
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+// a browser per run, so a cold load is cold in the GPU process's shader cache as well as the HTTP cache
+const launch = () => chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+let browser = null, failed = null;
 const errors = [];
 if (opts.profile) {
   const { runProfile } = await import('./load-profile.mjs');
@@ -58,7 +61,7 @@ if (opts.profile) {
 async function load(page, cdp, kind, go) {
   const reqs = new Map();
   let cacheControl = null;
-  const onReq = (e) => { if (!reqs.has(e.requestId)) reqs.set(e.requestId, { url: e.request.url, bytes: 0, cached: false, status: 0 }); };
+  const onReq = (e) => { if (/^https?:/.test(e.request.url) && !reqs.has(e.requestId)) reqs.set(e.requestId, { url: e.request.url, bytes: 0, cached: false, status: 0 }); };
   const onResp = (e) => {
     const r = reqs.get(e.requestId); if (!r) return;
     r.status = e.response.status;
@@ -85,7 +88,8 @@ async function load(page, cdp, kind, go) {
 }
 
 const out = [];
-for (let i = 0; i < runs; i++) {
+try { for (let i = 0; i < runs; i++) {
+  browser = await launch();
   const context = await browser.newContext({ viewport: { width: 960, height: 540 } });
   const page = await context.newPage();
   // A tree from before v13-P0 (the live site until it is released) has no src/startup.js: then this stands in for
@@ -115,8 +119,9 @@ for (let i = 0; i < runs; i++) {
   out.push(run);
   console.log(`run ${i + 1}/${runs}: cold ${run.cold.ready} ms, repeat ${run.repeat.ready} ms${run.serial ? `, serial ${run.serial.ready} ms` : ''}`);
   await context.close();
-}
-await browser.close();
+  await browser.close(); browser = null;
+} } catch (e) { failed = e; console.error(`load-probe: ${e.message.split('\n')[0]}`); } finally { await browser?.close(); }
+if (!out.length) process.exit(1);
 
 // --- the table
 const med = (a) => { const s = a.filter((x) => x != null).sort((x, y) => x - y); if (!s.length) return null; const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -126,9 +131,9 @@ const cell = (a) => {
   return v.length > 1 ? `${fmt(m)} [${fmt(lo)}–${fmt(hi)}]` : fmt(m);
 };
 const fmt = (x) => (Math.abs(x) >= 100 ? Math.round(x).toString() : (Math.round(x * 10) / 10).toString());
-const spread = (a) => { const m = med(a); return m ? Math.round(((Math.max(...a) - Math.min(...a)) / m) * 100) : 0; };
+const spread = (a) => { a = a.filter((x) => x != null); const m = med(a); return m ? Math.round(((Math.max(...a) - Math.min(...a)) / m) * 100) : 0; };
 const PH = ['module', 'tier', 'renderer', 'terrain', 'mountains', 'scaffold', 'imports', 'modules', 'post', 'programs', 'warmup', 'ready'];
-const NAMES = { module: 'fetch (static graph, to first module)', tier: 'tier chosen', renderer: 'renderer made', terrain: 'terrain built', mountains: 'mountains built', scaffold: 'regions, kit, sky, controls, HUD', imports: 'module imports resolved', modules: 'modules built', post: 'far, post, light slots', programs: 'programs compiled', warmup: 'warm-up drawn', ready: 'to ready ("Go out")' };
+const NAMES = { module: 'fetch (static graph, to first module)', tier: 'three + static graph run, tier', renderer: 'renderer made', terrain: 'terrain built', mountains: 'mountains built', scaffold: 'regions, kit, sky, controls, HUD', imports: 'module imports resolved', modules: 'modules built', post: 'far, post, light slots', programs: 'programs compiled', warmup: 'warm-up drawn', ready: 'to ready ("Go out")' };
 const kinds = ['cold', 'repeat', ...(out[0].serial ? ['serial'] : [])];
 const col = (k, f) => kinds.map((kind) => cell(out.map((r) => f(r[kind])))).map((s) => s.padStart(22)).join('');
 const lines = [];
@@ -137,7 +142,17 @@ P('');
 P(`load-probe ${url} · runs ${runs} · cpu ${rate}x${net ? ` · net ${opts.net}` : ''} · ${out[0].cold.cacheControl ? `main.js cache-control: ${out[0].cold.cacheControl}` : ''}`);
 P(`ms, median [min–max] over ${runs} run(s); a phase ends at its mark`);
 P(`${'phase'.padEnd(40)}${kinds.map((k) => k.padStart(22)).join('')}`);
-for (const p of PH) P(`${(p + ': ' + NAMES[p]).slice(0, 39).padEnd(40)}${col(p, (r) => r.phases[p])}`);
+// in an ordinary load the imports resolve behind the builds, so cold and repeat get them as one row; serial apart
+const both = (r) => (r.phases.imports != null ? r.phases.imports + r.phases.modules : null);
+for (const p of PH) {
+  if (p === 'imports' || p === 'modules') {
+    const f = (r) => (r.serial ? r.phases[p] : null);
+    if (kinds.includes('serial')) P(`${(p + ': ' + NAMES[p] + ' (serial)').slice(0, 39).padEnd(40)}${col(p, (r) => (r && f(r)))}`);
+    if (p === 'modules') P(`${'imports+modules: imported and built'.padEnd(40)}${col(p, (r) => r && both(r))}`);
+    continue;
+  }
+  P(`${(p + ': ' + NAMES[p]).slice(0, 39).padEnd(40)}${col(p, (r) => r.phases[p])}`);
+}
 P(`${'READY (navigation to "Go out")'.padEnd(40)}${col('ready', (r) => r.ready)}`);
 P(`${'  first contentful paint (title card)'.padEnd(40)}${col('fcp', (r) => r.nav?.fcp)}`);
 P(`${'longest stall (ms)'.padEnd(40)}${col('longest', (r) => r.longest?.ms)}`);
@@ -167,3 +182,5 @@ if (opts.json) {
   writeFileSync(opts.json, JSON.stringify({ kind: 'fading-planet-load-probe', date: new Date().toISOString(), url, runs, throttle: rate, net: opts.net || null, table: lines, results: out }, null, 1));
   console.log('[saved]', opts.json);
 }
+if (failed) console.error('load-probe: stopped early; the table is of the runs that finished');
+process.exit(failed || errors.length ? 1 : 0); // a timeout or any page error fails the probe

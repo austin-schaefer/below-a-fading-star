@@ -459,4 +459,4 @@ async function start() {
   startup.mark('ready');
 }
 
-start().catch((e) => { console.error(e); document.getElementById('error').textContent = String(e?.stack || e); });
+start().catch((e) => { startup.abort(); console.error(e); document.getElementById('error').textContent = String(e?.stack || e); });
