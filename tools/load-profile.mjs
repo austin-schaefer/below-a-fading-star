@@ -5,7 +5,7 @@
 //      by reading it just before Profiler.stop, so a window's edge is good to a few ms);
 //   2. a ?serial=1 load under the Profiler: each module's build is its own window (startup.built, read from a copy
 //      of src/startup.js rewritten in flight), so each module gets its own heightAt share and top files;
-//   3. a ?serial=1 load, not profiled, with src/height/field.js (the heightfield, v13 L2; it was in src/terrain.js)
+//   3. a ?serial=1 load, not profiled, with src/height/field.js (the heightfield, v13 L2)
 //      and src/noise.js rewritten in flight (page.route) to
 //      count calls: heightAt, normalAt, slopeAt, biomeAt and the simplex noise2, per phase and per module build.
 //      Nothing in src/ changes and a visitor's load is untouched; only the probe's page is served the counting copy.

@@ -1,4 +1,4 @@
-// The far ranges' meshes and ctx.mountains (v13 L2: out of v4/mountains.js, so that file and the heightfield it
+// The far ranges' meshes and ctx.mountains (v13 L2: apart from v4/mountains.js, so that file and the heightfield it
 // carries import no three and can be loaded in a worker). The ranges' surfaces, the walls and the tables are
 // v4/mountains.js's; this builds the two rings of mesh beyond the terrain and returns the walls' API.
 import * as THREE from 'three';

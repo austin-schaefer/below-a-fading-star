@@ -1,4 +1,4 @@
-// The Adust's height hook and what it reads (v13 L2: out of v4/regions/adust.js, so the heightfield imports no three
+// The Adust's height hook and what it reads (v13 L2: apart from v4/regions/adust.js, so the heightfield imports no three
 // and can be loaded in a worker). The region's module imports these back and re-exports height as its hook.
 import { SUN } from '../../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../../noise.js';

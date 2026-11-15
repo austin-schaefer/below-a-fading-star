@@ -1,4 +1,4 @@
-// The heightfield (v13 L2: out of terrain.js, which keeps the bake, the material and the shaders): heightAt and what
+// The heightfield (v13 L2; terrain.js holds the bake, the material and the shaders): heightAt and what
 // it is made of (the moor, the landmarks' shaping, the tarn, the fen, the orchard, the causeway, the regions' hooks, the
 // walls, the glacier, the Tumbling Water and its ravine, the Span's blocks, the map's pit and fall), slopeAt, normalAt,
 // biomeAt, the water and the river. Pure: no three, no page globals, so a worker can import it (src/height/params.js
@@ -35,7 +35,7 @@ export function causewayDistance(x, z) {
   }
   return d;
 }
-// causewayDistance where it is under lim - 0.5: the same number; elsewhere lim or more. A segment whose box is lim or
+// causewayDistance where that is under lim: the same number; elsewhere lim. A segment whose box is lim or
 // more away is never measured, so far from the road this is a few box tests (heightAt's road bed reads under 7.5).
 function causewayNear(x, z, lim) {
   let d = lim;

@@ -1,4 +1,4 @@
-// The Demesne's height hook and what it reads (v13 L2: out of v4/regions/demesne.js, so the heightfield imports no three
+// The Demesne's height hook and what it reads (v13 L2: apart from v4/regions/demesne.js, so the heightfield imports no three
 // and can be loaded in a worker). The region's module imports these back and re-exports height as its hook.
 import { LANDMARKS, CAUSEWAY_V4 } from '../../../world.js';
 import { crossingDistance } from '../../../v8/roads/crossings.js'; // v8-01

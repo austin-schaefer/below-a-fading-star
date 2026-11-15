@@ -1,4 +1,4 @@
-// The Lynchets's height hook and what it reads (v13 L2: out of v4/regions/lynchets.js, so the heightfield imports no three
+// The Lynchets's height hook and what it reads (v13 L2: apart from v4/regions/lynchets.js, so the heightfield imports no three
 // and can be loaded in a worker). The region's module imports these back and re-exports height as its hook.
 import { REGIONS } from '../../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../../noise.js';

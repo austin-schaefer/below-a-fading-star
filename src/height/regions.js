@@ -1,5 +1,5 @@
-// The regions' weights and their height hooks (v13 L2: out of v4/regions.js, which carries the regions' modules, their
-// ground, cover, stone, air and sound, and three). What heightAt needs of the regions, importable in a worker: each
+// The regions' weights and their height hooks (v13 L2; v4/regions.js carries the regions' modules, their ground, cover,
+// stone, air and sound, and three). What heightAt needs of the regions, importable in a worker: each
 // region's shape as a signed distance, regionAt(x, z, out?, blend?) (the weights; v4/regions.js's header says what
 // they are), regionDistance, regionsHeight (terrain.js's marked block: each region's height hook by its weight; the
 // hooks are the regions' own, in v4/regions/height/<key>.js, which their modules re-export) and the coarse pass.

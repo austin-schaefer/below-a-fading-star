@@ -21,7 +21,7 @@
 // the sun and the Parhelion City keep the gap. Deterministic: no rng, only seeded noise.
 import { makeSimplex, hash2, clamp, lerp, smoothstep } from '../noise.js';
 import { WORLD, SUN, PEAKS } from '../world.js';
-import { HEIGHT_PARAMS } from '../height/params.js'; // the URL switches, read once (a worker gets them by name)
+import { HEIGHT_PARAMS } from '../height/params.js'; // the URL switches, fixed before this loads (a worker is handed them)
 
 const S = makeSimplex(WORLD.seed + 404);
 const D2R = Math.PI / 180;
@@ -153,7 +153,7 @@ function seatHeights(h, x, z) {
 // lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
 // in r (full height from the crest's r - 6 to + 4, ramping out to r - 10 and + 8), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
 // ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
-const RIDGE_ON = HEIGHT_PARAMS.get('ridge') !== '0';
+const RIDGE_ON = HEIGHT_PARAMS.ridge;
 const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 45, kMin: 0, kMax: 6, broken: [2, 5] };
 export const RIDGE = { bearings: [RG.lo + RG.taper, RG.hi - RG.taper], merlons: [] };
 const ridgeEnv = (b) => smoothstep(RG.lo, RG.lo + RG.taper, b) * (1 - smoothstep(RG.hi - RG.taper, RG.hi, b));
@@ -205,8 +205,7 @@ for (let i = 0; i <= N; i++) {
 // massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
 // it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
 export const PROFILE = (() => {
-  const v = HEIGHT_PARAMS.get('mountains');
-  return v === 'v4' ? 'v4' : 'c';
+  return HEIGHT_PARAMS.mountains;
 })();
 const CAND = PROFILE === 'c' ? {
   // [bearing, crest height above the floor]; the saddle's gate (237-263) is the saddle's own. The cols: 112° (east),
@@ -223,7 +222,7 @@ const CAND = PROFILE === 'c' ? {
 // the notches cut beside the cols go (a slot beside a pass reads as a second col), and the far ring's lobe behind each
 // pass stands higher so it still shows over it. Inside the walk limit the ground within ±15° of a pass rises by up to
 // 9.5 m and falls by up to 5 (the pass's long foot; at r 300-348, never inside r 300; v12 measured on a 0.5° x 2 m grid). With ?cols=low nothing here runs. The heightfield is built once: a reload.
-const COLS_HIGH = PROFILE === 'c' && HEIGHT_PARAMS.get('cols') !== 'low';
+const COLS_HIGH = PROFILE === 'c' && HEIGHT_PARAMS.cols !== 'low';
 // [bearing of the pass, the spline's points that replace the col's three: [bearing, height]]
 const PASSES = [
   [112, [[100, 200], [106, 152], [112, 133], [118, 147], [124, 190]]],
