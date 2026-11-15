@@ -404,8 +404,12 @@ function buildThroat(ctx) {
       const bed = Math.max(0, N.noise2(y * 0.35, i * 0.02 * nb / 240 * 6) ) * 0.9 + Math.max(0, N.noise2(i * 0.31, y * 0.9)) * 0.35;
       const inR = Math.max(0.6, r - 0.3 - bed * Math.min(1, k) - (k === rows ? 0.4 : 0));
       pos.push(PIT.x + T.dx * inR, y, PIT.z + T.dz * inR);
-      const d = 1 - Math.pow(f, 0.6) * 0.92, st = 0.85 + 0.15 * Math.sin(y * 1.9 + N.noise2(i * 0.1, y * 0.2) * 2);
-      col.push(0.27 * d * st, 0.24 * d * st, 0.22 * d * st);
+      const d = 1 - Math.pow(f, 0.6) * (PF ? 0.55 : 0.92), st = 0.85 + 0.15 * Math.sin(y * 1.9 + N.noise2(i * 0.1, y * 0.2) * 2);
+      // v14-D2: read at arm's length from the slabs: beds of paler and darker rock, and wet streaks running down
+      const band = PF ? 0.78 + 0.34 * Math.max(0, Math.sin(y * 0.9 + N.noise2(i * 0.05, y * 0.05) * 1.5)) - 0.12 * Math.max(0, Math.sin(y * 2.7 + 1.1)) : 1;
+      const wet = PF ? 1 - 0.38 * Math.pow(Math.max(0, N.noise2(i * 0.55, y * 0.04)), 1.5) : 1;
+      const kk = d * st * band * wet;
+      col.push(0.27 * kk, 0.24 * kk * (wet < 0.9 ? 1.03 : 1), 0.22 * kk * (wet < 0.9 ? 1.08 : 1));
     }
   }
   const W = rows + 1;

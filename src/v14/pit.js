@@ -20,11 +20,13 @@ import { makeGround } from '../fauna/uncanny/kit.js';
 import { UnderBuilder, underMaterial, installBelow } from './under.js';
 import { C, dirOf, bearingOf, NADIR, nadirR, REEL, SHEERS, LEAD, STAIR, FLOOR, makeFloor, makeStair, wallR, LAMPS, STARLIGHT, mouthClear } from './pit/plan.js';
 import { PIT_HAZE, hazed, hazeAt } from './pit/haze.js';
+import { hyp } from '../noise.js';
 
 const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('pit') === '0';
 const col = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
-const RUBBLE = col('#3b3632'), RUBBLE_D = col('#2a2624'), ROCK = col('#3a3431'), ROCK_D = col('#1d1a19'), SLAB = col('#6b625a'), SLAB_D = col('#4f4943');
-const TIMBER = col('#2e241c'), TIMBER_L = col('#45372a'), IRON = col('#26221f'), ROPE = col('#6a5d47'), BRONZE = col('#6e5a2e'), RIME = col('#aab6c8');
+const RUBBLE = col('#3b3632'), RUBBLE_D = col('#2a2624'), ROCK = col('#3a3431'), ROCK_D = col('#1d1a19'), SLAB = col('#857b70'), SLAB_D = col('#6a6158');
+const BLACKROCK = col('#0b0a0c'), WORN = col('#a39a8e');
+const TIMBER = col('#2e241c'), TIMBER_L = col('#45372a'), IRON = col('#26221f'), ROPE = col('#6a5d47'), BRONZE = col('#6e5a2e'), RIME = col('#cfdbe8');
 const ss = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // the act's timeline, in seconds from the press
@@ -65,6 +67,10 @@ export async function build(ctx) {
   };
   cutOver(T.mesh.geometry);
   cutOver(scene.getObjectByName('saltings-crust')?.geometry);
+  // the Great Span crosses over the Pit: from the floor, through 80 m of the height fog, its underside was a flat pale lid
+  // over the disc of sky. Its materials keep the same share of their haze as the Pit's own (1 everywhere but in the Pit)
+  await ctx.built?.('span');
+  { const seen = new Set(); scene.traverse((o) => { if (!/^span/.test(o.name) || !o.material) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (!seen.has(m) && m.isMeshStandardMaterial) { seen.add(m); hazed(m); m.needsUpdate = true; } }); }
   // the rocks' pebbles that lay on the old ground down here, laid on this floor (await the rocks: before this in MODULES)
   await ctx.built?.('rocks');
   {
@@ -84,11 +90,15 @@ export async function build(ctx) {
   // ---- what lights it: the sky through the disc overhead (dimmer the deeper), the Nadir's starlight, the lamps
   const stair = makeStair(T, FL);
   const lampAt = LAMPS.map((s) => { const p = stair.point(s, -STAIR.half - 0.05); return [p[0], p[1] + 1.55, p[2]]; });
+  // and a beacon on the landing's tall post, over the lip: seen from the road's end and the moor round it
+  { const L = stair.land, u = L.r1 - 0.2, w = STAIR.half + 0.12; lampAt.push([C.x + L.dx * u - L.dz * w, L.y + 3.55, C.z + L.dz * u + L.dx * w]); }
+  const BEACON = lampAt.length - 1;
   const lit = (x, y, z, out) => {
-    out[0] = 0.22 + 0.78 * ss(yC + 4, lipY + 1, y);
+    out[0] = 0.34 + 0.66 * ss(yC + 4, lipY + 1, y);
     out[1] = 1;
     const dh = Math.hypot(x - C.x, z - C.z), dv = Math.max(0, y - yHole);
-    let gl = 1.25 * Math.exp(-Math.hypot(dh, dv * 0.8) / 3.2) + (y < yHole ? 1.6 * Math.exp(-(dh - nadirR(bearingOf(x, z)) + 0.2) * 1.5) : 0);
+    // the starlight up out of the hole is faint: it touches the sheers and the floor round it, and leaves the rim dark
+    let gl = 0.55 * Math.exp(-Math.hypot(dh, dv * 0.8) / 3.0) + (y < yHole ? 0.25 * Math.exp(-(dh - nadirR(bearingOf(x, z)) + 0.2) * 2.0) : 0);
     for (const L of lampAt) { const d = Math.hypot(x - L[0], y - L[1], z - L[2]); gl += 0.5 * Math.exp(-d / 1.6); }
     out[2] = Math.min(1.8, gl);
     return out;
@@ -104,7 +114,7 @@ export async function build(ctx) {
       const b = (i % NB) * 360 / NB, [dx, dz] = dirOf(b), r0 = nadirR(b), r1 = drawR(b), row = [];
       for (const u of rad) {
         const r = Math.min(r1, r0 + u), x = C.x + dx * r, z = C.z + dz * r, fy = FL.y(x, z);
-        let y = (fy ?? Math.max(T.heightAt(x, z), MG.at(x, z))) + 0.04 + Math.max(0, ctx.noise.noise2(x * 1.7, z * 1.7)) * 0.06;
+        let y = (fy ?? Math.max(T.heightAt(x, z), MG.at(x, z), r < floorR(b) + 1.6 ? FLOOR.edge : -Infinity)) + 0.04 + Math.max(0, ctx.noise.noise2(x * 1.7, z * 1.7)) * 0.06;
         if (u === 0) y = yC - 0.35; else if (u < 0.5) y -= 0.18 * (1 - u / 0.5);
         const shade = 0.82 + 0.3 * ctx.noise.noise2(x * 0.6 + 4, z * 0.6) + (u < 1 ? -0.15 : 0);
         row.push([x, y, z, shade]);
@@ -122,11 +132,15 @@ export async function build(ctx) {
     for (let i = 0; i < NB; i++) {
       const b0 = (i * 360) / NB, b1 = ((i + 1) * 360) / NB, [ax, az] = dirOf(b0), [bx, bz] = dirOf(b1);
       const ra = nadirR(b0), rb = nadirR(b1), y0 = yC - 0.35;
-      const lay = [0, 0.7, 1.5, NADIR.deep + 0.6];
+      const lay = [0, 0.3, 0.75, 1.25]; // the floor's thickness: a metre of rubble, then nothing
       for (let k = 0; k < lay.length - 1; k++) {
         const ja = 0.18 * Math.sin(b0 * 0.31 + k * 2.1), jb = 0.18 * Math.sin(b1 * 0.31 + k * 2.1), na = 0.18 * Math.sin(b0 * 0.31 + (k + 1) * 2.1), nb = 0.18 * Math.sin(b1 * 0.31 + (k + 1) * 2.1);
         const q = (r, j, dx, dz, y) => [C.x + dx * (r + j), y, C.z + dz * (r + j)];
-        B.quad(q(ra, ja, ax, az, y0 - lay[k]), q(rb, jb, bx, bz, y0 - lay[k]), q(rb, nb, bx, bz, y0 - lay[k + 1]), q(ra, na, ax, az, y0 - lay[k + 1]), k ? ROCK_D : ROCK, [-(ax + bx), 0, -(az + bz)], 0.2);
+        B.quad(q(ra, ja, ax, az, y0 - lay[k]), q(rb, jb, bx, bz, y0 - lay[k]), q(rb, nb, bx, bz, y0 - lay[k + 1]), q(ra, na, ax, az, y0 - lay[k + 1]), k ? BLACKROCK : ROCK_D, [-(ax + bx), 0, -(az + bz)], 0.2);
+      }
+      // the underside: a ragged lip of the floor's bottom, turned in, so its edge shows how thin the world is here
+      { const yb = y0 - lay[lay.length - 1], q = (r, dx, dz, y) => [C.x + dx * r, y, C.z + dz * r];
+        B.quad(q(ra + 0.18 * Math.sin(b0 * 0.31 + 6.3), ax, az, yb), q(rb + 0.18 * Math.sin(b1 * 0.31 + 6.3), bx, bz, yb), q(rb + 1.6, bx, bz, yb - 0.3), q(ra + 1.6, ax, az, yb - 0.3), BLACKROCK, [0, -1, 0], 0.1);
       }
     }
     // rubble: blocks fallen from the throat over the ages, kept off the ways (the passage's mouth, the stair's foot, the reel)
@@ -153,7 +167,10 @@ export async function build(ctx) {
       const s = i / treads, q = stair.at(s), [dx, dz] = dirOf(q.b), x = C.x + dx * q.r, z = C.z + dz * q.r;
       const yaw = -(q.b * Math.PI) / 180 + (rng() - 0.5) * 0.12, c0 = 0.85 + rng() * 0.3, cl = (rng() < 0.3 ? SLAB_D : SLAB).map((v) => v * c0);
       const ring = []; for (let k = 0; k < 6; k++) { const a = yaw + k * Math.PI / 3 + Math.PI / 6; ring.push([x + Math.cos(a) * HEX, z + Math.sin(a) * HEX]); }
-      B.prism(ring, q.y - 0.17, q.y, cl.map((v) => v * 0.7), cl, 0.12);
+      B.prism(ring, q.y - 0.17, q.y, cl.map((v) => v * 0.55), cl, 0.12);
+      // the worn middle: paler, where two hundred years of feet went
+      const inner = ring.map(([px, pz]) => [x + (px - x) * 0.55, z + (pz - z) * 0.55]);
+      B.prism(inner, q.y - 0.02, q.y + 0.006, WORN, WORN, 0.1);
       // a knee of iron under the slab: from the rock below, up to the slab's wall side
       const wr = Math.min(q.r + 3, Math.max(q.r + 0.9, wallR(T, q.b, q.y - 1.1) - 0.05));
       B.beam([x + dx * 0.4, q.y - 0.16, z + dz * 0.4], [C.x + dx * wr, q.y - 1.1, C.z + dz * wr], 0.022, IRON, 0.05);
@@ -179,7 +196,7 @@ export async function build(ctx) {
       const x1 = C.x + ax * L.r1 + tx * w * (STAIR.half - 0.05), z1 = C.z + az * L.r1 + tz * w * (STAIR.half - 0.05);
       B.beam([x0, L.y - 0.12, z0], [x1, L.y - 0.12, z1], 0.08, TIMBER, 0.12);
       const px = C.x + ax * (L.r1 - 0.2) + tx * w * (STAIR.half + 0.12), pz = C.z + az * (L.r1 - 0.2) + tz * w * (STAIR.half + 0.12);
-      B.beam([px, g(px, pz) - 0.3, pz], [px, L.y + 1.25, pz], 0.05, IRON, 0.05);
+      B.beam([px, g(px, pz) - 0.3, pz], [px, L.y + (w > 0 ? 3.6 : 1.25), pz], 0.05, IRON, 0.05); // one post a tall lamp-post, seen from the road
       // a bearer's foot on the rim
       const fx = C.x + ax * (stair.R0 + 0.6) + tx * w * (STAIR.half - 0.05), fz = C.z + az * (stair.R0 + 0.6) + tz * w * (STAIR.half - 0.05);
       B.beam([fx, g(fx, fz) - 0.4, fz], [fx, L.y - 0.1, fz], 0.07, TIMBER, 0.12);
@@ -313,16 +330,42 @@ export async function build(ctx) {
         d = vec3(ca * d.x - sa * d.z, d.y, sa * d.x + ca * d.z);
         float s = layer(d, 70.0, 0.82, 0.16) + layer(d, 150.0, 0.86, 0.2) * 0.8 + layer(d, 32.0, 0.93, 0.12) * 1.6;
         float neb = 0.5 + 0.5 * sin(d.x * 3.1 + d.z * 2.3 + 1.7) * sin(d.z * 4.0 - d.x * 1.3);
-        vec3 base = mix(vec3(0.012, 0.010, 0.03), vec3(0.05, 0.035, 0.09), neb * neb);
-        vec3 c = base + vec3(0.78, 0.86, 1.0) * s * (1.0 + 0.6 * uGust);
+        vec3 base = mix(vec3(0.0), vec3(0.012, 0.008, 0.026), neb * neb * neb); // black: the deepest thing in any frame
+        vec3 c = base + vec3(0.85, 0.92, 1.0) * s * 1.6 * (1.0 + 0.6 * uGust);
         c *= 1.0 - 0.6 * uDraw; // the Pit drawing its breath dims them a little
         gl_FragColor = vec4(c, 1.0);
       }`,
     depthWrite: false,
   });
-  const starDisc = new THREE.Mesh(new THREE.CircleGeometry(NADIR.r + 1.2, 28).rotateX(-Math.PI / 2), starsMat);
-  starDisc.position.set(C.x, yC - 0.35 - NADIR.deep - 0.5, C.z); starDisc.renderOrder = -2; starDisc.name = 'pit-stars';
+  const starDisc = new THREE.Mesh(new THREE.CircleGeometry(NADIR.r + 7, 32).rotateX(-Math.PI / 2), starsMat);
+  starDisc.position.set(C.x, yC - 0.35 - 1.25 - 0.6, C.z); starDisc.renderOrder = -2; starDisc.name = 'pit-stars';
   scene.add(starDisc);
+  // and the near ones, at real depth under the hole (4 to 120 m down, out to 40 m round): they move against each other
+  // as the visitor walks round the rim, and the whole field turns slowly over them, the deeper the slower, as if the
+  // world were turning over the night. Additive points, depth-tested, so only the hole shows them; no fog
+  const NS = low ? 180 : 320, spos = new Float32Array(NS * 3), sat = new Float32Array(NS * 2);
+  for (let i = 0; i < NS; i++) {
+    const a = rng() * Math.PI * 2, r = 0.5 + Math.pow(rng(), 0.6) * 40, d = 4 + Math.pow(rng(), 1.4) * 116;
+    spos.set([Math.cos(a) * r, -d, Math.sin(a) * r], i * 3); sat.set([0.5 + rng() * (rng() < 0.12 ? 3 : 1.2), rng() * 50], i * 2);
+  }
+  const sgeo = new THREE.BufferGeometry();
+  sgeo.setAttribute('position', new THREE.BufferAttribute(spos, 3)); sgeo.setAttribute('aS', new THREE.BufferAttribute(sat, 2));
+  const nearMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uHole: { value: new THREE.Vector3(C.x, yC - 1.6, C.z) }, uScale: { value: 400 }, uGust: { value: 0 } },
+    vertexShader: `uniform float uTime, uScale, uGust; uniform vec3 uHole; attribute vec2 aS; varying float vB;
+      void main() {
+        float d = -position.y, a = uTime * 0.03 / (1.0 + d * 0.04);
+        vec3 p = vec3(cos(a) * position.x - sin(a) * position.z, position.y, sin(a) * position.x + cos(a) * position.z) + uHole;
+        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+        float px = 0.06 * aS.x * uScale / max(-mv.z, 0.5);
+        vB = (0.8 + 0.2 * sin(uTime * (1.3 + aS.y * 0.05) + aS.y)) * (1.0 + 0.7 * uGust) * clamp(px / 1.5, 0.35, 1.0);
+        gl_PointSize = clamp(px * 3.0, 2.5, 14.0);
+      }`,
+    fragmentShader: `varying float vB; void main() { vec2 c = gl_PointCoord - 0.5; float r2 = dot(c, c) * 4.0; float a = exp(-r2 * 9.0) * 2.2 + exp(-r2 * 2.5) * 0.15; gl_FragColor = vec4(vec3(0.86, 0.92, 1.0) * a * vB, 1.0); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const nearStars = new THREE.Points(sgeo, nearMat); nearStars.name = 'pit-stars-near'; nearStars.frustumCulled = false; nearStars.renderOrder = -1;
+  scene.add(nearStars);
 
   // ---- the motes (the outer wind made visible) and the flames: one Points draw. Motes: idle, a slow breath up out of
   // the Nadir (uPhase advances with the flow, backwards while the Pit draws breath, so they pour back down); a gust
@@ -352,15 +395,18 @@ export async function build(ctx) {
         } else {
           float life = fract(uPhase * (0.06 + 0.04 * aM.x) + aM.x * 7.13);
           float an = aM.y + life * 2.4, r = aM.z * (0.35 + life * 0.9);
-          transformed = uHole + vec3(sin(an) * r, life * 13.0 - 0.6, -cos(an) * r);
-          a = sin(life * 3.14159) * 0.55 * uIdle;
+          // the idle breath: up the whole throat, its last wisps just over the lip (seen from the road's end)
+          transformed = uHole + vec3(sin(an) * r * (1.0 + life * 2.0), life * (uLip + 4.0) - 0.6, -cos(an) * r * (1.0 + life * 2.0));
+          a = smoothstep(0.0, 0.08, life) * (1.0 - smoothstep(0.7, 1.0, life)) * 0.6 * uIdle;
           float tt = uGustT - aM.x * 3.2;
-          if (uGustT >= 0.0 && tt > 0.0 && tt < 9.0) {
-            float up = tt * (5.5 + aM.z * 2.5) + tt * tt * 0.45, rr = 0.6 + aM.z * (0.8 + tt * 0.9);
+          if (uGustT >= 0.0 && tt > 0.0 && tt < 14.0) {
+            // the plume: up the full 26 m in five or six seconds, then spilling out over the lip and drifting off
+            float up = tt * (4.2 + aM.z * 1.6) + tt * tt * 0.12, over = max(0.0, up - uLip);
+            float rr = 0.6 + aM.z * (0.8 + tt * 0.5) + over * (0.5 + aM.x * 0.6);
             float gan = aM.y + tt * 0.5;
-            transformed = uHole + vec3(sin(gan) * rr, up, -cos(gan) * rr);
-            float ga = smoothstep(0.0, 0.25, tt) * (1.0 - smoothstep(5.0, 9.0, tt)) * 1.4;
-            a = max(a * (1.0 - smoothstep(0.0, 0.3, tt)), ga); sz = 0.1 + 0.1 * smoothstep(1.0, 6.0, tt); // bigger as they rise, so the plume reads from the lip
+            transformed = uHole + vec3(sin(gan) * rr, up - over * 0.5, -cos(gan) * rr);
+            float ga = smoothstep(0.0, 0.25, tt) * (1.0 - smoothstep(9.0, 14.0, tt)) * 1.5;
+            a = max(a * (1.0 - smoothstep(0.0, 0.3, tt)), ga); sz = 0.12 + 0.28 * smoothstep(1.0, 7.0, tt); // bigger as they rise: the plume reads from 40 m off
           }
         }
         vec4 mvPosition = viewMatrix * vec4(transformed, 1.0); gl_Position = projectionMatrix * mvPosition;
@@ -383,13 +429,36 @@ export async function build(ctx) {
   const motes = new THREE.Points(mgeo, mmat);
   motes.name = 'pit-motes'; motes.frustumCulled = false; motes.renderOrder = 20;
   scene.add(motes);
+  // the breath of fog that comes up with the gust: soft pale puffs rising the throat and spilling over the lip (one Points)
+  const NP = low ? 18 : 30, ppos = new Float32Array(NP * 3), pat = new Float32Array(NP * 3);
+  for (let i = 0; i < NP; i++) { ppos.set([C.x, yHole, C.z], i * 3); pat.set([rng(), rng() * Math.PI * 2, 2.5 + rng() * 3.5], i * 3); }
+  const pgeo = new THREE.BufferGeometry(); pgeo.setAttribute('position', new THREE.BufferAttribute(ppos, 3)); pgeo.setAttribute('aP', new THREE.BufferAttribute(pat, 3));
+  const puffMat = new THREE.ShaderMaterial({
+    uniforms: { uGustT: { value: -1 }, uScale: { value: 400 }, uHole: { value: new THREE.Vector3(C.x, yHole, C.z) }, uLip: { value: lipY - yHole } },
+    vertexShader: `uniform float uGustT, uScale, uLip; uniform vec3 uHole; attribute vec3 aP; varying float vA;
+      void main() {
+        float tt = uGustT - aP.x * 2.5; vA = 0.0;
+        vec3 p = uHole;
+        if (uGustT >= 0.0 && tt > 0.0 && tt < 16.0) {
+          float up = tt * (3.6 + aP.x * 1.2), over = max(0.0, up - uLip), rr = 0.5 + tt * 0.25 + over * 0.8;
+          p += vec3(sin(aP.y + tt * 0.2) * rr, up - over * 0.6, -cos(aP.y + tt * 0.2) * rr);
+          vA = smoothstep(0.0, 1.0, tt) * (1.0 - smoothstep(9.0, 16.0, tt)) * 0.16;
+        }
+        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+        gl_PointSize = vA > 0.0 ? clamp(aP.z * (1.0 + max(0.0, tt) * 0.12) * uScale / max(-mv.z, 1.0), 2.0, 256.0) : 0.0;
+      }`,
+    fragmentShader: `varying float vA; void main() { vec2 c = gl_PointCoord - 0.5; float r2 = dot(c, c) * 4.0; gl_FragColor = vec4(vec3(0.62, 0.68, 0.82) * exp(-r2 * 2.6) * vA, 1.0); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const breath = new THREE.Points(pgeo, puffMat); breath.name = 'pit-breath'; breath.frustumCulled = false; breath.renderOrder = 19;
+  scene.add(breath);
 
   // ---- the lights: the Nadir's, cold, up out of the hole; the lead's own; the lamps
   const SL = new THREE.Color(STARLIGHT);
   const nadirLight = new THREE.PointLight(SL, 4, 13, 2); nadirLight.position.set(C.x, yHole + 0.4, C.z); nadirLight.name = 'pit-nadir-light'; scene.add(nadirLight);
   const leadLight = new THREE.PointLight(SL, 1.2, 6, 2); leadLight.name = 'pit-lead-light'; scene.add(leadLight);
   // (each light a little out from its post toward the open Pit: inside the cage the post went white)
-  const lamps = lampAt.map(([x, y, z]) => { const L = new THREE.PointLight(SL, 1.6, 9, 2); const k = 0.45 / Math.hypot(x - C.x, z - C.z); L.position.set(x - (x - C.x) * k, y + 0.05, z - (z - C.z) * k); L.name = 'pit-lamp'; scene.add(L); return L; });
+  const lamps = lampAt.map(([x, y, z], j) => { const L = new THREE.PointLight(SL, j === BEACON ? 3.5 : 1.6, j === BEACON ? 14 : 9, 2); const k = 0.45 / Math.hypot(x - C.x, z - C.z); L.position.set(x - (x - C.x) * k, y + 0.05, z - (z - C.z) * k); L.name = 'pit-lamp'; scene.add(L); return L; });
 
   // ---- floors and colliders: the stair (held edges), the Nadir's ring, the sheers' feet, the reel
   ctx.addWalkable(stair.floor, { stack: true, keep: true, name: 'pit-stair' });
@@ -410,25 +479,73 @@ export async function build(ctx) {
     const dx = x - C.x, dz = z - C.z; if (dx * dx + dz * dz > 400) return 0;
     const e = Math.hypot(dx, dz) - pitRim(bearingOf(x, z)); if (e > 0) return 0;
     return 0.6 * ss(lipY - 9, lipY - 17, y) * ss(0, -2, e);
-  }, { size: 1 }); // never 1: the Pit is open to the sky, so the kit's seal never shuts it
-  // kept under the seal, so a visitor in the passage under the moor (D1's) sees the Pit's own things through its mouth
-  for (const o of [mesh, drum, pawl, lead, line, starDisc, motes]) ctx.below.keep?.(o);
+  }, { size: 1 }); // a hall's room; at most 0.6 here, so the kit's seal (at 1) never shuts the Pit, which is open to the sky
+
+  // ---- what the soundings leave: the lead white with rime for good after the first; frost on the sheers, from the
+  // sheave down the legs, a fifth of their length more with each sounding (and the drum's line pale with it)
+  const RIMEC = new THREE.Color('#d4deea'), LEADC = new THREE.Color('#4a5c78');
+  const frostMat = hazed(new THREE.MeshStandardMaterial({ color: '#cfdbe8', roughness: 0.6, emissive: new THREE.Color(STARLIGHT), emissiveIntensity: 0.12 }));
+  const frost = new THREE.Mesh(new THREE.BufferGeometry(), frostMat); frost.name = 'pit-frost'; frost.visible = false; scene.add(frost);
+  function rime(n) {
+    leadMat.color.copy(n > 0 ? RIMEC : LEADC);
+    const f = Math.min(1, n * 0.2);
+    frost.visible = f > 0; if (!f) return;
+    const F = new UnderBuilder(lit);
+    for (const [x, y, z] of legFeet) {
+      const top = [apex[0] + (x - C.x) * 0.04, apex[1] + 0.35, apex[2] + (z - C.z) * 0.04];
+      F.beam(top, [top[0] + (x - top[0]) * f, top[1] + (y - 0.3 - top[1]) * f, top[2] + (z - top[2]) * f], 0.145, RIME, 0.2);
+    }
+    F.box(apex[0], apex[1] + 0.28, apex[2], 0.3, 0.32, 0.3, 0.4, RIME, RIME, 0.2);
+    frost.geometry.dispose(); frost.geometry = F.geometry();
+  }
+
+  // ---- into the sky under the world: whoever gets over the Nadir (a teleport, a carry, a fall from the lip) falls
+  // through. The view goes to its stars and closes; they wake at the Bitter End on the icefall's shelf, by the
+  // leadsmen's broken eye and the frayed end of their line: the line that sounds the world brought them up
+  const veil = typeof document !== 'undefined' ? document.createElement('div') : null;
+  if (veil) { veil.id = 'pit-veil'; veil.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:8;opacity:0;background:#000;'; document.body.appendChild(veil); }
+  const fall = { t: -1, release: null, falls: 0 };
+  const WAKE = { x: 44, z: -390 }; // the Bitter End (settings.js's stand: yaw 1.2, the broken eye)
+  function skyFall(dt) {
+    const p = ctx.player;
+    if (fall.t < 0) {
+      if (p.carried || p.pos.y - p.eye > yC - 1.6) return;
+      const dx = p.pos.x - C.x, dz = p.pos.z - C.z; if (dx * dx + dz * dz > 20) return;
+      fall.t = 0; fall.falls++; let vy = -2;
+      fall.release = ctx.controls.carry({ step(pos, d) { vy -= 9.8 * d; pos.y = Math.max(yC - 80, pos.y + vy * d); }, drop() {}, look: () => ({ yaw: p.yaw, pitch: -1.3, rate: 3 }) });
+      ctx.audio?.cue?.('act-pit-breath', holeAt, { dur: 6 });
+    }
+    fall.t += dt;
+    if (veil) veil.style.opacity = String(fall.t < 2.2 ? ss(0.9, 2.2, fall.t) : 1 - ss(3.4, 5.4, fall.t));
+    if (fall.t >= 3.2 && fall.release) {
+      fall.release(); fall.release = null;
+      ctx.controls.placeAt(WAKE.x, WAKE.z); p.yaw = 1.2; p.pitch = 0.1; p.vel?.set(0, 0, 0);
+    }
+    if (fall.t >= 5.4) { fall.t = -1; if (veil) veil.style.opacity = '0'; }
+  }
+
+  // kept under the seal, so a visitor in the passage under the moor (D1's) sees the Pit's own things through its mouth:
+  // everything of the Pit's own, the throat's rock, the road's slabs and the lip's clods; and the disc of sky is an opening
+  const kept = [mesh, drum, pawl, lead, line, starDisc, nearStars, motes, breath, frost, scene.getObjectByName('pit-line-run'), scene.getObjectByName('paths-pit-throat'), scene.getObjectByName('paths-pit-slabs'), scene.getObjectByName('paths-pit-lip')];
+  for (const o of kept) if (o) ctx.below.keep?.(o);
+  ctx.below.opening?.({ x: C.x, y: lipY, z: C.z, r: 15 });
 
   // ---- the act: "Let go the lead", at the reel's pawl, from the passage's side
   const S = { t: -1, n: 0, phase: 0, flow: 1, gust: 0, sounding: false, sounds: 0, leadY: leadRestY, line: 0 };
   // offered at the crank's end of the drum, the pawl and ratchet there, to a visitor looking at the reel or past it at the Nadir
   const actAt = { x: reelX + ax2 * (drumL / 2 + 0.2) + rdx * 0.25, y: drumY + 0.15, z: reelZ + az2 * (drumL / 2 + 0.2) + rdz * 0.25 };
-  const looks = (pl, x, z, cone) => { const dx = x - pl.pos.x, dz = z - pl.pos.z, l = Math.hypot(dx, dz) || 1; return (-Math.sin(pl.yaw) * dx - Math.cos(pl.yaw) * dz) / l >= Math.cos(cone); };
+  const looks = (pl, x, z, cone) => { const dx = x - pl.pos.x, dz = z - pl.pos.z, l = hyp(dx, dz) || 1; return (-Math.sin(pl.yaw) * dx - Math.cos(pl.yaw) * dz) / l >= Math.cos(cone); };
   const cueAt = { x: reelX, y: drumY, z: reelZ }, holeAt = { x: C.x, y: yHole, z: C.z };
   const keep = (n) => { mmat.uniforms.uKept.value = Math.min(14, n * 2); };
   const handle = ctx.acts?.add({
     id: 'pit-lead', at: actAt, reach: 2.4, rise: 2.5, facing: (pl) => looks(pl, actAt.x, actAt.z, 0.8) || looks(pl, C.x, C.z, 0.6),
     words: 'Let go the lead', every: 'free',
     lure: { x: pawlBase.x, y: pawlBase.y + 0.05, z: pawlBase.z, face: null },
-    do(n) { S.t = 0; S.n = n; S.sounding = true; S.sounds++; ctx.audio?.cue?.('act-pit-pawl', cueAt); return SOUNDING.done; },
-    show(n) { keep(n); },
+    // one clock: the act's own (performance.now, as acts.js's busy timer), so a hidden tab cannot leave the two apart
+    do(n) { S.t0 = performance.now() / 1000; S.t = 0; S.n = n; S.sounding = true; S.sounds++; cuedOut = cuedTaut = cuedBreath = cuedHome = false; ctx.audio?.cue?.('act-pit-pawl', cueAt); return SOUNDING.done; },
+    show(n) { keep(n); rime(n); },
   });
-  if (!handle) keep(0);
+  if (!handle) { keep(0); rime(0); }
 
   // ---- per frame, near: the haze by the eye's depth, the stars' clock, the breath, the sounding
   const ds = new THREE.Vector2(), cam = ctx.camera.position;
@@ -446,13 +563,15 @@ export async function build(ctx) {
   function update(dt, t) {
     starsMat.uniforms.uTime.value = t; mmat.uniforms.uTime.value = t;
     ctx.renderer.getDrawingBufferSize(ds);
-    mmat.uniforms.uScale.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5));
+    mmat.uniforms.uScale.value = puffMat.uniforms.uScale.value = nearMat.uniforms.uScale.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5));
+    nearMat.uniforms.uTime.value = t; nearMat.uniforms.uGust.value = S.gust;
+    skyFall(dt);
     const near = (cam.x - C.x) ** 2 + (cam.z - C.z) ** 2 < 32 * 32;
     PIT_HAZE.value = near ? hazeAt(cam.y, lipY, yC) : 1;
     // the sounding
     let flowTo = 1, depth = 0;
     if (S.t >= 0) {
-      S.t += dt; const st = S.t;
+      S.t = performance.now() / 1000 - S.t0; const st = S.t;
       depth = leadDepth(st);
       // the pawl swung up and clear, then back down as the lead comes home
       pawlA = st < SOUNDING.home ? Math.min(1, st / SOUNDING.knock) : Math.max(0, 1 - (st - SOUNDING.home) / 0.4);
@@ -461,7 +580,7 @@ export async function build(ctx) {
       else if (st < SOUNDING.breath) flowTo = 0;
       else flowTo = 1;
       const gt = st - SOUNDING.breath;
-      mmat.uniforms.uGustT.value = gt >= 0 && gt < 14 ? gt : -1;
+      mmat.uniforms.uGustT.value = puffMat.uniforms.uGustT.value = gt >= 0 && gt < 16 ? gt : -1;
       S.gust = gt >= 0 ? ss(0, 0.8, gt) * (1 - ss(6, 12, gt)) : 0;
       if (!cuedOut && st >= SOUNDING.knock) { cuedOut = true; ctx.audio?.cue?.('act-pit-run', cueAt, { dur: SOUNDING.out - SOUNDING.knock }); }
       if (!cuedTaut && st >= SOUNDING.out) { cuedTaut = true; ctx.audio?.cue?.('act-pit-taut', { x: apex[0], y: apex[1], z: apex[2] }); }
@@ -469,7 +588,7 @@ export async function build(ctx) {
       if (!cuedHome && st >= SOUNDING.home - 0.6) { cuedHome = true; ctx.audio?.cue?.('act-pit-home', cueAt); }
       // the drum turns as the line runs: out, then back in
       const dd = depth - S.line; S.line = depth; drumA += dd / (drumR + 0.05);
-      if (st >= SOUNDING.done) { S.t = -1; S.sounding = false; cuedOut = cuedTaut = cuedBreath = cuedHome = false; mmat.uniforms.uGustT.value = -1; S.gust = 0; S.line = 0; keep(S.n); }
+      if (st >= SOUNDING.done) { S.t = -1; S.sounding = false; cuedOut = cuedTaut = cuedBreath = cuedHome = false; mmat.uniforms.uGustT.value = puffMat.uniforms.uGustT.value = -1; S.gust = 0; S.line = 0; keep(S.n); rime(S.n); }
     }
     S.flow += (flowTo - S.flow) * Math.min(1, dt * 1.5);
     S.phase += dt * S.flow;
@@ -485,15 +604,15 @@ export async function build(ctx) {
     line.scale.y = Math.max(0.01, top - eyeY);
     const twang = S.t >= SOUNDING.out ? 0.08 * Math.exp(-(S.t - SOUNDING.out) * 1.2) * Math.sin(S.t * 31) : 0;
     line.rotation.set(twang + swing * 0.06, 0, 0);
-    leadMat.emissiveIntensity = 0.18 + 1.2 * S.gust + (S.t > SOUNDING.home - 1 && S.t < SOUNDING.done ? 0.8 * (1 - ss(SOUNDING.home - 1, SOUNDING.done, S.t)) : 0);
+    leadMat.emissiveIntensity = (S.n > 0 && !(S.t >= 0 && S.t < SOUNDING.home) ? 0.45 : 0.18) + 1.2 * S.gust + (S.t > SOUNDING.home - 1 && S.t < SOUNDING.done ? 0.8 * (1 - ss(SOUNDING.home - 1, SOUNDING.done, S.t)) : 0);
     leadLight.position.set(C.x, S.leadY + 0.6, C.z); leadLight.intensity = depth > 4 ? 0 : 1.2 + 2 * S.gust;
     nadirLight.intensity = 4 * (0.85 + 0.15 * Math.sin(t * 0.4)) * (1 - 0.35 * Math.max(0, -S.flow) / 1.6) + 9 * S.gust;
     drum.quaternion.setFromAxisAngle(_up, Math.atan2(-az2, ax2)).multiply(_q.setFromAxisAngle(drumAxis, drumA));
     pawl.rotation.x = -0.9 * pawlA;
-    for (let i = 0; i < lamps.length; i++) lamps[i].intensity = 1.6 * (0.88 + 0.08 * Math.sin(t * 9 + i * 2) + 0.04 * Math.sin(t * 21 + i)) * (1 + 0.6 * S.gust);
+    for (let i = 0; i < lamps.length; i++) lamps[i].intensity = (i === BEACON ? 3.5 : 1.6) * (0.88 + 0.08 * Math.sin(t * 9 + i * 2) + 0.04 * Math.sin(t * 21 + i)) * (1 + 0.6 * S.gust);
   }
   const _up = new THREE.Vector3(0, 1, 0), _q = new THREE.Quaternion();
-  ctx.registerUpdate(update, { pos: { x: C.x, z: C.z }, near: 70, hz: 2, r: 20 });
+  ctx.registerUpdate(update, { pos: { x: C.x, y: (yC + lipY) / 2, z: C.z }, near: 70, hz: 2, r: 20 });
 
   // the way up, for heights-test: from the floor at the stair's foot, up the slabs, over the landing to the turf
   const foot = stair.point(1), [hx, hz] = dirOf(STAIR.head);
@@ -507,8 +626,8 @@ export async function build(ctx) {
   const tris = geo.attributes.position.count / 3;
   ctx.pit = {
     off: false, stair, yC, yHole, lipY, apex, reel: { x: reelX, z: reelZ, y: drumY }, act: actAt, state: S, treads, cut,
-    floor: stair.floor, haze: PIT_HAZE,
-    stats: () => ({ calls: 11, tris: Math.round(tris + dgeo.attributes.position.count / 3), treads, colliders, cut, lights: 2 + lamps.length, motes: NM }),
+    floor: stair.floor, bowl: FL.y, haze: PIT_HAZE, sky: fall,
+    stats: () => ({ calls: 15, tris: Math.round(tris + dgeo.attributes.position.count / 3), treads, colliders, cut, lights: 2 + lamps.length, motes: NM }),
   };
   ctx.log?.(`pit: floor at ${yC.toFixed(1)} (lip ~${lipY.toFixed(1)}), ${treads} slabs up ${(stair.yHead - stair.yFoot).toFixed(1)} m over ${stair.len.toFixed(0)} m, ${Math.round(tris)} tris, ${cut} terrain tris cut, ${(performance.now() - t0).toFixed(0)} ms`);
 }

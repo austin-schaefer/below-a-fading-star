@@ -85,7 +85,7 @@ export const LANDMARKS = {
   croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", line: "“We discovered, however, at an early date, that we ourselves and our buildings were invisible to men.”", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'Lonely Staircase', aside: false },
   // the top of the lift: the gangway off the carriage and the walked gallery on the cliff, 135 m up
   remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
-  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -12], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
+  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -27], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
 };
 
 // v7.1: region cards. Austin's copy for four of the v4 regions (briefs/copy/place-copy.md): the card shows while the
