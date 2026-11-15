@@ -24,7 +24,9 @@ Part A, the kit, pushed at `39e7401` (told to main at once); Part B, the place, 
 
 ## Tests (round 2)
 
-SUITE_R2
+Part A, on its own tree (`39e7401`): `ONLY=edges,walk,hop,heights,audio tools/suite.sh 8161`: 5 tests, 0 failed (walk 13, hop 25, edges 124, heights 111, audio 101); edges and heights again on a clean export of the commit: 124 and 111 PASS.
+
+Part B, with `next` merged (B4 stands, B5 quotations): `ONLY=edges,heights,settings,walk,hop,audio,perf,loading,regions,paths,roads tools/suite.sh 8161`: **11 tests, 0 failed, 18 min 37 s**: settings 85, paths 76, roads 56, regions 56, walk 13, hop 25, edges 136 (12 new: the stair at 98%, the landing over the hole and over the turf), heights 111, audio 101, loading 28, perf 29 PASS lines. On the way: with `next` merged only up to B4, `audio` failed `act-bell-letters` (+0.5 dB, the bell's tail under the cue) three times running while the Part A tree and `next` passed; merging B5 cleared it (+2.3 dB), so I take it as `next`'s at that point, not this branch's (the audio graph is the same in Part A and here).
 
 ## Frames, in order (`shots/wip/`)
 
