@@ -344,7 +344,7 @@ export async function build(ctx) {
     const yaw = Math.atan2(ox, oz) - Math.PI / 2;
     const f0 = -MOUTH.portal, f1 = 1.6, depth = (f1 - f0) / 2, mid = (f0 + f1) / 2;
     const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const [x, , z] = W(along, lat, 0); PO.box(x, y, z, ha, hy, hl, yaw, col, colTop, 0.1); };
-    const open = 1.2, top = Y + 3.25, outer = 3.1, order = 1.75;
+    const open = 1.2, top = Y + 3.25, outer = 3.5, order = 1.75;
     // the piers in courses of dressed blocks (the way through is between them), an inner order of jambs and a lintel
     // stepped in from the face, the lintel block over all, the cornice, the face's rough surround
     let ci = 0;
@@ -490,8 +490,17 @@ export async function build(ctx) {
       return n;
     };
     // the throat: any corner in the way through the gatehouse
-    const inWay = (Pp, i) => { const [al, lat] = local(Pp[i * 3], Pp[i * 3 + 2]), y = Pp[i * 3 + 1]; return al > portal.f0 - 0.3 && al < 7 && Math.abs(lat) < portal.open + 0.55 && y < P.YM + 3.9 && y > P.YM - 2; };
+    // (the whole of the gatehouse's face: the rock is cut where the gatehouse stands, its own mass covers the hole)
+    const inWay = (Pp, i) => { const [al, lat] = local(Pp[i * 3], Pp[i * 3 + 2]), y = Pp[i * 3 + 1]; return al > portal.f0 - 0.3 && al < 7 && Math.abs(lat) < portal.outer + 0.2 && y < P.YM + 6.2 && y > P.YM - 2; };
     cuts.throat = cutIdx(scene.getObjectByName('paths-pit-throat')?.geometry, (Pp, a, b, c) => inWay(Pp, a) || inWay(Pp, b) || inWay(Pp, c));
+    // the Pit's own rock at the wall's foot (D2's pit-floor mesh), not its bowl: triangles rising more than 0.6 m over
+    // the floor with a corner where the gatehouse stands
+    { const g = scene.getObjectByName('pit-floor')?.geometry, hy = (Pp, i) => Pp[i * 3 + 1];
+      const test = (Pp, a, b, c) => Math.max(hy(Pp, a), hy(Pp, b), hy(Pp, c)) > P.YM + 0.6 && (inWay(Pp, a) || inWay(Pp, b) || inWay(Pp, c));
+      if (g?.index) cuts.pitRock = cutIdx(g, test);
+      else if (g) { const A = g.attributes.position, Pp = A.array; let n = 0;
+        for (let t = 0; t < A.count; t += 3) if (test(Pp, t, t + 1, t + 2)) { for (let k = 3; k < 9; k++) Pp[t * 3 + k] = Pp[t * 3 + (k % 3)]; n++; }
+        if (n) A.needsUpdate = true; cuts.pitRock = n; } }
     // the terrain: triangles wholly in the wall (every corner under the lip by 4 m) with a corner across the way
     const lipY = T.heightAt(PIT.x + ox * (pitRim(MOUTH.b) + 1.5), PIT.z + oz * (pitRim(MOUTH.b) + 1.5));
     const inWall = (Pp, i) => Pp[i * 3 + 1] < lipY - 4;
