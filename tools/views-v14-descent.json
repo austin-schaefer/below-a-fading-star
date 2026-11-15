@@ -1,0 +1,118 @@
+[
+ {
+  "name": "01-moor",
+  "x": 262,
+  "z": 6,
+  "yaw": -2.9927,
+  "pitch": 0.02,
+  "settle": 2500
+ },
+ {
+  "name": "02-shears",
+  "x": 277,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": -0.08,
+  "settle": 2500
+ },
+ {
+  "name": "03-head",
+  "x": 268.6,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": -0.62,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(268.6, 47.75, fp.coffinRoad.floor(268.6, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.62; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(268.6, 47.75, fp.coffinRoad.floor(268.6, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.62; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "04-flight",
+  "x": 264.5,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": -0.45,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(264.5, 47.75, fp.coffinRoad.floor(264.5, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.45; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(264.5, 47.75, fp.coffinRoad.floor(264.5, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.45; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "05-stair",
+  "x": 258,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(258, 47.75, fp.coffinRoad.floor(258, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(258, 47.75, fp.coffinRoad.floor(258, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "06-raft",
+  "x": 249.0,
+  "z": 47.75,
+  "yaw": 0.2885,
+  "pitch": -0.05,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(249.0, 47.75, fp.coffinRoad.floor(249.0, 47.75) + 0.02); p.yaw = 0.2885; p.pitch = -0.05; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(249.0, 47.75, fp.coffinRoad.floor(249.0, 47.75) + 0.02); p.yaw = 0.2885; p.pitch = -0.05; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "07-road",
+  "x": 250.4,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": 0.03,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(250.4, 42, fp.coffinRoad.floor(250.4, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.03; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(250.4, 42, fp.coffinRoad.floor(250.4, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.03; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "08-under-roof",
+  "x": 274,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": 0.05,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(274, 42, fp.coffinRoad.floor(274, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.05; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(274, 42, fp.coffinRoad.floor(274, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.05; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "09-sun",
+  "x": 292.5,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": 0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(292.5, 42, fp.coffinRoad.floor(292.5, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(292.5, 42, fp.coffinRoad.floor(292.5, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "10-back",
+  "x": 294.5,
+  "z": 42,
+  "yaw": 1.5708,
+  "pitch": 0.04,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(294.5, 42, fp.coffinRoad.floor(294.5, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.04; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(294.5, 42, fp.coffinRoad.floor(294.5, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.04; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "11-door",
+  "x": 246.7,
+  "z": 45,
+  "yaw": 3.1416,
+  "pitch": 0.0,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 45, fp.coffinRoad.floor(246.7, 45) + 0.02); p.yaw = 3.1416; p.pitch = 0.0; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 45, fp.coffinRoad.floor(246.7, 45) + 0.02); p.yaw = 3.1416; p.pitch = 0.0; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "12-up",
+  "x": 247.4,
+  "z": 47.75,
+  "yaw": -1.5708,
+  "pitch": 0.5,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(247.4, 47.75, fp.coffinRoad.floor(247.4, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = 0.5; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(247.4, 47.75, fp.coffinRoad.floor(247.4, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = 0.5; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ }
+]

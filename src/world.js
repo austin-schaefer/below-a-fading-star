@@ -80,6 +80,7 @@ export const LANDMARKS = {
   lead: { x: 76, z: -322.3, r: 0, y: null, name: "The Fallen Lead", card: true, feet: [47, 75], axis: { x0: 58, x1: 94, half: 2.5 }, at: { x: 96, z: -320 }, reached: 'the icefall', aside: false },
   bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
   diffident: { x: 286, z: -14, r: 9, y: null, name: "The Diffident Stair", card: true, feet: [-30, 30], aside: false },
+  coffinroad: { x: 271, z: 42, r: 0, y: null, name: "The Coffin Road", card: true, feet: [-22, -8], axis: { x0: 246, x1: 296, half: 6 }, at: { x: 250.4, z: 42 }, reached: 'the Sexton’s stair', aside: false }, // v14-D0: the road of coffins on the Foundered Nave's water, 16 m under the moor (src/v14/coffin-road.js)
   croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'the Diffident Stair', aside: false },
   landing: { x: -299, z: -18, r: 9, y: null, name: "The Warders’ Landing", card: true, aside: false },
   remand: { x: -375, z: -70, r: 0, y: null, name: "The Remand", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
