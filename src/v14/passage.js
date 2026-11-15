@@ -23,8 +23,9 @@ const STONE = C('#6e655c'), STONE_D = C('#4c453f'), ROCK = C('#77707c'), GRIT = 
 const GULF = C('#2f2a26'), IRON = C('#26221f'), WAX = C('#6f6a58'), TIMBER = C('#2a2018'), BED = C('#8c8576'), CHALK = C('#cfc6b2');
 const GOLDS = [C('#d8ac3c'), C('#ecc456'), C('#c09432'), C('#f2d070')], RED = C('#6a2a1c'), OCHRE = C('#8a6420'), SLATE = C('#4d5a63');
 const WICKER = C('#5e4a2e'), CLOTH = C('#4a1c18'), BRONZE = C('#6b4f2a'), CUT = C('#221e1b');
-const GREEN = '#9fe8c2', COLD = '#bcd2ff', WARM = '#ffc47e'; // the Sexton's corpse-candles, the sounder's lamps (the Pit's starlight), the Reckoner's lamp
-const KIND_COL = [GREEN, COLD, WARM];
+const DAY = '#f4ead0', COLD = '#bcd2ff', WARM = '#ffc47e'; // stored daylight (the fourth people's, failing), the sounder's lamps (the Pit's starlight), the Reckoner's lamp
+const KIND_COL = [DAY, COLD, WARM];
+const MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C('#8a8070'), AMBER = C('#8a5a1c'), AMBER_L = C('#b4802e'), OXBLOOD = C('#5e1c16'), LENS = C('#fff6dc'), LENS_D = C('#5f6c63');
 
 export async function build(ctx) {
   if (PASSAGE_OFF) { ctx.passage = { off: true }; return; }
@@ -56,7 +57,7 @@ export async function build(ctx) {
   const pitLight = (x, y, z) => { const r = rOf(x, z); return r > P.rf + 14 ? 0 : 0.55 * Math.pow(ss(P.rf + 14, P.rf - 1, r), 1.6); };
   const litFor = (kinds, R, k, mouth = false) => { const G = glow(kinds, R, k); return (x, y, z, out) => { out[0] = 0.012; out[1] = 0; out[2] = Math.min(1.2, G(x, y, z) + (mouth ? pitLight(x, y, z) : 0)); return out; }; };
   const builders = {
-    flight: new UnderBuilder(litFor([0], 7, 1.15)),
+    flight: new UnderBuilder(litFor([0], 7, 0.62)),
     flute: new UnderBuilder(litFor([1], 8.5, 0.95)),
     sun: new UnderBuilder(litFor([2], 13.5, 0.95)),
     gulf: new UnderBuilder(litFor([1], 8, 1.0)),
@@ -67,7 +68,15 @@ export async function build(ctx) {
   // ---- the colours: dressed blocks in courses; the Flute's rock banded along its flutes, its grit in ripples; the room
   const hsh = P.hsh;
   function colour(kind, s, k, v, i, floorStrip) {
-    if (kind === 'flight' || kind === 'gate' || kind === 'neck') {
+    if (kind === 'flight') {
+      // the Line: milk resin, crazed (a fine darker web), clouded toward its foot; silt drifted in its floor
+      if (floorStrip) { const j = 0.85 + 0.25 * hsh(i * 7 + k) + (i % 4 === 0 ? -0.08 : 0); return [SILT[0] * j, SILT[1] * j, SILT[2] * j]; }
+      // (the crazing a slow clouding along and round it, not quad by quad)
+      const craze = 0.9 + 0.1 * P.nz(s * 0.8 + k * 0.37, 1, 21), cloud = 0.7 + 0.3 * Math.min(1, v / 1.8), rib = (s % 1.2) < 0.41 ? 0.86 : 1;
+      const j = craze * cloud * rib * 0.82;
+      return [MILK[0] * j, MILK[1] * j, MILK[2] * j];
+    }
+    if (kind === 'gate' || kind === 'neck') {
       if (floorStrip) { const b = Math.floor(s / 0.9) * 13 + Math.floor((k + 7) / 2); const j = 0.78 + 0.3 * hsh(b); return [STONE_D[0] * j * 1.1, STONE_D[1] * j * 1.1, STONE_D[2] * j * 1.1]; }
       const c = Math.floor((v + 0.4) / 0.46), b = Math.floor((s + (c % 2) * 0.45) / 0.9), j = 0.8 + 0.34 * hsh(b * 31 + c * 7 + (k > KA / 2 ? 999 : 0));
       const base = v > 2.85 ? STONE_D : STONE; return [base[0] * j, base[1] * j, base[2] * j];
@@ -141,42 +150,44 @@ export async function build(ctx) {
     }
   }
 
-  // ---- the Bearers' Flight: the bearers' benches either side on each landing, the candles' brackets and cages; a
-  // bier left on the last bench
+  // ---- the Line: the fourth people's tube, made in one piece (no joint, no stone, no iron): its lenses (glass bulbs
+  // in collars of the same milk resin, most dark, a few still holding stored daylight), two of their carriers stalled
+  // in its nodes (sealed vessels of bottle amber, an ox-blood band round each, one cracked and silted), and its broken
+  // end where the wind's bore begins (shards of the tube standing out of the rock)
   {
-    const Bd = builders.flight;
-    const at = (s, d, v) => P.world(s, d, v);
-    const fr = (s) => { const p = P.at(s), l = Math.hypot(p.tx, p.tz); return { tx: p.tx / l, tz: p.tz / l }; };
-    const yawOf = (s) => { const f = fr(s); return Math.atan2(f.tx, f.tz) - Math.PI / 2; };
-    const benches = [];
-    for (const l of P.lamps) if (l.kind === 0) benches.push(l.s);
-    for (const sb of benches) {
-      for (const side of [-1, 1]) {
-        const [x, y, z] = at(sb + 0.2, side * 0.88, 0.32), yaw = yawOf(sb);
-        // a long low bench of one stone, a hollow worn in its top where a bier was set down
-        Bd.box(x, y, z, 0.95, 0.32, 0.2, yaw, STONE_D, STONE, 0.08);
-      }
-    }
-    // the candles: a stone bracket out of the wall, an iron cage on it, a candle in it (the flame is the Points'),
-    // and the one gone out where the cut ends
-    const cage = (s, d, v, lit) => {
-      const side = Math.sign(d), [bx, by, bz] = at(s, d + side * 0.06, v - 0.18), yaw = yawOf(s);
-      Bd.box(bx, by, bz, 0.13, 0.06, 0.16, yaw, STONE, STONE, 0.08);
-      const [cx, cy, cz] = at(s, d - side * 0.02, v);
-      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) Bd.beam([cx + a * 0.07, cy - 0.12, cz + b * 0.07], [cx + a * 0.06, cy + 0.16, cz + b * 0.06], 0.008, IRON, 0.04);
-      Bd.box(cx, cy + 0.17, cz, 0.08, 0.01, 0.08, 0, IRON);
-      const h = lit ? 0.12 : 0.05;
-      Bd.prism([[cx - 0.02, cz - 0.02], [cx + 0.02, cz - 0.02], [cx + 0.02, cz + 0.02], [cx - 0.02, cz + 0.02]], cy - 0.12, cy - 0.12 + h, WAX, WAX, 0.1);
+    const Bd = builders.flight, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3();
+    const place = (x, y, z, dir, up = [0, 1, 0]) => { const f = new THREE.Vector3(...dir).normalize(), u = new THREE.Vector3(...up); const r = new THREE.Vector3().crossVectors(u, f).normalize(); u.crossVectors(f, r); M4.makeBasis(r, u, f); M4.setPosition(x, y, z); return M4.clone(); };
+    const inward = (s, d, v) => { const p = P.at(s), l = Math.hypot(p.tx, p.tz), c = P.section(s); void c; const [x, y, z] = P.world(s, d, v), [cx, cy, cz] = P.world(s, 0, 1.6); return [cx - x, cy - y, cz - z]; };
+    const lens = (s, d, v, lit) => {
+      const [x, y, z] = P.world(s, d, v), n = inward(s, d, v);
+      Bd.geo(new THREE.TorusGeometry(0.27, 0.07, 6, 14), place(x, y, z, n), MILK_D, 0.05);
+      Bd.geo(new THREE.SphereGeometry(0.2, 10, 7), place(x + n[0] * 0.03, y + n[1] * 0.03, z + n[2] * 0.03, n), lit ? LENS : LENS_D, 0.04);
     };
-    for (const l of P.lamps) if (l.kind === 0) cage(l.s, l.d, l.v, true);
-    cage(P.OUT_CANDLE[0], P.OUT_CANDLE[1], P.OUT_CANDLE[2], false);
-    // the bier: two poles and the slats between them, leaning on the last landing's bench
-    {
-      const sb = benches[benches.length - 1] + 0.2, side = -1;
-      const a = at(sb - 0.85, side * 0.72, 0.66), b = at(sb + 0.95, side * 0.72, 0.66);
-      const a2 = at(sb - 0.85, side * 0.2, 0.05), b2 = at(sb + 0.95, side * 0.2, 0.05);
-      Bd.beam(a, b, 0.03, TIMBER); Bd.beam(a2, b2, 0.03, TIMBER);
-      for (let k = 0; k < 6; k++) { const f = 0.1 + k * 0.16, p = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f], q = [a2[0] + (b2[0] - a2[0]) * f, a2[1] + (b2[1] - a2[1]) * f, a2[2] + (b2[2] - a2[2]) * f]; Bd.beam(p, q, 0.018, TIMBER); }
+    for (const l of P.lamps) if (l.kind === 0) lens(l.s, l.d, l.v, true);
+    lens(P.OUT_CANDLE[0], P.OUT_CANDLE[1], P.OUT_CANDLE[2], false);
+    for (let s = 5.5; s < SP.FLIGHT - 3; s += 7.2) if (!P.lamps.some((l) => l.kind === 0 && Math.abs(l.s - s) < 2.5)) lens(s, (Math.floor(s) % 2 ? 1 : -1) * 1.3, 2.6, false);
+    // the carriers: one lying along the first node's side, one rolled and cracked in the second, silt drifted on it
+    const carrier = (s, d, roll, crack) => {
+      const p = P.at(s), l = Math.hypot(p.tx, p.tz), dir = [p.tx / l, 0, p.tz / l], y = P.yAt(s);
+      const [x, , z] = P.world(s, d, 0), cy = y + 0.58;
+      const m = place(x, cy, z, dir, [Math.sin(roll), Math.cos(roll), 0]), rot = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+      Bd.geo(new THREE.CapsuleGeometry(0.58, 2.1, 5, 12), m.clone().multiply(rot), (nx, ny) => (ny > 0.5 ? AMBER_L : AMBER), 0.06);
+      Bd.geo(new THREE.TorusGeometry(0.6, 0.06, 6, 16), m, OXBLOOD, 0.05);
+      for (const e of [-1.2, 1.2]) Bd.geo(new THREE.TorusGeometry(0.42, 0.05, 6, 14), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, e)), MILK_D, 0.05);
+      if (crack) for (let k = 0; k < 5; k++) { const a = 0.4 + k * 0.5, [qx, , qz] = P.world(s + (k - 2) * 0.35, d, 0); Bd.beam([qx, cy + 0.59 * Math.cos(a), qz], [qx + dir[0] * 0.3, cy + 0.59 * Math.cos(a + 0.4), qz + dir[2] * 0.3], 0.012, CUT, 0); }
+      // the silt it lies in
+      Bd.box(x, y + 0.05, z, 1.4, 0.07, 0.8, Math.atan2(-dir[2], dir[0]), SILT, SILT, 0.1);
+      if (ctx.addCollider) { const [ax, , az] = P.world(s - 1.6, d, 0), [bx, , bz] = P.world(s + 1.6, d, 0); ctx.addCollider({ x1: ax, z1: az, x2: bx, z2: bz, r: 0.62, y: y - 0.1, h: 1.25, stand: false }); }
+    };
+    const n1 = (P.NODES[0][0] + P.NODES[0][1]) / 2, n2 = (P.NODES[1][0] + P.NODES[1][1]) / 2;
+    carrier(n1, 1.55, 0.05, false);
+    carrier(n2, -1.5, 0.9, true);
+    // the broken end: shards of the tube's wall standing out of the rock round the bore's mouth
+    for (let k = 0; k < (low ? 9 : 14); k++) {
+      const a = (k / 14) * Math.PI * 2 + rng() * 0.3, s0 = SP.FLIGHT + 0.3 + rng() * 0.6, R = 2.05;
+      const d = Math.cos(a) * R, v = 1.45 + Math.sin(a) * R; if (v < 0.2) continue;
+      const [x, y, z] = P.world(s0, d, v), [x2, y2, z2] = P.world(s0 + 0.6 + rng() * 0.9, d * 0.92, 1.45 + (v - 1.45) * 0.92);
+      Bd.beam([x, y, z], [x2, y2, z2], 0.05 + rng() * 0.05, MILK_D, 0.1);
     }
   }
 
@@ -382,7 +393,7 @@ export async function build(ctx) {
   // ---- the meshes: one a stretch, each its own glow colour; far fades each to black
   const meshes = [];
   const FAR = { flight: [12, 30], flute: [14, 34], sun: [16, 36], gulf: [9, 26], gate: [14, 34] };
-  const GLOWC = { flight: GREEN, flute: COLD, sun: WARM, gulf: COLD, gate: COLD };
+  const GLOWC = { flight: DAY, flute: COLD, sun: WARM, gulf: COLD, gate: COLD };
   for (const [name, Bd] of Object.entries(builders)) {
     const mat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0.02 }), 'passage-' + name, GLOWC[name], { far: FAR[name] });
     const m = new THREE.Mesh(Bd.geometry(), mat); m.name = 'passage-' + name; m.castShadow = false; m.receiveShadow = true;
@@ -396,7 +407,7 @@ export async function build(ctx) {
 
   // ---- the points: the flames and the beads of the lamps; the Flute's rime; the Gulf's motes going up
   const PT = []; // [x, y, z, size, phase, kind] kind 0 green flame, 1 cold bead, 2 warm flame, 3 rime, 4 mote
-  for (const l of P.lamps) PT.push([l.x, l.y + (l.kind === 1 ? -0.08 : 0), l.z, l.kind === 1 ? 0.12 : l.kind === 2 ? 0.17 : 0.11, rng() * 40, l.kind]);
+  for (const l of P.lamps) PT.push([l.x, l.y + (l.kind === 1 ? -0.08 : 0), l.z, l.kind === 1 ? 0.12 : l.kind === 2 ? 0.17 : 0.16, rng() * 40, l.kind]);
   {
     const n = low ? 420 : 760;
     for (let i = 0; i < n; i++) {
@@ -421,7 +432,7 @@ export async function build(ctx) {
   pg.setAttribute('position', new THREE.BufferAttribute(pts, 3));
   pg.setAttribute('aP', new THREE.BufferAttribute(pat, 3));
   const pmatF = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uScale: { value: 400 }, uC0: { value: new THREE.Color(GREEN) }, uC1: { value: new THREE.Color(COLD) }, uC2: { value: new THREE.Color(WARM) } }]),
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uScale: { value: 400 }, uC0: { value: new THREE.Color(DAY) }, uC1: { value: new THREE.Color(COLD) }, uC2: { value: new THREE.Color(WARM) } }]),
     vertexShader: `uniform float uTime, uScale; attribute vec3 aP; varying float vI; varying float vK; varying float vKind;
       #include <fog_pars_vertex>
       void main() {
@@ -430,6 +441,7 @@ export async function build(ctx) {
         if (kind > 3.5) { float h = mod(uTime * 0.35 + ph * 1.7, 22.0); transformed.y += h; fl = smoothstep(0.0, 3.0, h) * (1.0 - smoothstep(16.0, 22.0, h)); }
         else if (kind > 2.5) { fl = 0.35 + 0.65 * pow(0.5 + 0.5 * sin(uTime * (0.6 + fract(ph) * 1.4) + ph * 3.1), 3.0); }
         else if (kind > 0.5 && kind < 1.5) { fl = 0.9 + 0.1 * sin(uTime * 1.7 + ph); }
+        else if (kind < 0.5) { fl = 0.8 + 0.12 * sin(uTime * 0.37 + ph) - 0.35 * smoothstep(0.93, 1.0, sin(uTime * 0.13 + ph * 1.7)); } // stored daylight, failing: a slow ebb, now and then a dip
         vec4 mvPosition = viewMatrix * vec4(transformed, 1.0); gl_Position = projectionMatrix * mvPosition;
         float d = -mvPosition.z, px = aP.x * uScale / max(d, 0.1);
         float core = kind > 2.5 ? max(px, 1.1) : max(px * fl, 2.2), S = clamp(core * (kind > 2.5 ? 2.6 : 3.5), 3.0, 64.0);
@@ -440,7 +452,7 @@ export async function build(ctx) {
     fragmentShader: `uniform vec3 uC0, uC1, uC2; varying float vI; varying float vK; varying float vKind;
       #include <fog_pars_fragment>
       void main() {
-        vec2 c = (gl_PointCoord - 0.5) * 2.0; if (vKind < 2.5) c.y *= 0.8; float r2 = dot(c, c), q = r2 / (vK * vK);
+        vec2 c = (gl_PointCoord - 0.5) * 2.0; if (vKind > 1.5 && vKind < 2.5) c.y *= 0.8; float r2 = dot(c, c), q = r2 / (vK * vK);
         float a = exp(-q * 1.6) * 2.0 + exp(-r2 * 6.0) * (vKind > 2.5 ? 0.08 : 0.22);
         vec3 base = vKind < 0.5 ? uC0 : vKind < 1.5 ? uC1 : vKind < 2.5 ? uC2 : uC1 * (vKind > 3.5 ? 0.8 : 0.9);
         vec3 col = mix(base, vec3(0.95, 1.0, 1.0), exp(-q * 4.0) * (vKind > 2.5 ? 0.5 : 1.0)) * a * vI;
@@ -454,7 +466,7 @@ export async function build(ctx) {
   // ---- the lights: one at each flame and bead, its owner's colour
   const lights = [];
   for (const l of P.lamps) {
-    const [i, d] = l.kind === 0 ? [2.4, 8.5] : l.kind === 2 ? [5.5, 13] : l.outside ? [3.2, 11] : [2.3, 10];
+    const [i, d] = l.kind === 0 ? [1.3, 8] : l.kind === 2 ? [5.5, 13] : l.outside ? [3.2, 11] : [2.3, 10];
     const L = new THREE.PointLight(new THREE.Color(KIND_COL[l.kind]), i, d, 2); L.position.set(l.x, l.y + 0.05, l.z); L.name = 'passage-light';
     scene.add(L); lights.push({ L, i, ph: rng() * 6, kind: l.kind });
   }
@@ -598,7 +610,7 @@ export async function build(ctx) {
       else if (s < SP.GULF1 - 5 && unOpen) { unOpen(); unOpen = null; } }
     ctx.renderer.getDrawingBufferSize(ds);
     pmatF.uniforms.uScale.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5));
-    for (const l of lights) l.L.intensity = l.i * (l.kind === 1 ? 0.96 + 0.04 * Math.sin(t * 1.7 + l.ph) : 0.85 + 0.1 * Math.sin(t * 9 + l.ph) + 0.05 * Math.sin(t * 21 + l.ph * 2));
+    for (const l of lights) l.L.intensity = l.i * (l.kind === 0 ? 0.8 + 0.12 * Math.sin(t * 0.37 + l.ph) : l.kind === 1 ? 0.96 + 0.04 * Math.sin(t * 1.7 + l.ph) : 0.85 + 0.1 * Math.sin(t * 9 + l.ph) + 0.05 * Math.sin(t * 21 + l.ph * 2));
     if (pl.onStack && pl.onStack.name === 'passage-gulf') {
       wet += dt;
       if (wet > 0.9) {
