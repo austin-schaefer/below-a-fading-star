@@ -72,3 +72,21 @@ Passed over, still in the pool: #18, #20, #23, #28, #30, #33, #36; the six small
 | P1 the frame yardstick (`brief-v13-P1-frame-yardstick.md`) | `issue-1301-frame-yardstick` | 8162 | opus |
 
 Next: when each reports, run its tool myself on 8123 after the merge (the probe's table; a bench in a real browser), a cold review of each diff, merge, the whole suite once for the batch (both touch shared code), write the two baseline tables here, then write batch 2 from the numbers (`briefs/v13/index.md` lists the candidates; cut what the numbers do not support). The owner can help with one thing nobody else can: run the Measure row on a real phone once P1 is in and paste what it copies into an issue.
+
+**2026-11-14, 22:21 PST. The owner has left for the night: "remember, pursue your goal until it hits main! i'll be afk overnight."** So every call from here to the release is the orchestrator's, written here.
+
+**The first load numbers this repository has had** (P0's own runs on its branch, not yet rerun by the orchestrator; the owner's Mac, headless Chromium, another agent's browser beside it; `node tools/load-probe.mjs <base> --q=<q> [--throttle=4] --runs=3`, medians):
+
+| | low | low, 4x CPU | medium | medium, 4x CPU | live site, low |
+|---|---|---|---|---|---|
+| navigation to "Go out", cold | 8.1 s | 31.6 s | 12.2 s | 48.4 s | 9.0 s |
+| the same, repeat | 7.7 s | 30.5 s | 11.9 s | 47.3 s | 8.0 s |
+| terrain bake (one freeze) | 2.0 s | 8.3 s | 3.9 s | 16.3 s | |
+| module builds | 5.4 s | 21.9 s | 7.4 s | 30.4 s | |
+| compile and warm-up | 0.5 s | 0.9 s | 0.65 s | 1.0 s | |
+
+287 requests, 1.85 MB over the wire live; a live repeat is 281 revalidations. What this says: **the load is compute, not network.** Fetching is about a second of nine on the live site; a bundle or a service worker alone could not get a repeat load under about 7 s. The title card is frozen for 6.6 of 8.1 s. With the 4x throttle that stands in for a phone, a visitor waits half a minute on low. Ten modules are most of the build time (vegetation, rocks, plinths, galleries, water, the Adust, thrones, structures, the outwash, inhabitants2). Compile and warm-up are not worth a brief.
+
+So the plan's weight moves: L1 (the network) shrinks to the cheap things (cache headers, imports started early, perhaps a service worker late); the milestone is won or lost on the terrain bake and the module builds, cold and repeat. Before batch 2 is written, one more measurement is out: **P2** (`issue-1302-load-profile`, port 8163, opus, on top of P0's branch) adds `--profile` to the probe and answers why the builds cost what they do, above all whether the analytic `heightAt` (no cache, 15+ octaves, about 300 call sites) is most of both the bake and the builds. If it is, one change shortens everything.
+
+In flight: P0 (8161, its whole suite running, the last step before its report), P1 (8162, baseline bench runs), P2 (8163).
