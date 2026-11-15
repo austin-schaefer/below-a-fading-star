@@ -33,3 +33,10 @@ Route rows, ms a frame, low (x4): render 2.06 (7.54) · vegetation 0.34 (1.16) �
 
 ## Defaults taken
 Legs stand 15% of the round (1.5–8 s; 6.75 s at 45); stations at 10/30/50/70/90% of the route plus one per leg; the top is the settings entry "The middle of the Span"; the waking is fall.js's placement and look copied into the bench (fall.js exports no wake); the hitch rule min(50 ms, 3x median); Copy gives the brief, Download everything; `measure=1` cleans the URL when done.
+
+## Review round (2026-11-14, late)
+Fixes: the wake leg calls `ctx.fall.wake()` (fall.js exposes it; a real fall is unchanged); Close after Measure reloads the clean URL (`q` kept only with `measure=q`): after it the profiler is off, nothing hooked; draw hooks go on only at a station and come off after (those frames, 31–44 a run, flagged `station`, left out of the distributions); a block straddling a leg change counts in no leg; `--against` warns on mismatched quality, duration, legs, throttle, dpr, size, cap, and against a pre-v13 file compares only the avg, 1% low, world modules and main.js's own total; `report().memory.geometry` is a getter; perf-test's draws row now checks the hooks see all but ≤ 20 post draws, terrain and vegetation, and are off after.
+
+Tests: `ONLY=pan,perf,record,settings,touch,heights tools/suite.sh 8162`: heights 102/102, perf 28/28, touch 43/43, record 16/16; settings timed out at its first gear click and pan station A failed while P2's load-probe and an acts-test ran beside it; rerun on a quiet machine (`pgrep` empty): settings 73/73, pan A PASS, B PASS.
+
+Low rerun (3 runs) after the fixes: the machine was on mains, so the cap went 30 → 60 fps (summary avg 33.3 → 16.7) and the numbers do not compare one to one: route JS median 3.9 (3.7–4.0) vs 3.6, p99 5.7 vs 7.2, worst 6.7 (6.4–7.6) vs 8.6, render 2.35 vs 2.06 ms, hitches 0. The teleport onto the deck is now the slowest frame in 2 of 3 runs (6.4–6.7 ms: shadow, plants, rocks, far 9.6k, 240 KB sent). Files: `shots/wip/v13-P1-baseline2-low-*.json`.

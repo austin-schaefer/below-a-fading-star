@@ -29,6 +29,7 @@ What each module under `src/` owns. Every agent that adds a module extends this 
 | `perf-frames.js` | the bench's per-frame log, distribution, hitch log, draw cost per module, geometry bytes and JS heap, and its panel lines and short copy (also read by `tools/bench-report.mjs`) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |
 | `shadows.js` | shadow-map cadence and the far cut-off for creatures' shadows |
+| `startup.js` | the load's marks from navigation to ready, its long tasks and each module's import and build ms (`report()`, `window.__fp_startup`; v13-P0) |
 | `tier.js` | quality tier choice, the adaptive pixel ratio, the debug panel's quality rows |
 | `gpumem.js` | texture and render-target bytes, per-frame texture and buffer uploads, for the profiler |
 | `fade.js` | the fade kit for cross-fades: `FADE_GLSL` (`fpFadeKeep(f, side)`, a still screen-space dither: side 0 keeps a share f of the pixels, side 1 the rest), `withFade(material, { key, attribute \| vertex \| fadeExpr })`, `fadeDepthMaterial(opts)` for the shadow pass; `node tools/fade-test.mjs <base>` checks it |
