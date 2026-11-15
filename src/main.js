@@ -94,6 +94,7 @@ const MODULES = [
   ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
+  ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Bearers' Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
