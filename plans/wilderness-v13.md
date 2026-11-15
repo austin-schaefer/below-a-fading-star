@@ -208,3 +208,32 @@ Next: the release note and the README line while they run; the critic's blocking
   3. **The gate, the critic and the curator start together** when the last brief merges (`orchestrator`, "Releasing to `main`"): the tail was the critic then the gate, 1 h 50 min here; started together it is the longer of the two, about 50 minutes.
   4. A skill records a correction as the rule and its reason in a line, without quotes or history.
 - So what reaches `main`: the site as gated at `5eb2cb4`; after it only `tools/`, `.agents/`, `briefs/`, `plans/` (the softening in `AGENTS.md`: test tooling reruns the tests it touches; said here which).
+
+**2026-11-15, 09:13 PST. Status: released** as v13 on 2026-11-15 (the release PR #53 from `next`, merged as `eda4a31`; `tools/gh-release.sh v13`; `origin/main` merged back; #44 and #34 closed from the release). Nothing is in flight; no worktree but the deploy one.
+
+**The live site, checked straight after** (`DEPLOY.md`'s checks and `node tools/load-probe.mjs https://below-a-fading-star.netlify.app --q=low --runs=3 --serial=0`, one Mac):
+
+- `commit.json` says `eda4a31`; the page and `src/main.js` carry `X-Fp-Commit: eda4a31` beside `X-Robots-Tag` (Netlify merges the built `_headers` with `netlify.toml`'s); `sw.js` and `commit.json` are `no-cache`; `sw.js` is served as JavaScript.
+- **Netlify's 304s carry no stamp.** So the worst of the two cases is the live one: the first return after each release downloads the release whole once (measured locally at about 8.2 s against 6.25 s with no worker). The note says so. A content manifest would close it (`plans/IDEAS.md`).
+- **First visit: 5.37 s to "Go out"** [5.34 to 5.54] where v12's live site took 9.0 s; 320 requests, 1.91 MB over the wire (v12: 287 and 1.85 MB); longest stall 0.29 s (2.04 s). **Repeat: 2.48 s** [2.37 to 2.50] where it took 8.0 s; **3 requests, 0.2 KB**; the terrain from the store all three times. The service worker works on the path a real visitor takes, in Chromium; Firefox and Safari on the live site are untested by anyone.
+
+**What shipped weaker than planned (for an engineer):**
+
+- "No stall of the title card over 200 ms": 0.29 to 0.32 s on low, 0.50 s on medium (the warm-up draw; the largest module build). The other three targets were met.
+- No real-phone number exists. The 4x throttle does not slow the bake's worker, so its rows flatter the result; a two-core phone is unmeasured.
+- The first return after each release re-downloads the walk (above).
+- Firefox fetches two of the bake worker's files from the network on a repeat. The service worker's round three and L4's round two had no second cold review; F2 had none (read by the orchestrator). The curator cleared 316 images mostly by name.
+- On a local server the kept store refetches every script to hash it (614 requests a load on 8123); the live site does not.
+- The Measure row's rough edges (the overlay over the wordmark, Close losing the visitor's place, a diagnostic panel).
+- Two modules over their documented budgets (fauna on calls, vegetation on triangles), named and left.
+- `?bakeslope=mesh` is in the tree, off: half a second more for a repainted ground.
+- Open and the owner's: #38 to #43 (bugs, `idea`), untouched by this milestone.
+
+## Looking back
+
+- **What took longest, and did it need to?** Whole-suite runs on agents' branches (about 2 h 25 min of the critical chain) and a tail run in sequence (1 h 50 min). Neither needed to; both are changed (below). Reviews and before-and-after tables took about as long again and earned it.
+- **What was found late?** The stale-store blocker, the service worker meeting the bake's worker, and the probe's stall bug were found by cold reviews told to find where a claim is false: that framing is worth keeping. Found by luck at the very end: the doubled requests on a local server, by the orchestrator's own table. An agent that changes what a load fetches should report the request count; `load-probe` prints it.
+- **Slips of the orchestrator's:** a worktree removed before the briefs that pointed into it were dispatched; a shell loop that zsh did not split; three Status times written from a guess (every entry since takes its time from `date` in the same command).
+- **What worked:** a batch that only measured, before anyone optimised (it moved the whole plan from the network to the height function); a bit-for-bit tool written before each risky change (`height-check`, `build-check`), which is what let a rewrite of the terrain's core merge in two hours; reviews started while an agent's tests were still running.
+- **Changed in the harness** (three, as the skill allows): the whole suite runs on `next` once a batch and as the gate, never on a branch; the gate, the critic and the curator start together; `tools/suite.sh` prints each test's seconds (and the gate is 94 s shorter).
+- No milestone idea filed as an issue: what this work turned up is small and in `plans/IDEAS.md`.
