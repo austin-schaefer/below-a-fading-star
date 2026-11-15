@@ -249,8 +249,11 @@ for (const q of ['', '&fall=1']) {
       }
       // with the blackout, on the page's own frames (the fall's module runs there)
       p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+      const falls0 = fp.fall.falls;
       await wait(1500); p.keys.clear();
-      await wait(9000); await frames(5);
+      // the blackout and the waking: until this fall has gone dark and the walker is back, idle, standing and free (at most 9 s)
+      for (const t0 = performance.now(); !(fp.fall.falls > falls0 && fp.fall.phase === 'idle' && p.onGround && !p.carried) && performance.now() - t0 < 9000;) await frames(1);
+      await frames(5);
       out.push({ name, dropped: +(fromY - p.pos.y).toFixed(1), keep: +Math.hypot(p.pos.x - fp.spawn.x, p.pos.z - fp.spawn.z).toFixed(1), on: p.onGround, carried: p.carried });
     }
     if (blackout) { const fb = L.stand.foot(); place(fb.x, fb.z, L.floorY0); p.yaw = fb.yaw; out.push({ footBell: { where: L.where(), may: fp.acts.may(fp.acts.list.find((h) => h.def.id === 'lift-call')) } }); }

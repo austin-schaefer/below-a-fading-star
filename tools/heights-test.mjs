@@ -553,11 +553,15 @@ const FALL_RUN = `async () => {
     // 18 m: off the perch, on the page's own frames
     place(S.perch.x, S.perch.z, S.perch.y); p.yaw = Math.PI; p.keys.add('KeyW'); p.keys.add('ShiftLeft'); // south, away from the beam under its north edge
     const seen = []; const el = document.getElementById('fall'); const t0 = performance.now();
+    // until the walker has woken from it (seen waking, then idle with the view open, standing and free), at most 9 s
     while (performance.now() - t0 < 9000) {
       await new Promise((r) => requestAnimationFrame(r));
       if (performance.now() - t0 > 1200) p.keys.clear();
-      seen.push({ t: performance.now() - t0, phase: fp.fall.phase, amt: fp.fall.amount, op: +getComputedStyle(el).opacity, y: p.pos.y - p.eye, carried: p.carried });
+      const s = { t: performance.now() - t0, phase: fp.fall.phase, amt: fp.fall.amount, op: +getComputedStyle(el).opacity, y: p.pos.y - p.eye, carried: p.carried };
+      seen.push(s);
+      if (s.phase === 'idle' && s.op === 0 && p.onGround && !p.carried && seen.some((x) => x.phase === 'waking')) break;
     }
+    p.keys.clear();
     const first = (ph) => seen.find((s) => s.phase === ph);
     out.falling = first('falling'); out.dark = first('dark'); out.waking = first('waking');
     out.end = seen[seen.length - 1];
