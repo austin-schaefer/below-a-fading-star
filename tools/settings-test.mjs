@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The settings panel (v7-08): the gear, open and close, volume, mute, quality, mouse capture and teleport, on a
-// desktop viewport; then the gear and a finger-sized panel on a phone. Usage: node tools/settings-test.mjs [url]
+// desktop viewport; then the gear and a finger-sized panel on a phone, and (v13) its Measure row's reload. Usage: node tools/settings-test.mjs [url]
 // SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
 // SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
 import { createRequire } from 'node:module';
@@ -269,6 +269,11 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const near = await page.evaluate(() => { const pl = window.__fp.settings.places[5], p = window.__fp.player.pos; return Math.hypot(p.x - pl.x, p.z - pl.z); });
   check('touch: a tap on a place teleports and closes', !(await shown(page)) && near < 1, near);
   await page.touchscreen.tap(g.l + g.w / 2, g.t + g.h / 2);
+  // v13: Measure reloads into the bench at the tier in use, its params taken off again when it is done (src/perf.js)
+  await page.evaluate(() => { window.__nav = null; window.__fp.settings.navigate = (u) => { window.__nav = u; }; });
+  await page.locator('#set-measure').tap();
+  const mu = await page.evaluate(() => { const u = window.__nav && new URL(window.__nav); return u && Object.fromEntries(u.searchParams); });
+  check('touch: Measure reloads into the bench (bench=45, perf=1, measure=1, the tier kept, no pos)', mu && mu.bench === '45' && mu.perf === '1' && mu.measure === '1' && mu.q === 'low' && !('pos' in mu), mu);
   await page.locator('#set-close').tap();
   check('touch: Close closes', !(await shown(page)));
   await context.close();
