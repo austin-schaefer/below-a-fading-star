@@ -67,7 +67,7 @@ export function createPerf(ctx) {
   const mods = new Map(), modList = []; // modList: the same rows as an array, walked every frame while the bench records
   function mod(name) {
     let m = mods.get(name);
-    if (!m) { m = { name, cpu: 0, tot: 0, f0: 0, enabled: true, world: false, updates: 0, objects: null, hidden: null }; mods.set(name, m); modList.push(m); }
+    if (!m) { m = { name, cpu: 0, tot: 0, f0: 0, enabled: true, world: false, updates: 0, objects: new Set(), hidden: null }; mods.set(name, m); modList.push(m); }
     return m;
   }
   const rawRegister = ctx.registerUpdate;
