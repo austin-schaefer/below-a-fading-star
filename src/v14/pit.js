@@ -67,10 +67,6 @@ export async function build(ctx) {
   };
   cutOver(T.mesh.geometry);
   cutOver(scene.getObjectByName('saltings-crust')?.geometry);
-  // the Great Span crosses over the Pit: from the floor, through 80 m of the height fog, its underside was a flat pale lid
-  // over the disc of sky. Its materials keep the same share of their haze as the Pit's own (1 everywhere but in the Pit)
-  await ctx.built?.('span');
-  { const seen = new Set(); scene.traverse((o) => { if (!/^span/.test(o.name) || !o.material) return; for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (!seen.has(m) && m.isMeshStandardMaterial) { seen.add(m); hazed(m); m.needsUpdate = true; } }); }
   // the rocks' pebbles that lay on the old ground down here, laid on this floor (await the rocks: before this in MODULES)
   await ctx.built?.('rocks');
   {

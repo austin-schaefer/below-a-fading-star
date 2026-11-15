@@ -24,6 +24,7 @@ Somebody came up once from the valley and cut a stair in the ice below the shelf
 | 2 | R3's face, east of the stair (seen from T2 and the valley); R2's face, west of the block | Crystals of the same shape frozen into the cliffs of ice, one point out, one collar out, each with a bronze collar | There have been others; the ice has them | The bridge | built |
 | 3 | The bridge over R2's lip | The way up crosses a lead lying on its side, its collar on the block, its point in the ice above | One came all this way down; you are walking on it | The stair, the shelf | built |
 | 4 | The shelf, at the lip of the last crevasse (`?pos=44,-390&yaw=1.2`) | A bronze eye as wide as a cart, broken off, half sunk in the ice, glyphs round its band, a frayed line knotted through it, its end over the lip still glowing; across the crevasse, out of reach, the Plummet's point in the ice and its body going up to its eye and the thread | The line broke; the eye says the same as the Reckoner's door | The Hypogeum's lintel, 340 m south-east | built |
+| 4b | The shelf, after a fall into the Nadir at the bottom of the Pit (`the-sounding-down.md`) | Waking by the broken eye, the frayed line's end beside them | The line brought them up | | built |
 | 5 | The Plummet's eye, every few minutes | A mote of light leaves the eye and climbs the thread into the dark; the light that runs up the crystals of the icefall runs on into the Plummet | Something is sent up | | built |
 
 ## What it ties together

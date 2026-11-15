@@ -48,7 +48,9 @@ export function makeFloor(T, N) {
     const px = x - C.x, pz = z - C.z, r = Math.hypot(px, pz);
     if (r > 19) return null;
     const b = ((Math.atan2(px, -pz) * 180) / Math.PI + 360) % 360, rf = pitRim(b) - FLOOR.out;
-    if (r > rf) return null;
+    // past the bowl's edge, up to the wall's foot: the ground, or the edge's height where the ground is lower (the old
+    // trench under the floor is never walked into: round 2 found a walker could step down into it out of sight)
+    if (r > rf) return r > rf + 2.5 ? null : Math.max(T.heightAt(x, z), wallAt(b));
     const rh = nadirR(b);
     if (r < rh - 0.05) return FLOOR.sky; // the hole: nothing under it
     const t = ss(rh + 0.6, rf, r);
@@ -126,7 +128,8 @@ export function makeStair(T, FL) {
     const q = at(ss);
     if (Math.abs(r - q.r) > S.half) return null;
     if (s > 1) { const over = ((d - N) * Math.PI / 180) * r; if (over > S.half) return null; }
-    return q.y;
+    const f = floorY(x, z); // never under the bowl beside it (its foot lies on the bowl)
+    return f !== null && f !== undefined && f + 0.04 > q.y ? f + 0.04 : q.y;
   }
   return { at, point, floor, len, yHead, yFoot: ys[N], footB, land, R0, under: (s) => { const q = at(s); return under(q.b, q.r); } };
 }

@@ -18,12 +18,13 @@ At the bottom of the Pit the floor of the world is worn through. In the middle o
 
 | # | Where (place, position, the view it reads from) | What the visitor finds | What it tells them alone | What points on to the next | State |
 |---|---|---|---|---|---|
-| 1 | The lip at the road's end and the south lookout (`?pos=194.2,201`) | Over the lip on the north-west, a landing of planks with two iron posts and a lamp; from it the road's hex slabs going down round the wall, a rope on irons on their open side; far down, a cold light, pale motes rising slowly | Somebody made a way down; something down there is lit | The landing | built |
+| 1 | The lip at the road's end and the south lookout (`?pos=194.2,201`) | Over the lip on the north-west, a landing of planks with an iron post and a tall lamp-post whose cold lamp shows from the road; from it the road's hex slabs going down round the wall, a rope on irons on their open side; far down, a cold light, pale motes rising slowly | Somebody made a way down; something down there is lit | The landing | built |
 | 2 | The slabs, going down (or up) | Each slab a riser over the last, on an iron knee into the rock; two more lamps on the way; the disc of sky shrinking overhead, the sheers and the lead over a hole in the middle of the floor | The road's paving goes on, down a well | The floor | built |
-| 3 | The floor, from where the passage under the moor comes in (bearing 20, `nadir` in the settings map) | A shallow bowl of rubble; in its lowest place a ragged hole, the Nadir; through it, stars, below; three timbers lashed over it with a sheave, a crystal lead on a line hanging in the hole's mouth; a windlass beside it; motes rising slowly out of the hole; the wind's hollow note | The wind comes up out of a hole full of night | The windlass: "Let go the lead" | built |
+| 3 | The floor, from where the passage under the moor comes in (bearing 20, `nadir` in the settings map) | A shallow bowl of rubble; in its lowest place a ragged hole, the Nadir, a metre of rubble and then nothing; through it, black, and stars far down, moving against each other as you walk round it and turning slowly; three timbers lashed over it with a sheave, a crystal lead on a line hanging in the hole's mouth; a windlass beside it; motes rising slowly out of the hole; the wind's hollow note | The wind comes up out of a hole full of night | The windlass: "Let go the lead" | built |
 | 4 | The windlass, at its crank (the act) | The lead drops into the stars, the drum runs, the motes turn and pour back down; the line snaps taut and sings; a plume of cold motes rises up the throat and out of the Pit, and the lead comes back up, white with rime | There is no bottom; the wind is from outside the world | Up at the lip, the plume; the motes that stay | built |
 | 5 | The lip, while somebody sounds below | The plume rising out of the Pit into the sky; the line's song and the gust | Something down there answers | The landing | built |
-| 6 | A return | More motes hanging in the Pit's air, two for each sounding (to fourteen) | It was done before, and it stays | | built |
+| 6 | A return | The lead white with rime for good; frost down the sheers' legs from the sheave, a fifth further each sounding; more motes hanging in the Pit's air, two for each sounding (to fourteen) | It was done before, and it stays | | built |
+| 7 | Over the hole (a fall from the lip, a carry, a step through) | The view goes down into the stars and closes; they wake on the icefall's shelf by the leadsmen's broken eye and the frayed end of their line | The line that sounds the world brought them up | The Bitter End | built |
 
 `src/v14/pit.js`, `src/v14/pit/plan.js`, `src/v14/pit-sound.js`.
 
@@ -42,5 +43,7 @@ Who the sounder was, how long the line is, and whether the leadsmen know someone
 - When the sun gutters, does the wind through the Nadir change?
 
 ## Log
+
+- 2026-11-15, v14-D2 round 2: the hole black with stars at real depth; the rime and frost a sounding leaves; the plume and a breath of fog over the lip; the beacon on the landing; the fall into the stars and the waking at the Bitter End (`the-soundings.md`).
 
 - 2026-11-15, v14-D2: written and built with the bottom of the Pit (the Nadir, the down-reel, the road's slabs up the wall), answering the Pit's card and the soundings' open thread "who cut the stair?".

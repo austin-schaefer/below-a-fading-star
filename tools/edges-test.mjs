@@ -197,7 +197,7 @@ const R = await page.evaluate(async () => {
       for (const [way, yaw] of [['the hole', toHole], ['the wall', toHole + Math.PI], ['down', toHole + Math.PI / 2]]) {
         fp.controls.placeAt(x, z, y + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw;
         let low = 0;
-        for (let i = 0; i < 120; i++) { fp.controls.update(DT); const f = Math.max(PF(p.pos.x, p.pos.z) ?? -Infinity, PB(p.pos.x, p.pos.z) ?? T.heightAt(p.pos.x, p.pos.z)); low = Math.min(low, p.pos.y - p.eye - f); }
+        for (let i = 0; i < 120; i++) { fp.controls.update(DT); const feet = p.pos.y - p.eye, sf = PF(p.pos.x, p.pos.z); const f = Math.max(sf !== null && sf !== undefined && sf <= feet + 0.6 ? sf : -Infinity, PB(p.pos.x, p.pos.z) ?? T.heightAt(p.pos.x, p.pos.z)); low = Math.min(low, feet - f); } // (the slabs' floor counts where it could hold the feet: the landing 26 m overhead does not)
         p.keys.clear();
         res.push({ psFoot: `${Math.round((1 - sv) * 100)}% up, toward ${way}`, low });
       }

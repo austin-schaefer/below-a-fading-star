@@ -70,6 +70,7 @@ const route = await page.evaluate(async (way) => {
   }
   return R;
 }, way);
+const FOOT = await page.evaluate(() => { const p = window.__fp.pit.stair.point(0.97); return { x: p[0], z: p[2] }; });
 if (way === 'up') await page.evaluate(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(203.2, 176.2); p.yaw = 2.8; p.pitch = 0; });
 const SENS = touch ? 0.005 : 0.0021;
 const touchPts = (pts) => pts.map(([id, x, y]) => ({ id, x, y }));
@@ -115,7 +116,7 @@ async function shot(what) {
 async function pause(fn) { await walkOn(false); await sleep(400); await fn(); await walkOn(true); }
 // at a checkpoint: what to look at, as turns from the walking direction (yaw, pitch)
 const LOOKS = {
-  reel: [['reel', 0, -0.1], ['up', 0, 0.9]], nadir: [['hole', -1.2, -0.5], ['stair', 0.6, 0.35]], foot: [['up', 0, 0.45]],
+  reel: [['reel', 0, -0.1], ['up', 0, 0.9]], nadir: [['hole', 'C', -0.6], ['stair', 'F', 0.35]], foot: [['up', 0, 0.45]], // 'C': turn to the Nadir; 'F': to the stair's foot
   'stair-low': [['floor', -1.4, -0.45]], 'stair-mid': [['ahead', 0, 0.1], ['down', -1.5, -0.6]], 'stair-high': [['ahead', 0, 0.1]],
   head: [['landing', 0, 0]], out: [['moor', 0, 0], ['back', Math.PI, -0.35]], moor: [['pit', 0, -0.2]], 'landing-seen': [['landing', 0, -0.3]],
 };
@@ -128,7 +129,9 @@ while (i < route.length && Date.now() - t0 < 25 * 60 * 1000) {
   const w = route[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
   if (s.feet < lowest) lowest = s.feet;
   if (d < 0.6) {
-    if (w.tag && LOOKS[w.tag]) for (const [what, dy, dp] of LOOKS[w.tag]) await pause(async () => { await turn(dy, dp - (await st()).pitch); await sleep(1100); await shot(`${w.tag}-${what}`); await turn(-dy, -(await st()).pitch); await sleep(200); });
+    if (w.tag && LOOKS[w.tag]) for (const [what, dy0, dp] of LOOKS[w.tag]) await pause(async () => {
+      const here = await st(), tgt = dy0 === 'C' ? { x: 200, z: 185 } : dy0 === 'F' ? FOOT : null;
+      const dy = tgt ? wrap(Math.atan2(-(tgt.x - here.x), -(tgt.z - here.z)) - here.yaw) : dy0; await turn(dy, dp - (await st()).pitch); await sleep(1100); await shot(`${w.tag}-${what}`); await turn(-dy, -(await st()).pitch); await sleep(200); });
     i++; continue;
   }
   const want = Math.atan2(-dx, -dz), dy = wrap(want - s.yaw);
