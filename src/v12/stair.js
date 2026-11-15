@@ -334,9 +334,9 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, t) => { columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t); });
 
   // ------------------------------------------------------------------ the ascent, and the API
-  // the path heights-test walks: the turf east of the stub, each flight's first and last tread (steering only), each
-  // landing's centre (the feet there), the top
-  const pts = [[FOOTX(E), E[0].cz, undefined]];
+  // the path heights-test walks: the turf at the stub's foot (a step before its first riser, where P51 ends), each
+  // flight's first and last tread (steering only), each landing's centre (the feet there), the top
+  const pts = [[...foot(E), undefined]];
   for (const e of E) {
     const pv = E[e.i - 1], nx = E[e.i + 1];
     if (e.kind === KIND.LANDING || e.kind === KIND.TOP) pts.push([e.cx, e.cz, e.y]);
@@ -367,5 +367,5 @@ export async function build(ctx) {
   ctx.log(`stair: ${treads.length} treads, ${lands.length} landings, ${kerbs.length} kerbs, ${P.top.y - P.y0 | 0} m from the stub to the top at (${P.top.cx.toFixed(0)}, ${P.top.cz.toFixed(0)}), ${(performance.now() - t0).toFixed(0)} ms`);
 }
 
-// a step east of the stub's first tread, on the turf
-function FOOTX(E) { return E[0].cx - E[0].ux * 1.6; }
+// the turf a step before the stub's first tread, against its climb
+function foot(E) { return [E[0].cx - E[0].ux * 1.6, E[0].cz - E[0].uz * 1.6]; }
