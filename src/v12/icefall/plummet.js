@@ -35,7 +35,9 @@ export function lead(P, A, M, rng, R, L, along, tint) {
   rings.push(ring(neckY, R * 0.42));
   const v = new THREE.Vector3();
   const put = (p) => { v.copy(p).applyMatrix4(M); P.push(v.x, v.y, v.z); A.push(along, tint); };
-  const tri = (a, b, c) => { put(a); put(b); put(c); };
+  // each face is listed going round the ring the inside way, so it is put down reversed: wound counter-clockwise seen
+  // from outside (#47: the bridge's lead was drawn inside out, its near faces culled and the far ones seen through it)
+  const tri = (a, b, c) => { put(a); put(c); put(b); };
   const tip = new THREE.Vector3((rng() - 0.5) * R * 0.08, 0, (rng() - 0.5) * R * 0.08);
   const r0 = rings[0];
   for (let s = 0; s < n; s++) tri(tip, r0[(s + 1) % n], r0[s]);
