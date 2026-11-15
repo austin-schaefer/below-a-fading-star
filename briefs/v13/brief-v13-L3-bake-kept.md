@@ -1,6 +1,6 @@
 # Brief v13 L3: the bake, beside the builds and kept
 
-Worktree and port: set at dispatch (after L2 is merged). Read `briefs/v13/_common.md` first. Model: strong.
+Worktree: `.claude/worktrees/issue-1306-bake-kept` (branch `issue-1306-bake-kept`, port 8163). Work only there. Read `briefs/v13/_common.md` first. Model: strong.
 
 ## Goal
 
