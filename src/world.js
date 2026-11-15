@@ -65,20 +65,20 @@ export const LANDMARKS = {
   leerie: { x: 128, z: 5, r: 20, y: null, name: "A Lamplighter’s Standards", line: "“All fled, all done, so lift me on the pyre;\nThe feast is over and the lamps expire.”", card: true },
   // v14-B3 (#52): the places a visitor can stand that came with v9 to v12, named; cards with no line yet (the owner sources
   // the quotations). `feet: [lo, hi]`: the card is up only while the walker's feet are at that height (a deck over the
-  // valley floor, a gallery on the wall); `reached`: no track comes within its reach, it is reached by its own way
-  // (roads-test skips it). An axis along z is { z0, z1, half } (landmarkDistance).
+  // valley floor, a gallery on the wall); `reached`: no track comes within its reach, it is reached by its own way or
+  // across open ground, said how (roads-test prints it and does not ask for a track). An axis along z is { z0, z1, half } (landmarkDistance).
   halt: { x: -63, z: 1, r: 9, y: null, name: "The Lantern Halt", card: true },
   tocsin: { x: -52, z: 207, r: 11, y: null, name: "The Tocsin", card: true, feet: [-30, 30] },
-  escalade: { x: -226, z: 200, r: 9, y: null, name: "The Escalade", card: true, feet: [-30, 30] },
+  escalade: { x: -226, z: 200, r: 9, y: null, name: "The Escalade", card: true, feet: [-30, 30], reached: 'the wood’s fringe, off the tracks' },
   footing: { x: -95, z: 211, r: 0, y: null, name: "The Footing Course", card: true, feet: [44, 70], axis: { x0: -113, x1: -77, half: 3 }, at: { x: -116, z: 212 }, reached: 'the Span' },
   coping: { x: -45, z: 219, r: 5, y: null, name: "The Fallen Coping", card: true, feet: [44, 70], reached: 'the Span' },
   cornice: { x: 47, z: 219.5, r: 0, y: null, name: "The Hung Cornice", card: true, feet: [44, 70], axis: { x0: 32, x1: 63, half: 3 }, at: { x: 29, z: 218 }, reached: 'the Span' },
   wait: { x: 88, z: 211, r: 11, y: null, name: "The Long Wait", card: true, feet: [44, 70], reached: 'the Span' },
   spar: { x: 145, z: 215, r: 0, y: null, name: "The Dropped Spar", card: true, feet: [40, 70], axis: { x0: 122, x1: 169, half: 3 }, at: { x: 118, z: 214 }, reached: 'the Span' },
-  soundings: { x: 70, z: -290, r: 10, y: null, name: "The Soundings", card: true },
+  soundings: { x: 70, z: -290, r: 10, y: null, name: "The Soundings", card: true, reached: 'the Lattice’s floor, off the tracks' },
   lead: { x: 76, z: -322.3, r: 0, y: null, name: "The Fallen Lead", card: true, feet: [47, 75], axis: { x0: 58, x1: 94, half: 2.5 }, at: { x: 96, z: -320 }, reached: 'the icefall' },
   bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", card: true, feet: [80, 130], reached: 'the icefall' },
-  diffident: { x: 286, z: -14, r: 9, y: null, name: "The Diffident Stair", card: true, feet: [-30, 30] },
+  diffident: { x: 286, z: -14, r: 9, y: null, name: "The Diffident Stair", card: true, feet: [-30, 30], reached: 'the open moor, 23 m off the road' },
   croft: { x: 226, z: -55, r: 9, y: null, name: "The Hanging Croft", card: true, feet: [95, 130], reached: 'the Diffident Stair' },
   landing: { x: -299, z: -18, r: 9, y: null, name: "The Warders’ Landing", card: true },
   remand: { x: -375, z: -70, r: 0, y: null, name: "The Remand", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift' },
