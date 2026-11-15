@@ -211,7 +211,8 @@ async function start() {
   // mesh's heights or colours is marked { mesh: true } in MODULES and builds once the bake is in.
   const keepLater = [];
   const store = openKept({ base: document.baseURI, off: url.searchParams.get('kept') === '0', log: ctx.log });
-  ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(fn()) }); // (a module's record is written as soon as it is computed) // the contract: runtime.md, "The bake and the store"
+  let keepNow = false; // v13 L4: a module's record is written after ready, one an idle slot (a write then was the cold load's 100 ms)
+  ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(keepNow ? fn() : fn) }); // the contract: runtime.md, "The bake and the store"
   const bake = startBake(ctx, url, store);
   ctx.terrain = bake.terrain;
   await bake.leads;
@@ -492,8 +493,8 @@ async function start() {
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
   startup.mark('ready');
-  // v13 L3: the page's own bake (if the worker failed) is kept just after ready, the modules' records are on their way; then the other trees' records go
-  setTimeout(() => { (async () => { await bake.info.keepLater?.(); for (const p of keepLater) await p; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
+  // v13 L3: the page's own bake (if the worker failed) is kept just after ready, then the modules' records, one an idle slot (L4); then the other trees' records go
+  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; await idle(); await (typeof f === 'function' ? f() : f); } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
   ctx.keptStats = store.stats;
 }
 
