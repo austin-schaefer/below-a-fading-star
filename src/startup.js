@@ -5,7 +5,8 @@
 // show in a browser's own profiler. Always on: a dozen marks, one observer, one array per module.
 //
 // The boundaries, in order (a phase is named for the mark that ends it):
-//   nav (0, navigation start) · module (the static imports fetched and this file evaluated) · tier (chooseTier)
+//   nav (0, navigation start) · module (the static graph fetched; this file evaluates first) · tier (three and the
+//   rest of the static graph evaluated, main.js's top level, chooseTier)
 //   · renderer (the WebGLRenderer) · terrain (buildTerrain) · mountains (buildMountains) · scaffold (regions, kit,
 //   strata, acts, the lights, sky, controls, HUD) · imports (the last world module's import resolved: in an ordinary
 //   load that waits behind the builds already running, so only ?serial=1 makes it fetch alone) · modules
@@ -49,7 +50,9 @@ export function mark(name, data, t) {
   safeMark(name, marks[name]);
   safeMeasure(name, last || 'nav');
   last = name;
-  if (name === 'ready') stop();
+  // the task that reaches ready (it holds the warm-up) has its long-task entry delivered after it ends, and the
+  // timer's gap shows only on its next tick: stop a little later; report() keeps only tasks begun by ready
+  if (name === 'ready') setTimeout(stop, 250);
 }
 mark('module');
 
@@ -65,6 +68,8 @@ export function built(name, t1) {
   if (m) m.build = now() - t1;
 }
 export function setSerial(on) { serial = !!on; }
+// the load failed: stop listening
+export function abort() { stop(); }
 
 // Long tasks while loading
 try {

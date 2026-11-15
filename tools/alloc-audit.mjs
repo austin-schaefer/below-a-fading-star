@@ -8,6 +8,8 @@
 //  2. Every JS allocation (arrays, closures, objects, strings) per frame, from V8's sampling heap profiler with
 //     collected objects included, summed by the src/ function that allocated it.
 //   node tools/alloc-audit.mjs "<url with ?bench=>" [out.json] [windowSeconds=10]
+//   node tools/alloc-audit.mjs "<url without ?bench, with &idle=0>" ...: the walker standing at the spawn, the profiler
+//   off unless the url turns it on (what the profiler costs when it is not in use: its hooks are not installed)
 // e.g. node tools/alloc-audit.mjs "http://localhost:8131/?bench=30&q=medium" shots/perf/stage3-tier-alloc-after.json
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -45,7 +47,11 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(url, { waitUntil: 'load', timeout: 60000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
-await page.waitForFunction(() => window.__fp?.perf?.bench?.phase === 'run', null, { timeout: 120000, polling: 100 });
+// without ?bench (v13: the cost of the profiler and the bench when they are not in use) the walker stands at the
+// spawn with the card hidden: give the url &idle=0 so the frame rate is not dropped under a card
+const benching = /[?&]bench=/.test(url);
+if (benching) await page.waitForFunction(() => window.__fp?.perf?.bench?.phase === 'run', null, { timeout: 120000, polling: 100 });
+else await page.evaluate(() => { document.getElementById('card')?.classList.add('hidden'); });
 // count rendered frames: main.js calls ctx.perf.frameEnd() once per frame
 await page.evaluate(() => { const p = window.__fp.perf, f = p.frameEnd; window.__frames = 0; p.frameEnd = () => { window.__frames++; f(); }; });
 await page.waitForTimeout(1000);
@@ -68,7 +74,8 @@ await cdp.send('HeapProfiler.startSampling', { samplingInterval: 256, includeObj
 await page.waitForTimeout(WIN);
 const { profile } = await cdp.send('HeapProfiler.stopSampling');
 const hFrames = (await page.evaluate(() => window.__frames)) - h0;
-const benchDone = await page.evaluate(() => window.__fp.perf.bench.phase);
+const benchDone = await page.evaluate(() => window.__fp.perf.bench?.phase ?? 'no bench');
+const hooks = await page.evaluate(() => ({ active: window.__fp.perf.active, hooked: window.__fp.perf.hooked ?? null }));
 await browser.close();
 
 const byFn = {}, byKind = { src: 0, three: 0, other: 0 };
@@ -91,6 +98,7 @@ const rep = {
   errors,
 };
 if (out) writeFileSync(out, JSON.stringify(rep, null, 1));
+console.log(`profiler ${hooks.active ? 'on' : 'off'} · its frame hooks ${hooks.hooked ? 'installed' : 'not installed'} · bench ${benchDone}`);
 console.log(`THREE objects per frame: ${rep.three.perFrame} over ${c.frames} frames`);
 for (const [k, v] of Object.entries(rep.three.bySite)) console.log(`  ${String(v).padStart(8)}  ${k}`);
 console.log(`heap bytes per frame over ${hFrames} frames: src ${rep.heap.bytesPerFrame.src} · three ${rep.heap.bytesPerFrame.three} · other ${rep.heap.bytesPerFrame.other}`);
