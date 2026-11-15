@@ -18,3 +18,12 @@ Seconds to "Go out", cold and repeat, low and medium, 1x and 4x, and the longest
 ## Not yours
 
 The service worker and the files (L1). Making builds cheaper (L5).
+
+## Two build-order races, found by L5's `build-check --runs=3`: yours to end
+
+Startup order is yours in this brief, so these are too. Both are in `next` today and predate v13.
+
+- **region-bletting builds without vegetation's trees if they are not ready within 15 s** (it waits on a timer, then goes on): no windfalls under the trees, no snails. It happened on medium on a loaded Mac; a slow phone, where vegetation alone takes 4 s at a 4x throttle and everything else is queued beside it, can hit it. A visitor on the slowest device gets a different world: make the dependency explicit (bletting awaits the trees, with no timeout that changes what is built) and check with `build-check --throttle`-style runs (a 4x and a 6x CPU throttle) that the module's fingerprint is the same as unthrottled.
+- **fauna's cloak takes its first spot from whether structures has built yet** (it moves to the right one 2 s into the walk). Make it deterministic.
+
+Then look for others of the same kind: any `setTimeout`, polling or "if it exists yet" in a module's build that reads another module's output (`grep -n "setTimeout\|ctx\.[a-zA-Z]*\?\." src` is a start), and list what you find even where you leave it.
