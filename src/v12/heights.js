@@ -58,8 +58,10 @@ function buildTest(ctx) {
   };
   const draw = (pieces, thick) => { for (const p of pieces) slab(p.x0, p.x1, p.z0, p.z1, p.ax, p.y0, p.y1, thick); };
 
-  // the site: the clearest flat 70 x 40 m near (150, -40)
-  const S = findSite(ctx, 150, -40);
+  // the site: a clear flat 70 x 40 m at (210, 0), where a search near (150, -40) for the fewest colliders found it in
+  // v12. Fixed, not searched for on each load: the count moves with the scatter (v14-B2's tors moved it to (190, 20),
+  // where the bridge's foot is not reached)
+  const S = { x: 210, z: 0 };
   const sx = S.x, sz = S.z, g0 = H(sx, sz);
   const site = ctx.heightsTest = { x: sx, z: sz, y: g0 };
 
@@ -141,21 +143,3 @@ function buildTest(ctx) {
   ctx.log(`heights test floors at (${sx.toFixed(0)}, ${sz.toFixed(0)}), ground ${g0.toFixed(1)}`);
 }
 
-// the clearest, flattest 70 x 44 m box near (x, z): fewest colliders, least relief, no water
-function findSite(ctx, x, z) {
-  const T = ctx.terrain, cols = ctx.controls.state.colliders;
-  let best = null;
-  for (let dx = -60; dx <= 60; dx += 20) for (let dz = -60; dz <= 60; dz += 20) {
-    const cx = x + dx, cz = z + dz;
-    let lo = Infinity, hi = -Infinity, wet = false;
-    for (let i = -35; i <= 35; i += 7) for (let j = -22; j <= 22; j += 5.5) {
-      const h = T.heightAt(cx + i, cz + j); lo = Math.min(lo, h); hi = Math.max(hi, h);
-      if (T.waterLevelAt(cx + i, cz + j) !== null) wet = true;
-    }
-    let n = 0;
-    for (const c of cols) if (Math.abs(c.x - cx) < 40 && Math.abs(c.z - cz) < 26) n++;
-    const score = n * 4 + (hi - lo) + (wet ? 100 : 0) + Math.hypot(dx, dz) * 0.02;
-    if (!best || score < best.score) best = { x: cx, z: cz, score, n, relief: hi - lo };
-  }
-  return best;
-}
