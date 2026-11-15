@@ -5,7 +5,7 @@
 //     0.5 m, the Sunken Court's coping 1.0 m after a hop onto the kerb),
 //   - never pass it (the signed distance to the lip stays >= 0; on the Span the deck holds, the walker never drops),
 //   - never be under the floor: feet no lower than the terrain (or the deck) less 0.15 m at any tick,
-// and at the Span's crack a running hop still clears it. v14-D0, the Coffin Road: a walker whose line meets the Nave's
+// and at the Span's crack a running hop still clears it. v14-D0, the Noon Road: a walker whose line meets the Nave's
 // stair at its head goes down it, held on its floor (so that walk is not a pass of the lip, and is measured from the
 // stair's floor), and at least one bearing does; hurrying and hopping sideways off the stair (high, middle, low) and
 // off the road on the water keep the walker on (held edges); one dropped into the water off the road is put back on
@@ -44,7 +44,7 @@ const R = await page.evaluate(async () => {
     for (let i = 0; i < secs * 60; i++) {
       fp.controls.update(DT);
       if (hopAt && i >= hopAt && i % 40 === 0) fp.controls.hop();
-      // v14-D0: on the Coffin Road's stair (a held floor into the Nave) the lip is not passed and the floor is the stair's
+      // v14-D0: on the Noon Road's stair (a held floor into the Nave) the lip is not passed and the floor is the stair's
       const cr = p.onStack && p.onStack.name === 'coffin-road' ? fp.coffinRoad.floor(p.pos.x, p.pos.z) : null;
       if (cr !== null && cr !== undefined) { stair++; under = Math.min(under, p.pos.y - p.eye - cr); continue; }
       const e = edge(p.pos.x, p.pos.z); if (e < minEdge) minEdge = e;
@@ -116,7 +116,7 @@ const R = await page.evaluate(async () => {
     p.keys.clear();
     res.push({ coping: name, ok: Math.abs(p.pos.x - x1) <= 0.4, low, feet: p.pos.y - p.eye - Y });
   }
-  // v14-D0: the Coffin Road. Sideways off its stair (a hurry, then a hurrying hop) at three heights, and off the road
+  // v14-D0: the Noon Road. Sideways off its stair (a hurry, then a hurrying hop) at three heights, and off the road
   // on the water: the held edges keep the walker on; dropped in the water off the road, put back on it
   if (fp.coffinRoad && !fp.coffinRoad.off) {
     const CR = fp.coffinRoad, Hd = CR.head, PL = await import('/src/v14/coffin-road/plan.js');
@@ -153,12 +153,12 @@ const R = await page.evaluate(async () => {
     fp.controls.placeAt(270, 37, PL.ROAD_Y + 3); p.pos.x = 270; p.pos.z = 37; p.pos.y = PL.ROAD_Y + 3 + p.eye; p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear();
     // (the fall in simulated ticks; then the page's own frames, which run the road's update that gives the walker back)
     let back = null, lowW = 0, inWater = false;
-    for (let i = 0; i < 60; i++) { fp.controls.update(DT); lowW = Math.min(lowW, p.pos.y - p.eye - (PL.ROAD_Y - 2)); }
+    for (let i = 0; i < 60; i++) { fp.controls.update(DT); lowW = Math.min(lowW, p.pos.y - p.eye - (NG.NAVE.water - 1.75)); }
     inWater = p.onStack?.name === 'nave-water';
     const t0 = performance.now();
     while (back === null && performance.now() - t0 < 4000) {
       await new Promise((r) => setTimeout(r, 50));
-      lowW = Math.min(lowW, p.pos.y - p.eye - (PL.ROAD_Y - 2));
+      lowW = Math.min(lowW, p.pos.y - p.eye - (NG.NAVE.water - 1.75));
       const f = CR.floor(p.pos.x, p.pos.z);
       if (f !== null && f !== undefined && Math.abs(p.pos.y - p.eye - f) < 0.05) back = 1 + (performance.now() - t0) / 1000;
     }
@@ -176,9 +176,9 @@ let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
 const f = (v) => v.toFixed(2);
 for (const r of R) {
-  if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Coffin Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
-  if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
-  if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Coffin Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
+  if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Noon Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
+  if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Noon Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Noon Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
   if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }
   if (r.hop !== undefined) { check(r.hop !== null, `${r.name}: lands on the far deck`, r.hop === null ? 'never' : `hop ${f(r.hop)} m short of the lip`); continue; }

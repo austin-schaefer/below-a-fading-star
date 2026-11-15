@@ -8,7 +8,7 @@
 
 ## The story
 
-The lattices were built by nobody now remembered and they hang in the air over the world, turning slowly, a few cells each, as big as towns. Their joints want oil and their webs want sweeping, and someone does it: once a company of tenders with their own stair laid for them by the Heliarchs, who honoured anything that kept to its place in the sky; now one. The tender goes from lattice to lattice with a lamp, stops at each a while, and moves on; from the valley the lamp is one of the lights in the sky.
+The lattices were built by a people nobody now remembers (the Noonwrights: `the-noon-road.md`), to gather daylight above the haze, and they hang in the air over the world, turning slowly, a few cells each, as big as towns. Their joints want oil and their webs want sweeping, and someone does it: once a company of tenders with their own stair laid for them by the Heliarchs, who honoured anything that kept to its place in the sky; now one. The tender goes from lattice to lattice with a lamp, stops at each a while, and moves on; from the valley the lamp is one of the lights in the sky.
 
 One lattice has sunk. It hangs lowest of all now, its foot a hundred metres over the east moor, and it does not turn. The tender has made a home on that foot, because the old stair reaches it and a person who works in the sky still needs bread and water and somewhere to sit: a deck of planks on iron brackets bolted to the node, a lean-to of old bronze sheet, a cot with a crimson blanket, a stove and a kettle, cups on a shelf, a pot of moss, a line of washing, a high-backed chair turned to the sun with a cushion on it and a crate beside it for the cup. And at the foot of the ladder of rungs that goes up the strut into the lattice: the tools, absurdly big, an oil can with a spout like a heron's neck and a brush on a seven-metre pole.
 
@@ -36,12 +36,13 @@ Whether there is anyone holding the lamp.
 
 ## Open threads
 
-- The Leerie and the tender: the same lamp oil? A flask on the Leerie's slate (v12-T1) could be the tender's.
+- The Leerie and the tender: the same lamp oil? A flask on the Leerie's slate (v12-T1) could be the tender's. (v14-D3: it is the Noonwrights' stored noon, and somebody draws it from the carriers in the Foundered Nave: flasks on the stage, a bulb in a rope cradle by the shears. Which of the two comes for it is not said.)
 - The lattice is sinking. If it ever comes down it falls on the road.
 - The tenders were once many. The stair is wide enough for two.
 
 ## Log
 
+- 2026-11-15, v14-D3 (the owner: "yes to all that"): the lattices are the Noonwrights' collectors; the oil is their stored noon. The lattices are not yet dressed in that hand.
 - 2026-11-15, v14-B5 (#52, the owner): the stair is "Lonely Staircase"; it and "The Hanging Croft" have the owner's quotations.
 - 2026-11-15, v14-B3 (#52): the stub has its card, "The Diffident Stair"; the home on the lattice's foot is "The Hanging Croft".
 - 2026-11-12, v12-H3: written and built with the Diffident Stair (`src/v12/stair.js`); the seed was the milestone doc's ("a lamp already goes from lattice to lattice, stops at each a while as if tending it").

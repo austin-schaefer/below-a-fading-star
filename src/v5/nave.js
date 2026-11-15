@@ -17,9 +17,9 @@ import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
 import { approach, angDiff, makeGround } from '../fauna/uncanny/kit.js';
 import { installBelow, underMaterial, boxBelow, belowLit } from '../v14/under.js'; // v14-D0: the kit for places under the ground
-import { hulls } from '../v14/noon-road/plan.js'; // v14-D3: the Noon Road's carriers, seen through the water
+import { hulls, lamps } from '../v14/noon-road/plan.js'; // v14-D3: the Noon Road's carriers: their stored light, their hulls through the water
 import { NOON } from '../v8/strata/noon.js';
-import { SZ, SHALF, DOOR, candles, FLAME_Y, ROAD_Y, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Coffin Road
+import { SZ, SHALF, DOOR, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Noon Road
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
 // the roof's underside at (x, z): level at NAVE.ceil, sunk with the moor wherever the moor lies lower than the cover
@@ -51,15 +51,15 @@ function litAt(x, y, z, out) {
   return out;
 }
 
-// the Coffin Road's candles' light, baked: their cold glow on the columns, the walls and the water's edge
-const CANDLES = candles().map(([x, z, k]) => [x, ROAD_Y + FLAME_Y[k], z, [0.8, 1.0, 1.4, 0.9, 1.1][k]]);
+// the Noon Road's stored light, baked: its white-gold on the columns, the walls and the vault (v14-D3)
+const LAMPS = CR_OFF ? [] : lamps();
 export function glowAt(x, y, z) {
   let g = 0;
-  for (const [cx, cy, cz, s] of CANDLES) {
+  for (const [cx, cy, cz, s, reach] of LAMPS) {
     const dx = x - cx, dy = y - cy, dz = z - cz, d2 = dx * dx + dy * dy + dz * dz;
-    if (d2 < 100) { const f = 1 - Math.sqrt(d2) / 10; g += s * f * f * f; }
+    if (d2 < reach * reach) { const f = 1 - Math.sqrt(d2) / reach; g += s * f * f * (0.4 + 0.6 * f); }
   }
-  return Math.min(1.0, g * 0.55);
+  return Math.min(1.0, g * 0.6);
 }
 
 // ---------------------------------------------------------------- the hall's one mesh
@@ -104,7 +104,7 @@ class Builder {
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-    g.setAttribute('aUnder', new THREE.Float32BufferAttribute(this.l, 3)); // the kit's: sky, haze, the candles' glow (v14/under.js)
+    g.setAttribute('aUnder', new THREE.Float32BufferAttribute(this.l, 3)); // the kit's: sky, haze, the stored light's glow (v14/under.js)
     g.computeBoundingSphere();
     return g;
   }
@@ -135,7 +135,7 @@ function hallMaterial() {
         float pl = smoothstep(0.66, 0.74, nvN(vNW * vec3(2.6, 1.3, 2.6) + 5.0)) * smoothstep(0.35, 0.6, nvN(vNW * 0.45 + 9.0)) * vert * smoothstep(1.4, 2.4, wy);
         float hue = nvN(vNW * 0.18 + 31.0);
         vec3 paint = hue < 0.4 ? vec3(0.56, 0.3, 0.24) : hue < 0.6 ? vec3(0.38, 0.42, 0.5) : vec3(0.62, 0.5, 0.3);
-        diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.5, 0.47, 0.42), paint, 0.55 * smoothstep(0.3, 0.7, nvN(vNW * 2.3))), pl * 0.45);
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 1.25, paint * 0.7, 0.6 * smoothstep(0.3, 0.7, nvN(vNW * 2.3))), pl * 0.3);
         float wet = vert * (1.0 - smoothstep(1.0, 1.6 + 0.5 * nvN(vNW * 1.7), wy)) * step(0.0, wy);
         diffuseColor.rgb *= 1.0 - 0.5 * wet;
         float tide = vert * smoothstep(0.03, 0.08, wy) * (1.0 - smoothstep(0.2, 0.3, wy));
@@ -143,8 +143,8 @@ function hallMaterial() {
   };
   m.customProgramCacheKey = () => 'fp-nave-hall';
   // v14-D0: the sun and the sky's light scaled by how much of the hole's light reaches each vertex, the haze by how
-  // much of the moor's air, the Coffin Road's candles baked in; point lights (a candle near the walker) as anywhere
-  return underMaterial(m, 'nave');
+  // much of the moor's air, the Noon Road's stored light baked in; point lights (a lit carrier near the walker) as anywhere
+  return underMaterial(m, 'nave', NOON.lightHex);
 }
 
 // ---------------------------------------------------------------- the water
@@ -166,8 +166,6 @@ const WATER_FRAG = /* glsl */`
   uniform vec4 uShape[3];   // x, z, heading, how near the surface (0 gone .. 1 just under)
   uniform vec2 uSize[3];    // half length, half width
   uniform vec4 uSplash[3];  // x, z, start time, strength
-  uniform vec4 uCand[8];    // v14-D0: the nearest of the Coffin Road's flames (xyz, strength), doubled in the water (CAND_N of them: 4 on low)
-  uniform vec3 uCandCol;
   uniform vec4 uHullA[HULL_N]; uniform vec4 uHullB[HULL_N]; uniform vec3 uHullCol; // v14-D3: the carriers' hulls (x1, z1, x2, z2), (r, depth, light, 0)
   varying vec3 vWorld;
   #include <fog_pars_fragment>
@@ -233,17 +231,6 @@ const WATER_FRAG = /* glsl */`
     vec3 body = vec3(0.004, 0.006, 0.006) * lit;
     vec3 col = body * (1.0 - 0.8 * dark) + refl * F * (1.0 - 0.94 * dark);
     col = mix(col, uSky * 1.6 + 0.03, clamp(glint * 0.55, 0.0, 0.85) * lit);
-    // the candles' flames in the black water, broken by its shiver and the rings
-    // each flame's image under the surface (its mirror point), seen along the eye's ray bent by the shiver: a streak,
-    // long up and down and thin across, as flames on still water are
-    vec3 Vb = normalize(V + vec3(slope.x, 0.0, slope.y) * 1.6);
-    for (int i = 0; i < CAND_N; i++) {
-      if (uCand[i].w <= 0.0) continue;
-      vec3 m = vec3(uCand[i].x, ${(2 * WY).toFixed(2)} - uCand[i].y, uCand[i].z);
-      vec3 a = Vb - normalize(m - cameraPosition);
-      float I = exp(-dot(a.xz, a.xz) / 0.00003 - a.y * a.y / 0.0009);
-      col += uCandCol * uCand[i].w * I * 2.2 * (1.0 - 0.9 * dark);
-    }
     // v14-D3: the carriers under the surface: a hull that still holds its light shows whole through the black water,
     // dimmer the deeper its flank lies, and lights the water round it; a dark one is a pale ghost near the surface
     vec2 ph = p + slope * 0.7;
@@ -253,8 +240,11 @@ const WATER_FRAG = /* glsl */`
       vec2 ab = HA.zw - HA.xy, hq = ph - HA.xy;
       float ht = clamp(dot(hq, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0), hd = length(hq - ab * ht), hr = HB.x;
       float through = hd < hr ? exp(-max(HB.y - sqrt(hr * hr - hd * hd), 0.0) * 2.3) : 0.0;
-      float halo = exp(-max(hd - hr * 0.8, 0.0) * 0.55) * 0.07;
-      col += (uHullCol * vec3(0.9, 1.0, 0.8) * HB.z * (through * 0.42 + halo) + vec3(0.03, 0.035, 0.03) * through) * (1.0 - 0.8 * F) * (1.0 - 0.7 * dark);
+      // where it meets the water: a pale line; and the light it sheds goes out over the water in slow rings
+      float hw = sqrt(max(hr * hr - HB.y * HB.y, 0.0)), he = hd - hw;
+      float halo = exp(-max(he, 0.0) * 0.5) * 0.085 * (0.55 + 0.75 * (0.5 + 0.5 * sin(he * 6.5 - uT * 0.9 + float(i) * 1.7)) * exp(-max(he, 0.0) * 0.35));
+      col += vec3(0.05, 0.05, 0.048) * exp(-he * he * 30.0) * (0.25 + HB.z) * step(0.0, he + 0.2);
+      col += (uHullCol * vec3(0.9, 1.0, 0.8) * HB.z * (through * 0.42 + halo) + vec3(0.008, 0.009, 0.01) * through) * (1.0 - 0.8 * F) * (1.0 - 0.7 * dark);
     }
     gl_FragColor = vec4(col, 1.0);
     vec3 preFog = gl_FragColor.rgb;
@@ -407,7 +397,7 @@ export async function build(ctx) {
   // ---- the walls: the aisles' outer walls, the east end far under the moor, and the west end choked with earth
   {
     const y0 = WY - 1.5, n = 32, bands = (top) => [y0, WY + 4, top - 4, top];
-    // the south wall's run is broken at the Coffin Road's door (v14-D0: v14/coffin-road/plan.js DOOR): below its
+    // the south wall's run is broken at the Noon Road's door (v14-D0: v14/coffin-road/plan.js DOOR): below its
     // lintel the wall stops at its jambs, and the door's frame and passage are the road's
     const dx0 = DOOR.x - DOOR.half, dx1 = DOOR.x + DOOR.half, dTop = DOOR.sill + DOOR.h;
     for (const side of [-1, 1]) {
@@ -508,7 +498,7 @@ export async function build(ctx) {
     columns.push({ x, z });
   }
   // v14-D0: the north aisle's column at (282.5, 29) is down: its shaft lies in the water across the aisle, half
-  // under, its capital beyond; seen from the road by the wall's candles
+  // under, its capital beyond; seen from the road by the up-ended carrier's light
   {
     const a = [283.6, 30.9], b = [273.0, 32.7], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
     E.set(0, -Math.atan2(b[1] - a[1], b[0] - a[0]), Math.PI / 2, 'YXZ');
@@ -553,7 +543,7 @@ export async function build(ctx) {
     }
     // the fallen column's drums in a line in the water, half under, its capital beyond; a drum of the broken one
     const fall = Math.atan2(4.7, -6.2);
-    // (v14-D0: the line lies north of the Coffin Road, which goes past its end)
+    // (v14-D0: the line lies north of the Noon Road, which goes past its end)
     const lay = [[CX - 0.4, CZ - 0.6, fall, 3.2, 'drum'], [CX + 1.4, CZ - 2.9, fall + 0.12, 3.0, 'drum'], [CX + 3.0, CZ - 5.1, fall - 0.2, 2.6, 'drum'],
       [CX + 2.6, CZ + 6.0, 0.4, 0, 'cap'], [broken.x + 2.3, broken.z + 3.0, 1.9, 2.4, 'drum']];
     for (const [x, z, yaw, len, kind] of lay) {
@@ -575,7 +565,7 @@ export async function build(ctx) {
     [-3.0, 1.0, 5.6, 3.2, 40, 12, 26, 0.6],
   ];
   for (const [ox, oz, len, wid, yaw, pitch, roll, lift] of SLABS) {
-    if (nearRoad(CX + ox, CZ + oz, len / 2 - 0.5)) continue; // v14-D0: none across the Coffin Road's stair or its road
+    if (nearRoad(CX + ox, CZ + oz, len / 2 - 0.5)) continue; // v14-D0: none across the Noon Road's stair or its road
     const x = CX + ox, z = CZ + oz, y = Math.max(coneY(x, z), WY - 0.4) + lift;
     E.set(pitch * RAD, yaw * RAD, roll * RAD, 'YXZ');
     Q.setFromEuler(E);
@@ -597,20 +587,19 @@ export async function build(ctx) {
 
   // ---- the water
   const rimU = new Array(36); for (let i = 0; i < 36; i++) rimU[i] = naveRim(i * 10);
-  const candU = Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 0, 0)), candCol = new THREE.Color('#9fe8c2');
   const shapeU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)), sizeU = [0, 1, 2].map(() => new THREE.Vector2(1, 0.5)), splashU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, -100, 0));
   const skyU = new THREE.Color('#5a5470');
-  const HULL_N = low ? 6 : 14, HL = hulls().slice(0, HULL_N);
+  const HULL_N = low ? 8 : 16, HL = (CR_OFF ? [] : hulls()).slice(0, HULL_N);
   const hullA = Array.from({ length: HULL_N }, (_, i) => new THREE.Vector4(...(HL[i] ? HL[i].slice(0, 4) : [0, 0, 0, 0])));
   const hullB = Array.from({ length: HULL_N }, (_, i) => (HL[i] ? new THREE.Vector4(HL[i][4], HL[i][5], HL[i][6], 0) : new THREE.Vector4(0, 0, 0, 0)));
   const hullCol = new THREE.Color(NOON.lightHex);
-  const wmat = new THREE.ShaderMaterial({ defines: { CAND_N: low ? 4 : 8, HULL_N },
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uCand: { value: candU }, uCandCol: { value: candCol }, uHullA: { value: hullA }, uHullB: { value: hullB }, uHullCol: { value: hullCol } }]),
+  const wmat = new THREE.ShaderMaterial({ defines: { HULL_N },
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uHullA: { value: hullA }, uHullB: { value: hullB }, uHullCol: { value: hullCol } }]),
     vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, fog: true,
   });
   // UniformsUtils.merge clones the arrays: keep the material's own
   const WU = wmat.uniforms;
-  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU; WU.uCand.value = candU; WU.uCandCol.value = candCol; WU.uHullA.value = hullA; WU.uHullB.value = hullB;
+  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU; WU.uHullA.value = hullA; WU.uHullB.value = hullB;
   const wgeo = new THREE.PlaneGeometry(NAVE.x1 - NAVE.x0, 2 * HALF, 1, 1).rotateX(-Math.PI / 2);
   const water = new THREE.Mesh(wgeo, wmat);
   water.position.set((NAVE.x0 + NAVE.x1) / 2, WY, CZ); water.name = 'nave-water'; water.receiveShadow = false;
@@ -638,7 +627,7 @@ export async function build(ctx) {
   let colliders = 0;
   if (ctx.addCollider) {
     let lx = Infinity, lz = Infinity;
-    // v14-D0: they stand from a metre under the turf to two over it (so they do not reach down to the Coffin Road
+    // v14-D0: they stand from a metre under the turf to two over it (so they do not reach down to the Noon Road
     // under the hole), and leave a gap for the stair's head on the south-east (v14/coffin-road/plan.js SZ)
     for (let b = 0; b < 360; b += 0.25) {
       const R = naveRim(b) - 0.45, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
@@ -767,7 +756,7 @@ export async function build(ctx) {
   { let rmax = 0; for (let b = 0; b < 360; b += 5) rmax = Math.max(rmax, naveRim(b)); below.opening({ x: CX, y: RIM_Y + 0.5, z: CZ, r: rmax + 1 }); }
   below.keep(hall); below.keep(water); below.keep(shapesMesh);
   ctx.nave = {
-    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge, litAt, waterFlames: candU, ceilAt: (x, z) => ceilAt(x, z), // (v14-D0: the Coffin Road writes its nearest flames into waterFlames)
+    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge, litAt, ceilAt: (x, z) => ceilAt(x, z),
     // test hooks: a splash at shape i (or at (x, z)), shape i surfacing now, shape i placed at (x, z), hold the life still
     splash(i = 0, x, z) { const sh = S.shapes[i]; splashAt(x ?? sh.x, z ?? sh.z, 1, WU.uT.value, true); sh.flick = 0.6; return { x: x ?? sh.x, z: z ?? sh.z }; },
     surface(i = 0) { surface(S.shapes[i], WU.uT.value); },

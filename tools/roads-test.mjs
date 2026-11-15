@@ -200,7 +200,7 @@ const EXEMPT = {
 };
 for (const p of res.places) {
   // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the
-  // gallery: its card's feet over 20 m), down (v14-D0: under the ground, its card's feet under -5 m: the Coffin Road) or at
+  // gallery: its card's feet over 20 m), down (v14-D0: under the ground, its card's feet under -5 m: the Noon Road) or at
   // the walk's edge (the passes); a `reached` on the ground fails
   if (p.reached) { check(p.high || p.below || p.edge, `${p.name}: reached by ${p.reached}, not a track (it is ${p.high ? 'up' : p.below ? 'under the ground' : p.edge ? 'at the walk\'s edge' : 'on the ground: give it a track'})`, `${p.d} m from ${p.by}`); continue; }
   if (EXEMPT[p.k]) check(p.d <= EXEMPT[p.k].max, `${p.name}: exempt (${EXEMPT[p.k].why}); the nearest track within ${EXEMPT[p.k].max} m of its reach`, `${p.d} m, ${p.by}`);

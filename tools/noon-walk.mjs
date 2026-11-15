@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-// The Coffin Road walked by hand (v14-D0): a judge's tool, not a gate (the model: tools/span-walk.mjs). One page:
+// The Noon Road walked by hand (v14-D0, D3): a judge's tool, not a gate (the model: tools/span-walk.mjs). One page:
 // press "Go out", click the view so the mouse is captured (headless Chromium refuses the capture: then the page's own
 // fallback, drag to look, which this uses and says so), then hold W and steer with the mouse alone (moves read back
-// from the page only to aim the next) from the trod north of the Foundered Nave (262, 6) to the Sexton's shears,
+// from the page only to aim the next) from the trod north of the Foundered Nave (262, 6) to the shears,
 // over the landing, down the stair, across the raft and the north spur, east along the road to the sun on the east
 // wall, back west, up the stair and out onto the moor again. At checkpoints it stops, looks and writes a frame. With
 // `touch` it does the same on a phone-sized touch page with the stick only: one finger holds the stick up, a second
 // drags to steer.
-//   node tools/coffin-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [prefix=coffinroad-walk]
+//   node tools/noon-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [prefix=noonroad-walk]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NN-<what>.png in order. Prints each frame with where the feet are and
 // on what floor, the lowest the feet went, and a last line `walked: yes|no`.
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
-const [base = 'http://localhost:8123', mode = 'keys', q = 'low', prefix0 = 'coffinroad-walk'] = process.argv.slice(2);
+const [base = 'http://localhost:8123', mode = 'keys', q = 'low', prefix0 = 'noonroad-walk'] = process.argv.slice(2);
 const prefix = `${prefix0}-${mode}-${q}`;
 const touch = mode === 'touch';
 const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -48,7 +48,7 @@ const route = await page.evaluate(async () => {
   push(270, 22, 'shears-seen'); push(281, 40); push(h.xLand + 6, P.SZ, 'shears'); push(h.xLand + 0.5, P.SZ); push(h.xHead + 0.3, P.SZ, 'head');
   push((h.xHead + P.FOOT_X) / 2, P.SZ, 'stair-mid'); push(P.FOOT_X - 0.6, P.SZ, 'foot'); push(246.7, 45, 'spur'); push(246.7, 42);
   push(262, 42, 'under-hole'); push(278, 42, 'under-roof'); push(P.ROAD.x1 - 0.6, 42, 'sun');
-  push(250, 42, 'back'); push(246.7, 45); push(246.7, 47.75); push(P.FOOT_X + 0.5, P.SZ, 'up'); push(h.xHead - 2, P.SZ); push(h.xLand + 4, P.SZ, 'out');
+  push(250, 42, 'back'); push(246.7, 45); push(246.7, 47.75); push(246.7, 53.6, 'sill'); push(246.7, 48); push(P.FOOT_X + 0.5, P.SZ, 'up'); push(h.xHead - 2, P.SZ); push(h.xLand + 4, P.SZ, 'out');
   return R;
 });
 const SENS = touch ? 0.005 : 0.0021;
@@ -98,7 +98,7 @@ const LOOKS = {
   'shears-seen': [['shears', 0, 0.05]], shears: [['landing', 0, -0.15]], head: [['down', 0, -0.6]],
   'stair-mid': [['hall', 0, -0.3], ['up', Math.PI, 0.6]], foot: [['raft', 0, -0.2], ['door', -1.57, 0]],
   spur: [['road', 0, -0.05]], 'under-hole': [['ahead', 0, 0], ['up', 0, 0.8]], 'under-roof': [['ahead', 0, 0.05], ['back', Math.PI, 0.05]],
-  sun: [['sun', 0, 0.35]], back: [['door', Math.PI / 2, 0]], up: [['stair', 0, 0.45]], out: [['moor', 0, 0]],
+  sun: [['sun', 0, 0.35]], sill: [['door', 0, 0.05]], back: [['door', Math.PI / 2, 0]], up: [['stair', 0, 0.45]], out: [['moor', 0, 0]],
 };
 await shot('start');
 await walkOn(true);

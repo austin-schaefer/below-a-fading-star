@@ -17,7 +17,7 @@ import * as THREE from 'three';
 
 const c = (h) => new THREE.Color(h);
 export const NOON = {
-  milk: c('#d8d2bf'), cloud: c('#a9a593'), bone: c('#beb7a0'), amber: c('#8a5418'), celadon: c('#8fb09c'), oxblood: c('#701c16'),
+  milk: c('#c9c3b0'), cloud: c('#9a9685'), bone: c('#aaa48f'), amber: c('#8a5418'), honey: c('#d9a04a'), biscuit: c('#6a6051'), celadon: c('#8fb09c'), oxblood: c('#701c16'),
   lime: c('#d4cfbb'), silt: c('#3a382f'), dark: c('#0b0a08'), strand: c('#b9b4a2'),
   light: [1.0, 0.93, 0.74], lightHex: '#ffedbd',
 };
@@ -94,9 +94,9 @@ function tube(B, M, o = {}) {
 function lens(B, M, o = {}) {
   const r = o.r ?? 0.55, k = o.lit ?? 0;
   const q = o.bulge ?? 2.6, dome = new THREE.SphereGeometry(r * q, 14, 5, 0, Math.PI * 2, 0, Math.asin(1 / q)).rotateX(Math.PI / 2).translate(0, 0, -r * q * Math.cos(Math.asin(1 / q)));
-  put(B, dome, M, { color: o.glass || (k > 0 ? NOON.milk : NOON.amber), wear: o.wear, glow: k > 0 ? 1.15 * k : null, jit: 0.02 });
+  put(B, dome, M, { color: o.glass || (k > 0 ? NOON.honey : NOON.amber), wear: o.wear, glow: k > 0 ? 0.75 * k : null, jit: 0.02 });
   put(B, ringZ(r * 1.04, r * 0.13, -Math.PI, Math.PI, 20, 6), M, { color: o.rim || NOON.oxblood, wear: o.wear, glow: k > 0 ? 0.25 * k : null });
-  put(B, ringZ(r * 0.45, r * 0.05, -Math.PI, Math.PI, 14, 4), T(M, 0, 0, r * 0.19), { color: NOON.bone, glow: k > 0 ? 1.2 * k : null });
+  put(B, ringZ(r * 0.45, r * 0.05, -Math.PI, Math.PI, 14, 4), T(M, 0, 0, r * 0.19), { color: NOON.bone, glow: k > 0 ? 0.5 * k : null });
 }
 // mark: their mark, the empty ring, lying on a surface (facing +z). o: r (0.16), n (1: a row of them along +x), gap
 function mark(B, M, o = {}) {
@@ -114,48 +114,76 @@ function band(B, M, o = {}) {
     put(B, ringZ(w * 0.3, w * 0.06, -Math.PI, Math.PI, 12, 4), T(M, 0, 0, 0, 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, r + 0.02, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { color: NOON.bone, wear: o.wear, glow: o.glow });
   }
 }
-// carrier: one of the great sealed vessels the line carried, each once filled with a measure of noon. Blown whole:
-// a punt at its tail, a long belly, a shoulder drawn in to a rolled lip at its nose (which sat in the punt of the one
-// ahead); three ribs; a band of ox-blood with its row of rings; a bull's-eye in its back.
-// o: r (2.3), len (7.2), lit (0..1), galls (2), couple (true: the ring at its nose), roll (rad: the back turned from the crown), crack (true: a shell-fracture in its
-// back, black inside), seg, glaze (the band's colour), full (low tier false: fewer parts). Origin: the axis at mid-length.
+// carrier: one of the great sealed vessels the line carried, each once filled with a measure of noon. Blown whole,
+// and no two alike: a punt and its pontil scar at the tail, a belly, a shoulder drawn out to a neck and a rolled lip
+// at the nose (which sat in the punt of the one ahead); ribs; a band of ox-blood with its row of rings; a bull's-eye
+// in its back; galls; the coupling ring at its nose. o: r (2.3), len (7.2), form ('long' | 'waist' (two bellies, a
+// ring gripping the waist) | 'gourd' (fat at the tail, a long neck) | 'drop' (fat at the nose)), lit (0..1), roll
+// (rad), crack (a shell-fracture in its back, black inside), net (true: its spun cradle, filament rings laced
+// together), galls (2), couple (true), seg, glaze, full (false on low: fewer parts). Origin: the axis at mid-length.
+export const FORMS = {
+  long: [[0, 0.5], [0.07, 0.84], [0.15, 0.99], [0.5, 1.02], [0.8, 0.98], [0.91, 0.72], [1, 0.36]],
+  waist: [[0, 0.5], [0.07, 0.84], [0.16, 1.02], [0.36, 1.0], [0.5, 0.88], [0.64, 0.99], [0.8, 0.96], [0.91, 0.7], [1, 0.34]],
+  gourd: [[0, 0.42], [0.09, 0.88], [0.24, 1.06], [0.42, 0.97], [0.6, 0.64], [0.78, 0.4], [1, 0.3]],
+  drop: [[0, 0.3], [0.2, 0.46], [0.45, 0.78], [0.68, 1.04], [0.85, 0.92], [0.94, 0.62], [1, 0.36]],
+};
+// the body's radius (in r) at t (0 the tail's rim .. 1 the neck's root)
+export function formAt(form, t) {
+  const F = FORMS[form] || FORMS.long;
+  for (let i = 1; i < F.length; i++) if (t <= F[i][0]) { const u = (t - F[i - 1][0]) / (F[i][0] - F[i - 1][0]), q = u * u * (3 - 2 * u); return F[i - 1][1] + (F[i][1] - F[i - 1][1]) * q; }
+  return F[F.length - 1][1];
+}
 function carrier(B, M, o = {}) {
-  const R = o.r ?? 2.3, L = o.len ?? 7.2, k = o.lit ?? 0, seg = o.seg ?? 30, rng = rngOf(o, 3), h = L / 2;
+  const R = o.r ?? 2.3, L = o.len ?? 7.2, k = o.lit ?? 0, seg = o.seg ?? 30, rng = rngOf(o, 3), h = L / 2, form = o.form || 'long';
   const MR = o.roll ? T(M, 0, 0, 0, 0, 0, o.roll) : M;
-  const prof = [[0, -h + R * 0.3], [R * 0.2, -h + R * 0.22], [R * 0.42, -h + R * 0.04], [R * 0.52, -h]];
-  const sh = (s) => Math.pow(Math.sin(s * Math.PI / 2), 0.72);
-  for (let i = 1; i <= 6; i++) prof.push([R * (0.52 + 0.48 * sh(i / 6)), -h + (i / 6) * R * 0.7]);
-  const zA = -h + R * 0.7, zB = h - R * 0.95;
-  for (const [f, s] of [[0.3, 1.012], [0.55, 1.02], [0.8, 1.008]]) prof.push([R * s, zA + (zB - zA) * f]);
-  for (let i = 0; i <= 6; i++) prof.push([R * (0.34 + 0.66 * sh(1 - i / 6)), h - R * 0.95 + (i / 6) * R * 0.78]);
-  prof.push([R * 0.34, h - R * 0.1], [R * 0.4, h - R * 0.03], [R * 0.4, h], [R * 0.3, h + R * 0.02], [0, h - R * 0.02]);
-  // the stored light lies in it like something poured: brightest low in the belly, thin at the crown (world y)
-  const glow = k > 0 ? (o.glowFn || k * 0.6) : null;
-  put(B, latheZ(prof, seg), MR, { color: o.color || NOON.milk, wear: o.wear, glow });
-  for (const z of [-h + R * 0.72, h - R * 0.97]) put(B, ringZ(R * 1.0, R * 0.045, -Math.PI, Math.PI, seg, 5), T(MR, 0, 0, z), { color: NOON.bone, wear: o.wear, glow: k > 0 ? k * 0.5 : null });
-  put(B, ringZ(R * 0.42, R * 0.07, -Math.PI, Math.PI, 18, 6), T(MR, 0, 0, h - R * 0.02), { color: NOON.oxblood, wear: o.wear });
-  const top = o.full === false ? (a) => Math.abs(a) < 0.6 || Math.abs(a - Math.PI * 2) < 0.6 : null;
-  band(B, T(MR, 0, 0, -h * 0.34), { r: R * 1.014, w: R * 0.13, seg, color: o.glaze || NOON.oxblood, wear: o.wear, only: top, glow: k > 0 ? k * 0.25 : null });
-  if (o.full !== false) band(B, T(MR, 0, 0, h * 0.5), { r: R * 0.99, w: R * 0.07, seg, marks: 0, color: NOON.celadon, wear: o.wear, glow: k > 0 ? k * 0.4 : null });
+  const body = L - R * 0.14, zt = (t) => -h + t * body, rt = (t) => R * formAt(form, t), F = FORMS[form] || FORMS.long;
+  const rT = rt(0), rN = rt(1);
+  const prof = [[0, -h + rT * 0.5], [rT * 0.35, -h + rT * 0.42], [rT * 0.8, -h + rT * 0.1]];
+  const n = o.full === false ? 16 : 24;
+  for (let i = 0; i <= n; i++) prof.push([rt(i / n), zt(i / n)]);
+  prof.push([rN * 1.02, h - R * 0.06], [rN * 1.22, h - R * 0.02], [rN * 1.22, h], [rN * 0.9, h + R * 0.02], [0, h - R * 0.03]);
+  const wear = o.wear, glow = k > 0 ? (o.glowFn || k * 0.6) : null, part = (c, g) => ({ color: c, wear, glow: k > 0 ? k * g : null });
+  put(B, latheZ(prof, seg), MR, { color: o.color || NOON.milk, wear, glow });
+  // the pontil scar in the punt: where it was broken from the rod, rough and dark, a bead left in it
+  put(B, new THREE.CircleGeometry(rT * 0.3, 10), T(MR, 0, 0, -h + rT * 0.49, 0, Math.PI, 0), { color: NOON.silt, wear });
+  put(B, new THREE.SphereGeometry(rT * 0.1, 8, 6), T(MR, 0, 0, -h + rT * 0.44), { color: NOON.amber, wear });
+  // ribs where the body turns; on a waisted one the ring that gripped it
+  for (const t of form === 'gourd' ? [0.12, 0.5] : form === 'drop' ? [0.5, 0.9] : [0.1, 0.86]) put(B, ringZ(rt(t), R * 0.04, -Math.PI, Math.PI, seg, 5), T(MR, 0, 0, zt(t)), part(NOON.bone, 0.5));
+  if (form === 'waist') collar(B, T(MR, 0, 0, zt(0.5)), { r: R * 0.97, t: R * 0.085, seg, band: false, wear, color: NOON.bone });
+  put(B, ringZ(rN * 1.24, R * 0.06, -Math.PI, Math.PI, 18, 6), T(MR, 0, 0, h - R * 0.01), part(NOON.oxblood, 0));
+  const top = o.full === false ? (a) => Math.abs(a) < 0.7 || Math.abs(a - Math.PI * 2) < 0.7 : null;
+  const tb = form === 'drop' ? 0.72 : 0.27, tl = form === 'drop' ? 0.6 : form === 'waist' ? 0.7 : form === 'gourd' ? 0.33 : 0.56;
+  band(B, T(MR, 0, 0, zt(tb)), { r: rt(tb) + R * 0.004, w: R * 0.12, seg, color: o.glaze || NOON.oxblood, wear, only: top, glow: k > 0 ? k * 0.2 : null });
+  if (o.full !== false) band(B, T(MR, 0, 0, zt(form === 'gourd' ? 0.6 : 0.82)), { r: rt(form === 'gourd' ? 0.6 : 0.82) + R * 0.004, w: R * 0.06, seg, marks: 0, color: NOON.celadon, wear, glow: k > 0 ? k * 0.3 : null });
   // the bull's-eye in its back (and one in its flank, mostly under water afloat)
-  const eye = (a, z, r) => lens(B, T(MR, 0, 0, z, 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, R * 1.012, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { r, lit: k, wear: o.wear });
-  eye(0, h * 0.12, R * 0.26);
-  if (o.full !== false) eye(1.25 + rng() * 0.3, -h * 0.05, R * 0.2);
+  const eye = (a, t, r) => lens(B, T(MR, 0, 0, zt(t), 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rt(t) - r * 0.05, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { r, lit: k, wear });
+  eye(0, tl, R * 0.24);
+  if (o.full !== false) eye(1.25 + rng() * 0.3, tl - 0.12, R * 0.18);
   // the coupling at its nose: the great ring that held it to the next (it stands out of the water between two afloat)
-  if (o.couple !== false) collar(B, T(MR, 0, 0, h + R * 0.04), { r: R * 0.74, t: R * 0.075, seg, band: false, wear: o.wear, color: NOON.bone });
-  // galls: where the blowing was closed and where it was filled, a long blister budded from the shoulder in a ring of celadon
+  if (o.couple !== false) collar(B, T(MR, 0, 0, h + R * 0.03), { r: R * 0.72, t: R * 0.07, seg, band: false, wear, color: NOON.bone });
+  // galls: a long blister budded from the shoulder in a ring of celadon
   const galls = o.galls ?? 2;
   for (let i = 0; i < galls; i++) {
-    const a = (i ? -1 : 1) * (0.32 + rng() * 0.25), z = i ? -h + R * (0.55 + rng() * 0.2) : h - R * (0.8 + rng() * 0.25), gr = R * (0.2 + rng() * 0.09), rr = R * (i ? 0.93 : 0.9);
-    const G = T(MR, 0, 0, z, 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rr, 0));
-    put(B, new THREE.SphereGeometry(gr, 12, 8).scale(0.85, 0.7, 1.5), G, { color: o.color || NOON.milk, wear: o.wear, glow: k > 0 ? k * 0.75 : null });
-    put(B, ringZ(gr * 0.95, gr * 0.09, -Math.PI, Math.PI, 14, 5).rotateX(Math.PI / 2), G.clone().multiply(new THREE.Matrix4().makeTranslation(0, gr * 0.12, 0)), { color: NOON.celadon, wear: o.wear });
+    const a = (i ? -1 : 1) * (0.32 + rng() * 0.25), t = i ? 0.1 + rng() * 0.05 : 0.86 + rng() * 0.05, gr = R * (0.17 + rng() * 0.08);
+    const G = T(MR, 0, 0, zt(t), 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rt(t) * 0.94, 0));
+    put(B, new THREE.SphereGeometry(gr, 12, 8).scale(0.85, 0.7, 1.5), G, part(o.color || NOON.milk, 0.75));
+    put(B, ringZ(gr * 0.95, gr * 0.09, -Math.PI, Math.PI, 14, 5).rotateX(Math.PI / 2), G.clone().multiply(new THREE.Matrix4().makeTranslation(0, gr * 0.12, 0)), { color: NOON.celadon, wear });
+  }
+  // its spun cradle: filament rings round the body, laced one to the next at a slant (as a glass float is netted)
+  if (o.net) {
+    const ts = [0.14, 0.34, 0.56, 0.78], m = o.full === false ? 8 : 14, off = R * 0.035;
+    ts.forEach((t, j) => {
+      put(B, ringZ(rt(t) + off, R * 0.014, -Math.PI, Math.PI, seg, 4), T(MR, 0, 0, zt(t)), { color: NOON.strand, wear });
+      if (!j) return;
+      const t0 = ts[j - 1], r0 = rt(t0) + off, r1 = rt(t) + off;
+      for (let i = 0; i < m; i++) { const a = i / m * Math.PI * 2, b = a + (j % 2 ? 1 : -1) * Math.PI / m * 1.6; strand(B, MR, [Math.sin(a) * r0, Math.cos(a) * r0, zt(t0)], [Math.sin(b) * r1, Math.cos(b) * r1, zt(t)], { t: R * 0.009, wear }); }
+    });
   }
   if (o.crack) { // a shell-fracture: a curved black bite with a pale edge
-    const a = 0.12, z = -h * 0.1;
+    const a = o.crackAt ?? 0.12, t = 0.42;
     const bite = new THREE.Shape(); bite.moveTo(-0.5, -0.2); bite.bezierCurveTo(-0.2, 0.5, 0.5, 0.45, 0.75, 0.05); bite.bezierCurveTo(0.4, -0.1, 0.1, -0.5, -0.5, -0.2);
-    const mk = (s, col) => put(B, new THREE.ShapeGeometry(bite, 5).scale(R * 0.5 * s, R * 0.5 * s, 1), T(MR, 0, 0, z, 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, R * 1.03 + (s > 1 ? 0 : 0.004), 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { color: col, jit: 0 });
-    mk(1.08, NOON.cloud); mk(1, NOON.dark);
+    const mk = (sc, col, lift) => put(B, new THREE.ShapeGeometry(bite, 5).scale(R * 0.62 * sc, R * 0.62 * sc, 1), T(MR, 0, 0, zt(t), 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rt(t) + lift, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { color: col, jit: 0 });
+    mk(1.1, NOON.cloud, R * 0.012); mk(1, NOON.dark, R * 0.018);
   }
 }
 // node: the swelling where lines met, a gall: an oblate bulb with a collared port for each line. o: r (1.4),
