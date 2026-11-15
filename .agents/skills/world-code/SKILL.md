@@ -94,6 +94,7 @@ A change to a surface's shader (ground, rock, water) is also rendered close and 
 An implementer, when done:
 
 1. Commits by part with conventional messages (`feat(wilderness): …`).
-2. `git fetch origin && git merge origin/next`, then pushes the branch. No merge into `next`, no PR.
-3. Kills its server.
-4. Reports in under 200 words (or what the brief says): what changed, the exact test commands and the counts they printed, the renders to look at (paths in `shots/wip/`), any default it took.
+2. `git fetch origin && git merge origin/next`, then pushes the branch. No merge into `next`, no PR. Push after every part, not only at the end, and before any long test run: a session can die mid-run, and what is not pushed and not written down is lost with it (v12's H5 sat unpushed and unreported for a day and a half).
+3. Writes the report's facts (what changed, the test counts, the renders, the defaults) into `briefs/v<N>/reports/<branch>.md` on the branch and pushes it, so the report outlives the session that asked for it.
+4. Kills its server.
+5. Reports in under 200 words (or what the brief says): what changed, the exact test commands and the counts they printed, the renders to look at (paths in `shots/wip/`), any default it took.

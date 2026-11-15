@@ -16,7 +16,7 @@ Load the `wilderness` skill too (serving, renders), and `world-code` when you re
 
 ## Start of session
 
-1. **Read the state:** the current milestone's doc (the highest-numbered `plans/wilderness-v<N>.md`, its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`).
+1. **Read the state:** the current milestone's doc (the highest-numbered `plans/wilderness-v<N>.md`, its Status section) → its `briefs/<v>/index.md`; worktrees in flight (`git worktree list`); open issues and PRs (`gh issue list`, `gh pr list`). **If Status names an agent in flight and no agent is running**, the session before you died: for each such worktree, `git status` and `git log origin/next..` (push it if it has no upstream), read its `briefs/v<N>/reports/` file if there is one, then treat the branch as an unreported hand-back: a cold review of the whole diff, its tests run by you, its frames looked at, a fresh agent in the same worktree for what the review finds. Write a Status entry before anything else.
 2. **Report to the owner** in five lines or fewer: what's on `main`, what's in flight, what's waiting on them, and what you plan to do next.
 
 Then carry on. Take the owner's direction if they give any; otherwise work the current milestone, and if there is none, choose the next one and open it (`autonomous-run`, "Choosing what to build"). Don't wait for a go-ahead.
@@ -70,7 +70,7 @@ When a subagent reports done:
 
 When the milestone is in, in this order:
 
-1. The critic first (`autonomous-run` skill, `critic.md`), as soon as the last brief is merged, with the curator beside it ("Screenshots are the record", below; it needs no browser). While they run, write the `RELEASES.md` entry and the `README.md` line (below). The critic goes before the gate because its findings mean fixes, and fixes mean running the gate again: v8 ran the gate, then the critic, then the gate a second time.
+1. Read the milestone doc's "Done when" line by line and check each against what is merged, before the critic goes out: what is not met is fixed now, or said in the note. (v12 promised that a fresh eye could point at three of four ways up from the floor; nobody checked until the critic found none.) Then the critic (`autonomous-run` skill, `critic.md`), as soon as the last brief is merged, with the curator beside it ("Screenshots are the record", below; it needs no browser). While they run, write the `RELEASES.md` entry and the `README.md` line (below). The critic goes before the gate because its findings mean fixes, and fixes mean running the gate again: v8 ran the gate, then the critic, then the gate a second time.
 2. The critic's blocking findings fixed; the curator's work committed (it does not commit).
 3. `tools/suite.sh` green on `next`, once, on everything that will ship. The repository has no CI: the suite on the working branch is the gate. A small fix after that (one module, or the test tooling) reruns only the tests it touches; a fix in shared code reruns the suite (`AGENTS.md`, the first fixed thing).
 4. The release PR.
