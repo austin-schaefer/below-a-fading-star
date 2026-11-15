@@ -42,6 +42,9 @@ const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
   { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
   { name: 'The Diffident Stair', x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // v12-H3: the stub side on, its steps going up to nothing between the posts, the slabs lying in the turf beyond
+  { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
+  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice and their glass posts over it
+  { name: 'The Span\'s west stair', x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // v12-C1: at its foot in the wood's southern fringe, the first flight climbing west between its walls (dark under the trees)
   { name: 'The tender\'s deck', x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // v12-H3: on the deck at the top, 100 m up: the lean-to, the stove, the chair and the ladder against the lattice's foot
 ];
 const ACT_PLACES = [
