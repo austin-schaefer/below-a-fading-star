@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { NAVE } from '../v5/nave/ground.js';
 import { glowAt } from '../v5/nave.js';
 import { UnderBuilder, underMaterial, installBelow, boxBelow } from './under.js';
+import { buildNoon } from './noon-road.js';
 import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, PAIRS, DOOR, stairHead, candles, FLAME_Y, makeFloor, CR_OFF, GAP, ADRIFT, LID_OFF, pairX, WARM } from './coffin-road/plan.js';
 
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
@@ -410,6 +411,7 @@ export async function build(ctx) {
   const below = installBelow(ctx);
   below.add(boxBelow(DOOR.x - DOOR.half - 0.6, DOOR.x + DOOR.half + 0.6, DOOR.z - 0.2, DOOR.z + DOOR.depth + 3, -4, 1, 0.6), { size: 0.35 }); // a narrow passage: a smaller room
   below.keep(mesh); below.keep(gold); below.keep(flames);
+  const noon = buildNoon(ctx, { lit, below });
 
   // the way down, for heights-test: from the turf east of the shears, down the stair, the raft, the north spur, the
   // road to its end under the sun
@@ -424,6 +426,7 @@ export async function build(ctx) {
   const S = { get rescues() { return rescues; } };
   function update(dt, t) {
     fmat.uniforms.uTime.value = t;
+    noon.update(dt, t);
     ctx.renderer.getDrawingBufferSize(ds);
     fmat.uniforms.uScale.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5));
     for (const l of lights) l.L.intensity = l.i * (0.85 + 0.1 * Math.sin(t * 9 + l.ph) + 0.05 * Math.sin(t * 21 + l.ph * 2));

@@ -34,7 +34,7 @@ const r = await page.evaluate(async () => {
     let nan = false; for (const v of B.P) if (!Number.isFinite(v)) { nan = true; break; }
     out.parts.push({ h, name, count: B.count, tris: B.I.length / 3, nan, err });
   }
-  out.signs = S.HANDS.map((h) => S.placements.filter((p) => p.hand === h && p.kind === 'sign').length);
+  out.signs = (S.SIGNED || S.HANDS).map((h) => S.placements.filter((p) => p.hand === h && p.kind === 'sign').length);
   out.spolia = S.placements.filter((p) => p.kind === 'spolia').length;
   // ---- standing
   const meshes = [];
@@ -97,7 +97,7 @@ const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  $
 if (r.missing) { check(false, 'ctx.strata is installed'); process.exit(1); }
 check(r.on, 'the strata are on by default');
 const bad = r.parts.filter((p) => !p.count || p.nan || p.err);
-check(r.parts.length >= 15 && !bad.length, `the kit's ${r.parts.length} parts build`, bad.length ? JSON.stringify(bad) : r.parts.map((p) => `${p.h}.${p.name} ${p.tris}`).join(', '));
+check(r.parts.length >= 23 && r.parts.filter((p) => p.h === 'noon').length >= 8 && !bad.length, `the kit's ${r.parts.length} parts build`, bad.length ? JSON.stringify(bad) : r.parts.map((p) => `${p.h}.${p.name} ${p.tris}`).join(', '));
 const total = r.signs.reduce((a, b) => a + b, 0);
 check(total >= 12 && r.signs.every((n) => n >= 3), 'the sign placed at least 12 times, at least 3 in each hand', `elder ${r.signs[0]}, heliarch ${r.signs[1]}, late ${r.signs[2]}`);
 check(r.spolia >= 10, 'spolia placed at least 10 times', `${r.spolia}`);

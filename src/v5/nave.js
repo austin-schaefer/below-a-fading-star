@@ -17,6 +17,8 @@ import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
 import { approach, angDiff, makeGround } from '../fauna/uncanny/kit.js';
 import { installBelow, underMaterial, boxBelow, belowLit } from '../v14/under.js'; // v14-D0: the kit for places under the ground
+import { hulls } from '../v14/noon-road/plan.js'; // v14-D3: the Noon Road's carriers, seen through the water
+import { NOON } from '../v8/strata/noon.js';
 import { SZ, SHALF, DOOR, candles, FLAME_Y, ROAD_Y, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Coffin Road
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
@@ -166,6 +168,7 @@ const WATER_FRAG = /* glsl */`
   uniform vec4 uSplash[3];  // x, z, start time, strength
   uniform vec4 uCand[8];    // v14-D0: the nearest of the Coffin Road's flames (xyz, strength), doubled in the water (CAND_N of them: 4 on low)
   uniform vec3 uCandCol;
+  uniform vec4 uHullA[HULL_N]; uniform vec4 uHullB[HULL_N]; uniform vec3 uHullCol; // v14-D3: the carriers' hulls (x1, z1, x2, z2), (r, depth, light, 0)
   varying vec3 vWorld;
   #include <fog_pars_fragment>
   float rimAt(vec2 d) {
@@ -240,6 +243,18 @@ const WATER_FRAG = /* glsl */`
       vec3 a = Vb - normalize(m - cameraPosition);
       float I = exp(-dot(a.xz, a.xz) / 0.00003 - a.y * a.y / 0.0009);
       col += uCandCol * uCand[i].w * I * 2.2 * (1.0 - 0.9 * dark);
+    }
+    // v14-D3: the carriers under the surface: a hull that still holds its light shows whole through the black water,
+    // dimmer the deeper its flank lies, and lights the water round it; a dark one is a pale ghost near the surface
+    vec2 ph = p + slope * 0.7;
+    for (int i = 0; i < HULL_N; i++) {
+      vec4 HA = uHullA[i], HB = uHullB[i];
+      if (HB.x <= 0.0) continue;
+      vec2 ab = HA.zw - HA.xy, hq = ph - HA.xy;
+      float ht = clamp(dot(hq, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0), hd = length(hq - ab * ht), hr = HB.x;
+      float through = hd < hr ? exp(-max(HB.y - sqrt(hr * hr - hd * hd), 0.0) * 2.3) : 0.0;
+      float halo = exp(-max(hd - hr * 0.8, 0.0) * 0.55) * 0.07;
+      col += (uHullCol * vec3(0.9, 1.0, 0.8) * HB.z * (through * 0.42 + halo) + vec3(0.03, 0.035, 0.03) * through) * (1.0 - 0.8 * F) * (1.0 - 0.7 * dark);
     }
     gl_FragColor = vec4(col, 1.0);
     vec3 preFog = gl_FragColor.rgb;
@@ -585,13 +600,17 @@ export async function build(ctx) {
   const candU = Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 0, 0)), candCol = new THREE.Color('#9fe8c2');
   const shapeU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)), sizeU = [0, 1, 2].map(() => new THREE.Vector2(1, 0.5)), splashU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, -100, 0));
   const skyU = new THREE.Color('#5a5470');
-  const wmat = new THREE.ShaderMaterial({ defines: { CAND_N: low ? 4 : 8 },
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uCand: { value: candU }, uCandCol: { value: candCol } }]),
+  const HULL_N = low ? 6 : 14, HL = hulls().slice(0, HULL_N);
+  const hullA = Array.from({ length: HULL_N }, (_, i) => new THREE.Vector4(...(HL[i] ? HL[i].slice(0, 4) : [0, 0, 0, 0])));
+  const hullB = Array.from({ length: HULL_N }, (_, i) => (HL[i] ? new THREE.Vector4(HL[i][4], HL[i][5], HL[i][6], 0) : new THREE.Vector4(0, 0, 0, 0)));
+  const hullCol = new THREE.Color(NOON.lightHex);
+  const wmat = new THREE.ShaderMaterial({ defines: { CAND_N: low ? 4 : 8, HULL_N },
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uCand: { value: candU }, uCandCol: { value: candCol }, uHullA: { value: hullA }, uHullB: { value: hullB }, uHullCol: { value: hullCol } }]),
     vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, fog: true,
   });
   // UniformsUtils.merge clones the arrays: keep the material's own
   const WU = wmat.uniforms;
-  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU; WU.uCand.value = candU; WU.uCandCol.value = candCol;
+  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU; WU.uCand.value = candU; WU.uCandCol.value = candCol; WU.uHullA.value = hullA; WU.uHullB.value = hullB;
   const wgeo = new THREE.PlaneGeometry(NAVE.x1 - NAVE.x0, 2 * HALF, 1, 1).rotateX(-Math.PI / 2);
   const water = new THREE.Mesh(wgeo, wmat);
   water.position.set((NAVE.x0 + NAVE.x1) / 2, WY, CZ); water.name = 'nave-water'; water.receiveShadow = false;
