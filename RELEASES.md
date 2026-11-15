@@ -33,6 +33,8 @@ Known issues: phones were not measured, only a laptop slowed down to stand in fo
 
 ### Stats
 
+**This release**
+
 - **Time:** 11 hours 48 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 22 sub-agents.
 - **Tokens:** 479.0 million read and written in all; 14.9 million not counting what was reread from the cache, 1.6 million of it written by the models.
@@ -73,6 +75,20 @@ Known issues: phones were not measured, only a laptop slowed down to stand in fo
 
 </details>
 
+**Since the project started** (v1 to v13)
+
+- **Time:** 8 days 2 hours since the walk's first commit.
+- **Agents:** 293 sub-agents.
+- **Tokens:** 4.38 billion read and written in all; 124.8 million not counting what was reread from the cache, 18.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 3.24B | 98.2M | 13.1M |
+| Fable 5.2 | 510.1M | 6.9M | 1.5M |
+| Sonnet 5.5 | 372.3M | 15.5M | 2.4M |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Haiku 5.5 | 406k | 102k | 9k |
+
 ## v12: The Heights
 
 Released 2026-11-14.
@@ -109,6 +125,8 @@ Known issues: the ways up are hard to find. Nothing at ground level says where e
 <p><img src="shots/80-span-orch-river-ahead.webp" width="24%" alt="On the Great Span: a narrow truss of rungs crossing a fallen stretch high over the river"> <img src="shots/82-icefall-shelf-plummet.webp" width="24%" alt="From the shelf at the top of the icefall: blocks of blue ice and a long crystal hanging over the valley"> <img src="shots/83-stair-slab-rising.webp" width="24%" alt="The Diffident Stair: a stone slab risen out of the turf, a sign of the sun burning on it"> <img src="shots/84-lift-orch-gallery-east.webp" width="24%" alt="Stepping out of the lift onto the gallery, the carriage behind and the valley far below"></p>
 
 ### Stats
+
+**This release**
 
 - **Time:** 2 days 6 hours, from the first plan to live.
 - **Agents:** one orchestrator and 32 sub-agents.
@@ -159,6 +177,20 @@ Known issues: the ways up are hard to find. Nothing at ground level says where e
 | Third blind read of floor frames | Sonnet 5.5 | 78k | 44k | 1k |
 
 </details>
+
+**Since the project started** (v1 to v12)
+
+- **Time:** 7 days 14 hours since the walk's first commit.
+- **Agents:** 271 sub-agents.
+- **Tokens:** 3.90 billion read and written in all; 109.9 million not counting what was reread from the cache, 16.5 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 2.87B | 85.8M | 11.9M |
+| Fable 5.2 | 401.8M | 4.5M | 1.1M |
+| Sonnet 5.5 | 367.6M | 15.3M | 2.3M |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Haiku 5.5 | 406k | 102k | 9k |
 
 ## v11.1: The mountains, up close
 
@@ -216,6 +248,8 @@ Known issues: the mountains toward the sun are still smoother than the rest. Up 
 
 ### Stats
 
+**This release**
+
 - **Time:** 3 hours 41 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 12 sub-agents.
 - **Tokens:** 143.4 million read and written in all; 3.3 million not counting what was reread from the cache, 624 thousand of it written by the models.
@@ -246,6 +280,20 @@ Known issues: the mountains toward the sun are still smoother than the rest. Up 
 
 </details>
 
+**Since the project started** (v1 to v11)
+
+- **Time:** 5 days 5 hours since the walk's first commit.
+- **Agents:** 231 sub-agents.
+- **Tokens:** 2.95 billion read and written in all; 71.5 million not counting what was reread from the cache, 13.8 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 2.06B | 51.2M | 9.8M |
+| Sonnet 5.5 | 321.3M | 13.1M | 2.1M |
+| Fable 5.2 | 317.2M | 2.9M | 788k |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Haiku 5.5 | 406k | 102k | 9k |
+
 ## v10: Things to do
 
 Released 2026-11-12.
@@ -275,6 +323,8 @@ Known issues: the yellow sparks are hard to see at the great crystal until you a
 <p><img src="shots/76-tally-c-drawing.webp" width="24%" alt="The chalk on its cord drawing a stroke on the tally wall at the Lantern Halt"> <img src="shots/76-sleeper-c-from-the-seat.webp" width="24%" alt="From the rope seat at the top of the slab: the sleeper in the hanging lantern, the country behind"> <img src="shots/76-bell-b-candles.webp" width="24%" alt="The great bell under the Span after it is rung, corpse-candles gathered in its mouth"> <img src="shots/76-crystal-b-hand.webp" width="24%" alt="A handprint of light on the great crystal, veins of light running out from it"></p>
 
 ### Stats
+
+**This release**
 
 - **Time:** 6 hours 22 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 22 sub-agents.
@@ -315,6 +365,20 @@ Known issues: the yellow sparks are hard to see at the great crystal until you a
 | Blind read of act renders | Sonnet 5.5 | 87k | 52k | 2k |
 
 </details>
+
+**Since the project started** (v1 to v10)
+
+- **Time:** 4 days 22 hours since the walk's first commit.
+- **Agents:** 218 sub-agents.
+- **Tokens:** 2.80 billion read and written in all; 68.0 million not counting what was reread from the cache, 13.2 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 1.96B | 48.9M | 9.3M |
+| Fable 5.2 | 296.6M | 2.6M | 715k |
+| Sonnet 5.5 | 285.0M | 12.2M | 1.9M |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Haiku 5.5 | 406k | 102k | 9k |
 
 ## v9.1: The Lantern Halt
 
@@ -368,6 +432,8 @@ Known issues: the music is an early attempt. The pieces are not very tuneful and
 <p><img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"> <img src="shots/74-settings-phone.webp" width="24%" alt="The same menu on a phone"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/73-hillside-figure-after.webp" width="24%" alt="The white figure on the hillside, cleared of rocks and plants"></p>
 
 ### Stats
+
+**This release**
 
 - **Time:** 8 hours 13 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 50 sub-agents.
@@ -438,6 +504,20 @@ Known issues: the music is an early attempt. The pieces are not very tuneful and
 
 </details>
 
+**Since the project started** (v1 to v9)
+
+- **Time:** 4 days 15 hours since the walk's first commit.
+- **Agents:** 196 sub-agents.
+- **Tokens:** 2.35 billion read and written in all; 55.2 million not counting what was reread from the cache, 11.6 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 1.65B | 38.3M | 8.2M |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Sonnet 5.5 | 236.3M | 10.8M | 1.7M |
+| Fable 5.2 | 200.1M | 1.8M | 533k |
+| Haiku 5.5 | 406k | 102k | 9k |
+
 ## v8: One world
 
 Released 2026-11-11.
@@ -468,6 +548,72 @@ Ties the world together: roads that lead somewhere, peoples whose buildings and 
 Known issues: the traveller below the Span is very hard to spot from the bridge deck; the Twk-men are tiny unless you are close; a few low things (some grave kerbs, the sunken wall round the lawns, the causeway's edge) still cannot be hopped onto; the wood is very dark away from its shafts of light.
 
 <p><img src="shots/61-roads-spawn-after.webp" width="24%" alt="The start of the walk with a worn track leading past a waystone toward the pond, the red sun in its gap between the mountains"> <img src="shots/63-strata-house-gate-after.webp" width="24%" alt="The Pomegranate House's gate in cream and rose limewash with turquoise domes, seen across tall grass"> <img src="shots/65-house-court-after.webp" width="24%" alt="The inn's courtyard under strings of coloured lamps, with a fountain and tables"> <img src="shots/67-twk-gnomon-after.webp" width="24%" alt="Carcanet Keep's gate, a tall wall of coursed stone with narrow slots, at the end of a path of hexagonal paving"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 4 hours 32 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 29 sub-agents.
+- **Tokens:** 464.2 million read and written in all; 9.0 million not counting what was reread from the cache, 1.8 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 386.4M | 7.2M | 1.5M |
+| Fable 5.2 | 67.3M | 751k | 194k |
+| Sonnet 5.5 | 10.1M | 1.0M | 94k |
+| Haiku 5.5 | 406k | 102k | 9k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.2 | 66.5M | 620k | 179k |
+| v8-04 story threads | Opus 5.5 | 58.6M | 1.1M | 211k |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M | 514k | 137k |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M | 1.4M | 166k |
+| v8-07 Twk-men | Opus 5.5 | 45.3M | 497k | 153k |
+| v8-01 roads | Opus 5.5 | 35.7M | 598k | 178k |
+| v8-06 liveries | Opus 5.5 | 33.9M | 409k | 108k |
+| v8-03 three strata | Opus 5.5 | 24.2M | 523k | 144k |
+| v8-02 ground contrast | Opus 5.5 | 22.7M | 372k | 83k |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M | 653k | 99k |
+| v8-11 the rocks | Opus 5.5 | 17.5M | 302k | 75k |
+| v8-08 the painter | Opus 5.5 | 12.9M | 359k | 106k |
+| Cold critic for v8 | Opus 5.5 | 3.8M | 192k | 24k |
+| Curate v8 renders | Sonnet 5.5 | 3.1M | 173k | 25k |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M | 138k | 33k |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M | 91k | 17k |
+| Audit architecture and figures | Sonnet 5.5 | 1.0M | 41k | 9k |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k | 86k | 8k |
+| Research music harness plan | Fable 5.2 | 809k | 132k | 15k |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k | 88k | 7k |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k | 94k | 7k |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k | 83k | 6k |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k | 71k | 4k |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k | 67k | 4k |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k | 90k | 5k |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k | 75k | 3k |
+| Can a session self-compact | Haiku 5.5 | 406k | 102k | 9k |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k | 63k | 5k |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k | 68k | 2k |
+| Audit paths, density, palette levers | Sonnet 5.5 | 254k | 13k | 9k |
+
+</details>
+
+**Since the project started** (v1 to v8)
+
+- **Time:** 4 days 11 hours since the walk's first commit.
+- **Agents:** 172 sub-agents.
+- **Tokens:** 2.11 billion read and written in all; 50.1 million not counting what was reread from the cache, 10.5 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 1.54B | 34.9M | 7.5M |
+| Fable 5.1 | 254.8M | 4.2M | 1.1M |
+| Sonnet 5.5 | 210.8M | 9.7M | 1.5M |
+| Fable 5.2 | 99.1M | 1.3M | 343k |
+| Haiku 5.5 | 406k | 102k | 9k |
 
 ## v7.2.1: Quieter birds at the keep
 
@@ -527,6 +673,55 @@ Adds far more life to the world, with 18 new characters, creatures and signs to 
 Known issues: the Coheirs sit in deep shade and are hard to see until you are close; the Accrescent's trail is faint from a distance.
 
 <p><img src="shots/52-still-stylite-offer.webp" width="24%" alt="A stack of round stones against a cliff, with a glowing, speckled growth beside it"> <img src="shots/52-still-accrescent-trail.webp" width="24%" alt="Boulders on the dark moor crossed by thin glowing threads of glassy light"> <img src="shots/51-workers-taker-road.webp" width="24%" alt="A field of small stone cairns on cracked ground below the cliff, with the keep on the horizon"> <img src="shots/53-glyphs-erratic-after.webp" width="24%" alt="A large boulder carved with a small pale sun sign, with ruined columns behind it"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 3 hours 55 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 15 sub-agents.
+- **Tokens:** 202.9 million read and written in all; 5.5 million not counting what was reread from the cache, 708 thousand of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 145.6M | 4.1M | 420k |
+| Sonnet 5.5 | 41.0M | 1.2M | 237k |
+| Fable 5.1 | 16.2M | 177k | 51k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.1 | 16.2M | 177k | 51k |
+| v7-05 small agent | Opus 5.5 | 44.0M | 1.6M | 182k |
+| v7-03 still agent | Sonnet 5.5 | 36.4M | 543k | 191k |
+| v7-01 walkers agent | Opus 5.5 | 29.5M | 577k | 61k |
+| v7-02 workers agent | Opus 5.5 | 27.4M | 502k | 38k |
+| v7-07 audio agent | Opus 5.5 | 22.6M | 1.1M | 89k |
+| v7-06 canyon agent | Opus 5.5 | 20.1M | 118k | 44k |
+| v7-04 glyphs agent | Opus 5.5 | 2.1M | 251k | 5k |
+| Curate v7 shots | Sonnet 5.5 | 2.0M | 191k | 21k |
+| Cold review of v7-canyon | Sonnet 5.5 | 537k | 70k | 4k |
+| Cold review of v7-workers | Sonnet 5.5 | 459k | 51k | 4k |
+| Cold review of v7-small | Sonnet 5.5 | 415k | 67k | 5k |
+| Cold review of v7-walkers | Sonnet 5.5 | 361k | 50k | 3k |
+| Cold review of v7-still | Sonnet 5.5 | 301k | 62k | 3k |
+| Cold review of v7-glyphs | Sonnet 5.5 | 250k | 61k | 2k |
+| Cold review of v7-audio | Sonnet 5.5 | 243k | 73k | 4k |
+
+</details>
+
+**Since the project started** (v1 to v7)
+
+- **Time:** 39 hours 2 minutes since the walk's first commit.
+- **Agents:** 131 sub-agents.
+- **Tokens:** 1.48 billion read and written in all; 36.8 million not counting what was reread from the cache, 8.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 1.08B | 25.7M | 5.7M |
+| Fable 5.1 | 222.0M | 3.7M | 1.0M |
+| Sonnet 5.5 | 177.9M | 7.5M | 1.3M |
 
 ## v6.7: Two more place names
 
@@ -619,6 +814,81 @@ Known issues: on phones the picture is drawn a little below the screen's resolut
 
 <p><img src="shots/43-fxaa-lattice-off.webp" width="24%" alt="Before: crystals and glowing lines with stair-stepped, jagged edges"> <img src="shots/43-fxaa-lattice-on.webp" width="24%" alt="After: the same crystals with smooth edges"> <img src="shots/44-rocks-ling-before.webp" width="24%" alt="Before: boulders on the heath ending in a visible ring"> <img src="shots/44-rocks-ling-after.webp" width="24%" alt="After: the same boulders blending into their distant versions"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 6 hours 20 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 41 sub-agents.
+- **Tokens:** 329.6 million read and written in all; 7.9 million not counting what was reread from the cache, 1.8 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 193.8M | 4.6M | 1.1M |
+| Fable 5.1 | 76.7M | 1.3M | 350k |
+| Sonnet 5.5 | 59.1M | 2.1M | 402k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Fable 5.1 | 76.7M | 1.3M | 350k |
+| v6-04 trees agent | Opus 5.5 | 37.7M | 756k | 137k |
+| v6-05 ground agent | Opus 5.5 | 26.9M | 366k | 96k |
+| Land mountains C | Opus 5.5 | 22.9M | 324k | 85k |
+| v5: the local lights bundle | Opus 5.5 | 21.6M | 358k | 104k |
+| v6-02 finish pass agent | Opus 5.5 | 15.7M | 279k | 84k |
+| Draft the v6 briefs | Opus 5.5 | 11.4M | 404k | 131k |
+| v5 coherence pass | Opus 5.5 | 10.0M | 338k | 43k |
+| v5: the Kept Fire | Sonnet 5.5 | 9.7M | 94k | 29k |
+| v5: story set-dressing | Sonnet 5.5 | 9.4M | 101k | 37k |
+| v6-01 harness agent | Sonnet 5.5 | 9.4M | 273k | 72k |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | 208k | 55k |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | 208k | 48k |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | 180k | 44k |
+| Draft the v7 briefs | Opus 5.5 | 6.0M | 303k | 93k |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | 166k | 41k |
+| v6-00 square lights, second attempt | Opus 5.5 | 5.3M | 195k | 39k |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 4.7M | 28k | 9k |
+| Reshape wilderness docs, token-smart | Opus 5.5 | 4.6M | 177k | 28k |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | 141k | 29k |
+| v6 fade kit agent | Opus 5.5 | 3.4M | 140k | 32k |
+| v6-00 bloom squares investigation | Opus 5.5 | 3.2M | 108k | 24k |
+| Curate v6 renders, pass 1 | Sonnet 5.5 | 2.9M | 139k | 23k |
+| Span deck invisible colliders | Opus 5.5 | 2.6M | 102k | 20k |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | 161k | 27k |
+| Curate shots/wip, group B (v5-07 to v5-13) | Sonnet 5.5 | 2.0M | 117k | 15k |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | 115k | 21k |
+| Review trees diff cold | Opus 5.5 | 1.2M | 98k | 16k |
+| Review ground diff cold | Opus 5.5 | 1.0M | 99k | 15k |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 888k | 40k | 10k |
+| v6-00 square lights agent | Sonnet 5.5 | 737k | 73k | 5k |
+| Review finish pass diff cold | Opus 5.5 | 735k | 86k | 13k |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k | 75k | 8k |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | 45k | 4k |
+| Curate v6 renders, pass 2 (trees) | Sonnet 5.5 | 527k | 68k | 5k |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 445k | 4k | 1k |
+| Review harness diff cold | Sonnet 5.5 | 388k | 53k | 4k |
+| Curate shots/wip, group A (v5-01 to v5-06) | Sonnet 5.5 | 329k | 74k | 5k |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | 45k | 5k |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | 43k | 3k |
+| Review Span collider fix cold | Sonnet 5.5 | 217k | 53k | 4k |
+| Review fade kit diff cold | Sonnet 5.5 | 179k | 35k | 5k |
+
+</details>
+
+**Since the project started** (v1 to v6)
+
+- **Time:** 31 hours 52 minutes since the walk's first commit.
+- **Agents:** 102 sub-agents.
+- **Tokens:** 1.11 billion read and written in all; 26.3 million not counting what was reread from the cache, 6.2 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 816.4M | 17.7M | 4.4M |
+| Fable 5.1 | 173.9M | 3.0M | 840k |
+| Sonnet 5.5 | 121.5M | 5.6M | 964k |
+
 ## v5: The built
 
 Released 2026-11-08.
@@ -637,6 +907,118 @@ Known issues: the lost slipper is easy to miss, and the window-lights on the wes
 
 <p><img src="shots/30-thrones-gutter-spawn-after.webp" width="24%" alt="Two headless giants crawling out of the mountain wall either side of the dimmed sun"> <img src="shots/28-court-moraine-after.webp" width="24%" alt="Two enormous stone piers reaching for an arch that was never closed, with a giant chain at the right"> <img src="shots/31-hawser-measure-after.webp" width="24%" alt="A link of the giant chain, taller than a person, in front of the sun"> <img src="shots/35-keptfire-flare-after.webp" width="24%" alt="A small fire in a ring of stones on pale shingle, flaring with sparks"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 13 hours 38 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 78 sub-agents.
+- **Tokens:** 927.9 million read and written in all; 21.5 million not counting what was reread from the cache, 5.2 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 694.3M | 14.6M | 3.8M |
+| Fable 5.1 | 129.6M | 2.2M | 626k |
+| Sonnet 5.5 | 104.0M | 4.7M | 810k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 129.8M | 2.3M | 626k |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 51.2M | 614k | 205k |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | 718k | 237k |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | 508k | 145k |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | 797k | 208k |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | 565k | 172k |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.8M | 1.0M | 197k |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | 532k | 160k |
+| v5 wonder: the Plinth Road | Opus 5.5 | 26.3M | 443k | 130k |
+| v5 recast: the Gradine extended | Opus 5.5 | 25.6M | 988k | 127k |
+| Land mountains C | Opus 5.5 | 22.9M | 324k | 85k |
+| v5 recast: the Arcature | Opus 5.5 | 22.0M | 427k | 121k |
+| v5: the local lights bundle | Opus 5.5 | 21.6M | 358k | 104k |
+| v5 recast: Sunken Court | Opus 5.5 | 21.5M | 689k | 117k |
+| v5: the Kept Fire | Sonnet 5.5 | 20.3M | 423k | 124k |
+| v5 wonder: the Occultation | Opus 5.5 | 20.3M | 331k | 102k |
+| v5: story set-dressing | Sonnet 5.5 | 20.0M | 427k | 132k |
+| v5 wonder: the Acephalous Thrones | Opus 5.5 | 18.9M | 375k | 110k |
+| v5 wonder: the Annals | Opus 5.5 | 18.9M | 442k | 89k |
+| v5 wonder: the Hawser | Opus 5.5 | 17.8M | 345k | 93k |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
+| v5 wonder: Galleries of Durance | Opus 5.5 | 16.2M | 325k | 100k |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
+| v5 recast: Carcanet Keep | Opus 5.5 | 15.1M | 385k | 106k |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 14.3M | 271k | 68k |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | 282k | 79k |
+| v5 recast: Lattice mother crystal | Opus 5.5 | 12.9M | 283k | 80k |
+| v5 recast: Armiger's Tower | Opus 5.5 | 12.8M | 283k | 70k |
+| Draft the v6 briefs | Opus 5.5 | 11.4M | 404k | 131k |
+| Fix: tree LODs rotate on approach | Opus 5.5 | 10.5M | 255k | 66k |
+| v5 coherence pass | Opus 5.5 | 10.0M | 338k | 43k |
+| v5 wonder: the Cincture | Opus 5.5 | 10.0M | 236k | 71k |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
+| Mountains study: three profiles | Opus 5.5 | 8.6M | 217k | 65k |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | 208k | 55k |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | 208k | 48k |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | 180k | 44k |
+| Draft the v7 briefs | Opus 5.5 | 6.0M | 303k | 93k |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | 166k | 41k |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | 112k | 20k |
+| Fix: jumpy camera in the wood | Opus 5.5 | 4.2M | 135k | 27k |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | 141k | 29k |
+| Fix: stair hop animation | Opus 5.5 | 3.9M | 111k | 25k |
+| v5 wonder: the Battlemented Ridge | Sonnet 5.5 | 3.8M | 238k | 26k |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | 175k | 30k |
+| v5 follow-up: legibility calls | Sonnet 5.5 | 2.9M | 119k | 19k |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | 161k | 27k |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | 115k | 21k |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | 119k | 11k |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 1.2M | 94k | 13k |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | 97k | 10k |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | 99k | 11k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | 85k | 8k |
+| Cold review: the Annals | Sonnet 5.5 | 736k | 48k | 6k |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k | 95k | 11k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
+| Cold review: Gradine extension | Sonnet 5.5 | 588k | 95k | 10k |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k | 75k | 8k |
+| Cold review: Acephalous Thrones | Sonnet 5.5 | 574k | 86k | 10k |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | 45k | 4k |
+| Cold review: the Hawser | Sonnet 5.5 | 528k | 92k | 14k |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | 75k | 7k |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | 49k | 5k |
+| Cold review: Lattice mother crystal | Sonnet 5.5 | 392k | 70k | 6k |
+| Cold review of v5 tower recast | Sonnet 5.5 | 388k | 75k | 5k |
+| Review: the Occultation branch | Sonnet 5.5 | 347k | 47k | 7k |
+| Cold review: Arcature recast | Sonnet 5.5 | 337k | 42k | 4k |
+| Cold review: Galleries of Durance | Sonnet 5.5 | 308k | 68k | 4k |
+| Cold review: Carcanet Keep recast | Sonnet 5.5 | 289k | 45k | 3k |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | 56k | 5k |
+| Cold review: the Plinth Road | Sonnet 5.5 | 259k | 66k | 3k |
+| Cold review: the Cincture | Sonnet 5.5 | 244k | 67k | 5k |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | 45k | 5k |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | 43k | 3k |
+| Cold review: Sunken Court recast | Sonnet 5.5 | 230k | 57k | 4k |
+| Cold review: the Battlemented Ridge | Sonnet 5.5 | 206k | 49k | 6k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+
+</details>
+
+**Since the project started** (v1 to v5)
+
+- **Time:** 27 hours 49 minutes since the walk's first commit.
+- **Agents:** 82 sub-agents.
+- **Tokens:** 948.8 million read and written in all; 22.3 million not counting what was reread from the cache, 5.4 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 714.1M | 15.3M | 3.9M |
+| Fable 5.1 | 129.6M | 2.2M | 626k |
+| Sonnet 5.5 | 105.0M | 4.8M | 825k |
+
 ## v4: The land and the Great Span
 
 Released 2026-11-08.
@@ -654,6 +1036,68 @@ Known issues: the waterfall cannot be seen from the causeway, and the surveyor's
 
 <p><img src="shots/21-systems-sun-after.webp" width="24%" alt="The red sun in a gap between mountain ranges, hazing paler range by range"> <img src="shots/23-span-spawn-after.webp" width="24%" alt="The Great Span's dark arches crossing the south of the valley, seen past the keep's wall"> <img src="shots/24-map-pool-after.webp" width="24%" alt="The Tumbling Water, a very tall thin waterfall dropping into mist in a narrow ravine"> <img src="shots/22-saltings-rim-after.webp" width="24%" alt="Pale salt plates with curled edges and tall reeds along the edge of the salt flats"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 11 hours 10 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 28 sub-agents.
+- **Tokens:** 370.2 million read and written in all; 7.7 million not counting what was reread from the cache, 2.0 million of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 292.5M | 5.4M | 1.6M |
+| Fable 5.1 | 48.8M | 737k | 198k |
+| Sonnet 5.5 | 28.9M | 1.6M | 237k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 52.1M | 856k | 217k |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | 718k | 237k |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | 508k | 145k |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | 797k | 208k |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | 565k | 172k |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.4M | 616k | 197k |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | 532k | 160k |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | 282k | 79k |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | 112k | 20k |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | 175k | 30k |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | 119k | 11k |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | 97k | 10k |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | 99k | 11k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | 85k | 8k |
+| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k | 95k | 11k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | 75k | 7k |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | 49k | 5k |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | 56k | 5k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+
+</details>
+
+**Since the project started** (v1 to v4)
+
+- **Time:** 19 hours 44 minutes since the walk's first commit.
+- **Agents:** 28 sub-agents.
+- **Tokens:** 374.2 million read and written in all; 7.9 million not counting what was reread from the cache, 2.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 296.5M | 5.6M | 1.6M |
+| Fable 5.1 | 48.8M | 737k | 198k |
+| Sonnet 5.5 | 28.9M | 1.6M | 237k |
+
 ## v3: Running cooler, and a medium quality
 
 Released 2026-11-07.
@@ -668,6 +1112,52 @@ Makes the walk lighter on laptops: little looks different, on purpose.
 Known issues: the high quality setting has no smoothing of jagged edges yet.
 
 <p><img src="shots/17-tier-spawn-before.webp" width="24%" alt="The start of the walk at high quality"> <img src="shots/17-tier-spawn-after.webp" width="24%" alt="The same view at the new medium quality, close to identical"> <img src="shots/16-flicker-fen-east-before.webp" width="24%" alt="Before: reed heads floating off their stems at the fen's edge"> <img src="shots/16-flicker-fen-east-after.webp" width="24%" alt="After: the same edge with the heads fixed to their stems"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 7 hours 50 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 12 sub-agents.
+- **Tokens:** 99.9 million read and written in all; 2.7 million not counting what was reread from the cache, 685 thousand of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 78.7M | 2.1M | 557k |
+| Fable 5.1 | 18.5M | 320k | 87k |
+| Sonnet 5.5 | 2.6M | 309k | 40k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 21.8M | 439k | 106k |
+| v4 systems: mountains, light, kits | Opus 5.5 | 18.7M | 417k | 110k |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
+| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+
+</details>
+
+**Since the project started** (v1 to v3)
+
+- **Time:** 16 hours 20 minutes since the walk's first commit.
+- **Agents:** 12 sub-agents.
+- **Tokens:** 103.9 million read and written in all; 2.9 million not counting what was reread from the cache, 720 thousand of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 82.8M | 2.3M | 593k |
+| Fable 5.1 | 18.5M | 320k | 87k |
+| Sonnet 5.5 | 2.6M | 309k | 40k |
 
 ## v2.2: A hop and a hush for phones
 
@@ -708,6 +1198,42 @@ Adds a waterfall and river, a dozen new places and new inhabitants, and ties the
 
 <p><img src="shots/12-river-speculum-young-sun.webp" width="24%" alt="A waterfall falling into a round blue pool that reflects a young sun and clouds"> <img src="shots/13-sky-parhelion-gutter-solid.webp" width="24%" alt="A city of needle spires standing against the dimmed sun in the mountain gap"> <img src="shots/13-inhabitants-galley-crossing.webp" width="24%" alt="A black galley crossing the lake through the reeds, the sun in the gap beyond"> <img src="shots/13-riverlife-pedlars-slow-reach.webp" width="24%" alt="Pale riders on dragonflies over the slow water, with glints on the reeds"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 11 hours 3 minutes, from the first plan to live.
+- **Agents:** one orchestrator and 4 sub-agents.
+- **Tokens:** 20.7 million read and written in all; 720 thousand not counting what was reread from the cache, 152 thousand of it written by the models.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 19.7M | 632k | 137k |
+| Sonnet 5.5 | 981k | 88k | 15k |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|---|
+| The orchestrator | Opus 5.5 | 7.0M | 214k | 52k |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
+| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
+
+</details>
+
+**Since the project started** (v1 to v2)
+
+- **Time:** 12 hours 33 minutes since the walk's first commit.
+- **Agents:** 4 sub-agents.
+- **Tokens:** 20.9 million read and written in all; 757 thousand not counting what was reread from the cache, 155 thousand of it written by the models. v1's sessions were not kept, so this is short by them.
+
+| Model | Tokens | Without cache rereads | Written |
+|---|---|---|---|
+| Opus 5.5 | 19.9M | 669k | 140k |
+| Sonnet 5.5 | 981k | 88k | 15k |
+
 ## v1: The moor, the keep, the things between
 
 Released 2026-11-07.
@@ -720,3 +1246,10 @@ The first release: a first-person walk across a moor in a valley ringed by mount
 - **Sound and controls**: Sound made on the fly, and first-person controls with the mouse and keys or by touch.
 
 <p><img src="shots/07-full-causeway.webp" width="24%" alt="The first view: a causeway, a line of trees and the swollen red sun in the saddle of the mountains"> <img src="shots/05-structures-keep-courtyard.webp" width="24%" alt="Carcanet Keep's wall and gate arch in silhouette against the setting sun"> <img src="shots/09-uncanny-woman-tarn.webp" width="24%" alt="A woman standing far out in the lake, her long shadow across the water"> <img src="shots/10-refine-lattice-tamed-after.webp" width="24%" alt="A field of tall blue crystals with glowing lines across the ground and long shadows"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 4 hours 25 minutes, from the first plan to live.
+- **Agents and tokens:** not on record; the sessions that built this release were not kept.
