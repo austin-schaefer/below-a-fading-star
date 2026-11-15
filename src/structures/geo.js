@@ -204,12 +204,23 @@ export class Builder {
     if (!g.attributes.normal) g.computeVertexNormals();
     let muv = g.attributes.muv;
     const pos = g.attributes.position;
+    // v13-L5: per vertex through the typed arrays, not getX/setXYZ (the same values: these attributes are plain
+    // float arrays, neither normalized nor interleaved; anything else goes through the accessors)
+    const plain = (a) => a && !a.isInterleavedBufferAttribute && !a.normalized;
     if (!muv) {
       // planar masonry coordinates from the local normal
       g.computeVertexNormals();
       const nrm = g.attributes.normal;
       const arr = new Float32Array(pos.count * 2);
-      for (let i = 0; i < pos.count; i++) {
+      if (plain(pos) && plain(nrm) && pos.itemSize === 3 && nrm.itemSize === 3) {
+        const pa = pos.array, na = nrm.array;
+        for (let i = 0; i < pos.count; i++) {
+          const ax = Math.abs(na[i * 3]), ay = Math.abs(na[i * 3 + 1]), az = Math.abs(na[i * 3 + 2]);
+          if (ay >= ax && ay >= az) { arr[i * 2] = pa[i * 3]; arr[i * 2 + 1] = pa[i * 3 + 2]; }
+          else if (ax >= az) { arr[i * 2] = pa[i * 3 + 2]; arr[i * 2 + 1] = pa[i * 3 + 1]; }
+          else { arr[i * 2] = pa[i * 3]; arr[i * 2 + 1] = pa[i * 3 + 1]; }
+        }
+      } else for (let i = 0; i < pos.count; i++) {
         const ax = Math.abs(nrm.getX(i)), ay = Math.abs(nrm.getY(i)), az = Math.abs(nrm.getZ(i));
         if (ay >= ax && ay >= az) { arr[i * 2] = pos.getX(i); arr[i * 2 + 1] = pos.getZ(i); }
         else if (ax >= az) { arr[i * 2] = pos.getZ(i); arr[i * 2 + 1] = pos.getY(i); }
@@ -218,16 +229,19 @@ export class Builder {
       muv = new THREE.BufferAttribute(arr, 2);
     }
     if (m) g.applyMatrix4(m);
+    const fast = plain(pos) && pos.itemSize === 3;
+    const pa = pos.array;
     const disp = o.disp || 0;
     if (disp > 0) {
-      const s = o.dispScale || 1.3;
+      const s = o.dispScale || 1.3, dyk = o.dispY ?? 1;
       for (let i = 0; i < pos.count; i++) {
-        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const x = fast ? pa[i * 3] : pos.getX(i), y = fast ? pa[i * 3 + 1] : pos.getY(i), z = fast ? pa[i * 3 + 2] : pos.getZ(i);
         const px = x * s, py = y * s, pz = z * s;
         let dx = this.n3(px, py, pz) + 0.45 * this.n3(px * 2.7 + 3.1, py * 2.7, pz * 2.7);
         let dy = this.n3(py + 31.7, pz, px) + 0.45 * this.n3(py * 2.7 - 7.7, pz * 2.7, px * 2.7);
         let dz = this.n3(pz - 13.1, px, py) + 0.45 * this.n3(pz * 2.7 + 9.3, px * 2.7, py * 2.7);
-        pos.setXYZ(i, x + dx * disp, y + dy * disp * (o.dispY ?? 1), z + dz * disp);
+        if (fast) { pa[i * 3] = x + dx * disp; pa[i * 3 + 1] = y + dy * disp * dyk; pa[i * 3 + 2] = z + dz * disp; }
+        else pos.setXYZ(i, x + dx * disp, y + dy * disp * dyk, z + dz * disp);
       }
     }
     g.computeVertexNormals();
@@ -237,16 +251,18 @@ export class Builder {
     const course = o.course || 0, moss = o.moss ?? 0.6, iron = o.iron || 0, wet = o.wet || 0;
     const em = o.emit || NOEMIT;
     let ground = o.ground;
-    if (ground === undefined) { ground = Infinity; for (let i = 0; i < pos.count; i++) ground = Math.min(ground, pos.getY(i)); }
+    if (ground === undefined) { ground = Infinity; for (let i = 0; i < pos.count; i++) ground = Math.min(ground, fast ? pa[i * 3 + 1] : pos.getY(i)); }
+    const P = this.P, Nn = this.Nn, C = this.C, U = this.U, A = this.A, E = this.E, L = this.L;
+    const nf = plain(nrm) && nrm.itemSize === 3, uf = plain(muv) && muv.itemSize === 2, na = nrm.array, ua = muv.array;
     for (let i = 0; i < pos.count; i++) {
-      const y = pos.getY(i);
-      this.P.push(pos.getX(i), y, pos.getZ(i));
-      this.Nn.push(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
-      this.C.push(c.r, c.g, c.b);
-      this.U.push(muv.getX(i), muv.getY(i));
-      this.A.push(course, moss, iron, wet);
-      this.E.push(em[0], em[1], em[2], em[3]);
-      this.L.push(y - ground);
+      const y = fast ? pa[i * 3 + 1] : pos.getY(i);
+      P.push(fast ? pa[i * 3] : pos.getX(i), y, fast ? pa[i * 3 + 2] : pos.getZ(i));
+      if (nf) Nn.push(na[i * 3], na[i * 3 + 1], na[i * 3 + 2]); else Nn.push(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
+      C.push(c.r, c.g, c.b);
+      if (uf) U.push(ua[i * 2], ua[i * 2 + 1]); else U.push(muv.getX(i), muv.getY(i));
+      A.push(course, moss, iron, wet);
+      E.push(em[0], em[1], em[2], em[3]);
+      L.push(y - ground);
     }
     if (g.index) { const ix = g.index.array; for (let i = 0; i < ix.length; i++) this.I.push(ix[i] + base); }
     else for (let i = 0; i < pos.count; i++) this.I.push(base + i);

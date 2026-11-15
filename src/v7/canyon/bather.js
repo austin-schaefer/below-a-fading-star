@@ -62,9 +62,10 @@ const STONES = [
 ];
 export const STONE_PARTS = STONES;
 
+// indexed, not destructured: the field is evaluated a few hundred thousand times at build (v13-L5)
 const partsField = (parts, k) => (u, y, v) => {
   let d = 1e9;
-  for (const [A, B, ra, rb, fy] of parts) d = smin(d, capsule(u, y, v, A, B, ra, rb, fy), k);
+  for (let i = 0; i < parts.length; i++) { const p = parts[i]; d = smin(d, capsule(u, y, v, p[0], p[1], p[2], p[3], p[4]), k); }
   return d;
 };
 const bodyF = partsField(BODY, 0.22), hairF = partsField(HAIR, 0.18), armF = partsField(ARM_PARTS, 0.12), stonesRaw = partsField(STONES, 0);
