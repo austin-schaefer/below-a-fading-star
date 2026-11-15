@@ -4,7 +4,7 @@ Worktree: `.claude/worktrees/issue-1303-height-core` (branch `issue-1303-height-
 
 ## Goal
 
-A visitor waits 8.1 s on low and 12.2 s on medium for "Go out" on the owner's Mac, and 32 to 48 s with the 4x CPU throttle that stands in for a phone (`plans/wilderness-v13.md`, Status). P2's profile (`shots/wip/v13-P2-low.txt` in `.claude/worktrees/issue-1302-load-profile`, and the P2 entry in Status) says why: **`heightAt` and what it calls is 42% of the whole load's CPU**: 63% of the terrain bake and about half of the module builds. 399k calls in the bake (278k of them from 69.5k `slopeAt` calls of four samples each), 737k in the module builds at about 6 µs each. Inside it: `regionsHeight`/`regionAt` (`src/v4/regions.js:132`, the largest self time of any function in the load, 14.7%), `applyMountains` (36% of the bake's height time), `noise2` (`src/noise.js:42`, 11.9% of the load), the fen's `warped2`, the causeway and river distances.
+A visitor waits 8.1 s on low and 12.2 s on medium for "Go out" on the owner's Mac, and 32 to 48 s with the 4x CPU throttle that stands in for a phone (`plans/wilderness-v13.md`, Status). P2's profile (`.claude/worktrees/deploy/shots/wip/v13-P2-low.txt` and `v13-P2-medium.txt`: read them there, do not write there, and the P2 entry in Status) says why: **`heightAt` and what it calls is 42% of the whole load's CPU**: 63% of the terrain bake and about half of the module builds. 399k calls in the bake (278k of them from 69.5k `slopeAt` calls of four samples each), 737k in the module builds at about 6 µs each. Inside it: `regionsHeight`/`regionAt` (`src/v4/regions.js:132`, the largest self time of any function in the load, 14.7%), `applyMountains` (36% of the bake's height time), `noise2` (`src/noise.js:42`, 11.9% of the load), the fen's `warped2`, the causeway and river distances.
 
 Make height sampling cheap **without changing one bit of what it returns**, and leave the height path importable by a Worker.
 
@@ -29,3 +29,7 @@ The worker and the cache (the next brief). Modules whose build is not height (`s
 - Render pairs at `tools/views-perf.json` on low: identical or within run-to-run noise (take a no-change pair first to learn the noise).
 - The whole suite (`tools/suite.sh 8163`), since terrain is shared code, with the counts.
 - `world-code` (`modules.md`, `runtime.md`) says what the height path's files are, what may be imported in a worker, and how to run `height-check`.
+
+## From P2's medium run (in after this brief was written)
+
+On medium `heightAt` is 50.8% of the load's CPU (67% of the bake, 52 to 54% of the builds); `slopeAt` 21% of the whole load; `noise2` 15.7% self, `regionAt` 13.7%, `computeVertexNormals` 5.2%, `riverSection` 4.6%. The bake makes 825k `heightAt` calls, 576k of them from 144k `slopeAt` calls; only 140 repeat. The module builds make 1.02M, of which 18.1% repeat a point: an exact memo is worth at most about a fifth of the builds' height time and nothing for the bake. So part 2 is answered: build the memo only if it is small and still pays after the exact speed-ups.

@@ -4,7 +4,7 @@ Worktree: `.claude/worktrees/issue-1304-builders` (branch `issue-1304-builders`,
 
 ## Goal
 
-A visitor waits 8.1 s on low and 12.2 s on medium for "Go out" (32 to 48 s with the 4x CPU throttle that stands in for a phone). The module builds are 5.4 s and 7.4 s of that. About half of the build time is terrain height sampling, which L2 is making cheaper beside you. **The other half is yours:** the modules whose build is their own code. From P2's profile (`shots/wip/v13-P2-low.txt` in `.claude/worktrees/issue-1302-load-profile`; P0's per-module times are in `plans/wilderness-v13.md`, Status, and `shots/wip/v13-P0-baseline.log` in `.claude/worktrees/issue-1300-load-yardstick`):
+A visitor waits 8.1 s on low and 12.2 s on medium for "Go out" (32 to 48 s with the 4x CPU throttle that stands in for a phone). The module builds are 5.4 s and 7.4 s of that. About half of the build time is terrain height sampling, which L2 is making cheaper beside you. **The other half is yours:** the modules whose build is their own code. From P2's profile (`.claude/worktrees/deploy/shots/wip/v13-P2-low.txt` and `v13-P2-medium.txt`: read them there, do not write there; P0's per-module times are in `plans/wilderness-v13.md`, Status, and `shots/wip/v13-P0-baseline.log` in `.claude/worktrees/issue-1300-load-yardstick`):
 
 - **plinths** (`src/v5/plinths.js`; 308 ms low, 607 medium, 2.5 s at medium 4x): 2% height; its own `field` (`:270`) and `capD` (`:103`).
 - **thrones** (`src/v5/thrones.js`; 419 ms medium, 1.65 s at 4x): 9% height; `buildOne` (`:182`), its `cap` and `body`.
