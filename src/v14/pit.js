@@ -46,20 +46,20 @@ export async function build(ctx) {
   const yHole = yC - 0.25;
   const lipY = (() => { let a = 0; for (let b = 0; b < 360; b += 30) { const [dx, dz] = dirOf(b), R = pitRim(b) + 1.2; a += g(C.x + dx * R, C.z + dz * R); } return a / 12; })();
   const floorR = (b) => pitRim(b) - FLOOR.out;  // the bowl reaches here; the drawn floor goes on under the wall's foot
-  const drawR = (b) => floorR(b) + 1.5;
+  const drawR = (b) => floorR(b) + 3.2;  // out to every cut triangle's far corner, up the wall's foot
 
-  // ---- the terrain over the floor is not drawn (its triangles with every corner well inside the wall's foot), nor
+  // ---- the terrain over the floor is not drawn (its triangles with any corner inside the bowl), nor
   // the Saltings' crust laid on those same triangles (v4/regions/saltings.js): this floor is drawn instead
   await Promise.all([ctx.built?.('paths'), ctx.built?.('region-saltings')]);
   let cut = 0;
   const cutOver = (geo) => {
     if (!geo?.index) return;
     const idx = geo.index.array, P = geo.attributes.position.array;
-    const inside = (i) => { const x = P[i * 3], z = P[i * 3 + 2], r = Math.hypot(x - C.x, z - C.z); return r < 20 && r < pitRim(bearingOf(x, z)) - FLOOR.out + 1.2; };
+    const inside = (i) => { const x = P[i * 3], z = P[i * 3 + 2], r = Math.hypot(x - C.x, z - C.z); return r < 20 && r < pitRim(bearingOf(x, z)) - FLOOR.out - 0.2; };
     for (let t = 0; t < idx.length; t += 3) {
       const a = idx[t], b = idx[t + 1], c = idx[t + 2], xa = P[a * 3], za = P[a * 3 + 2];
       if (Math.abs(xa - C.x) > 22 || Math.abs(za - C.z) > 22) continue;
-      if (inside(a) && inside(b) && inside(c)) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
+      if (inside(a) || inside(b) || inside(c)) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
     }
     geo.index.needsUpdate = true;
   };
@@ -85,7 +85,7 @@ export async function build(ctx) {
   const stair = makeStair(T, FL);
   const lampAt = LAMPS.map((s) => { const p = stair.point(s, -STAIR.half - 0.05); return [p[0], p[1] + 1.55, p[2]]; });
   const lit = (x, y, z, out) => {
-    out[0] = 0.22 + 0.78 * ss(yC - 2, lipY + 1, y);
+    out[0] = 0.22 + 0.78 * ss(yC + 4, lipY + 1, y);
     out[1] = 1;
     const dh = Math.hypot(x - C.x, z - C.z), dv = Math.max(0, y - yHole);
     let gl = 1.25 * Math.exp(-Math.hypot(dh, dv * 0.8) / 3.2) + (y < yHole ? 1.6 * Math.exp(-(dh - nadirR(bearingOf(x, z)) + 0.2) * 1.5) : 0);
@@ -99,7 +99,7 @@ export async function build(ctx) {
   // into the hole at its edge; then the Nadir's rock throat, going down into the dark
   {
     const NB = low ? 72 : 120, rings = [];
-    const rad = [0, 0.15, 0.4, 0.8, 1.3, 2, 2.8, 3.7, 4.7, 5.8, 7, 8.3, 9.7, 11.2, 12.6, 14];
+    const rad = [0, 0.15, 0.4, 0.8, 1.3, 2, 2.8, 3.7, 4.7, 5.8, 7, 8.3, 9.7, 11.2, 12.6, 14, 15.4];
     for (let i = 0; i <= NB; i++) {
       const b = (i % NB) * 360 / NB, [dx, dz] = dirOf(b), r0 = nadirR(b), r1 = drawR(b), row = [];
       for (const u of rad) {
@@ -154,14 +154,9 @@ export async function build(ctx) {
       const yaw = -(q.b * Math.PI) / 180 + (rng() - 0.5) * 0.12, c0 = 0.85 + rng() * 0.3, cl = (rng() < 0.3 ? SLAB_D : SLAB).map((v) => v * c0);
       const ring = []; for (let k = 0; k < 6; k++) { const a = yaw + k * Math.PI / 3 + Math.PI / 6; ring.push([x + Math.cos(a) * HEX, z + Math.sin(a) * HEX]); }
       B.prism(ring, q.y - 0.17, q.y, cl.map((v) => v * 0.7), cl, 0.12);
-      // the two irons: from under the slab's wall side into the rock
-      const wr = Math.min(q.r + 2.8, Math.max(q.r + 1, wallR(T, q.b, q.y - 0.4) - 0.1));
-      for (const w of [-0.3, 0.3]) {
-        const tx = -dz, tz = dx; // along the line
-        const ax = x + dx * 0.35 + tx * w, az = z + dz * 0.35 + tz * w;
-        const R = wr;
-        B.beam([ax, q.y - 0.12, az], [C.x + dx * R + tx * w, q.y - 0.42, C.z + dz * R + tz * w], 0.03, IRON, 0.05);
-      }
+      // a knee of iron under the slab: from the rock below, up to the slab's wall side
+      const wr = Math.min(q.r + 3, Math.max(q.r + 0.9, wallR(T, q.b, q.y - 1.1) - 0.05));
+      B.beam([x + dx * 0.4, q.y - 0.16, z + dz * 0.4], [C.x + dx * wr, q.y - 1.1, C.z + dz * wr], 0.022, IRON, 0.05);
     }
     // the stanchions and the rope on the hole's side
     const posts = Math.round(stair.len / 2.8);
@@ -361,11 +356,11 @@ export async function build(ctx) {
           a = sin(life * 3.14159) * 0.55 * uIdle;
           float tt = uGustT - aM.x * 3.2;
           if (uGustT >= 0.0 && tt > 0.0 && tt < 9.0) {
-            float up = tt * (4.5 + aM.z * 2.0) + tt * tt * 0.25, rr = 0.6 + aM.z * (0.8 + tt * 0.75);
+            float up = tt * (5.5 + aM.z * 2.5) + tt * tt * 0.45, rr = 0.6 + aM.z * (0.8 + tt * 0.9);
             float gan = aM.y + tt * 0.5;
             transformed = uHole + vec3(sin(gan) * rr, up, -cos(gan) * rr);
             float ga = smoothstep(0.0, 0.25, tt) * (1.0 - smoothstep(5.0, 9.0, tt)) * 1.4;
-            a = max(a * (1.0 - smoothstep(0.0, 0.3, tt)), ga); sz = 0.08;
+            a = max(a * (1.0 - smoothstep(0.0, 0.3, tt)), ga); sz = 0.1 + 0.1 * smoothstep(1.0, 6.0, tt); // bigger as they rise, so the plume reads from the lip
           }
         }
         vec4 mvPosition = viewMatrix * vec4(transformed, 1.0); gl_Position = projectionMatrix * mvPosition;

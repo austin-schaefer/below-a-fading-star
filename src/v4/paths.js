@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
 import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
-import { STAIR, makeFloor } from '../v14/pit/plan.js'; // v14-D2: the way down the Pit's wall: its head's gap in the rim
+import { STAIR, FLOOR, makeFloor } from '../v14/pit/plan.js'; // v14-D2: the way down the Pit's wall: its head's gap in the rim
 import { hazed } from '../v14/pit/haze.js'; // v14-D2: the throat's haze by the eye's depth
 // v14-D2: the bottom of the Pit is v14/pit.js's (its floor, the Nadir); ?pit=0 leaves the old black fan and a closed rim
 const PIT_D2 = typeof location === 'undefined' || new URLSearchParams(location.search).get('pit') !== '0';
@@ -397,8 +397,8 @@ function buildThroat(ctx) {
     for (let k = 0; k <= rows; k++) {
       const f = k / rows, y = T.yTop - 0.15 + (T.yFloor + 0.4 - T.yTop) * Math.pow(f, 0.85);
       // where the drawn surface crosses y on this bearing, searched inward from outside the rim
-      const rMin = PF ? T.R - 3.8 : 0.5;
-      let r = PF ? rMin : T.R + 3;
+      const rMin = PF ? T.R - 5.5 : 0.5;
+      let r = PF ? T.R - FLOOR.out : T.R + 3;
       for (let rr = T.R + 3; rr > rMin; rr -= 0.2) { if (yAt(T, rr) <= y) { r = rr; break; } }
       if (k === 0) r = Math.min(r, T.R + 0.2);
       const bed = Math.max(0, N.noise2(y * 0.35, i * 0.02 * nb / 240 * 6) ) * 0.9 + Math.max(0, N.noise2(i * 0.31, y * 0.9)) * 0.35;
