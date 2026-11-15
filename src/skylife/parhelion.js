@@ -208,6 +208,7 @@ function paintAtlas(rng) {
     g.fillRect(Math.round(X(w.b) - pw / 2), Math.round(Y(w.e)), Math.round(pw), Math.round(ph));
     lit++;
   }
+  g.getImageData(0, 0, 1, 1); // (v13 L3) drawn now, in this task: rastered later beside other modules' canvases, a few edge pixels came out differently from load to load
   const tex = new THREE.CanvasTexture(cv);
   tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
   tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;

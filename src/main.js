@@ -280,7 +280,8 @@ async function start() {
       let t1 = startup.imported(name, t0);
       lastImport = Math.max(lastImport, t1);
       if (serial) return mod;
-      if (o?.mesh && !ctx.terrain.baked) { await bake.baked; t1 = performance.now(); } // reads the terrain mesh: after the bake
+      // reads the terrain mesh: after the bake, each in a task of its own (resumed together they were one long stall)
+      if (o?.mesh && !ctx.terrain.baked) { await bake.baked; await new Promise((r) => setTimeout(r, 0)); t1 = performance.now(); }
       await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
       startup.built(name, t1);
       ok = true;
