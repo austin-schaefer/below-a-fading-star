@@ -137,7 +137,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
   // v14-B3: the places of v9 to v12 (the Lantern Halt, the bell, the Span's ways and camp, the ways up and their tops, the passes) are named landmarks now
-  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps, the three region cards, the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) - 1 + 1 + 3 + 18 + 8, n);
+  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps and the two stands kept where the owner cut the card (#52), the three region cards, the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) - 1 + 3 + 3 + 18 + 8, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -206,8 +206,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     });
     return out.filter(Boolean);
   });
-  const badView = view.filter((r) => r.deg > 40 || r.hit);
-  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 40 && badView.length === 0, { checked: view.length, badView });
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked: the owner cut nine cards on #52, about 41 stands remain)
+  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 35 && badView.length === 0, { checked: view.length, badView });
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};
@@ -224,7 +224,9 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // v14-B3 (#52, the class: a way up whose top has no name): stood where each ascent ends (its last point, on the floor
   // that holds the walk there: the path's y, or the floor nearest its highest y when the point has none), the HUD shows a
-  // name card; and both ends of the walked gallery (its first point too) show the Remand
+  // name card; and both ends of the walked gallery (its first point too) show Final Refuge (v14-B5: the owner's one name at
+  // the top of the lift); and the top of each of the Span's stairs (its last flight's last tread, and its top landing)
+  // shows Titan's Causeway
   const tB = Date.now();
   const tops = await page.evaluate(() => {
     const fp = window.__fp, p = fp.player, out = [];
@@ -240,10 +242,15 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       out.push({ id: a.id, end: 'last', ...card(a.path[a.path.length - 1], hi) });
       if (a.id === 'lift-gallery') out.push({ id: a.id, end: 'first', ...card(a.path[0], hi) });
     }
+    for (const [key, S] of Object.entries(fp.span?.stairs ?? {})) {
+      const f = S.flights[S.flights.length - 1], L = S.landings[S.landings.length - 1], run = f.steps * f.run;
+      out.push({ id: 'span-' + key, end: 'last tread', ...card([f.x + f.dir[0] * (run - 0.3), f.z + f.dir[1] * (run - 0.3), f.y1], f.y1) });
+      out.push({ id: 'span-' + key, end: 'top landing', ...card([(L.rect[0] + L.rect[1]) / 2, (L.rect[2] + L.rect[3]) / 2, L.y], L.y) });
+    }
     return out;
   });
-  const want = { stair: 'The Hanging Croft', icefall: 'The Bitter End', 'lift-gallery': 'The Remand' };
-  check('names: stood at the end of every way up the HUD names it (the icefall, the Diffident Stair, the lift\'s gallery at both ends); a new way up with no name fails', tops.length >= 4 && tops.every((t) => t.name && (!want[t.id] || t.name === want[t.id])), tops);
+  const want = { stair: 'The Hanging Croft', icefall: 'The Bitter End', 'lift-gallery': 'Final Refuge', 'span-west': 'Titan\u2019s Causeway', 'span-east': 'Titan\u2019s Causeway' };
+  check('names: stood at the end of every way up the HUD names it (the icefall, Lonely Staircase, the lift\'s gallery at both ends, the Span\'s two stairs); a new way up with no name fails', tops.length >= 8 && tops.every((t) => t.name && (!want[t.id] || t.name === want[t.id])), tops);
   console.log(`   (the names checks: ${((Date.now() - tB) / 1000).toFixed(1)} s)`);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
@@ -301,8 +308,13 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('cards: (128, 5) A Lamplighter\u2019s Standards, the line on two lines', lee.name === 'A Lamplighter\u2019s Standards' && lee.lines === 2 && lee.text.includes('\n'), lee);
   // v14-B3: a card on a deck shows on the deck and not on the floor under it; a name with no line shows the name alone
   const at = (x, z, y) => page.evaluate(([x, z, y]) => { const fp = window.__fp, p = fp.player; p.pos.set(x, (y ?? fp.terrain.heightAt(x, z)) + p.eye, z); fp.hud.update(0.1); const l = document.getElementById('place-line'); return { name: document.getElementById('place').classList.contains('shown') ? document.getElementById('place-name').textContent : null, line: l.style.display === 'none' ? '' : l.textContent }; }, [x, z, y]);
-  await at(0, 0); const deck = await at(88, 211, 56); await at(0, 0); const under = await at(88, 211);
-  check('cards: on the Span\u2019s middle deck (56 m) The Long Wait, name alone; on the ground under it not', deck.name === 'The Long Wait' && deck.line === '' && under.name !== 'The Long Wait', { deck, under });
+  await at(0, 0); const deck = await at(88, 211, 56);
+  const waitLines = await page.evaluate(() => { const l = document.getElementById('place-line'); return Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)); });
+  await at(0, 0); const under = await at(88, 211);
+  check('cards: on the Span\u2019s middle deck (56 m) The Long Wait, its two lines one above the other, each in its own quotation marks (v14-B5, #52); on the ground under it not', deck.name === 'The Long Wait' && deck.line === '\u201cA bitter night for travelers.\u201d\n\u201cA bitter night for musing on the stars.\u201d' && waitLines === 2 && under.name !== 'The Long Wait', { deck, waitLines, under });
+  // v14-B5: the deck is Titan's Causeway between the places on it, and the places on it win inside it; not on the ground
+  await at(0, 0); const mid = await at(-160, 215, 56); await at(0, 0); const splice = await at(145, 215, 56); await at(0, 0); const floor = await at(-160, 200);
+  check('cards: the deck between its places is Titan\u2019s Causeway; the Shaky Splice wins on its spar; the ground under the deck is not the Causeway', mid.name === 'Titan\u2019s Causeway' && mid.line.startsWith('\u201cNever shall') && splice.name === 'Shaky Splice' && floor.name !== 'Titan\u2019s Causeway', { mid, splice, floor });
   await at(0, 0); const croft = await at(226, -55, 107.9); await at(0, 0); const moor = await at(226, -55);
   check('cards: on the tender\u2019s deck (108 m) The Hanging Croft; on the moor under it not', croft.name === 'The Hanging Croft' && moor.name !== 'The Hanging Croft', { croft, moor });
   await context.close();
