@@ -724,7 +724,7 @@ if (process.env.FIND !== '0') {
   await p.keyboard.press('KeyE'); await sleep(1500);
   r = await p.evaluate(() => ({ carried: window.__fp.player.carried, ridden: window.__fp.lift.ridden, n: window.__fp.acts.count('lift-lever') }));
   check('lift: E throws the lever: the visitor is carried', r.carried && r.ridden && r.n === 1, r);
-  // the gallery's bell: offered while the carriage is away from the gallery (it is riding down from... the foot now)
+  // the gallery's bell: offered while the carriage is away from the gallery (here it stands at the foot)
   await p.evaluate(() => window.__fp.controls.placeAt(-200, -40)); await sleep(400);
   await p.evaluate(() => window.__fp.lift.jump(window.__fp.lift.S0));
   check('lift: the gallery\'s bell is offered at its pull with the carriage away', (await offAt(L.t.x, L.t.z, L.galY, L.t.yaw, 0.1)) === 'lift-call-top');

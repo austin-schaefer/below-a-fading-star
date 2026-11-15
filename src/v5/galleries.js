@@ -459,9 +459,9 @@ export async function build(ctx) {
   const trestleFeet = []; // the trestles' legs' feet, for lift.js's colliders
   // ---- the lift: two rails straight up the face from the floor to the highest tier, in front of every gallery, rungs
   // every 6 m, braced back to the rock above 66 m and standing on trestles below it, down the talus to where the rails
-  // go into the ground beside the lower station (v12-H4, src/v12/lift.js). Before v12 a carriage climbed and descended it
-  // in the shader (travelling group 2); with the lift on (the default; ?lift=0 for the old) the carriage is a real cage
-  // that lift.js rides, so it is not drawn here.
+  // go into the ground beside the lower station (v12-H4, src/v12/lift.js). With the lift on (the default) the
+  // carriage is a real cage that lift.js rides, so it is not drawn here; with ?lift=0 a carriage climbs and descends
+  // the rails in the shader (travelling group 2).
   {
     const b = 273.6, y0 = 66, y1 = 246, gap = 3.2;
     const need = (y) => Math.min(faceR(b - 0.5, y), faceR(b, y), faceR(b + 0.5, y)) - 12;
