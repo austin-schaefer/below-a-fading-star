@@ -14,7 +14,7 @@ page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 300)); });
 await page.goto(url, { waitUntil: 'load', timeout: 60000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 240000 });
-await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 1000 });
+await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 100 });
 const r = await page.evaluate(() => {
   const fp = window.__fp, out = {};
   const rep = fp.perf.report(), info = fp.renderer.info.render; // same moment: between two frames
@@ -42,13 +42,13 @@ const r = await page.evaluate(() => {
   fp.perf.setShadows(false); out.shadowsOff = fp.perf.toggles.shadows.get(); fp.perf.setShadows(true); out.shadowsOn = fp.perf.toggles.shadows.get();
   return out;
 });
-await page.waitForTimeout(1500);
+// (page 1 stays open while page 2 loads and benches, so an error the toggles raise late is still caught)
 // the same page as if the GPU timer extension were missing: gpu reads n/a, no errors
 const page2 = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page2.on('pageerror', (e) => errors.push('pageerror (gpu=0): ' + e.message));
 page2.on('console', (m) => { if (m.type() === 'error') errors.push('console (gpu=0): ' + m.text().slice(0, 300)); });
 await page2.goto(url.replace(/bench=\d+/, 'bench=3') + '&gpu=0', { waitUntil: 'load', timeout: 60000 });
-await page2.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 1000 });
+await page2.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 100 });
 const r2 = await page2.evaluate(() => ({ rep: window.__fp.perf.report(), text: document.getElementById('perf').textContent, sum: document.querySelector('#perf-bench pre')?.textContent || '' }));
 // the medium tier, and the adaptive pixel ratio under a forced budget (?budget=1: every frame is over it, so
 // after 5 s over budget the ratio steps down 0.1 and every target follows it)
