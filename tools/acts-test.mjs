@@ -485,8 +485,9 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   await p.keyboard.down('KeyW'); await until(() => window.__fp.tally.ride.phase === 'down', 8000); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
   const back = await until(() => !window.__fp.player.carried && window.__fp.tally.ride.phase === null, 20000);
   r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
-  r = await p.evaluate(() => window.__seatEye);
-  check('the ride, press to set-down: the eye is never inside a collider (the slab\'s stone)', r.frames > 60 && r.worst <= 0, r);
+  const eyeIn = await p.evaluate(() => window.__seatEye);
+  check('the ride, press to set-down: the eye is never inside a collider (the slab\'s stone)', eyeIn.frames > 60 && eyeIn.worst <= 0, eyeIn);
+  r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
   check('pushing to walk lets them down, and the ride ends exactly where it began', back && Math.hypot(r.x - start.x, r.z - start.z) < 0.01 && Math.abs(r.y - start.y) < 0.05, { r, start });
   await sleep(500);
   r = await p.evaluate(() => { const q = window.__fp.player; return { x: q.pos.x, z: q.pos.z, onGround: q.onGround }; });

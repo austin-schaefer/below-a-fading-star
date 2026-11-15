@@ -140,8 +140,13 @@ export function buildSeat(ctx, o) {
   const open = () => P.enabled && !ctx.settings?.shown && (!card || card.classList.contains('hidden'));
 
   // the carry: the eye where the ride puts it
+  // The rider (v14-B1, after B2's #50 on the lift): controls.update places the eye before the modules' updates run, so
+  // a seat advanced in its own update carried the eye a frame behind the plank it draws. While ridden the seat is
+  // advanced here, in the carrier's step, by the frame's own dt, and its update skips that frame; the set-down, which
+  // ends the carry, waits for the update
   const carrier = {
-    step(pos) {
+    step(pos, dt) {
+      if (!stepped) { inStep = true; try { tick(ctx.time?.dt ?? dt); } finally { inStep = false; } stepped = true; }
       eye.set(seat.position.x - Math.sin(spin) * BACK, seat.position.y + EYE, seat.position.z - Math.cos(spin) * BACK).applyMatrix4(M0);
       if (mode === 'boarding') pos.copy(boardFrom).lerp(eye, ease(t / BOARD));
       else if (mode === 'alighting') pos.copy(eye).lerp(start, ease(t / ALIGHT));
@@ -245,7 +250,19 @@ export function buildSeat(ctx, o) {
     if (T > 8.8 && turned < 0.01 && slive === 0) { sleepT = -1; fa.quaternion.identity(); hd.quaternion.identity(); salt.visible = false; }
   }
 
+  let inStep = false, stepped = false, alight = false;
   ctx.registerUpdate((dt) => {
+    if (stepped) { stepped = false; if (alight) setDown(); return; } // advanced in the carrier's step this frame
+    tick(dt);
+  }, { pos: { x: at.x, z: at.z }, near: 80, hz: 4 });
+  function setDown() {
+    alight = false;
+    release?.(); release = null;
+    P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
+    if (!took || P.lookQuiet > 3) { P.yaw = startYaw; P.pitch = startPitch; } // set down as they stood, looking where they looked
+    haul(1.5);
+  }
+  function tick(dt) {
     lastDt = dt;
     if (mode === 'up' && sleepT < 0 && pending < 0 && o.dimmer.value === 0) return; // at rest at the hatch: nothing per frame
     if (mode === 'waiting' && swayT < 0 && sleepT < 0) { if (open()) checkWait(dt); return; } // waiting still: a distance a frame
@@ -276,12 +293,7 @@ export function buildSeat(ctx, o) {
     else if (mode === 'top') spin = spinH;
     else if (mode === 'down') spin = spinFrom + (spinB - spinFrom) * ease(t / 2);
     else if (mode === 'hauling' || mode === 'up') spin += (Math.round(spin / Math.PI) * Math.PI - spin) * Math.min(1, dt * 0.6);
-    if (mode === 'alighting' && t >= ALIGHT) {
-      release?.(); release = null;
-      P.pos.copy(start); P.vel.set(0, 0, 0); P.vy = 0;
-      if (!took || P.lookQuiet > 3) { P.yaw = startYaw; P.pitch = startPitch; } // set down as they stood, looking where they looked
-      haul(1.5);
-    }
+    if (mode === 'alighting' && t >= ALIGHT && !alight) { if (inStep) alight = true; else setDown(); }
     if (mode === 'hauling' && t >= 0 && !hauled) { hauled = true; move(yTop, HAUL); }
     // the lamp turned low while a guest hangs near it, so the light on him is warm and not blinding
     const near = mode === 'rising' || mode === 'top' || mode === 'down' ? Math.min(1, Math.max(0, (y - yLow - 4) / 3)) : 0;
@@ -289,7 +301,7 @@ export function buildSeat(ctx, o) {
     if (o.dimmer.value < 0.002 && near === 0) o.dimmer.value = 0;
     place();
     stepSleeper(go ? dt : 0);
-  }, { pos: { x: at.x, z: at.z }, near: 80, hz: 4 });
+  }
   // untaken: back up after a while, sooner if the visitor has gone away
   function checkWait(dt) {
     waited += dt;
