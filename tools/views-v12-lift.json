@@ -1,0 +1,110 @@
+[
+ {
+  "name": "station-path-end",
+  "x": -268,
+  "z": -16,
+  "yaw": 1.52,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);})()",
+  "settle": 3500
+ },
+ {
+  "name": "station-bell",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": 0.25,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const s=L.stand.foot();const p={x:s.x+L.io.x*1.5,z:s.z+L.io.z*1.5};fp.controls.placeAt(p.x,p.z,L.floorY0);const h=L.acts.callFoot.def.at;fp.player.yaw=Math.atan2(-(h.x-p.x),-(h.z-p.z));})()",
+  "settle": 2500
+ },
+ {
+  "name": "carriage-from-tower",
+  "x": -246,
+  "z": -112,
+  "yaw": 2.62,
+  "pitch": 0.42,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.sOfY(110));})()",
+  "settle": 2500
+ },
+ {
+  "name": "carriage-from-stones",
+  "x": -170,
+  "z": -50,
+  "yaw": 1.52,
+  "pitch": 0.33,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.sOfY(110));})()",
+  "settle": 2500
+ },
+ {
+  "name": "gallery-walk",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.06,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const p=L.gal.at(1,0.2,2.6),q=L.gal.at(5,0.5,2.6);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-(q.x-p.x),-(q.z-p.z));})()",
+  "settle": 2500
+ },
+ {
+  "name": "gallery-open-5",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.22,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const p=L.gal.at(5,0.5,3.0);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-L.io.x,-L.io.z);})()",
+  "settle": 2500
+ },
+ {
+  "name": "gallery-open-9",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.22,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const p=L.gal.at(9,0.5,3.0);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-L.io.x,-L.io.z)+0.3;})()",
+  "settle": 2500
+ },
+ {
+  "name": "odd-approach",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.12,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const o=L.gal.odd;const p=L.gal.at(9,0.75,2.6);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-(o.coin.x-p.x),-(o.coin.z-p.z));})()",
+  "settle": 2500
+ },
+ {
+  "name": "odd-in-the-shaft",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": 0.0,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const o=L.gal.odd;const p=o.coin.clone().addScaledVector(o.L,-1.2);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-(o.bore.x-p.x),-(o.bore.z-p.z));fp.player.pitch=Math.atan2(o.bore.y-(L.gal.y+1.7),Math.hypot(o.bore.x-p.x,o.bore.z-p.z));})()",
+  "settle": 2500
+ },
+ {
+  "name": "odd-cell",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": 0.0,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const o=L.gal.odd;const p=o.c.clone().addScaledVector(o.n,3.25).addScaledVector(o.u,1.55);fp.controls.placeAt(p.x,p.z,L.gal.y);const t=o.c.clone().addScaledVector(o.u,-0.9).addScaledVector(o.n,0.6);fp.player.yaw=Math.atan2(-(t.x-p.x),-(t.z-p.z));fp.player.pitch=-0.42;})()",
+  "settle": 2500
+ },
+ {
+  "name": "ragged-along",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.25,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const p=L.gal.at(11,0.6,4.2),q=L.gal.at(12,0.9,4.6);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-(q.x-p.x),-(q.z-p.z));})()",
+  "settle": 2500
+ },
+ {
+  "name": "ragged-edge-down",
+  "x": -170,
+  "z": -50,
+  "yaw": 0,
+  "pitch": -0.75,
+  "js": "(()=>{const fp=window.__fp,L=fp.lift;L.jump(L.SG);const p=L.gal.at(12,0.3,3.0),q=L.gal.at(12,1.0,3.0);fp.controls.placeAt(p.x,p.z,L.gal.y);fp.player.yaw=Math.atan2(-(q.x-p.x),-(q.z-p.z))+0.2;})()",
+  "settle": 2500
+ }
+]

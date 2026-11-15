@@ -10,7 +10,7 @@ import { applyMountains, M_START, PROFILE as MTN_PROFILE, MASSIFS, WALL_SAMPLE, 
 import { regionsHeight, regionsGround } from './v4/regions.js'; // v4 systems: the regions' hooks
 import { ground as placesGround } from './v8/places.js'; // v8-02: the common, the wood's litter, the fen's mud
 import { spanGround } from './v4/span/plan.js'; // v4: the Great Span's marked blocks
-import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
+import { glacierTongue, glacierIce, glacierFloorIce, glacierCoords, GLACIER_GLSL, glacierBedH, glacierCarve } from './v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { injectOccultation } from './v5/occultation.js'; // v5 wonders: AR the Occultation's shadow on the walls
 import { injectAnnals } from './v5/annals.js'; // v5 wonders: AK the Annals, a frieze in this material's fragment shader
 
@@ -579,12 +579,12 @@ export function heightAt(x, z) {
   const ramp = smoothstep(WORLD.regionRadius - 10, WORLD.mountainRadius, r);
   if (r > M_START) {
     const g = glacierMask(x, z);
-    const glacierH = g > 0 ? ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp : 0;
+    const glacierH = g > 0 ? glacierBedH(x, z, h, ramp, ramp * ramp * 60 + ramp * 20 + SX.fbm2(x * 0.02, z * 0.02, 3) * 2.5 * ramp) : 0; // v12-H2: the icefall (src/v12/icefall/plan.js)
     h = applyMountains(h, x, z, r, g, glacierH);
   }
   // --- v4 systems: the mountains (end)
-  // Glacier tongue below the ramp too: its snout on the moor (v4 regions: src/v4/glacier.js)
-  h = glacierTongue(h, x, z, ramp);
+  // Glacier tongue below the ramp too: its snout on the moor (v4 regions: src/v4/glacier.js); v12-H2: the slot and the stair carved
+  h = glacierCarve(x, z, glacierTongue(h, x, z, ramp));
   return mapHeight(spanGround(carveRiver(h, x, z), x, z), x, z, RIVER); // v4: the Great Span's marked blocks (src/v4/span/plan.js), then the map's pit and the fall's face
 }
 

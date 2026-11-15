@@ -6,6 +6,7 @@ import { MOTHER_FOOT } from './vegetation/mother.js';
 import { plinthsClear } from './v5/plinths.js';
 import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' ground and the Accrescent's line
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { stairClear } from './v12/stair/plan.js'; // v12-H3: the Diffident Stair's slabs in the turf
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
 import { wornAt, nearestLead } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
@@ -241,6 +242,7 @@ export async function build(ctx) {
     if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
     if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
     if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
+    if (stairClear(x, z, size * 0.6 + 0.4)) continue; // v12-H3: the Diffident Stair's slabs lying in the turf
     if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
     if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue; // v9 (#16): nothing on the Long Figure, pebbles included, cut or not
     if (CUT && cls !== 'pebble') { // v8-11: off the cleared ground by its whole footprint, then into outcrops
@@ -262,7 +264,7 @@ export async function build(ctx) {
       const size = 1.6 + rng() * 3.4;
       const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
       const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
-      if (plinthsClear(x, z) || naveClear(x, z)) continue; // after the draws, as above
+      if (plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, size * 0.6)) continue; // after the draws, as above
       if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue;
       if (CUT && clear(x, z, size * reachOf[it.variant])) { cut.thinned.tor++; continue; }
       classes.boulder.push(it);

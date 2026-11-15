@@ -7,13 +7,14 @@ fail=0; n=0
 grep '^## v' RELEASES.md | sed 's/^## //' > /tmp/release-check.$$ 
 while IFS= read -r head; do
   v=${head%%:*}; n=$((n + 1))
-  if grep -qF -- "- [$head](https://github.com/" README.md && grep -F -- "- [$head](" README.md | grep -q "/releases/tag/$v)"; then echo "PASS README has $head"
-  else echo "FAIL README.md Milestones has no line '- [$head](.../releases/tag/$v). <one sentence>'"; fail=1; fi
+  case "$v" in *.*) pre="  - [";; *) pre="- **[";; esac  # a major release is a bold top-level line; a point release sits indented under its major
+  if grep -qF -- "$pre$head](https://github.com/" README.md && grep -F -- "$pre$head](" README.md | grep -q "/releases/tag/$v)"; then echo "PASS README has $head"
+  else echo "FAIL README.md Milestones has no line '$pre$head](.../releases/tag/$v)...' (a major: '- **[title](url)**. Sentence'; a point release: '  - [title](url). Sentence' under its major)"; fail=1; fi
 done < /tmp/release-check.$$
 rm -f /tmp/release-check.$$
-m=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -c '^- \[v')
+m=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -cE '^(- \*\*|  - )\[v')
 if [ "$m" = "$n" ]; then echo "PASS $n releases, $m README lines"; else echo "FAIL $n releases in RELEASES.md, $m lines in README.md Milestones"; fail=1; fi
-first=$(grep -m1 '^## v' RELEASES.md | sed 's/^## //'); top=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -m1 '^- \[v')
+first=$(grep -m1 '^## v' RELEASES.md | sed 's/^## //'); top=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -m1 '^- \*\*\[v')
 # every major release (v<N>) has its picture in README.md's Progress boxes: the alt texts list the versions shown
 prog=$(sed -n '/^## Progress/,/^## Milestones/p' README.md | grep '^!\[' )
 shown=$(printf '%s\n' "$prog" | sed 's/\](.*//' | grep -oE '[0-9]+' | tr '\n' ' ')
@@ -29,5 +30,9 @@ if [ "$br" = next ]; then echo "PASS on the branch next"; else echo "FAIL HEAD i
 git fetch -q origin next 2>/dev/null
 ahead=$(git rev-list --count origin/next..HEAD 2>/dev/null || echo '?')
 if [ "$ahead" = 0 ]; then echo "PASS next is pushed"; else echo "FAIL $ahead commit(s) here are not on origin/next: push before releasing"; fail=1; fi
-case "$top" in "- [$first]("*) echo "PASS newest first in both";; *) echo "FAIL the newest release is not the first README line"; fail=1;; esac
+# newest first: the README's first line is the newest release's major, and if the newest is a point release it is that major's first sub-line
+fm=${first%%:*}; fm=${fm%%.*}
+case "$top" in "- **[$fm:"*) ok=1;; *) ok=;; esac
+case "${first%%:*}" in *.*) sub=$(sed -n '/^## Milestones/,/^## License/p' README.md | grep -A1 -m1 '^- \*\*\[v' | tail -1); case "$sub" in "  - [$first]("*) ;; *) ok=;; esac;; esac
+if [ -n "$ok" ]; then echo "PASS newest first in both"; else echo "FAIL the newest release is not first in README.md Milestones (its major at the top; a point release first under it)"; fail=1; fi
 exit $fail

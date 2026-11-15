@@ -4,6 +4,41 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v12: The Heights
+
+Released 2026-11-14.
+
+Until now the walk was a valley floor with a wall of mountains round it. This release lets you go up: four ways, each a different kind of climb, each ending somewhere with a view of the whole valley and something to find.
+
+### New
+
+- **The Great Span can be walked end to end**: The long broken bridge in the south had three fallen stretches nobody could cross. Each now has a narrow way over it, 56 m up with no parapet: a course of footing stones on a surviving rib, slabs hung from an old iron tie-bar, and over the river a bowed truss of pale crystal with open rungs you can see the water through. Strips of saffron cloth mark the ways from the ground. On the cut-off middle of the bridge is a camp where someone waited a long time.
+- **The glacier is ice now, and you can climb it**: The pale ramp in the north is rebuilt as an icefall: three great steps of blue ice split by crevasses, with the crystals of the Lattice (the field of blue crystal at its foot) climbing it. A way goes up through a cleft in the ice front, along a slot inside the glacier, over a fallen crystal that serves as a bridge, and up a cut stair to a shelf about 95 m above the valley. Beyond a last crevasse hangs the Plummet, a crystal 180 m long, point down, lit from inside.
+- **The Diffident Stair**: On the moor in the east stand thirty steps of a stair that goes nowhere. Climb them and more arrive: slabs tear out of the turf, rise edge-on, and settle a few strides ahead of you, then sink back behind. It climbs about 100 m into the air to the foot of one of the old lattices that hang in the sky, where the one who tends them lives.
+- **The lift on the west cliff**: The Galleries of Durance, the tiers of cells cut into the western cliff, have an iron and glass carriage on rails. Ring the bell at the station below and it comes down for you; throw the lever inside and it carries you 127 m up the face to a gallery you can walk, with cells to look into. One of them is not like the others.
+- **The valley from above**: From a high place the valley now holds up: the haze thins, the shadows reach the ground, and the roads, the water and the red desert read as themselves.
+- **A long fall can cost you**: Off unless you turn it on in the settings menu ("A long fall costs"). With it on, fall far and the view closes like eyelids; you wake lying by the keep's gate.
+- **High passes**: Three of the four gaps in the mountain wall are raised into high passes, so the saddle the sun sets behind is the one low way out.
+
+### Fixed
+
+- **Slipping off the bridge by accident**: A walk or a sidestep is now held at a broken edge, and a hop no longer scrambles onto a parapet and over. You go off a height only when you mean to.
+- **One tally, not five**: Counting strokes had spread to the bridge, the tomb door's plate and a lamplighter's slate. The tally wall at the Lantern Halt (the inn on the road) is now the only one; the others show a long wait or a count some other way.
+- **Phones draw less from far away**: Small things too far off to see are drawn smaller and then not at all, so the high views cost less and the valley floor is a little lighter too.
+
+- **Walking into the tors**: The stacked stones on the eastern moor let you walk into their upper halves. They are solid now.
+- **Three misspelt place cards**, and on a phone the card of a place no longer sits under the walking stick.
+- **Five more places in the settings menu**: the middle of the Great Span, its west stair, the Diffident Stair, the lift's station and the foot of the icefall.
+
+### Behind the scenes
+
+- Every way up is walked and fallen from by the release tests, and a test fails if a high view gets too heavy for a phone.
+- The front page lists releases grouped by major version, with point releases beneath.
+
+Known issues: the ways up are hard to find. Nothing at ground level says where each one starts: the stair onto the Great Span is at its west end in the Deodand Wood, the lift's station is under the western cliff beyond the Armiger's Tower, the icefall's cleft is in the ice front behind the Lattice, and the Diffident Stair is on the eastern moor (the settings menu's map will take you to each). The high views are the heaviest places for a phone, and may run slowly on an older one. A long fall has no sound yet. The yellow sparks that mark things to do are still too bright, and the other small faults reported since the last release (the seat at the inn, the bell's ring on the ground, the lamp that flickers, the Pomegranate House) are not fixed in this one.
+
+<p><img src="shots/80-span-orch-river-ahead.webp" width="24%" alt="On the Great Span: a narrow truss of rungs crossing a fallen stretch high over the river"> <img src="shots/82-icefall-shelf-plummet.webp" width="24%" alt="From the shelf at the top of the icefall: blocks of blue ice and a long crystal hanging over the valley"> <img src="shots/83-stair-slab-rising.webp" width="24%" alt="The Diffident Stair: a stone slab risen out of the turf, a sign of the sun burning on it"> <img src="shots/84-lift-orch-gallery-east.webp" width="24%" alt="Stepping out of the lift onto the gallery, the carriage behind and the valley far below"></p>
+
 ## v11.1: The mountains, up close
 
 Released 2026-11-12.

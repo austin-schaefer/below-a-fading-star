@@ -1,0 +1,6 @@
+[
+ {"name": "deck-n", "x": -150, "z": 219, "yaw": 0, "pitch": -0.3, "js": "window.__fp.controls.placeAt(-150, 219, 56)", "settle": 3000},
+ {"name": "deck-e", "x": -150, "z": 219, "yaw": -1.5708, "pitch": -0.3, "js": "window.__fp.controls.placeAt(-150, 219, 56)", "settle": 3000},
+ {"name": "deck-s", "x": -150, "z": 219, "yaw": 3.1416, "pitch": -0.3, "js": "window.__fp.controls.placeAt(-150, 219, 56)", "settle": 3000},
+ {"name": "deck-w", "x": -150, "z": 219, "yaw": 1.5708, "pitch": -0.3, "js": "window.__fp.controls.placeAt(-150, 219, 56)", "settle": 3000}
+]

@@ -1,0 +1,302 @@
+[
+ {
+  "name": "stair-020",
+  "x": 287.4,
+  "z": -21.1,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=20+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(287.4,Y,-21.1);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-025",
+  "x": 281.37,
+  "z": -21.1,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=25+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(281.37,Y,-21.1);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-030",
+  "x": 275.33,
+  "z": -21.1,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=30+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(275.33,Y,-21.1);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-035",
+  "x": 269.3,
+  "z": -21.1,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=35+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(269.3,Y,-21.1);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-040",
+  "x": 268.04,
+  "z": -15.29,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=40+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(268.04,Y,-15.29);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-045",
+  "x": 267.32,
+  "z": -8.83,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=45+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(267.32,Y,-8.83);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-050",
+  "x": 266.85,
+  "z": -12.72,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=50+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(266.85,Y,-12.72);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-055",
+  "x": 266.43,
+  "z": -18.58,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=55+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(266.43,Y,-18.58);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-060",
+  "x": 266.02,
+  "z": -24.44,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=60+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(266.02,Y,-24.44);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-065",
+  "x": 265.6,
+  "z": -30.3,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=65+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(265.6,Y,-30.3);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-070",
+  "x": 258.86,
+  "z": -30.3,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=70+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(258.86,Y,-30.3);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-075",
+  "x": 253.6,
+  "z": -31.63,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=75+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(253.6,Y,-31.63);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-080",
+  "x": 253.6,
+  "z": -37.66,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=80+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(253.6,Y,-37.66);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-085",
+  "x": 253.6,
+  "z": -43.69,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=85+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(253.6,Y,-43.69);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-090",
+  "x": 253.48,
+  "z": -49.6,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=90+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(253.48,Y,-49.6);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-095",
+  "x": 247.3,
+  "z": -49.6,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=95+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(247.3,Y,-49.6);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-100",
+  "x": 241.13,
+  "z": -49.6,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=100+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(241.13,Y,-49.6);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "stair-105",
+  "x": 234.96,
+  "z": -49.6,
+  "yaw": 1.9,
+  "pitch": -0.18,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=105+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(234.96,Y,-49.6);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=-0.18;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-005",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+5+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-010",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+10+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-015",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+15+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-020",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+20+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-025",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+25+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-030",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+30+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-035",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+35+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-040",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+40+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-045",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+45+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-050",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+50+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-055",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+55+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ },
+ {
+  "name": "span-060",
+  "x": -205,
+  "z": 196,
+  "yaw": -0.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp,p=fp.player;window.__hold&&window.__hold();const Y=fp.terrain.heightAt(-205,196)+60+p.eye;window.__hold=fp.controls.carry({step(pos){pos.set(-205,Y,196);}});})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.6;p.pitch=-0.15;})()",
+  "settle": 2500
+ }
+]

@@ -50,7 +50,7 @@ export function buildLattice(ctx, ground, shared) {
     if (x * x + z * z > 352 * 352) return 0;
     ground.biomeAt(x, z, b);
     const glacial = b.glacier * smoothstep(-205, -240, z) * 0.85;
-    return clamp(Math.max(b.crystal * 1.1, glacial), 0, 1);
+    return clamp(Math.max(b.crystal * 1.1, glacial), 0, 1) * smoothstep(-300, -289, z); // v12-H2: none up the icefall (its own line climbs it: src/v12/icefall.js)
   };
   const okGround = (x, z) => ground.slopeAt(x, z) < 0.85 && ground.waterDepth(x, z) < 0 && ground.causewayDistance(x, z) > 4 && ground.wornAt(x, z) < 0.05; // v8-01: no crystal on a road
 

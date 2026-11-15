@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { SPAN, STAIRS, BOT, RING, deckAt, bayArch, isCollapsed } from './plan.js';
 import { box, extrudeXY, loft, clean } from './geo.js';
+import { KERB_OPENINGS, OPENING_HALF } from './vestige-plan.js';
 
 const Y = SPAN.deckY, Z = SPAN.z, Z0 = SPAN.z0, Z1 = SPAN.z1;
 
@@ -104,7 +105,10 @@ export function buildDeck(K) {
     if (Math.abs(x) > SPAN.gateX - 1) continue;
     const kx = x - dir * 0.45; // dir 1: the run starts here (its gap lies to -x)
     K.kerbs.push(kx);
-    addCol({ x1: kx, z1: Z - SPAN.inner, x2: kx, z2: Z + SPAN.inner, r: 0.3, y: Y - 0.5, h: 0.64, stand: false });
+    // v12-H1: the kerb opens where a vestige leaves (a stride and a half either side of its line); elsewhere it stands
+    const op = KERB_OPENINGS.find((o) => Math.abs(o.x - x) < 0.5), zs = [[Z - SPAN.inner, Z + SPAN.inner]];
+    if (op) { zs[0] = [Z - SPAN.inner, op.z - OPENING_HALF]; zs.push([op.z + OPENING_HALF, Z + SPAN.inner]); }
+    for (const [za, zb] of zs) if (zb > za) addCol({ x1: kx, z1: za, x2: kx, z2: zb, r: 0.3, y: Y - 0.5, h: 0.64, stand: false });
   }
   // the piers and abutments at ground level, up to just under the deck
   const footY = (x) => Math.min(H(x - 6, Z), H(x + 6, Z), H(x, Z - 8), H(x, Z + 8)) - 3;

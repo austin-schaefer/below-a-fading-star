@@ -40,6 +40,12 @@ const CARD_POSES = {
 // v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
+  { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
+  { name: 'The Diffident Stair', x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // v12-H3: the stub side on, its steps going up to nothing between the posts, the slabs lying in the turf beyond
+  { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
+  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice and their glass posts over it
+  { name: 'The Span\'s west stair', x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // v12-C1: at its foot in the wood's southern fringe, the first flight climbing west between its walls (dark under the trees)
+  { name: 'The tender\'s deck', x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // v12-H3: on the deck at the top, 100 m up: the lean-to, the stove, the chair and the ladder against the lattice's foot
 ];
 const ACT_PLACES = [
   { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
@@ -204,6 +210,21 @@ export function buildSettings(ctx) {
     syncPos();
   });
 
+  // --- a long fall costs (v12): off by default, remembered in 'fp-fall'; src/v12/fall.js reads it (ctx.fall.refresh)
+  const fallBtn = $('set-fall');
+  const fallNow = () => { try { return localStorage.getItem('fp-fall') === '1'; } catch (e) { return false; } };
+  function syncFall() {
+    if (!fallBtn) return;
+    const on = fallNow();
+    fallBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    fallBtn.textContent = on ? 'On' : 'Off';
+  }
+  fallBtn?.addEventListener('click', () => {
+    try { localStorage.setItem('fp-fall', fallNow() ? '0' : '1'); } catch (e) { /* private mode */ }
+    ctx.fall?.refresh();
+    syncFall();
+  });
+
   // --- teleport: the whole map under small headings
   let group;
   PLACES.forEach((pl, i) => {
@@ -218,7 +239,7 @@ export function buildSettings(ctx) {
     if (typeof pl === 'number') pl = PLACES[pl];
     if (!pl || (pl.thread && !ctx.threads?.[pl.thread])) return false; // v8-04: a story's end only when its thread was built
     const p = ctx.player;
-    const at = pl.y != null ? (p.pos.set(pl.x, pl.y + p.eye, pl.z), p.vel.set(0, 0, 0), p.vy = 0, { x: pl.x, z: pl.z }) : ctx.controls.placeAt(pl.x, pl.z); // v8-04: y, a floor above the ground (the Span's deck)
+    const at = ctx.controls.placeAt(pl.x, pl.z, pl.y); // y (v8-04, v12): the floor at that height there (the Span's deck, a gallery), else the ground
     if (pl.look === 'sun') p.yaw = yawToward(0, 0, SUN.dir.x, SUN.dir.z);
     else if (pl.look) p.yaw = yawToward(at.x, at.z, pl.look.x, pl.look.z);
     else p.yaw = pl.yaw;
@@ -232,7 +253,7 @@ export function buildSettings(ctx) {
     if (open_) return;
     open_ = true;
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
-    syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
+    syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos(); syncFall();
     for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');

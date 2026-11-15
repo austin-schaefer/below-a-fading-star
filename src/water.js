@@ -165,6 +165,15 @@ const FRAG = /* glsl */`
     // body: near black, slightly lifted toward the sky tint in deep water
     vec3 body = uWater * (0.7 + 0.3 * NV) + vec3(0.002, 0.0015, 0.004);
     vec3 col = mix(body, refl, fres);
+    // v12-H5: from a top, looking down into it, black water reads as a hole: the shelf under the shallows shows (peat
+    // over silt, by the depth) and the deep goes to black-green, the swell catching the sky. Only for an eye 15 m and
+    // more over the water and looking down at it; at walking height the water is exactly as it was.
+    float fpUp = smoothstep(15.0, 60.0, cameraPosition.y - P.y) * smoothstep(0.3, 0.7, NV);
+    if (fpUp > 0.0) {
+      float shelf = (1.0 - smoothstep(0.25, 3.0, vDepth)) * (1.0 - 0.65 * uFen); // the fen is shallow all over: only its edges
+      vec3 bed = mix(vec3(0.016, 0.022, 0.018), vec3(0.060, 0.050, 0.034), shelf);
+      col = mix(col, bed + refl * (0.10 + 1.6 * length(s)), fpUp * 0.85);
+    }
 
     // methane sheen on the fen: oily hue by view angle
     float oil = texture2D(uTex, p * 0.07 + vec2(uTime * 0.004, 0.0)).a;

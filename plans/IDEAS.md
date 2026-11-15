@@ -115,3 +115,31 @@ Needs design input before building: AG's sigils, AC's element pairs, any carved 
 - Expected an offer and got none: the Pit, the Speculum, the Armiger's Tower.
 - "Make each act lead on to a second act or another place, the way the door and the Halt already do."
 - From a blind reader of v11's frames: the speckle on rocks ("glitter-dusted blobs"), hex slabs like stickers, the crystals' flat stripe bands.
+
+## From v12-H5, the valley from above (2026-11-13), not fixed in H5
+
+H5 fixed five things seen from the tops (the haze and the sun's shadows under a top, a grade from a top, the Adust's rectangle, black water). The rest, worst first (frames `h5-07-heights-medium-*`, `h5-08-after-*`, `h5-11-see-*` in the H5 worktree's `shots/wip/`):
+
+- The Diffident Stair cannot be picked out from any other top: from the Span (295 m) the lattice it climbs to hangs over the east wall, but no stair and no light; from the gallery and the shelf nothing. A lamp on the tender's deck with a halo that never shrinks under two pixels (as the house's lamps do), or lit posts up the flights, would make it a thing to go to.
+- The Span's ragged ways do not read from the stair's top (300 m): the arches do, the strips and the truss do not. A lamp at the camp would.
+- Looking away from the sun the whole valley is still one violet, the grade from a top only eases it: the places differ by colour mostly toward the sun.
+- Boulders' long low-sun shadows read as black blots from 100 m and more, scattered over every place.
+- The Adust's red is still the loudest colour on the floor from the Galleries, now with a ragged edge; its inside reads flat (the cracks fade out by 30 m).
+- The fen at a grazing angle and the far river read as pale lavender sheets (the sky's reflection, no texture at that distance); from straight above the fen is a dark mottle.
+- The Diffident Stair draws 324 treads (76k triangles, 130k with its landings) from anywhere on the map, even lying in the turf; most are under a pixel from everywhere but its own climb.
+- From high, ground cover leaves no mark: the moor's heather, the Bletting's tall grass and the common's turf read as one mottled green-brown; larger-scale colour by place (the Lynchets' strips do read) would make the country legible.
+
+## From the v12 critic (2026-11-14), not blocking v12, not done
+
+- **No way up says where it starts.** The critic found none of the four feet unprompted: the Span's west stair is hidden in the Deodand Wood, the lift's station is far off at (-299,-18), the stair reads as one flight going nowhere and was met side-on, the icefall did not read as climbable. A lamp, a worn path or a banner at each foot, ideally one seen from the spawn. v12's own "done when" (a fresh eye points at three of four from the floor) is not met. The first thing for a fix release.
+- The icefall's top is an empty snow shelf; the valley is hidden behind the crystals; the find is half buried.
+- The act marker (`src/v10/lure.js`) reads as a pale many-armed creature, and hangs in the air beside the tender's deck with no offer there (the owner's #38 is the same thing seen from the ground).
+- The sky's remnants read as floating debris: nothing says what they are.
+- Many Go-to stands face a wall or sit under a tree: Medlar Close, the Plinth Road, the Sunken Court, the Tumbling Water; the Lantern Halt in portrait. The list has a "Stories" group that spoils the finds, mixes title and sentence case, and has "The moss light, The Deodand Wood".
+- The Speculum has a white disc floating at the foot of its waterfall.
+- Low, medium and high look nearly the same from every high place.
+- The slipper, 22 m from the spawn, cannot be seen from 6 m. Salt for news and the Reckoner's door were never met; nothing tall draws a walker to the Hypogeum's sunken stair.
+- The gallery at the lift's top is dark and close; the view from its ragged end is muddy. From the Span's deck, looking down is murky.
+- Sound: the canyon rim measures the same as the open moor (the waterfall hardly registers); at the Lattice the 500 Hz band sits 11 dB over its neighbours; every pose dips 6 dB in the same 10 to 15 s slice (the bed is one clock everywhere); almost nothing above 4 kHz; no harness pose is at a height.
+- Settings: "Hidden" on the position row does not say whether pressing it shows or hides.
+- Familiar, could be any fantasy game: the hexagonal stepping stones, the coloured fairy lights and the fairground yellow and teal of the Pomegranate House (the owner's #42), the blue crystal field, the aqueduct arches. Could be nowhere else: the failing sun in its saddle between the two stone legs, the city of windows, the Halt's tally and the seat up to the sleeper; and, new, the tender's deck at the top of the stair, which the critic called the best thing here.

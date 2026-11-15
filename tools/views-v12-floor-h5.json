@@ -1,0 +1,92 @@
+[
+ {
+  "name": "spawn",
+  "x": -60,
+  "z": 20,
+  "yaw": 1.9,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-60,20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.9;p.pitch=0;})()",
+  "settle": 3000
+ },
+ {
+  "name": "tarn-shore",
+  "x": -60,
+  "z": 60,
+  "yaw": 2.6,
+  "pitch": -0.15,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-60,60);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.6;p.pitch=-0.15;})()",
+  "settle": 3000
+ },
+ {
+  "name": "tarn-edge",
+  "x": -75,
+  "z": 88,
+  "yaw": 2.3,
+  "pitch": -0.4,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-75,88);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.3;p.pitch=-0.4;})()",
+  "settle": 3000
+ },
+ {
+  "name": "adust-east",
+  "x": -225,
+  "z": 0,
+  "yaw": 1.57,
+  "pitch": -0.05,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-225,0);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.57;p.pitch=-0.05;})()",
+  "settle": 3000
+ },
+ {
+  "name": "adust-in",
+  "x": -270,
+  "z": -10,
+  "yaw": 1.2,
+  "pitch": -0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-270,-10);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.2;p.pitch=-0.1;})()",
+  "settle": 3000
+ },
+ {
+  "name": "adust-north",
+  "x": -270,
+  "z": 70,
+  "yaw": 3.14,
+  "pitch": -0.05,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-270,70);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=3.14;p.pitch=-0.05;})()",
+  "settle": 3000
+ },
+ {
+  "name": "fen",
+  "x": 30,
+  "z": 130,
+  "yaw": 2.5,
+  "pitch": -0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(30,130);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=2.5;p.pitch=-0.1;})()",
+  "settle": 3000
+ },
+ {
+  "name": "meadow",
+  "x": -190,
+  "z": 165,
+  "yaw": -0.8,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(-190,165);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=-0.8;p.pitch=0;})()",
+  "settle": 3000
+ },
+ {
+  "name": "moor",
+  "x": 200,
+  "z": -20,
+  "yaw": 1.57,
+  "pitch": 0,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=null;fp.controls.placeAt(200,-20);})()",
+  "pre": "(()=>{const p=window.__fp.player;p.yaw=1.57;p.pitch=0;})()",
+  "settle": 3000
+ }
+]

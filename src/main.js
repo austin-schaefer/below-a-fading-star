@@ -2,7 +2,7 @@
 // module (vegetation, structures, water, particles, fauna, audio) to build itself against a
 // shared context, and runs the frame loop. Modules register per-frame updates via ctx.registerUpdate.
 import * as THREE from 'three';
-import { installAtmosphere } from './atmosphere.js';
+import { installAtmosphere, FOG_DENSITY } from './atmosphere.js';
 import { buildTerrain } from './terrain.js';
 import { buildSky } from './sky.js';
 import { buildControls } from './controls.js';
@@ -23,6 +23,9 @@ import { makeTinctures } from './v4/tinctures.js';
 import * as places from './v8/places.js'; // v8-02: places that differ
 import { installStrata } from './v8/strata.js';
 import { installActs } from './v10/acts.js'; // v10: acts, registered by the places' modules
+import { installHeights } from './v12/heights.js'; // v12: ctx.ascents, and the test floors behind ?heights=test
+import { shadowFrame } from './v12/above.js'; // v12: the shadow box and the haze for an eye high over the ground
+import { installFar } from './v12/far.js'; // v12-H5: small things far off drawn smaller, then not at all (by their size on the screen)
 
 // Light rigs (v4 systems): exposure, the sun, the hemisphere (sky and ground colours) and the ambient floor.
 const LIGHT_RIGS = {
@@ -54,6 +57,7 @@ const MODULES = [
   ['roads', () => import('./v8/roads.js')], // v8-01: the gnomons along the roads (?roads=0)
   ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
+  ['lift', () => import('./v12/lift.js')], // v12-H4: the Galleries' lift ridden, its station, the gallery at 135 m and its cells (?lift=0)
   ['lamps', () => import('./v5/lamps.js')], // v5 wonders: AO the Escarpment Lamps (window-lights, a city on the south massif's face, that go out one by one; ?lamps=0)
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
@@ -78,6 +82,9 @@ const MODULES = [
   ['waystation', () => import('./v9/waystation.js')], // v9 (#934): the Lantern Halt, the causeway's waystation (?waystation=0)
   ['bell', () => import('./v10/bell.js')], // v10-A3: the bell under the Span, its ram, and the candles it calls (?bell=0)
   ['acts', () => import('./v10/acts.js')], // v10 (#24): the offer, its input and the marks' memory for every act (?acts=0)
+  ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
+  ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
+  ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -132,7 +139,7 @@ async function start() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.haze), 0.0022);
+  scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.haze), FOG_DENSITY);
   const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.08, 2600);
 
   const events = new EventTarget();
@@ -208,7 +215,7 @@ async function start() {
   let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
   sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 420;
-  const sb = 95;
+  let sb = 95; // the shadow box's half-size (v12: grows with the eye's height, src/v12/above.js)
   sunLight.shadow.camera.left = -sb; sunLight.shadow.camera.right = sb; sunLight.shadow.camera.top = sb; sunLight.shadow.camera.bottom = -sb;
   sunLight.shadow.bias = -0.0006; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
   sunLight.shadow.camera.updateProjectionMatrix();
@@ -227,6 +234,7 @@ async function start() {
   ctx.controls = buildControls(ctx);
   ctx.player = ctx.controls.state;
   ctx.addCollider = ctx.controls.addCollider;
+  installHeights(ctx, url); // v12: ctx.ascents.add(def) for heights-test; ?heights=test builds the test floors
   // HUD
   ctx.hud = buildHud(ctx);
   import('./settings.js').then((m) => m.buildSettings(ctx)).catch((e) => console.error('[fp] settings failed:', e)); // v7-08: the gear and its panel
@@ -241,6 +249,7 @@ async function start() {
     } finally { settled++; within = 0; progress(); }
   }));
   results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
+  installFar(ctx, url); // v12-H5: ctx.far (src/v12/far.js); on after the warm-up
 
   // Post
   ctx.post = buildPost(ctx);
@@ -288,6 +297,8 @@ async function start() {
   // Shadow cadence (shadows.js): the map is redrawn when the shadow camera has moved, on a slow clock, or
   // while a creature near you moves. ?shadowhz=0 redraws every frame, as before.
   ctx.shadowCadence = makeShadowCadence(ctx, url, shadowTexel);
+  const above = shadowFrame(ctx, url, sunLight, sunDir, sb); // v12: from above, a box on the ground seen (null with ?above=0)
+  ctx.above = above; // v12-H5: post.js reads `over` (the eye's height over the ground) for the grade from a top
   // a tier change at runtime resizes the shadow map (three re-creates it at the new size on the next draw)
   ctx.setShadowMapSize = (n) => {
     if (n === sm) return;
@@ -301,6 +312,7 @@ async function start() {
     const w = warmUp(ctx);
     if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
   }
+  ctx.far.start();
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
@@ -310,12 +322,14 @@ async function start() {
   const P = () => ctx.player.pos;
   function runUpdates(dt, t) {
     const p = P();
+    const high = !!above && above.alt > 25; // v12: high over the floor underfoot, the true distance (a thing's own y where it has one)
     for (const u of updates) {
       const m = u.meta;
       if (!m || !throttle) { u.fn(dt, t); continue; }
       u.acc += dt;
       const q = m.at ? m.at() : m.pos;
-      const ex = q.x - p.x, ez = q.z - p.z, d = Math.sqrt(ex * ex + ez * ez) - (m.r || 0); // Math.hypot allocates
+      const ex = q.x - p.x, ez = q.z - p.z, ey = !high ? 0 : q.y !== undefined ? q.y - p.y : above.alt;
+      const d = Math.sqrt(ex * ex + ez * ez + ey * ey) - (m.r || 0); // Math.hypot allocates
       if (d <= m.near) { u.fn(u.held ? dt : u.acc, t); u.acc = 0; u.held = false; }
       else if (m.hz > 0) { if (u.acc >= 1 / m.hz) { u.fn(u.acc, t); u.acc = 0; } }
       else u.held = true;
@@ -375,6 +389,7 @@ async function start() {
     // was the shimmer in the wood); snapping in world units did not align with the light's grid.
     fwdTmp.set(-Math.sin(ctx.player.yaw), 0, -Math.cos(ctx.player.yaw));
     shadowTarget.copy(camera.position).addScaledVector(fwdTmp, 40);
+    if (above) { const b = above.frame(shadowTarget, fwdTmp); if (b !== sb) { sb = b; shadowTexel = (2 * sb) / sm; ctx.shadowCadence.setTexel(shadowTexel); } }
     shadowTarget.applyMatrix4(lightView);
     shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
@@ -390,9 +405,9 @@ async function start() {
     ctx.hud.update(dt, t);
     ctx.post.update(dt, t);
     // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
-    if (ctx.shadowCadence.update(dt, shadowTarget)) {
+    if (ctx.shadowCadence.update(dt, shadowTarget) || (above && above.take())) { // (a step in the box's size moves the light at once)
       sunLight.target.position.copy(shadowTarget);
-      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, 260);
+      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, above ? above.lightDist : 260);
     }
     ctx.lightSlots?.update();
     ctx.perf.cpu('frame');

@@ -18,9 +18,9 @@
 //   9.5-13 s  the shadow of a hand comes into the fan of light from under the door and lies flat, fingers spread (as the
 //             visitor's lies on the crystal);
 //   12.5-14 s a bronze plate is pushed out under the door and slides to the visitor's feet (act-plate): the door's last glyph
-//             cut large in it, and beside it his tally for them, a stroke a visit in gates of five, in chalk;
+//             cut large in it, and beside it his reckoning of them, a bead a visit on a spiral wire;
 //   15-21 s   the lamp goes back down: the light sinks down the seam and the fan dims to its first glow.
-// Remembered: show(n) lays the plate (n > 0) with n strokes and its glyph (the act's data). Once the mother crystal's
+// Remembered: show(n) lays the plate (n > 0) with n beads and its glyph (the act's data). Once the mother crystal's
 // thread has come down the stair (src/v10/crystal.js) his light is the crystal's blue.
 // No point light: the seam, its halo and the fan are emissive quads; the ripple is a term in the door's own material.
 import * as THREE from 'three';
@@ -142,12 +142,30 @@ export function doorAct(ctx, H, meshes) {
   const dust = new THREE.Points(dg, dustMat); dust.visible = false; dust.name = 'act-door-dust';
   dg.boundingSphere = new THREE.Sphere(new THREE.Vector3(x1, Yf + 1.3, zc), 3);
 
-  // ---- the plate: a bronze tablet 64 x 40 cm, the door's last glyph cut large, his tally for the visitor in chalk; on
-  // its back, cut, the lantern hanging in its notch (the Lantern Halt) and beside it in his chalk the strokes the visitor
-  // has chalked on the Halt's tally (src/v10/tally.js): he reckons that too, and the back shows what he has counted
+  // ---- the plate: a bronze tablet 64 x 40 cm, the door's last glyph cut large, his reckoning of the visitor's knocks as
+  // beads on a spiral wire; on its back, cut, the lantern hanging in its notch (the Lantern Halt) and beside it, in
+  // saffron beads on the same wire, what the visitor has chalked at the Halt (src/v10/tally.js): he reckons that too
   const PW = 0.64, PD = 0.4, PT = 0.02;
   const pc = document.createElement('canvas'); pc.width = 256; pc.height = 160;
   const pTex = new THREE.CanvasTexture(pc); pTex.colorSpace = THREE.SRGBColorSpace; pTex.anisotropy = 4;
+  // his notation: a spiral wire (Archimedean, a turn every 15 px) with a round bead for each count along it, 22 px apart
+  // and growing outward, so more is plainly a wider coil; the wire runs on, bare, to one socket past the last bead
+  function spiral(g, count, cap, bead, groove) {
+    const cx = 188, cy = 80, b = 15 / (2 * Math.PI), pts = [];
+    let th = 3.2;
+    for (let i = 0; i <= cap; i++) { const r = b * th; pts.push([cx + Math.cos(th) * r, cy + Math.sin(th) * r * 0.96]); th += 22 / Math.max(10, b * th); }
+    const shown = Math.min(count, cap), upto = Math.min(shown + 1, cap);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(cx + Math.cos(2.4) * b * 2.4, cy + Math.sin(2.4) * b * 2.4);
+    for (let i = 0; i <= upto; i++) g.lineTo(pts[i][0], pts[i][1]);
+    g.strokeStyle = 'rgba(230,190,120,0.75)'; g.lineWidth = 6; g.stroke(); // the cut wire: a bright lip round a dark groove
+    g.strokeStyle = 'rgba(20,14,8,0.95)'; g.lineWidth = 3; g.stroke();
+    for (let i = 0; i < upto; i++) {
+      g.beginPath(); g.arc(pts[i][0], pts[i][1], 6, 0, 6.3);
+      if (i < shown) { g.fillStyle = bead; g.fill(); g.strokeStyle = groove; g.lineWidth = 1.5; g.stroke(); }
+      else { g.fillStyle = 'rgba(20,14,8,0.5)'; g.fill(); } // the next socket, empty
+    }
+  }
   function drawPlate(n, form) {
     const g = pc.getContext('2d'), W = 256, Hh = 160;
     g.fillStyle = '#5a4424'; g.fillRect(0, 0, W, Hh);
@@ -161,20 +179,13 @@ export function doorAct(ctx, H, meshes) {
     g.lineCap = 'round';
     path(() => { g.strokeStyle = 'rgba(230,190,120,0.9)'; g.lineWidth = 9; g.stroke(); });
     path(() => { g.strokeStyle = 'rgba(20,14,8,0.95)'; g.lineWidth = 5; g.stroke(); });
-    // the tally: a stroke a visit, gates of five, in chalk, on the right
-    g.strokeStyle = 'rgba(240,234,220,0.95)'; g.lineWidth = 4;
-    for (let k = 0; k < Math.min(n, 25); k++) {
-      const gate = Math.floor(k / 5), j = k % 5, row = Math.floor(gate / 2), col = gate % 2;
-      const bx = 140 + col * 52, by = 34 + row * 40;
-      g.beginPath();
-      if (j < 4) { g.moveTo(bx + j * 9, by); g.lineTo(bx + j * 9 + 1, by + 30); } else { g.moveTo(bx - 4, by + 26); g.lineTo(bx + 32, by + 4); }
-      g.stroke();
-    }
+    // his reckoning: a spiral wire cut on the right, a bead strung on it for each knock, outward from the middle
+    spiral(g, n, 25, 'rgba(240,226,190,0.95)', 'rgba(20,14,8,0.8)');
     pTex.needsUpdate = true;
   }
   const bc = document.createElement('canvas'); bc.width = 256; bc.height = 160;
   const bTex = new THREE.CanvasTexture(bc); bTex.colorSpace = THREE.SRGBColorSpace; bTex.anisotropy = 4;
-  function drawBack(k) { // k: the visitor's strokes at the Halt
+  function drawBack(k) { // k: the visitor's chalk at the Halt
     const g = bc.getContext('2d'), W = 256, Hh = 160;
     g.setTransform(-1, 0, 0, 1, W, 0); // the back face's uv runs right to left
     g.fillStyle = '#4e3a1e'; g.fillRect(0, 0, W, Hh);
@@ -189,15 +200,8 @@ export function doorAct(ctx, H, meshes) {
     g.fillStyle = 'rgba(60,20,10,0.9)'; g.beginPath(); g.ellipse(80, 76, 8, 9, 0, 0, 6.3); g.fill(); // the open hatch
     cut(() => { g.beginPath(); g.arc(72, 70, 22, 0, 6.3); }, 3);
     cut(() => { g.beginPath(); g.ellipse(72, 70, 9, 22, 0, 0, 6.3); g.moveTo(50, 70); g.lineTo(94, 70); }, 2); // meridian, equator
-    // his chalk: their strokes in saffron, gates of five, as they stand on the slab; none yet, one stroke's place dotted
-    g.strokeStyle = 'rgba(255,206,110,0.98)'; g.lineWidth = 5; g.lineCap = 'round';
-    if (k <= 0) { g.setLineDash([3, 7]); g.beginPath(); g.moveTo(160, 52); g.lineTo(162, 112); g.stroke(); g.setLineDash([]); }
-    for (let i = 0; i < Math.min(k, 20); i++) {
-      const gate = Math.floor(i / 5), j = i % 5, bx = 146 + (gate % 2) * 50, by = 36 + Math.floor(gate / 2) * 54;
-      g.beginPath();
-      if (j < 4) { g.moveTo(bx + j * 9, by); g.lineTo(bx + j * 9 + 1, by + 40); } else { g.moveTo(bx - 4, by + 34); g.lineTo(bx + 32, by + 6); }
-      g.stroke();
-    }
+    // what he has counted of the Halt's chalk, on the same wire in saffron beads; none yet, the first bead's socket alone
+    spiral(g, k, 20, 'rgba(255,206,110,0.98)', 'rgba(60,20,10,0.8)');
     g.setTransform(1, 0, 0, 1, 0, 0);
     bTex.needsUpdate = true;
   }
@@ -214,7 +218,7 @@ export function doorAct(ctx, H, meshes) {
   placePlate(restX);
 
   meshes.push(ring, seam, halo, fan, dust, plate);
-  ctx.scene.add(fit); // a group: the ruins' tally of meshes counts geometries
+  ctx.scene.add(fit); // a group: the ruins' count of meshes counts geometries
 
   // ---- the light, now: k 0..1 (0 the first glow), its colour by whether the crystal's thread has come
   const lit = new THREE.Color();
@@ -260,7 +264,7 @@ export function doorAct(ctx, H, meshes) {
   };
 
   // ---- the plate's act, "Read the plate": the visitor takes it up from the flags into their hands, his side toward them
-  // (the glyph, their knocks), turns it over (the lantern in its notch and their strokes at the Halt in his chalk), and
+  // (the glyph, their knocks), turns it over (the lantern in its notch and their chalk at the Halt in saffron beads), and
   // lays it down again lantern side up, as it stays
   const RD = { up: [0.2, 1.5], flip: [3.6, 4.5], down: [8.4, 9.6], end: 9.9 };
   let rt = -1;
@@ -393,7 +397,7 @@ export function doorAct(ctx, H, meshes) {
       n = count; t = 0; fired = 0; jolt = joltV = flash = 0; st.strikes = st.answers = 0; st.strikeAt = []; st.ringMax = 0; st.hand = 0; st.read = 0; st.spun = 0;
       form = doorsLast(ctx, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
       handle.setData({ glyph: form });
-      plate.visible = false; backUp = false; // his plate goes back in, to come out again with one more stroke, his side up
+      plate.visible = false; backUp = false; // his plate goes back in, to come out again with one more bead, his side up
       st.n = count; st.knocked = true;
       from.copy(P.pos); back.copy(P.pos);
       const d = D.x - P.pos.x; if (d < STEP) back.x = D.x - STEP; back.z += (zc - back.z) * 0.6; // a step back, toward the stair's line

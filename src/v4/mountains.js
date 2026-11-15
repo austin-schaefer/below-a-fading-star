@@ -12,7 +12,7 @@
 //          the picture and paler under the fog tiers.
 //   v11 the form: summits, notches and serration along the crest, spurs and the valleys between them (FORM, SPURS_M);
 //          v11.1 the north-east wall's buttresses, recess and notch, and the Ossuary Horn as a pyramid (HORN);
-//          ?cols=high (a trial) the three cols as high passes (PASSES).
+//          v12 the three cols as high passes (PASSES; ?cols=low the old cols).
 // ?mountains=v4 builds the v4 wall instead (a front range at r ~362, a steep face with buttresses, talus and
 // bedding to a fractal crest at r ~430-475, far ranges rising above it): applyMountains' body and farCrest's.
 // The sun's saddle is a flat-floored gate ±8° wide at the floor, its walls rising to full height by ±13°, with
@@ -47,13 +47,80 @@ export function saddleFloor(r) {
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
 export function saddleWeight(az) { return 1 - smoothstep(SADDLE.full, SADDLE.wall, Math.abs(angDiff(az, SADDLE.azimuth))); }
 
-// How far out a walker may go at (x, z): the region's edge (regionRadius + 48) everywhere but the saddle's
-// wedge, which runs out to the road's start.
+// The walk limit (v12 H0): a circle at r 348 (regionRadius + 48) plus corridors that let a walker past it. A corridor
+// is a wedge { wedge: { az, half, taper, r } } (out to r within ±half of the azimuth az, easing back to the circle
+// over taper; radians, world azimuth from +x toward +z) or a band { pts: [[x, z], ...], half } (within half metres of
+// the polyline, round at its ends). The saddle's wedge is the first. addCorridor(c) registers one and returns a remover.
+// walkLimit(x, z) is how far the open ground runs along the line through (x, z) (the circle and the wedges; a band
+// corridor does not widen it, so a module keeping things on the floor stays off the ways up); inWalk(x, z) says whether a
+// walker may stand there, bands included. clampWalk(x, z, out) puts (x, z) back inside: radially onto the circle or a wedge,
+// as the circle always has, or onto the nearer side of a band it has just left, so a walker who steps sideways out of
+// a corridor beyond the circle stops at the corridor's side.
 const BASE_LIMIT = WORLD.regionRadius + 48;
-export function walkLimit(x, z) {
-  const d = Math.abs(angDiff(Math.atan2(z, x), SADDLE.azimuth));
-  if (d > SADDLE.walkHalf + 1.5 * D2R) return BASE_LIMIT;
-  return lerp(SADDLE.walkR, BASE_LIMIT, smoothstep(SADDLE.walkHalf, SADDLE.walkHalf + 1.5 * D2R, d));
+export const WALK_R = BASE_LIMIT;
+const CORRIDORS = [];
+export function addCorridor(c) {
+  if (c.pts) {
+    c.segs = [];
+    for (let i = 0; i + 1 < c.pts.length; i++) {
+      const [x1, z1] = c.pts[i], [x2, z2] = c.pts[i + 1], dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz) || 1e-6;
+      c.segs.push({ x1, z1, ux: dx / len, uz: dz / len, len });
+    }
+    if (c.pts.length === 1) c.segs.push({ x1: c.pts[0][0], z1: c.pts[0][1], ux: 1, uz: 0, len: 0 });
+  }
+  CORRIDORS.push(c);
+  return () => { const i = CORRIDORS.indexOf(c); if (i >= 0) CORRIDORS.splice(i, 1); };
+}
+export const corridors = CORRIDORS;
+addCorridor({ name: 'saddle', wedge: { az: SADDLE.azimuth, half: SADDLE.walkHalf, taper: 1.5 * D2R, r: SADDLE.walkR } });
+function wedgeLimit(w, x, z) {
+  const d = Math.abs(angDiff(Math.atan2(z, x), w.az));
+  if (d > w.half + w.taper) return BASE_LIMIT;
+  return lerp(w.r, BASE_LIMIT, smoothstep(w.half, w.half + w.taper, d));
+}
+// the nearest point of a band's polyline to (x, z), into _near; returns the distance
+const _near = { x: 0, z: 0 };
+function bandDist(c, x, z) {
+  let best = Infinity;
+  for (const s of c.segs) {
+    let t = (x - s.x1) * s.ux + (z - s.z1) * s.uz; t = t < 0 ? 0 : t > s.len ? s.len : t;
+    const px = s.x1 + s.ux * t, pz = s.z1 + s.uz * t, ex = x - px, ez = z - pz, d = Math.sqrt(ex * ex + ez * ez);
+    if (d < best) { best = d; _near.x = px; _near.z = pz; }
+  }
+  return best;
+}
+// the circle and the wedges alone: how far out along the line through (x, z)
+function radialLimit(x, z) {
+  let L = BASE_LIMIT;
+  for (const c of CORRIDORS) if (c.wedge) { const l = wedgeLimit(c.wedge, x, z); if (l > L) L = l; }
+  return L;
+}
+// the circle and the wedges: how far out the open ground runs along the line through (x, z). What modules that spread
+// things over the floor (paving, grazers) mean by "inside": a band corridor is a way up, not more floor.
+export function walkLimit(x, z) { return radialLimit(x, z); }
+// may a walker stand at (x, z)? Inside the circle or a wedge, or in a band corridor
+export function inWalk(x, z) {
+  if (Math.sqrt(x * x + z * z) <= radialLimit(x, z)) return true;
+  for (const c of CORRIDORS) if (c.segs && bandDist(c, x, z) <= c.half) return true;
+  return false;
+}
+// (x, z) put back inside the limit, into out; returns true if it moved
+export function clampWalk(x, z, out) {
+  const r = Math.sqrt(x * x + z * z), L = radialLimit(x, z);
+  out.x = x; out.z = z;
+  if (r <= L) return false;
+  let bx = x * L / r, bz = z * L / r, bd = r - L;
+  for (const c of CORRIDORS) {
+    if (!c.segs) continue;
+    const d = bandDist(c, x, z);
+    if (d <= c.half) return false;
+    if (d - c.half < bd && d > 1e-6) {
+      const k = (c.half - 1e-3) / d;
+      bx = _near.x + (x - _near.x) * k; bz = _near.z + (z - _near.z) * k; bd = d - c.half;
+    }
+  }
+  out.x = bx; out.z = bz;
+  return true;
 }
 
 // --- v4 systems: AM's seats (begin). Two flat benches cut into the saddle's flanks for the crawling colossi
@@ -149,14 +216,14 @@ const CAND = PROFILE === 'c' ? {
     [320, 175], [328, 102], [336, 180], [346, 270], [356, 240]],
   peaks: 0.35, slope: [28, 52], farEl: [[8.5, 8], [10.5, 8]],
 } : null;
-// ?cols=high (v11.1 W5, a trial): the three cols that are not the sun's become high passes, so the saddle is the one
+// The high passes (v11.1 W5's trial, the default since v12; ?cols=low the old cols): the three cols that are not the sun's become high passes, so the saddle is the one
 // place the wall breaks to the floor. Each pass is a broad saddle between its massifs at 40-50 % of their height (on
 // the ground: the east 131 m, the south-east 141 m under the Horn, the north-west 149 m), its shoulders rising long to
 // either side, set back between the massifs (passRecess; held inside the terrain's square, so the south-east's less);
 // the notches cut beside the cols go (a slot beside a pass reads as a second col), and the far ring's lobe behind each
-// pass stands higher so it still shows over it. Inside the walk limit the ground within ±10° of a pass rises by up to
-// 9 m (the pass's long foot). Without the flag nothing here runs. The heightfield is built once: a reload.
-const COLS_HIGH = PROFILE === 'c' && typeof location !== 'undefined' && new URLSearchParams(location.search).get('cols') === 'high';
+// pass stands higher so it still shows over it. Inside the walk limit the ground within ±15° of a pass rises by up to
+// 9.5 m and falls by up to 5 (the pass's long foot; at r 300-348, never inside r 300; v12 measured on a 0.5° x 2 m grid). With ?cols=low nothing here runs. The heightfield is built once: a reload.
+const COLS_HIGH = PROFILE === 'c' && !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('cols') === 'low');
 // [bearing of the pass, the spline's points that replace the col's three: [bearing, height]]
 const PASSES = [
   [112, [[100, 200], [106, 152], [112, 133], [118, 147], [124, 190]]],
@@ -887,7 +954,7 @@ export function buildMountains(ctx) {
   const azOf = (bearing) => (bearing - 90) * D2R;
   return {
     saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR, profile: PROFILE,
-    walkLimit, saddleWeight, saddleFloor,
+    walkLimit, inWalk, clampWalk, addCorridor, corridors: CORRIDORS, saddleWeight, saddleFloor,
     // the main crest along a compass bearing: its radius and the ground's height there
     crestAt(bearing, out = { x: 0, z: 0, r: 0, y: 0 }) {
       const az = azOf(bearing); sampleBearing(az);

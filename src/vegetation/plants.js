@@ -275,7 +275,7 @@ function makePlantMaterial(ctx, shared, o) {
         varying float vFpT; varying vec3 vFpW;
         ${GLSL_WIND}`)
       .replace('#include <color_vertex>', `
-        float fpDist = distance(cameraPosition.xz, iPos.xz);
+        float fpDist = length(vec2(distance(cameraPosition.xz, iPos.xz), max(0.0, abs(cameraPosition.y - iPos.y) - 20.0))); // v12: from high above, the true distance (the first 20 m of height free, so the walk is as it was)
         float fpDens = pow(min(1.0, uR0 / max(fpDist, 0.001)), uExp) * (1.0 - smoothstep(uFade0, uFade1, fpDist));
         float fpKeep = clamp((fpDens - iShape.z) / 0.1, 0.0, 1.0);
         float fpVar = floor(iShape.w); float fpSeed = fract(iShape.w);

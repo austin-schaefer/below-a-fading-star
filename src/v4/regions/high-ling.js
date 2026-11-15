@@ -14,6 +14,7 @@ import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { Mesher, flapMaterial, flapInstanced } from '../../fauna/geo.js';
 import { groundOf, stoneGeo, instanced, stoneMaterial, airMotes, meshStats, compose } from './common.js';
 import { nearestLead } from '../paths/routes.js'; // v8-09: no stone or bush across a road (called at build time)
+import { stairClear, stairSight } from '../../v12/stair/plan.js'; // v12-H3: none on the Diffident Stair's slabs (after the draws)
 const onRoad = (x, z, r) => { const h = nearestLead(x, z, r + 0.3); return !!h && h.kind !== 'rivulet'; };
 
 const KEY = 'highLing';
@@ -65,6 +66,14 @@ export const air = { tint: '#f2c95e', strength: 1 }; // "gold pollen" (DI)
 
 // the tors: [x, z, height]; the tallest at (268, -80)
 const TORS = [[SITES.tallestTor.x, SITES.tallestTor.z, 10], [252, -40, 7.5], [281, -20, 6.2], [258, -2, 6.5], [247, -92, 7], [283, -62, 6]];
+// how far from a stack's axis (cx, cz) a pillow reaches, from the ground to a little over a walker's eye: the widest of
+// its horizontal semi-axes (the pillow geometry's x 1, z 0.85, y 0.72, with the noise's swell) where it cuts that band
+function pillowReach(p, cx, cz, base) {
+  const R = Math.max(p.sx, p.sz * 0.85) * 1.12, ry = p.sy * 0.72 * 1.12;
+  let w = 0;
+  for (const h of [0.2, 0.9, 1.7, 2.1]) { const t = (base + h - p.y) / ry; if (t > -1 && t < 1) w = Math.max(w, R * Math.sqrt(1 - t * t)); }
+  return w > 0 ? Math.hypot(p.x - cx, p.z - cz) + w : 0;
+}
 
 // ---------------------------------------------------------------- sound: grasshoppers, the wind in the tors
 export const sound = {
@@ -180,13 +189,17 @@ export async function build(ctx) {
       const off = (c - (n - 1) / 2) * (3.4 + rng() * 1.0), cx = tx + ca * off + (rng() - 0.5) * 1.5, cz = tz - sa * off + (rng() - 0.5) * 1.5;
       const Hc = c === Math.floor(n / 2) ? H : H * (0.45 + rng() * 0.35);
       const base = G.heightAt(cx, cz);
-      let y = base - 0.6, wdt = 4.4 + rng() * 1.6;
+      let y = base - 0.6, wdt = 4.4 + rng() * 1.6, reach = 0;
       while (y < base + Hc - 0.8) {
         const th = 1.5 + rng() * 0.9;
-        pillows.push({ x: cx + (rng() - 0.5) * 0.7, y: y + th * 0.42, z: cz + (rng() - 0.5) * 0.7, sx: wdt * (0.5 + rng() * 0.12), sy: th, sz: wdt * (0.45 + rng() * 0.12), ry: yaw0 + (rng() - 0.5) * 0.35, rx: (rng() - 0.5) * 0.1, rz: (rng() - 0.5) * 0.1, c: pinkish() });
+        const p = { x: cx + (rng() - 0.5) * 0.7, y: y + th * 0.42, z: cz + (rng() - 0.5) * 0.7, sx: wdt * (0.5 + rng() * 0.12), sy: th, sz: wdt * (0.45 + rng() * 0.12), ry: yaw0 + (rng() - 0.5) * 0.35, rx: (rng() - 0.5) * 0.1, rz: (rng() - 0.5) * 0.1, c: pinkish() };
+        pillows.push(p);
+        reach = Math.max(reach, pillowReach(p, cx, cz, base));
         y += th * 0.93; wdt *= 0.88 + rng() * 0.08;
       }
-      ctx.addCollider({ x: cx, z: cz, r: 2.2 });
+      // the collider reaches as far as the pillows do where a walker's body and eye are (v12-C1: it was 2.2 m, and the
+      // wider pillows stood a metre past it, so a walker pressed against a tor stood inside the stone)
+      ctx.addCollider({ x: cx, z: cz, r: Math.max(2.2, reach - 0.55) });
     }
   }
   const torMesh = instanced(pillowGeo, granite, pillows, { name: 'highling-tors', shadow: true, colors: true });
@@ -201,13 +214,14 @@ export async function build(ctx) {
     const s = (0.25 + Math.pow(rng(), 2) * 1.0) * (1 - r / (24 + H) * 0.5);
     if (onRoad(x, z, s * 0.8)) continue;
     clitter.push({ x, y: G.heightAt(x, z) + s * 0.1, z, s, sx: s * (1 + rng() * 0.5), sy: s * (0.7 + rng() * 0.4), sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.6, rz: (rng() - 0.5) * 0.6, c: pinkish(0.9) });
-    if (s > 0.8) ctx.addCollider({ x, z, r: s * 0.8 });
+    if (s > 0.8 && !stairClear(x, z, s) && !stairSight(x, z)) ctx.addCollider({ x, z, r: s * 0.8 });
   }
   for (let z = -104; z < 10; z += 1.6) { // the scarp's lip: granite breaking through the turf where it is steep
     if (scarpWidth(z) > 6.5 || rng() < 0.35) continue;
     const x = edgeX(z) + 0.6 + rng() * 2.2, s = 0.4 + rng() * 0.8;
     clitter.push({ x, y: G.heightAt(x, z) - s * 0.25, z, s, sx: s * 1.4, sy: s * 0.8, sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.5, rz: (rng() - 0.5) * 0.5, c: pinkish(0.85) });
   }
+  for (let i = clitter.length - 1; i >= 0; i--) if (stairClear(clitter[i].x, clitter[i].z, clitter[i].s) || stairSight(clitter[i].x, clitter[i].z)) clitter.splice(i, 1);
   const clitMesh = instanced(clitGeo, granite, clitter, { name: 'highling-clitter', colors: true });
   scene.add(clitMesh); meshes.push(clitMesh);
 
@@ -253,6 +267,7 @@ export async function build(ctx) {
     if (onRoad(x, z, s * 0.8)) continue;
     gorse.push({ x, y: G.heightAt(x, z) - 0.05, z, s, sx: s * (1 + rng() * 0.4), sy: s * (0.9 + rng() * 0.6), sz: s * (1 + rng() * 0.3), ry: rng() * 6.28 });
   }
+  for (let i = gorse.length - 1; i >= 0; i--) if (stairClear(gorse[i].x, gorse[i].z, gorse[i].s) || stairSight(gorse[i].x, gorse[i].z)) gorse.splice(i, 1);
   const gorseMesh = instanced(gorseGeo, gorseMat, gorse, { name: 'highling-gorse' });
   scene.add(gorseMesh); meshes.push(gorseMesh);
   for (const g of gorse) if (g.s > 0.85) ctx.addCollider({ x: g.x, z: g.z, r: g.s * 0.8, y: g.y - 0.5, h: g.sy * 1.2 + 0.5, stand: false }); // v8-10: gorse is not stood on

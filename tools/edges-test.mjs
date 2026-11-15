@@ -5,7 +5,10 @@
 //     0.5 m, the Sunken Court's coping 1.0 m after a hop onto the kerb),
 //   - never pass it (the signed distance to the lip stays >= 0; on the Span the deck holds, the walker never drops),
 //   - never be under the floor: feet no lower than the terrain (or the deck) less 0.15 m at any tick,
-// and at the Span's crack a running hop still clears it. Simulated at 60 Hz through controls.update in one page.
+// and at the Span's crack a running hop still clears it. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
+// them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
+// and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
+// through controls.update in one page.
 // Usage: node tools/edges-test.mjs [base=http://localhost:8123]
 import { createRequire } from 'node:module';
 let chromium;
@@ -91,6 +94,20 @@ const R = await page.evaluate(async () => {
     if (p.pos.x > c1 && Math.abs(p.pos.y - p.eye - Y) < 0.05) cleared = lead;
   }
   res.push({ name: 'the Span: the crack, a running hop', hop: cleared });
+  // v12-H1: the crack's fallen coping: walked across along its own line, both ways, no hop, no hurry
+  const CW = fp.span.crackWay;
+  for (const [name, x0, x1] of [['from the west', CW.x0 - 5, CW.x1 + 4], ['from the east', CW.x1 + 5, CW.x0 - 4]]) {
+    fp.controls.placeAt(x0, CW.zc(x0)); p.pos.y = Y + p.eye; p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true; p.keys.clear(); p.keys.add('KeyW');
+    let low = 0;
+    for (let i = 0; i < 900 && Math.abs(p.pos.x - x1) > 0.4; i++) {
+      const tx = p.pos.x + Math.sign(x1 - p.pos.x) * 2;
+      p.yaw = Math.atan2(-(tx - p.pos.x), -(CW.zc(tx) - p.pos.z));
+      fp.controls.update(DT);
+      low = Math.min(low, p.pos.y - p.eye - Y);
+    }
+    p.keys.clear();
+    res.push({ coping: name, ok: Math.abs(p.pos.x - x1) <= 0.4, low, feet: p.pos.y - p.eye - Y });
+  }
   // the Sunken Court: the kerb stops the walker; a hop lands on the coping, close over the water
   for (const [name, sx, sz, edge] of [['from the south', -40, -135, (x, z) => z - pit.z1], ['from the west', -65, -165, (x, z) => pit.x0 - x]]) {
     const r = walk(sx, sz, -40, -165, edge, { secs: 8, hopAt: 360 });
@@ -103,6 +120,7 @@ let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
 const f = (v) => v.toFixed(2);
 for (const r of R) {
+  if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }
   if (r.hop !== undefined) { check(r.hop !== null, `${r.name}: lands on the far deck`, r.hop === null ? 'never' : `hop ${f(r.hop)} m short of the lip`); continue; }
   const who = `${r.name} (${r.mode})`;
   check(r.worst <= r.reach, `${who}: reaches within ${r.reach} m of the lip`, `${r.n > 1 ? 'worst of ' + r.n + ' bearings, ' : ''}${f(r.worst)} m${r.at ? ' at ' + r.at : ''}`);
