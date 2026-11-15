@@ -166,7 +166,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 
 ### v13
 
-- `serial=1` (v13-P0): every world module imported first, then built one at a time, so each build's time is its own (`src/startup.js`); for `tools/load-probe.mjs`, never for a visitor
+- `serial=1` (v13-P0): every world module imported first, then built one at a time, so each build's time is its own (`src/startup.js`); for timing only (`tools/load-probe.mjs`), never for a visitor or a render: modules then build in `MODULES` order to completion, and at the spawn on low its frame differs from an ordinary load's by 85 pixels on one figure (two ordinary loads: 0)
 
 ## Quality tiers
 
