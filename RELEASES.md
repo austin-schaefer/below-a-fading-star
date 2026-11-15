@@ -36,58 +36,57 @@ Known issues: phones were not measured, only a laptop slowed down to stand in fo
 **This release**
 
 - **Time:** 11 hours 48 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 22 sub-agents.
-- **Tokens:** 479.0 million read and written in all; 14.9 million not counting what was reread from the cache, 1.6 million of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 366.9M | 12.4M | 1.2M |
-| Fable 5.2 | 107.4M | 2.3M | 390k |
-| Sonnet 5.5 | 4.7M | 212k | 28k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 10 | 366.9M |
+| Fable 5.2 | 11 | 107.4M |
+| Sonnet 5.5 | 2 | 4.7M |
+| **Total** | **23** | **479.0M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 92.4M | 861k | 188k |
-| v13 L3 bake in worker, kept | Opus 5.5 | 102.3M | 1.7M | 222k |
-| v13 L2 height core | Opus 5.5 | 57.1M | 1.7M | 169k |
-| v13 L1 service worker | Opus 5.5 | 54.0M | 970k | 239k |
-| v13 L4 kept builders | Opus 5.5 | 50.9M | 3.3M | 132k |
-| v13 L5 other builders | Opus 5.5 | 42.8M | 1.4M | 120k |
-| v13 P1 frame yardstick | Opus 5.5 | 26.8M | 1.7M | 126k |
-| v13 critic: differences from v12 | Opus 5.5 | 15.3M | 288k | 50k |
-| v13 P0 load yardstick | Opus 5.5 | 9.1M | 590k | 42k |
-| Shorten the suite safely | Opus 5.5 | 5.5M | 491k | 24k |
-| Suite speed audit, read-only | Fable 5.2 | 4.9M | 239k | 33k |
-| v13 F2 the owners | Sonnet 5.5 | 4.0M | 130k | 22k |
-| Cold review L2 diff | Fable 5.2 | 3.5M | 222k | 30k |
-| v13 P2 load CPU profile | Opus 5.5 | 3.1M | 241k | 25k |
-| Cold review L3 diff | Fable 5.2 | 2.0M | 184k | 28k |
-| Cold review L4 diff | Fable 5.2 | 1.2M | 131k | 21k |
-| Cold review L5 diff | Fable 5.2 | 919k | 122k | 16k |
-| Cold review P1 diff | Fable 5.2 | 852k | 151k | 19k |
-| v13 curator | Sonnet 5.5 | 657k | 83k | 6k |
-| Survey backlog for next milestone | Fable 5.2 | 507k | 98k | 8k |
-| Cold review L1 service worker | Fable 5.2 | 448k | 127k | 21k |
-| Cold review P0 diff | Fable 5.2 | 376k | 87k | 9k |
-| Second cold review L1 final | Fable 5.2 | 305k | 107k | 17k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 92.4M |
+| v13 L3 bake in worker, kept | Opus 5.5 | 102.3M |
+| v13 L2 height core | Opus 5.5 | 57.1M |
+| v13 L1 service worker | Opus 5.5 | 54.0M |
+| v13 L4 kept builders | Opus 5.5 | 50.9M |
+| v13 L5 other builders | Opus 5.5 | 42.8M |
+| v13 P1 frame yardstick | Opus 5.5 | 26.8M |
+| v13 critic: differences from v12 | Opus 5.5 | 15.3M |
+| v13 P0 load yardstick | Opus 5.5 | 9.1M |
+| Shorten the suite safely | Opus 5.5 | 5.5M |
+| Suite speed audit, read-only | Fable 5.2 | 4.9M |
+| v13 F2 the owners | Sonnet 5.5 | 4.0M |
+| Cold review L2 diff | Fable 5.2 | 3.5M |
+| v13 P2 load CPU profile | Opus 5.5 | 3.1M |
+| Cold review L3 diff | Fable 5.2 | 2.0M |
+| Cold review L4 diff | Fable 5.2 | 1.2M |
+| Cold review L5 diff | Fable 5.2 | 919k |
+| Cold review P1 diff | Fable 5.2 | 852k |
+| v13 curator | Sonnet 5.5 | 657k |
+| Survey backlog for next milestone | Fable 5.2 | 507k |
+| Cold review L1 service worker | Fable 5.2 | 448k |
+| Cold review P0 diff | Fable 5.2 | 376k |
+| Second cold review L1 final | Fable 5.2 | 305k |
+| **Total** | | **479.0M** |
 
 </details>
 
 **Since the project started** (v1 to v13)
 
-- **Time:** 8 days 2 hours since the walk's first commit.
-- **Agents:** 293 sub-agents.
-- **Tokens:** 4.38 billion read and written in all; 124.8 million not counting what was reread from the cache, 18.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 3.24B | 98.2M | 13.1M |
-| Fable 5.2 | 510.1M | 6.9M | 1.5M |
-| Sonnet 5.5 | 372.3M | 15.5M | 2.4M |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 146 | 3.24B |
+| Fable 5.2 | 15 | 510.1M |
+| Sonnet 5.5 | 134 | 372.3M |
+| Fable 5.1 | 1 | 254.8M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **294** | **4.38B** |
 
 ## v12: The Heights
 
@@ -129,68 +128,67 @@ Known issues: the ways up are hard to find. Nothing at ground level says where e
 **This release**
 
 - **Time:** 2 days 6 hours, from the first plan to live.
-- **Agents:** one orchestrator and 32 sub-agents.
-- **Tokens:** 847.7 million read and written in all; 35.8 million not counting what was reread from the cache, 2.2 million of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 751.3M | 33.1M | 1.8M |
-| Fable 5.2 | 67.1M | 1.2M | 213k |
-| Sonnet 5.5 | 29.2M | 1.4M | 168k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 16 | 751.3M |
+| Fable 5.2 | 4 | 67.1M |
+| Sonnet 5.5 | 13 | 29.2M |
+| **Total** | **33** | **847.7M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 64.9M | 853k | 184k |
-| H5 the valley from above | Opus 5.5 | 183.3M | 12.2M | 204k |
-| H4 the lift | Opus 5.5 | 154.7M | 8.4M | 354k |
-| H2 the glacier | Opus 5.5 | 131.5M | 4.6M | 357k |
-| H3 the stair that appears | Opus 5.5 | 92.6M | 3.1M | 239k |
-| H0 the footing | Opus 5.5 | 85.4M | 1.6M | 224k |
-| H1 round two, Span | Opus 5.5 | 44.4M | 866k | 152k |
-| Critic's blocking fixes v12 | Opus 5.5 | 22.2M | 616k | 62k |
-| H1 the Span whole | Sonnet 5.5 | 13.1M | 331k | 85k |
-| Cold critic before v12 release | Opus 5.5 | 12.6M | 289k | 54k |
-| H5 round two: far.js fixes | Opus 5.5 | 10.5M | 503k | 42k |
-| One tally in the world | Sonnet 5.5 | 8.9M | 367k | 36k |
-| Curate v12 screenshots | Sonnet 5.5 | 3.4M | 164k | 22k |
-| Cold review of glacier diff | Opus 5.5 | 3.3M | 170k | 31k |
-| Cold review of lift diff | Opus 5.5 | 3.1M | 186k | 32k |
-| Fall setting in the menu | Sonnet 5.5 | 2.5M | 113k | 14k |
-| Cold review of H0 footing | Opus 5.5 | 1.9M | 125k | 24k |
-| Cold review of Span diff | Opus 5.5 | 1.6M | 118k | 18k |
-| Cold review of stair diff | Opus 5.5 | 1.6M | 114k | 22k |
-| Cold review H5 from-above | Opus 5.5 | 1.5M | 128k | 18k |
-| Cold review H4 lift | Opus 5.5 | 1.2M | 140k | 14k |
-| Survey frame loop costs | Fable 5.2 | 1.2M | 170k | 11k |
-| Survey loading path | Fable 5.2 | 695k | 113k | 11k |
-| Cold review of v11.1 diff | Sonnet 5.5 | 602k | 80k | 5k |
-| Survey load path statically | Fable 5.2 | 372k | 87k | 7k |
-| Cold read of ground renders | Sonnet 5.5 | 123k | 45k | 0k |
-| Cold read: road and top | Sonnet 5.5 | 123k | 45k | 0k |
-| Cold read of two renders | Sonnet 5.5 | 122k | 44k | 1k |
-| Blind read of Span frames | Sonnet 5.5 | 100k | 65k | 3k |
-| Blind read of floor frames | Sonnet 5.5 | 81k | 46k | 1k |
-| Second blind read of floor frames | Sonnet 5.5 | 80k | 25k | 1k |
-| Blind read of two frames | Sonnet 5.5 | 79k | 44k | 1k |
-| Third blind read of floor frames | Sonnet 5.5 | 78k | 44k | 1k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 64.9M |
+| H5 the valley from above | Opus 5.5 | 183.3M |
+| H4 the lift | Opus 5.5 | 154.7M |
+| H2 the glacier | Opus 5.5 | 131.5M |
+| H3 the stair that appears | Opus 5.5 | 92.6M |
+| H0 the footing | Opus 5.5 | 85.4M |
+| H1 round two, Span | Opus 5.5 | 44.4M |
+| Critic's blocking fixes v12 | Opus 5.5 | 22.2M |
+| H1 the Span whole | Sonnet 5.5 | 13.1M |
+| Cold critic before v12 release | Opus 5.5 | 12.6M |
+| H5 round two: far.js fixes | Opus 5.5 | 10.5M |
+| One tally in the world | Sonnet 5.5 | 8.9M |
+| Curate v12 screenshots | Sonnet 5.5 | 3.4M |
+| Cold review of glacier diff | Opus 5.5 | 3.3M |
+| Cold review of lift diff | Opus 5.5 | 3.1M |
+| Fall setting in the menu | Sonnet 5.5 | 2.5M |
+| Cold review of H0 footing | Opus 5.5 | 1.9M |
+| Cold review of Span diff | Opus 5.5 | 1.6M |
+| Cold review of stair diff | Opus 5.5 | 1.6M |
+| Cold review H5 from-above | Opus 5.5 | 1.5M |
+| Cold review H4 lift | Opus 5.5 | 1.2M |
+| Survey frame loop costs | Fable 5.2 | 1.2M |
+| Survey loading path | Fable 5.2 | 695k |
+| Cold review of v11.1 diff | Sonnet 5.5 | 602k |
+| Survey load path statically | Fable 5.2 | 372k |
+| Cold read of ground renders | Sonnet 5.5 | 123k |
+| Cold read: road and top | Sonnet 5.5 | 123k |
+| Cold read of two renders | Sonnet 5.5 | 122k |
+| Blind read of Span frames | Sonnet 5.5 | 100k |
+| Blind read of floor frames | Sonnet 5.5 | 81k |
+| Second blind read of floor frames | Sonnet 5.5 | 80k |
+| Blind read of two frames | Sonnet 5.5 | 79k |
+| Third blind read of floor frames | Sonnet 5.5 | 78k |
+| **Total** | | **847.7M** |
 
 </details>
 
 **Since the project started** (v1 to v12)
 
-- **Time:** 7 days 14 hours since the walk's first commit.
-- **Agents:** 271 sub-agents.
-- **Tokens:** 3.90 billion read and written in all; 109.9 million not counting what was reread from the cache, 16.5 million of it written by the models. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 2.87B | 85.8M | 11.9M |
-| Fable 5.2 | 401.8M | 4.5M | 1.1M |
-| Sonnet 5.5 | 367.6M | 15.3M | 2.3M |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 136 | 2.87B |
+| Fable 5.2 | 5 | 401.8M |
+| Sonnet 5.5 | 132 | 367.6M |
+| Fable 5.1 | 1 | 254.8M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **272** | **3.90B** |
 
 ## v11.1: The mountains, up close
 
@@ -251,48 +249,47 @@ Known issues: the mountains toward the sun are still smoother than the rest. Up 
 **This release**
 
 - **Time:** 3 hours 41 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 12 sub-agents.
-- **Tokens:** 143.4 million read and written in all; 3.3 million not counting what was reread from the cache, 624 thousand of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 92.5M | 2.1M | 439k |
-| Sonnet 5.5 | 36.3M | 925k | 131k |
-| Fable 5.2 | 14.6M | 211k | 53k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 7 | 92.5M |
+| Sonnet 5.5 | 5 | 36.3M |
+| Fable 5.2 | 1 | 14.6M |
+| **Total** | **13** | **143.4M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 14.6M | 211k | 53k |
-| v11 M1 the rock | Opus 5.5 | 42.0M | 908k | 177k |
-| v11 F2 critic fixes | Sonnet 5.5 | 20.3M | 279k | 48k |
-| v11 M2 the form | Opus 5.5 | 18.6M | 351k | 84k |
-| v11 M4 fitting and test | Opus 5.5 | 15.7M | 315k | 77k |
-| v11 M3 the two squares | Sonnet 5.5 | 14.3M | 446k | 66k |
-| v11 F1 wall moire fix | Opus 5.5 | 6.7M | 183k | 36k |
-| v11 cold critic | Opus 5.5 | 6.1M | 159k | 28k |
-| Cold review of M1 diff | Opus 5.5 | 2.2M | 125k | 22k |
-| Cold review of M2 diff | Opus 5.5 | 1.2M | 82k | 15k |
-| v11 curator | Sonnet 5.5 | 1.0M | 88k | 9k |
-| Cold review of M3 diff | Sonnet 5.5 | 622k | 53k | 6k |
-| Blind read of M1 frames | Sonnet 5.5 | 94k | 59k | 3k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 14.6M |
+| v11 M1 the rock | Opus 5.5 | 42.0M |
+| v11 F2 critic fixes | Sonnet 5.5 | 20.3M |
+| v11 M2 the form | Opus 5.5 | 18.6M |
+| v11 M4 fitting and test | Opus 5.5 | 15.7M |
+| v11 M3 the two squares | Sonnet 5.5 | 14.3M |
+| v11 F1 wall moire fix | Opus 5.5 | 6.7M |
+| v11 cold critic | Opus 5.5 | 6.1M |
+| Cold review of M1 diff | Opus 5.5 | 2.2M |
+| Cold review of M2 diff | Opus 5.5 | 1.2M |
+| v11 curator | Sonnet 5.5 | 1.0M |
+| Cold review of M3 diff | Sonnet 5.5 | 622k |
+| Blind read of M1 frames | Sonnet 5.5 | 94k |
+| **Total** | | **143.4M** |
 
 </details>
 
 **Since the project started** (v1 to v11)
 
-- **Time:** 5 days 5 hours since the walk's first commit.
-- **Agents:** 231 sub-agents.
-- **Tokens:** 2.95 billion read and written in all; 71.5 million not counting what was reread from the cache, 13.8 million of it written by the models. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 2.06B | 51.2M | 9.8M |
-| Sonnet 5.5 | 321.3M | 13.1M | 2.1M |
-| Fable 5.2 | 317.2M | 2.9M | 788k |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 116 | 2.06B |
+| Sonnet 5.5 | 115 | 321.3M |
+| Fable 5.2 | 2 | 317.2M |
+| Fable 5.1 | 1 | 254.8M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **232** | **2.95B** |
 
 ## v10: Things to do
 
@@ -327,58 +324,57 @@ Known issues: the yellow sparks are hard to see at the great crystal until you a
 **This release**
 
 - **Time:** 6 hours 22 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 22 sub-agents.
-- **Tokens:** 439.0 million read and written in all; 12.6 million not counting what was reread from the cache, 1.5 million of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 308.6M | 10.6M | 1.1M |
-| Fable 5.2 | 82.4M | 609k | 149k |
-| Sonnet 5.5 | 48.1M | 1.3M | 248k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 11 | 308.6M |
+| Fable 5.2 | 1 | 82.4M |
+| Sonnet 5.5 | 11 | 48.1M |
+| **Total** | **23** | **439.0M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 82.4M | 609k | 149k |
-| v10-A3 a great bell to ring | Opus 5.5 | 85.0M | 3.7M | 255k |
-| v10-A4 tally rebuilt with ride | Opus 5.5 | 84.1M | 2.4M | 250k |
-| v10-A1 crystal and door acts | Opus 5.5 | 43.5M | 1.7M | 189k |
-| v10-A2 glass and salt acts | Sonnet 5.5 | 33.7M | 493k | 148k |
-| v10-A0 acts framework and tally | Opus 5.5 | 30.0M | 867k | 138k |
-| v10-F2 seat ride view and knock | Opus 5.5 | 27.3M | 403k | 109k |
-| v10-F1 make acts findable | Opus 5.5 | 20.5M | 817k | 81k |
-| v10-T1 walk to pit edges | Sonnet 5.5 | 10.6M | 257k | 57k |
-| Cold critic before v10 release | Opus 5.5 | 10.5M | 352k | 40k |
-| Cold review of bell branch | Opus 5.5 | 3.0M | 131k | 21k |
-| Cold review of A1 branch | Opus 5.5 | 2.5M | 116k | 20k |
-| Curate v10 screenshots | Sonnet 5.5 | 1.6M | 124k | 11k |
-| Cold review of A4 branch | Opus 5.5 | 1.6M | 131k | 20k |
-| Cold review of A2 branch | Sonnet 5.5 | 1.2M | 94k | 12k |
-| Cold review of acts branch | Opus 5.5 | 689k | 79k | 10k |
-| Cold review of edges branch | Sonnet 5.5 | 293k | 42k | 4k |
-| Blind read of A2 frame sequences | Sonnet 5.5 | 174k | 61k | 4k |
-| Blind read of A1 frame sequences | Sonnet 5.5 | 171k | 61k | 4k |
-| Blind read of bell frames | Sonnet 5.5 | 94k | 40k | 2k |
-| Blind read of door and crystal round two | Sonnet 5.5 | 94k | 59k | 2k |
-| Blind read of bell round two | Sonnet 5.5 | 91k | 56k | 2k |
-| Blind read of act renders | Sonnet 5.5 | 87k | 52k | 2k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 82.4M |
+| v10-A3 a great bell to ring | Opus 5.5 | 85.0M |
+| v10-A4 tally rebuilt with ride | Opus 5.5 | 84.1M |
+| v10-A1 crystal and door acts | Opus 5.5 | 43.5M |
+| v10-A2 glass and salt acts | Sonnet 5.5 | 33.7M |
+| v10-A0 acts framework and tally | Opus 5.5 | 30.0M |
+| v10-F2 seat ride view and knock | Opus 5.5 | 27.3M |
+| v10-F1 make acts findable | Opus 5.5 | 20.5M |
+| v10-T1 walk to pit edges | Sonnet 5.5 | 10.6M |
+| Cold critic before v10 release | Opus 5.5 | 10.5M |
+| Cold review of bell branch | Opus 5.5 | 3.0M |
+| Cold review of A1 branch | Opus 5.5 | 2.5M |
+| Curate v10 screenshots | Sonnet 5.5 | 1.6M |
+| Cold review of A4 branch | Opus 5.5 | 1.6M |
+| Cold review of A2 branch | Sonnet 5.5 | 1.2M |
+| Cold review of acts branch | Opus 5.5 | 689k |
+| Cold review of edges branch | Sonnet 5.5 | 293k |
+| Blind read of A2 frame sequences | Sonnet 5.5 | 174k |
+| Blind read of A1 frame sequences | Sonnet 5.5 | 171k |
+| Blind read of bell frames | Sonnet 5.5 | 94k |
+| Blind read of door and crystal round two | Sonnet 5.5 | 94k |
+| Blind read of bell round two | Sonnet 5.5 | 91k |
+| Blind read of act renders | Sonnet 5.5 | 87k |
+| **Total** | | **439.0M** |
 
 </details>
 
 **Since the project started** (v1 to v10)
 
-- **Time:** 4 days 22 hours since the walk's first commit.
-- **Agents:** 218 sub-agents.
-- **Tokens:** 2.80 billion read and written in all; 68.0 million not counting what was reread from the cache, 13.2 million of it written by the models. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 1.96B | 48.9M | 9.3M |
-| Fable 5.2 | 296.6M | 2.6M | 715k |
-| Sonnet 5.5 | 285.0M | 12.2M | 1.9M |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 108 | 1.96B |
+| Fable 5.2 | 2 | 296.6M |
+| Sonnet 5.5 | 110 | 285.0M |
+| Fable 5.1 | 1 | 254.8M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **219** | **2.80B** |
 
 ## v9.1: The Lantern Halt
 
@@ -436,87 +432,86 @@ Known issues: the music is an early attempt. The pieces are not very tuneful and
 **This release**
 
 - **Time:** 8 hours 13 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 50 sub-agents.
-- **Tokens:** 676.2 million read and written in all; 12.9 million not counting what was reread from the cache, 2.6 million of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 477.2M | 9.6M | 2.0M |
-| Fable 5.2 | 164.3M | 1.1M | 345k |
-| Sonnet 5.5 | 34.3M | 2.1M | 259k |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 28 | 477.2M |
+| Fable 5.2 | 1 | 164.3M |
+| Sonnet 5.5 | 21 | 34.3M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **51** | **676.2M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 164.3M | 1.1M | 345k |
-| v8-09 repairs and gate | Opus 5.5 | 55.7M | 514k | 137k |
-| v8-04 story threads | Opus 5.5 | 52.2M | 890k | 164k |
-| v8-05 Pomegranate House | Opus 5.5 | 49.6M | 1.4M | 166k |
-| v8-07 Twk-men | Opus 5.5 | 45.3M | 497k | 153k |
-| v8-06 liveries | Opus 5.5 | 33.9M | 409k | 108k |
-| v8-01 roads | Opus 5.5 | 31.5M | 353k | 122k |
-| v8-10 hop and crystals | Opus 5.5 | 22.5M | 653k | 99k |
-| v9-M6 music settings | Opus 5.5 | 19.4M | 572k | 81k |
-| v8-03 three strata | Opus 5.5 | 19.4M | 265k | 94k |
-| v8-11 the rocks | Opus 5.5 | 17.5M | 302k | 75k |
-| v8-02 ground contrast | Opus 5.5 | 17.5M | 150k | 44k |
-| v9-M1 patches and player | Opus 5.5 | 17.4M | 351k | 112k |
-| v9-T1 owner tweaks | Opus 5.5 | 17.1M | 458k | 56k |
-| v8-08 the painter | Opus 5.5 | 12.9M | 359k | 106k |
-| Finish the Lantern Halt | Opus 5.5 | 12.0M | 273k | 77k |
-| v9-M5 cheaper sound harness | Sonnet 5.5 | 11.7M | 402k | 67k |
-| Waystation C (revised skills, clean) | Opus 5.5 | 9.3M | 254k | 56k |
-| Write the visual art skill | Opus 5.5 | 6.9M | 256k | 33k |
-| v9-M2 director and bus | Sonnet 5.5 | 6.6M | 178k | 43k |
-| Cold critic for v9 | Opus 5.5 | 6.2M | 168k | 27k |
-| Waystation B (no craft skills) | Opus 5.5 | 5.9M | 203k | 54k |
-| Waystation A (with craft skills) | Opus 5.5 | 5.0M | 200k | 47k |
-| Split the wilderness skill | Opus 5.5 | 3.9M | 151k | 32k |
-| v9-M0 the score | Opus 5.5 | 3.9M | 207k | 64k |
-| Cold critic for v8 | Opus 5.5 | 3.8M | 192k | 24k |
-| Curate v8 renders | Sonnet 5.5 | 3.1M | 173k | 25k |
-| Rewrite release notes (#3) | Opus 5.5 | 2.7M | 138k | 33k |
-| Cold review v9-M6 | Opus 5.5 | 2.4M | 96k | 13k |
-| v9-M3 region tracks | Sonnet 5.5 | 2.3M | 96k | 25k |
-| v9-M4 special tracks | Sonnet 5.5 | 2.0M | 77k | 18k |
-| Backfill release-note pictures | Sonnet 5.5 | 1.5M | 119k | 15k |
-| Cold review v8-10 diff | Opus 5.5 | 1.2M | 91k | 17k |
-| Waystation C (revised skills) | Opus 5.5 | 1.1M | 86k | 5k |
-| Cold review v8-02 diff | Sonnet 5.5 | 824k | 86k | 8k |
-| Cold review v8-09 diff | Sonnet 5.5 | 765k | 88k | 7k |
-| Cold review v9-M1 | Opus 5.5 | 737k | 159k | 14k |
-| Cold review v8-05 diff | Sonnet 5.5 | 722k | 94k | 7k |
-| Cold review v8-07 diff | Sonnet 5.5 | 658k | 83k | 6k |
-| Cold review Lantern Halt | Sonnet 5.5 | 604k | 71k | 4k |
-| Cold review v8-11 rocks | Sonnet 5.5 | 533k | 71k | 4k |
-| Cold review v8-06 diff | Sonnet 5.5 | 530k | 67k | 4k |
-| Cold review v8-04 diff | Sonnet 5.5 | 530k | 90k | 5k |
-| Cold review v8-08 diff | Sonnet 5.5 | 447k | 75k | 3k |
-| Can a session self-compact | Haiku 5.5 | 406k | 102k | 9k |
-| Cold review v8-01 diff | Sonnet 5.5 | 398k | 63k | 5k |
-| Curate v9 renders | Sonnet 5.5 | 355k | 65k | 3k |
-| Cold review v8-03 diff | Sonnet 5.5 | 303k | 68k | 2k |
-| Cold review v9-T1 | Sonnet 5.5 | 298k | 62k | 3k |
-| Cold review v9-M0 | Sonnet 5.5 | 218k | 48k | 3k |
-| Blind read of renders | Sonnet 5.5 | 83k | 31k | 2k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 164.3M |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M |
+| v8-04 story threads | Opus 5.5 | 52.2M |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M |
+| v8-07 Twk-men | Opus 5.5 | 45.3M |
+| v8-06 liveries | Opus 5.5 | 33.9M |
+| v8-01 roads | Opus 5.5 | 31.5M |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M |
+| v9-M6 music settings | Opus 5.5 | 19.4M |
+| v8-03 three strata | Opus 5.5 | 19.4M |
+| v8-11 the rocks | Opus 5.5 | 17.5M |
+| v8-02 ground contrast | Opus 5.5 | 17.5M |
+| v9-M1 patches and player | Opus 5.5 | 17.4M |
+| v9-T1 owner tweaks | Opus 5.5 | 17.1M |
+| v8-08 the painter | Opus 5.5 | 12.9M |
+| Finish the Lantern Halt | Opus 5.5 | 12.0M |
+| v9-M5 cheaper sound harness | Sonnet 5.5 | 11.7M |
+| Waystation C (revised skills, clean) | Opus 5.5 | 9.3M |
+| Write the visual art skill | Opus 5.5 | 6.9M |
+| v9-M2 director and bus | Sonnet 5.5 | 6.6M |
+| Cold critic for v9 | Opus 5.5 | 6.2M |
+| Waystation B (no craft skills) | Opus 5.5 | 5.9M |
+| Waystation A (with craft skills) | Opus 5.5 | 5.0M |
+| Split the wilderness skill | Opus 5.5 | 3.9M |
+| v9-M0 the score | Opus 5.5 | 3.9M |
+| Cold critic for v8 | Opus 5.5 | 3.8M |
+| Curate v8 renders | Sonnet 5.5 | 3.1M |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M |
+| Cold review v9-M6 | Opus 5.5 | 2.4M |
+| v9-M3 region tracks | Sonnet 5.5 | 2.3M |
+| v9-M4 special tracks | Sonnet 5.5 | 2.0M |
+| Backfill release-note pictures | Sonnet 5.5 | 1.5M |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M |
+| Waystation C (revised skills) | Opus 5.5 | 1.1M |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k |
+| Cold review v9-M1 | Opus 5.5 | 737k |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k |
+| Cold review Lantern Halt | Sonnet 5.5 | 604k |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k |
+| Can a session self-compact | Haiku 5.5 | 406k |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k |
+| Curate v9 renders | Sonnet 5.5 | 355k |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k |
+| Cold review v9-T1 | Sonnet 5.5 | 298k |
+| Cold review v9-M0 | Sonnet 5.5 | 218k |
+| Blind read of renders | Sonnet 5.5 | 83k |
+| **Total** | | **676.2M** |
 
 </details>
 
 **Since the project started** (v1 to v9)
 
-- **Time:** 4 days 15 hours since the walk's first commit.
-- **Agents:** 196 sub-agents.
-- **Tokens:** 2.35 billion read and written in all; 55.2 million not counting what was reread from the cache, 11.6 million of it written by the models. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 1.65B | 38.3M | 8.2M |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Sonnet 5.5 | 236.3M | 10.8M | 1.7M |
-| Fable 5.2 | 200.1M | 1.8M | 533k |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 97 | 1.65B |
+| Fable 5.1 | 1 | 254.8M |
+| Sonnet 5.5 | 99 | 236.3M |
+| Fable 5.2 | 2 | 200.1M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **197** | **2.35B** |
 
 ## v8: One world
 
@@ -554,66 +549,65 @@ Known issues: the traveller below the Span is very hard to spot from the bridge 
 **This release**
 
 - **Time:** 4 hours 32 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 29 sub-agents.
-- **Tokens:** 464.2 million read and written in all; 9.0 million not counting what was reread from the cache, 1.8 million of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 386.4M | 7.2M | 1.5M |
-| Fable 5.2 | 67.3M | 751k | 194k |
-| Sonnet 5.5 | 10.1M | 1.0M | 94k |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 14 | 386.4M |
+| Fable 5.2 | 2 | 67.3M |
+| Sonnet 5.5 | 13 | 10.1M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **30** | **464.2M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.2 | 66.5M | 620k | 179k |
-| v8-04 story threads | Opus 5.5 | 58.6M | 1.1M | 211k |
-| v8-09 repairs and gate | Opus 5.5 | 55.7M | 514k | 137k |
-| v8-05 Pomegranate House | Opus 5.5 | 49.6M | 1.4M | 166k |
-| v8-07 Twk-men | Opus 5.5 | 45.3M | 497k | 153k |
-| v8-01 roads | Opus 5.5 | 35.7M | 598k | 178k |
-| v8-06 liveries | Opus 5.5 | 33.9M | 409k | 108k |
-| v8-03 three strata | Opus 5.5 | 24.2M | 523k | 144k |
-| v8-02 ground contrast | Opus 5.5 | 22.7M | 372k | 83k |
-| v8-10 hop and crystals | Opus 5.5 | 22.5M | 653k | 99k |
-| v8-11 the rocks | Opus 5.5 | 17.5M | 302k | 75k |
-| v8-08 the painter | Opus 5.5 | 12.9M | 359k | 106k |
-| Cold critic for v8 | Opus 5.5 | 3.8M | 192k | 24k |
-| Curate v8 renders | Sonnet 5.5 | 3.1M | 173k | 25k |
-| Rewrite release notes (#3) | Opus 5.5 | 2.7M | 138k | 33k |
-| Cold review v8-10 diff | Opus 5.5 | 1.2M | 91k | 17k |
-| Audit architecture and figures | Sonnet 5.5 | 1.0M | 41k | 9k |
-| Cold review v8-02 diff | Sonnet 5.5 | 824k | 86k | 8k |
-| Research music harness plan | Fable 5.2 | 809k | 132k | 15k |
-| Cold review v8-09 diff | Sonnet 5.5 | 765k | 88k | 7k |
-| Cold review v8-05 diff | Sonnet 5.5 | 722k | 94k | 7k |
-| Cold review v8-07 diff | Sonnet 5.5 | 658k | 83k | 6k |
-| Cold review v8-11 rocks | Sonnet 5.5 | 533k | 71k | 4k |
-| Cold review v8-06 diff | Sonnet 5.5 | 530k | 67k | 4k |
-| Cold review v8-04 diff | Sonnet 5.5 | 530k | 90k | 5k |
-| Cold review v8-08 diff | Sonnet 5.5 | 447k | 75k | 3k |
-| Can a session self-compact | Haiku 5.5 | 406k | 102k | 9k |
-| Cold review v8-01 diff | Sonnet 5.5 | 398k | 63k | 5k |
-| Cold review v8-03 diff | Sonnet 5.5 | 303k | 68k | 2k |
-| Audit paths, density, palette levers | Sonnet 5.5 | 254k | 13k | 9k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.2 | 66.5M |
+| v8-04 story threads | Opus 5.5 | 58.6M |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M |
+| v8-07 Twk-men | Opus 5.5 | 45.3M |
+| v8-01 roads | Opus 5.5 | 35.7M |
+| v8-06 liveries | Opus 5.5 | 33.9M |
+| v8-03 three strata | Opus 5.5 | 24.2M |
+| v8-02 ground contrast | Opus 5.5 | 22.7M |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M |
+| v8-11 the rocks | Opus 5.5 | 17.5M |
+| v8-08 the painter | Opus 5.5 | 12.9M |
+| Cold critic for v8 | Opus 5.5 | 3.8M |
+| Curate v8 renders | Sonnet 5.5 | 3.1M |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M |
+| Audit architecture and figures | Sonnet 5.5 | 1.0M |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k |
+| Research music harness plan | Fable 5.2 | 809k |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k |
+| Can a session self-compact | Haiku 5.5 | 406k |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k |
+| Audit paths, density, palette levers | Sonnet 5.5 | 254k |
+| **Total** | | **464.2M** |
 
 </details>
 
 **Since the project started** (v1 to v8)
 
-- **Time:** 4 days 11 hours since the walk's first commit.
-- **Agents:** 172 sub-agents.
-- **Tokens:** 2.11 billion read and written in all; 50.1 million not counting what was reread from the cache, 10.5 million of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Time:** 4 days 11 hours since the walk's first commit. The table leaves out v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 1.54B | 34.9M | 7.5M |
-| Fable 5.1 | 254.8M | 4.2M | 1.1M |
-| Sonnet 5.5 | 210.8M | 9.7M | 1.5M |
-| Fable 5.2 | 99.1M | 1.3M | 343k |
-| Haiku 5.5 | 406k | 102k | 9k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 83 | 1.54B |
+| Fable 5.1 | 1 | 254.8M |
+| Sonnet 5.5 | 89 | 210.8M |
+| Fable 5.2 | 2 | 99.1M |
+| Haiku 5.5 | 1 | 406k |
+| **Total** | **173** | **2.11B** |
 
 ## v7.2.1: Quieter birds at the keep
 
@@ -679,49 +673,48 @@ Known issues: the Coheirs sit in deep shade and are hard to see until you are cl
 **This release**
 
 - **Time:** 3 hours 55 minutes, from the first plan to live.
-- **Agents:** one orchestrator and 15 sub-agents.
-- **Tokens:** 202.9 million read and written in all; 5.5 million not counting what was reread from the cache, 708 thousand of it written by the models.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 145.6M | 4.1M | 420k |
-| Sonnet 5.5 | 41.0M | 1.2M | 237k |
-| Fable 5.1 | 16.2M | 177k | 51k |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 6 | 145.6M |
+| Sonnet 5.5 | 9 | 41.0M |
+| Fable 5.1 | 1 | 16.2M |
+| **Total** | **16** | **202.9M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.1 | 16.2M | 177k | 51k |
-| v7-05 small agent | Opus 5.5 | 44.0M | 1.6M | 182k |
-| v7-03 still agent | Sonnet 5.5 | 36.4M | 543k | 191k |
-| v7-01 walkers agent | Opus 5.5 | 29.5M | 577k | 61k |
-| v7-02 workers agent | Opus 5.5 | 27.4M | 502k | 38k |
-| v7-07 audio agent | Opus 5.5 | 22.6M | 1.1M | 89k |
-| v7-06 canyon agent | Opus 5.5 | 20.1M | 118k | 44k |
-| v7-04 glyphs agent | Opus 5.5 | 2.1M | 251k | 5k |
-| Curate v7 shots | Sonnet 5.5 | 2.0M | 191k | 21k |
-| Cold review of v7-canyon | Sonnet 5.5 | 537k | 70k | 4k |
-| Cold review of v7-workers | Sonnet 5.5 | 459k | 51k | 4k |
-| Cold review of v7-small | Sonnet 5.5 | 415k | 67k | 5k |
-| Cold review of v7-walkers | Sonnet 5.5 | 361k | 50k | 3k |
-| Cold review of v7-still | Sonnet 5.5 | 301k | 62k | 3k |
-| Cold review of v7-glyphs | Sonnet 5.5 | 250k | 61k | 2k |
-| Cold review of v7-audio | Sonnet 5.5 | 243k | 73k | 4k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.1 | 16.2M |
+| v7-05 small agent | Opus 5.5 | 44.0M |
+| v7-03 still agent | Sonnet 5.5 | 36.4M |
+| v7-01 walkers agent | Opus 5.5 | 29.5M |
+| v7-02 workers agent | Opus 5.5 | 27.4M |
+| v7-07 audio agent | Opus 5.5 | 22.6M |
+| v7-06 canyon agent | Opus 5.5 | 20.1M |
+| v7-04 glyphs agent | Opus 5.5 | 2.1M |
+| Curate v7 shots | Sonnet 5.5 | 2.0M |
+| Cold review of v7-canyon | Sonnet 5.5 | 537k |
+| Cold review of v7-workers | Sonnet 5.5 | 459k |
+| Cold review of v7-small | Sonnet 5.5 | 415k |
+| Cold review of v7-walkers | Sonnet 5.5 | 361k |
+| Cold review of v7-still | Sonnet 5.5 | 301k |
+| Cold review of v7-glyphs | Sonnet 5.5 | 250k |
+| Cold review of v7-audio | Sonnet 5.5 | 243k |
+| **Total** | | **202.9M** |
 
 </details>
 
 **Since the project started** (v1 to v7)
 
-- **Time:** 39 hours 2 minutes since the walk's first commit.
-- **Agents:** 131 sub-agents.
-- **Tokens:** 1.48 billion read and written in all; 36.8 million not counting what was reread from the cache, 8.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Time:** 39 hours 2 minutes since the walk's first commit. The table leaves out v1, whose sessions were not kept.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 1.08B | 25.7M | 5.7M |
-| Fable 5.1 | 222.0M | 3.7M | 1.0M |
-| Sonnet 5.5 | 177.9M | 7.5M | 1.3M |
+| Model | Agents | Tokens |
+|---|---|---|
+| Opus 5.5 | 65 | 1.08B |
+| Fable 5.1 | 1 | 222.0M |
+| Sonnet 5.5 | 67 | 177.9M |
+| **Total** | **132** | **1.48B** |
 
 ## v6.7: Two more place names
 
@@ -820,74 +813,77 @@ Known issues: on phones the picture is drawn a little below the screen's resolut
 
 - **Time:** 6 hours 20 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 41 sub-agents.
-- **Tokens:** 329.6 million read and written in all; 7.9 million not counting what was reread from the cache, 1.8 million of it written by the models.
+- **Tokens:** 329.6 million.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 193.8M | 4.6M | 1.1M |
-| Fable 5.1 | 76.7M | 1.3M | 350k |
-| Sonnet 5.5 | 59.1M | 2.1M | 402k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 193.8M |
+| Fable 5.1 | 76.7M |
+| Sonnet 5.5 | 59.1M |
+| **Total** | **329.6M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Fable 5.1 | 76.7M | 1.3M | 350k |
-| v6-04 trees agent | Opus 5.5 | 37.7M | 756k | 137k |
-| v6-05 ground agent | Opus 5.5 | 26.9M | 366k | 96k |
-| Land mountains C | Opus 5.5 | 22.9M | 324k | 85k |
-| v5: the local lights bundle | Opus 5.5 | 21.6M | 358k | 104k |
-| v6-02 finish pass agent | Opus 5.5 | 15.7M | 279k | 84k |
-| Draft the v6 briefs | Opus 5.5 | 11.4M | 404k | 131k |
-| v5 coherence pass | Opus 5.5 | 10.0M | 338k | 43k |
-| v5: the Kept Fire | Sonnet 5.5 | 9.7M | 94k | 29k |
-| v5: story set-dressing | Sonnet 5.5 | 9.4M | 101k | 37k |
-| v6-01 harness agent | Sonnet 5.5 | 9.4M | 273k | 72k |
-| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | 208k | 55k |
-| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | 208k | 48k |
-| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | 180k | 44k |
-| Draft the v7 briefs | Opus 5.5 | 6.0M | 303k | 93k |
-| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | 166k | 41k |
-| v6-00 square lights, second attempt | Opus 5.5 | 5.3M | 195k | 39k |
-| v5 wonder: the Foundered Nave | Opus 5.5 | 4.7M | 28k | 9k |
-| Reshape wilderness docs, token-smart | Opus 5.5 | 4.6M | 177k | 28k |
-| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | 141k | 29k |
-| v6 fade kit agent | Opus 5.5 | 3.4M | 140k | 32k |
-| v6-00 bloom squares investigation | Opus 5.5 | 3.2M | 108k | 24k |
-| Curate v6 renders, pass 1 | Sonnet 5.5 | 2.9M | 139k | 23k |
-| Span deck invisible colliders | Opus 5.5 | 2.6M | 102k | 20k |
-| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | 161k | 27k |
-| Curate shots/wip, group B (v5-07 to v5-13) | Sonnet 5.5 | 2.0M | 117k | 15k |
-| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | 115k | 21k |
-| Review trees diff cold | Opus 5.5 | 1.2M | 98k | 16k |
-| Review ground diff cold | Opus 5.5 | 1.0M | 99k | 15k |
-| Review: the Foundered Nave branch | Sonnet 5.5 | 888k | 40k | 10k |
-| v6-00 square lights agent | Sonnet 5.5 | 737k | 73k | 5k |
-| Review finish pass diff cold | Opus 5.5 | 735k | 86k | 13k |
-| Cold review of mountains C landing | Sonnet 5.5 | 586k | 75k | 8k |
-| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | 45k | 4k |
-| Curate v6 renders, pass 2 (trees) | Sonnet 5.5 | 527k | 68k | 5k |
-| v7 plan: perf and artefacts survey | Opus 5.5 | 445k | 4k | 1k |
-| Review harness diff cold | Sonnet 5.5 | 388k | 53k | 4k |
-| Curate shots/wip, group A (v5-01 to v5-06) | Sonnet 5.5 | 329k | 74k | 5k |
-| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | 45k | 5k |
-| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | 43k | 3k |
-| Review Span collider fix cold | Sonnet 5.5 | 217k | 53k | 4k |
-| Review fade kit diff cold | Sonnet 5.5 | 179k | 35k | 5k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Fable 5.1 | 76.7M |
+| v6-04 trees agent | Opus 5.5 | 37.7M |
+| v6-05 ground agent | Opus 5.5 | 26.9M |
+| Land mountains C | Opus 5.5 | 22.9M |
+| v5: the local lights bundle | Opus 5.5 | 21.6M |
+| v6-02 finish pass agent | Opus 5.5 | 15.7M |
+| Draft the v6 briefs | Opus 5.5 | 11.4M |
+| v5 coherence pass | Opus 5.5 | 10.0M |
+| v5: the Kept Fire | Sonnet 5.5 | 9.7M |
+| v5: story set-dressing | Sonnet 5.5 | 9.4M |
+| v6-01 harness agent | Sonnet 5.5 | 9.4M |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M |
+| Draft the v7 briefs | Opus 5.5 | 6.0M |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M |
+| v6-00 square lights, second attempt | Opus 5.5 | 5.3M |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 4.7M |
+| Reshape wilderness docs, token-smart | Opus 5.5 | 4.6M |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M |
+| v6 fade kit agent | Opus 5.5 | 3.4M |
+| v6-00 bloom squares investigation | Opus 5.5 | 3.2M |
+| Curate v6 renders, pass 1 | Sonnet 5.5 | 2.9M |
+| Span deck invisible colliders | Opus 5.5 | 2.6M |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M |
+| Curate shots/wip, group B (v5-07 to v5-13) | Sonnet 5.5 | 2.0M |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M |
+| Review trees diff cold | Opus 5.5 | 1.2M |
+| Review ground diff cold | Opus 5.5 | 1.0M |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 888k |
+| v6-00 square lights agent | Sonnet 5.5 | 737k |
+| Review finish pass diff cold | Opus 5.5 | 735k |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k |
+| Curate v6 renders, pass 2 (trees) | Sonnet 5.5 | 527k |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 445k |
+| Review harness diff cold | Sonnet 5.5 | 388k |
+| Curate shots/wip, group A (v5-01 to v5-06) | Sonnet 5.5 | 329k |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k |
+| Review Span collider fix cold | Sonnet 5.5 | 217k |
+| Review fade kit diff cold | Sonnet 5.5 | 179k |
+| **Total** | | **329.6M** |
 
 </details>
 
 **Since the project started** (v1 to v6)
 
 - **Time:** 31 hours 52 minutes since the walk's first commit.
-- **Agents:** 102 sub-agents.
-- **Tokens:** 1.11 billion read and written in all; 26.3 million not counting what was reread from the cache, 6.2 million of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Agents:** 102 sub-agents, not counting v1.
+- **Tokens:** 1.11 billion, not counting v1.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 816.4M | 17.7M | 4.4M |
-| Fable 5.1 | 173.9M | 3.0M | 840k |
-| Sonnet 5.5 | 121.5M | 5.6M | 964k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 816.4M |
+| Fable 5.1 | 173.9M |
+| Sonnet 5.5 | 121.5M |
+| **Total** | **1.11B** |
 
 ## v5: The built
 
@@ -913,111 +909,114 @@ Known issues: the lost slipper is easy to miss, and the window-lights on the wes
 
 - **Time:** 13 hours 38 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 78 sub-agents.
-- **Tokens:** 927.9 million read and written in all; 21.5 million not counting what was reread from the cache, 5.2 million of it written by the models.
+- **Tokens:** 927.9 million.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 694.3M | 14.6M | 3.8M |
-| Fable 5.1 | 129.6M | 2.2M | 626k |
-| Sonnet 5.5 | 104.0M | 4.7M | 810k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 694.3M |
+| Fable 5.1 | 129.6M |
+| Sonnet 5.5 | 104.0M |
+| **Total** | **927.9M** |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Opus 5.5, Fable 5.1 | 129.8M | 2.3M | 626k |
-| v5 wonder: the Foundered Nave | Opus 5.5 | 51.2M | 614k | 205k |
-| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | 718k | 237k |
-| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | 508k | 145k |
-| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | 797k | 208k |
-| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | 565k | 172k |
-| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.8M | 1.0M | 197k |
-| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | 532k | 160k |
-| v5 wonder: the Plinth Road | Opus 5.5 | 26.3M | 443k | 130k |
-| v5 recast: the Gradine extended | Opus 5.5 | 25.6M | 988k | 127k |
-| Land mountains C | Opus 5.5 | 22.9M | 324k | 85k |
-| v5 recast: the Arcature | Opus 5.5 | 22.0M | 427k | 121k |
-| v5: the local lights bundle | Opus 5.5 | 21.6M | 358k | 104k |
-| v5 recast: Sunken Court | Opus 5.5 | 21.5M | 689k | 117k |
-| v5: the Kept Fire | Sonnet 5.5 | 20.3M | 423k | 124k |
-| v5 wonder: the Occultation | Opus 5.5 | 20.3M | 331k | 102k |
-| v5: story set-dressing | Sonnet 5.5 | 20.0M | 427k | 132k |
-| v5 wonder: the Acephalous Thrones | Opus 5.5 | 18.9M | 375k | 110k |
-| v5 wonder: the Annals | Opus 5.5 | 18.9M | 442k | 89k |
-| v5 wonder: the Hawser | Opus 5.5 | 17.8M | 345k | 93k |
-| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
-| v5 wonder: Galleries of Durance | Opus 5.5 | 16.2M | 325k | 100k |
-| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
-| v5 recast: Carcanet Keep | Opus 5.5 | 15.1M | 385k | 106k |
-| v7 plan: perf and artefacts survey | Opus 5.5 | 14.3M | 271k | 68k |
-| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | 282k | 79k |
-| v5 recast: Lattice mother crystal | Opus 5.5 | 12.9M | 283k | 80k |
-| v5 recast: Armiger's Tower | Opus 5.5 | 12.8M | 283k | 70k |
-| Draft the v6 briefs | Opus 5.5 | 11.4M | 404k | 131k |
-| Fix: tree LODs rotate on approach | Opus 5.5 | 10.5M | 255k | 66k |
-| v5 coherence pass | Opus 5.5 | 10.0M | 338k | 43k |
-| v5 wonder: the Cincture | Opus 5.5 | 10.0M | 236k | 71k |
-| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
-| Mountains study: three profiles | Opus 5.5 | 8.6M | 217k | 65k |
-| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | 208k | 55k |
-| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | 208k | 48k |
-| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | 180k | 44k |
-| Draft the v7 briefs | Opus 5.5 | 6.0M | 303k | 93k |
-| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | 166k | 41k |
-| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | 112k | 20k |
-| Fix: jumpy camera in the wood | Opus 5.5 | 4.2M | 135k | 27k |
-| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | 141k | 29k |
-| Fix: stair hop animation | Opus 5.5 | 3.9M | 111k | 25k |
-| v5 wonder: the Battlemented Ridge | Sonnet 5.5 | 3.8M | 238k | 26k |
-| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | 175k | 30k |
-| v5 follow-up: legibility calls | Sonnet 5.5 | 2.9M | 119k | 19k |
-| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | 161k | 27k |
-| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
-| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | 115k | 21k |
-| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | 119k | 11k |
-| Review: the Foundered Nave branch | Sonnet 5.5 | 1.2M | 94k | 13k |
-| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | 97k | 10k |
-| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | 99k | 11k |
-| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
-| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | 85k | 8k |
-| Cold review: the Annals | Sonnet 5.5 | 736k | 48k | 6k |
-| Cold review of v4 polish diff | Sonnet 5.5 | 655k | 95k | 11k |
-| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
-| Cold review: Gradine extension | Sonnet 5.5 | 588k | 95k | 10k |
-| Cold review of mountains C landing | Sonnet 5.5 | 586k | 75k | 8k |
-| Cold review: Acephalous Thrones | Sonnet 5.5 | 574k | 86k | 10k |
-| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | 45k | 4k |
-| Cold review: the Hawser | Sonnet 5.5 | 528k | 92k | 14k |
-| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | 75k | 7k |
-| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | 49k | 5k |
-| Cold review: Lattice mother crystal | Sonnet 5.5 | 392k | 70k | 6k |
-| Cold review of v5 tower recast | Sonnet 5.5 | 388k | 75k | 5k |
-| Review: the Occultation branch | Sonnet 5.5 | 347k | 47k | 7k |
-| Cold review: Arcature recast | Sonnet 5.5 | 337k | 42k | 4k |
-| Cold review: Galleries of Durance | Sonnet 5.5 | 308k | 68k | 4k |
-| Cold review: Carcanet Keep recast | Sonnet 5.5 | 289k | 45k | 3k |
-| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | 56k | 5k |
-| Cold review: the Plinth Road | Sonnet 5.5 | 259k | 66k | 3k |
-| Cold review: the Cincture | Sonnet 5.5 | 244k | 67k | 5k |
-| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | 45k | 5k |
-| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | 43k | 3k |
-| Cold review: Sunken Court recast | Sonnet 5.5 | 230k | 57k | 4k |
-| Cold review: the Battlemented Ridge | Sonnet 5.5 | 206k | 49k | 6k |
-| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 129.8M |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 51.2M |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.8M |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M |
+| v5 wonder: the Plinth Road | Opus 5.5 | 26.3M |
+| v5 recast: the Gradine extended | Opus 5.5 | 25.6M |
+| Land mountains C | Opus 5.5 | 22.9M |
+| v5 recast: the Arcature | Opus 5.5 | 22.0M |
+| v5: the local lights bundle | Opus 5.5 | 21.6M |
+| v5 recast: Sunken Court | Opus 5.5 | 21.5M |
+| v5: the Kept Fire | Sonnet 5.5 | 20.3M |
+| v5 wonder: the Occultation | Opus 5.5 | 20.3M |
+| v5: story set-dressing | Sonnet 5.5 | 20.0M |
+| v5 wonder: the Acephalous Thrones | Opus 5.5 | 18.9M |
+| v5 wonder: the Annals | Opus 5.5 | 18.9M |
+| v5 wonder: the Hawser | Opus 5.5 | 17.8M |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M |
+| v5 wonder: Galleries of Durance | Opus 5.5 | 16.2M |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M |
+| v5 recast: Carcanet Keep | Opus 5.5 | 15.1M |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 14.3M |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M |
+| v5 recast: Lattice mother crystal | Opus 5.5 | 12.9M |
+| v5 recast: Armiger's Tower | Opus 5.5 | 12.8M |
+| Draft the v6 briefs | Opus 5.5 | 11.4M |
+| Fix: tree LODs rotate on approach | Opus 5.5 | 10.5M |
+| v5 coherence pass | Opus 5.5 | 10.0M |
+| v5 wonder: the Cincture | Opus 5.5 | 10.0M |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M |
+| Mountains study: three profiles | Opus 5.5 | 8.6M |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M |
+| Draft the v7 briefs | Opus 5.5 | 6.0M |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M |
+| Fix: jumpy camera in the wood | Opus 5.5 | 4.2M |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M |
+| Fix: stair hop animation | Opus 5.5 | 3.9M |
+| v5 wonder: the Battlemented Ridge | Sonnet 5.5 | 3.8M |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M |
+| v5 follow-up: legibility calls | Sonnet 5.5 | 2.9M |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 1.2M |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k |
+| Cold review: the Annals | Sonnet 5.5 | 736k |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k |
+| Cold review: Gradine extension | Sonnet 5.5 | 588k |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k |
+| Cold review: Acephalous Thrones | Sonnet 5.5 | 574k |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k |
+| Cold review: the Hawser | Sonnet 5.5 | 528k |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k |
+| Cold review: Lattice mother crystal | Sonnet 5.5 | 392k |
+| Cold review of v5 tower recast | Sonnet 5.5 | 388k |
+| Review: the Occultation branch | Sonnet 5.5 | 347k |
+| Cold review: Arcature recast | Sonnet 5.5 | 337k |
+| Cold review: Galleries of Durance | Sonnet 5.5 | 308k |
+| Cold review: Carcanet Keep recast | Sonnet 5.5 | 289k |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k |
+| Cold review: the Plinth Road | Sonnet 5.5 | 259k |
+| Cold review: the Cincture | Sonnet 5.5 | 244k |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k |
+| Cold review: Sunken Court recast | Sonnet 5.5 | 230k |
+| Cold review: the Battlemented Ridge | Sonnet 5.5 | 206k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k |
+| **Total** | | **927.9M** |
 
 </details>
 
 **Since the project started** (v1 to v5)
 
 - **Time:** 27 hours 49 minutes since the walk's first commit.
-- **Agents:** 82 sub-agents.
-- **Tokens:** 948.8 million read and written in all; 22.3 million not counting what was reread from the cache, 5.4 million of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Agents:** 82 sub-agents, not counting v1.
+- **Tokens:** 948.8 million, not counting v1.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 714.1M | 15.3M | 3.9M |
-| Fable 5.1 | 129.6M | 2.2M | 626k |
-| Sonnet 5.5 | 105.0M | 4.8M | 825k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 714.1M |
+| Fable 5.1 | 129.6M |
+| Sonnet 5.5 | 105.0M |
+| **Total** | **948.8M** |
 
 ## v4: The land and the Great Span
 
@@ -1042,61 +1041,61 @@ Known issues: the waterfall cannot be seen from the causeway, and the surveyor's
 
 - **Time:** 11 hours 10 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 28 sub-agents.
-- **Tokens:** 370.2 million read and written in all; 7.7 million not counting what was reread from the cache, 2.0 million of it written by the models.
+- **Tokens:** 370.2 million.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 292.5M | 5.4M | 1.6M |
-| Fable 5.1 | 48.8M | 737k | 198k |
-| Sonnet 5.5 | 28.9M | 1.6M | 237k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 292.5M |
+| Fable 5.1 | 48.8M |
+| Sonnet 5.5 | 28.9M |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Opus 5.5, Fable 5.1 | 52.1M | 856k | 217k |
-| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | 718k | 237k |
-| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | 508k | 145k |
-| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | 797k | 208k |
-| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | 565k | 172k |
-| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.4M | 616k | 197k |
-| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | 532k | 160k |
-| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
-| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
-| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | 282k | 79k |
-| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
-| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
-| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
-| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | 112k | 20k |
-| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | 175k | 30k |
-| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
-| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | 119k | 11k |
-| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | 97k | 10k |
-| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
-| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | 99k | 11k |
-| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
-| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | 85k | 8k |
-| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
-| Cold review of v4 polish diff | Sonnet 5.5 | 655k | 95k | 11k |
-| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
-| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | 75k | 7k |
-| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | 49k | 5k |
-| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | 56k | 5k |
-| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 52.1M |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.4M |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k |
+| Review chat queue diff #85 | Opus 5.5 | 687k |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k |
 
 </details>
 
 **Since the project started** (v1 to v4)
 
 - **Time:** 19 hours 44 minutes since the walk's first commit.
-- **Agents:** 28 sub-agents.
-- **Tokens:** 374.2 million read and written in all; 7.9 million not counting what was reread from the cache, 2.0 million of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Agents:** 28 sub-agents, not counting v1.
+- **Tokens:** 374.2 million, not counting v1.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 296.5M | 5.6M | 1.6M |
-| Fable 5.1 | 48.8M | 737k | 198k |
-| Sonnet 5.5 | 28.9M | 1.6M | 237k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 296.5M |
+| Fable 5.1 | 48.8M |
+| Sonnet 5.5 | 28.9M |
 
 ## v3: Running cooler, and a medium quality
 
@@ -1119,45 +1118,45 @@ Known issues: the high quality setting has no smoothing of jagged edges yet.
 
 - **Time:** 7 hours 50 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 12 sub-agents.
-- **Tokens:** 99.9 million read and written in all; 2.7 million not counting what was reread from the cache, 685 thousand of it written by the models.
+- **Tokens:** 99.9 million.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 78.7M | 2.1M | 557k |
-| Fable 5.1 | 18.5M | 320k | 87k |
-| Sonnet 5.5 | 2.6M | 309k | 40k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 78.7M |
+| Fable 5.1 | 18.5M |
+| Sonnet 5.5 | 2.6M |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Opus 5.5, Fable 5.1 | 21.8M | 439k | 106k |
-| v4 systems: mountains, light, kits | Opus 5.5 | 18.7M | 417k | 110k |
-| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | 345k | 108k |
-| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | 307k | 84k |
-| Fix flickering spars (v3) | Opus 5.5 | 9.3M | 253k | 61k |
-| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
-| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
-| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | 242k | 90k |
-| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
-| Review the stage 3 tier diff | Sonnet 5.5 | 885k | 91k | 10k |
-| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
-| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | 82k | 8k |
-| Sites JSON from the placement plan | Sonnet 5.5 | 154k | 48k | 7k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 21.8M |
+| v4 systems: mountains, light, kits | Opus 5.5 | 18.7M |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k |
+| Review chat queue diff #85 | Opus 5.5 | 687k |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k |
 
 </details>
 
 **Since the project started** (v1 to v3)
 
 - **Time:** 16 hours 20 minutes since the walk's first commit.
-- **Agents:** 12 sub-agents.
-- **Tokens:** 103.9 million read and written in all; 2.9 million not counting what was reread from the cache, 720 thousand of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Agents:** 12 sub-agents, not counting v1.
+- **Tokens:** 103.9 million, not counting v1.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 82.8M | 2.3M | 593k |
-| Fable 5.1 | 18.5M | 320k | 87k |
-| Sonnet 5.5 | 2.6M | 309k | 40k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 82.8M |
+| Fable 5.1 | 18.5M |
+| Sonnet 5.5 | 2.6M |
 
 ## v2.2: A hop and a hush for phones
 
@@ -1204,35 +1203,35 @@ Adds a waterfall and river, a dozen new places and new inhabitants, and ties the
 
 - **Time:** 11 hours 3 minutes, from the first plan to live.
 - **Agents:** one orchestrator and 4 sub-agents.
-- **Tokens:** 20.7 million read and written in all; 720 thousand not counting what was reread from the cache, 152 thousand of it written by the models.
+- **Tokens:** 20.7 million.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 19.7M | 632k | 137k |
-| Sonnet 5.5 | 981k | 88k | 15k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 19.7M |
+| Sonnet 5.5 | 981k |
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-| The orchestrator | Opus 5.5 | 7.0M | 214k | 52k |
-| Implement chat message queue #85 | Opus 5.5 | 6.6M | 210k | 49k |
-| Implement chat response modes #86 | Opus 5.5 | 5.4M | 157k | 29k |
-| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | 88k | 15k |
-| Review chat queue diff #85 | Opus 5.5 | 687k | 51k | 7k |
+| Agent | Model | Tokens |
+|---|---|---|
+| The orchestrator | Opus 5.5 | 7.0M |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k |
+| Review chat queue diff #85 | Opus 5.5 | 687k |
 
 </details>
 
 **Since the project started** (v1 to v2)
 
 - **Time:** 12 hours 33 minutes since the walk's first commit.
-- **Agents:** 4 sub-agents.
-- **Tokens:** 20.9 million read and written in all; 757 thousand not counting what was reread from the cache, 155 thousand of it written by the models. v1's sessions were not kept, so this is short by them.
+- **Agents:** 4 sub-agents, not counting v1.
+- **Tokens:** 20.9 million, not counting v1.
 
-| Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|
-| Opus 5.5 | 19.9M | 669k | 140k |
-| Sonnet 5.5 | 981k | 88k | 15k |
+| Model | Tokens |
+|---|---|
+| Opus 5.5 | 19.9M |
+| Sonnet 5.5 | 981k |
 
 ## v1: The moor, the keep, the things between
 

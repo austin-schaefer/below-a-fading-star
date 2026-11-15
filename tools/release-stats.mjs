@@ -7,8 +7,9 @@
 //
 // Two parts. "This release": the clock runs from the first commit of the milestone's doc
 // (plans/wilderness-v<N>.md; with none, from the release before it) to the commit tagged v<version>.
-// "Since the project started": the same counts from the walk's first commit to that tag, so v5's covers
-// v1 to v5 and everything between them.
+// "Since the project started": agents and tokens from the walk's first commit to that tag, so v5's covers
+// v1 to v5 and everything between them. It gives no time: elapsed days since the first commit say nothing
+// about work (the owner, 2026-11-15).
 //
 // Tokens are read from Claude Code's own session transcripts on this machine (~/.claude/projects/), every
 // model call whose timestamp falls inside the window: the main sessions (the orchestrator) and each
@@ -18,9 +19,10 @@
 // ones) and only for work done on this machine. v1's own sessions are not on record: its part says so,
 // and the running totals are short by them.
 //
-// "Tokens" is everything the models read and wrote: fresh input, input written to the cache, input read
-// back from the cache (by far the largest part: a long session rereads its own context on every call),
-// and output. Each part gives the total, the part that was not a cache read, and what was written.
+// "Tokens" is one number: everything the models read and wrote (fresh input, input written to the cache,
+// input reread from the cache, and output). Rereads are by far the largest part, since a long session
+// rereads its own context on every call. The owner asked for one plain figure (2026-11-15, of a line that
+// gave three: "this is all gobbledegook").
 import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -79,7 +81,7 @@ for (const dir of dirs) {
 const sum = (k) => k.in + k.write + k.read + k.out;
 const tally = (since) => {
   const byAgent = new Map(), byModel = new Map(), all = { all: 0, fresh: 0, out: 0 };
-  const add = (map, key, c) => { const r = map.get(key) || { all: 0, fresh: 0, out: 0, models: new Set() }; r.all += sum(c.k); r.fresh += sum(c.k) - c.k.read; r.out += c.k.out; r.models.add(c.model); map.set(key, r); };
+  const add = (map, key, c) => { const r = map.get(key) || { all: 0, fresh: 0, out: 0, models: new Set(), agents: new Set() }; r.all += sum(c.k); r.fresh += sum(c.k) - c.k.read; r.out += c.k.out; r.models.add(c.model); r.agents.add(c.agent); map.set(key, r); };
   for (const c of calls.values()) { if (c.t < since) continue; add(byAgent, c.agent, c); add(byModel, c.model, c); all.all += sum(c.k); all.fresh += sum(c.k) - c.k.read; all.out += c.k.out; }
   return { byAgent, byModel, all, subs: [...byAgent].filter(([a]) => a !== 'main').sort((a, b) => b[1].all - a[1].all) };
 };
@@ -87,21 +89,21 @@ const n = (x) => x >= 1e9 ? (x / 1e9).toFixed(2) + ' billion' : x >= 1e6 ? (x / 
 const short = (x) => x >= 1e9 ? (x / 1e9).toFixed(2) + 'B' : x >= 1e6 ? (x / 1e6).toFixed(1) + 'M' : Math.round(x / 1e3) + 'k';
 const model = (m) => m.replace(/^claude-/, '').replace(/-(\d+)-(\d+).*$/, ' $1.$2').replace(/-\d{8}$/, '').replace(/^./, (c) => c.toUpperCase());
 const span = (a, b) => { const mins = Math.round((b - a) / 60000); return mins >= 2880 ? `${Math.floor(mins / 1440)} days ${Math.round((mins % 1440) / 60)} hours` : `${Math.floor(mins / 60)} hours ${mins % 60} minutes`; };
-const models = (T) => `| Model | Tokens | Without cache rereads | Written |\n|---|---|---|---|\n${[...T.byModel].sort((a, b) => b[1].all - a[1].all).map(([m, r]) => `| ${model(m)} | ${short(r.all)} | ${short(r.fresh)} | ${short(r.out)} |`).join('\n')}`;
-const tokens = (T) => `${n(T.all.all)} read and written in all; ${n(T.all.fresh)} not counting what was reread from the cache, ${n(T.all.out)} of it written by the models`;
+// Agents counts the orchestrator as one, in the model it ran on; an agent that used two models is in both rows and once in the total.
+const models = (T) => `| Model | Agents | Tokens |\n|---|---|---|\n${[...T.byModel].sort((a, b) => b[1].all - a[1].all).map(([m, r]) => `| ${model(m)} | ${r.agents.size} | ${short(r.all)} |`).join('\n')}\n| **Total** | **${T.byAgent.size}** | **${short(T.all.all)}** |`;
+const tokens = (T) => n(T.all.all);
 
 const R = tally(from), C = tally(born);
 if (!C.all.all) { console.error(`no transcripts on this machine cover anything up to v${version}`); process.exit(1); }
-const one = first && R.all.all ? `- **Agents:** one orchestrator and ${R.subs.length} sub-agents.
-- **Tokens:** ${tokens(R)}.
-
+const one = first && R.all.all ? `
 ${models(R)}
 
 <details><summary>Each agent</summary>
 
-| Agent | Model | Tokens | Without cache rereads | Written |
-|---|---|---|---|---|
-${[['main', R.byAgent.get('main')], ...R.subs].filter(([, r]) => r).map(([a, r]) => `| ${a === 'main' ? 'The orchestrator' : names.get(a).replace(/\|/g, '/')} | ${[...r.models].map(model).join(', ')} | ${short(r.all)} | ${short(r.fresh)} | ${short(r.out)} |`).join('\n')}
+| Agent | Model | Tokens |
+|---|---|---|
+${[['main', R.byAgent.get('main')], ...R.subs].filter(([, r]) => r).map(([a, r]) => `| ${a === 'main' ? 'The orchestrator' : names.get(a).replace(/\|/g, '/')} | ${[...r.models].map(model).join(', ')} | ${short(r.all)} |`).join('\n')}
+| **Total** | | **${short(R.all.all)}** |
 
 </details>` : '- **Agents and tokens:** not on record; the sessions that built this release were not kept.';
 
@@ -114,8 +116,6 @@ ${one}
 ${first ? `
 **Since the project started** (v1 to v${version})
 
-- **Time:** ${span(born, to)} since the walk's first commit.
-- **Agents:** ${C.subs.length} sub-agents.
-- **Tokens:** ${tokens(C)}. v1's sessions were not kept, so this is short by them.
+Not counting v1, whose sessions were not kept.
 
 ${models(C)}` : ''}`);
