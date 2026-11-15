@@ -176,6 +176,7 @@ export function buildThurifer(ctx, F, cue) {
     return 8;
   }
   S.shrineS = shrineTurnS();
+  ctx.built?.().then(() => { S.shrineS = shrineTurnS(); }); // (v13 L3) again once every module has built: the cloak is at his spot then, whatever order they built in
 
   // fill the train's ring as if it had walked here
   function seedRing() {

@@ -25,7 +25,7 @@ import { LANDMARKS, SPAWN } from '../world.js';
 import { bodyGeometry, wingGeometry, riderGeometry, bodyMaterial, wingMaterial, riderMaterial } from './twk/model.js';
 import { buildSalt } from './twk/salt.js';
 import { saltPlan, pointOn } from './twk/plan.js';
-import { waitFor, loaded } from '../v7/workers/rig.js';
+import { loaded } from '../v7/workers/rig.js';
 import { buildSaltActs } from '../v10/salt.js'; // v10-A2: the pinch, and the news (shelved: ?salt=1)
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -51,7 +51,7 @@ export async function build(ctx) {
   // ================================================================ where: the stations
   // the gnomons are another module's, built in parallel: wait for them unless they are left out
   const roadsOn = loaded('roads') && new URL(location.href).searchParams.get('roads') !== '0';
-  if (roadsOn) await waitFor(() => ctx.roads?.heads); // v8-09: the heads are in the roads' merged stone; ctx.roads.heads gives their matrices
+  if (roadsOn) await ctx.built('roads'); // (v13 L3: its build settled, not a 20 s poll) v8-09: the heads are in the roads' merged stone; ctx.roads.heads gives their matrices
   const T = tracks();
   const nearestTrack = (x, z) => { let best = null, bd = Infinity, bs = 0; for (const t of T) { const r = nearestOn(t, x, z); if (r.d < bd) { bd = r.d; best = t; bs = r.s; } } return { T: best, d: bd, s: bs }; };
   const stations = [];

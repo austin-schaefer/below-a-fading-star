@@ -14,7 +14,7 @@ import { buildPainter } from './threads/painter.js';
 import { buildTwelfthPlace } from '../v10/chair.js';
 import { meshGround } from '../v4/regions/skin.js';
 import { surfaceAt } from './threads/kit.js';
-import { waitFor, loaded } from '../v7/workers/rig.js';
+import { loaded } from '../v7/workers/rig.js';
 import { SEXTON_OFF } from '../v7/workers/graves.js';
 
 export async function build(ctx) {
@@ -27,17 +27,18 @@ export async function build(ctx) {
   const pavers = () => ctx.scene.getObjectByName('structures-pavers');
   const surf = (x, z) => surfaceAt(x, z, [pavers(), ctx.terrain.mesh], mg, 60);
   // the traveller's kit lies on the Span's deck: built only with the Span
-  if (!OFF.traveller && loaded('span') && await waitFor(() => ctx.span)) T.traveller = buildTraveller(ctx, gy);
+  // (v13 L3) each wait below is for that module's build to settle (ctx.built), however long it takes: they were 20 s polls
+  if (!OFF.traveller && (await ctx.built('span')) && ctx.span) T.traveller = buildTraveller(ctx, gy);
   if (!OFF.gold) {
-    if (loaded('structures')) await waitFor(() => ctx.structures);
+    await ctx.built('structures');
     T.gold = buildGold(ctx, gy);
   }
   if (!OFF.chair) {
-    if (loaded('structures')) await waitFor(() => ctx.structures);
-    if (loaded('living-workers') && !SEXTON_OFF) await waitFor(() => ctx.workers?.sexton || ctx.workers?.off); // his turf is laid by then
+    await ctx.built('structures');
+    if (!SEXTON_OFF) await ctx.built('living-workers'); // his turf is laid by then
     T.chair = buildChair(ctx, gy, surf);
     // the Collation gives up its twelfth place only now that the chair stands at the graves
-    if (loaded('dressing5')) T.chair.taken = !!(await waitFor(() => ctx.dressing5))?.collation?.takeTwelfth?.();
+    if (await ctx.built('dressing5')) T.chair.taken = !!ctx.dressing5?.collation?.takeTwelfth?.();
     if (T.chair.taken) buildTwelfthPlace(ctx, ctx.dressing5.collation, T.chair.ends.marks); // v10-A2: his place stays laid, and the visitor can drink to him
   }
   if (!OFF.painter) T.painter = buildPainter(ctx, mg, loaded('dressing5') && !/[?&](prospect|dressing5)=0/.test(location.search)); // v8-08: on the drawn ground (the High Ling, the Bletting)

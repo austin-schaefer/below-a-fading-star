@@ -9,7 +9,6 @@
 import * as THREE from 'three';
 import { LANDMARKS } from '../world.js';
 import { hyp } from '../noise.js';
-import { waitFor, loaded } from '../v7/workers/rig.js';
 
 const N = 34;
 
@@ -17,7 +16,7 @@ export async function build(ctx) {
   if (new URLSearchParams(location.search).get('shafts') === '0') return;
   const { terrain, sun } = ctx;
   const W = LANDMARKS.wood, rng = ctx.makeRng(8021);
-  const trees = loaded('vegetation') ? await waitFor(() => ctx.woodTrees, 60000) : null;
+  const trees = (await ctx.built('vegetation')) ? ctx.woodTrees || null : null; // (v13 L3: its build settled, not a 60 s poll)
   if (!trees || !trees.length) return; // no crowns, nothing for the light to fall through
   const deep = (x, z, w) => terrain.biomeAt(x, z).wood > w;
   const list = [];

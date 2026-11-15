@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // What every module built, as one fingerprint a module (v13-L5): for a change to a builder that must not change
 // what is seen. terrain-probe's idea, for the whole scene.
-//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b] [--allowunstable] [--repeat]
+//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b] [--allowunstable] [--repeat] [--throttle=4]
+// --throttle=N (v13 L3): Chromium's CPU throttle from the first byte (a slow phone's stand-in), for build-order races:
+// a module whose output depends on how long another took differs from the unthrottled recording.
 // --repeat (v13 L3): each load is a repeat visit: a load, its kept store written (src/v13/kept.js), then a reload in the
 // same context, fingerprinted; it fails unless the reload's terrain came from the store, so what is checked is the
 // walk built from what was kept.
@@ -25,7 +27,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1', allowunstable: '', repeat: '' };
+const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1', allowunstable: '', repeat: '', throttle: '' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
   const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
@@ -197,6 +199,7 @@ async function once() {
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));
   await page.addInitScript(install);
+  if (+opts.throttle > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +opts.throttle }); }
   const t0 = Date.now();
   await page.goto(url);
   await page.waitForFunction(() => window.__buildCheck, null, { timeout: 900000, polling: 500 });
@@ -239,7 +242,7 @@ for (const [n, keys] of unstable) {
 }
 const only = opts.only ? new Set(opts.only.split(',')) : null;
 const names = Object.keys(res.mods).filter((n) => !only || only.has(n)).sort();
-console.log(`build-check ${url} · ready in ${(res.wall / 1000).toFixed(1)} s · fingerprinted in ${res.ms} ms${runs > 1 ? ` · ${runs} loads` : ''}`);
+console.log(`build-check ${url}${+opts.throttle > 1 ? ` · cpu ${opts.throttle}x` : ''} · ready in ${(res.wall / 1000).toFixed(1)} s · fingerprinted in ${res.ms} ms${runs > 1 ? ` · ${runs} loads` : ''}`);
 for (const n of names) {
   const m = res.mods[n];
   console.log(`  ${n.padEnd(22)} ${m.h}  ${String(m.objs).padStart(5)} objects ${String(m.attrs).padStart(5)} attributes ${String(m.texs).padStart(3)} textures ${String(m.mb).padStart(6)} MB${m.unstable ? `  (${m.unstable.length} entries unstable between loads: ${m.unstable.slice(0, 3).join(', ')}${m.unstable.length > 3 ? ', ...' : ''})` : ''}`);

@@ -10,7 +10,8 @@
 //     loaded with a hash of its text, and holds only while each of them still hashes the same (they are fetched
 //     again to check, once a load each). A test's fresh browser context starts with an empty store either way.
 // A put replaces whatever was in its slot (so an old key is gone); prune() deletes every record of another tree.
-// ?kept=0 turns it all off (get misses, put does nothing). FORMAT changes whenever what a record holds changes.
+// A record carries a checksum of all it holds (sumOf), checked on every read. ?kept=0 turns it all off (get misses,
+// put does nothing). FORMAT changes whenever what a record holds changes.
 export const KEPT_FORMAT = 1;
 const DB = 'fp-kept', STORE = 'records', WAIT = 2500;
 
@@ -29,6 +30,34 @@ export function hashText(s) {
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0') + ':' + s.length;
+}
+
+// a checksum of everything in data (typed arrays by their bytes; numbers, strings and booleans in plain objects, arrays
+// and Maps, keys in order), so a record changed in the store is not used
+const _f = new Float64Array(1), _u = new Uint32Array(_f.buffer);
+export function sumOf(data) {
+  let a = 0x811c9dc5 | 0, b = 0x9747b28c | 0;
+  const mix = (w) => { a = Math.imul(a ^ w, 0x01000193); b = Math.imul(b ^ w, 0x5bd1e995); b ^= b >>> 13; };
+  const str = (t) => { for (let i = 0; i < t.length; i++) mix(t.charCodeAt(i)); mix(t.length); };
+  const walk = (v) => {
+    if (v === null || v === undefined) { mix(7); return; }
+    const ty = typeof v;
+    if (ty === 'number') { _f[0] = v; mix(_u[0]); mix(_u[1]); return; }
+    if (ty === 'string') { str(v); return; }
+    if (ty === 'boolean') { mix(v ? 3 : 5); return; }
+    if (ty !== 'object') return;
+    if (ArrayBuffer.isView(v)) {
+      const u = (v.byteOffset & 3) === 0 ? new Uint32Array(v.buffer, v.byteOffset, v.byteLength >> 2) : new Uint32Array(new Uint8Array(v.buffer, v.byteOffset, v.byteLength & ~3).slice().buffer);
+      for (let i = 0; i < u.length; i++) mix(u[i]);
+      mix(v.byteLength);
+      return;
+    }
+    if (v instanceof Map) { for (const [k, x] of v) { walk(k); walk(x); } mix(v.size); return; }
+    if (Array.isArray(v)) { for (const x of v) walk(x); mix(v.length); return; }
+    for (const k of Object.keys(v)) { str(k); walk(v[k]); }
+  };
+  walk(data);
+  return `${(a >>> 0).toString(16)}${(b >>> 0).toString(16)}`;
 }
 
 const timeout = (p, ms, v = null) => Promise.race([p, new Promise((r) => setTimeout(() => r(v), ms))]);
@@ -92,6 +121,7 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
         const t = await tree;
         if (rec.v !== KEPT_FORMAT || rec.key !== key || rec.tree !== t || rec.data == null) { note('misses', `${slot}: ${rec.v !== KEPT_FORMAT ? 'format' : rec.tree !== t ? 'tree' : 'key'}`); return null; }
         if (t === 'src' && !(await depsHold(rec.deps))) { note('misses', `${slot}: scripts changed`); return null; }
+        if (rec.sum !== sumOf(rec.data)) { note('misses', `${slot}: corrupt`); return null; }
         note('hits', slot);
         return rec.data;
       } catch (e) { note('errors', `get ${slot}: ${e?.name || e}`); return null; }
@@ -109,7 +139,7 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
         }
         const d = await db(); if (!d) return false;
         const tx = d.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), data }, slot);
+        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), sum: sumOf(data), data }, slot);
         await timeout(new Promise((res, rej) => { tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }), WAIT * 4, false);
         note('puts', slot);
         return true;
