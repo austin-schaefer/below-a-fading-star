@@ -5,8 +5,8 @@
 // ground from its source toward the plan's next point, never climbing, and ends where it reaches water or the
 // ground gives it nowhere lower to go. The kerb is straight. Each sample knows the region it crosses, and so its
 // material (MATERIALS). Shared by v4/paths.js (draws them), vegetation (wears the cover off them) and __fp.paths.
-import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../terrain.js';
-import { regionAt, regionDistance } from '../regions.js';
+import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../height/field.js'; // (v13 L2: the three-free heightfield)
+import { regionAt, regionDistance } from '../../height/regions.js';
 import { LANDMARKS, SITES } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 

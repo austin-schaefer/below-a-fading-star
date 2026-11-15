@@ -11,6 +11,9 @@
 //   node tools/height-check.mjs [check] [file]  compare against it: one PASS/FAIL line per group, exit 1 on any FAIL
 //   node tools/height-check.mjs bench           µs per call of heightAt, slopeAt, regionAt, biomeAt over the low
 //                                               bake's vertices, and the bake's ms (low, medium), median of 3
+//   node tools/height-check.mjs pure [file]     as a worker would: three refused at import, no location or document;
+//                                               imports src/height/field.js (the three-free heightfield) and checks its
+//                                               queries at the recording's points (the bakes are main-side: not here)
 //   --params=mountains=v4&cols=low   the URL's params (the height path reads them once, at import); recorded apart
 //   --quick                          a tenth of the points, no medium bake (a fast loop while working)
 // Record on the tree before a change, check after it. A FAIL names the first point that differs and by how much.
@@ -23,23 +26,29 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const flags = Object.fromEntries(argv.filter((a) => a.startsWith('--')).map((a) => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), '1'] : [a.slice(2, i), a.slice(i + 1)]; }));
 const pos = argv.filter((a) => !a.startsWith('--'));
-const mode = ['record', 'check', 'bench'].includes(pos[0]) ? pos.shift() : 'check';
+const mode = ['record', 'check', 'bench', 'pure'].includes(pos[0]) ? pos.shift() : 'check';
 const params = flags.params || '';
 const quick = !!flags.quick;
 const file = pos[0] || `${ROOT}/shots/wip/height-check${params ? '-' + params.replace(/[^a-z0-9]+/gi, '_') : ''}${quick ? '-quick' : ''}.bin`;
 
 const three = pathToFileURL(`${ROOT}/vendor/three/three.module.js`).href, addons = pathToFileURL(`${ROOT}/vendor/three/`).href;
-register('data:text/javascript,' + encodeURIComponent(`export async function resolve(s, c, n) {
+const PURE = mode === 'pure';
+register('data:text/javascript,' + encodeURIComponent(PURE ? `export async function resolve(s, c, n) {
+  if (s === 'three' || s.startsWith('three/') || s.includes('vendor/three')) throw new Error('the height path imported three (' + s + ' from ' + c.parentURL + ')');
+  return n(s, c);
+}` : `export async function resolve(s, c, n) {
   if (s === 'three') return { url: ${JSON.stringify(three)}, shortCircuit: true };
   if (s.startsWith('three/addons/')) return { url: ${JSON.stringify(addons)} + s.slice(13), shortCircuit: true };
   return n(s, c);
 }`));
-globalThis.location = new URL(`http://localhost/?${params}`);
-const THREE = await import('three');
+globalThis.FP_HEIGHT_QUERY = `?${params}`; // src/height/params.js: the URL's switches, as a worker is given them
+if (PURE) { for (const g of ['location', 'document', 'window']) if (g in globalThis) delete globalThis[g]; }
+else globalThis.location = new URL(`http://localhost/?${params}`);
+const THREE = PURE ? null : await import('three');
 const src = (p) => import(pathToFileURL(`${ROOT}/src/${p}`).href);
-const T = await src('terrain.js');
+const T = await src(PURE ? 'height/field.js' : 'terrain.js');
 const { WALL_SAMPLE } = await src('v4/mountains.js');
-const R = await src('v4/regions.js');
+const R = await src(PURE ? 'height/regions.js' : 'v4/regions.js');
 const W = await src('world.js');
 const routes = await src('v4/paths/routes.js');
 const { mulberry32 } = await src('noise.js');
@@ -123,7 +132,7 @@ const CELLS = TIERS.map((q) => W.WORLD.size / (q === 'low' ? 320 : 480));
 function sample(Pts) {
   const n = Pts.length / 2;
   const h = new Float64Array(n), slope = new Float64Array(n), hash = new Uint32Array(n * GROUPS.length);
-  const nv = new THREE.Vector3();
+  const nv = { x: 0, y: 0, z: 0 };
   for (let p = 0; p < n; p++) {
     const x = Pts[2 * p], z = Pts[2 * p + 1], o = p * GROUPS.length;
     WALL_SAMPLE.water = WALL_SAMPLE.mouth = WALL_SAMPLE.hard = WALL_SAMPLE.step = -1;
@@ -176,6 +185,22 @@ if (mode === 'bench') {
   time('heightAt', T.heightAt); time('slopeAt', T.slopeAt); time('regionAt', (x, z) => R.regionAt(x, z).moor); time('biomeAt', (x, z) => T.biomeAt(x, z).moor);
   for (const q of TIERS) console.log(`bake ${q.padEnd(6)} ${med(ms[q]).toFixed(0)} ms (runs ${ms[q].map((v) => v.toFixed(0)).join(', ')}; the first carries the JIT's warm-up)`);
   process.exit(0);
+}
+
+// ---------------------------------------------------------------- pure: the recording's points, the three-free modules
+if (PURE) {
+  if (!existsSync(file)) { console.log(`FAIL height-check pure: no recording at ${file}`); process.exit(1); }
+  const t0 = performance.now(), want = load();
+  (await src('v4/paths/ground.js')).prepareMap(); // the leads, as the bake traces them first
+  const got = sample(want.points), n = got.h.length;
+  let fails = 0;
+  for (let g = 0; g < GROUPS.length; g++) {
+    let count = 0;
+    for (let p = 0; p < n; p++) if (want.hash[p * GROUPS.length + g] !== got.hash[p * GROUPS.length + g]) count++;
+    console.log(`${count ? 'FAIL' : 'PASS'} pure ${GROUPS[g]}: ${n} points, ${count} differ`); if (count) fails++;
+  }
+  console.log(`height-check pure: ${fails ? fails + ' FAIL' : 'all PASS'} (src/height/field.js with three refused and no location or document; ${((performance.now() - t0) / 1000).toFixed(1)} s)`);
+  process.exit(fails ? 1 : 0);
 }
 
 // ---------------------------------------------------------------- record / check

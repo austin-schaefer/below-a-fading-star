@@ -13,24 +13,8 @@ import { stripAt, stripEdge } from '../../v8/strips.js';
 import { instanced, meshStats, meshGround } from './skin.js';
 
 const KEY = 'lynchets';
-const N = makeSimplex(20261107 + 909);
-const POLY = REGIONS.lynchets.shape.poly;
-// ridge-and-furrow: the ridges run north-north-east, so the low sun from the west-south-west rakes across them
-const RF = { ax: 0.34, az: -0.94, period: 7, amp: 0.15 }; // along-ridge direction, metres
-const RFX = -RF.az, RFZ = RF.ax; // across the ridges
-const TERRACE = 1.5; // metres from one tread to the next
-
-// ---------------------------------------------------------------- relief: terraces along the contours, ridge and furrow
-export function height(h, x, z, w) {
-  // strip lynchets: long level treads and short steep risers, following the hill's own contours
-  const t = (h + 100) / TERRACE, f = t - Math.floor(t);
-  const terr = (Math.floor(t) + smoothstep(0.72, 0.98, f)) * TERRACE - 100;
-  // the ridges, lowest at the risers' foot so the furrows drain off the terrace
-  const a = (x * RFX + z * RFZ) / RF.period;
-  const rf = RF.amp * (0.5 - 0.5 * Math.cos(a * 2 * Math.PI)) * (1 - smoothstep(0.6, 0.75, f));
-  const k = smoothstep(0.15, 0.7, w);
-  return h + (terr + rf - h) * k;
-}
+import { N, POLY, RF, RFX, RFZ, TERRACE, height } from './height/lynchets.js'; // the height hook and what it reads (v13 L2)
+export { height };
 
 // rank turf, greener than the moor, darker where the middens were; the walls' foot is bare
 const cTurf = new THREE.Color('#566331'), cTurf2 = new THREE.Color('#6d6e3a'), cMid = new THREE.Color('#2f3a1c');

@@ -17,7 +17,7 @@ import { makeShadowCadence } from './shadows.js';
 import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
-import { buildMountains } from './v4/mountains.js';
+import { buildMountains } from './v4/ranges.js'; // (v13 L2: the far ranges' meshes; v4/mountains.js is the walls' pure maths)
 import { installKit } from './v4/kit/index.js';
 import { makeRegions, REGION_FILES } from './v4/regions.js';
 import { makeTinctures } from './v4/tinctures.js';
