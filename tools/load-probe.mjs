@@ -156,6 +156,9 @@ for (const p of PH) {
 P(`${'READY (navigation to "Go out")'.padEnd(40)}${col('ready', (r) => r.ready)}`);
 P(`${'  first contentful paint (title card)'.padEnd(40)}${col('fcp', (r) => r.nav?.fcp)}`);
 P(`${'longest stall (ms)'.padEnd(40)}${col('longest', (r) => r.longest?.ms)}`);
+P(`${'terrain bake, in its worker (v13 L3)'.padEnd(40)}${col('wbake', (r) => r.extra?.bake?.workerBakeMs)}`);
+P(`${'  terrain whole, from its start'.padEnd(40)}${col('baked', (r) => r.extra?.bake?.bakedMs)}`);
+P(`${'  leads in hand, from its start'.padEnd(40)}${col('leads', (r) => r.extra?.bake?.leadsMs)}`);
 P(`${'  long tasks over 50 ms (count)'.padEnd(40)}${col('n', (r) => r.longTasks.length)}`);
 P(`${'  long tasks, total ms'.padEnd(40)}${col('sum', (r) => r.longTasks.reduce((s, e) => s + e.ms, 0))}`);
 P(`${'requests'.padEnd(40)}${col('req', (r) => r.net.requests)}`);
@@ -167,6 +170,8 @@ const stall = (kind) => {
   return Object.entries(by).map(([k, n]) => `${k} ×${n}`).join(', ');
 };
 P(`longest stall fell in: cold ${stall('cold')}; repeat ${stall('repeat')}`);
+const src = (kind) => { const by = {}; for (const r of out) { const b = r[kind].extra?.bake?.source || 'before v13 L3'; by[b] = (by[b] || 0) + 1; } return Object.entries(by).map(([k, n]) => `${k} ×${n}`).join(', '); };
+P(`the terrain came from: cold ${src('cold')}; repeat ${src('repeat')}${kinds.includes('serial') ? `; serial ${src('serial')}` : ''}`);
 P(`spread of ready (max−min over median): cold ${spread(out.map((r) => r.cold.ready))}%, repeat ${spread(out.map((r) => r.repeat.ready))}%`);
 if (out[0].serial) {
   const names = out[0].serial.modules.map((m) => m.name);

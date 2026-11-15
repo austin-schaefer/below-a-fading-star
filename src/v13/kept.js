@@ -167,7 +167,7 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
 // ctx.kept(name, compute) (v13 L3): a module's own computed data (typed arrays and plain objects, nothing with
 // methods or THREE in it) kept between visits. name: unique on the map ('rocks.place'); compute: () => data (or a
 // promise of it). On a hit it returns the kept copy without calling compute; on a miss it computes, returns that, and
-// keeps a snapshot taken at once, written once the walk is ready (later(fn) queues it). The key is the tier and the
+// keeps a snapshot taken at once, written straight away (later(fn) starts it and holds its promise). The key is the tier and the
 // URL's switches; the tree (the commit, or the scripts' text) is the store's. A module must build the same from either.
 export function keptHelper(store, { quality, search, later }) {
   const key = `${quality}|${queryKey(search)}`;
@@ -175,12 +175,16 @@ export function keptHelper(store, { quality, search, later }) {
   const kept = async (name, compute) => {
     if (used.has(name)) throw new Error(`ctx.kept: '${name}' asked for twice`);
     used.add(name);
-    const slot = `kept:${name}:${quality}`;
+    const slot = `kept:${name}:${quality}`, t0 = performance.now();
     const hit = store && !store.off ? await store.get(slot, key) : null;
-    if (hit != null) return hit;
+    const t1 = performance.now(), T = { name, getMs: t1 - t0 };
+    (store.stats.timing ||= []).push(T);
+    if (hit != null) { T.hit = true; return hit; }
     const v = await compute();
+    const t2 = performance.now(); T.computeMs = t2 - t1;
     if (store && !store.off) {
       const snap = structuredClone(v), deps = loadedScripts();
+      T.snapMs = performance.now() - t2;
       later(() => store.put(slot, key, snap, deps));
     }
     return v;

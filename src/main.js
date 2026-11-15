@@ -211,7 +211,7 @@ async function start() {
   // mesh's heights or colours is marked { mesh: true } in MODULES and builds once the bake is in.
   const keepLater = [];
   const store = openKept({ base: document.baseURI, off: url.searchParams.get('kept') === '0', log: ctx.log });
-  ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(fn) }); // the contract: runtime.md, "The bake and the store"
+  ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(fn()) }); // (a module's record is written as soon as it is computed) // the contract: runtime.md, "The bake and the store"
   const bake = startBake(ctx, url, store);
   ctx.terrain = bake.terrain;
   await bake.leads;
@@ -487,8 +487,8 @@ async function start() {
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
   startup.mark('ready');
-  // v13 L3: what this load computed is kept for the next, once the walk is out of the way; then the other trees' records go
-  setTimeout(() => { (async () => { await bake.info.keepLater?.(); for (const fn of keepLater) await fn(); await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 1500);
+  // v13 L3: the page's own bake (if the worker failed) is kept just after ready, the modules' records are on their way; then the other trees' records go
+  setTimeout(() => { (async () => { await bake.info.keepLater?.(); for (const p of keepLater) await p; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
   ctx.keptStats = store.stats;
 }
 
