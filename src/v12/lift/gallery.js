@@ -64,9 +64,11 @@ export function buildGallery(ctx, o) {
     const k = bayOf(b), f = (b - bs[k]) / (bs[k + 1] - bs[k]), r = hyp(ch.A[0], ch.A[2]), rear = backAt(k, f) - REAR;
     if (r < rear - D - 1 || r > rear + REAR + CHAIN_R) continue;
     const bayLen = P(bs[k], backAt(k, 0), y).distanceTo(P(bs[k + 1], backAt(k, 1), y));
-    notches.push({ x: ch.A[0], z: ch.A[2], k, f, half: (CHAIN_R + 0.15) / bayLen, depth: Math.max(0, rear - (r - CHAIN_R)) + 0.1 });
+    notches.push({ x: ch.A[0], z: ch.A[2], k, f, half: (CHAIN_R + 0.15) / bayLen, f0: f, f1: f, depth: Math.max(0, rear - (r - CHAIN_R)) + 0.1 });
   }
-  const notchAt = (k, f0, f1) => { let d = 0; for (const n of notches) if (n.k === k && f1 > n.f - n.half && f0 < n.f + n.half) d = Math.max(d, n.depth); return d; };
+  // the notch's depth over bay k between fractions f0 and f1: its span is whole plate columns (set with the plates,
+  // below), so the floor and the plates drawn agree exactly
+  const notchAt = (k, f0, f1) => { let d = 0; for (const n of notches) if (n.k === k && f1 > n.f0 + 1e-6 && f0 < n.f1 - 1e-6) d = Math.max(d, n.depth); return d; };
 
   // ---- the cells: a box of rubble stone against the rear of the deck in their bays, its door to the walkway
   const cells = [];
@@ -126,19 +128,21 @@ export function buildGallery(ctx, o) {
   const depth = (k, f) => D - REAR + 0.15; // rear to front lip
   const gratingQuads = [];
   const plateRows = 3;
+  const colsOf = (k) => Math.max(4, Math.round(at(k, 0, 0).distanceTo(at(k, 1, 0)) / 1.15)); // plate columns in bay k
+  for (const n of notches) { const nA = colsOf(n.k); n.f0 = Math.floor((n.f - n.half) * nA) / nA; n.f1 = Math.ceil((n.f + n.half) * nA) / nA; }
   for (let k = 0; k < nW; k++) {
-    const len = at(k, 0, 0).distanceTo(at(k, 1, 0));
-    const nA = Math.max(4, Math.round(len / 1.15));
+    const nA = colsOf(k);
     for (let i = 0; i < nA; i++) for (let j = 0; j < plateRows; j++) {
       let f0 = i / nA, f1 = (i + 1) / nA;
       if (k === nW - 1) { if (f0 > RAGGED + 0.08) continue; f1 = Math.min(f1, RAGGED + 0.1); }
       const missing = rng() < (k === nW - 1 ? 0.3 : 0.1) && !(k === 0 && i < 2);
-      const d0 = (j / plateRows), d1 = ((j + 1) / plateRows), cut = j === 0 ? notchAt(k, f0, f1) : 0;
+      const d0 = (j / plateRows), d1 = ((j + 1) / plateRows), cut = notchAt(k, f0, f1); // a plate's rear is cut back to the notch
+      const dIn = (f, d) => Math.max(cut, d * depth(k, f));
       const corner = (sx, sy, sz) => {
-        const f = sx < 0 ? f0 + 0.004 : f1 - 0.004, dd = Math.max(cut, (sz < 0 ? d0 : d1) * depth(k, f)) + (sz < 0 ? 0.015 : -0.015);
+        const f = sx < 0 ? f0 + 0.004 : f1 - 0.004, dd = dIn(f, sz < 0 ? d0 : d1) + (sz < 0 ? 0.015 : -0.015);
         return at(k, f, dd, sy < 0 ? -0.07 : (rng() - 0.5) * 0.012);
       };
-      if (missing) { gratingQuads.push([at(k, f0, d0 * depth(k, f0), -0.09), at(k, f1, d0 * depth(k, f1), -0.09), at(k, f1, d1 * depth(k, f1), -0.09), at(k, f0, d1 * depth(k, f0), -0.09)]); continue; }
+      if (missing) { if (dIn(f0, d1) > dIn(f0, d0)) gratingQuads.push([at(k, f0, dIn(f0, d0), -0.09), at(k, f1, dIn(f1, d0), -0.09), at(k, f1, dIn(f1, d1), -0.09), at(k, f0, dIn(f0, d1), -0.09)]); continue; }
       const tone = rng();
       hexa(corner, tone < 0.3 ? C.rust : tone < 0.8 ? C.iron : C.ironDark);
     }

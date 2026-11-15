@@ -615,7 +615,7 @@ export async function build(ctx) {
     get rideT() { return rideT; },
     roam() { round(); }, // for tests: start its round now
     cageCentre: () => cc.clone(), cageRest: () => cageAt(s), // the cage's floor middle, drawn (with its shake) and at rest
-     lever: () => leverWorld().clone(), weight: () => railAt(SG - s).addScaledVector(al, WEIGHT_AL),
+    lever: () => leverWorld().clone(), weight: () => railAt(SG - s).addScaledVector(al, WEIGHT_AL),
     stand: { // where a visitor stands for each act, and the yaw that faces it
       foot() { const p = toW(-ARCH.x + 0.9, floorY0, ARCH.z + 1.4); const h = bells.foot.handleAt; return { x: p.x, z: p.z, y: floorY0, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },
       top() { const h = bells.top.handleAt, p = h.clone().addScaledVector(io, -0.9).addScaledVector(al, -0.8); return { x: p.x, z: p.z, y: gal.y, yaw: Math.atan2(-(h.x - p.x), -(h.z - p.z)) }; },

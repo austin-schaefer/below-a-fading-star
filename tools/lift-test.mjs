@@ -259,6 +259,57 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
   });
   check(CH.half >= 0.56, 'chains (#51): a link\'s ends reach past the half link length (0.5), into the next link', `outer half-length ${CH.half} link lengths`);
   check(CH.spans >= 1 && !CH.through.length, 'chains (#51): no chain that hangs past the gallery goes down through its deck (the deck notched round it)', CH);
+  // #51 review: round each chain's notch the deck is walkable exactly where a plate (or the grating under a gone one) is
+  // drawn: a 5 m square at 17 cm, a ray down at each point and 4 cm either side
+  const DK = await page.evaluate(() => {
+    const fp = window.__fp, gal = fp.lift.gal, T = fp.THREE, meshes = [];
+    gal.group.traverse((o) => { if (o.name === 'lift-gallery-deck' || o.name === 'lift-gallery-grating') meshes.push(o); });
+    gal.group.updateMatrixWorld(true);
+    const rc = new T.Raycaster(), D = new T.Vector3(0, -1, 0), O = new T.Vector3(), OFF = [[0, 0], [0.04, 0], [-0.04, 0], [0, 0.04], [0, -0.04]];
+    const hit = (x, z) => { O.set(x, gal.y + 1, z); rc.set(O, D); rc.far = 1.2; const h = rc.intersectObjects(meshes, false)[0]; return !!h && h.point.y > gal.y - 0.12; };
+    const out = { notches: gal.notches.length, n: 0, air: [], unwalk: [] };
+    for (const nt of gal.notches) for (let i = -15; i <= 15; i++) for (let j = -15; j <= 15; j++) {
+      const x = nt.x + i * 0.17, z = nt.z + j * 0.17; out.n++;
+      if (gal.floor(x, z) !== null && !OFF.some(([a, b]) => hit(x + a, z + b))) out.air.push([+x.toFixed(2), +z.toFixed(2)]);
+      if (hit(x, z) && OFF.every(([a, b]) => gal.floor(x + a, z + b) === null)) out.unwalk.push([+x.toFixed(2), +z.toFixed(2)]);
+    }
+    return { ...out, air: out.air.length, airAt: out.air.slice(0, 4), unwalk: out.unwalk.length, unwalkAt: out.unwalk.slice(0, 4) };
+  });
+  check(DK.notches >= 1 && DK.n > 900 && DK.air === 0 && DK.unwalk === 0, 'chains (#51): round the notch the deck holds a walker exactly where a plate is drawn (no walking on air, no plate that cannot be stood on)', DK);
+  // #50 review: the ride on the page's own frames (ctx.time.dt, the end released in the update): its first 12 s and its
+  // last stretch, the middle stepped by hand; the eye's place in the cage (after the first 0.1 s, where the lever puts
+  // the rider inside the cage's walls) and the look's turn as in the manual ride
+  const RP = await page.evaluate(async () => {
+    const fp = window.__fp, L = fp.lift, p = fp.player, al = L.al;
+    const raf = () => new Promise((r) => requestAnimationFrame(r));
+    const out = { enabled: p.enabled, relMax: 0, yawRate: 0, frames: 0 };
+    L.manual = false;
+    L.jump(L.S0, { e: 1, w: 0 });
+    const c = L.cageCentre(); fp.controls.placeAt(c.x + al.x * 0.3, c.z + al.z * 0.3, L.floorY0); p.keys.clear(); p.yaw = Math.atan2(-L.io.x, -L.io.z);
+    for (let i = 0; i < 10; i++) await raf();
+    const hl = fp.acts.list.find((h) => h.def.id === 'lift-lever');
+    out.may = fp.acts.may(hl);
+    fp.acts.act(hl);
+    const watch = async (sec, until) => {
+      const rel0 = p.pos.clone().sub(L.cageRest()), rel = rel0.clone(); let yaw0 = p.yaw; const t0 = performance.now();
+      while (performance.now() - t0 < sec * 1000 && !(until && until())) {
+        await raf(); out.frames++;
+        rel.copy(p.pos).sub(L.cageRest()); if (L.ridden && L.rideT > 0.1 && rel.distanceTo(rel0) > out.relMax) { out.relMax = rel.distanceTo(rel0); out.relAt = { s: +L.s.toFixed(2), v: +L.v.toFixed(2), dt: +(fp.time.dt || 0).toFixed(3), moving: L.moving, rideT: +L.rideT.toFixed(2) }; } rel0.copy(rel);
+        const dt = fp.time.dt || 1 / 60, dy = Math.abs(Math.atan2(Math.sin(p.yaw - yaw0), Math.cos(p.yaw - yaw0))); if (L.ridden) out.yawRate = Math.max(out.yawRate, dy / dt); yaw0 = p.yaw;
+      }
+    };
+    await watch(12);
+    out.early = { s: +L.s.toFixed(1), ridden: L.ridden, carried: p.carried };
+    L.manual = true; for (let i = 0; i < 60 * 80 && L.ridden && L.s < L.SG - 10; i++) window.H.tick(); L.manual = false;
+    out.handed = +L.s.toFixed(1);
+    await watch(25, () => !L.ridden);
+    for (let i = 0; i < 10; i++) await raf();
+    out.end = { ridden: L.ridden, carried: p.carried, where: L.where(), f: +(p.pos.y - p.eye - L.gal.y).toFixed(3) };
+    L.manual = true;
+    return out;
+  });
+  check(RP.may && RP.early.ridden && RP.early.carried && RP.relMax < 0.025 && RP.yawRate < 0.8, 'ride up (#50) on the page\'s own frames: the eye keeps its place in the cage, the look turns under 0.8 rad/s', RP);
+  check(!RP.end.ridden && !RP.end.carried && RP.end.where === 'gallery' && Math.abs(RP.end.f) < 0.05, 'ride up (#50) on the page\'s own frames: it ends and sets the rider down at the gallery (the end released in the update)', RP.end);
   await page.close();
 }
 

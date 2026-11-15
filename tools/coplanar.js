@@ -1,9 +1,9 @@
 // Faces that fight for the pixel (#41): two triangles of a mesh in one plane, facing the same way, overlapping, so the
 // depth test cannot choose and they flicker in turn as the view moves (a lining laid exactly on a face). A browser
 // module for the tests (imported in the page as /tools/coplanar.js): coplanar(mesh, centre, radius) → [{ a, b, at }]
-// for the triangles whose centroids lie within `radius` of `centre` (world space; an instanced mesh is read through
-// its first instance near `centre`, or not at all). Tolerances: normals within 1.8°, planes within 1.5 mm, overlap past
-// 2 mm inside both.
+// for the triangles whose centroids lie within `radius` of `centre` (world space, through the mesh's world matrix; an
+// InstancedMesh's instance matrices are not applied, so pass a merged or plain mesh). Tolerances: normals within 1.8°,
+// planes within 1.5 mm, overlap past 2 mm inside both.
 export function coplanar(mesh, centre, radius) {
   const g = mesh.geometry, P = g.attributes.position, I = g.index;
   mesh.updateWorldMatrix(true, false);

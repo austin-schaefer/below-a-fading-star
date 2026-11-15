@@ -7,7 +7,7 @@
 // fractions of the path's length (default [0.3, 0.6, 0.95]); `test`: built only for ?heights=test. heights-test walks
 // every ascent, steps off at each `off` and checks the landing, and compares the frame time at the top with the floor's.
 //
-// ?heights=test builds, east of the Moot (about (150, -40); the site is found at build, flat and clear of colliders):
+// ?heights=test builds, east of the Moot (the site at (210, 0), flat and clear of colliders):
 //   a bridge (a stacked floor with held edges) that leaves the ground, rises 6 m and comes back down to it;
 //   a deck 3 m up reached by a ramp, and over it a beam 0.9 m wide at 7 m (a floor over a floor, the edge-guard's
 //   narrow walkway), reached by a second ramp from the deck; a perch 18 m up at the beam's far end (for the fall);
@@ -58,9 +58,8 @@ function buildTest(ctx) {
   };
   const draw = (pieces, thick) => { for (const p of pieces) slab(p.x0, p.x1, p.z0, p.z1, p.ax, p.y0, p.y1, thick); };
 
-  // the site: a clear flat 70 x 40 m at (210, 0), where a search near (150, -40) for the fewest colliders found it in
-  // v12. Fixed, not searched for on each load: the count moves with the scatter (v14-B2's tors moved it to (190, 20),
-  // where the bridge's foot is not reached)
+  // the site: a clear flat 70 x 40 m at (210, 0). Fixed, not searched for on each load: a search that counts colliders
+  // moves with the scatter, and the floors' tests need the same ground every time
   const S = { x: 210, z: 0 };
   const sx = S.x, sz = S.z, g0 = H(sx, sz);
   const site = ctx.heightsTest = { x: sx, z: sz, y: g0 };

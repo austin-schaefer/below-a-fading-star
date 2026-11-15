@@ -42,3 +42,12 @@ Branch `issue-1402-heights-faults`, port 8163, 2026-11-15 10:08 PST. Every issue
 - A stand's clearance in the guard is a body's width (0.6 m): at 1–2 m a tree by the Deodand Wood's stand failed, though it stands clear.
 - `?heights=test`'s site is fixed at (210, 0), where v12's search found it: the search counted colliders and moved with the tors to a place its bridge's foot is not reached.
 - `tools/coplanar.js` lives in `tools/` and is imported by the page from `/tools/` (served with the repo root).
+
+## After review (2026-11-15)
+
+- The gallery's notch spans whole plate columns, so the walkable deck and the drawn plates (and grating) agree; `lift-test` samples a 5 m square round the chain (961 points: none walkable without a plate, none drawn but unwalkable). Frame: `shots/wip/faults-after2-chain-06-down-past-the-deck.png`.
+- `lift-test` also rides on the page's own frames (12 s from the lever, the middle stepped by hand, the last 10 m real): eye in the cage 0.9 cm a frame at most, look 0.55 rad/s, the end released in the update. About 40 s more.
+- `ONLY=lift,heights,edges,perf tools/suite.sh 8163`: 4 of 4 (lift 45, heights 105, edges 103, perf 28).
+- For the Halt's seat (B1), the fix pattern, in two lines:
+  > Move the seat's advance out of its `registerUpdate` into the carrier's `step(pos, dt)`: advance by `ctx.time.dt`, then set `pos`, and mark the frame stepped so the update skips it.
+  > Anything that releases the carry while inside `step` (the ride's end) sets a flag instead; the update calls `release()` after controls are done with the frame.
