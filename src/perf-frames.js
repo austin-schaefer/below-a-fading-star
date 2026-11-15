@@ -225,7 +225,7 @@ export function benchLines(res, { hitches = 10, rows = 14, modules = 4 } = {}) {
   return out;
 }
 
-// The short JSON the panel's Copy gives: everything above, small enough to paste into an issue (about 6 KB)
+// The short JSON the panel's Copy gives: everything above, small enough to paste into an issue (about 9 KB)
 export function benchBrief(res) {
   const mem = (x) => x && { jsHeap: x.jsHeap, geometry: x.geometry && { totalMB: x.geometry.totalMB, byModule: top(x.geometry.byModule, 8) }, gpu: x.gpu && { totalMB: x.gpu.totalMB, textureMB: x.gpu.textureMB }, counts: x.counts };
   const legs = {};
