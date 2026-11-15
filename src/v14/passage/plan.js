@@ -17,6 +17,7 @@
 //                                         Pit's wall at its floor on bearing MOUTH.b (D2's plan keeps it clear)
 import { PIT, pitRim } from '../../v4/paths/ground.js';
 import { DOOR } from '../coffin-road/plan.js';
+import { makeFloor as pitFloor } from '../pit/plan.js'; // v14-D2: the Pit's bowl, whose edge the mouth meets
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 export const PASSAGE_OFF = !!Q && (Q.get('passage') === '0' || (Q.get('skip') || '').split(',').includes('passage') || (Q.get('only') !== null && !Q.get('only').split(',').includes('passage')));
@@ -91,7 +92,9 @@ export function makePlan(T) {
   const SP = { FLIGHT, SUN, RC, NECK0, GULF0, GULF1, L, RF: rf };
   // ---- the floor: knots (s, y); stairs where `stair` says (treads drawn over the slope)
   const Y0 = START.y, YF = -24.3, YS = -28.0, YB = -30.4;
-  const YM = T.heightAt(M[0], M[1]); // the Pit's floor at the wall's foot (D2's bowl and the terrain agree there)
+  // the Pit's floor at the mouth: D2's bowl at its edge on the mouth's bearing (its FLOOR.edge), read from its own floor
+  // a hand inside the edge; the terrain only if the bowl has nothing there
+  const YM = (() => { const r = rf - 0.02; try { const y = pitFloor(T, null).y(C.x + ox * r, C.z + oz * r); if (y !== null && y !== undefined && isFinite(y)) return y; } catch (e) { /* no Pit */ } return T.heightAt(M[0], M[1]); })();
   const fl = FLIGHT;
   const land = [[0, Y0], [2.0, Y0]];
   { const a = 2.0, n = 3, lw = 1.8, run = (fl - a - lw * (n - 1)) / n, dy = (YF - Y0) / n; let s = a, y = Y0;
