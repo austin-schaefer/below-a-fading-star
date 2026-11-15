@@ -7,7 +7,7 @@ Check: `tools/settings-test.mjs`, "every named place's centre is in view ... no 
 
 Frames, in `shots/wip` (gitignored): before `sheet-b4-before-00..09.jpg` (3x3, order = `ls b4-before-*.png`), after `sheet-b4-after-00..09.jpg`; singles `b4-before-NN-*.png`, `b4-after-NN-*.png`; candidate trials `c1..c4`.
 
-Tests: `ONLY=settings,roads,walk tools/suite.sh 8164`: settings 83/84 then, after exempting the Tumbling Water (its centre is mid-river; the stand shows the fall), rerun `ONLY=settings` (see the final message), roads and walk 63 passed.
+Tests: `ONLY=settings,roads,walk tools/suite.sh 8164`: settings 83/84 (the new check caught the Tumbling Water, whose centre is mid-river), roads and walk 63 passed, 0 failed; after exempting the Tumbling Water, `ONLY=settings` 84/84.
 
 Still weak: the Escalade (the stair is in deep shade of its own masonry; readable only as a dark mass against the sky), the Nave (hole seen from above is dim), the Pit, the Wrong Colour, the Coheirs, the Moles (dark lawns; not changed). Living and story stands were looked at, not fixed.
 
