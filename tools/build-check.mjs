@@ -6,7 +6,8 @@
 // a module whose output depends on how long another took differs from the unthrottled recording.
 // --repeat (v13 L3): each load is a repeat visit: a load, its kept store written (src/v13/kept.js), then a reload in the
 // same context, fingerprinted; it fails unless the reload's terrain came from the store, so what is checked is the
-// walk built from what was kept.
+// walk built from what was kept, and (v13 L4) unless every ctx.kept record hit and every height tape answered all its
+// calls from the tape (none missed or skipped); it prints each record's counts.
 // It loads <base>/?q=<q>&<params> and, at the "ready" mark (src/startup.js), synchronously, before the first frame
 // has run any update, walks the objects each module added to the scene (the registry, ctx.modules;
 // what no module claimed is 'core': the terrain, the sky, the lights) and hashes, bit for bit: every geometry
@@ -219,6 +220,11 @@ async function once() {
     const how = await page.evaluate(() => ({ bake: window.__fp_startup.report().extra.bake?.source, hits: window.__fp.keptStats?.hits }));
     console.log(`  (repeat: the terrain from ${how.bake}; kept hits ${JSON.stringify(how.hits)})`);
     if (how.bake !== 'kept') { console.log('FAIL --repeat: the reload did not take its terrain from the store'); process.exit(1); }
+    // v13 L4: every module's record hit, and every height tape answered all its calls (src/v13/tape.js)
+    const ks = await page.evaluate(() => (window.__fp.keptStats?.timing || []).map((t) => ({ name: t.name, hit: !!t.hit, tape: t.tape ? { calls: t.tape.calls, fromTape: t.tape.fromTape, missed: t.tape.missed, skipped: t.tape.skipped } : null })));
+    for (const t of ks) console.log(`  (kept ${t.name}: ${t.hit ? 'hit' : 'MISS'}${t.tape ? `, tape ${t.tape.fromTape}/${t.tape.calls} from the tape, ${t.tape.missed} missed, ${t.tape.skipped} skipped` : ''})`);
+    const bad = ks.filter((t) => !t.hit || (t.tape && (!(t.tape.fromTape > 0) || t.tape.missed !== 0 || t.tape.skipped !== 0)));
+    if (!ks.length || bad.length) { console.log(`FAIL --repeat: ${ks.length ? 'not every record hit and every tape answered every call: ' + bad.map((t) => t.name).join(', ') : 'no kept records'}`); process.exit(1); }
   }
   const r = await page.evaluate(() => window.__buildCheck);
   await page.close();

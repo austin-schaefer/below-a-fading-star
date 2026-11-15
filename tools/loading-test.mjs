@@ -61,7 +61,7 @@ const checks = [
 // ---------------------------------------------------------------- v13 L3: the kept store
 const ready = (p) => p.waitForFunction(() => window.__fp_startup?.report().ready != null, null, { timeout: 300000 });
 const kept = (p) => p.waitForFunction(() => window.__fp?.keptDone, null, { timeout: 120000 });
-const how = (p) => p.evaluate(() => ({ failed: window.__fp_startup.report().extra.failed, bake: window.__fp_startup.report().extra.bake?.source, fell: window.__fp_startup.report().extra.bake?.fellBack, kept: window.__fp_startup.report().extra.bake?.kept, hits: window.__fp.keptStats.hits, misses: window.__fp.keptStats.misses, errors: window.__fp.keptStats.errors, tapes: (window.__fp.keptStats.timing || []).filter((t) => t.tape).map((t) => ({ name: t.name, hit: !!t.hit, ...t.tape })), gal: window.__fp.galleries?.stats?.() || null }));
+const how = (p) => p.evaluate(() => ({ failed: window.__fp_startup.report().extra.failed, bake: window.__fp_startup.report().extra.bake?.source, fell: window.__fp_startup.report().extra.bake?.fellBack, kept: window.__fp_startup.report().extra.bake?.kept, hits: window.__fp.keptStats.hits, misses: window.__fp.keptStats.misses, errors: window.__fp.keptStats.errors, tapes: (window.__fp.keptStats.timing || []).filter((t) => t.tape).map((t) => ({ name: t.name, hit: !!t.hit, ...t.tape })), gal: window.__fp.galleries?.stats?.() || null, galHash: (() => { const objs = window.__fp.modules?.of?.('galleries'); if (!objs?.size) return null; let h = 0, n = 0; for (const o of objs) o.traverse((c) => { const a = c.geometry?.attributes?.position?.array; if (a) for (let i = 0; i < a.length; i++) { h = (Math.imul(h, 31) + Math.round(a[i] * 1e4)) | 0; n++; } }); return `${h}:${n}`; })() }));
 // the store's records, read in the page: slot -> { key, tree, v }
 const records = (p) => p.evaluate(() => new Promise((res) => { const r = indexedDB.open('fp-kept'); r.onsuccess = () => { const out = {}; const c = r.result.transaction('records').objectStore('records').openCursor(); c.onsuccess = () => { const k = c.result; if (!k) { r.result.close(); return res(out); } out[k.key] = { key: k.value.key, tree: k.value.tree, v: k.value.v }; k.continue(); }; }; }));
 // change the record in a slot in the page: what = 'value' (one height in P), 'format', 'short' (P cut down), 'stray' (another tree's record), 'deps' (a script's hash)
@@ -72,13 +72,15 @@ await kp.goto(u0); await ready(kp);
 const h1 = await how(kp); await kept(kp);
 const slot = Object.keys(await records(kp)).find((k) => k.startsWith('src|bake:'));
 await kp.reload(); await ready(kp); const h2 = await how(kp); await kept(kp);
-// v13 L4: a well-formed tape (its checksum made again) whose first call is not the module's: every call misses and
-// is answered by the terrain, and the module builds the same
+// v13 L4: a well-formed tape (its checksum made again) that is not the module's call order: its first call changed, a
+// call it makes taken out, one it never makes put in. Those calls are answered by the terrain (missed), the tape
+// resyncs past the strays (skipped), and the Galleries build the same, vertex for vertex
 const forged = await kp.evaluate(async () => {
   const { sumOf } = await import(new URL('src/v13/kept.js', document.baseURI).href);
   return new Promise((res) => { const r = indexedDB.open('fp-kept'); r.onsuccess = () => { const st = r.result.transaction('records', 'readwrite').objectStore('records'); const c = st.openCursor();
-    c.onsuccess = () => { const k = c.result; if (!k) { res(null); return; } if (!/\|kept:galleries\.heights:/.test(k.key)) { k.continue(); return; }
-      const v = k.value; v.data.heightAt.xs[0] += 1; v.sum = sumOf(v.data); k.update(v); st.transaction.oncomplete = () => { r.result.close(); res(k.key); }; }; }; });
+    c.onsuccess = () => { const k = c.result; if (!k) { res(null); return; } if (!/\|kept:galleries\.heightAt:/.test(k.key)) { k.continue(); return; }
+      const v = k.value, H = v.data, cut = (a) => { const b = Array.from(a); b[0] += 1; b.splice(100, 1); b.splice(200, 0, 12345.5); return new Float64Array(b); };
+      H.xs = cut(H.xs); H.zs = cut(H.zs); H.vs = cut(H.vs); v.sum = sumOf(v.data); k.update(v); st.transaction.oncomplete = () => { r.result.close(); res(k.key); }; }; }; });
 });
 await kp.reload(); await ready(kp); const h2t = await how(kp); await kept(kp);
 const u1 = u0 + '&tinct=1'; // a switch no list of view-only switches holds: another key
@@ -112,8 +114,8 @@ const recHits = (h, s) => h.hits.includes(s.split('|')[1]);
 checks.push(
   ['kept: a cold load bakes in the worker and keeps it (' + h1.bake + ', kept ' + h1.kept + ')', h1.bake === 'worker' && h1.kept === true && !!slot],
   ['kept: a reload takes the terrain and the rocks from the store (' + h2.hits.join(', ') + ')', h2.bake === 'kept' && recHits(h2, slot) && h2.hits.some((x) => x.startsWith('kept:rocks.place'))],
-  ['tape: a reload answers every taped query from its tape (' + h2.tapes.map((t) => `${t.name} ${t.fromTape}/${t.calls}`).join(', ') + ')', h2.tapes.length >= 6 && h2.tapes.every((t) => t.hit && t.calls > 0 && t.missed === 0 && t.fromTape === t.calls) && h1.tapes.every((t) => !t.hit && t.calls > 0)],
-  ['tape: a forged tape is answered by the terrain and the Galleries build the same (' + forged + ': ' + JSON.stringify(h2t.tapes.find((t) => t.name === 'galleries.heights')) + ')', !!forged && (() => { const t = h2t.tapes.find((x) => x.name === 'galleries.heights'); return t && t.hit && t.missed === t.calls && t.fromTape === 0 && JSON.stringify(h2t.gal) === JSON.stringify(h2.gal) && !!h2.gal; })()],
+  ['tape: a reload answers every taped query from its tape (' + h2.tapes.map((t) => `${t.name} ${t.fromTape}/${t.calls}`).join(', ') + ')', h2.tapes.length >= 6 && h2.tapes.every((t) => t.hit && t.calls > 0 && t.missed === 0 && t.skipped === 0 && t.fromTape === t.calls) && h1.tapes.every((t) => !t.hit && t.calls > 0)],
+  ['tape: a tape out of the module\'s order (a call changed, one dropped, one added) is answered by the terrain where it differs and the Galleries build the same (' + forged + ': ' + JSON.stringify(h2t.tapes.find((t) => t.name === 'galleries.heightAt')) + ', ' + h2t.galHash + ')', !!forged && (() => { const t = h2t.tapes.find((x) => x.name === 'galleries.heightAt'); return t && t.hit && t.missed >= 2 && t.skipped >= 1 && t.fromTape + t.missed === t.calls && t.fromTape > t.calls * 0.99 && JSON.stringify(h2t.gal) === JSON.stringify(h2.gal) && !!h2.galHash && h2t.galHash === h2.galHash; })()],
   ['kept: another key misses and its record replaces the old in the slot', h3.bake === 'worker' && h3.kept === true && r3[slot]?.key?.includes('tinct=1')],
   ['kept: the old key, replaced, misses (' + h4.misses.join(', ') + ')', h4.bake === 'worker' && h4.misses.some((x) => x.startsWith(slot.split('|')[1] + ': key'))],
   ['kept: another tree\'s record is pruned', h5.bake === 'kept' && !Object.keys(r5).some((k) => k.startsWith('commit:0000000|'))],

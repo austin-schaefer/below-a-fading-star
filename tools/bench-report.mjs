@@ -34,7 +34,9 @@ else {
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
   if (flags.throttle) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +flags.throttle }); }
   await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 900000, polling: 1000 });
-  const rep = await page.evaluate(() => ({ headless: true, url: location.href, ...window.__fp.perf.report() }));
+  const rep = await page.evaluate(() => ({ headless: true, url: location.href, ...window.__fp.perf.report(), kept: window.__fp.keptStats ? { putMs: window.__fp.keptStats.putMs || [], puts: window.__fp.keptStats.puts, preloadMs: window.__fp.keptStats.preloadMs ?? null, ready: window.__fp_startup?.report().ready ?? null } : null }));
+  // v13 L4: what writing the kept records cost the main thread, each put's checksum and clone (they run after ready, one an idle slot)
+  if (rep.kept?.putMs?.length) { const k = rep.kept; console.log(`kept writes (${k.putMs.length}, from ${Math.round(k.putMs[0].at - k.ready)} to ${Math.round(k.putMs.at(-1).at - k.ready)} ms after ready): ` + k.putMs.map((p) => `${p.slot.replace(/^kept:/, '')} ${(p.sumMs + p.putMs).toFixed(1)}`).join(' · ') + ` · largest ${Math.max(...k.putMs.map((p) => p.sumMs + p.putMs)).toFixed(1)} ms`); }
   if (flags.throttle) rep.bench.cpuThrottle = +flags.throttle;
   extra = { firstBlock: rep.firstBlock };
   await browser.close();
