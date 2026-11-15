@@ -20,7 +20,7 @@ import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, PAIRS, DOOR, stair
 const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('coffinroad') === '0';
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const TIMBER = C('#2b211a'), TIMBER_L = C('#3d3026'), LID = C('#352920'), LEAD = C('#3f4341'), ROPE = C('#6d5f48');
-const IRON = C('#26221f'), WAX = C('#8f876f'), STONE = C('#6e655c'), STONE_D = C('#4c453f'), RUBBLE = C('#5d554c');
+const IRON = C('#26221f'), WAX = C('#6f6a58'), STONE = C('#6e655c'), STONE_D = C('#4c453f'), RUBBLE = C('#5d554c');
 const MORTAR = C('#4a3a26'), GOLD = C('#c8962e'), GOLD_D = C('#8a6420'), RED = C('#6a2a1c'), BLACK = C('#050505');
 const FLAME = '#9fe8c2'; // corpse-candle green (the palette's wisp)
 
@@ -33,7 +33,7 @@ export async function build(ctx) {
   const rng = ctx.makeRng(14001);
   await ctx.progress?.('the coffin road', 0);
   const head = stairHead(T), floor = makeFloor(head);
-  const { xRim, xHead, yHead } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
+  const { xRim, xHead, xLand, yHead } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
   const stairY = (x) => ROAD_Y + (x - FOOT_X) * k;
   const litAt = ctx.nave.litAt;
   const lit = (x, y, z, out) => { litAt(x, y, z, out); out[2] = glowAt(x, y, z); return out; };
@@ -41,9 +41,19 @@ export async function build(ctx) {
   const g = (x, z) => T.heightAt(x, z);
   const WY = NAVE.water;
 
+  // ---- the landing: planks on two bearers, a step over the turf, out over the lip to the flight's head; its posts
+  {
+    for (const s of [-1, 1]) {
+      const z = SZ + s * (SHALF - 0.05);
+      B.beam([xHead - 0.2, yHead - 0.12, z], [xLand + 0.15, yHead - 0.12, z], 0.09, TIMBER, 0.12);
+      for (const px of [xRim + 0.35, xLand - 0.1]) B.beam([px, g(px, z) - 0.3, z], [px, yHead - 0.05, z], 0.08, TIMBER, 0.12);
+    }
+    const n = Math.round((xLand - xHead) / 0.3);
+    for (let i = 0; i < n; i++) { const x = xHead + (i + 0.5) * (xLand - xHead) / n; B.box(x, yHead - 0.025, SZ, (xLand - xHead) / n / 2 - 0.015, 0.025, SHALF + 0.04 * (rng() - 0.5), (rng() - 0.5) * 0.04, TIMBER_L, TIMBER_L, 0.3); }
+  }
   // ---- the stair: two stringers along its sides, a tread every rise, a hand-rope on stanchions both sides
   {
-    const xTop = xHead + 0.6, run = xTop - FOOT_X;
+    const xTop = xHead + 0.15, run = xTop - FOOT_X;
     for (const s of [-1, 1]) {
       const z = SZ + s * (SHALF + 0.06);
       B.beam([FOOT_X - 0.15, ROAD_Y - 0.25, z], [xTop, stairY(xTop) - 0.25, z], 0.11, TIMBER, 0.12);
@@ -292,7 +302,7 @@ export async function build(ctx) {
   // colliders: the stair's sides where it is still within a step of the turf, the shears' feet, the waiting coffin
   let colliders = 0;
   if (ctx.addCollider) {
-    for (const s of [-1, 1]) for (let x = xRim - 4.5; x <= xRim + 0.8; x += 0.4) { ctx.addCollider({ x, z: SZ + s * (SHALF + 0.32), r: 0.28, y: g(x, SZ) - 1.2, h: 3.2, stand: false }); colliders++; }
+    for (const s of [-1, 1]) for (let x = xRim - 4.5; x <= xLand + 0.2; x += 0.4) { ctx.addCollider({ x, z: SZ + s * (SHALF + 0.32), r: 0.28, y: g(x, SZ) - 1.2, h: 3.2, stand: false }); colliders++; }
     for (const [fx, fz] of feet) { ctx.addCollider({ x: fx, z: fz, r: 0.5, y: g(fx, fz) - 0.5, h: 3 }); colliders++; }
     ctx.addCollider({ x1: wait.x - 0.95, z1: wait.z, x2: wait.x + 0.95, z2: wait.z, r: 0.45, y: g(wait.x, wait.z) - 0.2, h: 1.5, stand: false }); colliders++;
   }
@@ -303,7 +313,7 @@ export async function build(ctx) {
   // road to its end under the sun
   const mid = (xHead + FOOT_X) / 2;
   ctx.ascents?.add({ id: 'coffin-road', held: true, offs: [0.2, 0.35, 0.7, 0.95],
-    path: [[xHead + 4, SZ, g(xHead + 4, SZ)], [xHead - 0.3, SZ], [mid, SZ, stairY(mid)], [FOOT_X - 0.6, SZ, ROAD_Y], [246.7, 45.5, ROAD_Y], [246.7, 42, ROAD_Y], [270, 42, ROAD_Y], [ROAD.x1 - 0.6, 42, ROAD_Y]] });
+    path: [[xLand + 3, SZ, g(xLand + 3, SZ)], [xLand - 0.5, SZ, yHead], [xHead - 0.3, SZ], [mid, SZ, stairY(mid)], [FOOT_X - 0.6, SZ, ROAD_Y], [246.7, 45.5, ROAD_Y], [246.7, 42, ROAD_Y], [270, 42, ROAD_Y], [ROAD.x1 - 0.6, 42, ROAD_Y]] });
 
   // ---- per frame, near: the flames' clock and size, the lights' flicker with the sun's gutter, the water giving back
   const ds = new THREE.Vector2(), p = ctx.player;

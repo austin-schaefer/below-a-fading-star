@@ -1,0 +1,322 @@
+[
+ {
+  "name": "dir-e0u",
+  "x": 262,
+  "z": 42,
+  "yaw": 0,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e0d",
+  "x": 262,
+  "z": 42,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e1u",
+  "x": 262,
+  "z": 42,
+  "yaw": 1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e1d",
+  "x": 262,
+  "z": 42,
+  "yaw": 1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e2u",
+  "x": 262,
+  "z": 42,
+  "yaw": 3.1416,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e2d",
+  "x": 262,
+  "z": 42,
+  "yaw": 3.1416,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e3u",
+  "x": 262,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-e3d",
+  "x": 262,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(262, 42, fp.coffinRoad.floor(262, 42) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f0u",
+  "x": 285,
+  "z": 42,
+  "yaw": 0,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f0d",
+  "x": 285,
+  "z": 42,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f1u",
+  "x": 285,
+  "z": 42,
+  "yaw": 1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f1d",
+  "x": 285,
+  "z": 42,
+  "yaw": 1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f2u",
+  "x": 285,
+  "z": 42,
+  "yaw": 3.1416,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f2d",
+  "x": 285,
+  "z": 42,
+  "yaw": 3.1416,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f3u",
+  "x": 285,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-f3d",
+  "x": 285,
+  "z": 42,
+  "yaw": -1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(285, 42, fp.coffinRoad.floor(285, 42) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g0u",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 0,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g0d",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g1u",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g1d",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g2u",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 3.1416,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g2d",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": 3.1416,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g3u",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": -1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-g3d",
+  "x": 246.7,
+  "z": 52.5,
+  "yaw": -1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(246.7, 52.5, fp.coffinRoad.floor(246.7, 52.5) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h0u",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 0,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 0.0000; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h0d",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 0,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 0.0000; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h1u",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h1d",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h2u",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 3.1416,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 3.1416; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h2d",
+  "x": 253,
+  "z": 47.75,
+  "yaw": 3.1416,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = 3.1416; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h3u",
+  "x": 253,
+  "z": 47.75,
+  "yaw": -1.5708,
+  "pitch": 0.6,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = 0.6; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "dir-h3d",
+  "x": 253,
+  "z": 47.75,
+  "yaw": -1.5708,
+  "pitch": -0.3,
+  "settle": 2500,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(253, 47.75, fp.coffinRoad.floor(253, 47.75) + 0.02); p.yaw = -1.5708; p.pitch = -0.3; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ }
+]

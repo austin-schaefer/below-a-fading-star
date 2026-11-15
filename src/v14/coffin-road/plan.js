@@ -25,12 +25,15 @@ export const PAIRS = 16;                   // on the road; with the raft's four 
 // blocks that fills it (the next brief opens it)
 export const DOOR = { x: 246.7, half: 1.1, sill: ROAD_Y - 0.04, h: 3.0, z: NAVE.z + NAVE.walls + 0.5, floorTo: 56.8, treads: 3, tread: 0.42, rise: 0.22, fall: 58.4, depth: 4.6 };
 
-// the stair's head, from the rim: the turf a metre short of the lip on z = SZ, east of the hole
+// the stair's head, from the rim on z = SZ, east of the hole: a landing of planks a step over the turf, from LAND m
+// back from the lip out over it (clear of the lip's turf and soil), and the flight going down from its end
+export const LAND = 3.0;
 export function stairHead(T) {
   let x = 275;
   while (x > 258 && naveEdge(x, SZ) > 0) x -= 0.05;
-  const xRim = x + 0.05, xHead = xRim + 1.1;
-  return { xRim, xHead, yHead: T.heightAt(xHead, SZ) };
+  const xRim = x + 0.05, xHead = xRim - 0.3, xLand = xRim + LAND;
+  let g = -Infinity; for (let u = xHead; u <= xLand; u += 0.25) for (const dz of [-SHALF, 0, SHALF]) g = Math.max(g, T.heightAt(u, SZ + dz));
+  return { xRim, xHead, xLand, yHead: g + 0.38 };
 }
 
 // the candles: [x, z, kind] (kind 0 a pair's pricket, 1 a tall candle, 2 a great candle on an iron stand), the flame ROAD_Y + their height above it
@@ -50,10 +53,10 @@ export const FLAME_Y = [0.44, 0.98, 1.9]; // a pricket's flame, a tall candle's,
 
 // the floor under (x, z): the stair (given its head), the raft, the spurs, the road, the passage; else null
 export function makeFloor(head) {
-  const { xHead, yHead } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
+  const { xHead, yHead, xLand } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
   const inR = (R, x, z) => x >= R.x0 && x <= R.x1 && z >= R.z0 && z <= R.z1;
   return (x, z) => {
-    if (z >= SZ - SHALF && z <= SZ + SHALF && x >= FOOT_X && x <= xHead) return ROAD_Y + (x - FOOT_X) * k;
+    if (z >= SZ - SHALF && z <= SZ + SHALF && x >= FOOT_X && x <= xLand) return x >= xHead ? yHead : ROAD_Y + (x - FOOT_X) * k;
     if (inR(RAFT, x, z) || inR(ROAD, x, z) || inR(NSPUR, x, z) || inR(SSPUR, x, z)) return ROAD_Y;
     if (Math.abs(x - DOOR.x) <= DOOR.half - 0.15 && z > DOOR.z - 0.01 && z <= DOOR.fall) {
       if (z <= DOOR.floorTo) return DOOR.sill;
