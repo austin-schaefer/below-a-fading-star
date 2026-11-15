@@ -48,7 +48,7 @@ export const LANDMARKS = {
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
   // v7.1: the pit where the old road from the east gate ends (SITES.pit); inside the Span's broad card, so a card wins there
-  pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true },
+  pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true, feet: [-12, 60] }, // v14-D2: the lip's (the floor has its own, the Nadir)
   // v7.1: the Sexton's grave field (SITES.sexton's block): a card wins over the Saltings' region card and the Span's broad one
   graves:   { x: 55,   z: 274,  r: 18,  y: null, name: "Rest in Starlight", line: "“Dig me no grave; I shall not need one.”", card: true },
   // v6.5: name cards for the v5 sites (SITES): card places have no footprint of their own, so the scatter ignores them and
@@ -81,6 +81,7 @@ export const LANDMARKS = {
   bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
   diffident: { x: 286, z: -14, r: 9, y: null, name: "The Diffident Stair", card: true, feet: [-30, 30], aside: false },
   coffinroad: { x: 271, z: 42, r: 0, y: null, name: "The Coffin Road", card: true, feet: [-22, -8], axis: { x0: 246, x1: 296, half: 6 }, at: { x: 250.4, z: 42 }, reached: 'the Sexton’s stair', aside: false }, // v14-D0: the road of coffins on the Foundered Nave's water, 16 m under the moor (src/v14/coffin-road.js)
+  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -12], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
   croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'the Diffident Stair', aside: false },
   landing: { x: -299, z: -18, r: 9, y: null, name: "The Warders’ Landing", card: true, aside: false },
   remand: { x: -375, z: -70, r: 0, y: null, name: "The Remand", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },

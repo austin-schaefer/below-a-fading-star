@@ -75,6 +75,10 @@ const CUES = [
   ['act-lift-run', { dx: 4, dy: 6, dz: -4 }, { speed: 4 }, 1500, 500], ['act-lift-clank', { dx: 2, dy: 0, dz: -2 }, { amp: 0.06 }, 1000, 800],
   ['act-lift-door', { dx: 1.5, dy: 0, dz: -1.5 }, { open: true }, 1500, 800], ['act-lift-lever', { dx: 0.8, dy: -0.5, dz: -0.8 }, null, 800, 500],
   ['act-lift-creak', { dx: 2, dy: 1, dz: -2 }, null, 2000, 1000],
+  // v14-D2 the sounding at the bottom of the Pit (src/v14/pit-sound.js)
+  ['act-pit-pawl', { dx: 1, dy: -0.8, dz: -1 }, null, 1000, 800], ['act-pit-run', { dx: 2, dy: -0.8, dz: -2 }, { dur: 3 }, 1500, 2500],
+  ['act-pit-taut', { dx: 4, dy: 4, dz: -5 }, null, 1500, 3000], ['act-pit-breath', { dx: 5, dy: -1, dz: -6 }, { dur: 5 }, 2000, 4000],
+  ['act-pit-home', { dx: 3, dy: -0.5, dz: -3 }, null, 1200, 1500],
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
   ['act-bell', { dx: 6, dy: 2, dz: -8 }, { n: 1 }, 1500, 1500], // v10-A3: last, its minute of tail would be the bed of any row after it
 ];
