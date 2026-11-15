@@ -15,7 +15,7 @@
 //                                               imports src/height/field.js (the three-free heightfield) and checks its
 //                                               queries at the recording's points (the bakes are main-side: not here)
 //   --params=mountains=v4&cols=low   the URL's params (the height path reads them once, at import); recorded apart
-//   --quick                          a tenth of the points, no medium bake (a fast loop while working)
+//   --quick                          about a fifth of the points, no medium bake (a fast loop while working)
 // Record on the tree before a change, check after it. A FAIL names the first point that differs and by how much.
 import { register } from 'node:module';
 import { pathToFileURL, fileURLToPath } from 'node:url';

@@ -5,7 +5,8 @@
 //      by reading it just before Profiler.stop, so a window's edge is good to a few ms);
 //   2. a ?serial=1 load under the Profiler: each module's build is its own window (startup.built, read from a copy
 //      of src/startup.js rewritten in flight), so each module gets its own heightAt share and top files;
-//   3. a ?serial=1 load, not profiled, with src/terrain.js and src/noise.js rewritten in flight (page.route) to
+//   3. a ?serial=1 load, not profiled, with src/height/field.js (the heightfield, v13 L2; it was in src/terrain.js)
+//      and src/noise.js rewritten in flight (page.route) to
 //      count calls: heightAt, normalAt, slopeAt, biomeAt and the simplex noise2, per phase and per module build.
 //      Nothing in src/ changes and a visitor's load is untouched; only the probe's page is served the counting copy.
 // The raw profiles go to shots/wip/load-profile-<q>-{cold,serial}.cpuprofile (open in DevTools' Performance panel).
@@ -31,12 +32,12 @@ function rewriteNoise(src) {
   return src.replace(/function noise2\(xin, yin\) \{/, 'function noise2(xin, yin) { globalThis.__fpc && globalThis.__fpc.noise2++;');
 }
 async function routeRewrites(context, counting) {
-  await context.route(/\/src\/(startup|terrain|noise)\.js(\?.*)?$/, async (route) => {
+  await context.route(/\/src\/(startup|height\/field|noise)\.js(\?.*)?$/, async (route) => {
     const resp = await route.fetch();
     let body = await resp.text();
     const u = route.request().url();
     if (/startup\.js/.test(u)) body = rewriteStartup(body);
-    else if (counting && /terrain\.js/.test(u)) body = rewriteTerrain(body);
+    else if (counting && /height\/field\.js/.test(u)) body = rewriteTerrain(body);
     else if (counting && /noise\.js/.test(u)) body = rewriteNoise(body);
     await route.fulfill({ response: resp, body, headers: { ...resp.headers(), 'content-type': 'text/javascript', 'cache-control': 'no-store' } });
   });
@@ -201,7 +202,7 @@ export async function runProfile({ browser, base, query, opts, P, wait }) {
       P(`  ${cm[i].name.padEnd(10)} ${['heightAt', 'heightAtRepeat', 'normalAt', 'slopeAt', 'biomeAt', 'noise2'].map((n) => `${n} ${delta(cm[i - 1].c, cm[i].c, n).toLocaleString('en')}`).join(' · ')}`);
     }
     P(`  whole load: ${Object.entries(counted.c).map(([k, v]) => `${k} ${v.toLocaleString('en')}`).join(' · ')}`);
-  } else P('calls: the counting load found no counters (src/terrain.js not rewritten?)');
+  } else P('calls: the counting load found no counters (src/height/field.js not rewritten?)');
   P('');
   P('module builds (?serial=1, profiled): build ms, heightAt inclusive ms and share, heightAt calls, µs a call, top file other than heightAt\'s');
   const rows = [];
