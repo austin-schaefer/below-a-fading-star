@@ -171,7 +171,39 @@ const res = await page.evaluate(async () => {
       rim.push({ ok: i === pts.length, at: [+p.pos.x.toFixed(1), +p.pos.z.toFixed(1)], of: `${i}/${pts.length}` });
     }
   }
-  return { rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
+  // ---- v14-B6 (the owner's #54: a path brings a walker to the front of a way up, not its back): every way up whose foot is on the
+  // ground (ctx.ascents, its first point with no y or a y within 1 m of the terrain) has a track ending at its foot:
+  // the nearest track end within 4 m of the first point, and behind it (on the side the climb does not go: its
+  // second distinct point is on the other side), so a walker who follows the track arrives facing up the way
+  // ways down not yet given a track to their foot, each with why (listed for the agent who owns the place)
+  const FEET_OPEN = { 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
+  const feet = [];
+  for (const a of fp.ascents?.list || []) {
+    if (a.test) continue;
+    const p0 = a.path[0], p1 = a.path.find((q) => Math.hypot(q[0] - p0[0], q[1] - p0[1]) > 0.5);
+    if (!p1 || (p0[2] !== undefined && Math.abs(p0[2] - T.heightAt(p0[0], p0[1])) > 1)) continue;
+    let best = null;
+    for (const t of tracks) for (const e of [t.pts[0], t.pts[t.pts.length - 1]]) {
+      const d = Math.hypot(e[0] - p0[0], e[1] - p0[1]);
+      if (!best || d < best.d) best = { d, id: t.id, e };
+    }
+    const ux = p1[0] - p0[0], uz = p1[1] - p0[1], ahead = ((best.e[0] - p0[0]) * ux + (best.e[1] - p0[1]) * uz) / Math.hypot(ux, uz);
+    feet.push({ id: a.id, d: +best.d.toFixed(1), by: best.id, ahead: +ahead.toFixed(2), at: p0.slice(0, 2).map((v) => +v.toFixed(1)), ok: best.d <= 4 && ahead <= 0.3, open: FEET_OPEN[a.id] || null });
+  }
+  // ---- and none leads to its back (#54: nothing a walker follows, a track or the stair's slabs lying in the turf,
+  // brings them to the blank back of a way up): for an ascent that names its `back` (the turf behind its first rise), no track
+  // ends within 4 m of it, and no slab of the stair lying in sight in the turf (not buried) is within 4 m of it
+  const backs = [];
+  for (const a of fp.ascents?.list || []) {
+    if (a.test || !a.back) continue;
+    const [bx, bz] = a.back, ends = [], slabs = [];
+    for (const t of tracks) for (const e of [t.pts[0], t.pts[t.pts.length - 1]]) if (Math.hypot(e[0] - bx, e[1] - bz) < 4) ends.push(t.id);
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried && Math.hypot(e.cx - bx, e.cz - bz) < 4) slabs.push(e.i);
+    let near = Infinity;
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried) near = Math.min(near, Math.hypot(e.cx - bx, e.cz - bz));
+    backs.push({ id: a.id, ends, slabs, near: +near.toFixed(1), buried: (fp.stair?.plan.els || []).filter((e) => e.rest?.buried).length });
+  }
+  return { feet, backs, rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
     lengths: { ways: +P.leads.filter((l) => l.cls === 'way').reduce((a, l) => a + l.length, 0).toFixed(0), trods: +P.leads.filter((l) => l.cls === 'trod').reduce((a, l) => a + l.length, 0).toFixed(0) } };
 });
 // #41: the waystones' heads have no two faces in one plane fighting for the pixel (the notch's dark lining was laid
@@ -196,7 +228,6 @@ check(res.startD < 6 && res.unjoined.length === 0, 'one network: every track joi
 // v14-B3: places on open ground a short walk off a track, each with how far past its reach the nearest track may lie
 const EXEMPT = {
   escalade: { why: 'the Cyclopean Stairs, the Span\'s west stair, in the wood\'s fringe', max: 20 },
-  diffident: { why: 'Lonely Staircase, the stub on the moor beside the road', max: 25 },
 };
 for (const p of res.places) {
   // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the
@@ -206,6 +237,14 @@ for (const p of res.places) {
   if (EXEMPT[p.k]) check(p.d <= EXEMPT[p.k].max, `${p.name}: exempt (${EXEMPT[p.k].why}); the nearest track within ${EXEMPT[p.k].max} m of its reach`, `${p.d} m, ${p.by}`);
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }
+{
+  const shut = res.feet.filter((f) => !f.open), open = res.feet.filter((f) => f.open);
+  const say = (f) => `${f.id} ${f.ok ? 'ok' : 'FAIL'}: ${f.by} ends ${f.d} m from (${f.at}), ${f.ahead > 0.3 ? `${f.ahead} m up the climb's side` : 'behind the foot'}`;
+  check(shut.length >= 2 && shut.every((f) => f.ok), 'every way up with its foot on the ground: a track ends within 4 m of the foot, behind it (#54)', `${shut.length} ascents: ${shut.map(say).join('; ')}`);
+  // an exemption lasts only while its reason holds: once a track reaches that foot, take the way out of FEET_OPEN
+  check(open.every((f) => !f.ok), 'the ways up exempted in FEET_OPEN still have no track to their foot (once one does, drop its exemption)', open.map((f) => `${f.id}: ${f.ok ? `REACHED by ${f.by}` : `no track yet, nearest end ${f.d} m (${f.by})`} (${f.open})`).join('; ') || 'none exempted');
+}
+check(res.backs.length >= 1 && res.backs.every((b) => !b.ends.length && !b.slabs.length), 'nothing a walker follows ends at the back of a way up: no track end, no slab lying in sight in the turf, within 4 m of it (#54)', res.backs.map((b) => `${b.id}: track ends ${b.ends.join(',') || 'none'}, slabs ${b.slabs.length} (nearest in sight ${b.near} m; ${b.buried} under the turf)`).join('; '));
 check(res.blind.length === 0, 'a standing gnomon in sight (80 m, over the terrain) every 4 m', `${res.samples} samples, ${res.blind.length} blind ${res.blind.slice(0, 8).join(' ')}`);
 check(res.steep.length === 0, 'every track walkable: grade along it under 1.2 over each 2 m', `${res.steep.length} ${res.steep.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
 check(res.wet.length === 0, 'every track sample dry-shod (or on slabs)', `${res.wet.length} ${res.wet.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
