@@ -42,4 +42,5 @@ Whether there is anyone holding the lamp.
 
 ## Log
 
+- 2026-11-15, v14-B3 (#52): the stub has its card, "The Diffident Stair"; the home on the lattice's foot is "The Hanging Croft".
 - 2026-11-12, v12-H3: written and built with the Diffident Stair (`src/v12/stair.js`); the seed was the milestone doc's ("a lamp already goes from lattice to lattice, stops at each a while as if tending it").

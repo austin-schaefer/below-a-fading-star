@@ -42,4 +42,5 @@ Who the leadsmen are, how far up they are, what depth they read, and why they co
 
 ## Log
 
+- 2026-11-15, v14-B3 (#52): the places named on cards: the icefall's foot and cleft "The Soundings", the old lead you walk up "The Fallen Lead", the shelf with the broken eye and the frayed line's end "The Bitter End" (a line's last end, made fast).
 - 2026-11-12, v12-H2: written with the icefall (`src/v12/icefall.js`, `src/v12/icefall/plummet.js`), answering the milestone's seed "the mother crystal has a mother".

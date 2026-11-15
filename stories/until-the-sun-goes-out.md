@@ -37,5 +37,6 @@ Who they were, what they did, whether they saw the sun every day through the hol
 
 ## Log
 
+- 2026-11-15, v14-B3 (#52): the lower station is "The Warders’ Landing" and the walked gallery at 135 m "The Remand", on cards.
 - 2026-11-12, v12-H4 (the lift): written and built with the lift's ride and the gallery at 135 m.
 - 2026-11-12, v12-H4 round two: the cell made readable: the stool, the worn floor, the heap of spoil, the shaft lit with dust; no counting anywhere (the Lantern Halt's tally is the one).

@@ -74,7 +74,9 @@ export function buildHud(ctx) {
     debug.update(dt);
     const p = ctx.player.pos;
     let best = null, bestD = Infinity;
+    const feet = p.y - (ctx.player.eye ?? 1.7);
     for (const [key, L] of landmarkList) {
+      if (L.feet && (feet < L.feet[0] || feet > L.feet[1])) continue; // v14-B3: a deck's card is not the floor's under it
       const d = landmarkDistance(L, p.x, p.z);
       const k = L.card && d < 6 ? d - 1000 : d; // a name card lying inside a broad landmark wins there
       if (k < bestD) { bestD = k; best = key; }

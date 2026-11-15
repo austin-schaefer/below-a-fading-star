@@ -1,13 +1,14 @@
-// v8-05 the Pomegranate House's lamps: glass lanterns in four colours (pomegranate red, saffron, turquoise, green) on
-// brief 03's brackets (TAVERNA_BRACKETS), on strings from a painted mast in the dry fountain to the four turrets' finials
-// and the galleries' roofs, and on strings between painted poles out along P9 toward the causeway and round the east
-// side to the head of kerb K1. No real light: the court keeps the house's own two lanterns (taverna.js) as its point
-// lights, and the rest is emissive glass, a halo per lamp that never shrinks under about two pixels across (so from the
-// causeway at 200 m the lamps read as separate coloured points), and warm ground pools under the court and the gate.
+// v8-05 the Pomegranate House's lamps, made fewer, warmer and steadier in v14-B3 (#42: "they verge on xmas lights"):
+// glass lanterns in four warm glasses (honey, saffron, garnet, tallow) on brief 03's brackets (TAVERNA_BRACKETS), a
+// few on short strings from the painted mast in the fountain to the galleries' roofs, one hung from the crossbar of
+// each painted pole along P9 and round to kerb K1, and one hung in each gallery where somebody sits, sleeps or cooks.
+// No real light of their own: the court's one point light is the hearth's (house.js); the rest is emissive glass, a
+// small halo per lamp that never shrinks under about a pixel and a half (so from the causeway the house reads as a few
+// warm points, not a fairground), and warm ground pools under the court, the gate and the hearth.
 //
-// Draws: the lamps (one mesh: gilt caps, coloured glass, iron cords; emission per vertex by channel; swaying in the
-// vertex shader about each lamp's hook), the glows (one mesh of additive halos and ground pools), and the strings and
-// poles, which are in the props mesh (house/props.js). Low tier: every other lamp on a string, no sway.
+// Draws: the lamps (one mesh: gilt caps, coloured glass, iron cords; emission per vertex by channel; a slow small sway
+// in the vertex shader about each lamp's hook), the glows (one mesh of additive halos and ground pools), and the strings
+// and poles, which are in the props mesh (house/props.js). Low tier: no sway.
 //
 // The gutter (ctx.sky.flicker): read with a hysteresis (in under 0.6, out over 0.85). While it lasts every lamp dims
 // to a nervous flutter round a third of its light and the fickle ones (channels 1..FICKLE) sputter out one by one; as it
@@ -17,11 +18,12 @@
 import * as THREE from 'three';
 import { hyp } from '../../noise.js';
 
+// four warm glasses, none of them a fairground's: no green, no blue (v14-B3); a lamp's glass is the source you see
 export const GLASS = [
-  [3.6, 0.34, 0.22], // pomegranate red
-  [3.3, 1.75, 0.28], // saffron
-  [0.22, 2.3, 2.05], // turquoise
-  [0.75, 2.9, 0.42], // green
+  [2.3, 1.05, 0.3], // honey
+  [2.1, 1.2, 0.36], // saffron
+  [1.9, 0.36, 0.16], // garnet, the house's pomegranate, darker than its paint
+  [1.9, 1.35, 0.7], // tallow, a pale candle through horn
 ];
 export const FICKLE = 12;
 const GILT = new THREE.Color('#c8963a'), IRON = new THREE.Color('#1c1714');
@@ -38,12 +40,12 @@ export function layLamps(ctx, plan, rng) {
   let n = 0;
   const add = (x, y, z, kind, size = 1, drop = 0) => {
     const h = (n * 0.618034 + rng() * 0.3) % 1, col = (n + (rng() < 0.3 ? 1 + Math.floor(rng() * 3) : 0)) % 4;
-    lamps.push({ x, y: y - drop, z, kind, col, ch: 0, seed: h, sway: kind === 'bracket' ? 0.05 : 0.11 + rng() * 0.06, size, drop });
+    lamps.push({ x, y: y - drop, z, kind, col, ch: 0, seed: h, sway: kind === 'bracket' ? 0.02 : 0.035 + rng() * 0.025, size, drop }); // v14-B3: steadier
     n++;
   };
   for (const b of plan.brackets) add(b.x, b.y, b.z, 'bracket', 1.15);
   for (const s of plan.strings) {
-    const L = hyp(s.b[0] - s.a[0], s.b[2] - s.a[2]), step = s.step * (low ? 2 : 1), k = Math.max(1, Math.round(L / step));
+    const L = hyp(s.b[0] - s.a[0], s.b[2] - s.a[2]), step = s.step * (low && !s.keep ? 2 : 1), k = Math.max(1, Math.round(L / step));
     const p = [0, 0, 0];
     for (let i = 1; i < k; i++) { stringAt(s.a, s.b, s.sag, i / k, p); add(p[0], p[1], p[2], s.kind || 'string', s.size || 0.85); }
   }
@@ -138,8 +140,8 @@ export function glowMesh(ctx, lamps, pools, G, U) {
     const b = q * 4; idx.push(b, b + 1, b + 2, b, b + 2, b + 3); q++;
   };
   for (const L of lamps) {
-    const g = GLASS[L.col], a = [L.x, L.y + GLASS_Y * L.size, L.z], k = 0.16;
-    quad([a, a, a, a], a, SQ, [0.55 * L.size, 0], [g[0] * k, g[1] * k, g[2] * k], [L.x, L.y, L.z], [L.seed, L.ch, L.sway, 0]);
+    const g = GLASS[L.col], a = [L.x, L.y + GLASS_Y * L.size, L.z], k = 0.13;
+    quad([a, a, a, a], a, SQ, [0.42 * L.size, 0], [g[0] * k, g[1] * k, g[2] * k], [L.x, L.y, L.z], [L.seed, L.ch, L.sway, 0]);
   }
   // pools: a warm light on the ground, a grid draped on the drawn ground
   for (const P of pools) {
@@ -193,7 +195,7 @@ const GLOW_VS = /* glsl */`
       vFar = clamp((minS - s) / max(minS, 1e-4), 0.0, 1.0);
       s = max(s, minS);
       mvPosition.xy += aCorner * s;
-      vCol = aColor * k * (1.0 + 3.5 * vFar);
+      vCol = aColor * k * (1.0 + 1.6 * vFar); // v14-B3: a far lamp a point, not a bulb
     } else {
       mvPosition = viewMatrix * vec4(position, 1.0);
       vCol = aColor * k * uPool;

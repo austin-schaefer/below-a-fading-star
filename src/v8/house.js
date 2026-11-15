@@ -1,16 +1,19 @@
-// v8-05 the Pomegranate House, lit and lived in (briefs/v8/brief-v8-05-house.md): the one warm, bright, silly place on
-// the map. "While we are alive we should sit among colored lights and taste good wines."
+// v8-05 the Pomegranate House, lit and lived in (briefs/v8/brief-v8-05-house.md); v14-B3 (#42) made it kept, with
+// fewer, warmer lights. "While we are alive we should sit among colored lights and taste good wines."
 //
-//   lamps   house/lamps.js: lanterns in four colours on brief 03's brackets, on strings from a mast in the dry fountain
-//           to the turrets and the galleries' roofs, over the gate, and on painted poles out along P9 toward the
-//           causeway and round the east side to the head of kerb K1. No point light of its own (the court keeps the
-//           house's two lanterns; walkers-test allows three sources within reach of any path): emissive glass, halos at
-//           least two pixels across, warm pools on the ground. They sway, and dim, flutter, go out and flare with the
-//           sun's gutter; the fickle ones are relit late, one by one.
+//   lamps   house/lamps.js: lanterns in four warm glasses on brief 03's brackets, on four short strings from a mast in
+//           the dry fountain to the galleries' roofs, one from each painted pole's crossbar out along P9 toward the
+//           causeway and round the east side to the head of kerb K1, and one hung in each gallery where something is
+//           done. The court's one point light is the hearth's (walkers-test allows three sources within reach of any
+//           path); the rest is emissive glass, small halos, warm pools on the ground. They sway a little, and dim,
+//           flutter, go out and flare with the sun's gutter; the fickle ones are relit late, one by one.
+//   kept    house/kept.js: what the host owns, cooks on, sits at and mends: the hearth and the oven in the south
+//           gallery, the divan in the west, his curtained alcove in the east, washing in the court, a ladder and
+//           limewash, water in the fountain; the court and galleries swept (props.js bareGround's court).
 //   folk    house/folk.js: the host at the gate, the two patrons at the board, the musician on the fountain's rim,
 //           the sleeper under the bronze-door table, wearing the slipper's mate (thread 3: src/v5/dressing/slipper.js).
 //   props   house/props.js: the mast, the poles and strings, benches, the board, the table, the spilt things, the
-//           trampled ground before the gate.
+//           trampled ground before the gate and the swept court.
 //   voice   house/sound.js (the cues; audio.js starts it, audio/cues.js routes `house-*` to it). This file phrases them:
 //           talk in bouts with rests, a laugh at the end of some, the oud in short halting phrases with long rests (and
 //           not while the musician is offended), a cup set down when the loser drinks, the lamps' glass ticking within
@@ -25,6 +28,7 @@ import { makeGround } from '../structures/geo.js';
 import { hyp } from '../noise.js';
 import { layLamps, lampMesh, glowMesh, makeGutter, FICKLE, GLASS_Y } from './house/lamps.js';
 import { buildProps, bareGround } from './house/props.js';
+import { keptHouse, HEARTH, HUNG } from './house/kept.js';
 import { buildHost, buildPatrons, buildMusician, buildSleeper, SLEEPER } from './house/folk.js';
 import { slipperShape, brocade, SLIPPER } from '../v5/dressing/slipper.js';
 import { BARE } from './house/clear.js';
@@ -48,28 +52,24 @@ export async function build(ctx) {
   for (const b of TAVERNA_BRACKETS) plan.brackets.push({ x: b.x, y: b.y, z: b.z });
   plan.mast = { x: cx, z: cz, g: gc, base: gc + 2.2, top: gc + 11.0, attach: gc + 10.5 };
   const M = [cx, plan.mast.attach, cz];
-  const turret = (sx, sz) => { const x = cx + sx * half, z = cz + sz * half; return [x, G(x, z) + 7.6, z]; };
   const roof = (dx, dz) => { const x = cx + dx * 9.6, z = cz + dz * 9.6; return [x, G(x, z) + 4.3, z]; };
-  const T = { nw: turret(-1, -1), ne: turret(1, -1), se: turret(1, 1), sw: turret(-1, 1) };
-  // the tent of lamps over the court: mast to the turrets and to the galleries' roofs
-  for (const t of Object.values(T)) plan.strings.push({ a: M, b: t, sag: 0.55, step: 1.7, size: 0.95 });
-  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) plan.strings.push({ a: M, b: roof(dx, dz), sag: 0.25, step: 1.5, size: 0.85 });
-  // round the walls, turret to turret
-  for (const [a, b] of [[T.nw, T.ne], [T.ne, T.se], [T.se, T.sw], [T.sw, T.nw]]) plan.strings.push({ a, b, sag: 1.5, step: 1.8, size: 0.9 });
-  // the poles: out along P9 toward the causeway (west), and round the east side to kerb K1's head
+  // v14-B3 (#42): fewer, warmer, steadier. Over the court only four short strings, mast to the galleries' roofs, a lamp
+  // every 3 m (on low too); the poles out along P9 and round to K1 each carry one lantern from the end of its crossbar,
+  // no strings between them; and a lamp hung inside each gallery where something is done (house/kept.js HUNG).
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) plan.strings.push({ a: M, b: roof(dx, dz), sag: 0.3, step: 3.1, size: 1.0, keep: true });
   const poleH = 3.5;
   const west = [[86.0, -62.0], [80.0, -61.0], [78.5, -52.5], [78.5, -43.5], [80.0, -35.0], [82.6, -26.5], [81.0, -18.0]];
   const east = [[104.0, -62.0], [111.0, -61.5], [117.5, -55.0], [119.0, -46.0], [118.5, -36.5], [116.0, -28.5], [111.5, -24.0]];
-  const poles = (pts, from) => pts.map(([x, z], i) => {
+  const poles = (pts, from) => pts.forEach(([x, z], i) => {
     const n = pts[Math.min(i + 1, pts.length - 1)], p = pts[Math.max(i - 1, 0)];
     const p0 = { x, z, top: G(x, z) + poleH, i: i + from, yaw: Math.atan2(n[0] - p[0], n[1] - p[1]) + Math.PI / 2 };
-    plan.poles.push(p0); return [x, p0.top - 0.12, z];
+    plan.poles.push(p0);
+    // the crossbar runs along the pole's yaw (props.js); the lantern hangs from its outer end, on the side away from the road's middle
+    const s = i % 2 ? 0.21 : -0.21;
+    plan.hung.push({ x: x + Math.cos(p0.yaw) * s, y: p0.top - 0.1, z: z - Math.sin(p0.yaw) * s, kind: 'pole', size: 1.05 });
   });
-  const W = poles(west, 0), E = poles(east, 3);
-  for (const R of [W, E]) for (let i = 0; i < R.length - 1; i++) plan.strings.push({ a: R[i], b: R[i + 1], sag: 0.45, step: 1.7, size: 0.8 });
-  plan.strings.push({ a: W[0], b: E[0], sag: 0.75, step: 1.6, size: 0.85 }); // across the front of the gate
-  plan.strings.push({ a: T.nw, b: W[1], sag: 0.6, step: 1.8, size: 0.85 });
-  plan.strings.push({ a: T.ne, b: E[1], sag: 0.6, step: 1.8, size: 0.85 });
+  poles(west, 0); poles(east, 3);
+  for (const [x, z, h] of HUNG) plan.hung.push({ x, y: G(x, z) + h, z, kind: 'hung', size: 1.1 });
   // the patrons' table (03's hex paver on its trestle) and their stools, before the gate west of it
   const zf = cz - half - 0.4, tx = cx - 5.3, tz = zf - 2.3, tg = G(tx, tz);
   plan.table = { x: tx, z: tz, top: tg + 0.865 };
@@ -83,24 +83,26 @@ export async function build(ctx) {
   const U = { uK: { value: new Float32Array(FICKLE + 1).fill(1) }, uTime: { value: 0 }, uSway: { value: low ? 0 : 1 }, uMinPx: { value: 0.004 }, uPool: { value: 1 } };
   const lampM = lampMesh(ctx, lamps, U);
   const pools = [
-    { x: cx, z: cz, rx: 10.5, rz: 10.5, col: [0.22, 0.11, 0.035] },
-    { x: cx, z: zf - 3.2, rx: 7, rz: 4.5, col: [0.2, 0.1, 0.03] },
-    ...plan.poles.map((p) => ({ x: p.x, z: p.z, rx: 3.2, rz: 3.2, col: [0.1, 0.05, 0.016] })),
+    { x: cx, z: cz, rx: 8, rz: 8, col: [0.09, 0.05, 0.018] }, // the court under the four strings
+    { x: cx, z: zf - 3.2, rx: 7, rz: 4.5, col: [0.14, 0.07, 0.022] }, // the gate
+    { x: HEARTH.x, z: HEARTH.z - 0.6, rx: 3.6, rz: 2.6, col: [0.26, 0.1, 0.025] }, // the fire's, on the gallery floor
+    ...plan.poles.map((p) => ({ x: p.x, z: p.z, rx: 2.6, rz: 2.6, col: [0.07, 0.035, 0.012] })),
   ];
   const glowM = glowMesh(ctx, lamps, pools, G, U);
   ctx.scene.add(lampM, glowM);
   const gutter = makeGutter(rng);
-  // the court's light: the house's own east-gallery lantern keeps its glass, and its light moves to the mast, warmer and
-  // brighter, under the lamps (so the court is lit and the count of point lights near the paths stays what it was)
+  // the court's light: the house's own east-gallery lantern keeps its glass, and its light moves to the hearth in the
+  // south gallery (v14-B3), so the one real light in the court is a fire you can see, and the count of point lights
+  // near the paths stays within the three walkers-test allows
   const old = (await ctx.built('structures')) ? ctx.scene.getObjectByName('taverna-court-lantern') || null : null;
   old?.removeFromParent();
-  const courtLight = new THREE.PointLight(new THREE.Color('#ffb070'), 0, 14, 2);
-  courtLight.name = 'house-court-light'; courtLight.position.set(cx, gc + 4.2, cz);
+  const courtLight = new THREE.PointLight(new THREE.Color('#ff9048'), 0, 16, 2);
+  courtLight.name = 'house-court-light'; courtLight.position.set(HEARTH.x, G(HEARTH.x, HEARTH.z) + 1.7, HEARTH.z - 1.1); // over the fire and out toward the court, so the pot is not blown white
   ctx.scene.add(courtLight);
 
   // ---------------------------------------------------------------- the props
-  const props = buildProps(ctx, plan, G, rng);
-  const bare = bareGround(ctx, G, { ...BARE, spill: [93.4, -61.9] }, N2);
+  const props = buildProps(ctx, plan, G, rng, (B) => keptHouse(ctx, B, G, ctx.strata));
+  const bare = bareGround(ctx, G, { ...BARE, spill: [93.4, -61.9], court: { x: cx, z: cz, half: 12.55 } }, N2);
 
   // ---------------------------------------------------------------- the people
   const stoolG = (x, z) => G(x, z);
@@ -201,7 +203,7 @@ export async function build(ctx) {
       if (e.type === 'relit') { const l = lampXYZ[chLamp[e.ch]]; if (l && hyp(l.x - cam.x, l.z - cam.z) < 40) fire('house-tick', l); }
     }
     U.uTime.value = t;
-    courtLight.intensity = 30 * K[0] * (0.9 + 0.1 * N2(t * 1.7, 3.3));
+    courtLight.intensity = 26 * K[0] * (0.95 + 0.035 * N2(t * 0.9, 3.3) + 0.01 * N2(t * 4.1, 1.2)); // coals: a slow breath, no flicker
     U.uMinPx.value = MIN_PX * 2 / Math.max(1, ctx.renderer.domElement.height);
     // the camera's look, for the patrons' stare
     fwd.x = -Math.sin(ctx.player.yaw); fwd.z = -Math.cos(ctx.player.yaw);

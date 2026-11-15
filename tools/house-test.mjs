@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// v8-05 the Pomegranate House lit and lived in (src/v8/house.js, src/v8/house/): the lamps and the people exist and stand
+// v8-05 the Pomegranate House lit and lived in (src/v8/house.js, src/v8/house/): the lamps (v14-B3: 30 to 70, warm, the
+// court lit by the hearth, steady) and the people exist and stand
 // on their ground (every lamp's hook 1.9-13 m over the ground under it; the host on his feet, the patrons on their
 // stools, the musician on the fountain's rim, the sleeper on the floor); each behaviour triggers at its distance and
 // resets (the host's bow in at 6 m and his bow out at the gate, at least four times shallower; the patrons' stare while
@@ -37,6 +38,11 @@ const r = await page.evaluate(async () => {
   // ---- standing
   const hooks = H.lamps.map((l) => l.y - G(l.x, l.z));
   out.lamps = { n: H.lamps.length, brackets: H.lamps.filter((l) => l.kind === 'bracket').length, wantBrackets: TAVERNA_BRACKETS.length, lo: Math.min(...hooks), hi: Math.max(...hooks), cols: [0, 1, 2, 3].map((c) => H.lamps.filter((l) => l.col === c).length) };
+  const { GLASS } = await import('/src/v8/house/lamps.js'), { HEARTH } = await import('/src/v8/house/kept.js');
+  Object.assign(out.lamps, { poles: H.lamps.filter((l) => l.kind === 'pole').length, inside: H.lamps.filter((l) => l.kind === 'hung').length, warm: GLASS.every(([r, g, b]) => r > g && g > b) });
+  const cl = fp.scene.getObjectByName('house-court-light'), ks = [];
+  for (let i = 0; i < 50; i++) { H.sim(0.1); ks.push(cl.intensity); }
+  out.hearth = { d: +Math.hypot(cl.position.x - HEARTH.x, cl.position.z - HEARTH.z).toFixed(2), y: +(cl.position.y - G(HEARTH.x, HEARTH.z)).toFixed(2), swing: +((Math.max(...ks) - Math.min(...ks)) / Math.max(...ks)).toFixed(3) };
   const F = H.figures, P = fp.player.pos;
   const host = F.host.state, mus = F.musician, sl = F.sleeper;
   out.stand = {
@@ -138,7 +144,10 @@ const r = await page.evaluate(async () => {
 });
 if (r.missing) { check('ctx.house exists', false); await browser.close(); process.exit(1); }
 const L = r.lamps;
-check(`the lamps: at least 100 (low tier), in all four colours, every bracket of the house hung`, L.n >= 100 && L.cols.every((n) => n >= 15) && L.brackets === L.wantBrackets && L.wantBrackets >= 20, L);
+// v14-B3 (#42, the owner: "they verge on xmas lights"): fewer and warm. 30 to 70 lamps, every glass warm (red over green over blue),
+// every bracket of the house hung, a lantern on every pole, one hung inside each gallery; the court's light at the hearth
+check(`the lamps: 30 to 70 (low tier), four warm glasses and no green or blue one, every bracket hung, one on each of the 14 poles, 4 inside`, L.n >= 30 && L.n <= 70 && L.cols.every((n) => n >= 3) && L.warm && L.brackets === L.wantBrackets && L.wantBrackets >= 20 && L.poles === 14 && L.inside === 4, L);
+check(`the court's one point light is the hearth's, low over the fire in the south gallery, and steady (under 10% over 5 s)`, r.hearth.d < 1.5 && r.hearth.y < 2.5 && r.hearth.swing < 0.1, r.hearth);
 check(`every lamp hangs 1.9-13 m over the ground under it`, L.lo >= 1.9 && L.hi <= 13, { lo: +L.lo.toFixed(2), hi: +L.hi.toFixed(2) });
 const s = r.stand;
 check(`the people stand on their ground (host's feet, the patrons' seats on their stools, the musician on the rim, the sleeper on the floor, each within 8 cm)`, Math.abs(s.host) < 0.08 && s.patrons.every((d) => Math.abs(d) < 0.08) && Math.abs(s.musician) < 0.08 && Math.abs(s.sleeper) < 0.08, s);
