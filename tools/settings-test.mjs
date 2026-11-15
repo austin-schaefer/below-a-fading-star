@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The settings panel (v7-08): the gear, open and close, volume, mute, quality, mouse capture and teleport, on a
+// The settings panel (v7-08), which is also the pause (v14-B1): the gear, open and close, Escape, volume, mute, quality, mouse capture and teleport, on a
 // desktop viewport; then the gear and a finger-sized panel on a phone, and (v13) its Measure row's reload. Usage: node tools/settings-test.mjs [url]
 // SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
 // SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
@@ -50,7 +50,22 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const pausedBefore = await page.evaluate(() => { window.__fp.controls.setDragLook(true); return !document.getElementById('card').classList.contains('hidden'); });
   await page.click('#gear'); await page.keyboard.press('Escape');
   check('close: Escape in drag-look mode does not pause', !pausedBefore && !(await shown(page)) && await page.evaluate(() => document.getElementById('card').classList.contains('hidden')), pausedBefore);
+  // v14-B1 (#46): Escape opens the one panel (the pause is the settings panel): in drag-look mode the key itself, with the
+  // mouse captured the capture let go (what the browser does on Escape); never the old paused card. Escape again shuts it
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Escape');
+  let esc = await page.evaluate(() => ({ panel: window.__fp.settings.shown, card: !document.getElementById('card').classList.contains('hidden') }));
+  check('pause: Escape in drag-look mode opens the settings panel, and no paused card', esc.panel && !esc.card, esc);
+  await page.waitForTimeout(400); await page.keyboard.press('Escape');
+  check('pause: Escape again shuts it', !(await shown(page)));
   await page.evaluate(() => window.__fp.controls.setDragLook(false));
+  await page.evaluate(() => { const P = window.__fp.player; P.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); });
+  esc = await page.evaluate(() => ({ panel: window.__fp.settings.shown, card: !document.getElementById('card').classList.contains('hidden'), keys: !!document.querySelector('#settings-panel .set-keys')?.offsetParent, back: document.getElementById('set-close').textContent }));
+  check('pause: the mouse let go (Escape) opens the settings panel, with the keys and "Back to the moor", and no paused card', esc.panel && !esc.card && esc.keys && esc.back === 'Back to the moor', esc);
+  await page.keyboard.press('Escape'); // within a moment of opening: the same Escape, not a second one
+  check('pause: the Escape that opened it does not also shut it', await shown(page));
+  await page.click('#set-close');
+  check('pause: "Back to the moor" shuts it', !(await shown(page)));
 
   // volume and mute, on the output gain after the mute gain
   await page.click('#gear');

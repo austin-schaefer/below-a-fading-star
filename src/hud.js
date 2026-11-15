@@ -32,15 +32,15 @@ export function buildHud(ctx) {
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
   ctx.events.addEventListener('begin', () => card.classList.add('hidden'));
+  // v14-B1 (#46): the pause is the settings panel. Escape (which lets go of the captured mouse) opens it, as the gear
+  // does, on desktop and touch; its "Back to the moor" (or Escape again) shuts it. The title card is only the title.
+  const pause = () => { card.classList.add('hidden'); if (ctx.settings) ctx.settings.open({ paused: true }); else { card.classList.remove('hidden'); card.classList.add('paused'); } };
   ctx.events.addEventListener('lock', (e) => {
-    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself: no pause card behind it
-    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden');
+    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself
+    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) pause(); else card.classList.add('hidden');
   });
-  // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
-  ctx.events.addEventListener('pausetoggle', () => {
-    if (card.classList.contains('hidden')) { card.classList.remove('hidden'); card.classList.add('paused'); }
-    else card.classList.add('hidden');
-  });
+  // In drag-look mode (no capture to lose) Escape is the walk's: it opens the panel (settings.js shuts it on the next)
+  ctx.events.addEventListener('pausetoggle', () => { if (!ctx.settings?.shown) pause(); });
   const dragBtn = document.getElementById('draglook');
   if (dragBtn) {
     dragBtn.addEventListener('click', (e) => {
