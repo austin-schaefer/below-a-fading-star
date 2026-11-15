@@ -143,3 +143,14 @@ H5 fixed five things seen from the tops (the haze and the sun's shadows under a 
 - Sound: the canyon rim measures the same as the open moor (the waterfall hardly registers); at the Lattice the 500 Hz band sits 11 dB over its neighbours; every pose dips 6 dB in the same 10 to 15 s slice (the bed is one clock everywhere); almost nothing above 4 kHz; no harness pose is at a height.
 - Settings: "Hidden" on the position row does not say whether pressing it shows or hides.
 - Familiar, could be any fantasy game: the hexagonal stepping stones, the coloured fairy lights and the fairground yellow and teal of the Pomegranate House (the owner's #42), the blue crystal field, the aqueduct arches. Could be nowhere else: the failing sun in its saddle between the two stone legs, the city of windows, the Halt's tally and the seat up to the sleeper; and, new, the tender's deck at the top of the stair, which the critic called the best thing here.
+
+## From v13 (performance), not done
+
+- **The bake's slope from the mesh** (`?bakeslope=mesh`, in the tree, off): 0.5 s off a first load on low and 1.3 s on medium, and it repaints the ground a little (34k of 309k colour values on low). For a milestone that is allowed to change the ground's colours.
+- **A shared height grid** sampled bilinearly: about 3 s of a first load at v13's start, and it moves things by centimetres on steep ground. Needs a milestone that re-places and re-renders everything.
+- **Vegetation is about twice its triangle budget** on medium and high (up to 838k against 400k at a station) and over on low at one; **fauna is over on calls** (26 to 30 against 25). `node tools/bench-report.mjs` prints both.
+- **A content manifest for the service worker**: if Netlify's 304s carry no commit stamp, the first return after each release downloads the release whole (about a cold load's network, once). A manifest of content hashes written at build would let unchanged files be kept across releases.
+- **Firefox misses two of the bake worker's files in the service worker's first-visit fill** (`strips.js`, `crossings.js`): two network requests on a repeat, harmless.
+- **The worker on a two-core phone** is unmeasured (no way to limit cores here); the 4x throttle does not slow a worker. A real phone's numbers, from the settings menu's Measure row, would settle what the bake costs there.
+- **`render` is 57% of a median frame's JS** (three's own traversal and sorting) and `far.js`'s packs are in most of the slowest frames at a 4x throttle; no frame is over 50 ms, so neither was touched.
+- **Compile and warm-up** (0.5 to 1.0 s of the load) were left: the main thread waits on the GPU process while 218 programs link. Fewer program variants would shorten it.
