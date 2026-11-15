@@ -40,28 +40,23 @@ const CARD_POSES = {
 // v11-F2: places that stand on the wall or in the air with no landmark; each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
+  // v14-B5: two places whose cards the owner cut (#52) keep the stands and names they had before v14-B3
+  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
+  { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
 ];
 // v14-B3 (#52): the named places of v9 to v12 (LANDMARKS' cards), each where it reads: the ways up from their feet, the
-// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1)
+// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1); v14-B5: the owner's cuts and renames
 const NAMED_POSES = {
   halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
   tocsin: { x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
   escalade: { x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // at its foot in the wood's southern fringe, the first flight climbing west between its walls
-  footing: { x: -72, y: 56, z: 212, look: { x: -113, z: 211 }, pitch: -0.08 }, // on the deck at its east lip, the footing course running off west on its rib
-  coping: { x: -36, y: 56, z: 219, look: { x: -45, z: 219 }, pitch: -0.3 }, // the crack and the coping fallen across it, the bell's crown under
-  cornice: { x: 68, y: 56, z: 216, look: { x: 32, z: 219.5 }, pitch: -0.08 }, // from the middle deck's west end, the cornice stones hung on iron going back west
+  causeway: { x: -238, y: 56, z: 213, look: { x: -150, z: 215 }, pitch: 0 }, // on the deck just past the west stair's top, running off east between its parapets
   wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
   spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
-  soundings: { x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
-  lead: { x: 97, z: -318, look: { x: 60, z: -322.3 }, pitch: 0.2 }, // on the first terrace, the old lead lying across the gap up to the second
   bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
   diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
-  landing: { x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
-  prime: { x: 278, z: 112, look: { x: 320, z: 129 }, pitch: 0.15 }, // 300 m out on bearing 112, the pass's long foot rising to its saddle
-  sext: { x: 0, z: 300, look: { x: 0, z: 345 }, pitch: 0.15 }, // 300 m out due south
-  compline: { x: -153, z: -245, look: { x: -183, z: -293 }, pitch: 0.17 }, // 289 m out on bearing 328 (at 300 the pass's foot rings it round)
 };
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [

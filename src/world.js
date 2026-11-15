@@ -63,29 +63,27 @@ export const LANDMARKS = {
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
   leerie: { x: 128, z: 5, r: 20, y: null, name: "A Lamplighter’s Standards", line: "“All fled, all done, so lift me on the pyre;\nThe feast is over and the lamps expire.”", card: true },
-  // v14-B3 (#52): the places a visitor can stand that came with v9 to v12, named; cards with no line yet (the owner sources
-  // the quotations). `feet: [lo, hi]`: the card is up only while the walker's feet are at that height (a deck over the
-  // valley floor, a gallery on the wall); `reached`: a place up or at the walk's edge that no track comes near, reached by
-  // its own way, said how (roads-test asks no track of it; a place on open ground is in roads-test's EXEMPT, bounded). An axis along z is { z0, z1, half } (landmarkDistance). `aside: false`: the
-  // Link-Boy does not take it for what continues past a lead's end (v7/walkers/linkboy.js), so he steps aside as before.
-  halt: { x: -63, z: 1, r: 9, y: null, name: "The Lantern Halt", card: true, aside: false },
-  tocsin: { x: -52, z: 207, r: 11, y: null, name: "The Tocsin", card: true, feet: [-30, 30], aside: false },
-  escalade: { x: -226, z: 200, r: 9, y: null, name: "The Escalade", card: true, feet: [-30, 30], aside: false },
-  footing: { x: -95, z: 211, r: 0, y: null, name: "The Footing Course", card: true, feet: [44, 70], axis: { x0: -113, x1: -77, half: 3 }, at: { x: -116, z: 212 }, reached: 'the Span', aside: false },
-  coping: { x: -45, z: 219, r: 5, y: null, name: "The Fallen Coping", card: true, feet: [44, 70], reached: 'the Span', aside: false },
-  cornice: { x: 47, z: 219.5, r: 0, y: null, name: "The Hung Cornice", card: true, feet: [44, 70], axis: { x0: 32, x1: 63, half: 3 }, at: { x: 29, z: 218 }, reached: 'the Span', aside: false },
-  wait: { x: 88, z: 211, r: 11, y: null, name: "The Long Wait", card: true, feet: [44, 70], reached: 'the Span', aside: false },
-  spar: { x: 145, z: 215, r: 0, y: null, name: "The Dropped Spar", card: true, feet: [40, 70], axis: { x0: 122, x1: 169, half: 3 }, at: { x: 118, z: 214 }, reached: 'the Span', aside: false },
-  soundings: { x: 70, z: -290, r: 10, y: null, name: "The Soundings", card: true, aside: false },
-  lead: { x: 76, z: -322.3, r: 0, y: null, name: "The Fallen Lead", card: true, feet: [47, 75], axis: { x0: 58, x1: 94, half: 2.5 }, at: { x: 96, z: -320 }, reached: 'the icefall', aside: false },
-  bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
-  diffident: { x: 286, z: -14, r: 9, y: null, name: "The Diffident Stair", card: true, feet: [-30, 30], aside: false },
-  croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'the Diffident Stair', aside: false },
-  landing: { x: -299, z: -18, r: 9, y: null, name: "The Warders’ Landing", card: true, aside: false },
-  remand: { x: -375, z: -70, r: 0, y: null, name: "The Remand", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
-  prime: { x: 311, z: 125, r: 14, y: null, name: "The Col of Prime", card: true, reached: 'the walk’s edge', aside: false },
-  sext: { x: 0, z: 335, r: 14, y: null, name: "The Col of Sext", card: true, reached: 'the walk’s edge', aside: false },
-  compline: { x: -178, z: -284, r: 14, y: null, name: "The Col of Compline", card: true, reached: 'the walk’s edge', aside: false },
+  // v14-B3 (#52): the places a visitor can stand that came with v9 to v12, named; v14-B5: the owner's quotations,
+  // renames and cuts (#52, 2026-11-15). `feet: [lo, hi]`: the card is up only while the walker's feet are at that height (a
+  // deck over the valley floor, a gallery on the wall); `reached`: a place up or at the walk's edge that no track comes
+  // near, reached by its own way, said how (roads-test asks no track of it; a place on open ground is in roads-test's
+  // EXEMPT, bounded). An axis along z is { z0, z1, half } (landmarkDistance). `aside: false`: the Link-Boy does not take it
+  // for what continues past a lead's end (v7/walkers/linkboy.js), so he steps aside as before. `broad: true`: a card that
+  // gives way to every other card inside it (hud.js): Titan's Causeway is the whole deck, the Long Wait and the Shaky
+  // Splice are places on it.
+  halt: { x: -63, z: 1, r: 9, y: null, name: "The Lantern Halt", line: "“We went out into the moonless and tortuous network of that incredibly ancient town; went out as the lights in the curtained windows disappeared one by one.”", card: true, aside: false },
+  tocsin: { x: -52, z: 207, r: 11, y: null, name: "The Tocsin", line: "“I came to the fog-enfolded river that flows beside its walls, and heard beyond the river the mortuary tolling of many bells.”", card: true, feet: [-30, 30], aside: false },
+  escalade: { x: -226, z: 200, r: 9, y: null, name: "The Cyclopean Stairs", line: "“In the dank twilight I climbed the worn and aged stone stairs till I reached the level where they ceased.”", card: true, feet: [-30, 30], aside: false },
+  // the Span's deck from gate to gate, and both stairs' top landings (the west one's turn at z 186 is 29 m off the line):
+  // up from the stair's last flight (feet 53 m) at either end
+  causeway: { x: 0, z: 215, r: 0, y: null, name: "Titan’s Causeway", line: "“Never shall I learn the secret of those ruinous walls and crumbling keeps, nor the fate of my companions.”", card: true, broad: true, feet: [53, 70], axis: { x0: -257, x1: 257, half: 24 }, at: { x: -238, z: 213 }, reached: 'the Span', aside: false },
+  wait: { x: 88, z: 211, r: 11, y: null, name: "The Long Wait", line: "“A bitter night for travelers.”\n“A bitter night for musing on the stars.”", card: true, feet: [44, 70], reached: 'the Span', aside: false },
+  spar: { x: 145, z: 215, r: 0, y: null, name: "Shaky Splice", line: "“At intervals we came to the broken fragments of a paved road: broad, cyclopean flags of gneiss.”", card: true, feet: [40, 70], axis: { x0: 122, x1: 169, half: 3 }, at: { x: 118, z: 214 }, reached: 'the Span', aside: false },
+  bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", line: "“Our eyes swept that limitless, tempest-scarred plateau and grasped the almost endless labyrinth.”", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
+  diffident: { x: 286, z: -14, r: 9, y: null, name: "Lonely Staircase", line: "“Form is shadow, substance is illusion, materiality is dream.”", card: true, feet: [-30, 30], aside: false },
+  croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", line: "“We discovered, however, at an early date, that we ourselves and our buildings were invisible to men.”", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'Lonely Staircase', aside: false },
+  // the top of the lift: the gangway off the carriage and the walked gallery on the cliff, 135 m up
+  remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
 };
 
 // v7.1: region cards. Austin's copy for four of the v4 regions (briefs/copy/place-copy.md): the card shows while the
