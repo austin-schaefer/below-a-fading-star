@@ -78,3 +78,13 @@ headless page lost focus while the machine was busy); it passed on the run befor
 - The passes are named at their feet, inside the walk's limit.
 - Old house-test lamp check (at least 100, four colours incl. turquoise and green) replaced with the owner's word: 30 to 70, warm only, one per pole, four inside, the hearth light steady.
 - The far places in the settings panel lost their descriptive names ("The tender's deck") for the card names.
+
+## Review fixes (2026-11-15)
+
+- The bench's top leg goes to "The Long Wait" by name; perf-test fails if it falls back.
+- roads-test: `reached` passes only for places that are up (feet over 20 m) or at the walk's edge. The Escalade (20 m), the Soundings (50 m) and the Diffident Stair (25 m) are in EXEMPT by name with those bounds; I laid no tracks because paths belong to B2.
+- settings-test stands at each ascent's last point, and at the gallery's first point too, and reads the HUD. The Hanging Croft's card now runs as a line in z over the deck and the walkable member.
+- The fire, the oven and the ladder are walls you cannot stand on.
+- The Link-Boy skips the new cards (`aside: false`); at all 122 lead ends his side is unchanged.
+- `ONLY=settings,roads,house,perf,walk tools/suite.sh 8164`: settings 76, roads 63, house 20, walk 13, perf 29, 0 failed. Settings took 387 s and the new names check takes under 0.1 s.
+- 20 m render: `house-r4-hearth20.png`, no z-fighting.
