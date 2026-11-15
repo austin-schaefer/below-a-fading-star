@@ -12,7 +12,7 @@ The lattices were built by nobody now remembered and they hang in the air over t
 
 One lattice has sunk. It hangs lowest of all now, its foot a hundred metres over the east moor, and it does not turn. The tender has made a home on that foot, because the old stair reaches it and a person who works in the sky still needs bread and water and somewhere to sit: a deck of planks on iron brackets bolted to the node, a lean-to of old bronze sheet, a cot with a crimson blanket, a stove and a kettle, cups on a shelf, a pot of moss, a line of washing, a high-backed chair turned to the sun with a cushion on it and a crate beside it for the cup. And at the foot of the ladder of rungs that goes up the strut into the lattice: the tools, absurdly big, an oil can with a spout like a heron's neck and a brush on a seven-metre pole.
 
-The stair is diffident. It lies on the moor as a line of old slabs in the turf, with seven steps standing at its end between two posts, and it comes for whoever climbs it, a slab at a time out of its bed, and goes back behind them. The tender has climbed it so often that nobody on the moor ever notices; a visitor who climbs it finds the home empty, the kettle on the stove, and, after a little while, a lamp coming down the ladder out of the lattice, hand over hand, to hang on its hook by the shelf. Nobody sets it down. It stays a while, and climbs away.
+The stair is diffident. It lies on the moor under the turf, a canted lip of old slab showing here and there, with seven steps standing at its end between two posts, and it comes for whoever climbs it, a slab at a time out of its bed, and goes back behind them. The tender has climbed it so often that nobody on the moor ever notices; a visitor who climbs it finds the home empty, the kettle on the stove, and, after a little while, a lamp coming down the ladder out of the lattice, hand over hand, to hang on its hook by the shelf. Nobody sets it down. It stays a while, and climbs away.
 
 ## Beats
 
@@ -42,7 +42,7 @@ Whether there is anyone holding the lamp.
 
 ## Log
 
-- 2026-11-15, v14-B6 (#54, the owner: the path ended at the stair's back): the line of slabs runs into the stub's top, as the stair goes on from there; a heather trod off the Nave way comes round the tor to the stub's foot, so a walker meets the first step facing up it.
+- 2026-11-15, v14-B6 (#54, the owner followed the line of slabs to the stub's blank back): the slabs are steps not yet risen, most under the turf and the rest sunk to canted lips like fallen treads, none near the stub's back or a path; two heather trods come to the stub's foot, one round the tor and one behind the stub and down its side.
 - 2026-11-15, v14-B5 (#52, the owner): the stair is "Lonely Staircase"; it and "The Hanging Croft" have the owner's quotations.
 - 2026-11-15, v14-B3 (#52): the stub has its card, "The Diffident Stair"; the home on the lattice's foot is "The Hanging Croft".
 - 2026-11-12, v12-H3: written and built with the Diffident Stair (`src/v12/stair.js`); the seed was the milestone doc's ("a lamp already goes from lattice to lattice, stops at each a while as if tending it").

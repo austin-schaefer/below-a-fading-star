@@ -37,3 +37,35 @@ The stair's ascent (`ctx.ascents` 'stair') also started on its first tread: `FOO
 - I moved the path, not the stair, as the brief preferred.
 - The check uses 4 m and "not more than 0.3 m up the climb's side".
 - Following the brief, I fixed the icefall's missing trod because it was small.
+
+## Round 2 (the owner: "yes, it was slab line that i followed to stair")
+
+Merged `origin/next` first.
+
+- **At the cause** (`src/v12/stair/plan.js`, pure, the same in every tool; the pose in `src/v12/stair.js`): a slab lying in the turf was flat and 15 cm proud, so the line read as paving. Now 147 of them lie under the turf altogether, bed and all, in runs of about a metre. The rest are sunk to a lip and canted (0.1 to 0.26 rad across, up to 0.25 rad askew), like fallen treads. Everything near the stub's back is under: the flight past the stub and its first landing. The nearest slab in sight is 6 m from the back. The last 5 m of the top flight is under too, because it came within a step of P10. No slab joins a path. Called, they still tear up out of the ground, with the dust at the turf.
+- **P53**, a trod off P22 at (247, -15), crosses the sunk slabs, passes behind the stub and runs down its west side to the foot, where it meets P51. From the back, the way round is a worn trod. P51 stays.
+- **roads-test**: an ascent may name its `back` (the stair does). Within 4 m of it there may be no track end and no slab lying in sight. The Sexton's stair into the Nave (`coffin-road`, which came in from next) has no track to its head, 42 m from P22. It is listed in `FEET_OPEN` for the Nave's brief and not fixed here.
+
+### Tests
+
+`ONLY=roads,paths,stair,heights,settings,walk,rocks tools/suite.sh 8164`: paths 79, roads 58, rocks 42, walk 13, heights 111 (the stair's ascent climbed), stair 5, all ok. **settings fails** at its first `page.click('#gear')`, a 30 s timeout, both times. It fails the same way with next's own `stair.js`, `plan.js` and `routes.js` in place of mine, so it comes from next (after D0's merge), not from this branch. In my own probe page the gear clicked at once.
+
+### Scatter (instance and collider positions dumped with and without P51 to P53, diffed; the dump is deterministic)
+
+- roads (gnomon beads, colliders): 9 to 12 moved, all within 34 m of the new trods.
+- High Ling (clitter 128, gorse 42 + 7 far, stonechats 10, colliders 32): moved up to 89 m off, over the region. Its stream re-rolls.
+- rocks: 86 of 825 colliders and about 90 instances moved **across the whole map**, as far as (-220, 219). A changed lead shifts the rocks' one stream. That is wider than the trods.
+- vegetation: 3 of 408 build-check entries.
+
+### Frames (shots/wip/)
+
+- From the slab line's west end at P10: `b6r2-slabs-00-0m` to `-12-end`, plan `b6r2-slabs-plan`.
+- From P22 along P53: `b6r2-p22-00-0m` to `-07-end`, plan `b6r2-p22-plan`.
+- Views: `b6r2-after-plan-above`, `b6r2-after-slabs-close`, `b6r2-after-oblique`.
+- The icefall's P52: `b6r2-icefall-02-20m`, `b6r2-icefall-05-end`.
+- The plans outline the buried slabs and fill the ones in sight.
+
+### Weak
+
+- My walks follow a script; no one walked them without knowing the place.
+- The canted slabs overlap one another where two cant into each other.
