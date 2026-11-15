@@ -411,6 +411,10 @@ export async function build(ctx) {
   const t0 = performance.now();
   await ctx.progress?.('raising the plinths', 0);
 
+  // v13 L4: half of this build is the feet's polygonised field, and emitFigure draws no rng, registers nothing and
+  // writes only into feet. So the feet's finished arrays are kept (ctx.kept.open) and a repeat visit skips emitFigure
+  // alone: every draw, box and collider below is made as on a first visit (lying()'s offset loops then run over none)
+  const slot = ctx.kept?.open ? await ctx.kept.open('plinths.feet') : null, hit = slot?.data || null;
   const yawRoad = Math.atan2(-PZ, PX); // a plinth's local x runs across the road, its z down it
   const stoneG = [], cols = (r) => ctx.addCollider(r);
   const q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), pv = new THREE.Vector3(), M = new THREE.Matrix4();
@@ -440,7 +444,7 @@ export async function build(ctx) {
   };
   const feet = { pos: [], nrm: [], col: [], idx: [] };
   const cell = low ? CELL_LO : CELL_HI;
-  const placeFigure = (F, mat) => emitFigure(F, mat, feet, cell, noise, F.bronze ? PAL.bronze : PAL.stone);
+  const placeFigure = hit ? () => {} : (F, mat) => emitFigure(F, mat, feet, cell, noise, F.bronze ? PAL.bronze : PAL.stone);
   const FM = new THREE.Matrix4(), RQ = new THREE.Quaternion();
   const facingYaw = (fx, fz) => Math.atan2(-fz, fx); // three's Y rotation taking local +x to (fx, 0, fz)
 
@@ -564,11 +568,15 @@ export async function build(ctx) {
   sMesh.matrixAutoUpdate = false; sMesh.updateMatrix();
   scene.add(sMesh);
 
+  // as the attributes take them: Float32, the index Uint16 under 65536 vertices
+  const fa = hit || { pos: new Float32Array(feet.pos), nrm: new Float32Array(feet.nrm), col: new Float32Array(feet.col),
+    idx: feet.pos.length / 3 > 65535 ? new Uint32Array(feet.idx) : new Uint16Array(feet.idx) };
+  if (!hit) slot?.keep(fa);
   const fGeo = new THREE.BufferGeometry();
-  fGeo.setAttribute('position', new THREE.Float32BufferAttribute(feet.pos, 3));
-  fGeo.setAttribute('normal', new THREE.Float32BufferAttribute(feet.nrm, 3));
-  fGeo.setAttribute('color', new THREE.Float32BufferAttribute(feet.col, 3));
-  fGeo.setIndex(feet.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(feet.idx, 1) : new THREE.Uint16BufferAttribute(feet.idx, 1));
+  fGeo.setAttribute('position', new THREE.BufferAttribute(fa.pos, 3));
+  fGeo.setAttribute('normal', new THREE.BufferAttribute(fa.nrm, 3));
+  fGeo.setAttribute('color', new THREE.BufferAttribute(fa.col, 3));
+  fGeo.setIndex(new THREE.BufferAttribute(fa.idx, 1));
   fGeo.computeBoundingSphere();
   const fMesh = new THREE.Mesh(fGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0.08 }));
   fMesh.name = 'plinths-feet'; fMesh.castShadow = true; fMesh.receiveShadow = true;

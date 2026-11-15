@@ -296,26 +296,35 @@ export async function build(ctx) {
   if (OFF) { ctx.thrones = { stats: () => ({ calls: 0, tris: 0 }), rim: null, off: true }; return; }
   const seats = ctx.mountains.seats;
   const cell = ctx.quality === 'low' ? 2.4 : 1.7;
-  const out = { pos: [], nrm: [], col: [], rim: [], idx: [] };
   const t0 = performance.now();
   await ctx.progress('carving the thrones', 0);
-  // seat 0 (-420, 100) has its wall on +across, seat 1 (-400, 200) on -across; the two crawl out of step
-  buildOne(ctx, seats[0], 1, 1, out, cell);
-  await ctx.progress('carving the thrones', 0.5);
-  buildOne(ctx, seats[1], -1, -1, out, cell);
+  // v13 L4: the two colossi's arrays are computed once and kept (ctx.kept). buildOne touches nothing but its own
+  // fresh rng (makeRng(8810 + side * 7)), its own simplex, heightAt (pure) and these arrays, so a repeat visit that
+  // skips it leaves every other stream where it was
+  const carve = async () => {
+    const out = { pos: [], nrm: [], col: [], rim: [], idx: [] };
+    // seat 0 (-420, 100) has its wall on +across, seat 1 (-400, 200) on -across; the two crawl out of step
+    buildOne(ctx, seats[0], 1, 1, out, cell);
+    await ctx.progress('carving the thrones', 0.5);
+    buildOne(ctx, seats[1], -1, -1, out, cell);
+    // as the attributes below take them (Float32; the index Uint16 under 65536 vertices)
+    return { pos: new Float32Array(out.pos), nrm: new Float32Array(out.nrm), col: new Float32Array(out.col), rim: new Float32Array(out.rim),
+      idx: out.pos.length / 3 > 65535 ? new Uint32Array(out.idx) : new Uint16Array(out.idx) };
+  };
+  const out = await (ctx.kept ? ctx.kept('thrones.mesh', carve) : carve());
   const t1 = performance.now();
   const n = out.pos.length / 3;
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(out.pos, 3));
-  geo.setAttribute('normal', new THREE.Float32BufferAttribute(out.nrm, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(out.col, 3));
-  geo.setAttribute('aRim', new THREE.Float32BufferAttribute(out.rim, 1));
+  geo.setAttribute('position', new THREE.BufferAttribute(out.pos, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(out.nrm, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(out.col, 3));
+  geo.setAttribute('aRim', new THREE.BufferAttribute(out.rim, 1));
   // the terrain material's own attributes, empty: no ice, no wet, no glacier, no wall water
   geo.setAttribute('aIce', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aWall', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aGlac', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  geo.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(out.idx, 1) : new THREE.Uint16BufferAttribute(out.idx, 1));
+  geo.setIndex(new THREE.BufferAttribute(out.idx, 1));
   geo.computeBoundingSphere();
 
   // the terrain's material, compiled again with the rim (as v4/regions/skin.js does for the ground skins)
