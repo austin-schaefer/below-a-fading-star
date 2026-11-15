@@ -100,8 +100,8 @@ const CELL_HI = 0.3, CELL_LO = 0.4;
 const DEAL = ['raptor', 'pig', 'wader', 'lizard', 'hoof', 'ratite', 'paw', 'webbed', 'raptor', 'tortoise', 'croc', 'parrot',
   'pig', 'lizard', 'webbed', 'hoof', 'tortoise', 'wader', 'parrot', 'croc', 'ratite', 'paw', 'lizard', 'raptor'];
 
-// Each distance reads constants prep() works out once a part (v13-L5: the same expressions, so the same doubles, as
-// when they were worked out at every call; the field is evaluated about a million times a load).
+// Each distance reads constants prep() works out once a part (v13-L5: the field is evaluated about a million times a
+// load; each constant is the same expression on the same doubles wherever it is worked out).
 function prep(p) {
   if (p.t === 'cap') {
     p.a0 = p.a[0]; p.a1 = p.a[1]; p.a2 = p.a[2];

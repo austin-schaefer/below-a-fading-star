@@ -14,7 +14,7 @@ export function mergeGeometries(geos) {
     let o = 0;
     for (const g of geos) {
       let a = g.attributes[n], src = a.array, index = g.index;
-      if (index && a.itemSize !== size) { a = g.toNonIndexed().attributes[n]; src = a.array; index = null; } // as it was, odd as that is
+      if (index && a.itemSize !== size) { a = g.toNonIndexed().attributes[n]; src = a.array; index = null; } // a part whose item size differs from the first's: unrolled, then read at the first's item size
       if (index) {
         const ix = index.array, il = a.isInterleavedBufferAttribute;
         const stride = il ? a.data.stride : size, off = il ? a.offset : 0;

@@ -40,8 +40,9 @@ export function makeWaterTexture(rng, size = 256) {
   const exact = (size & (size - 1)) === 0;
   for (const w of waves) {
     const lo = (Math.min(0, w.kx) + Math.min(0, w.ky)) * (size - 1), hi = (Math.max(0, w.kx) + Math.max(0, w.ky)) * (size - 1);
+    if (!exact) continue;
     w.lo = lo; w.sin = new Float64Array(hi - lo + 1); w.cos = new Float64Array(hi - lo + 1);
-    if (exact) for (let m = lo; m <= hi; m++) { const arg = TAU * (m / size) + w.ph; w.sin[m - lo] = Math.sin(arg); w.cos[m - lo] = Math.cos(arg); }
+    for (let m = lo; m <= hi; m++) { const arg = TAU * (m / size) + w.ph; w.sin[m - lo] = Math.sin(arg); w.cos[m - lo] = Math.cos(arg); }
   }
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const u = x / size, v = y / size;

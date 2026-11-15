@@ -205,7 +205,7 @@ export class Builder {
     let muv = g.attributes.muv;
     const pos = g.attributes.position;
     // v13-L5: per vertex through the typed arrays, not getX/setXYZ (the same values: these attributes are plain
-    // float arrays, neither normalized nor interleaved; anything else goes through the accessors as before)
+    // float arrays, neither normalized nor interleaved; anything else goes through the accessors)
     const plain = (a) => a && !a.isInterleavedBufferAttribute && !a.normalized;
     if (!muv) {
       // planar masonry coordinates from the local normal

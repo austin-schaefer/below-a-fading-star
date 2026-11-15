@@ -1,26 +1,28 @@
 #!/usr/bin/env node
 // What every module built, as one fingerprint a module (v13-L5): for a change to a builder that must not change
 // what is seen. terrain-probe's idea, for the whole scene.
-//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b]
+//   node tools/build-check.mjs <base> [--q=low] [--params=a=1&b=2] [--runs=1] [--record=path.json] [--against=path.json] [--only=a,b] [--allowunstable]
 // It loads <base>/?q=<q>&<params> and, at the "ready" mark (src/startup.js), synchronously, before the first frame
 // has run any update, walks the objects each module added to the scene (the profiler's tagging, ctx.perf._mods;
 // what no module claimed is 'core': the terrain, the sky, the lights) and hashes, bit for bit: every geometry
-// attribute and index (with its draw range), each InstancedMesh's matrices, colours and count, each object's world
-// matrix, each material's scalar, colour and vector properties and uniforms, and each texture's pixels (a canvas's
-// by getImageData, a DataTexture's data). One line a module: its fingerprint, its object, attribute and texture
-// counts and the megabytes hashed. --record writes the entries; --against compares with a recording and prints
-// IDENTICAL or MOVED a module, with the first entries that moved (an attribute's weighted sum, before and after,
-// says by how much) and exits 1 if any moved. Objects a module parents under another (the camera) are not seen.
-// The warm-up draw (src/warmup.js) runs before "ready", so onBeforeRender packing is in the fingerprint; it is
-// deterministic for a fixed load. A module's fingerprint does not depend on the order its roots were added in.
-// Record twice on one tree to see that it is stable before trusting a MOVED.
+// attribute and index (array type, item size, normalized, interleaving; draw range, groups, instanceCount), each
+// InstancedMesh's matrices, colours and count, each object's world matrix, visibility and shadow, culling and render
+// order flags, each material's scalar, colour and vector properties, defines and uniforms (typed arrays by their
+// bytes), and each texture's pixels (a canvas's by getImageData, a DataTexture's data) and sampling parameters.
+// Not covered: shader code changed in onBeforeCompile, colliders, registered updates, acts, anything outside the
+// scene or parented under the camera. One line a module: its fingerprint, its object, attribute and texture counts
+// and the megabytes hashed. --record writes the entries with q and params; --against compares with a recording made
+// with the same q and params (it refuses otherwise) and prints IDENTICAL or MOVED a module, with the first entries
+// that moved (an attribute's weighted sum, before and after, says by how much), and exits 1 if any moved or nothing
+// was compared. The warm-up draw (src/warmup.js) runs before "ready", so onBeforeRender packing is in the
+// fingerprint. A module's fingerprint does not depend on the order its roots or children were added in.
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1' };
+const opts = { q: 'low', params: '', record: '', against: '', only: '', runs: '1', allowunstable: '' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
   const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
@@ -82,6 +84,7 @@ function install() {
     }
     return parts.join(';');
   }
+  const childId = (c) => `${c.type}${c.name ? ' ' + c.name : ''}${c.geometry?.attributes?.position ? ' v' + c.geometry.attributes.position.count : ''}`;
   const MAT_SKIP = new Set(['uuid', 'id', 'version', 'name', 'userData', '_listeners']);
   function fingerprint(ctx) {
     const t0 = performance.now();
@@ -105,7 +108,7 @@ function install() {
         objs++;
         o.updateMatrixWorld?.(false);
         const tag = `${path}<${o.type}${o.name ? ' ' + o.name : ''}>`;
-        entries.push({ k: tag + ':matrix', h: hashBuf(new Float64Array(o.matrixWorld.elements)) + (o.visible ? '' : ':hidden') });
+        entries.push({ k: tag + ':matrix', h: hashBuf(new Float64Array(o.matrixWorld.elements)) + (o.visible ? '' : ':hidden') + `|${o.castShadow},${o.receiveShadow},${o.frustumCulled},${o.renderOrder}` });
         const g = o.geometry;
         if (g && g.attributes) {
           for (const an of Object.keys(g.attributes).sort()) {
@@ -113,10 +116,10 @@ function install() {
             const arr = at.isInterleavedBufferAttribute ? at.data.array : at.array;
             if (!arr) continue;
             attrs++;
-            entries.push({ k: `${tag}:${an}`, h: hashBuf(arr) + `/${at.itemSize}/${at.isInterleavedBufferAttribute ? at.offset + 'i' : ''}`, n: arr.length, s: wsum(arr) });
+            entries.push({ k: `${tag}:${an}`, h: hashBuf(arr) + `/${arr.constructor.name}/${at.itemSize}/${at.normalized ? 'n' : ''}/${at.isInterleavedBufferAttribute ? at.offset + 'i' + at.data.stride : ''}`, n: arr.length, s: wsum(arr) });
           }
           if (g.index) entries.push({ k: `${tag}:index`, h: hashBuf(g.index.array), n: g.index.array.length });
-          entries.push({ k: `${tag}:draw`, h: `${g.drawRange.start},${g.drawRange.count};${(g.groups || []).map((x) => `${x.start},${x.count},${x.materialIndex}`).join('|')}` });
+          entries.push({ k: `${tag}:draw`, h: `${g.isInstancedBufferGeometry ? 'i' + g.instanceCount + ';' : ''}${g.drawRange.start},${g.drawRange.count};${(g.groups || []).map((x) => `${x.start},${x.count},${x.materialIndex}`).join('|')}` });
         }
         if (o.isInstancedMesh) {
           entries.push({ k: `${tag}:instanceMatrix`, h: hashBuf(o.instanceMatrix.array) + '#' + o.count, n: o.count, s: wsum(o.instanceMatrix.array.subarray(0, o.count * 16)) });
@@ -135,6 +138,7 @@ function install() {
               const v = m.uniforms[k]?.value;
               if (v?.isTexture) tx.push(['u.' + k, v]);
               else if (Array.isArray(v)) v.forEach((x, i) => { if (x?.isTexture) tx.push([`u.${k}[${i}]`, x]); else us.push(`${k}[${i}]=${x?.toArray ? x.toArray().join(',') : x}`); });
+              else if (ArrayBuffer.isView(v)) us.push(`${k}=${v.constructor.name}:${hashBuf(v)}`);
               else if (v != null && typeof v !== 'function') us.push(`${k}=${v.toArray ? v.toArray().join(',') : (typeof v === 'object' ? (v.isTexture ? 'tex' : '{}') : v)}`);
             }
             entries.push({ k: `${tag}:mat${mi}:uniforms`, h: hashStr(us.join(';')) });
@@ -142,20 +146,30 @@ function install() {
           for (const [k, t] of tx) {
             if (t.isRenderTargetTexture) continue;
             let th = texSeen.get(t);
-            if (!th) { const p = texPixels(t); th = `${p.h}@${p.w}x${p.hh}`; texSeen.set(t, th); texs++; }
+            if (!th) {
+              const p = texPixels(t);
+              th = `${p.h}@${p.w}x${p.hh}|${t.wrapS},${t.wrapT},${t.magFilter},${t.minFilter},${t.generateMipmaps},${t.anisotropy},${t.flipY},${t.colorSpace},${t.repeat.toArray()},${t.offset.toArray()}`;
+              texSeen.set(t, th); texs++;
+            }
             entries.push({ k: `${tag}:mat${mi}.${k}`, h: th });
           }
         });
-        o.children.forEach((c, i) => walk(c, `${path}/${i}`));
+        // a child is keyed by its type, name and vertex count and how many siblings before it share them (not its
+        // index), so a child added in a racing order does not shift its later siblings' keys
+        const seen = new Map();
+        for (const c of o.children) {
+          const id = childId(c), nth = seen.get(id) || 0;
+          seen.set(id, nth + 1);
+          walk(c, `${path}/${id}#${nth}`);
+        }
       };
       // a root's hash is its subtree's entries without the root's index; the module's is over its roots' hashes
       // sorted, so the order roots were added in (async builds race) does not move it
       const rootHashes = [];
-      // a root is keyed by its type and name and how many roots before it share them, so a key does not shift when
-      // another root is added earlier
+      // a root is keyed as a child is (below), so a key does not shift when another root is added earlier
       const seenRoot = new Map();
       list.forEach((o) => {
-        const id = `${o.type}${o.name ? ' ' + o.name : ''}`, nth = seenRoot.get(id) || 0;
+        const id = childId(o), nth = seenRoot.get(id) || 0;
         seenRoot.set(id, nth + 1);
         const e0 = entries.length, p = `#${nth}`;
         walk(o, p);
@@ -198,9 +212,9 @@ const unstable = new Map(); // module -> Set of keys
 for (let k = 1; k < runs; k++) {
   const r = await once();
   for (const [n, m] of Object.entries(res.mods)) {
-    const other = new Map((r.mods[n]?.entries || []).map((e) => [e.k, e.h]));
-    const keys = new Set([...m.entries.map((e) => e.k), ...other.keys()]);
-    for (const key of keys) if (other.get(key) !== m.entries.find((e) => e.k === key)?.h) { if (!unstable.has(n)) unstable.set(n, new Set()); unstable.get(n).add(key); }
+    const other = new Map((r.mods[n]?.entries || []).map((e) => [e.k, e.h])), mine = new Map(m.entries.map((e) => [e.k, e.h]));
+    const keys = new Set([...mine.keys(), ...other.keys()]);
+    for (const key of keys) if (other.get(key) !== mine.get(key)) { if (!unstable.has(n)) unstable.set(n, new Set()); unstable.get(n).add(key); }
   }
 }
 await browser.close();
@@ -220,17 +234,29 @@ for (const n of names) {
   console.log(`  ${n.padEnd(22)} ${m.h}  ${String(m.objs).padStart(5)} objects ${String(m.attrs).padStart(5)} attributes ${String(m.texs).padStart(3)} textures ${String(m.mb).padStart(6)} MB${m.unstable ? `  (${m.unstable.length} entries unstable between loads: ${m.unstable.slice(0, 3).join(', ')}${m.unstable.length > 3 ? ', ...' : ''})` : ''}`);
 }
 if (opts.record) {
-  writeFileSync(opts.record, JSON.stringify({ kind: 'fading-planet-build-check', url, runs, date: new Date().toISOString(), mods: res.mods }));
+  writeFileSync(opts.record, JSON.stringify({ kind: 'fading-planet-build-check', url, q: opts.q, params: opts.params, runs, date: new Date().toISOString(), mods: res.mods }));
   console.log('[recorded]', opts.record);
 }
 if (opts.against) {
-  const ref = JSON.parse(readFileSync(opts.against, 'utf8')).mods;
-  let moved = 0, same = 0;
+  const rec = JSON.parse(readFileSync(opts.against, 'utf8')), ref = rec.mods;
+  if (rec.q !== opts.q || (rec.params || '') !== opts.params) { console.log(`FAIL the recording is q=${rec.q} params=${rec.params || '(none)'}, this load q=${opts.q} params=${opts.params || '(none)'}: record again or match them`); process.exit(2); }
+  // only the recording's unstable entries are skipped: one that is unstable in this load but was stable when recorded
+  // is new nondeterminism, a failure. More than MAX_SKIP of a module's entries skipped fails unless --allowunstable.
+  const MAX_SKIP = 0.1;
+  let moved = 0, same = 0, compared = 0;
   for (const n of [...new Set([...names, ...Object.keys(ref).filter((n) => !only || only.has(n))])].sort()) {
     const a = ref[n], b = res.mods[n];
     if (!a || !b) { console.log(`MOVED ${n}: only in the ${a ? 'recording' : 'this load'}`); moved++; continue; }
-    const skip = new Set([...(a.unstable || []), ...(b.unstable || [])]);
-    if (stableHash(a, skip) === stableHash(b, skip)) { console.log(`IDENTICAL ${n}${skip.size ? ` (${skip.size} unstable entries skipped)` : ''}`); same++; continue; }
+    const skip = new Set(a.unstable || []);
+    const fresh = (b.unstable || []).filter((k) => !skip.has(k));
+    if (fresh.length) { console.log(`MOVED ${n}: ${fresh.length} entries unstable in this load but stable in the recording: ${fresh.slice(0, 3).join(', ')}`); moved++; continue; }
+    const share = skip.size / Math.max(1, a.entries.length);
+    if (share > MAX_SKIP) {
+      console.log(`${opts.allowunstable ? 'WARN' : 'MOVED'} ${n}: ${skip.size} of ${a.entries.length} entries are unstable in the recording (over ${MAX_SKIP * 100}%), too many to call it identical`);
+      if (!opts.allowunstable) { moved++; continue; }
+    }
+    compared += a.entries.length - skip.size;
+    if (stableHash(a, skip) === stableHash(b, skip)) { console.log(`IDENTICAL ${n}${skip.size ? ` (${skip.size} of ${a.entries.length} entries skipped as unstable)` : ''}`); same++; continue; }
     moved++;
     const A = new Map(a.entries.map((e) => [e.k, e])), B = new Map(b.entries.map((e) => [e.k, e]));
     const diffs = [];
@@ -244,6 +270,7 @@ if (opts.against) {
     console.log(`MOVED ${n}: ${diffs.length} of ${a.entries.length} entries`);
     for (const d of diffs.slice(0, 8)) console.log(`    ${d}`);
   }
-  console.log(`${moved ? 'FAIL' : 'PASS'} build-check against ${opts.against}: ${same} identical, ${moved} moved`);
-  process.exit(moved ? 1 : 0);
+  const fail = moved > 0 || compared === 0;
+  console.log(`${fail ? 'FAIL' : 'PASS'} build-check against ${opts.against}: ${same} identical, ${moved} moved, ${compared} entries compared${compared === 0 ? ' (nothing compared: a typo in --only?)' : ''}`);
+  process.exit(fail ? 1 : 0);
 }
