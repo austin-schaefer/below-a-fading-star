@@ -35,7 +35,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: unknown.
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton: his other forty graves are the Coffin Road's forty (`the-coffin-road.md`); never seen at the Nave.
-- The Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet.
+- The Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet. The host lives in his house (v14): his hearth and bread oven, his curtained pallet, a chest, his own plain slippers set side by side, washing on a line, a ladder and limewash for the walls.
 
 ## Things that travel
 
