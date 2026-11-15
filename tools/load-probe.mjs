@@ -3,6 +3,9 @@
 // throttle. It reads src/startup.js's report (window.__fp_startup.report()) and counts the network over CDP.
 //   node tools/load-probe.mjs <base> [--q=low|medium|high] [--runs=3] [--throttle=4] [--net=fast4g|slow4g|3g]
 //                                    [--serial=0] [--params=a=1&b=2] [--json=path]
+//   node tools/load-probe.mjs <base> --profile [--q=low] [--interval=200] [--inclusive=heightAt,slopeAt,...] [--out=path]
+//     where the CPU goes instead (v13-P2, tools/load-profile.mjs says how): self time by function and by file,
+//     inclusive time for named functions, per phase and per module build, with heightAt's call counts.
 // Each run, in a new browser context (empty cache): a cold load; a repeat load (a reload in that context, as a
 // visitor's refresh); then, unless --serial=0, a third load in the same context with ?serial=1, which imports every
 // module first and builds them one at a time, so each module's build time is its own (startup.js says how).
@@ -26,11 +29,11 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 
-const opts = { q: 'low', runs: '3', throttle: '1', net: '', serial: '1', params: '', json: '' };
+const opts = { q: 'low', runs: '3', throttle: '1', net: '', serial: '1', params: '', json: '', profile: '', interval: '200', inclusive: '', out: '' };
 const pos = [];
 for (const a of process.argv.slice(2)) {
-  const m = a.match(/^--([a-z]+)=(.*)$/);
-  if (m) opts[m[1]] = m[2]; else pos.push(a);
+  const m = a.match(/^--([a-z]+)(?:=(.*))?$/);
+  if (m) opts[m[1]] = m[2] ?? '1'; else pos.push(a);
 }
 const base = (pos[0] || 'http://localhost:8123').replace(/\/$/, '');
 const runs = Math.max(1, +opts.runs || 3), rate = Math.max(1, +opts.throttle || 1);
@@ -42,6 +45,15 @@ const url = `${base}/?${query}`;
 
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const errors = [];
+if (opts.profile) {
+  const { runProfile } = await import('./load-profile.mjs');
+  const lines = [];
+  const wait = (page) => page.waitForFunction(() => document.body?.classList.contains('ready') && window.__fp_startup?.report().ready != null, null, { timeout: 900000, polling: 250 });
+  await runProfile({ browser, base, query, opts, wait, P: (s) => { lines.push(s); console.log(s); } });
+  await browser.close();
+  if (opts.out) { writeFileSync(opts.out, lines.join('\n') + '\n'); console.log('[saved]', opts.out); }
+  process.exit(0);
+}
 
 async function load(page, cdp, kind, go) {
   const reqs = new Map();
