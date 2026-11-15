@@ -1,6 +1,7 @@
 // Entry point. Builds the renderer, terrain, sky, lights and controls, then asks each world
 // module (vegetation, structures, water, particles, fauna, audio) to build itself against a
 // shared context, and runs the frame loop. Modules register per-frame updates via ctx.registerUpdate.
+import * as startup from './startup.js'; // v13-P0: first, so its top level marks when the static graph has arrived
 import * as THREE from 'three';
 import { installAtmosphere, FOG_DENSITY } from './atmosphere.js';
 import { buildTerrain } from './terrain.js';
@@ -93,6 +94,7 @@ async function start() {
   // Quality tier (tier.js, v3 stage 3): 'high' | 'medium' | 'low', from ?q= / ?tier=, the debug panel's pin, or the device
   const tierChoice = await chooseTier(url);
   const quality = tierChoice.name;
+  startup.mark('tier');
   const only = url.searchParams.get('only'); // comma list of modules to load (for testing)
   const skip = (url.searchParams.get('skip') || '').split(',').filter(Boolean);
 
@@ -126,6 +128,7 @@ async function start() {
   // texture and target bytes for the profiler: the GL hooks only when it is on from the start (perf.js installs them late otherwise)
   const gpumem = url.searchParams.get('perf') === '1' || url.searchParams.get('bench') != null ? installGpuMem(renderer.getContext(), canvas) : null;
   renderer.setSize(innerWidth, innerHeight);
+  startup.mark('renderer');
   renderer.shadowMap.enabled = true;
   // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands
   // the dappled light in the wood (shots/wip/perf-02-pcf-wood-*), for a saving of a few multiplies a tap.
@@ -198,8 +201,10 @@ async function start() {
 
   // Terrain
   ctx.terrain = buildTerrain(ctx);
+  startup.mark('terrain');
   // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
   ctx.mountains = buildMountains(ctx);
+  startup.mark('mountains');
   ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
   ctx.tinctures = makeTinctures(ctx, url); // v4 Tinctures (DI): each region's hue in the haze, ?tinct=0 off
   ctx.places = places; // v8-02: each place's ground, cover and light (placeAt, gradeAt)
@@ -239,15 +244,42 @@ async function start() {
   ctx.hud = buildHud(ctx);
   import('./settings.js').then((m) => m.buildSettings(ctx)).catch((e) => console.error('[fp] settings failed:', e)); // v7-08: the gear and its panel
 
-  // World modules
-  const results = await Promise.allSettled(wanted.map(async ([name, load]) => {
-    const t0 = performance.now();
+  startup.mark('scaffold');
+
+  // World modules. ?serial=1 (v13-P0, for tools/load-probe.mjs): every import first, then each build alone, so
+  // each module's time is its own (src/startup.js); otherwise they import and build together, as visitors get.
+  const serial = url.searchParams.get('serial') === '1';
+  startup.setSerial(serial);
+  let lastImport = 0;
+  const buildOne = async (name, load, t0) => {
     try {
       const mod = await load();
+      const t1 = startup.imported(name, t0);
+      lastImport = Math.max(lastImport, t1);
+      if (serial) return mod;
       await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
+      startup.built(name, t1);
       ctx.log(`${name} ready in ${(performance.now() - t0).toFixed(0)}ms`);
-    } finally { settled++; within = 0; progress(); }
-  }));
+    } finally { if (!serial) { settled++; within = 0; progress(); } }
+  };
+  let results = await Promise.allSettled(wanted.map(([name, load]) => buildOne(name, load, performance.now())));
+  startup.mark('imports', null, lastImport || undefined);
+  if (serial) {
+    const loaded = results;
+    results = [];
+    for (let i = 0; i < wanted.length; i++) {
+      const name = wanted[i][0], t1 = performance.now();
+      try {
+        if (loaded[i].status === 'rejected') throw loaded[i].reason;
+        await loaded[i].value.build(ctx.perf.forModule(name));
+        startup.built(name, t1);
+        ctx.log(`${name} built alone in ${(performance.now() - t1).toFixed(0)}ms`);
+        results.push({ status: 'fulfilled' });
+      } catch (e) { results.push({ status: 'rejected', reason: e }); }
+      finally { settled++; within = 0; progress(); }
+    }
+  }
+  startup.mark('modules');
   results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
   installFar(ctx, url); // v12-H5: ctx.far (src/v12/far.js); on after the warm-up
 
@@ -258,6 +290,7 @@ async function start() {
   ctx.tier.attach(); // the debug panel's quality rows, above perf's measure rows
   ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
+  startup.mark('post');
   // Every material's shader program is compiled here, behind the title card. three otherwise compiles a
   // program the first time its object is drawn, and on ANGLE's Metal one compile holds a frame for tens of
   // milliseconds: turning towards a creature, a ruin or a region not yet seen stalled the frame and the
@@ -273,6 +306,7 @@ async function start() {
     await compiling;
     ctx.log(`programs compiled in ${(performance.now() - tc).toFixed(0)}ms (${renderer.info.programs.length})`);
   }
+  startup.mark('programs', { count: renderer.info.programs?.length ?? null });
 
   // Resize
   function resize() {
@@ -313,6 +347,7 @@ async function start() {
     if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
   }
   ctx.far.start();
+  startup.mark('warmup');
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
@@ -421,6 +456,7 @@ async function start() {
   requestAnimationFrame(loop);
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
+  startup.mark('ready');
 }
 
 start().catch((e) => { console.error(e); document.getElementById('error').textContent = String(e?.stack || e); });

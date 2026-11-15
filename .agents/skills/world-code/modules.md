@@ -28,6 +28,7 @@ What each module under `src/` owns. Every agent that adds a module extends this 
 | `perf.js` | profiler overlay, bench path, recorder, runtime toggles, `ctx.perf` (with `count(key)`, the per-frame counters `pop-test` reads) |
 | `lights.js` | point-light slots: the nearest sources copied into 3 fixed lights |
 | `shadows.js` | shadow-map cadence and the far cut-off for creatures' shadows |
+| `startup.js` | the load's marks from navigation to ready, its long tasks and each module's import and build ms (`report()`, `window.__fp_startup`; v13-P0) |
 | `tier.js` | quality tier choice, the adaptive pixel ratio, the debug panel's quality rows |
 | `gpumem.js` | texture and render-target bytes and per-frame uploads, for the profiler |
 | `fade.js` | the fade kit for cross-fades: `FADE_GLSL` (`fpFadeKeep(f, side)`, a still screen-space dither: side 0 keeps a share f of the pixels, side 1 the rest), `withFade(material, { key, attribute \| vertex \| fadeExpr })`, `fadeDepthMaterial(opts)` for the shadow pass; `node tools/fade-test.mjs <base>` checks it |
