@@ -1,5 +1,61 @@
 # v14-D2 report: the Pit, from the bottom (the sounding down)
 
+## Round 2 (2026-11-15, after the orchestrator's review)
+
+Merged `origin/next` and `origin/issue-1400-first-descent` first (conflicts in `world.js`, `settings.js`, `modules.md` and the stories' index, resolved keeping both sides).
+
+**The blocker (the slabs under the bowl).** `plan.js makeStair` now lifts every tread to the floor under it (sampled at its middle and both edges) +0.04 m, so the line comes down straight until it meets the bowl and then lies on it to its foot. The stair's floor function also never returns under the bowl beside it. Least tread over the floor: +0.01 m at s 0.94. New edges-test rows: off the slabs at s 0.9, 0.95 and 0.99, toward the hole, the wall and down the line (never under the slabs or the floor), and "no tread's top under the floor beside it".
+
+**Changes, point by point.**
+1. *The Nadir.* Inside the ring is black. A direction-drawn far field sits on a 9.5 m disc 1.9 m under the rim, and 180 to 320 near stars sit at real depth (4 to 120 m down, out to 40 m). They move against each other as you walk round, and the field turns slowly, the deep ones slower. No fog. The throat is the floor's thickness, 1.25 m of near-black rock, with a ragged underside turned in, then nothing. The starlight on the rim is cut to a third, so the rim is dark. Frames: `pit-r2-b-nadir-3m.png`, `pit-r2-b-nadir-lean.png`, `pit-r2-b-nadir-3m-side.png`, `pit-r2-a-nadir-8m.png`. At 8 m the hole is a black slit; its stars show from about 4 m in.
+2. *Haze and readability.* The Pit's haze share falls from just under the lip to 0.06 by the floor's upper 14 m (was 0.22 at the floor only). The throat's rock has beds and wet streaks, and is lighter at the foot. The slabs are paler, with a worn middle. There are eight lamps on the way (a next light every 9 m). The floor's sky light is 0.34. "The Nadir" card's feet are now [−40, −27]: it fires on the floor, not on the stair. Frames: `pit-r2-a-stair-mid.png` (the next six slabs, rope and lamp plain), `pit-r2-walk-up-keys-medium-05-nadir-stair.png`.
+3. *The plume and what is left.* The gust's motes rise the full 26 m in 5 to 6 s, grow as they rise, and spill out over the lip. A breath of fog (18 to 30 soft puffs) rises with them. Frames from the south lookout: `pit-r2-act-lip-07-after-11s`, `-08-after-15s`. After the first sounding the lead is white with rime for good, and frost creeps down the sheers' legs from the sheave, a fifth further each sounding. Two motes per sounding stay hung in the Pit (no tally of strokes). Compare `pit-r2-act-floor-00-before` and `-10-after-26s`.
+4. *Finding it.* The landing's second post is a 3.6 m lamp-post with a brighter, cold beacon (3.5, 14 m). The idle breath's motes now rise the whole throat and show just over the lip. Frame: `pit-r2-walk-down-keys-low-02-moor-pit` (the post and lamp, the landing and slabs from the road's end).
+5. *Rendering faults.*
+   - The pale jagged cutouts behind the tripod were terrain triangles standing above the bowl. Mine, fixed in round 1's last commit (every terrain triangle touching the bowl cut) after the act frames were taken; gone in `pit-r2-act-*`.
+   - The "missing lid" at the top of the shaft is the Great Span's underside (y 45–56, z 207), 80 m up through the height fog. It is not a hole. Hazing its materials from here removed it but cost about 100 s of a software renderer's first frame (recompiles), so I took that out. Still there, and weak.
+   - The dark slabs at the lip are the road's last slabs hanging over the throat (paths.js, by design).
+   - The pale shards in the air were the fallen slabs and lip clods in fog: now hazed (round 1).
+6. *Over the hole.* The floor there is y −90. Whoever gets over it (a teleport, a carry, a fall) drops, the view goes down into the stars and closes, and they wake at the Bitter End (44, −390, yaw 1.2) by the leadsmen's broken eye and the frayed end of their line. `ctx.pit.sky`; stories updated (`the-soundings.md` beat 4b). Seen working: a view render placed inside the ring woke on the shelf.
+7. *One clock.* `do()` re-arms the cues and starts `S.t0 = performance.now()`; the sounding's time is `now − t0`, the same clock as acts.js's busy timer.
+8. *settings-test.* The 3 m cut-off is back; the Nadir's stand is exempted by name. Its `y` is now −31.66.
+9. *Seen from D1's passage.* `below.keep` covers the place, drum, pawl, lead, both lines, the far and near stars, the motes, the breath, the frost, the throat's veneer, the road's slabs and the lip's clods. `below.opening({ x: 200, y: lipY ≈ −3.0, z: 185, r: 15 })` is registered for the disc of sky. **D1 must register its own mouth**: an opening, or a volume that eases below 1 toward the mouth. The Pit's volume is at most 0.6, so the seal never shuts inside the Pit. D1 also cuts through the throat's veneer (`paths-pit-throat`) and the terrain wall at bearing 20.
+10. *The low point.* The bowl's edge is now never under −31.4, and the hole's mouth (−32.4) is the floor's lowest point. Past the edge, up to 2.5 m, the walked floor is the ground or the edge's height, whichever is higher, so the old trench under the north wall's foot can't be walked into. **The mouth point moved: (204.10, 173.73), y −31.40** (was −33.40). Sent to main by SendMessage at once.
+11. *Nits.* The update's `pos` has a `y`. `looks()` uses `hyp`. The `size` comment is fixed.
+
+**Tests, round 2.**
+- `ONLY=edges,heights,settings,walk,hop,audio,perf,loading,regions,paths,roads,acts tools/suite.sh 8163`: 12 tests, 2 failed. Passed: paths 76, roads 57, regions 56, walk 13, hop 25, heights 116, audio 106, loading 28, perf 29, acts 163 PASS lines.
+  - edges failed on two new foot rows, both fixed. One was a real −0.38 m: past the foot's end the line's floor lay under the rising bowl (fixed by the stair floor never returning under the bowl). The other was the test's own measure: −26 m against the landing's floor, 26 m overhead.
+  - settings could not click the gear: one 126 s frame after Go out on swiftshader, from the Span hazing. Removed.
+- Reruns: `node tools/edges-test.mjs` **159 PASS, 0 FAIL**; `ONLY=settings tools/suite.sh 8163` **ok, 86 PASS lines**.
+- Note for the batch run: on swiftshader at 1280×720 the first frame after Go out takes about 26 s even with `?pit=0` (after the merges). settings-test's 30 s gear click is that close to its limit.
+- `act-bell-letters` in audio-test is flaky at its threshold (it must clear the bed by more than 0.5 dB). It sat at exactly +0.5 dB in two round-1 runs (bed 0.00724, the bell's own tails) and at +2.4 dB now (bed 0.00302). The orchestrator's run passed it. Not the Pit's: the Pit's five rows come after it (pawl 0.014, run 0.013, taut 0.160, breath 0.193, home 0.018 rms).
+
+**Walked, round 2** (`tools/pit-walk.mjs`, prefix `pit-r2-walk`): down on the keys on low, up on the keys on medium, up on the touch stick on low. `walked: yes` each, no page errors, lowest feet −32.17.
+
+**Frames, round 2, in order (`shots/wip/`).**
+1. The Nadir: `pit-r2-a-nadir-8m`, `pit-r2-b-nadir-3m`, `pit-r2-b-nadir-3m-side`, `pit-r2-b-nadir-lean` (low).
+2. The act from the floor: `pit-r2-act-floor-00-before` … `-10-after-26s`.
+3. The act from the south lookout: `pit-r2-act-lip-00` … `-09-after-22s`.
+4. Down from the road's end: `pit-r2-walk-down-keys-low-01` … `-13`.
+5. Up from the floor, keys on medium: `pit-r2-walk-up-keys-medium-01` … `-13`.
+6. Up from the floor, touch on low: `pit-r2-walk-up-touch-low-01` … `-13`.
+7. The stair on its own: `pit-r2-a-stair-mid`, `pit-r2-a-stair-low-down`; looking up from the floor: `pit-r2-a-floor-up`.
+
+**What a stranger would now say is inside the ring:** "stars: a hole in the ground with the night sky underneath it, and a glowing crystal hanging over it."
+
+**Still weak (round 2).**
+- The hole reads navy-black, not true black: the grade lifts it.
+- From the touch tier the slabs from the floor are a dim line with lamps.
+- `pit-walk`'s "ahead" frames on the stair look into the wall: its steering heading is a chord.
+- The Span's underside overhead is still a pale flat shape from the floor.
+- The frost is out of frame in the act's floor frames: it climbs from the sheave down.
+- The Nadir's high-tier render was not taken; only low and medium frames exist.
+
+---
+
+## Round 1
+
 Branch `issue-1411-the-pit` (from D0's branch; D0's kit move `39e7401` merged), port 8163, 2026-11-15.
 
 ## What a visitor finds
