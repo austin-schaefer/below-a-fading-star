@@ -124,7 +124,7 @@ export const REGIONS = {
                 // v4 regions: the spine follows the tarn's new shore (src/v4/tarn.js) round the south bay, 4.5 m inland, and out along the spit
                 shape: { strip: [[-31, 130, 9], [-37, 142, 9], [-45, 153, 9], [-67, 142.5, 4.5], [-45, 153, 9], [-55, 162, 9], [-66, 171, 9], [-73, 180, 8], [-77, 191, 8], [-88, 202, 7], [-102, 206, 7], [-114, 195, 8], [-121, 180, 8], [-121, 169, 8]] },
                 yields: [{ x: -210, z: 130, r: 95 }] },
-  adust:      { id: 'BW', name: 'The Adust', shape: { poly: [[-255, -70], [-290, -72], [-297, 40], [-252, 40]] }, blend: 8,
+  adust:      { id: 'BW', name: 'The Adust', shape: { poly: [[-258, -76], [-274, -83], [-291, -75], [-298, -40], [-300, 2], [-297, 40], [-286, 50], [-270, 44], [-257, 49], [-246, 39], [-249, 28], [-237, 21], [-234, 12], [-247, 5], [-251, -7], [-240, -15], [-236, -24], [-250, -31], [-255, -45], [-245, -57], [-249, -68]] }, blend: 8, // v12-H5: ragged, drifts tongued east with the wind; it was a rectangle, and from the tops a red stain
                 yields: [] },
 };
 

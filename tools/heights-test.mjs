@@ -20,6 +20,7 @@
 //   - the Diffident Stair (v12-H3, when built): a slab that has not come does not hold (its place is a held edge); with
 //     its clock the walker climbs; ahead of the feet the slabs have come, 6 m behind they have gone; standing still is safe;
 //     at 30 and 20 fps a walk is never held; down from the deck to the turf; turning back mid-flight; the columns it caps;
+//   - v12-H5: draw calls and triangles at the four tops on low, within 1.3x the floor's worst (tools/heights-cost.mjs);
 //   - ?fall=1: a fall from the perch (18 m) closes the view, holds it dark and wakes the walker at the keep's gate,
 //     lying and getting up; a 7 m drop does not.
 // Usage: node tools/heights-test.mjs [base=http://localhost:8123]
@@ -229,7 +230,7 @@ const HELPERS = `(() => {
     }
     return out;
   });
-  // the view from above, on the page's own frames: at walking height and on the Span's deck nothing changes; held
+  // the view from above, on the page's own frames: at walking height nothing changes; on the Span's deck a step (H5); held
   // 120 m up the box grows and the eye stays inside it; turning in place there redraws the map no more than on the ground
   const V = await page.evaluate(async () => {
     const { fp, p } = window.H, sc = fp.sun.light.shadow.camera, tgt = fp.sun.light.target.position, cad = fp.shadowCadence.stats;
@@ -285,7 +286,10 @@ const HELPERS = `(() => {
   check(!!Hp.bank && Hp.bankFree > 0.75, 'hops: down a steep bank with no keys, untouched (3 m/s downhill, air drag alone: 0.86 m)', Hp.bank ? `slope ${f2(Hp.bank.sl)} rad, carried ${f2(Hp.bankFree)} m` : 'no bank found');
   check(!!Hp.bank && Hp.bankStrafe > 1.2, 'hops: strafing down a steep bank, untouched', `moved ${f2(Hp.bankStrafe)} m`);
   check(V.ground.box === 95 && Math.abs(V.ground.density - 0.0022) < 1e-7, 'from above: at walking height the shadow box and the haze are as before', V.ground);
-  check(V.deck.box === 95 && Math.abs(V.deck.density - 0.0022) < 1e-7, 'from above: on the Span\'s deck (56 m over the valley) too', V.deck);
+  // v12-H5: a top looks down through its height over the ground (src/v12/above.js, \`over\`): on the deck the box is one
+  // step up (140) with the eye well inside it, the haze a little thinner, and turning there redraws no more than on the ground
+  check(V.deck.box === 140 && V.deck.eyeToCentre <= V.deck.box - 30 && V.deck.density < 0.0022 && V.deck.density > 0.0018, 'from above: on the Span\'s deck (56 m over the valley) the box is one step up and the haze a little thinner', V.deck);
+  check(V.deck.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning on the deck redraws the shadow map no more than on the ground', `deck ${V.deck.redraws}, ground ${V.ground.redraws}`);
   check(V.high.box >= 200 && V.high.eyeToCentre <= V.high.box - 30, 'from above: held 120 m up the box grows and the eye stays well inside it', V.high);
   check(V.high.redraws <= Math.max(V.ground.redraws, 4), 'from above: turning in place 120 m up redraws the shadow map no more than on the ground', `120 m ${V.high.redraws}, deck ${V.deck.redraws}, ground ${V.ground.redraws} redraws in a 3 s turn`);
   check(errors.length === 0, 'no page errors (test floors)', errors.slice(0, 3).join(' | '));
@@ -446,6 +450,57 @@ const HELPERS = `(() => {
     check(SD.turnBack.ok && SD.turnBack.maxAir < 0.45 && Math.abs(SD.turnBack.feet - SD.turnBack.want) < 0.3, 'stair: turning back half-way up a flight, down to its foot and up again', SD.turnBack);
     check(SD.cols.bad === 0, 'stair: columns capped under it only where it is 3 m and more over the ground, under its treads', SD.cols);
   }
+
+  // ---------------------------------------------------------------- v12-H5: far.js's stand-ins never lag their module
+  // While the walker climbs the Diffident Stair (each simulated frame rendered at once) and then over real frames
+  // (grazers, birds, anything that writes its instances), every stand-in whose module wrote its instances that frame
+  // draws only matrices the module has now (by position: a shrunk copy keeps its source's translation), and every
+  // stand-in drawn takes its source's frustumCulled.
+  const FL = await page.evaluate(async () => {
+    const { fp, p, place, run } = window.H, S = fp.stair, scene = fp.scene, DT = 1 / 60;
+    if (!fp.far?.active) return { off: true };
+    const ins = scene.children.filter((o) => o.userData.farOf);
+    const last = new Map(ins.map((c) => [c, -1]));
+    const out = { stand: ins.length, checks: 0, moved: 0, stale: 0, worst: null, culled: 0, stairMoved: 0 };
+    const key = (a, j) => a[j + 12] + ',' + a[j + 13] + ',' + a[j + 14];
+    const prev = scene.onAfterRender;
+    scene.onAfterRender = (r, s, cam) => {
+      if (cam === fp.camera) {
+        out.checks++;
+        for (const c of ins) {
+          const o = c.userData.farOf;
+          if (!c.visible) continue;
+          if (c.frustumCulled !== o.frustumCulled) out.culled++;
+          const v = o.instanceMatrix.version;
+          if (v === last.get(c)) continue;
+          last.set(c, v);
+          out.moved++; if (/^stair-/.test(o.name)) out.stairMoved++;
+          const src = new Set(), a = o.instanceMatrix.array, b = c.instanceMatrix.array;
+          for (let i = 0; i < o.count; i++) src.add(key(a, i * 16));
+          for (let j = 0; j < c.count; j++) if (!src.has(key(b, j * 16))) { out.stale++; out.worst ??= { name: o.name || o.parent?.name || '?', j, count: c.count }; break; }
+        }
+      }
+      prev(r, s, cam);
+    };
+    if (S && !S.off) {
+      // up the stair from its stub at a hurry, each frame drawn: the slabs rise ahead and sink behind, and the eye's
+      // moving sets every stand-in packing again (with far.js before v12-H5 round two, stair-treads lagged 9 frames of 600)
+      const E = S.plan.els;
+      S.all(false); S.tick(DT);
+      place(E[0].cx - E[0].ux * 1.6, E[0].cz - E[0].uz * 1.6); p.yaw = Math.atan2(-E[0].ux, -E[0].uz);
+      for (let i = 0; i < 600; i++) { run(1, ['KeyW', 'ShiftLeft']); fp.renderer.render(scene, fp.camera); }
+    }
+    // then real frames, the walker standing
+    const t0 = performance.now();
+    while (performance.now() - t0 < 4000) await new Promise(requestAnimationFrame);
+    scene.onAfterRender = prev;
+    if (S && !S.off) { S.all(false); S.tick(DT); }
+    return out;
+  });
+  if (!FL.off) {
+    check(FL.stale === 0 && FL.moved > 20 && (!SD || FL.stairMoved > 20), 'far: a stand-in drawn the frame its module wrote its instances draws what the module has (the stair\'s slabs rising, grazers walking)', FL);
+    check(FL.culled === 0, 'far: every stand-in drawn culls as its source does (frustumCulled)', `${FL.culled} mismatches over ${FL.checks} renders`);
+  }
   await page.close();
 }
 
@@ -513,5 +568,16 @@ const FALL_RUN = `async () => {
   await page.close();
 }
 await browser.close();
+// v12-H5: the cost at the four tops on low, against the floor's worst (tools/heights-cost.mjs, its own browser, after this one)
+{
+  const { spawnSync } = await import('node:child_process');
+  const tool = new URL('./heights-cost.mjs', import.meta.url).pathname;
+  const r = spawnSync(process.execPath, [tool, base, 'low', '', '--modules=0'], { env: { ...process.env, BOUND: '1' }, encoding: 'utf8', timeout: 900000 });
+  const lines = (r.stdout || '').split('\n');
+  for (const l of lines) if (l && !/^(PASS|FAIL) /.test(l)) console.log('  ' + l);
+  const rows = lines.filter((l) => /^(PASS|FAIL) /.test(l));
+  for (const l of rows) check(l.startsWith('PASS'), 'cost: ' + l.slice(5));
+  check(rows.length >= 8, 'cost: the four tops measured', `${rows.length} rows, exit ${r.status}${r.stderr ? ' ' + r.stderr.slice(-300) : ''}`);
+}
 console.log(`${pass}/${pass + fail} passed`);
 process.exit(fail ? 1 : 0);
