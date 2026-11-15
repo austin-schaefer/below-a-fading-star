@@ -128,7 +128,7 @@ async function interruptCheck(page, file, o) {
   return { ...r, clicks: mc.clicks, tail_db: r.tail > 0 ? +(20 * Math.log10(r.tail)).toFixed(1) : -Infinity };
 }
 
-// The live path once (an AudioContext, the one timer, the 2 s lookahead): 3 s of the track, then stop(0.5).
+// The live path once (an AudioContext, the one timer, the 2 s lookahead): the track until its clock passes 0.5 s (at most 3 s), then stop(0.5).
 async function liveCheck(page, file) {
   const url = `${HOST}/${path.relative(ROOT, file).split(path.sep).join('/')}`;
   return page.evaluate(async ({ url }) => {
@@ -137,7 +137,8 @@ async function liveCheck(page, file) {
     const ac = new AudioContext(); await ac.resume();
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const h = P.play(S.compose(track), { ac, dest: ac.destination, voices: track.voices });
-    await sleep(3000);
+    // until the clock is past what the gate asks of it (playing, t > 0.5 s), at most 3 s
+    for (const t0 = performance.now(); !(h.playing && +h.t.toFixed(2) > 0.5) && performance.now() - t0 < 3000;) await sleep(50);
     const mid = { t: +h.t.toFixed(2), playing: h.playing };
     const t0 = performance.now();
     await Promise.race([h.stop(0.5), sleep(3000)]);
