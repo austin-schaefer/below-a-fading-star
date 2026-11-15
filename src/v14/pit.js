@@ -410,7 +410,9 @@ export async function build(ctx) {
     const dx = x - C.x, dz = z - C.z; if (dx * dx + dz * dz > 400) return 0;
     const e = Math.hypot(dx, dz) - pitRim(bearingOf(x, z)); if (e > 0) return 0;
     return 0.6 * ss(lipY - 9, lipY - 17, y) * ss(0, -2, e);
-  });
+  }, { size: 1 }); // never 1: the Pit is open to the sky, so the kit's seal never shuts it
+  // kept under the seal, so a visitor in the passage under the moor (D1's) sees the Pit's own things through its mouth
+  for (const o of [mesh, drum, pawl, lead, line, starDisc, motes]) ctx.below.keep?.(o);
 
   // ---- the act: "Let go the lead", at the reel's pawl, from the passage's side
   const S = { t: -1, n: 0, phase: 0, flow: 1, gust: 0, sounding: false, sounds: 0, leadY: leadRestY, line: 0 };
