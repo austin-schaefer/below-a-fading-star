@@ -31,9 +31,10 @@ for (const q of ['?q=low&sw=1&kept=commit', '?q=low&sw=1&kept=commit', '?q=low&s
   if (!runs.length) await page.waitForFunction(() => window.__fp_sw?.filled, null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(1500);
   const s = await st();
-  s.src = [...site.counts.keys()].filter((p) => p.startsWith('/src/')).length;
+  const srcs = [...site.counts.keys()].filter((p) => p.startsWith('/src/'));
+  s.src = srcs.length; s.srcs = srcs.slice(0, 6);
   runs.push(s);
-  console.log(q, JSON.stringify({ controlled: s.controlled, source: s.bake.source, fellBack: s.bake.fellBack, kept: s.bake.kept, hits: s.hits, srcFromNetwork: s.src, failed: s.failed }));
+  console.log(q, JSON.stringify({ controlled: s.controlled, source: s.bake.source, fellBack: s.bake.fellBack, kept: s.bake.kept, hits: s.hits, srcFromNetwork: s.src, some: s.src < 20 ? s.srcs : undefined, failed: s.failed }));
 }
 await browser.close(); await site.close();
 const [a, b, c, d] = runs;
