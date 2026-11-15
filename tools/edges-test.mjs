@@ -9,7 +9,9 @@
 // stair at its head goes down it, held on its floor (so that walk is not a pass of the lip, and is measured from the
 // stair's floor), and at least one bearing does; hurrying and hopping sideways off the stair (high, middle, low) and
 // off the road on the water keep the walker on (held edges); one dropped into the water off the road is put back on
-// the road within three seconds (the page's own frames), never under the water's floor. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
+// the road within three seconds (the page's own frames), never under the water's floor. v14-D1, the Bearers' Way: off
+// each of its stretches sideways, hurrying and hopping, held and the eye under the vault; into the Gulf off the bridge,
+// caught and put back; no uncapped collider standing down through it. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
 // them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
 // and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
 // through controls.update in one page.
@@ -164,6 +166,55 @@ const R = await page.evaluate(async () => {
     }
     res.push({ water: true, back, lowW, inWater, rescues: CR.state.rescues });
   }
+  // v14-D1: the Bearers' Way (src/v14/passage.js), the passage under the moor from the Nave's south door to the Pit's
+  // floor. Sideways off it (a hurry, then a hurrying hop) at points in each of its stretches, both sides: held on its
+  // floor, never under it, and a hop's eye never within 0.15 m of the vault over it (the camera's near plane);
+  // dropped into the Gulf off the bridge, put back on the bridge within three seconds; and no uncapped collider of
+  // the moor's still stands across the way (each is given a bottom under its ground)
+  if (fp.passage && !fp.passage.off) {
+    const PS = fp.passage, P = PS.plan, SP = P.SP, q = { i: 0, s: 0, d: 0, e: 0, t: 0 };
+    const side = (s, sgn, hop, secs = 2) => {
+      const a = P.at(s), l = Math.hypot(a.tx, a.tz), rx = -a.tz / l, rz = a.tx / l;
+      fp.controls.placeAt(a.x, a.z, P.yAt(s) + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+      p.yaw = Math.atan2(-rx * sgn, -rz * sgn);
+      let low = 0, off = 0, head = Infinity;
+      for (let i = 0; i < secs * 60; i++) {
+        fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
+        const f = P.floor(p.pos.x, p.pos.z);
+        if (f === null || f === undefined) off++; else low = Math.min(low, p.pos.y - p.eye - f);
+        P.near(p.pos.x, p.pos.z, q); head = Math.min(head, P.ceilAt(q.s, q.d) - p.pos.y);
+      }
+      p.keys.clear();
+      return { off, low, head, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
+    };
+    const where = [[6, 'the Flight\'s first landing'], [14, 'the Flight\'s stair'], [SP.FLIGHT + 8, 'the Flute'], [SP.FLIGHT + 22, 'the Flute, further'], [SP.SUN + 1.5, 'the Laid Sun'], [SP.NECK0 + 1.2, 'the neck'], [SP.GULF0 + 5, 'the Gulf\'s bridge'], [SP.GULF0 + 16, 'the Gulf\'s bridge, further'], [SP.GULF1 + 6, 'the Gate\'s stair'], [P.L - 3, 'the Gate by the Pit\'s door']];
+    for (const [s, name] of where) for (const sgn of [-1, 1]) for (const hop of [false, true]) {
+      const r = side(s, sgn, hop);
+      res.push({ bw: `off ${name} (s ${s.toFixed(0)}) to the ${sgn > 0 ? 'right' : 'left'}, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+    }
+    // the Gulf: dropped off the bridge 3 m out to the side; put back on the bridge
+    { const s = SP.GULF0 + 10, a = P.at(s), l = Math.hypot(a.tx, a.tz), x = a.x - (a.tz / l) * 3, z = a.z + (a.tx / l) * 3;
+      p.pos.set(x, P.yAt(s) + p.eye, z); p.onStack = null; p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.onGround = false;
+      let low = 0;
+      for (let i = 0; i < 150; i++) { fp.controls.update(DT); low = Math.min(low, p.pos.y - p.eye - (P.yAt(s) - 16)); }
+      const caught = p.onStack?.name === 'passage-gulf';
+      let back = null; const t0 = performance.now();
+      while (back === null && performance.now() - t0 < 4000) {
+        await new Promise((r) => setTimeout(r, 50));
+        const f = P.floor(p.pos.x, p.pos.z);
+        if (f !== null && f !== undefined && Math.abs(p.pos.y - p.eye - f) < 0.1 && p.onStack?.name === 'passage') back = 1 + (performance.now() - t0) / 1000;
+      }
+      res.push({ gulf: true, caught, back, low, rescues: PS.state.rescues });
+    }
+    // the moor's uncapped colliders over the way: none left standing down through it
+    { let n = 0; const left = [];
+      for (const c of fp.controls.state.colliders) {
+        if (c.y !== undefined || c.x1 !== undefined) continue;
+        P.near(c.x, c.z, q); if (q.e < P.walkHalf(q.s) + c.r + 0.3 && q.s > 0.5 && q.s < P.L - 0.1) { n++; left.push([+c.x.toFixed(1), +c.z.toFixed(1)]); }
+      }
+      res.push({ cols: true, n, left: left.slice(0, 4), capped: PS.cuts.colliders });
+    }
+  }
   // the Sunken Court: the kerb stops the walker; a hop lands on the coping, close over the water
   for (const [name, sx, sz, edge] of [['from the south', -40, -135, (x, z) => z - pit.z1], ['from the west', -65, -165, (x, z) => pit.x0 - x]]) {
     const r = walk(sx, sz, -40, -165, edge, { secs: 8, hopAt: 360 });
@@ -178,6 +229,9 @@ const f = (v) => v.toFixed(2);
 for (const r of R) {
   if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Coffin Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
   if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Bearers' Way: ${r.bw}: held on its floor, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
+  if (r.gulf) { check(r.caught && r.back !== null && r.back <= 3 && r.low > -0.15, 'the Bearers\' Way: dropped into the Gulf off the bridge, caught and put back on the bridge within 3 s', `${r.caught ? 'caught' : 'not caught'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.low)} m under the catch`); continue; }
+  if (r.cols) { check(r.n === 0, 'the Bearers\' Way: no uncapped collider of the moor\'s stands down through the way', `${r.capped} given a bottom; ${r.n} left${r.left.length ? ' at ' + r.left.map((a) => a.join(', ')).join('; ') : ''}`); continue; }
   if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Coffin Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
   if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }

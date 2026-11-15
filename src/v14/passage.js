@@ -497,6 +497,31 @@ export async function build(ctx) {
   // the bottom of the Gulf that gives a walker back to the bridge
   ctx.addWalkable(P.floor, { stack: true, keep: true, name: 'passage' });
   ctx.addWalkable(P.catchFloor, { stack: true, keep: true, name: 'passage-gulf' });
+  // what stands on the moor over the way: an uncapped collider is a column to the sky and down through the ground
+  // (the Pit's rim ring stands across the Gate), so each one whose foot is within reach of the way is given a bottom
+  // 1.5 m under the ground it stands on (as the trees' and rocks' are): the same above the ground, nothing below. Run
+  // again once every module is built, for the colliders added after this one.
+  const _c = { i: 0, s: 0, d: 0, e: 0, t: 0 }, CX0 = Math.min(...P.X) - 20, CX1 = Math.max(...P.X) + 20, CZ0 = Math.min(...P.Z) - 20, CZ1 = Math.max(...P.Z) + 20;
+  const capOver = () => {
+    let n = 0;
+    for (const c of ctx.controls?.state?.colliders || []) {
+      if (c.y !== undefined) continue;
+      const pts = c.x1 !== undefined ? [[c.x1, c.z1], [c.x, c.z], [c.x2, c.z2]] : [[c.x, c.z]];
+      let hit = false;
+      for (const [x, z] of pts) {
+        if (x < CX0 || x > CX1 || z < CZ0 || z > CZ1) continue;
+        P.near(x, z, _c);
+        const g = T.heightAt(x, z);
+        if (_c.e < P.walkHalf(_c.s) + c.r + 2 && P.yAt(_c.s) + 4 < g - 1.5) { hit = true; break; }
+      }
+      if (!hit) continue;
+      let g = Infinity; for (const [x, z] of pts) g = Math.min(g, T.heightAt(x, z));
+      c.y = g - 1.5; c.h = 1e5; n++;
+    }
+    return n;
+  };
+  cuts.colliders = capOver();
+  ctx.built?.().then(() => { cuts.colliders += capOver(); });
   // the room's things a walker would walk through: his lamp, the basket
   if (ctx.addCollider) {
     const L2 = P.lamps.find((l) => l.kind === 2);
@@ -538,7 +563,7 @@ export async function build(ctx) {
   for (const s of [1, 4, 8, 12, 16, 20, SP.FLIGHT, SP.FLIGHT + 8, SP.FLIGHT + 16, SP.FLIGHT + 24, SP.FLIGHT + 32, SP.SUN - SP.RC - 0.5, SP.SUN, SP.NECK0 + 1, SP.GULF0 + 4, SP.GULF0 + 11, SP.GULF1 - 2, SP.GULF1 + 4, SP.GULF1 + 9, P.L - 2, P.L - 0.3]) {
     const p = P.at(s); path.push([p.x, p.z, P.yAt(s)]);
   }
-  const out = P.world(P.L + 1.6, 0, 0); path.push([out[0], out[2]]);
+  path.push([P.M[0] + P.IN[0] * 1.6, P.M[1] + P.IN[1] * 1.6]); // out onto the Pit's floor
   ctx.ascents?.add({ id: 'bearers-way', held: true, offs: [0.08, 0.3, 0.5, 0.62, 0.72, 0.9], path: path.map((q) => q.filter((v) => v !== undefined)) });
 
   // ---- per frame, near: the points' clock and scale, the lights' flicker, the catch
