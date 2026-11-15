@@ -131,7 +131,6 @@ function boxD(u, v, y, p) {
   const qu = Math.abs(lu) - p.h[0] + p.rr, qv = Math.abs(lv) - p.h[1] + p.rr, qy = Math.abs(y - p.c[2]) - p.h[2] + p.rr;
   return Math.hypot(Math.max(qu, 0), Math.max(qv, 0), Math.max(qy, 0)) + Math.min(Math.max(qu, qv, qy), 0) - p.rr;
 }
-// a web: a plate between two toes, from the foot's root to most of the way along each
 // one edge of a web's triangle: the distance to it into WE[0], the side (a cross product) into WE[1]
 const WE = new Float64Array(2);
 function webEdge(u, v, P, Q) {
@@ -139,6 +138,7 @@ function webEdge(u, v, P, Q) {
   const t = clamp((wx * ex + wv * ev) / (ex * ex + ev * ev), 0, 1);
   WE[0] = Math.hypot(wx - ex * t, wv - ev * t); WE[1] = ex * wv - ev * wx;
 }
+// a web: a plate between two toes, from the foot's root to most of the way along each
 function webD(u, v, y, p) {
   const A = p.tri[0], B = p.tri[1], C = p.tri[2];
   // signed distance to the triangle in the uv plane (negative inside), then thickened about its plane's height
