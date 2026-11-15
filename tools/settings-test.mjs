@@ -285,9 +285,10 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   // v14-B1: the panel is the pause, so the frame idles under it as it did under the card; for a moment after a change in
   // it (a slider's preview) it does not
   await page.waitForTimeout(1200);
-  const o2 = await page.evaluate(() => ({ idle: window.__fp.pacing.idle }));
+  const idleNow = () => page.evaluate(() => { const P = window.__fp.pacing; P.targetFps(performance.now()); return { idle: P.idle }; }); // asked now, not at the last drawn frame (a software GL frame can take seconds)
+  const o2 = await idleNow();
   await page.locator('#set-volume').fill('70'); await page.waitForTimeout(150);
-  const o3 = await page.evaluate(() => ({ idle: window.__fp.pacing.idle }));
+  const o3 = await idleNow();
   check('panel: the frame idles under it, and not just after a change in it', o2.idle === true && o3.idle === false, { o2, o3 });
   await page.evaluate(() => window.__fp.settings.close());
   const t = await page.evaluate(() => {

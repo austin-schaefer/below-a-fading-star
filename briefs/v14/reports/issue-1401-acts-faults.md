@@ -42,3 +42,14 @@ Looked for others of each kind: every carrier in the tree (the seat, the door's 
 - #40: kept the rope (a thing with a cause) rather than removing it.
 - #46: the panel does not drop the frame rate to 10 fps (an existing settings-test row says so; `main.js` untouched). Headless browsers do not let go of the mouse on Escape, so the walk and the test do what the browser does (`exitPointerLock`, the `lock` event).
 - `waystation.js` (v9) got one argument (`faceZ`); not in B1's list but the seat's only way to know its face.
+
+## After the orchestrator's review (commit 08329c1 and the docs after it)
+
+- **Stuck key (blocker):** a key held through Escape was let go inside the panel, whose keyup swallow hid it from the walk. The keys are now cleared when the capture is let go (`controls.js` syncLock) and when the panel opens. settings-test: W held through Escape, let go in the panel, the walker stays still in it and after it, with no key held.
+- **Idle:** the panel (the pause) idles the frame to 10 fps, except for 1.5 s after a change in it (`settings.idle`, one condition in `main.js`). The old row that wanted full rate dates from v7.1, when opening by the gear raised the pause card; nothing needed the full rate.
+- **Re-lock:** a capture refused within 1.5 s of a let-go no longer drops the visitor into drag-look; the next click asks again.
+- **Moths:** Lambert (lit by the scene), paler; each flies one loop 0.5 m out every 12 s, staggered so one is nearly always up. Frames `b1-r2-tally-00..03` (30, 15, 10, 2 m) and `b1-r2-bell-00..02` (30, 15, 10 m; in the arch's shadow). Honestly: at the tally from 15 m there is one small moving pale speck on the dark slab; I would not find the act by it without knowing where to look, though the slab and its chalk draw you anyway. At 2 m they read plainly as moths. At the bell the moths are a speck at the post; what now makes the bell findable is the post itself.
+- **The bell's post:** 1.3 m (a head over the grass), pale with handling, the rope worn pale: it reads against the sky from 30, 15 and 10 m (`b1-r2-bell-00..02`).
+- acts-test now pauses as Escape does (the capture let go), not with `#card.paused`. Nits fixed: acts.js's header, the GPU-reset note's words, act-walk's import.
+
+Tests at the review's HEAD: `ONLY=acts,settings,touch,walk,loading tools/suite.sh 8162`: acts 155, touch 43, loading 28, walk 13 passed. Settings failed one new check: it read `pacing.idle` from the last drawn frame, and a software-GL frame can take seconds. The test now asks `targetFps(now)`. After that, `ONLY=settings` passed 83 checks, 0 failed. The test fix is the only change since the full run.
