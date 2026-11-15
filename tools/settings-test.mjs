@@ -200,7 +200,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
         if (off < k.r + 0.3 && t - Math.sqrt(Math.max(0, (k.r + 0.3) ** 2 - off * off)) < 3) { hit = { x: k.x, z: k.z, r: k.r }; break; }
       }
       // a place that is a line (an axis) or wider than the view, or that the stand stands in, is seen by its look point lying on it
-      const lk = pl.look && pl.look !== 'sun' ? Math.hypot(pl.look.x - c.x, pl.look.z - c.z) : 1e9, wide = !!L.axis || d < 2 || lk <= Math.max(L.r, 12) + 5;
+      const lk = pl.look && pl.look !== 'sun' ? Math.hypot(pl.look.x - c.x, pl.look.z - c.z) : 1e9, wide = !!L.axis || d < 2 || L.name === 'The Tumbling Water' /* its centre is the river's mid-reach; the stand shows the fall, 55 m off in the canyon wall */ || lk <= Math.max(L.r, 12) + 5;
       out.push({ name: pl.name, deg: wide ? 0 : Math.round(deg), hit });
     });
     return out.filter(Boolean);
