@@ -100,36 +100,58 @@ const CELL_HI = 0.3, CELL_LO = 0.4;
 const DEAL = ['raptor', 'pig', 'wader', 'lizard', 'hoof', 'ratite', 'paw', 'webbed', 'raptor', 'tortoise', 'croc', 'parrot',
   'pig', 'lizard', 'webbed', 'hoof', 'tortoise', 'wader', 'parrot', 'croc', 'ratite', 'paw', 'lizard', 'raptor'];
 
+// Each distance reads constants prep() works out once a part (v13-L5: the field is evaluated about a million times a
+// load; each constant is the same expression on the same doubles wherever it is worked out).
+function prep(p) {
+  if (p.t === 'cap') {
+    p.a0 = p.a[0]; p.a1 = p.a[1]; p.a2 = p.a[2];
+    p.bu = p.b[0] - p.a[0]; p.bv = p.b[1] - p.a[1]; p.by = p.b[2] - p.a[2];
+    p.bb = p.bu * p.bu + p.bv * p.bv + p.by * p.by + 1e-9; p.dr = p.rb - p.ra;
+  } else if (p.t === 'ell') p.rmin = Math.min(p.r[0], p.r[1], p.r[2]);
+  else if (p.t === 'box') { p.ca = Math.cos(p.yaw); p.sa = Math.sin(p.yaw); }
+  p.fn = PART_D[p.t];
+  p.k = p.tag === 2 ? 0.06 : 0.16;
+  return p;
+}
 function capD(u, v, y, p) {
-  const pu = u - p.a[0], pv = v - p.a[1], py = y - p.a[2];
-  const bu = p.b[0] - p.a[0], bv = p.b[1] - p.a[1], by = p.b[2] - p.a[2];
-  const h = clamp((pu * bu + pv * bv + py * by) / (bu * bu + bv * bv + by * by + 1e-9), 0, 1);
+  const pu = u - p.a0, pv = v - p.a1, py = y - p.a2;
+  const bu = p.bu, bv = p.bv, by = p.by;
+  let h = (pu * bu + pv * bv + py * by) / p.bb;
+  h = h < 0 ? 0 : h > 1 ? 1 : h;
   const du = pu - bu * h, dv = pv - bv * h, dy = py - by * h;
-  return Math.sqrt(du * du + dv * dv + dy * dy) - (p.ra + (p.rb - p.ra) * h);
+  return Math.sqrt(du * du + dv * dv + dy * dy) - (p.ra + p.dr * h);
 }
 function ellD(u, v, y, p) {
   const qu = (u - p.c[0]) / p.r[0], qv = (v - p.c[1]) / p.r[1], qy = (y - p.c[2]) / p.r[2];
-  return (Math.sqrt(qu * qu + qv * qv + qy * qy) - 1) * Math.min(p.r[0], p.r[1], p.r[2]);
+  return (Math.sqrt(qu * qu + qv * qv + qy * qy) - 1) * p.rmin;
 }
 function boxD(u, v, y, p) {
-  const ca = Math.cos(p.yaw), sa = Math.sin(p.yaw);
+  const ca = p.ca, sa = p.sa;
   const lu = (u - p.c[0]) * ca + (v - p.c[1]) * sa, lv = -(u - p.c[0]) * sa + (v - p.c[1]) * ca;
   const qu = Math.abs(lu) - p.h[0] + p.rr, qv = Math.abs(lv) - p.h[1] + p.rr, qy = Math.abs(y - p.c[2]) - p.h[2] + p.rr;
   return Math.hypot(Math.max(qu, 0), Math.max(qv, 0), Math.max(qy, 0)) + Math.min(Math.max(qu, qv, qy), 0) - p.rr;
 }
+// one edge of a web's triangle: the distance to it into WE[0], the side (a cross product) into WE[1]
+const WE = new Float64Array(2);
+function webEdge(u, v, P, Q) {
+  const ex = Q[0] - P[0], ev = Q[1] - P[1], wx = u - P[0], wv = v - P[1];
+  const t = clamp((wx * ex + wv * ev) / (ex * ex + ev * ev), 0, 1);
+  WE[0] = Math.hypot(wx - ex * t, wv - ev * t); WE[1] = ex * wv - ev * wx;
+}
 // a web: a plate between two toes, from the foot's root to most of the way along each
 function webD(u, v, y, p) {
-  const [A, B, C] = p.tri;
+  const A = p.tri[0], B = p.tri[1], C = p.tri[2];
   // signed distance to the triangle in the uv plane (negative inside), then thickened about its plane's height
-  const e = (P, Q) => { const ex = Q[0] - P[0], ev = Q[1] - P[1], wx = u - P[0], wv = v - P[1]; const t = clamp((wx * ex + wv * ev) / (ex * ex + ev * ev), 0, 1); return [Math.hypot(wx - ex * t, wv - ev * t), ex * wv - ev * wx]; };
-  const [d0, s0] = e(A, B), [d1, s1] = e(B, C), [d2, s2] = e(C, A);
+  webEdge(u, v, A, B); const d0 = WE[0], s0 = WE[1];
+  webEdge(u, v, B, C); const d1 = WE[0], s1 = WE[1];
+  webEdge(u, v, C, A); const d2 = WE[0], s2 = WE[1];
   const inside = (s0 >= 0 && s1 >= 0 && s2 >= 0) || (s0 <= 0 && s1 <= 0 && s2 <= 0);
   const dp = (inside ? -1 : 1) * Math.min(d0, d1, d2);
   const yc = p.y + Math.max(0, u - EDGE) * -1.3;
   return Math.hypot(Math.max(dp, 0), Math.max(Math.abs(y - yc) - p.th, 0)) + Math.min(Math.max(dp, Math.abs(y - yc) - p.th), 0);
 }
 const PART_D = { cap: capD, ell: ellD, box: boxD, web: webD };
-const sminK = (a, b, k) => { const h = clamp(0.5 + 0.5 * (b - a) / k, 0, 1); return lerp(b, a, h) - k * h * (1 - h); };
+const sminK = (a, b, k) => { let h = 0.5 + 0.5 * (b - a) / k; h = h < 0 ? 0 : h > 1 ? 1 : h; return b + (a - b) * h - k * h * (1 - h); }; // clamp and lerp, inlined
 const droop = (u) => Math.max(0, u - EDGE) * 1.3; // over the crown's edge a toe goes down
 
 // One figure: the robe's hem and the feet and legs coming out from under it. tags: 0 robe, 1 skin, 2 horn (claws,
@@ -267,27 +289,50 @@ function makeField(F, noise) {
   }
   // the break: a rough plane above the hem, through the robe and the legs inside it
   const cutY = (u, v) => R.H + R.tu * (u - R.cu) + R.tv * v + 0.22 * N2(u * 0.9 + R.ph, v * 0.9) + 0.1 * N2(u * 2.7, v * 2.7 + R.ph);
-  function field(u, v, y) {
+  const parts = F.parts.map(prep), np = parts.length;
+  // the robe and the parts, smoothly joined: the field before the two planes below cut it
+  function body(u, v, y) {
     let d = robeD(u, v, y);
-    for (const p of F.parts) d = sminK(d, PART_D[p.t](u, v, y, p), p.tag === 2 ? 0.06 : 0.16);
-    // the soles flat on the crown; past its edge the plane falls away so what hangs over is kept
-    return Math.max(d, y - cutY(u, v), -(y + 0.1) - Math.max(0, u - EDGE) * 4);
+    for (let i = 0; i < np; i++) { const p = parts[i]; d = sminK(d, p.fn(u, v, y, p), p.k); }
+    return d;
   }
+  // the soles flat on the crown; past its edge the plane falls away so what hangs over is kept
+  const planes = (u, v, y) => Math.max(y - cutY(u, v), -(y + 0.1) - Math.max(0, u - EDGE) * 4);
+  const field = (u, v, y) => Math.max(body(u, v, y), y - cutY(u, v), -(y + 0.1) - Math.max(0, u - EDGE) * 4);
   function tagAt(u, v, y) {
     let best = robeD(u, v, y), tag = 0;
     const cut = y > cutY(u, v) - 0.3;
-    for (const p of F.parts) { const d = PART_D[p.t](u, v, y, p); if (d < best - 0.02) { best = d; tag = p.tag; } }
+    for (let i = 0; i < np; i++) { const p = parts[i]; const d = p.fn(u, v, y, p); if (d < best - 0.02) { best = d; tag = p.tag; } }
     return { tag, cut: cut && tag === 0 };
   }
-  return { field, tagAt };
+  return { field, tagAt, body, planes };
 }
 
-// surface nets on a grid of n cells from o (u, v, y), cell c
+// surface nets on a grid of n cells from o (u, v, y), cell c. The field is max(body, planes): where the planes alone
+// are above 0 the node is outside whatever the body is, so body is only evaluated there for a node next to one that
+// is inside (the corners of a cell the surface crosses, whose values the vertices are made from). Every other
+// outside node keeps the planes' value: only its sign is ever read, and it is the same sign. (v13-L5: the same
+// vertices and quads as evaluating every node, for about half the evaluations.)
 function polygonise(f, o, n, c) {
   const [nx, ny, nz] = n; // u, y, v
+  const { body, planes } = f;
   const idx = (i, j, k) => (k * (ny + 1) + j) * (nx + 1) + i;
   const F = new Float32Array((nx + 1) * (ny + 1) * (nz + 1));
-  for (let k = 0; k <= nz; k++) for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) F[idx(i, j, k)] = f(o[0] + i * c, o[1] + k * c, o[2] + j * c);
+  const todo = new Uint8Array(F.length); // 1: outside by the planes, its exact value not yet needed
+  for (let k = 0; k <= nz; k++) for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
+    const u = o[0] + i * c, v = o[1] + k * c, y = o[2] + j * c, P = planes(u, v, y), id = idx(i, j, k);
+    if (P > 0) { F[id] = P; todo[id] = 1; } else F[id] = Math.max(body(u, v, y), P);
+  }
+  for (let k = 0; k <= nz; k++) for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
+    if (todo[idx(i, j, k)] || !(F[idx(i, j, k)] < 0)) continue;
+    for (let kk = Math.max(0, k - 1); kk <= Math.min(nz, k + 1); kk++) for (let jj = Math.max(0, j - 1); jj <= Math.min(ny, j + 1); jj++) for (let ii = Math.max(0, i - 1); ii <= Math.min(nx, i + 1); ii++) {
+      const id = idx(ii, jj, kk);
+      if (!todo[id]) continue;
+      todo[id] = 0;
+      const u = o[0] + ii * c, v = o[1] + kk * c, y = o[2] + jj * c;
+      F[id] = Math.max(body(u, v, y), planes(u, v, y));
+    }
+  }
   const cellV = new Int32Array(nx * ny * nz).fill(-1), verts = [];
   const C = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]];
   const E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
@@ -319,9 +364,9 @@ function polygonise(f, o, n, c) {
 
 // one figure into the shared arrays, through the matrix M (local x = u, y = y, z = v)
 function emitFigure(F, M, out, cell, noise, colors) {
-  const { field, tagAt } = makeField(F, noise);
+  const fields = makeField(F, noise), { field, tagAt } = fields;
   const o = [-3.4, -3.6, -2.6], n = [Math.ceil(8.8 / cell), Math.ceil(6.6 / cell), Math.ceil(7.2 / cell)];
-  const { verts, quads } = polygonise(field, o, n, cell);
+  const { verts, quads } = polygonise(fields, o, n, cell);
   const nv = verts.length / 3, base = out.pos.length / 3;
   const nm = new THREE.Matrix3().getNormalMatrix(M), p = new THREE.Vector3(), nn = new THREE.Vector3(), c = new THREE.Color();
   const e = 0.12, NRM = new Float32Array(nv * 3);

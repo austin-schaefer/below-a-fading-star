@@ -19,9 +19,9 @@
 // a walkable wedge (±4.5°) out to the road's start at r 366 and two flat seats for AM's colossi on its flanks
 // (the marked block below). Every range dips in the saddle, below the line from the gate over the col, so
 // the sun and the Parhelion City keep the gap. Deterministic: no rng, only seeded noise.
-import * as THREE from 'three';
 import { makeSimplex, hash2, clamp, lerp, smoothstep } from '../noise.js';
-import { WORLD, SUN, PEAKS, PALETTE } from '../world.js';
+import { WORLD, SUN, PEAKS } from '../world.js';
+import { HEIGHT_PARAMS } from '../height/params.js'; // the URL switches, fixed before this loads (a worker is handed them)
 
 const S = makeSimplex(WORLD.seed + 404);
 const D2R = Math.PI / 180;
@@ -153,7 +153,7 @@ function seatHeights(h, x, z) {
 // lowering the notches would leave the natural crest's pinnacles standing above the "wall"). Merlons are 14 m deep
 // in r (full height from the crest's r - 6 to + 4, ramping out to r - 10 and + 8), with nothing behind. Edges rise over ~4 m, two samples of the high mesh (2.1 m).
 // ?ridge=0 leaves the crest as it was; the heightfield is built once, so a reload.
-const RIDGE_ON = !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('ridge') === '0');
+const RIDGE_ON = HEIGHT_PARAMS.ridge;
 const RG = { b0: 8.15, period: 7.6, merlon: 0.54, edge: 0.06, lo: 9, hi: 57, taper: 3, height: 45, kMin: 0, kMax: 6, broken: [2, 5] };
 export const RIDGE = { bearings: [RG.lo + RG.taper, RG.hi - RG.taper], merlons: [] };
 const ridgeEnv = (b) => smoothstep(RG.lo, RG.lo + RG.taper, b) * (1 - smoothstep(RG.hi - RG.taper, RG.hi, b));
@@ -205,8 +205,7 @@ for (let i = 0; i <= N; i++) {
 // massifs and cols through a periodic spline over bearing (control points below; the named peaks are broad crowns on
 // it, not spikes); the face's mean slope follows the crest's height (gentle under the cols, steep under the massifs).
 export const PROFILE = (() => {
-  const v = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('mountains') : null;
-  return v === 'v4' ? 'v4' : 'c';
+  return HEIGHT_PARAMS.mountains;
 })();
 const CAND = PROFILE === 'c' ? {
   // [bearing, crest height above the floor]; the saddle's gate (237-263) is the saddle's own. The cols: 112° (east),
@@ -223,7 +222,7 @@ const CAND = PROFILE === 'c' ? {
 // the notches cut beside the cols go (a slot beside a pass reads as a second col), and the far ring's lobe behind each
 // pass stands higher so it still shows over it. Inside the walk limit the ground within ±15° of a pass rises by up to
 // 9.5 m and falls by up to 5 (the pass's long foot; at r 300-348, never inside r 300; v12 measured on a 0.5° x 2 m grid). With ?cols=low nothing here runs. The heightfield is built once: a reload.
-const COLS_HIGH = PROFILE === 'c' && !(typeof location !== 'undefined' && new URLSearchParams(location.search).get('cols') === 'low');
+const COLS_HIGH = PROFILE === 'c' && HEIGHT_PARAMS.cols !== 'low';
 // [bearing of the pass, the spline's points that replace the col's three: [bearing, height]]
 const PASSES = [
   [112, [[100, 200], [106, 152], [112, 133], [118, 147], [124, 190]]],
@@ -380,15 +379,18 @@ function sampleForm(az) {
   const q = ((az + Math.PI) / TAU) * N, i = Math.min(N - 1, Math.max(0, Math.floor(q))), f = q - i;
   return T_FM[i] + (T_FM[i + 1] - T_FM[i]) * f;
 }
-function spurPush(b, r, Rc) {
+function spurPush(b, r, Rc, hold = holdOf(HOLD_FACE, b, 3)) {
   let push = 0, pull = 0;
   const t = clamp((Rc - r) / 150, 0, 1); // 0 at the crest, 1 at the foot
   for (const [sb, sp, w0, w1, lean, o] of SPURS_M) {
     let db = b - sb; if (db > 180) db -= 360; if (db < -180) db += 360;
     if (Math.abs(db) > 24) continue;
+    const w = lerp(w0, w1, t);
+    // (v13 L2) the noise moves the line by at most 1.2 x 1.1 degrees (|noise2| < 1): a spur certainly out of reach is
+    // skipped before its noise is taken
+    if ((Math.abs(db - lean * t) - 1.32) * D2R * r > w * 1.001 + 1e-6) continue;
     const edge = 1 - smoothstep(18, 24, Math.abs(db)); // fades out before the cutoff, so a wide foot leaves no step
     const across = Math.abs(db - lean * t + 1.2 * S.noise2(r * 0.013, sb)) * D2R * r;
-    const w = lerp(w0, w1, t);
     if (across > w) continue;
     if (sp > 0) {
       const r0 = Rc - 8 - (o?.drop ?? 0), prof = smoothstep(r0, r0 - (o?.shoulder ?? 62), r) * (1 - 0.35 * smoothstep(0.55, 1, t)); // a shoulder leaving the crest, weaker at the foot
@@ -399,7 +401,7 @@ function spurPush(b, r, Rc) {
       pull = Math.max(pull, -sp * prof * (1 - c * c) * (1 - c * c) * edge * smoothstep(352, 352 + (o?.ramp ?? 38), r));
     }
   }
-  return (push * smoothstep(352, 395, r) - pull) * (1 - holdOf(HOLD_FACE, b, 3));
+  return (push * smoothstep(352, 395, r) - pull) * (1 - hold);
 }
 // --- the form (end)
 // --- the massifs (end; applyMassifs and the far ranges' hook below)
@@ -560,13 +562,14 @@ const FAM = [[16, 50, 0.5, 0, 1.7, 1], [46, 16, 0.42, 1, 3.3, 0.7]];
 const _dn = { cut: 0, water: 0, fan: -Infinity, mouth: 0 }, _cc = new Float64Array(5), _fm = { cut: 0, water: 0, fan: -Infinity, mouth: 0, nq: 9, nd: 0, nb: 0 };
 function family(F, x, z, az, r, u, uw, steep, Ha, ra) {
   const [NF, DEP, WID, salt, sf, fs] = F;
+  // the family's sectors: long stretches with none, others gathered (a ring noise by bearing)
+  const sector = smoothstep(-0.25, 0.35, ring(az, sf, 61.7 + salt * 13));
+  _fm.cut = 0; _fm.water = 0; _fm.fan = -Infinity; _fm.mouth = 0; _fm.nq = 9;
+  if (sector === 0) return _fm; // every line's k1 is 0 here (v13 L2: before the wander's noise)
   // the lines wander as they climb (world-space noise, so the bowl has no seam), unevenly spaced
   const t = ((az + Math.PI) / TAU) * NF + 0.55 * S.fbm2(x * 0.0042 + 17.3 + salt * 9, z * 0.0042 - 4.1, 3);
   const L = (TAU * r) / NF, i0 = Math.floor(t);
   for (let j = 0; j < 5; j++) { const k = i0 - 2 + j; _cc[j] = k + 0.5 + 0.75 * (hash2(((k % NF) + NF) % NF, 517 + salt) - 0.5); }
-  // the family's sectors: long stretches with none, others gathered (a ring noise by bearing)
-  const sector = smoothstep(-0.25, 0.35, ring(az, sf, 61.7 + salt * 13));
-  _fm.cut = 0; _fm.water = 0; _fm.fan = -Infinity; _fm.mouth = 0; _fm.nq = 9;
   for (let j = 0; j < 5; j++) {
     const kk = (((i0 - 2 + j) % NF) + NF) % NF, d = t - _cc[j];
     const str = hash2(kk, 733 + salt);
@@ -655,6 +658,7 @@ function crags(x, z, az, r, y, ui, rock, water) {
 // heightfield into rows of fins (v10).
 function faceDr(x, z, az, r, u, steep, face, dn) {
   let dr = -dn.cut * smoothstep(0.03, 0.2, u) * (1 - smoothstep(0.95, 1.02, u)); // the drainage, crest to apron
+  if (face === 0 && dr !== 0) return dr; // every term below is weighted by face: ±0 each (v13 L2)
   const rho = 4.95 + (r - 450) * 0.0045; // ribs and bays, 2.4:1 down the fall line
   dr += S.fbm2(Math.cos(az) * rho + 1.3, Math.sin(az) * rho - 2.1, 3) * 12 * face;
   // arêtes: creases of ridged noise in the same chart (~40 m across, 90 m down, and ~17 m by 38 m low on the face)
@@ -705,7 +709,8 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   const B = sampleBearing(az);
   const Rc = B.cr, Hc = B.ch, sw = B.sw;
   const b = bearingOf(az);
-  const r = rTrue + spurPush(b, rTrue, Rc); // v11 the form: a spur is the face pushed toward the bowl (the face's code sees it as nearer the crest)
+  const holdF = holdOf(HOLD_FACE, b, 3); // (once: spurPush and the form below read it)
+  const r = rTrue <= 352 ? rTrue : rTrue + spurPush(b, rTrue, Rc, holdF); // (inside r 352 a spur's push is +0: v13 L2) v11 the form: a spur is the face pushed toward the bowl (the face's code sees it as nearer the crest)
   const slope = lerp(CAND.slope[0], CAND.slope[1], smoothstep(70, 280, Hc)) * D2R;
   const foot = Math.max(298, Rc - Hc / Math.tan(slope) + 14 * S.noise2(az * 2.6, 5.3)); // the apron's toe
   const steep = smoothstep(46, 58, Math.atan2(Hc, Rc - foot) / D2R); // 0 on an easy face, 1 on a steep one
@@ -748,9 +753,12 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
   // rounded); the broad roll and the fine noise, low
   const up = smoothstep(0.6, 1.0, u);
   const rEnv = RIDGE_ON ? ridgeEnv(b) : 0; // AP's run, as in applyMountains
-  m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
-  m += S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
-  m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  // (each term weighted 0 adds ±0, which leaves any m but ±0 as it was, so its noise is skipped: v13 L2)
+  if (up !== 0 || m === 0) m += (Math.max(0, S.ridged2(x * 0.0055 + 3.1, z * 0.0055 - 7.7, 3) - 0.4) * 13 - 1 + S.fbm2(x * 0.004, z * 0.004, 3) * 7) * up * (1 - 0.85 * rEnv * smoothstep(0.85, 1, u));
+  if (u !== 0 || m === 0) {
+    m += S.fbm2(x * 0.018 + 4.4, z * 0.018, 3) * 2.5 * u;
+    m += S.fbm2(x * 0.009 + 1.3, z * 0.009 - 2.1, 3) * 6 * u * (1 - 0.7 * u);
+  }
   // the couloirs' fans: cones of scree spread from each mouth over the apron
   if (dn.fan > 0) m = smax(m, dn.fan, 5);
   // the apron meets the band in a crease, its top soft
@@ -759,10 +767,10 @@ function applyMassifs(h, x, z, rTrue, g, glacierH) {
     m = smax(m, -smax(-cone, -Ha * 1.15, 10), 3); // the cone, its top capped softly
   }
   m = Math.max(m, 0);
-  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdOf(HOLD_FACE, b, 3)) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
+  m += sampleForm(az) * lerp(smoothstep(0.62, 1.0, u), smoothstep(0.12, 1.0, u), 1 - holdF) * smoothstep(352, 390, rTrue); // v11 the form: the crest's summits, notches and serration, over the face's top (all the face where nothing hangs on it), nothing inside r 352 (walkLimit 348, and one cell of the low mesh)
   // v11.1 the Horn: the pyramid, with the face's relief (the height dr makes on the profile, at 0.8, held to -45..+10 m) and the
   // crags, so the couloirs and crags stay cut into it
-  { const hz = hornAt(x, z) + clamp(0.8 * (P(re + dr) - P(re)), -45, 10) + crg; if (hz > m) m += (hz - m) * smoothstep(352, 400, rTrue) * (1 - smoothstep(169, 177, b)); } // the col at 180 stays
+  { const hn = hornAt(x, z), hz = hn === -Infinity ? hn : hn + clamp(0.8 * (P(re + dr) - P(re)), -45, 10) + crg; if (hz > m) m += (hz - m) * smoothstep(352, 400, rTrue) * (1 - smoothstep(169, 177, b)); } // the col at 180 stays
   // the apron, the fall's wall, AP's merlons, the seam, the saddle, the glacier and the seats: as applyMountains
   m = smax(m, 9 * smoothstep(290, 350, r), 3);
   {
@@ -845,7 +853,6 @@ function farMassifs(T, az, r, out) {
   out.y = hc * env * (0.5 + 0.55 * ridge + 0.14 * B + 0.08 * Rf * (1 - R)) - 30 * (1 - smoothstep(T.r0, T.r0 + 80, r)); // the inner edge tucks below the floor
   return out;
 }
-const FAR_PALE = new THREE.Color('#8e8a99'); // the far ranges paled toward the haze
 // --- the massifs (end)
 
 // ---------------------------------------------------------------- the far ranges (tiers 2 and 3)
@@ -882,107 +889,6 @@ function farHeight(T, az, r) {
   y += (S.ridged2(x * 0.011 - T.seed, z * 0.011, 3) - 0.45) * hc * (CAND ? 0.08 : 0.045) * smoothstep(0.2, 1, u); // the massifs: more crest silhouette, as the far ranges stand in the open through the cols
   return y - 30 * (1 - smoothstep(T.r0, T.r0 + 80, r)); // the inner edge tucks below the floor, out of sight
 }
-function buildRing(ctx, T) {
-  const low = ctx.quality === 'low';
-  // v11: more cells, evenly spaced in r, so the ridges in plan have room (medium/high 1200x56, low 720x30 a ring)
-  const nA = CAND ? (low ? 720 : 1200) : (low ? 540 : 900), nR = CAND ? (low ? 30 : 56) : (low ? 18 : T.rows);
-  const pos = new Float32Array((nA + 1) * (nR + 1) * 3), col = new Float32Array((nA + 1) * (nR + 1) * 3);
-  const cRock = new THREE.Color('#5a535c'), cHigh = new THREE.Color('#77717c'), cSnow = new THREE.Color('#a2a2b4'), c = new THREE.Color();
-  const cGully = new THREE.Color(T.name === 'far' ? '#302c3a' : '#3e3c4c'), cRib = new THREE.Color(T.name === 'far' ? '#867a80' : '#86828e');
-  let k = 0;
-  for (let i = 0; i <= nA; i++) {
-    const az = -Math.PI + (TAU * i) / nA;
-    for (let j = 0; j <= nR; j++) {
-      const v = j / nR;
-      if (CAND) {
-        // the far ranges: rock darker in the valleys and pale on the ridges (the ridged field's value), snow on the
-        // farthest's high ridges only, all paled a step toward the haze (the fog tiers do the rest)
-        const r = T.r0 + (T.r1 - T.r0) * v, F = farMassifs(T, az, r, _fr), hc = _fc.hc;
-        pos[k] = Math.cos(az) * r; pos[k + 1] = F.y; pos[k + 2] = Math.sin(az) * r;
-        c.copy(cGully).lerp(cRib, smoothstep(0.15, 0.7, F.ridge));
-        c.lerp(cSnow, smoothstep(0.78, 0.98, F.y / hc + 0.1 * S.noise2(pos[k] * 0.006, pos[k + 2] * 0.006)) * smoothstep(0.45, 0.7, F.ridge) * (T.name === 'farthest' ? 0.7 : 0.25));
-        c.lerp(FAR_PALE, T.name === 'far' ? 0.15 : 0.3);
-        col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
-        k += 3;
-        continue;
-      }
-      // rows denser toward the crest
-      const r = T.r0 + (T.r1 - T.r0) * (0.5 - 0.5 * Math.cos(v * Math.PI));
-      const y = farHeight(T, az, r);
-      pos[k] = Math.cos(az) * r; pos[k + 1] = y; pos[k + 2] = Math.sin(az) * r;
-      const hc = farCrest(T, az, _fc).hc;
-      c.copy(cRock).lerp(cHigh, smoothstep(hc * 0.35, hc * 0.8, y));
-      c.lerp(cSnow, smoothstep(hc * 0.85, hc * 1.02, y + 0.08 * hc * S.noise2(pos[k] * 0.01, pos[k + 2] * 0.01)) * (T.name === 'farthest' ? 0.8 : 0.4));
-      col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
-      k += 3;
-    }
-  }
-  const idx = [];
-  for (let i = 0; i < nA; i++) for (let j = 0; j < nR; j++) {
-    const a = i * (nR + 1) + j, b = a + nR + 1;
-    idx.push(a, b, a + 1, b, b + 1, a + 1); // counter-clockwise seen from above
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  geo.setIndex(idx);
-  geo.computeVertexNormals();
-  if (CAND) {
-    // v11: the sun's side baked into the colour too, so the far ranges keep a bright side and a shadow side under
-    // the fog tiers: warmed and lifted where a slope faces the low sun, cooled and dropped where it turns away
-    const nrm = geo.getAttribute('normal').array, sd = SUN.dir, warm = new THREE.Color(PALETTE.sunLight);
-    for (let q = 0; q < col.length; q += 3) {
-      const ndl = nrm[q] * sd.x + nrm[q + 1] * sd.y + nrm[q + 2] * sd.z;
-      const lit = smoothstep(-0.1, 0.6, ndl), sh = 0.45 + 0.85 * lit;
-      col[q] = col[q] * sh + warm.r * 0.02 * lit; col[q + 1] = col[q + 1] * sh + warm.g * 0.02 * lit; col[q + 2] = col[q + 2] * (sh * 0.92 + 0.08) + warm.b * 0.02 * lit;
-    }
-  }
-  geo.computeBoundingSphere();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
-  mesh.name = `ranges-${T.name}`;
-  mesh.castShadow = false; mesh.receiveShadow = false;
-  mesh.matrixAutoUpdate = false; mesh.updateMatrix();
-  return mesh;
-}
-
-// ---------------------------------------------------------------- ctx.mountains
-// Builds the far ranges and returns the walls' API for the modules that sit things on them.
-export function buildMountains(ctx) {
-  const rings = FAR.map((T) => buildRing(ctx, T));
-  for (const m of rings) ctx.scene.add(m);
-  const terrain = ctx.terrain;
-  const azOf = (bearing) => (bearing - 90) * D2R;
-  return {
-    saddle: SADDLE, seats: SEATS, peaks: PEAKS, ranges: rings, far: FAR, profile: PROFILE,
-    walkLimit, inWalk, clampWalk, addCorridor, corridors: CORRIDORS, saddleWeight, saddleFloor,
-    // the main crest along a compass bearing: its radius and the ground's height there
-    crestAt(bearing, out = { x: 0, z: 0, r: 0, y: 0 }) {
-      const az = azOf(bearing); sampleBearing(az);
-      // the crest radius is the shape's; search ±25 m for the rendered high point (the noise moves it)
-      let best = -Infinity, br = _b.cr;
-      for (let r = _b.cr - 25; r <= _b.cr + 25; r += 2.5) { const y = terrain.heightAt(Math.cos(az) * r, Math.sin(az) * r); if (y > best) { best = y; br = r; } }
-      out.r = br; out.y = best; out.x = Math.cos(az) * br; out.z = Math.sin(az) * br;
-      return out;
-    },
-    // the first point on the inner face, walking out along a bearing, where the ground reaches height y
-    // (for things hung on the wall at a height: the Annals' band, the Galleries, the Lamps); null if the
-    // wall never gets that high on that bearing
-    faceAt(bearing, y, out = { x: 0, z: 0, r: 0, y: 0 }) {
-      const az = azOf(bearing), cx = Math.cos(az), cz = Math.sin(az);
-      let prev = -Infinity;
-      for (let r = M_START; r <= 520; r += 2) {
-        const h = terrain.heightAt(cx * r, cz * r);
-        if (h >= y) {
-          const rr = prev > -Infinity ? r - 2 + 2 * (y - prev) / Math.max(1e-3, h - prev) : r;
-          out.r = rr; out.y = y; out.x = cx * rr; out.z = cz * rr;
-          return out;
-        }
-        prev = h;
-      }
-      return null;
-    },
-    // the far ranges' surface (tier 2 or 3) at a bearing and radius, for anything set on them
-    farHeightAt(tier, bearing, r) { return farHeight(FAR[tier - 2], azOf(bearing), r); },
-  };
-}
-
+// What src/v4/ranges.js (the far ranges' meshes and ctx.mountains, on the main side) reads of this file's insides:
+// the far ranges' surfaces and their scratch objects, the noise, the per-bearing sampler
+export const RANGES_KIT = { FAR, CAND: !!CAND, farMassifs, farHeight, farCrest, fc: _fc, fr: _fr, noise: S, sampleBearing, bearing: _b };
