@@ -7,7 +7,8 @@
 //          22 and 26 s
 //   lip:   stood at the south lookout looking in and down; the sounding started below (as another visitor would),
 //          then 0.3, 1, 2, 5, 8, 9, 11, 15 and 22 s
-// Usage: node tools/pit-frames.mjs [base] [prefix=pit-act] [part=all|floor|lip] [q=low]
+//   fall:  placed over the Nadir: 0.3, 1, 2, 3.5 s (the night under the world, the veil) and 5.5 s (the Bitter End)
+// Usage: node tools/pit-frames.mjs [base] [prefix=pit-act] [part=all|floor|lip|fall] [q=low]
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -68,5 +69,17 @@ if (part === 'all' || part === 'lip') {
   await page.evaluate(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(194.2, 201); p.vel.set(0, 0, 0); p.yaw = Math.atan2(-(200 - 194.2), -(185 - 201)); p.pitch = -0.3; });
   await run(2500);
   await through('lip', TIMES_LIP, () => page.evaluate(() => { const h = window.__fp.acts.list.find((x) => x.def.id === 'pit-lead'); h.def.do(h.count + 1); }));
+}
+if (part === 'all' || part === 'fall') {
+  // a step over the Nadir's edge: placed over the hole (as a carry or a fall from the lip would leave them), then
+  // frames at 0.3, 1, 2 and 3.5 s (the veil, the night under the world) and 5.5 s (waking at the Bitter End)
+  await page.evaluate(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(200.6, 184.2); p.vel.set(0, 0, 0); p.yaw = 2.8; p.pitch = -0.6; });
+  let el = 0, n = 0;
+  for (const t of [0.3, 1, 2, 3.5, 5.5]) {
+    await run(Math.max(1, (t - el) * 1000)); el = t;
+    const f = `shots/wip/${prefix}-fall-${String(n++).padStart(2, '0')}-${t}s.png`;
+    await page.screenshot({ path: f, timeout: 240000 });
+    console.log('[saved]', f, JSON.stringify(await page.evaluate(() => { const fp = window.__fp, p = fp.player; return { feet: +(p.pos.y - p.eye).toFixed(1), at: [+p.pos.x.toFixed(1), +p.pos.z.toFixed(1)], fall: +fp.pit.sky.t.toFixed(2) }; })));
+  }
 }
 await browser.close();

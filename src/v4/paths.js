@@ -17,6 +17,10 @@ import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/ro
 import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
 import { STAIR, FLOOR, makeFloor } from '../v14/pit/plan.js'; // v14-D2: the way down the Pit's wall: its head's gap in the rim
 import { hazed } from '../v14/pit/haze.js'; // v14-D2: the throat's haze by the eye's depth
+import { underMaterial } from '../v14/under.js'; // v14-D2: the well's light falling off with depth, the lip's last sun, the lamps' pools
+import { LAMP_WARM } from '../v14/pit/plan.js';
+import { SUN } from '../world.js';
+const SUN_XZ = (() => { const l = Math.hypot(SUN.dir.x, SUN.dir.z) || 1; return [SUN.dir.x / l, SUN.dir.z / l]; })();
 // v14-D2: the bottom of the Pit is v14/pit.js's (its floor, the Nadir); ?pit=0 leaves the old black fan and a closed rim
 const PIT_D2 = typeof location === 'undefined' || new URLSearchParams(location.search).get('pit') !== '0';
 const inStairHead = (b, R, pad) => PIT_D2 && Math.abs(((b - STAIR.head + 540) % 360) - 180) < (Math.asin(Math.min(1, (STAIR.half + pad) / R)) * 180) / Math.PI;
@@ -379,7 +383,7 @@ function buildThroat(ctx) {
   const G = groundOf(terrain);
   const N = ctx.noise;
   const nb = low ? 120 : 240, rows = low ? 12 : 20;
-  const top = [], pos = [], col = [], idx = [];
+  const top = [], pos = [], col = [], idx = [], und = [];
   // v14-D2: the floor is the bowl v14/pit.js walks and draws: the rock comes down to its edge at the wall's foot and
   // no further in (the ground's own floor, a heap in the middle, would stand the rock's foot up out of the bowl)
   const PF = PIT_D2 ? makeFloor(terrain, ctx.noise) : null;
@@ -410,6 +414,11 @@ function buildThroat(ctx) {
       const wet = PF ? 1 - 0.38 * Math.pow(Math.max(0, N.noise2(i * 0.55, y * 0.04)), 1.5) : 1;
       const kk = d * st * band * wet;
       col.push(0.27 * kk, 0.24 * kk * (wet < 0.9 ? 1.03 : 1), 0.22 * kk * (wet < 0.9 ? 1.08 : 1));
+      // v14-D2 (the under kit's light): the sky's light falls off down the well, so the walls are darker than the air
+      // in front of them; the last of the sun catches the lip on the side that faces it, an ember ring seen from below
+      // (the glow channel; v14/pit.js adds its lamps' warm pools to it)
+      const ht = smoothstep(T.yFloor, T.yTop, y), face = Math.max(0, -(T.dx * SUN_XZ[0] + T.dz * SUN_XZ[1]));
+      und.push(PF ? 0.14 + 0.86 * ht * ht : 1, 1, PF ? 1.25 * smoothstep(T.yTop - 3.2, T.yTop - 0.2, y) * face : 0);
     }
   }
   const W = rows + 1;
@@ -428,10 +437,12 @@ function buildThroat(ctx) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  und.push(1, 1, 0); g.setAttribute('aUnder', new THREE.Float32BufferAttribute(und, 3));
   g.setIndex(idx);
   g.computeVertexNormals();
   g.computeBoundingSphere();
-  const m = hazed(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide }));
+  const m0 = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide });
+  const m = hazed(PIT_D2 ? underMaterial(m0, 'pit-throat', LAMP_WARM) : m0);
   const mesh = new THREE.Mesh(g, m);
   mesh.name = 'paths-pit-throat'; mesh.receiveShadow = true; mesh.castShadow = false;
   ctx.scene.add(mesh);
@@ -542,7 +553,7 @@ function buildPit(ctx) {
       const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
       if (inStairHead(b, R, 0.35)) continue; // v14-D2: the way onto the stair's landing (its own edges are held)
-      ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
+      ctx.addCollider({ x, z, r: 0.3, ...(PIT_D2 ? { y: terrain.heightAt(x, z) - 2, h: 5 } : {}) }); colliders++; lx = x; lz = z; // v14-D2: from 2 m under the turf to 3 m over it, so nothing down the throat or on its floor (the passage's mouth) meets them
     }
   }
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
