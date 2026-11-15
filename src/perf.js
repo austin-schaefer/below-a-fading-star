@@ -36,11 +36,8 @@ const BENCH_CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
 ];
 import { installGpuMem } from './gpumem.js';
-<<<<<<< HEAD
 import { EV, dist, makeFrameLog, legValues, hitchLog, makeDrawCost, geometryBytes, jsHeap, jsHeapPrecise, benchLines, benchBrief } from './perf-frames.js';
-=======
 import { report as startupReport } from './startup.js'; // v13-P0: the load's phases, as `startup`
->>>>>>> origin/next
 
 const BLOCK_MS = 500; // one sample block
 const WINDOW = 4;     // blocks in the rolling window (~2 s)
