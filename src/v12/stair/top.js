@@ -264,9 +264,33 @@ export function buildTop(ctx, P, { low }) {
   ctx.scene.add(lamp);
   const lampLight = new THREE.PointLight(col('#bfe4d8'), 0, 14, 2);
   ctx.scene.add(lampLight);
-  // its halo, seen from the moor as a mote on the lattice
+  // its halo, seen from the moor as a mote on the lattice: a soft round glow 0.9 m across, gone within a few metres
+  // (#49: a plain PointsMaterial drew it as a flat pale square, 0.9 m wide, standing over the lamp at the hook); the
+  // fog thins it to nothing, as it does the light it stands for (FogExp2's factor, applied to the glow, not mixed in)
+  const haloU = { uColor: { value: col('#bfe4d8') }, uOn: { value: 0 }, uScale: { value: 600 }, fogDensity: { value: 0 }, fogColor: { value: new THREE.Color() } };
   const halo = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3)),
-    new THREE.PointsMaterial({ color: col('#bfe4d8'), size: 0.9, sizeAttenuation: true, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending, fog: true }));
+    new THREE.ShaderMaterial({
+      uniforms: haloU, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true,
+      vertexShader: /* glsl */`uniform float uScale; uniform float uOn; varying float vA;
+        #include <fog_pars_vertex>
+        void main() { vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); float d = -mvPosition.z;
+          gl_PointSize = max(3.0, 0.9 * uScale / max(d, 0.1)); vA = uOn * smoothstep(5.0, 14.0, d); gl_Position = projectionMatrix * mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader: /* glsl */`uniform vec3 uColor; varying float vA;
+        #include <fog_pars_fragment>
+        void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; float r2 = dot(q, q); if (r2 > 1.0 || vA <= 0.0) discard;
+          float k = exp(-r2 * 3.5) * (1.0 - r2) * vA;
+          #ifdef USE_FOG
+            #ifdef FOG_EXP2
+              k *= exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
+            #else
+              k *= 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
+            #endif
+          #endif
+          gl_FragColor = vec4(uColor * k, 1.0); }`,
+    }));
+  if (THREE.UniformsLib?.fog) for (const [k, v] of Object.entries(THREE.UniformsLib.fog)) if (!haloU[k]) haloU[k] = { value: v.value?.clone ? v.value.clone() : v.value };
   halo.frustumCulled = false; halo.name = 'stair-lamp-halo';
   ctx.scene.add(halo);
   // the lamp's round: away (in the lattice, out of sight), down the ladder, home on its hook, up the ladder
@@ -300,7 +324,8 @@ export function buildTop(ctx, P, { low }) {
     lampLight.position.set(x, y, z);
     lampLight.intensity = 3.2 * on * (0.92 + 0.08 * Math.sin(t * 2.3));
     halo.position.set(x, y, z);
-    halo.material.opacity = 0.75 * on;
+    haloU.uOn.value = 0.75 * on;
+    haloU.uScale.value = ctx.renderer.domElement.height / (2 * Math.tan((ctx.camera.fov * Math.PI / 180) / 2));
   }
   update(0, 0);
 
