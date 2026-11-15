@@ -32,7 +32,8 @@ export async function build(ctx) {
   const hold = new ctx.THREE.Vector3();
   const state = ctx.fall = { get phase() { return phase; }, get enabled() { return on; },
     // the settings toggle calls this after writing 'fp-fall'; the URL still wins
-    refresh() { on = q === '1' ? true : q === '0' ? false : stored(); }, get amount() { return amount; }, falls: 0, FALL_M };
+    refresh() { on = q === '1' ? true : q === '0' ? false : stored(); }, get amount() { return amount; }, falls: 0, FALL_M,
+    wake: () => wake() }; // the waking alone, from the dark, at the gate: the bench's last leg (perf.js), whether or not falling costs
   const ease = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 
   ctx.events.addEventListener('land', (e) => {

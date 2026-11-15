@@ -57,6 +57,11 @@ if (flags.against) {
     rows.push(`  ${label.padEnd(44)} ${String(x ?? '–').padStart(9)} → ${String(y ?? '–').padStart(9)}${unit}${d != null ? `  (${d > 0 ? '+' : ''}${Math.round(d * 100) / 100}${pct != null ? `, ${pct > 0 ? '+' : ''}${pct}%` : ''})` : ''}`);
   };
   console.log(`\nagainst ${flags.against} (before → after)`);
+  // the two runs must be the same run to compare
+  const same = [['quality', (r) => r.quality], ['duration', (r) => r.duration], ['leg seconds', (r) => r.legSeconds], ['CPU throttle', (r) => r.cpuThrottle ?? 1], ['dpr', (r) => r.dpr], ['render size', (r) => r.renderSize?.buffer?.join('x')], ['frame cap', (r) => r.settings?.cap]];
+  for (const [k, f] of same) if (f(a) !== f(b) && f(a) !== undefined) console.log(`  WARNING: ${k} differs: ${f(a)} → ${f(b)}; the numbers below are not one run against another`);
+  const old = !a.legs; // a report from before v13: no legs, and its \`frame\` row held what v13 names controls, sky, hud, post.update, shadow.cadence and lights.slots
+  if (old) console.log('  the older report is from before v13: only the round\'s avg and 1% low, the world modules\' rows and main.js\'s own work in total (old frame vs frame + the six rows split out of it) mean the same thing in both; render, shadow.pass, far and perf had no row then and are left out');
   cmp('the round: avg frame ms', a.summary?.avgFrameMs, b.summary?.avgFrameMs);
   cmp('the round: 1% low ms', a.summary?.low1FrameMs, b.summary?.low1FrameMs);
   for (const leg of new Set([...Object.keys(a.legs || {}), ...Object.keys(b.legs || {})])) {
@@ -67,7 +72,15 @@ if (flags.against) {
   cmp('unattributed ms of the median frame', a.unattributed?.medianUnattributedMs, b.unattributed?.medianUnattributedMs);
   // rows: the round's rows (v2), else the old cpuMs (v1, the same route)
   const ra = a.legs?.route?.rows || a.summary?.cpuMs || {}, rb = b.legs?.route?.rows || b.summary?.cpuMs || {};
-  for (const k of new Set([...Object.keys(ra), ...Object.keys(rb)])) if (Math.abs((rb[k] || 0) - (ra[k] || 0)) >= 0.02) cmp(`the round: ${k} ms a frame`, ra[k] ?? 0, rb[k] ?? 0);
+  const SPLIT = ['frame', 'controls', 'sky', 'hud', 'post.update', 'shadow.cadence', 'lights.slots'], NEW = ['render', 'shadow.pass', 'far', 'perf', 'bench.drive'];
+  if (old) {
+    const own = (r) => Math.round(SPLIT.reduce((t, k) => t + (r[k] || 0), 0) * 100) / 100;
+    cmp('the round: main.js\'s own work (old frame / v13 frame + its six rows)', own(ra), own(rb));
+  }
+  for (const k of new Set([...Object.keys(ra), ...Object.keys(rb)])) {
+    if (old && (SPLIT.includes(k) || NEW.includes(k))) continue;
+    if (Math.abs((rb[k] || 0) - (ra[k] || 0)) >= 0.02) cmp(`the round: ${k} ms a frame`, ra[k] ?? 0, rb[k] ?? 0);
+  }
   cmp('geometry MB at the end', a.memory?.end?.geometry?.totalMB, b.memory?.end?.geometry?.totalMB);
   cmp('JS heap MB at the end', a.memory?.end?.jsHeap?.usedMB, b.memory?.end?.jsHeap?.usedMB);
   cmp('textures MB at the end', a.memory?.end?.gpu?.textureMB, b.memory?.end?.gpu?.textureMB);

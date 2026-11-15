@@ -8,7 +8,7 @@
 // - makeDrawCost(ctx, mods): calls and triangles per module in the colour and shadow passes, on asked frames only
 //   (heights-cost's method: each drawable's onBeforeRender / onAfterRender and its shadow pair read renderer.info)
 // - geometryBytes(scene, mods), jsHeap(): memory
-export const EV = { shadow: 1, plants: 2, rocks: 4, far: 8, texFirst: 16, texData: 32, geometry: 64, program: 128, teleport: 256, tier: 512, buffer: 1024 };
+export const EV = { shadow: 1, plants: 2, rocks: 4, far: 8, texFirst: 16, texData: 32, geometry: 64, program: 128, teleport: 256, tier: 512, buffer: 1024, station: 2048 }; // station: a draw-cost station's frames (hooked; left out of the distributions)
 const EV_NAMES = Object.entries(EV);
 export const evNames = (ev) => EV_NAMES.filter(([, b]) => ev & b).map(([k]) => k);
 
@@ -36,13 +36,12 @@ export function makeFrameLog(cap) {
   };
 }
 
-// the frames of one leg (or all, leg < 0) as a Float32Array of one field
-export function legValues(L, field, leg) {
-  const a = L[field];
-  if (leg < 0) return a.subarray(0, L.n);
-  let k = 0; for (let i = 0; i < L.n; i++) if (L.leg[i] === leg) k++;
+// the frames of one leg (or all, leg < 0) as a Float32Array of one field, less those with an event in `skip`
+export function legValues(L, field, leg, skip = 0) {
+  const a = L[field], take = (i) => (leg < 0 || L.leg[i] === leg) && !(L.ev[i] & skip);
+  let k = 0; for (let i = 0; i < L.n; i++) if (take(i)) k++;
   const out = new Float32Array(k); k = 0;
-  for (let i = 0; i < L.n; i++) if (L.leg[i] === leg) out[k++] = a[i];
+  for (let i = 0; i < L.n; i++) if (take(i)) out[k++] = a[i];
   return out;
 }
 
@@ -67,8 +66,9 @@ export function hitchLog(L, legs, rows, cbs, keep = 60) {
 }
 
 // calls and triangles per module, on the frames asked for (begin()); the colour pass on the next render, the shadow
-// pass on the next render that redraws the map. Objects added after hookAll() are not hooked: their draws, and the
-// post chain's full-screen passes, are the station's `other`.
+// pass on the next render that redraws the map. The hooks go on every drawable at begin() and come off when the station
+// is done, so no other frame pays for them (the station's frames carry EV.station). The post chain's full-screen passes
+// are the station's `other`.
 export function makeDrawCost(ctx, mods) {
   const info = ctx.renderer.info.render;
   const owner = new Map();
@@ -81,12 +81,14 @@ export function makeDrawCost(ctx, mods) {
     for (let p = src; p; p = p.parent) { const n = owner.get(p); if (n) return n; }
     return 'core:' + (src.name || src.geometry?.type || src.type);
   };
+  const hooked = [];
   function hook(o) {
     if (o.__fpDraw || !(o.isMesh || o.isPoints || o.isLine || o.isSprite)) return;
     o.__fpDraw = true; st.hooked++;
     const e = entry(nameOf(o));
     let c0 = 0, t0 = 0, s0 = 0, u0 = 0;
     const br = o.onBeforeRender, ar = o.onAfterRender, bs = o.onBeforeShadow, as = o.onAfterShadow;
+    hooked.push([o, br, ar, bs, as]);
     o.onBeforeRender = function (a, b, c, d, f, g) { br.call(this, a, b, c, d, f, g); if (st.on) { c0 = info.calls; t0 = info.triangles; } };
     o.onAfterRender = function (a, b, c, d, f, g) { ar.call(this, a, b, c, d, f, g); if (st.on) { e.c += info.calls - c0; e.t += info.triangles - t0; } };
     if (bs && as) {
@@ -94,12 +96,20 @@ export function makeDrawCost(ctx, mods) {
       o.onAfterShadow = function (a, b, c, d, f, g, h) { as.call(this, a, b, c, d, f, g, h); if (st.shadowOn) { e.sc += info.calls - s0; e.st += info.triangles - u0; } };
     }
   }
+  // put back exactly what was there (own properties: a far.js stand-in's is overwritten each frame anyway)
+  function unhookAll() {
+    for (const [o, br, ar, bs, as] of hooked) {
+      o.onBeforeRender = br; o.onAfterRender = ar;
+      if (bs && as) { o.onBeforeShadow = bs; o.onAfterShadow = as; }
+      delete o.__fpDraw;
+    }
+    hooked.length = 0;
+  }
   let cur = null;
   return {
-    get hooked() { return st.hooked; },
+    get hooked() { return st.hooked; }, get live() { return hooked.length; },
     get busy() { return !!cur; },
-    hookAll() { ctx.scene.traverse(hook); },
-    begin(meta) { for (const e of list) { e.c = 0; e.t = 0; e.sc = 0; e.st = 0; } st.on = true; st.shadowOn = true; cur = { ...meta, frames: 0 }; },
+    begin(meta) { ctx.scene.traverse(hook); for (const e of list) { e.c = 0; e.t = 0; e.sc = 0; e.st = 0; } st.on = true; st.shadowOn = true; cur = { ...meta, frames: 0 }; },
     // after each render while a station is open: the frame's totals and whether the shadow map was redrawn in it
     end(calls, tris, shadowDrew) {
       if (!cur) return null;
@@ -117,6 +127,7 @@ export function makeDrawCost(ctx, mods) {
         modules: rows,
       };
       cur = null;
+      unhookAll();
       return out;
     },
   };
@@ -214,7 +225,7 @@ export function benchLines(res, { hitches = 10, rows = 14, modules = 4 } = {}) {
   return out;
 }
 
-// The short JSON the panel's Copy gives: everything above, small enough to paste into an issue (about 10 KB)
+// The short JSON the panel's Copy gives: everything above, small enough to paste into an issue (about 6 KB)
 export function benchBrief(res) {
   const mem = (x) => x && { jsHeap: x.jsHeap, geometry: x.geometry && { totalMB: x.geometry.totalMB, byModule: top(x.geometry.byModule, 8) }, gpu: x.gpu && { totalMB: x.gpu.totalMB, textureMB: x.gpu.textureMB }, counts: x.counts };
   const legs = {};

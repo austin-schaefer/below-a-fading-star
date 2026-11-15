@@ -226,12 +226,14 @@ export function buildSettings(ctx) {
   });
 
   // --- measure (v13): reload into the bench (src/perf.js, ?bench=45&perf=1) at the tier in use; it ends on a panel whose
-  // Copy gives a short JSON, and with measure=1 the bench takes its params off the URL when done, so a refresh is a visit
+  // Copy gives a short JSON; the bench takes its params off the URL when done (and q, unless it was there before), and its
+  // Close reloads that clean URL, so the profiler and its hooks are gone and a refresh is an ordinary visit
   function measureUrl() {
     const u = new URL(location.href);
+    const hadQ = u.searchParams.has('q'); // measure=q: keep it afterwards; measure=1: the bench takes it off again
     for (const k of ['pos', 'yaw', 'pitch', 'tier', 'record']) u.searchParams.delete(k);
     u.searchParams.set('q', ctx.quality);
-    u.searchParams.set('bench', '45'); u.searchParams.set('perf', '1'); u.searchParams.set('measure', '1');
+    u.searchParams.set('bench', '45'); u.searchParams.set('perf', '1'); u.searchParams.set('measure', hadQ ? 'q' : '1');
     return u.href;
   }
   api.measureUrl = measureUrl;

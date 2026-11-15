@@ -25,6 +25,7 @@ const r = await page.evaluate(() => {
   out.panelText = document.querySelector('#perf-bench pre')?.textContent || '';
   out.copyLabel = document.querySelector('#perf-bench [data-a=copy]')?.textContent;
   out.hooked = fp.perf.hooked;
+  out.drawHooksLive = fp.perf.bench.draws.live;
   out.overlayText = document.getElementById('perf').textContent;
   out.toggleRows = [...document.querySelectorAll('#dbg-list [data-toggle]')].map((b) => b.dataset.toggle);
   const bloom = fp.post.bloom;
@@ -88,7 +89,7 @@ const checks = [
   ['hitch log: a rule, a count, the worst sorted, each with its row and events', bench.hitches && bench.hitches.count >= bench.hitches.worst.length && bench.hitches.worst.every((w, i) => (i === 0 || w.ms <= bench.hitches.worst[i - 1].ms) && Array.isArray(w.events) && 'top' in w)],
   ['memory at start and end: geometry bytes per module, gpu bytes, the JS heap or why not', ['start', 'end'].every((k) => bench.memory?.[k]?.geometry?.totalMB > 0 && Object.keys(bench.memory[k].geometry.byModule).length > 1 && bench.memory[k].gpu && 'api' in bench.memory[k].jsHeap)],
   ['report().memory has geometry bytes and the heap', rep.memory?.geometry?.totalMB > 0 && 'api' in (rep.memory?.jsHeap || {})],
-  ['draws: 7 stations; per module colour calls add up to renderer.info\'s calls less the post passes', bench.draws?.length === 7 && bench.draws.every((d) => d.colour.calls > 0 && d.other.calls >= 0 && d.other.calls <= 40 && d.calls === d.colour.calls + d.other.calls + (d.shadowInFrame && d.shadow ? d.shadow.calls : 0) && d.modules.length > 3)],
+  ['draws: 7 stations; the hooks see every scene draw (all but the post chain\'s ~14 passes), terrain and vegetation among them, and come off after', bench.draws?.length === 7 && bench.draws.every((d) => d.colour.calls > 100 && d.other.calls >= 0 && d.other.calls <= 20 && d.shadow && d.shadow.calls > 0 && ['core:terrain', 'vegetation'].every((m) => d.modules.some((r) => r[0] === m))) && r.drawHooksLive === 0 && bench.stationFrames > 0],
   ['unowned rows: render, shadow.pass, far, controls named in the cpu split', ['render', 'shadow.pass', 'far', 'controls'].every((k) => k in (bench.legs?.route?.rows || {}))],
   ['unattributed share of all JS under 10%', bench.unattributed?.shareOfAllJs != null && bench.unattributed.shareOfAllJs < 0.1],
   ['the panel leads with JS a frame; Copy gives a brief under 30 KB', /^.*\n?JS a frame/m.test(r.panelText) && r.copyLabel === 'Copy' && r.briefLen > 1000 && r.briefLen < 30000],

@@ -273,7 +273,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   await page.evaluate(() => { window.__nav = null; window.__fp.settings.navigate = (u) => { window.__nav = u; }; });
   await page.locator('#set-measure').tap();
   const mu = await page.evaluate(() => { const u = window.__nav && new URL(window.__nav); return u && Object.fromEntries(u.searchParams); });
-  check('touch: Measure reloads into the bench (bench=45, perf=1, measure=1, the tier kept, no pos)', mu && mu.bench === '45' && mu.perf === '1' && mu.measure === '1' && mu.q === 'low' && !('pos' in mu), mu);
+  check('touch: Measure reloads into the bench (bench=45, perf=1, measure=q: q was in the URL; the tier kept, no pos)', mu && mu.bench === '45' && mu.perf === '1' && mu.measure === 'q' && mu.q === 'low' && !('pos' in mu), mu);
   await page.locator('#set-close').tap();
   check('touch: Close closes', !(await shown(page)));
   await context.close();
