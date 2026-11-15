@@ -17,6 +17,9 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
 let body = html.match(/<body>([\s\S]*?)<\/body>/)[1];
 body = body.replace(/<script type="importmap">[\s\S]*?<\/script>\s*/, '');
+// no service worker on the artifact host: dist/ has no sw.js and the host's origin is not the site's (v13-L1)
+body = body.replace(/<script id="sw-register">[\s\S]*?<\/script>\s*/, '');
+if (/serviceWorker/.test(body)) { console.error('artifact.html would register a service worker'); process.exit(1); }
 const title = head.match(/<title>[\s\S]*?<\/title>/)[0];
 const description = head.match(/<meta name="description"[^>]*>/)[0];
 const links = [...head.matchAll(/<link[^>]*>/g)].map((m) => m[0]).join('\n');

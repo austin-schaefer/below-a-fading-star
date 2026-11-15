@@ -20,6 +20,9 @@
 // gzip or brotli over HTTP/2 and `max-age=0, must-revalidate` with ETags (a repeat costs a round trip a file). The
 // one honest network number is the live site, read-only, by hand:
 //   node tools/load-probe.mjs https://below-a-fading-star.netlify.app --runs=3
+// With a service worker (v13-L1, sw.js; on localhost it needs --params=sw=1 and a server that stamps the commit:
+// tools/sw-site.mjs), the repeat is served by it: 'over the wire' counts the page's requests no cache answered plus
+// the worker's own (commit.json, and what its cache lacked). The cold load waits for the worker's fill.
 // --net emulates a link over CDP (fast4g: 60 ms latency, 9 Mbit/s down, 1.5 up; slow4g: 150 ms, 1.6, 0.75; 3g:
 // 300 ms, 0.4, 0.4): on localhost it adds latency and bandwidth but still not compression or HTTP/2.
 // --throttle=N slows the page's CPU N times over CDP: 4 is the stand-in for a phone, and only a stand-in.
@@ -66,24 +69,38 @@ async function load(page, cdp, kind, go) {
     const r = reqs.get(e.requestId); if (!r) return;
     r.status = e.response.status;
     if (e.response.fromDiskCache || e.response.fromServiceWorker || e.response.fromPrefetchCache) r.cached = true;
+    if (e.response.fromServiceWorker) r.worker = true;
     if (!cacheControl && /\/src\/main\.js/.test(e.response.url)) cacheControl = e.response.headers['cache-control'] || e.response.headers['Cache-Control'] || '(none)';
   };
   const onCache = (e) => { const r = reqs.get(e.requestId); if (r) r.cached = true; };
   const onDone = (e) => { const r = reqs.get(e.requestId); if (r) r.bytes = e.encodedDataLength; };
   cdp.on('Network.requestWillBeSent', onReq); cdp.on('Network.responseReceived', onResp);
   cdp.on('Network.requestServedFromCache', onCache); cdp.on('Network.loadingFinished', onDone);
+  // the service worker's own fetches (v13-L1: commit.json, and what its cache lacks) are not the page's: Playwright
+  // reports them on the context
+  const swReqs = [];
+  const onSw = (r) => { if (r.serviceWorker()) swReqs.push(r.sizes().then((z) => z.responseBodySize + z.responseHeadersSize).catch(() => 0)); };
+  page.context().on('requestfinished', onSw);
   const t0 = Date.now();
   await go();
   await page.waitForFunction(() => document.body?.classList.contains('ready') && (!window.__fp_startup || window.__fp_startup.report().ready != null), null, { timeout: 900000, polling: 250 });
   await page.waitForTimeout(300); // let the last loadingFinished events in
+  // a first visit with a worker: wait for it to keep what the page fetched (index.html's fill) before the repeat
+  await page.waitForFunction(() => !window.__fp_sw || window.__fp_sw.controlled || window.__fp_sw.off || window.__fp_sw.filled, null, { timeout: 20000, polling: 100 }).catch(() => {});
+  page.context().off('requestfinished', onSw);
+  const swBytes = (await Promise.all(swReqs)).reduce((a, b) => a + b, 0);
   const rep = await page.evaluate(() => (window.__fp_startup ? window.__fp_startup.report() : window.__probe.report()));
   cdp.off('Network.requestWillBeSent', onReq); cdp.off('Network.responseReceived', onResp);
   cdp.off('Network.requestServedFromCache', onCache); cdp.off('Network.loadingFinished', onDone);
   const list = [...reqs.values()];
   const kb = list.reduce((s, r) => s + r.bytes, 0) / 1024;
+  const wire = list.filter((r) => !r.cached);
+  const sw = await page.evaluate(() => (window.__fp_sw ? { controlled: !!window.__fp_sw.controlled, kept: window.__fp_sw.filled?.kept ?? null } : null));
   return {
     kind, wallMs: Date.now() - t0, ...rep, cacheControl,
-    net: { requests: list.length, kb: Math.round(kb), fromCache: list.filter((r) => r.cached).length, revalidated: list.filter((r) => r.status === 304).length },
+    net: { requests: list.length, kb: Math.round(kb), fromCache: list.filter((r) => r.cached).length, revalidated: list.filter((r) => r.status === 304).length,
+      fromWorker: list.filter((r) => r.worker).length, wire: wire.length + swReqs.length, wireKb: Math.round(((wire.reduce((s, r) => s + r.bytes, 0) + swBytes) / 1024) * 10) / 10 },
+    sw,
   };
 }
 
@@ -160,6 +177,9 @@ P(`${'  long tasks over 50 ms (count)'.padEnd(40)}${col('n', (r) => r.longTasks.
 P(`${'  long tasks, total ms'.padEnd(40)}${col('sum', (r) => r.longTasks.reduce((s, e) => s + e.ms, 0))}`);
 P(`${'requests'.padEnd(40)}${col('req', (r) => r.net.requests)}`);
 P(`${'KB over the wire'.padEnd(40)}${col('kb', (r) => r.net.kb)}`);
+P(`${'  over the wire: requests'.padEnd(40)}${col('wire', (r) => r.net.wire)}`);
+P(`${'  over the wire: KB'.padEnd(40)}${col('wirekb', (r) => r.net.wireKb)}`);
+if (out.some((r) => r.cold.sw)) P(`${'  served by the service worker'.padEnd(40)}${col('sw', (r) => r.net.fromWorker)}`);
 P(`${'from cache / 304'.padEnd(40)}${kinds.map((kind) => `${cell(out.map((r) => r[kind].net.fromCache))} / ${cell(out.map((r) => r[kind].net.revalidated))}`.padStart(22)).join('')}`);
 P(`${'programs compiled'.padEnd(40)}${col('prog', (r) => r.extra?.programs?.count)}`);
 const stall = (kind) => {

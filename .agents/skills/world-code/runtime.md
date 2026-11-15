@@ -167,6 +167,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v13
 
 - `serial=1` (v13-P0): every world module imported first, then built one at a time, so each build's time is its own (`src/startup.js`); for timing only (`tools/load-probe.mjs`), never for a visitor or a render: modules then build in `MODULES` order to completion, and at the spawn on low its frame differs from an ordinary load's by 85 pixels on one figure (two ordinary loads: 0)
+- `sw=0` (v13-L1): unregisters the service worker (`sw.js`), deletes its caches and keeps it off in this browser; `sw=1` turns it back on, and is the only way it registers on localhost (it needs a server that stamps `X-Fp-Commit` and serves `commit.json`: `node tools/sw-site.mjs <built _site> <port>`). With no `?sw=1` on localhost nothing registers, so every test and `tools/serve.sh` run without it. `node tools/sw-test.mjs [port]` (in the suite as `sw`, about 13 s) proves it on a small site of its own: a repeat visit asks for `commit.json` only, a new commit shows whole, a deploy mid-load or in a second tab never mixes modules, offline opens the last release, a cut-off or error answer is not kept, `?sw=0` leaves nothing. The worker's log: post `{type:'fp-trace'}` with a MessageChannel to `navigator.serviceWorker.controller`
 
 ## Quality tiers
 
