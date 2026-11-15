@@ -2,14 +2,19 @@
 // No THREE and no DOM: the page and the bake's worker both use it. Nothing here may make a visit wrong or slower:
 // every miss, error, refusal, private window, timeout or version skew answers "not kept", and the caller computes.
 //
-// A record lives in one slot (a short name: 'bake:low', 'kept:rocks:low') and carries the key it was made under. The
-// key is the caller's string (the tier, the URL's switches: queryKey()) and the tree, what the code was:
-//   - 'commit:<sha>' where commit.json (the Netlify build's, and build-artifact.mjs's) names one: the same commit
-//     runs the same code, so the record holds;
-//   - 'src' where it does not, and on localhost without ?kept=commit (tools/serve.sh): the record lists every script the computing context had
-//     loaded with a hash of its text, and holds only while each of them still hashes the same (they are fetched
-//     again to check, once a load each). A test's fresh browser context starts with an empty store either way.
-// A put replaces whatever was in its slot (so an old key is gone); prune() deletes every record of another tree.
+// A record lives under `<tree>|<slot>` (a slot is a short name: 'bake:320', 'kept:rocks.place:low') and carries the
+// key it was made under (the caller's string: the tier, the URL's switches, queryKey()). The tree is what the code
+// running in this context is, never what the network says it is now:
+//   - 'commit:<sha>' (off localhost, or ?kept=commit on it): the X-Fp-Commit stamp of this very module's own response
+//     and of the bake's (fetched force-cache: the copy the module loader ran, from the HTTP cache or, under the
+//     service worker, from its bound release) must agree with each other and with commit.json. Anything else (no
+//     stamp, no commit.json, a disagreement: a deploy landed mid-load, or the service worker served an older release
+//     than the network has) turns the store off for this load: nothing read, written or pruned.
+//   - 'src' (localhost: tools/serve.sh has neither stamp nor commit.json): the record lists every script its context
+//     had loaded with a hash of its text, and holds only while each still hashes the same (refetched once a load).
+//     A test's fresh browser context starts with an empty store.
+// A put replaces whatever was in its slot for this tree (an old key is gone); prune() deletes every record of another
+// tree by its key alone (no record is read).
 // A record carries a checksum of all it holds (sumOf), checked on every read. ?kept=0 turns it all off (get misses,
 // put does nothing). FORMAT changes whenever what a record holds changes.
 export const KEPT_FORMAT = 1;
@@ -60,6 +65,10 @@ export function sumOf(data) {
   return `${(a >>> 0).toString(16)}${(b >>> 0).toString(16)}`;
 }
 
+// the page's query: the bake's worker is started without one (a service worker keeps no URL with a query) and is
+// handed the page's as globalThis.FP_PAGE_QUERY before it imports anything
+export const pageQuery = () => globalThis.FP_PAGE_QUERY ?? globalThis.location?.search ?? '';
+
 const timeout = (p, ms, v = null) => Promise.race([p, new Promise((r) => setTimeout(() => r(v), ms))]);
 const reqP = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 
@@ -83,22 +92,27 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
     try {
       const r = indexedDB.open(DB, 1);
       r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE); };
-      r.onsuccess = () => res(r.result);
+      r.onsuccess = () => { r.result.onversionchange = () => { r.result.close(); dbP = Promise.resolve(null); }; res(r.result); };
       r.onerror = () => { note('errors', `open: ${r.error?.name || r.error}`); res(null); };
       r.onblocked = () => { note('errors', 'open: blocked'); res(null); };
     } catch (e) { note('errors', `open: ${e?.name || e}`); res(null); }
   }), WAIT).then((d) => { if (!d) note('errors', 'open: no database (timed out or refused)'); return d; }));
   // on this machine's own server (tools/serve.sh has no commit.json, and asking for it logs a 404 the tests count as a
-  // page error) the scripts' text decides, unless ?kept=commit says a local copy does have one (a _site/ build)
-  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(new URL(base).hostname) && !/[?&]kept=commit\b/.test(globalThis.location?.search || '');
+  // page error) the scripts' text decides, unless ?kept=commit says a local copy has the build's stamps (a _site/)
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(new URL(base).hostname) && !/[?&]kept=commit\b/.test(pageQuery());
+  const stampOf = (u) => timeout(fetch(u, { cache: 'force-cache', credentials: 'same-origin' }).then((r) => (r.ok ? r.headers.get('x-fp-commit') : null)).catch(() => null), WAIT);
   const tree = (async () => {
     if (local) return 'src';
     try {
-      const r = await timeout(fetch(new URL('commit.json', base), { cache: 'no-store' }), WAIT);
-      if (r && r.ok) { const j = await r.json(); if (j && typeof j.commit === 'string' && j.commit) return `commit:${j.commit}`; }
-    } catch { /* no commit.json: the scripts' own text decides */ }
-    return 'src';
+      const [r, s1, s2] = await Promise.all([timeout(fetch(new URL('commit.json', base), { cache: 'no-store' }), WAIT), stampOf(import.meta.url), stampOf(new URL('../height/bake.js', import.meta.url).href)]);
+      const j = r && r.ok ? await r.json() : null, c = j && typeof j.commit === 'string' ? j.commit : '';
+      stats.stamp = { commit: c || null, kept: s1, bake: s2 };
+      if (c && s1 === c && s2 === c) return `commit:${c}`;
+      note('misses', `the store is off: commit.json ${c || 'none'}, this code's stamps ${s1 || 'none'}, ${s2 || 'none'}`);
+    } catch (e) { note('misses', `the store is off: ${e?.name || e}`); }
+    return null;
   })();
+  const rkey = (t, slot) => `${t}|${slot}`;
   // the scripts' hashes, each fetched once a load
   const hashes = new Map();
   const hashOf = (url) => {
@@ -110,9 +124,9 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
     const now = await Promise.all(deps.map(([u]) => hashOf(u)));
     return deps.every(([, h], i) => now[i] != null && now[i] === h);
   }
-  async function read(slot) {
+  async function read(t, slot) {
     const d = await db(); if (!d) return null;
-    try { return await timeout(reqP(d.transaction(STORE, 'readonly').objectStore(STORE).get(slot)), WAIT); }
+    try { return await timeout(reqP(d.transaction(STORE, 'readonly').objectStore(STORE).get(rkey(t, slot))), WAIT); }
     catch (e) { note('errors', `get ${slot}: ${e?.name || e}`); return null; }
   }
   return {
@@ -120,9 +134,10 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
     // the data kept in slot under key, or null
     async get(slot, key) {
       try {
-        const rec = await read(slot);
-        if (!rec) { note('misses', `${slot}: none`); return null; }
         const t = await tree;
+        if (!t) { note('misses', `${slot}: store off`); return null; }
+        const rec = await read(t, slot);
+        if (!rec) { note('misses', `${slot}: none`); return null; }
         if (rec.v !== KEPT_FORMAT || rec.key !== key || rec.tree !== t || rec.data == null) { note('misses', `${slot}: ${rec.v !== KEPT_FORMAT ? 'format' : rec.tree !== t ? 'tree' : 'key'}`); return null; }
         if (t === 'src' && !(await depsHold(rec.deps))) { note('misses', `${slot}: scripts changed`); return null; }
         if (rec.sum !== sumOf(rec.data)) { note('misses', `${slot}: corrupt`); return null; }
@@ -134,6 +149,7 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
     async put(slot, key, data, deps) {
       try {
         const t = await tree;
+        if (!t) return false;
         let dl = null;
         if (t === 'src') {
           if (!deps?.length) { note('errors', `put ${slot}: no scripts to key it by`); return false; }
@@ -143,8 +159,9 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
         }
         const d = await db(); if (!d) return false;
         const tx = d.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), sum: sumOf(data), data }, slot);
-        await timeout(new Promise((res, rej) => { tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }), WAIT * 4, false);
+        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), sum: sumOf(data), data }, rkey(t, slot));
+        const ok = await timeout(new Promise((res, rej) => { tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }), WAIT * 4, false);
+        if (!ok) { note('errors', `put ${slot}: timed out`); return false; }
         note('puts', slot);
         return true;
       } catch (e) { note('errors', `put ${slot}: ${e?.name || e}`); return false; }
@@ -152,16 +169,14 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
     // delete every record made by another tree (another commit, or the scripts' text against a commit)
     async prune() {
       try {
-        const t = await tree, d = await db(); if (!d) return 0;
-        const tx = d.transaction(STORE, 'readwrite'), cur = tx.objectStore(STORE).openCursor();
+        const t = await tree; if (!t) return 0;
+        const d = await db(); if (!d) return 0;
+        const t0 = performance.now();
+        const st = d.transaction(STORE, 'readwrite').objectStore(STORE), all = st.getAllKeys(); // keys only: no record is read
         let n = 0;
-        cur.onsuccess = () => {
-          const c = cur.result; if (!c) return;
-          const rec = c.value;
-          if (!rec || rec.v !== KEPT_FORMAT || rec.tree !== t) { c.delete(); n++; }
-          c.continue();
-        };
-        await timeout(new Promise((res, rej) => { tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }), WAIT * 4);
+        all.onsuccess = () => { for (const k of all.result) if (typeof k !== 'string' || !k.startsWith(t + '|')) { st.delete(k); n++; } };
+        await timeout(new Promise((res, rej) => { st.transaction.oncomplete = () => res(); st.transaction.onerror = () => rej(st.transaction.error); }), WAIT * 4);
+        stats.pruneMs = performance.now() - t0; stats.pruned = n;
         return n;
       } catch (e) { note('errors', `prune: ${e?.name || e}`); return 0; }
     },

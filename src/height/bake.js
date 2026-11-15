@@ -6,8 +6,8 @@
 //                                               rotateX(-PI/2), to the bit (three's own arithmetic, in its order)
 //   bakeTerrain(P, segs, size) -> { color, aIce, aWet, aWall, aRock, aGlac }  writes each vertex's height into P (y)
 // The caller traces the leads (v4/paths/ground.js prepareMap) first, as the bake's heights carry the runnels' cuts.
-// The URL switches it reads (?bakeslope=mesh, ?regions=1) come from location: a worker is started with the page's
-// query on its own URL, so they are the page's there too. tools/height-check.mjs (pure) checks it bit for bit.
+// The URL switches it reads (?bakeslope=mesh, ?regions=1) are the page's: in the worker, globalThis.FP_PAGE_QUERY
+// (set before any import; the worker's own URL has no query, which a service worker would not keep). tools/height-check.mjs (pure) checks it bit for bit.
 import { clamp, lerp, smoothstep } from '../noise.js';
 import { WORLD, PALETTE } from '../world.js';
 import { heightAt, slopeAt, causewayDistance, BAKE_KIT } from './field.js';
@@ -19,7 +19,7 @@ import { glacierFloorIce, glacierCoords } from '../v4/glacier.js';
 import { Col } from './color.js';
 const { SX, riverSection, cs: _cs, biomeWith, POOL, POOL_R, GULLY_BED, IMPACT } = BAKE_KIT;
 
-const MESH_SLOPE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('bakeslope') === 'mesh';
+const MESH_SLOPE = new URLSearchParams(globalThis.FP_PAGE_QUERY ?? globalThis.location?.search ?? '').get('bakeslope') === 'mesh';
 // the attributes the bake makes, with their item sizes (terrain.js sets them in this order)
 export const BAKED = [['color', 3], ['aIce', 1], ['aWet', 1], ['aWall', 1], ['aRock', 3], ['aGlac', 3]];
 

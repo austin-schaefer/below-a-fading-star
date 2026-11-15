@@ -16,7 +16,8 @@ import { ground as adust } from '../v4/regions/ground/adust.js';
 export const GROUND_HOOKS = { bletting, saltings, outwash, highLing, demesne, lynchets, strandline, adust };
 const GROUND_KEYS = REGION_KEYS.filter((k) => typeof GROUND_HOOKS[k] === 'function');
 
-export const REGIONS_DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('regions') === '1';
+// (the page's query; in the bake's worker, handed in as FP_PAGE_QUERY: its own URL has none)
+export const REGIONS_DEBUG = new URLSearchParams(globalThis.FP_PAGE_QUERY ?? globalThis.location?.search ?? '').get('regions') === '1';
 export const REGION_DEBUG_COLORS = {
   bletting: '#c8902a', saltings: '#f0e0e8', outwash: '#8fb4d8', highLing: '#b04a6a', demesne: '#5aa04a', lynchets: '#c8c070',
   strandline: '#222228', adust: '#c84a1a', wood: '#1a4a1a', fen: '#3a6a5a', lattice: '#4ad0ff', moor: '#6a6a40',

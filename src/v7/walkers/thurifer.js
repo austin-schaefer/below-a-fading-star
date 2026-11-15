@@ -176,7 +176,9 @@ export function buildThurifer(ctx, F, cue) {
     return 8;
   }
   S.shrineS = shrineTurnS();
-  ctx.built?.().then(() => { S.shrineS = shrineTurnS(); }); // (v13 L3) again once every module has built: the cloak is at his spot then, whatever order they built in
+  // (v13 L3) again once every module has built and the cloak has taken his spot (ctx.cloakPlaced, fauna/uncanny/cloak.js), awaited
+  // explicitly: .then callbacks on ctx.built() run in the order they were attached
+  ctx.built?.().then(() => ctx.cloakPlaced).then(() => { S.shrineS = shrineTurnS(); });
 
   // fill the train's ring as if it had walked here
   function seedRing() {

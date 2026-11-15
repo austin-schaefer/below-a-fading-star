@@ -81,7 +81,7 @@ export function placeAt(x, z, cd, out = _p, blend = 1) {
   return out;
 }
 
-const PARAMS = typeof location !== 'undefined' ? new URL(location.href).searchParams : new URLSearchParams();
+const PARAMS = new URLSearchParams(globalThis.FP_PAGE_QUERY ?? globalThis.location?.search ?? ''); // (the bake's worker is handed the page's query)
 const GRADE_ON = PARAMS.get('placegrade') !== '0';
 const _g = { ..._p };
 export function gradeAt(x, z, cd, out) {

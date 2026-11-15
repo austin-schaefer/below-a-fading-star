@@ -311,7 +311,11 @@ async function start() {
   allBuiltFn(true);
   startup.mark('modules');
   startup.note('bake', bake.info);
-  results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
+  // a module that failed is reported on the title card's error line as well as the console (v13 L3: "Go out" must not hide it)
+  const failed = [];
+  results.forEach((r, i) => { if (r.status === 'rejected') { failed.push(wanted[i][0]); console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); } });
+  startup.note('failed', failed);
+  if (failed.length) { const el = document.getElementById('error'); if (el) el.textContent += `${el.textContent ? '\n' : ''}module${failed.length > 1 ? 's' : ''} failed: ${failed.join(', ')}`; }
   installFar(ctx, url); // v12-H5: ctx.far (src/v12/far.js); on after the warm-up
 
   // Post

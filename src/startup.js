@@ -55,6 +55,9 @@ export function mark(name, data, t) {
   if (name === 'ready') setTimeout(stop, 250);
 }
 mark('module');
+// (v13 L3) room for every script's resource-timing entry (the default is 250; a load fetches over 300), which the
+// kept store lists to key a record by the scripts' text on a local server
+try { perf?.setResourceTimingBufferSize?.(2000); } catch { /* */ }
 
 // The loop in main.js reports each module: imported(name, t0) when its import resolves (returns the time),
 // built(name, t1) when its build settles.
