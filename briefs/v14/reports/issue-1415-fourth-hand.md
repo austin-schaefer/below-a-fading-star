@@ -32,7 +32,7 @@ Names kept, because the passage (D1) reads them: `src/v14/coffin-road.js`, `src/
 
 ## Tests
 
-On `10817e0` plus the walk tool's door leg (2026-11-15), port 8161, in sequence:
+On `10817e0` plus the walk tool's door leg (2026-11-15), port 8161, in sequence; after merging `origin/next` (`a5b4d86`) `ONLY=paths,roads,strata,edges` again: 4 tests, 0 failed (paths 79, roads 59, strata 8, edges 136):
 
 - `ONLY=edges,heights,strata,walk,hop,regions,paths,roads nice -n 10 env SHOT_ANGLE=metal tools/suite.sh 8161`: **8 tests, 0 failed, 3 min 34 s**: paths 76, roads 56, regions 56, strata 8, walk 13, hop 25, edges 136, heights 111 PASS lines.
 - `ONLY=perf,loading,settings,audio ...`: **4 tests, 0 failed, 16 min 19 s**: settings 85, audio 101, loading 28, perf 29 PASS lines.
