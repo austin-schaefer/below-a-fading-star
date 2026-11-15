@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { UnderBuilder, underMaterial } from './under.js';
 import { NOON, NOON_PARTS as P, put, strand } from '../v8/strata/noon.js';
+import { DOOR } from './coffin-road/plan.js';
 import { VESSELS, NODE, HOOPS, SHARDS, LINE, ELBOW, elbowAt, yOf, lamps, WY } from './noon-road/plan.js';
 
 // glazed and blown: smooth, wet-bright under a lamp, clouded and crazed with age, a lime crust at the water's line
@@ -110,6 +111,8 @@ export function buildNoon(ctx, { lit, below, extras = [] }) {
     const r2 = (a) => new THREE.Vector3(Math.sin(a) * 1.25, Math.cos(a) * 1.25, 0).applyMatrix4(C2).toArray();
     strand(B, I, r2(0.3), caps[1], { t: 0.018, sag: 0.3, wear }); strand(B, I, r2(-0.5), rim(1.6), { t: 0.018, sag: 0.8, wear });
   }
+  // the lesser line's collar round the Heliarchs' south door: it left the hall through it
+  P.collar(B, lineMatrix([DOOR.x, DOOR.sill + 1.5, DOOR.z - 0.42], [0, 0, 1]), { r: 2.78, t: 0.22, seg: low ? 30 : 44, wear });
   // the Late folk's takings
   for (const e of extras) {
     const M = new THREE.Matrix4().makeTranslation(...e.at);

@@ -141,10 +141,10 @@ export async function build(ctx) {
   // ---- the Late folk's road-mending: the stage on the node's back at the stair's foot, the gangway north to the
   // string, boards down the pitched carrier to the door, and planks over every coupling; all lashed, none nailed
   const top = ROAD_Y;
-  const planks = (x0, x1, z0, z1, along, n, y0 = top, y1 = top) => {
+  const planks = (x0, x1, z0, z1, along, n, y0 = top, y1 = top, dark = false) => {
     for (let i = 0; i < n; i++) {
       const f = (i + 0.5) / n, sk = (rng() - 0.5) * 0.03;
-      if (along === 'x') { const z = z0 + (z1 - z0) * f, w = (z1 - z0) / n / 2 - 0.03; B.box((x0 + x1) / 2 + (rng() - 0.5) * 0.12, y0 - 0.03, z, (x1 - x0) / 2, 0.028, w, sk, BOARD, i % 2 ? BOARD : TIMBER_L, 0.3); }
+      if (along === 'x') { const z = z0 + (z1 - z0) * f, w = (z1 - z0) / n / 2 - 0.03; B.box((x0 + x1) / 2 + (rng() - 0.5) * 0.12, y0 - 0.03, z, (x1 - x0) / 2, 0.028, w, sk, BOARD, dark || i % 2 ? BOARD : TIMBER_L, 0.3); }
       else if (y0 === y1) { const x = x0 + (x1 - x0) * f, w = (x1 - x0) / n / 2 - 0.03; B.box(x, y0 - 0.03, (z0 + z1) / 2 + (rng() - 0.5) * 0.12, w, 0.028, (z1 - z0) / 2, sk, BOARD, i % 2 ? BOARD : TIMBER_L, 0.3); }
       else { const x = x0 + (x1 - x0) * f, w = (x1 - x0) / n / 2 - 0.03; B.quad([x - w, y0, z0], [x + w, y0, z0], [x + w, y1, z1], [x - w, y1, z1], i % 2 ? BOARD : TIMBER_L, [0, 1, 0], 0.3); B.quad([x - w, y1 - 0.05, z1], [x + w, y1 - 0.05, z1], [x + w, y0 - 0.05, z0], [x - w, y0 - 0.05, z0], BOARD, [0, -1, 0], 0.2); }
     }
@@ -166,13 +166,13 @@ export async function build(ctx) {
   planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, SLOPE.z1, DOOR.z + 0.05, 'z', 4, DOOR.sill + 0.03, DOOR.sill + 0.03);
   for (let z = SLOPE.z0 + 0.5; z < SLOPE.z1; z += 0.62) B.box(DOOR.x, spurY(z) + 0.02, z, 0.72, 0.022, 0.03, 0, TIMBER, TIMBER, 0.2);
   // the road: planks over each coupling, from one back to the next, lashed to the coupling's ring
-  planks(ROAD.x0, ROAD.x0 + 1.2, ROAD.z0 + 0.1, ROAD.z1 - 0.1, 'x', 4);
+  planks(ROAD.x0, ROAD.x0 + 1.2, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true);
   for (let i = 0; i < MAIN.length - 1; i++) {
     const x = gapX(i);
-    planks(x - 1.45, x + 1.5, ROAD.z0 + 0.12, ROAD.z1 - 0.12, 'x', 4);
-    for (const s of [-1, 1]) lash([x - 0.2, top - 0.06, ROAD.zc + s * 0.66], [x - 0.15, top - 0.75, ROAD.zc + s * 1.25]);
+    planks(x - 1.4, x + 1.45, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true); // a patch: the carriers are the road
+    for (const s of [-1, 1]) lash([x - 0.2, top - 0.06, ROAD.zc + s * 0.47], [x - 0.15, top - 0.75, ROAD.zc + s * 1.2]);
   }
-  planks(ROAD.x1 - 1.1, ROAD.x1, ROAD.z0 + 0.1, ROAD.z1 - 0.1, 'x', 4);
+  planks(ROAD.x1 - 1.1, ROAD.x1, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true);
   // things floating: a few boards got loose
   for (const [x, z, yaw, len] of [[263.5, 45.6, 0.4, 1.6], [287.2, 44.9, -0.8, 1.1], [253.8, 45.2, 1.9, 0.9], [292.5, 37.2, 0.2, 1.3]]) B.box(x, WY + 0.015, z, len / 2, 0.025, 0.1, yaw, TIMBER_L, TIMBER_L, 0.3);
   await ctx.progress?.('the noon road', 0.55);
