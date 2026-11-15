@@ -23,7 +23,9 @@ Not the first idea: no ladder, no crypt. A gravedigger's hoist, a hung stair, an
 
 ## Tests (counts printed)
 
-`ONLY=edges,heights,settings,walk,hop,audio,perf,loading,regions,paths tools/suite.sh 8161` (after merging `next` at 0a10449): **10 tests, 1 failed**: settings 73, paths 76, regions 56, walk 13, hop 25, heights 111, audio 101, loading 28, perf 28 PASS lines; **edges failed** 3 rows: with the landing's side colliders a walker coming at the rim from bearing 120 stopped 3.9 m short of the lip. Fixed (`ef9d720`, the stair's side colliders only over the hole), then, a change confined to the module: `ONLY=edges,walk,hop tools/suite.sh 8161`: **3 tests, 0 failed** (edges 124, walk 13, hop 25) and `ONLY=heights tools/suite.sh 8161`: **1 test, 0 failed** (heights 111; the ascent `coffin-road`: 8 points walked, 4 step-offs sane, top 16.70 ms vs floor 16.70 ms). `node tools/build-artifact.mjs`: wrote `dist/artifact.html`.
+**Final:** `ONLY=edges,heights,settings,walk,hop,audio,perf,loading,regions,paths,roads tools/suite.sh 8161`, on the branch with `next` merged (B2 and B3 in): **11 tests, 0 failed, 16 min 47 s**: settings 76, paths 76, roads 64, regions 56, walk 13, hop 25, edges 124, heights 111, audio 101, loading 28, perf 29 PASS lines. `roads` is added because the Coffin Road is now a landmark with `reached` (B3's scheme); roads-test learnt that a place reached by its own way may be under the ground (feet under -5 m).
+
+Before that: the same ten (without roads) after the first `next` merge gave 10 tests, 1 failed: `edges`, 3 rows (the landing's side colliders stopped a walker from bearing 120 3.9 m short of the lip); fixed in `ef9d720` (the stair's side colliders only over the hole). `node tools/build-artifact.mjs`: wrote `dist/artifact.html`.
 
 Also run alone before the suite, on this branch: `edges` 124 PASS 0 FAIL (21 new Coffin Road rows), `settings` 73/0, `heights` 108/0 (the ascent `coffin-road` walked, four step-offs sane, top 16.70 ms vs floor 16.70 ms).
 
