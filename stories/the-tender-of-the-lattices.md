@@ -3,7 +3,7 @@
 - **Kind:** plain
 - **State:** built
 - **Someone:** the one who tends the old lattices that hang in the high air: alone, never seen, with an oil can as tall as a child, a brush on a pole longer than their deck, a cot, a stove and a gilt chair gone brown; and their lamp
-- **Places:** the Diffident Stair on the east moor, from its stub at (288, -12) to its top a hundred metres over the road at (232, -57); the deck on the foot of the lattice come low; the sky, where a lamp goes from lattice to lattice (`src/skylife/remnants.js`)
+- **Places:** Lonely Staircase on the east moor, from its stub at (288, -12) to its top a hundred metres over the road at (232, -57); the deck on the foot of the lattice come low; the sky, where a lamp goes from lattice to lattice (`src/skylife/remnants.js`)
 - **Touches:** the Leerie (`src/v7/walkers.js`), who lights the lamps on the ground at dusk as the tender lights the sky; the sign of the sun in its notch (each slab of the stair carries it underneath, in ember glass); the Lattice's metal (the Span's river-bay way, `src/v4/span/strut.js`, is a member of one of the lattices that fell all the way)
 
 ## The story
@@ -42,5 +42,6 @@ Whether there is anyone holding the lamp.
 
 ## Log
 
+- 2026-11-15, v14-B5 (#52, the owner): the stair is "Lonely Staircase"; it and "The Hanging Croft" have the owner's quotations.
 - 2026-11-15, v14-B3 (#52): the stub has its card, "The Diffident Stair"; the home on the lattice's foot is "The Hanging Croft".
 - 2026-11-12, v12-H3: written and built with the Diffident Stair (`src/v12/stair.js`); the seed was the milestone doc's ("a lamp already goes from lattice to lattice, stops at each a while as if tending it").

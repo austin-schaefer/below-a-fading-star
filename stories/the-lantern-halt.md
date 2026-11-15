@@ -39,6 +39,7 @@ Who he is, and his eyes. From the seat his face is seen from a couple of metres 
 
 ## Log
 
+- 2026-11-15, v14-B5 (#52, the owner): its card has the owner's quotation.
 - 2026-11-15, v14-B3 (#52): the Halt has a card at last.
 - 2026-11-11, brief #934: the halt, the sleeper's shadow, the clogs and staff built.
 - 2026-11-11, #934 rework: the shadow on the cloth did not read (owner: "i don't see the bed"); it is gone. The globe has an open hatch with the bed and the sleeper showing through and over its sill; the seat, davit and rope make the way up; the stocking and tallies added at the foot.

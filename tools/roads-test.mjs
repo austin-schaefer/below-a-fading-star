@@ -88,7 +88,9 @@ const res = await page.evaluate(async () => {
   let samples = 0; const blind = [];
   for (const t of tracks) {
     for (let i = 0; i < t.pts.length; i += 2) {
-      const [x, z] = t.pts[i]; samples++;
+      const [x, z] = t.pts[i];
+      if (Math.hypot(x - 200, z - 185) < 12) continue; // v14-D2: the causeway's line runs on over the Pit's hole, where no one walks it (its floor has its own way)
+      samples++;
       let ok = false, nearest = Infinity;
       for (const g of G) { const d = Math.hypot(g.x - x, g.z - z); if (d < R.SIGHT) { nearest = Math.min(nearest, d); if (clear(x, z, g)) { ok = true; break; } } }
       if (!ok) blind.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)})`);
@@ -195,9 +197,8 @@ check(res.startD < 6 && res.unjoined.length === 0, 'one network: every track joi
 // The Galleries and the Thrones hang on the mountain wall: no track reaches them (a track looks up at them).
 // v14-B3: places on open ground a short walk off a track, each with how far past its reach the nearest track may lie
 const EXEMPT = {
-  escalade: { why: 'the Span\'s west stair, in the wood\'s fringe', max: 20 },
-  soundings: { why: 'the icefall\'s foot, across the Lattice\'s floor', max: 50 },
-  diffident: { why: 'the stair\'s stub, on the moor beside the road', max: 25 },
+  escalade: { why: 'the Cyclopean Stairs, the Span\'s west stair, in the wood\'s fringe', max: 20 },
+  diffident: { why: 'Lonely Staircase, the stub on the moor beside the road', max: 25 },
 };
 for (const p of res.places) {
   // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the

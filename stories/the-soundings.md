@@ -36,11 +36,14 @@ Who the leadsmen are, how far up they are, what depth they read, and why they co
 
 ## Open threads
 
-- Who cut the stair? The Late folk climb for nothing; the Heliarchy's people cut stone, not ice. Perhaps the astronomer, who walks the world without a story.
+- Who cut the stair? Answered (v14-D2): a sounder from the valley, for a piece of an old lead to sound the world from below with (`the-sounding-down.md`).
 - A lead's line parts; where does the rest of it fall? A length of glowing line found somewhere on the moor would be a beat.
 - The Reckoner turns his row at every gutter. Does the Plummet do anything at a gutter (a shudder in its line, the mote going up early)?
 
 ## Log
 
+- 2026-11-15, v14-D2: the stair's cutter is the sounder at the bottom of the Pit (`the-sounding-down.md`).
+
+- 2026-11-15, v14-B5 (#52, the owner): the cards of the icefall's foot and the old lead are cut (the Lattice's own card shows there again); "The Bitter End" has the owner's quotation.
 - 2026-11-15, v14-B3 (#52): the places named on cards: the icefall's foot and cleft "The Soundings", the old lead you walk up "The Fallen Lead", the shelf with the broken eye and the frayed line's end "The Bitter End" (a line's last end, made fast).
 - 2026-11-12, v12-H2: written with the icefall (`src/v12/icefall.js`, `src/v12/icefall/plummet.js`), answering the milestone's seed "the mother crystal has a mother".

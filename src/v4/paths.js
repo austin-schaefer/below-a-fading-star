@@ -15,6 +15,11 @@
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
 import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
+import { STAIR, FLOOR, makeFloor } from '../v14/pit/plan.js'; // v14-D2: the way down the Pit's wall: its head's gap in the rim
+import { hazed } from '../v14/pit/haze.js'; // v14-D2: the throat's haze by the eye's depth
+// v14-D2: the bottom of the Pit is v14/pit.js's (its floor, the Nadir); ?pit=0 leaves the old black fan and a closed rim
+const PIT_D2 = typeof location === 'undefined' || new URLSearchParams(location.search).get('pit') !== '0';
+const inStairHead = (b, R, pad) => PIT_D2 && Math.abs(((b - STAIR.head + 540) % 360) - 180) < (Math.asin(Math.min(1, (STAIR.half + pad) / R)) * 180) / Math.PI;
 import { groundOf, stoneGeo } from './regions/common.js';
 import { hexCellsIn, HEX_R } from '../structures/common.js';
 import { smoothstep, clamp } from '../noise.js';
@@ -375,12 +380,15 @@ function buildThroat(ctx) {
   const N = ctx.noise;
   const nb = low ? 120 : 240, rows = low ? 12 : 20;
   const top = [], pos = [], col = [], idx = [];
+  // v14-D2: the floor is the bowl v14/pit.js walks and draws: the rock comes down to its edge at the wall's foot and
+  // no further in (the ground's own floor, a heap in the middle, would stand the rock's foot up out of the bowl)
+  const PF = PIT_D2 ? makeFloor(terrain, ctx.noise) : null;
   // per bearing: where the drawn ground starts to drop (the top), and the floor
   for (let i = 0; i < nb; i++) {
     const b = (i / nb) * 360, a = (b * Math.PI) / 180, dx = Math.sin(a), dz = -Math.cos(a);
     const R = pitRim(b);
     const yTop = terrain.heightAt(PIT.x + dx * (R + 0.6), PIT.z + dz * (R + 0.6));
-    const yFloor = G.heightAt(PIT.x + dx * Math.max(1, R - 6), PIT.z + dz * Math.max(1, R - 6));
+    const yFloor = PF ? PF.wallAt(b) - 0.3 : G.heightAt(PIT.x + dx * Math.max(1, R - 6), PIT.z + dz * Math.max(1, R - 6));
     top.push({ dx, dz, R, yTop, yFloor });
   }
   const yAt = (T, r) => G.heightAt(PIT.x + T.dx * r, PIT.z + T.dz * r);
@@ -389,8 +397,9 @@ function buildThroat(ctx) {
     for (let k = 0; k <= rows; k++) {
       const f = k / rows, y = T.yTop - 0.15 + (T.yFloor + 0.4 - T.yTop) * Math.pow(f, 0.85);
       // where the drawn surface crosses y on this bearing, searched inward from outside the rim
-      let r = T.R + 3;
-      for (let rr = T.R + 3; rr > 0.5; rr -= 0.2) { if (yAt(T, rr) <= y) { r = rr; break; } }
+      const rMin = PF ? T.R - 5.5 : 0.5;
+      let r = PF ? T.R - FLOOR.out : T.R + 3;
+      for (let rr = T.R + 3; rr > rMin; rr -= 0.2) { if (yAt(T, rr) <= y) { r = rr; break; } }
       if (k === 0) r = Math.min(r, T.R + 0.2);
       const bed = Math.max(0, N.noise2(y * 0.35, i * 0.02 * nb / 240 * 6) ) * 0.9 + Math.max(0, N.noise2(i * 0.31, y * 0.9)) * 0.35;
       const inR = Math.max(0.6, r - 0.3 - bed * Math.min(1, k) - (k === rows ? 0.4 : 0));
@@ -411,14 +420,14 @@ function buildThroat(ctx) {
   const c0 = pos.length / 3;
   let fy = 0; for (const T of top) fy += T.yFloor; fy /= nb;
   pos.push(PIT.x, fy + 0.3, PIT.z); col.push(0.02, 0.02, 0.02);
-  for (let i = 0; i < nb; i++) idx.push(i * W + rows, c0, ((i + 1) % nb) * W + rows);
+  if (!PIT_D2) for (let i = 0; i < nb; i++) idx.push(i * W + rows, c0, ((i + 1) % nb) * W + rows);
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   g.setIndex(idx);
   g.computeVertexNormals();
   g.computeBoundingSphere();
-  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide });
+  const m = hazed(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true, side: THREE.DoubleSide }));
   const mesh = new THREE.Mesh(g, m);
   mesh.name = 'paths-pit-throat'; mesh.receiveShadow = true; mesh.castShadow = false;
   ctx.scene.add(mesh);
@@ -456,16 +465,17 @@ function buildPit(ctx) {
     slabs.push({ x, y, z, inx, inz, tilt, yaw: (rng() - 0.5) * 0.3, sc: 0.82 + rng() * 0.16, c: 0.32 + rng() * 0.14 });
   });
   // a few that went in: on ledges down the throat and on the floor
+  const pitFloor = PIT_D2 ? makeFloor(terrain, ctx.noise).y : null; // v14-D2: the floor walked down there
   for (let i = 0; i < (low ? 5 : 9); i++) {
     const b = 330 + rng() * 40, r = pitRim(b) - 1.5 - rng() * 6, a = (b * Math.PI) / 180;
     const x = PIT.x + Math.sin(a) * r, z = PIT.z - Math.cos(a) * r;
-    slabs.push({ x, y: terrain.heightAt(x, z) + 0.05, z, inx: Math.cos(i), inz: Math.sin(i), tilt: 0.2 + rng() * 1.1, yaw: rng() * 6, sc: 0.85, c: 0.24 + rng() * 0.1 });
+    slabs.push({ x, y: (pitFloor?.(x, z) ?? terrain.heightAt(x, z)) + 0.05, z, inx: Math.cos(i), inz: Math.sin(i), tilt: 0.2 + rng() * 1.1, yaw: rng() * 6, sc: 0.85, c: 0.24 + rng() * 0.1 });
   }
   {
     const r = HEX_R * 0.9, prof = [[r, -0.16], [r, 0.02], [r - 0.035, 0.06], [0.0, 0.068]];
     const g = new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 6).toNonIndexed();
     g.computeVertexNormals();
-    const m = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9 });
+    const m = hazed(new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9 })); // v14-D2: seen from the floor
     const im = new THREE.InstancedMesh(g, m, slabs.length);
     const col = new THREE.Color();
     slabs.forEach((sb, i) => {
@@ -492,6 +502,7 @@ function buildPit(ctx) {
     const R = pitRim(bb) + (lo ? 0.9 : 0.2) + rng() * 1.4;
     const x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
     if (road(x, z) < 2.2) continue; // the slabs are there
+    if (inStairHead(bb, R, 1.2)) continue; // v14-D2: the stair's landing is there
     const e = pitEdge(x, z);
     const inx = -Math.sin(a), inz = Math.cos(a);
     const lx = x - inx * Math.max(0, -e), lz = z - inz * Math.max(0, -e);
@@ -501,7 +512,7 @@ function buildPit(ctx) {
   }
   {
     const g = stoneGeo(rng, ctx.noise, 1, { sx: 1.2, sy: 0.4, sz: 0.9, round: 0.15, seed: 7 });
-    const m = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95 });
+    const m = hazed(new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95 })); // v14-D2: seen from the floor
     const im = new THREE.InstancedMesh(g, m, bits.length);
     const col = new THREE.Color();
     bits.forEach((it, i) => {
@@ -526,6 +537,7 @@ function buildPit(ctx) {
     for (let b = 0; b < 360; b += 0.25) {
       const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
+      if (inStairHead(b, R, 0.35)) continue; // v14-D2: the way onto the stair's landing (its own edges are held)
       ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
     }
   }
