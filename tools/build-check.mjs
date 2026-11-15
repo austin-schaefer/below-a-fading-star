@@ -8,7 +8,7 @@
 // same context, fingerprinted; it fails unless the reload's terrain came from the store, so what is checked is the
 // walk built from what was kept.
 // It loads <base>/?q=<q>&<params> and, at the "ready" mark (src/startup.js), synchronously, before the first frame
-// has run any update, walks the objects each module added to the scene (the profiler's tagging, ctx.perf._mods;
+// has run any update, walks the objects each module added to the scene (the registry, ctx.modules;
 // what no module claimed is 'core': the terrain, the sky, the lights) and hashes, bit for bit: every geometry
 // attribute and index (array type, item size, normalized, interleaving; draw range, groups, instanceCount), each
 // InstancedMesh's matrices, colours and count, each object's world matrix, visibility and shadow, culling and render
@@ -94,7 +94,7 @@ function install() {
   function fingerprint(ctx) {
     const t0 = performance.now();
     bytes = 0;
-    const mods = ctx.perf?._mods;
+    const mods = ctx.modules ? new Map([...ctx.modules].map(([n, o]) => [n, { world: true, objects: o }])) : ctx.perf?._mods; // the fallback records a tree from before ctx.modules
     const owner = new Map();
     const roots = new Map(); // name -> [objects]
     if (mods) for (const [name, m] of mods) { if (!m.world) continue; roots.set(name, [...m.objects]); }

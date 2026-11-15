@@ -29,6 +29,7 @@
 // registerUpdate callbacks, the objects it adds to the scene and its colliders (c.mod). Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, WATER } from './world.js';
+import { createModuleRegistry } from './module-registry.js';
 
 // The bench walks the causeway as it was in v3, pinned here (v4 systems) so that v4's reroute of CAUSEWAY
 // (from the saddle to the pit, plans/wilderness-v4-placement.md) leaves bench numbers comparable with v3's.
@@ -62,6 +63,7 @@ export function createPerf(ctx) {
   const { renderer, scene } = ctx;
 
   // --- modules: name -> { cpu (ms this block), enabled, world, objects, hidden }
+  const registry = ctx.modules ?? (ctx.modules = createModuleRegistry()); // who made which objects (module-registry.js), shared with shadows and far
   const mods = new Map(), modList = []; // modList: the same rows as an array, walked every frame while the bench records
   function mod(name) {
     let m = mods.get(name);
@@ -98,9 +100,9 @@ export function createPerf(ctx) {
   ctx.registerUpdate = (fn, meta) => rawRegister(wrapUpdate(core, fn), meta);
 
   function forModule(name) {
-    const m = mod(name); m.world = true;
+    const m = mod(name); m.world = true; m.objects = registry.of(name);
     const register = (fn, meta) => rawRegister(wrapUpdate(m, fn), meta);
-    const add = (...objs) => { for (const o of objs) m.objects.add(o); scene.add(...objs); return scene; };
+    const add = (...objs) => { registry.add(name, ...objs); scene.add(...objs); return scene; };
     // each collider carries the module that registered it (c.mod), so a block can be traced to its owner
     const addCollider = (c) => { if (c && c.mod === undefined) c.mod = name; return ctx.addCollider(c); };
     const sceneProxy = new Proxy(scene, {
@@ -854,7 +856,7 @@ export function createPerf(ctx) {
 
   const api = {
     active: false, gpuTimer: gpu.ok, count, counters, forModule, attach, frameBegin, frameEnd, cpu, mark: markNow, report,
-    record, lastRecord: () => lastRec, get recording() { return !!rec; }, setModule, setBloom, setShadows, setActive, toggles, _mods: mods, // _mods: name -> { objects, ... } for diagnostics
+    record, lastRecord: () => lastRec, get recording() { return !!rec; }, setModule, setBloom, setShadows, setActive, toggles, moduleCpu: () => Object.fromEntries([...mods.values()].map((m) => [m.name, m.cpu])), // ms each module has used in the open block (pan-test)
     get bench() { return bench; }, get hooked() { return hooked; },
     brief: () => (bench?.result ? benchBrief(bench.result) : null), // the panel's Copy
   };

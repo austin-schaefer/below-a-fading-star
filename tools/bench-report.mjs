@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Run the bench headlessly and save ctx.perf.report() (the bench's result included) as JSON, then print its summary:
 // JS a frame per leg (the round, the Span's deck, waking at the gate), the hitch log's worst, the rows (modules and the
-// unowned costs), memory, and calls and triangles per module at the stations. The lines are the bench panel's own
+// unowned costs), memory, and calls and triangles per module at the stations, then one line for each module over its budget at a station. The lines are the bench panel's own
 // (src/perf-frames.js benchLines). Headless WebGL is software or ANGLE: frame intervals and GPU times are noise here,
 // JS ms, counts and ratios are real.
 //   node tools/bench-report.mjs <url> [out.json] [width=960] [height=540] [--against=before.json]
@@ -11,7 +11,7 @@
 // e.g. node tools/bench-report.mjs "http://localhost:8123/?bench=45&perf=1&q=low" shots/wip/bench-low.json --against=shots/wip/v13-P1-baseline-low-1.json
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { benchLines } from '../src/perf-frames.js';
+import { benchLines, overBudget, MODULE_BUDGET } from '../src/perf-frames.js';
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const flags = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--')).map((a) => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), '1'] : [a.slice(2, i), a.slice(i + 1)]; }));
@@ -46,6 +46,8 @@ if (res.cpuThrottle) console.log(`CPU throttled ${res.cpuThrottle}x (a stand-in 
 for (const l of benchLines(res, { hitches: 10, rows: 16, modules: 5 })) console.log(l);
 if (res.summary?.cpuCallbacks) console.log('callbacks, ms a frame (the round): ' + Object.entries(res.summary.cpuCallbacks).slice(0, 8).map(([k, v]) => `${k} ${v}`).join(' · '));
 if (extra?.firstBlock) console.log('first block:', JSON.stringify(extra.firstBlock));
+// a name for an overrun (no gate): every module past its documented budget at any station, colour pass
+for (const o of overBudget(res.draws)) console.log(`over budget: ${o.module} at ${o.station}: ${o.calls} calls, ${o.tris.toLocaleString('en')} triangles (budget ${MODULE_BUDGET.calls} calls, ${MODULE_BUDGET.tris.toLocaleString('en')} triangles)`);
 
 // --against: every number that is in both, before → after
 if (flags.against) {

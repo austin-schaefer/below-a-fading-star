@@ -55,9 +55,8 @@ export function installFar(ctx, url) {
     || (m.isMeshBasicMaterial && Math.max(m.color.r, m.color.g, m.color.b) > 0.5)
     || (m.emissive && m.emissive.r + m.emissive.g + m.emissive.b > 0.05 && (m.emissiveIntensity ?? 1) > 0)));
   // --- what is managed
-  for (const [, m] of ctx.perf._mods) {
-    if (!m.world) continue;
-    for (const root of m.objects) root.traverse((o) => {
+  for (const [, objects] of ctx.modules) {
+    for (const root of objects) root.traverse((o) => {
       if (o.userData.noFar) return;
       const boost = glows(o.material) ? GLOW : 1;
       if (o.isInstancedMesh) { const e = instEntry(o); if (e) { e.boost = boost; inst.push(e); } return; }
