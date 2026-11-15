@@ -16,6 +16,10 @@
 //   node tools/height-check.mjs pure [file]     as a worker would: three refused at import, no location, document or
 //                                               window, the params handed in (globalThis.FP_HEIGHT_PARAMS); imports
 //                                               src/height/field.js and checks its queries at the recording's points
+//   node tools/height-check.mjs purebake [file] the bake as its worker makes it (v13 L3): three refused, no location, document
+//                                               or window; the leads traced, then src/height/bake.js's planePositions and
+//                                               bakeTerrain on each tier, compared with the recording's position and baked
+//                                               attributes (normals are three's, on the page, so not here)
 //   node tools/height-check.mjs bench           µs per call of heightAt, slopeAt, regionAt, biomeAt over the low bake's
 //                                               vertices, and the node bake's ms (low, medium), median of 3
 //   --params=mountains=v4&cols=low   the URL's switches (fixed when the height path loads); record each apart
@@ -33,13 +37,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
 const flags = Object.fromEntries(argv.filter((a) => a.startsWith('--')).map((a) => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), '1'] : [a.slice(2, i), a.slice(i + 1)]; }));
 const pos = argv.filter((a) => !a.startsWith('--'));
-const mode = ['record', 'check', 'bench', 'pure'].includes(pos[0]) ? pos.shift() : 'check';
+const mode = ['record', 'check', 'bench', 'pure', 'purebake'].includes(pos[0]) ? pos.shift() : 'check';
 const params = flags.params || '';
 const quick = !!flags.quick;
 const file = pos[0] || `${ROOT}/shots/wip/height-check${params ? '-' + params.replace(/[^a-z0-9]+/gi, '_') : ''}${quick ? '-quick' : ''}.bin`;
 
 const three = pathToFileURL(`${ROOT}/vendor/three/three.module.js`).href, addons = pathToFileURL(`${ROOT}/vendor/three/`).href;
-const PURE = mode === 'pure';
+const PURE = mode === 'pure' || mode === 'purebake';
 register('data:text/javascript,' + encodeURIComponent(PURE ? `export async function resolve(s, c, n) {
   if (s === 'three' || s.startsWith('three/') || s.includes('vendor/three')) throw new Error('the height path imported three (' + s + ' from ' + c.parentURL + ')');
   return n(s, c);
@@ -273,6 +277,24 @@ if (!PURE) {
     line(count === 0 && A.length === B.length, `bake ${q} ${k}: ${A.length} values, ${count} differ${count ? ` (max |d| ${maxd.toExponential(2)}, mean |d| of those ${(sum / count).toExponential(2)}, ${big} by more than 1/255; first at index ${first})` : ''}`);
   }
 } else (await src('v4/paths/ground.js')).prepareMap(); // the leads, as the bake traces them first
+if (mode === 'purebake') { // (v13 L3) the worker's bake: nothing sampled before it, as in the worker
+  const B = await src('height/bake.js');
+  const segsOf = (q) => (q === 'low' ? 320 : 480);
+  for (const q of head.tiers) {
+    const P = B.planePositions(W.WORLD.size, segsOf(q)), t1 = performance.now(), baked = B.bakeTerrain(P, segsOf(q), W.WORLD.size), ms = performance.now() - t1;
+    for (const k of ATTRS) {
+      if (k === 'normal') continue;
+      const [o, len] = recBakes[`${q}.${k}`], A = readArr(fd, o, Float32Array, len), Bk = k === 'position' ? P : baked[k];
+      let count = 0;
+      const ua = new Uint32Array(A.buffer), ub = new Uint32Array(Bk.buffer, Bk.byteOffset, Bk.length);
+      for (let i = 0; i < A.length; i++) if (ua[i] !== ub[i]) count++;
+      line(count === 0 && A.length === Bk.length, `purebake ${q} ${k}: ${A.length} values, ${count} differ`);
+    }
+    console.log(`  (the ${q} bake took ${ms.toFixed(0)} ms in node)`);
+  }
+  console.log(`height-check purebake: ${fails ? fails + ' FAIL' : 'all PASS'} (src/height/bake.js with three refused and no location, document or window)`);
+  process.exit(fails ? 1 : 0);
+}
 // the samples, chunk by chunk: the recording's bits against this tree's, element for element
 const want = new Float64Array(CHUNK * WIDTH), got = new Float64Array(CHUNK * WIDTH);
 const wb = new BigUint64Array(want.buffer), gb = new BigUint64Array(got.buffer);

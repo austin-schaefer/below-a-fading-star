@@ -9,38 +9,15 @@
 import * as THREE from 'three';
 import { REGIONS, CAUSEWAY, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
-import { stripAt, stripEdge } from '../../v8/strips.js';
 import { instanced, meshStats, meshGround } from './skin.js';
 
 const KEY = 'lynchets';
 import { N, POLY, RF, RFX, RFZ, TERRACE, height } from './height/lynchets.js'; // the height hook and what it reads (v13 L2)
 export { height };
+import { middenAt, inPoly, polyDist } from './ground/lynchets.js'; // the ground hook (three-free, v13 L3), the middens and the polygon helpers
+export { ground } from './ground/lynchets.js';
 
 // rank turf, greener than the moor, darker where the middens were; the walls' foot is bare
-const cTurf = new THREE.Color('#566331'), cTurf2 = new THREE.Color('#6d6e3a'), cMid = new THREE.Color('#2f3a1c');
-// v8-02: stubble, ley, plough, fallow (src/v8/strips.js)
-const STRIP = [new THREE.Color('#b4a25a'), new THREE.Color('#3e6e22'), new THREE.Color('#3a2014'), new THREE.Color('#82704e')];
-let MIDDENS = [];
-function middenAt(x, z) { let m = 0; for (const d of MIDDENS) m = Math.max(m, 1 - smoothstep(d.r * 0.5, d.r, Math.hypot(x - d.x, z - d.z))); return m; }
-export function ground(col, x, z, w) {
-  if (!MIDDENS.length) MIDDENS = makeMiddens();
-  const n = N.fbm2(x * 0.05, z * 0.05, 3) * 0.5 + 0.5;
-  // v8-02: the strips, each a different crop's ghost, with a green balk between
-  _c.copy(STRIP[stripAt(x, z)]).lerp(cTurf2, n * 0.15).lerp(cTurf, (1 - stripEdge(x, z)) * 0.7).lerp(cMid, middenAt(x, z) * 0.8);
-  col.lerp(_c, smoothstep(0.3, 0.6, w));
-}
-const _c = new THREE.Color();
-function makeMiddens() {
-  // where the farm's heaps were: a few soft patches inside the walls
-  const r = (s) => { const v = Math.sin(s * 12.9898) * 43758.5453; return v - Math.floor(v); };
-  const out = [];
-  for (let i = 0; out.length < 4 && i < 200; i++) {
-    const x = -222 + r(i * 2 + 1) * 58, z = -146 + r(i * 2 + 2) * 64;
-    if (inPoly(x, z) && polyDist(x, z) > 7 && !out.some((m) => Math.hypot(m.x - x, m.z - z) < 14)) out.push({ x, z, r: 5 + r(i + 77) * 4 });
-  }
-  return out;
-}
-
 export const cover = {
   density: { grass: 1.1, heather: 0, bracken: 0.25, flowers: 0.35, fleshy: 0.4, sedge: 0, reeds: 0, trees: 0 },
   scale: { grass: 1.05 },
@@ -49,24 +26,6 @@ export const cover = {
 export const stone = { density: 0.04, tors: false }; // the field-stone went into the walls
 export const air = { tint: '#c6c8d6', strength: 0.85 }; // "silver thistle-down"
 
-// ---------------------------------------------------------------- polygon helpers
-function inPoly(x, z) {
-  let inside = false;
-  for (let i = 0, j = POLY.length - 1; i < POLY.length; j = i++) {
-    const [ax, az] = POLY[j], [bx, bz] = POLY[i];
-    if ((az > z) !== (bz > z) && x < ((bx - ax) * (z - az)) / (bz - az) + ax) inside = !inside;
-  }
-  return inside;
-}
-function polyDist(x, z) {
-  let d = Infinity;
-  for (let i = 0, j = POLY.length - 1; i < POLY.length; j = i++) {
-    const [ax, az] = POLY[j], [bx, bz] = POLY[i], ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez;
-    let t = ((x - ax) * ex + (z - az) * ez) / l2; t = clamp(t, 0, 1);
-    d = Math.min(d, Math.hypot(x - ax - ex * t, z - az - ez * t));
-  }
-  return d;
-}
 function roadDist(x, z) {
   let d = Infinity;
   for (const L of [CAUSEWAY, CAUSEWAY_V4]) for (let i = 0; i < L.length - 1; i++) {
@@ -140,7 +99,6 @@ export async function build(ctx) {
   const R = ctx.regions;
   const meshH = meshGround(terrain);
   const meshes = [];
-  if (!MIDDENS.length) MIDDENS = makeMiddens();
 
   // ---- the walls: every edge, and a few straight runs to nowhere inside; gapped, slumped, open where the road runs
   const runs = [];

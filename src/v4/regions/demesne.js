@@ -19,15 +19,10 @@ import { crossingDistance } from '../../v8/roads/crossings.js'; // v8-01
 const KEY = 'demesne';
 import { N, K, HAHA, FROM, TO, WALL_R, LAWN, lawnAt, bearingOf, hahaAmt, roadD, PART, parterreD, hahaProfile, height } from './height/demesne.js'; // the height hook and what it reads (v13 L2)
 export { height };
+import { cLawn2 } from './ground/demesne.js';
+export { ground } from './ground/demesne.js'; // the ground hook, three-free (v13 L3)
 
 // grazed turf: an even green, paler where the beds' ridges dry out, a little darker in the hollows of the tussocks
-const cLawn = new THREE.Color('#6f8c3a'), cLawn2 = new THREE.Color('#7c9444'), cRidge = new THREE.Color('#9a9c58'); // v8-02: shaven, the brightest green on the map
-export function ground(col, x, z, w) {
-  const n = N.fbm2(x * 0.08, z * 0.08, 2) * 0.5 + 0.5, pd = parterreD(x, z);
-  _c.copy(cLawn).lerp(cLawn2, n).lerp(cRidge, pd < 1.2 ? (1 - pd / 1.2) * 0.6 : 0);
-  col.lerp(_c, smoothstep(0.45, 0.55, w)); // v8-02: a crisp edge, as a mown lawn has
-}
-const _c = new THREE.Color();
 
 export const cover = {
   density: { grass: 0.9, heather: 0, bracken: 0, flowers: 0, fleshy: 0, sedge: 0, reeds: 0, trees: 0 },

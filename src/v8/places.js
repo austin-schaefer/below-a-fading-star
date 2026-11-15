@@ -28,8 +28,8 @@
 // gradeAt(x, z, cd, out) -> out (a Vector4: exposure, saturation, contrast, warmth) blended over 25 m like the
 // Tinctures; post.js's finish applies it at the camera. ?placegrade=0 holds it at (1, 1, 1, 0).
 import { LANDMARKS } from '../world.js';
-import { regionAt, REGION_KEYS, PLACE_KEYS, REGION_AIR_BLEND } from '../v4/regions.js';
-import * as THREE from 'three';
+import { regionAt, REGION_KEYS, PLACE_KEYS, REGION_AIR_BLEND } from '../height/regions.js'; // (v13 L3: three-free, so the bake's worker can import this)
+import { col, Col } from '../height/color.js';
 import { smoothstep, makeSimplex } from '../noise.js';
 
 export const GRADE = {
@@ -101,10 +101,10 @@ export function gradeAt(x, z, cd, out) {
 // ---------------------------------------------------------------- ground
 const N = makeSimplex(20261111 + 802);
 // the common: pale grazed turf, sage to straw, with bare trodden earth near the road and the keep's gate
-const cTurf = new THREE.Color('#7c8a56'), cTurf2 = new THREE.Color('#969a68'), cTrod = new THREE.Color('#7c6a52');
+const cTurf = col('#7c8a56'), cTurf2 = col('#969a68'), cTrod = col('#7c6a52');
 // the wood: leaf litter, rust-brown to near black; the fen: black mud
-const cLitter = new THREE.Color('#3a2414'), cLitter2 = new THREE.Color('#1c140e'), cMud = new THREE.Color('#1c2220');
-const _gp = { ..._p }, _c = new THREE.Color();
+const cLitter = col('#3a2414'), cLitter2 = col('#1c140e'), cMud = col('#1c2220');
+const _gp = { ..._p }, _c = new Col();
 export function trodAt(x, z, cd) {
   const near = Math.max(1 - smoothstep(5, 16, cd), 1 - smoothstep(40, 62, hyp(x - K.x, z - K.z)));
   return smoothstep(0.58, 0.72, N.fbm2(x * 0.05 + 11, z * 0.05 - 7, 3) * 0.5 + 0.5 + 0.12 * near);

@@ -15,13 +15,9 @@ import { buildSkin, instanced, meshStats, leanShader, skinGround } from './skin.
 const KEY = 'adust';
 import { N, SUNX, SUNZ, SUN_YAW, sandAt, dune, height } from './height/adust.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/adust.js'; // the ground hook, three-free (v13 L3)
 
 // the terrain under and round the skin: green failing into ochre and rust over the boundary
-const cOchre = new THREE.Color('#8a4a2c'), cRust = new THREE.Color('#7a2a16'); // v8-02: redder, further from the moor
-export function ground(col, x, z, w) {
-  const k = smoothstep(0.04, 0.5, w);
-  col.lerp(cOchre, k).lerp(cRust, k * 0.4 * (0.5 + 0.5 * N.noise2(x * 0.05, z * 0.05)));
-}
 
 export const cover = { density: { grass: 0, sedge: 0, heather: 0, bracken: 0, flowers: 0, fleshy: 0, reeds: 0, trees: 0 } };
 export const stone = { density: 0.2, tors: false };

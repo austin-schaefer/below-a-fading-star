@@ -16,12 +16,9 @@ import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
 const KEY = 'strandline';
 import { WY, TX, TZ, N, LAP_RISE, grade, height } from './height/strandline.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/strandline.js'; // the ground hook, three-free (v13 L3)
 
 // The terrain under the skin goes dark flint, so a gap in the skin never shows green; outside the carpet, moor.
-const cFlint = new THREE.Color('#0e0d11'); // v8-02: black
-export function ground(col, x, z, w) {
-  col.lerp(cFlint, smoothstep(0.55, 0.85, w));
-}
 
 export const cover = {
   density: { grass: 0, heather: 0, bracken: 0, flowers: 0, fleshy: 0, trees: 0, sedge: 0, reeds: 0.15 },

@@ -20,20 +20,8 @@ const onRoad = (x, z, r) => { const h = nearestLead(x, z, r + 0.3); return !!h &
 const KEY = 'highLing';
 import { SN, POLY, edgeX, CLIMBS, scarpWidth, RISE, height } from './height/high-ling.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/high-ling.js'; // the ground hook, three-free (v13 L3)
 
-const C = (h) => new THREE.Color(h);
-const cLing = C('#54303e'), cBell = C('#5e3252') /* v8-02: purple-brown */, cBil = C('#34442a'), cGrit = C('#6a5854');
-const _gc = new THREE.Color();
-export function ground(col, x, z, w, b) {
-  const n = SN.fbm2(x * 0.06 + 5, z * 0.06, 3) * 0.5 + 0.5;
-  _gc.copy(cLing).lerp(cBell, smoothstep(0.55, 0.72, n) * 0.6);
-  // bilberry in the hollows (the terrain's own low places), granite grit on the scarp's face
-  const hollow = smoothstep(0.3, 0.7, SN.fbm2(x * 0.03 - 4, z * 0.03 + 2, 2) * -0.5 + 0.5);
-  _gc.lerp(cBil, hollow * 0.55);
-  const dw = x - edgeX(z);
-  _gc.lerp(cGrit, (1 - smoothstep(0, 5, Math.abs(dw - 1.5))) * 0.6 * (z < 12 && z > -107 ? 1 : 0));
-  col.lerp(_gc, w * 0.85);
-}
 
 // deep ling everywhere, knee-high and ruddy; little grass; no trees (gorse and the tors are the region's own)
 export const cover = {

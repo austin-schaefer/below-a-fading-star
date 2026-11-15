@@ -18,20 +18,8 @@ import { groundOf, stoneGeo, weld, instanced, stoneMaterial, airMotes, meshStats
 const KEY = 'outwash';
 import { E, SN, sdE, OUT, CHANNELS, CH_BOX, channelAt, moraineAt, height } from './height/outwash.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/outwash.js'; // the ground hook, three-free (v13 L3)
 
-const C = (h) => new THREE.Color(h);
-const cGravel = C('#6e7c8a'), cBar = C('#56616e'), cWash = C('#9eaab6'), cTill = C('#6c7078'), cMoss = C('#4c5a52'), cWet = C('#434a56'); // v8-02: grey-blue, the glacier's
-const _gc = new THREE.Color();
-export function ground(col, x, z, w, b) {
-  const ch = channelAt(x, z), mo = moraineAt(x, z);
-  const n = SN.fbm2(x * 0.08 + 20, z * 0.08, 3) * 0.5 + 0.5;
-  _gc.copy(cGravel).lerp(cBar, smoothstep(0.55, 0.75, n) * 0.8);
-  _gc.lerp(cWash, ch);
-  _gc.lerp(cTill, smoothstep(0.15, 0.6, mo));
-  _gc.lerp(cMoss, smoothstep(0.62, 0.8, SN.fbm2(x * 0.05 - 9, z * 0.05 + 4, 3) * 0.5 + 0.5) * (1 - ch) * 0.7);
-  _gc.lerp(cWet, (1 - smoothstep(-214, -204, z)) * 0.5); // the snout's foot is damp
-  col.lerp(_gc, w * (1 - (b?.ice ?? 0)));
-}
 
 // nothing taller than an ankle: the moor's grass thinned, cut short and greyed by the cold breath; no heather,
 // bracken, flowers or trees (the cushions are the region's own, below)

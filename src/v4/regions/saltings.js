@@ -20,16 +20,8 @@ const KEY = 'saltings';
 export const CRUST_PAVE = { uPave: { value: null }, uPaveBox: { value: new THREE.Vector4(0, 0, 0, 0) } };
 import { SPINE, FEN, SN, DROP, runnel, RUNNEL_GLSL, height } from './height/saltings.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/saltings.js'; // the ground hook, three-free (v13 L3)
 
-const C = (h) => new THREE.Color(h);
-const cCrust = C('#f0ebe8'), cPink = C('#e6cccb'), cDamp = C('#a89e9a'); // v8-02: white, the palest ground on the map
-const _gc = new THREE.Color();
-export function ground(col, x, z, w) {
-  const n = SN.fbm2(x * 0.05 + 3, z * 0.05, 3) * 0.5 + 0.5;
-  _gc.copy(cCrust).lerp(cPink, smoothstep(0.55, 0.8, n) * 0.35);
-  _gc.lerp(cDamp, (1 - smoothstep(0.05, 0.25, runnel(x, z))) * 0.5);
-  col.lerp(_gc, smoothstep(0.2, 0.8, w));
-}
 
 // no grass, heather, bracken, flowers or trees on the crust; a little sedge and reed at the fen's side
 export const cover = {

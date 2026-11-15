@@ -40,34 +40,18 @@ import * as adust from './regions/adust.js';
 
 import { REGION_KEYS, PLACE_KEYS, REGION_AIR_BLEND, SHAPES, BOX, _w, regionAt, regionDistance, regionsHeight, setRegionsCoarse, COARSE_BOXES, HEIGHT_HOOKS } from '../height/regions.js'; // (v13 L2) the weights and the height hooks, three-free
 export { REGION_KEYS, PLACE_KEYS, REGION_AIR_BLEND, regionAt, regionDistance, regionsHeight, setRegionsCoarse, COARSE_BOXES };
+// (v13 L3) the ground hooks and the terrain's colour pass through them, three-free, for the bake in a worker
+import { GROUND_HOOKS, regionsGround, REGIONS_DEBUG, REGION_DEBUG_COLORS } from '../height/ground.js';
+export { regionsGround, REGION_DEBUG_COLORS };
 
 export const HOOKS = { bletting, saltings, outwash, highLing, demesne, lynchets, strandline, adust };
 // module file name for each key (main.js loads them as region-<key> world modules)
 export const REGION_FILES = { bletting: 'bletting', saltings: 'saltings', outwash: 'outwash', highLing: 'high-ling', demesne: 'demesne', lynchets: 'lynchets', strandline: 'strandline', adust: 'adust' };
 
 // ---------------------------------------------------------------- hooks for the shared systems
-const GROUND_KEYS = REGION_KEYS.filter((k) => typeof HOOKS[k].ground === 'function');
 for (const k of REGION_KEYS) if (HOOKS[k].height !== HEIGHT_HOOKS[k]) throw new Error(`region ${k}: its module's height is not v4/regions/height's`);
-
-const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).get('regions') === '1';
-export const REGION_DEBUG_COLORS = {
-  bletting: '#c8902a', saltings: '#f0e0e8', outwash: '#8fb4d8', highLing: '#b04a6a', demesne: '#5aa04a', lynchets: '#c8c070',
-  strandline: '#222228', adust: '#c84a1a', wood: '#1a4a1a', fen: '#3a6a5a', lattice: '#4ad0ff', moor: '#6a6a40',
-};
-const DBG = Object.fromEntries(Object.entries(REGION_DEBUG_COLORS).map(([k, v]) => [k, new THREE.Color(v)]));
-const _gw = { ..._w }, _dc = new THREE.Color();
-// terrain.js's vertex colours: each region's ground hook; with ?regions=1, a flat tint by weight instead
-export function regionsGround(col, x, z, b) {
-  if (!DEBUG && !GROUND_KEYS.length) return col;
-  const w = regionAt(x, z, _gw);
-  if (DEBUG) {
-    _dc.setRGB(0, 0, 0);
-    for (const k of Object.keys(DBG)) if (w[k] > 0) _dc.r += DBG[k].r * w[k], _dc.g += DBG[k].g * w[k], _dc.b += DBG[k].b * w[k];
-    return col.lerp(_dc, 0.75);
-  }
-  for (const k of GROUND_KEYS) if (w[k] > 0) HOOKS[k].ground(col, x, z, w[k], b);
-  return col;
-}
+for (const k of REGION_KEYS) if ((HOOKS[k].ground || null) !== (GROUND_HOOKS[k] || null)) throw new Error(`region ${k}: its module's ground is not v4/regions/ground's`);
+const DEBUG = REGIONS_DEBUG;
 
 // the Tinctures: the blended air hue and its strength at a point (regions without air add nothing)
 const AIR = Object.fromEntries(REGION_KEYS.map((k) => [k, HOOKS[k].air ? { c: new THREE.Color(HOOKS[k].air.tint), s: HOOKS[k].air.strength ?? 1 } : null]));

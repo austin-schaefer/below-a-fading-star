@@ -16,16 +16,8 @@ import { groundOf, instanced, stoneMaterial, airMotes, meshStats, compose, veget
 const KEY = 'bletting';
 import { R, CI, ZMIN, O, SN, HEDGE_R, HEDGE_N, GAPS, hedgeDist, height } from './height/bletting.js'; // the height hook and what it reads (v13 L2)
 export { height };
+export { ground } from './ground/bletting.js'; // the ground hook, three-free (v13 L3)
 
-const C = (h) => new THREE.Color(h);
-const cRank = C('#4c6a2a'), cWind = C('#4a3a24'), cHeal = C('#4e4250');
-const _gc = new THREE.Color();
-export function ground(col, x, z, w) {
-  const n = SN.fbm2(x * 0.04, z * 0.04, 3) * 0.5 + 0.5;
-  _gc.copy(cRank).lerp(cHeal, smoothstep(0.6, 0.78, SN.fbm2(x * 0.09 + 7, z * 0.09, 2) * 0.5 + 0.5) * 0.45);
-  _gc.lerp(cWind, (1 - smoothstep(30, 52, hyp(x - O.x, z - O.z))) * smoothstep(0.45, 0.7, n) * 0.5); // the close's floor, browned by the fall of fruit
-  col.lerp(_gc, w * 0.8);
-}
 
 // the trees this region plants: medlars and quinces gone to thicket past the close's wall, and the blackthorn hedge
 function plantTrees(ground, rng, regionAt) {
