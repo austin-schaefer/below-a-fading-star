@@ -20,6 +20,8 @@
 //   - the Diffident Stair (v12-H3, when built): a slab that has not come does not hold (its place is a held edge); with
 //     its clock the walker climbs; ahead of the feet the slabs have come, 6 m behind they have gone; standing still is safe;
 //     at 30 and 20 fps a walk is never held; down from the deck to the turf; turning back mid-flight; the columns it caps;
+//     a walker pressing W into the High Ling's tors (the critic's line by the stair, every stack from four sides) is
+//     stopped short of the drawn stone (v12-C1);
 //   - v12-H5: draw calls and triangles at the four tops on low, within 1.3x the floor's worst (tools/heights-cost.mjs);
 //   - ?fall=1: a fall from the perch (18 m) closes the view, holds it dark and wakes the walker at the keep's gate,
 //     lying and getting up; a 7 m drop does not.
@@ -437,6 +439,41 @@ const HELPERS = `(() => {
     // under the tread; none of them a figure that walks
     const cl = S.cappedList();
     out.cols = { n: cl.length, bad: cl.filter((q) => q.lo - q.g < 3 || q.c.y + q.c.h > q.lo - 0.5 || q.c.h < 1).length };
+    // v12-C1: walking into the High Ling's tors with W alone (the critic's line beside the stair's turn at (285.3, -21.3),
+    // then every stack from four sides), the eye never comes within 0.25 m of the drawn stone nor inside it: 12 level
+    // rays from the eye against the tors' mesh, an inside one hitting a back face
+    {
+      const T3 = fp.THREE, tors = fp.scene.getObjectByName('highling-tors');
+      const rc = new T3.Raycaster(), O = new T3.Vector3(), D = new T3.Vector3(), IM = new T3.Matrix4(), NM = new T3.Matrix3(), N = new T3.Vector3();
+      const side = tors.material.side; tors.material.side = T3.DoubleSide;
+      const probe = () => {
+        let near = Infinity, inside = 0;
+        for (let k = 0; k < 12; k++) {
+          const a = k / 12 * Math.PI * 2; O.copy(p.pos); D.set(Math.cos(a), 0, Math.sin(a)); rc.set(O, D); rc.far = 6;
+          const h = rc.intersectObject(tors, false)[0]; if (!h) continue;
+          near = Math.min(near, h.distance);
+          tors.getMatrixAt(h.instanceId, IM); NM.getNormalMatrix(IM); if (N.copy(h.face.normal).applyMatrix3(NM).dot(D) > 0) inside++;
+        }
+        return { near, inside: inside >= 4 };
+      };
+      const walks = [[288.5, -15.5, 0.6], [290, -21.3, 1.57], [287, -24, 2.2], [278, -26, 4.0], [276, -18, 5.2], [281, -28, 3.3]];
+      for (const c of fp.controls.state.colliders) if (c.mod === 'region-highLing' && c.r >= 2.2 && c.x2 === undefined)
+        for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2 + 0.4; walks.push([c.x + Math.sin(a) * 8, c.z + Math.cos(a) * 8, a]); } // yaw a walks toward (-sin a, -cos a)
+      const tor = { walks: walks.length, near: Infinity, inside: 0, worst: null };
+      for (const [x, z, yaw] of walks) {
+        place(x, z); p.yaw = yaw; p.keys.clear(); p.keys.add('KeyW');
+        for (let i = 0; i < 240; i++) {
+          fp.controls.update(DT);
+          if (i % 3) continue;
+          const r = probe();
+          if (r.inside) tor.inside++;
+          if (r.near < tor.near) { tor.near = +r.near.toFixed(3); tor.worst = { from: [x, z, yaw], at: [+p.pos.x.toFixed(2), +p.pos.z.toFixed(2)] }; }
+        }
+        p.keys.clear();
+      }
+      tors.material.side = side;
+      out.tor = tor;
+    }
     S.all(false); S.tick(DT);
     return out;
   });
@@ -448,7 +485,8 @@ const HELPERS = `(() => {
     for (const fps of [30, 20]) check(SD.fps[fps].held === 0 && SD.fps[fps].reached, `stair: at ${fps} frames a second a plain walk up the first flight is never held at its end`, SD.fps[fps]);
     check(SD.down.ok && SD.down.maxAir < 0.45 && Math.abs(SD.down.feet - SD.down.ground) < 0.3, 'stair: down from the tender\'s deck to the turf, every landing and the switchback, never falling', SD.down);
     check(SD.turnBack.ok && SD.turnBack.maxAir < 0.45 && Math.abs(SD.turnBack.feet - SD.turnBack.want) < 0.3, 'stair: turning back half-way up a flight, down to its foot and up again', SD.turnBack);
-    check(SD.cols.bad === 0, 'stair: columns capped under it only where it is 3 m and more over the ground, under its treads', SD.cols);
+    check(SD.tor.inside === 0 && SD.tor.near >= 0.25, 'stair: a walker pressing into the High Ling\'s tors (the critic\'s line by the stair\'s turn, each stack from four sides) is stopped short of the drawn stone', SD.tor);
+    check(SD.cols.bad === 0,'stair: columns capped under it only where it is 3 m and more over the ground, under its treads', SD.cols);
   }
 
   // ---------------------------------------------------------------- v12-H5: far.js's stand-ins never lag their module

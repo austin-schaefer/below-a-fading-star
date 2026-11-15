@@ -66,6 +66,14 @@ export const air = { tint: '#f2c95e', strength: 1 }; // "gold pollen" (DI)
 
 // the tors: [x, z, height]; the tallest at (268, -80)
 const TORS = [[SITES.tallestTor.x, SITES.tallestTor.z, 10], [252, -40, 7.5], [281, -20, 6.2], [258, -2, 6.5], [247, -92, 7], [283, -62, 6]];
+// how far from a stack's axis (cx, cz) a pillow reaches, from the ground to a little over a walker's eye: the widest of
+// its horizontal semi-axes (the pillow geometry's x 1, z 0.85, y 0.72, with the noise's swell) where it cuts that band
+function pillowReach(p, cx, cz, base) {
+  const R = Math.max(p.sx, p.sz * 0.85) * 1.12, ry = p.sy * 0.72 * 1.12;
+  let w = 0;
+  for (const h of [0.2, 0.9, 1.7, 2.1]) { const t = (base + h - p.y) / ry; if (t > -1 && t < 1) w = Math.max(w, R * Math.sqrt(1 - t * t)); }
+  return w > 0 ? Math.hypot(p.x - cx, p.z - cz) + w : 0;
+}
 
 // ---------------------------------------------------------------- sound: grasshoppers, the wind in the tors
 export const sound = {
@@ -181,13 +189,17 @@ export async function build(ctx) {
       const off = (c - (n - 1) / 2) * (3.4 + rng() * 1.0), cx = tx + ca * off + (rng() - 0.5) * 1.5, cz = tz - sa * off + (rng() - 0.5) * 1.5;
       const Hc = c === Math.floor(n / 2) ? H : H * (0.45 + rng() * 0.35);
       const base = G.heightAt(cx, cz);
-      let y = base - 0.6, wdt = 4.4 + rng() * 1.6;
+      let y = base - 0.6, wdt = 4.4 + rng() * 1.6, reach = 0;
       while (y < base + Hc - 0.8) {
         const th = 1.5 + rng() * 0.9;
-        pillows.push({ x: cx + (rng() - 0.5) * 0.7, y: y + th * 0.42, z: cz + (rng() - 0.5) * 0.7, sx: wdt * (0.5 + rng() * 0.12), sy: th, sz: wdt * (0.45 + rng() * 0.12), ry: yaw0 + (rng() - 0.5) * 0.35, rx: (rng() - 0.5) * 0.1, rz: (rng() - 0.5) * 0.1, c: pinkish() });
+        const p = { x: cx + (rng() - 0.5) * 0.7, y: y + th * 0.42, z: cz + (rng() - 0.5) * 0.7, sx: wdt * (0.5 + rng() * 0.12), sy: th, sz: wdt * (0.45 + rng() * 0.12), ry: yaw0 + (rng() - 0.5) * 0.35, rx: (rng() - 0.5) * 0.1, rz: (rng() - 0.5) * 0.1, c: pinkish() };
+        pillows.push(p);
+        reach = Math.max(reach, pillowReach(p, cx, cz, base));
         y += th * 0.93; wdt *= 0.88 + rng() * 0.08;
       }
-      ctx.addCollider({ x: cx, z: cz, r: 2.2 });
+      // the collider reaches as far as the pillows do where a walker's body and eye are (v12-C1: it was 2.2 m, and the
+      // wider pillows stood a metre past it, so a walker pressed against a tor stood inside the stone)
+      ctx.addCollider({ x: cx, z: cz, r: Math.max(2.2, reach - 0.55) });
     }
   }
   const torMesh = instanced(pillowGeo, granite, pillows, { name: 'highling-tors', shadow: true, colors: true });
