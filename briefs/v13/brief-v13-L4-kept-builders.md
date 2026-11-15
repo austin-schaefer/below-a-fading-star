@@ -1,6 +1,6 @@
 # Brief v13 L4: the heavy builders, kept
 
-Worktree and port: set at dispatch (after L3 is merged). Read `briefs/v13/_common.md` first. Model: strong.
+Worktree: `.claude/worktrees/issue-1309-kept-builders` (branch `issue-1309-kept-builders`, port 8163; 8170 to 8172 for a base copy). Work only there. Read `briefs/v13/_common.md` first. Model: strong.
 
 ## Goal
 
