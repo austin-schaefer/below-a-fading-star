@@ -82,12 +82,13 @@ async function open(query, pre) {
   check(log.length > 1 && log[1].gutterIn >= 20 && log[1].swellSm < 0.05 && waited2 > 14, `a gutter due in 5 s holds the next start back until it has passed (started after ${waited2.toFixed(0)} s, next gutter in ${log[1]?.gutterIn.toFixed(0)} s)`);
   // the duck: hold the sun at 0.2 (the bed's swell follows), the bus falls to silence; release, it returns
   await page.evaluate(() => { window.__fp.sky.flicker.hold = 0.2; });
-  await sleep(4000);
+  // until the bus has fallen as far as the check below asks (at most 4 s)
+  await page.waitForFunction(() => { const m = window.__fp.audio.music; return m.bus.gain.value / m.mix < 0.1 && m.duck < 0.05; }, null, { timeout: 4000, polling: 100 }).catch(() => {});
   // (the sped-up director may end the track meanwhile; with nothing sounding Chromium stops rendering the bus and its
   // gain's value freezes, so the return is read from the duck the glue last sent it, music.duck)
   const lo = await page.evaluate(() => [window.__fp.audio.music.bus.gain.value / window.__fp.audio.music.mix, window.__fp.audio.music.duck]);
   await page.evaluate(() => { window.__fp.sky.flicker.hold = null; });
-  await sleep(9000);
+  await page.waitForFunction(() => window.__fp.audio.music.duck > 0.9, null, { timeout: 9000, polling: 100 }).catch(() => {}); // at most 9 s
   const hi = await page.evaluate(() => window.__fp.audio.music.duck);
   check(lo[0] < 0.1 && lo[1] < 0.05, `the bus ducks in a gutter (gain ${lo[0].toFixed(3)} of the mix, duck ${lo[1].toFixed(3)})`);
   check(hi > 0.9, `and returns on its tail (duck ${hi.toFixed(3)})`);
@@ -114,7 +115,9 @@ for (const [q, expect] of [['moor', true], ['keep', true], ['0', false]]) {
   const { page, errors, fetched } = await open(`q=low&only=audio&music=${q}`, () => { localStorage.setItem('fp-music', 'frequent'); });
   await sleep(1500);
   const early = await page.evaluate(() => window.__fp.audio?.music?.log.length ?? -1);
-  await sleep(4500);
+  // a track expected: until it has started (at most 4.5 s more); ?music=0: the whole 4.5 s, since the check is that nothing plays
+  if (expect) await page.waitForFunction((q) => { const m = window.__fp.audio.music; return m.log.length === 1 && m.playing === q; }, q, { timeout: 4500, polling: 100 }).catch(() => {});
+  else await sleep(4500);
   const r = await page.evaluate(() => { const m = window.__fp.audio.music; return { log: m.log.slice(), playing: m.playing, mode: m.director ? m.director.state.setting : 'none' }; });
   const log = r.log;
   check(expect ? early === 0 && log.length === 1 && log[0].name === q && r.playing === q : log.length === 0 && fetched.join() === 'index.js', `?music=${q}: ${expect ? `nothing at 1.5 s, ${q} playing by 6 s whatever the setting` : 'nothing played or loaded'} (${log.length} played, playing ${r.playing}; the director is ${r.mode}; fetched ${fetched.join(' ')})`);
