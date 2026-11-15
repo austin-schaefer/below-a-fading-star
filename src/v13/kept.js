@@ -191,22 +191,39 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
 export function keptHelper(store, { quality, search, later }) {
   const key = `${quality}|${queryKey(search)}`;
   const used = new Set();
-  const kept = async (name, compute) => {
+  const live = store && !store.off;
+  // kept.open(name) (v13 L4): the slot itself, for data that is only whole after the build has run (a height tape,
+  // src/v13/tape.js): { data } on a hit, else { data: null }; keep(v) snapshots v at once and writes it straight away
+  const open = async (name) => {
     if (used.has(name)) throw new Error(`ctx.kept: '${name}' asked for twice`);
     used.add(name);
     const slot = `kept:${name}:${quality}`, t0 = performance.now();
-    const hit = store && !store.off ? await store.get(slot, key) : null;
-    const t1 = performance.now(), T = { name, getMs: t1 - t0 };
+    const hit = live ? await store.get(slot, key) : null;
+    const T = { name, getMs: performance.now() - t0 };
     (store.stats.timing ||= []).push(T);
-    if (hit != null) { T.hit = true; return hit; }
+    if (hit != null) { T.hit = true; return { data: hit, timing: T, keep: () => false }; }
+    let kept = false;
+    return {
+      data: null, timing: T,
+      keep(v) {
+        if (kept || !live) return false;
+        kept = true;
+        const t2 = performance.now(), snap = structuredClone(v), deps = loadedScripts();
+        T.snapMs = performance.now() - t2;
+        later(() => store.put(slot, key, snap, deps));
+        return true;
+      },
+    };
+  };
+  const kept = async (name, compute) => {
+    const s = await open(name);
+    if (s.data != null) return s.data;
+    const t1 = performance.now();
     const v = await compute();
-    const t2 = performance.now(); T.computeMs = t2 - t1;
-    if (store && !store.off) {
-      const snap = structuredClone(v), deps = loadedScripts();
-      T.snapMs = performance.now() - t2;
-      later(() => store.put(slot, key, snap, deps));
-    }
+    s.timing.computeMs = performance.now() - t1;
+    s.keep(v);
     return v;
   };
+  kept.open = open;
   return kept;
 }

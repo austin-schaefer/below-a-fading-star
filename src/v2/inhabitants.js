@@ -2,19 +2,23 @@
 // Menology with its lizards. Names [Proposed]. Follows the module contract in README.md; each site lives in
 // src/v2/inhabitants/*.js and is built here in turn, so one failing does not take the others with it.
 // Exposes ctx.inhabitants2 = { guest, galley, menology, report } for tests and the console.
+import { keptHeights } from '../v13/tape.js';
+
 export async function build(ctx) {
   const [g, s, m] = await Promise.all([
     import('./inhabitants/guest.js'), import('./inhabitants/galley.js'), import('./inhabitants/menology.js'),
   ]);
+  const tape = await keptHeights(ctx, 'inhabitants2'); // v13 L4: the ground's answers kept between visits (src/v13/tape.js)
   const out = ctx.inhabitants2 = { report: {} };
   for (const [name, fn] of [['guest', g.buildGuest], ['galley', s.buildGalley], ['menology', m.buildMenology]]) {
     const t0 = performance.now();
     try {
-      const r = fn(ctx);
+      const r = tape.run(() => fn(ctx));
       out[name] = r.api;
       out.report[name] = { drawCalls: r.drawCalls, tris: Math.round(r.tris), ms: Math.round(performance.now() - t0) };
     } catch (e) { console.error(`[fp] inhabitants2: ${name} failed:`, e?.stack || e); }
   }
+  tape.done();
   ctx.log('inhabitants2', JSON.stringify(out.report));
   return out;
 }

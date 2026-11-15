@@ -34,6 +34,7 @@
 import * as THREE from 'three';
 import { clamp, lerp } from '../noise.js';
 import { SITES } from '../world.js';
+import { keptHeights } from '../v13/tape.js'; // v13 L4: the face's heights kept between visits
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 const OFF = Q.get('galleries') === '0';
@@ -222,7 +223,9 @@ function segDist(p1, q1, p2, q2) {
 
 export async function build(ctx) {
   if (OFF) { ctx.galleries = { stats: () => ({ calls: 0, tris: 0 }), offset: 0, off: true }; return; }
-  const { scene, terrain } = ctx;
+  const { scene } = ctx;
+  // v13 L4: nearly all of this build is heightAt on the face; a repeat visit takes the answers from its tape
+  const tape = await keptHeights(ctx, 'galleries'), terrain = tape.terrain;
   const low = ctx.quality === 'low';
   const rng = ctx.makeRng(8121);
   const site = SITES.galleries;
@@ -813,6 +816,7 @@ export async function build(ctx) {
   };
   G.geo = { faceR, P, inward, along, azOf, keep, tiers: tierData, lift: liftGeo, booms, chains, struts, low };
   ctx.galleries = G;
+  tape.done();
   const flick = ctx.sky?.flicker;
   const update = (dt, t) => {
     U.uT.value = t + G.offset;

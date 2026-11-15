@@ -34,6 +34,7 @@
 import * as THREE from 'three';
 import { SUN, SITES } from '../world.js';
 import { clamp, smoothstep } from '../noise.js';
+import { keptHeights } from '../v13/tape.js'; // v13 L4: the face's heights kept between visits
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('annals') : null;
 const OFF = Q === '0';
@@ -181,11 +182,16 @@ export function injectAnnals(shader) {
 export async function build(ctx) {
   if (OFF) { ctx.annals = { off: true, uniforms }; return; }
   // the glacier's notch: the bearings where the face at 120 m lies in the terrain's glacier mask
+  // (v13 L4: faceAt's heightAt from the tape on a repeat visit, src/v13/tape.js)
   let lo = null, hi = null;
-  for (let b = -60; b <= 60; b += 0.25) {
-    const p = ctx.mountains.faceAt((b + 360) % 360, 120);
-    if (p && ctx.terrain.glacierMask(p.x, p.z) > 0.02) { if (lo === null) lo = b; hi = b; }
-  }
+  const tape = await keptHeights(ctx, 'annals');
+  tape.run(() => {
+    for (let b = -60; b <= 60; b += 0.25) {
+      const p = ctx.mountains.faceAt((b + 360) % 360, 120);
+      if (p && ctx.terrain.glacierMask(p.x, p.z) > 0.02) { if (lo === null) lo = b; hi = b; }
+    }
+  });
+  tape.done();
   if (lo !== null) uniforms.uAnnGlac.value.set(((lo + hi) / 2 + 360) % 360, (hi - lo) / 2, 2.5);
   const api = { uniforms, flipHold: null, glacier: lo === null ? null : [lo, hi], gradine: null }; // flipHold pins the swing (0..1), for renders
   // the Gradine's crossing, once its module has built (the modules build together)

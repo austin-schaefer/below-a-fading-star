@@ -41,6 +41,7 @@ const ROUND = [118, 102, 85];                     // the carriage's round, by it
 const AWAY = { foot: [25, 120], top: [45, 60] };  // m and s: it leaves a landing once the visitor has been that far off that long
 
 export async function build(ctx) {
+  await ctx.built?.('galleries'); // (v13 L4: the Galleries' build awaits its height tape first, so wait for it to settle)
   const G = ctx.galleries;
   if (!G || G.off || !G.geo?.lift?.foot || Q.get('lift') === '0') { ctx.lift = null; return; }
   const geo = G.geo, Lg = geo.lift, T = ctx.terrain, P = ctx.player;

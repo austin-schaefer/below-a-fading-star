@@ -13,6 +13,7 @@ import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 import { buildSkin, instanced, meshStats, leanShader, skinGround } from './skin.js';
 
 const KEY = 'adust';
+import { keptHeights } from '../../v13/tape.js'; // v13 L4: the ground's answers kept between visits
 import { N, SUNX, SUNZ, SUN_YAW, sandAt, dune, height } from './height/adust.js'; // the height hook and what it reads (v13 L2)
 export { height };
 export { ground } from './ground/adust.js'; // the ground hook, three-free (v13 L3)
@@ -94,7 +95,14 @@ function paveAt(x, z) {
 }
 
 // ---------------------------------------------------------------- the build
+// v13 L4: the build has no await, so all of it runs in its height tape (src/v13/tape.js)
 export async function build(ctx) {
+  const tape = await keptHeights(ctx, 'region-adust');
+  tape.run(() => buildNow(ctx));
+  tape.done();
+}
+
+function buildNow(ctx) {
   const { THREE: T, terrain } = ctx;
   const low = ctx.quality === 'low';
   const rng = ctx.makeRng(8300);
