@@ -207,6 +207,21 @@ export function buildSettings(ctx) {
     syncPos();
   });
 
+  // --- a long fall costs (v12): off by default, remembered in 'fp-fall'; src/v12/fall.js reads it (ctx.fall.refresh)
+  const fallBtn = $('set-fall');
+  const fallNow = () => { try { return localStorage.getItem('fp-fall') === '1'; } catch (e) { return false; } };
+  function syncFall() {
+    if (!fallBtn) return;
+    const on = fallNow();
+    fallBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    fallBtn.textContent = on ? 'On' : 'Off';
+  }
+  fallBtn?.addEventListener('click', () => {
+    try { localStorage.setItem('fp-fall', fallNow() ? '0' : '1'); } catch (e) { /* private mode */ }
+    ctx.fall?.refresh();
+    syncFall();
+  });
+
   // --- teleport: the whole map under small headings
   let group;
   PLACES.forEach((pl, i) => {
@@ -235,7 +250,7 @@ export function buildSettings(ctx) {
     if (open_) return;
     open_ = true;
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
-    syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
+    syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos(); syncFall();
     for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
     root.classList.add('shown');
     gear.setAttribute('aria-expanded', 'true');

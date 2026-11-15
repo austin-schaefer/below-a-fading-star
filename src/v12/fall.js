@@ -1,19 +1,19 @@
-// A fall that costs (v12 H0, part 7; plans/wilderness-v12.md, "Falling costs something"). Behind ?fall=1, off by
-// default until the owner has tried it (FALL_DEFAULT below is the one line that switches it). A fall of more than
+// A fall that costs (v12 H0, part 7; plans/wilderness-v12.md, "Falling costs something"). Off by default; a visitor
+// turns it on in the settings panel (localStorage 'fp-fall', '1' or '0'), and ?fall=1 / ?fall=0 in the URL wins over
+// that. The DOM layer is always built; the update acts only while it is on, so the toggle works live. A fall of more than
 // FALL_M closes the view as the walker drops (no impact is shown), holds the dark a moment, and wakes them lying by
 // the keep's gate (the spawn), the view opening on the sky and coming down to the gate as they get up.
 // Reads the controls' fall state (player.fallTop: the highest the feet have been since they last stood;
 // player.floorBelow: the floor under them now) and holds the walker with ctx.controls.carry while dark and waking.
 // One fixed DOM layer (the eyelids, two radial gradients) and one per-frame check while idle: nothing drawn in 3D.
 // No sound yet: the wind of the fall wants the `sound-design` pass (a cue in src/v10/sound.js and a row in audio-test).
-const FALL_DEFAULT = false; // the owner's call: true makes the blackout the default, ?fall=0 the way back
 const FALL_M = 12;          // m: a drop of more than this blacks out
 const CLOSE_S = 0.55, DARK_S = 1.4, WAKE_S = 3.2; // s: the shortest close (a long fall closes over 0.8 of its time), the dark, the waking
 
 export async function build(ctx) {
   const q = new URLSearchParams(location.search).get('fall');
-  const on = q === '1' ? true : q === '0' ? false : FALL_DEFAULT;
-  if (!on) return;
+  const stored = () => { try { return localStorage.getItem('fp-fall') === '1'; } catch (e) { return false; } }; // private mode: off
+  let on = q === '1' ? true : q === '0' ? false : stored();
   const el = document.createElement('div');
   el.id = 'fall';
   el.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:8;opacity:0;';
@@ -30,7 +30,9 @@ export async function build(ctx) {
   const p = ctx.player, SP = ctx.spawn;
   let phase = 'idle', t = 0, amount = 0, release = null, closeS = CLOSE_S;
   const hold = new ctx.THREE.Vector3();
-  const state = ctx.fall = { get phase() { return phase; }, get amount() { return amount; }, falls: 0, FALL_M };
+  const state = ctx.fall = { get phase() { return phase; }, get enabled() { return on; },
+    // the settings toggle calls this after writing 'fp-fall'; the URL still wins
+    refresh() { on = q === '1' ? true : q === '0' ? false : stored(); }, get amount() { return amount; }, falls: 0, FALL_M };
   const ease = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
 
   ctx.events.addEventListener('land', (e) => {
@@ -62,7 +64,7 @@ export async function build(ctx) {
   }
   ctx.registerUpdate((dt) => {
     if (phase === 'idle') {
-      if (p.onGround || p.carried || p.vy > -3) return;
+      if (!on || p.onGround || p.carried || p.vy > -3) return;
       const total = p.fallTop - p.floorBelow, fallen = p.fallTop - (p.pos.y - p.eye);
       if (total > FALL_M && fallen > 1) {
         // shut over most of the time left to the ground (the visitor sees the fall begin), and well before it

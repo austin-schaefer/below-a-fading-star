@@ -179,7 +179,15 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('coords: Show position puts the line bottom-left and remembers it', await page.evaluate(() => { const e = document.getElementById('posline'), r = e.getBoundingClientRect(); return e.classList.contains('shown') && r.left < 40 && r.bottom > 690 && /^x 90/.test(e.textContent) && localStorage.getItem('fp-showpos') === '1'; }));
   await page.click('#set-showpos');
   check('coords: and off again, off by default', await page.evaluate(() => !document.getElementById('posline').classList.contains('shown') && localStorage.getItem('fp-showpos') === '0'));
-  await page.evaluate(() => window.__fp.settings.close());
+  // a long fall costs (v12): off by default, a click turns it on live and remembers it, a click turns it off
+  check('fall: off by default, the row says so', await page.evaluate(() => { const b = document.getElementById('set-fall'); return !!b && b.getAttribute('aria-pressed') === 'false' && b.textContent === 'Off' && localStorage.getItem('fp-fall') === null && !window.__fp.fall.enabled; }));
+  await page.click('#set-fall');
+  check('fall: a click turns it on at once and remembers it', await page.evaluate(() => { const b = document.getElementById('set-fall'); return b.getAttribute('aria-pressed') === 'true' && b.textContent === 'On' && localStorage.getItem('fp-fall') === '1' && window.__fp.fall.enabled; }));
+  await page.evaluate(() => { window.__fp.settings.close(); window.__fp.settings.open(); });
+  check('fall: reopening the panel still shows it on', (await page.getAttribute('#set-fall', 'aria-pressed')) === 'true');
+  await page.click('#set-fall');
+  check('fall: and off again', await page.evaluate(() => localStorage.getItem('fp-fall') === '0' && !window.__fp.fall.enabled && document.getElementById('set-fall').textContent === 'Off'));
+  await page.evaluate(() => { localStorage.removeItem('fp-fall'); window.__fp.settings.close(); });
 
   // the debug panel survives a teleport from either panel, and the quality reload keeps every parameter
   await page.evaluate(() => { window.__fp.debug.toggle(true); window.__fp.settings.open(); });

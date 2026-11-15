@@ -227,7 +227,6 @@ const HELPERS = `(() => {
       }
       out.hops = res;
     }
-    out.noFall = !fp.fall && !document.getElementById('fall');
     return out;
   });
   // the view from above, on the page's own frames: at walking height and on the Span's deck nothing changes; held
@@ -285,7 +284,6 @@ const HELPERS = `(() => {
   check(Hp.strafe.x > Hp.strafe.edge && Hp.strafe.on && !Hp.strafe.stack && Math.abs(Hp.strafe.f - Hp.strafe.ground) < 0.05, 'hops: strafing off the 1 m step, untouched', Hp.strafe);
   check(!!Hp.bank && Hp.bankFree > 0.75, 'hops: down a steep bank with no keys, untouched (3 m/s downhill, air drag alone: 0.86 m)', Hp.bank ? `slope ${f2(Hp.bank.sl)} rad, carried ${f2(Hp.bankFree)} m` : 'no bank found');
   check(!!Hp.bank && Hp.bankStrafe > 1.2, 'hops: strafing down a steep bank, untouched', `moved ${f2(Hp.bankStrafe)} m`);
-  check(U.noFall, 'fall: without ?fall=1 nothing is installed');
   check(V.ground.box === 95 && Math.abs(V.ground.density - 0.0022) < 1e-7, 'from above: at walking height the shadow box and the haze are as before', V.ground);
   check(V.deck.box === 95 && Math.abs(V.deck.density - 0.0022) < 1e-7, 'from above: on the Span\'s deck (56 m over the valley) too', V.deck);
   check(V.high.box >= 200 && V.high.eyeToCentre <= V.high.box - 30, 'from above: held 120 m up the box grows and the eye stays well inside it', V.high);
@@ -451,12 +449,11 @@ const HELPERS = `(() => {
   await page.close();
 }
 
-// ---------------------------------------------------------------- the fall, with ?fall=1
-{
-  const { page, errors } = await open('&fall=1');
-  const F = await page.evaluate(async () => {
+// ---------------------------------------------------------------- the fall: off by default, on by ?fall=1 or the stored setting
+// the 18 m fall off the perch, on the page's own frames; resolves with what was seen
+const FALL_RUN = `async () => {
     const { fp, p, feet, place, run } = window.H, S = fp.heightsTest, out = {};
-    out.has = !!fp.fall;
+    out.has = !!fp.fall; out.enabled = !!fp.fall?.enabled;
     // a 7 m drop: off the beam's spur, nothing
     place(S.x - 10, S.beam.z0 - 0.45, S.beam.y); p.yaw = 0; run(150, ['KeyW', 'ShiftLeft']);
     out.small = { phase: fp.fall.phase, falls: fp.fall.falls, f: feet() };
@@ -475,14 +472,44 @@ const HELPERS = `(() => {
     out.lowestWhileOpen = Math.min(...seen.filter((s) => s.phase === 'falling' && s.amt < 0.999).map((s) => s.y));
     out.ground = fp.terrain.heightAt(S.perch.x, S.perch.z + 2);
     return out;
-  });
-  check(F.has, 'fall: ?fall=1 installs the blackout');
+  }`;
+{
+  // nothing set: the layer is there, a long fall does not black out
+  const { page, errors } = await open('');
+  const N = await page.evaluate(`(async () => { const { fp, p, place } = window.H, S = fp.heightsTest; localStorage.removeItem('fp-fall');
+    place(S.perch.x, S.perch.z, S.perch.y); p.yaw = Math.PI; p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+    let maxAmt = 0, phases = new Set(); const t0 = performance.now();
+    while (performance.now() - t0 < 4000) { await new Promise((r) => requestAnimationFrame(r)); if (performance.now() - t0 > 1200) p.keys.clear(); maxAmt = Math.max(maxAmt, fp.fall.amount); phases.add(fp.fall.phase); }
+    return { enabled: fp.fall.enabled, falls: fp.fall.falls, maxAmt, phases: [...phases], on: p.onGround, op: +getComputedStyle(document.getElementById('fall')).opacity }; })()`);
+  check(!N.enabled && N.falls === 0 && N.maxAmt === 0 && N.phases.join() === 'idle' && N.on && N.op === 0, 'fall: off by default, a long fall does not black out', N);
+  check(errors.length === 0, 'no page errors (fall off)', errors.slice(0, 3).join(' | '));
+  await page.close();
+}
+{
+  // ?fall=0 beats a stored 'on'
+  const { page, errors } = await open('&fall=0');
+  const N = await page.evaluate(`(async () => { const { fp, p, place } = window.H, S = fp.heightsTest; localStorage.setItem('fp-fall', '1'); fp.fall.refresh();
+    place(S.perch.x, S.perch.z, S.perch.y); p.yaw = Math.PI; p.keys.add('KeyW'); p.keys.add('ShiftLeft');
+    let maxAmt = 0; const t0 = performance.now();
+    while (performance.now() - t0 < 4000) { await new Promise((r) => requestAnimationFrame(r)); if (performance.now() - t0 > 1200) p.keys.clear(); maxAmt = Math.max(maxAmt, fp.fall.amount); }
+    localStorage.removeItem('fp-fall'); return { enabled: fp.fall.enabled, falls: fp.fall.falls, maxAmt }; })()`);
+  check(!N.enabled && N.falls === 0 && N.maxAmt === 0, 'fall: ?fall=0 overrides a stored on', N);
+  check(errors.length === 0, 'no page errors (fall=0)', errors.slice(0, 3).join(' | '));
+  await page.close();
+}
+{
+  // the stored setting on (no URL param), set live as the settings row does: the same 18 m fall blacks out and wakes at the gate
+  const { page, errors } = await open('');
+  await page.evaluate(() => { localStorage.setItem('fp-fall', '1'); window.__fp.fall.refresh(); });
+  const F = await page.evaluate(`(${FALL_RUN})()`);
+  await page.evaluate(() => localStorage.removeItem('fp-fall'));
+  check(F.has && F.enabled, 'fall: the stored setting turns the blackout on, live');
   check(F.small.phase === 'idle' && F.small.falls === 0, 'fall: a 7 m drop does not black out', F.small);
   check(!!F.falling && !!F.dark && F.dark.amt === 1, 'fall: an 18 m fall closes the view and goes dark', { falling: F.falling, dark: F.dark });
   check(F.lowestWhileOpen > F.ground + 0.5, 'fall: the view is shut before the ground (no impact shown)', `lowest feet with the view still open ${f2(F.lowestWhileOpen)}, ground ${f2(F.ground)}`);
   check(!!F.waking && F.end.phase === 'idle' && F.end.op === 0, 'fall: the walker wakes and the view opens again', { waking: F.waking, end: F.end });
   check(Math.hypot(F.at.x - F.at.spawn.x, F.at.z - F.at.spawn.z) < 2 && F.at.on && !F.at.carried, 'fall: they wake at the keep\'s gate (the spawn), standing and free', F.at);
-  check(errors.length === 0, 'no page errors (fall)', errors.slice(0, 3).join(' | '));
+  check(errors.length === 0, 'no page errors (fall on)', errors.slice(0, 3).join(' | '));
   await page.close();
 }
 await browser.close();
