@@ -19,7 +19,7 @@ import { NAVE } from '../v5/nave/ground.js';
 import { glowAt } from '../v5/nave.js';
 import { UnderBuilder, underMaterial, installBelow, boxBelow } from './under.js';
 import { buildNoon } from './noon-road.js';
-import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, DOOR, stairHead, makeFloor, CR_OFF, spurY, SLOPE } from './coffin-road/plan.js';
+import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, DOOR, stairHead, makeFloor, CR_OFF, spurY, SLOPE, PATCH } from './coffin-road/plan.js';
 import { MAIN, gapX, NODE } from './noon-road/plan.js';
 import { NOON } from '../v8/strata/noon.js';
 
@@ -166,13 +166,13 @@ export async function build(ctx) {
   planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, SLOPE.z1, DOOR.z + 0.05, 'z', 4, DOOR.sill + 0.03, DOOR.sill + 0.03);
   for (let z = SLOPE.z0 + 0.5; z < SLOPE.z1; z += 0.62) B.box(DOOR.x, spurY(z) + 0.02, z, 0.72, 0.022, 0.03, 0, TIMBER, TIMBER, 0.2);
   // the road: planks over each coupling, from one back to the next, lashed to the coupling's ring
-  planks(ROAD.x0, ROAD.x0 + 1.2, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true);
+  planks(ROAD.x0, ROAD.x0 + 1.2, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true);
   for (let i = 0; i < MAIN.length - 1; i++) {
     const x = gapX(i);
-    planks(x - 1.4, x + 1.45, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true); // a patch: the carriers are the road
+    planks(x - PATCH.w, x + PATCH.e, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true); // a patch: the carriers are the road
     for (const s of [-1, 1]) lash([x - 0.2, top - 0.06, ROAD.zc + s * 0.47], [x - 0.15, top - 0.75, ROAD.zc + s * 1.2]);
   }
-  planks(ROAD.x1 - 1.1, ROAD.x1, ROAD.zc - 0.48, ROAD.zc + 0.48, 'x', 3, top, top, true);
+  planks(ROAD.x1 - 1.45, ROAD.x1, ROAD.zc - PATCH.half, ROAD.zc + PATCH.half, 'x', 3, top, top, true);
   // things floating: a few boards got loose
   for (const [x, z, yaw, len] of [[263.5, 45.6, 0.4, 1.6], [287.2, 44.9, -0.8, 1.1], [253.8, 45.2, 1.9, 0.9], [292.5, 37.2, 0.2, 1.3]]) B.box(x, WY + 0.015, z, len / 2, 0.025, 0.1, yaw, TIMBER_L, TIMBER_L, 0.3);
   await ctx.progress?.('the noon road', 0.55);

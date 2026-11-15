@@ -13,6 +13,7 @@
 //   the road: seven carriers nose to tail east along the nave on z = 42, past the cone's toe, under the hole's light
 //     and through the hoops of the broken line, into the dark under the moor to the east wall and the sun on it
 import { NAVE, naveEdge } from '../../v5/nave/ground.js';
+import { gapX, MAIN } from '../noon-road/plan.js';
 
 // ?coffinroad=0, or the module skipped or left out by ?only=: the Nave keeps its rim's colliders and south wall whole
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
@@ -44,13 +45,29 @@ export function stairHead(T) {
 export const SLOPE = { z0: 49.3, z1: 54.2 };
 export const spurY = (z) => ROAD_Y + (DOOR.sill - ROAD_Y) * Math.min(1, Math.max(0, (z - SLOPE.z0) / (SLOPE.z1 - SLOPE.z0)));
 
+// the planks over each coupling (and at the string's two ends): PATCH.half either side of the line, from x - PATCH.w
+// to x + PATCH.e of the coupling. Where they bridge the gap between two carriers' noses nothing else is under the road's
+// edges, so there the floor is as wide as the planks, and it widens back to the road's over PATCH.ease m of the backs
+export const PATCH = { half: 0.48, w: 1.4, e: 1.45, ease: 0.85, ends: [[ROAD.x0 - 1, ROAD.x0 + 1.2], [ROAD.x1 - 1.45, ROAD.x1 + 1]] };
+const RHALF = (ROAD.z1 - ROAD.z0) / 2, NARROW = PATCH.half + 0.07;
+const SPANS = [...MAIN.slice(1).map((_, i) => [gapX(i) - PATCH.w, gapX(i) + PATCH.e]), ...PATCH.ends];
+export function roadHalf(x) {
+  let d = Infinity; for (const [a, b] of SPANS) d = Math.min(d, x < a ? a - x : x > b ? x - b : 0);
+  return NARROW + (RHALF - NARROW) * Math.min(1, d / PATCH.ease);
+}
+
 // the floor under (x, z): the stair (given its head), the stage, the spurs, the road, the passage; else null
 export function makeFloor(head) {
   const { xHead, yHead, xLand } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
   const inR = (R, x, z) => x >= R.x0 && x <= R.x1 && z >= R.z0 && z <= R.z1;
   return (x, z) => {
     if (z >= SZ - SHALF && z <= SZ + SHALF && x >= FOOT_X && x <= xLand) return x >= xHead ? yHead : ROAD_Y + (x - FOOT_X) * k;
-    if (inR(RAFT, x, z) || inR(ROAD, x, z) || inR(NSPUR, x, z)) return ROAD_Y;
+    if (inR(RAFT, x, z)) return ROAD_Y;
+    if (inR(ROAD, x, z) || inR(NSPUR, x, z)) {
+      // over a coupling, only the planks (the north spur's gangway comes in at the west end from the south)
+      if (z > ROAD.z1 - 0.3 && inR(NSPUR, x, z)) return ROAD_Y;
+      return Math.abs(z - ROAD.zc) <= roadHalf(x) ? ROAD_Y : null;
+    }
     if (inR(SSPUR, x, z)) return spurY(z);
     if (Math.abs(x - DOOR.x) <= DOOR.half - 0.15 && z > DOOR.z - 0.01 && z <= DOOR.fall) {
       if (z <= DOOR.floorTo) return DOOR.sill;
