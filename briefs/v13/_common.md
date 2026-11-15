@@ -14,6 +14,6 @@ Rules for this milestone:
 - **Say what you could not move.** A finding that something is not worth doing (a worker that saves nothing, a bundle that the network did not need) is a result: write the number.
 - **Others are at work beside you** (the index says who owns what). Keep edits to `src/main.js`, `src/world.js`, `src/perf.js` and the skill references to the lines your brief names; new code goes in new files.
 - One headless browser at a time; `nice -n 10` and `SHOT_ANGLE=metal` in front of every `node tools/...`; no `--trace`; never delete a render.
-- Tests before handing back, at least: `ONLY=settings,loading,perf,pan,record,walk,touch tools/suite.sh <port>` (say the counts), plus any your change touches. Shared code (`main.js`, `world.js`, terrain, controls, post) means the whole suite.
+- Tests before handing back, at least: `ONLY=settings,loading,perf,pan,record,walk,touch tools/suite.sh <port>` (say the counts), plus any your change touches. Never the whole suite on a branch, shared code or not: that is the orchestrator's, once a batch on `next`.
 - Document in `world-code/runtime.md`, in the present tense, in a few lines, whatever the next agent needs to use what you built.
 - Hand back as `world-code` says, in under 250 words: target, baseline, result; what changed; the commands and counts; what is still slow and why; any default you took.

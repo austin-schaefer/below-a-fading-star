@@ -84,7 +84,7 @@ Once the release is live, and not before (it must never hold a release up), spen
 
 - **What took longest, and did it need to?** What was checked twice, what waited on something that could have run beside it.
 - **What was found late** (by the critic, the owner, or after release) that a test, a tool or a line in a skill would have caught earlier?
-- **What did the owner have to say more than once,** or correct? That belongs in a skill or `AGENTS.md`, in their words.
+- **What did the owner have to say more than once,** or correct? That belongs in a skill or `AGENTS.md`, as the rule and its reason in a line: no quotes, no history (a skill is read on every run, and every word costs).
 - **What worked** that should be done again on purpose?
 
 Then act, small: at most three changes to the harness (a test, a tool, a line in a skill; sharpen before you add), and file as issues, labelled `agent`, any milestone idea the work turned up ("File your own milestone ideas", above; none is fine). The owner asked for this step (2026-11-11) and also said the end of a release takes too long: so it comes after, it is time-boxed, and it is where the release process itself gets shorter.

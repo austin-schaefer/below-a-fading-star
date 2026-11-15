@@ -81,7 +81,7 @@ Before you push, run, in sequence, with `B=http://localhost:PORT` and `SHOT_ANGL
 - `node tools/grass-flicker-test.mjs low $B`
 - `node tools/build-artifact.mjs` (the single-file artifact and `commit.json`)
 
-Outside the gate, for the work that needs them: `tools/pop-test.mjs` (what pops, swaps and uploads; exits 1 only on gated rows) with `tools/pair-diff.mjs` (a picture difference in the survey's numbers, the unit briefs state tolerances in), and `tools/bloom-test.mjs` (bloom's shape). `tools/suite.sh` itself is the orchestrator's, once a batch.
+Outside the gate, for the work that needs them: `tools/pop-test.mjs` (what pops, swaps and uploads; exits 1 only on gated rows) with `tools/pair-diff.mjs` (a picture difference in the survey's numbers, the unit briefs state tolerances in), and `tools/bloom-test.mjs` (bloom's shape). The whole of `tools/suite.sh` is the orchestrator's, once a batch on `next` and once as the gate: an implementer does not run it whole on a branch, shared code or not (it takes 40 minutes and a browser the whole time). Run the lines near your change with `ONLY=name,name tools/suite.sh PORT`, which makes the gate's exact calls; if you think your change could reach a test far from it, name that test in your report and the orchestrator's batch run will show it.
 
 ## Reviewing a branch
 

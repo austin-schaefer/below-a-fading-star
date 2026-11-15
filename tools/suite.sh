@@ -4,7 +4,7 @@
 #   tools/suite.sh [port]     default 8123, the working branch's server
 #
 # Serves this checkout on the port if nothing is listening there (and stops that server afterwards).
-# Prints each test's output, then one line per test and a total. Exits 0 only if every test passed.
+# Prints each test's output, then one line per test with its seconds, a total, and the slowest five. Exits 0 only if every test passed.
 # A new test earns a `run` line here.
 
 cd "$(dirname "$0")/.."
@@ -19,7 +19,8 @@ if [ -z "$(lsof -ti:"$PORT")" ]; then
   for i in {1..40}; do curl -s -o /dev/null "$B/" && break; sleep 0.5; done
 fi
 
-typeset -a names codes passes
+typeset -a names codes passes secs
+t_all=$SECONDS
 log="$(mktemp)"
 # ONLY=settings,strata tools/suite.sh runs just those lines, with the gate's own arguments: the way to rerun what a
 # small fix touches, and to try a `run` line when you add it (v9 added one with the wrong URL and found out 25 min later)
@@ -27,13 +28,15 @@ run() {
   local name="$1"; shift
   if [ -n "$ONLY" ] && [[ ",$ONLY," != *",$name,"* ]]; then return; fi
   echo "=== $name"
+  local t0=$SECONDS
   nice -n 10 node "$@" 2>&1 | tee "$log"
   codes+=("${pipestatus[1]}")
   names+=("$name")
   passes+=("$(grep -c '^PASS' "$log")")
+  secs+=($((SECONDS - t0)))
 }
 
-if [ -z "$ONLY" ] || [[ ",$ONLY," == *",releases,"* ]]; then echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")"); fi
+if [ -z "$ONLY" ] || [[ ",$ONLY," == *",releases,"* ]]; then echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")"); secs+=(0); fi
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
@@ -77,8 +80,10 @@ rm -f "$log"
 echo "=== SUMMARY"
 failed=0
 for i in {1..${#names}}; do
-  if [ "${codes[$i]}" = 0 ]; then echo "ok    ${names[$i]} (${passes[$i]} PASS lines)"
-  else echo "FAIL  ${names[$i]} (exit ${codes[$i]})"; failed=$((failed + 1)); fi
+  if [ "${codes[$i]}" = 0 ]; then echo "ok    ${names[$i]} (${passes[$i]} PASS lines, ${secs[$i]} s)"
+  else echo "FAIL  ${names[$i]} (exit ${codes[$i]}, ${secs[$i]} s)"; failed=$((failed + 1)); fi
 done
-echo "=== ${#names} tests, $failed failed"
+echo "=== ${#names} tests, $failed failed, $(( (SECONDS - t_all) / 60 )) min $(( (SECONDS - t_all) % 60 )) s"
+# the slowest five: where a shorter suite is to be found
+echo "=== slowest: $(for i in {1..${#names}}; do echo "${secs[$i]} ${names[$i]}"; done | sort -rn | head -5 | awk '{printf "%s %ss  ", $2, $1}')"
 [ "$failed" = 0 ]
