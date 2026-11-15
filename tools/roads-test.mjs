@@ -174,6 +174,17 @@ const res = await page.evaluate(async () => {
   return { rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
     lengths: { ways: +P.leads.filter((l) => l.cls === 'way').reduce((a, l) => a + l.length, 0).toFixed(0), trods: +P.leads.filter((l) => l.cls === 'trod').reduce((a, l) => a + l.length, 0).toFixed(0) } };
 });
+// #41: the waystones' heads have no two faces in one plane fighting for the pixel (the notch's dark lining was laid
+// exactly on the flanks and shoulders, and flickered as the walker moved): forty standing heads, tools/coplanar.js
+const CP = await page.evaluate(async () => {
+  const fp = window.__fp, { coplanar } = await import('/tools/coplanar.js'), mesh = fp.scene.getObjectByName('roads-gnomons'), H = fp.roads.heads;
+  const M = new fp.THREE.Matrix4(), P = new fp.THREE.Vector3(), out = { heads: 0, pairs: 0, at: [] };
+  for (let i = 0; i < H.count && out.heads < 40; i += Math.max(1, Math.floor(H.count / 40))) {
+    H.getMatrixAt(i, M); P.setFromMatrixPosition(M); P.y += 0.35;
+    const r = coplanar(mesh, P, 0.75); out.heads++; out.pairs += r.length; if (r.length && out.at.length < 4) out.at.push(r[0].at);
+  }
+  return out;
+});
 await browser.close();
 if (res.missing) { console.log(`FAIL __fp.${res.missing} is not registered`); process.exit(1); }
 let fail = 0, pass = 0;
@@ -195,6 +206,7 @@ check(res.outside.length === 0, 'every track sample inside the walk limit', `${r
 check(res.blocked.length === 0, 'nothing stands across any track (a collider within 0.3 m of its middle; the causeway: across all its width)', `${res.blocked.length} ${res.blocked.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
 check(res.rim.length === 3 && res.rim.every((r) => r.ok), 'the canyon rim walked on foot: P13 from the worn crust, under the Span, to the lips over the Speculum and the Cutting', JSON.stringify(res.rim));
 check(res.onTread.length === 0, 'no gnomon stands on a tread', `${res.onTread.length} ${res.onTread.slice(0, 6).join(' ')}`);
+check(CP.heads >= 30 && CP.pairs === 0, 'the waystones\' heads (#41): no two faces in one plane (the notch\'s lining stands off the stone)', `${CP.heads} heads, ${CP.pairs} pairs ${JSON.stringify(CP.at)}`);
 const st = res.stats;
 check(st.calls <= 4 && st.tris < 120000, 'the gnomons: 4 draw calls, under 120k triangles', JSON.stringify(st));
 console.log(`\n${pass} passed, ${fail} failed`);

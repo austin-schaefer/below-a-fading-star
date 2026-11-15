@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { REGIONS, SITES, CAUSEWAY_V4, LANDMARKS } from '../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { groundOf, instanced, airMotes, meshStats, compose } from './common.js';
+import { nearestLead } from '../paths/routes.js'; // #48: no stump on a ford's slabs
 
 const KEY = 'saltings';
 // the slabs' distance field (set by build): the crust raises its lip round them, and the stone material
@@ -409,9 +410,12 @@ export async function build(ctx) {
     if (wAt(x, z) < 0.7 || keepOut(x, z, 2) || stumps.some((s) => hyp(s.x - x, s.z - z) < 14)) continue;
     const s = 0.7 + rng() * 0.8;
     const st = { x, y: G.heightAt(x, z) - 0.1, z, sx: s, sy: s * (0.6 + rng() * 0.8), sz: s, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.25, rz: (rng() - 0.5) * 0.25 };
+    st.s = s;
     stumps.push(st);
-    ctx.addCollider({ x, z, r: 0.3 * s, y: st.y - 0.5, h: st.sy + 0.5 }); // capped at the stump: the Span's deck passes over some
   }
+  // none on a ford's slabs (#48: P14's and P44's crossings had one each); dropped after the draws, so nothing else moves
+  for (let i = stumps.length - 1; i >= 0; i--) { const h = nearestLead(stumps[i].x, stumps[i].z, 0.3 * stumps[i].s + 0.3); if (h && h.kind !== 'rivulet') stumps.splice(i, 1); }
+  for (const st of stumps) ctx.addCollider({ x: st.x, z: st.z, r: 0.3 * st.s, y: st.y - 0.5, h: st.sy + 0.5 }); // capped at the stump: the Span's deck passes over some
   const stumpMesh = instanced(stumpGeo, stumpMat, stumps, { name: 'saltings-stumps', shadow: false });
   scene.add(stumpMesh); meshes.push(stumpMesh);
 
