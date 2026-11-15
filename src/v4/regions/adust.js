@@ -133,7 +133,7 @@ export async function build(ctx) {
   const edgeN = (x, z) => 0.5 + 0.18 * N.noise2(x * 0.3, z * 0.3) + 0.1 * N.noise2(x * 1.5, z * 1.5);
   const cClay = new T.Color('#94523a'), cClay2 = new T.Color('#84422c'), cSand = new T.Color('#a2462a'), cSand2 = new T.Color('#b05a36'), cBurn = new T.Color('#4a2216'); // v8-02: red clay
   const skin = buildSkin(ctx, {
-    name: KEY, box: [-304, -228, -90, 58], step: low ? 0.9 : 0.76, // (v12-H5: 0.76, from 0.7, for the ragged outline's larger area, within the region's 150k) lift: 0.02,
+    name: KEY, box: [-304, -228, -90, 58], step: low ? 0.9 : 0.76, lift: 0.02, // medium and high 0.76 m (v12-H5: from 0.7, for the ragged outline's larger area, within the region's 150k)
     keep: (x, z) => wAt(x, z) > 0.2 && terrain.slopeAt(x, z) < 0.75,
     color: (x, z, y, c) => {
       const s = sandAt(x, z), n = N.fbm2(x * 0.06, z * 0.06, 3) * 0.5 + 0.5;

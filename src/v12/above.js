@@ -13,18 +13,20 @@
 // - (H5) Height over the ground (`over`): the eye over the terrain under it, wherever the feet are. On a top (the Span's
 //   deck, the Diffident Stair's, a gallery) `alt` is a walker's but `over` is 56 to 135 m: the haze and the box's size
 //   read it (the box at `over` less 30 m, never less than by `alt`), so the valley under a top is seen through thinner
-//   air and has its shadows; throttling (main.js) still reads `alt`.
+//   air and has its shadows; throttling (main.js) still reads `alt`. It is eased (0.5 s), so a narrow deep gap crossed
+//   on a bridge (the icefall's crevasse, the Span's crack) does not step the haze, the grade (post.js) or the box; a
+//   jump of more than 3 m across the ground in a frame (a teleport, a render placed) takes the new height at once.
 // - The haze: the distance fog (FogExp2) is the air near the ground; an eye high over it looks down through thinner
 //   air, so its density is scaled by the mean of an exponential atmosphere (scale height 90 m) over `over` less 20 m.
 //   The wall's cool air (atmosphere.js) eases off by the same scaled density, so the two always agree.
 const STEPS = [[25, 95], [70, 140], [140, 200], [Infinity, 280]];
-const HS = 90, FREE = 20;
+const HS = 90, FREE = 20, EASE = 0.5;
 
 export function shadowFrame(ctx, url, light, sunDir, sb0) {
   if (url.searchParams.get('above') === '0') return null;
   const cam = ctx.camera, T = ctx.terrain, fog = ctx.scene.fog, density0 = fog.density;
   const sc = light.shadow.camera, far0 = sc.far;
-  let sb = sb0;
+  let sb = sb0, lx = NaN, lz = NaN, lt = 0;
   const out = {
     alt: 0, over: 0, lightDist: 260, stepped: false,
     // main.js: true once after a step in size (move the light to the new centre now)
@@ -35,7 +37,11 @@ export function shadowFrame(ctx, url, light, sunDir, sb0) {
       const under = p.carried || !Number.isFinite(p.floorBelow) ? ground : p.floorBelow;
       const alt = out.alt = cam.position.y - under;
       // (H5) the air below: on a deck, a stair or a gallery the eye still looks down through the height to the ground
-      const over = out.over = cam.position.y - ground;
+      const raw = cam.position.y - ground, now = performance.now(), cx = cam.position.x, cz = cam.position.z;
+      const jx = cx - lx, jz = cz - lz, dt = Math.min(0.1, (now - lt) / 1000);
+      out.over = !(jx * jx + jz * jz < 9) ? raw : out.over + (raw - out.over) * (1 - Math.exp(-dt / EASE));
+      lx = cx; lz = cz; lt = now;
+      const over = out.over;
       // the haze
       const a = over - FREE;
       fog.density = a > 1 ? density0 * Math.sqrt(HS * (1 - Math.exp(-a / HS)) / a) : density0;
