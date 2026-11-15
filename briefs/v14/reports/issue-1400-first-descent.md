@@ -1,3 +1,55 @@
+# v14-D0 report, round 2 (2026-11-15)
+
+Part A, the kit, pushed at `39e7401` (told to main at once); Part B, the place, on top. `next` merged twice (B1, B2, B3 and the stands in).
+
+## Part A, the kit (`src/v14/under.js`; runtime.md "Under the ground", with a passage in ten lines)
+
+- **A1 the seal.** While the eye is wholly under (`below.here` 1) the camera draws only its own layer: the place's kept meshes, the lights it saw, and per drawable what lies in the cone through an opening (the Nave's hole) or casts a shadow within 110 m of one. At 45 m the sunlit capitals in the hole lost far casters' shadows (0.3% of a frame); at 110 m the pairs with `?seal=0` differ by 0.01–0.06% (the noise between two loads: 0.003%). Numbers on low, `?perf=1`, 6 s a stand, two passes each: from the east end looking back at the hole **285 → 140 draw calls, JS a frame 4.3–6.2 → 2.0–2.9 ms**; looking down the hall 112 → 98 calls, 1.8–1.9 → 1.7–2.0 ms; the rim (unchanged) 3.2–5.1 ms. The floor now costs less than the rim everywhere.
+- **A2** `pathBelow(T, line, { half, cover, deep })`: a polyline's volume under `heightAt - cover` (sampled every 2 m); `add()` returns a handle (call it to remove; `.fn` to reuse where volumes meet).
+- **A3** `underMaterial(…, { far: [near, far] })` fades to black with distance.
+- **A4** `belowLit(material)`: any built-in lit material's sky light and haze cut by the volumes per fragment (16 capsules). Limit: ShaderMaterials, Points and unlit materials are not cut (documented). The Nave's shapes use it.
+- **A5** `ctx.nave.ceilAt` exists; the road waits on `ctx.built('nave')`; `?coffinroad=0`, `?skip=coffinroad` or an `only=` without it leave the rim's colliders and the south wall whole.
+- **A6** `add(fn, { size })`: the stone room's tail scales 0.4–1 with the size of the volume the listener is in (the passage 0.35); the surface is unchanged (size 1 outside every volume). `space.at(x, z, out, y)` takes the listener's y; no y means the surface.
+
+## Part B, the place
+
+- **B1 the forty.** Six-sided coffins, a lighter lid with a raised coffin-shaped panel over a darker body, rope handles tied pair to pair (the old lashings across the way read as sleepers), boards laid along the gaps and darker. Not alike: two children's, crude board boxes with plank lids, one fine (pale wood, a gilt plate, the sun's boss), lids slid off the head (the black inside). Pair 9's north coffin is adrift beside the road, lid off and floating, a shroud in it, candle out; its place bridged, its rope in the water. One far down the north aisle, candle lit. The last pair: one coffin and an empty place, its ropes laid ready. 30 + 4 + 4 on the road, 2 adrift: forty. **The count settled** (story file): forty graves on the hill for these, the forty-first the twelfth diner's; the coffin on the trestles (lid slid, empty, his size) is the Sexton's own, and its place is the empty one under the sun.
+- **B2 the water.** Water's Fresnel (2% looking down, a mirror at a glance: black from the stair), a black body, four drips ringing slowly, each flame's image a thin vertical streak (4 on low, 8 above), the coffins 8 cm lower; on every upright a dark wet band and a pale tide line; boards, two black wreaths and the lid floating.
+- **B3 the sun.** 12 m across in a moulded ring standing out of the east wall; a grid of tesserae, gold left in patches (its own metallic draw: the candles glint in it as you come) and dark sockets where it was picked out; sixteen red and ochre rays to the vault; a step at its foot with fallen gold awash; the great candles and two brackets either side are warm, the only warm light down there.
+- **B4 the columns.** Drum joints, flaking plaster with a trace of red, blue-grey and ochre, the tide line; the north aisle's column at (282.5, 29) lies in the water with its capital beyond.
+- **B5 a light every way.** Six candles in iron brackets on the walls (two warm by the sun) and the lit coffin adrift. Around-sheet on low (`coffinroad-r2-around-sheet.png`, 32 frames): median luma 23–49, pixels under 8/255 at most 0.9%, under 20/255 at most 32% (looking at the north wall from x 285, where the brackets are 20 m off).
+- **B6** tapered candles with runs of wax, teardrop flames with a white heart; the "glowing blobs" were the broad glow round each flame's image on the water: gone (a thin streak now).
+- **B7** the stair's head is clear of rocks, plants and scatter (`naveClear`, `naveHole`); the rubble stays 0.5 m past the floor's held end; edges-test has the stair at 98% and the landing (over the hole held; over the turf, onto the turf, never into the hole); the water's loop is 4 on low; stats fixed; `at()`'s y.
+- **B8** the moth by the shears in keys-medium 02 is a Twk-man on his dragonfly (v8, not an act's lure; not mine to move); the shears' lantern now has the pull: never under 3 px, a wide halo.
+
+## Tests (round 2)
+
+SUITE_R2
+
+## Frames, in order (`shots/wip/`)
+
+1. `coffinroad-r2-low-01-moor` … `-12-up`; the same as `coffinroad-r2-medium-*`, `coffinroad-r2-high-*`; `coffinroad-r2-high-dpr2-shears.png` (`SHOT_DPR=2`, 2560x1440) and `coffinroad-r2-high-dsf2-*`.
+2. Walked: `coffinroad-r2-walk-touch-low-01..17`, `coffinroad-r2-walk-keys-medium-*`, `coffinroad-r2-walk-keys-high-*` (each `walked: yes`, lowest feet −16.74, no page errors).
+3. Every direction: `coffinroad-r2-around-sheet.png`.
+4. The seal, pairs: `coffinroad-r2-seal-*-off2.png` against `-on4.png`.
+
+## What a stranger would now call them
+
+- the road: a road of coffins on black water with a candle on every pair;
+- the floor: still black water, columns standing in it with a tide line, the candles streaked in it;
+- the thing at the end: a great mosaic sun in the end wall, most of its gold picked out, glinting in the only warm light.
+
+## Still weak
+
+- The water is black and streaked now but from far it is still a smooth plane; the columns are not reflected.
+- The plaster patches still read a little like spots at mid range.
+- The sun's rays partly hide behind its ring; the gold catches the light but there is no specular sweep yet on low.
+- The step under the ground is the hard step on coffin lids too (wood would want its own).
+- The Twk-man near the shears still draws the eye on the way there.
+
+
+---
+
 # v14-D0 report: the first descent (the Coffin Road)
 
 Branch `issue-1400-first-descent`, port 8161, 2026-11-15. The Foundered Nave is entered: the first place in the walk below the ground.
