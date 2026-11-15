@@ -1,5 +1,38 @@
 # v14-D2 report: the Pit, from the bottom (the sounding down)
 
+## Round 3 (2026-11-15, the last)
+
+`origin/next` merged first; it merged clean.
+
+**A. The inside of the Pit was one flat violet.**
+1. *The lip and the sky from below.* The cause was the height fog's low mist, integrated from an eye 30 m under the moor. `atmosphere.js` (one line, shared code) now reckons it from at most 8 m under the moor. Only an eye down a hole sees a difference: the Pit, the Nave and the passages. From the floor the lip is a ring and the disc of sky has its stars; the Span overhead shows its masonry instead of a flat pale lid (`pit-r3c-low-floor-up`). The ember: the throat's rock is now on the under kit, and the last sun catches the lip's sun-facing side (the east). It shows as a warm band at the rim from below and from the lip; on the lip I toned it down after a first try painted it flat orange. The sky inside the disc is the zenith, violet with stars, not ember.
+2. *Walls darker and cooler than the air.* On the throat the sky's light falls off down the well (aUnder.x from 1 at the lip to 0.14 at the floor), over round 2's strata and wet streaks (`pit-r3c-*-stair-mid-down`, `-along`).
+3. *Warm lamps.* `LAMP_WARM` #ffae5c, tallow behind horn. Eleven lamps on the way plus the landing's beacon. Each has a warm point light, a warm flame, and a pool of 1.5 m baked into the glow channel of the slabs and the throat's rock beside it, so the pool shows whichever three lights lights.js keeps. The stair reads as a string of warm pools going down (`pit-r3c-low-stair-mid-down`).
+   Frames (low and medium): `pit-r3c-{low,medium}-floor-up`, `-stair-mid-down`, `-stair-mid-along`, `-lip-in`.
+
+**B. The review's list.**
+1. `stair.floor` and the bowl's floor return after two compares away from the Pit, and use no allocation per call (`atInto`). Ground cover asks `pitEdge` only inside (180..220, 165..205).
+2. The fall runs on its own `requestAnimationFrame` loop from start to finish, so the veil opens smoothly 600 m away. A teleport during it ends the carry, and the carry's `drop()` cancels the waking. It starts at the hole's mouth even when the walker is placed straight onto the floor far below. A sphere of night (the far stars, 8 m round the eye) shows under the star disc. Frames: `pit-r3-fall-00-0.3s` … `-04-5.5s` (night and stars at 1 s, the veil shut at 3.5 s, the Bitter End at 5.5 s). The 0.3 s frame has the title card over the stars; the frame tool caught the page's card coming up after the teleport. I did not chase why.
+3. `tools/pit-walk.mjs` is **not** in the suite: it takes about 5 minutes a run and prints frames and `walked: yes|no`, not PASS lines. The gate's version of it is edges-test's slab, foot and landing rows plus heights-test's `pit-stair` ascent.
+4. Comments are in the present tense (pit.js header, the stair, the lights, `calls: 14`; plan.js floor; haze.js; the pit-sound gain note). Light count: 14 point lights (the Nadir's, the lead's, eleven lamps, the beacon).
+5. The rim's colliders run from 2 m under the turf at the lip (measured 0.6 m outside the rim) to 3 m over it, so they cannot bar D1's mouth at (204.10, 173.73), y −31.40. My first try measured at the collider itself, inside the rim where the ground already falls away. That let the paths and edges rim walkers through, and the suite caught it.
+
+**C. Tests on the tip.**
+- `ONLY=edges,heights,settings,walk,hop,audio,perf,loading,regions,paths,roads,acts tools/suite.sh 8163` (in sequence): 12 tests, 3 failed.
+  - Passed: roads 57, regions 56, walk 13, hop 25, heights 116, audio 106 (`act-bell-letters` passed again), loading 28, perf 29, acts 163 PASS lines.
+  - Failed: paths and edges, on the rim's colliders (the bug in B5, fixed on disk while regions ran, so heights onward ran on the fix); settings, the swiftshader gear timeout again.
+- After committing the fix (`ONLY=settings,paths,roads,regions,walk,hop,edges tools/suite.sh 8163`): **7 tests, 0 failed**: settings 86, paths 76, roads 57, regions 56, walk 13, hop 25, edges 159 PASS lines.
+- So all twelve have passed on the tip's code.
+
+**Still weak (round 3).**
+- The disc of sky overhead is violet, not ember: the ember is the lip, not the sky.
+- The lip's ember band is faint from the floor on the west side (it faces away from the sun).
+- The fall's 0.3 s frame shows the title card.
+- The settings-test gear click is near its 30 s limit on swiftshader at 1280×720, with or without the Pit (it failed once and passed on a rerun in round 2).
+
+---
+
+
 ## Round 2 (2026-11-15, after the orchestrator's review)
 
 Merged `origin/next` and `origin/issue-1400-first-descent` first (conflicts in `world.js`, `settings.js`, `modules.md` and the stories' index, resolved keeping both sides).
@@ -8,7 +41,7 @@ Merged `origin/next` and `origin/issue-1400-first-descent` first (conflicts in `
 
 **Changes, point by point.**
 1. *The Nadir.* Inside the ring is black. A direction-drawn far field sits on a 9.5 m disc 1.9 m under the rim, and 180 to 320 near stars sit at real depth (4 to 120 m down, out to 40 m). They move against each other as you walk round, and the field turns slowly, the deep ones slower. No fog. The throat is the floor's thickness, 1.25 m of near-black rock, with a ragged underside turned in, then nothing. The starlight on the rim is cut to a third, so the rim is dark. Frames: `pit-r2-b-nadir-3m.png`, `pit-r2-b-nadir-lean.png`, `pit-r2-b-nadir-3m-side.png`, `pit-r2-a-nadir-8m.png`. At 8 m the hole is a black slit; its stars show from about 4 m in.
-2. *Haze and readability.* The Pit's haze share falls from just under the lip to 0.06 by the floor's upper 14 m (was 0.22 at the floor only). The throat's rock has beds and wet streaks, and is lighter at the foot. The slabs are paler, with a worn middle. There are eight lamps on the way (a next light every 9 m). The floor's sky light is 0.34. "The Nadir" card's feet are now [−40, −27]: it fires on the floor, not on the stair. Frames: `pit-r2-a-stair-mid.png` (the next six slabs, rope and lamp plain), `pit-r2-walk-up-keys-medium-05-nadir-stair.png`.
+2. *Haze and readability.* The Pit's haze share falls from just under the lip to 0.06 by the floor's upper 14 m (was 0.22 at the floor only). The throat's rock has beds and wet streaks, and is lighter at the foot. The slabs are paler, with a worn middle. There were eight lamps on the way after round 2 (eleven and a beacon after round 3). The floor's sky light is 0.34. "The Nadir" card's feet are now [−40, −27]: it fires on the floor, not on the stair. Frames: `pit-r2-a-stair-mid.png` (the next six slabs, rope and lamp plain), `pit-r2-walk-up-keys-medium-05-nadir-stair.png`.
 3. *The plume and what is left.* The gust's motes rise the full 26 m in 5 to 6 s, grow as they rise, and spill out over the lip. A breath of fog (18 to 30 soft puffs) rises with them. Frames from the south lookout: `pit-r2-act-lip-07-after-11s`, `-08-after-15s`. After the first sounding the lead is white with rime for good, and frost creeps down the sheers' legs from the sheave, a fifth further each sounding. Two motes per sounding stay hung in the Pit (no tally of strokes). Compare `pit-r2-act-floor-00-before` and `-10-after-26s`.
 4. *Finding it.* The landing's second post is a 3.6 m lamp-post with a brighter, cold beacon (3.5, 14 m). The idle breath's motes now rise the whole throat and show just over the lip. Frame: `pit-r2-walk-down-keys-low-02-moor-pit` (the post and lamp, the landing and slabs from the road's end).
 5. *Rendering faults.*
