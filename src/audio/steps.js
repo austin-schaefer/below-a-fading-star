@@ -44,13 +44,15 @@ export function startSteps(a) {
     const pitch = 0.96 + rng() * 0.08;
     const out = ac.createGain(); out.gain.value = STEP_GAIN;
     let kind = 'grass';
+    const under = (ctx.below?.inside(p.x, p.y, p.z) || 0) > 0.5; // v14-D0: under the ground, the hard step, in the stone room, never the region's
     if (player.wading > 0.05) kind = 'splash';
     else if (b.ice > 0.35 || (b.crystal > 0.55 && b.h > 0 && terrain.glacierMask(p.x, p.z) > 0.2)) kind = 'crunch';
+    else if (under) kind = 'click';
     else if (terrain.causewayDistance(p.x, p.z) < 2.5 || nearCastle || inCourt) kind = 'click';
     else if (b.marsh > 0.5) kind = 'squelch';
     rec = stepRing[audio.steps.seq & 15]; recN = 0; replaying = false; capturing = true;
-    rec.t = t0; rec.hurrying = !!hurrying; rec.kind = kind; rec.regionKind = null; rec.x = p.x; rec.z = p.z; rec.vol = vol; rec.pitch = pitch; rec.verb = nearCastle || inCourt;
-    if (kind !== 'splash' && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
+    rec.t = t0; rec.hurrying = !!hurrying; rec.kind = kind; rec.regionKind = null; rec.x = p.x; rec.z = p.z; rec.vol = vol; rec.pitch = pitch; rec.verb = nearCastle || inCourt || under;
+    if (kind !== 'splash' && !under && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
       capturing = false;
       rec.regionKind = ctx.regions?.regionAt?.(p.x, p.z, _rw)?.primary || 'region'; rec.seq = audio.steps.seq++;
       out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return;

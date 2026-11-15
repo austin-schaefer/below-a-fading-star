@@ -45,6 +45,7 @@ const FAR_PLACES = [
   { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
   { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice and their glass posts over it
   { name: 'The Span\'s west stair', x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // v12-C1: at its foot in the wood's southern fringe, the first flight climbing west between its walls (dark under the trees)
+  { name: 'The Coffin Road', x: 250.4, y: -16.6, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D0: on the coffins 16 m under the moor, looking east along the road into the dark under the roof, the candles going away
   { name: 'The tender\'s deck', x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // v12-H3: on the deck at the top, 100 m up: the lean-to, the stove, the chair and the ladder against the lattice's foot
 ];
 const ACT_PLACES = [
