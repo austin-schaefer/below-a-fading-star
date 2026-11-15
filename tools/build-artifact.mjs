@@ -3,8 +3,8 @@
 // <html>/<head>/<body> skeleton and may load module scripts of its own first, which makes the page's
 // import map arrive too late to count ("the specifier 'three' was a bare specifier"). So the build
 // copies src/ and vendor/ into dist/ with every bare 'three' and 'three/addons/' import rewritten to a
-// relative path, and writes dist/artifact.html without the import map. index.html itself keeps the
-// import map for local serving and ordinary static hosts such as Netlify.
+// relative path, and writes dist/artifact.html without the import map (it is in index.html's head, which
+// the artifact does not copy). index.html itself keeps the import map for local serving and static hosts such as Netlify.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { dirname, join, relative, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +16,9 @@ mkdirSync(dist, { recursive: true });
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 const head = html.match(/<head>([\s\S]*?)<\/head>/)[1];
 let body = html.match(/<body>([\s\S]*?)<\/body>/)[1];
-body = body.replace(/<script type="importmap">[\s\S]*?<\/script>\s*/, '');
+// no service worker on the artifact host: dist/ has no sw.js and the host's origin is not the site's (v13-L1)
+body = body.replace(/<script id="sw-register">[\s\S]*?<\/script>\s*/, '');
+if (/serviceWorker/.test(body)) { console.error('artifact.html would register a service worker'); process.exit(1); }
 const title = head.match(/<title>[\s\S]*?<\/title>/)[0];
 const description = head.match(/<meta name="description"[^>]*>/)[0];
 const links = [...head.matchAll(/<link[^>]*>/g)].map((m) => m[0]).join('\n');
