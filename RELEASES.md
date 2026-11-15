@@ -26,6 +26,10 @@ Until now the walk was a valley floor with a wall of mountains round it. This re
 - **One tally, not five**: Counting strokes had spread to the bridge, the tomb door's plate and a lamplighter's slate. The tally wall at the Lantern Halt (the inn on the road) is now the only one; the others show a long wait or a count some other way.
 - **Phones draw less from far away**: Small things too far off to see are drawn smaller and then not at all, so the high views cost less and the valley floor is a little lighter too.
 
+- **Walking into the tors**: The stacked stones on the eastern moor let you walk into their upper halves. They are solid now.
+- **Three misspelt place cards**, and on a phone the card of a place no longer sits under the walking stick.
+- **Four more places in the settings menu**: the middle of the Great Span, the Diffident Stair, the lift's station and the foot of the icefall, and the Span's west stair.
+
 ### Behind the scenes
 
 - Every way up is walked and fallen from by the release tests, and a test fails if a high view gets too heavy for a phone.

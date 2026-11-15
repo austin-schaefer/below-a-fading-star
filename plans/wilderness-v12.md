@@ -160,3 +160,21 @@ Next: merge H4 when its subset and ride are in and the should-fixes are done; me
 - **`RELEASES.md` has v12's entry and `README.md` its line** (`12c739a`); `tools/release-check.sh` passes.
 
 In flight: the critic (opus, on 8123, renders `critic-v12-*`). No worktree but the deploy one. Next: the critic's blocking findings fixed; the whole suite on `next` with nothing else running; the release PR, `tools/gh-release.sh v12`, `origin/main` merged back, #4 closed from the release.
+
+**2026-11-14, 21:22 PST. The gate is green and v12 goes to `main`.**
+
+- **The critic** (opus, cold, 95 minutes, 289 renders `critic-v12-*`) found no hole and no collapse (51 to 60 fps on the GPU path). Its three best: the tender's deck at the top of the stair, crossing the Span, the lift's ride. Its blocking list went to **C1** (`issue-1208-critic-fixes`, opus), merged: three place cards' typos ("hi", "bule", "verdue"); every High Ling tor's collider was 2.2 m under stone drawn to 3 or 4 m (old, from v4: a walker could end inside one beside the stair), now matched, with a `heights-test` row that walks every stack from four sides; the lift's bell swings at the press, the carriage's lamp flares at 0.55 s and it moves at about 1.9 s (the orchestrator looked at `c1-lift2-05-called-0_3s` and `-06-called-1s`: the flare is plain, the bell's swing is small in the frame); the settings note reads "When on, fall far and you wake by the keep."; on a phone the place card sits above the stick; three Go-to stands (the lift's station, the foot of the icefall, the Span's west stair; `c1-goto-final-*` looked at, the west stair's is dark under the wood). The Pit's floor (a grey wash) cannot be reached on foot and is old. C1's subset: settings 72, rocks 32, walk 13, hop 25, edges 103, lift 37, audio 101, loading 7, touch 43, acts 152; no cold review of C1 (the gate is its check).
+- **A test changed to pass, and why.** `heights-cost`'s fixed bound on calls at a top was 1.3 times 260 (338), set from the floor as measured before the lift existed. On `next` with the lift merged the stair's top draws 351 and the gallery 344 on low (the same before and after C1), and v12's own floor is at 322. The bound is now 364 calls; triangles keep 1.3 times 2.1M (the worst top is 2.57M); the bound against the floor's worst in the same run is as it was (`4927c5b`). So the brief's aim for calls was not met: the tops are 1.3 to 1.35 times v11's floor in calls, and v12 made the floor itself heavier in calls (273 to 322 against 150 to 260) though lighter in triangles than H5 found it.
+- **The gate:** `tools/suite.sh 8123` on `next` at `4927c5b`, nothing else running, 20:40 to 21:22: **36 tests, 0 failed.** releases 31, music 207, music-selftest 61, music-render 96, music-director 17, music-live 29, settings 72, dressing 24, threads 25, paths 76, roads 44, twk 35, regions 56, contrast 3, strata 8, livery 16, house 19, rocks 32, walk 13, hop 25, edges 103, heights 102, lift 37, mountains 4, audio 101, loading 7, perf 17, grass 3, touch 43, acts 152, gutter 11, treelod 71, stair 5, pan 1. Only docs changed after it.
+
+**What shipped weaker than planned (for an engineer):**
+
+- "A fresh agent shown only frames from the valley floor can point at three of the four ways up": not met. The critic found no foot unprompted. The first thing for a fix release (`plans/IDEAS.md`, "From the v12 critic").
+- "Each top points at another" (H5, part 3): no code.
+- The fall's cost is a setting, off by default, with no sound.
+- The calls bound, above. Medium at the tops is 3.6M to 4.4M triangles.
+- The icefall's shelf is bare and its crevasse's near wall is stretched terrain; the gallery is dark; the Galleries' later tiers changed look unannounced; no second cold review of H0's, H3's or H5's second rounds, nor of C1 or F1.
+- The fifth ascent (the Gradine to the Vigilant's knee) did not go out; it is in the idea bank's spirit, not built.
+- Open and the owner's: #38 to #43 (bugs, `idea`), #44 (milestone, `idea`).
+
+**Status: released** as v12 on 2026-11-14 (the release PR from `next`; `tools/gh-release.sh v12`). Nothing is in flight; no worktree but the deploy one. The next session chooses the next piece of work: the natural one is a fix release for the ways' feet and #38 to #43.
