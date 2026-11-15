@@ -18,35 +18,10 @@ const KEY = 'saltings';
 // the slabs' distance field (set by build): the crust raises its lip round them, and the stone material
 // (structures/materials.js) keeps moss off their tops, salt-bleached, where they lie on the crust
 export const CRUST_PAVE = { uPave: { value: null }, uPaveBox: { value: new THREE.Vector4(0, 0, 0, 0) } };
-const SPINE = REGIONS.saltings.shape.strip;
-const FEN = LANDMARKS.fen;
-const SN = makeSimplex(8811);
-const DROP = 1.0;
+import { SPINE, FEN, SN, DROP, runnel, RUNNEL_GLSL, height } from './height/saltings.js'; // the height hook and what it reads (v13 L2)
+export { height };
+export { ground } from './ground/saltings.js'; // the ground hook, three-free (v13 L3)
 
-// the runnels: shallow drainage lines wandering across the flat (the same function on the CPU, for the
-// glasswort, and in the crust's shader)
-const runnel = (x, z) => Math.abs(Math.sin(x * 0.11 + z * 0.07 + 1.7 * Math.sin(x * 0.031 + z * 0.023)));
-const RUNNEL_GLSL = 'abs(sin(p.x * 0.11 + p.y * 0.07 + 1.7 * sin(p.x * 0.031 + p.y * 0.023)))';
-
-// a metre's step down from the moor at the tideline, the flat's own small relief smoothed; never below the fen's
-// water where the strip runs along its rim
-export function height(h, x, z, w) {
-  const s = smoothstep(0.3, 0.7, w);
-  let h2 = h - DROP * s - SN.fbm2(x * 0.08, z * 0.08, 2) * 0.12 * s;
-  h2 -= (1 - smoothstep(0.06, 0.16, runnel(x, z))) * 0.12 * s; // the runnels, a hand deep
-  if (hyp(x - FEN.x, z - FEN.z) < 84) h2 = Math.max(h2, Math.min(h, -2.25));
-  return h2;
-}
-
-const C = (h) => new THREE.Color(h);
-const cCrust = C('#f0ebe8'), cPink = C('#e6cccb'), cDamp = C('#a89e9a'); // v8-02: white, the palest ground on the map
-const _gc = new THREE.Color();
-export function ground(col, x, z, w) {
-  const n = SN.fbm2(x * 0.05 + 3, z * 0.05, 3) * 0.5 + 0.5;
-  _gc.copy(cCrust).lerp(cPink, smoothstep(0.55, 0.8, n) * 0.35);
-  _gc.lerp(cDamp, (1 - smoothstep(0.05, 0.25, runnel(x, z))) * 0.5);
-  col.lerp(_gc, smoothstep(0.2, 0.8, w));
-}
 
 // no grass, heather, bracken, flowers or trees on the crust; a little sedge and reed at the fen's side
 export const cover = {

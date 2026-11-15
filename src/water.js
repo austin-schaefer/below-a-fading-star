@@ -10,6 +10,7 @@ import { makeWaterTexture } from './water/textures.js';
 import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
 import { tideAt } from './v4/tarn.js';
+import { keptHeights } from './v13/tape.js'; // v13 L4: the ground's answers kept between visits
 import { injectReachFen } from './v7/reach.js'; // v7: DP the Luminous Reach, its plume in the fen's disc shader
 
 const MAX_RIPPLES = 6;
@@ -230,6 +231,7 @@ const FRAG = /* glsl */`
 
 export async function build(ctx) {
   const { scene, terrain, palette, sky } = ctx;
+  const tape = await keptHeights(ctx, 'water'); // v13 L4: the discs', the river's and the pool's ground from the tape on a repeat
   await ctx.progress?.('filling the tarn', 0.1);
   const rng = ctx.makeRng(7001);
   const tex = makeWaterTexture(rng, 256);
@@ -247,7 +249,7 @@ export async function build(ctx) {
     // v4: the tarn's disc reaches r 92 for the south bay, so it takes 1.4 times the rings and segments to keep its
     // shore as fine as at the old r 60 (still one mesh, one call)
     const k = body.shore ? 1.4 : 1;
-    const geo = discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k));
+    const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k)));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },
@@ -289,9 +291,10 @@ export async function build(ctx) {
 
   // the river, the fall and the pool
   await ctx.progress?.('cutting the ravine', 0.5);
-  const river = buildRiver(ctx, tex);
+  const river = tape.run(() => buildRiver(ctx, tex));
   await ctx.progress?.('lighting the Speculum', 0.8);
-  const pool = buildPool(ctx, tex, river.impact);
+  const pool = tape.run(() => buildPool(ctx, tex, river.impact));
+  tape.done();
   ctx.registerUpdate((dt, t) => { river.update(dt, t); pool.update(dt, t); });
   const RV = terrain.river;
   // Downstream from the top of the ravine to where the river gives itself to the fen. Each point:

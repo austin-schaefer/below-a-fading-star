@@ -14,32 +14,11 @@ import { spitAt, tideAt, lapAt, LAP, tarnShoreDistance } from '../tarn.js';
 import { buildSkin, instanced, meshStats, meshGround } from './skin.js';
 
 const KEY = 'strandline';
-const WY = WATER.tarn.y;
-const TX = WATER.tarn.x, TZ = WATER.tarn.z;
-const N = makeSimplex(20261107 + 707);
-const LAP_RISE = 0.17; // metres the lap's front climbs above the tide: about a metre up the shingle
-
-// metres above the still water, and how the beach is sorted there: 0 fine at the water .. 1 coarse up top
-const grade = (s) => clamp(s / 1.7, 0, 1);
-
-// ---------------------------------------------------------------- the beach profile: a berm, cusps
-// Both bumps are positive, so the coarse pass (regions.js) takes the bare slope: the skin carries the detail.
-export function height(h, x, z, w, coarse) {
-  if (coarse) return h;
-  const s = h - WY;
-  if (s < -1.2 || s > 3) return h;
-  // a storm berm along the top of the shingle, and beach cusps every 7 m along the shore just above the water
-  const along = Math.atan2(z - TZ, x - TX) * 70;
-  const berm = 0.3 * Math.exp(-(((s - 1.15) / 0.38) ** 2)) * (0.75 + 0.25 * N.noise2(x * 0.05, z * 0.05));
-  const cusp = 0.09 * (0.5 + 0.5 * Math.sin((along * 2 * Math.PI) / 7)) * Math.exp(-(((s - 0.35) / 0.4) ** 2));
-  return h + smoothstep(0.35, 0.65, w) * (berm + cusp);
-}
+import { WY, TX, TZ, N, LAP_RISE, grade, height } from './height/strandline.js'; // the height hook and what it reads (v13 L2)
+export { height };
+export { ground } from './ground/strandline.js'; // the ground hook, three-free (v13 L3)
 
 // The terrain under the skin goes dark flint, so a gap in the skin never shows green; outside the carpet, moor.
-const cFlint = new THREE.Color('#0e0d11'); // v8-02: black
-export function ground(col, x, z, w) {
-  col.lerp(cFlint, smoothstep(0.55, 0.85, w));
-}
 
 export const cover = {
   density: { grass: 0, heather: 0, bracken: 0, flowers: 0, fleshy: 0, trees: 0, sedge: 0, reeds: 0.15 },

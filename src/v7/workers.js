@@ -10,7 +10,6 @@ import { buildTaker } from './workers/taker.js';
 import { buildCoheirs } from './workers/coheirs.js';
 import { buildSexton } from './workers/sexton.js';
 import { SEXTON_OFF, digOrder } from './workers/graves.js';
-import { waitFor, loaded } from './workers/rig.js';
 import { skinGround, meshGround } from '../v4/regions/skin.js';
 
 // The Adust's pavement slab nearest the Taker's site that a man can sit on: rebuilt from the pavements' mesh (each
@@ -43,18 +42,18 @@ export async function build(ctx) {
   await ctx.progress?.('the workers', 0);
   // the Taker, once the Adust has laid its pavements (modules build in parallel)
   if (!off('taker')) {
-    const pave = loaded('region-adust') ? await waitFor(() => ctx.scene.getObjectByName('adust-pavements')) : null;
+    const pave = (await ctx.built('region-adust')) ? ctx.scene.getObjectByName('adust-pavements') || null : null; // (v13 L3: its build settled, not a 20 s poll)
     W.taker = buildTaker(ctx, findSeat(ctx, pave));
   }
   // the Coheirs, on the Strandline's shingle skin where it lies
   if (!off('coheirs')) {
-    const skin = loaded('region-strandline') ? await waitFor(() => ctx.scene.getObjectByName('skin-strandline')) : null;
+    const skin = (await ctx.built('region-strandline')) ? ctx.scene.getObjectByName('skin-strandline') || null : null;
     const groundAt = skin ? skinGround(ctx.terrain, skin.userData.covers, skin.userData.lift) : meshGround(ctx.terrain);
     W.coheirs = buildCoheirs(ctx, groundAt);
   }
   // the Sexton, once rocks.js has placed its boulders (a boulder on a slot blocks it)
   if (!SEXTON_OFF) {
-    if (loaded('rocks')) await waitFor(() => ctx.scene.getObjectByName('rocks-boulder-0'));
+    await ctx.built('rocks');
     W.sexton = buildSexton(ctx, digOrder());
   }
   W.stats = () => {

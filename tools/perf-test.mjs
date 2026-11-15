@@ -14,13 +14,18 @@ page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 300)); });
 await page.goto(url, { waitUntil: 'load', timeout: 60000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 240000 });
-await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 1000 });
+await page.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 100 });
 const r = await page.evaluate(() => {
   const fp = window.__fp, out = {};
   const rep = fp.perf.report(), info = fp.renderer.info.render; // same moment: between two frames
   out.report = rep;
   out.infoCalls = info.calls; out.infoTris = info.triangles;
   out.summaryShown = !!document.getElementById('perf-bench');
+  out.briefLen = JSON.stringify(fp.perf.brief()).length;
+  out.panelText = document.querySelector('#perf-bench pre')?.textContent || '';
+  out.copyLabel = document.querySelector('#perf-bench [data-a=copy]')?.textContent;
+  out.hooked = fp.perf.hooked;
+  out.drawHooksLive = fp.perf.bench.draws.live;
   out.overlayText = document.getElementById('perf').textContent;
   out.toggleRows = [...document.querySelectorAll('#dbg-list [data-toggle]')].map((b) => b.dataset.toggle);
   const bloom = fp.post.bloom;
@@ -37,13 +42,13 @@ const r = await page.evaluate(() => {
   fp.perf.setShadows(false); out.shadowsOff = fp.perf.toggles.shadows.get(); fp.perf.setShadows(true); out.shadowsOn = fp.perf.toggles.shadows.get();
   return out;
 });
-await page.waitForTimeout(1500);
+// (page 1 stays open while page 2 loads and benches, so an error the toggles raise late is still caught)
 // the same page as if the GPU timer extension were missing: gpu reads n/a, no errors
 const page2 = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page2.on('pageerror', (e) => errors.push('pageerror (gpu=0): ' + e.message));
 page2.on('console', (m) => { if (m.type() === 'error') errors.push('console (gpu=0): ' + m.text().slice(0, 300)); });
 await page2.goto(url.replace(/bench=\d+/, 'bench=3') + '&gpu=0', { waitUntil: 'load', timeout: 60000 });
-await page2.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 1000 });
+await page2.waitForFunction(() => window.__fp?.perf?.bench?.done, null, { timeout: 600000, polling: 100 });
 const r2 = await page2.evaluate(() => ({ rep: window.__fp.perf.report(), text: document.getElementById('perf').textContent, sum: document.querySelector('#perf-bench pre')?.textContent || '' }));
 // the medium tier, and the adaptive pixel ratio under a forced budget (?budget=1: every frame is over it, so
 // after 5 s over budget the ratio steps down 0.1 and every target follows it)
@@ -52,7 +57,7 @@ page3.on('pageerror', (e) => errors.push('pageerror (medium): ' + e.message));
 page3.on('console', (m) => { if (m.type() === 'error') errors.push('console (medium): ' + m.text().slice(0, 300)); });
 await page3.goto(new URL(url).origin + '/?q=medium&idle=0&adapt=1&budget=1', { waitUntil: 'load', timeout: 60000 });
 await page3.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 240000 });
-const r3a = await page3.evaluate(() => { document.getElementById('card')?.classList.add('hidden'); return window.__fp.tier.stats(); });
+const r3a = await page3.evaluate(() => { document.getElementById('card')?.classList.add('hidden'); return { ...window.__fp.tier.stats(), hooked: window.__fp.perf.hooked, active: window.__fp.perf.active }; });
 await page3.waitForFunction(() => window.__fp.tier.stats().steps.length > 0, null, { timeout: 60000, polling: 500 }).catch(() => {});
 const r3 = await page3.evaluate(() => {
   const fp = window.__fp, pr = fp.renderer.getPixelRatio();
@@ -77,6 +82,18 @@ const checks = [
   ['module toggle off and on', r.modOffEnabled === false && r.modOnEnabled === true],
   ['shadows toggle off and on', r.shadowsOff === false && r.shadowsOn === true],
   ['summary overlay shown', r.summaryShown],
+  // v13 P1: the frame yardstick
+  ['bench v2: the round, the top and the waking, each with a JS distribution', bench.version === 2 && ['route', 'top', 'wake'].every((k) => bench.legs?.[k]?.frames > 0 && bench.legs[k].js.medianMs > 0 && bench.legs[k].js.medianMs <= bench.legs[k].js.p95Ms && bench.legs[k].js.p95Ms <= bench.legs[k].js.p99Ms && bench.legs[k].js.p99Ms <= bench.legs[k].js.worstMs)],
+  ['the round keeps its old summary (avg, 1% low, cpuMs) from its own frames (the teleport frame is the top\'s; the distributions leave out station frames)', bench.summary?.avgFrameMs > 0 && bench.summary.frames > 0 && (bench.legs?.route?.interval?.frames ?? -9) <= bench.summary.frames + 1 && bench.legs.route.interval.frames >= bench.summary.frames - bench.stationFrames - 2 && Object.keys(bench.summary.cpuMs || {}).length > 1],
+  ['the top leg stands on the Span\'s deck (feet over 40 m), the waking at the gate', (bench.draws || []).some((d) => d.leg === 'top' && d.y > 40) && (bench.draws || []).some((d) => d.leg === 'wake' && d.y < 30)],
+  ['hitch log: a rule, a count, the worst sorted, each with its row and events', bench.hitches && bench.hitches.count >= bench.hitches.worst.length && bench.hitches.worst.every((w, i) => (i === 0 || w.ms <= bench.hitches.worst[i - 1].ms) && Array.isArray(w.events) && 'top' in w)],
+  ['memory at start and end: geometry bytes per module, gpu bytes, the JS heap or why not', ['start', 'end'].every((k) => bench.memory?.[k]?.geometry?.totalMB > 0 && Object.keys(bench.memory[k].geometry.byModule).length > 1 && bench.memory[k].gpu && 'api' in bench.memory[k].jsHeap)],
+  ['report().memory has geometry bytes and the heap', rep.memory?.geometry?.totalMB > 0 && 'api' in (rep.memory?.jsHeap || {})],
+  ['draws: 7 stations; the hooks see every scene draw (all but the post chain\'s ~14 passes), terrain and vegetation among them, and come off after', bench.draws?.length === 7 && bench.draws.every((d) => d.colour.calls > 100 && d.other.calls >= 0 && d.other.calls <= 20 && d.shadow && d.shadow.calls > 0 && ['core:terrain', 'vegetation'].every((m) => d.modules.some((r) => r[0] === m))) && r.drawHooksLive === 0 && bench.stationFrames > 0],
+  ['unowned rows: render, shadow.pass, far, controls named in the cpu split', ['render', 'shadow.pass', 'far', 'controls'].every((k) => k in (bench.legs?.route?.rows || {}))],
+  ['unattributed share of all JS under 10%', bench.unattributed?.shareOfAllJs != null && bench.unattributed.shareOfAllJs < 0.1],
+  ['the panel leads with JS a frame; Copy gives a brief under 30 KB', /^.*\n?JS a frame/m.test(r.panelText) && r.copyLabel === 'Copy' && r.briefLen > 1000 && r.briefLen < 30000],
+  ['the frame hooks go in with the profiler, and not without it (?perf absent)', r.hooked === true && r3a.hooked === false && r3a.active === false],
   ['?q=medium reports tier medium', r3a.tier === 'medium' && r3.quality === 'medium' && r3a.dpr === r3a.base],
   ['adaptive step moves dpr down under a forced budget (?budget=1)', r3.tier.steps.length > 0 && r3.pr < r3a.dpr && r3.pr >= r3.tier.floor && r3.canvas === r3.want && Math.abs(r3.rt - r3.want) <= 1],
 ];

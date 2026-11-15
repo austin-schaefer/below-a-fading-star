@@ -203,72 +203,82 @@ export async function build(ctx) {
     return true;
   }
 
-  // Gather placements into size classes: pebbles (no shadow), stones, boulders (shadow)
-  const classes = { pebble: [], stone: [], boulder: [] };
-  const R = terrain.regionRadius + 70;
-  const N = low ? 16000 : 30000;
   const m = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), s = new T.Vector3(), p = new T.Vector3(), up = new T.Vector3(0, 1, 0);
-  const n = new T.Vector3();
-  for (let i = 0; i < N; i++) {
-    const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (!allowed(x, z)) continue;
-    const b = terrain.biomeAt(x, z);
-    // density: scree and rock slopes, heath, the moor; less in marsh and wood
-    let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6;
-    if (ctx.regions) density *= ctx.regions.stoneAt(x, z).density; // v4 regions: a region's own stone replaces these
-    density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
-    if (rng() > density) continue;
-    if (b.slope > 1.1) continue;
-    // The cirque walls round the fall are steep and spray-wet: a stone sunk 0.18 of its size into a near-vertical
-    // face pokes out as a flat dark ellipse (the "black ovals" Austin saw from the Speculum). Keep stones and
-    // boulders off slopes over 0.6 rad, and everything off the spray band round the pool.
-    if (Math.hypot(x - pool.x, z - pool.z) < 24) continue;
-    const u = rng();
-    let size, cls;
-    if (u < 0.6) { size = 0.18 + rng() * 0.3; cls = 'pebble'; }
-    else if (u < 0.92) { size = 0.5 + rng() * 0.9; cls = 'stone'; }
-    else { size = 1.3 + rng() * rng() * 3.2; cls = 'boulder'; }
-    if (b.slope > 0.6 && cls !== 'pebble') continue;
-    if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
-    const y = terrain.heightAt(x, z);
-    terrain.normalAt(x, z, n);
-    const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
-    // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
-    // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
-    if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
-    if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
-    if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
-    if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
-    if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
-    if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
-    if (stairClear(x, z, size * 0.6 + 0.4)) continue; // v12-H3: the Diffident Stair's slabs lying in the turf
-    if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
-    if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue; // v9 (#16): nothing on the Long Figure, pebbles included, cut or not
-    if (CUT && cls !== 'pebble') { // v8-11: off the cleared ground by its whole footprint, then into outcrops
-      if (clear(x, z, size * reachOf[it.variant])) continue;
-      if (!keepBig(x, z, b, cls, size)) { cut.thinned[cls]++; continue; }
+  // v13 L3: where every rock lies (the draws, the clearances, the tors) is computed once and kept (ctx.kept,
+  // src/v13/kept.js): a repeat visit takes the same placements from the store and builds the same meshes from them
+  const tPlace = performance.now();
+  const placed = await (ctx.kept ? ctx.kept('rocks.place', place) : place());
+  const classes = placed.classes;
+  Object.assign(cut, placed.cut);
+  const placeMs = performance.now() - tPlace;
+  function place() {
+    // Gather placements into size classes: pebbles (no shadow), stones, boulders (shadow)
+    const classes = { pebble: [], stone: [], boulder: [] };
+    const R = terrain.regionRadius + 70;
+    const N = low ? 16000 : 30000;
+    const n = new T.Vector3();
+    for (let i = 0; i < N; i++) {
+      const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R;
+      const x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (!allowed(x, z)) continue;
+      const b = terrain.biomeAt(x, z);
+      // density: scree and rock slopes, heath, the moor; less in marsh and wood
+      let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6;
+      if (ctx.regions) density *= ctx.regions.stoneAt(x, z).density; // v4 regions: a region's own stone replaces these
+      density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
+      if (rng() > density) continue;
+      if (b.slope > 1.1) continue;
+      // The cirque walls round the fall are steep and spray-wet: a stone sunk 0.18 of its size into a near-vertical
+      // face pokes out as a flat dark ellipse (the "black ovals" Austin saw from the Speculum). Keep stones and
+      // boulders off slopes over 0.6 rad, and everything off the spray band round the pool.
+      if (Math.hypot(x - pool.x, z - pool.z) < 24) continue;
+      const u = rng();
+      let size, cls;
+      if (u < 0.6) { size = 0.18 + rng() * 0.3; cls = 'pebble'; }
+      else if (u < 0.92) { size = 0.5 + rng() * 0.9; cls = 'stone'; }
+      else { size = 1.3 + rng() * rng() * 3.2; cls = 'boulder'; }
+      if (b.slope > 0.6 && cls !== 'pebble') continue;
+      if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
+      const y = terrain.heightAt(x, z);
+      terrain.normalAt(x, z, n);
+      const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
+      // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
+      // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
+      if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
+      if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
+      if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
+      if (Math.hypot(x - L.moraine.x, z - L.moraine.z) < MOTHER_FOOT) continue; // the Lattice's mother crystal stands here (vegetation/mother.js)
+      if (plinthsClear(x, z)) continue; // the Plinth Road's corridor and its fallen blocks (v5/plinths.js)
+      if (naveClear(x, z)) continue; // the Foundered Nave's rim and hole (v5/nave/ground.js)
+      if (stairClear(x, z, size * 0.6 + 0.4)) continue; // v12-H3: the Diffident Stair's slabs lying in the turf
+      if (stillRockClear(x, z, size)) continue; // v7: the Sleeper's, the basket's and the Accrescent's ground and line (v7/still/clear.js)
+      if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue; // v9 (#16): nothing on the Long Figure, pebbles included, cut or not
+      if (CUT && cls !== 'pebble') { // v8-11: off the cleared ground by its whole footprint, then into outcrops
+        if (clear(x, z, size * reachOf[it.variant])) continue;
+        if (!keepBig(x, z, b, cls, size)) { cut.thinned[cls]++; continue; }
+      }
+      if (sextonClear(x, z, cls === 'boulder' ? size : 0, size * 0.5)) continue; // the Sexton's graves and heaps (v7/workers/graves.js)
+      if (cls === 'boulder') { const h = nearestLead(x, z, size * 0.75 + 0.3); if (h && h.kind !== 'rivulet') continue; } // v8-09: a boulder's whole bulk off the road, not only its centre
+      classes[cls].push(it);
     }
-    if (sextonClear(x, z, cls === 'boulder' ? size : 0, size * 0.5)) continue; // the Sexton's graves and heaps (v7/workers/graves.js)
-    if (cls === 'boulder') { const h = nearestLead(x, z, size * 0.75 + 0.3); if (h && h.kind !== 'rivulet') continue; } // v8-09: a boulder's whole bulk off the road, not only its centre
-    classes[cls].push(it);
-  }
-  // Tors: a few stacked outcrops as landmarks of the open moor
-  const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
-  for (const [tx, tz] of tors) {
-    if (!allowed(tx, tz) || (ctx.regions && !ctx.regions.stoneAt(tx, tz).tors)) continue;
-    const count = 6 + Math.floor(rng() * 5);
-    for (let k = 0; k < count; k++) {
-      const ang = rng() * Math.PI * 2, d = rng() * 5;
-      const x = tx + Math.cos(ang) * d, z = tz + Math.sin(ang) * d;
-      const size = 1.6 + rng() * 3.4;
-      const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
-      const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
-      if (plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, size * 0.6)) continue; // after the draws, as above
-      if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue;
-      if (CUT && clear(x, z, size * reachOf[it.variant])) { cut.thinned.tor++; continue; }
-      classes.boulder.push(it);
+    // Tors: a few stacked outcrops as landmarks of the open moor
+    const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
+    for (const [tx, tz] of tors) {
+      if (!allowed(tx, tz) || (ctx.regions && !ctx.regions.stoneAt(tx, tz).tors)) continue;
+      const count = 6 + Math.floor(rng() * 5);
+      for (let k = 0; k < count; k++) {
+        const ang = rng() * Math.PI * 2, d = rng() * 5;
+        const x = tx + Math.cos(ang) * d, z = tz + Math.sin(ang) * d;
+        const size = 1.6 + rng() * 3.4;
+        const y = terrain.heightAt(x, z) + (k > 2 ? rng() * size * 0.9 : 0) - size * 0.15;
+        const it = { x, y, z, size, variant: variantFor.boulder[Math.floor(rng() * 3)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.8, nx: 0, nz: 0 };
+        if (plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, size * 0.6)) continue; // after the draws, as above
+        if (offFigure(x, z, size * reachOf[it.variant], ctx)) continue;
+        if (CUT && clear(x, z, size * reachOf[it.variant])) { cut.thinned.tor++; continue; }
+        classes.boulder.push(it);
+      }
     }
+    return { classes, cut };
   }
 
   // Draw distance by size class: pebbles vanish into the turf past ~75 m and stones past ~170 m (a few pixels
@@ -407,5 +417,5 @@ export async function build(ctx) {
     cut: CUT, lichen: LICHEN, rock: palette.rock, boulders: foot(classes.boulder), stones: foot(classes.stone), pebbles: foot(classes.pebble),
     stats: () => ({ pebbles: classes.pebble.length, stones: classes.stone.length, boulders: classes.boulder.length, colliders: rockColliders, drawCalls, tris: Math.round(tris), cleared: cut.cleared, thinned: cut.thinned }),
   };
-  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders, ${rockColliders} colliders; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
+  ctx.log(`rocks: ${classes.pebble.length} pebbles, ${classes.stone.length} stones, ${classes.boulder.length} boulders, ${rockColliders} colliders; placed in ${placeMs.toFixed(0)}ms; ${drawCalls} draw calls, ~${Math.round(tris / 1000)}k tris, ${(performance.now() - t0).toFixed(0)}ms`);
 }

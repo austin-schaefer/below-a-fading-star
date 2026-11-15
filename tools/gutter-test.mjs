@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Sun-gutter timing test: loads ?q=low&only=sky&gutter=12,20, samples __fp.sky.flicker.value every 100 ms
-// for 60 s and checks that gutters recur, last 12-16 s (first dip under 0.9 to recovery above 0.9), hold the
-// floor (under 0.35) for 6.5-9 s (a pinned 12 s gutter holds about 7), and keep the unchanged ramps (floor within ~1.4 s of the dip, ~2.5 s back).
+// Sun-gutter timing test: loads ?q=low&only=sky&gutter=12,20, runs 60 s of the sky's update synchronously at dt 1/60
+// from the state at ready, samples __fp.sky.flicker.value every 0.1 s, and checks that gutters recur, last 12-16 s (first dip under 0.9 to recovery above 0.9), hold the
+// floor (under 0.35) for 6.5-9 s (a pinned 12 s gutter holds about 7), and keep the unchanged ramps (floor within ~1.4 s of the dip, ~2.5 s back);
+// then 4 s on the real frame loop: a gutter started there falls on the page's clock (the countdown at real time, the dip and the floor).
 // Usage: node tools/gutter-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -15,13 +16,31 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(`${base}/?q=low&only=sky&gutter=12,20`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
-// sample on the page's own clock so a slow headless frame rate cannot skew the timing
-const samples = await page.evaluate(() => new Promise((resolve) => {
-  const out = [], t0 = performance.now();
+// The statistics: 60 s of the sky's own update (sky.js's update, the function the frame loop calls each frame), run
+// synchronously at dt = 1/60 from the state the page reached at ready, sampled every sixth step (0.1 s). dt stays
+// 1/60: the value eases with min(1, dt * 6). The frame loop cannot run in between: this is one task.
+const samples = await page.evaluate(() => {
+  const sky = window.__fp.sky, f = sky.flicker, out = [], DT = 1 / 60;
+  let t = window.__fp.time.t;
+  for (let i = 1; i <= 3600; i++) { t += DT; sky.update(DT, t); if (i % 6 === 0) out.push([i * DT, f.value]); }
+  return out;
+});
+// Then the real loop: the frame loop feeds the sky real time. Start a gutter now and sample the value on the page's own
+// clock every 100 ms for 4 s: the countdown to the next falls as the clock does, and the value leaves 1, reaches the
+// floor within about 1.4 s and holds it, as the 60 s above say it should.
+const live = await page.evaluate(() => new Promise((resolve) => {
+  const sky = window.__fp.sky, f = sky.flicker, out = [];
+  // let a gutter still running at the end of the 60 s finish first (the same update, synchronously, unsampled)
+  let t = window.__fp.time.t;
+  while (f.phase > 0) { t += 1 / 60; sky.update(1 / 60, t); }
+  const t0 = performance.now();
+  f.next = 0;
+  let next0 = null;
   const id = setInterval(() => {
     const t = (performance.now() - t0) / 1000;
-    out.push([t, window.__fp.sky.flicker.value]);
-    if (t >= 60) { clearInterval(id); resolve(out); }
+    if (next0 === null && f.phase > 0) next0 = [t, f.next];
+    out.push([t, f.value]);
+    if (t >= 4) { clearInterval(id); resolve({ out, next0, next1: [t, f.next], phase: f.phase }); }
   }, 100);
 }));
 await browser.close();
@@ -48,6 +67,14 @@ gutters.forEach((g, i) => {
   check(down <= 1.6, `gutter ${i + 1} reaches the floor within about 1.4 s of the dip (${down.toFixed(2)})`);
   check(up >= 0.5 && up <= 3.0, `gutter ${i + 1} recovers over about 2.5 s (${up.toFixed(2)})`);
 });
+// the real-time segment
+{
+  const firstDip = live.out.find(([, v]) => v < 0.9), firstFloor = live.out.find(([, v]) => v < 0.35);
+  const real = live.next1[0] - live.next0[0], fed = live.next0[1] - live.next1[1];
+  console.log(`      live: dip at ${firstDip?.[0].toFixed(2)} s, floor at ${firstFloor?.[0].toFixed(2)} s; the countdown fell ${fed.toFixed(2)} s in ${real.toFixed(2)} s of the page's clock`);
+  check(!!live.next0 && Math.abs(fed - real) <= 0.2 * real, `under the frame loop the sky runs on real time (its countdown fell ${fed.toFixed(2)} s in ${real.toFixed(2)} s)`);
+  check(!!firstDip && !!firstFloor && firstFloor[0] - firstDip[0] <= 1.6 && live.out.filter(([t]) => t >= firstFloor[0]).every(([, v]) => v < 0.5), `under the frame loop a gutter dips, reaches the floor within about 1.4 s and stays down (under 0.5: the floor shudders to about 0.41) (${firstDip?.[0].toFixed(2)} s to ${firstFloor?.[0].toFixed(2)} s)`);
+}
 check(errors.length === 0, `no page errors${errors.length ? ': ' + errors[0] : ''}`);
 console.log(fails ? `FAIL: ${fails} check(s) failed` : 'PASS: all checks');
 process.exit(fails ? 1 : 0);

@@ -21,9 +21,8 @@ const R = Math.PI / 180;
 
 export async function buildStylite(ctx, G) {
   const { scene } = ctx, low = ctx.quality === 'low', site = SITES.stylite, tor = SITES.tallestTor;
-  // the tor's stone (the region builds beside this module: wait for it, up to 25 s)
-  let tors = null;
-  for (let t0 = performance.now(); !(tors = scene.getObjectByName('highling-tors')) && performance.now() - t0 < 25000;) await new Promise((r) => setTimeout(r, 60));
+  // the tor's stone (the region builds beside this module: wait for its build to settle; v13 L3, it was a 25 s poll)
+  const tors = (await ctx.built('region-highLing')) ? scene.getObjectByName('highling-tors') || null : null;
   tors?.updateWorldMatrix(true, true);
   const cast = tors ? makeDownCaster([tors]) : (x, z) => G.at(x, z) + 10;
   const top = (x, z) => cast(x, z, 60, 80);

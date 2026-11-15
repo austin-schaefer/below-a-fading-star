@@ -40,7 +40,7 @@ await browser.close();
 console.log(text);
 const s = r.summary, fps = s.fps;
 let pass = 0, fail = 0;
-const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); c ? pass++ : fail++; };
+const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); c ? pass++ : fail++; };
 ok(!errors.length, 'no page errors' + (errors.length ? ': ' + errors[0] : ''));
 ok(idleFrames, 'armed and waiting while idle under the card');
 ok(Math.abs(r.recordedSeconds - 6) < 0.5, `recorded ${r.recordedSeconds} s of 6`);

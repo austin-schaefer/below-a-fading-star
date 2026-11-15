@@ -7,27 +7,34 @@ import { makeGround } from './vegetation/ground.js';
 import { buildPlants } from './vegetation/plants.js';
 import { buildTrees, buildToadstools, makeAtlas, makeTreeMaterials } from './vegetation/trees.js';
 import { buildLattice } from './vegetation/lattice.js';
+import { keptHeights } from './v13/tape.js'; // v13 L4: the ground's answers kept between visits
 
 export async function build(ctx) {
   const T = [performance.now()];
   const lap = () => { T.push(performance.now()); return (T[T.length - 1] - T[T.length - 2]).toFixed(0); };
   const shared = { time: { value: 0 } };
+  // v13 L4: each stretch between the awaits runs in tape.run, so a repeat visit takes ctx.terrain's answers from the
+  // tape (every draw and every call still made in its order; coverAt's tint and the rest are untouched)
+  const tape = await keptHeights(ctx, 'vegetation');
 
   await ctx.progress?.('combing the grass', 0.1);
-  const ground = makeGround(ctx);
+  const ground = tape.run(() => makeGround(ctx));
   const tGround = lap();
   await ctx.progress?.('growing the wood', 0.3);
-  const mats = makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4001)));
-  const trees = buildTrees(ctx, ground, mats);
-  const fungi = buildToadstools(ctx, ground, mats, trees);
+  const { mats, trees, fungi } = tape.run(() => {
+    const mats = makeTreeMaterials(ctx, makeAtlas(ctx.makeRng(4001)));
+    const trees = buildTrees(ctx, ground, mats);
+    return { mats, trees, fungi: buildToadstools(ctx, ground, mats, trees) };
+  });
   ctx.woodTrees = trees.trees.filter((t) => t.kind === 'wood' && !t.hidden); // the Deodand Wood's trees, { x, y, z, h }: the shafts fall from their crowns (v8/shafts.js)
   const tTrees = lap();
   await ctx.progress?.('sowing the heather and the reeds', 0.6);
-  const plants = buildPlants(ctx, ground, shared);
+  const plants = tape.run(() => buildPlants(ctx, ground, shared));
   const tPlants = lap();
   await ctx.progress?.('seeding the Lattice', 0.85);
-  const lattice = buildLattice(ctx, ground, shared);
+  const lattice = tape.run(() => buildLattice(ctx, ground, shared));
   const tLattice = lap();
+  tape.done();
 
   // Per frame: wind time, chunk packing against the view frustum, tree LOD, flicker-driven glow.
   const frustum = new THREE.Frustum(), pv = new THREE.Matrix4();

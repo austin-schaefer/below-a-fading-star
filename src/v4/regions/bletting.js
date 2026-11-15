@@ -14,39 +14,10 @@ import { makeSimplex, smoothstep, lerp, hyp } from '../../noise.js';
 import { groundOf, instanced, stoneMaterial, airMotes, meshStats, compose, vegetationTrees } from './common.js';
 
 const KEY = 'bletting';
-const R = REGIONS.bletting, CI = R.shape.circle, ZMIN = R.clip.zMin;
-const O = LANDMARKS.orchard; // Medlar Close
-const SN = makeSimplex(5511);
-const HEDGE_R = CI.r - 3, HEDGE_N = ZMIN + 3; // the hedge stands just inside the region's edge, and along its northern clip
-// gaps where paths come through (placement plan section 4: P7 at the Plinth Road's foot, P8 toward the Hypogeum,
-// P9 and the causeway from (80, -8), the Leerie's kerb K1)
-// [x, z, r]: r the wall's gap (6 m unless given; the hedge's is 4.5). v8-09: Medlar Close's wicket (strata/place.js),
-// where P8 comes through the close's circuit, a gate's width
-const GAPS = [[130, -150], [212, -121], [82, -6], [123, 5], [178.7, -115.05, 1.2]];
+import { R, CI, ZMIN, O, SN, HEDGE_R, HEDGE_N, GAPS, hedgeDist, height } from './height/bletting.js'; // the height hook and what it reads (v13 L2)
+export { height };
+export { ground } from './ground/bletting.js'; // the ground hook, three-free (v13 L3)
 
-function hedgeDist(x, z) {
-  const r = hyp(x - CI.x, z - CI.z);
-  let d = Math.abs(r - HEDGE_R);
-  if (z < ZMIN + 12) d = Math.min(d, Math.abs(z - HEDGE_N) + Math.max(0, r - HEDGE_R));
-  return d;
-}
-
-// a low bank under the hedge, and nothing else: the orchard ground keeps the moor's lie (and Medlar Close its terraces)
-export function height(h, x, z, w) {
-  const d = hedgeDist(x, z);
-  if (d > 4) return h;
-  return h + 0.55 * Math.exp(-((d / 1.3) ** 2)) * Math.min(1, w * 2);
-}
-
-const C = (h) => new THREE.Color(h);
-const cRank = C('#4c6a2a'), cWind = C('#4a3a24'), cHeal = C('#4e4250');
-const _gc = new THREE.Color();
-export function ground(col, x, z, w) {
-  const n = SN.fbm2(x * 0.04, z * 0.04, 3) * 0.5 + 0.5;
-  _gc.copy(cRank).lerp(cHeal, smoothstep(0.6, 0.78, SN.fbm2(x * 0.09 + 7, z * 0.09, 2) * 0.5 + 0.5) * 0.45);
-  _gc.lerp(cWind, (1 - smoothstep(30, 52, hyp(x - O.x, z - O.z))) * smoothstep(0.45, 0.7, n) * 0.5); // the close's floor, browned by the fall of fruit
-  col.lerp(_gc, w * 0.8);
-}
 
 // the trees this region plants: medlars and quinces gone to thicket past the close's wall, and the blackthorn hedge
 function plantTrees(ground, rng, regionAt) {
@@ -169,7 +140,7 @@ export async function build(ctx) {
   const meshes = [];
 
   // the trees round here: Medlar Close's own (vegetation) and the ones this region planted
-  const vt = ((await vegetationTrees()) || []).filter((t) => (t.kind === 'orchard' || t.kind === 'region') && inRegion(t.x, t.z, 0.3));
+  const vt = ((await vegetationTrees(ctx)) || []).filter((t) => (t.kind === 'orchard' || t.kind === 'region') && inRegion(t.x, t.z, 0.3));
   const spots = vt.length ? vt.map((t) => [t.x, t.z, t.s]) : plantTrees(null, ctx.makeRng(5100 + 1), regions.regionAt).filter((t) => t.kind === 'medlar').map((t) => [t.x, t.z, t.s]);
   for (const s of spots) DROPS.push(s);
 

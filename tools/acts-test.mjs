@@ -77,7 +77,7 @@ await page.evaluate(() => {
 });
 s = await waitOffer(page, true, 1500);
 check('from the causeway (about 24 m): not offered', s.offered === null && !s.shown, s);
-await sleep(1200); await shot(page, 'acts-halt2-road');
+if (shots) { await sleep(1200); await shot(page, 'acts-halt2-road'); }
 await stand(page, 8, -1, 0.02);
 s = await waitOffer(page, true, 1500);
 check('8 m out, facing the wall: not offered', s.offered === null && !s.shown, s);
@@ -94,7 +94,7 @@ s = await waitOffer(page, true);
 for (let i = 0; i < 40 && s.shown && !s.visible; i++) { await new Promise((r) => setTimeout(r, 100)); s = await waitOffer(page, true); }
 check('in front of where the next stroke goes, facing it: offered, shown, with its words', s.offered === 'halt-tally' && s.shown && s.visible && s.words === 'Chalk your stroke', s);
 check('the next stroke\'s place is in view', await onScreen(page, await page.evaluate(() => ({ ...window.__fp.tally.next }))));
-await sleep(1300); await shot(page, 'acts-halt2-offer');
+if (shots) { await sleep(1300); await shot(page, 'acts-halt2-offer'); }
 await atStroke(page, 2.1, Math.PI);
 s = await waitOffer(page, false);
 check('there, facing away: not offered', s.offered === null, s);
@@ -189,7 +189,7 @@ check('after a reload the stroke is there: the wall\'s own count plus one', s.vi
 await atStroke(page);
 s = await waitOffer(page, true);
 check('after a reload the act is offered again (a new visit)', s.offered === 'halt-tally', s);
-await sleep(800); await shot(page, 'acts-halt2-reload');
+if (shots) { await sleep(800); await shot(page, 'acts-halt2-reload'); }
 
 // the settings row forgets it
 await page.evaluate(() => window.__fp.settings.open());
@@ -231,7 +231,7 @@ await seeded('return', () => { try { if (!sessionStorage.getItem('seeded')) { lo
       fp.controls.placeAt(wx + n.x * 2, wz + n.z * 2);
       pl.yaw = Math.atan2(n.x, n.z); pl.pitch = -0.12;
     });
-    await sleep(1500); await shot(p, 'acts-halt2-return');
+    if (shots) { await sleep(1500); await shot(p, 'acts-halt2-return'); }
   });
 await seeded('corrupt', () => { try { localStorage.setItem('fp-acts', '{"v":1,"marks":{oops'); } catch (e) { /* */ } },
   `${base}/?q=low&only=waystation,acts&render=0&pos=-50,12`, async (p) => {

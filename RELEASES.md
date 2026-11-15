@@ -4,6 +4,33 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v13: A quicker start
+
+Released 2026-11-15.
+
+Nothing new to find in this one. The walk now opens in about half the time on a first visit and about a third of the time on every visit after, and it should look, sound and play exactly as it did.
+
+### New
+
+- **A much shorter wait at the title card**: On the laptop it was measured on, the wait before "Go out" fell from about 8 seconds to about 4 on the lowest quality setting, and from about 12 to under 6 on the middle one. The page also no longer freezes for seconds at a time while it loads.
+- **A second visit is faster again**: The walk now keeps what it worked out on your first visit (the shape of the land, where the rocks and plants and buildings stand) in your browser, and keeps its files too. Come back, or refresh, and it is ready in two to three seconds, and it opens with no connection at all. A new release replaces what was kept.
+- **Measure**: The settings menu (the gear) has a new row, Measure. It walks a fixed route for under a minute and shows how smoothly the walk ran on your device, with a button to copy the result. If the walk runs badly for you, that result is the most useful thing you could send.
+
+### Fixed
+
+- **A slow device could get a slightly different world**: On a slow enough device a few things were built before the things they depend on were ready. The Bletting (the medlar orchards) could come up with no windfalls under its trees and no snails, and some stones and paving could sit a little off. Everything now waits for what it needs, however slow the device.
+- **The cloaked figure no longer shifts**: A small cloaked figure used to move to its proper place about two seconds after you set out. It starts there now.
+
+### Behind the scenes
+
+- The time the walk takes to load, and where that time goes, can now be measured with one command; before this release nobody had measured it.
+- Every change in this release was checked against the last one to the last decimal place: the height of the ground at 1.4 million points, and everything each part of the world builds.
+- The profiler now names costs that used to hide (the shadow pass, far-off stand-ins, the engine's own drawing), and reports any part of the world that draws more than its allowance.
+
+Known issues: phones were not measured, only a laptop slowed down to stand in for one, so the gain on a real phone is not known; the Measure row is how to find out. The first visit after each new release may download the whole walk again once. If the walk ever seems stuck on an old version, add `?sw=0` to the address once. The small faults listed under v12 (the seat at the inn, the bell's ring on the ground, the lamp that flickers, the Pomegranate House, the sparks that mark things to do) are still there.
+
+<p><img src="shots/87-first-view-medium.webp" width="24%" alt="The first view after setting out: the dying sun between two great figures, the keep, a pool, and tiers of lit windows on a cliff"> <img src="shots/87-door-loading-bar.webp" width="24%" alt="The title card while the walk loads"> <img src="shots/87-measure-row-phone.webp" width="24%" alt="The settings menu on a phone, with the new Measure row"> <img src="shots/87-measure-panel-phone.webp" width="24%" alt="The result of a Measure run on a phone: how long each frame took, and the slowest moments"></p>
+
 ## v12: The Heights
 
 Released 2026-11-14.

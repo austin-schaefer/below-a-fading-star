@@ -1,9 +1,11 @@
 // Entry point. Builds the renderer, terrain, sky, lights and controls, then asks each world
 // module (vegetation, structures, water, particles, fauna, audio) to build itself against a
 // shared context, and runs the frame loop. Modules register per-frame updates via ctx.registerUpdate.
+import * as startup from './startup.js'; // v13-P0: first, so its top level marks when the static graph has arrived
 import * as THREE from 'three';
 import { installAtmosphere, FOG_DENSITY } from './atmosphere.js';
-import { buildTerrain } from './terrain.js';
+import { startBake } from './v13/bake.js'; // v13 L3: the terrain mesh at once, its bake kept, or in a worker beside the builds
+import { openKept, keptHelper } from './v13/kept.js'; // v13 L3: the store, and ctx.kept for a module's own arrays
 import { buildSky } from './sky.js';
 import { buildControls } from './controls.js';
 import { buildPost } from './post.js';
@@ -16,7 +18,7 @@ import { makeShadowCadence } from './shadows.js';
 import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
-import { buildMountains } from './v4/mountains.js';
+import { buildMountains } from './v4/ranges.js'; // (v13 L2: the far ranges' meshes; v4/mountains.js is the walls' pure maths)
 import { installKit } from './v4/kit/index.js';
 import { makeRegions, REGION_FILES } from './v4/regions.js';
 import { makeTinctures } from './v4/tinctures.js';
@@ -33,50 +35,56 @@ const LIGHT_RIGS = {
   v4: { name: 'v4', exposure: 1.25, sun: 2.7, hemi: 2.7, hemiSky: '#5a5296', hemiGround: '#2e2c20', ambient: 1.6, ambientColor: '#302d4c' },
 };
 
+// { mesh: true } (M): the module reads the terrain mesh's heights or colours (or calls something that does: the ground
+// samplers in vegetation/ground.js, v4/regions/common.js and skin.js, fauna/uncanny/kit.js, water/river.js), so it
+// builds once the bake is in (v13 L3, src/v13/bake.js); the rest build beside the bake. A module that reads the mesh
+// without it fails with "the terrain mesh is not baked yet"; ?bakehold=20000 holds the bake back to find one.
+const M = { mesh: true };
+const MESH_REGIONS = new Set(['adust', 'bletting', 'demesne', 'highLing', 'lynchets', 'outwash', 'saltings', 'strandline']);
 const MODULES = [
-  ['rocks', () => import('./rocks.js')],
-  ['vegetation', () => import('./vegetation.js')],
+  ['rocks', () => import('./rocks.js'), M],
+  ['vegetation', () => import('./vegetation.js'), M],
   ['structures', () => import('./structures.js')],
-  ['water', () => import('./water.js')],
+  ['water', () => import('./water.js'), M],
   ['particles', () => import('./particles.js')],
-  ['fauna', () => import('./fauna.js')],
+  ['fauna', () => import('./fauna.js'), M],
   ['audio', () => import('./audio.js')],
   ['skylife', () => import('./skylife.js')],
   // v2 stage C modules, one per agent, so parallel work never shares a file
   ['flora2', () => import('./v2/flora.js')],
-  ['ruins2', () => import('./v2/ruins.js')],
-  ['inhabitants2', () => import('./v2/inhabitants.js')],
-  ['riverlife2', () => import('./v2/riverlife.js')],
+  ['ruins2', () => import('./v2/ruins.js'), M],
+  ['inhabitants2', () => import('./v2/inhabitants.js'), M],
+  ['riverlife2', () => import('./v2/riverlife.js'), M],
   // v4 systems: one module per bioregion (src/v4/regions/<file>.js), filled by the region agents
-  ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`)]),
+  ...Object.entries(REGION_FILES).map(([key, file]) => [`region-${key}`, () => import(`./v4/regions/${file}.js`), MESH_REGIONS.has(key) ? M : undefined]),
   // v4 systems: the kit's test scene, only when named (?only=kit)
   ['kit', () => import('./v4/kit/demo.js'), { optIn: true }],
-  ['dressing', () => import('./v4/dressing.js')], // v4: the Long Figure, the Discontinued Track, the Surveyor's Pegs
+  ['dressing', () => import('./v4/dressing.js'), M], // v4: the Long Figure, the Discontinued Track, the Surveyor's Pegs
   ['span', () => import('./v4/span.js')], // v4: the Great Span (W) and the Postern (BG)
-  ['paths', () => import('./v4/paths.js')], // v4 map: the leads, the pit's lip, the taller fall's mist
+  ['paths', () => import('./v4/paths.js'), M], // v4 map: the leads, the pit's lip, the taller fall's mist
   ['roads', () => import('./v8/roads.js')], // v8-01: the gnomons along the roads (?roads=0)
   ['thrones', () => import('./v5/thrones.js')], // v5 wonders: AM the Acephalous Thrones on the saddle's seats
   ['galleries', () => import('./v5/galleries.js')], // v5 wonders: AL the Galleries of Durance on the west wall
   ['lift', () => import('./v12/lift.js')], // v12-H4: the Galleries' lift ridden, its station, the gallery at 135 m and its cells (?lift=0)
-  ['lamps', () => import('./v5/lamps.js')], // v5 wonders: AO the Escarpment Lamps (window-lights, a city on the south massif's face, that go out one by one; ?lamps=0)
+  ['lamps', () => import('./v5/lamps.js'), M], // v5 wonders: AO the Escarpment Lamps (window-lights, a city on the south massif's face, that go out one by one; ?lamps=0)
   ['plinths', () => import('./v5/plinths.js')], // v5 wonders: AW the Plinth Road north from Medlar Close
   ['hawser', () => import('./v5/hawser.js')], // v5: BA the Hawser, from the north wall into the court's paving
   ['occultation', () => import('./v5/occultation.js')], // v5 wonders: AR the Occultation (the passes and the hush; the shading is in the fog, terrain and sky shaders)
   ['dressing5', () => import('./v5/dressing.js')], // v5: CY the Collation, DE the Slipper, DF the Unfinished Prospect
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
   ['keptfire', () => import('./v5/keptfire.js')], // v5 wonders: DN the Kept Fire (a tended hearth on the Outwash; one point light, ?keptfire=0)
-  ['nave', () => import('./v5/nave.js')], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
+  ['nave', () => import('./v5/nave.js'), M], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
   // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
-  ['living-canyon', () => import('./v7/canyon.js')], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
-  ['living-glyphs', () => import('./v7/glyphs.js')], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
-  ['living-still', () => import('./v7/still.js')], // v7: CB the Long Sleeper, CI the Stylite, CL the Accrescent (?still=0, ?sleeper=0, ?stylite=0, ?accrescent=0)
-  ['living-walkers', () => import('./v7/walkers.js')], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
+  ['living-canyon', () => import('./v7/canyon.js'), M], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
+  ['living-glyphs', () => import('./v7/glyphs.js'), M], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
+  ['living-still', () => import('./v7/still.js'), M], // v7: CB the Long Sleeper, CI the Stylite, CL the Accrescent (?still=0, ?sleeper=0, ?stylite=0, ?accrescent=0)
+  ['living-walkers', () => import('./v7/walkers.js'), M], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
   ['living-workers', () => import('./v7/workers.js')], // v7: BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One (?workers=0)
   ['living-small', () => import('./v7/small.js')], // v7: CM the Indistinct, CO the Repetend, CQ the Simulacrum (?small=0)
   ['shafts', () => import('./v8/shafts.js')], // v8-02: shafts of ember light in the Deodand Wood (?shafts=0)
-  ['threads', () => import('./v8/threads.js')], // v8-04: stories with two ends (the traveller, the twelfth chair, the gold from the court; ?threads=0)
+  ['threads', () => import('./v8/threads.js'), M], // v8-04: stories with two ends (the traveller, the twelfth chair, the gold from the court; ?threads=0)
   ['twk', () => import('./v8/twk.js')], // v8-07: the Twk-men on their dragonflies, at the gnomons, the house and the spilt salt (?twk=0)
-  ['livery', () => import('./v8/livery/props.js')], // v8-06: the dealings' props, the Leerie's slate and the keeper's peg (?livery=0 also restores v7's costumes)
+  ['livery', () => import('./v8/livery/props.js'), M], // v8-06: the dealings' props, the Leerie's slate and the keeper's peg (?livery=0 also restores v7's costumes)
   ['strata', () => import('./v8/strata/place.js')], // v8-03: the three hands' signs and spolia across the map (?strata=0)
   ['house', () => import('./v8/house.js')], // v8-05: the Pomegranate House lit and lived in (?house=0)
   ['waystation', () => import('./v9/waystation.js')], // v9 (#934): the Lantern Halt, the causeway's waystation (?waystation=0)
@@ -85,7 +93,7 @@ const MODULES = [
   ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
-  ['locallights', () => import('./v5/lights.js')], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
+  ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
 async function start() {
@@ -93,6 +101,7 @@ async function start() {
   // Quality tier (tier.js, v3 stage 3): 'high' | 'medium' | 'low', from ?q= / ?tier=, the debug panel's pin, or the device
   const tierChoice = await chooseTier(url);
   const quality = tierChoice.name;
+  startup.mark('tier');
   const only = url.searchParams.get('only'); // comma list of modules to load (for testing)
   const skip = (url.searchParams.get('skip') || '').split(',').filter(Boolean);
 
@@ -126,6 +135,7 @@ async function start() {
   // texture and target bytes for the profiler: the GL hooks only when it is on from the start (perf.js installs them late otherwise)
   const gpumem = url.searchParams.get('perf') === '1' || url.searchParams.get('bench') != null ? installGpuMem(renderer.getContext(), canvas) : null;
   renderer.setSize(innerWidth, innerHeight);
+  startup.mark('renderer');
   renderer.shadowMap.enabled = true;
   // ?pcf=soft|hard: PCFSoft (default, as before) or PCF with the light's radius. Both take 17 taps; hard bands
   // the dappled light in the wood (shots/wip/perf-02-pcf-wood-*), for a saving of a few multiplies a tap.
@@ -196,10 +206,21 @@ async function start() {
   // Profiler, bench and toggles (perf.js): wraps registerUpdate so each callback is timed per module
   ctx.perf = createPerf(ctx);
 
-  // Terrain
-  ctx.terrain = buildTerrain(ctx);
+  // Terrain (v13 L3, src/v13/bake.js): the mesh now; its bake from the store, or a worker beside the builds below, or
+  // here. Only the leads are waited for (every heightAt after them carries the runnels' cuts); a module that reads the
+  // mesh's heights or colours is marked { mesh: true } in MODULES and builds once the bake is in.
+  const keepLater = [];
+  const store = openKept({ base: document.baseURI, off: url.searchParams.get('kept') === '0', log: ctx.log });
+  let keepNow = false; // v13 L4: a module's record is written after ready, one an idle slot (a write then was the cold load's 100 ms)
+  ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(keepNow ? fn() : fn) }); // the contract: runtime.md, "The bake and the store"
+  const keptPre = ctx.kept.preload(); // v13 L4: this tier's records read and checked before any build (each awaits it after its import)
+  const bake = startBake(ctx, url, store);
+  ctx.terrain = bake.terrain;
+  await bake.leads;
+  startup.mark('terrain');
   // The walls' far ranges and API (v4 systems, BI): crestAt, faceAt, the saddle, AM's seats, walkLimit
   ctx.mountains = buildMountains(ctx);
+  startup.mark('mountains');
   ctx.regions = makeRegions(); // regionAt, airAt, soundAt and each region's hooks (v4 systems)
   ctx.tinctures = makeTinctures(ctx, url); // v4 Tinctures (DI): each region's hue in the haze, ?tinct=0 off
   ctx.places = places; // v8-02: each place's ground, cover and light (placeAt, gradeAt)
@@ -239,16 +260,65 @@ async function start() {
   ctx.hud = buildHud(ctx);
   import('./settings.js').then((m) => m.buildSettings(ctx)).catch((e) => console.error('[fp] settings failed:', e)); // v7-08: the gear and its panel
 
-  // World modules
-  const results = await Promise.allSettled(wanted.map(async ([name, load]) => {
-    const t0 = performance.now();
+  startup.mark('scaffold');
+
+  // World modules. ?serial=1 (v13-P0, for tools/load-probe.mjs): every import first, then each build alone, so
+  // each module's time is its own (src/startup.js); otherwise they import and build together, as visitors get.
+  const serial = url.searchParams.get('serial') === '1';
+  startup.setSerial(serial);
+  // ctx.built(name) (v13 L3): a promise of that module's build settling (true built, false failed or not loaded), for
+  // a module that reads another's output; await it in build only for a module before yours in MODULES (?serial=1
+  // builds in that order). ctx.built() is every module's: never await it in a build, attach a .then.
+  const builtFns = new Map(), builtPs = new Map();
+  for (const [name] of wanted) builtPs.set(name, new Promise((r) => builtFns.set(name, r)));
+  let allBuiltFn;
+  const allBuilt = new Promise((r) => { allBuiltFn = r; });
+  ctx.built = (name) => (name == null ? allBuilt : builtPs.get(name) || Promise.resolve(false));
+  let lastImport = 0;
+  const buildOne = async (name, load, t0, o) => {
+    let ok = false;
     try {
       const mod = await load();
+      let t1 = startup.imported(name, t0);
+      lastImport = Math.max(lastImport, t1);
+      if (serial) return mod;
+      // reads the terrain mesh: after the bake, each in a task of its own (resumed together they were one long stall)
+      if (o?.mesh && !ctx.terrain.baked) { await bake.baked; await new Promise((r) => setTimeout(r, 0)); t1 = performance.now(); }
+      await keptPre;
       await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
+      startup.built(name, t1);
+      ok = true;
       ctx.log(`${name} ready in ${(performance.now() - t0).toFixed(0)}ms`);
-    } finally { settled++; within = 0; progress(); }
-  }));
-  results.forEach((r, i) => { if (r.status === 'rejected') console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); });
+    } finally { if (!serial) { settled++; within = 0; progress(); builtFns.get(name)(ok); } }
+  };
+  let results = await Promise.allSettled(wanted.map(([name, load, o]) => buildOne(name, load, performance.now(), o)));
+  startup.mark('imports', null, lastImport || undefined);
+  if (serial) { await bake.baked; await keptPre; } // each build's time its own, the bake's and the store's not among them
+  if (serial) {
+    const loaded = results;
+    results = [];
+    for (let i = 0; i < wanted.length; i++) {
+      const name = wanted[i][0], t1 = performance.now();
+      try {
+        if (loaded[i].status === 'rejected') throw loaded[i].reason;
+        await loaded[i].value.build(ctx.perf.forModule(name));
+        startup.built(name, t1);
+        ctx.log(`${name} built alone in ${(performance.now() - t1).toFixed(0)}ms`);
+        results.push({ status: 'fulfilled' });
+        builtFns.get(name)(true);
+      } catch (e) { results.push({ status: 'rejected', reason: e }); builtFns.get(name)(false); }
+      finally { settled++; within = 0; progress(); }
+    }
+  }
+  await bake.baked; // (no module read the mesh: it is still drawn)
+  allBuiltFn(true);
+  startup.mark('modules');
+  startup.note('bake', bake.info);
+  // a module that failed is reported on the title card's error line as well as the console (v13 L3: "Go out" must not hide it)
+  const failed = [];
+  results.forEach((r, i) => { if (r.status === 'rejected') { failed.push(wanted[i][0]); console.error(`[fp] module ${wanted[i][0]} failed:`, r.reason); } });
+  startup.note('failed', failed);
+  if (failed.length) { const el = document.getElementById('error'); if (el) el.textContent += `${el.textContent ? '\n' : ''}module${failed.length > 1 ? 's' : ''} failed: ${failed.join(', ')}`; }
   installFar(ctx, url); // v12-H5: ctx.far (src/v12/far.js); on after the warm-up
 
   // Post
@@ -258,6 +328,7 @@ async function start() {
   ctx.tier.attach(); // the debug panel's quality rows, above perf's measure rows
   ctx.lightSlots = lightsParam === 'off' ? null : makeLightSlots(ctx, lightsParam != null && isFinite(+lightsParam) ? Math.max(0, Math.round(+lightsParam)) : 3);
   ctx.perf.attach();
+  startup.mark('post');
   // Every material's shader program is compiled here, behind the title card. three otherwise compiles a
   // program the first time its object is drawn, and on ANGLE's Metal one compile holds a frame for tens of
   // milliseconds: turning towards a creature, a ruin or a region not yet seen stalled the frame and the
@@ -273,6 +344,7 @@ async function start() {
     await compiling;
     ctx.log(`programs compiled in ${(performance.now() - tc).toFixed(0)}ms (${renderer.info.programs.length})`);
   }
+  startup.mark('programs', { count: renderer.info.programs?.length ?? null });
 
   // Resize
   function resize() {
@@ -313,6 +385,7 @@ async function start() {
     if (url.searchParams.get('perf') === '1') ctx.log(`warm-up uploaded ${w.geometries} geometries, ${w.textures} textures, compiled ${w.programs} programs in ${w.ms}ms`);
   }
   ctx.far.start();
+  startup.mark('warmup');
 
   // Update throttling by distance (v3 stage 2): a callback registered with meta runs every frame within
   // `near` metres of the player, and beyond it at `hz` (or not at all when hz is 0), given the time it
@@ -421,6 +494,10 @@ async function start() {
   requestAnimationFrame(loop);
   window.__fp = ctx; // for the screenshot tool and the console
   document.body.classList.add('ready');
+  startup.mark('ready');
+  // v13 L3: the page's own bake (if the worker failed) is kept just after ready, then the modules' records, one an idle slot (L4); then the other trees' records go
+  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); let dl = null; for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; if (!(dl?.timeRemaining?.() > 8)) dl = await idle(); await (typeof f === 'function' ? f() : f); keepLater[i] = null; } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
+  ctx.keptStats = store.stats;
 }
 
-start().catch((e) => { console.error(e); document.getElementById('error').textContent = String(e?.stack || e); });
+start().catch((e) => { startup.abort(); console.error(e); document.getElementById('error').textContent = String(e?.stack || e); });

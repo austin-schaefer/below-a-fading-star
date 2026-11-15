@@ -4,6 +4,8 @@
 // and how many texture uploads a frame makes (a static texture re-uploaded every frame shows up here).
 // Mip chains count when they are allocated (texStorage levels, or generateMipmap: +1/3). The canvas's own
 // drawing buffer is not allocated through these calls, so it is estimated from the context's attributes.
+// v13: buffer uploads too (bufferData and bufferSubData: the bytes a frame sends, a geometry's first upload or a
+// refreshed instance buffer), for the bench's hitch log; geometry bytes held are perf-frames.js's geometryBytes().
 const BPP = {
   0x8058: 4, 0x8c43: 4, 0x8051: 4, 0x8c41: 4, 0x8059: 4, 0x8c3a: 4, // RGBA8 SRGB8_ALPHA8 RGB8 SRGB8 RGB10_A2 R11G11B10F
   0x881a: 8, 0x881b: 8, 0x8814: 16, 0x8815: 16,                       // RGBA16F RGB16F RGBA32F RGB32F
@@ -27,6 +29,7 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   const bound = new Map(); // unit*65536 + target -> texture
   let unit = 0, rb = null;
   let uploads = 0, uploadsFrame = 0, perFrame = 0, frames = 0;
+  let bufFrame = 0, bufLast = 0, bufTotal = 0, bufCalls = 0;
   // v6: uploads split by whether the texture had been uploaded before (a first sight, expected behind the title
   // card only) or is a data texture refreshed (the BatchedMesh's matrices and indirect textures, the shadow's...),
   // with the sizes of the refreshed ones
@@ -85,6 +88,10 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   wrap('renderbufferStorage', (a) => { if (rb) rbs.set(rb, a[2] * a[3] * bpp(a[1])); });
   wrap('renderbufferStorageMultisample', (a) => { if (rb) rbs.set(rb, a[3] * a[4] * bpp(a[2]) * Math.max(1, a[1])); });
   wrap('deleteRenderbuffer', (a) => { rbs.delete(a[0]); });
+  // bufferData(target, size | data, usage[, srcOffset, length]); bufferSubData(target, dstOffset, data[, srcOffset, length])
+  const viewBytes = (v, off, len) => (!v || typeof v === 'number' ? (v || 0) : len ? len * (v.BYTES_PER_ELEMENT || 1) : v.byteLength - (off || 0) * (v.BYTES_PER_ELEMENT || 1));
+  wrap('bufferData', (a) => { const n = viewBytes(a[1], a[3], a[4]); bufFrame += n; bufTotal += n; bufCalls++; });
+  wrap('bufferSubData', (a) => { const n = viewBytes(a[2], a[3], a[4]); bufFrame += n; bufTotal += n; bufCalls++; });
 
   const MB = (b) => Math.round(b / 1048576 * 10) / 10;
   function bytesOf(t) { let s = 0; for (const v of tex.get(t)?.values() || []) s += v; return s; }
@@ -98,13 +105,14 @@ export function installGpuMem(gl, canvas, { late = false } = {}) {
   return {
     bytesOf,
     get upFirst() { return upFirst; }, get upData() { return upData; },
+    get lastTexUploads() { return perFrame; }, get lastBufBytes() { return bufLast; }, // the frame just ended
     dataDims() { const o = {}; for (const [k, v] of dataDims) o[`${k >> 16}x${k & 65535}`] = v; return o; },
-    frame() { perFrame = uploadsFrame; uploadsFrame = 0; frames++; },
+    frame() { perFrame = uploadsFrame; uploadsFrame = 0; bufLast = bufFrame; bufFrame = 0; frames++; },
     stats() {
       let t = 0; for (const k of tex.keys()) t += bytesOf(k);
       let r = 0; for (const v of rbs.values()) r += v;
       const bb = backbuffer();
-      return { late, textureMB: MB(t), renderbufferMB: MB(r), backbufferMB: MB(bb), totalMB: MB(t + r + bb), textures: tex.size, renderbuffers: rbs.size, uploads, uploadsLastFrame: perFrame };
+      return { late, textureMB: MB(t), renderbufferMB: MB(r), backbufferMB: MB(bb), totalMB: MB(t + r + bb), textures: tex.size, renderbuffers: rbs.size, uploads, uploadsLastFrame: perFrame, bufferUploads: bufCalls, bufferUploadMB: MB(bufTotal) };
     },
   };
 }

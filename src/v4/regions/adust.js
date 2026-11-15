@@ -11,35 +11,14 @@ import * as THREE from 'three';
 import { SUN, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 import { buildSkin, instanced, meshStats, leanShader, skinGround } from './skin.js';
+import { keptHeights } from '../../v13/tape.js'; // v13 L4: the ground's answers kept between visits
+import { N, SUNX, SUNZ, SUN_YAW, sandAt, dune, height } from './height/adust.js'; // the height hook and what it reads (v13 L2)
+export { height };
 
 const KEY = 'adust';
-const N = makeSimplex(20261107 + 808);
-// the sun's direction on the ground (toward it), for the varnish and the beetles
-const SUNX = SUN.dir.x / Math.hypot(SUN.dir.x, SUN.dir.z), SUNZ = SUN.dir.z / Math.hypot(SUN.dir.x, SUN.dir.z);
-const SUN_YAW = Math.atan2(SUNX, SUNZ); // a mesh built facing +z, turned by this, faces the sun
-
-// where the red sand drifts (else cracked clay)
-const sandAt = (x, z) => smoothstep(0.62, 0.8, N.fbm2(x * 0.035 + 7, z * 0.035 - 3, 3) * 0.5 + 0.5 + 0.08 * N.noise2(x * 0.2, z * 0.2));
-// the drifts' ripples and small dunes: crests run north-south, a long west face and a short steep lee to the east
-function dune(x, z) {
-  const u = (x + N.noise2(x * 0.03, z * 0.05) * 9 + z * 0.12) / 6.5, f = u - Math.floor(u);
-  return (f < 0.78 ? f / 0.78 : (1 - f) / 0.22) ** 1.4;
-}
-
-// ---------------------------------------------------------------- relief: small dunes in the drifts (positive: the
-// coarse pass leaves them to the skin)
-export function height(h, x, z, w, coarse) {
-  if (coarse) return h;
-  const s = sandAt(x, z) * smoothstep(0.3, 0.8, w);
-  return s > 0 ? h + s * 0.42 * dune(x, z) : h;
-}
+export { ground } from './ground/adust.js'; // the ground hook, three-free (v13 L3)
 
 // the terrain under and round the skin: green failing into ochre and rust over the boundary
-const cOchre = new THREE.Color('#8a4a2c'), cRust = new THREE.Color('#7a2a16'); // v8-02: redder, further from the moor
-export function ground(col, x, z, w) {
-  const k = smoothstep(0.04, 0.5, w);
-  col.lerp(cOchre, k).lerp(cRust, k * 0.4 * (0.5 + 0.5 * N.noise2(x * 0.05, z * 0.05)));
-}
 
 export const cover = { density: { grass: 0, sedge: 0, heather: 0, bracken: 0, flowers: 0, fleshy: 0, reeds: 0, trees: 0 } };
 export const stone = { density: 0.2, tors: false };
@@ -116,7 +95,14 @@ function paveAt(x, z) {
 }
 
 // ---------------------------------------------------------------- the build
+// v13 L4: the build has no await, so all of it runs in its height tape (src/v13/tape.js)
 export async function build(ctx) {
+  const tape = await keptHeights(ctx, 'region-adust');
+  tape.run(() => buildNow(ctx));
+  tape.done();
+}
+
+function buildNow(ctx) {
   const { THREE: T, terrain } = ctx;
   const low = ctx.quality === 'low';
   const rng = ctx.makeRng(8300);

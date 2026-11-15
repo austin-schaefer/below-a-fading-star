@@ -1,6 +1,6 @@
 // The settings panel (v7-08): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
 // parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture and a list of
-// places to teleport to. UI only: it builds no world, draws nothing and registers no per-frame update; with the
+// places to teleport to, and (v13) Measure, which reloads into the bench. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
 // ctx.controls (controls.js), ctx.quality (tier.js) and ctx.terrain lazily, because those build after the hud.
 import { LANDMARKS, REGION_CARDS, SITES, SPAWN, SUN } from './world.js';
@@ -224,6 +224,20 @@ export function buildSettings(ctx) {
     ctx.fall?.refresh();
     syncFall();
   });
+
+  // --- measure (v13): reload into the bench (src/perf.js, ?bench=45&perf=1) at the tier in use; it ends on a panel whose
+  // Copy gives a short JSON; the bench takes its params off the URL when done (and q, unless it was there before), and its
+  // Close reloads that clean URL, so the profiler and its hooks are gone and a refresh is an ordinary visit
+  function measureUrl() {
+    const u = new URL(location.href);
+    const hadQ = u.searchParams.has('q'); // measure=q: keep it afterwards; measure=1: the bench takes it off again
+    for (const k of ['pos', 'yaw', 'pitch', 'tier', 'record']) u.searchParams.delete(k);
+    u.searchParams.set('q', ctx.quality);
+    u.searchParams.set('bench', '45'); u.searchParams.set('perf', '1'); u.searchParams.set('measure', hadQ ? 'q' : '1');
+    return u.href;
+  }
+  api.measureUrl = measureUrl;
+  $('set-measure')?.addEventListener('click', () => api.navigate(measureUrl()));
 
   // --- teleport: the whole map under small headings
   let group;

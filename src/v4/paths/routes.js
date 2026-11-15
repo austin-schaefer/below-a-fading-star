@@ -5,8 +5,8 @@
 // ground from its source toward the plan's next point, never climbing, and ends where it reaches water or the
 // ground gives it nowhere lower to go. The kerb is straight. Each sample knows the region it crosses, and so its
 // material (MATERIALS). Shared by v4/paths.js (draws them), vegetation (wears the cover off them) and __fp.paths.
-import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../terrain.js';
-import { regionAt, regionDistance } from '../regions.js';
+import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../height/field.js'; // (v13 L2: the three-free heightfield)
+import { regionAt, regionDistance } from '../../height/regions.js';
 import { LANDMARKS, SITES } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 
@@ -112,6 +112,11 @@ function stripDist(x, z, S) {
   const t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez), 0, 1);
   return Math.hypot(x - ax - ex * t, z - az - ez * t) - S.half;
 }
+// whether (x, z) is certainly more than lim from strip S (its box, padded): stripDist is then lim or more
+function stripFar(x, z, S, lim) {
+  const R = S.half + lim + 1e-3;
+  return x < Math.min(S.a[0], S.b[0]) - R || x > Math.max(S.a[0], S.b[0]) + R || z < Math.min(S.a[1], S.b[1]) - R || z > Math.max(S.a[1], S.b[1]) + R;
+}
 export function inStrip(x, z, pad = 0) { for (const S of STRIPS) if (stripDist(x, z, S) < pad) return true; return false; }
 
 // ---------------------------------------------------------------- the walker's cost of a spot (cached on a 2 m grid)
@@ -132,9 +137,10 @@ function cellCost(ix, iz) {
 }
 function siteCost(x, z, avoid) {
   let c = 0;
-  for (const A of avoid) { const d = Math.hypot(x - A.x, z - A.z); if (d < A.r + 2) c += 40 * (1 - smoothstep(A.r - 2, A.r + 2, d)) + 10; }
+  // (v13 L2: the hypot only where the squared distance, with a margin, says it may be within reach)
+  for (const A of avoid) { const ex = x - A.x, ez = z - A.z, R = A.r + 2; if (ex * ex + ez * ez > R * R * 1.0001 + 1e-6) continue; const d = Math.hypot(ex, ez); if (d < R) c += 40 * (1 - smoothstep(A.r - 2, A.r + 2, d)) + 10; }
   for (const b of BLOCKS) if (x > b[0] - 1 && x < b[1] + 1 && z > b[2] - 1 && z < b[3] + 1) c += 50;
-  for (const S of STRIPS) { const d = stripDist(x, z, S); if (d < 3) c += 6 * (1 - d / 3); } // cross a strip, never run along it
+  for (const S of STRIPS) { if (stripFar(x, z, S, 3)) continue; const d = stripDist(x, z, S); if (d < 3) c += 6 * (1 - d / 3); } // cross a strip, never run along it
   return c;
 }
 const costAt = (x, z, avoid) => cellCost(Math.floor(x / 2), Math.floor(z / 2)) + siteCost(x, z, avoid);
@@ -298,6 +304,14 @@ export function leads() {
   }));
   BUILT = { list: out, grid, ms: performance.now() - t0 };
   return BUILT;
+}
+
+// (v13 L3) leads traced elsewhere (the bake's worker, or the store): the same object leads() returns, cloned. Only
+// before any heightAt that would see them (runnelCut reads them), and only once.
+export function setLeads(B) {
+  if (BUILT) throw new Error('setLeads: the leads are already traced');
+  if (!B || !Array.isArray(B.list) || !(B.grid instanceof Map)) throw new Error('setLeads: not a leads() object');
+  BUILT = B;
 }
 
 // The nearest lead at (x, z), if (x, z) is on it: { id, kind, material (key), name (MATERIALS), d, s, along } or null

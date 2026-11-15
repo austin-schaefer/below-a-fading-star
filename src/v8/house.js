@@ -22,7 +22,6 @@
 import * as THREE from 'three';
 import { TAVERNA, TAVERNA_BRACKETS } from '../structures/taverna.js';
 import { makeGround } from '../structures/geo.js';
-import { waitFor, loaded } from '../v7/workers/rig.js';
 import { hyp } from '../noise.js';
 import { layLamps, lampMesh, glowMesh, makeGutter, FICKLE, GLASS_Y } from './house/lamps.js';
 import { buildProps, bareGround } from './house/props.js';
@@ -41,7 +40,7 @@ export async function build(ctx) {
   const GR = makeGround(ctx), G = GR.groundAt, N2 = ctx.noise.noise2;
   const rng = ctx.makeRng(8050);
   // brief 03's brackets, once the structures have built (modules build in parallel)
-  if (ctx.strata?.on && loaded('structures')) await waitFor(() => TAVERNA_BRACKETS.length || null, 30000);
+  if (ctx.strata?.on) await ctx.built('structures'); // (v13 L3: its build settled, however long it takes; it was a 30 s poll)
 
   // ---------------------------------------------------------------- the plan
   const gc = G(cx, cz);
@@ -93,7 +92,7 @@ export async function build(ctx) {
   const gutter = makeGutter(rng);
   // the court's light: the house's own east-gallery lantern keeps its glass, and its light moves to the mast, warmer and
   // brighter, under the lamps (so the court is lit and the count of point lights near the paths stays what it was)
-  const old = loaded('structures') ? await waitFor(() => ctx.scene.getObjectByName('taverna-court-lantern'), 30000) : null;
+  const old = (await ctx.built('structures')) ? ctx.scene.getObjectByName('taverna-court-lantern') || null : null;
   old?.removeFromParent();
   const courtLight = new THREE.PointLight(new THREE.Color('#ffb070'), 0, 14, 2);
   courtLight.name = 'house-court-light'; courtLight.position.set(cx, gc + 4.2, cz);

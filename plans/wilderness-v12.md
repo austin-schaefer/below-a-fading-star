@@ -178,3 +178,14 @@ In flight: the critic (opus, on 8123, renders `critic-v12-*`). No worktree but t
 - Open and the owner's: #38 to #43 (bugs, `idea`), #44 (milestone, `idea`).
 
 **Status: released** as v12 on 2026-11-14 (the release PR from `next`; `tools/gh-release.sh v12`). Nothing is in flight; no worktree but the deploy one. The next session chooses the next piece of work: the natural one is a fix release for the ways' feet and #38 to #43.
+
+**2026-11-14, 21:23 PST. v12 is live** (PR #45, `8a9c7f3` on `main`; the GitHub release `v12`; #4 closed from it; `origin/main` merged back into `next`; the live site serves `src/v12/lift.js` and the settings row). One merge to `main` today.
+
+### Looking back
+
+- **What took longest, and did it need to?** A day and a half of nothing: the orchestrator's session hit its usage limit with two agents out, and neither the agents' reports nor one branch's commits were anywhere but that session. Picking it up took a cold review of each branch to learn what a report would have said. After that the tail took about three hours, an hour of it the gate and most of the rest two fix rounds (H5's review, the critic's list) that each waited on a whole test run.
+- **What was found late?** H5's stale stand-ins and culling (by the pickup's cold review: it had never had one). A walker inside a tor, old since v4, and three misspelt cards (by the critic). The fixed calls bound failing on `next` once the lift was in (by C1's subset: H5 set it on a world without the lift). That no way up can be found from the floor (by the critic: it was in "Done when" from the first day and never checked).
+- **What did the owner say more than once?** "sitrep?", "eta?", "please proceed", "your job is to carry all the way thru a final shipped milestone": they wanted the run to go to the end without stopping to report, and a plain time when they asked.
+- **What worked?** Treating a dead session's branch as an unreported hand-back (review cold, run its tests, ride it by hand) found real faults fast. The critic and the curator beside the last fix round. One agent for the whole of the critic's list.
+
+Changes to the harness (three): `world-code`'s Hand-back has an implementer push after every part and write its report into `briefs/v<N>/reports/<branch>.md`; `orchestrator`'s start of session says how to pick up after a dead session; its release steps begin by checking "Done when" before the critic goes out. No milestone idea filed: what the critic found is a fix release's worth and is in `plans/IDEAS.md`.

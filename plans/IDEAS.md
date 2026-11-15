@@ -143,3 +143,26 @@ H5 fixed five things seen from the tops (the haze and the sun's shadows under a 
 - Sound: the canyon rim measures the same as the open moor (the waterfall hardly registers); at the Lattice the 500 Hz band sits 11 dB over its neighbours; every pose dips 6 dB in the same 10 to 15 s slice (the bed is one clock everywhere); almost nothing above 4 kHz; no harness pose is at a height.
 - Settings: "Hidden" on the position row does not say whether pressing it shows or hides.
 - Familiar, could be any fantasy game: the hexagonal stepping stones, the coloured fairy lights and the fairground yellow and teal of the Pomegranate House (the owner's #42), the blue crystal field, the aqueduct arches. Could be nowhere else: the failing sun in its saddle between the two stone legs, the city of windows, the Halt's tally and the seat up to the sleeper; and, new, the tender's deck at the top of the stair, which the critic called the best thing here.
+
+## From v13 (performance), not done
+
+- **The bake's slope from the mesh** (`?bakeslope=mesh`, in the tree, off): 0.5 s off a first load on low and 1.3 s on medium, and it repaints the ground a little (34k of 309k colour values on low). For a milestone that is allowed to change the ground's colours.
+- **A shared height grid** sampled bilinearly: about 3 s of a first load at v13's start, and it moves things by centimetres on steep ground. Needs a milestone that re-places and re-renders everything.
+- **Vegetation is about twice its triangle budget** on medium and high (up to 838k against 400k at a station) and over on low at one; **fauna is over on calls** (26 to 30 against 25). `node tools/bench-report.mjs` prints both.
+- **A content manifest for the service worker**: if Netlify's 304s carry no commit stamp, the first return after each release downloads the release whole (about a cold load's network, once). A manifest of content hashes written at build would let unchanged files be kept across releases.
+- **Firefox misses two of the bake worker's files in the service worker's first-visit fill** (`strips.js`, `crossings.js`): two network requests on a repeat, harmless.
+- **The worker on a two-core phone** is unmeasured (no way to limit cores here); the 4x throttle does not slow a worker. A real phone's numbers, from the settings menu's Measure row, would settle what the bake costs there.
+- **`render` is 57% of a median frame's JS** (three's own traversal and sorting) and `far.js`'s packs are in most of the slowest frames at a 4x throttle; no frame is over 50 ms, so neither was touched.
+- **Compile and warm-up** (0.5 to 1.0 s of the load) were left: the main thread waits on the GPU process while 218 programs link. Fewer program variants would shorten it.
+- **The Measure row, finished**: while it runs the profiler's overlay sits on the title's wordmark; Close reloads to the title card and loses the visitor's place (bring them back to where they stood, as the Quality row does); the result is a diagnostic panel, which is right for the Copy button and wrong for the first thing a visitor reads: one plain sentence first ("the walk ran smoothly here" / "the walk struggled here, most at the ..."), the table beneath.
+- **On a local server the kept store refetches every loaded script** to hash its text (there is no commit stamp there), so the owner's view on 8123 fetches everything twice. Hash from the HTTP cache (`force-cache`), or key by `git rev-parse` written by `tools/serve.sh`.
+
+## A shorter suite (from v13's audit; estimates by reading, not measured)
+
+World loading is now a small share of the gate's 39 minutes; two tests hold about 40% of it in real-time waiting: `acts` (about 10 min) and `audio` (about 7 min, 226 s of it fixed settle sleeps). `tools/suite.sh` prints each test's seconds: check these against it before starting.
+
+- **`audio-test.mjs`'s settle after each cue** (about 2 min): wait until the cue's voices have left and the cue bus is back to the bed, capped at the fixed settle. Risk: a delayed part bleeding into the next bed; this test has flaked by 0.5 dB before.
+- **Fast-forward hooks for the acts** (about 2.5 min): the seat's ride, the pours and the "find" walks run in real time. Needs source changes, and changes what the test proves; keep one act in real time.
+- **`contrast-survey.mjs` in a gate mode** (about 50 s): the gate reads 13 of the 19 poses' frames.
+- **One browser profile for the suite** (about 1 min): every test after the first loads from the kept store. Most tests would then prove the world built from tapes, not cold; `loading`, `sw`, `perf`, `pan`, `record` must stay cold.
+- **Two browsers for the gate when nothing else runs**: the owner's call (the pace rule is one browser an agent); it would roughly halve the gate.

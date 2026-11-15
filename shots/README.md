@@ -99,6 +99,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 84 | v12 the lift: the station, the caged carriage, the ride and the gallery with its cell |
 | 85 | v12 the fall setting: "A long fall costs" in the settings menu |
 | 86 | v12 the orchestrator's own climbs: the ice and the other ways up |
+| 87 | v13 a quicker door: the same walk, loaded in half the time; the Measure row; the pairs it was checked with |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp` and `gallery-v12.webp` (`83-stair-orch-home`, the box v12 starts) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -728,5 +729,14 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `85-fall-setting-panel.webp` | The settings menu with "A long fall costs" switched on. |
 | `86-orch-ice-bridge-end-back.webp` | The bridge's end, the Lattice and the ruined court below. |
 | `86-orch-ice-slot-end-back.webp` | The orchestrator's climb of the ice: the slot's end looked back down. |
+| `87-bakeslope-wrongcolour-after.webp` | The rejected change: the terrain bake's slope taken from the mesh, rocks a shade lighter, left off. |
+| `87-bakeslope-wrongcolour-before.webp` | The ground as it ships, the same station before the slope-from-mesh trial. |
+| `87-checked-wrongcolour-after.webp` | How the release was checked: the same station after the loading work, meant to look identical. |
+| `87-checked-wrongcolour-before.webp` | The same station before the loading work. |
+| `87-door-loading-bar.webp` | The door with its loading bar, "wearing the paths", in the fallback font. |
+| `87-first-view-medium.webp` | The release's picture: the first view after "Go out", Carcanet Keep under the sun. |
+| `87-meadow-medium.webp` | A plain view in the Heliotrope Sward, taken on the release candidate. |
+| `87-measure-panel-phone.webp` | The Measure result panel on a phone: frame times, hitches and the ten slowest frames. |
+| `87-measure-row-phone.webp` | The settings menu's new Measure row on a phone. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

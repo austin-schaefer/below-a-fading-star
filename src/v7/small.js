@@ -21,12 +21,10 @@ function flags() {
 async function lynchetsWalls(ctx) {
   const q = new URLSearchParams(location.search), only = q.get('only'), skip = (q.get('skip') || '').split(',');
   if ((only && !only.split(',').includes('region-lynchets')) || skip.includes('region-lynchets')) return null;
-  for (let k = 0; k < 1200; k++) {
-    const m = ctx.scene.getObjectByName('lynchets-walls');
-    if (m && ctx.regions?.lynchetsWalls) return m;
-    await new Promise((r) => setTimeout(r, 50));
-  }
-  return null;
+  // (v13 L3) once its build has settled, however long it takes: it was a 60 s poll, so a slow enough load built without it
+  if (!(await ctx.built('region-lynchets'))) return null;
+  const m = ctx.scene.getObjectByName('lynchets-walls');
+  return m && ctx.regions?.lynchetsWalls ? m : null;
 }
 
 export async function build(ctx) {

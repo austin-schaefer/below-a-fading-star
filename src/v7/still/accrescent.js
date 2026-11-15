@@ -25,8 +25,10 @@ export async function buildAccrescent(ctx, G) {
   const { scene, terrain } = ctx, low = ctx.quality === 'low', site = SITES.accrescent, keep = ctx.landmarks.castle;
   const rng = ctx.makeRng(7321);
   // the outwash's own meshes (the region builds beside this module): the erratics the line must pass, the cobbles it clears
-  const waitFor = async (name) => { let m = null; for (let t0 = performance.now(); !(m = scene.getObjectByName(name)) && performance.now() - t0 < 25000;) await new Promise((r) => setTimeout(r, 60)); return m; };
-  const errMesh = await waitFor('outwash-erratics');
+  // (v13 L3: once the region's build has settled, however long it takes; it was a 25 s poll)
+  const outwashBuilt = await ctx.built('region-outwash');
+  const waitFor = (name) => (outwashBuilt ? scene.getObjectByName(name) || null : null);
+  const errMesh = waitFor('outwash-erratics');
   const erratics = [];
   if (errMesh) { const M = new THREE.Matrix4(), v = new THREE.Vector3(), s = new THREE.Vector3(), q = new THREE.Quaternion(); for (let i = 0; i < errMesh.count; i++) { errMesh.getMatrixAt(i, M); M.decompose(v, q, s); erratics.push({ x: v.x, z: v.z, r: Math.max(s.x, s.z) * 1.25 + 0.55 }); } }
 
@@ -213,7 +215,7 @@ export async function buildAccrescent(ctx, G) {
   {
     const dead = new THREE.Matrix4().makeScale(0, 0, 0), M = new THREE.Matrix4(), v = new THREE.Vector3();
     for (const nm of ['outwash-cobbles', 'outwash-cushions']) {
-      const m = await waitFor(nm); if (!m) continue;
+      const m = waitFor(nm); if (!m) continue;
       let n = 0;
       for (let i = 0; i < m.count; i++) {
         m.getMatrixAt(i, M); v.setFromMatrixPosition(M);

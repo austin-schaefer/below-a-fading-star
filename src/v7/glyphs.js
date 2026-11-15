@@ -16,12 +16,9 @@ import { buildErraticGlyph } from './glyphs/erratic.js';
 async function erraticMesh(ctx) {
   const q = new URLSearchParams(location.search), only = q.get('only'), skip = (q.get('skip') || '').split(',');
   if ((only && !only.split(',').includes('region-outwash')) || skip.includes('region-outwash')) return null;
-  for (let k = 0; k < 1200; k++) {
-    const m = ctx.scene.getObjectByName('outwash-erratics');
-    if (m) return m;
-    await new Promise((r) => setTimeout(r, 50));
-  }
-  return null;
+  // (v13 L3) once its build has settled, however long it takes: it was a 60 s poll, so a slow enough load built without it
+  if (!(await ctx.built('region-outwash'))) return null;
+  return ctx.scene.getObjectByName('outwash-erratics') || null;
 }
 
 export async function build(ctx) {

@@ -81,7 +81,7 @@ Before you push, run, in sequence, with `B=http://localhost:PORT` and `SHOT_ANGL
 - `node tools/grass-flicker-test.mjs low $B`
 - `node tools/build-artifact.mjs` (the single-file artifact and `commit.json`)
 
-Outside the gate, for the work that needs them: `tools/pop-test.mjs` (what pops, swaps and uploads; exits 1 only on gated rows) with `tools/pair-diff.mjs` (a picture difference in the survey's numbers, the unit briefs state tolerances in), and `tools/bloom-test.mjs` (bloom's shape). `tools/suite.sh` itself is the orchestrator's, once a batch.
+Outside the gate, for the work that needs them: `tools/pop-test.mjs` (what pops, swaps and uploads; exits 1 only on gated rows) with `tools/pair-diff.mjs` (a picture difference in the survey's numbers, the unit briefs state tolerances in), and `tools/bloom-test.mjs` (bloom's shape). The whole of `tools/suite.sh` is the orchestrator's, once a batch on `next` and once as the gate: an implementer does not run it whole on a branch, shared code or not (it takes 40 minutes and a browser the whole time). Run the lines near your change with `ONLY=name,name tools/suite.sh PORT`, which makes the gate's exact calls; if you think your change could reach a test far from it, name that test in your report and the orchestrator's batch run will show it.
 
 ## Reviewing a branch
 
@@ -94,6 +94,7 @@ A change to a surface's shader (ground, rock, water) is also rendered close and 
 An implementer, when done:
 
 1. Commits by part with conventional messages (`feat(wilderness): …`).
-2. `git fetch origin && git merge origin/next`, then pushes the branch. No merge into `next`, no PR.
-3. Kills its server.
-4. Reports in under 200 words (or what the brief says): what changed, the exact test commands and the counts they printed, the renders to look at (paths in `shots/wip/`), any default it took.
+2. `git fetch origin && git merge origin/next`, then pushes the branch. No merge into `next`, no PR. Push after every part, not only at the end, and before any long test run: a session can die mid-run, and what is not pushed and not written down is lost with it (v12's H5 sat unpushed and unreported for a day and a half).
+3. Writes the report's facts (what changed, the test counts, the renders, the defaults) into `briefs/v<N>/reports/<branch>.md` on the branch and pushes it, so the report outlives the session that asked for it.
+4. Kills its server.
+5. Reports in under 200 words (or what the brief says): what changed, the exact test commands and the counts they printed, the renders to look at (paths in `shots/wip/`), any default it took.

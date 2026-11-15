@@ -44,7 +44,7 @@ await page.evaluate(() => {
   fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1;
   // tag every object with its module
   const owner = new Map();
-  for (const [name, m] of fp.perf._mods) for (const o of m.objects) o.traverse((c) => owner.set(c, name));
+  for (const [name, objects] of fp.modules) for (const o of objects) o.traverse((c) => owner.set(c, name));
   const acc = window.__cost = { main: {}, shadow: {}, tag(o) { let n = owner.get(o) || owner.get(o.userData.farOf); if (!n) { let p = o; while (p && !owner.get(p)) p = p.parent; n = (p && owner.get(p)) || 'core:' + (o.name || o.geometry?.type || o.type); owner.set(o, n); } return n; } };
   const hook = (o) => {
     if (o.__costHooked || !(o.isMesh || o.isPoints || o.isLine || o.isSprite)) return;

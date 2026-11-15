@@ -33,15 +33,21 @@ const OFF = typeof location !== 'undefined' && new URLSearchParams(location.sear
 // ---------------------------------------------------------------- the distance field (local frame)
 // u: metres out along the seat's radial from the plinth's edge (toward the sun; the figure faces -u, the bowl),
 // v: across, positive toward the figure's own wall, y: metres above the bench.
-const sminK = (a, b, k) => { const h = clamp(0.5 + 0.5 * (b - a) / k, 0, 1); return lerp(b, a, h) - k * h * (1 - h); };
+const sminK = (a, b, k) => { let h = 0.5 + 0.5 * (b - a) / k; h = h < 0 ? 0 : h > 1 ? 1 : h; return b + (a - b) * h - k * h * (1 - h); }; // clamp and lerp, inlined
 const smaxK = (a, b, k) => -sminK(-a, -b, k);
-// tapered capsule from A to B (radii ra, rb), v stretched by sv
-function cap(u, v, y, A, B, ra, rb, sv = 1) {
-  const pu = u - A[0], pv = (v - A[1]) / sv, py = y - A[2];
+// A tapered capsule from A to B (radii ra, rb), squashed across by sv: capPrep works out once what depends only on the
+// capsule (v13-L5; the field is evaluated about a million times a load), capAt(u, v, y, C) is the distance
+function capPrep(A, B, ra, rb, sv = 1) {
   const bu = B[0] - A[0], bv = (B[1] - A[1]) / sv, by = B[2] - A[2];
-  const h = clamp((pu * bu + pv * bv + py * by) / (bu * bu + bv * bv + by * by + 1e-9), 0, 1);
+  return { a0: A[0], a1: A[1], a2: A[2], sv, bu, bv, by, bb: bu * bu + bv * bv + by * by + 1e-9, ra, dr: rb - ra, m: Math.min(1, sv) };
+}
+function capAt(u, v, y, C) {
+  const pu = u - C.a0, pv = (v - C.a1) / C.sv, py = y - C.a2;
+  const bu = C.bu, bv = C.bv, by = C.by;
+  let h = (pu * bu + pv * bv + py * by) / C.bb;
+  h = h < 0 ? 0 : h > 1 ? 1 : h;
   const du = pu - bu * h, dv = pv - bv * h, dy = py - by * h;
-  return (Math.sqrt(du * du + dv * dv + dy * dy) - lerp(ra, rb, h)) * Math.min(1, sv);
+  return (Math.sqrt(du * du + dv * dv + dy * dy) - (C.ra + C.dr * h)) * C.m;
 }
 function box(u, v, y, c, hs, r) {
   const qu = Math.abs(u - c[0]) - hs[0] + r, qv = Math.abs(v - c[1]) - hs[1] + r, qy = Math.abs(y - c[2]) - hs[2] + r;
@@ -101,18 +107,20 @@ function makeField(sk, noise, turn) {
   const bodyU = (u, v) => PIVOT + ct * (u - PIVOT) + st * v;
   const bodyV = (u, v) => -st * (u - PIVOT) + ct * v;
   // body only (no bench or wall), for the rim mask and the fillet's reach
+  const T = sk.torso, torso = [], blades = sk.blades.map((b) => capPrep(b[0], b[0], b[1], b[1])), parts = sk.parts.map((p) => capPrep(p[0], p[1], p[2], p[3]));
+  for (let i = 0; i < T.length - 1; i++) torso.push(capPrep(T[i][0], T[i + 1][0], T[i][1], T[i + 1][1], 1.3));
+  const neck = capPrep(sk.neck[0], sk.neck[1], sk.neck[2], sk.neck[2] * 0.92);
   function body(us, vs, y) {
     const u = bodyU(us, vs), v = bodyV(us, vs);
     let d = 1e9;
-    const T = sk.torso;
-    for (let i = 0; i < T.length - 1; i++) d = sminK(d, cap(u, v, y, T[i][0], T[i + 1][0], T[i][1], T[i + 1][1], 1.3), 6);
-    for (const b of sk.blades) d = sminK(d, cap(u, v, y, b[0], b[0], b[1], b[1]), 5);
+    for (let i = 0; i < torso.length; i++) d = sminK(d, capAt(u, v, y, torso[i]), 6);
+    for (let i = 0; i < blades.length; i++) d = sminK(d, capAt(u, v, y, blades[i]), 5);
     // the neck and its weathered break
     const c = sk.cut, n = c.n;
-    let nk = cap(u, v, y, sk.neck[0], sk.neck[1], sk.neck[2], sk.neck[2] * 0.92);
+    let nk = capAt(u, v, y, neck);
     nk = smaxK(nk, (u - c.p[0]) * n[0] + (v - c.p[1]) * n[1] + (y - c.p[2]) * n[2], 3.5);
     d = sminK(d, nk, 5);
-    for (const p of sk.parts) d = sminK(d, cap(u, v, y, p[0], p[1], p[2], p[3]), 3.2);
+    for (let i = 0; i < parts.length; i++) d = sminK(d, capAt(u, v, y, parts[i]), 3.2);
     for (const h of sk.hands) d = sminK(d, box(u, v, y, h.c, h.hs, 1.8), 2.5);
     return d;
   }
@@ -288,26 +296,35 @@ export async function build(ctx) {
   if (OFF) { ctx.thrones = { stats: () => ({ calls: 0, tris: 0 }), rim: null, off: true }; return; }
   const seats = ctx.mountains.seats;
   const cell = ctx.quality === 'low' ? 2.4 : 1.7;
-  const out = { pos: [], nrm: [], col: [], rim: [], idx: [] };
   const t0 = performance.now();
   await ctx.progress('carving the thrones', 0);
-  // seat 0 (-420, 100) has its wall on +across, seat 1 (-400, 200) on -across; the two crawl out of step
-  buildOne(ctx, seats[0], 1, 1, out, cell);
-  await ctx.progress('carving the thrones', 0.5);
-  buildOne(ctx, seats[1], -1, -1, out, cell);
+  // v13 L4: the two colossi's arrays are computed once and kept (ctx.kept). buildOne touches nothing but its own
+  // fresh rng (makeRng(8810 + side * 7)), its own simplex, heightAt (pure) and these arrays, so a repeat visit that
+  // skips it leaves every other stream where it was
+  const carve = async () => {
+    const out = { pos: [], nrm: [], col: [], rim: [], idx: [] };
+    // seat 0 (-420, 100) has its wall on +across, seat 1 (-400, 200) on -across; the two crawl out of step
+    buildOne(ctx, seats[0], 1, 1, out, cell);
+    await ctx.progress('carving the thrones', 0.5);
+    buildOne(ctx, seats[1], -1, -1, out, cell);
+    // as the attributes below take them (Float32; the index Uint16 under 65536 vertices)
+    return { pos: new Float32Array(out.pos), nrm: new Float32Array(out.nrm), col: new Float32Array(out.col), rim: new Float32Array(out.rim),
+      idx: out.pos.length / 3 > 65535 ? new Uint32Array(out.idx) : new Uint16Array(out.idx) };
+  };
+  const out = await (ctx.kept ? ctx.kept('thrones.mesh', carve) : carve());
   const t1 = performance.now();
   const n = out.pos.length / 3;
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(out.pos, 3));
-  geo.setAttribute('normal', new THREE.Float32BufferAttribute(out.nrm, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(out.col, 3));
-  geo.setAttribute('aRim', new THREE.Float32BufferAttribute(out.rim, 1));
+  geo.setAttribute('position', new THREE.BufferAttribute(out.pos, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(out.nrm, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(out.col, 3));
+  geo.setAttribute('aRim', new THREE.BufferAttribute(out.rim, 1));
   // the terrain material's own attributes, empty: no ice, no wet, no glacier, no wall water
   geo.setAttribute('aIce', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aWet', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aWall', new THREE.BufferAttribute(new Float32Array(n), 1));
   geo.setAttribute('aGlac', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  geo.setIndex(n > 65535 ? new THREE.Uint32BufferAttribute(out.idx, 1) : new THREE.Uint16BufferAttribute(out.idx, 1));
+  geo.setIndex(new THREE.BufferAttribute(out.idx, 1));
   geo.computeBoundingSphere();
 
   // the terrain's material, compiled again with the rim (as v4/regions/skin.js does for the ground skins)
