@@ -6,6 +6,7 @@
 // within SIGHT m whose head clears the terrain from a walker's eye; where none does, one is raised there, so the
 // rule the roads-test checks holds by construction.
 import { leads, nearestLead } from '../../v4/paths/routes.js';
+import { pitEdge } from '../../v4/paths/ground.js';
 import { heightAt, waterLevelAt, causewayDistance, slopeAt } from '../../terrain.js';
 import { regionAt } from '../../v4/regions.js';
 import { CAUSEWAY_V4, SUN } from '../../world.js';
@@ -82,6 +83,7 @@ export function placeGnomons() {
   // clear of every tread (its middle and 0.7 m more), off the causeway, dry and not on a steep bank
   const clearAt = (x, z, pad = 0.7) => {
     if (causewayDistance(x, z) < 2.6) return false;
+    if (pitEdge(x, z) < 1.5) return false; // v14-D2: none down in the Pit (its floor is v14/pit.js's, walked under the old ground)
     if (!dry(x, z) || slopeAt(x, z) > 0.6) return false;
     return !nearestLead(x, z, pad); // the leads' own grid: no tread (nor kerb, nor runnel) within pad of its edge
   };
