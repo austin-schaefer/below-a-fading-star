@@ -43,7 +43,7 @@ for (const st of STATIONS) {
   await page.goto(st.url, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
   const out = await page.evaluate(async (turns) => {
-    const fp = window.__fp, mods = fp.perf._mods, sm = fp.renderer.shadowMap;
+    const fp = window.__fp, sm = fp.renderer.shadowMap;
     document.getElementById('card')?.classList.add('hidden'); // full rate, as when walking
     const rec = [];
     let cur = null, prev = new Map(), mode = 'settle', yaw0 = fp.player.yaw, t0 = 0, turn = null;
@@ -70,11 +70,11 @@ for (const st of STATIONS) {
       if (cur) {
         cur.cpu = performance.now() - cur.at;
         cur.yaw = fp.player.yaw;
-        for (const m of mods.values()) {
-          const p = prev.get(m.name) || 0;
-          const d = m.cpu >= p ? m.cpu - p : m.cpu; // the block closed (reset) inside frameEnd
-          if (d > 0.05) cur.mods[m.name] = +d.toFixed(2);
-          prev.set(m.name, m.cpu);
+        for (const [name, cpu] of Object.entries(fp.perf.moduleCpu())) {
+          const p = prev.get(name) || 0;
+          const d = cpu >= p ? cpu - p : cpu; // the block closed (reset) inside frameEnd
+          if (d > 0.05) cur.mods[name] = +d.toFixed(2);
+          prev.set(name, cpu);
         }
         cur.newProgs = info.programs.slice(cur.progs).map((q) => q.name || q.cacheKey?.slice(0, 40)); cur.progs = info.programs.length - cur.progs; cur.geos = info.memory.geometries - cur.geos; cur.texs = info.memory.textures - cur.texs;
         cur.tris = fp.renderer.info.render.triangles; cur.calls = fp.renderer.info.render.calls;
