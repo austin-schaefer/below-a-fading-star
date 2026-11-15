@@ -26,7 +26,13 @@ Released <YYYY-MM-DD>.
 Known issues: <one to three plain items, only if they matter to a visitor>.
 
 <p><img src="shots/NN-subject-view.webp" width="24%" alt="what it shows"> <img ...> <img ...> <img ...></p>
+
+### Stats
+
+<what `tools/release-stats.mjs` printed>
 ```
+
+**Stats** (the owner, 2026-11-15: "for each milestone's release note, i'd like to include a \"stats\" seciton at the end: wall clock time from start of work until merged to main; total sub-agents; total tokens, and breakdown of tokens per sub-agent and per model"): every milestone's entry ends with the section `nice -n 10 node tools/release-stats.mjs <N> --to "$(date -Iseconds)"` prints, pasted as it is, last thing before the release PR is opened (the tag does not exist yet, so `--to` stops the clock; with no agent still running the few minutes to the merge cost nothing). It reads Claude Code's transcripts on this machine, so it can only be made here and only while they last; its header says what is and is not counted. A point release has no milestone doc: give it `--from` the time its work began, or leave the section out.
 
 **Pictures** (the owner, issue #25): each entry ends with about four representative screenshots from the curated keepers in `shots/`, in one `<p>` of `<img>` tags at `width="24%"` with a plain `alt`. Choose what a visitor would want to see of this release (the new thing from where they would meet it, a before and after of a fix), not test sheets. Paths are relative (`shots/...`), which GitHub renders in `RELEASES.md`; `tools/gh-release.sh` turns them into absolute addresses for the release page. A keeper must exist before the note can use it, so a point release that skips the curator still converts the three or four it shows (`magick in.png -quality 85 shots/NN-name.webp`, a row in `shots/README.md`). A hotfix with nothing to see has none.
 
