@@ -72,7 +72,7 @@ const res = await page.evaluate(async () => {
       const d = L.axis ? W.landmarkDistance(L, x, z) : Math.hypot(x - L.x, z - L.z) - Math.max(L.r, 15);
       if (d < best) { best = d; by = t.id; }
     }
-    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null, high: !!(L.feet && L.feet[0] > 20), edge: Math.hypot(L.x, L.z) > 320 });
+    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null, high: !!(L.feet && L.feet[0] > 20), below: !!(L.feet && L.feet[1] < -5), edge: Math.hypot(L.x, L.z) > 320 });
   }
   // ---- in sight: every 4 m, a visible gnomon within SIGHT m over the terrain
   const G = R.gnomons.filter((g) => g.visible);
@@ -200,8 +200,9 @@ const EXEMPT = {
 };
 for (const p of res.places) {
   // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the
-  // gallery: its card's feet over 20 m) or at the walk's edge (the passes); a `reached` on the ground fails
-  if (p.reached) { check(p.high || p.edge, `${p.name}: reached by ${p.reached}, not a track (it is ${p.high ? 'up' : p.edge ? 'at the walk\'s edge' : 'on the ground: give it a track'})`, `${p.d} m from ${p.by}`); continue; }
+  // gallery: its card's feet over 20 m), down (v14-D0: under the ground, its card's feet under -5 m: the Coffin Road) or at
+  // the walk's edge (the passes); a `reached` on the ground fails
+  if (p.reached) { check(p.high || p.below || p.edge, `${p.name}: reached by ${p.reached}, not a track (it is ${p.high ? 'up' : p.below ? 'under the ground' : p.edge ? 'at the walk\'s edge' : 'on the ground: give it a track'})`, `${p.d} m from ${p.by}`); continue; }
   if (EXEMPT[p.k]) check(p.d <= EXEMPT[p.k].max, `${p.name}: exempt (${EXEMPT[p.k].why}); the nearest track within ${EXEMPT[p.k].max} m of its reach`, `${p.d} m, ${p.by}`);
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }
