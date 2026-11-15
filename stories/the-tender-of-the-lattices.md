@@ -42,6 +42,7 @@ Whether there is anyone holding the lamp.
 
 ## Log
 
+- 2026-11-15, v14-B6 (#54, the owner: the path ended at the stair's back): the line of slabs runs into the stub's top, as the stair goes on from there; a heather trod off the Nave way comes round the tor to the stub's foot, so a walker meets the first step facing up it.
 - 2026-11-15, v14-B5 (#52, the owner): the stair is "Lonely Staircase"; it and "The Hanging Croft" have the owner's quotations.
 - 2026-11-15, v14-B3 (#52): the stub has its card, "The Diffident Stair"; the home on the lattice's foot is "The Hanging Croft".
 - 2026-11-12, v12-H3: written and built with the Diffident Stair (`src/v12/stair.js`); the seed was the milestone doc's ("a lamp already goes from lattice to lattice, stops at each a while as if tending it").
