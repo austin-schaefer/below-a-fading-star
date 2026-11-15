@@ -176,6 +176,37 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);
+  // v14-B4 (#52): the stand shows the place. Each named landmark's own centre (its `at`, for the places that stand on a line) lies within 40
+  // degrees of the view's centre line (the horizontal field is about 100 degrees across) and no collider shuts the view within 3 m of the eye
+  // (v12's critic: "Go-to stands face walls"; a stand that looks into a trunk or a wall at arm's length shows nothing). Stands whose y is below the terrain
+  // (a chamber, the Pit's floor) are left alone; so are the places with no landmark of their own (the living, the stories, the region cards).
+  const view = await page.evaluate(() => {
+    const fp = window.__fp, T = fp.terrain, out = [];
+    const marks = Object.values(fp.landmarks).filter((L) => L.name);
+    fp.settings.places.forEach((pl, i) => {
+      const L = marks.find((m) => m.name === pl.name || 'The moss light, ' + m.name === pl.name);
+      if (!L || pl.look === 'sun') { out.push(null); return; }
+      if (pl.y !== undefined && pl.y < T.heightAt(pl.x, pl.z) - 1) { out.push(null); return; }
+      fp.settings.teleport(pl);
+      const p = fp.player, fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw), c = L.at || L;
+      const tx = c.x - p.pos.x, tz = c.z - p.pos.z, d = Math.hypot(tx, tz) || 1;
+      const deg = Math.acos(Math.max(-1, Math.min(1, (fx * tx + fz * tz) / d))) * 180 / Math.PI;
+      let hit = null; const floor = Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1);
+      for (const k of fp.player.colliders) {
+        if (k.h !== undefined && k.y + k.h < floor) continue;
+        const ox = k.x - p.pos.x, oz = k.z - p.pos.z, t = ox * fx + oz * fz; // along the look
+        if (t < 0 || t > 3 + k.r) continue;
+        const off = Math.abs(ox * fz - oz * fx); // across it
+        if (off < k.r + 0.3 && t - Math.sqrt(Math.max(0, (k.r + 0.3) ** 2 - off * off)) < 3) { hit = { x: k.x, z: k.z, r: k.r }; break; }
+      }
+      // a place that is a line (an axis) or wider than the view, or that the stand stands in, is seen by its look point lying on it
+      const lk = pl.look && pl.look !== 'sun' ? Math.hypot(pl.look.x - c.x, pl.look.z - c.z) : 1e9, wide = !!L.axis || d < 2 || L.name === 'The Tumbling Water' /* its centre is the river's mid-reach; the stand shows the fall, 55 m off in the canyon wall */ || lk <= Math.max(L.r, 12) + 5;
+      out.push({ name: pl.name, deg: wide ? 0 : Math.round(deg), hit });
+    });
+    return out.filter(Boolean);
+  });
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked: the owner cut nine cards on #52, about 41 stands remain)
+  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 35 && badView.length === 0, { checked: view.length, badView });
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};

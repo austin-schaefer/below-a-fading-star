@@ -35,7 +35,17 @@ const CARD_POSES = {
   // v11.1-W4: the canyon's three were a rock at arm's length or a wall; each now on dry ground with the thing across open air
   river: { x: 208, z: 240, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the slope 26 m off
   cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
-  prospect: { x: 247, z: -36, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
+  orchard: { x: 80, z: -100, look: { x: 130, z: -90 }, pitch: 0.05 }, // v14-B4: from the grove's west side, the medlars and the path through (the old stand put a trunk across the frame)
+  byre: { x: -160, z: 48, look: { x: -148, z: 64 }, pitch: 0.05 }, // v14-B4: 21 m off, the roof clear of the wood's trunks
+  plinths: { x: 175, z: -160, look: { x: 148, z: -220 }, pitch: 0.1 }, // v14-B4: beside the road's foot, the plinths running off in file (the old stand was at a wall's foot)
+  nave: { x: 251, z: 24, look: { x: 255, z: 40 }, pitch: -0.4 }, // v14-B4: on the hole's north rim, looking down on the capitals (the old stand looked across the turf)
+  thrones: { x: -290, z: 85, look: { x: -324, z: 118 }, pitch: 0.3 }, // v14-B4: out of the wood's edge, the thrones against the sunset (the old stand looked into black trunks)
+  leerie: { x: 110, z: -12, look: { x: 128, z: 5 }, pitch: 0.05 }, // v14-B4: the standards and their lamplighter, the arch behind
+  prospect: { x: 248, z: -30, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
+};
+// v14-B4: a region card's stand (default: its card point, facing the spawn's way)
+const REGION_STANDS = {
+  lynchets: { x: -170, z: -95, look: { x: -200, z: -135 }, pitch: 0.1 }, // the terraced walls climbing the slope
 };
 // v11-F2: places that stand on the wall or in the air with no landmark; each a postcard from open ground
 const FAR_PLACES = [
@@ -48,8 +58,8 @@ const FAR_PLACES = [
 // tops on their own floor (y), the act places 9 m out in front of the act (v10-F1); v14-B5: the owner's cuts and renames
 const NAMED_POSES = {
   halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
-  tocsin: { x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
-  escalade: { x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // at its foot in the wood's southern fringe, the first flight climbing west between its walls
+  tocsin: { x: -60.6, z: 194.2, look: { x: -57.2, z: 203.4 }, pitch: 0.2 }, // 9 m from the ringing post (the act's lure, 20 degrees off the look) so the bell, hung to the east of it, and its arch are in the frame
+  escalade: { x: -120, z: 175, look: { x: -226, z: 195 }, pitch: 0.3 }, // from the tarn's side, 100 m off: the gate's masonry against the last of the sky (at its foot, in the wood, the stair stands in its own deep shade and the frame is black)
   causeway: { x: -150, y: 56, z: 213, look: { x: -60, z: 215 }, pitch: -0.04 }, // on the west deck between piers, running off east to the fallen bay and the footing course (nearer the stair's top the wall's shoulder rings the stand: the hole check)
   wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
   spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
@@ -94,7 +104,7 @@ function buildPlaces() {
   }
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
-  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
+  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw, ...REGION_STANDS[R.region] });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];
     if (x != null) out.push({ name: S.name, group: 'The living', x, z, yaw, pitch });
