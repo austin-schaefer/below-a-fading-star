@@ -41,6 +41,7 @@
   kbd { font-family: inherit; border: 1px solid rgba(219,170,134,0.4); border-radius: 2px; padding: 0 0.4em; margin: 0 0.1em; }
   #place { position: fixed; left: 0; right: 0; bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transform: translateY(8px); transition: opacity 1.6s ease, transform 1.6s ease; pointer-events: none; z-index: 5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #place.shown { opacity: 1; transform: none; }
+  body.touch #place { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 232px); } /* v12-C1: on touch, over the stick, the hop ring and the act's button (its top at 240 px), not under them */
   #card:not(.hidden) ~ #place { opacity: 0; } /* no place card behind the title or paused card */
   #place-name { font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.18em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); }
   #place-line { white-space: pre-line; max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; line-height: 1.35; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
@@ -198,7 +199,7 @@
   <div class="set-row"><span class="set-label">Show position, bottom left</span><button id="set-showpos" type="button" aria-pressed="false">Hidden</button></div>
   <h3>Falling</h3>
   <div class="set-row"><span class="set-label">A long fall costs</span><button id="set-fall" type="button" aria-pressed="false">Off</button></div>
-  <p class="set-note">Fall far and you wake by the keep.</p>
+  <p class="set-note">When on, fall far and you wake by the keep.</p>
   <h3>Marks</h3>
   <div class="set-row"><span class="set-label">What you have left on the moor, kept by this browser</span><button id="set-forget" type="button">Forget my marks</button></div>
   <h3>Go to</h3>
