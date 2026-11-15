@@ -159,12 +159,24 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
         }
         const d = await db(); if (!d) return false;
         const tx = d.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), sum: sumOf(data), data }, rkey(t, slot));
+        // (v13 L4) the main thread's share of a put: the checksum and IndexedDB's structured clone, timed
+        const p0 = performance.now(), sum = sumOf(data), p1 = performance.now();
+        tx.objectStore(STORE).put({ v: KEPT_FORMAT, key, tree: t, deps: dl, at: Date.now(), sum, data }, rkey(t, slot));
+        (stats.putMs ||= []).push({ slot, at: p0, sumMs: p1 - p0, putMs: performance.now() - p1 });
         const ok = await timeout(new Promise((res, rej) => { tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }), WAIT * 4, false);
         if (!ok) { note('errors', `put ${slot}: timed out`); return false; }
         note('puts', slot);
         return true;
       } catch (e) { note('errors', `put ${slot}: ${e?.name || e}`); return false; }
+    },
+    // (v13 L4) the slots this tree holds that start with prefix (keys only: no record is read)
+    async slots(prefix) {
+      try {
+        const t = await tree; if (!t) return [];
+        const d = await db(); if (!d) return [];
+        const r = await timeout(reqP(d.transaction(STORE, 'readonly').objectStore(STORE).getAllKeys(IDBKeyRange.bound(`${t}|${prefix}`, `${t}|${prefix}\uffff`))), WAIT);
+        return (r || []).map((k) => String(k).slice(t.length + 1));
+      } catch (e) { note('errors', `slots: ${e?.name || e}`); return []; }
     },
     // delete every record made by another tree (another commit, or the scripts' text against a commit)
     async prune() {
@@ -186,25 +198,39 @@ export function openKept({ base, off = false, log = () => {} } = {}) {
 // ctx.kept(name, compute) (v13 L3): a module's own computed data (typed arrays and plain objects, nothing with
 // methods or THREE in it) kept between visits. name: unique on the map ('rocks.place'); compute: () => data (or a
 // promise of it). On a hit it returns the kept copy without calling compute; on a miss it computes, returns that, and
-// keeps a snapshot taken at once, written straight away (later(fn) starts it and holds its promise). The key is the tier and the
-// URL's switches; the tree (the commit, or the scripts' text) is the store's. A module must build the same from either.
+// keeps a snapshot taken at once; later(fn) holds the write, which main.js runs after ready, one an idle slot (v13 L4).
+// The key is the tier and the URL's switches; the tree (the commit, or the scripts' text) is the store's. A module must
+// build the same from either. kept.preload() (v13 L4, main.js starts it at once and each build awaits it after its
+// import) reads and checks this tier's records before any build, so a build's own open()/kept() then waits only a
+// microtask, never on IndexedDB: the order builds register updates and colliders in is not moved by the store's timing.
 export function keptHelper(store, { quality, search, later }) {
   const key = `${quality}|${queryKey(search)}`;
   const used = new Set();
   const live = store && !store.off;
+  let pre = null; // name -> data or null, once preloaded
+  const preload = async () => {
+    if (!live) { pre = new Map(); return; }
+    const t0 = performance.now(), m = new Map(), suffix = `:${quality}`;
+    const names = (await store.slots('kept:')).filter((x) => x.endsWith(suffix)).map((x) => x.slice(5, -suffix.length));
+    await Promise.all(names.map(async (n) => { m.set(n, await store.get(`kept:${n}${suffix}`, key)); }));
+    pre = m;
+    store.stats.preloadMs = performance.now() - t0;
+  };
   // kept.open(name) (v13 L4): the slot itself, for data that is only whole after the build has run (a height tape,
-  // src/v13/tape.js): { data } on a hit, else { data: null }; keep(v) snapshots v at once and writes it straight away
+  // src/v13/tape.js): { data } on a hit, else { data: null }; keep(v) snapshots v at once and writes it after ready
   const open = async (name) => {
     if (used.has(name)) throw new Error(`ctx.kept: '${name}' asked for twice`);
     used.add(name);
     const slot = `kept:${name}:${quality}`, t0 = performance.now();
-    const hit = live ? await store.get(slot, key) : null;
+    let hit = null;
+    if (pre) { if (live && !pre.has(name)) store.stats.misses.push(`${slot}: none`); hit = pre.get(name) ?? null; pre.delete(name); }
+    else if (live) hit = await store.get(slot, key);
     const T = { name, getMs: performance.now() - t0 };
     (store.stats.timing ||= []).push(T);
-    if (hit != null) { T.hit = true; return { data: hit, timing: T, keep: () => false }; }
+    if (hit != null) T.hit = true;
     let kept = false;
     return {
-      data: null, timing: T,
+      data: hit, timing: T, // (keep(v) also replaces a hit: a height tape that finds a part of itself missing writes itself again)
       keep(v) {
         if (kept || !live) return false;
         kept = true;
@@ -225,5 +251,7 @@ export function keptHelper(store, { quality, search, later }) {
     return v;
   };
   kept.open = open;
+  let preP = null;
+  kept.preload = () => (preP ||= preload().catch(() => { pre = null; }));
   return kept;
 }

@@ -213,6 +213,7 @@ async function start() {
   const store = openKept({ base: document.baseURI, off: url.searchParams.get('kept') === '0', log: ctx.log });
   let keepNow = false; // v13 L4: a module's record is written after ready, one an idle slot (a write then was the cold load's 100 ms)
   ctx.kept = keptHelper(store, { quality, search: location.search, later: (fn) => keepLater.push(keepNow ? fn() : fn) }); // the contract: runtime.md, "The bake and the store"
+  const keptPre = ctx.kept.preload(); // v13 L4: this tier's records read and checked before any build (each awaits it after its import)
   const bake = startBake(ctx, url, store);
   ctx.terrain = bake.terrain;
   await bake.leads;
@@ -283,6 +284,7 @@ async function start() {
       if (serial) return mod;
       // reads the terrain mesh: after the bake, each in a task of its own (resumed together they were one long stall)
       if (o?.mesh && !ctx.terrain.baked) { await bake.baked; await new Promise((r) => setTimeout(r, 0)); t1 = performance.now(); }
+      await keptPre;
       await mod.build(ctx.perf.forModule(name)); // ctx as seen by this module: its updates and objects are tagged
       startup.built(name, t1);
       ok = true;
@@ -291,7 +293,7 @@ async function start() {
   };
   let results = await Promise.allSettled(wanted.map(([name, load, o]) => buildOne(name, load, performance.now(), o)));
   startup.mark('imports', null, lastImport || undefined);
-  if (serial) await bake.baked; // each build's time its own, the bake's not among them
+  if (serial) { await bake.baked; await keptPre; } // each build's time its own, the bake's and the store's not among them
   if (serial) {
     const loaded = results;
     results = [];
@@ -494,7 +496,7 @@ async function start() {
   document.body.classList.add('ready');
   startup.mark('ready');
   // v13 L3: the page's own bake (if the worker failed) is kept just after ready, then the modules' records, one an idle slot (L4); then the other trees' records go
-  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; await idle(); await (typeof f === 'function' ? f() : f); } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
+  setTimeout(() => { (async () => { await bake.info.keepLater?.(); const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(r, { timeout: 1000 }) : setTimeout(r, 0))); for (let i = 0; i < keepLater.length; i++) { const f = keepLater[i]; await idle(); await (typeof f === 'function' ? f() : f); keepLater[i] = null; } keepNow = true; await store.prune(); ctx.keptDone = true; })().catch((e) => console.warn('[fp] kept:', e)); }, 200);
   ctx.keptStats = store.stats;
 }
 

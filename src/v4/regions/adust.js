@@ -11,11 +11,11 @@ import * as THREE from 'three';
 import { SUN, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
 import { buildSkin, instanced, meshStats, leanShader, skinGround } from './skin.js';
-
-const KEY = 'adust';
 import { keptHeights } from '../../v13/tape.js'; // v13 L4: the ground's answers kept between visits
 import { N, SUNX, SUNZ, SUN_YAW, sandAt, dune, height } from './height/adust.js'; // the height hook and what it reads (v13 L2)
 export { height };
+
+const KEY = 'adust';
 export { ground } from './ground/adust.js'; // the ground hook, three-free (v13 L3)
 
 // the terrain under and round the skin: green failing into ochre and rust over the boundary
