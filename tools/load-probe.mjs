@@ -57,6 +57,7 @@ let browser = null, failed = null;
 const errors = [];
 if (opts.profile) {
   const { runProfile } = await import('./load-profile.mjs');
+  browser = await launch(); // a browser per run since L3: the profile's own
   const lines = [];
   const wait = (page) => page.waitForFunction(() => document.body?.classList.contains('ready') && window.__fp_startup?.report().ready != null, null, { timeout: 900000, polling: 250 });
   await runProfile({ browser, base, query, opts, wait, P: (s) => { lines.push(s); console.log(s); } });

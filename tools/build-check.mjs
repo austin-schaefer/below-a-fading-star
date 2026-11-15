@@ -14,7 +14,8 @@
 // InstancedMesh's matrices, colours and count, each object's world matrix, visibility and shadow, culling and render
 // order flags, each material's scalar, colour and vector properties, defines and uniforms (typed arrays by their
 // bytes), and each texture's pixels (a canvas's by getImageData, a DataTexture's data) and sampling parameters.
-// Not covered: shader code changed in onBeforeCompile, colliders, registered updates, acts, anything outside the
+// The colliders are one more line, 'colliders' (v13 L4: every one's fields bit for bit, the set in any order).
+// Not covered: shader code changed in onBeforeCompile, walkables, registered updates, acts, anything outside the
 // scene or parented under the camera. One line a module: its fingerprint, its object, attribute and texture counts
 // and the megabytes hashed. --record writes the entries with q and params; --against compares with a recording made
 // with the same q and params (it refuses otherwise) and prints IDENTICAL or MOVED a module, with the first entries
@@ -181,6 +182,14 @@ function install() {
         rootHashes.push(hashStr(entries.slice(e0).map((e) => e.k.slice(p.length) + '=' + e.h).join('\n')));
       });
       out[name] = { h: hashStr(rootHashes.sort().join('\n')), objs, attrs, texs, mb: +((bytes - b0) / 1048576).toFixed(1), entries };
+    }
+    // v13 L4: the colliders (ctx.controls.state.colliders), as one pseudo-module: each one's own fields in key order,
+    // the set sorted (modules register them in a racing order), so a builder that skips its registrations moves it
+    const cl = ctx.controls?.state?.colliders;
+    if (Array.isArray(cl)) {
+      const one = (c) => Object.keys(c).sort().map((k) => `${k}=${typeof c[k] === 'number' ? hashBuf(new Float64Array([c[k]])) : typeof c[k] === 'object' ? '[obj]' : String(c[k])}`).join(',');
+      const list = cl.map(one).sort();
+      out.colliders = { h: hashStr(list.join('\n')), objs: list.length, attrs: 0, texs: 0, mb: 0, entries: [{ k: 'colliders:set', h: hashStr(list.join('\n')), n: list.length }] };
     }
     return { ms: Math.round(performance.now() - t0), mods: out };
   }
