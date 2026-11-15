@@ -68,7 +68,7 @@ run treelod tools/tree-lod-test.mjs $B
 run stair tools/stair-test.mjs "$B/?q=low"
 run pan tools/pan-test.mjs "$B/?q=medium&perf=1"
 run record tools/record-test.mjs "$B/?q=medium&record=6&pos=-190,165"
-run sw tools/sw-test.mjs $((PORT + 1000)) # v13-L1: the service worker on a site of its own, served on the port 1000 up
+run sw tools/sw-test.mjs $((PORT + 1000)) # v13-L1: the service worker on a site of its own, served on the port 1000 up (about 25 s)
 run artifact tools/build-artifact.mjs > /dev/null
 
 [ -n "$started" ] && lsof -ti:"$PORT" | xargs kill 2>/dev/null

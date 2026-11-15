@@ -20,15 +20,15 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascr
 // files(path) → Buffer | string | null, for '/'-rooted paths ('/' asks for '/index.html'); commit() → the current commit
 // or null (no header, as a host without the build's _headers); hooks: { before(path, req, res) → true if handled }
 export function serveSite({ port, files, commit, stamp304 = false, hooks = {} }) {
-  const counts = new Map(), log = [];
+  const counts = new Map(), log = [], opts = { stamp304 }; // opts.stamp304 may change between requests
   const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, 'http://x');
     let path = decodeURIComponent(u.pathname);
     if (path === '/__count') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(Object.fromEntries(counts))); return; }
     if (path === '/__reset') { counts.clear(); log.length = 0; res.writeHead(204); res.end(); return; }
+    if (path.endsWith('/')) path += 'index.html'; // counted as /index.html
     counts.set(path, (counts.get(path) || 0) + 1);
     log.push({ path, t: Date.now(), cond: !!req.headers['if-none-match'] });
-    if (path.endsWith('/')) path += 'index.html';
     const c = commit();
     const head = { 'x-content-type-options': 'nosniff' };
     if (c) head['x-fp-commit'] = c;
@@ -41,14 +41,14 @@ export function serveSite({ port, files, commit, stamp304 = false, hooks = {} })
     head.etag = etag;
     head['content-type'] = TYPES[extname(path)] || 'application/octet-stream';
     if (req.headers['if-none-match'] === etag) {
-      if (!stamp304) delete head['x-fp-commit'];
+      if (!opts.stamp304) delete head['x-fp-commit'];
       res.writeHead(304, head); res.end(); return;
     }
     head['content-length'] = buf.length;
     res.writeHead(200, head);
     res.end(req.method === 'HEAD' ? undefined : buf);
   });
-  return new Promise((ok) => server.listen(port, () => ok({ server, counts, log, close: () => new Promise((d) => { server.closeAllConnections?.(); server.close(d); }) })));
+  return new Promise((ok) => server.listen(port, () => ok({ server, counts, log, opts, close: () => new Promise((d) => { server.closeAllConnections?.(); server.close(d); }) })));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

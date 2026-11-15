@@ -235,78 +235,102 @@
 </script>
 <script id="sw-register">
   // The service worker (v13-L1, sw.js says what it does; DEPLOY.md how to turn it off). Registered only where the
-  // deploy stamps commit.json (Netlify), never on localhost unless ?sw=1 (tools/sw-test.mjs). ?sw=0 unregisters it,
-  // deletes its caches and keeps it off in this browser until ?sw=1. tools/build-artifact.mjs leaves this script out.
+  // deploy stamps commit.json (Netlify), never on localhost unless ?sw=1 (tools/sw-test.mjs), and kept only where
+  // this browser passes the worker's probe. ?sw=0 unregisters it, deletes its caches and keeps it off in this
+  // browser until ?sw=1. tools/build-artifact.mjs leaves this script out.
+  //   localStorage 'fp-sw': 'off' (?sw=0, until ?sw=1), or 'fail:<commit>' (the probe failed, or the worker sent a
+  //   page round twice): not registered again until commit.json names another commit.
+  //   ?fp-swr=1|2 on a reload the worker caused (stripped at once): a page carrying it never reloads by itself again.
   (function () {
-    var sw = navigator.serviceWorker;
-    if (!sw || !window.caches) return;
-    try { performance.setResourceTimingBufferSize(4000); } catch (e) { /* the fill reads what the page fetched */ }
-    var q = new URLSearchParams(location.search), off = function (then) {
-      sw.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
-        .then(function () { return caches.keys(); })
-        .then(function (ks) { return Promise.all(ks.filter(function (k) { return /^fp\d*-/.test(k); }).map(function (k) { return caches.delete(k); })); })
-        .then(function () { window.__fp_sw = { off: true }; if (then) then(); }, function () {});
-    };
-    var store = function (k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* blocked */ } };
-    var read = function (s, k) { try { return s.getItem(k); } catch (e) { return null; } };
-    if (q.get('sw') === '0') { store('fp-sw', 'off'); off(); return; }
-    if (q.get('sw') === '1') store('fp-sw', null);
-    var local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
-    if ((local && q.get('sw') !== '1') || read(localStorage, 'fp-sw') === 'off' || read(sessionStorage, 'fp-sw-tripped')) {
-      sw.getRegistrations().then(function (rs) { if (rs.length) off(); }, function () {});
-      return;
-    }
-    // A file from another release was refused: reload, and the worker gives the new release whole. A reload that is
-    // refused again before its walk is ready, or a fourth within a minute, means something is wrong with the worker,
-    // not the deploy: it is turned off for this session (the way out without ?sw=0).
-    var going = false; // one page reloads once, however many of its files were refused
-    var log = (function () { try { return JSON.parse(sessionStorage.getItem('fp-sw-stale')) || {}; } catch (x) { return {}; } })();
-    var keep = function () { try { sessionStorage.setItem('fp-sw-stale', JSON.stringify(log)); } catch (x) { /* blocked */ } };
-    sw.addEventListener('message', function (e) {
-      if (!e.data || e.data.type !== 'fp-stale' || going) return;
-      going = true;
-      var now = Date.now(), times = (log.times || []).filter(function (t) { return now - t < 60000; });
-      var trip = log.pending || times.length >= 3;
-      log = { pending: true, times: times.concat(now) }; keep();
-      if (trip) { try { sessionStorage.setItem('fp-sw-tripped', '1'); } catch (x) { /* blocked */ } off(function () { location.reload(); }); }
-      else location.reload();
-    });
-    if (log.pending) { // this page is a stale reload: it counts as done once the walk is ready
-      var settle = function () { if (document.body && document.body.classList.contains('ready')) { if (!going) { log.pending = false; keep(); } } else setTimeout(settle, 500); };
-      settle();
-    }
-    sw.startMessages();
-    window.__fp_sw = { controlled: !!sw.controller };
-    if (sw.controller) { // the bench names its commit (perf.js): ask the worker which release this page is
-      var ch = new MessageChannel();
-      ch.port1.onmessage = function (e) { if (e.data && e.data.commit && !window.__fp_commit) window.__fp_commit = e.data.commit; };
-      sw.controller.postMessage({ type: 'fp-commit' }, [ch.port2]);
-      return;
-    }
-    // Not controlled (a first visit): register where the deploy stamps its commit, then, once the walk is ready,
-    // hand the worker the list of what this page fetched, so the next visit is served from its cache.
-    var fill = function (reg) {
-      var go = function () {
-        var w = reg.active || reg.waiting || reg.installing;
-        if (!w) return;
-        var urls = performance.getEntriesByType('resource').map(function (r) { return r.name; });
-        var ch = new MessageChannel();
-        ch.port1.onmessage = function (e) { window.__fp_sw.filled = e.data; };
-        w.postMessage({ type: 'fp-fill', page: location.href, urls: urls }, [ch.port2]);
+    try {
+      var sw = navigator.serviceWorker, q = new URLSearchParams(location.search);
+      if (!sw || !window.caches) return;
+      var swr = +(q.get('fp-swr') || 0);
+      if (swr) { q.delete('fp-swr'); var qs = q.toString(); history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash); }
+      try { performance.setResourceTimingBufferSize(4000); } catch (e) { /* the fill reads what the page fetched */ }
+      var get = function () { try { return localStorage.getItem('fp-sw'); } catch (e) { return null; } };
+      var set = function (v) { try { if (v == null) localStorage.removeItem('fp-sw'); else localStorage.setItem('fp-sw', v); } catch (e) { /* blocked */ } };
+      var off = function (then) {
+        sw.getRegistrations().then(function (rs) { // told first, so a worker still running for an open page writes nothing more
+          return Promise.all(rs.map(function (r) { try { if (r.active) r.active.postMessage({ type: 'fp-off' }); } catch (e) { /* */ } return r.unregister(); }));
+        })
+          .then(function () { return caches.keys(); })
+          .then(function (ks) { return Promise.all(ks.filter(function (k) { return /^fp\d*-/.test(k); }).map(function (k) { return caches.delete(k); })); })
+          .then(function () { window.__fp_sw = { off: true }; if (then) then(); }, function () { if (then) then(); });
       };
-      var when = function () { if (document.body.classList.contains('ready')) sw.ready.then(go); else setTimeout(when, 500); };
-      when();
-    };
-    addEventListener('load', function () {
-      fetch('./commit.json', { cache: 'no-store' }).then(function (r) {
-        var s = r.ok && r.headers.get('x-fp-commit');
-        return s ? r.json().then(function (j) {
-          if (!j || j.commit !== s) return;
-          if (!window.__fp_commit) window.__fp_commit = j.commit;
-          return sw.register('./sw.js').then(fill);
-        }) : null;
-      }).catch(function () { /* no commit, no worker */ });
-    });
+      var reload = function (n) { var u = new URL(location.href); u.searchParams.set('fp-swr', String(n)); location.replace(u.href); };
+      if (q.get('sw') === '0') { set('off'); off(); return; }
+      if (q.get('sw') === '1' && get() === 'off') set(null);
+      var local = /^(localhost|127\.|\[::1\])/.test(location.hostname);
+      if ((local && q.get('sw') !== '1') || get() === 'off') { sw.getRegistrations().then(function (rs) { if (rs.length) off(); }, function () {}); return; }
+      // A file from another release was refused: one reload, and the worker gives the new release whole. A page that
+      // is itself such a reload and is refused again turns the worker off (until a new commit) and goes once more to
+      // the plain network; a page from that never reloads by itself.
+      var going = false;
+      sw.addEventListener('message', function (e) {
+        if (!e.data || e.data.type !== 'fp-stale' || going || swr >= 2) return;
+        going = true;
+        if (swr === 1) { // off until the deploy after the one live now
+          var trip = function (c) { set('fail:' + (c || '?')); off(function () { reload(2); }); };
+          fetch('./commit.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { trip(j && j.commit); }, function () { trip(null); });
+        }
+        else reload(1);
+      });
+      sw.startMessages();
+      window.__fp_sw = { controlled: !!sw.controller, reloaded: swr };
+      if (sw.controller) { // the bench names its commit (perf.js): ask the worker which release this page is
+        var ch = new MessageChannel();
+        ch.port1.onmessage = function (e) { if (e.data && e.data.commit && !window.__fp_commit) window.__fp_commit = e.data.commit; };
+        sw.controller.postMessage({ type: 'fp-commit' }, [ch.port2]);
+        return;
+      }
+      // Not controlled (a first visit): register where the deploy stamps its commit; prove the worker can bind this
+      // browser's pages (a hidden frame on its probe); then, once the walk is ready, hand it the list of what this page
+      // fetched, so the next visit is served from its cache.
+      var ask = function (w, msg, ms) {
+        return new Promise(function (ok) {
+          var ch = new MessageChannel(), t = setTimeout(function () { ok(null); }, ms);
+          ch.port1.onmessage = function (e) { clearTimeout(t); ok(e.data); };
+          w.postMessage(msg, [ch.port2]);
+        });
+      };
+      var prove = function (reg, commit) {
+        return sw.ready.then(function () {
+          return new Promise(function (ok) {
+            var f = document.createElement('iframe');
+            f.style.display = 'none'; f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+            f.src = './__fp-probe';
+            var done = function () { setTimeout(function () { ask(reg.active, { type: 'fp-proof' }, 3000).then(function (r) { f.remove(); ok(!!(r && r.proven)); }); }, 300); };
+            f.onload = done; f.onerror = done;
+            document.body.appendChild(f);
+          });
+        }).then(function (ok) {
+          window.__fp_sw.proven = ok;
+          if (!ok) { set('fail:' + commit); off(); }
+          return ok;
+        });
+      };
+      var fill = function (reg) {
+        var when = function () {
+          if (!document.body.classList.contains('ready')) return setTimeout(when, 500);
+          var urls = performance.getEntriesByType('resource').map(function (r) { return r.name; });
+          ask(reg.active, { type: 'fp-fill', page: location.href, urls: urls }, 60000).then(function (n) { window.__fp_sw.filled = n; });
+        };
+        when();
+      };
+      addEventListener('load', function () {
+        fetch('./commit.json', { cache: 'no-store' }).then(function (r) {
+          var s = r.ok && r.headers.get('x-fp-commit');
+          return s ? r.json().then(function (j) {
+            if (!j || String(j.commit) !== s) return;
+            if (!window.__fp_commit) window.__fp_commit = s;
+            var flag = get();
+            if (flag && flag.indexOf('fail:') === 0) { if (flag.slice(5) === s) return; set(null); } // a new commit: try again
+            return sw.register('./sw.js').then(function (reg) { return prove(reg, s).then(function (ok) { if (ok) fill(reg); }); });
+          }) : null;
+        }).catch(function () { /* no commit, no worker */ });
+      });
+    } catch (e) { /* a sandboxed frame or a browser that refuses: no worker */ }
   })();
 </script>
 <script type="module" src="./src/main.js"></script>
