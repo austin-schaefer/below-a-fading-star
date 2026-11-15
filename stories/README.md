@@ -20,8 +20,9 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The soundings](the-soundings.md) | deep (plain surface: a crystal hung from the sky, stuck in the ice) | built | the leadsmen at the top of the thread, sounding the world; never seen | the Plummet, the old leads in the icefall, the bridge, the eye on the shelf, the mother crystal | the Reckoner (his eleven glyphs on the eye's band; the mother crystal the oldest lead); the thread |
 | [The tender of the lattices](the-tender-of-the-lattices.md) | plain | built | the one who tends the lattices in the sky, never seen: a home on the foot of a lattice come low, a chair to the sun, an oil can too big for anyone; their lamp comes down the ladder | the Diffident Stair on the east moor, its top 100 m up | the Leerie (the ground's lamps, the sky's); the lattices; the sign of the sun |
 | [The Coffin Road](the-coffin-road.md) | plain (a deep end) | built; the door's passage fallen in | the Sexton, never seen here: his shears, his stair, forty coffins lashed on the Nave's water, a candle on each pair | the Foundered Nave: its rim, its stair, its nave, its east wall and south door | the twelfth chair (his other forty graves); the Reckoner (the tesserae) |
+| [The Bearers' Way](the-bearers-way.md) | plain (a deep end) | built | the Reckoner, never seen: in a room under the moor he is laying a new sun into the floor out of the gold picked from the others, by his own lamp; the Sexton's candles and the sounder's lamps stop short of it | the passage under the moor from the Nave's south door to the Pit's floor | the Reckoner (his glyphs, lamp, beads); the Coffin Road (the door); the sounding down (the lamps, the wind); the gold from the court |
 
-Twelve plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Thirteen plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -31,7 +32,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - Whoever commissioned the painter. Unseen.
 - The pedlar whose sack split: the sleeper in the Lantern Halt (v10-A4).
 - The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
-- The Reckoner, behind the Hypogeum's door: heard knocking, never seen.
+- The Reckoner, behind the Hypogeum's door: heard knocking, never seen. His room on the Bearers' Way, where the valley's gold is going into a new sun, is his (v14-D1).
 - The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: unknown.
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton: his other forty graves are the Coffin Road's forty (`the-coffin-road.md`); never seen at the Nave.
@@ -40,6 +41,6 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 ## Things that travel
 
 - Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited).
-- Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown.
+- Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown. The Nave's sun's gold too; both go into the Laid Sun's floor on the Bearers' Way (with a few of the Nave's red pieces by mistake).
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.

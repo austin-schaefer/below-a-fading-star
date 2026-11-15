@@ -57,6 +57,7 @@ const NAMED_POSES = {
   bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
   diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
   coffinroad: { x: 250.4, y: -16.7, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D0: on the coffins 16 m under the moor, looking east along the road into the dark under the roof, the candles going away
+  laidsun: { x: 225.9, y: -28.0, z: 118.56, look: { x: 223.6, z: 123.0 }, pitch: -0.36 }, // v14-D1: at the room's way in from the Flute, 28 m under the moor, the half-laid gold sun in the floor and his lamp
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
   landing: { x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end

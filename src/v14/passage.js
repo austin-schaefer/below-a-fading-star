@@ -317,7 +317,7 @@ export async function build(ctx) {
     }
     // the wire: a flat spiral of bronze on the bed beside the pad, a bead strung on it for every ray laid
     const [wx, wz] = sunW(2.75, workA + 0.3);
-    let pp = null; for (let i = 0; i <= 60; i++) { const t = i / 60, a = t * Math.PI * 6, r = 0.02 + t * 0.15, p = [wx + Math.cos(a) * r, fy + 0.04, wz + Math.sin(a) * r]; if (pp) RB.beam(pp, p, 0.0035, BRONZE, 0.02); pp = p; if (i % 9 === 4) RB.box(p[0], p[1] + 0.005, p[2], 0.012, 0.012, 0.012, a, BRONZE, BRONZE, 0.05); }
+    let pp = null; for (let i = 0; i <= 60; i++) { const t = i / 60, a = t * Math.PI * 6, r = 0.02 + t * 0.15, p = [wx + Math.cos(a) * r, fy + 0.04, wz + Math.sin(a) * r]; if (pp) RB.beam(pp, p, 0.0035, BRONZE, 0.02); pp = p; if (i % 11 === 10 && i < 60) RB.box(p[0], p[1] + 0.005, p[2], 0.012, 0.012, 0.012, a, BRONZE, BRONZE, 0.05); }
     // his lamp: a bronze bowl on a tripod, the flame the Points' (P.lamps' kind 2 is its flame)
     const L2 = P.lamps.find((l) => l.kind === 2);
     for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI * 2 + 0.3; RB.beam([L2.x + Math.cos(a) * 0.17, fy, L2.z + Math.sin(a) * 0.17], [L2.x + Math.cos(a) * 0.03, L2.y - 0.12, L2.z + Math.sin(a) * 0.03], 0.012, BRONZE, 0.04); }
