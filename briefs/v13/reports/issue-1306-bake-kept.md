@@ -1,4 +1,4 @@
-# v13 L3, the bake beside the builds and kept: report (2026-11-15, 00:55 to 02:30 PST)
+# v13 L3, the bake beside the builds and kept: report (2026-11-15, 00:55 to 03:40 PST; round two from 02:50)
 
 **Target:** seconds to "Go out", cold and repeat, low and medium, 1x and 4x CPU (the phone stand-in), and the title card's longest stall: the bake off a cold load's wall clock, no bake at all on a repeat, every module bit for bit.
 **Baseline:** `SHOT_ANGLE=metal nice -n 10 node tools/load-probe.mjs <base> --q=<q> [--throttle=4] --runs=3`, the base tree (`9ca6842`) served from a scratch archive with a `commit.json` (as Netlify serves it) on 8170, interleaved with the result on 8171 (`_site/`, this branch, with a `commit.json`), back to back; load average 2 to 5; medians [min–max].
@@ -35,12 +35,31 @@ IndexedDB `fp-kept`, one record a slot (`bake:<segs>`, `kept:<name>:<tier>`), ke
 - found by the reordering: the Parhelion's canvas atlas, rastered on the GPU beside other modules' canvases, differed by ~26 edge pixels in 2 of 5 loads; a 1-pixel readback at the end of its paint: 7 of 7 equal to the base.
 - left (runtime, self-correcting): gutterbats' exits (redone at each pour), rooks' and crows' perches (retried in updates), beetles (`ctx.hypogeum`), twk's Thurifer, the icefall's anchor thread.
 
+## Round two (the review)
+
+- **The blocker, a stale record:** the tree is now the running code's own `X-Fp-Commit` (force-cache fetches of `kept.js` and `bake.js`: the copy that ran, from the HTTP cache or `sw.js`'s bound release), and must equal `commit.json`'s; off localhost any absence or disagreement turns the store off for the load (no read, write or prune). Records are keyed `<tree>|<slot>`. loading-test, on this tree served with stamps (`sw-site`): a record made under commit A is not read under B and is pruned; a load whose `commit.json` (C) disagrees with its code's stamp (B) reads, writes and prunes nothing.
+- The worker URL has no query (the page's goes in its first message); started at once and raced with the store; its height params' key checked against the page's; its fetched files handed to `sw.js`'s fill (`window.__fp_fill_extra`). `tools/bake-sw-check.mjs` (a stamped site, `sw.js` active, four loads): Chromium and WebKit 5/5 PASS: first visit worker+kept, controlled repeats from the store with 0 `src/` requests, a controlled `?kept=0` repeat with a query baked in the worker (not the fallback) with every file from the service worker. Firefox 4/5: its controlled repeat fetched `v8/strips.js` and `v8/roads/crossings.js` from the network (the first-visit fill missed them; the next visit has them): `sw.js`'s fill in Firefox, for L1.
+- `prune()` by keys alone: 4.4 ms for two stale 12 MB records (medium), no long task after ready from it. `put` reports its own timeout; `onversionchange` closes; fallback timers cleared; resource timing buffer 2000.
+- The Thurifer awaits `ctx.cloakPlaced`. A module that fails is on the title card's error line and in `extra.failed`; loading-test asserts none failed, also with `?bakehold=3000`. `?bakehold=20000` swept on low, medium and high: no failure.
+- runtime.md: a short list; `purebake`, `--repeat`, `--throttle`, `bake-sw-check` named as outside the suite, with when to run them.
+
+**The probe once more** (round two's tree, both served as Netlify serves them by `tools/sw-site.mjs`, `--params=kept=commit`, back to back, 03:20–03:39, load 2.6–3.2), ready ms cold / repeat, longest stall cold:
+
+| | base | after |
+|---|---|---|
+| low | 5173 [5160–5382] / 4749 [4641–4765], stall 1225 | 4267 [4226–4326] / 3473 [3349–3492], stall 322 |
+| medium | 7499 [7491–7812] / 6975 [6942–7003], stall 2353 | 5638 [5608–5641] / 4624 [4618–4631], stall 501 |
+
+Cold −18% / −25%, repeat −27% / −34%. The longest stall now falls in the warm-up or one module's build step (vegetation's, structures', galleries': ~300 ms on low, ~500 on medium), never the terrain.
+
 ## Checks
 
 - `node tools/height-check.mjs check <rec>` against a recording at `9ca6842`: all PASS (1,427,272 points × 58, 2 bakes). New `purebake` (three refused, no location, nothing sampled first): every position and baked attribute, low and medium, 0 differ (14 PASS).
 - `node tools/build-check.mjs <B> --against=<base rec>`: low and medium, 1x (`--runs=3`, no unstable entry), 4x, 6x (low), and `--repeat`: 54 of 55 IDENTICAL, the one MOVED the cloak.
 - Firefox and WebKit: a cold load bakes in the module worker and keeps; the reload takes the bake and rocks from the store.
-- `loading-test`: 20 PASS. Render pairs and the whole suite: below.
+- `loading-test`: 26 PASS.
+- Render pairs at `tools/views-perf.json`, low and medium (`shots/wip/v13-L3-{base-a,base-b,after}-<q>-*.png`, `v13-L3-pairs.txt`): every station within two base renders' spread except low wrongcolour (98 vs 58 px; the diff is the fall's spray and water) and medium tarn (139 vs 46; after against the second base render: 11).
+- The whole suite, `SHOT_ANGLE=metal tools/suite.sh 8163`, next merged (L1's sw.js round three included): 37 tests, 36 ok, 1596 PASS lines; `releases` fails only on "HEAD is not next" and "commits not on origin/next", as on any branch.
 
 ## Defaults taken
 
