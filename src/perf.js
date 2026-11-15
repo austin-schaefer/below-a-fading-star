@@ -23,6 +23,7 @@ const BENCH_CAUSEWAY = [
   { x: 8, z: 30 }, { x: -40, z: 22 }, { x: -90, z: 2 }, { x: -140, z: -30 }, { x: -185, z: -72 }, { x: -222, z: -110 },
 ];
 import { installGpuMem } from './gpumem.js';
+import { report as startupReport } from './startup.js'; // v13-P0: the load's phases, as `startup`
 
 const BLOCK_MS = 500; // one sample block
 const WINDOW = 4;     // blocks in the rolling window (~2 s)
@@ -470,7 +471,7 @@ export function createPerf(ctx) {
         kind: 'fading-planet-bench', date: new Date().toISOString(),
         ...(window.__fp_commit ? { commit: String(window.__fp_commit) } : {}),
         ...(machine ? { machine } : {}),
-        settings: settings(),
+        settings: settings(), startup: startupReport(),
         userAgent: navigator.userAgent, quality: ctx.quality, tier: ctx.tier?.stats() ?? null, gpuMemory: ctx.gpumem?.stats() ?? null, dpr: renderer.getPixelRatio(), devicePixelRatio: devicePixelRatio,
         renderSize: size, url: location.search, duration, warmup: warm, pathMetres: Math.round(path.length),
         gpuTimer: gpu.ok, toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
@@ -672,6 +673,7 @@ export function createPerf(ctx) {
       firstBlock: firstBlock && { frames: firstBlock.frames, callbacks: topCallbacks(firstBlock.cb, 1) },
       modules: Object.fromEntries([...mods.values()].map((m) => [m.name, { world: m.world, enabled: m.enabled, updates: m.updates, objects: m.objects.size }])),
       toggles: Object.fromEntries(Object.entries(toggles).map(([k, t]) => [k, t.get()])),
+      startup: startupReport(),
       bench: bench ? (bench.result || { phase: bench.phase, samples: bench.samples.length }) : null,
     };
   }
