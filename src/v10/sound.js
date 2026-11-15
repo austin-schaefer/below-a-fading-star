@@ -15,6 +15,7 @@
 //   act-murmur  the sleeper answering a visitor at the hatch: two sleepy syllables, "mm-hm", a low voiced hum on A2
 //               through a moving vowel, with breath. Detail tier, 12 m
 import { softKit } from '../audio/cues-v2.js';
+import { startPassageSound } from '../v14/passage-sound.js'; // v14-D1: the Bearers' Way's drip and draught (no cues)
 import { startCentralSound } from './sound-central.js'; // v10-A1: act-crystal, act-crystal-ring, act-knock, act-answer, act-plate
 import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, act-pinch, act-tribute
 import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
@@ -26,6 +27,7 @@ export function startActsSound(a, ctx) {
   const { sgrain, stone, jit } = softKit({ ...a, rng }); // its jitter from this module's own stream, not the shared one
   const D4 = 293.66;
   const stories = startStoriesSound(a, ctx);
+  startPassageSound(a, ctx); // v14-D1: its own rng
 
   function offer(pos) {
     const v = voice(pos, { ref: 2.5, roll: 1, range: 20, dur: 1.6, verb: 0.3, air: 60, gain: 4 }); if (!v) return;

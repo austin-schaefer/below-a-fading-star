@@ -536,10 +536,12 @@ export async function build(ctx) {
   const vol = (sa, sb, W, H, mouth) => (x, y, z) => {
     if (x < bbox.x0 || x > bbox.x1 || z < bbox.z0 || z > bbox.z1) return 0;
     P.near(x, z, _q);
-    if (_q.s < sa - 0.6 || _q.s > sb + 0.6 || (_q.i === 0 && _q.t < -1)) return 0;
+    if (_q.s < sa - 0.6 || _q.s > sb + 0.6 || (_q.i === 0 && _q.t < -1) || (_q.i === P.N - 1 && _q.t > MOUTH.portal + 0.5)) return 0;
     const h = 1 - ss(W, W + 1, Math.abs(_q.d)), top = P.yAt(_q.s) + H;
     let v = h * (1 - ss(top, top + 2, y)) * ss(P.yAt(_q.s) - 24, P.yAt(_q.s) - 21, y);
-    if (mouth) v *= ss(P.rf + 1, P.rf + 13, rOf(x, z));
+    // the Gate's last 13 m: stone-sounding and sheltered (0.95), never sealed (the seal needs 1: the Pit is seen from
+    // here), easing to the Pit floor's own 0.6 (D2's) at the portal
+    if (mouth) { const r = rOf(x, z); v *= r >= P.rf + 12 ? 0.95 + 0.05 * ss(P.rf + 12, P.rf + 14, r) : 0.6 + 0.35 * ss(P.rf - 1.5, P.rf + 3, r); }
     return v;
   };
   const vols = [
