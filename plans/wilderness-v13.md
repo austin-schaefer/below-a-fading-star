@@ -73,7 +73,7 @@ Passed over, still in the pool: #18, #20, #23, #28, #30, #33, #36; the six small
 
 Next: when each reports, run its tool myself on 8123 after the merge (the probe's table; a bench in a real browser), a cold review of each diff, merge, the whole suite once for the batch (both touch shared code), write the two baseline tables here, then write batch 2 from the numbers (`briefs/v13/index.md` lists the candidates; cut what the numbers do not support). The owner can help with one thing nobody else can: run the Measure row on a real phone once P1 is in and paste what it copies into an issue.
 
-**2026-11-14, 22:25 PST. The owner has left for the night: "remember, pursue your goal until it hits main! i'll be afk overnight."** So every call from here to the release is the orchestrator's, written here.
+**2026-11-14, 22:21 PST. The owner has left for the night: "remember, pursue your goal until it hits main! i'll be afk overnight."** So every call from here to the release is the orchestrator's, written here.
 
 **The first load numbers this repository has had** (P0's own runs on its branch, not yet rerun by the orchestrator; the owner's Mac, headless Chromium, another agent's browser beside it; `node tools/load-probe.mjs <base> --q=<q> [--throttle=4] --runs=3`, medians):
 
