@@ -125,6 +125,7 @@ async function fromCache(commit, key) {
 // --- the page
 async function navigate(event) {
   const req = event.request, id = event.resultingClientId;
+  if (!id) return fetch(req); // no page will come of it (a download, say)
   const n = await netCommit();
   T('nav', id.slice(0, 4), n.kind, n.commit || '');
   let commit = null;
@@ -195,9 +196,13 @@ async function file(event, url) {
   return res;
 }
 
+// A browser that does not say which page a navigation makes (resultingClientId) cannot have its pages bound: the
+// worker then answers nothing, and the site loads as if it were not there.
+const BINDS = typeof FetchEvent !== 'undefined' && 'resultingClientId' in FetchEvent.prototype;
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
+  if (req.method !== 'GET' || !BINDS) return;
   const url = new URL(req.url);
   if (req.mode === 'navigate') {
     if (url.searchParams.get('sw') === '0') {

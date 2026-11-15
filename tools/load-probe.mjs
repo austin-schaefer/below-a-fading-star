@@ -88,7 +88,8 @@ async function load(page, cdp, kind, go) {
   // a first visit with a worker: wait for it to keep what the page fetched (index.html's fill) before the repeat
   await page.waitForFunction(() => !window.__fp_sw || window.__fp_sw.controlled || window.__fp_sw.off || window.__fp_sw.filled, null, { timeout: 20000, polling: 100 }).catch(() => {});
   page.context().off('requestfinished', onSw);
-  const swBytes = (await Promise.all(swReqs)).reduce((a, b) => a + b, 0);
+  const swSizes = (await Promise.all(swReqs)).filter((n) => n > 0); // 0: answered by the HTTP cache (the worker's fill)
+  const swBytes = swSizes.reduce((a, b) => a + b, 0);
   const rep = await page.evaluate(() => (window.__fp_startup ? window.__fp_startup.report() : window.__probe.report()));
   cdp.off('Network.requestWillBeSent', onReq); cdp.off('Network.responseReceived', onResp);
   cdp.off('Network.requestServedFromCache', onCache); cdp.off('Network.loadingFinished', onDone);
@@ -99,7 +100,7 @@ async function load(page, cdp, kind, go) {
   return {
     kind, wallMs: Date.now() - t0, ...rep, cacheControl,
     net: { requests: list.length, kb: Math.round(kb), fromCache: list.filter((r) => r.cached).length, revalidated: list.filter((r) => r.status === 304).length,
-      fromWorker: list.filter((r) => r.worker).length, wire: wire.length + swReqs.length, wireKb: Math.round(((wire.reduce((s, r) => s + r.bytes, 0) + swBytes) / 1024) * 10) / 10 },
+      fromWorker: list.filter((r) => r.worker).length, wire: wire.length + swSizes.length, wireKb: Math.round(((wire.reduce((s, r) => s + r.bytes, 0) + swBytes) / 1024) * 10) / 10 },
     sw,
   };
 }
