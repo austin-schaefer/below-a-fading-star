@@ -5,7 +5,11 @@
 //     0.5 m, the Sunken Court's coping 1.0 m after a hop onto the kerb),
 //   - never pass it (the signed distance to the lip stays >= 0; on the Span the deck holds, the walker never drops),
 //   - never be under the floor: feet no lower than the terrain (or the deck) less 0.15 m at any tick,
-// and at the Span's crack a running hop still clears it. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
+// and at the Span's crack a running hop still clears it. v14-D0, the Coffin Road: a walker whose line meets the Nave's
+// stair at its head goes down it, held on its floor (so that walk is not a pass of the lip, and is measured from the
+// stair's floor), and at least one bearing does; hurrying and hopping sideways off the stair (high, middle, low) and
+// off the road on the water keep the walker on (held edges); one dropped into the water off the road is put back on
+// the road within three seconds (the page's own frames), never under the water's floor. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
 // them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
 // and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
 // through controls.update in one page.
@@ -36,27 +40,31 @@ const R = await page.evaluate(async () => {
     fp.controls.placeAt(sx, sz); onSpan = y !== undefined; if (y !== undefined) p.pos.y = y + p.eye;
     p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true;
     p.yaw = Math.atan2(-(tx - sx), -(tz - sz)); p.keys.clear(); p.keys.add('KeyW'); if (hurry) p.keys.add('ShiftLeft');
-    let minEdge = Infinity, under = 0;
+    let minEdge = Infinity, under = 0, stair = 0;
     for (let i = 0; i < secs * 60; i++) {
       fp.controls.update(DT);
       if (hopAt && i >= hopAt && i % 40 === 0) fp.controls.hop();
+      // v14-D0: on the Coffin Road's stair (a held floor into the Nave) the lip is not passed and the floor is the stair's
+      const cr = p.onStack && p.onStack.name === 'coffin-road' ? fp.coffinRoad.floor(p.pos.x, p.pos.z) : null;
+      if (cr !== null && cr !== undefined) { stair++; under = Math.min(under, p.pos.y - p.eye - cr); continue; }
       const e = edge(p.pos.x, p.pos.z); if (e < minEdge) minEdge = e;
       under = Math.min(under, p.pos.y - p.eye - floorAt(p.pos.x, p.pos.z));
     }
     p.keys.clear();
-    return { x: p.pos.x, z: p.pos.z, end: edge(p.pos.x, p.pos.z), minEdge, under, feet: p.pos.y - p.eye };
+    return { x: p.pos.x, z: p.pos.z, end: stair ? 0 : edge(p.pos.x, p.pos.z), minEdge, under, feet: p.pos.y - p.eye, stair };
   }
   const res = [];
   // the two ragged holes, from five bearings
   for (const [name, H, edge, reach] of [['the Foundered Nave', NG.NAVE, NG.naveEdge, 1.0], ['the Pit', PG.PIT, PG.pitEdge, 1.0]]) {
     for (const hurry of [false, true]) {
-      let worst = 0, minEdge = Infinity, under = 0, n = 0, at = '';
+      let worst = 0, minEdge = Infinity, under = 0, n = 0, at = '', stairs = [];
       for (const b of [0, 60, 120, 180, 300]) {
         const a = b * Math.PI / 180, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry, secs: hurry ? 9 : 14 });
+        if (r.stair) stairs.push(b);
         if (r.end > worst) { worst = r.end; at = `bearing ${b}`; }
         minEdge = Math.min(minEdge, r.minEdge); under = Math.min(under, r.under); n++;
       }
-      res.push({ name, mode: hurry ? 'hurry' : 'walk', n, worst, minEdge, under, reach, at });
+      res.push({ name, mode: hurry ? 'hurry' : 'walk', n, worst, minEdge, under, reach, at, stairs: H === NG.NAVE ? stairs : undefined });
     }
     // a hurrying hop at the lip, five seconds
     const a = 0.3, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry: true, secs: 12, hopAt: 240 });
@@ -108,6 +116,47 @@ const R = await page.evaluate(async () => {
     p.keys.clear();
     res.push({ coping: name, ok: Math.abs(p.pos.x - x1) <= 0.4, low, feet: p.pos.y - p.eye - Y });
   }
+  // v14-D0: the Coffin Road. Sideways off its stair (a hurry, then a hurrying hop) at three heights, and off the road
+  // on the water: the held edges keep the walker on; dropped in the water off the road, put back on it
+  if (fp.coffinRoad && !fp.coffinRoad.off) {
+    const CR = fp.coffinRoad, Hd = CR.head, PL = await import('/src/v14/coffin-road/plan.js');
+    const side = (x, z, y, yaw, hop, secs = 2) => {
+      fp.controls.placeAt(x, z, y + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw;
+      let low = 0, off = 0;
+      for (let i = 0; i < secs * 60; i++) {
+        fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
+        const f = CR.floor(p.pos.x, p.pos.z);
+        if (f === null || f === undefined) off++; else low = Math.min(low, p.pos.y - p.eye - f);
+      }
+      p.keys.clear();
+      return { off, low, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
+    };
+    for (const f of [0.85, 0.5, 0.12]) {
+      const x = PL.FOOT_X + f * (Hd.xHead - PL.FOOT_X), y = CR.stairY(x);
+      for (const s of [-1, 1]) for (const hop of [false, true]) {
+        const r = side(x, PL.SZ, y, s > 0 ? Math.PI : 0, hop);
+        res.push({ cr: `off the stair's ${s > 0 ? 'south' : 'north'} side ${Math.round(f * 100)}% up, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+      }
+    }
+    for (const [x, s] of [[262, 1], [275, -1], [290, 1]]) for (const hop of [false, true]) {
+      const r = side(x, PL.ROAD.zc, PL.ROAD_Y, s > 0 ? Math.PI : 0, hop);
+      res.push({ cr: `off the road at x ${x}, ${s > 0 ? 'south' : 'north'}, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+    }
+    // the water: dropped in beside the road, 3 m up; put back on the road
+    fp.controls.placeAt(270, 37, PL.ROAD_Y + 3); p.pos.x = 270; p.pos.z = 37; p.pos.y = PL.ROAD_Y + 3 + p.eye; p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear();
+    // (the fall in simulated ticks; then the page's own frames, which run the road's update that gives the walker back)
+    let back = null, lowW = 0, inWater = false;
+    for (let i = 0; i < 60; i++) { fp.controls.update(DT); lowW = Math.min(lowW, p.pos.y - p.eye - (PL.ROAD_Y - 2)); }
+    inWater = p.onStack?.name === 'nave-water';
+    const t0 = performance.now();
+    while (back === null && performance.now() - t0 < 4000) {
+      await new Promise((r) => setTimeout(r, 50));
+      lowW = Math.min(lowW, p.pos.y - p.eye - (PL.ROAD_Y - 2));
+      const f = CR.floor(p.pos.x, p.pos.z);
+      if (f !== null && f !== undefined && Math.abs(p.pos.y - p.eye - f) < 0.05) back = 1 + (performance.now() - t0) / 1000;
+    }
+    res.push({ water: true, back, lowW, inWater, rescues: CR.state.rescues });
+  }
   // the Sunken Court: the kerb stops the walker; a hop lands on the coping, close over the water
   for (const [name, sx, sz, edge] of [['from the south', -40, -135, (x, z) => z - pit.z1], ['from the west', -65, -165, (x, z) => pit.x0 - x]]) {
     const r = walk(sx, sz, -40, -165, edge, { secs: 8, hopAt: 360 });
@@ -120,6 +169,9 @@ let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
 const f = (v) => v.toFixed(2);
 for (const r of R) {
+  if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Coffin Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
+  if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }
   if (r.hop !== undefined) { check(r.hop !== null, `${r.name}: lands on the far deck`, r.hop === null ? 'never' : `hop ${f(r.hop)} m short of the lip`); continue; }
   const who = `${r.name} (${r.mode})`;

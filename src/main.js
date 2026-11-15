@@ -74,6 +74,7 @@ const MODULES = [
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
   ['keptfire', () => import('./v5/keptfire.js')], // v5 wonders: DN the Kept Fire (a tended hearth on the Outwash; one point light, ?keptfire=0)
   ['nave', () => import('./v5/nave.js'), M], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
+  ['coffinroad', () => import('./v14/coffin-road.js'), M], // v14-D0: the Coffin Road, the Sexton's stair down into the Nave and the road of forty coffins on its water (?coffinroad=0)
   // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
   ['living-canyon', () => import('./v7/canyon.js'), M], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
   ['living-glyphs', () => import('./v7/glyphs.js'), M], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
@@ -185,7 +186,8 @@ async function start() {
   // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
-  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js)
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), below (v14/under.js:
+  //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
     world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,
