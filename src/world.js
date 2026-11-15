@@ -87,7 +87,7 @@ export const LANDMARKS = {
   remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
   coffinroad: { x: 271, z: 42, r: 0, y: null, name: "The Coffin Road", card: true, feet: [-22, -8], axis: { x0: 246, x1: 296, half: 6 }, at: { x: 250.4, z: 42 }, reached: 'the Sexton’s stair', aside: false }, // v14-D0: the road of coffins on the Foundered Nave's water, 16 m under the moor (src/v14/coffin-road.js)
   laidsun: { x: 223.6, z: 123.0, r: 6, y: null, name: "The Laid Sun", card: true, feet: [-34, -22], reached: 'the Bearers’ Way', aside: false }, // v14-D1: the room on the way under the moor from the Nave to the Pit, the Reckoner's new sun going into its floor
-  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -12], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
+  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -27], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
 };
 
 // v7.1: region cards. Austin's copy for four of the v4 regions (briefs/copy/place-copy.md): the card shows while the
