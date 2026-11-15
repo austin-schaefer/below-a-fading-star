@@ -175,9 +175,11 @@ const res = await page.evaluate(async () => {
   // ground (ctx.ascents, its first point with no y or a y within 1 m of the terrain) has a track ending at its foot:
   // the nearest track end within 4 m of the first point, and behind it (on the side the climb does not go: its
   // second distinct point is on the other side), so a walker who follows the track arrives facing up the way
+  // ways down not yet given a track to their foot, each with why (listed for the agent who owns the place)
+  const FEET_OPEN = { 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
   const feet = [];
   for (const a of fp.ascents?.list || []) {
-    if (a.test) continue;
+    if (a.test || FEET_OPEN[a.id]) continue;
     const p0 = a.path[0], p1 = a.path.find((q) => Math.hypot(q[0] - p0[0], q[1] - p0[1]) > 0.5);
     if (!p1 || (p0[2] !== undefined && Math.abs(p0[2] - T.heightAt(p0[0], p0[1])) > 1)) continue;
     let best = null;
@@ -188,7 +190,20 @@ const res = await page.evaluate(async () => {
     const ux = p1[0] - p0[0], uz = p1[1] - p0[1], ahead = ((best.e[0] - p0[0]) * ux + (best.e[1] - p0[1]) * uz) / Math.hypot(ux, uz);
     feet.push({ id: a.id, d: +best.d.toFixed(1), by: best.id, ahead: +ahead.toFixed(2), at: p0.slice(0, 2).map((v) => +v.toFixed(1)), ok: best.d <= 4 && ahead <= 0.3 });
   }
-  return { feet, rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
+  // ---- and none leads to its back (#54, round 2: the stair's slabs lying in the turf read as a paved road and brought
+  // walkers to the stub's blank back): for an ascent that names its `back` (the turf behind its first rise), no track
+  // ends within 4 m of it, and no slab of the stair lying in sight in the turf (not buried) is within 4 m of it
+  const backs = [];
+  for (const a of fp.ascents?.list || []) {
+    if (a.test || !a.back) continue;
+    const [bx, bz] = a.back, ends = [], slabs = [];
+    for (const t of tracks) for (const e of [t.pts[0], t.pts[t.pts.length - 1]]) if (Math.hypot(e[0] - bx, e[1] - bz) < 4) ends.push(t.id);
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried && Math.hypot(e.cx - bx, e.cz - bz) < 4) slabs.push(e.i);
+    let near = Infinity;
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried) near = Math.min(near, Math.hypot(e.cx - bx, e.cz - bz));
+    backs.push({ id: a.id, ends, slabs, near: +near.toFixed(1), buried: (fp.stair?.plan.els || []).filter((e) => e.rest?.buried).length });
+  }
+  return { feet, backs, rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
     lengths: { ways: +P.leads.filter((l) => l.cls === 'way').reduce((a, l) => a + l.length, 0).toFixed(0), trods: +P.leads.filter((l) => l.cls === 'trod').reduce((a, l) => a + l.length, 0).toFixed(0) } };
 });
 // #41: the waystones' heads have no two faces in one plane fighting for the pixel (the notch's dark lining was laid
@@ -223,6 +238,7 @@ for (const p of res.places) {
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }
 check(res.feet.length >= 2 && res.feet.every((f) => f.ok), 'every way up with its foot on the ground: a track ends within 4 m of the foot, behind it (#54)', `${res.feet.length} ascents: ${res.feet.map((f) => `${f.id} ${f.ok ? 'ok' : 'FAIL'}: ${f.by} ends ${f.d} m from (${f.at}), ${f.ahead > 0.3 ? `${f.ahead} m up the climb's side` : 'behind the foot'}`).join('; ')}`);
+check(res.backs.length >= 1 && res.backs.every((b) => !b.ends.length && !b.slabs.length), 'nothing a walker follows ends at the back of a way up: no track end, no slab lying in sight in the turf, within 4 m of it (#54)', res.backs.map((b) => `${b.id}: track ends ${b.ends.join(',') || 'none'}, slabs ${b.slabs.length} (nearest in sight ${b.near} m; ${b.buried} under the turf)`).join('; '));
 check(res.blind.length === 0, 'a standing gnomon in sight (80 m, over the terrain) every 4 m', `${res.samples} samples, ${res.blind.length} blind ${res.blind.slice(0, 8).join(' ')}`);
 check(res.steep.length === 0, 'every track walkable: grade along it under 1.2 over each 2 m', `${res.steep.length} ${res.steep.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
 check(res.wet.length === 0, 'every track sample dry-shod (or on slabs)', `${res.wet.length} ${res.wet.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);

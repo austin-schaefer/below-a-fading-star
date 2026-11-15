@@ -106,7 +106,7 @@ const check = (ok, label, detail = '') => { if (ok) pass++; else fail++; console
 const modErr = errors.filter((e) => /paths/.test(e));
 check(!modErr.length, 'paths module loaded without errors', modErr[0] || '');
 const kinds = (k) => res.leads.filter((l) => l.kind === k).length;
-check(kinds('path') === 52 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 52 paths (v8-01: 17 + 32; v12-H4: the trod to the lift; v14-B6: the trods to the feet of Lonely Staircase and the icefall), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
+check(kinds('path') === 53 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 53 paths (v8-01: 17 + 32; v12-H4: the trod to the lift; v14-B6: the trods to the feet of Lonely Staircase and the icefall, and round the stub), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
 for (const L of res.leads) {
   // v8-01: an end that is a junction finds the lead it joins (leadAt gives the nearest), and that is right too
   const bad = L.ends.filter((e) => !e.id || e.material !== e.region);

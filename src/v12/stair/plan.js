@@ -73,6 +73,7 @@ export function buildPlan(heightAt) {
       px = cx + rx * sd * off - ux * D / 2; pz = cz + rz * sd * off - uz * D / 2; ux = -ux; uz = -uz; s += D + 2 * off;
     }
   }
+  const LAST = flight - 1;
   // where each lies when it is not called: in its bed under its place, or on an earlier slab its bed would overlap
   for (const e of els) {
     e.ground = heightAt(e.cx, e.cz);
@@ -84,12 +85,24 @@ export function buildPlan(heightAt) {
       if (!o.rest || (o.flight === e.flight && o.flight !== undefined)) continue;
       if (overlaps(o, e)) { if (!on || o.rest.y > on.rest.y) on = o; }
     }
-    // sunk into the turf by most of its thickness; a slab on a slab lies on it, a little askew
-    e.rest = on ? { y: on.rest.y + on.thick, on: on.i } : { y: e.ground + e.thick * 0.55, on: -1 }; // proud of the turf, so the line of them reads
+    // a slab on a slab lies on it, a little askew. In the turf (v14-B6, the owner's #54: laid flat and proud, the line
+    // of them read as a paved road and led walkers to the stub's blank back) a slab is a step that has not risen: in
+    // runs of a metre or so it is under the turf altogether (`buried`), else sunk to a lip and canted, as a fallen
+    // tread lies; the flight past the stub and its landing are all under, so nothing visible leads to the stub's back,
+    // and so is the last flight's far end, where it comes within a step of the heather track (P10): no slab joins a path
+    if (on) { e.rest = { y: on.rest.y + on.thick, on: on.i, tilt: [0, 0, 0] }; continue; }
+    const h = hash(Math.floor(e.s / 1.1) + 17), k = hash(e.i * 7 + 3);
+    const buried = e.flight === 0 || (e.flight === LAST && e.k >= e.n - 15) || (e.kind === KIND.LANDING && e.landing === 0) || (e.kind === KIND.TREAD && h < 0.48);
+    const tilt = e.kind === KIND.LANDING ? [(k - 0.5) * 0.08, (hash(e.i + 5) - 0.5) * 0.1, (k - 0.5) * 0.12] // pitch, roll, yaw
+      : [(k - 0.5) * 0.22, (hash(e.i * 3 + 1) < 0.5 ? -1 : 1) * (0.1 + hash(e.i + 9) * 0.16), (hash(e.i * 5 + 2) - 0.5) * 0.5];
+    e.rest = { y: buried ? e.ground - e.thick - 0.06 : e.ground + e.thick * (e.kind === KIND.LANDING ? 0.12 : 0.05), on: -1, buried, tilt };
   }
   const top = els[els.length - 1];
   return { els, y0, top, length: s, count: els.length };
 }
+
+// a fixed 0..1 from an integer (the lie of each slab, the same on every load and in every tool)
+function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
 // do two elements' boxes overlap (by more than 5 cm)? Tested at the corners and centre of the smaller, both ways
 function overlaps(a, b) {

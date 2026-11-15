@@ -77,7 +77,7 @@ const png = await page.evaluate(async ({ trail, half, end }) => {
   for (const Ld of fp.paths.leads) if (Ld.kind !== 'rivulet') for (const S2 of Ld.lines) { line(S2.map((s) => [s[0], s[1]]), '#2a2420', Math.max(2, Ld.w * px)); const [a, b] = P(S2[0][0], S2[0][1]); g.fillStyle = '#fff'; g.font = '13px sans-serif'; if (a > 0 && a < S && b > 0 && b < S) g.fillText(Ld.id, a + 4, b - 4); }
   if (fp.stair) for (const e of fp.stair.plan.els) {
     const [a, b] = P(e.cx, e.cz); g.save(); g.translate(a, b); g.rotate(Math.atan2(e.uz, e.ux));
-    g.fillStyle = e.kind === 2 ? '#3a2f3a' : e.kind === 3 ? '#556' : '#cfc6b8'; g.fillRect(-e.hd * px, -e.hw * px, 2 * e.hd * px, 2 * e.hw * px); g.restore();
+    if (e.rest?.buried) { g.strokeStyle = 'rgba(80,70,60,0.5)'; g.lineWidth = 1; g.strokeRect(-e.hd * px, -e.hw * px, 2 * e.hd * px, 2 * e.hw * px); } else { g.fillStyle = e.kind === 2 ? '#3a2f3a' : e.kind === 3 ? '#556' : '#cfc6b8'; g.fillRect(-e.hd * px, -e.hw * px, 2 * e.hd * px, 2 * e.hw * px); } g.restore();
   }
   for (const a of fp.ascents?.list || []) {
     const p0 = a.path[0], p1 = a.path.find((q) => Math.hypot(q[0] - p0[0], q[1] - p0[1]) > 0.5) || a.path[1]; const [x0, y0] = P(p0[0], p0[1]), [x1, y1] = P(p1[0], p1[1]), ang = Math.atan2(y1 - y0, x1 - x0);
