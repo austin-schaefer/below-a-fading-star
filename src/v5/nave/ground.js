@@ -37,12 +37,17 @@ export const naveBearing = (x, z) => ((Math.atan2(x - NAVE.x, -(z - NAVE.z)) * 1
 export function naveEdge(x, z) { return Math.hypot(x - NAVE.x, z - NAVE.z) - naveRim(naveBearing(x, z)); }
 // rocks, trees and the scatter keep off the rim and the hole (read after the draws by rocks.js, vegetation/ground.js
 // and structures/scatter.js)
+// v14-D0: and the Coffin Road's head on the south-east rim (v14/coffin-road/plan.js SZ = 47.75): the shears' feet,
+// the landing, the waiting coffin, the guys' stakes, with a margin (a fixed box: the plan reads the terrain)
+const HEAD = { x0: 263, x1: 286, z0: 39.5, z1: 56 };
+const inHead = (x, z) => x > HEAD.x0 && x < HEAD.x1 && z > HEAD.z0 && z < HEAD.z1;
 export function naveClear(x, z) {
-  if (NAVE_OFF || x < B[0] - 4 || x > B[1] + 4 || z < B[2] - 4 || z > B[3] + 4) return false;
-  return naveEdge(x, z) < 2;
+  if (NAVE_OFF || x < B[0] - 4 || x > Math.max(B[1], HEAD.x1) + 4 || z < B[2] - 4 || z > B[3] + 4) return false;
+  return naveEdge(x, z) < 2 || inHead(x, z);
 }
 // ground cover grows right up to the torn edge, never over the hole
 export function naveHole(x, z) {
-  if (NAVE_OFF || x < B[0] || x > B[1] || z < B[2] || z > B[3]) return false;
-  return naveEdge(x, z) < 0.25;
+  if (NAVE_OFF || x < B[0] || x > HEAD.x1 || z < B[2] || z > B[3]) return false;
+  // v14-D0: no grass through the landing's planks, under the waiting coffin, round the shears' feet
+  return naveEdge(x, z) < 0.25 || (x > 266 && x < 274.5 && z > 46.3 && z < 49.2) || (x > 270 && x < 276 && z > 41.3 && z < 43.8) || (x > 270 && x < 275 && Math.abs(Math.abs(z - 47.75) - 2.7) < 0.9);
 }

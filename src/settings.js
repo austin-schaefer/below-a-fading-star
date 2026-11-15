@@ -65,7 +65,7 @@ const NAMED_POSES = {
   spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
   bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
   diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
-  coffinroad: { x: 250.4, y: -16.6, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D0: on the coffins 16 m under the moor, looking east along the road into the dark under the roof, the candles going away
+  coffinroad: { x: 250.4, y: -16.7, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D0: on the coffins 16 m under the moor, looking east along the road into the dark under the roof, the candles going away
   nadir: { x: 203.08, y: -32.58, z: 176.54, look: { x: 200, z: 185 }, pitch: 0.12 }, // v14-D2: on the Pit's floor where the passage comes in, the down-reel and the sheers over the Nadir ahead, the slabs going up the wall behind them
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
