@@ -9,15 +9,13 @@
 // (the hall's own darkness, glow and below-volume are v5/nave.js's).
 // Draws: the road (stair, shears, coffins, candles' irons, door, passage, the sun: one mesh), the flames (one Points).
 // Lights: a PointLight between each two candles and one in the lantern (lights.js keeps the nearest three).
-// ?coffinroad=0 leaves it out (the Nave then is as it was, with the gap in its rim's colliders closed by nothing: a
-// test switch only).
+// ?coffinroad=0 (or ?skip=coffinroad) leaves it out, and the Nave keeps its rim's colliders and south wall whole.
 import * as THREE from 'three';
 import { NAVE } from '../v5/nave/ground.js';
-import { glowAt, naveBuilt } from '../v5/nave.js';
+import { glowAt } from '../v5/nave.js';
 import { UnderBuilder, underMaterial, installBelow, boxBelow } from './under.js';
-import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, PAIRS, DOOR, stairHead, candles, FLAME_Y, makeFloor } from './coffin-road/plan.js';
+import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, PAIRS, DOOR, stairHead, candles, FLAME_Y, makeFloor, CR_OFF } from './coffin-road/plan.js';
 
-const OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('coffinroad') === '0';
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const TIMBER = C('#2b211a'), TIMBER_L = C('#3d3026'), LID = C('#352920'), LEAD = C('#3f4341'), ROPE = C('#6d5f48');
 const IRON = C('#26221f'), WAX = C('#6f6a58'), STONE = C('#6e655c'), STONE_D = C('#4c453f'), RUBBLE = C('#5d554c');
@@ -25,8 +23,8 @@ const MORTAR = C('#4a3a26'), GOLD = C('#c8962e'), GOLD_D = C('#8a6420'), RED = C
 const FLAME = '#9fe8c2'; // corpse-candle green (the palette's wisp)
 
 export async function build(ctx) {
-  await Promise.race([naveBuilt, new Promise((r) => setTimeout(r, 30000))]); // (the Nave left out by ?only= or ?skip=: give up)
-  if (OFF || !ctx.nave || ctx.nave.off) { ctx.coffinRoad = { off: true }; return; }
+  await ctx.built('nave'); // (false at once when the Nave is left out: then no road)
+  if (CR_OFF || !ctx.nave || ctx.nave.off) { ctx.coffinRoad = { off: true }; return; }
   const t0 = performance.now();
   const { scene, terrain: T } = ctx;
   const low = ctx.quality === 'low';
@@ -307,7 +305,9 @@ export async function build(ctx) {
     ctx.addCollider({ x1: wait.x - 0.95, z1: wait.z, x2: wait.x + 0.95, z2: wait.z, r: 0.45, y: g(wait.x, wait.z) - 0.2, h: 1.5, stand: false }); colliders++;
   }
   // under the ground: the passage (the hall and the hole's shaft are the Nave's)
-  installBelow(ctx).add(boxBelow(DOOR.x - DOOR.half - 0.6, DOOR.x + DOOR.half + 0.6, DOOR.z - 0.2, DOOR.z + DOOR.depth + 3, -4, 1, 0.6));
+  const below = installBelow(ctx);
+  below.add(boxBelow(DOOR.x - DOOR.half - 0.6, DOOR.x + DOOR.half + 0.6, DOOR.z - 0.2, DOOR.z + DOOR.depth + 3, -4, 1, 0.6), { size: 0.35 }); // a narrow passage: a smaller room
+  below.keep(mesh); below.keep(flames);
 
   // the way down, for heights-test: from the turf east of the shears, down the stair, the raft, the north spur, the
   // road to its end under the sun

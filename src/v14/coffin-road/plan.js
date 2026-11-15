@@ -12,6 +12,9 @@
 //     dark under the moor to the east wall and the sun on it (x 296.4)
 import { NAVE, naveEdge } from '../../v5/nave/ground.js';
 
+// ?coffinroad=0, or the module skipped or left out by ?only=: the Nave keeps its rim's colliders and south wall whole
+const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+export const CR_OFF = !!Q && (Q.get('coffinroad') === '0' || (Q.get('skip') || '').split(',').includes('coffinroad') || (Q.get('only') !== null && !Q.get('only').split(',').includes('coffinroad')));
 export const ROAD_Y = NAVE.water + 0.34;  // the lids' tops
 export const SZ = 47.75, SHALF = 0.85;     // the stair's line and half-width
 export const FOOT_X = 248.7;               // the stair's foot, the raft's east edge
