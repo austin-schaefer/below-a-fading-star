@@ -131,12 +131,19 @@ const R = await page.evaluate(async () => {
       p.keys.clear();
       return { off, low, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
     };
-    for (const f of [0.85, 0.5, 0.12]) {
+    for (const f of [0.98, 0.85, 0.5, 0.12]) {
       const x = PL.FOOT_X + f * (Hd.xHead - PL.FOOT_X), y = CR.stairY(x);
       for (const s of [-1, 1]) for (const hop of [false, true]) {
         const r = side(x, PL.SZ, y, s > 0 ? Math.PI : 0, hop);
         res.push({ cr: `off the stair's ${s > 0 ? 'south' : 'north'} side ${Math.round(f * 100)}% up, ${hop ? 'hopping' : 'hurrying'}`, ...r });
       }
+    }
+    // round 2: the landing over the hole (held), and over the turf (a step down onto the turf, never into the hole)
+    for (const s of [-1, 1]) for (const hop of [false, true]) {
+      const r = side(Hd.xHead + 0.15, PL.SZ, Hd.yHead, s > 0 ? Math.PI : 0, hop);
+      res.push({ cr: `off the landing's ${s > 0 ? 'south' : 'north'} side over the hole, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+      const t = side(Hd.xRim + 1.6, PL.SZ, Hd.yHead, s > 0 ? Math.PI : 0, hop);
+      res.push({ turf: `off the landing's ${s > 0 ? 'south' : 'north'} side over the turf, ${hop ? 'hopping' : 'hurrying'}`, edge: NG.naveEdge(t.at[0], t.at[1]), under: t.feet - T.heightAt(t.at[0], t.at[1]), ...t });
     }
     for (const [x, s] of [[262, 1], [275, -1], [290, 1]]) for (const hop of [false, true]) {
       const r = side(x, PL.ROAD.zc, PL.ROAD_Y, s > 0 ? Math.PI : 0, hop);
@@ -169,6 +176,7 @@ let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
 const f = (v) => v.toFixed(2);
 for (const r of R) {
+  if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Coffin Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
   if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
   if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Coffin Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
   if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
