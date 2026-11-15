@@ -765,6 +765,42 @@ if (process.env.FIND !== '0') {
   await c.close();
 }
 
+// v14-D2, the sounding at the bottom of the Pit (src/v14/pit.js; frames: tools/pit-frames.mjs): offered at the reel's
+// crank end to a visitor beside it looking at the reel or past it at the Nadir, not from the lip 30 m over it, not with
+// the back to it, not from the stair over it; done, the lead goes down into the hole and comes home; remembered
+{
+  const c = await browser.newContext({ viewport: { width: 640, height: 360 } }); const p = await c.newPage(); watch(p, 'pit');
+  await p.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.pit, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  const offAt = (x, z, y, yaw, pitch = 0) => p.evaluate(async ([x, z, y, yaw, pitch]) => {
+    const fp = window.__fp; fp.controls.placeAt(x, z, y); const pl = fp.player; pl.yaw = yaw; pl.pitch = pitch; pl.vel.set(0, 0, 0);
+    await new Promise((r) => setTimeout(r, 900));
+    return fp.acts.offered?.def.id || null;
+  }, [x, z, y, yaw, pitch]);
+  const P = await p.evaluate(() => { const P = window.__fp.pit, dx = (P.reel.x - 200) / Math.hypot(P.reel.x - 200, P.reel.z - 185), dz = (P.reel.z - 185) / Math.hypot(P.reel.x - 200, P.reel.z - 185); return { reel: P.reel, dx, dz, ax: -dz, az: dx, yC: P.yC, lipY: P.lipY, s: P.stair.point(0.5) }; });
+  const yawTo = (x, z, tx, tz) => Math.atan2(-(tx - x), -(tz - z));
+  const side = { x: P.reel.x + P.ax * 1.7 - P.dx * 0.4, z: P.reel.z + P.az * 1.7 - P.dz * 0.4 };
+  check('pit: the lead is offered beside the reel, looking at the Nadir', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3)) === 'pit-lead');
+  check('pit: and looking at the reel itself', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, P.reel.x, P.reel.z))) === 'pit-lead');
+  check('pit: not with the back to it', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) + Math.PI)) !== 'pit-lead');
+  check('pit: not from the lip over it', (await offAt(194.2, 201, undefined, yawTo(194.2, 201, 200, 185), -0.6)) !== 'pit-lead');
+  check('pit: not from the stair over the floor', (await offAt(P.s[0], P.s[2], P.s[1], yawTo(P.s[0], P.s[2], 200, 185), -0.5)) !== 'pit-lead');
+  await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3);
+  await p.keyboard.press('KeyE'); await sleep(2500);
+  let r = await p.evaluate(() => ({ n: window.__fp.acts.count('pit-lead'), t: window.__fp.pit.state.t, leadY: window.__fp.pit.state.leadY, yC: window.__fp.pit.yC }));
+  check('pit: E lets go the lead: it is going down into the Nadir', r.n === 1 && r.t > 0 && r.leadY < r.yC - 2, r);
+  for (let i = 0; i < 80 && (await p.evaluate(() => window.__fp.pit.state.t >= 0)); i++) await sleep(500);
+  r = await p.evaluate(() => ({ t: window.__fp.pit.state.t, leadY: window.__fp.pit.state.leadY, yC: window.__fp.pit.yC, kept: window.__fp.pit.state.n }));
+  check('pit: the wind brings it home over the hole', r.t < 0 && Math.abs(r.leadY - (r.yC + 0.35)) < 0.3, r);
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.pit, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  r = await p.evaluate(() => ({ n: window.__fp.acts.count('pit-lead') }));
+  check('pit: after a reload the sounding is remembered and the lead offered again', r.n === 1 && (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3)) === 'pit-lead', r);
+  await c.close();
+}
+
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
 console.log(`${passes} passed, ${fails} failed`);

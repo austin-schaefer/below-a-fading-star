@@ -19,6 +19,7 @@ import { startCentralSound } from './sound-central.js'; // v10-A1: act-crystal, 
 import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, act-pinch, act-tribute
 import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
 import { startLiftSound } from '../v12/lift-sound.js'; // v12-H4: the lift (act-lift-*)
+import { startPitSound } from '../v14/pit-sound.js'; // v14-D2: the Pit's breath and the sounding (act-pit-*)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -95,8 +96,10 @@ export function startActsSound(a, ctx) {
   const bell = startBellSound(a, ctx); // its own rng
   const central = startCentralSound(a, ctx); // v10-A1
   const lift = startLiftSound(a, ctx); // v12-H4
+  const pit = startPitSound(a, ctx); // v14-D2: its own rng
   function cue(name, pos, opts) {
     if (name.startsWith('act-lift') && lift.cue(name, pos, opts)) return; // v12-H4
+    if (name.startsWith('act-pit') && pit.cue(name, pos, opts)) return; // v14-D2
     if (central.cue(name, pos, opts)) return; // v10-A1
     if (name.startsWith('act-bell')) bell.cue(name, pos, opts);
     else if (name === 'act-offer') offer(pos);

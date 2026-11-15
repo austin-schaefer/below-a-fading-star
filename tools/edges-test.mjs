@@ -9,7 +9,9 @@
 // stair at its head goes down it, held on its floor (so that walk is not a pass of the lip, and is measured from the
 // stair's floor), and at least one bearing does; hurrying and hopping sideways off the stair (high, middle, low) and
 // off the road on the water keep the walker on (held edges); one dropped into the water off the road is put back on
-// the road within three seconds (the page's own frames), never under the water's floor. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
+// the road within three seconds (the page's own frames), never under the water's floor. v14-D2, the Pit's slabs round its
+// wall: sideways off them toward the hole and the wall at three heights, the held edges keep the walker on; a walker on
+// the landing's line walks out onto it. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
 // them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
 // and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
 // through controls.update in one page.
@@ -164,6 +166,53 @@ const R = await page.evaluate(async () => {
     }
     res.push({ water: true, back, lowW, inWater, rescues: CR.state.rescues });
   }
+  // v14-D2: the Pit's way up, the road's slabs pinned round its wall: sideways off them (a hurry, then a hurrying hop)
+  // toward the hole and toward the wall at three heights: the held edges keep the walker on; and a walker coming at
+  // the rim on the landing's line from 30 m walks out onto the landing, held on its floor
+  if (fp.pit && !fp.pit.off) {
+    const PS = fp.pit.stair, PF = fp.pit.floor;
+    const side = (x, z, y, yaw, hop, secs = 2) => {
+      fp.controls.placeAt(x, z, y + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw;
+      let low = 0, off = 0;
+      for (let i = 0; i < secs * 60; i++) {
+        fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
+        const f = PF(p.pos.x, p.pos.z);
+        if (f === null || f === undefined) off++; else low = Math.min(low, p.pos.y - p.eye - f);
+      }
+      p.keys.clear();
+      return { off, low, feet: p.pos.y - p.eye };
+    };
+    for (const sv of [0.2, 0.5, 0.8]) {
+      const [x, y, z] = PS.point(sv), toHole = Math.atan2(-(200 - x), -(185 - z));
+      for (const [way, yaw] of [['the hole', toHole], ['the wall', toHole + Math.PI]]) for (const hop of [false, true]) {
+        const r = side(x, z, y, yaw, hop);
+        res.push({ ps: `off the slabs ${Math.round((1 - sv) * 100)}% up, toward ${way}, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+      }
+    }
+    // near the foot, where the slabs come down onto the bowl (v14-D2 round 2: they lay a metre inside it): off them
+    // either way the walker is on the slabs or on the floor, never under either
+    const PB = fp.pit.bowl;
+    for (const sv of [0.9, 0.95, 0.99]) {
+      const [x, y, z] = PS.point(sv), toHole = Math.atan2(-(200 - x), -(185 - z));
+      for (const [way, yaw] of [['the hole', toHole], ['the wall', toHole + Math.PI], ['down', toHole + Math.PI / 2]]) {
+        fp.controls.placeAt(x, z, y + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw;
+        let low = 0;
+        for (let i = 0; i < 120; i++) { fp.controls.update(DT); const feet = p.pos.y - p.eye, sf = PF(p.pos.x, p.pos.z); const f = Math.max(sf !== null && sf !== undefined && sf <= feet + 0.6 ? sf : -Infinity, PB(p.pos.x, p.pos.z) ?? T.heightAt(p.pos.x, p.pos.z)); low = Math.min(low, feet - f); } // (the slabs' floor counts where it could hold the feet: the landing 26 m overhead does not)
+        p.keys.clear();
+        res.push({ psFoot: `${Math.round((1 - sv) * 100)}% up, toward ${way}`, low });
+      }
+    }
+    // no tread's top under the floor beside it
+    let worst = Infinity, at = 0;
+    for (let i = 0; i <= 400; i++) { const sv = i / 400, d = PS.at(sv).y - PS.under(sv); if (d < worst) { worst = d; at = sv; } }
+    res.push({ psTread: true, worst, at });
+    const L = PS.land, sx = 200 + L.dx * 30, sz = 185 + L.dz * 30;
+    fp.controls.placeAt(sx, sz); p.vel.set(0, 0, 0); p.vy = 0; p.yaw = Math.atan2(-(200 - sx), -(185 - sz)); p.keys.clear(); p.keys.add('KeyW');
+    let onLand = 0, low = 0;
+    for (let i = 0; i < 14 * 60; i++) { fp.controls.update(DT); if (p.onStack?.name === 'pit-stair') { onLand++; low = Math.min(low, p.pos.y - p.eye - PF(p.pos.x, p.pos.z)); } }
+    p.keys.clear();
+    res.push({ psLand: true, onLand, low, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] });
+  }
   // the Sunken Court: the kerb stops the walker; a hop lands on the coping, close over the water
   for (const [name, sx, sz, edge] of [['from the south', -40, -135, (x, z) => z - pit.z1], ['from the west', -65, -165, (x, z) => pit.x0 - x]]) {
     const r = walk(sx, sz, -40, -165, edge, { secs: 8, hopAt: 360 });
@@ -178,6 +227,10 @@ const f = (v) => v.toFixed(2);
 for (const r of R) {
   if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Coffin Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
   if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Coffin Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.ps) { check(r.off === 0 && r.low > -0.15, `the Pit's slabs: ${r.ps}: held on them`, `${r.off} ticks off them, lowest ${f(r.low)} m under them`); continue; }
+  if (r.psFoot) { check(r.low > -0.15, `the Pit's slabs near the foot, ${r.psFoot}: never under the slabs or the floor`, `lowest ${f(r.low)} m`); continue; }
+  if (r.psTread) { check(r.worst > -0.02, 'the Pit\'s slabs: no tread\'s top under the floor beside it', `least ${f(r.worst)} m over it at s ${f(r.at)}`); continue; }
+  if (r.psLand) { check(r.onLand > 30 && r.low > -0.15, 'the Pit: a walker on the landing\'s line from 30 m walks out onto it, held on its floor', `${r.onLand} ticks on it, lowest ${f(r.low)} m under it, ended at (${f(r.at[0])}, ${f(r.at[1])}) feet ${f(r.feet)}`); continue; }
   if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Coffin Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
   if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }

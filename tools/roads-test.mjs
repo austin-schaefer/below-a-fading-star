@@ -88,7 +88,9 @@ const res = await page.evaluate(async () => {
   let samples = 0; const blind = [];
   for (const t of tracks) {
     for (let i = 0; i < t.pts.length; i += 2) {
-      const [x, z] = t.pts[i]; samples++;
+      const [x, z] = t.pts[i];
+      if (Math.hypot(x - 200, z - 185) < 12) continue; // v14-D2: the causeway's line runs on over the Pit's hole, where no one walks it (its floor has its own way)
+      samples++;
       let ok = false, nearest = Infinity;
       for (const g of G) { const d = Math.hypot(g.x - x, g.z - z); if (d < R.SIGHT) { nearest = Math.min(nearest, d); if (clear(x, z, g)) { ok = true; break; } } }
       if (!ok) blind.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)})`);
