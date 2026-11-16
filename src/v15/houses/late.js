@@ -306,7 +306,7 @@ export function late(B, M, o = {}) {
     // a chimney, where there is a fire: a plastered stack under a tile, or a pot
     const cxh = clamp(x + (rng() - 0.5) * 2.2, -w / 2 + 0.7, w / 2 - 0.7), czh = zb + (against ? 0.45 : 0.3 + 0.6 * ds), hh = 0.8 + rng() * 0.7;
     B.add(B.box(0.42, hh + 0.3, 0.42, { seg: 9, chip: 0.03 }), ch(HM, cxh, y + hh / 2 + 0.05, czh), /* (its foot in the roof: there is no parapet to stand on against a riser) */ { color: worn(wash, rng, 0.25), moss: 0.2, ground: g0 });
-    B.add(B.box(0.56, 0.05, 0.56, { seg: 9 }), ch(HM, cxh, y + hh + 0.3, czh, 0.1, rng(), 0.06), { color: worn(L.tile[1], rng, 0.4), moss: 0.1, ground: g0 });
+    B.add(B.box(0.56, 0.05, 0.56, { seg: 9 }), ch(HM, cxh, y + hh + 0.22, czh, 0.1, rng(), 0.06), { color: worn(L.tile[1], rng, 0.4), moss: 0.1, ground: g0 });
     R.chimney = R.W(cxh, y + hh + 0.35, czh);
   }
   // a lamp's bracket by the door, a bench or a jar beside it
