@@ -137,7 +137,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
   // v14-B3: the places of v9 to v12 (the Lantern Halt, the bell, the Span's ways and camp, the ways up and their tops, the passes) are named landmarks now
-  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps and the two stands kept where the owner cut the card (#52), the three region cards, the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) - 1 + 3 + 3 + 18 + 8, n);
+  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps and the two stands kept where the owner cut the card (#52), the three region cards, the two village places with no card (the Fountain of Noon, the Smoking Saint; the four quarter cards are `map: false`), the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name && L.map !== false).length)) - 1 + 3 + 3 + 2 + 18 + 8, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -185,7 +185,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     const fp = window.__fp, T = fp.terrain, out = [];
     const marks = Object.values(fp.landmarks).filter((L) => L.name);
     fp.settings.places.forEach((pl, i) => {
-      const L = marks.find((m) => m.name === pl.name || 'The moss light, ' + m.name === pl.name);
+      const L = marks.find((m) => m.name === pl.name || 'The moss light, ' + m.name === pl.name) || (pl.thing && { name: pl.name, x: pl.thing.x, z: pl.thing.z, r: 3 }); // (v15-N1: the village's three things with no card of their own)
       if (!L || pl.look === 'sun') { out.push(null); return; }
       if (pl.y !== undefined && pl.y < T.heightAt(pl.x, pl.z) - 1) { out.push(null); return; }
       fp.settings.teleport(pl);

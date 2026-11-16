@@ -30,6 +30,8 @@ const STATIONS = [
   { name: 'meadow', top: false, x: -190, z: 165, pitch: 0 },
   { name: 'lattice', top: false, x: 40, z: -230, pitch: 0 },
 ].filter((s) => !flags.only || flags.only.split(',').includes(s.name));
+if (flags.village) STATIONS.splice(0, STATIONS.length, // the village's three near stands on low (v15-N1): the Lees' square, the Mid Rung, the Pennyworth
+  { name: 'square', top: false, x: 73.7, z: -36.3, pitch: 0 }, { name: 'rungs', top: false, x: 64.3, z: -21.8, pitch: 0 }, { name: 'pennyworth', top: false, x: 100, z: -25, pitch: 0 });
 const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
@@ -90,6 +92,13 @@ for (const s of STATIONS) {
     await page.evaluate((f0) => new Promise((res) => { const w = () => (window.__cost.frames > f0 ? res() : requestAnimationFrame(w)); w(); }), f0);
     const r = await page.evaluate(() => JSON.parse(JSON.stringify(window.__cost.last)));
     rows.push({ yaw: +yaw.toFixed(2), ...r }); if (!flags.objects) delete r.objs;
+  }
+  if (flags.village) { // the village's own modules (colour pass), per heading: the worst heading and the mean
+    const V = ['lappet', 'quarrels', 'rungs', 'lees', 'pennyworth', 'villagerow', 'lappetfar', 'house'];
+    const vs = rows.map((r) => V.reduce((a, k) => [a[0] + (r.main[k]?.[0] || 0), a[1] + (r.main[k]?.[1] || 0)], [0, 0]));
+    const w = vs.reduce((a, b) => (b[1] > a[1] ? b : a));
+    console.log(`  VILLAGE ${s.name}: worst heading ${w[0]} calls / ${Math.round(w[1] / 1000)}k tris (by heading: ${vs.map((v) => Math.round(v[1] / 1000) + 'k').join(' ')})`);
+    for (const k of V) console.log(`    ${k.padEnd(12)} max ${String(Math.max(...rows.map((r) => r.main[k]?.[0] || 0))).padStart(2)} calls ${String(Math.round(Math.max(...rows.map((r) => r.main[k]?.[1] || 0)) / 1000)).padStart(4)}k`);
   }
   const worstT = rows.reduce((a, b) => (b.tris > a.tris ? b : a));
   const worstC = rows.reduce((a, b) => (b.calls > a.calls ? b : a));

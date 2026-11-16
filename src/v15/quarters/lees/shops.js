@@ -1,15 +1,15 @@
 // The Lees' shops (v15-Q3): three in the Low Rung's vaults (the vaults and their round arches are the bones':
 // src/v15/ways/misc.js undercroft), one stall on the square, one house at the bench's east end. Each mouth is closed
 // its own way and each has the furniture of one trade and none of its goods (batch 3 brings those):
-//   the Lagan   [Proposed] lees-shop-4: the dead-letter counter. A counter across the mouth and over it a rack of
+//   the Lagan   lees-shop-4: the dead-letter counter. A counter across the mouth and over it a rack of
 //               pigeonholes to the arch's crown, a hatch left in the middle; the lit room shows through every hole.
-//   the Ullage  [Proposed] lees-shop-5: the vintner. A plank shutter propped out from the arch's head, a low
+//   the Ullage  lees-shop-5: the vintner. A plank shutter propped out from the arch's head, a low
 //               counter and a half gate, and across the mouth a beam with twelve hooks.
-//   the Welt    [Proposed] lees-shop-6: the slipper-maker. A plank wall with a wicket in it and a window; on the
+//   the Welt    lees-shop-6: the slipper-maker. A plank wall with a wicket in it and a window; on the
 //               sill an iron stand for a last, half a curtain; a trying-on bench outside.
-//   the Tare    [Proposed] lees-stall-salt: the salt-weigher. A door-slab counter on two drums under one cloth, a
+//   the Tare    lees-stall-salt: the salt-weigher. A door-slab counter on two drums under one cloth, a
 //               curtain behind, a balance with a perch on its beam too small for any bird, a peg nobody's pack hangs on.
-//   the Rebate  [Proposed] lees-house-3: the picture-framer. Empty frames leaned against the front, and out on the
+//   the Rebate  lees-house-3: the picture-framer. Empty frames leaned against the front, and out on the
 //               brink a great frame on two posts, sized for the view and holding it.
 // (A lagan is cargo lying on the sea's floor; ullage, what a bottle lacks of full; a welt, a shoe's seam; tare, the
 // weight of the vessel alone; a rebate, the groove a picture sits in.)
