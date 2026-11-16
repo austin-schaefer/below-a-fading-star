@@ -96,7 +96,7 @@ export async function build(ctx) {
   for (const R of list) {
     const f = R.floors.find((q) => q.steps); if (!f) continue;
     const p = P.plot(R.name), dx = f.s, dz = f.c, hx = f.x + dx * f.d / 2, hz = f.z + dz * f.d / 2, fx = f.x - dx * f.d / 2, fz = f.z - dz * f.d / 2;
-    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx - dx * 0.15, hz - dz * 0.15, f.y1], [hx + dx * 0.6, hz + dz * 0.6, f.y1]] });
+    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx + dx * 0.2, hz + dz * 0.2, f.y1], [hx + dx * 0.7, hz + dz * 0.7, f.y1]] });
   }
 
   // ---------------------------------------------------------------- floors of this file's own: level rectangles
@@ -197,7 +197,8 @@ export async function build(ctx) {
     K.addFloor(floor, { name: G.id, keep: true });
     for (const sd of [-1, 1]) for (let i = 0, m = 4; i < m; i++) { // nobody walks into its mass from the slot beside it
       const a0 = len * i / m, a1 = len * (i + 1) / m, top = yM - drop * Math.min(1, (a1 + 0.7) / len) - 0.4; if (top < yL + 0.3) continue;
-      const px = t[0] * sd * (w / 2 + 0.05), pz = t[1] * sd * (w / 2 + 0.05); K.wall(hx + b[0] * a0 + px, hz + b[1] * a0 + pz, hx + b[0] * a1 + px, hz + b[1] * a1 + pz, 0.15, yL - 0.4, top - yL + 0.4);
+      const px = t[0] * sd * (w / 2 + 0.2), pz = t[1] * sd * (w / 2 + 0.2); K.wall(hx + b[0] * a0 + px, hz + b[1] * a0 + pz, hx + b[0] * a1 + px, hz + b[1] * a1 + pz, 0.1, // (a body's width and a hand between them: set closer, the two squeezed a walker up the stair)
+        yL - 0.4, top - yL + 0.4);
     }
     const fx = hx + b[0] * len, fz = hz + b[1] * len;
     K.ascent({ id: G.id, held: true, offs: [0.4], path: [[fx + b[0] * 1.3, fz + b[1] * 1.3, yL], [fx, fz, yL], [hx - b[0] * 0.9, hz - b[1] * 0.9, yM], [hx - b[0] * 2.4, hz - b[1] * 2.4, yM]] });

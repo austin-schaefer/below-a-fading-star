@@ -500,9 +500,10 @@ export function backs(soup, T = TOL) {
         const facing = (N[t * 3] * dx + N[t * 3 + 1] * dy + N[t * 3 + 2] * dz) * (p.side === 1 ? -1 : 1);
         if (facing <= 0) continue; // its front, as drawn
         const at = [s.x + dx * h.d, s.y + dy * h.d, s.z + dz * h.d];
-        // met outside the place's region: what was taken from the page there is only the faces that reach into the region (a wall's
-        // long front without its top), so a back met there says nothing about the wall
-        if (!inside(at[0], at[1], at[2])) continue;
+        // a place that says `near: true` (a roof walk, looking out over a village): a back met outside its region is not a
+        // finding. Only the faces that reach into the region are taken from the page (a wall's long front without its top),
+        // so out there a back says nothing about the wall
+        if (soup.near && !inside(at[0], at[1], at[2])) continue;
         key = `${part[t]}|${Math.floor(at[0])},${Math.floor(at[1])},${Math.floor(at[2])}`;
         rec = { part: part[t], sky: false, at, from: [s.x, s.y, s.z], dir: [dx, dy, dz], d: h.d };
       }

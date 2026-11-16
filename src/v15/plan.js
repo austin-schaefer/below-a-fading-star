@@ -395,6 +395,6 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
   // the Rungs (v15-Q2): its own ways, and the Leads walked along the Low Rung's roofs
   ...[RUNGS.tenter.id, RUNGS.gullet.id, ...RUNGS.stairs].map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
-  ...RUNGS.leads.crossings.map((c, i) => ({ name: `lappet-rungs-leads-${i + 1}`, ascent: `rungs-leads-${i + 1}`, half: 5, exempt: BURIED })),
+  ...RUNGS.leads.crossings.map((c, i) => ({ name: `lappet-rungs-leads-${i + 1}`, ascent: `rungs-leads-${i + 1}`, half: 5, near: true, exempt: BURIED })),
   { name: 'lappet-rungs-squint', pts: [[...at(2, 27, 11.6), LEVEL.mid.y], [...at(2, 23.4, 11.6), LEVEL.mid.y]], half: 6, exempt: BURIED },
 ];

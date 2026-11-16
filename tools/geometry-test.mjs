@@ -108,7 +108,7 @@ async function take(place) {
   if (!place.stands) await page.clock.runFor(900); // what hides below the moor, what drops far, settles round the walker
   const r = await page.evaluate(async (place) => (await import('/tools/geometry/extract.js')).extract(window.__fp, place), place);
   if (r.missing) return null;
-  const soup = { P: dec(r.P, Float32Array), S: dec(r.S, Float32Array), part: dec(r.part, Uint32Array), parts: r.parts, spheres: r.spheres, stands: r.stands, L: r.L, tris: r.tris, truncated: r.truncated, skipped: r.skipped };
+  const soup = { P: dec(r.P, Float32Array), S: dec(r.S, Float32Array), part: dec(r.part, Uint32Array), parts: r.parts, spheres: r.spheres, stands: r.stands, L: r.L, tris: r.tris, truncated: r.truncated, skipped: r.skipped, near: !!place.near };
   const ex = [...Object.entries(place.exempt || {}), ...EXEMPT], an = [...Object.entries(place.anchor || {}), ...ANCHOR];
   for (const p of soup.parts) {
     const hit = ex.find(([pat]) => nameHit(pat, p.name));
