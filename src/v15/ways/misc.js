@@ -33,8 +33,7 @@ export function ramp(K, o) {
     const a = P[i], b = P[i + 1], dx = b[0] - a[0], dz = b[2] - a[2], len = Math.hypot(dx, dz), fx = dx / len, fz = dz / len;
     segs.push({ a, b, len, fx, fz });
     const F = frame(a[0], a[1], a[2], fx, fz), dy = b[1] - a[1], pitch = -Math.atan2(dy, len), sl = Math.hypot(len, dy);
-    const eu = (o.revet || 0) * (w / 2 + 0.1); // (the revetment's posts stand at the edge: the ground there counts)
-    const g0 = Math.min(o.base(a[0], a[2]), o.base(b[0], b[2]), o.base(a[0] + fz * eu, a[2] - fx * eu), o.base(b[0] + fz * eu, b[2] - fx * eu)) - 0.3, th = (a[1] + b[1]) / 2 - g0;
+    const g0 = Math.min(o.base(a[0], a[2]), o.base(b[0], b[2])) - 0.3, th = (a[1] + b[1]) / 2 - g0;
     // the earth: a slab as deep as it stands over the ground, its top following the fall
     B.add(B.box(w - 0.1, 0.5, sl + 0.25, { seg: 1.2 }), F.clone().multiply(mat(0, dy / 2 - 0.25 - (i % 2) * 0.012, len / 2, pitch, 0, 0)), { color: jit(earth, 0.85 + rng() * 0.3), moss: 0.7, ground: g0, disp: 0.03, dispScale: 2 });
     if (th > 0.6) B.add(B.box(w - 0.3 - (i % 2) * 0.03, th, len + 0.1), F.clone().multiply(mat(0, dy / 2 - 0.4 - th / 2, len / 2)), { color: jit(earth, 0.6), moss: 0.8, ground: g0 });
@@ -44,7 +43,8 @@ export function ramp(K, o) {
     if (o.revet) {
       const sd = o.revet;
       for (let s = 0; s <= len + 0.01; s += len / Math.max(1, Math.round(len / 1.3))) {
-        const y = dy * s / len, h = a[1] + y - g0 - 0.05; // (its foot a finger into the ground)
+        const eu = sd * (w / 2 + 0.02), gp = Math.min(g0, o.base(a[0] + fx * s + fz * eu, a[2] + fz * s - fx * eu) - 0.3); // (the ground where the post stands, at the edge: it can lie lower than under the ramp's middle)
+        const y = dy * s / len, h = a[1] + y - gp - 0.05; // (its foot a finger into the ground)
         if (h > 0.5) B.add(B.box(0.13, h, 0.13), F.clone().multiply(mat(sd * (w / 2 + 0.02), y - h / 2 + 0.22, s, (rng() - 0.5) * 0.06, 0, sd * 0.04)), { color: jit(wood, 0.8 + rng() * 0.4), moss: 0.35, ground: g0 });
       }
       if (th > 0.5) for (let q = 0, nb = Math.ceil(th / 0.28); q < nb; q++) {
@@ -78,7 +78,7 @@ export function bridge(K, o) {
     const t = (i + 0.5) / n, sag = -0.06 * Math.sin(t * Math.PI);
     B.add(B.box(w + rng() * 0.12, 0.045, len / n - 0.02, { chip: 0.01 }), F.clone().multiply(mat((rng() - 0.5) * 0.04, dy * t + sag - 0.02, len * t, pitch, (rng() - 0.5) * 0.05, (rng() - 0.5) * 0.03)), { color: jit(grey, rng() < 0.12 ? 1.3 : 0.7 + rng() * 0.4), moss: 0.15, ground: Math.min(ay, by) - 2 });
   }
-  if (o.rails !== false) for (const sd of [-1, 1]) rail(K, [[ax + fz * sd * (w / 2 + 0.03), ay, az - fx * sd * (w / 2 + 0.03)], [bx + fz * sd * (w / 2 + 0.03), by, bz - fx * sd * (w / 2 + 0.03)]], { h: 0.95, every: 1.6, paint: sd > 0 ? C.late.paint[2] : undefined });
+  if (o.rails !== false) for (const sd of [-1, 1]) rail(K, [[ax + fz * sd * (w / 2 - 0.07), ay, az - fx * sd * (w / 2 - 0.07)], [bx + fz * sd * (w / 2 - 0.07), by, bz - fx * sd * (w / 2 - 0.07)]], { h: 0.95, every: 1.6, paint: sd > 0 ? C.late.paint[2] : undefined });
   const floor = (x, z) => {
     const dx = x - ax, dz = z - az, t = dx * fx + dz * fz, u = dx * fz - dz * fx;
     if (t < 0 || t > len || u > w / 2 || u < -w / 2) return null;

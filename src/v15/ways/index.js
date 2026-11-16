@@ -158,7 +158,7 @@ export function buildWays(ctx, lappet) {
         const R = RUN[br.run], pp = P.plot('bridge-pier');
         pier(K, { name: 'bridge-pier', x: pp.x, z: pp.z, y0: LEVEL.low.y, y1: LEVEL.mid.y, w: pp.w, d: pp.d, f: R.n });
         built['lane-bridge'] = bridge(K, { name: 'lane-bridge', a: at3(br.run, br.s, br.D0, LEVEL.mid.y), b: at3(br.run, br.s, br.D1 + 0.15, LEVEL.mid.y), width: 1.1, gaps: true });
-        const c = (u, D) => at3(br.run, br.s + u, D, LEVEL.mid.y), e = pp.w / 2 + 0.02, Da = pp.D - pp.d / 2, Db = pp.D + pp.d / 2;
+        const c = (u, D) => at3(br.run, br.s + u, D, LEVEL.mid.y), e = pp.w / 2 - 0.08, Da = pp.D - pp.d / 2 + 0.08, Db = pp.D + pp.d / 2 - 0.08;
         K.rail([c(-0.65, Da), c(-e, Da), c(-e, Db), c(e, Db), c(e, Da), c(0.65, Da)], { h: 0.95, every: 1.2 });
       }
 
@@ -168,7 +168,7 @@ export function buildWays(ctx, lappet) {
         bridge(K, { name: 'lees-stair-head', a: at3(ls.run, ls.s - 1.6 * g, D + 0.72, y), b: at3(ls.run, ls.s - 0.3 * g, D + 0.72, y), width: 1.75, rails: false, register: false });
         const [x, z] = at(ls.run, ls.s - 0.3 * g, D + 0.9), drop = y - LEVEL.bench.y;
         built['lees-stair'] = timberFlight(K, { land: at3(ls.run, ls.s - 1 * g, D - 1.2, y), name: 'lees-stair', x, y, z, f, drop, width: 1.4, run: 0.3, rails: g > 0 ? [false, true] : [true, false], props: [0.02, 0.45], propBase: LEVEL.bench.y });
-        K.rail([at3(ls.run, ls.s - 1.65 * g, D - 0.06, y), at3(ls.run, ls.s - 1.65 * g, D + 1.62, y), at3(ls.run, ls.s - 0.3 * g, D + 1.62, y)], {});
+        K.rail([at3(ls.run, ls.s - 1.55 * g, D + 0.05, y), at3(ls.run, ls.s - 1.55 * g, D + 1.5, y), at3(ls.run, ls.s - 0.4 * g, D + 1.5, y)], {}); // (its poles stand on the planks, a hand in from their edge)
         for (const [u, v] of [[-1.5, 0.35], [-1.5, 1.5], [-0.4, 1.5]]) B.add(B.box(0.12, drop, 0.12), mat(...at3(ls.run, ls.s + u * g, D + v, y - drop / 2 - 0.05)), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.bench.y });
       }
 
@@ -184,7 +184,7 @@ export function buildWays(ctx, lappet) {
         for (let b = pr.b0 - 0.5; b < pr.b1 + 1.5; b += 3) { const a = P.polar(b, P.HAHA - 0.25), c = P.polar(Math.min(b + 3, pr.b1 + 1.5), P.HAHA - 0.25); K.wall(a[0], a[1], c[0], c[1], 0.3, y1 - 0.8, y0 - y1 + 0.78); }
         // and nobody on the Pennyworth walks into its earth from outside: a wall under its outer edge, in pieces, each under the ramp beside it
         for (let b = pr.b0 - 1.6; b < pr.b1 - 2; b += 1.5) { const b2 = Math.min(b + 1.5, pr.b1 - 2), yLo = y0 + (y1 - y0) * Math.max(0, (b2 - pr.b0) / (pr.b1 - pr.b0)) - 0.3, a = P.polar(b, r + 1.05), c = P.polar(b2, r + 1.05); if (yLo > y1 + 0.3) K.wall(a[0], a[1], c[0], c[1], 0.2, y1 - 0.8, yLo - y1 + 0.8); }
-        const outer = (b, y) => { const [x, z] = P.polar(b, r + 1.22); return [x, y, z]; };
+        const outer = (b, y) => { const [x, z] = P.polar(b, r + 1.165); return [x, y, z]; };
         K.rail([outer(pr.b0 - 1.6, y0), outer(pr.b0, y0), outer((pr.b0 + pr.b1) / 2, (y0 + y1) / 2), outer(pr.b1 - 3, y1 + (y0 - y1) * 3 / (pr.b1 - pr.b0))], { every: 2.2 });
       }
 
@@ -219,7 +219,7 @@ export function buildWays(ctx, lappet) {
                   // the Late wall: runs of 2 to 5 m, a hand thick, a coping of flat stones, its ends ragged; gaps between
                   const L = Math.min(s1 - s, 2 + rr() * 3), h = 0.72 + rr() * 0.14, [x, z] = at(run, s + L / 2, R.D - 0.4);
                   B.add(B.box(L, h, 0.26, { chip: 0.05, chipTop: true, seed: s }), mat(x, y + h / 2 - 0.02, z, 0, yaw - Math.PI / 2, 0), { color: lime(Math.floor(rr() * 3)), moss: 0.45, ground: y });
-                  B.add(B.box(L * (0.6 + rr() * 0.35), 0.07, 0.34, { chip: 0.02 }), mat(x, y + h + 0.03, z, 0, yaw - Math.PI / 2, 0), { color: jit(C.heliarch.dark, 1.1), moss: 0.5, ground: y });
+                  B.add(B.box(L * (0.6 + rr() * 0.35), 0.07, 0.34, { chip: 0.02 }), mat(x, y + h - 0.045, z, 0, yaw - Math.PI / 2, 0), { color: jit(C.heliarch.dark, 1.1), moss: 0.5, ground: y });
                   s += L + (rr() < 0.4 ? 0.8 + rr() * 1.6 : 0.03);
                 }
               }

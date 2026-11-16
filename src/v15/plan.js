@@ -345,6 +345,7 @@ const laneRoute = (name) => { const l = LANES.find((q) => q.name === name); retu
 // (and what stood here before v15 and is seen from the village's places as it was: not the village's to mend)
 const OLD = {
   'structures-keep': 'Carcanet Keep\'s fallen corner, as it stood before v15, seen from the crown',
+  'house-lamps': 'the Pomegranate House\'s lanterns are one-sided glass (v14-B3; the place `house` carries sixteen such on next): from the village\'s places their backs are seen as they are from the house\'s own. Not the ground: the house\'s ground is as it was',
 };
 const BURIED = {
   ...OLD,

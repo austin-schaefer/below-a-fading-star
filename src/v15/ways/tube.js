@@ -113,15 +113,14 @@ export function tube(K, o) {
       outer: (x, y, z, out) => setC(out, F[0], 0.9), inner: (x, y, z, out) => setC(out, wash, 0.6), seed: dw * 11 });
   }
   // the noon it still holds: two lenses still lit in its crown, one over the door and one near the lower end (the
-  // last stretch was too dark to steer by), each a steady lamp
+  // last stretch was too dark to steer by)
   const lights = [];
   if (o.light !== false) {
-    for (const [fr, power, reach] of [[0.36, 7, 11], [0.9, 4.5, 9]]) {
-      const wl = wTop + (wBot - wTop) * fr, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), power, reach, 2);
-      L.position.set(p[0], ya(wl) + 0.5, p[2]); L.name = `${o.name}-light`; ctx.scene.add(L); lights.push(L);
-      P.lens(U, lineM(wl).multiply(new THREE.Matrix4().makeTranslation(0, r - 0.08, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: 0.42, lit: 1, cheap: low });
-      ctx.registerUpdate((dt, t) => { L.intensity = power * (0.94 + 0.06 * Math.sin(t * 0.7 + fr * 9)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
-    }
+    for (const fr of [0.36, 0.9]) { const wl = wTop + (wBot - wTop) * fr; P.lens(U, lineM(wl).multiply(new THREE.Matrix4().makeTranslation(0, r - 0.08, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: 0.42, lit: 1, cheap: low }); }
+    // one lamp for both (the house's court and the Leerie's row leave room for one more light here, not two: house-test), hung between them, reaching each
+    const wl = wTop + (wBot - wTop) * 0.64, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), 9, 15, 1.6);
+    L.position.set(p[0], ya(wl) + 0.4, p[2]); L.name = `${o.name}-light`; ctx.scene.add(L); lights.push(L);
+    ctx.registerUpdate((dt, t) => { L.intensity = 9 * (0.94 + 0.06 * Math.sin(t * 0.7)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
   }
 
   // ---- the Late folk's planks: a sill at the top, then a stair down the bore, two stringers under it
@@ -181,7 +180,7 @@ export function tube(K, o) {
     };
     K.addFloor(gang, { name: `${o.name}-gangway`, keep: true });
     const e = (ww, uu) => pt(ww, sd * uu, y);
-    K.rail([e(door + 0.7, u0 + 0.5), e(door + 0.7, u1), e(back + 0.1, u1)], {});
+    K.rail([e(door + 0.62, u0 + 0.5), e(door + 0.62, u1 - 0.1), e(back + 0.1, u1 - 0.1)], {});
   }
   const top = pt(0, 0, o.y), end = pt(wEnd, 0, o.yEnd);
   K.ascent({ id: o.name, held: true, offs: [0.5], path: [[end[0] + fx * 1.5, end[2] + fz * 1.5, o.yEnd], [end[0], end[2], o.yEnd], [top[0] + fx * 0.5, top[2] + fz * 0.5, o.y], [top[0] - fx * 1.5, top[2] - fz * 1.5, o.y]] });

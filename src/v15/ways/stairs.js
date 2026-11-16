@@ -165,8 +165,8 @@ export function rail(K, pts, o = {}) {
     const tops = [];
     for (let j = 0; j <= n; j++) {
       // each pole its own height and lean (the first of a later span shares the last one's place, not its pole)
-      const h = hgt * (0.9 + rng() * 0.25), lx = (rng() - 0.5) * 0.22, lz = (rng() - 0.5) * 0.08;
-      if (j > 0 || i === 0) B.add(B.box(0.07 + rng() * 0.03, h + 0.3, 0.07 + rng() * 0.02), F.clone().multiply(mat(0, dy * j / n + h / 2 - 0.15, len * j / n, lx, 0, lz)), { color: jit(wood, 0.55 + rng() * 0.35), moss: 0.3, ground: a[1] });
+      const h = hgt * (0.9 + rng() * 0.25), lx = (rng() - 0.5) * 0.14, lz = (rng() - 0.5) * 0.06;
+      if (j > 0 || i === 0) B.add(B.box(0.07 + rng() * 0.03, h + 0.06, 0.07 + rng() * 0.02), F.clone().multiply(mat(0, dy * j / n + h / 2 - 0.03, len * j / n, lx, 0, lz)) /* its foot ends in what it stands on, a finger deep */, { color: jit(wood, 0.55 + rng() * 0.35), moss: 0.3, ground: a[1] });
       tops.push([0, dy * j / n + h - 0.1, len * j / n + lx * h * 0.8]);
     }
     // the rope: tied a hand under each pole's top, hanging slack between them
