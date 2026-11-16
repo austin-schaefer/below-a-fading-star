@@ -1,14 +1,14 @@
 # The saint in the kiln
 
 - **Kind:** plain
-- **State:** partial: every beat is built but the people (the burner, the masons at the rope) come with batch 3
+- **State:** built; the burner is there (v15-P1); the masons at the drag rope and the sitters on the bench are not
 - **Someone:** the colossus that stood on Carcanet Keep's north-east corner, a Heliarch saint with a crown; and the masons of the Quarrels, who needed lime
 - **Places:** the Quarrels, the Lappet's crown under the keep's wound
 - **Touches:** the gold from the court (the Heliarchs' broken statuary: the same crowned heads and hands lie all down the valley); the sign of the sun (a piece of it hangs upside down in the shears); the Pomegranate House (he is set to look at it)
 
 ## The story
 
-When the keep's corner fell the saint came down with it. His head rolled to the brink of the crown and stopped over on its right cheek, its eyes shut; one hand landed palm up under the broken end of the aqueduct. The Late folk who came to quarry the fallen wall needed three things to build with: stone, lime and water. The stone was lying about. For lime they hollowed the saint's head, broke a hole in the top of his skull to feed it and let a stoke hole into the break of his neck, on the square's side, wedged him with timber and robbed blocks where he rocked, and they burn in him the only limestone they have, which is the rest of the Heliarchs' statues: three lesser crowned heads wait in a row on the brink for their turn. For water they kerbed his palm with clay, and the last arch drips into it. Nobody means any insult by it. Somebody put a bench beside his head, under the smoking hole, facing the way he faces, because it is warm there and the view is good.
+When the keep's corner fell the saint came down with it. His head rolled to the brink of the crown and stopped over on its right cheek, its eyes shut; one hand landed palm up under the broken end of the aqueduct. The Late folk who came to quarry the fallen wall needed three things to build with: stone, lime and water. The stone was lying about. For lime they hollowed the saint's head, broke a hole in the top of his skull to feed it and let a stoke hole into the break of his neck, on the square's side, wedged him with timber and robbed blocks where he rocked, and they burn in him the only limestone they have, which is the rest of the Heliarchs' statues: three lesser crowned heads wait in a row on the brink for their turn. For water they kerbed his palm with clay, and the last arch drips into it. Nobody means any insult by it. Somebody put a bench beside his head, under the smoking hole, facing the way he faces, because it is warm there and the view is good. The burner who rakes his fire does not mind burning him; she minds the next ones waiting in the cold, and she has put her own red cap on the smallest of them.
 
 ## Beats
 
@@ -17,7 +17,9 @@ When the keep's corner fell the saint came down with it. His head rolled to the 
 | 1 | The square behind the stair's head (plan `QUARRELS.kiln`); from the stair's head his face, from the square his profile | A carved stone head four metres long lying on its cheek where it fell, a fillet and an empty roundel on its brow, combed locks, its eyes shut, a crack down the cheek uppermost, smoke rising from its broken crown, a stoked fire door at its broken neck, glowing on the paving, lime spilt pale beside it | They are burning something in a saint | The row of small heads on the brink beside him | built |
 | 2 | The brink east of the stair (`QUARRELS.heads`) | Three smaller crowned heads set in a row, largest first, all turned to face him | These are next | The drip, heard and seen, by the old pier | built |
 | 3 | Under the Last Arch's broken end (`QUARRELS.hand`) | A stone hand three metres long, palm up, a ring of clay on the palm full of water, a drop falling into it from the arch; a bronze ring still on one finger; jars and a yoke | The same statue: the rest of him is put to use too | The new house's pale wall beyond | built |
-| 4 | The bench by his crown | A plank on two blocks beside the head, facing out over the brink at the Pomegranate House | Somebody sits with him | | built (its sitters: batch 3) |
+| 4 | The bench by his crown | A plank on two blocks beside the head, facing out over the brink at the Pomegranate House | Somebody sits with him | | built (its sitters: not yet) |
+| 5 | At the stoke hole (`ctx.quarrels.places.stoke`); from the square's west, about 6 m | The burner, lime-dusted, a leather apron and a cloth over her mouth, working a long iron rake in and out of the fire door in his neck, and now and then wiping her brow; within 6 m she stops and looks at you | Someone tends him | Her cap | built (v15-P1) |
+| 6 | The smallest of the three heads on the brink | A red felt cap with a turquoise band on its stone crown | The next one is being kept warm | | built (v15-P1) |
 
 ## What it ties together
 
@@ -32,4 +34,5 @@ The valley's broken hands and crowned heads (`src/structures/scatter.js`) were s
 ## Log
 
 - 2026-11-16, v15-Q1 (the Quarrels' agent): written and built with the quarter.
+- 2026-11-16, v15-P1 (people and stories): the burner at the stoke hole (`src/v15/people/folk.js`) and her cap on the smallest head.
 - 2026-11-16, v15-S1: the head sculpted again as one carved surface and laid over on its right cheek; the bench by his crown.
