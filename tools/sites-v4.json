@@ -568,15 +568,15 @@
 },
 {
 "key": "track-0",
-"x": 177,
-"z": 152,
+"x": 145,
+"z": 194,
 "r": 2,
 "label": "Discontinued Track start [v4; v15-F2]"
 },
 {
 "key": "track-1",
-"x": 176,
-"z": 188,
+"x": 174,
+"z": 177.3,
 "r": 2,
 "label": "Discontinued Track end [v4; v15-F2]"
 },

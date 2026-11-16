@@ -1,9 +1,11 @@
 // DC The Discontinued Track [Proposed] (plans/wilderness-v5.md): "a line of bare footprints crossing the Saltings' crust from
-// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (177, 152),
-// 6 m off the causeway where the trods P39 and P40 leave it, south over the open crust to (176, 188), 12 m short of the Pit's
-// lip: a walker stepped off the road and went out onto the salt, and stops. A 2 m strip, crossing no road or trod (v15-F2:
-// the causeway's reroute past the Pit, #59, took its old line from (170, 150) to (215, 160)). Left and right, one stride
-// apart, each a slight hollow with a darker floor. A print the causeway or the water would take is dropped (none now).
+// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (145, 194),
+// in from the western reeds, east-north-east over open crust toward the Pit, to (174, 177.3): it stops 9 m short of the
+// dirt trod to the Pit's landing (P54) and 6 m south of where P40 ends at the Span's fallen bay, so a visitor on either comes
+// on it; it crosses no road or trod, and no rubble or paving lies on it (v15-F2: the causeway's reroute past the Pit, #59,
+// took its old line from (170, 150) to (215, 160); the corridor south of the causeway ends in the fallen bay's rubble).
+// Left and right, one stride apart, each a slight hollow with a darker floor. A print the causeway or the water would
+// take is dropped (none now).
 //
 // Two instanced quads (left feet, right feet) laid on the rendered terrain's triangles, the crust's own surface, each
 // carrying a baked normal map of the hollow so the low sun lights its bank and shades its floor. No shadows.
@@ -11,7 +13,7 @@ import * as THREE from 'three';
 import { CAUSEWAY_V4 } from '../../world.js';
 import { groundOf } from '../regions/common.js';
 
-export const TRACK = { from: [177, 152], to: [176, 188], stride: 0.78, half: 0.17, clear: 4.6 };
+export const TRACK = { from: [145, 194], to: [174, 177.3], stride: 0.78, half: 0.17, clear: 4.6 };
 
 // a foot's silhouette on a 64 x 128 grid (toes up): heel, arch, ball and five toes; left foot (the right is its mirror)
 function footMask(W, H) {

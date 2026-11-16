@@ -6,8 +6,8 @@
  {"name": "dress-figure-keep", "x": 40, "z": 30, "yaw": 4.55, "pitch": 0.12, "dy": 22},
  {"name": "dress-figure-deck", "x": 100, "z": 209.4, "yaw": 5.34, "pitch": -0.12, "js": "__fp.player.pos.y = 60.2;", "pre": "__fp.player.pos.y = 60.2; __fp.camera.position.y = 60.2;"},
  {"name": "dress-figure-span-west", "x": 0, "z": 209.4, "yaw": 5.157, "pitch": -0.08, "js": "__fp.player.pos.y = 60.2;", "pre": "__fp.player.pos.y = 60.2; __fp.camera.position.y = 60.2;"},
- {"name": "dress-track-along", "x": 180, "z": 146.5, "yaw": 2.97, "pitch": -0.28},
- {"name": "dress-track-end", "x": 170, "z": 194, "yaw": 5.5, "pitch": -0.5, "dy": 7},
+ {"name": "dress-track-along", "x": 141, "z": 196.3, "yaw": 5.235, "pitch": -0.25},
+ {"name": "dress-track-end", "x": 181, "z": 173.5, "yaw": 2.08, "pitch": -0.5, "dy": 7},
  {"name": "dress-pegs-causeway", "x": -80, "z": -34, "yaw": 3.14159, "pitch": -0.08, "dy": 1.2},
  {"name": "dress-pegs-tarn", "x": -80, "z": 18, "yaw": 3.14159, "pitch": -0.02, "dy": 0.5},
  {"name": "dress-pegs-span", "x": -80, "z": 246, "yaw": 0, "pitch": 0.1}
