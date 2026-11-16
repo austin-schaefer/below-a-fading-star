@@ -75,6 +75,7 @@ Every tool under `tools/` says what it checks and how to call it in its header c
 Before you push, run, in sequence, with `B=http://localhost:PORT` and `SHOT_ANGLE=metal nice -n 10` in front of each `node`:
 
 - the test for what you touched (and its render, if it is something a visitor sees);
+- for anything a visitor stands on or inside (a stair, a floor, a passage, a house), `node tools/geometry-test.mjs $B` with its place added to `tools/geometry/places.mjs` (one line), and `node tools/route-frames.mjs $B <place>`, every frame looked at; a visual fix ships with the frame that shows it fixed, from the stand of the frame that showed it broken (#64);
 - `node tools/walk-test.mjs "$B/?q=low"`
 - `node tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"`
 - `node tools/loading-test.mjs "$B/?q=low"` (its card renders go to `shots/wip/`)
@@ -85,7 +86,7 @@ Outside the gate, for the work that needs them: `tools/pop-test.mjs` (what pops,
 
 ## Reviewing a branch
 
-A reviewer reads `git diff HEAD...origin/<branch>` cold and read-only against the brief, runs the tests it names, and looks at the renders it lists. Report blockers (the brief not met, a broken contract or budget, a test that fails or was not run) apart from the rest.
+A reviewer reads `git diff HEAD...origin/<branch>` cold and read-only against the brief, runs the tests it names, and looks at the renders it lists. New walkable geometry is a blocker until `geometry` passes on it and the reviewer has read its route frames (`tools/route-frames.mjs`'s sheet, then the frames it points to) itself: v12 and v14 shipped about five glitches each from places judged only from stands their authors chose. Report blockers (the brief not met, a broken contract or budget, a test that fails or was not run, a visual fix with no frame showing it fixed) apart from the rest.
 
 ## Hand-back
 
