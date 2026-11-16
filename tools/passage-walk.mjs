@@ -37,7 +37,7 @@ if (touch) {
 }
 await sleep(1200);
 // stand on the hall's road by the south door, facing the door (a teleport to the start only: the walk itself is on the input)
-await page.evaluate(async () => { const fp = window.__fp, CR = await import('/src/v14/coffin-road/plan.js'); fp.controls.placeAt(CR.DOOR.x, CR.DOOR.z - 2.2, CR.ROAD_Y + 0.02); fp.player.yaw = Math.PI; fp.player.pitch = 0; });
+await page.evaluate(async () => { const fp = window.__fp, CR = await import('/src/v14/coffin-road/plan.js'); const fy = fp.coffinRoad.floor(CR.DOOR.x, CR.DOOR.z - 2.2) ?? CR.ROAD_Y; fp.controls.placeAt(CR.DOOR.x, CR.DOOR.z - 2.2, fy + 0.02); fp.player.yaw = Math.PI; fp.player.pitch = 0; });
 await sleep(1500);
 const st = () => page.evaluate(() => { const fp = window.__fp, p = fp.player, P = fp.passage.plan, f = P.floor(p.pos.x, p.pos.z); return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan: f, s: P.near(p.pos.x, p.pos.z, { i: 0, s: 0, d: 0, e: 0, t: 0 }).s }; });
 const s0 = await st();

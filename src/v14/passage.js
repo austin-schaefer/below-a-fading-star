@@ -20,6 +20,7 @@ import { makePlan, PASSAGE_OFF, KA, KF, MOUTH, START } from './passage/plan.js';
 import { DOOR, ROAD_Y } from './coffin-road/plan.js';
 import { PIT, pitRim, pitEdge, pitBearing } from '../v4/paths/ground.js';
 import { lintelForms, prims } from '../v7/glyphs/forms.js';
+import { NOON, GLAZES } from '../v8/strata/noon.js'; // v14-D3: the Noonwrights' palette (their parts: ctx.strata.parts.noon)
 
 const C = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 const STONE = C('#6e655c'), STONE_D = C('#4c453f'), ROCK = C('#77707c'), GRIT = C('#8e877a'), ROOM = C('#5b534b'), DOME = C('#4a4440');
@@ -28,7 +29,7 @@ const GOLDS = [C('#d8ac3c'), C('#ecc456'), C('#c09432'), C('#f2d070')], RED = C(
 const WICKER = C('#5e4a2e'), CLOTH = C('#4a1c18'), BRONZE = C('#6b4f2a'), CUT = C('#221e1b');
 const DAY = '#f4ead0', COLD = '#bcd2ff', WARM = '#ffc47e'; // stored daylight (the fourth people's, failing), the sounder's lamps (the Pit's starlight), the Reckoner's lamp
 const KIND_COL = [DAY, COLD, WARM];
-const HELIO = C('#8e7654'), MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C('#8a8070'), AMBER = C('#8a5a1c'), AMBER_L = C('#b4802e'), OXBLOOD = C('#5e1c16'), LENS = C('#fff6dc'), LENS_D = C('#5f6c63');
+const HELIO = C('#8e7654'), MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C('#6e6656'), AMBER = C('#8a5a1c'), AMBER_L = C('#b4802e'), OXBLOOD = C('#5e1c16'), LENS = C('#fff6dc'), LENS_D = C('#5f6c63');
 
 export async function build(ctx) {
   if (PASSAGE_OFF) { ctx.passage = { off: true }; return; }
@@ -75,9 +76,15 @@ export async function build(ctx) {
       // the Line: milk resin, crazed (a fine darker web), clouded toward its foot; silt drifted in its floor
       if (floorStrip) { const j = 0.85 + 0.25 * hsh(i * 7 + k) + (i % 4 === 0 ? -0.08 : 0); return [SILT[0] * j, SILT[1] * j, SILT[2] * j]; }
       // (the crazing a slow clouding along and round it, not quad by quad)
-      const craze = 0.9 + 0.1 * P.nz(s * 0.8 + k * 0.37, 1, 21), cloud = 0.7 + 0.3 * Math.min(1, v / 1.8), rib = (s % 1.2) < 0.41 ? 0.86 : 1;
-      const j = craze * cloud * rib * 0.82;
-      return [MILK[0] * j, MILK[1] * j, MILK[2] * j];
+      // (their hand, NOON: milk glass clouding to bone toward the foot; a band of ox-blood glaze beside each collar; a
+      // celadon field pooled thick in the lowest part of the wall; a crust of lime at the silt line)
+      const craze = 0.9 + 0.1 * P.nz(s * 0.8 + k * 0.37, 1, 21), rib = (s % 1.2) < 0.41 ? 0.86 : 1, sc = s % 7.2;
+      let C0 = v > 1.8 ? NOON.milk : NOON.bone;
+      if (sc > 0.45 && sc < 0.95) C0 = NOON.oxbloodD;
+      else if (v < 0.35) C0 = NOON.lime;
+      else if (v < 0.9 && P.nz(s * 0.35, 1, 33) > 0.1) C0 = NOON.celadonD;
+      const j = craze * rib * 0.9;
+      return [C0.r * j, C0.g * j, C0.b * j];
     }
     if (kind === 'gate' || kind === 'neck') {
       if (floorStrip) { const b = Math.floor(s / 0.9) * 13 + Math.floor((k + 7) / 2); const j = 0.78 + 0.3 * hsh(b); return [STONE_D[0] * j * 1.1, STONE_D[1] * j * 1.1, STONE_D[2] * j * 1.1]; }
@@ -161,8 +168,10 @@ export async function build(ctx) {
     const Bd = builders.line, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3();
     const place = (x, y, z, dir, up = [0, 1, 0]) => { const f = new THREE.Vector3(...dir).normalize(), u = new THREE.Vector3(...up); const r = new THREE.Vector3().crossVectors(u, f).normalize(); u.crossVectors(f, r); M4.makeBasis(r, u, f); M4.setPosition(x, y, z); return M4.clone(); };
     const inward = (s, d, v) => { const p = P.at(s), l = Math.hypot(p.tx, p.tz), c = P.section(s); void c; const [x, y, z] = P.world(s, d, v), [cx, cy, cz] = P.world(s, 0, 1.6); return [cx - x, cy - y, cz - z]; };
+    const NP = ctx.strata?.parts?.noon || null; // the Noonwrights' kit (v8/strata/noon.js): the Line is their hand
     const lens = (s, d, v, lit) => {
       const [x, y, z] = P.world(s, d, v), n = inward(s, d, v);
+      if (NP) { NP.lens(Bd, place(x, y, z, n), { r: 0.24, lit: lit ? 1 : 0, rim: lit ? NOON.oxblood : NOON.celadonD, bulge: 2.4 }); return; }
       Bd.geo(new THREE.TorusGeometry(0.27, 0.07, 6, 14), place(x, y, z, n), MILK_D, 0.05);
       Bd.geo(new THREE.SphereGeometry(0.2, 10, 7), place(x + n[0] * 0.03, y + n[1] * 0.03, z + n[2] * 0.03, n), lit ? LENS : LENS_D, 0.04);
     };
@@ -174,6 +183,12 @@ export async function build(ctx) {
       const p = P.at(s), l = Math.hypot(p.tx, p.tz), dir = [p.tx / l, 0, p.tz / l], y = P.yAt(s);
       const [x, , z] = P.world(s, d, 0), cy = y + 0.58;
       const m = place(x, cy, z, dir, [Math.sin(roll), Math.cos(roll), 0]), rot = new THREE.Matrix4().makeRotationX(Math.PI / 2);
+      if (NP) { // a lesser carrier of theirs, stalled where it stopped
+        NP.carrier(Bd, place(x, y + 0.66, z, dir), { r: 0.68, len: 3.1, form: crack ? 'gourd' : 'long', roll, crack, lit: 0, net: false, seed: crack ? 41 : 17, full: !low });
+        Bd.box(x, y + 0.05, z, 1.4, 0.07, 0.8, Math.atan2(-dir[2], dir[0]), SILT, SILT, 0.1);
+        if (ctx.addCollider) { const [ax, , az] = P.world(s - 1.6, d, 0), [bx, , bz] = P.world(s + 1.6, d, 0); ctx.addCollider({ x1: ax, z1: az, x2: bx, z2: bz, r: 0.7, y: y - 0.1, h: 1.45, stand: false }); }
+        return;
+      }
       Bd.geo(new THREE.CapsuleGeometry(0.58, 2.1, 5, 12), m.clone().multiply(rot), (nx, ny) => (ny > 0.5 ? AMBER_L : AMBER), 0.06);
       Bd.geo(new THREE.TorusGeometry(0.6, 0.06, 6, 16), m, OXBLOOD, 0.05);
       for (const e of [-1.2, 1.2]) Bd.geo(new THREE.TorusGeometry(0.42, 0.05, 6, 14), m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, e)), MILK_D, 0.05);
@@ -185,6 +200,13 @@ export async function build(ctx) {
     const n1 = (P.NODES[0][0] + P.NODES[0][1]) / 2, n2 = (P.NODES[1][0] + P.NODES[1][1]) / 2;
     carrier(n1, 1.55, 0.05, false);
     carrier(n2, -1.5, 0.9, true);
+    // their collars where the lengths were joined (every 7.2 m: the loft's own collar groove), glazed in their fields,
+    // a band of ox-blood beside each and a row of amber cells; the arc stands above the silt
+    if (NP) for (let s = 7.2, k = 0; s < SP.LINE - 1; s += 7.2, k++) {
+      const p = P.at(s + 0.2), l = Math.hypot(p.tx, p.tz), dir = [p.tx / l, 0, p.tz / l], sec = P.section(s + 0.2), c = sec.pts[Math.floor(KA / 2)][1] - (sec.pts[Math.floor(KA / 2)][1] - sec.pts[0][1]) / 2;
+      const [x, y, z] = P.world(s + 0.2, 0, 1.35 + 0.35 * P.nodeAt(s)), R = 1.95 + 0.95 * P.nodeAt(s) - 0.12;
+      void c; NP.collar(Bd, place(x, y, z, dir), { r: R, t: 0.15, a0: -2.35, a1: 2.35, glaze: GLAZES[k % GLAZES.length], cells: low ? 4 : 7, seg: low ? 30 : 44 });
+    }
     // the broken end: shards of the tube's wall standing out of the rock round the bore's mouth
     for (let k = 0; k < (low ? 9 : 14); k++) {
       const a = (k / 14) * Math.PI * 2 + rng() * 0.3, s0 = SP.LINE + 0.3 + rng() * 0.6, R = 2.05;
@@ -626,7 +648,9 @@ export async function build(ctx) {
 
   // the way, for heights-test and edges-test: from the hall's road by the south door, through the door, down the Line, the
   // Flute, across the room, over the Gulf, down the Gate and out onto the Pit's floor
-  const path = [[DOOR.x, DOOR.z - 1.6, ROAD_Y], [DOOR.x, DOOR.z + 1.0, DOOR.sill], [DOOR.x, 59.0, START.y]];
+  // (its first points on the hall's road as it is: its own floor down to the sill, whatever leads down to the door)
+  const roadAt = (x, z, dflt) => { const f = ctx.coffinRoad?.floor?.(x, z); return f !== null && f !== undefined && isFinite(f) ? f : dflt; };
+  const path = [[DOOR.x, DOOR.z - 1.6, roadAt(DOOR.x, DOOR.z - 1.6, ROAD_Y)], [DOOR.x, DOOR.z + 1.0, roadAt(DOOR.x, DOOR.z + 1.0, DOOR.sill)], [DOOR.x, 59.0, START.y]];
   for (const s of [1, 4, 8, 12, 16, 20, SP.LINE, SP.LINE + 8, SP.LINE + 16, SP.LINE + 24, SP.LINE + 32, SP.SUN - SP.RC - 0.5, SP.SUN, SP.NECK0 + 1, SP.GULF0 + 4, SP.GULF0 + 11, SP.GULF1 - 2, SP.GULF1 + 4, SP.GULF1 + 9, P.L - 2, P.L - 0.3]) {
     const p = P.at(s); path.push([p.x, p.z, P.yAt(s)]);
   }

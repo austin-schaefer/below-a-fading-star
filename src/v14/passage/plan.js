@@ -266,7 +266,7 @@ export function makePlan(T) {
   // (the fourth people's, failing), 1 the sounder's cold lamp, 2 the Reckoner's work-lamp (warm)
   const n1 = (NODES[0][0] + NODES[0][1]) / 2, n2 = (NODES[1][0] + NODES[1][1]) / 2;
   const LAMPS = [
-    [2.2, 1.05, 2.45, 0], [n1, -2.35, 2.5, 0], [n2, 2.35, 2.5, 0], [(n1 + n2) / 2, -1.25, 2.6, 0],
+    [0.9, 0, 3.05, 0], [3.4, 1.05, 2.45, 0], [n1, -2.35, 2.5, 0], // (the first in the crown just past the door: what is seen through it from the hall) [n2, 2.35, 2.5, 0], [(n1 + n2) / 2, -1.25, 2.6, 0],
     [LINE + 5.0, -1.55, 2.0, 1], [LINE + 14.5, 1.6, 2.0, 1], [LINE + 24.5, -1.6, 2.0, 1], [LINE + 34.5, 1.55, 2.0, 1],
     [SUN + 0.9, 3.1, 0.62, 2],
     [GULF0 + 0.7, 0.95, 1.45, 1], [GULF0 + 11.0, -0.95, 1.45, 1], [GULF1 - 0.7, 0.95, 1.45, 1],
