@@ -52,6 +52,7 @@ export const EXEMPT = [
   ['house-glows', "the house lamps' halos: light made visible, not a solid"],
   ['local-lights-glows', "the local lamps' halos: light made visible, not a solid"],
   ['lees-noon', "the fountain of noon's light (v15-Q3): light made visible, not a solid"],
+  ['lappet-far', 'the Lappet seen from far off (v15-P3, src/v15/far.js): a block inside each house and a speck at each light, drawn only from 140 m out on low (the specks from 60 m, grown): a stand-in nobody stands beside'],
 ];
 // What everything else may rest on: the ground, what is laid flat on it, and water. Same matching, each with its reason.
 export const ANCHOR = [

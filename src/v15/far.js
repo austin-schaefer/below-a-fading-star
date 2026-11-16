@@ -29,7 +29,7 @@ const PX = 3; // a speck's least radius on the screen, in pixels at 720 lines
 const FAR_GLOW = 3.2; // a speck's light, times its own, from 150 m (from 1x at 60 m): what is a window at arm's length is a town's lights from the road
 const CELL = 0.9; // the grid lights are gathered on, m
 const INSET = 0.25;
-const CARRY = 330; // m: on low the fountain's glow and the kiln's smoke are drawn out to here (bones.js drops the ways' timber at the same)
+const CARRY = 330; // m: on low the far mesh, the fountain's glow and the kiln's smoke are drawn out to here (bones.js drops the ways' timber at the same)
 
 export async function build(ctx) {
   const url = new URL(location.href);
@@ -204,7 +204,7 @@ export async function build(ctx) {
     if (low) {
       const p = ctx.camera.position, d = Math.hypot(p.x - C.x, p.z - C.z), on = d > lap.FAR - BOX_IN, gone = d > CARRY;
       if (on !== boxOn) { boxOn = on; U.uBox.value = on ? 1 : 0; }
-      if (gone !== carryGone) { carryGone = gone; for (const m of carry) m.visible = !gone; }
+      if (gone !== carryGone) { carryGone = gone; for (const m of carry) m.visible = !gone; mesh.visible = !gone; } // (and the far mesh itself: the west gallery's frame, 400 m off, is at its 364 calls)
     }
   });
 
