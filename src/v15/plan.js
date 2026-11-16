@@ -112,7 +112,7 @@ export const houseOut = (x, z) => Math.max(82 - x, x - 108, -58 - z, z + 32);
 // The village's ground where the Demesne's hook has no say (a region's hook runs only where its weight is above 0:
 // r 39 to 88 from the keep): the crown, levelled to 18 behind the rim, and the Pennyworth, level from the lowest
 // riser's face out to its fade. src/height/field.js calls it after the regions' hooks.
-export function lappetGround(h, x, z) {
+export function lappetGround(h, x, z, coarse = 0) {
   if (x < 40 || x > 128 || z < -64 || z > 36) return h;
   const r = radiusOf(x, z);
   if (r > HAHA + 0.25) {
@@ -124,7 +124,11 @@ export function lappetGround(h, x, z) {
     if (D >= RIM - 0.3 || D < RIM - APRON - 6) return h;
     const A = villageAmt(x, z);
     if (A <= 0) return h;
-    const v = D < RIM - APRON ? h + (LEVELS[0].y - h) * sstep(RIM - APRON - 6, RIM - APRON, D) : LEVELS[0].y - SINK * sstep(0.9, 1, A);
+    let v = D < RIM - APRON ? h + (LEVELS[0].y - h) * sstep(RIM - APRON - 6, RIM - APRON, D) : LEVELS[0].y - SINK * sstep(0.9, 1, A);
+    // under the mesh's coarse pass (cell `coarse`), the lower envelope across a cell at the rim: a crown vertex within a
+    // cell of the riser takes the High Rung's level (within 1.2 cells), so no triangle leans out in front of the riser's face (v15-W1: the
+    // owner's "pale flat triangles" against the rim at the head's east flight). The crown's slab hides the dip.
+    if (coarse && D > RIM - coarse * 1.2) v = Math.min(v, stepsY(D + coarse * 1.2) - SINK * sstep(0.9, 1, A)); // (1.2 cells, not the 1.45 of a diagonal: further back the masons' poles stand on the mesh)
     return h + (v - h) * A;
   }
   return h;
@@ -240,12 +244,20 @@ export const WAYS = [
     note: 'cut 1.9 m into the High Rung, then out over the Mid Rung; lands on a hexagon at D 7.9..10.1' },
   { name: 'timber-patch', kind: 'stair', hand: 'late', from: 'mid', to: 'low', run: 1, s: 31, D0: 10.1, D1: 15.3,
     note: 'the Heliarch flight is broken here; a Late plank flight spans the gap, and the Low Rung\'s lane passes under it' },
-  { name: 'heliarch-foot', kind: 'stair', hand: 'heliarch', from: 'low', to: 'bench', run: 1, s: 31, D0: 17.6, D1: 21.4,
-    note: 'from the hexagon bastion at D 15.3..17.6 (level with the Low Rung) down into the Lees square' },
+  // (v15-W1) the bastion is 1.6 m deep (it was 2.4) and the foot flight as steep as the head's (run 0.26): straight out
+  // from D 17.6 its foot ran into the Pomegranate House's north-west turret (0.3 m between the last tread and the tower,
+  // the owner's "walls right next to stairs"), and the bench's street could not pass it. Now the foot lands at D 19.66,
+  // 1.7 m from the tower, with 1.2 m of landing and the street between. (Turning it toward the square was tried: a
+  // turned head cannot lie on the bastion's straight edge, and its first treads lay a knee under the bastion's top.)
+  { name: 'heliarch-foot', kind: 'stair', hand: 'heliarch', from: 'low', to: 'bench', run: 1, s: 31, D0: 16.8, D1: 19.66, going: 0.26,
+    note: 'from the hexagon bastion at D 15.2..16.8 (level with the Low Rung) down into the Lees square' },
   { name: 'noon-main', kind: 'tube', hand: 'noon', from: 'high', to: 'bench', run: 2, s: 9, D0: 3.6, D1: 19.6,
     note: 'the daylight main: laid straight down the three nosings, walked inside on a Late plank stair; open at both ends and breached on the Low Rung' },
-  { name: 'rungs-ladder', kind: 'ladder', hand: 'late', from: 'low', to: 'mid', run: 2, s: 19, D0: 10, D1: 10,
-    note: 'up the Mid Rung\'s riser, 4 m' },
+  // (v15-W1) the ladder stood up the Mid Rung's riser at run 2 s 19, its head 1.6 m from the Tenter's (the owner's "stairs
+  // and ladders right by each other"): two ways from the Low Rung to the Mid in one look. It goes up the rim instead, at
+  // the crown's west end by the Brow House, the one way from the High Rung to the crown that is not the Heliarch head.
+  { name: 'rungs-ladder', kind: 'ladder', hand: 'late', from: 'high', to: 'crown', run: 1, s: 14, D0: -4.6, D1: -4.6,
+    note: 'up the rim, 4 m, to the crown\'s brink by the Brow House' },
   { name: 'lees-stair', kind: 'stair', hand: 'late', from: 'bench', to: 'low', run: 2, s: 22.9, sign: -1, D0: 15.4, D1: 17.1,
     note: 'a plank outside stair along the Low Rung\'s riser, 2.9 m: its head at s, the flight going down toward the corner (sign -1)' },
   { name: 'pennyworth-ramp', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 41.2, b1: 53,
@@ -294,7 +306,7 @@ const free = (name, kind, quarter, level, x, z, face, w, d, hand, extra = {}) =>
 const HD = 3.7, backD = (riser) => RISERS.find((r) => r.key === riser).D + HD / 2 + 0.05; // a stacked house's depth; its centre's D against a riser
 
 // --- the Rungs: stacked houses. Mid Rung (y 10) against the High Rung's riser, roofs at 14; Low Rung (y 6), roofs at 10.
-// Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the ladder (run 2, s 19), the corner.
+// Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the corner.
 // (v15-Q2, the Rungs' own changes: mid-5 is the Cantle, a sherd of a carrier standing as an apse where the main's
 // line was first laid; low-6 is the dyers' yard under the Tenter, their stair, not a house.)
 for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [6, 2, 15.7, 5.6], [7, 2, 24.3, 6.4]])
@@ -432,6 +444,9 @@ export const QUARRELS = {
   // still carries drips off its broken end into the saint's upturned hand
   aqueduct: { run: 2, s: way('lane-bridge').s, piers: [-20.6, -13.4], name: 'the Last Arch' },
   hand: { ...xz(2, way('lane-bridge').s, -11.15), name: 'the Almoner' },
+  // the Stage: a mason's scaffold lashed to the Last Arch's near pier, 2.5 m up, a cleated plank run up to it: a lookout
+  // with a rail (the run's one end; the quarter builds it from the arch's frame, src/v15/quarters/quarrels.js)
+  stage: { ...xz(2, way('lane-bridge').s + 1.65, -13.8), y: LEVEL.crown.y + 2.5, name: 'the Stage' },
   // the quarry in the keep's wound: the shears over the block being lifted, the block split with wedges
   shears: xz(2, 4.5, -14.5),
   split: xz(1, 28.36, -11.92),

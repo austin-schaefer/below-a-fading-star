@@ -717,5 +717,7 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry };
+  // floorAt(x, z, feet): the floor that would hold feet at `feet` there, collider tops included ({ y, ground, stack, top }), read-only: tools/ways-test.mjs floods a level with it (v15-W1)
+  const floorProbe = (x, z, feet) => { const o = { y: 0, ground: 0, stack: null, top: false, wl: null }; floorAt(x, z, feet, true, o); return o; };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry, floorAt: floorProbe };
 }

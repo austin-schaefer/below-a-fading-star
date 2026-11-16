@@ -20,7 +20,7 @@
 //   the Slype       the lane under the main: a door in the step, a niche with a light in it
 //   the Squint      a bench at the west end of rungs-low-7's roof, over the Short Stair, the Tenter and the main
 //   the lanes       flags laid over the Elder treads where feet go, more of them lost than kept
-//   and what the bones left: the ladder's poles stop a walker, a hand-rope, a lamp and a worn stone say it is climbed
+//   and what the bones left: the ladder (up the rim to the crown) its poles stop a walker, a hand-rope, a worn stone say it is climbed
 // Draws: `rungs-houses` and `rungs-ways` (the stone shader). No point light: every slot in reach of P9 and K1 is
 // spoken for (tools/house-test.mjs), so the lamps and windows are emissive. ctx.rungs = { records, stats() }.
 // ?rungs=0 leaves the quarter out.
@@ -229,7 +229,7 @@ export async function build(ctx) {
   function crossing(Ra, Rb, n) {
     const end = (R, O) => { // the roof's end toward the other roof, and the furthest forward a walker reaches it past the kit's things
       const [lx] = loc(R, O.plot.x, O.plot.z), x = lx > 0 ? R.roof.x1 : R.roof.x0, inw = lx > 0 ? -1 : 1;
-      for (let z = R.roof.zf - 0.75; z >= R.roof.zb + 0.55; z -= 0.1) { let ok = true; for (let t = 0.2; t <= 1.5 && ok; t += 0.2) { const q = R.W(x + inw * t, 0, z); ok = clearOn(R, q.x, q.z, BODY); } if (ok) return R.W(x, R.roof.y, z); }
+      for (let z = R.roof.zf - 0.75; z >= R.roof.zb + 0.55; z -= 0.1) { let ok = true; for (let t = 0.2; t <= 1.6 && ok; t += 0.2) { const q = R.W(x + inw * t, 0, z); ok = clearOn(R, q.x, q.z, BODY + 0.65); } /* (v15-W1: a stile's foot 2 m clear of the roof's jars and washing poles: a body's width each side, not a hair) */ if (ok) return R.W(x, R.roof.y, z); }
       return R.W(x, R.roof.y, R.roof.zb + 0.55);
     };
     const A = end(Ra, Rb), Bq = end(Rb, Ra), len = Math.hypot(Bq.x - A.x, Bq.z - A.z), ux = (Bq.x - A.x) / len, uz = (Bq.z - A.z) / len, y = A.y, yd = y + 0.57, hw = 0.46;
@@ -266,7 +266,7 @@ export async function build(ctx) {
       const lx = (R.roof.x0 + R.roof.x1) / 2 + x, lz = (R.roof.zb + R.roof.zf) / 2 + z;
       if (lx < R.roof.x0 + rad + 0.3 || lx > R.roof.x1 - rad - 0.3) continue;
       const q = R.W(lx, R.roof.y, lz);
-      if (!freeOn(R, q.x, q.z, rad + BODY * 2 - 0.1) || cross.some((c) => [c.A, c.B].some((e) => Math.hypot(e.x - q.x, e.z - q.z) < rad + 1.9))) continue;
+      if (!freeOn(R, q.x, q.z, rad + BODY * 2 - 0.1) || cross.some((c) => [c.A, c.B].some((e) => Math.hypot(e.x - q.x, e.z - q.z) < rad + 2.9))) /* (v15-W1: a walker steps off a stile and on 1.2 m clear: the dovecote stood in the Leads' second landing) */ continue;
       taken.push([q.x, q.z, rad]);
       fn(ch(MP(R), lx, R.roof.y, lz), q.y);
       if (solid) ctx.addCollider({ x: q.x, z: q.z, r: rad, y: q.y, h: hgt, stand: false }); // (its true height, and not stood on: a walker hopped onto a 1.2 m cap and stood inside the dovecote)
@@ -500,17 +500,20 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- what the bones left: the ladder
-  // Its poles stop a walker (a hand's breadth each, so the rungs between them are still reached); a knotted hand-rope
-  // hangs beside it from the Tenter's corner post, a lamp under the bridge's baulk lights its head, and the stone
-  // before its foot is worn pale.
+  // (v15-W1: it stood a stride from the Tenter's head, both joining the Low and Mid Rungs; it is now the crown's west way
+  // down to the High Rung, up the rim at the Brow House, where no stair goes.) Its poles stop a walker (a hand's breadth
+  // each, so the rungs between them are still reached); a knotted hand-rope hangs beside it from a stake on the rim, and
+  // the stone before its foot is worn pale. The lamp under the bridge's baulk stays where it was: it lights the bridge.
   {
-    const ld = P.way('rungs-ladder'), T = RUNGS.tenter;
-    for (const sd of [-1, 1]) { const a = at(ld.run, ld.s + sd * 0.25, DM + 0.7), c = at(ld.run, ld.s + sd * 0.25, DM + 0.42); ctx.addCollider({ x1: a[0], z1: a[1], x2: c[0], z2: c[1], r: 0.05, y: yL, h: 1.9, stand: false }); }
-    const M = RM(ld.run, T.s + 1.25, DM + 0.05, yM), top = [0.02, 0.86, 0.02], pts = [top, [0.2, -0.3, 0.2], [0.34, -1.5, 0.16], [0.36, -2.6, 0.22], [0.4, -3.35, 0.18]];
-    for (let i = 0; i < pts.length - 1; i++) { beam(KB, M, pts[i], pts[i + 1], 0.035, { color: V.rope, moss: 0.05, ground: yL - 3, round: 5 }); if (i) KB.add(new THREE.IcosahedronGeometry(0.045, 0), ch(M, ...pts[i]), { color: jit(V.rope, 0.8), moss: 0, ground: yL - 3 }); }
-    KB.add(new THREE.IcosahedronGeometry(0.06, 0), ch(M, ...pts[pts.length - 1]), { color: jit(V.rope, 0.75), moss: 0, ground: yL - 3 });
+    const ld = P.way('rungs-ladder'), yT = P.LEVEL[ld.to].y, yF = P.LEVEL[ld.from].y, Dr = P.RISERS.find((r) => r.top === yT).D;
+    for (const sd of [-1, 1]) { const a = at(ld.run, ld.s + sd * 0.25, Dr + 0.7), c = at(ld.run, ld.s + sd * 0.25, Dr + 0.42); ctx.addCollider({ x1: a[0], z1: a[1], x2: c[0], z2: c[1], r: 0.05, y: yF, h: 1.9, stand: false }); }
+    const M = RM(ld.run, ld.s + 0.62, Dr - 0.1, yT); // the stake, driven in at the brink, the rope knotted round its head
+    KB.add(box(0.11, 1.05, 0.11, { chip: 0.01 }), ch(M, 0, 0.42, 0, 0.03, 0, -0.03), wood(0.8));
+    const top = [0.02, 0.86, 0.02], pts = [top, [0.2, -0.3, 0.2], [0.34, -1.5, 0.16], [0.36, -2.6, 0.22], [0.4, -3.35, 0.18]];
+    for (let i = 0; i < pts.length - 1; i++) { beam(KB, M, pts[i], pts[i + 1], 0.035, { color: V.rope, moss: 0.05, ground: yF - 3, round: 5 }); if (i) KB.add(new THREE.IcosahedronGeometry(0.045, 0), ch(M, ...pts[i]), { color: jit(V.rope, 0.8), moss: 0, ground: yF - 3 }); }
+    KB.add(new THREE.IcosahedronGeometry(0.06, 0), ch(M, ...pts[pts.length - 1]), { color: jit(V.rope, 0.75), moss: 0, ground: yF - 3 });
     const br = P.way('lane-bridge'); hangLamp(KB, { x: at(br.run, br.s - 0.43, DM + 1.0)[0], y: yM - 0.275, z: at(br.run, br.s - 0.43, DM + 1.0)[1] }, 'amber', 0.55);
-    KB.add(box(0.5, 0.09, 0.78, { chip: 0.04 }), ch(RM(ld.run, ld.s, DM + 1.22, yL), 0, 0.015, 0, 0, 0.1, 0), { color: jit(H.stone, 1.25), moss: 0.15, ground: yL - 2 });
+    KB.add(box(0.5, 0.09, 0.78, { chip: 0.04 }), ch(RM(ld.run, ld.s, Dr + 1.22, yF), 0, 0.015, 0, 0, 0.1, 0), { color: jit(H.stone, 1.25), moss: 0.15, ground: yF - 2 });
   }
 
   // ---------------------------------------------------------------- the lanes: flags over the Elder treads

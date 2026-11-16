@@ -218,7 +218,7 @@ export async function build(ctx) {
     B.add(B.rock(0.13, 0, 0.8, 1.5, 0.7), ch(M, 0.82, 1.36, -0.79), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g - 3, flat: true });
     B.add(B.cyl(0.05, 0.035, 0.1, 6, 1), ch(M, 0.97, 1.5, -0.79), brass);
     collide(M, -0.95, 0.02, 0.95, 0.02, 0.3, -0.3, 1.22); post(M, 0.96, -0.94, 0.1); post(M, -0.1, -0.85, 0.22, -0.3, 0.75);
-    roofed(M, g, 1.42, -1.2, 0.85, 2.55, 2.12, worn(V.teal, rng, 0.3), 0.35);
+    roofed(M, g, 1.25, -1.2, 0.85, 2.55, 2.12, worn(V.teal, rng, 0.3), 0.35); // (v15-W1: 1.25 wide each side, not 1.42: its west poles stood 0.63 m from the Slip's line, inside the lane, and the walks stuck on them)
     // salt: three cones off the pan-house's moulds and a broken block, pale in any light
     const salt = { color: new THREE.Color('#d9d2c4'), moss: 0, ground: g - 3, emit: [0.05, 0.048, 0.045, 2] };
     for (const [sx, sz, sh2] of [[-0.12, 0.08, 0.24], [0.14, -0.06, 0.2], [0.36, 0.1, 0.17]]) B.add(B.cyl(0.012, sh2 * 0.42, sh2, 7, 1), ch(M, sx, by + sh2 / 2, sz, 0, sx * 9, 0), salt);
