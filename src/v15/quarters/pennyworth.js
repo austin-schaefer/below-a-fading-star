@@ -54,11 +54,11 @@ export async function build(ctx) {
   const wood = (k = 0.2) => ({ color: worn(L.wood, rng, k), moss: 0.12, ground: -3 }), raw = () => ({ color: worn(V.rawWood, rng, 0.25), moss: 0.1, ground: -3, round: 5 });
   const stoneO = (g0, k = 0.12) => ({ color: worn(H.stone, rng, k), moss: 0.4, ground: g0 });
   // a cloth between three or four corners (local points), hanging in its middle: two leaves a finger apart, so it has an underside
-  const cloth = (M, pts, sag, col) => {
+  const cloth = (M, pts, sag, col, laid = false) => { // (laid: flat on something, one leaf)
     const o = { color: col, moss: 0.02, ground: -5 }, n = pts.length === 4 ? 4 : 0;
     const up = (pts[1][2] - pts[0][2]) * (pts[2][0] - pts[0][0]) - (pts[1][0] - pts[0][0]) * (pts[2][2] - pts[0][2]) > 0; // the corners as given wind to face up
     const at = n ? (u, v, d) => { const a = pts[0], b = pts[1], c = pts[2], e = pts[3], w = [(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v], k = 16 * u * (1 - u) * v * (1 - v); return [0, 1, 2].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3] - (i === 1 ? sag * k + d * Math.min(1, k * 4) : 0)); } : null;
-    for (const d of [0, 0.014]) {
+    for (const d of laid ? [0] : [0, 0.014]) {
       const under = d > 0, nat = under !== up, oo = under ? { ...o, color: col.clone().multiplyScalar(0.78) } : o;
       if (n) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const p = [at(i / n, j / n, d), at((i + 1) / n, j / n, d), at((i + 1) / n, (j + 1) / n, d), at(i / n, (j + 1) / n, d)]; if (nat) quad(B, M, p[0], p[1], p[2], p[3], oo); else quad(B, M, p[3], p[2], p[1], p[0], oo); }
       else {
@@ -185,7 +185,7 @@ export async function build(ctx) {
     PARTS.heliarch.roundel(B, ch(Mb, 0.3, 1.02, 0.08, -Math.PI / 2, 0, 0.5), { size: 0.62, disc: 'bronze' }); // the sign it carried, on its back now
     ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a block of Carcanet Keep for the news-seller\'s counter', x: f.x, y: g - 0.22, z: f.z, mount: 'ground', r: 0.9 });
     // a cloth over its west end under a stone, a bench of a plank on two stones behind
-    cloth(Mb, [[-0.99, 1.045, 0.54], [-0.3, 1.05, 0.54], [-0.3, 1.05, -0.54], [-0.99, 1.045, -0.54]], 0, worn(V.saffron, rng, 0.35));
+    cloth(Mb, [[-0.92, 1.045, 0.47], [-0.3, 1.05, 0.47], [-0.3, 1.05, -0.47], [-0.92, 1.045, -0.47]], 0, worn(V.saffron, rng, 0.35), true);
     B.add(B.rock(0.11, 0, 1, 0.6, 1), ch(Mb, -0.7, 1.1, -0.3), stoneO(g, 0.25));
     for (const s of [-1, 1]) B.add(B.rock(0.2, 0, 1, 0.9, 1), ch(M, s * 0.55, 0.13, -1.1), stoneO(g, 0.2));
     B.add(B.box(1.5, 0.05, 0.3, { seg: 9 }), ch(M, 0, 0.35, -1.1, 0, 0.04, 0), wood(0.25));
