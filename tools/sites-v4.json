@@ -910,20 +910,6 @@
 "label": "Accrescent [v7]"
 },
 {
-"key": "indistinct-0",
-"x": 40,
-"z": -55,
-"r": 3,
-"label": "Indistinct ditch start [v7]"
-},
-{
-"key": "indistinct-1",
-"x": 125,
-"z": 30,
-"r": 3,
-"label": "Indistinct ditch end [v7]"
-},
-{
 "key": "repetend",
 "x": -170,
 "z": -97,
