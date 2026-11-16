@@ -26,8 +26,9 @@
 //   door      every door a house record gives: its step is reached on foot from each way's end on its level within
 //             8 m, by a walk no longer than twice the straight line and 3 m; a door with no way within 8 m is not shut
 //             in a pocket
-//   headroom  up each way's line every 0.25 m, a ray from 0.4 m over the floor to 2.1 m meets no drawn mesh (W1's
+//   headroom  up each way's line every 0.25 m, a ray from 0.6 m over the floor to 2.1 m meets no drawn mesh (W1's
 //             row read the colliders, and a footbridge across the Gullet's head passed it)
+//   spine     the plan's SPINE (the one main way, keep's end to the house): joined, lit, 1.5 m wide on its levels
 // Prints the table of ways (id, its two ends, the levels it joins, the module that built it) and one PASS/FAIL line per
 // way per row. WAYS_JSON=path writes the table and the findings as JSON.
 //   node tools/ways-test.mjs [base=http://localhost:8123]
@@ -174,13 +175,46 @@ const r = await page.evaluate(async () => {
   const flooded = (fl, x0, z0, x, z, tol) => { for (let i = Math.floor((x - tol - x0) / B2); i <= Math.ceil((x + tol - x0) / B2); i++) for (let j = Math.floor((z - tol - z0) / B2); j <= Math.ceil((z + tol - z0) / B2); j++) { if (Math.hypot(x0 + i * B2 - x, z0 + j * B2 - z) > tol) continue; if (fl.seen.has(i * 4096 + j)) return true; } return false; };
   const houseIn = (x, z, y) => P.PLOTS.some((p) => p.kind !== 'yard' && p.kind !== 'square' && p.kind !== 'garden' && p.kind !== 'tube' && Math.abs(p.y - y) < 0.35 && P.inPlot(p, x, z, 0.1));
   const THREE = fp.THREE || (await import('three'));
-  const rc = new THREE.Raycaster(), up = new THREE.Vector3(0, 1, 0), o = new THREE.Vector3(), skip = /sky|star|cloud|far|lure|grass|fog|haze|water|folk|people|body|moth|bird|dust|smoke|glow|halo|beam|lamp-glass/i;
+  const skip = /sky|star|cloud|far|lure|grass|fog|haze|water|folk|people|body|moth|bird|dust|smoke|glow|halo|beam|lamp-glass/i;
   const meshes = []; fp.scene.traverse((m) => { if ((m.isMesh || m.isInstancedMesh) && m.visible && !skip.test(m.name || '') && !(m.material && m.material.transparent && m.material.opacity < 0.5)) meshes.push(m); });
-  const down = new THREE.Vector3(0, -1, 0);
+  // the drawn meshes as triangles in 1 m columns over the village, for vertical rays (a raycast through the merged
+  // meshes costs tens of milliseconds a ray; this is the same answer, straight up or down)
+  const TRI = [], TM = [], COLS = new Map(), cK = (i, j) => i * 4096 + j, va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3(), mi = new THREE.Matrix4(), mw = new THREE.Matrix4();
+  fp.scene.updateMatrixWorld(true);
+  meshes.forEach((m, mk) => {
+    const g = m.geometry, pos = g?.attributes?.position; if (!pos) return;
+    const idx = g.index, nTri = idx ? idx.count / 3 : pos.count / 3, inst = m.isInstancedMesh ? m.count : 1;
+    for (let q = 0; q < inst; q++) {
+      if (m.isInstancedMesh) { m.getMatrixAt(q, mi); mw.multiplyMatrices(m.matrixWorld, mi); } else mw.copy(m.matrixWorld);
+      for (let t = 0; t < nTri; t++) {
+        const a = idx ? idx.getX(t * 3) : t * 3, b = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, c = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+        va.fromBufferAttribute(pos, a).applyMatrix4(mw); vb.fromBufferAttribute(pos, b).applyMatrix4(mw); vc.fromBufferAttribute(pos, c).applyMatrix4(mw);
+        const x0 = Math.min(va.x, vb.x, vc.x), x1 = Math.max(va.x, vb.x, vc.x), z0 = Math.min(va.z, vb.z, vc.z), z1 = Math.max(va.z, vb.z, vc.z);
+        if (x1 < 40 || x0 > 130 || z1 < -75 || z0 > 40 || x1 - x0 > 30 || z1 - z0 > 30) continue;
+        const k = TRI.length / 9; TRI.push(va.x, va.y, va.z, vb.x, vb.y, vb.z, vc.x, vc.y, vc.z); TM.push(mk);
+        for (let i = Math.floor(x0); i <= Math.floor(x1); i++) for (let j = Math.floor(z0); j <= Math.floor(z1); j++) { const kk = cK(i, j); let l = COLS.get(kk); if (!l) COLS.set(kk, (l = [])); l.push(k); }
+      }
+    }
+  });
+  // the surfaces over (x, z) between y0 and y1: the nearest to y0 ({ y, name }) or null
+  const column = (x, z, y0, y1) => {
+    const l = COLS.get(cK(Math.floor(x), Math.floor(z))); if (!l) return null;
+    let best = null, bd = Infinity;
+    for (const k of l) {
+      const o9 = k * 9, ax = TRI[o9], az = TRI[o9 + 2], bx = TRI[o9 + 3], bz = TRI[o9 + 5], cx = TRI[o9 + 6], cz = TRI[o9 + 8];
+      const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(d) < 1e-9) continue;
+      const l1 = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, l2 = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, l3 = 1 - l1 - l2;
+      if (l1 < 0 || l2 < 0 || l3 < 0) continue;
+      const y = l1 * TRI[o9 + 1] + l2 * TRI[o9 + 4] + l3 * TRI[o9 + 7];
+      if (y < Math.min(y0, y1) || y > Math.max(y0, y1)) continue;
+      const dd = Math.abs(y - y0); if (dd < bd) { bd = dd; best = { y, name: meshes[TM[k]].name || meshes[TM[k]].type }; }
+    }
+    return best;
+  };
   // something drawn standing at (x, z) between a walker's knee (0.5 m: lower is stepped or hopped over) and chest over feet (a parapet, a newel, a block)
-  const drawnAt = (x, z, feet) => { o.set(x, feet + 1.3, z); rc.set(o, down); rc.far = 0.8; const h = rc.intersectObjects(meshes, false)[0]; return h ? `${h.object.name || h.object.type} at (${x.toFixed(1)}, ${z.toFixed(1)}) ${(h.point.y - feet).toFixed(2)} m up` : null; };
+  const drawnAt = (x, z, feet) => { const h = column(x, z, feet + 1.3, feet + 0.5); return h ? `${h.name} at (${x.toFixed(1)}, ${z.toFixed(1)}) ${(h.y - feet).toFixed(2)} m up` : null; };
   // something drawn over (x, z) under a walker's head: the space under a deck or a flight, not ground a body walks on
-  const roofed = (x, z, feet) => { o.set(x, feet + 0.4, z); rc.set(o, up); rc.far = 1.7; return rc.intersectObjects(meshes, false).length > 0; };
+  const roofed = (x, z, feet) => !!column(x, z, feet + 0.4, feet + 2.1);
   // turn: from each end, every way the level runs (its floor 2.4 m out within 0.3 m of the end's, not a house's room,
   // not back down the way) the walker reaches a point 2 m out (within 0.5 m of it), own walls counted
   for (const { w, ends } of all) ends.forEach((e, ei) => {
@@ -232,7 +266,7 @@ const r = await page.evaluate(async () => {
     }
     find.push({ row: 'door', tag, ok: !bad.length, detail: bad.join('; ') + (near8.length ? '' : pocket ? '' : ' (no way within 8 m; open ground)') });
   }
-  // headroom: up every way's line, every 0.25 m, a ray from 0.4 m over the floor there to 2.1 m, against the drawn
+  // headroom: up every way's line, every 0.25 m, a ray from 0.6 m over the floor there to 2.1 m, against the drawn
   // meshes (not the colliders: W1's row passed a footbridge across a stair's head because its collider was low)
   for (const { w } of all) {
     if (w.tick) continue;
@@ -242,12 +276,51 @@ const r = await page.evaluate(async () => {
       for (let s = 0; s < n; s++) {
         const t = s / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t, yl = a[2] + (b[2] - a[2]) * t, f = C.floorAt(x, z, yl + 0.3);
         const g = C.floorAt(x, z, yl + 1), feet = Math.abs(g.y - yl) < 1.2 ? g.y : Math.abs(f.y - yl) < 0.5 ? f.y : yl;
-        o.set(x, feet + 0.4, z); rc.set(o, up); rc.far = 1.7;
-        const h = rc.intersectObjects(meshes, false)[0];
-        if (h) hits.push(`${h.object.name || h.object.type} ${(h.distance + 0.4).toFixed(2)} m over the feet (${feet.toFixed(2)}) at (${x.toFixed(1)}, ${z.toFixed(1)})`);
+        const h = column(x, z, feet + 0.6, feet + 2.1); // (from over a knee: a kerb or a parapet's top in the line is the turn row's)
+        if (h) hits.push(`${h.name} ${(h.y - feet).toFixed(2)} m over the feet (${feet.toFixed(2)}) at (${x.toFixed(1)}, ${z.toFixed(1)})`);
       }
     }
     find.push({ row: 'headroom', tag: w.id, ok: !hits.length, detail: hits.length ? `${hits.length} points: ${hits.slice(0, 2).join('; ')}` : '' });
+  }
+  // the spine (src/v15/plan.js SPINE): joined (each leg on one level reached on foot from the last), lit (a lamp within
+  // 9 m of every 3 m of it, within 4 m up or down), and 1.5 m wide where it is walked on a level (a body 0.3 m either
+  // side of its line stands, on the same floor)
+  if (P.SPINE) {
+    const L = fp.ascents.list, sp = [[P.SPINE.from[0], P.SPINE.from[1], P.LEVEL[P.SPINE.from[2]].y, 'from']];
+    let missing = '';
+    for (const leg of P.SPINE.legs) {
+      if (leg.way) { const a = L.find((q) => q.id === leg.way); if (!a) { missing += ` ${leg.way}`; continue; } const p = a.path.map((q) => [q[0], q[1], q[2], leg.way]), last = sp[sp.length - 1]; if (Math.hypot(p[p.length - 1][0] - last[0], p[p.length - 1][1] - last[1]) < Math.hypot(p[0][0] - last[0], p[0][1] - last[1])) p.reverse(); sp.push(...p); }
+      else sp.push(...leg.pts.map(([x, z, lv]) => [x, z, P.LEVEL[lv].y, 'lane']));
+    }
+    sp.push([P.SPINE.to[0], P.SPINE.to[1], P.LEVEL[P.SPINE.to[2]].y, 'to']);
+    const gaps = [];
+    for (let k = 0; k < sp.length - 1; k++) {
+      const a = sp[k], b = sp[k + 1], d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (Math.abs(a[2] - b[2]) > 0.4 || d < 0.6 || (a[3] === b[3] && a[3] !== 'lane')) continue; // (a way's own line is walked by heights-test)
+      const fl = reach(a[0], a[1], C.floorAt(a[0], a[1], a[2] + 0.3).y, d + 8, 60000, (x, z) => Math.hypot(x - b[0], z - b[1]) < 0.6);
+      if (!fl.hit) gaps.push(`(${a[0].toFixed(1)}, ${a[1].toFixed(1)}) to (${b[0].toFixed(1)}, ${b[1].toFixed(1)})`);
+    }
+    find.push({ row: 'spine', tag: 'joined: every leg on a level reached on foot from the last', ok: !gaps.length && !missing, detail: (missing ? `missing ways:${missing}; ` : '') + gaps.join('; ') });
+    const lamps = [...(fp.lappetFar?.lamps || []), ...(fp.lappetLamps?.lamps || [])].map((l) => [l.x, l.y, l.z]);
+    fp.scene.traverse((m) => { if (m.isPointLight && m.distance > 0) { const v = m.getWorldPosition(new THREE.Vector3()); lamps.push([v.x, v.y, v.z]); } });
+    const dark = [], narrow = [];
+    let along = 0;
+    for (let k = 0; k < sp.length - 1; k++) {
+      const a = sp[k], b = sp[k + 1], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / 0.5)), ux = (b[0] - a[0]) / (d || 1), uz = (b[1] - a[1]) / (d || 1);
+      for (let i = 0; i < n; i++, along += d / n) {
+        const t = i / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t, y = a[2] + (b[2] - a[2]) * t;
+        if (i % 6 === 0 && !lamps.some((l) => Math.hypot(l[0] - x, l[2] - z) < 9 && Math.abs(l[1] - y) < 4)) dark.push(`${along.toFixed(0)} m (${x.toFixed(1)}, ${z.toFixed(1)})`);
+        // (the clear width across the line: where a body's middle may stand either side of it, on the same floor, plus the body)
+        if (Math.abs(b[2] - a[2]) < 0.1 && d > 0.6) {
+          const f0 = C.floorAt(x, z, y + 0.3).y, cs = colsNear(x, z, 2), span = [0, 0], by = [null, null];
+          [-1, 1].forEach((sd, q) => { for (let o = 0; o <= 1.2; o += 0.1) { const px = x - uz * o * sd, pz = z + ux * o * sd, f = C.floorAt(px, pz, f0 + 0.3); const c = cs.find((c) => { const pt = near(c, px, pz); return pt.d < BODY && stands(c, f.y, pt.t); }); if (Math.abs(f.y - f0) > 0.3 || c) { by[q] = c ? desc(c) : `floor ${f.y.toFixed(2)}`; break; } span[q] = o; } });
+          const wide = span[0] + span[1] + 2 * BODY;
+          if (wide < 1.5) narrow.push(`${along.toFixed(0)} m (${x.toFixed(1)}, ${z.toFixed(1)}) ${wide.toFixed(1)} m: ${by.filter(Boolean).join(' / ')}`);
+        }
+      }
+    }
+    find.push({ row: 'spine', tag: `lit: a lamp within 9 m of every 3 m (${along.toFixed(0)} m of it)`, ok: !dark.length, detail: dark.slice(0, 30).join('; ') + (dark.length > 30 ? ` and ${dark.length - 30} more` : '') });
+    find.push({ row: 'spine', tag: '1.5 m wide where it is walked on a level', ok: !narrow.length, detail: narrow.slice(0, 30).join('; ') + (narrow.length > 30 ? ` and ${narrow.length - 30} more` : '') });
   }
   return { table, find, n: ways.length, paths: ways.map((w) => ({ id: w.id, path: w.path })) };
 });
@@ -256,7 +329,7 @@ console.log(`${r.n} ways in the village:`);
 for (const t of r.table) console.log(`  ${t.id.padEnd(22)} ${t.levels[0].padEnd(6)} (${t.ends[0].join(', ')})  ->  ${t.levels[1].padEnd(6)} (${t.ends[1].join(', ')})`);
 let pass = 0, fail = 0;
 const check = (ok, name, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? '  ' + detail : ''}`); ok ? pass++ : fail++; };
-for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
+for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom', 'spine']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
 const dbl = r.find.filter((q) => q.row === 'doubled');
 check(!dbl.length, 'doubled: no two ways join the same levels within 6 m at both ends', dbl.map((q) => `${q.tag} (${q.detail})`).join('; '));
 check(r.n >= 15, `the village registers its ways (${r.n})`); // (v15-W4 took four out: 21 to 17)

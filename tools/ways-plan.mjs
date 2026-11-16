@@ -8,7 +8,8 @@
 //   ways         every registered ascent (ctx.ascents) as a coloured line by kind (stair, ramp, ladder, bridge, tube),
 //                its id at its middle and each end ringed and labelled with its level
 //   house steps  every flight a house record carries (a floor with steps) that is not a registered way, dashed
-//   doors        every door a house record gives, a red tick out of its face, its record's name
+//   doors        every door a house record gives, a red tick out of its face
+//   the spine    the plan's SPINE (src/v15/plan.js), a wide yellow band from the keep's end to the house's door
 // Writes the PNG and a JSON of what it drew (ways, house steps, doors).
 //   node tools/ways-plan.mjs [base=http://localhost:8123] [out=shots/wip/ways-plan.png]
 // PLAN_BOX=x0,x1,z0,z1 and PLAN_SCALE=px a metre draw a part closer (the Rungs and the stairs: PLAN_BOX=44,112,-36,18 PLAN_SCALE=20).
@@ -60,7 +61,16 @@ const r = await page.evaluate(async ({ X0, X1, Z0, Z1, G }) => {
   const labels = [];
   for (const L of P.LEVELS) labels.push(L.key);
   const plots = P.PLOTS.filter((p) => inBox(p.x, p.z)).map((p) => ({ name: p.name, title: p.title, x: p.x, z: p.z, kind: p.kind, corners: P.plotCorners(p) }));
-  return { nx, nz, hgt: Array.from(hgt), walls, ways, steps, doors, plots, haveFp: !!fp };
+  let spine = null;
+  if (P.SPINE) {
+    const L = fp.ascents.list; spine = [[P.SPINE.from[0], P.SPINE.from[1]]];
+    for (const leg of P.SPINE.legs) {
+      if (leg.way) { const a = L.find((q) => q.id === leg.way); if (!a) continue; const p = a.path.map((q) => [q[0], q[1]]), last = spine[spine.length - 1]; if (Math.hypot(p[p.length - 1][0] - last[0], p[p.length - 1][1] - last[1]) < Math.hypot(p[0][0] - last[0], p[0][1] - last[1])) p.reverse(); spine.push(...p); }
+      else spine.push(...leg.pts.map(([x, z]) => [x, z]));
+    }
+    spine.push([P.SPINE.to[0], P.SPINE.to[1]]);
+  }
+  return { nx, nz, hgt: Array.from(hgt), walls, ways, steps, doors, plots, spine, haveFp: !!fp };
 }, { X0, X1, Z0, Z1, G });
 
 // ---- the drawing
@@ -87,6 +97,13 @@ for (const c of r.walls) {
   if (c.k === 'w') svg.push(`<line x1="${px(c.a[0])}" y1="${pz(c.a[1])}" x2="${px(c.b[0])}" y2="${pz(c.b[1])}" stroke="${col}" stroke-opacity="${op}" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`);
   else svg.push(`<circle cx="${px(c.a[0])}" cy="${pz(c.a[1])}" r="${Math.max(1.5, c.r * S).toFixed(1)}" fill="${col}" fill-opacity="${op}"/>`);
 }
+if (r.spine) {
+  const pts = r.spine.map((p) => `${px(p[0])},${pz(p[1])}`).join(' ');
+  svg.push(`<polyline points="${pts}" fill="none" stroke="#ffd34a" stroke-opacity="0.45" stroke-width="${(2.4 * S).toFixed(0)}" stroke-linejoin="round" stroke-linecap="round"/>`);
+  svg.push(`<polyline points="${pts}" fill="none" stroke="#ffd34a" stroke-width="2" stroke-dasharray="10 6"/>`);
+  svg.push(`<text x="${+px(r.spine[0][0]) + 10}" y="${+pz(r.spine[0][1]) + 18}" font-size="14" font-weight="bold" fill="#ffd34a" stroke="#000" stroke-width="3" paint-order="stroke">THE SPINE: the keep's end</text>`);
+  const e = r.spine[r.spine.length - 1]; svg.push(`<text x="${+px(e[0]) - 10}" y="${+pz(e[1]) + 22}" font-size="14" font-weight="bold" fill="#ffd34a" stroke="#000" stroke-width="3" paint-order="stroke" text-anchor="end">the Pomegranate House's door</text>`);
+}
 const KC = { stair: '#ff3b6b', ramp: '#ffb020', ladder: '#2be0ff', bridge: '#9dff4a', tube: '#c58bff' };
 const registered = new Set(r.ways.map((w) => w.id));
 for (const s of r.steps) {
@@ -109,7 +126,7 @@ for (const d of r.doors) {
   svg.push(`<line x1="${x}" y1="${z}" x2="${ex.toFixed(1)}" y2="${ez.toFixed(1)}" stroke="#ff2a00" stroke-width="3"/><circle cx="${x}" cy="${z}" r="3.5" fill="${d.ladder ? '#2be0ff' : '#ff2a00'}"/>`);
 }
 // legend
-const lg = [['stair', KC.stair], ['ramp', KC.ramp], ['ladder', KC.ladder], ['bridge / crossing', KC.bridge], ['tube', KC.tube], ['house steps (not a registered way)', '#ff8fb0'], ['door', '#ff2a00'], ['wall at walking height', '#000']];
+const lg = [['spine', '#ffd34a'], ['stair', KC.stair], ['ramp', KC.ramp], ['ladder', KC.ladder], ['bridge / crossing', KC.bridge], ['tube', KC.tube], ['house steps (not a registered way)', '#ff8fb0'], ['door', '#ff2a00'], ['wall at walking height', '#000']];
 let lx = 8;
 for (const [t, c] of lg) { svg.push(`<rect x="${lx}" y="${H + 12}" width="14" height="14" fill="${c}" stroke="#fff"/><text x="${lx + 18}" y="${H + 24}" font-size="12" fill="#fff">${t}</text>`); lx += 30 + t.length * 6.6; }
 svg.push(`<text x="${W - 8}" y="${H + 24}" font-size="12" fill="#fff" text-anchor="end">${r.ways.length} ways, ${r.steps.length} house flights, ${r.doors.length} doors; floor shaded by height</text>`);

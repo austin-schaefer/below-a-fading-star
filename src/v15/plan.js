@@ -517,7 +517,29 @@ export const LAMPS = [
   lampAt('slype-bracket', 'bracket', at(2, (RUNGS.slype.s0 + RUNGS.slype.s1) / 2 - 1.4, RISERS[2].D + 0.555), LEVEL.low.y, n2, { h: 2.0, reach: 0.55, k: 1.1, note: 'over the Slype\'s door on its plastered front (the niche\'s clay lamp beside it): the lane under the main' }),
   lampAt('skirts-bracket', 'bracket', polar(65.6, HAHA + 1.22), LEVELS[5].y, [Math.sin(65.6 * Math.PI / 180), -Math.cos(65.6 * Math.PI / 180)], { h: 2.3, reach: 0.65, k: 1.3, note: 'on the face of the Late buttress raked against the giants\' face (FIXTURES riser-buttress): the Skirts' }),
   lampAt('foot-post', 'post', [108.6, -15.7], LEVELS[5].y, [0, -1], { note: 'the Pennyworth\'s foot, between the ramp\'s foot and the kerb, by the wreck\'s neck' }),
+  // (v15-W4) the spine's two dark stretches (tools/ways-test.mjs spine rows): where the head's flights come down onto the
+  // causeway and turn back to the upper flight, and the foot flight down from the bastion
+  lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: where the head\'s twin flights come down, the way on down is the lit one' }),
+  lampAt('stair-foot-post', 'post', at(1, STAIR.s + 2.3, 19.0), LEVEL.bench.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, note: 'on the bench beside the foot flight\'s east cheek, its arm over the flight: the stair up from the Lees is lit from the square, and the bastion over it' }),
 ];
+
+// ---------------------------------------------------------------- the spine (v15-W4)
+// The one obvious way through the village, from the keep's end to the Pomegranate House: the masons' court on the
+// crown, the Heliarch stair straight down its axis (the head's west flight, the upper flight, the Late timber patch,
+// the foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
+// south door. Every other way is a branch off it. `ways` are registered ascents walked in order (each from the end
+// nearer the last point); `pts` are [x, z, level] between them. tools/ways-plan.mjs draws it; tools/ways-test.mjs
+// checks it is joined, lit (a lamp within 9 m of every 3 m of it) and never narrower than 1.5 m.
+export const SPINE = {
+  from: [...at(1, STAIR.s, -9), 'crown'], to: [HOUSE.door.x + 0.3, HOUSE.door.z + 1.9, 'foot'],
+  legs: [
+    { way: 'heliarch-head-west' }, { pts: [[...at(1, STAIR.s - 5.4, -1.2), 'high']] }, // (off the flight's foot and out onto the causeway, clear of its flank)
+    { way: 'heliarch-upper' }, { way: 'timber-patch' }, { way: 'heliarch-foot' },
+    { pts: [[...at(1, cornerS(1, 19.4), 19.4), 'bench']] }, // the Lees' street, east
+    { way: 'pennyworth-ramp' },
+    { pts: [[104.3, -17.3, 'foot'], [103.95, -21.5, 'foot'], [103.95, -25.2, 'foot'], [103.5, -28.9, 'foot'], [100, -29.6, 'foot']] }, // the Slip and the Thumbway
+  ],
+};
 
 // ---------------------------------------------------------------- the places the geometry check walks (#64)
 // tools/geometry-test.mjs and tools/route-frames.mjs read this list (the format: tools/geometry/places.mjs). Each way

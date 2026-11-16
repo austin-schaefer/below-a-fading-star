@@ -133,6 +133,28 @@ export async function build(ctx) {
   registerAll(ctx, records, 'pennyworth');
   const rec = (name) => records.find((R) => R.name === name);
 
+  // ---------------------------------------------------------------- a door over a fall (v15-W4)
+  // A house stood at the ground before its door can still have the ground fall away a stride further out: hitch-4's
+  // doorstep stood 0.7 m over the Hitch with nothing to climb by (tools/ways-test.mjs door row: its step a 4 m2 pocket).
+  // Where the ground within 2 m out falls more than 0.3 m under the floor at the door, slabs of the old paving go down it.
+  for (const R of records) {
+    if (R.name === 'pennyworth-house-2') continue; // (its bank steps are below)
+    for (const d of R.doors) {
+      const [fx, fz] = d.face, top = ctx.controls.floorAt ? ctx.controls.floorAt(d.x + fx * 0.2, d.z + fz * 0.2, d.y + 0.3).y : d.y;
+      let zd = null; for (let z = 0.3; z <= 2.0 && zd === null; z += 0.1) if (G(d.x + fx * z, d.z + fz * z) < top - 0.3) zd = z;
+      if (zd === null) continue;
+      const zs = Math.max(0.3, zd - 0.25), M = plotMatrix({ x: d.x, y: top, z: d.z, face: d.face }), steps = [];
+      for (let i = 0, y = G(d.x + fx * (zs - 0.05), d.z + fz * (zs - 0.05)); i < 6; i++) {
+        const z0 = zs + i * 0.36, g = G(d.x + fx * (z0 + 0.18), d.z + fz * (z0 + 0.18));
+        if (z0 > zd && y - g < 0.14) break; // down on the ground (past the fall)
+        y = Math.max(g + 0.03, y - 0.22);
+        B.add(B.box(1.15 - (i % 2) * 0.1, 0.5, 0.4, { seg: 9, chip: 0.04, chipTop: true, seed: i + 60 }), ch(M, (i % 2 ? 0.04 : -0.03), y - top - 0.25, z0 + 0.18, 0, (rng() - 0.5) * 0.08, 0), stoneO(g - 0.3, 0.2));
+        steps.push({ z0, y });
+      }
+      if (steps.length) ctx.addWalkable((x, z) => { const dx = x - d.x, dz = z - d.z, lz = dx * fx + dz * fz, lx = -dx * fz + dz * fx; if (Math.abs(lx) > 0.55 || lz < zs) return null; const st = steps[Math.floor((lz - zs) / 0.36)]; return st ? st.y : null; });
+    }
+  }
+
   // ---------------------------------------------------------------- between the two houses: steps down the bank, washing over the lane
   {
     const h1 = rec('pennyworth-house-1'), h2 = rec('pennyworth-house-2'), p1 = P.plot('pennyworth-house-1'), p2 = P.plot('pennyworth-house-2');
