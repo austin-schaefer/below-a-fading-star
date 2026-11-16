@@ -10,8 +10,10 @@
 // is skipped. Three kinds of finding, each clustered by the metre:
 //   seam   two neighbouring cells whose floors differ by more than a step (0.12 m, the controls' STEP_UP) where the
 //          drawn surface does not make the same step (within 0.12 m) and no collider stands within 0.5 m (a kerb, a
-//          wall): the feet jump where the eye sees none, or none where it sees one
-//   off    a floor more than 0.15 m from the drawn surface nearest it (above or below): the feet float or sink
+//          wall) and no drawn face (a riser, the ha-ha) passes within 0.2 m of the step: the feet jump where the eye
+//          sees none, or none where it sees one
+//   off    a floor more than 0.15 m from the drawn surface nearest it (above or below), not within 0.2 m of a drawn
+//          face (the drop is drawn there): the feet float or sink
 //   ghost  a collider in the box with nothing drawn within 0.3 m of half or more of its outline (sampled every 0.5 m
 //          at 0.3 and 1 m over its foot), or a held edge of a stacked floor (`keep`) with nothing drawn within 0.3 m
 //          of the walker's body stopped at it (0.75 m of the edge): the walker stopped by something unseen
@@ -110,11 +112,11 @@ const r = await page.evaluate(async () => {
     const den = 1 / (va_ + vb_ + vc_), v = vb_ * den, w = vc_ * den;
     return q(ax + abx * v + acx * w, ay + aby * v + acy * w, az + abz * v + acz * w);
   };
-  const drawnNear = (x, y, z, lim) => {
+  const drawnNear = (x, y, z, lim, steepOnly = false) => {
     const l2 = lim * lim;
     for (let bz = Math.floor(z - lim - Z0); bz <= Math.floor(z + lim - Z0); bz++) for (let bx = Math.floor(x - lim - X0); bx <= Math.floor(x + lim - X0); bx++) {
       if (bx < 0 || bx >= NBX || bz < 0 || bz >= NBZ) continue;
-      const L = bins[bz * NBX + bx]; if (L) for (const id of L) if (cp(id * 10, x, y, z) <= l2) return true;
+      const L = bins[bz * NBX + bx]; if (L) for (const id of L) if ((!steepOnly || tri[id * 10 + 9] < 0.7) && cp(id * 10, x, y, z) <= l2) return true;
     }
     return false;
   };
@@ -163,7 +165,8 @@ const r = await page.evaluate(async () => {
   for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
     const k = j * NX + i; if (!OK[k]) continue; cells++;
     const x = X0 + i * H, z = Z0 + j * H;
-    if (Math.abs(F[k] - D[k]) > OFF) find('off', x, z, F[k] - D[k], stackNames[K[k]], `feet ${F[k].toFixed(2)} drawn ${D[k].toFixed(2)}`);
+    // (a cell on a drawn face, a riser's or the ha-ha's, within 0.2 m: the drop is drawn there, a body's width inside the face)
+    if (Math.abs(F[k] - D[k]) > OFF && !drawnNear(x, F[k], z, 0.2, true) && !drawnNear(x, D[k], z, 0.2, true)) find('off', x, z, F[k] - D[k], stackNames[K[k]], `feet ${F[k].toFixed(2)} drawn ${D[k].toFixed(2)}`);
     for (const [di, dj] of [[1, 0], [0, 1]]) {
       if (i + di >= NX || j + dj >= NZ) continue;
       const n = (j + dj) * NX + i + di; if (!OK[n]) continue;
@@ -172,7 +175,7 @@ const r = await page.evaluate(async () => {
       const dD = drawnAt(X0 + (i + di) * H, Z0 + (j + dj) * H, F[n]) - drawnAt(x, z, F[k]);
       if (Math.abs(dF - dD) <= Math.max(STEP, Math.abs(dF) * 0.25)) continue; // (at a drawn riser the two may differ by its batter)
       const mx = x + di * H / 2, mz = z + dj * H / 2;
-      if (colNear(mx, mz, Math.min(F[k], F[n]), 0.5)) continue;
+      if (colNear(mx, mz, Math.min(F[k], F[n]), 0.5) || drawnNear(mx, (F[k] + F[n]) / 2, mz, 0.2, true)) continue;
       find('seam', mx, mz, dF, `${stackNames[K[k]]}>${stackNames[K[n]]}`, `feet ${F[k].toFixed(2)} -> ${F[n].toFixed(2)}, drawn ${dD > 0 ? '+' : ''}${dD.toFixed(2)}`);
     }
   }
