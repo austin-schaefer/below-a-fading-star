@@ -121,29 +121,31 @@ export function undercroft(B, M, o = {}) {
     if (!bare) { PARTS.heliarch.slab(B, ch(M, cx - cl / 2, ctop - 0.08, cz).multiply(basis), { w: 0.8, h: cl, d: 0.16 });
       R.counter(cx, ctop, cz + 0.42, cl); R.wall(cx - cl / 2 + 0.36, cz, cx + cl / 2 - 0.36, cz, 0, ctop, 0.36);
       R.door(a.x + s2 * (a.aw / 2 - 0.62), zf + 0.6, { w: 1.2, enter: true }); }
-    // inside: a rack of shelves along the back with jars on it, two sacks, a lamp over the counter
+    // inside: the vault's own floor (the street's flags stop at the wall), a rack of shelves along the back with jars
+    // on it, two sacks, a lamp over the counter
+    if (!riser) { const z0 = zb + 0.3, z1 = zf - 0.02; B.add(B.box(a.aw + 0.5, 0.7, z1 - z0, { seg: 1.5 }), ch(M, a.x, -0.37, (z0 + z1) / 2), { color: H.dark.clone().multiplyScalar(0.7), course: 0.5, moss: 0.3, ground: g0 - 2 }); R.floor(a.x, (z0 + z1) / 2, a.aw - 0.1, z1 - z0, 0); }
     const zr = Math.max(zb + (riser ? 0.2 : 0.95), cz - 2.6), rw = Math.min(a.aw - 0.4, 2.2), wood = { color: L.wood, moss: 0, ground: g0 - 2 };
-    for (const sx of [-1, 1]) beam(B, M, [a.x + sx * rw / 2, 0, zr], [a.x + sx * rw / 2, Math.min(1.9, a.sp + 0.5), zr], 0.06, wood);
+    for (const sx of [-1, 1]) beam(B, M, [a.x + sx * rw / 2, -0.12, zr], [a.x + sx * rw / 2, Math.min(1.9, a.sp + 0.5), zr], 0.06, wood);
     for (const y of [0.55, 1.05, 1.55]) if (y < a.sp + 0.3) { B.add(B.box(rw + 0.1, 0.035, 0.3, { seg: 9 }), ch(M, a.x, y, zr + 0.1), wood); R.shelf(a.x, y + 0.02, zr + 0.1, rw, 0.3); for (let i = 0; i < (low ? 1 : 3); i++) pot(B, M, a.x - rw / 2 + 0.25 + rng() * (rw - 0.5), y + 0.018, zr + 0.1, 0.08 + rng() * 0.06, worn(pick([L.tile[0], V.mud, L.tile[4], L.plaster[1]], rng), rng, 0.3), 1.5 + rng(), 6); }
     R.wall(a.x - rw / 2, zr + 0.1, a.x + rw / 2, zr + 0.1, 0, 1.7, 0.2);
     for (let i = 0; i < 2; i++) { const sx2 = a.x - s2 * (a.aw / 2 - 0.55 - i * 0.2), sz2 = cz - 0.9 - i * 0.6; B.add(new THREE.IcosahedronGeometry(0.3, 1), ch(M, sx2, 0.22, sz2, 0, rng() * 3, 0, 1, 0.8, 1.15), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g0 - 2, disp: 0.03 }); R.post(sx2, sz2, 0.3, 0, 0.45); }
     R.light(a.x, Math.min(1.9, a.sp + a.aw * 0.3), cz - 0.9, '#ffb060', 1.6, 7);
-    B.add(new THREE.IcosahedronGeometry(0.07, 0), ch(M, a.x, Math.min(1.95, a.sp + a.aw * 0.32), cz - 0.6, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * 0.8, V.lit[1] * 0.8, V.lit[2] * 0.8, 1] });
-    beam(B, M, [a.x, Math.min(2.0, a.sp + a.aw * 0.32) + 0.06, cz - 0.6], [a.x, a.sp + Math.sqrt(Math.max(0.01, (a.aw / 2) ** 2 - 0.36)) - 0.02, cz - 0.6], 0.012, { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
+    B.add(new THREE.IcosahedronGeometry(0.07, 0), ch(M, a.x, Math.min(1.95, a.sp + a.aw * 0.32), cz - 0.1, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * 0.8, V.lit[1] * 0.8, V.lit[2] * 0.8, 1] });
+    beam(B, M, [a.x, Math.min(2.0, a.sp + a.aw * 0.32) + 0.06, cz - 0.1], [a.x, a.sp + a.aw / 2 + 0.03, cz - 0.1], 0.012, /* (from the arch's crown, in the wall's thickness) */ { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
     R.window(a.x, a.sp, zf, true);
     if (bare) return;
     const af = B.count, ah = Math.min(h - 0.3, a.sp + a.aw / 2 + 0.55);
     if (shut) { // no cloth: the shop's shutter, a leaf of planks hinged under the arch's head and propped out on two sticks
-      const y0 = Math.max(2.3, a.sp + 0.25), bw = Math.max(1.2, 2 * Math.sqrt(Math.max(0.3, (a.aw / 2) ** 2 - Math.max(0, y0 - a.sp) ** 2)) - 0.12), bl = 1.3, t = 0.32 + rng() * 0.12, wd = { color: worn(L.wood, rng, 0.25, 0.15), moss: 0.08, ground: g0 - 2 };
-      const bm = ch(M, a.x, y0, zf - 0.12, -t, 0, 0);
+      const y0 = Math.max(2.3, Math.min(h - 0.35, a.sp + a.aw / 2 + 0.15)), bw = a.aw + 0.3, bl = 1.3, t = 0.25 + rng() * 0.12, wd = { color: worn(L.wood, rng, 0.25, 0.15), moss: 0.08, ground: g0 - 2 };
+      const bm = ch(M, a.x, y0, zf + 0.03, -t, 0, 0);
       B.add(B.box(bw, 0.045, bl, { seg: 9 }), ch(bm, 0, 0, bl / 2), wd);
       for (const q of [0.25, 0.8]) B.add(B.box(bw - 0.1, 0.035, 0.09, { seg: 9 }), ch(bm, 0, -0.04, bl * q), { ...wd, color: L.wood });
-      for (const s of [-1, 1]) { const px = a.x + s * (bw / 2 - 0.12), pz = zf - 0.12 + Math.cos(t) * (bl - 0.08), py = y0 + Math.sin(t) * (bl - 0.08) - 0.03; const fx = a.x + s * (a.aw / 2 + 0.18); beam(B, M, [fx, -0.1, pz + 0.25], [px, py, pz], 0.05, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); R.post(fx, pz + 0.22, 0.07, 0, 1.2, { stand: false }); } // (their feet wide of the arch: the way round the counter stays clear)
+      for (const s of [-1, 1]) { const px = a.x + s * (bw / 2 - 0.1), pz = zf + 0.03 + Math.cos(t) * (bl - 0.08), py = y0 + Math.sin(t) * (bl - 0.08) - 0.03; beam(B, M, [px, -0.6, pz + 0.12], [px, py, pz], 0.05, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); R.post(px, pz + 0.08, 0.07, 0, 2.0, { stand: false }); } // (wide of the arch, as a cloth's poles are)
     } else {
     awning(B, ch(M, a.x, 0, zf + 0.02), { w: a.aw + 0.5, d: 1.55, h: ah, drop: Math.min(0.5, ah - 1.95), rng });
     for (const s of [-1, 1]) R.post(a.x + s * (a.aw / 2 + 0.2), zf + 1.55, 0.07, 0, 2.0, { stand: false });
     }
-    hangSign(B, ch(M, a.x - s2 * (a.aw / 2 + 0.5), Math.min(h - 0.25, a.sp + 1.25), zf), rng, { size: low ? 0.42 : 0.5 });
+    hangSign(B, ch(M, Math.max(-W / 2 + 0.2, Math.min(W / 2 - 0.2, a.x - s2 * (a.aw / 2 + 0.5))), Math.min(h - 0.25, a.sp + 1.25), zf - 0.06), rng, { size: low ? 0.42 : 0.5 }); // (its arm in the wall, never past the wall's end)
     dirty(B, af, 0.2, rng);
   };
   // the arch walled up a metre in, crooked, with the shop's hole and a narrow door in the infill

@@ -111,8 +111,9 @@ export function vessel(B, M, o = {}) {
     room(B, M, R, { x0: -hx, x1: hx, zb, zf, h: hh, rng, g0, color: plaster, low, patches: low ? 2 : 3, openings: [{ door: true, kind: 'ogee', x: dx, y: 0, w: 1.0, sp: 1.35, paint, frame: L.paint[(seed + 1) % 4] }, { kind: 'rect', x: -side * hx * 0.4, y: 1.25, w: 0.55, sp: 0.6, paint, stop: 'lit', one: side }], par: { f: 0.3, b: 0, l: 0.25, r: 0.25 } });
     // poles from its roof to the wall, planks on them; the flue
     const zin = (x, y) => zc - Math.sqrt(Math.max(0.01, (rAt(y) - TH) ** 2 - x * x));
-    for (let i = 0, np = low ? 3 : 5; i < np; i++) { const x = -hx + 0.5 + (i / (np - 1)) * (2 * hx - 1), y1 = hh + 0.9 + rng() * 0.5; beam(B, M, [x, hh + 0.28, zf - 0.6], [x + (rng() - 0.5) * 0.3, y1, zin(x, y1) + 0.05], 0.11, { color: V.rawWood, moss: 0.1, ground: g0 - 2, round: 5 }); }
-    for (let i = 0; i < (low ? 2 : 4); i++) { const z = zb + 0.3 + i * 0.55; B.add(B.box(2 * hx - 0.8, 0.04, 0.5, { seg: 9 }), ch(M, 0, hh + 0.78 + (zf - 0.6 - z) * -0.02 + i * 0.05, z, -0.2, 0, (rng() - 0.5) * 0.04), wood()); }
+    for (let i = 0, np = low ? 3 : 5; i < np; i++) { const x = -hx + 0.5 + (i / (np - 1)) * (2 * hx - 1), y1 = hh + 1.15; beam(B, M, [x, hh + 0.28, zf - 0.6], [x + (rng() - 0.5) * 0.3, y1, zin(x, y1) + 0.05], 0.11, { color: V.rawWood, moss: 0.1, ground: g0 - 2, round: 5 }); }
+    { const za = zf - 0.6, zz = zin(0, hh + 1.15) + 0.05, sl = (hh + 1.15 - (hh + 0.28)) / (za - zz); // (the planks lie on the poles: their slope, a pole's half thickness up)
+      for (let i = 0; i < (low ? 2 : 4); i++) { const z = Math.max(zz + 0.4, zb + 0.3) + i * 0.52; if (z > za - 0.3) break; B.add(B.box(2 * hx - 0.8, 0.04, 0.5, { seg: 9 }), ch(M, 0, hh + 0.28 + (za - z) * sl + 0.075, z, Math.atan(sl), 0, 0), wood()); } }
     beam(B, M, [fx, hh - 0.2, fz], [fx, hh + 2.2, fz - 0.15], 0.16, { color: L.iron, iron: 0.6, moss: 0, ground: g0 - 3, round: 6 });
     pot(B, M, dx + side * 0.95 > hx - 0.3 ? dx - side * 0.95 : dx + side * 0.95, 0, zf + 0.35, 0.26, worn(L.tile[0], rng, 0.4), 1.9);
     for (let i = 0; i < (low ? 2 : 4); i++) shard(side * (w / 2 - 0.5 - rng() * 0.8) * (i % 2 ? 1 : -1), zf + 0.1 + rng() * 0.5 - (i > 1 ? 1.5 : 0));
