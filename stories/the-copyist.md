@@ -3,7 +3,7 @@
 - **Kind:** plain
 - **State:** built
 - **Someone:** a mason of the Quarrels, set to cut the new house's mouldings
-- **Places:** the Quarrels, the brink before the Unroofed House's east end
+- **Places:** the Quarrels, the brink before the Unroofed House's west end
 - **Touches:** [The saint in the kiln](the-saint-in-the-kiln.md) (the same masons, the same keep's stone); the Unroofed House (`new-house`, its pale cut ornament)
 
 ## The story
@@ -14,7 +14,7 @@ The masons are building a new house out of the keep's own fallen wall, and whoev
 
 | # | Where (place, position, the view it reads from) | What the visitor finds | What it tells them alone | What points on to the next | State |
 |---|---|---|---|---|---|
-| 1 | Before the Unroofed House's east end, on the brink (`new-house` plot, its front); from the Drag, about 9 m | A mason on a block, mallet and chisel, before two carved blocks, one dark, one pale | Someone is carving stone for the house | | built |
+| 1 | Before the Unroofed House's west end, on the brink (`new-house` plot, its front) (the east end is the scaffold's ladder's foot) | A mason on a block, mallet and chisel, before two carved blocks, one dark, one pale | Someone is carving stone for the house | | built |
 | 2 | Close, 3 m | The dark block's eggs are even and crisp; the pale one's are lumps of every size with one gone; two more pale spoiled blocks on the ground; he sits back, looks from one to the other, shakes his head | He cannot copy it | The new house's own carving, a few metres off | built |
 
 ## What it ties together
