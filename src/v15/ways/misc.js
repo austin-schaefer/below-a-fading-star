@@ -2,7 +2,7 @@
 //   ramp(K, { name, pts: [[x, y, z], ...] (its centre line, top first), width, revet: -1 | +1 | 0 (the side that is
 //             held up by a plank revetment: left or right of the way down), base(x, z) -> y (the ground under it) })
 //             rammed earth between planks, cleats across it
-//   bridge(K, { name, a: [x, y, z], b: [x, y, z], width (1.1), rails (true), register })   planks on two baulks
+//   bridge(K, { name, a: [x, y, z], b: [x, y, z], width (1.1), rails (true), register, over: [a, b] (the baulks past each end, 0.35) })   planks on two baulks
 //   roofWalk(K, { name, pts: [[x, z] x 4] (round the roof), y, parapet: [bool x 4] (which edges carry a low wall, edge
 //             i from pts[i] to pts[i + 1]), h (0.55), color })   a flat roof as a stacked floor; the parapet is drawn,
 //             every edge holds (an edge onto a floor within a step stays open)
@@ -77,7 +77,11 @@ const boxOf = (pts, pad) => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, 
 export function bridge(K, o) {
   const { B, C } = K, rng = K.rng, w = o.width ?? 1.1, [ax, ay, az] = o.a, [bx, by, bz] = o.b, len = Math.hypot(bx - ax, bz - az), fx = (bx - ax) / len, fz = (bz - az) / len;
   const F = frame(ax, ay, az, fx, fz), wood = C.late.wood, grey = jit(wood, 1.5), dy = by - ay, pitch = -Math.atan2(dy, len);
-  for (const sd of [-1, 1]) B.add(B.box(0.16, 0.22, Math.hypot(len, dy) + 0.7, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 - 0.12), dy / 2 - 0.17, len / 2, pitch, sd * 0.01, 0)), { color: jit(wood, 0.75 + rng() * 0.2), moss: 0.3, ground: Math.min(ay, by) - 2 });
+  // the baulks run on past each end into what holds them (o.over: [at a, at b], 0.35 m), or stop short under the planks
+  // where the end is a stair's head (v15-W4: the Gullet's head deck's baulks stood 0.35 m out over its top tread, two
+  // dark blocks and the planks' edge between them at a walker's shin, read as a bar across the stair)
+  const [oa, ob] = o.over ?? [0.35, 0.35], bl = Math.hypot(len, dy) + oa + ob;
+  for (const sd of [-1, 1]) B.add(B.box(0.16, 0.22, bl, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 - 0.12), dy / 2 - 0.17, len / 2 + (ob - oa) / 2, pitch, sd * 0.01, 0)), { color: jit(wood, 0.75 + rng() * 0.2), moss: 0.3, ground: Math.min(ay, by) - 2 });
   const n = Math.round(len / 0.24);
   for (let i = 0; i < n; i++) {
     if (o.gaps && rng() < 0.05) continue; // a board gone (never two together: the floor under it is whole)
