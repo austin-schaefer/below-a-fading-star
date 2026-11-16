@@ -105,7 +105,7 @@ const R = await page.evaluate(async () => {
       let drop = 0; const onLand = (e) => { drop = Math.max(drop, e.detail.drop); }; fp.events.addEventListener('land', onLand);
       const r = walk(tx, tz, H.x, H.z, edge, { secs: 7, steer });
       fp.events.removeEventListener('land', onLand);
-      res.push({ along: `${name}: a walk steered along the lip (${DRIFT} rad in from its line)`, closest: r.minEdge, drop, end: r.feet, crust: name === 'the Pit', slid: !!(r.landed && landsIn[name](r.landed)) }); void R; }
+      res.push({ along: `${name}: a walk steered along the lip (${DRIFT} rad in from its line)`, closest: r.minEdge, drop, end: r.feet, crust: false, slid: !!(r.landed && landsIn[name](r.landed)) }); void R; }
     // a hurrying hop at the lip: over it
     const a = 0.3, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry: true, secs: 12, hopAt: 240 });
     res.push({ hole: name, mode: 'hop at the lip', n: 1, over: r.minEdge < -0.05 ? 1 : 0, sane: r.landed && landsIn[name](r.landed) ? 1 : 0, need: 1, bad: r.landed ? [`landed at ${r.landed.feet.toFixed(2)} on ${r.landed.stack || 'ground'}`] : ['never landed'] });

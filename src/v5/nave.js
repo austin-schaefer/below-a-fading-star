@@ -20,6 +20,7 @@ import { installBelow, underMaterial, boxBelow, belowLit } from '../v14/under.js
 import { hulls, lamps } from '../v14/noon-road/plan.js'; // v14-D3: the Noon Road's carriers: their stored light, their hulls through the water
 import { NOON } from '../v8/strata/noon.js';
 import { SZ, SHALF, DOOR, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Noon Road
+import { holeLip } from '../v15/lips.js'; // v15-W3: the rim's drawn lip for the edge-guard
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
 // the roof's underside at (x, z): level at NAVE.ceil, sunk with the moor wherever the moor lies lower than the cover
@@ -630,6 +631,8 @@ export async function build(ctx) {
   // finds is the water's floor, as drawn: a replacing floor a centimetre under the Noon Road's water (which holds them
   // and puts them back on the road); where no hall is under it, a landing there wakes them at the lip (fall.js's trap)
   const colliders = 0;
+  // the lip a walker sees, smoothed over the rim's jags (src/v15/lips.js); open where the Noon Road's stair leaves the rim
+  if (ctx.addLip) holeLip(ctx, { name: 'nave', x: CX, z: CZ, rim: naveRim, open: (x, z) => !CR_OFF && x > CX && Math.abs(z - SZ) < SHALF + 0.8 });
   { const WF = NAVE.water - 1.26, R = NAVE.r + 8;
     const inHallW = (x, z) => x > NAVE.x0 + 9 && x < NAVE.x1 - 0.5 && Math.abs(z - CZ) < HALF - 0.4;
     ctx.addWalkable((x, z) => (Math.abs(x - CX) < R && Math.abs(z - CZ) < R && naveEdge(x, z) < 0 ? WF : null), { replace: true });

@@ -110,6 +110,8 @@ export async function build(ctx) {
   ctx.registerUpdate((dt) => {
     if (phase === 'idle') {
       remember(dt);
+      // standing still in a trap (come to rest against the Pit's wall after a short drop): the same waking
+      if (p.onGround && !p.carried && p.fallTop - (p.pos.y - p.eye) > 2 && trapped(p.pos.x, p.pos.z, p.pos.y - p.eye)) { dark(); return; }
       if ((p.onGround && !p.steep) || p.carried || (p.vy > -3 && !p.steep)) return; // (a slide down a face too steep to stand is a fall: p.steep)
       const total = p.fallTop - p.floorBelow, fallen = p.fallTop - (p.pos.y - p.eye);
       if (fallen > 1 && ((on && total > FALL_M) || trapped(p.pos.x, p.pos.z, p.floorBelow))) {

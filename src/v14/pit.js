@@ -504,6 +504,9 @@ export async function build(ctx) {
     // the Nadir's mouth is open (v15-W3: what is seen holds, and nothing is seen there): a walker who goes in falls into
     // the night under it and wakes a few metres back from its lip (src/v12/fall.js's trap, whether or not falling costs)
     (ctx.fallTraps ||= []).push((x, z, feet) => feet < yC - 4 && Math.hypot(x - C.x, z - C.z) < NADIR.r + 1.5);
+    // (v15-W3) the throat's walls: a walker who comes to rest against them, between the lip and the floor and off the
+    // slabs, has no way on (the rock is drawn steeper than a person stands): the same waking at the lip
+    (ctx.fallTraps ||= []).push((x, z, feet) => { if (Math.abs(x - C.x) > 22 || Math.abs(z - C.z) > 22 || feet > lipY - 3 || feet < FLOOR.y0 + 2.5) return false; const b = ((Math.atan2(x - C.x, -(z - C.z)) * 180) / Math.PI + 360) % 360; const r = Math.hypot(x - C.x, z - C.z); if (r < floorR(b) - 1 || r > pitRim(b) + 0.5) return false; const sf = stair.floor(x, z); return !(sf !== null && sf !== undefined && Math.abs(sf - feet) < 0.6); });
     for (const [x, y, z] of legFeet) { ctx.addCollider({ x, z, r: 0.35, y: y - 0.5, h: 4, stand: false }); colliders++; }
     ctx.addCollider({ x1: reelX - ax2 * 0.75, z1: reelZ - az2 * 0.75, x2: reelX + ax2 * 0.75, z2: reelZ + az2 * 0.75, r: 0.55, y: reelG - 0.2, h: 1.4, stand: false }); colliders++;
   }

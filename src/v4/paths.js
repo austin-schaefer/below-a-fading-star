@@ -22,6 +22,7 @@ import { hazed } from '../v14/pit/haze.js'; // v14-D2: the throat's haze by the 
 import { underMaterial } from '../v14/under.js'; // v14-D2: the well's light falling off with depth, the lip's last sun, the lamps' pools
 import { LAMP_WARM } from '../v14/pit/plan.js';
 import { SUN } from '../world.js';
+import { holeLip } from '../v15/lips.js'; // v15-W3: the rim's drawn lip for the edge-guard
 const SUN_XZ = (() => { const l = Math.hypot(SUN.dir.x, SUN.dir.z) || 1; return [SUN.dir.x / l, SUN.dir.z / l]; })();
 // v14-D2: the bottom of the Pit is v14/pit.js's (its floor, the Nadir); ?pit=0 leaves the old black fan and a closed rim
 const PIT_D2 = typeof location === 'undefined' || new URLSearchParams(location.search).get('pit') !== '0';
@@ -532,6 +533,8 @@ function buildPit(ctx) {
   // the rim is open (v15-W3: what is seen holds; v10-T1's ring of unseen columns is gone): the edge-guard keeps a plain
   // walk along it on the turf, and a walker who pushes at it, hurries or hops goes over into the Pit
   const colliders = 0;
+  // the lip a walker sees, at the top of the crust (src/v15/lips.js); open where the stair's head leaves the rim
+  if (ctx.addLip) holeLip(ctx, { name: 'pit', x: PIT.x, z: PIT.z, rim: pitRim, open: (x, z) => { const b = ((Math.atan2(x - PIT.x, -(z - PIT.z)) * 180) / Math.PI + 360) % 360; return inStairHead(b, Math.hypot(x - PIT.x, z - PIT.z), 1.2); } });
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
 }
 

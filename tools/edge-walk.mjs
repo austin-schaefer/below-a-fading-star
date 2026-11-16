@@ -61,8 +61,17 @@ const run = (ms) => page.clock.runFor(ms);
 await page.click('#begin'); await run(400);
 // the lip: of 32 bearings, the nearest drop of more than 1.5 m (marching 0.2 m at a time over the floor that holds the
 // feet), and its outward normal: the mean of the bearings within 1 m of the nearest
-const lip = await page.evaluate((dir) => {
+const lip = await page.evaluate(([dir, hole, gallery]) => {
+  if (gallery) dir = [window.__fp.lift.io.x, window.__fp.lift.io.z]; // (out from the face, not into a cell)
   const fp = window.__fp, p = fp.player, x0 = p.pos.x, z0 = p.pos.z, f0 = p.pos.y - p.eye, hits = [];
+  // a hole with a drawn lip (src/v15/lips.js): that line is the lip, as the guard sees it
+  const H = hole && (fp.holeLips || []).find((l) => l.name === hole);
+  if (H) {
+    let x = x0, z = z0; const g = 0.5, nrm = (x, z) => { const gx = H.edge(x + g, z) - H.edge(x - g, z), gz = H.edge(x, z + g) - H.edge(x, z - g), l = Math.hypot(gx, gz) || 1; return [-gx / l, -gz / l]; };
+    for (let k = 0; k < 200 && H.edge(x, z) > 0.05; k++) { const [nx, nz] = nrm(x, z), e = H.edge(x, z); x += nx * Math.min(0.2, e); z += nz * Math.min(0.2, e); }
+    const [nx, nz] = nrm(x, z);
+    return { x, z, y: fp.controls.floorAt(x, z, f0 + 0.5).y, d: Math.hypot(x - x0, z - z0), nx, nz };
+  }
   for (let k = 0; k < 32; k++) {
     const a = (k / 32) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a);
     let feet = f0;
@@ -79,7 +88,7 @@ const lip = await page.evaluate((dir) => {
   let nx = 0, nz = 0; for (const h of hits) if (h.d < best.d + 1 && h.dx * best.dx + h.dz * best.dz > 0.5) { nx += h.dx; nz += h.dz; }
   const l = Math.hypot(nx, nz) || 1;
   return { x: best.x, z: best.z, y: best.y, d: best.d, nx: nx / l, nz: nz / l };
-}, P.dir || null);
+}, [P.dir || null, P.hole || null, !!P.gallery]);
 if (!lip) { console.log('[lip] none found within 16 m of', at); await browser.close(); process.exit(1); }
 // the walk begins 1.5 m in from the lip (so the first lip it meets is this one, not one further round a curve)
 { const b = await page.evaluate((lip) => { const fp = window.__fp, r = fp.controls.placeAt(lip.x - lip.nx * 1.5, lip.z - lip.nz * 1.5, lip.y); return r; }, lip); await run(300); lip.d = 1.5; at = [b.x, b.z, b.y]; }
@@ -152,12 +161,20 @@ await walk(true);
 let s = await info(), t = 0;
 // steering as a visitor does: every 0.2 s the look is turned to keep 65 degrees off the lip nearest them (its line
 // turns round a hole's curve)
-const nearLip = () => page.evaluate(() => { const fp = window.__fp, p = fp.player, x0 = p.pos.x, z0 = p.pos.z, f0 = p.pos.y - p.eye; let sx = 0, sz = 0, best = 9;
+const nearLip = () => page.evaluate((hole) => { const fp = window.__fp, p = fp.player, x0 = p.pos.x, z0 = p.pos.z, f0 = p.pos.y - p.eye; let sx = 0, sz = 0, best = 9;
+  const H = hole && (fp.holeLips || []).find((l) => l.name === hole); if (H) { const g = 0.5, gx = H.edge(x0 + g, z0) - H.edge(x0 - g, z0), gz = H.edge(x0, z0 + g) - H.edge(x0, z0 - g), l = Math.hypot(gx, gz) || 1; return { nx: -gx / l, nz: -gz / l, d: H.edge(x0, z0) }; }
   for (let k = 0; k < 32; k++) { const a = (k / 32) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a); for (let d = 0.3; d < 4; d += 0.3) { const fl = fp.controls.floorAt(x0 + dx * d, z0 + dz * d, f0); if (fl.y < f0 - 1.5) { if (d < best - 0.3) { best = d; sx = dx; sz = dz; } else if (d < best + 0.6) { sx += dx; sz += dz; } break; } if (fl.y > f0 + 0.7) break; } }
-  const l = Math.hypot(sx, sz); return l ? { nx: sx / l, nz: sz / l, d: best } : null; });
+  const l = Math.hypot(sx, sz); return l ? { nx: sx / l, nz: sz / l, d: best } : null; }, P.hole || null);
 while (t < 12000 && s.atLip < 0.5 && s.on) {
-  const L = MODE === 'keys' ? await nearLip() : null; // (on touch the stick's walk is not steered: a second finger restarted it)
-  if (L) await look(yawOf(L.nx * Math.cos(side) - L.nz * Math.sin(side), L.nz * Math.cos(side) + L.nx * Math.sin(side)), -0.12);
+  const L = await nearLip();
+  // on touch, steered with the stick's own direction (a second finger on the view restarted the stick): the thumb
+  // leans the way to go, at the same part push
+  if (L && MODE === 'touch') {
+    const ty = yawOf(L.nx * Math.cos(side) - L.nz * Math.sin(side), L.nz * Math.cos(side) + L.nx * Math.sin(side));
+    const yaw = await page.evaluate(() => window.__fp.player.yaw), dy = ty - yaw, k = 46;
+    stick = [-Math.sin(dy) * k, -Math.cos(dy) * k];
+    await touch('touchMove', [[1, home.x + stick[0], home.y + stick[1]]]);
+  } else if (L) await look(yawOf(L.nx * Math.cos(side) - L.nz * Math.sin(side), L.nz * Math.cos(side) + L.nx * Math.sin(side)), -0.12);
   await run(200); t += 200; s = await info(); if (t === 1000) await shot('walking-along'); }
 await run(400);
 await shot(s.on ? 'held-at-the-lip' : 'off-before-the-lip');
@@ -170,7 +187,10 @@ await look(sq, -0.35);
 await walk(true);
 if (process.env.HOP) await hop();
 await run(150); await shot('going-over');
-for (const [ms, name] of [[250, 'over-0.4s'], [400, 'falling-0.8s']]) { await run(ms); await shot(name); }
+await run(250); await shot('over-0.4s');
+// pushing on until the feet leave the ground (down a crust to its break), at most 3 s
+for (let t2 = 0; t2 < 3000 && (await info()).on; t2 += 100) await run(100);
+await run(300); await shot('falling');
 await walk(false);
 // 4. the landing: until standing again (or the fall's dark), then on through any waking
 for (t = 0; t < 8000; t += 100) { s = await info(); if (s.on && s.fall !== 'falling' && t > 200) break; if (s.fall === 'dark') break; await run(100); }

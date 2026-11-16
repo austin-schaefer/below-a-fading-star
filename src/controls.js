@@ -315,6 +315,14 @@ export function buildControls(ctx) {
     return terrain.heightAt(x, z);
   }
   ctx.addWalkable = addWalkable;
+  // --- drawn lips (v15-W3): addLip({ x0, x1, z0, z1, edge(x, z) }) declares where a hole's ground visibly breaks: edge is
+  // a smooth signed distance, positive outside, negative over the hole. To the edge-guard it is a lip like a drop: a
+  // plain walk along it is held there, a push square at it, a hurry or a hop goes over. It holds nothing else (no
+  // collider, nothing in the air). Use it where the drop begins with a slope (a crust, a bank) or a ragged rim whose
+  // line the guard would read from its jags. Returns a remover.
+  const lips = [];
+  function addLip(L) { lips.push(L); return () => { const i = lips.indexOf(L); if (i >= 0) lips.splice(i, 1); }; }
+  ctx.addLip = addLip;
   // the ground's normal: the terrain's, or where a replacing floor holds the ground (a pit's bowl and walls), that
   // floor's own (v15-W3: a walker who lands against the Pit's wall slides down it, as on any slope too steep to stand)
   const _fn = new THREE.Vector3();
@@ -570,6 +578,18 @@ export function buildControls(ctx) {
       // looking ahead 0.6 m along a plain walk: a bank too steep to walk down (more than LIP down within it: 68 degrees,
       // the Pit's throat) is a lip too, so a walk along the top of it is held where the cliff under it begins
       const dm = hyp(mv.x - ox, mv.z - oz);
+      // a drawn lip (a hole's rim declared with addLip): crossing its line inward is the lip, with the line's own normal
+      // over a metre's baseline, so a ragged rim's jags and a crust's slope below the break do not decide it
+      let lipAt = null;
+      if (!inHop && !hurry && lips.length && (kind === 0 || kind === LIP_SOFT)) {
+        for (const L of lips) {
+          if (mv.x < L.x0 || mv.x > L.x1 || mv.z < L.z0 || mv.z > L.z1) continue;
+          const e1 = L.edge(mv.x, mv.z); if (e1 >= 0) continue;
+          const e0 = L.edge(ox, oz); if (e1 >= e0) continue;
+          const g = 0.5, gx = L.edge(mv.x + g, mv.z) - L.edge(mv.x - g, mv.z), gz = L.edge(mv.x, mv.z + g) - L.edge(mv.x, mv.z - g), gl = hyp(gx, gz) || 1;
+          lipN.x = -gx / gl; lipN.z = -gz / gl; lipAt = L; kind = LIP_LINE; break;
+        }
+      }
       if (!kind && !inHop && !hurry && len > 0.05 && dm > 0.001) {
         pm.x = mv.x + (mv.x - ox) / dm * 0.6; pm.z = mv.z + (mv.z - oz) / dm * 0.6;
         floorAt(pm.x, pm.z, feet0, false, probe, state.onStack); pm.y = probe.y; pm.stack = probe.stack;
@@ -580,9 +600,12 @@ export function buildControls(ctx) {
           if (nn.y < STEEP_Y) { const h = hyp(nn.x, nn.z) || 1; kind = LIP_STEEP; lipN.x = nn.x / h; lipN.z = nn.z / h; }
         }
       }
-      if (kind === EDGE_HELD || ((kind === LIP_SOFT || kind === LIP_STEEP) && !inHop && !hurry && slope <= 0.95)) { // (on ground too steep to stand, they slide, lip or not)
+      if (kind === EDGE_HELD || ((kind === LIP_SOFT || kind === LIP_STEEP || kind === LIP_LINE) && !inHop && !hurry && (slope <= 0.95 || kind === LIP_LINE))) { // (on ground too steep to stand, they slide, lip or not)
         const tx = mv.x, tz = mv.z;
-        if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop, kind === LIP_SOFT);
+        // still over: past the drawn lip's line further than they stood, or over an edge
+        const past = (m) => (lipAt ? lipAt.edge(m.x, m.z) < Math.min(0, lipAt.edge(ox, oz)) - 0.005 : false) || !!edgeKind(m, ref);
+        if (kind === LIP_LINE) nDrops = 0;
+        else if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop, kind === LIP_SOFT);
         else nDrops = 0;
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
         // already held at this lip (sliding along it): a ragged lip's jags turn its line by 20 degrees or more under the
@@ -592,13 +615,13 @@ export function buildControls(ctx) {
           const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
           mv = resolve(sx, sz, feet0, mvB);
           // the slide still goes over (a notch where two pieces' rounded ends meet): the same, a few cm in from the edge
-          if (edgeKind(mv, ref)) mv = resolve(sx - lipN.x * 0.08, sz - lipN.z * 0.08, feet0, mvB);
-          if (edgeKind(mv, ref)) {
+          if (past(mv)) mv = resolve(sx - lipN.x * 0.08, sz - lipN.z * 0.08, feet0, mvB);
+          if (past(mv)) {
             // no slide left: at an outer corner, a walker pushing on goes over; anywhere else, they stand
             if (kind !== EDGE_HELD && len > 0.05 && aim > 0 && nDrops >= 5 && !nBeam) mv = resolve(tx, tz, feet0, mvB);
             else mv = resolve(ox, oz, feet0, mvB);
           }
-          if (!edgeKind(mv, ref)) {
+          if (!past(mv)) {
             const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
             if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
             leaning = kind !== EDGE_HELD && aim > 0.15;
@@ -697,7 +720,7 @@ export function buildControls(ctx) {
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
   // there onto nothing within a step, down or up (keep: 'up' holds only up: out of a cut, through a tunnel's side);
   // LIP_SOFT: down more than LIP; 0: neither.
-  const EDGE_HELD = 1, LIP_SOFT = 2, LIP_STEEP = 3, LIP = 1.5, AIM = 0.64, AIM_HELD = 0.82, STEEP_Y = Math.cos(0.95); // AIM: the cosine of 50 degrees off square: 40 off the lip's line (30 and a margin for a ragged lip)
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP_STEEP = 3, LIP_LINE = 4, LIP = 1.5, AIM = 0.64, AIM_HELD = 0.82, STEEP_Y = Math.cos(0.95); // AIM: the cosine of 50 degrees off square: 40 off the lip's line (30 and a margin for a ragged lip)
   let lipLean = 0, nDrops = 0, nBeam = false; // nBeam: the drops lie on both sides (a beam, a parapet's top)
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {
