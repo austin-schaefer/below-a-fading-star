@@ -22,7 +22,7 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 
 | [The Noon Road](the-noon-road.md) | plain (a deep end) | built | the Noonwrights, long gone, who tried to keep the sun; and whoever comes down now for what they left, never seen: their shears, their stair, their flasks | the Foundered Nave: its rim, its stair, its nave (the carriers, the hoops, the torn elbow), its east wall and south door | the tender of the lattices and the Leerie (the same lamp oil; the lattices were this people's); the Reckoner (the tesserae); the twelfth chair (the Sexton's forty graves, open again) |
 
-Twelve plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Thirteen plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -33,7 +33,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The pedlar whose sack split: the sleeper in the Lantern Halt (v10-A4).
 - The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
 - The Reckoner, behind the Hypogeum's door: heard knocking, never seen.
-- The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: unknown.
+- The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: the sounder who went down the Pit (`the-sounding-down.md`), never seen.
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton: whose are his other forty graves? Open (the Nave's road was first drawn as his; it is the Noonwrights' now: `the-noon-road.md`); never seen at the Nave.
 - The Noonwrights: the fourth people, between the Heliarchy and the folk here now; nobody living has seen one. Their carriers lie in the Nave (`the-noon-road.md`); the sky's lattices were their collectors; the tender and the Leerie burn what they left.
