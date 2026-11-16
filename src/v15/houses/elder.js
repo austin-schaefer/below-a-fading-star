@@ -44,7 +44,7 @@ function overhang(B, M, o) {
   // the house: a plaster front between the stubs, its roof the stone
   const x0 = -xs + sw / 2 + 0.06, x1 = xs - sw / 2 - 0.06, hr = Math.min(under(x0), under(x1)) - 0.12, zf = zs + sdd / 2 - 1.5 - rng() * 0.4, zb = Math.max(-d / 2 + 0.6, (o.back ?? -99) + 0.2, zf - 3.4);
   const wash = washOf(rng), ai = Math.floor(rng() * 4), paint = L.paint[ai], cx = (x0 + x1) / 2, rw = x1 - x0;
-  const ops = [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx - s * rw * 0.2, y: 0, w: 0.95, sp: Math.min(1.45, hr - 1.3), paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx + s * rw * 0.22, y: 1.2, w: 0.5, sp: 0.6, paint, stop: 'lit', one: s }];
+  const ops = [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx - s * rw * 0.2, y: 0, w: 1.12, sp: Math.min(1.45, hr - 1.35), paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx + s * rw * 0.22, y: 1.2, w: 0.5, sp: 0.6, paint, stop: 'lit', one: s }];
   if (rw > 4.6) ops.push({ kind: 'ogee', x: cx + s * rw * 0.4, y: 1.5, w: 0.4, sp: 0.4, paint, stop: rng() < 0.5 ? 'lit' : 'dark', one: 0 });
   room(B, M, R, { x0, x1, zb, zf, h: hr, rng, g0, color: wash, low, openings: ops, par: { f: 0.02, b: 0.02, l: 0.02, r: 0.02 }, batter: 0 });
   // rubble packed between the plaster's head and the stone
@@ -79,23 +79,34 @@ function stack(B, M, o) {
   const shx0 = Math.min(bx - s * bw / 2, x2 - s * w2 / 2), shx1 = Math.max(bx - s * bw / 2, x2 - s * w2 / 2), shw = shx1 - shx0;
   const hutOnFront = shw < 1.5, hm = ch(M, 0, bh - 0.02, 0);
   const rec = { door: () => {}, window: (x, y, z, lit) => R.window(x, y + bh, z, lit), wall: () => {} };
-  let lx, lz; // where the ladder's head is
+  // the hut is never the same hut: its height, its window's shape, and what is on its roof (a dome the size of a
+  // bread oven, a chimney, a jar and a pole with a rag)
+  const hk = pick(['rect', 'ogee', 'horseshoe'], rng), hcap = pick(['dome', 'chimney', 'pole', 'none'], rng);
+  const cap = (x0, x1, zb, zf, hh) => { const cx = (x0 + x1) / 2, cz = (zb + zf) / 2, y = bh + hh, o2 = { color: worn(wash, rng, 0.12), moss: 0.12, ground: g0 + bh };
+    if (hcap === 'dome') { const r = Math.min(x1 - x0, zf - zb) * 0.36; B.add(new THREE.SphereGeometry(r, low ? 7 : 9, 3, 0, Math.PI * 2, 0, Math.PI / 2), ch(M, cx, y + 0.02, cz, 0, 0, 0, 1, 0.75, 1), o2); R.top = Math.max(R.top || 0, y + r); }
+    else if (hcap === 'chimney') { const hc = 0.7 + rng() * 0.5; B.add(B.box(0.36, hc, 0.36, { seg: 9, chip: 0.03 }), ch(M, cx - s * (x1 - x0) * 0.25, y + hc / 2 + 0.05, zb + 0.4), o2); R.top = Math.max(R.top || 0, y + hc); }
+    else if (hcap === 'pole') { const px = cx + s * (x1 - x0) * 0.3; beam(B, M, [px, y, cz], [px + 0.1, y + 1.7, cz], 0.045, { color: V.rawWood, moss: 0.05, ground: g0 + bh, round: 5 }); B.add(B.box(0.5, 0.3, 0.014, { seg: 9 }), ch(M, px + 0.33, y + 1.5, cz, 0, 0, -0.15), { color: worn(V.madder, rng, 0.45), moss: 0, ground: g0 + bh }); pot(B, M, cx - s * 0.3, y + 0.05, cz, 0.2, worn(L.tile[0], rng, 0.4), 1.6); }
+  };
+  let lx, lz, hut = false; // where the ladder's head is; whether there is anything up there to climb to
   if (!hutOnFront) {
-    const hx0 = shx0 + 0.12, hx1 = shx1 - 0.05, hzf = bz + bd / 2 - 0.5 - rng() * 0.3, hzb = Math.max(bz - bd / 2 + 0.3, hzf - 2.4), hh = 1.75 + rng() * 0.25;
-    room(B, hm, rec, { x0: hx0, x1: hx1, zb: hzb, zf: hzf, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: 'rect', x: (hx0 + hx1) / 2, y: 0.7, w: 0.42, sp: 0.5, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
-    lx = (hx0 + hx1) / 2 - s * 0.1; lz = bz + bd / 2;
+    const hx0 = shx0 + 0.12, hx1 = shx1 - 0.05, hzf = bz + bd / 2 - 0.14 - rng() * 0.08, hzb = Math.max(bz - bd / 2 + 0.3, hzf - 2.4), hh = 1.6 + rng() * 0.7;
+    room(B, hm, rec, { x0: hx0, x1: hx1, zb: hzb, zf: hzf, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: hk, x: (hx0 + hx1) / 2, y: 0.7, w: 0.46, sp: hk === 'rect' ? 0.5 : 0.4, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    cap(hx0, hx1, hzb, hzf, hh);
+    hut = true; lx = (hx0 + hx1) / 2 - s * 0.1; lz = bz + bd / 2;
   } else {
     // (no shoulder: the hut on the front of the first block's top, before the second)
-    const fd = bz + bd / 2 - (z2 + d2 / 2), hw = Math.min(2.4, bw - 0.8), hx0 = bx - hw / 2, hh = 1.7 + rng() * 0.25;
-    if (fd > 1.5) room(B, hm, rec, { x0: hx0, x1: hx0 + hw, zb: z2 + d2 / 2 - 0.05, zf: bz + bd / 2 - 0.35, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: 'rect', x: bx, y: 0.7, w: 0.42, sp: 0.5, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    const fd = bz + bd / 2 - (z2 + d2 / 2), hw = Math.min(2.4, bw - 0.8), hx0 = bx - hw / 2, hh = 1.6 + rng() * 0.6;
+    if (fd > 1.5) hut = true;
+    if (hut) room(B, hm, rec, { x0: hx0, x1: hx0 + hw, zb: z2 + d2 / 2 - 0.05, zf: bz + bd / 2 - 0.14, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: hk, x: bx, y: 0.7, w: 0.46, sp: hk === 'rect' ? 0.5 : 0.4, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    if (hut) cap(hx0, hx0 + hw, z2 + d2 / 2 - 0.05, bz + bd / 2 - 0.14, hh);
     lx = bx - s * (hw / 2 + 0.25); lz = bz + bd / 2;
   }
-  ladder(B, M, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }); R.post(lx, lz + 0.55, 0.32, 0, 1.3, { stand: false });
-  R.door(lx, lz + 1.5, { w: 0.5 }); // (the way in is the ladder: not walked)
+  if (hut) { ladder(B, M, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }); R.post(lx, lz + 0.55, 0.32, 0, 1.3, { stand: false });
+    R.door(lx, lz + 1.5, { w: 0.5, ladder: true }); } // (the way in is the ladder, to the hut's sill: not walked)
   if (flank) {
     // the lean-to against the pile's flank: one room, its door and a window, a chimney, jars on its roof
     const x0 = s > 0 ? -w / 2 + 0.2 : bx + bw / 2 - 0.08, x1 = s > 0 ? bx - bw / 2 + 0.08 : w / 2 - 0.2, zf = Math.min(d / 2 - 0.3, bz + bd / 2 + 0.3 + rng() * 0.5), zb = Math.max(-d / 2 + 0.5, (o.back ?? -99) + 0.2, zf - 3.6), hh = 2.2 + rng() * 0.3, cx = (x0 + x1) / 2, rw = x1 - x0;
-    room(B, M, R, { x0, x1, zb, zf, h: hh, rng, g0, color: wash, low, openings: [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx + s * rw * 0.18, y: 0, w: 0.95, sp: 1.3, paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx - s * rw * 0.25, y: 1.15, w: 0.5, sp: 0.6, paint, stop: rng() < 0.6 ? 'lit' : 'dark', one: -s }], par: { f: 0.3, b: 0.2, l: 0.25, r: 0.25 } });
+    room(B, M, R, { x0, x1, zb, zf, h: hh, rng, g0, color: wash, low, openings: [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx + s * rw * 0.18, y: 0, w: 1.12, sp: 1.3, paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx - s * rw * 0.25, y: 1.15, w: 0.5, sp: 0.6, paint, stop: rng() < 0.6 ? 'lit' : 'dark', one: -s }], par: { f: 0.3, b: 0.2, l: 0.25, r: 0.25 } });
     const hc = 0.8 + rng() * 0.5; B.add(B.box(0.4, hc, 0.4, { seg: 9, chip: 0.03 }), ch(M, cx - s * 0.6, hh + hc / 2 + 0.15, zb + 0.6), { color: worn(wash, rng, 0.2), moss: 0.1, ground: g0 });
     R.chimney = R.W(cx - s * 0.6, hh + hc + 0.2, zb + 0.6);
     for (let i = 0; i < (low ? 1 : 3); i++) pot(B, M, cx + (rng() - 0.5) * (rw - 1.4), hh, zb + 1.2 + rng() * Math.max(0.2, zf - zb - 2.2), 0.2 + rng() * 0.1, worn(pick([V.mud, L.tile[4], L.tile[0]], rng), rng, 0.35), 1.6 + rng());

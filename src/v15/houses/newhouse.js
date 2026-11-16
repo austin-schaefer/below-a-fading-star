@@ -101,7 +101,9 @@ export function newhouse(B, M, o = {}) {
   if (stage > 0) {
   for (const sx of [-1, 1]) beam(B, M, [xd + sx * (dw / 2 - 0.09), 0, zc], [xd + sx * (dw / 2 - 0.09), sp, zc], 0.11, raw);
   beam(B, M, [xd - dw / 2 + 0.03, sp, zc], [xd + dw / 2 - 0.03, sp, zc], 0.1, raw, 0.34);
-  { const pts = []; for (let i = 0; i <= 8; i++) { const a = -0.25 + (i / 8) * (Math.PI + 0.5); pts.push([Math.cos(a) * cr, sp + 0.18 + Math.sin(a) * cr]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw); }
+  // (a centring is a frame you walk under: a rib of boards on the curve, a king post and two struts, the rest air)
+  { const pts = [], n = 8, a0 = -0.25, a1 = Math.PI + 0.25; for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * cr, sp + 0.18 + Math.sin(a) * cr]); } for (let i = n; i >= 0; i--) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * (cr - 0.13), sp + 0.18 + Math.sin(a) * (cr - 0.13)]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw);
+    for (const a of [Math.PI / 2, 0.75, Math.PI - 0.75]) beam(B, M, [xd, sp + 0.04, zc], [xd + Math.cos(a) * (cr - 0.08), sp + 0.18 + Math.sin(a) * (cr - 0.08), zc], 0.07, raw, 0.2); }
   for (const sx of [-1, 1]) for (let i = 0; i < (stage === 2 ? 4 : sx === side ? 3 : 2); i++) { const a = -0.2 + i * 0.42, rr = cr + 0.2; B.add(B.box(0.3, 0.36, BT, { seg: 9, chip: 0.012 }), ch(M, xd + sx * Math.cos(a) * rr, sp + 0.18 + Math.sin(a) * rr, zc, 0, 0, sx * (a - 0.15)), fresh()); }
   }
   R.door(xd, zf + 0.8, { enter: true, w: dw });
@@ -155,7 +157,7 @@ export function newhouse(B, M, o = {}) {
   for (const [bx, bz, bw, bd] of [[0, 0.5, 1.5, 0.06], [0, -0.5, 1.5, 0.06], [0.72, 0, 0.06, 1.0], [-0.72, 0, 0.06, 1.0]]) B.add(B.box(bw, 0.34, bd, { seg: 9 }), ch(M, px + bx, 0.12, pz + bz), raw);
   B.add(B.box(1.4, 0.2, 0.96, { seg: 0.5 }), ch(M, px, 0.1, pz), { color: V.lime, moss: 0, wet: 0.25, ground: g0 - 3, disp: 0.015, dispScale: 3, emit: [0.05, 0.05, 0.045, 1] });
   beam(B, M, [px + 0.2, 0.18, pz], [px + 0.9, 1.25, pz - 0.75], 0.04, { ...raw, round: 5 });
-  for (let i = 0; i < (low ? 2 : 4); i++) patch(B, ch(M, px + (rng() - 0.5) * 2.4, 0.012 + i * 0.003, pz + (rng() - 0.3) * 1.3, -Math.PI / 2, rng() * 3, 0), 0.25 + rng() * 0.3, rng, { color: V.lime, moss: 0, ground: g0 - 3 });
+  for (let i = 0; i < (low ? 2 : 4); i++) { const r = 0.16 + rng() * 0.2; B.add(new THREE.IcosahedronGeometry(1, 0), ch(M, px + (i % 2 ? 1 : -1) * (0.95 + rng() * 0.3), -0.01, pz + (rng() - 0.5) * 1.2, 0, rng() * 3, 0, r * 1.3, 0.05, r), { color: V.lime.clone().lerp(V.dirt, 0.35 + rng() * 0.2), moss: 0, ground: g0 - 3, disp: 0.02, dispScale: 4 }); } // (slopped putty, trodden grey: lumps, not sheets)
   R.wall(px - 0.5, pz, px + 0.5, pz, 0, 0.3, 0.5, { stand: true });
   // the stock: quarried blocks waiting, the sign whole on one of them and upside down; a column drum not yet cut
   const kx = side > 0 ? x1 + 0.55 : x0 - 0.55, kz = zb + 1.4;

@@ -107,6 +107,9 @@ const r = await page.evaluate(async () => {
     const near = (x, z, y) => { let best = Infinity; for (const c2 of R.colliders) { const y0 = c2.y ?? -1e9, y1 = c2.y !== undefined ? c2.y + (c2.h ?? 1e9) : 1e9; if (y + 1.5 < y0 || y + 0.3 > y1) continue; let dd; if (c2.x1 !== undefined) { const ex = c2.x2 - c2.x1, ez = c2.z2 - c2.z1, l2 = ex * ex + ez * ez, t = l2 ? Math.max(0, Math.min(1, ((x - c2.x1) * ex + (z - c2.z1) * ez) / l2)) : 0; dd = Math.hypot(x - c2.x1 - ex * t, z - c2.z1 - ez * t); } else dd = Math.hypot(x - c2.x, z - c2.z); best = Math.min(best, dd - c2.r); } return best; };
     m.doorBad = [];
     for (const dr of R.doors) {
+      if (!dr.ladder && dr.w < 0.9) m.doorBad.push(`${dr.w.toFixed(2)} m wide: under 0.9`);
+      // (an entered doorway is drawn open: nothing from knee to brow on its line, from the street to a stride inside)
+      if (dr.enter) { let shut = 0; for (const [yy, off] of [[0.5, 0], [1.1, 0], [1.1, -0.2], [1.1, 0.2], [1.75, 0]]) { O.set(dr.x + dr.face[1] * off + dr.face[0] * 0.2, dr.y + yy, dr.z - dr.face[0] * off + dr.face[1] * 0.2); D.set(-dr.face[0], 0, -dr.face[1]); if (cast(O, D, 1.7)) shut++; } if (shut) m.doorBad.push(`entered, but ${shut} of 5 rays down its line meet something drawn`); }
       let tight = Infinity;
       for (let t = -0.2; t <= (dr.enter ? 1.8 : 1.6); t += 0.1) tight = Math.min(tight, near(dr.x - dr.face[0] * t, dr.z - dr.face[1] * t, dr.y));
       if (dr.enter ? tight < 0.44 : tight >= 0.45) m.doorBad.push(`${dr.enter ? 'entered, but a collider stands ' + tight.toFixed(2) + ' m from its line' : 'not entered, yet nothing stops a walker (nearest ' + tight.toFixed(2) + ' m)'}`);

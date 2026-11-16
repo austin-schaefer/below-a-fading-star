@@ -44,6 +44,7 @@ export async function build(ctx) {
   if (mode === '0' || !ctx.strata?.on) { ctx.village = { off: true }; return; }
   const low = ctx.quality === 'low', T = ctx.terrain, rng = rngOf(1501, 9);
   const plan = ctx.lappet && ctx.lappet.on !== false ? ctx.lappet.plan : null, S = plan && plan.STRAKE, viaPlan = !!(S && S.slots && S.slots.every((n) => plan.plot(n)));
+  if (plan && !viaPlan) console.warn(`village row: the Lappet's plan is on but ${!S ? 'exports no STRAKE' : !S.slots ? 'its STRAKE names no slots' : 'has no plot named ' + S.slots.filter((n) => !plan.plot(n)).join(', ')}: the row stands at ROW, on the village's ground`); // (once: build runs once)
   const face = viaPlan ? [S.face[0], S.face[1]] : faceOf(ROW.bearing), yaw = Math.atan2(face[0], face[1]), cy = Math.cos(yaw), sy = Math.sin(yaw);
   const slots = viaPlan ? S.slots.map((n) => plan.plot(n)) : null, len = viaPlan ? slots.reduce((q, p) => q + p.w, 0) : ROW_PLOTS.reduce((q, p) => q + p.w, 0);
   // the frame: the middle of the fronts' line (with the plan: the mean of the plots' front middles)

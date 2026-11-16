@@ -72,7 +72,7 @@ export function room(B, HM, R, r) {
   // shape of its own: a stain has no outline): limewash over a mend and raw mud, each a tone off the wall; low down
   // the plaster gone from the rubble it hid (that one has an edge: plaster breaks); rain's streaks under every sill
   // and down from the parapet; damp risen along the foot.
-  { const ops = r.openings || [], wo = { color: col, moss, ground: g0, emit: limeGlow(col) }; let zq = zf + 0.012;
+  { const ops = r.openings || [], wo = { color: col, moss, ground: g0, emit: limeGlow(col) }; let zq = zf + 0.03;
     const lay = (rows, to, o2 = wo) => { tint(B, ch(HM, 0, 0, zq), o2, to, rows); zq += 0.006; };
     const blot = (px, py, rx, ry, to, k, edge = 0, o2 = wo) => { const n = 9, ring = (f, kk) => { const row = []; for (let i = 0; i <= n; i++) { const a = (i / n) * Math.PI * 2, j = 0.75 + 0.5 * B.n3(px * 3 + Math.cos(a) * 1.3, py * 3 + Math.sin(a) * 1.3, 7); row.push([px + Math.cos(a) * rx * f * j, Math.max(0.02, py + Math.sin(a) * ry * f * j), kk]); } return row; };
       lay([ring(1, edge), ring(0.8, k), ring(0.02, k)], to, o2); };

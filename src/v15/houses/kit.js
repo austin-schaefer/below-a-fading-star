@@ -61,7 +61,7 @@ export function site(M, kind, o) {
   R.disc = (x, z, r, y, f = {}) => { const a = W(x, y, z); R.floors.push({ x: a.x, z: a.z, r, y: a.y, y1: a.y, steps: 0, layer: f.layer ?? 0, keep: f.keep ?? false }); };
   R.lamp = (x, y, z, fx = 0, fz = 1) => R.lamps.push({ ...W(x, y, z), face: face(fx, fz) });
   R.window = (x, y, z, lit) => R.windows.push({ ...W(x, y, z), lit: !!lit });
-  R.door = (x, z, f = {}) => R.doors.push({ ...W(x, 0, z), face: face(f.fx || 0, f.fz ?? 1), enter: !!f.enter, w: f.w || 1 });
+  R.door = (x, z, f = {}) => R.doors.push({ ...W(x, 0, z), face: face(f.fx || 0, f.fz ?? 1), enter: !!f.enter, w: f.w || 1, ladder: !!f.ladder });
   R.counter = (x, y, z, w) => R.counters.push({ ...W(x, y, z), face: face(0, 1), w });
   R.shelf = (x, y, z, w, d) => R.shelves.push({ ...W(x, y, z), face: face(0, 1), w, d });
   R.light = (x, y, z, color, intensity, distance) => R.lights.push({ ...W(x, y, z), color, intensity, distance });
@@ -263,11 +263,14 @@ export function ladder(B, M, foot, top, w, o, side = [1, 0, 0]) {
 // washing on a line between two local points: the line sags, the cloths hang off true
 export function washing(B, M, a, b, rng, n = 4) {
   const g0 = M.elements[13] - 3, dx = b[0] - a[0], dz = b[2] - a[2], ry = Math.atan2(-dz, dx);
-  beam(B, M, a, b, 0.014, { color: V.rope, moss: 0, ground: g0 });
+  beam(B, M, a, b, 0.022, { color: V.rope, moss: 0, ground: g0 });
   for (let i = 0; i < n; i++) {
     const t = (i + 0.6 + rng() * 0.3) / (n + 0.6), w = 0.35 + rng() * 0.4, hh = 0.4 + rng() * 0.5;
-    const col = worn(rng() < 0.3 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.12, 0.16);
-    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t - hh / 2 - 0.01, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12), { color: col, moss: 0, ground: g0 });
+    const col = worn(rng() < 0.25 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.4, 0.16); // (washed a hundred times: no colour is loud)
+    // (thrown over the line: a long leaf this side, a short one that, apart at their hems: cloth from above too)
+    const m = ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12);
+    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(m, 0, -hh / 2 + 0.01, 0.035, 0.07, 0, 0), { color: col, moss: 0, ground: g0 });
+    B.add(B.box(w, hh * 0.45, 0.014, { seg: 9 }), ch(m, 0, -hh * 0.225 + 0.01, -0.035, -0.14, 0, 0), { color: col.clone().multiplyScalar(0.85), moss: 0, ground: g0 });
   }
 }
 // a bed frame: four posts, rails, a pallet and a quilt
@@ -341,11 +344,16 @@ export function awning(B, M, o = {}) {
   const rng = o.rng, w = o.w ?? 3, d = o.d ?? 1.6, h = o.h ?? 2.5, drop = Math.min(o.drop ?? 0.5, Math.max(0.05, h - 2.26)), g0 = M.elements[13], n = 5, // (its hem never lower than a walker's head)
      col = o.color || worn(pick([V.saffron, V.linen, V.madder, V.teal], rng), rng, 0.22);
   const sag = (u) => 0.16 * (1 - (2 * u - 1) ** 2) + 0.03; // (the middle hangs)
-  for (let i = 0; i < n; i++) {
-    const u0 = i / n, u1 = (i + 1) / n, um = (u0 + u1) / 2, len = d + (rng() - 0.5) * 0.14, y0 = h - sag(um) * 0.3, y1 = h - drop - sag(um), sl = Math.hypot(len, y0 - y1);
-    B.add(B.box(w / n + 0.01, 0.014, sl, { seg: 9 }), ch(M, -w / 2 + um * w, (y0 + y1) / 2, len / 2, Math.atan2(y0 - y1, len), 0, (sag(u1) - sag(u0)) * -1.6), { color: col.clone().multiplyScalar(0.9 + 0.16 * rng()), moss: 0.02, ground: g0 - 2 });
+  // one cloth, its widths sewn edge to edge (no strip hangs free of its neighbour), a patch let into it in paint
+  const nr = 3, hem = [], tone = [], pu = 0.2 + rng() * 0.5, patchC = worn(pick([V.linen, V.madder, V.teal], rng), rng, 0.3);
+  for (let i = 0; i <= n; i++) { hem.push(d + (rng() - 0.5) * 0.12); tone.push(0.88 + 0.18 * rng()); }
+  for (const under of [false, true]) {
+    const pos = [], idx = [];
+    for (let j = 0; j <= nr; j++) for (let i = 0; i <= n; i++) { const u = i / n, v = j / nr; pos.push(-w / 2 + u * w, h - 0.02 - v * drop - sag(u) * (0.3 + 0.7 * v) - (under && i > 0 && i < n && j > 0 && j < nr ? 0.014 : 0), 0.03 + v * (hem[i] - 0.03)); }
+    for (let j = 0; j < nr; j++) for (let i = 0; i < n; i++) { const a2 = j * (n + 1) + i, b2 = a2 + 1, c2 = a2 + n + 1, e2 = c2 + 1; if (under) idx.push(a2, b2, c2, b2, e2, c2); else idx.push(a2, c2, b2, b2, c2, e2); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+    addPainted(B, g.toNonIndexed(), M, { color: col, moss: 0.02, ground: g0 - 2 }, (x, y, z, out) => { const u = (x + w / 2) / w, i = Math.min(n - 1, Math.floor(u * n + (z > 0.04 && z < d * 0.98 ? 0 : 1e-6))), k = tone[i] * (under ? 0.8 : 1), inP = Math.abs(u - pu - 0.08) < 0.1 && z > d * 0.3 && z < d * 0.75, C = inP ? patchC : col; out.r = C.r * k; out.g = C.g * k; out.b = C.b * k; });
   }
-  { const u = 0.25 + rng() * 0.5, pw = 0.35 + rng() * 0.3; B.add(B.box(pw, 0.012, pw * (0.7 + rng() * 0.6), { seg: 9 }), ch(M, -w / 2 + u * w, h - drop * 0.55 - sag(u) * 0.7 + 0.012, d * 0.55, Math.atan2(drop + sag(u) * 0.7, d), rng() - 0.5, 0), { color: worn(pick([V.linen, V.madder, V.teal], rng), rng, 0.2), moss: 0, ground: g0 - 2 }); }
   B.add(B.box(w + 0.1, 0.05, 0.05, { seg: 9 }), ch(M, 0, h, 0.03), { color: L.wood, moss: 0, ground: g0 });
   if (o.poles !== false) for (const sx of [-1, 1]) beam(B, M, [sx * (w / 2 - 0.05) + (rng() - 0.5) * 0.12, -0.15, d + (rng() - 0.5) * 0.1], [sx * (w / 2 - 0.05), h - drop - 0.02, d - 0.02], 0.065, { color: V.rawWood, moss: 0.08, ground: g0, round: 5 });
 }

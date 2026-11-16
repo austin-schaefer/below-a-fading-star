@@ -9,7 +9,6 @@
 //            round it, entered by a ragged cut with a plank frame knocked into it and a door hung in the frame
 //   'wreck'  one lying along the plot (8 m of front and more), half in the ground: the belly caved in on top, a
 //            breach in its side walled up in plaster with a door, the neck snapped off and lying apart, shards
-// ('standing', the whole flask on its tail, is src/v15/houses/carrier.js: a quarter may use it once.)
 // o: seed, w, d, form, glaze (0..3, GLAZES), lit (0..1), low. Least plot 4.6 x 4.4 ('wreck' 8 x 3.6); less throws.
 import * as THREE from 'three';
 import { GLAZES, NOON_PARTS } from '../../v8/strata/noon.js';
@@ -122,7 +121,7 @@ export function vessel(B, M, o = {}) {
     const prof = (v) => { if (v <= 0.8) { const p = (v / 0.8) * Math.PI / 2; return [rn + (Rd - rn) * Math.cos(p) ** 0.75, -0.4 + (Hd + 0.4) * Math.sin(p) ** 0.85]; } return [rn * (1 + (v - 0.8) * 0.5), Hd + (v - 0.8) * 2.2]; };
     const a0 = Math.PI / nu * (nd % 2 ? 1 : 0); // (the door's cells centred on the front)
     const P = (i, j, inner) => { const a = (i / nu) * Math.PI * 2 - (nd / 2) * (Math.PI * 2 / nu) + a0 * 0, [r0, y0] = prof(j / nv), top = j === nv ? 0.28 * n3(i * 1.9, 3, 1) : 0, r = r0 - (inner ? TH * (j > nv * 0.8 ? 0.5 : 1) : 0); return [Math.sin(a) * r, y0 + top, zc + Math.cos(a) * r]; };
-    const jDoor = Math.max(2, Math.round(nv * 0.8 * (Math.asin(Math.min(1, ((hDoor + 0.4) / (Hd + 0.4)) ** (1 / 0.85))) / (Math.PI / 2))));
+    const jDoor = Math.max(2, Math.ceil(nv * 0.8 * (Math.asin(Math.min(1, ((hDoor + 0.4) / (Hd + 0.4)) ** (1 / 0.85))) / (Math.PI / 2))));
     const open = (i, j) => i < nd && j < jDoor;
     soots.push({ x: -side * rn * 0.5, y: Hd * 0.7, z: zc - 0.2, len: 1.6, r: 0.9 }, { x: 0, y: hDoor - 0.2, z: zc + Rd * 0.7, len: 1.4, r: 0.8 });
     piece(P, nu, nv, true, open, (y) => sat(y / (Hd + 0.4)), lit * 0.11);

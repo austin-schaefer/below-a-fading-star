@@ -3,17 +3,12 @@
 // calls them.
 import { late, LATE_FORMS, shopfront } from './late.js';
 import { undercroft, UNDER_FORMS } from './undercroft.js';
-import { carrier as flask } from './carrier.js';
-import { vessel, VESSEL_FORMS } from './vessel.js';
+import { vessel as carrier, VESSEL_FORMS as CARRIER_FORMS } from './vessel.js';
 import { elder, ELDER_FORMS } from './elder.js';
 import { newhouse } from './newhouse.js';
-import { plotMatrix } from './kit.js';
+import { plotMatrix, H, worn, rngOf, ch } from './kit.js';
 export { register, registerAll, plotMatrix, faceOf, floorAt, site } from './kit.js';
-export { LATE_FORMS, UNDER_FORMS, ELDER_FORMS, shopfront };
-// a carrier is never whole: a sherd, a sunk dome or a wreck (vessel.js); the flask on its tail (carrier.js) only
-// when a quarter asks for it by name, once
-const carrier = (B, M, o = {}) => (o.form === 'standing' ? flask(B, M, o) : vessel(B, M, o));
-export const CARRIER_FORMS = VESSEL_FORMS;
+export { LATE_FORMS, UNDER_FORMS, CARRIER_FORMS, ELDER_FORMS, shopfront }; // (a carrier is never whole: vessel.js)
 
 // by age, oldest hand first
 export const MAKERS = { elder, undercroft, carrier, late, new: newhouse };
@@ -48,6 +43,7 @@ export function makePlot(B, plot, o = {}) {
     else if (h !== undefined) q.h = h;
     if (plot.kind === 'shop') { if (plot.w < 4 || plot.d < 3) q.form = 'stall'; else q.shop = true; }
     if (plot.stair === false && q.stair === undefined && !plot.against) q.stair = 'side';
+    else if ((plot.stair === 'front' || plot.stair === 'side') && q.stair === undefined && !plot.against) { q.stair = plot.stair; if (q.form === undefined && !q.shop && plot.w >= (plot.stair === 'front' ? 6.5 : 3)) q.form = 'yard'; } // (the yard is the form with a stair to its roof)
   } else if (kind === 'undercroft') {
     if (plot.against) {
       need(); const Rz = plan.RISERS.find((r) => r.key === plot.against);
@@ -59,5 +55,21 @@ export function makePlot(B, plot, o = {}) {
   }
   const R = make(kind, B, plot, q);
   R.name = plot.name;
+  // Against a riser, a maker that is not built into it (an Elder pile, a carrier, a new house: none carries a roof,
+  // none is the step's own vault) still leaves no slot behind it: the gap from the riser's face to its back is packed
+  // with rubble to the tread's height, the tread walked out over the packing to a parapet at its new edge.
+  // R.packed: { z0, z1, y } in the plot's frame (z0 the riser's face), and the parapet's collider, for the plan's rails.
+  if (plot.against && kind !== 'late' && kind !== 'undercroft') {
+    need(); const Rz = plan.RISERS.find((r) => r.key === plot.against), hR = h ?? (Rz ? Rz.top - plot.y : 0);
+    const zR = Rz && Rz.D !== undefined && plot.D !== undefined ? Rz.D - plot.D : -plot.d / 2 - 0.3, z1 = -plot.d / 2 + 0.3, dep = z1 - zR;
+    if (hR > 0.5 && dep > 0.08 && dep < 4) {
+      const M = plotMatrix(plot), rng = rngOf(q.seed | 0, 31), g0 = plot.y, w = plot.w - 0.04, zm = (zR + z1) / 2;
+      B.add(B.box(w, hR + 0.5, dep, { seg: 1.2, chip: 0.06, seed: (q.seed | 0) + 5 }), ch(M, 0, (hR - 0.5) / 2, zm), { color: worn(H.stone, rng, 0.14, 0.1), course: 0.3, moss: 0.5, ground: g0 });
+      B.add(B.box(w, 0.86, 0.3, { seg: 1.2, chip: 0.05, chipTop: true, seed: (q.seed | 0) + 6 }), ch(M, 0, hR + 0.42, z1 - 0.15), { color: worn(H.stone, rng, 0.1, 0.1), course: 0.28, moss: 0.45, ground: g0 + hR });
+      R.wall(-w / 2, zm, w / 2, zm, 0, hR, dep / 2); R.wall(-w / 2, z1 - 0.15, w / 2, z1 - 0.15, hR, 0.86, 0.15);
+      R.floor(0, (zR + z1 - 0.3) / 2, w, dep - 0.3, hR, { layer: 1 });
+      R.packed = { z0: zR, z1, y: hR, parapet: 0.86 };
+    }
+  }
   return R;
 }
