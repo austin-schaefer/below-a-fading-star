@@ -64,6 +64,8 @@ Plain stories, each a someone with a petty want (`storytelling`), and each answe
 - #59, #60, #61, #63 are fixed, each with a frame that shows it.
 - The whole suite is green on `next`; `perf` and `load-probe` on low are within the milestone's budget: the village in view costs at most 30 draw calls and 250k triangles at low in total, and a frame at the spawn costs no more than it does on v14.
 
+- Music is on by default (the owner, in session, 2026-11-15: "for this release, have music on by default. it's good enough."), and the release note says so.
+
 ## How it is built
 
 Two surveys (2026-11-15, read-only) are summarised here; check, do not trust.
@@ -76,7 +78,7 @@ Two surveys (2026-11-15, read-only) are summarised here; check, do not trust.
 
 ## Status
 
-**2026-11-15, 20:05 PST. Opened; batch 1 is dispatched.** The owner started the run at 19:17 with the words quoted above and `/loop 30m` to check on it. Issues #20, #59, #60, #61, #63, #64 are `in-progress`, `v15`. Two read-only surveys (the hillside's geography and code; the story library) and six frames of the hillside today (`shots/wip/v15-before-*.png`, `v15-plan-map.png`) made the plan above.
+**2026-11-15, 19:30 PST. Opened; batch 1 is dispatched.** The owner started the run at 19:17 with the words quoted above and `/loop 30m` to check on it. Issues #20, #59, #60, #61, #63, #64 are `in-progress`, `v15`. Two read-only surveys (the hillside's geography and code; the story library) and six frames of the hillside today (`shots/wip/v15-before-*.png`, `v15-plan-map.png`) made the plan above.
 
 | Brief | Branch / worktree | Port | Model |
 |---|---|---|---|
@@ -86,3 +88,5 @@ Two surveys (2026-11-15, read-only) are summarised here; check, do not trust.
 | F1 the faults after v14 (#59 #60 #61 #63) (`brief-v15-F1-faults.md`) | `issue-1503-faults` | 8164 | opus |
 
 Next: as each reports, look at its frames with the report shut, run its tests, a cold review, merge into `next`; the whole suite once on `next` for the batch (V0 changes the height field). V1's row is the "one before nine": a blind reader on its frames, and the paths left here for the owner, before batch 2 (the four quarters, one agent each, `briefs/v15/index.md`) is written from what V0 and V1 taught.
+
+**2026-11-15, 20:03 PST. Music on by default.** The owner, in session: "for this release, have music on by default. it's good enough." Done on `next` by the orchestrator: `DEFAULT_SETTING` is `default` (`src/audio/music/index.js`), the panel's fallback agrees, the label is "Music" with no "(experimental)" (my reading of "good enough"; one line in `index.html` to put back), a visitor's stored `off` is kept. `music-test` passes alone with a new section for the default. Not yet known: whether any other test hears the music now (the audio tests, `load-probe`'s fetch count); the batch's whole suite on `next` says, and the cure is `music=0` in that test's URL. The release note must say it.
