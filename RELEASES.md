@@ -4,6 +4,108 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v14: The Depths
+
+Released 2026-11-15.
+
+The walk goes underground. Until now everything stood on the surface and the holes in it were only looked into; now there are three ways down, and they join.
+
+### New
+
+- **A stair down into the Foundered Nave**: The Foundered Nave is the roofless, flooded hall of columns you could only look down into. A stair now goes down its wall to the water, and you can walk the length of the hall.
+- **The Noonwrights, a fourth people**: The road across the Nave's water is theirs. They were glass-blowers and potters who tried to keep the sun by storing daylight in great glazed vessels and sending it along tubes. Their vessels lie afloat nose to tail, and you walk along their backs through the standing hoops of a broken tube, past a torn length of it that still rises to the hole in the roof. A few vessels still hold some noon.
+- **The Wellward Way**: A door at the far end of the Nave leads on and down: first inside one of the Noonwrights' tubes, then through a round, wind-worn tunnel with points of light in its walls, across a stair-bridge over a black gulf, and out through a gate at the bottom of the Pit.
+- **The Laid Sun**: A room halfway along the Wellward Way, where someone is laying a gold sun into the floor from pieces picked off other suns. Their lamp and tools are still out.
+- **Down into the Pit**: The Pit is the great hole in the moor. A stair of stone slabs, lit by lamps, now winds down its wall from a landing on the lip to the floor.
+- **The Nadir**: At the bottom of the Pit there is a hole in the floor, and through it the night sky, under the ground. There is something to do there. If you step into the hole you wake somewhere else.
+- **Eighteen places have their names**: Places added in earlier releases that had no card now show a name when you reach them, ten of them with a line of old verse or prose chosen by the owner.
+
+### Fixed
+
+- **The marks on things you can do were far too bright**: They are now a few moths at rest where your hand would go.
+- **Taking the seat at the inn put you inside the wall**: The seat now stands clear of it.
+- **A great ring swelled on the ground when you rang the bell**: It was a coil of rope drawn four times too tall. It is a pile of rope now.
+- **Escape opens the settings**, not only the pause card.
+- **The lift on the prison cliff lurched and spun as it rose**: It rides smoothly.
+- **The crystal bridge had faces missing**, a lamp glowed as a flat square, a waystone's inside flickered, chain links did not join and passed through a floor, and a path ran through two boulders: all mended.
+- **The Pomegranate House read as a ruin inside**: It has a hearth, warm lamps on every floor, a divan and washing hung out.
+- **The path to the Lonely Staircase led to its back**: A trodden path now comes to its foot, and the loose slabs in the turf lie as fallen steps, not as a road.
+- **The hand under the door came long before its letter**: The hand now pushes the letter out itself.
+- **Ten viewpoints in the settings map faced a wall**: They face the place.
+
+### Behind the scenes
+
+- The world can now have places under the ground: a shared way to cut an opening, floor it, wall it and keep the surface's fog and daylight out of it.
+- Each milestone's release note now ends with what it took: how long, how many agents, how many tokens and what those would cost at public prices.
+- A check now fails if any path ends at the back of a way up.
+
+Known issues: under the ground has been walked on a laptop, not yet on a phone. A column beside the last lit vessel on the Noonwrights' road is lit so pale it can look like daylight; it is the vessel's light. Seen from above, a lit vessel on the Noonwrights' road still looks more like a pale back with a lamp on it than like glass lit from inside. The sky seen from the bottom of the Pit is violet where it should take the sun's colour. The things in the sky that the Noonwrights also built (the lattices and the floating remnants) do not yet look like theirs.
+
+<p><img src="shots/88-noonroad-vessels-glazed-after.webp" width="24%" alt="The Noonwrights' road: glazed vessels afloat nose to tail through great green hoops with amber bands, in a flooded hall of columns"> <img src="shots/89-passage-laid-sun-in.webp" width="24%" alt="The Laid Sun: a round floor with a gold sun half laid in tiles, and one lamp"> <img src="shots/90-pit-floor-up-after.webp" width="24%" alt="Looking up from the bottom of the Pit: the stair winding up the wall, a bridge overhead, and stars rising"> <img src="shots/90-pit-stair-along.webp" width="24%" alt="The stair down the Pit's wall: stone slabs and a rope rail between lamps"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 8 hours 54 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 19 | 730.9M | $240 |
+| Fable 5.2 | 6 | 99.3M | $60 |
+| Sonnet 5.5 | 4 | 13.1M | $3 |
+| **Total** | **29** | **843.3M** | **$303** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 71.7M | $33 |
+| v14-D0 first descent | Opus 5.5 | 177.8M | $51 |
+| v14-D1 the passage | Opus 5.5 | 169.0M | $51 |
+| v14-D2 the Pit | Opus 5.5 | 140.9M | $43 |
+| v14-B1 acts faults | Opus 5.5 | 51.9M | $21 |
+| v14-B2 heights faults | Opus 5.5 | 51.8M | $17 |
+| v14-B3 names and house | Opus 5.5 | 39.6M | $13 |
+| v14-D3 finish: test and render the road | Opus 5.5 | 27.4M | $11 |
+| v14-D3 fourth hand and road | Fable 5.2 | 21.0M | $17 |
+| v14-F1 critic's blocking fixes | Opus 5.5 | 19.6M | $8 |
+| v14-B6 stair approach path | Opus 5.5 | 18.9M | $9 |
+| v14-B5 owner's quotations | Opus 5.5 | 12.6M | $5 |
+| v14-B4 stands facing walls | Sonnet 5.5 | 11.1M | $2 |
+| v14 cold critic | Opus 5.5 | 7.1M | $3 |
+| Cold review of the Pit diff | Opus 5.5 | 4.6M | $2 |
+| Cold review of D0 diff | Opus 5.5 | 2.6M | $2 |
+| Cold review of B3 diff | Opus 5.5 | 2.4M | $1 |
+| Cold review D2 r2 diff | Fable 5.2 | 2.1M | $3 |
+| Cold review D1 passage diff | Fable 5.2 | 2.0M | $3 |
+| v14 curator | Sonnet 5.5 | 1.9M | $1 |
+| Cold review D3 road diff | Fable 5.2 | 1.7M | $3 |
+| Cold review of B2 diff | Opus 5.5 | 1.6M | $1 |
+| Cold review of B1 diff | Opus 5.5 | 1.3M | $1 |
+| Blind read of the Pit renders | Opus 5.5 | 956k | $1 |
+| Cold review B6 r2 diff | Fable 5.2 | 915k | $1 |
+| Blind read of D0 renders | Opus 5.5 | 469k | $0 |
+| Second blind read of Coffin Road | Opus 5.5 | 326k | $0 |
+| Blind read of road frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of road frames 2 | Sonnet 5.5 | 80k | $0 |
+| **Total** | | **843.3M** | **$303** |
+
+</details>
+
+**Since the project started** (v1 to v14)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 167 | 3.98B | $1,561 |
+| Fable 5.2 | 20 | 616.1M | $299 |
+| Sonnet 5.5 | 138 | 385.4M | $95 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **324** | **5.23B** | **$2,135** |
+
 ## v13: A quicker start
 
 Released 2026-11-15.
