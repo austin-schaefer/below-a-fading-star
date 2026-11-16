@@ -62,7 +62,7 @@ export function newhouse(B, M, o = {}) {
   const fresh = () => ({ color: V.newStone.clone().lerp(rng() < 0.3 ? H.stone : V.dirt, 0.08 + rng() * 0.16).multiplyScalar(0.9 + rng() * 0.1), moss: 0.03, ground: g0 - 0.6, course: 0 });
   // how many courses stand at each corner, and how far the wall between dips: corners first
   const cor = [0, 1, 2, 3].map(() => (stage === 0 ? 1 + Math.floor(rng() * 2) : stage === 2 ? 8 + Math.floor(rng() * 2) : 5 + Math.floor(rng() * 4))); cor[side > 0 ? 0 : 1] += stage === 2 ? 1 : 2; // (fl, fr, br, bl); the scaffold's corner is highest
-  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, gapTop = Math.ceil((sp + 0.18 + dw0 / 2 + 0.45) / CH); // (the door's gap closes over the arch)
+  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, SPR = 5, ys = SPR * CH - 0.004, gapTop = Math.ceil((sp + 0.18 + dw0 / 2 + 0.45) / CH); // (ys: the spring line, the top of the fifth course: the jambs are carried up to it) // (the door's gap closes over the arch)
   let maxC = 0, front = 0;
   // one wall: from p to q (local x, z), the outward normal's yaw ry, corner heights ca, cb
   const wall = (px, pz, len, ry, ca, cb, dip, gap) => {
@@ -94,6 +94,12 @@ export function newhouse(B, M, o = {}) {
   wall(x1 - BT / 2, zf - BT, sl, Math.PI / 2, cor[1], cor[2], 1.5 + rng() * 2, null);
   wall(x0 + BT / 2, zb + BT, sl, -Math.PI / 2, cor[3], cor[0], 1.5 + rng() * 2, null);
   front = Math.min(cor[0], cor[1]);
+  // the jambs, carried up to the spring line first (a mason's order): where the front wall stands lower than that beside the door, a pier of
+  // blocks one metre wide on each side, from the wall's own top to the fifth course, on its own rng stream; the springers sit on them
+  if (stage > 0) { const rj = rngOf(seed, 77), nAt = (xx) => courses(cor[0], cor[1], (xx - x0) / fl, dipF * dipK); for (const sx of [-1, 1]) {
+    const xa = xd + sx * dw / 2, xb = xd + sx * (dw / 2 + 0.92), nTop = Math.max(nAt(xa), nAt(xb), nAt((xa + xb) / 2));
+    for (let c = nTop; c < SPR; c++) B.add(B.box(0.92, CH - 0.008, BT - 0.03, { seg: 9, chip: 0.014, seed: c * 31 + sx }), ch(M, xd + sx * (dw / 2 + 0.46), (c + 0.5) * CH, zf - BT / 2, 0, 0, 0), { color: V.newStone.clone().lerp(V.dirt, 0.1 + rj() * 0.1).multiplyScalar(0.9 + rj() * 0.1), moss: 0.03, ground: g0 - 0.6, course: 0 });
+  } }
   // the footing shows a hand's breadth all round: rubble in lime
   B.add(B.box(fl + 0.3, 0.5, zf - zb + 0.3, { seg: 2.5, chip: 0.04 }), ch(M, cx, -0.232, (zf + zb) / 2), { color: worn(V.newDust, rng, 0.25), course: 0.2, moss: 0.05, ground: g0 - 0.6 });
   // the door's centering: two props and a half-wheel of boards, the first arch stones on it either side
@@ -102,9 +108,15 @@ export function newhouse(B, M, o = {}) {
   for (const sx of [-1, 1]) beam(B, M, [xd + sx * (dw / 2 - 0.09), 0, zc], [xd + sx * (dw / 2 - 0.09), sp, zc], 0.11, raw);
   beam(B, M, [xd - dw / 2 + 0.03, sp, zc], [xd + dw / 2 - 0.03, sp, zc], 0.1, raw, 0.34);
   // (a centring is a frame you walk under: a rib of boards on the curve, a king post and two struts, the rest air)
-  { const pts = [], n = 8, a0 = -0.25, a1 = Math.PI + 0.25; for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * cr, sp + 0.18 + Math.sin(a) * cr]); } for (let i = n; i >= 0; i--) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * (cr - 0.13), sp + 0.18 + Math.sin(a) * (cr - 0.13)]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw);
-    for (const a of [Math.PI / 2, 0.75, Math.PI - 0.75]) beam(B, M, [xd, sp + 0.04, zc], [xd + Math.cos(a) * (cr - 0.08), sp + 0.18 + Math.sin(a) * (cr - 0.08), zc], 0.07, raw, 0.2); }
-  for (const sx of [-1, 1]) for (let i = 0; i < (stage === 2 ? 4 : sx === side ? 3 : 2); i++) { const a = -0.2 + i * 0.42, rr = cr + 0.2; B.add(B.box(0.3, 0.36, BT, { seg: 9, chip: 0.012 }), ch(M, xd + sx * Math.cos(a) * rr, sp + 0.18 + Math.sin(a) * rr, zc, 0, 0, sx * (a - 0.15)), fresh()); }
+  { const pts = [], n = 8, a0 = -0.25, a1 = Math.PI + 0.25; for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * cr, ys + Math.sin(a) * cr]); } for (let i = n; i >= 0; i--) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * (cr - 0.13), ys + Math.sin(a) * (cr - 0.13)]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw);
+    for (const a of [Math.PI / 2, 0.75, Math.PI - 0.75]) beam(B, M, [xd, sp + 0.04, zc], [xd + Math.cos(a) * (cr - 0.08), ys + Math.sin(a) * (cr - 0.08), zc], 0.07, raw, 0.2); }
+  // the voussoirs: wedges of the arch's own plane, each on the rib (its inner face at the rib's outer radius), radial, joint to joint,
+  // the first on the jamb's top course; deeper than the rib is thick so they read as arch stones; the centring carries them till it closes
+  { const a0 = -0.03, da = (Math.PI / 2 - a0) / 4, r0 = cr, r1 = cr + 0.34;
+    for (const sx of [-1, 1]) for (let i = 0; i < (stage === 2 ? 4 : sx === side ? 3 : 2); i++) {
+      const pa = a0 + i * da + 0.003, pb = a0 + (i + 1) * da - 0.003, P = (r, a) => [sx * Math.cos(a) * r, ys + Math.sin(a) * r];
+      plate(B, ch(M, xd, 0, zc), sx > 0 ? [P(r0, pa), P(r1, pa), P(r1, pb), P(r0, pb)] : [P(r0, pa), P(r0, pb), P(r1, pb), P(r1, pa)], BT, fresh());
+    } }
   }
   R.door(xd, zf + 0.8, { enter: true, w: dw });
   if (stage === 0) {

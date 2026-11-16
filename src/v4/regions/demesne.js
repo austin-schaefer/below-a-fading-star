@@ -329,7 +329,9 @@ function buildBlocks(ctx, rng, low) {
       ctx.addCollider({ x: it.x, z: it.z, r: 0.7, y: it.y - 1.2, h: it.sy * 0.5 + 1.2 });
     });
     perches.length = 0;
-    for (const [run, sN, D, lv] of [[1, 26, 4.25, 'high'], [1, 35.5, -4.95, 'crown'], [2, 3.5, 9.65, 'mid']]) { const [x, z] = LAPPET.at(run, sN, D); perches.push({ x, z, y: LAPPET.LEVEL[lv].y, sy: 0 }); }
+    // the crown's brink, on the drawn tread (y = the level's): two birds a step in from the rim facing the keep, their trains out over the drop and the sky,
+    // and one on open ground further in facing out; each clear of every wall and block for any heading within the clamp (peafowl.js, YAW_SWAY)
+    for (const [run, sN, D, out] of [[1, 22, -6.5, 1], [1, 15.8, -5.2, -1], [2, 11, -5.2, -1]]) { const [x, z] = LAPPET.at(run, sN, D), n = LAPPET.RUN[run].n; perches.push({ x, z, y: LAPPET.LEVEL.crown.y, sy: 0, yaw: Math.atan2(n[0] * out, n[1] * out) }); }
   }
   const mesh = instanced(ctx, g, mat, kept, { name: 'demesne-blocks', shadow: true });
   return { mesh, perches, count: kept.length };
