@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The music glue on the live walk (v9-M2, v9-M6). Usage: node tools/music-test.mjs [base]   (default http://localhost:8123)
-// 0. the default (v9-M6: off, experimental): a walk with no setting stored and the director's clock sped up 60x for
+// 0. switched off (the default since v15 is 'default', on: 0b): a walk with 'off' stored and the director's clock sped up 60x for
 //    10 s of audio clock (ten simulated minutes) fetches none of the music's modules but its glue, builds nothing,
 //    plays nothing and leaves the bus untouched; the panel's row shows off, and the music's level and frequencies dimmed.
 // 1. a walk with the director's clock sped up (?musicspeed=60): the first track is the moor, the director's own clock
@@ -36,19 +36,19 @@ async function open(query, pre) {
   return { page, errors, fetched };
 }
 
-// ---- 0. off by default: nothing of the music is built
+// ---- 0. switched off: nothing of the music is built (the default, with nothing stored, is 'default': section 0b)
 {
-  const { page, errors, fetched } = await open('q=low&musicspeed=60', () => { localStorage.removeItem('fp-music'); });
+  const { page, errors, fetched } = await open('q=low&musicspeed=60', () => { localStorage.setItem('fp-music', 'off'); });
   await page.keyboard.down('KeyW');
   await page.waitForFunction(() => window.__fp.audio?.music, null, { timeout: 30000 });
   const c0 = await page.evaluate(() => window.__fp.audio.ctx.currentTime);
   await page.waitForFunction((c0) => window.__fp.audio.ctx.currentTime > c0 + 10, c0, { timeout: 60000 });
   const s = await page.evaluate(() => { const m = window.__fp.audio.music; return { setting: m.setting, built: m.built, director: !!m.director, played: m.log.length, playing: m.playing, bus: m.bus.gain.value }; });
-  check(s.setting === 'off' && !s.built && !s.director && s.played === 0 && s.playing === null && s.bus === 1, `off by default: ten simulated minutes walking, nothing built or played (${JSON.stringify(s)})`);
+  check(s.setting === 'off' && !s.built && !s.director && s.played === 0 && s.playing === null && s.bus === 1, `switched off: ten simulated minutes walking, nothing built or played (${JSON.stringify(s)})`);
   check(fetched.join() === 'index.js', `only the glue fetched (${fetched.join(', ')})`);
   await page.evaluate(() => window.__fp.settings.open());
   const row = await page.evaluate(() => ({ btns: [...document.querySelectorAll('#set-music button')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed') + (b.classList.contains('set-dim') ? ':dim' : '')).join(), level: document.getElementById('set-level-music').closest('.set-part').classList.contains('set-dim'), label: document.querySelector('label[for=set-level-music]').textContent }));
-  check(row.btns === 'off:true,rare:false:dim,default:false:dim,frequent:false:dim' && row.level && /experimental/.test(row.label), `the panel: off pressed, the level and frequencies dimmed, "${row.label}" (${row.btns})`);
+  check(row.btns === 'off:true,rare:false:dim,default:false:dim,frequent:false:dim' && row.level && row.label === "Music", `the panel: off pressed, the level and frequencies dimmed, "${row.label}" (${row.btns})`);
   // turning it on loads and builds it, and the dimming goes
   await page.click('#set-music button[data-music=default]');
   await page.waitForFunction(() => window.__fp.audio.music.built, null, { timeout: 20000 });
@@ -56,6 +56,19 @@ async function open(query, pre) {
   check(on.dir === 'default' && on.dim === 0 && on.bus === on.mix, `turned on: the director built at default, nothing dimmed, the bus at the mix (${JSON.stringify(on)})`);
   const names = await page.evaluate(async () => { const c = await import('./src/audio/music/catalog.js'); return [c.CATALOG.map((x) => x.name + ':' + x.pool).join(), window.__fp.audio.music.tracks.join()]; });
   check(names[0] === 'moor:moor,wood:wood,wet:wet,cold:cold,garden:garden,dry:dry,span:span,keep:keep,gates:gates' && names[1] === names[0].split(',').map((x) => x.split(':')[0]).join(), `the catalog's nine and the glue's names agree (${names[0]})`);
+  check(errors.length === 0, `no page errors${errors.length ? ': ' + errors[0] : ''}`);
+  await page.close();
+}
+
+// ---- 0b. the default: with nothing stored the music is on at 'default' (v15, the owner: "have music on by default")
+{
+  const { page, errors } = await open('q=low&musicspeed=60', () => { localStorage.removeItem('fp-music'); });
+  await page.waitForFunction(() => window.__fp.audio?.music?.built, null, { timeout: 30000 });
+  const s = await page.evaluate(() => { const m = window.__fp.audio.music; return { setting: m.setting, dir: m.director?.state.setting, stored: localStorage.getItem('fp-music') }; });
+  check(s.setting === 'default' && s.dir === 'default' && s.stored === null, `on by default: nothing stored, the director built at default (${JSON.stringify(s)})`);
+  await page.evaluate(() => window.__fp.settings.open());
+  const btns = await page.evaluate(() => [...document.querySelectorAll('#set-music button')].map((b) => b.textContent + ':' + b.getAttribute('aria-pressed')).join());
+  check(btns === 'off:false,rare:false,default:true,frequent:false', `the panel: default pressed (${btns})`);
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors[0] : ''}`);
   await page.close();
 }
