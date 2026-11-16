@@ -7,13 +7,13 @@
 // halite crabs, pale and sideways, their backs crusted the colour of the flat, that drop into holes in the plates
 // when you come near and leave star-patterns of pellets round each hole."
 // Per Austin, "snaky": a strip along the fen's and the river mouth's rim (placement plan), not the brief's plate.
-// Kept clear for later releases: the Discontinued Track's line from (170, 150) to (215, 160) (DC), the pit's block
+// Kept clear: the Discontinued Track's strip (DC, STRIPS[0] in paths/routes.js, from (193.5, 133) to (168.5, 112)), the pit's block
 // and the causeway's new route (CAUSEWAY_V4) through the east lobe.
 import * as THREE from 'three';
 import { REGIONS, SITES, CAUSEWAY_V4, LANDMARKS } from '../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../noise.js';
 import { groundOf, instanced, airMotes, meshStats, compose } from './common.js';
-import { nearestLead } from '../paths/routes.js'; // #48: no stump on a ford's slabs
+import { nearestLead, STRIPS } from '../paths/routes.js'; // #48: no stump on a ford's slabs
 
 const KEY = 'saltings';
 // the slabs' distance field (set by build): the crust raises its lip round them, and the stone material
@@ -82,8 +82,8 @@ export async function build(ctx) {
   const meshes = [];
   const keepOut = (x, z, m = 0) => {
     // the Discontinued Track's strip, the pit's block, the causeway's new route
-    const ex = 215 - 170, ez = 160 - 150, t = clamp(((x - 170) * ex + (z - 150) * ez) / (ex * ex + ez * ez), 0, 1);
-    if (hyp(x - 170 - ex * t, z - 150 - ez * t) < 3 + m) return true;
+    const [ax, az] = STRIPS[0].a, ex = STRIPS[0].b[0] - ax, ez = STRIPS[0].b[1] - az, t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez), 0, 1);
+    if (hyp(x - ax - ex * t, z - az - ez * t) < 3 + m) return true;
     const b = SITES.pit.block; if (x > b[0] - m && x < b[1] + m && z > b[2] - m && z < b[3] + m) return true;
     for (let i = 0; i < CAUSEWAY_V4.length - 1; i++) {
       const a = CAUSEWAY_V4[i], c = CAUSEWAY_V4[i + 1], fx = c.x - a.x, fz = c.z - a.z, u = clamp(((x - a.x) * fx + (z - a.z) * fz) / (fx * fx + fz * fz), 0, 1);
