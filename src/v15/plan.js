@@ -158,12 +158,22 @@ export function lineAt(D, a = FADE.s1[0], b = FADE.s2[1]) { return [at(1, a, D),
 export const OUTLINES = Object.fromEntries(RISERS.map((R) => [R.key, R.D !== undefined ? lineAt(R.D)
   : Array.from({ length: 48 }, (_, i) => polar(2 + i * 2, R.r))]));
 
+// a line at D from s1 4 to s2 28 that steps in to another D where something lies across it: jogs [[run, s, D, half], ...]
+function jogged(D, jogs) {
+  const out = [at(1, 4, D)];
+  for (const run of [1, 2]) {
+    for (const [r, sj, Dj, h] of jogs) if (r === run) out.push(at(run, sj - h - 1.4, D), at(run, sj - h, Dj), at(run, sj + h, Dj), at(run, sj + h + 1.4, D));
+    out.push(run === 1 ? at(1, cornerS(1, D), D) : at(2, 28, D));
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- lanes: { name, level, width, pts: [[x, z], ...] }
 const lane = (name, level, width, pts, note) => ({ name, level, y: LEVEL[level].y, width, pts, note });
 export const LANES = [
   lane('high-lane', 'high', ROAD_HALF * 2, lineAt(0), 'the causeway on the High Rung: the Elder tread is the road'),
-  lane('mid-lane', 'mid', 1.6, lineAt(9.1, 4, 28), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it'),
-  lane('low-lane', 'low', 1.6, lineAt(14.5, 4, 28), 'the Low Rung\'s outer strip'),
+  lane('mid-lane', 'mid', 1.6, jogged(9.1, [[2, 9, 5.9, 3.4]]), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it; it ducks in under the tube'),
+  lane('low-lane', 'low', 1.6, jogged(14.5, [[1, 31, 11.4, 2.2], [2, 9, 11.5, 3.4], [2, 20.1, 12, 2.2]]), 'the Low Rung\'s outer strip; it ducks in under the timber flight, the tube and the bridge\'s pier'),
   lane('lees-street', 'bench', 3, [at(1, -4, 19), at(1, 12, 19.5), at(1, 30, 21), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 30, 18)], 'the bench\'s street: it bends at the square and again at the corner'),
   lane('wall-lane', 'foot', 2.4, [[87, -29.6], [96, -29.2], [108, -28.4], [112.5, -31]], 'under the house\'s south wall, from the ramp\'s foot to its east side'),
   lane('gate-lane', 'foot', 2.4, [[112.5, -31], [112, -45], [110.5, -59], [100, -62.5], [95, -61]], 'round the house\'s east side to its gate'),
@@ -200,8 +210,8 @@ export const WAYS = [
     note: 'rammed earth and plank down the outside of the lowest riser, from the square\'s east end to the house\'s wall' },
   { name: 'p9-bank', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 20, b1: 28,
     note: 'the old way\'s bank across the ha-ha (src/v8/roads/crossings.js), kept' },
-  { name: 'lane-bridge', kind: 'bridge', hand: 'late', from: 'mid', to: 'mid', run: 2, s: 24, D0: 9.6, D1: 13.4,
-    note: 'a plank bridge from the Mid Rung\'s edge to a Low Rung roof, over the low lane' },
+  { name: 'lane-bridge', kind: 'bridge', hand: 'late', from: 'mid', to: 'mid', run: 2, s: 20.1, D0: 9.7, D1: 13.3,
+    note: 'a plank bridge from the Mid Rung\'s edge to the last pier of a Heliarch aqueduct (D 13.3..15.1, its top level with the Mid Rung): the lookout' },
 ];
 export const way = (name) => WAYS.find((w) => w.name === name) || null;
 
@@ -252,6 +262,8 @@ free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 104.5, -27, [0, -1], 6
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
+{ const w = WAYS.find((v) => v.name === 'lane-bridge'); put('bridge-pier', 'pier', 'rungs', 'low', w.run, w.s, 14.2, 2, 1.8, 'heliarch', { note: 'the aqueduct\'s last pier; the bridge lands on it' }); }
+
 export const PLOTS = PLOTS_;
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
@@ -264,4 +276,22 @@ export function plotCorners(p) {
 export function inPlot(p, x, z, pad = 0) {
   const dx = x - p.x, dz = z - p.z, [fx, fz] = p.face;
   return Math.abs(dx * fx + dz * fz) <= p.d / 2 + pad && Math.abs(-dx * fz + dz * fx) <= p.w / 2 + pad;
+}
+
+// ---------------------------------------------------------------- cuts: where a tread is cut down into
+// { name, run, s0, s1, D0, D1, y }: the ground there is at y (the Demesne's height hook reads cutAt). A shop against
+// a riser is an undercroft let 3.2 m into the step behind it, at the bench's level; the Heliarch stair is cut 1.9 m
+// into the High Rung.
+export const VAULT_DEPTH = 3.2;
+export const CUTS = [
+  ...PLOTS.filter((p) => p.kind === 'shop' && p.against).map((p) => { const R = RISERS.find((r) => r.key === p.against); return { name: p.name, run: p.run, s0: p.s - p.w / 2 + 0.4, s1: p.s + p.w / 2 - 0.4, D0: R.D - VAULT_DEPTH - 0.2, D1: R.D + 0.4, y: R.foot - 0.04 }; }),
+  { name: 'heliarch-upper', run: STAIR.run, s0: STAIR.s - STAIR.width / 2 - 0.3, s1: STAIR.s + STAIR.width / 2 + 0.3, D0: way('heliarch-upper').D0, D1: RISERS[1].D + 0.4, y: LEVEL.mid.y - SINK },
+];
+const _f = { run: 0, s: 0, D: 0 };
+// the cut's level at (x, z), or null; `pad` widens every cut (the mesh's coarse pass: its lower envelope)
+export function cutAt(x, z, pad = 0) {
+  frameOf(x, z, _f);
+  let y = null;
+  for (const c of CUTS) if (c.run === _f.run && _f.s > c.s0 - pad && _f.s < c.s1 + pad && _f.D > c.D0 - pad && _f.D < c.D1 + pad && (y === null || c.y < y)) y = c.y;
+  return y;
 }

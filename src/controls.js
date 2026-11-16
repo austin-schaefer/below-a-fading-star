@@ -480,6 +480,7 @@ export function buildControls(ctx) {
       if (k.has('KeyD') || k.has('ArrowRight')) mx += 1;
       mx += moveVec.x; mz -= moveVec.y;
     }
+    state.moveX = mx; state.moveZ = mz; // (v15) what the keys or the stick ask for, strafe and forward (-1..1): a carrier reads them (the ladder)
     // touch look inertia
     if (!lookTouch && (lookVel.x || lookVel.y)) {
       state.yaw += lookVel.x * dt; state.pitch = clamp(state.pitch + lookVel.y * dt, -1.45, 1.45);

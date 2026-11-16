@@ -125,7 +125,16 @@ export async function build(ctx) {
     const P = (i, j) => { const D = Dv(j), [a, e] = sRange(D), s = mix(a, e, i / nS), [x, z] = at(run, s, D); const sag = lanes[b.level] !== null ? 0.035 * Math.max(0, 1 - Math.abs(D - lanes[b.level]) / 1.2) : 0; return { p: [x, b.y - sag, z], c: tone(b.level, x, z, D, b.D0), s, D }; };
     for (let j = 0; j < nD; j++) for (let i = 0; i < nS; i++) {
       const a = P(i, j), q = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1);
-      if (inHole(b.level, run, (a.s + c.s) / 2, (a.D + c.D) / 2)) continue;
+      // a cell a hole reaches into is laid in ninths of a ninth, less those in the hole (a way's cheeks cover the saw edge)
+      if (lappet.holes.some((h) => h.level === b.level && h.run === run && Math.max(a.s, q.s, c.s, d.s) > h.s0 && Math.min(a.s, q.s, c.s, d.s) < h.s1 && Math.max(a.D, d.D) > h.D0 && Math.min(a.D, d.D) < h.D1)) {
+        const K = 9, L3 = (u, v, k) => mix(mix(a.p[k], q.p[k], u), mix(d.p[k], c.p[k], u), v), pt = (u, v) => [L3(u, v, 0), L3(u, v, 1), L3(u, v, 2)];
+        for (let v = 0; v < K; v++) for (let u = 0; u < K; u++) {
+          const um = (u + 0.5) / K, vm = (v + 0.5) / K;
+          if (inHole(b.level, run, mix(mix(a.s, q.s, um), mix(d.s, c.s, um), vm), mix(a.D, d.D, vm))) continue;
+          M.quadW(UP, pt(u / K, v / K), pt(u / K, (v + 1) / K), pt((u + 1) / K, (v + 1) / K), pt((u + 1) / K, v / K), a.c);
+        }
+        continue;
+      }
       M.quadW(UP, a.p, d.p, c.p, q.p, a.c, d.c, c.c, q.c);
     }
   }
@@ -139,8 +148,14 @@ export async function build(ctx) {
     const sa = run === 1 ? S1 : cornerS(2, R.D), sb = run === 1 ? cornerS(1, R.D) : S2, n = Math.ceil((sb - sa) / 2), ds = (sb - sa) / n;
     const yb = R.foot - 0.6, yt = R.top - NOSE, dark = R.key === 'low' ? 0.8 : 0.92;
     let start = null;
-    for (let i = 0; i < n; i++) {
-      const s0 = sa + i * ds, s1 = s0 + ds, sm = (s0 + s1) / 2;
+    // stations every 2 m, and one at each edge of an opening, so a gap is exactly as wide as what is let into it
+    const cutsAt = [];
+    for (let i = 0; i <= n; i++) cutsAt.push(sa + i * ds);
+    for (const o of lappet.openings) if (o.riser === R.key && o.run === run) for (const e of [o.s0, o.s1]) if (e > sa + 0.05 && e < sb - 0.05) cutsAt.push(e);
+    cutsAt.sort((p, q) => p - q);
+    for (let i = 0; i < cutsAt.length - 1; i++) {
+      const s0 = cutsAt[i], s1 = cutsAt[i + 1], sm = (s0 + s1) / 2;
+      if (s1 - s0 < 0.02) continue;
       if (openAt(R.key, run, sm)) { if (start !== null) { walls.push({ riser: R, run, s0: start, s1: s0 }); start = null; } continue; }
       if (start === null) start = s0;
       const f = (s, y, out) => { const [x, z] = at(run, s, R.D + out); return [x, y, z]; };

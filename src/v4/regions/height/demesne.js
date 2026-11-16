@@ -3,7 +3,7 @@
 import { LANDMARKS, CAUSEWAY_V4 } from '../../../world.js';
 import { crossingDistance } from '../../../v8/roads/crossings.js'; // v8-01
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../../noise.js';
-import { LEVEL, RISERS, APRON, SINK, Dof, villageAmt, benchAmt, footAmt, stepsY, stepsYCoarse } from '../../../v15/plan.js'; // v15: the Lappet's terraces
+import { LEVEL, RISERS, APRON, SINK, Dof, villageAmt, benchAmt, footAmt, stepsY, stepsYCoarse, cutAt } from '../../../v15/plan.js'; // v15: the Lappet's terraces
 
 export const N = makeSimplex(20261107 + 1010);
 export const K = LANDMARKS.castle; // (40, 30)
@@ -88,7 +88,8 @@ function village(y, h, x, z, r, coarse) {
   let v;
   if (D < RIM - APRON) v = lerp(h, LEVEL.crown.y, smoothstep(RIM - APRON - 6, RIM - APRON, D));
   else v = (coarse ? stepsYCoarse(D, coarse) : stepsY(D)) - SINK * smoothstep(0.9, 1, A);
-  // the bench under the last riser: the Lees' level where the lawn's own easing has not reached it
+  // a stair's slot or an undercroft, cut down into a tread (the plan's CUTS)
+  if (D > -1) { const c = cutAt(x, z, coarse ? coarse * 1.45 : 0); if (c !== null && c < v) v = c; }
   return lerp(y, v, A);
 }
 export function height(h, x, z, w, coarse) {
