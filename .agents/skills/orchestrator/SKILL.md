@@ -49,7 +49,7 @@ Finish: as the `world-code` skill's Hand-back says.
 Report back: under 200 words. What changed, how you verified it (exact commands and pass counts), the renders to look at, anything surprising, any default you took.
 ```
 
-**Model choice:** mid-tier (sonnet-level) by default. Use a stronger model (opus-level) for architecture, shaders, performance work, cross-cutting bugs, or anything a mid-tier subagent has already failed at once.
+**Model choice:** mid-tier (sonnet-level) by default. Use a stronger model (opus-level) for architecture, shaders, performance work, cross-cutting bugs, or anything a mid-tier subagent has already failed at once. Never the top tier (the main session's own model) for an implementation agent: a quarter of a village built by four of them in one night spent a week's allowance and stopped the run. An agent that reads hundreds of renders hands the reading to helpers on the smallest model that can see, and its brief says so.
 
 **Parallelism:** at most four implementation agents at once, each in its own worktree on its own port (`AGENTS.md`'s pace rules). Tell each which shared files the others are likely to touch (`src/main.js`, `src/world.js`, `world-code`'s `modules.md` and `runtime.md`) so it keeps its edits there to a line or two and puts new code in new files.
 

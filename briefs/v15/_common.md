@@ -17,3 +17,4 @@ Rules for this milestone:
 - **Worn, never toy town.** Late plaster is dirty, patched and limewashed over; colour is in small saturated accents (a door, a tile band, an awning) against cream, not in whole walls. Nothing medieval: no crenellations, half-timber, thatch, Gothic points, heraldry, barrels-and-crates market. Not the first idea.
 - **The budget is the village's, not yours alone:** 30 draw calls and 250k triangles at low for the whole village in view. Your brief gives your share. One merged mesh per quarter or kit use; instanced props; no textures from the network.
 - **One plan.** `src/v15/plan.js` is the only source of levels, plots, lanes and ways. Never hard-code a village coordinate elsewhere; if the plan is wrong, change the plan and say so.
+- **Helpers run small.** If you hand route frames or renders to helper agents to read, start them on `haiku` or `sonnet` (the Agent tool's `model`), never on your own model.
