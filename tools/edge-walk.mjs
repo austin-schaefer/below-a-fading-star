@@ -16,14 +16,14 @@ const MODE = process.env.MODE || 'keys', Q = process.env.Q || 'low';
 const prefix = process.argv[4] || `edge-${placeArg}-${MODE}`;
 // where each walk starts: on the floor of the way, a few metres from a lip (feet y); `dir`: look for the lip this way first
 const PLACES = {
-  lappet: { at: [62, -12, 18], name: 'the Lappet\'s top step (the crown over the High Rung)' },
+  lappet: { at: null, name: 'the Lappet\'s top step (the crown)', ascent: ['heliarch-head-east', 1] },
   leads: { at: [60, -28.2, 10], name: 'a roof on the Leads' },
   span: { at: null, name: 'the Great Span, the crack', span: true, dir: [-1, 0], side: 1 },
   pit: { at: null, name: 'the Pit\'s lip', hole: 'pit' },
   nave: { at: null, name: 'the Foundered Nave\'s sinkhole', hole: 'nave' },
   icefall: { at: null, name: 'the icefall', ascent: ['icefall', 0.55] },
   stair: { at: null, name: 'the Lonely Staircase\'s deck', ascent: ['stair', 1] },
-  gallery: { at: [-375.2, -23.6, 135.2], name: 'the lift\'s gallery (the heights)' },
+  gallery: { at: null, name: 'the lift\'s gallery (the heights), at a gap in its rail', gallery: true },
 };
 const P = PLACES[placeArg] || (placeArg && placeArg.includes(',') ? { at: placeArg.split(',').map(Number), name: placeArg } : null);
 if (!P) { console.error('usage: node tools/edge-walk.mjs base <' + Object.keys(PLACES).join('|') + '|x,z,y> [prefix]'); process.exit(2); }
@@ -40,6 +40,7 @@ if (!at) {
   await page.goto(`${base}/?q=${Q}`, { waitUntil: 'load', timeout: 120000 }); await ready();
   at = await page.evaluate(async (P) => {
     const fp = window.__fp;
+    if (P.gallery) { const L = fp.lift, q = L.gal.at(5, 0.5, 2.6); return [q.x, q.z, L.gal.y]; } // bay 5: its rail is gone
     if (P.span) { const S = (await import('/src/v4/span/plan.js')).SPAN; return [S.crack.x + S.crack.w / 2 + 1.2, S.z - 1, S.deckY]; }
     if (P.hole) {
       const G = P.hole === 'pit' ? await import('/src/v4/paths/ground.js') : await import('/src/v5/nave/ground.js');
@@ -119,7 +120,7 @@ async function look(yaw, pitch) {
 async function walk(on, hurry = false) {
   if (MODE === 'keys') {
     if (on) { await page.keyboard.down('KeyW'); if (hurry) await page.keyboard.down('ShiftLeft'); } else { await page.keyboard.up('KeyW'); await page.keyboard.up('ShiftLeft'); }
-  } else if (on) { stick = [0, hurry ? -60 : -32]; await touch(stick ? 'touchStart' : 'touchMove', [[1, home.x, home.y]]); await touch('touchMove', [[1, home.x + stick[0], home.y + stick[1]]]); }
+  } else if (on) { stick = [0, hurry ? -70 : -46]; /* a part push: a walk, under 0.8 of the throw */ await touch(stick ? 'touchStart' : 'touchMove', [[1, home.x, home.y]]); await touch('touchMove', [[1, home.x + stick[0], home.y + stick[1]]]); }
   else { stick = null; await touch('touchEnd', []); }
 }
 async function hop() {
@@ -155,7 +156,7 @@ const nearLip = () => page.evaluate(() => { const fp = window.__fp, p = fp.playe
   for (let k = 0; k < 32; k++) { const a = (k / 32) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a); for (let d = 0.3; d < 4; d += 0.3) { const fl = fp.controls.floorAt(x0 + dx * d, z0 + dz * d, f0); if (fl.y < f0 - 1.5) { if (d < best - 0.3) { best = d; sx = dx; sz = dz; } else if (d < best + 0.6) { sx += dx; sz += dz; } break; } if (fl.y > f0 + 0.7) break; } }
   const l = Math.hypot(sx, sz); return l ? { nx: sx / l, nz: sz / l, d: best } : null; });
 while (t < 12000 && s.atLip < 0.5 && s.on) {
-  const L = await nearLip();
+  const L = MODE === 'keys' ? await nearLip() : null; // (on touch the stick's walk is not steered: a second finger restarted it)
   if (L) await look(yawOf(L.nx * Math.cos(side) - L.nz * Math.sin(side), L.nz * Math.cos(side) + L.nx * Math.sin(side)), -0.12);
   await run(200); t += 200; s = await info(); if (t === 1000) await shot('walking-along'); }
 await run(400);
