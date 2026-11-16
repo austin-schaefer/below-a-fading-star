@@ -46,7 +46,7 @@ export async function build(ctx) {
       hang(lp, Lp.glass || 'amber', Lp.k ?? 1, Lp.name);
     } else { // 'hang': a lantern on a cord from something overhead at Lp.top
       const top = Lp.top, lp = { x: Lp.x, y: Lp.yLamp, z: Lp.z };
-      beam(B, mat(Lp.x, 0, Lp.z), [0, lp.y + 0.05, 0], [0, top, 0], 0.008, { color: V.rope, moss: 0, ground: y - 3 });
+      beam(B, mat(Lp.x, 0, Lp.z), [0, lp.y - 0.02, 0], [0, top, 0], 0.008, { color: V.rope, moss: 0, ground: y - 3 });
       hang(lp, Lp.glass || 'amber', Lp.k ?? 1, Lp.name);
     }
   }
