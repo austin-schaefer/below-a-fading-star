@@ -107,8 +107,8 @@ function stack(B, M, o) {
     R.floor(hc, lz - LEDGE / 2 - 0.02, hx1 - hx0 + 0.1, LEDGE - 0.1, bh, { layer: 1 });
     lx = hc - s * 0.1;
     const far = Math.abs(hx0 + 0.3 - lx) > Math.abs(hx1 - 0.3 - lx) ? hx0 + 0.3 : hx1 - 0.3;
-    climbLadder(B, M, R, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }, { y1: bh, head: [lx, lz - 0.45], away: [far, lz - 0.45] });
-    R.post(lx, lz + 0.55, 0.32, 0, 1.3, { stand: false });
+    climbLadder(B, M, R, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }, { y1: bh, head: [lx, lz - 0.45], away: [far, lz - 0.45], perch: 'the ledge on the block before the hut\'s door' });
+    R.wall(lx, lz + 0.95, lx, lz + 0.3, 0, 1.3, 0.25); // (along the ladder: no walking through it)
     R.door(lx, lz + 1.5, { w: 0.5, ladder: true }); // (the way in is the ladder, to the hut's door)
   } else lx = bx - s * (Math.min(2.4, bw - 0.8) / 2 + 0.25);
   if (flank) {

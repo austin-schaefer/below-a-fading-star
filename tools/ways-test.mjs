@@ -110,6 +110,9 @@ const r = await page.evaluate(async () => {
     table.push({ id: w.id, ends: ends.map((e) => [+e.at[0].toFixed(1), +e.at[1].toFixed(1), +e.y.toFixed(1)]), levels: ends.map((e) => lv(e.y)) });
     ends.forEach((e, ei) => {
       const tag = `${w.id} ${ei ? 'top' : 'foot'}`;
+      // a perch (v15-W2): a ladder's head onto a place to stand that is the end of the way (a scaffold's stage, a ledge
+      // before a hut's door): no mouth, landing or way on is asked of it, only that it says what it is
+      if (ei && w.perch) { find.push({ row: 'mouth', tag, ok: w.perch.length > 12, detail: `a perch: ${w.perch}` }); return; }
       // mouth
       const mx = e.at[0] + e.dir[0] * 0.4, mz = e.at[1] + e.dir[1] * 0.4, inMouth = [];
       for (const c of cols) { if (Math.abs(c.x - mx) > 10 || Math.abs(c.z - mz) > 10) continue; const pt = near(c, mx, mz); if (pt.d < 0.8 && stands(c, e.y, pt.t) && !own(c, e, pt)) inMouth.push(`${desc(c)} ${Math.max(0, pt.d).toFixed(2)} m`); }

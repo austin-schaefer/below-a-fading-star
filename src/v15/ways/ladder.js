@@ -15,7 +15,8 @@
 //                floor), back: [b0, b1] (how far behind the rungs the eye hangs, bottom and top: 0.12, 0.34), off (0.55:
 //                how far past `top` along n they are set on the upper floor; or head: [x, z], the point itself),
 //                from, away ([x, z]: the ascent's first and last points, default 2.7 m out from the foot and 3.2 m
-//                in past the top) })
+//                in past the top), perch ('what it is': its head is a place to stand and the way's end, a scaffold's
+//                stage, a ledge: tools/ways-test.mjs asks no landing or way on of it) })
 // registers the climb (a tick, an ascent `name` with held: true so tools/heights-test.mjs climbs it on its own
 // clock, and an entry in the ladders' register) and returns { state(), foot, head, height }.
 //   ladder(K, { name, x, z (the wall's face at its foot), y0, y1 (the floors it joins), n, width (0.5), over (1.1) })
@@ -88,7 +89,7 @@ export function climb(ctx, o) {
   }
   ctx.registerUpdate(tick, { pos: { x: (fx + tx) / 2, y: (y0 + y1) / 2 + P.eye, z: (fz + tz) / 2 }, near: 30 + H / 2, hz: 0 }); // (its own y: high up, the throttle measures from the eye)
   const from = o.from || [fx - nx * 2.7, fz - nz * 2.7], away = o.away || [tx + nx * 3.2, tz + nz * 3.2];
-  ctx.ascents?.add({ id: o.name, tick, held: true, offs: [0.12, 0.92], ladder: true,
+  ctx.ascents?.add({ id: o.name, tick, held: true, offs: [0.12, 0.92], ladder: true, perch: o.perch,
     path: [[from[0], from[1], y0], [foot[0], foot[1], y0], [head[0], head[1], y1], [away[0], away[1], y1]] });
   const state = () => ({ on: st.on, t: st.t, sign: st.sign, climbs: st.climbs });
   ladders(ctx).add({ id: o.name, mod: o.mod || '?', foot: [fx, fz, y0], top: [tx, tz, y1], head: [head[0], head[1], y1], n: [nx, nz], take: foot, climb: true, state });

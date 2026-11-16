@@ -146,8 +146,8 @@ export function newhouse(B, M, o = {}) {
   const lx = side > 0 ? sx0 - 0.05 : sx1 + 0.05, zs = sz - 0.51;
   R.floor((sx0 + sx1) / 2, zs, sx1 - sx0 + 0.3, 0.88, sy + 0.035, { layer: 1 });
   if (block) R.wall(kbx - 0.36, sz - 0.39, kbx + 0.36, sz - 0.61, sy, CH + 0.2, 0.25); // (the block waiting)
-  climbLadder(B, M, R, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw, { y1: sy + 0.035, head: [lx + side * 0.3, zs], away: [lx + side * 0.9, zs] });
-  R.post(lx, sz + 0.5, 0.3, 0, 1.3, { stand: false });
+  climbLadder(B, M, R, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw, { y1: sy + 0.035, head: [lx + side * 0.3, zs], away: [lx + side * 0.9, zs], perch: 'the masons\' stage, between the wall and the standards' });
+  R.wall(lx, sz + 0.78, lx, sz + 0.32, 0, 1.3, 0.25); // (along the ladder: no walking through it)
   }
   // the mason's line, red, pinned along the front's working course; the plumb bob off the high corner
   const ly = front * CH + 0.05, lineC = { color: worn(L.tile[1], rng, 0.45), moss: 0, ground: g0 - 3 }; // (madder twine, dull: it shows by being straight)

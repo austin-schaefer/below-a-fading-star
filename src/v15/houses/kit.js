@@ -286,14 +286,14 @@ export function ladder(B, M, foot, top, w, o, side = [1, 0, 0]) {
 // a climbable ladder: drawn as ladder() and recorded in R.ladders, which registerAll hands to src/v15/ways/ladder.js
 // climb(). f: { y1 (the local level of the floor it reaches: a floor of the record's own, with an edge that holds),
 // head: [x, z] (local: where on that floor the climber is set down), away: [x, z] (local: a point further on it, for
-// the ascent's path) }
+// the ascent's path), perch ('what it is', when its head is a place to stand and the way's end) }
 export function climbLadder(B, M, R, foot, top, w, o, f) {
   ladder(B, M, foot, top, w, o);
   const k = (f.y1 - foot[1]) / (top[1] - foot[1]), X = (i) => foot[i] + (top[i] - foot[i]) * k;
   const F = R.W(foot[0], foot[1], foot[2]), C = R.W(X(0), f.y1, X(2)), h = R.W(f.head[0], f.y1, f.head[1]), a = R.W(f.away[0], f.y1, f.away[1]);
   const nl = Math.hypot(C.x - F.x, C.z - F.z) || 1;
   const nx = (C.x - F.x) / nl, nz = (C.z - F.z) / nl;
-  R.ladders.push({ foot: [F.x, F.z, F.y], top: [C.x, C.z, C.y], n: [nx, nz], head: [h.x, h.z], away: [a.x, a.z], from: [F.x - nx * 1.3, F.z - nz * 1.3] }); // (from: a stride and a half out: a house's front may stand near a brink)
+  R.ladders.push({ foot: [F.x, F.z, F.y], top: [C.x, C.z, C.y], n: [nx, nz], head: [h.x, h.z], away: [a.x, a.z], from: [F.x - nx * 1.3, F.z - nz * 1.3], perch: f.perch }); // (from: a stride and a half out: a house's front may stand near a brink)
 }
 // washing on a line between two local points: the line sags, the cloths hang off true
 export function washing(B, M, a, b, rng, n = 4) {
