@@ -62,16 +62,15 @@ export function newhouse(B, M, o = {}) {
   const fresh = () => ({ color: V.newStone.clone().lerp(rng() < 0.3 ? H.stone : V.dirt, 0.08 + rng() * 0.16).multiplyScalar(0.9 + rng() * 0.1), moss: 0.03, ground: g0 - 0.6, course: 0 });
   // how many courses stand at each corner, and how far the wall between dips: corners first
   const cor = [0, 1, 2, 3].map(() => (stage === 0 ? 1 + Math.floor(rng() * 2) : stage === 2 ? 8 + Math.floor(rng() * 2) : 5 + Math.floor(rng() * 4))); cor[side > 0 ? 0 : 1] += stage === 2 ? 1 : 2; // (fl, fr, br, bl); the scaffold's corner is highest
-  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, SPR = 5, ys = SPR * CH - 0.004, gapTop = Math.ceil((ys + dw0 / 2 + 0.45) / CH); // (ys: the spring line, the top of the fifth course, where the jambs are carried up first) // (the door's gap closes over the arch)
+  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, SPR = 5, ys = SPR * CH - 0.004, gapTop = Math.ceil((sp + 0.18 + dw0 / 2 + 0.45) / CH); // (ys: the spring line, the top of the fifth course: the jambs are carried up to it) // (the door's gap closes over the arch)
   let maxC = 0, front = 0;
   // one wall: from p to q (local x, z), the outward normal's yaw ry, corner heights ca, cb
   const wall = (px, pz, len, ry, ca, cb, dip, gap) => {
     const Wm = ch(M, px, 0, pz, 0, ry, 0); // +x along the wall, +z out of it
     dip *= dipK;
-    const cs = (a, b, t, dp) => { const n = courses(a, b, t, dp); return gap && stage > 0 && Math.abs(t * len - (gap[0] + gap[1]) / 2) < dw / 2 + 0.55 ? Math.max(n, SPR) : n; }; // (the jambs first: the springers sit on them)
     // as a wall for the walker: lengths of about a metre, each as high as its lowest stone
     { const ns = Math.max(1, Math.round(len / 1.1)), cy = Math.cos(ry), sy = Math.sin(ry), P = (x) => [px + x * cy, pz - x * sy];
-      for (let i = 0; i < ns; i++) { let a = (i / ns) * len, b = ((i + 1) / ns) * len; if (gap && b > gap[0] && a < gap[1]) { if (a < gap[0] - 0.5) b = gap[0]; else if (b > gap[1] + 0.5) a = gap[1]; else continue; } const n = Math.min(cs(ca, cb, a / len, dip), cs(ca, cb, (a + b) / 2 / len, dip), cs(ca, cb, b / len, dip)), r = BT / 2, p0 = P(a + r), p1 = P(b - r); R.wall(p0[0], p0[1], p1[0], p1[1], 0, n * CH, r); } }
+      for (let i = 0; i < ns; i++) { let a = (i / ns) * len, b = ((i + 1) / ns) * len; if (gap && b > gap[0] && a < gap[1]) { if (a < gap[0] - 0.5) b = gap[0]; else if (b > gap[1] + 0.5) a = gap[1]; else continue; } const n = Math.min(courses(ca, cb, a / len, dip), courses(ca, cb, (a + b) / 2 / len, dip), courses(ca, cb, b / len, dip)), r = BT / 2, p0 = P(a + r), p1 = P(b - r); R.wall(p0[0], p0[1], p1[0], p1[1], 0, n * CH, r); } }
     for (let c = 0; c < 12; c++) {
       let x = c % 2 ? -0.22 - rng() * 0.2 : 0;
       while (x < len - 0.05) {
@@ -79,7 +78,7 @@ export function newhouse(B, M, o = {}) {
         x += bl;
         if (xb - xa < 0.12) continue;
         if (gap && c < gapTop && xb > gap[0] && xa < gap[1]) { if (xa < gap[0] - 0.12) xb = gap[0]; else if (xb > gap[1] + 0.12) xa = gap[1]; else continue; }
-        const mid = (xa + xb) / 2, n = cs(ca, cb, mid / len, dip);
+        const mid = (xa + xb) / 2, n = courses(ca, cb, mid / len, dip);
         if (c >= n) continue;
         maxC = Math.max(maxC, c + 1);
         const m = ch(Wm, mid, (c + 0.5) * CH, 0);
@@ -95,6 +94,12 @@ export function newhouse(B, M, o = {}) {
   wall(x1 - BT / 2, zf - BT, sl, Math.PI / 2, cor[1], cor[2], 1.5 + rng() * 2, null);
   wall(x0 + BT / 2, zb + BT, sl, -Math.PI / 2, cor[3], cor[0], 1.5 + rng() * 2, null);
   front = Math.min(cor[0], cor[1]);
+  // the jambs, carried up to the spring line first (a mason's order): where the front wall stands lower than that beside the door, a pier of
+  // blocks one metre wide on each side, from the wall's own top to the fifth course, on its own rng stream; the springers sit on them
+  if (stage > 0) { const rj = rngOf(seed, 77), nAt = (xx) => courses(cor[0], cor[1], (xx - x0) / fl, dipF * dipK); for (const sx of [-1, 1]) {
+    const xa = xd + sx * dw / 2, xb = xd + sx * (dw / 2 + 0.92), nTop = Math.max(nAt(xa), nAt(xb), nAt((xa + xb) / 2));
+    for (let c = nTop; c < SPR; c++) B.add(B.box(0.92, CH - 0.008, BT - 0.03, { seg: 9, chip: 0.014, seed: c * 31 + sx }), ch(M, xd + sx * (dw / 2 + 0.46), (c + 0.5) * CH, zf - BT / 2, 0, 0, 0), { color: V.newStone.clone().lerp(V.dirt, 0.1 + rj() * 0.1).multiplyScalar(0.9 + rj() * 0.1), moss: 0.03, ground: g0 - 0.6, course: 0 });
+  } }
   // the footing shows a hand's breadth all round: rubble in lime
   B.add(B.box(fl + 0.3, 0.5, zf - zb + 0.3, { seg: 2.5, chip: 0.04 }), ch(M, cx, -0.232, (zf + zb) / 2), { color: worn(V.newDust, rng, 0.25), course: 0.2, moss: 0.05, ground: g0 - 0.6 });
   // the door's centering: two props and a half-wheel of boards, the first arch stones on it either side
