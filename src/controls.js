@@ -639,7 +639,7 @@ export function buildControls(ctx) {
     }
     // a floor that rises like a wall is a wall (a pit's side, a face drawn as a replacing floor): the open edges let a
     // walker fall beside walls a held edge kept them from, and the feet must not ride up them, walking or hopping. On a
-    // rising move, and on every move in the air, the floor 0.3 m on more than 0.9 m over the floor underfoot (72
+    // rising move, and on every move in the air, the floor 0.3 m on more than 1.2 m over the floor underfoot (76
     // degrees) stops them; in the air, a floor that comes up 0.3 m over the feet under a sideways move stops them, and
     // they drop down it. Stacked floors (stairs, treads) and collider tops (a scramble) are not walls here. Cost: one
     // floor probe on a frame whose move rises or is in the air.
@@ -650,7 +650,7 @@ export function buildControls(ctx) {
       let wall = !state.onGround && mv.y > feet0 + 0.3 && repl(mv.x, mv.z, mv.y);
       if (!wall && dh > 0.001 && (mv.y > base + 0.05 || !state.onGround)) {
         floorAt(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, base, false, probe, state.onStack);
-        wall = !probe.stack && probe.y - base > 0.9 && repl(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, probe.y);
+        wall = !probe.stack && probe.y - base > 1.2 && repl(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, probe.y);
       }
       if (wall) { mv = resolve(ox, oz, feet0, mvB); state.vel.x = 0; state.vel.z = 0; }
     }

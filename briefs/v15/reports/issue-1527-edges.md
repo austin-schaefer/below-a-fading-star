@@ -120,3 +120,20 @@ The fall on by default; waking 3.5 m back; the guard's 40/35 degree margins; the
 - edges-test's Pit row is the strong claim again: a walk along the lip never falls.
 - Left as they are (listed): rails held by `keep` cannot be hopped (the Staircase's rope, the lift's rails); W4's
   parapets on `keep: 'up'` treads need colliders.
+
+## Round 3 (the owner's walk on 8123), in progress
+
+- Stair jitter: eye-height traces up heliarch-foot, heliarch-upper, heliarch-head-east, noon-main, stair and span-west,
+  through controls.update at 60 Hz and at uneven frame times (1/24 and 1/50 s), are identical on origin/next, on the
+  build the owner walked (8bf7932) and on this branch: the jitter (eye reversals at uneven frame times: 42 on span-west)
+  is on origin/next and not this branch's.
+- "Can't get over this terrain": a sweep of 2512 walks (260 seeded points and the three rims, four headings, walking
+  and hopping, 2.5 s) against origin/next: the build the owner walked stopped short at 27 (the wall rule on plain
+  terrain and steep-ground lips without a drop, e.g. 253.5,49.5 by the Nave and 90,20 on the Lappet); this branch at
+  8, all started inside the Pit's throat where no walker stands. Fixed: steepness is the floor's underfoot, a
+  steep-ground lip needs a real drop beyond it, the wall rule is for replacing floors only, at 76 degrees.
+- The Nave: its capitals under the open hole, the roof slab's ledge under the rim's turf and the fallen slabs' turf
+  are floors now.
+- Still to do (queued, no browser until the orchestrator says): the Pit seam renders (stands in
+  `scratchpad pitviews.json`: 191.2,203.2 / 217,185 / 208.5,170.3) on origin/next and here; the frames and the
+  suite again.
