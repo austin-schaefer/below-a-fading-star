@@ -152,3 +152,54 @@ In all: about 20 separate mechanisms over some 12 placers. A new place had to be
 - The ground rule reads the low tier's coarse terrain: a pebble set on `heightAt` under a coarse triangle is found. That is true of what a low visitor sees, but it is most of the 50 pebbles.
 - Birds move. The test's clock is fixed, so a run repeats, but a bird turning on its perch can carry its train in or out of a wall between X2's fix and a later perch.
 - 42% is a tuned number. A box exactly half in a wall reads 46%.
+
+## Round 2 (the orchestrator's three points), after merging X2's peafowl
+
+**1. Nothing comes and goes.**
+
+The cause: the page's loop starts at "ready". "Ready" falls at a point of the test's clock stepping that depends on how long the load took in real time. Until the pause, the clock runs in real time. So the frames before the take differed run to run, and so did everything that moves on its own clock, such as a bird turning on its perch.
+
+The sample points and rays are fixed (Halton points, fixed directions), so they were not the cause.
+
+The fix, in `tools/geometry-test.mjs`:
+- The clock is paused as soon as the page is ready. If the call lands late on a busy machine, it retries further ahead.
+- It then runs on until the loop's own time (`ctx.time.t`) is 1.5 s, whatever came before.
+
+Hysteresis: a new finding needs 42% (`frac`), and a baseline finding stays matched down to 34% (`keep`). A soft finding (between the two) that the baseline does not hold is not a finding and is not recorded.
+
+Three `ONLY=geometry tools/suite.sh 8174` runs in a row, all on `next` with X2 merged:
+
+| Run | Result | Time |
+|---|---|---|
+| 1 | 135 PASS, 0 failed | 79 s |
+| 2 | 135 PASS, 0 failed | 77 s |
+| 3, with a second browser rendering three medium shots beside it | 135 PASS, 0 failed | 99 s |
+
+All three runs printed identical findings (893), compared through `GEOM_JSON`. The one difference is a v14 `pit-lead` loose end whose position moved by 1 mm.
+
+**2. "Under the ground" is now two kinds**, each with its own baseline groups and reason:
+
+- **`buried-hidden`**: 90% or more of it under the drawn ground. Its faces are wasted and its placing is likely a mistake. 202 in all:
+  - `stair-treads` 170 (the Diffident Stair's slabs, wholly under the low tier's turf)
+  - `pennyworth` 12
+  - `adust-rosettes` 6
+  - `rocks-pebble` 5
+  - `structures-taverna` 3
+  - `icefall` 2
+  - `threads-chair-marks` 2
+  - `span-rubble` 1
+  - `house-props` 1
+- **`buried-sunk`**: partly under. It is **bedded**, and not reported, when its mesh has at least four groups under the ground in the place (hidden or sunk), making up at least half of the mesh's groups judged there: one of a row of like things sunk alike. A sunk thing that is the odd one of its mesh (its fellows stand clear) is reported. No names are used.
+  - This took sunk from 280 to 79. The stair's bedded slabs (110), most kerbs (39 to 3) and most pebbles (50 to 16) are exempt by it.
+  - The 79 left: `pennyworth` 17, `rocks-pebble` 16, `structures-taverna` 7, `adust-cushions` 6, `living-moles` 5, `lift` 4, `rocks-stone`, `adust-pavements` and `paths-kerb` 3 each, `stair-kerbs`, `adust-rosettes`, `icefall`, `structures-drums`, `lappet-ways-glass` and `quarrels` 2 each, and 1 each of `span-rubble`, `house-slipper-mate` and `lappet-bones`.
+
+Inside another mesh: 70. Total: 351, down from 560.
+
+**3. After X2's merge and the re-record:**
+- The three peafowl findings are gone (five groups, in lappet-high, lappet-mid and lappet-noon-main).
+- Nothing new appeared.
+- Every non-buried group is exactly `next`'s.
+
+A miss: X2's raycast found bird 1's body in a Quarrels wall at (76.12, 18, -4.22). `buried` did not find it. I did not find out why (likely a flat or double-sided wall piece, which is never taken as solid).
+
+W6's terrain pad in Medlar Close is not in yet. The baseline will need one more `GEOMETRY_RECORD=1` after it lands.

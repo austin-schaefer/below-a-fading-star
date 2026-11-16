@@ -106,7 +106,7 @@ await page.evaluate(() => { const fp = window.__fp; fp.events.dispatchEvent(new 
 // that depends on how long the load took in real time, so the frames run before the pause differed run to run and so
 // did everything that moves on its own (a bird turning on its perch drew its train into a wall on one run in three).
 // Paused at once, then run on to the same time since the loop began (ctx.time.t), whatever came before
-await page.clock.pauseAt(await page.evaluate(() => Date.now() + 200));
+for (let ahead = 200; ; ahead *= 2) { try { await page.clock.pauseAt(await page.evaluate((a) => Date.now() + a, ahead)); break; } catch (e) { if (ahead > 60000) throw e; } } // (the clock runs until paused: on a busy machine 200 ms can pass before the call lands)
 const tLoop = await page.evaluate(() => window.__fp.time.t);
 await page.clock.runFor(Math.max(0, Math.round((1.5 - tLoop) * 1000)));
 for (let i = 0; i < 40 && (await page.evaluate(() => window.__fp.time.t)) < 1.5 - 1e-6; i++) await page.clock.runFor(1);
