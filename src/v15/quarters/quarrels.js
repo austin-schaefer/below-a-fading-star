@@ -36,6 +36,8 @@ const OPTS = {
   'quarrels-house-2': { seed: 3, form: 'tower' },
 };
 
+const LIFT = 0.015; // a Late house's floor and doorstep stand this far above the tread they are laid on
+
 export async function build(ctx) {
   const url = new URL(location.href);
   if (url.searchParams.get('quarrels') === '0' || !ctx.strata?.on) { ctx.quarrels = { off: true }; return; }
@@ -60,7 +62,7 @@ export async function build(ctx) {
     if (p.quarter !== 'quarrels' || p.kind === 'yard') continue;
     const o = { ...OPTS[p.name] };
     if (p.leans === 'slab') { o.against = true; o.h = p.roofY - p.y; o.form = 'yard'; }
-    const R = makePlot(B, p, { plan: P, built: ctx.lappet.built, low, ...o });
+    const R = makePlot(B, p.kind === 'house' ? { ...p, y: p.y + LIFT } : p, { plan: P, built: ctx.lappet.built, low, ...o });
     records.push(R); byName[p.name] = R;
     R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby'][(R.seed + i) % 2], 0.5));
   }
@@ -132,11 +134,11 @@ export async function build(ctx) {
   hangLamp(B, { x: lampAt.x, y: lampAt.y, z: lampAt.z }, 'amber', 0.6);
   const hand = almoner(B, F(Q.hand.x, Q.hand.z, P.RUN[Q.hand.run].n), { rng, low });
   add(hand.colliders);
-  // the jar under his fingers, and a yoke with two more beside the pier: the water is carried from here
+  // the jar under his fingers, and two more beside the pier with their yoke laid down by them: the water is carried from here
   pot(B, new THREE.Matrix4(), hand.jar[0], Y, hand.jar[2], 0.2, worn(L.tile[0], rng, 0.45), 2.0, 8);
   { const [jx, , jz] = at3(aq.run, aq.s - 1.5, aq.piers[1] + 1.9), JM = F(jx, jz, d2);
     for (const s of [-1, 1]) pot(B, JM, s * 0.55, 0, 0, 0.19, worn(s > 0 ? V.mud : L.tile[4], rng, 0.4), 2.0, 8);
-    beam(B, JM, [-0.7, 0.72, 0.08], [0.7, 0.78, -0.06], 0.045, { color: worn(V.rawWood, rng, 0.25), moss: 0, ground: Y, round: 5 });
+    beam(B, JM, [-0.75, 0.025, 0.42], [0.75, 0.03, 0.34], 0.05, { color: worn(V.rawWood, rng, 0.25), moss: 0, ground: Y, round: 5 });
     const a = new THREE.Vector3(-0.55, 0, 0).applyMatrix4(JM), b = new THREE.Vector3(0.55, 0, 0).applyMatrix4(JM);
     colliders.push({ x1: a.x, z1: a.z, x2: b.x, z2: b.z, r: 0.25, y: Y - 0.5, h: 1.3, stand: false }); }
 

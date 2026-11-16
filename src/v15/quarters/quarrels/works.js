@@ -54,8 +54,6 @@ export function lastArch(B, M, o) {
     }
   }
   B.add(bx(B, aw - 0.52, 0.07, z1 - z0 - 0.1), ch(M, 0, T + 0.0, (z0 + z1) / 2), { color: new THREE.Color('#1b2226'), moss: 0.6, ground: g0 - 9, wet: 1 });
-  // where the drip has run down the broken end: a dark tongue, and lime it has left white
-  B.add(bx(B, 0.5, 1.5, 0.03), ch(M, 0, T - 0.95, pl / 2 + over - 0.36, 0.42, 0, 0), { color: new THREE.Color('#20282a'), moss: 1, ground: g0 - 9, wet: 1 });
   const a = W(M, 0, 0, -0.5), b = W(M, 0, 0, 0.5), c = W(M, 0, 0, -span - 0.5), d = W(M, 0, 0, -span + 0.5);
   const colliders = [{ x1: a[0], z1: a[2], x2: b[0], z2: b[2], r: 1.05, y: g0 - 0.5, h: sp + 0.5, stand: false }, { x1: c[0], z1: c[2], x2: d[0], z2: d[2], r: 1.05, y: g0 - 0.5, h: sp + 0.5, stand: false }];
   for (const f of fallen) colliders.push({ x: f[0], z: f[2], r: 0.5, y: g0 - 0.5, h: 1.05 });
@@ -122,7 +120,7 @@ export function shears(B, M, o) {
   beam(B, M, [hx + uz * 0.6, 1.02, hz2 - ux * 0.6], [hx - uz * 0.6, 0.98, hz2 + ux * 0.6], 0.05, { ...raw, round: 5 });
   for (const p of [a, b]) B.add(bx(B, 0.3, 0.14, 0.3), ch(M, p[0], 1.0, p[2], 0, 0.5, 0), rope);
   // under it: the dunnage it will be set down on, and what the splitting left
-  for (const s of [-1, 1]) B.add(bx(B, 0.16, 0.14, 1.0), ch(M, s * 0.38, 0.06, hz, 0, yaw + 0.1 * s, 0), { ...raw, round: 0 });
+  for (const s of [-1, 1]) B.add(bx(B, 0.16, 0.14, 1.0), ch(M, s * 0.38, 0.0, hz, 0, yaw + 0.1 * s, 0), { ...raw, round: 0 });
   for (let i = 0; i < (o.low ? 4 : 8); i++) { const r = 0.1 + rng() * 0.16, ang = rng() * 6.28, d = 0.9 + rng() * 1.3; B.add(B.rock(r, 0, 1.2, 0.45, 0.8), ch(M, Math.cos(ang) * d, 0.02, hz + Math.sin(ang) * d * 0.7, 0, rng() * 3, 0), { color: worn(V.newStone, rng, 0.2, 0.2), moss: 0, ground: g0 - 9 }); }
   const c = W(M, 0, 0, hz), wa = W(M, a[0], 0, a[2]), wb = W(M, b[0], 0, b[2]);
   colliders.push({ x: c[0], z: c[2], r: 0.72, y: g0 - 0.5, h: by + bh / 2 + 0.6, stand: false }, { x1: wa[0], z1: wa[2], x2: wb[0], z2: wb[2], r: 0.14, y: g0 + 0.6, h: 0.75, stand: false });
@@ -170,14 +168,14 @@ export function drag(B, pts, o) {
     }
     if (i === 0) {
       // the sledge: two runners, three cross bars, a block of the keep lashed on, three rollers under it and one run out behind
-      const t = len * (o.sledge ?? 0.4), SM = new THREE.Matrix4().makeRotationY(yaw).setPosition(a[0] + ux * t, a[1] + 0.046, a[2] + uz * t);
+      const t = len * (o.sledge ?? 0.4), SM = new THREE.Matrix4().makeRotationY(yaw).setPosition(a[0] + ux * t, a[1] + 0.025, a[2] + uz * t);
       for (const k of [-0.75, 0, 0.75]) B.add(B.cyl(0.085, 0.085, 1.15, 7, 1), ch(SM, 0, 0.085, k, 0, 0.03 * k, Math.PI / 2), wood(0.1));
       B.add(B.cyl(0.085, 0.085, 1.1, 7, 1), ch(SM, 0.15, 0.085, -1.9, 0, 0.3, Math.PI / 2), wood(0.1));
-      for (const s of [-1, 1]) B.add(bx(B, 0.14, 0.16, 2.3, { chip: 0.02 }), ch(SM, s * 0.36, 0.25, 0), wood(0.15));
-      for (const k of [-0.8, 0, 0.8]) B.add(bx(B, 0.95, 0.07, 0.12), ch(SM, 0, 0.365, k), wood(0.2));
-      B.add(bx(B, 0.82, 0.56, 1.35, { chip: 0.03, seed: 4 }), ch(SM, 0, 0.68, -0.05, 0, 0.04, 0), { color: worn(H.stone, rng, 0.06, 0.06), moss: 0.35, ground: g0, course: 0 });
-      B.add(bx(B, 0.76, 0.5, 0.02), ch(SM, 0, 0.68, -0.05, 0, 0.04, 0).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.68)), { color: worn(V.newStone, rng, 0.08), moss: 0, ground: g0 - 9, course: 0 });
-      for (const k of [-0.4, 0.35]) B.add(bx(B, 0.86, 0.6, 0.03), ch(SM, 0, 0.68, k), { color: V.rope, moss: 0, ground: g0 - 9 });
+      for (const s of [-1, 1]) B.add(bx(B, 0.14, 0.16, 2.3, { chip: 0.02 }), ch(SM, s * 0.36, 0.225, 0), wood(0.15));
+      for (const k of [-0.8, 0, 0.8]) B.add(bx(B, 0.84, 0.07, 0.12), ch(SM, 0, 0.325, k), wood(0.2));
+      B.add(bx(B, 0.82, 0.56, 1.35, { chip: 0.03, seed: 4 }), ch(SM, 0, 0.63, -0.05, 0, 0.04, 0), { color: worn(H.stone, rng, 0.06, 0.06), moss: 0.35, ground: g0, course: 0 });
+      B.add(bx(B, 0.76, 0.5, 0.02), ch(SM, 0, 0.63, -0.05, 0, 0.04, 0).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.68)), { color: worn(V.newStone, rng, 0.08), moss: 0, ground: g0 - 9, course: 0 });
+      for (const k of [-0.4, 0.35]) B.add(bx(B, 0.86, 0.6, 0.03), ch(SM, 0, 0.63, k), { color: V.rope, moss: 0, ground: g0 - 9 });
       // the drag rope, thrown down ahead of it
       beam(B, SM, [0, 0.3, 1.15], [0.1, 0.03, 1.9], 0.03, { color: V.rope, moss: 0, ground: g0 - 9 });
       beam(B, SM, [0.1, 0.03, 1.9], [-0.25, 0.03, 3.0], 0.03, { color: V.rope, moss: 0, ground: g0 - 9 });
