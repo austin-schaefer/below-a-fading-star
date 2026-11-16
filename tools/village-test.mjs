@@ -20,7 +20,8 @@
 // carrier two: it lies down only on a long plot), and their silhouettes differ: height or width by a metre), a plot too small for its maker throws, and the row: five records, two draw calls, at
 // most 45,000 triangles on low, a walker placed on the Late house's roof stands on it; and the row built from a
 // plan (a stub of src/v15/plan.js's STRAKE through ctx.lappet): its five plots in the plan's order at the plan's
-// level, the Late house's roof at the tread behind it.
+// level, the Late house's roof at the tread behind it. And the far mesh (v15-P3, src/v15/far.js), on a second page with
+// every quarter: a block for every built plot, a speck within a metre of every lamp record, one draw, the swap on low.
 // Usage: node tools/village-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { createRequire } from 'node:module';
 let chromium;
@@ -159,6 +160,23 @@ const r = await page.evaluate(async () => {
   { const P = fp.lappet.plan, pr = P.way('pennyworth-ramp'), rk = fp.lappet.built['pennyworth-ramp']?.keep, at = (b) => P.polar(b, P.HAHA + 2.6); out.ramp = rk ? { foot: rk(...at(pr.b1 - 0.6)), high: rk(...at(pr.b0 + 3)), ground: fp.terrain.heightAt(...at(pr.b1 - 0.6)) } : null; }
   return out;
 });
+// (v15-P3) the far mesh, on a page with every quarter: a block for every built plot, a speck for every lamp record,
+// one draw, and on low the blocks up from 140 m and the near meshes gone from 150
+await page.goto(`${base}/?q=low&only=strata,lappet,quarrels,rungs,lees,pennyworth,villagerow,lappetfar`, { waitUntil: 'load', timeout: 120000 });
+await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
+const far = await page.evaluate(async () => {
+  const fp = window.__fp, F = fp.lappetFar, P = fp.lappet.plan, on = ['quarrels', 'rungs', 'lees', 'pennyworth', 'village'].filter((q) => fp[q] && !fp[q].off);
+  if (!F || F.off) return { missing: true, on };
+  const recs = [...(fp.village?.row?.records || []), ...(fp.lees?.records || []), ...Object.values(fp.rungs?.records || {}), ...(fp.quarrels?.records || []), ...(fp.pennyworth?.records || [])];
+  const built = recs.map((R) => R.name).filter((n) => n && P.plot(n)), blocks = new Set(F.boxes.map((b) => b.name));
+  const noBlock = built.filter((n) => !blocks.has(n));
+  const unbuilt = P.PLOTS.filter((p) => ['house', 'shop', 'new-house', 'carrier', 'stall'].includes(p.kind) && !built.includes(p.name)).map((p) => p.name);
+  const lone = F.lamps.filter((l) => !F.specks.some((s) => Math.abs(s.x - l.x) < 1 && Math.abs(s.z - l.z) < 1 && Math.abs(s.y - l.y) < 1)).map((l) => `${l.x.toFixed(1)},${l.y.toFixed(1)},${l.z.toFixed(1)}`);
+  let draws = 0; fp.scene.traverse((o) => { if (o.isMesh && o.name === 'lappet-far') draws++; });
+  const M = fp.lappet.middle, at = async (d) => { fp.controls.placeAt(M.x + d * 0.6, M.z + d * 0.8); await new Promise((q) => setTimeout(q, 500)); return { boxes: F.state().boxes, near: fp.lappet.farHidden.filter((m) => m.visible).length }; };
+  const swap = { d100: await at(100), d145: await at(145), d160: await at(160), back: await at(60) };
+  return { on, built: built.length, noBlock, unbuilt, lamps: F.lamps.length, lone, specks: F.specks.length, draws, stats: F.stats(), hidden: fp.lappet.farHidden.length, swap };
+});
 await browser.close();
 let pass = 0, fail = 0;
 const check = (ok, what) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${what}`); ok ? pass++ : fail++; };
@@ -191,6 +209,13 @@ check(r.row.records === 5 && new Set(r.row.kinds).size === 5, `the row: five bui
 check(r.row.draws <= 3 && r.row.tris <= 45000, `the row: ${r.row.draws} draw calls, ${r.row.tris} triangles on low (${r.row.perHouse.map((h) => `${h.kind} ${h.tris}`).join(', ')})`);
 check(r.row.roof && Math.abs(r.row.roof.feet - r.row.roof.want) < 0.1, `the row: a walker placed on the Late house's roof stands on it (${r.row.roof ? r.row.roof.feet.toFixed(2) + ' for ' + r.row.roof.want.toFixed(2) : 'no roof floor'})`);
 check(r.ramp && r.ramp.foot === false && r.ramp.high === true, `the Pennyworth ramp's outer edge is open over its last 0.6 m of fall and held where it stands high (the ground outside its foot ${r.ramp ? r.ramp.ground.toFixed(2) : '?'}: lower than the foot, which held it)`);
+if (far.missing) check(false, `the far mesh (src/v15/far.js) is built (quarters on: ${far.on.join(', ')})`);
+else {
+  check(far.on.length === 5 && far.built >= 30 && far.noBlock.length === 0, `the far mesh: a block for every built plot (${far.built} plots built by ${far.on.join(', ')}; ${far.noBlock.length ? 'no block: ' + far.noBlock.join(', ') : 'all blocked'}; plots of a building kind with no record: ${far.unbuilt.join(', ') || 'none'})`);
+  check(far.lamps >= 20 && far.lone.length === 0, `the far mesh: a speck within a metre of every lamp record (${far.lamps} lamps, ${far.specks} specks; ${far.lone.length ? 'alone: ' + far.lone.slice(0, 6).join(' | ') : 'none alone'})`);
+  check(far.draws === 1 && far.stats.triangles <= 6000, `the far mesh: one draw, at most 6,000 triangles (${far.draws}, ${far.stats.triangles}: ${far.stats.blocks} blocks in ${far.stats.blockTris}, ${far.stats.specks} specks)`);
+  const w = far.swap; check(w.d100.boxes === 0 && w.d100.near === far.hidden && w.d145.boxes === 1 && w.d145.near === far.hidden && w.d160.boxes === 1 && w.d160.near === 0 && w.back.boxes === 0 && w.back.near === far.hidden, `on low the blocks stand up at 140 m inside the near meshes, which go at 150 (100 m: blocks ${w.d100.boxes}, near ${w.d100.near}/${far.hidden}; 145: ${w.d145.boxes}, ${w.d145.near}; 160: ${w.d160.boxes}, ${w.d160.near}; back at 60: ${w.back.boxes}, ${w.back.near})`);
+}
 check(errors.length === 0, `no page errors (${errors.length}${errors.length ? ': ' + errors[0] : ''})`);
 console.log(`village-test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
