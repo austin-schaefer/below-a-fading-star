@@ -185,7 +185,10 @@ export function plate(B, M, pts, t, o) {
 export function patch(B, M, r, rng, o) {
   const n = 8 + Math.floor(rng() * 4), pts = [];
   for (let i = 0; i < n; i++) { const a = ((i + rng() * 0.6) / n) * Math.PI * 2, k = r * (0.5 + rng() * 0.7); pts.push([Math.cos(a) * k * 1.25, Math.sin(a) * k]); }
-  plate(B, M, pts, 0.03, o);
+  // (v15-W1) a slab 0.16 thick whose face stands 0.03 proud of M and whose body runs 0.13 into the wall behind it: a
+  // battered or wandering wall face buries its back edge, never shows it. A 3 cm plate laid on M stood clear of a wall
+  // that leaned away and read as a dark polygon floating off the plaster (the owner's 3.png and 4.png).
+  plate(B, M.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.13)), pts, 0.16, o);
 }
 // a stain: a flat sheet in M's xy plane (facing +z) with the wall's own surface `o`, its colour run toward `to`
 // by each point's weight. rows: [[x, y, k], ...] a row, every row as long; where k is 0 it cannot be told from the wall
