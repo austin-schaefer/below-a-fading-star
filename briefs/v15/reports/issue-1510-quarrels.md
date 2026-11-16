@@ -52,3 +52,53 @@ Before: `/Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1510-quar
 ## After the report's tests
 
 `git fetch origin && git merge origin/next` after the runs above brought nothing new: the branch already held `next` (a1d2620), so the runs stand for what is pushed. The server on 8161 is stopped.
+
+# Round 2 (written 2026-11-16 03:45)
+
+Round 1's text above stands as history; where the two differ, this is what is built.
+
+## What changed
+
+1. **The saint.** He lies in the square behind the stair's head, east of its axis (run 1 s 33.59, D -8.86, S 1.7: his collider ends at D -7.45, off the landing), facing the stair's head. No spikes, no glowing eyes: a band with an empty hexagon roundel, lids shut, a nose broken short, the crown of his skull broken open for the smoke, the stoke hole at his nape facing the yard. His features are separate masses so they shadow each other in the keep's shade; a lamp on a pole by the bench rakes his face (the third point light, moved from the lodging's door). The stock that hid him is gone from the square.
+2. **The stock is the quarter's.** `masons-yard` moved to the brink east of him with `stock: 'quarrels'`; `src/v4/regions/demesne.js` stacks nothing when the plot says so (2 lines). Twelve closed blocks with drafted margins and mason's marks.
+3. **Built:** the Stage (a scaffold on the Last Arch's near pier, a cleated plank run, ascent `quarrels-stage`); the chalk (one cut line with ticks on the keep's **fallen** face, not the standing wall: the slab's plane is the one I could measure); a slaking tub closing the pocket by the hand; windows, raking buttresses, things against the wall and a washing line on every side and back of the two Late houses; two lamps without lights where the way turns; firelight baked into the paving by the stoke hole.
+4. **Review points:** the route no longer passes the split block's neighbour; comments and story say the stoke hole is at the nape; the bench comment is true.
+5. `tools/quarrels-walk.mjs`: the plan's route walked on keys or touch. `tools/roads-test.mjs`: `quarrels-stage` in `FEET_OPEN`.
+
+## The five backs
+
+- `demesne-blocks` at (73, 1) and (74.5, 4): V0's stock, open between courses. Fixed (the stock is rebuilt); out of the baseline.
+- `structures-keep-slots` at (70, 14.5): no longer found from the new route; out of the baseline. Not fixed by me.
+- `structures-keep-blocks[38]` at (66.4, -6.8): a fallen keep block seen from 2.7 m. Still recorded. I did not go and look at what shows.
+- `lappet-bones` at (93.5, 16.5), 13 m off and 4 m down: still recorded. I looked at the frame (`v15-Q1-backs-b5.png`) and could not find the fault in it; not fixed in bones.js.
+
+## The touch walk that hung (round 1)
+
+`node tools/village-walk.mjs http://localhost:8161 touch low 0 v15-Q1-walk`: the last line written was `[frame] ...-016-ramp-foot-back.png at (103.1, -16.5) feet -0.80 on pennyworth-ramp`: the checkpoint `ramp-foot`, after its look back. The next waypoint is `house-wall` at about (101, -30.7). Nothing more for 12 minutes: no `stuck at` line (which the tool prints after 80 polls without movement), so either the walker kept moving without reaching the waypoint or the script was held inside the touch turn back from the look. I did not find out which.
+
+## Tests (port 8161, `SHOT_ANGLE=metal nice -n 10`), on the branch with `origin/next` 3fc4cbc merged
+
+- `ONLY=village,geometry,walk,hop,edges,heights,roads,paths,rocks,regions,strata,house,perf,loading,contrast tools/suite.sh 8161` at d09abe6: 15 tests, 2 failed: `roads` (the new ascent had no track to its foot) and `heights` (the Stage's run was not walkable: feet stayed at 18.00). Passed: paths 81, regions 56, contrast 3, strata 8, village 646, house 20, rocks 42, walk 13, hop 25, edges 214, geometry 96, loading 28 (179 s), perf 29.
+- After the fixes: ROUND2TESTS
+- `loading`: failed once in round 1 at 215 s with four agents rendering, passed alone at 155 s, passed in round 2's run at 179 s.
+- `node tools/quarrels-walk.mjs http://localhost:8161 touch low 0 v15-Q1-qwalk` (before the readers' fixes): `walked: yes`, 0 page errors.
+- `node tools/route-frames.mjs http://localhost:8161 quarrels medium v15-Q1-r2route`: 348 frames. All 348 were opened at full size, by three blind readers (116 each), not by me. Their findings that were mine are fixed in the last commit; **the frames were not re-rendered or re-read after those fixes**, and neither were the stills below.
+
+## Frames (`/Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1510-quarrels/shots/wip/`), in order; all taken BEFORE the last commit's fixes
+
+1. `v15-Q1-r2b-phone-stairhead.png`: the saint from the stair's head, phone size, low.
+2. `v15-Q1-r2e-face-3m.png`: his face from 3 m.
+3. `v15-Q1-r2d-square-west.png`: from the square (taken before the brow band and the last face pass).
+4. `v15-Q1-r2-vv-stair-head-down.png`: down the notch to the Pomegranate House: clear.
+5. `v15-Q1-r2-vv-stair-foot-gutter.png`: from the stair's foot at the gutter: the smoke and one lit window read; the saint does not show from below.
+6. `v15-Q1-r2-vv-level-crown.png`, `v15-Q1-r2-vv-far-east.png`, `-far-north.png`, `-far-kerb.png`, `-from-house-corner.png`, `-from-spawn.png`, `-stair-from-square.png`, `-stair-head-below.png`, `-tube-top.png` and four `-gutter` copies: the village views that see the crown, after. Only four of these fifteen were opened by me. No before of these exact views exists; `v15-Q1-before-*.png` and `v15-Q1-after-*.png` are my own pairs (the after set of seven was rendered and not opened).
+7. `v15-Q1-r2c-between.png`, `v15-Q1-r2c-stage-foot.png`.
+
+## What is still weak
+
+- **The saint's face** is a face from the front and in left profile (the readers: "an anonymous idol"; "a human face in left profile with heavy brow, nose, stacked lips and a banded cap"). From behind he reads as "a ridged clay pot, beehive", from the side close as "a faceless lump". Stiff and mask-like; no ear worth the name; no real crack. The weakest thing in the quarter still.
+- No frame from the causeway west of the village at distance shows him as more than a dark lump with smoke.
+- The Stage was never looked at from on top; I saw it only from its foot.
+- The Leaning Lodging's roof is set by `plan.SLAB`, which lies 0.16 to 0.3 m above the keep's real slab face (measured for the chalk): the roof does not meet the slab as the plan says. Not fixed.
+- The readers also named, and I did not change: the kit's washing as stiff boards; the kit's pots as loose balls; the new house's white blocks as toy-like and its centring's blocks as floating (the houses' kit, not this module); the down views as blank paving; the hand from further off as "a stump or roots with a basin".
+- The fresh-block tool marks asked for in the kit's new-house stock were not done.

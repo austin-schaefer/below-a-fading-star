@@ -230,26 +230,27 @@ export async function build(ctx) {
     colliders.push({ x: tx, z: tz, r: 0.55, y: Y - 0.5, h: 1.0 }); }
 
   // ---------------------------------------------------------------- the Stage: the scaffold on the Last Arch
-  // A mason's stage lashed to the far side of the arch's near pier, 2.5 m up, and a cleated plank run up to it from
-  // the ground: the one thing on the crown a visitor climbs. From it: the channel's broken end, the hand under it,
+  // A mason's stage lashed to the far side of the arch's near pier, 2.5 m up, and a cleated plank run up to it along
+  // the arch's flank from the keep's side: the one thing on the crown a visitor climbs. From it: the channel's broken end, the hand under it,
   // the brink and the valley.
   const stage = site(arch.east, 'stage', { w: 14.4, d: 3.2, seed: 0 }); // (w, d: what registerAll bounds its floors by: the stage and the whole run)
-  { const SM = arch.east, hgt = 2.5, w = 3.2, d = 1.4, z0 = 0.05, raw = (k = 0.12) => ({ color: worn(V.rawWood, rng, k, 0.15), moss: 0.04, ground: Y, round: 6 }), plank = () => ({ color: worn(V.rawWood, rng, 0.3, 0.2).multiplyScalar(0.85), moss: 0.08, ground: Y });
+  { const SM = ch(arch.east, -0.4, 0, 0), sg = -1, hgt = 2.5, w = 2.6, d = 1.4, // (the stage a little toward the keep, the run going on that way along the arch: the new house's stock lies the other way)
+      z0 = 0.05, raw = (k = 0.12) => ({ color: worn(V.rawWood, rng, k, 0.15), moss: 0.04, ground: Y, round: 6 }), plank = () => ({ color: worn(V.rawWood, rng, 0.3, 0.2).multiplyScalar(0.85), moss: 0.08, ground: Y });
     for (const x of [-w / 2 + 0.1, 0, w / 2 - 0.1]) { beam(B, SM, [x, -0.3, z0 + d - 0.08], [x, hgt + 1.05, z0 + d - 0.08], 0.13, raw(), 0.1); beam(B, SM, [x, hgt - 0.11, -0.12], [x, hgt - 0.11, z0 + d + 0.1], 0.1, raw()); beam(B, SM, [x, 0.5, z0 + d - 0.08], [x, hgt - 0.15, 0.02], 0.07, raw()); }
     for (let i = 0; i < 5; i++) B.add(bx(w + 0.06, 0.05, d / 5 - 0.02), ch(SM, (rng() - 0.5) * 0.05, hgt - 0.025, z0 + (i + 0.5) * (d / 5)), plank());
     beam(B, SM, [-w / 2, hgt + 0.95, z0 + d - 0.08], [w / 2, hgt + 1.0, z0 + d - 0.08], 0.06, raw()); // the one rail, on the open side
     beam(B, SM, [-w / 2 + 0.1, 0.4, z0 + d - 0.06], [0, hgt - 0.2, z0 + d - 0.06], 0.06, raw()); beam(B, SM, [0, 0.4, z0 + d - 0.06], [w / 2 - 0.1, hgt - 0.2, z0 + d - 0.06], 0.06, raw());
     // the run: two planks side by side with cleats nailed across, from the ground up to the stage's end
-    const run = 5.2, rx0 = w / 2 + run, ang = Math.atan2(hgt, run), len = Math.hypot(hgt, run), rz = z0 + d / 2;
-    for (const s of [-1, 1]) B.add(bx(len + 0.1, 0.05, 0.36), ch(SM, w / 2 + run / 2, hgt / 2 - 0.03, rz + s * 0.19, 0, 0, -ang), plank());
-    for (let i = 1; i < 14; i++) { const t = i / 14; B.add(bx(0.05, 0.035, 0.74), ch(SM, rx0 - run * t, hgt * t + 0.005, rz, 0, 0, -ang), raw(0.2)); }
-    for (const t of [0.33, 0.66]) { const px = rx0 - run * t; for (const s of [-1, 1]) beam(B, SM, [px, -0.3, rz + s * 0.42], [px, hgt * t - 0.02, rz + s * 0.42], 0.09, raw(), 0.08); beam(B, SM, [px, hgt * t - 0.09, rz - 0.5], [px, hgt * t - 0.09, rz + 0.5], 0.08, raw()); }
-    stage.floor(0, z0 + d / 2, w, d, hgt, { layer: 1 });
-    stage.floor(w / 2 + run / 2, rz, 0.78, run, 0, { ry: -Math.PI / 2, y1: hgt, steps: 14, layer: 1 });
-    B.add(bx(0.5, 0.04, 0.4), ch(SM, -1.1, hgt + 0.02, 0.4, 0, 0.3, 0), plank()); B.add(B.rock(0.14, 0, 1, 0.45, 1), ch(SM, -1.1, hgt + 0.07, 0.4), { color: V.lime.clone().multiplyScalar(0.85), moss: 0, ground: Y - 9 }); // a mortar board
+    const run = 5.2, rx0 = sg * (w / 2 + run), ang = sg * Math.atan2(hgt, run), len = Math.hypot(hgt, run), rz = z0 + d / 2;
+    for (const s of [-1, 1]) B.add(bx(len + 0.1, 0.05, 0.36), ch(SM, sg * (w / 2 + run / 2), hgt / 2 - 0.03, rz + s * 0.19, 0, 0, -ang), plank());
+    for (let i = 1; i < 14; i++) { const t = i / 14; B.add(bx(0.05, 0.035, 0.74), ch(SM, rx0 - sg * run * t, hgt * t + 0.005, rz, 0, 0, -ang), raw(0.2)); }
+    for (const t of [0.33, 0.66]) { const px = rx0 - sg * run * t; for (const s of [-1, 1]) beam(B, SM, [px, -0.3, rz + s * 0.42], [px, hgt * t - 0.02, rz + s * 0.42], 0.09, raw(), 0.08); beam(B, SM, [px, hgt * t - 0.09, rz - 0.5], [px, hgt * t - 0.09, rz + 0.5], 0.08, raw()); }
+    stage.floor(-0.4, z0 + d / 2, w, d, hgt, { layer: 1 });
+    stage.floor(-0.4 + sg * (w / 2 + run / 2), rz, 0.78, run, 0, { ry: -sg * Math.PI / 2, y1: hgt, steps: 14, layer: 1 });
+    B.add(bx(0.5, 0.04, 0.4), ch(SM, 0.8, hgt + 0.02, 0.4, 0, 0.3, 0), plank()); B.add(B.rock(0.14, 0, 1, 0.45, 1), ch(SM, 0.8, hgt + 0.07, 0.4), { color: V.lime.clone().multiplyScalar(0.85), moss: 0, ground: Y - 9 }); // a mortar board
     stage.name = 'the-stage'; }
   registerAll(ctx, [stage], 'quarrels-stage');
-  if (ctx.ascents) { const pt = (x, y, z) => { const v = new THREE.Vector3(x, y, z).applyMatrix4(arch.east); return [v.x, v.z, v.y]; }; ctx.ascents.add({ id: 'quarrels-stage', path: [pt(1.6 + 5.2 + 0.9, 0, 0.75), pt(1.6 + 5.0, 0.1, 0.75), pt(1.6 + 2.6, 1.25, 0.75), pt(1.5, 2.5, 0.75), pt(-1.1, 2.5, 0.85)], offs: [0.95] }); }
+  if (ctx.ascents) { const pt = (x, y, z) => { const v = new THREE.Vector3(x, y, z).applyMatrix4(arch.east); return [v.x, v.z, v.y]; }; ctx.ascents.add({ id: 'quarrels-stage', path: [pt(-0.4 - 1.3 - 5.2 - 0.9, 0, 0.75), pt(-0.4 - 1.3 - 5.0, 0.1, 0.75), pt(-0.4 - 1.3 - 2.6, 1.25, 0.75), pt(-0.4 - 1.2, 2.5, 0.75), pt(0.5, 2.5, 0.85)], offs: [0.95] }); }
 
   // ---------------------------------------------------------------- the chalk: the next blocks, marked on the keep's fallen face
   // The masons' lines on the slab's toe by the square: the line of the next cut, its blocks ticked off, the first one crossed.
