@@ -146,6 +146,23 @@ export function openingPts(kind, cx, y0, w, sp, n = 10) {
 export const openingTop = (kind, w, sp) => sp + (kind === 'horseshoe' || kind === 'round' ? w / 2 : kind === 'ogee' ? (w / 2) * 1.15 : 0);
 // a wall with holes in it, standing in the xy plane, d thick about z 0: w wide, h tall (or `top`, [[x, y], ...]
 // from right to left, a roofline out of true), sunk `sink` under its foot. openings: [{ kind, x, y, w, sp }]
+// A geometry's triangles split until no edge runs far both across and up (each such edge at its midpoint, so two
+// triangles that share it split it at the same point and no seam opens). batter() is not affine (it draws x and z in
+// by 1 - k*y), so the long slanting triangles of an earcut wall fold over their neighbours under it; an edge whose
+// run across times its rise is under `max` (m2) moves less than k*max/4 off true. Level and plumb edges never split.
+export function shortEdges(g, max = 0.3) {
+  const src = (g.index ? g.toNonIndexed() : g).attributes.position.array, out = [], st = [];
+  for (let i = 0; i < src.length; i += 9) st.push([[src[i], src[i + 1], src[i + 2]], [src[i + 3], src[i + 4], src[i + 5]], [src[i + 6], src[i + 7], src[i + 8]]]);
+  const sk = (a, b) => (Math.abs(a[0] - b[0]) + Math.abs(a[2] - b[2])) * Math.abs(a[1] - b[1]);
+  while (st.length) {
+    const t = st.pop(), l = [sk(t[0], t[1]), sk(t[1], t[2]), sk(t[2], t[0])], k = l[0] >= l[1] && l[0] >= l[2] ? 0 : l[1] >= l[2] ? 1 : 2;
+    if (l[k] <= max || out.length > 90000) { out.push(...t[0], ...t[1], ...t[2]); continue; }
+    const a = t[k], b = t[(k + 1) % 3], c = t[(k + 2) % 3], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    st.push([a, m, c], [m, b, c]);
+  }
+  const r = new THREE.BufferGeometry(); r.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); r.computeVertexNormals();
+  return r;
+}
 export function facade(B, M, o) {
   const w = o.w, sink = o.sink ?? 0.5, sh = new THREE.Shape();
   sh.moveTo(-w / 2, -sink); sh.lineTo(w / 2, -sink);
@@ -157,7 +174,7 @@ export function facade(B, M, o) {
     pts.forEach(([x, y], i) => (i ? hole.lineTo(x, y) : hole.moveTo(x, y)));
     hole.closePath(); sh.holes.push(hole);
   }
-  B.add(B.extrude(sh, o.d ?? 0.36, 1), M, { color: o.color, moss: o.moss ?? 0.2, course: o.course || 0, ground: o.ground, wet: o.wet || 0, emit: o.emit });
+  B.add(shortEdges(B.extrude(sh, o.d ?? 0.36, 1), o.edge ?? 0.3), M, { color: o.color, moss: o.moss ?? 0.2, course: o.course || 0, ground: o.ground, wet: o.wet || 0, emit: o.emit }); // (short edges: a facade is battered)
 }
 // a flat plate of any outline, t thick, lying in the xy plane (a patch on a wall, a sign board, a rug)
 export function plate(B, M, pts, t, o) {
@@ -269,8 +286,8 @@ export function washing(B, M, a, b, rng, n = 4) {
     const col = worn(rng() < 0.25 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.4, 0.16); // (washed a hundred times: no colour is loud)
     // (thrown over the line: a long leaf this side, a short one that, apart at their hems: cloth from above too)
     const m = ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12);
-    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(m, 0, -hh / 2 + 0.01, 0.035, 0.07, 0, 0), { color: col, moss: 0, ground: g0 });
-    B.add(B.box(w, hh * 0.45, 0.014, { seg: 9 }), ch(m, 0, -hh * 0.225 + 0.01, -0.035, -0.14, 0, 0), { color: col.clone().multiplyScalar(0.85), moss: 0, ground: g0 });
+    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(m, 0, -hh / 2 + 0.01, 0.035 + (i % 2) * 0.008, 0.07, 0, 0), { color: col, moss: 0, ground: g0 }); // (each cloth a finger off its neighbour's plane: two that overlap along the line do not lie in one)
+    B.add(B.box(w, hh * 0.45, 0.014, { seg: 9 }), ch(m, 0, -hh * 0.225 + 0.01, -0.035 - (i % 2) * 0.008, -0.14, 0, 0), { color: col.clone().multiplyScalar(0.85), moss: 0, ground: g0 });
   }
 }
 // a bed frame: four posts, rails, a pallet and a quilt
