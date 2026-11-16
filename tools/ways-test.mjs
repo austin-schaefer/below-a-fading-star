@@ -168,7 +168,7 @@ const LD = await page.evaluate(() => {
 const NO_LADDER = { // files that speak of ladders and draw none
   'src/controls.js': 'a comment: the carrier reads the keys for the ladder', 'src/v8/house.js': 'the house\'s header: kept.js draws it',
   'src/v15/plan.js': 'the ways\' plan: rungs-ladder is drawn by src/v15/ways', 'src/v15/bones.js': 'its header lists the ways', 'src/v15/ways/index.js': 'calls ladder(K) (registered there)',
-  'src/v15/quarters/rungs.js': 'the hand-rope and the poles\' colliders beside rungs-ladder', 'src/v15/houses/kit.js': 'ladder() and climbLadder(); registerAll climbs', 'src/v15/houses/index.js': 'the makers\' index',
+  'src/v15/quarters/rungs.js': 'the hand-rope and the poles\' colliders beside rungs-ladder', 'src/v15/houses/kit.js': 'ladder() and climbLadder(); registerAll climbs', 'src/v15/houses/index.js': 'the makers\' index', 'src/world.js': 'the Tender\'s Round card says how it is reached',
 };
 const files = [];
 const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (p.endsWith('.js')) files.push(p); } };
