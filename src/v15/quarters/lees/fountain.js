@@ -45,7 +45,7 @@ export function fountain(Q, plot) {
   const P = (a, r, y) => [Math.sin(a) * r, y, Math.cos(a) * r];
 
   // ---------------------------------------------------------------- the foot
-  const nu = low ? 32 : 48, nv = low ? 6 : 9, jag = Array.from({ length: nu }, () => rng());
+  const nu = low ? 32 : 48, nv = low ? 8 : 11, jag = Array.from({ length: nu }, () => rng());
   const rimAt = (i) => {
     const a = (((i % nu) + nu) % nu) / nu * TAU, j = jag[((i % nu) + nu) % nu];
     const t = Math.max(0, 1 - Math.abs(adiff(a, rad(185))) / 1.5), t2 = Math.max(0, 1 - Math.abs(adiff(a, SWAPE)) / 0.42), t3 = Math.max(0, 1 - Math.abs(adiff(a, NOTCH)) / 0.34);
@@ -55,19 +55,21 @@ export function fountain(Q, plot) {
   };
   const rims = Array.from({ length: nu }, (_, i) => rimAt(i));
   const ang = (i) => (i / nu) * TAU;
-  const out = (i, j) => { const h = rims[((i % nu) + nu) % nu], y = -0.14 + (h + 0.14) * (j / nv); return P(ang(i), ro(y), y); };
+  // the outside's rings: fixed where the band is (so it is a band on every column), even above it to the break
+  const levs = rims.map((h) => { const f = [-0.14, 0.4, 0.86, 0.9, 1.06, 1.1].filter((y) => y < h - 0.06), top = f[f.length - 1], n = nv + 1 - f.length; for (let k = 1; k <= n; k++) f.push(top + (h - top) * (k / n)); return f; });
+  const out = (i, j) => { const y = levs[((i % nu) + nu) % nu][j]; return P(ang(i), ro(y), y); };
   const inn = (i, j) => { const h = rims[((i % nu) + nu) % nu], y = YF + (h - YF) * (j / nv); return P(ang(i), ro(y) - TH, y); };
   const milkDull = N.milk.clone().multiplyScalar(0.7), mossC = new THREE.Color(0.16, 0.19, 0.12), col = new THREE.Color();
   // the glaze at a point of the outside: deep celadon, an ox-blood band a metre up, sheared to the dull body in
   // sheets, limed from the broken edge down, green at the foot. Through it the light shows, low, and the band is dark.
   const glaze = (a, y, h) => {
-    const u = a * 1.9, band = Math.abs(y - (0.98 + 0.05 * Math.sin(a * 3))) < 0.11;
+    const u = a * 1.9, band = Math.abs(y - 0.98) < 0.085;
     col.copy(band ? N.oxblood : N.celadonD); if (!band) col.lerp(N.celadon, 0.3 + 0.3 * n3(u * 0.4, y * 0.3, 4.4)); col.multiplyScalar(0.9 + 0.25 * n3(u * 0.7, y * 0.6, 2.2));
     const sh = n3(u * 0.35, y * 0.4, 9.3); if (sh > 0.36 && !band) col.lerp(milkDull, Math.min(1, (sh - 0.36) * 6) * 0.85);
     col.lerp(V.dirt, 0.12 + 0.2 * Math.max(0, n3(u, y, 5)));
     col.lerp(V.lime, 0.3 * Math.max(0, n3(u * 2.4, y * 0.12, 3.3)) * Math.min(1, Math.max(0, y) / Math.max(0.6, h)));
     col.lerp(mossC, 0.55 * Math.max(0, 1 - Math.max(0, y) / 0.5));
-    const e = (0.3 * Math.exp(-Math.max(0, y) / 1.5) + 0.06 * Math.max(0, 1 - (h - y) / 0.22)) * (band ? 0.5 : 1) * (0.7 + 0.6 * Math.max(0, n3(a * 2, y, 7) + 0.5));
+    const e = (0.24 * Math.exp(-Math.max(0, y) / 1.2) + 0.05 * Math.max(0, 1 - (h - y) / 0.22)) * (band ? 0.5 : 1) * (0.7 + 0.6 * Math.max(0, n3(a * 2, y, 7) + 0.5));
     return [col.clone(), e];
   };
   const body = (a, y) => [col.copy(N.milk).multiplyScalar(0.6 + 0.12 * n3(a * 3, y * 2, 1.5)).clone(), y < YS ? 0.5 : 0.07 + 0.36 * Math.exp(-(y - YS) / 1.0)];
@@ -91,7 +93,7 @@ export function fountain(Q, plot) {
     for (let i = 0; i < cr.length - 1; i++) { const [x0, z0] = cr[i], [x1, z1] = cr[i + 1], l = Math.hypot(x1 - x0, z1 - z0), px = (-(z1 - z0) / l) * 0.03, pz = ((x1 - x0) / l) * 0.03, y = YF + 0.045;
       I.quad([x0 - px, y, z0 - pz], [x1 - px, y, z1 - pz], [x1 + px, y, z1 + pz], [x0 + px, y, z0 + pz], [0, 1, 0], N.milk, 1.3); }
   }
-  S.flush(B, { color: N.milk, moss: 0.2, wet: 0.35, course: 0, ground: g0 }, M, 5);
+  S.flush(B, { color: N.milk, moss: 0.2, wet: 0.35, course: 0, ground: g0 }, M, 3.4);
   I.flush(B, { color: N.milk, moss: 0, wet: 0, course: 0, ground: g0 - 3 }, M);
   // the foot's collar, sunk in the paving
   B.add(new THREE.TorusGeometry(1.25, 0.1, 5, nu).rotateX(Math.PI / 2), ch(M, 0, 0.03, 0), { color: worn(N.celadonD, rng, 0.3), moss: 0.7, wet: 0.2, ground: g0 });
