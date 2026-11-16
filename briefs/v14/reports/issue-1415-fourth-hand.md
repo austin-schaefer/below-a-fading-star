@@ -6,9 +6,9 @@ Branch `issue-1415-fourth-hand`, port 8161.
 
 Names considered: the Meridiate (the brief's placeholder), the Garnerers, **the Noonwrights** (chosen: a trade name in plain words, like the Leerie, the Sexton, the Reckoner). The place card is **The Noon Road**.
 
-- **Blown and cast, and spun.** Everything made in one piece and round in section (carriers, tubes, collars, nodes, lenses, beads, galls where a thing was joined or closed), in milk glass, bottle amber, celadon and one band of ox-blood glaze, now crazed, worn through to a dull body, streaked, chipped, weeded and limed at the waterline. Beside it a spun register: filament laced ring to ring at a tangent (the `cell`, the net round a carrier, the stays of the elbow's cradle).
+- **Blown and cast, and spun.** Everything made in one piece and round in section (carriers, tubes, collars, nodes, lenses, beads, galls where a thing was joined or closed). **Glaze is the majority** (`GLAZES`, `put`'s `paint` in the part's own frame): each thing dipped in a field of celadon, ox-blood or amber glass, a broad band brushed round it, edges run toward the tail in drips (fired standing on their tails), the foot left bare milk as a potter leaves it, throwing rings on collars and tubes, a spiral of pulled amber glass on each carrier's shoulder, the body slumped a little narrow and never twice the same. Then crazed, worn through to the milk body, streaked, chipped, weeded and limed at the waterline, and a ragged lime crust at an old waterline 1.5-1.8 m up. Beside it a spun register: filament laced ring to ring at a tangent (the `cell`, the net round a carrier, the stays of the elbow's cradle).
 - **The empty ring** is their mark (on every band, a row of them; every collar; every lens rim). They have no sign of the sun: `ctx.strata.SIGNED` is the three hands that drew it.
-- **Stored daylight** `#ffedbd`: steady (it breathes, never flickers), lying low in a vessel's belly, seen through the black water under a lit hull, sent out over the water in slow rings.
+- **Stored daylight** `#ffedbd`: steady (it breathes, never flickers); a lit carrier is warm milk glass lit through its whole wall, brightest low in the belly, seen through the black water under a lit hull, sent out over the water in slow rings.
 
 Written into `visual-art/architecture.md` (the table's fourth row, "The fourth hand", what it must never be, and the owner's attribution of 2026-11-15: the sky's lattices and remnants are theirs, the Galleries' iron is not, the tender and the Leerie live off what they left; the lattices are not yet re-dressed). Parts: `src/v8/strata/noon.js`, reached as `ctx.strata.parts.noon` (`carrier` in four forms, `tube`, `collar`, `node`, `lens`, `band`, `mark`, `cell`; `put`, `strand`), adding into a structures Builder or an `UnderBuilder`; `noonGlass()` in `src/v14/noon-road.js`. `world-code/runtime.md` ("The fourth hand under the ground") and `modules.md` say how to use them.
 
@@ -16,8 +16,8 @@ Written into `visual-art/architecture.md` (the table's fourth row, "The fourth h
 
 The shears, the hung stair, the hall, the water, the Heliarchs' sun and the south door stay. The coffins, the candles and their stands, the waiting coffin and the Sexton are gone.
 
-- **The string:** seven carriers 6.9 m long and 4.6 m through, nose to tail on z 42, riding a third out of the water, no two alike (long and waisted bodies, rolled, two cracked and black inside, two netted in filament); three hold their light (the second faintly, the fourth and the last fully). The Late folk's planks, three dark boards 0.96 m wide (`PATCH` in `coffin-road/plan.js`), are lashed over each coupling and at the string's two ends. Over a coupling the walked floor is as wide as the planks (0.55 m each side of the line) and widens back to the road's 0.8 m over 0.85 m of the carriers' backs (`roadHalf`), so no foot stands over the gap between two noses; the north spur's gangway comes in at the west end as before.
-- **The line they ran in:** six of its collars stand as hoops 6.7 m across down the nave, a hand clear of the colonnade (one a horn under the hole, one a horn by the sun), a bay of wall still up between two (the road goes through it), shards on three more.
+- **The string:** seven carriers 6.9 m long and 4.6 m through, nose to tail on z 42, riding a third out of the water, no two alike (long and waisted bodies, rolled, two cracked and black inside, two netted in filament); three hold their light (the second faintly, the fourth and the last fully). The Late folk's boards, two pale silvered planks a patch 0.96 m across (`PATCH` in `coffin-road/plan.js`), odd lengths, one bowed proud, are bound with cord at each end over each coupling and at the string's two ends. Over a coupling the walked floor is as wide as the planks (0.55 m each side of the line) and widens back to the road's 0.8 m over 0.85 m of the carriers' backs (`roadHalf`), so no foot stands over the gap between two noses; it narrows the same way beside each standing hoop's south limb and through the bay of the line's wall, so the eye keeps 0.3 m clear of the glaze (the near plane is 0.08 m). The north spur's gangway comes in at the west end as before.
+- **The line they ran in:** six of its collars stand as hoops 6.7 m across down the nave, each glazed in its own scheme with a row of hand-set amber cells round both faces (a fifth fallen out, dark sockets), and a seventh fallen off its line, tipped half under the water between two columns north of the road's west end; a hand clear of the colonnade (one a horn under the hole, one a horn by the sun), a bay of wall still up between two (the road goes through it), shards on three more.
 - **Where it came down from:** west of the second hoop the line turns up in an elbow toward the hole, torn open underneath, its mouth to the sky; over the mouth a spun collector's cell on the line it took, stayed with filaments to the capitals; a smaller cell hangs fallen.
 - **Adrift:** a gourd stood on its tail and alight in the north aisle where the column fell, a gourd rolled over under the hole, a lesser one alight in the south aisle, one alight at the west end, one nose-down, one sunk to its back.
 - **The stage:** the stair lands on planks lashed to the back of the junction node (dimly alight under the boards); flasks of drawn light on its corner; a gangway north to the string; south, boards and cleats down a lesser carrier pitched to the door.
@@ -32,41 +32,38 @@ Names kept, because the passage (D1) reads them: `src/v14/coffin-road.js`, `src/
 
 ## Tests
 
-On `10817e0` plus the walk tool's door leg (2026-11-15), port 8161, in sequence; after merging `origin/next` (`a5b4d86`) `ONLY=paths,roads,strata,edges` again: 4 tests, 0 failed (paths 79, roads 59, strata 8, edges 136):
+After the look pass (`54787a9`, 2026-11-15), port 8161, in sequence:
 
-- `ONLY=edges,heights,strata,walk,hop,regions,paths,roads nice -n 10 env SHOT_ANGLE=metal tools/suite.sh 8161`: **8 tests, 0 failed, 3 min 34 s**: paths 76, roads 56, regions 56, strata 8, walk 13, hop 25, edges 136, heights 111 PASS lines.
-- `ONLY=perf,loading,settings,audio ...`: **4 tests, 0 failed, 16 min 19 s**: settings 85, audio 101, loading 28, perf 29 PASS lines.
-- The walk by hand: `nice -n 10 env SHOT_ANGLE=metal node tools/noon-walk.mjs http://localhost:8161 keys medium noonroad-walk2`: **walked: yes**, no page errors. From the trod to the shears, down the stair, the north spur, the road to the sun and back, down the pitched carrier to the sill (feet -16.58 at z 53.3) and in through the south door (feet -16.78, the sill, at z 56.2), back, up the stair and out. Never in the water. The touch stick was not walked.
-- A ray survey (a scratch script, not kept) of the road band every 0.2 m: before the fix the walked floor's outer 0.3 m over each coupling had nothing drawn within 0.5 m under it; after it, only single samples between boards.
-- JS a frame (`?perf=1&q=low`, 8 s standing on the road at (262, 42)): the module's update `coffinroad` reads 0.00 ms, the Nave 0.02 ms; render 1.54 ms (1.64 on the moor at the spawn side).
+- `ONLY=edges,heights,strata,perf,settings,audio nice -n 10 env SHOT_ANGLE=metal tools/suite.sh 8161`: **6 tests, 0 failed, 14 min 25 s**: settings 85, strata 8, edges 136, heights 111, audio 101, perf 29 PASS lines.
+- The touch walk, `node tools/noon-walk.mjs http://localhost:8161 touch low noonroad-walk-touch-low`: **walked: yes**, no page errors, in through the south door (feet -16.78 at z 56.6), never in the water.
+- Before the look pass: `ONLY=edges,heights,strata,walk,hop,regions,paths,roads`: 8 tests, 0 failed (paths 76, roads 56, regions 56, strata 8, walk 13, hop 25, edges 136, heights 111); `ONLY=perf,loading,settings,audio`: 4 tests, 0 failed (settings 85, audio 101, loading 28, perf 29); after merging `origin/next` (`a5b4d86`) paths 79, roads 59, strata 8, edges 136; the keys walk at medium (`noonroad-walk2`): walked: yes, in through the door.
+- JS a frame (`?perf=1&q=low`, standing on the road at (262, 42)): the module's update reads 0.00 ms, the Nave 0.02 ms. Triangles on low in the road view went from 1.21 M to 1.26 M with the glaze pass (the hoops' cells are the most of it).
 
 ## Frames (`shots/wip/`)
 
-- The finished road on low, after the fixes: `noonroad-c-low-{pair-8m,pair-30m,stair,top-lit,elbow,back-west,sun,stage,north,door}`; before them `noonroad-b-low-*` (the same poses; `-door` shows the old collar crowding the lintel).
-- Medium and high: `noonroad-c-{medium,high}-{pair-8m,stair,elbow,top-lit}`.
-- The walk: `noonroad-walk2-keys-medium-01..20` (`16-sill-door`, `17-inside-fall`, `18-inside-back` are the door). An earlier pass without the door leg: `noonroad-walk-keys-medium-keys-medium-*`.
-- Step 1's vessel and the first build: `noon-one-{low,high}-*`, `noonroad-a-low-*`.
+- The road after the look pass: `noonroad-j-high-{pair-8m,top-lit,elbow,stair,door}` and `noonroad-j-low-*` (the same five).
+- Before it, the same poses: `noonroad-c-{low,medium,high}-*`.
+- The review's checks: `noonroad-f-low-{hoop-s,wall-s,col-249,col-277}` (before the floor narrowed by the hoops), `noonroad-g-low-{hoop-s,col-249}` (after), `noonroad-i-low-fallen-road` (the fallen hoop, barely seen).
+- The walks: `noonroad-walk2-keys-medium-01..20`, `noonroad-walk-touch-low-touch-low-01..20`.
 
 ## Not done
 
-- The touch walk, the around sheet and the descent on three tiers (the brief's three sets of frames): only the keys walk at medium and the four views at medium and high are taken. The low tier's histogram is not measured, though no low frame is black.
-- A blind reader has not described the renders.
+- A blind reader of the glazed frames. The around sheet and the descent on three tiers.
 - The pillar tops at the rim and the orange bar in the sky from the stair: not looked at.
-- Sound: no audio hook is changed; a step on the glass is the hard step.
+- Sound: a step on the glass is still the hard step.
 
-## What a stranger would call them (my own read, not a blind reader's)
+## What a stranger would call them (my own read)
 
-- The road: a line of great pale glazed vessels afloat nose to tail through a row of huge standing rings in a flooded hall, planks between them, one or two glowing.
-- The people: makers of giant glass and ceramic pipework; not medieval, classical or elvish. A single carrier alone still reads nearest to a pill or capsule.
+- Glazed: great celadon and ox-blood rings with amber cells round them, and a string of mottled glazed vessels afloat through them, one or two glowing. Much nearer "huge glazed pottery" than before. A row of round amber cells on a ring can still read as lights or portholes, so the sci-fi reading is weaker, not gone.
 
 ## Still weak
 
-- The three dark planks over each coupling are the first thing the eye meets at 8 m; the carriers' backs between them are short.
-- The water away from a lit hull is a flat dark plane.
-- The sun on the east wall is dim (`-sun`): a mosaic in the dark with one lamp's glow under it.
-- Looking into the south door from the sill is a black hole (the passage beyond is D1's).
-- At the road's edges over a carrier's back the floor stands 0.25-0.5 m over the curved surface for the outer 0.2 m; a visitor sees no feet, but a low look down there shows the boards' level, not the hull's.
-- The spun register is thin: one cell over the elbow, one fallen, two netted carriers.
+- The hoops' amber cells. Hand-set and some fallen out, but still a row of round lights. If a blind reader says "portholes", drop them for a band of amber glass.
+- The lit carriers read as warm pale glass from beside them. Looked down on from the crown, they are still a pale back with a light.
+- Where the field is broken, the worn milk patches on the glaze can read as camouflage blotches at 8 m.
+- The fallen hoop lies in the dark north of the road's west end and is barely seen.
+- The carriers still meet the south arcade's column bases at the waterline (narrowed about 0.2 m, not cleared): they read as jammed against the colonnade.
+- The water away from a lit hull is a flat dark plane; the sun on the east wall is dim; the south door opens onto black (the passage is D1's).
 
 ## Defaults taken
 
