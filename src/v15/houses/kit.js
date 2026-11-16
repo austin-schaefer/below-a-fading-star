@@ -214,9 +214,9 @@ export function pot(B, M, x, y, z, r, col, k = 1.8, seg = 8) {
 // a plank door leaf in its frame's plane (xy), foot at y 0: boards, two straps, a ring
 export function leaf(B, M, w, h, col, rng, o = {}) {
   const g0 = M.elements[13] - 1;
-  B.add(B.box(w, h, 0.07, { seg: 9 }), ch(M, 0, h / 2, 0), { color: col, moss: 0.05, ground: g0 });
+  B.add(B.box(w, h + 0.03, 0.07, { seg: 9 }), ch(M, 0, h / 2 - 0.015, 0), { color: col, moss: 0.05, ground: g0 }); // (its foot a finger into what it stands on: on a built tread its underside lay in the tread's plane)
   // planks, and their feet worn grey where rain and boots get at them
-  B.add(B.box(w, 0.17, 0.012, { seg: 9 }), ch(M, 0, 0.085, 0.04), { color: col.clone().lerp(V.dirt, 0.55).multiplyScalar(0.85), moss: 0.3, ground: g0 });
+  B.add(B.box(w, 0.2, 0.012, { seg: 9 }), ch(M, 0, 0.07, 0.04), { color: col.clone().lerp(V.dirt, 0.55).multiplyScalar(0.85), moss: 0.3, ground: g0 });
   if (o.plain) return;
   for (const t of [-1 / 6, 1 / 6]) B.add(B.box(0.014, h - 0.2, 0.012, { seg: 9 }), ch(M, w * t, h / 2 + 0.09, 0.034), { color: col.clone().multiplyScalar(0.5), moss: 0, ground: g0 });
   for (const t of [0.22, 0.74]) B.add(B.box(w * 0.92, 0.07, 0.02, { seg: 9 }), ch(M, 0, h * t, 0.045), { color: L.iron, iron: 0.7, moss: 0, ground: g0 });
@@ -264,8 +264,10 @@ export function ladder(B, M, foot, top, w, o, side = [1, 0, 0]) {
 export function washing(B, M, a, b, rng, n = 4) {
   const g0 = M.elements[13] - 3, dx = b[0] - a[0], dz = b[2] - a[2], ry = Math.atan2(-dz, dx);
   beam(B, M, a, b, 0.022, { color: V.rope, moss: 0, ground: g0 });
+  const len = Math.hypot(dx, dz), short = len < 2.6; // (a short line: fewer cloths, and none over its neighbour, where two would lie in one plane)
+  if (short) n = Math.max(1, Math.min(n, Math.floor(len / 0.62)));
   for (let i = 0; i < n; i++) {
-    const t = (i + 0.6 + rng() * 0.3) / (n + 0.6), w = 0.35 + rng() * 0.4, hh = 0.4 + rng() * 0.5;
+    const t = (i + 0.6 + rng() * 0.3) / (n + 0.6), w = short ? Math.min(0.35 + rng() * 0.4, len / (n + 0.6) - 0.1) : 0.35 + rng() * 0.4, hh = 0.4 + rng() * 0.5;
     const col = worn(rng() < 0.25 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.4, 0.16); // (washed a hundred times: no colour is loud)
     // (thrown over the line: a long leaf this side, a short one that, apart at their hems: cloth from above too)
     const m = ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12);

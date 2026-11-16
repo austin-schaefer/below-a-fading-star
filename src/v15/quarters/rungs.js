@@ -31,8 +31,8 @@ const BODY = 0.5; // a walker's half width, and a little
 // each house is its seed (the wash, the door, the things on its roof); `side`: which end its stair's head or its
 // jar stands at (+1 the west end on either run), found by trying seeds from the one given
 const HOUSES = {
-  'rungs-mid-1': { seed: 3 }, 'rungs-mid-2': { seed: 8 }, 'rungs-mid-3': { seed: 5 }, 'rungs-mid-4': { seed: 12 }, 'rungs-mid-6': { seed: 7 }, 'rungs-mid-7': { seed: 14 },
-  'rungs-low-1': { seed: 21, side: -1 }, 'rungs-low-2': { seed: 9, side: 1 }, 'rungs-low-3': { seed: 16, side: 1 }, 'rungs-low-4': { seed: 2, side: -1 }, 'rungs-low-5': { seed: 11, side: 1 }, 'rungs-low-7': { seed: 6, side: 1 },
+  'rungs-mid-1': { seed: 3 }, 'rungs-mid-2': { seed: 8 }, 'rungs-mid-3': { seed: 5 }, 'rungs-mid-4': { seed: 13 }, 'rungs-mid-6': { seed: 7 }, 'rungs-mid-7': { seed: 15 },
+  'rungs-low-1': { seed: 21, side: -1 }, 'rungs-low-2': { seed: 9, side: 1 }, 'rungs-low-3': { seed: 16, side: 1 }, 'rungs-low-4': { seed: 30, side: -1 }, 'rungs-low-5': { seed: 11, side: 1 }, 'rungs-low-7': { seed: 6, side: 1 },
   'rungs-cantle': { seed: 4, form: 'sherd', glaze: 3 },
 };
 
@@ -62,7 +62,7 @@ export async function build(ctx) {
     let seed = q.seed;
     if (side) for (let t = 0; t < 12; t++, seed++) if (sideOf(makePlot(ctx.strata.builder(), p, opts(seed))) === side) break; // (a trial build into a builder that is thrown away)
     const R = makePlot(B, p, opts(seed));
-    R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'amber', 'ruby', 'emerald'][(seed + i) % 4], 0.5));
+    R.lamps.forEach((lamp, i) => hangLamp(B, { ...lamp, y: lamp.y + 0.24 }, ['amber', 'amber', 'ruby', 'emerald'][(seed + i) % 4], 0.5)); // (hung short: the kit's hook is at 2.25 m and its lamp would hang at a walker's brow)
     records[p.name] = R; list.push(R);
   }
   registerAll(ctx, list, 'rungs');
@@ -95,8 +95,8 @@ export async function build(ctx) {
   // the plan's front stairs, each a way between two treads
   for (const R of list) {
     const f = R.floors.find((q) => q.steps); if (!f) continue;
-    const p = P.plot(R.name), dx = f.s, dz = f.c, hx = f.x + dx * f.d / 2, hz = f.z + dz * f.d / 2, fx = f.x - dx * f.d / 2, fz = f.z - dz * f.d / 2, c = R.W((R.roof.x0 + R.roof.x1) / 2, 0, (R.roof.zb + R.roof.zf) / 2);
-    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx - dx * 0.15, hz - dz * 0.15, f.y1], [hx + dx * 0.55, hz + dz * 0.55, f.y1], [c.x, c.z, f.y1]] });
+    const p = P.plot(R.name), dx = f.s, dz = f.c, hx = f.x + dx * f.d / 2, hz = f.z + dz * f.d / 2, fx = f.x - dx * f.d / 2, fz = f.z - dz * f.d / 2;
+    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx - dx * 0.15, hz - dz * 0.15, f.y1], [hx + dx * 0.6, hz + dz * 0.6, f.y1]] });
   }
 
   // ---------------------------------------------------------------- floors of this file's own: level rectangles
@@ -173,7 +173,7 @@ export async function build(ctx) {
     for (const sx of [-1, 1]) { beam(KB, M, [sx * 0.55, 0, 0], [sx * 0.55, 1.75, -0.12], 0.07, raw()); beam(KB, M, [sx * 0.55, 0.0, -0.5], [sx * 0.55, 1.1, -0.07], 0.05, raw()); }
     for (const yy of [0.32, 1.66]) beam(KB, M, [-0.66, yy, -0.02 - yy * 0.065], [0.66, yy, -0.02 - yy * 0.065], 0.08, raw());
     KB.add(box(0.96, 1.3, 0.012), ch(M, 0, 0.99, -0.085, -0.068, 0, 0), { color: worn(V.linen, rng, 0.1), moss: 0, ground: y - 3 });
-    KB.add(box(0.97, 0.42, 0.02), ch(M, 0, 0.56, -0.05, -0.068, 0, 0), { color: worn(V.madder, rng, 0.1), moss: 0, ground: y - 3, emit: limeGlow(V.madder, 0.05) });
+    KB.add(box(0.97, 0.42, 0.02), ch(M, 0, 0.56, -0.026, -0.068, 0, 0), { color: worn(V.madder, rng, 0.1), moss: 0, ground: y - 3, emit: limeGlow(V.madder, 0.05) });
   }, [-0.6, 0, -1]);
 
   // ---------------------------------------------------------------- the corner: the Gullet, and the plank over it
@@ -221,9 +221,10 @@ export async function build(ctx) {
     let nd = 0;
     // a length of cloth hung from M's origin, its width along M's +x: most of it down one side, a hand thrown over
     const cloth = (M, w, lh) => { const col = worn(dyes[nd++ % dyes.length], rng, 0.1, 0.12), o = { color: col, moss: 0, ground: yL - 6, emit: limeGlow(col, 0.07) }, tilt = 0.015 + rng() * 0.03;
-      KB.add(box(w, lh, 0.016, { seg: 0.9 }), ch(M, 0, -lh / 2 + 0.012, 0.03 + Math.sin(tilt) * lh / 2, tilt, 0, 0), { ...o, disp: 0.02, dispScale: 1.3 });
-      KB.add(box(w, lh * 0.18, 0.016), ch(M, 0, -lh * 0.09 + 0.012, -0.03, -0.1, 0, 0), { ...o, color: jit(col, 0.9) }); };
-    ss.forEach((s, i) => { const lean = (rng() - 0.5) * 0.2, M = RM(run, s, Dp, yL); beam(KB, M, [0, -0.05, 0], [lean, yT - yL + 0.3, lean * 0.4], 0.11, raw()); if (i === 0 || i === 3) beam(KB, M, [0, -0.05, i ? 0.6 : -0.6], [lean * 0.5, (yT - yL) * 0.5, lean * 0.2], 0.07, raw()); const [px, pz] = at(run, s, Dp); ctx.addCollider({ x: px, z: pz, r: 0.1, y: yL - 0.3, h: 3 }); });
+      KB.add(box(w, lh, 0.016, { seg: 0.9 }), ch(M, 0, -lh / 2 + 0.012, 0.03 + Math.sin(tilt) * lh / 2, tilt, 0, 0), { ...o, disp: 0.006, dispScale: 1.3 });
+      KB.add(box(w, lh * 0.18, 0.016), ch(M, 0, -lh * 0.09 + 0.012, -0.03, -0.1, 0, 0), { ...o, color: jit(col, 0.9) });
+      KB.add(box(w, 0.016, 0.09), ch(M, 0, 0.014, 0.002), o); }; // (the fold over the line)
+    ss.forEach((s, i) => { const lean = 0, M = RM(run, s, Dp, yL); beam(KB, M, [0, -0.05, 0], [0, yT - yL + 0.2 + rng() * 0.3, 0], 0.11, raw()); if (i === 0 || i === 3) beam(KB, M, [0, -0.05, i ? 0.6 : -0.6], [lean * 0.5, (yT - yL) * 0.5, lean * 0.2], 0.07, raw()); const [px, pz] = at(run, s, Dp); ctx.addCollider({ x: px, z: pz, r: 0.1, y: yL - 0.3, h: 3 }); });
     for (let b = 0; b < 3; b++) { // along the poles: a cloth a bay, its face to the valley
       const M = RM(run, ss[b], Dp, yT), len = ss[b + 1] - ss[b];
       for (let i = 0; i < 4; i++) beam(KB, M, [0, sag(i / 4, 0.1), len * i / 4], [0, sag((i + 1) / 4, 0.1), len * (i + 1) / 4], 0.025, { color: V.rope, moss: 0, ground: yL - 3 });
@@ -247,7 +248,7 @@ export async function build(ctx) {
       const [px, pz] = at(run, s, D); ctx.addCollider({ x: px, z: pz, r, y: yL, h: 0.72 });
       // its runnel: across the lane's flags to the drain at the nosing, the colour going to mud as it goes
       const D1 = DL - 0.62, n = 4;
-      for (let j = 0; j < n; j++) { const a = j / n, c2 = (j + 1) / n, Da = D + r + (D1 - D - r) * a, Db = D + r + (D1 - D - r) * c2, wob = (q) => Math.sin(q * 5 + i * 2) * 0.12; beam(KB, RM(run, s, 0, yL), [Da - 0.03, 0.022 + i * 0.003, wob(a)], [Db, 0.022 + i * 0.003, wob(c2)], 0.15 - j * 0.015, { color: dye.clone().lerp(V.dirt, 0.25 + 0.4 * c2), moss: 0, wet: 0.8, ground: yL - 3 }, 0.04); }
+      for (let j = 0; j < n; j++) { const a = j / n, c2 = (j + 1) / n, Da = D + r + (D1 - D - r) * a, Db = D + r + (D1 - D - r) * c2, wob = (q) => Math.sin(q * 5 + i * 2) * 0.12; beam(KB, RM(run, s, 0, yL), [Da - 0.03, 0.03 - j * 0.006, wob(a)], [Db, 0.03 - j * 0.006, wob(c2)], 0.15 - j * 0.015, { color: dye.clone().lerp(V.dirt, 0.25 + 0.4 * c2), moss: 0, wet: 0.8, ground: yL - 3 }, 0.04); }
     });
     // the drain: a gutter of the Noonwrights' glazed channel laid inside the rope along the nosing; it runs west and spills over the edge
     { const d0 = yard.s - 2.5, d1 = yard.s + 1.9, D = DL - 0.5, M = RM(run, d0, D, yL), len = d1 - d0;
@@ -280,14 +281,16 @@ export async function build(ctx) {
     const S = RUNGS.slype, run = S.run, sm = (S.s0 + S.s1) / 2, D0 = DM + 0.12; // (the riser's foot stands 0.2 out from its head)
     const M = ch(RM(run, sm, D0, yL), 0, 0, 0, 0, Math.PI / 2, 0); // +z out from the riser, +x toward the west
     // one plastered front against the step, out of true: a horseshoe door in it and, east of the door, a small round-headed niche
-    const wash = worn(L.plaster[3], rng, 0.22), from = KB.count, dw = 1.0, nx = -1.5;
-    facade(KB, ch(M, 0, 0, 0.2), { w: 3.5, d: 0.4, top: [[1.75, 2.35], [0.9, 2.62], [0.1, 2.7], [-0.9, 2.48], [-1.75, 2.2]], openings: [{ kind: 'horseshoe', x: 0.45, y: 0, w: dw, sp: 1.45 }, { kind: 'round', x: nx, y: 1.05, w: 0.5, sp: 0.42 }], color: wash, moss: 0.2, ground: yL, emit: limeGlow(wash, 0.07), n: low ? 7 : 10 });
+    const wash = worn(L.plaster[3], rng, 0.22), from = KB.count, dw = 1.0, nx = -1.15; // (the niche clear of the front's end: a hole that touches the outline leaves the end face open)
+    facade(KB, ch(M, 0, 0, 0.2), { w: 3.5, d: 0.4, top: [[1.75, 2.35], [0.9, 2.62], [0.1, 2.7], [-0.9, 2.48], [-1.75, 2.2]], openings: [{ kind: 'horseshoe', x: 0.45, y: 0.012, w: dw, sp: 1.45 }, { kind: 'round', x: nx, y: 1.05, w: 0.5, sp: 0.42 }], color: wash, moss: 0.2, ground: yL, emit: limeGlow(wash, 0.07), n: low ? 7 : 10 });
     leaf(KB, ch(M, 0.45, 0, 0.1), dw + 0.24, 2.1, worn(L.paint[1], rng, 0.35), rng, { plain: low });
     KB.add(box(dw + 0.5, 0.26, 0.5, { chip: 0.03 }), ch(M, 0.45, -0.07, 0.42), { color: H.stone, moss: 0.45, ground: yL });
     KB.add(box(0.62, 0.8, 0.04), ch(M, nx, 1.4, 0.06), { color: new THREE.Color('#3a2410'), moss: 0, ground: yL - 3, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
     KB.add(box(0.62, 0.05, 0.3), ch(M, nx, 1.03, 0.2), { color: worn(L.tile[1], rng, 0.3), moss: 0.1, ground: yL });
     dirty(KB, from, 0.2, rng);
-    _p.set(nx, 1.72, 0.2).applyMatrix4(M); hangLamp(KB, { x: _p.x, y: _p.y, z: _p.z }, 'amber', 0.6);
+    // the light in it: a clay lamp on the sill (not a hung one: its cup is open, and this one is looked down into)
+    KB.add(box(0.16, 0.05, 0.13, { chip: 0.015 }), ch(M, nx, 1.08, 0.2), { color: worn(L.tile[4], rng, 0.3), moss: 0, ground: yL });
+    { const g = L.glass.amber; KB.add(new THREE.IcosahedronGeometry(0.055, 1), ch(M, nx - 0.03, 1.15, 0.2, 0, 0, 0, 0.8, 1.5, 0.8), { color: new THREE.Color('#201008'), moss: 0, ground: yL - 3, emit: [g[0] * 0.7, g[1] * 0.7, g[2] * 0.7, 1] }); }
   }
 
   // ---------------------------------------------------------------- the Squint: a bench where the three stairs are seen
@@ -318,7 +321,7 @@ export async function build(ctx) {
     const ln = P.LANES.find((q) => q.name === name), y = ln.y, keepP = low ? 0.3 : 0.55;
     for (let i = 0; i < ln.pts.length - 1; i++) {
       const [ax, az] = ln.pts[i], [bx, bz] = ln.pts[i + 1], len = Math.hypot(bx - ax, bz - az), F = frame(ax, y, az, (bx - ax) / len, (bz - az) / len);
-      for (let a = 0.1; a < len - 0.4;) { const l = Math.min(len - a, 0.55 + rng() * 0.65); for (const off of [-0.31, 0.31]) if (rng() < keepP) KB.add(box(0.5 + rng() * 0.1, 0.07, l - 0.04, { chip: 0.03, chipTop: true, seed: i * 31 + a }), F.clone().multiply(mat(off + (rng() - 0.5) * 0.06, -0.008 + rng() * 0.006, a + l / 2, 0, (rng() - 0.5) * 0.07, 0)), { color: worn(rng() < 0.25 ? H.stone : V.flag, rng, 0.2, 0.22), moss: 0.5, wet: 0.08, ground: y - 0.4 }); a += l; }
+      for (let a = 0.55; a < len - 0.9;) { const l = Math.min(len - 0.55 - a, 0.55 + rng() * 0.65); for (const off of [-0.33, 0.33]) if (rng() < keepP) KB.add(box(0.48 + rng() * 0.08, 0.07, l - 0.04, { chip: 0.03, chipTop: true, seed: i * 31 + a }), F.clone().multiply(mat(off + (rng() - 0.5) * 0.06, -0.008 + rng() * 0.006, a + l / 2, 0, (rng() - 0.5) * 0.07, 0)), { color: worn(rng() < 0.25 ? H.stone : V.flag, rng, 0.2, 0.22), moss: 0.5, wet: 0.08, ground: y - 0.4 }); a += l; }
     }
   }
 

@@ -42,11 +42,11 @@ export function room(B, HM, R, r) {
     const [ga, gb] = [r.gap[0] - cx, r.gap[1] - cx], keep = top.filter(([x]) => x > gb + 0.05 || x < ga - 0.05), hi = h + pf;
     top.length = 0; top.push(...keep.filter(([x]) => x > gb), ...(gb < w / 2 - 0.05 ? [[gb, hi]] : []), [Math.min(gb, w / 2), h + 0.02], [Math.max(ga, -w / 2), h + 0.02], ...(ga > -w / 2 + 0.05 ? [[ga, hi]] : []), ...keep.filter(([x]) => x < ga));
   }
-  facade(B, ch(HM, cx, 0, zf - T / 2), { w, top, d: T, openings: (r.openings || []).map((op) => ({ ...op, x: op.x - cx })), color: col, moss, ground: g0, n: r.low ? 7 : 10, emit: limeGlow(col) });
+  facade(B, ch(HM, cx, 0, zf - T / 2), { w, top, d: T, openings: (r.openings || []).map((op) => ({ ...op, x: op.x - cx, ...(op.door ? { y: (op.y || 0) + 0.012 } : {}) })), color: col, moss, ground: g0, n: r.low ? 7 : 10, emit: limeGlow(col) }); // (a door's sill a finger over the floor: on a built tread it lay in the tread's own plane)
   const side = (hh, x, z, ww, dd, seed) => B.add(B.box(ww, hh + 0.5, dd, { seg: 1.5, chip: 0.05, chipTop: true, seed }), ch(HM, x, (hh - 0.5) / 2, z), { color: worn(col, rng, 0.06, 0.06), moss, ground: g0, disp: 0.018, dispScale: 1.4, emit: limeGlow(col) });
   side(h + pb, cx, zb + T / 2, w, T, 3);
-  side(h + pl, x0 + T / 2 + 0.015, (zb + zf) / 2 - 0.045, T, dep - 0.12, 5);
-  side(h + pr, x1 - T / 2 - 0.015, (zb + zf) / 2 - 0.045, T, dep - 0.12, 7);
+  side(h + pl, x0 + T / 2 + 0.04, (zb + zf) / 2 - 0.045, T, dep - 0.12, 5); // (set in from the front's ends by more than their own roughness, 18 mm: at 15 mm a side wall's face came into the plane of the front's end)
+  side(h + pr, x1 - T / 2 - 0.04, (zb + zf) / 2 - 0.045, T, dep - 0.12, 7);
   B.add(B.box(w - 0.3, 0.26, dep - 0.3, { seg: 9 }), ch(HM, cx, h - 0.13, (zb + zf) / 2), { color: worn(V.mud, rng, 0.2), moss: 0.25, ground: g0 });
   // what stops each opening: a leaf behind a door, a pane or a shutter behind a window
   for (const op of r.openings || []) {
@@ -185,7 +185,7 @@ export function late(B, M, o = {}) {
       R.wall(sx, lz - Math.min(0.55, ld - 0.2), sx, lz - ld + 0.1, -0.4, h + 0.4 - 0.16, 0.42); // (its round end clear of the top treads)
     } else if (stair === 'front') {
       const sz = zfr + sw / 2 - 0.01, fx0 = la - side * run;
-      flight(B, HM, R, { x: fx0, z: sz, dx: side, dz: 0, w: sw, h, tread, color: sc, color2: sc2, seed, into: 0.4, ox: 0, oz: -1 });
+      flight(B, HM, R, { x: fx0, z: sz, dx: side, dz: 0, w: sw, h, tread, color: sc, color2: sc2, seed, into: 0.3, ox: 0, oz: -1 }); // (into the wall and not through it: at 0.4 its back came out of a battered wall's inner face)
       const lw = Math.abs((side > 0 ? x1 : x0) - la);
       B.add(B.box(lw, h + 0.4, 1.4, { seg: 1.5, chip: 0.03, chipTop: true }), ch(HM, la + side * lw / 2, (h - 0.4) / 2, sz + sw / 2 - 0.7), { color: sc, moss: 0.25, ground: g0 });
       R.floor(la + side * lw / 2, sz + sw / 2 - 0.95, lw, 1.9, h, { layer: 1 }); // the landing, and on over the wall's head
