@@ -178,6 +178,12 @@ const R = await page.evaluate(async () => {
     const PS = fp.passage, P = PS.plan, SP = P.SP, q = { i: 0, s: 0, d: 0, e: 0, t: 0 };
     // its cuts into other modules' meshes each removed something (a renamed or reshaped mesh makes one a silent no-op)
     res.push({ bwCuts: true, cuts: { ...PS.cuts }, pit: !!(fp.pit && !fp.pit.off) });
+    // the door opens onto the passage: from the sill, looking down the old stair's stub at eye height, the first thing
+    // hit past the stub's own walls is the passage, not the hall road's mesh (its black end or fall left standing)
+    { const D = (await import('/src/v14/coffin-road/plan.js')).DOOR, TH = fp.THREE, rc = new TH.Raycaster(); let seen = [];
+      for (const [dx, dy] of [[0, 1.6], [0.4, 1.0], [-0.4, 2.2]]) { rc.set(new TH.Vector3(D.x + dx, D.sill + dy, D.z + 1.0), new TH.Vector3(0, -0.05, 1).normalize()); rc.far = 30;
+        const h = rc.intersectObjects(fp.scene.children, true).find((x) => x.object.visible && !/points/.test(x.object.name)); seen.push(h ? h.object.name : 'nothing'); }
+      res.push({ bwDoor: true, seen }); }
     // the gatehouse from the Pit's side: a hurry at each pier's face and outer corner from 6 m out on the floor never
     // puts the walker inside a pier or behind it, nor drops them into the trench
     { const po = PS.portal, ox = -P.IN[0], oz = -P.IN[1], rx = -oz, rz = ox, M = P.M;
@@ -301,6 +307,7 @@ for (const r of R) {
   if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Noon Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
   if (r.bwOff) { check(false, 'the Wellward Way is built (its edges rows run)', r.why); continue; }
   if (r.bwCuts) { const need = ['fall', 'throat'].concat(r.pit ? ['pitRock'] : []); check(need.every((k) => r.cuts[k] > 0), 'the Wellward Way: each of its cuts into another module\'s mesh removed something', need.map((k) => `${k} ${r.cuts[k]}`).join(', ') + `; terrain ${r.cuts.terrain} (may be 0), colliders ${r.cuts.colliders}`); continue; }
+  if (r.bwDoor) { check(r.seen.every((n) => /^passage/.test(n)), 'the Wellward Way: from the Nave\'s south door the eye sees down into the passage, not a wall', r.seen.join(', ')); continue; }
   if (r.bwPier) { check(r.inside === 0 && r.drop < 1, `the Wellward Way: ${r.bwPier}: never inside or behind a pier, never dropped`, `${r.inside} ticks inside, dropped ${f(r.drop)} m, got to ${f(r.far)} m along`); continue; }
   if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Wellward Way: ${r.bw}: held on its floor, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
   if (r.gulf) { check(r.caught && r.back !== null && r.back <= 3 && r.low > -0.15, 'the Wellward Way: dropped into the Gulf off the bridge, caught and put back on the bridge within 3 s', `${r.caught ? 'caught' : 'not caught'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.low)} m under the catch`); continue; }

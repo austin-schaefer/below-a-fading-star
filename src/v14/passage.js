@@ -527,7 +527,7 @@ export async function build(ctx) {
     const cr = scene.getObjectByName('coffin-road'), g = cr?.geometry, A = g?.attributes.position;
     if (A && !g.index) {
       const p = A.array, x0 = DOOR.x - DOOR.half - 1.2, x1 = DOOR.x + DOOR.half + 1.2, zc = DOOR.fall + 0.3; // (its floor and walls start before)
-      const y0 = START.y - 0.65, y1 = DOOR.sill + DOOR.h - 0.01;
+      const y0 = START.y - 0.65, y1 = DOOR.sill + DOOR.h + 0.01; // (up to the vault: the black end's top is at it)
       for (let t = 0; t < p.length; t += 9) {
         let ok = true;
         for (let v = 0; v < 9 && ok; v += 3) { const x = p[t + v], y = p[t + v + 1], z = p[t + v + 2]; if (x < x0 || x > x1 || z < zc || z > zc + 6 || y < y0 || y > y1) ok = false; }
