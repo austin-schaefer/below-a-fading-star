@@ -205,7 +205,7 @@ export const LANES = [
   // stand: V0 drew it through the stable and both its houses on the stable's walls)
   lane('wall-lane', 'foot', 2.4, [[93.6, -30.3], [100, -29.6], [108, -28.6], [112.5, -31]], 'the Thumbway [Proposed]: under the house\'s south wall, from its south door (the Afterdoor [Proposed]) to its east side'),
   lane('gate-lane', 'foot', 2.4, [[112.5, -31], [116.4, -36.2], [116.7, -48], [116.2, -57.5], [115.4, -64.3], [108.5, -64.8], [100, -62.5], [95, -61]], 'the Hitch [Proposed]: round the back of the house\'s stable to its gate'),
-  lane('ramp-cut', 'foot', 1.4, [[103.3, -17.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
+  lane('ramp-cut', 'foot', 1.4, [[104.3, -17.3], [104.15, -19.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
 ];
 
 // ---------------------------------------------------------------- the two squares

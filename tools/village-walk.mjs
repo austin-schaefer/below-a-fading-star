@@ -56,7 +56,7 @@ const route = await page.evaluate(async (quarter) => {
   if (quarter) {
     const lane = (n) => P.LANES.find((l) => l.name === n).pts, D = P.HOUSE.door, G = P.HOUSE.gate, cx = (P.HOUSE.x0 + P.HOUSE.x1) / 2, cz = (P.HOUSE.z0 + P.HOUSE.z1) / 2, wl = lane('wall-lane'), gl = lane('gate-lane');
     // the ramp's foot; between the garden and the wreck's neck to the old kerb; up the kerb to the market; the Thumbway west to the south door
-    push([103.6, -16.8], 'ramp-foot'); for (const q of lane('ramp-cut')) push(q, q === lane('ramp-cut')[2] ? 'slip' : undefined); for (const q of [...lane('ramp-cut')].reverse()) push(q); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
+    push([103.6, -16.8], 'ramp-foot'); for (const q of lane('ramp-cut')) push(q, q === lane('ramp-cut')[3] ? 'slip' : undefined); for (const q of [...lane('ramp-cut')].reverse()) push(q); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
     // through the door, across the court, out of the north gate
     push([D.x, D.z + 1.3], 'south-door'); push([D.x, D.z - 0.2], 'in-the-door'); push([D.x, D.z - 2.6], 'gallery'); push([cx - 2.8, cz + 6]); push([cx - 2.8, cz - 6], 'court'); push([G[0], G[1] + 2.2], 'gate-inside'); push([G[0], G[1] - 2.6], 'gate-outside');
     // round the house by the Hitch: the far side, the two houses, the stable's back, the Thumbway's east end

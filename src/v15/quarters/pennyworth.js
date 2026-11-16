@@ -180,10 +180,10 @@ export async function build(ctx) {
   // the block of the keep: news is sold over it
   {
     const f = P.fixture('news-block'), g = G(f.x, f.z), M = frame(f, g);
-    const Mb = ch(M, 0, -0.14, 0, 0.03, 0, -0.05);
+    const Mb = ch(M, 0, -0.22, 0, 0.03, 0, -0.05);
     B.add(B.box(1.95, 1.02, 1.05, { seg: 0.5, chip: 0.09, seed: 21 }), ch(Mb, 0, 0.51, 0), { color: worn(H.stone, rng, 0.1), moss: 0.45, ground: g, disp: 0.012, dispScale: 2 });
-    PARTS.heliarch.roundel(B, ch(Mb, 0.42, 1.0, 0.28, -Math.PI / 2, 0, 0.5), { size: 0.62, disc: 'bronze' }); // the sign it carried, on its back now
-    ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a block of Carcanet Keep for the news-seller\'s counter', x: f.x, y: g, z: f.z, mount: 'ground', r: 1.0 });
+    PARTS.heliarch.roundel(B, ch(Mb, 0.3, 1.02, 0.08, -Math.PI / 2, 0, 0.5), { size: 0.62, disc: 'bronze' }); // the sign it carried, on its back now
+    ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a block of Carcanet Keep for the news-seller\'s counter', x: f.x, y: g - 0.22, z: f.z, mount: 'ground', r: 0.9 });
     // a cloth over its west end under a stone, a bench of a plank on two stones behind
     cloth(Mb, [[-0.99, 1.045, 0.54], [-0.3, 1.05, 0.54], [-0.3, 1.05, -0.54], [-0.99, 1.045, -0.54]], 0, worn(V.saffron, rng, 0.35));
     B.add(B.rock(0.11, 0, 1, 0.6, 1), ch(Mb, -0.7, 1.1, -0.3), stoneO(g, 0.25));
@@ -204,7 +204,7 @@ export async function build(ctx) {
       const len = Math.hypot(x2 - x1, z2 - z1), ry = Math.atan2(x2 - x1, z2 - z1), n = Math.max(1, Math.round(len / 1.5));
       for (let i = 0; i < n; i++) {
         const t = (i + 0.5) / n, x = x1 + (x2 - x1) * t, z = z1 + (z2 - z1) * t, h = 0.5 + rng() * 0.16, wp = world(M, x, 0, z), g = G(wp.x, wp.z) - g0;
-        B.add(B.box(0.26, h + 0.5, len / n + 0.02, { seg: 0.8, chip: 0.05, chipTop: true, seed: x * 3 + z }), ch(M, x, g + h / 2 - 0.25, z, 0, ry, 0), { color: worn(V.mud, rng, 0.2, 0.16).lerp(L.plaster[0], 0.25 * rng()), moss: 0.4, ground: g0 + g, disp: 0.02, dispScale: 2 });
+        B.add(B.box(0.26 + (i % 2) * 0.02, h + 0.5, len / n + 0.02, { seg: 0.8, chip: 0.05, chipTop: true, seed: x * 3 + z }), ch(M, x, g + h / 2 - 0.25, z, 0, ry, 0), { color: worn(V.mud, rng, 0.2, 0.16).lerp(L.plaster[0], 0.25 * rng()), moss: 0.4, ground: g0 + g, disp: 0.02, dispScale: 2 });
         if (rng() < 0.7) { B.add(B.box(0.36, 0.06, len / n * (0.6 + rng() * 0.3), { seg: 9, chip: 0.02 }), ch(M, x, g + h - 0.005, z, 0, ry, 0), { color: worn(H.dark, rng, 0.15), moss: 0.5, ground: g0 + g }); cop.push([x, g + h + 0.025, z, ry]); }
       }
       collide(M, x1, z1, x2, z2, 0.15, -0.4, 1.05);
@@ -331,7 +331,7 @@ export async function build(ctx) {
         PARTS.heliarch.drum(B, ch(M, -0.9, 0.3, 0.5, Math.PI / 2 - 0.06, 0.7, 0), { r: 0.35, h: 0.8, moss: 0.6 }); PARTS.heliarch.capital(B, ch(M, -1.75, 0.34, -0.2, 0, 0.2, Math.PI / 2 + 0.2), { r: 0.33 }); // (away from the kerb, which lies to this post's +x)
         const a = world(M, -0.9, 0, 0.5); ctx.addCollider({ x: a.x, z: a.z, r: 0.5, y: g - 0.3, h: 0.95 }); const b = world(M, -1.75, 0, -0.2); ctx.addCollider({ x: b.x, z: b.z, r: 0.45, y: g - 0.3, h: 0.9 });
       }
-      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a post at the Leave (${name})`, x: f.x, y: g, z: f.z, mount: 'ground', r: 0.5 });
+      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a post at the Leave (${name})`, x: f.x, y: g - 0.25, z: f.z, mount: 'ground', r: 0.36 });
     }
     const a = P.fixture('leave-east'); place('the Leave', mat(a.x, G(a.x, a.z), a.z), -1.2, 0, 1.0, 'someone leaving, or looking back, under the last lamp');
   }
