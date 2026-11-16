@@ -98,7 +98,7 @@ export function lampMesh(ctx, lamps, U) {
   geo.setAttribute('aPivot', new THREE.Float32BufferAttribute(piv, 3));
   geo.setAttribute('aMeta', new THREE.Float32BufferAttribute(meta, 4));
   geo.computeBoundingSphere();
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.35 });
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.35, side: THREE.DoubleSide }); // (v15-Q4: the lanterns' glass and brackets are single leaves, and with lanes round the house they are seen from every side)
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uK = U.uK; sh.uniforms.uTime = U.uTime; sh.uniforms.uSway = U.uSway;
     sh.vertexShader = sh.vertexShader

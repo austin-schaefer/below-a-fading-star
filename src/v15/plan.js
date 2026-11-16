@@ -156,13 +156,18 @@ export function levelAt(x, z) {
   if (D < RISERS[0].D) return D > RISERS[0].D - APRON - 6 ? LEVEL.crown : null;
   return D < RISERS[1].D ? LEVEL.high : D < RISERS[2].D ? LEVEL.mid : LEVEL.low;
 }
-// the lanes round the Pomegranate House (x 82..108, z -58..-32) that belong to the Pennyworth: 9 m out from its east
-// wall and 5 m from its south
-export const HOUSE = { x0: 82, x1: 108, z0: -58, z1: -32, gate: [95, -58], ground: -0.8 };
-function inHouseLanes(x, z) { return x > HOUSE.x1 && x < HOUSE.x1 + 9 && z > HOUSE.z0 - 4 && z < HOUSE.z1 + 6; }
+// the lanes round the Pomegranate House (x 82..108, z -58..-32) that belong to the Pennyworth: 11.5 m out from its
+// east wall (past its stable, to the foot of the field bank the house's lamp poles stand along), 5 m from its south,
+// and round its north-east corner. `door`: the south door (v15-Q4), cut through the wall's tenth bay from the east,
+// under the bracket lamp that hangs there, where the gallery's roof is patched with cloth (src/structures/taverna.js).
+export const HOUSE = { x0: 82, x1: 108, z0: -58, z1: -32, gate: [95, -58], ground: -0.8, door: { x: 92.8, z: -32, w: 1.2, sp: 1.5 }, stable: { x0: 109.6, x1: 114.9, z0: -48.9, z1: -37.1 } };
+function inHouseLanes(x, z) { return x > HOUSE.x1 && x < HOUSE.x1 + 11.5 && z > HOUSE.z0 - 8.5 && z < HOUSE.z1 + 6; }
 export function quarterOf(x, z) { const l = levelAt(x, z); return l ? l.quarter : null; }
 // where the village has the ground to itself: no yews, blocks, grass tufts, rocks or scatter. A margin wider than the
 // built ground (2 m), and the whole of the fades.
+// the box the Pennyworth's plots and the foot's lanes lie in (villageClear asks at every point of a wide ring at load: outside it, no loop)
+let FOOT_BOX_ = null;
+const footBox = () => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity; const eat = (x, z, p) => { x0 = Math.min(x0, x - p); x1 = Math.max(x1, x + p); z0 = Math.min(z0, z - p); z1 = Math.max(z1, z + p); }; for (const p of PLOTS_) if (p.quarter === 'pennyworth') eat(p.x, p.z, Math.hypot(p.w, p.d) / 2 + 1.5); for (const l of LANES) if (l.level === 'foot') for (const q of l.pts) eat(q[0], q[1], l.width / 2 + 0.6); return [x0, x1, z0, z1]; };
 // (v15-Q3) The Lees' square runs out past the ha-ha's line where the old way's bank comes up to it: the bench is level
 // there to D 30 (the bank's head), and the square's floor is laid on it. 0..1: how much of that ground is the square's.
 export function leesHead(x, z) {
@@ -173,10 +178,12 @@ export function leesHead(x, z) {
 }
 const _h = { run: 0, s: 0, D: 0 };
 export function villageClear(x, z) {
+  const FOOT_BOX = FOOT_BOX_ || (FOOT_BOX_ = footBox());
   const r = radiusOf(x, z);
-  if (r > HAHA + 22 || r < 30) return false;
+  if (r < 30) return false;
+  if (r > HAHA + 22) return r < HAHA + 62 && x > FOOT_BOX[0] && x < FOOT_BOX[1] && z > FOOT_BOX[2] && z < FOOT_BOX[3] && (footLaneDist(x, z) < 0.5 || PLOTS_.some((p) => p.quarter === 'pennyworth' && inPlot(p, x, z, 1.2))); // (v15-Q4) the Hitch's worn line and the two houses beside it, out in the house's grass
   const b = bearingOf(x, z), u = b >= 300 ? b - 360 : b;
-  if (r >= HAHA - 1) return footAmt(x, z, r, b) > 0.02 || inHouseLanes(x, z) || leesHead(x, z) > 0.3;
+  if (r >= HAHA - 1) return footAmt(x, z, r, b) > 0.02 || inHouseLanes(x, z) || leesHead(x, z) > 0.3 || PLOTS_.some((p) => p.quarter === 'pennyworth' && inPlot(p, x, z, 1.2));
   const D = Dof(x, z);
   if (D >= RISERS[3].D - 2) return u > 1 && u < 90;
   return villageAmt(x, z) > 0 && D > RISERS[0].D - APRON;
@@ -206,8 +213,12 @@ export const LANES = [
   lane('mid-lane', 'mid', 1.4, jogged(9.1, [[2, 9, 5.9, 2.3]]), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it; it ducks in under the tube'),
   lane('low-lane', 'low', 1.4, jogged(14.5, [[1, 31, 11.4, 2.2], [2, 9, 11.5, 2.3], [2, 20.1, 12, 1.3]]), 'the Low Rung\'s outer strip; it ducks in under the timber flight, the tube and the bridge\'s pier'),
   lane('lees-street', 'bench', 2.2, [at(1, -6, 22), at(1, 29, 22), at(1, cornerS(1, 19.4), 19.4), at(2, 2, 19.6), at(2, 14, 19.6), at(2, 23.4, 19.8)], 'the bench\'s street: along the Strake\'s fronts (a hand clear of them), past the stair\'s foot, round the corner, along the shops\' forecourts to the house at the east end'),
-  lane('wall-lane', 'foot', 2.4, [[92, -30.2], [100, -29.6], [108, -28.6], [112.5, -31]], 'under the house\'s south wall, from the ramp\'s foot to its east side'),
-  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [112, -45], [110.9, -59], [100, -62.5], [95, -61]], 'round the house\'s east side to its gate'),
+  // (v15-Q4: the wall lane begins at the house's south door, in the pocket under the ramp's head; the gate lane goes
+  // round the back of the house's stable, between it and the field bank, where the house's own lamp poles already
+  // stand: V0 drew it through the stable and both its houses on the stable's walls)
+  lane('wall-lane', 'foot', 2.4, [[93.6, -30.3], [100, -29.6], [108, -28.6], [112.5, -31]], 'the Thumbway [Proposed]: under the house\'s south wall, from its south door (the Afterdoor [Proposed]) to its east side'),
+  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [116.4, -36.2], [116.6, -48], [116.0, -57.5], [115.2, -63.6], [108.5, -63.4], [100, -61.5], [95, -61]], 'the Hitch [Proposed]: round the back of the house\'s stable to its gate'),
+  lane('ramp-cut', 'foot', 1.4, [[104.3, -17.3], [104.15, -19.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
 ];
 
 // ---------------------------------------------------------------- the two squares
@@ -326,12 +337,23 @@ put('masons-yard', 'yard', 'quarrels', 'crown', 2, 5.0, -6.7, 5.4, 3.2, 'new', {
   free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Leaning Lodging', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. [Proposed] name' }); }
 put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. [Proposed] name' });
 // --- the Pennyworth: the foot
-free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.4), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5, 'noon', { note: 'a stalled carrier on its side along the lowest riser: a door cut in its belly, a chimney through its shoulder' });
-free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 116.4, -37, [-1, 0], 6, 4.4, 'late', { y: -0.3, slope: 1.2, note: 'east of the house, facing its wall across the gate lane' });
-free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 116, -50, [-1, 0], 5.6, 4.4, 'late', { y: 0.1, slope: 1.1, note: 'on the old ground past the levelled foot, which falls about a metre across the plot (`slope`): its maker steps the footings' });
+// (v15-Q4: the carrier's plot is 5.8 deep, the widest a wreck is made; the two houses stand north of the house's stable,
+// one on the flat between the stable and the gate, one up on the field bank across the lane from it; the garden is
+// the ground between the stalls, the wall lane, the kerb and the ramp's foot)
+free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.6), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5.8, 'noon', { fronts: ['K1'], note: 'the Spilt Measure [Proposed]: a carrier fallen off the end of the daylight main and lying along the lowest riser, half sunk: someone lives in the sound half, the broken half is a garden' });
+free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
+free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
+// (v15-Q4 round 2) the foot built up to the house: a street down the old kerb, the Hitch's far side, and a pair facing the house's gate. Their `y` is nominal: the quarter's module stands each at the ground before its door, on a footing of older stone where the ground falls away under it.
+free('pennyworth-kerb-1', 'house', 'pennyworth', 'foot', 116.9, -22.1, [-0.86, 0.5], 6, 4.4, 'late', { y: -1.8, slope: 0.8, fronts: ['K1'], note: 'across the old kerb from the garden' });
+free('pennyworth-kerb-2', 'house', 'pennyworth', 'foot', 120.6, -15.8, [-0.86, 0.5], 5.6, 4.2, 'late', { y: -1.85, slope: 0.9, fronts: ['K1'], note: 'across the old kerb from the wreck' });
+free('pennyworth-east-1', 'house', 'pennyworth', 'foot', 118.2, -30, [-1, 0], 5.2, 4.4, 'late', { y: -1.5, slope: 1.2, note: 'at the Thumbway\'s east end, facing the house\'s corner tower' });
+free('pennyworth-hitch-3', 'house', 'pennyworth', 'foot', 121, -39, [-1, 0], 5.6, 4.4, 'late', { y: 1.05, slope: 1.4, note: 'on the Hitch, facing the stable\'s back' });
+free('pennyworth-hitch-4', 'house', 'pennyworth', 'foot', 121.2, -45.3, [-1, 0], 5.8, 4.4, 'late', { y: 1.45, slope: 1.0, note: 'on the Hitch, facing the stable\'s back' });
+free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 4.4, 'late', { y: 1.55, slope: 0.9, note: 'across the gate\'s road from the house, facing its gate' });
+free('pennyworth-gate-2', 'house', 'pennyworth', 'foot', 110.8, -69.4, [0.1, 1], 5.6, 4.4, 'late', { y: 0.95, slope: 1.7, note: 'beside it, toward the Hitch' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
-free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.4, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
-free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107, -24.6, [0, -1], 5, 3.6, 'late', { fronts: ['K1'], note: 'pot herbs and a bean row between the stalls and the wall lane' });
+free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.2, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
+free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1], 4.7, 6.2, 'late', { fronts: ['K1'], note: 'the Grudge [Proposed]: beans on poles, a well under a Heliarch drum, and the Tesserine Moles\' heaps in the beds' });
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
@@ -343,6 +365,43 @@ for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.hand === 'late' && p
 // plot's front 0.9 m is the stair's strip, and that house's wall stands 0.9 m back from the plot's front (`stairStrip`).
 for (const p of PLOTS_) if (p.stair === 'front' && p.quarter === 'rungs') p.stairStrip = 0.9;
 export const PLOTS = PLOTS_;
+// The Pennyworth's small standing things that are not plots (v15-Q4): the market's stalls, the lean-tos against the
+// lowest riser, the well, the posts where the village ends. { name, x, z, r (what it keeps clear), face: [fx, fz] }.
+// The quarter's module builds each where this says; the moles keep off them (molesMay).
+const fix = (name, x, z, r, face, note) => { const l = Math.hypot(face[0], face[1]); return { name, x, z, r, face: [face[0] / l, face[1] / l], y: LEVELS[5].y, note }; };
+const onRiser = (name, b, r, note) => { const a = (b * Math.PI) / 180, [x, z] = polar(b, HAHA + 0.3); return { name, x, z, r, face: [Math.sin(a), -Math.cos(a)], bearing: b, y: LEVELS[5].y, note }; };
+export const FIXTURES = [
+  fix('cloth-stall', 95.0, -28.2, 0.9, [0.3, -1], 'a three-cornered cloth from the ramp\'s revetment to one pole, in the pocket by the south door: slippers, when there are any'),
+  fix('salt-stall', 106.0, -26.5, 1.3, [0, -1], 'the salt-weigher\'s: a plank on two Heliarch drums, the Twk-men\'s perch, a peg at thumb height'),
+  fix('news-block', 108.55, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
+  fix('well', 106.2, -23.5, 1.0, [0, -1], 'the well: a Heliarch drum bored through, a sweep on a forked post'),
+  fix('west-post-1', 70.3, -47, 0.6, [0, 1], 'a post of drums and a lamp where the west way (the path P9) passes the house\'s west wall'),
+  fix('west-post-2', 86.2, -66.6, 0.6, [0, 1], 'the same, where the west way comes round to the gate\'s road'),
+  onRiser('riser-buttress', 65.6, 0.9, 'a Late buttress of plastered rubble raked against the Elder face'),
+  onRiser('riser-repair', 67.1, 1.7, 'the Heliarchy\'s repair: a panel of exact ashlar let into the giants\' face, a blind arch in it'),
+  onRiser('leanto-oil', 69.1, 1.5, 'a lean-to against the riser under a plank roof: lamp oil'),
+  onRiser('leanto-slippers', 70.9, 1.4, 'a second, lower: its board is bare'),
+  fix('leave-east', 122.5, -6.8, 0.6, [0.504, 0.863], 'the Leave [Proposed]: two posts either side of the old kerb where the village ends, and the last lamp'),
+  fix('leave-west', 119.7, -5.2, 0.6, [0.504, 0.863], 'its fellow, broken short'),
+];
+export const fixture = (name) => FIXTURES.find((f) => f.name === name) || null;
+// where a mole may heap in the Pennyworth: in the garden's beds and the bare earth of the market, never under a
+// building, a stall, the well or a lane's worn line
+export function molesMay(x, z) {
+  for (const p of PLOTS_) if (p.quarter === 'pennyworth' && p.kind !== 'garden' && inPlot(p, x, z, 0.5)) return false;
+  for (const f of FIXTURES) if ((x - f.x) ** 2 + (z - f.z) ** 2 < (f.r + 0.4) ** 2) return false;
+  return footLaneDist(x, z) > 0.3;
+}
+// metres outside the nearest lane of the foot (negative on it): the Thumbway and the Hitch
+export function footLaneDist(x, z) {
+  let best = Infinity;
+  for (const l of LANES) if (l.level === 'foot') for (let i = 0; i < l.pts.length - 1; i++) {
+    const a = l.pts[i], b = l.pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], t = clamp01(((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz));
+    const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - l.width / 2;
+    if (d < best) best = d;
+  }
+  return best;
+}
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
 export function plotCorners(p) {
@@ -457,7 +516,11 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, near: ['rungs-houses', 'rungs-ways'], exempt: BURIED }, // (near: the Rungs' houses stand over it, beyond its region, and are taken in part)
   // (v15-Q3) the Lees' square from the old way's bank: through the arch, round the fountain, past the stall to the stair's foot and the Lagan
   { name: 'lappet-lees-square', pts: [at(1, 12.6, 31.4), at(1, 14.4, 28.7), at(1, 16.9, 25.6), at(1, 10.4, 23.2), at(1, 17.4, 22.5), at(1, 22.6, 22.4), at(1, 24.7, 24.1), at(1, 28.6, 23.1), at(1, 32.8, 22.5), at(1, 35.8, 19.8), at(1, 39.5, 18.9)], half: 6, exempt: BURIED },
-  { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
+  { name: 'lappet-pennyworth', pts: [[HOUSE.door.x, HOUSE.door.z + 1.5, LEVELS[5].y], ...LANES.find((q) => q.name === 'wall-lane').pts], half: 6, exempt: BURIED }, // the Thumbway, from the south door's step
+  { name: 'lappet-pennyworth-market', pts: [[98.6, -28.6], [103.5, -28], [107.2, -27.6], [110.8, -26.4], [112.6, -21], [115.2, -16.2], [118.2, -10.6], [121.1, -6]], half: 6, exempt: BURIED }, // along the stalls and down the old kerb past the wreck to the Leave
+  { name: 'lappet-pennyworth-foot', pts: [[103.6, -16.8], [106.6, -17.5], [110.9, -17.5], [113.4, -19.2]], half: 5, exempt: BURIED }, // from the ramp's foot between the garden and the wreck's neck to the kerb
+  { name: 'lappet-pennyworth-skirts', pts: [[117.6, -9.5], [116.2, -3.5], [115.8, 1.6]], half: 8, exempt: BURIED }, // along the lowest riser east of the wreck: the repair, the buttress, the lean-tos
+  { name: 'lappet-pennyworth-hitch', pts: LANES.find((q) => q.name === 'gate-lane').pts.slice(0, 6), half: 9, exempt: { ...BURIED, 'structures-taverna': 'the Pomegranate House is judged whole in its own place, `house`: here the take cuts it at the region\'s edge', 'house-props': 'as the house' } }, // the Hitch, round the stable and between the two houses
   // the Rungs (v15-Q2): its own ways, and the Leads walked along the Low Rung's roofs
   ...[RUNGS.tenter.id, RUNGS.gullet.id, ...RUNGS.stairs].map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
   ...RUNGS.leads.crossings.map((c, i) => ({ name: `lappet-rungs-leads-${i + 1}`, ascent: `rungs-leads-${i + 1}`, half: 5, near: ['rungs-houses', 'village-row'], exempt: BURIED })),

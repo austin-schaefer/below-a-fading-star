@@ -251,7 +251,7 @@ export function late(B, M, o = {}) {
     const px0 = side > 0 ? lx0 + 0.5 : lx1 - 0.5, pz0 = zb + 0.6, pz1 = lzf - 0.6, ph = 2.0;
     for (const z of [pz0, pz1]) { beam(B, HM, [px0, lh, z], [px0, lh + ph, z], 0.07, { color: L.wood, moss: 0.05, ground: g0, round: 5 }); beam(B, HM, [px0, lh + ph, z], [wx - side * 0.05, lh + ph + 0.25, z], 0.06, { color: L.wood, moss: 0.05, ground: g0 }); }
     const nc = low ? 3 : 5, cc = pick([V.saffron, V.teal, V.madder], rng);
-    for (let i = 0; i < nc; i++) { const z = pz0 + (i + 0.5) * (pz1 - pz0) / nc; if (rng() < 0.2) continue; beam(B, HM, [px0, lh + ph + 0.03 - 0.1 * Math.sin(i), z], [wx - side * 0.05, lh + ph + 0.28, z], 0.02, { color: worn(i % 2 ? V.linen : cc, rng, 0.15), moss: 0, ground: g0 }, (pz1 - pz0) / nc * 0.9); }
+    for (let i = 0; i < nc; i++) { const z = pz0 + (i + 0.5) * (pz1 - pz0) / nc; if (rng() < 0.2) continue; beam(B, HM, [px0, lh + ph + 0.03 - 0.1 * Math.sin(i), z], [wx + side * 0.02, lh + ph + 0.28, z], (pz1 - pz0) / nc * 0.9, { color: worn(i % 2 ? V.linen : cc, rng, 0.15), moss: 0, ground: g0 }, 0.02); } // (each width lying flat, its end in the wall it is pegged to)
     pot(B, HM, lcx, lh, lzf - 0.8, 0.26, worn(L.tile[0], rng, 0.35), 2);
     roofBits.push([tcx, th, 'crown']);
   } else if (form === 'stall') {
@@ -260,7 +260,7 @@ export function late(B, M, o = {}) {
     B.add(B.box(sw, h + 0.5, 0.3, { seg: 1.5, chip: 0.04, chipTop: true, seed }), ch(HM, 0, (h - 0.5) / 2, zb + 0.15), col());
     for (const sx of [-1, 1]) B.add(B.box(0.3, h + 0.5 - 0.02, zs - zb - 0.28, { seg: 1.5, chip: 0.04, chipTop: true, seed: seed + sx }), ch(HM, sx * (sw / 2 - 0.15), (h - 0.52) / 2, (zs + zb + 0.3) / 2 - 0.01), col());
     B.add(B.box(sw + 0.24, 0.07, zs - zb + 0.3, { seg: 9 }), ch(HM, 0, h + 0.02, (zs + zb) / 2 + 0.05, 0.05, 0, 0), { color: worn(L.wood, rng, 0.25), moss: 0.2, ground: g0 });
-    niche(B, ch(HM, 0, 0.02, zs - 0.02), sw - 0.64, h - 0.08, zs - zb - 0.34, { color: V.soot.clone().lerp(L.wood, 0.35), moss: 0, ground: g0 - 2 }, { color: new THREE.Color('#2a1a0c'), moss: 0, ground: g0 - 2, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
+    niche(B, ch(HM, 0, 0.02, zs - 0.02), sw - 0.58, h - 0.03, zs - zb - 0.34, { color: V.soot.clone().lerp(L.wood, 0.35), moss: 0, ground: g0 - 2 }, { color: new THREE.Color('#2a1a0c'), moss: 0, ground: g0 - 2, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
     for (const y of [1.25, 1.7]) { B.add(B.box(sw - 0.7, 0.035, 0.26, { seg: 9 }), ch(HM, 0, y, zb + 0.46), { color: L.wood, moss: 0, ground: g0 - 2 }); R.shelf(0, y + 0.02, zb + 0.46, sw - 0.7, 0.26); }
     for (let i = 0; i < (low ? 2 : 5); i++) pot(B, HM, x0 + 0.6 + rng() * (sw - 1.2), i % 2 ? 1.27 : 1.72, zb + 0.46, 0.09 + rng() * 0.05, worn(pick([L.tile[0], V.mud, L.tile[4]], rng), rng, 0.3), 1.6 + rng(), 6);
     const cw = sw - 0.66, cxs = 0; // the counter, wall to wall (its flap lifts)
@@ -269,7 +269,7 @@ export function late(B, M, o = {}) {
     R.counter(cxs, 0.985, zs + 0.2, cw); R.wall(cxs - cw / 2 + 0.28, zs - 0.1, cxs + cw / 2 - 0.28, zs - 0.1, 0, 0.98, 0.28);
     R.wall(x0 + 0.15, zb + 0.15, x1 - 0.15, zb + 0.15, 0, h, 0.15); for (const sx of [-1, 1]) R.wall(sx * (sw / 2 - 0.15), zb + 0.15, sx * (sw / 2 - 0.15), zs - 0.2, 0, h, 0.15);
     R.door(0, zs + 0.5, { w: cw });
-    B.add(B.box(sw - 0.6, 0.3, zs - zb - 0.2, { seg: 9 }), ch(HM, 0, -0.13, (zs + zb) / 2 + 0.1), { color: worn(V.mud, rng, 0.3), moss: 0.1, ground: g0 - 1 });
+    B.add(B.box(sw - 0.6, 0.3, zs - zb - 0.2, { seg: 9 }), ch(HM, 0, -0.145, (zs + zb) / 2 + 0.1), { color: worn(V.mud, rng, 0.3), moss: 0.1, ground: g0 - 1 });
     awning(B, ch(HM, 0, 0, zs + 0.02), { w: sw + 0.1, d: Math.min(1.2, d / 2 + 1.6 - zs), h: h + 0.05, drop: 0.3, rng });
     if (!low) hangSign(B, ch(HM, -side * (sw / 2 - 0.1), h - 0.15, zs), rng, { size: 0.4, reach: 0.6 });
     R.window(0, 1.4, zs, true);

@@ -61,10 +61,16 @@ export function ramp(K, o) {
     }
     return null;
   };
-  K.addFloor(floor, { name: o.name, keep: true, box: boxOf(P.map((p) => [p[0], p[2]]), w) });
-  const A = P[0], Z = P[P.length - 1];
+  // Its edge holds a walker only where the ramp stands more than a step over its own foot. (v15-Q4: the ground just
+  // outside the Pennyworth ramp's outer edge lies 0.3 m under its foot, so the controls' own rule, a drop of over
+  // 0.6 m, held the edge to within 1.4 m of the foot: a wall nobody could see, a hand above the turf. Four touch
+  // walks stuck on it.)
+  const A = P[0], Z = P[P.length - 1], low = Math.min(A[1], Z[1]);
+  const heightNear = (x, z) => { let best = Infinity, y = low; for (const s of segs) { const dx = x - s.a[0], dz = z - s.a[2], t = Math.max(0, Math.min(s.len, dx * s.fx + dz * s.fz)), ex = dx - s.fx * t, ez = dz - s.fz * t, d = ex * ex + ez * ez; if (d < best) { best = d; y = s.a[1] + (s.b[1] - s.a[1]) * t / s.len; } } return y; };
+  const keep = (x, z) => heightNear(x, z) > low + 0.6;
+  K.addFloor(floor, { name: o.name, keep, box: boxOf(P.map((p) => [p[0], p[2]]), w) });
   if (o.register !== false) K.ascent({ id: o.name, held: true, offs: [0.5], path: [[Z[0], Z[2], Z[1]], ...P.slice(1, -1).reverse().map((p) => [p[0], p[2], p[1]]), [A[0], A[2], A[1]]] });
-  return { floor };
+  return { floor, keep };
 }
 const boxOf = (pts, pad) => { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return [x0 - pad, x1 + pad, z0 - pad, z1 + pad]; };
 

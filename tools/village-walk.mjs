@@ -14,13 +14,19 @@
 // the Tenter, the Slype, up the Gullet, the Leads' three crossings, the five house stairs (each in the direction the
 // tour meets it). The ways' points are the registered ascents' own paths; it prints each way as it is finished and a
 // count, and wants the ladder taken once.
+// With route=pennyworth (v15-Q4) it walks the quarter at the hill's foot instead: from the ramp's foot between the
+// garden and the wreck's neck to the old kerb, up it to the market and along the Thumbway to the Pomegranate House's
+// south door, through it, across the court and out of the north gate; round the house by the Hitch (between the two
+// houses, the stable's back); down the kerb past the wreck to the Leave; along the Skirts and back to the ramp.
+//   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk] [route=village|pennyworth]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NNN-<what>.png in order. Prints each frame with where the feet are and
 // on what floor, each time the ladder is taken hold of, and a last line `walked: yes|no`.
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
-const [base = 'http://localhost:8123', mode = 'keys', q = 'low', every0 = '0', prefix0 = 'v15-V0-walk'] = process.argv.slice(2);
+const [base = 'http://localhost:8123', mode = 'keys', q = 'low', every0 = '0', prefix0 = 'v15-V0-walk', routeName = 'village'] = process.argv.slice(2);
+const quarter = routeName === 'pennyworth';
 const every = +every0;
 const prefix = `${prefix0}-${mode}-${q}`;
 const touch = mode === 'touch';
@@ -32,7 +38,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 const RUNGS = process.env.ROUTE === 'rungs';
 const start = RUNGS ? (await import('../src/v15/plan.js')).at(2, 20.5, 20.5).map((v) => v.toFixed(1)).join(',') : '58,-6';
-await page.goto(`${base}/?q=${q}&pos=${start}&yaw=-1.9`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${base}/?q=${q}&${quarter ? 'pos=103.2,-16.2&yaw=2.6' : `pos=${start}&yaw=-1.9`}`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = touch ? 390 : 1280, H = touch ? 844 : 720;
@@ -51,9 +57,25 @@ const s0 = await st();
 const locked = s0.locked;
 console.log(touch ? 'touch page' : `pointer captured: ${s0.locked}${s0.locked ? '' : ' (refused: steering by the page\'s drag-to-look fallback)'}`);
 // the route, from the village's own plan (read only)
-const route = await page.evaluate(async (RUNGS) => {
+const route = await page.evaluate(async ([RUNGS, quarter]) => {
   const P = await import('/src/v15/plan.js'), R = [], S = P.STAIR.s, tb = P.way('noon-main'), ld = P.way('rungs-ladder'), pr = P.way('pennyworth-ramp'), up = P.way('heliarch-upper'), hf = P.way('heliarch-foot');
   const push = (xz, tag) => R.push({ x: xz[0], z: xz[1], tag });
+  if (quarter) {
+    const lane = (n) => P.LANES.find((l) => l.name === n).pts, D = P.HOUSE.door, G = P.HOUSE.gate, cx = (P.HOUSE.x0 + P.HOUSE.x1) / 2, cz = (P.HOUSE.z0 + P.HOUSE.z1) / 2, wl = lane('wall-lane'), gl = lane('gate-lane');
+    // the ramp's foot; between the garden and the wreck's neck to the old kerb; up the kerb to the market; the Thumbway west to the south door
+    push([103.6, -16.8], 'ramp-foot'); for (const q of lane('ramp-cut')) push(q, q === lane('ramp-cut')[3] ? 'slip' : undefined); for (const q of [...lane('ramp-cut')].reverse()) push(q); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
+    // through the door, across the court, out of the north gate
+    push([D.x, D.z + 1.3], 'south-door'); push([D.x, D.z - 0.2], 'in-the-door'); push([D.x, D.z - 2.6], 'gallery'); push([cx - 2.8, cz + 6]); push([cx - 2.8, cz - 6], 'court'); push([G[0], G[1] + 2.2], 'gate-inside'); push([G[0], G[1] - 2.6], 'gate-outside');
+    // the west way (the path P9): from the gate west and north round the house's haha to where the riser shuts it by the north-west tower (no way through to the south door's pocket: 0.3 m between the tower and the riser's end), and back
+    { const ww = [[90, -64.6], [76, -62], [67, -52], [69, -42], [70.5, -36.4], [79.9, -32.6]]; ww.forEach((q, i) => push(q, { 2: 'west-way', 5: 'west-end' }[i])); for (let i = ww.length - 2; i >= 0; i--) push(ww[i]); push([G[0], G[1] - 2.6], 'gate-from-west'); }
+    // round the house by the Hitch: the far side, the two houses, the stable's back, the Thumbway's east end
+    for (let i = gl.length - 1; i >= 0; i--) push(gl[i], { 6: 'hitch-far', 3: 'hitch-houses', 2: 'hitch-stable', 0: 'thumbway-east' }[i]);
+    // down the old kerb past the wreck to the Leave; the Skirts and back; by the neck to the ramp
+    push([110.8, -26.4]); push([112.6, -21]); push([115.2, -16.2], 'wreck'); push([118.2, -10.6]); push([121.1, -6], 'leave');
+    push([117.6, -9.5]); push([116.2, -3.5], 'skirts'); push([115.8, 1.6], 'lean-tos'); push([116.2, -3.5]); push([117.6, -9.5]);
+    push([113.4, -19.2]); push([110.9, -17.5]); push([106.6, -17.5]); push([103.6, -16.8], 'ramp-foot-again');
+    return R;
+  }
   const a = (s, D, tag) => push(P.at(1, s, D), tag), b = (s, D, tag) => push(P.at(2, s, D), tag), pol = (bg, r, tag) => push(P.polar(bg, r), tag);
   if (RUNGS) {
     const A = Object.fromEntries(window.__fp.ascents.list.map((w) => [w.id, w.path]));
@@ -73,7 +95,10 @@ const route = await page.evaluate(async (RUNGS) => {
   a(S, up.D0 + 0.4); a(S, (up.D0 + up.D1) / 2, 'upper-flight'); a(S, up.D1 + 0.9, 'landing'); a(S, 10.4); a(S, 12.8, 'timber'); a(S, 15.9, 'bastion'); a(S, hf.D0 + 0.3); a(S, (hf.D0 + hf.D1) / 2, 'foot-flight'); a(S - 0.8, hf.D1 + 0.4, 'square');
   // to the house's wall by the ramp, and back
   pol(pr.b0 - 3.2, P.HAHA - 2.2); pol(pr.b0 - 1.2, P.HAHA + 1.1, 'ramp-head'); for (const bg of [pr.b0 + 2, pr.b0 + 6, pr.b0 + 10]) pol(bg, P.HAHA + 1.1, bg === pr.b0 + 6 ? 'ramp' : undefined); pol(pr.b1 + 0.6, P.HAHA + 1.1, 'ramp-foot');
+  const cut = (P.LANES.find((l) => l.name === 'ramp-cut') || { pts: [] }).pts; // (v15-Q4: the Slip, between the booths' end and the garden's wall)
+  for (const q of cut) push(q);
   push([P.HOUSE.x1 - 7, P.HOUSE.z1 + 1.3], 'house-wall');
+  for (const q of [...cut].reverse()) push(q);
   pol(pr.b1 + 0.6, P.HAHA + 1.1); for (const bg of [pr.b0 + 10, pr.b0 + 6, pr.b0 + 2]) pol(bg, P.HAHA + 1.1); pol(pr.b0 - 1.2, P.HAHA + 1.1); pol(pr.b0 - 3.2, P.HAHA - 2.2, 'bench');
   // the main from its foot to the breach, the gangway, the Mid Rung
   const k = 4 / 5.4, door = (P.LEVEL.high.y + 0.81 - P.LEVEL.mid.y) / k + P.RISERS[1].D;
@@ -85,7 +110,7 @@ const route = await page.evaluate(async (RUNGS) => {
   const cs = P.cornerS(1, -3.7);
   a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
   return R;
-}, RUNGS);
+}, [RUNGS, quarter]);
 const SENS = touch ? 0.005 : 0.0021;
 const touchPts = (pts) => pts.map(([id, x, y]) => ({ id, x, y }));
 let stickDown = false, stickHome = null;
@@ -136,6 +161,13 @@ const LOOKS = {
   'tube-foot': [['mouth', 0, 0.35]], 'tube-low': [['up', 0, 0.5]], 'tube-mid': [['up', 0, 0.5], ['back', Math.PI, -0.5]], breach: [['out', -1.4, 0]], gangway: [['along', 0, 0], ['back', Math.PI, 0]],
   'mid-rung': [['ladder', 0, 0]], 'ladder-foot': [['back', Math.PI, 0.6]], 'ladder-top': [['back', Math.PI, -0.5]], 'tube-high': [['up', 0, 0.5]], 'tube-top': [['back', Math.PI, -0.5], ['ahead', 0, 0]],
   'head-flight-up': [['ahead', 0, 0.3]], crown: [['house', Math.PI, -0.3]], corner: [['back', Math.PI, -0.1]],
+  // route=pennyworth
+  slip: [['ahead', 0, 0.05], ['back', Math.PI, 0.2]],
+  'west-way': [['ahead', 0, 0.05], ['house', -1.4, 0.15]], 'gate-from-west': [['gate', -1.2, 0.1]], 'west-end': [['ahead', 0, 0.05], ['back', Math.PI, 0.1]],
+  thumbway: [['west', 0, 0.05], ['stalls', 1.5, 0.05]], 'south-door': [['door', 0, 0.1]], 'in-the-door': [['court', 0, 0]], gallery: [['back', Math.PI, 0]], court: [['gate', 0, 0.05]], 'gate-inside': [['back', Math.PI, 0.05]],
+  'gate-outside': [['back', Math.PI, 0.2]], 'hitch-far': [['ahead', 0, 0.05]], 'hitch-houses': [['ahead', 0, 0.2], ['up-the-bank', 1.45, 0.25]], 'hitch-stable': [['ahead', 0, 0.1]], 'thumbway-east': [['keep', -0.66, 0.3]],
+  market: [['stalls', 0.9, 0], ['back', Math.PI, 0.1]], garden: [['garden', 1.2, -0.1]], wreck: [['wreck', -1.1, 0.05]], leave: [['out', 0, 0], ['back', Math.PI, 0.15]], skirts: [['riser', -1.5, 0.2]], 'lean-tos': [['lean-tos', -1.3, 0.1], ['back', Math.PI, 0.1]],
+  neck: [['ahead', 0, 0.1]], 'ramp-foot-again': [['back', Math.PI, 0.1]],
 };
 await shot('start');
 await walkOn(true);
@@ -170,4 +202,4 @@ console.log(`ladder taken ${climbs} times; page errors: ${errors.length}${errors
 if (RUNGS) console.log(`ways walked: ${ways} of ${route.filter((w) => w.tag && w.tag.startsWith('way:')).length}`);
 console.log(`walked: ${walked ? 'yes' : 'no'}`);
 await browser.close();
-process.exit(walked && climbs >= (RUNGS ? 1 : 2) && !errors.length ? 0 : 1);
+process.exit(walked && (quarter || climbs >= (RUNGS ? 1 : 2)) && !errors.length ? 0 : 1);

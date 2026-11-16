@@ -155,6 +155,8 @@ const r = await page.evaluate(async () => {
   let draws = 0; fp.scene.traverse((o) => { if (o.isMesh && /^village-row/.test(o.name)) draws++; }); out.row.draws = draws;
   const roof = (V.row.records.find((q) => q.kind === 'late') || V.row.records[0]).floors.find((f) => f.layer === 1 && !f.steps && f.r === undefined && f.w > 3);
   if (roof) { fp.controls.placeAt(roof.x, roof.z, roof.y); await new Promise((q) => setTimeout(q, 600)); out.row.roof = { want: roof.y, feet: fp.player.pos.y - fp.player.eye }; }
+  // (v15-Q4) the Pennyworth ramp's edge: open over its last fall, held where it stands high
+  { const P = fp.lappet.plan, pr = P.way('pennyworth-ramp'), rk = fp.lappet.built['pennyworth-ramp']?.keep, at = (b) => P.polar(b, P.HAHA + 2.6); out.ramp = rk ? { foot: rk(...at(pr.b1 - 0.6)), high: rk(...at(pr.b0 + 3)), ground: fp.terrain.heightAt(...at(pr.b1 - 0.6)) } : null; }
   return out;
 });
 await browser.close();
@@ -188,6 +190,7 @@ check(r.sweep.length === 0, `every building plot of the real plan builds at seed
 check(r.row.records === 5 && new Set(r.row.kinds).size === 5, `the row: five buildings of five kinds (${r.row.kinds.join(', ')})`);
 check(r.row.draws <= 3 && r.row.tris <= 45000, `the row: ${r.row.draws} draw calls, ${r.row.tris} triangles on low (${r.row.perHouse.map((h) => `${h.kind} ${h.tris}`).join(', ')})`);
 check(r.row.roof && Math.abs(r.row.roof.feet - r.row.roof.want) < 0.1, `the row: a walker placed on the Late house's roof stands on it (${r.row.roof ? r.row.roof.feet.toFixed(2) + ' for ' + r.row.roof.want.toFixed(2) : 'no roof floor'})`);
+check(r.ramp && r.ramp.foot === false && r.ramp.high === true, `the Pennyworth ramp's outer edge is open over its last 0.6 m of fall and held where it stands high (the ground outside its foot ${r.ramp ? r.ramp.ground.toFixed(2) : '?'}: lower than the foot, which held it)`);
 check(errors.length === 0, `no page errors (${errors.length}${errors.length ? ': ' + errors[0] : ''})`);
 console.log(`village-test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
