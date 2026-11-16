@@ -84,7 +84,7 @@ export function buildHud(ctx) {
       if (k < bestD) { bestD = k; best = key; }
     }
     let near = bestD < 6 ? best : null;
-    if (near === null && ctx.regions) { // no landmark card is up: a region card, where the region holds half the ground or more
+    if (near === null && ctx.regions && !(ctx.below?.here > 0.5)) { // no landmark card is up: a region card, where the region holds half the ground or more (never under the ground, v14-F1)
       const w = ctx.regions.regionAt(p.x, p.z, rw);
       for (const [key, R] of regionList) if (w[R.region] >= 0.5) { near = 'region:' + key; break; }
     }
