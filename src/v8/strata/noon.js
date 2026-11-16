@@ -19,7 +19,7 @@ const c = (h) => new THREE.Color(h);
 export const NOON = {
   milk: c('#c9c3b0'), cloud: c('#9a9685'), bone: c('#aaa48f'), amber: c('#8a5418'), honey: c('#d9a04a'), biscuit: c('#6a6051'), celadon: c('#8fb09c'), oxblood: c('#701c16'),
   // the glazes as fields: a deep celadon pooled thick, a thin one broken over a rim, ox-blood fired dark, amber glass
-  celadonD: c('#5d8a77'), celadonT: c('#a3bba7'), oxbloodD: c('#561510'), amberG: c('#9a5c1a'),
+  celadonD: c('#5f7d5f'), celadonT: c('#b4c2a6'), oxbloodD: c('#561510'), amberG: c('#9a5c1a'),
   lime: c('#d4cfbb'), silt: c('#3a382f'), dark: c('#0b0a08'), strand: c('#b9b4a2'),
   light: [1.0, 0.93, 0.74], lightHex: '#ffedbd',
 };
@@ -84,22 +84,40 @@ export const GLAZES = [
 // collar: the thick ring where two lengths were joined (a gall on the line), a band of ox-blood glaze beside it.
 // o: r (3: the centre-line radius), t (0.26: its section), a0, a1 (the arc left standing, from the crown), band (true)
 // glaze: [field, band, rim] (GLAZES) paints it as a thrown ring: the field on its faces in throwing rings, the glaze
-// broken thin to milk over its outer rim, a run of drips from the field's edge; cells: n amber bull's-eyes in a row
-// round each face (the collector's register)
+// broken thin to milk over its outer rim, a run of drips from the field's edge; inlay: an amber glass band in each face
 function collar(B, M, o = {}) {
   const r = o.r ?? 3, t = o.t ?? r * 0.085, a0 = o.a0 ?? -Math.PI, a1 = o.a1 ?? Math.PI, seg = o.seg ?? 44, G = o.glaze;
   const paint = G ? (x, y, z, out) => {
     const rr = Math.hypot(x, y), a = Math.atan2(x, y), u = (rr - r) / t, v = z / t; // u out across the section, v along the axis
-    if (u > 0.55 + 0.25 * drip(a, 3, 14)) return setC(out, NOON.milk, thrown(a * r, 0.5)); // the rim: the glaze broke thin, the milk body
-    return setC(out, G[0], thrown(rr, 0.07) * (0.9 + 0.12 * Math.abs(v)));
+    const e = 0.55 + 0.25 * drip(a, 3, 14);
+    if (u > e) return setC(out, NOON.milk, thrown(a * r, 0.5)); // the rim: the glaze broke thin, the milk body
+    // glaze, not paint: pooled deep and dark in the throwing rings, thin and pale over the ridges and toward the rim
+    const ridge = 0.5 + 0.5 * Math.sin(rr / 0.07 * Math.PI * 2), thin = Math.min(1, Math.max(0, (u - e + 0.4) / 0.4));
+    mixC(out, G[0], NOON.dark, 0.3 * (1 - ridge) * (0.9 + 0.12 * Math.abs(v)));
+    const f = Math.min(1, 0.22 * ridge + 0.7 * thin * thin);
+    out[0] += ((NOON.celadonT.r + NOON.milk.r) / 2 - out[0]) * f; out[1] += ((NOON.celadonT.g + NOON.milk.g) / 2 - out[1]) * f; out[2] += ((NOON.celadonT.b + NOON.milk.b) / 2 - out[2]) * f;
+    return out;
   } : null;
   put(B, ringZ(r, t, a0, a1, seg, o.sec ?? 8), M, { color: o.color || NOON.milk, wear: o.wear, glow: o.glow, paint });
-  // the cells were set by hand, not by a jig: each its own size and a little off the line, some fallen out (a dark socket)
-  const crng = mulberry(Math.round(r * 1000 + a0 * 97));
-  if (G && o.cells) for (const s of [-1, 1]) for (let i = 0; i < o.cells; i++) {
-    const a = a0 + (a1 - a0) * (i + (s > 0 ? 0.25 : 0.75) + (crng() - 0.5) * 0.3) / o.cells, gone = crng() < 0.22, cr = t * (0.48 + 0.24 * crng()), off = (crng() - 0.5) * t * 0.5;
-    if (a1 - a0 < 6.2 && (a - a0 < 0.12 || a1 - a < 0.12)) continue;
-    lens(B, T(M, Math.sin(a) * (r + off), Math.cos(a) * (r + off), s * t * 0.97, s > 0 ? 0 : Math.PI, 0, 0), { r: cr, lit: gone ? 0 : o.cellLit ?? 0.12, wear: o.wear, rim: G[1], glass: gone ? NOON.dark : crng() < 0.3 ? NOON.amberG : NOON.honey, cheap: true, bulge: gone ? 6 : 2.2 });
+  // inlay: a band of amber glass laid into each face while the clay was soft, and fired in: one run round the ring, its
+  // width uneven, cracked across in places and gone in stretches (the socket left dark). inlayLit (0..1): how much of a
+  // lit carrier's light it catches
+  if (G && o.inlay) {
+    const crng = mulberry(Math.round(r * 1000 + a0 * 97 + t * 13)), k = o.inlayLit || 0;
+    for (const s of [-1, 1]) {
+      let a = a0 + 0.08, ph = crng() * 6.28;
+      while (a < a1 - 0.1) {
+        const run = Math.min(a1 - 0.08, a + 0.5 + crng() * 0.7), lost = crng() < 0.15, col = lost ? NOON.silt : k > 0 ? NOON.honey : NOON.amberG;
+        // a run of the band, drawn as short overlapping pieces whose width and line wander, so its edges are uneven
+        for (let p0 = a; p0 < run - 0.01;) {
+          const p1 = Math.min(run, p0 + 0.14), mid = (p0 + p1) / 2, w = t * (0.24 + 0.1 * Math.sin(mid * 7 + ph) + 0.05 * Math.sin(mid * 23 + ph * 2));
+          const g = ringZ(r + t * 0.06 * Math.sin(mid * 5 + ph), w, p0, Math.min(run, p1 + 0.012), 4, 5).scale(1, 1, 0.3);
+          put(B, g, T(M, 0, 0, s * t * 0.94), lost ? { color: col, wear: o.wear } : { color: col, wear: o.wear, glow: k > 0 ? k * (0.6 + 0.4 * Math.sin(mid * 3 + ph)) : null, jit: 0.04 });
+          p0 = p1;
+        }
+        a = run + (crng() < 0.8 ? 0.008 : 0.04); // a crack across it
+      }
+    }
   }
   if (o.band !== false) put(B, ringZ(r + t * 0.15, t * 0.62, a0, a1, seg, 6), T(M, 0, 0, t * 0.95), { color: G ? G[1] : NOON.oxblood, wear: o.wear, glow: o.glow });
   // a broken end is a clean shell-fracture: a dark disc across the section
@@ -137,7 +155,7 @@ function tube(B, M, o = {}) {
   if (typeof B.vert !== 'function') { const g = wall().scale(0.985, 0.985, 1); g.setIndex(idx.map((_, k) => idx[k - (k % 3) + [0, 2, 1][k % 3]])); put(B, g, M, { color: NOON.cloud }); } // (single-sided stone: its inside)
   const every = o.rib ?? (G ? 0 : 1.1);
   if (every > 0) for (let z = every; z < len - 0.3 - rag; z += every) put(B, ringZ(r + 0.03, r * 0.022, a0 + rag * 0.2, a1 - rag * 0.2, o.seg ?? 40, 5), T(M, 0, 0, z), { color: NOON.bone, wear: o.wear, glow: o.lit ? 0.2 * o.lit : null });
-  if (o.collar !== false) collar(B, M, { r: r + r * 0.06, t: r * 0.085, a0, a1, wear: o.wear, seg: o.seg, glaze: G, cells: o.cells });
+  if (o.collar !== false) collar(B, M, { r: r + r * 0.06, t: r * 0.085, a0, a1, wear: o.wear, seg: o.seg, glaze: G, inlay: o.inlay, inlayLit: o.inlayLit });
 }
 // lens: a bull's-eye, facing +z: a low dome of amber or clear glass in a rolled rim. o: r (0.55), lit, glass
 function lens(B, M, o = {}) {
