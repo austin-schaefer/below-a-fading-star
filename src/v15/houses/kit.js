@@ -292,7 +292,8 @@ export function climbLadder(B, M, R, foot, top, w, o, f) {
   const k = (f.y1 - foot[1]) / (top[1] - foot[1]), X = (i) => foot[i] + (top[i] - foot[i]) * k;
   const F = R.W(foot[0], foot[1], foot[2]), C = R.W(X(0), f.y1, X(2)), h = R.W(f.head[0], f.y1, f.head[1]), a = R.W(f.away[0], f.y1, f.away[1]);
   const nl = Math.hypot(C.x - F.x, C.z - F.z) || 1;
-  R.ladders.push({ foot: [F.x, F.z, F.y], top: [C.x, C.z, C.y], n: [(C.x - F.x) / nl, (C.z - F.z) / nl], head: [h.x, h.z], away: [a.x, a.z] });
+  const nx = (C.x - F.x) / nl, nz = (C.z - F.z) / nl;
+  R.ladders.push({ foot: [F.x, F.z, F.y], top: [C.x, C.z, C.y], n: [nx, nz], head: [h.x, h.z], away: [a.x, a.z], from: [F.x - nx * 1.3, F.z - nz * 1.3] }); // (from: a stride and a half out: a house's front may stand near a brink)
 }
 // washing on a line between two local points: the line sags, the cloths hang off true
 export function washing(B, M, a, b, rng, n = 4) {

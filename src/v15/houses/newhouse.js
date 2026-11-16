@@ -136,16 +136,17 @@ export function newhouse(B, M, o = {}) {
   for (let i = 0; i < 3; i++) B.add(B.box(sx1 - sx0 + 0.5 - i * 0.2, 0.045, 0.27, { seg: 9 }), ch(M, (sx0 + sx1) / 2 + (i - 1) * 0.07, sy + 0.01 + i * 0.004, sz - 0.2 - i * 0.3, 0, (rng() - 0.5) * 0.03, 0), { ...raw, color: worn(V.rawWood, rng, 0.12) });
   // on the stage: a block waiting, the mortar board
   // (the block at the stage's far end from the ladder, the board at its near end: v15-W2, the stage is walked)
-  const kbx = side > 0 ? sx1 - 0.7 : sx0 + 0.7, mbx = side > 0 ? sx0 + 0.75 : sx1 - 0.75;
-  B.add(B.box(0.8, CH, BT, { seg: 9, chip: 0.014 }), ch(M, kbx, sy + 0.25, sz - 0.5, 0, 0.3, 0), fresh());
+  // (only where the stage is long enough that a walker passes from the ladder's head to the stage's middle clear of it)
+  const kbx = side > 0 ? sx1 - 0.25 : sx0 + 0.25, mbx = side > 0 ? sx0 + 0.75 : sx1 - 0.75, block = Math.abs(sx1 - sx0) >= 2.25;
+  if (block) B.add(B.box(0.8, CH, BT, { seg: 9, chip: 0.014 }), ch(M, kbx, sy + 0.25, sz - 0.5, 0, 0.3, 0), fresh());
   B.add(B.box(0.5, 0.03, 0.5, { seg: 9 }), ch(M, mbx, sy + 0.05, sz - 0.5, 0, 0.5, 0), raw);
   B.add(B.cyl(0.02, 0.2, 0.12, 7, 1), ch(M, mbx, sy + 0.12, sz - 0.5), { color: V.lime, moss: 0, ground: g0 - 3 });
   // the ladder up to the stage, climbed (v15-W2): the stage is a floor, its edges held, the block and the board on it
   // in the way; from it the masons' line and the work, and the street over the scaffold's ledger
   const lx = side > 0 ? sx0 - 0.05 : sx1 + 0.05, zs = sz - 0.51;
   R.floor((sx0 + sx1) / 2, zs, sx1 - sx0 + 0.3, 0.88, sy + 0.035, { layer: 1 });
-  R.wall(kbx - 0.36, sz - 0.39, kbx + 0.36, sz - 0.61, sy, CH + 0.2, 0.25); // (the block waiting)
-  climbLadder(B, M, R, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw, { y1: sy + 0.035, head: [lx + side * 0.3, zs], away: [lx + side * 1.1, zs] });
+  if (block) R.wall(kbx - 0.36, sz - 0.39, kbx + 0.36, sz - 0.61, sy, CH + 0.2, 0.25); // (the block waiting)
+  climbLadder(B, M, R, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw, { y1: sy + 0.035, head: [lx + side * 0.3, zs], away: [lx + side * 0.9, zs] });
   R.post(lx, sz + 0.5, 0.3, 0, 1.3, { stand: false });
   }
   // the mason's line, red, pinned along the front's working course; the plumb bob off the high corner

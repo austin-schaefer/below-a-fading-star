@@ -37,15 +37,20 @@ export function ladders(ctx) {
 export function climb(ctx, o) {
   const [fx, fz, y0] = o.foot, [tx, tz, y1] = o.top, [nx, nz] = o.n, H = y1 - y0, [b0, b1] = o.back || [0.12, 0.34], offT = o.off ?? 0.55;
   const P = ctx.player, ctl = ctx.controls;
-  const foot = [fx - nx * b0, fz - nz * b0], head = o.head ? [o.head[0], o.head[1]] : [tx + nx * offT, tz + nz * offT], down = [fx - nx * 0.45, fz - nz * 0.45];
+  const foot = [fx - nx * b0, fz - nz * b0], head = o.head ? [o.head[0], o.head[1]] : [tx + nx * offT, tz + nz * offT], down = [fx - nx * (b0 + 0.33), fz - nz * (b0 + 0.33)];
   const st = { on: false, t: 0, sign: 1, side: 0, release: null, climbs: 0, want: null };
   const at = (t, out) => { const k = t / H; out.set(fx - nx * b0 + (tx - nx * b1 - fx + nx * b0) * k, y0 + t + P.eye, fz - nz * b0 + (tz - nz * b1 - fz + nz * b0) * k); };
   const facing = () => -Math.sin(P.yaw) * nx - Math.cos(P.yaw) * nz; // > 0: looking at the wall
   function off(where) {
     const r = st.release; st.on = false; st.release = null; st.want = null;
     if (r) r();
-    if (where === 'top') ctl.placeAt(head[0], head[1], y1);
-    else if (where === 'foot') ctl.placeAt(down[0], down[1], y0);
+    if (where === 'top') {
+      // (placeAt keeps 0.6 m off every collider: on a scaffold's stage between the wall and the standards that is
+      // more room than there is, and it would push them off the edge; the floor at the head holds a walker, so there)
+      const r = ctl.placeAt(head[0], head[1], y1);
+      if (Math.abs(r.y - y1) > 0.2 || Math.hypot(r.x - head[0], r.z - head[1]) > 0.3) P.pos.set(head[0], y1 + P.eye, head[1]);
+    }
+    else if (where === 'foot') { const r = ctl.placeAt(down[0], down[1], y0); if (Math.abs(r.y - y0) > 0.2) P.pos.set(down[0], y0 + P.eye, down[1]); }
     else P.pos.set(P.pos.x - nx * 0.25, P.pos.y, P.pos.z - nz * 0.25); // let go: they drop from where they hang
   }
   function take(t) {
@@ -81,12 +86,13 @@ export function climb(ctx, o) {
     // (from the top they must be at its head and walking squarely off the edge: a lane may pass a stride behind it)
     if (push < -0.6 && Math.abs(feet - y1) < 0.35 && dxh * dxh + dzh * dzh < 0.6 * 0.6 && P.onGround) return take(H);
   }
-  ctx.registerUpdate(tick, { pos: { x: (fx + tx) / 2, z: (fz + tz) / 2 }, near: 30 + H / 2, hz: 0 });
+  ctx.registerUpdate(tick, { pos: { x: (fx + tx) / 2, y: (y0 + y1) / 2 + P.eye, z: (fz + tz) / 2 }, near: 30 + H / 2, hz: 0 }); // (its own y: high up, the throttle measures from the eye)
   const from = o.from || [fx - nx * 2.7, fz - nz * 2.7], away = o.away || [tx + nx * 3.2, tz + nz * 3.2];
   ctx.ascents?.add({ id: o.name, tick, held: true, offs: [0.12, 0.92], ladder: true,
     path: [[from[0], from[1], y0], [foot[0], foot[1], y0], [head[0], head[1], y1], [away[0], away[1], y1]] });
-  ladders(ctx).add({ id: o.name, mod: o.mod || '?', foot: [fx, fz, y0], top: [tx, tz, y1], head: [head[0], head[1], y1], climb: true });
-  return { state: () => ({ on: st.on, t: st.t, sign: st.sign, climbs: st.climbs }), foot, head, height: H };
+  const state = () => ({ on: st.on, t: st.t, sign: st.sign, climbs: st.climbs });
+  ladders(ctx).add({ id: o.name, mod: o.mod || '?', foot: [fx, fz, y0], top: [tx, tz, y1], head: [head[0], head[1], y1], n: [nx, nz], take: foot, climb: true, state });
+  return { state, foot, head, height: H };
 }
 
 export function ladder(K, o) {
