@@ -21,6 +21,7 @@ import { N, K, HAHA, FROM, TO, WALL_R, LAWN, lawnAt, bearingOf, hahaAmt, roadD, 
 export { height };
 import { cLawn2 } from './ground/demesne.js';
 import * as LAPPET from '../../v15/plan.js'; // v15: the village takes the north-east sector (the yews and blocks there are gone, on the owner's word)
+import { claimedBy } from '../../claims.js'; // v15-G1: the claimed ground the fallen blocks keep off
 import { lappetTint, underSlabs } from '../../v15/ground.js';
 export { ground } from './ground/demesne.js'; // the ground hook, three-free (v13 L3)
 
@@ -307,7 +308,7 @@ function buildBlocks(ctx, rng, low) {
     const y = terrain.heightAt(x, z) + sy * 0.32;
     const it = { x, y, z, sx, sy, sz, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.25, rz: (rng() - 0.5) * 0.3 };
     // v15: the village's ground is cleared of them; the masons have carted the first dozen up to their yard as stock
-    if (LAPPET.villageClear(x, z)) { it.gone = true; if (stock.length < 12) stock.push(it); list.push(it); continue; }
+    if (claimedBy(x, z, 0, 'blocks')) { it.gone = true; if (stock.length < 12) stock.push(it); list.push(it); continue; }
     list.push(it);
     if (big) { ctx.addCollider({ x, z, r: Math.max(sx, sz) * 0.55, y: y - 1, h: sy * 0.5 + 1 }); perches.push(it); }
     else ctx.addCollider({ x, z, r: Math.min(sx, sz) * 0.5, y: y - 1, h: sy * 0.5 + 1 }); // v8-10: the small ones are knee high and stood on too

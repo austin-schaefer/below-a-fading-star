@@ -25,6 +25,7 @@ import { makeTinctures } from './v4/tinctures.js';
 import * as places from './v8/places.js'; // v8-02: places that differ
 import { installStrata } from './v8/strata.js';
 import { installActs } from './v10/acts.js'; // v10: acts, registered by the places' modules
+import { makeClaims } from './claims.js'; // v15-G1: claimed ground, the one question every placer asks
 import { installHeights } from './v12/heights.js'; // v12: ctx.ascents, and the test floors behind ?heights=test
 import { shadowFrame } from './v12/above.js'; // v12: the shadow box and the haze for an eye high over the ground
 import { installFar } from './v12/far.js'; // v12-H5: small things far off drawn smaller, then not at all (by their size on the screen)
@@ -197,7 +198,7 @@ async function start() {
   // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
-  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), below (v14/under.js:
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), claims (claims.js), below (v14/under.js:
   //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
@@ -240,6 +241,7 @@ async function start() {
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   installStrata(ctx, url); // ctx.strata: the three hands' parts, signs and placements (v8-03)
   installActs(ctx, url); // ctx.acts: add(def), count(id), forget() (v10; the contract: the `world-code` skill, "Acts")
+  ctx.claims = makeClaims(ctx); // v15-G1: at(x, z, r, who), add(claim), list: the ground places build on (src/claims.js)
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce

@@ -27,6 +27,15 @@ export const TOL = {
   slender: 4, endMin: 0.3, endLen: 0.12,
   // backs: rays from each standing eye; the first face met within `far` metres. `rays` directions on a sphere.
   rays: 320, far: 60, near: 0.05,
+  // buried: `samples` points over each piece's skin (by area), each nudged `nudge` inward; a point is inside when at least
+  // `inside` of the 14 rays from it first meet the back of a solid face of another mesh, or the ray straight up meets the
+  // ground's underside. A piece is buried when `frac` of its skin is inside: a box half in a wall is, a post rooted a
+  // tenth of its height is not
+  // `flush`: what shows of a piece whose shown samples' faces all lie within this of their mean is laid (a flag, a
+  // tread, a panel), unless `whole` of it is inside. `deep`: rays look this far for a way out
+  // `keep`: a finding the baseline holds is matched down to this share, a new one needs `frac` (nothing sits on one line).
+  // `bedRow`, `bedShare`: a sunk group is bedded when its mesh has at least that many sunk alike, and that share of its groups
+  samples: 24, nudge: 0.01, inside: 11, frac: 0.42, keep: 0.34, flush: 0.9, whole: 0.9, deep: 8, bedRow: 4, bedShare: 0.5,
 };
 
 const hypot3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
@@ -428,11 +437,11 @@ function bvh(soup, keep) {
   if (T.length) build(0, T.length);
   return { nodes, T };
 }
-function raycast(P, H, ox, oy, oz, dx, dy, dz, near, far) {
+function raycast(P, H, ox, oy, oz, dx, dy, dz, near, far, skip = null, own = -1) {
   const { nodes, T } = H;
   if (!nodes.length) return null;
   const ix = 1 / dx, iy = 1 / dy, iz = 1 / dz;
-  let best = far, bt = -1;
+  let best = far, bt = -1, bBack = false;
   const stack = [0];
   while (stack.length) {
     const nd = nodes[stack.pop()];
@@ -446,6 +455,7 @@ function raycast(P, H, ox, oy, oz, dx, dy, dz, near, far) {
       const s = -nd[6] - 1;
       for (let i = s; i < s + nd[7]; i++) {
         const t = T[i], o = t * 9;
+        if (skip && skip[t] === own) continue;
         const e1x = P[o + 3] - P[o], e1y = P[o + 4] - P[o + 1], e1z = P[o + 5] - P[o + 2];
         const e2x = P[o + 6] - P[o], e2y = P[o + 7] - P[o + 1], e2z = P[o + 8] - P[o + 2];
         const hx = dy * e2z - dz * e2y, hy = dz * e2x - dx * e2z, hz = dx * e2y - dy * e2x;
@@ -456,7 +466,14 @@ function raycast(P, H, ox, oy, oz, dx, dy, dz, near, far) {
         const qx = sy * e1z - sz * e1y, qy = sz * e1x - sx * e1z, qz = sx * e1y - sy * e1x;
         const v = f * (dx * qx + dy * qy + dz * qz); if (v < 0 || u + v > 1) continue;
         const d = f * (e2x * qx + e2y * qy + e2z * qz);
-        if (d > near && d < best) { best = d; bt = t; }
+        if (d > near && d < best + (skip ? 1e-3 : 0)) {
+          // (buried, `skip` given: of two faces met at one distance, a box's floor on a slab's top, the back wins: the
+          // point is inside the box whichever the walk meets first. Möller-Trumbore's a < 0: the ray meets the back)
+          const back = a < 0;
+          if (!skip || bt < 0 || d < best - 1e-3) { best = d; bt = t; bBack = back; }
+          else if (back && !bBack) { best = Math.min(best, d); bt = t; bBack = true; }
+          else if (d < best && back === bBack) { best = d; bt = t; }
+        }
       }
     } else { stack.push(nd[6], nd[7]); }
   }
@@ -516,4 +533,193 @@ export function backs(soup, T = TOL) {
   const res = [...groups.values()].map((g) => ({ ...g, stands: g.stands.size })).sort((p, q) => q.rays - p.rays);
   res.insideStands = inside0;
   return res;
+}
+
+// ------------------------------------------------------------------ buried
+// What lies mostly inside something solid of another mesh, or mostly under the drawn ground: a bird in a wall, a lamp in
+// a roof, a rock through a stair, a prop the new ground was raised over. Nothing about what it is.
+//   solid: the faces of a piece that is not flat (a card, a sheet, a decal has no inside), not exempt, not see-through
+//   (glass, water, a ghost: what is under water is not buried) and not a stand-in.
+//   a point is inside when, of 14 rays from it, at least `inside` first meet such a face from its back (inside a closed
+//   thing every way out is a back; an open shell's missing floor or end costs a ray or three, which the margin allows),
+//   its own mesh never counted (a mesh's material groups and an instanced mesh's instances are one thing: what it makes
+//   of itself is the other kinds' business); it is under the ground when the ray straight up first meets the back of an
+//   anchor (the ground, laid ground).
+//   inside a solid: judged a piece at a time (faces of one part joined through shared vertices: in a merged quarter one
+//   house, one prop, one beam), when `frac` of its skin is inside.
+//   under the ground: judged a group at a time (the pieces of one part that touch: a house and its footing, a bird and its
+//   legs), when `frac` of the group's skin is under: a wall's footing below the turf belongs to a wall that stands.
+// Exempt by rule, not name: an anchor or exempt part; a flat piece; a piece or group smaller than `minSize` or bigger than
+// `big` (a hall, a quarter: what things are let into); what is let in by its end (a post rooted, a beam's end in a wall, a
+// plant's base: a small share of its skin); what shows only one flat face (`flush`: a flag or a tread laid in the
+// ground, a panel set in a wall) unless `whole` of it is inside.
+//   buried(soup, T) → [{ part, with, at, frac, size, under, pieces, tris }]
+const DIRS14 = (() => {
+  const out = [[0.013, 1, 0.007]]; // up first (a little off the axis so it never runs down an edge): it says "under the ground" too
+  for (const d of [[0.009, -1, 0.011], [1, 0.012, 0.008], [-1, 0.007, -0.013], [0.011, 0.006, 1], [-0.008, -0.012, -1]]) out.push(d);
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) out.push([sx * 1.01, sy, sz * 0.99]);
+  return out.map(([x, y, z]) => { const l = hypot3(x, y, z); return [x / l, y / l, z / l]; });
+})();
+const halton = (i, b) => { let f = 1, r = 0; while (i > 0) { f /= b; r += f * (i % b); i = Math.floor(i / b); } return r; };
+export function buried(soup, T = TOL) {
+  const { P, part, parts } = soup, { n, N, A, B } = prepare(soup);
+  const { id, count } = pieces(soup, T);
+  // the mesh each part belongs to: its name without the material's #k (an instanced mesh's instances share it)
+  const keys = new Map(), mk = new Int32Array(parts.length);
+  parts.forEach((p, i) => { const k = (p.name || '').replace(/#\d+$/, ''); if (!keys.has(k)) keys.set(k, keys.size); mk[i] = keys.get(k); });
+  const triMesh = new Int32Array(n);
+  for (let t = 0; t < n; t++) triMesh[t] = mk[part[t]];
+  const L = Array.from({ length: count }, () => []);
+  for (let t = 0; t < n; t++) L[id[t]].push(t);
+  const flat = new Uint8Array(count), box = new Float64Array(count * 6), area = new Float64Array(count), pOf = new Int32Array(count);
+  for (let c = 0; c < count; c++) {
+    const l = L[c], t0 = l[0];
+    let f = 1, x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity, ar = 0;
+    for (const t of l) {
+      if (f && Math.abs(N[t * 3] * N[t0 * 3] + N[t * 3 + 1] * N[t0 * 3 + 1] + N[t * 3 + 2] * N[t0 * 3 + 2]) < 0.99) f = 0;
+      x0 = Math.min(x0, B[t * 6]); y0 = Math.min(y0, B[t * 6 + 1]); z0 = Math.min(z0, B[t * 6 + 2]);
+      x1 = Math.max(x1, B[t * 6 + 3]); y1 = Math.max(y1, B[t * 6 + 4]); z1 = Math.max(z1, B[t * 6 + 5]);
+      ar += A[t];
+    }
+    flat[c] = f; area[c] = ar; pOf[c] = part[t0];
+    box[c * 6] = x0; box[c * 6 + 1] = y0; box[c * 6 + 2] = z0; box[c * 6 + 3] = x1; box[c * 6 + 4] = y1; box[c * 6 + 5] = z1;
+  }
+  // (an exempt part is judged too: what may hang in air or be seen through may still not stand in a wall. It is never
+  // what another is inside: exempt things are not taken as solid)
+  // a piece that leaves the place (a corner of its box outside the region) is not judged: only part of it was taken
+  const { spheres } = soup;
+  const within = (c) => { const o = c * 6; for (let k = 0; k < 8; k++) { const x = box[o + (k & 1 ? 3 : 0)], y = box[o + (k & 2 ? 4 : 1)], z = box[o + (k & 4 ? 5 : 2)]; if (!spheres.some(([sx, sy, sz, r]) => (x - sx) ** 2 + (y - sy) ** 2 + (z - sz) ** 2 < r * r)) return false; } return true; };
+  const member = (c) => { const p = parts[pOf[c]]; return !p.anchor && !p.ghost && area[c] > 0 && !STANDIN.test(p.name || ''); };
+  const judged = (c) => member(c) && !flat[c] && within(c);
+  const solidT = (t) => { const p = parts[part[t]]; return !p.exempt && !p.ghost && !p.clear && !flat[id[t]] && A[t] > 1e-9 && !STANDIN.test(p.name || ''); };
+  const H = bvh(soup, solidT);
+  const G = grid(soup, 1.0, 0, solidT, 60000);
+  // the groups: pieces of one part that touch
+  const U = uf(count), tol2 = T.touch * T.touch;
+  {
+    const GT = grid(soup, 0.6, T.touch, (t) => member(id[t]), 60000);
+    for (const list of GT.cells.values()) {
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i], ca = id[a];
+        for (let j = i + 1; j < list.length; j++) {
+          const b = list[j], cb = id[b];
+          if (ca === cb || part[a] !== part[b] || U.find(ca) === U.find(cb)) continue;
+          if (B[b * 6] > B[a * 6 + 3] + T.touch || B[b * 6 + 3] < B[a * 6] - T.touch || B[b * 6 + 1] > B[a * 6 + 4] + T.touch || B[b * 6 + 4] < B[a * 6 + 1] - T.touch || B[b * 6 + 2] > B[a * 6 + 5] + T.touch || B[b * 6 + 5] < B[a * 6 + 2] - T.touch) continue;
+          if (triTouch(P, a, b, tol2)) U.join(ca, cb);
+        }
+      }
+    }
+  }
+  const leaves = new Set(); // groups with a piece that leaves the place (a roof sheet joins a house's walls: flat pieces join, unjudged)
+  for (let c = 0; c < count; c++) if (member(c) && !within(c)) leaves.add(U.find(c));
+  const backOf = (t, dx, dy, dz) => { const p = parts[part[t]], d = N[t * 3] * dx + N[t * 3 + 1] * dy + N[t * 3 + 2] * dz; return (p.side === 1 ? -d : d) > 0; };
+  const need = T.inside, K = DIRS14.length, hits = new Map();
+  // one point: under the ground (-2 - the anchor's part), inside a solid (its part), or -1. `full`: false asks only
+  // whether it is under the ground
+  const probe = (x, y, z, own, full) => {
+    hits.clear();
+    let ins = 0, miss = 0;
+    for (let r = 0; r < K; r++) {
+      const [dx, dy, dz] = DIRS14[r];
+      const h = raycast(P, H, x, y, z, dx, dy, dz, 1e-4, T.deep, triMesh, own);
+      if (h && backOf(h.t, dx, dy, dz)) {
+        const pi = part[h.t];
+        if (r === 0 && parts[pi].anchor) return -2 - pi;
+        ins++; hits.set(pi, (hits.get(pi) || 0) + 1);
+      } else if (++miss > K - need) return -1;
+      if (!full) return -1;
+    }
+    if (ins < need) return -1;
+    let best = -1, bn = 0; for (const [pi, k] of hits) if (k > bn) { bn = k; best = pi; }
+    return best;
+  };
+  const S = T.samples, out = [];
+  const shownAligned = (list) => { // every shown sample's face turned one way: laid flush
+    if (!list.length) return false;
+    let nx = 0, ny = 0, nz = 0; for (const t of list) { nx += N[t * 3]; ny += N[t * 3 + 1]; nz += N[t * 3 + 2]; }
+    const l = hypot3(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    return list.every((t) => N[t * 3] * nx + N[t * 3 + 1] * ny + N[t * 3 + 2] * nz > T.flush);
+  };
+  // per group: area, area under, the shown faces, where the under part is, which anchor
+  const grp = new Map();
+  for (let c = 0; c < count; c++) {
+    if (!judged(c)) continue;
+    const l = L[c], o = c * 6, own = mk[pOf[c]];
+    const size = Math.max(box[o + 3] - box[o], box[o + 4] - box[o + 1], box[o + 5] - box[o + 2]);
+    const gk = U.find(c);
+    let g = grp.get(gk);
+    if (!g) grp.set(gk, (g = { part: pOf[c], area: 0, under: 0, shown: [], sx: 0, sy: 0, sz: 0, n: 0, with: new Map(), pieces: 0, tris: 0, box: [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity] }));
+    g.area += area[c]; g.pieces++; g.tris += l.length;
+    for (let k = 0; k < 3; k++) { g.box[k] = Math.min(g.box[k], box[o + k]); g.box[3 + k] = Math.max(g.box[3 + k], box[o + 3 + k]); }
+    // looked at only when another mesh's solid face reaches into its box, or what is over its middle is the back of
+    // something (it is wholly inside, or deep under the ground)
+    let near = false;
+    for (let i = Math.floor(box[o] / G.cs); i <= Math.floor(box[o + 3] / G.cs) && !near; i++)
+      for (let j = Math.floor(box[o + 1] / G.cs); j <= Math.floor(box[o + 4] / G.cs) && !near; j++)
+        for (let k = Math.floor(box[o + 2] / G.cs); k <= Math.floor(box[o + 5] / G.cs) && !near; k++)
+          for (const u of G.cells.get(G.K(i, j, k)) || []) {
+            if (triMesh[u] === own) continue;
+            if (B[u * 6] > box[o + 3] || B[u * 6 + 3] < box[o] || B[u * 6 + 1] > box[o + 4] || B[u * 6 + 4] < box[o + 1] || B[u * 6 + 2] > box[o + 5] || B[u * 6 + 5] < box[o + 2]) continue;
+            near = true; break;
+          }
+    if (!near) {
+      const cx = (box[o] + box[o + 3]) / 2, cy = (box[o + 1] + box[o + 4]) / 2, cz = (box[o + 2] + box[o + 5]) / 2, [dx, dy, dz] = DIRS14[0];
+      const h = raycast(P, H, cx, cy, cz, dx, dy, dz, 1e-4, T.deep * 4, triMesh, own);
+      if (!h || !backOf(h.t, dx, dy, dz)) { for (const t of l) if (g.shown.length < 64) g.shown.push(t); continue; }
+    }
+    // the samples: S points spread over the skin by area (stratified along the summed area), each nudged in
+    const nudge = Math.min(T.nudge, size * 0.05), solidOK = size >= T.minSize && size <= T.big;
+    let acc = 0, ti = 0, inside = 0, under = 0, sx = 0, sy = 0, sz = 0;
+    const tally = new Map(), shown = [];
+    for (let s = 0; s < S; s++) {
+      const want = ((s + 0.5) / S) * area[c];
+      while (ti < l.length - 1 && acc + A[l[ti]] < want) acc += A[l[ti++]];
+      const t = l[ti], q = t * 9, r1 = Math.sqrt(0.1 + 0.8 * halton(s + 1, 2)), r2 = 0.1 + 0.8 * halton(s + 1, 3); // spread over the face, off its edges
+      const w0 = 1 - r1, w1 = r1 * (1 - r2), w2 = r1 * r2;
+      const x = P[q] * w0 + P[q + 3] * w1 + P[q + 6] * w2 - N[t * 3] * nudge;
+      const y = P[q + 1] * w0 + P[q + 4] * w1 + P[q + 7] * w2 - N[t * 3 + 1] * nudge;
+      const z = P[q + 2] * w0 + P[q + 5] * w1 + P[q + 8] * w2 - N[t * 3 + 2] * nudge;
+      const full = solidOK && inside + (S - s) >= T.keep * S; // inside a solid is still within reach (of the lower line: a known one is held down to it)
+      const pi = probe(x, y, z, own, full);
+      if (pi <= -2) { under++; g.sx += x; g.sy += y; g.sz += z; g.n++; g.with.set(-2 - pi, (g.with.get(-2 - pi) || 0) + 1); continue; }
+      if (g.shown.length < 64) g.shown.push(t);
+      if (pi >= 0) { inside++; sx += x; sy += y; sz += z; tally.set(pi, (tally.get(pi) || 0) + 1); } else shown.push(t);
+    }
+    g.under += (under / S) * area[c];
+    if (!solidOK || inside < T.keep * S) continue;
+    if (inside < T.whole * S && shownAligned(shown)) continue; // laid flush
+    let w = -1, wn = 0; for (const [pi, k] of tally) if (k > wn) { wn = k; w = pi; }
+    out.push({ part: pOf[c], with: w, at: [sx / inside, sy / inside, sz / inside], frac: inside / S, soft: inside < T.frac * S, size, under: false, pieces: 1, tris: l.length });
+  }
+  // under the ground: hidden (all but a sliver under: nothing of it is seen, its faces are wasted and its placing likely
+  // wrong) or sunk (partly). A sunk group is bedded, by design, when it is one of a row of its mesh's like groups sunk
+  // alike: at least `bedRow` of them under the ground (hidden or sunk), and `bedShare` of all its mesh's groups judged here (a kerb's run, a scatter of
+  // pebbles set into the turf, a stair's slabs). A swallowed one is the odd one out: the few of a mesh's things the
+  // new ground was raised over while their fellows stand clear
+  const meshG = new Map(), meshSunk = new Map(), cand = [];
+  for (const [gk, g] of grp) {
+    const size = Math.max(g.box[3] - g.box[0], g.box[4] - g.box[1], g.box[5] - g.box[2]);
+    if (size < T.minSize || size > T.big || leaves.has(gk)) continue;
+    const m = mk[g.part];
+    meshG.set(m, (meshG.get(m) || 0) + 1);
+    if (!g.n || g.under < T.keep * g.area) continue;
+    if (g.under < T.whole * g.area && shownAligned(g.shown)) continue; // laid flush
+    const hidden = g.under >= T.whole * g.area;
+    meshSunk.set(m, (meshSunk.get(m) || 0) + 1); // hidden ones count to the row: a stair's slabs, some whole under, some showing a top
+    cand.push({ g, size, hidden, m });
+  }
+  for (const { g, size, hidden, m } of cand) {
+    if (!hidden && meshSunk.get(m) >= T.bedRow && meshSunk.get(m) >= T.bedShare * meshG.get(m)) continue; // bedded
+    let w = -1, wn = 0; for (const [pi, k] of g.with) if (k > wn) { wn = k; w = pi; }
+    out.push({ part: g.part, with: w, at: [g.sx / g.n, g.sy / g.n, g.sz / g.n], frac: g.under / g.area, soft: g.under < T.frac * g.area, size, under: true, hidden, pieces: g.pieces, tris: g.tris });
+  }
+  // gathered: by the part, what it is in, and a 2 m cell (a merged mesh's many pieces in one wall are one finding)
+  const groups = new Map();
+  for (const f of out) {
+    const k = `${f.part}|${f.with}|${f.under ? (f.hidden ? 2 : 1) : 0}|${Math.floor(f.at[0] / 2)},${Math.floor(f.at[1] / 2)},${Math.floor(f.at[2] / 2)}`;
+    const g = groups.get(k);
+    if (!g) groups.set(k, { ...f });
+    else { g.pieces += f.pieces; g.tris += f.tris; g.soft = g.soft && f.soft; if (f.size * f.frac > g.size * g.frac) Object.assign(g, { at: f.at, frac: f.frac, size: f.size }); }
+  }
+  return [...groups.values()].sort((p, q) => q.size * q.frac - p.size * p.frac);
 }
