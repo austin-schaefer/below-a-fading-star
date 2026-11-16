@@ -14,6 +14,8 @@ Set pieces, bend them if you find better:
 
 The fountain is the only vessel form here.
 
+Left by the houses for you: in `v15-row-r4-high-tread-along-east.png` (the view along the Low Rung's tread behind the Strake) a thin pale vertical strip stands between an Elder slab's face and a parapet: find what it is and close it. The Strake's rope rail against V0's, and lamps doubled with V0's, were not judged by their author: look.
+
 ## Done when
 
 - From the road at 100 m at the gutter the square is found by the fountain's light; standing in it, the light is steady, pooled, and does not blow out the frame on high or vanish on low (histograms, both).

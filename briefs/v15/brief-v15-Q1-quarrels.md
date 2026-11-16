@@ -16,6 +16,8 @@ Set pieces, bend them if you find better:
 
 No vessel form here. Nothing medieval (no cranes with treadwheels, no banners).
 
+Left by the bones for you (a blind reader, `v15-V0-final-level-crown.png`): big faceted flat slabs over the right half of the crown read as hard-edged shapes, not paving or fallen stone: make them one or the other.
+
 ## Done when
 
 - From the causeway west of the village and from the stair's foot looking up, the crown reads as a building site against the keep, by a lit kiln and one or two lamps.

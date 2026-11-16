@@ -17,6 +17,8 @@ Set pieces, bend them if you find better:
 
 Late plaster carries it; two or three plots are Elder slab-houses or Heliarch undercrofts where the plan says. Every house `against` a riser meets the tread above with its roof: no slots.
 
+Left by the bones for you: the ladder's plank landing hangs off broken blocks and the timber flight's foot rests on a loose block (seat both on something built); the ladder's poles have no collider; nothing but its look says the ladder can be climbed (a worn foot, a lamp, a hand-rope); the main is dark above its door and below 14 m (it may have one lamp by `house-test`'s rule on lamps in view of the house: light its lower mouth from outside it, from your lane).
+
 ## Done when
 
 - The roof walk, the three stairs' spot and at least three routes between each pair of adjoining levels are walked on keys and touch; every ascent registered; no drop over the guard without a parapet; nowhere to be stuck (hop and scramble onto every roof edge you can reach and say what happened).

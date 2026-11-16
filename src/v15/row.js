@@ -131,6 +131,7 @@ export async function build(ctx) {
   const mesh = ctx.strata.mesh(B, 'late', 'village-row');
   const blocks = ctx.strata.mesh(E, 'elder', 'village-row-elder');
   ctx.scene.add(mesh, blocks);
+  ctx.lappet?.farHidden?.push(mesh, blocks); // on low, not drawn from more than 150 m (bones.js: the heights' cost from above)
   const tris = B.triangles + E.triangles;
   const route = [-len / 2 + 1, -len / 4, 0, len / 4, len / 2 - 1].map((x, i) => [wx(x, i % 2 ? 0.7 : 2.0), wz(x, i % 2 ? 0.7 : 2.0), Y]);
   ctx.village = { row: { frame: { x: F0.x, z: F0.z, face, y: Y, len, back: BACK, edge: EDGE, viaPlan }, plots, records, route }, meshes: [mesh, blocks], stats: () => ({ draws: 2, triangles: tris, lights: records.reduce((s, R) => s + R.lights.length, 0), perHouse: records.map((R) => ({ kind: R.kind, tris: R.tris + (R.etris || 0) })) }) };

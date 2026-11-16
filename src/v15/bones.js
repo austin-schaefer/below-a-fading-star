@@ -3,7 +3,7 @@
 // cuts (src/v4/regions/height/demesne.js) from the one plan (src/v15/plan.js). One merged mesh in the Elder stone
 // (`lappet-bones`); each tread a stacked floor whose edges hold; a wall along each riser's foot. Then the ways
 // (src/v15/ways/): the Heliarch stair, the Late flights, the ladder, the tube, the ramp, the bridge and roof kit.
-// ctx.lappet = { plan, elderMat, floors, openings, ways: { ...the kit }, built: { ...what V0 placed } } for the quarters.
+// ctx.lappet = { plan, elderMat, floors, openings, ways: { ...the kit }, built: { ...what V0 placed } } for the quarters. farHidden: meshes a quarter pushes that low does not draw from more than 150 m off.
 // ?lappet=0 leaves the masonry and the ways out (the ground stays cut: the height field has no switch).
 import * as THREE from 'three';
 import * as PLAN from './plan.js';
@@ -87,7 +87,7 @@ export async function build(ctx) {
   const off = new URL(location.href).searchParams.get('lappet') === '0';
   const low = ctx.quality === 'low';
   const T = ctx.terrain, N2 = ctx.noise.noise2;
-  const lappet = (ctx.lappet = { plan: PLAN, on: !off, floors: {}, openings: planOpenings(), holes: [], kerbs: [], colliders: 0, ways: {}, built: {}, Mesher });
+  const lappet = (ctx.lappet = { plan: PLAN, on: !off, floors: {}, openings: planOpenings(), holes: [], kerbs: [], colliders: 0, farHidden: [], ways: {}, built: {}, Mesher });
   if (off) { ctx.log('lappet: off (?lappet=0)'); return; }
 
   // the ways claim their openings (a gap in a riser's face) and holes (a slot cut in a tread) before the stone is laid
@@ -327,11 +327,13 @@ export async function build(ctx) {
   // from above is at its limit: tools/heights-cost.mjs), the village is drawn as its steps alone: the ways' timber
   // and the main's ware, and the masons' twelve blocks on the crown, are too small to see from there.
   if (low) {
-    let small = null, far = false;
+    let small = null, far = false, mid = false;
     ctx.registerUpdate(() => {
       if (!small) small = ['lappet-ways-stone', 'lappet-ways-glass', 'demesne-blocks'].map((n) => ctx.scene.getObjectByName(n)).filter(Boolean);
       const c = ctx.camera.position, f = Math.hypot(c.x - 80, c.z + 12) > 330;
       if (f !== far) { far = f; for (const m of small) m.visible = !f; }
+      const g = Math.hypot(c.x - 80, c.z + 12) > 150; // the houses and the quarters' own meshes (lappet.farHidden) go sooner: from the Hanging Croft's deck (155 m off, 108 m up) the frame is at its triangle limit without them
+      if (g !== mid) { mid = g; for (const m of lappet.farHidden) m.visible = !g; }
     }); // (every frame, unthrottled: a distance and a compare)
   }
   lappet.stats = () => ({ bones: M.triangles, ...w.stats() });
