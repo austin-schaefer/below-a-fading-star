@@ -96,7 +96,7 @@ export function carrier(B, M, o = {}) {
   R.post(side * (dxh + 0.5), dzh + 0.75, 0.45, 0, 2.3, { stand: false });
   // a Heliarch drum for a doorstep
   PARTS.heliarch.drum(B, ch(M, 0, -0.62, dzh + 0.42), { r: 0.62, h: 0.62 + yF - 0.03, moss: 0.5 });
-  R.post(0, dzh + 0.42, 0.62, -0.62, 0.62 + yF - 0.03);
+  R.disc(0, dzh + 0.42, 0.62, yF - 0.03); // stepped onto: a floor, not a thing in the way
   // the stovepipe out through its shoulder, a lump of lime round it where it comes through, a cowl
   {
     const a = side * (2.1 + rng() * 0.5), s = body * 0.8, r = rad(s), [ox, oz] = off(s), p0 = [Math.sin(a) * (r - 0.3) * 0.95 + ox, s - sink - 0.2, Math.cos(a) * (r - 0.3) + oz];
@@ -159,7 +159,7 @@ export function carrier(B, M, o = {}) {
   }
   // a flask of the noon it was made to carry, hung from the loft: the room's light
   beam(B, M, [0, sC - sink, 0], [0, yF + 2.15, 0], 0.02, { color: V.rope, moss: 0, ground: g0 - 3 });
-  B.add(new THREE.SphereGeometry(0.13, 8, 6), ch(M, 0, yF + 2.05, 0, 0, 0, 0, 1, 1.25, 1), { color: N.milk, moss: 0, ground: g0 - 3, emit: [N.light[0] * 2.4, N.light[1] * 2.4, N.light[2] * 2.4, 1] });
+  B.add(new THREE.SphereGeometry(0.13, 8, 6), ch(M, 0, yF + 2.05, 0, 0, 0, 0, 1, 1.25, 1), { color: N.milk, moss: 0, ground: g0 - 3, emit: [N.light[0] * 1.1, N.light[1] * 1.1, N.light[2] * 1.1, 1] });
   R.light(0, yF + 1.95, 0, N.lightHex, 2.2 * lit + 0.6, 11);
   if (!low) pot(B, M, -side * 0.9, yF, dzh - 0.75, 0.2, worn(L.tile[4], rng, 0.3), 2.2);
   R.tris = B.triangles - base; R.form = form; R.top = Lh - sink;

@@ -47,7 +47,7 @@ export async function build(ctx) {
     const R = make(p.kind, B, plot, { ...p.o, E, low });
     register(ctx, R);
     for (const l of R.lights) { const pl = new THREE.PointLight(new THREE.Color(l.color), l.intensity, l.distance, 2); pl.position.set(l.x, l.y, l.z); pl.name = `village-row-${p.kind}`; ctx.scene.add(pl); }
-    R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby', 'emerald', 'sapphire'][(R.seed + i) % 4], 0.9));
+    R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby', 'emerald', 'sapphire'][(R.seed + i) % 4], 0.42)); // (dim: at a door they are met at arm's length)
     records.push(R); plots.push(plot);
     x += p.w;
   }

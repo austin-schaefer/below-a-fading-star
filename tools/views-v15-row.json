@@ -1,11 +1,11 @@
 [
  {
   "name": "from-east",
-  "x": 82.51,
-  "z": -33.9,
-  "yaw": 1.347,
-  "pitch": 0.1,
-  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(82.51,Y,-33.9);}});})()"
+  "x": 79.89,
+  "z": -34.92,
+  "yaw": 1.372,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(79.89,Y,-34.92);}});})()"
  },
  {
   "name": "from-west",
@@ -121,27 +121,27 @@
  },
  {
   "name": "gutter-street",
-  "x": 82.51,
-  "z": -33.9,
-  "yaw": 1.347,
-  "pitch": 0.1,
-  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(82.51,Y,-33.9);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
+  "x": 79.89,
+  "z": -34.92,
+  "yaw": 1.372,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(79.89,Y,-34.92);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
  },
  {
-  "name": "sun-side",
-  "x": 26.89,
-  "z": -49.64,
-  "yaw": -1.948,
+  "name": "gutter-from-west",
+  "x": 37.31,
+  "z": -46.02,
+  "yaw": -1.871,
   "pitch": 0.1,
-  "js": "(()=>{window.__hold&&window.__hold();window.__hold=null;})()"
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(37.31,Y,-46.02);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
  },
  {
-  "name": "into-sun",
-  "x": 86.95,
-  "z": -34.99,
-  "yaw": 1.486,
-  "pitch": 0.14,
-  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(86.95,Y,-34.99);}});})()"
+  "name": "west-end",
+  "x": 30.94,
+  "z": -45.44,
+  "yaw": -1.891,
+  "pitch": 0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(30.94,Y,-45.44);}});})()"
  },
  {
   "name": "front-60",

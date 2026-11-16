@@ -73,7 +73,7 @@ export function elder(B, M, o = {}) {
   if (xf - xHead > 1.3) { bed(B, M, X(xHead + 0.75), 0.05, (zbk + zfr) / 2 - 0.3, 0, rng, { w: 0.8, len: 1.8 }); R.post(X(xHead + 0.75), (zbk + zfr) / 2 - 0.3, 0.55, 0, 0.6, { stand: false }); }
   for (let i = 0; i < (low ? 1 : 3); i++) pot(B, M, X(xHead + 0.4 + i * 0.45), 0.05, zfr - 0.55 - (i % 2) * 0.35, 0.17 + rng() * 0.08, worn(pick([V.mud, L.tile[4], L.tile[0]], rng), rng, 0.3), 1.8 + rng(), 6);
   // outside, in the porch the slab makes: a jar, a stool that is a drum
-  PARTS.heliarch.drum(B, ch(M, X(xh - 0.2), -0.3, zfr + 0.75), { r: 0.3, h: 0.78, moss: 0.5 }); R.post(X(xh - 0.2), zfr + 0.75, 0.3, 0, 0.48);
+  { const sx2 = Math.max(xh - 0.2, xd + dw / 2 + 0.85); PARTS.heliarch.drum(B, ch(M, X(sx2), -0.3, zfr + 0.75), { r: 0.3, h: 0.78, moss: 0.5 }); R.post(X(sx2), zfr + 0.75, 0.3, 0, 0.48); } // (clear of the slot)
   // floors and walls. The room and the sill through the front
   const fx0 = xa, fx1 = xHead + 0.1;
   R.floor(X((fx0 + fx1) / 2), (zbk + zfr) / 2 - 0.1, fx1 - fx0, zfr - zbk - 0.2, 0.05, { keep: false });

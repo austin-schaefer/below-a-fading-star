@@ -131,14 +131,14 @@ export function late(B, M, o = {}) {
       const lz = zfr - 0.08 - f.run, ld = Math.min(1.0, lz - zb);
       B.add(B.box(1.4, h + 0.4, ld, { seg: 1.5, chip: 0.03, chipTop: true }), ch(HM, sx - side * 0.2, (h - 0.4) / 2, lz - ld / 2), { color: sc, moss: 0.25, ground: g0 });
       R.floor(sx - side * 0.3, lz - ld / 2, 1.6, ld, h, { layer: 1 });
-      R.wall(sx, lz - 0.1, sx, lz - ld + 0.1, -0.4, h + 0.4 - 0.16, 0.42);
+      R.wall(sx, lz - Math.min(0.55, ld - 0.2), sx, lz - ld + 0.1, -0.4, h + 0.4 - 0.16, 0.42); // (its round end clear of the top treads)
     } else if (stair === 'front') {
       const sz = zfr + 0.49, fx0 = la - side * run;
       flight(B, HM, R, { x: fx0, z: sz, dx: side, dz: 0, w: 1.0, h, tread, color: sc, color2: sc2, seed, into: 0.4, ox: 0, oz: -1 });
       const lw = Math.abs((side > 0 ? x1 : x0) - la);
       B.add(B.box(lw, h + 0.4, 1.4, { seg: 1.5, chip: 0.03, chipTop: true }), ch(HM, la + side * lw / 2, (h - 0.4) / 2, sz - 0.2), { color: sc, moss: 0.25, ground: g0 });
       R.floor(la + side * lw / 2, sz - 0.45, lw, 1.9, h, { layer: 1 }); // the landing, and on over the wall's head
-      R.wall(la + side * 0.3, sz, la + side * (lw - 0.3), sz, -0.4, h + 0.4 - 0.16, 0.42);
+      R.wall(la + side * 0.78, sz, la + side * (lw - 0.3), sz, -0.4, h + 0.4 - 0.16, 0.42); // (its round end clear of the top treads)
       // the cupboard under the stair: a small door in its high end, and a kerb of plaster down its open side
       if (!low) leaf(B, ch(HM, la - side * 0.75, 0, sz + 0.5), 0.62, Math.min(1.3, h - 1.6), worn(frame, rng, 0.3), rng, { plain: true });
     }
