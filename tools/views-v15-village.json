@@ -1,0 +1,7 @@
+[
+  { "name": "far-east", "x": 135, "z": 5, "yaw": 1.387, "pitch": 0.08 },
+  { "name": "far-north", "x": 50, "z": -75, "yaw": -2.863, "pitch": 0.08 },
+  { "name": "far-kerb", "x": 128, "z": 5, "yaw": 1.19, "pitch": 0.1 },
+  { "name": "from-house-corner", "x": 112, "z": -28, "yaw": 0.9, "pitch": 0.15 },
+  { "name": "from-spawn", "x": 2, "z": 35, "yaw": -1.57, "pitch": 0.1 }
+]
