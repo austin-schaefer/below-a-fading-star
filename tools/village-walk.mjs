@@ -1,80 +1,151 @@
 #!/usr/bin/env node
-// The Strake walked the way a visitor walks it (v15-V1): load on the flags, "Go out", the mouse captured by a click,
-// then each route on the keys (W held, steering with the mouse), a frame every metre looking where they walk and one
-// with the head turned (left and right by turns), 960 x 540 into shots/wip/<prefix>-<route>-NN-<a|l|r>.png. Routes
-// are read from the row's own records (ctx.village.row), never typed in: `roof` (up the Late house's stair, across its
-// landing and round its roof yard), `carrier`, `elder`, `new` (in at each door that can be entered, to the back of
-// the room, and out again), `street` (the flags from end to end). A line a frame: the eye, the floor under it, and
-// STUCK where three seconds of walking moved them less than 0.2 m (a finding, not a crash). Frames on the page's own
-// clock. Exits 1 when a route did not reach its end.
-// Usage: node tools/village-walk.mjs [base] [routes=roof,carrier,elder,new,street] [prefix=v15-walk]   Q=medium
-import { chromium } from 'playwright'; // npm install --no-save playwright@1.63.0 in the worktree (the wilderness skill)
-const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
-const routes = (process.argv[3] || 'roof,carrier,elder,new,street').split(',');
-const prefix = process.argv[4] || 'v15-walk';
-const Q = process.env.Q || 'medium';
-const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const page = await (await browser.newContext({ viewport: { width: 960, height: 540 } })).newPage();
+// The Lappet walked by hand (v15-V0): a judge's tool, not a gate (the model: tools/noon-walk.mjs). One page: press
+// "Go out", click the view so the mouse is captured (if headless Chromium refuses the capture, the page's own
+// fallback, drag to look, which this uses and says so), then hold W and steer with the mouse alone, from the keep's
+// fallen corner down the Heliarch stair (the head's west flight, the slot, the landing, the Late timber flight, the
+// bastion, the foot flight) into the Lees' square, down the ramp to the Pomegranate House's wall and back up it; then
+// up the daylight main from its foot to the breach, out along the gangway to the Mid Rung, down the ladder and up it
+// again, back through the breach and up the main to the High Rung, up the head's east flight to the crown and the
+// fallen corner. With `touch` the same on a phone-sized touch page with the stick only: one finger holds the stick
+// up, a second drags to steer. With every=1 it stops each metre it walks on a way (not on a tread or the ground),
+// turns the head left or right and writes a frame; at checkpoints it always does.
+//   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk]
+// Frames go to shots/wip/<prefix>-<mode>-<q>-NNN-<what>.png in order. Prints each frame with where the feet are and
+// on what floor, each time the ladder is taken hold of, and a last line `walked: yes|no`.
+import { createRequire } from 'node:module';
+let pw;
+try { pw = await import('playwright'); }
+catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
+const [base = 'http://localhost:8123', mode = 'keys', q = 'low', every0 = '0', prefix0 = 'v15-V0-walk'] = process.argv.slice(2);
+const every = +every0;
+const prefix = `${prefix0}-${mode}-${q}`;
+const touch = mode === 'touch';
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
+const page = await context.newPage();
 page.setDefaultTimeout(600000);
-page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-page.on('console', (m) => { if (m.type() === 'error') console.log('[console.error]', m.text().slice(0, 300)); });
-await page.clock.install();
-const wait = async () => { for (let i = 0; i < 3000 && !(await page.evaluate(() => document.body.classList.contains('ready') && !!window.__fp?.village && !document.getElementById('begin').disabled)); i++) await page.clock.runFor(200); };
-await page.goto(`${base}/?q=${Q}${process.env.EXTRA || ''}`, { waitUntil: 'load', timeout: 120000 }); await wait();
-// the routes, from the records: [[x, z, y?], ...] (y: the floor the walker should be on when they get there)
-const plan = await page.evaluate(() => {
-  const V = window.__fp.village.row, F = V.frame, out = {}, f = F.face, t = [f[1], -f[0]]; // t: along the street (to the right of someone facing the fronts)
-  const by = (k) => V.records.find((r) => r.kind === k);
-  if (by('late').floors.some((q) => q.steps)) { const R = by('late'), fl = R.floors.find((q) => q.steps), roof = R.floors.filter((q) => q.layer === 1 && !q.steps).sort((a, b) => b.w * b.d - a.w * a.d), dir = [Math.sin(fl.yaw), Math.cos(fl.yaw)];
-    const foot = [fl.x - dir[0] * (fl.d / 2 + 0.3), fl.z - dir[1] * (fl.d / 2 + 0.3)], top = [fl.x + dir[0] * (fl.d / 2 + 0.5), fl.z + dir[1] * (fl.d / 2 + 0.5)], Rf = roof[0], c = Math.cos(Rf.yaw), s = Math.sin(Rf.yaw), P = (lx, lz) => [Rf.x + lx * c + lz * s, Rf.z - lx * s + lz * c, Rf.y];
-    out.roof = [[foot[0] + f[0] * 1.2 - dir[0] * 1.5, foot[1] + f[1] * 1.2 - dir[1] * 1.5], foot, [...top, fl.y1], P(Rf.w * 0.3 * Math.sign((top[0] - Rf.x) * c - (top[1] - Rf.z) * s), Rf.d * 0.3), P(0, Rf.d * 0.3), P(-Rf.w * 0.38, Rf.d * 0.3), P(-Rf.w * 0.38, -Rf.d * 0.05), P(Rf.w * 0.3, Rf.d * 0.32), [...top, fl.y1], foot]; }
-  for (const k of ['carrier', 'elder', 'new']) { const R = by(k), d = R.doors.find((q) => q.enter), room = R.floors.filter((q) => q.layer === 0).sort((a, b) => (b.r ? b.r * b.r * 3 : b.w * b.d) - (a.r ? a.r * a.r * 3 : a.w * a.d))[0], back = room.r ? room.r - 1.7 : room.d / 2 - (k === 'new' ? 2.4 : 1.3); // (short of what stands at the back: the bed, the hearth, the masons' trestle)
-    out[k] = [[d.x + d.face[0] * 1.3, d.z + d.face[1] * 1.3], [d.x - d.face[0] * 0.2, d.z - d.face[1] * 0.2], [room.x, room.z, room.y], [room.x - d.face[0] * back, room.z - d.face[1] * back, room.y], [room.x, room.z, room.y], [d.x + d.face[0] * 1.3, d.z + d.face[1] * 1.3]]; }
-  const L = F.len / 2 - 1, at = (a, b) => [F.x + t[0] * a + f[0] * b, F.z + t[1] * a + f[1] * b];
-  out.street = [at(-L, 2), at(-L / 2, 0.9), at(0, 2.1), at(L / 2, 0.8), at(L, 2)];
-  return out;
-});
-await page.evaluate(() => { const fp = window.__fp; fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1; for (const k of ['place', 'hint']) { const e = document.getElementById(k); if (e) e.style.display = 'none'; } });
-await page.clock.pauseAt(await page.evaluate(() => Date.now() + 500));
-const run = (ms) => page.clock.runFor(ms);
-await page.click('#begin'); await run(300);
-await page.mouse.click(480, 270); await run(300);
-const locked = await page.evaluate(() => window.__fp.player.locked);
-console.log('[lock]', locked ? 'the mouse is captured' : 'NOT captured: the look is turned through the page instead');
-let mx0 = 480, my0 = 270;
-const turnBy = async (dy, dp = 0) => {
-  if (!locked) return page.evaluate(([dy, dp]) => { const p = window.__fp.player; p.yaw += dy; p.pitch += dp; }, [dy, dp]);
-  const tx = mx0 - dy / 0.0021, ty = my0 - dp / 0.0021; await page.mouse.move(tx, ty, { steps: 3 }); mx0 = tx; my0 = ty;
-};
-const turnTo = async (w, pitch = -0.08) => { const s = await page.evaluate(([w, pitch]) => { const p = window.__fp.player; let dy = Math.atan2(-(w[0] - p.pos.x), -(w[1] - p.pos.z)) - p.yaw; dy -= Math.round(dy / (2 * Math.PI)) * 2 * Math.PI; return { dy, dp: pitch - p.pitch }; }, [w, pitch]); await turnBy(s.dy, s.dp); };
-const info = () => page.evaluate(() => { const p = window.__fp.player; return { x: +p.pos.x.toFixed(2), y: +(p.pos.y - p.eye).toFixed(2), z: +p.pos.z.toFixed(2) }; });
-let bad = 0;
-for (const name of routes) {
-  const pts = plan[name]; if (!pts) { console.log(`[skip] no route ${name}${name === 'roof' ? " (the Late house has no stair: against a riser its roof is walked from the tread behind)" : ""}`); continue; }
-  await page.evaluate(([x, z]) => window.__fp.controls.placeAt(x, z), pts[0]); await run(400);
-  await turnTo(pts[1]); await run(300);
-  let n = 0, gone = 0, last = await info(), side = 1, reached = true;
-  const shot = async (tag) => { const f = `shots/wip/${prefix}-${name}-${String(n).padStart(2, '0')}-${tag}.png`; await page.screenshot({ path: f, timeout: 240000 }); console.log(`[saved] ${f}`, JSON.stringify(await info())); };
-  await shot('a'); n++;
-  for (let leg = 1; leg < pts.length; leg++) {
-    const W = pts[leg]; let still = 0, ticks = 0;
-    await page.keyboard.down('KeyW');
-    for (;;) {
-      await turnTo(W); await run(100); ticks++;
-      const s = await info(), step = Math.hypot(s.x - last.x, s.z - last.z);
-      gone += step; still = step < 0.007 ? still + 1 : 0; last = s;
-      if (gone >= 1) { gone = 0; await page.keyboard.up('KeyW'); await run(200); await shot('a'); await turnBy(side * 1.15, 0.05); await run(150); await shot(side > 0 ? 'l' : 'r'); await turnBy(-side * 1.15, -0.05); side = -side; n++; await page.keyboard.down('KeyW'); }
-      if (Math.hypot(W[0] - s.x, W[1] - s.z) < 0.35) break;
-      if (still >= 30 || ticks > 400) { console.log(`STUCK on ${name}, leg ${leg}, at ${JSON.stringify(s)} making for ${W.map((v) => v.toFixed(2))}`); reached = false; break; }
-    }
-    await page.keyboard.up('KeyW'); await run(150);
-    const s = await info();
-    if (W[2] !== undefined && Math.abs(s.y - W[2]) > 0.2) { console.log(`OFF its floor on ${name}, leg ${leg}: feet at ${s.y}, the floor at ${W[2].toFixed(2)}`); reached = false; }
-    if (!reached) break;
-  }
-  await shot('end');
-  console.log(`${reached ? 'PASS' : 'FAIL'} ${name}: walked on the keys to its end (${n} metres of frames)`);
-  if (!reached) bad++;
+const errors = [];
+page.on('pageerror', (e) => errors.push(e.message));
+await page.goto(`${base}/?q=${q}&pos=58,-6&yaw=-1.9`, { waitUntil: 'load', timeout: 120000 });
+await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const W = touch ? 390 : 1280, H = touch ? 844 : 720;
+let cdp = null;
+if (touch) {
+  cdp = await context.newCDPSession(page);
+  await page.evaluate(() => { const b = document.getElementById('begin'); if (b) b.click(); });
+} else {
+  await page.click('#begin').catch(() => page.evaluate(() => window.__fp.events.dispatchEvent(new CustomEvent('begin'))));
+  await sleep(500);
+  await page.mouse.click(W / 2, H / 2);
 }
+await sleep(1200);
+const st = () => page.evaluate(() => { const p = window.__fp.player; return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', carried: !!p.carried, climbs: window.__fp.lappet.built['rungs-ladder'].state().climbs, locked: !!document.pointerLockElement }; });
+const s0 = await st();
+const locked = s0.locked;
+console.log(touch ? 'touch page' : `pointer captured: ${s0.locked}${s0.locked ? '' : ' (refused: steering by the page\'s drag-to-look fallback)'}`);
+// the route, from the village's own plan (read only)
+const route = await page.evaluate(async () => {
+  const P = await import('/src/v15/plan.js'), R = [], S = P.STAIR.s, tb = P.way('noon-main'), ld = P.way('rungs-ladder'), pr = P.way('pennyworth-ramp'), up = P.way('heliarch-upper'), hf = P.way('heliarch-foot');
+  const push = (xz, tag) => R.push({ x: xz[0], z: xz[1], tag });
+  const a = (s, D, tag) => push(P.at(1, s, D), tag), b = (s, D, tag) => push(P.at(2, s, D), tag), pol = (bg, r, tag) => push(P.polar(bg, r), tag);
+  // down: the keep's fallen corner, the court, the head, its west flight, the slot, the landing, the timber, the bastion, the foot
+  a(S, -9, 'court'); a(S, -5.5, 'head'); a(S - 0.6, -3.7); a(S - 3.4, -3.7, 'head-flight'); a(S - 6.6, -3.7); a(S - 6.6, 0.2); a(S, 0.8, 'slot');
+  a(S, up.D0 + 0.4); a(S, (up.D0 + up.D1) / 2, 'upper-flight'); a(S, up.D1 + 0.9, 'landing'); a(S, 10.4); a(S, 12.8, 'timber'); a(S, 15.9, 'bastion'); a(S, hf.D0 + 0.3); a(S, (hf.D0 + hf.D1) / 2, 'foot-flight'); a(S - 0.8, hf.D1 + 0.4, 'square');
+  // to the house's wall by the ramp, and back
+  pol(pr.b0 - 3.2, P.HAHA - 2.2); pol(pr.b0 - 1.2, P.HAHA + 1.1, 'ramp-head'); for (const bg of [pr.b0 + 2, pr.b0 + 6, pr.b0 + 10]) pol(bg, P.HAHA + 1.1, bg === pr.b0 + 6 ? 'ramp' : undefined); pol(pr.b1 + 0.6, P.HAHA + 1.1, 'ramp-foot');
+  push([P.HOUSE.x1 - 7, P.HOUSE.z1 + 1.3], 'house-wall');
+  pol(pr.b1 + 0.6, P.HAHA + 1.1); for (const bg of [pr.b0 + 10, pr.b0 + 6, pr.b0 + 2]) pol(bg, P.HAHA + 1.1); pol(pr.b0 - 1.2, P.HAHA + 1.1); pol(pr.b0 - 3.2, P.HAHA - 2.2, 'bench');
+  // the main from its foot to the breach, the gangway, the Mid Rung
+  const k = 4 / 5.4, door = (P.LEVEL.high.y + 0.81 - P.LEVEL.mid.y) / k + P.RISERS[1].D;
+  b(tb.s + 0.4, 22.6, 'tube-foot'); b(tb.s, 20.2); b(tb.s, 17, 'tube-low'); b(tb.s, 14, 'tube-mid'); b(tb.s, door + 0.15, 'breach'); b(tb.s + 2.6, door, 'gangway'); b(tb.s + 2.6, 9.2); b(ld.s - 2.5, 8.9, 'mid-rung');
+  // the ladder: off its head and down, then into its foot and up
+  b(ld.s, 9.1); b(ld.s, 10.75, 'ladder-down'); b(ld.s, 11.7, 'ladder-foot'); b(ld.s, 10.5, 'ladder-up'); b(ld.s, 8.9, 'ladder-top');
+  // back through the breach and up the main to the High Rung; the head's east flight; the court; the fallen corner
+  b(tb.s + 2.6, 9.2); b(tb.s + 2.6, door); b(tb.s, door - 0.15); b(tb.s, 8, 'tube-high'); b(tb.s, 5.2); b(tb.s, 2.6, 'tube-top'); b(4, -0.5);
+  const cs = P.cornerS(1, -3.7);
+  a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
+  return R;
+});
+const SENS = touch ? 0.005 : 0.0021;
+const touchPts = (pts) => pts.map(([id, x, y]) => ({ id, x, y }));
+let stickDown = false, stickHome = null;
+async function walkOn(on) {
+  if (!touch) { if (on) await page.keyboard.down('KeyW'); else await page.keyboard.up('KeyW'); return; }
+  if (on && !stickDown) {
+    stickHome = await page.evaluate(() => { const r = document.getElementById('stick').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 3, x: stickHome.x, y: stickHome.y }] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ id: 3, x: stickHome.x, y: stickHome.y - 55 }] });
+    stickDown = true;
+  } else if (!on && stickDown) {
+    stickDown = false;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  }
+}
+async function lookTouch(dyaw, dpitch = 0) {
+  const px = -dyaw / SENS, py = -dpitch / SENS, was = stickDown, sx = 195, sy = 300, n = 6;
+  if (was) await walkOn(false);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: touchPts([[7, sx, sy]]) });
+  for (let i = 1; i <= n; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: touchPts([[7, sx + px * i / n, sy + py * i / n]]) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  if (was) await walkOn(true);
+}
+let mx = W / 2, my = H / 2;
+async function lookKeys(dyaw, dpitch = 0) {
+  const px = -dyaw / SENS, py = -dpitch / SENS, n = Math.max(1, Math.ceil(Math.max(Math.abs(px), Math.abs(py)) / 150));
+  if (locked) { for (let i = 0; i < n; i++) { mx += px / n; my += py / n; await page.mouse.move(mx, my); } return; }
+  mx = W / 2; my = H / 2; await page.mouse.move(mx, my); await page.mouse.down();
+  for (let i = 0; i < n; i++) { mx += px / n; my += py / n; await page.mouse.move(mx, my); }
+  await page.mouse.up();
+}
+const turn = touch ? lookTouch : lookKeys;
+const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+let frame = 0;
+async function shot(what) {
+  frame++;
+  const f = `shots/wip/${prefix}-${String(frame).padStart(3, '0')}-${what}.png`;
+  await page.screenshot({ path: f });
+  const s = await st();
+  console.log(`[frame] ${f} at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(2)} on ${s.carried ? 'the ladder' : s.floor}`);
+}
+async function pause(fn) { await walkOn(false); await sleep(400); await fn(); await walkOn(true); }
+// at a checkpoint: what to look at, as turns from the walking direction (yaw, pitch)
+const LOOKS = {
+  court: [['down-the-stair', 0, -0.25]], head: [['over', 0, -0.5]], 'head-flight': [['ahead', 0, -0.3]], slot: [['down', 0, -0.45]], 'upper-flight': [['ahead', 0, -0.35]],
+  landing: [['timber', 0, -0.4], ['back', Math.PI, 0.5]], timber: [['ahead', 0, -0.4]], bastion: [['square', 0, -0.25], ['back', Math.PI, 0.45]], 'foot-flight': [['ahead', 0, -0.2]], square: [['back', Math.PI, 0.35]],
+  'ramp-head': [['down', 0, -0.2]], ramp: [['ahead', 0, -0.1]], 'ramp-foot': [['back', Math.PI, 0.15]], 'house-wall': [['wall', 0, 0.1], ['back', Math.PI, 0.3]], bench: [['tube', 1.2, 0.2]],
+  'tube-foot': [['mouth', 0, 0.35]], 'tube-low': [['up', 0, 0.5]], 'tube-mid': [['up', 0, 0.5], ['back', Math.PI, -0.5]], breach: [['out', -1.4, 0]], gangway: [['along', 0, 0], ['back', Math.PI, 0]],
+  'mid-rung': [['ladder', 0, 0]], 'ladder-foot': [['back', Math.PI, 0.6]], 'ladder-top': [['back', Math.PI, -0.5]], 'tube-high': [['up', 0, 0.5]], 'tube-top': [['back', Math.PI, -0.5], ['ahead', 0, 0]],
+  'head-flight-up': [['ahead', 0, 0.3]], crown: [['house', Math.PI, -0.3]], corner: [['back', Math.PI, -0.1]],
+};
+await shot('start');
+await walkOn(true);
+let i = 0, stuck = 0, last = null, since = 0, side = 1, climbs = 0;
+const t0 = Date.now();
+const onWay = (s) => s.carried || (s.floor !== 'ground' && !/^lappet-(crown|high|mid|low|bench)/.test(s.floor));
+while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
+  const s = await st();
+  const w = route[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
+  if (s.climbs !== climbs) { climbs = s.climbs; console.log(`took hold of the ladder at feet ${s.feet.toFixed(2)} (${climbs})`); }
+  if (last && onWay(s)) since += Math.hypot(s.x - last.x, s.feet - last.feet, s.z - last.z);
+  if (every > 0 && since >= every) {
+    since = 0; side = -side;
+    await pause(async () => { const p0 = (await st()).pitch; await turn(side * 0.55, 0); await sleep(700); await shot(`m-${s.carried ? 'ladder' : s.floor}`); await turn(-side * 0.55, p0 - (await st()).pitch); await sleep(150); });
+  }
+  if (d < 0.6) {
+    if (w.tag && LOOKS[w.tag]) for (const [what, dy, dp] of LOOKS[w.tag]) await pause(async () => { await turn(dy, dp - (await st()).pitch); await sleep(1100); await shot(`${w.tag}-${what}`); await turn(-dy, -(await st()).pitch); await sleep(200); });
+    else if (w.tag) console.log(`[at] ${w.tag} (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(2)} on ${s.carried ? 'the ladder' : s.floor}`);
+    i++; continue;
+  }
+  const want = Math.atan2(-dx, -dz), dy = wrap(want - s.yaw);
+  if (Math.abs(dy) > (touch ? 0.06 : 0.02)) await turn(dy, -s.pitch * 0.5);
+  await sleep(d < 2 ? 60 : 120);
+  if (last && Math.hypot(s.x - last.x, s.z - last.z, s.feet - last.feet) < 0.01) { if (++stuck > 80) { console.log(`stuck at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(2)} on ${s.floor} heading for ${i} ${w.tag || ''} (${w.x.toFixed(1)}, ${w.z.toFixed(1)})`); break; } } else stuck = 0;
+  last = s;
+}
+await walkOn(false);
+const walked = i >= route.length;
+console.log(`ladder taken ${climbs} times; page errors: ${errors.length}${errors.length ? ' ' + errors.slice(0, 3).join(' | ') : ''}`);
+console.log(`walked: ${walked ? 'yes' : 'no'}`);
 await browser.close();
-process.exit(bad ? 1 : 0);
+process.exit(walked && climbs >= 2 && !errors.length ? 0 : 1);

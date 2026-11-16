@@ -60,6 +60,7 @@ export function skinGround(terrain, covers = null, lift = 0.02) {
 //   vSkin, vTPos, vTNormal in scope), rough: GLSL after the roughness, normal: GLSL after the terrain's normal
 //   (view-space `normal` in scope), post: GLSL just before lighting (the last word on diffuseColor and
 //   roughnessFactor, after the terrain's own grain), decl: GLSL declarations, uniforms: { name: { value } },
+//   noEnv(x, z) -> bool: where something built covers the lowered mesh, so the envelope's skin is left out (v15),
 //   snap(x, z, step) -> null or [px, pz, sx, sz]: a grid vertex drawn at (px, pz) with its ground sampled at (sx, sz),
 //   so a crease sharper than the grid (the ha-ha's drop) lies on a line instead of a grid's sawtooth }
 export function buildSkin(ctx, o) {
@@ -75,6 +76,7 @@ export function buildSkin(ctx, o) {
   const env = new Uint8Array(nx * nz), lowered = coarseLowering(terrain);
   for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
     const x = x0 + i * st, z = z0 + j * st;
+    if (o.noEnv && o.noEnv(x, z)) continue; // (v15) a built floor covers the lowered mesh here: no skin under it
     if (Math.max(lowered(x, z), lowered(x - st, z - st), lowered(x + st, z - st), lowered(x - st, z + st), lowered(x + st, z + st)) > 0.02) {
       env[j * nx + i] = 1; keep[j * nx + i] = 1;
     }

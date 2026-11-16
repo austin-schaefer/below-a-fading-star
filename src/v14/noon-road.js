@@ -9,7 +9,9 @@ import { DOOR } from './coffin-road/plan.js';
 import { VESSELS, NODE, HOOPS, SHARDS, LINE, ELBOW, elbowAt, yOf, lamps, WY } from './noon-road/plan.js';
 
 // glazed and blown: smooth, wet-bright under a lamp, clouded and crazed with age, a lime crust at the water's line
-export function noonGlass(key = 'noon-glass', waterY = -1e5) {
+// o: { worn (0.65: how far the glaze is worn through to the body in patches), cloud ([0.62, 0.5]: the glaze's clouding, floor and swing) }
+export function noonGlass(key = 'noon-glass', waterY = -1e5, o = {}) {
+  const worn = (o.worn ?? 0.65).toFixed(3), cl = o.cloud ?? [0.62, 0.5];
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
@@ -22,11 +24,11 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5) {
         float ngY = ngW.y - ${waterY.toFixed(2)}, ngIn = step(ngY, 9.0) * step(-0.6, ngY);
         // old: the glaze clouded and stained, worn through in patches to the dull body under it, chipped darker
         float ngA = ngN(ngW * 0.55) * 0.6 + ngN(ngW * 1.7 + 4.0) * 0.3 + ngN(ngW * 6.0) * 0.1;
-        diffuseColor.rgb *= 0.62 + 0.5 * ngN(ngW * 0.9 + 2.0);
+        diffuseColor.rgb *= ${cl[0].toFixed(3)} + ${cl[1].toFixed(3)} * ngN(ngW * 0.9 + 2.0);
         float ngWorn = smoothstep(0.56, 0.66, ngA);
         // worn through, the glaze shows the milk body under it (a milk field wears to a duller biscuit)
         vec3 ngBody = vec3(0.58, 0.55, 0.47) * (0.8 + 0.3 * ngN(ngW * 8.0));
-        diffuseColor.rgb = mix(diffuseColor.rgb, ngBody, ngWorn * 0.65);
+        diffuseColor.rgb = mix(diffuseColor.rgb, ngBody, ngWorn * ${worn});
         // chipped: ragged flakes off the glaze to the duller body, never round dark spots (they read as rivets)
         float ngChip = smoothstep(0.8, 0.83, ngN(ngW * 3.1 + 9.0) + 0.12 * ngN(ngW * 14.0)) * smoothstep(0.45, 0.65, ngN(ngW * 0.8 + 5.0));
         diffuseColor.rgb = mix(diffuseColor.rgb, ngBody * 0.55, ngChip * 0.8);
@@ -51,7 +53,7 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5) {
       .replace('#include <opaque_fragment>', `outgoingLight += diffuseColor.rgb * vec3(0.03, 0.028, 0.05);
 #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2);
+  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2) + (o.worn != null || o.cloud ? `-${worn}-${cl.join('-')}` : '');
   return underMaterial(m, key, NOON.lightHex);
 }
 

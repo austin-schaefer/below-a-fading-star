@@ -2,7 +2,7 @@
 // but the earth they push up is full of tesserae: small dressed cubes of red, gold and lapis from a mosaic floor somewhere
 // under the turf. Now and then a new heap rises, slowly, with a click of stone on stone." Austin: "more of the cute": the
 // cute is in the scale and the slow heave; no mole is ever seen.
-// A fixed pool of 30 slots within r 12 of SITES.moles, 18 heaps at load. Each heap is 0.45-0.6 m across and 0.15-0.22 m
+// A fixed pool of 30 slots within SITES.moles (v15: the Pennyworth's garden; their lawn is under the Lappet's steps), 18 heaps at load. Each heap is 0.45-0.6 m across and 0.15-0.22 m
 // high, dark crumbled soil, with 25-45 tesserae half-buried in it and a few spilled on the turf. While the walker is within
 // 35 m, every 50-110 s a free slot heaves: the earth swells from the centre over 8 s with a crumbling jitter, the tesserae
 // surface in its last 2 s, and 3-5 `moles-click` cues fire. With every slot used, the oldest heap is flattened back to turf
@@ -11,12 +11,13 @@
 // One instanced mesh of heaps (the rise in its vertex shader), one of tesserae; both stand on the drawn terrain mesh.
 import * as THREE from 'three';
 import { SITES } from '../../world.js';
+import { radiusOf, HAHA, houseOut } from '../../v15/plan.js';
 import { hyp } from '../../noise.js';
 import { meshGround } from '../../v4/regions/skin.js';
 import { engrave } from './engrave.js';
 import { lintelForms } from './forms.js';
 
-const SITE = SITES.moles;               // (75, 0) r 12
+const SITE = SITES.moles;               // (104, -23) r 9: the Pennyworth's garden, under the Lappet (v15)
 const SLOTS = 30, AT_LOAD = 18, RISE = 8, SURFACE = 2, NEAR = 35, EVERY = [50, 110];
 const COLORS = [['#8a2a1c', 0], ['#b8902a', 1], ['#26407a', 0]]; // red, gold worn to brass (metallic), lapis
 
@@ -57,11 +58,11 @@ export function buildMoles(ctx, { motif }) {
   const ground = meshGround(terrain);
   const lintel = lintelForms(ctx);
 
-  // ---- the 30 slots: on the lawn within r 12, a heap's breadth apart, off the causeway's verge
+  // ---- the 30 slots: within the site, a heap's breadth apart, off the causeway's verge
   const slots = [];
   for (let k = 0; k < 2000 && slots.length < SLOTS; k++) {
     const a = rng() * 6.2832, r = Math.sqrt(rng()) * (SITE.r - 0.6), x = SITE.x + Math.cos(a) * r, z = SITE.z + Math.sin(a) * r;
-    if (terrain.causewayDistance(x, z) < 4 || terrain.slopeAt(x, z) > 0.45) continue;
+    if (terrain.causewayDistance(x, z) < 4 || terrain.slopeAt(x, z) > 0.45 || radiusOf(x, z) < HAHA + 3.6 || houseOut(x, z) < 1.5) continue; // (not on the ramp along the lowest riser, nor against the house's wall)
     if (slots.some((s) => hyp(s.x - x, s.z - z) < 1.6)) continue;
     const R = 0.225 + rng() * 0.075, H = 0.15 + rng() * 0.07;
     const n = Math.round((25 + rng() * 20) * (low ? 0.67 : 1)), spill = 2 + ((rng() * 4) | 0);

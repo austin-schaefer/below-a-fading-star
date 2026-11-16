@@ -40,8 +40,8 @@ export async function build(ctx) {
     const key = i + ',' + j;
     if (paverCells.has(key)) return false;
     paverCells.add(key);
-    const gy = ground.groundAt(x, z);
-    ground.groundNormal(x, z, _n, 0.55);
+    const gy = o.y ?? ground.groundAt(x, z); // o.y (v15): laid on a built floor at that height, level
+    if (o.y === undefined) ground.groundNormal(x, z, _n, 0.55); else _n.set(0, 1, 0);
     const tilt = o.tilt ?? 0.05;
     _q.setFromUnitVectors(UP, _n);
     _e.set((pRng() - 0.5) * tilt, (pRng() - 0.5) * 0.12, (pRng() - 0.5) * tilt);

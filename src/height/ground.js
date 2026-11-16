@@ -12,6 +12,7 @@ import { ground as demesne } from '../v4/regions/ground/demesne.js';
 import { ground as lynchets } from '../v4/regions/ground/lynchets.js';
 import { ground as strandline } from '../v4/regions/ground/strandline.js';
 import { ground as adust } from '../v4/regions/ground/adust.js';
+import { lappetTint } from '../v15/ground.js'; // v15: the village's ground (trodden earth, the Pennyworth's past the Demesne's edge)
 
 export const GROUND_HOOKS = { bletting, saltings, outwash, highLing, demesne, lynchets, strandline, adust };
 const GROUND_KEYS = REGION_KEYS.filter((k) => typeof GROUND_HOOKS[k] === 'function');
@@ -33,5 +34,6 @@ export function regionsGround(c, x, z, b) {
     return c.lerp(_dc, 0.75);
   }
   for (const k of GROUND_KEYS) if (w[k] > 0) GROUND_HOOKS[k](c, x, z, w[k], b);
+  lappetTint(c, x, z);
   return c;
 }

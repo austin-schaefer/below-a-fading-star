@@ -59,6 +59,7 @@ export const LANDMARKS = {
   keptfire: { x: 10, z: -190, r: 14, y: null, name: "The Kept Fire", line: "“He walked apart, beyond the glow of the campfires to gaze out among the mystic vistas of crag and valley. The slopes were softened by verdure and foliage, the vales deepening into shadowy realms of magic.”", card: true },
   hawser: { x: -80, z: -272, r: 25, y: null, name: "The Hawser", line: "“To chain them wholly to modern rules would be barbarous.”", card: true },
   plinths: { x: 148, z: -220, r: 25, y: null, name: "The Plinth Road", line: "“It had not been built for human feet to travel. It had not been built for feet at all.”", card: true },
+  lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true, aside: false, at: { x: 128, z: 5 } }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
@@ -190,11 +191,11 @@ export const SITES = {
   sexton:     { x: 55, z: 272, r: 18, block: [40, 70, 264, 284], name: 'The Sexton' },
   stylite:    { x: 268, z: -80, r: 8, on: 'tallestTor', name: 'The Stylite' },
   accrescent: { x: 60, z: -180, r: 3, trailFrom: [40, -265], corridor: 3, name: 'The Accrescent' },
-  indistinct: { x: 40, z: 30, r: 0, ditch: { from: [40, -55], to: [125, 30] }, name: 'The Indistinct' }, // the ha-ha's ditch, bearings 0-90 from the keep
+  indistinct: { x: 40, z: 30, r: 0, ditch: { from: [-21, -29], to: [66, -51] }, name: 'The Indistinct' }, // the ha-ha's ditch, bearings 314-18 from the keep (v15: the Lappet took the north-east arc)
   repetend:   { x: -170, z: -97, r: 0, name: 'The Repetend' }, // the Lynchets' east wall-tops
   scriveners: { x: -100, z: 58, r: 8, name: 'The Scriveners' },
   simulacrum: { x: 20, z: -205, r: 5, name: 'The Simulacrum' },
-  moles:      { x: 75, z: 0, r: 12, name: 'The Moles' },
+  moles:      { x: 104, z: -23, r: 9, name: 'The Moles' }, // v15: in the Pennyworth's garden and the bare earth beside it (the Lappet's steps stand where their lawn was)
   toadstone:  { x: 180, z: 230, r: 2, name: 'The Toadstone' },
   linkBoy:    { x: -165, z: -105, r: 2, leads: 'P1-P17', name: 'The Link-Boy' },
   reach:      { x: 171, z: 235, r: 0, from: [208, 258], to: [134, 211], name: 'The Luminous Reach' },

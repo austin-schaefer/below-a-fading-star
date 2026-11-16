@@ -71,10 +71,11 @@ r.motif = await page.evaluate(() => {
 });
 
 // ---- the moles
-await at(80, -8, 2.583, -0.1);
-r.moles0 = await page.evaluate(() => {
+await at(97.5, -27.5, -1.75, -0.2);
+r.moles0 = await page.evaluate(async () => {
+  const SITE = (await import('/src/world.js')).SITES.moles;
   const m = window.__fp.glyphs.moles, used = m.slots.filter((s) => s.used);
-  return { heaps: used.length, maxR: Math.max(...used.map((s) => Math.hypot(s.x - 75, s.z))), nearest: Math.min(...used.map((s) => window.__fp.terrain.causewayDistance(s.x, s.z))) };
+  return { heaps: used.length, maxR: Math.max(...used.map((s) => Math.hypot(s.x - SITE.x, s.z - SITE.z))), site: SITE, nearest: Math.min(...used.map((s) => window.__fp.terrain.causewayDistance(s.x, s.z))) };
 });
 await sleep(1500);
 r.cpuMoles = await page.evaluate(() => window.__fp.perf.report().cpu.modules['living-glyphs'] ?? null);
@@ -109,7 +110,7 @@ check(r.wander.lo >= 0.2 && r.wander.hi <= 0.8 && r.wander.phase === 'wander' &&
 check(r.form1.phase === 'hold' && r.form1.err !== null && r.form1.err <= 0.15, 'every formed fish lies within 0.15 m of its glyph\'s strokes (x16)', `worst ${r.form1.err?.toFixed(3)} m`);
 check(r.form1.f === r.form1.want, 'the shoal forms the glyph the door showed last', `form ${r.form1.f}, door's last ${r.form1.want} (${r.form1.shifts} shifts)`);
 check(r.gutter.shifts === 2 && r.gutter.f === r.gutter.want && r.gutter.err <= 0.15, 'after the gutters the next formation is the lintel\'s new first (the one pushed off the end)', `${r.gutter.shifts} shifts, form ${r.gutter.f}, glyphOrder[0] ${r.gutter.want}, worst ${r.gutter.err?.toFixed(3)} m`);
-check(r.moles0.heaps === 18 && r.moles0.maxR <= 12, '18 heaps at load, all inside r 12 of (75, 0)', `${r.moles0.heaps} heaps, furthest ${r.moles0.maxR.toFixed(1)} m, nearest the causeway ${r.moles0.nearest.toFixed(1)} m`);
+check(r.moles0.heaps === 18 && r.moles0.maxR <= r.moles0.site.r, '18 heaps at load, all inside the site (src/world.js SITES.moles)', `${r.moles0.heaps} heaps, furthest ${r.moles0.maxR.toFixed(1)} m, nearest the causeway ${r.moles0.nearest.toFixed(1)} m`);
 check(r.rise.k >= 0 && r.rise.after === r.rise.before + 1 && r.rise.rising === -1 && r.rise.clicks >= 3 && r.rise.clicks <= 5, 'a rise completes in 8 s, adds a heap, and clicks 3-5 times', `slot ${r.rise.k}, ${r.rise.before} -> ${r.rise.after} heaps, ${r.rise.clicks} moles-click`);
 check(r.flat.inView === false && r.flat.away === true && r.flat.log.every((f) => !f.inView), 'no heap is flattened in view (the oldest goes only behind the walker)', `in view: ${r.flat.inView}, behind: ${r.flat.away}, ${r.flat.log.length} flattened`);
 const t = r.motif.tess;
