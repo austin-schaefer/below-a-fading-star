@@ -352,7 +352,7 @@ export function awning(B, M, o = {}) {
     for (let j = 0; j <= nr; j++) for (let i = 0; i <= n; i++) { const u = i / n, v = j / nr; pos.push(-w / 2 + u * w, h - 0.02 - v * drop - sag(u) * (0.3 + 0.7 * v) - (under && i > 0 && i < n && j > 0 && j < nr ? 0.014 : 0), 0.03 + v * (hem[i] - 0.03)); }
     for (let j = 0; j < nr; j++) for (let i = 0; i < n; i++) { const a2 = j * (n + 1) + i, b2 = a2 + 1, c2 = a2 + n + 1, e2 = c2 + 1; if (under) idx.push(a2, b2, c2, b2, e2, c2); else idx.push(a2, c2, b2, b2, c2, e2); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
-    addPainted(B, g.toNonIndexed(), M, { color: col, moss: 0.02, ground: g0 - 2 }, (x, y, z, out) => { const u = (x + w / 2) / w, i = Math.min(n - 1, Math.floor(u * n + (z > 0.04 && z < d * 0.98 ? 0 : 1e-6))), k = tone[i] * (under ? 0.8 : 1), inP = Math.abs(u - pu - 0.08) < 0.1 && z > d * 0.3 && z < d * 0.75, C = inP ? patchC : col; out.r = C.r * k; out.g = C.g * k; out.b = C.b * k; });
+    addPainted(B, g.toNonIndexed(), M, { color: col, moss: 0.02, ground: g0 - 2 }, (x, y, z, out) => { const u = (x + w / 2) / w, i = Math.max(0, Math.min(n - 1, Math.floor(u * n))), k = tone[i] * (under ? 0.8 : 1), inP = Math.abs(u - pu - 0.08) < 0.1 && z > d * 0.3 && z < d * 0.75, C = inP ? patchC : col; out.r = C.r * k; out.g = C.g * k; out.b = C.b * k; });
   }
   B.add(B.box(w + 0.1, 0.05, 0.05, { seg: 9 }), ch(M, 0, h, 0.03), { color: L.wood, moss: 0, ground: g0 });
   if (o.poles !== false) for (const sx of [-1, 1]) beam(B, M, [sx * (w / 2 - 0.05) + (rng() - 0.5) * 0.12, -0.15, d + (rng() - 0.5) * 0.1], [sx * (w / 2 - 0.05), h - drop - 0.02, d - 0.02], 0.065, { color: V.rawWood, moss: 0.08, ground: g0, round: 5 });

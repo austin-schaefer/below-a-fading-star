@@ -48,7 +48,7 @@ export function vessel(B, M, o = {}) {
     out.e = 0;
   };
   const bodyAt = (x, y, z, out, glow = 0) => { set(out, N.milk, 0.5 + 0.1 * n3(x * 0.8, y * 0.8, z * 0.8)); mix(out, V.dirt, 0.2); out.e = glow; };
-  const skinOpts = { color: N.milk, moss: 0.55, wet: 0, course: 0.07, ground: g0 }; // (the crazing: a fine net all over)
+  const skinOpts = { color: N.milk, moss: 0.55, wet: 0, course: 0.17, ground: g0 }; // (the crazing: a fine net all over)
   // a piece of wall: P(i, j, inner) over a grid nu by nv (wrapU: closed round), cells where open(i, j) left out; its
   // outer skin glazed, its inner the body, and a face through the thickness at every broken edge
   const piece = (P, nu, nv, wrapU, open, y01, inGlow = 0, footJ = true) => {
@@ -66,6 +66,10 @@ export function vessel(B, M, o = {}) {
       }
       if (!idx.length) continue;
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+      if (!inner) { // the crazing: the shader's mortar net, laid askew and pulled about so no line of it runs true
+        const mu = new Float32Array((pos.length / 3) * 2);
+        for (let k = 0; k < pos.length / 3; k++) { const x = pos[k * 3], y = pos[k * 3 + 1], z = pos[k * 3 + 2], s = x * 0.8 + z * 0.6; mu[k * 2] = s * 0.77 - y * 0.64 + 0.5 * n3(x * 0.9, y * 0.9, z * 0.9 + 3); mu[k * 2 + 1] = s * 0.64 + y * 0.77 + 0.5 * n3(x * 0.9 + 7, y * 0.9, z * 0.9); }
+        g.setAttribute('muv', new THREE.BufferAttribute(mu, 2)); }
       addPainted(B, g, M, inner ? { color: N.milk, moss: 0.05, wet: 0, ground: g0 - 3 } : skinOpts, inner ? (x, y, z, out) => bodyAt(x, y, z, out, inGlow) : (x, y, z, out) => glazeAt(x, y, z, y01(y), out));
     }
     // the breaks: the wall seen in section
@@ -85,7 +89,7 @@ export function vessel(B, M, o = {}) {
   // a shard: a lump of the wall, as thick as the wall, lying where it fell and half in the ground
   const shard = (x, z, s = 1) => {
     const a = 0.7 + rng() * 0.6, b = 0.5 + rng() * 0.5, col = G[0].clone().multiplyScalar(0.6).lerp(V.dirt, 0.4);
-    B.add(B.box(a * s, TH, b * s, { seg: 0.5, chip: 0.12, seed: seed + x * 7 }), ch(M, x, 0.02 + rng() * 0.08, z, (rng() - 0.5) * 0.5, rng() * 3, (rng() - 0.5) * 0.5), { color: rng() < 0.4 ? N.milk.clone().multiplyScalar(0.55).lerp(V.dirt, 0.25) : col, moss: 0.6, course: 0.07, ground: g0 });
+    B.add(B.box(a * s, TH, b * s, { seg: 0.5, chip: 0.12, seed: seed + x * 7 }), ch(M, x, 0.02 + rng() * 0.08, z, (rng() - 0.5) * 0.5, rng() * 3, (rng() - 0.5) * 0.5), { color: rng() < 0.4 ? N.milk.clone().multiplyScalar(0.55).lerp(V.dirt, 0.25) : col, moss: 0.6, course: 0.17, ground: g0 });
     R.post(x, z, 0.35 * s, 0, 0.3);
   };
   const plaster = worn(L.plaster[rng() < 0.6 ? 0 : 3], rng, 0.08 + rng() * 0.1, 0.08), paint = L.paint[Math.floor(rng() * 4)];

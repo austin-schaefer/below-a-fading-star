@@ -157,7 +157,7 @@ export function newhouse(B, M, o = {}) {
   for (const [bx, bz, bw, bd] of [[0, 0.5, 1.5, 0.06], [0, -0.5, 1.5, 0.06], [0.72, 0, 0.06, 1.0], [-0.72, 0, 0.06, 1.0]]) B.add(B.box(bw, 0.34, bd, { seg: 9 }), ch(M, px + bx, 0.12, pz + bz), raw);
   B.add(B.box(1.4, 0.2, 0.96, { seg: 0.5 }), ch(M, px, 0.1, pz), { color: V.lime, moss: 0, wet: 0.25, ground: g0 - 3, disp: 0.015, dispScale: 3, emit: [0.05, 0.05, 0.045, 1] });
   beam(B, M, [px + 0.2, 0.18, pz], [px + 0.9, 1.25, pz - 0.75], 0.04, { ...raw, round: 5 });
-  for (let i = 0; i < (low ? 2 : 4); i++) { const r = 0.16 + rng() * 0.2; B.add(new THREE.IcosahedronGeometry(1, 0), ch(M, px + (i % 2 ? 1 : -1) * (0.95 + rng() * 0.3), -0.01, pz + (rng() - 0.5) * 1.2, 0, rng() * 3, 0, r * 1.3, 0.05, r), { color: V.lime.clone().lerp(V.dirt, 0.35 + rng() * 0.2), moss: 0, ground: g0 - 3, disp: 0.02, dispScale: 4 }); } // (slopped putty, trodden grey: lumps, not sheets)
+  for (let i = 0; i < (low ? 2 : 4); i++) { const r = 0.16 + rng() * 0.2; B.add(new THREE.IcosahedronGeometry(1, 0), ch(M, px + (i % 2 ? 1 : -1) * (0.95 + rng() * 0.3), -0.01, pz + (rng() - 0.5) * 1.2, 0, rng() * 3, 0, r * 1.3, 0.05, r), { color: V.lime.clone().lerp(V.dirt, 0.6 + rng() * 0.2).multiplyScalar(0.8), moss: 0.1, ground: g0 - 3, disp: 0.02, dispScale: 4 }); } // (slopped putty, trodden grey: lumps, not sheets)
   R.wall(px - 0.5, pz, px + 0.5, pz, 0, 0.3, 0.5, { stand: true });
   // the stock: quarried blocks waiting, the sign whole on one of them and upside down; a column drum not yet cut
   const kx = side > 0 ? x1 + 0.55 : x0 - 0.55, kz = zb + 1.4;
