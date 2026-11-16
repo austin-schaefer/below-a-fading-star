@@ -265,7 +265,7 @@ export function undercroft(B, M, o = {}) {
     // along the walls: the big jars, the sacks, a bench
     const jx = -side * (w / 2 - 0.95);
     for (let i = 0; i < (low ? 2 : 4); i++) { const z = zf + 0.9 + i * 0.85 + rng() * 0.2, r = 0.3 + rng() * 0.12; pot(B, M, jx, 0, z, r, worn(pick([L.tile[0], V.mud, L.tile[4], V.mud], rng), rng, 0.35), 1.9 + rng() * 0.5); R.post(jx, z, r, 0, 0.8); }
-    for (let i = 0; i < 3; i++) { const x = side * (w / 2 - 0.85) - side * (i % 2) * 0.5, z = zf + 0.8 + i * 0.5; B.add(new THREE.IcosahedronGeometry(0.32, 1), ch(M, x, 0.2 + (i === 2 ? 0.34 : 0), z - (i === 2 ? 0.25 : 0), 0, rng() * 3, 0, 1, 0.75, 1.15), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g0, disp: 0.03 }); if (i < 2) R.post(x, z, 0.32, 0, 0.5); }
+    for (let i = 0; i < 3; i++) { const x = side * (w / 2 - 0.85) - side * (i % 2) * 0.5, z = i === 2 ? zf + 0.95 : zf + 0.8 + i * 0.5; B.add(new THREE.IcosahedronGeometry(0.32, 1), ch(M, x, i === 2 ? 0.56 : 0.2, z, /* (the third lies on the first) */ 0, rng() * 3, 0, 1, 0.75, 1.15), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g0, disp: 0.03 }); if (i < 2) R.post(x, z, 0.32, 0, 0.5); }
     R.top = Math.max(h, 2.6);
   } else {
     const lx = side * Math.min(W / 2 - 0.2, (form === 'double' ? xa1 : aw0 / 2) + 0.7), ly = Math.min(h - 0.5, sp + 0.9);

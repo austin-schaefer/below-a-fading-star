@@ -62,7 +62,7 @@ export async function build(ctx) {
   const B = ctx.strata.builder(), E = ctx.strata.builder();
   const records = [], plots = [], kinds = [];
   const done = (R, plot) => {
-    for (const l of R.lights) { const pl = new THREE.PointLight(new THREE.Color(l.color), l.intensity, l.distance, 2); pl.position.set(l.x, l.y, l.z); pl.name = `village-row-${R.kind}`; ctx.scene.add(pl); }
+    // (no PointLight of the row's own: on the plan the shop is within reach of P9, where the House's two and the Link-Boy's already make three; the lamp's glass and the windows are emissive. R.lights stays for a quarter with a slot to give.)
     R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby', 'emerald', 'sapphire'][(R.seed + i) % 4], 0.42)); // (dim: at a door they are met at arm's length)
     records.push(R); plots.push(plot); kinds.push(R.kind);
   };
