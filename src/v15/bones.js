@@ -88,6 +88,7 @@ export async function build(ctx) {
   const low = ctx.quality === 'low';
   const T = ctx.terrain, N2 = ctx.noise.noise2;
   const lappet = (ctx.lappet = { plan: PLAN, on: !off, floors: {}, openings: planOpenings(), holes: [], kerbs: [], colliders: 0, farHidden: [], ways: {}, built: {}, Mesher });
+  lappet.middle = { x: 80, z: -12 }; lappet.FAR = 150; // (the village's middle, and how far off low stops drawing farHidden: src/v15/far.js stands its blocks in from there)
   if (off) { ctx.log('lappet: off (?lappet=0)'); return; }
 
   // the ways claim their openings (a gap in a riser's face) and holes (a slot cut in a tread) before the stone is laid
@@ -330,9 +331,9 @@ export async function build(ctx) {
     let small = null, far = false, mid = false;
     ctx.registerUpdate(() => {
       if (!small) small = ['lappet-ways-stone', 'lappet-ways-glass', 'demesne-blocks'].map((n) => ctx.scene.getObjectByName(n)).filter(Boolean);
-      const c = ctx.camera.position, f = Math.hypot(c.x - 80, c.z + 12) > 330;
+      const c = ctx.camera.position, M = lappet.middle, f = Math.hypot(c.x - M.x, c.z - M.z) > 330;
       if (f !== far) { far = f; for (const m of small) m.visible = !f; }
-      const g = Math.hypot(c.x - 80, c.z + 12) > 150; // the houses and the quarters' own meshes (lappet.farHidden) go sooner: from the Hanging Croft's deck (155 m off, 108 m up) the frame is at its triangle limit without them
+      const g = Math.hypot(c.x - M.x, c.z - M.z) > lappet.FAR; // the houses and the quarters' own meshes (lappet.farHidden) go sooner: from the Hanging Croft's deck (155 m off, 108 m up) the frame is at its triangle limit without them
       if (g !== mid) { mid = g; for (const m of lappet.farHidden) m.visible = !g; }
     }); // (every frame, unthrottled: a distance and a compare)
   }
