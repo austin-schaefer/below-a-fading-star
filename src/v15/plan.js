@@ -373,7 +373,7 @@ const onRiser = (name, b, r, note) => { const a = (b * Math.PI) / 180, [x, z] = 
 export const FIXTURES = [
   fix('cloth-stall', 95.0, -28.2, 0.9, [0.3, -1], 'a three-cornered cloth from the ramp\'s revetment to one pole, in the pocket by the south door: slippers, when there are any'),
   fix('salt-stall', 106.0, -26.5, 1.3, [0, -1], 'the salt-weigher\'s: a plank on two Heliarch drums, the Twk-men\'s perch, a peg at thumb height'),
-  fix('news-block', 108.55, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
+  fix('news-block', 108.35, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
   fix('well', 106.2, -23.5, 1.0, [0, -1], 'the well: a Heliarch drum bored through, a sweep on a forked post'),
   fix('west-post-1', 70.3, -47, 0.6, [0, 1], 'a post of drums and a lamp where the west way (the path P9) passes the house\'s west wall'),
   fix('west-post-2', 86.2, -66.6, 0.6, [0, 1], 'the same, where the west way comes round to the gate\'s road'),

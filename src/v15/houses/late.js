@@ -247,7 +247,10 @@ export function late(B, M, o = {}) {
     if (o.shop && !lops[1].skip) shopfront(B, HM, R, lops[1], lzf, rng, { paint, low, awning: false, signSide: -side });
     // the door from the tall half onto the yard, and the pergola's cloth
     const wx = side > 0 ? tx0 : tx1;
-    leaf(B, ch(HM, wx - side * 0.03, lh, (zb + lzf) / 2 + 0.4, 0, -side * Math.PI / 2, 0), 0.8, 1.75, worn(paint, rng, 0.2), rng, { plain: low });
+    // (on the tall half's side wall as its batter leaves it: the face stands 4 cm in from the front's end at the foot and
+    // leans in by k of its distance from the room's middle for each metre up, so the leaf leans with it, its back 1.5 cm in)
+    const kt = Math.min(0.03, 0.075 / th), sl = (Math.abs(tcx - wx) - 0.04) * kt;
+    leaf(B, ch(ch(HM, wx + side * (0.04 + sl * lh + 0.015 - 0.035), lh, (zb + lzf) / 2 + 0.4, 0, 0, -side * Math.atan(sl)), 0, 0, 0, 0, -side * Math.PI / 2, 0), 0.8, 1.75, worn(paint, rng, 0.2), rng, { plain: low });
     const px0 = side > 0 ? lx0 + 0.5 : lx1 - 0.5, pz0 = zb + 0.6, pz1 = lzf - 0.6, ph = 2.0;
     for (const z of [pz0, pz1]) { beam(B, HM, [px0, lh, z], [px0, lh + ph, z], 0.07, { color: L.wood, moss: 0.05, ground: g0, round: 5 }); beam(B, HM, [px0, lh + ph, z], [wx - side * 0.05, lh + ph + 0.25, z], 0.06, { color: L.wood, moss: 0.05, ground: g0 }); }
     const nc = low ? 3 : 5, cc = pick([V.saffron, V.teal, V.madder], rng);
