@@ -130,7 +130,7 @@ export function ground(Q, F) {
     const end = flat(brink + 1, 0, 0.045), fall = low ? 1.5 : 1.9;
     for (const [ax, az] of [[Math.cos(yaw), -Math.sin(yaw)], [Math.sin(yaw), Math.cos(yaw)]]) {
       const w = 0.03, hw = 0.2, e = (k, y) => [end[0] + ax * k, end[1] - y, end[2] + az * k];
-      for (const [y0, y1, k, ww] of [[0, 0.55, 0.5, w * 1.6], [0.66, 1.02, 0.3, w * 1.2], [1.14, 1.4, 0.16, w], [1.5, 1.62, 0.08, w]]) if (y1 <= fall) G.quad(e(-ww, y0), e(ww, y0), e(ww * 0.7, y1), e(-ww * 0.7, y1), k, k, k * 0.5, k * 0.5); // (it falls in lengths, each fainter: a pour going out, not a line on the wall)
+      for (const [y0, y1, k, ww] of [[0, 0.5, 0.26, w * 2.6], [0.62, 0.92, 0.15, w * 2.2], [1.06, 1.26, 0.08, w * 1.8], [1.4, 1.5, 0.04, w * 1.5]]) if (y1 <= fall) G.quad(e(-ww, y0), e(ww, y0), e(ww * 0.7, y1), e(-ww * 0.7, y1), k, k, k * 0.5, k * 0.5); // (it falls in lengths, each fainter: a pour going out, not a line on the wall)
       for (const sd of [-1, 1]) G.quad(e(0, 0), e(0, fall * 0.8), e(sd * hw, fall * 0.8), e(sd * hw, 0), 0.07, 0, 0, 0);
     }
     Q.places.push({ what: 'the spout: the light runs off here and goes out as it falls', x: end[0], y: end[1], z: end[2] });
