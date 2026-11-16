@@ -137,3 +137,4 @@ A cost no single world module owns has one owner and one place its number is rea
 | the kept store | `v13-L3`, not in the tree yet | what a visit keeps (the bake, keyed by commit, tier and height params) so the next skips it | `load-probe` repeat load, phases `terrain` and `modules` |
 | the service worker | `sw.js` | a repeat visit served from its cache of one commit; the network asked for `commit.json` | `load-probe` repeat load: requests and kilobytes over the wire; `tools/sw-test.mjs` |
 | who made which objects | `module-registry.js` | nothing per frame; the one record of module ownership | `ctx.modules` in the console |
+| `v15/lips.js` | v15-W3: `holeLip(ctx, o)`: a hole's drawn lip for the edge-guard (`ctx.addLip`), found from the floors and smoothed to the rim's hull; the Pit's (`v4/paths.js`) and the Nave's (`v5/nave.js`) |

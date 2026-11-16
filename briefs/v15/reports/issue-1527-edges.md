@@ -104,3 +104,19 @@ Keys, mouse captured: `edge-span-keys-*` (held, looking down 56 m, over, dark, w
 
 The fall on by default; waking 3.5 m back; the guard's 40/35 degree margins; the Nave's west water edge left held
 (rock above it).
+
+## Round 2 (the orchestrator: the two pits)
+
+- **Drawn lips:** `ctx.addLip` and `src/v15/lips.js`. The Pit's rim holds a plain walk at the top of the crust (feet
+  about +0.9, where the ground visibly breaks), no longer halfway down it; the Nave's rim is followed on its smoothed
+  hull, so a walk along it slides past the jags. A square push, a hurry or a hop still goes in. Nothing unseen holds.
+- The Pit's throat walls are a trap: a walker who comes to rest against them (the replacing floor is steeper than the
+  drawn rock there; once it put the eye inside the rock) wakes back at the lip.
+- `edge-walk.mjs` now steers by the drawn lip, on touch by the stick's own lean, and faces the gallery outward.
+- Frames, held then over: `edge-pit-keys-r2-*` (held 01, looking in 02, over 03-05, dark 06, woken 09),
+  `edge-pit-touch-r2-*`, `edge-nave-keys-r2-*` (held 02, over 04-06, dark 07, woken 10), `edge-nave-touch-r2-*`
+  (held 02, over into the water, given back to the road 07), `edge-gallery-keys-r2-*` and `edge-gallery-touch-r2-*`
+  (held at bay 5's gap 02, over 04-06, dark 07, woken on the gallery 10).
+- edges-test's Pit row is the strong claim again: a walk along the lip never falls.
+- Left as they are (listed): rails held by `keep` cannot be hopped (the Staircase's rope, the lift's rails); W4's
+  parapets on `keep: 'up'` treads need colliders.
