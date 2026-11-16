@@ -76,7 +76,6 @@
   "buried-sunk|v12-lift-lower|rocks-pebble-5": {"n":1,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["-304,6.5,-17.5"]},
   "buried-sunk|v12-lift-lower|rocks-pebble-6": {"n":2,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["-288,2,-21.5","-292.5,2.5,-20.5"]},
   "buried-sunk|v12-lift-lower|rocks-stone-3": {"n":1,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["-297,3,-21.5"]},
-  "buried-sunk|v12-stair|rocks-stone-4": {"n":1,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["238,2.5,-52.5"]},
   "buried-sunk|v12-stair|stair-kerbs": {"n":2,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["252.5,3,-48.5","267,4.5,-9"]},
   "buried-sunk|v14-pit-stair|rocks-pebble-5": {"n":1,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["202.5,-28,193.5"]},
   "buried-sunk|v14-pit-stair|span-rubble": {"n":1,"why":"found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)","at":["177,-3.5,180.5"]},
