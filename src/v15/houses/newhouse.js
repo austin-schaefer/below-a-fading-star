@@ -62,15 +62,16 @@ export function newhouse(B, M, o = {}) {
   const fresh = () => ({ color: V.newStone.clone().lerp(rng() < 0.3 ? H.stone : V.dirt, 0.08 + rng() * 0.16).multiplyScalar(0.9 + rng() * 0.1), moss: 0.03, ground: g0 - 0.6, course: 0 });
   // how many courses stand at each corner, and how far the wall between dips: corners first
   const cor = [0, 1, 2, 3].map(() => (stage === 0 ? 1 + Math.floor(rng() * 2) : stage === 2 ? 8 + Math.floor(rng() * 2) : 5 + Math.floor(rng() * 4))); cor[side > 0 ? 0 : 1] += stage === 2 ? 1 : 2; // (fl, fr, br, bl); the scaffold's corner is highest
-  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, gapTop = Math.ceil((sp + 0.18 + dw0 / 2 + 0.45) / CH); // (the door's gap closes over the arch)
+  const dipK = stage === 0 ? 0.3 : stage === 2 ? 0.45 : 1, sp = 2.06, dw0 = 1.36, SPR = 5, ys = SPR * CH - 0.004, gapTop = Math.ceil((ys + dw0 / 2 + 0.45) / CH); // (ys: the spring line, the top of the fifth course, where the jambs are carried up first) // (the door's gap closes over the arch)
   let maxC = 0, front = 0;
   // one wall: from p to q (local x, z), the outward normal's yaw ry, corner heights ca, cb
   const wall = (px, pz, len, ry, ca, cb, dip, gap) => {
     const Wm = ch(M, px, 0, pz, 0, ry, 0); // +x along the wall, +z out of it
     dip *= dipK;
+    const cs = (a, b, t, dp) => { const n = courses(a, b, t, dp); return gap && stage > 0 && Math.abs(t * len - (gap[0] + gap[1]) / 2) < dw / 2 + 0.55 ? Math.max(n, SPR) : n; }; // (the jambs first: the springers sit on them)
     // as a wall for the walker: lengths of about a metre, each as high as its lowest stone
     { const ns = Math.max(1, Math.round(len / 1.1)), cy = Math.cos(ry), sy = Math.sin(ry), P = (x) => [px + x * cy, pz - x * sy];
-      for (let i = 0; i < ns; i++) { let a = (i / ns) * len, b = ((i + 1) / ns) * len; if (gap && b > gap[0] && a < gap[1]) { if (a < gap[0] - 0.5) b = gap[0]; else if (b > gap[1] + 0.5) a = gap[1]; else continue; } const n = Math.min(courses(ca, cb, a / len, dip), courses(ca, cb, (a + b) / 2 / len, dip), courses(ca, cb, b / len, dip)), r = BT / 2, p0 = P(a + r), p1 = P(b - r); R.wall(p0[0], p0[1], p1[0], p1[1], 0, n * CH, r); } }
+      for (let i = 0; i < ns; i++) { let a = (i / ns) * len, b = ((i + 1) / ns) * len; if (gap && b > gap[0] && a < gap[1]) { if (a < gap[0] - 0.5) b = gap[0]; else if (b > gap[1] + 0.5) a = gap[1]; else continue; } const n = Math.min(cs(ca, cb, a / len, dip), cs(ca, cb, (a + b) / 2 / len, dip), cs(ca, cb, b / len, dip)), r = BT / 2, p0 = P(a + r), p1 = P(b - r); R.wall(p0[0], p0[1], p1[0], p1[1], 0, n * CH, r); } }
     for (let c = 0; c < 12; c++) {
       let x = c % 2 ? -0.22 - rng() * 0.2 : 0;
       while (x < len - 0.05) {
@@ -78,7 +79,7 @@ export function newhouse(B, M, o = {}) {
         x += bl;
         if (xb - xa < 0.12) continue;
         if (gap && c < gapTop && xb > gap[0] && xa < gap[1]) { if (xa < gap[0] - 0.12) xb = gap[0]; else if (xb > gap[1] + 0.12) xa = gap[1]; else continue; }
-        const mid = (xa + xb) / 2, n = courses(ca, cb, mid / len, dip);
+        const mid = (xa + xb) / 2, n = cs(ca, cb, mid / len, dip);
         if (c >= n) continue;
         maxC = Math.max(maxC, c + 1);
         const m = ch(Wm, mid, (c + 0.5) * CH, 0);
@@ -102,9 +103,15 @@ export function newhouse(B, M, o = {}) {
   for (const sx of [-1, 1]) beam(B, M, [xd + sx * (dw / 2 - 0.09), 0, zc], [xd + sx * (dw / 2 - 0.09), sp, zc], 0.11, raw);
   beam(B, M, [xd - dw / 2 + 0.03, sp, zc], [xd + dw / 2 - 0.03, sp, zc], 0.1, raw, 0.34);
   // (a centring is a frame you walk under: a rib of boards on the curve, a king post and two struts, the rest air)
-  { const pts = [], n = 8, a0 = -0.25, a1 = Math.PI + 0.25; for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * cr, sp + 0.18 + Math.sin(a) * cr]); } for (let i = n; i >= 0; i--) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * (cr - 0.13), sp + 0.18 + Math.sin(a) * (cr - 0.13)]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw);
-    for (const a of [Math.PI / 2, 0.75, Math.PI - 0.75]) beam(B, M, [xd, sp + 0.04, zc], [xd + Math.cos(a) * (cr - 0.08), sp + 0.18 + Math.sin(a) * (cr - 0.08), zc], 0.07, raw, 0.2); }
-  for (const sx of [-1, 1]) for (let i = 0; i < (stage === 2 ? 4 : sx === side ? 3 : 2); i++) { const a = -0.2 + i * 0.42, rr = cr + 0.2; B.add(B.box(0.3, 0.36, BT, { seg: 9, chip: 0.012 }), ch(M, xd + sx * Math.cos(a) * rr, sp + 0.18 + Math.sin(a) * rr, zc, 0, 0, sx * (a - 0.15)), fresh()); }
+  { const pts = [], n = 8, a0 = -0.25, a1 = Math.PI + 0.25; for (let i = 0; i <= n; i++) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * cr, ys + Math.sin(a) * cr]); } for (let i = n; i >= 0; i--) { const a = a0 + (i / n) * (a1 - a0); pts.push([Math.cos(a) * (cr - 0.13), ys + Math.sin(a) * (cr - 0.13)]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw);
+    for (const a of [Math.PI / 2, 0.75, Math.PI - 0.75]) beam(B, M, [xd, sp + 0.04, zc], [xd + Math.cos(a) * (cr - 0.08), ys + Math.sin(a) * (cr - 0.08), zc], 0.07, raw, 0.2); }
+  // the voussoirs: wedges of the arch's own plane, each on the rib (its inner face at the rib's outer radius), radial, joint to joint,
+  // the first on the jamb's top course; deeper than the rib is thick so they read as arch stones; the centring carries them till it closes
+  { const a0 = -0.03, da = (Math.PI / 2 - a0) / 4, r0 = cr, r1 = cr + 0.34;
+    for (const sx of [-1, 1]) for (let i = 0; i < (stage === 2 ? 4 : sx === side ? 3 : 2); i++) {
+      const pa = a0 + i * da + 0.003, pb = a0 + (i + 1) * da - 0.003, P = (r, a) => [sx * Math.cos(a) * r, ys + Math.sin(a) * r];
+      plate(B, ch(M, xd, 0, zc), sx > 0 ? [P(r0, pa), P(r1, pa), P(r1, pb), P(r0, pb)] : [P(r0, pa), P(r0, pb), P(r1, pb), P(r1, pa)], BT, fresh());
+    } }
   }
   R.door(xd, zf + 0.8, { enter: true, w: dw });
   if (stage === 0) {
