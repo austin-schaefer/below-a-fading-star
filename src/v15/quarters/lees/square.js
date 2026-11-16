@@ -112,7 +112,7 @@ export function ground(Q, F) {
     const brink = gut.length - 2, yEnd = P3(...gut[brink], 0)[1], flat = (i, k, dy) => { const q = off(i, k, dy); if (i > brink) q[1] = yEnd + dy; return q; }; // (the spout runs on level past the brink)
     for (let i = 0; i < gut.length - 1; i++) {
       const t0 = len[i] / tot, t1 = len[i + 1] / tot, bed = N.milk.clone().multiplyScalar(0.45);
-      st.quad(flat(i, -0.075, 0.042), flat(i + 1, -0.075, 0.042), flat(i + 1, 0.075, 0.042), flat(i, 0.075, 0.042), [0, 1, 0], bed, [eAt(t0), eAt(t1), eAt(t1), eAt(t0)]);
+      st.quad(flat(i, -0.075, 0.056), flat(i + 1, -0.075, 0.056), flat(i + 1, 0.075, 0.056), flat(i, 0.075, 0.056), [0, 1, 0], bed, [eAt(t0), eAt(t1), eAt(t1), eAt(t0)]);
       for (const sd of [-1, 1]) { const col = worn(H.dark, rng, 0.15, 0.15), a = flat(i, sd * 0.075, 0.095), b = flat(i + 1, sd * 0.075, 0.095), c = flat(i + 1, sd * 0.19, 0.09), d = flat(i, sd * 0.19, 0.09), dn = (p, k) => [p[0], p[1] - k, p[2]], pp = perp(i), o = [pp[0] * sd, pp[1] * sd], ow = [plan.RUN[1].dir[0] * o[0] + plan.RUN[1].n[0] * o[1], 0, plan.RUN[1].dir[1] * o[0] + plan.RUN[1].n[1] * o[1]];
         st.quad(a, b, c, d, [0, 1, 0], col); st.quad(a, b, dn(b, 0.06), dn(a, 0.06), [-ow[0], 0, -ow[2]], col.clone().multiplyScalar(0.6), [eAt(t0) * 0.5, eAt(t1) * 0.5, eAt(t1) * 0.5, eAt(t0) * 0.5]); st.quad(d, c, dn(c, 0.07), dn(d, 0.07), ow, col.clone().multiplyScalar(0.6)); }
       // its glow, lying over it

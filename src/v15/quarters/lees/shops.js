@@ -73,7 +73,7 @@ export function shops(Q) {
     Q.records.push(R);
   }
   // ---------------------------------------------------------------- the Ullage
-  { const v = vault('lees-shop-5', 52, -1), { M, R, rng, g0, zm, rad, sp, zw } = v, top = 0.8;
+  { const v = vault('lees-shop-5', 52, -1), { M, R, rng, g0, zm, zf, rad, sp } = v, top = 0.8;
     counter(v, -rad + 0.01, 0.46, top);
     // the half gate
     leaf(B, ch(M, 0.96, 0, zm + 0.02), 0.98, 1.02, worn(L.paint[1], rng, 0.4), rng, { plain: low });
@@ -116,7 +116,7 @@ export function shops(Q) {
       B.add(B.cyl(0.05, 0.07, 0.025, 6, 1), ch(M, wx + 0.1, win[2] + 0.015, zm + 0.16), iron); B.add(B.cyl(0.012, 0.012, 0.2, 5, 1), ch(M, wx + 0.1, win[2] + 0.11, zm + 0.16), iron);
       B.add(B.box(0.08, 0.035, 0.03, { seg: 9 }), ch(M, wx + 0.1, win[2] + 0.22, zm + 0.16, 0, 0.5, 0), iron); // the stand's foot-plate: the last goes on it
       B.add(B.box(ww * 0.46, wh * 0.72, 0.014, { seg: 9 }), ch(M, wx - ww * 0.27, win[3] - wh * 0.36 + 0.02, zm - 0.14, 0, 0, 0.03), { color: worn(V.madder, rng, 0.3), moss: 0, ground: g0 - 3, emit: lit(0.06) });
-      B.add(B.box(ww + 0.1, 0.02, 0.02, { seg: 9 }), ch(M, wx, win[3] + 0.0, zm - 0.14), iron);
+      B.add(B.box(ww + 0.1, 0.02, 0.034, { seg: 9 }), ch(M, wx, win[3] + 0.0, zm - 0.14), iron);
       R.shelf(wx, win[2] + 0.01, zm + 0.16, ww, 0.3);
       Q.places.push({ what: 'the Welt: the sill and the last\'s stand (one left slipper)', ...R.W(wx + 0.1, win[2] + 0.24, zm + 0.16), shop: 'lees-shop-6' });
       // the trying-on bench under it
@@ -137,7 +137,8 @@ export function shops(Q) {
     // the cloth: from a rail on two poles behind to two in front; the curtain hangs from the rail
     const hr = 2.5, from = B.count;
     for (const s of [-1, 1]) { beam(B, M, [s * (hw + 0.03) + (rng() - 0.5) * 0.1, -0.2, zb - 0.02], [s * hw, hr + 0.06, zb], 0.07, raw()); R.post(s * hw, zb, 0.08, 0, 2.2, { stand: false }); R.post(s * (hw - 0.07), zb + p.d - 0.3, 0.07, 0, 2.2, { stand: false }); }
-    awning(B, ch(M, 0, 0, zb), { w: 2 * hw - 0.1, d: p.d - 0.3, h: hr, drop: 0.22, rng, color: worn(V.linen, rng, 0.3) });
+    { const a0 = B.count; awning(B, ch(M, 0, 0, zb), { w: 2 * hw - 0.1, d: p.d - 0.3, h: hr, drop: 0.22, rng, color: worn(V.linen, rng, 0.3) });
+      for (let i = a0; i < B.count; i++) if (B.Nn[i * 3 + 1] < -0.3) B.P[i * 3 + 1] -= 0.012; } // (the cloth stands free here and is seen from under at its hem: its underside hangs clear of its top all the way to the edge)
     { const cw = 2 * hw - 0.3, col = worn(V.madder, rng, 0.35, 0.1), n = 6; // the curtain, in six folds
       for (let i = 0; i < n; i++) B.add(B.box(cw / n + 0.01, hr - 0.32, 0.016, { seg: 9 }), ch(M, -cw / 2 + (i + 0.5) * (cw / n), (hr - 0.32) / 2 + 0.3 - 0.02, zb - 0.045 + (i % 2) * 0.025, 0, (i % 2 ? 1 : -1) * 0.22, 0), { color: col.clone().multiplyScalar(0.85 + 0.25 * rng()), moss: 0, ground: g0 - 2 });
       R.wall(-cw / 2, zb, cw / 2, zb, 0, 2.2, 0.1); }
@@ -161,7 +162,7 @@ export function shops(Q) {
   }
   // ---------------------------------------------------------------- the Rebate: the framer's house, its frames, and the great frame on the brink
   { const p = plan.plot('lees-house-3'), M = plotMatrix(p), rng = rngOf(85, 5), g0 = p.y;
-    const R = makePlot(B, p, { plan, built, seed: 5, low });
+    const R = makePlot(B, p, { plan, built, seed: 7, low }) // (seed 7: the plot's other forms tried (3, 5, 6, 8, 9) each leave a coplanar pair or a back in the house itself: geometry-test);
     Q.records.push(R);
     const inv = M.clone().invert(), d0 = R.doors[0] ? new THREE.Vector3(R.doors[0].x, 0, R.doors[0].z).applyMatrix4(inv) : new THREE.Vector3(0, 0, 0), side = d0.x > 0 ? -1 : 1, zf = R.front ? R.front.zf : p.d / 2 - 0.4;
     const bar = (m, w, h, t, col) => { const o = { color: col, moss: 0.05, ground: g0 - 1 };
@@ -177,7 +178,7 @@ export function shops(Q) {
     { const z = 4.25, fw = 2.7, fh = 1.75, y0 = 0.85, t = 0.13, raw = { color: worn(V.rawWood, rng, 0.3), moss: 0.12, ground: g0, round: 6 }, T = ctx.terrain;
       const wpt = (x, zz) => new THREE.Vector3(x, 0, zz).applyMatrix4(M);
       if (T.heightAt(wpt(0, z).x, wpt(0, z).z) > g0 - 0.2) {
-        for (const s of [-1, 1]) { beam(B, M, [s * (fw / 2 - t / 2), -0.3, z], [s * (fw / 2 - t / 2), y0 + 0.02, z], 0.12, raw); beam(B, M, [s * (fw / 2 - t / 2), 0, z - 0.75], [s * (fw / 2 - t / 2), y0 - 0.1, z - 0.02], 0.07, raw); const q = wpt(s * (fw / 2 - t / 2), z); ctx.addCollider({ x: q.x, z: q.z, r: 0.14, y: g0 - 0.3, h: 3, stand: false }); }
+        for (const s of [-1, 1]) { beam(B, M, [s * (fw / 2 - t / 2), 0, z], [s * (fw / 2 - t / 2), y0 + 0.02, z], 0.12, raw); beam(B, M, [s * (fw / 2 - t / 2), 0, z - 0.75], [s * (fw / 2 - t / 2), y0 - 0.1, z - 0.02], 0.07, raw); const q = wpt(s * (fw / 2 - t / 2), z); ctx.addCollider({ x: q.x, z: q.z, r: 0.14, y: g0 - 0.3, h: 3, stand: false }); }
         bar(ch(M, 0, y0, z), fw, fh, t, gilt());
         for (const sx of [-1, 1]) for (const sy of [0, 1]) B.add(B.cyl(0.11, 0.11, 0.12, 6, 1), ch(M, sx * (fw / 2 - t / 2), y0 + (sy ? fh - t / 2 : t / 2), z, Math.PI / 2, 0, 0), { color: gilt(), moss: 0.05, ground: g0 - 1 });
         Q.places.push({ what: 'the Rebate\'s great frame, sized for the Prospect: look through it from the street', ...R.W(0, y0 + fh / 2, z), shop: 'lees-house-3' });
