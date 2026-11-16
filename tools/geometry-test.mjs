@@ -8,6 +8,9 @@
 //             a strut or chain end attached to nothing (what is meant to hang in air is exempt by name, below)
 //   backs     from standing eyes every metre along the route, rays round the head whose first face is the back of a
 //             single-sided face (a hole you see through), or that meet nothing from a place marked sealed
+//   buried    a piece of one mesh mostly inside something solid of another (a bird in a wall, a lamp in a roof, a rock
+//             through a stair), or a group of touching pieces mostly under the drawn ground (a prop the new ground was
+//             raised over): one thing drawn inside another, whatever either is (v15-G1, the owner's peafowl in a wall)
 // Each finding prints its kind, mesh names, world position and a ?pos=x,z,y URL that stands you on its floor. Before
 // the world, a fixture is planted in the air over the spawn (never in the world's
 // files) with one fault of each kind beside sound parts of each kind: each fault must be found and the sound parts not.
@@ -25,7 +28,7 @@ import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import { coplanar, floating, backs, TOL } from './geometry/analyze.mjs';
+import { coplanar, floating, backs, buried, TOL } from './geometry/analyze.mjs';
 import { PLACES } from './geometry/places.mjs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -166,7 +169,12 @@ function judge(place, soup) {
     out.push({ kind: f.sky ? 'sky' : 'backs', place: place.name, names, at: f.at, score: f.rays, info: f.sky ? `${f.rays} rays from a sealed stand meet nothing` : `${f.rays} rays from ${f.stands} stand(s) meet its back, nearest ${f2(f.d)} m`, url: where(soup, f.at, f.from), stand: standOf(soup, f.at, f.from), key: key(f.sky ? 'sky' : 'backs', place.name, names, f.at) });
   }
   const te = Date.now();
-  return { out, ms: { coplanar: tf - tc, floating: tb - tf, backs: te - tb } };
+  for (const f of buried(soup)) {
+    const names = [nm(soup, f.part), f.with < 0 ? '(?)' : nm(soup, f.with)]; // the buried thing first: its group is its own mesh
+    out.push({ kind: 'buried', place: place.name, names, at: f.at, score: f.size * f.frac, info: `${Math.round(f.frac * 100)}% of its skin ${f.under ? 'under the drawn ground' : 'inside the other'}; ${f2(f.size)} m across, ${f.pieces} piece(s), ${f.tris} faces`, url: where(soup, f.at), stand: standOf(soup, f.at), key: key('buried', place.name, names, f.at) });
+  }
+  const tu = Date.now();
+  return { out, ms: { coplanar: tf - tc, floating: tb - tf, backs: te - tb, buried: tu - te } };
 }
 
 let pass = 0, fail = 0;
@@ -201,6 +209,22 @@ const fixture = await page.evaluate(() => {
     k('w', 2, 2, -1, 1.02, 0, 0, Math.PI / 2); k('e', 2, 2, 1, 1.02, 0, 0, -Math.PI / 2);
     if (roof) k('roof', 2, 2, 0, 2.02, 0, Math.PI / 2, 0);
   };
+  // buried: a box half in a wall, a small thing wholly inside a block, a ball sunk to its middle in a ground sheet (faults);
+  // a post rooted 0.2 m in that ground, a beam let into the wall by its end, a shrub's base sunk a little, a box standing on
+  // a parapet (sound)
+  box('fixture-wall', 3, 2, 0.4, 0, 1, 5.5);
+  box('fixture-half-fault', 0.6, 0.6, 0.6, -0.8, 1, 5.5 + 0.2 - 0.02);
+  box('fixture-beam-sound', 0.2, 0.2, 2, 0.8, 1.2, 5.5 - 0.2 + 0.3 - 1);
+  box('fixture-block', 1.5, 1.2, 1.5, -2.5, 0.6, -6);
+  box('fixture-hidden-fault', 0.4, 0.3, 0.4, -2.5, 0.6, -6);
+  box('fixture-parapet', 3, 1, 0.5, 2, 0.5, -6.5);
+  box('fixture-perch-sound', 0.4, 0.5, 0.3, 2, 1.25, -6.5);
+  const gs = new THREE.PlaneGeometry(5, 5, 10, 10); gs.rotateX(-Math.PI / 2);
+  const gp = gs.attributes.position; for (let i = 0; i < gp.count; i++) gp.setY(i, 0.06 * Math.sin(gp.getX(i) * 2.1) * Math.cos(gp.getZ(i) * 1.7)); gs.computeVertexNormals();
+  const gm = new THREE.Mesh(gs, mat); gm.name = 'fixture-ground'; gm.position.set(X + 11, Y + 0.3, Z); g.add(gm); // a ground: one sheet, faced up
+  const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 1), mat); ball.name = 'fixture-sunk-fault'; ball.position.set(X + 10, Y + 0.3, Z - 1); g.add(ball);
+  box('fixture-post-rooted-sound', 0.18, 2, 0.18, 12, 0.3 + 1 - 0.2, -1);
+  const shrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.45, 1), mat); shrub.name = 'fixture-shrub-sound'; shrub.scale.set(1, 0.8, 1); shrub.position.set(X + 11, Y + 0.3 + 0.36 - 0.1, Z + 1.2); g.add(shrub);
   room('fixture-room-sound', -5.5, 0, true);
   room('fixture-room-fault', 5.5, 0, false);
   fp.scene.add(g); g.updateMatrixWorld(true);
@@ -208,7 +232,8 @@ const fixture = await page.evaluate(() => {
 });
 {
   const F = fixture;
-  const soup = await take({ name: 'fixture', stands: [[F.X, F.Y, F.Z], [F.X - 5.5, F.Y + 0.02, F.Z, true], [F.X + 5.5, F.Y + 0.02, F.Z, true]], region: [[F.X, F.Y, F.Z, 14]] });
+  const soup = await take({ name: 'fixture', stands: [[F.X, F.Y, F.Z], [F.X - 5.5, F.Y + 0.02, F.Z, true], [F.X + 5.5, F.Y + 0.02, F.Z, true]], region: [[F.X, F.Y, F.Z, 15]], anchor: { 'fixture-ground': 'the fixture\'s ground sheet' } });
+  if (process.env.GEOM_DUMP) writeFileSync(join(process.env.GEOM_DUMP, 'fixture.json'), JSON.stringify({ ...soup, P: Array.from(soup.P), S: Array.from(soup.S), part: Array.from(soup.part) }));
   const { out } = judge({ name: 'fixture' }, soup);
   await page.evaluate(() => { const fp = window.__fp, g = fp.scene.getObjectByName('geometry-fixture'); fp.scene.remove(g); });
   const has = (kind, re) => out.some((f) => f.kind === kind && f.names.some((n) => re.test(n)));
@@ -218,7 +243,11 @@ const fixture = await page.evaluate(() => {
   check(out.some((f) => f.kind === 'sky' && Math.abs(f.at[0] - (F.X + 5.5)) < 3), 'fixture: a sealed room with no roof is found open to the sky', out.filter((f) => f.kind === 'sky').map((f) => f.at.map(f1).join(',')).join('; '));
   check(has('backs', /wall-fault/), 'fixture: a one-sided wall seen from behind is found', out.filter((f) => f.kind === 'backs').map((f) => f.names.join('+')).join('; '));
   const loud = out.filter((f) => (f.names.some((n) => /sound|slab/.test(n)) && !f.names.some((n) => /fault/.test(n))) || (f.kind === 'sky' && Math.abs(f.at[0] - (F.X - 5.5)) < 3));
-  check(!loud.length, 'fixture: the sound parts (a mat 1 cm up, a post, its bracket and a brace to the slab, a two-sided wall, a wall faced, a roofed room) are quiet', loud.map((f) => `${f.kind} ${f.names.join('+')}`).join('; '));
+  const bu = out.filter((f) => f.kind === 'buried').map((f) => `${f.names.join(' in ')} ${f.info.split(';')[0]}`).join('; ');
+  check(has('buried', /half-fault/), 'fixture: a box half in a wall is found buried', bu);
+  check(has('buried', /hidden-fault/), 'fixture: a small box wholly inside a block is found buried', bu);
+  check(has('buried', /sunk-fault/), 'fixture: a ball sunk to its middle in the ground is found buried', bu);
+  check(!loud.length, 'fixture: the sound parts (a mat 1 cm up, a post, its bracket and a brace to the slab, a two-sided wall, a wall faced, a roofed room; a post rooted 0.2 m, a beam let into a wall by its end, a shrub\'s sunk base, a box stood on a parapet) are quiet', loud.map((f) => `${f.kind} ${f.names.join('+')}`).join('; '));
 }
 
 // ---------------------------------------------------------------- the places
@@ -265,7 +294,7 @@ for (const place of run) {
   }
   for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !groups.has(g)) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
   const by = (k) => out.filter((f) => f.kind === k).length;
-  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}; ${groups.size} groups; ${fresh.length} new, ${fixed.length} fixed; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)})`);
+  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}, buried ${by('buried')}; ${groups.size} groups; ${fresh.length} new, ${fixed.length} fixed; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)}, buried ${(ms.buried / 1000).toFixed(1)})`);
   const show = process.env.GEOM_ALL ? out : fresh;
   for (const f of show) console.log(`   ${fresh.includes(f) ? 'NEW  ' : 'known'} ${f.kind.padEnd(8)} ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n         ${f.url}`);
   for (const x of fixed) console.log(`   FIXED ${x} (lower the baseline: GEOMETRY_RECORD=1)`);
@@ -274,7 +303,7 @@ for (const place of run) {
 }
 await browser.close();
 
-const worst = { coplanar: [], floating: [], backs: [], sky: [] };
+const worst = { coplanar: [], floating: [], backs: [], sky: [], buried: [] };
 for (const f of all) worst[f.kind].push(f);
 console.log('=== by kind');
 for (const [k, list] of Object.entries(worst)) {
@@ -283,7 +312,7 @@ for (const [k, list] of Object.entries(worst)) {
 }
 if (process.env.GEOMETRY_RECORD) {
   const ran = new Set(run.map((p) => p.name)), known = {};
-  for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || 'on next when the check was written; not yet judged', at };
+  for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || (g.startsWith('buried|') ? 'found by v15-G1 (2026-11-16), not yet judged' : 'on next when the check was written; not yet judged'), at };
   for (const [g, k] of Object.entries(baseline.known)) if (!ran.has(g.split('|')[1])) known[g] = k;
   const rows = Object.entries(known).sort().map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
   writeFileSync(baseFile, `{\n "about": ${JSON.stringify(baseline.about || '')},\n "known": {\n${rows.join(',\n')}\n }\n}\n`);

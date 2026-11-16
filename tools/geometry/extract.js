@@ -175,7 +175,7 @@ export async function extract(fp, place, opts = {}) {
         if (any) parts.push({
           name: name + (mats.length > 1 ? `#${gr.materialIndex}` : ''), mesh: o.name || '', inst: o.isInstancedMesh ? inst : -1,
           side: mat.side ?? 0, ghost: !!(mat.transparent && mat.depthWrite === false) || mat.depthTest === false,
-          offset: !!mat.polygonOffset, matName: mat.name || mat.type, mat: mat.uuid, instanced: !!o.isInstancedMesh,
+          offset: !!mat.polygonOffset, clear: !!mat.transparent || (mat.opacity ?? 1) < 1, matName: mat.name || mat.type, mat: mat.uuid, instanced: !!o.isInstancedMesh,
         });
       }
     }
