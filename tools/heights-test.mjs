@@ -285,7 +285,7 @@ const HELPERS = `(() => {
   const P = U.parapet;
   check(P.top > 56.3 && P.top < 57.1, 'the Span: placeAt with a height stands the walker on a parapet\'s top', `feet ${f2(P.top)}`);
   check(P.along.minF > 56.2, 'the Span: walking along the parapet drifting outward stays on it', `lowest ${f2(P.along.minF)}`);
-  check(P.outStop.minF < 56.2, 'the Span: a walk straight out over the parapet\'s outer lip goes over at once (no timed hold)', `lowest ${f2(P.outStop.minF)}`);
+  check(P.outStop.minF < P.top - 0.2 && P.outPress.minF < P.top - 3, 'the Span: a walk straight out over the parapet\'s outer lip goes over at once (no timed hold): off within 0.5 s, far down within 1.5 s', `lowest ${f2(P.outStop.minF)} after 0.5 s, ${f2(P.outPress.minF)} after 1.5 s`);
   check(P.hopFalls + P.hopStay === 4 && P.hopSane === P.hopFalls, 'the Span: hurrying along the deck drifting toward the parapet and hopping: a hop that carries a walker over the parapet lands them sane below (the fall wakes them back on the deck)', `${P.hopUp} of 4 scrambled onto the parapet, ${P.hopFalls} fell, ${P.hopSane} landed sane, ${P.hopStay} stayed up`);
   check(P.sane.feet < 50 && P.landed && P.sane.ok, 'the Span: pressing on goes over, and lands sane', P.sane);
   const Hp = U.hops;

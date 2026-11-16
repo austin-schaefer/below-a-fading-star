@@ -156,7 +156,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 ### v12
 
 - `heights=test` (v12-H0): the test floors east of the Moot (a bridge with held edges, a deck under a 0.9 m beam, a perch 18 m up, a cut under the ground, a corridor through the limit on bearing 140) and their ascents (`src/v12/heights.js`); `tools/heights-test.mjs` loads it
-- `fall=1` / `fall=0` (v12-H0): a fall of more than 12 m blacks out and wakes the walker at the keep's gate (`src/v12/fall.js`). Off by default; the settings panel's "A long fall costs" row turns it on (localStorage `fp-fall`, live, no reload); the URL param wins over the stored setting
+- `fall=1` / `fall=0` (v12-H0, v15-W3): a fall of more than 12 m blacks out and wakes the walker 3.5 m back from the lip they left (`src/v12/fall.js`). On by default since v15-W3; the settings panel's "A long fall costs" row turns it off (localStorage `fp-fall` `'0'`, live, no reload); the URL param wins over the stored setting. A trap (`ctx.fallTraps`) wakes them at the lip either way
 - `lift=0` (v12-H4): no lift ridden, no station or gallery walked; the Galleries draw the carriage in the shader as before (`src/v12/lift.js`)
 - `icefall=0` (v12-H2): the icefall's drawn ice, crystals, leads and floors left out (the terrain keeps the icefall's shape, `src/v12/icefall.js`); `node tools/icefall-walk.mjs <base> [keys|touch] [prefix]` climbs it by hand with frames and falls (a judge's tool, not in the suite)
 - `above=0` (v12-H0): the old shadow box (±95 m, 40 m ahead of the eye) and haze at any height, for a before and after (`src/v12/above.js`); renders from above: `tools/views-v12-heights.json`

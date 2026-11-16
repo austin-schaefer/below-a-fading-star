@@ -14,7 +14,8 @@
 //     rail where it stands stays on, at the rear (the rock) stays on; the cells' walls hold; the odd cell's grille holds;
 //   - no trap: with the carriage gone from the gallery the gangway's end holds, and the gallery's bell is offered and
 //     brings it back; a fall off the ragged end (and off a gap in the rail) lands on the ground inside the walk limit or
-//     the wedge, standing, and able to walk; ?fall=1: a fall from the gallery blacks out and wakes at the keep;
+//     the wedge, standing, and able to walk; with the fall on (the default since v15-W3): a fall from the gallery blacks
+//     out and wakes the walker on the gallery, a few metres back from where they went over;
 //   - the ride down: the lever at the top takes them to the foot and sets them down on the floor; a teleport mid-ride
 //     drops the carry and the carriage goes on to its landing; a reload mid-ride starts the visitor on the ground;
 //   - ?lift=0: no lift, and the Galleries draw their carriage in the shader as before.
@@ -313,8 +314,8 @@ const f2 = (v) => (typeof v === 'number' ? v.toFixed(2) : String(v));
   await page.close();
 }
 
-// ---------------------------------------------------------------- falls, without and with ?fall=1
-for (const q of ['', '&fall=1']) {
+// ---------------------------------------------------------------- falls, with the fall off (?fall=0) and on
+for (const q of ['&fall=0', '&fall=1']) {
   const page = await open(q);
   const F = await page.evaluate(async (blackout) => {
     const { fp, p, L, place, run, sane } = window.H, out = [];
@@ -341,15 +342,15 @@ for (const q of ['', '&fall=1']) {
       // the blackout and the waking: until this fall has gone dark and the walker is back, idle, standing and free (at most 9 s)
       for (const t0 = performance.now(); !(fp.fall.falls > falls0 && fp.fall.phase === 'idle' && p.onGround && !p.carried) && performance.now() - t0 < 9000;) await frames(1);
       await frames(5);
-      out.push({ name, dropped: +(fromY - p.pos.y).toFixed(1), keep: +Math.hypot(p.pos.x - fp.spawn.x, p.pos.z - fp.spawn.z).toFixed(1), on: p.onGround, carried: p.carried });
+      out.push({ name, dropped: +(fromY - p.pos.y).toFixed(1), back: +Math.hypot(p.pos.x - q.x, p.pos.z - q.z).toFixed(1), gal: +(p.pos.y - p.eye - L.gal.y).toFixed(2), on: p.onGround, carried: p.carried });
     }
     if (blackout) { const fb = L.stand.foot(); place(fb.x, fb.z, L.floorY0); p.yaw = fb.yaw; out.push({ footBell: { where: L.where(), may: fp.acts.may(fp.acts.list.find((h) => h.def.id === 'lift-call')) } }); }
     return out;
-  }, !!q);
+  }, q === '&fall=1');
   for (const f of F) {
     if (f.footBell) { check(f.footBell.may, 'fall (?fall=1): walked back to the station, the carriage left up the face, its bell is offered', f.footBell); continue; }
-    if (!q) check(f.ok && f.dropped > 20 && f.down.reached, `fall (no ?fall): off the gallery at the ${f.name}, a sane landing, and walked down to the station`, f);
-    else check(f.keep < 12 && f.on, `fall (?fall=1): off the gallery at the ${f.name}: blacked out and woken at the keep's gate`, f);
+    if (q !== '&fall=1') check(f.ok && f.dropped > 20 && f.down.reached, `fall (?fall=0): off the gallery at the ${f.name}, a sane landing, and walked down to the station`, f);
+    else check(f.back < 6 && Math.abs(f.gal) < 0.1 && f.on, `fall (on): off the gallery at the ${f.name}: blacked out and woken on the gallery, a few metres back from where they went over (v15-W3)`, f);
   }
   await page.close();
 }
