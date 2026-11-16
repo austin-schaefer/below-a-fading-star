@@ -17,8 +17,14 @@
 // them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
 // and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
 // through controls.update in one page.
+// v15-F1, the owner's #60, #61, #63, guarded: in the underground's meshes every sloping member's lower end bears on
+// something and no two faces of different paint overlap in one plane (tools/under-geometry.mjs); every cord on the Noon
+// Road meets glass or water and every knee of the Pit's stair meets the drawn rock; walking up the treads inside the
+// Nave's south door from the passage, the eye meets the treads, not the hall beyond them (risers that faced away let it
+// show through every step).
 // Usage: node tools/edges-test.mjs [base=http://localhost:8123]
 import { createRequire } from 'node:module';
+import { membersBear, facesApart } from './under-geometry.mjs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
@@ -298,6 +304,25 @@ const R = await page.evaluate(async () => {
   }
   return res;
 });
+// v15-F1: the underground's geometry (tools/under-geometry.mjs) and the door's treads seen from below
+const UNDER = '^(pit-floor|passage-|coffin-road)';
+const UG = { bear: await page.evaluate(membersBear, UNDER), apart: await page.evaluate(facesApart, UNDER) };
+UG.stats = await page.evaluate(async () => {
+  const fp = window.__fp, THREE = await import('three'), out = {};
+  if (fp.coffinRoad && !fp.coffinRoad.off) {
+    out.ties = fp.coffinRoad.stats();
+    const CR = await import('/src/v14/coffin-road/plan.js'), D = CR.DOOR, eye = [D.x, D.sill - D.rise * D.treads + 1.6, D.floorTo + D.treads * D.tread + 1.2];
+    const meshes = []; fp.scene.traverse((o) => { if (o.isMesh && o.visible && !o.isInstancedMesh && /^(coffin-road|noon-road-glass|passage-|nave)/.test(o.name)) meshes.push(o); });
+    const rc = new THREE.Raycaster(); out.door = [];
+    for (let i = 0; i < D.treads; i++) for (const dx of [-0.5, 0, 0.5]) {
+      const za = D.floorTo + i * D.tread, yt = D.sill - (i + 1) * D.rise + D.rise * 0.5, d = new THREE.Vector3(D.x + dx - eye[0], yt - eye[1], za + 0.01 - eye[2]).normalize();
+      rc.set(new THREE.Vector3(...eye), d); rc.far = 6;
+      const h = rc.intersectObjects(meshes, false)[0]; out.door.push(h ? `${h.object.name}@${h.distance.toFixed(2)}` : 'nothing');
+    }
+  }
+  if (fp.pit && !fp.pit.off) out.pit = fp.pit.stats();
+  return out;
+});
 await browser.close();
 let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
@@ -326,6 +351,15 @@ for (const r of R) {
   check(r.under >= -0.15, `${who}: never under the floor`, `lowest ${f(r.under)} m`);
   if (r.onDeck !== undefined) check(r.onDeck, `${who}: still on the deck`);
   if (r.onKerb !== undefined) check(r.onKerb, `${who}: standing on the coping`);
+}
+{
+  const B = UG.bear, A = UG.apart, S = UG.stats;
+  check(B.ends > 100 && B.floating.length === 0, 'the underground: every sloping member\'s lower end bears on something (no strut, knee, leg or bracket in the air)', `${B.ends} members, ${B.faces} faces near them; ${B.floating.length} in the air${B.floating.length ? ': ' + B.floating.slice(0, 4).join('; ') : ''}`);
+  const np = A.pairs.reduce((a, p) => a + p.n, 0);
+  check(A.faces > 1000 && np === 0, 'the underground: no two faces of different paint overlap in one plane (nothing flickers)', `${A.faces} faces in ${A.meshes} meshes; ${np} pairs${np ? ': ' + A.pairs.slice(0, 4).map((p) => `${p.k} ${p.n} at ${p.at.join(' | ')}`).join('; ') : ''}`);
+  if (S.ties) check(S.ties.ties > 20 && S.ties.loose === 0, 'the Noon Road: every cord the Late folk tied down meets glass or water', `${S.ties.ties} cords, ${S.ties.loose} loose`);
+  if (S.pit) check(S.pit.loose === 0, 'the Pit: every knee under the slabs meets the drawn rock', `${S.pit.loose} without`);
+  if (S.door) check(S.door.length > 0 && S.door.every((h) => /^coffin-road@/.test(h) && parseFloat(h.split('@')[1]) < 4), 'the Noon Road: from the passage, walking up to the south door, the eye meets its treads, not the hall through them', S.door.join(', '));
 }
 check(errors.length === 0, 'no page errors', errors.slice(0, 3).join(' | '));
 process.exit(fail ? 1 : 0);
