@@ -55,6 +55,17 @@ export function buildStairs(K) {
       y = yTop;
     }
     stairInfo[key] = info;
+    // (v15-F1, the owner's #59) each stair is a way up (ctx.ascents): from its foot up every flight and across every
+    // landing to the deck through the parapet's gap, so heights-test walks it and roads-test asks for a track to its foot
+    const path = [[fx, fz, +y0.toFixed(2)]];
+    S.parts.forEach((p, i) => {
+      if (p.rect) { const nx = S.parts[i + 1]; if (nx && !nx.rect) path.push([nx.x - nx.dir[0] * 1.2, nx.z - nx.dir[1] * 1.2], [nx.x, nx.z]); return; }
+      const x1 = p.x + p.dir[0] * p.len, z1 = p.z + p.dir[1] * p.len;
+      path.push([x1, z1], [x1 + p.dir[0] * 1.2, z1 + p.dir[1] * 1.2]);
+    });
+    const gx = (S.gap[0] + S.gap[1]) / 2;
+    path.push([gx, Z0 - 1.5], [gx, Z, Y]);
+    ctx.ascents?.add({ id: 'span-' + key, path });
   }
   const partY = (w, x, z) => (w.fl ? w.fl.walkable(x, z) : (inRect(w.rect, x, z) ? w.y : null));
   for (const w of walkParts) if (!w.fl) { const r = w.rect, yy = w.y; ctx.addWalkable((x, z) => (x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3] ? yy : null)); }
