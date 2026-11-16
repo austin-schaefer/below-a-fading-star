@@ -319,7 +319,10 @@ export function late(B, M, o = {}) {
   const d0 = form === 'stall' ? null : R.doors[0];
   if (d0) {
     const dl = new THREE.Vector3(d0.x, d0.y, d0.z).applyMatrix4(M.clone().invert()), bs = rng() < 0.5 ? -1 : 1, F = R.front || { x0: -w / 2, x1: w / 2, h: 2.6, zf: dl.z - 0.6, k: 0, cx: 0, cz: 0 }, fits = (x) => x > F.x0 + 0.2 && x < F.x1 - 0.2, wz = F.zf; // (the wall's own face: a door's record may stand out past a stair)
-    const bxs = fits(dl.x + bs * 0.95) ? dl.x + bs * 0.95 : fits(dl.x - bs * 0.95) ? dl.x - bs * 0.95 : clamp(dl.x + bs * 0.95, F.x0 + 0.2, F.x1 - 0.2), by = Math.min(2.25, F.h - 0.25); // (on the wall the door is in, never past its end or over its top)
+    // (v15-W4: never over an outside stair: on a front-stair house the lamp went to either side of the door at random, and
+    // where it went to the stair's side it hung over its lowest treads at a walker's brow; it goes to the door's other side)
+    const fs = R.floors.find((q) => q.steps), sx = fs ? new THREE.Vector3(fs.x, fs.y, fs.z).applyMatrix4(M.clone().invert()).x : null, away = sx === null ? 0 : Math.sign(dl.x - sx);
+    const bxs = away ? clamp(dl.x + away * 0.95, F.x0 + 0.2, F.x1 - 0.2) : fits(dl.x + bs * 0.95) ? dl.x + bs * 0.95 : fits(dl.x - bs * 0.95) ? dl.x - bs * 0.95 : clamp(dl.x + bs * 0.95, F.x0 + 0.2, F.x1 - 0.2), by = Math.min(2.25, F.h - 0.25); // (on the wall the door is in, never past its end or over its top)
     const bf = 1 - F.k * by, bx2 = F.cx + (bxs - F.cx) * bf, bz2 = F.cz + (wz - F.cz) * bf; // (on the wall's face as its batter leaves it at that height)
     const hook = PARTS.late.bracket(B, ch(HM, bx2, by, bz2), { reach: 0.5 });
     const hp = new THREE.Vector3(bx2, by + hook.y, bz2 + hook.z).applyMatrix4(HM).applyMatrix4(M.clone().invert()); // (the hook as the leaning wall has it)
