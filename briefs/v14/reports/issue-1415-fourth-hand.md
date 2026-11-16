@@ -32,6 +32,8 @@ Names kept, because the passage (D1) reads them: `src/v14/coffin-road.js`, `src/
 
 ## Tests
 
+After the inlay pass (`c29dfc9`, on next as merged): `ONLY=edges,strata,perf`: 3 tests, 0 failed (strata 8, edges 159, perf 29). Frames: `noonroad-m-high-{pair-8m,top-lit,elbow,stair}`.
+
 After the look pass (`54787a9`, 2026-11-15), port 8161, in sequence:
 
 - `ONLY=edges,heights,strata,perf,settings,audio nice -n 10 env SHOT_ANGLE=metal tools/suite.sh 8161`: **6 tests, 0 failed, 14 min 25 s**: settings 85, strata 8, edges 136, heights 111, audio 101, perf 29 PASS lines.
