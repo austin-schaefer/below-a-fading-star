@@ -67,7 +67,7 @@ export function newhouse(B, M, o = {}) {
   // the footing shows a hand's breadth all round: rubble in lime
   B.add(B.box(fl + 0.3, 0.5, zf - zb + 0.3, { seg: 2.5, chip: 0.04 }), ch(M, cx, -0.2, (zf + zb) / 2), { color: worn(V.newDust, rng, 0.25), course: 0.2, moss: 0.05, ground: g0 - 0.6 });
   // the door's centering: two props and a half-wheel of boards, the first arch stones on it either side
-  const raw = { color: V.rawWood, moss: 0.03, ground: g0 - 0.5 }, zc = zf - BT / 2, sp = 1.72, cr = dw / 2 - 0.03;
+  const raw = { color: V.rawWood, moss: 0.03, ground: g0 - 0.5 }, zc = zf - BT / 2, sp = 2.06, cr = dw / 2 - 0.03; // (the tie clears a walker's head)
   for (const sx of [-1, 1]) beam(B, M, [xd + sx * (dw / 2 - 0.09), 0, zc], [xd + sx * (dw / 2 - 0.09), sp, zc], 0.11, raw);
   beam(B, M, [xd - dw / 2 + 0.03, sp, zc], [xd + dw / 2 - 0.03, sp, zc], 0.1, raw, 0.34);
   { const pts = []; for (let i = 0; i <= 8; i++) { const a = -0.25 + (i / 8) * (Math.PI + 0.5); pts.push([Math.cos(a) * cr, sp + 0.18 + Math.sin(a) * cr]); } plate(B, ch(M, xd, 0, zc), pts, 0.3, raw); }

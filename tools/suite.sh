@@ -51,6 +51,7 @@ run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B
 run strata tools/strata-test.mjs $B
+run village tools/village-test.mjs $B # v15-V1: the houses' makers at five seeds (closed, in their footprints, colliders and floors that agree) and the row's cost
 run livery tools/livery-test.mjs $B
 run house tools/house-test.mjs $B
 run rocks tools/rocks-test.mjs $B

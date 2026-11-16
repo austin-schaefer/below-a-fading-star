@@ -239,6 +239,9 @@ export function hangSign(B, M, rng, o = {}) {
 }
 // a wall of any outline (pts, [[x, y], ...]) with holes (each a list of points), d thick about z 0
 export function wallPoly(B, M, pts, holes, d, o) {
+  // (counter-clockwise, whichever way it was drawn or mirrored: ExtrudeGeometry cuts holes of either winding only then)
+  let area = 0; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; area += a[0] * b[1] - b[0] * a[1]; }
+  if (area < 0) pts = [...pts].reverse();
   const sh = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? sh.lineTo(x, y) : sh.moveTo(x, y)));
   for (const h of holes || []) { const p = new THREE.Path(); h.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); sh.holes.push(p); }
   B.add(B.extrude(sh, d, 1), M, o);

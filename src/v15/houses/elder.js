@@ -15,24 +15,24 @@ export function elder(B, M, o = {}) {
   const X = (x) => -s * x; // the plan below is drawn with the standing block at -x, and mirrored for s = 1
   const stone = (k = 0) => ({ color: EC.stone.clone().multiplyScalar(0.92 + rng() * 0.16 - k), moss: 0.4, ground: g0 });
   // the standing block
-  const aw = 3.0 + rng() * 0.9, ah = 5.3 + rng() * 1.3, ad = d - 1.4 - rng() * 0.6, xl = -w / 2 + 0.35, xa = xl + aw, xf = w / 2 - 0.9 - rng() * 0.5;
+  const aw = Math.min(w * 0.36, 2.7 + rng() * 0.8), ah = 5.3 + rng() * 1.3, ad = d - 1.4 - rng() * 0.6, xl = -w / 2 + 0.3, xa = xl + aw, xf = w / 2 - 2.35 - rng() * 0.3;
   EB.add(EB.box(aw, ah + 1, ad, { seg: 3, chip: 0.16, seed }), ch(M, X(xl + aw / 2), (ah - 1) / 2, -0.1, 0, 0, -s * (0.01 + rng() * 0.025)), stone());
   // the leaning one: its under face from its foot at (xf, 0) to where it rests on the standing block's head
   const rx = xa - 0.35, ry = ah - 0.25, ul = Math.hypot(rx - xf, ry), ux = (rx - xf) / ul, uy = ry / ul, nx = uy, ny = -ux;
-  const sth = 1.4 + rng() * 0.6, over = 0.9 + rng() * 1.6, slen = ul + over + 1.0, sd = d - 0.5, mid = slen / 2 - 1.0;
+  const sth = 1.35 + rng() * 0.45, over = 0.9 + rng() * 1.6, slen = ul + over + 1.0, sd = d - 0.5, mid = slen / 2 - 1.0;
   EB.add(EB.box(slen, sth, sd, { seg: 3, chip: 0.18, seed: seed + 9 }), ch(M, X(xf + ux * mid + nx * sth / 2), uy * mid + ny * sth / 2, 0.05, 0, 0, -s * Math.atan2(uy, ux) + (s < 0 ? Math.PI : 0)), stone(0.04));
   // a chock under its foot, and a spall fallen off its head
-  EB.add(EB.box(1.5, 1.3, 1.9, { seg: 3, chip: 0.14, seed: seed + 3 }), ch(M, X(xf + 0.95), 0.2, sd / 2 - 1.5, 0.05, 0.3, s * 0.2), stone());
+  EB.add(EB.box(1.5, 1.3, 1.9, { seg: 3, chip: 0.14, seed: seed + 3 }), ch(M, X(xf + 0.85), 0.2, sd / 2 - 1.5, 0.05, 0.2, s * 0.2), stone());
   const yl = (x) => ry * (xf - x) / (xf - rx); // the under face over x
   // the room: from the standing block's face (xa) to where the slab comes down to head height
   const zfr = sd / 2 - 1.25 - rng() * 0.3, zbk = Math.max(-ad / 2 + 0.5, (o.back ?? -99) + 0.3), hp = 2.75 + rng() * 0.35, xh = xf - (xf - rx) * hp / ry, xHead = xf - (xf - rx) * 1.95 / ry;
-  const dw = 1.06, xd = xa + 0.25 + dw / 2 + rng() * 0.15, dh = Math.min(hp - 0.2, 2.35 + rng() * 0.2);
+  const dw = 1.06, xd = xa + 0.25 + dw / 2 + rng() * 0.15, dh = Math.min(hp - 0.2, 2.35 + rng() * 0.2, ry * (xf - xd - dw / 2) / (xf - rx) - 0.3); // (the slot's head clear of the slab)
   const wash = worn(L.plaster[rng() < 0.5 ? 0 : 3], rng, 0.28), ai = Math.floor(rng() * 4);
   const mir = (pts) => pts.map(([x, y]) => [X(x), y]);
   // the front: plaster to hp, the slot in it, a pane beside it; packed rubble from there up to the stone
-  const wx = Math.min(xh - 0.35, xd + dw / 2 + 0.55), wy = 1.25;
-  wallPoly(B, ch(M, 0, 0, zfr - 0.16), mir([[xa - 0.12, -0.5], [xf + 0.1, -0.5], [xf + 0.1, 0.02], [xh + 0.06, hp + 0.04], [xa - 0.12, hp]]), [mir([[xd - dw / 2, 0], [xd + dw / 2, 0], [xd + dw / 2, dh], [xd, dh + 0.14], [xd - dw / 2, dh]]), mir([[wx - 0.16, wy], [wx + 0.16, wy], [wx + 0.16, wy + 0.42], [wx - 0.16, wy + 0.42]])], 0.32, { color: wash, moss: 0.3, ground: g0 });
-  stop(B, ch(M, X(wx), wy, zfr - 0.16), 0.32, 0.42, 'lit', rng); R.window(X(wx), wy + 0.2, zfr, true);
+  const wx = xd + dw / 2 + 0.55, wy = 1.25, pane = ry * (xf - wx - 0.16) / (xf - rx) > wy + 0.75; // a pane beside the slot, where the slab leaves room
+  wallPoly(B, ch(M, 0, 0, zfr - 0.16), mir([[xa - 0.12, -0.5], [xf + 0.1, -0.5], [xf + 0.1, 0.02], [xh + 0.06, hp + 0.04], [xa - 0.12, hp]]), [mir([[xd - dw / 2, 0], [xd + dw / 2, 0], [xd + dw / 2, dh], [xd, dh + 0.14], [xd - dw / 2, dh]]), ...(pane ? [mir([[wx - 0.16, wy], [wx + 0.16, wy], [wx + 0.16, wy + 0.42], [wx - 0.16, wy + 0.42]])] : [])], 0.32, { color: wash, moss: 0.3, ground: g0 });
+  if (pane) { stop(B, ch(M, X(wx), wy, zfr - 0.16), 0.32, 0.42, 'lit', rng); R.window(X(wx), wy + 0.2, zfr, true); }
   wallPoly(B, ch(M, 0, 0, zfr - 0.4), mir([[xa - 0.12, hp - 0.2], [xh + 0.3, hp - 0.2], [xa - 0.12, yl(xa - 0.12) + 0.1]]), null, 0.3, { color: worn(V.mud, rng, 0.3).multiplyScalar(0.8), course: 0.19, moss: 0.45, ground: g0 });
   // the curtain, pulled to one side on its pole; a threshold
   beam(B, M, [X(xd - dw / 2 - 0.2), dh + 0.22, zfr + 0.06], [X(xd + dw / 2 + 0.25), dh + 0.2, zfr + 0.06], 0.035, { color: L.wood, moss: 0, ground: g0, round: 5 });

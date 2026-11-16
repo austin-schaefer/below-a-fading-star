@@ -120,6 +120,7 @@ export function carrier(B, M, o = {}) {
   const ri = rad(sF + 0.6) * 0.95 - th, wood = { color: worn(L.wood, rng, 0.1), moss: 0, ground: g0 - 3, emit: [0.05, 0.035, 0.015, 1] };
   B.add(new THREE.CircleGeometry(rad(sF) - 0.05, ni).rotateX(-Math.PI / 2), ch(M, 0, yF, 0, 0, 0, 0, 0.95, 1, 1), wood);
   B.add(new THREE.CircleGeometry(rad(sC) - 0.05, ni).rotateX(Math.PI / 2), ch(M, 0, sC - sink, 0, 0, 0, 0, 0.95, 1, 1), { ...wood, color: L.wood.clone().multiplyScalar(0.7) });
+  B.add(B.box(dxh * 2 + 0.06, 0.3, 1.5, { seg: 9 }), ch(M, 0, yF - 0.152, dzh - 0.55), { color: worn(L.wood, rng, 0.2), moss: 0.1, ground: g0 - 1 }); // the sill, a plank through the cut
   R.disc(0, 0, ri - 0.1, yF);
   R.disc(0, dzh - 0.1, 0.72, yF); // the sill, through the wall's thickness
   R.door(0, dzh + 1.2, { enter: true, w: dxh * 2 });
