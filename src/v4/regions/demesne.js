@@ -318,7 +318,8 @@ function buildBlocks(ctx, rng, low) {
   const yard = LAPPET.plot('masons-yard');
   if (yard) {
     const [fx, fz] = yard.face, rx = -fz, rz = fx, yaw = Math.atan2(fx, fz);
-    stock.forEach((it, i) => {
+    // (v15-Q1: where the plan's plot says `stock`, the quarter builds the stock itself and the fallen blocks only leave)
+    if (!yard.stock) stock.forEach((it, i) => {
       const tier = i >= 8 ? 1 : 0, col = tier ? i - 8 : i % 4, rowi = tier ? 0.5 : Math.floor(i / 4);
       const u = (col - 1.5 + (tier ? 0.4 : 0)) * 1.75, v = yard.d / 2 - 1.2 - rowi * 1.5;
       it.sx = 1.5; it.sz = 1.15; it.sy = 0.78; it.rx = 0; it.rz = 0; it.ry = yaw + (((i * 7) % 5) - 2) * 0.012;
