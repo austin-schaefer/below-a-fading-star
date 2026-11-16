@@ -263,10 +263,17 @@ const HD = 3.7, backD = (riser) => RISERS.find((r) => r.key === riser).D + HD / 
 
 // --- the Rungs: stacked houses. Mid Rung (y 10) against the High Rung's riser, roofs at 14; Low Rung (y 6), roofs at 10.
 // Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the ladder (run 2, s 19), the corner.
-for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [5, 2, 2.2, 5], [6, 2, 15.7, 5.6], [7, 2, 24.3, 6.4]])
+// (v15-Q2, the Rungs' own changes: mid-5 is the Cantle, a sherd of a carrier standing as an apse where the main's
+// line was first laid; low-6 is the dyers' yard under the Tenter, their stair, not a house.)
+for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [6, 2, 15.7, 5.6], [7, 2, 24.3, 6.4]])
   put(`rungs-mid-${i}`, 'house', 'rungs', 'mid', run, s, backD('high'), w, HD, 'late', { against: 'high', roof: 'high' });
-for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 15.1, 4.2], [7, 2, 25.35, 5.1]])
+for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [7, 2, 25.35, 5.1]])
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });
+// the Cantle [Proposed]: a carrier's sherd needs 4.4 m of depth and the Mid Rung gives 3.8 before its lane, so the
+// plot's back lies 0.6 m in the High Rung's riser: the sherd's back is bedded in the step (its maker packs nothing)
+put('rungs-cantle', 'carrier', 'rungs', 'mid', 2, 2.25, RISERS[1].D + 1.6, 5.8, 4.4, 'noon', { against: 'high', called: 'the Cantle', note: 'a third of a carrier\'s wall standing as an apse over the High Rung, a plaster house in its lap: where the main\'s line was first laid, beside its head' });
+// the dyers' yard [Proposed]: open ground under the Tenter (RUNGS.tenter), vats and tenter-poles; `against` keeps the Mid Rung's nosing clear of the bones' wall above it
+put('rungs-dyers', 'yard', 'rungs', 'low', 2, 15.1, backD('mid'), 4.2, HD, 'late', { against: 'mid', called: 'the dyers\' yard', note: 'the dyers\' vats at the Tenter\'s foot; nothing roofed' });
 // --- the Lees: shops in the Low Rung's riser (Heliarch undercrofts: round arches let 3.2 m into the step, a Late front
 // out on the bench), and two houses that stand free on the square's west side
 for (const [i, run, s, w] of [[4, 1, 39.5, 5], [5, 2, 3, 4.6], [6, 2, 15, 4.6]])
@@ -336,6 +343,25 @@ export function cutAt(x, z, pad = 0) {
   return y;
 }
 
+// ---------------------------------------------------------------- the Rungs' own (v15-Q2)
+// What src/v15/quarters/rungs.js builds between its plots, in the run frame; names [Proposed], in the valley's voice.
+export const RUNGS = {
+  // the dyers' stair: a plank flight down the Mid Rung's riser on the east run, its head at s (a plank landing east of it), going down toward the corner
+  tenter: { name: 'the Tenter', id: 'rungs-tenter', run: 2, s: 17.05, sign: -1, out: 0.9, width: 1.3, run1: 0.25 },
+  // the slot stair at the corner, straight down the bisector between rungs-low-4 and rungs-low-5: the meanest way, and whole
+  gullet: { name: 'the Gullet', id: 'rungs-gullet', clear: 0.6, width: 1.05 },
+  // the Heliarch service flight east of the aqueduct's pier, down along the riser from its head at s: seven treads of it, and then the end wall of rungs-low-7, which was built over the rest
+  stub: { name: 'the Short Stair', run: 2, s: 21.25, sign: 1, width: 1.1 },
+  // the lane under the main on the Low Rung: a door in the step, a niche, a lamp
+  slype: { name: 'the Slype', run: 2, s0: 7.2, s1: 10.9, D: 11.5 },
+  // where three stairs of three ages are seen side by side in one look (the Short Stair at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
+  squint: { name: 'the Squint', plot: 'rungs-low-7' },
+  // the roof walk on the Low Rung's roofs (the Mid Rung's level), west to east; a crossing between each pair that has no stair between
+  leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3'], ['rungs-low-4', 'rungs-low-5']] },
+  // the house stairs the plan gives (stair: 'front'), each a way between two treads: their ascents' ids
+  stairs: ['rungs-mid-1', 'rungs-mid-2', 'rungs-mid-3', 'rungs-mid-7', 'rungs-low-3'].map((n) => `${n}-stair`),
+};
+
 // ---------------------------------------------------------------- the places the geometry check walks (#64)
 // tools/geometry-test.mjs and tools/route-frames.mjs read this list (the format: tools/geometry/places.mjs). Each way
 // is its registered ascent; each level is its lane walked end to end; the crown is the court behind the stair's head.
@@ -367,4 +393,9 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5, exempt: BURIED },
   { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, exempt: BURIED },
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
+  // the Rungs (v15-Q2): its own ways, and the Leads walked along the Low Rung's roofs
+  ...[RUNGS.tenter.id, RUNGS.gullet.id, ...RUNGS.stairs].map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
+  { name: 'lappet-rungs-leads', pts: [[...at(1, 4.5, 11.3), LEVEL.mid.y], [...at(1, 12, 11.3), LEVEL.mid.y], [...at(1, 26.5, 11.3), LEVEL.mid.y]], half: 5, exempt: BURIED },
+  { name: 'lappet-rungs-corner', pts: [[...at(1, 36, 11.3), LEVEL.mid.y], [...at(1, 40, 11.3), LEVEL.mid.y], [...at(2, -1.5, 11.3), LEVEL.mid.y], [...at(2, 3, 11.3), LEVEL.mid.y]], half: 5, exempt: BURIED },
+  { name: 'lappet-rungs-squint', pts: [[...at(2, 27, 11.6), LEVEL.mid.y], [...at(2, 23.4, 11.6), LEVEL.mid.y]], half: 6, exempt: BURIED },
 ];
