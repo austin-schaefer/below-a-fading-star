@@ -400,10 +400,9 @@ export async function build(ctx) {
     const W = (along, lat, y) => [M[0] + ox * along + rx * lat, y, M[1] + oz * along + rz * lat];
     const yaw = Math.atan2(ox, oz) - Math.PI / 2;
     const f0 = -MOUTH.portal, f1 = 1.6, depth = (f1 - f0) / 2, mid = (f0 + f1) / 2;
-    // (v15-F1, #60) each box's back (in the rock, toward the passage) is drawn a few millimetres short of the last's, so
-    // two boxes that share it never lay two faces in one plane where they overlap
-    let bi = 0;
-    const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const k = 0.004 * bi++; const [x, , z] = W(along - k / 2, lat, 0); PO.box(x, y, z, ha - k / 2, hy, hl, yaw, col, colTop, 0.1); };
+    // (v15-F1, #60) `k`: how far short of the others a box's back (in the rock, toward the passage) is drawn, for the
+    // boxes that overlap another and share its back plane: the lintel block 4 mm, the inner lintel 8, the jambs 12
+    const box = (along, lat, y, ha, hl, hy, col, colTop = col, k = 0) => { const [x, , z] = W(along - k / 2, lat, 0); PO.box(x, y, z, ha - k / 2, hy, hl, yaw, col, colTop, 0.1); };
     const open = 1.2, top = Y + 3.25, outer = 3.5, order = 1.75;
     // the piers in courses of dressed blocks (the way through is between them), an inner order of jambs and a lintel
     // stepped in from the face, the lintel block over all, the cornice, the face's rough surround
@@ -412,12 +411,12 @@ export async function build(ctx) {
       const hy = Math.min(0.31, (Y + 7.4 - y0) / 2), j = 0.78 + 0.32 * hsh(ci++ * 7.3 + s), c = [STONE[0] * j, STONE[1] * j, STONE[2] * j];
       const inner = y0 < top ? order : open; // below the lintel the face steps in to the inner order
       box(mid, s * (inner + (outer - inner) / 2), y0 + hy, depth, (outer - inner) / 2, hy, c, c);
-      if (y0 < top) box(mid + 0.35, s * (open + (order - open) / 2), y0 + hy, depth - 0.35, (order - open) / 2, hy, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8]);
+      if (y0 < top) box(mid + 0.35, s * (open + (order - open) / 2), y0 + hy, depth - 0.35, (order - open) / 2, hy, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8], undefined, 0.012);
     }
     // (v15-F1, #60) the lintel block's soffit sits 4 cm up inside the inner lintel, and the inner lintel's face 2 cm back
     // of the jambs': with both soffits at `top` the way's ceiling was two faces in one plane, and it flickered in bands
-    box(mid + 0.01, 0, top + 2.14, depth - 0.01, open + 0.02, 2.06, STONE, STONE_D);
-    box(mid + 0.36, 0, top + 0.12, depth - 0.36, order - 0.02, 0.12, STONE_D);
+    box(mid + 0.01, 0, top + 2.14, depth - 0.01, open + 0.02, 2.06, STONE, STONE_D, 0.004);
+    box(mid + 0.36, 0, top + 0.12, depth - 0.36, order - 0.02, 0.12, STONE_D, STONE_D, 0.008);
     box(f0 - 0.12, 0, Y + 6.9, 0.2, outer + 0.3, 0.22, STONE_D);
     for (let i = 0; i < 14; i++) { const lat = (rng() - 0.5) * 2 * (outer + 0.6), h = 0.3 + rng() * 0.5, a = f0 + 0.2 + rng() * 0.6; rng(); const hl = 0.4 + rng() * 0.5; box(a + ((i * 3) % 14) * 0.004, lat, Y + 6.9 + ((i * 5) % 14) * 0.069 + h, 0.5, hl, h, STONE_D); } // (each bottom and back its own: none share a plane)
     // the sun over the door: a boss and its rays in relief, its sockets empty (the Heliarchs')

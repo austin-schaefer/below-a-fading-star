@@ -1,4 +1,4 @@
-// The map structure's heightfield (v4 map): the pit at the causeway's end and the taller Tumbling Water, each in
+// The map structure's heightfield (v4 map): the pit beside the causeway and the taller Tumbling Water, each in
 // its own marked block of the placement plan (SITES.pit.block, SITES.fallLip.block). Pure functions of (x, z), so
 // terrain.js can call mapHeight() at the end of heightAt() and everything that samples the ground agrees.
 import { SITES, WATER } from '../../world.js';
@@ -8,12 +8,13 @@ import { runnelCut, leads, setLeads } from './routes.js';
 const SN = makeSimplex(20261108);
 
 // ---------------------------------------------------------------- the pit (name [Proposed])
-// "With a fractal, ragged edge that has swallowed the end of the road": a hole r 14 whose rim wanders on every
+// "With a fractal, ragged edge that has swallowed the end of the road" (the road's last stretch went in; the causeway
+// turns past it now for the Span, v15-F1): a hole r 14 whose rim wanders on every
 // scale (octaves of noise round the circle, each half the last), its throat dropping near-sheer to a floor 26 m
 // down. The rim's lip, the arc it is lowest on, faces south and south-west toward the fall.
 export const PIT = { x: SITES.pit.x, z: SITES.pit.z, r: SITES.pit.r, block: SITES.pit.block, depth: 26, lipBearing: 200 };
 const PB = PIT.block;
-export const PIT_PAVE = 3.5; // within this of the rim the road's slabs are v4/paths.js's: tilting in, hanging over
+export const PIT_PAVE = 3.5; // within this of the rim no paving is laid (structures/causeway.js; the road runs 10 m and more off it now)
 // rim radius on compass bearing b (degrees), metres from the pit's centre
 export function pitRim(b) {
   const a = (b * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
@@ -22,7 +23,7 @@ export function pitRim(b) {
   return PIT.r + r;
 }
 // v10-T1 (#15): the lookouts, compass bearings on the rim where no clod of the lip stands between the walker and the
-// throat: beside where the road comes to the pit (its last slabs hang over the throat), on the lip arc facing the fall, and on the east side
+// throat: on the north-west, where the old road came to the pit, on the lip arc facing the fall, and on the east side
 export const PIT_LOOKOUTS = [312, 200, 90];
 export const PIT_LOOKOUT_ARC = 14; // degrees either side
 // the bearing (compass degrees, clockwise from north) of (x, z) from the pit's centre

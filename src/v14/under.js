@@ -231,30 +231,39 @@ export function belowLit(mat, key = 'below') {
 // the terrain's shape, not its drawing: on a wall of 26 m over a cell or two (3.1 m apart on low) the drawn triangle
 // lies a metre and more off it, and a knee ended where heightAt says the rock is stood in the air.
 //   const S = drawnSurface([T.mesh, throat], box); S.cast([x, y, z], [dx, dy, dz], far) -> [x, y, z] | null
+//   (box.around = { x, z, n }: sectors by bearing round a centre, for many short rays out from a ring)
 export function drawnSurface(meshes, box) {
   const pos = [];
   for (const m of meshes) {
     const g = m?.geometry; if (!g) continue;
     m.updateMatrixWorld(); const E = m.matrixWorld.elements, P = g.attributes.position.array, I = g.index?.array, n = I ? I.length / 3 : P.length / 9;
-    const w = (k) => { const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2]; return [E[0] * x + E[4] * y + E[8] * z + E[12], E[1] * x + E[5] * y + E[9] * z + E[13], E[2] * x + E[6] * y + E[10] * z + E[14]]; };
+    // the box asked of each corner's world x and z before anything is made (no allocation per triangle)
+    const inBox = (k) => { const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2], wx = E[0] * x + E[4] * y + E[8] * z + E[12], wz = E[2] * x + E[6] * y + E[10] * z + E[14]; return wx > box.x0 && wx < box.x1 && wz > box.z0 && wz < box.z1; };
+    const put = (k) => { const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2]; pos.push(E[0] * x + E[4] * y + E[8] * z + E[12], E[1] * x + E[5] * y + E[9] * z + E[13], E[2] * x + E[6] * y + E[10] * z + E[14]); };
     for (let t = 0; t < n; t++) {
       const a = I ? I[t * 3] : t * 3, b = I ? I[t * 3 + 1] : t * 3 + 1, c = I ? I[t * 3 + 2] : t * 3 + 2;
       if (a === b || b === c || a === c) continue; // a triangle another module has cut
-      const A = w(a), Bv = w(b), C = w(c), inBox = (p) => p[0] > box.x0 && p[0] < box.x1 && p[2] > box.z0 && p[2] < box.z1;
-      if (inBox(A) || inBox(Bv) || inBox(C)) pos.push(...A, ...Bv, ...C);
+      if (inBox(a) || inBox(b) || inBox(c)) { put(a); put(b); put(c); }
     }
   }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeBoundingSphere();
-  const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
-  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3();
+  // with `around: { x, z, n }` the faces are kept in n sectors by bearing round (x, z), and a cast from a point asks only
+  // its own sector and the two beside it (rays a few metres long, out from a ring: the Pit's knees, 16k faces on high)
+  const around = box.around, n = around ? around.n : 1, buckets = Array.from({ length: n }, () => []);
+  const sec = (x, z) => (around ? ((Math.floor(((Math.atan2(x - around.x, z - around.z) / (Math.PI * 2)) + 1) * n) % n) + n) % n : 0);
+  for (let t = 0; t < pos.length; t += 9) buckets[sec((pos[t] + pos[t + 3] + pos[t + 6]) / 3, (pos[t + 2] + pos[t + 5] + pos[t + 8]) / 3)].push(...pos.slice(t, t + 9));
+  const mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+  const parts = buckets.map((b) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(b, 3)); g.computeBoundingSphere(); return new THREE.Mesh(g, mat); });
+  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3(), ask = [];
   return {
     tris: pos.length / 9,
     cast(from, dir, far = 5) {
       o.set(from[0], from[1], from[2]); d.set(dir[0], dir[1], dir[2]).normalize(); rc.set(o, d); rc.far = far;
-      const h = rc.intersectObject(mesh, false)[0];
+      ask.length = 0; const k = sec(from[0], from[2]);
+      if (n === 1) ask.push(parts[0]); else for (const j of [k - 1, k, k + 1]) ask.push(parts[(j + n) % n]);
+      const h = rc.intersectObjects(ask, false)[0];
       return h ? [h.point.x, h.point.y, h.point.z] : null;
     },
-    dispose() { g.dispose(); mesh.material.dispose(); },
+    dispose() { for (const m of parts) m.geometry.dispose(); mat.dispose(); },
   };
 }
 

@@ -59,14 +59,19 @@ export function buildStairs(K) {
     // landing to the deck through the parapet's gap, so heights-test walks it and roads-test asks for a track to its foot
     const path = [[fx, fz, +y0.toFixed(2)]];
     const side = (p) => [-p.dir[1] * (p.walk || 0), p.dir[0] * (p.walk || 0)]; // a flight's `walk`: its line off the middle
+    const runs = []; // [path index where each flight starts, where it ends]
     S.parts.forEach((p, i) => {
       if (p.rect) { const nx = S.parts[i + 1]; if (nx && !nx.rect) { const [ox, oz] = side(nx); path.push([nx.x + ox - nx.dir[0] * 1.2, nx.z + oz - nx.dir[1] * 1.2], [nx.x + ox, nx.z + oz]); } return; }
       const [ox, oz] = side(p), x1 = p.x + ox + p.dir[0] * p.len, z1 = p.z + oz + p.dir[1] * p.len;
+      runs.push([path.length - 1, path.length]);
       path.push([x1, z1], [x1 + p.dir[0] * 1.2, z1 + p.dir[1] * 1.2]);
     });
     const gx = (S.gap[0] + S.gap[1]) / 2;
     path.push([gx, Z0 - 1.5], [gx, Z, Y]);
-    ctx.ascents?.add({ id: 'span-' + key, path });
+    // stepped off (heights-test) half way up each flight: a step sideways off a landing is the next flight, walked up
+    const at = [0]; for (let i = 1; i < path.length; i++) at.push(at[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+    const offs = runs.map(([a, b]) => +((at[a] + at[b]) / 2 / at[at.length - 1]).toFixed(3));
+    ctx.ascents?.add({ id: 'span-' + key, path, offs });
   }
   const partY = (w, x, z) => (w.fl ? w.fl.walkable(x, z) : (inRect(w.rect, x, z) ? w.y : null));
   for (const w of walkParts) if (!w.fl) { const r = w.rect, yy = w.y; ctx.addWalkable((x, z) => (x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3] ? yy : null)); }
