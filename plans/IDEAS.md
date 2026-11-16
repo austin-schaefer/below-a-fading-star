@@ -166,3 +166,15 @@ World loading is now a small share of the gate's 39 minutes; two tests hold abou
 - **`contrast-survey.mjs` in a gate mode** (about 50 s): the gate reads 13 of the 19 poses' frames.
 - **One browser profile for the suite** (about 1 min): every test after the first loads from the kept store. Most tests would then prove the world built from tapes, not cold; `loading`, `sw`, `perf`, `pan`, `record` must stay cold.
 - **Two browsers for the gate when nothing else runs**: the owner's call (the pace rule is one browser an agent); it would roughly halve the gate.
+
+## From v14's critic (2026-11-15), not fixed in v14
+
+- **The second half of the Wellward Way is one corridor three times**: the Flute, the Gulf and the Gate are all blue-grey; only the Laid Sun has colour. Give the Gulf and the Gate their own colour and objects.
+- **An act in the Laid Sun** (his lamp or his gold); offers were also expected at the Noon Road's carriers and at the shears on the Nave's rim, and nothing rose.
+- **Acts cannot be found from a distance**: at the map's stands (about 9 m out) no offer rises; the moths do not read from 15 m.
+- **The Pomegranate House is plain cartoon colour** (yellow drum, teal domes, red trim): repaint it worn. The critic would cut it otherwise.
+- **Familiar, could be in any fantasy game**: the ruined arches and aqueduct, the grey keep, the waterfall gorge, the bronze bell on a post, the blue crystal fields at the Lattice and the Wayside Shrine, the dark wood with teal glow. **Nowhere else**: the Laid Sun, the Noonwrights' tube with its stalled carriers, the Lantern Halt's tally tower. Build on those.
+- **Stories seen but not read**: the Hanging Croft (a home, nothing more); the Long Wait's lean-to (too small and dark: a hearth that glows); the broken eye at the Bitter End reads as an ice shard. **Missed**: Gold from the court (reads only from 3 m: a glint from the court's centre), the Slipper's mate, Salt for news, the Traveller.
+- **Nobody alive below ground**, and no sign of anyone but the Reckoner's tools.
+- **The open moor is a bed with no events** (no onsets in 20 s at moor-stand); the underground walk's roughness is out of band (0.435).
+- Straight down into the Nadir shows nothing (the stars read only at a shallow pitch); the south-west world clamp facing out is one flat colour; touch controls below ground were not seen by the critic (its page was not a touch device; the agents' touch walks passed).
