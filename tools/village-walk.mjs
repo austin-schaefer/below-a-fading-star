@@ -11,7 +11,7 @@
 // turns the head left or right and writes a frame; at checkpoints it always does.
 //   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk]
 // ROUTE=rungs (v15-Q2) walks the Rungs' own ways instead, from the Lees' square: up the Lees' stair, up the Tenter and down
-// it, the Slype, up the Gullet, the Leads' three crossings, the five house stairs (each in the direction the
+// it, the Slype, up the Gullet, the Leads' two crossings, the two house stairs (each in the direction the
 // tour meets it). The ways' points are the registered ascents' own paths; it prints each way as it is finished and a
 // count, and wants the ladder taken once.
 // With route=pennyworth (v15-Q4) it walks the quarter at the hill's foot instead: from the ramp's foot between the
@@ -86,8 +86,8 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
     const up2 = (id) => { if (/-stair$/.test(id) && id !== 'lees-stair') lane(id); way(id, false); }, dn = (id) => { way(id, true); if (/-stair$/.test(id)) lane(id); };
     up2('lees-stair'); b(22.4, 14.6); b(22.15, 12.4); b(19.7, 12.2); up2('rungs-tenter'); // (v15-W1: the ladder that stood beside the Tenter climbs the rim now: taken below, from the High Rung)
     dn('rungs-tenter'); b(12.2, 11.9); b(9, 11.7); b(5.6, 11.9); b(4.4, 14.5); b(1, 14.6); up2('rungs-gullet');
-    b(1.5, 9.3); dn('rungs-leads-3'); a(37, 9.3); a(27.5, 9.3); dn('rungs-low-3-stair'); up2('rungs-low-3-stair'); dn('rungs-leads-2'); dn('rungs-leads-1'); a(6, 9.4);
-    up2('rungs-mid-1-stair'); a(7.5, 3.4); a(ld.s, -2.9); a(ld.s, -4.1); a(ld.s, -5.7, 'way:rungs-ladder'); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85); a(ld.s, -2.9); a(14.2, 3.4); // (off the head onto the crown and back to it, as the main route comes: turned about on the head, the walker hung on the top rung) dn('rungs-mid-2-stair'); up2('rungs-mid-3-stair'); a(22.6, 3.4); a(33, 3.2); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair');
+    b(1.5, 9.3); a(37, 9.3); a(27.5, 9.3); a(23, 9.4); a(23, 10.9); dn('rungs-leads-2'); dn('rungs-leads-1'); a(6, 9.4); // (v15-W4: the third crossing and rungs-low-3's stair are gone: onto rungs-low-3's roof, s 20.7 to 27.1, from the tread at its back)
+    up2('rungs-mid-1-stair'); a(7.5, 3.4); a(ld.s, -2.9); a(ld.s, -4.1); a(ld.s, -5.7, 'way:rungs-ladder'); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85); a(ld.s, -2.9); a(14.2, 3.4); a(22.6, 3.4); a(26, 0.3); a(35, 0.3); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair'); // (off the head onto the crown and back to it, as the main route comes: turned about on the head, the walker hung on the top rung) (v15-W4: the rest of this line sat inside that comment, so the tour never reached rungs-mid-7's stair; it passes the Heliarch upper flight's slot on the causeway, not at its lip)
     return R;
   }
   // down: the keep's fallen corner, the court, the head, its west flight, the slot, the landing, the timber, the bastion, the foot
@@ -104,7 +104,7 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
   const k = 4 / 5.4, door = (P.LEVEL.high.y + 0.81 - P.LEVEL.mid.y) / k + P.RISERS[1].D;
   b(tb.s + 0.4, 22.6, 'tube-foot'); b(tb.s, 20.2); b(tb.s, 17, 'tube-low'); b(tb.s, 14, 'tube-mid'); b(tb.s, door + 0.15, 'breach'); b(tb.s + 2.6, door, 'gangway'); b(tb.s + 2.6, 9.2); b(16.5, 9.2, 'mid-rung');
   // the Tenter: down it and up again (v15-W1: the ladder that stood beside it is taken at the end, up the rim)
-  { const tp = window.__fp.ascents.list.find((w) => w.id === 'rungs-tenter').path; [...tp].reverse().forEach((q, k) => push(q, k === 3 ? 'tenter-foot' : undefined)); tp.forEach((q, k) => push(q, k === 3 ? 'tenter-top' : undefined)); }
+  { const tp = window.__fp.ascents.list.find((w) => w.id === 'rungs-tenter').path; [...tp].reverse().forEach((q, k) => push(q, k === 3 ? 'tenter-foot' : undefined)); tp.forEach((q, k) => push(q, k === 3 ? 'tenter-top' : undefined)); b(16.4, 9.0); } // (v15-W4: off the deck inside the nosing's wall, as a walker does, not along its lip)
   // back through the breach and up the main to the High Rung; the head's east flight; the court; the fallen corner
   b(tb.s + 2.6, 9.2); b(tb.s + 2.6, door); b(tb.s, door - 0.15); b(tb.s, 8, 'tube-high'); b(tb.s, 5.2); b(tb.s, 2.6, 'tube-top'); b(4, -0.5);
   const cs = P.cornerS(1, -3.7);

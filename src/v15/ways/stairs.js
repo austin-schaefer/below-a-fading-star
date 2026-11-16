@@ -62,14 +62,17 @@ export function stoneFlight(K, o) {
   [-1, 1].forEach((sd, k) => {
     if (!cheeks[k]) return;
     // a cheek wall: from the base up to 0.95 over the pitch line, 0.3 thick, a moulded coping on it
-    const c = new THREE.Shape(), top = o.cheekTop ?? 0.95, e = 0.25;
-    c.moveTo(-e, top); c.lineTo(S.length + e, -o.drop + top); c.lineTo(S.length + e, base); c.lineTo(-e, base); c.lineTo(-e, top);
+    // (v15-W4: the cheek and its newel end at the last tread. They stood 0.35 m out onto the floor below, and with the
+    // newel's cap that put a waist-high block in the lane the flight lands on, the owner's "walls blocking people from
+    // getting from stairs to their own door". Behind the head the cheek still runs on a hand: it guards the slot.)
+    const c = new THREE.Shape(), top = o.cheekTop ?? 0.95, e = 0.25, L = S.length - 0.05;
+    c.moveTo(-e, top); c.lineTo(L, -o.drop + top + 0.05); c.lineTo(L, base); c.lineTo(-e, base); c.lineTo(-e, top);
     B.add(B.extrude(c, 0.3), F.clone().multiply(mat(sd * (w / 2 + 0.15), 0, 0)).multiply(ROT_PROFILE), { color: jit(stone, 0.92), course: 0.5, moss: 0.4, ground });
-    const len = Math.hypot(S.length + 2 * e, o.drop), pitch = Math.atan2(o.drop, S.length + 2 * e);
-    B.add(B.box(0.42, 0.13, len + 0.06, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 + 0.15), top + 0.06 - o.drop / 2, S.length / 2, pitch, 0, 0)), { color: C.heliarch.dark, moss: 0.45, ground });
-    // a hexagonal newel at the foot
-    B.add(B.cyl(0.26, 0.3, 1.25, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 0.6, S.length + e + 0.1)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
-    B.add(B.cyl(0.33, 0.33, 0.1, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 1.27, S.length + e + 0.1)), { color: C.heliarch.dark, moss: 0.3, ground });
+    const len = Math.hypot(L + e, o.drop), pitch = Math.atan2(o.drop, L + e);
+    B.add(B.box(0.42, 0.13, len - 0.3, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 + 0.15), top + 0.06 - o.drop / 2 + 0.03, (L - e) / 2 - 0.12, pitch, 0, 0)), { color: C.heliarch.dark, moss: 0.45, ground });
+    // a hexagonal newel at the foot, on the cheek's line beside the last tread
+    B.add(B.cyl(0.24, 0.27, 1.25, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 0.6, L - 0.25)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
+    B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 1.27, L - 0.25)), { color: C.heliarch.dark, moss: 0.3, ground });
   });
   // nobody walks into its mass from beside it: a wall along each cheek's line in pieces, each one's top under the
   // treads beside it (the lowest treads, within a step of the floor, are stepped onto from any side)
@@ -130,13 +133,35 @@ export function hexLanding(K, o) {
   B.add(B.extrude(sh2, 0.03), F.clone().multiply(mat(0, 0.012, 0, -Math.PI / 2, 0, 0)), { color: jit(stone, 1.12), moss: 0.2, ground: o.base });
   B.add(B.cyl(0.42, 0.42, 0.02, 6, 1), F.clone().multiply(mat(0, 0.035, d / 2)), { color: C.heliarch.bronze, moss: 0.05, iron: 0.3, ground: o.base });
   const edges = wing > 0 ? { right: [pts[1], pts[2], pts[3]], left: [pts[4], pts[5], pts[0]], far: [pts[3], pts[4]] } : { right: [pts[1], pts[2]], left: [pts[3], pts[0]], far: [pts[2], pts[3]] };
+  // A parapet stands only where its side has a drop: where the ground outside is at the landing's level (the tread the
+  // landing stands out from), it is left down for 0.9 m either side of that and ends in a newel, so a walker on the
+  // landing turns onto the tread (v15-W4: the bastion's parapet wrapped its corners onto the Low Rung, the owner's
+  // "here too"). Each standing run is a wall to the walker as well as drawn.
+  const ph = o.parapetH ?? 0.9, T = K.ctx.terrain, toW = (u, v) => [o.x + o.f[1] * u + o.f[0] * v, o.z - o.f[0] * u + o.f[1] * v];
   for (const side of o.parapet ?? []) {
     const e = edges[side];
     for (let i = 0; i < e.length - 1; i++) {
       const [u0, v0] = e[i], [u1, v1] = e[i + 1], len = Math.hypot(u1 - u0, v1 - v0), a = Math.atan2(u1 - u0, v1 - v0);
-      const ph = o.parapetH ?? 0.9;
-      B.add(B.box(0.3, ph, len + 0.12, { chip: 0.02 }), F.clone().multiply(mat((u0 + u1) / 2, ph / 2, (v0 + v1) / 2, 0, a, 0)), { color: jit(stone, 0.92), course: 0.45, moss: 0.4, ground: o.base });
-      B.add(B.box(0.42, 0.12, len + 0.2, { chip: 0.02 }), F.clone().multiply(mat((u0 + u1) / 2, ph + 0.06, (v0 + v1) / 2, 0, a, 0)), { color: C.heliarch.dark, moss: 0.45, ground: o.base });
+      // outward: away from the landing's middle
+      let nu = v1 - v0, nv = -(u1 - u0); const nl = Math.hypot(nu, nv) || 1; nu /= nl; nv /= nl;
+      if (nu * ((u0 + u1) / 2) + nv * ((v0 + v1) / 2 - d / 2) < 0) { nu = -nu; nv = -nv; }
+      const m = Math.max(2, Math.ceil(len / 0.2)), open = [];
+      for (let k = 0; k <= m; k++) { const t = k / m, u = u0 + (u1 - u0) * t, v = v0 + (v1 - v0) * t; open.push([0.5, 1.0].some((q) => { const [x, z] = toW(u + nu * q, v + nv * q); return T && Math.abs(T.heightAt(x, z) - o.y) < 0.6; })); }
+      const shut = open.map((_, k) => !open.some((op, j) => op && Math.abs(j - k) * len / m < 0.9));
+      for (let k = 0; k < m;) {
+        if (!shut[k] || !shut[k + 1]) { k++; continue; }
+        let j = k; while (j < m && shut[j + 1]) j++;
+        const t0 = k / m, t1 = j / m, l = (t1 - t0) * len, cu = u0 + (u1 - u0) * (t0 + t1) / 2, cv = v0 + (v1 - v0) * (t0 + t1) / 2, whole = k === 0 && j === m;
+        B.add(B.box(0.3, ph, l + (whole ? 0.12 : 0), { chip: 0.02 }), F.clone().multiply(mat(cu, ph / 2, cv, 0, a, 0)), { color: jit(stone, 0.92), course: 0.45, moss: 0.4, ground: o.base });
+        B.add(B.box(0.42, 0.12, l + (whole ? 0.2 : 0.06), { chip: 0.02 }), F.clone().multiply(mat(cu, ph + 0.06, cv, 0, a, 0)), { color: C.heliarch.dark, moss: 0.45, ground: o.base });
+        for (const [kk, tt] of [[k, t0], [j, t1]]) if (kk !== 0 && kk !== m) { // a cut end: a newel, as at a flight's foot
+          const nu0 = u0 + (u1 - u0) * tt, nv0 = v0 + (v1 - v0) * tt;
+          B.add(B.cyl(0.24, 0.27, ph + 0.2, 6, 1), F.clone().multiply(mat(nu0, (ph + 0.2) / 2, nv0)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground: o.base });
+          B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(nu0, ph + 0.25, nv0)), { color: C.heliarch.dark, moss: 0.3, ground: o.base });
+        }
+        if (ph > 0.5) { const [ax, az] = toW(u0 + (u1 - u0) * t0, v0 + (v1 - v0) * t0), [bx, bz] = toW(u0 + (u1 - u0) * t1, v0 + (v1 - v0) * t1); K.wall(ax, az, bx, bz, 0.18, o.y - 0.1, ph + 0.22); }
+        k = j + 1;
+      }
     }
   }
   const [fx, fz] = o.f, x0 = o.x, z0 = o.z, y = o.y, R = Math.hypot(w / 2 + wing, d) + 1;

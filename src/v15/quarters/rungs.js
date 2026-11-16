@@ -6,7 +6,7 @@
 //                   head and things built into or onto it (Elder blocks under one, Heliarch quoins and lintels, a
 //                   Noonwright collar for a window, a timber jetty, an upper room, a cupola, a loggia, dye run down
 //                   the dyers' walls, soot over every lamp); a second row of small lights high in each front;
-//                   five carry the plan's front stair, each registered as a way
+//                   two carry the plan's front stair, each registered as a way
 //   the Cantle      a carrier's sherd standing as an apse over the High Rung, a plaster house in its lap, the gap
 //                   behind its flanks packed
 //   the Leads       the roof walk on the Low Rung's roofs (the Mid Rung's level): plank crossings with a stile at
@@ -14,11 +14,10 @@
 //   the Gullet      a mud stair straight down the slot between the two houses at the corner: mean, and whole
 //   the Tenter      the dyers' stair down the Mid Rung's riser on the east run, cloth on tenter lines down its
 //                   length, vats at its foot, their runnels across the lane to a drain
-//   the Stump       a Heliarch flight along the riser east of the aqueduct's pier, its foot in a house's wall; and
-//                   the Pier Stair, the same hand's treads let into the pier's faces, the lowest gone: seen from
-//                   the Lees between the Late timber of the Tenter and the Noonwrights' main
+//   the Pier Stair  Heliarch treads let into the aqueduct's last pier's faces, the lowest gone: seen from the Lees
+//                   between the Late timber of the Tenter and the Noonwrights' main
 //   the Slype       the lane under the main: a door in the step, a niche with a light in it
-//   the Squint      a bench at the west end of rungs-low-7's roof, over the Stump, the Tenter and the main
+//   the Squint      a bench at the west end of rungs-low-7's roof, over the Pier Stair, the Tenter and the main
 //   the lanes       flags laid over the Elder treads where feet go, more of them lost than kept
 //   and what the bones left: the ladder (up the rim to the crown) its poles stop a walker, a hand-rope, a worn stone say it is climbed
 // Draws: `rungs-houses` and `rungs-ways` (the stone shader). No point light: every slot in reach of P9 and K1 is
@@ -327,7 +326,7 @@ export async function build(ctx) {
     KB.add(KB.extrude(shp, w), F.clone().multiply(ROT), { color: mud, moss: 0.3, ground: yL, emit: limeGlow(mud, 0.04) });
     for (let i = 1; i < n; i++) KB.add(box(w - 0.02 - rng() * 0.08, 0.035, 0.085, { chip: 0.01 }), F.clone().multiply(mat(0, -i * rise + 0.008, i * run - 0.045)), { color: worn(V.lime, rng, 0.12 + rng() * 0.25), moss: 0.05, ground: yL - 3, emit: limeGlow(V.lime, 0.1) });
     // the head: planks from the nosing to the first riser
-    ways.bridge(K, { name: 'rungs-gullet-head', a: [cx0 - b[0] * 0.3 + t[0] * sh, yM, cz0 - b[1] * 0.3 + t[1] * sh], b: [hx + b[0] * 0.04, yM, hz + b[1] * 0.04], width: w + 0.1, rails: false, register: false });
+    ways.bridge(K, { name: 'rungs-gullet-head', a: [cx0 - b[0] * 0.3 + t[0] * sh, yM, cz0 - b[1] * 0.3 + t[1] * sh], b: [hx + b[0] * 0.04, yM, hz + b[1] * 0.04], width: w + 0.1, rails: false, register: false, over: [0.35, -0.06] });
     const floor = (x, z) => { const dx = x - hx, dz = z - hz, a = dx * b[0] + dz * b[1], u = dx * t[0] + dz * t[1]; if (a < 0 || a >= len || u > w / 2 + 0.03 || u < -w / 2 - 0.03) return null; return yM - (Math.floor(a / run) + 1) * rise; };
     K.addFloor(floor, { name: G.id, keep: true });
     for (const sd of [-1, 1]) for (let i = 0, m = 4; i < m; i++) { // nobody walks into its mass from the slot beside it
@@ -417,22 +416,8 @@ export async function build(ctx) {
       beam(KB, M, [0, 0.05, 0.1], [0.75, -0.02, -0.2], 0.2, { color: worn(N.celadonD, rng, 0.3), moss: 0.2, wet: 0.6, ground: yL - 2 }, 0.07); }
   }
 
-  // ---------------------------------------------------------------- the Stump: a Heliarch flight, built over
-  // Along the riser east of the pier, exact ashlar on a solid core: seven treads go down from the Mid Rung and the
-  // eighth is in the end wall of the house that was built over the rest. A tread is gone, the cheek is a stump.
-  {
-    const S = RUNGS.stub, run = S.run, g = S.sign, w = S.width, Dc = DM + 0.05 + w / 2, rise = 0.25, going = 0.26, stone = (k) => ({ color: jit(H.stone, k), course: 0.5, moss: 0.45, ground: yL });
-    const step = (i, extra = 0, sink = 0) => { const top = yM - (i + 1) * rise - sink, h = top - yL + 0.3; KB.add(box(w, h, going + extra, { chip: 0.03, seed: i }), ch(RM(run, S.s + g * ((i + 0.5) * going + extra / 2), Dc, yL), 0, h / 2 - 0.3, 0), stone(0.88 + (i % 3) * 0.06)); };
-    for (let i = 0; i < 6; i++) step(i, 0, i === 3 ? 0.27 : 0); // (the fourth tread has gone down the hill)
-    step(6, 0.5);
-    KB.add(box(w, yM - yL + 0.3, 0.32, { chip: 0.03 }), ch(RM(run, S.s - g * 0.16, Dc, yL), 0, (yM - yL) / 2 - 0.15, 0), stone(0.95)); // its head, at the nosing
-    KB.add(box(0.3, yM - yL + 0.75, 3 * going + 0.3, { chip: 0.06, chipTop: true, seed: 31 }), ch(RM(run, S.s + g * (1.5 * going - 0.15), Dc + w / 2 + 0.16, yL), 0, (yM - yL + 0.75) / 2 - 0.3, 0), stone(0.86));
-    KB.add(box(0.3, 2.9, 2 * going, { chip: 0.07, chipTop: true, seed: 33 }), ch(RM(run, S.s + g * 4 * going, Dc + w / 2 + 0.16, yL), 0, 1.15, 0, 0.03, 0, 0), stone(0.82));
-    const [bx, bz] = at(run, S.s + g * 1.1, Dc + 1.75);
-    KB.add(box(0.8, 0.26, 0.5, { chip: 0.06, seed: 41 }), mat(bx, yL + 0.1, bz, 0.05, 0.7, 0.04), stone(0.8)); // the lost tread
-    const a = at(run, S.s + g * 0.3, Dc + 0.05), c = at(run, S.s + g * 7 * going, Dc + 0.05);
-    K.wall(a[0], a[1], c[0], c[1], w / 2 + 0.1, yL - 0.5, yM - yL);
-  }
+  // (v15-W4) The Stump, a Heliarch flight down the riser into rungs-low-7's end wall, is gone: from the Mid Rung it read
+  // as a stair shut at its head and walled at its foot, the owner's "and another". The Pier Stair says the same hand.
 
   // ---------------------------------------------------------------- the Pier Stair: the Heliarchs' way up their aqueduct
   // Ashlar treads let into the last pier's faces: up its east face from the Low Rung, round the corner and along its

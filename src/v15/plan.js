@@ -353,15 +353,15 @@ put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'l
 // one on the flat between the stable and the gate, one up on the field bank across the lane from it; the garden is
 // the ground between the stalls, the wall lane, the kerb and the ramp's foot)
 free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.6), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5.8, 'noon', { fronts: ['K1'], note: 'the Spilt Measure: a carrier fallen off the end of the daylight main and lying along the lowest riser, half sunk: someone lives in the sound half, the broken half is a garden' });
-free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
-free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
+free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, slope: 0.8, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
+free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, slope: 0.75, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
 // (v15-Q4 round 2) the foot built up to the house: a street down the old kerb, the Hitch's far side, and a pair facing the house's gate. Their `y` is nominal: the quarter's module stands each at the ground before its door, on a footing of older stone where the ground falls away under it.
 free('pennyworth-kerb-1', 'house', 'pennyworth', 'foot', 116.9, -22.1, [-0.86, 0.5], 6, 4.4, 'late', { y: -1.8, slope: 0.8, fronts: ['K1'], note: 'across the old kerb from the garden' });
 free('pennyworth-kerb-2', 'house', 'pennyworth', 'foot', 120.6, -15.8, [-0.86, 0.5], 5.6, 4.2, 'late', { y: -1.85, slope: 0.9, fronts: ['K1'], note: 'across the old kerb from the wreck' });
 free('pennyworth-east-1', 'house', 'pennyworth', 'foot', 118.2, -30, [-1, 0], 5.2, 4.4, 'late', { y: -1.5, slope: 1.2, note: 'at the Thumbway\'s east end, facing the house\'s corner tower' });
 free('pennyworth-hitch-3', 'house', 'pennyworth', 'foot', 121, -39, [-1, 0], 5.6, 4.4, 'late', { y: 1.05, slope: 1.4, note: 'on the Hitch, facing the stable\'s back' });
-free('pennyworth-hitch-4', 'house', 'pennyworth', 'foot', 121.2, -45.3, [-1, 0], 5.8, 4.4, 'late', { y: 1.45, slope: 1.0, note: 'on the Hitch, facing the stable\'s back' });
-free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 4.4, 'late', { y: 1.55, slope: 0.9, note: 'across the gate\'s road from the house, facing its gate' });
+free('pennyworth-hitch-4', 'house', 'pennyworth', 'foot', 121.2, -45.3, [-1, 0], 5.8, 4.4, 'late', { y: 1.45, slope: 1.4, note: 'on the Hitch, facing the stable\'s back' });
+free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 4.4, 'late', { y: 1.55, slope: 1.0, note: 'across the gate\'s road from the house, facing its gate' });
 free('pennyworth-gate-2', 'house', 'pennyworth', 'foot', 110.8, -69.4, [0.1, 1], 5.6, 4.4, 'late', { y: 0.95, slope: 1.7, note: 'beside it, toward the Hitch' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
 free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.2, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
@@ -375,6 +375,13 @@ free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1]
 for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.hand === 'late' && p.w >= 6.3 ? 'front' : false;
 // On the Rungs a tread is 5.4 m deep: a plot is 3.7 and the lane 1.4. So a front stair stands inside its plot: the
 // plot's front 0.9 m is the stair's strip, and that house's wall stands 0.9 m back from the plot's front (`stairStrip`).
+// (v15-W4, the owner's "the stair logic is just wild across the board") Three of the five front stairs the rule gave the
+// Rungs did a job another way already did a few metres off: rungs-mid-2's foot was 4.4 m from rungs-mid-1's and both went
+// from the Mid Rung to the High; rungs-mid-3's was 7 m from the Heliarch upper flight's, Mid to High; rungs-low-3's was 6 m
+// from the timber flight's, Low to Mid. Their houses stand as they were, without an outside stair: each roof is still
+// walked onto from the tread at its back. The two kept (rungs-mid-1 at the west end, rungs-mid-7 on the east run) are
+// the only ways between their two treads within 15 m.
+for (const p of PLOTS_) if (['rungs-mid-2', 'rungs-mid-3', 'rungs-low-3'].includes(p.name)) p.stair = false;
 for (const p of PLOTS_) if (p.stair === 'front' && p.quarter === 'rungs') p.stairStrip = 0.9;
 export const PLOTS = PLOTS_;
 // The Pennyworth's small standing things that are not plots (v15-Q4): the market's stalls, the lean-tos against the
@@ -487,16 +494,14 @@ export const RUNGS = {
   tenter: { name: 'the Tenter', id: 'rungs-tenter', run: 2, s: 17.05, sign: -1, out: 0.9, width: 1.3, run1: 0.25 },
   // the slot stair at the corner, straight down the bisector between rungs-low-4 and rungs-low-5: the meanest way, and whole
   gullet: { name: 'the Gullet', id: 'rungs-gullet', clear: 0.6, width: 1.05 },
-  // the Heliarch service flight east of the aqueduct's pier, down along the riser from its head at s: seven treads of it, and then the end wall of rungs-low-7, which was built over the rest
-  stub: { name: 'the Stump', run: 2, s: 21.25, sign: 1, width: 1.1 },
   // the lane under the main on the Low Rung: a door in the step, a niche, a lamp
   slype: { name: 'the Slype', run: 2, s0: 7.2, s1: 10.9, D: 11.5 },
-  // where three stairs of three ages are seen side by side in one look (the Stump at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
+  // where three stairs of three ages are seen side by side in one look (the Pier Stair at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
   squint: { name: 'the Squint', plot: 'rungs-low-7' },
   // the roof walk on the Low Rung's roofs (the Mid Rung's level), west to east; a crossing between each pair that has no stair between
-  leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3'], ['rungs-low-4', 'rungs-low-5']] },
+  leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3']] }, // (v15-W4: the third, rungs-low-4 to rungs-low-5, crossed the Gullet's head at a walker's brow, the owner's "a staircase blocked by a little footbridge": the Gullet's head joins those two roofs already)
   // the house stairs the plan gives (stair: 'front'), each a way between two treads: their ascents' ids
-  stairs: ['rungs-mid-1', 'rungs-mid-2', 'rungs-mid-3', 'rungs-mid-7', 'rungs-low-3'].map((n) => `${n}-stair`),
+  stairs: ['rungs-mid-1', 'rungs-mid-7'].map((n) => `${n}-stair`),
 };
 
 // (v15-L1) The walking lamps: where readers found "nothing lit to walk toward", a lamp to walk to, built by
@@ -512,7 +517,29 @@ export const LAMPS = [
   lampAt('slype-bracket', 'bracket', at(2, (RUNGS.slype.s0 + RUNGS.slype.s1) / 2 - 1.4, RISERS[2].D + 0.555), LEVEL.low.y, n2, { h: 2.0, reach: 0.55, k: 1.1, note: 'over the Slype\'s door on its plastered front (the niche\'s clay lamp beside it): the lane under the main' }),
   lampAt('skirts-bracket', 'bracket', polar(65.6, HAHA + 1.22), LEVELS[5].y, [Math.sin(65.6 * Math.PI / 180), -Math.cos(65.6 * Math.PI / 180)], { h: 2.3, reach: 0.65, k: 1.3, note: 'on the face of the Late buttress raked against the giants\' face (FIXTURES riser-buttress): the Skirts' }),
   lampAt('foot-post', 'post', [108.6, -15.7], LEVELS[5].y, [0, -1], { note: 'the Pennyworth\'s foot, between the ramp\'s foot and the kerb, by the wreck\'s neck' }),
+  // (v15-W4) the spine's two dark stretches (tools/ways-test.mjs spine rows): where the head's flights come down onto the
+  // causeway and turn back to the upper flight, and the foot flight down from the bastion
+  lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: where the head\'s twin flights come down, the way on down is the lit one' }),
+  lampAt('stair-foot-post', 'post', at(1, STAIR.s + 2.3, 19.0), LEVEL.bench.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, note: 'on the bench beside the foot flight\'s east cheek, its arm over the flight: the stair up from the Lees is lit from the square, and the bastion over it' }),
 ];
+
+// ---------------------------------------------------------------- the spine (v15-W4)
+// The one obvious way through the village, from the keep's end to the Pomegranate House: the masons' court on the
+// crown, the Heliarch stair straight down its axis (the head's west flight, the upper flight, the Late timber patch,
+// the foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
+// south door. Every other way is a branch off it. `ways` are registered ascents walked in order (each from the end
+// nearer the last point); `pts` are [x, z, level] between them. tools/ways-plan.mjs draws it; tools/ways-test.mjs
+// checks it is joined, lit (a lamp within 9 m of every 3 m of it) and never narrower than 1.5 m.
+export const SPINE = {
+  from: [...at(1, STAIR.s, -9), 'crown'], to: [HOUSE.door.x + 0.3, HOUSE.door.z + 1.9, 'foot'],
+  legs: [
+    { way: 'heliarch-head-west' }, { pts: [[...at(1, STAIR.s - 5.4, -1.2), 'high']] }, // (off the flight's foot and out onto the causeway, clear of its flank)
+    { way: 'heliarch-upper' }, { way: 'timber-patch' }, { way: 'heliarch-foot' },
+    { pts: [[...at(1, cornerS(1, 19.4), 19.4), 'bench']] }, // the Lees' street, east
+    { way: 'pennyworth-ramp' },
+    { pts: [[104.3, -17.3, 'foot'], [103.95, -21.5, 'foot'], [103.95, -25.2, 'foot'], [103.5, -28.9, 'foot'], [100, -29.6, 'foot']] }, // the Slip and the Thumbway
+  ],
+};
 
 // ---------------------------------------------------------------- the places the geometry check walks (#64)
 // tools/geometry-test.mjs and tools/route-frames.mjs read this list (the format: tools/geometry/places.mjs). Each way

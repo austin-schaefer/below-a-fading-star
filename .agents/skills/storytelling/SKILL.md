@@ -36,6 +36,8 @@ A prop is a thing that is there. A story usually has:
 
 A quick check: can you say in two sentences who wanted what and what happened?
 
+The owner removed the Indistinct (v15) as indistinct: no figure whose idea is that it cannot be made out (a blur, a shimmer, a translucent or glowing lens standing for a person); a figure here is a body doing something.
+
 ## Tools for telling one
 
 None of these is a rule. They are what has worked; use the ones that serve the story and break any of them on purpose.

@@ -61,6 +61,7 @@ run walk tools/walk-test.mjs "$B/?q=low"
 run hop tools/hop-test.mjs $B
 run edges tools/edges-test.mjs $B
 run heights tools/heights-test.mjs $B
+run seams tools/seams-test.mjs $B # v15-W5: the floor under the walker against the ground drawn, the village and a 30 m skirt on a 0.25 m grid (seams, floors off the drawing, colliders nothing draws), a ratchet (about 2 min)
 run geometry tools/geometry-test.mjs $B # v15-H1 (#64): what flickers, floats or shows its back in every walkable place (about 30 s)
 run lift tools/lift-test.mjs $B
 run mountains tools/mountains-test.mjs $B

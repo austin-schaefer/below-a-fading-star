@@ -33,6 +33,7 @@ The stole gives back a tenth of its own colour (`stoleEmit` 0.12) "so the stroke
 
 ## What failed, and why
 
+- The owner removed the Indistinct (v15) as indistinct: no figure whose idea is that it cannot be made out (a blur, a shimmer, a translucent or glowing lens standing for a person); a figure here is a body doing something.
 - **Too dark to find.** The Late folk "still read as dark figures" at 30 m (v8 Status; `66-liveries-latefolk-sheet`); the Long Sleeper's stole cannot be read at 10 or 30 m (grass and shade); the Stylite and the Taker are marginal at 30 m. The officers' sheet at 10 m shows how small a 1.8 m figure is in the frame (`66-liveries-officers-sheet`).
 - **Too small to find.** The traveller's body was 40 px wide from the deck's lip, 80 m off, and nothing pointed down at it (v8 Status; a pale cloth, a circling bird or a lamp below were the critic's ideas). A Twk-man is about 10 px at 15 m; their salt sack read as a grey lump.
 - **Blocky.** The painter up close is boxes and cylinders (`68-painter-man-close`), and his colours were hard-coded instead of taken from `livery.js`.

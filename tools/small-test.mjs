@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// v7 living-small check (src/v7/small.js): CM the Indistinct, CO the Repetend, CQ the Simulacrum.
-// The Indistinct, over a scripted walk along the ha-ha's lawn edge (the walker's own acceleration, as controls.js has it) at
-// walking and at hurrying pace: whenever the walker is within 7 m of the ditch line its distance is 7.0 +- 0.3 m and never
-// under 6.7 m; it does not move while the walker stands; it stays on the ditch line (r 78.2 from the keep, the drawn floor)
-// within 0.3 m. The Repetend, over a walk in to the Lynchets' east wall, along it and away: it sits or hops within 0.1 m of a
+// v7 living-small check (src/v7/small.js): CO the Repetend, CQ the Simulacrum.
+// The Repetend, over a scripted walk (the walker's own acceleration, as controls.js has it) in to the Lynchets' east wall, along it and away: it sits or hops within 0.1 m of a
 // wall-top's height and inside the Lynchets; it follows only within 18 m, and goes home beyond; each step near it is echoed
 // 1.0 s later, and (v7.1) it perches within 6 m of P3 or P4 and flicks its tail and hops as each echo sounds and every 6-10 s on its own. The Simulacrum: the face forms only after flicker has been under 0.5 for 1 s, and comes apart when it rises
 // past 0.85; 240 gnats a column at high and 120 at low (v7.1; 180 and 90 before). Cost: stats() within 5 draws and 5k triangles, no lights, and the
@@ -58,28 +55,6 @@ const walk = (legs, probe) => page.evaluate(async ([legs, probe]) => {
   }
   return out;
 }, [legs, probe]);
-
-// ---- the Indistinct: along the lawn's edge (r 76.6, the walker within 7 m of the line) and back, a stand between
-const indProbe = `(L) => { const s = window.__fp.small.indistinct.state(); const K = { x: 40, z: 30 }; return { leg: L.name, d: s.dist, lineD: s.lineD, phase: s.phase, held: s.held, moved: s.moved, wv: s.walkerV, r: Math.hypot(s.x - K.x, s.z - K.z), dy: s.y - window.__fp.terrain.heightAt(s.x, s.z) - 0.02 }; }`;
-const ind = await walk([
-  { name: 'settle', stand: 1.5, arc: [-42, -42], r: 76.6 }, // v15: its arc is bearings 314 to 18 (the Lappet took the north-east)
-  { name: 'walk', arc: [-42, -8], r: 76.6, speed: 3.6 },
-  { name: 'stand', stand: 3, arc: [-8, -8], r: 76.6 },
-  { name: 'hurry', arc: [-8, -40], r: 76.6, speed: 6.6 },
-  { name: 'ditch', arc: [-40, -14], r: 78.2, speed: 3.6 },
-], indProbe);
-const stat = (leg) => {
-  const s = ind.filter((o) => o.leg === leg && o.lineD <= 7 && o.phase === 'shown');
-  return { n: s.length, err: Math.max(0, ...s.map((o) => Math.abs(o.d - 7))), min: Math.min(...s.map((o) => o.d)) };
-};
-r.indWalk = stat('walk'); r.indHurry = stat('hurry'); r.indDitch = stat('ditch');
-{
-  const st = ind.filter((o) => o.leg === 'stand');
-  const tail = st.slice(Math.min(st.length - 1, 5)); // after the walker's last frame of motion has settled
-  r.indStand = { n: tail.length, moved: tail.length ? tail[tail.length - 1].moved - tail[0].moved : NaN, held: tail.every((o) => o.held) };
-  const shown = ind.filter((o) => o.phase === 'shown');
-  r.indLine = { n: shown.length, dr: Math.max(...shown.map((o) => Math.abs(o.r - 78.2))), dy: Math.max(...shown.map((o) => Math.abs(o.dy))) };
-}
 
 // ---- the Repetend: start the audio, walk in to the east wall, along it, and away; a step every 0.42 s near it
 await page.evaluate(async () => { const fp = window.__fp; try { fp.events.dispatchEvent(new Event('begin')); } catch (e) { /* headless */ } for (let k = 0; k < 40 && !fp.audio.ctx; k++) await new Promise((res) => setTimeout(res, 100)); await fp.audio.ctx?.resume(); });
@@ -152,8 +127,8 @@ r.face = await page.evaluate(async () => {
 }
 r.stats = await page.evaluate(() => window.__fp.small.stats());
 r.per = await page.evaluate(() => ({ per: window.__fp.small.simulacrum.per, N: window.__fp.small.simulacrum.N, q: window.__fp.quality }));
-// the module's CPU, at the ditch while it keeps its distance, and while the bird follows
-await page.evaluate(() => { const fp = window.__fp, p = fp.player, b = 26 * Math.PI / 180; p.pos.set(40 + Math.sin(b) * 76.6, 0, 30 - Math.cos(b) * 76.6); p.pos.y = fp.terrain.heightAt(p.pos.x, p.pos.z) + p.eye; });
+// the module's CPU, at the Repetend's wall
+await page.evaluate(() => { const fp = window.__fp, p = fp.player; p.pos.set(-166.5, 0, -96.5); p.pos.y = fp.terrain.heightAt(p.pos.x, p.pos.z) + p.eye; });
 await page.waitForTimeout(3000);
 r.cpu = await page.evaluate(() => window.__fp.perf.report().cpu.modules['living-small'] ?? null);
 await browser.close();
@@ -170,12 +145,6 @@ await b2.close();
 
 // ---- verdicts
 const checks = [
-  ['Indistinct: 7.0 +- 0.3 m at walking pace', r.indWalk.n > 30 && r.indWalk.err <= 0.3, `${r.indWalk.n} frames within 7 m of the line, max error ${r.indWalk.err.toFixed(3)} m`],
-  ['Indistinct: 7.0 +- 0.3 m hurrying', r.indHurry.n > 15 && r.indHurry.err <= 0.3, `${r.indHurry.n} frames, max error ${r.indHurry.err.toFixed(3)} m`],
-  ['Indistinct: 7.0 +- 0.3 m walking in the ditch', r.indDitch.n > 30 && r.indDitch.err <= 0.3, `${r.indDitch.n} frames, max error ${r.indDitch.err.toFixed(3)} m`],
-  ['Indistinct: never under 6.7 m', Math.min(r.indWalk.min, r.indHurry.min, r.indDitch.min) >= 6.7, `nearest ${Math.min(r.indWalk.min, r.indHurry.min, r.indDitch.min).toFixed(3)} m`],
-  ['Indistinct: holds while the walker stands', r.indStand.n > 5 && r.indStand.moved === 0 && r.indStand.held, `${r.indStand.n} frames standing, moved ${r.indStand.moved} m, held ${r.indStand.held}`],
-  ['Indistinct: on the ditch line within 0.3 m', r.indLine.dr <= 0.3 && r.indLine.dy <= 0.3, `${r.indLine.n} frames, |r - 78.2| <= ${r.indLine.dr.toFixed(3)} m, |y - floor| <= ${r.indLine.dy.toFixed(3)} m`],
   ['Repetend: on wall-tops (0.1 m) inside the Lynchets', r.birdTop.n > 50 && r.birdTop.err <= 0.1 && r.birdTop.out === 0, `${r.birdTop.n} frames on a top, worst ${r.birdTop.err.toFixed(3)} m off it, ${r.birdTop.out} outside`],
   ['Repetend: follows only within 18 m, home beyond', r.birdFollow.wrong === 0 && r.birdFollow.farFollowing === 0 && r.birdFollow.home < 1 && r.birdFollow.hops + r.birdFollow.flits > 3, `${r.birdFollow.wrong} frames following wrongly; ${r.birdFollow.hops} hops, ${r.birdFollow.flits} flits; ${r.birdFollow.inBand}/${r.birdFollow.nearN} near frames within 6.5 m; ends ${r.birdFollow.home.toFixed(2)} m from home`],
   ['Repetend: echoes each step 1.0 s late, at the bird', r.echoTiming.length >= 2 && r.echoTiming.every((e) => Math.abs(e.dt - 1) <= 0.05 && Math.hypot(e.x - e.bx, e.z - e.bz) < 0.5) && r.birdEcho.echoes > 3, `${r.echoTiming.length} timed: dt ${r.echoTiming.map((e) => e.dt.toFixed(3)).join(', ')} s; ${r.birdEcho.echoes} echoes over the walk (${r.birdEcho.steps} steps), most voices ${r.birdEcho.maxVoices}`],
@@ -183,7 +152,7 @@ const checks = [
   ['Simulacrum: the face forms after 1 s under 0.5, unravels past 0.85', r.faceRule.early === 0 && r.faceRule.formed >= 0.99 && r.faceRule.held && r.faceRule.rise && r.faceRule.end === 'columns' && r.faceRule.endU === 0, JSON.stringify(r.faceRule)],
   ['Simulacrum: 240 gnats a column at high, 120 at low', r.per.per === 240 && r.per.N === 960 && r.low.per === 120 && r.low.N === 480, `high ${r.per.N} (${r.per.per} a column), low ${r.low.N} (${r.low.per})`],
   ['Cost: within 5 draws, 5k triangles, no lights', r.stats.calls <= 5 && r.stats.tris <= 5000 && r.stats.lights === 0, JSON.stringify(r.stats)],
-  ['Cost: CPU under 0.05 ms at the ditch', r.cpu != null && r.cpu < 0.05, `living-small ${r.cpu == null ? 'n/a' : r.cpu.toFixed(4)} ms`],
+  ['Cost: CPU under 0.05 ms at the wall', r.cpu != null && r.cpu < 0.05, `living-small ${r.cpu == null ? 'n/a' : r.cpu.toFixed(4)} ms`],
 ];
 let bad = 0;
 for (const [name, ok, info] of checks) { if (!ok) bad++; console.log(ok ? 'PASS' : 'FAIL', name.padEnd(62), info); }

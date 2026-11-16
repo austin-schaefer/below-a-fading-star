@@ -13,6 +13,7 @@ const col = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; }
 const WHITE = col('#d8d3c6'), UNDER = col('#aaa497'), BACK = col('#e0dbcf'), WING = col('#cfc9bb'), QUILL = col('#a39d90');
 const LEG = col('#7a6e66'), BILL = col('#a5967d'), EYE = col('#120f0d');
 const EYE_C = col('#18213f'), EYE_T = col('#2c5c55'), EYE_B = col('#7e6230'), TIP = col('#9c968a');
+export const YAW_SWAY = 0.3; // how far a bird's heading may wander from its perch's, either way (the body's own sway adds 0.25: 0.55 in all)
 export const RUMP = [0, 0.645, -0.31]; // where the train springs, in the body's frame
 
 // a tiny private hash for the ragged details, so the region's shared rng stream is untouched
@@ -175,7 +176,7 @@ export function buildPeafowl(ctx, rng, perches) {
   const mat = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, side: T.DoubleSide });
   // perches: the biggest blocks nearest (75, -15)
   const ps = perches.slice().sort((a, b) => Math.hypot(a.x - 75, a.z + 15) - Math.hypot(b.x - 75, b.z + 15)).slice(0, 3);
-  const list = ps.map((b) => ({ x: b.x, y: b.y + b.sy * 0.5, z: b.z, yaw: rng() * 6.28, look: 0, next: 1 + rng() * 3, cry: 0, ph: rng() * 6 }));
+  const list = ps.map((b) => ({ x: b.x, y: b.y + b.sy * 0.5, z: b.z, yaw: b.yaw ?? rng() * 6.28, yaw0: b.yaw ?? 0, look: 0, next: 1 + rng() * 3, cry: 0, ph: rng() * 6 }));
   const body = new T.InstancedMesh(bodyGeo, mat, Math.max(1, list.length));
   const train = new T.InstancedMesh(trainGeo, mat, Math.max(1, list.length));
   body.name = 'demesne-peafowl'; train.name = 'demesne-peafowl-trains';
@@ -193,7 +194,7 @@ export function buildPeafowl(ctx, rng, perches) {
       b.cry = Math.max(0, b.cry - dt);
       b.next -= dt;
       if (b.next <= 0) { b.look = (rng() - 0.5) * 1.6; b.next = 1.5 + rng() * 4; }
-      b.yaw += (b.look * 0.25) * dt;
+      b.yaw = Math.max(b.yaw0 - YAW_SWAY, Math.min(b.yaw0 + YAW_SWAY, b.yaw + (b.look * 0.25) * dt)); // (a perch's heading is clear of walls only within the clamp)
       b.cs = (b.cs || 0) + ((b.cry > 0.3 ? 1 : 0) - (b.cs || 0)) * Math.min(1, dt * 6);
       const cr = b.cs; // up while crying
       // the body: a slight bob, the head raised (whole bird pitches back a little) while it cries
