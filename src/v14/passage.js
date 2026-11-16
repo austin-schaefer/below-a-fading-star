@@ -10,7 +10,7 @@
 // to a gatehouse standing out of the Pit's wall at its floor). The story: stories/the-wellward-way.md. Dark, sealed
 // and stone-sounding by the kit (v14/under.js).
 // Draws: the way (one mesh a stretch: five), the room's things, the gold, the portal, the lights' and the rime's
-// points (one Points): eight. Lights: fifteen PointLights, each with its owner (lights.js keeps the nearest three).
+// points (one Points): eight. Lights: sixteen PointLights, each with its owner, and one lens baked only (lights.js keeps the nearest three).
 // It opens D0's fall of blocks behind the door (their triangles in the hall's road mesh made degenerate), the Pit's
 // throat, the Pit's own rock and the terrain where the portal stands (the same), and leaves heightAt alone.
 // ?passage=0 leaves it out.
@@ -515,6 +515,7 @@ export async function build(ctx) {
   // ---- the lights: one at each flame and bead, its owner's colour
   const lights = [];
   for (const l of P.lamps) {
+    if (l.baked) continue; // glow and bead only
     const [i, d] = l.outside ? [3.6, 12] : l.kind === 0 ? [1.3, 8] : l.kind === 2 ? [5.5, 13] : [2.3, 10];
     const L = new THREE.PointLight(new THREE.Color(KIND_COL[l.kind]), i, d, 2); L.position.set(l.x, l.y + 0.05, l.z); L.name = 'passage-light';
     scene.add(L); lights.push({ L, i, ph: rng() * 6, kind: l.kind });

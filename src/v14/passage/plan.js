@@ -266,7 +266,11 @@ export function makePlan(T) {
   // (the fourth people's, failing), 1 the sounder's cold lamp, 2 the Reckoner's work-lamp (warm)
   const n1 = (NODES[0][0] + NODES[0][1]) / 2, n2 = (NODES[1][0] + NODES[1][1]) / 2;
   const LAMPS = [
-    [0.9, 0, 3.05, 0], [3.4, 1.05, 2.45, 0], [n1, -2.35, 2.5, 0], // (the first in the crown just past the door: what is seen through it from the hall) [n2, 2.35, 2.5, 0], [(n1 + n2) / 2, -1.25, 2.6, 0],
+    // (the first in the crown just past the door: what is seen through it from the hall)
+    [0.9, 0, 3.05, 0], [3.4, 1.05, 2.45, 0], [n1, -2.35, 2.5, 0], [n2, 2.35, 2.5, 0], [(n1 + n2) / 2, -1.25, 2.6, 0],
+    // the last lens still holding a little, by the break: its glow baked into the walls and its bead, no PointLight
+    // (v14-F1: without it the Line's end, s 20 to 26, was black between the second node and the Flute's first lamp)
+    [LINE - 4.8, -1.3, 2.5, 0, 'baked'],
     [LINE + 5.0, -1.55, 2.0, 1], [LINE + 14.5, 1.6, 2.0, 1], [LINE + 24.5, -1.6, 2.0, 1], [LINE + 34.5, 1.55, 2.0, 1],
     [SUN + 0.9, 3.1, 0.62, 2],
     [GULF0 + 0.7, 0.95, 1.45, 1], [GULF0 + 11.0, -0.95, 1.45, 1], [GULF1 - 0.7, 0.95, 1.45, 1],
@@ -274,7 +278,7 @@ export function makePlan(T) {
   ];
   // the Line's last lens, where it is broken, dark
   const DARK_LENS = [LINE - 2.2, 1.3, 2.4];
-  const lamps = LAMPS.map(([s, d, v, k]) => { const [x, y, z] = world(s, d, v); return { s, d, v, kind: k, x, y, z }; });
+  const lamps = LAMPS.map(([s, d, v, k, b]) => { const [x, y, z] = world(s, d, v); return { s, d, v, kind: k, x, y, z, baked: b === 'baked' }; });
   // the Reckoner's lamp outside, warm, on a bracket off the portal's right pier (looking out of the passage): the way
   // he comes; it is what finds the door from across the Pit's floor
   { const al = -MOUTH.portal - 0.75, lat = 2.0, rx = -oz, rz = ox; lamps.push({ s: L - al, d: -lat, v: 2.5, kind: 2, outside: true, x: M[0] + ox * al + rx * lat, y: YM + 2.5, z: M[1] + oz * al + rz * lat }); }
