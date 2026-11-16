@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
 import { COLORS, PARTS } from '../../v8/strata/parts.js';
+import { climb } from '../ways/ladder.js';
 export { PARTS };
 
 const c = (h) => new THREE.Color(h);
@@ -48,7 +49,7 @@ export const worn = (col, rng, k = 0.18, v = 0.1) => col.clone().lerp(V.dirt, k)
 const _v = new THREE.Vector3();
 export function site(M, kind, o) {
   const yaw = Math.atan2(M.elements[8], M.elements[10]);
-  const R = { kind, seed: o.seed | 0, plot: { x: M.elements[12], y: M.elements[13], z: M.elements[14], yaw, w: o.w, d: o.d }, colliders: [], floors: [], lamps: [], windows: [], doors: [], counters: [], shelves: [], lights: [], tris: 0 };
+  const R = { kind, seed: o.seed | 0, plot: { x: M.elements[12], y: M.elements[13], z: M.elements[14], yaw, w: o.w, d: o.d }, colliders: [], floors: [], lamps: [], windows: [], doors: [], counters: [], shelves: [], lights: [], ladders: [], tris: 0 };
   const W = (x, y, z) => { _v.set(x, y, z).applyMatrix4(M); return { x: _v.x, y: _v.y, z: _v.z }; };
   const face = (fx, fz) => { const cy = Math.cos(yaw), sy = Math.sin(yaw); return [fx * cy + fz * sy, -fx * sy + fz * cy]; };
   R.W = W; R.face = face;
@@ -86,6 +87,7 @@ export function floorAt(floors, x, z) {
 // except within 0.7 m of a floor that says keep: false (a room's floor at its door, a doorstep)
 export function registerAll(ctx, records, name = 'village') {
   for (const R of records) for (const col of R.colliders) ctx.addCollider({ ...col });
+  for (const R of records) R.ladders?.forEach((L, i) => climb(ctx, { ...L, name: `${R.name || `${name}-${R.kind}-${R.seed}`}-ladder${i ? i + 1 : ''}`, mod: name }));
   const layers = new Map();
   for (const R of records) {
     const rr = Math.hypot(R.plot.w, R.plot.d) / 2 + 2.5;
@@ -274,11 +276,23 @@ export function flight(B, M, R, o) {
   R.wall(x + dx * w * 0.4, z + dz * w * 0.4, x + dx * (run - 0.1), z + dz * (run - 0.1), -0.4, 0.4 + rise - 0.16, w / 2 - 0.08, { dh: h - rise });
   return { run, n, rise, tread };
 }
-// a ladder from foot to top (local points), w wide: two rails and its rungs
+// a ladder from foot to top (local points), w wide: two rails and its rungs. Drawn alone it is scenery: a ladder that
+// reads as a way up is climbLadder()'s (the owner's rule: src/v15/ways/ladder.js)
 export function ladder(B, M, foot, top, w, o, side = [1, 0, 0]) {
   const hx = side[0] * w / 2, hz = side[2] * w / 2, len = Math.hypot(top[0] - foot[0], top[1] - foot[1], top[2] - foot[2]), n = Math.max(3, Math.round(len / 0.32));
   for (const s of [-1, 1]) beam(B, M, [foot[0] + s * hx, foot[1], foot[2] + s * hz], [top[0] + s * hx, top[1], top[2] + s * hz], 0.055, o);
   for (let i = 1; i < n; i++) { const t = i / n, p = [foot[0] + (top[0] - foot[0]) * t, foot[1] + (top[1] - foot[1]) * t, foot[2] + (top[2] - foot[2]) * t]; beam(B, M, [p[0] - hx, p[1], p[2] - hz], [p[0] + hx, p[1], p[2] + hz], 0.035, o); }
+}
+// a climbable ladder: drawn as ladder() and recorded in R.ladders, which registerAll hands to src/v15/ways/ladder.js
+// climb(). f: { y1 (the local level of the floor it reaches: a floor of the record's own, with an edge that holds),
+// head: [x, z] (local: where on that floor the climber is set down), away: [x, z] (local: a point further on it, for
+// the ascent's path) }
+export function climbLadder(B, M, R, foot, top, w, o, f) {
+  ladder(B, M, foot, top, w, o);
+  const k = (f.y1 - foot[1]) / (top[1] - foot[1]), X = (i) => foot[i] + (top[i] - foot[i]) * k;
+  const F = R.W(foot[0], foot[1], foot[2]), C = R.W(X(0), f.y1, X(2)), h = R.W(f.head[0], f.y1, f.head[1]), a = R.W(f.away[0], f.y1, f.away[1]);
+  const nl = Math.hypot(C.x - F.x, C.z - F.z) || 1;
+  R.ladders.push({ foot: [F.x, F.z, F.y], top: [C.x, C.z, C.y], n: [(C.x - F.x) / nl, (C.z - F.z) / nl], head: [h.x, h.z], away: [a.x, a.z] });
 }
 // washing on a line between two local points: the line sags, the cloths hang off true
 export function washing(B, M, a, b, rng, n = 4) {
