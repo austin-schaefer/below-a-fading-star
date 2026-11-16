@@ -283,7 +283,7 @@ export function startLappetSound(a, ctx) {
     const gust = clamp(g0 * 0.8 + g1 * 0.3 - 0.1, 0, 1); gustSm += (gust - gustSm) * 0.3;
     // the kiln breathes with the gusts and a slower swell of its own; a little hushed in the gutter (the wind drops)
     const draw = 0.55 + 0.45 * gustSm, sw = 0.75 + 0.25 * ctx.noise.noise2(t * 0.05, 61.3);
-    Pp.kG.gain.setTargetAtTime(wake * 0.9 * draw * sw * (1 - 0.3 * gut), now, 0.6);
+    Pp.kG.gain.setTargetAtTime(wake * 0.62 * draw * sw * (1 - 0.3 * gut), now, 0.6);
     Pp.kB.frequency.setTargetAtTime(110 + 60 * gustSm, now, 0.8);
     // the cloth: a rustle on the gust, and a few flaps at its crest
     const rust = ss(0.5, 0.95, gustSm) * (0.6 + 0.4 * ctx.noise.noise2(t * 0.31, 44.1));
@@ -297,7 +297,7 @@ export function startLappetSound(a, ctx) {
     // the loops' rates wander a little apart, so no buffer's length comes round as a period (the pink loop is 5 s: the survey heard it at the fountain)
     for (let k = 0; k < Pp.srcs.length; k++) Pp.srcs[k].playbackRate.setTargetAtTime(1 + 0.035 * ctx.noise.noise2(t * 0.11 + k * 7.3, 15.2 + k), now, 1.5);
     // the fountain: each band wanders on its own; the chord brightens at the gutter
-    Pp.lightBus.gain.setTargetAtTime(wake * 2.0 * (1 + 0.8 * gut), now, 1.2);
+    Pp.lightBus.gain.setTargetAtTime(wake * 1.6 * (1 + 0.8 * gut), now, 1.2);
     for (const b of Pp.bands) { const w = 0.5 + 0.5 * ctx.noise.noise2(t * b.w, b.ph); b.g.gain.setTargetAtTime(b.lvl * (0.25 + 0.75 * w * w), now, 1.5); }
     const well = Math.max(0, ctx.noise.noise2(t * 0.17, 7.7) + 0.2 * ctx.noise.noise2(t * 0.41, 2.9)) ** 2 * 1.6; // (a sine here came round every 9 s: the survey's repeat_s 5)
     Pp.wG.gain.setTargetAtTime(wake * (0.12 + 0.24 * well), now, 0.8);
