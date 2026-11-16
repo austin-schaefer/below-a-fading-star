@@ -239,8 +239,8 @@ export const FOLK = [
     props(P, base) {
       // a letter in his right hand: cream, sealed in red
       P.bone(base + BONE.rF);
-      tone(P, rgb('#e2d6b8'), 1, 0, 0.8); glow(P, 0.06); P.box(0, -ARM.fore - 0.07, 0.03, 0.15, 0.11, 0.008);
-      tone(P, C.pom, 1, 0, 0.5); P.blob(0, -ARM.fore - 0.07, 0.036, 0.016, 0.016, 0.006, 5, 2);
+      tone(P, rgb('#e2d6b8'), 1, 0, 0.8); glow(P, 0.06); P.box(0, -ARM.fore - 0.1, 0.03, 0.2, 0.15, 0.008);
+      tone(P, C.pom, 1, 0, 0.5); P.blob(0, -ARM.fore - 0.1, 0.036, 0.022, 0.022, 0.007, 5, 2);
     },
     init: () => ({ t: 0, phase: 'sort', pt: 0, armed: true, offers: 0, offer: 0, read: 0, reach: 0 }),
     update(f, dt, t, cam, S) {
@@ -256,8 +256,8 @@ export const FOLK = [
       S.read = ramp(S.read, S.phase === 'doubt' ? 1 : S.phase === 'sort' ? pulse(T, 3, 4, 8, 9) : 0, 1.5, dt);
       f.look(cam, dt, S.phase === 'sort' ? 3 : 7, -0.1, lin(0.15, 0.5, S.read));
       if (S.phase === 'doubt') f.hy += 0.16 * Math.sin(S.pt * 11) * (1 - smoothstep(0.8, 1.6, S.pt)) * (1 - f.lookK * 0.5);
-      f.lean = 0.04 + 0.18 * S.offer; f.twist = -0.35 * S.reach;
-      f.hR.set(-0.14, 1.0, 0.16).lerp(_v.set(-0.06, 1.24, 0.24), S.read).lerp(_v.set(-0.24, 1.72, -0.3), S.reach).lerp(_v.set(-0.04, 1.32, 0.66), S.offer);
+      f.lean = 0.04 + 0.32 * S.offer; f.twist = -0.35 * S.reach;
+      f.hR.set(-0.14, 1.0, 0.16).lerp(_v.set(-0.06, 1.24, 0.24), S.read).lerp(_v.set(-0.24, 1.72, -0.3), S.reach).lerp(_v.set(-0.02, 1.36, 0.7), S.offer);
       f.hL.set(0.13, 1.0, 0.18).lerp(_v.set(0.06, 1.2, 0.26), S.read);
     },
     colliders: (f) => [{ x: f.x, z: f.z, r: 0.28, y: f.y, h: 1.8, stand: false }],
@@ -330,7 +330,7 @@ export const FOLK = [
     id: 'leaver', name: 'the one who is leaving', story: 'the-door-on-her-back.md',
     place(ctx, plan, Q) {
       const L = Q.pennyworth?.places?.find((p) => p.name === 'the Leave'), fx0 = plan.fixture('leave-east'); if (!L || !fx0) return null;
-      const [fx, fz] = fx0.face, sx = fz, sz = -fx, x = L.x + fx * 3.4 - sx * 1.3, z = L.z + fz * 3.4 - sz * 1.3; // (past the posts, at the kerb's west edge)
+      const [fx, fz] = fx0.face, sx = fz, sz = -fx, x = L.x + fx * 3.6 - sx * 0.4, z = L.z + fz * 3.6 - sz * 0.4; // (past the posts, on the kerb, a step west of its middle)
       return { x, y: floorY(ctx, x, z, L.y), z, yaw: yawOf(fx, fz) - 0.15 }; // (her back, and the door on it, to the village)
     },
     body: { pose: 'stand', robe: { cloth: C.rose, dark: rgb('#4a2028'), seed: 7.4, patch: 0.12 }, hat: 'straw', sash: C.turq, girth: 0.95, sign: true },
