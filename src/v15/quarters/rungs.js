@@ -207,7 +207,8 @@ export async function build(ctx) {
   for (const R of list) {
     const f = R.floors.find((q) => q.steps); if (!f) continue;
     const p = P.plot(R.name), dx = f.s, dz = f.c, hx = f.x + dx * f.d / 2, hz = f.z + dz * f.d / 2, fx = f.x - dx * f.d / 2, fz = f.z - dz * f.d / 2;
-    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx + dx * 0.2, hz + dz * 0.2, f.y1], [hx + dx * 0.7, hz + dz * 0.7, f.y1]] });
+    ctx.ascents?.add({ id: `${R.name}-stair`, held: true, offs: [0.5], path: [[fx - dx * 1.3 + p.face[0] * 0.3, fz - dz * 1.3 + p.face[1] * 0.3, p.y], [fx, fz, p.y], [hx + dx * 0.2, hz + dz * 0.2, f.y1], [hx + dx * 0.7, hz + dz * 0.7, f.y1], [hx + dx * 0.6 - p.face[0] * 1.35, hz + dz * 0.6 - p.face[1] * 1.35, f.y1]] }); // (the last: through the parapet's gap onto the roof)
+    taken.push([hx + dx * 0.6 - p.face[0] * 1.2, hz + dz * 0.6 - p.face[1] * 1.2, 0.8]); // (nothing of this file's is stood on the roof where the stair comes onto it: the dovecote stood in the way)
   }
 
   // ---------------------------------------------------------------- floors of this file's own: level rectangles
@@ -325,7 +326,7 @@ export async function build(ctx) {
     const floor = (x, z) => { const dx = x - hx, dz = z - hz, a = dx * b[0] + dz * b[1], u = dx * t[0] + dz * t[1]; if (a < 0 || a >= len || u > w / 2 + 0.03 || u < -w / 2 - 0.03) return null; return yM - (Math.floor(a / run) + 1) * rise; };
     K.addFloor(floor, { name: G.id, keep: true });
     for (const sd of [-1, 1]) for (let i = 0, m = 4; i < m; i++) { // nobody walks into its mass from the slot beside it
-      const a0 = len * i / m, a1 = len * (i + 1) / m, top = yM - drop * (a0 / len) + 1.5;
+      const a0 = len * i / m, a1 = len * (i + 1) / m, top = Math.min(yM + 0.3, yM - drop * (a0 / len) + 1.5); // (and under the plank that crosses over the stair's head: at their full height they stopped a walker on the Leads)
       const px = t[0] * sd * (w / 2 + 0.3), pz = t[1] * sd * (w / 2 + 0.3); K.wall(hx + b[0] * a0 + px, hz + b[1] * a0 + pz, hx + b[0] * a1 + px, hz + b[1] * a1 + pz, 0.08, // (along the stair and higher than a walker on it: the houses' walls are a wedge, and a push sideways at one slid him up the stair; a body's width and two hands between them, so they do not squeeze him)
         yL - 0.4, top - yL + 0.4);
     }

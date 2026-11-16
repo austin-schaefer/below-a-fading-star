@@ -58,7 +58,10 @@ const route = await page.evaluate(async (RUNGS) => {
   if (RUNGS) {
     const A = Object.fromEntries(window.__fp.ascents.list.map((w) => [w.id, w.path]));
     const way = (id, rev) => { const pts = rev ? [...A[id]].reverse() : A[id]; pts.forEach((q, k) => push([q[0], q[1]], k === pts.length - 1 ? `way:${id}` : undefined)); };
-    const up2 = (id) => way(id, false), dn = (id) => way(id, true);
+    // a house stair runs along its front: come to its foot from out in the lane and leave it the same way, or the straight
+    // line to the next point runs back up the flight
+    const lane = (id) => { const q = A[id][0], f = P.frameOf(q[0], q[1]); push(P.at(f.run, f.s, f.D > 12 ? 14.7 : 9.4)); };
+    const up2 = (id) => { if (/-stair$/.test(id) && id !== 'lees-stair') lane(id); way(id, false); }, dn = (id) => { way(id, true); if (/-stair$/.test(id)) lane(id); };
     up2('lees-stair'); b(22.4, 14.6); b(22.15, 12.4); b(19.7, 12.2); b(ld.s, 11.7); b(ld.s, 10.5); b(ld.s, 8.9, 'way:rungs-ladder');
     b(17.9, 9.2); dn('rungs-tenter'); b(12.2, 11.9); b(9, 11.7); b(5.6, 11.9); b(4.4, 14.5); b(1, 14.6); up2('rungs-gullet');
     b(1.5, 9.3); dn('rungs-leads-3'); a(37, 9.3); a(27.5, 9.3); dn('rungs-low-3-stair'); up2('rungs-low-3-stair'); dn('rungs-leads-2'); dn('rungs-leads-1'); a(6, 9.4);
@@ -139,7 +142,7 @@ await walkOn(true);
 let i = 0, stuck = 0, last = null, since = 0, side = 1, climbs = 0, ways = 0;
 const t0 = Date.now();
 const onWay = (s) => s.carried || (s.floor !== 'ground' && !/^lappet-(crown|high|mid|low|bench)/.test(s.floor));
-while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
+while (i < route.length && Date.now() - t0 < (+process.env.WALK_MIN || 30) * 60 * 1000) {
   const s = await st();
   const w = route[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
   if (s.climbs !== climbs) { climbs = s.climbs; console.log(`took hold of the ladder at feet ${s.feet.toFixed(2)} (${climbs})`); }
@@ -162,6 +165,7 @@ while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
 }
 await walkOn(false);
 const walked = i >= route.length;
+if (!walked && last && stuck <= 80) console.log(`out of time at (${last.x.toFixed(1)}, ${last.z.toFixed(1)}) feet ${last.feet.toFixed(2)} on ${last.floor} heading for ${i} ${route[i].tag || ''} (${route[i].x.toFixed(1)}, ${route[i].z.toFixed(1)})`);
 console.log(`ladder taken ${climbs} times; page errors: ${errors.length}${errors.length ? ' ' + errors.slice(0, 3).join(' | ') : ''}`);
 if (RUNGS) console.log(`ways walked: ${ways} of ${route.filter((w) => w.tag && w.tag.startsWith('way:')).length}`);
 console.log(`walked: ${walked ? 'yes' : 'no'}`);
