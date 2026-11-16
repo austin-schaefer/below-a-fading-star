@@ -231,8 +231,8 @@ export function shutter(B, M, w, h, side, col, ang = 0.12) {
 export function flight(B, M, R, o) {
   const { x, z, dx, dz, w, h } = o, into = o.into || 0, n = Math.max(2, Math.ceil(h / (o.rise || 0.22))), rise = h / n, tread = o.tread || 0.3, run = n * tread, ry = Math.atan2(dx, dz), g0 = M.elements[13];
   for (let i = 0; i < n; i++) {
-    const s = (i + 0.5) * tread, hh = (i + 1) * rise + 0.4;
-    B.add(B.box(w + into, hh, tread + 0.012, { seg: 9, chip: 0.025, chipTop: true, seed: i * 3 + (o.seed || 0) }), ch(M, x + dx * s + (o.ox || 0) * into / 2, hh / 2 - 0.4, z + dz * s + (o.oz || 0) * into / 2, 0, ry, 0), { color: i % 3 === 1 ? o.color2 || o.color : o.color, moss: 0.3, ground: g0 });
+    const s = (i + 0.5) * tread, sk = 0.4 + (i % 2) * 0.03, hh = (i + 1) * rise + sk; // (sunk to two depths: neighbours overlap a finger and must not share an underside)
+    B.add(B.box(w + into, hh, tread + 0.012, { seg: 9, chip: 0.025, chipTop: true, seed: i * 3 + (o.seed || 0) }), ch(M, x + dx * s + (o.ox || 0) * into / 2, hh / 2 - sk, z + dz * s + (o.oz || 0) * into / 2, 0, ry, 0), { color: i % 3 === 1 ? o.color2 || o.color : o.color, moss: 0.3, ground: g0 });
   }
   R.floor(x + dx * run / 2, z + dz * run / 2, w, run, (o.y || 0) + rise, { ry, y1: (o.y || 0) + h, steps: n, layer: o.layer ?? 1 });
   R.wall(x + dx * w * 0.4, z + dz * w * 0.4, x + dx * (run - 0.1), z + dz * (run - 0.1), -0.4, 0.4 + rise - 0.16, w / 2 - 0.08, { dh: h - rise });
