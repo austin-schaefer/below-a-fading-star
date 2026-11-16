@@ -45,12 +45,20 @@ export async function build(ctx) {
   // between frames (a teleport, a carry's end) starts it again
   const trail = [], traps = (ctx.fallTraps ||= []); // a module built before this one pushes onto ctx.fallTraps
   let spot = null, lx = Infinity, lz = 0;
-  function remember() {
+  // (the trail is held still from the moment the feet leave standable ground for more than 0.3 s until they have stood
+  // again for a second, so a tumble down a talus does not write its stops into the way back)
+  let air = 0, stood = 0, frozen = false;
+  function remember(dt) {
     const x = p.pos.x, z = p.pos.z;
     const d = Math.hypot(x - lx, z - lz);
-    if (d > 3) trail.length = 0;
+    if (d > 3) { trail.length = 0; frozen = false; }
     lx = x; lz = z;
-    if (!p.onGround || p.steep || p.carried || p.hopping) return;
+    if (p.carried) return;
+    if (!p.onGround || p.steep) { air += dt; stood = 0; if (air > 0.3) frozen = true; return; }
+    air = 0; stood += dt;
+    if (frozen && stood < 1) return;
+    frozen = false;
+    if (p.hopping) return;
     const last = trail[trail.length - 1];
     if (last && Math.hypot(x - last.x, z - last.z) < SAMPLE_M && Math.abs(p.pos.y - p.eye - last.y) < 0.3) return;
     if (trail.length >= TRAIL) trail.shift();
@@ -101,7 +109,7 @@ export async function build(ctx) {
   }
   ctx.registerUpdate((dt) => {
     if (phase === 'idle') {
-      remember();
+      remember(dt);
       if ((p.onGround && !p.steep) || p.carried || (p.vy > -3 && !p.steep)) return; // (a slide down a face too steep to stand is a fall: p.steep)
       const total = p.fallTop - p.floorBelow, fallen = p.fallTop - (p.pos.y - p.eye);
       if (fallen > 1 && ((on && total > FALL_M) || trapped(p.pos.x, p.pos.z, p.floorBelow))) {
@@ -117,7 +125,8 @@ export async function build(ctx) {
       const total = Math.max(1, p.fallTop - p.floorBelow), fallen = p.fallTop - (p.pos.y - p.eye);
       amount = Math.max(amount, Math.min(1, t / closeS), clamp01((fallen - 1) / Math.max(1, total * 0.85 - 1)));
       lids(amount);
-      if (p.onGround && !p.steep && phase === 'falling') { if ((on && p.fallTop - (p.pos.y - p.eye) > FALL_M) || trapped(p.pos.x, p.pos.z, p.pos.y - p.eye)) dark(); else phase = 'opening'; }
+      // (touching ground too steep to stand, after more than FALL_M, is the landing too: a slide down a talus is not watched)
+      if (p.onGround && phase === 'falling') { const drop = p.fallTop - (p.pos.y - p.eye); if ((on && drop > FALL_M) || trapped(p.pos.x, p.pos.z, p.pos.y - p.eye)) dark(); else if (!p.steep) phase = 'opening'; }
     } else if (phase === 'opening') {
       amount = Math.max(0, amount - dt * 2.5); lids(amount);
       if (amount <= 0) phase = 'idle';

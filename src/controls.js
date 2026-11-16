@@ -582,7 +582,7 @@ export function buildControls(ctx) {
       }
       if (kind === EDGE_HELD || ((kind === LIP_SOFT || kind === LIP_STEEP) && !inHop && !hurry && slope <= 0.95)) { // (on ground too steep to stand, they slide, lip or not)
         const tx = mv.x, tz = mv.z;
-        if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
+        if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop, kind === LIP_SOFT);
         else nDrops = 0;
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
         // already held at this lip (sliding along it): a ragged lip's jags turn its line by 20 degrees or more under the
@@ -631,9 +631,9 @@ export function buildControls(ctx) {
     state.vy -= 12 * dt;
     let feet = state.pos.y - state.eye + state.vy * dt;
     // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too; but not down a
-    // face too steep to stand (more than 1.5 times the step's run and more than a riser: v15-W3, the Pit's throat), where
+    // face too steep to stand (more than 1.5 times the step's run and more than a tall riser, 0.45 m: v15-W3, the Pit's throat), where
     // the feet leave it and fall
-    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6 && (mv.stack || mv.onTop || feet - floorY < Math.max(0.26, 1.5 * hyp(mv.x - ox, mv.z - oz)))) feet = floorY;
+    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6 && (mv.stack || mv.onTop || feet - floorY < Math.max(0.45, 1.5 * hyp(mv.x - ox, mv.z - oz)))) feet = floorY;
     if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; state.hopping = false; } else state.onGround = false;
     state.onTop = onTop && state.onGround;
     state.floorBelow = floorY;
@@ -714,7 +714,7 @@ export function buildControls(ctx) {
   const nAt = { x: Infinity, z: 0, ref: 0, t: -1, n: 0, beam: false };
   let guardT = 0;
   const DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
-  function edgeNormal(x, z, ref, feet, mx, mz, tops) {
+  function edgeNormal(x, z, ref, feet, mx, mz, tops, lip = true) {
     if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; nDrops = nAt.n; nBeam = nAt.beam; return; }
     let sx = 0, sz = 0, n = 0, ax = 0, az = 0, bxz = 0;
     for (const [cx, cz] of DIRS) {
@@ -725,7 +725,7 @@ export function buildControls(ctx) {
     }
     let l = hyp(sx, sz);
     nDrops = n; nBeam = false; nAt.beam = false;
-    if (!n) {
+    if (!n && lip) {
       // no drop within 0.35 m: a bank too steep to walk down (the guard's look ahead found it); its drops 0.9 m out
       for (const [cx, cz] of DIRS) {
         pm.x = x + cx * 0.9; pm.z = z + cz * 0.9;
@@ -735,10 +735,10 @@ export function buildControls(ctx) {
       }
       l = hyp(sx, sz);
       if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = 0; return; }
-    } else if (l > 0.3 * n) {
+    } else if (n && l > 0.3 * n) {
       // a ragged lip: the same eight directions 0.9 m out as well, so a jag of a stride or less does not turn the lip's
       // line square to a walk along it (the Pit's rim, a broken bay's end)
-      for (const [cx, cz] of DIRS) {
+      if (lip) for (const [cx, cz] of DIRS) {
         pm.x = x + cx * 0.9; pm.z = z + cz * 0.9;
         floorAt(pm.x, pm.z, feet, tops, probe, state.onStack);
         pm.y = probe.y; pm.stack = probe.stack;
@@ -748,7 +748,7 @@ export function buildControls(ctx) {
       lipN.x = sx / l2; lipN.z = sz / l2; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return; }
     // both sides drop (a beam, a plank, a ridge): the normal is the axis the drops lie on, turned to the move's side
     // (the drops' principal axis), so a walk along a narrow way slides along it; a lone top dropping all round, the move
-    if (n && n < 7 && Math.abs(ax - az) + Math.abs(bxz) > 0.5) {
+    if (lip && n && n < 7 && Math.abs(ax - az) + Math.abs(bxz) > 0.5) { // (a held edge both sides: stopped, as a wall)
       const th = 0.5 * Math.atan2(2 * bxz, ax - az), c = Math.cos(th), sn = Math.sin(th), sg = c * mx + sn * mz < 0 ? -1 : 1;
       lipN.x = c * sg; lipN.z = sn * sg; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; nBeam = nAt.beam = true; return;
     }

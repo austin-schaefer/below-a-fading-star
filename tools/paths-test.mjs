@@ -7,7 +7,7 @@
 // walked road, inside the walkable floor, from the colossi's feet past the pit) while the bench keeps v3's; it ends
 // at something at both ends (v15-F1, the owner's #59): it starts in the saddle between the colossi's hands and ends at
 // the foot of the Great Span's east stair, short of its first step, and the trod P54 ends at the Pit's landing; the pit
-// is a fall (deep, its rim fenced by colliders, a walker pushed at it from the causeway's last bend stops at the lip); the
+// is a fall (deep, its rim open since v15-W3: a walker pushed at it from the causeway's last bend goes over); the
 // fall's lip is at y 53.5 ± 1 with its wall 65 m or more within 15 m behind it; the rumble's radius is doubled; and
 // the leads' cost at high is about 10 draw calls and under 150k triangles.
 // Usage: node tools/paths-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
@@ -82,7 +82,7 @@ const res = await page.evaluate(async () => {
     if (L && trod) { const q = trod.pts[trod.pts.length - 1], ox = W.SITES.pit.x + L.dx * L.r1, oz = W.SITES.pit.z + L.dz * L.r1; out.road.trodToLanding = +Math.hypot(q[0] - ox, q[1] - oz).toFixed(2); } }
   // the v3 road's far end (the tower hill) is now mid-road, and the old end of v3 no longer the end
   out.road.v3TowerOn = +T.causewayDistance(-222, -110).toFixed(3);
-  // the pit: deep, fenced, a walker stops at the lip
+  // the pit: deep, open, a walker walking at it goes in
   const pit = W.SITES.pit, rimY = T.heightAt(pit.x, pit.z - P.pit.rim(0) - 1.5);
   out.pit.depth = +(rimY - T.heightAt(pit.x, pit.z)).toFixed(1);
   out.pit.colliders = P.pit.colliders;
@@ -132,7 +132,7 @@ check(res.road.startR >= 345 && res.road.toFoot !== null && res.road.toFoot <= 4
 check(res.road.v3TowerOn < 0.01, 'the v3 road is part of it (the tower hill is on the road)', `${res.road.v3TowerOn} m`);
 check(res.pit.depth >= 15, 'the pit is a fall (deep)', `${res.pit.depth} m below its rim`);
 check(res.pit.colliders === 0, 'the pit\'s rim is open: no ring of unseen columns (v15-W3: what is seen holds)', `${res.pit.colliders} colliders`);
-check(res.pit.walk.edge > 0 && res.pit.walk.minY > res.pit.walk.rimY - 2.5 && res.pit.walk.moved > 2, 'a walker from the causeway\'s last bend, walking at the pit, stops at the lip', JSON.stringify(res.pit.walk));
+check(res.pit.walk.edge < 0 && res.pit.walk.minY < res.pit.walk.rimY - 10 && res.pit.walk.moved > 2, 'a walker from the causeway\'s last bend, walking at the pit, walks over its lip and into it (v15-W3: no ring of unseen columns)', JSON.stringify(res.pit.walk));
 check(Math.abs(res.fall.lipY - 53.5) <= 1, 'the fall\'s lip is at y 53.5 ± 1', `lip ${res.fall.lipY}, ground there ${res.fall.groundAtLip}, pool ${res.fall.poolY}`);
 check(Math.abs(res.fall.groundAtLip - 53.5) <= 1.5, 'the ground at the lip stands at it', `${res.fall.groundAtLip}`);
 check(res.fall.wall15 >= 65, 'the wall stands 65 m or more within 15 m behind the lip', `${res.fall.wall15} m`);
