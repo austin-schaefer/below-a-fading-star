@@ -80,7 +80,7 @@ const shade = (y) => { // -1 .. 25 m: dark earth to pale stone, a hue step per l
   return `hsl(${h.toFixed(0)},${(18 + t * 10).toFixed(0)}%,${l.toFixed(0)}%)`;
 };
 const svg = [];
-svg.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H + 40}" font-family="Helvetica,Arial,sans-serif">`);
+svg.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H + 60}" font-family="Helvetica,Arial,sans-serif">`);
 svg.push(`<rect width="100%" height="100%" fill="#111"/>`);
 for (let j = 0; j < r.nz; j++) for (let i = 0; i < r.nx; i++) {
   const y = r.hgt[j * r.nx + i]; svg.push(`<rect x="${(i * G * S).toFixed(0)}" y="${(j * G * S).toFixed(0)}" width="${G * S + 0.6}" height="${G * S + 0.6}" fill="${shade(y)}"/>`);
@@ -129,9 +129,9 @@ for (const d of r.doors) {
 const lg = [['spine', '#ffd34a'], ['stair', KC.stair], ['ramp', KC.ramp], ['ladder', KC.ladder], ['bridge / crossing', KC.bridge], ['tube', KC.tube], ['house steps (not a registered way)', '#ff8fb0'], ['door', '#ff2a00'], ['wall at walking height', '#000']];
 let lx = 8;
 for (const [t, c] of lg) { svg.push(`<rect x="${lx}" y="${H + 12}" width="14" height="14" fill="${c}" stroke="#fff"/><text x="${lx + 18}" y="${H + 24}" font-size="12" fill="#fff">${t}</text>`); lx += 30 + t.length * 6.6; }
-svg.push(`<text x="${W - 8}" y="${H + 24}" font-size="12" fill="#fff" text-anchor="end">${r.ways.length} ways, ${r.steps.length} house flights, ${r.doors.length} doors; floor shaded by height</text>`);
+svg.push(`<text x="${W - 8}" y="${H + 48}" font-size="12" fill="#fff" text-anchor="end">${r.ways.length} ways, ${r.steps.length} house flights, ${r.doors.length} doors; floor shaded by height</text>`);
 svg.push('</svg>');
-const p2 = await browser.newPage({ viewport: { width: W, height: H + 40 } });
+const p2 = await browser.newPage({ viewport: { width: W, height: H + 60 } });
 await p2.setContent(`<html><body style="margin:0;background:#111">${svg.join('')}</body></html>`);
 await p2.screenshot({ path: out, fullPage: true });
 fs.writeFileSync(out.replace(/\.png$/, '.json'), JSON.stringify({ ways: r.ways, steps: r.steps, doors: r.doors }, null, 1));
