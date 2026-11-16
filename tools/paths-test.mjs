@@ -47,7 +47,7 @@ const res = await page.evaluate(async () => {
     out.leads.push({ id: L.id, kind: L.kind, length: +L.length.toFixed(1), ends, materials: L.materials, ended: L.ended, rise: +rise.toFixed(2), waterUp: +waterUp.toFixed(3), groundOver: +groundOver.toFixed(3) });
   }
   // the strips: no open (drawn) sample of any lead on the Discontinued Track or the Surveyor's Pegs
-  const strips = [{ name: 'the Discontinued Track', a: [170, 150], b: [215, 160], half: 1.0 }, { name: "the Surveyor's Pegs", a: [-80, -285], b: [-80, 285], half: 0.5 }];
+  const strips = [{ name: 'the Discontinued Track', a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { name: "the Surveyor's Pegs", a: [-80, -285], b: [-80, 285], half: 0.5 }];
   for (const S of strips) {
     let n = 0;
     for (const L of P.leads) for (const line of L.lines) for (const [x, z, , , open] of line) {

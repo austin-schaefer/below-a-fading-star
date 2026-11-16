@@ -83,7 +83,7 @@ export const LEADS = [
   { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [56, -38], [66, -32], [73, -26]] },
   { id: 'P42', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'the fen way on stepping slabs, the Demesne to the Saltings', pts: [[110, 40], [95, 80], [80, 120], [70, 160], [56, 184], [48, 193], [42, 200], [41, 207], [44, 214], [46, 221], [48, 228], [52, 242], [56, 259]] },
   { id: 'P43', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod across the Sunken Court\'s floor, between the piers, south of the shaft and round the fallen pier\'s end', pts: [[-72, -149], [-64, -153], [-56, -153], [-48, -153], [-40, -153], [-32, -153], [-27, -151.5], [-23.5, -144], [-23.5, -141], [-17.5, -141], [-10, -141], [0, -143], [12, -146]] },
-  { id: 'P44', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the worn crust round the Discontinued Track to the rim way', pts: [[219.5, 168], [226, 150], [205, 140], [178, 141]] },
+  { id: 'P44', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the worn crust round to the rim way', pts: [[219.5, 168], [226, 150], [205, 140], [178, 141]] },
   { id: 'P45', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard trod to the Collation\'s table', pts: [[148, -100], [150, -84]] },
   { id: 'P46', kind: 'path', cls: 'trod', w: 0.5, brief: 'field trod below the ha-ha, the north way to the Pomegranate House', pts: [[18, -54], [45, -63], [67, -53]] },
   { id: 'P47', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Collation\'s table to the orchard (v8-04\'s twelfth chair)', pts: [[112, -82], [126, -72], [136, -69], [150, -84]] },
@@ -109,8 +109,8 @@ const AVOID = [
   { x: 60, z: -180, r: 3 }, { x: 75, z: 0, r: 12 }, { x: -100, z: 58, r: 8 }, { x: 20, z: -205, r: 5 }, { x: 180, z: 230, r: 2 },
 ];
 const BLOCKS = ['spanWest', 'spanEast', 'fallLip', 'nave'].map((k) => SITES[k].block);
-// the set-dressing strips (section 4's table): the Discontinued Track, 2 m, and the Surveyor's Pegs, 1 m
-export const STRIPS = [{ a: [170, 150], b: [215, 160], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
+// the set-dressing strips (section 4's table): the Discontinued Track, 2 m (dressing/track.js's TRACK), and the Surveyor's Pegs, 1 m
+export const STRIPS = [{ a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
 function stripDist(x, z, S) {
   const [ax, az] = S.a, [bx, bz] = S.b, ex = bx - ax, ez = bz - az;
   const t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez), 0, 1);
