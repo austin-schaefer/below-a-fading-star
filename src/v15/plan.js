@@ -423,9 +423,10 @@ export const QUARRELS = {
   // the Smoking Saint: the lime kiln, in the head of the keep's fallen colossus. He lies in the Saint's Rest behind the
   // Heliarch stair's head, east of its axis (clear of the landing, D > -7.4, and of the long view down the notch):
   // `face` the way he looks (at the stair's head, and past it at the Pomegranate House), so the stair's head has his
-  // face and the square and the causeway's end his profile; `stoke`: the side his fire is fed from (the yard's)
-  kiln: { ...xz(1, 33.59, -8.86), face: [-0.15, -0.99], stoke: [0.6, 0.8], S: 1.7, name: 'the Smoking Saint' },
-  // (the bench stands at his right cheek, looking where he looks); three lesser heads on the brink, waiting
+  // face and the square and the causeway's end his profile; `stoke`: the side his fire is fed from (the square's, where his neck broke)
+  kiln: { ...xz(1, 33.59, -8.86), face: [-0.15, -0.99], stoke: [-0.97, 0.3], S: 1.7, roll: 0.7, pitch: 0.2, turn: 0, sink: 0.7, name: 'the Smoking Saint' },
+  // (he lies over on his right cheek, `roll`, and forward, `pitch`, his lowest point `sink` m in the ground; the bench stands
+  // by his crown on that side, looking where he looks); three lesser heads on the brink, waiting
   heads: [[1, 33.72, -5.5, 0.44], [1, 34.38, -5.52, 0.35], [1, 34.9, -5.5, 0.27]],
   // the aqueduct's last arch, on the line of the Rungs' last pier (WAYS lane-bridge): its two piers' D; the water it
   // still carries drips off its broken end into the saint's upturned hand

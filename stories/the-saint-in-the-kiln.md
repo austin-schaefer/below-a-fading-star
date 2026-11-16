@@ -8,16 +8,16 @@
 
 ## The story
 
-When the keep's corner fell the saint came down with it. His head rolled to the brink of the crown and stopped; one hand landed palm up under the broken end of the aqueduct. The Late folk who came to quarry the fallen wall needed three things to build with: stone, lime and water. The stone was lying about. For lime they hollowed the saint's head, broke a hole in the top of his skull to feed it and let a stoke hole into his nape where the neck broke, and they burn in him the only limestone they have, which is the rest of the Heliarchs' statues: three lesser crowned heads wait in a row on the brink for their turn. For water they kerbed his palm with clay, and the last arch drips into it. Nobody means any insult by it. Somebody put a bench beside his cheek, facing the way he faces, because it is warm there and the view is good.
+When the keep's corner fell the saint came down with it. His head rolled to the brink of the crown and stopped over on its right cheek, its eyes shut; one hand landed palm up under the broken end of the aqueduct. The Late folk who came to quarry the fallen wall needed three things to build with: stone, lime and water. The stone was lying about. For lime they hollowed the saint's head, broke a hole in the top of his skull to feed it and let a stoke hole into the break of his neck, on the square's side, wedged him with timber and robbed blocks where he rocked, and they burn in him the only limestone they have, which is the rest of the Heliarchs' statues: three lesser crowned heads wait in a row on the brink for their turn. For water they kerbed his palm with clay, and the last arch drips into it. Nobody means any insult by it. Somebody put a bench beside his head, under the smoking hole, facing the way he faces, because it is warm there and the view is good.
 
 ## Beats
 
 | # | Where (place, position, the view it reads from) | What the visitor finds | What it tells them alone | What points on to the next | State |
 |---|---|---|---|---|---|
-| 1 | The square behind the stair's head (plan `QUARRELS.kiln`); from the stair's head his face, from the square his profile | A stone head three and a half metres high lying where it fell, a band and an empty roundel on its brow, its eyes shut, smoke rising from its broken crown, a stoked fire door at its nape | They are burning something in a saint | The row of small heads on the brink beside him | built |
+| 1 | The square behind the stair's head (plan `QUARRELS.kiln`); from the stair's head his face, from the square his profile | A carved stone head four metres long lying on its cheek where it fell, a fillet and an empty roundel on its brow, combed locks, its eyes shut, a crack down the cheek uppermost, smoke rising from its broken crown, a stoked fire door at its broken neck, glowing on the paving, lime spilt pale beside it | They are burning something in a saint | The row of small heads on the brink beside him | built |
 | 2 | The brink east of the stair (`QUARRELS.heads`) | Three smaller crowned heads set in a row, largest first, all turned to face him | These are next | The drip, heard and seen, by the old pier | built |
 | 3 | Under the Last Arch's broken end (`QUARRELS.hand`) | A stone hand three metres long, palm up, a ring of clay on the palm full of water, a drop falling into it from the arch; a bronze ring still on one finger; jars and a yoke | The same statue: the rest of him is put to use too | The new house's pale wall beyond | built |
-| 4 | The bench at his cheek | A plank on two blocks beside the head, facing out over the brink at the Pomegranate House | Somebody sits with him | | built (its sitters: batch 3) |
+| 4 | The bench by his crown | A plank on two blocks beside the head, facing out over the brink at the Pomegranate House | Somebody sits with him | | built (its sitters: batch 3) |
 
 ## What it ties together
 
@@ -32,3 +32,4 @@ The valley's broken hands and crowned heads (`src/structures/scatter.js`) were s
 ## Log
 
 - 2026-11-16, v15-Q1 (the Quarrels' agent): written and built with the quarter.
+- 2026-11-16, v15-S1: the head sculpted again as one carved surface and laid over on its right cheek; the bench by his crown.
