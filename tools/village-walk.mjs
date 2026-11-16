@@ -87,7 +87,7 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
     up2('lees-stair'); b(22.4, 14.6); b(22.15, 12.4); b(19.7, 12.2); up2('rungs-tenter'); // (v15-W1: the ladder that stood beside the Tenter climbs the rim now: taken below, from the High Rung)
     dn('rungs-tenter'); b(12.2, 11.9); b(9, 11.7); b(5.6, 11.9); b(4.4, 14.5); b(1, 14.6); up2('rungs-gullet');
     b(1.5, 9.3); dn('rungs-leads-3'); a(37, 9.3); a(27.5, 9.3); dn('rungs-low-3-stair'); up2('rungs-low-3-stair'); dn('rungs-leads-2'); dn('rungs-leads-1'); a(6, 9.4);
-    up2('rungs-mid-1-stair'); a(7.5, 3.4); a(ld.s, -2.9); a(ld.s, -4.1); a(ld.s, -5.7, 'way:rungs-ladder'); a(ld.s, -5.5); a(ld.s, -3.85); a(ld.s, -2.9); a(14.2, 3.4); dn('rungs-mid-2-stair'); up2('rungs-mid-3-stair'); a(22.6, 3.4); a(33, 3.2); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair');
+    up2('rungs-mid-1-stair'); a(7.5, 3.4); a(ld.s, -2.9); a(ld.s, -4.1); a(ld.s, -5.7, 'way:rungs-ladder'); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85); a(ld.s, -2.9); a(14.2, 3.4); // (off the head onto the crown and back to it, as the main route comes: turned about on the head, the walker hung on the top rung) dn('rungs-mid-2-stair'); up2('rungs-mid-3-stair'); a(22.6, 3.4); a(33, 3.2); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair');
     return R;
   }
   // down: the keep's fallen corner, the court, the head, its west flight, the slot, the landing, the timber, the bastion, the foot
