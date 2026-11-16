@@ -360,7 +360,7 @@ const HELPERS = `(() => {
   check(['test-bridge', 'test-beam', 'test-cut', 'test-corridor'].every((id) => ids.includes(id)), 'ascents: the test ascents are registered', ids.join(', '));
   for (const a of A) {
     check(a.pts.every((q) => q.ok) && !a.fell, `ascent ${a.id}: walked point to point, the feet on it`, a.pts.filter((q) => !q.ok).map((q) => `point ${q.i}: ${q.reached ? '' : 'not reached, '}feet ${f2(q.f)}${q.want !== undefined ? ' want ' + f2(q.want) : ''}`).join('; ') || `${a.pts.length} points`);
-    for (const o of a.offs) check(o && o.sane.ok, `ascent ${a.id}: stepped off at ${o?.off}, a sane landing`, o && `dropped ${f2(o.dropped)} m to ${f2(o.feet)}; ${o.sane.ok ? 'standing, inside, free' : JSON.stringify(o.sane)}`);
+    for (const o of a.offs) check(o && o.sane.ok && o.dropped > -0.6, `ascent ${a.id}: stepped off at ${o?.off}, a sane landing (never more than a riser up: v15-F1)`, o && `dropped ${f2(o.dropped)} m to ${f2(o.feet)}; ${o.sane.ok ? 'standing, inside, free' : JSON.stringify(o.sane)}${o.dropped <= -0.6 ? '; climbed ' + f2(-o.dropped) + ' m sideways' : ''}`);
     check(a.msTop <= a.msFloor * 1.5 + 4, `ascent ${a.id}: the frame time at the top is not much worse than on the floor`, `floor ${f2(a.msFloor)} ms, top ${f2(a.msTop)} ms`);
   }
   check(errors.length === 0, 'no page errors (ascents)', errors.slice(0, 3).join(' | '));
