@@ -26,7 +26,8 @@ view('level-crown', [1, 14, -9], L.crown.y, [1, 34, -6], -0.08);
 view('level-high', [1, 10, 0.5], L.high.y, [1, 36, 1], -0.05);
 view('level-mid', [1, 12, 8.6], L.mid.y, [1, 34, 8.4], -0.02);
 view('level-low', [1, 12, 14.2], L.low.y, [1, 34, 13.6], 0);
-view('level-lees', [1, 14, 21], null, [1, 34, 19], 0.12);
+view('level-lees', [1, 4, 24.5], null, [1, 34, 20], 0.12);
+view('strake-from-way', [1, 17.5, 26], null, [1, 11, 16], 0.2);
 view('level-pennyworth', [2, 16, 30], null, [2, 2, 22], 0.2);
 // the Heliarch stair, from the bottom up
 view('stair-from-square', [1, S - 4.5, 23.6], null, [1, S, 10], 0.3);
@@ -53,8 +54,8 @@ view('bridge', [br.run, br.s - 0.2, 7.6], L.mid.y, [br.run, br.s, 14], -0.1);
 view('pier-from-lees', [br.run, br.s + 4, 21], null, [br.run, br.s, 13], 0.42);
 view('pier-top', [br.run, br.s, 14.2], L.mid.y, [1, 30, 24], -0.3);
 // the Lees' stair, the undercrofts, the ramp
-view('lees-stair', [ls.run, ls.s + 7, 19.5], null, [ls.run, ls.s, 16], 0.2);
-{ const p = P.plot('lees-shop-2'); view('undercroft-front', [p.run, p.s + 1.5, 20.2], null, [p.run, p.s, 14], 0.08); view('undercroft-inside', [p.run, p.s + 0.4, 13.2], null, [p.run, p.s - 0.3, 22], 0.05); }
+view('lees-stair', [ls.run, ls.s + 7 * (ls.sign || 1), 19.5], null, [ls.run, ls.s, 16], 0.2);
+{ const p = P.plot('lees-shop-5'); view('undercroft-front', [p.run, p.s + 1.5, 20.2], null, [p.run, p.s, 14], 0.08); view('undercroft-inside', [p.run, p.s + 0.4, 13.2], null, [p.run, p.s - 0.3, 22], 0.05); }
 { const pr = P.way('pennyworth-ramp'), a = P.polar(pr.b0 - 4, P.HAHA - 2), b = P.polar(pr.b1 + 5, P.HAHA + 5), m = P.polar((pr.b0 + pr.b1) / 2, P.HAHA + 1);
   views.push({ name: 'ramp-top', x: r3(a[0]), z: r3(a[1]), yaw: r3(P.yawOf(m[0] - a[0], m[1] - a[1])), pitch: -0.2 });
   views.push({ name: 'ramp-foot', x: r3(b[0]), z: r3(b[1]), yaw: r3(P.yawOf(m[0] - b[0], m[1] - b[1])), pitch: 0.15 }); }

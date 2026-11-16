@@ -67,7 +67,7 @@ export function buildWays(ctx, lappet) {
     ['high', 1, sx - hw - 0.5, sx + hw + 0.5], ['mid', 1, sx - hw - 1.2, sx + hw + 1.2], ['low', 1, sx - hw - 1.2, sx + hw + 1.2],
     ...['high', 'mid', 'low'].map((k) => [k, tb.run, tb.s - 2.3, tb.s + 2.3]),
     ['mid', tb.run, tb.s, tb.s + 3.4], // the gangway
-    ['mid', ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, ls.s - 1.9, ls.s + 3.2],
+    ['mid', ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
   ];
 
   return {
@@ -159,12 +159,12 @@ export function buildWays(ctx, lappet) {
 
       // ---------------------------------------------------------------- the Lees' plank stair up the Low Rung's riser
       {
-        const D = RISERS[3].D, y = LEVEL.low.y;
-        bridge(K, { name: 'lees-stair-head', a: at3(ls.run, ls.s - 1.6, D + 0.72, y), b: at3(ls.run, ls.s - 0.3, D + 0.72, y), width: 1.75, rails: false, register: false });
-        const [x, z] = at(ls.run, ls.s - 0.3, D + 0.9), drop = y - LEVEL.bench.y;
-        built['lees-stair'] = timberFlight(K, { land: at3(ls.run, ls.s - 1, D - 1.2, y), name: 'lees-stair', x, y, z, f: RUN[ls.run].dir, drop, width: 1.4, run: 0.3, rails: [false, true], props: [0.02, 0.45], propBase: LEVEL.bench.y });
-        K.rail([at3(ls.run, ls.s - 1.65, D + 0.15, y), at3(ls.run, ls.s - 1.65, D + 1.62, y), at3(ls.run, ls.s - 0.3, D + 1.62, y)], { paint: C.late.paint[0] });
-        for (const [u, v] of [[-1.5, 0.35], [-1.5, 1.5], [-0.4, 1.5]]) B.add(B.box(0.12, drop, 0.12), mat(...at3(ls.run, ls.s + u, D + v, y - drop / 2 - 0.05)), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.bench.y });
+        const D = RISERS[3].D, y = LEVEL.low.y, g = ls.sign || 1, R = RUN[ls.run], f = [R.dir[0] * g, R.dir[1] * g];
+        bridge(K, { name: 'lees-stair-head', a: at3(ls.run, ls.s - 1.6 * g, D + 0.72, y), b: at3(ls.run, ls.s - 0.3 * g, D + 0.72, y), width: 1.75, rails: false, register: false });
+        const [x, z] = at(ls.run, ls.s - 0.3 * g, D + 0.9), drop = y - LEVEL.bench.y;
+        built['lees-stair'] = timberFlight(K, { land: at3(ls.run, ls.s - 1 * g, D - 1.2, y), name: 'lees-stair', x, y, z, f, drop, width: 1.4, run: 0.3, rails: g > 0 ? [false, true] : [true, false], props: [0.02, 0.45], propBase: LEVEL.bench.y });
+        K.rail([at3(ls.run, ls.s - 1.65 * g, D + 0.15, y), at3(ls.run, ls.s - 1.65 * g, D + 1.62, y), at3(ls.run, ls.s - 0.3 * g, D + 1.62, y)], { paint: C.late.paint[0] });
+        for (const [u, v] of [[-1.5, 0.35], [-1.5, 1.5], [-0.4, 1.5]]) B.add(B.box(0.12, drop, 0.12), mat(...at3(ls.run, ls.s + u * g, D + v, y - drop / 2 - 0.05)), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.bench.y });
       }
 
       // ---------------------------------------------------------------- the ramp to the Pennyworth

@@ -101,7 +101,7 @@ export function villageAmt(x, z) {
   return 1 - sstep(FADE.s2[0], FADE.s2[1], b.dir[0] * (x - b.o[0]) + b.dir[1] * (z - b.o[1]));
 }
 // the bench is brought to 3.1 a little wider than the steps (the Lees runs on west to the parterre), by bearing
-export const benchAmt = (b) => { const u = b >= 300 ? b - 360 : b; return sstep(2, 12, u) * (1 - sstep(84, 94, u)); };
+export const benchAmt = (b) => { const u = b >= 300 ? b - 360 : b; return sstep(-8, 2, u) * (1 - sstep(84, 94, u)); };
 // the foot is levelled to -0.8 in the wedge under the house's south wall (bearings 34 to 70, 14 m out from the ha-ha)
 export function footAmt(x, z, r = radiusOf(x, z), b = bearingOf(x, z)) {
   const u = b >= 300 ? b - 360 : b;
@@ -129,7 +129,7 @@ export function levelAt(x, z) {
   const r = radiusOf(x, z), b = bearingOf(x, z), u = b >= 300 ? b - 360 : b;
   if (r >= HAHA) return footAmt(x, z, r, b) > 0.5 || inHouseLanes(x, z) ? LEVEL.foot : null;
   const D = Dof(x, z);
-  if (D >= RISERS[3].D) return u > 4 && u < 92 ? LEVEL.bench : null;
+  if (D >= RISERS[3].D) return u > 1 && u < 92 ? LEVEL.bench : null;
   if (villageAmt(x, z) <= 0) return null;
   if (D < RISERS[0].D) return D > RISERS[0].D - APRON - 6 ? LEVEL.crown : null;
   return D < RISERS[1].D ? LEVEL.high : D < RISERS[2].D ? LEVEL.mid : LEVEL.low;
@@ -147,7 +147,7 @@ export function villageClear(x, z) {
   const b = bearingOf(x, z), u = b >= 300 ? b - 360 : b;
   if (r >= HAHA - 1) return footAmt(x, z, r, b) > 0.02 || inHouseLanes(x, z);
   const D = Dof(x, z);
-  if (D >= RISERS[3].D - 2) return u > 8 && u < 90;
+  if (D >= RISERS[3].D - 2) return u > 1 && u < 90;
   return villageAmt(x, z) > 0 && D > RISERS[0].D - APRON;
 }
 
@@ -174,8 +174,8 @@ export const LANES = [
   lane('high-lane', 'high', ROAD_HALF * 2, lineAt(0), 'the causeway on the High Rung: the Elder tread is the road'),
   lane('mid-lane', 'mid', 1.6, jogged(9.1, [[2, 9, 5.9, 3.4]]), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it; it ducks in under the tube'),
   lane('low-lane', 'low', 1.6, jogged(14.5, [[1, 31, 11.4, 2.2], [2, 9, 11.5, 3.4], [2, 20.1, 12, 2.2]]), 'the Low Rung\'s outer strip; it ducks in under the timber flight, the tube and the bridge\'s pier'),
-  lane('lees-street', 'bench', 3, [at(1, -4, 19), at(1, 12, 19.5), at(1, 30, 21), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 30, 18)], 'the bench\'s street: it bends at the square and again at the corner'),
-  lane('wall-lane', 'foot', 2.4, [[87, -29.6], [96, -29.2], [108, -28.4], [112.5, -31]], 'under the house\'s south wall, from the ramp\'s foot to its east side'),
+  lane('lees-street', 'bench', 3, [at(1, -6, 22.6), at(1, 12, 22.4), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 30, 18)], 'the bench\'s street: along the Strake\'s fronts, past the stair\'s foot, round the corner'),
+  lane('wall-lane', 'foot', 2.4, [[92, -30.2], [100, -29.6], [108, -28.6], [112.5, -31]], 'under the house\'s south wall, from the ramp\'s foot to its east side'),
   lane('gate-lane', 'foot', 2.4, [[112.5, -31], [112, -45], [110.5, -59], [100, -62.5], [95, -61]], 'round the house\'s east side to its gate'),
 ];
 
@@ -184,7 +184,7 @@ export const SQUARES = [
   { name: 'quarrels-square', level: 'crown', quarter: 'quarrels', note: 'the upper square, at the stair\'s head: the masons\' ground',
     pts: [at(1, 25, -5.2), at(1, cornerS(1, -5.2), -5.2), at(2, 9, -5.2), at(2, 9, -13), at(1, 25, -13)] },
   { name: 'lees-square', level: 'bench', quarter: 'lees', note: 'the main square: arrived in from the stair\'s foot, the fountain off its centre',
-    pts: [at(1, 12, 16), at(1, 33.5, 16), at(1, 34, 24.6), at(1, 24, 26.2), at(1, 12, 27.3)] },
+    pts: [at(1, 10, 20.9), at(1, 28.6, 20.9), at(1, 34, 24.6), at(1, 24, 26.2), at(1, 10, 27)] },
 ];
 
 // ---------------------------------------------------------------- the ways between levels
@@ -204,8 +204,8 @@ export const WAYS = [
     note: 'the daylight main: laid straight down the three nosings, walked inside on a Late plank stair; open at both ends and breached on the Low Rung' },
   { name: 'rungs-ladder', kind: 'ladder', hand: 'late', from: 'low', to: 'mid', run: 2, s: 19, D0: 10, D1: 10,
     note: 'up the Mid Rung\'s riser, 4 m' },
-  { name: 'lees-stair', kind: 'stair', hand: 'late', from: 'bench', to: 'low', run: 1, s: 9, D0: 15.4, D1: 16.6,
-    note: 'a plank outside stair along the Low Rung\'s riser, 2.9 m' },
+  { name: 'lees-stair', kind: 'stair', hand: 'late', from: 'bench', to: 'low', run: 2, s: 22.9, sign: -1, D0: 15.4, D1: 17.1,
+    note: 'a plank outside stair along the Low Rung\'s riser, 2.9 m: its head at s, the flight going down toward the corner (sign -1)' },
   { name: 'pennyworth-ramp', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 40, b1: 53,
     note: 'rammed earth and plank down the outside of the lowest riser, from the square\'s east end to the house\'s wall' },
   { name: 'p9-bank', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 20, b1: 28,
@@ -217,8 +217,8 @@ export const way = (name) => WAYS.find((w) => w.name === name) || null;
 
 // ---------------------------------------------------------------- the plots
 // { name, kind, quarter, level, y, x, z, face: [fx, fz], yaw, w (across the front), d (front to back), hand,
-//   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), stair (a house
-//   wide enough, 6.3 m, for the front outside stair to a roof yard), note }
+//   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), stair ('front': a Late house
+//   wide enough, 6.3 m, for the front outside stair to a roof yard; false: no outside stair), note }
 // A house "against" a riser stands with its back wall on the face, on the lower tread; `roof` is the tread above, so
 // its roof is that tread's yard. Corners: plotCorners(p).
 const PLOTS_ = [];
@@ -243,12 +243,20 @@ for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], 
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });
 // --- the Lees: shops in the Low Rung's riser (Heliarch undercrofts: round arches let 3.2 m into the step, a Late front
 // out on the bench), and two houses that stand free on the square's west side
-for (const [i, run, s, w] of [[1, 1, 15, 4.6], [2, 1, 20.5, 4.6], [3, 1, 26, 4.6], [4, 1, 39.5, 5], [5, 2, 3, 4.6], [6, 2, 15, 4.6], [7, 2, 21, 4.6]])
+for (const [i, run, s, w] of [[4, 1, 39.5, 5], [5, 2, 3, 4.6], [6, 2, 15, 4.6]])
   put(`lees-shop-${i}`, 'shop', 'lees', 'bench', run, s, RISERS[3].D - 0.6, w, 5.2, 'heliarch', { against: 'low', roof: 'low', note: 'an undercroft: 3.2 m in under the Low Rung, 2 m of Late front on the bench' });
-put('lees-house-1', 'house', 'lees', 'bench', 1, 3, 18, 6, 4.4, 'late', { against: 'low', roof: 'low' });
-put('lees-house-2', 'house', 'lees', 'bench', 1, 8.5, 24.5, 5.4, 4.6, 'late', { faceIn: true, note: 'free-standing, on the ha-ha\'s edge, its front to the street' });
 put('lees-house-3', 'house', 'lees', 'bench', 2, 27.5, 17.5, 5.6, 4.2, 'late', { against: 'low', roof: 'low' });
-put('fountain', 'fountain', 'lees', 'bench', 1, 21, 21.2, 5, 5, 'noon', { note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
+// --- the Strake: five ages shoulder to shoulder along the foot of the Low Rung's riser on the north run, their fronts
+// in one line facing out over the Lees (the old way from the north arrives opposite them; the Heliarch stair's foot
+// is at their east end). STRAKE is the row's frame; its five plots, west to east, are strake-elder (where the Elder
+// steps die into the turf), strake-late, strake-shop (the riser behind it is cut into an undercroft), strake-carrier
+// and strake-new.
+export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.2, slot: 6.8, origin: at(1, -6, RISERS[3].D + 0.2 + 5.2), along: RUNS[1].dir, face: RUNS[1].n, length: 34, y: LEVEL.bench.y,
+  slots: ['strake-elder', 'strake-late', 'strake-shop', 'strake-carrier', 'strake-new'] };
+[['strake-elder', 'house', 'elder', 'an Elder slab-house: three blocks and a lintel nobody alive could lift, lived in'], ['strake-late', 'house', 'late', null], ['strake-shop', 'shop', 'heliarch', 'the undercroft behind it is cut 3.2 m into the Low Rung'],
+  ['strake-carrier', 'carrier', 'noon', 'a length of carrier stood in the row as a house'], ['strake-new', 'new-house', 'new', 'the newest front in the row: the keep\'s fallen ashlar, half built']]
+  .forEach(([name, kind, hand, note], i) => put(name, kind, 'lees', 'bench', 1, STRAKE.s0 + STRAKE.slot * (i + 0.5), STRAKE.D0 + STRAKE.depth / 2, STRAKE.slot, STRAKE.depth, hand, { against: 'low', roof: 'low', strake: i, ...(note ? { note } : {}) }));
+put('fountain', 'fountain', 'lees', 'bench', 1, 26, 23.9, 4.6, 4.6, 'noon', { note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
 // --- the Quarrels: the crown
 put('new-house', 'new-house', 'quarrels', 'crown', 2, 15, -9.4, 7, 5.6, 'new', { note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold' });
 put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { note: 'the lime pit, the sledge on rollers, the banker; the Demesne\'s fallen blocks stacked as stock' });
@@ -257,16 +265,16 @@ put('quarrels-house-1', 'house', 'quarrels', 'crown', 1, 18, -8, 5.6, 4.4, 'late
 free('carrier-house', 'carrier', 'pennyworth', 'foot', 109.5, -17.5, [-0.82, -0.57], 14, 5, 'noon', { note: 'a stalled carrier on its side along the lowest riser: a door cut in its belly, a chimney through its shoulder' });
 free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 114.5, -37, [-1, 0], 6, 4.4, 'late', { note: 'east of the house, facing its wall across the gate lane' });
 free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 114.5, -50, [-1, 0], 5.6, 4.4, 'late');
-free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 94, -26.6, [0.1, -1], 3.4, 2.4, 'late', { note: 'a stall against the lowest riser, facing the house\'s south wall' });
-free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101, -23.4, [0.35, -0.94], 3.4, 2.4, 'late');
-free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 104.5, -27, [0, -1], 6, 4, 'late', { note: 'pot herbs and a bean row between the stalls and the wall lane' });
+free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
+free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.4, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
+free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107, -24.6, [0, -1], 5, 3.6, 'late', { note: 'pot herbs and a bean row between the stalls and the wall lane' });
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
 { const w = WAYS.find((v) => v.name === 'lane-bridge'); put('bridge-pier', 'pier', 'rungs', 'low', w.run, w.s, 14.2, 2, 1.8, 'heliarch', { note: 'the aqueduct\'s last pier; the bridge lands on it' }); }
 
 // a Late house with an outside stair up its front to a roof yard needs 6.3 m of front (V1's makers): `stair` says which plots have it
-for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.w >= 6.3;
+for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.hand === 'late' && p.w >= 6.3 ? 'front' : false;
 export const PLOTS = PLOTS_;
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
@@ -312,6 +320,6 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6 },
   { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5 },
   { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5 },
-  { name: 'lappet-lees', pts: [at(1, 12, 19.5), at(1, 30, 20.5), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7 },
+  { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7 },
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6 },
 ];
