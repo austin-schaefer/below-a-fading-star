@@ -10,6 +10,10 @@
 // up, a second drags to steer. With every=1 it stops each metre it walks on a way (not on a tread or the ground),
 // turns the head left or right and writes a frame; at checkpoints it always does.
 //   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk]
+// ROUTE=rungs (v15-Q2) walks the Rungs' own ways instead, from the Lees' square: up the Lees' stair, the ladder, down
+// the Tenter, the Slype, up the Gullet, the Leads' three crossings, the five house stairs (each in the direction the
+// tour meets it). The ways' points are the registered ascents' own paths; it prints each way as it is finished and a
+// count, and wants the ladder taken once.
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NNN-<what>.png in order. Prints each frame with where the feet are and
 // on what floor, each time the ladder is taken hold of, and a last line `walked: yes|no`.
 import { createRequire } from 'node:module';
@@ -26,7 +30,9 @@ const page = await context.newPage();
 page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.goto(`${base}/?q=${q}&pos=58,-6&yaw=-1.9`, { waitUntil: 'load', timeout: 120000 });
+const RUNGS = process.env.ROUTE === 'rungs';
+const start = RUNGS ? (await import('../src/v15/plan.js')).at(2, 20.5, 20.5).map((v) => v.toFixed(1)).join(',') : '58,-6';
+await page.goto(`${base}/?q=${q}&pos=${start}&yaw=-1.9`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = touch ? 390 : 1280, H = touch ? 844 : 720;
@@ -45,10 +51,20 @@ const s0 = await st();
 const locked = s0.locked;
 console.log(touch ? 'touch page' : `pointer captured: ${s0.locked}${s0.locked ? '' : ' (refused: steering by the page\'s drag-to-look fallback)'}`);
 // the route, from the village's own plan (read only)
-const route = await page.evaluate(async () => {
+const route = await page.evaluate(async (RUNGS) => {
   const P = await import('/src/v15/plan.js'), R = [], S = P.STAIR.s, tb = P.way('noon-main'), ld = P.way('rungs-ladder'), pr = P.way('pennyworth-ramp'), up = P.way('heliarch-upper'), hf = P.way('heliarch-foot');
   const push = (xz, tag) => R.push({ x: xz[0], z: xz[1], tag });
   const a = (s, D, tag) => push(P.at(1, s, D), tag), b = (s, D, tag) => push(P.at(2, s, D), tag), pol = (bg, r, tag) => push(P.polar(bg, r), tag);
+  if (RUNGS) {
+    const A = Object.fromEntries(window.__fp.ascents.list.map((w) => [w.id, w.path]));
+    const way = (id, rev) => { const pts = rev ? [...A[id]].reverse() : A[id]; pts.forEach((q, k) => push([q[0], q[1]], k === pts.length - 1 ? `way:${id}` : undefined)); };
+    const up2 = (id) => way(id, false), dn = (id) => way(id, true);
+    up2('lees-stair'); b(22.4, 14.6); b(22.15, 12.4); b(19.7, 12.2); b(ld.s, 11.7); b(ld.s, 10.5); b(ld.s, 8.9, 'way:rungs-ladder');
+    b(17.9, 9.2); dn('rungs-tenter'); b(12.2, 11.9); b(9, 11.7); b(5.6, 11.9); b(4.4, 14.5); b(1, 14.6); up2('rungs-gullet');
+    b(1.5, 9.3); dn('rungs-leads-3'); a(37, 9.3); a(27.5, 9.3); dn('rungs-low-3-stair'); up2('rungs-low-3-stair'); dn('rungs-leads-2'); dn('rungs-leads-1'); a(6, 9.4);
+    up2('rungs-mid-1-stair'); a(7.5, 3.4); a(14.2, 3.4); dn('rungs-mid-2-stair'); up2('rungs-mid-3-stair'); a(22.6, 3.4); a(33, 3.2); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair');
+    return R;
+  }
   // down: the keep's fallen corner, the court, the head, its west flight, the slot, the landing, the timber, the bastion, the foot
   a(S, -9, 'court'); a(S, -5.5, 'head'); a(S - 0.6, -3.7); a(S - 3.4, -3.7, 'head-flight'); a(S - 6.6, -3.7); a(S - 6.6, 0.2); a(S, 0.8, 'slot');
   a(S, up.D0 + 0.4); a(S, (up.D0 + up.D1) / 2, 'upper-flight'); a(S, up.D1 + 0.9, 'landing'); a(S, 10.4); a(S, 12.8, 'timber'); a(S, 15.9, 'bastion'); a(S, hf.D0 + 0.3); a(S, (hf.D0 + hf.D1) / 2, 'foot-flight'); a(S - 0.8, hf.D1 + 0.4, 'square');
@@ -66,7 +82,7 @@ const route = await page.evaluate(async () => {
   const cs = P.cornerS(1, -3.7);
   a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
   return R;
-});
+}, RUNGS);
 const SENS = touch ? 0.005 : 0.0021;
 const touchPts = (pts) => pts.map(([id, x, y]) => ({ id, x, y }));
 let stickDown = false, stickHome = null;
@@ -120,7 +136,7 @@ const LOOKS = {
 };
 await shot('start');
 await walkOn(true);
-let i = 0, stuck = 0, last = null, since = 0, side = 1, climbs = 0;
+let i = 0, stuck = 0, last = null, since = 0, side = 1, climbs = 0, ways = 0;
 const t0 = Date.now();
 const onWay = (s) => s.carried || (s.floor !== 'ground' && !/^lappet-(crown|high|mid|low|bench)/.test(s.floor));
 while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
@@ -134,6 +150,7 @@ while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
   }
   if (d < 0.6) {
     if (w.tag && LOOKS[w.tag]) for (const [what, dy, dp] of LOOKS[w.tag]) await pause(async () => { await turn(dy, dp - (await st()).pitch); await sleep(1100); await shot(`${w.tag}-${what}`); await turn(-dy, -(await st()).pitch); await sleep(200); });
+    else if (w.tag && w.tag.startsWith('way:')) { ways++; console.log(`[way] ${w.tag.slice(4)} walked, feet ${s.feet.toFixed(2)} on ${s.carried ? 'the ladder' : s.floor}`); }
     else if (w.tag) console.log(`[at] ${w.tag} (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) feet ${s.feet.toFixed(2)} on ${s.carried ? 'the ladder' : s.floor}`);
     i++; continue;
   }
@@ -146,6 +163,7 @@ while (i < route.length && Date.now() - t0 < 30 * 60 * 1000) {
 await walkOn(false);
 const walked = i >= route.length;
 console.log(`ladder taken ${climbs} times; page errors: ${errors.length}${errors.length ? ' ' + errors.slice(0, 3).join(' | ') : ''}`);
+if (RUNGS) console.log(`ways walked: ${ways} of ${route.filter((w) => w.tag && w.tag.startsWith('way:')).length}`);
 console.log(`walked: ${walked ? 'yes' : 'no'}`);
 await browser.close();
-process.exit(walked && climbs >= 2 && !errors.length ? 0 : 1);
+process.exit(walked && climbs >= (RUNGS ? 1 : 2) && !errors.length ? 0 : 1);

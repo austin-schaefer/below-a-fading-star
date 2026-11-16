@@ -391,10 +391,10 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6, exempt: BURIED },
   { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5, exempt: BURIED },
   { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5, exempt: BURIED },
-  { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, near: true, exempt: BURIED }, // (near: the Rungs' houses stand over it, beyond its region, and are taken in part)
+  { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, near: ['rungs-houses', 'rungs-ways'], exempt: BURIED }, // (near: the Rungs' houses stand over it, beyond its region, and are taken in part)
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
   // the Rungs (v15-Q2): its own ways, and the Leads walked along the Low Rung's roofs
   ...[RUNGS.tenter.id, RUNGS.gullet.id, ...RUNGS.stairs].map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
-  ...RUNGS.leads.crossings.map((c, i) => ({ name: `lappet-rungs-leads-${i + 1}`, ascent: `rungs-leads-${i + 1}`, half: 5, near: true, exempt: BURIED })),
+  ...RUNGS.leads.crossings.map((c, i) => ({ name: `lappet-rungs-leads-${i + 1}`, ascent: `rungs-leads-${i + 1}`, half: 5, near: ['rungs-houses', 'village-row'], exempt: BURIED })),
   { name: 'lappet-rungs-squint', pts: [[...at(2, 27, 11.6), LEVEL.mid.y], [...at(2, 23.4, 11.6), LEVEL.mid.y]], half: 6, exempt: BURIED },
 ];
