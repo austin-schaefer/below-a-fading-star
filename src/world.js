@@ -176,7 +176,6 @@ export const SITES = {
   spanWest:   { x: -257, z: 215, r: 12, name: 'the Great Span, west gate', block: [-270, -195, 180, 245] },
   spanEast:   { x: 257, z: 215, r: 12, name: 'the Great Span, east gate', block: [220, 270, 160, 245] },
   fallLip:    { x: 214, z: 266, r: 15, name: 'the Tumbling Water, the taller lip', block: [195, 235, 248, 290] },
-  longFigure: { x: 292, z: 70, r: 45, name: 'The Long Figure' },
   lightMoss:  { x: -205, z: 140, r: 8, name: 'moss light' },
   lightEmbers:{ x: 160, z: 60, r: 6, name: 'embers' },
   lightPost:  { x: -140, z: -30, r: 3, name: 'a lamp on a post' },

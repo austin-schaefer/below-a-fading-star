@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // v4 Tinctures and set-dressing check: the air at a Saltings point has the rose-white hue and the tint at spawn is neutral,
 // the tint keeps the fog's luminance; the Discontinued Track's footprints (count, ends, spacing, none on the causeway, all on
-// the crust); the Surveyor's Pegs (count, spacing, the caps and their glyphs (v7), none in deep water, all on x = -80); the Long Figure (80 m
-// long on the ground, its centre on the wall's face, hugging the terrain); and the four items' draw calls and triangles;
+// the crust); the Surveyor's Pegs (count, spacing, the caps and their glyphs (v7), none in deep water, all on x = -80); and the items' draw calls and triangles;
 // and v5's story set-dressing: the Collation (twelve places, eleven chairs one of them down and one gone to the graves (v8-04),  clear of every tree, level, collided),
 // the Slipper (25 cm, on a slab, no collider) and the Unfinished Prospect (the canvas facing the painter, 512 x 384, under 200 KB).
 // Usage: node tools/dressing-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
@@ -43,17 +42,6 @@ const r = await page.evaluate(async () => {
   for (let i = 0; i < Q.length; i++) { const d = T.waterDepthAt(Q[i].x, Q[i].z) || 0; if (d > 0.7) out.pegs.deep++; if (Math.abs(Q[i].x + 80) > 0.1) out.pegs.offLine++; if (i && Q[i].z - Q[i - 1].z < 40) { const g = Q[i].z - Q[i - 1].z; out.pegs.minGap = Math.min(out.pegs.minGap, g); if (g > 10.5) out.pegs.over++; } }
   out.pegs.first = Q[0].z; out.pegs.last = Q[Q.length - 1].z;
   { const cm = fp.scene.getObjectByName('surveyors-caps'), a = cm?.geometry.attributes.aForm; out.pegs.capForms = a ? Array.from(a.array).slice(0, cm.count) : []; } // v7: the glyph motif
-  // the figure
-  const fg = fp.dressing.figure, pos = fg.mesh.geometry.attributes.position.array, c = fg.centre;
-  let maxLift = 0, minLift = 1e9;
-  // against the rendered terrain triangles (rays from above), not the analytic heightfield the coarse mesh only approximates
-  const ray = new fp.THREE.Raycaster(), dir = new fp.THREE.Vector3(0, -1, 0), org = new fp.THREE.Vector3(); fp.terrain.mesh.updateMatrixWorld();
-  const nV = pos.length / 3, stepV = Math.floor(nV / 28);
-  for (let v = 0; v < nV; v += stepV) { org.set(pos[v * 3], 700, pos[v * 3 + 2]); ray.set(org, dir); const hit = ray.intersectObject(fp.terrain.mesh, false)[0]; if (!hit) continue; const l = pos[v * 3 + 1] - hit.point.y; maxLift = Math.max(maxLift, l); minLift = Math.min(minLift, l); }
-  // dy: the centre against the rendered triangles: the massifs' face carries relief finer than the mesh, so the analytic height can stand a few centimetres off it
-  out.fig = { centre: c, slope: T.slopeAt(c.x, c.z) * 57.3, groundY: T.heightAt(c.x, c.z), dy: (() => { org.set(c.x, 700, c.z); ray.set(org, dir); const hit = ray.intersectObject(fp.terrain.mesh, false)[0]; return hit ? c.y - hit.point.y : NaN; })(), dyAnalytic: c.y - T.heightAt(c.x, c.z), r: Math.hypot(c.x, c.z), foot: fg.foot, head: fg.head, maxLift, minLift, castShadow: fg.mesh.castShadow };
-  let arc = 0, last = null; const a = Math.atan2(70, 292); for (let r = fg.radii[0]; r <= fg.radii[1]; r += 0.5) { const x = Math.cos(a) * r, z = Math.sin(a) * r, h = T.heightAt(x, z); if (last !== null) arc += Math.hypot(0.5, h - last); last = h; }
-  out.fig.arc = arc;
   out.stats = fp.dressing.stats();
   // v5: the Collation
   {
@@ -98,10 +86,6 @@ check(p.deep === 0, 'none stands in deep water (over 0.7 m)');
 check(p.minGap >= 5.5 && p.over <= 4, 'spaced 6 to 10 m (longer only across the tarn\'s deeps and the fallen slabs)', `shortest ${p.minGap.toFixed(1)}, ${p.over} longer`);
 check(p.caps.length >= 4 && p.caps.every((z) => [-200, -100, 0, 100, 200].includes(z)), 'brass caps only at the five z values (the one in the tarn\'s deep is absent)', `caps at ${p.caps}`);
 check(p.capForms.length === p.caps.length && p.capForms.every((g) => Number.isInteger(g) && g >= 0 && g <= 8) && p.capForms.every((g, i) => i === 0 || g !== p.capForms[i - 1]), 'each standing cap carries one of the lintel\'s glyphs, no two neighbours alike (v7)', `forms ${p.capForms}`);
-const f = r.fig;
-check(Math.abs(f.arc - 80) < 4, 'the figure is 80 m long on the ground', `${f.arc.toFixed(1)} m`);
-check(f.slope > 15 && Math.abs(f.dy) < 0.01 && f.r > 300 && f.r < 360, 'the figure\'s centre is on the wall face', `slope ${f.slope.toFixed(0)} deg, r ${f.r.toFixed(0)}, dy ${f.dy.toFixed(3)} (analytic ${f.dyAnalytic.toFixed(2)})`);
-check(f.minLift > 0 && f.maxLift < 1.2 && !f.castShadow, 'it hugs the ground and casts no shadow', `lift ${f.minLift.toFixed(2)} to ${f.maxLift.toFixed(2)}`);
 check(r.stats.calls <= 8 && r.stats.tris <= 60000, 'draw calls and triangles within the budget', `${r.stats.calls} calls, ${r.stats.tris} tris`);
 const cy = r.cy, sl = r.sl, pr = r.pr;
 check(cy.places === 12 && cy.plates === 11 && cy.medlars === 11 && cy.glasses === 11 && cy.chairs === 11 && cy.fallen === 1 && cy.fallenLow && cy.len >= 10 && cy.len <= 12 && cy.near >= 23 && cy.minTree >= 1 && cy.level < 0.3 && cy.bletting > 0.9 && cy.off < 15 && cy.calls === 1 && r.d5.calls <= 4 && r.d5.tris <= 12000, 'the Collation: an 11 m table laid for twelve, eleven chairs (v8-04: the twelfth is at the graves) and one down, clear of every tree, level, collided; with the Slipper and the Prospect at most 4 draws and 12k triangles', `plates ${cy.plates} medlars ${cy.medlars} glasses ${cy.glasses} chairs ${cy.chairs} (${cy.fallen} down), ${cy.near} colliders, trees ${cy.minTree.toFixed(1)} m off, bletting ${cy.bletting.toFixed(2)}, fall ${cy.level.toFixed(2)} m, ${cy.off.toFixed(0)} m from the plan, ${Math.round(cy.tris)} tris; the three: ${r.d5.calls} calls, ${r.d5.tris} tris`);
