@@ -39,7 +39,7 @@ export function makePlot(B, plot, o = {}) {
   let h;
   if (plot.roof) { need(); h = plan.LEVEL[plot.roof].y - plot.y; if (!(h > 1.9)) throw new Error(`makePlot: ${plot.name}: its roof (${plot.roof}) is ${h} m over its ground`); }
   if (kind === 'late') {
-    if (plot.against) { if (h === undefined) throw new Error(`makePlot: ${plot.name} stands against a riser and names no roof`); q.against = true; q.h = h; const Rz = plan.RISERS.find((r) => r.key === plot.against); if (Rz && Rz.D !== undefined && plot.D !== undefined && Math.abs(Rz.D - plot.D + plot.d / 2) < 0.5) q.backZ = Rz.D - plot.D; }
+    if (plot.against) { if (h === undefined) throw new Error(`makePlot: ${plot.name} stands against a riser and names no roof`); q.against = true; q.h = h; if (plot.stair === 'front' && q.stair === undefined) { q.stair = 'front'; if (plot.stairStrip) q.strip = plot.stairStrip; } const Rz = plan.RISERS.find((r) => r.key === plot.against); if (Rz && Rz.D !== undefined && plot.D !== undefined && Math.abs(Rz.D - plot.D + plot.d / 2) < 0.5) q.backZ = Rz.D - plot.D; }
     else if (h !== undefined) q.h = h;
     if (plot.kind === 'shop') { if (plot.w < 4 || plot.d < 3) q.form = 'stall'; else q.shop = true; }
     if (plot.stair === false && q.stair === undefined && !plot.against) q.stair = 'side';
@@ -67,7 +67,7 @@ export function makePlot(B, plot, o = {}) {
       B.add(B.box(w, hR + 0.5, dep, { seg: 1.2, chip: 0.06, seed: (q.seed | 0) + 5 }), ch(M, 0, (hR - 0.5) / 2, zm), { color: worn(H.stone, rng, 0.14, 0.1), course: 0.3, moss: 0.5, ground: g0 });
       B.add(B.box(w, 0.86, 0.3, { seg: 1.2, chip: 0.05, chipTop: true, seed: (q.seed | 0) + 6 }), ch(M, 0, hR + 0.42, z1 - 0.15), { color: worn(H.stone, rng, 0.1, 0.1), course: 0.28, moss: 0.45, ground: g0 + hR });
       R.wall(-w / 2, zm, w / 2, zm, 0, hR, dep / 2); R.wall(-w / 2, z1 - 0.15, w / 2, z1 - 0.15, hR, 0.86, 0.15);
-      R.floor(0, (zR + z1 - 0.3) / 2, w, dep - 0.3, hR, { layer: 1 });
+      if (dep > 0.75) R.floor(0, (zR + z1 - 0.3) / 2, w, dep - 0.3, hR, { layer: 1 }); // (under that the tread's own floor reaches the parapet)
       R.packed = { z0: zR, z1, y: hR, parapet: 0.86 };
     }
   }

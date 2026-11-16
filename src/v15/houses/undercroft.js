@@ -130,8 +130,8 @@ export function undercroft(B, M, o = {}) {
     R.wall(a.x - rw / 2, zr + 0.1, a.x + rw / 2, zr + 0.1, 0, 1.7, 0.2);
     for (let i = 0; i < 2; i++) { const sx2 = a.x - s2 * (a.aw / 2 - 0.55 - i * 0.2), sz2 = cz - 0.9 - i * 0.6; B.add(new THREE.IcosahedronGeometry(0.3, 1), ch(M, sx2, 0.22, sz2, 0, rng() * 3, 0, 1, 0.8, 1.15), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g0 - 2, disp: 0.03 }); R.post(sx2, sz2, 0.3, 0, 0.45); }
     R.light(a.x, Math.min(1.9, a.sp + a.aw * 0.3), cz - 0.9, '#ffb060', 1.6, 7);
-    B.add(new THREE.IcosahedronGeometry(0.07, 0), ch(M, a.x, Math.min(1.95, a.sp + a.aw * 0.32), cz - 0.1, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * 0.8, V.lit[1] * 0.8, V.lit[2] * 0.8, 1] });
-    beam(B, M, [a.x, Math.min(2.0, a.sp + a.aw * 0.32) + 0.06, cz - 0.1], [a.x, a.sp + a.aw / 2 + 0.03, cz - 0.1], 0.012, /* (from the arch's crown, in the wall's thickness) */ { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
+    B.add(new THREE.IcosahedronGeometry(0.07, 0), ch(M, a.x, a.sp + a.aw / 2 - 0.4, cz - 0.1, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * 0.8, V.lit[1] * 0.8, V.lit[2] * 0.8, 1] });
+    beam(B, M, [a.x, a.sp + a.aw / 2 - 0.34, cz - 0.1], [a.x, a.sp + a.aw / 2 + 0.03, cz - 0.1], 0.012, /* (from the arch's crown, in the wall's thickness) */ { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
     R.window(a.x, a.sp, zf, true);
     if (bare) return;
     const af = B.count, ah = Math.min(h - 0.3, a.sp + a.aw / 2 + 0.55);

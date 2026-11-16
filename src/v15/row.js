@@ -42,6 +42,7 @@ const BACK = -4.8, PAVE0 = -1.6, DRAIN = 1.45, EDGE = 2.6; // across the street 
 export async function build(ctx) {
   const url = new URL(location.href), mode = url.searchParams.get('v15');
   if (mode === '0' || !ctx.strata?.on) { ctx.village = { off: true }; return; }
+  if (ctx.built) await ctx.built('lappet'); // (the plan's levels, the vault V0 built behind the shop: read after they are there)
   const low = ctx.quality === 'low', T = ctx.terrain, rng = rngOf(1501, 9);
   const plan = ctx.lappet && ctx.lappet.on !== false ? ctx.lappet.plan : null, S = plan && plan.STRAKE, viaPlan = !!(S && S.slots && S.slots.every((n) => plan.plot(n)));
   if (plan && !viaPlan) console.warn(`village row: the Lappet's plan is on but ${!S ? 'exports no STRAKE' : !S.slots ? 'its STRAKE names no slots' : 'has no plot named ' + S.slots.filter((n) => !plan.plot(n)).join(', ')}: the row stands at ROW, on the village's ground`); // (once: build runs once)

@@ -163,9 +163,9 @@ export function late(B, M, o = {}) {
     // one storey; a solid stair up to a flat roof that is a yard, with a bed, a jar and the washing. The stair runs
     // along the front where the plot is shallow or the seed says (the house's whole front is then a diagonal), else
     // up its side
-    const hr = 2.75 + rng() * 0.55, h = o.h ?? hr, n = Math.ceil(h / 0.22), want = against ? false : o.stair ?? (rng() < 0.5 || d < 5.4 ? 'front' : 'side');
-    const stair = want === false ? null : want === 'side' && d / 1 - 0.7 >= n * 0.24 + 1.15 ? 'side' : w - 0.4 >= n * 0.24 + 2.95 ? 'front' : null; // (a front stair's foot stands clear of the door's frame)
-    const zfr = stair === 'front' ? d / 2 - 1.12 : zf, xs = side * (w / 2 - 1.1);
+    const hr = 2.75 + rng() * 0.55, h = o.h ?? hr, n = Math.ceil(h / 0.22), want = against ? (o.stair === 'front' ? 'front' : false) : o.stair ?? (rng() < 0.5 || d < 5.4 ? 'front' : 'side'), strip = o.strip ?? 1.12; // (against a riser only the stair the plan gives: it is a way between two treads)
+    const stair = want === false ? null : want === 'side' && d / 1 - 0.7 >= n * 0.24 + 1.15 ? 'side' : w - 0.4 >= n * (o.stair === 'front' ? 0.155 : 0.24) + 2.95 ? 'front' : null; /* (asked for by the plan it may be steep: 0.16 m of going) */ // (a front stair's foot stands clear of the door's frame)
+    const zfr = stair === 'front' ? d / 2 - strip : zf, sw = Math.min(1.0, strip - 0.1), xs = side * (w / 2 - 1.1);
     const x0 = stair === 'side' && side < 0 ? xs : -w / 2 + 0.1, x1 = stair === 'side' && side > 0 ? xs : w / 2 - 0.1, cx = (x0 + x1) / 2, rw = x1 - x0;
     const tread = stair === 'front' ? Math.min(0.27, (rw - 2.95) / n) : Math.min(0.3, (zfr - zb - 1.15) / n), run = n * tread;
     // the front stair's landing is at the `side` end; its foot comes down toward the door
@@ -184,11 +184,11 @@ export function late(B, M, o = {}) {
       R.floor(sx - side * 0.3, lz - ld / 2, 1.6, ld, h, { layer: 1 });
       R.wall(sx, lz - Math.min(0.55, ld - 0.2), sx, lz - ld + 0.1, -0.4, h + 0.4 - 0.16, 0.42); // (its round end clear of the top treads)
     } else if (stair === 'front') {
-      const sz = zfr + 0.49, fx0 = la - side * run;
-      flight(B, HM, R, { x: fx0, z: sz, dx: side, dz: 0, w: 1.0, h, tread, color: sc, color2: sc2, seed, into: 0.4, ox: 0, oz: -1 });
+      const sz = zfr + sw / 2 - 0.01, fx0 = la - side * run;
+      flight(B, HM, R, { x: fx0, z: sz, dx: side, dz: 0, w: sw, h, tread, color: sc, color2: sc2, seed, into: 0.4, ox: 0, oz: -1 });
       const lw = Math.abs((side > 0 ? x1 : x0) - la);
-      B.add(B.box(lw, h + 0.4, 1.4, { seg: 1.5, chip: 0.03, chipTop: true }), ch(HM, la + side * lw / 2, (h - 0.4) / 2, sz - 0.2), { color: sc, moss: 0.25, ground: g0 });
-      R.floor(la + side * lw / 2, sz - 0.45, lw, 1.9, h, { layer: 1 }); // the landing, and on over the wall's head
+      B.add(B.box(lw, h + 0.4, 1.4, { seg: 1.5, chip: 0.03, chipTop: true }), ch(HM, la + side * lw / 2, (h - 0.4) / 2, sz + sw / 2 - 0.7), { color: sc, moss: 0.25, ground: g0 });
+      R.floor(la + side * lw / 2, sz + sw / 2 - 0.95, lw, 1.9, h, { layer: 1 }); // the landing, and on over the wall's head
       R.wall(la + side * 0.78, sz, la + side * (lw - 0.3), sz, -0.4, h + 0.4 - 0.16, 0.42); // (its round end clear of the top treads)
       // the cupboard under the stair: a small door in its high end, and a kerb of plaster down its open side
       if (!low) leaf(B, ch(HM, la - side * 0.75, 0, sz + 0.5), 0.62, Math.min(1.3, h - 1.6), worn(frame, rng, 0.3), rng, { plain: true });

@@ -33,14 +33,15 @@ page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 400)); });
-await page.goto(`${base}/?q=low&only=villagerow`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${base}/?q=low&only=lappet,villagerow`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
 const r = await page.evaluate(async () => {
   const fp = window.__fp, THREE = fp.THREE, H = await import('/src/v15/houses/index.js'), SH = await import('/src/v15/sheet.js'), out = { makers: [], late: [], variety: {}, throws: [] };
   if (!fp.village || fp.village.off) return { missing: true };
   const rc = new THREE.Raycaster(), both = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
   const SIZE = { late: [7, 6], undercroft: [8, 6], carrier: [8, 7], elder: [9, 7], new: [8, 6.5] };
-  const Y0 = 200, plan = SH.planStub(Y0), cases = [];
+  const Y0 = 200, stub = SH.planStub(Y0), PLAN = await import('/src/v15/plan.js'), BUILT = (fp.lappet && fp.lappet.built) || {}, cases = [];
+  const KINDS_OF_PLAN = ['house', 'shop', 'new-house', 'carrier'], realPlots = PLAN.PLOTS.filter((p) => KINDS_OF_PLAN.includes(p.kind));
   for (const kind of H.KINDS) H.FORMS[kind].forEach((form, fi) => { for (const seed of [1, 2, 3]) {
     let [w, d] = SIZE[kind]; const o = { seed, low: true };
     if (kind === 'new') o.stage = fi; else o.form = form;
@@ -51,11 +52,19 @@ const r = await page.evaluate(async () => {
   } });
   SH.PLAN_PLOTS.forEach((p, i) => { const plot = { ...p }; delete plot.o; delete plot.built; cases.push({ id: `plan ${p.name} (${p.kind} ${p.w} x ${p.d}${p.against ? ', against' : ''})`, plot, w: p.w, d: p.d, o: { seed: i + 1, low: true, ...SH.planOpts(p, Y0) } }); });
   cases.push({ id: 'plan carrier-house (carrier 14 x 5)', plot: { name: 'carrier-house', kind: 'carrier', hand: 'noon', w: 14, d: 5 }, w: 14, d: 5, o: { seed: 4, low: true } });
+  // every building plot of the real plan (src/v15/plan.js), judged whole at one seed on low, stood at the test's place
+  // with its own level, depth and riser
+  realPlots.forEach((p, i) => cases.push({ id: `real ${p.name} (${p.kind} ${p.hand} ${p.w.toFixed(1)} x ${p.d.toFixed(1)}${p.against ? ', against ' + p.against : ''}${p.stair === 'front' ? ', front stair' : ''})`, real: true, plot: { ...p }, w: p.w, d: p.d, o: { seed: i + 1, low: true, plan: PLAN, built: BUILT } }));
+  // and each at seeds 1 to 10, low and high: it builds, with a door, nothing not a number
+  out.sweep = [];
+  for (const p of realPlots) for (const low of [true, false]) for (let seed = 1; seed <= 10; seed++) { const B = fp.strata.builder(), E = fp.strata.builder(); try { const R = H.makePlot(B, { ...p }, { seed, low, plan: PLAN, built: BUILT, E }); if (!R.doors.length || [...B.P, ...E.P].some((v) => !Number.isFinite(v)) || B.triangles + E.triangles < 100) out.sweep.push(`${p.name} seed ${seed} ${low ? 'low' : 'high'}: ${R.doors.length} doors, ${B.triangles + E.triangles} triangles`); } catch (e) { out.sweep.push(`${p.name} seed ${seed} ${low ? 'low' : 'high'}: ${String(e.message).slice(0, 140)}`); } }
+  out.sweepN = realPlots.length * 20;
   for (const c of cases) {
-    const { w, d } = c, plot = { ...(c.plot || {}), x: 300, y: Y0, z: -300, face: [0, 1], w, d }, B = fp.strata.builder(), E = fp.strata.builder(), m = { id: c.id, kind: c.kind };
+    const plan = c.real ? PLAN : stub, yb = c.real ? c.plot.y : Y0;
+    const { w, d } = c, plot = { ...(c.plot || {}), x: 300, y: yb, z: -300, face: [0, 1], w, d }, B = fp.strata.builder(), E = fp.strata.builder(), m = { id: c.id, kind: c.kind };
     let R;
     try { R = c.plot ? H.makePlot(B, plot, { ...c.o, E }) : H.make(c.kind, B, plot, { ...c.o, E }); } catch (e) { m.err = String(e.stack || e).slice(0, 300); out.makers.push(m); continue; }
-    m.kind = R.kind; m.form = R.form; m.wantForm = c.form; m.riserBack = plot.against && plot.D ? plot.D - 10 - d / 2 : 0; // (how far behind the plot its riser's face is)
+    m.kind = R.kind; m.form = R.form; m.fit = !!(c.real && BUILT[plot.name]); /* (only the fitting is ours there: little to meet) */ m.wantForm = c.form; m.riserBack = plot.against && plot.D ? plot.D - plan.RISERS.find((q) => q.key === plot.against).D - d / 2 : 0; // (how far behind the plot its riser's face is)
     m.tris = B.triangles + E.triangles; m.nan = [...B.P, ...E.P].some((v) => !Number.isFinite(v));
     m.doors = R.doors.length; m.enter = R.doors.some((q) => q.enter); m.rooms = R.floors.filter((f) => f.layer === 0).length; m.colliders = R.colliders.length;
     // footprint
@@ -68,7 +77,7 @@ const r = await page.evaluate(async () => {
     // closed: the first face a ray meets faces the eye
     let rays = 0, backs = 0;
     const O = new THREE.Vector3(), D = new THREE.Vector3();
-    const look = (ox, oy, oz, tx, ty, tz) => { O.set(ox, oy, oz); D.set(tx - ox, ty - oy, tz - oz); const h = cast(O, D); if (!h) return; rays++; if (h.face.normal.dot(rc.ray.direction) > 0.08) backs++; };
+    const look = (ox, oy, oz, tx, ty, tz) => { O.set(ox, oy, oz); D.set(tx - ox, ty - oy, tz - oz); const h = cast(O, D); if (!h) return; rays++; if (h.face.normal.dot(rc.ray.direction) > 0.08) { backs++; if (!m.backAt) m.backAt = `${(h.point.x - plot.x).toFixed(2)}, ${(h.point.y - plot.y).toFixed(2)}, ${(h.point.z - plot.z).toFixed(2)} (normal ${h.face.normal.x.toFixed(2)}, ${h.face.normal.y.toFixed(2)}, ${h.face.normal.z.toFixed(2)}, ${h.distance.toFixed(2)} m from the eye)`; } };
     const rr = Math.max(w, d) / 2 + 6, inStep = R.form === 'riser';
     for (let a = 0; a < 16; a++) for (const ey of [1.7, 9]) {
       if (inStep && (ey > 2 || a !== 0)) continue; // (the step hides the rest)
@@ -117,9 +126,9 @@ const r = await page.evaluate(async () => {
     // against a riser: no stair, the roof at the tread's height and run to the back
     m.against = false;
     if (plot.against && R.kind === 'late') {
-      const h = plan.LEVEL[plot.roof].y - Y0, roof = R.floors.filter((f) => f.layer === 1 && !f.steps);
+      const h = plan.LEVEL[plot.roof].y - yb, roof = R.floors.filter((f) => f.layer === 1 && !f.steps);
       const backMost = Math.min(...roof.map((f) => f.z - plot.z - f.d / 2));
-      m.against = { stair: R.floors.some((f) => f.steps), y: roof.length ? roof[0].y - Y0 : null, h, gap: m.riserBack, back: backMost + d / 2 + m.riserBack, top: top - h };
+      m.against = { stair: R.floors.some((f) => f.steps), wantStair: plot.stair === 'front', y: roof.length ? roof[0].y - yb : null, h, gap: m.riserBack, back: backMost + d / 2 + m.riserBack, top: top - h };
     }
     for (const q of meshes) q.geometry.dispose();
     out.makers.push(m);
@@ -133,27 +142,14 @@ const r = await page.evaluate(async () => {
   // too small: every maker says so
   for (const [kind, w, d] of [['late', 2, 1.5], ['undercroft', 3, 2], ['carrier', 4, 4], ['elder', 3, 3], ['new', 4, 4]]) { let threw = false; try { H.make(kind, fp.strata.builder(), { x: 0, y: 0, z: 0, face: [0, 1], w, d }, { seed: 1, low: true }); } catch { threw = true; } out.throws.push({ kind, w, d, threw }); }
   { let threw = false; try { H.makePlot(fp.strata.builder(), { name: 'fountain', kind: 'fountain', x: 0, y: 0, z: 0, face: [0, 1], w: 5, d: 5 }, { seed: 1 }); } catch { threw = true; } out.throws.push({ kind: 'makePlot fountain', w: 5, d: 5, threw }); }
-  // the row on the plan: built again into a scene of its own from a plan of the plan's shape (STRAKE as
-  // src/v15/plan.js has it at v15-V0: five 6.8 x 5.2 plots against the Low Rung's riser on run 1), through ctx.lappet
-  {
-    const o = [45, -22], e = [80, -8], L = Math.hypot(e[0] - o[0], e[1] - o[1]), dir = [(e[0] - o[0]) / L, (e[1] - o[1]) / L], n = [dir[1], -dir[0]], at = (s, D) => [o[0] + dir[0] * s + n[0] * D, o[1] + dir[1] * s + n[1] * D];
-    const LEVEL = { low: { y: 6 }, bench: { y: 3.1 } }, RISERS = [{ key: 'low', D: 15.4, top: 6, foot: 3.1 }], D0 = 15.6, slots = ['strake-elder', 'strake-late', 'strake-shop', 'strake-carrier', 'strake-new'];
-    const PLOTS = [['house', 'elder'], ['house', 'late'], ['shop', 'heliarch'], ['carrier', 'noon'], ['new-house', 'new']].map(([kind, hand], i) => { const s = -6 + 6.8 * (i + 0.5), D = D0 + 2.6, [x, z] = at(s, D); return { name: slots[i], kind, hand, level: 'bench', y: 3.1, x, z, face: n, w: 6.8, d: 5.2, against: 'low', roof: 'low', run: 1, s, D, strake: i }; });
-    const plan = { LEVEL, RISERS, PLOTS, plot: (name) => PLOTS.find((p) => p.name === name) || null, STRAKE: { run: 1, s0: -6, s1: 28, D0, depth: 5.2, slot: 6.8, origin: at(-6, D0 + 5.2), along: dir, face: n, length: 34, y: 3.1, slots } };
-    const walk = [], cols = [], c2 = Object.create(fp);
-    Object.assign(c2, { scene: new THREE.Scene(), lappet: { on: true, plan, built: { 'strake-shop': { rad: 1.48, spring: 3.1 + 0.9 } } }, addCollider: (q) => cols.push(q), addWalkable: (fn, q) => { walk.push([fn, q]); return () => {}; }, log: () => {} });
-    try {
-      await (await import('/src/v15/row.js')).build(c2);
-      const Rw = c2.village.row, mid = at(11, D0 + 5.2), late = Rw.records[1], roof = late.floors.filter((f) => f.layer === 1 && !f.steps);
-      out.planRow = { via: Rw.frame.viaPlan, kinds: Rw.records.map((q) => q.kind), forms: Rw.records.map((q) => q.form), off: Math.hypot(Rw.frame.x - mid[0], Rw.frame.z - mid[1]), y: Rw.frame.y, roofY: roof.length ? roof[0].y : null, stair: late.floors.some((f) => f.steps), inSlot: Rw.records.every((q, i) => Math.hypot(q.plot.x - PLOTS[i].x, q.plot.z - PLOTS[i].z) < 0.01), route: Rw.route.length, walks: walk.length, cols: cols.length };
-      c2.scene.traverse((q) => q.geometry && q.geometry.dispose());
-    } catch (e2) { out.planRow = { err: String(e2.stack || e2).slice(0, 300) }; }
-  }
+  // the row on the plan: the page's own row, built by src/v15/row.js from ctx.lappet.plan.STRAKE
+  { const Rw = fp.village.row, S = PLAN.STRAKE, slots = S.slots.map((n) => PLAN.plot(n)), late = Rw.records.find((q) => q.kind === 'late'), roof = late ? late.floors.filter((f) => f.layer === 1 && !f.steps) : [];
+    out.planRow = { via: !!Rw.frame.viaPlan, lappet: !!(fp.lappet && fp.lappet.on !== false), kinds: Rw.records.map((q) => q.kind), forms: Rw.records.map((q) => q.form), y: Rw.frame.y, roofY: roof.length ? roof[0].y : null, low: PLAN.LEVEL.low.y, bench: PLAN.LEVEL.bench.y, stair: !!late && late.floors.some((f) => f.steps), wantStair: PLAN.plot('strake-late').stair === 'front', inSlot: Rw.records.every((q, i) => Math.hypot(q.plot.x - slots[i].x, q.plot.z - slots[i].z) < 0.01), packed: Rw.records.filter((q) => q.packed).map((q) => q.kind) }; }
   // the row
   const V = fp.village, st = V.stats();
   out.row = { records: V.row.records.length, kinds: V.row.records.map((q) => q.kind), tris: st.triangles, perHouse: st.perHouse };
   let draws = 0; fp.scene.traverse((o) => { if (o.isMesh && /^village-row/.test(o.name)) draws++; }); out.row.draws = draws;
-  const roof = V.row.records[0].floors.find((f) => f.layer === 1 && !f.steps && f.r === undefined && f.w > 3);
+  const roof = (V.row.records.find((q) => q.kind === 'late') || V.row.records[0]).floors.find((f) => f.layer === 1 && !f.steps && f.r === undefined && f.w > 3);
   if (roof) { fp.controls.placeAt(roof.x, roof.z, roof.y); await new Promise((q) => setTimeout(q, 600)); out.row.roof = { want: roof.y, feet: fp.player.pos.y - fp.player.eye }; }
   return out;
 });
@@ -167,12 +163,12 @@ for (const m of r.makers) {
   check(!m.nan && m.tris > 150 && m.doors >= 1 && m.colliders >= 3 && (!m.wantForm || m.form === m.wantForm), `${id}: builds (${m.tris} triangles, ${m.doors} doors, ${m.colliders} colliders, ${m.form})`);
   check(m.side <= 0.6 && m.back <= (m.against ? Math.max(0.06, m.against.gap + 0.06) : m.form === 'riser' && m.riserBack > 0 ? m.riserBack + 3.3 : 0.35) && m.front <= 2, // (a shop before its riser keeps its store in the vault behind the plot)
   `${id}: inside its footprint (past the sides ${m.side.toFixed(2)}, the back ${m.back.toFixed(2)}, the front ${m.front.toFixed(2)} m)`);
-  check(m.rays > 100 && m.backs / m.rays < 0.006, `${id}: closed (${m.backs} of ${m.rays} rays met the back of a face first)`);
+  check(m.rays > (m.fit ? 40 : 100) && (m.backs / m.rays < 0.006 || (m.fit && m.backs <= 1)), // (a fitting alone is met by so few rays that one is over the rate) `${id}: closed (${m.backs} of ${m.rays} rays met the back of a face first${m.backAt ? ', the first at ' + m.backAt + ' in its plot' : ''})`);
   check(m.lone === 0, `${id}: every collider has something drawn in it (${m.lone} of ${m.colliders} have nothing)`);
   check(m.fs + m.covered === 0 || (m.holes === 0 && m.fs > 0 && m.fok / m.fs >= 0.75 && m.covered <= m.fs), `${id}: floors are where they are drawn (${m.fok} of ${m.fs} samples, ${m.holes} over nothing, ${m.covered} under furniture)`);
   check(m.doorBad.length === 0, `${id}: its doors do what they say (${m.doorBad.length ? m.doorBad.join('; ') : m.enter ? 'entered' : 'shut'})`);
   if ((m.kind === 'carrier' && m.form === 'sunk') || m.kind === 'new' || (m.kind === 'elder' && m.form === 'lean')) check(m.enter && m.rooms >= 1, `${id}: can be entered (a door marked enter, ${m.rooms} room floors)`);
-  if (m.against && m.against.h) { const a = m.against; check(!a.stair && a.y !== null && Math.abs(a.y - a.h) < 0.02 && a.back < 0.08 && a.back > -0.08, `${id}: against its riser: no stair, the roof at the tread (${a.y === null ? 'no roof floor' : a.y.toFixed(2)} for ${a.h}), its floor to the back edge (${a.back.toFixed(2)} m short)`); }
+  if (m.against && m.against.h) { const a = m.against; check(a.stair === a.wantStair && a.y !== null && Math.abs(a.y - a.h) < 0.02 && a.back < 0.08 && a.back > -0.08, `${id}: against its riser: ${a.wantStair ? 'the front stair the plan gives' : 'no stair'} (${a.stair ? 'a stair' : 'none'}), the roof at the tread (${a.y === null ? 'no roof floor' : a.y.toFixed(2)} for ${a.h}), its floor to the back edge (${a.back.toFixed(2)} m short)`); }
 }
 const forms = new Set(r.late.map((l) => l.form)), tops = new Set(r.late.map((l) => Math.round(l.top * 4)));
 check(r.late.every((l) => l.tris <= 2500), `a Late house costs at most 2,500 triangles on low (ten seeds: ${r.late.map((l) => l.tris).join(', ')})`);
@@ -182,7 +178,8 @@ for (const [kind, rows] of Object.entries(r.variety)) {
   check(f.size >= (kind === 'carrier' ? 2 : 3) && (Math.max(...hs) - Math.min(...hs) >= 1 || Math.max(...ws) - Math.min(...ws) >= 1), `ten ${kind} seeds: ${f.size} forms (${[...f].join(', ')}), heights ${Math.min(...hs).toFixed(1)} to ${Math.max(...hs).toFixed(1)} m, widths above 1.5 m ${Math.min(...ws).toFixed(1)} to ${Math.max(...ws).toFixed(1)} m`);
 }
 for (const t of r.throws) check(t.threw, `${t.kind} on ${t.w} x ${t.d} m throws`);
-{ const p = r.planRow; check(!p.err && p.via && p.kinds.join() === 'elder,late,undercroft,carrier,new' && p.off < 0.05 && Math.abs(p.y - 3.14) < 0.001 && p.roofY !== null && Math.abs(p.roofY - 6) < 0.02 && !p.stair && p.inSlot && p.forms[2] === 'riser', `the row on the plan (ctx.lappet.plan): ${p.err || `five plots in the plan's order (${p.kinds.map((k, i) => k + ' ' + p.forms[i]).join(', ')}), its frame ${p.off.toFixed(2)} m from the middle of the fronts' line, level ${p.y.toFixed(2)}, the Late roof at ${p.roofY === null ? 'none' : p.roofY.toFixed(2)} (the tread: 6), no stair ${!p.stair}, ${p.cols} colliders, ${p.walks} walkables`}`); }
+{ const p = r.planRow; check(p.via && p.lappet && p.kinds.join() === 'elder,late,undercroft,carrier,new' && p.inSlot && Math.abs(p.y - p.bench) < 0.06 && p.roofY !== null && Math.abs(p.roofY - p.low) < 0.02 && p.stair === p.wantStair && p.forms[2] === 'riser', `the row on the real plan (ctx.lappet.plan.STRAKE): ${p.kinds.map((k, i) => k + ' ' + p.forms[i]).join(', ')}; each on its plot ${p.inSlot}; level ${p.y.toFixed(2)} (bench ${p.bench}); the Late roof at ${p.roofY === null ? 'none' : p.roofY.toFixed(2)} (the Low Rung: ${p.low}); its stair ${p.stair} (the plan: ${p.wantStair}); packed behind: ${p.packed.join(', ') || 'none'}`); }
+check(r.sweep.length === 0, `every building plot of the real plan builds at seeds 1 to 10, low and high (${r.sweepN} builds${r.sweep.length ? ': ' + r.sweep.slice(0, 6).join(' | ') : ''})`);
 check(r.row.records === 5 && new Set(r.row.kinds).size === 5, `the row: five buildings of five kinds (${r.row.kinds.join(', ')})`);
 check(r.row.draws <= 3 && r.row.tris <= 45000, `the row: ${r.row.draws} draw calls, ${r.row.tris} triangles on low (${r.row.perHouse.map((h) => `${h.kind} ${h.tris}`).join(', ')})`);
 check(r.row.roof && Math.abs(r.row.roof.feet - r.row.roof.want) < 0.1, `the row: a walker placed on the Late house's roof stands on it (${r.row.roof ? r.row.roof.feet.toFixed(2) + ' for ' + r.row.roof.want.toFixed(2) : 'no roof floor'})`);
