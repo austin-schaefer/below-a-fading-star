@@ -441,7 +441,7 @@ export async function build(ctx) {
 
   // ---- the columns: octagons straight-tapered from the water to a plain block of a capital that carries the roof
   const COL = { a0: 0.95, a1: 0.78, chW: 0.42, chD: 0.1, cap: 0.85, capW: 2.1, neck: 0.3, neckW: 1.75 };
-  const columns = [];
+  const columns = [], tops = [];
   const RC = 1 / Math.cos(Math.PI / 8);
   // what the roof's fall did to the columns under the hole: one gone (its drums lie in the water), one broken at
   // mid-height, one broken off where the cone now buries it
@@ -495,6 +495,7 @@ export async function build(ctx) {
       H.geo(new THREE.BoxGeometry(COL.neckW, COL.neck, COL.neckW), M, STONE_D);
       M.compose(V.set(tx, cTop - COL.cap / 2, tz), Q.identity(), S1);
       H.geo(new THREE.BoxGeometry(COL.capW, COL.cap, COL.capW), M, STONE);
+      if (naveEdge(tx, tz) < 2) tops.push({ x: tx, z: tz, top: cTop }); // (v15-W3) a capital under the open hole: a floor
     }
     columns.push({ x, z });
   }
@@ -555,6 +556,7 @@ export async function build(ctx) {
     }
   }
   // ---- the fallen slabs: the roof's, their turf still on them, tilted against the columns and down onto the cone
+  const slabTops = [];
   const SLABS = [
     // x, z (centre offset from the hole's centre), length, width, yaw, pitch (deg), roll (deg), y-lift above the cone
     [-6.5, 7.5, 7.2, 4.2, 20, -28, 6, 1.4],
@@ -578,6 +580,9 @@ export async function build(ctx) {
     for (let i = 0; i < tp.count; i++) if (tp.getY(i) > 0) tp.setY(i, tp.getY(i) + SN.noise2(tp.getX(i) * 1.7 + ox, tp.getZ(i) * 1.7 + oz) * 0.12);
     M.compose(V.set(0, 0.62, 0).applyQuaternion(Q).add(new THREE.Vector3(x, y, z)), Q, S1);
     H.geo(turf, M, (nx, ny) => (ny > 0.5 ? TURF : SOIL), 0.2);
+    // (v15-W3) its turf's top as a floor: the plane through the turf's top face, inside the slab's outline
+    { const n = new THREE.Vector3(0, 1, 0).applyQuaternion(Q), c = new THREE.Vector3(0, 0.62 + 0.225, 0).applyQuaternion(Q).add(new THREE.Vector3(x, y, z)), iq = Q.clone().invert();
+      slabTops.push({ n, c, iq, hw: wid * 0.46, hl: len * 0.44 }); }
   }
   await ctx.progress?.('the foundered nave', 0.8);
 
@@ -636,6 +641,25 @@ export async function build(ctx) {
   { const WF = NAVE.water - 1.26, R = NAVE.r + 8;
     const inHallW = (x, z) => x > NAVE.x0 + 9 && x < NAVE.x1 - 0.5 && Math.abs(z - CZ) < HALF - 0.4;
     ctx.addWalkable((x, z) => (Math.abs(x - CX) < R && Math.abs(z - CZ) < R && naveEdge(x, z) < 0 ? WF : null), { replace: true });
+    // what is drawn over the hole is stood on (v15-W3, the owner: "i can't jump onto these pillars"): each capital under
+    // the open hole (its top the roof's underside), the roof's slab jutting under the rim's turf, and the fallen slabs'
+    // turf on the cone
+    for (const t of tops) ctx.addCollider({ x: t.x, z: t.z, r: COL.capW / 2, y: t.top - COL.cap, h: COL.cap });
+    const _v = new THREE.Vector3();
+    ctx.addWalkable((x, z) => {
+      if (Math.abs(x - CX) > R || Math.abs(z - CZ) > R) return null;
+      const e = naveEdge(x, z); if (e >= 0) return null;
+      const b = naveBearing(x, z), jut = 0.25 + Math.max(0, SN.noise2(b * 0.09, 3.1)) * 1.6;
+      if (e < -jut) {
+        for (const S of slabTops) {
+          const y = S.c.y - (S.n.x * (x - S.c.x) + S.n.z * (z - S.c.z)) / S.n.y;
+          _v.set(x - S.c.x, y - S.c.y, z - S.c.z).applyQuaternion(S.iq);
+          if (Math.abs(_v.x) <= S.hw && Math.abs(_v.z) <= S.hl) return y;
+        }
+        return null;
+      }
+      return ceilAt(x, z) + 0.58; // the jutting slab's top, under the turf's curl
+    });
     (ctx.fallTraps ||= []).push((x, z, feet) => feet < WF + 0.5 && Math.abs(x - CX) < R && Math.abs(z - CZ) < R && naveEdge(x, z) < 0 && (CR_OFF || !inHallW(x, z))); }
 
   // ---- the life in the water

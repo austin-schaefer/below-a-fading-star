@@ -80,7 +80,7 @@ const R = await page.evaluate(async () => {
   // steered along the lip (0.25 rad in from its line, four seconds) stays on the turf at it and never passes it
   const PFL = (await import('/src/v14/pit/plan.js')).FLOOR;
   const landsIn = {
-    'the Foundered Nave': (L) => L.on && (((L.stack === 'nave-water' || L.stack === 'coffin-road') && L.feet >= NG.NAVE.water - 1.4) || (fp.fallTraps || []).some((fn) => fn(L.x, L.z, L.feet))), // (the water, the road, or the hole's floor where no hall is under it: a trap that wakes them at the lip)
+    'the Foundered Nave': (L) => L.on && (((L.stack === 'nave-water' || L.stack === 'coffin-road') && L.feet >= NG.NAVE.water - 1.4) || L.top || L.feet - L.ground > 1 || (fp.fallTraps || []).some((fn) => fn(L.x, L.z, L.feet))), // (or a drawn top over the hole: a capital, the roof slab's ledge under the rim, a fallen slab) // (the water, the road, or the hole's floor where no hall is under it: a trap that wakes them at the lip)
     'the Pit': (L) => L.on && (L.stack === 'pit-stair' || (L.feet >= PFL.y0 - 0.4 && L.feet <= PFL.edge + 12) || (fp.fallTraps || []).some((fn) => fn(L.x, L.z, L.feet))),
   };
   for (const [name, H, edge] of [['the Foundered Nave', NG.NAVE, NG.naveEdge], ['the Pit', PG.PIT, PG.pitEdge]]) {
@@ -103,7 +103,8 @@ const R = await page.evaluate(async () => {
       const DRIFT = 0.15;
       const steer = () => { const e = 0.5, gx = edge(p.pos.x + e, p.pos.z) - edge(p.pos.x - e, p.pos.z), gz = edge(p.pos.x, p.pos.z + e) - edge(p.pos.x, p.pos.z - e), l = Math.hypot(gx, gz) || 1, ux = -gx / l, uz = -gz / l, dx = (-uz) * Math.cos(DRIFT) + ux * Math.sin(DRIFT), dz = ux * Math.cos(DRIFT) + uz * Math.sin(DRIFT); return Math.atan2(-dx, -dz); };
       let drop = 0; const onLand = (e) => { drop = Math.max(drop, e.detail.drop); }; fp.events.addEventListener('land', onLand);
-      const r = walk(tx, tz, H.x, H.z, edge, { secs: 7, steer });
+      const DL = (fp.holeLips || []).find((l) => l.name === (name === 'the Pit' ? 'pit' : 'nave'));
+      const r = walk(tx, tz, H.x, H.z, DL ? (x, z) => DL.edge(x, z) : edge, { secs: 7, steer });
       fp.events.removeEventListener('land', onLand);
       res.push({ along: `${name}: a walk steered along the lip (${DRIFT} rad in from its line)`, closest: r.minEdge, drop, end: r.feet, crust: false, slid: !!(r.landed && landsIn[name](r.landed)) }); void R; }
     // a hurrying hop at the lip: over it
@@ -394,8 +395,8 @@ for (const r of R) {
   if (r.stairs) check(r.stairs.length >= 1, `${r.hole || r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
   // (the Pit's rim is a crust of banks too steep to stand on, running off the mapped line: a walk drifting in can step
   // onto one and slide down it; there the claim is the weaker one: it ends on the turf, or on the Pit's floor, never through)
-  if (r.along && r.crust) { check((r.drop <= 3 || r.slid) && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip, and stays on the turf or slides down the crust onto the Pit's floor (never through it)`, `closest ${f(r.closest)} m to the lip as mapped, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}${r.slid ? ', on the floor' : ''}`); continue; }
-  if (r.along) { check(r.drop <= 3 && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip and never falls (no drop over 3 m: the edge-guard; the Pit's crust has steps of 2 m)`, `closest ${f(r.closest)} m to the lip as mapped, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}`); continue; }
+  if (r.along && r.crust) { check((r.drop <= 3 || r.slid) && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip, and stays on the turf or slides down the crust onto the Pit's floor (never through it)`, `closest ${f(r.closest)} m to the drawn lip, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}${r.slid ? ', on the floor' : ''}`); continue; }
+  if (r.along) { check(r.drop <= 3 && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip and never falls (no drop over 3 m: the edge-guard; the Pit's crust has steps of 2 m)`, `closest ${f(r.closest)} m to the drawn lip, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}`); continue; }
   if (r.hole) { check(r.over === r.need && r.need > 0, `${r.hole} (${r.mode}): walks to the lip and over it, nothing unseen stops them short (v15-W3)`, `${r.over} of ${r.need} over${r.bad.length ? '; ' + r.bad.slice(0, 3).join('; ') : ''}`);
     check(r.sane === r.need, `${r.hole} (${r.mode}): lands where the drawing says (never through a floor)`, `${r.sane} of ${r.need}${r.bad.length ? '; ' + r.bad.slice(0, 3).join('; ') : ''}`); continue; }
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }

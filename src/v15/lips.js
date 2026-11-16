@@ -37,9 +37,10 @@ export function holeLip(ctx, o) {
     x0: o.x - pad, x1: o.x + pad, z0: o.z - pad, z1: o.z + pad,
     edge(x, z) {
       if (o.open && o.open(x, z)) return 1;
-      if (!R) build();
-      return Math.hypot(x - o.x, z - o.z) - rLip(bearing(x, z));
+      return L.dist(x, z);
     },
+    // the line's signed distance, the openings ignored (its normal is taken from this, so an opening's sides do not turn it)
+    dist(x, z) { if (!R) build(); return Math.hypot(x - o.x, z - o.z) - rLip(bearing(x, z)); },
     get line() { if (!R) build(); return R; },
   };
   ctx.addLip(L);

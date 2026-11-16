@@ -315,7 +315,7 @@ export function buildControls(ctx) {
     return terrain.heightAt(x, z);
   }
   ctx.addWalkable = addWalkable;
-  // --- drawn lips (v15-W3): addLip({ x0, x1, z0, z1, edge(x, z) }) declares where a hole's ground visibly breaks: edge is
+  // --- drawn lips (v15-W3): addLip({ x0, x1, z0, z1, edge(x, z), dist(x, z) }) declares where a hole's ground visibly breaks: edge is
   // a smooth signed distance, positive outside, negative over the hole. To the edge-guard it is a lip like a drop: a
   // plain walk along it is held there, a push square at it, a hurry or a hop goes over. It holds nothing else (no
   // collider, nothing in the air). Use it where the drop begins with a slope (a crust, a bank) or a ragged rim whose
@@ -326,7 +326,10 @@ export function buildControls(ctx) {
   // the ground's normal: the terrain's, or where a replacing floor holds the ground (a pit's bowl and walls), that
   // floor's own (v15-W3: a walker who lands against the Pit's wall slides down it, as on any slope too steep to stand)
   const _fn = new THREE.Vector3();
-  function floorNormal(x, z) {
+  // With `y` (the floor's height there): a raise-only walkable that holds the feet above the ground (a stair, a deck) is
+  // level, whatever the ground under it does.
+  function floorNormal(x, z, y) {
+    if (y !== undefined && Math.abs(y - baseFloor(x, z)) > 0.05) return UP;
     if (!replacers.length) return terrain.normalAt(x, z);
     const g = baseFloor(x, z);
     if (g === terrain.heightAt(x, z)) return terrain.normalAt(x, z);
@@ -543,7 +546,7 @@ export function buildControls(ctx) {
     // slope slows you and stops you on the steep stuff; a raised floor (a deck, a stair) more than a metre
     // above the ground is level, whatever the slope beneath it, and so is a stacked floor
     const raised = state.onTop || state.onStack || state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
-    const n = raised ? UP : floorNormal(state.pos.x, state.pos.z);
+    const n = raised ? UP : floorNormal(state.pos.x, state.pos.z, state.pos.y - state.eye);
     const slope = raised ? 0 : Math.acos(clamp(n.y, -1, 1));
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
 
@@ -586,7 +589,7 @@ export function buildControls(ctx) {
           if (mv.x < L.x0 || mv.x > L.x1 || mv.z < L.z0 || mv.z > L.z1) continue;
           const e1 = L.edge(mv.x, mv.z); if (e1 >= 0) continue;
           const e0 = L.edge(ox, oz); if (e1 >= e0) continue;
-          const g = 0.5, gx = L.edge(mv.x + g, mv.z) - L.edge(mv.x - g, mv.z), gz = L.edge(mv.x, mv.z + g) - L.edge(mv.x, mv.z - g), gl = hyp(gx, gz) || 1;
+          const D = L.dist || L.edge, g = 0.5, gx = D(mv.x + g, mv.z) - D(mv.x - g, mv.z), gz = D(mv.x, mv.z + g) - D(mv.x, mv.z - g), gl = hyp(gx, gz) || 1;
           lipN.x = -gx / gl; lipN.z = -gz / gl; lipAt = L; kind = LIP_LINE; break;
         }
       }
@@ -595,9 +598,14 @@ export function buildControls(ctx) {
         floorAt(pm.x, pm.z, feet0, false, probe, state.onStack); pm.y = probe.y; pm.stack = probe.stack;
         if (edgeKind(pm, ref) === LIP_SOFT) kind = LIP_SOFT;
         // and onto ground too steep to stand (a crust leaning into a hole): its top is the lip, its normal the slope's
+        // (only where that steep ground leads down more than LIP within 1.2 m: a short bank is walked down, not a lip)
         else if (!mv.stack && !mv.onTop && mv.y < terrain.heightAt(mv.x, mv.z) + 1) {
-          const nn = floorNormal(mv.x, mv.z);
-          if (nn.y < STEEP_Y) { const h = hyp(nn.x, nn.z) || 1; kind = LIP_STEEP; lipN.x = nn.x / h; lipN.z = nn.z / h; }
+          const nn = floorNormal(mv.x, mv.z, mv.y);
+          if (nn.y < STEEP_Y) {
+            const h = hyp(nn.x, nn.z) || 1, dx = nn.x / h, dz = nn.z / h;
+            floorAt(mv.x + dx * 1.2, mv.z + dz * 1.2, feet0, false, probe, state.onStack);
+            if (probe.y < feet0 - LIP) { kind = LIP_STEEP; lipN.x = dx; lipN.z = dz; }
+          }
         }
       }
       if (kind === EDGE_HELD || ((kind === LIP_SOFT || kind === LIP_STEEP || kind === LIP_LINE) && !inHop && !hurry && (slope <= 0.95 || kind === LIP_LINE))) { // (on ground too steep to stand, they slide, lip or not)
@@ -637,10 +645,12 @@ export function buildControls(ctx) {
     // floor probe on a frame whose move rises or is in the air.
     if (!mv.onTop && !mv.stack) {
       const base = state.onGround ? Math.max(feet0, state.floorBelow) : state.floorBelow, dh = hyp(mv.x - ox, mv.z - oz);
-      let wall = !state.onGround && mv.y > feet0 + 0.3;
+      // (replacing floors only: the terrain's own steep ground is the slope push's, and a hop over a rough bank is free)
+      const repl = (x, z, y) => { if (!replacers.length || Math.abs(y - baseFloor(x, z)) > 0.05) return false; for (const fn of replacers) { const h = fn(x, z); if (h !== null && h !== undefined) return true; } return false; };
+      let wall = !state.onGround && mv.y > feet0 + 0.3 && repl(mv.x, mv.z, mv.y);
       if (!wall && dh > 0.001 && (mv.y > base + 0.05 || !state.onGround)) {
         floorAt(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, base, false, probe, state.onStack);
-        wall = !probe.stack && probe.y - base > 0.9;
+        wall = !probe.stack && probe.y - base > 0.9 && repl(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, probe.y);
       }
       if (wall) { mv = resolve(ox, oz, feet0, mvB); state.vel.x = 0; state.vel.z = 0; }
     }
@@ -663,7 +673,7 @@ export function buildControls(ctx) {
     // how far the walker has fallen: the highest the feet have been since they last stood (for v12/fall.js)
     // (v15-W3) ground too steep to stand is not standing: a slide down a face (the Pit's throat) is one fall from its top
     // (player.steep), and lands, sending 'land', only where the feet can stand
-    state.steep = state.onGround && !mv.stack && !mv.onTop && floorNormal(state.pos.x, state.pos.z).y < STEEP_Y;
+    state.steep = state.onGround && !mv.stack && !mv.onTop && floorNormal(state.pos.x, state.pos.z, feet).y < STEEP_Y;
     if (wasOnGround && slope <= 0.95) state.fallTop = feet0;
     else if (feet0 > state.fallTop) state.fallTop = feet0;
     if (state.onGround && !state.steep && (!wasOnGround || slope > 0.95)) {
