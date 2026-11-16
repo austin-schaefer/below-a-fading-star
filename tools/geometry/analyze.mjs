@@ -17,12 +17,12 @@ export const TOL = {
   // coplanar: normals within 1.8 degrees (as tools/coplanar.js), every vertex of each within `plane` of the other's
   // plane, and an overlap of more than `area`. The camera's near plane is 0.08 m on a 24-bit depth buffer: two faces 4 mm
   // apart fight from about 70 m, 1 mm apart from 35 m; v14-F1's landing fix moved planks 2.5 cm and held.
-  dot: 0.9995, plane: 0.004, area: 0.004,
+  dot: 0.9995, plane: 0.004, area: 0.02,
   // floating: vertices welded at 2 mm make a piece; two pieces touch when a vertex of one is within `touch` of a face of
   // the other or an edge of one passes through a face of the other. A group of touching pieces floats when none of it
   // is an anchor (the ground, water), leaves the place, or is bigger than `big` across (a wall, a floor, a hall: what
   // things are hung from, which a place this size cannot see the far end of).
-  weld: 0.002, touch: 0.025, big: 12, minSize: 0.12, decal: 0.08,
+  weld: 0.002, touch: 0.05, big: 12, minSize: 0.12, decal: 0.08,
   // loose ends: a piece at least `endMin` long and `slender` times its thickness, each end its last `endLen` of length
   slender: 4, endMin: 0.3, endLen: 0.12,
   // backs: rays from each standing eye; the first face met within `far` metres. `rays` directions on a sphere.

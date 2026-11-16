@@ -13,11 +13,11 @@
 // back from the route's end. `exempt`: extra { pattern: reason } for this place alone (the tool's own list is general).
 export const PLACES = [
   { name: 'v14-descent', ascent: 'coffin-road', half: 9 }, // the Nave's hung stair down from the shears and the road over the water
-  { name: 'v14-passage', ascent: 'wellward-way', half: 7, sealed: [6, -10] }, // the Wellward Way, the Nave's door to the Pit's floor
+  { name: 'v14-passage', ascent: 'wellward-way', half: 16, sealed: [6, -10] }, // the Wellward Way, the Nave's door to the Pit's floor
   { name: 'v14-pit-floor', pts: [[187.6, 187.2, -30.2], [196, 184], [203.6, 175.2, -31.4], [208.9, 160.2, -31.1]], half: 9 }, // the passage's mouth on the Pit's floor (#60)
   { name: 'v14-pit-stair', ascent: 'pit-stair', half: 8 }, // the Pit's wall stair and its landings, floor to lip
   { name: 'v12-stair', ascent: 'stair', half: 6 }, // the Diffident Stair up the wall, its landings and top
-  { name: 'v12-lift-lower', c: [-292, -18], r: 12 }, // the lift's lower station: plinth, bell arch, the cage at rest
+  { name: 'v12-lift-lower', pts: [[-280, -19], [-288, -18.6], [-296, -18.2]], half: 12 }, // the path in to the lift's lower station: plinth, bell arch, the cage at rest
   { name: 'v12-lift-gallery', ascent: 'lift-gallery', half: 6 }, // the gallery from the upper station along the face
   { name: 'v12-icefall', ascent: 'icefall', half: 6 }, // the way up the icefall, its bridge over the crevasse
   { name: 'span-west-stairs', span: 'west', half: 7 }, // the Cyclopean Stairs, the Span's west end

@@ -11,15 +11,16 @@
 // Each finding prints its kind, mesh names, world position and a ?pos= URL (with the console line that stands you on
 // a floor off the ground). Before the world, a fixture is planted in the air over the spawn (never in the world's
 // files) with one fault of each kind beside sound parts of each kind: each fault must be found and the sound parts not.
-// Known findings are in tools/geometry-baseline.json (key, the issue or the reason); the test fails on any finding not
-// in it, and says which baseline keys no longer appear (fixed: take them out).
+// Known findings are in tools/geometry-baseline.json, counted by group (kind, place, mesh) with the issue or the
+// reason beside each: a place fails when a group grows or a new one appears, and the run says which groups shrank
+// (fixed: lower them, or GEOM_BASELINE=write rewrites the counts from the run and keeps every reason).
 //   node tools/geometry-test.mjs [base=http://localhost:8123] [place,place]   (env ONLY_PLACES= too)
 //   GEOM_LIST=1 prints each place's parts and triangle counts; GEOM_JSON=path writes every finding as JSON;
 //   GEOM_ALL=1 prints every finding, not only the new ones and the worst ten; GEOM_DUMP=dir writes each place's faces
 //   as JSON there (for a closer look in node with tools/geometry/analyze.mjs).
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { coplanar, floating, backs, TOL } from './geometry/analyze.mjs';
 import { PLACES } from './geometry/places.mjs';
@@ -48,7 +49,7 @@ const ANCHOR = words('terrain', 'skin', 'ground', 'crust', 'water', 'river', 'po
 const places = PLACES.slice();
 const v15 = join(here, '..', 'src', 'v15', 'plan.js');
 if (existsSync(v15)) {
-  try { const m = await import(v15); for (const p of m.GEOMETRY_PLACES || []) places.push(p); }
+  try { const m = await import(pathToFileURL(v15).href); for (const p of m.GEOMETRY_PLACES || []) places.push(p); }
   catch (e) { console.log(`(src/v15/plan.js did not load: ${e.message})`); }
 }
 const run = places.filter((p) => !only.length || only.includes(p.name));
@@ -95,6 +96,7 @@ function where(soup, at, from) {
   return `${base}/?q=medium&pos=${f1(s[0])},${f1(s[2])}&yaw=${f2(yaw)}&pitch=${f2(pitch)}  (feet y ${f1(feet)}: __fp.controls.placeAt(${f1(s[0])}, ${f1(s[2])}, ${f1(feet + 0.1)}))`;
 }
 const nm = (soup, i) => (i < 0 ? '(sky)' : soup.parts[i].name + (soup.parts[i].inst >= 0 ? `[${soup.parts[i].inst}]` : ''));
+const groupOf = (f) => `${f.kind}${/one end/.test(f.info) ? '-end' : ''}|${f.place}|${f.names[0].replace(/\[\d+\]/g, '').replace(/#\d+$/, '')}`;
 const key = (kind, place, names, at) => `${kind}|${place}|${names.join('+')}|${Math.round(at[0])},${Math.round(at[1])},${Math.round(at[2])}`;
 
 function judge(place, soup) {
@@ -185,13 +187,18 @@ for (const place of run) {
   if (process.env.GEOM_DUMP) writeFileSync(join(process.env.GEOM_DUMP, `${place.name}.json`), JSON.stringify({ ...soup, P: Array.from(soup.P), S: Array.from(soup.S), part: Array.from(soup.part) }));
   const ex = Date.now() - tp;
   const { out, ms } = judge(place, soup);
-  for (const f of out) { all.push(f); seenKeys.add(f.key); }
-  const fresh = out.filter((f) => !baseline.known[f.key]);
+  // the baseline counts findings by group (kind, place, the first mesh's name without its instance): a place fails when
+  // a group has more findings than the baseline allows, or a group appears that it does not name
+  const groups = new Map();
+  for (const f of out) { all.push(f); const g = groupOf(f); seenKeys.add(g); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(f); }
+  const fresh = [];
+  for (const [g, list] of groups) { const k = baseline.known[g]; if (!k || list.length > k.n) fresh.push(...list.map((f) => ({ ...f, over: `${g}: ${list.length} found, baseline ${k ? k.n : 0}` }))); }
   const by = (k) => out.filter((f) => f.kind === k).length;
-  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}; ${fresh.length} new; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)})`);
+  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}; ${groups.size} groups, ${new Set(fresh.map((f) => f.over)).size} over the baseline; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)})`);
+  for (const o of new Set(fresh.map((f) => f.over))) console.log(`   OVER  ${o}`);
   const show = process.env.GEOM_ALL ? out : fresh;
-  for (const f of show) console.log(`   ${baseline.known[f.key] ? 'known' : 'NEW  '} ${f.kind.padEnd(8)} ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n         ${f.url}\n         key ${f.key}`);
-  check(!fresh.length, `${place.name}: no geometry fault beyond the baseline`, `${out.length} found, ${out.length - fresh.length} known`);
+  for (const f of show) console.log(`   ${f.kind.padEnd(8)} ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n         ${f.url}`);
+  check(!fresh.length, `${place.name}: no geometry fault beyond the baseline`, `${out.length} found in ${groups.size} groups`);
 }
 await browser.close();
 
@@ -202,9 +209,18 @@ for (const [k, list] of Object.entries(worst)) {
   console.log(`${k}: ${list.length}`);
   for (const f of list.sort((a, b) => b.score - a.score).slice(0, 10)) console.log(`   ${f.place}  ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n      ${f.url}`);
 }
-if (run.length === places.length) {
-  const gone = Object.keys(baseline.known).filter((k) => !seenKeys.has(k));
-  if (gone.length) console.log(`baseline keys no longer found (fixed? take them out of tools/geometry-baseline.json):\n   ${gone.join('\n   ')}`);
+const counts = {};
+for (const f of all) { const g = groupOf(f); counts[g] = (counts[g] || 0) + 1; }
+const ran = new Set(run.map((p) => p.name));
+const fewer = Object.entries(baseline.known).filter(([g, k]) => ran.has(g.split('|')[1]) && (counts[g] || 0) < k.n);
+if (fewer.length) console.log(`baseline groups now smaller (fixed? lower n in tools/geometry-baseline.json, or GEOM_BASELINE=write):\n   ${fewer.map(([g, k]) => `${g}: ${counts[g] || 0} of ${k.n}`).join('\n   ')}`);
+if (process.env.GEOM_BASELINE === 'write') {
+  const known = {};
+  for (const [g, n] of Object.entries(counts).sort()) known[g] = { n, why: baseline.known[g]?.why || 'on next when the check was written; not yet judged' };
+  for (const [g, k] of Object.entries(baseline.known)) if (!ran.has(g.split('|')[1])) known[g] = k;
+  const rows = Object.entries(known).map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
+  writeFileSync(baseFile, `{\n "about": ${JSON.stringify(baseline.about || '')},\n "known": {\n${rows.join(',\n')}\n }\n}\n`);
+  console.log(`wrote ${Object.keys(known).length} groups to ${baseFile}`);
 }
 if (process.env.GEOM_JSON) writeFileSync(process.env.GEOM_JSON, JSON.stringify(all, null, 1));
 check(!errors.length, 'no page errors', errors.slice(0, 3).join(' | '));

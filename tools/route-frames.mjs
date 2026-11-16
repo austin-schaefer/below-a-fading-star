@@ -17,7 +17,7 @@
 //     the stand it names, looking at the fault, and a sheet of them.
 import { createRequire } from 'node:module';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { PLACES } from './geometry/places.mjs';
 let pw;
@@ -34,7 +34,7 @@ mkdirSync('shots/wip', { recursive: true });
 
 const places = PLACES.slice();
 const v15 = join(here, '..', 'src', 'v15', 'plan.js');
-if (existsSync(v15)) { try { const m = await import(v15); places.push(...(m.GEOMETRY_PLACES || [])); } catch { /* no village yet */ } }
+if (existsSync(v15)) { try { const m = await import(pathToFileURL(v15).href); places.push(...(m.GEOMETRY_PLACES || [])); } catch { /* no village yet */ } }
 
 let views = [];
 let place = null;
