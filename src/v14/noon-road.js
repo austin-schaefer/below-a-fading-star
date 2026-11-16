@@ -141,7 +141,13 @@ export function buildNoon(ctx, { lit, below, extras = [] }) {
   scene.add(mesh); below.keep(mesh);
   // the stored light: a steady lamp over each vessel that still holds it (lights.js keeps the nearest three)
   const lights = [], LAMPS = lamps();
-  for (const [x, y, z, s, reach] of LAMPS) {
+  // (v14-F1) a light is kept 3.3 m off any column's axis (its face ~2.4 m), moved straight away from it: the last
+  // carrier's, 1.6 m from the south row's column at (293.5, 44.5), washed that column's face flat and pale at eye
+  // height, and from the road's east end it read as daylight
+  const cols = ctx.nave?.columns || [], KEEP = 3.3;
+  for (const [x0, y, z0, s, reach] of LAMPS) {
+    let x = x0, z = z0;
+    for (const c of cols) { const dx = x - c.x, dz = z - c.z, d = Math.hypot(dx, dz); if (d < KEEP && d > 1e-3) { x = c.x + (dx / d) * KEEP; z = c.z + (dz / d) * KEEP; } }
     const L = new THREE.PointLight(new THREE.Color(NOON.lightHex), 9 * s, reach + 4, 2);
     L.position.set(x, y + 0.6, z); L.name = 'noon-road-light'; scene.add(L); lights.push({ L, i: 9 * s, ph: x * 0.37 });
   }
