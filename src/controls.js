@@ -30,7 +30,7 @@ export function buildControls(ctx) {
   const url = new URL(location.href);
   if (url.searchParams.get('pos')) {
     const [x, z] = url.searchParams.get('pos').split(',').map(Number);
-    state.pos.set(x, terrain.heightAt(x, z) + state.eye, z);
+    const fy = url.searchParams.get('pos').split(',')[2]; state.pos.set(x, (fy !== undefined && fy !== '' && Number.isFinite(+fy) ? +fy : terrain.heightAt(x, z)) + state.eye, z); // pos=x,z,y: the feet at y, on the floor there (v15-H1)
   }
   if (url.searchParams.get('yaw')) state.yaw = Number(url.searchParams.get('yaw'));
   const speedMul = Number(url.searchParams.get('speed')) > 0 ? Number(url.searchParams.get('speed')) : 1;

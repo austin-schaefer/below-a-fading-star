@@ -1,6 +1,6 @@
 # Critic brief
 
-Hand this to a fresh agent before every release to `main`, and between milestones when choosing what to build. Use a strong model. Do not tell it what the milestone was meant to do: it judges what is there. Fill in the bracketed parts.
+Hand this to a fresh agent before every release to `main`, and between milestones when choosing what to build. Use a strong model. Do not tell it what the milestone was meant to do: it judges what is there. Fill in the bracketed parts. **Its time has a floor, not a ceiling:** 30 minutes, plus 10 for every 25 m of walkable route new since the last release (v14's 25-minute critic over a stair, a hall and a 121 m passage let five glitches through within the hour; #64), and a second, shorter pass over anything changed after its report. Give it the new places' names in `tools/geometry/places.mjs`, not what they are meant to be.
 
 ---
 
@@ -10,6 +10,7 @@ Load the `wilderness` skill (serving, the render tools, where renders go) and ke
 
 1. **Arrive as a visitor.** Render the loading card and the first view after "Go out". What does someone who knows nothing see, and would they stay?
 2. **Walk it.** Use `tools/views.mjs` to take at least thirty views: a route out from the spawn along the road, each region, each named place (the settings menu's teleport list has them), and ten places nobody would think to check (a far corner, underwater, behind a ruin, straight up, straight down). Look at every render with the Read tool.
+2b. **Walk what is new on foot, a metre at a time.** For each new walkable place named in `[places]`, run `tools/route-frames.mjs <base> <place> medium critic` and read its contact sheet, then every frame where something looks wrong: stripes that change from one metre to the next (faces fighting), a hole onto what should be behind a wall, a strut or chain whose end you can see past. The stands are not where the glitches are.
 3. **Check it on a phone.** Repeat six views at `?q=low` in a portrait viewport (`tools/shot.mjs <url> <out.png> 390 844`).
 4. **Listen.** Run the audio survey (`sound-design` skill, `harness.md`) and read the numbers and the band tables at four poses (`--poses=`; `--images` only if the text leaves a question).
 5. **Look for stories, then check.** While walking, note every find that seemed to be about someone and made you want to look further, and where you went next. Only after the walk, open `stories/README.md`: which of its stories did you notice unprompted, which beats did you walk past? For the plain ones you missed, go back to two and say what would have made you see them. For the deep ones, say only whether their surface read as anything.
