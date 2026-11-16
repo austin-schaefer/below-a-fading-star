@@ -272,3 +272,13 @@ The owner, 13:35, on a test for the birds alone: "don't we need some more genera
 - **In flight:** W3 edges (`issue-1527-edges`, 8172, `afffb9a425c739624`), W6 the Collation's pad (`issue-1533-collation`, 8175, `a0b3ce9e358fbb0cb`; `dressing` is red on `next` until it lands).
 - **Waiting on the owner (none blocks):** the Lees' turret on the main flight's axis (move it, or leave it); two screenshots that arrived as terminal captures (a light by the stairs, a pile of bricks); the quotations of #76; the stray branch `v15-briefs-tmp`.
 
+**2026-11-16, 15:02 PST. W3 (edges) taken back off `next`: not in v15 as it stands.**
+
+The orchestrator merged W3 into `next` locally (unpushed) at about 14:40 so the owner could try it on 8123, while its own walk had already failed the rule at the Pit. The owner, 14:54 to 15:00, on that build:
+- "something in all this seems to have peeled the pit's edges away from surrounding terrain" (`shots/wip/owner-v15/18.png`: from the Pit's rim looking down, the cracked ground's edge standing clear of the Pit's wall), then "actually the edge of the pit has gotten separated from terrain all around it".
+- "walking along, i still can't get over this terrain here" (the screenshot was of the terminal: place unknown).
+- "visual jitter is back ascending stairs; it was gone for a long time".
+- "ltos of areas around this edge wher ei can just fall thru eterrain; conversely, i can't jump onto these pillar.s feels janky." (`20.png`: the Nave's sinkhole from its rim, the columns' capitals at the lip), "very easy to just fall thru terrain", "this might not be prime-time ready".
+
+Agreed: the local merge is dropped (`git reset --keep origin/next`: only the unpushed merge commit; W3's work is whole on `origin/issue-1527-edges`), so 8123 is `next` without W3 again. **Not yet known which of these four are W3's** and which came with W4, W5, W6 or were always there: the owner's next look at 8123 (the stair jitter, the Pit's rim) tells. W3 goes on in its own worktree against these notes and ships after v15 as a point release when the owner says it is ready. v15's note says the invisible walls round pits are still there.
+
