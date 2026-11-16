@@ -205,7 +205,7 @@ export const LANES = [
   // stand: V0 drew it through the stable and both its houses on the stable's walls)
   lane('wall-lane', 'foot', 2.4, [[93.6, -30.3], [100, -29.6], [108, -28.6], [112.5, -31]], 'the Thumbway [Proposed]: under the house\'s south wall, from its south door (the Afterdoor [Proposed]) to its east side'),
   lane('gate-lane', 'foot', 2.4, [[112.5, -31], [116.4, -36.2], [116.7, -48], [116.2, -57.5], [115.4, -64.3], [108.5, -64.8], [100, -62.5], [95, -61]], 'the Hitch [Proposed]: round the back of the house\'s stable to its gate'),
-  lane('ramp-cut', 'foot', 1.4, [[103.3, -17.6], [104.0, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
+  lane('ramp-cut', 'foot', 1.4, [[103.3, -17.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
 ];
 
 // ---------------------------------------------------------------- the two squares
@@ -303,7 +303,7 @@ free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 
 free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
 free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.2, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
-free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.5, -21.5, [0, -1], 5.4, 6.2, 'late', { fronts: ['K1'], note: 'the Grudge [Proposed]: beans on poles, a well under a Heliarch drum, and the Tesserine Moles\' heaps in the beds' });
+free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1], 4.7, 6.2, 'late', { fronts: ['K1'], note: 'the Grudge [Proposed]: beans on poles, a well under a Heliarch drum, and the Tesserine Moles\' heaps in the beds' });
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
@@ -323,8 +323,8 @@ const onRiser = (name, b, r, note) => { const a = (b * Math.PI) / 180, [x, z] = 
 export const FIXTURES = [
   fix('cloth-stall', 95.0, -28.2, 0.9, [0.3, -1], 'a three-cornered cloth from the ramp\'s revetment to one pole, in the pocket by the south door: slippers, when there are any'),
   fix('salt-stall', 106.0, -26.5, 1.3, [0, -1], 'the salt-weigher\'s: a plank on two Heliarch drums, the Twk-men\'s perch, a peg at thumb height'),
-  fix('news-block', 108.9, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
-  fix('well', 105.9, -23.5, 1.0, [0, -1], 'the well: a Heliarch drum bored through, a sweep on a forked post'),
+  fix('news-block', 108.55, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
+  fix('well', 106.2, -23.5, 1.0, [0, -1], 'the well: a Heliarch drum bored through, a sweep on a forked post'),
   onRiser('riser-buttress', 65.6, 0.9, 'a Late buttress of plastered rubble raked against the Elder face'),
   onRiser('riser-repair', 67.1, 1.7, 'the Heliarchy\'s repair: a panel of exact ashlar let into the giants\' face, a blind arch in it'),
   onRiser('leanto-oil', 69.1, 1.5, 'a lean-to against the riser under a plank roof: lamp oil'),

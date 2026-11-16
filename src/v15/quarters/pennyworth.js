@@ -214,7 +214,7 @@ export async function build(ctx) {
     run(hw - 0.4, -hd, -hw + 0.3, -hd);                                 // the south, toward the wreck
     run(-hw, -hd + 0.3, -hw, -0.5); run(-hw, 0.9, -hw, hd - 1.7);       // the kerb's side, a gap onto the kerb
     // three beds of turned earth
-    const beds = [[-0.5, 1.9, 3.2], [-0.45, 0.1, 3.7], [-0.4, -1.75, 3.7]]; // [the bed's middle x, z, its length]
+    const beds = [[-0.4, 1.9, 2.9], [-0.4, 0.1, 3.3], [-0.4, -1.75, 3.3]]; // [the bed's middle x, z, its length]
     for (const [bx, bz, len] of beds) B.add(B.box(len, 0.3, 0.95, { seg: 0.6, chip: 0.06, chipTop: true, seed: bz }), ch(M, bx, -0.03, bz, 0.045 * (bz > 0 ? 1 : -1), 0, 0.02), { color: worn(SOIL, rng, 0.1, 0.2), moss: 0.15, ground: g0 - 1, disp: 0.03, dispScale: 3 });
     // beans on crossed poles down the two southern beds: pairs lashed where they cross, a ridge pole through the crotches; where a heap has come up under a pair it leans
     for (const [bx, bz, len] of beds.slice(1)) {
