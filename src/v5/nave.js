@@ -16,6 +16,10 @@ import * as THREE from 'three';
 import { NAVE, NAVE_OFF, naveRim, naveEdge, naveBearing } from './nave/ground.js';
 import { makeSimplex, smoothstep, clamp, lerp, hyp } from '../noise.js';
 import { approach, angDiff, makeGround } from '../fauna/uncanny/kit.js';
+import { installBelow, underMaterial, boxBelow, belowLit } from '../v14/under.js'; // v14-D0: the kit for places under the ground
+import { hulls, lamps } from '../v14/noon-road/plan.js'; // v14-D3: the Noon Road's carriers: their stored light, their hulls through the water
+import { NOON } from '../v8/strata/noon.js';
+import { SZ, SHALF, DOOR, nearRoad, CR_OFF } from '../v14/coffin-road/plan.js'; // v14-D0: the Noon Road
 
 const CX = NAVE.x, CZ = NAVE.z, YC = NAVE.ceil, WY = NAVE.water, RIM_Y = -2.0;
 // the roof's underside at (x, z): level at NAVE.ceil, sunk with the moor wherever the moor lies lower than the cover
@@ -47,6 +51,17 @@ function litAt(x, y, z, out) {
   return out;
 }
 
+// the Noon Road's stored light, baked: its white-gold on the columns, the walls and the vault (v14-D3)
+const LAMPS = CR_OFF ? [] : lamps();
+export function glowAt(x, y, z) {
+  let g = 0;
+  for (const [cx, cy, cz, s, reach] of LAMPS) {
+    const dx = x - cx, dy = y - cy, dz = z - cz, d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < reach * reach) { const f = 1 - Math.sqrt(d2) / reach; g += s * f * f * (0.4 + 0.6 * f); }
+  }
+  return Math.min(1.0, g * 0.6);
+}
+
 // ---------------------------------------------------------------- the hall's one mesh
 class Builder {
   constructor() { this.p = []; this.n = []; this.c = []; this.l = []; this._la = [0, 0]; this._v = new THREE.Vector3(); }
@@ -55,7 +70,7 @@ class Builder {
     this.p.push(x, y, z); this.n.push(nx, ny, nz);
     const j = 1 + jit * (Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453 % 1);
     this.c.push(col[0] * j, col[1] * j, col[2] * j);
-    litAt(x, y, z, this._la); this.l.push(this._la[0], this._la[1], 0);
+    litAt(x, y, z, this._la); this.l.push(this._la[0], this._la[1], glowAt(x, y, z));
   }
   // a flat triangle; `hint` is any vector on its outward side (the winding is turned to face it)
   tri(a, b, c, col, hint, jit = 0.12) {
@@ -89,7 +104,7 @@ class Builder {
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
-    g.setAttribute('aLA', new THREE.Float32BufferAttribute(this.l, 3));
+    g.setAttribute('aUnder', new THREE.Float32BufferAttribute(this.l, 3)); // the kit's: sky, haze, the stored light's glow (v14/under.js)
     g.computeBoundingSphere();
     return g;
   }
@@ -99,11 +114,11 @@ function hallMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec3 aLA; varying vec3 vLA; varying vec3 vNW;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLA = aLA; vNW = (modelMatrix * vec4(position, 1.0)).xyz;');
+      .replace('#include <common>', '#include <common>\nvarying vec3 vNW; varying vec3 vNN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvNW = (modelMatrix * vec4(position, 1.0)).xyz; vNN = normal;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        varying vec3 vLA; varying vec3 vNW;
+        varying vec3 vNW; varying vec3 vNN;
         float nvH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
         float nvN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
           return mix(mix(mix(nvH(i), nvH(i + vec3(1,0,0)), f.x), mix(nvH(i + vec3(0,1,0)), nvH(i + vec3(1,1,0)), f.x), f.y),
@@ -111,13 +126,25 @@ function hallMaterial() {
       .replace('#include <color_fragment>', `#include <color_fragment>
         // worn, stained, damp toward the water: no texture, only the world position
         diffuseColor.rgb *= 0.72 + 0.4 * nvN(vNW * 0.9) * (0.6 + 0.4 * nvN(vNW * 3.7 + 11.0));
-        diffuseColor.rgb *= 1.0 - 0.35 * smoothstep(${(WY + 6).toFixed(1)}, ${(WY + 0.2).toFixed(1)}, vNW.y);`)
-      .replace('#include <opaque_fragment>', `outgoingLight *= vLA.x;\n#include <opaque_fragment>`)
-      // under the roof the air is the hall's, not the moor's lit haze
-      .replace('#include <fog_fragment>', `vec3 fpNoFog = gl_FragColor.rgb;\n#include <fog_fragment>\ngl_FragColor.rgb = mix(fpNoFog, gl_FragColor.rgb, vLA.y);`);
+        diffuseColor.rgb *= 1.0 - 0.35 * smoothstep(${(WY + 6).toFixed(1)}, ${(WY + 0.2).toFixed(1)}, vNW.y);
+        // v14-D0: on the upright stone (columns, walls): the drums' joints; the old plaster flaking off, a trace of its
+        // colours left (a faded red, a blue-grey, an ochre); the water's marks: a dark wet band, and the pale tide line
+        float vert = 1.0 - abs(vNN.y), wy = vNW.y - ${WY.toFixed(1)};
+        float jt = abs(fract((vNW.y + 0.35) / 1.15) - 0.5);
+        diffuseColor.rgb *= 1.0 - 0.45 * vert * smoothstep(0.455, 0.492, jt);
+        float pl = smoothstep(0.66, 0.74, nvN(vNW * vec3(2.6, 1.3, 2.6) + 5.0)) * smoothstep(0.35, 0.6, nvN(vNW * 0.45 + 9.0)) * vert * smoothstep(1.4, 2.4, wy);
+        float hue = nvN(vNW * 0.18 + 31.0);
+        vec3 paint = hue < 0.4 ? vec3(0.56, 0.3, 0.24) : hue < 0.6 ? vec3(0.38, 0.42, 0.5) : vec3(0.62, 0.5, 0.3);
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(diffuseColor.rgb * 1.25, paint * 0.7, 0.6 * smoothstep(0.3, 0.7, nvN(vNW * 2.3))), pl * 0.3);
+        float wet = vert * (1.0 - smoothstep(1.0, 1.6 + 0.5 * nvN(vNW * 1.7), wy)) * step(0.0, wy);
+        diffuseColor.rgb *= 1.0 - 0.5 * wet;
+        float tide = vert * smoothstep(0.03, 0.08, wy) * (1.0 - smoothstep(0.2, 0.3, wy));
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.52, 0.5, 0.4), tide * 0.75);`);
   };
   m.customProgramCacheKey = () => 'fp-nave-hall';
-  return m;
+  // v14-D0: the sun and the sky's light scaled by how much of the hole's light reaches each vertex, the haze by how
+  // much of the moor's air, the Noon Road's stored light baked in; point lights (a lit carrier near the walker) as anywhere
+  return underMaterial(m, 'nave', NOON.lightHex);
 }
 
 // ---------------------------------------------------------------- the water
@@ -139,6 +166,7 @@ const WATER_FRAG = /* glsl */`
   uniform vec4 uShape[3];   // x, z, heading, how near the surface (0 gone .. 1 just under)
   uniform vec2 uSize[3];    // half length, half width
   uniform vec4 uSplash[3];  // x, z, start time, strength
+  uniform vec4 uHullA[HULL_N]; uniform vec4 uHullB[HULL_N]; uniform vec3 uHullCol; // v14-D3: the carriers' hulls (x1, z1, x2, z2), (r, depth, light, 0)
   varying vec3 vWorld;
   #include <fog_pars_fragment>
   float rimAt(vec2 d) {
@@ -179,6 +207,13 @@ const WATER_FRAG = /* glsl */`
       float soft = mix(0.95, 0.35, uShape[i].w);
       dark = max(dark, (1.0 - smoothstep(1.0 - soft, 1.0 + soft * 0.4, k)) * uShape[i].w);
     }
+    // v14-D0: water dripping from the roof here and there under it: a slow ring every few seconds
+    for (int i = 0; i < 4; i++) {
+      vec3 D = i == 0 ? vec3(262.4, 44.1, 4.7) : i == 1 ? vec3(281.2, 37.3, 6.3) : i == 2 ? vec3(292.1, 45.7, 5.1) : vec3(251.2, 33.6, 7.4);
+      float age = mod(uT + float(i) * 1.7, D.z); vec2 q = p - D.xy; float r = length(q) + 1e-4, w = r - age * 0.55;
+      float ring = sin(w * 11.0) * exp(-w * w * 6.0) * exp(-age * 0.7);
+      slope += q / r * ring * 0.05; glint += max(ring, 0.0) * 0.12 * exp(-r * 0.4);
+    }
     slope *= 1.0 - 0.6 * dark;
     vec3 N = normalize(vec3(-slope.x, 1.0, -slope.y));
     vec3 V = normalize(vWorld - cameraPosition);
@@ -190,10 +225,27 @@ const WATER_FRAG = /* glsl */`
       open = 1.0 - smoothstep(-1.2, 0.3, length(q) - rimAt(q));
     }
     vec3 refl = mix(vec3(0.004, 0.004, 0.005), uSky, open);
-    float F = 0.3 + 0.7 * pow(1.0 - max(dot(-V, N), 0.0), 4.0);
-    vec3 body = vec3(0.010, 0.013, 0.012) * lit;
+    // v14-D0: water's own Fresnel (2% straight down, a mirror at a glance), so from the stair it is black, along the
+    // road it mirrors; the body black
+    float F = 0.03 + 0.97 * pow(1.0 - max(dot(-V, N), 0.0), 5.0);
+    vec3 body = vec3(0.004, 0.006, 0.006) * lit;
     vec3 col = body * (1.0 - 0.8 * dark) + refl * F * (1.0 - 0.94 * dark);
     col = mix(col, uSky * 1.6 + 0.03, clamp(glint * 0.55, 0.0, 0.85) * lit);
+    // v14-D3: the carriers under the surface: a hull that still holds its light shows whole through the black water,
+    // dimmer the deeper its flank lies, and lights the water round it; a dark one is a pale ghost near the surface
+    vec2 ph = p + slope * 0.7;
+    for (int i = 0; i < HULL_N; i++) {
+      vec4 HA = uHullA[i], HB = uHullB[i];
+      if (HB.x <= 0.0) continue;
+      vec2 ab = HA.zw - HA.xy, hq = ph - HA.xy;
+      float ht = clamp(dot(hq, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0), hd = length(hq - ab * ht), hr = HB.x;
+      float through = hd < hr ? exp(-max(HB.y - sqrt(hr * hr - hd * hd), 0.0) * 2.3) : 0.0;
+      // where it meets the water: a pale line; and the light it sheds goes out over the water in slow rings
+      float hw = sqrt(max(hr * hr - HB.y * HB.y, 0.0)), he = hd - hw;
+      float halo = exp(-max(he, 0.0) * 0.5) * 0.085 * (0.55 + 0.75 * (0.5 + 0.5 * sin(he * 6.5 - uT * 0.9 + float(i) * 1.7)) * exp(-max(he, 0.0) * 0.35));
+      col += vec3(0.05, 0.05, 0.048) * exp(-he * he * 30.0) * (0.25 + HB.z) * step(0.0, he + 0.2);
+      col += (uHullCol * vec3(0.9, 1.0, 0.8) * HB.z * (through * 0.42 + halo) + vec3(0.008, 0.009, 0.01) * through) * (1.0 - 0.8 * F) * (1.0 - 0.7 * dark);
+    }
     gl_FragColor = vec4(col, 1.0);
     vec3 preFog = gl_FragColor.rgb;
     #include <fog_fragment>
@@ -345,10 +397,24 @@ export async function build(ctx) {
   // ---- the walls: the aisles' outer walls, the east end far under the moor, and the west end choked with earth
   {
     const y0 = WY - 1.5, n = 32, bands = (top) => [y0, WY + 4, top - 4, top];
+    // the south wall's run is broken at the Noon Road's door (v14-D0: v14/coffin-road/plan.js DOOR): below its
+    // lintel the wall stops at its jambs, and the door's frame and passage are the road's
+    const dx0 = DOOR.x - DOOR.half, dx1 = DOOR.x + DOOR.half, dTop = DOOR.sill + DOOR.h;
     for (const side of [-1, 1]) {
       const z = CZ + side * HALF;
-      for (let i = 0; i < n; i++) {
-        const xa = NAVE.x0 + (i / n) * (NAVE.x1 - NAVE.x0), xb = NAVE.x0 + ((i + 1) / n) * (NAVE.x1 - NAVE.x0), A = bands(ceilAt(xa, z)), Bb = bands(ceilAt(xb, z));
+      const xs = [];
+      for (let i = 0; i <= n; i++) xs.push(NAVE.x0 + (i / n) * (NAVE.x1 - NAVE.x0));
+      if (side > 0 && !CR_OFF) { xs.push(dx0, dx1); xs.sort((a, b) => a - b); }
+      for (let i = 0; i < xs.length - 1; i++) {
+        const xa = xs[i], xb = xs[i + 1]; if (xb - xa < 1e-3) continue;
+        const A = bands(ceilAt(xa, z)), Bb = bands(ceilAt(xb, z));
+        if (side > 0 && !CR_OFF && xa >= dx0 - 1e-3 && xb <= dx1 + 1e-3) {
+          // the door: the wall under the sill (down into the water) and over the lintel
+          H.quad([xa, A[0], z], [xb, Bb[0], z], [xb, DOOR.sill, z], [xa, DOOR.sill, z], STONE_D, [0, 0, -side], 0.1);
+          H.quad([xa, dTop, z], [xb, dTop, z], [xb, Bb[2], z], [xa, A[2], z], STONE_D, [0, 0, -side], 0.1);
+          H.quad([xa, A[2], z], [xb, Bb[2], z], [xb, Bb[3], z], [xa, A[3], z], STONE_D, [0, 0, -side], 0.1);
+          continue;
+        }
         for (let k = 0; k < 3; k++) H.quad([xa, A[k], z], [xb, Bb[k], z], [xb, Bb[k + 1], z], [xa, A[k + 1], z], STONE_D, [0, 0, -side], 0.1);
       }
     }
@@ -378,7 +444,7 @@ export async function build(ctx) {
   const RC = 1 / Math.cos(Math.PI / 8);
   // what the roof's fall did to the columns under the hole: one gone (its drums lie in the water), one broken at
   // mid-height, one broken off where the cone now buries it
-  const FATE = { '0:4.5': { gone: true }, '1:-4.5': { top: YC - 7.4 }, '-1:-4.5': { top: WY + 4.6 } };
+  const FATE = { '0:4.5': { gone: true }, '1:-4.5': { top: YC - 7.4 }, '-1:-4.5': { top: WY + 4.6 }, '5:-11': { gone: true } }; // (v14-D0: 5:-11 lies in the water, below)
   const broken = { x: CX + NAVE.bay, z: CZ - 4.5 };
   for (const rz of NAVE.rows) for (let k = -3; ; k++) {
     const x = CX + k * NAVE.bay; if (x > NAVE.x1 - 2) break; if (x < NAVE.x0 + 4) continue;
@@ -431,6 +497,16 @@ export async function build(ctx) {
     }
     columns.push({ x, z });
   }
+  // v14-D0: the north aisle's column at (282.5, 29) is down: its shaft lies in the water across the aisle, half
+  // under, its capital beyond; seen from the road by the up-ended carrier's light
+  {
+    const a = [283.6, 30.9], b = [273.0, 32.7], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    E.set(0, -Math.atan2(b[1] - a[1], b[0] - a[0]), Math.PI / 2, 'YXZ');
+    M.compose(V.set((a[0] + b[0]) / 2, WY + 0.15, (a[1] + b[1]) / 2), Q.setFromEuler(E), S1);
+    H.geo(new THREE.CylinderGeometry(0.82, 0.9, len, 8, 4), M, STONE, 0.1);
+    E.set(0.3, 0.7, 0.15, 'YXZ'); M.compose(V.set(271.3, WY + 0.05, 33.4), Q.setFromEuler(E), S1);
+    H.geo(new THREE.BoxGeometry(COL.capW, COL.cap, COL.capW), M, STONE, 0.1);
+  }
   await ctx.progress?.('the foundered nave', 0.65);
 
   // ---- the cone: soil, turf and stones come down through the hole under its west-north-west lip, 7 m high above the water
@@ -467,7 +543,8 @@ export async function build(ctx) {
     }
     // the fallen column's drums in a line in the water, half under, its capital beyond; a drum of the broken one
     const fall = Math.atan2(4.7, -6.2);
-    const lay = [[CX + 1.2, CZ + 2.6, fall, 3.2, 'drum'], [CX + 3.0, CZ + 0.3, fall + 0.12, 3.0, 'drum'], [CX + 4.6, CZ - 1.9, fall - 0.2, 2.6, 'drum'],
+    // (v14-D0: the line lies north of the Noon Road, which goes past its end)
+    const lay = [[CX - 0.4, CZ - 0.6, fall, 3.2, 'drum'], [CX + 1.4, CZ - 2.9, fall + 0.12, 3.0, 'drum'], [CX + 3.0, CZ - 5.1, fall - 0.2, 2.6, 'drum'],
       [CX + 2.6, CZ + 6.0, 0.4, 0, 'cap'], [broken.x + 2.3, broken.z + 3.0, 1.9, 2.4, 'drum']];
     for (const [x, z, yaw, len, kind] of lay) {
       E.set(kind === 'drum' ? Math.PI / 2 : 0.35, yaw, kind === 'drum' ? 0.06 : 0.22, 'YXZ');
@@ -488,6 +565,7 @@ export async function build(ctx) {
     [-3.0, 1.0, 5.6, 3.2, 40, 12, 26, 0.6],
   ];
   for (const [ox, oz, len, wid, yaw, pitch, roll, lift] of SLABS) {
+    if (nearRoad(CX + ox, CZ + oz, len / 2 - 0.5)) continue; // v14-D0: none across the Noon Road's stair or its road
     const x = CX + ox, z = CZ + oz, y = Math.max(coneY(x, z), WY - 0.4) + lift;
     E.set(pitch * RAD, yaw * RAD, roll * RAD, 'YXZ');
     Q.setFromEuler(E);
@@ -511,13 +589,19 @@ export async function build(ctx) {
   const rimU = new Array(36); for (let i = 0; i < 36; i++) rimU[i] = naveRim(i * 10);
   const shapeU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0)), sizeU = [0, 1, 2].map(() => new THREE.Vector2(1, 0.5)), splashU = [0, 1, 2].map(() => new THREE.Vector4(0, 0, -100, 0));
   const skyU = new THREE.Color('#5a5470');
-  const wmat = new THREE.ShaderMaterial({
-    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU } }]),
+  // (on low, the six brightest lit hulls and two dark ones adrift, so the dark water still holds a shape or two)
+  const HULL_N = low ? 8 : 16, HA = CR_OFF ? [] : hulls();
+  const HL = low ? [...HA.filter((h) => h[6] > 0).slice(0, 6), ...HA.filter((h) => !(h[6] > 0) && h[7]).slice(0, 2)] : HA.slice(0, HULL_N);
+  const hullA = Array.from({ length: HULL_N }, (_, i) => new THREE.Vector4(...(HL[i] ? HL[i].slice(0, 4) : [0, 0, 0, 0])));
+  const hullB = Array.from({ length: HULL_N }, (_, i) => (HL[i] ? new THREE.Vector4(HL[i][4], HL[i][5], HL[i][6], 0) : new THREE.Vector4(0, 0, 0, 0)));
+  const hullCol = new THREE.Color(NOON.lightHex);
+  const wmat = new THREE.ShaderMaterial({ defines: { HULL_N },
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uT: { value: 0 }, uRimY: { value: RIM_Y }, uRim: { value: rimU }, uCenter: { value: new THREE.Vector2(CX, CZ) }, uSky: { value: skyU }, uShape: { value: shapeU }, uSize: { value: sizeU }, uSplash: { value: splashU }, uHullA: { value: hullA }, uHullB: { value: hullB }, uHullCol: { value: hullCol } }]),
     vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, fog: true,
   });
   // UniformsUtils.merge clones the arrays: keep the material's own
   const WU = wmat.uniforms;
-  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU;
+  WU.uSky.value = skyU; WU.uShape.value = shapeU; WU.uSize.value = sizeU; WU.uSplash.value = splashU; WU.uHullA.value = hullA; WU.uHullB.value = hullB;
   const wgeo = new THREE.PlaneGeometry(NAVE.x1 - NAVE.x0, 2 * HALF, 1, 1).rotateX(-Math.PI / 2);
   const water = new THREE.Mesh(wgeo, wmat);
   water.position.set((NAVE.x0 + NAVE.x1) / 2, WY, CZ); water.name = 'nave-water'; water.receiveShadow = false;
@@ -535,7 +619,7 @@ export async function build(ctx) {
     }
     sgeo.computeVertexNormals();
   }
-  const smat = new THREE.MeshStandardMaterial({ color: '#060606', roughness: 0.22, metalness: 0.05 });
+  const smat = belowLit(new THREE.MeshStandardMaterial({ color: '#060606', roughness: 0.22, metalness: 0.05 }), 'nave-shapes'); // (v14-D0: the hall's sky light, by the kit's volumes)
   const shapesMesh = new THREE.InstancedMesh(sgeo, smat, 3);
   shapesMesh.name = 'nave-shapes'; shapesMesh.frustumCulled = false; shapesMesh.visible = false; shapesMesh.castShadow = false;
   scene.add(shapesMesh);
@@ -545,10 +629,14 @@ export async function build(ctx) {
   let colliders = 0;
   if (ctx.addCollider) {
     let lx = Infinity, lz = Infinity;
+    // v14-D0: they stand from a metre under the turf to two over it (so they do not reach down to the Noon Road
+    // under the hole), and leave a gap for the stair's head on the south-east (v14/coffin-road/plan.js SZ)
     for (let b = 0; b < 360; b += 0.25) {
       const R = naveRim(b) - 0.45, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
-      ctx.addCollider({ x, z, r: 0.3 }); colliders++; lx = x; lz = z;
+      if (!CR_OFF && x > CX && Math.abs(z - SZ) < SHALF + 0.2) continue;
+      const g = T.heightAt(x, z);
+      ctx.addCollider({ x, z, r: 0.3, y: g - 1, h: 3, stand: false, unseen: true }); colliders++; lx = x; lz = z; // unseen: nothing drawn (settings-test's stands look past them)
     }
   }
 
@@ -577,7 +665,7 @@ export async function build(ctx) {
     camera.getWorldDirection(fwd);
     let best = null, bs = -1;
     for (const sh of S.shapes) {
-      if (sh.mode !== 'swim' || naveEdge(sh.x, sh.z) > -2) continue;
+      if (sh.mode !== 'swim' || naveEdge(sh.x, sh.z) > -2 || nearRoad(sh.x, sh.z, 1.6)) continue;
       aim.set(sh.x - cam.x, WY - cam.y, sh.z - cam.z).normalize();
       const d = fwd.dot(aim);
       if (d > bs) { bs = d; best = sh; }
@@ -642,7 +730,7 @@ export async function build(ctx) {
       S.splashT = 22 + rng() * 34;
       let sh = S.shapes.find((s) => s.mode === 'swim' && naveEdge(s.x, s.z) < 0);
       if (!sh) sh = S.shapes.find((s) => s.mode === 'swim');
-      if (sh) { splashAt(sh.x + Math.cos(sh.h) * sh.len * 0.6, sh.z + Math.sin(sh.h) * sh.len * 0.6, 1, t, true); sh.flick = 0.6; }
+      if (sh && !nearRoad(sh.x, sh.z, 1.6)) { splashAt(sh.x + Math.cos(sh.h) * sh.len * 0.6, sh.z + Math.sin(sh.h) * sh.len * 0.6, 1, t, true); sh.flick = 0.6; }
     }
     // pose the backs that are up (and the flick of a splash)
     let shown = 0;
@@ -663,8 +751,14 @@ export async function build(ctx) {
 
   const tris = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;
   const stats = () => ({ calls: 2 + (shapesMesh.visible ? 1 : 0), tris: Math.round(tris(hallGeo) + 2 + (shapesMesh.visible ? 3 * tris(sgeo) : 0)), hall: Math.round(tris(hallGeo)), lip: lipTris, columns: columns.length, slabs: SLABS.length, colliders, terrainCut: cut });
+  // v14-D0: under the roof, and down the hole's shaft below the rim, is under the ground (v14/under.js)
+  const below = installBelow(ctx);
+  below.add(boxBelow(NAVE.x0, NAVE.x1, CZ - HALF, CZ + HALF, (x, z) => Math.min(ceilAt(x, z), RIM_Y), 3, 1.0), { size: 1 });
+  // the seal: under the roof the moor is drawn only through the hole (its disc at the rim, the widest radius)
+  { let rmax = 0; for (let b = 0; b < 360; b += 5) rmax = Math.max(rmax, naveRim(b)); below.opening({ x: CX, y: RIM_Y + 0.5, z: CZ, r: rmax + 1 }); }
+  below.keep(hall); below.keep(water); below.keep(shapesMesh);
   ctx.nave = {
-    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge,
+    state: S, stats, columns, cone: CONE, rim: naveRim, edge: naveEdge, litAt, ceilAt: (x, z) => ceilAt(x, z),
     // test hooks: a splash at shape i (or at (x, z)), shape i surfacing now, shape i placed at (x, z), hold the life still
     splash(i = 0, x, z) { const sh = S.shapes[i]; splashAt(x ?? sh.x, z ?? sh.z, 1, WU.uT.value, true); sh.flick = 0.6; return { x: x ?? sh.x, z: z ?? sh.z }; },
     surface(i = 0) { surface(S.shapes[i], WU.uT.value); },

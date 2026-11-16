@@ -100,8 +100,13 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 85 | v12 the fall setting: "A long fall costs" in the settings menu |
 | 86 | v12 the orchestrator's own climbs: the ice and the other ways up |
 | 87 | v13 a quicker door: the same walk, loaded in half the time; the Measure row; the pairs it was checked with |
+| 88 | v14 the Nave's stair: the coffin road first, then the Noonwrights' road of glazed vessels and hoops |
+| 89 | v14 the Wellward Way: the passage from the Nave's south door, by the Laid Sun and the Gulf, to the Pit's floor |
+| 90 | v14 the Pit and its hole of stars: the flat violet before, the round-3 after |
+| 91 | v14 the Lonely Staircase's approach: the trods to its foot and the slabs in the turf, before and after |
+| 92 | v14 fixes to earlier places: the Pomegranate House's court |
 
-`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp` and `gallery-v12.webp` (`83-stair-orch-home`, the box v12 starts) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
+`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp` and `gallery-v12-to-v14.webp` (`83-stair-orch-home`, the box v12 starts) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
 ## Index
 
@@ -738,5 +743,37 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `87-meadow-medium.webp` | A plain view in the Heliotrope Sward, taken on the release candidate. |
 | `87-measure-panel-phone.webp` | The Measure result panel on a phone: frame times, hitches and the ten slowest frames. |
 | `87-measure-row-phone.webp` | The settings menu's new Measure row on a phone. |
+| `88-coffinroad-road-before.webp` | Before: the first road down the Nave (the coffin road), since replaced by the Noonwrights'. |
+| `88-coffinroad-shears-before.webp` | Before: the A-frame shears at the Nave's mouth, the coffin road's lift against the sun. |
+| `88-noonroad-door-hoop.webp` | The road at the Nave's door, a studded hoop standing over the plank walk. |
+| `88-noonroad-elbow-after.webp` | The road from above at the elbow, hoops and vessels folded round the pillars. |
+| `88-noonroad-glaze-between.webp` | Between: the vessels glazed teal and oxblood, the hoops studded, still before the final grade. |
+| `88-noonroad-glaze-wall-failure.webp` | A funny failure: the glaze filling the frame as a flat teal wall. |
+| `88-noonroad-top-lit-after.webp` | After: the road's head from above, the glazed hoops lit from the top of the stair. |
+| `88-noonroad-vessel-first.webp` | The first vessel: a white lozenge with a red seal ring, lying in the dark. |
+| `88-noonroad-vessels-glazed-after.webp` | After: the glazed vessels and amber-banded hoops receding toward the lattice in the Nave's far wall. |
+| `88-noonroad-vessels-white.webp` | Before the glaze: the white vessels and bare hoops down the Nave, pale as plaster. |
+| `89-passage-flute-begins.webp` | The Wellward Way where the flute begins: a rough tunnel of blue stone studded with stars. |
+| `89-passage-kenching-flats.webp` | The far end of the stair-bridge over the Gulf, with the card of the region above (Kenching Flats). |
+| `89-passage-laid-sun-back.webp` | The Laid Sun room from the Nadir side, its disc of tiles and the arched way out. |
+| `89-passage-laid-sun-dome.webp` | The Laid Sun from close above: a disc of amber tiles and chalked rays under a standing lamp. |
+| `89-passage-laid-sun-in.webp` | Entering the Laid Sun: a round floor inlaid with a sun in tiles, one lamp, a dropped book. |
+| `89-passage-lantern-corridor.webp` | The Gate: a lamp-lit corridor of cut stone running out to the Pit's floor, the reel over the Nadir beyond. |
+| `89-passage-nadir-mouth.webp` | The Pit's floor from the passage's mouth: the reel on its tripod over the Nadir, stars rising. |
+| `89-passage-nave-door-back.webp` | Looking back from the passage to the Nave's door, the lit road of vessels beyond. |
+| `89-passage-nave-door.webp` | The Foundered Nave's south door with the hall's card, the Noonwrights' tube lit beyond it. |
+| `90-pit-floor-up-after.webp` | After (round 3): from the Pit's floor, the hole of stars torn open above the stair's spiral. |
+| `90-pit-floor-up-before.webp` | Before: the same view with the hole filled by a flat violet-white plane. |
+| `90-pit-lip-after.webp` | After: the lip of the Pit from within, a ragged opening with the stair wound round it. |
+| `90-pit-lip-before.webp` | Before: the lip with a wide tan rim and a flat violet fill. |
+| `90-pit-plumb-from-floor.webp` | The reel on its tripod over the Nadir, seen from the Pit's floor, stars rising past it. |
+| `90-pit-stair-along.webp` | The Pit's stair going down along the wall, hexagon treads and a rope rail between lamps. |
+| `91-stair-approach-after.webp` | After: the Lonely Staircase's approach, the stair rising out of the slope with a figure at its foot. |
+| `91-stair-approach-before.webp` | Before: the approach, a worn path leading to the stair under the cliff. |
+| `91-stair-beds-all-risen.webp` | A test view: every slab of the Lonely Staircase called up at once, leaving flat dark beds in the turf. |
+| `91-stair-sign-after.webp` | After: the hillside's long figure above the new approach, from the oblique. |
+| `91-stair-sign-before.webp` | Before: the same long figure on the slope, the approach below it bare. |
+| `91-stair-slabs-fallen-after.webp` | After: the stair's slabs lying in the turf as clusters of fallen treads, no longer a line to its back. |
+| `92-house-court-fountain.webp` | The Pomegranate House's court at dusk: the fountain, the pole and the lit arcade. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

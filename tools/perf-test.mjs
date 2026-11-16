@@ -84,6 +84,7 @@ const checks = [
   ['summary overlay shown', r.summaryShown],
   // v13 P1: the frame yardstick
   ['bench v2: the round, the top and the waking, each with a JS distribution', bench.version === 2 && ['route', 'top', 'wake'].every((k) => bench.legs?.[k]?.frames > 0 && bench.legs[k].js.medianMs > 0 && bench.legs[k].js.medianMs <= bench.legs[k].js.p95Ms && bench.legs[k].js.p95Ms <= bench.legs[k].js.p99Ms && bench.legs[k].js.p99Ms <= bench.legs[k].js.worstMs)],
+  ['the top leg stands at its named place on the settings map (not the fallback)', bench.legs?.top?.place === 'The Long Wait'],
   ['the round keeps its old summary (avg, 1% low, cpuMs) from its own frames (the teleport frame is the top\'s; the distributions leave out station frames)', bench.summary?.avgFrameMs > 0 && bench.summary.frames > 0 && (bench.legs?.route?.interval?.frames ?? -9) <= bench.summary.frames + 1 && bench.legs.route.interval.frames >= bench.summary.frames - bench.stationFrames - 2 && Object.keys(bench.summary.cpuMs || {}).length > 1],
   ['the top leg stands on the Span\'s deck (feet over 40 m), the waking at the gate', (bench.draws || []).some((d) => d.leg === 'top' && d.y > 40) && (bench.draws || []).some((d) => d.leg === 'wake' && d.y < 30)],
   ['hitch log: a rule, a count, the worst sorted, each with its row and events', bench.hitches && bench.hitches.count >= bench.hitches.worst.length && bench.hitches.worst.every((w, i) => (i === 0 || w.ms <= bench.hitches.worst[i - 1].ms) && Array.isArray(w.events) && 'top' in w)],

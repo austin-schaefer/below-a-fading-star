@@ -74,6 +74,8 @@ const MODULES = [
   ['annals', () => import('./v5/annals.js')], // v5 wonders: AK the Annals (the breaks and the gutter's swing; the frieze is in terrain.js's shader)
   ['keptfire', () => import('./v5/keptfire.js')], // v5 wonders: DN the Kept Fire (a tended hearth on the Outwash; one point light, ?keptfire=0)
   ['nave', () => import('./v5/nave.js'), M], // v5 wonders: BD the Foundered Nave, a sinkhole over a buried hall on the east moor
+  ['coffinroad', () => import('./v14/coffin-road.js'), M], // v14-D0, D3: the Noon Road: the hung stair down into the Nave and the Noonwrights' carriers on its water (?coffinroad=0; the key keeps its first name)
+  ['pit', () => import('./v14/pit.js'), M], // v14-D2: the bottom of the Pit: the Nadir, the down-reel and its lead, the road's slabs up the wall (?pit=0)
   // v7, the living: one line per module, each named living-<group> (shadows.js treats living-* as dynamic casters)
   ['living-canyon', () => import('./v7/canyon.js'), M], // v7: CE the Bather, CX the Toadstone (DP the Luminous Reach is v7/reach.js, in the water's shaders; ?canyon=0)
   ['living-glyphs', () => import('./v7/glyphs.js'), M], // v7: CP the Scriveners, the glyph motif, CT the Tesserine Moles (?glyphs=0)
@@ -93,6 +95,7 @@ const MODULES = [
   ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
+  ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -185,7 +188,8 @@ async function start() {
   // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
-  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js)
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), below (v14/under.js:
+  //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
     world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,
@@ -410,7 +414,7 @@ async function start() {
   }
 
   // Frame pacing (v3 stage 2). ?cap= frames per second (default 60; 30 at q=low on battery where the browser
-  // says so; 0 = uncapped, as before). About 10 fps while the title or paused card shows or the window has
+  // says so; 0 = uncapped, as before). About 10 fps while the title card or the settings panel (the pause; not for 1.5 s after a change in it) shows or the window has
   // been unfocused for 3 s (read from document.hasFocus() each frame, not from blur and focus events, which can
   // be missed); never while the pointer is locked, a movement key is down or a touch is active; nothing while the tab is hidden. Time and the updates run once per rendered
   // frame with the real (clamped) dt, so the world and the audio mix keep going at the slower rate.
@@ -430,7 +434,7 @@ async function start() {
     if (document.hasFocus()) blurredAt = null; else if (blurredAt === null) blurredAt = now;
     const pl = ctx.player, tc = ctx.controls.touch;
     const active = pl.locked || pl.keys.size > 0 || !!(tc && (tc.moveId != null || tc.lookId != null));
-    pacing.idle = idle && !benching && !active && (!cardEl.classList.contains('hidden') || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
+    pacing.idle = idle && !benching && !active && (!cardEl.classList.contains('hidden') || ctx.settings?.idle || (blurredAt !== null && now - blurredAt > UNFOCUSED_MS));
     return pacing.idle ? (cap > 0 ? Math.min(cap, IDLE_FPS) : IDLE_FPS) : cap;
   }
   ctx.pacing = pacing;

@@ -24,6 +24,7 @@ Somebody came up once from the valley and cut a stair in the ice below the shelf
 | 2 | R3's face, east of the stair (seen from T2 and the valley); R2's face, west of the block | Crystals of the same shape frozen into the cliffs of ice, one point out, one collar out, each with a bronze collar | There have been others; the ice has them | The bridge | built |
 | 3 | The bridge over R2's lip | The way up crosses a lead lying on its side, its collar on the block, its point in the ice above | One came all this way down; you are walking on it | The stair, the shelf | built |
 | 4 | The shelf, at the lip of the last crevasse (`?pos=44,-390&yaw=1.2`) | A bronze eye as wide as a cart, broken off, half sunk in the ice, glyphs round its band, a frayed line knotted through it, its end over the lip still glowing; across the crevasse, out of reach, the Plummet's point in the ice and its body going up to its eye and the thread | The line broke; the eye says the same as the Reckoner's door | The Hypogeum's lintel, 340 m south-east | built |
+| 4b | The shelf, after a fall into the Nadir at the bottom of the Pit (`the-sounding-down.md`) | Waking by the broken eye, the frayed line's end beside them | The line brought them up | | built |
 | 5 | The Plummet's eye, every few minutes | A mote of light leaves the eye and climbs the thread into the dark; the light that runs up the crystals of the icefall runs on into the Plummet | Something is sent up | | built |
 
 ## What it ties together
@@ -36,10 +37,14 @@ Who the leadsmen are, how far up they are, what depth they read, and why they co
 
 ## Open threads
 
-- Who cut the stair? The Late folk climb for nothing; the Heliarchy's people cut stone, not ice. Perhaps the astronomer, who walks the world without a story.
+- Who cut the stair? Answered (v14-D2): a sounder from the valley, for a piece of an old lead to sound the world from below with (`the-sounding-down.md`).
 - A lead's line parts; where does the rest of it fall? A length of glowing line found somewhere on the moor would be a beat.
 - The Reckoner turns his row at every gutter. Does the Plummet do anything at a gutter (a shudder in its line, the mote going up early)?
 
 ## Log
 
+- 2026-11-15, v14-D2: the stair's cutter is the sounder at the bottom of the Pit (`the-sounding-down.md`).
+
+- 2026-11-15, v14-B5 (#52, the owner): the cards of the icefall's foot and the old lead are cut (the Lattice's own card shows there again); "The Bitter End" has the owner's quotation.
+- 2026-11-15, v14-B3 (#52): the places named on cards: the icefall's foot and cleft "The Soundings", the old lead you walk up "The Fallen Lead", the shelf with the broken eye and the frayed line's end "The Bitter End" (a line's last end, made fast).
 - 2026-11-12, v12-H2: written with the icefall (`src/v12/icefall.js`, `src/v12/icefall/plummet.js`), answering the milestone's seed "the mother crystal has a mother".

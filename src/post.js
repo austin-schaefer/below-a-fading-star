@@ -401,6 +401,7 @@ export function buildPost(ctx) {
     u.uFlicker.value = ctx.sky.flicker.value;
     u.uWade.value = ctx.controls.state.wading || 0;
     if (ctx.places) ctx.places.gradeAt(camera.position.x, camera.position.z, ctx.terrain.causewayDistance(camera.position.x, camera.position.z), u.uPlace.value); // v8-02
+    const under = ctx.below ? ctx.below.tick(camera.position, ctx.places ? u.uPlace.value : null) : 0; // v14-D0: under the ground, the dark-adapted eye's grade and no sun through the roof
     { const o = ctx.above?.over ?? 0, k = Math.min(1, Math.max(0, (o - 30) / 60)); u.uHigh.value = k * k * (3 - 2 * k); } // v12-H5
     u.uResolution.value.set(size.x, size.y);
     renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
@@ -412,7 +413,7 @@ export function buildPost(ctx) {
     const behind = proj.z > 1;
     u.uSunScreen.value.set(proj.x * 0.5 + 0.5, proj.y * 0.5 + 0.5);
     const inView = !behind && Math.abs(proj.x) < 1.6 && Math.abs(proj.y) < 1.6;
-    const vis = inView ? 1 - THREE.MathUtils.smoothstep(Math.max(Math.abs(proj.x), Math.abs(proj.y)), 1.0, 1.6) : 0;
+    const vis = (inView ? 1 - THREE.MathUtils.smoothstep(Math.max(Math.abs(proj.x), Math.abs(proj.y)), 1.0, 1.6) : 0) * (1 - under);
     u.uSunVisible.value += (vis - u.uSunVisible.value) * Math.min(1, dt * 6);
     if (rays) rays.active = u.uSunVisible.value > 0.001;
     bloom.strength = tune.strength * (0.8 + 0.2 * ctx.sky.flicker.value);

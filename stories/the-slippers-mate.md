@@ -33,4 +33,5 @@ To be decided with the turn.
 
 ## Log
 
+- 2026-11-15, v14-B3 (#42): the house kept round him: the host's hearth and oven in the south gallery, his curtained pallet and his own slippers, side by side, in the east (`src/v8/house/kept.js`). The host bows in a man with one shoe and lets him sleep under the table: still no turn.
 - v5: the slipper. 2026-11-11, v8 brief 05: the sleeper. Marked partial when the library began.

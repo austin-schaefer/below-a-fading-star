@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The settings panel (v7-08): the gear, open and close, volume, mute, quality, mouse capture and teleport, on a
+// The settings panel (v7-08), which is also the pause (v14-B1): the gear, open and close, Escape, volume, mute, quality, mouse capture and teleport, on a
 // desktop viewport; then the gear and a finger-sized panel on a phone, and (v13) its Measure row's reload. Usage: node tools/settings-test.mjs [url]
 // SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
 // SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
@@ -50,7 +50,33 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const pausedBefore = await page.evaluate(() => { window.__fp.controls.setDragLook(true); return !document.getElementById('card').classList.contains('hidden'); });
   await page.click('#gear'); await page.keyboard.press('Escape');
   check('close: Escape in drag-look mode does not pause', !pausedBefore && !(await shown(page)) && await page.evaluate(() => document.getElementById('card').classList.contains('hidden')), pausedBefore);
+  // v14-B1 (#46): Escape opens the one panel (the pause is the settings panel): in drag-look mode the key itself, with the
+  // mouse captured the capture let go (what the browser does on Escape); never the old paused card. Escape again shuts it
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Escape');
+  let esc = await page.evaluate(() => ({ panel: window.__fp.settings.shown, card: !document.getElementById('card').classList.contains('hidden') }));
+  check('pause: Escape in drag-look mode opens the settings panel, and no paused card', esc.panel && !esc.card, esc);
+  await page.waitForTimeout(400); await page.keyboard.press('Escape');
+  check('pause: Escape again shuts it', !(await shown(page)));
   await page.evaluate(() => window.__fp.controls.setDragLook(false));
+  await page.evaluate(() => { const P = window.__fp.player; P.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); });
+  esc = await page.evaluate(() => ({ panel: window.__fp.settings.shown, card: !document.getElementById('card').classList.contains('hidden'), keys: !!document.querySelector('#settings-panel .set-keys')?.offsetParent, back: document.getElementById('set-close').textContent }));
+  check('pause: the mouse let go (Escape) opens the settings panel, with the keys and "Back to the moor", and no paused card', esc.panel && !esc.card && esc.keys && esc.back === 'Back to the moor', esc);
+  await page.keyboard.press('Escape'); // within a moment of opening: the same Escape, not a second one
+  check('pause: the Escape that opened it does not also shut it', await shown(page));
+  await page.click('#set-close');
+  check('pause: "Back to the moor" shuts it', !(await shown(page)));
+  // a key held as Escape is pressed is let go inside the panel: the walker stops, and nothing is still held after it shuts
+  await page.evaluate(() => { const fp = window.__fp, s = fp.settings.places[0]; fp.controls.placeAt(s.x, s.z); });
+  await page.keyboard.down('KeyW'); await page.waitForTimeout(400);
+  await page.evaluate(() => window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })));
+  const held0 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
+  await page.keyboard.up('KeyW'); await page.waitForTimeout(600);
+  const held1 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
+  await page.click('#set-close'); await page.waitForTimeout(800);
+  const held2 = await page.evaluate(() => { const q = window.__fp.player.pos; return { p: [q.x, q.z], keys: [...window.__fp.player.keys] }; });
+  const mv = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  check('pause: W held through Escape and let go in the panel: the walker stands still in it and after it, no key held', mv(held0, held1) < 0.05 && mv(held1, held2.p) < 0.05 && held2.keys.length === 0, { held0, held1, held2 });
 
   // volume and mute, on the output gain after the mute gain
   await page.click('#gear');
@@ -110,7 +136,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 
   // teleport: every place, within 1 m of its stand point, on the ground, facing, no cue, panel closed
   const n = await page.evaluate(() => window.__fp.settings.places.length);
-  check('teleport: the whole map (spawn, every named landmark, the two places with an act and no landmark (the Lantern Halt, the bell under the Span), the Escarpment Lamps, the middle of the Span (56 m up), the Diffident Stair and the tender\'s deck (100 m up), the feet of the other ways up (the lift\'s lower station, the icefall, the Span\'s west stair), the three region cards, the Taker standing for the Adust, the eighteen living, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) + 2 + 1 + 3 + 18 - 1 + 8 + 1 + 2 + 3, n);
+  // v14-B3: the places of v9 to v12 (the Lantern Halt, the bell, the Span's ways and camp, the ways up and their tops, the passes) are named landmarks now
+  check('teleport: the whole map (spawn, every named landmark but the Sexton\'s graves, the Escarpment Lamps and the two stands kept where the owner cut the card (#52), the three region cards, the eighteen living with the Taker standing for the Adust, the eight story ends)', n === 1 + (await page.evaluate(() => Object.values(window.__fp.landmarks).filter((L) => L.name).length)) - 1 + 3 + 3 + 18 + 8, n);
   check('teleport: Places, The living and Stories headings', await page.evaluate(() => [...document.querySelectorAll('#set-places h4')].map((h) => h.textContent).join('|')) === 'Places|The living|Stories');
   check('teleport: a button for each place', await page.evaluate(() => document.querySelectorAll('#set-places button').length) === n);
   let allNear = true, allClosed = true, allGround = true, noCue = true, facing = true;
@@ -132,7 +159,8 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       const wl = T.waterLevelAt(p.pos.x, p.pos.z), inCol = fp.player.colliders.some((c) => Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < c.r + 0.3 && !(c.h !== undefined && c.y + c.h < Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1))); // (a collider under the deck is not one you stand in)
       // v11-F2: never stand in a hole: the mean of the ground in a 30 m ring against the ground underfoot (the Pit's old entry stood 29 m down)
       let ring = 0; for (let k = 0; k < 16; k++) ring += T.heightAt(p.pos.x + 30 * Math.cos(k * Math.PI / 8), p.pos.z + 30 * Math.sin(k * Math.PI / 8)); const basin = ring / 16 - T.heightAt(p.pos.x, p.pos.z);
-      return { name: pl.name, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && pl.y > T.heightAt(p.pos.x, p.pos.z) + 3 ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
+      const under = pl.y !== undefined && (pl.y < T.heightAt(p.pos.x, p.pos.z) - 3 || pl.name === 'The Nadir'); // v14-D0: a stand under the ground (the Noon Road) is measured from its own floor; v14-D2: so is the Nadir's, on the Pit's bowl, a little under the old ground
+      return { name: pl.name, under, basin: +basin.toFixed(2), q: fp.quality, wet: wl !== null && wl - T.heightAt(p.pos.x, p.pos.z) > 1.15, inCol, d: Math.hypot(p.pos.x - pl.x, p.pos.z - pl.z), above: p.pos.y - (fp.span?.deckAt(p.pos.x, p.pos.z) ?? (pl.y !== undefined && (Math.abs(pl.y - T.heightAt(p.pos.x, p.pos.z)) > 3 || pl.name === 'The Nadir') ? pl.y : T.heightAt(p.pos.x, p.pos.z))) /* v8-04: a story end on the deck; v12-H3: a place in the air (the tender's deck) measured from its own y */, closed: !fp.settings.shown, cues, dot: (fx * tx + fz * tz) / l, pitch: p.pitch };
     }, i);
     detail.push(r);
     if (r.d > 1) allNear = false;
@@ -145,14 +173,46 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: none inside a collider or under water', detail.every((r) => !r.wet && !r.inCol), bad);
   check('teleport: all land within 1 m of their stand point', allNear, bad);
   check('teleport: eye on the ground (heightAt + eye)', allGround, bad);
-  check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || ['The Speculum', 'The Cutting'].includes(r.name)) && r.above > 0.5), detail.filter((r) => (r.basin > 6 && !['The Speculum', 'The Cutting'].includes(r.name)) || r.above <= 0.5)); // (the Cutting stands in its gorge, the one place the slot is seen from; the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
+  check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || r.under || ['The Speculum', 'The Cutting'].includes(r.name)) && r.above > 0.5), detail.filter((r) => (r.basin > 6 && !r.under && !['The Speculum', 'The Cutting'].includes(r.name)) || r.above <= 0.5)); // (the Cutting stands in its gorge, the one place the slot is seen from; the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
   check('teleport: fires no cue', noCue, bad);
+  // v14-B4 (#52): the stand shows the place. Each named landmark's own centre (its `at`, for the places that stand on a line) lies within 40
+  // degrees of the view's centre line (the horizontal field is about 100 degrees across) and no collider shuts the view within 3 m of the eye
+  // (v12's critic: "Go-to stands face walls"; a stand that looks into a trunk or a wall at arm's length shows nothing). Stands whose y is below the terrain
+  // (a chamber, the Pit's floor) are left alone; so are the places with no landmark of their own (the living, the stories, the region cards).
+  const view = await page.evaluate(() => {
+    const fp = window.__fp, T = fp.terrain, out = [];
+    const marks = Object.values(fp.landmarks).filter((L) => L.name);
+    fp.settings.places.forEach((pl, i) => {
+      const L = marks.find((m) => m.name === pl.name || 'The moss light, ' + m.name === pl.name);
+      if (!L || pl.look === 'sun') { out.push(null); return; }
+      if (pl.y !== undefined && pl.y < T.heightAt(pl.x, pl.z) - 1) { out.push(null); return; }
+      fp.settings.teleport(pl);
+      const p = fp.player, fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw), c = L.at || L;
+      const tx = c.x - p.pos.x, tz = c.z - p.pos.z, d = Math.hypot(tx, tz) || 1;
+      const deg = Math.acos(Math.max(-1, Math.min(1, (fx * tx + fz * tz) / d))) * 180 / Math.PI;
+      let hit = null; const floor = Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1);
+      for (const k of fp.player.colliders) {
+        if (k.h !== undefined && k.y + k.h < floor) continue;
+        if (k.unseen) continue; // (v14-F1) a collider with nothing drawn, the Nave's lip posts: it shuts no view
+        const ox = k.x - p.pos.x, oz = k.z - p.pos.z, t = ox * fx + oz * fz; // along the look
+        if (t < 0 || t > 3 + k.r) continue;
+        const off = Math.abs(ox * fz - oz * fx); // across it
+        if (off < k.r + 0.3 && t - Math.sqrt(Math.max(0, (k.r + 0.3) ** 2 - off * off)) < 3) { hit = { x: k.x, z: k.z, r: k.r }; break; }
+      }
+      // a place that is a line (an axis) or wider than the view, or that the stand stands in, is seen by its look point lying on it
+      const lk = pl.look && pl.look !== 'sun' ? Math.hypot(pl.look.x - c.x, pl.look.z - c.z) : 1e9, wide = !!L.axis || d < 2 || L.name === 'The Tumbling Water' /* its centre is the river's mid-reach; the stand shows the fall, 55 m off in the canyon wall */ || lk <= Math.max(L.r, 12) + 5;
+      out.push({ name: pl.name, deg: wide ? 0 : Math.round(deg), hit });
+    });
+    return out.filter(Boolean);
+  });
+  const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked: the owner cut nine cards on #52, about 41 stands remain)
+  check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 35 && badView.length === 0, { checked: view.length, badView });
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};
-    for (const [name, id] of [['The Lantern Halt', 'halt-tally'], ['The bell under the Span', 'span-bell'], ['The Lattice', 'mother-hand'], ['The Hypogeum', 'hypogeum-door'], ['The Collation', 'collation-twelfth']]) {
+    for (const [name, id] of [['The Lantern Halt', 'halt-tally'], ['The Tocsin', 'span-bell'], ['The Lattice', 'mother-hand'], ['The Hypogeum', 'hypogeum-door'], ['The Collation', 'collation-twelfth']]) {
       const pl = fp.settings.places.find((q) => q.name === name), h = fp.acts?.list.find((q) => q.def.id === id);
       if (!pl || !h) { out[name] = null; continue; }
       fp.settings.teleport(pl);
@@ -161,7 +221,38 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
     }
     return out;
   });
-  check('teleport: the Lantern Halt, the bell, the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
+  check('teleport: the Lantern Halt, the bell (the Tocsin), the Lattice, the Hypogeum and the Collation land 8 to 11 m from their act\'s lure, facing it', Object.values(actLand).every((r) => r && r.d >= 8 && r.d <= 11 && r.deg <= 25), actLand);
+
+  // v14-B3 (#52, the class: a way up whose top has no name): stood where each ascent ends (its last point, on the floor
+  // that holds the walk there: the path's y, or the floor nearest its highest y when the point has none), the HUD shows a
+  // name card; and both ends of the walked gallery (its first point too) show Final Refuge (v14-B5: the owner's one name at
+  // the top of the lift); and the top of each of the Span's stairs (its last flight's last tread, and its top landing)
+  // shows Titan's Causeway
+  const tB = Date.now();
+  const tops = await page.evaluate(() => {
+    const fp = window.__fp, p = fp.player, out = [];
+    const card = (q, hi) => {
+      fp.controls.placeAt(0, 0); fp.hud.update(0.1); // off any card, so the next one is new
+      fp.controls.placeAt(q[0], q[1], q[2] ?? hi);
+      fp.hud.update(0.1);
+      const shown = document.getElementById('place').classList.contains('shown');
+      return { at: [q[0], q[1], +(p.pos.y - p.eye).toFixed(1)].map((v) => +(+v).toFixed(1)), name: shown ? document.getElementById('place-name').textContent : null };
+    };
+    for (const a of fp.ascents.list.filter((a) => !a.test)) {
+      const hi = Math.max(...a.path.filter((q) => q[2] !== undefined).map((q) => q[2]));
+      out.push({ id: a.id, end: 'last', ...card(a.path[a.path.length - 1], hi) });
+      if (a.id === 'lift-gallery') out.push({ id: a.id, end: 'first', ...card(a.path[0], hi) });
+    }
+    for (const [key, S] of Object.entries(fp.span?.stairs ?? {})) {
+      const f = S.flights[S.flights.length - 1], L = S.landings[S.landings.length - 1], run = f.steps * f.run;
+      out.push({ id: 'span-' + key, end: 'last tread', ...card([f.x + f.dir[0] * (run - 0.3), f.z + f.dir[1] * (run - 0.3), f.y1], f.y1) });
+      out.push({ id: 'span-' + key, end: 'top landing', ...card([(L.rect[0] + L.rect[1]) / 2, (L.rect[2] + L.rect[3]) / 2, L.y], L.y) });
+    }
+    return out;
+  });
+  const want = { stair: 'The Hanging Croft', icefall: 'The Bitter End', 'lift-gallery': 'Final Refuge', 'span-west': 'Titan\u2019s Causeway', 'span-east': 'Titan\u2019s Causeway' };
+  check('names: stood at the end of every way up the HUD names it (the icefall, Lonely Staircase, the lift\'s gallery at both ends, the Span\'s two stairs); a new way up with no name fails', tops.length >= 8 && tops.every((t) => t.name && (!want[t.id] || t.name === want[t.id])), tops);
+  console.log(`   (the names checks: ${((Date.now() - tB) / 1000).toFixed(1)} s)`);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
   await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });
@@ -208,7 +299,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
 // ---- region cards (v7.1): the bottom-of-screen card for the Adust, the Lynchets and Kenching Flats, and Medlar Close beating the Bletting
 {
   const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
-  for (const [x, z, want] of [[-275, -15, 'The Taker of Altitudes'], [130, -60, 'Medlar Close'], [-195, -113, 'The Lynchets'], [60, 250, 'Kenching Flats'], [55, 274, 'Rest in Starlight'], [185, -70, 'Sleeper\u2019s Orchard'], [195, -100, 'Sleeper\u2019s Orchard'], [200, 185, 'The Pit']]) {
+  for (const [x, z, want] of [[-275, -15, 'The Taker of Altitudes'], [130, -60, 'Medlar Close'], [-195, -113, 'The Lynchets'], [60, 250, 'Kenching Flats'], [55, 274, 'Rest in Starlight'], [185, -70, 'Sleeper\u2019s Orchard'], [195, -100, 'Sleeper\u2019s Orchard'], [194.2, 201, 'The Pit'], [203.08, 176.54, 'The Nadir']] /* v14-D2: the Pit's card is the lip's; its floor is the Nadir's */) {
     await page.evaluate(([x, z]) => { const p = window.__fp.player; p.pos.set(x, window.__fp.terrain.heightAt(x, z) + p.eye, z); window.__fp.hud.update(0.1); }, [x, z]);
     const got = await page.textContent('#place-name');
     check(`cards: (${x}, ${z}) shows ${want}`, got === want, got);
@@ -216,6 +307,17 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   await page.evaluate(() => { const p = window.__fp.player; p.pos.set(128, window.__fp.terrain.heightAt(128, 5) + p.eye, 5); window.__fp.hud.update(0.1); });
   const lee = await page.evaluate(() => { const l = document.getElementById('place-line'); return { name: document.getElementById('place-name').textContent, lines: Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)), text: l.textContent }; });
   check('cards: (128, 5) A Lamplighter\u2019s Standards, the line on two lines', lee.name === 'A Lamplighter\u2019s Standards' && lee.lines === 2 && lee.text.includes('\n'), lee);
+  // v14-B3: a card on a deck shows on the deck and not on the floor under it; a name with no line shows the name alone
+  const at = (x, z, y) => page.evaluate(([x, z, y]) => { const fp = window.__fp, p = fp.player; p.pos.set(x, (y ?? fp.terrain.heightAt(x, z)) + p.eye, z); fp.hud.update(0.1); const l = document.getElementById('place-line'); return { name: document.getElementById('place').classList.contains('shown') ? document.getElementById('place-name').textContent : null, line: l.style.display === 'none' ? '' : l.textContent }; }, [x, z, y]);
+  await at(0, 0); const deck = await at(88, 211, 56);
+  const waitLines = await page.evaluate(() => { const l = document.getElementById('place-line'); return Math.round(l.getBoundingClientRect().height / parseFloat(getComputedStyle(l).lineHeight)); });
+  await at(0, 0); const under = await at(88, 211);
+  check('cards: on the Span\u2019s middle deck (56 m) The Long Wait, its two lines one above the other, each in its own quotation marks (v14-B5, #52); on the ground under it not', deck.name === 'The Long Wait' && deck.line === '\u201cA bitter night for travelers.\u201d\n\u201cA bitter night for musing on the stars.\u201d' && waitLines === 2 && under.name !== 'The Long Wait', { deck, waitLines, under });
+  // v14-B5: the deck is Titan's Causeway between the places on it, and the places on it win inside it; not on the ground
+  await at(0, 0); const mid = await at(-160, 215, 56); await at(0, 0); const splice = await at(145, 215, 56); await at(0, 0); const floor = await at(-160, 200);
+  check('cards: the deck between its places is Titan\u2019s Causeway; the Shaky Splice wins on its spar; the ground under the deck is not the Causeway', mid.name === 'Titan\u2019s Causeway' && mid.line.startsWith('\u201cNever shall') && splice.name === 'Shaky Splice' && floor.name !== 'Titan\u2019s Causeway', { mid, splice, floor });
+  await at(0, 0); const croft = await at(226, -55, 107.9); await at(0, 0); const moor = await at(226, -55);
+  check('cards: on the tender\u2019s deck (108 m) The Hanging Croft; on the moor under it not', croft.name === 'The Hanging Croft' && moor.name !== 'The Hanging Croft', { croft, moor });
   await context.close();
 }
 
@@ -224,7 +326,15 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   const { context, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await page.evaluate(() => window.__fp.settings.open()); await page.waitForTimeout(800);
   const o = await page.evaluate(() => ({ idle: window.__fp.pacing.idle, hidden: document.getElementById('card').classList.contains('hidden') }));
-  check('panel: opening it does not raise the pause card or idle the frame', o.hidden && o.idle === false, o);
+  check('panel: opening it does not raise the pause card', o.hidden, o);
+  // v14-B1: the panel is the pause, so the frame idles under it as it did under the card; for a moment after a change in
+  // it (a slider's preview) it does not
+  await page.waitForTimeout(1200);
+  const idleNow = () => page.evaluate(() => { const P = window.__fp.pacing; P.targetFps(performance.now()); return { idle: P.idle }; }); // asked now, not at the last drawn frame (a software GL frame can take seconds)
+  const o2 = await idleNow();
+  await page.locator('#set-volume').fill('70'); await page.waitForTimeout(150);
+  const o3 = await idleNow();
+  check('panel: the frame idles under it, and not just after a change in it', o2.idle === true && o3.idle === false, { o2, o3 });
   await page.evaluate(() => window.__fp.settings.close());
   const t = await page.evaluate(() => {
     const fp = window.__fp, P = fp.pacing; let r = {};

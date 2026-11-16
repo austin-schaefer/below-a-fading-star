@@ -386,7 +386,7 @@ export function buildLinkBoy(ctx, F, cue) {
     const tr = S.rec.track, e = S.dir > 0 ? tr.length : 0, p = tr.at(e, at2), tx = p.tx * S.dir, tz = p.tz * S.dir;
     let bx = tx, bz = tz, best = 70;
     for (const L of [...Object.values(LANDMARKS), ...Object.values(SITES)]) {
-      if (L.x == null) continue;
+      if (L.x == null || L.aside === false) continue; // (v14-B3: the name cards of v9-v12 are not what continues)
       const d = hyp(L.x - p.x, L.z - p.z);
       if (d > 2 && d < best) { best = d; bx = (L.x - p.x) / d; bz = (L.z - p.z) / d; }
     }

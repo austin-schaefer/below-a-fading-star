@@ -1,4 +1,5 @@
-// The settings panel (v7-08): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
+// The settings panel (v7-08), which is also the pause (v14-B1, #46: Escape opens it, as the gear does; "Back to the
+// moor" shuts it and takes the mouse again): a gear beside the speaker opens volume, mute (and under them, v9-M6, the sound's three
 // parts: sound effects, ambience, music, with the music's off / how often), quality, mouse capture and a list of
 // places to teleport to, and (v13) Measure, which reloads into the bench. UI only: it builds no world, draws nothing and registers no per-frame update; with the
 // panel closed it is a handful of listeners. The markup and CSS are in index.html. Reads ctx.audio (audio.js),
@@ -34,23 +35,42 @@ const CARD_POSES = {
   // v11.1-W4: the canyon's three were a rock at arm's length or a wall; each now on dry ground with the thing across open air
   river: { x: 208, z: 240, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the slope 26 m off
   cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
-  prospect: { x: 247, z: -36, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
+  orchard: { x: 80, z: -100, look: { x: 130, z: -90 }, pitch: 0.05 }, // v14-B4: from the grove's west side, the medlars and the path through (the old stand put a trunk across the frame)
+  byre: { x: -160, z: 48, look: { x: -148, z: 64 }, pitch: 0.05 }, // v14-B4: 21 m off, the roof clear of the wood's trunks
+  plinths: { x: 175, z: -160, look: { x: 148, z: -220 }, pitch: 0.1 }, // v14-B4: beside the road's foot, the plinths running off in file (the old stand was at a wall's foot)
+  nave: { x: 262.4, z: 28.2, look: { x: 252, z: 44 }, pitch: -0.55 }, // v14-F1: at the north-east lip, looking down past the capitals onto the Noon Road's lit carriers and hoops (B4's, 4 m back at (251, 24), framed the rim's grass)
+  thrones: { x: -290, z: 85, look: { x: -324, z: 118 }, pitch: 0.3 }, // v14-B4: out of the wood's edge, the thrones against the sunset (the old stand looked into black trunks)
+  leerie: { x: 110, z: -12, look: { x: 128, z: 5 }, pitch: 0.05 }, // v14-B4: the standards and their lamplighter, the arch behind
+  prospect: { x: 248, z: -30, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
 };
-// v10-F1: places with an act and no landmark of their own, 9 m out in front of it, facing it
-// v11-F2: places that stand on the wall or in the air with no landmark (the card places, Lamps); each a postcard from open ground
+// v14-B4: a region card's stand (default: its card point, facing the spawn's way)
+const REGION_STANDS = {
+  lynchets: { x: -170, z: -95, look: { x: -200, z: -135 }, pitch: 0.1 }, // the terraced walls climbing the slope
+};
+// v11-F2: places that stand on the wall or in the air with no landmark; each a postcard from open ground
 const FAR_PLACES = [
   { name: 'The Escarpment Lamps', x: -45, z: 45, look: { x: -171, z: 384 }, pitch: 0.32 }, // across the tarn, 400 m: the city of windows over the Span's arches
-  { name: 'The middle of the Span', x: 98, y: 56, z: 213, look: { x: 4, z: 247 }, pitch: 0.02 }, // v12-H1: on the deck run nobody could reach, 56 m up, looking west along it to the sun's saddle; the camp is behind and to the right
-  { name: 'The Diffident Stair', x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // v12-H3: the stub side on, its steps going up to nothing between the posts, the slabs lying in the turf beyond
+  // v14-B5: two places whose cards the owner cut (#52) keep the stands and names they had before v14-B3
+  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice over it
   { name: 'The lift\'s lower station', x: -282, z: -19, look: { x: -299, z: -18 }, pitch: 0.42 }, // v12-C1: on the path east of the station's stair: the plinth, the bell's arch and the rails going up the face
-  { name: 'The foot of the icefall', x: 62, z: -266, look: { x: 72.5, z: -293 }, pitch: 0.18 }, // v12-C1: on the Lattice's floor, the lit cleft in the ice front, the steps of ice and their glass posts over it
-  { name: 'The Span\'s west stair', x: -199, z: 200, look: { x: -230, z: 200 }, pitch: 0.38 }, // v12-C1: at its foot in the wood's southern fringe, the first flight climbing west between its walls (dark under the trees)
-  { name: 'The tender\'s deck', x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // v12-H3: on the deck at the top, 100 m up: the lean-to, the stove, the chair and the ladder against the lattice's foot
 ];
-const ACT_PLACES = [
-  { name: 'The Lantern Halt', x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
-  { name: 'The bell under the Span', x: -60.6, z: 194.2, look: { x: -60.6, z: 203.4 } }, // the bell, its ram and the ringing post
-];
+// v14-B3 (#52): the named places of v9 to v12 (LANDMARKS' cards), each where it reads: the ways up from their feet, the
+// tops on their own floor (y), the act places 9 m out in front of the act (v10-F1); v14-B5: the owner's cuts and renames
+const NAMED_POSES = {
+  halt: { x: -54.0, z: 5.95, look: { x: -62.4, z: 2.6 }, pitch: 0.08 }, // the tally slab's chalked face
+  tocsin: { x: -60.6, z: 194.2, look: { x: -57.2, z: 203.4 }, pitch: 0.2 }, // 9 m from the ringing post (the act's lure, 20 degrees off the look) so the bell, hung to the east of it, and its arch are in the frame
+  escalade: { x: -120, z: 175, look: { x: -226, z: 195 }, pitch: 0.3 }, // from the tarn's side, 100 m off: the gate's masonry against the last of the sky (at its foot, in the wood, the stair stands in its own deep shade and the frame is black)
+  causeway: { x: -150, y: 56, z: 213, look: { x: -60, z: 215 }, pitch: -0.04 }, // on the west deck between piers, running off east to the fallen bay and the footing course (nearer the stair's top the wall's shoulder rings the stand: the hole check)
+  wait: { x: 101, y: 56, z: 214, look: { x: 88, z: 210 }, pitch: -0.08 }, // the camp, its lean-to and hearth, the worn lane to her stone
+  spar: { x: 173, y: 56, z: 215, look: { x: 122, z: 215 }, pitch: -0.1 }, // on the east deck, the truss member going back over the river bay
+  bitter: { x: 44, z: -390, yaw: 1.2, pitch: 0.1 }, // on the shelf at the lip of the last crevasse, the broken eye (stories/the-soundings.md, beat 4)
+  diffident: { x: 275, z: 0, look: { x: 288, z: -9 }, pitch: 0.18 }, // the stub side on, its steps going up to nothing between the posts
+  coffinroad: { x: 250.4, y: -15.7, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D3: on the first carrier's back 15 m under the moor, looking east along the string through the hoops into the dark under the roof
+  laidsun: { x: 225.9, y: -28.0, z: 118.56, look: { x: 223.6, z: 123.0 }, pitch: -0.36 }, // v14-D1: at the room's way in from the Flute, 28 m under the moor, the half-laid gold sun in the floor and his lamp
+  nadir: { x: 203.08, y: -31.66, z: 176.54, look: { x: 200, z: 185 }, pitch: 0.12 }, // v14-D2: on the Pit's floor where the passage comes in, the down-reel and the sheers over the Nadir ahead, the slabs going up the wall behind them
+  croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
+  remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
+};
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
   ['taker', -275.35, 13.29, -1.222, -0.04], // workers-taker-road
@@ -80,15 +100,14 @@ function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
     if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
-    const h = HAND[key];
+    const h = HAND[key] || NAMED_POSES[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
-  for (const a of ACT_PLACES) out.push({ ...a, group: 'Places' });
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
-  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw });
+  for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw, ...REGION_STANDS[R.region] });
   for (const [key, x, z, yaw, pitch] of LIVING) {
     const S = SITES[key];
     if (x != null) out.push({ name: S.name, group: 'The living', x, z, yaw, pitch });
@@ -114,9 +133,10 @@ export function buildSettings(ctx) {
   const slider = $('set-volume'), sliderOut = $('set-volume-out'), muteBtn = $('set-mute');
   const posEl = $('set-pos'), posToggle = $('set-showpos'), posHud = $('posline');
   const qualityEl = $('set-quality'), captureEl = $('set-capture-choice'), placesEl = $('set-places');
-  const api = { open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
+  let touched = -1e9; // the last change made in the panel: the frame stays full for a moment after it (a slider's preview)
+  const api = { get idle() { return open_ && performance.now() - touched > 1500; }, open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };
   ctx.settings = api;
-  let open_ = false;
+  let open_ = false, openedAt = -1e9;
 
   // --- sound
   const audio = () => ctx.audio;
@@ -263,9 +283,11 @@ export function buildSettings(ctx) {
   }
 
   // --- open and close
-  function open() {
+  function open(o) {
     if (open_) return;
-    open_ = true;
+    ctx.player?.keys?.clear(); // a key held as the panel opens is let go in it, where the walk never hears it: the walker stops
+    open_ = true; openedAt = o?.paused ? performance.now() : -1e9; // opened by Escape (hud.js): that Escape is not also the one that shuts it
+    document.getElementById('card')?.classList.add('hidden'); // the one panel: never the old paused card behind it
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
     syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos(); syncFall();
     for (const b of placesEl.querySelectorAll('button[data-thread]')) b.hidden = !ctx.threads?.[b.dataset.thread]; // v8-04
@@ -283,14 +305,21 @@ export function buildSettings(ctx) {
   }
   function toggle() { if (open_) close(); else open(); }
   gear.addEventListener('click', toggle);
-  $('set-close').addEventListener('click', close);
+  // Back to the moor: shut it and, on a desktop with the mouse captured on click, take the mouse again (the click is the
+  // gesture the browser asks for; Escape is not one, so after Escape a click on the view takes it, as before)
+  $('set-close').addEventListener('click', () => {
+    close();
+    const pl = ctx.player;
+    if (pl?.enabled && !pl.locked && !pl.lockFailed && !pl.dragLook && !(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) ctx.controls.lock();
+  });
   root.addEventListener('mousedown', (e) => { if (e.target === root) { e.preventDefault(); panel.focus({ preventScroll: true }); } });
   // Escape closes the panel before the pause toggle (drag-look mode) sees it; while the mouse is captured the
   // browser takes Escape for itself and the panel stays shut. Other keys typed in the panel are the panel's, not the walk's.
   window.addEventListener('keydown', (e) => {
-    if (open_ && e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); }
+    if (open_ && e.code === 'Escape' && performance.now() - openedAt > 300) { e.preventDefault(); e.stopImmediatePropagation(); close(); }
   }, true);
   const swallow = (e) => { if (e.code !== 'Escape') e.stopPropagation(); };
+  for (const ev of ['input', 'pointerdown']) root.addEventListener(ev, () => { touched = performance.now(); });
   root.addEventListener('keydown', swallow); root.addEventListener('keyup', swallow);
   syncSound(); syncMusic(); syncQuality(); syncCapture(); syncPos();
   return api;

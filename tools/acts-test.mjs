@@ -3,8 +3,8 @@
 // Lantern Halt (src/v10/tally.js), and on test acts registered in the page for the contract's parts. Desktop: the act
 // is not offered from the road, 30 m off, facing away, or facing the wall far from where the next stroke goes; is
 // offered in front of it; E does it (the stroke, the count, the stored mark) and the stroke is drawn on screen; a
-// second E or a click does nothing (once a visit); Ctrl+E does nothing; nothing is offered or done behind the paused
-// card or the settings panel; after a reload the stroke is there and the act offered again; the settings row forgets
+// second E or a click does nothing (once a visit); Ctrl+E does nothing; nothing is offered or done behind the pause
+// (Escape: the settings panel) or the panel opened by the gear; after a reload the stroke is there and the act offered again; the settings row forgets
 // it. The contract: busy (a 'free' act whose do returns seconds cannot fire twice), when(), at.y (another level),
 // data kept beside the count. Memory: corrupt JSON, a tampered count (clamped), storage that throws; ?acts=0. Touch:
 // the offer clear of the stick and the hop button, a tap does the act and reaches neither. v10-A4, the Halt's second half: the
@@ -105,20 +105,20 @@ await atStroke(page, 2.1, 0, 3.2);
 s = await waitOffer(page, false);
 check('at the wall 3 m along from the row\'s end: not offered (the stroke would land out of sight)', s.offered === null, s);
 
-// the paused card and the settings panel
+// the pause (Escape: the settings panel) and the panel opened by the gear
 await atStroke(page);
 await waitOffer(page, true);
-await page.evaluate(() => { const c = document.getElementById('card'); c.classList.remove('hidden'); c.classList.add('paused'); }); // what Esc does
+await page.evaluate(() => { window.__fp.player.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); }); // what Escape does: the capture let go, the settings panel (the pause) up (v14-B1)
 await sleep(250);
 s = await state(page);
-check('behind the paused card: the offer gone at once', s.offered === null && !s.visible, s);
+check('behind the pause (Escape: the settings panel): the offer gone at once', s.offered === null && !s.visible, s);
 await page.keyboard.press('KeyE'); await sleep(150);
 s = await state(page);
-check('behind the paused card: E does nothing', s.visitor === 0 && s.count === 0, s);
+check('behind the pause: E does nothing', s.visitor === 0 && s.count === 0, s);
 await shot(page, 'acts-halt2-paused');
-await page.evaluate(() => document.getElementById('card').classList.add('hidden'));
+await page.evaluate(() => window.__fp.settings.close());
 s = await waitOffer(page, true);
-check('the card gone: offered again', s.offered === 'halt-tally', s);
+check('the pause shut: offered again', s.offered === 'halt-tally', s);
 await page.evaluate(() => window.__fp.settings.open());
 await sleep(100);
 s = await state(page);
@@ -442,14 +442,28 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   check('then the seat is offered, with its words', r.offered && r.words === 'Take the seat', r);
   const start = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, yaw: window.__fp.player.yaw }; });
   const tPress = await p.evaluate(() => window.__fp.time.t);
+  // v14-B1 (#39): from the press to the set-down, every frame, the eye is never inside a collider (the slab's capsule
+  // stands 0.2 m proud of its faces, so inside it is the stone's face at the camera's nose or behind it)
+  await p.evaluate(() => {
+    const fp = window.__fp, C = fp.player.colliders, W = { worst: 0, at: null, frames: 0 };
+    const inside = (c, e) => {
+      if (c.y !== undefined && (e.y < c.y || e.y > c.y + (c.h ?? 0) + (c.dh ?? 0))) return 0;
+      let d;
+      if (c.x2 !== undefined) { const dx = c.x2 - c.x1, dz = c.z2 - c.z1, L = dx * dx + dz * dz || 1e-9, u = Math.max(0, Math.min(1, ((e.x - c.x1) * dx + (e.z - c.z1) * dz) / L)); d = Math.hypot(e.x - c.x1 - dx * u, e.z - c.z1 - dz * u); }
+      else d = Math.hypot(e.x - c.x, e.z - c.z);
+      return c.r - d;
+    };
+    const tick = () => { if (!fp.player.carried && W.frames > 30) { W.done = true; return; } if (fp.player.carried) { W.frames++; const e = fp.camera.position; for (const c of C) { const k = inside(c, e); if (k > W.worst) { W.worst = +k.toFixed(3); W.at = { phase: fp.tally.ride.phase, mod: c.mod, eye: [+e.x.toFixed(2), +e.y.toFixed(2), +e.z.toFixed(2)] }; } } } requestAnimationFrame(tick); };
+    window.__seatEye = W; requestAnimationFrame(tick);
+  });
   await p.keyboard.press('KeyE');
   await until(() => window.__fp.tally.ride.phase === 'rising', 4000);
   r = await p.evaluate(() => { const fp = window.__fp, h0 = fp.player.hops, hopped = fp.controls.hop(); return { carried: fp.player.carried, hopped, hops: fp.player.hops - h0, phase: fp.tally.ride.phase }; });
   check('E takes the seat: the visitor is carried and cannot hop off', r.carried && r.phase === 'rising' && !r.hopped && r.hops === 0, r);
   // pause and the settings panel hold the ride; the sun's gutter does not
-  await p.evaluate(() => { const c2 = document.getElementById('card'); c2.classList.remove('hidden'); c2.classList.add('paused'); });
+  await p.evaluate(() => { window.__fp.player.everLocked = true; window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })); }); // Escape (v14-B1: the settings panel is the pause)
   const y0 = await p.evaluate(() => window.__fp.player.pos.y); await sleep(1200); const y1 = await p.evaluate(() => window.__fp.player.pos.y);
-  await p.evaluate(() => document.getElementById('card').classList.add('hidden'));
+  await p.evaluate(() => window.__fp.settings.close());
   await p.evaluate(() => window.__fp.settings.open()); await sleep(1000); const y2 = await p.evaluate(() => window.__fp.player.pos.y);
   await p.evaluate(() => window.__fp.settings.close());
   check('paused, and with the settings panel open, the ride holds where it is', Math.abs(y1 - y0) < 0.02 && Math.abs(y2 - y1) < 0.02, { y0, y1, y2 });
@@ -470,6 +484,9 @@ if (!SALT) console.log('salt for news is off (?salt=1): its rows are skipped; ru
   check('nothing of him is within a metre of the eye: his head, and his hand held out to them', r.dHead > 1 && r.dHand > 1, r);
   await p.keyboard.down('KeyW'); await until(() => window.__fp.tally.ride.phase === 'down', 8000); await p.keyboard.up('KeyW'); // pushing to walk: the seat lets them down
   const back = await until(() => !window.__fp.player.carried && window.__fp.tally.ride.phase === null, 20000);
+  r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
+  const eyeIn = await p.evaluate(() => window.__seatEye);
+  check('the ride, press to set-down: the eye is never inside a collider (the slab\'s stone)', eyeIn.frames > 60 && eyeIn.worst <= 0, eyeIn);
   r = await p.evaluate(() => { const q = window.__fp.player.pos; return { x: q.x, y: q.y, z: q.z, carried: window.__fp.player.carried }; });
   check('pushing to walk lets them down, and the ride ends exactly where it began', back && Math.hypot(r.x - start.x, r.z - start.z) < 0.01 && Math.abs(r.y - start.y) < 0.05, { r, start });
   await sleep(500);
@@ -540,6 +557,15 @@ if (process.env.CENTRAL !== '0') await (await import('./acts-central.mjs')).cent
   await bt('window.__fp.bell.state.ram > 1.5', 8000);
   b = await bs();
   check('bell: E does it: counted and kept, the ram hauled back metres on its rope', b.count === 1 && b.stored === 1 && b.active && b.ram > 1.5, b);
+  // v14-B1 (#40): what the haul takes in is rope, falling in turns at the post: each turn rope-sized (never a ring
+  // stretched up out of the grass), in the arch's shadow like the post, and a rope down to it from the post's ring
+  const coil = await p.evaluate(() => {
+    const fp = window.__fp, T = fp.THREE, c = fp.scene.getObjectByName('bell-coil'), d = fp.scene.getObjectByName('bell-rope-drop'), M = new T.Matrix4(), P = new T.Vector3(), Q = new T.Quaternion(), S = new T.Vector3();
+    if (!c?.isInstancedMesh) return { instanced: false };
+    let turns = 0, tall = 0; for (let i = 0; i < c.count; i++) { c.getMatrixAt(i, M); M.decompose(P, Q, S); if (S.x > 0.01) { turns++; tall = Math.max(tall, S.y); } }
+    return { instanced: true, turns, tall: +tall.toFixed(2), shade: c.receiveShadow, drop: !!d?.visible && d.receiveShadow };
+  });
+  check('bell: hauled, the rope taken in lies in turns at the post (two or more, none stretched), in shadow, with its rope down from the ring', coil.instanced && coil.turns >= 2 && coil.tall <= 1.05 && coil.shade && coil.drop, coil);
   await bt('window.__fp.bell.state.rang'); await bt('window.__fp.bell.state.t > window.__fp.bell.strike + 0.5');
   b = await bs();
   check('bell: the ram comes in and strikes: dust falls, a fresh stone or two from the crack', b.rang && b.dust && b.stones === 2, b);
@@ -736,6 +762,42 @@ if (process.env.FIND !== '0') {
   await begin(p); await sleep(300);
   r = await p.evaluate(() => ({ call: window.__fp.acts.count('lift-call'), lever: window.__fp.acts.count('lift-lever') }));
   check('lift: after a reload the acts are remembered and the bell is offered again', r.call === 1 && r.lever === 1 && (await offAt(L.f.x, L.f.z, L.floor, L.f.yaw, 0.1)) === 'lift-call', r);
+  await c.close();
+}
+
+// v14-D2, the sounding at the bottom of the Pit (src/v14/pit.js; frames: tools/pit-frames.mjs): offered at the reel's
+// crank end to a visitor beside it looking at the reel or past it at the Nadir, not from the lip 30 m over it, not with
+// the back to it, not from the stair over it; done, the lead goes down into the hole and comes home; remembered
+{
+  const c = await browser.newContext({ viewport: { width: 640, height: 360 } }); const p = await c.newPage(); watch(p, 'pit');
+  await p.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.pit, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  const offAt = (x, z, y, yaw, pitch = 0) => p.evaluate(async ([x, z, y, yaw, pitch]) => {
+    const fp = window.__fp; fp.controls.placeAt(x, z, y); const pl = fp.player; pl.yaw = yaw; pl.pitch = pitch; pl.vel.set(0, 0, 0);
+    await new Promise((r) => setTimeout(r, 900));
+    return fp.acts.offered?.def.id || null;
+  }, [x, z, y, yaw, pitch]);
+  const P = await p.evaluate(() => { const P = window.__fp.pit, dx = (P.reel.x - 200) / Math.hypot(P.reel.x - 200, P.reel.z - 185), dz = (P.reel.z - 185) / Math.hypot(P.reel.x - 200, P.reel.z - 185); return { reel: P.reel, dx, dz, ax: -dz, az: dx, yC: P.yC, lipY: P.lipY, s: P.stair.point(0.5) }; });
+  const yawTo = (x, z, tx, tz) => Math.atan2(-(tx - x), -(tz - z));
+  const side = { x: P.reel.x + P.ax * 1.7 - P.dx * 0.4, z: P.reel.z + P.az * 1.7 - P.dz * 0.4 };
+  check('pit: the lead is offered beside the reel, looking at the Nadir', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3)) === 'pit-lead');
+  check('pit: and looking at the reel itself', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, P.reel.x, P.reel.z))) === 'pit-lead');
+  check('pit: not with the back to it', (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) + Math.PI)) !== 'pit-lead');
+  check('pit: not from the lip over it', (await offAt(194.2, 201, undefined, yawTo(194.2, 201, 200, 185), -0.6)) !== 'pit-lead');
+  check('pit: not from the stair over the floor', (await offAt(P.s[0], P.s[2], P.s[1], yawTo(P.s[0], P.s[2], 200, 185), -0.5)) !== 'pit-lead');
+  await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3);
+  await p.keyboard.press('KeyE'); await sleep(2500);
+  let r = await p.evaluate(() => ({ n: window.__fp.acts.count('pit-lead'), t: window.__fp.pit.state.t, leadY: window.__fp.pit.state.leadY, yC: window.__fp.pit.yC }));
+  check('pit: E lets go the lead: it is going down into the Nadir', r.n === 1 && r.t > 0 && r.leadY < r.yC - 2, r);
+  for (let i = 0; i < 80 && (await p.evaluate(() => window.__fp.pit.state.t >= 0)); i++) await sleep(500);
+  r = await p.evaluate(() => ({ t: window.__fp.pit.state.t, leadY: window.__fp.pit.state.leadY, yC: window.__fp.pit.yC, kept: window.__fp.pit.state.n }));
+  check('pit: the wind brings it home over the hole', r.t < 0 && Math.abs(r.leadY - (r.yC + 0.35)) < 0.3, r);
+  await p.reload({ waitUntil: 'load' });
+  await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.pit, null, { timeout: 300000 });
+  await begin(p); await sleep(300);
+  r = await p.evaluate(() => ({ n: window.__fp.acts.count('pit-lead') }));
+  check('pit: after a reload the sounding is remembered and the lead offered again', r.n === 1 && (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3)) === 'pit-lead', r);
   await c.close();
 }
 

@@ -33,8 +33,9 @@ export const cover = {
 export const stone = { density: 0.3, tors: false };
 export const air = { tint: '#f2c95e', strength: 1 }; // "gold pollen" (DI)
 
-// the tors: [x, z, height]; the tallest at (268, -80)
-const TORS = [[SITES.tallestTor.x, SITES.tallestTor.z, 10], [252, -40, 7.5], [281, -20, 6.2], [258, -2, 6.5], [247, -92, 7], [283, -62, 6]];
+// the tors: [x, z, height]; the tallest at (268, -80). None stands on the Diffident Stair's slabs lying in the turf
+// (#48: rocks-test's ways check)
+const TORS = [[SITES.tallestTor.x, SITES.tallestTor.z, 10], [258, -64, 7.5], [284, -36, 6.2], [258, -2, 6.5], [247, -92, 7], [283, -62, 6]];
 // how far from a stack's axis (cx, cz) a pillow reaches, from the ground to a little over a walker's eye: the widest of
 // its horizontal semi-axes (the pillow geometry's x 1, z 0.85, y 0.72, with the noise's swell) where it cuts that band
 function pillowReach(p, cx, cz, base) {

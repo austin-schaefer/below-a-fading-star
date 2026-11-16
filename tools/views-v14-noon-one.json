@@ -1,0 +1,102 @@
+[
+ {
+  "name": "lit-30m",
+  "x": 296,
+  "z": 42,
+  "yaw": 1.4023,
+  "pitch": -0.0904,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(296, -14, 42); p.yaw = 1.4023; p.pitch = -0.0904; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(296, -14, 42); p.yaw = 1.4023; p.pitch = -0.0904; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "lit-8m",
+  "x": 283.5,
+  "z": 42,
+  "yaw": 1.1903,
+  "pitch": -0.1981,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(283.5, -14, 42); p.yaw = 1.1903; p.pitch = -0.1981; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(283.5, -14, 42); p.yaw = 1.1903; p.pitch = -0.1981; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "lit-2m",
+  "x": 274.8,
+  "z": 42.4,
+  "yaw": 0.2311,
+  "pitch": -0.52,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(274.8, -14, 42.4); p.yaw = 0.2311; p.pitch = -0.5200; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(274.8, -14, 42.4); p.yaw = 0.2311; p.pitch = -0.5200; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "lit-top",
+  "x": 271.3,
+  "z": 38.3,
+  "yaw": -1.5708,
+  "pitch": -0.3657,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(271.3, -14, 38.3); p.yaw = -1.5708; p.pitch = -0.3657; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(271.3, -14, 38.3); p.yaw = -1.5708; p.pitch = -0.3657; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "dark-30m",
+  "x": 290,
+  "z": 42,
+  "yaw": 1.4297,
+  "pitch": -0.0739,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(290, -14, 42); p.yaw = 1.4297; p.pitch = -0.0739; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(290, -14, 42); p.yaw = 1.4297; p.pitch = -0.0739; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "dark-8m",
+  "x": 254.5,
+  "z": 42,
+  "yaw": -1.1611,
+  "pitch": -0.2067,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(254.5, -14, 42); p.yaw = -1.1611; p.pitch = -0.2067; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(254.5, -14, 42); p.yaw = -1.1611; p.pitch = -0.2067; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "dark-2m",
+  "x": 263.8,
+  "z": 42.4,
+  "yaw": 0.2311,
+  "pitch": -0.52,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(263.8, -14, 42.4); p.yaw = 0.2311; p.pitch = -0.5200; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(263.8, -14, 42.4); p.yaw = 0.2311; p.pitch = -0.5200; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "dark-top",
+  "x": 260.3,
+  "z": 38.2,
+  "yaw": -1.5708,
+  "pitch": -0.3657,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(260.3, -14, 38.2); p.yaw = -1.5708; p.pitch = -0.3657; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(260.3, -14, 38.2); p.yaw = -1.5708; p.pitch = -0.3657; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "pair-stair",
+  "x": 262,
+  "z": 47.75,
+  "yaw": -0.5438,
+  "pitch": -0.5382,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(262, -9.5, 47.75); p.yaw = -0.5438; p.pitch = -0.5382; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(262, -9.5, 47.75); p.yaw = -0.5438; p.pitch = -0.5382; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ },
+ {
+  "name": "up-12m",
+  "x": 262,
+  "z": 42,
+  "yaw": -0.6183,
+  "pitch": 0,
+  "settle": 1200,
+  "js": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(262, -14, 42); p.yaw = -0.6183; p.pitch = 0.0000; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; p.pos.set(262, -14, 42); p.yaw = -0.6183; p.pitch = 0.0000; p.vel?.set(0, 0, 0); p.vy = 0; fp.camera.position.copy(p.pos); fp.camera.rotation.set(p.pitch, p.yaw, 0, 'YXZ'); fp.camera.updateMatrixWorld(true); })()"
+ }
+]

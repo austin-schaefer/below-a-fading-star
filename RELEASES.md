@@ -4,6 +4,108 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v14: The Depths
+
+Released 2026-11-15.
+
+The walk goes underground. Until now everything stood on the surface and the holes in it were only looked into; now there are three ways down, and they join.
+
+### New
+
+- **A stair down into the Foundered Nave**: The Foundered Nave is the roofless, flooded hall of columns you could only look down into. A stair now goes down its wall to the water, and you can walk the length of the hall.
+- **The Noonwrights, a fourth people**: The road across the Nave's water is theirs. They were glass-blowers and potters who tried to keep the sun by storing daylight in great glazed vessels and sending it along tubes. Their vessels lie afloat nose to tail, and you walk along their backs through the standing hoops of a broken tube, past a torn length of it that still rises to the hole in the roof. A few vessels still hold some noon.
+- **The Wellward Way**: A door at the far end of the Nave leads on and down: first inside one of the Noonwrights' tubes, then through a round, wind-worn tunnel with points of light in its walls, across a stair-bridge over a black gulf, and out through a gate at the bottom of the Pit.
+- **The Laid Sun**: A room halfway along the Wellward Way, where someone is laying a gold sun into the floor from pieces picked off other suns. Their lamp and tools are still out.
+- **Down into the Pit**: The Pit is the great hole in the moor. A stair of stone slabs, lit by lamps, now winds down its wall from a landing on the lip to the floor.
+- **The Nadir**: At the bottom of the Pit there is a hole in the floor, and through it the night sky, under the ground. There is something to do there. If you step into the hole you wake somewhere else.
+- **Eighteen places have their names**: Places added in earlier releases that had no card now show a name when you reach them, ten of them with a line of old verse or prose chosen by the owner.
+
+### Fixed
+
+- **The marks on things you can do were far too bright**: They are now a few moths at rest where your hand would go.
+- **Taking the seat at the inn put you inside the wall**: The seat now stands clear of it.
+- **A great ring swelled on the ground when you rang the bell**: It was a coil of rope drawn four times too tall. It is a pile of rope now.
+- **Escape opens the settings**, not only the pause card.
+- **The lift on the prison cliff lurched and spun as it rose**: It rides smoothly.
+- **The crystal bridge had faces missing**, a lamp glowed as a flat square, a waystone's inside flickered, chain links did not join and passed through a floor, and a path ran through two boulders: all mended.
+- **The Pomegranate House read as a ruin inside**: It has a hearth, warm lamps on every floor, a divan and washing hung out.
+- **The path to the Lonely Staircase led to its back**: A trodden path now comes to its foot, and the loose slabs in the turf lie as fallen steps, not as a road.
+- **The hand under the door came long before its letter**: The hand now pushes the letter out itself.
+- **Ten viewpoints in the settings map faced a wall**: They face the place.
+
+### Behind the scenes
+
+- The world can now have places under the ground: a shared way to cut an opening, floor it, wall it and keep the surface's fog and daylight out of it.
+- Each milestone's release note now ends with what it took: how long, how many agents, how many tokens and what those would cost at public prices.
+- A check now fails if any path ends at the back of a way up.
+
+Known issues: under the ground has been walked on a laptop, not yet on a phone. A column beside the last lit vessel on the Noonwrights' road is lit so pale it can look like daylight; it is the vessel's light. Seen from above, a lit vessel on the Noonwrights' road still looks more like a pale back with a lamp on it than like glass lit from inside. The sky seen from the bottom of the Pit is violet where it should take the sun's colour. The things in the sky that the Noonwrights also built (the lattices and the floating remnants) do not yet look like theirs.
+
+<p><img src="shots/88-noonroad-vessels-glazed-after.webp" width="24%" alt="The Noonwrights' road: glazed vessels afloat nose to tail through great green hoops with amber bands, in a flooded hall of columns"> <img src="shots/89-passage-laid-sun-in.webp" width="24%" alt="The Laid Sun: a round floor with a gold sun half laid in tiles, and one lamp"> <img src="shots/90-pit-floor-up-after.webp" width="24%" alt="Looking up from the bottom of the Pit: the stair winding up the wall, a bridge overhead, and stars rising"> <img src="shots/90-pit-stair-along.webp" width="24%" alt="The stair down the Pit's wall: stone slabs and a rope rail between lamps"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 8 hours 54 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 19 | 730.9M | $240 |
+| Fable 5.2 | 6 | 99.3M | $60 |
+| Sonnet 5.5 | 4 | 13.1M | $3 |
+| **Total** | **29** | **843.3M** | **$303** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 71.7M | $33 |
+| v14-D0 first descent | Opus 5.5 | 177.8M | $51 |
+| v14-D1 the passage | Opus 5.5 | 169.0M | $51 |
+| v14-D2 the Pit | Opus 5.5 | 140.9M | $43 |
+| v14-B1 acts faults | Opus 5.5 | 51.9M | $21 |
+| v14-B2 heights faults | Opus 5.5 | 51.8M | $17 |
+| v14-B3 names and house | Opus 5.5 | 39.6M | $13 |
+| v14-D3 finish: test and render the road | Opus 5.5 | 27.4M | $11 |
+| v14-D3 fourth hand and road | Fable 5.2 | 21.0M | $17 |
+| v14-F1 critic's blocking fixes | Opus 5.5 | 19.6M | $8 |
+| v14-B6 stair approach path | Opus 5.5 | 18.9M | $9 |
+| v14-B5 owner's quotations | Opus 5.5 | 12.6M | $5 |
+| v14-B4 stands facing walls | Sonnet 5.5 | 11.1M | $2 |
+| v14 cold critic | Opus 5.5 | 7.1M | $3 |
+| Cold review of the Pit diff | Opus 5.5 | 4.6M | $2 |
+| Cold review of D0 diff | Opus 5.5 | 2.6M | $2 |
+| Cold review of B3 diff | Opus 5.5 | 2.4M | $1 |
+| Cold review D2 r2 diff | Fable 5.2 | 2.1M | $3 |
+| Cold review D1 passage diff | Fable 5.2 | 2.0M | $3 |
+| v14 curator | Sonnet 5.5 | 1.9M | $1 |
+| Cold review D3 road diff | Fable 5.2 | 1.7M | $3 |
+| Cold review of B2 diff | Opus 5.5 | 1.6M | $1 |
+| Cold review of B1 diff | Opus 5.5 | 1.3M | $1 |
+| Blind read of the Pit renders | Opus 5.5 | 956k | $1 |
+| Cold review B6 r2 diff | Fable 5.2 | 915k | $1 |
+| Blind read of D0 renders | Opus 5.5 | 469k | $0 |
+| Second blind read of Coffin Road | Opus 5.5 | 326k | $0 |
+| Blind read of road frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of road frames 2 | Sonnet 5.5 | 80k | $0 |
+| **Total** | | **843.3M** | **$303** |
+
+</details>
+
+**Since the project started** (v1 to v14)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 167 | 3.98B | $1,561 |
+| Fable 5.2 | 20 | 616.1M | $299 |
+| Sonnet 5.5 | 138 | 385.4M | $95 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **324** | **5.23B** | **$2,135** |
+
 ## v13: A quicker start
 
 Released 2026-11-15.
@@ -30,6 +132,63 @@ Nothing new to find in this one. The walk now opens in about half the time on a 
 Known issues: phones were not measured, only a laptop slowed down to stand in for one, so the gain on a real phone is not known; the Measure row is how to find out. The first visit after each new release may download the whole walk again once. If the walk ever seems stuck on an old version, add `?sw=0` to the address once. The small faults listed under v12 (the seat at the inn, the bell's ring on the ground, the lamp that flickers, the Pomegranate House, the sparks that mark things to do) are still there.
 
 <p><img src="shots/87-first-view-medium.webp" width="24%" alt="The first view after setting out: the dying sun between two great figures, the keep, a pool, and tiers of lit windows on a cliff"> <img src="shots/87-door-loading-bar.webp" width="24%" alt="The title card while the walk loads"> <img src="shots/87-measure-row-phone.webp" width="24%" alt="The settings menu on a phone, with the new Measure row"> <img src="shots/87-measure-panel-phone.webp" width="24%" alt="The result of a Measure run on a phone: how long each frame took, and the slowest moments"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 11 hours 48 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 10 | 366.9M | $150 |
+| Fable 5.2 | 11 | 107.4M | $60 |
+| Sonnet 5.5 | 2 | 4.7M | $1 |
+| **Total** | **23** | **479.0M** | **$211** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 92.4M | $37 |
+| v13 L3 bake in worker, kept | Opus 5.5 | 102.3M | $32 |
+| v13 L2 height core | Opus 5.5 | 57.1M | $22 |
+| v13 L1 service worker | Opus 5.5 | 54.0M | $19 |
+| v13 L4 kept builders | Opus 5.5 | 50.9M | $28 |
+| v13 L5 other builders | Opus 5.5 | 42.8M | $17 |
+| v13 P1 frame yardstick | Opus 5.5 | 26.8M | $15 |
+| v13 critic: differences from v12 | Opus 5.5 | 15.3M | $5 |
+| v13 P0 load yardstick | Opus 5.5 | 9.1M | $5 |
+| Shorten the suite safely | Opus 5.5 | 5.5M | $4 |
+| Suite speed audit, read-only | Fable 5.2 | 4.9M | $4 |
+| v13 F2 the owners | Sonnet 5.5 | 4.0M | $1 |
+| Cold review L2 diff | Fable 5.2 | 3.5M | $4 |
+| v13 P2 load CPU profile | Opus 5.5 | 3.1M | $2 |
+| Cold review L3 diff | Fable 5.2 | 2.0M | $3 |
+| Cold review L4 diff | Fable 5.2 | 1.2M | $2 |
+| Cold review L5 diff | Fable 5.2 | 919k | $2 |
+| Cold review P1 diff | Fable 5.2 | 852k | $2 |
+| v13 curator | Sonnet 5.5 | 657k | $0 |
+| Survey backlog for next milestone | Fable 5.2 | 507k | $1 |
+| Cold review L1 service worker | Fable 5.2 | 448k | $2 |
+| Cold review P0 diff | Fable 5.2 | 376k | $1 |
+| Second cold review L1 final | Fable 5.2 | 305k | $2 |
+| **Total** | | **479.0M** | **$211** |
+
+</details>
+
+**Since the project started** (v1 to v13)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 146 | 3.24B | $1,316 |
+| Fable 5.2 | 15 | 510.1M | $235 |
+| Sonnet 5.5 | 134 | 372.3M | $92 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **294** | **4.38B** | **$1,824** |
 
 ## v12: The Heights
 
@@ -65,6 +224,73 @@ Until now the walk was a valley floor with a wall of mountains round it. This re
 Known issues: the ways up are hard to find. Nothing at ground level says where each one starts: the stair onto the Great Span is at its west end in the Deodand Wood, the lift's station is under the western cliff beyond the Armiger's Tower, the icefall's cleft is in the ice front behind the Lattice, and the Diffident Stair is on the eastern moor (the settings menu's map will take you to each). The high views are the heaviest places for a phone, and may run slowly on an older one. A long fall has no sound yet. The yellow sparks that mark things to do are still too bright, and the other small faults reported since the last release (the seat at the inn, the bell's ring on the ground, the lamp that flickers, the Pomegranate House) are not fixed in this one.
 
 <p><img src="shots/80-span-orch-river-ahead.webp" width="24%" alt="On the Great Span: a narrow truss of rungs crossing a fallen stretch high over the river"> <img src="shots/82-icefall-shelf-plummet.webp" width="24%" alt="From the shelf at the top of the icefall: blocks of blue ice and a long crystal hanging over the valley"> <img src="shots/83-stair-slab-rising.webp" width="24%" alt="The Diffident Stair: a stone slab risen out of the turf, a sign of the sun burning on it"> <img src="shots/84-lift-orch-gallery-east.webp" width="24%" alt="Stepping out of the lift onto the gallery, the carriage behind and the valley far below"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 2 days 6 hours, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 16 | 751.3M | $337 |
+| Fable 5.2 | 4 | 67.1M | $36 |
+| Sonnet 5.5 | 13 | 29.2M | $8 |
+| **Total** | **33** | **847.7M** | **$380** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 64.9M | $31 |
+| H5 the valley from above | Opus 5.5 | 183.3M | $98 |
+| H4 the lift | Opus 5.5 | 154.7M | $77 |
+| H2 the glacier | Opus 5.5 | 131.5M | $54 |
+| H3 the stair that appears | Opus 5.5 | 92.6M | $37 |
+| H0 the footing | Opus 5.5 | 85.4M | $28 |
+| H1 round two, Span | Opus 5.5 | 44.4M | $15 |
+| Critic's blocking fixes v12 | Opus 5.5 | 22.2M | $8 |
+| H1 the Span whole | Sonnet 5.5 | 13.1M | $3 |
+| Cold critic before v12 release | Opus 5.5 | 12.6M | $5 |
+| H5 round two: far.js fixes | Opus 5.5 | 10.5M | $5 |
+| One tally in the world | Sonnet 5.5 | 8.9M | $2 |
+| Curate v12 screenshots | Sonnet 5.5 | 3.4M | $1 |
+| Cold review of glacier diff | Opus 5.5 | 3.3M | $2 |
+| Cold review of lift diff | Opus 5.5 | 3.1M | $2 |
+| Fall setting in the menu | Sonnet 5.5 | 2.5M | $1 |
+| Cold review of H0 footing | Opus 5.5 | 1.9M | $1 |
+| Cold review of Span diff | Opus 5.5 | 1.6M | $1 |
+| Cold review of stair diff | Opus 5.5 | 1.6M | $1 |
+| Cold review H5 from-above | Opus 5.5 | 1.5M | $1 |
+| Cold review H4 lift | Opus 5.5 | 1.2M | $1 |
+| Survey frame loop costs | Fable 5.2 | 1.2M | $2 |
+| Survey loading path | Fable 5.2 | 695k | $2 |
+| Cold review of v11.1 diff | Sonnet 5.5 | 602k | $0 |
+| Survey load path statically | Fable 5.2 | 372k | $1 |
+| Cold read of ground renders | Sonnet 5.5 | 123k | $0 |
+| Cold read: road and top | Sonnet 5.5 | 123k | $0 |
+| Cold read of two renders | Sonnet 5.5 | 122k | $0 |
+| Blind read of Span frames | Sonnet 5.5 | 100k | $0 |
+| Blind read of floor frames | Sonnet 5.5 | 81k | $0 |
+| Second blind read of floor frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 79k | $0 |
+| Third blind read of floor frames | Sonnet 5.5 | 78k | $0 |
+| **Total** | | **847.7M** | **$380** |
+
+</details>
+
+**Since the project started** (v1 to v12)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 136 | 2.87B | $1,166 |
+| Fable 5.2 | 5 | 401.8M | $175 |
+| Sonnet 5.5 | 132 | 367.6M | $91 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **272** | **3.90B** | **$1,612** |
 
 ## v11.1: The mountains, up close
 
@@ -120,6 +346,53 @@ Known issues: the mountains toward the sun are still smoother than the rest. Up 
 
 <p><img src="shots/77-mountains-high-y0-before.webp" width="24%" alt="Before: the mountains from above the valley, their faces ruled with horizontal lines"> <img src="shots/77-mountains-high-y0-after.webp" width="24%" alt="After: the same view, the faces now weathered rock under sharper peaks"> <img src="shots/77-mountains-foreland-y2-after.webp" width="24%" alt="From the ice field at walking height: jagged mountains across the valley, paler ranges behind"> <img src="shots/77-lamps-400-warm.webp" width="24%" alt="The city of windows climbing a ravine above the arches of the Great Span"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 3 hours 41 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 7 | 92.5M | $35 |
+| Sonnet 5.5 | 5 | 36.3M | $7 |
+| Fable 5.2 | 1 | 14.6M | $8 |
+| **Total** | **13** | **143.4M** | **$50** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 14.6M | $8 |
+| v11 M1 the rock | Opus 5.5 | 42.0M | $15 |
+| v11 F2 critic fixes | Sonnet 5.5 | 20.3M | $3 |
+| v11 M2 the form | Opus 5.5 | 18.6M | $7 |
+| v11 M4 fitting and test | Opus 5.5 | 15.7M | $6 |
+| v11 M3 the two squares | Sonnet 5.5 | 14.3M | $3 |
+| v11 F1 wall moire fix | Opus 5.5 | 6.7M | $3 |
+| v11 cold critic | Opus 5.5 | 6.1M | $2 |
+| Cold review of M1 diff | Opus 5.5 | 2.2M | $1 |
+| Cold review of M2 diff | Opus 5.5 | 1.2M | $1 |
+| v11 curator | Sonnet 5.5 | 1.0M | $0 |
+| Cold review of M3 diff | Sonnet 5.5 | 622k | $0 |
+| Blind read of M1 frames | Sonnet 5.5 | 94k | $0 |
+| **Total** | | **143.4M** | **$50** |
+
+</details>
+
+**Since the project started** (v1 to v11)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 116 | 2.06B | $805 |
+| Sonnet 5.5 | 115 | 321.3M | $79 |
+| Fable 5.2 | 2 | 317.2M | $127 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **232** | **2.95B** | **$1,192** |
+
 ## v10: Things to do
 
 Released 2026-11-12.
@@ -147,6 +420,63 @@ Until now you could only walk and look. This release adds the first things you c
 Known issues: the yellow sparks are hard to see at the great crystal until you are about twenty metres from it, and faint at the long table and at the traveller. The figures you meet up close (the sleeper, the man below the bridge) are blocky. The Hypogeum's doorway is dim. Your marks live in your browser only: clearing its data, or visiting on another device, starts you again.
 
 <p><img src="shots/76-tally-c-drawing.webp" width="24%" alt="The chalk on its cord drawing a stroke on the tally wall at the Lantern Halt"> <img src="shots/76-sleeper-c-from-the-seat.webp" width="24%" alt="From the rope seat at the top of the slab: the sleeper in the hanging lantern, the country behind"> <img src="shots/76-bell-b-candles.webp" width="24%" alt="The great bell under the Span after it is rung, corpse-candles gathered in its mouth"> <img src="shots/76-crystal-b-hand.webp" width="24%" alt="A handprint of light on the great crystal, veins of light running out from it"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 6 hours 22 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 11 | 308.6M | $130 |
+| Fable 5.2 | 1 | 82.4M | $30 |
+| Sonnet 5.5 | 11 | 48.1M | $10 |
+| **Total** | **23** | **439.0M** | **$169** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 82.4M | $30 |
+| v10-A3 a great bell to ring | Opus 5.5 | 85.0M | $38 |
+| v10-A4 tally rebuilt with ride | Opus 5.5 | 84.1M | $32 |
+| v10-A1 crystal and door acts | Opus 5.5 | 43.5M | $19 |
+| v10-A2 glass and salt acts | Sonnet 5.5 | 33.7M | $6 |
+| v10-A0 acts framework and tally | Opus 5.5 | 30.0M | $12 |
+| v10-F2 seat ride view and knock | Opus 5.5 | 27.3M | $9 |
+| v10-F1 make acts findable | Opus 5.5 | 20.5M | $9 |
+| v10-T1 walk to pit edges | Sonnet 5.5 | 10.6M | $2 |
+| Cold critic before v10 release | Opus 5.5 | 10.5M | $4 |
+| Cold review of bell branch | Opus 5.5 | 3.0M | $2 |
+| Cold review of A1 branch | Opus 5.5 | 2.5M | $1 |
+| Curate v10 screenshots | Sonnet 5.5 | 1.6M | $1 |
+| Cold review of A4 branch | Opus 5.5 | 1.6M | $1 |
+| Cold review of A2 branch | Sonnet 5.5 | 1.2M | $0 |
+| Cold review of acts branch | Opus 5.5 | 689k | $1 |
+| Cold review of edges branch | Sonnet 5.5 | 293k | $0 |
+| Blind read of A2 frame sequences | Sonnet 5.5 | 174k | $0 |
+| Blind read of A1 frame sequences | Sonnet 5.5 | 171k | $0 |
+| Blind read of bell frames | Sonnet 5.5 | 94k | $0 |
+| Blind read of door and crystal round two | Sonnet 5.5 | 94k | $0 |
+| Blind read of bell round two | Sonnet 5.5 | 91k | $0 |
+| Blind read of act renders | Sonnet 5.5 | 87k | $0 |
+| **Total** | | **439.0M** | **$169** |
+
+</details>
+
+**Since the project started** (v1 to v10)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 108 | 1.96B | $769 |
+| Fable 5.2 | 2 | 296.6M | $116 |
+| Sonnet 5.5 | 110 | 285.0M | $72 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **219** | **2.80B** | **$1,137** |
 
 ## v9.1: The Lantern Halt
 
@@ -199,6 +529,92 @@ Known issues: the music is an early attempt. The pieces are not very tuneful and
 
 <p><img src="shots/74-settings-desktop.webp" width="24%" alt="The settings menu with the new volume sliders"> <img src="shots/74-settings-phone.webp" width="24%" alt="The same menu on a phone"> <img src="shots/73-wood-shafts-glade-after.webp" width="24%" alt="Shafts of ember light falling through the Deodand Wood"> <img src="shots/73-hillside-figure-after.webp" width="24%" alt="The white figure on the hillside, cleared of rocks and plants"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 8 hours 13 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 28 | 477.2M | $172 |
+| Fable 5.2 | 1 | 164.3M | $59 |
+| Sonnet 5.5 | 21 | 34.3M | $10 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **51** | **676.2M** | **$241** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 164.3M | $59 |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M | $16 |
+| v8-04 story threads | Opus 5.5 | 52.2M | $17 |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M | $19 |
+| v8-07 Twk-men | Opus 5.5 | 45.3M | $14 |
+| v8-06 liveries | Opus 5.5 | 33.9M | $10 |
+| v8-01 roads | Opus 5.5 | 31.5M | $10 |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M | $9 |
+| v9-M6 music settings | Opus 5.5 | 19.4M | $8 |
+| v8-03 three strata | Opus 5.5 | 19.4M | $7 |
+| v8-11 the rocks | Opus 5.5 | 17.5M | $6 |
+| v8-02 ground contrast | Opus 5.5 | 17.5M | $5 |
+| v9-M1 patches and player | Opus 5.5 | 17.4M | $7 |
+| v9-T1 owner tweaks | Opus 5.5 | 17.1M | $6 |
+| v8-08 the painter | Opus 5.5 | 12.9M | $6 |
+| Finish the Lantern Halt | Opus 5.5 | 12.0M | $5 |
+| v9-M5 cheaper sound harness | Sonnet 5.5 | 11.7M | $3 |
+| Waystation C (revised skills, clean) | Opus 5.5 | 9.3M | $4 |
+| Write the visual art skill | Opus 5.5 | 6.9M | $3 |
+| v9-M2 director and bus | Sonnet 5.5 | 6.6M | $1 |
+| Cold critic for v9 | Opus 5.5 | 6.2M | $2 |
+| Waystation B (no craft skills) | Opus 5.5 | 5.9M | $3 |
+| Waystation A (with craft skills) | Opus 5.5 | 5.0M | $3 |
+| Split the wilderness skill | Opus 5.5 | 3.9M | $2 |
+| v9-M0 the score | Opus 5.5 | 3.9M | $3 |
+| Cold critic for v8 | Opus 5.5 | 3.8M | $2 |
+| Curate v8 renders | Sonnet 5.5 | 3.1M | $1 |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M | $2 |
+| Cold review v9-M6 | Opus 5.5 | 2.4M | $1 |
+| v9-M3 region tracks | Sonnet 5.5 | 2.3M | $1 |
+| v9-M4 special tracks | Sonnet 5.5 | 2.0M | $1 |
+| Backfill release-note pictures | Sonnet 5.5 | 1.5M | $1 |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M | $1 |
+| Waystation C (revised skills) | Opus 5.5 | 1.1M | $1 |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k | $0 |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k | $0 |
+| Cold review v9-M1 | Opus 5.5 | 737k | $1 |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k | $0 |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k | $0 |
+| Cold review Lantern Halt | Sonnet 5.5 | 604k | $0 |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k | $0 |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k | $0 |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k | $0 |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k | $0 |
+| Can a session self-compact | Haiku 5.5 | 406k | $0 |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k | $0 |
+| Curate v9 renders | Sonnet 5.5 | 355k | $0 |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k | $0 |
+| Cold review v9-T1 | Sonnet 5.5 | 298k | $0 |
+| Cold review v9-M0 | Sonnet 5.5 | 218k | $0 |
+| Blind read of renders | Sonnet 5.5 | 83k | $0 |
+| **Total** | | **676.2M** | **$241** |
+
+</details>
+
+**Since the project started** (v1 to v9)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 97 | 1.65B | $639 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Sonnet 5.5 | 99 | 236.3M | $62 |
+| Fable 5.2 | 2 | 200.1M | $81 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **197** | **2.35B** | **$962** |
+
 ## v8: One world
 
 Released 2026-11-11.
@@ -229,6 +645,71 @@ Ties the world together: roads that lead somewhere, peoples whose buildings and 
 Known issues: the traveller below the Span is very hard to spot from the bridge deck; the Twk-men are tiny unless you are close; a few low things (some grave kerbs, the sunken wall round the lawns, the causeway's edge) still cannot be hopped onto; the wood is very dark away from its shafts of light.
 
 <p><img src="shots/61-roads-spawn-after.webp" width="24%" alt="The start of the walk with a worn track leading past a waystone toward the pond, the red sun in its gap between the mountains"> <img src="shots/63-strata-house-gate-after.webp" width="24%" alt="The Pomegranate House's gate in cream and rose limewash with turquoise domes, seen across tall grass"> <img src="shots/65-house-court-after.webp" width="24%" alt="The inn's courtyard under strings of coloured lamps, with a fountain and tables"> <img src="shots/67-twk-gnomon-after.webp" width="24%" alt="Carcanet Keep's gate, a tall wall of coursed stone with narrow slots, at the end of a path of hexagonal paving"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 4 hours 32 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 14 | 386.4M | $135 |
+| Fable 5.2 | 2 | 67.3M | $29 |
+| Sonnet 5.5 | 13 | 10.1M | $4 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **30** | **464.2M** | **$168** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 66.5M | $27 |
+| v8-04 story threads | Opus 5.5 | 58.6M | $20 |
+| v8-09 repairs and gate | Opus 5.5 | 55.7M | $16 |
+| v8-05 Pomegranate House | Opus 5.5 | 49.6M | $19 |
+| v8-07 Twk-men | Opus 5.5 | 45.3M | $14 |
+| v8-01 roads | Opus 5.5 | 35.7M | $13 |
+| v8-06 liveries | Opus 5.5 | 33.9M | $10 |
+| v8-03 three strata | Opus 5.5 | 24.2M | $10 |
+| v8-02 ground contrast | Opus 5.5 | 22.7M | $8 |
+| v8-10 hop and crystals | Opus 5.5 | 22.5M | $9 |
+| v8-11 the rocks | Opus 5.5 | 17.5M | $6 |
+| v8-08 the painter | Opus 5.5 | 12.9M | $6 |
+| Cold critic for v8 | Opus 5.5 | 3.8M | $2 |
+| Curate v8 renders | Sonnet 5.5 | 3.1M | $1 |
+| Rewrite release notes (#3) | Opus 5.5 | 2.7M | $2 |
+| Cold review v8-10 diff | Opus 5.5 | 1.2M | $1 |
+| Audit architecture and figures | Sonnet 5.5 | 1.0M | $0 |
+| Cold review v8-02 diff | Sonnet 5.5 | 824k | $0 |
+| Research music harness plan | Fable 5.2 | 809k | $2 |
+| Cold review v8-09 diff | Sonnet 5.5 | 765k | $0 |
+| Cold review v8-05 diff | Sonnet 5.5 | 722k | $0 |
+| Cold review v8-07 diff | Sonnet 5.5 | 658k | $0 |
+| Cold review v8-11 rocks | Sonnet 5.5 | 533k | $0 |
+| Cold review v8-06 diff | Sonnet 5.5 | 530k | $0 |
+| Cold review v8-04 diff | Sonnet 5.5 | 530k | $0 |
+| Cold review v8-08 diff | Sonnet 5.5 | 447k | $0 |
+| Can a session self-compact | Haiku 5.5 | 406k | $0 |
+| Cold review v8-01 diff | Sonnet 5.5 | 398k | $0 |
+| Cold review v8-03 diff | Sonnet 5.5 | 303k | $0 |
+| Audit paths, density, palette levers | Sonnet 5.5 | 254k | $0 |
+| **Total** | | **464.2M** | **$168** |
+
+</details>
+
+**Since the project started** (v1 to v8)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 83 | 1.54B | $590 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Sonnet 5.5 | 89 | 210.8M | $56 |
+| Fable 5.2 | 2 | 99.1M | $47 |
+| Haiku 5.5 | 1 | 406k | $0 |
+| **Total** | **173** | **2.11B** | **$873** |
 
 ## v7.2.1: Quieter birds at the keep
 
@@ -288,6 +769,54 @@ Adds far more life to the world, with 18 new characters, creatures and signs to 
 Known issues: the Coheirs sit in deep shade and are hard to see until you are close; the Accrescent's trail is faint from a distance.
 
 <p><img src="shots/52-still-stylite-offer.webp" width="24%" alt="A stack of round stones against a cliff, with a glowing, speckled growth beside it"> <img src="shots/52-still-accrescent-trail.webp" width="24%" alt="Boulders on the dark moor crossed by thin glowing threads of glassy light"> <img src="shots/51-workers-taker-road.webp" width="24%" alt="A field of small stone cairns on cracked ground below the cliff, with the keep on the horizon"> <img src="shots/53-glyphs-erratic-after.webp" width="24%" alt="A large boulder carved with a small pale sun sign, with ruined columns behind it"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 3 hours 55 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 6 | 145.6M | $55 |
+| Sonnet 5.5 | 9 | 41.0M | $9 |
+| Fable 5.1 | 1 | 16.2M | $9 |
+| **Total** | **16** | **202.9M** | **$73** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.1 | 16.2M | $9 |
+| v7-05 small agent | Opus 5.5 | 44.0M | $19 |
+| v7-03 still agent | Sonnet 5.5 | 36.4M | $6 |
+| v7-01 walkers agent | Opus 5.5 | 29.5M | $10 |
+| v7-02 workers agent | Opus 5.5 | 27.4M | $8 |
+| v7-07 audio agent | Opus 5.5 | 22.6M | $11 |
+| v7-06 canyon agent | Opus 5.5 | 20.1M | $5 |
+| v7-04 glyphs agent | Opus 5.5 | 2.1M | $2 |
+| Curate v7 shots | Sonnet 5.5 | 2.0M | $1 |
+| Cold review of v7-canyon | Sonnet 5.5 | 537k | $0 |
+| Cold review of v7-workers | Sonnet 5.5 | 459k | $0 |
+| Cold review of v7-small | Sonnet 5.5 | 415k | $0 |
+| Cold review of v7-walkers | Sonnet 5.5 | 361k | $0 |
+| Cold review of v7-still | Sonnet 5.5 | 301k | $0 |
+| Cold review of v7-glyphs | Sonnet 5.5 | 250k | $0 |
+| Cold review of v7-audio | Sonnet 5.5 | 243k | $0 |
+| **Total** | | **202.9M** | **$73** |
+
+</details>
+
+**Since the project started** (v1 to v7)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 65 | 1.08B | $425 |
+| Fable 5.1 | 1 | 222.0M | $159 |
+| Sonnet 5.5 | 67 | 177.9M | $45 |
+| **Total** | **132** | **1.48B** | **$630** |
 
 ## v6.7: Two more place names
 
@@ -380,6 +909,80 @@ Known issues: on phones the picture is drawn a little below the screen's resolut
 
 <p><img src="shots/43-fxaa-lattice-off.webp" width="24%" alt="Before: crystals and glowing lines with stair-stepped, jagged edges"> <img src="shots/43-fxaa-lattice-on.webp" width="24%" alt="After: the same crystals with smooth edges"> <img src="shots/44-rocks-ling-before.webp" width="24%" alt="Before: boulders on the heath ending in a visible ring"> <img src="shots/44-rocks-ling-after.webp" width="24%" alt="After: the same boulders blending into their distant versions"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 6 hours 20 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 20 | 193.8M | $77 |
+| Fable 5.1 | 1 | 76.7M | $54 |
+| Sonnet 5.5 | 21 | 59.1M | $14 |
+| **Total** | **42** | **329.6M** | **$145** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.1 | 76.7M | $54 |
+| v6-04 trees agent | Opus 5.5 | 37.7M | $13 |
+| v6-05 ground agent | Opus 5.5 | 26.9M | $9 |
+| Land mountains C | Opus 5.5 | 22.9M | $7 |
+| v5: the local lights bundle | Opus 5.5 | 21.6M | $8 |
+| v6-02 finish pass agent | Opus 5.5 | 15.7M | $6 |
+| Draft the v6 briefs | Opus 5.5 | 11.4M | $6 |
+| v5 coherence pass | Opus 5.5 | 10.0M | $4 |
+| v5: the Kept Fire | Sonnet 5.5 | 9.7M | $1 |
+| v5: story set-dressing | Sonnet 5.5 | 9.4M | $1 |
+| v6-01 harness agent | Sonnet 5.5 | 9.4M | $2 |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | $3 |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | $2 |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | $3 |
+| Draft the v7 briefs | Opus 5.5 | 6.0M | $4 |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | $1 |
+| v6-00 square lights, second attempt | Opus 5.5 | 5.3M | $3 |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 4.7M | $1 |
+| Reshape wilderness docs, token-smart | Opus 5.5 | 4.6M | $2 |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | $1 |
+| v6 fade kit agent | Opus 5.5 | 3.4M | $2 |
+| v6-00 bloom squares investigation | Opus 5.5 | 3.2M | $2 |
+| Curate v6 renders, pass 1 | Sonnet 5.5 | 2.9M | $1 |
+| Span deck invisible colliders | Opus 5.5 | 2.6M | $1 |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | $1 |
+| Curate shots/wip, group B (v5-07 to v5-13) | Sonnet 5.5 | 2.0M | $1 |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | $1 |
+| Review trees diff cold | Opus 5.5 | 1.2M | $1 |
+| Review ground diff cold | Opus 5.5 | 1.0M | $1 |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 888k | $0 |
+| v6-00 square lights agent | Sonnet 5.5 | 737k | $0 |
+| Review finish pass diff cold | Opus 5.5 | 735k | $1 |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k | $0 |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | $0 |
+| Curate v6 renders, pass 2 (trees) | Sonnet 5.5 | 527k | $0 |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 445k | $0 |
+| Review harness diff cold | Sonnet 5.5 | 388k | $0 |
+| Curate shots/wip, group A (v5-01 to v5-06) | Sonnet 5.5 | 329k | $0 |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | $0 |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | $0 |
+| Review Span collider fix cold | Sonnet 5.5 | 217k | $0 |
+| Review fade kit diff cold | Sonnet 5.5 | 179k | $0 |
+| **Total** | | **329.6M** | **$145** |
+
+</details>
+
+**Since the project started** (v1 to v6)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 51 | 816.4M | $315 |
+| Fable 5.1 | 1 | 173.9M | $128 |
+| Sonnet 5.5 | 52 | 121.5M | $33 |
+| **Total** | **103** | **1.11B** | **$476** |
+
 ## v5: The built
 
 Released 2026-11-08.
@@ -398,6 +1001,117 @@ Known issues: the lost slipper is easy to miss, and the window-lights on the wes
 
 <p><img src="shots/30-thrones-gutter-spawn-after.webp" width="24%" alt="Two headless giants crawling out of the mountain wall either side of the dimmed sun"> <img src="shots/28-court-moraine-after.webp" width="24%" alt="Two enormous stone piers reaching for an arch that was never closed, with a giant chain at the right"> <img src="shots/31-hawser-measure-after.webp" width="24%" alt="A link of the giant chain, taller than a person, in front of the sun"> <img src="shots/35-keptfire-flare-after.webp" width="24%" alt="A small fire in a ring of stones on pale shingle, flaring with sparks"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 13 hours 38 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 37 | 694.3M | $266 |
+| Fable 5.1 | 1 | 129.6M | $95 |
+| Sonnet 5.5 | 42 | 104.0M | $28 |
+| **Total** | **79** | **927.9M** | **$389** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 129.8M | $95 |
+| v5 wonder: the Foundered Nave | Opus 5.5 | 51.2M | $16 |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | $16 |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | $14 |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | $14 |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | $12 |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.8M | $15 |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | $12 |
+| v5 wonder: the Plinth Road | Opus 5.5 | 26.3M | $9 |
+| v5 recast: the Gradine extended | Opus 5.5 | 25.6M | $12 |
+| Land mountains C | Opus 5.5 | 22.9M | $7 |
+| v5 recast: the Arcature | Opus 5.5 | 22.0M | $8 |
+| v5: the local lights bundle | Opus 5.5 | 21.6M | $8 |
+| v5 recast: Sunken Court | Opus 5.5 | 21.5M | $9 |
+| v5: the Kept Fire | Sonnet 5.5 | 20.3M | $4 |
+| v5 wonder: the Occultation | Opus 5.5 | 20.3M | $7 |
+| v5: story set-dressing | Sonnet 5.5 | 20.0M | $4 |
+| v5 wonder: the Acephalous Thrones | Opus 5.5 | 18.9M | $7 |
+| v5 wonder: the Annals | Opus 5.5 | 18.9M | $7 |
+| v5 wonder: the Hawser | Opus 5.5 | 17.8M | $7 |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | $7 |
+| v5 wonder: Galleries of Durance | Opus 5.5 | 16.2M | $6 |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | $6 |
+| v5 recast: Carcanet Keep | Opus 5.5 | 15.1M | $6 |
+| v7 plan: perf and artefacts survey | Opus 5.5 | 14.3M | $5 |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | $3 |
+| v5 recast: Lattice mother crystal | Opus 5.5 | 12.9M | $5 |
+| v5 recast: Armiger's Tower | Opus 5.5 | 12.8M | $5 |
+| Draft the v6 briefs | Opus 5.5 | 11.4M | $6 |
+| Fix: tree LODs rotate on approach | Opus 5.5 | 10.5M | $4 |
+| v5 coherence pass | Opus 5.5 | 10.0M | $4 |
+| v5 wonder: the Cincture | Opus 5.5 | 10.0M | $4 |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | $4 |
+| Mountains study: three profiles | Opus 5.5 | 8.6M | $4 |
+| Fix: first-sight geometry uploads | Opus 5.5 | 8.2M | $3 |
+| Curate v5 shots and finish release notes | Sonnet 5.5 | 6.9M | $2 |
+| Fix: pixel-ratio ratchet and shadow cadence | Opus 5.5 | 6.4M | $3 |
+| Draft the v7 briefs | Opus 5.5 | 6.0M | $4 |
+| Build the Escarpment Lamps | Sonnet 5.5 | 5.9M | $1 |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | $1 |
+| Fix: jumpy camera in the wood | Opus 5.5 | 4.2M | $2 |
+| Restyle the Leerie's standards | Sonnet 5.5 | 4.1M | $1 |
+| Fix: stair hop animation | Opus 5.5 | 3.9M | $2 |
+| v5 wonder: the Battlemented Ridge | Sonnet 5.5 | 3.8M | $1 |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | $1 |
+| v5 follow-up: legibility calls | Sonnet 5.5 | 2.9M | $1 |
+| Draft v5 release notes and curation list | Sonnet 5.5 | 2.6M | $1 |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | $3 |
+| Profiler: ?record= flag | Sonnet 5.5 | 1.4M | $1 |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | $0 |
+| Review: the Foundered Nave branch | Sonnet 5.5 | 1.2M | $0 |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | $0 |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | $0 |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | $0 |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | $0 |
+| Cold review: the Annals | Sonnet 5.5 | 736k | $0 |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k | $0 |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | $0 |
+| Cold review: Gradine extension | Sonnet 5.5 | 588k | $0 |
+| Cold review of mountains C landing | Sonnet 5.5 | 586k | $0 |
+| Cold review: Acephalous Thrones | Sonnet 5.5 | 574k | $0 |
+| Correct stale lines in the v5 doc | Sonnet 5.5 | 533k | $0 |
+| Cold review: the Hawser | Sonnet 5.5 | 528k | $0 |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | $0 |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | $0 |
+| Cold review: Lattice mother crystal | Sonnet 5.5 | 392k | $0 |
+| Cold review of v5 tower recast | Sonnet 5.5 | 388k | $0 |
+| Review: the Occultation branch | Sonnet 5.5 | 347k | $0 |
+| Cold review: Arcature recast | Sonnet 5.5 | 337k | $0 |
+| Cold review: Galleries of Durance | Sonnet 5.5 | 308k | $0 |
+| Cold review: Carcanet Keep recast | Sonnet 5.5 | 289k | $0 |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | $0 |
+| Cold review: the Plinth Road | Sonnet 5.5 | 259k | $0 |
+| Cold review: the Cincture | Sonnet 5.5 | 244k | $0 |
+| Cold review of the pixel-ratio fix | Sonnet 5.5 | 243k | $0 |
+| Cold review of the Escarpment Lamps | Sonnet 5.5 | 242k | $0 |
+| Cold review: Sunken Court recast | Sonnet 5.5 | 230k | $0 |
+| Cold review: the Battlemented Ridge | Sonnet 5.5 | 206k | $0 |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | $0 |
+| **Total** | | **927.9M** | **$389** |
+
+</details>
+
+**Since the project started** (v1 to v5)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 40 | 714.1M | $276 |
+| Fable 5.1 | 1 | 129.6M | $95 |
+| Sonnet 5.5 | 43 | 105.0M | $28 |
+| **Total** | **83** | **948.8M** | **$399** |
+
 ## v4: The land and the Great Span
 
 Released 2026-11-08.
@@ -415,6 +1129,67 @@ Known issues: the waterfall cannot be seen from the causeway, and the surveyor's
 
 <p><img src="shots/21-systems-sun-after.webp" width="24%" alt="The red sun in a gap between mountain ranges, hazing paler range by range"> <img src="shots/23-span-spawn-after.webp" width="24%" alt="The Great Span's dark arches crossing the south of the valley, seen past the keep's wall"> <img src="shots/24-map-pool-after.webp" width="24%" alt="The Tumbling Water, a very tall thin waterfall dropping into mist in a narrow ravine"> <img src="shots/22-saltings-rim-after.webp" width="24%" alt="Pale salt plates with curled edges and tall reeds along the edge of the salt flats"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 11 hours 10 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 14 | 292.5M | $108 |
+| Fable 5.1 | 1 | 48.8M | $33 |
+| Sonnet 5.5 | 15 | 28.9M | $8 |
+| **Total** | **29** | **370.2M** | **$149** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 52.1M | $34 |
+| v4 regions B: Strandline, Adust, Lynchets, Demesne | Opus 5.5 | 46.9M | $16 |
+| v4 polish: regions skin, Saltings, tarn shore, pit ring | Opus 5.5 | 45.0M | $14 |
+| v4 Great Span: deck, piers, stairs, gates, Postern | Opus 5.5 | 36.9M | $14 |
+| v4 map structure: causeway, pit, paths, rivulets, taller fall | Opus 5.5 | 35.2M | $12 |
+| v4 regions A: Outwash, Bletting, High Ling, Saltings | Opus 5.5 | 34.4M | $13 |
+| v4 systems: mountains, light, kits | Opus 5.5 | 34.2M | $12 |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | $7 |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | $6 |
+| v4 Tinctures and terrain set-dressing | Sonnet 5.5 | 12.9M | $3 |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | $4 |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | $3 |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | $2 |
+| Longer sun-gutter (v4) | Sonnet 5.5 | 4.4M | $1 |
+| Curate v4 wip renders into shots/ | Sonnet 5.5 | 3.0M | $1 |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | $3 |
+| Cold review of v4 Great Span diff | Sonnet 5.5 | 1.2M | $0 |
+| Cold review of v4 map-structure diff | Sonnet 5.5 | 1.1M | $0 |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | $0 |
+| Cold review of v4 regions B diff | Sonnet 5.5 | 972k | $0 |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | $0 |
+| Cold review of v4 regions A diff | Sonnet 5.5 | 827k | $0 |
+| Review chat queue diff #85 | Opus 5.5 | 687k | $0 |
+| Cold review of v4 polish diff | Sonnet 5.5 | 655k | $0 |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | $0 |
+| Prepare v5 brief sheet for the wonders | Sonnet 5.5 | 432k | $0 |
+| Cold review of v4 set-dressing diff | Sonnet 5.5 | 406k | $0 |
+| Curate v4 polish renders into shots/ | Sonnet 5.5 | 268k | $0 |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | $0 |
+| **Total** | | **370.2M** | **$149** |
+
+</details>
+
+**Since the project started** (v1 to v4)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 14 | 296.5M | $111 |
+| Fable 5.1 | 1 | 48.8M | $33 |
+| Sonnet 5.5 | 15 | 28.9M | $8 |
+| **Total** | **29** | **374.2M** | **$152** |
+
 ## v3: Running cooler, and a medium quality
 
 Released 2026-11-07.
@@ -429,6 +1204,51 @@ Makes the walk lighter on laptops: little looks different, on purpose.
 Known issues: the high quality setting has no smoothing of jagged edges yet.
 
 <p><img src="shots/17-tier-spawn-before.webp" width="24%" alt="The start of the walk at high quality"> <img src="shots/17-tier-spawn-after.webp" width="24%" alt="The same view at the new medium quality, close to identical"> <img src="shots/16-flicker-fen-east-before.webp" width="24%" alt="Before: reed heads floating off their stems at the fen's edge"> <img src="shots/16-flicker-fen-east-after.webp" width="24%" alt="After: the same edge with the heads fixed to their stems"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 7 hours 50 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 9 | 78.7M | $34 |
+| Fable 5.1 | 1 | 18.5M | $14 |
+| Sonnet 5.5 | 4 | 2.6M | $1 |
+| **Total** | **13** | **99.9M** | **$49** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Opus 5.5, Fable 5.1 | 21.8M | $15 |
+| v4 systems: mountains, light, kits | Opus 5.5 | 18.7M | $7 |
+| v3 stage 3: tiers, targets, allocations | Opus 5.5 | 17.7M | $7 |
+| v3 stage 3: vegetation LOD, materials | Opus 5.5 | 15.4M | $6 |
+| Fix flickering spars (v3) | Opus 5.5 | 9.3M | $4 |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | $3 |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | $2 |
+| v4 master placement plan (no renders) | Opus 5.5 | 1.7M | $3 |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | $0 |
+| Review the stage 3 tier diff | Sonnet 5.5 | 885k | $0 |
+| Review chat queue diff #85 | Opus 5.5 | 687k | $0 |
+| Curate shots/wip for the v3 release | Sonnet 5.5 | 609k | $0 |
+| Sites JSON from the placement plan | Sonnet 5.5 | 154k | $0 |
+| **Total** | | **99.9M** | **$49** |
+
+</details>
+
+**Since the project started** (v1 to v3)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 9 | 82.8M | $37 |
+| Fable 5.1 | 1 | 18.5M | $14 |
+| Sonnet 5.5 | 4 | 2.6M | $1 |
+| **Total** | **13** | **103.9M** | **$52** |
 
 ## v2.2: A hop and a hush for phones
 
@@ -469,6 +1289,41 @@ Adds a waterfall and river, a dozen new places and new inhabitants, and ties the
 
 <p><img src="shots/12-river-speculum-young-sun.webp" width="24%" alt="A waterfall falling into a round blue pool that reflects a young sun and clouds"> <img src="shots/13-sky-parhelion-gutter-solid.webp" width="24%" alt="A city of needle spires standing against the dimmed sun in the mountain gap"> <img src="shots/13-inhabitants-galley-crossing.webp" width="24%" alt="A black galley crossing the lake through the reeds, the sun in the gap beyond"> <img src="shots/13-riverlife-pedlars-slow-reach.webp" width="24%" alt="Pale riders on dragonflies over the slow water, with glints on the reeds"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 11 hours 3 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 4 | 19.7M | $10 |
+| Sonnet 5.5 | 1 | 981k | $0 |
+| **Total** | **5** | **20.7M** | **$10** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Opus 5.5 | 7.0M | $4 |
+| Implement chat message queue #85 | Opus 5.5 | 6.6M | $3 |
+| Implement chat response modes #86 | Opus 5.5 | 5.4M | $2 |
+| Implement wiki auto-save #84 | Sonnet 5.5 | 981k | $0 |
+| Review chat queue diff #85 | Opus 5.5 | 687k | $0 |
+| **Total** | | **20.7M** | **$10** |
+
+</details>
+
+**Since the project started** (v1 to v2)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 4 | 19.9M | $10 |
+| Sonnet 5.5 | 1 | 981k | $0 |
+| **Total** | **5** | **20.9M** | **$10** |
+
 ## v1: The moor, the keep, the things between
 
 Released 2026-11-07.
@@ -481,3 +1336,10 @@ The first release: a first-person walk across a moor in a valley ringed by mount
 - **Sound and controls**: Sound made on the fly, and first-person controls with the mouse and keys or by touch.
 
 <p><img src="shots/07-full-causeway.webp" width="24%" alt="The first view: a causeway, a line of trees and the swollen red sun in the saddle of the mountains"> <img src="shots/05-structures-keep-courtyard.webp" width="24%" alt="Carcanet Keep's wall and gate arch in silhouette against the setting sun"> <img src="shots/09-uncanny-woman-tarn.webp" width="24%" alt="A woman standing far out in the lake, her long shadow across the water"> <img src="shots/10-refine-lattice-tamed-after.webp" width="24%" alt="A field of tall blue crystals with glowing lines across the ground and long shadows"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 4 hours 25 minutes, from the first plan to live.
+- **Agents and tokens:** not on record; the sessions that built this release were not kept.

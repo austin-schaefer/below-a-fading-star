@@ -25,6 +25,9 @@ done
 for f in $(printf '%s\n' "$prog" | grep -oE 'shots/[^)]+'); do [ -f "$f" ] || { echo "FAIL README.md Progress shows $f, which does not exist"; fail=1; }; done
 # the working branch is checked out and pushed: a detached HEAD in the deploy worktree commits to nothing, and
 # `git push origin next` then reports nothing wrong (v9 was released from a stale `next` this way)
+# A milestone's entry (v<N>, no point) ends with its Stats section (tools/release-stats.mjs).
+stv=$(grep -m1 -oE '^## v[0-9.]+' RELEASES.md | sed 's/## //')
+case "$stv" in *.*) ;; *) if awk -v h="## $stv:" 'index($0,h)==1{on=1;next} /^## v/{on=0} on&&/^### Stats/{f=1} END{exit !f}' RELEASES.md; then echo "PASS $stv has its Stats"; else echo "FAIL $stv's entry in RELEASES.md has no '### Stats' section (release-notes.md, \"Stats\")"; fail=1; fi;; esac
 br=$(git symbolic-ref --short -q HEAD || echo DETACHED)
 if [ "$br" = next ]; then echo "PASS on the branch next"; else echo "FAIL HEAD is '$br', not the branch next: commits here are not on next (git checkout next && git merge --ff-only <that commit>)"; fail=1; fi
 git fetch -q origin next 2>/dev/null

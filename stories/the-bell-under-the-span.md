@@ -41,5 +41,7 @@ Who sent the candles, or whether they are the fen's dead come to keep one of the
 
 ## Log
 
+- 2026-11-15, v14-B5 (#52, the owner): "The Tocsin" has the owner's quotation.
+- 2026-11-15, v14-B3 (#52): the bell's ground has a card, "The Tocsin" (on the floor only, not on the deck over it).
 - 2026-11-12, v10-A3: built. The Bell-House's bell (an unmerged v9 branch) rehomed under the Span's crack and hung; the ram, the act, the candles and their ring round the traveller.
 - 2026-11-12, v10-A3 second round: the ram hung clear and hauled over a sheave; the bell swings; the candles wait in its mouth for the ringer; the traveller redrawn to read as a man, his letters sealed and gatherable; the last beat ("Gather his letters") and the candles going up.

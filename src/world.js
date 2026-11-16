@@ -48,7 +48,7 @@ export const LANDMARKS = {
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
   // v7.1: the pit where the old road from the east gate ends (SITES.pit); inside the Span's broad card, so a card wins there
-  pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true },
+  pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true, feet: [-27, 60] }, // v14-D2: the lip's and the stair's down the wall (the floor has its own, the Nadir; v14-F1: down to it, so no region card rises on the stair)
   // v7.1: the Sexton's grave field (SITES.sexton's block): a card wins over the Saltings' region card and the Span's broad one
   graves:   { x: 55,   z: 274,  r: 18,  y: null, name: "Rest in Starlight", line: "“Dig me no grave; I shall not need one.”", card: true },
   // v6.5: name cards for the v5 sites (SITES): card places have no footprint of their own, so the scatter ignores them and
@@ -63,6 +63,30 @@ export const LANDMARKS = {
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
   leerie: { x: 128, z: 5, r: 20, y: null, name: "A Lamplighter’s Standards", line: "“All fled, all done, so lift me on the pyre;\nThe feast is over and the lamps expire.”", card: true },
+  // v14-B3 (#52): the places a visitor can stand that came with v9 to v12, named; v14-B5: the owner's quotations,
+  // renames and cuts (#52, 2026-11-15). `feet: [lo, hi]`: the card is up only while the walker's feet are at that height (a
+  // deck over the valley floor, a gallery on the wall); `reached`: a place up or at the walk's edge that no track comes
+  // near, reached by its own way, said how (roads-test asks no track of it; a place on open ground is in roads-test's
+  // EXEMPT, bounded). An axis along z is { z0, z1, half } (landmarkDistance). `aside: false`: the Link-Boy does not take it
+  // for what continues past a lead's end (v7/walkers/linkboy.js), so he steps aside as before. `broad: true`: a card that
+  // gives way to every other card inside it (hud.js): Titan's Causeway is the whole deck, the Long Wait and the Shaky
+  // Splice are places on it.
+  halt: { x: -63, z: 1, r: 9, y: null, name: "The Lantern Halt", line: "“We went out into the moonless and tortuous network of that incredibly ancient town; went out as the lights in the curtained windows disappeared one by one.”", card: true, aside: false },
+  tocsin: { x: -52, z: 207, r: 11, y: null, name: "The Tocsin", line: "“I came to the fog-enfolded river that flows beside its walls, and heard beyond the river the mortuary tolling of many bells.”", card: true, feet: [-30, 30], aside: false },
+  escalade: { x: -226, z: 200, r: 9, y: null, name: "The Cyclopean Stairs", line: "“In the dank twilight I climbed the worn and aged stone stairs till I reached the level where they ceased.”", card: true, feet: [-30, 30], aside: false },
+  // the Span's deck from gate to gate, and both stairs' top landings (the west one's turn at z 186 is 29 m off the line):
+  // up from the stair's last flight (feet 53 m) at either end
+  causeway: { x: 0, z: 215, r: 0, y: null, name: "Titan’s Causeway", line: "“Never shall I learn the secret of those ruinous walls and crumbling keeps, nor the fate of my companions.”", card: true, broad: true, feet: [53, 70], axis: { x0: -257, x1: 257, half: 24 }, at: { x: -150, z: 213 }, reached: 'the Span', aside: false },
+  wait: { x: 88, z: 211, r: 11, y: null, name: "The Long Wait", line: "“A bitter night for travelers.”\n“A bitter night for musing on the stars.”", card: true, feet: [44, 70], reached: 'the Span', aside: false },
+  spar: { x: 145, z: 215, r: 0, y: null, name: "Shaky Splice", line: "“At intervals we came to the broken fragments of a paved road: broad, cyclopean flags of gneiss.”", card: true, feet: [40, 70], axis: { x0: 122, x1: 169, half: 3 }, at: { x: 118, z: 214 }, reached: 'the Span', aside: false },
+  bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", line: "“Our eyes swept that limitless, tempest-scarred plateau and grasped the almost endless labyrinth.”", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
+  diffident: { x: 286, z: -14, r: 9, y: null, name: "Lonely Staircase", line: "“Form is shadow, substance is illusion, materiality is dream.”", card: true, feet: [-30, 30], aside: false },
+  coffinroad: { x: 271, z: 42, r: 0, y: null, name: "The Noon Road", card: true, feet: [-22, -8], axis: { x0: 246, x1: 296, half: 6 }, at: { x: 250.4, z: 42 }, reached: 'the hung stair', aside: false }, // v14-D3: the Noonwrights' stalled carriers on the Foundered Nave's water, 15 m under the moor (src/v14/coffin-road.js, noon-road.js; the key keeps its first name); no line yet: the owner sources the quotations
+  croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", line: "“We discovered, however, at an early date, that we ourselves and our buildings were invisible to men.”", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'Lonely Staircase', aside: false },
+  // the top of the lift: the gangway off the carriage and the walked gallery on the cliff, 135 m up
+  remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
+  laidsun: { x: 223.6, z: 123.0, r: 6, y: null, name: "The Laid Sun", card: true, feet: [-34, -22], reached: 'the Wellward Way', aside: false }, // v14-D1: the room on the way under the moor from the Nave to the Pit, the Reckoner's new sun going into its floor
+  nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -27], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
 };
 
 // v7.1: region cards. Austin's copy for four of the v4 regions (briefs/copy/place-copy.md): the card shows while the
@@ -76,10 +100,12 @@ export const REGION_CARDS = {
   saltings: { region: 'saltings', x: 45,   z: 246, name: "Kenching Flats", line: "“From the essential Saltes of humane Dust, a Philosopher may, without any criminal Necromancy, call up the Shape of any dead Ancestour from the Dust.”" },
 };
 
-// Distance from (x, z) to a landmark's edge (negative inside): its circle, or for one with an axis its line.
+// Distance from (x, z) to a landmark's edge (negative inside): its circle, or for one with an axis its line (along x at
+// L.z from x0 to x1, or, given z0 and z1, along z at L.x).
 export function landmarkDistance(L, x, z) {
   const a = L.axis;
   if (!a) { const dx = x - L.x, dz = z - L.z; return Math.sqrt(dx * dx + dz * dz) - L.r; }
+  if (a.z0 !== undefined) { const dz = z < a.z0 ? z - a.z0 : z > a.z1 ? z - a.z1 : 0, dx = x - L.x; return Math.sqrt(dx * dx + dz * dz) - a.half; }
   const dx = x < a.x0 ? x - a.x0 : x > a.x1 ? x - a.x1 : 0, dz = z - L.z;
   return Math.sqrt(dx * dx + dz * dz) - a.half;
 }

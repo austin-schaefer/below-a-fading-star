@@ -72,7 +72,7 @@ const res = await page.evaluate(async () => {
       const d = L.axis ? W.landmarkDistance(L, x, z) : Math.hypot(x - L.x, z - L.z) - Math.max(L.r, 15);
       if (d < best) { best = d; by = t.id; }
     }
-    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card });
+    places.push({ k, name: L.name, d: +best.toFixed(1), by, card: !!L.card, reached: L.reached || null, high: !!(L.feet && L.feet[0] > 20), below: !!(L.feet && L.feet[1] < -5), edge: Math.hypot(L.x, L.z) > 320 });
   }
   // ---- in sight: every 4 m, a visible gnomon within SIGHT m over the terrain
   const G = R.gnomons.filter((g) => g.visible);
@@ -88,7 +88,9 @@ const res = await page.evaluate(async () => {
   let samples = 0; const blind = [];
   for (const t of tracks) {
     for (let i = 0; i < t.pts.length; i += 2) {
-      const [x, z] = t.pts[i]; samples++;
+      const [x, z] = t.pts[i];
+      if (Math.hypot(x - 200, z - 185) < 12) continue; // v14-D2: the causeway's line runs on over the Pit's hole, where no one walks it (its floor has its own way)
+      samples++;
       let ok = false, nearest = Infinity;
       for (const g of G) { const d = Math.hypot(g.x - x, g.z - z); if (d < R.SIGHT) { nearest = Math.min(nearest, d); if (clear(x, z, g)) { ok = true; break; } } }
       if (!ok) blind.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)})`);
@@ -171,8 +173,51 @@ const res = await page.evaluate(async () => {
       rim.push({ ok: i === pts.length, at: [+p.pos.x.toFixed(1), +p.pos.z.toFixed(1)], of: `${i}/${pts.length}` });
     }
   }
-  return { rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
+  // ---- v14-B6 (the owner's #54: a path brings a walker to the front of a way up, not its back): every way up whose foot is on the
+  // ground (ctx.ascents, its first point with no y or a y within 1 m of the terrain) has a track ending at its foot:
+  // the nearest track end within 4 m of the first point, and behind it (on the side the climb does not go: its
+  // second distinct point is on the other side), so a walker who follows the track arrives facing up the way
+  // ways down not yet given a track to their foot, each with why (listed for the agent who owns the place)
+  const FEET_OPEN = { 'pit-stair': 'the Pit\'s stair is come to from its head (the causeway ends at its landing on the lip); its foot stands on the Pit\'s floor, where no track runs', 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
+  const feet = [];
+  for (const a of fp.ascents?.list || []) {
+    if (a.test) continue;
+    const p0 = a.path[0], p1 = a.path.find((q) => Math.hypot(q[0] - p0[0], q[1] - p0[1]) > 0.5);
+    if (!p1 || (p0[2] !== undefined && Math.abs(p0[2] - T.heightAt(p0[0], p0[1])) > 1)) continue;
+    let best = null;
+    for (const t of tracks) for (const e of [t.pts[0], t.pts[t.pts.length - 1]]) {
+      const d = Math.hypot(e[0] - p0[0], e[1] - p0[1]);
+      if (!best || d < best.d) best = { d, id: t.id, e };
+    }
+    const ux = p1[0] - p0[0], uz = p1[1] - p0[1], ahead = ((best.e[0] - p0[0]) * ux + (best.e[1] - p0[1]) * uz) / Math.hypot(ux, uz);
+    feet.push({ id: a.id, d: +best.d.toFixed(1), by: best.id, ahead: +ahead.toFixed(2), at: p0.slice(0, 2).map((v) => +v.toFixed(1)), ok: best.d <= 4 && ahead <= 0.3, open: FEET_OPEN[a.id] || null });
+  }
+  // ---- and none leads to its back (#54: nothing a walker follows, a track or the stair's slabs lying in the turf,
+  // brings them to the blank back of a way up): for an ascent that names its `back` (the turf behind its first rise), no track
+  // ends within 4 m of it, and no slab of the stair lying in sight in the turf (not buried) is within 4 m of it
+  const backs = [];
+  for (const a of fp.ascents?.list || []) {
+    if (a.test || !a.back) continue;
+    const [bx, bz] = a.back, ends = [], slabs = [];
+    for (const t of tracks) for (const e of [t.pts[0], t.pts[t.pts.length - 1]]) if (Math.hypot(e[0] - bx, e[1] - bz) < 4) ends.push(t.id);
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried && Math.hypot(e.cx - bx, e.cz - bz) < 4) slabs.push(e.i);
+    let near = Infinity;
+    for (const e of fp.stair?.plan.els || []) if (e.rest && !e.rest.buried) near = Math.min(near, Math.hypot(e.cx - bx, e.cz - bz));
+    backs.push({ id: a.id, ends, slabs, near: +near.toFixed(1), buried: (fp.stair?.plan.els || []).filter((e) => e.rest?.buried).length });
+  }
+  return { feet, backs, rim, stats: R.stats(), blocked, n: tracks.length, start: start.t.id, startD: +start.d.toFixed(1), unjoined, places, samples, blind, steep, wet, outside, onTread,
     lengths: { ways: +P.leads.filter((l) => l.cls === 'way').reduce((a, l) => a + l.length, 0).toFixed(0), trods: +P.leads.filter((l) => l.cls === 'trod').reduce((a, l) => a + l.length, 0).toFixed(0) } };
+});
+// #41: the waystones' heads have no two faces in one plane fighting for the pixel (the notch's dark lining was laid
+// exactly on the flanks and shoulders, and flickered as the walker moved): forty standing heads, tools/coplanar.js
+const CP = await page.evaluate(async () => {
+  const fp = window.__fp, { coplanar } = await import('/tools/coplanar.js'), mesh = fp.scene.getObjectByName('roads-gnomons'), H = fp.roads.heads;
+  const M = new fp.THREE.Matrix4(), P = new fp.THREE.Vector3(), out = { heads: 0, pairs: 0, at: [] };
+  for (let i = 0; i < H.count && out.heads < 40; i += Math.max(1, Math.floor(H.count / 40))) {
+    H.getMatrixAt(i, M); P.setFromMatrixPosition(M); P.y += 0.35;
+    const r = coplanar(mesh, P, 0.75); out.heads++; out.pairs += r.length; if (r.length && out.at.length < 4) out.at.push(r[0].at);
+  }
+  return out;
 });
 await browser.close();
 if (res.missing) { console.log(`FAIL __fp.${res.missing} is not registered`); process.exit(1); }
@@ -182,11 +227,26 @@ const modErr = errors.filter((e) => /roads|paths/.test(e));
 check(!modErr.length, 'roads and paths loaded without errors', modErr[0] || '');
 check(res.startD < 6 && res.unjoined.length === 0, 'one network: every track joined to the spawn\'s', `${res.n} tracks from ${res.start} (${res.startD} m from the spawn); ways ${res.lengths.ways} m, trods ${res.lengths.trods} m; unjoined: ${res.unjoined.join(', ') || 'none'}`);
 // The Galleries and the Thrones hang on the mountain wall: no track reaches them (a track looks up at them).
-const EXEMPT = {};
+// v14-B3: places on open ground a short walk off a track, each with how far past its reach the nearest track may lie
+const EXEMPT = {
+  escalade: { why: 'the Cyclopean Stairs, the Span\'s west stair, in the wood\'s fringe', max: 20 },
+};
 for (const p of res.places) {
-  if (EXEMPT[p.k]) check(p.d <= 25 - 15, `${p.name}: exempt (${EXEMPT[p.k]}); a track looks at it`, `${p.d} m past 15 m, ${p.by}`);
+  // v14-B3: a place reached by its own way (`reached` in world.js) needs no track only if it is up (a deck, a top, the
+  // gallery: its card's feet over 20 m), down (v14-D0: under the ground, its card's feet under -5 m: the Noon Road) or at
+  // the walk's edge (the passes); a `reached` on the ground fails
+  if (p.reached) { check(p.high || p.below || p.edge, `${p.name}: reached by ${p.reached}, not a track (it is ${p.high ? 'up' : p.below ? 'under the ground' : p.edge ? 'at the walk\'s edge' : 'on the ground: give it a track'})`, `${p.d} m from ${p.by}`); continue; }
+  if (EXEMPT[p.k]) check(p.d <= EXEMPT[p.k].max, `${p.name}: exempt (${EXEMPT[p.k].why}); the nearest track within ${EXEMPT[p.k].max} m of its reach`, `${p.d} m, ${p.by}`);
   else check(p.d <= 0, `${p.name}${p.card ? ' (card)' : ''}: a track within its reach`, `${p.d <= 0 ? 'on' : p.d + ' m short,'} ${p.by}`);
 }
+{
+  const shut = res.feet.filter((f) => !f.open), open = res.feet.filter((f) => f.open);
+  const say = (f) => `${f.id} ${f.ok ? 'ok' : 'FAIL'}: ${f.by} ends ${f.d} m from (${f.at}), ${f.ahead > 0.3 ? `${f.ahead} m up the climb's side` : 'behind the foot'}`;
+  check(shut.length >= 2 && shut.every((f) => f.ok), 'every way up with its foot on the ground: a track ends within 4 m of the foot, behind it (#54)', `${shut.length} ascents: ${shut.map(say).join('; ')}`);
+  // an exemption lasts only while its reason holds: once a track reaches that foot, take the way out of FEET_OPEN
+  check(open.every((f) => !f.ok), 'the ways up exempted in FEET_OPEN still have no track to their foot (once one does, drop its exemption)', open.map((f) => `${f.id}: ${f.ok ? `REACHED by ${f.by}` : `no track yet, nearest end ${f.d} m (${f.by})`} (${f.open})`).join('; ') || 'none exempted');
+}
+check(res.backs.length >= 1 && res.backs.every((b) => !b.ends.length && !b.slabs.length), 'nothing a walker follows ends at the back of a way up: no track end, no slab lying in sight in the turf, within 4 m of it (#54)', res.backs.map((b) => `${b.id}: track ends ${b.ends.join(',') || 'none'}, slabs ${b.slabs.length} (nearest in sight ${b.near} m; ${b.buried} under the turf)`).join('; '));
 check(res.blind.length === 0, 'a standing gnomon in sight (80 m, over the terrain) every 4 m', `${res.samples} samples, ${res.blind.length} blind ${res.blind.slice(0, 8).join(' ')}`);
 check(res.steep.length === 0, 'every track walkable: grade along it under 1.2 over each 2 m', `${res.steep.length} ${res.steep.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
 check(res.wet.length === 0, 'every track sample dry-shod (or on slabs)', `${res.wet.length} ${res.wet.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
@@ -194,6 +254,7 @@ check(res.outside.length === 0, 'every track sample inside the walk limit', `${r
 check(res.blocked.length === 0, 'nothing stands across any track (a collider within 0.3 m of its middle; the causeway: across all its width)', `${res.blocked.length} ${res.blocked.slice(0, process.env.ALL ? 400 : 8).join(' ')}`);
 check(res.rim.length === 3 && res.rim.every((r) => r.ok), 'the canyon rim walked on foot: P13 from the worn crust, under the Span, to the lips over the Speculum and the Cutting', JSON.stringify(res.rim));
 check(res.onTread.length === 0, 'no gnomon stands on a tread', `${res.onTread.length} ${res.onTread.slice(0, 6).join(' ')}`);
+check(CP.heads >= 30 && CP.pairs === 0, 'the waystones\' heads (#41): no two faces in one plane (the notch\'s lining stands off the stone)', `${CP.heads} heads, ${CP.pairs} pairs ${JSON.stringify(CP.at)}`);
 const st = res.stats;
 check(st.calls <= 4 && st.tris < 120000, 'the gnomons: 4 draw calls, under 120k triangles', JSON.stringify(st));
 console.log(`\n${pass} passed, ${fail} failed`);

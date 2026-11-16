@@ -34,6 +34,8 @@ Whether she looked back from the far side and saw him stop, or only sat.
 
 ## Log
 
+- 2026-11-15, v14-B5 (#52, the owner): the deck from either stair's top is "Titan’s Causeway"; the cards of the west bay, the crack and the fen bay are gone into it; the camp keeps "The Long Wait", with two lines ("A bitter night for travelers." / "A bitter night for musing on the stars."); the river bay's strut is "Shaky Splice". Each has the owner's quotation.
+- 2026-11-15, v14-B3 (#52): the ways and the camp named on cards, deck height only: "The Footing Course" (the west bay), "The Fallen Coping" (the crack), "The Hung Cornice" (the fen bay), "The Long Wait" (the camp), "The Dropped Spar" (the river bay's strut).
 - 2026-11-12, v12-T1 (the owner: one tally in the whole world, the Halt's): the forty-one chalk strokes on the coping are gone; the long wait is shown by a deep drift of ash and char round the hearth and a lane worn pale along the deck to a flat stone where she sat to watch (`src/v4/span/camp.js`).
 
 - 2026-11-12, v12-H1: built, with the Span's three thin ways (`src/v4/span/vestige.js`) that she crossed to get here.

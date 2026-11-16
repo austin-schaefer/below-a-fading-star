@@ -18,7 +18,7 @@ export function rod(B, a, b, r, o, sides = 4) {
   B.add(B.cyl(r, r, L, sides, 1), _m.clone(), o);
 }
 
-export function buildProps(ctx, plan, G, rng) {
+export function buildProps(ctx, plan, G, rng, extra) { // extra(B): more for the same mesh (house/kept.js)
   const S = ctx.strata, L = S.colors.late, Hc = S.colors.heliarch, P = S.parts, B = S.builder();
   const low = ctx.quality === 'low';
   const paint = [L.paint[1], L.paint[2], L.paint[0], L.plaster[3]];
@@ -90,24 +90,47 @@ export function buildProps(ctx, plan, G, rng) {
     else if (s.kind === 'pom') for (const k of [0, 1]) { B.add(new THREE.SphereGeometry(0.065, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), mat(s.x + k * 0.16, g + 0.005, s.z + k * 0.05, k ? 0.2 : 0, k * 2, 0), { color: k ? L.pom : L.pomDark, moss: 0, ground: g }); B.add(B.cyl(0.06, 0.06, 0.01, 8, 1), mat(s.x + 0.16, g + 0.065, s.z + 0.05, 0.2, 2, 0), { color: new THREE.Color('#d86070'), moss: 0, ground: g }); }
     else if (s.kind === 'spoon') B.add(B.box(0.02, 0.012, 0.24), mat(s.x, g + 0.01, s.z, 0, s.yaw, 0.1), { color: L.wood, moss: 0, ground: g });
   }
+  extra?.(B);
   const mesh = S.mesh(B, 'late', 'house-props');
   ctx.scene.add(mesh);
   return mesh;
 }
 
-// the trampled ground before the gate: packed earth, a dark spill, faded out at the edges with the noise
+// the trampled ground before the gate: packed earth, a dark spill, faded out at the edges with the noise; and (v14-B3,
+// area.court) the court and its galleries swept to beaten earth, a darker lane worn from the gate round the fountain to
+// the hearth, so the yard reads as a floor somebody keeps and not as turf inside ruined walls
 export function bareGround(ctx, G, area, N2) {
-  const nx = 26, nz = 16, pos = [], col = [], idx = [];
-  const earth = new THREE.Color('#3e2f22'), wet = new THREE.Color('#1e1610');
-  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
-    const u = i / nx * 2 - 1, v = j / nz * 2 - 1, x = area.x + u * area.rx, z = area.z + v * area.rz;
+  const pos = [], col = [], idx = [];
+  const earth = new THREE.Color('#3e2f22'), wet = new THREE.Color('#1e1610'), floor = new THREE.Color('#76583a'), worn = new THREE.Color('#4e3824');
+  const grid = (nx, nz, at, lift = 0.035) => {
+    const b = pos.length / 3;
+    for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) { const [x, z, c, a] = at(i / nx * 2 - 1, j / nz * 2 - 1); pos.push(x, G(x, z) + lift, z); col.push(c.r, c.g, c.b, a); }
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const a = b + j * (nx + 1) + i, bb = a + 1, c = a + nx + 1, d = c + 1; idx.push(a, c, bb, bb, c, d); }
+  };
+  grid(26, 16, (u, v) => {
+    const x = area.x + u * area.rx, z = area.z + v * area.rz;
     const r = Math.hypot(u, v), n = N2(x * 0.45, z * 0.45);
     const a = Math.max(0, Math.min(1, (1 - r) * 2.2 + n * 0.5)) * 0.85;
     const spill = Math.hypot(x - area.spill[0], (z - area.spill[1]) * 1.6) < 0.7 + 0.2 * n ? 1 : 0;
-    const c = earth.clone().lerp(wet, spill * 0.8).multiplyScalar(0.85 + 0.3 * N2(x * 2.1, z * 2.1));
-    pos.push(x, G(x, z) + 0.035, z); col.push(c.r, c.g, c.b, a);
+    return [x, z, earth.clone().lerp(wet, spill * 0.8).multiplyScalar(0.85 + 0.3 * N2(x * 2.1, z * 2.1)), a];
+  });
+  const C = area.court;
+  if (C) {
+    const n = ctx.quality === 'low' ? 24 : 40;
+    // the lane: the gate (north) to the fountain's rim, round its east side, and on to the hearth in the south gallery
+    const lane = (x, z) => {
+      const dx = x - C.x, dz = z - C.z, r = Math.hypot(dx, dz);
+      const a = Math.max(0, 1 - Math.abs(dx) / 1.3) * (dz < -2.6 ? 1 : 0);
+      const ring = Math.max(0, 1 - Math.abs(r - 3.2) / 0.9) * (dx > -1 ? 1 : 0.4);
+      const b = Math.max(0, 1 - Math.hypot(dx - 2.4, Math.max(0, Math.abs(dz - 6.5) - 3.5)) / 1.2) * (dz > 1 ? 1 : 0);
+      return Math.min(1, Math.max(a, ring, b));
+    };
+    grid(n, n, (u, v) => {
+      const x = C.x + u * C.half, z = C.z + v * C.half, nn = N2(x * 0.6, z * 0.6);
+      const c = floor.clone().lerp(worn, lane(x, z) * (0.7 + 0.3 * nn)).multiplyScalar(0.88 + 0.22 * N2(x * 1.7, z * 1.7));
+      return [x, z, c, 1];
+    }, 0.02); // about the court pavers' tops, so the old star pavement shows through the swept earth and the terrain does not
   }
-  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const a = j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 4));

@@ -15,10 +15,12 @@
 //   act-murmur  the sleeper answering a visitor at the hatch: two sleepy syllables, "mm-hm", a low voiced hum on A2
 //               through a moving vowel, with breath. Detail tier, 12 m
 import { softKit } from '../audio/cues-v2.js';
+import { startPassageSound } from '../v14/passage-sound.js'; // v14-D1: the Wellward Way's drip and draught (no cues)
 import { startCentralSound } from './sound-central.js'; // v10-A1: act-crystal, act-crystal-ring, act-knock, act-answer, act-plate
 import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, act-pinch, act-tribute
 import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
 import { startLiftSound } from '../v12/lift-sound.js'; // v12-H4: the lift (act-lift-*)
+import { startPitSound } from '../v14/pit-sound.js'; // v14-D2: the Pit's breath and the sounding (act-pit-*)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -26,6 +28,7 @@ export function startActsSound(a, ctx) {
   const { sgrain, stone, jit } = softKit({ ...a, rng }); // its jitter from this module's own stream, not the shared one
   const D4 = 293.66;
   const stories = startStoriesSound(a, ctx);
+  startPassageSound(a, ctx); // v14-D1: its own rng
 
   function offer(pos) {
     const v = voice(pos, { ref: 2.5, roll: 1, range: 20, dur: 1.6, verb: 0.3, air: 60, gain: 4 }); if (!v) return;
@@ -95,8 +98,10 @@ export function startActsSound(a, ctx) {
   const bell = startBellSound(a, ctx); // its own rng
   const central = startCentralSound(a, ctx); // v10-A1
   const lift = startLiftSound(a, ctx); // v12-H4
+  const pit = startPitSound(a, ctx); // v14-D2: its own rng
   function cue(name, pos, opts) {
     if (name.startsWith('act-lift') && lift.cue(name, pos, opts)) return; // v12-H4
+    if (name.startsWith('act-pit') && pit.cue(name, pos, opts)) return; // v14-D2
     if (central.cue(name, pos, opts)) return; // v10-A1
     if (name.startsWith('act-bell')) bell.cue(name, pos, opts);
     else if (name === 'act-offer') offer(pos);

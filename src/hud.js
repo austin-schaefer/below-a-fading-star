@@ -32,15 +32,15 @@ export function buildHud(ctx) {
 
   begin.addEventListener('click', () => ctx.events.dispatchEvent(new CustomEvent('begin')));
   ctx.events.addEventListener('begin', () => card.classList.add('hidden'));
+  // v14-B1 (#46): the pause is the settings panel. Escape (which lets go of the captured mouse) opens it, as the gear
+  // does, on desktop and touch; its "Back to the moor" (or Escape again) shuts it. The title card is only the title.
+  const pause = () => { card.classList.add('hidden'); if (ctx.settings) ctx.settings.open({ paused: true }); else { card.classList.remove('hidden'); card.classList.add('paused'); } };
   ctx.events.addEventListener('lock', (e) => {
-    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself: no pause card behind it
-    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) { card.classList.remove('hidden'); card.classList.add('paused'); } else card.classList.add('hidden');
+    if (!e.detail && ctx.settings?.shown) return; // the settings panel releases the pointer itself
+    if (!e.detail && ctx.player.enabled && ctx.player.everLocked) pause(); else card.classList.add('hidden');
   });
-  // Paused in drag-look mode (no capture to lose): Esc toggles the card; the button resumes.
-  ctx.events.addEventListener('pausetoggle', () => {
-    if (card.classList.contains('hidden')) { card.classList.remove('hidden'); card.classList.add('paused'); }
-    else card.classList.add('hidden');
-  });
+  // In drag-look mode (no capture to lose) Escape is the walk's: it opens the panel (settings.js shuts it on the next)
+  ctx.events.addEventListener('pausetoggle', () => { if (!ctx.settings?.shown) pause(); });
   const dragBtn = document.getElementById('draglook');
   if (dragBtn) {
     dragBtn.addEventListener('click', (e) => {
@@ -74,13 +74,17 @@ export function buildHud(ctx) {
     debug.update(dt);
     const p = ctx.player.pos;
     let best = null, bestD = Infinity;
+    const feet = p.y - (ctx.player.eye ?? 1.7);
     for (const [key, L] of landmarkList) {
+      if (L.feet && (feet < L.feet[0] || feet > L.feet[1])) continue; // v14-B3: a deck's card is not the floor's under it
       const d = landmarkDistance(L, p.x, p.z);
-      const k = L.card && d < 6 ? d - 1000 : d; // a name card lying inside a broad landmark wins there
+      // a name card lying inside a broad landmark wins there; a broad card (v14-B5: Titan's Causeway, the whole deck)
+      // wins over landmarks but gives way to every other card inside it
+      const k = L.card && d < 6 ? d - (L.broad ? 500 : 1000) : d;
       if (k < bestD) { bestD = k; best = key; }
     }
     let near = bestD < 6 ? best : null;
-    if (near === null && ctx.regions) { // no landmark card is up: a region card, where the region holds half the ground or more
+    if (near === null && ctx.regions && !(ctx.below?.here > 0.5)) { // no landmark card is up: a region card, where the region holds half the ground or more (never under the ground, v14-F1)
       const w = ctx.regions.regionAt(p.x, p.z, rw);
       for (const [key, R] of regionList) if (w[R.region] >= 0.5) { near = 'region:' + key; break; }
     }

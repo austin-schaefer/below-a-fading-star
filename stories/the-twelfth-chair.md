@@ -38,7 +38,7 @@ What he died of, and whether the eleven had a hand in it.
 ## Open threads
 
 - The eleven: who are they? Officers in ember stoles, the house's patrons? One of them could be seen walking the road with a bottle.
-- The Sexton has dug forty-one graves. Whose are the other forty?
+- The Sexton has dug forty-one graves. Whose are the other forty? (Open. v14-D0 answered it with a road of coffins in the Foundered Nave; v14-D3 took the coffins out on the owner's word: `the-noon-road.md`.)
 
 ## Log
 

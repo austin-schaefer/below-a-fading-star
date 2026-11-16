@@ -17,8 +17,8 @@
 //   seconds | Promise | undefined (busy until then: not offered, not done again), show?(n, data) }.
 //   do runs when the act is done, with the count after it; show runs at add() with the remembered count and again
 //   with 0 when the visitor forgets their marks.
-//   v10-F1: far = reach * 1.5 (at most reach + 3) and ease = true (the easier offer, in inReach below); lure = { x, y, z, h }
-//   | false (the lure over it, src/v10/lure.js: there while it may be done and is not on offer).
+//   v10-F1: far = reach * 1.5 (at most reach + 3) and ease = true (the easier offer, in inReach below); lure = { x, y, z,
+//   face } | false (v14-B1: where the tally-moths sit, src/v10/lure.js: there while it may be done, offered or not).
 // A handle: { def, count, done (this visit), busy, data (the act's kept object), setData(obj) }.
 // Events on ctx.events: 'act' ({ id, count }) after an act is done; 'actsforget' after the marks are forgotten.
 
@@ -162,7 +162,7 @@ export async function build(ctx) {
     return (fx * dx + fz * dz) / r >= Math.cos(d.cone) ? r2 : -1;
   }
   const lure = acts.lure = buildLure(ctx, acts);
-  const lureWant = (h) => h !== shown && acts.may(h); // can be done now and not already on offer
+  const lureWant = (h) => acts.may(h); // v14-B1: can be done now (the moths stay on it while it is offered: that is when they are plain)
   ctx.registerUpdate((dt, t) => {
     if (!open()) { cand = null; held = 0; away = 0; if (shown) show(null); lure.step(dt, t, lureWant); return; } // gone at once behind a card or the panel
     let best = null, bd = Infinity;
