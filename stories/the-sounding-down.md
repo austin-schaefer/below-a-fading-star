@@ -4,7 +4,7 @@
 - **State:** built (v14-D2)
 - **Someone:** whoever cut the stair in the ice to the leadsmen's broken eye (`the-soundings.md`, an open thread): a sounder from the valley who went down instead of up. Never seen; their reel, their lead, their lamps and the road's slabs they hung on the wall are what is left
 - **Places:** the Pit (200, 185): its lip, where the road comes in; the old road's slabs pinned up its wall; its floor, the Nadir in the middle of it
-- **Touches:** [The soundings](the-soundings.md) (the lead is a piece of one of theirs, cut out of the icefall; the line is a leadsman's line; the frayed end at the Bitter End); [The Coffin Road](the-coffin-road.md) (the way under the moor from the Nave comes out here); the Pit's own card, which asks the question this answers
+- **Touches:** [The soundings](the-soundings.md) (the lead is a piece of one of theirs, cut out of the icefall; the line is a leadsman's line; the frayed end at the Bitter End); [The Noon Road](the-noon-road.md) (the way under the moor from the Nave comes out here); the Pit's own card, which asks the question this answers
 
 ## The story
 

@@ -1,32 +1,34 @@
-// The Coffin Road's plan (v14-D0): the Sexton's way down into the Foundered Nave and the road of forty coffins lashed
-// two by two on its black water, in world metres. Shared by v14/coffin-road.js (draws it, its floor and its lights),
-// v5/nave.js (the gap in the rim's colliders at the stair's head, the door in the south wall, the candles' glow baked
-// into the hall, the shapes kept from under the road) and the tests. The hall is NAVE (v5/nave/ground.js).
+// The Noon Road's floor plan (v14-D0, D3; the file keeps the name the way down was first built under, and so do
+// ctx.coffinRoad and the module's key, which other modules read): the Late folk's stair down into the Foundered Nave
+// and the walked line along the Noonwrights' stalled carriers on its black water, in world metres. Shared by
+// v14/coffin-road.js (draws the way down, its floor), v14/noon-road.js and v14/noon-road/plan.js (the carriers, the
+// hoops, the stored light), v5/nave.js (the gap in the rim's colliders at the stair's head, the door in the south
+// wall, the shapes kept from under the road) and the tests. The hall is NAVE (v5/nave/ground.js).
 //
 //   the shears and the stair's head: the south-east rim, on the line z = SZ, the stair going down west through the
-//     hole's light along the south aisle (between the column rows z 44.5 and 51) to the raft at the hall's west end
-//   the raft: four coffins abreast at the stair's foot, x 245.3-248.7
-//   the door spur: one pair, south from the raft to the door in the south wall (the onward passage, DOOR)
-//   the north spur: one pair, north from the raft between the columns to the road
-//   the road: sixteen pairs east along the nave on z = 42, past the cone's toe and under the hole's light, into the
-//     dark under the moor to the east wall and the sun on it (x 296.4)
+//     hole's light along the south aisle (between the column rows z 44.5 and 51) to the stage at the hall's west end
+//   the stage (RAFT): planks on the back of the junction node, at the stair's foot, x 245.3-248.7
+//   the door spur: boards and a lesser carrier pitched down south from the stage to the door in the south wall (DOOR)
+//   the north spur: a gangway north from the stage between the columns to the road
+//   the road: seven carriers nose to tail east along the nave on z = 42, past the cone's toe, under the hole's light
+//     and through the hoops of the broken line, into the dark under the moor to the east wall and the sun on it
 import { NAVE, naveEdge } from '../../v5/nave/ground.js';
+import { gapX, MAIN, HOOPS, LINE } from '../noon-road/plan.js';
 
 // ?coffinroad=0, or the module skipped or left out by ?only=: the Nave keeps its rim's colliders and south wall whole
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 export const CR_OFF = !!Q && (Q.get('coffinroad') === '0' || (Q.get('skip') || '').split(',').includes('coffinroad') || (Q.get('only') !== null && !Q.get('only').split(',').includes('coffinroad')));
-export const ROAD_Y = NAVE.water + 0.26;  // the lids' tops: the coffins ride low
+export const ROAD_Y = NAVE.water + 1.3;   // the carriers' backs: they ride a third out of the water
 export const SZ = 47.75, SHALF = 0.85;     // the stair's line and half-width
 export const FOOT_X = 248.7;               // the stair's foot, the raft's east edge
 export const RAFT = { x0: 245.3, x1: 248.7, z0: 46.6, z1: 48.9 };
 export const NSPUR = { x0: 245.9, x1: 247.5, z0: 41.2, z1: 46.6 };
 export const SSPUR = { x0: 245.9, x1: 247.5, z0: 48.9, z1: 54.5 };
 export const ROAD = { x0: 245.9, x1: 296.4, z0: 41.2, z1: 42.8, zc: 42.0 };
-export const PAIRS = 16;                   // on the road; with the raft's four and the spurs' two pairs, forty
-// the onward passage: a door in the hall's south wall (z = NAVE.z + NAVE.walls + 0.5), its sill a hand under the
-// road; inside, a level floor, three treads going down south toward the Pit (200, 185), and a fall of the roof's
+// the onward passage: a door in the hall's south wall (z = NAVE.z + NAVE.walls + 0.5), its sill a hand over the
+// water (y -16.78, fixed: the passage is built from it), a metre under the road: the door spur slopes down to it; inside, a level floor, three treads going down south toward the Pit (200, 185), and a fall of the roof's
 // blocks that fills it (the next brief opens it)
-export const DOOR = { x: 246.7, half: 1.1, sill: ROAD_Y - 0.04, h: 3.0, z: NAVE.z + NAVE.walls + 0.5, floorTo: 56.8, treads: 3, tread: 0.42, rise: 0.22, fall: 58.1, depth: 4.6 };
+export const DOOR = { x: 246.7, half: 1.1, sill: NAVE.water + 0.22, h: 3.0, z: NAVE.z + NAVE.walls + 0.5, floorTo: 56.8, treads: 3, tread: 0.42, rise: 0.22, fall: 58.1, depth: 4.6 };
 
 // the stair's head, from the rim on z = SZ, east of the hole: a landing of planks a step over the turf, from LAND m
 // back from the lip out over it (clear of the lip's turf and soil), and the flight going down from its end
@@ -39,47 +41,37 @@ export function stairHead(T) {
   return { xRim, xHead, xLand, yHead: g + 0.38 };
 }
 
-// the forty and the places on the road (v14-D0 round 2): on the road a pair a pitch, but pair GAP's north coffin is
-// adrift (boards bridge its place) and the last pair has one coffin and an empty place, its ropes ready (the
-// Sexton's own: stories/the-coffin-road.md); two adrift, ADRIFT[0] near the gap with its lid off and its candle out,
-// ADRIFT[1] far down the north aisle with its candle lit. 4 + 4 + 30 on the road, 2 adrift: forty.
-export const GAP = 9;
-export const ADRIFT = [{ x: 277.4, z: 38.6, yaw: 0.55, lit: false }, { x: 247.6, z: 32.2, yaw: -0.35, lit: true }];
-export const LID_OFF = { x: 279.9, z: 38.9, yaw: 1.2 };
-export const pairX = (i) => FOOT_X + i * ((ROAD.x1 - FOOT_X) / PAIRS) + 1.1;
-// the empty place at the road's end (no floor: the walker is held at its edge)
-export const EMPTY = { x0: pairX(PAIRS - 1) - 1.15, x1: ROAD.x1 + 0.01, z0: ROAD.zc - 0.02, z1: ROAD.z1 + 0.01 };
-// the Sexton's candles in iron brackets on the walls, so every way the eye turns there is a far light
-const H = NAVE.z + NAVE.walls + 0.5, WN = NAVE.z - H + NAVE.z, WS = H;
-export const SCONCES = [[264, WN + 0.25], [286, WN + 0.25], [271, WS - 0.25], [291, WS - 0.25], [NAVE.x1 - 0.25, NAVE.z - 8.5], [NAVE.x1 - 0.25, NAVE.z + 8.5]];
-// the candles: [x, z, kind] (kind 0 a pair's pricket, 1 a tall candle, 2 a great candle on an iron stand, 3 a candle
-// on a coffin adrift, 4 a candle in a wall's bracket), the flame ROAD_Y + FLAME_Y[kind]; warm: the two under the sun
-// and the two either side of it (the only warm light down there)
-export function candles() {
-  const out = [];
-  const pitch = (ROAD.x1 - FOOT_X) / PAIRS;
-  for (let i = 0; i < PAIRS; i++) {
-    const x = FOOT_X + pitch * (i + 1) - 0.25, side = i % 2 ? 1 : -1;
-    out.push([x, ROAD.zc + (i === GAP || i === PAIRS - 1 ? 1 : side) * 0.68, 0]);
-  }
-  out.push([RAFT.x0 + 0.25, RAFT.z0 + 0.3, 1], [RAFT.x1 - 0.3, RAFT.z1 - 0.25, 1]); // the raft's two
-  out.push([DOOR.x - DOOR.half - 0.25, DOOR.z - 0.35, 1], [DOOR.x + DOOR.half + 0.25, DOOR.z - 0.35, 1]); // the door's
-  out.push([ROAD.x1 + 0.7, ROAD.z0 - 0.5, 2], [ROAD.x1 + 0.7, ROAD.z1 + 0.5, 2]); // the road's end: two great candles under the sun
-  for (const a of ADRIFT) if (a.lit) out.push([a.x + Math.cos(a.yaw) * 0.6, a.z + Math.sin(a.yaw) * 0.6, 3]);
-  for (const [x, z] of SCONCES) out.push([x, z, 4]);
-  return out;
-}
-export const FLAME_Y = [0.4, 0.95, 1.9, 0.36, 2.9]; // above ROAD_Y: a pricket's flame, a tall candle's, a great candle's, an adrift one's, a bracket's
-export const WARM = (x, z, kind) => kind === 2 || (kind === 4 && x > NAVE.x1 - 1);
+// the door spur's slope: level with the stage to SLOPE.z0, then down to the sill at SLOPE.z1
+export const SLOPE = { z0: 49.3, z1: 54.2 };
+export const spurY = (z) => ROAD_Y + (DOOR.sill - ROAD_Y) * Math.min(1, Math.max(0, (z - SLOPE.z0) / (SLOPE.z1 - SLOPE.z0)));
 
-// the floor under (x, z): the stair (given its head), the raft, the spurs, the road, the passage; else null
+// the planks over each coupling (and at the string's two ends): PATCH.half either side of the line, from x - PATCH.w
+// to x + PATCH.e of the coupling. Where they bridge the gap between two carriers' noses nothing else is under the road's
+// edges, so there the floor is as wide as the planks, and it widens back to the road's over PATCH.ease m of the backs
+export const PATCH = { half: 0.48, w: 1.4, e: 1.45, ease: 0.85, ends: [[ROAD.x0 - 1, ROAD.x0 + 1.2], [ROAD.x1 - 1.45, ROAD.x1 + 1]] };
+const RHALF = (ROAD.z1 - ROAD.z0) / 2, NARROW = PATCH.half + 0.07;
+// and beside each standing hoop's south limb, and through the bay of the line's wall, so the eye keeps a hand clear of
+// the glaze (the camera's near plane is 0.08 m)
+const SPANS = [...MAIN.slice(1).map((_, i) => [gapX(i) - PATCH.w, gapX(i) + PATCH.e]), ...PATCH.ends,
+  ...HOOPS.filter((h) => h.a0 === undefined || h.wall).map((h) => [h.x - LINE.t - 0.15, h.x + (h.wall ? h.wall.len : 0) + LINE.t + 0.15])];
+export function roadHalf(x) {
+  let d = Infinity; for (const [a, b] of SPANS) d = Math.min(d, x < a ? a - x : x > b ? x - b : 0);
+  return NARROW + (RHALF - NARROW) * Math.min(1, d / PATCH.ease);
+}
+
+// the floor under (x, z): the stair (given its head), the stage, the spurs, the road, the passage; else null
 export function makeFloor(head) {
   const { xHead, yHead, xLand } = head, k = (yHead - ROAD_Y) / (xHead - FOOT_X);
   const inR = (R, x, z) => x >= R.x0 && x <= R.x1 && z >= R.z0 && z <= R.z1;
   return (x, z) => {
     if (z >= SZ - SHALF && z <= SZ + SHALF && x >= FOOT_X && x <= xLand) return x >= xHead ? yHead : ROAD_Y + (x - FOOT_X) * k;
-    if (inR(EMPTY, x, z)) return null;
-    if (inR(RAFT, x, z) || inR(ROAD, x, z) || inR(NSPUR, x, z) || inR(SSPUR, x, z)) return ROAD_Y;
+    if (inR(RAFT, x, z)) return ROAD_Y;
+    if (inR(ROAD, x, z) || inR(NSPUR, x, z)) {
+      // over a coupling, only the planks (the north spur's gangway comes in at the west end from the south)
+      if (z > ROAD.z1 - 0.3 && inR(NSPUR, x, z)) return ROAD_Y;
+      return Math.abs(z - ROAD.zc) <= roadHalf(x) ? ROAD_Y : null;
+    }
+    if (inR(SSPUR, x, z)) return spurY(z);
     if (Math.abs(x - DOOR.x) <= DOOR.half - 0.15 && z > DOOR.z - 0.01 && z <= DOOR.fall) {
       if (z <= DOOR.floorTo) return DOOR.sill;
       return DOOR.sill - DOOR.rise * Math.min(DOOR.treads, Math.ceil((z - DOOR.floorTo) / DOOR.tread));
