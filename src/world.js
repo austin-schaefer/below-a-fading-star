@@ -60,11 +60,11 @@ export const LANDMARKS = {
   hawser: { x: -80, z: -272, r: 25, y: null, name: "The Hawser", line: "“To chain them wholly to modern rules would be barbarous.”", card: true },
   plinths: { x: 148, z: -220, r: 25, y: null, name: "The Plinth Road", line: "“It had not been built for human feet to travel. It had not been built for feet at all.”", card: true },
   lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true, aside: false, at: { x: 128, z: 5 } }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
-  // v15-N1: the Lappet's four quarters, each a card up only on its own level (`feet`: the Quarrels on the crown, the Rungs on the High, Mid and Low Rungs, the Lees on the bench, the Pennyworth on the foot); they win over "The Lappet" inside them, so every way up's end is named by the quarter it comes out in
-  lappetCrown: { x: 60, z: -6, r: 18, y: null, name: "The Quarrels", card: true, feet: [16, 21.5], aside: false },
-  lappetRungs: { x: 80, z: -16, r: 24, y: null, name: "The Rungs", card: true, feet: [4.8, 15.8], aside: false },
-  lappetLees: { x: 80, z: -28, r: 34, y: null, name: "The Lees", card: true, feet: [2, 4.6], aside: false },
-  lappetFoot: { x: 110, z: -30, r: 24, y: null, name: "The Pennyworth", card: true, feet: [-3, 1.8], aside: false },
+  // v15-N1: the Lappet's four quarters, each a card up only on its own level (`feet`: the Quarrels on the crown, the Rungs on the High, Mid and Low Rungs, the Lees on the bench, the Pennyworth on the foot); they win over "The Lappet" inside them, so every way up's end is named by the quarter it comes out in; `map: false`: a card only, not a place in the teleport list (the owner's #70: fewer entries; the village is the one entry, The Lappet)
+  lappetCrown: { x: 60, z: -6, r: 18, y: null, name: "The Quarrels", card: true, map: false, feet: [16, 21.5], aside: false },
+  lappetRungs: { x: 80, z: -16, r: 24, y: null, name: "The Rungs", card: true, map: false, feet: [4.8, 15.8], aside: false },
+  lappetLees: { x: 80, z: -28, r: 34, y: null, name: "The Lees", card: true, map: false, feet: [2, 4.6], aside: false },
+  lappetFoot: { x: 110, z: -30, r: 24, y: null, name: "The Pennyworth", card: true, map: false, feet: [-3, 1.8], aside: false },
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },

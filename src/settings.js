@@ -69,19 +69,13 @@ const NAMED_POSES = {
   coffinroad: { x: 250.4, y: -15.7, z: 42, look: { x: 296, z: 42 }, pitch: 0.04 }, // v14-D3: on the first carrier's back 15 m under the moor, looking east along the string through the hoops into the dark under the roof
   laidsun: { x: 225.9, y: -28.0, z: 118.56, look: { x: 223.6, z: 123.0 }, pitch: -0.36 }, // v14-D1: at the room's way in from the Flute, 28 m under the moor, the half-laid gold sun in the floor and his lamp
   nadir: { x: 203.08, y: -31.66, z: 176.54, look: { x: 200, z: 185 }, pitch: 0.12 }, // v14-D2: on the Pit's floor where the passage comes in, the down-reel and the sheers over the Nadir ahead, the slabs going up the wall behind them
-  // v15-N1: the Lappet's quarters, each from a stand on its own level that shows it (a metre off the plan's walls: nothing within 3 m of the eye)
-  lappetCrown: { x: 62, y: 18, z: -8, look: { x: 72.9, z: -1.3 }, pitch: 0.3 }, // the crown from the Saint's Rest: the kiln's smoke, the sheers, the Last Arch and the valley beyond
-  lappetRungs: { x: 64, y: 14, z: -17.5, look: { x: 86, z: -14 }, pitch: 0.02 }, // the High Lane's edge: the Mid and Low Rungs' roofs below, the crown and the arch above
-  lappetLees: { x: 78.4, z: -34.1, look: { x: 77.7, z: -22 }, pitch: 0.3 }, // the square's north side, the Heliarch stair coming down to it
-  lappetFoot: { x: 114, z: -15, look: { x: 100, z: -24 }, pitch: 0.05 }, // the market's lane in the foot: the booths, the cypress beds, the house's tower over them
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
 };
-// v15-N1: three things in the Lappet, named on the map though they have no card of their own (the quarters' cards are the walk's own): `thing` is what the stand faces (settings-test checks it is in view and nothing shuts the view within 3 m)
+// v15-N1: two things in the Lappet, named on the map though they have no card of their own (the village is the one entry already, The Lappet, and its quarters' cards are the walk's own, `map: false`): `thing` is what the stand faces (settings-test checks it is in view and nothing shuts the view within 3 m)
 const VILLAGE_PLACES = [
   { name: 'The Fountain of Noon', x: 80, z: -33, look: { x: 72.5, z: -37.9 }, pitch: 0.05, thing: { x: 72.5, z: -37.9 } }, // the square's foot of a vessel, welling stored daylight; the Wanting Arch behind it
   { name: 'The Smoking Saint', x: 64.5, y: 18, z: -3.5, look: { x: 72.9, z: -1.3 }, pitch: 0.3, thing: { x: 72.9, z: -1.3 } }, // the fallen colossus's head, the masons' lime kiln, from the Saint's Rest
-  { name: 'The Afterdoor', x: 101, z: -29.4, look: { x: 92.8, z: -31.5 }, pitch: 0.12, thing: { x: 92.8, z: -32 } }, // the Pomegranate House's south door, down the Thumbway in the lamp of its wall
 ];
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
@@ -111,7 +105,7 @@ const offToward = (c, d) => { // d metres from (c.x, c.z) toward spawn
 function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
-    if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
+    if (!L.name || key === 'graves' || L.map === false) continue; // the Sexton's entry among the living lands there
     const h = HAND[key] || NAMED_POSES[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
