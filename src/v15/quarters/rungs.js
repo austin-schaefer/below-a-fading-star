@@ -283,14 +283,14 @@ export async function build(ctx) {
     // one plastered front against the step, out of true: a horseshoe door in it and, east of the door, a small round-headed niche
     const wash = worn(L.plaster[3], rng, 0.22), from = KB.count, dw = 1.0, nx = -1.15; // (the niche clear of the front's end: a hole that touches the outline leaves the end face open)
     facade(KB, ch(M, 0, 0, 0.2), { w: 3.5, d: 0.4, top: [[1.75, 2.35], [0.9, 2.62], [0.1, 2.7], [-0.9, 2.48], [-1.75, 2.2]], openings: [{ kind: 'horseshoe', x: 0.45, y: 0.012, w: dw, sp: 1.45 }, { kind: 'round', x: nx, y: 1.05, w: 0.5, sp: 0.42 }], color: wash, moss: 0.2, ground: yL, emit: limeGlow(wash, 0.07), n: low ? 7 : 10 });
-    leaf(KB, ch(M, 0.45, 0, 0.1), dw + 0.24, 2.1, worn(L.paint[1], rng, 0.35), rng, { plain: low });
+    leaf(KB, ch(M, 0.45, 0, 0.24), dw + 0.24, 2.1, worn(L.paint[1], rng, 0.35), rng, { plain: low });
     KB.add(box(dw + 0.5, 0.26, 0.5, { chip: 0.03 }), ch(M, 0.45, -0.07, 0.42), { color: H.stone, moss: 0.45, ground: yL });
-    KB.add(box(0.62, 0.8, 0.04), ch(M, nx, 1.4, 0.06), { color: new THREE.Color('#3a2410'), moss: 0, ground: yL - 3, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
-    KB.add(box(0.62, 0.05, 0.3), ch(M, nx, 1.03, 0.2), { color: worn(L.tile[1], rng, 0.3), moss: 0.1, ground: yL });
+    KB.add(box(0.62, 0.8, 0.04), ch(M, nx, 1.4, 0.17), { color: new THREE.Color('#3a2410'), moss: 0, ground: yL - 3, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
+    KB.add(box(0.62, 0.05, 0.24), ch(M, nx, 1.03, 0.3), { color: worn(L.tile[1], rng, 0.3), moss: 0.1, ground: yL });
     dirty(KB, from, 0.2, rng);
     // the light in it: a clay lamp on the sill (not a hung one: its cup is open, and this one is looked down into)
-    KB.add(box(0.16, 0.05, 0.13, { chip: 0.015 }), ch(M, nx, 1.08, 0.2), { color: worn(L.tile[4], rng, 0.3), moss: 0, ground: yL });
-    { const g = L.glass.amber; KB.add(new THREE.IcosahedronGeometry(0.055, 1), ch(M, nx - 0.03, 1.15, 0.2, 0, 0, 0, 0.8, 1.5, 0.8), { color: new THREE.Color('#201008'), moss: 0, ground: yL - 3, emit: [g[0] * 0.7, g[1] * 0.7, g[2] * 0.7, 1] }); }
+    KB.add(box(0.16, 0.05, 0.13, { chip: 0.015 }), ch(M, nx, 1.08, 0.3), { color: worn(L.tile[4], rng, 0.3), moss: 0, ground: yL });
+    { const g = L.glass.amber; KB.add(new THREE.IcosahedronGeometry(0.055, 1), ch(M, nx - 0.03, 1.15, 0.3, 0, 0, 0, 0.8, 1.5, 0.8), { color: new THREE.Color('#201008'), moss: 0, ground: yL - 3, emit: [g[0] * 0.7, g[1] * 0.7, g[2] * 0.7, 1] }); }
   }
 
   // ---------------------------------------------------------------- the Squint: a bench where the three stairs are seen
