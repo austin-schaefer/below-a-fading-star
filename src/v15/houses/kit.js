@@ -25,7 +25,10 @@ export const V = {
   dirt: c('#74644f'), soot: c('#191411'), mud: c('#9c8262'), newStone: c('#d9d2c1'), newDust: c('#e9e4d6'),
   rawWood: c('#b6976a'), rope: c('#b09a6a'), pane: c('#15100c'), lime: c('#f1ecde'), flag: c('#8a8378'),
   lit: [2.3, 1.05, 0.34], ember: [2.6, 0.7, 0.12],
+  // cloth as the Late folk have it now: undyed, or a dye nearly gone (saffron, a tired teal, madder gone to brick)
+  linen: c('#cfc4a8'), saffron: c('#c9a04e'), teal: c('#6f9a8e'), madder: c('#96584a'),
 };
+export const CLOTHS = [V.saffron, V.linen, V.teal, V.madder];
 
 export const mulberry = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 export const rngOf = (seed, salt = 0) => mulberry((seed | 0) * 7919 + salt * 104729 + 13);
@@ -51,7 +54,7 @@ export function site(M, kind, o) {
   R.post = (x, z, r, y = null, h = null, extra = {}) => { const a = W(x, y || 0, z); R.colliders.push(y === null ? { x: a.x, z: a.z, r, ...extra } : { x: a.x, z: a.z, r, y: a.y, h, ...extra }); };
   // a floor: a rectangle w (local x) by d (local z) centred at (x, z), turned by ry, level at y; or with `steps`, a
   // flight rising along its own +z from y to y1 in that many treads. layer 0: a ground room; 1: a roof and its stair
-  R.floor = (x, z, w, d, y, f = {}) => { const a = W(x, y, z); R.floors.push({ x: a.x, z: a.z, yaw: yaw + (f.ry || 0), w, d, y: a.y, y1: f.y1 === undefined ? a.y : a.y + f.y1 - y, steps: f.steps || 0, layer: f.layer ?? 0, keep: f.keep ?? true }); };
+  R.floor = (x, z, w, d, y, f = {}) => { const a = W(x, y, z); const fy = yaw + (f.ry || 0); R.floors.push({ x: a.x, z: a.z, yaw: fy, c: Math.cos(fy), s: Math.sin(fy), w, d, y: a.y, y1: f.y1 === undefined ? a.y : a.y + f.y1 - y, steps: f.steps || 0, layer: f.layer ?? 0, keep: f.keep ?? true }); };
   R.disc = (x, z, r, y, f = {}) => { const a = W(x, y, z); R.floors.push({ x: a.x, z: a.z, r, y: a.y, y1: a.y, steps: 0, layer: f.layer ?? 0, keep: f.keep ?? false }); };
   R.lamp = (x, y, z, fx = 0, fz = 1) => R.lamps.push({ ...W(x, y, z), face: face(fx, fz) });
   R.window = (x, y, z, lit) => R.windows.push({ ...W(x, y, z), lit: !!lit });
@@ -67,7 +70,7 @@ export function floorAt(floors, x, z) {
   for (const f of floors) {
     const dx = x - f.x, dz = z - f.z;
     if (f.r !== undefined) { if (dx * dx + dz * dz <= f.r * f.r && (y === null || f.y > y)) y = f.y; continue; }
-    const cy = Math.cos(f.yaw), sy = Math.sin(f.yaw), lx = dx * cy - dz * sy, lz = dx * sy + dz * cy;
+    const lx = dx * f.c - dz * f.s, lz = dx * f.s + dz * f.c;
     if (Math.abs(lx) > f.w / 2 || Math.abs(lz) > f.d / 2) continue;
     let h = f.y;
     if (f.steps) h = f.y + (f.y1 - f.y) * Math.min(f.steps - 1, Math.floor(((lz + f.d / 2) / f.d) * f.steps)) / Math.max(1, f.steps - 1);
@@ -75,17 +78,46 @@ export function floorAt(floors, x, z) {
   }
   return y;
 }
-// hand a record to the walk: its colliders, and its floors as stacked walkables (one a layer), edges held
-export function register(ctx, R) {
-  for (const col of R.colliders) ctx.addCollider({ ...col });
+// hand a quarter's records to the walk: every collider, and the floors as one stacked walkable a layer for the
+// whole quarter (a record is passed over by its plot's circle before any of its floors is looked at). An edge is held
+// except within 0.7 m of a floor that says keep: false (a room's floor at its door, a doorstep)
+export function registerAll(ctx, records, name = 'village') {
+  for (const R of records) for (const col of R.colliders) ctx.addCollider({ ...col });
   const layers = new Map();
-  for (const f of R.floors) { if (!layers.has(f.layer)) layers.set(f.layer, []); layers.get(f.layer).push(f); }
-  const rr = Math.hypot(R.plot.w, R.plot.d) / 2 + 2, rr2 = rr * rr, px = R.plot.x, pz = R.plot.z;
-  for (const [layer, fs] of layers) {
-    const fn = (x, z) => ((x - px) * (x - px) + (z - pz) * (z - pz) > rr2 ? null : floorAt(fs, x, z));
-    ctx.addWalkable(fn, { stack: true, keep: fs.some((f) => f.keep), name: `${R.kind}-${R.seed}-${layer}` });
+  for (const R of records) {
+    const rr = Math.hypot(R.plot.w, R.plot.d) / 2 + 2.5;
+    for (const f of R.floors) {
+      if (!layers.has(f.layer)) layers.set(f.layer, new Map());
+      const L2 = layers.get(f.layer);
+      if (!L2.has(R)) L2.set(R, { x: R.plot.x, z: R.plot.z, r2: rr * rr, fs: [], open: [] });
+      L2.get(R).fs.push(f); if (!f.keep) L2.get(R).open.push(f);
+    }
   }
+  const removers = [];
+  for (const [layer, L2] of layers) {
+    const groups = [...L2.values()];
+    const fn = (x, z) => {
+      let y = null;
+      for (const g of groups) { const dx = x - g.x, dz = z - g.z; if (dx * dx + dz * dz > g.r2) continue; const h = floorAt(g.fs, x, z); if (h !== null && (y === null || h > y)) y = h; }
+      return y;
+    };
+    const keep = (x, z) => {
+      for (const g of groups) {
+        const dx = x - g.x, dz = z - g.z; if (dx * dx + dz * dz > g.r2) continue;
+        for (const f of g.open) {
+          const ex = x - f.x, ez = z - f.z;
+          if (f.r !== undefined) { if (ex * ex + ez * ez < (f.r + 0.7) * (f.r + 0.7)) return false; continue; }
+          if (Math.abs(ex * f.c - ez * f.s) < f.w / 2 + 0.7 && Math.abs(ex * f.s + ez * f.c) < f.d / 2 + 0.7) return false;
+        }
+      }
+      return true;
+    };
+    removers.push(ctx.addWalkable(fn, { stack: true, keep, name: `${name}-${layer}` }));
+  }
+  return () => removers.forEach((r) => r && r());
 }
+// one record on its own (a test, a lone house)
+export const register = (ctx, R) => registerAll(ctx, [R], `${R.kind}-${R.seed}`);
 
 // ---------------------------------------------------------------- shapes
 // an opening's outline (a list of [x, y]): w wide, its foot at y0, its jambs sp tall; the head by kind
@@ -215,7 +247,7 @@ export function washing(B, M, a, b, rng, n = 4) {
   beam(B, M, a, b, 0.014, { color: V.rope, moss: 0, ground: g0 });
   for (let i = 0; i < n; i++) {
     const t = (i + 0.6 + rng() * 0.3) / (n + 0.6), w = 0.35 + rng() * 0.4, hh = 0.4 + rng() * 0.5;
-    const col = rng() < 0.35 ? pick(L.cloth, rng) : worn(L.plaster[3], rng, 0.1);
+    const col = worn(rng() < 0.3 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.12, 0.16);
     B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t - hh / 2 - 0.01, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12), { color: col, moss: 0, ground: g0 });
   }
 }
@@ -224,7 +256,7 @@ export function bed(B, M, x, y, z, ry, rng, o = {}) {
   const m = ch(M, x, y, z, 0, ry, 0), g0 = M.elements[13] - 3, w = o.w || 0.9, len = o.len || 1.9, wood = o.wood || L.wood;
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(B.box(0.07, sz < 0 ? 0.85 : 0.55, 0.07, { seg: 9 }), ch(m, sx * w / 2, (sz < 0 ? 0.85 : 0.55) / 2, sz * len / 2), { color: wood, moss: 0, ground: g0 });
   B.add(B.box(w, 0.12, len, { seg: 9 }), ch(m, 0, 0.36, 0), { color: wood, moss: 0, ground: g0 });
-  B.add(B.box(w - 0.08, 0.1, len - 0.1, { seg: 0.6 }), ch(m, 0, 0.47, 0), { color: o.quilt || pick(L.cloth, rng), moss: 0, ground: g0, disp: 0.015, dispScale: 4 });
+  B.add(B.box(w - 0.08, 0.1, len - 0.1, { seg: 0.6 }), ch(m, 0, 0.47, 0), { color: o.quilt || worn(pick(CLOTHS, rng), rng, 0.1), moss: 0, ground: g0, disp: 0.015, dispScale: 4 });
   B.add(B.box(w * 0.6, 0.09, 0.3, { seg: 9 }), ch(m, 0, 0.55, -len / 2 + 0.25), { color: worn(L.plaster[3], rng, 0.05), moss: 0, ground: g0 });
 }
 // a hanging sign in the Late hand on an iron arm out from a wall (M: the arm's root on the wall's face)
@@ -282,4 +314,18 @@ export function batter(B, from, M, cx, cz, k) {
 export function dirty(B, from, k, rng, col = V.dirt) {
   const C = B.C;
   for (let i = from; i < B.count; i++) { const f = k * (0.6 + 0.8 * rng()); C[i * 3] += (col.r - C[i * 3]) * f; C[i * 3 + 1] += (col.g - C[i * 3 + 1]) * f; C[i * 3 + 2] += (col.b - C[i * 3 + 2]) * f; }
+}
+// an awning as the Late folk have them now: one cloth of one tired colour on a rail at the wall and two raw poles
+// in the street, sagging between them, a patch sewn on in whatever there was, its hem uneven. M: the wall's face at
+// the ground under the rail's middle. o: w, d (out from the wall), h (at the wall), rng, color
+export function awning(B, M, o = {}) {
+  const rng = o.rng, w = o.w ?? 3, d = o.d ?? 1.6, h = o.h ?? 2.5, drop = o.drop ?? 0.5, g0 = M.elements[13], n = 5, col = o.color || worn(pick([V.saffron, V.linen, V.madder, V.teal], rng), rng, 0.22);
+  const sag = (u) => 0.16 * (1 - (2 * u - 1) ** 2) + 0.03; // (the middle hangs)
+  for (let i = 0; i < n; i++) {
+    const u0 = i / n, u1 = (i + 1) / n, um = (u0 + u1) / 2, len = d + (rng() - 0.5) * 0.14, y0 = h - sag(um) * 0.3, y1 = h - drop - sag(um), sl = Math.hypot(len, y0 - y1);
+    B.add(B.box(w / n + 0.01, 0.014, sl, { seg: 9 }), ch(M, -w / 2 + um * w, (y0 + y1) / 2, len / 2, Math.atan2(y0 - y1, len), 0, (sag(u1) - sag(u0)) * -1.6), { color: col.clone().multiplyScalar(0.9 + 0.16 * rng()), moss: 0.02, ground: g0 - 2 });
+  }
+  { const u = 0.25 + rng() * 0.5, pw = 0.35 + rng() * 0.3; B.add(B.box(pw, 0.012, pw * (0.7 + rng() * 0.6), { seg: 9 }), ch(M, -w / 2 + u * w, h - drop * 0.55 - sag(u) * 0.7 + 0.012, d * 0.55, Math.atan2(drop + sag(u) * 0.7, d), rng() - 0.5, 0), { color: worn(pick([V.linen, V.madder, V.teal], rng), rng, 0.2), moss: 0, ground: g0 - 2 }); }
+  B.add(B.box(w + 0.1, 0.05, 0.05, { seg: 9 }), ch(M, 0, h, 0.03), { color: L.wood, moss: 0, ground: g0 });
+  if (o.poles !== false) for (const sx of [-1, 1]) beam(B, M, [sx * (w / 2 - 0.05) + (rng() - 0.5) * 0.12, -0.15, d + (rng() - 0.5) * 0.1], [sx * (w / 2 - 0.05), h - drop - 0.02, d - 0.02], 0.065, { color: V.rawWood, moss: 0.08, ground: g0, round: 5 });
 }

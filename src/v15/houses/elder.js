@@ -1,14 +1,113 @@
-// A house under an Elder block (v15-V1): two cyclopean blocks, one standing and one fallen against its head, and in
-// the cleft under the leaning one a dwelling scraped out by people a fortieth of its weight: a plaster front the size
-// of a cupboard with a slot for a door and a curtain for a leaf, rubble packed above it to the stone, a stovepipe out
-// through the packing. Entered: a cleft room two metres wide and five tall at the standing block, its ceiling the
-// slab coming down to the floor; whoever lives here keeps pledges, and they hang ticketed up the tall wall on a rack.
+// A house under Elder blocks (v15-V1): cyclopean blocks nobody alive could move, and a dwelling scraped into what
+// they leave, made by people a fortieth of their weight. Three forms, three silhouettes:
+//   'lean'      one block standing and one fallen against its head; in the cleft under the leaning one a plaster
+//               front the size of a cupboard, a slot for a door and a curtain for a leaf, rubble packed above it to the
+//               stone, a stovepipe out through the packing. Entered: a cleft room two metres wide and five tall at
+//               the standing block, its ceiling the slab coming down to the floor; whoever lives here keeps pledges,
+//               and they hang ticketed up the tall wall on a rack. (7.5 x 5.5 m or more.)
+//   'overhang'  one great slab lying across two stubs, out of level, its front edge a metre and a half out over
+//               the air; under it, set back in its shadow, a whole Late front whose roof is the stone. (6.6 x 4.6.)
+//   'stack'     three blocks piled as they were left, the top one askew; a lean-to against the pile's flank where
+//               there is room, and a hut the size of a dovecote on its shoulder with a ladder up to it. (4 x 3.6.)
+// A form that does not fit its plot becomes the next that does; under 4 x 3.6 throws.
 // The blocks go into o.E (a Builder for the Elder material) when it is given, else into B in the Elder colour.
-// o: seed, w (9), d (7), E, back (the local z behind which the ground may rise: the room keeps in front of it), low.
+// o: seed, w (9), d (7), form, E, back (the local z behind which the ground may rise: the room keeps in front of it), low.
 import * as THREE from 'three';
-import { L, H, V, E as EC, PARTS, rngOf, pick, ch, worn, site, beam, pot, plate, wallPoly, stop, bed, patch, ladder } from './kit.js';
+import { L, H, V, E as EC, PARTS, rngOf, pick, ch, worn, site, beam, pot, plate, wallPoly, stop, bed, ladder, washing } from './kit.js';
+import { room } from './late.js';
+
+export const ELDER_FORMS = ['lean', 'overhang', 'stack'];
 
 export function elder(B, M, o = {}) {
+  const w = o.w ?? 9, d = o.d ?? 7, seed = o.seed | 0;
+  if (w < 4 || d < 3.6) throw new Error(`elder: a plot ${w} x ${d} m is too small (4 x 3.6)`);
+  const fits = { lean: w >= 7.5 && d >= 5.5, overhang: w >= 6.6 && d >= 4.6, stack: true };
+  let form = o.form || ELDER_FORMS[seed % 3];
+  for (let i = 0; i < 3 && !fits[form]; i++) form = ELDER_FORMS[(ELDER_FORMS.indexOf(form) + 1) % 3];
+  const R = form === 'lean' ? lean(B, M, o) : form === 'overhang' ? overhang(B, M, o) : stack(B, M, o);
+  R.form = form;
+  return R;
+}
+const stoneOf = (rng, g0) => (k = 0) => ({ color: EC.stone.clone().multiplyScalar(0.92 + rng() * 0.16 - k), moss: 0.4, ground: g0 });
+const washOf = (rng) => worn(L.plaster[rng() < 0.5 ? 0 : 3], rng, 0.1);
+
+// ---------------------------------------------------------------- a slab on two stubs, a house in its shadow
+function overhang(B, M, o) {
+  const seed = o.seed | 0, rng = rngOf(seed, 41), w = o.w ?? 9, d = o.d ?? 7, low = !!o.low, g0 = M.elements[13], EB = o.E || B;
+  const R = site(M, 'elder', { seed, w, d }), base = B.triangles, ebase = EB === B ? 0 : EB.triangles, stone = stoneOf(rng, g0);
+  const s = seed % 2 ? -1 : 1, sw = 1.5 + rng() * 0.4, hA = 3.3 + rng() * 0.9, hB = hA - 0.5 - rng() * 0.7, sd = d - 2.0 - rng() * 0.4, xs = w / 2 - 0.25 - sw / 2;
+  // the stubs (the higher on the side s), and the slab across them, pushed forward
+  for (const [sx, hh, k] of [[s, hA, 1], [-s, hB, 2]]) { EB.add(EB.box(sw, hh + 1, sd, { seg: 3, chip: 0.16, seed: seed + k }), ch(M, sx * xs, (hh - 1) / 2, -0.5, 0, (rng() - 0.5) * 0.08, sx * (rng() - 0.3) * 0.03), stone()); R.wall(sx * xs, -0.5 - sd / 2 + sw / 2, sx * xs, -0.5 + sd / 2 - sw / 2, 0, hh, sw / 2); }
+  const th = 1.5 + rng() * 0.5, tilt = Math.atan2(hA - hB, 2 * xs) * s, sl = w - 0.2, sdd = d - 0.9, zs = d / 2 - 0.15 - sdd / 2;
+  EB.add(EB.box(sl, th, sdd, { seg: 3, chip: 0.2, seed: seed + 7 }), ch(M, 0, (hA + hB) / 2 + th / 2 * Math.cos(tilt) - 0.03, zs, 0, 0, tilt), stone(0.04));
+  const under = (x) => (hA + hB) / 2 + Math.tan(tilt) * x; // the slab's under face over x
+  // the house: a plaster front between the stubs, its roof the stone
+  const x0 = -xs + sw / 2 + 0.06, x1 = xs - sw / 2 - 0.06, hr = Math.min(under(x0), under(x1)) - 0.12, zf = zs + sdd / 2 - 1.5 - rng() * 0.4, zb = Math.max(-d / 2 + 0.6, (o.back ?? -99) + 0.2, zf - 3.4);
+  const wash = washOf(rng), ai = Math.floor(rng() * 4), paint = L.paint[ai], cx = (x0 + x1) / 2, rw = x1 - x0;
+  const ops = [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx - s * rw * 0.2, y: 0, w: 0.95, sp: Math.min(1.45, hr - 1.3), paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx + s * rw * 0.22, y: 1.2, w: 0.5, sp: 0.6, paint, stop: 'lit', one: s }];
+  if (rw > 4.6) ops.push({ kind: 'ogee', x: cx + s * rw * 0.4, y: 1.5, w: 0.4, sp: 0.4, paint, stop: rng() < 0.5 ? 'lit' : 'dark', one: 0 });
+  room(B, M, R, { x0, x1, zb, zf, h: hr, rng, g0, color: wash, low, openings: ops, par: { f: 0.02, b: 0.02, l: 0.02, r: 0.02 }, batter: 0 });
+  // rubble packed between the plaster's head and the stone
+  wallPoly(B, ch(M, 0, 0, zf - 0.4), [[x0, hr - 0.1], [x1, hr - 0.1], [x1, under(x1) + 0.06], [x0, under(x0) + 0.06]], null, 0.3, { color: worn(V.mud, rng, 0.3).multiplyScalar(0.8), course: 0.19, moss: 0.3, ground: g0 });
+  // in the porch the stone makes: a bench that is a drum on its side, jars, a lamp's bracket, the stovepipe out of the packing
+  const dl = cx - s * rw * 0.2, bx = dl + s * 0.95;
+  PARTS.late.bracket(B, ch(M, bx, 2.1, zf), { reach: 0.45 }); R.lamp(bx, 2.12, zf + 0.45);
+  PARTS.heliarch.drum(B, ch(M, cx + s * (rw / 2 - 0.5), -0.3, zf + 0.6), { r: 0.3, h: 0.78, moss: 0.5 }); R.post(cx + s * (rw / 2 - 0.5), zf + 0.6, 0.3, 0, 0.48);
+  for (let i = 0; i < (low ? 1 : 3); i++) pot(B, M, cx - s * (rw / 2 - 0.45 - i * 0.42), 0, zf + 0.35 + (i % 2) * 0.3, 0.17 + rng() * 0.08, worn(pick([V.mud, L.tile[4], L.tile[0]], rng), rng, 0.3), 1.8 + rng(), 6);
+  { const px = cx + s * rw * 0.05, py = hr + 0.12; beam(B, M, [px, py, zf - 0.5], [px, py + 0.05, zf + 1.3], 0.17, { color: L.iron, iron: 0.55, moss: 0, ground: g0, round: 6 }); beam(B, M, [px, py + 0.05, zf + 1.3], [px, py + 0.5, zf + 1.42], 0.16, { color: L.iron, iron: 0.55, moss: 0, ground: g0, round: 6 }); R.chimney = R.W(px, py + 0.55, zf + 1.42); }
+  // on the stone: nothing of theirs but a pole and a rag, where somebody once got up
+  if (!low) { const px = -s * (xs - 0.3), py = under(px) + th * Math.cos(tilt); beam(B, M, [px, py - 0.1, zs], [px + 0.1, py + 2.2, zs], 0.06, { color: V.rawWood, moss: 0.1, ground: g0 + py, round: 5 }); B.add(B.box(0.5, 0.34, 0.014, { seg: 9 }), ch(M, px + 0.35, py + 1.95, zs, 0, 0, -0.12), { color: worn(V.saffron, rng, 0.25), moss: 0, ground: g0 }); }
+  R.tris = B.triangles - base; R.etris = EB === B ? 0 : EB.triangles - ebase; R.top = Math.max(hA, hB) + th + 0.3;
+  return R;
+}
+
+// ---------------------------------------------------------------- three blocks piled, a hut on the shoulder
+function stack(B, M, o) {
+  const seed = o.seed | 0, rng = rngOf(seed, 42), w = o.w ?? 9, d = o.d ?? 7, low = !!o.low, g0 = M.elements[13], EB = o.E || B;
+  const R = site(M, 'elder', { seed, w, d }), base = B.triangles, ebase = EB === B ? 0 : EB.triangles, stone = stoneOf(rng, g0);
+  const s = seed % 2 ? -1 : 1, flank = w >= 6.8; // the pile on the side s; a lean-to on the other where there is room
+  const bw = flank ? Math.min(4.6, w * 0.52) + rng() * 0.3 : w - 1.3, bd = Math.min(d - 0.9, 4.6 + rng() * 0.6), bh = 2.6 + rng() * 0.5, bx = s * (w / 2 - 0.6 - bw / 2), bz = -d / 2 + 0.35 + bd / 2;
+  EB.add(EB.box(bw, bh + 1, bd, { seg: 3, chip: 0.18, seed }), ch(M, bx, (bh - 1) / 2, bz, 0, 0, s * 0.012), stone());
+  R.wall(bx - bw / 2 + Math.min(bw, bd) / 2, bz, bx + bw / 2 - Math.min(bw, bd) / 2, bz, 0, bh, Math.min(bw, bd) / 2 - 0.05);
+  // the second, set back and to the pile's outer side so the first keeps a shoulder; the third askew on top
+  const w2 = bw * (0.62 + rng() * 0.1), d2 = bd * (0.72 + rng() * 0.12), h2 = 2.2 + rng() * 0.5, x2 = bx + s * (bw - w2) / 2 * 0.9, z2 = bz - (bd - d2) / 2 * 0.8, yaw2 = (rng() - 0.5) * 0.16;
+  EB.add(EB.box(w2, h2, d2, { seg: 3, chip: 0.18, seed: seed + 5 }), ch(M, x2, bh + h2 / 2 - 0.02, z2, 0, yaw2, -s * 0.02), stone(0.03));
+  const w3 = w2 * (0.6 + rng() * 0.15), h3 = 1.5 + rng() * 0.5, d3 = d2 * 0.75;
+  EB.add(EB.box(w3, h3, d3, { seg: 3, chip: 0.2, seed: seed + 11 }), ch(M, x2 - s * (w2 - w3) * 0.2, bh + h2 + h3 / 2 - 0.12, z2 + 0.1, 0.03, 0.35 + rng() * 0.3, s * (0.1 + rng() * 0.08)), stone(0.06));
+  const wash = washOf(rng), ai = Math.floor(rng() * 4), paint = L.paint[ai];
+  // the hut on the shoulder: on the first block's top, on the side away from the second, its window lit
+  const shx0 = Math.min(bx - s * bw / 2, x2 - s * w2 / 2), shx1 = Math.max(bx - s * bw / 2, x2 - s * w2 / 2), shw = shx1 - shx0;
+  const hutOnFront = shw < 1.5, hm = ch(M, 0, bh - 0.02, 0);
+  const rec = { door: () => {}, window: (x, y, z, lit) => R.window(x, y + bh, z, lit), wall: () => {} };
+  let lx, lz; // where the ladder's head is
+  if (!hutOnFront) {
+    const hx0 = shx0 + 0.12, hx1 = shx1 - 0.05, hzf = bz + bd / 2 - 0.5 - rng() * 0.3, hzb = Math.max(bz - bd / 2 + 0.3, hzf - 2.4), hh = 1.75 + rng() * 0.25;
+    room(B, hm, rec, { x0: hx0, x1: hx1, zb: hzb, zf: hzf, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: 'rect', x: (hx0 + hx1) / 2, y: 0.7, w: 0.42, sp: 0.5, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    lx = (hx0 + hx1) / 2 - s * 0.1; lz = bz + bd / 2;
+  } else {
+    // (no shoulder: the hut on the front of the first block's top, before the second)
+    const fd = bz + bd / 2 - (z2 + d2 / 2), hw = Math.min(2.4, bw - 0.8), hx0 = bx - hw / 2, hh = 1.7 + rng() * 0.25;
+    if (fd > 1.5) room(B, hm, rec, { x0: hx0, x1: hx0 + hw, zb: z2 + d2 / 2 - 0.05, zf: bz + bd / 2 - 0.35, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: 'rect', x: bx, y: 0.7, w: 0.42, sp: 0.5, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    lx = bx - s * (hw / 2 + 0.25); lz = bz + bd / 2;
+  }
+  ladder(B, M, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }); R.post(lx, lz + 0.55, 0.32, 0, 1.3, { stand: false });
+  R.door(lx, lz + 1.5, { w: 0.5 }); // (the way in is the ladder: not walked)
+  if (flank) {
+    // the lean-to against the pile's flank: one room, its door and a window, a chimney, jars on its roof
+    const x0 = s > 0 ? -w / 2 + 0.2 : bx + bw / 2 - 0.08, x1 = s > 0 ? bx - bw / 2 + 0.08 : w / 2 - 0.2, zf = Math.min(d / 2 - 0.3, bz + bd / 2 + 0.3 + rng() * 0.5), zb = Math.max(-d / 2 + 0.5, (o.back ?? -99) + 0.2, zf - 3.6), hh = 2.2 + rng() * 0.3, cx = (x0 + x1) / 2, rw = x1 - x0;
+    room(B, M, R, { x0, x1, zb, zf, h: hh, rng, g0, color: wash, low, openings: [{ door: true, kind: rng() < 0.5 ? 'horseshoe' : 'ogee', x: cx + s * rw * 0.18, y: 0, w: 0.95, sp: 1.3, paint, frame: L.paint[(ai + 1) % 4] }, { kind: 'rect', x: cx - s * rw * 0.25, y: 1.15, w: 0.5, sp: 0.6, paint, stop: rng() < 0.6 ? 'lit' : 'dark', one: -s }], par: { f: 0.3, b: 0.2, l: 0.25, r: 0.25 } });
+    const hc = 0.8 + rng() * 0.5; B.add(B.box(0.4, hc, 0.4, { seg: 9, chip: 0.03 }), ch(M, cx - s * 0.6, hh + hc / 2 + 0.15, zb + 0.6), { color: worn(wash, rng, 0.2), moss: 0.1, ground: g0 });
+    R.chimney = R.W(cx - s * 0.6, hh + hc + 0.2, zb + 0.6);
+    for (let i = 0; i < (low ? 1 : 3); i++) pot(B, M, cx + (rng() - 0.5) * (rw - 1.4), hh, zb + 1.2 + rng() * Math.max(0.2, zf - zb - 2.2), 0.2 + rng() * 0.1, worn(pick([V.mud, L.tile[4], L.tile[0]], rng), rng, 0.35), 1.6 + rng());
+    const dx = cx + s * rw * 0.18 - s * 0.95; PARTS.late.bracket(B, ch(M, dx, 2.0, zf), { reach: 0.45 }); R.lamp(dx, 2.02, zf + 0.45);
+    if (!low) { const a = [cx - s * (rw / 2 - 0.4), hh + 1.9, zf - 0.5], b = [bx - s * (bw / 2 - 0.1), bh + 1.3, bz + bd / 2 - 0.3]; beam(B, M, [a[0], hh, a[2]], a, 0.06, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); beam(B, M, [b[0], bh, b[2]], b, 0.06, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); washing(B, M, a, b, rng, 4); }
+  } else { const lxp = lx + s * 0.9; PARTS.late.bracket(B, ch(M, lxp, 2.1, lz), { reach: 0.45 }); R.lamp(lxp, 2.12, lz + 0.45); }
+  R.tris = B.triangles - base; R.etris = EB === B ? 0 : EB.triangles - ebase; R.top = bh + h2 + h3;
+  return R;
+}
+
+// ---------------------------------------------------------------- one standing, one fallen against it
+function lean(B, M, o = {}) {
   const seed = o.seed | 0, rng = rngOf(seed, 4), w = o.w ?? 9, d = o.d ?? 7, low = !!o.low, g0 = M.elements[13], EB = o.E || B;
   const R = site(M, 'elder', { seed, w, d }), base = B.triangles, ebase = EB === B ? 0 : EB.triangles;
   const s = seed % 2 ? -1 : 1; // which side the standing block is on (s = 1: the right, +x)

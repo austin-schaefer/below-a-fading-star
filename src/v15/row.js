@@ -10,7 +10,7 @@
 // ?v15=0 leaves it out; ?v15=kit also lays every maker at ten seeds on a deck for a contact sheet (src/v15/sheet.js).
 import * as THREE from 'three';
 import { mat } from '../structures/geo.js';
-import { make, register, faceOf } from './houses/index.js';
+import { make, registerAll, faceOf } from './houses/index.js';
 import { L, H, V, N, PARTS, rngOf, ch, worn, quad, hangLamp, beam } from './houses/kit.js';
 
 // The row's frame on the bench as it stands (the flat is 8 m wide here, bearing 15): the middle of the line its
@@ -22,9 +22,9 @@ export const ROW = { x: 59.6, z: -38.8, bearing: 15 };
 export const ROW_PLOTS = [
   { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard', stair: 'front' } },
   { kind: 'undercroft', w: 7.4, d: 4.8, o: { seed: 3 } },
-  { kind: 'carrier', w: 6.6, d: 5.6, over: 0.5, o: { seed: 6, form: 'long', glaze: 0 } },
-  { kind: 'elder', w: 8.6, d: 7.2, over: 0.3, o: { seed: 2, back: -1.3 } },
-  { kind: 'new', w: 7.6, d: 6.4, over: 1.15, o: { seed: 1 } },
+  { kind: 'carrier', w: 7.6, d: 6.4, over: 0.9, o: { seed: 6, form: 'standing', profile: 'long', glaze: 0 } },
+  { kind: 'elder', w: 8.6, d: 7.2, over: 0.3, o: { seed: 2, form: 'lean', back: -1.3 } },
+  { kind: 'new', w: 7.6, d: 6.4, over: 1.15, o: { seed: 1, stage: 1 } },
 ];
 const BACK = -4.8, PAVE0 = -1.6, DRAIN = 1.45, EDGE = 2.6; // across the street from the fronts' line: where the flat begins, where the flags start, the drain's axis, the kerb
 
@@ -45,12 +45,12 @@ export async function build(ctx) {
   for (const p of ROW_PLOTS) {
     const lz = (p.over || 0) - p.d / 2, plot = { x: wx(x + p.w / 2, lz), z: wz(x + p.w / 2, lz), y: Y, face, w: p.w, d: p.d, kind: p.kind, lx: x + p.w / 2, lz };
     const R = make(p.kind, B, plot, { ...p.o, E, low });
-    register(ctx, R);
     for (const l of R.lights) { const pl = new THREE.PointLight(new THREE.Color(l.color), l.intensity, l.distance, 2); pl.position.set(l.x, l.y, l.z); pl.name = `village-row-${p.kind}`; ctx.scene.add(pl); }
     R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby', 'emerald', 'sapphire'][(R.seed + i) % 4], 0.42)); // (dim: at a door they are met at arm's length)
     records.push(R); plots.push(plot);
     x += p.w;
   }
+  registerAll(ctx, records, 'village-row');
   // ---------------------------------------------------------------- the ground between them
   const g0 = Y, x0 = -len / 2 - 0.4, x1 = len / 2 + 0.4, drop = Y - lowEdge;
   const body = (za, zb, top, hh, col, course) => B.add(B.box(x1 - x0, hh, zb - za, { seg: 3, chip: 0.03 }), ch(M0, (x0 + x1) / 2, top - hh / 2, (za + zb) / 2), { color: col, course, moss: 0.4, ground: Y - drop });

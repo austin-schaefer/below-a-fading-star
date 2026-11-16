@@ -10,7 +10,7 @@ const views = [];
 S.rows.forEach((kind, r) => {
   const z = S.z + (r - (S.rows.length - 1) / 2) * S.dz;
   for (const [n, x] of [['a', -38], ['b', 0], ['c', 38]]) views.push({ name: `${kind}-${n}`, x: S.x + x, z: z + 23, yaw: 0, pitch: -0.42, js: hold(S.x + x, S.y + 13, z + 23) });
-  for (const [n, x] of [['near-1', -4 * S.dx], ['near-2', 2 * S.dx]]) views.push({ name: `${kind}-${n}`, x: S.x + x, z: z + 10.2, yaw: 0, pitch: 0.12, js: hold(S.x + x, S.y + 1.7, z + 10.2) });
+  for (const [n, x] of [['near-1', -4 * S.dx], ['near-2', -1 * S.dx], ['near-3', 2 * S.dx]]) views.push({ name: `${kind}-${n}`, x: S.x + x, z: z + 10.2, yaw: 0, pitch: 0.12, js: hold(S.x + x, S.y + 1.7, z + 10.2) });
 });
 writeFileSync(new URL('./views-v15-kit.json', import.meta.url), JSON.stringify(views, null, 1));
 console.log(views.length, 'views');
