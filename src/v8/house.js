@@ -58,7 +58,7 @@ export async function build(ctx) {
   // no strings between them; and a lamp hung inside each gallery where something is done (house/kept.js HUNG).
   for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) plan.strings.push({ a: M, b: roof(dx, dz), sag: 0.3, step: 3.1, size: 1.0, keep: true });
   const poleH = 3.5;
-  const west = [[86.0, -62.0], [80.0, -61.0], [78.5, -52.5], [78.5, -43.5], [80.0, -35.0], [82.6, -26.5], [81.0, -18.0]];
+  const west = [[86.0, -62.0], [80.0, -61.0], [78.5, -52.5], [78.5, -43.5], [80.0, -35.0], [83.4, -27.2], [82.7, -23.2]]; // v15: the last two stand by the Heliarch stair's foot and on the Low Rung beside its bastion (the old line ran up what is now the stair)
   const east = [[104.0, -62.0], [111.0, -61.5], [117.5, -55.0], [119.0, -46.0], [118.5, -36.5], [116.0, -28.5], [111.5, -24.0]];
   const poles = (pts, from) => pts.forEach(([x, z], i) => {
     const n = pts[Math.min(i + 1, pts.length - 1)], p = pts[Math.max(i - 1, 0)];

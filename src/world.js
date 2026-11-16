@@ -59,7 +59,7 @@ export const LANDMARKS = {
   keptfire: { x: 10, z: -190, r: 14, y: null, name: "The Kept Fire", line: "“He walked apart, beyond the glow of the campfires to gaze out among the mystic vistas of crag and valley. The slopes were softened by verdure and foliage, the vales deepening into shadowy realms of magic.”", card: true },
   hawser: { x: -80, z: -272, r: 25, y: null, name: "The Hawser", line: "“To chain them wholly to modern rules would be barbarous.”", card: true },
   plinths: { x: 148, z: -220, r: 25, y: null, name: "The Plinth Road", line: "“It had not been built for human feet to travel. It had not been built for feet at all.”", card: true },
-  lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
+  lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true, at: { x: 128, z: 5 } }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
