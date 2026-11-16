@@ -381,6 +381,6 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5, exempt: BURIED },
   { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, exempt: BURIED },
   // (v15-Q3) the Lees' square from the old way's bank: through the arch, round the fountain, past the stall to the stair's foot and the Lagan
-  { name: 'lappet-lees-square', pts: [at(1, 12.6, 31.4), at(1, 14.4, 28.7), at(1, 16.9, 25.6), at(1, 10.4, 23.2), at(1, 17.4, 22.5), at(1, 22.6, 22.4), at(1, 24.7, 24.1), at(1, 28.6, 23.1), at(1, 34.5, 19.6), at(1, 39.5, 18.9)], half: 6, exempt: BURIED },
+  { name: 'lappet-lees-square', pts: [at(1, 12.6, 31.4), at(1, 14.4, 28.7), at(1, 16.9, 25.6), at(1, 10.4, 23.2), at(1, 17.4, 22.5), at(1, 22.6, 22.4), at(1, 24.7, 24.1), at(1, 28.6, 23.1), at(1, 32.8, 22.5), at(1, 35.8, 19.8), at(1, 39.5, 18.9)], half: 6, exempt: BURIED },
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
 ];

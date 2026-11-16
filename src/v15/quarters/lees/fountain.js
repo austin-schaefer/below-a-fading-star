@@ -23,7 +23,7 @@ export const YS = 0.46, YF = 0.16; // the light's surface and the bowl's floor, 
 const PROF = [[-0.14, 1.16], [0.1, 1.3], [0.4, 1.5], [0.8, 1.66], [1.4, 1.74], [2.2, 1.72], [3.6, 1.56], [5.6, 1.22]]; // the outer wall: [y, r]
 export const ro = (y) => { for (let i = 1; i < PROF.length; i++) if (y <= PROF[i][0]) { const [y0, r0] = PROF[i - 1], [y1, r1] = PROF[i]; return r0 + (r1 - r0) * Math.max(0, (y - y0) / (y1 - y0)); } return PROF[PROF.length - 1][1]; };
 const TH = 0.24;
-export const NOTCH = rad(-25), SWAPE = rad(-75);
+export const NOTCH = rad(-25), SWAPE = rad(-68);
 
 // a geometry added and then painted vertex by vertex in its own frame: fn(x, y, z, out) writes r, g, b and e (noon)
 function painted(B, g, M, o, fn) {
@@ -138,7 +138,7 @@ export function fountain(Q, plot) {
 
   // ---------------------------------------------------------------- the Swape: post, pole, counterweight, chain, cradle
   const wood = () => ({ color: worn(V.rawWood, rng, 0.35, 0.15), moss: 0.12, ground: g0, round: 6 }), iron = { color: L.iron, iron: 0.9, moss: 0, ground: g0 - 4 };
-  const p0 = P(SWAPE, 2.6, 0), tipXZ = P(rad(30), 0.95, 0), hl = Math.hypot(tipXZ[0] - p0[0], tipXZ[2] - p0[2]), hx = (tipXZ[0] - p0[0]) / hl, hz = (tipXZ[2] - p0[2]) / hl, PV = 2.8, TAIL = 2.5;
+  const p0 = P(SWAPE, 2.85, 0), tipXZ = P(rad(30), 0.95, 0), hl = Math.hypot(tipXZ[0] - p0[0], tipXZ[2] - p0[2]), hx = (tipXZ[0] - p0[0]) / hl, hz = (tipXZ[2] - p0[2]) / hl, PV = 2.8, TAIL = 2.2; // (the post stands 2.85 m out: a body passes between its legs and the bowl)
   const tail = [p0[0] - hx * TAIL, 0.58, p0[2] - hz * TAIL], slope = (PV - tail[1]) / TAIL, tip = [tipXZ[0], PV + slope * hl, tipXZ[2]];
   { const qx = -hz, qz = hx; // across the pole
     for (const s of [-1, 1]) beam(B, M, [p0[0] + s * qx * 0.5, -0.25, p0[2] + s * qz * 0.5], [p0[0] - s * qx * 0.1, PV + 0.4, p0[2] - s * qz * 0.1], 0.13, wood());
@@ -169,7 +169,7 @@ export function fountain(Q, plot) {
     for (const d of [-116, -131, -146]) { const a = rad(d), rc = 1.74; PARTS.late.bench(B, ch(M, Math.sin(a) * rc, 0, Math.cos(a) * rc, 0, a, 0), { w: 0.5, h: 0.42, d: 0.46, rng }); R.post(Math.sin(a) * rc, Math.cos(a) * rc, 0.28, 0, 0.42); seats.push(R.W(Math.sin(a) * rc, 0.42, Math.cos(a) * rc)); }
     dirty(B, from, 0.4, rng);
     const tops = [];
-    for (const d of [-104, -124, -142]) { const a = rad(d), f = P(a, 2.36, -0.2), t = P(a, 2.05, 2.3 + rng() * 0.3); beam(B, M, f, t, 0.07, wood()); R.post(f[0], f[2], 0.08, 0, 2.2, { stand: false }); tops.push(t); }
+    for (const d of [-110, -126, -142]) { const a = rad(d), f = P(a, 2.36, -0.2), t = P(a, 2.05, 2.3 + rng() * 0.3); beam(B, M, f, t, 0.07, wood()); R.post(f[0], f[2], 0.08, 0, 2.2, { stand: false }); tops.push(t); }
     for (let k = 0; k < 2; k++) beam(B, M, tops[k], tops[k + 1], 0.045, wood());
     // the vine: up the middle pole, along the rail, and off it toward the bowl; leaves only where the light is
     const stem = { color: new THREE.Color('#3a2c20'), moss: 0.2, ground: g0 }, f1 = P(rad(-124), 2.3, -0.1), path = [f1, [f1[0] * 0.97, 0.8, f1[2] * 0.97 + 0.05], [tops[1][0] + 0.04, 1.6, tops[1][2] - 0.03], tops[1], [(tops[1][0] + tops[2][0]) / 2, tops[1][1] - 0.08, (tops[1][2] + tops[2][2]) / 2], tops[2]];

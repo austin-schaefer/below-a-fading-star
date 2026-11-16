@@ -166,7 +166,7 @@ export function ground(Q, F) {
   }
   // ---------------------------------------------------------------- lamps where the street turns: each on a stub of a Heliarch column
   // (the street east of the square had nothing lit to walk toward: the blind reader, round 2)
-  for (const [run, s, D, glass] of [[1, 44.2, 20.9, 'amber'], [2, 9.2, 20.6, 'ruby'], [2, 21.4, 20.6, 'amber']]) {
+  for (const [run, s, D, glass] of [[1, 44.2, 20.9, 'amber'], [2, 5.6, 21.3, 'ruby'], [2, 21.4, 20.6, 'amber']]) {
     const [x, z] = plan.at(run, s, D), h = T.heightAt(x, z); if (Math.abs(h - Y0) > 0.2 || plan.houseOut(x, z) < 1.2) continue;
     const n = plan.RUN[run].n, m = mat(x, Y0, z, 0, Math.atan2(-n[0], -n[1]), 0), hs = 1.5 + rng() * 0.25;
     for (let k = 0, y = -0.1; k < 3; k++) { const dh = (hs + 0.1) / 3; PARTS.heliarch.drum(B, ch(m, (rng() - 0.5) * 0.04, y, (rng() - 0.5) * 0.04), { r: 0.24 - k * 0.012, h: dh, turn: rng(), moss: 0.5 }); y += dh; }
