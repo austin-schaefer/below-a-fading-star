@@ -114,7 +114,10 @@ export function height(h, x, z, w, coarse) {
     // the bench, level from the Low Rung's riser to the ha-ha (the lawn's own easing begins at r 58), then the steps
     if (r < HAHA) { const A = villageAmt(x, z); if (A > 0 && Dof(x, z) >= LOW) y = lerp(y, lawnAt(b), A); }
     // the Pomegranate House's corner lamps hang over the bench here: the ground is worn a hand lower under it (house-test: a lamp 1.9 m up)
-    if (x > 78.5 && x < 85.5 && z < -28.5 && z > -35.5) y -= 0.16 * (1 - smoothstep(1.2, 2.8, Math.hypot(x - 81.8, z + 32.2)));
+    if (x > 78.5 && x < 86.5 && z < -28.5 && z > -36) { // the lamps' brackets are set from the ground at the house's wall (82, -32 is its corner): the ground a step out from it is no higher
+      const d = Math.max(z + 32, 82 - x);
+      y -= 0.36 * smoothstep(0.05, 0.8, d) * (1 - smoothstep(1.8, 3.2, d)) * (1 - smoothstep(84.6, 86.4, x)) * smoothstep(-35.9, -34.4, z);
+    }
     y = village(y, h, x, z, r, coarse);
   }
   return y;
