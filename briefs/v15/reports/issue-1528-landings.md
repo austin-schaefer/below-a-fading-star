@@ -93,9 +93,28 @@ The rows did not fail on their first draft; they were tuned to drop false findin
 The commands (`SHOT_ANGLE=metal nice -n 10`, port 8169) and their counts:
 
 - `node tools/ways-test.mjs`: 219 passed, 0 failed.
-- `node tools/village-walk.mjs keys`: walked: yes, the ladder taken twice. Headless refused the capture here, so it steered by drag-look.
-- touch and `ROUTE=rungs`: see the last section.
-- `ONLY=... tools/suite.sh 8169`: see the last section.
+- `ONLY=ways,village,village-plan,geometry,roads,walk,hop,edges,heights,house,strata tools/suite.sh 8169`: 10 of 11 green (by PASS lines):
+
+  | test | PASS lines |
+  |---|---|
+  | roads | 67 |
+  | village-plan | 7 |
+  | strata | 8 |
+  | village | 687 |
+  | ways | 219 |
+  | house | 20 |
+  | walk | 13 |
+  | hop | 25 |
+  | edges | 214 |
+  | heights | 198 |
+
+- geometry failed, 131 passed and 1 failed. The failure is new: one `backs` finding at `lappet-heliarch-upper`, at (71.4, 9.7, -24.9). It is the underside of rungs-low-3's roof slab, seen through the slab's top: the top lies in the Mid Rung's tread plane and the check does not take it, and it shows since rungs-low-3's stair went. I judged it a check artefact and recorded it in `tools/geometry-baseline.json` with that reason. I did not prove it by a render: a frame from the stand shows the roof's top. The place then gives 18 passed, 0 failed, run with the Tenter's and the Gullet's places.
+- The whole-village walks (`tools/village-walk.mjs`):
+  - keys: walked: yes, the ladder taken twice. One run first stuck at the ladder's foot, where W2 works; the rerun passed unchanged.
+  - touch: walked: yes, the ladder taken twice. The first run went over the Mid Rung's lip at the gangway, along a strip my first, wider Tenter gap left outside the wall. The gap is now the deck's span.
+  - `ROUTE=rungs`: walked: yes, 9 of 9 ways. Its tail, rungs-mid-7, sat inside a comment before and is walked again.
+- The owner's five places (`tools/landing-walk.mjs tools/landing-walk-owner.json`): 22 of 22 stops reached, pointer captured.
+- The spine (`tools/landing-walk.mjs tools/landing-walk-spine.json`): 66 of 66 stops, down and up.
 
 ## Still weak
 
