@@ -18,6 +18,16 @@
 //             1,600 cells; the way's own line is not entered. An end whose flood runs out before that without meeting
 //             another way's end or a place (a plot's front, a square, a fixture, the crown's and the Rungs' named
 //             places, an act) is a dead end.
+//   turn      (v15-W4: the owner's "walls blocking people from getting from stairs to their own door") from each end,
+//             in each of 16 directions where the level runs on (floor at the end's level all the way 2.4 m out, not a
+//             house's room, not back down the way) a body reaches 2 m out, every collider counted, the way's own
+//             (and nothing drawn stands knee to chest high on the straight line out: a parapet with no collider is a wall to the eye)
+//             walls, parapets and newels too
+//   door      every door a house record gives: its step is reached on foot from each way's end on its level within
+//             8 m, by a walk no longer than twice the straight line and 3 m; a door with no way within 8 m is not shut
+//             in a pocket
+//   headroom  up each way's line every 0.25 m, a ray from 0.4 m over the floor to 2.1 m meets no drawn mesh (W1's
+//             row read the colliders, and a footbridge across the Gullet's head passed it)
 // Prints the table of ways (id, its two ends, the levels it joins, the module that built it) and one PASS/FAIL line per
 // way per row. WAYS_JSON=path writes the table and the findings as JSON.
 //   node tools/ways-test.mjs [base=http://localhost:8123]
@@ -138,6 +148,107 @@ const r = await page.evaluate(async () => {
     const d0 = Math.hypot(A[0].at[0] - B[0].at[0], A[0].at[1] - B[0].at[1]), d1 = Math.hypot(A[1].at[0] - B[1].at[0], A[1].at[1] - B[1].at[1]);
     if (d0 < 6 && d1 < 6) find.push({ row: 'doubled', tag: `${all[a].w.id} / ${all[b].w.id}`, ok: false, detail: `feet ${d0.toFixed(1)} m apart, tops ${d1.toFixed(1)} m` });
   }
+  // ---- (v15-W4) the rows that count a way's own walls, and the drawn meshes
+  // a flood at 0.25 m where a body (0.45 m, the controls' BODY) stands: within a 0.3 m step of the last cell, and no
+  // collider at the walker's height, the way's own included, within its radius + 0.45 m. Returns the cells' distances.
+  const B2 = 0.25, BODY = 0.45;
+  const colsNear = (x, z, R) => cols.filter((c) => Math.abs(c.x - x) < R + 3 && Math.abs(c.z - z) < R + 3);
+  const free = (cs, x, z, feet) => { for (const c of cs) { const pt = near(c, x, z); if (pt.d < BODY && stands(c, feet, pt.t)) return false; } return true; };
+  function reach(x0, z0, y0, R, cap = 20000, stop = null, extra = null) {
+    const cs = colsNear(x0, z0, R), seen = new Map(), q = [[0, 0, y0, 0]], key = (i, j) => i * 4096 + j;
+    seen.set(key(0, 0), { y: y0, d: 0 });
+    let head = 0;
+    while (head < q.length && seen.size < cap) {
+      const [i, j, y, d] = q[head++];
+      if (stop && stop(x0 + i * B2, z0 + j * B2, y)) return { seen, hit: true, d, i, j };
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ni = i + di, nj = j + dj, k = key(ni, nj); if (seen.has(k)) continue;
+        const nx = x0 + ni * B2, nz = z0 + nj * B2; if (Math.hypot(nx - x0, nz - z0) > R) continue;
+        const f = C.floorAt(nx, nz, y); if (Math.abs(f.y - y) > 0.3) continue;
+        if (!free(cs, nx, nz, f.y) || (extra && extra(ni, nj))) continue;
+        seen.set(k, { y: f.y, d: d + B2 }); q.push([ni, nj, f.y, d + B2]);
+      }
+    }
+    return { seen, hit: false, open: seen.size >= cap };
+  }
+  const flooded = (fl, x0, z0, x, z, tol) => { for (let i = Math.floor((x - tol - x0) / B2); i <= Math.ceil((x + tol - x0) / B2); i++) for (let j = Math.floor((z - tol - z0) / B2); j <= Math.ceil((z + tol - z0) / B2); j++) { if (Math.hypot(x0 + i * B2 - x, z0 + j * B2 - z) > tol) continue; if (fl.seen.has(i * 4096 + j)) return true; } return false; };
+  const houseIn = (x, z, y) => P.PLOTS.some((p) => p.kind !== 'yard' && p.kind !== 'square' && p.kind !== 'garden' && p.kind !== 'tube' && Math.abs(p.y - y) < 0.35 && P.inPlot(p, x, z, 0.1));
+  const THREE = fp.THREE || (await import('three'));
+  const rc = new THREE.Raycaster(), up = new THREE.Vector3(0, 1, 0), o = new THREE.Vector3(), skip = /sky|star|cloud|far|lure|grass|fog|haze|water|folk|people|body|moth|bird|dust|smoke|glow|halo|beam|lamp-glass/i;
+  const meshes = []; fp.scene.traverse((m) => { if ((m.isMesh || m.isInstancedMesh) && m.visible && !skip.test(m.name || '') && !(m.material && m.material.transparent && m.material.opacity < 0.5)) meshes.push(m); });
+  const down = new THREE.Vector3(0, -1, 0);
+  // something drawn standing at (x, z) between a walker's knee (0.5 m: lower is stepped or hopped over) and chest over feet (a parapet, a newel, a block)
+  const drawnAt = (x, z, feet) => { o.set(x, feet + 1.3, z); rc.set(o, down); rc.far = 0.8; const h = rc.intersectObjects(meshes, false)[0]; return h ? `${h.object.name || h.object.type} at (${x.toFixed(1)}, ${z.toFixed(1)}) ${(h.point.y - feet).toFixed(2)} m up` : null; };
+  // something drawn over (x, z) under a walker's head: the space under a deck or a flight, not ground a body walks on
+  const roofed = (x, z, feet) => { o.set(x, feet + 0.4, z); rc.set(o, up); rc.far = 1.7; return rc.intersectObjects(meshes, false).length > 0; };
+  // turn: from each end, every way the level runs (its floor 2.4 m out within 0.3 m of the end's, not a house's room,
+  // not back down the way) the walker reaches a point 2 m out (within 0.5 m of it), own walls counted
+  for (const { w, ends } of all) ends.forEach((e, ei) => {
+    if (w.tick) return; // a ladder is taken from its foot and its head, by a carry
+    // what is drawn knee to chest high on each cell within 3.45 m: a body (about 0.3 m of it, the cell's neighbours) does not pass it
+    const x0 = e.at[0], z0 = e.at[1], dm = new Map(), dk = (i, j) => i * 4096 + j, shut = [];
+    for (let i = -14; i <= 14; i++) for (let j = -14; j <= 14; j++) { if (Math.hypot(i, j) * B2 > 3.45) continue; const a = drawnAt(x0 + i * B2, z0 + j * B2, e.y); if (a) dm.set(dk(i, j), a); }
+    const nearDrawn = (i, j) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const v = dm.get(dk(i + a, j + b)); if (v) return v; } return null; };
+    const fl = reach(x0, z0, e.y, 3.2, 20000, null, (i, j) => !!nearDrawn(i, j));
+    const self = (x, z) => { const p = w.path; for (let k = 0; k < p.length - 1; k++) { const a = p[k], b = p[k + 1], dx = b[0] - a[0], dz = b[1] - a[1], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) < 0.9 && Math.abs(a[2] + (b[2] - a[2]) * t - e.y) > 0.25) return true; } return false; };
+    for (let k = 0; k < 16; k++) {
+      const th = k * Math.PI / 8, ux = Math.sin(th), uz = -Math.cos(th), fx = x0 + ux * 2.4, fz = z0 + uz * 2.4, f = C.floorAt(fx, fz, e.y);
+      if (Math.abs(f.y - e.y) > 0.3 || houseIn(fx, fz, e.y) || self(fx, fz) || self(x0 + ux * 1.2, z0 + uz * 1.2)) continue;
+      // (where no body stands, in a slot between two houses or inside a tower, or under a deck or a flight: not ground the level runs on)
+      const tx = x0 + ux * 2, tz = z0 + uz * 2;
+      if (!free(colsNear(tx, tz, 0.6), tx, tz, e.y) || roofed(tx, tz, e.y) || roofed(fx, fz, e.y)) continue;
+      // and the level is not only beyond a drop or a wall it has anyway: it is floor all the way out at the end's level
+      let cont = true; for (let s = 0.4; s <= 2.4; s += 0.2) { const g = C.floorAt(x0 + ux * s, z0 + uz * s, e.y); if (Math.abs(g.y - e.y) > 0.35 || roofed(x0 + ux * s, z0 + uz * s, e.y)) { cont = false; break; } } // (and not in under a deck or a flight: the way's own legs stand there)
+      if (!cont) continue;
+      if (!flooded(fl, x0, z0, x0 + ux * 2, z0 + uz * 2, 0.5)) { let d = null; for (let q = 1; q <= 9 && !d; q++) d = nearDrawn(Math.round(ux * q), Math.round(uz * q)); shut.push(`${['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][k]}${d ? ` (drawn: ${d})` : ''}`); }
+    }
+    let why = '';
+    if (shut.length) { // what stands there: the colliders at walking height within 2.4 m in the shut directions
+      const cs = colsNear(x0, z0, 2.6).filter((c) => { const pt = near(c, x0, z0); return pt.d < 2.4 && stands(c, e.y, pt.t); });
+      why = `shut to the ${shut.join(' ')}; by ${cs.slice(0, 3).map(desc).join('; ')}`;
+    }
+    find.push({ row: 'turn', tag: `${w.id} ${ei ? 'top' : 'foot'}`, ok: !shut.length, detail: why, at: [x0, z0, e.y] });
+  });
+  // doors: every door a house record gives. Its step (0.5 m out of its face) is reached on foot from every way's end
+  // on its level within 8 m, by a way no longer than twice the straight line and 3 m; and a door no way's end on its
+  // level reaches is not shut in a pocket (its flood meets a way's end, or runs out past 4,000 cells: open ground)
+  const recs = [], take = (l) => { for (const R of l || []) if (R && R.plot) recs.push(R); };
+  take(fp.village?.row?.records); take(fp.lees?.records); take(fp.rungs?.records && Object.values(fp.rungs.records)); take(fp.quarrels?.records); take(fp.pennyworth?.records);
+  const doors = [];
+  for (const R of recs) for (const d of R.doors) if (!d.ladder && inBox(d.x, d.z)) doors.push({ of: R.name || R.kind, x: d.x + d.face[0] * 0.5, z: d.z + d.face[1] * 0.5, y: d.y });
+  for (const d of doors) {
+    const fy = C.floorAt(d.x, d.z, d.y + 0.3).y, tag = `${d.of} door (${d.x.toFixed(1)}, ${d.z.toFixed(1)})`;
+    const near8 = [];
+    for (const { w, ends } of all) for (const e of ends) if (!w.tick && Math.abs(e.y - fy) < 0.4 && Math.hypot(e.at[0] - d.x, e.at[1] - d.z) < 8) near8.push({ w, e, L: Math.hypot(e.at[0] - d.x, e.at[1] - d.z) });
+    const bad = [];
+    for (const { w, e, L } of near8) {
+      const fl = reach(e.at[0], e.at[1], e.y, 12, 20000, (x, z) => Math.hypot(x - d.x, z - d.z) < 0.4);
+      if (!fl.hit) bad.push(`not reached from ${w.id} (${L.toFixed(1)} m off)`); else if (fl.d > 2 * L + 3) bad.push(`${fl.d.toFixed(1)} m round from ${w.id} (${L.toFixed(1)} m off)`);
+    }
+    let pocket = false;
+    if (!near8.length) {
+      const fl = reach(d.x, d.z, fy, 60, 4000, (x, z, y) => all.some(({ w, ends }) => ends.some((e) => Math.abs(e.y - y) < 0.4 && Math.hypot(e.at[0] - x, e.at[1] - z) < 0.6)));
+      pocket = !fl.hit && !fl.open; if (pocket) bad.push(`shut in: ${fl.seen.size} cells (${(fl.seen.size * B2 * B2).toFixed(0)} m2) and no way`);
+    }
+    find.push({ row: 'door', tag, ok: !bad.length, detail: bad.join('; ') + (near8.length ? '' : pocket ? '' : ' (no way within 8 m; open ground)') });
+  }
+  // headroom: up every way's line, every 0.25 m, a ray from 0.4 m over the floor there to 2.1 m, against the drawn
+  // meshes (not the colliders: W1's row passed a footbridge across a stair's head because its collider was low)
+  for (const { w } of all) {
+    if (w.tick) continue;
+    const p = w.path, hits = [];
+    for (let k = 0; k < p.length - 1; k++) {
+      const a = p[k], b = p[k + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(L / 0.25));
+      for (let s = 0; s < n; s++) {
+        const t = s / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t, yl = a[2] + (b[2] - a[2]) * t, f = C.floorAt(x, z, yl + 0.3);
+        const g = C.floorAt(x, z, yl + 1), feet = Math.abs(g.y - yl) < 1.2 ? g.y : Math.abs(f.y - yl) < 0.5 ? f.y : yl;
+        o.set(x, feet + 0.4, z); rc.set(o, up); rc.far = 1.7;
+        const h = rc.intersectObjects(meshes, false)[0];
+        if (h) hits.push(`${h.object.name || h.object.type} ${(h.distance + 0.4).toFixed(2)} m over the feet (${feet.toFixed(2)}) at (${x.toFixed(1)}, ${z.toFixed(1)})`);
+      }
+    }
+    find.push({ row: 'headroom', tag: w.id, ok: !hits.length, detail: hits.length ? `${hits.length} points: ${hits.slice(0, 2).join('; ')}` : '' });
+  }
   return { table, find, n: ways.length, paths: ways.map((w) => ({ id: w.id, path: w.path })) };
 });
 if (r.missing) { console.log(`FAIL ways: ${r.missing} is missing`); process.exit(1); }
@@ -145,10 +256,10 @@ console.log(`${r.n} ways in the village:`);
 for (const t of r.table) console.log(`  ${t.id.padEnd(22)} ${t.levels[0].padEnd(6)} (${t.ends[0].join(', ')})  ->  ${t.levels[1].padEnd(6)} (${t.ends[1].join(', ')})`);
 let pass = 0, fail = 0;
 const check = (ok, name, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? '  ' + detail : ''}`); ok ? pass++ : fail++; };
-for (const row of ['mouth', 'landing', 'dead end']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
+for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
 const dbl = r.find.filter((q) => q.row === 'doubled');
 check(!dbl.length, 'doubled: no two ways join the same levels within 6 m at both ends', dbl.map((q) => `${q.tag} (${q.detail})`).join('; '));
-check(r.n >= 20, `the village registers its ways (${r.n})`);
+check(r.n >= 15, `the village registers its ways (${r.n})`); // (v15-W4 took four out: 21 to 17)
 check(!errors.length, 'no page errors', errors.slice(0, 2).join(' | '));
 if (process.env.WAYS_JSON) fs.writeFileSync(process.env.WAYS_JSON, JSON.stringify(r, null, 1));
 console.log(`ways: ${pass} passed, ${fail} failed`);
