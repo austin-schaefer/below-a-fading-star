@@ -129,7 +129,7 @@ export function ground(Q, F) {
     const end = flat(brink + 1, 0, 0.045), fall = low ? 1.5 : 1.9;
     for (const [ax, az] of [[Math.cos(yaw), -Math.sin(yaw)], [Math.sin(yaw), Math.cos(yaw)]]) {
       const w = 0.03, hw = 0.2, e = (k, y) => [end[0] + ax * k, end[1] - y, end[2] + az * k];
-      G.quad(e(-w, 0), e(w, 0), e(w, fall), e(-w, fall), 0.5, 0.5, 0, 0);
+      for (const [y0, y1, k, ww] of [[0, 0.55, 0.5, w * 1.6], [0.66, 1.02, 0.3, w * 1.2], [1.14, 1.4, 0.16, w], [1.5, 1.62, 0.08, w]]) if (y1 <= fall) G.quad(e(-ww, y0), e(ww, y0), e(ww * 0.7, y1), e(-ww * 0.7, y1), k, k, k * 0.5, k * 0.5); // (it falls in lengths, each fainter: a pour going out, not a line on the wall)
       for (const sd of [-1, 1]) G.quad(e(0, 0), e(0, fall * 0.8), e(sd * hw, fall * 0.8), e(sd * hw, 0), 0.07, 0, 0, 0);
     }
     Q.places.push({ what: 'the spout: the light runs off here and goes out as it falls', x: end[0], y: end[1], z: end[2] });
@@ -163,6 +163,18 @@ export function ground(Q, F) {
     }
     line.flush(B, { color: V.flag, moss: 0.5, wet: 0.1, ground: Y0 - 0.2 });
   }
+  // ---------------------------------------------------------------- lamps where the street turns: each on a stub of a Heliarch column
+  // (the street east of the square had nothing lit to walk toward: the blind reader, round 2)
+  for (const [run, s, D, glass] of [[1, 44.2, 20.9, 'amber'], [2, 9.2, 20.6, 'ruby'], [2, 21.4, 20.6, 'amber']]) {
+    const [x, z] = plan.at(run, s, D), h = T.heightAt(x, z); if (Math.abs(h - Y0) > 0.2 || plan.houseOut(x, z) < 1.2) continue;
+    const n = plan.RUN[run].n, m = mat(x, Y0, z, 0, Math.atan2(-n[0], -n[1]), 0), hs = 1.5 + rng() * 0.25;
+    for (let k = 0, y = -0.1; k < 3; k++) { const dh = (hs + 0.1) / 3; PARTS.heliarch.drum(B, ch(m, (rng() - 0.5) * 0.04, y, (rng() - 0.5) * 0.04), { r: 0.24 - k * 0.012, h: dh, turn: rng(), moss: 0.5 }); y += dh; }
+    PARTS.late.bracket(B, ch(m, 0, hs - 0.16, 0.2), { reach: 0.42 });
+    const lp = new THREE.Vector3(0, hs - 0.14, 0.62).applyMatrix4(m);
+    Q.extraLamps.push({ x: lp.x, y: lp.y, z: lp.z, glass });
+    ctx.addCollider({ x, z, r: 0.3, y: Y0, h: hs, stand: false });
+  }
+
   // ---------------------------------------------------------------- the slot behind the Strake's Elder house, made good
   // Between the leaning block's back and the Low Rung's parapet a hand-wide slot was left open, and the plaster room's
   // back wall showed white in it from the tread (v15-V1's report). A weathering course of five stones lies over it,

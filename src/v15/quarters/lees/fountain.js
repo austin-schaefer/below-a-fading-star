@@ -20,7 +20,7 @@ const TAU = Math.PI * 2, rad = (d) => (d * Math.PI) / 180;
 const adiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
 const sm = (t) => t * t * (3 - 2 * t);
 export const YS = 0.46, YF = 0.16; // the light's surface and the bowl's floor, over the paving
-const PROF = [[-0.14, 1.16], [0.1, 1.3], [0.4, 1.5], [0.8, 1.66], [1.4, 1.74], [2.2, 1.72], [3.6, 1.56]]; // the outer wall: [y, r]
+const PROF = [[-0.14, 1.16], [0.1, 1.3], [0.4, 1.5], [0.8, 1.66], [1.4, 1.74], [2.2, 1.72], [3.6, 1.56], [5.6, 1.22]]; // the outer wall: [y, r]
 export const ro = (y) => { for (let i = 1; i < PROF.length; i++) if (y <= PROF[i][0]) { const [y0, r0] = PROF[i - 1], [y1, r1] = PROF[i]; return r0 + (r1 - r0) * Math.max(0, (y - y0) / (y1 - y0)); } return PROF[PROF.length - 1][1]; };
 const TH = 0.24;
 export const NOTCH = rad(-25), SWAPE = rad(-75);
@@ -49,7 +49,7 @@ export function fountain(Q, plot) {
   const rimAt = (i) => {
     const a = (((i % nu) + nu) % nu) / nu * TAU, j = jag[((i % nu) + nu) % nu];
     const t = Math.max(0, 1 - Math.abs(adiff(a, rad(185))) / 1.5), t2 = Math.max(0, 1 - Math.abs(adiff(a, SWAPE)) / 0.42), t3 = Math.max(0, 1 - Math.abs(adiff(a, NOTCH)) / 0.34);
-    let h = 0.62 + 3.5 * sm(t) + 1.1 * sm(t2) * (1 - sm(t));
+    let h = 0.62 + 4.7 * sm(t) + 1.1 * sm(t2) * (1 - sm(t));
     h += (j - 0.5) * (0.05 + 0.55 * Math.min(1, (h - 0.62) / 1.2)); // glass breaks in points: the higher, the more ragged
     return Math.max(0.5, h - 0.1 * sm(t3));
   };
@@ -72,7 +72,7 @@ export function fountain(Q, plot) {
     const e = (0.24 * Math.exp(-Math.max(0, y) / 1.2) + 0.05 * Math.max(0, 1 - (h - y) / 0.22)) * (band ? 0.5 : 1) * (0.7 + 0.6 * Math.max(0, n3(a * 2, y, 7) + 0.5));
     return [col.clone(), e];
   };
-  const body = (a, y) => [col.copy(N.milk).multiplyScalar(0.6 + 0.12 * n3(a * 3, y * 2, 1.5)).clone(), y < YS ? 0.5 : 0.07 + 0.36 * Math.exp(-(y - YS) / 1.0)];
+  const body = (a, y) => [col.copy(N.milk).multiplyScalar(0.6 + 0.12 * n3(a * 3, y * 2, 1.5)).clone(), y < YS ? 0.5 : 0.045 + 0.36 * Math.exp(-(y - YS) / 0.7)];
   const S = new Soup(), I = new Soup(), yOf = (p) => p[1];
   for (let i = 0; i < nu; i++) {
     const a0 = ang(i), a1 = ang(i + 1), h0 = rims[i], h1 = rims[(i + 1) % nu], radial = [Math.sin((a0 + a1) / 2), 0, Math.cos((a0 + a1) / 2)], inward = [-radial[0], 0, -radial[2]];
@@ -97,14 +97,21 @@ export function fountain(Q, plot) {
   I.flush(B, { color: N.milk, moss: 0, wet: 0, course: 0, ground: g0 - 3 }, M);
   // the foot's collar, sunk in the paving
   B.add(new THREE.TorusGeometry(1.25, 0.1, 5, nu).rotateX(Math.PI / 2), ch(M, 0, 0.03, 0), { color: worn(N.celadonD, rng, 0.3), moss: 0.7, wet: 0.2, ground: g0 });
-  for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU, b = ((i + 1) / 12) * TAU; R.wall(Math.sin(a) * 1.5, Math.cos(a) * 1.5, Math.sin(b) * 1.5, Math.cos(b) * 1.5, 0, Math.max(1.1, Math.min(rimAt(Math.round((i + 0.5) / 12 * nu)), 3)), 0.24); }
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU, b = ((i + 1) / 12) * TAU; R.wall(Math.sin(a) * 1.62, Math.cos(a) * 1.62, Math.sin(b) * 1.62, Math.cos(b) * 1.62, 0, Math.max(1.1, Math.min(rimAt(Math.round((i + 0.5) / 12 * nu)), 3)), 0.24); }
 
   // ---------------------------------------------------------------- the light, as depth
   { const ys = [0.24, 0.32, 0.4, YS], nf = low ? 12 : 18;
     ys.forEach((y, k) => { const r = ro(y) - TH - 0.012, top = k === ys.length - 1;
       for (let i = 0; i < nf; i++) { const a0 = (i / nf) * TAU, a1 = ((i + 1) / nf) * TAU, c = [0, y + (top ? 0.035 : 0), 0], m0 = P(a0, r * 0.5, y + (top ? 0.012 : 0)), m1 = P(a1, r * 0.5, y + (top ? 0.012 : 0));
         const w = (p) => R.W(p[0], p[1], p[2]), v = (p) => { const q = w(p); return [q.x, q.y, q.z]; };
-        G.tri(v(c), v(m0), v(m1), 0.15, 0.11, 0.11); G.quad(v(m0), v(P(a0, r, y)), v(P(a1, r, y)), v(m1), 0.11, 0.06, 0.06, 0.11); } });
+        G.tri(v(c), v(m0), v(m1), 0.12, 0.085, 0.085); G.quad(v(m0), v(P(a0, r, y)), v(P(a1, r, y)), v(m1), 0.085, 0.045, 0.045, 0.085); } });
+    // and going up off it: the stored day leaks upward, a pale standing column a visitor on the road sees over the
+    // roofs before they see the bowl (three crossed sheets, each drawn to nothing at its edges and its top)
+    const V3 = (p) => { const q = R.W(p[0], p[1], p[2]); return [q.x, q.y, q.z]; }, H0 = YS + 0.1, H1 = 6.5, H2 = 15;
+    for (let i = 0; i < 3; i++) { const a = (i / 3) * Math.PI + 0.4, cx = Math.sin(a), cz = Math.cos(a);
+      for (const sd of [-1, 1]) { const e = (hw, y) => [cx * hw * sd, y, cz * hw * sd], c = (y) => [0, y, 0];
+        G.quad(V3(c(H0)), V3(e(1.0, H0)), V3(e(1.5, H1)), V3(c(H1)), 0.05, 0, 0, 0.035);
+        G.quad(V3(c(H1)), V3(e(1.5, H1)), V3(e(2.1, H2)), V3(c(H2)), 0.035, 0, 0, 0); } }
   }
 
   // ---------------------------------------------------------------- the kerb, where people dip: five robbed stones, dished by knees

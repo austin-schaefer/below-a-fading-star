@@ -19,6 +19,7 @@ import { leesStone, noonGlow, bakeNoon } from './lees/light.js';
 import { fountain, YS } from './lees/fountain.js';
 import { ground, arch } from './lees/square.js';
 import { shops } from './lees/shops.js';
+import { bakeLamps } from './lees/goods.js';
 
 export async function build(ctx) {
   if (new URL(location.href).searchParams.get('lees') === '0') { ctx.lees = { off: true }; return; }
@@ -26,13 +27,16 @@ export async function build(ctx) {
   if (!ctx.lappet || ctx.lappet.on === false || !ctx.strata?.on) { ctx.lees = { off: true }; return; }
   const plan = ctx.lappet.plan, low = ctx.quality === 'low', fp = plan.plot('fountain');
   const B = ctx.strata.builder(), G = noonGlow();
-  const Q = { ctx, plan, B, G, low, Y: plan.LEVEL.bench.y + 0.06, places: [], records: [] };
+  const Q = { ctx, plan, B, G, low, Y: plan.LEVEL.bench.y + 0.06, places: [], records: [], lampSrc: [], extraLamps: [] };
   const f = fountain(Q, fp), F = { ...f, s: fp.s, D: fp.D };
   Q.records.push(f.R);
   const floor = ground(Q, F), gate = arch(Q, F);
   shops(Q);
   for (const R of Q.records) R.lamps.forEach((lamp, i) => hangLamp(B, lamp, ['amber', 'ruby', 'amber', 'emerald'][(R.seed + i) % 4], 0.5));
   bakeNoon(B, 0, B.count, { x: f.x, z: f.z, y: Q.Y, ys: Q.Y + YS, r: 13 }, { heavy: 0.42, pool: 0.4 });
+  for (const l of Q.extraLamps) { hangLamp(B, l, l.glass, 0.6); Q.lampSrc.push({ x: l.x, y: l.y - 0.28, z: l.z, r: 5.5, k: 0.8, col: [1, 0.74, 0.42] }); }
+  for (const R of Q.records) for (const l of R.lamps) Q.lampSrc.push({ x: l.x, y: l.y - 0.28, z: l.z, r: 4.2, k: 0.6, col: [1, 0.74, 0.42] });
+  bakeLamps(B, 0, B.count, Q.lampSrc); // (no point light: each shop's lamp and lit room are baked onto its own goods, board and flags)
   registerAll(ctx, Q.records, 'lees');
   const stone = leesStone(ctx, f.x, f.z), tris = B.triangles + G.triangles;
   const mesh = new THREE.Mesh(B.build(), stone.mat); mesh.name = 'lees'; mesh.castShadow = !low; mesh.receiveShadow = true;

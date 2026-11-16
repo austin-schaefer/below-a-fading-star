@@ -295,7 +295,7 @@ export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.
 // on the line of sight from the old way's bank through the arch at its head, and is 3.4 m, a vessel's foot, not 2.6.)
 put('fountain', 'fountain', 'lees', 'bench', 1, 19.6, 25.0, 3.4, 3.4, 'noon', { fronts: ['P9', 'P41'], title: 'the Fountain of Noon', note: 'the fountain of noon: a vessel\'s broken foot that wells stored daylight (src/v15/quarters/lees/fountain.js)' });
 // (v15-Q3: a stall on the square, its back to the brink and its counter to the street. Titles are [Proposed].)
-put('lees-stall-salt', 'stall', 'lees', 'bench', 1, 27.2, 24.4, 3.0, 2.2, 'late', { faceIn: true, fronts: ['P9'], title: 'the Tare', note: 'the salt-weigher\'s stall: a slab counter under one cloth, a balance' });
+put('lees-stall-salt', 'stall', 'lees', 'bench', 1, 10.2, 25.1, 2.8, 2.2, 'late', { faceIn: true, fronts: ['P41'], title: 'the Tare', note: 'the salt-weigher\'s stall: a slab counter under one cloth, a balance' });
 for (const [n, t] of [['lees-shop-4', 'the Lagan'], ['lees-shop-5', 'the Ullage'], ['lees-shop-6', 'the Welt'], ['lees-house-3', 'the Rebate']]) PLOTS_.find((q) => q.name === n).title = t; // [Proposed]: the dead-letter counter, the vintner, the slipper-maker, the picture-framer
 // --- the Quarrels: the crown
 put('new-house', 'new-house', 'quarrels', 'crown', 2, 15, -9.4, 7, 5.6, 'new', { note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold' });
@@ -381,6 +381,6 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5, exempt: BURIED },
   { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, exempt: BURIED },
   // (v15-Q3) the Lees' square from the old way's bank: through the arch, round the fountain, past the stall to the stair's foot and the Lagan
-  { name: 'lappet-lees-square', pts: [at(1, 12.6, 31.4), at(1, 14.4, 28.7), at(1, 16.9, 25.6), at(1, 18.3, 23.2), at(1, 22.8, 23.5), at(1, 24.7, 24.1), at(1, 28.6, 23.1), at(1, 34.5, 19.6), at(1, 39.5, 18.9)], half: 6, exempt: BURIED },
+  { name: 'lappet-lees-square', pts: [at(1, 12.6, 31.4), at(1, 14.4, 28.7), at(1, 16.9, 25.6), at(1, 10.4, 23.2), at(1, 17.4, 22.5), at(1, 22.6, 22.4), at(1, 24.7, 24.1), at(1, 28.6, 23.1), at(1, 34.5, 19.6), at(1, 39.5, 18.9)], half: 6, exempt: BURIED },
   { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
 ];
