@@ -117,10 +117,10 @@ export function tube(K, o) {
   const lights = [];
   if (o.light !== false) {
     for (const fr of [0.36, 0.9]) { const wl = wTop + (wBot - wTop) * fr; P.lens(U, lineM(wl).multiply(new THREE.Matrix4().makeTranslation(0, r - 0.08, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: 0.42, lit: 1, cheap: low }); }
-    // one lamp for both (the house's court and the Leerie's row leave room for one more light here, not two: house-test), hung between them, reaching each
-    const wl = wTop + (wBot - wTop) * 0.64, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), 9, 15, 1.6);
+    // one lamp, at the upper lens (house-test allows three live lights near K1 and near P9's end, and the house and the Leerie have the rest: a second lamp, or this one hung lower, breaks it). The lower lens glows but lights nothing
+    const wl = wTop + (wBot - wTop) * 0.36, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), 7, 11, 2);
     L.position.set(p[0], ya(wl) + 0.4, p[2]); L.name = `${o.name}-light`; ctx.scene.add(L); lights.push(L);
-    ctx.registerUpdate((dt, t) => { L.intensity = 9 * (0.94 + 0.06 * Math.sin(t * 0.7)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
+    ctx.registerUpdate((dt, t) => { L.intensity = 7 * (0.94 + 0.06 * Math.sin(t * 0.7)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
   }
 
   // ---- the Late folk's planks: a sill at the top, then a stair down the bore, two stringers under it

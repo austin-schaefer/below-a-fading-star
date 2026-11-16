@@ -79,3 +79,59 @@ Not run: the whole suite in one go; settings, perf, loading, touch, small-test, 
 - Yews, blocks and the Indistinct's east arc lost inside the sector, on the owner's word that the yews and "the little spooky circle guy" may go; the Indistinct keeps a ditch to the west.
 - Only the bones cast shadows on low.
 - The house's geometry baseline is re-recorded on top of next's (eleven findings added, see Tests); the height recording is new at the tip, not compared with the base.
+
+## Round 2 (the coordinator's three messages, 2026-11-15)
+
+What is said above about the sockets, the painted rails, the gutter by the house's corner and "the gallery row fails with `?lappet=0`" no longer holds: this section replaces it.
+
+### Done
+
+- **The foot's cliff** (review 1). A region's hook runs only where its weight is above 0 (r 39 to 88), so the foot's fade past 88 never happened. The Pennyworth's level and the crown's inner part are laid by `plan.js` `lappetGround`, called from `src/height/field.js` after the regions' hooks. `village-plan-test` holds the foot to no step of 0.5 m in 0.5 m (worst now 0.24 m).
+- **The house's ground** (review 2, first message 2). Inside the Pomegranate House's walls, and a metre outside them, the ground is as on next: base against head `heightAt` in node on a 0.5 m grid over a 260 m square differs at 20,427 points, all at r 31 to 97 and bearings -7 to 94, none inside the house's walls. `structures-taverna` is no longer exempt in the village's places. The house's place finds 106, next's count: four of next's findings are gone and four others found (a prop's end at 110, -43; a back at 96.7, -46.5; two lamps' backs). I could not tie those four to anything of the village's inside the walls; the baseline's reason says so.
+- **The moles** (review 3): `SITES.moles` is (104, -23) r 9, the Pennyworth's garden and the bare earth round the stalls; off the ramp and the house's wall. `glyphs-test` reads the site.
+- **The crown** (review 4): laid by `lappetGround` in past r 39, so no step where the region's weight starts.
+- **The plan's conflicts** (review 5) and **openings** (review 6): see "What moved in the plan" below. `tools/village-plan-test.mjs` is in the suite as `village-plan`.
+- **The heights row** (first message 1, review 8). It was the village's own: three meshes and one shadow pass seen from the top gallery. My note that it failed with `?lappet=0` was wrong (`heights-cost` drops the query). On low nothing of the village casts a shadow now, and from more than 330 m the ways' timber, the main's ware and the masons' twelve blocks are not drawn. The limit is not moved.
+- **The risers** (first message 4): polygonal blocks 2.6 to 5.4 m long, one or two to a riser, joints cut into the geometry. A human arch beside them reads as a mouse hole.
+- **The lowest riser** (first message 3): rebuilt in the same hand over the Pennyworth, bearings 38.5 to 72, a hand in front of the Demesne's small coursed wall; the ramp is the way through.
+- **The rails** (first message 5, reader d): no painted pole and no iron. A rope on leaning poles; the Elder kerb of block upstands on the High Rung; a low plastered wall, broken, on the Mid Rung.
+- **The main** (reader a, b, d, e): one shell with a wall's thickness, closed and two-faced everywhere but at its breaks, each an irregular hole with the milk body in section; the hoods that spiked through the gangway are gone with the old parts. Quiet glaze fields, a brushed band with drips, soot and lime. Two lit lenses and one lamp between them (a second lamp broke `house-test`'s three lights near K1).
+- **The undercrofts** (reader f): the plan says they are bare vaults for their makers to fit out.
+- Small (review 9): `modules.md`'s Indistinct line; `LANDMARKS.lappet` has `aside: false`; `runtime.md` says how touch lets go of the ladder (the stick held sideways).
+
+### Not done
+
+- **Why the geometry check passed the tube's holes** (reader a): the glass is drawn two-sided, so the check's "backs" kind never fires on it, and none of its kinds looks for a gap in a wall that should be whole. I did not add one.
+- **One geometry finding in a new place**: `lappet-low`, two rays from one stand at the Low Rung's corner meet the back of the steps' stone. Recorded in the baseline as open.
+- **Reader c**: the ladder's foot landing, the timber flight's foot on a loose block, the yew on the wall top by the Strake and the faceted slabs on the crown are as they were. The earth pyramids at the foot are gone with the ground fix. The stand of `stair-from-square` still has the house's tower at its left edge.
+- **The yellow lamp post at the stair's foot** (reader d) is one of the Pomegranate House's fourteen painted poles (v14), re-seated; not restyled.
+- **The Lees from the north-east** (reader e) is still a dark flat until the quarters light it.
+- **The ladder's poles have no collider** (review 9): one would stop a walker short of where the ladder is taken hold of; not tried.
+- `height-check` is a recording at the tip checked against itself (three paths agree); the comparison with the base is the node grid above.
+
+### What moved in the plan
+
+- Lanes on the Rungs are 1.4 m (a tread is 5.4 m: a 3.7 m plot and the lane), their jogs shorter. A `stair: 'front'` plot on the Rungs has `stairStrip: 0.9`: **the plot's front 0.9 m is the stair's and the house wall stands that far back.** V1 needs this.
+- `rungs-mid-5` (s 2.2), `rungs-mid-6` (s 15.7), `rungs-low-6` (s 15.1, 4.2 m wide), `rungs-low-7` (s 25.35, 5.1 m wide: no front stair now) moved or narrowed off the lanes' jogs. Six of nineteen Late house plots take a front stair.
+- The Lees' street is 2.2 m, at north D 22 and east D 19.6, ending before `lees-house-3`. The fountain is 2.6 m at north s 22.5, D 24.75, beside the street.
+- `carrier-house` lies along the lowest riser at bearing 60.5, 12 m long. `pennyworth-house-1` and `-2` are east of the gate lane on the old ground, marked `slope`. The garden `fronts` K1.
+- Every plot says what it `stands` on and carries its floor `y`; a plot declares `opening: { riser, width, height }` and the bones leave the face open.
+- P41 goes round the Strake's west end a stride clear of `strake-elder`.
+
+### Round 2: tests, budget, frames
+
+After the last merge of `origin/next` (with F2), port 8161:
+
+- `ONLY=heights,hop,rocks,regions,strata,settings,perf,loading,touch,geometry,house,roads,paths,walk,edges,village-plan,dressing tools/suite.sh 8161`: heights 165, hop 25, rocks 42, regions 56, strata 8, settings 86, perf 29, loading 28, touch 43, geometry 90, roads 62, paths 81, walk 13, edges 214, village-plan 7, dressing 24 PASS lines, no FAIL. **house failed in that run** (four lights near P9's end: the main's one lamp, hung low); the lamp went back to the upper lens and `ONLY=house` then gave 20 PASS lines. Only house was rerun after that one-file change.
+- `node tools/height-check.mjs record`, `check`, `pure`, `purebake`: exit 0 each, 56 PASS lines (a recording at the tip against itself).
+- `node tools/small-test.mjs http://localhost:8161`: 14 pass, 0 fail. (Two earlier runs tonight, 8 of 14 and 7 of 14, were mine run without the base: they went to the default port 8123, which is not this branch.)
+- `node tools/glyphs-test.mjs http://localhost:8161`: 13 PASS, no FAIL. `node tools/village-walk.mjs http://localhost:8161 touch low 0` and `keys low 0`: walked, the ladder taken twice, 0 page errors (run before the lamp went back).
+- Top gallery on low: 363 calls of 364 (`BOUND=1 node tools/heights-cost.mjs http://localhost:8161 low`, run before the merge).
+
+Budget on low: 3 draw calls (`lappet-bones` 5,152 triangles, `lappet-ways-stone` 9,928, `lappet-ways-glass` 4,726), no shadow pass, 19,806 triangles, against 8 and 70k. One point light.
+
+Two comparisons earlier in the round (per-module draw calls, the ground round the house) were made against the server on port 8123, taking it for next. It serves `.claude/worktrees/deploy`. I only fetched pages from it; nothing there was changed. The conclusions that rest on it are restated above from this branch's own runs and the node grid against `origin/next`.
+
+Frames (`shots/wip/`): `v15-V0-r2-sheet.png` (six), `v15-V0-r2-<view>.png` (all 38, low), `v15-V0-r2-route-lappet-noon-main-medium-sheet.png`, and `v15-V0-r2-ramp-foot.png` for the lowest riser from the foot.
+
+Still weak after round 2: the main is dark above the door (2.5 to 7 m) and murky below 14 m, since it may carry one lamp only; the lower lens glows and lights nothing.
