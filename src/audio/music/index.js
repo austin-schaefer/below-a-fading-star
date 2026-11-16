@@ -7,7 +7,7 @@
 //                   loaded and its director made) }
 //   (Read the duck from `duck`, not from bus.gain.value: with no track sounding Chromium does not render the bus, and
 //   its gain's value stays where it was.)
-//   setting  'off' | 'rare' | 'default' | 'frequent' (settings panel, localStorage `fp-music`); the default is off
+//   setting  'off' | 'rare' | 'default' | 'frequent' (settings panel, localStorage `fp-music`); the default is 'default' (on)
 //            (v9-M6: the music is experimental, heard only by a visitor who turns it on). ?music=<track> plays that
 //            track 3 s after the walk begins whatever the setting says, and nothing else (the director stays out of
 //            the load); ?music=0 is off.
@@ -27,7 +27,7 @@
 // about -35 at the output: well under the bed, heard when the wind drops. The gutter's duck multiplies it.
 export const MUSIC_KEY = 'fp-music';
 export const SETTINGS = ['off', 'rare', 'default', 'frequent']; // director.js's SETTINGS, kept here so off loads nothing
-export const DEFAULT_SETTING = 'off';
+export const DEFAULT_SETTING = 'default'; // on by default since v15 (the owner, 2026-11-15); a visitor's stored 'off' is kept
 export const TRACK_NAMES = ['moor', 'wood', 'wet', 'cold', 'garden', 'dry', 'span', 'keep', 'gates']; // catalog.js's, in order
 export const MIX = 2; // v9 critic: at 4 a piece sat 9 dB over the wood's bed; 2 is 6 dB lower
 export const readSetting = () => { try { const s = localStorage.getItem(MUSIC_KEY); if (SETTINGS.includes(s)) return s; } catch (e) { /* private mode */ } return DEFAULT_SETTING; };
