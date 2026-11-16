@@ -21,8 +21,8 @@
 - `ONLY=loading tools/suite.sh 8161` again, nothing changed: ok, 28 PASS lines. Read as a timing miss on a busy machine, not proved.
 - Geometry: the quarter's own mesh went from 3 coplanar and 7 floating to 0. What remained were five `backs` on other modules' meshes seen from the new route (a fallen keep block, two of V0's stock blocks, a slot in the keep's wall 13 m off, the bones' masonry under the Rungs 13 m off). They are recorded in the baseline, each with its reason, not fixed: they are not this module's files. `node tools/geometry-test.mjs http://localhost:8161 quarrels,lappet-crown` after that: 15 passed, 0 failed. So the place is at zero new findings, not at zero findings.
 - `node tools/village-plan-test.mjs`: 7 passed, 0 failed.
-- `node tools/village-walk.mjs http://localhost:8161 keys low 0 v15-Q1-walk` and `... touch ...`: WALKKEYS; WALKTOUCH.
-- Counts on low: COUNTS.
+- `node tools/village-walk.mjs http://localhost:8161 keys low 0 v15-Q1-walk` and `... touch ...`: keys ended `walked: yes` (35 frames). Touch did not finish: it stopped after frame 16 at the Pennyworth ramp's foot (103.1, -16.5), 35 m from the quarter, wrote nothing for 12 minutes and was killed. The cause was not looked for; it is not shown to be this branch or not (two other agents' walks were running on the machine).
+- Counts on low: `ctx.quarrels.stats()`: 2 draws, 15,134 triangles, 3 point lights (the budget: 5, 45k, 3). The renderer's own calls with the quarter shown and hidden were not a clean pair and are not reported.
 - `node tools/route-frames.mjs http://localhost:8161 quarrels medium v15-Q1-route`: 366 frames, 2 sheets. Both sheets were not read whole at full size: the first sheet and three frames (28, 38 and 52 m, ahead) were opened and are clean. The rest is unread.
 
 ## Renders (`shots/wip/`, low unless named)
@@ -47,4 +47,8 @@ Before: `/Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1510-quar
 - The hexagon patch is thin. The smoke is pale blobs up close.
 - Not built: the climbable scaffold, the chalk line on the keep's wall, lime-dust lumps, cobbles by the stoke.
 - The brief's "view down the stair's notch kept clear" was not checked in a render.
-- `BOUND=1 node tools/heights-cost.mjs`: HEIGHTSCOST.
+- `BOUND=1 node tools/heights-cost.mjs http://localhost:8161 low`: 8 PASS, 0 FAIL (top gallery on low: 362 calls of 364 allowed).
+
+## After the report's tests
+
+`origin/next` was merged after the runs above; nothing was rerun on the merge.
