@@ -39,6 +39,7 @@ export async function build(ctx) {
   if (!lap || lap.on === false || !lap.farHidden?.length) { ctx.lappetFar = { off: true }; return; }
   const low = ctx.quality === 'low', C = lap.middle, plan = lap.plan;
 
+  const t0 = performance.now();
   // ---------------------------------------------------------------- what the quarters built
   const records = [];
   const take = (list, quarter) => { for (const R of list || []) if (R && R.plot && R.W) records.push({ R, quarter }); };
@@ -75,7 +76,9 @@ export async function build(ctx) {
 
   // one pass over every vertex the quarters drew: fit each record's walls and gather the lights
   const cells = new Map(), v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
+  let nv = 0;
   for (const m of meshes) {
+    nv += m.geometry.attributes.position.count;
     m.updateWorldMatrix(true, false);
     const g = m.geometry, P = g.attributes.position, N = g.attributes.normal, Cc = g.attributes.color, E = g.attributes.aEmit;
     const ident = m.matrixWorld.equals(IDENT);
@@ -214,7 +217,7 @@ export async function build(ctx) {
     state: () => ({ boxes: U.uBox.value, px: U.uPx.value }),
     stats: () => ({ draws: 1, triangles: pos.length / 9, blocks: boxes.length, blockTris: boxTris, specks: lit.length, meshes: meshes.length }),
   };
-  ctx.log?.(`lappetfar: ${boxes.length} blocks of ${records.length} records, ${lit.length} specks, ${pos.length / 9} tris, from ${meshes.length} meshes`);
+  ctx.log?.(`lappetfar: built in ${(performance.now() - t0).toFixed(0)} ms (${nv} vertices read): ${boxes.length} blocks of ${records.length} records, ${lit.length} specks, ${pos.length / 9} tris, from ${meshes.length} meshes`);
 }
 
 const IDENT = new THREE.Matrix4();
