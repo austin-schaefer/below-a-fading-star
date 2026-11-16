@@ -6,7 +6,7 @@
 // bastion, the foot flight) into the Lees' square, down the ramp to the Pomegranate House's wall and back up it; then
 // up the daylight main from its foot to the breach, out along the gangway to the Mid Rung, down the Tenter and up it
 // again, back through the breach and up the main to the High Rung, up the head's east flight to the crown, west along
-// the brink, down the ladder at the rim and up it, and back to the fallen corner. With `touch` the same on a phone-sized touch page with the stick only: one finger holds the stick
+// the fallen corner, west along the brink, and down the ladder at the rim and up it. With `touch` the same on a phone-sized touch page with the stick only: one finger holds the stick
 // up, a second drags to steer. With every=1 it stops each metre it walks on a way (not on a tread or the ground),
 // turns the head left or right and writes a frame; at checkpoints it always does.
 //   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk]
@@ -108,10 +108,9 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
   // back through the breach and up the main to the High Rung; the head's east flight; the court; the fallen corner
   b(tb.s + 2.6, 9.2); b(tb.s + 2.6, door); b(tb.s, door - 0.15); b(tb.s, 8, 'tube-high'); b(tb.s, 5.2); b(tb.s, 2.6, 'tube-top'); b(4, -0.5);
   const cs = P.cornerS(1, -3.7);
-  a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown');
+  a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
   // the ladder (v15-W1: up the rim at the crown's west end): west along the brink, off its head and down, into its foot and up
   a(27.2, -8.6); a(22, -6.6); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85, 'ladder-down'); a(ld.s, -2.9, 'ladder-foot'); a(ld.s, -4.1, 'ladder-up'); a(ld.s, -5.7, 'ladder-top');
-  a(13.5, -7.2); a(22, -6.6); a(27.2, -8.6); a(S - 4, -11, 'corner');
   return R;
 }, [RUNGS, quarter]);
 const SENS = touch ? 0.005 : 0.0021;
