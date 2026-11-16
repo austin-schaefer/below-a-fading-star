@@ -16,6 +16,7 @@ import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate Hou
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
+import { villageClear } from '../v15/plan.js'; // v15: the Lappet's ground
 import { coarseLowering } from '../v4/regions/skin.js';
 import { onFigure } from '../v4/dressing/figure.js'; // v9 (#16): no tree on the Long Figure
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -144,6 +145,7 @@ export function makeGround(ctx) {
     if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)
     if (margin < 0 && threadsClear(x, z)) return true; // v8-04: ground cover keeps off the threads' props (after the draws)
     if (margin < 0 && twkClear(x, z)) return true; // v8-07: and off the Twk-men's salt
+    if (margin < 0 && villageClear(x, z)) return true; // v15: nothing grows on the Lappet's ground (trees: hiddenAt)
     return false;
   }
 
@@ -154,6 +156,6 @@ export function makeGround(ctx) {
   // v9 (#16): and on the Long Figure, a tree's trunk a crown's reach (6 m) off his chalk, so no crown hangs over him
   const FIG_CROWN = 6;
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
-  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || onFigure(x, z, FIG_CROWN, terrain);
+  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || onFigure(x, z, FIG_CROWN, terrain) || villageClear(x, z);
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

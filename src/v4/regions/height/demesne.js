@@ -3,13 +3,14 @@
 import { LANDMARKS, CAUSEWAY_V4 } from '../../../world.js';
 import { crossingDistance } from '../../../v8/roads/crossings.js'; // v8-01
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../../noise.js';
+import { LEVEL, RISERS, APRON, SINK, Dof, villageAmt, benchAmt, footAmt, stepsY, stepsYCoarse } from '../../../v15/plan.js'; // v15: the Lappet's terraces
 
 export const N = makeSimplex(20261107 + 1010);
 export const K = LANDMARKS.castle; // (40, 30)
 export const HAHA = 77, FROM = 300, TO = 120, WALL_R = HAHA + 0.22; // the sunk wall; its ditch and the ramp back up run out to the region's edge at r 85
 // the lower lawn's level by compass bearing from the keep (eased from the hill's own fall between r 70 and 85)
 export const LAWN = [[300, 8.2], [330, 4.2], [0, 3.6], [30, 3.6], [45, 2.4], [60, 1.6], [90, 2.4], [120, 1.8]];
-export function lawnAt(b) {
+function lawnOld(b) {
   const u = b >= FROM ? b - 360 : b; // -60 .. 120
   for (let i = 0; i < LAWN.length - 1; i++) {
     const u0 = LAWN[i][0] >= FROM ? LAWN[i][0] - 360 : LAWN[i][0], u1 = LAWN[i + 1][0] >= FROM ? LAWN[i + 1][0] - 360 : LAWN[i + 1][0];
@@ -17,6 +18,8 @@ export function lawnAt(b) {
   }
   return LAWN[LAWN.length - 1][1];
 }
+// v15: under the Lappet the bench is one level (the Lees, 3.1), eased into the lawn's own at each end
+export function lawnAt(b) { const a = benchAmt(b), L = lawnOld(b); return a > 0 ? lerp(L, LEVEL.bench.y, a) : L; }
 export const bearingOf = (x, z) => ((Math.atan2(x - K.x, -(z - K.z)) * 180) / Math.PI + 360) % 360;
 // how much ha-ha there is at a bearing: it runs out over the last 12 degrees at each end
 export function hahaAmt(b) {
@@ -64,15 +67,37 @@ export function hahaProfile(r, b, hNat, x, z) {
   const L = lawnAt(b), ang = hahaAmt(b), amt = ang * smoothstep(4, 7, roadD(x, z));
   const lawn = lerp(hNat, L, smoothstep(58, 68, r) * (1 - smoothstep(HAHA + 0.2, HAHA + 0.6, r)) * ang);
   if (r <= HAHA) return lawn;
-  const floor = Math.min(L - 2.1, hNat - 1.0), out = r < HAHA + 9 ? lerp(floor, hNat, smoothstep(HAHA + 2.2, HAHA + 9, r)) : hNat;
+  const floor = Math.min(L - 2.1, hNat - 1.0), fa = footAmt(x, z, r, b);
+  let out = r < HAHA + 9 ? lerp(floor, hNat, smoothstep(HAHA + 2.2, HAHA + 9, r)) : hNat;
+  if (fa > 0) out = lerp(out, LEVEL.foot.y, fa); // v15: the Pennyworth, level under the lowest riser (no ditch)
   // the drop happens at the wall's face (WALL_R), across 10 cm: the skin draws it there (snapped to the line), the wall faces it
   const k = smoothstep(WALL_R - 0.05, WALL_R + 0.05, r);
   return lerp(lawn, lerp(lawn, out, k), amt);
 }
+// v15, the Lappet (src/v15/plan.js): where the village is, the scarp is cut into the Elder stair's treads (the crown's
+// rim levelled, three treads, the bench), each riser's drop taken just behind its face and, under the mesh's coarse
+// pass, its lower envelope; the terrain lies SINK under the built treads. Past the ha-ha the foot is levelled (above).
+const V_BOX = [40, 122, -62, 36], RIM = RISERS[0].D, LOW = RISERS[3].D;
+function village(y, h, x, z, r, coarse) {
+  if (r >= HAHA) return y;
+  const D = Dof(x, z);
+  if (D < RIM - APRON - 6) return y;
+  if (D >= LOW) return y; // the bench: lawnAt has it
+  const A = villageAmt(x, z);
+  if (A <= 0) return y;
+  let v;
+  if (D < RIM - APRON) v = lerp(h, LEVEL.crown.y, smoothstep(RIM - APRON - 6, RIM - APRON, D));
+  else v = (coarse ? stepsYCoarse(D, coarse) : stepsY(D)) - SINK * smoothstep(0.9, 1, A);
+  // the bench under the last riser: the Lees' level where the lawn's own easing has not reached it
+  return lerp(y, v, A);
+}
 export function height(h, x, z, w, coarse) {
   const dx = x - K.x, dz = z - K.z, r = Math.sqrt(dx * dx + dz * dz);
-  if (r < 54 || r > HAHA + 10) return h;
+  const inV = x > V_BOX[0] && x < V_BOX[1] && z > V_BOX[2] && z < V_BOX[3] && r > 30;
+  if (r > HAHA + 10 && !(inV && r < HAHA + 21)) return h;
+  if (r < 54) return inV ? village(h, h, x, z, r, coarse) : h;
   const b = bearingOf(x, z);
+  if (r > HAHA + 10) { const fa = footAmt(x, z, r, b); return fa > 0 ? lerp(h, LEVEL.foot.y, fa) : h; }
   let y;
   if (coarse && r > HAHA - 3 && r < HAHA + 3.5) {
     const c = coarse * 1.25;
@@ -84,5 +109,10 @@ export function height(h, x, z, w, coarse) {
   if (pd < 2) y += 0.36 * (1 - smoothstep(0.2, 1.5, pd)) * (0.85 + 0.15 * N.noise2(x * 0.3, z * 0.3));
   // everything fades with the ha-ha at the annulus's two ends, so the region's own (soft) weight is not needed
   void w;
+  if (inV) {
+    // the bench, level from the Low Rung's riser to the ha-ha (the lawn's own easing begins at r 58), then the steps
+    if (r < HAHA) { const A = villageAmt(x, z); if (A > 0 && Dof(x, z) >= LOW) y = lerp(y, lawnAt(b), A); }
+    y = village(y, h, x, z, r, coarse);
+  }
   return y;
 }

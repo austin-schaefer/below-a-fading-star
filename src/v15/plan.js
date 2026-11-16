@@ -112,7 +112,7 @@ export function footAmt(x, z, r = radiusOf(x, z), b = bearingOf(x, z)) {
 // The steps' level at D, as the terrain carries it: each tread flat, the drop at each riser's face taken in the last
 // EDGE metres behind the face (under the built tread: the masonry and its stacked floor hide it). SINK: the terrain
 // lies this far under every built tread, so the slab drawn at the level never fights the mesh.
-export const EDGE = 0.25, SINK = 0.12;
+export const EDGE = 0.25, SINK = 0.3;
 export function stepsY(D) {
   let y = LEVELS[0].y;
   for (let i = 0; i < 4; i++) { const R = RISERS[i]; if (D > R.D - EDGE) y = R.foot + (R.top - R.foot) * clamp01((R.D - D) / EDGE); }
@@ -226,7 +226,7 @@ const HD = 3.7, backD = (riser) => RISERS.find((r) => r.key === riser).D + HD / 
 
 // --- the Rungs: stacked houses. Mid Rung (y 10) against the High Rung's riser, roofs at 14; Low Rung (y 6), roofs at 10.
 // Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the ladder (run 2, s 19), the corner.
-for (const [i, run, s, w] of [[1, 1, 7.5, 5.6], [2, 1, 14, 6.2], [3, 1, 21.5, 5.4], [4, 1, 38.5, 6], [5, 2, 2, 5.2], [6, 2, 15, 5.6], [7, 2, 24, 6]])
+for (const [i, run, s, w] of [[1, 1, 7.5, 5.6], [2, 1, 14, 6.2], [3, 1, 21.5, 5.4], [4, 1, 36.6, 5.2], [5, 2, 2.4, 5], [6, 2, 15, 5.6], [7, 2, 24, 6]])
   put(`rungs-mid-${i}`, 'house', 'rungs', 'mid', run, s, backD('high'), w, HD, 'late', { against: 'high', roof: 'high' });
 for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.5, 5.6], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 14.5, 5], [7, 2, 24, 5.6]])
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });

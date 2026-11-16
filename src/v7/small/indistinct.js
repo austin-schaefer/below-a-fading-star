@@ -1,10 +1,12 @@
 // CM The Indistinct [Proposed] (plans/wilderness-v5.md, "### CM. The Indistinct"): "Something small and dark that keeps exactly
 // seven metres from you along the ha-ha's ditch, always a little out of focus whatever you do: a soft blur where the eye
 // wants an animal. Walk toward it and it keeps the distance; stop and it stops." Austin: "ensure it's not too subtle to be seen."
-// The line: the ditch floor at r 78.2 from the keep, bearings 0-90 (the ha-ha's NE arc), on the drawn floor's height.
+// The line: the ditch floor at r 78.2 from the keep, bearings 314 to 18 (the ha-ha's north arc, west of the Lappet:
+// v15 gave the north-east arc to the village, whose foot has no ditch; it keeps the ditch under the parterre and
+// the Lees' last house), on the drawn floor's height.
 // The rule: within 30 m of the line it stands on it exactly 7.0 m (straight line, from the walker's feet) from the walker,
 // on its own side; when the walker is more than 7 m from the line, at the line's point nearest the walker; beyond 30 m it
-// waits at bearing 45. It holds while the walker's speed is under 0.1 m/s. It moves under a speed cap of 8 m/s and an
+// waits at bearing 330. It holds while the walker's speed is under 0.1 m/s. It moves under a speed cap of 8 m/s and an
 // acceleration cap of 12 m/s², and the distance is a constraint over that: never nearer than 6.75 m nor further than 7.25 m
 // while the walker is within 7 m of the line. Pushed past an end of the arc, it thins (the blur widens and it fades over
 // 0.6 s) and forms again 7 m on the walker's far side.
@@ -20,9 +22,9 @@ import { LANDMARKS } from '../../world.js';
 import { clamp, hyp } from '../../noise.js';
 
 const K = LANDMARKS.castle;             // (40, 30): the keep
-const R = 78.2, B0 = 0, B1 = 90, WAIT_B = 45;
+const R = 78.2, B0 = -46, B1 = 18, WAIT_B = -30;
 const KEEP = 7.0, NEAR_LINE = 30, BAND = 0.25, HOLD_V = 0.1, VMAX = 8, AMAX = 12, THIN = 0.6;
-const LEN = (R * (B1 - B0) * Math.PI) / 180; // 122.8 m of arc
+const LEN = (R * (B1 - B0) * Math.PI) / 180, A0 = (B0 * Math.PI) / 180; // 87.4 m of arc
 const STEP = 0.25, NS = Math.ceil(LEN / STEP) + 1;
 const MASS = { w: 0.7, h: 1.8 }, BLUR_PX = 8, OVER_LIP = 1.0, LIP_R = [73.5, 77.8];
 
@@ -33,7 +35,7 @@ export function buildIndistinct(ctx) {
   // same bearing), never under MASS.h
   const LX = new Float32Array(NS), LY = new Float32Array(NS), LZ = new Float32Array(NS), LH = new Float32Array(NS);
   for (let i = 0; i < NS; i++) {
-    const a = Math.min(LEN, i * STEP) / R;
+    const a = A0 + Math.min(LEN, i * STEP) / R;
     LX[i] = K.x + Math.sin(a) * R; LZ[i] = K.z - Math.cos(a) * R; LY[i] = terrain.heightAt(LX[i], LZ[i]) + 0.02;
     let lip = -Infinity;
     for (let r = LIP_R[0]; r <= LIP_R[1]; r += 0.2) lip = Math.max(lip, terrain.heightAt(K.x + Math.sin(a) * r, K.z - Math.cos(a) * r));
@@ -51,7 +53,7 @@ export function buildIndistinct(ctx) {
   // the arc parameter nearest the walker (by bearing from the keep), clamped to the arc
   function nearestS(x, z) {
     let b = (Math.atan2(x - K.x, -(z - K.z)) * 180) / Math.PI; // -180..180, 0 north, 90 east
-    if (b < -90) b += 360;
+    const mid = (B0 + B1) / 2; b = ((b - mid + 540) % 360) - 180 + mid; // the bearing nearest the arc's middle
     return clamp(((b - B0) * Math.PI * R) / 180, 0, LEN);
   }
   // the point at distance KEEP from the feet between s0 (inside) and s1 (outside): bisection
@@ -258,7 +260,7 @@ export function buildIndistinct(ctx) {
 
   return {
     mesh, shadow, update, lineAt, LEN, R,
-    state: () => { const p = lineAt(st.s, {}); return { ...st, x: p.x, y: p.y, z: p.z, dist: dAt(st.s), bearing: (st.s / R) * 180 / Math.PI }; },
+    state: () => { const p = lineAt(st.s, {}); return { ...st, x: p.x, y: p.y, z: p.z, dist: dAt(st.s), bearing: B0 + (st.s / R) * 180 / Math.PI }; },
     tris: () => 4, heightAt: heightAtS,
   };
 }

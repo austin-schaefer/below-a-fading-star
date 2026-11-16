@@ -20,6 +20,8 @@ const KEY = 'demesne';
 import { N, K, HAHA, FROM, TO, WALL_R, LAWN, lawnAt, bearingOf, hahaAmt, roadD, PART, parterreD, hahaProfile, height } from './height/demesne.js'; // the height hook and what it reads (v13 L2)
 export { height };
 import { cLawn2 } from './ground/demesne.js';
+import * as LAPPET from '../../v15/plan.js'; // v15: the village takes the north-east sector (the yews and blocks there are gone, on the owner's word)
+import { lappetTint, underSlabs } from '../../v15/ground.js';
 export { ground } from './ground/demesne.js'; // the ground hook, three-free (v13 L3)
 
 // grazed turf: an even green, paler where the beds' ridges dry out, a little darker in the hollows of the tussocks
@@ -161,7 +163,9 @@ export async function build(ctx) {
       c.copy(cTurf).lerp(cLawn2, n);
       c.lerp(cDitch, smoothstep(HAHA + 0.3, HAHA + 1.5, r) * (1 - smoothstep(HAHA + 4, HAHA + 9, r)));
       c.lerp(cField, smoothstep(HAHA + 6, HAHA + 11, r));
+      lappetTint(c, x, z); // v15: the village's ground is trodden earth, not lawn
     },
+    noEnv: underSlabs, // v15: the Lappet's built treads cover the lowered mesh (src/v15/bones.js)
     // y: 1 inside; the skin's inner and outer edges fray into the terrain under it
     attr: (x, z) => { const r = Math.hypot(x - K.x, z - K.z), e = Math.min(r - (HAHA - 4.5), HAHA + 11 - r) / 3; return [0, e / (2 * edgeN(x, z)), 0, 0]; },
     frag: /* glsl */`if (vSkin.y < 0.5) discard;`,
@@ -259,6 +263,8 @@ function ashlar(T, hex, course, len) {
   return mat;
 }
 
+// v15: the Lappet stands where these were. The owner: "i am fine losing the yews" (between bearings 0 and 100).
+const lappetYew = (x, z) => { const b = bearingOf(x, z); return b > 0 && b < 100; };
 // Yews: the clipped cone and urn grown out (yews.js), all in one mesh that casts a shadow; each blocks the way.
 // The placements draw from the region's stream exactly as v4's did, so the blocks after them land where they were.
 function buildYews(ctx, rng, low) {
@@ -267,8 +273,10 @@ function buildYews(ctx, rng, low) {
   const cones = [], urns = [];
   const add = (x, z, kind) => {
     if (Math.hypot(x - K.x, z - K.z) > HAHA - 3 || roadD(x, z) < 5) return;
+    const gone = lappetYew(x, z); // v15: its draws are still taken, so every other yew and block stays where it was
     const it = { x, y: terrain.heightAt(x, z) - 0.15, z, s: 0.85 + rng() * 0.35, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.12, rz: (rng() - 0.5) * 0.12 };
     it.kind = kind ? 'urn' : 'cone';
+    if (gone) return;
     (kind ? urns : cones).push(it);
     ctx.addCollider({ x, z, r: 1.15 * it.s });
   };
@@ -289,7 +297,7 @@ function buildBlocks(ctx, rng, low) {
   { const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const k = 0.93 + 0.07 * Math.abs(Math.sin(i * 1.9)); p.setXYZ(i, p.getX(i) * k, p.getY(i), p.getZ(i) * k); } g.computeVertexNormals(); }
   const mat = ashlar(T, '#8a8072', 0.5, 1.0);
   mat.side = T.FrontSide;
-  const list = [], perches = [];
+  const list = [], perches = [], stock = [];
   for (let k = 0; k < 600 && list.length < (low ? 34 : 52); k++) {
     const b = 30 + rng() * 30, r = 46 + Math.pow(rng(), 0.8) * 36, a = (b * Math.PI) / 180;
     const x = K.x + Math.sin(a) * r, z = K.z - Math.cos(a) * r;
@@ -298,12 +306,32 @@ function buildBlocks(ctx, rng, low) {
     const sx = big ? 1.4 + rng() * 0.9 : 0.6 + rng() * 0.6, sy = big ? 0.8 + rng() * 0.6 : 0.45 + rng() * 0.3, sz = big ? 1.0 + rng() * 0.7 : 0.5 + rng() * 0.5;
     const y = terrain.heightAt(x, z) + sy * 0.32;
     const it = { x, y, z, sx, sy, sz, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.25, rz: (rng() - 0.5) * 0.3 };
+    // v15: the village's ground is cleared of them; the masons have carted the first dozen up to their yard as stock
+    if (LAPPET.villageClear(x, z)) { it.gone = true; if (stock.length < 12) stock.push(it); list.push(it); continue; }
     list.push(it);
     if (big) { ctx.addCollider({ x, z, r: Math.max(sx, sz) * 0.55, y: y - 1, h: sy * 0.5 + 1 }); perches.push(it); }
     else ctx.addCollider({ x, z, r: Math.min(sx, sz) * 0.5, y: y - 1, h: sy * 0.5 + 1 }); // v8-10: the small ones are knee high and stood on too
   }
-  const mesh = instanced(ctx, g, mat, list, { name: 'demesne-blocks', shadow: true });
-  return { mesh, perches, count: list.length };
+  // v15: the stock, squared up in the masons' yard (the plan's plot): two rows of four and four more on top, along the
+  // plot's own lines; and the peafowl's perches, now the giant steps' own edges by the stair
+  const kept = list.filter((o) => !o.gone);
+  const yard = LAPPET.plot('masons-yard');
+  if (yard) {
+    const [fx, fz] = yard.face, rx = -fz, rz = fx, yaw = Math.atan2(fx, fz);
+    stock.forEach((it, i) => {
+      const tier = i >= 8 ? 1 : 0, col = tier ? i - 8 : i % 4, rowi = tier ? 0.5 : Math.floor(i / 4);
+      const u = (col - 1.5 + (tier ? 0.4 : 0)) * 1.75, v = yard.d / 2 - 1.2 - rowi * 1.5;
+      it.sx = 1.5; it.sz = 1.15; it.sy = 0.78; it.rx = 0; it.rz = 0; it.ry = yaw + (((i * 7) % 5) - 2) * 0.012;
+      it.x = yard.x + fx * v + rx * u; it.z = yard.z + fz * v + rz * u; // toward the rim, on the levelled apron
+      it.y = LAPPET.LEVEL.crown.y + 0.39 + tier * 0.8;
+      kept.push(it);
+      ctx.addCollider({ x: it.x, z: it.z, r: 0.7, y: it.y - 1.2, h: it.sy * 0.5 + 1.2 });
+    });
+    perches.length = 0;
+    for (const [run, sN, D, lv] of [[1, 26, 4.25, 'high'], [1, 35.5, -4.95, 'crown'], [2, 3.5, 9.65, 'mid']]) { const [x, z] = LAPPET.at(run, sN, D); perches.push({ x, z, y: LAPPET.LEVEL[lv].y, sy: 0 }); }
+  }
+  const mesh = instanced(ctx, g, mat, kept, { name: 'demesne-blocks', shadow: true });
+  return { mesh, perches, count: kept.length };
 }
 
 // The white peafowl are built in peafowl.js: one connected body per bird and a train pivoting at its rump.

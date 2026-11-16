@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, hexCellsIn } from './common.js';
 import { pitEdge, PIT_PAVE } from '../v4/paths/ground.js'; // v4 map: the road's end is laid by v4/paths.js
+import { underSlabs } from '../v15/ground.js';
+import { LEVEL } from '../v15/plan.js';
 
 // Walk the polyline: point and direction at arc length s.
 export function causewayAt(cw, s) {
@@ -53,7 +55,8 @@ export function buildCauseway(ctx, B, env) {
     const salt = ctx.regions ? ctx.regions.regionAt(x, z).saltings : 0, sk = Math.min(1, Math.max(0, (salt - 0.2) / 0.4));
     if (gone && sk < 0.5) return;
     const r = rng();
-    env.addPaver(x, z, i, j, { sink: (0.02 + r * 0.05) * (1 - sk) + (-0.1 + r * 0.05) * sk, tilt: 0.07 + sk * 0.05 });
+    // v15: on the Lappet's High Rung the Elder tread is the road's bed: the same slabs, laid on the built floor (y)
+    env.addPaver(x, z, i, j, { sink: (0.02 + r * 0.05) * (1 - sk) + (-0.1 + r * 0.05) * sk, tilt: 0.07 + sk * 0.05, y: underSlabs(x, z) ? LEVEL.high.y : undefined });
   });
 
   // waymarkers every ~40 m: a short hexagonal pillar with a worn carving

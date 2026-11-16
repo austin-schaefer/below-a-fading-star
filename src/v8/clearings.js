@@ -19,6 +19,7 @@ import { LEERIE } from '../v5/lights.js';
 import { leads } from '../v4/paths/routes.js';
 import { onFigure } from '../v4/dressing/figure.js';
 import { WAYSTATION } from '../v9/waystation/site.js';
+import { villageClear } from '../v15/plan.js';
 
 // the Leerie's row: the kerb K1 from SITES.leerie.from to .to; the standards stand LEERIE.side east of it and he walks
 // 0.6 m on the kerb's side of their feet. The strip covers both lines with 2 m to spare, and 3 m past each end.
@@ -47,6 +48,7 @@ export const CLEARINGS = [
   { name: "the icefall's approach", kind: 'strip', a: [48, -258], b: [74, -292], half: 9 }, // v12-H2: the way from the mother crystal to the cleft, seen clear
   { name: 'the icefall', kind: 'box', x0: -12, x1: 112, z0: -520, z1: -289 }, // v12-H2: the ice's full width; its seracs are its stones (src/v12/icefall.js); the notch's walls keep theirs
   { name: 'the Long Figure', kind: 'figure', pad: 1 }, // v9 (#16): nothing lies on him; rocks.js also keeps pebbles off, with or without the cut
+  { name: 'the Lappet', kind: 'fn', test: (x, z, r) => villageClear(x, z) || (r > 0.6 && (villageClear(x + r, z) || villageClear(x - r, z) || villageClear(x, z + r) || villageClear(x, z - r))) }, // v15: the village's ground (src/v15/plan.js)
 ];
 export const LEAD_PAD = 0.6, LEAD_PADS = { P3: 2.0 };
 export const CAUSEWAY_CLEAR = 3.0; // the paving's ragged edge is 1.75-2.05 m from the line, its kerbs a little more
@@ -57,6 +59,7 @@ function segD(x, z, ax, az, bx, bz) {
   return Math.hypot(x - ax - ex * t, z - az - ez * t);
 }
 function inEntry(C, x, z, r, ctx) {
+  if (C.kind === 'fn') return C.test(x, z, r);
   if (C.kind === 'figure') return !!ctx?.terrain && onFigure(x, z, r + C.pad, ctx.terrain);
   if (C.kind === 'region') return !!ctx?.regions && ctx.regions.regionAt(x, z)[C.key] > C.w;
   if (C.kind === 'disc') return Math.hypot(x - C.x, z - C.z) < C.r + r;

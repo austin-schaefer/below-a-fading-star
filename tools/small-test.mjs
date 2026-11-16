@@ -62,11 +62,11 @@ const walk = (legs, probe) => page.evaluate(async ([legs, probe]) => {
 // ---- the Indistinct: along the lawn's edge (r 76.6, the walker within 7 m of the line) and back, a stand between
 const indProbe = `(L) => { const s = window.__fp.small.indistinct.state(); const K = { x: 40, z: 30 }; return { leg: L.name, d: s.dist, lineD: s.lineD, phase: s.phase, held: s.held, moved: s.moved, wv: s.walkerV, r: Math.hypot(s.x - K.x, s.z - K.z), dy: s.y - window.__fp.terrain.heightAt(s.x, s.z) - 0.02 }; }`;
 const ind = await walk([
-  { name: 'settle', stand: 1.5, arc: [12, 12], r: 76.6 },
-  { name: 'walk', arc: [12, 46], r: 76.6, speed: 3.6 },
-  { name: 'stand', stand: 3, arc: [46, 46], r: 76.6 },
-  { name: 'hurry', arc: [46, 14], r: 76.6, speed: 6.6 },
-  { name: 'ditch', arc: [14, 40], r: 78.2, speed: 3.6 },
+  { name: 'settle', stand: 1.5, arc: [-42, -42], r: 76.6 }, // v15: its arc is bearings 314 to 18 (the Lappet took the north-east)
+  { name: 'walk', arc: [-42, -8], r: 76.6, speed: 3.6 },
+  { name: 'stand', stand: 3, arc: [-8, -8], r: 76.6 },
+  { name: 'hurry', arc: [-8, -40], r: 76.6, speed: 6.6 },
+  { name: 'ditch', arc: [-40, -14], r: 78.2, speed: 3.6 },
 ], indProbe);
 const stat = (leg) => {
   const s = ind.filter((o) => o.leg === leg && o.lineD <= 7 && o.phase === 'shown');
