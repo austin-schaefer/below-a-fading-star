@@ -280,7 +280,7 @@ export async function build(ctx) {
   // ---------------------------------------------------------------- the air and the lights
   const A = air(ctx, { mouth: kiln.mouth, fire: kiln.fire, lip: arch.lip, pool: hand.pool, low });
   ctx.scene.add(A.points);
-  const fire = new THREE.PointLight(new THREE.Color('#ff8436'), 11, 17, 2); fire.name = 'quarrels-kiln-light'; fire.position.set(kiln.stand[0], Y + 1.1, kiln.stand[2]);
+  const fire = new THREE.PointLight(new THREE.Color('#ff8436'), 11, 11.5, 2); fire.name = 'quarrels-kiln-light'; fire.position.set(kiln.stand[0], Y + 1.1, kiln.stand[2]);
   const lamps = [fire];
   const lampLight = (x, y, z, name) => { const l = new THREE.PointLight(new THREE.Color('#ffb060'), 1.8, 8, 2); l.name = name; l.position.set(x, y, z); lamps.push(l); return l; };
   lampLight(lampAt.x, lampAt.y - 0.3, lampAt.z, 'quarrels-pier-lamp');
