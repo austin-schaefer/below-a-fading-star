@@ -50,9 +50,11 @@ export function startSteps(a) {
     else if (under) kind = 'click';
     else if (terrain.causewayDistance(p.x, p.z) < 2.5 || nearCastle || inCourt) kind = 'click';
     else if (b.marsh > 0.5) kind = 'squelch';
+    const lk = kind === 'grass' || kind === 'click' ? ctx.lappetSound?.step(p.x, p.y - player.eye, p.z, player.onStack) : null; // v15-L1: the Lappet's planks and flags
+    if (lk) kind = lk;
     rec = stepRing[audio.steps.seq & 15]; recN = 0; replaying = false; capturing = true;
     rec.t = t0; rec.hurrying = !!hurrying; rec.kind = kind; rec.regionKind = null; rec.x = p.x; rec.z = p.z; rec.vol = vol; rec.pitch = pitch; rec.verb = nearCastle || inCourt; rec.under = under;
-    if (kind !== 'splash' && !under && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
+    if (kind !== 'splash' && !under && !lk && regionSnd?.step(p.x, p.z, t0, vol, pitch, out)) { // v4 regions
       capturing = false;
       rec.regionKind = ctx.regions?.regionAt?.(p.x, p.z, _rw)?.primary || 'region'; rec.seq = audio.steps.seq++;
       out.connect(dryBus); setTimeout(() => out.disconnect(), 1200); return;
@@ -94,6 +96,7 @@ export function startSteps(a) {
         const og = ac.createGain(); env(og, tt, 0.04 * vol, 0.004, 0.06); o.connect(og); og.connect(out); o.start(tt); o.stop(tt + 0.1);
       }
       send(out, 0.2);
+    } else if (kind === 'timber') { ctx.lappetSound.timberStep(r, t0, sAt, out, draw, stepBurst); // v15-L1: planks (src/v15/sound.js)
     } else { // crunch
       for (let k = 0; k < 4; k++) {
         const tt = t0 + k * (0.012 + draw() * 0.018);

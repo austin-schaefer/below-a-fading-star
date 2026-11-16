@@ -21,6 +21,7 @@ import { startStoriesSound } from './sound-stories.js'; // v10-A2: act-glasses, 
 import { startBellSound } from './bell-sound.js'; // v10-A3: the bell under the Span (act-bell*)
 import { startLiftSound } from '../v12/lift-sound.js'; // v12-H4: the lift (act-lift-*)
 import { startPitSound } from '../v14/pit-sound.js'; // v14-D2: the Pit's breath and the sounding (act-pit-*)
+import { startLappetSound } from '../v15/sound.js'; // v15-L1: the Lappet's own sound by quarter, its steps and its shelter (no cues)
 
 export function startActsSound(a, ctx) {
   const { ac, voice, filt, chain, pink } = a;
@@ -29,6 +30,7 @@ export function startActsSound(a, ctx) {
   const D4 = 293.66;
   const stories = startStoriesSound(a, ctx);
   startPassageSound(a, ctx); // v14-D1: its own rng
+  startLappetSound(a, ctx); // v15-L1: its own rng
 
   function offer(pos) {
     const v = voice(pos, { ref: 2.5, roll: 1, range: 20, dur: 1.6, verb: 0.3, air: 60, gain: 4 }); if (!v) return;
