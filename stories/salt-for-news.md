@@ -36,6 +36,7 @@ Whether the pedlar jumped or was pushed to look up.
 
 ## Log
 
+- 2026-11-16, v15-Q4: in the Pennyworth, the market under the keep, the salt-weigher's plank has a perch a thumb high at one end and a thimble's measure beside it: the Twk-men are paid here by the thumb. The post behind has three pegs and one is bare: the pedlar's, whose sack split on the road. Nobody is at the plank yet (`src/v15/quarters/pennyworth.js`, places `the Twk-men's perch`, `the pedlar's peg`).
 - 2026-11-12, v10-A2: the turn written as an act, then shelved after a blind reading (the sack place, the salt, the tokens and the riders' errand did not read): take a pinch at the sack, pay it at the pile, three tokens of news that point at the traveller, the twelfth chair and the jackdaw.
 - 2026-11-11, v8 brief 07: built. Marked partial when the library began.
 - 2026-11-12, v10-A4: the pedlar whose sack split is the sleeper in the Lantern Halt (stories/the-lantern-halt.md): what was left of the sack lies by his bed, and he pays a guest at the hatch with a handful of it.
