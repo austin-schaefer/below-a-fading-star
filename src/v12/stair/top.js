@@ -6,15 +6,19 @@
 // iron brackets with a rope rail, a lean-to of old bronze sheet and canvas against the node, a cot, a stove and its
 // kettle, a gilt chair gone brown turned to the sun, a line of washing, a pot of moss; and the tools of a job too big
 // for anyone, an oil can as tall as a child and a brush on a pole longer than the deck, at the foot of a ladder of
-// rungs that runs up the strut into the lattice. A lamp hook beside the ladder. The tender's lamp (the one the sky
+// rungs that runs up the strut to the next node, out round its underside and onto its top (v15-W2: climbed, the
+// ways' climb() in src/v15/ways/ladder.js). Up there the node's top and the two members that never fell, north and
+// west, are walked 140 m over the moor, to the next nodes. A lamp hook beside the ladder. The tender's lamp (the one the sky
 // sees going from lattice to lattice) comes down the ladder now and then, hangs on its hook a while, and climbs away;
 // it comes soon after a walker reaches the top. Nobody is ever seen. stories/the-tender-of-the-lattices.md.
 // From the deck the lowest member north is a walkway 3.2 m wide and 38 m long in the open air, to the next node.
 // Draws: the lattice (one), its webs (one), the home (one), the lamp (one mesh, one point); two lights (the stove, the
-// lamp). The floors: the deck (held edges, the rail), the member and the far node (not held).
+// lamp). The floors: the deck (held edges, the rail), the member and the far node (not held); up the ladder the next
+// node's top and the far nodes' (held), the two members between (not held).
 import * as THREE from 'three';
 import { mergeGeometries } from '../../v4/kit/merge.js';
 import { paint, slab, slabMaterial, BRONZE, POLISH, EMBER } from './treads.js';
+import { climb } from '../../v15/ways/ladder.js';
 
 const CELL = 42, TH = 3.2, NODE = 4.4; // the lattice's cell, a member's section, a node's cube
 const col = (h) => new THREE.Color(h);
@@ -84,6 +88,9 @@ export function buildTop(ctx, P, { low }) {
       struts.push([A, B]);
     }
   }
+  // the member up from the second node is gone (v15-W2: the ladder comes up onto that node's top, clear; drawn and
+  // drawn from rng as before, then dropped, so every other strut is the same)
+  { const c = node(0, 0, 1), i = struts.findIndex(([P, Q]) => Math.abs(P[0] - c[0]) + Math.abs(P[1] - c[1]) + Math.abs(P[2] - c[2]) < 0.01 && Q[1] > P[1] + 1); if (i >= 0) struts.splice(i, 1); }
   // a stub south off the foot, snapped, and a member west off it bent down where it broke
   struts.push([node(0, 0, 0), [n0.x, n0.y, n0.z + 15]]);
   struts.push([node(0, 0, 0), [n0.x - 11, n0.y - 1.2, n0.z]]);
@@ -175,10 +182,11 @@ export function buildTop(ctx, P, { low }) {
   // the lean-to: bronze sheets and patches of canvas from the node's east face down to two poles
   const lx0 = nx1, lx1 = nx1 + 3.1, lz0 = cz - 3.4, lz1 = cz + 3.2;
   for (const z of [lz0 + 0.2, lz1 - 0.2]) H.push(box(lx1, yd + 1.05, z, 0.1, 2.1, 0.1, WOOD_D));
-  let zz = lz0;
+  let zz = lz0, k = 0;
   while (zz < lz1 - 0.05) {
-    const w = Math.min(lz1 - zz, 0.9 + rng() * 0.8), c = rng() < 0.35 ? CANVAS.clone().multiplyScalar(0.8 + rng() * 0.3) : BRONZE.clone().multiplyScalar(0.7 + rng() * 0.5);
-    H.push(member([lx0, yd + 3.1 + rng() * 0.08, zz + w / 2], [lx1 + 0.3, yd + 1.95, zz + w / 2], w + 0.06, 0.03, c, [0, 0, 1]));
+    // (every other sheet laid 4 cm over its neighbours: lapped sheets in one plane flickered, seen from the node above, v15-W2)
+    const w = Math.min(lz1 - zz, 0.9 + rng() * 0.8), c = rng() < 0.35 ? CANVAS.clone().multiplyScalar(0.8 + rng() * 0.3) : BRONZE.clone().multiplyScalar(0.7 + rng() * 0.5), lift = (k++ % 2) * 0.04;
+    H.push(member([lx0, yd + 3.1 + rng() * 0.08 + lift, zz + w / 2], [lx1 + 0.3, yd + 1.95 + lift, zz + w / 2], w + 0.06, 0.03, c, [0, 0, 1]));
     zz += w - 0.04;
   }
   // under it: the cot along the node's face, its blanket and a pillow
@@ -224,10 +232,15 @@ export function buildTop(ctx, P, { low }) {
   H.push(member([A.x0 + 0.3, yd + 0.1, A.z0 + 2.6], [nx1 + 0.12, yd + 7.4, A.z0 + 3.4], 0.07, 0.07, WOOD));
   H.push(box(nx1 + 0.2, yd + 7.6, A.z0 + 3.45, 0.18, 0.5, 0.7, col('#3a3026')));
   for (let k = 0; k < 6; k++) H.push(cyl(A.x0 + 2.6, yd + 0.05 + k * 0.06, A.z0 + 0.8, 0.42 - k * 0.01, 0.42 - k * 0.01, 0.05, CANVAS, 10));
-  // the ladder: iron rungs up the vertical member's east face from the node's top to the next node, and on the node
-  const lx = n0.x + TH / 2 + 0.12;
-  for (let y = yd + 0.35; y < n0.y + CELL - NODE / 2; y += 0.36) H.push(member([lx, y, cz - 0.32], [lx, y, cz + 0.32], 0.035, 0.035, IRON, [0, 1, 0]));
-  for (const s of [-1, 1]) H.push(member([lx - 0.06, yd, cz + s * 0.36], [lx - 0.06, n0.y + CELL - NODE / 2, cz + s * 0.36], 0.05, 0.05, IRON));
+  // the ladder: iron rungs up the vertical member's east face from the node's top to the next node, cranked out round
+  // that node's soffit and on up its east face to its top, the rails hooped over onto it (v15-W2: it is climbed)
+  const lx = n0.x + TH / 2 + 0.12, n1 = node(0, 0, 1), n1b = n1[1] - NODE / 2, n1t = n1[1] + NODE / 2, fx = n1[0] + NODE / 2 + 0.12;
+  for (let y = yd + 0.35; y < n1b - 0.5; y += 0.36) H.push(member([lx, y, cz - 0.32], [lx, y, cz + 0.32], 0.035, 0.035, IRON, [0, 1, 0]));
+  for (let y = n1b + 0.2; y < n1t - 0.1; y += 0.36) H.push(member([fx, y, cz - 0.32], [fx, y, cz + 0.32], 0.035, 0.035, IRON, [0, 1, 0]));
+  for (const s of [-1, 1]) {
+    const z = cz + s * 0.36, a = [lx - 0.06, n1b - 0.6, z], b = [fx - 0.06, n1b, z], c = [fx - 0.06, n1t + 0.9, z], d = [fx - 0.5, n1t + 0.9, z];
+    H.push(member([lx - 0.06, yd, z], a, 0.05, 0.05, IRON), member(a, b, 0.05, 0.05, IRON), member(b, c, 0.05, 0.05, IRON), member(c, d, 0.05, 0.05, IRON), member(d, [fx - 0.5, n1t, z], 0.05, 0.05, IRON));
+  }
   // the washing line from the ladder to a pole at the deck's north-east, three cloths on it
   const pole = [A.x1 - 0.3, yd + 2.2, A.z0 + 0.4];
   H.push(box(pole[0], yd + 1.1, pole[2], 0.08, 2.2, 0.08, WOOD_D));
@@ -294,7 +307,7 @@ export function buildTop(ctx, P, { low }) {
   halo.frustumCulled = false; halo.name = 'stair-lamp-halo';
   ctx.scene.add(halo);
   // the lamp's round: away (in the lattice, out of sight), down the ladder, home on its hook, up the ladder
-  const ladderTop = n0.y + CELL * 2.6, AWAY = 170, DOWN = 34, HOME = 70, UP = 30;
+  const ladderTop = n1t + 0.4, AWAY = 170, DOWN = 34, HOME = 70, UP = 30; // (it comes over the second node's lip, where the ladder ends)
   const L = { phase: 'away', t: AWAY - 25, seen: false };
   const player = ctx.player;
   function update(dt, t) {
@@ -306,7 +319,7 @@ export function buildTop(ctx, P, { low }) {
     if (!onTop && Math.abs(player.pos.y - player.eye - Y) > 30) L.seen = false;
     const dur = { away: AWAY, down: DOWN, home: HOME, up: UP }[L.phase];
     if (L.t >= dur) { L.t = 0; L.phase = { away: 'down', down: 'home', home: 'up', up: 'away' }[L.phase]; }
-    let y = ladderTop, x = lx + 0.25, z = cz, on = 1, sway = 0;
+    let y = ladderTop, x = fx + 0.25, z = cz, on = 1, sway = 0;
     const u = L.t / dur;
     if (L.phase === 'away') on = 0;
     else if (L.phase === 'down' || L.phase === 'up') {
@@ -314,6 +327,7 @@ export function buildTop(ctx, P, { low }) {
       // it comes down the rungs in steps: a pause at each few metres, as a climber's hand-over-hand
       const stepped = e + Math.sin(e * Math.PI * 28) * 0.006;
       y = ladderTop + (hook[1] - 0.25 - ladderTop) * stepped;
+      x = y > n1b ? fx + 0.25 : y > n1b - 0.6 ? lx + 0.25 + (fx - lx) * (y - n1b + 0.6) / 0.6 : lx + 0.25; // (out round the node's soffit with the rails)
       on = Math.min(1, f * 6, (1 - f) * 40 + 0.3);
       if (f > 0.97) { x += (hook[0] - x) * (f - 0.97) / 0.03; z += (hook[2] - z) * (f - 0.97) / 0.03; }
       sway = 0.05;
@@ -346,6 +360,27 @@ export function buildTop(ctx, P, { low }) {
   ctx.addCollider({ x: far[0], z: far[2], r: TH * 0.7, stair: true });
   // the cot, the stove, the oil can, the chair: low things on the deck
   for (const [x, z, r, h] of [[lx0 + 0.55, cz - 1.8, 0.5, 0.4], [sx, sz, 0.38, 1.0], [A.x0 + 0.7, A.z0 + 1.2, 0.52, 1.5], [A.x0 + 1.4, A.z1 - 1.1, 0.34, 1.6]]) ctx.addCollider({ x, z, r, y: yd, h, stand: false });
+
+  // ------------------------------------------------------------------ up the ladder (v15-W2): the tender's way
+  // The next node up is a floor, its edges held; from it the two members that never fell (north and west) are
+  // walkways in the open air, 3.2 m wide and 37.6 long, each to a node whose top is a floor (held) a riser over it:
+  // the whole lowest course of the lattice, 140 m over the moor. What rises from those nodes stands as a wall.
+  {
+    const same = (P, Q) => Math.abs(P[0] - Q[0]) + Math.abs(P[1] - Q[1]) + Math.abs(P[2] - Q[2]) < 0.01;
+    const sq = (c, h) => ({ x0: c[0] - h, x1: c[0] + h, z0: c[2] - h, z1: c[2] + h });
+    const nN = node(0, 1, 1), nW = node(1, 0, 1), yT = n1t, yM = n1[1] + TH / 2;
+    const tops = [n1, nN, nW].map((c) => sq(c, NODE / 2));
+    const mN = { x0: n1[0] - TH / 2, x1: n1[0] + TH / 2, z0: nN[2] + NODE / 2, z1: n1[2] - NODE / 2 }, mW = { x0: nW[0] + NODE / 2, x1: n1[0] - NODE / 2, z0: n1[2] - TH / 2, z1: n1[2] + TH / 2 };
+    const up = []; // the members that rise from these nodes, and how far (a snapped one stops short)
+    for (const [A, Bq] of struts) for (const c of [n1, nN, nW]) if (same(A, c) && Bq[1] > A[1] + 1) up.push(sq(c, TH / 2));
+    const hi = (x, z) => { for (const R of up) if (inR(R, x, z, 0.05)) return true; return false; };
+    const floor = (x, z) => { if (hi(x, z)) return null; for (const R of tops) if (inR(R, x, z)) return yT; if (inR(mN, x, z) || inR(mW, x, z)) return yM; return null; };
+    ctx.addWalkable(floor, { stack: true, name: 'stair-lattice', keep: (x, z) => tops.some((R) => inR(R, x, z, 0.9)) && !inR(mN, x, z) && !inR(mW, x, z) });
+    for (const R of up) for (const [a, b] of [[[R.x0, R.z0], [R.x1, R.z0]], [[R.x1, R.z0], [R.x1, R.z1]], [[R.x1, R.z1], [R.x0, R.z1]], [[R.x0, R.z1], [R.x0, R.z0]]]) ctx.addCollider({ x1: a[0], z1: a[1], x2: b[0], z2: b[1], r: 0.1, y: yT - 0.7, h: 40, stand: false });
+    lattice.userData.climb = climb(ctx, { name: 'stair-lattice-ladder', mod: 'stair', foot: [lx, cz, yd], top: [fx, cz, yT], n: [-1, 0], back: [0.45, 0.4],
+      head: [n1[0] + NODE / 2 - 0.75, cz], away: [n1[0] - 0.4, cz], from: [lx + 2.6, cz] });
+    lattice.userData.up = { n1, nN, nW, yT, yM, ups: up.length };
+  }
 
   const tris = (latGeo.attributes.position.count + homeGeo.attributes.position.count + lampGeo.attributes.position.count) / 3 + W.length / 6;
   return {

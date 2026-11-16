@@ -8,12 +8,12 @@
 //   'overhang'  one great slab lying across two stubs, out of level, its front edge a metre and a half out over
 //               the air; under it, set back in its shadow, a whole Late front whose roof is the stone. (6.6 x 4.6.)
 //   'stack'     three blocks piled as they were left, the top one askew; a lean-to against the pile's flank where
-//               there is room, and a hut the size of a dovecote on its shoulder with a ladder up to it. (4 x 3.6.)
+//               there is room, and a hut the size of a dovecote on its shoulder, a ladder up to a ledge before its door (climbed). (4 x 3.6.)
 // A form that does not fit its plot becomes the next that does; under 4 x 3.6 throws.
 // The blocks go into o.E (a Builder for the Elder material) when it is given, else into B in the Elder colour.
 // o: seed, w (9), d (7), form, E, back (the local z behind which the ground may rise: the room keeps in front of it), low.
 import * as THREE from 'three';
-import { L, H, V, E as EC, PARTS, rngOf, pick, ch, worn, site, beam, pot, plate, wallPoly, stop, bed, ladder, washing } from './kit.js';
+import { L, H, V, E as EC, PARTS, rngOf, pick, ch, worn, site, beam, pot, plate, wallPoly, stop, bed, climbLadder, washing } from './kit.js';
 import { room } from './late.js';
 
 export const ELDER_FORMS = ['lean', 'overhang', 'stack'];
@@ -87,22 +87,30 @@ function stack(B, M, o) {
     else if (hcap === 'chimney') { const hc = 0.7 + rng() * 0.5; B.add(B.box(0.36, hc, 0.36, { seg: 9, chip: 0.03 }), ch(M, cx - s * (x1 - x0) * 0.25, y + hc / 2 + 0.05, zb + 0.4), o2); R.top = Math.max(R.top || 0, y + hc); }
     else if (hcap === 'pole') { const px = cx + s * (x1 - x0) * 0.3; beam(B, M, [px, y, cz], [px + 0.1, y + 1.7, cz], 0.045, { color: V.rawWood, moss: 0.05, ground: g0 + bh, round: 5 }); B.add(B.box(0.5, 0.3, 0.014, { seg: 9 }), ch(M, px + 0.33, y + 1.5, cz, 0, 0, -0.15), { color: worn(V.madder, rng, 0.45), moss: 0, ground: g0 + bh }); pot(B, M, cx - s * 0.3, y + 0.05, cz, 0.2, worn(L.tile[0], rng, 0.4), 1.6); }
   };
-  let lx, lz, hut = false; // where the ladder's head is; whether there is anything up there to climb to
+  // (v15-W2, the owner's rule on ladders) the ladder is climbed, so it lands somewhere: the hut stands back LEDGE from
+  // the first block's brink and the ladder comes up onto that ledge (a floor, its edges held) before the hut's door
+  const LEDGE = 0.9, front1 = bz + bd / 2, front2 = z2 + d2 / 2 + 0.12; // (the second block is turned a little: its corners come forward)
+  let lx, lz = front1, hut = false, hx0, hx1, hzb, hzf, hh;
   if (!hutOnFront) {
-    const hx0 = shx0 + 0.12, hx1 = shx1 - 0.05, hzf = bz + bd / 2 - 0.14 - rng() * 0.08, hzb = Math.max(bz - bd / 2 + 0.3, hzf - 2.4), hh = 1.6 + rng() * 0.7;
-    room(B, hm, rec, { x0: hx0, x1: hx1, zb: hzb, zf: hzf, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: hk, x: (hx0 + hx1) / 2, y: 0.7, w: 0.46, sp: hk === 'rect' ? 0.5 : 0.4, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
-    cap(hx0, hx1, hzb, hzf, hh);
-    hut = true; lx = (hx0 + hx1) / 2 - s * 0.1; lz = bz + bd / 2;
+    hx0 = shx0 + 0.12; hx1 = shx1 - 0.05; hzf = front1 - LEDGE - rng() * 0.08; hzb = Math.max(bz - bd / 2 + 0.3, hzf - 2.4); hh = 1.9 + rng() * 0.5;
+    hut = true;
   } else {
     // (no shoulder: the hut on the front of the first block's top, before the second)
-    const fd = bz + bd / 2 - (z2 + d2 / 2), hw = Math.min(2.4, bw - 0.8), hx0 = bx - hw / 2, hh = 1.6 + rng() * 0.6;
-    if (fd > 1.5) hut = true;
-    if (hut) room(B, hm, rec, { x0: hx0, x1: hx0 + hw, zb: z2 + d2 / 2 - 0.05, zf: bz + bd / 2 - 0.14, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [{ kind: hk, x: bx, y: 0.7, w: 0.46, sp: hk === 'rect' ? 0.5 : 0.4, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
-    if (hut) cap(hx0, hx0 + hw, z2 + d2 / 2 - 0.05, bz + bd / 2 - 0.14, hh);
-    lx = bx - s * (hw / 2 + 0.25); lz = bz + bd / 2;
+    const hw = Math.min(2.4, bw - 0.8); hx0 = bx - hw / 2; hx1 = hx0 + hw; hzb = front2 - 0.17; hzf = front1 - LEDGE; hh = 1.9 + rng() * 0.4;
+    hut = hzf - hzb > 1.3;
   }
-  if (hut) { ladder(B, M, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }); R.post(lx, lz + 0.55, 0.32, 0, 1.3, { stand: false });
-    R.door(lx, lz + 1.5, { w: 0.5, ladder: true }); } // (the way in is the ladder, to the hut's sill: not walked)
+  if (hut) {
+    const hc = (hx0 + hx1) / 2, door = hx1 - hx0 >= 1.5; // (a door 0.6 wide needs the front 1.5: a narrower hut keeps its window and is entered by it)
+    room(B, hm, rec, { x0: hx0, x1: hx1, zb: hzb, zf: hzf, h: hh, rng, g0: g0 + bh, color: wash, low, patches: 1, openings: [door ? { door: true, kind: hk, x: hc, y: 0, w: 0.6, sp: 1.1, paint } : { kind: hk, x: hc, y: 0.7, w: 0.46, sp: hk === 'rect' ? 0.5 : 0.4, paint, stop: 'lit', one: -s }], par: { f: 0.12, b: 0.12, l: 0.12, r: 0.12 } });
+    cap(hx0, hx1, hzb, hzf, hh);
+    R.wall(hx0 + (hzf - hzb) / 2, (hzb + hzf) / 2, hx1 - (hzf - hzb) / 2, (hzb + hzf) / 2, bh, hh + 0.2, (hzf - hzb) / 2 + 0.02);
+    R.floor(hc, lz - LEDGE / 2 - 0.02, hx1 - hx0 + 0.1, LEDGE - 0.1, bh, { layer: 1 });
+    lx = hc - s * 0.1;
+    const far = Math.abs(hx0 + 0.3 - lx) > Math.abs(hx1 - 0.3 - lx) ? hx0 + 0.3 : hx1 - 0.3;
+    climbLadder(B, M, R, [lx, 0, lz + 0.95], [lx, bh + 0.7, lz + 0.08], 0.5, { color: V.rawWood, moss: 0.05, ground: g0 }, { y1: bh, head: [lx, lz - 0.45], away: [far, lz - 0.45], perch: 'the ledge on the block before the hut\'s door' });
+    R.wall(lx, lz + 0.95, lx, lz + 0.3, 0, 1.3, 0.25); // (along the ladder: no walking through it)
+    R.door(lx, lz + 1.5, { w: 0.5, ladder: true }); // (the way in is the ladder, to the hut's door)
+  } else lx = bx - s * (Math.min(2.4, bw - 0.8) / 2 + 0.25);
   if (flank) {
     // the lean-to against the pile's flank: one room, its door and a window, a chimney, jars on its roof
     const x0 = s > 0 ? -w / 2 + 0.2 : bx + bw / 2 - 0.08, x1 = s > 0 ? bx - bw / 2 + 0.08 : w / 2 - 0.2, zf = Math.min(d / 2 - 0.3, bz + bd / 2 + 0.3 + rng() * 0.5), zb = Math.max(-d / 2 + 0.5, (o.back ?? -99) + 0.2, zf - 3.6), hh = 2.2 + rng() * 0.3, cx = (x0 + x1) / 2, rw = x1 - x0;

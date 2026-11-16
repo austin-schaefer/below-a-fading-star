@@ -20,6 +20,8 @@
 //             places, an act) is a dead end.
 // Prints the table of ways (id, its two ends, the levels it joins, the module that built it) and one PASS/FAIL line per
 // way per row. WAYS_JSON=path writes the table and the findings as JSON.
+// Ladders (v15-W2): every ladder drawn anywhere is in ctx.ladders, climbable with its ascent or scenery with a reason;
+// every file under src/ that speaks of a ladder registers one or is listed (NO_LADDER) as drawing none.
 //   node tools/ways-test.mjs [base=http://localhost:8123]
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -108,6 +110,9 @@ const r = await page.evaluate(async () => {
     table.push({ id: w.id, ends: ends.map((e) => [+e.at[0].toFixed(1), +e.at[1].toFixed(1), +e.y.toFixed(1)]), levels: ends.map((e) => lv(e.y)) });
     ends.forEach((e, ei) => {
       const tag = `${w.id} ${ei ? 'top' : 'foot'}`;
+      // a perch (v15-W2): a ladder's head onto a place to stand that is the end of the way (a scaffold's stage, a ledge
+      // before a hut's door): no mouth, landing or way on is asked of it, only that it says what it is
+      if (ei && w.perch) { find.push({ row: 'mouth', tag, ok: w.perch.length > 12, detail: `a perch: ${w.perch}` }); return; }
       // mouth
       const mx = e.at[0] + e.dir[0] * 0.4, mz = e.at[1] + e.dir[1] * 0.4, inMouth = [];
       for (const c of cols) { if (Math.abs(c.x - mx) > 10 || Math.abs(c.z - mz) > 10) continue; const pt = near(c, mx, mz); if (pt.d < 0.8 && stands(c, e.y, pt.t) && !own(c, e, pt)) inMouth.push(`${desc(c)} ${Math.max(0, pt.d).toFixed(2)} m`); }
@@ -149,6 +154,34 @@ for (const row of ['mouth', 'landing', 'dead end']) for (const f of r.find.filte
 const dbl = r.find.filter((q) => q.row === 'doubled');
 check(!dbl.length, 'doubled: no two ways join the same levels within 6 m at both ends', dbl.map((q) => `${q.tag} (${q.detail})`).join('; '));
 check(r.n >= 20, `the village registers its ways (${r.n})`);
+
+// ---------------------------------------------------------------- ladders (v15-W2, the owner's rule, 2026-11-16)
+// "ladders that are in a place that could read as climable, should be climable consistently": every ladder drawn
+// anywhere in the walk is in ctx.ladders, either climbable (climb() in src/v15/ways/ladder.js, with its ascent) or
+// scenery with the reason it does not read as a way up; and a file under src/ that speaks of a ladder either
+// registers one or is named below with why it draws none. The next ladder somebody draws must choose.
+const LD = await page.evaluate(() => {
+  const fp = window.__fp, list = fp.ladders?.list || [], asc = fp.ascents.list;
+  return { list: list.map((d) => ({ id: d.id, mod: d.mod, climb: !!d.climb, scenery: d.scenery || null, foot: d.foot.map((v) => +v.toFixed(1)), ascent: !!asc.find((a) => a.id === d.id), state: typeof d.state === 'function' })),
+    orphans: asc.filter((a) => a.ladder && !list.find((d) => d.id === a.id)).map((a) => a.id) };
+});
+const NO_LADDER = { // files that speak of ladders and draw none
+  'src/controls.js': 'a comment: the carrier reads the keys for the ladder', 'src/v8/house.js': 'the house\'s header: kept.js draws it',
+  'src/v15/plan.js': 'the ways\' plan: rungs-ladder is drawn by src/v15/ways', 'src/v15/bones.js': 'its header lists the ways', 'src/v15/ways/index.js': 'calls ladder(K) (registered there)',
+  'src/v15/quarters/rungs.js': 'the hand-rope and the poles\' colliders beside rungs-ladder', 'src/v15/houses/kit.js': 'ladder() and climbLadder(); registerAll climbs', 'src/v15/houses/index.js': 'the makers\' index', 'src/world.js': 'the Tender\'s Round card says how it is reached',
+};
+const files = [];
+const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (p.endsWith('.js')) files.push(p); } };
+walk(new URL('../src', import.meta.url).pathname);
+const root = new URL('..', import.meta.url).pathname;
+const speak = files.map((f) => [f.slice(root.length), fs.readFileSync(f, 'utf8')]).filter(([, t]) => /ladder/i.test(t));
+for (const [f, t] of speak) {
+  const registers = /\bclimb\(|climbLadder\(|ladders\(ctx\)\.add\(|\bladder\(K\b/.test(t);
+  check(registers || !!NO_LADDER[f], `ladders: ${f} speaks of a ladder and ${registers ? 'registers it' : NO_LADDER[f] ? 'draws none (' + NO_LADDER[f] + ')' : 'neither registers one nor is listed as drawing none'}`);
+}
+for (const d of LD.list) check(d.climb ? d.ascent && d.state : !!(d.scenery && d.scenery.length > 12), `ladders: ${d.id} (${d.mod}, foot ${d.foot.join(', ')}) is ${d.climb ? 'climbable, its ascent registered' : 'scenery: ' + d.scenery}`, d.climb && !d.ascent ? 'no ascent' : '');
+check(!LD.orphans.length, 'ladders: every ladder ascent is in the register', LD.orphans.join(', '));
+check(LD.list.filter((d) => d.climb).length >= 4 && LD.list.some((d) => !d.climb), `ladders: ${LD.list.filter((d) => d.climb).length} climbable, ${LD.list.filter((d) => !d.climb).length} scenery`);
 check(!errors.length, 'no page errors', errors.slice(0, 2).join(' | '));
 if (process.env.WAYS_JSON) fs.writeFileSync(process.env.WAYS_JSON, JSON.stringify(r, null, 1));
 console.log(`ways: ${pass} passed, ${fail} failed`);

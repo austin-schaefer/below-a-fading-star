@@ -12,7 +12,7 @@
 //   the alcove    the east gallery's north end: a striped curtain on a rod between two columns, half drawn; behind it
 //                 his pallet with a rose quilt and a bolster, a chest with iron bands, his own slippers set side by side.
 //   the line      across the court's south-west corner, column to column: a sheet, a long shirt, a sash, pegged.
-//   the mending   a ladder against the south gallery's roof by the patched hole, a bucket of limewash at its foot and a
+//   the mending   a ladder laid down along the south gallery by the patched hole, a bucket of limewash at its foot and a
 //                 brush across it; fresh limewash in patches on the court's side of the north wall (brighter, square).
 //   the fountain  water in it again, drawn by hand: a dark still disc in the basin and a bucket on the rim.
 //   the broom     against the gate's jamb inside.
@@ -22,6 +22,7 @@ import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
 import { TAVERNA } from '../../structures/taverna.js';
 import { rod } from './props.js';
+import { ladders } from '../../v15/ways/ladder.js';
 
 const { x: CX, z: CZ } = TAVERNA;
 // where the fire is (the court light and its ground pool are placed from it in house.js)
@@ -163,10 +164,13 @@ export function keptHouse(ctx, B, G, S) {
 
   // ---------------------------------------------------------------- the mending
   {
-    // a ladder against the south gallery's roof by the patched hole, a bucket of limewash and a brush
-    const lx = CX - 0.6, lz = CZ + 8.95, lg = G(lx, lz), top = G(lx, CZ + 9.6) + 4.0;
-    for (const dx of [-0.22, 0.22]) rod(B, [lx + dx, lg, lz], [lx + dx, top, CZ + 9.5], 0.03, o(L.wood, lg), 4);
-    for (let k = 1; k < 11; k++) { const s = k / 11; rod(B, [lx - 0.22, lg + (top - lg) * s, lz + 0.55 * s], [lx + 0.22, lg + (top - lg) * s, lz + 0.55 * s], 0.018, o(L.wood, lg), 4); }
+    // the ladder laid down along the south gallery's front, the roof's patch done for the day, a bucket of limewash
+    // at its foot and a brush across it. (v15-W2, the owner's rule: it stood against the gallery's roof and read as a
+    // way up that was not one; lying down it is a thing put away.)
+    const lx = CX - 0.6, lz = CZ + 8.95, x0 = lx - 4.05, x1 = lx - 0.05, y = (x) => G(x, lz) + 0.035;
+    for (const dz of [-0.22, 0.22]) rod(B, [x0, y(x0), lz + dz], [x1, y(x1), lz + dz], 0.03, o(L.wood, G(lx, lz)), 4);
+    for (let k = 1; k < 11; k++) { const x = x0 + (x1 - x0) * k / 11; rod(B, [x, y(x) + 0.01, lz - 0.22], [x, y(x) + 0.01, lz + 0.22], 0.018, o(L.wood, G(lx, lz)), 4); }
+    ladders(ctx).add({ id: 'pomegranate-ladder', mod: 'house', foot: [x1, lz, G(x1, lz)], top: [x0, lz, G(x0, lz)], scenery: 'laid down on the court along the south gallery, the bucket at its foot' });
     const bx = lx + 0.7, bz = lz - 0.2, bg = G(bx, bz);
     B.add(B.cyl(0.15, 0.12, 0.3, 10, 1, true), mat(bx, bg + 0.15, bz), o(WOOD_D, bg));
     B.add(B.cyl(0.14, 0.14, 0.01, 10, 1), mat(bx, bg + 0.27, bz), o(L.plaster[3], bg, { wet: 0.6 }));
@@ -196,7 +200,7 @@ export function keptHouse(ctx, B, G, S) {
   for (const [x, z, h] of HUNG) { const g = G(x, z); rod(B, [x, g + 3.92, z], [x, g + h, z], 0.006, { color: L.iron, iron: 0.9, moss: 0, ground: g }, 3); }
 
   // ---------------------------------------------------------------- what a walker does not walk through
-  // the fire, the oven and the ladder are walls (`stand: false`): nobody climbs onto an oven or stands in the coals
+  // the fire and the oven are walls (`stand: false`): nobody climbs onto an oven or stands in the coals
   const col = (x, z, r, h, stand) => { const g = G(x, z); ctx.addCollider({ x, z, r, y: g - 1, h: h + 1, ...(stand === false ? { stand: false } : {}) }); };
   col(CX + 5.5, CZ + 11.55, 0.66, 1.15, false); // the oven
   col(HEARTH.x, HEARTH.z, 0.55, 0.8, false); // the fire, its stones and the pot
@@ -204,5 +208,4 @@ export function keptHouse(ctx, B, G, S) {
   col(CX + 7.2, CZ + 11.9, 0.5, 0.6); // the wood
   col(CX - 10.9, CZ - 1.3, 0.42, 0.36); // the tray
   col(CX + 12.0, CZ - 2.4, 0.45, 0.5); // the chest
-  { const lx = CX - 0.6, z = CZ + 9.2, g = G(lx, z); ctx.addCollider({ x1: lx - 0.22, z1: z, x2: lx + 0.22, z2: z, r: 0.2, y: g - 1, h: 5, stand: false }); } // the ladder
 }

@@ -12,7 +12,7 @@
 // laid across).
 // o: seed, w (8), d (6.5), stage, low. Needs 5 x 4.6; less throws.
 import * as THREE from 'three';
-import { L, H, V, PARTS, rngOf, pick, ch, worn, site, beam, plate, patch, ladder, pot } from './kit.js';
+import { L, H, V, PARTS, rngOf, pick, ch, worn, site, beam, plate, patch, climbLadder, pot } from './kit.js';
 
 const CH = 0.42, BT = 0.46; // a course's height, a wall's thickness
 
@@ -135,12 +135,19 @@ export function newhouse(B, M, o = {}) {
   beam(B, M, [sx0 - 0.2, sy + 1.44, sz - 0.07], [sx1 + 0.25, sy + 1.52, sz - 0.07], 0.07, { ...raw, round: 5 });
   for (let i = 0; i < 3; i++) B.add(B.box(sx1 - sx0 + 0.5 - i * 0.2, 0.045, 0.27, { seg: 9 }), ch(M, (sx0 + sx1) / 2 + (i - 1) * 0.07, sy + 0.01 + i * 0.004, sz - 0.2 - i * 0.3, 0, (rng() - 0.5) * 0.03, 0), { ...raw, color: worn(V.rawWood, rng, 0.12) });
   // on the stage: a block waiting, the mortar board
-  B.add(B.box(0.8, CH, BT, { seg: 9, chip: 0.014 }), ch(M, sx0 + 0.7, sy + 0.25, sz - 0.5, 0, 0.3, 0), fresh());
-  B.add(B.box(0.5, 0.03, 0.5, { seg: 9 }), ch(M, sx1 - 0.6, sy + 0.05, sz - 0.5, 0, 0.5, 0), raw);
-  B.add(B.cyl(0.02, 0.2, 0.12, 7, 1), ch(M, sx1 - 0.6, sy + 0.12, sz - 0.5), { color: V.lime, moss: 0, ground: g0 - 3 });
-  // the ladder up to the stage
-  const lx = side > 0 ? sx0 - 0.05 : sx1 + 0.05;
-  ladder(B, M, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw); R.post(lx, sz + 0.5, 0.3, 0, 1.3, { stand: false });
+  // (the block at the stage's far end from the ladder, the board at its near end: v15-W2, the stage is walked)
+  // (only where the stage is long enough that a walker passes from the ladder's head to the stage's middle clear of it)
+  const kbx = side > 0 ? sx1 - 0.25 : sx0 + 0.25, mbx = side > 0 ? sx0 + 0.75 : sx1 - 0.75, block = Math.abs(sx1 - sx0) >= 2.25;
+  if (block) B.add(B.box(0.8, CH, BT, { seg: 9, chip: 0.014 }), ch(M, kbx, sy + 0.25, sz - 0.5, 0, 0.3, 0), fresh());
+  B.add(B.box(0.5, 0.03, 0.5, { seg: 9 }), ch(M, mbx, sy + 0.05, sz - 0.5, 0, 0.5, 0), raw);
+  B.add(B.cyl(0.02, 0.2, 0.12, 7, 1), ch(M, mbx, sy + 0.12, sz - 0.5), { color: V.lime, moss: 0, ground: g0 - 3 });
+  // the ladder up to the stage, climbed (v15-W2): the stage is a floor, its edges held, the block and the board on it
+  // in the way; from it the masons' line and the work, and the street over the scaffold's ledger
+  const lx = side > 0 ? sx0 - 0.05 : sx1 + 0.05, zs = sz - 0.51;
+  R.floor((sx0 + sx1) / 2, zs, sx1 - sx0 + 0.3, 0.88, sy + 0.035, { layer: 1 });
+  if (block) R.wall(kbx - 0.36, sz - 0.39, kbx + 0.36, sz - 0.61, sy, CH + 0.2, 0.25); // (the block waiting)
+  climbLadder(B, M, R, [lx, 0, sz + 0.78], [lx, sy + 0.75, sz + 0.1], 0.48, raw, { y1: sy + 0.035, head: [lx + side * 0.3, zs], away: [lx + side * 0.9, zs], perch: 'the masons\' stage, between the wall and the standards' });
+  R.wall(lx, sz + 0.78, lx, sz + 0.32, 0, 1.3, 0.25); // (along the ladder: no walking through it)
   }
   // the mason's line, red, pinned along the front's working course; the plumb bob off the high corner
   const ly = front * CH + 0.05, lineC = { color: worn(L.tile[1], rng, 0.45), moss: 0, ground: g0 - 3 }; // (madder twine, dull: it shows by being straight)
