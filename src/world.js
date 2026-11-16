@@ -47,7 +47,7 @@ export const LANDMARKS = {
   gradine:  { x: 282,  z: -172, r: 14,  y: null, name: "The Gradine",          line: "“The marble treads were cracked: A condition which the murk of twilight invested with a mournful grandeur.”" },
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
-  // v7.1: the pit where the old road from the east gate ends (SITES.pit); inside the Span's broad card, so a card wins there
+  // v7.1: the pit beside the old road from the east gate (SITES.pit); inside the Span's broad card, so a card wins there
   pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true, feet: [-27, 60] }, // v14-D2: the lip's and the stair's down the wall (the floor has its own, the Nadir; v14-F1: down to it, so no region card rises on the stair)
   // v7.1: the Sexton's grave field (SITES.sexton's block): a card wins over the Saltings' region card and the Span's broad one
   graves:   { x: 55,   z: 274,  r: 18,  y: null, name: "Rest in Starlight", line: "“Dig me no grave; I shall not need one.”", card: true },
@@ -202,13 +202,14 @@ export const SITES = {
 };
 
 // The causeway's v4 route (placement plan section 4): from between the colossi's feet in the saddle, north
-// through the Adust past the Armiger's Tower, the old road to the keep's gate, round the keep and east to the
-// pit. The map-structure agent swaps CAUSEWAY for it, with its paving and wear; until then CAUSEWAY is v3's.
+// through the Adust past the Armiger's Tower, the old road to the keep's gate, round the keep and east past the
+// Pit to the foot of the Great Span's east stair (v15-F1, the owner's #59: it had ended at the Pit's lip, beside the
+// stair's landing, and read as an error; the trod P54 from its last bend is what goes to the landing now).
 export const CAUSEWAY_V4 = [
   { x: -344, z: 126 }, { x: -302, z: 106 }, { x: -286, z: 60 }, { x: -272, z: 0 }, { x: -262, z: -60 }, { x: -254, z: -108 },
   { x: -222, z: -110 }, { x: -185, z: -72 }, { x: -140, z: -30 }, { x: -90, z: 2 }, { x: -40, z: 22 }, { x: 8, z: 30 },
   { x: 0, z: 5 }, { x: 12, z: -18 }, { x: 45, z: -22 }, { x: 80, z: -8 }, { x: 98, z: 25 }, { x: 122, z: 55 },
-  { x: 148, z: 95 }, { x: 172, z: 135 }, { x: 192, z: 168 }, { x: 200, z: 185 },
+  { x: 148, z: 95 }, { x: 172, z: 135 }, { x: 190, z: 160 }, { x: 205, z: 160.5 }, { x: 217, z: 160 }, { x: 225, z: 161.8 },
 ];
 
 // Water bodies: flat planes at a fixed height, clipped by the terrain naturally.

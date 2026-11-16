@@ -43,7 +43,7 @@ export function buildCauseway(ctx, B, env) {
     }
     const edge = 1.75 + N2(x * 0.15, z * 0.15) * 0.3;
     if (d > edge && !apron) return;
-    if (pitEdge(x, z) < PIT_PAVE) return; // v4 map: the slabs tilting into the pit and hanging over it are v4/paths.js's
+    if (pitEdge(x, z) < PIT_PAVE) return; // no paving on the Pit's lip (the road runs past it now, v15-F1)
     // ~15% missing, in clusters, more at the ragged edges
     const miss = N2(x * 0.21 + 9, z * 0.21 - 4) * 0.5 + 0.5;
     const gone = miss > 0.86 || rng() < 0.06 + Math.max(0, d - 1.1) * 0.12;
@@ -60,7 +60,7 @@ export function buildCauseway(ctx, B, env) {
   const len = causewayLength(cw);
   let n = 0;
   const v8Roads = new URL(location.href).searchParams.get('roads') !== '0'; // v8-01: the waymarkers are the roads' grand gnomons now (src/v8/roads.js)
-  for (let s = 38; s < (v8Roads ? 0 : len - 26); s += 40) { // v4 map: none in the pit at the road's end
+  for (let s = 38; s < (v8Roads ? 0 : len - 26); s += 40) { // v4 map: none in the last 26 m, at the Span's stair
     const p = causewayAt(cw, s);
     const side = n % 2 ? 1 : -1;
     const nx = -p.dz * side, nz = p.dx * side;

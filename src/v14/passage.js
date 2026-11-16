@@ -34,6 +34,7 @@ const HELIO = C('#8e7654'), MILK = C('#cdc8b8'), MILK_D = C('#9f9a8a'), SILT = C
 export async function build(ctx) {
   if (PASSAGE_OFF) { ctx.passage = { off: true }; return; }
   await ctx.built?.('coffinroad');
+  await ctx.built?.('pit'); // (the portal's feet stand on its floor)
   if (!ctx.coffinRoad || ctx.coffinRoad.off) { ctx.passage = { off: true }; return; }
   await Promise.all([ctx.built?.('paths'), ctx.built?.('pit')]);
   const t0 = performance.now();
@@ -225,8 +226,19 @@ export async function build(ctx) {
   }
 
   // ---- the sounder's lamps: an iron spike driven into the rock, a hanging cage, a bead of cold light (the Points')
+  // (v15-F1, #63) the spike is driven 6 cm into the wall where the section's wall crosses its height on its side (it
+  // was a fixed 0.5 m out from the cage, and stopped up to 0.35 m short of the rock)
+  const wallAt = (s, d, v) => {
+    const sec = P.section(s), side = Math.sign(d) || 1; let best = null;
+    for (let k = 0; k < sec.pts.length - 1; k++) {
+      const a = sec.pts[k], b = sec.pts[k + 1]; if ((a[1] - v) * (b[1] - v) > 0 || a[1] === b[1]) continue;
+      const x = a[0] + (b[0] - a[0]) * (v - a[1]) / (b[1] - a[1]);
+      if (x * side > d * side && (best === null || x * side < best * side)) best = x;
+    }
+    return best === null ? d + side * 0.5 : best + side * 0.06;
+  };
   const lampHang = (Bd, l) => {
-    const side = Math.sign(l.d) || 1, wallD = l.d + side * 0.5;
+    const side = Math.sign(l.d) || 1, wallD = wallAt(l.s, l.d, l.v + 0.35);
     const [wx, wy, wz] = P.world(l.s, wallD, l.v + 0.35), [hx, hy, hz] = P.world(l.s, l.d, l.v + 0.35);
     Bd.beam([wx, wy, wz], [hx, hy, hz], 0.015, IRON, 0.04);
     Bd.beam([hx, hy, hz], [hx, hy - 0.2, hz], 0.006, IRON, 0.02);
@@ -388,7 +400,9 @@ export async function build(ctx) {
     const W = (along, lat, y) => [M[0] + ox * along + rx * lat, y, M[1] + oz * along + rz * lat];
     const yaw = Math.atan2(ox, oz) - Math.PI / 2;
     const f0 = -MOUTH.portal, f1 = 1.6, depth = (f1 - f0) / 2, mid = (f0 + f1) / 2;
-    const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const [x, , z] = W(along, lat, 0); PO.box(x, y, z, ha, hy, hl, yaw, col, colTop, 0.1); };
+    // (v15-F1, #60) `k`: how far short of the others a box's back (in the rock, toward the passage) is drawn, for the
+    // boxes that overlap another and share its back plane: the lintel block 4 mm, the inner lintel 8, the jambs 12
+    const box = (along, lat, y, ha, hl, hy, col, colTop = col, k = 0) => { const [x, , z] = W(along - k / 2, lat, 0); PO.box(x, y, z, ha - k / 2, hy, hl, yaw, col, colTop, 0.1); };
     const open = 1.2, top = Y + 3.25, outer = 3.5, order = 1.75;
     // the piers in courses of dressed blocks (the way through is between them), an inner order of jambs and a lintel
     // stepped in from the face, the lintel block over all, the cornice, the face's rough surround
@@ -397,12 +411,14 @@ export async function build(ctx) {
       const hy = Math.min(0.31, (Y + 7.4 - y0) / 2), j = 0.78 + 0.32 * hsh(ci++ * 7.3 + s), c = [STONE[0] * j, STONE[1] * j, STONE[2] * j];
       const inner = y0 < top ? order : open; // below the lintel the face steps in to the inner order
       box(mid, s * (inner + (outer - inner) / 2), y0 + hy, depth, (outer - inner) / 2, hy, c, c);
-      if (y0 < top) box(mid + 0.35, s * (open + (order - open) / 2), y0 + hy, depth - 0.35, (order - open) / 2, hy, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8]);
+      if (y0 < top) box(mid + 0.35, s * (open + (order - open) / 2), y0 + hy, depth - 0.35, (order - open) / 2, hy, [c[0] * 0.8, c[1] * 0.8, c[2] * 0.8], undefined, 0.012);
     }
-    box(mid, 0, top + 2.1, depth, open + 0.02, 2.1, STONE, STONE_D);
-    box(mid + 0.35, 0, top + 0.12, depth - 0.35, order, 0.12, STONE_D);
+    // (v15-F1, #60) the lintel block's soffit sits 4 cm up inside the inner lintel, and the inner lintel's face 2 cm back
+    // of the jambs': with both soffits at `top` the way's ceiling was two faces in one plane, and it flickered in bands
+    box(mid + 0.01, 0, top + 2.14, depth - 0.01, open + 0.02, 2.06, STONE, STONE_D, 0.004);
+    box(mid + 0.36, 0, top + 0.12, depth - 0.36, order - 0.02, 0.12, STONE_D, STONE_D, 0.008);
     box(f0 - 0.12, 0, Y + 6.9, 0.2, outer + 0.3, 0.22, STONE_D);
-    for (let i = 0; i < 14; i++) { const lat = (rng() - 0.5) * 2 * (outer + 0.6), h = 0.3 + rng() * 0.5; box(f0 + 0.2 + rng() * 0.6, lat, Y + 7.2 + rng() * 0.9, 0.5, 0.4 + rng() * 0.5, h, STONE_D); }
+    for (let i = 0; i < 14; i++) { const lat = (rng() - 0.5) * 2 * (outer + 0.6), h = 0.3 + rng() * 0.5, a = f0 + 0.2 + rng() * 0.6; rng(); const hl = 0.4 + rng() * 0.5; box(a + ((i * 3) % 14) * 0.004, lat, Y + 6.9 + ((i * 5) % 14) * 0.069 + h, 0.5, hl, h, STONE_D); } // (each bottom and back its own: none share a plane)
     // the sun over the door: a boss and its rays in relief, its sockets empty (the Heliarchs')
     const [sx, , sz] = W(f0 - 0.06, 0, 0), sy = top + 1.95, R = 0.62;
     const P3 = (r, a) => [sx + rx * Math.cos(a) * r, sy + Math.sin(a) * r, sz + rz * Math.cos(a) * r];
@@ -411,7 +427,7 @@ export async function build(ctx) {
       PO.tri([sx - ox * 0.05, sy, sz - oz * 0.05], P3(R, a0), P3(R, a1), STONE_D, [-ox, 0, -oz], 0.15);
       if (i % 2 === 0) PO.tri(P3(R + 0.04, a0), P3(R + 0.04, a1), P3(R * 1.9, (a0 + a1) / 2), STONE, [-ox, 0, -oz], 0.15);
     }
-    for (let i = 0; i < 18; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.9, p = P3(r, a); PO.box(p[0] - ox * 0.07, p[1], p[2] - oz * 0.07, 0.035, 0.035, 0.035, yaw, CUT, CUT, 0.05); }
+    for (let i = 0; i < 18; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.9, p = P3(r, a), o = 0.004 + i * 0.0017; PO.box(p[0] - ox * o, p[1], p[2] - oz * o, 0.035, 0.035, 0.035, yaw, CUT, CUT, 0.05); } // (each its own depth, every one still set into the relief: two that overlap never share a face's plane, none hangs in front of it)
     // a threshold of three slabs where the passage's floor ends
     for (let i = 0; i < 3; i++) box(f0 + 0.35 + i * 0.62, 0, Y - 0.1, 0.3, open - 0.02, 0.12, STONE_D, STONE);
     // the lamp, on an iron bracket out of the right pier's face
@@ -424,9 +440,12 @@ export async function build(ctx) {
     // the Heliarchs' frame round the mouth, so it is found from across the floor: their hexagon (flat-topped, its
     // foot under the floor) in raised warm stone on the face, a roundel at each of its corners
     const hx = (lat, y) => [M[0] + ox * (f0 - 0.1) + rx * lat, y, M[1] + oz * (f0 - 0.1) + rz * lat];
-    const HEX = [[-1.45, Y - 0.61], [-2.9, Y + 1.9], [-1.45, Y + 4.41], [1.45, Y + 4.41], [2.9, Y + 1.9], [1.45, Y - 0.61]];
+    // (v15-F1, #63) its two feet stand 6 cm into the Pit's floor where they meet it (at Y - 0.61 they hung under it, in
+    // the floor's own hole at the wall's foot)
+    const foot = (lat) => { const [x, , z] = hx(lat, 0), f = ctx.pit?.bowl?.(x, z); return (Number.isFinite(f) ? f + 0.04 : Y) - 0.06; };
+    const HEX = [[-1.45, foot(-1.45)], [-2.9, Y + 1.9], [-1.45, Y + 4.41], [1.45, Y + 4.41], [2.9, Y + 1.9], [1.45, foot(1.45)]];
     for (let i = 0; i < 5; i++) PO.beam(hx(...HEX[i]), hx(...HEX[i + 1]), 0.11, HELIO, 0.06);
-    const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(rx, 0, rz), new THREE.Vector3(-ox, 0, -oz), new THREE.Vector3(0, 1, 0));
+    const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(rx, 0, rz), new THREE.Vector3(-ox, 0, -oz), new THREE.Vector3(0, -1, 0)); // (v15-F1, #60: right-handed; with +y the basis mirrored the roundels inside out, their backs seen from the floor)
     for (const [lat, y] of HEX.slice(1, 5)) {
       const [x0, y0, z0] = hx(lat, y), m = face.clone().setPosition(x0 - ox * 0.06, y0, z0 - oz * 0.06);
       PO.geo(new THREE.CylinderGeometry(0.34, 0.38, 0.16, 18), m, HELIO, 0.05);
@@ -563,19 +582,29 @@ export async function build(ctx) {
     // (the whole of the gatehouse's face: the rock is cut where the gatehouse stands, its own mass covers the hole)
     const inWay = (Pp, i) => { const [al, lat] = local(Pp[i * 3], Pp[i * 3 + 2]), y = Pp[i * 3 + 1]; return al > portal.f0 - 0.3 && al < 7 && Math.abs(lat) < portal.outer + 0.2 && y < P.YM + 6.2 && y > P.YM - 2; };
     cuts.throat = cutIdx(scene.getObjectByName('paths-pit-throat')?.geometry, (Pp, a, b, c) => inWay(Pp, a) || inWay(Pp, b) || inWay(Pp, c));
-    // the Pit's own rock at the wall's foot (D2's pit-floor mesh), not its bowl: triangles rising more than 0.6 m over
-    // the floor with a corner where the gatehouse stands
+    // the Pit's own rock at the wall's foot (D2's pit-floor mesh), not its bowl. (v15-F1) In the way through it is laid
+    // down to the threshold (every corner there over it brought down to it, so the floor stays whole up to the slabs);
+    // behind the face, triangles rising more than 0.6 m over the floor and wholly in the gatehouse's mass are cut.
+    // Cutting every triangle with a corner in the way left a hole in front of the right pier, which the Heliarchs'
+    // frame's foot stood over.
     { const g = scene.getObjectByName('pit-floor')?.geometry, hy = (Pp, i) => Pp[i * 3 + 1];
-      const test = (Pp, a, b, c) => Math.max(hy(Pp, a), hy(Pp, b), hy(Pp, c)) > P.YM + 0.6 && (inWay(Pp, a) || inWay(Pp, b) || inWay(Pp, c));
-      if (g?.index) cuts.pitRock = cutIdx(g, test);
-      else if (g) { const A = g.attributes.position, Pp = A.array; let n = 0;
-        for (let t = 0; t < A.count; t += 3) if (test(Pp, t, t + 1, t + 2)) { for (let k = 3; k < 9; k++) Pp[t * 3 + k] = Pp[t * 3 + (k % 3)]; n++; }
-        if (n) A.needsUpdate = true; cuts.pitRock = n; } }
-    // the terrain: triangles wholly in the wall (every corner under the lip by 4 m) with a corner across the way
+      const narrow = (Pp, i) => { if (!inWay(Pp, i)) return false; const [al, lat] = local(Pp[i * 3], Pp[i * 3 + 2]); return Math.abs(lat) < portal.open + 0.3 && al > portal.f0 - 0.3; };
+      const behind = (Pp, i) => { if (!inWay(Pp, i)) return false; const [al] = local(Pp[i * 3], Pp[i * 3 + 2]); return al > portal.f0 + 0.05; };
+      const test = (Pp, a, b, c) => Math.max(hy(Pp, a), hy(Pp, b), hy(Pp, c)) > P.YM + 0.6 && behind(Pp, a) && behind(Pp, b) && behind(Pp, c);
+      if (g && !g.index) { const A = g.attributes.position, Pp = A.array; let n = 0, laid = 0;
+        for (let i = 0; i < A.count; i++) if (narrow(Pp, i) && Pp[i * 3 + 1] > P.YM - 0.04) { Pp[i * 3 + 1] = P.YM - 0.04; laid++; }
+        // a face the laying folded over (it now faces down or edge-on, a rising face whose top came down) is cut
+        const folded = (Pp, a, b, c) => { if (!(narrow(Pp, a) || narrow(Pp, b) || narrow(Pp, c))) return false; const ux = Pp[b * 3] - Pp[a * 3], uy = Pp[b * 3 + 1] - Pp[a * 3 + 1], uz = Pp[b * 3 + 2] - Pp[a * 3 + 2], vx = Pp[c * 3] - Pp[a * 3], vy = Pp[c * 3 + 1] - Pp[a * 3 + 1], vz = Pp[c * 3 + 2] - Pp[a * 3 + 2]; const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; return ny < 0.5 * Math.hypot(nx, ny, nz); };
+        for (let t = 0; t < A.count; t += 3) if (test(Pp, t, t + 1, t + 2) || folded(Pp, t, t + 1, t + 2)) { for (let k = 3; k < 9; k++) Pp[t * 3 + k] = Pp[t * 3 + (k % 3)]; n++; }
+        if (n || laid) A.needsUpdate = true; cuts.pitRock = n + laid; cuts.pitLaid = laid; } }
+    // the terrain: triangles in the wall (no corner over the lip) with a corner across the way and a corner low enough
+    // to reach into it (under the gatehouse's top). (v15-F1, #60) The wall is 24 m of drop over a cell or two, so one
+    // triangle runs from the floor to the lip itself; asked to lie wholly 4 m under the lip, the one across the mouth
+    // stood in the way as a violet blade. What is cut above the gatehouse is behind its mass and the throat's veneer.
     const lipY = T.heightAt(PIT.x + ox * (pitRim(MOUTH.b) + 1.5), PIT.z + oz * (pitRim(MOUTH.b) + 1.5));
-    const inWall = (Pp, i) => Pp[i * 3 + 1] < lipY - 4;
+    const inWall = (Pp, i) => Pp[i * 3 + 1] < lipY + 0.3, low = (Pp, i) => Pp[i * 3 + 1] < P.YM + 8;
     const across = (Pp, i) => { const [al, lat] = local(Pp[i * 3], Pp[i * 3 + 2]); return al > -1.0 && al < 7 && Math.abs(lat) < 3.2; };
-    const tcut = (Pp, a, b, c) => inWall(Pp, a) && inWall(Pp, b) && inWall(Pp, c) && (across(Pp, a) || across(Pp, b) || across(Pp, c));
+    const tcut = (Pp, a, b, c) => inWall(Pp, a) && inWall(Pp, b) && inWall(Pp, c) && (low(Pp, a) || low(Pp, b) || low(Pp, c)) && (across(Pp, a) || across(Pp, b) || across(Pp, c));
     cuts.terrain = cutIdx(T.mesh.geometry, tcut);
     cutIdx(scene.getObjectByName('saltings-crust')?.geometry, tcut);
   }
