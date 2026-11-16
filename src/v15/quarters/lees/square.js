@@ -108,7 +108,7 @@ export function ground(Q, F) {
 
   // ---------------------------------------------------------------- the gutter: two lines of kerb and the light between them
   { const st = new Soup(), len = []; let tot = 0; for (let i = 0; i < gut.length - 1; i++) { len.push(tot); tot += Math.hypot(gut[i + 1][0] - gut[i][0], gut[i + 1][1] - gut[i][1]); } len.push(tot);
-    const eAt = (t) => 0.5 * (1 - t) ** 1.3 + 0.12, perp = (i) => { const a = gut[Math.max(0, i - 1)], b = gut[Math.min(gut.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]); return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
+    const eAt = (t) => 0.3 * (1 - t) ** 1.3 + 0.08, perp = (i) => { const a = gut[Math.max(0, i - 1)], b = gut[Math.min(gut.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]); return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
     const off = (i, k, dy) => { const p = perp(i); return P3(gut[i][0] + p[0] * k, gut[i][1] + p[1] * k, dy); };
     const brink = gut.length - 2, yEnd = P3(...gut[brink], 0)[1], flat = (i, k, dy) => { const q = off(i, k, dy); if (i > brink) q[1] = yEnd + dy; return q; }; // (the spout runs on level past the brink)
     for (let i = 0; i < gut.length - 1; i++) {

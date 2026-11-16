@@ -54,7 +54,7 @@ export function cask(B, M, x, y, z, r, len, rng) {
 // a loaf of salt; a sack
 export function saltCone(B, M, x, y, z, h, rng) { B.add(B.cyl(h * 0.07, h * 0.3, h, 7, 1), ch(M, x, y + h / 2, z, 0, rng() * 3, 0), { color: worn(V.lime, rng, 0.1, 0.05), moss: 0, ground: M.elements[13] - 3 }); }
 export function sack(B, M, x, y, z, w, h, rng) {
-  const g0 = M.elements[13] - 1, col = worn(V.linen, rng, 0.3, 0.12);
+  const g0 = M.elements[13] - 1, col = worn(V.linen, rng, 0.3, 0.12).lerp(V.dirt, 0.45).multiplyScalar(0.8); // (hemp gone grey-brown: a clean linen sack read as a blank cream block)
   B.add(new THREE.IcosahedronGeometry(1, 1), ch(M, x, y + h * 0.46, z, 0, rng() * 3, (rng() - 0.5) * 0.12, w * 0.56, h * 0.54, w * 0.46), { color: col, moss: 0.05, ground: g0 }); // (slumped, round-shouldered: a sack, not a block)
   B.add(B.cyl(w * 0.1, w * 0.2, w * 0.2, 5, 1), ch(M, x, y + h * 0.98, z), { color: col.clone().multiplyScalar(0.8), moss: 0, ground: g0 });
 }

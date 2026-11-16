@@ -76,6 +76,11 @@ export function shops(Q) {
       for (let k = 0; k < rows.length; k++) for (let i = 0; i < n; i++) { const xc = x0 + (i + 0.5) * cw, y = rows[k] + 0.016;
         if ((k === 1 && (i === n / 2 - 1 || i === n / 2)) || y + 0.2 > yArch(Math.abs(xc) + cw / 2) || rng() < 0.42) continue;
         if (!stuffed && k === 1 && i > 4) { stuffed = true; B.add(B.box(cw - 0.07, 0.25, 0.3, { seg: 0.12, chip: 0.03, seed: 9 }), ch(M, xc, y + 0.125, zr + 0.07), paper()); continue; }
+        if (rng() < 0.45) { // a letter stood on edge, its sealed side out: the flap's two lines and the wax
+          const lw2 = cw * 0.7, lh = 0.2, lm = ch(M, xc + (rng() - 0.5) * 0.03, y, zr + dep / 2 - 0.02, -0.12, (rng() - 0.5) * 0.3, (rng() - 0.5) * 0.12);
+          B.add(B.box(lw2, lh, 0.014, { seg: 9 }), ch(lm, 0, lh / 2, 0), paper());
+          for (const sd of [-1, 1]) B.add(B.box(lw2 * 0.56, 0.012, 0.006, { seg: 9 }), ch(lm, sd * lw2 * 0.24, lh * 0.74, 0.009, 0, 0, -sd * 0.6), { color: V.soot, moss: 0, ground: g0 - 3 });
+          B.add(B.cyl(0.026, 0.026, 0.012, 6, 1), ch(lm, 0, lh * 0.5, 0.012, Math.PI / 2, 0, 0), { color: new THREE.Color('#8e2318'), moss: 0, ground: g0 - 3 }); continue; }
         const nl = 1 + Math.floor(rng() * 3); for (let q = 0; q < nl; q++) B.add(B.box(cw * (0.5 + rng() * 0.22), 0.014, 0.26, { seg: 9 }), ch(M, xc + (rng() - 0.5) * 0.04, y + 0.007 + q * 0.016, zr + 0.06 + rng() * 0.06, 0, (rng() - 0.5) * 0.5, 0), paper()); }
       B.add(B.box(0.3, 0.13, 0.2, { seg: 0.1, chip: 0.02, seed: 4 }), ch(M, -0.85, top + 0.065, zm + 0.12, 0, 0.3, 0), paper()); B.add(B.box(0.31, 0.02, 0.03, { seg: 9 }), ch(M, -0.85, top + 0.135, zm + 0.12, 0, 0.3, 0), { color: V.madder, moss: 0, ground: g0 - 3 });
       B.add(B.cyl(0.02, 0.07, 0.09, 7, 1), ch(M, 0.9, top + 0.045, zm + 0.14), { color: H.bronzeDull, moss: 0, ground: g0 - 3 }); B.add(B.cyl(0.012, 0.012, 0.08, 4, 1), ch(M, 0.9, top + 0.13, zm + 0.14), { color: L.wood, moss: 0, ground: g0 - 3 }); }
@@ -163,7 +168,9 @@ export function shops(Q) {
     { const a0 = B.count; awning(B, ch(M, 0, 0, zb), { w: 2 * hw - 0.1, d: p.d - 0.3, h: hr, drop: 0.22, rng, color: worn(V.linen, rng, 0.3) });
       for (let i = a0; i < B.count; i++) if (B.Nn[i * 3 + 1] < -0.3) B.P[i * 3 + 1] -= 0.012; } // (the cloth stands free here and is seen from under at its hem: its underside hangs clear of its top all the way to the edge)
     { const cw = 2 * hw - 0.3, col = worn(V.madder, rng, 0.35, 0.1), n = 6; // the curtain, in six folds
-      for (let i = 0; i < n; i++) B.add(B.box(cw / n + 0.01, hr - 0.32, 0.016, { seg: 9 }), ch(M, -cw / 2 + (i + 0.5) * (cw / n), (hr - 0.32) / 2 + 0.3 - 0.02, zb - 0.045 + (i % 2) * 0.025, 0, (i % 2 ? 1 : -1) * 0.22, 0), { color: col.clone().multiplyScalar(0.85 + 0.25 * rng()), moss: 0, ground: g0 - 2 });
+      for (let i = 0; i < n; i++) { const sh = rng() * 0.3, hh = hr - 0.32 - sh; // (each width its own length and tone, a patch on two: a back that is cloth, not a board)
+        B.add(B.box(cw / n + 0.01, hh, 0.016, { seg: 9 }), ch(M, -cw / 2 + (i + 0.5) * (cw / n), hh / 2 + 0.3 - 0.02 + sh, zb - 0.045 + (i % 2) * 0.025, 0, (i % 2 ? 1 : -1) * 0.22, 0), { color: col.clone().multiplyScalar(0.62 + 0.5 * rng()), moss: 0, ground: g0 - 2 });
+        if (i === 1 || i === 4) B.add(B.box(cw / n * 0.6, 0.34, 0.012, { seg: 9 }), ch(M, -cw / 2 + (i + 0.5) * (cw / n), 0.9 + i * 0.18, zb - 0.07 - (i % 2) * 0.012, 0, (i % 2 ? 1 : -1) * 0.22, 0.1), { color: worn(i === 1 ? V.linen : V.teal, rng, 0.4, 0.2).multiplyScalar(0.7), moss: 0, ground: g0 - 2 }); }
       R.wall(-cw / 2, zb, cw / 2, zb, 0, 2.2, 0.1); }
     dirty(B, from, 0.15, rng);
     // the balance: a post on the counter, a beam out of true, two pans on three cords; the perch on the beam
@@ -179,7 +186,7 @@ export function shops(Q) {
     // the peg on the west pole, at a pack's height
     beam(B, M, [-hw + 0.01, 1.5 * 1, zb + 0.0], [-hw - 0.01, 1.54, zb + 0.16], 0.022, { color: L.wood, moss: 0, ground: g0 });
     Q.places.push({ what: 'the Tare: the pedlar\'s empty peg', ...R.W(-hw, 1.52, zb + 0.14), shop: 'lees-stall-salt' });
-    tradeBoard(B, ch(M, hw - 0.07, 2.05, zb + p.d - 0.3 + 0.03), 'cone', rng, { size: 0.5, reach: 0.6, turn: 0.6 });
+    tradeBoard(B, ch(M, hw - 0.07, 2.42, zb + p.d - 0.3 - 0.03, 0, Math.PI, 0), 'cone', rng, { size: 0.36, reach: 0.5, turn: 0.6 }); // (in under the cloth, over the counter's end: its foot at 1.9 m, off the walked line)
     // loaves of salt on the counter, sacks by it
     for (const [x, h] of [[-0.75, 0.3], [-0.42, 0.22], [-0.1, 0.36]]) saltCone(B, M, x, top + 0.07, zc + (x + 0.4) * 0.1, h, rng);
     sack(B, M, -1.0, 0, zc + 0.62, 0.42, 0.5, rng); sack(B, M, -0.62, 0, zc + 0.78, 0.36, 0.4, rng); sack(B, M, 0.95, 0, zc + 0.85, 0.44, 0.56, rng);

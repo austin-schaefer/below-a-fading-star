@@ -176,8 +176,8 @@ export function fountain(Q, plot) {
     const reach = P(rad(-133), ro(1.7) + 0.02, 1.72); path.push([(tops[2][0] + reach[0]) / 2, 2.1, (tops[2][2] + reach[2]) / 2], reach);
     for (let k = 0; k < path.length - 1; k++) beam(B, M, path[k], path[k + 1], 0.035 - k * 0.003, stem);
     const leafC = new THREE.Color('#8e9a58');
-    for (let k = 0; k < (low ? 12 : 26); k++) { const s = 3.2 + rng() * (path.length - 4.25), i = Math.floor(s), t = s - i, a = path[i], b = path[i + 1]; const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, z = a[2] + (b[2] - a[2]) * t;
-      B.add(B.box(0.12, 0.008, 0.085, { seg: 9 }), ch(M, x + (rng() - 0.5) * 0.06, y - 0.03 - rng() * 0.05, z + (rng() - 0.5) * 0.06, (rng() - 0.5) * 1.2, rng() * 6, (rng() - 0.5) * 1.2), { color: worn(leafC, rng, 0.1, 0.25), moss: 0, ground: g0 - 4 }); }
+    for (let k = 0; k < (low ? 26 : 48); k++) { const s = 2.2 + rng() * (path.length - 3.25), i = Math.floor(s), t = s - i, a = path[i], b = path[i + 1]; const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, z = a[2] + (b[2] - a[2]) * t;
+      const lw = 0.17 + rng() * 0.1; B.add(B.box(lw, 0.008, lw * 0.75, { seg: 9 }), ch(M, x + (rng() - 0.5) * 0.03, y - 0.012 - rng() * 0.02, z + (rng() - 0.5) * 0.03, (rng() - 0.5) * 1.5, rng() * 6, (rng() - 0.5) * 1.5), { color: worn(leafC, rng, 0.1, 0.25), moss: 0, ground: g0 - 4 }); } // (each leaf's middle on the stem: none hangs off it in air)
   }
   const nw = R.W(Math.sin(NOTCH) * (ro(0.5) - 0.02), 0.5, Math.cos(NOTCH) * (ro(0.5) - 0.02)), c = R.W(0, 0, 0), spW = R.W(p0[0], 0, p0[2]), tailW = R.W(tail[0], 0, tail[2]);
   return { R, M, x: c.x, z: c.z, notch: nw, post: spW, tail: tailW, tipY: Q.Y + tip[1], seats };
