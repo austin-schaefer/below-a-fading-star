@@ -568,6 +568,51 @@ const HELPERS = `(() => {
   check(GL.halo?.shader && GL.halo.round, 'stair (#49): the lamp-tender\'s halo is a round soft point, not a square', GL.halo);
   const bad = Object.entries(GL.faces).filter(([, v]) => v > 0);
   check(Object.keys(GL.faces).length >= 3 && GL.galleryLamps >= 3 && !bad.length, 'lamps (#41\'s kind): no two faces of the stair\'s lamp, the cage\'s or the gallery\'s warders\' lamps lie in one plane', bad.length ? bad : `${Object.keys(GL.faces).length} meshes, ${GL.galleryLamps} gallery lamps`);
+
+  // the eye up a stair of each make, whatever the frame times (v15-R1, the owner's "visual jitter is back ascending
+  // stairs" at 46 to 60 fps): each walked up on W twice, at an even 60 Hz and on a seeded uneven clock (8 to 55 ms
+  // frames), and the eye's height compared at the same place on the way. Stacked treads (the Heliarch's foot, the
+  // Lees' stair, the Noon road's flight), the Span's west stair, the Pit's slabs. By the clock alone the eye stood
+  // 12 to 19 mm rms off its even self (the village's flights 12 to 16, the Span's 19): over 10 fails (14 on the Span).
+  const EYEW = await page.evaluate((ids) => {
+    const fp = window.__fp, p = fp.player, out = {};
+    const walk = (path, clock) => {
+      let s = 12345; const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+      const dtOf = () => (clock ? (8 + 32 * rnd() * rnd() + (rnd() < 0.1 ? 15 : 0)) / 1000 : 1 / 60);
+      fp.controls.placeAt(path[0][0], path[0][1], path[0][2]); p.vel.set(0, 0, 0); p.keys.clear();
+      for (let i = 0; i < 30; i++) fp.controls.update(1 / 60);
+      p.keys.add('KeyW');
+      const log = []; let k = 1, d = 0, lx = p.pos.x, lz = p.pos.z;
+      for (let n = 0; n < 6000 && k < path.length; n++) {
+        while (k < path.length && Math.hypot(path[k][0] - p.pos.x, path[k][1] - p.pos.z) < 0.6) k++;
+        if (k < path.length) p.yaw = Math.atan2(-(path[k][0] - p.pos.x), -(path[k][1] - p.pos.z));
+        fp.controls.update(dtOf());
+        d += Math.hypot(p.pos.x - lx, p.pos.z - lz); lx = p.pos.x; lz = p.pos.z;
+        log.push([d, p.eyeY]);
+      }
+      p.keys.clear();
+      return { log, top: k >= path.length };
+    };
+    for (const id of ids) {
+      const a = fp.ascents.list.find((x) => x.id === id);
+      if (!a) { out[id] = null; continue; }
+      const E = walk(a.path, 0), U = walk(a.path, 1);
+      let j = 0, sq = 0, mx = 0, n = 0;
+      for (const [s, y] of U.log) {
+        while (j < E.log.length - 2 && E.log[j + 1][0] < s) j++;
+        const A = E.log[j], B = E.log[j + 1]; if (!B || s < A[0] || s > B[0]) continue;
+        const dy = y - (A[1] + (B[1] - A[1]) * ((s - A[0]) / (B[0] - A[0] || 1))); sq += dy * dy; n++; mx = Math.max(mx, Math.abs(dy));
+      }
+      out[id] = { rms: Math.sqrt(sq / (n || 1)) * 1000, max: mx * 1000, n, top: E.top && U.top };
+    }
+    return out;
+  }, ['heliarch-foot', 'lees-stair', 'noon-main', 'span-west', 'pit-stair']);
+  // (the Span's flights turn on landings, where the two clocks' walkers take the corner on lines a little apart: 14 mm)
+  for (const [id, r] of Object.entries(EYEW)) {
+    const lim = id === 'span-west' ? 14 : 10;
+    if (!r) { check(false, `eye (R1): ${id} is registered to walk`); continue; }
+    check(r.top && r.n > 50 && r.rms <= lim, `eye (R1): up ${id} the eye rides the same line whatever the frame times (within ${lim} mm rms of its even-clock self)`, `${f2(r.rms)} mm rms, ${f2(r.max)} max, ${r.n} frames`);
+  }
   await page.close();
 }
 
