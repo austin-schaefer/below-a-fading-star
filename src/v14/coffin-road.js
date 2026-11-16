@@ -358,7 +358,7 @@ export async function build(ctx) {
 
   // ---- the floor: the stair, the raft, the spurs, the road and the passage, one stacked floor with held edges; the
   // water under it holds whoever falls in until the road takes them back (below)
-  ctx.addWalkable(floor, { stack: true, keep: true, name: 'coffin-road' });
+  ctx.addWalkable(floor, { stack: true, keep: 'up', name: 'coffin-road' }); // (v15-W3: open: off it is the water, and the water puts a walker back)
   const HALF = NAVE.walls + 0.5, CATCH = WY - 1.25;
   const inHall = (x, z) => x > NAVE.x0 + 9 && x < NAVE.x1 - 0.5 && Math.abs(z - NAVE.z) < HALF - 0.4;
   const water = { fn: (x, z) => (inHall(x, z) ? CATCH : null) };

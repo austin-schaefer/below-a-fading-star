@@ -90,7 +90,7 @@ export function bridge(K, o) {
     if (t < 0 || t > len || u > w / 2 || u < -w / 2) return null;
     return ay + dy * (t / len);
   };
-  K.addFloor(floor, { name: o.name, keep: true, box: boxOf([[ax, az], [bx, bz]], w) });
+  K.addFloor(floor, { name: o.name, keep: o.rails !== false ? true : 'up', box: boxOf([[ax, az], [bx, bz]], w) }); // (held where its rails are drawn)
   if (o.register !== false) K.ascent({ id: o.name, held: true, offs: [0.5], path: [[ax - fx * 1.2, az - fz * 1.2, ay], [ax, az, ay], [bx, bz, by], [bx + fx * 1.2, bz + fz * 1.2, by]] });
   return { floor, len };
 }
@@ -103,7 +103,10 @@ export function roofWalk(K, o) {
     B.add(B.box(0.24, h, len + 0.24, { chip: 0.03, seed: i }), frame(ax, o.y, az, (bx - ax) / len, (bz - az) / len).multiply(mat(0, h / 2, len / 2)), { color: jit(col, 0.9), moss: 0.25, ground: o.y - 3 });
   }
   const floor = polyFloor(P, o.y);
-  K.addFloor(floor, { name: o.name, keep: true, box: boxOf(P, 0.3) });
+  // held on the sides that carry a parapet, open on the rest (v15-W3: what is seen holds)
+  const par = o.parapet ?? [true, true, true, true];
+  const keep = (x, z) => { let best = Infinity, k = 0; for (let i = 0; i < 4; i++) { const [ax, az] = P[i], [bx, bz] = P[(i + 1) % 4], ux = bx - ax, uz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / (ux * ux + uz * uz))), d = Math.hypot(x - ax - ux * t, z - az - uz * t); if (d < best) { best = d; k = i; } } return !!par[k]; };
+  K.addFloor(floor, { name: o.name, keep, box: boxOf(P, 0.3) });
   return { floor };
 }
 

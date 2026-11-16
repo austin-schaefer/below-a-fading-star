@@ -617,7 +617,7 @@ export async function build(ctx) {
 
   // ---- the floors: the passage's (one stacked floor with held edges, the bridge's deck in the Gulf), and a catch at
   // the bottom of the Gulf that gives a walker back to the bridge
-  ctx.addWalkable(P.floor, { stack: true, keep: true, name: 'passage' });
+  ctx.addWalkable(P.floor, { stack: true, keep: 'up', name: 'passage' }); // (v15-W3: the rock holds; off the Gulf's arch is open)
   ctx.addWalkable(P.catchFloor, { stack: true, keep: true, name: 'passage-gulf' });
   // what stands over the way: an uncapped collider is a column to the sky and down through the ground. The only ones
   // over this way are the Pit's rim ring (v4/paths.js), which stands across the Gate; capOver touches those alone: a

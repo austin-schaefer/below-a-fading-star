@@ -498,15 +498,12 @@ export async function build(ctx) {
   const lamps = lampAt.map(([x, y, z], j) => { const L = new THREE.PointLight(WARM, j === BEACON ? 3.5 : 1.8, j === BEACON ? 14 : 9, 2); const k = 0.45 / Math.hypot(x - C.x, z - C.z); L.position.set(x - (x - C.x) * k, y + 0.05, z - (z - C.z) * k); L.name = 'pit-lamp'; scene.add(L); return L; });
 
   // ---- floors and colliders: the stair (held edges), the Nadir's ring, the sheers' feet, the reel
-  ctx.addWalkable(stair.floor, { stack: true, keep: true, name: 'pit-stair' });
+  ctx.addWalkable(stair.floor, { stack: true, keep: 'up', name: 'pit-stair' }); // (v15-W3: the wall holds; the open side drops to the floor)
   let colliders = 0;
   if (ctx.addCollider) {
-    let lx = Infinity, lz = Infinity;
-    for (let b = 0; b < 360; b += 2) {
-      const [dx, dz] = dirOf(b), r = nadirR(b) + NADIR.guard, x = C.x + dx * r, z = C.z + dz * r;
-      if (Math.hypot(x - lx, z - lz) < 0.4) continue;
-      ctx.addCollider({ x, z, r: 0.3, y: yC - 3, h: 4.2, stand: false }); colliders++; lx = x; lz = z;
-    }
+    // the Nadir's mouth is open (v15-W3: what is seen holds, and nothing is seen there): a walker who goes in falls into
+    // the night under it and wakes a few metres back from its lip (src/v12/fall.js's trap, whether or not falling costs)
+    (ctx.fallTraps ||= []).push((x, z, feet) => feet < yC - 4 && Math.hypot(x - C.x, z - C.z) < NADIR.r + 1.5);
     for (const [x, y, z] of legFeet) { ctx.addCollider({ x, z, r: 0.35, y: y - 0.5, h: 4, stand: false }); colliders++; }
     ctx.addCollider({ x1: reelX - ax2 * 0.75, z1: reelZ - az2 * 0.75, x2: reelX + ax2 * 0.75, z2: reelZ + az2 * 0.75, r: 0.55, y: reelG - 0.2, h: 1.4, stand: false }); colliders++;
   }

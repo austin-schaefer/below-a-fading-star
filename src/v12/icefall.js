@@ -80,7 +80,7 @@ export async function build(ctx) {
     colliders.push({ x: sd.x + nx * (h0 - 0.55), z: sd.z + nz * (h0 - 0.55), r: 0.45, y: sd.y - 0.5, h: 3.2, stand: false });
     return { x: base[0], y: base[1], z: base[2], h: 3.4, r: 0.4, dir, rot: 0.3, tint: 0.95 };
   })();
-  ctx.addWalkable(lineFloor(SLOT.pts, slotHalf), { stack: true, keep: true, name: 'icefall-slot' });
+  ctx.addWalkable(lineFloor(SLOT.pts, slotHalf), { stack: true, keep: 'up', name: 'icefall-slot' });
   // the cleft's mouth glows: a cold light just inside, so the gate in the ice front reads from the Lattice
   {
     const L = new THREE.PointLight(new THREE.Color(ctx.palette.crystal), 60, 30, 2);
@@ -128,13 +128,13 @@ export async function build(ctx) {
     }
     colliders.push({ x1: B.hx - B.vx * B.half, z1: B.hz - B.vz * B.half, x2: B.hx + B.vx * B.half, z2: B.hz + B.vz * B.half, r: 0.5, y: H(B.hx, B.hz) - 1, h: B.hy - H(B.hx, B.hz) - 0.4, stand: false });
   }
-  // the block: its north side (the gap against R2's foot), its head and its south side above 11 m along (6 m up) held;
-  // off its low south side a walker steps down onto T1 on purpose
-  ctx.addWalkable(blockFloor(), { stack: true, keep: (x, z) => { const dx = x - B.fx, dz = z - B.fz, a = dx * B.ux + dz * B.uz; return dx * B.vx + dz * B.vz > 0 || a > B.L || a > 11; }, name: 'icefall-block' });
+  // the block: its edges open (v15-W3: nothing is drawn on them): off its low south side a walker steps down onto T1,
+  // off its high end they fall to T1 (a long fall wakes them back on the block)
+  ctx.addWalkable(blockFloor(), { stack: true, keep: 'up', name: 'icefall-block' });
 
   // the bridge: its start on the block's top near its head (plan.levels()), its floor the lead's top facet
-  // the bridge: held where it lies over R2's face (below is the face, not a floor); its ends open onto T1 and T2
-  ctx.addWalkable(lineFloor(BRIDGE.pts, BRIDGE.half), { stack: true, keep: (x, z) => { const s = sOf(z); return s > 39.6 && s < 54.5; }, name: 'icefall-bridge' });
+  // the bridge: its edges open (v15-W3): off it over R2's face a walker falls to T1 and wakes back on the lead
+  ctx.addWalkable(lineFloor(BRIDGE.pts, BRIDGE.half), { stack: true, keep: 'up', name: 'icefall-bridge' });
 
   parts.push(['stair', G.p.length / 9]);
   // the stair
@@ -213,8 +213,8 @@ export async function build(ctx) {
   const nFaces = buildFaces(G, rng, H, noise, low, {
     r2: (x) => (Math.abs(x - bridgeX(r2top)) < 3.2 ? BRIDGE.pts[0][2] - 0.6 : null),
   }, lines);
-  // the faces' feet stop a walker on the terrace below; their lips are held (a kerb of ice the height of a person,
-  // invisible past the teeth), but where the climb passes over or down them: the slot's cleft, the bridge, the slump
+  // the faces' feet stop a walker on the terrace below (the drawn face); their lips are open (v15-W3: what is seen
+  // holds): the edge-guard keeps a plain walk along a lip on it, and one who goes over falls to the terrace below
   const kerb = (pts, open, y0, h) => {
     for (let i = 0; i < pts.length - 2; i += 2) {
       const a = pts[i], b = pts[i + 2], mx = (a[0] + b[0]) / 2;
@@ -225,9 +225,6 @@ export async function build(ctx) {
   kerb(lines.feet[0], (x) => Math.abs(x - SLOT.pts[0][0]) < 4.5, (p) => p[2], 9);
   kerb(lines.feet[1], (x) => Math.abs(x - bridgeX(r2top)) < 4, (p) => p[2], 9);
   kerb(lines.feet[2], (x) => slumpW(x) > 0.02, (p) => p[2], 9);
-  kerb(lines.lips[0], () => false, (p) => H(p[0], p[1]) - 1, 2.8); // all along, the ledge south of the slot too (the cleft is a gap in the face: no lip there)
-  kerb(lines.lips[1], (x) => Math.abs(x - bridgeX(r2top)) < 3.5, (p) => H(p[0], p[1]) - 1, 2.8);
-  kerb(lines.lips[2], () => false, (p) => H(p[0], p[1]) - 1, 2.8);
 
   parts.push(['seracs', G.p.length / 9]);
   // ---------------------------------------------------------------- the seracs

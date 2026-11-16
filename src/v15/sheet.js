@@ -63,7 +63,7 @@ export function buildSheet(ctx) {
     }
   });
   registerAll(ctx, records, 'village-sheet');
-  ctx.addWalkable((x, z) => (Math.abs(x - S.x) <= W / 2 && Math.abs(z - S.z) <= D / 2 ? S.y : null), { stack: true, keep: true, name: 'village-sheet-deck' });
+  ctx.addWalkable((x, z) => (Math.abs(x - S.x) <= W / 2 && Math.abs(z - S.z) <= D / 2 ? S.y : null), { stack: true, keep: 'up', name: 'village-sheet-deck' });
   const mesh = ctx.strata.mesh(B, 'late', 'village-sheet'), blocks = ctx.strata.mesh(E, 'elder', 'village-sheet-elder');
   ctx.scene.add(mesh, blocks);
   ctx.village.sheet = { ...S, w: W, d: D, plots, records, meshes: [mesh, blocks] };

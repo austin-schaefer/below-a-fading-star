@@ -375,7 +375,7 @@ export function buildTop(ctx, P, { low }) {
     for (const [A, Bq] of struts) for (const c of [n1, nN, nW]) if (same(A, c) && Bq[1] > A[1] + 1) up.push(sq(c, TH / 2));
     const hi = (x, z) => { for (const R of up) if (inR(R, x, z, 0.05)) return true; return false; };
     const floor = (x, z) => { if (hi(x, z)) return null; for (const R of tops) if (inR(R, x, z)) return yT; if (inR(mN, x, z) || inR(mW, x, z)) return yM; return null; };
-    ctx.addWalkable(floor, { stack: true, name: 'stair-lattice', keep: (x, z) => tops.some((R) => inR(R, x, z, 0.9)) && !inR(mN, x, z) && !inR(mW, x, z) });
+    ctx.addWalkable(floor, { stack: true, name: 'stair-lattice', keep: 'up' }); // (v15-W3: nothing drawn at the tops' edges: open)
     for (const R of up) for (const [a, b] of [[[R.x0, R.z0], [R.x1, R.z0]], [[R.x1, R.z0], [R.x1, R.z1]], [[R.x1, R.z1], [R.x0, R.z1]], [[R.x0, R.z1], [R.x0, R.z0]]]) ctx.addCollider({ x1: a[0], z1: a[1], x2: b[0], z2: b[1], r: 0.1, y: yT - 0.7, h: 40, stand: false });
     lattice.userData.climb = climb(ctx, { name: 'stair-lattice-ladder', mod: 'stair', foot: [lx, cz, yd], top: [fx, cz, yT], n: [-1, 0], back: [0.45, 0.4],
       head: [n1[0] + NODE / 2 - 0.75, cz], away: [n1[0] - 0.4, cz], from: [lx + 2.6, cz] });

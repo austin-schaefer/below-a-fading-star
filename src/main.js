@@ -98,7 +98,7 @@ const MODULES = [
   ['bell', () => import('./v10/bell.js')], // v10-A3: the bell under the Span, its ram, and the candles it calls (?bell=0)
   ['acts', () => import('./v10/acts.js')], // v10 (#24): the offer, its input and the marks' memory for every act (?acts=0)
   ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
-  ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
+  ['fall', () => import('./v12/fall.js')], // v12-H0, v15-W3: a long fall blacks out and wakes the walker a few metres back from the lip (?fall=0 to turn off)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
   ['villagerow', () => import('./v15/row.js')], // v15-V1: the Strake, one row of five buildings of five ages on the Lees' bench, from the makers in src/v15/houses/ (?v15=0; ?v15=kit adds the makers' contact sheet)
@@ -199,6 +199,7 @@ async function start() {
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
   //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), below (v14/under.js:
   //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
+  // - fallTraps (v15-W3, read by v12/fall.js): fn(x, z, feet) → true where a landing has no way out; the walker wakes back from the lip
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
     world: WORLD, sun: SUN, landmarks: LANDMARKS, causeway: CAUSEWAY_V4, water: WATER, palette: PALETTE, spawn: SPAWN,

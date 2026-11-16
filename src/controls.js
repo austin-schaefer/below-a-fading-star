@@ -22,7 +22,7 @@ export function buildControls(ctx) {
     locked: false, everLocked: false, lockFailed: false, dragLook: false, enabled: false, moving: false, stepPhase: 0,
     keys: new Set(), colliders: [],
     onStep: null, hops: 0, hopping: false, onTop: false, carried: false, intent: 0, lookQuiet: 0,
-    onStack: null, fallTop: 0, floorBelow: 0, edgeDwell: 0, // v12: the stacked floor underfoot, the fall's top, the floor under the feet, a lip's press
+    onStack: null, fallTop: 0, floorBelow: 0, atLip: 0, // v12: the stacked floor underfoot, the fall's top, the floor under the feet; v15: held at a lip (0..1, the eye's lean)
   };
   state.pos.y = terrain.heightAt(state.pos.x, state.pos.z) + state.eye;
   state.hurrying = false;
@@ -297,9 +297,11 @@ export function buildControls(ctx) {
   //   stacked floor where it is at or over the ground and it holds them until it ends: a walkway may pass under higher
   //   ground (a cut in a cliff, a ledge under an overhang, a crevasse's floor), one floor may run under another, and a
   //   stair may leave the ground and come back to it. A stacked floor counts as level (no slope push) and no wading.
-  //   `keep`: its edges hold (true), or hold where keep(x, z) is true at the point just past the edge; an edge onto a
+  //   `keep`: its edges hold (true), or hold where keep(x, z) is true at the point just past the edge, or ('up') hold
+  //   only where the floor beside is higher (a cut's side, a tunnel's wall) and are open drops elsewhere; an edge onto a
   //   floor or the ground within a step is always open. A held edge stops the walker as a wall does, sliding along it,
-  //   at the cost of one call of fn a frame (the edge-guard below).
+  //   at the cost of one call of fn a frame (the edge-guard below). Hold an edge only where something is drawn there
+  //   (a rail, a parapet, a wall): what is seen holds (v15-W3).
   const walkables = [], replacers = [], stacks = [];
   const STACK_UP = 0.6, STACK_ENTER = 0.15; // a riser up onto one; how far under the ground one may start and still be stepped onto
   function addWalkable(fn, opts) {
@@ -390,7 +392,7 @@ export function buildControls(ctx) {
     }
     state.pos.set(x, floor + state.eye, z);
     state.vel.set(0, 0, 0); state.vy = 0; state.onGround = true; state.hopping = false; state.onTop = false;
-    state.fallTop = floor; state.onStack = on; lipDwell = 0;
+    state.fallTop = floor; state.onStack = on; lipLean = 0;
     eyeOff = 0; lastY = null;
     return { x, z, y: floor };
   }
@@ -539,52 +541,46 @@ export function buildControls(ctx) {
     const ox = state.pos.x, oz = state.pos.z, feet0 = state.pos.y - state.eye;
     guardT += dt;
     let mv = resolve(ox + state.vel.x * dt, oz + state.vel.z * dt, feet0, mvA);
-    // the edge-guard (v12): a held edge (a stacked floor's keep) stops a walker on the ground as a wall does; a lip
-    // (a drop of more than LIP) stops one who is not steering at it, and one who is, until they press on for DWELL
-    // (or at once with a hurry: Shift, or the touch stick pushed past 0.8). Stopped, they slide along the edge. In a hop
-    // the same, but a hop steered at the lip goes over at once: a hop drifting along a parapet's top lands on it again,
-    // as it did not before (the Span's slips). In a hop the drop is measured from the floor under the last position
-    // (floorBelow), not from the feet in the air, so only a break in the floor counts: a hop off a 1 m step or down a
-    // bank, steered or not, goes as it always did. A fall (in the air, not hopping) is not steered.
-    let leaning = false, stuck = false;
+    // the edge-guard (v15-W3, the owner: "if we're gonna have pits, and a jump button, we should allow you to go up to
+    // edge and fall in and jump"): only what is seen holds. A held edge (a stacked floor's keep: where a rail, a
+    // parapet or a cut's side is drawn) stops a walker as a wall does, in a hop too. A lip (a drop of more
+    // than LIP) stops only a plain walk on the ground that is steered along it (within about 30 degrees of its line):
+    // pushed squarely at it (aim > AIM), hurrying (Shift, or the touch stick past 0.8), or in a hop, the walker goes over
+    // at once. No timed hold. Stopped, they slide along the lip and the eye leans out over it. Pushing on where no slide
+    // is left (an outer corner: the drop on more than half the sides), they go over. In a hop the up-wall is measured
+    // from the floor under the last position (floorBelow), so a hop does not climb out of a cut.
+    let leaning = false;
     const inHop = state.hopping && !state.onGround;
     if ((state.onGround && !state.hopping) || inHop) {
       const ref = inHop ? state.floorBelow : feet0;
       const kind = edgeKind(mv, ref);
-      if (kind) {
+      if (kind === EDGE_HELD || (kind === LIP_SOFT && !inHop && !hurry)) {
+        const tx = mv.x, tz = mv.z;
         edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
-        let over = false;
-        if (kind === LIP_SOFT && aim > AIM) {
-          // a hop or a hurry squarely at the lip is meant; one glancing at a corner (a notch between two parapet
-          // pieces' rounded ends, 45 degrees off the line of travel) is not
-          if (inHop || hurry) { if (aim > AIM_AT_ONCE) over = true; }
-          else { leaning = true; lipDwell += dt; if (lipDwell >= DWELL) over = true; }
-        }
-        // pushing on, held at an outer corner (the drop on more than half the sides round them: no way along either edge)
-        // for DWELL: over, whichever way they push, so nobody is kept on a block they landed on
-        if (kind === LIP_SOFT && !over && stuckT >= DWELL) over = true;
-        if (!over) {
+        if (kind === EDGE_HELD || aim <= AIM) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
           const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
           mv = resolve(sx, sz, feet0, mvB);
           // the slide still goes over (a notch where two pieces' rounded ends meet): the same, a few cm in from the edge
           if (edgeKind(mv, ref)) mv = resolve(sx - lipN.x * 0.08, sz - lipN.z * 0.08, feet0, mvB);
           if (edgeKind(mv, ref)) {
-            mv = resolve(ox, oz, feet0, mvB);
-            if (len > 0.05 && kind === LIP_SOFT && nDrops >= 5) { stuck = true; stuckT += dt; }
+            // no slide left: at an outer corner, a walker pushing on goes over; anywhere else, they stand
+            if (kind === LIP_SOFT && len > 0.05 && aim > 0 && nDrops >= 5) mv = resolve(tx, tz, feet0, mvB);
+            else mv = resolve(ox, oz, feet0, mvB);
           }
-          const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
-          if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
+          if (!edgeKind(mv, ref)) {
+            const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
+            if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
+            leaning = kind === LIP_SOFT && aim > 0.15;
+          }
         }
       }
     }
-    if (leaning) lipQuiet = 0; else if ((lipQuiet += dt) > 0.25) lipDwell = 0;
-    if (!stuck) stuckT = 0;
-    lipLean += ((leaning ? Math.min(1, lipDwell / DWELL) : 0) - lipLean) * Math.min(1, dt * 8);
+    lipLean += ((leaning ? 1 : 0) - lipLean) * Math.min(1, dt * 6);
+    state.atLip = lipLean;
     state.pos.x = mv.x; state.pos.z = mv.z;
     state.onStack = mv.stack;
-    state.edgeDwell = lipDwell;
     let floorY = mv.y;
     const onTop = mv.onTop, groundY = mv.ground, wl = mv.wl;
     const wasOnGround = state.onGround;
@@ -650,13 +646,14 @@ export function buildControls(ctx) {
     return out;
   }
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
-  // there (onto nothing within a step, down or up: out of a cut is a wall); LIP_SOFT: down more than LIP; 0: neither.
-  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, DWELL = 0.5, AIM = 0.7, AIM_AT_ONCE = 0.87; // cosines: 45 and 30 degrees
-  let lipDwell = 0, lipQuiet = 0, lipLean = 0, stuckT = 0, nDrops = 0;
+  // there onto nothing within a step, down or up (keep: 'up' holds only up: out of a cut, through a tunnel's side);
+  // LIP_SOFT: down more than LIP; 0: neither.
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, AIM = 0.5; // AIM: the cosine of 60 degrees off square, 30 off the lip's line
+  let lipLean = 0, nDrops = 0;
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {
     const on = state.onStack;
-    if (on && on.keep && m.stack !== on && (m.y < feet - 0.6 || m.y > feet + STACK_UP) && (on.keep === true || on.keep(m.x, m.z))) return EDGE_HELD;
+    if (on && on.keep && m.stack !== on && (m.y > feet + STACK_UP || (m.y < feet - 0.6 && on.keep !== 'up')) && (on.keep === true || on.keep === 'up' || on.keep(m.x, m.z))) return EDGE_HELD;
     return m.y < feet - LIP ? LIP_SOFT : 0;
   }
   // the edge's outward normal into lipN: the mean of the eight directions round (x, z), 0.35 m out, in which a step
@@ -670,16 +667,22 @@ export function buildControls(ctx) {
   const DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
   function edgeNormal(x, z, ref, feet, mx, mz, tops) {
     if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; nDrops = nAt.n; return; }
-    let sx = 0, sz = 0, n = 0;
+    let sx = 0, sz = 0, n = 0, ax = 0, az = 0, bxz = 0;
     for (const [cx, cz] of DIRS) {
       pm.x = x + cx * 0.35; pm.z = z + cz * 0.35;
       floorAt(pm.x, pm.z, feet, tops, probe, state.onStack);
       pm.y = probe.y; pm.stack = probe.stack;
-      if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; }
+      if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; ax += cx * cx; az += cz * cz; bxz += cx * cz; }
     }
     const l = hyp(sx, sz);
     nDrops = n;
     if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return; }
+    // both sides drop (a beam, a plank, a ridge): the normal is the axis the drops lie on, turned to the move's side
+    // (the drops' principal axis), so a walk along a narrow way slides along it; a lone top dropping all round, the move
+    if (n && n < 7 && Math.abs(ax - az) + Math.abs(bxz) > 0.5) {
+      const th = 0.5 * Math.atan2(2 * bxz, ax - az), c = Math.cos(th), sn = Math.sin(th), sg = c * mx + sn * mz < 0 ? -1 : 1;
+      lipN.x = c * sg; lipN.z = sn * sg; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return;
+    }
     const ml = hyp(mx, mz) || 1;
     lipN.x = mx / ml; lipN.z = mz / ml; nAt.x = Infinity;
   }
@@ -709,7 +712,7 @@ export function buildControls(ctx) {
     lastY = state.pos.y;
     state.eyeY = state.pos.y + eyeOff;
 
-    // at a lip, pressing on: the eye leans out over it (v12 edge-guard)
+    // held at a lip: the eye leans out over it (the edge-guard)
     const lean = lipLean * 0.22;
     camera.position.set(state.pos.x + right.x * bobX + lipN.x * lean, state.eyeY + bobY - wading * 0.15 - lean * 0.2, state.pos.z + right.z * bobX + lipN.z * lean);
     camera.rotation.order = 'YXZ';

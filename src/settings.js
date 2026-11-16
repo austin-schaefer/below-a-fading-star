@@ -237,9 +237,9 @@ export function buildSettings(ctx) {
     syncPos();
   });
 
-  // --- a long fall costs (v12): off by default, remembered in 'fp-fall'; src/v12/fall.js reads it (ctx.fall.refresh)
+  // --- a long fall costs (v12; on by default since v15-W3): remembered in 'fp-fall'; src/v12/fall.js reads it (ctx.fall.refresh)
   const fallBtn = $('set-fall');
-  const fallNow = () => { try { return localStorage.getItem('fp-fall') === '1'; } catch (e) { return false; } };
+  const fallNow = () => { try { return localStorage.getItem('fp-fall') !== '0'; } catch (e) { return true; } };
   function syncFall() {
     if (!fallBtn) return;
     const on = fallNow();

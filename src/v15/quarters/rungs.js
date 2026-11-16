@@ -220,7 +220,7 @@ export async function build(ctx) {
   // ([cx, cz] centre, [ux, uz] along, half length, half width, y), one stacked floor for the lot (none lies over another)
   const rects = [];
   const rect = (cx, cz, ux, uz, hl, hw, y) => rects.push({ cx, cz, ux, uz, hl, hw, y });
-  K.addFloor((x, z) => { let y = null; for (const r of rects) { const dx = x - r.cx, dz = z - r.cz, a = dx * r.ux + dz * r.uz; if (a > r.hl || a < -r.hl) continue; const b = dx * r.uz - dz * r.ux; if (b <= r.hw && b >= -r.hw && (y === null || r.y > y)) y = r.y; } return y; }, { name: 'rungs-leads', keep: true });
+  K.addFloor((x, z) => { let y = null; for (const r of rects) { const dx = x - r.cx, dz = z - r.cz, a = dx * r.ux + dz * r.uz; if (a > r.hl || a < -r.hl) continue; const b = dx * r.uz - dz * r.ux; if (b <= r.hw && b >= -r.hw && (y === null || r.y > y)) y = r.y; } return y; }, { name: 'rungs-leads', keep: 'up' }); // (v15-W3: the leads' edges are open)
 
   // ---------------------------------------------------------------- the Leads: crossings from roof to roof
   // Planks on two baulks laid from parapet to parapet, a stile of two plastered steps inside each (the parapets stand

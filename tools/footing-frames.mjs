@@ -48,7 +48,7 @@ function shooter(page, part) {
   return async (t) => {
     const f = `shots/wip/${prefix}-${part}-${String(n++).padStart(2, '0')}-${t}.png`;
     await page.screenshot({ path: f, timeout: 240000 });
-    const s = await page.evaluate(() => { const p = window.__fp.player, F = window.__fp.fall; return { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), feet: +(p.pos.y - p.eye).toFixed(2), dwell: +p.edgeDwell.toFixed(2), fall: F ? F.phase : null }; });
+    const s = await page.evaluate(() => { const p = window.__fp.player, F = window.__fp.fall; return { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), feet: +(p.pos.y - p.eye).toFixed(2), atLip: +p.atLip.toFixed(2), fall: F ? F.phase : null }; });
     console.log(`[saved] ${f}`, JSON.stringify(s));
   };
 }

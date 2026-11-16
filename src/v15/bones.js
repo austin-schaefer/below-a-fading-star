@@ -266,7 +266,7 @@ export async function build(ctx) {
     M.quadW([-RUN[run].dir[0] * sg, 0, -RUN[run].dir[1] * sg], q[0], q[1], q[2], q[3], dk);
   }
 
-  // ---------------------------------------------------------------- the floors: each tread a stacked floor, its edges held
+  // ---------------------------------------------------------------- the floors: each tread a stacked floor, its lips open
   const fr = { run: 0, s: 0, D: 0 };
   for (const b of bands) {
     const fn = (x, z) => {
@@ -278,9 +278,9 @@ export async function build(ctx) {
       return b.y;
     };
     lappet.floors[b.level] = fn;
-    ctx.addWalkable(fn, { stack: true, keep: true, name: `lappet-${b.level}` });
+    ctx.addWalkable(fn, { stack: true, keep: 'up', name: `lappet-${b.level}` }); // (v15-W3: a tread's lip is open: nothing is drawn on it)
   }
-  // the bench's edge over the lowest riser (the old ha-ha), where the foot is the Pennyworth: held as the treads are
+  // the bench's edge over the lowest riser (the old ha-ha), where the foot is the Pennyworth: open as the treads are
   {
     const y = LEVEL.bench.y;
     const fn = (x, z) => {
@@ -290,7 +290,7 @@ export async function build(ctx) {
       return b > 37.5 && b < 74 ? y : null; // (west of 37.5 the house's own corner stands on the edge)
     };
     lappet.floors.bench = fn;
-    ctx.addWalkable(fn, { stack: true, keep: true, name: 'lappet-bench-edge' });
+    ctx.addWalkable(fn, { stack: true, keep: 'up', name: 'lappet-bench-edge' });
   }
 
   // ---------------------------------------------------------------- the walls: nobody walks into a riser from below

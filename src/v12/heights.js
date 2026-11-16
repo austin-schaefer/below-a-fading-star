@@ -72,7 +72,7 @@ function buildTest(ctx) {
       { x0: xa + 12, x1: xa + 24, z0, z1, ax: 'x', y0: top, y1: top },
       { x0: xa + 24, x1: xa + 36, z0, z1, ax: 'x', y0: top, y1: gb },
     ];
-    ctx.addWalkable(floor(P), { stack: true, keep: true, name: 'test-bridge' });
+    ctx.addWalkable(floor(P), { stack: true, keep: 'up', name: 'test-bridge' });
     draw(P, 0.5);
     site.bridge = { x0: xa, x1: xa + 36, z: sz - 14, top };
     ctx.ascents.add({ id: 'test-bridge', test: true, path: [[xa - 3, sz - 14], [xa + 6, sz - 14], [xa + 18, sz - 14, top], [xa + 33, sz - 14], [xa + 39, sz - 14]], offs: [0.45, 0.55], held: true });
@@ -118,7 +118,7 @@ function buildTest(ctx) {
       { x0: xa + 30, x1: xa + 40, z0, z1, ax: 'x', y0: lo, y1: gb },
     ];
     // the ramps start at the ground's height: the walker steps onto them where they are level with it, and they hold
-    ctx.addWalkable(floor(P), { stack: true, keep: true, name: 'test-cut' });
+    ctx.addWalkable(floor(P), { stack: true, keep: 'up', name: 'test-cut' });
     draw(P, 0.3);
     site.cut = { x0: xa, x1: xa + 40, z: za, lo };
     ctx.ascents.add({ id: 'test-cut', test: true, path: [[xa - 3, za], [xa + 1, za], [xa + 20, za, lo], [xa + 39, za], [xa + 43, za]], offs: [0.5], held: true });
