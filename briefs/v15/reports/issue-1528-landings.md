@@ -123,3 +123,30 @@ The commands (`SHOT_ANGLE=metal nice -n 10`, port 8169) and their counts:
 - The Pennyworth's houses are open ground from its ramp. The door row passes them, but none is on a way of its own.
 - The turn and door rows use flood fills on a 0.25 m grid. They find shut landings and pockets, but they do not judge a squeeze a body fits through.
 - The Stump was a named place on the owner's list (#76): it is gone. The Pier Stair stands in for the Heliarch hand at the Squint.
+
+## Round two (the orchestrator, on the spine)
+
+1. **The foot flight still faces the turret: not fixed.** The turret is the Pomegranate House's north-west corner. Its middle is at run 1, s 30.6, D 23, on the stair's own axis (s 31), and its face is 2.0 m from the last tread.
+   - I tried moving the bastion 1.2 m in onto the Low Rung's edge, which steepens the timber patch to 0.244 m of going. The frames before and after barely differ: `shots/wip/v15-W4r2-pair-foot.png` (top row next, bottom row the move). The turret still fills the view down, and the patch became a 45-degree stair, so I reverted it.
+   - Turning the flight toward the fountain needs about 30 degrees west. The Strake's new house (s 21.2 to 28, out to D 20.8) stands in that line. Turning east opens onto the ramp, not the square.
+   - What would open it: move the turret (a v8 set piece), or narrow the Strake's five slots from 6.8 m to 6.4 m. Narrowing frees 2 m, but the fountain is placed on the sherd's line and would move with it. Both are the owner's call.
+2. **The ramp stays the spine.** A direct stair from the bench to the south door would have to run down the revetment through the cloth booth. Its poles lean on the revetment's own line, and it fills the door's pocket. The ramp is the Pennyworth's market street, with two stalls and the booth under it, the garden, the well and the Slip, and the switchback passes them. It is lit at both ends, and the spine walk takes it both ways. I did not show it reads as the obvious way: the Slip back to the door is still a turn a stranger has to find.
+3. **The Gullet's head:** the two dark blocks were the head deck's baulks, run on 0.35 m past its planks over the top tread, and the bar was the planks' edge between them. The baulks now stop under the planks (`bridge(..., over: [a, b])`). What is left is the top step's plank edge, at the level of the top step. Before: `deploy/shots/wip/v15-W4-orch-011-9-gullet-mid-up.png`. After: `shots/wip/v15-W4r2-gullet-003-9-gullet-mid-up.png`.
+
+`tools/landing-walk-owner.json` no longer has the stop where the Stump was.
+
+Spine walk (`tools/landing-walk-spine.json`): 66 of 66 stops, down and up. After plan: `shots/wip/v15-W4r2-plan-after.png`.
+
+Tests: `ONLY=ways,village,village-plan,geometry,roads,walk,edges,seams,heights tools/suite.sh 8169` gives 9 of 9 green:
+
+| test | PASS lines |
+|---|---|
+| ways | 219 |
+| village | 687 |
+| geometry | 132 |
+| edges | 214 |
+| heights | 198 |
+| roads | 67 |
+| walk | 13 |
+| village-plan | 7 |
+| seams | 3 |
