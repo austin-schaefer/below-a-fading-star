@@ -13,6 +13,7 @@ import { regionsHeight, regionsCoarse } from './regions.js'; // v4 systems: the 
 import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and foot
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
+import { padGround } from './pads.js';
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -394,6 +395,7 @@ export function heightAt(x, z) {
     const u = (h + 100) / 1.2;
     h -= m * (0.42 + 0.3 * 1.2 * Math.sin(2 * Math.PI * u) / (2 * Math.PI));
   }
+  h = padGround(h, x, z, heightAt); // v15-W6: level pads under what the old treads held (the Collation's table), eased into the wave (src/height/pads.js)
   // Causeway: a raised, level-ish bed
   {
     const cd = causewayNear(x, z, 8); // the exact distance where it is under 7.5 (all the bed reads), else 8 or more
