@@ -51,6 +51,7 @@ export const EXEMPT = [
   ['adust-beetles', 'beetles: they crawl on their own clock'],
   ['house-glows', "the house lamps' halos: light made visible, not a solid"],
   ['local-lights-glows', "the local lamps' halos: light made visible, not a solid"],
+  ['lees-noon', "the fountain of noon's light (v15-Q3): light made visible, not a solid"],
 ];
 // What everything else may rest on: the ground, what is laid flat on it, and water. Same matching, each with its reason.
 export const ANCHOR = [
