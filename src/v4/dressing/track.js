@@ -1,7 +1,9 @@
 // DC The Discontinued Track [Proposed] (plans/wilderness-v5.md): "a line of bare footprints crossing the Saltings' crust from
-// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (170, 150)
-// east to (215, 160), a 2 m strip. Left and right, one stride apart, each a slight hollow with a darker floor; where the
-// line crosses the causeway the slabs have no prints on them, and the line goes on in the same step on the far side.
+// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (177, 152),
+// 6 m off the causeway where the trods P39 and P40 leave it, south over the open crust to (176, 188), 12 m short of the Pit's
+// lip: a walker stepped off the road and went out onto the salt, and stops. A 2 m strip, crossing no road or trod (v15-F2:
+// the causeway's reroute past the Pit, #59, took its old line from (170, 150) to (215, 160)). Left and right, one stride
+// apart, each a slight hollow with a darker floor. A print the causeway or the water would take is dropped (none now).
 //
 // Two instanced quads (left feet, right feet) laid on the rendered terrain's triangles, the crust's own surface, each
 // carrying a baked normal map of the hollow so the low sun lights its bank and shades its floor. No shadows.
@@ -9,7 +11,7 @@ import * as THREE from 'three';
 import { CAUSEWAY_V4 } from '../../world.js';
 import { groundOf } from '../regions/common.js';
 
-export const TRACK = { from: [170, 150], to: [215, 160], stride: 0.78, half: 0.17, clear: 4.6 };
+export const TRACK = { from: [177, 152], to: [176, 188], stride: 0.78, half: 0.17, clear: 4.6 };
 
 // a foot's silhouette on a 64 x 128 grid (toes up): heel, arch, ball and five toes; left foot (the right is its mirror)
 function footMask(W, H) {

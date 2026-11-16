@@ -36,7 +36,7 @@ const r = await page.evaluate(async () => {
   out.track = { n: P.length, first: P[0], last: P[P.length - 1], minGap: Infinity, maxGap: 0, road: 0, offCrust: 0, under: 0 };
   for (let i = 1; i < P.length; i++) { const g = Math.hypot(P[i].x - P[i - 1].x, P[i].z - P[i - 1].z); out.track.minGap = Math.min(out.track.minGap, g); out.track.maxGap = Math.max(out.track.maxGap, g); }
   for (const p of P) { if (T.causewayDistance(p.x, p.z) < 3 ) out.track.road++; if (fp.regions.regionAt(p.x, p.z, {}).saltings < 0.5) out.track.offCrust++; if (T.isUnderwater(p.x, p.z)) out.track.under++; }
-  out.track.gaps = []; for (let i = 1; i < P.length; i++) { const g = Math.hypot(P[i].x - P[i - 1].x, P[i].z - P[i - 1].z); if (g > 1.5) out.track.gaps.push([+P[i - 1].x.toFixed(1), +P[i].x.toFixed(1)]); }
+  out.track.gaps = []; for (let i = 1; i < P.length; i++) { const g = Math.hypot(P[i].x - P[i - 1].x, P[i].z - P[i - 1].z); if (g > 1.5) out.track.gaps.push([+P[i - 1].x.toFixed(1), +P[i - 1].z.toFixed(1), +P[i].x.toFixed(1), +P[i].z.toFixed(1)]); }
   // the pegs
   const pg = fp.dressing.pegs, Q = pg.pegs;
   out.pegs = { n: Q.length, caps: pg.caps.map((c) => c.z), deep: 0, offLine: 0, minGap: Infinity, over: 0, wet: pg.wet };
@@ -87,8 +87,9 @@ check(r.demesne === 0 && r.strand === 0, 'the Demesne and the Strandline stay ne
 check(r.lumDrift < 0.002, 'the tint keeps the fog colour\'s luminance', `drift ${(100 * r.lumDrift).toFixed(3)} %`);
 const t = r.track;
 check(t.n >= 40 && t.n <= 60, 'the footprints are N', `N = ${t.n}`);
-check(Math.abs(t.first.x - 170) < 1.2 && Math.abs(t.last.x - 215) < 1.2, 'the footprints end at the plan\'s x (170 to 215)', `${t.first.x.toFixed(1)} to ${t.last.x.toFixed(1)}`);
-check(t.minGap > 0.6 && t.gaps.length === 1, 'evenly spaced, one gap where the causeway crosses', `gaps ${JSON.stringify(t.gaps)}, step ${t.minGap.toFixed(2)}`);
+// v15-F2: the plan's ends since the causeway's reroute (#59) took the old line, (170, 150) to (215, 160)
+check(Math.hypot(t.first.x - 177, t.first.z - 152) < 1.2 && Math.hypot(t.last.x - 176, t.last.z - 188) < 1.2, 'the footprints end at the plan\'s ends ((177, 152) to (176, 188))', `(${t.first.x.toFixed(1)}, ${t.first.z.toFixed(1)}) to (${t.last.x.toFixed(1)}, ${t.last.z.toFixed(1)})`);
+check(t.minGap > 0.6 && t.gaps.length === 0, 'evenly spaced and unbroken (it crosses no road)', `gaps ${JSON.stringify(t.gaps)}, step ${t.minGap.toFixed(2)}`);
 check(t.offCrust === 0 && t.under === 0 && t.road === 0, 'every print is on the crust, dry, off the causeway', `off ${t.offCrust} under ${t.under} road ${t.road}`);
 const p = r.pegs;
 check(p.n >= 45 && p.n <= 80, 'the pegs are counted', `${p.n} (${p.wet} standing in the tarn)`);
