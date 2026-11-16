@@ -110,7 +110,7 @@ const AVOID = [
 ];
 const BLOCKS = ['spanWest', 'spanEast', 'fallLip', 'nave'].map((k) => SITES[k].block);
 // the set-dressing strips (section 4's table): the Discontinued Track, 2 m (dressing/track.js's TRACK), and the Surveyor's Pegs, 1 m
-export const STRIPS = [{ a: [145, 194], b: [174, 177.3], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
+export const STRIPS = [{ a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
 function stripDist(x, z, S) {
   const [ax, az] = S.a, [bx, bz] = S.b, ex = bx - ax, ez = bz - az;
   const t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez), 0, 1);

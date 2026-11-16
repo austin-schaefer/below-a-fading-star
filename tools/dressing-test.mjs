@@ -88,7 +88,7 @@ check(r.lumDrift < 0.002, 'the tint keeps the fog colour\'s luminance', `drift $
 const t = r.track;
 check(t.n >= 40 && t.n <= 60, 'the footprints are N', `N = ${t.n}`);
 // v15-F2: the plan's ends since the causeway's reroute (#59) took the old line, (170, 150) to (215, 160)
-check(Math.hypot(t.first.x - 145, t.first.z - 194) < 1.2 && Math.hypot(t.last.x - 174, t.last.z - 177.3) < 1.2, 'the footprints end at the plan\'s ends ((145, 194) to (174, 177.3))', `(${t.first.x.toFixed(1)}, ${t.first.z.toFixed(1)}) to (${t.last.x.toFixed(1)}, ${t.last.z.toFixed(1)})`);
+check(Math.hypot(t.first.x - 193.5, t.first.z - 133) < 1.2 && Math.hypot(t.last.x - 168.5, t.last.z - 112) < 1.2, 'the footprints end at the plan\'s ends ((193.5, 133) to (168.5, 112))', `(${t.first.x.toFixed(1)}, ${t.first.z.toFixed(1)}) to (${t.last.x.toFixed(1)}, ${t.last.z.toFixed(1)})`);
 check(t.minGap > 0.6 && t.gaps.length === 0, 'evenly spaced and unbroken (it crosses no road)', `gaps ${JSON.stringify(t.gaps)}, step ${t.minGap.toFixed(2)}`);
 check(t.offCrust === 0 && t.under === 0 && t.road === 0, 'every print is on the crust, dry, off the causeway', `off ${t.offCrust} under ${t.under} road ${t.road}`);
 const p = r.pegs;

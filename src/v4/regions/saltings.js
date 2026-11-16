@@ -7,7 +7,7 @@
 // halite crabs, pale and sideways, their backs crusted the colour of the flat, that drop into holes in the plates
 // when you come near and leave star-patterns of pellets round each hole."
 // Per Austin, "snaky": a strip along the fen's and the river mouth's rim (placement plan), not the brief's plate.
-// Kept clear: the Discontinued Track's strip (DC, STRIPS[0] in paths/routes.js, from (145, 194) to (174, 177.3)), the pit's block
+// Kept clear: the Discontinued Track's strip (DC, STRIPS[0] in paths/routes.js, from (193.5, 133) to (168.5, 112)), the pit's block
 // and the causeway's new route (CAUSEWAY_V4) through the east lobe.
 import * as THREE from 'three';
 import { REGIONS, SITES, CAUSEWAY_V4, LANDMARKS } from '../../world.js';
