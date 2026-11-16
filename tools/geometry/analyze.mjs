@@ -30,6 +30,7 @@ export const TOL = {
 };
 
 const hypot3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
+const STANDIN = /^lappet-far/; // drawn in place of what is near for a far eye (src/v15/far.js): nothing rests on it or is held by it
 
 // per-triangle normal, plane, area and box, once
 export function prepare(soup) {
@@ -381,7 +382,7 @@ export function floating(soup, T = TOL) {
           for (let j = Math.floor((y - T.touch) / cs); j <= Math.floor((y + T.touch) / cs) && !held[e]; j++)
             for (let q = Math.floor((z - T.touch) / cs); q <= Math.floor((z + T.touch) / cs) && !held[e]; q++)
               for (const u of G.cells.get(G.K(i, j, q)) || []) {
-                if (id[u] === c) continue;
+                if (id[u] === c || STANDIN.test(parts[part[u]].name || '')) continue; // (v15-W1: a stand-in holds nothing: the far mesh's block round the Strake's new house held a scaffold pole's head, and the pole was judged held there and loose at its foot)
                 if (pointTri2(P, u, x, y, z) <= tol2b || segTri(P, u, x, y, z, P[o2], P[o2 + 1], P[o2 + 2])) { held[e] = true; break; }
               }
       }
