@@ -507,7 +507,8 @@ function buildPit(ctx) {
     const inx = -Math.sin(a), inz = Math.cos(a);
     const lx = x - inx * Math.max(0, -e), lz = z - inz * Math.max(0, -e);
     const s = lo ? 0.2 + rng() * 0.15 : 0.25 + Math.pow(rng(), 2) * 0.9;
-    bits.push({ x, z, y: lipGround(lx, lz) - 0.08, inx, inz, s, // (one over the throat hangs by its edge at the lip's height, not under it) tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
+    // (one over the throat hangs by its edge at the lip's height, not under it)
+    bits.push({ x, z, y: lipGround(lx, lz) - 0.08, inx, inz, s, tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
       salt: (ctx.regions?.regionAt(lx, lz).saltings || 0) > 0.3 && rng() < 0.6 });
   }
   lipDrawn.dispose();

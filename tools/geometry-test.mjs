@@ -256,6 +256,31 @@ const fixture = await page.evaluate(() => {
   check(!loud.length, 'fixture: the sound parts (a mat 1 cm up, a post, its bracket and a brace to the slab, a two-sided wall, a wall faced, a roofed room; a post rooted 0.2 m, a beam let into a wall by its end, a shrub\'s sunk base, a box stood on a parapet) are quiet', loud.map((f) => `${f.kind} ${f.names.join('+')}`).join('; '));
 }
 
+// ---------------------------------------------------------------- placed at all (R1, the owner's "rims peeled")
+// Every drawn mesh, and every instance of every instanced one, has a finite placement: a NaN in a matrix draws nothing
+// and no other row sees an absence (v15: a comment swallowed the Pit's lip clods' tilt and yaw, every clod went NaN, and
+// the wall stood bare apart from the turf). A planted instanced mesh with one NaN instance must be found first.
+{
+  const nan = await page.evaluate(() => {
+    const fp = window.__fp, bad = [];
+    const fin = (a, o, n) => { for (let i = o; i < o + n; i++) if (!Number.isFinite(a[i])) return false; return true; };
+    const scan = (root) => root.traverse((o) => {
+      if (!o.isMesh && !o.isInstancedMesh && !o.isPoints && !o.isLine) return;
+      o.updateMatrixWorld?.();
+      if (!fin(o.matrixWorld.elements, 0, 16)) { bad.push(`${o.name || o.type} (matrix)`); return; }
+      if (o.isInstancedMesh) { const a = o.instanceMatrix.array; let k = 0; for (let i = 0; i < o.count; i++) if (!fin(a, i * 16, 16)) k++; if (k) bad.push(`${o.name || 'instanced'} (${k} of ${o.count} instances)`); }
+    });
+    const planted = new fp.THREE.InstancedMesh(new fp.THREE.BoxGeometry(), new fp.THREE.MeshBasicMaterial(), 2);
+    planted.name = 'nan-fault'; planted.setMatrixAt(0, new fp.THREE.Matrix4()); planted.setMatrixAt(1, new fp.THREE.Matrix4().makeRotationY(undefined));
+    const g = new fp.THREE.Group(); g.add(planted); scan(g); const found = bad.splice(0).some((b) => /nan-fault/.test(b));
+    planted.geometry.dispose(); planted.material.dispose();
+    scan(fp.scene);
+    return { found, bad };
+  });
+  check(nan.found, 'fixture: an instanced mesh with one NaN instance is found unplaced');
+  check(!nan.bad.length, 'every drawn mesh and instance has a finite placement', nan.bad.slice(0, 8).join('; '));
+}
+
 // ---------------------------------------------------------------- the places
 if (existsSync(v15) || hook) check(!hook, "the village's places come in from src/v15/plan.js", hook || `${places.length - PLACES.length} places`);
 // the baseline: per group (kind, place, the first mesh's name without its instance) the findings' positions, rounded to
