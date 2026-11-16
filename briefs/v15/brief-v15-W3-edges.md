@@ -1,6 +1,6 @@
 # Brief v15-W3: fewer invisible walls (edges you can walk off)
 
-Worktree `.claude/worktrees/issue-1527-edges`, branch `issue-1527-edges`, port 8169. Work only there. Read `briefs/v15/_common.md` first, and `world-code` "Floors, corridors and edges". Helpers that read images run on `haiku` or `sonnet`. **Stronger model: this is the walking code.**
+Worktree `.claude/worktrees/issue-1527-edges`, branch `issue-1527-edges`, port 8172. Work only there. Read `briefs/v15/_common.md` first, and `world-code` "Floors, corridors and edges". Helpers that read images run on `haiku` or `sonnet`. **Stronger model: this is the walking code.**
 
 ## The owner's words (2026-11-16)
 
@@ -27,4 +27,8 @@ Another agent (brief W2) is changing `src/v15/ways/ladder.js` and registering la
 
 ## Done when
 
-The table and the rule; for each kind of edge one done in a real browser with the pointer captured, on keys and on touch (the Lappet's top step, a roof on the Leads, the Span, the Pit's lip, the Nave's sinkhole, the icefall, the Lonely Staircase's deck, a heights gallery): frames walking to the lip, at it looking down, going over, landing, and walking on or waking at the gate. `ONLY=edges,heights,walk,hop,touch,ways,village,settings,acts,stair,lift,house tools/suite.sh 8169` green. Report `briefs/v15/reports/issue-1527-edges.md`; hand back in under 250 words, with what you chose for a long fall and why, so the owner can reverse it.
+The table and the rule; for each kind of edge one done in a real browser with the pointer captured, on keys and on touch (the Lappet's top step, a roof on the Leads, the Span, the Pit's lip, the Nave's sinkhole, the icefall, the Lonely Staircase's deck, a heights gallery): frames walking to the lip, at it looking down, going over, landing, and walking on or waking at the gate. `ONLY=edges,heights,walk,hop,touch,ways,village,settings,acts,stair,lift,house tools/suite.sh 8172` green. Report `briefs/v15/reports/issue-1527-edges.md`; hand back in under 250 words, with what you chose for a long fall and why, so the owner can reverse it.
+
+## Others at work now (added at dispatch)
+
+W4 (`issue-1528-landings`) is re-making the village's stairs, parapets and ways: leave every stair, rail and parapet in `src/v15/` as it is, and where one of yours is a village edge, change the edge's flag, not the thing. W5 (`issue-1529-seams`) is fixing floors that disagree with the drawn ground, in the floor data: do not fix those; list any you meet. Yours is `src/controls.js`, `src/v12/fall.js` and the `keep` flags. Merge `origin/next` before you start and before your last run.
