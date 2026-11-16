@@ -32,3 +32,14 @@ Sheet: `v15-S1-c-sheet.png`, `v15-S1-c-gutter-sheet.png`, `v15-S1-c-3m-front.png
 - His lowest cheek may look as if it floats (no contact shadow; sink 0.45 m).
 - On low and on a phone the features are soft.
 - The tint is the stone shader's violet in shade.
+
+# Round 2 (the coordinator's three points)
+
+- **Seated.** Sink 0.7 m. A dark ash apron lies under his outline. Round his edge, in fourteen bearings, rubble and lime are packed at the contact line. Two robbed blocks and pairs of timber wedges chock him. From 3 m in front and from behind, no light shows under him (`v15-S1-h2b-front-3m.png`, `-behind.png`). The paving under him is not cracked or dished; the apron covers it.
+- **Back and crown.** The locks are deeper (0.02 + 0.065 head units) and the fillet is raised 0.1. Three drum joints are cut round the neck, with a dowel hole in the break. A turn of 0.3 rad showed the square more crown, not more face, so it stays at 0.
+- **Kiln.** The stoke hole now faces the square from the break of his neck (plan `stoke: [-0.97, 0.3]`; the bench is on the far side). Its raked ash glows faintly, lime is spilt pale beside it, and the fire light falls on the paving. The glow inside the broken crown is doubled, and soot spreads further over the lip. The fuel stack and rake stand on the brink side: on the walk's first try the stack blocked the way at (71.2, -2.4), and `walked: no` was its catch.
+- **Colour.** His stone is now the keep's ashlar, `#8c7f70` (src/v8/strata.js), not `COLORS.heliarch.stone`.
+- **Cold read (sonnet) of h-square-west and h-stair-head:** "a colossal carved stone head (a fallen statue of a face, lying on its side, eyes closed…)… a hearth or brazier burns at its foot with smoke rising"; from the west, "a lumpy boulder or pumpkin-like mass with smoke venting from its crown". It saw fire at his foot and smoke from his head, but did not say "kiln". It also thought the head was being winched, because of the shears.
+- **Geometry.** The first rerun found three new coplanar pairs (the paired wedges, the lime and the apron at paver height). The wedges were then turned apart and the low pieces offset; `ONLY=geometry` passed.
+- **Frames:** `v15-S1-h2b-{stair-head,square-west,front-3m,behind,bench-side,causeway-end}.png`, `v15-S1-h2b-gutter-*.png`, `v15-S1-h2b-phone-*.png`, and the turntable `v15-S1-h-turntable.png`. The `v15-S1-h-*` placed set was taken before the fuel stack moved, so it is superseded, not overwritten.
+- **Tests (round 2):** `ONLY=village,geometry,walk,edges,heights,strata tools/suite.sh 8166`: 6 tests, 0 failed (strata 8, village 683, walk 13, edges 214, heights 198, geometry 144). `quarrels-walk.mjs` keys and touch: `walked: yes`, 0 page errors. Low tier: the head is 5,160 triangles; the quarter adds the rubble and the apron.

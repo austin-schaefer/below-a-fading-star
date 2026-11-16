@@ -15,6 +15,7 @@ import { mat } from '../../../structures/geo.js';
 const gs = (a, b, sa, sb) => Math.exp(-(a * a) / (sa * sa) - (b * b) / (sb * sb));
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3();
+const KEEP = new THREE.Color('#8c7f70'); // the keep's own ashlar (src/v8/strata.js): he is the keep's stone, not the hands' violet
 const W = (M, x, y, z) => { _v.set(x, y, z).applyMatrix4(M); return [_v.x, _v.y, _v.z]; };
 
 // The Heliarchs' crowned head, as the scatter cuts it: a unit sphere drawn into a long face looking along +z (brow,
@@ -90,8 +91,8 @@ function carved(x, y, z) {
   // the fillet, raised round his brow; the hair above it and down the back, in carved locks combed back
   const s = BAND(y, z), band = sstep(0.09, 0.05, Math.abs(s));
   const back = sstep(-0.05, -0.35, z) * sstep(-0.62, -0.45, y), hair = Math.max(sstep(0.05, 0.08, s), back) * (1 - band);
-  const lock = Math.sqrt(0.5 + 0.5 * Math.cos(x * 34 + 0.7 * Math.sin(z * 6 + y * 3))); // (combed back from the brow in waves: no two meet)
-  d -= 0.08 * band + hair * (0.014 + 0.03 * lock);
+  const lock = Math.sqrt(0.5 + 0.5 * Math.cos(x * 28 + 0.7 * Math.sin(z * 6 + y * 3))); // (combed back from the brow in waves: no two meet)
+  d -= 0.1 * band + hair * (0.02 + 0.065 * lock);
   // the roundel on the fillet over his brow: a boss, and the socket its stone was prised out of
   d = smin(d, ell(x, y, z, 0, 0.6, 0.56, 0.13, 0.12, 0.07), 0.02);
   d = smax(d, -ell(x, y, z, 0, 0.6, 0.64, 0.07, 0.065, 0.05), 0.015);
@@ -105,7 +106,9 @@ function stone(n3, x, y, z, vent) {
   if (y > -0.38 && Math.abs(x) < 0.2) d = smax(d, ((z - 0.79) - 0.3 * (y + 0.2)) / 1.044 + 0.012 * n3(x * 14, y * 14, 3), 0.01); // the nose's end, broken
   d = smax(d, -(Math.hypot(x - 0.72, y + 0.48, z + 0.1) - 0.13), 0.02); // his left lobe, broken off
   d = smax(d, -(Math.hypot(x - 0.12, y + 0.9, z - 0.6) - 0.07), 0.02); // a chip off his chin
+  if (y < -0.8 && z < 0.25) { const t = (y - breakY(z)) / 0.21; d += 0.03 * Math.exp(-((((t % 1) - 0.5) / 0.08) ** 2)) * sstep(0.25, 0.05, z) * (t < 3.2 ? 1 : 0); } // the joints of the drums his neck was built of
   d = smax(d, breakY(z) - y + 0.03 * n3(x * 5, z * 5, 7), 0.01); // the neck, broken across
+  d = smax(d, -Math.max(Math.hypot(x, z + 0.12) - 0.075, y - breakY(z) - 0.16), 0.01); // the dowel's hole in the break
   if (vent) d = smax(d, -(Math.hypot(x - vent[0], y - vent[1], z - vent[2]) - 0.3 - 0.07 * n3(x * 6, y * 6, z * 6) - 0.03 * n3(x * 15, y * 15, z * 15)), 0.01); // the crown broken open
   return d;
 }
@@ -141,7 +144,7 @@ export function sculpt(N2, nu, nv, up) { // (exported for the turntable preview)
       shade[k] = Math.max(0.3, Math.min(1.15, 1.08 - 0.42 * occ - 0.5 * cr - 0.35 * drum));
       glow[k] = inVent * sstep(0.0, 0.2, (vent[0] - x) * u[0] + (vent[1] - y) * u[1] + (vent[2] - z) * u[2]);
       const below = (x - vent[0]) * u[0] + (y - vent[1]) * u[1] + (z - vent[2]) * u[2]; // (how far below the hole, along the world's up)
-      soot[k] = Math.min(1, Math.max(inVent, 0.9 * Math.exp(-((dv / 0.55) ** 2)) * sstep(-0.6, -0.1, below), 0.8 * onBreak, 0.3 * cr));
+      soot[k] = Math.min(1, Math.max(inVent, 0.95 * Math.exp(-((dv / 0.7) ** 2)) * sstep(-0.7, -0.05, below), 0.8 * onBreak, 0.3 * cr));
       lime[k] = (1 - inVent) * sstep(0.85, 0.45, dv) * sstep(0.25, 0.4, dv) * (0.55 + 0.45 * n3(x * 8, y * 8, z * 8));
     }
   }
@@ -165,14 +168,14 @@ export function sculpt(N2, nu, nv, up) { // (exported for the turntable preview)
 // posed surface in M's frame: x, y, z each), tris }.
 export function saintHead(B, M, o) {
   const S = o.S ?? 1.7, low = !!o.low, g0 = M.elements[13], rng = o.rng;
-  const roll = o.roll ?? 0.7, pitch = o.pitch ?? 0.2, sink = o.sink ?? 0.45;
-  const R = mat(0, 0, 0, pitch, 0, roll), Ri = R.clone().invert(), up = new THREE.Vector3(0, 1, 0).applyMatrix4(Ri);
+  const roll = o.roll ?? 0.7, pitch = o.pitch ?? 0.2, sink = o.sink ?? 0.45, turn = o.turn ?? 0;
+  const R = mat(0, 0, 0, pitch, turn, roll), Ri = R.clone().invert(), up = new THREE.Vector3(0, 1, 0).applyMatrix4(Ri);
   const C = sculpt(o.N2, low ? 60 : 120, low ? 44 : 88, [up.x, up.y, up.z]);
   const lp = C.g.attributes.position.array, n = lp.length / 3;
   let minY = 1e9; for (let i = 0; i < n; i++) { _v.set(lp[i * 3], lp[i * 3 + 1], lp[i * 3 + 2]).applyMatrix4(R); if (_v.y < minY) minY = _v.y; }
-  const HM = ch(M, 0, -sink - S * minY, 0, pitch, 0, roll, S, S, S), HMl = mat(0, -sink - S * minY, 0, pitch, 0, roll, S, S, S);
+  const HM = ch(M, 0, -sink - S * minY, 0, pitch, turn, roll, S, S, S), HMl = mat(0, -sink - S * minY, 0, pitch, turn, roll, S, S, S);
   const pts = new Float32Array(n * 3); for (let i = 0; i < n; i++) { _v.set(lp[i * 3], lp[i * 3 + 1], lp[i * 3 + 2]).applyMatrix4(HMl); pts[i * 3] = _v.x; pts[i * 3 + 1] = _v.y; pts[i * 3 + 2] = _v.z; }
-  const stone = worn(H.stone, rng, 0.06, 0.04).multiplyScalar(1.1), sootC = V.soot.clone().lerp(stone, 0.12), limeC = V.newDust.clone().lerp(stone, 0.35), fireC = new THREE.Color('#3a1206');
+  const stone = worn(H.stone.clone().lerp(KEEP, 0.8), rng, 0.06, 0.04).multiplyScalar(1.05), sootC = V.soot.clone().lerp(stone, 0.12), limeC = V.newDust.clone().lerp(stone, 0.35), fireC = new THREE.Color('#3a1206');
   const st = o.stoke || [0, -1], sl = Math.hypot(st[0], st[1]) || 1;
   let vi = 0; const base = B.count;
   addPainted(B, C.g, HM, { color: stone, moss: 0.35, ground: g0, course: 0 }, (x, y, z, out) => {
@@ -182,7 +185,7 @@ export function saintHead(B, M, o) {
     let r = stone.r + (sootC.r - stone.r) * soot, g = stone.g + (sootC.g - stone.g) * soot, b = stone.b + (sootC.b - stone.b) * soot;
     r += (limeC.r - r) * lime; g += (limeC.g - g) * lime; b += (limeC.b - b) * lime;
     r += (fireC.r - r) * gl; g += (fireC.g - g) * gl; b += (fireC.b - b) * gl;
-    out.r = r * sh; out.g = g * sh; out.b = b * sh; out.e = gl * 0.5;
+    out.r = r * sh; out.g = g * sh; out.b = b * sh; out.e = gl * 1.1;
   }, V.ember);
   // the carved surface's own normal, a little of each facet's kept (faceted lightly, as the walk is)
   const NM = new THREE.Matrix3().getNormalMatrix(HM), Nn = B.Nn, facet = 0.22;
@@ -204,7 +207,7 @@ export function saint(B, M, o) {
   const S = o.S ?? 1.7, low = !!o.low, rng = o.rng, g0 = M.elements[13];
   const sl = Math.hypot(o.stoke[0], o.stoke[1]) || 1, sx = o.stoke[0] / sl, sz = o.stoke[1] / sl;
   const head = saintHead(B, M, { ...o, stoke: [sx, sz] }), pts = head.pts, n = pts.length / 3;
-  const sootC = V.soot.clone().lerp(H.stone, 0.15);
+  const sootC = V.soot.clone().lerp(KEEP, 0.15);
   // where he meets the ground: his outline above it, in M's frame (the collider; how far in the stoke hole is let)
   let x0 = 1e9, x1 = -1e9, z0h = 1e9, z1h = -1e9, reach = 0;
   for (let i = 0; i < n; i++) {
@@ -213,19 +216,37 @@ export function saint(B, M, o) {
     if (y < 1.3) reach = Math.max(reach, x * sx + z * sz);
   }
 
+  // seated where he bears: the ground under him dark with ash and soot, rubble and lime packed into the gap all round
+  // his edge, two robbed blocks and three timber wedges chocking him where his cheek lifts off the ground
+  const cx = (x0 + x1) / 2, cz = (z0h + z1h) / 2, bins = new Array(14).fill(null);
+  for (let i = 0; i < n; i++) {
+    const x = pts[i * 3], y = pts[i * 3 + 1], z = pts[i * 3 + 2]; if (y < -0.05 || y > 0.3) continue;
+    const a = Math.atan2(z - cz, x - cx), k = Math.floor(((a + Math.PI) / (2 * Math.PI)) * bins.length) % bins.length, r = Math.hypot(x - cx, z - cz);
+    if (!bins[k] || r > bins[k][3]) bins[k] = [x, y, z, r, a];
+  }
+  B.add(B.cyl(1, 1, 0.05, low ? 12 : 18, 1), ch(M, cx, 0.003, cz, 0, 0.3, 0, (x1 - x0) / 2 + 0.55, 1, (z1h - z0h) / 2 + 0.55), { color: V.soot.clone().lerp(V.newDust, 0.18), moss: 0, ground: g0 - 9, disp: 0.03, dispScale: 2.5, dispY: 0 }); // the ash apron
+  const stoneC = KEEP.clone().lerp(H.stone, 0.2);
+  bins.forEach((p, k) => {
+    if (!p) return; const [x, , z, , a] = p, ox = Math.cos(a), oz = Math.sin(a);
+    if (k % 5 === 1) B.add(B.box(0.55, 0.36, 0.42, { seg: 9, chip: 0.04, seed: k }), ch(M, x + ox * 0.12, 0.15, z + oz * 0.12, 0.05, -a, 0.08), { color: worn(stoneC, rng, 0.15, 0.12), moss: 0.3, ground: g0, course: 0 }); // a robbed block
+    else if (k % 5 === 3) for (const w of [-0.18, 0.18]) B.add(B.box(0.42, 0.12, 0.13, { seg: 9 }), ch(M, x + ox * 0.15 - oz * w, 0.07 + w * 0.1, z + oz * 0.15 + ox * w, w * 0.4, -a + w, -0.22 - w * 0.3), { color: worn(V.rawWood, rng, 0.35, 0.2).lerp(V.soot, 0.3), moss: 0.05, ground: g0 }); // timber wedges, driven in
+    for (let j = 0; j < (low ? 2 : 3); j++) { const t = (rng() - 0.5) * 0.5, rr = 0.1 + rng() * 0.12; B.add(B.rock(rr, 0, 1, 0.65, 1), ch(M, x + ox * (0.05 + rng() * 0.15) - oz * t, rr * 0.35, z + oz * (0.05 + rng() * 0.15) + ox * t, 0, rng() * 3, 0), { color: (rng() < 0.4 ? V.lime.clone().lerp(V.newDust, 0.5) : worn(stoneC, rng, 0.2, 0.2)), moss: 0.1, ground: g0 }); } // rubble and lime, packed
+  });
+
   // the stoke hole, let into his nape where the neck broke in robbed ashlar: two jambs, a lintel, a relieving block, the fire
-  const PM = ch(M, 0, 0, 0, 0, Math.atan2(sx, sz), 0), z0 = reach - 0.55, z1 = z0 + 1.28, zm = (z0 + z1) / 2; // (+z out of the hole)
+  const PM = ch(M, 0, 0, 0, 0, Math.atan2(sx, sz), 0), z0 = reach - 0.8, z1 = z0 + 1.28, zm = (z0 + z1) / 2; // (+z out of the hole)
   const ash = (k) => worn(H.stone, rng, 0.1, 0.1).lerp(sootC, k);
   for (const s of [-1, 1]) B.add(B.box(0.36, 1.2, z1 - z0, { seg: 9, chip: 0.035, seed: s + 3 }), ch(PM, s * 0.51, 0.47, zm, 0, 0, s * 0.02), { color: ash(0.35), moss: 0.1, ground: g0, course: 0 });
   B.add(B.box(1.56, 0.34, z1 - z0 + 0.1, { seg: 9, chip: 0.04, seed: 9 }), ch(PM, 0.02, 1.22, zm - 0.02, 0, 0.02, 0), { color: ash(0.6), moss: 0.05, ground: g0, course: 0 });
   B.add(B.box(1.05, 0.34, 0.8, { seg: 9, chip: 0.05, seed: 11 }), ch(PM, -0.05, 1.54, zm - 0.3, 0, -0.04, 0), { color: ash(0.7), moss: 0.05, ground: g0, course: 0 });
   quad(B, PM, [-0.33, 0.03, z0 + 0.5], [0.33, 0.03, z0 + 0.5], [0.33, 1.06, z0 + 0.5], [-0.33, 1.06, z0 + 0.5], { color: new THREE.Color('#3a1206'), moss: 0, ground: g0 - 9, emit: [V.ember[0] * 0.42, V.ember[1] * 0.42, V.ember[2] * 0.42, 1] });
-  B.add(B.box(0.74, 0.09, z1 - z0 + 0.5, { seg: 0.5 }), ch(PM, 0, 0.03, zm + 0.25), { color: V.newDust.clone().lerp(V.soot, 0.45), moss: 0, ground: g0 - 9, disp: 0.02, dispScale: 4 }); // the ash raked out
+  B.add(B.box(0.74, 0.09, z1 - z0 + 0.5, { seg: 0.5 }), ch(PM, 0, 0.047, zm + 0.25, 0.013, 0, 0.009), { color: V.newDust.clone().lerp(V.soot, 0.45), moss: 0, ground: g0 - 9, disp: 0.02, dispScale: 4, emit: [V.ember[0] * 0.12, V.ember[1] * 0.1, V.ember[2] * 0.1, 1] }); // the ash raked out, still warm
+  B.add(B.box(1.3, 0.05, 1.0, { seg: 0.4 }), ch(PM, -1.0, 0.031, z1 + 0.45, 0.021, -0.4, -0.017), { color: V.lime.clone(), moss: 0, ground: g0 - 9, disp: 0.025, dispScale: 3 }); // lime drawn and spilt, pale
   for (let i = 0; i < (low ? 3 : 6); i++) B.add(B.rock(0.07 + rng() * 0.05, 0, 1, 0.6, 1), ch(PM, (rng() - 0.5) * 0.5, 0.1, z0 + 0.62 + rng() * 0.5, 0, rng() * 3, 0), { color: new THREE.Color('#2a0a04'), moss: 0, ground: g0 - 9, emit: [V.ember[0] * 0.7, V.ember[1] * 0.5, V.ember[2] * 0.4, 1] });
   // the rake left leaning by it, and the fuel: split thorn, stacked
-  beam(B, PM, [0.86, 0, z1 + 0.5], [0.72, 1.7, z1 - 0.35], 0.035, { color: L.iron, iron: 0.9, moss: 0, ground: g0, round: 5 });
-  B.add(B.box(0.3, 0.03, 0.12, { seg: 9 }), ch(PM, 0.86, 0.02, z1 + 0.5, 0, 0.3, 0), { color: L.iron, iron: 0.9, moss: 0, ground: g0 });
-  const stack = [-1.28, z1 - 0.55];
+  beam(B, PM, [-0.86, 0, z1 + 0.5], [-0.72, 1.7, z1 - 0.35], 0.035, { color: L.iron, iron: 0.9, moss: 0, ground: g0, round: 5 });
+  B.add(B.box(0.3, 0.03, 0.12, { seg: 9 }), ch(PM, -0.86, 0.02, z1 + 0.5, 0, 0.3, 0), { color: L.iron, iron: 0.9, moss: 0, ground: g0 });
+  const stack = [1.28, z1 - 0.55]; // (on the brink's side, clear of the way past him)
   for (let i = 0; i < (low ? 7 : 11); i++) { const row = i < 5 ? 0 : i < 9 ? 1 : 2, k = i < 5 ? i : i < 9 ? i - 5 + 0.5 : i - 9 + 1; B.add(B.cyl(0.075, 0.085, 0.8 + rng() * 0.12, 5, 1), ch(PM, stack[0] + (rng() - 0.5) * 0.04, 0.08 + row * 0.15, stack[1] + k * 0.17, 0, (rng() - 0.5) * 0.12, Math.PI / 2), { color: worn(L.wood, rng, 0.2, 0.3), moss: 0.1, ground: g0 }); }
 
   const fire = W(PM, 0, 0.6, z1 - 0.1), stand = W(PM, 0, 0, z1 + 1.0);

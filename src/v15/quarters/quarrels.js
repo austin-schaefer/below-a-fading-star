@@ -148,12 +148,12 @@ export async function build(ctx) {
 
   // ---------------------------------------------------------------- the Smoking Saint, his bench, the heads that wait
   const kiln = saint(B, F(Q.kiln.x, Q.kiln.z, Q.kiln.face), { S: Q.kiln.S, // (F takes any length of face)
-    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], roll: Q.kiln.roll, pitch: Q.kiln.pitch, sink: Q.kiln.sink, N2, low, rng });
+    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], roll: Q.kiln.roll, pitch: Q.kiln.pitch, turn: Q.kiln.turn, sink: Q.kiln.sink, N2, low, rng });
   add(kiln.colliders);
   // ?saint=sheet: his head alone, posed as he lies, on bare ground at ?saintAt=x,z (the turntable his maker judges him on)
   if (url.searchParams.get('saint') === 'sheet') {
     const [sx, sz] = (url.searchParams.get('saintAt') || '-60,40').split(',').map(Number), SB = ctx.strata.builder(), sy = ctx.terrain.heightAt(sx, sz);
-    saintHead(SB, plotMatrix({ x: sx, z: sz, y: sy, face: [0, 1] }), { S: Q.kiln.S, roll: Q.kiln.roll, pitch: Q.kiln.pitch, sink: Q.kiln.sink, stoke: [0, -1], N2, low, rng });
+    saintHead(SB, plotMatrix({ x: sx, z: sz, y: sy, face: [0, 1] }), { S: Q.kiln.S, roll: Q.kiln.roll, pitch: Q.kiln.pitch, turn: Q.kiln.turn, sink: Q.kiln.sink, stoke: [0, -1], N2, low, rng });
     ctx.scene.add(ctx.strata.mesh(SB, 'late', 'saint-sheet'));
   }
   // the bench: on his right (the east side, by his crown and away from the fire's mouth), its sitters looking where he looks
