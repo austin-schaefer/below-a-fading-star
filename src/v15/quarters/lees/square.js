@@ -193,7 +193,7 @@ export function arch(Q, F) {
   B.add(B.box(0.98, 1.72, dep - 0.03, { seg: 2.5, chip: 0.05, seed: 21 }), ch(M, r1 + 0.5, sp + 0.08 + 0.86, 0), st());
   B.add(B.box(1.3, 0.2, dep + 0.2, { seg: 2.5, chip: 0.04, seed: 22 }), ch(M, r1 + 0.42, sp + 1.9, 0), st(0.08, H.dark));
   PARTS.heliarch.roundel(B, ch(M, r1 + 0.52, sp + 0.42, dep / 2 - 0.03), { size: 0.66, disc: 'bronze' });
-  ctx.strata.place?.({ hand: 'heliarch', kind: 'sign', name: 'lees-arch', x: cx + Math.cos(yaw) * (r1 + 0.52) + Math.sin(yaw) * 0.4, y: y0 + sp + 0.9, z: cz - Math.sin(yaw) * (r1 + 0.52) + Math.cos(yaw) * 0.4, face: [Math.sin(yaw), Math.cos(yaw)], mount: 'wall' });
+  ctx.strata.place?.({ hand: 'heliarch', kind: 'sign', name: 'lees-arch', x: cx + Math.cos(yaw) * (r1 + 0.52) + Math.sin(yaw) * 0.4, y: y0 + sp + 0.9, z: cz - Math.sin(yaw) * (r1 + 0.52) + Math.cos(yaw) * 0.4, face: [Math.sin(yaw), Math.cos(yaw)], mount: 'wall', size: 0.66 });
   // the prop: a raw pole and a pad under the stone beyond the gap
   { const a = ((GONE - 0.45) / nv) * Math.PI, tx = Math.cos(a) * (r1 - 0.02), ty = sp + 0.09 + Math.sin(a) * (r1 - 0.02), wood = { color: worn(V.rawWood, rng, 0.3), moss: 0.1, ground: y0 };
     beam(B, M, [tx - 0.12, -0.25, 0.05], [tx, ty - 0.07, 0], 0.13, { ...wood, round: 6 });
