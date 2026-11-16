@@ -11,7 +11,7 @@
 // One instanced mesh of heaps (the rise in its vertex shader), one of tesserae; both stand on the drawn terrain mesh.
 import * as THREE from 'three';
 import { SITES } from '../../world.js';
-import { radiusOf, HAHA, houseOut } from '../../v15/plan.js';
+import { radiusOf, HAHA, houseOut, molesMay } from '../../v15/plan.js';
 import { hyp } from '../../noise.js';
 import { meshGround } from '../../v4/regions/skin.js';
 import { engrave } from './engrave.js';
@@ -62,8 +62,8 @@ export function buildMoles(ctx, { motif }) {
   const slots = [];
   for (let k = 0; k < 2000 && slots.length < SLOTS; k++) {
     const a = rng() * 6.2832, r = Math.sqrt(rng()) * (SITE.r - 0.6), x = SITE.x + Math.cos(a) * r, z = SITE.z + Math.sin(a) * r;
-    if (terrain.causewayDistance(x, z) < 4 || terrain.slopeAt(x, z) > 0.45 || radiusOf(x, z) < HAHA + 3.6 || houseOut(x, z) < 1.5) continue; // (not on the ramp along the lowest riser, nor against the house's wall)
-    if (slots.some((s) => hyp(s.x - x, s.z - z) < 1.6)) continue;
+    if (terrain.causewayDistance(x, z) < 4 || terrain.slopeAt(x, z) > 0.45 || radiusOf(x, z) < HAHA + 3.6 || houseOut(x, z) < 1.5 || !molesMay(x, z)) continue; // (not on the ramp along the lowest riser, nor against the house's wall, nor under a stall, the well or a lane of the Pennyworth: v15-Q4)
+    if (slots.some((s) => hyp(s.x - x, s.z - z) < 1.4)) continue; // (1.4: the Pennyworth's free earth holds thirty no farther apart)
     const R = 0.225 + rng() * 0.075, H = 0.15 + rng() * 0.07;
     const n = Math.round((25 + rng() * 20) * (low ? 0.67 : 1)), spill = 2 + ((rng() * 4) | 0);
     slots.push({ x, z, R, H, rot: rng() * 6.2832, seed: rng(), n, spill, used: false, born: -1, rise: 0, rising: false, hold: null, clicks: [], tess: [] });
