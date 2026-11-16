@@ -413,6 +413,6 @@ export const GEOMETRY_PLACES = [
   { name: 'lappet-pennyworth', pts: [[HOUSE.door.x, HOUSE.door.z + 1.5, LEVELS[5].y], ...LANES.find((q) => q.name === 'wall-lane').pts], half: 6, exempt: BURIED }, // the Thumbway, from the south door's step
   { name: 'lappet-pennyworth-market', pts: [[98.6, -28.6], [103.5, -28], [107.2, -27.6], [110.8, -26.4], [112.6, -21], [115.2, -16.2], [118.2, -10.6], [121.1, -6]], half: 6, exempt: BURIED }, // along the stalls and down the old kerb past the wreck to the Leave
   { name: 'lappet-pennyworth-foot', pts: [[103.6, -16.8], [106.6, -17.5], [110.9, -17.5], [113.4, -19.2]], half: 5, exempt: BURIED }, // from the ramp's foot between the garden and the wreck's neck to the kerb
-  { name: 'lappet-pennyworth-skirts', pts: [[117.6, -9.5], [116.2, -3.5], [115.8, 1.6]], half: 5, exempt: BURIED }, // along the lowest riser east of the wreck: the repair, the buttress, the lean-tos
-  { name: 'lappet-pennyworth-hitch', pts: LANES.find((q) => q.name === 'gate-lane').pts.slice(0, 6), half: 6, exempt: BURIED }, // the Hitch, round the stable and between the two houses
+  { name: 'lappet-pennyworth-skirts', pts: [[117.6, -9.5], [116.2, -3.5], [115.8, 1.6]], half: 8, exempt: BURIED }, // along the lowest riser east of the wreck: the repair, the buttress, the lean-tos
+  { name: 'lappet-pennyworth-hitch', pts: LANES.find((q) => q.name === 'gate-lane').pts.slice(0, 6), half: 9, exempt: { ...BURIED, 'structures-taverna': 'the Pomegranate House is judged whole in its own place, `house`: here the take cuts it at the region\'s edge', 'house-props': 'as the house' } }, // the Hitch, round the stable and between the two houses
 ];

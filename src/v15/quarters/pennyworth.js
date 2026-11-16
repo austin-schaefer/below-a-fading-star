@@ -56,13 +56,14 @@ export async function build(ctx) {
   // a cloth between three or four corners (local points), hanging in its middle: two leaves a finger apart, so it has an underside
   const cloth = (M, pts, sag, col) => {
     const o = { color: col, moss: 0.02, ground: -5 }, n = pts.length === 4 ? 4 : 0;
+    const up = (pts[1][2] - pts[0][2]) * (pts[2][0] - pts[0][0]) - (pts[1][0] - pts[0][0]) * (pts[2][2] - pts[0][2]) > 0; // the corners as given wind to face up
     const at = n ? (u, v, d) => { const a = pts[0], b = pts[1], c = pts[2], e = pts[3], w = [(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v], k = 16 * u * (1 - u) * v * (1 - v); return [0, 1, 2].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3] - (i === 1 ? sag * k + d * Math.min(1, k * 4) : 0)); } : null;
     for (const d of [0, 0.014]) {
-      const under = d > 0, oo = under ? { ...o, color: col.clone().multiplyScalar(0.78) } : o;
-      if (n) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const p = [at(i / n, j / n, d), at((i + 1) / n, j / n, d), at((i + 1) / n, (j + 1) / n, d), at(i / n, (j + 1) / n, d)]; if (under) quad(B, M, p[0], p[1], p[2], p[3], oo); else quad(B, M, p[3], p[2], p[1], p[0], oo); }
+      const under = d > 0, nat = under !== up, oo = under ? { ...o, color: col.clone().multiplyScalar(0.78) } : o;
+      if (n) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const p = [at(i / n, j / n, d), at((i + 1) / n, j / n, d), at((i + 1) / n, (j + 1) / n, d), at(i / n, (j + 1) / n, d)]; if (nat) quad(B, M, p[0], p[1], p[2], p[3], oo); else quad(B, M, p[3], p[2], p[1], p[0], oo); }
       else {
         const [a, b, c] = pts, mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2 - sag - d, (p[2] + q[2]) / 2], ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
-        for (const t of [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(under ? [...t[0], ...t[1], ...t[2]] : [...t[0], ...t[2], ...t[1]], 3)); B.add(g, M, oo); }
+        for (const t of [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(nat ? [...t[0], ...t[1], ...t[2]] : [...t[0], ...t[2], ...t[1]], 3)); B.add(g, M, oo); }
       }
     }
   };
@@ -78,7 +79,8 @@ export async function build(ctx) {
   const records = [];
   for (const p of P.PLOTS) {
     if (p.quarter !== 'pennyworth' || !OPTS[p.name]) continue;
-    const from = B.count, R = makePlot(B, p, { plan: P, built: ctx.lappet.built, E, low, ...OPTS[p.name] });
+    const from = B.count, R = makePlot(B, p.kind === 'carrier' ? { ...p, y: p.y + 0.015 } : p, { // (the wreck a finger proud of its pad: a board of its yard lies at its foot's own height, in the pad's plane)
+      plan: P, built: ctx.lappet.built, E, low, ...OPTS[p.name] });
     if (p.kind === 'house') dull(from, 0.2);
     R.lamps.forEach((lamp, i) => { hangLamp(B, lamp, ['amber', 'ruby', 'amber', 'amber'][(R.seed + i) % 4], 0.5); lamps.push(lamp); });
     for (const c of R.counters) places.push({ name: `${p.name}: counter`, x: +c.x.toFixed(2), y: +c.y.toFixed(2), z: +c.z.toFixed(2), what: 'a bare counter; whoever keeps it stands behind' });
@@ -108,7 +110,7 @@ export async function build(ctx) {
     }
     if (h1 && h2 && p1 && p2) {
       // a line from the lower house's parapet to the upper one's wall, the lane under it
-      const a = [p1.x + p1.face[0] * (p1.d / 2 - 0.25), p1.y + (h1.top || 2.7) - 0.05, p1.z - 1.2], b = [p2.x + p2.face[0] * (p2.d / 2 - 0.3), p2.y + 2.45, p2.z + 1.4];
+      const a = [p1.x + p1.face[0] * (p1.d / 2 - 0.25), p1.y + 3.05, p1.z - 1.2], b = [p2.x + p2.face[0] * (p2.d / 2 - 0.3), p2.y + 2.4, p2.z + 1.4];
       for (const [q, pp] of [[a, p1], [b, p2]]) beam(B, mat(0, 0, 0), [q[0] - pp.face[0] * 0.4, q[1] - 0.04, q[2]], [q[0] + pp.face[0] * 0.03, q[1] + 0.02, q[2]], 0.05, wood(0.3)); // a peg driven into each wall
       washing(B, mat(0, 0, 0), a, b, rng, low ? 3 : 5);
     }
@@ -121,7 +123,7 @@ export async function build(ctx) {
       const M = plotMatrix(p), g0 = p.y;
       // (in the plot's frame the body lies from -x toward +x and its torn mouth is near x 3.2; the neck lies beyond)
       for (const [x, z, r, hh] of [[2.6, 2.2, 0.3, 1.9], [3.5, 3.0, 0.24, 1.6], [3.0, -1.4, 0.27, 0]]) {
-        pot(B, M, x, 0, z, r, worn(pick([V.mud, N.celadonD || V.teal, L.tile[4]], rng), rng, 0.4), 1.5, 7);
+        pot(B, M, x, -0.03, z, r, worn(pick([V.mud, N.celadonD || V.teal, L.tile[4]], rng), rng, 0.4), 1.5, 7);
         if (hh) { beam(B, M, [x, r * 1.3, z], [x + 0.12, hh, z - 0.15], 0.035, raw()); bine(M, [x, r * 1.4, z], [x + 0.12, hh, z - 0.15], 0.1); }
         else for (let k = 0; k < 3; k++) leafy(M, x + (rng() - 0.5) * 0.2, r * 1.5 + 0.08, z + (rng() - 0.5) * 0.2, 0.17, LEAF_D);
         post(M, x, z, r + 0.05, 0, 0.8);
@@ -212,7 +214,7 @@ export async function build(ctx) {
     run(-hw, -hd + 0.3, -hw, -0.5); run(-hw, 0.9, -hw, hd - 1.7);       // the kerb's side, a gap onto the kerb
     // three beds of turned earth
     const beds = [[-0.55, 1.9, 3.6], [-0.5, 0.1, 4.2], [-0.45, -1.75, 4.2]]; // [the bed's middle x, z, its length]
-    for (const [bx, bz, len] of beds) B.add(B.box(len, 0.3, 0.95, { seg: 0.6, chip: 0.06, chipTop: true, seed: bz }), ch(M, bx, -0.06, bz), { color: worn(SOIL, rng, 0.1, 0.2), moss: 0.15, ground: g0 - 1, disp: 0.03, dispScale: 3 });
+    for (const [bx, bz, len] of beds) B.add(B.box(len, 0.3, 0.95, { seg: 0.6, chip: 0.06, chipTop: true, seed: bz }), ch(M, bx, -0.03, bz, 0.045 * (bz > 0 ? 1 : -1), 0, 0.02), { color: worn(SOIL, rng, 0.1, 0.2), moss: 0.15, ground: g0 - 1, disp: 0.03, dispScale: 3 });
     // beans on crossed poles down the two southern beds: pairs lashed where they cross, a ridge pole through the crotches; where a heap has come up under a pair it leans
     for (const [bx, bz, len] of beds.slice(1)) {
       const n = Math.round(len / 0.75), tops = [];
@@ -234,10 +236,10 @@ export async function build(ctx) {
     tess.forEach((c, j) => { for (let k = 0; k < (low ? 5 : 9); k++) B.add(B.box(0.028, 0.028, 0.028, { seg: 9 }), ch(M, c[0] - 0.36 + k * 0.085 + j * 0.02, c[1] + 0.012, c[2] + 0.04, 0, rng(), 0), { color: TESS[(k + j) % 3].clone().multiplyScalar(0.75 + rng() * 0.4), moss: 0, ground: g0 - 2, iron: (k + j) % 3 === 1 ? 0.5 : 0 }); });
     B.add(new THREE.TorusGeometry(0.26, 0.022, 4, 12), ch(M, 1.2, 0.27, hd - 0.2, 0.32, 0, 0), wood(0.3)); B.add(B.cyl(0.25, 0.25, 0.012, 12, 1), ch(M, 1.2, 0.262, hd - 0.2, Math.PI / 2 + 0.32, 0, 0), { color: worn(V.rope, rng, 0.3), moss: 0, ground: g0 - 2 });
     beam(B, M, [0.6, 0.0, -0.8], [0.68, 1.02, -0.75], 0.035, wood(0.1)); B.add(B.box(0.2, 0.3, 0.02, { seg: 9 }), ch(M, 0.59, 0.06, -0.805, 0.05, 0, 0.08), { color: L.iron, iron: 0.7, moss: 0, ground: g0 - 2 });
-    PARTS.heliarch.slab(B, ch(M, -1.9, 0.05, -0.8, -Math.PI / 2 + 0.04, 0.5, 0), { w: 0.8, h: 1.1, d: 0.09 });
+    PARTS.heliarch.slab(B, ch(M, -1.9, 0.1, -0.8, -Math.PI / 2 + 0.05, 0.5, 0), { w: 0.8, h: 1.1, d: 0.09 });
     // the well, in the corner nearest the booths: a Heliarch drum bored through and set over the shaft, a sweep on a forked post
     const f = P.fixture('well'), gw = G(f.x, f.z), W = mat(f.x, gw, f.z);
-    PARTS.heliarch.drum(B, ch(W, 0, -0.1, 0, 0, 0.3, 0), { r: 0.66, h: 0.82, moss: 0.5 });
+    PARTS.heliarch.drum(B, ch(W, 0, -0.13, 0, 0.012, 0.3, 0), { r: 0.66, h: 0.82, moss: 0.5 });
     B.add(B.cyl(0.43, 0.43, 0.02, 12, 1), ch(W, 0, 0.726, 0), { color: new THREE.Color(0.006, 0.007, 0.008), moss: 0, wet: 1, ground: gw - 2 });
     B.add(new THREE.TorusGeometry(0.45, 0.035, 5, 14), ch(W, 0, 0.725, 0, Math.PI / 2, 0, 0), { color: worn(H.dark, rng, 0.1), moss: 0.3, wet: 0.4, ground: gw });
     ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: 'a Heliarch drum, bored, for the Pennyworth\'s well-head', x: f.x, y: gw, z: f.z, mount: 'ground', r: 0.7 });
@@ -264,7 +266,7 @@ export async function build(ctx) {
       B.add(B.box(w + 0.1, 0.3, 0.7, { seg: 0.8, chip: 0.04 }), ch(M, 0, 0.1, 0.01), { color: worn(H.dark, rng, 0.1), moss: 0.5, ground: g });                    // its plinth
       facade(B, ch(M, 0, 0.25, 0.33), { w: 1.9, h: 2.75, d: 0.1, sink: 0, openings: [{ kind: 'round', x: 0, y: 0, w: 1.3, sp: 1.55 }], color: worn(H.dark, rng, 0.06), course: 0.32, moss: 0.35, ground: g, n: low ? 6 : 10 });
       B.add(B.box(1.36, 2.26, 0.05, { seg: 0.7, chip: 0.02 }), ch(M, 0, 0.25 + 1.13, 0.325), { color: worn(V.mud, rng, 0.25), course: 0.11, moss: 0.2, ground: g });   // mud brick in the arch
-      PARTS.heliarch.roundel(B, ch(M, 0, 2.92, 0.36), { size: 0.5 });
+      PARTS.heliarch.roundel(B, ch(M, 0, 2.92, 0.445), { size: 0.5 });
       ctx.strata.place?.({ hand: 'heliarch', kind: 'sign', name: 'the roundel over the walled arch in the Skirts', x: f.x + f.face[0] * 0.4, y: g + 3.3, z: f.z + f.face[1] * 0.4, face: f.face, mount: 'wall', size: 0.5 });
       // a lamp niche knocked into the mud, lit
       B.add(B.box(0.3, 0.34, 0.03, { seg: 9 }), ch(M, 0.1, 1.45, 0.352), { color: new THREE.Color('#2a1a0c'), moss: 0, ground: g - 2, emit: [V.lit[0] * 0.55, V.lit[1] * 0.55, V.lit[2] * 0.55, 1] });
@@ -276,7 +278,7 @@ export async function build(ctx) {
       const f = P.fixture('riser-buttress'), g = G(f.x, f.z), M = frame(f, g), top = P.LEVEL.bench.y - g - 0.5;
       const sh = new THREE.Shape(); sh.moveTo(-0.5, -0.6); sh.lineTo(1.35, -0.6); sh.lineTo(1.2, 0.9); sh.lineTo(0.95, 1.0); sh.lineTo(0.62, 2.1); sh.lineTo(0.42, 2.2); sh.lineTo(0.18, top); sh.lineTo(-0.5, top); sh.lineTo(-0.5, -0.6);
       const col = worn(L.plaster[1], rng, 0.4, 0.1);
-      B.add(B.extrude(sh, 1.05, 1), ch(M, 0, 0, 0, 0, -Math.PI / 2, 0), { color: col, moss: 0.25, ground: g, disp: 0.02, dispScale: 1.5, emit: limeGlow(col, 0.05) });
+      B.add(B.extrude(sh, 1.05, 1), ch(M, 0, 0, 0, 0, -Math.PI / 2, 0), { color: col, moss: 0.25, ground: g, emit: limeGlow(col, 0.05) }); // (no disp: an extrusion's faces are not welded, and it opens along its arrises)
       B.add(B.box(1.2, 0.09, 0.85, { seg: 9, chip: 0.03 }), ch(M, 0, top + 0.03, -0.12), stoneO(g + top, 0.1));
       collide(M, 0, 0, 0, 0.9, 0.55, -0.5, top, { stand: false });
     }
@@ -303,7 +305,7 @@ export async function build(ctx) {
       for (const yy of oil ? [1.2, 1.65] : [1.35]) { for (const s of [-1, 1]) beam(B, M, [s * (w / 2 - 0.6), yy - 0.03, -0.3], [s * (w / 2 - 0.6), yy - 0.03, 0.22], 0.04, wood(0.2)); B.add(B.box(w - 0.9, 0.035, 0.26, { seg: 9 }), ch(M, 0, yy + 0.01, 0.08), wood(0.15)); place(`${name}: shelf`, M, 0, yy + 0.03, 0.08, 'a bare shelf on pegs in the giants\' face'); }
       if (oil) {
         const lp = world(M, 0.35, hf - 0.005, d); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, 'amber', 0.75); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
-        pot(B, M, -w / 2 + 0.55, 0, 0.5, 0.34, worn(V.mud, rng, 0.3), 2.0, low ? 7 : 10); post(M, -w / 2 + 0.55, 0.5, 0.36, 0, 0.7);
+        pot(B, M, -w / 2 + 0.55, -0.03, 0.5, 0.34, worn(V.mud, rng, 0.3), 2.0, low ? 7 : 10); post(M, -w / 2 + 0.55, 0.5, 0.36, 0, 0.7);
       }
       place(`${name}: counter`, M, 0, 0.9, d - 0.25, `a bare counter under a lean-to against the riser (${what}); its keeper stands behind, under the roof`);
     }
