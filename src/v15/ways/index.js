@@ -72,7 +72,8 @@ export function buildWays(ctx, lappet) {
     ['mid', tb.run, tb.s, tb.s + 3.4], // the gangway
     // (v15-W4) the quarters' own ways over a nosing: the Tenter's head deck (the Mid Rung's wall stood between it and
     // the tread, the owner's "yet another one": a block and its coping between the planks and a doorstep)
-    ['mid', P.RUNGS.tenter.run, Math.min(P.RUNGS.tenter.s - 1.5 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.6 * P.RUNGS.tenter.sign), Math.max(P.RUNGS.tenter.s - 1.5 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.6 * P.RUNGS.tenter.sign)],
+    // (the deck's span and no more: the wall either side still keeps a walker off the nosing's lip)
+    ['mid', P.RUNGS.tenter.run, Math.min(P.RUNGS.tenter.s - 1.45 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.25 * P.RUNGS.tenter.sign), Math.max(P.RUNGS.tenter.s - 1.45 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.25 * P.RUNGS.tenter.sign)],
     [RISERS.find((r) => r.top === LEVEL[ld.to].y).key, ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
   ];
 
