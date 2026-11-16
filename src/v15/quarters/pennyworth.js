@@ -59,8 +59,8 @@ export async function build(ctx) {
   const wood = (k = 0.2) => ({ color: worn(L.wood, rng, k), moss: 0.12, ground: -3 }), raw = () => ({ color: worn(V.rawWood, rng, 0.25), moss: 0.1, ground: -3, round: 5 });
   const stoneO = (g0, k = 0.12) => ({ color: worn(H.stone, rng, k), moss: 0.4, ground: g0 });
   // a cloth between three or four corners (local points), hanging in its middle: two leaves a finger apart, so it has an underside
-  const cloth = (M, pts, sag, col, laid = false) => { // (laid: flat on something, one leaf)
-    const o = { color: col, moss: 0.02, ground: -5 }, n = pts.length === 4 ? 4 : 0;
+  const cloth = (M, pts, sag, col, laid = false, glow = 0) => { // (laid: flat on something, one leaf; glow: lamplight caught in it, so its dye reads from under at dusk)
+    const o = { color: col, moss: 0.02, ground: -5, ...(glow ? { emit: [col.r * glow, col.g * glow, col.b * glow, 2] } : {}) }, n = pts.length === 4 ? 4 : 0;
     const up = (pts[1][2] - pts[0][2]) * (pts[2][0] - pts[0][0]) - (pts[1][0] - pts[0][0]) * (pts[2][2] - pts[0][2]) > 0; // the corners as given wind to face up
     const at = n ? (u, v, d) => { const a = pts[0], b = pts[1], c = pts[2], e = pts[3], w = [(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v], k = 16 * u * (1 - u) * v * (1 - v); return [0, 1, 2].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3] - (i === 1 ? sag * k + d : 0)); } : null;
     for (const d of laid ? [0] : [0, 0.014]) {
@@ -78,7 +78,7 @@ export async function build(ctx) {
   // a cloth roof on four poles over a stall (local: hx half its width, zb its back, zf its front, hb and hf its heights), and a lamp hung under it
   const roofed = (M, g, hx, zb, zf, hb, hf, col, lx) => {
     for (const [x, z, h] of [[-hx, zb, hb], [hx, zb, hb], [-hx, zf, hf], [hx, zf, hf]]) { beam(B, M, [x + (rng() - 0.5) * 0.06, -0.25, z], [x, h + 0.1, z], 0.06, raw()); post(M, x, z, 0.08); }
-    cloth(M, [[-hx - 0.1, hb, zb - 0.1], [hx + 0.1, hb, zb - 0.1], [hx + 0.12, hf, zf + 0.15], [-hx - 0.12, hf, zf + 0.15]], 0.14, col);
+    cloth(M, [[-hx - 0.1, hb, zb - 0.1], [hx + 0.1, hb, zb - 0.1], [hx + 0.12, hf, zf + 0.15], [-hx - 0.12, hf, zf + 0.15]], 0.14, col, false, 0.22);
     const ly = (hb + hf) / 2 - 0.2; beam(B, M, [lx, ly, (zb + zf) / 2], [lx, ly + 0.13, (zb + zf) / 2], 0.008, { color: V.rope, moss: 0, ground: g - 3 });
     const lp = world(M, lx, ly, (zb + zf) / 2); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, 'amber', 0.6); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
   };
@@ -240,10 +240,10 @@ export async function build(ctx) {
     for (const s of [-1, 1]) B.add(B.rock(0.2, 0, 1, 0.9, 1), ch(M, s * 0.55, 0.13, -1.1), stoneO(g, 0.2));
     B.add(B.box(1.5, 0.05, 0.3, { seg: 9 }), ch(M, 0, 0.35, -1.1, 0, 0.04, 0), wood(0.25));
     collide(M, -0.45, 0, 0.45, 0, 0.55, -0.4, 1.2); collide(M, -0.6, -1.1, 0.6, -1.1, 0.2, -0.3, 0.7);
-    roofed(M, g, 1.3, -1.55, 0.8, 2.7, 2.2, worn(V.madder.clone().lerp(V.saffron, 0.5), rng, 0.3), -0.3);
+    roofed(M, g, 1.02, -1.55, 0.8, 2.7, 2.2, worn(V.madder.clone().lerp(V.saffron, 0.5), rng, 0.3), -0.3);
     // the news: a cord between the front poles hung with knotted strings, a tag at each one's end (what is known, by the knot); a stranger reads none of it and counts them
-    beam(B, M, [-1.3, 2.02, 0.8], [1.3, 2.02, 0.8], 0.012, { color: V.rope, moss: 0, ground: g - 3 });
-    for (let k = 0; k < (low ? 6 : 11); k++) { const x = -1.1 + k * (2.2 / (low ? 5 : 10)), len = 0.3 + rng() * 0.55; beam(B, M, [x, 2.02, 0.8], [x + (rng() - 0.5) * 0.03, 2.02 - len, 0.8], 0.01, { color: worn(pick([V.rope, V.madder, V.saffron, V.teal], rng), rng, 0.2), moss: 0, ground: g - 3 }); B.add(B.box(0.06, 0.09, 0.012, { seg: 9 }), ch(M, x, 2.02 - len - 0.04, 0.8, 0, rng() * 0.6 - 0.3, 0), { color: worn(pick([V.linen, V.saffron, L.gilt], rng), rng, 0.25), moss: 0, ground: g - 3 }); }
+    beam(B, M, [-1.02, 2.02, 0.8], [1.02, 2.02, 0.8], 0.012, { color: V.rope, moss: 0, ground: g - 3 });
+    for (let k = 0; k < (low ? 6 : 11); k++) { const x = -0.9 + k * (1.8 / (low ? 5 : 10)), len = 0.3 + rng() * 0.55; beam(B, M, [x, 2.02, 0.8], [x + (rng() - 0.5) * 0.03, 2.02 - len, 0.8], 0.01, { color: worn(pick([V.rope, V.madder, V.saffron, V.teal], rng), rng, 0.2), moss: 0, ground: g - 3 }); B.add(B.box(0.06, 0.09, 0.012, { seg: 9 }), ch(M, x, 2.02 - len - 0.04, 0.8, 0, rng() * 0.6 - 0.3, 0), { color: worn(pick([V.linen, V.saffron, L.gilt], rng), rng, 0.25), moss: 0, ground: g - 3 }); }
     place('the keep\'s block', M, -0.6, 0.95, 0, 'a counter that is a block of the keep, a cloth over one end: news; the seller sits on the plank behind');
   }
 
@@ -283,7 +283,7 @@ export async function build(ctx) {
         tops.push(top);
       }
       for (let i = 0; i < n; i++) beam(B, M, tops[i], tops[i + 1], 0.028, raw());
-      collide(M, bx - len / 2 + 0.2, bz, bx + len / 2 - 0.2, bz, 0.42, -0.3, 2.4, { stand: false }); // (nobody walks through a row of poles)
+      collide(M, bx - len / 2 + 0.2, bz, bx + len / 2 - 0.2, bz, 0.25, -0.3, 2.4, { stand: false }); // (nobody walks through a row of poles)
     }
     // pot herbs in the northern bed, low
     for (let i = 0; i < (low ? 5 : 9); i++) { const x = beds[0][0] - 1.5 + i * 0.36 + rng() * 0.1, z = beds[0][1] + (rng() - 0.5) * 0.5; if (!nearHeap(x, z, 0.4)) leafy(M, x, 0.16, z, 0.13 + rng() * 0.07, i % 3 ? LEAF_D : LEAF); }

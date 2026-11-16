@@ -59,11 +59,10 @@ const route = await page.evaluate(async (quarter) => {
     push([103.6, -16.8], 'ramp-foot'); for (const q of lane('ramp-cut')) push(q, q === lane('ramp-cut')[3] ? 'slip' : undefined); for (const q of [...lane('ramp-cut')].reverse()) push(q); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
     // through the door, across the court, out of the north gate
     push([D.x, D.z + 1.3], 'south-door'); push([D.x, D.z - 0.2], 'in-the-door'); push([D.x, D.z - 2.6], 'gallery'); push([cx - 2.8, cz + 6]); push([cx - 2.8, cz - 6], 'court'); push([G[0], G[1] + 2.2], 'gate-inside'); push([G[0], G[1] - 2.6], 'gate-outside');
+    // the west way (the path P9): from the gate west and north round the house's haha to where the riser shuts it by the north-west tower (no way through to the south door's pocket: 0.3 m between the tower and the riser's end), and back
+    { const ww = [[90, -64.6], [76, -62], [67, -52], [69, -42], [70.5, -36.4], [79.9, -32.6]]; ww.forEach((q, i) => push(q, { 2: 'west-way', 5: 'west-end' }[i])); for (let i = ww.length - 2; i >= 0; i--) push(ww[i]); push([G[0], G[1] - 2.6], 'gate-from-west'); }
     // round the house by the Hitch: the far side, the two houses, the stable's back, the Thumbway's east end
     for (let i = gl.length - 1; i >= 0; i--) push(gl[i], { 6: 'hitch-far', 3: 'hitch-houses', 2: 'hitch-stable', 0: 'thumbway-east' }[i]);
-    // the west way (the path P9): from the south door's pocket round the house's west wall to the gate, in at the gate, back through the court and out at the south door
-    push(wl[1]); push(wl[0]); push([88, -30.6]); push([81, -31.6]); for (const q of [[79.9, -32.6], [70.5, -36.4], [69, -42], [67, -52], [76, -62]]) push(q, q[1] === -52 ? 'west-way' : undefined); push([90, -64.6]); push([G[0], G[1] - 2.6], 'gate-from-west');
-    push([G[0], G[1] + 2.2]); push([cx - 2.8, cz - 6]); push([cx - 2.8, cz + 6]); push([D.x, D.z - 2.6]); push([D.x, D.z + 1.3]); push(wl[0]); push(wl[1]); push(wl[2]);
     // down the old kerb past the wreck to the Leave; the Skirts and back; by the neck to the ramp
     push([110.8, -26.4]); push([112.6, -21]); push([115.2, -16.2], 'wreck'); push([118.2, -10.6]); push([121.1, -6], 'leave');
     push([117.6, -9.5]); push([116.2, -3.5], 'skirts'); push([115.8, 1.6], 'lean-tos'); push([116.2, -3.5]); push([117.6, -9.5]);
@@ -144,7 +143,7 @@ const LOOKS = {
   'head-flight-up': [['ahead', 0, 0.3]], crown: [['house', Math.PI, -0.3]], corner: [['back', Math.PI, -0.1]],
   // route=pennyworth
   slip: [['ahead', 0, 0.05], ['back', Math.PI, 0.2]],
-  'west-way': [['ahead', 0, 0.05], ['house', -1.4, 0.15]], 'gate-from-west': [['gate', -1.2, 0.1]],
+  'west-way': [['ahead', 0, 0.05], ['house', -1.4, 0.15]], 'gate-from-west': [['gate', -1.2, 0.1]], 'west-end': [['ahead', 0, 0.05], ['back', Math.PI, 0.1]],
   thumbway: [['west', 0, 0.05], ['stalls', 1.5, 0.05]], 'south-door': [['door', 0, 0.1]], 'in-the-door': [['court', 0, 0]], gallery: [['back', Math.PI, 0]], court: [['gate', 0, 0.05]], 'gate-inside': [['back', Math.PI, 0.05]],
   'gate-outside': [['back', Math.PI, 0.2]], 'hitch-far': [['ahead', 0, 0.05]], 'hitch-houses': [['ahead', 0, 0.2], ['up-the-bank', 1.45, 0.25]], 'hitch-stable': [['ahead', 0, 0.1]], 'thumbway-east': [['keep', -0.66, 0.3]],
   market: [['stalls', 0.9, 0], ['back', Math.PI, 0.1]], garden: [['garden', 1.2, -0.1]], wreck: [['wreck', -1.1, 0.05]], leave: [['out', 0, 0], ['back', Math.PI, 0.15]], skirts: [['riser', -1.5, 0.2]], 'lean-tos': [['lean-tos', -1.3, 0.1], ['back', Math.PI, 0.1]],

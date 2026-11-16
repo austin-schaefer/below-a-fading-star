@@ -338,7 +338,7 @@ export const FIXTURES = [
   fix('news-block', 108.55, -26.1, 1.2, [-0.15, -1], 'a counter that is a block of the keep, fallen with its carved face up: news is sold over it'),
   fix('well', 106.2, -23.5, 1.0, [0, -1], 'the well: a Heliarch drum bored through, a sweep on a forked post'),
   fix('west-post-1', 70.3, -47, 0.6, [0, 1], 'a post of drums and a lamp where the west way (the path P9) passes the house\'s west wall'),
-  fix('west-post-2', 84.5, -62.2, 0.6, [0, -1], 'the same, where the west way comes round to the gate\'s road'),
+  fix('west-post-2', 86.2, -66.6, 0.6, [0, 1], 'the same, where the west way comes round to the gate\'s road'),
   onRiser('riser-buttress', 65.6, 0.9, 'a Late buttress of plastered rubble raked against the Elder face'),
   onRiser('riser-repair', 67.1, 1.7, 'the Heliarchy\'s repair: a panel of exact ashlar let into the giants\' face, a blind arch in it'),
   onRiser('leanto-oil', 69.1, 1.5, 'a lean-to against the riser under a plank roof: lamp oil'),
