@@ -50,7 +50,7 @@ export async function build(ctx) {
     const d = Math.hypot(x - lx, z - lz);
     if (d > 3) trail.length = 0;
     lx = x; lz = z;
-    if (!p.onGround || p.carried || p.hopping) return;
+    if (!p.onGround || p.steep || p.carried || p.hopping) return;
     const last = trail[trail.length - 1];
     if (last && Math.hypot(x - last.x, z - last.z) < SAMPLE_M && Math.abs(p.pos.y - p.eye - last.y) < 0.3) return;
     if (trail.length >= TRAIL) trail.shift();
@@ -102,7 +102,7 @@ export async function build(ctx) {
   ctx.registerUpdate((dt) => {
     if (phase === 'idle') {
       remember();
-      if (p.onGround || p.carried || p.vy > -3) return;
+      if ((p.onGround && !p.steep) || p.carried || (p.vy > -3 && !p.steep)) return; // (a slide down a face too steep to stand is a fall: p.steep)
       const total = p.fallTop - p.floorBelow, fallen = p.fallTop - (p.pos.y - p.eye);
       if (fallen > 1 && ((on && total > FALL_M) || trapped(p.pos.x, p.pos.z, p.floorBelow))) {
         // shut over most of the time left to the ground (the visitor sees the fall begin), and well before it
@@ -117,7 +117,7 @@ export async function build(ctx) {
       const total = Math.max(1, p.fallTop - p.floorBelow), fallen = p.fallTop - (p.pos.y - p.eye);
       amount = Math.max(amount, Math.min(1, t / closeS), clamp01((fallen - 1) / Math.max(1, total * 0.85 - 1)));
       lids(amount);
-      if (p.onGround && phase === 'falling') { if ((on && p.fallTop - (p.pos.y - p.eye) > FALL_M) || trapped(p.pos.x, p.pos.z, p.pos.y - p.eye)) dark(); else phase = 'opening'; }
+      if (p.onGround && !p.steep && phase === 'falling') { if ((on && p.fallTop - (p.pos.y - p.eye) > FALL_M) || trapped(p.pos.x, p.pos.z, p.pos.y - p.eye)) dark(); else phase = 'opening'; }
     } else if (phase === 'opening') {
       amount = Math.max(0, amount - dt * 2.5); lids(amount);
       if (amount <= 0) phase = 'idle';

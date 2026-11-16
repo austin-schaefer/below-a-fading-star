@@ -585,7 +585,9 @@ export function buildControls(ctx) {
         if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
         else nDrops = 0;
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
-        if (kind === EDGE_HELD || aim <= AIM) {
+        // already held at this lip (sliding along it): a ragged lip's jags turn its line by 20 degrees or more under the
+        // feet, so going over takes a clearer turn into it (within about 35 degrees of square)
+        if (kind === EDGE_HELD || aim <= (lipLean > 0.2 ? AIM_HELD : AIM)) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
           const sx = d > 0 ? mv.x - lipN.x * d : mv.x, sz = d > 0 ? mv.z - lipN.z * d : mv.z;
           mv = resolve(sx, sz, feet0, mvB);
@@ -628,15 +630,20 @@ export function buildControls(ctx) {
     const wasOnGround = state.onGround;
     state.vy -= 12 * dt;
     let feet = state.pos.y - state.eye + state.vy * dt;
-    // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too
-    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6) feet = floorY;
+    // stick to ground going downhill (faster speeds out-run gravity on slopes), down a stair's tread too; but not down a
+    // face too steep to stand (more than 1.5 times the step's run and more than a riser: v15-W3, the Pit's throat), where
+    // the feet leave it and fall
+    if (state.onGround && state.vy <= 0 && feet > floorY && feet - floorY < 0.6 && (mv.stack || mv.onTop || feet - floorY < Math.max(0.26, 1.5 * hyp(mv.x - ox, mv.z - oz)))) feet = floorY;
     if (feet <= floorY) { feet = floorY; state.vy = 0; state.onGround = true; state.hopping = false; } else state.onGround = false;
     state.onTop = onTop && state.onGround;
     state.floorBelow = floorY;
     // how far the walker has fallen: the highest the feet have been since they last stood (for v12/fall.js)
-    if (wasOnGround) state.fallTop = feet0;
+    // (v15-W3) ground too steep to stand is not standing: a slide down a face (the Pit's throat) is one fall from its top
+    // (player.steep), and lands, sending 'land', only where the feet can stand
+    state.steep = state.onGround && !mv.stack && !mv.onTop && floorNormal(state.pos.x, state.pos.z).y < STEEP_Y;
+    if (wasOnGround && slope <= 0.95) state.fallTop = feet0;
     else if (feet0 > state.fallTop) state.fallTop = feet0;
-    if (!wasOnGround && state.onGround) {
+    if (state.onGround && !state.steep && (!wasOnGround || slope > 0.95)) {
       const drop = state.fallTop - feet;
       state.fallTop = feet;
       if (drop > 2) ctx.events.dispatchEvent(new CustomEvent('land', { detail: { drop, x: state.pos.x, y: feet, z: state.pos.z } }));
@@ -690,7 +697,7 @@ export function buildControls(ctx) {
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
   // there onto nothing within a step, down or up (keep: 'up' holds only up: out of a cut, through a tunnel's side);
   // LIP_SOFT: down more than LIP; 0: neither.
-  const EDGE_HELD = 1, LIP_SOFT = 2, LIP_STEEP = 3, LIP = 1.5, AIM = 0.5, STEEP_Y = Math.cos(0.95); // AIM: the cosine of 60 degrees off square, 30 off the lip's line
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP_STEEP = 3, LIP = 1.5, AIM = 0.64, AIM_HELD = 0.82, STEEP_Y = Math.cos(0.95); // AIM: the cosine of 50 degrees off square: 40 off the lip's line (30 and a margin for a ragged lip)
   let lipLean = 0, nDrops = 0, nBeam = false; // nBeam: the drops lie on both sides (a beam, a parapet's top)
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {

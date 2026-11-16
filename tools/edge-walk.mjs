@@ -18,7 +18,7 @@ const prefix = process.argv[4] || `edge-${placeArg}-${MODE}`;
 const PLACES = {
   lappet: { at: [62, -12, 18], name: 'the Lappet\'s top step (the crown over the High Rung)' },
   leads: { at: [60, -28.2, 10], name: 'a roof on the Leads' },
-  span: { at: [-30, 213, 56], name: 'the Great Span, the crack' , dir: [-1, 0] },
+  span: { at: null, name: 'the Great Span, the crack', span: true, dir: [-1, 0], side: 1 },
   pit: { at: null, name: 'the Pit\'s lip', hole: 'pit' },
   nave: { at: null, name: 'the Foundered Nave\'s sinkhole', hole: 'nave' },
   icefall: { at: null, name: 'the icefall', ascent: ['icefall', 0.55] },
@@ -27,7 +27,7 @@ const PLACES = {
 };
 const P = PLACES[placeArg] || (placeArg && placeArg.includes(',') ? { at: placeArg.split(',').map(Number), name: placeArg } : null);
 if (!P) { console.error('usage: node tools/edge-walk.mjs base <' + Object.keys(PLACES).join('|') + '|x,z,y> [prefix]'); process.exit(2); }
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctxB = await browser.newContext({ viewport: { width: 1280, height: 720 }, hasTouch: MODE === 'touch' });
 const page = await ctxB.newPage();
 page.setDefaultTimeout(600000);
@@ -40,9 +40,10 @@ if (!at) {
   await page.goto(`${base}/?q=${Q}`, { waitUntil: 'load', timeout: 120000 }); await ready();
   at = await page.evaluate(async (P) => {
     const fp = window.__fp;
+    if (P.span) { const S = (await import('/src/v4/span/plan.js')).SPAN; return [S.crack.x + S.crack.w / 2 + 1.2, S.z - 1, S.deckY]; }
     if (P.hole) {
       const G = P.hole === 'pit' ? await import('/src/v4/paths/ground.js') : await import('/src/v5/nave/ground.js');
-      const H = P.hole === 'pit' ? G.PIT : G.NAVE, edge = P.hole === 'pit' ? G.pitEdge : G.naveEdge, a = 200 * Math.PI / 180;
+      const H = P.hole === 'pit' ? G.PIT : G.NAVE, edge = P.hole === 'pit' ? G.pitEdge : G.naveEdge, a = (P.hole === 'pit' ? 200 : 330) * Math.PI / 180; // (the Nave's from the north-west: the Noon Road's landing is on the south-east)
       let x = H.x + Math.sin(a) * 40, z = H.z - Math.cos(a) * 40;
       for (let k = 0; k < 400 && edge(x, z) > 5; k++) { x += (H.x - x) * 0.02; z += (H.z - z) * 0.02; }
       return [x, z, fp.terrain.heightAt(x, z)];
@@ -79,6 +80,8 @@ const lip = await page.evaluate((dir) => {
   return { x: best.x, z: best.z, y: best.y, d: best.d, nx: nx / l, nz: nz / l };
 }, P.dir || null);
 if (!lip) { console.log('[lip] none found within 16 m of', at); await browser.close(); process.exit(1); }
+// the walk begins 1.5 m in from the lip (so the first lip it meets is this one, not one further round a curve)
+{ const b = await page.evaluate((lip) => { const fp = window.__fp, r = fp.controls.placeAt(lip.x - lip.nx * 1.5, lip.z - lip.nz * 1.5, lip.y); return r; }, lip); await run(300); lip.d = 1.5; at = [b.x, b.z, b.y]; }
 console.log('[place]', P.name, 'start', at.map((v) => +v.toFixed(2)), 'lip', JSON.stringify({ x: +lip.x.toFixed(2), z: +lip.z.toFixed(2), d: +lip.d.toFixed(1), n: [+lip.nx.toFixed(2), +lip.nz.toFixed(2)] }));
 // the controls: keys and the captured mouse, or the stick and a look drag
 let locked = false, cdp = null, home = null, mx0 = 640, my0 = 360;
@@ -137,20 +140,33 @@ const shot = async (name) => {
 };
 // 1. walk at the lip on a slant: 65 degrees off square (a plain walk along its line), level look
 const yawOf = (dx, dz) => Math.atan2(-dx, -dz);
-const sq = yawOf(lip.nx, lip.nz), side = 1.13; // 65 degrees
+const sq = yawOf(lip.nx, lip.nz);
+// the side of the lip's line with more floor along it (5 m), so the walk runs along the lip, not into a corner
+const sideOf = await page.evaluate((lip) => { const fp = window.__fp, f = lip.y, ok = (sg) => { let n = 0; for (let d = 1; d <= 8; d++) { const x = lip.x - lip.nx * 0.8 - lip.nz * sg * d, z = lip.z - lip.nz * 0.8 + lip.nx * sg * d, fl = fp.controls.floorAt(x, z, f); if (Math.abs(fl.y - f) < 0.7) n++; else break; } return n; }; return ok(1) >= ok(-1) ? 1 : -1; }, lip);
+const side = (+process.env.SLANT || 1.22) * (process.env.SIDE ? +process.env.SIDE : P.side || sideOf); // 65 degrees off square (SIDE=1|-1 picks the way along)
 const slant = yawOf(lip.nx * Math.cos(side) - lip.nz * Math.sin(side), lip.nz * Math.cos(side) + lip.nx * Math.sin(side));
 await look(slant, -0.12); await run(300);
 await shot('walking-to-the-lip');
 await walk(true);
 let s = await info(), t = 0;
-while (t < 12000 && s.atLip < 0.5 && s.on) { await run(200); t += 200; s = await info(); if (t === 1000) await shot('walking-along'); }
+// steering as a visitor does: every 0.2 s the look is turned to keep 65 degrees off the lip nearest them (its line
+// turns round a hole's curve)
+const nearLip = () => page.evaluate(() => { const fp = window.__fp, p = fp.player, x0 = p.pos.x, z0 = p.pos.z, f0 = p.pos.y - p.eye; let sx = 0, sz = 0, best = 9;
+  for (let k = 0; k < 32; k++) { const a = (k / 32) * Math.PI * 2, dx = Math.sin(a), dz = Math.cos(a); for (let d = 0.3; d < 4; d += 0.3) { const fl = fp.controls.floorAt(x0 + dx * d, z0 + dz * d, f0); if (fl.y < f0 - 1.5) { if (d < best - 0.3) { best = d; sx = dx; sz = dz; } else if (d < best + 0.6) { sx += dx; sz += dz; } break; } if (fl.y > f0 + 0.7) break; } }
+  const l = Math.hypot(sx, sz); return l ? { nx: sx / l, nz: sz / l, d: best } : null; });
+while (t < 12000 && s.atLip < 0.5 && s.on) {
+  const L = await nearLip();
+  if (L) await look(yawOf(L.nx * Math.cos(side) - L.nz * Math.sin(side), L.nz * Math.cos(side) + L.nx * Math.sin(side)), -0.12);
+  await run(200); t += 200; s = await info(); if (t === 1000) await shot('walking-along'); }
 await run(400);
 await shot(s.on ? 'held-at-the-lip' : 'off-before-the-lip');
-// 2. look down over it (still held: the plain walk along its line keeps them on)
+// 2. let go of the keys and look down over it
+await walk(false); await run(200);
 await look(slant + (sq - slant) * 0.6, -0.75); await run(500);
 await shot('at-the-lip-looking-down');
 // 3. turn square to it and push on: over at once (or a hop with HOP=1)
 await look(sq, -0.35);
+await walk(true);
 if (process.env.HOP) await hop();
 await run(150); await shot('going-over');
 for (const [ms, name] of [[250, 'over-0.4s'], [400, 'falling-0.8s']]) { await run(ms); await shot(name); }
@@ -162,8 +178,8 @@ if (s.fall === 'dark' || s.fall === 'waking') {
   for (const [ms, name] of [[1500, 'waking-1'], [1500, 'waking-2'], [1500, 'woken']]) { await run(ms); await shot(name); }
   for (t = 0; t < 6000 && (await info()).fall !== 'idle'; t += 200) await run(200);
 }
-// 5. walk on from where they are
-await look((await info()).yaw, -0.1);
+// 5. walk on from where they are, away from the lip
+await look(sq + Math.PI, -0.1);
 await walk(true); await run(1500); await walk(false); await run(300);
 await shot('walking-on');
 await browser.close();
