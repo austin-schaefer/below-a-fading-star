@@ -31,8 +31,11 @@ Whether she looked back from the far side and saw him stop, or only sat.
 
 - The lane stops at the stone and the fire went cold. Someone could say why.
 - Where she went. A saffron thread on someone living, east of the Span, would answer it.
+- The cloth was dyed in the Lappet (v15-P1): the dyer at the Tenter's foot stirs the same saffron and hangs the madder for its border on the Tenter's lines. Whether he remembers who bought the last length, and whether she wrote ahead to the Lagan (`the-dead-letters.md`), is open.
 
 ## Log
+
+- 2026-11-16, v15-P1 (people and stories): where the cloth came from: the dyers' yard on the Low Rung (`src/v15/people/folk.js`, the dyer, saffron to the elbows, stirring the saffron vat under the Tenter's saffron, cream and madder lengths).
 
 - 2026-11-15, v14-B5 (#52, the owner): the deck from either stair's top is "Titan’s Causeway"; the cards of the west bay, the crack and the fen bay are gone into it; the camp keeps "The Long Wait", with two lines ("A bitter night for travelers." / "A bitter night for musing on the stars."); the river bay's strut is "Shaky Splice". Each has the owner's quotation.
 - 2026-11-15, v14-B3 (#52): the ways and the camp named on cards, deck height only: "The Footing Course" (the west bay), "The Fallen Coping" (the crack), "The Hung Cornice" (the fen bay), "The Long Wait" (the camp), "The Dropped Spar" (the river bay's strut).

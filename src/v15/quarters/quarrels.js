@@ -4,7 +4,7 @@
 //
 // What stands here, every coordinate from src/v15/plan.js (the plots, QUARRELS, QUARRELS_ROUTE):
 //   the Brow House        quarrels-house-2: a narrow Late house on the rim at the west end, the first lit window
-//   the Leaning Lodging   quarrels-house-1: a Late house whose back is the west flank of the keep's fallen face (the
+//   the Propped House   quarrels-house-1: a Late house whose back is the west flank of the keep's fallen face (the
 //                         slab, plan.SLAB); its roof is level with the slab where they meet, so the slab is its stair
 //   the Saint's Rest      the square at the Heliarch stair's head: Heliarch hexagons relaid, a keep slab, the stock
 //   the Smoking Saint     the lime kiln, in the head of the keep's fallen colossus, lying in the square's middle
@@ -16,7 +16,7 @@
 //   the Last Arch         the aqueduct's last standing arch (on the line of the Rungs' pier); the templates hang on
 //                         its pier; its drip falls into the saint's upturned hand (the Almoner), the masons' trough
 //   the Banker            the masons' stock, twelve blocks squared up on the brink east of the saint
-//   the Stage             a scaffold on the Last Arch's near pier, climbed by a cleated plank run (ascent `quarrels-stage`)
+//   the Hustings          a scaffold on the Last Arch's near pier, climbed by a cleated plank run (ascent `quarrels-stage`)
 //   the chalk             the next blocks marked out on the keep's fallen face, and a tally
 //   the Unroofed House    new-house: the kit's new house, rising, its stock between its wall and the old pier
 // The makers: src/v15/houses/ (the plots), ./quarrels/saint.js, works.js, air.js.
@@ -58,7 +58,7 @@ export async function build(ctx) {
 
   // the keep's fallen face, as the keep builds it: the plan's copy must be the same slab
   { const S = KEEP_BUILT.slab, T = P.SLAB;
-    if (!S || S.b !== T.b || S.r0 !== T.r0 || S.Ls !== T.Ls || S.W !== T.W || Math.abs(S.yHi - T.yHi) > 1e-6) console.warn('quarrels: the keep\'s fallen slab is not where src/v15/plan.js SLAB says: the Leaning Lodging will not meet it'); }
+    if (!S || S.b !== T.b || S.r0 !== T.r0 || S.Ls !== T.Ls || S.W !== T.W || Math.abs(S.yHi - T.yHi) > 1e-6) console.warn('quarrels: the keep\'s fallen slab is not where src/v15/plan.js SLAB says: the Propped House will not meet it'); }
   const inSlab = (x, z, pad = 0) => { const dx = x - P.KEEP.x, dz = z - P.KEEP.z, al = dx * P.SLAB.f[0] + dz * P.SLAB.f[1] - P.SLAB.r0, sd = dx * P.SLAB.side[0] + dz * P.SLAB.side[1]; return al > -pad && al < P.SLAB.len + pad && Math.abs(sd) < P.SLAB.W / 2 + pad; };
 
   // ---------------------------------------------------------------- the plots
@@ -235,7 +235,7 @@ export async function build(ctx) {
     beam(B, TM, [0.1, 0.2, 0.05], [0.5, 1.15, -0.3], 0.045, { color: worn(V.rawWood, rng, 0.2), moss: 0, ground: Y, round: 5 });
     colliders.push({ x: tx, z: tz, r: 0.55, y: Y - 0.5, h: 1.0 }); }
 
-  // ---------------------------------------------------------------- the Stage: the scaffold on the Last Arch
+  // ---------------------------------------------------------------- the Hustings: the scaffold on the Last Arch
   // A mason's stage lashed to the far side of the arch's near pier, 2.5 m up, and a cleated plank run up to it along
   // the arch's flank from the keep's side: the one thing on the crown a visitor climbs. From it: the channel's broken end, the hand under it,
   // the brink and the valley.

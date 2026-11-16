@@ -14,11 +14,11 @@
 //   the Gullet      a mud stair straight down the slot between the two houses at the corner: mean, and whole
 //   the Tenter      the dyers' stair down the Mid Rung's riser on the east run, cloth on tenter lines down its
 //                   length, vats at its foot, their runnels across the lane to a drain
-//   the Short Stair a Heliarch flight along the riser east of the aqueduct's pier, its foot in a house's wall; and
+//   the Stump       a Heliarch flight along the riser east of the aqueduct's pier, its foot in a house's wall; and
 //                   the Pier Stair, the same hand's treads let into the pier's faces, the lowest gone: seen from
 //                   the Lees between the Late timber of the Tenter and the Noonwrights' main
 //   the Slype       the lane under the main: a door in the step, a niche with a light in it
-//   the Squint      a bench at the west end of rungs-low-7's roof, over the Short Stair, the Tenter and the main
+//   the Squint      a bench at the west end of rungs-low-7's roof, over the Stump, the Tenter and the main
 //   the lanes       flags laid over the Elder treads where feet go, more of them lost than kept
 //   and what the bones left: the ladder (up the rim to the crown) its poles stop a walker, a hand-rope, a worn stone say it is climbed
 // Draws: `rungs-houses` and `rungs-ways` (the stone shader). No point light: every slot in reach of P9 and K1 is
@@ -417,7 +417,7 @@ export async function build(ctx) {
       beam(KB, M, [0, 0.05, 0.1], [0.75, -0.02, -0.2], 0.2, { color: worn(N.celadonD, rng, 0.3), moss: 0.2, wet: 0.6, ground: yL - 2 }, 0.07); }
   }
 
-  // ---------------------------------------------------------------- the Short Stair: a Heliarch flight, built over
+  // ---------------------------------------------------------------- the Stump: a Heliarch flight, built over
   // Along the riser east of the pier, exact ashlar on a solid core: seven treads go down from the Mid Rung and the
   // eighth is in the end wall of the house that was built over the rest. A tread is gone, the cheek is a stump.
   {

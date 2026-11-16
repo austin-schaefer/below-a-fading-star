@@ -73,6 +73,11 @@ const NAMED_POSES = {
   tenders: { x: 223.1, y: 149.84, z: -56, look: { x: 223.1, z: -91.6 }, pitch: -0.08 }, // v15-W2: on the lattice's north member 140 m up, the next node at its end
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
 };
+// v15-N1: two things in the Lappet, named on the map though they have no card of their own (the village is the one entry already, The Lappet, and its quarters' cards are the walk's own, `map: false`): `thing` is what the stand faces (settings-test checks it is in view and nothing shuts the view within 3 m)
+const VILLAGE_PLACES = [
+  { name: 'The Fountain of Noon', x: 80, z: -33, look: { x: 72.5, z: -37.9 }, pitch: 0.05, thing: { x: 72.5, z: -37.9 } }, // the square's foot of a vessel, welling stored daylight; the Wanting Arch behind it
+  { name: 'The Smoking Saint', x: 64.5, y: 18, z: -3.5, look: { x: 72.9, z: -1.3 }, pitch: 0.3, thing: { x: 72.9, z: -1.3 } }, // the fallen colossus's head, the masons' lime kiln, from the Saint's Rest
+];
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
   ['taker', -275.35, 13.29, -1.222, -0.04], // workers-taker-road
@@ -101,13 +106,14 @@ const offToward = (c, d) => { // d metres from (c.x, c.z) toward spawn
 function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
-    if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
+    if (!L.name || key === 'graves' || L.map === false) continue; // the Sexton's entry among the living lands there
     const h = HAND[key] || NAMED_POSES[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
+  for (const a of VILLAGE_PLACES) out.push({ ...a, group: 'Places' }); // v15-N1
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
   for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw, ...REGION_STANDS[R.region] });
   for (const [key, x, z, yaw, pitch] of LIVING) {

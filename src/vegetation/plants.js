@@ -7,7 +7,6 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
 import { withFade } from '../fade.js';
 import { stripAt, stripEdge } from '../v8/strips.js';
-import { onFigure } from '../v4/dressing/figure.js'; // v9 (#16): no cover on the Long Figure
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
 const PARAMS = new URL(location.href).searchParams;
@@ -567,7 +566,7 @@ function copyPrefix(ch, k, P, S, T, at) {
 export function buildPlants(ctx, ground, shared) {
   const { landmarks: L, quality, noise } = ctx;
   perf = ctx.perf;
-  keepOff = (x, z) => onFigure(x, z, 1, ctx.terrain); // the Long Figure's chalk and a metre round it
+  keepOff = null;
   token = ctx.packToken ||= { t: -1, hold: 0 };
   token.now ||= () => ctx.time.t;
   const low = quality === 'low';

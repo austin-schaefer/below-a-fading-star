@@ -7,7 +7,7 @@
 // What is here: the foot (a thick milk-glass bowl 3.4 m across, glazed outside, its rim broken low to the north where
 // people dip and high to the south, a ragged tongue 3 m tall that the light climbs); the light in it (the lit floor
 // and its crack in stone, the depth of it as four additive sheets: light.js); a worn kerb of robbed stones on the
-// dipping side; a shelf of flasks left to fill, each fuller than the last; the Swape [Proposed], a well-sweep with a
+// dipping side; a shelf of flasks left to fill, each fuller than the last; the Swape, a well-sweep with a
 // Heliarch drum for its counterweight, a chain and a cradle; the Leerie's slate on its post; a bench built against
 // the glass where it is warm, and a vine on three poles that has grown its only leaves toward the light.
 //
