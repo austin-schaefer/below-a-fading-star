@@ -1,0 +1,39 @@
+[
+{
+"name": "spawn",
+"x": 0,
+"z": 5,
+"yaw": -1.348,
+"pitch": 0.05
+},
+{
+"name": "causeway",
+"x": 14,
+"z": -18,
+"yaw": -1.628,
+"pitch": 0.05
+},
+{
+"name": "east-road",
+"x": 148,
+"z": 95,
+"yaw": 0.531,
+"pitch": 0.05
+},
+{
+"name": "gate",
+"x": 100,
+"z": -90,
+"yaw": 2.934,
+"pitch": 0.1
+},
+{
+"name": "croft",
+"x": 228.6,
+"z": -55,
+"yaw": 1.847,
+"pitch": -0.45,
+"js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=116+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(228.6,Y,-55);}});})()",
+"settle": 3000
+}
+]
