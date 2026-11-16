@@ -44,7 +44,7 @@ const r = await page.evaluate(async () => {
   for (const kind of H.KINDS) H.FORMS[kind].forEach((form, fi) => { for (const seed of [1, 2, 3]) {
     let [w, d] = SIZE[kind]; const o = { seed, low: true };
     if (kind === 'new') o.stage = fi; else o.form = form;
-    if (kind === 'carrier' && form === 'lying') { w = 14; d = 5; }
+    if (kind === 'carrier' && form === 'wreck') { w = 14; d = 5; }
     if (kind === 'undercroft' && form === 'riser') { w = 4.6; d = 5.2; o.riser = 2.9; o.face = 0.6; }
     if (kind === 'late' && form === 'stall') { w = 3.4; d = 2.4; }
     cases.push({ id: `${kind} ${form} seed ${seed}`, kind, form, w, d, o });
@@ -168,7 +168,7 @@ for (const m of r.makers) {
   check(m.lone === 0, `${id}: every collider has something drawn in it (${m.lone} of ${m.colliders} have nothing)`);
   check(m.fs + m.covered === 0 || (m.holes === 0 && m.fs > 0 && m.fok / m.fs >= 0.75 && m.covered <= m.fs), `${id}: floors are where they are drawn (${m.fok} of ${m.fs} samples, ${m.holes} over nothing, ${m.covered} under furniture)`);
   check(m.doorBad.length === 0, `${id}: its doors do what they say (${m.doorBad.length ? m.doorBad.join('; ') : m.enter ? 'entered' : 'shut'})`);
-  if (m.kind === 'carrier' || m.kind === 'new' || (m.kind === 'elder' && m.form === 'lean')) check(m.enter && m.rooms >= 1, `${id}: can be entered (a door marked enter, ${m.rooms} room floors)`);
+  if ((m.kind === 'carrier' && m.form === 'sunk') || m.kind === 'new' || (m.kind === 'elder' && m.form === 'lean')) check(m.enter && m.rooms >= 1, `${id}: can be entered (a door marked enter, ${m.rooms} room floors)`);
   if (m.against && m.against.h) { const a = m.against; check(!a.stair && a.y !== null && Math.abs(a.y - a.h) < 0.02 && a.back < 0.08 && a.back > -0.08, `${id}: against its riser: no stair, the roof at the tread (${a.y === null ? 'no roof floor' : a.y.toFixed(2)} for ${a.h}), its floor to the back edge (${a.back.toFixed(2)} m short)`); }
 }
 const forms = new Set(r.late.map((l) => l.form)), tops = new Set(r.late.map((l) => Math.round(l.top * 4)));

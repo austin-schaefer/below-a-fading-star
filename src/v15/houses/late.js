@@ -12,7 +12,7 @@
 // 3.4, 'step' 5.2 x 3.4, 'long' 5.6, 'stall' 2.4 x 1.8. A form that does not fit its plot becomes a 'yard' (or a
 // 'stall' under 3 m); a plot under 2.4 x 1.8 throws.
 import * as THREE from 'three';
-import { L, H, V, PARTS, rngOf, pick, ch, leaned, worn, limeGlow, site, facade, patch, plate, beam, pot, leaf, stop, shutter, flight, washing, bed, hangSign, niche, openingTop, batter, dirty, awning } from './kit.js';
+import { L, H, V, PARTS, rngOf, pick, ch, leaned, worn, limeGlow, site, facade, patch, plate, tint, beam, pot, leaf, stop, shutter, flight, washing, bed, hangSign, niche, openingTop, batter, dirty, awning } from './kit.js';
 
 export const LATE_FORMS = ['yard', 'tower', 'step', 'long'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -36,8 +36,8 @@ export function room(B, HM, R, r) {
       kept.push(op);
     }
     r.openings = kept; }
-  const top = [], n = 2 + Math.floor(rng() * 3), from = B.count;
-  for (let i = 0; i <= n; i++) top.push([w / 2 - (i / n) * w, h + pf + (rng() - 0.5) * 0.14 - (i === 0 || i === n ? 0.05 : 0)]);
+  const top = [], n = 3 + Math.floor(rng() * 3), from = B.count, sagK = rng() < 0.5 ? 0.14 : 0.04; let bare = null;
+  for (let i = 0; i <= n; i++) top.push([w / 2 - (i / n) * w, h + pf + (rng() - 0.5) * 0.14 - (i === 0 || i === n ? 0.05 : 0) - sagK * Math.sin((Math.PI * i) / n)]); // (a parapet sags between its corners)
   if (r.gap) { // the parapet left down where a stair comes onto the roof: [xa, xb] (the room's own x)
     const [ga, gb] = [r.gap[0] - cx, r.gap[1] - cx], keep = top.filter(([x]) => x > gb + 0.05 || x < ga - 0.05), hi = h + pf;
     top.length = 0; top.push(...keep.filter(([x]) => x > gb), ...(gb < w / 2 - 0.05 ? [[gb, hi]] : []), [Math.min(gb, w / 2), h + 0.02], [Math.max(ga, -w / 2), h + 0.02], ...(ga > -w / 2 + 0.05 ? [[ga, hi]] : []), ...keep.filter(([x]) => x < ga));
@@ -68,18 +68,39 @@ export function room(B, HM, R, r) {
       R.window(op.x, (op.y || 0) + hh / 2, zf, op.stop === 'lit');
     }
   }
-  // patches on the front, each a tone off the wall: limewash over a mend, raw mud, damp risen from the ground, and
-  // low down the plaster gone from the coursed stone it hides
-  const np = r.patches ?? (r.low ? 2 : 3 + Math.floor(rng() * 2));
-  for (let i = 0; i < np; i++) {
-    const kind = i === 0 ? 'bare' : i === 1 ? 'damp' : rng() < 0.55 ? 'lime' : 'mud', py = kind === 'bare' ? 0.3 + rng() * 0.3 : kind === 'damp' ? 0.25 : 1.0 + rng() * Math.max(0.3, h - 2);
-    let px = 0, ok = false; // clear of every opening
-    for (let t = 0; t < 8 && !ok; t++) { px = cx + (rng() - 0.5) * (w - 1.6); ok = (r.openings || []).every((op) => Math.abs(px - op.x) > op.w / 2 + 0.85 || py > (op.y || 0) + op.sp + op.w + 0.6 || py < (op.y || 0) - 0.7); }
-    if (!ok) continue;
-    const o2 = kind === 'bare' ? { color: worn(H.stone, rng, 0.1), course: 0.26, moss: 0.5, ground: g0 } : { color: kind === 'lime' ? col.clone().lerp(L.plaster[3], 0.4) : kind === 'damp' ? col.clone().lerp(V.dirt, 0.45) : col.clone().lerp(V.mud, 0.5), moss: kind === 'damp' ? 0.5 : 0.12, ground: g0 };
-    // (never past the wall's ends: a patch is up to 1.5 r wide, a damp one 1.7 times that)
-    const pr = Math.min(kind === 'bare' ? 0.5 + rng() * 0.3 : 0.4 + rng() * 0.45, (w / 2 - 0.1) / (kind === 'damp' ? 2.55 : 1.5)), phw = pr * (kind === 'damp' ? 2.55 : 1.5);
-    patch(B, ch(HM, clamp(px, x0 + phw + 0.05, x1 - phw - 0.05), py, zf + i * 0.007, 0, 0, 0, kind === 'damp' ? 1.7 : 1, 1, 1), pr, rng, o2); // (each a coat deeper than the last: two that overlap never share a face)
+  // What time has done to the front, all of it painted a finger off the wall and fading into it at its edges (no
+  // shape of its own: a stain has no outline): limewash over a mend and raw mud, each a tone off the wall; low down
+  // the plaster gone from the rubble it hid (that one has an edge: plaster breaks); rain's streaks under every sill
+  // and down from the parapet; damp risen along the foot.
+  { const ops = r.openings || [], wo = { color: col, moss, ground: g0, emit: limeGlow(col) }; let zq = zf + 0.012;
+    const lay = (rows, to, o2 = wo) => { tint(B, ch(HM, 0, 0, zq), o2, to, rows); zq += 0.006; };
+    const blot = (px, py, rx, ry, to, k, edge = 0, o2 = wo) => { const n = 9, ring = (f, kk) => { const row = []; for (let i = 0; i <= n; i++) { const a = (i / n) * Math.PI * 2, j = 0.75 + 0.5 * B.n3(px * 3 + Math.cos(a) * 1.3, py * 3 + Math.sin(a) * 1.3, 7); row.push([px + Math.cos(a) * rx * f * j, Math.max(0.02, py + Math.sin(a) * ry * f * j), kk]); } return row; };
+      lay([ring(1, edge), ring(0.8, k), ring(0.02, k)], to, o2); };
+    const np = r.patches ?? (r.low ? 2 : 3 + Math.floor(rng() * 2));
+    for (let i = 0; i < np; i++) {
+      const kind = i === 0 ? 'bare' : rng() < 0.6 ? 'lime' : 'mud', py = kind === 'bare' ? 0.4 + rng() * 0.3 : 1.0 + rng() * Math.max(0.3, h - 2);
+      let px = 0, ok = false; // clear of every opening
+      for (let t = 0; t < 8 && !ok; t++) { px = cx + (rng() - 0.5) * (w - 1.6); ok = ops.every((op) => Math.abs(px - op.x) > op.w / 2 + 0.85 || py > (op.y || 0) + op.sp + op.w + 0.6 || py < (op.y || 0) - 0.7); }
+      if (!ok) continue;
+      const pr = Math.min(kind === 'bare' ? 0.45 + rng() * 0.25 : 0.4 + rng() * 0.45, (w / 2 - 0.1) / 1.6), phw = pr * 1.6, pxc = clamp(px, x0 + phw + 0.05, x1 - phw - 0.05);
+      if (kind === 'bare') { // the mud brick and rubble the plaster hid, a few stones standing out of it
+        bare = [pxc - phw, pxc + phw];
+        blot(pxc, py, pr * 1.25, Math.min(pr, py + 0.1), new THREE.Color(0.3, 0.215, 0.16), 1, 0.8, { ...wo, course: 0.14, moss: 0.3, emit: undefined });
+        for (let q = 0, nq = r.low ? 2 : 4; q < nq; q++) B.add(B.box(0.2 + rng() * 0.16, 0.12 + rng() * 0.07, 0.09, { seg: 9, chip: 0.035, seed: q + i }), ch(HM, pxc + (q / (nq - 1) - 0.5) * pr * 1.3, Math.max(0.1, py - 0.14 + (q % 2) * 0.22 + rng() * 0.06), zf + 0.02, 0, 0, (rng() - 0.5) * 0.2), { color: new THREE.Color(0.36, 0.27, 0.2).multiplyScalar(q % 3 === 0 ? 0.7 : 1 + rng() * 0.3), moss: 0.4, ground: g0 });
+      } else blot(pxc, py, pr * 1.3, pr * (0.7 + rng() * 0.5), kind === 'lime' ? (col.r > 0.7 ? col.clone().multiplyScalar(0.8).lerp(L.plaster[3], 0.3) : col.clone().lerp(L.plaster[0], 0.75)) : col.clone().multiply(new THREE.Color(0.72, 0.62, 0.5)), 0.9);
+    }
+    const dirt = col.clone().multiply(new THREE.Color(0.5, 0.46, 0.4));
+    const streak = (x, yT, ww, len, k) => { const lean = (rng() - 0.5) * 0.1; lay([[[x - ww, yT + 0.1, 0], [x, yT + 0.1, 0], [x + ww, yT + 0.1, 0]], [[x - ww, yT, 0], [x, yT, k], [x + ww, yT, 0]], [[x - ww * 0.8 + lean * 0.5, yT - len * 0.5, 0], [x + lean * 0.5, yT - len * 0.5, k * 0.6], [x + ww * 0.8 + lean * 0.5, yT - len * 0.5, 0]], [[x - ww * 0.4 + lean, yT - len, 0], [x + lean, yT - len, 0], [x + ww * 0.4 + lean, yT - len, 0]]], dirt); };
+    for (const op of ops) if (!op.door && !op.shop && (op.y || 0) > 0.7) for (const sx of [-1, 1]) streak(op.x + sx * (op.w / 2 + 0.02), (op.y || 0) - 0.04, 0.17 + rng() * 0.08, Math.min((op.y || 0) - 0.2, 0.6 + rng() * 0.9), 1); // (off each end of the sill, where the water runs)
+    for (let i = 0, ns = r.low ? 3 : 4 + Math.floor(rng() * 3); i < ns; i++) { const x = x0 + 0.3 + rng() * (w - 0.6), ww = 0.16 + rng() * 0.2, yT = h + Math.min(pf, 0.3) - 0.25, len = 0.8 + rng() * 1.4;
+      if (r.gap && x > r.gap[0] - 0.4 && x < r.gap[1] + 0.4) continue;
+      if (ops.some((op) => Math.abs(x - op.x) < op.w / 2 + ww + 0.3 && yT - len < (op.y || 0) + openingTop(op.kind, op.w, op.sp) + 0.45)) continue;
+      streak(x, yT, ww, len, 0.85); }
+    // the damp: runs between the doors, its top ragged
+    const runs = []; { let xa = x0 + 0.02; for (const op of ops.filter((q) => (q.y || 0) < 0.6).sort((p1, p2) => p1.x - p2.x)) { runs.push([xa, op.x - op.w / 2 - 0.3]); xa = op.x + op.w / 2 + 0.3; } runs.push([xa, x1 - 0.02]); }
+    for (const [xa, xb] of runs) { if (xb - xa < 0.5) continue; const nc = Math.max(2, Math.round((xb - xa) / 0.7)), rows = [[], [], []];
+      for (let i = 0; i <= nc; i++) { const x = xa + ((xb - xa) * i) / nc, t = 0.4 + rng() * 0.5, k = bare && x > bare[0] && x < bare[1] ? 0.3 : 0.85; rows[0].push([x, t, 0]); rows[1].push([x, t * 0.55, k * 0.85]); rows[2].push([x, -0.05, k]); }
+      lay(rows, col.clone().multiply(new THREE.Color(0.4, 0.43, 0.33))); }
   }
   // its walls, as walls (a closed house)
   for (const [a, b, c2, e] of [[x0 + 0.2, zf - 0.2, x1 - 0.2, zf - 0.2], [x0 + 0.2, zb + 0.2, x1 - 0.2, zb + 0.2], [x0 + 0.2, zb + 0.2, x0 + 0.2, zf - 0.2], [x1 - 0.2, zb + 0.2, x1 - 0.2, zf - 0.2]]) R.wall(a, b, c2, e, 0, h, 0.2);

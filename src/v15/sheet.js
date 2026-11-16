@@ -27,7 +27,7 @@ export const PLAN_PLOTS = [
   { name: 'strake-elder', kind: 'house', hand: 'elder', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8, o: { form: 'overhang' } },
   { name: 'strake-late', kind: 'house', hand: 'late', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8 },
   { name: 'strake-shop', kind: 'shop', hand: 'heliarch', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8, built: { rad: 1.48, spring: 0.9 } },
-  { name: 'strake-carrier', kind: 'carrier', hand: 'noon', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8, o: { form: 'standing' } },
+  { name: 'strake-carrier', kind: 'carrier', hand: 'noon', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8, o: { form: 'sherd' } },
   { name: 'strake-new', kind: 'new-house', hand: 'new', w: 6.8, d: 5.2, against: 'r29', roof: 'up29', D: 12.8, o: { stage: 1 } },
 ];
 // makePlot's options for one of them at level y

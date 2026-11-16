@@ -25,7 +25,7 @@ export const ROW = { x: 59.6, z: -38.8, bearing: 15 };
 // With the plan: what each of its plots is given beyond what the plan says (the seed is the building)
 export const STRAKE_OPTS = {
   'strake-elder': { seed: 2, form: 'overhang' }, 'strake-late': { seed: 4 }, 'strake-shop': { seed: 3 },
-  'strake-carrier': { seed: 6, form: 'standing', profile: 'long', glaze: 0 }, 'strake-new': { seed: 1, stage: 1 },
+  'strake-carrier': { seed: 6, form: 'sherd', glaze: 0 }, 'strake-new': { seed: 1, stage: 1 },
 };
 const LIFT = 0.04; // the flags stand this far above the bench's turf, and the row with them
 // along the street from its east end (the left of someone facing the fronts): kind, the plot's width and depth, how
@@ -33,7 +33,7 @@ const LIFT = 0.04; // the flags stand this far above the bench's turf, and the r
 export const ROW_PLOTS = [
   { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard', stair: 'front', h: 2.85 } }, // (h: thirteen risers, so the front stair's foot clears the door on a 6.6 m plot)
   { kind: 'undercroft', w: 7.4, d: 4.8, o: { seed: 3 } },
-  { kind: 'carrier', w: 7.6, d: 6.4, over: 0.9, o: { seed: 6, form: 'standing', profile: 'long', glaze: 0 } },
+  { kind: 'carrier', w: 7.6, d: 6.4, over: 0.9, o: { seed: 6, form: 'sherd', glaze: 0 } },
   { kind: 'elder', w: 8.6, d: 7.2, over: 0.3, o: { seed: 2, form: 'lean', back: -1.3 } },
   { kind: 'new', w: 7.6, d: 6.4, over: 1.15, o: { seed: 1, stage: 1 } },
 ];

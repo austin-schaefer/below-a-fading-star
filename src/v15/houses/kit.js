@@ -39,9 +39,9 @@ export const plotMatrix = (p) => mat(p.x, p.y, p.z, 0, Math.atan2(p.face[0], p.f
 // M leaned: a point y up is carried kx sideways and kz forward (a whole house out of true)
 export const leaned = (M, kx, kz = 0) => M.clone().multiply(new THREE.Matrix4().set(1, kx, 0, 0, 0, 1, 0, 0, 0, kz, 1, 0, 0, 0, 0, 1));
 // a colour worn: toward dirt by k, and no two the same
-// limewash holds a little of the sky's light back: a pale wall in shade stays pale (the lit-window channel, faint: it
-// goes down with the sun as the windows do)
-export const limeGlow = (col, k = 0.085) => [col.r * k, col.g * k, col.b * k, 1];
+// limewash holds a little of the sky's light back: a pale wall in shade stays pale (emission channel 2, the stone
+// shader's uLime: steady, no lamp's flicker in it, and down to a third with the sun)
+export const limeGlow = (col, k = 0.085) => [col.r * k, col.g * k, col.b * k, 2];
 export const worn = (col, rng, k = 0.18, v = 0.1) => col.clone().lerp(V.dirt, k).multiplyScalar(1 - v / 2 + rng() * v);
 
 // ---------------------------------------------------------------- the record
@@ -170,6 +170,19 @@ export function patch(B, M, r, rng, o) {
   for (let i = 0; i < n; i++) { const a = ((i + rng() * 0.6) / n) * Math.PI * 2, k = r * (0.5 + rng() * 0.7); pts.push([Math.cos(a) * k * 1.25, Math.sin(a) * k]); }
   plate(B, M, pts, 0.03, o);
 }
+// a stain: a flat sheet in M's xy plane (facing +z) with the wall's own surface `o`, its colour run toward `to`
+// by each point's weight. rows: [[x, y, k], ...] a row, every row as long; where k is 0 it cannot be told from the wall
+export function tint(B, M, o, to, rows) {
+  const nc = rows[0].length, pos = [], idx = [], ks = [];
+  for (const row of rows) for (const [x, y, k] of row) { pos.push(x, y, 0); ks.push(k); }
+  const flip = (rows[0][1][0] - rows[0][0][0]) * (rows[1][0][1] - rows[0][0][1]) - (rows[0][1][1] - rows[0][0][1]) * (rows[1][0][0] - rows[0][0][0]) < 0;
+  for (let j = 0; j < rows.length - 1; j++) for (let i = 0; i < nc - 1; i++) { const a = j * nc + i, b = a + 1, c = a + nc, e = c + 1; if (flip) idx.push(a, c, b, b, c, e); else idx.push(a, b, c, b, e, c); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+  let i = 0; const c0 = o.color;
+  const base = B.count, dim = (to.r + to.g + to.b) / Math.max(0.01, c0.r + c0.g + c0.b);
+  addPainted(B, g, M, o, (x, y, z, out) => { const k = ks[i++]; out.r = c0.r + (to.r - c0.r) * k; out.g = c0.g + (to.g - c0.g) * k; out.b = c0.b + (to.b - c0.b) * k; });
+  for (let j = 0; j < ks.length; j++) { const f = 1 + (dim - 1) * ks[j], e = (base + j) * 4; B.E[e] *= f; B.E[e + 1] *= f; B.E[e + 2] *= f; } // (and the wall's own glow with it)
+}
 // a beam, pole or line between two local points, t thick (t2 deep)
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _upx = new THREE.Vector3(1, 0, 0), _q = new THREE.Quaternion(), _one = new THREE.Vector3(1, 1, 1), _lm = new THREE.Matrix4();
 export function beam(B, M, a, b, t, o, t2 = t) {
@@ -202,7 +215,10 @@ export function pot(B, M, x, y, z, r, col, k = 1.8, seg = 8) {
 export function leaf(B, M, w, h, col, rng, o = {}) {
   const g0 = M.elements[13] - 1;
   B.add(B.box(w, h, 0.07, { seg: 9 }), ch(M, 0, h / 2, 0), { color: col, moss: 0.05, ground: g0 });
+  // planks, and their feet worn grey where rain and boots get at them
+  B.add(B.box(w, 0.17, 0.012, { seg: 9 }), ch(M, 0, 0.085, 0.04), { color: col.clone().lerp(V.dirt, 0.55).multiplyScalar(0.85), moss: 0.3, ground: g0 });
   if (o.plain) return;
+  for (const t of [-1 / 6, 1 / 6]) B.add(B.box(0.014, h - 0.2, 0.012, { seg: 9 }), ch(M, w * t, h / 2 + 0.09, 0.034), { color: col.clone().multiplyScalar(0.5), moss: 0, ground: g0 });
   for (const t of [0.22, 0.74]) B.add(B.box(w * 0.92, 0.07, 0.02, { seg: 9 }), ch(M, 0, h * t, 0.045), { color: L.iron, iron: 0.7, moss: 0, ground: g0 });
   B.add(new THREE.TorusGeometry(0.06, 0.012, 4, 8), ch(M, w * 0.3 * (rng() < 0.5 ? -1 : 1), h * 0.5, 0.05), { color: L.iron, iron: 0.8, moss: 0, ground: g0 });
 }

@@ -3,12 +3,17 @@
 // calls them.
 import { late, LATE_FORMS, shopfront } from './late.js';
 import { undercroft, UNDER_FORMS } from './undercroft.js';
-import { carrier, CARRIER_FORMS } from './carrier.js';
+import { carrier as flask } from './carrier.js';
+import { vessel, VESSEL_FORMS } from './vessel.js';
 import { elder, ELDER_FORMS } from './elder.js';
 import { newhouse } from './newhouse.js';
 import { plotMatrix } from './kit.js';
 export { register, registerAll, plotMatrix, faceOf, floorAt, site } from './kit.js';
-export { LATE_FORMS, UNDER_FORMS, CARRIER_FORMS, ELDER_FORMS, shopfront };
+export { LATE_FORMS, UNDER_FORMS, ELDER_FORMS, shopfront };
+// a carrier is never whole: a sherd, a sunk dome or a wreck (vessel.js); the flask on its tail (carrier.js) only
+// when a quarter asks for it by name, once
+const carrier = (B, M, o = {}) => (o.form === 'standing' ? flask(B, M, o) : vessel(B, M, o));
+export const CARRIER_FORMS = VESSEL_FORMS;
 
 // by age, oldest hand first
 export const MAKERS = { elder, undercroft, carrier, late, new: newhouse };
