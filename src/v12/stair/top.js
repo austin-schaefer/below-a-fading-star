@@ -182,10 +182,11 @@ export function buildTop(ctx, P, { low }) {
   // the lean-to: bronze sheets and patches of canvas from the node's east face down to two poles
   const lx0 = nx1, lx1 = nx1 + 3.1, lz0 = cz - 3.4, lz1 = cz + 3.2;
   for (const z of [lz0 + 0.2, lz1 - 0.2]) H.push(box(lx1, yd + 1.05, z, 0.1, 2.1, 0.1, WOOD_D));
-  let zz = lz0;
+  let zz = lz0, k = 0;
   while (zz < lz1 - 0.05) {
-    const w = Math.min(lz1 - zz, 0.9 + rng() * 0.8), c = rng() < 0.35 ? CANVAS.clone().multiplyScalar(0.8 + rng() * 0.3) : BRONZE.clone().multiplyScalar(0.7 + rng() * 0.5);
-    H.push(member([lx0, yd + 3.1 + rng() * 0.08, zz + w / 2], [lx1 + 0.3, yd + 1.95, zz + w / 2], w + 0.06, 0.03, c, [0, 0, 1]));
+    // (every other sheet laid 4 cm over its neighbours: lapped sheets in one plane flickered, seen from the node above, v15-W2)
+    const w = Math.min(lz1 - zz, 0.9 + rng() * 0.8), c = rng() < 0.35 ? CANVAS.clone().multiplyScalar(0.8 + rng() * 0.3) : BRONZE.clone().multiplyScalar(0.7 + rng() * 0.5), lift = (k++ % 2) * 0.04;
+    H.push(member([lx0, yd + 3.1 + rng() * 0.08 + lift, zz + w / 2], [lx1 + 0.3, yd + 1.95 + lift, zz + w / 2], w + 0.06, 0.03, c, [0, 0, 1]));
     zz += w - 0.04;
   }
   // under it: the cot along the node's face, its blanket and a pillow
