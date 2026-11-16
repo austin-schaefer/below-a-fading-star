@@ -17,6 +17,7 @@
 //     point's y, never falling), stepped off at each `off` with a hurry and landing sane (on a floor, not under the
 //     ground, inside the limit or a corridor, not inside a collider, able to walk away), the frame time at the top
 //     no worse than 1.5x the floor's plus 4 ms;
+//     (the Lappet's ladder, v15-V0, is one of them: a carry, climbed by the same W; its `tick` runs on the walker's frames);
 //   - the Diffident Stair (v12-H3, when built): a slab that has not come does not hold (its place is a held edge); with
 //     its clock the walker climbs; ahead of the feet the slabs have come, 6 m behind they have gone; standing still is safe;
 //     at 30 and 20 fps a walk is never held; down from the deck to the turf; turning back mid-flight; the columns it caps;

@@ -193,7 +193,7 @@ export const SQUARES = [
 export const STAIR = { run: 1, s: 31, width: 3 }; // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
 export const WAYS = [
   { name: 'heliarch-head', kind: 'stair', hand: 'heliarch', from: 'crown', to: 'high', run: 1, s: 31, D0: -4.6, D1: -2.8,
-    note: 'a hexagon landing on the crown\'s rim and twin flights down along the riser, east and west, 6.4 m each' },
+    note: 'a hexagon landing on the crown\'s rim and twin flights down along the riser, east and west, 3.9 m each (steep: the east one ends at the corner)' },
   { name: 'heliarch-upper', kind: 'stair', hand: 'heliarch', from: 'high', to: 'mid', run: 1, s: 31, D0: 2.7, D1: 7.9,
     note: 'cut 1.9 m into the High Rung, then out over the Mid Rung; lands on a hexagon at D 7.9..10.1' },
   { name: 'timber-patch', kind: 'stair', hand: 'late', from: 'mid', to: 'low', run: 1, s: 31, D0: 10.1, D1: 15.3,
@@ -217,7 +217,8 @@ export const way = (name) => WAYS.find((w) => w.name === name) || null;
 
 // ---------------------------------------------------------------- the plots
 // { name, kind, quarter, level, y, x, z, face: [fx, fz], yaw, w (across the front), d (front to back), hand,
-//   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), note }
+//   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), stair (a house
+//   wide enough, 6.3 m, for the front outside stair to a roof yard), note }
 // A house "against" a riser stands with its back wall on the face, on the lower tread; `roof` is the tread above, so
 // its roof is that tread's yard. Corners: plotCorners(p).
 const PLOTS_ = [];
@@ -236,9 +237,9 @@ const HD = 3.7, backD = (riser) => RISERS.find((r) => r.key === riser).D + HD / 
 
 // --- the Rungs: stacked houses. Mid Rung (y 10) against the High Rung's riser, roofs at 14; Low Rung (y 6), roofs at 10.
 // Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the ladder (run 2, s 19), the corner.
-for (const [i, run, s, w] of [[1, 1, 7.5, 5.6], [2, 1, 14, 6.2], [3, 1, 21.5, 5.4], [4, 1, 36.6, 5.2], [5, 2, 2.4, 5], [6, 2, 15, 5.6], [7, 2, 24, 6]])
+for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [5, 2, 2.4, 5], [6, 2, 15, 5.6], [7, 2, 24.3, 6.4]])
   put(`rungs-mid-${i}`, 'house', 'rungs', 'mid', run, s, backD('high'), w, HD, 'late', { against: 'high', roof: 'high' });
-for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.5, 5.6], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 14.5, 5], [7, 2, 24, 5.6]])
+for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 14.5, 5], [7, 2, 24.5, 6.4]])
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });
 // --- the Lees: shops in the Low Rung's riser (Heliarch undercrofts: round arches let 3.2 m into the step, a Late front
 // out on the bench), and two houses that stand free on the square's west side
@@ -264,6 +265,8 @@ free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 104.5, -27, [0, -1], 6
 
 { const w = WAYS.find((v) => v.name === 'lane-bridge'); put('bridge-pier', 'pier', 'rungs', 'low', w.run, w.s, 14.2, 2, 1.8, 'heliarch', { note: 'the aqueduct\'s last pier; the bridge lands on it' }); }
 
+// a Late house with an outside stair up its front to a roof yard needs 6.3 m of front (V1's makers): `stair` says which plots have it
+for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.w >= 6.3;
 export const PLOTS = PLOTS_;
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
@@ -295,3 +298,20 @@ export function cutAt(x, z, pad = 0) {
   for (const c of CUTS) if (c.run === _f.run && _f.s > c.s0 - pad && _f.s < c.s1 + pad && _f.D > c.D0 - pad && _f.D < c.D1 + pad && (y === null || c.y < y)) y = c.y;
   return y;
 }
+
+// ---------------------------------------------------------------- the places the geometry check walks (#64)
+// tools/geometry-test.mjs and tools/route-frames.mjs read this list (the format: tools/geometry/places.mjs). Each way
+// is its registered ascent; each level is its lane walked end to end; the crown is the court behind the stair's head.
+// A quarter adds its own places here as it builds.
+const laneRoute = (name) => { const l = LANES.find((q) => q.name === name); return l.pts.map(([x, z]) => [x, z, l.y]); };
+export const GEOMETRY_PLACES = [
+  ...['heliarch-head-east', 'heliarch-head-west', 'heliarch-upper', 'timber-patch', 'heliarch-foot', 'rungs-ladder', 'lane-bridge', 'lees-stair', 'pennyworth-ramp']
+    .map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5 })),
+  { name: 'lappet-noon-main', ascent: 'noon-main', half: 6 }, // the daylight main: cracked and breached, so never `sealed`
+  { name: 'lappet-crown', pts: [[...at(1, 20, -8), LEVEL.crown.y], [...at(1, STAIR.s, -7), LEVEL.crown.y], [...at(2, 6, -8), LEVEL.crown.y]], half: 6 },
+  { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6 },
+  { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5 },
+  { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5 },
+  { name: 'lappet-lees', pts: [at(1, 12, 19.5), at(1, 30, 20.5), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7 },
+  { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6 },
+];

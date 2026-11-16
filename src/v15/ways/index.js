@@ -36,7 +36,13 @@ export function buildWays(ctx, lappet) {
     const K = {
       ctx, plan: P, name, B: ctx.strata.builder(), U: new UnderBuilder(SKY), C: ctx.strata.colors, rng: ctx.makeRng(15000 + salt),
       addFloor(fn, o = {}) { lappet.floors[o.name] = fn; return ctx.addWalkable(fn, { stack: true, keep: o.keep ?? true, name: o.name }); },
-      wall(x1, z1, x2, z2, r, y, h, dh = 0) { lappet.colliders++; return ctx.addCollider({ x1, z1, x2, z2, r, y, h, dh, stand: false }); },
+      wall(x1, z1, x2, z2, r, y, h) { lappet.colliders++; return ctx.addCollider({ x1, z1, x2, z2, r, y, h, stand: false }); },
+      // under something too low to walk beneath, along (x1, z1)-(x2, z2), `half` wide: knee-high bars across the way
+      // every 0.75 m (a walker on the floor is stopped; one on the treads above never touches them)
+      block(x1, z1, x2, z2, half, yFloor) {
+        const dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz) || 1, ux = dx / len, uz = dz / len, n = Math.max(1, Math.ceil(len / 0.75));
+        for (let i = 0; i <= n; i++) { const cx = x1 + dx * i / n, cz = z1 + dz * i / n; K.wall(cx - uz * half, cz + ux * half, cx + uz * half, cz - ux * half, 0.2, yFloor - 0.6, 1.1); }
+      },
       ascent(def) { return ctx.ascents?.add(def); },
       rail(pts, o) { return rail(K, pts, o); },
       finish() {
@@ -85,7 +91,7 @@ export function buildWays(ctx, lappet) {
         const Dm = D0 + depth / 2 + 0.1, wd = depth - 0.25;
         for (const sg of [1, -1]) {
           const [hx, hz] = at(1, sx + sg * hw, Dm);
-          built[`heliarch-head-${sg > 0 ? 'east' : 'west'}`] = stoneFlight(K, { name: `heliarch-head-${sg > 0 ? 'east' : 'west'}`, x: hx, y: LEVEL.crown.y, z: hz, f: [d1[0] * sg, d1[1] * sg], drop: 4, width: wd, run: 0.36, base: LEVEL.high.y - 0.3, cheeks: sg > 0 ? [false, true] : [true, false] });
+          built[`heliarch-head-${sg > 0 ? 'east' : 'west'}`] = stoneFlight(K, { land: at3(1, sx, D0 - 1.6, LEVEL.crown.y), name: `heliarch-head-${sg > 0 ? 'east' : 'west'}`, x: hx, y: LEVEL.crown.y, z: hz, f: [d1[0] * sg, d1[1] * sg], drop: 4, width: wd, rise: 0.25, run: 0.26, base: LEVEL.high.y - 0.3, cheeks: sg > 0 ? [false, true] : [true, false] });
         }
       }
       // the upper flight: cut into the High Rung, out over the Mid Rung, onto a hexagon
@@ -98,12 +104,13 @@ export function buildWays(ctx, lappet) {
       // the middle flight is gone (its stumps stand at the nosing and on the bastion; three of its blocks lie on the
       // Low Rung): the Late folk's plank flight spans the gap, and the Low Rung's lane passes under its upper half
       {
-        const tp = way('timber-patch'), D0 = RISERS[2].D - 0.1, D1 = RISERS[3].D - 0.15, [x, z] = at(1, sx, D0), drop = 4, n = Math.round(drop / 0.235);
+        const tp = way('timber-patch'), D0 = RISERS[2].D + 0.55, D1 = RISERS[3].D - 0.15, [x, z] = at(1, sx, D0), drop = 4, n = Math.round(drop / 0.235);
         const f = timberFlight(K, { name: 'timber-patch', x, y: LEVEL.mid.y, z, f: n1, drop, width: 1.6, run: (D1 - D0) / (n - 1), props: [0.3, 0.62], propBase: LEVEL.low.y });
         built['timber-patch'] = f; void tp;
-        const yAt = (D) => LEVEL.mid.y - drop * (D - D0) / (D1 - D0) - 0.4, Dlow = D0 + (D1 - D0) * (drop - 1.95) / drop; // where the headroom runs out
-        K.wall(...at(1, sx - 0.75, Dlow), ...at(1, sx + 0.75, Dlow), 0.2, LEVEL.low.y - 0.6, yAt(Dlow) - LEVEL.low.y + 0.6);
-        K.wall(...at(1, sx, Dlow + 0.8), ...at(1, sx, D1 - 0.1), 0.75, LEVEL.low.y - 0.6, yAt(Dlow + 0.8) - LEVEL.low.y + 0.6, yAt(D1 - 0.1) - yAt(Dlow + 0.8));
+        // a plank head on two brackets, so its first tread is clear of the riser (whose face is a wall to anyone below the nosing)
+        bridge(K, { name: 'timber-patch-head', a: at3(1, sx, RISERS[2].D - 0.2, LEVEL.mid.y), b: at3(1, sx, D0 + 0.05, LEVEL.mid.y), width: 1.7, rails: false, register: false });
+        const Dlow = D0 + (D1 - D0) * (drop - 1.95) / drop; // where the headroom runs out
+        K.block(...at(1, sx, Dlow), ...at(1, sx, D1 - 1.0), 0.75, LEVEL.low.y); // (it ends a stride short of the foot: a bar's reach is 0.65 m, and the last treads are stepped onto)
         // boards nailed across under it there (why nobody walks under its foot)
         for (let q = 0; q < 4; q++) B.add(B.box(1.7, 0.16, 0.03), frame(...at3(1, sx, Dlow + 0.05, LEVEL.low.y + 0.3 + q * 0.42), n1[0], n1[1]).multiply(mat(0, 0, 0, 0, 0, (q % 2 ? 1 : -1) * 0.05)), { color: jit(C.late.wood, 0.8 + q * 0.15), moss: 0.2, ground: LEVEL.low.y });
         // the stumps: the Heliarch cheeks broken off short
@@ -130,7 +137,7 @@ export function buildWays(ctx, lappet) {
       {
         const R = RUN[tb.run], k = (LEVEL.high.y - LEVEL.mid.y) / (RISERS[2].D - RISERS[1].D), [x, z] = at(tb.run, tb.s, RISERS[1].D);
         // where it lies less than a walker's height over each floor: from there down to where it rests
-        const blocks = [[LEVEL.mid.y, RISERS[2].D], [LEVEL.low.y, RISERS[3].D], [LEVEL.bench.y, RISERS[3].D + (LEVEL.low.y - LEVEL.bench.y) / k - 0.9]]
+        const blocks = [[LEVEL.mid.y, RISERS[2].D], [LEVEL.low.y, RISERS[3].D], [LEVEL.bench.y, RISERS[3].D + (LEVEL.low.y - LEVEL.bench.y) / k]]
           .map(([yF, Dend]) => [(LEVEL.high.y - yF - 1.95) / k, Dend - RISERS[1].D, yF]);
         built['noon-main'] = tube(K, { name: 'noon-main', x, y: LEVEL.high.y, z, f: R.n, slope: k, yEnd: LEVEL.bench.y, r: 1.65, door: { y: LEVEL.mid.y, side: -1, reach: 1.35, propTo: LEVEL.low.y }, blocks });
       }
@@ -155,7 +162,7 @@ export function buildWays(ctx, lappet) {
         const D = RISERS[3].D, y = LEVEL.low.y;
         bridge(K, { name: 'lees-stair-head', a: at3(ls.run, ls.s - 1.6, D + 0.72, y), b: at3(ls.run, ls.s - 0.3, D + 0.72, y), width: 1.75, rails: false, register: false });
         const [x, z] = at(ls.run, ls.s - 0.3, D + 0.9), drop = y - LEVEL.bench.y;
-        built['lees-stair'] = timberFlight(K, { name: 'lees-stair', x, y, z, f: RUN[ls.run].dir, drop, width: 1.4, run: 0.3, rails: [false, true], props: [0.02, 0.45], propBase: LEVEL.bench.y });
+        built['lees-stair'] = timberFlight(K, { land: at3(ls.run, ls.s - 1, D - 1.2, y), name: 'lees-stair', x, y, z, f: RUN[ls.run].dir, drop, width: 1.4, run: 0.3, rails: [false, true], props: [0.02, 0.45], propBase: LEVEL.bench.y });
         K.rail([at3(ls.run, ls.s - 1.65, D + 0.15, y), at3(ls.run, ls.s - 1.65, D + 1.62, y), at3(ls.run, ls.s - 0.3, D + 1.62, y)], { paint: C.late.paint[0] });
         for (const [u, v] of [[-1.5, 0.35], [-1.5, 1.5], [-0.4, 1.5]]) B.add(B.box(0.12, drop, 0.12), mat(...at3(ls.run, ls.s + u, D + v, y - drop / 2 - 0.05)), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.bench.y });
       }

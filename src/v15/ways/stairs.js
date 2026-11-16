@@ -39,8 +39,10 @@ function finish(K, o, S, floor, held = true) {
   K.addFloor(floor, { name: o.name, keep: held });
   const foot = [o.x + o.f[0] * S.length, o.y - o.drop, o.z + o.f[1] * S.length];
   if (o.register !== false) {
-    const up = [o.x - o.f[0] * 1.2, o.z - o.f[1] * 1.2, o.y], dn = [foot[0] + o.f[0] * 1.2, foot[2] + o.f[1] * 1.2, foot[1]];
-    K.ascent({ id: o.name, path: [dn, [foot[0], foot[2], foot[1]], [o.x, o.z, o.y], up], offs: [0.5], held: true });
+    // from a stride past the foot to a stride onto the upper floor, then on to `land` (default: two strides on)
+    const up = [o.x - o.f[0] * 0.9, o.z - o.f[1] * 0.9, o.y], on = o.land ? [o.land[0], o.land[2], o.land[1]] : [o.x - o.f[0] * 2.1, o.z - o.f[1] * 2.1, o.y];
+    const dn = [foot[0] + o.f[0] * 1.2, foot[2] + o.f[1] * 1.2, foot[1]];
+    K.ascent({ id: o.name, path: [dn, [foot[0], foot[2], foot[1]], up, on], offs: [0.4], held: true });
   }
   return { foot, length: S.length, floor, steps: S };
 }
@@ -68,9 +70,17 @@ export function stoneFlight(K, o) {
     B.add(B.cyl(0.26, 0.3, 1.25, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 0.6, S.length + e + 0.1)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
     B.add(B.cyl(0.33, 0.33, 0.1, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 1.27, S.length + e + 0.1)), { color: C.heliarch.dark, moss: 0.3, ground });
   });
-  // nobody walks through its mass from beside it or below it: a wall along the axis, its top just under the treads
-  const yb = o.y + base;
-  K.wall(o.x, o.z, o.x + o.f[0] * S.length, o.z + o.f[1] * S.length, w / 2 - 0.1, yb, o.y - 0.4 - yb, -o.drop);
+  // nobody walks into its mass from beside it: a wall along each cheek's line in pieces, each one's top under the
+  // treads beside it (the lowest treads, within a step of the floor, are stepped onto from any side)
+  const yb = o.y + base, n = Math.ceil(S.length / 0.9);
+  [-1, 1].forEach((sd) => {
+    for (let i = 0; i < n; i++) {
+      const a = S.length * i / n, b = S.length * (i + 1) / n, top = o.y - o.drop * Math.min(1, (b + 0.7) / S.length) - 0.4;
+      if (top < o.y - o.drop + 0.3) continue;
+      const u = sd * (w / 2 + 0.05), px = o.f[1] * u, pz = -o.f[0] * u;
+      K.wall(o.x + o.f[0] * a + px, o.z + o.f[1] * a + pz, o.x + o.f[0] * b + px, o.z + o.f[1] * b + pz, 0.15, yb, top - yb);
+    }
+  });
   return finish(K, o, S, flightFloor(o, S, w / 2));
 }
 
@@ -137,7 +147,8 @@ export function hexLanding(K, o) {
   };
   if (o.floor !== false) K.addFloor(floor, { name: o.name, keep: true });
   // its bastion is solid: a wall round it for anyone below
-  if (h > 0.7 && o.solid !== false) { const c = [o.x + fx * d / 2, o.z + fz * d / 2]; K.wall(c[0] - fz * (w / 2 + wing * 0.4), c[1] + fx * (w / 2 + wing * 0.4), c[0] + fz * (w / 2 + wing * 0.4), c[1] - fx * (w / 2 + wing * 0.4), d / 2 - 0.05, o.base - 0.5, h + 0.5 - 0.2); }
+  // (kept half a metre inside its edges and under its top, so a flight that leaves it is not pushed off its first treads)
+  if (h > 0.7 && o.solid !== false) { const c = [o.x + fx * d / 2, o.z + fz * d / 2], r = d / 2 - 0.5, e = Math.max(0.05, w / 2 + wing * 0.4 - r - 0.5); K.wall(c[0] - fz * e, c[1] + fx * e, c[0] + fz * e, c[1] - fx * e, r, o.base - 0.5, h); }
   return { floor, far: [o.x + fx * d, o.y, o.z + fz * d] };
 }
 

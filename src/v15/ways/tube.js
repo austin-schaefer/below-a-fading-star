@@ -89,9 +89,8 @@ export function tube(K, o) {
   // ---- where it lies too low to pass under: cribbing (what stops it sliding: squared stone and baulks) and a wall
   for (const [wa, wb, yF] of o.blocks || []) {
     const top = (ww) => yb(ww) - yF, xz = (ww, u) => { const q = pt(ww, u); return [q[0], q[2]]; };
-    // a trestle across it where the headroom runs out, and the whole of it from there down
-    K.wall(...xz(wa, -(Ro - 0.3)), ...xz(wa, Ro - 0.3), 0.25, yF - 0.6, top(wa) + 0.55, 0);
-    if (wb - wa > 1.4) K.wall(...xz(wa + 1.3, 0), ...xz(wb, 0), Ro - 0.25, yF - 0.6, top(wa + 1.3) + 0.55, top(wb) - top(wa + 1.3));
+    // a trestle across it where the headroom runs out; nobody passes under it from there down
+    K.block(...xz(wa, 0), ...xz(wb - 0.3, 0), Ro - 0.3, yF);
     for (const sd of [-1, 1]) B.add(B.box(0.14, top(wa) + 0.3, 0.14), Fr.clone().multiply(mat(sd * (Ro - 0.45), yF + (top(wa) + 0.3) / 2, wa, 0, 0, -sd * 0.1)), { color: wood.clone().multiplyScalar(0.9), moss: 0.3, ground: yF });
     B.add(B.box(Ro * 2 - 0.5, 0.12, 0.12), Fr.clone().multiply(mat(0, yF + 1.0, wa, 0, 0, 0.03)), { color: wood.clone().multiplyScalar(0.75), moss: 0.3, ground: yF });
     for (const sd of [-1, 1]) {
