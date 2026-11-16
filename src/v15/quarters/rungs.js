@@ -192,15 +192,20 @@ export async function build(ctx) {
       if ((p.name === 'rungs-low-4' || p.name === 'rungs-low-5') && Math.sign(loc(R, ...at(1, cornerS(1, DM), DM))[0]) === sg) continue; // (the Gullet's two walls have their own)
       const ds = sg * sS, near = P.PLOTS.some((q) => q !== p && q.quarter === 'rungs' && q.kind !== 'yard' && q.run === p.run && q.level === p.level && (q.s - p.s) * ds > 0 && Math.abs(q.s - p.s) - (q.w + p.w) / 2 < 1.3);
       if (near) continue;
-      const z0 = F.cz + 0.5, z1 = F.zf - 0.55, zAt = (u) => z0 + (z1 - z0) * u, wash = c.wash; let ov = 0; const off = () => 0.03 + (ov++ % 5) * 0.0052; // (beyond the side wall's own roughness, 18 mm)
-      { const z = zAt(0.3 + r2() * 0.4), y = 2.5 + r2() * 0.5, pw = 0.36, ph = 0.5, k = 0.35 + r2() * 0.4, M = EM(R, sg, z, y), fc = { color: worn(L.plaster[3], r2, 0.25, 0.1), moss: 0.1, ground: g0, emit: limeGlow(L.plaster[3], 0.05) };
+      const z0 = F.cz + 0.5, z1 = F.zf - 0.55, zAt = (u) => z0 + (z1 - z0) * u, wash = c.wash; let zw = 0;
+      // (a run of dirt lies a few degrees out of the wall's plane, one edge in the wall: the side wall's face wanders
+      // some centimetres either way of its plane, and a sheet laid flat on that plane is buried in one place, hung clear
+      // of it in another, and in the plane of the face in a third)
+      const tilt = (i) => (i % 2 ? -1 : 1) * (0.07 + i * 0.012);
+      { const z = zw = zAt(0.3 + r2() * 0.4), y = 2.5 + r2() * 0.5, pw = 0.36, ph = 0.5, k = 0.35 + r2() * 0.4, M = EM(R, sg, z, y), fc = { color: worn(L.plaster[3], r2, 0.25, 0.1), moss: 0.1, ground: g0, emit: limeGlow(L.plaster[3], 0.05) };
         for (const sx of [-1, 1]) B.add(B.box(0.09, ph + 0.18, 0.09, { seg: 9 }), ch(M, sx * (pw / 2 + 0.045), ph / 2, 0.012), fc);
         for (const sy of [-1, 1]) B.add(B.box(pw + 0.24, 0.09, 0.11, { seg: 9 }), ch(M, 0, ph / 2 + sy * (ph / 2 + 0.045), 0.02), fc);
         B.add(B.box(pw + 0.02, ph + 0.02, 0.04, { seg: 9 }), ch(M, 0, ph / 2, 0.012), { color: new THREE.Color('#3a2410'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * k, V.lit[1] * k, V.lit[2] * k, 1] });
         B.add(B.box(0.03, ph + 0.02, 0.03, { seg: 9 }), ch(M, 0, ph / 2, 0.04), { color: V.soot, moss: 0, ground: g0 - 3 }); }
       for (let i = 0; i < 3; i++) { const M = EM(R, sg, zAt(0.12 + i * 0.36 + r2() * 0.06), 3.25 + r2() * 0.12); beam(B, M, [0, 0, -0.3], [0, -0.02, 0.18 + r2() * 0.12], 0.09, raw()); }
-      for (let i = 0; i < 3; i++) { const l = 0.7 + r2() * 1.2, M = EM(R, sg, zAt(0.1 + r2() * 0.8), F.h + 0.25); B.add(B.box(0.1 + r2() * 0.12, l, 0.02), ch(M, 0, -l / 2, off()), { color: wash.clone().lerp(V.dirt, 0.4 + r2() * 0.2).multiplyScalar(0.8), moss: 0.3, ground: g0 - 3 }); }
-      patch(B, ch(EM(R, sg, zAt(0.2 + r2() * 0.6), 1.0 + r2() * 0.5), 0, 0, 0.012), 0.32 + r2() * 0.2, r2, { color: worn(V.mud, r2, 0.3), moss: 0.2, course: 0.25, ground: g0 });
+      for (let i = 0; i < 3; i++) { const l = 0.7 + r2() * 1.2; let z = zAt(0.1 + r2() * 0.8); if (Math.abs(z - zw) < 0.6) z = zw + (z < zw ? -1 : 1) * (0.6 + i * 0.08); // (a run of dirt stands clear of the window: over its frame it lay in the frame's plane)
+        const M = EM(R, sg, z, F.h + 0.25); B.add(B.box(0.1 + r2() * 0.12, l, 0.02), ch(M, 0, -l / 2, 0.02, 0, tilt(i), 0), { color: wash.clone().lerp(V.dirt, 0.4 + r2() * 0.2).multiplyScalar(0.8), moss: 0.3, ground: g0 - 3 }); }
+      patch(B, ch(EM(R, sg, zAt(0.2 + r2() * 0.6), 1.0 + r2() * 0.5), 0, 0, 0.03), 0.32 + r2() * 0.2, r2, { color: worn(V.mud, r2, 0.3), moss: 0.2, course: 0.25, ground: g0 });
     }
   }
   // the plan's front stairs, each a way between two treads
@@ -349,7 +354,8 @@ export async function build(ctx) {
       for (const [a, y] of [[0.9, 3.25], [2.0, 3.2], [3.1, 3.3], [1.5, 1.9]]) { const z = C.zAt(a); beam(KB, I4, C.P3(z, y, -0.35), C.P3(z, y - 0.02, 0.2 + rng() * 0.12), 0.09, raw()); } // putlogs: the builders' scaffold poles, sawn off
       { const z = C.zAt(2.6), yr = C.R.roof.y + 0.02, col = worn(L.tile[4], rng, 0.3); // the roof's spout, and where a thousand rains have run from it
         beam(KB, I4, C.P3(z, yr, -0.3), C.P3(z, yr - 0.1, 0.45), 0.13, { color: col, moss: 0.2, wet: 0.4, ground: yL - 3, round: 6 });
-        for (let j = 0; j < 4; j++) { const y1 = yr - 0.25 - j * 0.75, y2 = y1 - 0.8, wd = 0.2 - j * 0.035; if (y2 < 0.3) break; B.add(B.box(wd, y1 - y2, 0.02), ch(EM(C.R, C.sg, z, y1), 0, -(y1 - y2) / 2, 0.03), { color: CHARACTER[C.R.name].wash.clone().lerp(V.dirt, 0.5 - j * 0.08).multiplyScalar(0.82), moss: 0.4 - j * 0.08, wet: 0.3, ground: yL - 3 }); } }
+        for (let j = 0; j < 4; j++) { const y1 = yr - 0.25 - j * 0.75, y2 = y1 - 0.8, wd = 0.2 - j * 0.035; if (y2 < 0.3) break; B.add(B.box(wd, y1 - y2, 0.02), ch(EM(C.R, C.sg, z, y1), 0, -(y1 - y2) / 2, 0.02, 0, (j % 2 ? -1 : 1) * (0.08 + j * 0.01), 0), // (each length laps the next by a hand, and lies a few degrees out of the wall's plane and its neighbour's)
+          { color: CHARACTER[C.R.name].wash.clone().lerp(V.dirt, 0.5 - j * 0.08).multiplyScalar(0.82), moss: 0.4 - j * 0.08, wet: 0.3, ground: yL - 3 }); } }
     }
     // a jar at the foot in the slot
     pot(KB, I4, fx - t[0] * 1.25 - b[0] * 0.5, yL, fz - t[1] * 1.25 - b[1] * 0.5, 0.28, worn(L.tile[4], rng, 0.4), 2);
@@ -453,7 +459,7 @@ export async function build(ctx) {
     // one plastered front against the step, out of true: a horseshoe door in it and, east of the door, a small round-headed niche
     const wash = worn(L.plaster[3], rng, 0.22), from = KB.count, dw = 1.0, nx = -1.15; // (the niche clear of the front's end: a hole that touches the outline leaves the end face open)
     facade(KB, ch(M, 0, 0, 0.2), { w: 3.5, d: 0.4, top: [[1.75, 2.35], [0.9, 2.62], [0.1, 2.7], [-0.9, 2.48], [-1.75, 2.2]], openings: [{ kind: 'horseshoe', x: 0.45, y: 0.012, w: dw, sp: 1.45 }, { kind: 'round', x: nx, y: 1.05, w: 0.5, sp: 0.42 }], color: wash, moss: 0.2, ground: yL, emit: limeGlow(wash, 0.2), n: low ? 7 : 10 }); // (it stands under the main, out of the sky's light: its limewash holds more of the niche's)
-    leaf(KB, ch(M, 0.45, 0, 0.35), dw + 0.24, 2.1, worn(L.paint[1], rng, 0.35), rng, { plain: low });
+    leaf(KB, ch(M, 0.45, 0, 0.27), dw + 0.24, 2.1, worn(L.paint[1], rng, 0.35), rng, { plain: low });
     KB.add(box(dw + 0.5, 0.26, 0.5, { chip: 0.03 }), ch(M, 0.45, -0.07, 0.42), { color: H.stone, moss: 0.45, ground: yL });
     KB.add(box(0.62, 0.8, 0.04), ch(M, nx, 1.4, 0.3), { color: new THREE.Color('#3a2410'), moss: 0, ground: yL - 3, emit: [V.lit[0] * 0.3, V.lit[1] * 0.3, V.lit[2] * 0.3, 1] });
     KB.add(box(0.62, 0.05, 0.14), ch(M, nx, 1.03, 0.37), { color: worn(L.tile[1], rng, 0.3), moss: 0.1, ground: yL });
@@ -462,7 +468,7 @@ export async function build(ctx) {
     KB.add(box(0.16, 0.05, 0.13, { chip: 0.015 }), ch(M, nx, 1.08, 0.37), { color: worn(L.tile[4], rng, 0.3), moss: 0, ground: yL });
     { const g = L.glass.amber; KB.add(new THREE.IcosahedronGeometry(0.055, 1), ch(M, nx - 0.03, 1.16, 0.37, 0, 0, 0, 0.9, 1.6, 0.9), { color: new THREE.Color('#201008'), moss: 0, ground: yL - 3, emit: [g[0] * 1.3, g[1] * 1.3, g[2] * 1.3, 1] }); }
     // the main's own ware where it broke over the lane: sherds stood against the front, glaze out, the milk body's thickness at their edges
-    for (const [x, ry, rz, gl, sc] of [[1.55, 0.3, 0.18, N.celadon, 1], [-0.55, -0.2, -0.3, N.oxblood, 0.75], [1.2, 1.1, 1.35, N.celadon, 0.6]]) { const S2 = ch(M, x, 0.3 * sc, 0.62, -0.35, ry, rz, sc, sc, sc);
+    for (const [x, ry, rz, gl, sc] of [[1.55, 0.3, 0.18, N.celadon, 1], [-0.72, -0.2, -0.3, N.oxblood, 0.75], [1.2, 1.1, 1.35, N.celadon, 0.6]]) { const S2 = ch(M, x, 0.3 * sc, 0.62, -0.35, ry, rz, sc, sc, sc);
       KB.add(box(0.62, 0.5, 0.075, { chip: 0.012, seed: x * 9 | 0 }), S2, { color: worn(N.milk, rng, 0.1), moss: 0.05, ground: yL - 1 });
       KB.add(box(0.56, 0.44, 0.02), ch(S2, 0, 0, 0.042), { color: worn(gl, rng, 0.08), moss: 0, wet: 0.9, ground: yL - 3 });
       KB.add(box(0.05, 0.3, 0.012), ch(S2, 0.1, -0.02, 0.054, 0, 0, 0.1), { color: worn(N.oxblood, rng, 0.05), moss: 0, wet: 0.9, ground: yL - 3 }); } // (a drip of ox-blood down the glaze)
