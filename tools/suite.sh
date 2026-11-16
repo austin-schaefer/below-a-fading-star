@@ -53,6 +53,7 @@ run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B
 run strata tools/strata-test.mjs $B
 run village tools/village-test.mjs $B # v15-V1: the houses' makers at five seeds (closed, in their footprints, colliders and floors that agree) and the row's cost
+run ways tools/ways-test.mjs $B # v15-W1: every village way's mouth clear, its landings 1.2 m, no two doubling each other, no dead end
 run livery tools/livery-test.mjs $B
 run house tools/house-test.mjs $B
 run rocks tools/rocks-test.mjs $B
