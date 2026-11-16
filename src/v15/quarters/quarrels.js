@@ -89,7 +89,7 @@ export async function build(ctx) {
     for (const [kind, u] of kinds) {
       const x = (u - 0.5) * len;
       if (kind === 'window') {
-        const w = 0.5, h = 0.72, y = 1.45, lit = rng() < 0.5;
+        const w = 0.62, h = 0.9, y = 1.3, lit = rng() < 0.5;
         B.add(bx(w, h, 0.3), ch(WM, x, y + h / 2, -0.13), { color: V.pane, moss: 0, ground: Y, ...(lit ? { emit: [V.lit[0] * 0.55, V.lit[1] * 0.55, V.lit[2] * 0.55, 1] } : {}) });
         for (const sx of [-1, 1]) B.add(bx(0.07, h + 0.14, 0.34), ch(WM, x + sx * (w / 2 + 0.035), y + h / 2, -0.12), wood());
         B.add(bx(w + 0.3, 0.07, 0.4), ch(WM, x, y - 0.047, -0.1), { color: worn(H.stone, rng, 0.1), moss: 0.3, ground: Y, course: 0 });
@@ -98,9 +98,9 @@ export async function build(ctx) {
         const leafC = worn([V.teal, V.madder, V.saffron][Math.floor(rng() * 3)], rng, 0.35, 0.1);
         B.add(bx(w * 0.52, h, 0.2), ch(WM, x + w / 2 + 0.07 + w * 0.26, y + h / 2, -0.05, 0, -0.06, 0), { color: leafC, moss: 0.05, ground: Y });
       } else if (kind === 'buttress') {
-        let y0 = -0.05; [[1.3, 0.55, 0.7], [1.1, 0.5, 0.5], [0.9, 0.45, 0.32]].forEach(([w, h, d], i) => { B.add(bx(w, h, d, { chip: 0.04, seed: i + u * 9 }), ch(WM, x + (rng() - 0.5) * 0.06, y0 + h / 2, d / 2 - 0.06, 0, (rng() - 0.5) * 0.03, 0), { color: worn(H.stone, rng, 0.1, 0.12), moss: 0.5 - i * 0.1, ground: Y, course: 0 }); y0 += h - 0.01; });
+        B.add(bx(0.85, 2.3, 0.55, { seg: 0.6, chip: 0.05, seed: u * 9 }), ch(WM, x, 0.95, 0.3, -0.24, 0, 0), { color: worn(H.stone, rng, 0.1, 0.12), moss: 0.5, ground: Y, course: 0.5 }); // a raking buttress of robbed ashlar, leaning into the wall
       } else if (kind === 'patch') {
-        patch(B, ch(WM, x, 0.9 + rng() * 0.8, 0.012), 0.42 + rng() * 0.2, rng, { color: worn(V.mud, rng, 0.2, 0.1), moss: 0.1, ground: Y });
+        pot(B, WM, x, 0, 0.3, 0.2, worn(V.mud, rng, 0.3), 2.0, 8); beam(B, WM, [x + 0.45, -0.05, 0.3], [x + 0.5, 1.5, -0.1], 0.045, { color: worn(V.rawWood, rng, 0.2), moss: 0, ground: Y, round: 5 }); // (a jar and a hoe)
       } else if (kind === 'wood') {
         for (let i = 0; i < 9; i++) { const row = i < 4 ? 0 : i < 7 ? 1 : 2, k = i < 4 ? i : i < 7 ? i - 4 + 0.5 : i - 7 + 1; B.add(B.cyl(0.075, 0.085, 0.7, 5, 1), ch(WM, x - 0.3 + k * 0.17, 0.08 + row * 0.15, 0.4, Math.PI / 2, 0, (rng() - 0.5) * 0.1), wood()); }
       } else if (kind === 'pots') {
@@ -111,15 +111,15 @@ export async function build(ctx) {
     }
   };
   { const p2 = P.plot('quarrels-house-2'), M2 = plotMatrix(p2), p1 = P.plot('quarrels-house-1'), M1 = plotMatrix(p1);
-    dressWall(ch(M2, 0, 0, -p2.d / 2, 0, Math.PI, 0), p2.w, [['window', 0.3], ['buttress', 0.78], ['pots', 0.5]]);
-    dressWall(ch(M2, p2.w / 2, 0, 0, 0, Math.PI / 2, 0), p2.d, [['patch', 0.4], ['poles', 0.72], ['window', 0.25]]);
+    dressWall(ch(M2, 0, 0, -p2.d / 2, 0, Math.PI, 0), p2.w, [['window', 0.28], ['window', 0.56], ['buttress', 0.84], ['pots', 0.42]]);
+    dressWall(ch(M2, p2.w / 2, 0, 0, 0, Math.PI / 2, 0), p2.d, [['patch', 0.45], ['poles', 0.76], ['window', 0.22]]);
     dressWall(ch(M2, -p2.w / 2, 0, 0, 0, -Math.PI / 2, 0), p2.d, [['window', 0.6], ['wood', 0.25], ['patch', 0.8]]);
     dressWall(ch(M1, p1.w / 2, 0, 0, 0, Math.PI / 2, 0), p1.d, [['window', 0.45], ['buttress', 0.8], ['patch', 0.2]]);
     dressWall(ch(M1, -p1.w / 2, 0, 0, 0, -Math.PI / 2, 0), p1.d, [['window', 0.5], ['wood', 0.2], ['poles', 0.8]]);
     // the washing line, from the Brow House's back to the lodging's side, over the way between them
     const a = new THREE.Vector3(-0.6, 2.75, -p2.d / 2 + 0.02).applyMatrix4(M2), b = new THREE.Vector3(-p1.w / 2 + 0.02, 2.75, 0.5).applyMatrix4(M1);
     for (const [q, QM] of [[a, M2], [b, M1]]) B.add(bx(0.5, 0.1, 0.5), new THREE.Matrix4().makeRotationY(Math.atan2(QM.elements[8], QM.elements[10])).setPosition(q.x, q.y, q.z), { color: L.iron, iron: 0.8, moss: 0, ground: Y });
-    washing(B, new THREE.Matrix4(), [a.x, a.y, a.z], [b.x, b.y, b.z], rng, low ? 4 : 6); }
+    washing(B, new THREE.Matrix4(), [a.x, a.y, a.z], [b.x, b.y, b.z], rng, 3); }
 
   // ---------------------------------------------------------------- the Saint's Rest: the square's paving
   // Heliarch hexagons lifted from the causeway and relaid round the stair's head, dusted with lime; ragged at the
@@ -213,8 +213,9 @@ export async function build(ctx) {
       const tier = i >= 6 ? 1 : 0, j = i % 6, col = j % 3, row = Math.floor(j / 3);
       const x = (col - 1) * (bw + 0.14) + (tier ? 0.35 : 0) + (rng() - 0.5) * 0.06, z = (row - 0.5) * (bd + 0.2) + (rng() - 0.5) * 0.05, y = tier * (bh + 0.012), BM = ch(YM, x, y, z, 0, (rng() - 0.5) * 0.03, 0);
       const col0 = worn(H.stone, rng, 0.08, 0.12);
-      B.add(bx(bw, bh, bd, { chip: 0.03, seed: i + 1 }), ch(BM, 0, bh / 2, 0), { color: col0, moss: tier ? 0.25 : 0.5, ground: Y, course: 0 });
-      for (const s of [-1, 1]) B.add(bx(bw - 0.2, bh - 0.2, 0.02, { seg: 0.25 }), ch(BM, 0, bh / 2, s * (bd / 2 + 0.006)), { color: col0.clone().multiplyScalar(0.8), moss: 0.3, ground: Y - 9, course: 0, disp: 0.008, dispScale: 9 });
+      B.add(bx(bw, bh, bd, { chip: 0.03, seed: i + 1 }), ch(BM, 0, bh / 2, 0), { color: col0, moss: tier ? 0.25 : 0.5, ground: Y, course: 0, disp: 0.012, dispScale: 3 });
+      if (i % 3 === 0) for (const r of [-0.6, 0.6]) B.add(bx(0.34, 0.03, 0.014), ch(BM, 0.2, bh / 2, bd / 2 + 0.02, 0, 0, r), { color: V.lime.clone().multiplyScalar(0.7), moss: 0, ground: Y - 9, course: 0 }); // the mason's mark, in chalk
+      for (const s of [-1, 1]) B.add(bx(bw - 0.2, bh - 0.2, 0.02, { seg: 0.25 }), ch(BM, 0, bh / 2, s * (bd / 2 + 0.006)), { color: col0.clone().multiplyScalar(0.62), moss: 0.3, ground: Y - 9, course: 0, disp: 0.008, dispScale: 9 });
       B.add(bx(0.02, bh - 0.12, bd - 0.12), ch(BM, (i % 2 ? 1 : -1) * (bw / 2 + 0.006), bh / 2, 0), { color: worn(V.newStone, rng, 0.2, 0.1).multiplyScalar(0.74), moss: 0, ground: Y - 9, course: 0, disp: 0.006, dispScale: 14 });
       if (!tier) { const c = new THREE.Vector3(0, 0, 0).applyMatrix4(BM); colliders.push({ x: c.x, z: c.z, r: 0.72, y: Y - 0.5, h: 2 * bh + 0.55, stand: false }); }
     }
@@ -223,7 +224,8 @@ export async function build(ctx) {
   // the slaking tub between the hand and the new house's stock: lime under water, a paddle left in it
   { const [tx, , tz] = at3(2, 21.5, -11.35), TM = F(tx, tz, n2);
     for (const s of [-1, 1]) { B.add(bx(0.9, 0.42, 0.05), ch(TM, 0, 0.2, s * 0.4), { color: worn(V.rawWood, rng, 0.3, 0.1), moss: 0.05, ground: Y }); B.add(bx(0.05, 0.42, 0.8), ch(TM, s * 0.43, 0.2, 0), { color: worn(V.rawWood, rng, 0.3, 0.1), moss: 0.05, ground: Y }); }
-    B.add(bx(0.84, 0.3, 0.78), ch(TM, 0, 0.19, 0), { color: V.lime.clone().multiplyScalar(0.8), moss: 0, ground: Y - 9, wet: 0.6 });
+    B.add(bx(0.84, 0.3, 0.78), ch(TM, 0, 0.19, 0), { color: V.lime.clone().multiplyScalar(0.5), moss: 0, ground: Y - 9, wet: 0.8, disp: 0.02, dispScale: 6 });
+    for (let i = 0; i < 4; i++) B.add(B.rock(0.1 + rng() * 0.06, 0, 1, 0.6, 1), ch(TM, (rng() - 0.5) * 0.5, 0.34, (rng() - 0.5) * 0.45, 0, rng() * 3, 0), { color: V.lime.clone().multiplyScalar(0.72), moss: 0, ground: Y - 9 });
     beam(B, TM, [0.1, 0.2, 0.05], [0.5, 1.15, -0.3], 0.045, { color: worn(V.rawWood, rng, 0.2), moss: 0, ground: Y, round: 5 });
     colliders.push({ x: tx, z: tz, r: 0.55, y: Y - 0.5, h: 1.0 }); }
 
@@ -231,7 +233,7 @@ export async function build(ctx) {
   // A mason's stage lashed to the far side of the arch's near pier, 2.5 m up, and a cleated plank run up to it from
   // the ground: the one thing on the crown a visitor climbs. From it: the channel's broken end, the hand under it,
   // the brink and the valley.
-  const stage = site(arch.east, 'stage', { w: 3.2, d: 1.5, seed: 0 });
+  const stage = site(arch.east, 'stage', { w: 14.4, d: 3.2, seed: 0 }); // (w, d: what registerAll bounds its floors by: the stage and the whole run)
   { const SM = arch.east, hgt = 2.5, w = 3.2, d = 1.4, z0 = 0.05, raw = (k = 0.12) => ({ color: worn(V.rawWood, rng, k, 0.15), moss: 0.04, ground: Y, round: 6 }), plank = () => ({ color: worn(V.rawWood, rng, 0.3, 0.2).multiplyScalar(0.85), moss: 0.08, ground: Y });
     for (const x of [-w / 2 + 0.1, 0, w / 2 - 0.1]) { beam(B, SM, [x, -0.3, z0 + d - 0.08], [x, hgt + 1.05, z0 + d - 0.08], 0.13, raw(), 0.1); beam(B, SM, [x, hgt - 0.11, -0.12], [x, hgt - 0.11, z0 + d + 0.1], 0.1, raw()); beam(B, SM, [x, 0.5, z0 + d - 0.08], [x, hgt - 0.15, 0.02], 0.07, raw()); }
     for (let i = 0; i < 5; i++) B.add(bx(w + 0.06, 0.05, d / 5 - 0.02), ch(SM, (rng() - 0.5) * 0.05, hgt - 0.025, z0 + (i + 0.5) * (d / 5)), plank());
@@ -250,12 +252,14 @@ export async function build(ctx) {
   if (ctx.ascents) { const pt = (x, y, z) => { const v = new THREE.Vector3(x, y, z).applyMatrix4(arch.east); return [v.x, v.z, v.y]; }; ctx.ascents.add({ id: 'quarrels-stage', path: [pt(1.6 + 5.2 + 0.9, 0, 0.75), pt(1.6 + 5.0, 0.1, 0.75), pt(1.6 + 2.6, 1.25, 0.75), pt(1.5, 2.5, 0.75), pt(-1.1, 2.5, 0.85)], offs: [0.95] }); }
 
   // ---------------------------------------------------------------- the chalk: the next blocks, marked on the keep's fallen face
-  // The masons' lines on the slab's toe by the square: a grid of the courses they will split next, the first one crossed.
-  { const chalk = { color: V.lime, moss: 0, ground: Y - 9, course: 0, emit: [0.02, 0.019, 0.017, 2] }, L0 = P.SLAB.len;
-    const line = (a0, s0, a1, s1) => { const [x0, z0] = P.slabAt(a0, s0), [x1, z1] = P.slabAt(a1, s1); beam(B, new THREE.Matrix4(), [x0, P.slabTop(a0) + 0.012, z0], [x1, P.slabTop(a1) + 0.012, z1], 0.022, chalk); };
-    for (const sd of [1.2, 2.7, 4.2, 5.7]) line(L0 - 4.6, sd, L0 - 0.9, sd);
-    for (const al of [L0 - 4.6, L0 - 3.4, L0 - 2.2, L0 - 0.9]) line(al, 1.2, al, 5.7);
-    line(L0 - 3.4, 1.2, L0 - 2.2, 2.7); line(L0 - 2.2, 1.2, L0 - 3.4, 2.7); // the one to take next, crossed
+  // The masons' lines on the slab's toe by the square: the line of the next cut, its blocks ticked off, the first one crossed.
+  { const chalk = { color: V.lime.clone().multiplyScalar(0.7), moss: 0, ground: Y - 9, course: 0 }, L0 = P.SLAB.len;
+    // (the slab's own face as the keep builds it lies a hand under the plan's plane, measured: tools probe, 2026-11-16)
+    const top = (al, sd) => P.slabTop(al) - 0.184 - 0.0305 * (5 - (L0 - al)) + 0.0125 * (sd - 3) - 0.004; // (a stroke is 22 mm deep and bites the stone by half)
+    const line = (a0, s0, a1, s1) => { const [x0, z0] = P.slabAt(a0, s0), [x1, z1] = P.slabAt(a1, s1); beam(B, new THREE.Matrix4(), [x0, top(a0, s0), z0], [x1, top(a1, s1), z1], 0.022, chalk); };
+    // one cut line along the toe, drawn in strokes as a hand draws it, a tick where each block ends
+    for (let i = 0; i < 6; i++) if (i !== 4) line(L0 - 3.3 + (rng() - 0.5) * 0.03, 1.4 + i * 0.6, L0 - 3.3 + (rng() - 0.5) * 0.03, 1.4 + i * 0.6 + 0.5);
+    for (const sd of [1.4, 2.6, 5.0]) line(L0 - 3.45, sd, L0 - 3.15, sd);
   }
 
   // ---------------------------------------------------------------- the walk

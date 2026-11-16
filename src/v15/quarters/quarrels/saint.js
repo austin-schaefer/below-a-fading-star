@@ -68,7 +68,7 @@ function colossus(N2, ws, hs) {
     z += d;
     // the band round his brow, the hair in carved bands above it and down the back of his head, his ears
     const band = sstep(0.38, 0.41, y) * (1 - sstep(0.55, 0.58, y)), hair = Math.max(sstep(0.58, 0.63, y), back * sstep(-0.62, -0.5, y) * (1 - band)), flute = Math.sin(y * 21);
-    const rad = 0.06 * band + hair * 0.035 * flute;
+    const rad = 0.06 * band + hair * 0.022 * flute;
     const side = 1 - sstep(0.1, 0.3, Math.abs(uz + 0.05)), ear = side * (0.11 * gs(0, y + 0.1, 1, 0.3) - 0.05 * gs(uz + 0.05, y + 0.02, 0.07, 0.16)) * (1 - band);
     x = x * (1 + rad) + Math.sign(x) * ear; z *= 1 + rad;
     // the crown of his skull broken open, and his neck broken off
@@ -89,14 +89,14 @@ function colossus(N2, ws, hs) {
 // Returns { mouth (the broken crown, where the smoke leaves), fire (the stoke hole's mouth), stand (where the burner
 // stands to feed it), colliders, r }.
 export function saint(B, M, o) {
-  const S = o.S ?? 1.7, sink = o.sink ?? 0.5, low = !!o.low, rng = o.rng, g0 = M.elements[13];
+  const S = o.S ?? 1.7, sink = o.sink ?? 0.85, low = !!o.low, rng = o.rng, g0 = M.elements[13];
   const cy = 1.0 * S - sink;
   const HM = ch(M, 0, cy, 0, -0.06, 0, 0.2, S, S, S);
   const stone = worn(H.stone, rng, 0.06, 0.04).multiplyScalar(1.12), sootC = V.soot.clone().lerp(stone, 0.15), limeC = V.newDust.clone().lerp(stone, 0.4);
   const sl = Math.hypot(o.stoke[0], o.stoke[1]) || 1, sx = o.stoke[0] / sl, sz = o.stoke[1] / sl;
   const C = colossus(o.N2, low ? 72 : 104, low ? 54 : 76);
   let vi = 0;
-  addPainted(B, C.g, HM, { color: stone, moss: 0.4, ground: g0, course: 0 }, (x, y, z, out) => {
+  addPainted(B, C.g, HM, { color: stone, moss: 0.4, ground: g0, course: 0.22, disp: 0.008, dispScale: 6 }, (x, y, z, out) => {
     const sh = C.shade[vi], fire = C.glow[vi]; vi++;
     const side = (x * sx + z * sz) / (Math.hypot(x, z) || 1); // toward the stoke hole
     const soot = Math.min(0.92, 0.75 * sstep(0.72, 0.95, y) + 0.85 * sstep(0.7, 0.97, side) * sstep(-0.9, -0.4, y) * (1 - sstep(0.0, 0.8, y)) + fire);
@@ -124,11 +124,8 @@ export function saint(B, M, o) {
   }
   { const sh = new THREE.Shape(); [[0, 0.24], [0.1, 0.2], [0.33, -0.12], [0.25, -0.18], [0.28, -0.25], [0.2, -0.32], [0, -0.32]].forEach(([q, y], i) => (i ? sh.lineTo(q, y) : sh.moveTo(q, y)));
     B.add(B.extrude(sh, 0.14, 1), ch(HM, 0, 0, 0.58, 0, -Math.PI / 2, 0), fs(1.1)); } // the nose: a wedge, its end broken off
-  ball(0.22, 0.05, 0.09, 0, -0.5, 0.66, fs(1.04)); ball(0.18, 0.055, 0.09, 0, -0.62, 0.65, fs(1.0)); ball(0.2, 0.025, 0.06, 0, -0.562, 0.67, dim, 1); // the lips, and the dark between them
+  ball(0.23, 0.034, 0.07, 0, -0.52, 0.64, fs(1.04)); ball(0.19, 0.04, 0.07, 0, -0.6, 0.63, fs(1.0)); ball(0.2, 0.014, 0.05, 0, -0.562, 0.655, dim, 1); // the lips, and the dark between them
   ball(0.2, 0.14, 0.14, 0, -0.87, 0.56, fs(1.02)); // the chin
-  // the crack through his left cheek, eye to jaw
-  { const pts = [[0.52, 0.36], [0.4, 0.02], [0.47, -0.3], [0.3, -0.82]], zf = [0.5, 0.58, 0.55, 0.47];
-    for (let k = 0; k < 3; k++) beam(B, HM, [pts[k][0], pts[k][1], zf[k]], [pts[k + 1][0], pts[k + 1][1], zf[k + 1]], 0.03, hollow, 0.018); }
   B.add(ring(B, 0.66, 0.765, 0.4, 0.57, low ? 18 : 28), ch(HM, 0, 0, -0.1, 0, 0, 0, 0.93, 1, 1.03), { color: stone.clone().multiplyScalar(0.86), moss: 0.3, ground: g0 - 9, course: 0 }); // the band round his brow
   // the roundel on his band, over the brow: a hexagon boss, its disc long gone and the socket empty; a lesser boss each side
   const boss = { color: worn(H.dark, rng, 0.1), moss: 0.3, ground: g0 - 9, course: 0 };

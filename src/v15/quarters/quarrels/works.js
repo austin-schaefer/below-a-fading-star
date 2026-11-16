@@ -109,7 +109,6 @@ export function shears(B, M, o) {
   // the block: old on five faces, a piece of the Heliarchs' sign still on the one that faced out, hanging upside down
   B.add(bx(B, bw, bh, bd, { chip: 0.03, seed: 7 }), BM, { color: worn(H.stone, rng, 0.06, 0.05), moss: 0.4, ground: g0 + by - 1, course: 0 });
   B.add(bx(B, bw - 0.06, bh - 0.06, 0.02), ch(BM, 0, 0, -bd / 2 - 0.004), { color: worn(V.newStone, rng, 0.1).multiplyScalar(0.72), moss: 0, ground: g0 - 9, course: 0 }); // its fresh bed, where it was split off
-  if (!o.low) PARTS.heliarch.roundel(B, ch(BM, 0.2, bh / 2 - 0.02, bd / 2 - 0.045, 0, 0, Math.PI), { size: 0.56, disc: 'bronze' });
   // the fall, down to the windlass: a drum between the first two legs at a hand's height, two handspikes through it
   const t = (1.0 + 0.3) / (hy + 0.3), a = at(feet[0], t), b = at(feet[1], t), mid = [(a[0] + b[0]) / 2, 1.0, (a[2] + b[2]) / 2], dx = b[0] - a[0], dz = b[2] - a[2], dl = Math.hypot(dx, dz), ux = dx / dl, uz = dz / dl;
   beam(B, M, [a[0] - ux * 0.25, 1.0, a[2] - uz * 0.25], [b[0] + ux * 0.25, 1.0, b[2] + uz * 0.25], 0.22, { ...raw, round: 8, color: worn(V.rawWood, rng, 0.2, 0.05) });
