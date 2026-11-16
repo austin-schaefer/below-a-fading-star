@@ -90,13 +90,13 @@ export async function build(ctx) {
       const x = (u - 0.5) * len;
       if (kind === 'window') {
         const w = 0.5, h = 0.72, y = 1.45, lit = rng() < 0.5;
-        B.add(bx(w, h, 0.05), ch(WM, x, y + h / 2, -0.005), { color: V.pane, moss: 0, ground: Y, ...(lit ? { emit: [V.lit[0] * 0.55, V.lit[1] * 0.55, V.lit[2] * 0.55, 1] } : {}) });
-        for (const sx of [-1, 1]) B.add(bx(0.07, h + 0.14, 0.09), ch(WM, x + sx * (w / 2 + 0.035), y + h / 2, 0.0), wood());
-        B.add(bx(w + 0.3, 0.07, 0.14), ch(WM, x, y - 0.035, 0.03), { color: worn(H.stone, rng, 0.1), moss: 0.3, ground: Y, course: 0 });
-        B.add(bx(w + 0.14, 0.07, 0.09), ch(WM, x, y + h + 0.035, 0.0), wood());
-        for (const k of [0.33, 0.66]) B.add(bx(0.025, h, 0.025), ch(WM, x - w / 2 + w * k, y + h / 2, 0.03), { color: L.iron, iron: 0.8, moss: 0, ground: Y });
+        B.add(bx(w, h, 0.3), ch(WM, x, y + h / 2, -0.13), { color: V.pane, moss: 0, ground: Y, ...(lit ? { emit: [V.lit[0] * 0.55, V.lit[1] * 0.55, V.lit[2] * 0.55, 1] } : {}) });
+        for (const sx of [-1, 1]) B.add(bx(0.07, h + 0.14, 0.34), ch(WM, x + sx * (w / 2 + 0.035), y + h / 2, -0.12), wood());
+        B.add(bx(w + 0.3, 0.07, 0.4), ch(WM, x, y - 0.047, -0.1), { color: worn(H.stone, rng, 0.1), moss: 0.3, ground: Y, course: 0 });
+        B.add(bx(w + 0.14, 0.07, 0.34), ch(WM, x, y + h + 0.047, -0.12), wood());
+        for (const k of [0.33, 0.66]) B.add(bx(0.025, h, 0.025), ch(WM, x - w / 2 + w * k, y + h / 2, 0.025), { color: L.iron, iron: 0.8, moss: 0, ground: Y });
         const leafC = worn([V.teal, V.madder, V.saffron][Math.floor(rng() * 3)], rng, 0.35, 0.1);
-        B.add(bx(w * 0.52, h, 0.035), ch(WM, x + w / 2 + 0.07 + w * 0.26, y + h / 2, 0.035, 0, -0.1, 0), { color: leafC, moss: 0.05, ground: Y });
+        B.add(bx(w * 0.52, h, 0.2), ch(WM, x + w / 2 + 0.07 + w * 0.26, y + h / 2, -0.05, 0, -0.06, 0), { color: leafC, moss: 0.05, ground: Y });
       } else if (kind === 'buttress') {
         let y0 = -0.05; [[1.3, 0.55, 0.7], [1.1, 0.5, 0.5], [0.9, 0.45, 0.32]].forEach(([w, h, d], i) => { B.add(bx(w, h, d, { chip: 0.04, seed: i + u * 9 }), ch(WM, x + (rng() - 0.5) * 0.06, y0 + h / 2, d / 2 - 0.06, 0, (rng() - 0.5) * 0.03, 0), { color: worn(H.stone, rng, 0.1, 0.12), moss: 0.5 - i * 0.1, ground: Y, course: 0 }); y0 += h - 0.01; });
       } else if (kind === 'patch') {
@@ -106,7 +106,7 @@ export async function build(ctx) {
       } else if (kind === 'pots') {
         pot(B, WM, x - 0.3, 0, 0.32, 0.22, worn(L.tile[0], rng, 0.4), 2.0, 8); pot(B, WM, x + 0.22, 0, 0.26, 0.16, worn(V.mud, rng, 0.3), 1.7, 8);
       } else if (kind === 'poles') {
-        for (let i = 0; i < 3; i++) beam(B, WM, [x - 0.3 + i * 0.28, -0.05, 0.55 + i * 0.06], [x - 0.2 + i * 0.22, Math.min(hgt, 2.9) - i * 0.2, 0.03], 0.07, { color: worn(V.rawWood, rng, 0.15, 0.15), moss: 0.03, ground: Y, round: 6 }, 0.055);
+        for (let i = 0; i < 3; i++) beam(B, WM, [x - 0.3 + i * 0.28, -0.4, 0.55 + i * 0.06], [x - 0.2 + i * 0.22, Math.min(hgt, 2.9) - i * 0.2, -0.16], 0.07, { color: worn(V.rawWood, rng, 0.15, 0.15), moss: 0.03, ground: Y, round: 6 }, 0.055);
       }
     }
   };
@@ -118,7 +118,7 @@ export async function build(ctx) {
     dressWall(ch(M1, -p1.w / 2, 0, 0, 0, -Math.PI / 2, 0), p1.d, [['window', 0.5], ['wood', 0.2], ['poles', 0.8]]);
     // the washing line, from the Brow House's back to the lodging's side, over the way between them
     const a = new THREE.Vector3(-0.6, 2.75, -p2.d / 2 + 0.02).applyMatrix4(M2), b = new THREE.Vector3(-p1.w / 2 + 0.02, 2.75, 0.5).applyMatrix4(M1);
-    for (const q of [a, b]) B.add(bx(0.1, 0.1, 0.14), new THREE.Matrix4().makeTranslation(q.x, q.y, q.z), { color: L.iron, iron: 0.8, moss: 0, ground: Y });
+    for (const [q, QM] of [[a, M2], [b, M1]]) B.add(bx(0.5, 0.1, 0.5), new THREE.Matrix4().makeRotationY(Math.atan2(QM.elements[8], QM.elements[10])).setPosition(q.x, q.y, q.z), { color: L.iron, iron: 0.8, moss: 0, ground: Y });
     washing(B, new THREE.Matrix4(), [a.x, a.y, a.z], [b.x, b.y, b.z], rng, low ? 4 : 6); }
 
   // ---------------------------------------------------------------- the Saint's Rest: the square's paving
@@ -250,13 +250,13 @@ export async function build(ctx) {
   if (ctx.ascents) { const pt = (x, y, z) => { const v = new THREE.Vector3(x, y, z).applyMatrix4(arch.east); return [v.x, v.z, v.y]; }; ctx.ascents.add({ id: 'quarrels-stage', path: [pt(1.6 + 5.2 + 0.9, 0, 0.75), pt(1.6 + 5.0, 0.1, 0.75), pt(1.6 + 2.6, 1.25, 0.75), pt(1.5, 2.5, 0.75), pt(-1.1, 2.5, 0.85)], offs: [0.95] }); }
 
   // ---------------------------------------------------------------- the chalk: the next blocks, marked on the keep's fallen face
-  // The masons' lines on the slab's toe by the square: a grid of the courses they will split next, a tally beside it.
+  // The masons' lines on the slab's toe by the square: a grid of the courses they will split next, the first one crossed.
   { const chalk = { color: V.lime, moss: 0, ground: Y - 9, course: 0, emit: [0.02, 0.019, 0.017, 2] }, L0 = P.SLAB.len;
     const line = (a0, s0, a1, s1) => { const [x0, z0] = P.slabAt(a0, s0), [x1, z1] = P.slabAt(a1, s1); beam(B, new THREE.Matrix4(), [x0, P.slabTop(a0) + 0.012, z0], [x1, P.slabTop(a1) + 0.012, z1], 0.022, chalk); };
     for (const sd of [1.2, 2.7, 4.2, 5.7]) line(L0 - 4.6, sd, L0 - 0.9, sd);
     for (const al of [L0 - 4.6, L0 - 3.4, L0 - 2.2, L0 - 0.9]) line(al, 1.2, al, 5.7);
     line(L0 - 3.4, 1.2, L0 - 2.2, 2.7); line(L0 - 2.2, 1.2, L0 - 3.4, 2.7); // the one to take next, crossed
-    for (let i = 0; i < 4; i++) line(L0 - 1.9, 0.2 + i * 0.14, L0 - 1.5, 0.2 + i * 0.14); line(L0 - 1.95, 0.72, L0 - 1.45, 0.1); } // a tally: four and a stroke through
+  }
 
   // ---------------------------------------------------------------- the walk
   for (const c of colliders) ctx.addCollider({ ...c });
