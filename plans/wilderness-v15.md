@@ -219,3 +219,8 @@ Next: each hand-back gets its frames looked at with the report shut, a blind rea
 | N1 names, cards, the map; the cost near on low (318k of 250k) | `issue-1525-names` | 8168 | sonnet | `ab472628c9ee344b8` |
 
 - After them: a walk of the whole village by the orchestrator in a real browser; the critic, the curator, the gate; the release.
+
+**The owner, 2026-11-16 about 09:50, on ladders** (asked whether other ladders on the map are inoperative: one of all those drawn can be climbed): "ladders that are in a place that could read as climable, should be climable consistently. it's fine if they don't read that way (like a ladder leaning against a wall) but if they do look climable, they should always be". Brief `briefs/v15/brief-v15-W2-ladders.md`, the whole walk, with a guard.
+
+**The owner, 2026-11-16 about 09:55, on edges:** "related pet peeve: the map is too stuffed with invisible walls around pits and falls. if we're gonna have pits, and a jump button, we should allow you to go up to edge and fall in and jump". Brief `briefs/v15/brief-v15-W3-edges.md`: the walk's edges opened by what is below them; shared walking code, so it goes out when a slot is free (four agents are in flight: P1, L1, N1, W2) and after W2's ladder code lands, and the whole suite runs after it. W2 (`issue-1526-ladders`, 8165, opus, `a31ef0f1adee11743`) went out at about 09:52.
+
