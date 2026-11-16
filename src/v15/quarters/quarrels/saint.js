@@ -41,7 +41,7 @@ const ring = (B, ri, ro, y0, y1, n) => B.lathe([[ri, y0], [ro, y0], [ro * 0.985,
 // One continuous surface: a face defined as smooth fields (signed distances: the skull, the face and jaw, cheekbones,
 // the brow, eye hollows with the lids shut, the nose and its wings, the philtrum, the lips closed, the chin, the ears,
 // the neck), the fillet round his brow with its one roundel and empty socket, the hair in carved locks above it and
-// down the back; then weathered (pitted, a crack down his right cheek, the nose's tip and his left lobe broken off, the
+// down the back; then weathered (pitted, a crack down his left cheek, the nose's tip and his left lobe broken off, the
 // neck broken across where it was built of drums) and the crown broken open where the kiln is charged. A grid of rays
 // from inside the skull (dense across the face, sparse at the crown and the neck) finds that surface; each triangle
 // keeps its own normal, so it is faceted as the walk is. Head units: about 2 from chin to crown, +z the way he looks,
@@ -57,7 +57,7 @@ function cone(px, py, pz, ax, ay, az, bx, by, bz, ra, rb) { // a rod from a (rad
   const t = Math.max(0, Math.min(1, ((px - ax) * ux + (py - ay) * uy + (pz - az) * uz) / l2));
   return Math.hypot(px - ax - ux * t, py - ay - uy * t, pz - az - uz * t) - (ra + (rb - ra) * t);
 }
-const CRACK = [[-0.33, 0.0], [-0.4, -0.18], [-0.35, -0.4], [-0.43, -0.62], [-0.4, -0.8]]; // down his right cheek (x, y)
+const CRACK = [[0.33, 0.0], [0.4, -0.18], [0.35, -0.4], [0.43, -0.62], [0.4, -0.8]]; // down his left cheek, the one uppermost (x, y)
 const crackD = (x, y) => { let m = 9; for (let k = 0; k < CRACK.length - 1; k++) { const [ax, ay] = CRACK[k], [bx, by] = CRACK[k + 1], vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy))); m = Math.min(m, Math.hypot(x - ax - vx * t, y - ay - vy * t)); } return m; };
 const BAND = (y, z) => ((y - 0.6) - 0.17 * (z - 0.62)) / 1.014; // the fillet's plane: high over the brow, low over the nape
 const breakY = (z) => -1.16 + 0.14 * (z + 0.2); // where the neck broke (a plane, raked)
@@ -159,13 +159,13 @@ export function sculpt(N2, nu, nv, up) { // (exported for the turntable preview)
 }
 
 // The Smoking Saint's head and nothing else, posed and sunk. M: the ground under the head's middle, +z the way he
-// looks. o: { S (head units to metres: 1.7 is 3.9 m from the neck's break to the crown), roll (over onto his left
-// cheek, negative), pitch (forward, face down), sink (m his lowest point is under the ground), N2, low, stoke: [x, z]
+// looks. o: { S (head units to metres: 1.7 is 3.9 m from the neck's break to the crown), roll (over onto his right
+// cheek, positive), pitch (forward, face down), sink (m his lowest point is under the ground), N2, low, stoke: [x, z]
 // (in M: the fire's side, for the soot) }. Returns { HM, mouth (the charging hole, where the smoke leaves), pts (the
 // posed surface in M's frame: x, y, z each), tris }.
 export function saintHead(B, M, o) {
   const S = o.S ?? 1.7, low = !!o.low, g0 = M.elements[13], rng = o.rng;
-  const roll = o.roll ?? -0.7, pitch = o.pitch ?? 0.2, sink = o.sink ?? 0.45;
+  const roll = o.roll ?? 0.7, pitch = o.pitch ?? 0.2, sink = o.sink ?? 0.45;
   const R = mat(0, 0, 0, pitch, 0, roll), Ri = R.clone().invert(), up = new THREE.Vector3(0, 1, 0).applyMatrix4(Ri);
   const C = sculpt(o.N2, low ? 60 : 120, low ? 44 : 88, [up.x, up.y, up.z]);
   const lp = C.g.attributes.position.array, n = lp.length / 3;
@@ -197,7 +197,7 @@ export function saintHead(B, M, o) {
 
 // The Smoking Saint: the head (saintHead), his stoke hole and its fire, the fuel. M: the ground under the head's
 // middle, +z the way he looks. o: saintHead's, and stoke: [lx, lz] (the stoke hole's side, in M's frame), rng.
-// He lies where he fell: over on his left cheek and forward, sunk to the jaw, his neck's break to the yard.
+// He lies where he fell: over on his right cheek and forward, sunk to the jaw, the stoke hole let in behind.
 // Returns { mouth (the broken crown, where the smoke leaves), fire (the stoke hole's mouth), stand (where the burner
 // stands to feed it), colliders, r, tris (the head's) }.
 export function saint(B, M, o) {
