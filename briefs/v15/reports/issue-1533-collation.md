@@ -22,7 +22,7 @@ Merged `origin/next` with G1's `buried` kind and ran `ONLY=geometry`.
 
 - First version (both houses padded): 3 new findings in `house` (2 backs and 1 coplanar at the stable's south foot, where the skirt had lifted the ground 0.47 m) and 4 gone. I fixed them at the cause by keeping the pads off the house, the stable and the alley between them.
 - Second version: 0 new findings, and 2 coplanar gone at the south-east turret's foot (107.5, -57), buried 1 to 8 cm by house-1's skirt. I recorded them with that reason, then reverted the record when house-1 lost its pad. The two findings are back as they were on next (the same pairs).
-- Final: 0 new, 0 gone, 0 re-recorded, the baseline as on next.
+- Final: 0 new, 0 gone, 0 re-recorded, the baseline as on next. Rerun after merging G1's tool itself (`buried`): `ONLY=geometry` 135 passed, 0 failed, 0 new of any kind.
 
 ## Frames (shots/wip/, medium)
 
