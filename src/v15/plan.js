@@ -488,10 +488,10 @@ export const RUNGS = {
   // the slot stair at the corner, straight down the bisector between rungs-low-4 and rungs-low-5: the meanest way, and whole
   gullet: { name: 'the Gullet', id: 'rungs-gullet', clear: 0.6, width: 1.05 },
   // the Heliarch service flight east of the aqueduct's pier, down along the riser from its head at s: seven treads of it, and then the end wall of rungs-low-7, which was built over the rest
-  stub: { name: 'the Short Stair', run: 2, s: 21.25, sign: 1, width: 1.1 },
+  stub: { name: 'the Stump', run: 2, s: 21.25, sign: 1, width: 1.1 },
   // the lane under the main on the Low Rung: a door in the step, a niche, a lamp
   slype: { name: 'the Slype', run: 2, s0: 7.2, s1: 10.9, D: 11.5 },
-  // where three stairs of three ages are seen side by side in one look (the Short Stair at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
+  // where three stairs of three ages are seen side by side in one look (the Stump at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
   squint: { name: 'the Squint', plot: 'rungs-low-7' },
   // the roof walk on the Low Rung's roofs (the Mid Rung's level), west to east; a crossing between each pair that has no stair between
   leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3'], ['rungs-low-4', 'rungs-low-5']] },
