@@ -1,17 +1,21 @@
-// The three hands (v8-03): who built this country, as a kit the other v8 work calls. installStrata(ctx) puts it on
+// The hands (v8-03; the fourth, v14-D3): who built this country, as a kit the other v8 work calls. installStrata(ctx) puts it on
 // ctx.strata (main.js does, beside the v4 kit, before any module builds). The bible is briefs/v8/index.md.
 //
 //   elder     cyclopean blocks 2 m and up, triangles, no ornament but the etch, nothing at human scale
 //   heliarch  coursed ashlar, round arches, hexagons, bronze gone to verdigris, ember glass; formal and symmetrical
 //   late      lime plaster (cream, rose, saffron), tile (turquoise, pomegranate, cobalt), painted timber, cloth, lamps
+//   noon      the Noonwrights: blown and cast whole, round in section (milk glass, amber, celadon, an ox-blood band),
+//             and spun frames laced ring to ring; the empty ring; stored daylight. No sign of the sun.
 //
 // ctx.strata = {
 //   on                     false under ?strata=0 (the v7 world: no placements, the Pomegranate House in grey stone)
-//   HANDS                  ['elder', 'heliarch', 'late']
+//   HANDS                  ['elder', 'heliarch', 'late', 'noon']; SIGNED: the three that drew the sun in the saddle
 //   colors                 each hand's colours (parts.js COLORS)
 //   parts[hand][name](B, M, o)   add a part into a structures Builder (src/structures/geo.js) at Matrix4 M, local frame:
 //                          origin at the foot, +y up, +z out of the face. elder: notch, block. heliarch: roundel, drum,
-//                          capital, slab. late: sign, finial, wall, screen, bracket, lamp, awning, bench, tiles.
+//                          capital, slab. late: sign, finial, wall, screen, bracket, lamp, awning, bench, tiles. noon (origin on the
+//                          axis, the axis +z; they also add into an UnderBuilder): carrier, tube, collar, node, lens,
+//                          band, mark, cell.
 //   sign(hand, B, M, o)    the hand's rendering of the sun in the saddle (elder notch, heliarch roundel, late sign)
 //   builder()              a fresh Builder
 //   mesh(B, hand, name)    B's geometry as a Mesh in the hand's material (elder: the kit's cyclopean stone, etched with
@@ -29,7 +33,8 @@ import { makeStoneMaterial } from '../structures/materials.js';
 import { etch } from '../v4/span/etch.js';
 import { PARTS, SIGNS, COLORS, SIGN } from './strata/parts.js';
 
-export const HANDS = ['elder', 'heliarch', 'late'];
+export const HANDS = ['elder', 'heliarch', 'late', 'noon'];
+export const SIGNED = ['elder', 'heliarch', 'late'];
 
 export function installStrata(ctx, url = new URL(location.href)) {
   let elderMat = null, stone = null;
@@ -45,7 +50,7 @@ export function installStrata(ctx, url = new URL(location.href)) {
   const placements = [];
   const S = {
     on: url.searchParams.get('strata') !== '0',
-    HANDS, colors: COLORS, parts: PARTS, SIGN,
+    HANDS, SIGNED, colors: COLORS, parts: PARTS, SIGN,
     sign: (hand, B, M, o) => SIGNS[hand](B, M, o),
     builder: () => new Builder(ctx.noise),
     materials,

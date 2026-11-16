@@ -9,6 +9,7 @@
 // the notch is 1.4 S wide at the shoulders, the disc's centre 0.163 S above them, its radius 0.488 S (SIGN).
 import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
+import { NOON, NOON_PARTS } from './noon.js';
 
 const TAN = Math.tan((35 * Math.PI) / 180);
 export const SIGN = { tan: TAN, discUp: 0.163, discR: 0.488 };
@@ -24,6 +25,7 @@ export const COLORS = {
     wood: c('#5a3a24'), iron: c('#1c1714'), pom: c('#a8182a'), pomDark: c('#6a0e18'), gilt: c('#d8a440'), cloth: [c('#d8a03a'), c('#e8dcc4'), c('#a8302a'), c('#2a8a80')],
     glass: { ruby: [3.2, 0.35, 0.3], amber: [3.0, 1.5, 0.3], emerald: [0.4, 2.4, 0.9], sapphire: [0.5, 0.9, 3.2] },
   },
+  noon: NOON, // the fourth hand, the Noonwrights (v14-D3): strata/noon.js
 };
 
 const ch = (M, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => M.clone().multiply(mat(x, y, z, rx, ry, rz, sx, sy, sz));
@@ -274,6 +276,7 @@ export const PARTS = {
   elder: { notch: elderNotch, block: elderBlock },
   heliarch: { roundel: heliRoundel, drum: heliDrum, capital: heliCapital, slab: heliSlab },
   late: { sign: lateSign, finial: lateFinial, wall: lateWall, screen: lateScreen, bracket: lateBracket, lamp: lateLamp, awning: lateAwning, bench: lateBench, tiles: lateTiles },
+  noon: NOON_PARTS, // carrier, tube, collar, node, lens, band, mark, cell (strata/noon.js: either builder)
 };
-// each hand's rendering of the sign
+// each hand's rendering of the sign (the Noonwrights have none: their mark is the empty ring, noon.mark)
 export const SIGNS = { elder: elderNotch, heliarch: heliRoundel, late: lateSign };

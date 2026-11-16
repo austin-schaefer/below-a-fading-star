@@ -31,8 +31,8 @@ export const LEAD = { len: 1.7, rest: 0.6 }; // the crystal lead: length; its po
 
 // ---------------------------------------------------------------- the floor
 // The ground the Pit's shape gives (heightAt) is a heap of rubble 5 m high in the middle with a trench round the
-// wall's foot: from the passage's mouth it was a black slope filling the view, and at 30 degrees and more it slowed
-// the walker to a crawl. The floor walked and drawn is a shallow bowl instead (a replacing walkable: heightAt stands):
+// wall's foot: from the passage's mouth a black slope filling the view, 30 degrees and more underfoot. The floor walked
+// and drawn is a shallow bowl instead (a replacing walkable: heightAt stands):
 // from the wall's foot on every bearing (the ground there, FLOOR.out m in from the rim, or FLOOR.edge where the ground
 // there is lower: the trench round the north wall's foot is under the floor) easing down to the Nadir's mouth at y0,
 // so the hole is the lowest place on the floor and the wind comes up out of it. Over the hole itself the floor is far
@@ -45,10 +45,14 @@ export function makeFloor(T, N) {
   const ss = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
   // the floor at (x, z) inside the wall's foot, else null (the terrain)
   function y(x, z) {
-    const px = x - C.x, pz = z - C.z, r = Math.hypot(px, pz);
+    const px = x - C.x, pz = z - C.z;
+    if (px > 19 || px < -19 || pz > 19 || pz < -19) return null; // asked at every step on the map (a replacing walkable)
+    const r = Math.sqrt(px * px + pz * pz);
     if (r > 19) return null;
     const b = ((Math.atan2(px, -pz) * 180) / Math.PI + 360) % 360, rf = pitRim(b) - FLOOR.out;
-    if (r > rf) return null;
+    // past the bowl's edge, up to the wall's foot: the ground, or the edge's height where the ground is lower, so the
+    // old trench under the drawn floor is never walked into out of sight
+    if (r > rf) return r > rf + 2.5 ? null : Math.max(T.heightAt(x, z), wallAt(b));
     const rh = nadirR(b);
     if (r < rh - 0.05) return FLOOR.sky; // the hole: nothing under it
     const t = ss(rh + 0.6, rf, r);
@@ -102,17 +106,22 @@ export function makeStair(T, FL) {
   for (let i = 0; i <= N; i++) { let m = Infinity; for (let k = -5; k <= 5; k++) m = Math.min(m, raw[Math.max(0, Math.min(N, i + k))]); mn[i] = m; }
   for (let i = 0; i <= N; i++) { let a = 0, n = 0; for (let k = -6; k <= 6; k++) { a += mn[Math.max(0, Math.min(N, i + k))]; n++; } rs[i] = Math.min(a / n, raw[i] + 0.25); }
   for (let i = 0; i <= N; i++) { const f = under(B0 + i, rs[i]); if (f + 0.04 > ys[i]) ys[i] = f + 0.04; }
-  const at = (s) => {
+  const atInto = (s, o) => {
     const u = Math.max(0, Math.min(1, s)) * N, i = Math.min(N - 1, Math.floor(u)), f = u - i;
-    return { b: B0 + s * N, r: rs[i] + (rs[i + 1] - rs[i]) * f, y: ys[i] + (ys[i + 1] - ys[i]) * f };
+    o.b = B0 + s * N; o.r = rs[i] + (rs[i + 1] - rs[i]) * f; o.y = ys[i] + (ys[i + 1] - ys[i]) * f; return o;
   };
+  const at = (s) => atInto(s, {});
+  const _q = { b: 0, r: 0, y: 0 }; // floor()'s, per frame: no allocation
   const point = (s, dr = 0) => { const q = at(s), [dx, dz] = dirOf(q.b); return [C.x + dx * (q.r + dr), q.y, C.z + dz * (q.r + dr)]; };
   const len = (() => { let L = 0, p = point(0); for (let i = 1; i <= 200; i++) { const q = point(i / 200); L += Math.hypot(q[0] - p[0], q[2] - p[2]); p = q; } return L; })();
   // the landing, in its own frame: u out along bearing B0 from the stair's first tread, w across
   const land = { b: B0, r0: rs[0] - S.half, r1: R0 + S.land, y: yHead, dx: hx, dz: hz };
+  const BOX = R0 + S.land + 2; // the landing's far end is the furthest the slabs' floor reaches
   // the floor: the landing, then the slabs; null off them
   function floor(x, z) {
-    const px = x - C.x, pz = z - C.z, r = Math.hypot(px, pz);
+    const px = x - C.x, pz = z - C.z;
+    if (px > BOX || px < -BOX || pz > BOX || pz < -BOX) return null; // every floorAt on the map asks: away from the Pit, two compares
+    const r = Math.sqrt(px * px + pz * pz);
     if (r < 6) return null;
     // the landing
     const u = px * hx + pz * hz, w = -px * hz + pz * hx;
@@ -123,15 +132,18 @@ export function makeStair(T, FL) {
     const s = d / N;
     if (s > 1 + 0.06 && s < 360 / N - 0.01) return null;
     const ss = s > 1 ? 1 : s;
-    const q = at(ss);
+    const q = atInto(ss, _q);
     if (Math.abs(r - q.r) > S.half) return null;
     if (s > 1) { const over = ((d - N) * Math.PI / 180) * r; if (over > S.half) return null; }
-    return q.y;
+    const f = floorY(x, z); // never under the bowl beside it (its foot lies on the bowl)
+    return f !== null && f !== undefined && f + 0.04 > q.y ? f + 0.04 : q.y;
   }
   return { at, point, floor, len, yHead, yFoot: ys[N], footB, land, R0, under: (s) => { const q = at(s); return under(q.b, q.r); } };
 }
 
-// ---------------------------------------------------------------- lamps: the head's post, six on the way, the foot
-export const LAMPS = [0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.88, 1.0]; // a next light every 9 m or so on the way
-// the colour of the light out of the Nadir (cold starlight) and the lamps that hold a little of it
+// ---------------------------------------------------------------- lamps: at the head, eight on the way, at the foot
+export const LAMPS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]; // a warm pool every 7 m or so on the way
+// the colour of the light out of the Nadir (cold starlight)
 export const STARLIGHT = '#bcd2ff';
+// the sounder's lamps burn tallow behind horn, the Late folk's saffron light: warm pools going down into the dark
+export const LAMP_WARM = '#ffae5c';

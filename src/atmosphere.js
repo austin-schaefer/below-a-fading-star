@@ -90,7 +90,9 @@ export function installAtmosphere() {
         float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
       #endif
       fogFactor = min(fogFactor, ${FOG_CAP.toFixed(3)}); // v4 systems: the tiers carry the far haze
-      float hf = fpHeightFog(cameraPosition, fpDir, fpDist);
+      // v14-D2: an eye down a hole (the Pit's floor, 30 m under the moor) reckons the low mist as from 8 m under the moor at
+      // most, so the lip, the sky and the Span over the Pit read from below instead of one violet; on the moor, unchanged
+      float hf = fpHeightFog(vec3(cameraPosition.x, max(cameraPosition.y, -8.0), cameraPosition.z), fpDir, fpDist);
       float sunAmt = max(dot(fpDir, FP_SUN_DIR), 0.0);
       vec3 haze = mix(FP_HAZE_AWAY, fogColor, 0.55 + 0.45 * sunAmt);
       haze += FP_SUN_GLOW * pow(sunAmt, 10.0) * 0.9 * fogFactor;

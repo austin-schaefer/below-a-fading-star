@@ -138,7 +138,7 @@ export function makeGround(ctx) {
     if (margin < 0 && (collationClear(x, z) || prospectClear(x, z))) return true; // v5: ground cover keeps off the Collation and the Prospect (after the draws: cells have their own rng)
     if (margin < 0 && plinthsPaved(x, z)) return true; // v5: ground cover keeps off the Plinth Road's paving (trees: hiddenAt)
     if (margin < 0 && naveHole(x, z)) return true; // v5: ground cover keeps off the Foundered Nave's hole (trees: hiddenAt)
-    if (margin < 0 && pitEdge(x, z) < -2) return true; // v14-D2: nor down the Pit's throat or on its floor (v14/pit.js's bowl, under the old ground)
+    if (margin < 0 && x > 180 && x < 220 && z > 165 && z < 205 && pitEdge(x, z) < -2) return true; // v14-D2: nor down the Pit's throat or on its floor (v14/pit.js's bowl, under the old ground)
     if (margin < 0 && stairClear(x, z, 0.15)) return true; // v12-H3: nothing grows through the stair's slabs (trees: hiddenAt)
     if (margin < 0 && houseClear(x, z)) return true; // v8-05: the house's court swept, the ground before its gate trampled
     if (margin < 0 && sextonClear(x, z, 0, 1)) return true; // v7: ground cover keeps off the Sexton's graves and heaps (after the draws)

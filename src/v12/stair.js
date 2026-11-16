@@ -1,6 +1,6 @@
 // The Diffident Stair (v12-H3). On the foot of the east wall a few Heliarch steps stand in the turf going nowhere,
-// between two posts that carry the sign of the sun; from them a line of the same slabs runs west across the moor,
-// lying in the grass like a broken pavement and turning at right angles. Step onto the last standing step and the next
+// between two posts that carry the sign of the sun; from them the same slabs run west across the moor under the turf,
+// a few here and there sunk to a canted lip like fallen treads, turning at right angles. Step onto the last standing step and the next
 // slab tears itself out of its bed in the turf, flies up edge-on with its sign burning, turns flat and settles in its
 // place; then the next, a few strides ahead of the feet and never more. Behind the walker the slabs wait a moment,
 // then tip up and sink away to their beds. So the stair is only ever a short length of steps in the open air, which
@@ -139,9 +139,11 @@ export async function build(ctx) {
   for (const e of E) {
     if (!e.rest) continue;
     const g = (f, r) => T.heightAt(e.cx + e.ux * f - e.uz * r, e.cz + e.uz * f + e.ux * r);
-    e.rest.pitch = Math.atan2(g(e.hd, 0) - g(-e.hd, 0), 2 * e.hd) * (e.rest.on < 0 ? 1 : 0.3);
-    e.rest.roll = Math.atan2(g(0, e.hw) - g(0, -e.hw), 2 * e.hw) * (e.rest.on < 0 ? 1 : 0.3);
-    e.rest.yaw = (seed[e.i] - 0.5) * (e.rest.on < 0 ? 0.06 : 0.3);
+    const [tp, tr, ty] = e.rest.tilt; // the plan's cant: a fallen tread, not a laid flag (v14-B6)
+    e.rest.gp = Math.atan2(g(e.hd, 0) - g(-e.hd, 0), 2 * e.hd); e.rest.gr = Math.atan2(g(0, e.hw) - g(0, -e.hw), 2 * e.hw); // the turf's slope (the bed lies on it)
+    e.rest.pitch = e.rest.gp * (e.rest.on < 0 ? 1 : 0.3) + tp;
+    e.rest.roll = e.rest.gr * (e.rest.on < 0 ? 1 : 0.3) + tr;
+    e.rest.yaw = (seed[e.i] - 0.5) * (e.rest.on < 0 ? 0.06 : 0.3) + ty;
   }
   // write the pose of element e at a (0 bed .. 1 place) into M; sc: the instance's scale
   function pose(e, av, sc) {
@@ -210,10 +212,14 @@ export async function build(ctx) {
   }
   for (let j = 0; j < bedEls.length; j++) {
     const e = bedEls[j];
-    pose(e, 0);
+    // the bed lies flat on the turf (its slope, not the slab's cant or skew), 1 cm up, under the lying slab's top (6 to
+    // 7 cm up at its centre), so the stone shows; once the slab goes it is the dark earth it came out of. A buried
+    // slab's bed is under the turf with it: no outline in the grass
+    Z.set(e.ux, 0, e.uz); X.set(e.uz, 0, -e.ux); basis.makeBasis(X, Y, Z); Q.setFromRotationMatrix(basis);
+    Qt.setFromAxisAngle(AX, -e.rest.gp); Q.multiply(Qt);
+    Qt.setFromAxisAngle(Z.set(0, 0, 1), e.rest.gr); Q.multiply(Qt);
     const sc = e.kind === KIND.LANDING ? SL.set((e.hw * 2) / WIDTH, 1, (e.hd * 2) / GOING) : null;
-    // the bed sits a little under the slab's top as it lies (the slab hides it until it goes)
-    M.compose(V.set(e.cx, e.ground + 0.03, e.cz), Q, sc || S);
+    M.compose(V.set(e.cx, e.ground + (e.rest.buried ? -0.6 : 0.01), e.cz), Q, sc || S);
     BM.setMatrixAt(j, M);
   }
   scene.add(BM);
@@ -269,7 +275,7 @@ export async function build(ctx) {
         if (a[i] === 0) {
           if (rippleT > 0 || !nextUp(i)) continue;
           rippleT += RIPPLE;
-          dust.puff(E[i].cx, E[i].rest.y + 0.1, E[i].cz, 10, 0); // torn out of the turf
+          dust.puff(E[i].cx, Math.max(E[i].rest.y, E[i].ground) + 0.1, E[i].cz, 10, 0); // torn out of the turf
         }
         a[i] = Math.min(1, a[i] + dt / (T_ARRIVE * (0.9 + seed[i] * 0.25)));
         GL[i] = 1;
@@ -283,7 +289,7 @@ export async function build(ctx) {
         if ((wait[i] -= dt) > 0) { GL[i] = Math.max(0, GL[i] - dt * 0.8); if (GL[i] !== g0) writeOne(i); continue; }
         a[i] = Math.max(0, a[i] - dt / T_LEAVE);
         GL[i] = Math.min(1, 0.25 + (1 - a[i]) * 0.9);
-        if (a[i] === 0) { GL[i] = 0; dust.puff(E[i].cx, E[i].rest.y + 0.1, E[i].cz, 6, 1); }
+        if (a[i] === 0) { GL[i] = 0; dust.puff(E[i].cx, Math.max(E[i].rest.y, E[i].ground) + 0.1, E[i].cz, 6, 1); }
         moving++;
       } else if (GL[i] > 0) { GL[i] = Math.max(0, GL[i] - dt * 0.6); }
       if (GL[i] !== g0 || a[i] !== a0) writeOne(i);
@@ -334,9 +340,9 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, t) => { columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t); });
 
   // ------------------------------------------------------------------ the ascent, and the API
-  // the path heights-test walks: the turf east of the stub, each flight's first and last tread (steering only), each
-  // landing's centre (the feet there), the top
-  const pts = [[FOOTX(E), E[0].cz, undefined]];
+  // the path heights-test walks: the turf at the stub's foot (a step before its first riser, where P51 ends), each
+  // flight's first and last tread (steering only), each landing's centre (the feet there), the top
+  const pts = [[...foot(E), undefined]];
   for (const e of E) {
     const pv = E[e.i - 1], nx = E[e.i + 1];
     if (e.kind === KIND.LANDING || e.kind === KIND.TOP) pts.push([e.cx, e.cz, e.y]);
@@ -345,6 +351,7 @@ export async function build(ctx) {
   if (top.path) for (const q of top.path) pts.push(q);
   ctx.ascents?.add({
     id: 'stair', path: pts.map(([x, z, y]) => (y === undefined ? [x, z] : [x, z, y])),
+    back: [E[STUB - 1].cx + E[STUB - 1].ux * (E[STUB - 1].hd + 1.5), E[STUB - 1].cz + E[STUB - 1].uz * (E[STUB - 1].hd + 1.5)], // the turf behind the stub's last step (roads-test: nothing leads here)
     offs: [0.1, 0.55, 0.86], tick: (dt) => ctx.stair.tick(dt),
   });
 
@@ -367,5 +374,5 @@ export async function build(ctx) {
   ctx.log(`stair: ${treads.length} treads, ${lands.length} landings, ${kerbs.length} kerbs, ${P.top.y - P.y0 | 0} m from the stub to the top at (${P.top.cx.toFixed(0)}, ${P.top.cz.toFixed(0)}), ${(performance.now() - t0).toFixed(0)} ms`);
 }
 
-// a step east of the stub's first tread, on the turf
-function FOOTX(E) { return E[0].cx - E[0].ux * 1.6; }
+// the turf a step before the stub's first tread, against its climb
+function foot(E) { return [E[0].cx - E[0].ux * 1.6, E[0].cz - E[0].uz * 1.6]; }

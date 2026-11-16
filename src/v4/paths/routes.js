@@ -90,6 +90,9 @@ export const LEADS = [
   { id: 'P48', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down to the Sexton\'s open grave (v8-04\'s twelfth chair)', pts: [[40, 261], [36, 268], [38, 276.5]] },
   { id: 'P49', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Pomegranate House\'s south side', pts: [[92, -66], [88, -61]] },
   { id: 'P50', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod from the tower\'s lit door down to the lift\'s station under the Galleries (v12-H4)', pts: [[-237, -110], [-252, -92], [-268, -68], [-279, -42], [-285, -19]] },
+  { id: 'P51', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod from the Nave way\'s fork, south round the tor and up to the Lonely Staircase\'s foot (v14-B6, the owner\'s #54: a walker comes to the first step, not the back)', pts: [[251, 4], [257, 6.2], [263, 6.6], [269, 6.4], [275, 4.6], [281, 3.2], [285.4, 1.8], [287.6, 0.2], [288, -2.6]] },
+  { id: 'P52', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod off the moraine way across the Lattice\'s floor to the foot of the icefall (v14-B6: every way up has a track to its foot)', pts: [[58, -231.1], [59, -245], [60, -258], [58.5, -268], [57, -274.5], [57.6, -277.6]] },
+  { id: 'P53', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod off the Nave way east across the stair\'s sunk slabs, behind the Lonely Staircase\'s stub and down its west side to its foot (v14-B6, #54: whoever comes on its back is shown the way round)', pts: [[247.1, -15], [255, -16.5], [264, -17.2], [272, -17.5], [280, -17.2], [285.2, -16.4], [284.8, -12], [284.8, -6], [286, -1.6], [287.6, 0.2]] },
 ];
 
 // ---------------------------------------------------------------- what the leads keep off
