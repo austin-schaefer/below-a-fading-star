@@ -8,7 +8,7 @@
 //                         slab, plan.SLAB); its roof is level with the slab where they meet, so the slab is its stair
 //   the Saint's Rest      the square at the Heliarch stair's head: Heliarch hexagons relaid, a keep slab, the stock
 //   the Smoking Saint     the lime kiln, in the head of the keep's fallen colossus, lying in the square's middle
-//                         behind the stair's head; a bench at his cheek looks where he looks, at the Pomegranate
+//                         behind the stair's head; a bench by his crown looks where he looks, at the Pomegranate
 //                         House; three lesser heads wait in a row on the brink
 //   the quarry            in the wound: a block split with wedges, the shears over a block half
 //                         lifted, the windlass between its legs
@@ -29,7 +29,7 @@ import * as THREE from 'three';
 import { makePlot, registerAll, plotMatrix, site } from '../houses/index.js';
 import { L, H, V, PARTS, ch, worn, beam, hangLamp, pot, washing, patch } from '../houses/kit.js';
 import { KEEP as KEEP_BUILT } from '../../structures/keep.js';
-import { saint, lesserHead, almoner, bench } from './quarrels/saint.js';
+import { saint, saintHead, lesserHead, almoner, bench } from './quarrels/saint.js';
 import { lastArch, templates, shears, splitBlock, drag } from './quarrels/works.js';
 import { air } from './quarrels/air.js';
 
@@ -148,9 +148,15 @@ export async function build(ctx) {
 
   // ---------------------------------------------------------------- the Smoking Saint, his bench, the heads that wait
   const kiln = saint(B, F(Q.kiln.x, Q.kiln.z, Q.kiln.face), { S: Q.kiln.S, // (F takes any length of face)
-    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], N2, low, rng });
+    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], roll: Q.kiln.roll, pitch: Q.kiln.pitch, turn: Q.kiln.turn, sink: Q.kiln.sink, N2, low, rng });
   add(kiln.colliders);
-  // the bench: at his right cheek (the east side, away from the fire's mouth), its sitters looking where he looks
+  // ?saint=sheet: his head alone, posed as he lies, on bare ground at ?saintAt=x,z (the turntable his maker judges him on)
+  if (url.searchParams.get('saint') === 'sheet') {
+    const [sx, sz] = (url.searchParams.get('saintAt') || '-60,40').split(',').map(Number), SB = ctx.strata.builder(), sy = ctx.terrain.heightAt(sx, sz);
+    saintHead(SB, plotMatrix({ x: sx, z: sz, y: sy, face: [0, 1] }), { S: Q.kiln.S, roll: Q.kiln.roll, pitch: Q.kiln.pitch, turn: Q.kiln.turn, sink: Q.kiln.sink, stoke: [0, -1], N2, low, rng });
+    ctx.scene.add(ctx.strata.mesh(SB, 'late', 'saint-sheet'));
+  }
+  // the bench: on his right (the east side, by his crown and away from the fire's mouth), its sitters looking where he looks
   const kf = Q.kiln.face, kl = Math.hypot(kf[0], kf[1]), face = [kf[0] / kl, kf[1] / kl], right = [-face[1], face[0]];
   const seat = bench(B, F(Q.kiln.x + right[0] * 2.1 + face[0] * 0.25, Q.kiln.z + right[1] * 2.1 + face[1] * 0.25, face), { rng, w: 1.45 });
   add(seat.colliders);
@@ -291,14 +297,14 @@ export async function build(ctx) {
     records, mesh, route: P.QUARRELS_ROUTE,
     // where batch 3's people, goods and sounds go: each { x, y, z } and what it is for
     places: {
-      bench: { at: seat.seat, for: 'two sitters beside the saint\'s cheek, looking where he looks: at the Pomegranate House' },
+      bench: { at: seat.seat, for: 'two sitters beside the saint\'s crown, looking where he looks: at the Pomegranate House' },
       stoke: { at: kiln.stand, for: 'the lime-burner, feeding the fire; the fire\'s sound' },
       windlass: { at: sh.spike, for: 'a mason at the handspike' },
       sledge: { at: dr.sledgeAt, for: 'two at the drag rope ahead of the sledge' },
       trough: { at: hand.c, for: 'someone filling a jar at the hand; the drip\'s sound' },
       doors: records.flatMap((R) => R.doors.map((d) => ({ at: [d.x, d.y, d.z], of: R.name, enter: d.enter }))),
     },
-    stats: () => ({ draws: 2, triangles: tris, lights: lamps.length, perHouse: records.map((R) => ({ name: R.name, kind: R.kind, form: R.form, tris: R.tris })) }),
+    stats: () => ({ draws: 2, triangles: tris, saint: kiln.tris, lights: lamps.length, perHouse: records.map((R) => ({ name: R.name, kind: R.kind, form: R.form, tris: R.tris })) }),
   };
   ctx.log?.(`quarrels: ${tris} triangles, ${colliders.length} colliders of its own, ${records.length} plots`);
 }
