@@ -29,6 +29,7 @@ const PX = 3; // a speck's least radius on the screen, in pixels at 720 lines
 const FAR_GLOW = 3.2; // a speck's light, times its own, from 150 m (from 1x at 60 m): what is a window at arm's length is a town's lights from the road
 const CELL = 0.9; // the grid lights are gathered on, m
 const INSET = 0.25;
+const CARRY = 330; // m: on low the fountain's glow and the kiln's smoke are drawn out to here (bones.js drops the ways' timber at the same)
 
 export async function build(ctx) {
   const url = new URL(location.href);
@@ -46,8 +47,14 @@ export async function build(ctx) {
   take(ctx.rungs?.records && Object.values(ctx.rungs.records), 'rungs');
   take(ctx.quarrels?.records, 'quarrels');
   take(ctx.pennyworth?.records, 'pennyworth');
-  const meshes = [];
-  for (const o of lap.farHidden) o.traverse?.((m) => { if (m.isMesh && m.geometry?.attributes?.position) meshes.push(m); });
+  const meshes = []; // (what is solid: a glow's sheets, additive, are no house's walls)
+  for (const o of lap.farHidden) o.traverse?.((m) => { if (m.isMesh && m.geometry?.attributes?.position && !m.material?.transparent) meshes.push(m); });
+  // What carries on its own from far off stays drawn on low out to 330 m (one draw each, a few hundred triangles; past
+  // that the ways' timber goes too, bones.js, and the west gallery's frame is at its limit): the fountain's noon glow
+  // (unfogged, additive: the shaft over the square) and the kiln's smoke, lit from under at its throat. Taken off
+  // farHidden before the first frame.
+  const carry = [ctx.lees?.meshes?.[1], ctx.scene.getObjectByName('quarrels-air')].filter((m) => m && lap.farHidden.includes(m));
+  for (const m of carry) lap.farHidden.splice(lap.farHidden.indexOf(m), 1);
 
   // each record's frame (site(): local +z out of its front), and a grid of them for the vertex pass
   const G = 4, grid = new Map(), key = (i, j) => i * 4096 + j;
@@ -189,14 +196,15 @@ export async function build(ctx) {
   ctx.scene.add(mesh);
 
   // ---------------------------------------------------------------- each frame: the blocks on low from 140 m, a speck's least size
-  let boxOn = false;
+  let boxOn = false, carryGone = false;
   ctx.registerUpdate((dt, t) => {
     // the angle PX pixels subtend on a 720-line frame: a speck is the same share of the view at any resolution
     U.uPx.value = (PX * 2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) / 2)) / 720;
     U.uGlow.value = 0.92 + 0.05 * Math.sin(t * 1.7) + 0.03 * Math.sin(t * 5.3);
     if (low) {
-      const p = ctx.camera.position, on = Math.hypot(p.x - C.x, p.z - C.z) > lap.FAR - BOX_IN;
+      const p = ctx.camera.position, d = Math.hypot(p.x - C.x, p.z - C.z), on = d > lap.FAR - BOX_IN, gone = d > CARRY;
       if (on !== boxOn) { boxOn = on; U.uBox.value = on ? 1 : 0; }
+      if (gone !== carryGone) { carryGone = gone; for (const m of carry) m.visible = !gone; }
     }
   });
 
