@@ -23,7 +23,7 @@ import { bakeLamps } from './lees/goods.js';
 
 export async function build(ctx) {
   if (new URL(location.href).searchParams.get('lees') === '0') { ctx.lees = { off: true }; return; }
-  if (ctx.built) await ctx.built('lappet');
+  if (ctx.built) await Promise.all([ctx.built('lappet'), ctx.built('villagerow')]); // (the bones' vaults; the row's kerb, which the square's floor is laid up to)
   if (!ctx.lappet || ctx.lappet.on === false || !ctx.strata?.on) { ctx.lees = { off: true }; return; }
   const plan = ctx.lappet.plan, low = ctx.quality === 'low', fp = plan.plot('fountain');
   const B = ctx.strata.builder(), G = noonGlow();

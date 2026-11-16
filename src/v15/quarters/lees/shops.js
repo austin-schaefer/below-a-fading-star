@@ -188,7 +188,7 @@ export function shops(Q) {
   }
   // ---------------------------------------------------------------- the Rebate: the framer's house, its frames, and the great frame on the brink
   { const p = plan.plot('lees-house-3'), M = plotMatrix(p), rng = rngOf(85, 5), g0 = p.y;
-    const R = makePlot(B, p, { plan, built, seed: 7, low }) // (seed 7: the plot's other forms tried (3, 5, 6, 8, 9) each leave a coplanar pair or a back in the house itself: geometry-test);
+    const R = makePlot(B, p, { plan, built, seed: 7, low }); // (seed 5 leaves two walls of its rooms in one plane: geometry-test; the others are clean since the kit's facade is cut to short edges)
     Q.records.push(R);
     const inv = M.clone().invert(), d0 = R.doors[0] ? new THREE.Vector3(R.doors[0].x, 0, R.doors[0].z).applyMatrix4(inv) : new THREE.Vector3(0, 0, 0), side = d0.x > 0 ? -1 : 1, zf = R.front ? R.front.zf : p.d / 2 - 0.4;
     const bar = (m, w, h, t, col) => { const o = { color: col, moss: 0.05, ground: g0 - 1 };
