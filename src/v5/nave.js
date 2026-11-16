@@ -624,21 +624,16 @@ export async function build(ctx) {
   shapesMesh.name = 'nave-shapes'; shapesMesh.frustumCulled = false; shapesMesh.visible = false; shapesMesh.castShadow = false;
   scene.add(shapesMesh);
 
-  // ---- the rim's colliders (v10-T1, #15): one ring of small columns 0.45 m inside the edge, 0.45 m apart, so the
-  // walker's body stops 0.3 m outside it and the eye is over the edge; a hurrying step (0.33 m) cannot pass between them
-  let colliders = 0;
-  if (ctx.addCollider) {
-    let lx = Infinity, lz = Infinity;
-    // v14-D0: they stand from a metre under the turf to two over it (so they do not reach down to the Noon Road
-    // under the hole), and leave a gap for the stair's head on the south-east (v14/coffin-road/plan.js SZ)
-    for (let b = 0; b < 360; b += 0.25) {
-      const R = naveRim(b) - 0.45, [dx, dz] = dirOf(b), x = CX + dx * R, z = CZ + dz * R;
-      if (Math.hypot(x - lx, z - lz) < 0.45) continue;
-      if (!CR_OFF && x > CX && Math.abs(z - SZ) < SHALF + 0.2) continue;
-      const g = T.heightAt(x, z);
-      ctx.addCollider({ x, z, r: 0.3, y: g - 1, h: 3, stand: false, unseen: true }); colliders++; lx = x; lz = z; // unseen: nothing drawn (settings-test's stands look past them)
-    }
-  }
+  // ---- the rim is open (v15-W3: v10-T1's ring of unseen posts is gone): the edge-guard keeps a plain walk along it on
+  // the turf; a walker who pushes at it, hurries or hops goes over, into the water (which gives them back to the road).
+  // The terrain runs on unbroken over the hole (the hall is drawn into it), so inside the rim the ground the walker
+  // finds is the water's floor, as drawn: a replacing floor a centimetre under the Noon Road's water (which holds them
+  // and puts them back on the road); where no hall is under it, a landing there wakes them at the lip (fall.js's trap)
+  const colliders = 0;
+  { const WF = NAVE.water - 1.26, R = NAVE.r + 8;
+    const inHallW = (x, z) => x > NAVE.x0 + 9 && x < NAVE.x1 - 0.5 && Math.abs(z - CZ) < HALF - 0.4;
+    ctx.addWalkable((x, z) => (Math.abs(x - CX) < R && Math.abs(z - CZ) < R && naveEdge(x, z) < 0 ? WF : null), { replace: true });
+    (ctx.fallTraps ||= []).push((x, z, feet) => feet < WF + 0.5 && Math.abs(x - CX) < R && Math.abs(z - CZ) < R && naveEdge(x, z) < 0 && (CR_OFF || !inHallW(x, z))); }
 
   // ---- the life in the water
   const inWater = (x, z) => x > NAVE.x0 + 10 && x < NAVE.x1 - 2 && Math.abs(z - CZ) < HALF - 1.2;

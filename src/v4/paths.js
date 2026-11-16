@@ -529,19 +529,9 @@ function buildPit(ctx) {
     im.computeBoundingSphere();
     scene.add(im); meshes.push(im);
   }
-  // the rim's colliders (v10-T1, #15): one ring of small columns whose centres lie 0.45 m inside the edge, so the
-  // walker's body stops 0.3 m outside it, close enough that the eye is over the edge and the throat fills the view.
-  // The columns are 0.45 m apart and 0.3 + 0.45 thick, so a hurrying step (0.33 m) cannot pass between them.
-  let colliders = 0;
-  if (ctx.addCollider) {
-    let lx = Infinity, lz = Infinity;
-    for (let b = 0; b < 360; b += 0.25) {
-      const a = (b * Math.PI) / 180, R = pitRim(b) - 0.45, x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
-      if (Math.hypot(x - lx, z - lz) < 0.45) continue;
-      if (inStairHead(b, R, 0.35)) continue; // v14-D2: the way onto the stair's landing (its own edges are held)
-      ctx.addCollider({ x, z, r: 0.3, ...(PIT_D2 ? { y: terrain.heightAt(PIT.x + Math.sin(a) * (R + 1.05), PIT.z - Math.cos(a) * (R + 1.05)) - 2, h: 5 } : {}) }); colliders++; lx = x; lz = z; // v14-D2: from 2 m under the turf at the lip to 3 m over it (measured outside the rim: inside it the ground is already falling away), so nothing down the throat or on its floor (the passage's mouth) meets them
-    }
-  }
+  // the rim is open (v15-W3: what is seen holds; v10-T1's ring of unseen columns is gone): the edge-guard keeps a plain
+  // walk along it on the turf, and a walker who pushes at it, hurries or hops goes over into the Pit
+  const colliders = 0;
   return { meshes, slabs: slabs.length, bits: bits.length, colliders };
 }
 

@@ -7,12 +7,13 @@
 //   - stacked floors: the bridge leaves the ground, rises 6 m and comes back down to it; a deck under a beam keeps the
 //     walker at the deck's height and the beam over it at the beam's; stepping off the beam over the deck lands on
 //     the deck; the cut takes the walker 3 m under the ground and out again;
-//   - held edges: hurrying sideways off the bridge or out of the cut, the walker stays on;
+//   - open edges (v15-W3: what is seen holds): the bridge has nothing drawn at its sides, so a hurry or a walk square
+//     off it goes over and lands sane on the ground below; out of the cut (its drawn side) the walker stays in;
 //   - corridors: walked out past r 348 along one; a step sideways there stops at its side, not back at the circle;
 //     placeAt honours it; outside it the circle holds; the saddle's wedge is as it was (372 at its axis);
-//   - the edge-guard, on the beam 0.9 m wide 7 m up and on a parapet's top on the Great Span: a walk or a hurry that
-//     drifts 0.25 rad stays on to the end; a slow walk straight at the lip stops at it, and goes over after pressing
-//     on (the dwell); a hurry straight at it goes over at once; a hop goes over;
+//   - the edge-guard (v15-W3: no timed hold), on the beam 0.9 m wide 7 m up and on a parapet's top on the Great Span:
+//     a walk that drifts 0.25 rad stays on to the end; a hurry that drifts goes over; a walk straight at the lip goes
+//     over at once; a hurry straight at it goes over at once; a hop goes over;
 //   - each ascent in ctx.ascents (every module's, and the test ones): walked point to point (feet within 0.3 m of each
 //     point's y, never falling), stepped off at each `off` with a hurry and landing sane (on a floor, not under the
 //     ground, inside the limit or a corridor, not inside a collider, able to walk away), the frame time at the top
@@ -24,8 +25,9 @@
 //     a walker pressing W into the High Ling's tors (the critic's line by the stair, every stack from four sides) is
 //     stopped short of the drawn stone (v12-C1);
 //   - v12-H5: draw calls and triangles at the four tops on low, within 1.3x the floor's worst (tools/heights-cost.mjs);
-//   - ?fall=1: a fall from the perch (18 m) closes the view, holds it dark and wakes the walker at the keep's gate,
-//     lying and getting up; a 7 m drop does not.
+//   - the fall (on by default since v15-W3): a fall from the perch (18 m) closes the view, holds it dark and wakes the
+//     walker on the perch, a few metres back from the lip they left, lying and getting up; a 7 m drop does not; ?fall=0
+//     and the stored setting off turn it off.
 // Usage: node tools/heights-test.mjs [base=http://localhost:8123]
 import { createRequire } from 'node:module';
 let chromium;
@@ -87,7 +89,8 @@ const HELPERS = `(() => {
     // a landing is sane: standing, not under the ground (unless a stacked floor holds them), inside the limit or a
     // corridor, inside no collider, and able to walk off (one of four directions moves them a metre)
     sane() {
-      const x = p.pos.x, z = p.pos.z, ft = feet(), g = T.heightAt(x, z);
+      const x = p.pos.x, z = p.pos.z, ft = feet(), g = fp.controls.floorAt(x, z, ft).ground; // (the ground or a replacing floor: the Pit's)
+      const trap = (fp.fallTraps || []).some((fn) => fn(x, z, ft)); // a landing with no way out: the fall wakes them at the lip (v15-W3)
       const inside = fp.mountains.inWalk(x, z) || Math.hypot(x, z) <= fp.mountains.walkLimit(x, z) + 0.01;
       const under = !p.onStack && ft < g - 0.15;
       let inCol = null;
@@ -106,7 +109,7 @@ const HELPERS = `(() => {
         if (Math.hypot(r.x - x, r.z - z) > 1) { moves = true; break; }
       }
       p.pos.set(s.x, s.y, s.z); p.vel.set(0, 0, 0); p.vy = 0; p.onGround = s.on; p.onStack = s.st; p.yaw = s.yaw;
-      return { ok: p.onGround && !under && inside && !inCol && moves, on: p.onGround, under, inside, inCol, moves, x, z, feet: ft, ground: g };
+      return { ok: (p.onGround && !under && inside && !inCol && moves) || trap, trap, on: p.onGround, under, inside, inCol, moves, x, z, feet: ft, ground: g };
     },
     async frames(n = 90) {
       for (let i = 0; i < 20; i++) await new Promise((r) => requestAnimationFrame(r));
@@ -133,7 +136,8 @@ const HELPERS = `(() => {
       place(B.x0 + 18, B.z, B.top);
       p.yaw = Math.PI; const r = run(180, ['KeyW', 'ShiftLeft']); // +z, a hurry at the held side
       const r2 = (place(B.x0 + 18, B.z, B.top), p.yaw = 0, run(180, ['KeyW']));
-      out.bridgeHeld = { south: { f: r.f, z: r.z }, north: { f: r2.f, z: r2.z }, top: B.top, z0: B.z - 1, z1: B.z + 1 };
+      const s2 = sane();
+      out.bridgeHeld = { south: { f: r.f, z: r.z, ground: T.heightAt(r.x, r.z) }, north: { f: r2.f, z: r2.z, ground: T.heightAt(r2.x, r2.z), sane: s2.ok }, top: B.top, z0: B.z - 1, z1: B.z + 1 };
     }
     // 2. a floor under a floor: the deck under the beam; the beam over the deck; off the beam onto the deck
     {
@@ -196,14 +200,15 @@ const HELPERS = `(() => {
       const landed = settle(); const s = sane();
       // the slip the owner felt: hurrying along the deck, drifting 0.15 rad toward the parapet, hopping every 1.5 s
       // (each hop scrambles onto the parapet's top; the next carried them off it, 56 m down)
-      let hopFalls = 0, hopUp = 0;
+      let hopFalls = 0, hopUp = 0, hopSane = 0, hopStay = 0;
       for (const z0 of [212, 214, 216, 218]) {
         fp.controls.placeAt(-230, z0, Y); p.vel.set(0, 0, 0); p.yaw = -Math.PI / 2 - 0.15; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft');
         let up = false, fell = false;
         for (let i = 0; i < 60 * 20 && p.pos.x < -125; i++) { if (i % 90 === 89) fp.controls.hop(); fp.controls.update(1 / 60); if (feet() > Y + 0.3 && p.onGround) up = true; if (feet() < Y - 3) { fell = true; break; } }
         p.keys.clear(); hopFalls += fell; hopUp += up;
+        if (fell) { settle(); if (sane().ok) hopSane++; } else hopStay++;
       }
-      out.parapet = { top, along, outStop, outPress, landed, sane: s, hopFalls, hopUp };
+      out.parapet = { top, along, outStop, outPress, landed, sane: s, hopFalls, hopUp, hopSane, hopStay };
     }
     // 7. hops the guard must not touch: off the 1 m step (keys let go at the edge, and strafing off it), and down a
     // steep bank with no keys or strafing (the drop over a hop's length is far more than 1.5 m, but the floor is unbroken)
@@ -255,7 +260,7 @@ const HELPERS = `(() => {
   check(Math.abs(B.peak - B.top) < 0.15, 'stacked: the bridge carries the walker up off the ground to its top', `peak ${f2(B.peak)}, top ${f2(B.top)}`);
   check(Math.abs(B.end - B.endGround) < 0.1 && B.x > B.x1, 'stacked: and back down onto the ground beyond', `feet ${f2(B.end)}, ground ${f2(B.endGround)}`);
   const BH = U.bridgeHeld;
-  check(Math.abs(BH.south.f - BH.top) < 0.05 && Math.abs(BH.north.f - BH.top) < 0.05, 'held edges: a hurry and a walk sideways off the bridge stay on it', BH);
+  check(Math.abs(BH.south.f - BH.south.ground) < 0.1 && Math.abs(BH.north.f - BH.north.ground) < 0.1 && BH.north.sane && BH.top - BH.north.f > 2, 'open edges: a hurry and a walk square off the bridge (nothing drawn at its sides) go over and land sane on the ground below', BH);
   const St = U.stack;
   check(St.under.reached && Math.abs(St.under.f - St.deckY) < 0.05 && Math.abs(St.under.min - St.deckY) < 0.05, 'stacked: on the deck under the beam, the walker stays at the deck', St.under);
   check(St.over.reached && Math.abs(St.over.f - St.beamY) < 0.05 && St.over.min > St.beamY - 0.05, 'stacked: on the beam over the deck, the walker stays on the beam', St.over);
@@ -271,17 +276,17 @@ const HELPERS = `(() => {
   check(Math.abs(K.saddle - 372) < 0.01 && Math.abs(K.saddleEdge - 348) < 0.01, 'corridor: the saddle\'s wedge is as it was', `axis ${f2(K.saddle)}, off it ${f2(K.saddleEdge)}`);
   const G = U.guard;
   check(G.walkDrift.minF > G.y - 0.05 && G.walkDrift.x < G.end + 1.5, 'edge-guard: a walk drifting 0.25 rad along the 0.9 m beam stays on it to the end', `x ${f2(G.walkDrift.x)} (end ${f2(G.end)}), lowest ${f2(G.walkDrift.minF)}`);
-  check(G.hurryDrift.minF > G.y - 0.05 && G.hurryDrift.x < G.end + 1.5, 'edge-guard: a hurry drifting 0.25 rad along it stays on it', `x ${f2(G.hurryDrift.x)}, lowest ${f2(G.hurryDrift.minF)}`);
-  check(G.stop.minF > G.y - 0.05, 'edge-guard: a slow walk straight at the lip stops at it', `feet ${f2(G.stop.f)}`);
-  check(G.press.f < G.y - 1, 'edge-guard: pressing on at the lip for a moment goes over', `feet ${f2(G.press.f)}`);
+  check(G.hurryDrift.minF < G.y - 1, 'edge-guard: a hurry drifting 0.25 rad along it goes over (a hurry is not held)', `x ${f2(G.hurryDrift.x)}, lowest ${f2(G.hurryDrift.minF)}`);
+  check(G.stop.minF < G.y - 0.05, 'edge-guard: a walk straight at the lip goes over at once (no timed hold): off within 0.35 s', `feet ${f2(G.stop.f)}, lowest ${f2(G.stop.minF)}`);
+  check(G.press.f < G.y - 1, 'edge-guard: and is down below within 1.2 s', `feet ${f2(G.press.f)}`);
   check(G.hurry.f < G.y - 0.3 || !G.hurry.on, 'edge-guard: a hurry straight at the lip goes over at once', `feet ${f2(G.hurry.f)} after 0.3 s`);
   check(G.hop.f < G.y - 1, 'edge-guard: a hop goes over', `feet ${f2(G.hop.f)}`);
   check(G.coast.minF > G.y - 0.05, 'edge-guard: coming at the lip on a slant and letting go, momentum does not carry them over', `lowest ${f2(G.coast.minF)}`);
   const P = U.parapet;
   check(P.top > 56.3 && P.top < 57.1, 'the Span: placeAt with a height stands the walker on a parapet\'s top', `feet ${f2(P.top)}`);
   check(P.along.minF > 56.2, 'the Span: walking along the parapet drifting outward stays on it', `lowest ${f2(P.along.minF)}`);
-  check(P.outStop.minF > 56.2, 'the Span: a slow walk straight out stops at the parapet\'s outer lip', `lowest ${f2(P.outStop.minF)}`);
-  check(P.hopFalls === 0, 'the Span: hurrying along the deck drifting toward the parapet and hopping, nobody goes over', `${P.hopUp} of 4 scrambled onto the parapet, ${P.hopFalls} fell`);
+  check(P.outStop.minF < 56.2, 'the Span: a walk straight out over the parapet\'s outer lip goes over at once (no timed hold)', `lowest ${f2(P.outStop.minF)}`);
+  check(P.hopFalls + P.hopStay === 4 && P.hopSane === P.hopFalls, 'the Span: hurrying along the deck drifting toward the parapet and hopping: a hop that carries a walker over the parapet lands them sane below (the fall wakes them back on the deck)', `${P.hopUp} of 4 scrambled onto the parapet, ${P.hopFalls} fell, ${P.hopSane} landed sane, ${P.hopStay} stayed up`);
   check(P.sane.feet < 50 && P.landed && P.sane.ok, 'the Span: pressing on goes over, and lands sane', P.sane);
   const Hp = U.hops;
   check(Hp.off.x > Hp.off.edge && Hp.off.on && !Hp.off.stack && Math.abs(Hp.off.f - Hp.off.ground) < 0.05, 'hops: off the 1 m step with the keys let go, the hop carries on off it', Hp.off);
@@ -594,7 +599,7 @@ const FALL_RUN = `async () => {
     const first = (ph) => seen.find((s) => s.phase === ph);
     out.falling = first('falling'); out.dark = first('dark'); out.waking = first('waking');
     out.end = seen[seen.length - 1];
-    out.at = { x: p.pos.x, z: p.pos.z, spawn: fp.spawn, on: p.onGround, carried: p.carried, yaw: p.yaw };
+    out.at = { x: p.pos.x, z: p.pos.z, f: feet(), spawn: fp.spawn, on: p.onGround, carried: p.carried, yaw: p.yaw, perch: { x: S.perch.x, z: S.perch.z, y: S.perch.y }, spot: fp.fall.spot };
     out.lowestWhileOpen = Math.min(...seen.filter((s) => s.phase === 'falling' && s.amt < 0.999).map((s) => s.y));
     out.ground = fp.terrain.heightAt(S.perch.x, S.perch.z + 2);
     return out;
@@ -607,8 +612,8 @@ const FALL_RUN = `async () => {
     let maxAmt = 0, phases = new Set(); const t0 = performance.now();
     while (performance.now() - t0 < 4000) { await new Promise((r) => requestAnimationFrame(r)); if (performance.now() - t0 > 1200) p.keys.clear(); maxAmt = Math.max(maxAmt, fp.fall.amount); phases.add(fp.fall.phase); }
     return { enabled: fp.fall.enabled, falls: fp.fall.falls, maxAmt, phases: [...phases], on: p.onGround, op: +getComputedStyle(document.getElementById('fall')).opacity }; })()`);
-  check(!N.enabled && N.falls === 0 && N.maxAmt === 0 && N.phases.join() === 'idle' && N.on && N.op === 0, 'fall: off by default, a long fall does not black out', N);
-  check(errors.length === 0, 'no page errors (fall off)', errors.slice(0, 3).join(' | '));
+  check(N.enabled && N.falls === 1 && N.maxAmt === 1 && N.phases.includes('dark'), 'fall: on by default (v15-W3), a long fall blacks out with nothing set', N);
+  check(errors.length === 0, 'no page errors (fall on by default)', errors.slice(0, 3).join(' | '));
   await page.close();
 }
 {
@@ -624,7 +629,7 @@ const FALL_RUN = `async () => {
   await page.close();
 }
 {
-  // the stored setting on (no URL param), set live as the settings row does: the same 18 m fall blacks out and wakes at the gate
+  // the stored setting on (no URL param), set live as the settings row does: the same 18 m fall blacks out and wakes back on the perch
   const { page, errors } = await open('');
   await page.evaluate(() => { localStorage.setItem('fp-fall', '1'); window.__fp.fall.refresh(); });
   const F = await page.evaluate(`(${FALL_RUN})()`);
@@ -634,7 +639,7 @@ const FALL_RUN = `async () => {
   check(!!F.falling && !!F.dark && F.dark.amt === 1, 'fall: an 18 m fall closes the view and goes dark', { falling: F.falling, dark: F.dark });
   check(F.lowestWhileOpen > F.ground + 0.5, 'fall: the view is shut before the ground (no impact shown)', `lowest feet with the view still open ${f2(F.lowestWhileOpen)}, ground ${f2(F.ground)}`);
   check(!!F.waking && F.end.phase === 'idle' && F.end.op === 0, 'fall: the walker wakes and the view opens again', { waking: F.waking, end: F.end });
-  check(Math.hypot(F.at.x - F.at.spawn.x, F.at.z - F.at.spawn.z) < 2 && F.at.on && !F.at.carried, 'fall: they wake at the keep\'s gate (the spawn), standing and free', F.at);
+  check(Math.hypot(F.at.x - F.at.perch.x, F.at.z - F.at.perch.z) < 2.5 && Math.abs(F.at.f - F.at.perch.y) < 0.1 && F.at.on && !F.at.carried && Math.abs(Math.cos(F.at.spot.yaw - Math.PI)) > 0.9, 'fall: they wake on the perch, a few metres back from the lip they left and facing it, standing and free (v15-W3: not at the keep\'s gate)', F.at);
   check(errors.length === 0, 'no page errors (fall on)', errors.slice(0, 3).join(' | '));
   await page.close();
 }

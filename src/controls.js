@@ -315,6 +315,16 @@ export function buildControls(ctx) {
     return terrain.heightAt(x, z);
   }
   ctx.addWalkable = addWalkable;
+  // the ground's normal: the terrain's, or where a replacing floor holds the ground (a pit's bowl and walls), that
+  // floor's own (v15-W3: a walker who lands against the Pit's wall slides down it, as on any slope too steep to stand)
+  const _fn = new THREE.Vector3();
+  function floorNormal(x, z) {
+    if (!replacers.length) return terrain.normalAt(x, z);
+    const g = baseFloor(x, z);
+    if (g === terrain.heightAt(x, z)) return terrain.normalAt(x, z);
+    const e = 0.25, hx = (baseFloor(x + e, z) - baseFloor(x - e, z)) / (2 * e), hz = (baseFloor(x, z + e) - baseFloor(x, z - e)) / (2 * e);
+    return _fn.set(-hx, 1, -hz).normalize();
+  }
   // The floor under feet at height `feet` at (x, z): the ground (or a replacing floor, or wading depth), the raise-only
   // walkables in their window, the stacked floors at or under the feet, and (with `tops`) the standable collider tops
   // within a step. Writes into fl: { y, ground (the ground's y), stack (the stacked floor that holds them, or null),
@@ -525,12 +535,15 @@ export function buildControls(ctx) {
     // slope slows you and stops you on the steep stuff; a raised floor (a deck, a stair) more than a metre
     // above the ground is level, whatever the slope beneath it, and so is a stacked floor
     const raised = state.onTop || state.onStack || state.pos.y - state.eye > terrain.heightAt(state.pos.x, state.pos.z) + 1;
-    const n = raised ? UP : terrain.normalAt(state.pos.x, state.pos.z);
+    const n = raised ? UP : floorNormal(state.pos.x, state.pos.z);
     const slope = raised ? 0 : Math.acos(clamp(n.y, -1, 1));
     const slopeFactor = 1 - smoothstep(0.55, 0.95, slope);
 
     const accel = state.onGround ? 14 : 3;
     target.copy(wish).multiplyScalar(maxSpeed * (0.35 + 0.65 * slopeFactor));
+    // (v15-W3) stepped off a ledge at a walk (not a hop, not a hurry): the feet drop, they are not carried on through the
+    // air by the keys, so a walk down a broken bank's step lands on the step, not over the next one
+    if (!state.onGround && !state.hopping && !hurry) target.set(0, 0, 0);
     state.vel.x += (target.x - state.vel.x) * Math.min(1, accel * dt);
     state.vel.z += (target.z - state.vel.z) * Math.min(1, accel * dt);
     // steep slopes push you back down
@@ -553,10 +566,24 @@ export function buildControls(ctx) {
     const inHop = state.hopping && !state.onGround;
     if ((state.onGround && !state.hopping) || inHop) {
       const ref = inHop ? state.floorBelow : feet0;
-      const kind = edgeKind(mv, ref);
-      if (kind === EDGE_HELD || (kind === LIP_SOFT && !inHop && !hurry)) {
+      let kind = edgeKind(mv, ref);
+      // looking ahead 0.6 m along a plain walk: a bank too steep to walk down (more than LIP down within it: 68 degrees,
+      // the Pit's throat) is a lip too, so a walk along the top of it is held where the cliff under it begins
+      const dm = hyp(mv.x - ox, mv.z - oz);
+      if (!kind && !inHop && !hurry && len > 0.05 && dm > 0.001) {
+        pm.x = mv.x + (mv.x - ox) / dm * 0.6; pm.z = mv.z + (mv.z - oz) / dm * 0.6;
+        floorAt(pm.x, pm.z, feet0, false, probe, state.onStack); pm.y = probe.y; pm.stack = probe.stack;
+        if (edgeKind(pm, ref) === LIP_SOFT) kind = LIP_SOFT;
+        // and onto ground too steep to stand (a crust leaning into a hole): its top is the lip, its normal the slope's
+        else if (!mv.stack && !mv.onTop && mv.y < terrain.heightAt(mv.x, mv.z) + 1) {
+          const nn = floorNormal(mv.x, mv.z);
+          if (nn.y < STEEP_Y) { const h = hyp(nn.x, nn.z) || 1; kind = LIP_STEEP; lipN.x = nn.x / h; lipN.z = nn.z / h; }
+        }
+      }
+      if (kind === EDGE_HELD || ((kind === LIP_SOFT || kind === LIP_STEEP) && !inHop && !hurry && slope <= 0.95)) { // (on ground too steep to stand, they slide, lip or not)
         const tx = mv.x, tz = mv.z;
-        edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
+        if (kind !== LIP_STEEP) edgeNormal(ox, oz, ref, feet0, mv.x - ox, mv.z - oz, state.onTop || inHop);
+        else nDrops = 0;
         const aim = len > 0.05 ? (wish.x * lipN.x + wish.z * lipN.z) / Math.min(1, len) : 0;
         if (kind === EDGE_HELD || aim <= AIM) {
           const mx = mv.x - ox, mz = mv.z - oz, d = mx * lipN.x + mz * lipN.z;
@@ -566,16 +593,31 @@ export function buildControls(ctx) {
           if (edgeKind(mv, ref)) mv = resolve(sx - lipN.x * 0.08, sz - lipN.z * 0.08, feet0, mvB);
           if (edgeKind(mv, ref)) {
             // no slide left: at an outer corner, a walker pushing on goes over; anywhere else, they stand
-            if (kind === LIP_SOFT && len > 0.05 && aim > 0 && nDrops >= 5) mv = resolve(tx, tz, feet0, mvB);
+            if (kind !== EDGE_HELD && len > 0.05 && aim > 0 && nDrops >= 5 && !nBeam) mv = resolve(tx, tz, feet0, mvB);
             else mv = resolve(ox, oz, feet0, mvB);
           }
           if (!edgeKind(mv, ref)) {
             const vd = state.vel.x * lipN.x + state.vel.z * lipN.z;
             if (vd > 0) { state.vel.x -= lipN.x * vd; state.vel.z -= lipN.z * vd; }
-            leaning = kind === LIP_SOFT && aim > 0.15;
+            leaning = kind !== EDGE_HELD && aim > 0.15;
           }
         }
       }
+    }
+    // a floor that rises like a wall is a wall (a pit's side, a face drawn as a replacing floor): the open edges let a
+    // walker fall beside walls a held edge kept them from, and the feet must not ride up them, walking or hopping. On a
+    // rising move, and on every move in the air, the floor 0.3 m on more than 0.9 m over the floor underfoot (72
+    // degrees) stops them; in the air, a floor that comes up 0.3 m over the feet under a sideways move stops them, and
+    // they drop down it. Stacked floors (stairs, treads) and collider tops (a scramble) are not walls here. Cost: one
+    // floor probe on a frame whose move rises or is in the air.
+    if (!mv.onTop && !mv.stack) {
+      const base = state.onGround ? Math.max(feet0, state.floorBelow) : state.floorBelow, dh = hyp(mv.x - ox, mv.z - oz);
+      let wall = !state.onGround && mv.y > feet0 + 0.3;
+      if (!wall && dh > 0.001 && (mv.y > base + 0.05 || !state.onGround)) {
+        floorAt(mv.x + (mv.x - ox) / dh * 0.3, mv.z + (mv.z - oz) / dh * 0.3, base, false, probe, state.onStack);
+        wall = !probe.stack && probe.y - base > 0.9;
+      }
+      if (wall) { mv = resolve(ox, oz, feet0, mvB); state.vel.x = 0; state.vel.z = 0; }
     }
     lipLean += ((leaning ? 1 : 0) - lipLean) * Math.min(1, dt * 6);
     state.atLip = lipLean;
@@ -648,8 +690,8 @@ export function buildControls(ctx) {
   // Would this move take a walker standing at `feet` over an edge? EDGE_HELD: off a stacked floor whose keep holds
   // there onto nothing within a step, down or up (keep: 'up' holds only up: out of a cut, through a tunnel's side);
   // LIP_SOFT: down more than LIP; 0: neither.
-  const EDGE_HELD = 1, LIP_SOFT = 2, LIP = 1.5, AIM = 0.5; // AIM: the cosine of 60 degrees off square, 30 off the lip's line
-  let lipLean = 0, nDrops = 0;
+  const EDGE_HELD = 1, LIP_SOFT = 2, LIP_STEEP = 3, LIP = 1.5, AIM = 0.5, STEEP_Y = Math.cos(0.95); // AIM: the cosine of 60 degrees off square, 30 off the lip's line
+  let lipLean = 0, nDrops = 0, nBeam = false; // nBeam: the drops lie on both sides (a beam, a parapet's top)
   const lipN = { x: 0, z: 0 };
   function edgeKind(m, feet) {
     const on = state.onStack;
@@ -662,11 +704,11 @@ export function buildControls(ctx) {
   // move's own direction. Kept while the walker stays within 0.25 m of where it was found at the same height, so
   // pressing at a lip or sliding along a straight one probes about every fourth frame at a walk.
   const probe = { y: 0, ground: 0, stack: null, top: false, wl: null }, pm = { x: 0, z: 0, y: 0, stack: null };
-  const nAt = { x: Infinity, z: 0, ref: 0, t: -1, n: 0 };
+  const nAt = { x: Infinity, z: 0, ref: 0, t: -1, n: 0, beam: false };
   let guardT = 0;
   const DIRS = Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2), Math.sin((i / 8) * Math.PI * 2)]);
   function edgeNormal(x, z, ref, feet, mx, mz, tops) {
-    if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; nDrops = nAt.n; return; }
+    if (hyp(x - nAt.x, z - nAt.z) < 0.25 && Math.abs(ref - nAt.ref) < 0.05 && guardT - nAt.t < 0.1) { nAt.t = guardT; nDrops = nAt.n; nBeam = nAt.beam; return; }
     let sx = 0, sz = 0, n = 0, ax = 0, az = 0, bxz = 0;
     for (const [cx, cz] of DIRS) {
       pm.x = x + cx * 0.35; pm.z = z + cz * 0.35;
@@ -674,14 +716,34 @@ export function buildControls(ctx) {
       pm.y = probe.y; pm.stack = probe.stack;
       if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; ax += cx * cx; az += cz * cz; bxz += cx * cz; }
     }
-    const l = hyp(sx, sz);
-    nDrops = n;
-    if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return; }
+    let l = hyp(sx, sz);
+    nDrops = n; nBeam = false; nAt.beam = false;
+    if (!n) {
+      // no drop within 0.35 m: a bank too steep to walk down (the guard's look ahead found it); its drops 0.9 m out
+      for (const [cx, cz] of DIRS) {
+        pm.x = x + cx * 0.9; pm.z = z + cz * 0.9;
+        floorAt(pm.x, pm.z, feet, tops, probe, state.onStack);
+        pm.y = probe.y; pm.stack = probe.stack;
+        if (edgeKind(pm, ref)) { sx += cx; sz += cz; n++; }
+      }
+      l = hyp(sx, sz);
+      if (n && l > 0.3 * n) { lipN.x = sx / l; lipN.z = sz / l; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = 0; return; }
+    } else if (l > 0.3 * n) {
+      // a ragged lip: the same eight directions 0.9 m out as well, so a jag of a stride or less does not turn the lip's
+      // line square to a walk along it (the Pit's rim, a broken bay's end)
+      for (const [cx, cz] of DIRS) {
+        pm.x = x + cx * 0.9; pm.z = z + cz * 0.9;
+        floorAt(pm.x, pm.z, feet, tops, probe, state.onStack);
+        pm.y = probe.y; pm.stack = probe.stack;
+        if (edgeKind(pm, ref)) { sx += cx; sz += cz; }
+      }
+      const l2 = hyp(sx, sz) || l;
+      lipN.x = sx / l2; lipN.z = sz / l2; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return; }
     // both sides drop (a beam, a plank, a ridge): the normal is the axis the drops lie on, turned to the move's side
     // (the drops' principal axis), so a walk along a narrow way slides along it; a lone top dropping all round, the move
     if (n && n < 7 && Math.abs(ax - az) + Math.abs(bxz) > 0.5) {
       const th = 0.5 * Math.atan2(2 * bxz, ax - az), c = Math.cos(th), sn = Math.sin(th), sg = c * mx + sn * mz < 0 ? -1 : 1;
-      lipN.x = c * sg; lipN.z = sn * sg; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; return;
+      lipN.x = c * sg; lipN.z = sn * sg; nAt.x = x; nAt.z = z; nAt.ref = ref; nAt.t = guardT; nAt.n = n; nBeam = nAt.beam = true; return;
     }
     const ml = hyp(mx, mz) || 1;
     lipN.x = mx / ml; lipN.z = mz / ml; nAt.x = Infinity;

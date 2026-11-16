@@ -131,7 +131,7 @@ check(res.road.off < 0.01 && res.road.outside === 0, 'the road\'s samples are on
 check(res.road.startR >= 345 && res.road.toFoot !== null && res.road.toFoot <= 4 && res.road.ahead <= 0.3 && res.road.trodToLanding !== undefined && res.road.trodToLanding <= 2, 'the causeway ends at something at both ends: the saddle, and the foot of the Great Span\'s east stair (short of its first step); the trod P54 ends at the Pit\'s landing (#59)', `starts at r ${res.road.startR}; ends ${res.road.toFoot} m from the stair's foot (${res.road.ahead} m up its line); P54 ends ${res.road.trodToLanding} m from the landing's outer end`);
 check(res.road.v3TowerOn < 0.01, 'the v3 road is part of it (the tower hill is on the road)', `${res.road.v3TowerOn} m`);
 check(res.pit.depth >= 15, 'the pit is a fall (deep)', `${res.pit.depth} m below its rim`);
-check(res.pit.colliders >= 60, 'the pit\'s rim is fenced', `${res.pit.colliders} colliders`);
+check(res.pit.colliders === 0, 'the pit\'s rim is open: no ring of unseen columns (v15-W3: what is seen holds)', `${res.pit.colliders} colliders`);
 check(res.pit.walk.edge > 0 && res.pit.walk.minY > res.pit.walk.rimY - 2.5 && res.pit.walk.moved > 2, 'a walker from the causeway\'s last bend, walking at the pit, stops at the lip', JSON.stringify(res.pit.walk));
 check(Math.abs(res.fall.lipY - 53.5) <= 1, 'the fall\'s lip is at y 53.5 ± 1', `lip ${res.fall.lipY}, ground there ${res.fall.groundAtLip}, pool ${res.fall.poolY}`);
 check(Math.abs(res.fall.groundAtLip - 53.5) <= 1.5, 'the ground at the lip stands at it', `${res.fall.groundAtLip}`);

@@ -1,21 +1,20 @@
 #!/usr/bin/env node
-// Walk to the edge and look down (v10-T1, the owner's issue #15): a scripted walker comes at each hole the map keeps
-// a walker back from, from outside, at a walk and at a hurry, and must
-//   - reach within a stated distance of the lip (the Pit and the Foundered Nave 1.0 m, the Great Span's broken edges
-//     0.5 m, the Sunken Court's coping 1.0 m after a hop onto the kerb),
-//   - never pass it (the signed distance to the lip stays >= 0; on the Span the deck holds, the walker never drops),
-//   - never be under the floor: feet no lower than the terrain (or the deck) less 0.15 m at any tick,
-// and at the Span's crack a running hop still clears it. v14-D0, the Noon Road: a walker whose line meets the Nave's
-// stair at its head goes down it, held on its floor (so that walk is not a pass of the lip, and is measured from the
-// stair's floor), and at least one bearing does; hurrying and hopping sideways off the stair (high, middle, low) and
-// off the road on the water keep the walker on (held edges); one dropped into the water off the road is put back on
-// the road within three seconds (the page's own frames), never under the water's floor. v14-D1, the Wellward Way: off
-// each of its stretches sideways, hurrying and hopping, held and the eye under the vault; into the Gulf off the bridge,
-// caught and put back; no uncapped collider standing down through it. v14-D2, the Pit's slabs round its
-// wall: sideways off them toward the hole and the wall at three heights, the held edges keep the walker on; a walker on
-// the landing's line walks out onto it. The kerbs along z 215 still hold at the crack's lips; v12-H1 opened
-// them only where a fallen coping lies across the crack 4 m in from the south parapet, and a walker on that line, at a walk
-// and with no hop, crosses on it both ways and stays on stone (never more than 0.3 m under the deck). Simulated at 60 Hz
+// Walk to the edge, look down, and go over (v10-T1, the owner's #15; v15-W3, the owner's "allow you to go up to edge
+// and fall in and jump": what is seen holds, nothing else). A scripted walker comes at each hole from outside, at a walk
+// and at a hurry, and
+//   - straight at it: reaches the lip and goes over (no ring of unseen posts, no kerb of air), and lands where the
+//     drawing says: the Foundered Nave's water or the Noon Road, the Pit's floor or its slabs (or the Nadir's night,
+//     a trap that wakes them at the lip), the ground under the Great Span's broken bays and crack;
+//   - steered along a lip (0.25 rad in from its line, at a walk): stays on and never passes it, within 1 m of it;
+// and at the Span's crack a running hop still clears it, and its fallen coping is walked across. v14-D0, the Noon Road:
+// a walker whose line meets the Nave's stair at its head goes down it, and at least one bearing does; hurrying and
+// hopping sideways off the stair, the landing and the road (nothing drawn at their sides) keeps the walker on its floor
+// or puts them in the water, never under it; dropped into the water off the road they are put back on the road within
+// three seconds (the page's own frames). v14-D1, the Wellward Way: off each of its stretches sideways, hurrying and
+// hopping: held by the rock and the eye under the vault, but off the Gulf's arch (open) onto the Gulf's catch; into the
+// Gulf, caught and put back; no uncapped collider standing down through it. v14-D2, the Pit's slabs: sideways off them
+// toward the hole they land on the floor, toward the wall they never climb it; a walker on the landing's line walks out
+// onto it. The Sunken Court's kerb (drawn) still stops a walker, and a hop lands on its coping. Simulated at 60 Hz
 // through controls.update in one page.
 // v15-F1, the owner's #60, #61, #63, guarded: in the underground's meshes every sloping member's lower end bears on
 // something and no two faces of different paint overlap in one plane (tools/under-geometry.mjs); every cord on the Noon
@@ -46,44 +45,75 @@ const R = await page.evaluate(async () => {
   const floorAt = (x, z) => { const d = onSpan ? fp.span.deckAt(x, z) : null; return d !== null && d !== undefined && d > T.heightAt(x, z) ? d : T.heightAt(x, z); };
   // a walk: from (sx, sz) [on the deck at y, if given] at (tx, tz), for `secs`; keys W (and Shift when hurry); reports
   // the closest the lip got (min of edge(), >= 0 means never passed) and the lowest the feet went under the floor
-  function walk(sx, sz, tx, tz, edge, { y, hurry = false, secs = 14, hopAt = null } = {}) {
+  // v15-W3: once the walker has gone over the lip and landed, the keys are let go and the landing is reported
+  // (`over`, `landed`: { feet, on, stack, ground (the ground or a replacing floor there), x, z })
+  function walk(sx, sz, tx, tz, edge, { y, hurry = false, secs = 14, hopAt = null, steer = null } = {}) {
     fp.controls.placeAt(sx, sz); onSpan = y !== undefined; if (y !== undefined) p.pos.y = y + p.eye;
     p.vel.set(0, 0, 0); p.vy = 0; p.onGround = true;
     p.yaw = Math.atan2(-(tx - sx), -(tz - sz)); p.keys.clear(); p.keys.add('KeyW'); if (hurry) p.keys.add('ShiftLeft');
-    let minEdge = Infinity, under = 0, stair = 0;
-    for (let i = 0; i < secs * 60; i++) {
+    let minEdge = Infinity, under = 0, stair = 0, air = false, landed = null;
+    for (let i = 0; i < secs * 60 && !landed; i++) {
+      if (steer) p.yaw = steer();
       fp.controls.update(DT);
+      if (!p.onGround) air = true;
+      else if (air && minEdge < -0.05) { const fl = fp.controls.floorAt(p.pos.x, p.pos.z, p.pos.y - p.eye); landed = { feet: p.pos.y - p.eye, on: p.onGround, top: p.onTop, stack: p.onStack?.name || null, ground: fl.ground, x: p.pos.x, z: p.pos.z }; }
       if (hopAt && i >= hopAt && i % 40 === 0) fp.controls.hop();
       // v14-D0: on the Noon Road's stair (a held floor into the Nave) the lip is not passed and the floor is the stair's
       const cr = p.onStack && p.onStack.name === 'coffin-road' ? fp.coffinRoad.floor(p.pos.x, p.pos.z) : null;
       if (cr !== null && cr !== undefined) { stair++; under = Math.min(under, p.pos.y - p.eye - cr); continue; }
       const e = edge(p.pos.x, p.pos.z); if (e < minEdge) minEdge = e;
-      under = Math.min(under, p.pos.y - p.eye - floorAt(p.pos.x, p.pos.z));
+      if (minEdge >= -0.05) under = Math.min(under, p.pos.y - p.eye - floorAt(p.pos.x, p.pos.z)); // (on this side of the lip)
     }
     p.keys.clear();
-    return { x: p.pos.x, z: p.pos.z, end: stair ? 0 : edge(p.pos.x, p.pos.z), minEdge, under, feet: p.pos.y - p.eye, stair };
+    // over the lip: let go of the keys and let them come to rest (a slide down a wall, a step down a ledge), then say where
+    if (minEdge < -0.05 && !stair) {
+      for (let i = 0; i < 240; i++) fp.controls.update(DT);
+      const fl = fp.controls.floorAt(p.pos.x, p.pos.z, p.pos.y - p.eye);
+      landed = { feet: p.pos.y - p.eye, on: p.onGround, top: p.onTop, stack: p.onStack?.name || null, ground: fl.ground, x: p.pos.x, z: p.pos.z };
+    }
+    return { x: p.pos.x, z: p.pos.z, end: stair ? 0 : edge(p.pos.x, p.pos.z), minEdge, under, feet: p.pos.y - p.eye, stair, landed };
   }
   const res = [];
-  // the two ragged holes, from five bearings
-  for (const [name, H, edge, reach] of [['the Foundered Nave', NG.NAVE, NG.naveEdge, 1.0], ['the Pit', PG.PIT, PG.pitEdge, 1.0]]) {
+  // the two ragged holes (v15-W3: their rims are open, nothing is drawn on them), from five bearings: a walk or a hurry
+  // straight at the middle reaches the lip and goes over (no wall short of it) and lands where it should: in the Nave
+  // the water or the road, in the Pit its floor or its slabs (or the Nadir's night, which wakes them at the lip); a walk
+  // steered along the lip (0.25 rad in from its line, four seconds) stays on the turf at it and never passes it
+  const PFL = (await import('/src/v14/pit/plan.js')).FLOOR;
+  const landsIn = {
+    'the Foundered Nave': (L) => L.on && (((L.stack === 'nave-water' || L.stack === 'coffin-road') && L.feet >= NG.NAVE.water - 1.4) || (fp.fallTraps || []).some((fn) => fn(L.x, L.z, L.feet))), // (the water, the road, or the hole's floor where no hall is under it: a trap that wakes them at the lip)
+    'the Pit': (L) => L.on && (L.stack === 'pit-stair' || (L.feet >= PFL.y0 - 0.4 && L.feet <= PFL.edge + 12) || (fp.fallTraps || []).some((fn) => fn(L.x, L.z, L.feet))),
+  };
+  for (const [name, H, edge] of [['the Foundered Nave', NG.NAVE, NG.naveEdge], ['the Pit', PG.PIT, PG.pitEdge]]) {
     for (const hurry of [false, true]) {
-      let worst = 0, minEdge = Infinity, under = 0, n = 0, at = '', stairs = [];
+      let over = 0, sane = 0, n = 0, bad = [], stairs = [];
       for (const b of [0, 60, 120, 180, 300]) {
         const a = b * Math.PI / 180, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry, secs: hurry ? 9 : 14 });
-        if (r.stair) stairs.push(b);
-        if (r.end > worst) { worst = r.end; at = `bearing ${b}`; }
-        minEdge = Math.min(minEdge, r.minEdge); under = Math.min(under, r.under); n++;
+        n++;
+        if (r.stair) { stairs.push(b); continue; }
+        if (r.minEdge < -0.05) over++; else bad.push(`${b}: stopped ${r.minEdge.toFixed(2)} m out`);
+        if (r.landed && landsIn[name](r.landed)) sane++; else bad.push(`${b}: ${r.landed ? `landed at ${r.landed.feet.toFixed(2)} on ${r.landed.stack || 'ground ' + r.landed.ground.toFixed(2)}` : 'never landed'}`);
       }
-      res.push({ name, mode: hurry ? 'hurry' : 'walk', n, worst, minEdge, under, reach, at, stairs: H === NG.NAVE ? stairs : undefined });
+      res.push({ hole: name, mode: hurry ? 'hurry' : 'walk', n, over, sane, need: n - stairs.length, bad, stairs: H === NG.NAVE ? stairs : undefined });
     }
-    // a hurrying hop at the lip, five seconds
+    // along the lip: from the turf 3 m out at bearing 200, a walk steered 0.25 rad in from the lip's line
+    { const a = 200 * Math.PI / 180, R = Math.hypot(H.x - (H.x + Math.sin(a) * 40), 0), sx = H.x + Math.sin(a) * 40, sz = H.z - Math.cos(a) * 40;
+      let tx = sx, tz = sz; for (let k = 0; k < 400 && edge(tx, tz) > 3; k++) { tx += (H.x - tx) * 0.02; tz += (H.z - tz) * 0.02; }
+      // (the lip's own line: the gradient of the hole's mapped edge, so the drift is DRIFT off the rim as drawn there; at
+      // 0.25 rad the Nave's ragged rim lets a walker over at a jag where the turf juts into the hole: v15-W3's report)
+      const DRIFT = 0.15;
+      const steer = () => { const e = 0.5, gx = edge(p.pos.x + e, p.pos.z) - edge(p.pos.x - e, p.pos.z), gz = edge(p.pos.x, p.pos.z + e) - edge(p.pos.x, p.pos.z - e), l = Math.hypot(gx, gz) || 1, ux = -gx / l, uz = -gz / l, dx = (-uz) * Math.cos(DRIFT) + ux * Math.sin(DRIFT), dz = ux * Math.cos(DRIFT) + uz * Math.sin(DRIFT); return Math.atan2(-dx, -dz); };
+      let drop = 0; const onLand = (e) => { drop = Math.max(drop, e.detail.drop); }; fp.events.addEventListener('land', onLand);
+      const r = walk(tx, tz, H.x, H.z, edge, { secs: 7, steer });
+      fp.events.removeEventListener('land', onLand);
+      res.push({ along: `${name}: a walk steered along the lip (${DRIFT} rad in from its line)`, closest: r.minEdge, drop, end: r.feet, crust: name === 'the Pit', slid: !!(r.landed && landsIn[name](r.landed)) }); void R; }
+    // a hurrying hop at the lip: over it
     const a = 0.3, r = walk(H.x + Math.sin(a) * 30, H.z - Math.cos(a) * 30, H.x, H.z, edge, { hurry: true, secs: 12, hopAt: 240 });
-    res.push({ name, mode: 'hop at the lip', n: 1, worst: r.end, minEdge: r.minEdge, under: r.under, reach: 1.0, at: '' });
+    res.push({ hole: name, mode: 'hop at the lip', n: 1, over: r.minEdge < -0.05 ? 1 : 0, sane: r.landed && landsIn[name](r.landed) ? 1 : 0, need: 1, bad: r.landed ? [`landed at ${r.landed.feet.toFixed(2)} on ${r.landed.stack || 'ground'}`] : ['never landed'] });
   }
-  // each Pit lookout (v10-T1): a walker coming straight at it reaches the lip within 0.9 m
+  // each Pit lookout (v10-T1): a walker coming straight at it walks right to the lip and over it (nothing stops them short)
   for (const b of PG.PIT_LOOKOUTS) {
     const a = b * Math.PI / 180, r = walk(PG.PIT.x + Math.sin(a) * 30, PG.PIT.z - Math.cos(a) * 30, PG.PIT.x, PG.PIT.z, PG.pitEdge, { secs: 14 });
-    res.push({ name: `the Pit, lookout ${b}`, mode: 'walk', n: 1, worst: r.end, minEdge: r.minEdge, under: r.under, reach: 0.9, at: '' });
+    res.push({ hole: `the Pit, lookout ${b}`, mode: 'walk', n: 1, over: r.minEdge < -0.05 ? 1 : 0, sane: r.landed && landsIn['the Pit'](r.landed) ? 1 : 0, need: 1, bad: r.landed ? [`landed at ${r.landed.feet.toFixed(2)}`] : ['never landed'] });
   }
   // the Span's broken edges, on the deck: the lip x of the deck run the walker is on, and which way the gap lies
   const c0 = SPAN.crack.x - SPAN.crack.w / 2, c1 = SPAN.crack.x + SPAN.crack.w / 2, T2 = SPAN.pierT / 2;
@@ -93,13 +123,21 @@ const R = await page.evaluate(async () => {
     spanTrials.push([`bay ${i + 1}, from the west`, a + T2 - 20, a + T2, 1]); // the deck ends at the west pier's far face
     spanTrials.push([`bay ${i + 1}, from the east`, b - T2 + 20, b - T2, -1]);
   });
+  // v15-W3: the broken edges are open (the kerb of air is gone): a walk or a hurry straight along the deck at one goes
+  // over and lands on the ground under the bridge; a walk along the deck beside one, drifting 0.25 rad toward it, stays on
   for (const [name, sx, lip, dir] of spanTrials) {
     for (const hurry of [false, true]) {
       // dir 1: walking +x toward a lip at `lip`; -1: walking -x
       const edge = (x) => dir * (lip - x);
       const r = walk(sx, 215, sx + dir * 100, 215, edge, { y: Y, hurry, secs: 12 });
-      res.push({ name: 'the Span: ' + name, mode: hurry ? 'hurry' : 'walk', n: 1, worst: r.end, minEdge: r.minEdge, under: r.under, reach: 0.5, at: '', onDeck: Math.abs(r.feet - Y) < 0.05 });
+      const L = r.landed;
+      res.push({ hole: 'the Span: ' + name, mode: hurry ? 'hurry' : 'walk', n: 1, over: r.minEdge < -0.05 ? 1 : 0, sane: L && L.on && (Math.abs(L.feet - L.ground) < 0.6 || L.top) && L.feet < Y - 10 ? 1 : 0, need: 1, bad: L ? [`landed at ${L.feet.toFixed(2)}${L.top ? ' on a fallen piece' : ''}, ground ${L.ground.toFixed(2)}`] : ['never landed'] }); // (the ground, or a fallen piece's top)
     }
+    if (name.startsWith('the crack')) { const edge = (x) => dir * (lip - x), x0 = lip - dir * 1.2, yaw = Math.atan2(-(dir * Math.sin(0.25)), -Math.cos(0.25)); // along +z, 0.25 rad toward the gap
+      let drop = 0; const onLand = (e) => { drop = Math.max(drop, e.detail.drop); }; fp.events.addEventListener('land', onLand);
+      const r = walk(x0, 215 - 4, x0, 215 + 8, edge, { y: Y, secs: 2, steer: () => yaw });
+      fp.events.removeEventListener('land', onLand);
+      res.push({ along: `the Span: ${name}: a walk along the deck beside it, drifting 0.25 rad toward it`, closest: r.minEdge, drop: Math.abs(r.feet - Y) < 0.05 ? drop : Math.max(drop, Y - r.feet), end: r.feet }); }
   }
   // the crack still clears at a run, with a hop
   let cleared = null;
@@ -136,10 +174,10 @@ const R = await page.evaluate(async () => {
       for (let i = 0; i < secs * 60; i++) {
         fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
         const f = CR.floor(p.pos.x, p.pos.z);
-        if (f === null || f === undefined) off++; else low = Math.min(low, p.pos.y - p.eye - f);
+        if (f === null || f === undefined || p.onStack?.name !== 'coffin-road') off++; else low = Math.min(low, p.pos.y - p.eye - f); // (under its floor only while on it: the water runs on under the stair)
       }
       p.keys.clear();
-      return { off, low, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
+      return { off, low, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z], on: p.onGround, stack: p.onStack?.name || null, onTurf: NG.naveEdge(p.pos.x, p.pos.z) > -0.3 && p.pos.y - p.eye > T.heightAt(p.pos.x, p.pos.z) - 0.15 };
     };
     for (const f of [0.98, 0.85, 0.5, 0.12]) {
       const x = PL.FOOT_X + f * (Hd.xHead - PL.FOOT_X), y = CR.stairY(x);
@@ -220,7 +258,7 @@ const R = await page.evaluate(async () => {
         P.near(p.pos.x, p.pos.z, q); head = Math.min(head, P.ceilAt(q.s, q.d) - p.pos.y);
       }
       p.keys.clear();
-      return { off, low, head, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z] };
+      return { off, low, head, feet: p.pos.y - p.eye, at: [p.pos.x, p.pos.z], on: p.onGround, stack: p.onStack?.name || null, gulf: s > SP.GULF0 && s < SP.GULF1 };
     };
     const where = [[6, 'the Line\'s first node'], [14, 'the Line\'s slope'], [SP.LINE + 8, 'the Flute'], [SP.LINE + 22, 'the Flute, further'], [SP.SUN + 1.5, 'the Laid Sun'], [SP.NECK0 + 1.2, 'the neck'], [SP.GULF0 + 5, 'the Gulf\'s bridge'], [SP.GULF0 + 16, 'the Gulf\'s bridge, further'], [SP.GULF1 + 6, 'the Gate\'s stair'], [P.L - 3, 'the Gate by the Pit\'s door']];
     for (const [s, name] of where) for (const sgn of [-1, 1]) for (const hop of [false, true]) {
@@ -257,20 +295,23 @@ const R = await page.evaluate(async () => {
     const PS = fp.pit.stair, PF = fp.pit.floor;
     const side = (x, z, y, yaw, hop, secs = 2) => {
       fp.controls.placeAt(x, z, y + 0.02); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw;
-      let low = 0, off = 0;
+      let low = 0, off = 0, high = -Infinity;
       for (let i = 0; i < secs * 60; i++) {
         fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
         const f = PF(p.pos.x, p.pos.z);
         if (f === null || f === undefined) off++; else low = Math.min(low, p.pos.y - p.eye - f);
+        if (p.onGround) high = Math.max(high, p.pos.y - p.eye - y);
       }
       p.keys.clear();
-      return { off, low, feet: p.pos.y - p.eye };
+      for (let i = 0; i < 300 && !p.onGround; i++) fp.controls.update(DT); // (gone over: down to wherever it lands)
+      const fl = fp.controls.floorAt(p.pos.x, p.pos.z, p.pos.y - p.eye);
+      return { off, low, feet: p.pos.y - p.eye, high, on: p.onGround, stack: p.onStack?.name || null, ground: fl.ground, trap: (fp.fallTraps || []).some((fn) => fn(p.pos.x, p.pos.z, p.pos.y - p.eye)) };
     };
     for (const sv of [0.2, 0.5, 0.8]) {
       const [x, y, z] = PS.point(sv), toHole = Math.atan2(-(200 - x), -(185 - z));
       for (const [way, yaw] of [['the hole', toHole], ['the wall', toHole + Math.PI]]) for (const hop of [false, true]) {
         const r = side(x, z, y, yaw, hop);
-        res.push({ ps: `off the slabs ${Math.round((1 - sv) * 100)}% up, toward ${way}, ${hop ? 'hopping' : 'hurrying'}`, ...r });
+        res.push({ ps: `off the slabs ${Math.round((1 - sv) * 100)}% up, toward ${way}, ${hop ? 'hopping' : 'hurrying'}`, wall: way === 'the wall', y0: PFL.y0, ...r });
       }
     }
     // near the foot, where the slabs come down onto the bowl (v14-D2 round 2: they lay a metre inside it): off them
@@ -328,21 +369,35 @@ let fail = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info ? ' — ' + info : ''}`); if (!ok) fail++; };
 const f = (v) => v.toFixed(2);
 for (const r of R) {
-  if (r.turf) { check(r.edge > 0 && r.under > -0.15, `the Noon Road: ${r.turf}: on the turf or the landing, never over the hole`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
-  if (r.cr) { check(r.off === 0 && r.low > -0.15, `the Noon Road: ${r.cr}: held on its floor`, `${r.off} ticks off it, lowest ${f(r.low)} m under it`); continue; }
+  if (r.turf) { check((r.edge > 0 && r.under > -0.15) || ['nave-water', 'coffin-road'].includes(r.stack), `the Noon Road: ${r.turf}: on the turf or the landing, or carried on over the rim into the water (v15-W3: the rim is open)`, `${f(r.edge)} m outside the lip, feet ${f(r.under)} m over the ground`); continue; }
+  // v15-W3: nothing is drawn at the road's or the stair's sides: a walker who goes off lands in the water (which gives
+  // them back to the road) or on the road again, never under its floor while on it
+  if (r.cr) { check(r.low > -0.15 && (r.off === 0 || ['nave-water', 'coffin-road'].includes(r.stack) || r.onTurf), `the Noon Road: ${r.cr}: on its floor, or off it into the water (or onto the turf at the rim)`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, ended ${r.on ? 'standing' : 'in the air (hopping)'} on ${r.stack || (r.onTurf ? 'the turf' : 'the ground')} at ${f(r.feet)}`); continue; }
   if (r.bwOff) { check(false, 'the Wellward Way is built (its edges rows run)', r.why); continue; }
   if (r.bwCuts) { const need = ['fall', 'throat'].concat(r.pit ? ['pitRock'] : []); check(need.every((k) => r.cuts[k] > 0), 'the Wellward Way: each of its cuts into another module\'s mesh removed something', need.map((k) => `${k} ${r.cuts[k]}`).join(', ') + `; terrain ${r.cuts.terrain} (may be 0), colliders ${r.cuts.colliders}`); continue; }
   if (r.bwDoor) { check(r.seen.every((n) => /^passage/.test(n)), 'the Wellward Way: from the Nave\'s south door the eye sees down into the passage, not a wall', r.seen.join(', ')); continue; }
   if (r.bwPier) { check(r.inside === 0 && r.drop < 1, `the Wellward Way: ${r.bwPier}: never inside or behind a pier, never dropped`, `${r.inside} ticks inside, dropped ${f(r.drop)} m, got to ${f(r.far)} m along`); continue; }
-  if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Wellward Way: ${r.bw}: held on its floor, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
+  // v15-W3: in the rock the way's sides are its walls (held); on the Gulf's arch nothing is drawn at its sides, so a walker
+  // who goes off falls to the Gulf's catch (which puts them back on the bridge, or the fall wakes them on it)
+  if (r.bw && r.gulf) { check(r.low > -0.15 && r.head > 0.15 && r.off > 0 && r.stack === 'passage-gulf', `the Wellward Way: ${r.bw}: over the arch's open side into the Gulf, onto its catch, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, ended on ${r.stack || 'nothing'}, the vault ${f(r.head)} m over the eye at the closest`); continue; }
+  if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Wellward Way: ${r.bw}: held on its floor by the rock, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
   if (r.gulf) { check(r.caught && r.back !== null && r.back <= 3 && r.low > -0.15, 'the Wellward Way: dropped into the Gulf off the bridge, caught and put back on the bridge within 3 s', `${r.caught ? 'caught' : 'not caught'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.low)} m under the catch`); continue; }
   if (r.cols) { check(r.n === 0, 'the Wellward Way: no uncapped collider of the moor\'s stands down through the way', `${r.capped} given a bottom; ${r.n} left${r.left.length ? ' at ' + r.left.map((a) => a.join(', ')).join('; ') : ''}`); continue; }
   if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Noon Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
-  if (r.ps) { check(r.off === 0 && r.low > -0.15, `the Pit's slabs: ${r.ps}: held on them`, `${r.off} ticks off them, lowest ${f(r.low)} m under them`); continue; }
+  // v15-W3: nothing is drawn at the slabs' open side: off it a walker lands on the Pit's floor (or the Nadir's night,
+  // which wakes them back at the lip); against the wall they never climb it (no more than a riser over the slab)
+  if (r.ps) { const down = r.on && (r.trap || (Math.abs(r.feet - r.ground) < 0.2 && r.feet >= r.y0 - 0.4) || r.stack === 'pit-stair');
+    check(r.low > -0.15 && r.high < 0.75 && (r.off === 0 || down), `the Pit's slabs: ${r.ps}: on them, or down onto the floor, never up the wall`, `${r.off} ticks off them, lowest ${f(r.low)} m under them, highest ${f(r.high)} m over the start, ended ${r.on ? 'standing' : 'in the air'} at ${f(r.feet)} on ${r.stack || 'ground ' + f(r.ground)}${r.trap ? ' (the Nadir: wakes at the lip)' : ''}`); continue; }
   if (r.psFoot) { check(r.low > -0.15, `the Pit's slabs near the foot, ${r.psFoot}: never under the slabs or the floor`, `lowest ${f(r.low)} m`); continue; }
   if (r.psTread) { check(r.worst > -0.02, 'the Pit\'s slabs: no tread\'s top under the floor beside it', `least ${f(r.worst)} m over it at s ${f(r.at)}`); continue; }
   if (r.psLand) { check(r.onLand > 30 && r.low > -0.15, 'the Pit: a walker on the landing\'s line from 30 m walks out onto it, held on its floor', `${r.onLand} ticks on it, lowest ${f(r.low)} m under it, ended at (${f(r.at[0])}, ${f(r.at[1])}) feet ${f(r.feet)}`); continue; }
-  if (r.stairs) check(r.stairs.length >= 1, `${r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
+  if (r.stairs) check(r.stairs.length >= 1, `${r.hole || r.name} (${r.mode}): the walker whose line meets the stair's head goes down it on its floor`, `bearings ${r.stairs.join(', ') || 'none'}`);
+  // (the Pit's rim is a crust of banks too steep to stand on, running off the mapped line: a walk drifting in can step
+  // onto one and slide down it; there the claim is the weaker one: it ends on the turf, or on the Pit's floor, never through)
+  if (r.along && r.crust) { check((r.drop <= 3 || r.slid) && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip, and stays on the turf or slides down the crust onto the Pit's floor (never through it)`, `closest ${f(r.closest)} m to the lip as mapped, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}${r.slid ? ', on the floor' : ''}`); continue; }
+  if (r.along) { check(r.drop <= 3 && r.closest <= 1.0, `${r.along}: comes within 1 m of the lip and never falls (no drop over 3 m: the edge-guard; the Pit's crust has steps of 2 m)`, `closest ${f(r.closest)} m to the lip as mapped, the largest drop ${f(r.drop)} m, ended at ${f(r.end)}`); continue; }
+  if (r.hole) { check(r.over === r.need && r.need > 0, `${r.hole} (${r.mode}): walks to the lip and over it, nothing unseen stops them short (v15-W3)`, `${r.over} of ${r.need} over${r.bad.length ? '; ' + r.bad.slice(0, 3).join('; ') : ''}`);
+    check(r.sane === r.need, `${r.hole} (${r.mode}): lands where the drawing says (never through a floor)`, `${r.sane} of ${r.need}${r.bad.length ? '; ' + r.bad.slice(0, 3).join('; ') : ''}`); continue; }
   if (r.coping) { check(r.ok && r.low > -0.3 && Math.abs(r.feet) < 0.05, `the Span: the crack's fallen coping, ${r.coping} (walk, no hop): crosses on it to the far deck`, `${r.ok ? 'across' : 'stopped'}, lowest ${f(r.low)} m under the deck`); continue; }
   if (r.hop !== undefined) { check(r.hop !== null, `${r.name}: lands on the far deck`, r.hop === null ? 'never' : `hop ${f(r.hop)} m short of the lip`); continue; }
   const who = `${r.name} (${r.mode})`;
