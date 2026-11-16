@@ -41,14 +41,59 @@ Rows per way end: mouth (no collider but the way's own or a flank within 0.8 m o
 
 Also: **the ladder** stood 1.6 m from the Tenter's head, and both joined the Low Rung to the Mid. It now climbs the rim from the High Rung to the crown's west end by the Brow House, which is the only way to the crown besides the Heliarch head. Its knotted rope hangs from a stake on the rim. **The map's stand for the Pomegranate House**, the orchestrator's `settings` finding, landed inside the Strake's new house (its stair collider was in front of the eye). It now stands on the west way, facing the house's west wall (`settings.js HAND.taverna`).
 
-## Tests
+Two more from the orchestrator, both mine to fix. The **settings** stand is fixed as above. **geometry** on `next` after P3 showed a scaffold standard of the Strake's new house floating, in three places. It was a check artefact. The far mesh's block round the house (an exempt stand-in) counted as holding the pole's head, so the pole was judged held at one end and loose at the other: its foot is sunk 0.2 m in the ground, but the ground's face lies in the grid cell above the foot, so it didn't count as touching. Before the far mesh it was held at neither end and was skipped. Now a part named `lappet-far` holds nothing in the loose-end test (`tools/geometry/analyze.mjs`). I tried two wider fixes, letting no exempt part hold, or following the end's edge through the cells. Each moved about 20 baseline findings across the map, and I reverted both. Separately, a first version of my rim band (1.45 cells) left three of the masons' poles at the Brow House floating, so the band is now 1.2 cells. And the ladder's rope hung 0.27 m off its stake; it is now tied to it.
 
-(filled below)
+## Tests (`SHOT_ANGLE=metal nice -n 10`, port 8165)
 
-## Frames (before, after)
+- `node tools/ways-test.mjs http://localhost:8165`: before 106 passed / 23 failed; after **129 passed, 0 failed**.
+- `ONLY=village-plan,village,ways,geometry,roads,walk,hop,edges,heights,strata,house,paths,regions,rocks,settings tools/suite.sh 8165`: see the last line of this report.
+- The walks (`tools/village-walk.mjs`):
+  - keys (`v15-W1-walk7`): walked, the ladder taken twice.
+  - touch: walked, the ladder twice.
+  - `ROUTE=rungs` (`v15-W1-rungs2`): walked, 11 of 11 ways.
+  - `route=pennyworth` (`v15-W1-penny2`): walked.
+  - `tools/lees-walk.mjs`: walked.
+  - `tools/quarrels-walk.mjs`: walked.
+- The keys walk failed three times before it passed. The first was the salt stall's poles in the Slip (fixed). The second was the turned foot flight (now dropped). The third stuck at the start or in the main, steering by drag-look, because headless Chromium refused the pointer capture; it went through on the next run unchanged.
 
-(filled below)
+## Frames (before, then after; the views stand at each way's two ends, `-in` looking at the way, `-out` looking off it)
+
+- 2: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-before-heliarch-foot-foot-out.png (the tower in the face), /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-after-heliarch-foot-foot-out.png
+- 3: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-before-heliarch-foot-top-out.png (the blocks and the patches), /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-after-heliarch-foot-top-out.png
+- 4: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-before-timber-patch-top-out.png (the polygon at left), /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-after-timber-patch-top-out.png
+- 6: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-before-heliarch-head-east-foot-in.png (the pale triangle), /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-after-heliarch-head-east-foot-in.png
+- the Leads: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-before-rungs-leads-2-top-out.png, /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-after-rungs-leads-2-top-out.png
+- the ladder: /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-walk5-keys-low-033-ladder-foot-back.png, /Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1520-ways/shots/wip/v15-W1-walk5-keys-low-034-ladder-top-back.png
+- every way's two ends: `v15-W1-before-*` and `v15-W1-after-*` (84 each)
 
 ## Still wrong
 
-(filled below)
+- At the Heliarch foot, the house's tower still fills the view straight ahead. The mouth is clear and the way into the square opens to the right, but the stair still points at a tower. The real cure is the house or the stair moving, which is a redesign.
+- I read 4.png's place from the frames, not from the owner's own position. Its blue bar round a shutter is not traced.
+- The dead-end row counts any plot's front as a place, so a lane that ends at a house wall passes. It finds pockets, not every lane that leads nowhere.
+- Not registered, so not checked: the Strake's Late house front stair, the Spilt Measure's ladder, the P9 bank.
+- `lees-street` in the plan still runs through the tower's footprint at s 31. It is data only (the walks pass between the foot and the tower), but the next lane-reader should move it.
+- Shared files touched: `src/controls.js` (the read-only `floorAt`), `src/height/field.js` and `regions.js` (one line each), `src/settings.js` (one stand), `tools/geometry/analyze.mjs`. The terrain change means the whole suite should run on `next`.
+
+## The last run (after merging `origin/next` with S1 and P3)
+
+`ONLY=village-plan,village,ways,geometry,roads,walk,hop,edges,heights,strata,house,paths,regions,rocks,settings tools/suite.sh 8165`: 14 of 15 pass.
+
+| test | PASS lines |
+|---|---|
+| settings | 86 |
+| paths | 81 |
+| roads | 62 |
+| village-plan | 7 |
+| regions | 56 |
+| strata | 8 |
+| village | 687 |
+| ways | 129 |
+| rocks | 42 |
+| walk | 13 |
+| hop | 25 |
+| edges | 214 |
+| heights | 198 |
+| geometry | 144 |
+
+**house fails, 19 of 20:** "at most three live point-light sources within reach + 20 m of any point on K1 and P9": P9 at (80, -33) has 4 (`quarrels-kiln-light`, the S1 saint's fire, `quarrels.js:283`, with the gate lantern, the court light and the Link-Boy). It passed on this branch before S1 was merged (the first run: house 20 of 20). It is S1's, not this brief's, and I did not change it.
