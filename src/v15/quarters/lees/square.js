@@ -163,6 +163,17 @@ export function ground(Q, F) {
     }
     line.flush(B, { color: V.flag, moss: 0.5, wet: 0.1, ground: Y0 - 0.2 });
   }
+  // ---------------------------------------------------------------- the slot behind the Strake's Elder house, made good
+  // Between the leaning block's back and the Low Rung's parapet a hand-wide slot was left open, and the plaster room's
+  // back wall showed white in it from the tread (v15-V1's report). A weathering course of five stones lies over it,
+  // from the parapet's back into the block.
+  { const e = plan.plot('strake-elder'), Rz = plan.RISERS.find((r) => r.key === 'low'), cr = rngOf(1512, 17), D0 = e.D - e.d / 2 + 0.26, yT = Rz.top + 0.6;
+    let s0 = e.s - e.w / 2 + 0.05; const s1 = e.s + e.w / 2 - 0.05, dir = plan.RUN[1].dir, yaw = Math.atan2(dir[0], dir[1]);
+    for (let k = 0; s0 < s1 - 0.1; k++) { const l = Math.min(s1 - s0, 1.1 + cr() * 0.6), [x, z] = W(s0 + l / 2, D0 + 0.36);
+      B.add(B.box(0.72, 0.16, l - 0.03, { seg: 2.5, chip: 0.04, chipTop: true, seed: 60 + k }), mat(x, yT + 0.08 + (k % 2) * 0.014, z, 0, yaw, (cr() - 0.5) * 0.05), { color: worn(k % 3 ? H.stone : H.dark, cr, 0.12, 0.1), moss: 0.5, wet: 0.2, ground: Rz.top });
+      s0 += l; }
+    // and its west end, where the slot stood open to anyone coming along the tread: an upright from the bench to the course
+    { const [x, z] = W(e.s - e.w / 2 + 0.22, D0 + 0.36), h = yT - Y0 + 0.3; B.add(B.box(0.7, h, 0.34, { seg: 1.4, chip: 0.05, seed: 71 }), mat(x, Y0 - 0.3 + h / 2, z, 0, yaw, 0), { color: worn(H.stone, cr, 0.14, 0.1), course: 0.3, moss: 0.5, ground: Y0 }); } }
   return { gut: gut.map(([s, D]) => W(s, D)) };
 }
 
