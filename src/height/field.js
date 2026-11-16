@@ -381,12 +381,18 @@ export function heightAt(x, z) {
       h -= inFen * (smoothstep(0.05, 0.45, pools) * 2.2 + 0.3);
     }
   }
-  // Orchard terraces: faint steps
+  // Orchard terraces: faint steps, soft ones. Every 1.2 m of the moor's rise lies flatter (a tread) then steeper (a
+  // bank): a wave of 0.3 of the rise, continuous, so the walker's feet follow the drawn ground (v15-W5: a floor() here
+  // stood a 0.84 m cliff in heightAt every 1.2 m of rise that the 2-3 m mesh drew as a slope, and the walker jumped it
+  // in one frame: the owner's "teleport up and down" in the dip by the Pomegranate House's gate). A deeper wave bends
+  // the ground more than the mesh's triangles follow (0.3: within 0.15 m of heightAt on medium's 2.1 m cells; the
+  // ground's own relief already misses by 0.2 on low's 3.1 m). The 0.42 m keeps the old mean lowering, so what stands
+  // on it by a fixed y stays put.
   if (!beyond(h, x, z, L.orchard.x, L.orchard.z, 65)) {
     const d = Math.hypot(x - L.orchard.x, z - L.orchard.z);
     const m = 1 - smoothstep(40, 65, d);
-    const terraced = Math.floor((h + 100) / 1.2) * 1.2 - 100;
-    h = lerp(h, terraced, m * 0.7);
+    const u = (h + 100) / 1.2;
+    h -= m * (0.42 + 0.3 * 1.2 * Math.sin(2 * Math.PI * u) / (2 * Math.PI));
   }
   // Causeway: a raised, level-ish bed
   {
