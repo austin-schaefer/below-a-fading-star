@@ -23,10 +23,11 @@ export const make = (kind, B, plot, o = {}) => MAKERS[kind](B, plotMatrix(plot),
 // new-house: new; carrier: carrier; an Elder plot by hand 'elder'); `against` and `roof` become what the maker needs:
 // a house against a riser is a 'yard' whose roof is the tread above (no stair: the tread is the way onto it), a shop
 // against one is the 'riser' undercroft, its face where the plan's riser is. o: { plan (the plan's module, or
-// { LEVEL, RISERS }: needed for any plot with `roof` or `against`), seed, low, E, fit, and anything the maker takes }.
+// { LEVEL, RISERS }: needed for any plot with `roof` or `against`), built (ctx.lappet.built: where it holds a shop's
+// vault, the undercroft is only fitted out), seed, low, E, and anything the maker takes }.
 // A plot the makers cannot build (a fountain, a yard, a garden) and a plot too small for its maker throw.
 export function makePlot(B, plot, o = {}) {
-  const { plan, ...rest } = o, q = { ...rest };
+  const { plan, built, ...rest } = o, q = { ...rest };
   const need = () => { if (!plan || !plan.LEVEL || !plan.RISERS) throw new Error(`makePlot: ${plot.name} has a roof or stands against a riser: pass o.plan (src/v15/plan.js)`); };
   let kind;
   if (plot.kind === 'house') kind = plot.hand === 'elder' ? 'elder' : 'late';
@@ -38,7 +39,7 @@ export function makePlot(B, plot, o = {}) {
   let h;
   if (plot.roof) { need(); h = plan.LEVEL[plot.roof].y - plot.y; if (!(h > 1.9)) throw new Error(`makePlot: ${plot.name}: its roof (${plot.roof}) is ${h} m over its ground`); }
   if (kind === 'late') {
-    if (plot.against) { if (h === undefined) throw new Error(`makePlot: ${plot.name} stands against a riser and names no roof`); q.against = true; q.h = h; }
+    if (plot.against) { if (h === undefined) throw new Error(`makePlot: ${plot.name} stands against a riser and names no roof`); q.against = true; q.h = h; const Rz = plan.RISERS.find((r) => r.key === plot.against); if (Rz && Rz.D !== undefined && plot.D !== undefined && Math.abs(Rz.D - plot.D + plot.d / 2) < 0.5) q.backZ = Rz.D - plot.D; }
     else if (h !== undefined) q.h = h;
     if (plot.kind === 'shop') { if (plot.w < 4 || plot.d < 3) q.form = 'stall'; else q.shop = true; }
     if (plot.stair === false && q.stair === undefined && !plot.against) q.stair = 'side';
@@ -47,6 +48,8 @@ export function makePlot(B, plot, o = {}) {
       need(); const Rz = plan.RISERS.find((r) => r.key === plot.against);
       q.riser = h ?? Rz.top - Rz.foot;
       if (Rz.D !== undefined && plot.D !== undefined) q.face = Rz.D - plot.D; // the riser's face, in the plot's own frame
+      const bu = o.built && o.built[plot.name]; // what src/v15/ways has built there: its vault and arch stand, ours is the fitting
+      if (bu) { q.fit = true; if (bu.rad) q.arch = { aw: bu.rad * 2, sp: bu.spring - plot.y }; }
     } else if (h !== undefined) q.h = h;
   }
   const R = make(kind, B, plot, q);

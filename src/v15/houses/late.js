@@ -20,6 +20,7 @@ const T = 0.36; // a wall's thickness
 
 // one room: a front with holes, three walls, a roof slab; its walls run on above the roof as its parapet
 export function room(B, HM, R, r) {
+  const first = !R.front; if (first) R.front = { x0: r.x0, x1: r.x1, h: r.h, zf: r.zf, k: 0, cx: 0, cz: 0 }; // (the first room's front: where a bracket by its door may hang)
   const { x0, x1, zb, zf, h, rng, g0 } = r, w = x1 - x0, cx = (x0 + x1) / 2, dep = zf - zb, p = r.par || {};
   const pf = p.f ?? 0.4, pb = p.b ?? 0.4, pl = p.l ?? 0.4, pr = p.r ?? 0.4, col = r.color, moss = r.moss ?? 0.07; // (limewash keeps moss off: a front in shade must stay pale)
   // every opening inside the wall and clear of the ones before it (the door first): one that will not fit is left out
@@ -53,7 +54,7 @@ export function room(B, HM, R, r) {
     if (op.door) {
       leaf(B, ch(m, 0, 0, -0.1), op.w + 0.24, openingTop(op.kind, op.w, op.sp) + 0.12, worn(op.paint, rng, 0.22), rng, { plain: r.low });
       // the painted frame, proud of the plaster (the alfiz), and a threshold of somebody else's stone
-      const fh = openingTop(op.kind, op.w, op.sp) + 0.17, fc = worn(op.frame, rng, 0.2);
+      const fh = openingTop(op.kind, op.w, op.sp) + 0.17, fc = worn(op.frame.clone().lerp(col, 0.5), rng, 0.25); // (the paint half gone into the wash it was put on)
       for (const sx of [-1, 1]) B.add(B.box(0.1, fh, 0.035, { seg: 9 }), ch(m, sx * (op.w / 2 + 0.17), fh / 2, T / 2 + 0.012), { color: fc, moss: 0.05, ground: g0 });
       B.add(B.box(op.w + 0.44, 0.1, 0.035, { seg: 9 }), ch(m, 0, fh, T / 2 + 0.012), { color: fc, moss: 0.05, ground: g0 });
       B.add(B.box(op.w + 0.5, 0.3, 0.5, { seg: 9, chip: 0.03 }), ch(m, 0, -0.1, T / 2 + 0.12), { color: H.stone, moss: 0.45, ground: g0, course: 0 });
@@ -78,20 +79,21 @@ export function room(B, HM, R, r) {
     const o2 = kind === 'bare' ? { color: worn(H.stone, rng, 0.1), course: 0.26, moss: 0.5, ground: g0 } : { color: kind === 'lime' ? col.clone().lerp(L.plaster[3], 0.4) : kind === 'damp' ? col.clone().lerp(V.dirt, 0.45) : col.clone().lerp(V.mud, 0.5), moss: kind === 'damp' ? 0.5 : 0.12, ground: g0 };
     // (never past the wall's ends: a patch is up to 1.5 r wide, a damp one 1.7 times that)
     const pr = Math.min(kind === 'bare' ? 0.5 + rng() * 0.3 : 0.4 + rng() * 0.45, (w / 2 - 0.1) / (kind === 'damp' ? 2.55 : 1.5)), phw = pr * (kind === 'damp' ? 2.55 : 1.5);
-    patch(B, ch(HM, clamp(px, x0 + phw + 0.05, x1 - phw - 0.05), py, zf + 0.004, 0, 0, 0, kind === 'damp' ? 1.7 : 1, 1, 1), pr, rng, o2);
+    patch(B, ch(HM, clamp(px, x0 + phw + 0.05, x1 - phw - 0.05), py, zf + i * 0.007, 0, 0, 0, kind === 'damp' ? 1.7 : 1, 1, 1), pr, rng, o2); // (each a coat deeper than the last: two that overlap never share a face)
   }
   // its walls, as walls (a closed house)
   for (const [a, b, c2, e] of [[x0 + 0.2, zf - 0.2, x1 - 0.2, zf - 0.2], [x0 + 0.2, zb + 0.2, x1 - 0.2, zb + 0.2], [x0 + 0.2, zb + 0.2, x0 + 0.2, zf - 0.2], [x1 - 0.2, zb + 0.2, x1 - 0.2, zf - 0.2]]) R.wall(a, b, c2, e, 0, h, 0.2);
   // battered: a mud wall is thicker at its foot (the taller the room, the less a metre)
   const k = r.batter ?? Math.min(0.03, 0.075 / h);
   batter(B, from, HM, cx, r.bcz ?? (zb + zf) / 2, k);
+  if (first) Object.assign(R.front, { k, cx, cz: r.bcz ?? (zb + zf) / 2 });
   return { cx, w, dep, f: 1 - k * h };
 }
 
 // a shopfront let into a front: the hole's lining with a shelf, a counter on brackets, a shutter propped open over
 // it, an awning and a hanging sign. op: the opening { x, y, w, sp }; zf the wall's face
 export function shopfront(B, HM, R, op, zf, rng, o = {}) {
-  const g0 = HM.elements[13], m = ch(HM, op.x, op.y, zf - T + 0.02), dark = { color: V.soot.clone().lerp(L.wood, 0.3), moss: 0, ground: g0 - 2 };
+  const g0 = HM.elements[13], m = ch(HM, op.x, op.y - 0.03, zf - T + 0.02), dark = { color: V.soot.clone().lerp(L.wood, 0.3), moss: 0, ground: g0 - 2 };
   const k = 0.35 + rng() * 0.25;
   niche(B, m, op.w + 0.3, op.sp + 0.3, 0.9, dark, { color: new THREE.Color('#2a1a0c'), moss: 0, ground: g0 - 2, emit: [V.lit[0] * k, V.lit[1] * k, V.lit[2] * k, 1] });
   B.add(B.box(op.w + 0.2, 0.04, 0.3, { seg: 9 }), ch(m, 0, op.sp * 0.52, -0.7), { color: L.wood, moss: 0, ground: g0 - 2 }); // the shelf
@@ -126,7 +128,7 @@ export function late(B, M, o = {}) {
   // its wash: cream or limewash, dirty; rarely an old rose or saffron wash nearly gone. One accent paint, one frame
   const wi = rng(), wash = worn(L.plaster[wi < 0.45 ? 0 : wi < 0.8 ? 3 : wi < 0.9 ? 1 : 2], rng, wi < 0.8 ? 0.05 + rng() * 0.1 : 0.26, 0.08);
   const ai = Math.floor(rng() * 4), paint = L.paint[ai], frame = L.paint[(ai + 1 + Math.floor(rng() * 2)) % 4];
-  const zf = d / 2 - 0.15 - rng() * Math.min(0.45, Math.max(0, d - 4.4) * 0.3), zb = against ? -d / 2 : -d / 2 + 0.1, side = rng() < 0.5 ? -1 : 1;
+  const zf = d / 2 - 0.15 - rng() * Math.min(0.45, Math.max(0, d - 4.4) * 0.3), zb = against ? o.backZ ?? -d / 2 : -d / 2 + 0.1, side = rng() < 0.5 ? -1 : 1; // (against: the riser's face, where the plan puts it)
   const doorKind = rng() < 0.6 ? 'horseshoe' : 'ogee';
   const door = (x, hmax) => { const dw = 0.95 + rng() * 0.22, sp = doorKind === 'ogee' ? 1.25 + rng() * 0.2 : 1.42 + rng() * 0.2; return { door: true, kind: doorKind, x, y: 0, w: dw, sp: Math.min(sp, hmax - 0.75 - dw / 2), paint, frame }; };
   const win = (x, y, lit, big) => { const ww = (big ? 0.6 : 0.42) + rng() * 0.2; return { kind: rng() < 0.4 ? 'ogee' : 'rect', x, y, w: ww, sp: ww * (0.9 + rng() * 0.6), paint, stop: lit ?? (rng() < 0.45 ? 'lit' : rng() < 0.6 ? 'shut' : 'dark'), one: rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) : 0 }; };
@@ -286,9 +288,12 @@ export function late(B, M, o = {}) {
   // a lamp's bracket by the door, a bench or a jar beside it
   const d0 = form === 'stall' ? null : R.doors[0];
   if (d0) {
-    const dl = new THREE.Vector3(d0.x, d0.y, d0.z).applyMatrix4(M.clone().invert()), bs = rng() < 0.5 ? -1 : 1, bxs = dl.x + (Math.abs(dl.x + bs * 0.95) < w / 2 - 0.3 ? bs : -bs) * 0.95, wz = dl.z - 0.6;
-    const hook = PARTS.late.bracket(B, ch(HM, bxs, 2.25, wz), { reach: 0.5 });
-    R.lamp(bxs, 2.25 + hook.y, wz + hook.z);
+    const dl = new THREE.Vector3(d0.x, d0.y, d0.z).applyMatrix4(M.clone().invert()), bs = rng() < 0.5 ? -1 : 1, F = R.front || { x0: -w / 2, x1: w / 2, h: 2.6, zf: dl.z - 0.6, k: 0, cx: 0, cz: 0 }, fits = (x) => x > F.x0 + 0.2 && x < F.x1 - 0.2, wz = F.zf; // (the wall's own face: a door's record may stand out past a stair)
+    const bxs = fits(dl.x + bs * 0.95) ? dl.x + bs * 0.95 : fits(dl.x - bs * 0.95) ? dl.x - bs * 0.95 : clamp(dl.x + bs * 0.95, F.x0 + 0.2, F.x1 - 0.2), by = Math.min(2.25, F.h - 0.25); // (on the wall the door is in, never past its end or over its top)
+    const bf = 1 - F.k * by, bx2 = F.cx + (bxs - F.cx) * bf, bz2 = F.cz + (wz - F.cz) * bf; // (on the wall's face as its batter leaves it at that height)
+    const hook = PARTS.late.bracket(B, ch(HM, bx2, by, bz2), { reach: 0.5 });
+    const hp = new THREE.Vector3(bx2, by + hook.y, bz2 + hook.z).applyMatrix4(HM).applyMatrix4(M.clone().invert()); // (the hook as the leaning wall has it)
+    R.lamp(hp.x, hp.y, hp.z);
   }
   R.tris = B.triangles - base;
   return R;

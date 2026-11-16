@@ -36,6 +36,10 @@ function routePoints(fp, place) {
     return out;
   }
   if (place.pts) return place.pts.map((p) => [p[0], p[1], p.length > 2 ? p[2] : null]);
+  if (place.route) { // a route the page holds: a path of names from the context to [[x, z, y?], ...]
+    const pts = place.route.split('.').reduce((o, k) => (o == null ? o : o[k]), fp);
+    return Array.isArray(pts) && pts.length > 1 ? pts.map((p) => [p[0], p[1], p.length > 2 ? p[2] : null]) : null;
+  }
   return null;
 }
 

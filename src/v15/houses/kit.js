@@ -163,8 +163,8 @@ export function plate(B, M, pts, t, o) {
 }
 // an irregular patch, about r across: where a wall was mended, limewashed over or lost its plaster
 export function patch(B, M, r, rng, o) {
-  const n = 6 + Math.floor(rng() * 3), pts = [];
-  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, k = r * (0.6 + rng() * 0.6); pts.push([Math.cos(a) * k * 1.25, Math.sin(a) * k]); }
+  const n = 8 + Math.floor(rng() * 4), pts = [];
+  for (let i = 0; i < n; i++) { const a = ((i + rng() * 0.6) / n) * Math.PI * 2, k = r * (0.5 + rng() * 0.7); pts.push([Math.cos(a) * k * 1.25, Math.sin(a) * k]); }
   plate(B, M, pts, 0.03, o);
 }
 // a beam, pole or line between two local points, t thick (t2 deep)
@@ -319,7 +319,8 @@ export function dirty(B, from, k, rng, col = V.dirt) {
 // in the street, sagging between them, a patch sewn on in whatever there was, its hem uneven. M: the wall's face at
 // the ground under the rail's middle. o: w, d (out from the wall), h (at the wall), rng, color
 export function awning(B, M, o = {}) {
-  const rng = o.rng, w = o.w ?? 3, d = o.d ?? 1.6, h = o.h ?? 2.5, drop = o.drop ?? 0.5, g0 = M.elements[13], n = 5, col = o.color || worn(pick([V.saffron, V.linen, V.madder, V.teal], rng), rng, 0.22);
+  const rng = o.rng, w = o.w ?? 3, d = o.d ?? 1.6, h = o.h ?? 2.5, drop = Math.min(o.drop ?? 0.5, Math.max(0.05, h - 2.26)), g0 = M.elements[13], n = 5, // (its hem never lower than a walker's head)
+     col = o.color || worn(pick([V.saffron, V.linen, V.madder, V.teal], rng), rng, 0.22);
   const sag = (u) => 0.16 * (1 - (2 * u - 1) ** 2) + 0.03; // (the middle hangs)
   for (let i = 0; i < n; i++) {
     const u0 = i / n, u1 = (i + 1) / n, um = (u0 + u1) / 2, len = d + (rng() - 0.5) * 0.14, y0 = h - sag(um) * 0.3, y1 = h - drop - sag(um), sl = Math.hypot(len, y0 - y1);

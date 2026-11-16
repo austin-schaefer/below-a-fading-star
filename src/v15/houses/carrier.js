@@ -25,7 +25,9 @@ export function carrier(B, M, o = {}) {
   if (w < 5 || d < 4.2) throw new Error(`carrier: a plot ${w} x ${d} m is too small (5 x 4.2)`);
   let form = o.form || (w >= 8 && w >= d * 1.8 ? 'lying' : seed % 3 === 1 ? 'broken' : 'standing');
   if (form === 'lying' && w < 8) form = 'standing';
-  const R = site(M, 'carrier', { seed, w, d }), base = B.triangles; R.form = form;
+  // (upright, it stands 0.3 m forward of its plot's middle: a plot is as deep as a house, and it is not a house)
+  const M0 = M; if (form !== 'lying') M = ch(M, 0, 0, 0.3);
+  const R = site(M, 'carrier', { seed, w, d }), base = B.triangles; R.form = form; R.plot.x = M0.elements[12]; R.plot.z = M0.elements[14];
   const profile = o.profile || PROFILES[seed % PROFILES.length], G = GLAZES[(o.glaze ?? seed) % GLAZES.length];
   const lying = form === 'lying', broken = form === 'broken', side = rng() < 0.5 ? -1 : 1;
   const ni = low ? 28 : 32, da = (Math.PI * 2) / ni;
@@ -78,12 +80,14 @@ export function carrier(B, M, o = {}) {
   };
   // a point on the skin at (a, s), lifted off it
   let skin;
+  // the same on the skin as it is drawn: straight between the stations S, where the true curve bellies out of them
+  const onMesh = (a, s, lift) => { let j = 0; while (j < S.length - 2 && S[j + 1] < s) j++; const t = Math.max(0, Math.min(1, (s - S[j]) / (S[j + 1] - S[j]))), p = skin(a, S[j], lift), q = skin(a, S[j + 1], lift); return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t]; };
   // a line laid on the skin through points [[a, s], ...]: a crack, a run of soot
   const lineOn = (pts, wid, o2, lift = 0.012) => {
     const pos = [], p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), n = new THREE.Vector3(), sd = new THREE.Vector3();
     for (let i = 1; i < pts.length; i++) {
-      p0.set(...skin(pts[i - 1][0], pts[i - 1][1], lift)); p1.set(...skin(pts[i][0], pts[i][1], lift));
-      n.set(...skin(pts[i][0], pts[i][1], lift + 0.3)).sub(p1).normalize(); sd.copy(p1).sub(p0).cross(n).normalize().multiplyScalar(wid / 2);
+      p0.set(...onMesh(pts[i - 1][0], pts[i - 1][1], lift)); p1.set(...onMesh(pts[i][0], pts[i][1], lift));
+      n.set(...onMesh(pts[i][0], pts[i][1], lift + 0.3)).sub(p1).normalize(); sd.copy(p1).sub(p0).cross(n).normalize().multiplyScalar(wid / 2);
       const a = [p0.x - sd.x, p0.y - sd.y, p0.z - sd.z], b = [p1.x - sd.x, p1.y - sd.y, p1.z - sd.z], c2 = [p1.x + sd.x, p1.y + sd.y, p1.z + sd.z], e = [p0.x + sd.x, p0.y + sd.y, p0.z + sd.z];
       pos.push(...a, ...c2, ...b, ...a, ...e, ...c2);
     }
@@ -100,7 +104,7 @@ export function carrier(B, M, o = {}) {
     const chip = 0.8 * B.n3(a * 1.9 + seed, s * 0.34, 1.7) + 0.6 * B.n3(a * 5.5, s * 1.1 + seed, 0.2);
     let glow = 0.05;
     if (s > body + 0.2) set(out, G[2], tone * 0.8);
-    else if (sc > 0 || chip > 0.62) { set(out, N.milk, tone * (0.86 + 0.1 * Math.min(1, Math.max(0, sc) * 3))); glow = sc > 0 ? 0.3 + 0.25 * Math.min(1, sc * 2.5) : 0.2; }
+    else if (sc > 0 || chip > 0.8) { set(out, N.milk, tone * (0.86 + 0.1 * Math.min(1, Math.max(0, sc) * 3))); glow = sc > 0 ? 0.3 + 0.25 * Math.min(1, sc * 2.5) : 0.2; }
     else if (bare(a, s) || t < 0.085 + 0.04 * drip(a, 1)) { set(out, N.milk, tone * 0.8); mix(out, V.lime, 0.75 * Math.min(1, 0.5 + B.n3(a * 3.1, s * 2.2, seed))); glow = 0.03; }
     else if (t > tb - 0.07 - 0.09 * drip(a, 2) && t < tb + 0.06) { set(out, G[1], tone); mix(out, V.dirt, 0.22); glow = 0.03; }
     else if (t > 0.86 - 0.05 * drip(a, 4)) { set(out, G[2], tone); glow = 0.12; }
@@ -145,14 +149,14 @@ export function carrier(B, M, o = {}) {
 
   if (!lying) {
     // ================================================================ on its tail
-    Rr = Math.min(w / 2 - 0.55, d / 2 - 0.3, 2.75 + rng() * 0.65); Lh = Rr * (4.25 + rng() * 0.9); body = Lh - 1.0;
+    Rr = Math.min(w / 2 - 0.55, d / 2, 2.75 + rng() * 0.65); Lh = Rr * (4.25 + rng() * 0.9); body = Lh - 1.0;
     const sink = 0.95, yF = 0.24, sF = yF + sink, sT = sF + 2.12, sC = sF + 2.78; // the room: floor, the door's head, the loft
     const sB = sC + 1.9 + rng() * 1.5; // where a broken one is broken
     if (broken) { Lh = sB; body = Math.max(body, sB + 2); }
     // slumped: above the room every ring is carried aside, more the higher; as hard as the plot lets it
     const ldx = side * 0.94, ldz = -0.34; let bend = broken ? 0.012 : 0.05;
     const off = (s) => { const u = Math.max(0, s - sC); return [ldx * bend * u * u, ldz * bend * u * u]; };
-    if (!broken) for (let it = 0; it < 30; it++) { let ok = true; for (let s = sC; s <= Lh + 1.6; s += 0.4) { const [ox, oz] = off(s), r = s > Lh ? rad(Lh) * 1.3 : rad(s); if (Math.abs(ox) + r * 0.95 > w / 2 + 0.45 || -oz + r > d / 2 + 0.25) ok = false; } if (ok) break; bend *= 0.88; }
+    if (!broken) for (let it = 0; it < 30; it++) { let ok = true; for (let s = sC; s <= Lh + 1.6; s += 0.4) { const [ox, oz] = off(s), r = s > Lh ? rad(Lh) * 1.3 : rad(s); if (Math.abs(ox) + r * 0.95 > w / 2 + 0.45 || -oz + r > d / 2 + 0.55) ok = false; } if (ok) break; bend *= 0.88; }
     const jag = (i) => (broken ? 0.7 * Math.sin(i * 0.9 + seed) + 0.5 * Math.sin(i * 2.3 + seed * 2) - 1.5 * Math.max(0, Math.cos((i - 0.5) * da - side * 2.2)) ** 3 : 0), jagC = (i) => Math.max(-1.55, jag(i));
     const ss = new Set([sF, sT - 0.32, sT, sT + 0.28, sC]);
     if (broken) ss.add(sB); else for (const s of [body + 0.35, Lh - 0.3, Lh - 0.28, Lh]) ss.add(s);
@@ -166,7 +170,7 @@ export function carrier(B, M, o = {}) {
     // the door: three panels of the wall cut out, each to its own height
     const heads = { [ni - 1]: S.indexOf(sT - 0.32), 0: S.indexOf(sT + 0.28), 1: jT };
     const door = (i, j) => heads[i] !== undefined && j >= jF && j < heads[i];
-    scar = { a: side * (0.85 + rng() * 0.3), s0: sF + 0.9, s1: Math.min(body * 0.74, Lh - 0.4), w: 0.62 + rng() * 0.2 };
+    scar = { a: side * (0.85 + rng() * 0.3), s0: sF + 1.6, s1: Math.min(body * 0.7, Lh - 0.4), w: 0.34 + rng() * 0.14 };
     bare = (a, s) => s < 0.75 + 0.5 * B.n3(a * 2.2, seed, 0.4);
     const aP = -side * (2.3 + rng() * 0.3), sP = broken ? sC + 0.7 : Math.min(body * 0.8, Lh - 2.2); // the stovepipe's place
     soots.push({ a: aP, s: sP, dir: 1, len: 3.2, w: 0.55, k: 0.9 }, { a: 0, s: sT, dir: 1, len: 2.4, w: 0.42, k: 0.7 });
@@ -213,11 +217,11 @@ export function carrier(B, M, o = {}) {
         R.post(foot[0] * 0.92, foot[2], 0.3, 0, 1.6, { stand: false });
       }
       // one of its own bull's-eyes high in its front
-      { const a = -side * (0.2 + rng() * 0.4), s = body * (0.62 + rng() * 0.06), p = skin(a, s); NOON_PARTS.lens(B, ch(M, p[0], p[1], p[2], 0, a, 0).multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.02)), { r: 0.62, lit, cheap: low }); R.window(p[0], p[1], p[2], true); }
+      { const a = -side * (0.2 + rng() * 0.4), s = body * (0.62 + rng() * 0.06), p = skin(a, s); NOON_PARTS.lens(B, ch(M, p[0], p[1], p[2], 0, a, 0).multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.02)), { r: 0.62, lit: lit * 0.3, cheap: low }); R.window(p[0], p[1], p[2], true); }
     }
     // the room's window: a bull's-eye at head height beside the door
     const ea = -side * (0.95 + rng() * 0.25), ep = skin(ea, sF + 1.55), em = ch(M, ep[0], ep[1], ep[2], 0, ea, 0);
-    NOON_PARTS.lens(B, ch(em, 0, 0, -0.02), { r: 0.5, lit, cheap: low }); R.window(ep[0], ep[1], ep[2], true);
+    NOON_PARTS.lens(B, ch(em, 0, 0, -0.02), { r: 0.5, lit: lit * 0.35, cheap: low }); R.window(ep[0], ep[1], ep[2], true);
     B.add(new THREE.CircleGeometry(0.46, 10), ch(em, 0, 0, -TH - 0.02, 0, Math.PI, 0), { color: N.honey, moss: 0, ground: g0 - 3, emit: [N.light[0] * 0.7, N.light[1] * 0.6, N.light[2] * 0.3, 1] });
     // the door's frame: planks knocked into the cut, none of them plumb; a leaf of three boards hung open; a slab
     const ad = 1.5 * da, rD = rad(sF + 1) * 0.95, dxh = Math.sin(ad) * rD, dzh = Math.cos(ad) * rad(sF + 1);
@@ -242,7 +246,7 @@ export function carrier(B, M, o = {}) {
     }
     // ---- the room. Boards, the loft's underside, a plank through the cut
     const ri = rad(sF + 0.6) * 0.95 - TH, boards = dim(worn(L.wood, rng, 0.1), 0.08);
-    B.add(new THREE.CircleGeometry(rad(sF) - 0.05, ni).rotateX(-Math.PI / 2), ch(M, 0, yF, 0, 0, 0, 0, 0.95, 1, 1), boards);
+    B.add(new THREE.CircleGeometry(rad(sF) - 0.05, ni).rotateX(-Math.PI / 2), ch(M, 0, yF - 0.007, 0, 0, 0, 0, 0.95, 1, 1), boards); // (a hair under the door's sill, which it runs in under)
     B.add(new THREE.CircleGeometry(rad(sC) - 0.05, ni).rotateX(Math.PI / 2), ch(M, 0, sC - sink, 0, 0, 0, 0, 0.95, 1, 1), dim(L.wood.clone().multiplyScalar(0.7), 0.06));
     B.add(B.box(dxh * 2 + 0.06, 0.3, 1.2, { seg: 9 }), ch(M, 0, yF - 0.18, dzh - 0.3), wood());
     R.disc(0, 0, ri - 0.1, yF); R.disc(0, dzh - 0.1, 0.72, yF);
@@ -252,8 +256,9 @@ export function carrier(B, M, o = {}) {
     const rb = ri - 0.5;
     for (let i = 0; i < 5; i++) {
       const a = Math.PI + side * (-0.75 + i * 0.36), m = ch(M, Math.sin(a) * rb, yF, Math.cos(a) * rb, 0, a, 0);
-      B.add(B.box(0.92, 0.34, 0.82, { seg: 9 }), ch(m, 0, 0.17, 0), dim(L.wood, 0.05));
-      B.add(B.box(0.94, 0.1, 0.74, { seg: 9 }), ch(m, 0, 0.39, 0), dim(i === 0 ? worn(V.linen, rng, 0.05) : worn(CLOTHS[i % 4], rng, 0.12), 0.07));
+      const bh = 0.3 + (i % 2) * 0.07; // (they overlap round the wall: no two neighbours one height)
+      B.add(B.box(0.92, bh, 0.82, { seg: 9 }), ch(m, 0, bh / 2, 0), dim(L.wood, 0.05));
+      B.add(B.box(0.94, 0.1, 0.74, { seg: 9 }), ch(m, 0, bh + 0.05, 0), dim(i === 0 ? worn(V.linen, rng, 0.05) : worn(CLOTHS[i % 4], rng, 0.12), 0.07));
     }
     R.wall(Math.sin(Math.PI - side * 0.75) * rb, Math.cos(Math.PI - side * 0.75) * rb, Math.sin(Math.PI + side * 0.7) * rb, Math.cos(Math.PI + side * 0.7) * rb, yF, 0.45, 0.42, { stand: true });
     // the hearth under the pipe: a hood of mud plaster against the wall, the fire's mouth, its flue up through the loft
@@ -269,17 +274,17 @@ export function carrier(B, M, o = {}) {
     {
       const a0 = side * 1.25, rsh = ri - 0.16;
       for (const [y, n] of [[1.2, 4], [1.68, 3]]) for (let i = 0; i < n; i++) {
-        const a = a0 + side * (i - (n - 1) / 2) * 0.24, m = ch(M, Math.sin(a) * rsh, yF + y, Math.cos(a) * rsh, 0, a, 0);
+        const a = a0 + side * (i - (n - 1) / 2) * 0.24, q = skin(a, sF + y, -TH - 0.13), m = ch(M, q[0], yF + y, q[2], 0, a, 0); // (let into the wall where it is at that height)
         B.add(B.box(rsh * 0.25, 0.035, 0.3, { seg: 9 }), m, dim(L.wood, 0.06));
         if (!low || i % 2 === 0) { const what = (i + seed + (y > 1.5 ? 1 : 0)) % 3; if (what === 0) pot(B, m, 0, 0.018, 0.02, 0.1 + rng() * 0.05, worn(pick([L.tile[0], V.mud, L.tile[4]], rng), rng, 0.3), 1.6 + rng(), 6); else if (what === 1) B.add(B.box(0.3, 0.16 + rng() * 0.1, 0.2, { seg: 9 }), ch(m, 0, 0.11, 0, 0, rng() - 0.5, 0), dim(worn(pick(CLOTHS, rng), rng, 0.2))); else for (const q of [-0.09, 0.03, 0.12]) B.add(B.cyl(0.035, 0.045, 0.2 + rng() * 0.1, 6, 1), ch(m, q, 0.13, 0.02), dim(worn(N.amberG || L.gilt, rng, 0.3), 0.12)); }
       }
       R.wall(Math.sin(a0 - 0.4) * (rsh - 0.05), Math.cos(a0 - 0.4) * (rsh - 0.05), Math.sin(a0 + 0.4) * (rsh - 0.05), Math.cos(a0 + 0.4) * (rsh - 0.05), yF + 1.0, 0.9, 0.2);
-      const ap = -side * 1.9, rp = ri - 0.07;
-      for (let i = 0; i < 3; i++) { const a = ap - side * i * 0.2, m = ch(M, Math.sin(a) * rp, yF + 1.75, Math.cos(a) * rp, 0, a + Math.PI, 0); B.add(B.box(0.04, 0.04, 0.14, { seg: 9 }), m, dim(L.wood)); if (i === 0) B.add(B.box(0.5, 1.05, 0.07, { seg: 0.5 }), ch(m, 0, -0.56, 0.08, 0, 0, 0.03), { ...dim(worn(V.madder, rng, 0.25)), disp: 0.02, dispScale: 4 }); else if (i === 1) B.add(B.cyl(0.16, 0.16, 0.03, 9, 1), ch(m, 0, -0.24, 0.07, Math.PI / 2, 0, 0), dim(H.bronzeDull, 0.08)); else B.add(B.box(0.3, 0.42, 0.05, { seg: 9 }), ch(m, 0, -0.26, 0.07, 0, 0, -0.05), dim(worn(V.linen, rng, 0.1))); }
+      const ap = -side * 1.9;
+      for (let i = 0; i < 3; i++) { const a = ap - side * i * 0.2, q = skin(a, sF + 1.75, -TH - 0.02), m = ch(M, q[0], yF + 1.75, q[2], 0, a + Math.PI, 0); /* (the pegs driven into the wall where it is at their height) */ B.add(B.box(0.04, 0.04, 0.14, { seg: 9 }), m, dim(L.wood)); if (i === 0) B.add(B.box(0.5, 1.05, 0.07, { seg: 0.5 }), ch(m, 0, -0.56, 0.08, 0, 0, 0.03), { ...dim(worn(V.madder, rng, 0.25)), disp: 0.02, dispScale: 4 }); else if (i === 1) B.add(B.cyl(0.16, 0.16, 0.03, 9, 1), ch(m, 0, -0.17, 0.06, Math.PI / 2, 0, 0), dim(H.bronzeDull, 0.08)); else B.add(B.box(0.3, 0.42, 0.05, { seg: 9 }), ch(m, 0, -0.22, 0.06, 0, 0, -0.05), dim(worn(V.linen, rng, 0.1))); }
     }
     // a mat; a stool; a flask of the noon it was made to carry, hung from the loft
-    B.add(B.box(1.7, 0.014, 1.0, { seg: 9 }), ch(M, 0.1 * side, yF + 0.008, 0.15, 0, 0.2 * side, 0), dim(worn(V.madder, rng, 0.3), 0.06));
-    for (const q of [-0.7, 0.7]) B.add(B.box(0.1, 0.016, 1.0, { seg: 9 }), ch(M, 0.1 * side, yF + 0.01, 0.15, 0, 0.2 * side, 0).multiply(new THREE.Matrix4().makeTranslation(q, 0, 0)), dim(worn(V.linen, rng, 0.2), 0.06));
+    B.add(B.box(1.7, 0.02, 1.0, { seg: 9 }), ch(M, 0.1 * side, yF + 0.011, 0.15, 0, 0.2 * side, 0), dim(worn(V.madder, rng, 0.3), 0.06));
+    for (const q of [-0.7, 0.7]) B.add(B.box(0.1, 0.02, 1.0, { seg: 9 }), ch(M, 0.1 * side, yF + 0.02, 0.15, 0, 0.2 * side, 0).multiply(new THREE.Matrix4().makeTranslation(q, 0, 0)), dim(worn(V.linen, rng, 0.2), 0.06));
     PARTS.heliarch.drum(B, ch(M, -side * (ri - 1.3), yF, 0.9), { r: 0.22, h: 0.42, moss: 0 }); R.post(-side * (ri - 1.3), 0.9, 0.22, yF, 0.42);
     beam(B, M, [0, sC - sink, 0], [0, yF + 2.2, 0], 0.02, { color: V.rope, moss: 0, ground: g0 - 3 });
     B.add(new THREE.SphereGeometry(0.12, 8, 6), ch(M, 0, yF + 2.1, 0, 0, 0, 0, 1, 1.25, 1), { color: N.milk, moss: 0, ground: g0 - 3, emit: [N.light[0] * 0.9, N.light[1] * 0.9, N.light[2] * 0.9, 1] });
@@ -305,7 +310,7 @@ export function carrier(B, M, o = {}) {
     // the door: in each of its three strips, the panels between the floor and that strip's own head
     const sM = sD + 0.65, rM = rad(sM), yAt = (i, lift = 0) => cy(sM) - Math.sin(i * da) * (rM + lift) * sq(sM), heads = [2.02, 2.3, 1.85];
     const door = (i, j) => { if (j < jD || j >= jE) return false; const ii = i > ni / 2 ? i - ni : i, y = yAt(ii); return Math.cos(ii * da) > 0 && y > yF - 0.2 && y < heads[Math.min(2, j - jD)]; };
-    scar = { a: -0.95 - rng() * 0.25, s0: sR0 + 2.6, s1: Math.min(body * 0.9, sR1 + 1.2), w: 0.55 + rng() * 0.15 };
+    scar = { a: -0.95 - rng() * 0.25, s0: sR0 + 2.8, s1: Math.min(body * 0.86, sR1 + 0.8), w: 0.4 + rng() * 0.12 };
     bare = (a, s) => Math.sin(a) > 0.42 + 0.25 * B.n3(s * 0.7, seed, 1.1); // (lime and damp along the ground)
     const sP = sR1 - 1.0, aP = -Math.PI / 2 - 0.5; // the stovepipe: through the shoulder, behind the crown
     const sootTop = (a, s) => { const dsx = Math.abs(s - sP), up = wrap(a - aP); return dsx < 0.8 && up > -0.1 && up < 1.3 ? 0.85 * (1 - dsx / 0.8) * (1 - Math.max(0, up) / 1.3) : Math.abs(s - sM) < 0.8 && a < -0.3 && a > -1.3 ? 0.6 * (1 - Math.abs(s - sM) / 0.8) * (1 + (a + 0.3)) : 0; };
@@ -325,7 +330,7 @@ export function carrier(B, M, o = {}) {
     for (const t of [0.86, 0.1]) { const s = t * body; B.add(new THREE.TorusGeometry(rad(s), 0.08, 5, ni), ch(M, x0 + side * s, cy(s), 0, 0, Math.PI / 2, 0, 1, sq(s), 1), glass(N.bone)); }
     // chocks under its belly, front and back, so it does not roll; a bull's-eye for the room's window
     for (const [s, fz] of [[sR0 - 0.6, 1], [sR1 + 0.5, 1], [body * 0.5, -1]]) { const r = rad(Math.max(0.5, s)), x = x0 + side * s, z = fz * Math.min(d / 2 - 0.35, r * 0.82); B.add(B.box(1.2, 0.7, 0.8, { seg: 9, chip: 0.07, seed: s }), ch(M, x, 0.15, z, 0.1 * fz, rng() * 0.5, 0), { color: worn(H.stone, rng, 0.1), moss: 0.5, ground: g0, course: 0 }); R.post(x, z, 0.5, 0, 0.5); }
-    { const s = sR0 + 3.4, a = -0.32, p = skin(a, s), m = ch(M, p[0], p[1], p[2], a * 0.9, 0, 0); NOON_PARTS.lens(B, ch(m, 0, 0, -0.02), { r: 0.5, lit, cheap: low }); R.window(p[0], p[1], p[2], true);
+    { const s = sR0 + 3.4, a = -0.32, p = skin(a, s), m = ch(M, p[0], p[1], p[2], a * 0.9, 0, 0); NOON_PARTS.lens(B, ch(m, 0, 0, -0.02), { r: 0.5, lit: lit * 0.35, cheap: low }); R.window(p[0], p[1], p[2], true);
       B.add(new THREE.CircleGeometry(0.46, 10), ch(m, 0, 0, -TH - 0.03, 0, Math.PI, 0), { color: N.honey, moss: 0, ground: g0 - 3, emit: [N.light[0] * 0.7, N.light[1] * 0.6, N.light[2] * 0.3, 1] }); }
     // the door's frame of planks, its leaf of three boards hung open, a slab for a step
     const xD = x0 + side * sM, zO = rM * Math.cos(Math.asin(Math.min(0.95, (cy(sM) - yF) / (rM * sq(sM))))), zH = rM + 0.06; // the wall's face at the floor, and at its fattest

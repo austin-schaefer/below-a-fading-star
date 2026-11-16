@@ -159,6 +159,7 @@ function lean(B, M, o = {}) {
     for (const y of rows) for (let z = z0 + 0.25; z < z1 - 0.1; z += 0.62 + rng() * 0.25) {
       const px = rxk + 0.13, what = (k++ + seed) % 6, m = ch(M, X(px), y - 0.07, z, 0, -s * Math.PI / 2, 0);
       if (low && k % 2) continue;
+      beam(B, M, [X(rxk + 0.02), y, z], [X(px), y - 0.07 - [-0.03, 0.14, 0.06, 0.08, 0.07, 0.06][what], z], 0.012, wood); // its cord from the rail
       if (what === 0) { B.add(new THREE.IcosahedronGeometry(0.11, 0), ch(m, 0, -0.2, 0, 0, 0, 0, 1, 1.3, 1), glowC(L.gilt)); B.add(B.box(0.012, 0.14, 0.012, { seg: 9 }), ch(m, 0, -0.03, 0), wood); }
       else if (what === 1) pot(B, m, 0, -0.42, 0, 0.13, worn(L.tile[0], rng, 0.3), 2.2, 6);
       else if (what === 2) for (const q of [-0.07, 0.07]) B.add(B.box(0.09, 0.3, 0.2, { seg: 9 }), ch(m, q, -0.2, 0.02, 0.1, 0, q), glowC(worn(L.paint[1], rng, 0.3)));

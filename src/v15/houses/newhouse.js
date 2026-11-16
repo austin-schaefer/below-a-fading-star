@@ -45,7 +45,7 @@ function oldFace(B, m, bw, bh, rng, g0, low) {
     if (!ok || t1 - t0 < 1e-3) continue;
     bx = ax + dx * t1; by = ay + dy * t1; ax += dx * t0; ay += dy * t0;
     const l = Math.hypot(bx - ax, by - ay); if (l < 0.012) continue;
-    const nx = (-(by - ay) / l) * lw, ny = ((bx - ax) / l) * lw, z = 0.0195;
+    const nx = (-(by - ay) / l) * lw, ny = ((bx - ax) / l) * lw, z = 0.027;
     pos.push(ax - nx, ay - ny, z, bx - nx, by - ny, z, bx + nx, by + ny, z, ax - nx, ay - ny, z, bx + nx, by + ny, z, ax + nx, ay + ny, z);
   }
   if (pos.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); B.add(g, m, cut); }
@@ -88,14 +88,14 @@ export function newhouse(B, M, o = {}) {
       }
     }
   };
-  const fl = x1 - x0, sl = zf - zb - BT, dipF = 2.5 + rng() * 1.5;
+  const fl = x1 - x0, sl = zf - zb - 2 * BT, dipF = 2.5 + rng() * 1.5;
   wall(x0, zf - BT / 2, fl, 0, cor[0], cor[1], dipF, [xd - dw / 2 - x0, xd + dw / 2 - x0]);
   wall(x1, zb + BT / 2, fl, Math.PI, cor[2], cor[3], 2 + rng() * 2, null);
   wall(x1 - BT / 2, zf - BT, sl, Math.PI / 2, cor[1], cor[2], 1.5 + rng() * 2, null);
   wall(x0 + BT / 2, zb + BT, sl, -Math.PI / 2, cor[3], cor[0], 1.5 + rng() * 2, null);
   front = Math.min(cor[0], cor[1]);
   // the footing shows a hand's breadth all round: rubble in lime
-  B.add(B.box(fl + 0.3, 0.5, zf - zb + 0.3, { seg: 2.5, chip: 0.04 }), ch(M, cx, -0.26, (zf + zb) / 2), { color: worn(V.newDust, rng, 0.25), course: 0.2, moss: 0.05, ground: g0 - 0.6 });
+  B.add(B.box(fl + 0.3, 0.5, zf - zb + 0.3, { seg: 2.5, chip: 0.04 }), ch(M, cx, -0.232, (zf + zb) / 2), { color: worn(V.newDust, rng, 0.25), course: 0.2, moss: 0.05, ground: g0 - 0.6 });
   // the door's centering: two props and a half-wheel of boards, the first arch stones on it either side
   const raw = { color: V.rawWood, moss: 0.03, ground: g0 - 0.5 }, zc = zf - BT / 2, cr = dw / 2 - 0.03; // (the tie, at sp, clears a walker's head)
   if (stage > 0) {
@@ -144,7 +144,9 @@ export function newhouse(B, M, o = {}) {
   const ly = front * CH + 0.05, lineC = { color: worn(L.tile[1], rng, 0.45), moss: 0, ground: g0 - 3 }; // (madder twine, dull: it shows by being straight)
   beam(B, M, [x0 - 0.1, ly, zf + 0.03], [cx, ly - 0.035, zf + 0.03], 0.012, lineC); beam(B, M, [cx, ly - 0.035, zf + 0.03], [x1 + 0.1, ly, zf + 0.03], 0.012, lineC);
   for (const x of [x0 - 0.1, x1 + 0.1]) beam(B, M, [x, ly - 0.12, zf + 0.03], [x, ly + 0.14, zf + 0.03], 0.03, raw);
-  { const px = side > 0 ? x0 : x1, top = cor[side > 0 ? 0 : 1] * CH; beam(B, M, [px, top + 0.02, zf - 0.1], [px - side * 0.05, top + 0.05, zf + 0.34], 0.035, raw); beam(B, M, [px - side * 0.05, top + 0.04, zf + 0.3], [px - side * 0.05, top - 1.5, zf + 0.3], 0.012, lineC); B.add(B.cyl(0.05, 0.004, 0.14, 6, 1), ch(M, px - side * 0.05, top - 1.56, zf + 0.3), { color: H.bronze, moss: 0, ground: g0 - 3 }); }
+  if (stage > 0) { // (a stick driven into a joint four courses under the high corner, where the wall is sure to stand)
+    const px = (side > 0 ? x0 : x1) + side * 0.3, top = (cor[side > 0 ? 0 : 1] - 3.5) * CH, ll = Math.min(1.5, top - 0.3);
+    beam(B, M, [px, top, zf - 0.12], [px, top + 0.03, zf + 0.34], 0.035, raw); beam(B, M, [px, top + 0.03, zf + 0.3], [px, top - ll, zf + 0.3], 0.012, lineC); B.add(B.cyl(0.05, 0.004, 0.14, 6, 1), ch(M, px, top - ll - 0.06, zf + 0.3), { color: H.bronze, moss: 0, ground: g0 - 3 }); }
   if (stage === 2) { // the first roof poles, laid across from the front wall to the back, not yet lashed
     const ty = Math.min(...cor) * CH - 0.5 * CH; for (let i = 0; i < 5; i++) { const x = (side > 0 ? x1 - 0.5 : x0 + 0.5) - side * i * (0.7 + rng() * 0.15); beam(B, M, [x + (rng() - 0.5) * 0.2, ty + CH * 0.5 + 0.09 + (rng() < 0.3 ? CH : 0), zf + 0.25], [x + (rng() - 0.5) * 0.2, ty + CH * 0.5 + 0.09, zb - 0.3], 0.13, { ...raw, round: 6 }); }
   }

@@ -6,6 +6,8 @@
 //   ascent: 'id'         the route is that registered ascent's path (ctx.ascents, src/v12/heights.js)
 //   span: 'west'|'east'  the Great Span's stair of that side, foot to deck (ctx.span.stairs)
 //   pts: [[x, z, y?], ...] a route written out (y: the feet's height there, as an ascent's)
+//   route: 'a.b.c'       a route the page holds, by its path from the context (ctx.a.b.c: [[x, z, y?], ...]), for a
+//                        place whose own module knows where it stands
 //   c: [x, z], r          a disc on the ground, stood on every `step` metres (default 2)
 // }
 // `half`: how far either side of the route (m) the faces are taken. `sealed: [s0, s1]`: metres along the route between
@@ -23,4 +25,5 @@ export const PLACES = [
   { name: 'span-west-stairs', span: 'west', half: 7 }, // the Cyclopean Stairs, the Span's west end
   { name: 'span-east-stairs', span: 'east', half: 7 }, // and its east end, over the Pit's side
   { name: 'house', c: [95, -45], r: 17 }, // the Pomegranate House: court, galleries, gate
+  { name: 'strake', route: 'village.row.route', half: 9 }, // v15-V1 the Strake: its flags walked end to end, the five fronts (src/v15/row.js gives the route, wherever the plan puts the row)
 ];

@@ -11,7 +11,10 @@
 //             above) with one squat arch half drowned in the bench's fill, and the shop in its mouth: a counter
 //             across it with a way round its end, shelves and a lamp in the dark behind. With o.fit the Heliarch
 //             work is left out altogether (src/v15/ways/misc.js undercroft has drawn the vault and its front; the
-//             arch is sized as that one is, from w and the riser) and only the Late folk's fitting is added.
+//             arch is sized as that one is, from w and the riser, or as o.arch { aw, sp } says) and only the Late
+//             folk's fitting is added. Where the riser's face is at the plot's back (the Strake's shop: 5 m of
+//             bench before the arch) the plot is the shop's forecourt: yard walls down its sides, the counter
+//             out at the street under a cloth, a gate beside it, the store's jars and sacks, the arch the storeroom.
 // o: seed, w (8), d (6), form, shop (false: a byre, the arch closed with a plank gate), h (a free vault's height, to
 // meet something), riser (m: the 'riser' form), face (the riser face's local z: d / 2 - 2), fit, top ('stumps' |
 // 'hut'), low. Needs 3.6 x 2.4; less throws.
@@ -33,9 +36,9 @@ export function undercroft(B, M, o = {}) {
   let W, h, th, zf, zb, arches;
   if (riser) {
     // as src/v15/ways/misc.js sizes it: the vault a metre narrower than the plot, the arch under the tread's slab
-    W = w - 1; h = o.riser; th = 0.5; zf = o.face ?? d / 2 - 2; zb = Math.max(-d / 2 + 0.1, zf - 3.2);
+    W = w - 1; h = o.riser; th = 0.5; zf = o.face ?? d / 2 - 2; zb = zf - (o.fit ? 3.2 : Math.max(1, Math.min(3.2, zf + d / 2 - 0.1)));
     const rad = Math.min(W / 2 - 0.25, h - 0.42 - 1.0);
-    arches = [{ x: 0, aw: rad * 2, sp: h - 0.52 - rad }];
+    arches = [o.arch ? { x: 0, aw: o.arch.aw, sp: o.arch.sp } : { x: 0, aw: rad * 2, sp: h - 0.52 - rad }];
   } else {
     W = w - 0.5; th = 1.0; zf = d / 2 - 0.35; zb = -d / 2 + 0.2;
     if (form === 'double') { const aw = Math.min(2.5 + rng() * 0.4, (W - 2.5) / 2), sp = 1.5 + rng() * 0.3, off = aw / 2 + 0.5; arches = [{ x: -off, aw, sp }, { x: off, aw, sp }]; }
@@ -92,7 +95,7 @@ export function undercroft(B, M, o = {}) {
         if (!broke) PARTS.heliarch.capital(B, ch(M, sx * px, ph - 0.62, zf + 0.2), { r: 0.34 });
         else {
           pot(B, M, sx * px, n * (ph - 0.62) / nd, zf + 0.2, 0.26, worn(L.tile[0], rng, 0.35), 2);
-          PARTS.heliarch.capital(B, ch(M, sx * (px - 0.2), 0.62, zf + 1.3, Math.PI, rng(), 0.08), { r: 0.34 });
+          PARTS.heliarch.capital(B, ch(M, sx * (px - 0.2), -0.02, zf + 1.3, 0.05, rng(), 0.04), { r: 0.34 });
           R.post(sx * (px - 0.2), zf + 1.3, 0.5, 0, 0.62);
         }
         R.post(sx * px, zf + 0.2, 0.36, 0, 2, { stand: false });
@@ -103,13 +106,13 @@ export function undercroft(B, M, o = {}) {
   const zi = zf - th + 0.08;
   // a shop in an arch's mouth, nothing walled up: the counter across it at the wall's face with a way round its end,
   // shelves and sacks in the dark behind, a cloth on poles before it
-  const mouth = (a, s2) => {
+  const mouth = (a, s2, bare) => {
     const cl = a.aw - 1.3, cx = a.x - s2 * (a.aw / 2 - cl / 2 - 0.05), cz = zf - th / 2, ctop = 0.96; // (1.25 m left at its end: a walker is 0.9 wide)
-    for (const s of [-1, 1]) B.add(B.box(0.3, ctop - 0.16 + 0.4, 0.6, { seg: 9, chip: 0.03 }), ch(M, cx + s * (cl / 2 - 0.3), (ctop - 0.16 - 0.4) / 2, cz), { color: worn(wash, rng, 0.08), moss: 0.12, ground: g0 });
+    if (!bare) for (const s of [-1, 1]) B.add(B.box(0.3, ctop - 0.16 + 0.4, 0.6, { seg: 9, chip: 0.03 }), ch(M, cx + s * (cl / 2 - 0.3), (ctop - 0.16 - 0.4) / 2, cz), { color: worn(wash, rng, 0.08), moss: 0.12, ground: g0 });
     const basis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0));
-    PARTS.heliarch.slab(B, ch(M, cx - cl / 2, ctop - 0.08, cz).multiply(basis), { w: 0.8, h: cl, d: 0.16 });
-    R.counter(cx, ctop, cz + 0.42, cl); R.wall(cx - cl / 2 + 0.36, cz, cx + cl / 2 - 0.36, cz, 0, ctop, 0.36);
-    R.door(a.x + s2 * (a.aw / 2 - 0.62), zf + 0.6, { w: 1.2, enter: true });
+    if (!bare) { PARTS.heliarch.slab(B, ch(M, cx - cl / 2, ctop - 0.08, cz).multiply(basis), { w: 0.8, h: cl, d: 0.16 });
+      R.counter(cx, ctop, cz + 0.42, cl); R.wall(cx - cl / 2 + 0.36, cz, cx + cl / 2 - 0.36, cz, 0, ctop, 0.36);
+      R.door(a.x + s2 * (a.aw / 2 - 0.62), zf + 0.6, { w: 1.2, enter: true }); }
     // inside: a rack of shelves along the back with jars on it, two sacks, a lamp over the counter
     const zr = Math.max(zb + (riser ? 0.2 : 0.95), cz - 2.6), rw = Math.min(a.aw - 0.4, 2.2), wood = { color: L.wood, moss: 0, ground: g0 - 2 };
     for (const sx of [-1, 1]) beam(B, M, [a.x + sx * rw / 2, 0, zr], [a.x + sx * rw / 2, Math.min(1.9, a.sp + 0.5), zr], 0.06, wood);
@@ -120,6 +123,7 @@ export function undercroft(B, M, o = {}) {
     B.add(new THREE.IcosahedronGeometry(0.07, 0), ch(M, a.x, Math.min(1.95, a.sp + a.aw * 0.32), cz - 0.6, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: [V.lit[0] * 0.8, V.lit[1] * 0.8, V.lit[2] * 0.8, 1] });
     beam(B, M, [a.x, Math.min(2.0, a.sp + a.aw * 0.32) + 0.06, cz - 0.6], [a.x, a.sp + Math.sqrt(Math.max(0.01, (a.aw / 2) ** 2 - 0.36)) - 0.02, cz - 0.6], 0.012, { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
     R.window(a.x, a.sp, zf, true);
+    if (bare) return;
     const af = B.count, ah = Math.min(h - 0.3, a.sp + a.aw / 2 + 0.55);
     awning(B, ch(M, a.x, 0, zf + 0.02), { w: a.aw + 0.5, d: 1.55, h: ah, drop: Math.min(0.5, ah - 1.95), rng });
     for (const s of [-1, 1]) R.post(a.x + s * (a.aw / 2 + 0.2), zf + 1.55, 0.07, 0, 2.0, { stand: false });
@@ -129,9 +133,9 @@ export function undercroft(B, M, o = {}) {
   // the arch walled up a metre in, crooked, with the shop's hole and a narrow door in the infill
   const infill = (a) => {
     const top = [[a.aw / 2 + 0.25, a.sp + 0.6], [0.3, a.sp + a.aw / 2 + 0.25], [-0.3, a.sp + a.aw / 2 + 0.25], [-a.aw / 2 - 0.25, a.sp + 0.6]];
-    const sx0 = side * (a.aw / 2 - 1.12), dx0 = -side * (a.aw / 2 - 0.62), op = { shop: true, kind: 'rect', x: sx0, y: 0.98, w: 1.45, sp: 1.0 }, dop = { kind: 'rect', x: dx0, y: 0, w: 0.72, sp: 1.85 };
+    const sx0 = side * (a.aw / 2 - 1.12), dx0 = -side * (a.aw / 2 - 0.62), op = { shop: true, kind: 'rect', x: sx0, y: 0.98, w: 1.45, sp: 1.0 }, dop = { kind: 'rect', x: dx0, y: 0.02, w: 0.72, sp: 1.83 };
     const vent = { kind: 'ogee', x: (rng() - 0.5) * 0.5, y: a.sp + a.aw * 0.14, w: 0.4, sp: 0.3 };
-    facade(B, ch(M, a.x, 0, zi - 0.18), { w: a.aw + 0.5, d: 0.36, top, openings: [op, dop, vent], color: wash, moss: 0.08, ground: g0, n: 6 });
+    facade(B, ch(M, a.x, 0, zi - 0.18), { w: a.aw + 0.5, d: 0.36, sink: 0.3, top, openings: [op, dop, vent], color: wash, moss: 0.08, ground: g0, n: 6 });
     leaf(B, ch(M, a.x + dx0, 0, zi - 0.26), 0.9, 1.95, worn(paint, rng, 0.22), rng, { plain: low });
     stop(B, ch(M, a.x + vent.x, vent.y, zi - 0.18), 0.4, 0.5, 'lit', rng);
     R.window(a.x + vent.x, vent.y + 0.25, zi, true);
@@ -146,7 +150,7 @@ export function undercroft(B, M, o = {}) {
     R.door(a.x + dx0, zf + 0.5, { w: 0.72 });
     R.wall(a.x - a.aw / 2, zi - 0.2, a.x + a.aw / 2, zi - 0.2, 0, h, 0.2);
     // the cloth under the arch's head, on two poles out in the street; the sign on its arm from the wall
-    const ah = a.sp + 0.5, awn = Math.min(a.aw - 0.3, 2 * Math.sqrt(Math.max(0.1, (a.aw / 2) ** 2 - 0.55 ** 2)) - 0.25), af = B.count;
+    const ah = Math.max(a.sp + 0.5, 2.45), awn = Math.min(a.aw - 0.3, 2 * Math.sqrt(Math.max(0.1, (a.aw / 2) ** 2 - 0.55 ** 2)) - 0.25), af = B.count;
     awning(B, ch(M, a.x, 0, zf - 0.25), { w: awn, d: 1.75, h: ah, drop: 0.3, rng });
     for (const s of [-1, 1]) R.post(a.x + s * (awn / 2 - 0.05), zf + 1.5, 0.07, 0, 2.0, { stand: false });
     hangSign(B, ch(M, a.x - side * (a.aw / 2 + 0.62), a.sp + 1.25, zf), rng, { size: low ? 0.42 : 0.5 });
@@ -159,7 +163,8 @@ export function undercroft(B, M, o = {}) {
     R.door(a.x, zf + 0.5, { w: a.aw - 0.7 });
     R.wall(a.x - a.aw / 2, zi - 0.2, a.x + a.aw / 2, zi - 0.2, 0, h, 0.2);
   };
-  if (riser) mouth(arches[0], side);
+  const court = riser && zf < -d / 2 + 1.5;
+  if (riser) mouth(arches[0], side, court);
   else if (form === 'double') { const si = side > 0 ? 1 : 0; mouth(arches[si], side); gate(arches[1 - si]); }
   else if (!shop) gate(arches[0]);
   else if (aw0 >= 2.85) infill(arches[0]);
@@ -195,8 +200,34 @@ export function undercroft(B, M, o = {}) {
     R.top = h;
     if (!o.fit) for (const [a, b] of [[-W / 2, xa0], [xa1, W / 2]]) if (b - a > 0.2) { const r = Math.min(0.25, (b - a) / 2); R.wall(a + r, zf - 0.25, b - r, zf - 0.25, 0, h, r); }
   }
-  const lx = side * Math.min(W / 2 - 0.2, (form === 'double' ? xa1 : aw0 / 2) + 0.7), ly = Math.min(h - 0.5, sp + 0.9);
-  R.lamp(lx, ly, zf + 0.5); PARTS.late.bracket(B, ch(M, lx, ly, zf), { reach: 0.5 });
+  if (court) {
+    // the forecourt: yard walls of plaster down both sides, stepping down to the street; the counter at the street
+    // under a cloth; a gate beside it between two piers; the store's big jars and sacks along the walls
+    const zF = d / 2 - 0.3, pl = () => ({ color: worn(wash, rng, 0.06, 0.06), moss: 0.08, ground: g0, disp: 0.015, dispScale: 1.4 });
+    for (const sx of [-1, 1]) { const xw = sx * (w / 2 - 0.22), zm = zf + 0.1 + (zF - zf) * (0.4 + rng() * 0.2);
+      for (const [za, zb2, hh] of [[zf + 0.08, zm, 1.9 + rng() * 0.4], [zm - 0.02, zF, 1.15 + rng() * 0.25]]) { B.add(B.box(0.34, hh + 0.5, zb2 - za, { seg: 1.5, chip: 0.04, chipTop: true, seed: seed + sx + hh }), ch(M, xw, (hh - 0.5) / 2, (za + zb2) / 2), pl()); R.wall(xw, za + 0.17, xw, zb2 - 0.17, 0, hh, 0.17); } }
+    const gx = side * (w / 2 - 1.55), cl = w - 3.6, cxc = -side * (w / 2 - 0.5 - cl / 2), cz = zF - 0.3, ctop = 0.96; // the gate's middle; the counter
+    for (const s of [-1, 1]) B.add(B.box(0.34, ctop - 0.16 + 0.4, 0.62, { seg: 9, chip: 0.03 }), ch(M, cxc + s * (cl / 2 - 0.35), (ctop - 0.16 - 0.4) / 2, cz), pl());
+    const basis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0));
+    PARTS.heliarch.slab(B, ch(M, cxc - cl / 2, ctop - 0.08, cz).multiply(basis), { w: 0.86, h: cl, d: 0.16 });
+    R.counter(cxc, ctop, cz + 0.45, cl); R.wall(cxc - cl / 2 + 0.36, cz, cxc + cl / 2 - 0.36, cz, 0, ctop, 0.36);
+    for (const s of [-1, 1]) { const px = gx + s * 0.95, ph = 1.55 + rng() * 0.3; B.add(B.box(0.42, ph + 0.5, 0.42, { seg: 1.5, chip: 0.04 }), ch(M, px, (ph - 0.5) / 2, zF - 0.21), pl()); R.post(px, zF - 0.21, 0.22, 0, ph); if (s === side) pot(B, M, px, ph, zF - 0.21, 0.2, worn(L.tile[0], rng, 0.35), 1.9); }
+    R.door(gx, zF + 0.5, { w: 1.4, enter: true });
+    const af = B.count, ar = cz - 1.5; // the cloth: from a rail on two poles behind the counter to two in the street
+    for (const s of [-1, 1]) { beam(B, M, [cxc + s * (cl / 2 - 0.1), -0.15, ar], [cxc + s * (cl / 2 - 0.1), 2.65, ar], 0.08, { color: V.rawWood, moss: 0.08, ground: g0, round: 5 }); R.post(cxc + s * (cl / 2 - 0.1), ar, 0.08); R.post(cxc + s * (cl / 2 + 0.05), ar + 2.2, 0.07, 0, 2, { stand: false }); }
+    awning(B, ch(M, cxc, 0, ar), { w: cl + 0.3, d: 2.2, h: 2.6, drop: 0.3, rng });
+    hangSign(B, ch(M, gx - side * 0.95, 1.5, zF - 0.02), rng, { size: low ? 0.42 : 0.5, reach: 0.7 });
+    dirty(B, af, 0.2, rng);
+    PARTS.late.bracket(B, ch(M, gx + side * 0.95, 1.35, zF), { reach: 0.45 }); R.lamp(gx + side * 0.95, 1.37, zF + 0.45);
+    // along the walls: the big jars, the sacks, a bench
+    const jx = -side * (w / 2 - 0.95);
+    for (let i = 0; i < (low ? 2 : 4); i++) { const z = zf + 0.9 + i * 0.85 + rng() * 0.2, r = 0.3 + rng() * 0.12; pot(B, M, jx, 0, z, r, worn(pick([L.tile[0], V.mud, L.tile[4], V.mud], rng), rng, 0.35), 1.9 + rng() * 0.5); R.post(jx, z, r, 0, 0.8); }
+    for (let i = 0; i < 3; i++) { const x = side * (w / 2 - 0.85) - side * (i % 2) * 0.5, z = zf + 0.8 + i * 0.5; B.add(new THREE.IcosahedronGeometry(0.32, 1), ch(M, x, 0.2 + (i === 2 ? 0.34 : 0), z - (i === 2 ? 0.25 : 0), 0, rng() * 3, 0, 1, 0.75, 1.15), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g0, disp: 0.03 }); if (i < 2) R.post(x, z, 0.32, 0, 0.5); }
+    R.top = Math.max(h, 2.6);
+  } else {
+    const lx = side * Math.min(W / 2 - 0.2, (form === 'double' ? xa1 : aw0 / 2) + 0.7), ly = Math.min(h - 0.5, sp + 0.9);
+    R.lamp(lx, ly, zf + 0.5); PARTS.late.bracket(B, ch(M, lx, ly, zf), { reach: 0.5 });
+  }
   R.tris = B.triangles - base;
   return R;
 }
