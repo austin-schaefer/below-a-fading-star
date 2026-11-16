@@ -16,7 +16,7 @@
 //   the Last Arch         the aqueduct's last standing arch (on the line of the Rungs' pier); the templates hang on
 //                         its pier; its drip falls into the saint's upturned hand (the Almoner), the masons' trough
 //   the Banker            the masons' stock, twelve blocks squared up on the brink east of the saint
-//   the Stage             a scaffold on the Last Arch's near pier, climbed by a cleated plank run (ascent `quarrels-stage`)
+//   the Hustings          a scaffold on the Last Arch's near pier, climbed by a cleated plank run (ascent `quarrels-stage`)
 //   the chalk             the next blocks marked out on the keep's fallen face, and a tally
 //   the Unroofed House    new-house: the kit's new house, rising, its stock between its wall and the old pier
 // The makers: src/v15/houses/ (the plots), ./quarrels/saint.js, works.js, air.js.
@@ -235,7 +235,7 @@ export async function build(ctx) {
     beam(B, TM, [0.1, 0.2, 0.05], [0.5, 1.15, -0.3], 0.045, { color: worn(V.rawWood, rng, 0.2), moss: 0, ground: Y, round: 5 });
     colliders.push({ x: tx, z: tz, r: 0.55, y: Y - 0.5, h: 1.0 }); }
 
-  // ---------------------------------------------------------------- the Stage: the scaffold on the Last Arch
+  // ---------------------------------------------------------------- the Hustings: the scaffold on the Last Arch
   // A mason's stage lashed to the far side of the arch's near pier, 2.5 m up, and a cleated plank run up to it along
   // the arch's flank from the keep's side: the one thing on the crown a visitor climbs. From it: the channel's broken end, the hand under it,
   // the brink and the valley.

@@ -14,7 +14,7 @@
 //   the Gullet      a mud stair straight down the slot between the two houses at the corner: mean, and whole
 //   the Tenter      the dyers' stair down the Mid Rung's riser on the east run, cloth on tenter lines down its
 //                   length, vats at its foot, their runnels across the lane to a drain
-//   the Stump a Heliarch flight along the riser east of the aqueduct's pier, its foot in a house's wall; and
+//   the Stump       a Heliarch flight along the riser east of the aqueduct's pier, its foot in a house's wall; and
 //                   the Pier Stair, the same hand's treads let into the pier's faces, the lowest gone: seen from
 //                   the Lees between the Late timber of the Tenter and the Noonwrights' main
 //   the Slype       the lane under the main: a door in the step, a niche with a light in it

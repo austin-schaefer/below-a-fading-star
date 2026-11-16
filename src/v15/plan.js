@@ -444,9 +444,9 @@ export const QUARRELS = {
   // still carries drips off its broken end into the saint's upturned hand
   aqueduct: { run: 2, s: way('lane-bridge').s, piers: [-20.6, -13.4], name: 'the Last Arch' },
   hand: { ...xz(2, way('lane-bridge').s, -11.15), name: 'the Almoner' },
-  // the Stage: a mason's scaffold lashed to the Last Arch's near pier, 2.5 m up, a cleated plank run up to it: a lookout
+  // the Hustings: a mason's scaffold lashed to the Last Arch's near pier, 2.5 m up, a cleated plank run up to it: a lookout
   // with a rail (the run's one end; the quarter builds it from the arch's frame, src/v15/quarters/quarrels.js)
-  stage: { ...xz(2, way('lane-bridge').s + 1.65, -13.8), y: LEVEL.crown.y + 2.5, name: 'the Stage' },
+  stage: { ...xz(2, way('lane-bridge').s + 1.65, -13.8), y: LEVEL.crown.y + 2.5, name: 'the Hustings' },
   // the quarry in the keep's wound: the shears over the block being lifted, the block split with wedges
   shears: xz(2, 4.5, -14.5),
   split: xz(1, 28.36, -11.92),
