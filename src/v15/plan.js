@@ -126,9 +126,9 @@ export function lappetGround(h, x, z, coarse = 0) {
     if (A <= 0) return h;
     let v = D < RIM - APRON ? h + (LEVELS[0].y - h) * sstep(RIM - APRON - 6, RIM - APRON, D) : LEVELS[0].y - SINK * sstep(0.9, 1, A);
     // under the mesh's coarse pass (cell `coarse`), the lower envelope across a cell at the rim: a crown vertex within a
-    // cell of the riser takes the High Rung's level, so no triangle leans out in front of the riser's face (v15-W1: the
+    // cell of the riser takes the High Rung's level (within 1.2 cells), so no triangle leans out in front of the riser's face (v15-W1: the
     // owner's "pale flat triangles" against the rim at the head's east flight). The crown's slab hides the dip.
-    if (coarse && D > RIM - coarse * 1.45) v = Math.min(v, stepsYCoarse(D, coarse) - SINK * sstep(0.9, 1, A));
+    if (coarse && D > RIM - coarse * 1.2) v = Math.min(v, stepsY(D + coarse * 1.2) - SINK * sstep(0.9, 1, A)); // (1.2 cells, not the 1.45 of a diagonal: further back the masons' poles stand on the mesh)
     return h + (v - h) * A;
   }
   return h;

@@ -507,8 +507,9 @@ export async function build(ctx) {
   {
     const ld = P.way('rungs-ladder'), yT = P.LEVEL[ld.to].y, yF = P.LEVEL[ld.from].y, Dr = P.RISERS.find((r) => r.top === yT).D;
     for (const sd of [-1, 1]) { const a = at(ld.run, ld.s + sd * 0.25, Dr + 0.7), c = at(ld.run, ld.s + sd * 0.25, Dr + 0.42); ctx.addCollider({ x1: a[0], z1: a[1], x2: c[0], z2: c[1], r: 0.05, y: yF, h: 1.9, stand: false }); }
-    KB.add(box(0.11, 1.05, 0.11, { chip: 0.01 }), ch(RM(ld.run, ld.s + 0.68, Dr - 0.22, yT), 0, 0.42, 0, 0.04, 0, -0.05), wood(0.8)); // the stake, driven in at the rim
-    const M = RM(ld.run, ld.s + 0.62, Dr + 0.05, yT), top = [0.02, 0.86, 0.02], pts = [top, [0.2, -0.3, 0.2], [0.34, -1.5, 0.16], [0.36, -2.6, 0.22], [0.4, -3.35, 0.18]];
+    const M = RM(ld.run, ld.s + 0.62, Dr - 0.1, yT); // the stake, driven in at the brink, the rope knotted round its head
+    KB.add(box(0.11, 1.05, 0.11, { chip: 0.01 }), ch(M, 0, 0.42, 0, 0.03, 0, -0.03), wood(0.8));
+    const top = [0.02, 0.86, 0.02], pts = [top, [0.2, -0.3, 0.2], [0.34, -1.5, 0.16], [0.36, -2.6, 0.22], [0.4, -3.35, 0.18]];
     for (let i = 0; i < pts.length - 1; i++) { beam(KB, M, pts[i], pts[i + 1], 0.035, { color: V.rope, moss: 0.05, ground: yF - 3, round: 5 }); if (i) KB.add(new THREE.IcosahedronGeometry(0.045, 0), ch(M, ...pts[i]), { color: jit(V.rope, 0.8), moss: 0, ground: yF - 3 }); }
     KB.add(new THREE.IcosahedronGeometry(0.06, 0), ch(M, ...pts[pts.length - 1]), { color: jit(V.rope, 0.75), moss: 0, ground: yF - 3 });
     const br = P.way('lane-bridge'); hangLamp(KB, { x: at(br.run, br.s - 0.43, DM + 1.0)[0], y: yM - 0.275, z: at(br.run, br.s - 0.43, DM + 1.0)[1] }, 'amber', 0.55);
