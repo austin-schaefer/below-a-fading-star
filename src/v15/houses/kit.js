@@ -288,7 +288,7 @@ export function washing(B, M, a, b, rng, n = 4) {
     const col = worn(rng() < 0.25 ? pick([V.saffron, V.teal, V.madder], rng) : V.linen, rng, 0.4, 0.16); // (washed a hundred times: no colour is loud)
     // (thrown over the line: a long leaf this side, a short one that, apart at their hems: cloth from above too)
     const m = ch(M, a[0] + dx * t, a[1] + (b[1] - a[1]) * t, a[2] + dz * t, 0, ry, (rng() - 0.5) * 0.12);
-    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(m, 0, 0.01, 0.03 + (i % 2) * 0.008, 0.07, 0, 0).multiply(mat(0, -hh / 2, 0)), { color: col, moss: 0, ground: g0 }); // (hung from its top edge, which stays at the line: turned about its middle, a long cloth's top stood 6 cm off the line and the cloth hung on nothing) // (each cloth a finger off its neighbour's plane: two that overlap along the line do not lie in one)
+    B.add(B.box(w, hh, 0.014, { seg: 9 }), ch(m, 0, 0.01, 0.03 + (i % 2) * 0.008, 0.07, 0, 0).multiply(mat(0, -hh / 2, 0)), { color: col, moss: 0, ground: g0 }); // (hung from its top edge, which stays at the line: turned about its middle, a long cloth's top stood 6 cm off the line and the cloth hung on nothing; each a finger off its neighbour's plane: two that overlap along the line do not lie in one)
     B.add(B.box(w, hh * 0.45, 0.014, { seg: 9 }), ch(m, 0, 0.01, -0.03 - (i % 2) * 0.008, -0.14, 0, 0).multiply(mat(0, -hh * 0.225, 0)), { color: col.clone().multiplyScalar(0.85), moss: 0, ground: g0 });
   }
 }
