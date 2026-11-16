@@ -34,3 +34,15 @@ The flat board of each patch on the road lay 1 mm over its own board (every patc
 - #59: the east stair, its foot; no second causeway beyond the west stair (a new road through the wood, the owner's to ask for).
 - A one-line fix in `src/v8/strata/noon.js` (outside src/v14) for the crack decal, same kind as #60.
 - `tools/step-frames.mjs` (frames a step apart on the keys) and `tools/under-geometry.mjs` (in edges-test) are new; they overlap H1's geometry-test in part (the members' ends, coplanar faces) and are kept because they ask the underground's own rules (cords, knees, the door's rays) at 1.2 mm.
+
+## Review round (fb778dc)
+
+- The violet sliver to the left of the portal was a terrain and Saltings-crust triangle lying where the floor's rim climbs the wall's foot, so the two fought for the same pixels. Any terrain triangle that lies wholly over that rim, or whose face folds back over the bowl, is now cut. The pale slabs on the floor are the road's fallen slabs (paths.js). The scene lit them like the moor; their colour now takes the floor's dark. Frame: `v15-F1-after5-60-portal.png`.
+- The threshold slabs are whole again: the back offset is a fixed 4, 8 or 12 mm, and only on the lintels and jambs, which overlap. Frame: `v15-F1-after5-60-threshold.png`.
+- The lip clods now sit on the lip as drawn, and one that hangs over the throat hangs from it by its edge. That clears the clod the reroute had left floating.
+- Why the two backs groups grew: the Pit stair's ascent ran in straight chords between tenths of the stair. Those chords stood a walker (and the geometry check's stand) on the floor band inside the drawn wall's foot. The ascent now follows the slabs at every 2.5%, and it starts on the floor side of the foot, not 2 m out. The backs fell from 13 to 2.
+- `drawnSurface` no longer allocates per triangle and keeps its faces in 36 sectors by bearing. On high the knee work went from 165 to 65 ms (the pit's own log line).
+- On the Span's stairs the step-offs are now half way up each flight. Stepping sideways off a landing just walks up the next flight, which is how the walker ended 6.6 m higher. heights-test now fails any step-off that climbs more than 0.6 m.
+- Stale comments about the road at the rim are rewritten, and the dead loop that laid slabs on the lip is removed.
+- Geometry baseline: 572 findings down to 560, 62 groups down to 60.
+- `ONLY=geometry,edges,heights,rocks,roads,paths,walk,settings,perf,loading tools/suite.sh 8164`: 10 of 10 (41, 214, 134, 42, 61, 81, 13, 86, 29, 28 PASS lines).
