@@ -201,7 +201,8 @@ export async function build(ctx) {
         yL - 0.4, top - yL + 0.4);
     }
     const fx = hx + b[0] * len, fz = hz + b[1] * len;
-    K.ascent({ id: G.id, held: true, offs: [0.4], path: [[fx + b[0] * 1.3, fz + b[1] * 1.3, yL], [fx, fz, yL], [hx - b[0] * 0.9, hz - b[1] * 0.9, yM], [hx - b[0] * 2.4, hz - b[1] * 2.4, yM]] });
+    K.ascent({ id: G.id, held: true, offs: [], // (no step off: the slot is a wedge, and a hurry sideways at a slanted house wall slides a walker up the stair he is on, which the heights test reads as a climb)
+      path: [[fx + b[0] * 1.3, fz + b[1] * 1.3, yL], [fx, fz, yL], [hx - b[0] * 0.9, hz - b[1] * 0.9, yM], [hx - b[0] * 2.4, hz - b[1] * 2.4, yM]] });
     // a hand-rope down the wider side, pegged to the house wall, and a jar at the foot in the slot
     pot(KB, I4, fx - t[0] * 1.25 - b[0] * 0.5, yL, fz - t[1] * 1.25 - b[1] * 0.5, 0.28, worn(L.tile[4], rng, 0.4), 2);
     ctx.addCollider({ x: fx - t[0] * 1.25 - b[0] * 0.5, z: fz - t[1] * 1.25 - b[1] * 0.5, r: 0.3, y: yL, h: 0.6 });
