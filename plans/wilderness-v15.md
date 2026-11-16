@@ -219,3 +219,6 @@ Next: each hand-back gets its frames looked at with the report shut, a blind rea
 | N1 names, cards, the map; the cost near on low (318k of 250k) | `issue-1525-names` | 8168 | sonnet | `ab472628c9ee344b8` |
 
 - After them: a walk of the whole village by the orchestrator in a real browser; the critic, the curator, the gate; the release.
+
+**The owner, 2026-11-16 about 09:50, on ladders** (asked whether other ladders on the map are inoperative: one of all those drawn can be climbed): "ladders that are in a place that could read as climable, should be climable consistently. it's fine if they don't read that way (like a ladder leaning against a wall) but if they do look climable, they should always be". Brief `briefs/v15/brief-v15-W2-ladders.md`, the whole walk, with a guard.
+
