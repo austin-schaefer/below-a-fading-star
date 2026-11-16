@@ -163,7 +163,7 @@ for (const m of r.makers) {
   check(!m.nan && m.tris > 150 && m.doors >= 1 && m.colliders >= 3 && (!m.wantForm || m.form === m.wantForm), `${id}: builds (${m.tris} triangles, ${m.doors} doors, ${m.colliders} colliders, ${m.form})`);
   check(m.side <= 0.6 && m.back <= (m.against ? Math.max(0.06, m.against.gap + 0.06) : m.form === 'riser' && m.riserBack > 0 ? m.riserBack + 3.3 : 0.35) && m.front <= 2, // (a shop before its riser keeps its store in the vault behind the plot)
   `${id}: inside its footprint (past the sides ${m.side.toFixed(2)}, the back ${m.back.toFixed(2)}, the front ${m.front.toFixed(2)} m)`);
-  check(m.rays > (m.fit ? 40 : 100) && (m.backs / m.rays < 0.006 || (m.fit && m.backs <= 1)), // (a fitting alone is met by so few rays that one is over the rate) `${id}: closed (${m.backs} of ${m.rays} rays met the back of a face first${m.backAt ? ', the first at ' + m.backAt + ' in its plot' : ''})`);
+  check(m.rays > (m.fit ? 40 : 100) && (m.backs / m.rays < 0.006 || (m.fit && m.backs <= 1)), /* (a fitting alone is met by so few rays that one is over the rate) */ `${id}: closed (${m.backs} of ${m.rays} rays met the back of a face first${m.backAt ? ', the first at ' + m.backAt + ' in its plot' : ''})`);
   check(m.lone === 0, `${id}: every collider has something drawn in it (${m.lone} of ${m.colliders} have nothing)`);
   check(m.fs + m.covered === 0 || (m.holes === 0 && m.fs > 0 && m.fok / m.fs >= 0.75 && m.covered <= m.fs), `${id}: floors are where they are drawn (${m.fok} of ${m.fs} samples, ${m.holes} over nothing, ${m.covered} under furniture)`);
   check(m.doorBad.length === 0, `${id}: its doors do what they say (${m.doorBad.length ? m.doorBad.join('; ') : m.enter ? 'entered' : 'shut'})`);

@@ -202,7 +202,7 @@ export function late(B, M, o = {}) {
     const bx = against ? cx - side * (rw / 2 - 1.0) : cx - side * rw * 0.22, bz = against ? zfr - T - 1.25 : zb + 1.15;
     bed(B, HM, bx, h, bz, against ? (rng() - 0.5) * 0.2 : Math.PI / 2 + (rng() - 0.5) * 0.3, rng);
     R.post(bx, bz, 0.6, h, 0.55);
-    const jx = (against ? side : -side) * (rw / 2 - 0.8) + cx, jz = zfr - 0.85;
+    const jx = against && stair === 'front' ? cx - side * (rw / 2 - 1.8) : (against ? side : -side) * (rw / 2 - 0.8) + cx, jz = zfr - 0.85; // (never at the stair's head)
     pot(B, HM, jx, h, jz, 0.3, worn(L.tile[rng() < 0.5 ? 0 : 4], rng, 0.35), 2.1);
     R.post(jx, jz, 0.3, h, 0.7);
     const pz = against ? zfr - T - 0.3 : zb + 0.55, pa = [cx - side * (rw / 2 - (against ? 2.3 : 0.55)), h, pz], pb2 = [cx + side * (rw / 2 - 1.5), h, pz + (against ? -1 : 1) * rng() * 0.4];

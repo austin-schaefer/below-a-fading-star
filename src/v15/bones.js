@@ -246,8 +246,13 @@ export async function build(ctx) {
       // one thrown down the slope now and then
       if (rng() < 0.3 * t + (gone ? 0.5 : 0)) {
         const [x, z] = at(run, sm + (rng() - 0.5) * 2, R.D + 2 + rng() * 3.5), y = T.heightAt(x, z), hb = 0.5 + rng() * 0.5;
-        M.block(x, y + hb * 0.45, z, 1 + rng() * 0.6, hb, 0.7 + rng() * 0.4, rng() * 6.28, (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.4, shade(0.8 + 0.1 * rng(), 0.02), 0.2, s + 3);
-        ctx.addCollider({ x, z, r: 1.0, y: y - 1, h: hb * 1.2 + 1 }); lappet.colliders++;
+        // (never onto a plot: one lay across the Strake's Late door, v15-V1 round 4. The dice are thrown all the same,
+        // so every other block lies where it lay.)
+        const bw = 1 + rng() * 0.6, bd = 0.7 + rng() * 0.4, ry = rng() * 6.28, rx = (rng() - 0.5) * 0.5, rz = (rng() - 0.5) * 0.4, sh = shade(0.8 + 0.1 * rng(), 0.02);
+        if (!PLAN.PLOTS.some((p) => PLAN.inPlot(p, x, z, 1.4))) {
+          M.block(x, y + hb * 0.45, z, bw, hb, bd, ry, rx, rz, sh, 0.2, s + 3);
+          ctx.addCollider({ x, z, r: 1.0, y: y - 1, h: hb * 1.2 + 1 }); lappet.colliders++;
+        }
       }
       s += dir * L;
     }
