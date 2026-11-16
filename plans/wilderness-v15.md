@@ -76,7 +76,7 @@ Two surveys (2026-11-15, read-only) are summarised here; check, do not trust.
 
 ## Status
 
-**2026-11-15, 20:05 PST. Opened; batch 1 is dispatched.** The owner started the run at 19:17 with the words quoted above and `/loop 30m` to check on it. Issues #20, #59, #60, #61, #63, #64 are `in-progress`, `v15`. Two read-only surveys (the hillside's geography and code; the story library) and six frames of the hillside today (`shots/wip/v15-before-*.png`, `v15-plan-map.png`) made the plan above.
+**2026-11-15, 19:30 PST. Opened; batch 1 is dispatched.** The owner started the run at 19:17 with the words quoted above and `/loop 30m` to check on it. Issues #20, #59, #60, #61, #63, #64 are `in-progress`, `v15`. Two read-only surveys (the hillside's geography and code; the story library) and six frames of the hillside today (`shots/wip/v15-before-*.png`, `v15-plan-map.png`) made the plan above.
 
 | Brief | Branch / worktree | Port | Model |
 |---|---|---|---|
