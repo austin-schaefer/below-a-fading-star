@@ -27,13 +27,18 @@
 import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
 import { makePlot, registerAll, plotMatrix } from '../houses/index.js';
-import { L, H, V, N, PARTS, rngOf, ch, worn, quad, hangLamp, beam, pot, washing, limeGlow, facade, pick } from '../houses/kit.js';
+import { L, H, V, N, PARTS, rngOf, ch, worn, quad, hangLamp, beam, pot, washing, limeGlow, facade, pick, leaf, hangSign } from '../houses/kit.js';
 
 // what each plot is given beyond what the plan says (the seed is the building)
 const OPTS = {
   'pennyworth-stall-1': { seed: 3 }, 'pennyworth-stall-2': { seed: 8 },
   'pennyworth-house-1': { seed: 5, form: 'step', stair: false }, 'pennyworth-house-2': { seed: 2, form: 'tower', stair: false },
-  'carrier-house': { seed: 3, form: 'wreck', glaze: 3 }, // (seed 3: its neck lies at the end toward the main)
+  'carrier-house': { seed: 3, form: 'wreck', glaze: 3 },
+  // (round 2: stood at the ground before their doors; `to` is what the weather has taken each one's wash toward)
+  'pennyworth-kerb-1': { seed: 11, form: 'step', stair: false, stand: true, to: '#8a6a4e', k: 0.34 }, 'pennyworth-kerb-2': { seed: 7, form: 'tower', stair: false, stand: true, to: '#6f6a78', k: 0.3 },
+  'pennyworth-east-1': { seed: 4, form: 'tower', stair: false, stand: true, to: '#93704a', k: 0.38 },
+  'pennyworth-hitch-3': { seed: 9, form: 'long', stair: false, stand: true, to: '#7b5f52', k: 0.36 }, 'pennyworth-hitch-4': { seed: 14, form: 'step', stair: false, stand: true, to: '#6b6f66', k: 0.3 },
+  'pennyworth-gate-1': { seed: 6, form: 'tower', stair: false, stand: true, to: '#8c6b55', k: 0.33 }, 'pennyworth-gate-2': { seed: 12, form: 'step', stair: false, stand: true, to: '#75697a', k: 0.3 }, // (seed 3: its neck lies at the end toward the main)
 };
 const LEAF = new THREE.Color('#5c7a40'), LEAF_D = new THREE.Color('#46633a'), SOIL = new THREE.Color('#3a2e22');
 const TESS = [new THREE.Color('#8a2a1c'), new THREE.Color('#b8902a'), new THREE.Color('#26407a')]; // the moles' red, gold and lapis (src/v7/glyphs/moles.js)
@@ -69,20 +74,50 @@ export async function build(ctx) {
   };
   // a flag of the lane's paving at a world point, on the ground as it lies
   const flag = (x, z, w, d, ry = 0) => { const g = G(x, z); B.add(B.box(w, 0.16, d, { seg: 9, chip: 0.03, chipTop: true, seed: x * 7 + z }), mat(x, g - 0.045 + rng() * 0.012, z, (rng() - 0.5) * 0.02, ry, (rng() - 0.5) * 0.02), { color: worn(V.flag, rng, 0.2, 0.2), moss: 0.45, wet: 0.08, ground: g - 0.3 }); };
+  // a cloth roof on four poles over a stall (local: hx half its width, zb its back, zf its front, hb and hf its heights), and a lamp hung under it
+  const roofed = (M, g, hx, zb, zf, hb, hf, col, lx) => {
+    for (const [x, z, h] of [[-hx, zb, hb], [hx, zb, hb], [-hx, zf, hf], [hx, zf, hf]]) { beam(B, M, [x + (rng() - 0.5) * 0.06, -0.25, z], [x, h + 0.1, z], 0.06, raw()); post(M, x, z, 0.08); }
+    cloth(M, [[-hx - 0.1, hb, zb - 0.1], [hx + 0.1, hb, zb - 0.1], [hx + 0.12, hf, zf + 0.15], [-hx - 0.12, hf, zf + 0.15]], 0.14, col);
+    const ly = (hb + hf) / 2 - 0.2; beam(B, M, [lx, ly, (zb + zf) / 2], [lx, ly + 0.13, (zb + zf) / 2], 0.008, { color: V.rope, moss: 0, ground: g - 3 });
+    const lp = world(M, lx, ly, (zb + zf) / 2); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, 'amber', 0.6); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
+  };
   const leafy = (M, x, y, z, s, col = LEAF) => B.add(B.rock(s, low ? 0 : 1, 1, 0.55, 1), ch(M, x, y, z, (rng() - 0.5) * 0.5, rng() * 3, (rng() - 0.5) * 0.5), { color: worn(col, rng, 0.1, 0.3), moss: 0, ground: -5, flat: true });
   // a bine up a pole from a to b (local points): one ragged column of leaf from the earth at its foot to short of the top
   const bine = (M, a, b, r, col = LEAF) => { const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), len = d.length(), t0 = -0.02, t1 = 0.86, mid = new THREE.Vector3(a[0], a[1], a[2]).addScaledVector(d, (t0 + t1) / 2), q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); B.add(B.rock(1, low ? 0 : 1, r, len * (t1 - t0) / 2, r), M.clone().multiply(new THREE.Matrix4().compose(mid, q, new THREE.Vector3(1, 1, 1))), { color: worn(col, rng, 0.1, 0.25), moss: 0, ground: -5, flat: true, disp: r * 0.5, dispScale: 5 }); };
   // a plot's building weathered after its maker: its colours taken toward dirt and its limewash's held light halved (out of the keep's shadow a clean wash is a white box)
-  const dull = (from, k) => { const C = B.C, Em = B.E; for (let i = from; i < B.count; i++) { const f = k * (0.55 + 0.9 * rng()); C[i * 3] += (V.dirt.r - C[i * 3]) * f; C[i * 3 + 1] += (V.dirt.g - C[i * 3 + 1]) * f; C[i * 3 + 2] += (V.dirt.b - C[i * 3 + 2]) * f; if (Em[i * 4 + 3] === 2) { Em[i * 4] *= 0.4; Em[i * 4 + 1] *= 0.4; Em[i * 4 + 2] *= 0.4; } } };
+  const dull = (from, k, to = V.dirt) => { const C = B.C, Em = B.E; for (let i = from; i < B.count; i++) { const f = k * (0.55 + 0.9 * rng()); C[i * 3] += (to.r - C[i * 3]) * f; C[i * 3 + 1] += (to.g - C[i * 3 + 1]) * f; C[i * 3 + 2] += (to.b - C[i * 3 + 2]) * f; if (Em[i * 4 + 3] === 2) { Em[i * 4] *= 0.4; Em[i * 4 + 1] *= 0.4; Em[i * 4 + 2] *= 0.4; } } };
 
   // ---------------------------------------------------------------- the plots, by the kit
   const records = [];
   for (const p of P.PLOTS) {
     if (p.quarter !== 'pennyworth' || !OPTS[p.name]) continue;
-    const from = B.count, R = makePlot(B, p.kind === 'carrier' ? { ...p, y: p.y + 0.015 } : p, { // (the wreck a finger proud of its pad: a board of its yard lies at its foot's own height, in the pad's plane)
-      plan: P, built: ctx.lappet.built, E, low, ...OPTS[p.name] });
-    if (p.kind === 'house') dull(from, 0.2);
-    if (p.kind === 'shop') for (let i = from; i < B.count; i++) if (B.E[i * 4 + 3] === 1) { B.E[i * 4] *= 0.5; B.E[i * 4 + 1] *= 0.5; B.E[i * 4 + 2] *= 0.5; } // (a booth's back wall by one lamp, not a furnace: beside the house's lanterns it was the brightest thing on the lane)
+    const O = OPTS[p.name];
+    let q = p.kind === 'carrier' ? { ...p, y: p.y + 0.015 } : p; // (the wreck a finger proud of its pad: a board of its yard lies at its foot's own height, in the pad's plane)
+    if (O.stand) {
+      // at the ground before its door; where the ground falls away under it, a footing of the Heliarchy's ashlar that was here first
+      const yy = G(p.x + p.face[0] * (p.d / 2 + 0.3), p.z + p.face[1] * (p.d / 2 + 0.3)) + 0.03; q = { ...p, y: yy };
+      const Mq = plotMatrix(q); let lo = Infinity; for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) { const wq = world(Mq, a * p.w / 2, 0, b * p.d / 2); lo = Math.min(lo, G(wq.x, wq.z)); }
+      if (yy - lo > 0.2) {
+        const hh = yy - lo + 0.5;
+        B.add(B.box(p.w + 0.36, hh, p.d + 0.36, { seg: 1.4, chip: 0.05, seed: p.x }), ch(Mq, 0, -hh / 2 - 0.035, 0), { color: worn(H.stone, rng, 0.14), course: 0.34, moss: 0.5, ground: lo });
+        for (const [x1, z1, x2, z2] of [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]]) collide(Mq, x1 * p.w / 2, z1 * p.d / 2, x2 * p.w / 2, z2 * p.d / 2, 0.18, -hh, hh - 0.25, { stand: false });
+      }
+    }
+    const from = B.count, R = makePlot(B, q, { plan: P, built: ctx.lappet.built, E, low, seed: O.seed, form: O.form, stair: O.stair, glaze: O.glaze });
+    if (p.kind === 'carrier') dull(from, 0.3, N.milk); // (fired ware, not iron: its glaze toward the milk body it was thrown in; a blind reader took the dark glaze for rusted plate)
+    if (p.kind === 'house') dull(from, O.k ?? 0.2, O.to ? new THREE.Color(O.to) : V.dirt);
+    if (p.kind === 'shop') {
+      // a booth's back is dark and its goods are lit by a lamp hung before them (the blind reader: the backs were "glowing panels ... like a game UI"); each a trade told by what hangs at its front
+      for (let i = from; i < B.count; i++) if (B.E[i * 4 + 3] === 1) { B.E[i * 4] *= 0.12; B.E[i * 4 + 1] *= 0.12; B.E[i * 4 + 2] *= 0.12; }
+      const Ms = plotMatrix(q), zf = p.d / 2 - 0.55, first = p.name.endsWith('1');
+      const lp = world(Ms, first ? 0.5 : -0.4, 1.86, zf + 0.12); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, first ? 'amber' : 'ruby', 0.55); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
+      for (let k = 0; k < (low ? 4 : 7); k++) {
+        const x = -1.05 + k * (2.1 / (low ? 3 : 6)), len = 0.25 + rng() * 0.3; if (Math.abs(x - (first ? 0.5 : -0.4)) < 0.2) continue;
+        beam(B, Ms, [x, 1.95, zf + 0.1], [x, 1.95 - len, zf + 0.1], 0.008, { color: V.rope, moss: 0, ground: p.y - 3 });
+        if (first) for (let m = 0; m < 3; m++) B.add(B.rock(0.045, 0, 1, 1.5, 1), ch(Ms, x + (m - 1) * 0.02, 1.93 - len - m * 0.08, zf + 0.1, 0, m * 2, 0.3), { color: worn(pick([V.madder, new THREE.Color('#8a2f1e'), V.saffron], rng), rng, 0.2), moss: 0, ground: p.y - 3, flat: true }); // dried pods and peppers on strings
+        else B.add(B.cyl(0.05, 0.035, 0.09, 7, 1), ch(Ms, x, 1.93 - len - 0.03, zf + 0.1, 0, 0, (rng() - 0.5) * 0.3), { color: L.gilt.clone().multiplyScalar(0.5 + rng() * 0.3), iron: 0.5, moss: 0, ground: p.y - 3 }); // cups and ladles of old brass
+      }
+    }
     R.lamps.forEach((lamp, i) => { hangLamp(B, lamp, ['amber', 'ruby', 'amber', 'amber'][(R.seed + i) % 4], 0.5); lamps.push(lamp); });
     for (const c of R.counters) places.push({ name: `${p.name}: counter`, x: +c.x.toFixed(2), y: +c.y.toFixed(2), z: +c.z.toFixed(2), what: 'a bare counter; whoever keeps it stands behind' });
     for (const s of R.shelves) places.push({ name: `${p.name}: shelf`, x: +s.x.toFixed(2), y: +s.y.toFixed(2), z: +s.z.toFixed(2), what: 'a bare shelf' });
@@ -149,6 +184,10 @@ export async function build(ctx) {
     B.add(B.box(1.25, 0.04, 0.34, { seg: 9 }), ch(M, -0.05, 0.25, 0.05, 0, 0.75, 0), wood(0.15));
     for (const q of [a, b]) post(M, q[0] - 0.1, q[2] - 0.2, 0.1); post(M, c[0], c[2], 0.1);
     collide(M, -0.5, 0.45, 0.4, -0.35, 0.3, -0.3, 0.6);
+    // on the board: bolts of cloth; from the lane's pole a string of slippers by their heels; a lamp under the cloth
+    [V.teal, V.saffron, V.linen].forEach((c, k) => B.add(B.cyl(0.065, 0.065, 0.42 + k * 0.05, 7, 1), ch(M, -0.05 + (k - 1) * 0.3 * Math.cos(0.75), 0.335, 0.05 - (k - 1) * 0.3 * Math.sin(0.75), 0, 0.75 + 0.1 * k, Math.PI / 2), { color: worn(c, rng, 0.3), moss: 0, ground: g - 3, flat: true }));
+    for (let k = 0; k < 4; k++) { const hx = c[0] - 0.12 - k * 0.04, hy = c[1] - 0.25 - k * 0.22; beam(B, M, [c[0], hy + 0.1, c[2]], [hx, hy, c[2] + 0.05], 0.008, { color: V.rope, moss: 0, ground: g - 3 }); B.add(B.rock(0.07, 0, 1.5, 0.5, 0.7), ch(M, hx, hy - 0.02, c[2] + 0.05, 0, k, 0.5), { color: worn([V.madder, V.saffron, V.teal, V.linen][k], rng, 0.25), moss: 0, ground: g - 3, flat: true }); }
+    { const lp = world(M, -0.2, 2.38, 0.1); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, 'ruby', 0.6); lamps.push({ x: lp.x, y: lp.y, z: lp.z }); beam(B, M, [-0.2, 2.38, 0.1], [-0.2, 2.62, 0.1], 0.008, { color: V.rope, moss: 0, ground: g - 3 }); }
     place('the three-cornered cloth: its board', M, -0.05, 0.28, 0.05, 'a bare board a hand off the ground under the cloth (slippers); the seller sits on the mat behind it');
   }
   // the salt-weigher's
@@ -172,7 +211,12 @@ export async function build(ctx) {
     for (const [k, yy] of [[-1, 1.5], [0, 1.6], [1, 1.5]]) beam(B, M, [0.97 + k * 0.03, yy, -0.93], [0.97 + k * 0.16, yy + 0.05, -0.8], 0.022, tw);
     B.add(B.rock(0.13, 0, 0.8, 1.5, 0.7), ch(M, 0.82, 1.36, -0.79), { color: worn(V.linen, rng, 0.3), moss: 0, ground: g - 3, flat: true });
     B.add(B.cyl(0.05, 0.035, 0.1, 6, 1), ch(M, 0.97, 1.5, -0.79), brass);
-    collide(M, -1.2, 0.02, 1.2, 0.02, 0.3, -0.3, 1.22); post(M, 0.96, -0.94, 0.1); post(M, -0.1, -0.85, 0.22, -0.3, 0.75);
+    collide(M, -0.95, 0.02, 0.95, 0.02, 0.3, -0.3, 1.22); post(M, 0.96, -0.94, 0.1); post(M, -0.1, -0.85, 0.22, -0.3, 0.75);
+    roofed(M, g, 1.42, -1.2, 0.85, 2.55, 2.12, worn(V.teal, rng, 0.3), 0.35);
+    // salt: three cones off the pan-house's moulds and a broken block, pale in any light
+    const salt = { color: new THREE.Color('#d9d2c4'), moss: 0, ground: g - 3, emit: [0.05, 0.048, 0.045, 2] };
+    for (const [sx, sz, sh2] of [[-0.12, 0.08, 0.24], [0.14, -0.06, 0.2], [0.36, 0.1, 0.17]]) B.add(B.cyl(0.012, sh2 * 0.42, sh2, 7, 1), ch(M, sx, by + sh2 / 2, sz, 0, sx * 9, 0), salt);
+    B.add(B.box(0.2, 0.11, 0.15, { seg: 9, chip: 0.03 }), ch(M, 0.52, by + 0.055, -0.1, 0, 0.5, 0), salt);
     place('the salt-weigher\'s plank', M, 0, 0.9, 0.02, 'a bare plank on two drums: salt by the thumb; the weigher sits on the stool behind');
     place('the Twk-men\'s perch', M, 0.87, 0.95, 0.16, 'a perch a thumb high at the plank\'s west end: a rider or two, their dragonflies on the twig');
     place('the pedlar\'s peg', M, 1.13, 1.55, -0.8, 'the bare peg of three on the post: his sack hangs here when he is in');
@@ -189,7 +233,11 @@ export async function build(ctx) {
     B.add(B.rock(0.11, 0, 1, 0.6, 1), ch(Mb, -0.7, 1.1, -0.3), stoneO(g, 0.25));
     for (const s of [-1, 1]) B.add(B.rock(0.2, 0, 1, 0.9, 1), ch(M, s * 0.55, 0.13, -1.1), stoneO(g, 0.2));
     B.add(B.box(1.5, 0.05, 0.3, { seg: 9 }), ch(M, 0, 0.35, -1.1, 0, 0.04, 0), wood(0.25));
-    collide(M, -0.5, 0, 0.5, 0, 0.6, -0.4, 1.3); collide(M, -0.6, -1.1, 0.6, -1.1, 0.2, -0.3, 0.7);
+    collide(M, -0.45, 0, 0.45, 0, 0.55, -0.4, 1.2); collide(M, -0.6, -1.1, 0.6, -1.1, 0.2, -0.3, 0.7);
+    roofed(M, g, 1.3, -1.55, 0.8, 2.7, 2.2, worn(V.madder.clone().lerp(V.saffron, 0.5), rng, 0.3), -0.3);
+    // the news: a cord between the front poles hung with knotted strings, a tag at each one's end (what is known, by the knot); a stranger reads none of it and counts them
+    beam(B, M, [-1.3, 2.02, 0.8], [1.3, 2.02, 0.8], 0.012, { color: V.rope, moss: 0, ground: g - 3 });
+    for (let k = 0; k < (low ? 6 : 11); k++) { const x = -1.1 + k * (2.2 / (low ? 5 : 10)), len = 0.3 + rng() * 0.55; beam(B, M, [x, 2.02, 0.8], [x + (rng() - 0.5) * 0.03, 2.02 - len, 0.8], 0.01, { color: worn(pick([V.rope, V.madder, V.saffron, V.teal], rng), rng, 0.2), moss: 0, ground: g - 3 }); B.add(B.box(0.06, 0.09, 0.012, { seg: 9 }), ch(M, x, 2.02 - len - 0.04, 0.8, 0, rng() * 0.6 - 0.3, 0), { color: worn(pick([V.linen, V.saffron, L.gilt], rng), rng, 0.25), moss: 0, ground: g - 3 }); }
     place('the keep\'s block', M, -0.6, 0.95, 0, 'a counter that is a block of the keep, a cloth over one end: news; the seller sits on the plank behind');
   }
 
@@ -229,6 +277,7 @@ export async function build(ctx) {
         tops.push(top);
       }
       for (let i = 0; i < n; i++) beam(B, M, tops[i], tops[i + 1], 0.028, raw());
+      collide(M, bx - len / 2 + 0.2, bz, bx + len / 2 - 0.2, bz, 0.42, -0.3, 2.4, { stand: false }); // (nobody walks through a row of poles)
     }
     // pot herbs in the northern bed, low
     for (let i = 0; i < (low ? 5 : 9); i++) { const x = beds[0][0] - 1.5 + i * 0.36 + rng() * 0.1, z = beds[0][1] + (rng() - 0.5) * 0.5; if (!nearHeap(x, z, 0.4)) leafy(M, x, 0.16, z, 0.13 + rng() * 0.07, i % 3 ? LEAF_D : LEAF); }
@@ -250,7 +299,7 @@ export async function build(ctx) {
     B.add(B.rock(0.27, 0, 1, 0.8, 1), ch(W, butt[0], butt[1] - 0.2, butt[2] - 0.1), stoneO(gw, 0.2)); // the counterweight, lashed on
     beam(B, W, tip, [tip[0], 1.02, tip[2] + 0.03], 0.014, { color: V.rope, moss: 0, ground: gw - 3 });
     B.add(B.cyl(0.13, 0.1, 0.24, 8, 1), ch(W, tip[0], 0.9, tip[2] + 0.03), wood(0.3));
-    ctx.addCollider({ x: f.x, z: f.z, r: 0.7, y: gw - 0.3, h: 1.05 }); post(W, fork[0], fork[2], 0.12, 0, 2.6);
+    ctx.addCollider({ x: f.x, z: f.z, r: 0.7, y: gw - 0.3, h: 1.05, stand: false }); post(W, fork[0], fork[2], 0.12, 0, 2.6);
     place('the well', W, 0.9, 0, -0.2, 'someone drawing water, a hand on the sweep\'s rope');
     place('the Grudge: the gardener', M, 1.5, 0, -0.8, 'the gardener, by the spade stood in the middle bed, glaring at a heap');
   }
@@ -303,6 +352,7 @@ export async function build(ctx) {
       B.add(B.box(w - 0.5, 0.06, 0.5, { seg: 9, chip: 0.012 }), ch(M, 0.02, 0.85, d - 0.25, 0, 0.01, 0), { color: worn(L.wood, rng, 0.25), moss: 0.06, ground: g - 2 });
       collide(M, -w / 2 + 0.35, d - 0.25, w / 2 - 0.35, d - 0.25, 0.3, -0.4, 1.3);
       // shelves on pegs in the face, bare; under the roof's beam a lamp (the oil-seller's is lit)
+      collide(M, -w / 2 + 0.5, 0.08, w / 2 - 0.5, 0.08, 0.16, 1.1, 0.75, { stand: false }); // (the shelves, at a head's height)
       for (const yy of oil ? [1.2, 1.65] : [1.35]) { for (const s of [-1, 1]) beam(B, M, [s * (w / 2 - 0.6), yy - 0.03, -0.3], [s * (w / 2 - 0.6), yy - 0.03, 0.22], 0.04, wood(0.2)); B.add(B.box(w - 0.9, 0.035, 0.26, { seg: 9 }), ch(M, 0, yy + 0.01, 0.08), wood(0.15)); place(`${name}: shelf`, M, 0, yy + 0.03, 0.08, 'a bare shelf on pegs in the giants\' face'); }
       if (oil) {
         const lp = world(M, 0.35, hf - 0.005, d); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, 'amber', 0.75); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
@@ -314,7 +364,7 @@ export async function build(ctx) {
 
   // ---------------------------------------------------------------- the Leave: where the village ends and the road begins
   {
-    for (const [name, n, lamp] of [['leave-east', 4, true], ['leave-west', 2, false]]) {
+    for (const [name, n, lamp] of [['leave-east', 4, true], ['leave-west', 2, false], ['west-post-1', 3, true], ['west-post-2', 3, true]]) { // (the last two: the west way round the house, the path P9)
       const f = P.fixture(name), g = G(f.x, f.z), M = frame(f, g);
       let y = -0.25, lx = 0, lz = 0;
       for (let i = 0; i < n; i++) { const h = 0.78 + rng() * 0.1; PARTS.heliarch.drum(B, ch(M, lx, y, lz, 0, rng() * 3, 0), { r: 0.36 - i * 0.012, h, moss: 0.5 - i * 0.08 }); y += h - 0.005; lx += (rng() - 0.5) * 0.05; lz += (rng() - 0.5) * 0.05; }
@@ -331,7 +381,7 @@ export async function build(ctx) {
         PARTS.heliarch.drum(B, ch(M, -0.9, 0.3, 0.5, Math.PI / 2 - 0.06, 0.7, 0), { r: 0.35, h: 0.8, moss: 0.6 }); PARTS.heliarch.capital(B, ch(M, -1.75, 0.34, -0.2, 0, 0.2, Math.PI / 2 + 0.2), { r: 0.33 }); // (away from the kerb, which lies to this post's +x)
         const a = world(M, -0.9, 0, 0.5); ctx.addCollider({ x: a.x, z: a.z, r: 0.5, y: g - 0.3, h: 0.95 }); const b = world(M, -1.75, 0, -0.2); ctx.addCollider({ x: b.x, z: b.z, r: 0.45, y: g - 0.3, h: 0.9 });
       }
-      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a post at the Leave (${name})`, x: f.x, y: g - 0.25, z: f.z, mount: 'ground', r: 0.36 });
+      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a lamp post (${name})`, x: f.x, y: g - 0.25, z: f.z, mount: 'ground', r: 0.36 });
     }
     const a = P.fixture('leave-east'); place('the Leave', mat(a.x, G(a.x, a.z), a.z), -1.2, 0, 1.0, 'someone leaving, or looking back, under the last lamp');
   }
@@ -340,6 +390,18 @@ export async function build(ctx) {
   {
     const D = P.HOUSE.door;
     for (let j = 0; j < 3; j++) for (let x = D.x - 1.5 + (j % 2) * 0.3; x < D.x + 1.6;) { const w = 0.6 + rng() * 0.5; if (rng() < 0.85 && P.radiusOf(x + w / 2, D.z + 0.95 + j * 0.62) > P.HAHA + 2.75) flag(x + w / 2, D.z + 0.95 + j * 0.62, w - 0.03, 0.59); x += w; }
+    // the south door says come in: its leaf stood open against the wall, a sign on a bracket over it
+    { const g = G(D.x + 0.7, D.z + 0.7), Ml = mat(D.x + 0.68, g - 0.02, D.z + 0.66, 0, Math.PI / 2 - 0.12, 0);
+      leaf(B, Ml, 1.16, 2.05, worn(L.paint[2], rng, 0.3), rng, { plain: low }); ctx.addCollider({ x1: D.x + 0.68, z1: D.z + 0.1, x2: D.x + 0.75, z2: D.z + 1.2, r: 0.1, y: g - 0.3, h: 2.2, stand: false });
+      if (!low) hangSign(B, mat(D.x - 0.95, g + 2.75, D.z + 0.02), rng, { size: 0.45, reach: 0.7 }); }
+    // the village's edge frays past the Leave: a last length of wall broken down, a midden of sherds against it, flags farther and farther apart down the kerb
+    { const a = P.fixture('leave-west'), kx = 0.5, kz = 0.86, wx = a.x - 2.6, wz = a.z + 2.4, gw = G(wx, wz), Mw = mat(wx, gw, wz, 0, Math.atan2(kx, kz), 0);
+      [0.95, 0.7, 0.42, 0.2].forEach((h, k) => B.add(B.box(0.3 + (k % 2) * 0.02, h + 0.4, 1.0, { seg: 0.8, chip: 0.06, chipTop: true, seed: k + 3 }), ch(Mw, 0, h / 2 - 0.2, k * 0.98), { color: worn(V.mud, rng, 0.2, 0.16), moss: 0.5, ground: gw, disp: 0.02, dispScale: 2 }));
+      collide(Mw, 0, -0.4, 0, 2.5, 0.2, -0.3, 0.9);
+      for (let k = 0; k < (low ? 5 : 10); k++) B.add(B.rock(0.12 + rng() * 0.16, 0, 1, 0.45, 1), ch(Mw, 0.45 + rng() * 0.9, 0.04 + rng() * 0.12, 0.2 + rng() * 1.6, rng(), rng() * 3, rng()), { color: worn(pick([V.mud, L.tile[0], N.milk, V.dirt], rng), rng, 0.3), moss: 0.3, ground: gw });
+      for (let k = 0; k < 6; k++) { const t = 3 + k * (1.3 + k * 0.5); flag(a.x + 1.4 + kx * t + (rng() - 0.5) * 0.8, a.z - 0.8 + kz * t + (rng() - 0.5) * 0.8, 0.6 + rng() * 0.3, 0.7, rng()); } }
+    // the market's ground flagged where feet go: before the weigher's and the news-seller's, close-set, a flag gone here and there
+    for (let z = -29.5; z < -27.25; z += 0.74) for (let x = 103.2 + ((z * 10) & 1) * 0.3; x < 110.6;) { const w = 0.62 + rng() * 0.4; if (rng() < 0.84 && !P.FIXTURES.some((f) => Math.hypot(f.x - x - w / 2, f.z - z) < f.r + 0.25)) flag(x + w / 2, z, w - 0.04, 0.7, (rng() - 0.5) * 0.06); x += w; }
     for (const lane of ['wall-lane', 'ramp-cut'].map((n) => P.LANES.find((l) => l.name === n))) for (let i = 0; i < lane.pts.length - 1; i++) {
       const a = lane.pts[i], b = lane.pts[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ry = Math.atan2(b[0] - a[0], b[1] - a[1]);
       for (let s = i || lane.name !== 'wall-lane' ? 0.4 : 2.2; s < len; s += 0.86) { if (rng() < (i === 2 ? 0.6 : 0.3)) continue; const off = (rng() - 0.5) * (lane.width - 1.1); flag(a[0] + (b[0] - a[0]) * s / len + Math.cos(ry) * off, a[1] + (b[1] - a[1]) * s / len - Math.sin(ry) * off, 0.55 + rng() * 0.3, 0.7 + rng() * 0.2, ry + (rng() - 0.5) * 0.2); }

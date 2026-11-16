@@ -60,7 +60,7 @@ export function buildMoles(ctx, { motif }) {
 
   // ---- the 30 slots: within the site, a heap's breadth apart, off the causeway's verge
   const slots = [];
-  for (const gap of [1.4, 1.2, 1.0, 0.8]) for (let k = 0; k < 2000 && slots.length < SLOTS; k++) { // (closer only where the free earth will not hold thirty: the code below needs every slot)
+  for (const gap of [1.6, 1.4, 1.2, 1.0, 0.8]) for (let k = 0; k < 2000 && slots.length < SLOTS; k++) { // (closer only where the free earth will not hold thirty: the code below needs every slot)
     const a = rng() * 6.2832, r = Math.sqrt(rng()) * (SITE.r - 0.6), x = SITE.x + Math.cos(a) * r, z = SITE.z + Math.sin(a) * r;
     if (terrain.causewayDistance(x, z) < 4 || terrain.slopeAt(x, z) > 0.45 || radiusOf(x, z) < HAHA + 3.6 || houseOut(x, z) < 1.5 || !molesMay(x, z)) continue; // (not on the ramp along the lowest riser, nor against the house's wall, nor under a stall, the well or a lane of the Pennyworth: v15-Q4)
     if (slots.some((s) => hyp(s.x - x, s.z - z) < gap)) continue;

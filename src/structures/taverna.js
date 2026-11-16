@@ -57,11 +57,12 @@ export function buildTaverna(ctx, B, env) {
       const x = cx + lx, z = cz + lz;
       const gm = ground.groundAt(x, z), gb = ground.minGround(x, z, 1.0) - 0.3;
       // kept up: the Late folk patch their walls; v7's are broken down in stretches
-      let h = wallH + 0.15 * N2(tm * 0.3, lx + lz) - (!S && N2(tm * 0.11 + lx, 3.3) > 0.45 ? 1.4 + rng() : 0);
+      const doorBay = si === 2 && Math.abs(x - HOUSE.door.x) < 0.5, brk = !S && N2(tm * 0.11 + lx, 3.3) > 0.45 ? 1.4 + rng() : 0; // (?strata=0 breaks walls down in stretches; never the door's bay, whose cut is taller than a broken wall)
+      let h = wallH + 0.15 * N2(tm * 0.3, lx + lz) - (doorBay ? 0 : brk);
       const H = h + gm - gb;
       // where the plaster has fallen the wall shows what it was built of: Heliarch ashlar, coursed
       const bare = N2(x * 0.2, z * 0.2) > (S ? 0.62 : 0.1);
-      const cut = si === 2 && Math.abs(x - HOUSE.door.x) < 0.5 ? CUT_H : 0; // the south door's bay: only the wall over the cut is the old wall
+      const cut = doorBay ? CUT_H : 0; // the south door's bay: only the wall over the cut is the old wall
       B.add(B.box(w + 0.02, H - (cut ? cut + gm - gb : 0), th, { seg: 0.7, chip: 0.08, chipTop: true, seed: t * 7, uvOffset: [t, 0] }), mat(x, gb + H / 2 + (cut ? (cut + gm - gb) / 2 : 0), z, 0, yaw, 0), {
         color: bare ? vary(S ? Hc.stone : tints.stone, rng, 0.05) : vary(wash[si], rng, 0.05), course: bare ? 0.32 : 0, moss: bare ? 0.5 : pmoss, ground: gm, disp: cut ? 0 : 0.02, dispScale: 2,
       });
