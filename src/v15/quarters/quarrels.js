@@ -4,7 +4,7 @@
 //
 // What stands here, every coordinate from src/v15/plan.js (the plots, QUARRELS, QUARRELS_ROUTE):
 //   the Brow House        quarrels-house-2: a narrow Late house on the rim at the west end, the first lit window
-//   the Leaning Lodging   quarrels-house-1: a Late house whose back is the west flank of the keep's fallen face (the
+//   the Propped House   quarrels-house-1: a Late house whose back is the west flank of the keep's fallen face (the
 //                         slab, plan.SLAB); its roof is level with the slab where they meet, so the slab is its stair
 //   the Saint's Rest      the square at the Heliarch stair's head: Heliarch hexagons relaid, a keep slab, the stock
 //   the Smoking Saint     the lime kiln, in the head of the keep's fallen colossus, lying in the square's middle
@@ -58,7 +58,7 @@ export async function build(ctx) {
 
   // the keep's fallen face, as the keep builds it: the plan's copy must be the same slab
   { const S = KEEP_BUILT.slab, T = P.SLAB;
-    if (!S || S.b !== T.b || S.r0 !== T.r0 || S.Ls !== T.Ls || S.W !== T.W || Math.abs(S.yHi - T.yHi) > 1e-6) console.warn('quarrels: the keep\'s fallen slab is not where src/v15/plan.js SLAB says: the Leaning Lodging will not meet it'); }
+    if (!S || S.b !== T.b || S.r0 !== T.r0 || S.Ls !== T.Ls || S.W !== T.W || Math.abs(S.yHi - T.yHi) > 1e-6) console.warn('quarrels: the keep\'s fallen slab is not where src/v15/plan.js SLAB says: the Propped House will not meet it'); }
   const inSlab = (x, z, pad = 0) => { const dx = x - P.KEEP.x, dz = z - P.KEEP.z, al = dx * P.SLAB.f[0] + dz * P.SLAB.f[1] - P.SLAB.r0, sd = dx * P.SLAB.side[0] + dz * P.SLAB.side[1]; return al > -pad && al < P.SLAB.len + pad && Math.abs(sd) < P.SLAB.W / 2 + pad; };
 
   // ---------------------------------------------------------------- the plots
