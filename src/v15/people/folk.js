@@ -92,7 +92,7 @@ export const FOLK = [
       f.hR.copy(butt).addScaledVector(u, 0.45);
       f.hL.copy(butt).addScaledVector(u, 0.95).lerp(_v.set(0.04, 1.62, 0.14), S.wipe); // (or her wrist to her brow)
     },
-    colliders: (f) => [{ x: f.x, z: f.z, r: 0.3, y: f.y, h: 1.8, stand: false }],
+    colliders: (f) => [{ x: f.x, z: f.z, r: 0.2, y: f.y, h: 1.8, stand: false }], // (0.2: at 0.3 the geometry walk's stand by her stepped out to where a keep block's back shows)
   },
 
   // ---------------------------------------------------------------- the copyist
