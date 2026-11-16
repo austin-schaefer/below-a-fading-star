@@ -56,3 +56,51 @@ other drop is open. Written into `world-code` ("Floors, corridors and edges").
 
 Floors that disagree with the drawn ground (W5's): none listed beyond the Nave's hole, where the terrain ran unbroken
 over the drawn hole (fixed here, in `nave.js`, because it was the reason the unseen ring existed).
+
+## The tests (meaning changed, not strength)
+
+- `edges-test`: 214 rows before, 177 after (the five bearings per hole now report as one row each for "over" and
+  "landed where drawn"). Every "never passes the lip" row became "walks to the lip and over it, nothing unseen stops
+  them" plus "lands where the drawing says"; new rows: a walk steered along the lip (0.15 rad in at the ragged holes,
+  0.25 at the Span's crack) never falls; the Noon Road's, the Gulf's and the slabs' sides: off into the water, the
+  catch, or the floor, never up a wall.
+- `heights-test`: 198 rows after merging next (210 before the merge, 210 before this work): the bridge's held sides, the dwell, the hurry-drift and the Span's hop-slip rows
+  rewritten (over and sane); the fall's rows: on by default, waking on the perch facing the lip.
+- `lift-test` (45), `settings-test` (86), `paths-test` (81), `walk-test` (13): the fall rows (on by default, woken on
+  the gallery), the Pit's rim (open), the crack (a walk goes over).
+- `tools/edge-walk.mjs` (new, not in the gate): an edge done as a visitor does it, on keys or the touch stick.
+
+## The gate's lines
+
+`ONLY=edges,heights,walk,hop,touch,ways,village,settings,acts,stair,lift,house,paths tools/suite.sh 8172`, after
+merging origin/next: 13 tests, 0 failed (settings 86, paths 81, village 687, ways 219, house 20, walk 13, hop 25,
+edges 177, heights 198, lift 45, touch 43, acts 163, stair 5 PASS lines). Shared code changed (`src/controls.js`):
+the whole suite is the orchestrator's.
+
+## Frames (shots/wip/, in order, NN 00 to 11)
+
+Keys, mouse captured: `edge-span-keys-*` (held, looking down 56 m, over, dark, woken on the deck),
+`edge-stair-keys-*` (the staircase's top, 100 m), `edge-nave-keys-*`, `edge-lappet-keys-*` (crown to the High tread,
+4 m), `edge-leads-keys-*` (roof to the Low lane), `edge-icefall-keys-*` (block to T1). Touch stick:
+`edge-span-touch-*`, `edge-stair-touch-*`, `edge-lappet-touch-*`, `edge-leads-touch-*`.
+
+## What is weak
+
+- The Pit's rim is a crust of banks steeper than standable running off its mapped line: a walk drifting in can step
+  onto one and slide down to the floor (`edge-pit-keys-*` shows a walker sliding, not a clean lip). edges-test claims
+  the weaker thing there.
+- At the Nave's ragged rim a walk 25 degrees off the lip's line can still go over at a jag; 15 degrees holds.
+- The lift gallery's rail gaps: the walk in `edge-gallery-*` does not show going over (the walker is stopped short at
+  bay 5; lift-test's simulated fall off the same gaps passes). The touch walks are not steered (a second finger
+  restarted the stick in the tool), so the touch Nave and gallery runs show nothing useful.
+- Drawn rails held by `keep` (the staircase's rope, the lift's rails) cannot be hopped; the brief wanted a rope rail
+  hoppable. Only collider rails and parapets (the Span's) are hopped over.
+- W4's parapets: where a village parapet is drawn without a collider and its floor was held by `keep`, the Lappet's
+  treads and the Leads are now `keep: 'up'`, so such a parapet would be walked through. W4 should give its parapets
+  colliders (or a keep function).
+- settings-test failed once in the batch (the gear click timed out under load) and passed alone (86/86).
+
+## Defaults taken
+
+The fall on by default; waking 3.5 m back; the guard's 40/35 degree margins; the Nave's west water edge left held
+(rock above it).
