@@ -27,7 +27,10 @@ export function lastArch(B, M, o) {
   }
   // the arch and the wall over it, to the channel's bed
   { const sh = new THREE.Shape(), e = pl / 2 + half + 0.02;
-    sh.moveTo(-e, T); sh.lineTo(e, T); sh.lineTo(e, sp); sh.lineTo(half, sp); sh.absarc(0, sp, half, 0, Math.PI, false); sh.lineTo(-e, sp); sh.lineTo(-e, T);
+    // (the top edge in five lengths: in one, each face's top was a 7 m sliver from corner to corner, and the geometry
+    // check, which takes only the faces that reach the crown's walk, took the far face's sliver without the soffit under
+    // it and saw its back through the arch from the walk, v15-W2)
+    sh.moveTo(-e, T); for (let k = 1; k <= 5; k++) sh.lineTo(-e + (2 * e * k) / 5, T); sh.lineTo(e, sp); sh.lineTo(half, sp); sh.absarc(0, sp, half, 0, Math.PI, false); sh.lineTo(-e, sp); sh.lineTo(-e, T);
     B.add(B.extrude(sh, aw, low ? 8 : 12), ch(M, 0, 0, -span / 2, 0, -Math.PI / 2, 0), stone()); }
   // past P1: the haunch of the arch that is gone, and the bed running out on it to a broken end
   { const sh = new THREE.Shape(), a1 = pl / 2 + over;

@@ -101,9 +101,10 @@ export const FOLK = [
     place(ctx, plan, Q) {
       if (!Q.quarrels?.places) return null;
       const p = plan.plot('new-house'), [fx, fz] = p.face, rx = -fz, rz = fx;
-      // before the Unroofed House's east end, on the brink, facing along its front toward its door (the Drag and the way in are 2 m off)
-      const x = p.x + fx * (p.d / 2 + 0.75) + rx * 3, z = p.z + fz * (p.d / 2 + 0.75) + rz * 3;
-      return { x, y: floorY(ctx, x, z, plan.LEVEL.crown.y), z, yaw: yawOf(-rx, -rz) };
+      // before the Unroofed House's west end, on the brink, facing along its front toward its door (v15-W2: at the east
+      // end he sat in the mouth of the scaffold's way up, which is climbed now; this end is 1.4 m clear all round)
+      const x = p.x + fx * (p.d / 2 + 0.75) - rx * 3, z = p.z + fz * (p.d / 2 + 0.75) - rz * 3;
+      return { x, y: floorY(ctx, x, z, plan.LEVEL.crown.y), z, yaw: yawOf(rx, rz) };
     },
     body: { pose: 'sit', hs: 0.46, robe: { cloth: C.undyed, dark: rgb('#3e382e'), seed: 4.4, patch: 0.15, dust: [C.lime, 0.35] }, apron: C.leather, rolled: true, legs: rgb('#6a5a44'), hat: 'cap', hatC: rgb('#7a6a4a'), beard: true, hairC: rgb('#3a2a1e'), belly: 0.4, sign: true },
     props(P, base, f, at, low) {

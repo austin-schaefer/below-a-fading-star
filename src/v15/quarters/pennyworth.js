@@ -180,7 +180,7 @@ export async function build(ctx) {
     }
   }
 
-  // ---------------------------------------------------------------- the Spilt Measure's broken mouth: beans in pots, a ladder to its roof
+  // ---------------------------------------------------------------- the Spilt Measure's broken mouth: beans in pots
   {
     const p = P.plot('carrier-house'), R = rec('carrier-house');
     if (p && R) {
