@@ -175,11 +175,15 @@ export async function build(ctx) {
     for (const s of [-1, 1]) {
       const a = x0 + rng() * 0.14, b = x1 - rng() * 0.14, z = ROAD.zc + s * (hw + 0.012), sk = (rng() - 0.5) * 0.03, col = DRIFT[(salt + (s > 0 ? 1 : 0)) % 3];
       const bow = s > 0 ? 0.012 + rng() * 0.012 : 0;
-      B.box((a + b) / 2, top - 0.03 + bow, z, (b - a) / 2, 0.026, hw, sk, col, col, 0.25);
-      B.box((a + b) / 2, top - 0.03 + bow * 1.6, z, (b - a) / 6, 0.027, hw * 0.98, sk, col, col, 0.25); // where it bows most
+      // a thick old plank (8 cm), its top at the floor
+      B.box((a + b) / 2, top - 0.044 + bow, z, (b - a) / 2, 0.04, hw, sk, col, col, 0.25);
+      B.box((a + b) / 2, top - 0.044 + bow * 1.6, z, (b - a) / 6, 0.041, hw * 0.98, sk, col, col, 0.25); // where it bows most
     }
+    // a batten across both at each end, a little askew, lashed down: the boards are one thing, laid on and tied
     for (const x of [x0 + 0.22, x1 - 0.22]) {
-      lash([x, top + 0.006, ROAD.zc - PATCH.half - 0.02], [x + 0.03, top + 0.006, ROAD.zc + PATCH.half + 0.02]);
+      const bc = DRIFT[(salt + 2) % 3];
+      B.box(x, top + 0.012, ROAD.zc, 0.055, 0.018, PATCH.half + 0.04, (rng() - 0.5) * 0.08, bc, bc, 0.25);
+      lash([x - 0.07, top + 0.032, ROAD.zc - PATCH.half - 0.02], [x - 0.04, top + 0.032, ROAD.zc + PATCH.half + 0.02]);
       for (const s of [-1, 1]) lash([x, top - 0.02, ROAD.zc + s * (PATCH.half + 0.02)], [x + 0.05, top - 0.45, ROAD.zc + s * (PATCH.half + 0.3)]);
     }
   };

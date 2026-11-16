@@ -27,8 +27,9 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5) {
         // worn through, the glaze shows the milk body under it (a milk field wears to a duller biscuit)
         vec3 ngBody = vec3(0.58, 0.55, 0.47) * (0.8 + 0.3 * ngN(ngW * 8.0));
         diffuseColor.rgb = mix(diffuseColor.rgb, ngBody, ngWorn * 0.65);
-        float ngChip = smoothstep(0.78, 0.8, ngN(ngW * 3.1 + 9.0)) * smoothstep(0.4, 0.6, ngN(ngW * 0.8 + 5.0));
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.12, 0.1, 0.09), ngChip);
+        // chipped: ragged flakes off the glaze to the duller body, never round dark spots (they read as rivets)
+        float ngChip = smoothstep(0.8, 0.83, ngN(ngW * 3.1 + 9.0) + 0.12 * ngN(ngW * 14.0)) * smoothstep(0.45, 0.65, ngN(ngW * 0.8 + 5.0));
+        diffuseColor.rgb = mix(diffuseColor.rgb, ngBody * 0.55, ngChip * 0.8);
         // streaks run down it from every rib and ring
         float ngS = smoothstep(0.55, 0.8, ngN(vec3(ngW.x * 3.0, ngW.y * 0.35, ngW.z * 3.0)));
         diffuseColor.rgb *= 1.0 - 0.38 * ngS;
@@ -90,22 +91,23 @@ export function buildNoon(ctx, { lit, below, extras = [] }) {
   P.node(B, new THREE.Matrix4().makeTranslation(NODE.x, NODE.y, NODE.z), { r: NODE.r, lit: NODE.lit, ports: [[Math.PI, 0.05], [0.12, -0.2], [-1.9, 0.1]], pr: 1.05, seg: low ? 16 : 24, wear });
   // the hoops: the line's collars, still standing round the string
   const hoopM = (x) => lineMatrix([x, LINE.y, LINE.z], [1, 0, 0]);
-  // the hoops: great glazed collars, each in its own glaze, a row of amber cells round both faces
-  const cells = low ? 7 : 10;
+  // the hoops: great glazed collars, each in its own glaze, an amber band inlaid round both faces, catching the light
+  // of a lit carrier near it
+  const near = (x) => VESSELS.reduce((m, v) => (v.lit > 0 && v.walked ? Math.max(m, v.lit * Math.max(0, 1 - Math.abs(v.x - x) / 5)) : m), 0);
   HOOPS.forEach((h, i) => {
-    P.collar(B, hoopM(h.x), { r: LINE.hoop, t: LINE.t, a0: h.a0, a1: h.a1, seg: low ? 36 : 56, wear, glaze: GLAZES[(i * 3 + 1) % 4], cells });
+    P.collar(B, hoopM(h.x), { r: LINE.hoop, t: LINE.t, a0: h.a0, a1: h.a1, seg: low ? 36 : 56, wear, glaze: GLAZES[(i * 3 + 1) % 4], inlay: true, inlayLit: 0.6 * near(h.x) });
     if (h.wall) P.tube(B, hoopM(h.x), { r: LINE.r, len: h.wall.len, a0: h.wall.a0, a1: h.wall.a1, ragged: h.wall.ragged, collar: false, seed: 5, seg: low ? 28 : 44, wear, glaze: GLAZES[0] });
   });
   for (const [i, len, a0, a1, rag] of SHARDS) P.tube(B, hoopM(HOOPS[i].x), { r: LINE.r, len, a0, a1, ragged: rag, collar: false, seed: 9 + i, seg: low ? 28 : 44, wear, glaze: GLAZES[(i + 1) % 4] });
   // one hoop fallen off its line, tipped half under the water, its north rim propped up between two columns
-  P.collar(B, lineMatrix([251.6, WY - 0.3, 38.0], [0.15, 0.85, 0.5], [0, -0.5, 0.85]), { r: LINE.hoop, t: LINE.t, a0: -2.6, a1: 2.2, seg: low ? 36 : 56, wear, glaze: GLAZES[2], cells });
+  P.collar(B, lineMatrix([251.6, WY - 0.3, 38.0], [0.15, 0.85, 0.5], [0, -0.5, 0.85]), { r: LINE.hoop, t: LINE.t, a0: -2.6, a1: 2.2, seg: low ? 36 : 56, wear, glaze: GLAZES[2], inlay: true });
   // the elbow: the line turning up toward the sky, torn open on its under side, its mouth to the hole
   const F = ELBOW.f, mouth = { p: null, d: null };
   for (let i = 0; i < F.length - 1; i++) {
     const f = F[i], p = elbowAt(f), q = elbowAt(F[i + 1]), d = [q[0] - p[0], q[1] - p[1], 0], len = Math.hypot(d[0], d[1]);
     const up = [Math.sin(f), Math.cos(f), 0], last = i === F.length - 2;
     // (in this frame + is south: the wall is kept over the crown and down the north side, clear of the road)
-    P.tube(B, lineMatrix(p, d, up), { r: LINE.r, len: len + 0.05, a0: i === 0 ? -2.5 : -2.7, a1: i === 0 ? -0.6 : 0.75 - i * 0.12, ragged: last ? 1 : 0.25, collar: i > 0, seed: 21 + i, seg: low ? 28 : 44, wear, glaze: GLAZES[i % 2 ? 3 : 0], cells: i > 0 ? cells : 0 });
+    P.tube(B, lineMatrix(p, d, up), { r: LINE.r, len: len + 0.05, a0: i === 0 ? -2.5 : -2.7, a1: i === 0 ? -0.6 : 0.75 - i * 0.12, ragged: last ? 1 : 0.25, collar: i > 0, seed: 21 + i, seg: low ? 28 : 44, wear, glaze: GLAZES[i % 2 ? 3 : 0], inlay: i > 0 });
     if (last) { mouth.p = q; mouth.d = [d[0] / len, d[1] / len, 0]; }
   }
   // the spun register: the cradle the elbow hung in. A collector's cell above the torn mouth, on the line it took to
@@ -127,7 +129,7 @@ export function buildNoon(ctx, { lit, below, extras = [] }) {
   // the lesser line's collar before the Heliarchs' south door: it left the hall through it. It stands free of the old
   // frame (0.8 m out, its bore clear of the lintel's corners); its lower arc is under the water, outside the pitched
   // carrier's nose and the boards
-  P.collar(B, lineMatrix([DOOR.x, DOOR.sill + 1.5, DOOR.z - 0.8], [0, 0, 1]), { r: 2.9, t: 0.22, seg: low ? 30 : 44, wear, glaze: GLAZES[1], cells: low ? 7 : 10 });
+  P.collar(B, lineMatrix([DOOR.x, DOOR.sill + 1.5, DOOR.z - 0.8], [0, 0, 1]), { r: 2.9, t: 0.22, seg: low ? 30 : 44, wear, glaze: GLAZES[1], inlay: true });
   // the Late folk's takings
   for (const e of extras) {
     const M = new THREE.Matrix4().makeTranslation(...e.at);
