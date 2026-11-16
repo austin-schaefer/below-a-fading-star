@@ -82,7 +82,7 @@ const MODULES = [
   ['living-still', () => import('./v7/still.js'), M], // v7: CB the Long Sleeper, CI the Stylite, CL the Accrescent (?still=0, ?sleeper=0, ?stylite=0, ?accrescent=0)
   ['living-walkers', () => import('./v7/walkers.js'), M], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
   ['living-workers', () => import('./v7/workers.js')], // v7: BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One (?workers=0)
-  ['living-small', () => import('./v7/small.js')], // v7: CM the Indistinct, CO the Repetend, CQ the Simulacrum (?small=0)
+  ['living-small', () => import('./v7/small.js')], // v7: CO the Repetend, CQ the Simulacrum (?small=0)
   ['shafts', () => import('./v8/shafts.js')], // v8-02: shafts of ember light in the Deodand Wood (?shafts=0)
   ['threads', () => import('./v8/threads.js'), M], // v8-04: stories with two ends (the traveller, the twelfth chair, the gold from the court; ?threads=0)
   ['twk', () => import('./v8/twk.js')], // v8-07: the Twk-men on their dragonflies, at the gnomons, the house and the spilt salt (?twk=0)

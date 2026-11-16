@@ -196,7 +196,6 @@ export const SITES = {
   sexton:     { x: 55, z: 272, r: 18, block: [40, 70, 264, 284], name: 'The Sexton' },
   stylite:    { x: 268, z: -80, r: 8, on: 'tallestTor', name: 'The Stylite' },
   accrescent: { x: 60, z: -180, r: 3, trailFrom: [40, -265], corridor: 3, name: 'The Accrescent' },
-  indistinct: { x: 40, z: 30, r: 0, ditch: { from: [-21, -29], to: [66, -51] }, name: 'The Indistinct' }, // the ha-ha's ditch, bearings 314-18 from the keep (v15: the Lappet took the north-east arc)
   repetend:   { x: -170, z: -97, r: 0, name: 'The Repetend' }, // the Lynchets' east wall-tops
   scriveners: { x: -100, z: 58, r: 8, name: 'The Scriveners' },
   simulacrum: { x: 20, z: -205, r: 5, name: 'The Simulacrum' },
