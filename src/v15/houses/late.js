@@ -7,7 +7,9 @@
 // o: seed, w (7), d (6), form, h (the roof's height, for a 'yard' or 'long' whose roof must meet a tread above),
 // stair ('front' | 'side' | false), against (true: its back wall is a riser's face and its roof the tread above:
 // a 'yard' of height h with no stair, no parapet at the back and its floor run to the back face, so a walker steps
-// onto it from the tread), shop (true: a shopfront in place of a window), low (the low tier: fewer small things).
+// onto it from the tread), shop (true: a shopfront in place of a window), low (the low tier: fewer small things),
+// and three a quarter gives so its street is not one house twelve times: wash (a THREE.Color, used as given), door
+// (its head: 'horseshoe' | 'ogee' | 'round' | 'rect'), win (every window's: 'rect' | 'ogee' | 'round'). None changes a default.
 // What a form needs: 'yard' 3 x 2.2 (a front stair: 6.5 m of front for a 2.75 m roof, more for a higher), 'tower'
 // 3.4, 'step' 5.2 x 3.4, 'long' 5.6, 'stall' 2.4 x 1.8. A form that does not fit its plot becomes a 'yard' (or a
 // 'stall' under 3 m); a plot under 2.4 x 1.8 throws.
@@ -148,14 +150,15 @@ export function late(B, M, o = {}) {
   if (against && o.h === undefined) throw new Error('late: a house against a riser needs h, the height of the tread above its ground');
   const R = site(M, 'late', { seed, w, d }); R.form = form;
   const base = B.triangles, ds = clamp((d - 3.2) / 2.4, 0, 1); // (how much of each form's setting back a shallow plot can afford)
-  const HM = leaned(M, (rng() - 0.5) * (form === 'yard' ? 0.03 : 0.07), against ? 0 : (rng() - 0.5) * 0.03);
+  const lean = [(rng() - 0.5) * (form === 'yard' ? 0.03 : 0.07), against ? 0 : (rng() - 0.5) * 0.03], HM = leaned(M, lean[0], lean[1]);
+  R.lean = lean; // (how far out of true it stands, per metre of height: what a quarter needs to put a thing on its wall)
   // its wash: cream or limewash, dirty; rarely an old rose or saffron wash nearly gone. One accent paint, one frame
-  const wi = rng(), wash = worn(L.plaster[wi < 0.45 ? 0 : wi < 0.8 ? 3 : wi < 0.9 ? 1 : 2], rng, wi < 0.8 ? 0.05 + rng() * 0.1 : 0.26, 0.08);
+  const wi = rng(), wash0 = worn(L.plaster[wi < 0.45 ? 0 : wi < 0.8 ? 3 : wi < 0.9 ? 1 : 2], rng, wi < 0.8 ? 0.05 + rng() * 0.1 : 0.26, 0.08), wash = o.wash ? o.wash.clone() : wash0; // (o.wash: a quarter's own colour for this house, as given; the seed's draws are the same either way)
   const ai = Math.floor(rng() * 4), paint = L.paint[ai], frame = L.paint[(ai + 1 + Math.floor(rng() * 2)) % 4];
   const zf = d / 2 - 0.15 - rng() * Math.min(0.45, Math.max(0, d - 4.4) * 0.3), zb = against ? o.backZ ?? -d / 2 : -d / 2 + 0.1, side = rng() < 0.5 ? -1 : 1; // (against: the riser's face, where the plan puts it)
-  const doorKind = rng() < 0.6 ? 'horseshoe' : 'ogee';
-  const door = (x, hmax) => { const dw = 0.95 + rng() * 0.22, sp = doorKind === 'ogee' ? 1.25 + rng() * 0.2 : 1.42 + rng() * 0.2; return { door: true, kind: doorKind, x, y: 0, w: dw, sp: Math.min(sp, hmax - 0.75 - dw / 2), paint, frame }; };
-  const win = (x, y, lit, big) => { const ww = (big ? 0.6 : 0.42) + rng() * 0.2; return { kind: rng() < 0.4 ? 'ogee' : 'rect', x, y, w: ww, sp: ww * (0.9 + rng() * 0.6), paint, stop: lit ?? (rng() < 0.45 ? 'lit' : rng() < 0.6 ? 'shut' : 'dark'), one: rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) : 0 }; };
+  const doorKind0 = rng() < 0.6 ? 'horseshoe' : 'ogee', doorKind = o.door || doorKind0; // (o.door: 'horseshoe' | 'ogee' | 'round' | 'rect', a flat lintel)
+  const door = (x, hmax) => { const dw = 0.95 + rng() * 0.22, sp = doorKind === 'ogee' ? 1.25 + rng() * 0.2 : doorKind === 'rect' ? 1.86 + rng() * 0.12 : 1.42 + rng() * 0.2; return { door: true, kind: doorKind, x, y: 0, w: dw, sp: Math.min(sp, hmax - 0.75 - dw / 2), paint, frame }; };
+  const win = (x, y, lit, big) => { const ww = (big ? 0.6 : 0.42) + rng() * 0.2; return { kind: [rng() < 0.4 ? 'ogee' : 'rect', o.win][o.win ? 1 : 0], x, y, w: ww, sp: ww * (0.9 + rng() * 0.6), paint, stop: lit ?? (rng() < 0.45 ? 'lit' : rng() < 0.6 ? 'shut' : 'dark'), one: rng() < 0.3 ? (rng() < 0.5 ? -1 : 1) : 0 }; };
   const shop = (x) => ({ shop: true, kind: 'rect', x, y: 0.98, w: 1.5 + rng() * 0.5, sp: 1.05 + rng() * 0.15 });
   const roofBits = [];
 
