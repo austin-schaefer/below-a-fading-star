@@ -7,7 +7,7 @@
 //   underSlabs(x, z)      true where a built tread of the Elder stair lies over the terrain (src/v15/bones.js)
 import { makeSimplex } from '../noise.js';
 import { col } from '../height/color.js';
-import { HAHA, RISERS, APRON, FADE, HOUSE, Dof, frameOf, villageAmt, benchAmt, footAmt, radiusOf, bearingOf } from './plan.js';
+import { HAHA, RISERS, APRON, FADE, HOUSE, Dof, frameOf, villageAmt, benchAmt, footAmt, radiusOf, bearingOf, leesHead } from './plan.js';
 
 const N = makeSimplex(20261115 + 15);
 const cEarth = col('#75624a'), cPale = col('#94826a'), cDamp = col('#4c4336'), cLime = col('#9d968a');
@@ -29,7 +29,7 @@ export function lappetEarth(x, z) {
   if (r >= HAHA - 0.4) {
     // the Pennyworth: the wedge under the house's south wall, and the lanes round its east side
     const east = sstep(HOUSE.x1 - 1, HOUSE.x1 + 1.5, x) * (1 - sstep(HOUSE.x1 + 7, HOUSE.x1 + 10, x)) * sstep(HOUSE.z0 - 7, HOUSE.z0 - 3, z) * (1 - sstep(HOUSE.z1 + 2, HOUSE.z1 + 8, z));
-    return Math.max(footAmt(x, z, r, b), east);
+    return Math.max(footAmt(x, z, r, b), east, leesHead(x, z)); // (and the Lees' square where it runs out onto the old way's bank: v15-Q3)
   }
   const D = Dof(x, z);
   if (D >= LOW - 1) return benchAmt(b) * sstep(4, 14, b >= 300 ? b - 360 : b); // the Lees (the parterre's end stays lawn)

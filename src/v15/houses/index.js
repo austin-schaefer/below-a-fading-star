@@ -68,6 +68,10 @@ export function makePlot(B, plot, o = {}) {
       B.add(B.box(w, 0.86, 0.3, { seg: 1.2, chip: 0.05, chipTop: true, seed: (q.seed | 0) + 6 }), ch(M, 0, hR + 0.42, z1 - 0.15), { color: worn(H.stone, rng, 0.1, 0.1), course: 0.28, moss: 0.45, ground: g0 + hR });
       R.wall(-w / 2, zm, w / 2, zm, 0, hR, dep / 2); R.wall(-w / 2, z1 - 0.15, w / 2, z1 - 0.15, hR, 0.86, 0.15);
       if (dep > 0.75) R.floor(0, (zR + z1 - 0.3) / 2, w, dep - 0.3, hR, { layer: 1 }); // (under that the tread's own floor reaches the parapet)
+      // An Elder pile's blocks stand 0.6 to 0.9 m in from the plot's back, so between the parapet and the stone a slot
+      // stood open to the bench, the cleft room's plaster white in it from the tread (v15-Q3's report): the packing is
+      // carried on under the stone as a bank a hand above the tread, and the slot's ends with it.
+      if (kind === 'elder') B.add(B.box(w, hR + 0.9, 0.72, { seg: 1.2, chip: 0.07, chipTop: true, seed: (q.seed | 0) + 7 }), ch(M, 0, (hR - 0.1) / 2, z1 + 0.33), { color: worn(H.stone, rng, 0.16, 0.12), course: 0.3, moss: 0.5, ground: g0 });
       R.packed = { z0: zR, z1, y: hR, parapet: 0.86 };
     }
   }
