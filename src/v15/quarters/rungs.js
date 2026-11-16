@@ -326,7 +326,7 @@ export async function build(ctx) {
     KB.add(KB.extrude(shp, w), F.clone().multiply(ROT), { color: mud, moss: 0.3, ground: yL, emit: limeGlow(mud, 0.04) });
     for (let i = 1; i < n; i++) KB.add(box(w - 0.02 - rng() * 0.08, 0.035, 0.085, { chip: 0.01 }), F.clone().multiply(mat(0, -i * rise + 0.008, i * run - 0.045)), { color: worn(V.lime, rng, 0.12 + rng() * 0.25), moss: 0.05, ground: yL - 3, emit: limeGlow(V.lime, 0.1) });
     // the head: planks from the nosing to the first riser
-    ways.bridge(K, { name: 'rungs-gullet-head', a: [cx0 - b[0] * 0.3 + t[0] * sh, yM, cz0 - b[1] * 0.3 + t[1] * sh], b: [hx + b[0] * 0.04, yM, hz + b[1] * 0.04], width: w + 0.1, rails: false, register: false });
+    ways.bridge(K, { name: 'rungs-gullet-head', a: [cx0 - b[0] * 0.3 + t[0] * sh, yM, cz0 - b[1] * 0.3 + t[1] * sh], b: [hx + b[0] * 0.04, yM, hz + b[1] * 0.04], width: w + 0.1, rails: false, register: false, over: [0.35, -0.06] });
     const floor = (x, z) => { const dx = x - hx, dz = z - hz, a = dx * b[0] + dz * b[1], u = dx * t[0] + dz * t[1]; if (a < 0 || a >= len || u > w / 2 + 0.03 || u < -w / 2 - 0.03) return null; return yM - (Math.floor(a / run) + 1) * rise; };
     K.addFloor(floor, { name: G.id, keep: true });
     for (const sd of [-1, 1]) for (let i = 0, m = 4; i < m; i++) { // nobody walks into its mass from the slot beside it
