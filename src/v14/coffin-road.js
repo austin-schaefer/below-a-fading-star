@@ -17,8 +17,8 @@
 import * as THREE from 'three';
 import { NAVE } from '../v5/nave/ground.js';
 import { glowAt } from '../v5/nave.js';
-import { UnderBuilder, underMaterial, installBelow, boxBelow } from './under.js';
-import { buildNoon } from './noon-road.js';
+import { UnderBuilder, underMaterial, installBelow, boxBelow, drawnSurface } from './under.js';
+import { buildNoon, makeGlassTest } from './noon-road.js';
 import { ROAD_Y, SZ, SHALF, FOOT_X, RAFT, NSPUR, SSPUR, ROAD, DOOR, stairHead, makeFloor, CR_OFF, spurY, SLOPE, PATCH } from './coffin-road/plan.js';
 import { MAIN, gapX, NODE } from './noon-road/plan.js';
 import { NOON } from '../v8/strata/noon.js';
@@ -45,7 +45,11 @@ export async function build(ctx) {
   const litAt = ctx.nave.litAt;
   const lit = (x, y, z, out) => { litAt(x, y, z, out); out[2] = glowAt(x, y, z); return out; };
   const B = new UnderBuilder(lit);
-  const g = (x, z) => T.heightAt(x, z);
+  // the turf as drawn round the stair's head (v15-F1, #63): what stands on the rim (the landing's posts, the shears'
+  // feet and padstones, the guys' stakes, the trestles) goes into the drawn ground, not heightAt's, which near the lip
+  // lies over the drawn triangle on high and left a leg's foot in the air
+  const turf = drawnSurface([T.mesh], { x0: 255, x1: 292, z0: SZ - 12, z1: SZ + 12 });
+  const g = (x, z) => T.heightAt(x, z), gd = (x, z) => { const h = g(x, z), d = turf.cast([x, h + 6, z], [0, -1, 0], 14); return d ? Math.min(h, d[1]) : h; };
   const WY = NAVE.water;
 
   // ---- the landing: planks on two bearers, a step over the turf, out over the lip to the flight's head; its posts
@@ -53,7 +57,7 @@ export async function build(ctx) {
     for (const s of [-1, 1]) {
       const z = SZ + s * (SHALF - 0.05);
       B.beam([xHead - 0.2, yHead - 0.12, z], [xLand + 0.15, yHead - 0.12, z], 0.09, TIMBER, 0.12);
-      for (const px of [xRim + 0.35, xLand - 0.1]) B.beam([px, g(px, z) - 0.3, z], [px, yHead - 0.05, z], 0.08, TIMBER, 0.12);
+      for (const px of [xRim + 0.35, xLand - 0.1]) B.beam([px, gd(px, z) - 0.3, z], [px, yHead - 0.05, z], 0.08, TIMBER, 0.12);
     }
     const n = Math.round((xLand - xHead) / 0.3);
     for (let i = 0; i < n; i++) { const x = xHead + (i + 0.5) * (xLand - xHead) / n; B.box(x, yHead - 0.025, SZ, (xLand - xHead) / n / 2 - 0.015, 0.025, SHALF + 0.04 * (rng() - 0.5), (rng() - 0.5) * 0.04, TIMBER_L, TIMBER_L, 0.3); }
@@ -69,7 +73,7 @@ export async function build(ctx) {
     for (let i = 1; i <= n; i++) {
       const x = FOOT_X + i * tr - tr / 2, y = ROAD_Y + i * rise;
       // worn: the middle of each tread a little lower and paler (drawn as two boards)
-      B.box(x, y - 0.035, SZ, tr / 2 + 0.03, 0.035, SHALF - 0.02, 0, TIMBER, TIMBER_L, 0.25);
+      B.box(x, y - 0.035 - (i === n ? 0.008 : 0), SZ, tr / 2 + 0.03, 0.035, SHALF - 0.02, 0, TIMBER, TIMBER_L, 0.25); // (v15-F1: the top tread 8 mm under the landing's boards it runs under)
     }
     // the stanchions and the rope, every 2.6 m, both sides
     const posts = Math.ceil(run / 2.6);
@@ -90,17 +94,18 @@ export async function build(ctx) {
   const feet = [[xRim + 3.4, SZ - 2.7], [xRim + 3.4, SZ + 2.7]];
   {
     for (const [fx, fz] of feet) {
-      B.beam([fx, g(fx, fz) - 0.3, fz], [apex[0] + 0.15, apex[1] + 0.5, SZ + Math.sign(fz - SZ) * 0.18], 0.16, TIMBER, 0.15);
-      B.box(fx, g(fx, fz) + 0.05, fz, 0.45, 0.12, 0.45, 0.3, STONE_D, STONE_D, 0.2); // its padstone
+      B.beam([fx, gd(fx, fz) - 0.15, fz], [apex[0] + 0.15, apex[1] + 0.5, SZ + Math.sign(fz - SZ) * 0.18], 0.16, TIMBER, 0.15);
+      B.box(fx, gd(fx, fz) + 0.05, fz, 0.45, 0.12, 0.45, 0.3, STONE_D, STONE_D, 0.2); // its padstone
     }
     // the lashing at the head, the cross-tie, the block
     B.box(apex[0] + 0.15, apex[1] + 0.35, SZ, 0.3, 0.32, 0.36, 0, ROPE, ROPE, 0.2);
-    const tieY = g(xRim + 2, SZ) + 3.6, tx = xRim + 2.25;
-    B.beam([tx, tieY, SZ - 1.75], [tx, tieY, SZ + 1.75], 0.08, TIMBER, 0.1);
+    // (v15-F1, #63) the cross-tie's ends on the legs themselves, where each passes its height (it stood 0.6 m off them)
+    const tieY = g(xRim + 2, SZ) + 3.6, onLeg = ([fx, fz]) => { const a = [fx, gd(fx, fz) - 0.15, fz], b = [apex[0] + 0.15, apex[1] + 0.5, SZ + Math.sign(fz - SZ) * 0.18], f = (tieY - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * f, tieY, a[2] + (b[2] - a[2]) * f]; };
+    B.beam(onLeg(feet[0]), onLeg(feet[1]), 0.08, TIMBER, 0.1);
     B.box(apex[0], apex[1] - 0.35, SZ, 0.14, 0.22, 0.1, 0, IRON);
     // the guys: back east to stakes in the turf
     for (const s of [-1, 1]) {
-      const sx = xRim + 13, sz = SZ + s * 5.5, sy = g(sx, sz);
+      const sx = xRim + 13, sz = SZ + s * 5.5, sy = gd(sx, sz);
       B.beam([apex[0] + 0.3, apex[1] + 0.3, SZ], [sx, sy + 0.4, sz], 0.022, ROPE, 0.05);
       B.beam([sx, sy - 0.2, sz], [sx - 0.15, sy + 0.55, sz], 0.05, TIMBER, 0.1);
     }
@@ -125,7 +130,7 @@ export async function build(ctx) {
     const gy = g(wait.x, wait.z) + 0.78;
     for (const s of [-0.65, 0.65]) {
       const tx = wait.x + s;
-      for (const w of [-0.3, 0.3]) for (const d of [-1, 1]) B.beam([tx + d * 0.12, g(tx, wait.z + w) - 0.1, wait.z + w], [tx, gy - 0.16, wait.z + w * 0.7], 0.035, TIMBER, 0.1);
+      for (const w of [-0.3, 0.3]) for (const d of [-1, 1]) B.beam([tx + d * 0.12, gd(tx, wait.z + w) - 0.1, wait.z + w], [tx, gy - 0.16, wait.z + w * 0.7], 0.035, TIMBER, 0.1);
       B.box(tx, gy - 0.13, wait.z, 0.06, 0.04, 0.42, 0, TIMBER_L);
     }
     for (const w of [-0.3, 0.3]) B.beam([wait.x - 0.8, gy - 0.07, wait.z + w], [wait.x + 0.8, gy - 0.07, wait.z + w], 0.03, TIMBER_L, 0.1);
@@ -138,6 +143,7 @@ export async function build(ctx) {
     B.box(wait.x, by + 0.62, wait.z, 0.07, 0.06, 0.07, 0.3, TIMBER_L); // the bung
   }
   extras.push({ kind: 'flask', at: [apex[0], apex[1] - 2.25, SZ], r: 0.15, lit: 1 });
+  turf.dispose();
   await ctx.progress?.('the noon road', 0.3);
 
   // ---- the Late folk's road-mending: the stage on the node's back at the stair's foot, the gangway north to the
@@ -152,18 +158,42 @@ export async function build(ctx) {
     }
   };
   const lash = (a, b) => B.beam(a, b, 0.02, ROPE, 0.08);
+  // (v15-F1, #63) a rope tied down to the glass: from a toward b, ended 5 cm into the first carrier, coupling ring, node
+  // or water it meets past a (out to 2.5 times its length); if that line misses, straight down from b to what is under
+  // it. Aimed at a fixed point, the ties over the couplings ended in the air beside noses that narrow there, and read
+  // as struts holding nothing. One that meets nothing is counted (stats().loose; edges-test fails it).
+  const inGlass = makeGlassTest(), ties = { n: 0, loose: 0, ends: [] };
+  const tie = (a, b) => {
+    const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(d[0], d[1], d[2]);
+    d[0] /= L; d[1] /= L; d[2] /= L;
+    let end = null, out = !inGlass(a[0], a[1], a[2]);
+    for (let s = 0.02; s <= L * 2.5 && !end; s += 0.02) {
+      const x = a[0] + d[0] * s, y = a[1] + d[1] * s, z = a[2] + d[2] * s, inside = inGlass(x, y, z);
+      if (!out) { out = !inside; continue; }
+      if (inside) end = [x + d[0] * 0.05, y + d[1] * 0.05, z + d[2] * 0.05];
+    }
+    for (let s = 0; s <= 3 && !end; s += 0.02) if (inGlass(b[0], b[1] - s, b[2])) end = [b[0], b[1] - s - 0.05, b[2]];
+    ties.n++;
+    if (!end) { ties.loose++; end = b; }
+    ties.ends.push([a, end]);
+    lash(a, end);
+  };
+  // a cord down to the coupling's ring itself (into its section's middle), where the ring is in reach; else a tie
+  const toRing = (a, b) => { const r = inGlass.ring(a[0], a[1], a[2]); if (!r) return tie(a, b); ties.n++; ties.ends.push([a, r]); lash(a, r); };
   // the stage: planks north-south on three bearers, the bearers lashed down round the node
   planks(RAFT.x0, RAFT.x1, RAFT.z0, RAFT.z1, 'z', 11);
   for (const z of [RAFT.z0 + 0.25, (RAFT.z0 + RAFT.z1) / 2, RAFT.z1 - 0.25]) B.beam([RAFT.x0 - 0.2, top - 0.12, z], [RAFT.x1 + 0.1, top - 0.12, z], 0.06, TIMBER, 0.12);
-  for (const [x, z] of [[RAFT.x0 - 0.15, RAFT.z0 + 0.25], [RAFT.x0 - 0.15, RAFT.z1 - 0.25], [RAFT.x1, RAFT.z0 + 0.25]]) lash([x, top - 0.12, z], [x - 0.5, NAVE.water - 0.2, z + (z < NODE.z ? -0.6 : 0.6)]);
+  for (const [x, z] of [[RAFT.x0 - 0.15, RAFT.z0 + 0.25], [RAFT.x0 - 0.15, RAFT.z1 - 0.25], [RAFT.x1, RAFT.z0 + 0.25]]) tie([x, top - 0.12, z], [x - 0.5, NAVE.water - 0.2, z + (z < NODE.z ? -0.6 : 0.6)]);
   // the tapping: a row of flasks on the stage's north-west corner, a funnel of horn, a coil of line
   for (let i = 0; i < 3; i++) extras.push({ kind: 'flask', at: [RAFT.x0 + 0.28 + i * 0.3, top + 0.16, RAFT.z0 + 0.3 + (i % 2) * 0.08], r: 0.1, lit: i === 1 ? 0 : 0.8 });
   for (let k = 0; k < 10; k++) { const a = k * 0.628, b = a + 0.628, cx = RAFT.x0 + 0.5, cz = RAFT.z1 - 0.5; B.beam([cx + Math.cos(a) * 0.24, top + 0.03, cz + Math.sin(a) * 0.24], [cx + Math.cos(b) * 0.24, top + 0.03, cz + Math.sin(b) * 0.24], 0.03, ROPE, 0.2); }
   // the gangway north to the string, sagging on its two ropes
-  planks(NSPUR.x0 + 0.1, NSPUR.x1 - 0.1, ROAD.z1 - 0.3, RAFT.z0, 'z', 4);
+  // (v15-F1) the gangway's and the door spur's step lie 8 mm over the stage's and the road's boards where their ends
+  // cross them (at one height the crossings flickered)
+  planks(NSPUR.x0 + 0.1, NSPUR.x1 - 0.1, ROAD.z1 - 0.3, RAFT.z0, 'z', 4, top + 0.008, top + 0.008);
   for (const x of [NSPUR.x0 + 0.05, NSPUR.x1 - 0.05]) lash([x, top - 0.07, ROAD.z1 - 0.4], [x, top - 0.07, RAFT.z0 + 0.1]);
   // down to the door: level a step, then boards on the lesser carrier's back, cleats across them
-  planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, RAFT.z1, SLOPE.z0, 'z', 4);
+  planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, RAFT.z1, SLOPE.z0, 'z', 4, top + 0.008, top + 0.008);
   planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, SLOPE.z0, SLOPE.z1, 'z', 4, spurY(SLOPE.z0), spurY(SLOPE.z1));
   planks(SSPUR.x0 + 0.1, SSPUR.x1 - 0.1, SLOPE.z1, DOOR.z + 0.05, 'z', 4, DOOR.sill + 0.03, DOOR.sill + 0.03);
   for (let z = SLOPE.z0 + 0.5; z < SLOPE.z1; z += 0.62) B.box(DOOR.x, spurY(z) + 0.02, z, 0.72, 0.022, 0.03, 0, TIMBER, TIMBER, 0.2);
@@ -177,21 +207,21 @@ export async function build(ctx) {
       const bow = s > 0 ? 0.012 + rng() * 0.012 : 0;
       // a thick old plank (8 cm), its top at the floor
       B.box((a + b) / 2, top - 0.044 + bow, z, (b - a) / 2, 0.04, hw, sk, col, col, 0.25);
-      B.box((a + b) / 2, top - 0.044 + bow * 1.6, z, (b - a) / 6, 0.041, hw * 0.98, sk, col, col, 0.25); // where it bows most
+      if (bow) B.box((a + b) / 2, top - 0.044 + bow * 1.6, z, (b - a) / 6, 0.041, hw * 0.98, sk, col, col, 0.25); // where it bows most (v15-F1: the flat board has none; it lay 1 mm over the board's own top and flickered)
     }
     // a batten across both at each end, a little askew, lashed down: the boards are one thing, laid on and tied
     for (const x of [x0 + 0.22, x1 - 0.22]) {
       const bc = DRIFT[(salt + 2) % 3];
       B.box(x, top + 0.012, ROAD.zc, 0.055, 0.018, PATCH.half + 0.04, (rng() - 0.5) * 0.08, bc, bc, 0.25);
       lash([x - 0.07, top + 0.032, ROAD.zc - PATCH.half - 0.02], [x - 0.04, top + 0.032, ROAD.zc + PATCH.half + 0.02]);
-      for (const s of [-1, 1]) lash([x, top - 0.02, ROAD.zc + s * (PATCH.half + 0.02)], [x + 0.05, top - 0.45, ROAD.zc + s * (PATCH.half + 0.3)]);
+      for (const s of [-1, 1]) toRing([x, top - 0.02, ROAD.zc + s * (PATCH.half + 0.02)], [x + 0.05, top - 0.45, ROAD.zc + s * (PATCH.half + 0.3)]);
     }
   };
   patch(ROAD.x0, ROAD.x0 + 1.2, 0);
   for (let i = 0; i < MAIN.length - 1; i++) {
     const x = gapX(i);
     patch(x - PATCH.w, x + PATCH.e, i + 1); // a patch: the carriers are the road
-    for (const s of [-1, 1]) lash([x - 0.2, top - 0.06, ROAD.zc + s * 0.47], [x - 0.15, top - 0.75, ROAD.zc + s * 1.2]);
+    for (const s of [-1, 1]) toRing([x - 0.2, top - 0.06, ROAD.zc + s * 0.47], [x - 0.15, top - 0.75, ROAD.zc + s * 1.2]);
   }
   patch(ROAD.x1 - 1.45, ROAD.x1, 2);
   // things floating: a few boards got loose
@@ -203,8 +233,8 @@ export async function build(ctx) {
     const x0 = DOOR.x - DOOR.half, x1 = DOOR.x + DOOR.half, y0 = DOOR.sill, y1 = DOOR.sill + DOOR.h, z = DOOR.z;
     // the frame: jambs and a lintel standing proud of the wall, and the sill
     for (const s of [-1, 1]) B.box(DOOR.x + s * (DOOR.half + 0.22), (y0 + y1) / 2 - 0.1, z - 0.12, 0.22, (y1 - y0) / 2 + 0.25, 0.2, 0, STONE, STONE, 0.12);
-    B.box(DOOR.x, y1 + 0.32, z - 0.14, DOOR.half + 0.55, 0.32, 0.22, 0, STONE, STONE, 0.12);
-    B.box(DOOR.x, y0 - 0.12, z + 0.1, DOOR.half + 0.1, 0.12, 0.35, 0, STONE_D, STONE_D, 0.1);
+    B.box(DOOR.x, y1 + 0.32, z - 0.135, DOOR.half + 0.55, 0.32, 0.22, 0, STONE, STONE, 0.12);
+    B.box(DOOR.x, y0 - 0.108, z + 0.1, DOOR.half + 0.1, 0.12, 0.35, 0, STONE_D, STONE_D, 0.1); // (v15-F1) its top 12 mm proud of the floor and the boards, not in their plane
     // the passage: an inside-out box (floor, walls, vault) to the fall; seals it from the moor overhead
     const zf = DOOR.fall + 0.1, ze = z + DOOR.depth + 2.5, yf = DOOR.sill - DOOR.rise * DOOR.treads;
     for (const [xa, xb, nx] of [[x0, x0, 1], [x1, x1, -1]]) B.quad([xa, yf - 0.6, z], [xa, yf - 0.6, ze], [xa, y1, ze], [xa, y1, z], STONE_D, [nx, 0, 0], 0.15);
@@ -212,7 +242,7 @@ export async function build(ctx) {
     B.quad([x0, y0, z], [x1, y0, z], [x1, y0, DOOR.floorTo], [x0, y0, DOOR.floorTo], STONE, [0, 1, 0], 0.15);
     for (let i = 1; i <= DOOR.treads; i++) {
       const za = DOOR.floorTo + (i - 1) * DOOR.tread, zb = za + DOOR.tread, yt = DOOR.sill - i * DOOR.rise;
-      B.quad([x0, yt + DOOR.rise, za], [x1, yt + DOOR.rise, za], [x1, yt, za], [x0, yt, za], STONE_D, [0, 0, -1], 0.12);
+      B.quad([x0, yt + DOOR.rise, za], [x1, yt + DOOR.rise, za], [x1, yt, za], [x0, yt, za], STONE_D, [0, 0, 1], 0.12); // (v15-F1, #61) faces down the flight, south: drawn facing north it was culled from the passage and the Nave showed through
       B.quad([x0, yt, za], [x1, yt, za], [x1, yt, zb], [x0, yt, zb], STONE, [0, 1, 0], 0.15);
     }
     B.quad([x0, yf, DOOR.floorTo + DOOR.treads * DOOR.tread], [x1, yf, DOOR.floorTo + DOOR.treads * DOOR.tread], [x1, yf, ze], [x0, yf, ze], STONE, [0, 1, 0], 0.15);
@@ -263,7 +293,7 @@ export async function build(ctx) {
       if (T0[1] > NAVE.ceil - 0.3 || T0[1] < NAVE.water + 0.4) { T0[1] = Math.max(NAVE.water + 0.4, Math.min(NAVE.ceil - 0.3, T0[1])); }
       B.tri(A0, A1, T0, long ? ROSE : OCHRE, [-1, 0, 0], 0.25);
       // a few gold pieces left along each ray's spine
-      for (let q = 0; q < (low ? 3 : 6); q++) { if (rng() < 0.45) continue; const r = R + 0.8 + rng() * (L - R - 1.1), [px, py, pz] = P(r, a + (rng() - 0.5) * 0.04, 0.05), t = 0.06; G.quad([px, py - t, pz - t], [px, py - t, pz + t], [px, py + t, pz + t], [px, py + t, pz - t], GOLD, [-1, (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.5], 0.25); }
+      for (let q = 0; q < (low ? 3 : 6); q++) { if (rng() < 0.45) continue; const r = R + 0.8 + rng() * (L - R - 1.1), [px, py, pz] = P(r, a + (rng() - 0.5) * 0.04, 0.05 + q * 0.004), t = 0.06; /* (v15-F1: each piece its own depth, so two that overlap never share a plane) */ G.quad([px, py - t, pz - t], [px, py - t, pz + t], [px, py + t, pz + t], [px, py + t, pz - t], GOLD, [-1, (rng() - 0.5) * 0.5, (rng() - 0.5) * 0.5], 0.25); }
     }
     // the step at its foot, out of the water, and the fallen gold on it, awash
     const sx0 = ROAD.x1 + 0.25, top2 = NAVE.water + 0.05;
@@ -377,7 +407,7 @@ export async function build(ctx) {
   const tris = (geo.attributes.position.count + gold.geometry.attributes.position.count) / 3 + noon.tris;
   ctx.coffinRoad = {
     head, floor, stairY, noon, lights, mesh, glass: noon.mesh, flames, state: S,
-    stats: () => ({ calls: 4, tris: Math.round(tris), glints: F.length, vessels: noon.vessels, lit: noon.lit, hoops: noon.hoops, lights: lights.length, colliders }),
+    ties, stats: () => ({ calls: 4, ties: ties.n, loose: ties.loose, tris: Math.round(tris), glints: F.length, vessels: noon.vessels, lit: noon.lit, hoops: noon.hoops, lights: lights.length, colliders }),
   };
   ctx.log?.(`noon road: ${noon.vessels} carriers (${noon.lit} alight), ${noon.hoops} hoops, ${lights.length} lights, ${Math.round(tris)} tris, stair ${(yHead - ROAD_Y).toFixed(1)} m down over ${(xHead - FOOT_X).toFixed(1)} m, ${(performance.now() - t0).toFixed(0)} ms`);
 }

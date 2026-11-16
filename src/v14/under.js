@@ -225,10 +225,45 @@ export function belowLit(mat, key = 'below') {
   });
 }
 
+// ---------------------------------------------------------------- the drawn surface
+// (v15-F1, #63) What is drawn near a place, to end a member on: the faces of `meshes` (the terrain's, a rock veneer's)
+// with a corner inside the box { x0, x1, z0, z1 }, gathered once into a small mesh that rays are cast at. heightAt is
+// the terrain's shape, not its drawing: on a wall of 26 m over a cell or two (3.1 m apart on low) the drawn triangle
+// lies a metre and more off it, and a knee ended where heightAt says the rock is stood in the air.
+//   const S = drawnSurface([T.mesh, throat], box); S.cast([x, y, z], [dx, dy, dz], far) -> [x, y, z] | null
+export function drawnSurface(meshes, box) {
+  const pos = [];
+  for (const m of meshes) {
+    const g = m?.geometry; if (!g) continue;
+    m.updateMatrixWorld(); const E = m.matrixWorld.elements, P = g.attributes.position.array, I = g.index?.array, n = I ? I.length / 3 : P.length / 9;
+    const w = (k) => { const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2]; return [E[0] * x + E[4] * y + E[8] * z + E[12], E[1] * x + E[5] * y + E[9] * z + E[13], E[2] * x + E[6] * y + E[10] * z + E[14]]; };
+    for (let t = 0; t < n; t++) {
+      const a = I ? I[t * 3] : t * 3, b = I ? I[t * 3 + 1] : t * 3 + 1, c = I ? I[t * 3 + 2] : t * 3 + 2;
+      if (a === b || b === c || a === c) continue; // a triangle another module has cut
+      const A = w(a), Bv = w(b), C = w(c), inBox = (p) => p[0] > box.x0 && p[0] < box.x1 && p[2] > box.z0 && p[2] < box.z1;
+      if (inBox(A) || inBox(Bv) || inBox(C)) pos.push(...A, ...Bv, ...C);
+    }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeBoundingSphere();
+  const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  const rc = new THREE.Raycaster(), o = new THREE.Vector3(), d = new THREE.Vector3();
+  return {
+    tris: pos.length / 9,
+    cast(from, dir, far = 5) {
+      o.set(from[0], from[1], from[2]); d.set(dir[0], dir[1], dir[2]).normalize(); rc.set(o, d); rc.far = far;
+      const h = rc.intersectObject(mesh, false)[0];
+      return h ? [h.point.x, h.point.y, h.point.z] : null;
+    },
+    dispose() { g.dispose(); mesh.material.dispose(); },
+  };
+}
+
 // ---------------------------------------------------------------- the builder
 export class UnderBuilder {
   // lit(x, y, z, out) -> out: [sky, air, glow]
-  constructor(lit) { this.lit = lit; this.p = []; this.n = []; this.c = []; this.u = []; this._u = [1, 1, 0]; }
+  // .beams: every beam's ends, half-width and its triangles (flat: ax, ay, az, bx, by, bz, w, first, last), kept on the
+  // geometry's userData for the tests (edges-test: each end touches something; v15-F1, #63)
+  constructor(lit) { this.lit = lit; this.p = []; this.n = []; this.c = []; this.u = []; this._u = [1, 1, 0]; this.beams = []; }
   get tris() { return this.p.length / 9; }
   vert(x, y, z, nx, ny, nz, col, jit = 0) {
     this.p.push(x, y, z); this.n.push(nx, ny, nz);
@@ -269,12 +304,13 @@ export class UnderBuilder {
     const up = Math.abs(d.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
     const u = new THREE.Vector3().crossVectors(d, up).normalize().multiplyScalar(w), v = new THREE.Vector3().crossVectors(d, u).normalize().multiplyScalar(w);
     const corner = (p, su, sv) => [p[0] + u.x * su + v.x * sv, p[1] + u.y * su + v.y * sv, p[2] + u.z * su + v.z * sv];
-    const S = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+    const S = [[1, 1], [-1, 1], [-1, -1], [1, -1]], t0 = this.tris;
     for (let i = 0; i < 4; i++) {
       const [s1, t1] = S[i], [s2, t2] = S[(i + 1) % 4];
       const hint = [u.x * (s1 + s2) + v.x * (t1 + t2), u.y * (s1 + s2) + v.y * (t1 + t2), u.z * (s1 + s2) + v.z * (t1 + t2)];
       this.quad(corner(a, s1, t1), corner(a, s2, t2), corner(b, s2, t2), corner(b, s1, t1), col, hint, jit);
     }
+    this.beams.push(a[0], a[1], a[2], b[0], b[1], b[2], w, t0, this.tris);
   }
   // any three.js geometry under a matrix, one colour or col(nx, ny, nz)
   geo(g, m, col, jit = 0.1) {
@@ -291,6 +327,7 @@ export class UnderBuilder {
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
     g.setAttribute('aUnder', new THREE.Float32BufferAttribute(this.u, 3));
     g.computeBoundingSphere();
+    g.userData.beams = this.beams;
     return g;
   }
 }
