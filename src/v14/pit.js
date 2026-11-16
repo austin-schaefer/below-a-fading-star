@@ -182,11 +182,12 @@ export async function build(ctx) {
       if (prev) { const mid = [(prev[0] + top[0]) / 2, (prev[1] + top[1]) / 2 - 0.14, (prev[2] + top[2]) / 2]; B.beam(prev, mid, 0.016, ROPE, 0.05); B.beam(mid, top, 0.016, ROPE, 0.05); }
       prev = top;
     }
-    // the landing: planks on two bearers from the first slab out over the lip; two iron posts at its outer end
+    // the landing: planks on two bearers from the first slab out over the lip; two iron posts at its outer end.
+    // The planks' tops lie 2.5 cm under the first slab's, which rests on their inner end: at one height the two flicker.
     const L = stair.land, ax = L.dx, az = L.dz, tx = -az, tz = ax, n = Math.round((L.r1 - L.r0) / 0.3);
     for (let i = 0; i < n; i++) {
       const u = L.r0 + (i + 0.5) * (L.r1 - L.r0) / n;
-      B.box(C.x + ax * u, L.y - 0.03, C.z + az * u, (L.r1 - L.r0) / n / 2 - 0.015, 0.03, STAIR.half + 0.05 * (rng() - 0.5), -(L.b * Math.PI) / 180 + Math.PI / 2, TIMBER_L, TIMBER_L, 0.3);
+      B.box(C.x + ax * u, L.y - 0.055, C.z + az * u, (L.r1 - L.r0) / n / 2 - 0.015, 0.03, STAIR.half + 0.05 * (rng() - 0.5), -(L.b * Math.PI) / 180 + Math.PI / 2, TIMBER_L, TIMBER_L, 0.3);
     }
     for (const w of [-1, 1]) {
       const x0 = C.x + ax * L.r0 + tx * w * (STAIR.half - 0.05), z0 = C.z + az * L.r0 + tz * w * (STAIR.half - 0.05);
