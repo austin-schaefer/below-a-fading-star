@@ -38,7 +38,7 @@ const CARD_POSES = {
   orchard: { x: 80, z: -100, look: { x: 130, z: -90 }, pitch: 0.05 }, // v14-B4: from the grove's west side, the medlars and the path through (the old stand put a trunk across the frame)
   byre: { x: -160, z: 48, look: { x: -148, z: 64 }, pitch: 0.05 }, // v14-B4: 21 m off, the roof clear of the wood's trunks
   plinths: { x: 175, z: -160, look: { x: 148, z: -220 }, pitch: 0.1 }, // v14-B4: beside the road's foot, the plinths running off in file (the old stand was at a wall's foot)
-  nave: { x: 251, z: 24, look: { x: 255, z: 40 }, pitch: -0.4 }, // v14-B4: on the hole's north rim, looking down on the capitals (the old stand looked across the turf)
+  nave: { x: 262.4, z: 28.2, look: { x: 252, z: 44 }, pitch: -0.55 }, // v14-F1: at the north-east lip, looking down past the capitals onto the Noon Road's lit carriers and hoops (B4's, 4 m back at (251, 24), framed the rim's grass)
   thrones: { x: -290, z: 85, look: { x: -324, z: 118 }, pitch: 0.3 }, // v14-B4: out of the wood's edge, the thrones against the sunset (the old stand looked into black trunks)
   leerie: { x: 110, z: -12, look: { x: 128, z: 5 }, pitch: 0.05 }, // v14-B4: the standards and their lamplighter, the arch behind
   prospect: { x: 248, z: -30, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer

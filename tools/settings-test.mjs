@@ -195,6 +195,7 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
       let hit = null; const floor = Math.max(T.heightAt(p.pos.x, p.pos.z), p.pos.y - p.eye - 0.1);
       for (const k of fp.player.colliders) {
         if (k.h !== undefined && k.y + k.h < floor) continue;
+        if (k.unseen) continue; // (v14-F1) a collider with nothing drawn, the Nave's lip posts: it shuts no view
         const ox = k.x - p.pos.x, oz = k.z - p.pos.z, t = ox * fx + oz * fz; // along the look
         if (t < 0 || t > 3 + k.r) continue;
         const off = Math.abs(ox * fz - oz * fx); // across it

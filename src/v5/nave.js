@@ -636,7 +636,7 @@ export async function build(ctx) {
       if (Math.hypot(x - lx, z - lz) < 0.45) continue;
       if (!CR_OFF && x > CX && Math.abs(z - SZ) < SHALF + 0.2) continue;
       const g = T.heightAt(x, z);
-      ctx.addCollider({ x, z, r: 0.3, y: g - 1, h: 3, stand: false }); colliders++; lx = x; lz = z;
+      ctx.addCollider({ x, z, r: 0.3, y: g - 1, h: 3, stand: false, unseen: true }); colliders++; lx = x; lz = z; // unseen: nothing drawn (settings-test's stands look past them)
     }
   }
 

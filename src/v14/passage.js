@@ -63,7 +63,8 @@ export async function build(ctx) {
   const builders = {
     line: new UnderBuilder(litFor([0], 7, 0.62)),
     flute: new UnderBuilder(litFor([1], 8.5, 0.95)),
-    sun: new UnderBuilder(litFor([2], 13.5, 0.95)),
+    // (v14-F1) and the lamp's light thrown up off the gold in the floor into the dome, most at its crown
+    sun: new UnderBuilder(((L) => (x, y, z, out) => { L(x, y, z, out); const h = y - P.sun.y - 3.0; if (h > 0) { const r = Math.hypot(x - P.sun.x, z - P.sun.z) / P.sun.rc; out[2] = Math.min(1.2, out[2] + 0.26 * Math.min(1, h / 1.5) * Math.max(0, 1 - r * r)); } return out; })(litFor([2], 13.5, 0.95))),
     gulf: new UnderBuilder(litFor([1], 8, 1.0)),
     gate: new UnderBuilder(litFor([1], 8, 1.0, true)),
   };
@@ -99,7 +100,14 @@ export async function build(ctx) {
     if (kind === 'sun') {
       if (floorStrip) { const j = 0.74 + 0.3 * hsh(Math.floor(s / 0.8) * 7 + k); return [ROOM[0] * j * 0.86, ROOM[1] * j * 0.86, ROOM[2] * j * 0.86]; }
       const c = Math.floor(v / 0.5), j = 0.82 + 0.28 * hsh(c * 17 + Math.floor(s / 0.8) + k * 3);
-      const base = v > 3.1 ? DOME : ROOM; return [base[0] * j, base[1] * j, base[2] * j];
+      if (v <= 3.1) return [ROOM[0] * j, ROOM[1] * j, ROOM[2] * j];
+      // (v14-F1) the vault: its courses ringing up to the crown, each a shade off the next and set in pale lime; a band
+      // of the Heliarchs' ochre two thirds up (their sun's ring, faded); the Reckoner's lamp's soot gone up the side over it
+      const crs = Math.floor((v - 3.1) / 0.62), jc = (crs % 2 ? 0.8 : 1.12) * (0.9 + 0.2 * hsh(crs * 53 + Math.floor(k / 2)));
+      const ring = Math.abs(v - (3.1 + 0.82 * SP.RC * 0.62)) < 0.2; // (a level ring on the sphere's section)
+      const u = P.section(s).pts[k][0], soot = Math.exp(-((s - SP.SUN - 0.9) ** 2 + (u - 3.1) ** 2) / 4.5) * Math.min(1, Math.max(0, (v - 3.1) / 2.5));
+      const base = ring ? OCHRE : DOME, f = (ring ? 1.25 : jc) * (1 - 0.7 * soot);
+      return [base[0] * f, base[1] * f, base[2] * f];
     }
     // the Gulf: black-brown, a little lighter in streaks where the wind has worn it
     const j = 0.7 + 0.45 * hsh(i * 13 + k * 7) * (v > -6 ? 1 : 0.6);

@@ -93,11 +93,14 @@ export async function build(ctx) {
   const BEACON = lampAt.length - 1;
   // a lamp's pool: on its slabs and the wall beside it, strongest a metre and a half round, gone by four
   const lampPool = (x, y, z) => { let gl = 0; for (const L of lampAt) { const d = Math.hypot(x - L[0], (y - L[1]) * 0.8, z - L[2]); gl += 1.3 * Math.exp(-d / 1.5); } return Math.min(1.8, gl); };
+  // (v14-F1) and the gatehouse lamp's light carried to the reel, 8 m off, so the drum and its frame read in the act
+  const [rpx, rpz] = dirOf(REEL.b), RPX = C.x + rpx * REEL.r, RPZ = C.z + rpz * REEL.r;
+  const reelPool = (x, y, z) => 0.55 * Math.exp(-Math.hypot(x - RPX, z - RPZ) / 1.6);
   const lit = (x, y, z, out) => {
     out[0] = 0.26 + 0.74 * ss(yC + 4, lipY + 1, y);
     out[1] = 1;
     // the glow channel is the lamps' warm pools (the Nadir's cold light is its point light, and leaves the rim dark)
-    out[2] = lampPool(x, y, z);
+    out[2] = lampPool(x, y, z) + reelPool(x, y, z);
     return out;
   };
   const B = new UnderBuilder(lit);
@@ -276,7 +279,7 @@ export async function build(ctx) {
   scene.add(drum);
   // the pawl: a short iron dog on the sill's post, resting on the ratchet; knocked up, it swings clear
   const pawlG = new THREE.BoxGeometry(0.05, 0.05, 0.36); pawlG.translate(0, 0, 0.16);
-  const pawl = new THREE.Mesh(pawlG, new THREE.MeshStandardMaterial({ color: '#2a2622', roughness: 0.6, metalness: 0.4 }));
+  const pawl = new THREE.Mesh(pawlG, new THREE.MeshStandardMaterial({ color: '#2a2622', roughness: 0.6, metalness: 0.4, emissive: LAMP_WARM, emissiveIntensity: 0.1 })); // (v14-F1) the lamp's sheen on the iron
   pawl.name = 'pit-pawl';
   const pawlBase = new THREE.Vector3(reelX + ax2 * (drumL / 2 + 0.035) + rdx * (drumR + 0.42), drumY + 0.2, reelZ + az2 * (drumL / 2 + 0.035) + rdz * (drumR + 0.42));
   pawl.position.copy(pawlBase);
