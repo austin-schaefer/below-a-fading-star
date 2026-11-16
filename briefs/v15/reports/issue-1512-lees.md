@@ -68,8 +68,9 @@ The spout; the Lagan's 30 pigeonholes and hatch; the Ullage's twelve hooks and c
 
 ## Tests
 
-Never the whole suite. On the final head (after merging `origin/next`, which held one new commit, a docs one: the other three quarters' round 2 was not yet in it, so this branch wants one more merge and run after them):
+Never the whole suite. Run twice: on 53b9287, and again on d43d642 after merging `origin/next` with the Quarrels in it (two conflicts, `plan.js` and `runtime.md`, both sides kept). The Rungs' and the Pennyworth's round 2 were not yet in `next`: one more merge and run is owed after them.
 
+- On d43d642, the same list with `village-plan`: **16 tests, 0 failed** (paths 81, roads 62, village-plan 7, regions 56, contrast 3, strata 8, village 646, house 20, rocks 42, walk 13, hop 25, edges 214, heights 168, geometry 99, loading 28, perf 29), 12 min 31 s. On 53b9287:
 - `ONLY=village,geometry,walk,hop,edges,heights,roads,paths,rocks,regions,strata,house,perf,loading,contrast tools/suite.sh 8163`: **15 tests, 0 failed** (paths 81 PASS lines, roads 62, regions 56, contrast 3, strata 8, village 640, house 20, rocks 42, walk 13, hop 25, edges 214, heights 165, geometry 96, loading 28, perf 29), 17 min 27 s.
 - `node tools/geometry-test.mjs http://localhost:8163 lappet-lees,lappet-lees-square`: 15 passed, 0 failed, no baseline entry for either place.
 - `node tools/lees-walk.mjs http://localhost:8163 keys low`: `[lock] the mouse is captured`, `walked: yes`, 36 frames (`lees-walk-keys-low-000` to `-035`), 0 page errors. Before the fixes it stuck at (74.6, -38.0) on the Swape and at (99.8, -10.9) on my lamp by the Noon main.
