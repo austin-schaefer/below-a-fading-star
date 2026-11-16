@@ -167,7 +167,8 @@ export function quarterOf(x, z) { const l = levelAt(x, z); return l ? l.quarter 
 // built ground (2 m), and the whole of the fades.
 export function villageClear(x, z) {
   const r = radiusOf(x, z);
-  if (r > HAHA + 22 || r < 30) return false;
+  if (r < 30) return false;
+  if (r > HAHA + 22) return r < HAHA + 62 && (footLaneDist(x, z) < 0.5 || PLOTS_.some((p) => p.quarter === 'pennyworth' && inPlot(p, x, z, 1.2))); // (v15-Q4) the Hitch's worn line and the two houses beside it, out in the house's grass
   const b = bearingOf(x, z), u = b >= 300 ? b - 360 : b;
   if (r >= HAHA - 1) return footAmt(x, z, r, b) > 0.02 || inHouseLanes(x, z) || PLOTS_.some((p) => p.quarter === 'pennyworth' && inPlot(p, x, z, 1.2));
   const D = Dof(x, z);
@@ -336,11 +337,17 @@ export const fixture = (name) => FIXTURES.find((f) => f.name === name) || null;
 export function molesMay(x, z) {
   for (const p of PLOTS_) if (p.quarter === 'pennyworth' && p.kind !== 'garden' && inPlot(p, x, z, 0.5)) return false;
   for (const f of FIXTURES) if ((x - f.x) ** 2 + (z - f.z) ** 2 < (f.r + 0.4) ** 2) return false;
+  return footLaneDist(x, z) > 0.3;
+}
+// metres outside the nearest lane of the foot (negative on it): the Thumbway and the Hitch
+export function footLaneDist(x, z) {
+  let best = Infinity;
   for (const l of LANES) if (l.level === 'foot') for (let i = 0; i < l.pts.length - 1; i++) {
     const a = l.pts[i], b = l.pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], t = clamp01(((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz));
-    if (Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) < l.width / 2 + 0.3) return false;
+    const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - l.width / 2;
+    if (d < best) best = d;
   }
-  return true;
+  return best;
 }
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
