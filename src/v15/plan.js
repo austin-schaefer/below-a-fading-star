@@ -353,15 +353,15 @@ put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'l
 // one on the flat between the stable and the gate, one up on the field bank across the lane from it; the garden is
 // the ground between the stalls, the wall lane, the kerb and the ramp's foot)
 free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.6), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5.8, 'noon', { fronts: ['K1'], note: 'the Spilt Measure: a carrier fallen off the end of the daylight main and lying along the lowest riser, half sunk: someone lives in the sound half, the broken half is a garden' });
-free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
-free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
+free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, slope: 0.8, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
+free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, slope: 0.75, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
 // (v15-Q4 round 2) the foot built up to the house: a street down the old kerb, the Hitch's far side, and a pair facing the house's gate. Their `y` is nominal: the quarter's module stands each at the ground before its door, on a footing of older stone where the ground falls away under it.
 free('pennyworth-kerb-1', 'house', 'pennyworth', 'foot', 116.9, -22.1, [-0.86, 0.5], 6, 4.4, 'late', { y: -1.8, slope: 0.8, fronts: ['K1'], note: 'across the old kerb from the garden' });
 free('pennyworth-kerb-2', 'house', 'pennyworth', 'foot', 120.6, -15.8, [-0.86, 0.5], 5.6, 4.2, 'late', { y: -1.85, slope: 0.9, fronts: ['K1'], note: 'across the old kerb from the wreck' });
 free('pennyworth-east-1', 'house', 'pennyworth', 'foot', 118.2, -30, [-1, 0], 5.2, 4.4, 'late', { y: -1.5, slope: 1.2, note: 'at the Thumbway\'s east end, facing the house\'s corner tower' });
 free('pennyworth-hitch-3', 'house', 'pennyworth', 'foot', 121, -39, [-1, 0], 5.6, 4.4, 'late', { y: 1.05, slope: 1.4, note: 'on the Hitch, facing the stable\'s back' });
-free('pennyworth-hitch-4', 'house', 'pennyworth', 'foot', 121.2, -45.3, [-1, 0], 5.8, 4.4, 'late', { y: 1.45, slope: 1.0, note: 'on the Hitch, facing the stable\'s back' });
-free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 4.4, 'late', { y: 1.55, slope: 0.9, note: 'across the gate\'s road from the house, facing its gate' });
+free('pennyworth-hitch-4', 'house', 'pennyworth', 'foot', 121.2, -45.3, [-1, 0], 5.8, 4.4, 'late', { y: 1.45, slope: 1.4, note: 'on the Hitch, facing the stable\'s back' });
+free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 4.4, 'late', { y: 1.55, slope: 1.0, note: 'across the gate\'s road from the house, facing its gate' });
 free('pennyworth-gate-2', 'house', 'pennyworth', 'foot', 110.8, -69.4, [0.1, 1], 5.6, 4.4, 'late', { y: 0.95, slope: 1.7, note: 'beside it, toward the Hitch' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
 free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.2, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
