@@ -1,7 +1,7 @@
 // The Quarrels' saint (v15-Q1): the colossus that stood on Carcanet Keep's north-east corner and came down with it,
 // put to work by the masons. His head stopped on the brink of the crown: they hollowed it and it is their lime kiln
 // (the Smoking Saint): fed through a hole broken in the crown of his skull, fired through a stoke hole of robbed
-// ashlar let in behind his ear, smoke out between the points of his crown, the fire showing in his eyes. What they
+// ashlar let in at the nape, where his neck broke, smoke out of the broken crown of his skull. What they
 // burn in him for lime is the rest of the Heliarchs' statuary (the valley's broken hands and crowned heads:
 // src/structures/scatter.js): three lesser heads wait in a row on the brink. One of his hands lies palm up under the
 // broken end of the aqueduct and takes its drip (the Almoner): a kerb of clay on the palm makes it the masons' trough.
@@ -36,49 +36,108 @@ function headGeo(N2, ws, hs, deep = 1) {
 // a solid ring about the y axis (a circlet, a kerb): inner and outer radius, y0 to y1
 const ring = (B, ri, ro, y0, y1, n) => B.lathe([[ri, y0], [ro, y0], [ro * 0.985, y1], [ri, y1], [ri, y0]], n);
 
-// The Smoking Saint. M: the ground under the head's middle, +z the way he looks. o: { S (the head's scale: 1.72 is
-// 3.85 m from chin to crown), sink, stoke: [lx, lz] (the stoke hole's side, in M's frame), N2, low, rng }
-// Returns { mouth (the top of the charging hole, where the smoke comes out), fire (the stoke hole's mouth), stand
-// (where the burner stands to feed it), colliders, r }.
-export function saint(B, M, o) {
-  const S = o.S ?? 1.72, sink = o.sink ?? 0.5, low = !!o.low, rng = o.rng, g0 = M.elements[13];
-  const cy = 1.12 * S - sink;
-  const HM = ch(M, 0, cy, 0, -0.1, 0, 0.045, S, S, S); // tilted back a little, and off true: it rolled here
-  const stone = worn(H.stone, rng, 0.12, 0.04).lerp(V.newDust, 0.22), sootC = V.soot.clone().lerp(stone, 0.12), limeC = V.newDust.clone().lerp(stone, 0.35);
-  const sl = Math.hypot(o.stoke[0], o.stoke[1]) || 1, sx = o.stoke[0] / sl, sz = o.stoke[1] / sl;
-  // the head, painted: soot from the crown down and above each eye and over the stoke hole, burnt pale round the
-  // charging hole, the fire's own colour where the stone is thin in the sockets
-  addPainted(B, headGeo(o.N2, low ? 44 : 60, low ? 30 : 42, 1.25), HM, { color: stone, moss: 0.35, ground: g0, course: 0 }, (x, y, z, out) => {
-    const front = z > 0 ? 1 : 0, ax = Math.abs(x);
-    let soot = 0.8 * sstep(0.5, 1.0, y) + 0.55 * front * gs(ax - 0.28, 0, 0.11, 9) * sstep(0.06, 0.2, y) * (1 - sstep(0.55, 0.95, y)) + 0.35 * front * gs(x, 0, 0.2, 9) * sstep(-0.6, -0.5, y) * (1 - sstep(-0.5, -0.1, y));
-    const side = (x * sx + z * sz) / (Math.hypot(x, z) || 1); // toward the stoke hole
-    soot += 0.85 * sstep(0.75, 0.97, side) * sstep(-0.75, -0.3, y) * (1 - sstep(0.1, 0.9, y));
-    soot = Math.min(0.92, soot);
-    const lime = 0.5 * sstep(0.78, 1.05, y) * (0.5 + 0.5 * Math.sin(x * 9 + z * 7));
-    const c = stone;
-    // the face cut in colour as well as stone, so it reads in the keep's shadow: the sockets, under the nose, the lips' line dark; the nose's ridge and the brow pale
-    const dark = front * Math.min(0.75, 0.62 * gs(ax - 0.28, y - 0.08, 0.16, 0.1) + 0.5 * gs(x, y + 0.36, 0.13, 0.05) + 0.7 * gs(x, y + 0.585, 0.25, 0.028) + 0.3 * gs(ax - 0.5, y + 0.3, 0.12, 0.4)), pale = front * (0.4 * gs(x, y + 0.1, 0.045, 0.2) + 0.28 * gs(x, y - 0.24, 0.5, 0.05) + 0.25 * gs(x, y + 0.5, 0.15, 0.03) + 0.2 * gs(x, y + 0.86, 0.14, 0.07));
-    out.r = c.r + (sootC.r - c.r) * soot; out.g = c.g + (sootC.g - c.g) * soot; out.b = c.b + (sootC.b - c.b) * soot;
-    out.r += (limeC.r - out.r) * lime; out.g += (limeC.g - out.g) * lime; out.b += (limeC.b - out.b) * lime;
-    const m = (1 - dark) * (1 + pale * 0.5); out.r *= m; out.g *= m; out.b *= m;
-  });
-  // his eyes: burnt through. A dark almond in each socket with the fire behind it
-  for (const s of [-1, 1]) B.add(new THREE.IcosahedronGeometry(1, 1), ch(HM, s * 0.285, 0.075, 0.735, 0, 0, -s * 0.12, 0.125, 0.06, 0.07), { color: new THREE.Color('#2a0c04'), moss: 0, ground: g0 - 9, emit: [V.ember[0] * 0.3, V.ember[1] * 0.26, V.ember[2] * 0.26, 1] });
-  B.add(new THREE.IcosahedronGeometry(1, 1), ch(HM, 0, -0.585, 0.735, 0, 0, 0.03, 0.18, 0.024, 0.05), { color: new THREE.Color('#2a0c04'), moss: 0, ground: g0 - 9, emit: [V.ember[0] * 0.26, V.ember[1] * 0.2, V.ember[2] * 0.2, 1] }); // and between his lips
-  // his crown: a circlet standing off the skull, five of its six points left
-  const gold = worn(H.bronzeDull, rng, 0.25, 0.06).lerp(sootC, 0.35);
-  B.add(ring(B, 0.6, 0.84, 0.6, 0.88, low ? 14 : 20), HM, { color: gold, moss: 0.1, ground: g0 - 9 });
-  for (let k = 0; k < 6; k++) {
-    if (k === 4) continue;
-    const a = (k / 6) * Math.PI * 2 + 0.26;
-    B.add(B.cyl(0.0, 0.11, 0.5, 4, 1), ch(HM, Math.cos(a) * 0.74, 1.1, Math.sin(a) * 0.74 - 0.02, 0, -a, -0.17), { color: gold, moss: 0.05, ground: g0 - 9 });
+// The colossus's head, carved: the unit sphere drawn into a long Heliarch face looking along +z, with the relief a
+// visitor reads at arm's length and at 30 m (a brow ridge over hollow sockets, heavy lids closed, a nose broken off
+// short, lips, long ears, a band round the brow, the hair in carved bands above it and down the back), a crack through
+// his left cheek, the crown of the skull broken open (the kiln's vent) and the neck broken off flat. Returns the
+// geometry and, a vertex each, `shade` (the relief cut in colour too: hollows dark, ridges pale) and `glow` (the
+// fire, inside the broken crown).
+function colossus(N2, ws, hs) {
+  const g = new THREE.SphereGeometry(1, ws, hs), pos = g.attributes.position, n = pos.count, shade = new Float32Array(n), glow = new Float32Array(n);
+  const crackPts = [[0.5, 0.32], [0.36, 0.02], [0.43, -0.3], [0.25, -0.8]];
+  const segD = (x, y, a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / (vx * vx + vy * vy))); return Math.hypot(x - a[0] - vx * t, y - a[1] - vy * t); };
+  for (let i = 0; i < n; i++) {
+    const ux = pos.getX(i), uy = pos.getY(i), uz = pos.getZ(i);
+    const jaw = uy < -0.2 ? 1 - 0.3 * Math.min(1, (-0.2 - uy) / 0.8) : 1;
+    const neck = 1 - 0.28 * sstep(-0.35, -1.0, uy) * (1 - sstep(0.1, 0.6, uz)); // the skull's back draws in to the neck; the jaw and chin stay forward
+    let x = ux * 0.74 * jaw * neck, y = uy * 1.12, z = uz * 0.92 * (uz < 0 ? neck : 1 - 0.32 * uz); // (the face is a flattened front: its features stand out of it)
+    const ax = Math.abs(x), front = sstep(0.0, 0.4, uz), back = 1 - sstep(-0.4, -0.05, uz);
+    // the face
+    let d = 0.14 * gs(0, y - 0.25, 1, 0.06) * (1 - sstep(0.3, 0.62, ax)); // the brow ridge
+    d -= 0.19 * gs(ax - 0.27, y - 0.1, 0.15, 0.085); // the socket
+    d += 0.085 * gs(ax - 0.27, y - 0.095, 0.105, 0.04) + 0.03 * gs(ax - 0.27, y - 0.15, 0.13, 0.014) - 0.025 * gs(ax - 0.27, y - 0.095, 0.1, 0.008); // the eye under its lids, closed
+    const t = Math.max(0, Math.min(1, (0.22 - y) / 0.52));
+    let nose = (0.1 + 0.3 * t) * Math.exp(-((x / (0.06 + 0.05 * t)) ** 2)) * sstep(-0.38, -0.3, y) * (1 - sstep(0.2, 0.3, y));
+    if (y < -0.06) nose = Math.min(nose, 0.21 + 0.03 * N2(x * 20, y * 20)); // broken off short
+    d += nose + 0.07 * gs(ax - 0.11, y + 0.3, 0.05, 0.045);
+    d += 0.1 * gs(x, y + 0.5, 0.21, 0.04) - 0.07 * gs(x, y + 0.558, 0.25, 0.018) + 0.12 * gs(x, y + 0.63, 0.17, 0.045) - 0.06 * gs(x, y + 0.74, 0.2, 0.04) + 0.15 * gs(x, y + 0.9, 0.2, 0.1); // the lips, the chin
+    d += 0.07 * gs(ax - 0.43, y + 0.08, 0.14, 0.12) - 0.05 * gs(ax - 0.4, y + 0.45, 0.12, 0.2);
+    let cr = 9; for (let k = 0; k < crackPts.length - 1; k++) cr = Math.min(cr, segD(x, y, crackPts[k], crackPts[k + 1]));
+    const crack = front * Math.exp(-((cr / 0.024) ** 2));
+    d = (d * 0.3 - 0.05 * crack) * front; // (an undertone: the features themselves are masses of their own, in saint())
+    z += d;
+    // the band round his brow, the hair in carved bands above it and down the back of his head, his ears
+    const band = sstep(0.38, 0.41, y) * (1 - sstep(0.55, 0.58, y)), hair = Math.max(sstep(0.58, 0.63, y), back * sstep(-0.62, -0.5, y) * (1 - band)), flute = Math.sin(y * 21);
+    const rad = 0.06 * band + hair * 0.035 * flute;
+    const side = 1 - sstep(0.1, 0.3, Math.abs(uz + 0.05)), ear = side * (0.11 * gs(0, y + 0.1, 1, 0.3) - 0.05 * gs(uz + 0.05, y + 0.02, 0.07, 0.16)) * (1 - band);
+    x = x * (1 + rad) + Math.sign(x) * ear; z *= 1 + rad;
+    // the crown of his skull broken open, and his neck broken off
+    let fire = 0;
+    if (y > 0.95) { const dep = y - 0.95; y = 0.95 - dep * 1.7 + 0.05 * N2(x * 9 + 3, z * 9); x *= 0.88; z *= 0.88; fire = sstep(0.0, 0.1, dep); }
+    if (y < -1.0) y = -1.0 + 0.02 * N2(x * 7, z * 7);
+    const w = N2(x * 3 + 1, y * 3 + z * 2) * 0.022;
+    pos.setXYZ(i, x * (1 + w), y, z * (1 + w));
+    shade[i] = Math.max(0.22, Math.min(1.55, 1 + 4.6 * d - 0.5 * crack + hair * 0.16 * flute + 0.12 * band - 0.5 * Math.max(0, -ear) * 8));
+    glow[i] = fire;
   }
-  // the charging hole broken in the top of his skull: a kerb of mud brick round it, the throat glowing
-  B.add(ring(B, 0.27, 0.47, 0.96, 1.25, low ? 10 : 14), HM, { color: worn(V.mud, rng, 0.2).lerp(limeC, 0.3), moss: 0, ground: g0 - 9, disp: 0.03, dispScale: 3 });
-  B.add(B.cyl(0.275, 0.275, 0.04, low ? 10 : 14, 1), ch(HM, 0, 1.17, 0), { color: new THREE.Color('#160804'), moss: 0, ground: g0 - 9, emit: [V.ember[0] * 0.5, V.ember[1] * 0.4, V.ember[2] * 0.4, 1] });
+  return { g, shade, glow };
+}
 
-  // the stoke hole, let into him behind the ear in robbed ashlar: two jambs, a lintel, a relieving block, the fire
-  const PM = ch(M, 0, 0, 0, 0, Math.atan2(sx, sz), 0), z0 = 0.62 * S, z1 = z0 + 1.28, zm = (z0 + z1) / 2; // (+z out of the hole)
+// The Smoking Saint. M: the ground under the head's middle, +z the way he looks. o: { S (the head's scale: 1.9 is
+// 4 m from the neck's break to the broken crown), sink, stoke: [lx, lz] (the stoke hole's side, in M's frame), N2,
+// low, rng }. He lies where he fell: tilted back and over on his left cheek, half his jaw in the ground.
+// Returns { mouth (the broken crown, where the smoke leaves), fire (the stoke hole's mouth), stand (where the burner
+// stands to feed it), colliders, r }.
+export function saint(B, M, o) {
+  const S = o.S ?? 1.7, sink = o.sink ?? 0.5, low = !!o.low, rng = o.rng, g0 = M.elements[13];
+  const cy = 1.0 * S - sink;
+  const HM = ch(M, 0, cy, 0, -0.06, 0, 0.2, S, S, S);
+  const stone = worn(H.stone, rng, 0.06, 0.04).multiplyScalar(1.12), sootC = V.soot.clone().lerp(stone, 0.15), limeC = V.newDust.clone().lerp(stone, 0.4);
+  const sl = Math.hypot(o.stoke[0], o.stoke[1]) || 1, sx = o.stoke[0] / sl, sz = o.stoke[1] / sl;
+  const C = colossus(o.N2, low ? 72 : 104, low ? 54 : 76);
+  let vi = 0;
+  addPainted(B, C.g, HM, { color: stone, moss: 0.4, ground: g0, course: 0 }, (x, y, z, out) => {
+    const sh = C.shade[vi], fire = C.glow[vi]; vi++;
+    const side = (x * sx + z * sz) / (Math.hypot(x, z) || 1); // toward the stoke hole
+    const soot = Math.min(0.92, 0.75 * sstep(0.72, 0.95, y) + 0.85 * sstep(0.7, 0.97, side) * sstep(-0.9, -0.4, y) * (1 - sstep(0.0, 0.8, y)) + fire);
+    const lime = 0.4 * sstep(0.5, 0.9, y) * (1 - sstep(0.9, 1.0, y)) * (0.5 + 0.5 * Math.sin(x * 9 + z * 7));
+    out.r = stone.r + (sootC.r - stone.r) * soot; out.g = stone.g + (sootC.g - stone.g) * soot; out.b = stone.b + (sootC.b - stone.b) * soot;
+    out.r += (limeC.r - out.r) * lime; out.g += (limeC.g - out.g) * lime; out.b += (limeC.b - out.b) * lime;
+    out.r *= sh; out.g *= sh; out.b *= sh;
+    out.e = fire * 0.42;
+  }, V.ember);
+  // His face, cut as the Heliarchs cut a colossus: in masses that throw their own shadows. A brow in one bar, the
+  // sockets hollow under it and the lids closed, the nose a wedge broken off short, the cheeks, the lips with the dark
+  // between them, the chin, the long ears.
+  const fs = (k = 1) => ({ color: stone.clone().multiplyScalar(k), moss: 0.35, ground: g0, course: 0 }), hollow = { color: H.cut.clone().lerp(V.soot, 0.4), moss: 0, ground: g0 - 9, course: 0 };
+  const ball = (rx, ry, rz, x, y, z, st, det = 2, rot = 0) => B.add(new THREE.IcosahedronGeometry(1, low ? 1 : det), ch(HM, x, y, z, 0, 0, rot, rx, ry, rz), st);
+  const dim = { color: stone.clone().multiplyScalar(0.5).lerp(H.cut, 0.3), moss: 0.2, ground: g0 - 9, course: 0 };
+  for (const s of [-1, 1]) {
+    B.add(B.box(0.5, 0.11, 0.2, { seg: 0.15, chip: 0.025, seed: s + 3 }), ch(HM, s * 0.25, 0.26 - 0.0, 0.6, 0.15, s * 0.16, -s * 0.1), fs(1.1)); // the brow, in two arcs
+    ball(0.15, 0.075, 0.04, s * 0.265, 0.115, 0.615, dim, 1); // the socket's shadow
+    ball(0.11, 0.048, 0.07, s * 0.265, 0.095, 0.625, fs(0.97)); // the eye
+    ball(0.13, 0.042, 0.085, s * 0.265, 0.135, 0.625, fs(1.06), 2, -s * 0.1); // its lid, shut
+    ball(0.19, 0.2, 0.13, s * 0.4, -0.18, 0.5, fs(1.02)); // the cheek
+    ball(0.06, 0.05, 0.065, s * 0.095, -0.285, 0.74, fs(0.98), 1); // the nostril's wing
+    B.add(B.box(0.07, 0.66, 0.26, { seg: 0.2, chip: 0.03, seed: s + 7 }), ch(HM, s * 0.73, -0.12, -0.03, 0, s * 0.12, s * 0.05), fs(0.95)); // the ear, its lobe long
+    B.add(B.box(0.03, 0.3, 0.1, { seg: 9 }), ch(HM, s * 0.765, -0.02, -0.03, 0, s * 0.12, s * 0.05), dim);
+  }
+  { const sh = new THREE.Shape(); [[0, 0.24], [0.1, 0.2], [0.33, -0.12], [0.25, -0.18], [0.28, -0.25], [0.2, -0.32], [0, -0.32]].forEach(([q, y], i) => (i ? sh.lineTo(q, y) : sh.moveTo(q, y)));
+    B.add(B.extrude(sh, 0.14, 1), ch(HM, 0, 0, 0.58, 0, -Math.PI / 2, 0), fs(1.1)); } // the nose: a wedge, its end broken off
+  ball(0.22, 0.05, 0.09, 0, -0.5, 0.66, fs(1.04)); ball(0.18, 0.055, 0.09, 0, -0.62, 0.65, fs(1.0)); ball(0.2, 0.025, 0.06, 0, -0.562, 0.67, dim, 1); // the lips, and the dark between them
+  ball(0.2, 0.14, 0.14, 0, -0.87, 0.56, fs(1.02)); // the chin
+  // the crack through his left cheek, eye to jaw
+  { const pts = [[0.52, 0.36], [0.4, 0.02], [0.47, -0.3], [0.3, -0.82]], zf = [0.5, 0.58, 0.55, 0.47];
+    for (let k = 0; k < 3; k++) beam(B, HM, [pts[k][0], pts[k][1], zf[k]], [pts[k + 1][0], pts[k + 1][1], zf[k + 1]], 0.03, hollow, 0.018); }
+  B.add(ring(B, 0.66, 0.765, 0.4, 0.57, low ? 18 : 28), ch(HM, 0, 0, -0.1, 0, 0, 0, 0.93, 1, 1.03), { color: stone.clone().multiplyScalar(0.86), moss: 0.3, ground: g0 - 9, course: 0 }); // the band round his brow
+  // the roundel on his band, over the brow: a hexagon boss, its disc long gone and the socket empty; a lesser boss each side
+  const boss = { color: worn(H.dark, rng, 0.1), moss: 0.3, ground: g0 - 9, course: 0 };
+  B.add(B.cyl(0.095, 0.095, 0.09, 6, 1), ch(HM, 0, 0.5, 0.65, Math.PI / 2 - 0.2, 0, 0), boss);
+  B.add(B.cyl(0.045, 0.045, 0.03, low ? 10 : 16, 1), ch(HM, 0, 0.507, 0.69, Math.PI / 2 - 0.2, 0, 0), { color: H.cut, moss: 0, ground: g0 - 9, course: 0 });
+  for (const s of [-1, 1]) B.add(B.cyl(0.06, 0.06, 0.05, 6, 1), ch(HM, s * 0.4, 0.475, 0.55, Math.PI / 2 - 0.2, s * 0.6, 0), boss);
+
+  // the stoke hole, let into the nape where the neck broke in robbed ashlar: two jambs, a lintel, a relieving block, the fire
+  const PM = ch(M, 0, 0, 0, 0, Math.atan2(sx, sz), 0), z0 = 0.6 * S, z1 = z0 + 1.28, zm = (z0 + z1) / 2; // (+z out of the hole)
   const ash = (k) => worn(H.stone, rng, 0.1, 0.1).lerp(sootC, k);
   for (const s of [-1, 1]) B.add(B.box(0.36, 1.2, z1 - z0, { seg: 9, chip: 0.035, seed: s + 3 }), ch(PM, s * 0.51, 0.47, zm, 0, 0, s * 0.02), { color: ash(0.35), moss: 0.1, ground: g0, course: 0 });
   B.add(B.box(1.56, 0.34, z1 - z0 + 0.1, { seg: 9, chip: 0.04, seed: 9 }), ch(PM, 0.02, 1.22, zm - 0.02, 0, 0.02, 0), { color: ash(0.6), moss: 0.05, ground: g0, course: 0 });
@@ -92,10 +151,10 @@ export function saint(B, M, o) {
   const stack = [-1.28, z1 - 0.55];
   for (let i = 0; i < (low ? 7 : 11); i++) { const row = i < 5 ? 0 : i < 9 ? 1 : 2, k = i < 5 ? i : i < 9 ? i - 5 + 0.5 : i - 9 + 1; B.add(B.cyl(0.075, 0.085, 0.8 + rng() * 0.12, 5, 1), ch(PM, stack[0] + (rng() - 0.5) * 0.04, 0.08 + row * 0.15, stack[1] + k * 0.17, 0, (rng() - 0.5) * 0.12, Math.PI / 2), { color: worn(L.wood, rng, 0.2, 0.3), moss: 0.1, ground: g0 }); }
 
-  const mouth = W(HM, 0, 1.28, 0), fire = W(PM, 0, 0.6, z1 - 0.1), stand = W(PM, 0, 0, z1 + 1.0);
+  const mouth = W(HM, 0, 0.9, 0), fire = W(PM, 0, 0.6, z1 - 0.1), stand = W(PM, 0, 0, z1 + 1.0);
   const c0 = W(M, 0, 0, 0), a = W(PM, 0, 0, z0 + 0.2), b = W(PM, 0, 0, z1 - 0.2), st = W(PM, stack[0], 0, stack[1] + 0.35);
   return { mouth, fire, stand, r: 0.86 * S,
-    colliders: [{ x: c0[0], z: c0[2], r: 0.83 * S, y: g0 - 0.5, h: 2.24 * S }, { x1: a[0], z1: a[2], x2: b[0], z2: b[2], r: 0.66, y: g0 - 0.5, h: 2.2, stand: false }, { x: st[0], z: st[2], r: 0.5, y: g0 - 0.5, h: 0.95 }] };
+    colliders: [{ x: c0[0], z: c0[2], r: 0.83 * S, y: g0 - 0.5, h: 2.1 * S }, { x1: a[0], z1: a[2], x2: b[0], z2: b[2], r: 0.66, y: g0 - 0.5, h: 2.2, stand: false }, { x: st[0], z: st[2], r: 0.5, y: g0 - 0.5, h: 0.95 }] };
 }
 
 // A lesser crowned head, waiting for the fire: r its size (m, about its half-width). M: the ground under it, +z its face.

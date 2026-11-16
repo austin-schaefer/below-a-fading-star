@@ -57,7 +57,7 @@ export function lastArch(B, M, o) {
   const a = W(M, 0, 0, -0.5), b = W(M, 0, 0, 0.5), c = W(M, 0, 0, -span - 0.5), d = W(M, 0, 0, -span + 0.5);
   const colliders = [{ x1: a[0], z1: a[2], x2: b[0], z2: b[2], r: 1.05, y: g0 - 0.5, h: sp + 0.5, stand: false }, { x1: c[0], z1: c[2], x2: d[0], z2: d[2], r: 1.05, y: g0 - 0.5, h: sp + 0.5, stand: false }];
   for (const f of fallen) colliders.push({ x: f[0], z: f[2], r: 0.5, y: g0 - 0.5, h: 1.05 });
-  return { lip: W(M, 0, T + 0.02, z1 + 0.06), west: ch(M, pw / 2, 0, 0, 0, Math.PI / 2, 0), colliders, top: T + 0.5 };
+  return { lip: W(M, 0, T + 0.02, z1 + 0.06), west: ch(M, pw / 2, 0, 0, 0, Math.PI / 2, 0), east: ch(M, -pw / 2, 0, 0, 0, -Math.PI / 2, 0), colliders, top: T + 0.5 };
 }
 
 // The templates: the masons' wooden profiles, cut to match the mouldings of the stones they take, hung in a row on a

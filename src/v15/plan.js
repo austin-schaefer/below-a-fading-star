@@ -300,7 +300,7 @@ put('fountain', 'fountain', 'lees', 'bench', 1, 22.5, 24.75, 2.6, 2.6, 'noon', {
 // them at s 15), hard by the aqueduct's line; the masons' lodging leans on the slab's west flank, its roof level with
 // the slab where the two meet (the slab is the way up to it); a narrow house stands on the rim at the west end.
 put('new-house', 'new-house', 'quarrels', 'crown', 2, 24, -9.4, 7, 5.6, 'new', { title: 'the Unroofed House', note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold. [Proposed] name' });
-put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { title: 'the Banker', note: 'the stock squared up beside the stair\'s head; the Demesne\'s fallen blocks stacked as stock' });
+put('masons-yard', 'yard', 'quarrels', 'crown', 2, 5.0, -6.7, 5.4, 3.2, 'new', { title: 'the Banker', stock: 'quarrels', note: 'the stock squared up on the brink east of the saint; `stock`: the quarter builds the blocks (src/v15/quarters/quarrels.js), the Demesne only gives up its fallen ones' });
 { const a = 7.6, d = 4.4, [x, z] = slabAt(a, -SLAB.W / 2 - d / 2 + 0.04); // (its back wall's outer face a finger inside the slab's flank: no two faces in one plane)
   free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Leaning Lodging', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. [Proposed] name' }); }
 put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. [Proposed] name' });
@@ -340,19 +340,20 @@ export function inPlot(p, x, z, pad = 0) {
 // where they fell (src/structures/keep.js); these are set between them. Names are [Proposed].
 const xz = (run, s, D) => { const [x, z] = at(run, s, D); return { run, s, D, x, z }; };
 export const QUARRELS = {
-  // the Smoking Saint: the lime kiln, in the head of the keep's fallen colossus, on the brink by the corner. `face`: the
-  // way he looks (north, down the Heliarch stair's side and out at the Pomegranate House: his profile from the square);
-  // `stoke`: the side his fire is fed from (south-west, toward the quarry)
-  kiln: { ...xz(2, 4.6, -6.9), face: [-0.2, -0.98], stoke: [-0.5, 0.87], name: 'the Smoking Saint' },
+  // the Smoking Saint: the lime kiln, in the head of the keep's fallen colossus. He lies in the Saint's Rest behind the
+  // Heliarch stair's head, east of its axis (clear of the landing, D > -7.4, and of the long view down the notch):
+  // `face` the way he looks (at the stair's head, and past it at the Pomegranate House), so the stair's head has his
+  // face and the square and the causeway's end his profile; `stoke`: the side his fire is fed from (the yard's)
+  kiln: { ...xz(1, 33.59, -8.86), face: [-0.15, -0.99], stoke: [0.6, 0.8], S: 1.7, name: 'the Smoking Saint' },
   // (the bench stands at his right cheek, looking where he looks); three lesser heads on the brink, waiting
   heads: [[1, 33.72, -5.5, 0.44], [1, 34.38, -5.52, 0.35], [1, 34.9, -5.5, 0.27]],
   // the aqueduct's last arch, on the line of the Rungs' last pier (WAYS lane-bridge): its two piers' D; the water it
   // still carries drips off its broken end into the saint's upturned hand
   aqueduct: { run: 2, s: way('lane-bridge').s, piers: [-20.6, -13.4], name: 'the Last Arch' },
   hand: { ...xz(2, way('lane-bridge').s, -11.15), name: 'the Almoner' },
-  // the quarry in the keep's wound: the shears over the block being lifted, the block split with wedges on the stair's axis
+  // the quarry in the keep's wound: the shears over the block being lifted, the block split with wedges
   shears: xz(2, 4.5, -14.5),
-  split: xz(1, 29.95, -10.85),
+  split: xz(1, 28.36, -11.92),
   // the Drag: the plank track from the shears round the stock and along the brink to the new house's stock
   track: [[2, 6.4, -13.9], [2, 10.8, -6.6], [2, 13.0, -5.6], [2, 17, -5.6], [2, 21.0, -6.5]].map(([r, s, D]) => xz(r, s, D)),
   sledge: 0.3, // how far along the Drag's first length the loaded sledge stands
@@ -362,7 +363,7 @@ export const QUARRELS = {
 };
 // the Quarrels walked: from the west end between the two houses, along the brink past the slab's toe, across the
 // square to the split block and the shears, down the Drag, past the hand, to the new house's door
-export const QUARRELS_ROUTE = [[1, 5.5, -11.4], [1, 10.5, -10.5], [1, 13.5, -7.2], [1, 22, -6.6], [1, 27.2, -8.6], [1, 28.4, -11.6], [1, 31.1, -11.7], [2, 5.74, -12.25], [2, 7.4, -12.6], [2, 10.6, -7.4], [2, 13.0, -5.8], [2, 17.5, -6.4], [2, 19.2, -8.2], [2, 21.4, -6.2], [2, 24.8, -6.2], [2, 24.8, -7.6], [2, 24.5, -9.7]]
+export const QUARRELS_ROUTE = [[1, 5.5, -11.4], [1, 10.5, -10.5], [1, 13.5, -7.2], [1, 22, -6.6], [1, 27.2, -8.6], [1, 29.92, -9.36], [1, 32.27, -11.75], [2, 5.74, -12.25], [2, 7.4, -12.6], [2, 10.6, -7.4], [2, 13.0, -5.8], [2, 17.5, -6.4], [2, 19.2, -8.2], [2, 21.4, -6.2], [2, 24.8, -6.2], [2, 24.8, -7.4]]
   .map(([r, s, D]) => [...at(r, s, D), LEVEL.crown.y]);
 
 // ---------------------------------------------------------------- cuts: where a tread is cut down into
