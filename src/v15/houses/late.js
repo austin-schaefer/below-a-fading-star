@@ -12,7 +12,7 @@
 // 3.4, 'step' 5.2 x 3.4, 'long' 5.6, 'stall' 2.4 x 1.8. A form that does not fit its plot becomes a 'yard' (or a
 // 'stall' under 3 m); a plot under 2.4 x 1.8 throws.
 import * as THREE from 'three';
-import { L, H, V, PARTS, rngOf, pick, ch, leaned, worn, site, facade, patch, plate, beam, pot, leaf, stop, shutter, flight, washing, bed, hangSign, niche, openingTop, batter, dirty, awning } from './kit.js';
+import { L, H, V, PARTS, rngOf, pick, ch, leaned, worn, limeGlow, site, facade, patch, plate, beam, pot, leaf, stop, shutter, flight, washing, bed, hangSign, niche, openingTop, batter, dirty, awning } from './kit.js';
 
 export const LATE_FORMS = ['yard', 'tower', 'step', 'long'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -42,8 +42,8 @@ export function room(B, HM, R, r) {
     const [ga, gb] = [r.gap[0] - cx, r.gap[1] - cx], keep = top.filter(([x]) => x > gb + 0.05 || x < ga - 0.05), hi = h + pf;
     top.length = 0; top.push(...keep.filter(([x]) => x > gb), ...(gb < w / 2 - 0.05 ? [[gb, hi]] : []), [Math.min(gb, w / 2), h + 0.02], [Math.max(ga, -w / 2), h + 0.02], ...(ga > -w / 2 + 0.05 ? [[ga, hi]] : []), ...keep.filter(([x]) => x < ga));
   }
-  facade(B, ch(HM, cx, 0, zf - T / 2), { w, top, d: T, openings: (r.openings || []).map((op) => ({ ...op, x: op.x - cx })), color: col, moss, ground: g0, n: r.low ? 7 : 10 });
-  const side = (hh, x, z, ww, dd, seed) => B.add(B.box(ww, hh + 0.5, dd, { seg: 1.5, chip: 0.05, chipTop: true, seed }), ch(HM, x, (hh - 0.5) / 2, z), { color: worn(col, rng, 0.06, 0.06), moss, ground: g0, disp: 0.018, dispScale: 1.4 });
+  facade(B, ch(HM, cx, 0, zf - T / 2), { w, top, d: T, openings: (r.openings || []).map((op) => ({ ...op, x: op.x - cx })), color: col, moss, ground: g0, n: r.low ? 7 : 10, emit: limeGlow(col) });
+  const side = (hh, x, z, ww, dd, seed) => B.add(B.box(ww, hh + 0.5, dd, { seg: 1.5, chip: 0.05, chipTop: true, seed }), ch(HM, x, (hh - 0.5) / 2, z), { color: worn(col, rng, 0.06, 0.06), moss, ground: g0, disp: 0.018, dispScale: 1.4, emit: limeGlow(col) });
   side(h + pb, cx, zb + T / 2, w, T, 3);
   side(h + pl, x0 + T / 2 + 0.015, (zb + zf) / 2 - 0.045, T, dep - 0.12, 5);
   side(h + pr, x1 - T / 2 - 0.015, (zb + zf) / 2 - 0.045, T, dep - 0.12, 7);
@@ -54,7 +54,7 @@ export function room(B, HM, R, r) {
     if (op.door) {
       leaf(B, ch(m, 0, 0, -0.1), op.w + 0.24, openingTop(op.kind, op.w, op.sp) + 0.12, worn(op.paint, rng, 0.22), rng, { plain: r.low });
       // the painted frame, proud of the plaster (the alfiz), and a threshold of somebody else's stone
-      const fh = openingTop(op.kind, op.w, op.sp) + 0.17, fc = worn(op.frame.clone().lerp(col, 0.5), rng, 0.25); // (the paint half gone into the wash it was put on)
+      const fh = openingTop(op.kind, op.w, op.sp) + 0.17, fc = worn(op.frame.clone().lerp(col, 0.62), rng, 0.35); // (the paint half gone into the wash it was put on)
       for (const sx of [-1, 1]) B.add(B.box(0.1, fh, 0.035, { seg: 9 }), ch(m, sx * (op.w / 2 + 0.17), fh / 2, T / 2 + 0.012), { color: fc, moss: 0.05, ground: g0 });
       B.add(B.box(op.w + 0.44, 0.1, 0.035, { seg: 9 }), ch(m, 0, fh, T / 2 + 0.012), { color: fc, moss: 0.05, ground: g0 });
       B.add(B.box(op.w + 0.5, 0.3, 0.5, { seg: 9, chip: 0.03 }), ch(m, 0, -0.1, T / 2 + 0.12), { color: H.stone, moss: 0.45, ground: g0, course: 0 });
@@ -271,7 +271,7 @@ export function late(B, M, o = {}) {
     if (kind === 'dome') {
       const r = 0.95 + rng() * 0.35;
       B.add(B.cyl(r * 1.02, r * 1.08, 0.5, 8, 1), ch(HM, x, y + 0.2, z), { color: worn(wash, rng, 0.05), moss: 0.2, ground: g0 });
-      B.add(new THREE.SphereGeometry(r, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), ch(HM, x, y + 0.44, z, 0, 0, 0, 1, 0.8 + rng() * 0.3, 1), { color: worn(rng() < 0.4 ? L.tile[0] : L.plaster[3], rng, 0.3), moss: 0.25, ground: g0, wet: 0.15 });
+      B.add(new THREE.SphereGeometry(r, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), ch(HM, x, y + 0.44, z, 0, 0, 0, 1, 0.8 + rng() * 0.3, 1), { color: rng() < 0.4 ? worn(L.tile[0].clone().lerp(L.plaster[3], 0.35), rng, 0.5, 0.2) : worn(L.plaster[3], rng, 0.3), moss: 0.3, ground: g0, wet: 0.15 }); // (a tiled one's glaze is mostly weathered off)
       if (!low) PARTS.late.finial(B, ch(HM, x, y + 0.44 + r * 0.82, z), { h: 0.8, rng });
     } else if (kind === 'catcher') {
       const ch2 = 1.9 + rng() * 0.9;

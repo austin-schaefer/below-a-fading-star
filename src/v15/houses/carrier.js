@@ -104,11 +104,13 @@ export function carrier(B, M, o = {}) {
     const chip = 0.8 * B.n3(a * 1.9 + seed, s * 0.34, 1.7) + 0.6 * B.n3(a * 5.5, s * 1.1 + seed, 0.2);
     let glow = 0.05;
     if (s > body + 0.2) set(out, G[2], tone * 0.8);
-    else if (sc > 0 || chip > 0.8) { set(out, N.milk, tone * (0.86 + 0.1 * Math.min(1, Math.max(0, sc) * 3))); glow = sc > 0 ? 0.3 + 0.25 * Math.min(1, sc * 2.5) : 0.2; }
+    else if (chip > 0.8) { set(out, N.milk, tone * 0.86); glow = 0.16; }
     else if (bare(a, s) || t < 0.085 + 0.04 * drip(a, 1)) { set(out, N.milk, tone * 0.8); mix(out, V.lime, 0.75 * Math.min(1, 0.5 + B.n3(a * 3.1, s * 2.2, seed))); glow = 0.03; }
     else if (t > tb - 0.07 - 0.09 * drip(a, 2) && t < tb + 0.06) { set(out, G[1], tone); mix(out, V.dirt, 0.22); glow = 0.03; }
     else if (t > 0.86 - 0.05 * drip(a, 4)) { set(out, G[2], tone); glow = 0.12; }
     else { set(out, G[0], tone * (0.94 + 0.08 * Math.sin(a * 3 + seed))); mix(out, V.dirt, 0.12 + 0.14 * B.n3(a * 1.2, s * 0.5, seed + 9)); }
+    // the scar: the glaze thinning to the milk body over a hand's breadth, never an edge; the light gets out there
+    if (sc > 0 && s <= body + 0.2) { const q = Math.min(1, sc * 1.6), q2 = q * q * (3 - 2 * q); mix(out, { r: N.milk.r * tone * 0.9, g: N.milk.g * tone * 0.9, b: N.milk.b * tone * 0.9 }, q2 * 0.85); glow += (0.2 + 0.16 * q - glow) * q2; }
     const k = sootAt(a, s); if (k > 0) { mix(out, V.soot, Math.min(0.85, k)); glow *= 1 - Math.min(0.85, k); }
     out.e = lit * glow;
   };

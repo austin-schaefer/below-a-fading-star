@@ -25,7 +25,7 @@ await page.goto(`${base}/?q=${Q}${process.env.EXTRA || ''}`, { waitUntil: 'load'
 const plan = await page.evaluate(() => {
   const V = window.__fp.village.row, F = V.frame, out = {}, f = F.face, t = [f[1], -f[0]]; // t: along the street (to the right of someone facing the fronts)
   const by = (k) => V.records.find((r) => r.kind === k);
-  { const R = by('late'), fl = R.floors.find((q) => q.steps), roof = R.floors.filter((q) => q.layer === 1 && !q.steps).sort((a, b) => b.w * b.d - a.w * a.d), dir = [Math.sin(fl.yaw), Math.cos(fl.yaw)];
+  if (by('late').floors.some((q) => q.steps)) { const R = by('late'), fl = R.floors.find((q) => q.steps), roof = R.floors.filter((q) => q.layer === 1 && !q.steps).sort((a, b) => b.w * b.d - a.w * a.d), dir = [Math.sin(fl.yaw), Math.cos(fl.yaw)];
     const foot = [fl.x - dir[0] * (fl.d / 2 + 0.3), fl.z - dir[1] * (fl.d / 2 + 0.3)], top = [fl.x + dir[0] * (fl.d / 2 + 0.5), fl.z + dir[1] * (fl.d / 2 + 0.5)], Rf = roof[0], c = Math.cos(Rf.yaw), s = Math.sin(Rf.yaw), P = (lx, lz) => [Rf.x + lx * c + lz * s, Rf.z - lx * s + lz * c, Rf.y];
     out.roof = [[foot[0] + f[0] * 1.2 - dir[0] * 1.5, foot[1] + f[1] * 1.2 - dir[1] * 1.5], foot, [...top, fl.y1], P(Rf.w * 0.3 * Math.sign((top[0] - Rf.x) * c - (top[1] - Rf.z) * s), Rf.d * 0.3), P(0, Rf.d * 0.3), P(-Rf.w * 0.38, Rf.d * 0.3), P(-Rf.w * 0.38, -Rf.d * 0.05), P(Rf.w * 0.3, Rf.d * 0.32), [...top, fl.y1], foot]; }
   for (const k of ['carrier', 'elder', 'new']) { const R = by(k), d = R.doors.find((q) => q.enter), room = R.floors.filter((q) => q.layer === 0).sort((a, b) => (b.r ? b.r * b.r * 3 : b.w * b.d) - (a.r ? a.r * a.r * 3 : a.w * a.d))[0], back = room.r ? room.r - 1.7 : room.d / 2 - (k === 'new' ? 2.4 : 1.3); // (short of what stands at the back: the bed, the hearth, the masons' trestle)
@@ -50,7 +50,7 @@ const turnTo = async (w, pitch = -0.08) => { const s = await page.evaluate(([w, 
 const info = () => page.evaluate(() => { const p = window.__fp.player; return { x: +p.pos.x.toFixed(2), y: +(p.pos.y - p.eye).toFixed(2), z: +p.pos.z.toFixed(2) }; });
 let bad = 0;
 for (const name of routes) {
-  const pts = plan[name]; if (!pts) { console.log(`[skip] no route ${name}`); continue; }
+  const pts = plan[name]; if (!pts) { console.log(`[skip] no route ${name}${name === 'roof' ? " (the Late house has no stair: against a riser its roof is walked from the tread behind)" : ""}`); continue; }
   await page.evaluate(([x, z]) => window.__fp.controls.placeAt(x, z), pts[0]); await run(400);
   await turnTo(pts[1]); await run(300);
   let n = 0, gone = 0, last = await info(), side = 1, reached = true;

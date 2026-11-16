@@ -31,7 +31,7 @@ const LIFT = 0.04; // the flags stand this far above the bench's turf, and the r
 // along the street from its east end (the left of someone facing the fronts): kind, the plot's width and depth, how
 // far the plot comes out over the fronts' line (the masons' scaffold stands in the street), the maker's options
 export const ROW_PLOTS = [
-  { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard', stair: 'front' } },
+  { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard', stair: 'front', h: 2.85 } }, // (h: thirteen risers, so the front stair's foot clears the door on a 6.6 m plot)
   { kind: 'undercroft', w: 7.4, d: 4.8, o: { seed: 3 } },
   { kind: 'carrier', w: 7.6, d: 6.4, over: 0.9, o: { seed: 6, form: 'standing', profile: 'long', glaze: 0 } },
   { kind: 'elder', w: 8.6, d: 7.2, over: 0.3, o: { seed: 2, form: 'lean', back: -1.3 } },

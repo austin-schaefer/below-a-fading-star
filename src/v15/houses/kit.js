@@ -39,6 +39,9 @@ export const plotMatrix = (p) => mat(p.x, p.y, p.z, 0, Math.atan2(p.face[0], p.f
 // M leaned: a point y up is carried kx sideways and kz forward (a whole house out of true)
 export const leaned = (M, kx, kz = 0) => M.clone().multiply(new THREE.Matrix4().set(1, kx, 0, 0, 0, 1, 0, 0, 0, kz, 1, 0, 0, 0, 0, 1));
 // a colour worn: toward dirt by k, and no two the same
+// limewash holds a little of the sky's light back: a pale wall in shade stays pale (the lit-window channel, faint: it
+// goes down with the sun as the windows do)
+export const limeGlow = (col, k = 0.085) => [col.r * k, col.g * k, col.b * k, 1];
 export const worn = (col, rng, k = 0.18, v = 0.1) => col.clone().lerp(V.dirt, k).multiplyScalar(1 - v / 2 + rng() * v);
 
 // ---------------------------------------------------------------- the record
@@ -154,7 +157,7 @@ export function facade(B, M, o) {
     pts.forEach(([x, y], i) => (i ? hole.lineTo(x, y) : hole.moveTo(x, y)));
     hole.closePath(); sh.holes.push(hole);
   }
-  B.add(B.extrude(sh, o.d ?? 0.36, 1), M, { color: o.color, moss: o.moss ?? 0.2, course: o.course || 0, ground: o.ground, wet: o.wet || 0 });
+  B.add(B.extrude(sh, o.d ?? 0.36, 1), M, { color: o.color, moss: o.moss ?? 0.2, course: o.course || 0, ground: o.ground, wet: o.wet || 0, emit: o.emit });
 }
 // a flat plate of any outline, t thick, lying in the xy plane (a patch on a wall, a sign board, a rug)
 export function plate(B, M, pts, t, o) {

@@ -19,7 +19,7 @@
 // meet something), riser (m: the 'riser' form), face (the riser face's local z: d / 2 - 2), fit, top ('stumps' |
 // 'hut'), low. Needs 3.6 x 2.4; less throws.
 import * as THREE from 'three';
-import { L, H, V, PARTS, rngOf, pick, ch, worn, site, facade, plate, beam, pot, leaf, stop, washing, hangSign, dirty, niche, awning } from './kit.js';
+import { L, H, V, PARTS, rngOf, pick, ch, worn, site, facade, plate, beam, pot, leaf, stop, washing, hangSign, dirty, niche, awning, limeGlow } from './kit.js';
 import { shopfront, room } from './late.js';
 
 export const UNDER_FORMS = ['single', 'double', 'riser'];
@@ -95,8 +95,8 @@ export function undercroft(B, M, o = {}) {
         if (!broke) PARTS.heliarch.capital(B, ch(M, sx * px, ph - 0.62, zf + 0.2), { r: 0.34 });
         else {
           pot(B, M, sx * px, n * (ph - 0.62) / nd, zf + 0.2, 0.26, worn(L.tile[0], rng, 0.35), 2);
-          PARTS.heliarch.capital(B, ch(M, sx * (px - 0.2), -0.02, zf + 1.3, 0.05, rng(), 0.04), { r: 0.34 });
-          R.post(sx * (px - 0.2), zf + 1.3, 0.5, 0, 0.62);
+          PARTS.heliarch.capital(B, ch(M, sx * (px - 0.2), -0.02, zf + 0.78, 0.05, rng(), 0.04), { r: 0.34 });
+          R.post(sx * (px - 0.2), zf + 0.78, 0.5, 0, 0.62); // (close under the pier: no pocket between it and the wall for a walker to wedge in)
         }
         R.post(sx * px, zf + 0.2, 0.36, 0, 2, { stand: false });
       }
@@ -135,7 +135,7 @@ export function undercroft(B, M, o = {}) {
     const top = [[a.aw / 2 + 0.25, a.sp + 0.6], [0.3, a.sp + a.aw / 2 + 0.25], [-0.3, a.sp + a.aw / 2 + 0.25], [-a.aw / 2 - 0.25, a.sp + 0.6]];
     const sx0 = side * (a.aw / 2 - 1.12), dx0 = -side * (a.aw / 2 - 0.62), op = { shop: true, kind: 'rect', x: sx0, y: 0.98, w: 1.45, sp: 1.0 }, dop = { kind: 'rect', x: dx0, y: 0.02, w: 0.72, sp: 1.83 };
     const vent = { kind: 'ogee', x: (rng() - 0.5) * 0.5, y: a.sp + a.aw * 0.14, w: 0.4, sp: 0.3 };
-    facade(B, ch(M, a.x, 0, zi - 0.18), { w: a.aw + 0.5, d: 0.36, sink: 0.3, top, openings: [op, dop, vent], color: wash, moss: 0.08, ground: g0, n: 6 });
+    facade(B, ch(M, a.x, 0, zi - 0.18), { w: a.aw + 0.5, d: 0.36, sink: 0.3, top, openings: [op, dop, vent], color: wash, moss: 0.08, ground: g0, n: 6, emit: limeGlow(wash) });
     leaf(B, ch(M, a.x + dx0, 0, zi - 0.26), 0.9, 1.95, worn(paint, rng, 0.22), rng, { plain: low });
     stop(B, ch(M, a.x + vent.x, vent.y, zi - 0.18), 0.4, 0.5, 'lit', rng);
     R.window(a.x + vent.x, vent.y + 0.25, zi, true);
@@ -203,7 +203,7 @@ export function undercroft(B, M, o = {}) {
   if (court) {
     // the forecourt: yard walls of plaster down both sides, stepping down to the street; the counter at the street
     // under a cloth; a gate beside it between two piers; the store's big jars and sacks along the walls
-    const zF = d / 2 - 0.3, pl = () => ({ color: worn(wash, rng, 0.06, 0.06), moss: 0.08, ground: g0, disp: 0.015, dispScale: 1.4 });
+    const zF = d / 2 - 0.3, pl = () => ({ color: worn(wash, rng, 0.06, 0.06), moss: 0.08, ground: g0, disp: 0.015, dispScale: 1.4, emit: limeGlow(wash) });
     for (const sx of [-1, 1]) { const xw = sx * (w / 2 - 0.22), zm = zf + 0.1 + (zF - zf) * (0.4 + rng() * 0.2);
       for (const [za, zb2, hh] of [[zf + 0.08, zm, 1.9 + rng() * 0.4], [zm - 0.02, zF, 1.15 + rng() * 0.25]]) { B.add(B.box(0.34, hh + 0.5, zb2 - za, { seg: 1.5, chip: 0.04, chipTop: true, seed: seed + sx + hh }), ch(M, xw, (hh - 0.5) / 2, (za + zb2) / 2), pl()); R.wall(xw, za + 0.17, xw, zb2 - 0.17, 0, hh, 0.17); } }
     const gx = side * (w / 2 - 1.55), cl = w - 3.6, cxc = -side * (w / 2 - 0.5 - cl / 2), cz = zF - 0.3, ctop = 0.96; // the gate's middle; the counter
