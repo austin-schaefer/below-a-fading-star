@@ -83,9 +83,9 @@ const LIVING = [
   ['leerie', 149, 42, 0.516, 0.05], // walkers-leerie-gutter: the row's south end
   ['linkBoy', -150, -95, 0.983, -0.04], // walkers-linkboy-post
   ['scriveners', -101, 50, 3.266, -0.3], // glyphs-scriveners-wander: the tarn's bank
-  ['moles', 80, -8, 2.583, -0.1], // glyphs-moles-causeway
+  ['moles', 99.5, -27.5, -1.75, -0.2], // glyphs-moles-causeway
   ['glyphs', 69.5, -198, -1.223, 0.03], // glyphs-erratic-sun: the erratic
-  ['indistinct', 68.69, -41.02, -1.755, -0.498], // small-indistinct-lawn
+  ['indistinct', 13.8, -42, 1.89, -0.35], // the lawn's edge north of the keep, over its ditch (v15: west of the Lappet)
   ['repetend', -167.2, -96.3, 1.513, -0.14], // small-repetend-p3
   ['simulacrum', 10.8, -201.5, -1.291, 0.016], // small-simulacrum-columns
   ['bather', 166.5, 218.5, 2.43, -0.45], // canyon-bather-rim

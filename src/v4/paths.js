@@ -12,6 +12,7 @@
 //     column, widened 2.5 times and carried up the fall, with a drift of it across the gap toward the pit (the
 //     spray and the doubled rumble are v2/riverlife.js's).
 // Registers __fp.paths: { stats(), leadAt(x, z), leads, pit, fall }.
+import { villageClear } from '../v15/plan.js';
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
 import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
@@ -190,7 +191,7 @@ function buildLeads(ctx) {
         const x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
         let tx = b.x - a.x, tz = b.z - a.z; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
         const m = t < 0.5 ? a : b;
-        const open = Math.min(a.open, b.open) * smoothstep(0, 2.5, s) * smoothstep(0, 2.5, len - s);
+        const open = villageClear(x, z) ? 0 : Math.min(a.open, b.open) * smoothstep(0, 2.5, s) * smoothstep(0, 2.5, len - s); // v15: no trod is worn across the Lappet's stone (its lanes are its own)
         const k = tileOf(x, z);
         if (!cur || cur.k !== k) {
           // a new strip in this tile (overlapping the last sample of the previous one)
