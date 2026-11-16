@@ -51,4 +51,4 @@ Before: `/Users/austin/dev/below-a-fading-star/.claude/worktrees/issue-1510-quar
 
 ## After the report's tests
 
-`origin/next` was merged after the runs above; nothing was rerun on the merge.
+`git fetch origin && git merge origin/next` after the runs above brought nothing new: the branch already held `next` (a1d2620), so the runs stand for what is pushed. The server on 8161 is stopped.
