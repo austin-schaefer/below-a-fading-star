@@ -202,3 +202,20 @@ Next: each hand-back gets its frames looked at with the report shut, a blind rea
 - **P3 the far mesh merged** (fc2778b, opus): `src/v15/far.js`, one draw, 2.7k triangles, built from the quarters' records: 39 house blocks on low from 140 m (to 330 m: beyond that the gallery's frame has no room), 241 light specks on every tier from 60 m. Looked at on low: from the Hanging Croft a lit town between the keep and the house where there were bare steps; from the east road a small amber cluster. Unchanged from the spawn and the causeway (the crown hides the village). Houses still pop at about 149 m walking in. `load-probe` not resolved under load.
 - **Open, found by P3: near, on low, the village costs about 318k triangles and 24 to 26 draws** at the square, the Rungs' middle and the Pennyworth, against the 250k budget; nobody had summed the quarters. Needs a brief (the quarters' low tiers thinned, or parts hidden by where the walker stands) before the gate; `perf` passes today.
 - **On `next` after these two merges** (`ONLY=village-plan,village,geometry,heights,strata,walk,edges`): 6 of 7. heights 198 (with the far mesh), village 687. **`geometry` fails**: one new floating member of `village-row` at (72.6, 2.9, -32.4), 3.9 m long, one end touching nothing, in three places' takes; it passed in the 07:41 suite. With W1 (`ac7d97cab79f56e09`, `issue-1520-ways`, 8165).
+
+**2026-11-16, 09:42 PST. W1 (the owner's stairs) is merged; the whole suite is running on `next`; batch 3's last three briefs are out.**
+
+- **`pan` passes** on `next` with the machine quieter (worst turning frame ×1.62 and ×2.17, limit ×3): the earlier failures were load.
+- **W1 the ways merged** (258fb6f, opus). 21 registered ways, tabled in its report. New `tools/ways-test.mjs` in the suite (mouth clear, a 1.2 m landing, no doubled way, no dead end): 106 passed and 23 failed before (10 of the 23 its own rule's errors), 129 of 129 after. The owner's four places by its report: the Heliarch foot flight ran into the house's north-west tower with a 0.3 m gap (the bastion made shallower, the foot now 1.7 m clear; looked at before and after: a face full of wall, then a clear stair); loose blocks moved off the Low lane; the dark polygons were the kit's mud patch standing 3 cm off the plaster (bedded in, every house); the pale triangles in the upper square were the terrain's coarse mesh leaning over the High Rung's rim (`lappetGround` lowers it: **shared terrain code**, hence the whole suite). Also: the ladder that stood 1.6 m from the Tenter now climbs from the High Rung to the crown's west end; the map's stand for the house landed inside the Strake's new house (the stand moved); the floating scaffold pole was the far mesh "holding" it in the geometry check. Its tests 14 of 15 (ways 129, geometry 144, settings 86, heights 198); every walk passed, the keys walk after reruns (its drag-look steering is flaky).
+- **Open from W1:** the Heliarch foot still points straight at the tower; the blue bar round a shutter in the owner's `4.png` not found; the dead-end row counts any plot front as a destination (weak); the Strake's Late front stair, the Spilt Measure's ladder and the P9 bank are not registered, so not checked.
+- **The kiln's light** (the orchestrator, one line, `src/v15/quarters/quarrels.js:283`): its reach 17 m to 11.5 m; at 17 it was a fourth point light in view of the house's west way (`house` 19 of 20, then 20 of 20). The fire's pool on the paving is smaller: not re-rendered.
+- **The whole suite on `next`** started 09:41 (`/tmp/suite-v15-batch3a.log`), 41 tests with `ways`.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model | Agent |
+|---|---|---|---|---|
+| P1 who lives here (six to nine figures, their stories) | `issue-1523-people` | 8166 | opus | `aef2d9c110acea77c` |
+| L1 the village heard, and lit to walk by | `issue-1524-sound` | 8167 | opus | `a95648b6080a8c97c` |
+| N1 names, cards, the map; the cost near on low (318k of 250k) | `issue-1525-names` | 8168 | sonnet | `ab472628c9ee344b8` |
+
+- After them: a walk of the whole village by the orchestrator in a real browser; the critic, the curator, the gate; the release.
