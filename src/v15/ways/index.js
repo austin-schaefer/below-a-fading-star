@@ -138,10 +138,8 @@ export function buildWays(ctx, lappet) {
       {
         const hf = way('heliarch-foot'), D0 = RISERS[3].D - 0.215, [x, z] = at(1, sx, D0);
         hexLanding(K, { name: 'heliarch-bastion', x, y: LEVEL.low.y, z, f: n1, depth: hf.D0 - D0, width: STAIR.width, wing: 1, base: LEVEL.bench.y - 0.4, parapet: ['left', 'right'] });
-        // turned `turn` degrees west about the bastion's east far corner (plan.js: straight out it met the house's tower)
-        const th = ((hf.turn || 0) * Math.PI) / 180, w = hf.width || STAIR.width, c = Math.cos(th), sn = Math.sin(th);
-        const f = [n1[0] * c - d1[0] * sn, n1[1] * c - d1[1] * sn], e = [d1[0] * c + n1[0] * sn, d1[1] * c + n1[1] * sn], [px, pz] = at(1, sx + hw, hf.D0);
-        built['heliarch-foot'] = stoneFlight(K, { name: 'heliarch-foot', x: px - e[0] * w / 2, y: LEVEL.low.y, z: pz - e[1] * w / 2, f, drop: LEVEL.low.y - LEVEL.bench.y, width: w, run: hf.going || (hf.D1 - hf.D0) / 12, base: LEVEL.bench.y - 0.4, cheeks: hf.turn ? [false, true] : [true, true] }); // (its east cheek gone: the street steps past its lowest treads)
+        const [fx, fz] = at(1, sx, hf.D0);
+        built['heliarch-foot'] = stoneFlight(K, { name: 'heliarch-foot', x: fx, y: LEVEL.low.y, z: fz, f: n1, drop: LEVEL.low.y - LEVEL.bench.y, width: STAIR.width, run: hf.going || (hf.D1 - hf.D0) / 12, base: LEVEL.bench.y - 0.4 });
       }
 
       // ---------------------------------------------------------------- the daylight main

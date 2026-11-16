@@ -244,12 +244,13 @@ export const WAYS = [
     note: 'cut 1.9 m into the High Rung, then out over the Mid Rung; lands on a hexagon at D 7.9..10.1' },
   { name: 'timber-patch', kind: 'stair', hand: 'late', from: 'mid', to: 'low', run: 1, s: 31, D0: 10.1, D1: 15.3,
     note: 'the Heliarch flight is broken here; a Late plank flight spans the gap, and the Low Rung\'s lane passes under it' },
-  // (v15-W1) the foot flight leaves the bastion's far edge from its east corner turned 25 degrees west, 2.2 m wide, run
-  // 0.26: straight out it ran into the Pomegranate House's north-west turret (a 0.3 m slot between its foot and the
-  // tower, the owner's "walls right next to stairs"), and the bench's street could not pass the foot at all. Turned, it
-  // comes down facing the square, 1.7 m clear of the tower, and the street passes between its foot and the tower.
-  { name: 'heliarch-foot', kind: 'stair', hand: 'heliarch', from: 'low', to: 'bench', run: 1, s: 31, D0: 17.6, D1: 19.7, turn: 25, width: 2.2, going: 0.26,
-    note: 'from the hexagon bastion at D 15.3..17.6 (level with the Low Rung) down into the Lees square, turned toward it' },
+  // (v15-W1) the bastion is 1.6 m deep (it was 2.4) and the foot flight as steep as the head's (run 0.26): straight out
+  // from D 17.6 its foot ran into the Pomegranate House's north-west turret (0.3 m between the last tread and the tower,
+  // the owner's "walls right next to stairs"), and the bench's street could not pass it. Now the foot lands at D 19.66,
+  // 1.7 m from the tower, with 1.2 m of landing and the street between. (Turning it toward the square was tried: a
+  // turned head cannot lie on the bastion's straight edge, and its first treads lay a knee under the bastion's top.)
+  { name: 'heliarch-foot', kind: 'stair', hand: 'heliarch', from: 'low', to: 'bench', run: 1, s: 31, D0: 16.8, D1: 19.66, going: 0.26,
+    note: 'from the hexagon bastion at D 15.2..16.8 (level with the Low Rung) down into the Lees square' },
   { name: 'noon-main', kind: 'tube', hand: 'noon', from: 'high', to: 'bench', run: 2, s: 9, D0: 3.6, D1: 19.6,
     note: 'the daylight main: laid straight down the three nosings, walked inside on a Late plank stair; open at both ends and breached on the Low Rung' },
   // (v15-W1) the ladder stood up the Mid Rung's riser at run 2 s 19, its head 1.6 m from the Tenter's (the owner's "stairs

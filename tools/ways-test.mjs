@@ -8,7 +8,7 @@
 //             over the feet): a mouth is 1.6 m clear. The way's own, or its flank: a capsule that lies along the way
 //             (within 25 degrees of it) and is either not out in front of the mouth (its cheek, its rail, its ladder's
 //             pole) or beside the mouth's line with a walker's half-width between (a house stair's own front wall).
-//   landing   from the mouth outward toward where the path leaves the way (its first or last point), 1.2 m of floor within 0.3 m of the end's level
+//   landing   from the way's last tread (found back from the mouth toward the way) outward toward where the path leaves it (its first or last point), 1.2 m of floor within 0.3 m of the end's level
 //             (on open ground, a slope of 1 in 3 more), nothing standing
 //             in a walker's half-width (0.45 m) of that line: room to step off and turn.
 //   doubled   no two ways join the same two levels (each end's level within 0.4 m) with both their ends within 6 m of
@@ -114,7 +114,12 @@ const r = await page.evaluate(async () => {
       find.push({ row: 'mouth', tag, ok: !inMouth.length, detail: inMouth.slice(0, 3).join('; ') });
       // landing
       let ok = true, why = '';
-      for (let s = 0.1; s <= 1.2001 && ok; s += 0.1) {
+      // the landing is counted from the way's last tread: the registered mouth may already stand some way onto the floor
+      // (a kit flight's path steps 0.9 m past its head), so find the edge back toward the way first
+      const inw = ei ? nrm(v(w.path[e.k], w.path[e.k - 1] || w.path[e.k])) : nrm(v(w.path[e.k], w.path[e.k + 1] || w.path[e.k]));
+      let back = 0;
+      for (let t = 0.1; t <= 1.5; t += 0.1) { const f = C.floorAt(e.at[0] + inw[0] * t, e.at[1] + inw[1] * t, e.y); if (Math.abs(f.y - e.y) > 0.15) break; back = t; }
+      for (let s = 0.1; s <= 1.2001 - back && ok; s += 0.1) {
         const x = e.at[0] + e.dir[0] * s, z = e.at[1] + e.dir[1] * s, f = C.floorAt(x, z, e.y);
         if (Math.abs(f.y - e.y) > 0.3 + (f.stack ? 0 : 0.35 * s)) { ok = false; why = `the floor is ${f.y.toFixed(2)} at ${s.toFixed(1)} m`; break; }
         for (const c of cols) { if (Math.abs(c.x - x) > 10 || Math.abs(c.z - z) > 10) continue; const pt = near(c, x, z); if (pt.d < 0.45 && stands(c, e.y, pt.t) && !own(c, e, pt)) { ok = false; why = `${desc(c)} at ${s.toFixed(1)} m`; break; } }
