@@ -10,7 +10,7 @@ import { stairClear } from './v12/stair/plan.js'; // v12-H3: the Diffident Stair
 import { sextonClear } from './v7/workers/graves.js'; // v7: CF the Sexton's graves (a boulder on a slot stays and blocks it)
 import { withFade, fadeDepthMaterial } from './fade.js';
 import { wornAt, nearestLead } from './v4/paths/routes.js'; // v8-01: nothing lies on a road
-import { clearedBy } from './v8/clearings.js'; // v8-11: the one table of ground kept clear of stones and boulders
+import { claimedBy } from './claims.js'; // v15-G1 (v8-11's table): the claimed ground the stones and boulders keep off
 import { commonAt } from './v8/places.js'; // v8-11: the grazed common round the keep keeps few boulders
 
 const PARAMS = new URL(location.href).searchParams;
@@ -164,7 +164,7 @@ export async function build(ctx) {
   const outcrop = (x, z) => noise.noise2(x * 0.011 + 71.3, z * 0.011 - 33.1) * 0.5 + 0.5;
   const hash = (x, z) => { const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return h - Math.floor(h); };
   const cut = { cleared: {}, thinned: { boulder: 0, stone: 0, tor: 0 } };
-  const clear = (x, z, r) => { const why = clearedBy(x, z, r, ctx); if (why) cut.cleared[why] = (cut.cleared[why] || 0) + 1; return !!why; };
+  const clear = (x, z, r) => { const why = claimedBy(x, z, r, 'rocks', ctx); if (why) cut.cleared[why] = (cut.cleared[why] || 0) + 1; return !!why; };
   // whether a boulder (or a big stone, share 1 - its weight) stays: in an outcrop, or a rare stray; on the grazed common
   // and the scree under the walls, fewer and more
   function keepBig(x, z, b, cls, size) {
