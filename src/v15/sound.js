@@ -12,14 +12,14 @@
 //                                      mallet on a chisel at uneven spacing (0.5-1.2 s: a hand, never a rhythm), then a
 //                                      rest of 14-70 s (lognormal). Detail, 75 m: heard faintly from the Lees
 //   the Rungs      the Tenter's cloth  the dyers' lengths on their poles: a soft rustle that follows the gusts, and at a
-//                                      gust's crest two to four slow flaps. Detail, 28 m
+//                                      gust's crest one or two slow flaps. Detail, 28 m
 //                  the vats            a drip from a hung length into a dye vat in phrases (one to three, a breath
-//                                      apart, then 6-16 s), pitched on A4, D5 and F5 a little out of true, deeper and
+//                                      apart, then 6-28 s), pitched on A4, D5 and F5 a little out of true, deeper and
 //                                      rounder than the Wellward Way's. Detail, 22 m
 //   the Lees       the Fountain of Noon stored daylight: three narrow bands of noise on D5, A5 and D6 (never a tone),
 //                                      each wandering in level on its own 9-23 s, so the chord is always there and never
 //                                      the same; it brightens at the gutter, when it is the light that is left. Under it
-//                                      a slow welling (a soft swell every 6-12 s). Bed, 30 m
+//                                      a slow welling (soft swells on the world's noise, never on a period). Bed, 30 m
 //                  the spout, the gutter a trickle (pink noise whose level babbles under a 30 Hz random envelope) and
 //                                      the overflow's gurgle in the stone gutter, lower and sparser. Bed, 22 m
 //   the Pennyworth the market          small things, nobody shouting: the salt-weigher's brass pan set on its beam (a
@@ -173,7 +173,7 @@ export function startLappetSound(a, ctx) {
   const callers = [
     caller(rng, { bout: [1, 4], gap: [0.15, 0.7], rest: [7, 0.5, 3, 16], first: [1, 5], when: () => near(stoke, 20) }, () => kilnTick()),
     caller(rng, { bout: [3, 7], gap: [0.5, 1.2], rest: [26, 0.5, 14, 70], first: [2, 8], when: () => near(chisel, 75) }, (i) => blow(i)),
-    caller(rng, { bout: [1, 3], gap: [0.4, 1.4], rest: [9, 0.4, 5, 18], first: [1, 6], when: () => near(vats, 24) }, () => vatDrop()),
+    caller(rng, { bout: [1, 3], gap: [0.4, 1.4], rest: [13, 0.45, 6, 28], first: [1, 6], when: () => near(vats, 24) }, () => vatDrop()),
   ];
   if (E.salt) callers.push(caller(rng, { bout: [1, 2], gap: [0.8, 2], rest: [40, 0.5, 18, 90], first: [3, 10], when: () => near(E.salt, 36) }, () => pan()));
   if (E.stall) callers.push(caller(rng, { bout: [1, 2], gap: [0.6, 1.8], rest: [50, 0.5, 20, 110], first: [6, 14], when: () => near(E.stall, 32) }, () => setDown(E.stall)));
@@ -289,15 +289,17 @@ export function startLappetSound(a, ctx) {
     const rust = ss(0.5, 0.95, gustSm) * (0.6 + 0.4 * ctx.noise.noise2(t * 0.31, 44.1));
     Pp.cG.gain.setTargetAtTime(wake * 0.4 * rust * (1 - 0.6 * gut), now, 0.35);
     Pp.cB.frequency.setTargetAtTime(520 + 300 * gustSm, now, 0.5);
-    if (gust > 0.72 && prevG <= 0.72 && flaps <= 0 && dist(tenter) < 28) { flaps = 2 + Math.floor(rng() * 3); flapNext = now; }
+    if (gust > 0.72 && prevG <= 0.72 && flaps <= 0 && dist(tenter) < 28) { flaps = 1 + Math.floor(rng() * 2); flapNext = now; }
     if (flaps > 0 && now >= flapNext) { flap(flaps & 1); flaps--; flapNext = now + span(0.35, 0.8); }
     // the beans' poles knock on a gust's rise
     if (E.beans && gust > 0.62 && prevG <= 0.62 && now >= poleNext && dist(E.beans) < 30) { poles(); poleNext = now + span(4, 9); }
     prevG = gust;
+    // the loops' rates wander a little apart, so no buffer's length comes round as a period (the pink loop is 5 s: the survey heard it at the fountain)
+    for (let k = 0; k < Pp.srcs.length; k++) Pp.srcs[k].playbackRate.setTargetAtTime(1 + 0.035 * ctx.noise.noise2(t * 0.11 + k * 7.3, 15.2 + k), now, 1.5);
     // the fountain: each band wanders on its own; the chord brightens at the gutter
     Pp.lightBus.gain.setTargetAtTime(wake * 2.0 * (1 + 0.8 * gut), now, 1.2);
     for (const b of Pp.bands) { const w = 0.5 + 0.5 * ctx.noise.noise2(t * b.w, b.ph); b.g.gain.setTargetAtTime(b.lvl * (0.25 + 0.75 * w * w), now, 1.5); }
-    const well = Math.max(0, Math.sin(t * 0.7 + 1.1 * ctx.noise.noise2(t * 0.05, 7.7))) ** 3;
+    const well = Math.max(0, ctx.noise.noise2(t * 0.17, 7.7) + 0.2 * ctx.noise.noise2(t * 0.41, 2.9)) ** 2 * 1.6; // (a sine here came round every 9 s: the survey's repeat_s 5)
     Pp.wG.gain.setTargetAtTime(wake * (0.12 + 0.24 * well), now, 0.8);
     Pp.tG.gain.setTargetAtTime(wake * 0.12, now, 1);
     Pp.gG.gain.setTargetAtTime(wake * 0.12, now, 1);
