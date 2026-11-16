@@ -39,7 +39,7 @@ Polar from the keep's centre (37, 31), bearing 0 = -z, 90 = +x. The village take
 
 Names are `[Proposed]` and the lead brief's to bend, in the valley's voice (a definite article and one rare, exact noun; people are offices, never names). The village is **the Lappet**: the keep is a carcanet, a collar, and this is the piece that hangs from it.
 
-Lost, on the owner's word: the Demesne's yews on the scarp and ring between bearings 0 and 100, the ashlar `demesne-blocks` in the corridor (reused as the quarry's stock), and the Indistinct if it cannot be given a place (first choice: it keeps its ditch west of the village, bearings 300 to 360; second: it is the thing at the end of one lane after dark).
+Lost, on the owner's word: the Demesne's yews on the scarp and ring between bearings 0 and 100, the ashlar `demesne-blocks` in the corridor (reused as the quarry's stock), and the Indistinct, removed on the owner's word (X1; see below).
 
 ### Who is there
 

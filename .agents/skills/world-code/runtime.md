@@ -124,7 +124,7 @@ v6-01 adds only the counters and `pop-test`. Later v6 agents append their `?para
 - `rockcut=0` (v8-11: the rocks as v8-10 left them: every boulder, no cleared-ground table, the pale high-contrast lichen, uncapped region lichen; `node tools/rocks-test.mjs <base> [low,high]` checks every stone's and boulder's footprint against the walkers' lines, the roads and the built places, every rock's and drawn tree's against the Long Figure (v9), the common's boulder count, the boulders' share of the uncut count, and the lichen's contrast)
 - `twk=0` (v8-07: no Twk-men, no salt at the spill or the house; `node tools/twk-test.mjs <base>` pins their stations, the inspection's metre, the quarrel, the salute, the salt line, the guard and the gutter)
 - `workers=0` leaves out the workers (`src/v7/workers.js`): `taker=0`, `coheirs=0`, `sexton=0` each one
-- `small=0` leaves out all of `living-small`; `indistinct=0` the blur on the ha-ha, `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
+- `small=0` leaves out all of `living-small`; `repetend=0` the bird and its echo, `simulacrum=0` the gnat columns; `simulacrum=face` forces the face on and `simulacrum=noface` off (v7-05)
 
 ### v9 music
 
