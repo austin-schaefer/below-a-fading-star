@@ -178,7 +178,8 @@ const res = await page.evaluate(async () => {
   // the nearest track end within 4 m of the first point, and behind it (on the side the climb does not go: its
   // second distinct point is on the other side), so a walker who follows the track arrives facing up the way
   // ways down not yet given a track to their foot, each with why (listed for the agent who owns the place)
-  const FEET_OPEN = { 'pit-stair': 'the Pit\'s stair is come to from its head (the causeway ends at its landing on the lip); its foot stands on the Pit\'s floor, where no track runs', 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
+  const LAPPET = 'a way inside the Lappet (v15): come to by the village\'s own paved lanes (src/v15/plan.js LANES), not by a track; P9 and P41 end at the Heliarch stair\'s foot';
+  const FEET_OPEN = { 'heliarch-head-east': LAPPET, 'heliarch-head-west': LAPPET, 'heliarch-upper': LAPPET, 'timber-patch': LAPPET, 'noon-main': LAPPET, 'rungs-ladder': LAPPET, 'lane-bridge': LAPPET, 'lees-stair': LAPPET, 'pennyworth-ramp': LAPPET, 'pit-stair': 'the Pit\'s stair is come to from its head (the causeway ends at its landing on the lip); its foot stands on the Pit\'s floor, where no track runs', 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
   const feet = [];
   for (const a of fp.ascents?.list || []) {
     if (a.test) continue;

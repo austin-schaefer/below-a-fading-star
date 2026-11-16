@@ -36,7 +36,7 @@ export function tube(K, o) {
   // ---- the glass
   const wTop = w0 + 0.5, wBot = wEnd - 1.3; // the whole section runs between these
   // the upper end: only the crown and shoulders left, a hood over the way in, its lip torn
-  P.tube(U, lineM(wTop, -1), { r, len: along(wTop + 1.9), a0: -1.95, a1: 1.95, ragged: 0.9, collar: false, seed: 31, seg, wear, glaze: GLAZES[1] });
+  P.tube(U, lineM(wTop, -1), { r: r + 0.012, len: along(wTop + 1.9), a0: -1.95, a1: 1.95, ragged: 0.35, collar: false, seed: 31, seg, wear, glaze: GLAZES[1] });
   const door = o.door ? (o.y + up - o.door.y) / k : null; // where the planks pass the door's floor
   const crack = wTop + (wBot - wTop) * 0.62;
   let w = wTop, i = 0;
@@ -60,10 +60,10 @@ export function tube(K, o) {
     w = b;
   }
   // the lower end: broken off; the crown runs on a little as a torn hood, and its shards lie on the floor
-  P.tube(U, lineM(wBot), { r, len: along(1.9), a0: -1.7, a1: 1.5, ragged: 1, collar: true, seed: 77, seg, wear, glaze: GLAZES[3] });
+  P.tube(U, lineM(wBot), { r: r + 0.012, len: along(1.9), a0: -1.7, a1: 1.5, ragged: 0.35, collar: false, seed: 77, seg, wear, glaze: GLAZES[3] });
   for (const [dw, du, a, s] of [[1.6, 2.1, 0.5, 1.0], [2.4, -1.7, 2.2, 0.8], [3.2, 0.6, 4.0, 0.65], [0.4, -2.4, 1.2, 0.5]]) {
     const p = pt(wEnd + dw - 0.8, du);
-    P.tube(U, new THREE.Matrix4().makeRotationY(a).setPosition(p[0], o.yEnd - r * s + 0.32 * s, p[2]), { r: r * s, len: 0.8 + s, a0: -0.7, a1: 0.6, ragged: 0.8, collar: false, seed: 90 + dw * 7, seg: 10, wear, glaze: GLAZES[(dw * 3 | 0) % 4] });
+    P.tube(U, new THREE.Matrix4().makeRotationY(a).setPosition(p[0], o.yEnd - r * s + 0.32 * s, p[2]), { r: r * s, len: 0.8 + s, a0: -0.7, a1: 0.6, ragged: 0.25, collar: false, seed: 90 + dw * 7, seg: 10, wear, glaze: GLAZES[(dw * 3 | 0) % 4] });
   }
   // the noon it still holds: a steady lamp at the lit collar, seen through the door and the crack
   const lights = [];
@@ -76,7 +76,7 @@ export function tube(K, o) {
 
   // ---- the Late folk's planks: a sill at the top, then a stair down the bore, two stringers under it
   const Fr = frame(o.x, 0, o.z, fx, fz), wood = C.late.wood, grey = wood.clone().multiplyScalar(1.5);
-  for (let q = 0; q < 4; q++) B.add(B.box(half * 2 - 0.1, 0.05, w0 / 4 + 0.04, { chip: 0.01 }), Fr.clone().multiply(mat(0, o.y - 0.028, (q + 0.5) * w0 / 4, 0, (rng() - 0.5) * 0.03, 0)), { color: grey.clone().multiplyScalar(0.75 + rng() * 0.35), moss: 0.2, ground: o.y - 1 });
+  for (let q = 0; q < 4; q++) B.add(B.box(half * 2 - 0.1, 0.05, w0 / 4 - 0.015, { chip: 0.01 }), Fr.clone().multiply(mat(0, o.y - 0.028, (q + 0.5) * w0 / 4, 0, (rng() - 0.5) * 0.03, 0)), { color: grey.clone().multiplyScalar(0.75 + rng() * 0.35), moss: 0.2, ground: o.y - 1 });
   for (let s = 0; s < nSteps; s++) {
     const wS = w0 + (s + 0.5) * run, y = floorY(wS);
     if (y <= o.yEnd + 0.01) break;
@@ -115,7 +115,7 @@ export function tube(K, o) {
   // the gangway from the door to its tread: planks on two baulks let into the riser, propped from the floor below
   if (o.door) {
     const sd = o.door.side, y = o.door.y, back = door - o.door.reach, u0 = half - 0.1, u1 = Ro + 1.35;
-    const rects = [[door - 0.7, door + 0.7, u0, u1], [back - 0.15, door + 0.7, Ro + 0.3, u1]];
+    const rects = [[door - 0.7, door + 0.7, u0, Ro + 0.3], [back - 0.15, door + 0.7, Ro + 0.3, u1]];
     for (const [wa, wb, ua, ub] of rects) {
       const n = Math.max(2, Math.round((wb - wa) / 0.26));
       for (let q = 0; q < n; q++) B.add(B.box(ub - ua + rng() * 0.08, 0.05, (wb - wa) / n - 0.015, { chip: 0.01 }), Fr.clone().multiply(mat(sd * (ua + ub) / 2, y - 0.028, wa + (q + 0.5) * (wb - wa) / n, 0, (rng() - 0.5) * 0.03, 0)), { color: grey.clone().multiplyScalar(0.7 + rng() * 0.4), moss: 0.15, ground: y - 2 });

@@ -206,7 +206,7 @@ export const WAYS = [
     note: 'up the Mid Rung\'s riser, 4 m' },
   { name: 'lees-stair', kind: 'stair', hand: 'late', from: 'bench', to: 'low', run: 2, s: 22.9, sign: -1, D0: 15.4, D1: 17.1,
     note: 'a plank outside stair along the Low Rung\'s riser, 2.9 m: its head at s, the flight going down toward the corner (sign -1)' },
-  { name: 'pennyworth-ramp', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 40, b1: 53,
+  { name: 'pennyworth-ramp', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 41.2, b1: 53,
     note: 'rammed earth and plank down the outside of the lowest riser, from the square\'s east end to the house\'s wall' },
   { name: 'p9-bank', kind: 'ramp', hand: 'late', from: 'bench', to: 'foot', b0: 20, b1: 28,
     note: 'the old way\'s bank across the ha-ha (src/v8/roads/crossings.js), kept' },
@@ -256,7 +256,7 @@ export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.
 [['strake-elder', 'house', 'elder', 'an Elder slab-house: three blocks and a lintel nobody alive could lift, lived in'], ['strake-late', 'house', 'late', null], ['strake-shop', 'shop', 'heliarch', 'the undercroft behind it is cut 3.2 m into the Low Rung'],
   ['strake-carrier', 'carrier', 'noon', 'a length of carrier stood in the row as a house'], ['strake-new', 'new-house', 'new', 'the newest front in the row: the keep\'s fallen ashlar, half built']]
   .forEach(([name, kind, hand, note], i) => put(name, kind, 'lees', 'bench', 1, STRAKE.s0 + STRAKE.slot * (i + 0.5), STRAKE.D0 + STRAKE.depth / 2, STRAKE.slot, STRAKE.depth, hand, { against: 'low', roof: 'low', strake: i, ...(note ? { note } : {}) }));
-put('fountain', 'fountain', 'lees', 'bench', 1, 26, 23.9, 4.6, 4.6, 'noon', { note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
+put('fountain', 'fountain', 'lees', 'bench', 1, 25, 25, 3.8, 3.8, 'noon', { note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
 // --- the Quarrels: the crown
 put('new-house', 'new-house', 'quarrels', 'crown', 2, 15, -9.4, 7, 5.6, 'new', { note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold' });
 put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { note: 'the lime pit, the sledge on rollers, the banker; the Demesne\'s fallen blocks stacked as stock' });
@@ -312,14 +312,31 @@ export function cutAt(x, z, pad = 0) {
 // is its registered ascent; each level is its lane walked end to end; the crown is the court behind the stair's head.
 // A quarter adds its own places here as it builds.
 const laneRoute = (name) => { const l = LANES.find((q) => q.name === name); return l.pts.map(([x, z]) => [x, z, l.y]); };
+// what the village's ground change left where it lay, hidden: older things under a built tread or under the levelled foot
+// (and what stood here before v15 and is seen from the village's places as it was: not the village's to mend)
+const OLD = {
+  'structures-keep': 'Carcanet Keep\'s fallen corner, as it stood before v15, seen from the crown',
+  'structures-taverna': 'the Pomegranate House\'s own walls, as they stood before v15 (its findings are the place `house`\'s)',
+  'house-lamps': 'the Pomegranate House\'s lamps, as they hung before v15 (the place `house`\'s)',
+};
+const BURIED = {
+  ...OLD,
+  'structures-drums*': 'the causeway\'s old fallen drums, now under the Mid Rung\'s tread: not seen',
+  'structures-ashlars*': 'the causeway\'s old fallen ashlars, now under a tread: not seen',
+  'rocks-pebble*': 'a pebble of the old slope under a tread: not seen',
+  'roads-gnomons': 'a road gnomon stands through the High Rung\'s tread into the ground 0.3 m under it',
+  'livery-slate': 'the house\'s slates lie under the Pennyworth\'s levelled ground: not seen',
+  'demesne-peafowl-trains*': 'a perched bird\'s train hangs free',
+  'threads-chair-marks': 'a mark drawn on the ground, level here since the bench was levelled',
+};
 export const GEOMETRY_PLACES = [
   ...['heliarch-head-east', 'heliarch-head-west', 'heliarch-upper', 'timber-patch', 'heliarch-foot', 'rungs-ladder', 'lane-bridge', 'lees-stair', 'pennyworth-ramp']
-    .map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5 })),
-  { name: 'lappet-noon-main', ascent: 'noon-main', half: 6 }, // the daylight main: cracked and breached, so never `sealed`
-  { name: 'lappet-crown', pts: [[...at(1, 20, -8), LEVEL.crown.y], [...at(1, STAIR.s, -7), LEVEL.crown.y], [...at(2, 6, -8), LEVEL.crown.y]], half: 6 },
-  { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6 },
-  { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5 },
-  { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5 },
-  { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7 },
-  { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6 },
+    .map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
+  { name: 'lappet-noon-main', ascent: 'noon-main', half: 6, exempt: BURIED }, // the daylight main: cracked and breached, so never `sealed`
+  { name: 'lappet-crown', pts: [[...at(1, 20, -8), LEVEL.crown.y], [...at(1, STAIR.s, -7), LEVEL.crown.y], [...at(2, 6, -8), LEVEL.crown.y]], half: 6, exempt: BURIED },
+  { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6, exempt: BURIED },
+  { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5, exempt: BURIED },
+  { name: 'lappet-low', pts: laneRoute('low-lane'), half: 5, exempt: BURIED },
+  { name: 'lappet-lees', pts: [at(1, 2, 22.6), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 24, 18)], half: 7, exempt: BURIED },
+  { name: 'lappet-pennyworth', pts: LANES.find((q) => q.name === 'wall-lane').pts.slice(1), half: 6, exempt: BURIED },
 ];

@@ -35,20 +35,20 @@ export function ramp(K, o) {
     const F = frame(a[0], a[1], a[2], fx, fz), dy = b[1] - a[1], pitch = -Math.atan2(dy, len), sl = Math.hypot(len, dy);
     const g0 = Math.min(o.base(a[0], a[2]), o.base(b[0], b[2])) - 0.3, th = (a[1] + b[1]) / 2 - g0;
     // the earth: a slab as deep as it stands over the ground, its top following the fall
-    B.add(B.box(w - 0.1, 0.5, sl + 0.25, { seg: 1.2 }), F.clone().multiply(mat(0, dy / 2 - 0.25, len / 2, pitch, 0, 0)), { color: jit(earth, 0.85 + rng() * 0.3), moss: 0.7, ground: g0, disp: 0.03, dispScale: 2 });
-    if (th > 0.6) B.add(B.box(w - 0.3, th, len + 0.1), F.clone().multiply(mat(0, dy / 2 - 0.4 - th / 2, len / 2)), { color: jit(earth, 0.6), moss: 0.8, ground: g0 });
+    B.add(B.box(w - 0.1, 0.5, sl + 0.25, { seg: 1.2 }), F.clone().multiply(mat(0, dy / 2 - 0.25 - (i % 2) * 0.012, len / 2, pitch, 0, 0)), { color: jit(earth, 0.85 + rng() * 0.3), moss: 0.7, ground: g0, disp: 0.03, dispScale: 2 });
+    if (th > 0.6) B.add(B.box(w - 0.3 - (i % 2) * 0.03, th, len + 0.1), F.clone().multiply(mat(0, dy / 2 - 0.4 - th / 2, len / 2)), { color: jit(earth, 0.6), moss: 0.8, ground: g0 });
     // a cleat across it every stride and a half (a split log pegged down), so feet and barrows hold
     for (let s = 0.5; s < len; s += 1.15) B.add(B.cyl(0.05, 0.06, w - 0.25, 6, 1), F.clone().multiply(mat(0, dy * s / len + 0.02, s, 0, (rng() - 0.5) * 0.08, Math.PI / 2)), { color: jit(wood, 0.8 + rng() * 0.5), moss: 0.3, ground: g0 });
     // the revetment: posts driven in and boards behind them, as high as the ramp stands
     if (o.revet) {
       const sd = o.revet;
       for (let s = 0; s <= len + 0.01; s += len / Math.max(1, Math.round(len / 1.3))) {
-        const y = dy * s / len, h = a[1] + y - g0 + 0.25;
+        const y = dy * s / len, h = a[1] + y - g0 - 0.05; // (its foot a finger into the ground)
         if (h > 0.5) B.add(B.box(0.13, h, 0.13), F.clone().multiply(mat(sd * (w / 2 + 0.02), y - h / 2 + 0.22, s, (rng() - 0.5) * 0.06, 0, sd * 0.04)), { color: jit(wood, 0.8 + rng() * 0.4), moss: 0.35, ground: g0 });
       }
       if (th > 0.5) for (let q = 0, nb = Math.ceil(th / 0.28); q < nb; q++) {
         const drop = 0.2 + q * 0.28; if (drop > th + 0.1) break;
-        B.add(B.box(0.045, 0.25, sl + 0.2, { chip: 0.01 }), F.clone().multiply(mat(sd * (w / 2 - 0.06), dy / 2 - drop, len / 2, pitch * Math.max(0, 1 - q * 0.22), 0, 0)), { color: jit(wood, 0.9 + rng() * 0.7), moss: 0.35, ground: g0 });
+        B.add(B.box(0.045, 0.25, sl - 0.03, { chip: 0.01 }), F.clone().multiply(mat(sd * (w / 2 - 0.08 - (i % 2) * 0.012 - (q % 2) * 0.02), dy / 2 - drop, len / 2, pitch * Math.max(0, 1 - q * 0.22), 0, 0)), { color: jit(wood, 0.9 + rng() * 0.7), moss: 0.35, ground: g0 });
       }
     }
   }
@@ -121,7 +121,7 @@ export function undercroft(K, p, o) {
   // the lining: side walls, the back, the vault (a half barrel of nine staves), seen from inside
   // the room, seen from inside: the floor, two walls to the springing, the barrel over them, the back wall with its lunette
   {
-    const hwR = w / 2, rise = yT - y0 - spring, NS = 10, pos = [], idx = [];
+    const hwR = w / 2 - 0.04, rise = yT - y0 - spring, NS = 10, pos = [], idx = [];
     const ring = [[-hwR, 0], [-hwR, spring]];
     for (let i = 1; i < NS; i++) { const a = Math.PI * (1 - i / NS); ring.push([Math.cos(a) * hwR, spring + Math.sin(a) * rise]); }
     ring.push([hwR, spring], [hwR, 0]);
@@ -145,7 +145,7 @@ export function undercroft(K, p, o) {
   hole.moveTo(-rad, -0.4); hole.lineTo(-rad, sp); hole.absarc(0, sp, rad, Math.PI, 0, true); hole.lineTo(rad, -0.4); hole.lineTo(-rad, -0.4);
   sh.holes.push(hole);
   B.add(B.extrude(sh, 0.5, 14), F.clone().multiply(mat(0, 0, -0.25)), { color: stone, course: 0.48, moss: 0.4, ground: y0 });
-  const ring = new THREE.Shape(); ring.moveTo(-rad - 0.34, sp); ring.absarc(0, sp, rad + 0.34, Math.PI, 0, true); ring.lineTo(rad, sp); ring.absarc(0, sp, rad, 0, Math.PI, false); ring.lineTo(-rad - 0.34, sp);
+  const ring = new THREE.Shape(); const ri = rad - 0.035; ring.moveTo(-rad - 0.34, sp); ring.absarc(0, sp, rad + 0.34, Math.PI, 0, true); ring.lineTo(ri, sp); ring.absarc(0, sp, ri, 0, Math.PI, false); ring.lineTo(-rad - 0.34, sp); // (a finger proud of the wall's own arch: no two faces in one surface)
   B.add(B.extrude(ring, 0.6, 14), F.clone().multiply(mat(0, 0, -0.18)), { color: dark, course: 0, moss: 0.35, ground: y0 });
   // the keystone carries the hexagon
   B.add(B.cyl(0.2, 0.2, 0.08, 6, 1), F.clone().multiply(mat(0, sp + rad + 0.17, 0.14, Math.PI / 2, 0, 0)), { color: C.heliarch.bronze, iron: 0.3, moss: 0.05, ground: y0 });

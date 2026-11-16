@@ -110,7 +110,7 @@ export async function build(ctx) {
   const lanes = { crown: null, high: 0, mid: 9.1, low: 14.5 };
   const tone = (level, x, z, D, D0) => {
     const n = N2(x * 0.11, z * 0.11) * 0.5 + N2(x * 0.43 + 7, z * 0.43) * 0.25;
-    let k = 0.9 + 0.16 * n;
+    let k = 1.04 + 0.16 * n; // (paler than the risers: the whole sector is in the keep's shadow, and the steps read by value)
     if (level !== 'crown') k *= mix(0.66, 1, Math.min(1, (D - D0) / 1.6)); // the riser's foot: damp, mossed
     const ln = lanes[level];
     if (ln !== null) k *= 1 + 0.2 * Math.max(0, 1 - Math.abs(D - ln) / (level === 'high' ? 2.6 : 1)); // the trodden line
@@ -257,7 +257,7 @@ export async function build(ctx) {
       const dx = x - PLAN.KEEP.x, dz = z - PLAN.KEEP.z, r2 = dx * dx + dz * dz;
       if (r2 < 73.5 * 73.5 || r2 >= PLAN.HAHA * PLAN.HAHA) return null;
       const b = PLAN.bearingOf(x, z);
-      return b > 33 && b < 74 ? y : null;
+      return b > 37.5 && b < 74 ? y : null; // (west of 37.5 the house's own corner stands on the edge)
     };
     lappet.floors.bench = fn;
     ctx.addWalkable(fn, { stack: true, keep: true, name: 'lappet-bench-edge' });

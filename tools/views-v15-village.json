@@ -35,6 +35,6 @@
   {"name":"lees-stair","x":104.733,"z":-3.379,"yaw":-3.106,"pitch":0.2},
   {"name":"undercroft-front","x":99.888,"z":-13.722,"yaw":1.833,"pitch":0.08},
   {"name":"undercroft-inside","x":93.216,"z":-11.336,"yaw":-0.992,"pitch":0.05},
-  {"name":"ramp-top","x":84.213,"z":-30.854,"yaw":-2.081,"pitch":-0.2},
-  {"name":"ramp-foot","x":109.727,"z":-13.57,"yaw":0.902,"pitch":0.15}
+  {"name":"ramp-top","x":85.478,"z":-29.915,"yaw":-2.084,"pitch":-0.2},
+  {"name":"ramp-foot","x":109.727,"z":-13.57,"yaw":0.909,"pitch":0.15}
 ]
