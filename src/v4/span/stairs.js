@@ -58,9 +58,10 @@ export function buildStairs(K) {
     // (v15-F1, the owner's #59) each stair is a way up (ctx.ascents): from its foot up every flight and across every
     // landing to the deck through the parapet's gap, so heights-test walks it and roads-test asks for a track to its foot
     const path = [[fx, fz, +y0.toFixed(2)]];
+    const side = (p) => [-p.dir[1] * (p.walk || 0), p.dir[0] * (p.walk || 0)]; // a flight's `walk`: its line off the middle
     S.parts.forEach((p, i) => {
-      if (p.rect) { const nx = S.parts[i + 1]; if (nx && !nx.rect) path.push([nx.x - nx.dir[0] * 1.2, nx.z - nx.dir[1] * 1.2], [nx.x, nx.z]); return; }
-      const x1 = p.x + p.dir[0] * p.len, z1 = p.z + p.dir[1] * p.len;
+      if (p.rect) { const nx = S.parts[i + 1]; if (nx && !nx.rect) { const [ox, oz] = side(nx); path.push([nx.x + ox - nx.dir[0] * 1.2, nx.z + oz - nx.dir[1] * 1.2], [nx.x + ox, nx.z + oz]); } return; }
+      const [ox, oz] = side(p), x1 = p.x + ox + p.dir[0] * p.len, z1 = p.z + oz + p.dir[1] * p.len;
       path.push([x1, z1], [x1 + p.dir[0] * 1.2, z1 + p.dir[1] * 1.2]);
     });
     const gx = (S.gap[0] + S.gap[1]) / 2;

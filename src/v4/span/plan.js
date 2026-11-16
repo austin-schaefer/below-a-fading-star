@@ -65,7 +65,7 @@ export const STAIRS = {
     parts: [
       { x: 225, z: 165, dir: [0, 1], len: 34 },
       { rect: [221.8, 235.2, 199, 205.4] },
-      { x: 232, z: 199, dir: [0, -1], len: 31 },
+      { x: 232, z: 199, dir: [0, -1], len: 31, walk: 1.4 }, // walk: its way up (ctx.ascents) keeps 1.4 m east of the middle, by the fallen stone at its foot
       { rect: [228.8, 242.2, 161.6, 168], rubble: true },
       { x: 239, z: 168, dir: [0, 1], len: 33 },
       { rect: [235.8, 250, 201, 207], top: true },
