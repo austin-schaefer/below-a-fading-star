@@ -237,6 +237,18 @@ export const WAYS = [
 ];
 export const way = (name) => WAYS.find((w) => w.name === name) || null;
 
+// ---------------------------------------------------------------- the keep's fallen face (the Quarrels build on it)
+// Carcanet Keep's north face lies on the crown where it fell (src/structures/keep.js SLAB, which builds it and walks
+// it: these numbers are that file's, kept equal by src/v15/quarters/quarrels.js, which warns if they part): from r0
+// out along bearing b for `len` metres on the level, W wide, its top falling from yHi to the turf at its toe.
+export const SLAB = (() => {
+  const b = 30, r0 = 27, Ls = 17, W = 13, yHi = 24.5, toe = 18.35, a = (b * Math.PI) / 180, th = Math.asin((yHi - toe) / Ls);
+  return { b, r0, Ls, W, yHi, toe, len: Ls * Math.cos(th), tan: Math.tan(th), f: [Math.sin(a), -Math.cos(a)], side: [Math.cos(a), Math.sin(a)] };
+})();
+// a point on it: `along` metres from its propped end (on the level), `side` metres east of its middle line
+export const slabAt = (along, side = 0) => [KEEP.x + SLAB.f[0] * (SLAB.r0 + along) + SLAB.side[0] * side, KEEP.z + SLAB.f[1] * (SLAB.r0 + along) + SLAB.side[1] * side];
+export const slabTop = (along) => SLAB.yHi - along * SLAB.tan;
+
 // ---------------------------------------------------------------- the plots
 // { name, kind, quarter, level, y, x, z, face: [fx, fz], yaw, w (across the front), d (front to back), hand,
 //   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), stair ('front': a Late house
@@ -283,10 +295,15 @@ export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.
   ['strake-carrier', 'carrier', 'noon', 'a length of carrier stood in the row as a house'], ['strake-new', 'new-house', 'new', 'the newest front in the row: the keep\'s fallen ashlar, half built']]
   .forEach(([name, kind, hand, note], i) => put(name, kind, 'lees', 'bench', 1, STRAKE.s0 + STRAKE.slot * (i + 0.5), STRAKE.D0 + STRAKE.depth / 2, STRAKE.slot, STRAKE.depth, hand, { against: 'low', roof: 'low', strake: i, ...(kind === 'shop' ? { opening: { riser: 'low', width: STRAKE.slot - 1, height: 2.6 } } : {}), ...(note ? { note } : {}) }));
 put('fountain', 'fountain', 'lees', 'bench', 1, 22.5, 24.75, 2.6, 2.6, 'noon', { fronts: ['P9', 'P41'], note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
-// --- the Quarrels: the crown
-put('new-house', 'new-house', 'quarrels', 'crown', 2, 15, -9.4, 7, 5.6, 'new', { note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold' });
-put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { note: 'the lime pit, the sledge on rollers, the banker; the Demesne\'s fallen blocks stacked as stock' });
-put('quarrels-house-1', 'house', 'quarrels', 'crown', 1, 18, -8, 5.6, 4.4, 'late', { note: 'the masons\' lodging, on the rim west of the keep\'s fallen slab' });
+// --- the Quarrels: the crown. The keep's fallen face (SLAB) lies across its west half and the corner's blocks are
+// strung from the wound to the rim at the east run's s 11..14, so: the new house stands east of them (it stood on
+// them at s 15), hard by the aqueduct's line; the masons' lodging leans on the slab's west flank, its roof level with
+// the slab where the two meet (the slab is the way up to it); a narrow house stands on the rim at the west end.
+put('new-house', 'new-house', 'quarrels', 'crown', 2, 24, -9.4, 7, 5.6, 'new', { title: 'the Unroofed House', note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold. [Proposed] name' });
+put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { title: 'the Banker', note: 'the stock squared up beside the stair\'s head; the Demesne\'s fallen blocks stacked as stock' });
+{ const a = 7.6, d = 4.4, [x, z] = slabAt(a, -SLAB.W / 2 - d / 2 + 0.04); // (its back wall's outer face a finger inside the slab's flank: no two faces in one plane)
+  free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Leaning Lodging', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. [Proposed] name' }); }
+put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. [Proposed] name' });
 // --- the Pennyworth: the foot
 free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.4), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5, 'noon', { note: 'a stalled carrier on its side along the lowest riser: a door cut in its belly, a chimney through its shoulder' });
 free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 116.4, -37, [-1, 0], 6, 4.4, 'late', { y: -0.3, slope: 1.2, note: 'east of the house, facing its wall across the gate lane' });
@@ -317,6 +334,36 @@ export function inPlot(p, x, z, pad = 0) {
   const dx = x - p.x, dz = z - p.z, [fx, fz] = p.face;
   return Math.abs(dx * fx + dz * fz) <= p.d / 2 + pad && Math.abs(-dx * fz + dz * fx) <= p.w / 2 + pad;
 }
+
+// ---------------------------------------------------------------- the Quarrels' own places (src/v15/quarters/quarrels.js builds them)
+// Everything the crown's quarter stands where no plot is, in the run frame: [run, s, D]. The keep's fallen blocks lie
+// where they fell (src/structures/keep.js); these are set between them. Names are [Proposed].
+const xz = (run, s, D) => { const [x, z] = at(run, s, D); return { run, s, D, x, z }; };
+export const QUARRELS = {
+  // the Smoking Saint: the lime kiln, in the head of the keep's fallen colossus, on the brink by the corner. `face`: the
+  // way he looks (north, down the Heliarch stair's side and out at the Pomegranate House: his profile from the square);
+  // `stoke`: the side his fire is fed from (south-west, toward the quarry)
+  kiln: { ...xz(2, 4.6, -6.9), face: [-0.2, -0.98], stoke: [-0.5, 0.87], name: 'the Smoking Saint' },
+  // (the bench stands at his right cheek, looking where he looks); three lesser heads on the brink, waiting
+  heads: [[1, 33.72, -5.5, 0.44], [1, 34.38, -5.52, 0.35], [1, 34.9, -5.5, 0.27]],
+  // the aqueduct's last arch, on the line of the Rungs' last pier (WAYS lane-bridge): its two piers' D; the water it
+  // still carries drips off its broken end into the saint's upturned hand
+  aqueduct: { run: 2, s: way('lane-bridge').s, piers: [-20.6, -13.4], name: 'the Last Arch' },
+  hand: { ...xz(2, way('lane-bridge').s, -11.15), name: 'the Almoner' },
+  // the quarry in the keep's wound: the shears over the block being lifted, the block split with wedges on the stair's axis
+  shears: xz(2, 4.5, -14.5),
+  split: xz(1, 29.95, -10.85),
+  // the Drag: the plank track from the shears round the stock and along the brink to the new house's stock
+  track: [[2, 6.4, -13.9], [2, 10.8, -6.6], [2, 13.0, -5.6], [2, 17, -5.6], [2, 21.0, -6.5]].map(([r, s, D]) => xz(r, s, D)),
+  sledge: 0.3, // how far along the Drag's first length the loaded sledge stands
+  // the square's paving (Heliarch hexagons relaid in a patch round the stair's head court): north run, s and D
+  paving: { run: 1, s0: 23.4, s1: 35.7, D0: -12.4, D1: -4.98 },
+  square: 'the Saint\'s Rest',
+};
+// the Quarrels walked: from the west end between the two houses, along the brink past the slab's toe, across the
+// square to the split block and the shears, down the Drag, past the hand, to the new house's door
+export const QUARRELS_ROUTE = [[1, 5.5, -11.4], [1, 10.5, -10.5], [1, 13.5, -7.2], [1, 22, -6.6], [1, 27.2, -8.6], [1, 28.4, -11.6], [1, 31.1, -11.7], [2, 5.74, -12.25], [2, 7.4, -12.6], [2, 10.6, -7.4], [2, 13.0, -5.8], [2, 17.5, -6.4], [2, 19.2, -8.2], [2, 21.4, -6.2], [2, 24.8, -6.2], [2, 24.8, -7.6], [2, 24.5, -9.7]]
+  .map(([r, s, D]) => [...at(r, s, D), LEVEL.crown.y]);
 
 // ---------------------------------------------------------------- cuts: where a tread is cut down into
 // { name, run, s0, s1, D0, D1, y }: the ground there is at y (the Demesne's height hook reads cutAt). A shop against
@@ -361,6 +408,7 @@ export const GEOMETRY_PLACES = [
   ...['heliarch-head-east', 'heliarch-head-west', 'heliarch-upper', 'timber-patch', 'heliarch-foot', 'rungs-ladder', 'lane-bridge', 'lees-stair', 'pennyworth-ramp']
     .map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
   { name: 'lappet-noon-main', ascent: 'noon-main', half: 6, exempt: BURIED }, // the daylight main: cracked and breached, so never `sealed`
+  { name: 'quarrels', pts: QUARRELS_ROUTE, half: 8, exempt: BURIED }, // the crown's quarter: the lodgings, the square, the quarry, the Drag, the new house
   { name: 'lappet-crown', pts: [[...at(1, 20, -8), LEVEL.crown.y], [...at(1, STAIR.s, -7), LEVEL.crown.y], [...at(2, 6, -8), LEVEL.crown.y]], half: 6, exempt: BURIED },
   { name: 'lappet-high', pts: [[...at(1, 5, 0.6), LEVEL.high.y], [...at(1, cornerS(1, 0.6), 0.6), LEVEL.high.y], [...at(2, 27, 0.6), LEVEL.high.y]], half: 6, exempt: BURIED },
   { name: 'lappet-mid', pts: laneRoute('mid-lane'), half: 5, exempt: BURIED },
