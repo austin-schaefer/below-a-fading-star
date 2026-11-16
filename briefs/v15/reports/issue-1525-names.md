@@ -26,5 +26,13 @@ Kept, changed, why. Display names only; plot ids, ascent ids, mesh names and cod
 | the Leaning Lodging | changed: the Propped House | alliteration; doubled "lodgings" |
 | the Stage | changed: the Hustings | a theatre word on a mason's scaffold |
 
+## Later additions (the owner's three, relayed)
+- The teleport list: the four quarter cards are `map: false` (cards only); the village is the existing entry The Lappet, plus The Fountain of Noon and The Smoking Saint (+2 entries; the Afterdoor and the quarters' stands are cut).
+- `briefs/v15/reports/v15-names-for-the-owner.md`: every name, stand link, meaning, card/map, quotation needed. New places' `line` is absent (nothing to accept or reject).
+- The Long Figure is out (`dressing/figure.js` deleted, plants, rocks, trees, clearings and two tests no longer name him). Frames: shots/wip/fig-before-east-b.png, fig-after-east-b.png.
+
+## Tests
+`ONLY=settings,village,village-plan,ways,geometry,heights,perf,loading,regions,walk,dressing,rocks tools/suite.sh 8168`: village-plan 7, regions 56, village 687, ways 129, walk 13, heights 198, geometry 144, loading 28, perf 29, dressing 21, rocks 38 passed. settings: 0 failed in 7 min 28 s on its own rerun (the first rerun died on a stray apostrophe in the test I had edited; the next three timed out clicking the gear under a load of 17 to 23, the test using swiftshader). Frames: shots/wip/n5-sheet.png (stands), fig-sheet.png.
+
 ## Cards and places (part 2)
 Four cards in `LANDMARKS` (`lappetCrown`, `lappetRungs`, `lappetLees`, `lappetFoot`: The Quarrels, The Rungs, The Lees, The Pennyworth), each gated on its level by `feet` and winning over The Lappet inside it. Three map places with no card in `src/settings.js` `VILLAGE_PLACES`: The Fountain of Noon, The Smoking Saint, The Afterdoor (the Pomegranate House's south door). Stands checked by the test's own rule (centre in view, no collider within 3 m of the eye) with a script that teleports to candidates.
