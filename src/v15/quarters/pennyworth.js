@@ -152,9 +152,9 @@ export async function build(ctx) {
     }
     if (h1 && h2 && p1 && p2) {
       // a line from the lower house's parapet to the upper one's wall, the lane under it
-      const a = [p1.x + p1.face[0] * (p1.d / 2 - 0.25), p1.y + 3.05, p1.z - 1.2], b = [p2.x + p2.face[0] * (p2.d / 2 - 0.3), p2.y + 2.4, p2.z + 1.4];
+      const a = [p1.x + p1.face[0] * (p1.d / 2 - 0.25), p1.y + 3.05, p1.z - 1.2], b = [p2.x + p2.face[0] * (p2.d / 2 - 0.3), Math.min(p2.y + 2.4, p1.y + 3.2), p2.z + 1.4]; // (near level: the kit's cloths hang square, and on a steep line a corner leaves the rope)
       for (const [q, pp] of [[a, p1], [b, p2]]) beam(B, mat(0, 0, 0), [q[0] - pp.face[0] * 0.4, q[1] - 0.04, q[2]], [q[0] + pp.face[0] * 0.03, q[1] + 0.02, q[2]], 0.05, wood(0.3)); // a peg driven into each wall
-      washing(B, mat(0, 0, 0), a, b, rng, low ? 3 : 5);
+      washing(B, mat(0, 0, 0), a, b, rngOf(41), low ? 3 : 5);
     }
   }
 
