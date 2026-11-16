@@ -403,7 +403,7 @@ export async function build(ctx) {
     // (v15-F1, #60) each box's back (in the rock, toward the passage) is drawn a few millimetres short of the last's, so
     // two boxes that share it never lay two faces in one plane where they overlap
     let bi = 0;
-    const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const k = 0.0016 * bi++; const [x, , z] = W(along - k / 2, lat, 0); PO.box(x, y, z, ha - k / 2, hy, hl, yaw, col, colTop, 0.1); };
+    const box = (along, lat, y, ha, hl, hy, col, colTop = col) => { const k = 0.004 * bi++; const [x, , z] = W(along - k / 2, lat, 0); PO.box(x, y, z, ha - k / 2, hy, hl, yaw, col, colTop, 0.1); };
     const open = 1.2, top = Y + 3.25, outer = 3.5, order = 1.75;
     // the piers in courses of dressed blocks (the way through is between them), an inner order of jambs and a lintel
     // stepped in from the face, the lintel block over all, the cornice, the face's rough surround
@@ -428,7 +428,7 @@ export async function build(ctx) {
       PO.tri([sx - ox * 0.05, sy, sz - oz * 0.05], P3(R, a0), P3(R, a1), STONE_D, [-ox, 0, -oz], 0.15);
       if (i % 2 === 0) PO.tri(P3(R + 0.04, a0), P3(R + 0.04, a1), P3(R * 1.9, (a0 + a1) / 2), STONE, [-ox, 0, -oz], 0.15);
     }
-    for (let i = 0; i < 18; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.9, p = P3(r, a), o = 0.07 + i * 0.004; PO.box(p[0] - ox * o, p[1], p[2] - oz * o, 0.035, 0.035, 0.035, yaw, CUT, CUT, 0.05); } // (each its own depth: two that overlap never share a face's plane)
+    for (let i = 0; i < 18; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.9, p = P3(r, a), o = 0.004 + i * 0.0017; PO.box(p[0] - ox * o, p[1], p[2] - oz * o, 0.035, 0.035, 0.035, yaw, CUT, CUT, 0.05); } // (each its own depth, every one still set into the relief: two that overlap never share a face's plane, none hangs in front of it)
     // a threshold of three slabs where the passage's floor ends
     for (let i = 0; i < 3; i++) box(f0 + 0.35 + i * 0.62, 0, Y - 0.1, 0.3, open - 0.02, 0.12, STONE_D, STONE);
     // the lamp, on an iron bracket out of the right pier's face
@@ -446,7 +446,7 @@ export async function build(ctx) {
     const foot = (lat) => { const [x, , z] = hx(lat, 0), f = ctx.pit?.bowl?.(x, z); return (Number.isFinite(f) ? f + 0.04 : Y) - 0.06; };
     const HEX = [[-1.45, foot(-1.45)], [-2.9, Y + 1.9], [-1.45, Y + 4.41], [1.45, Y + 4.41], [2.9, Y + 1.9], [1.45, foot(1.45)]];
     for (let i = 0; i < 5; i++) PO.beam(hx(...HEX[i]), hx(...HEX[i + 1]), 0.11, HELIO, 0.06);
-    const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(rx, 0, rz), new THREE.Vector3(-ox, 0, -oz), new THREE.Vector3(0, 1, 0));
+    const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(rx, 0, rz), new THREE.Vector3(-ox, 0, -oz), new THREE.Vector3(0, -1, 0)); // (v15-F1, #60: right-handed; with +y the basis mirrored the roundels inside out, their backs seen from the floor)
     for (const [lat, y] of HEX.slice(1, 5)) {
       const [x0, y0, z0] = hx(lat, y), m = face.clone().setPosition(x0 - ox * 0.06, y0, z0 - oz * 0.06);
       PO.geo(new THREE.CylinderGeometry(0.34, 0.38, 0.16, 18), m, HELIO, 0.05);
@@ -594,7 +594,9 @@ export async function build(ctx) {
       const test = (Pp, a, b, c) => Math.max(hy(Pp, a), hy(Pp, b), hy(Pp, c)) > P.YM + 0.6 && behind(Pp, a) && behind(Pp, b) && behind(Pp, c);
       if (g && !g.index) { const A = g.attributes.position, Pp = A.array; let n = 0, laid = 0;
         for (let i = 0; i < A.count; i++) if (narrow(Pp, i) && Pp[i * 3 + 1] > P.YM - 0.04) { Pp[i * 3 + 1] = P.YM - 0.04; laid++; }
-        for (let t = 0; t < A.count; t += 3) if (test(Pp, t, t + 1, t + 2)) { for (let k = 3; k < 9; k++) Pp[t * 3 + k] = Pp[t * 3 + (k % 3)]; n++; }
+        // a face the laying folded over (it now faces down or edge-on, a rising face whose top came down) is cut
+        const folded = (Pp, a, b, c) => { if (!(narrow(Pp, a) || narrow(Pp, b) || narrow(Pp, c))) return false; const ux = Pp[b * 3] - Pp[a * 3], uy = Pp[b * 3 + 1] - Pp[a * 3 + 1], uz = Pp[b * 3 + 2] - Pp[a * 3 + 2], vx = Pp[c * 3] - Pp[a * 3], vy = Pp[c * 3 + 1] - Pp[a * 3 + 1], vz = Pp[c * 3 + 2] - Pp[a * 3 + 2]; const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; return ny < 0.5 * Math.hypot(nx, ny, nz); };
+        for (let t = 0; t < A.count; t += 3) if (test(Pp, t, t + 1, t + 2) || folded(Pp, t, t + 1, t + 2)) { for (let k = 3; k < 9; k++) Pp[t * 3 + k] = Pp[t * 3 + (k % 3)]; n++; }
         if (n || laid) A.needsUpdate = true; cuts.pitRock = n + laid; cuts.pitLaid = laid; } }
     // the terrain: triangles in the wall (no corner over the lip) with a corner across the way and a corner low enough
     // to reach into it (under the gatehouse's top). (v15-F1, #60) The wall is 24 m of drop over a cell or two, so one
