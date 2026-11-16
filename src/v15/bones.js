@@ -75,11 +75,11 @@ const mix = (a, b, t) => a + (b - a) * t;
 const shade = (k, warm = 0) => [k * (1 + warm), k, k * (1 - warm * 1.4)];
 
 // ---------------------------------------------------------------- openings and holes (from the plan)
-// Where a riser's face is left open for a way or an undercroft: { riser, run, s0, s1 }. A way's kit adds its own
-// before the bones are built (buildWays' `claim` pass), so a quarter's stair cuts its slot the same way.
+// Where a riser's face is left open for a way or an undercroft: { riser, run, s0, s1 }. A plot declares its own in
+// the plan (`opening`), so a quarter never edits this file; V0's own ways add theirs in buildWays' `claim` pass.
 function planOpenings() {
   const out = [];
-  for (const p of PLAN.PLOTS) if (p.kind === 'shop' && p.against) out.push({ riser: p.against, run: p.run, s0: p.s - p.w / 2 + 0.5, s1: p.s + p.w / 2 - 0.5, why: p.name, vault: true });
+  for (const p of PLAN.PLOTS) if (p.opening) out.push({ riser: p.opening.riser, run: p.run, s0: p.s - p.opening.width / 2, s1: p.s + p.opening.width / 2, why: p.name, vault: p.kind === 'shop' });
   return out;
 }
 
@@ -87,7 +87,7 @@ export async function build(ctx) {
   const off = new URL(location.href).searchParams.get('lappet') === '0';
   const low = ctx.quality === 'low';
   const T = ctx.terrain, N2 = ctx.noise.noise2;
-  const lappet = (ctx.lappet = { plan: PLAN, on: !off, floors: {}, openings: planOpenings(), holes: [], colliders: 0, ways: {}, built: {}, Mesher });
+  const lappet = (ctx.lappet = { plan: PLAN, on: !off, floors: {}, openings: planOpenings(), holes: [], kerbs: [], colliders: 0, ways: {}, built: {}, Mesher });
   if (off) { ctx.log('lappet: off (?lappet=0)'); return; }
 
   // the ways claim their openings (a gap in a riser's face) and holes (a slot cut in a tread) before the stone is laid
@@ -140,46 +140,79 @@ export async function build(ctx) {
   }
 
   // ---------------------------------------------------------------- the risers
-  // a battered face from below the lower tread to the nosing's bevel, in 2 m stations; left open where the plan or a
-  // way opens it; a socket here and there in the top course (a triangle let 0.7 m into the block, its purpose gone)
-  const SOCKETS = [{ riser: 'rim', run: 1, s: 11 }, { riser: 'rim', run: 2, s: 20 }, { riser: 'high', run: 2, s: 17.5 }, { riser: 'mid', run: 1, s: 12 }];
+  // Cyclopean, and not for us: each face is a few polygonal blocks 2.6 to 5.4 m long, one or two to the riser's
+  // height, their joints leaning and kinked, no two alike. Every block's face stands a hand proud of its joints, so
+  // the joints are grooves cut in the geometry and read in the keep's shadow and on low. Left open where the plan or
+  // a way opens the face.
   const walls = []; // { riser, run, s0, s1 } the stretches of face that stand, for the colliders
-  for (const R of RISERS.slice(0, 4)) for (const run of [1, 2]) {
-    const sa = run === 1 ? S1 : cornerS(2, R.D), sb = run === 1 ? cornerS(1, R.D) : S2, n = Math.ceil((sb - sa) / 2), ds = (sb - sa) / n;
-    const yb = R.foot - 0.6, yt = R.top - NOSE, dark = R.key === 'low' ? 0.8 : 0.92;
-    let start = null;
-    // stations every 2 m, and one at each edge of an opening, so a gap is exactly as wide as what is let into it
-    const cutsAt = [];
-    for (let i = 0; i <= n; i++) cutsAt.push(sa + i * ds);
-    for (const o of lappet.openings) if (o.riser === R.key && o.run === run) for (const e of [o.s0, o.s1]) if (e > sa + 0.05 && e < sb - 0.05) cutsAt.push(e);
-    cutsAt.sort((p, q) => p - q);
-    for (let i = 0; i < cutsAt.length - 1; i++) {
-      const s0 = cutsAt[i], s1 = cutsAt[i + 1], sm = (s0 + s1) / 2;
-      if (s1 - s0 < 0.02) continue;
-      if (openAt(R.key, run, sm)) { if (start !== null) { walls.push({ riser: R, run, s0: start, s1: s0 }); start = null; } continue; }
-      if (start === null) start = s0;
-      const f = (s, y, out) => { const [x, z] = at(run, s, R.D + out); return [x, y, z]; };
-      const nn = [RUN[run].n[0], 0.05, RUN[run].n[1]];
-      const cb = shade(dark * 0.74, 0.02), ct = shade(dark * (0.95 + 0.1 * hash(i + R.D)), 0.02);
-      const sock = SOCKETS.find((k) => k.riser === R.key && k.run === run && k.s >= s0 && k.s < s1);
-      if (sock) {
-        // the face round a triangle, point down, in the top course, and the niche behind it
-        const ym = yt - 1.75, a = 0.72, h1 = yt - 0.32, h0 = yt - 1.5, om = mix(BATTER, 0.02, (ym - yb) / (yt - yb));
-        M.quadW(nn, f(s0, yb, BATTER), f(s1, yb, BATTER), f(s1, ym, om), f(s0, ym, om), cb, cb, ct, ct);
-        const BL = f(s0, ym, om), BR = f(s1, ym, om), TR = f(s1, yt, 0.02), TL = f(s0, yt, 0.02);
-        const o1 = mix(BATTER, 0.02, (h1 - yb) / (yt - yb)), o0 = mix(BATTER, 0.02, (h0 - yb) / (yt - yb));
-        const T1 = f(sm - a, h1, o1), T2 = f(sm + a, h1, o1), T3 = f(sm, h0, o0);
-        for (const t of [[BL, BR, T3], [BL, T3, T1], [BL, T1, TL], [TL, T1, T2], [TL, T2, TR], [TR, T2, BR], [T2, T3, BR]]) M.triW(nn, t[0], t[1], t[2], ct);
-        const dk = shade(0.3, 0.05), b1 = f(sm - a * 0.8, h1 - 0.05, -0.7), b2 = f(sm + a * 0.8, h1 - 0.05, -0.7), b3 = f(sm, h0 + 0.15, -0.7);
-        const ctr = [(T1[0] + T2[0] + T3[0]) / 3, (T1[1] + T2[1] + T3[1]) / 3, (T1[2] + T2[2] + T3[2]) / 3];
-        for (const [p, q, r, u] of [[T1, T3, b3, b1], [T3, T2, b2, b3], [T2, T1, b1, b2]]) M.quadW([ctr[0] - (p[0] + q[0]) / 2, ctr[1] - (p[1] + q[1]) / 2, ctr[2] - (p[2] + q[2]) / 2], p, q, r, u, ct, ct, dk, dk);
-        M.triW(nn, b1, b3, b2, dk);
-      } else M.quadW(nn, f(s0, yb, BATTER), f(s1, yb, BATTER), f(s1, yt, 0.02), f(s0, yt, 0.02), cb, cb, ct, ct);
-      // the nosing: worn off at a slope, then the tread
-      const cn = shade(1.04, 0.02);
-      M.quadW([nn[0], 1, nn[2]], f(s0, yt, 0.02), f(s1, yt, 0.02), f(s1, R.top, -NOSE), f(s0, R.top, -NOSE), ct, ct, cn, cn);
+  const PROUD = 0.13, GROOVE = 0.15, grooveC = shade(0.3, 0.02);
+  // one face: o = { sa, sb (along it), yb, yt, f(s, y, proud) -> [x, y, z], want(s) -> the way it looks, seedA,
+  // seedB, dark, stretches: [[s0, s1], ...] that stand, top(sA, sB, lean...) optional }
+  const face = (o) => {
+    const { yb, yt, f, want, dark } = o, H = yt - yb;
+    const hs = (k) => hash(o.seedA * 3.17 + o.seedB * 17.3 + k * 5.71);
+    const panel = (poly, k) => {
+      let cs = 0, cy = 0; for (const [ps, py] of poly) { cs += ps; cy += py; } cs /= poly.length; cy /= poly.length;
+      const nn = want(cs), tone = dark * (0.82 + 0.24 * hs(k + 0.5)), warm = 0.015 + 0.03 * hs(k + 0.9);
+      const col = (y) => shade(tone * mix(0.72, 1.02, (y - yb) / H), warm);
+      const inner = poly.map(([ps, py]) => { const d = Math.hypot(cs - ps, cy - py) || 1, t = Math.min(0.3, GROOVE * 1.5 / d); return [ps + (cs - ps) * t, py + (cy - py) * t]; });
+      const O = poly.map(([ps, py]) => f(ps, py, 0)), I = inner.map(([ps, py]) => f(ps, py, PROUD)), C = f(cs, cy, PROUD * 1.5);
+      for (let i = 0; i < poly.length; i++) {
+        const j = (i + 1) % poly.length, ci = col(inner[i][1]), cj = col(inner[j][1]);
+        M.quadW(nn, O[i], O[j], I[j], I[i], grooveC, grooveC, cj, ci);
+        M.triW(nn, I[i], I[j], C, col((inner[i][1] + inner[j][1] + cy) / 3));
+      }
+    };
+    let k = 0;
+    for (const [a, b] of o.stretches) {
+      const cols = [a];
+      while (b - cols[cols.length - 1] > 6.4) cols.push(cols[cols.length - 1] + 2.6 + 2.8 * hs(k++ + a));
+      const rem = b - cols[cols.length - 1];
+      if (rem > 5.4) cols.push(cols[cols.length - 1] + rem * (0.4 + 0.2 * hs(k++)));
+      else if (rem < 1.5 && cols.length > 1) cols.pop();
+      cols.push(b);
+      const lean = cols.map((c, i) => (i === 0 || i === cols.length - 1 ? 0 : (hs(c) - 0.5) * 0.8)); // a joint's foot stands this far along from its head
+      for (let i = 0; i < cols.length - 1; i++, k++) {
+        const s0 = cols[i], s1 = cols[i + 1], l0 = lean[i], l1 = lean[i + 1];
+        const L = (y) => s0 + l0 * (1 - 2 * (y - yb) / H) * 0.5, Rr = (y) => s1 + l1 * (1 - 2 * (y - yb) / H) * 0.5;
+        const two = H > 3.6 ? hs(k + 0.2) < 0.72 : hs(k + 0.2) < 0.3;
+        if (!two || s1 - s0 < 1.6) panel([[L(yb), yb], [Rr(yb), yb], [Rr(yt), yt], [L(yt), yt]], k);
+        else {
+          // two courses, the bed joint stepped: it lies at one height from the left, drops or climbs at a kink, and runs on
+          const hl = yb + H * (0.36 + 0.3 * hs(k + 0.3)), hr = yb + H * (0.36 + 0.3 * hs(k + 0.4)), sm = mix(s0, s1, 0.3 + 0.4 * hs(k + 0.6)), kk = 0.25 * (hs(k + 0.7) - 0.5);
+          panel([[L(yb), yb], [Rr(yb), yb], [Rr(hr), hr], [sm + kk, hr], [sm - kk, hl], [L(hl), hl]], k);
+          panel([[L(hl), hl], [sm - kk, hl], [sm + kk, hr], [Rr(hr), hr], [Rr(yt), yt], [L(yt), yt]], k + 0.45);
+        }
+        o.top?.(L(yt), Rr(yt));
+      }
     }
-    if (start !== null) walls.push({ riser: R, run, s0: start, s1: sb });
+  };
+  for (const R of RISERS.slice(0, 4)) for (const run of [1, 2]) {
+    const sa = run === 1 ? S1 : cornerS(2, R.D), sb = run === 1 ? cornerS(1, R.D) : S2;
+    const yb = R.foot - 0.6, yt = R.top - NOSE, H = yt - yb, dark = R.key === 'low' ? 0.8 : 0.92;
+    const nn = [RUN[run].n[0], 0.05, RUN[run].n[1]];
+    // the standing stretches between the openings
+    const ops = lappet.openings.filter((o) => o.riser === R.key && o.run === run).map((o) => [Math.max(sa, o.s0), Math.min(sb, o.s1)]).filter((o) => o[1] > o[0]).sort((p, q) => p[0] - q[0]);
+    const stretches = []; let sAt = sa;
+    for (const [o0, o1] of ops) { if (o0 - sAt > 0.05) stretches.push([sAt, o0]); sAt = Math.max(sAt, o1); }
+    if (sb - sAt > 0.05) stretches.push([sAt, sb]);
+    for (const [a, b] of stretches) walls.push({ riser: R, run, s0: a, s1: b });
+    const cn = shade(1.04, 0.02), ct = shade(dark, 0.02), g = (s, y, out) => { const [x, z] = at(run, s, R.D + out); return [x, y, z]; };
+    face({ yb, yt, dark, seedA: R.D, seedB: run, stretches, want: () => nn,
+      f: (s, y, proud = 0) => { const [x, z] = at(run, s, R.D + mix(BATTER, 0.02, (y - yb) / H) + proud); return [x, y, z]; },
+      // the nosing: worn off at a slope, then the tread
+      top: (sA, sB) => M.quadW([nn[0], 1, nn[2]], g(sA, yt, 0.02), g(sB, yt, 0.02), g(sB, R.top, -NOSE), g(sA, R.top, -NOSE), ct, ct, cn, cn) });
+  }
+  // the lowest riser, over the Pennyworth: the same hand. It stands a hand in front of the Demesne's sunk wall (the
+  // Heliarchy's small coursed work, which runs on west of the house's corner as the lawn's ha-ha): here the turf is
+  // dug away to the foot and the giants' face is bare, bearings 38.5 to 72, from under the foot's ground to the bench.
+  {
+    const HR = RISERS[4], r0 = PLAN.HAHA + 0.06, yb = HR.foot - 0.8, yt = HR.top - 0.04, H = yt - yb, k = Math.PI / 180;
+    const pos = (b, rr, y) => { const [x, z] = PLAN.polar(b, rr); return [x, y, z]; }, bOf = (s) => 38.5 + s / (r0 * k);
+    const len = (72 - 38.5) * r0 * k, cn = shade(1.0, 0.02), ct = shade(0.8, 0.02);
+    face({ yb, yt, dark: 0.8, seedA: 7.7, seedB: 5, stretches: [[0, len]], want: (s) => { const b = bOf(s) * k; return [Math.sin(b), 0.05, -Math.cos(b)]; },
+      f: (s, y, proud = 0) => pos(bOf(s), r0 + mix(BATTER, 0.02, (y - yb) / H) + proud, y),
+      top: (sA, sB) => M.quadW(UP, pos(bOf(sA), r0 + 0.02, yt), pos(bOf(sB), r0 + 0.02, yt), pos(bOf(sB), r0 - 0.5, HR.top + 0.01), pos(bOf(sA), r0 - 0.5, HR.top + 0.01), ct, ct, cn, cn) });
   }
   // the cheeks of each opening: the step's own mass, seen where a way is cut through it (1.2 m back; a way's lining goes deeper)
   for (const o of lappet.openings) {
@@ -227,15 +260,6 @@ export async function build(ctx) {
     M.quadW([-RUN[run].dir[0] * sg, 0, -RUN[run].dir[1] * sg], q[0], q[1], q[2], q[3], dk);
   }
 
-  // ---------------------------------------------------------------- the stone
-  const stone = ctx.kit.masonry({ color: '#8f8272', course: 2, base: -2, joint: 0.02, slab: 4.6, wear: 0.85, moss: 0.5 });
-  etch(stone.mat, { size: 1.9, amount: 0.5 });
-  stone.mat.vertexColors = true;
-  lappet.elderMat = stone.mat;
-  const mesh = new THREE.Mesh(M.geometry(), stone.mat);
-  mesh.name = 'lappet-bones'; mesh.castShadow = true; mesh.receiveShadow = true;
-  ctx.scene.add(mesh);
-
   // ---------------------------------------------------------------- the floors: each tread a stacked floor, its edges held
   const fr = { run: 0, s: 0, D: 0 };
   for (const b of bands) {
@@ -279,6 +303,32 @@ export async function build(ctx) {
 
   // ---------------------------------------------------------------- the ways
   const w = ways.build();
+
+  // the Elder kerb along the High Rung's nosing (the ways' plan says where: lappet.kerbs), of the steps' own block
+  for (const b of lappet.kerbs) M.block(b.x, b.y, b.z, b.hx, b.hy, b.hz, b.yaw, 0, 0, shade(0.86 + 0.14 * hash(b.seed), 0.02), 0.07, b.seed);
+
+  // ---------------------------------------------------------------- the stone
+  // (no courses drawn on a face: the blocks and their joints are geometry; the treads keep their great slabs)
+  const stone = ctx.kit.masonry({ color: '#8f8272', course: 60, base: -40, joint: 0.02, slab: 4.6, wear: 0.85, moss: 0.5 });
+  etch(stone.mat, { size: 3.8, amount: 0.3 });
+  stone.mat.vertexColors = true;
+  lappet.elderMat = stone.mat;
+  const mesh = new THREE.Mesh(M.geometry(), stone.mat);
+  mesh.name = 'lappet-bones'; mesh.castShadow = !low; // (on low nothing of the village throws a shadow: the whole sector lies in the keep's, and the valley's cost from above is at its limit)
+  mesh.receiveShadow = true;
+  ctx.scene.add(mesh);
+
+  // On low, from more than 330 m off (the west gallery and the Stair's deck look down the whole valley, and its cost
+  // from above is at its limit: tools/heights-cost.mjs), the village is drawn as its steps alone: the ways' timber
+  // and the main's ware, and the masons' twelve blocks on the crown, are too small to see from there.
+  if (low) {
+    let small = null, far = false;
+    ctx.registerUpdate(() => {
+      if (!small) small = ['lappet-ways-stone', 'lappet-ways-glass', 'demesne-blocks'].map((n) => ctx.scene.getObjectByName(n)).filter(Boolean);
+      const c = ctx.camera.position, f = Math.hypot(c.x - 80, c.z + 12) > 330;
+      if (f !== far) { far = f; for (const m of small) m.visible = !f; }
+    }); // (every frame, unthrottled: a distance and a compare)
+  }
   lappet.stats = () => ({ bones: M.triangles, ...w.stats() });
   ctx.log(`lappet: the bones ${M.triangles} tris, ${walls.length} walls, ${endBlocks.length} end blocks, ${lappet.colliders} colliders; the ways ${JSON.stringify(w.stats())}`);
 }

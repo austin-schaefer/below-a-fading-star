@@ -50,7 +50,7 @@ export function buildWays(ctx, lappet) {
         const low = ctx.quality === 'low'; // on low only the Elder steps throw shadows (the valley's cost from above: tools/heights-cost.mjs)
         if (K.B.count > 0) { const m = ctx.strata.mesh(K.B, 'late', `${name}-stone`); if (low) m.castShadow = false; ctx.scene.add(m); tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; }
         if (K.U.tris > 0) {
-          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`)); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
+          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`, -1e5, { worn: 0.12, cloud: [0.82, 0.22] }) /* quiet fields: in daylight the Nave's worn-through patches read as a toadstool's spots */); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
           ctx.scene.add(m); tris += K.U.tris;
         }
         return { tris };
@@ -159,7 +159,7 @@ export function buildWays(ctx, lappet) {
         pier(K, { name: 'bridge-pier', x: pp.x, z: pp.z, y0: LEVEL.low.y, y1: LEVEL.mid.y, w: pp.w, d: pp.d, f: R.n });
         built['lane-bridge'] = bridge(K, { name: 'lane-bridge', a: at3(br.run, br.s, br.D0, LEVEL.mid.y), b: at3(br.run, br.s, br.D1 + 0.15, LEVEL.mid.y), width: 1.1, gaps: true });
         const c = (u, D) => at3(br.run, br.s + u, D, LEVEL.mid.y), e = pp.w / 2 + 0.02, Da = pp.D - pp.d / 2, Db = pp.D + pp.d / 2;
-        K.rail([c(-0.65, Da), c(-e, Da), c(-e, Db), c(e, Db), c(e, Da), c(0.65, Da)], { h: 0.95, every: 1.2, paint: C.late.paint[3] });
+        K.rail([c(-0.65, Da), c(-e, Da), c(-e, Db), c(e, Db), c(e, Da), c(0.65, Da)], { h: 0.95, every: 1.2 });
       }
 
       // ---------------------------------------------------------------- the Lees' plank stair up the Low Rung's riser
@@ -168,7 +168,7 @@ export function buildWays(ctx, lappet) {
         bridge(K, { name: 'lees-stair-head', a: at3(ls.run, ls.s - 1.6 * g, D + 0.72, y), b: at3(ls.run, ls.s - 0.3 * g, D + 0.72, y), width: 1.75, rails: false, register: false });
         const [x, z] = at(ls.run, ls.s - 0.3 * g, D + 0.9), drop = y - LEVEL.bench.y;
         built['lees-stair'] = timberFlight(K, { land: at3(ls.run, ls.s - 1 * g, D - 1.2, y), name: 'lees-stair', x, y, z, f, drop, width: 1.4, run: 0.3, rails: g > 0 ? [false, true] : [true, false], props: [0.02, 0.45], propBase: LEVEL.bench.y });
-        K.rail([at3(ls.run, ls.s - 1.65 * g, D - 0.06, y), at3(ls.run, ls.s - 1.65 * g, D + 1.62, y), at3(ls.run, ls.s - 0.3 * g, D + 1.62, y)], { paint: C.late.paint[0] });
+        K.rail([at3(ls.run, ls.s - 1.65 * g, D - 0.06, y), at3(ls.run, ls.s - 1.65 * g, D + 1.62, y), at3(ls.run, ls.s - 0.3 * g, D + 1.62, y)], {});
         for (const [u, v] of [[-1.5, 0.35], [-1.5, 1.5], [-0.4, 1.5]]) B.add(B.box(0.12, drop, 0.12), mat(...at3(ls.run, ls.s + u * g, D + v, y - drop / 2 - 0.05)), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.bench.y });
       }
 
@@ -191,18 +191,40 @@ export function buildWays(ctx, lappet) {
       // ---------------------------------------------------------------- the undercrofts behind the Lees' shops
       for (const p of P.PLOTS) if (p.kind === 'shop' && p.against) built[p.name] = undercroft(K, p, { riser: RISERS.find((q) => q.key === p.against), depth: P.VAULT_DEPTH });
 
-      // ---------------------------------------------------------------- rails along the nosings
-      // where no house's roof meets a tread's edge and no way crosses it, the Late folk have put up a pole rail
-      // (the edge holds without it: the rail says so)
+      // ---------------------------------------------------------------- what stands along the nosings
+      // Where no house's roof meets a tread's edge and no way crosses it, each hand has left its own (the edge holds
+      // without any of them): on the High Rung the Elder kerb, upstands of the steps' own block with gaps where one
+      // has gone over; on the Mid Rung a low wall the Late folk plastered, broken down in stretches; on the Low Rung
+      // a rope on leaning poles.
       {
-        const S1 = P.FADE.s1[1] + 1, S2 = P.FADE.s2[0] - 1;
-        ['high', 'mid', 'low'].forEach((key, li) => {
+        const S1 = P.FADE.s1[1] + 1, S2 = P.FADE.s2[0] - 1, rr = ctx.makeRng(15077);
+        const plaster = C.late.plaster || [], lime = (i) => (plaster[i % Math.max(1, plaster.length)] || new THREE.Color('#9a8266')).clone().multiplyScalar(0.62); // (dulled: old limewash in shadow)
+        ['high', 'mid', 'low'].forEach((key) => {
           const R = RISERS.find((q) => q.key === key), y = R.top;
           for (const run of [1, 2]) {
             const a = run === 1 ? S1 : P.cornerS(2, R.D) + 0.1, b = run === 1 ? P.cornerS(1, R.D) - 0.1 : S2;
             const taken = [...P.PLOTS.filter((p) => p.run === run && p.against === key).map((p) => [p.s - p.w / 2 - 0.1, p.s + p.w / 2 + 0.1]), ...gaps.filter((g) => g[0] === key && g[1] === run).map((g) => [g[2], g[3]])].sort((p, q) => p[0] - q[0]);
+            const d = RUN[run].dir, yaw = Math.atan2(d[0], d[1]);
+            const span = (s0, s1) => {
+              if (s1 - s0 < 1.2) return;
+              if (key === 'low') { K.rail([at3(run, s0, R.D - 0.32, y), at3(run, s1, R.D - 0.32, y)], { every: 2.1 }); return; }
+              let s = s0;
+              while (s < s1 - 0.6) {
+                if (key === 'high') {
+                  // the Elder kerb: blocks 1.6 to 3 m long, knee-high to them and waist-high to us; one in four gone
+                  const L = Math.min(s1 - s, 1.6 + rr() * 1.4), gone = rr() < 0.25;
+                  if (!gone && L > 0.9) { const [x, z] = at(run, s + L / 2, R.D - 0.62); lappet.kerbs.push({ x, y: y + 0.36, z, hx: L / 2 - 0.05, hy: 0.38 + rr() * 0.06, hz: 0.36, yaw: yaw - Math.PI / 2 + (rr() - 0.5) * 0.03, seed: s }); }
+                  s += L + (gone ? 0 : 0.02);
+                } else {
+                  // the Late wall: runs of 2 to 5 m, a hand thick, a coping of flat stones, its ends ragged; gaps between
+                  const L = Math.min(s1 - s, 2 + rr() * 3), h = 0.72 + rr() * 0.14, [x, z] = at(run, s + L / 2, R.D - 0.4);
+                  B.add(B.box(L, h, 0.26, { chip: 0.05, chipTop: true, seed: s }), mat(x, y + h / 2 - 0.02, z, 0, yaw - Math.PI / 2, 0), { color: lime(Math.floor(rr() * 3)), moss: 0.45, ground: y });
+                  B.add(B.box(L * (0.6 + rr() * 0.35), 0.07, 0.34, { chip: 0.02 }), mat(x, y + h + 0.03, z, 0, yaw - Math.PI / 2, 0), { color: jit(C.heliarch.dark, 1.1), moss: 0.5, ground: y });
+                  s += L + (rr() < 0.4 ? 0.8 + rr() * 1.6 : 0.03);
+                }
+              }
+            };
             let s = a;
-            const span = (s0, s1) => { if (s1 - s0 > 1.2) K.rail([at3(run, s0, R.D - 0.32, y), at3(run, s1, R.D - 0.32, y)], { paint: [undefined, C.late.paint[1], C.late.paint[0]][li], every: 2.1 }); };
             for (const [t0, t1] of taken) { if (t0 > s) span(s, Math.min(t0, b)); s = Math.max(s, t1); }
             if (s < b) span(s, b);
           }

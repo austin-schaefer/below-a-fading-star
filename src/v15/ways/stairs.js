@@ -104,7 +104,7 @@ export function timberFlight(K, o) {
       const t = j / np, hgt = 1.0 + (rng() - 0.5) * 0.08;
       B.add(B.box(0.07, hgt + 0.3, 0.07), F.clone().multiply(mat(sd * (w / 2 + 0.058), -t * (o.drop - S.rise) - S.rise + hgt / 2 + 0.02, t * S.length, (rng() - 0.5) * 0.05, 0, (rng() - 0.5) * 0.05)), { color: jit(wood, 0.9 + rng() * 0.3), moss: 0.15, ground });
     }
-    B.add(B.cyl(0.035, 0.04, len + 0.3, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.07), -(o.drop) / 2 + 0.92 - S.rise / 2, S.length / 2, pitch + Math.PI / 2, 0, 0)), { color: k ? C.late.paint[1] : jit(wood, 1.1), moss: 0.1, ground });
+    B.add(B.cyl(0.035, 0.04, len + 0.3, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.07), -(o.drop) / 2 + 0.92 - S.rise / 2, S.length / 2, pitch + Math.PI / 2, 0, 0)), { color: jit(wood, k ? 0.95 : 0.7), moss: 0.2, ground }); // (bare poles: a painted one read as a toy)
   });
   // props under it, where it has a floor to stand on: a pair of legs and a diagonal at the given fractions
   for (const t of o.props ?? []) {
@@ -154,14 +154,30 @@ export function hexLanding(K, o) {
   return { floor, far: [o.x + fx * d, o.y, o.z + fz * d] };
 }
 
-// a Late rail: posts and one pole (and a lower rope) along pts [[x, y, z], ...]; o: { h (1), every (1.9), paint }
+// a Late rail: a rope on leaning poles along pts [[x, y, z], ...], weathered, unpainted (o.paint is not used: a
+// painted pole read as a playground bar). o: { h (1), every (1.9) }
+const HEMP = new THREE.Color('#6a5b43');
 export function rail(K, pts, o = {}) {
-  const { B, C } = K, rng = K.rng, hgt = o.h ?? 1, wood = C.late.wood;
+  const { B, C } = K, rng = K.rng, hgt = o.h ?? 1, wood = C.late.wood, low = K.ctx.quality === 'low';
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dz), n = Math.max(1, Math.round(len / (o.every ?? 1.9)));
     const F = frame(a[0], a[1], a[2], dx / len, dz / len), pitch = -Math.atan2(dy, len);
-    for (let j = i ? 1 : 0; j <= n; j++) B.add(B.box(0.075, hgt + 0.25, 0.075), F.clone().multiply(mat(0, dy * j / n + hgt / 2 - 0.12, len * j / n, (rng() - 0.5) * 0.06, 0, (rng() - 0.5) * 0.06)), { color: jit(wood, 0.8 + rng() * 0.4), moss: 0.15, ground: a[1] });
-    B.add(B.cyl(0.035, 0.04, Math.hypot(len, dy) + 0.2, 6, 1), F.clone().multiply(mat(0, dy / 2 + hgt - 0.06, len / 2, pitch + Math.PI / 2, 0, 0)), { color: o.paint ?? jit(wood, 1.15), moss: 0.1, ground: a[1] });
-    if (K.ctx.quality !== 'low') B.add(B.cyl(0.02, 0.02, Math.hypot(len, dy) + 0.1, 5, 1), F.clone().multiply(mat(0, dy / 2 + hgt * 0.52, len / 2, pitch + Math.PI / 2, 0, 0)), { color: jit(wood, 0.6), moss: 0.1, ground: a[1] });
+    const tops = [];
+    for (let j = 0; j <= n; j++) {
+      // each pole its own height and lean (the first of a later span shares the last one's place, not its pole)
+      const h = hgt * (0.9 + rng() * 0.25), lx = (rng() - 0.5) * 0.22, lz = (rng() - 0.5) * 0.08;
+      if (j > 0 || i === 0) B.add(B.box(0.07 + rng() * 0.03, h + 0.3, 0.07 + rng() * 0.02), F.clone().multiply(mat(0, dy * j / n + h / 2 - 0.15, len * j / n, lx, 0, lz)), { color: jit(wood, 0.55 + rng() * 0.35), moss: 0.3, ground: a[1] });
+      tops.push([0, dy * j / n + h - 0.1, len * j / n + lx * h * 0.8]);
+    }
+    // the rope: tied a hand under each pole's top, hanging slack between them
+    for (let j = 0; j < n; j++) {
+      const p = tops[j], q = tops[j + 1], sag = 0.06 + rng() * 0.12, parts = low ? 2 : 3;
+      for (let k = 0; k < parts; k++) {
+        const t0 = k / parts, t1 = (k + 1) / parts, at = (t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t - sag * 4 * t * (1 - t), p[2] + (q[2] - p[2]) * t];
+        const u = at(t0), v = at(t1), l = Math.hypot(v[0] - u[0], v[1] - u[1], v[2] - u[2]);
+        B.add(B.cyl(0.018, 0.018, l + 0.02, 5, 1), F.clone().multiply(mat((u[0] + v[0]) / 2, (u[1] + v[1]) / 2, (u[2] + v[2]) / 2, Math.PI / 2 - Math.atan2(v[1] - u[1], v[2] - u[2]), 0, 0)), { color: jit(HEMP, 0.8 + rng() * 0.3), moss: 0.1, ground: a[1] });
+      }
+    }
+    void pitch;
   }
 }

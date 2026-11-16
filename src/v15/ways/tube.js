@@ -12,7 +12,7 @@
 // gangway into K.B; registers the floors, the walls and the ascent. Returns { floor, top, end, length, lights }.
 import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
-import { NOON, GLAZES } from '../../v8/strata/noon.js';
+import { NOON, GLAZES, put } from '../../v8/strata/noon.js';
 import { frame } from './stairs.js';
 
 const FLOOR_UP = 0.65; // the planks' line above the tube's underside, square to it
@@ -30,48 +30,98 @@ export function tube(K, o) {
     const z = new THREE.Vector3(fx * cs * dirSign, -sn * dirSign, fz * cs * dirSign), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(), y = new THREE.Vector3().crossVectors(z, x);
     const p = pt(w); return new THREE.Matrix4().makeBasis(x, y, z).setPosition(p[0], ya(w), p[2]);
   };
-  const seg = low ? 22 : 34, wear = null;
+  const seg = low ? 22 : 34;
+  const hash1 = (n) => { const q = Math.sin(n * 127.1 + 311.7) * 43758.5453; return q - Math.floor(q); };
   const along = (dw) => dw / cs; // metres of tube for metres of plan
 
-  // ---- the glass
+  // ---- the ware: one shell with a wall's thickness, glazed outside, washed inside, closed everywhere but where it
+  // is broken. A break is a hole in the shell with an edge: the milk body in section between the two faces, its
+  // outline irregular (the cells' corners are thrown about where they border a hole).
   const wTop = w0 + 0.5, wBot = wEnd - 1.3; // the whole section runs between these
-  // the upper end: only the crown and shoulders left, a hood over the way in, its lip torn
-  P.tube(U, lineM(wTop, -1), { r: r + 0.012, len: along(wTop + 1.9), a0: -1.95, a1: 1.95, ragged: 0.35, collar: false, seed: 31, seg, wear, glaze: GLAZES[1] });
   const door = o.door ? (o.y + up - o.door.y) / k : null; // where the planks pass the door's floor
   const crack = wTop + (wBot - wTop) * 0.62;
-  let w = wTop, i = 0;
-  const cuts = [wTop];
-  if (door) cuts.push(door - 0.85, door + 0.85);
-  cuts.push(crack - 1.0, crack + 1.0, wBot);
-  cuts.sort((a, b) => a - b);
-  for (let c = 0; c < cuts.length - 1; c++) {
-    const a = cuts[c], b = cuts[c + 1], isDoor = door && Math.abs((a + b) / 2 - door) < 0.1, isCrack = Math.abs((a + b) / 2 - crack) < 0.1;
-    // a plain stretch is thrown in lengths of about 4 m, a collar at each joint
-    const n = isDoor || isCrack ? 1 : Math.max(1, Math.round(along(b - a) / 4.2));
-    for (let j = 0; j < n; j++) {
-      const wa = a + (b - a) * j / n, wb = a + (b - a) * (j + 1) / n, G = GLAZES[i % 4];
-      let a0 = -Math.PI, a1 = Math.PI, rag = 0;
-      if (isDoor) { rag = 0.35; if (o.door.side > 0) { a0 = 2.35; a1 = Math.PI * 2 + 0.7; } else { a0 = -0.7; a1 = Math.PI * 2 - 2.35; } }
-      if (isCrack) { rag = 0.5; a0 = 0.62; a1 = Math.PI * 2 - 0.5; }
-      const lit = i === 2 ? 0.7 : 0;
-      P.tube(U, lineM(wa), { r, len: along(wb - wa) + 0.03, a0, a1, ragged: rag * 0.4, collar: !(isDoor || isCrack) && (j > 0 || c > 0), seed: 40 + i * 3, seg, wear, glaze: G, inlay: !low && i % 2 === 0, inlayLit: lit, lit: lit || undefined });
-      if (!(isDoor || isCrack)) i++;
+  const M0 = lineM(wTop), N2 = ctx.noise.noise2, LEN = 4.2;
+  const Lm = along(wBot - wTop), tA = -along(wTop + 1.9), tB = Lm + 1.9, tD = door !== null ? along(door - wTop) : null, tC = along(crack - wTop);
+  const nz = (a, t, q = 0) => N2(a * 1.4 + q * 7.3, t * 0.8 + q * 3.1);
+  const open = (a, t) => {
+    if (t < 0) return Math.abs(a) > 1.95 + 0.3 * nz(a, t) || t < tA + 0.7 + 0.7 * nz(a, t, 1); // the upper end: crown and shoulders left, the lip torn
+    if (t > Lm) return a < -1.7 + 0.25 * nz(a, t) || a > 1.5 + 0.25 * nz(a, t) || t > tB - 0.7 - 0.7 * nz(a, t, 2); // the lower end, broken off
+    if (tD !== null && Math.abs(t - tD) < 0.85 + 0.18 * nz(a, t, 3)) { const u = a * o.door.side; if (u > 0.7 + 0.12 * nz(a, t, 4) && u < 2.38) return true; } // the breach in its side
+    const dc = (t - tC) / 1.9; // the crack along its crown, widest at its middle
+    return Math.abs(dc) < 1 && Math.abs(a - 0.08 - 0.1 * Math.sin(t * 1.3)) < 0.4 * (1 - dc * dc) + 0.1 * nz(a, t, 5);
+  };
+  // a shell: cells na round by nt along; mask(a, t) true where it is gone. Outer, inner and edge go in as three parts.
+  const shell = (Mx, S) => {
+    const { na, t0, t1, a0 = -Math.PI, a1 = Math.PI, mask, rIn, rOut, seed = 1 } = S, nt = Math.max(1, Math.round((t1 - t0) / 0.48)), wrap = a1 - a0 > 6.28;
+    const gone = (i, j) => { if (j < 0 || j >= nt) return true; if (wrap) i = (i + na) % na; else if (i < 0 || i >= na) return true; return mask(a0 + (a1 - a0) * (i + 0.5) / na, t0 + (t1 - t0) * (j + 0.5) / nt); };
+    const V = (i, j) => { // a corner's place: thrown about if it borders a hole
+      let a = a0 + (a1 - a0) * i / na, t = t0 + (t1 - t0) * j / nt;
+      const g = [gone(i - 1, j - 1), gone(i, j - 1), gone(i - 1, j), gone(i, j)], some = g.some((q) => q), all = g.every((q) => q);
+      if (some && !all) { const ii = wrap ? i % na : i; a += (hash1(ii * 3.1 + j * 7.7 + seed) - 0.5) * 0.7 * (a1 - a0) / na; t += (hash1(ii * 5.3 + j * 2.9 + seed) - 0.5) * 0.7 * (t1 - t0) / nt; }
+      return [a, t];
+    };
+    const P = (rr, [a, t]) => [Math.sin(a) * rr, Math.cos(a) * rr, t];
+    const parts = [{ pos: [], idx: [] }, { pos: [], idx: [] }, { pos: [], idx: [] }]; // outer, inner, edge
+    const quad = (part, p, q, r2, s2) => { const n = part.pos.length / 3; part.pos.push(...p, ...q, ...r2, ...s2); part.idx.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+    // (outer and inner share corners between cells so the ware shades round, not in facets)
+    const ids = [new Map(), new Map()];
+    const vid = (w, rr, i, j) => { const key = (wrap ? (i % na) : i) + j * 1000, m = ids[w]; if (!m.has(key)) { m.set(key, parts[w].pos.length / 3); parts[w].pos.push(...P(rr, V(i, j))); } return m.get(key); };
+    for (let j = 0; j < nt; j++) for (let i = 0; i < na; i++) {
+      if (gone(i, j)) continue;
+      const o4 = [vid(0, rOut, i, j), vid(0, rOut, i + 1, j), vid(0, rOut, i + 1, j + 1), vid(0, rOut, i, j + 1)];
+      parts[0].idx.push(o4[0], o4[3], o4[1], o4[1], o4[3], o4[2]);
+      const i4 = [vid(1, rIn, i, j), vid(1, rIn, i + 1, j), vid(1, rIn, i + 1, j + 1), vid(1, rIn, i, j + 1)];
+      parts[1].idx.push(i4[0], i4[1], i4[3], i4[1], i4[2], i4[3]);
+      const c = [V(i, j), V(i + 1, j), V(i + 1, j + 1), V(i, j + 1)];
+      const edge = (u, v) => quad(parts[2], P(rOut, c[u]), P(rOut, c[v]), P(rIn, c[v]), P(rIn, c[u]));
+      if (gone(i, j - 1)) edge(0, 1); if (gone(i + 1, j)) edge(1, 2); if (gone(i, j + 1)) edge(2, 3); if (gone(i - 1, j)) edge(3, 0);
     }
-    w = b;
+    const geo = (part) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(part.pos, 3)); g.setIndex(part.idx); g.computeVertexNormals(); return g; };
+    if (parts[0].idx.length) put(U, geo(parts[0]), Mx, { paint: S.outer, jit: 0.015 });
+    if (parts[1].idx.length) put(U, geo(parts[1]), Mx, { paint: S.inner, jit: 0.015 });
+    if (parts[2].idx.length) put(U, geo(parts[2]), Mx, { color: NOON.milk.clone().multiplyScalar(0.8), jit: 0.03 });
+  };
+  // the glazes, as a potter left them: each thrown length dipped in one quiet glaze, a band of a second brushed round
+  // it below the collar and run in drips toward the tail; soot along the crown, lime crusted under the belly
+  const quiet = (c, kq) => c.clone().lerp(NOON.biscuit, 0.3).multiplyScalar(kq);
+  const fields = GLAZES.map((G) => [quiet(G[0], 0.8), quiet(G[1], 0.72)]);
+  const setC = (out, c, kq) => { out[0] = c.r * kq; out[1] = c.g * kq; out[2] = c.b * kq; return out; };
+  const outer = (x, y, z, out) => {
+    const a = Math.atan2(x, y), li = Math.max(0, Math.floor(z / LEN)), tl = z - li * LEN, F = fields[((li % 4) + 4) % 4];
+    const d = 0.5 + 0.5 * Math.sin(a * 7 + li * 2.1), drip = d * d * d * d * 1.3 + 0.12 * Math.sin(a * 19 + li);
+    let kq = 0.94 + 0.06 * Math.sin(z * 39); // the wheel's rings
+    kq *= 1 - 0.22 * Math.max(0, Math.cos(a)) ** 3; // soot settled along the crown
+    const banded = z >= 0 && z <= Lm && tl > 0.3 && tl < 1.0 + drip;
+    setC(out, banded ? F[1] : F[0], kq);
+    const crust = Math.max(0, -Math.cos(a) - 0.72) * 2.2 * (0.6 + 0.4 * Math.sin(z * 2.3 + a * 5)); // lime, under the belly
+    if (crust > 0) { const q = Math.min(0.55, crust); out[0] += (NOON.lime.r * 0.7 - out[0]) * q; out[1] += (NOON.lime.g * 0.7 - out[1]) * q; out[2] += (NOON.lime.b * 0.7 - out[2]) * q; }
+    return out;
+  };
+  const wash = NOON.celadonT.clone().lerp(NOON.biscuit, 0.45);
+  const inner = (x, y, z, out) => setC(out, wash, (0.62 + 0.05 * Math.sin(z * 39)) * (1 - 0.2 * Math.max(0, Math.cos(Math.atan2(x, y))))); // a thin wash, smoked overhead
+  shell(M0, { na: seg, t0: tA, t1: tB, mask: open, rIn: r, rOut: Ro, outer, inner, seed: 3 });
+  // a collar at each joint between two lengths, where the wall is whole all round
+  for (let t = LEN; t < Lm - 0.6; t += LEN) {
+    if ((tD !== null && Math.abs(t - tD) < 1.4) || Math.abs(t - tC) < 2.1) continue;
+    const F = fields[Math.round(t / LEN) % 4];
+    put(U, new THREE.TorusGeometry(Ro + 0.03, 0.11, 6, seg), M0.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, t)), { color: F[1].clone().multiplyScalar(0.8), jit: 0.02 });
   }
-  // the lower end: broken off; the crown runs on a little as a torn hood, and its shards lie on the floor
-  P.tube(U, lineM(wBot), { r: r + 0.012, len: along(1.9), a0: -1.7, a1: 1.5, ragged: 0.35, collar: false, seed: 77, seg, wear, glaze: GLAZES[3] });
-  for (const [dw, du, a, s] of [[1.6, 2.1, 0.5, 1.0], [2.4, -1.7, 2.2, 0.8], [3.2, 0.6, 4.0, 0.65], [0.4, -2.4, 1.2, 0.5]]) {
-    const p = pt(wEnd + dw - 0.8, du);
-    P.tube(U, new THREE.Matrix4().makeRotationY(a).setPosition(p[0], o.yEnd - r * s + 0.32 * s, p[2]), { r: r * s, len: 0.8 + s, a0: -0.7, a1: 0.6, ragged: 0.25, collar: false, seed: 90 + dw * 7, seg: 10, wear, glaze: GLAZES[(dw * 3 | 0) % 4] });
+  // its shards lie on the floor below the broken end
+  for (const [dw, du, a, sc] of [[1.6, 2.1, 0.5, 1.0], [2.4, -1.7, 2.2, 0.8], [3.2, 0.6, 4.0, 0.65], [0.4, -2.4, 1.2, 0.5]]) {
+    const p = pt(wEnd + dw - 0.8, du), rs = r * sc, F = fields[(dw * 3 | 0) % 4];
+    shell(new THREE.Matrix4().makeRotationY(a).setPosition(p[0], o.yEnd - rs * 0.93, p[2]), { na: 5, a0: -0.75, a1: 0.65, t0: 0, t1: 0.9 + sc, mask: (aa, t) => nz(aa * 3, t * 2 + dw, 6) > 0.55, rIn: rs, rOut: rs + 0.1,
+      outer: (x, y, z, out) => setC(out, F[0], 0.9), inner: (x, y, z, out) => setC(out, wash, 0.6), seed: dw * 11 });
   }
-  // the noon it still holds: a steady lamp at the lit collar, seen through the door and the crack
+  // the noon it still holds: two lenses still lit in its crown, one over the door and one near the lower end (the
+  // last stretch was too dark to steer by), each a steady lamp
   const lights = [];
   if (o.light !== false) {
-    const wl = wTop + (wBot - wTop) * 0.36, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), 7, 11, 2);
-    L.position.set(p[0], ya(wl) + 0.5, p[2]); L.name = `${o.name}-light`; ctx.scene.add(L); lights.push(L);
-    P.lens(U, lineM(wl).multiply(new THREE.Matrix4().makeTranslation(0, r - 0.08, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: 0.42, lit: 1, cheap: low });
-    ctx.registerUpdate((dt, t) => { L.intensity = 7 * (0.94 + 0.06 * Math.sin(t * 0.7)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
+    for (const [fr, power, reach] of [[0.36, 7, 11], [0.9, 4.5, 9]]) {
+      const wl = wTop + (wBot - wTop) * fr, p = pt(wl), L = new THREE.PointLight(new THREE.Color(NOON.lightHex), power, reach, 2);
+      L.position.set(p[0], ya(wl) + 0.5, p[2]); L.name = `${o.name}-light`; ctx.scene.add(L); lights.push(L);
+      P.lens(U, lineM(wl).multiply(new THREE.Matrix4().makeTranslation(0, r - 0.08, 0)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: 0.42, lit: 1, cheap: low });
+      ctx.registerUpdate((dt, t) => { L.intensity = power * (0.94 + 0.06 * Math.sin(t * 0.7 + fr * 9)); }, { pos: { x: p[0], z: p[2] }, near: 40, hz: 2 });
+    }
   }
 
   // ---- the Late folk's planks: a sill at the top, then a stair down the bore, two stringers under it
@@ -131,7 +181,7 @@ export function tube(K, o) {
     };
     K.addFloor(gang, { name: `${o.name}-gangway`, keep: true });
     const e = (ww, uu) => pt(ww, sd * uu, y);
-    K.rail([e(door + 0.7, u0 + 0.5), e(door + 0.7, u1), e(back + 0.1, u1)], { paint: C.late.paint[0] });
+    K.rail([e(door + 0.7, u0 + 0.5), e(door + 0.7, u1), e(back + 0.1, u1)], {});
   }
   const top = pt(0, 0, o.y), end = pt(wEnd, 0, o.yEnd);
   K.ascent({ id: o.name, held: true, offs: [0.5], path: [[end[0] + fx * 1.5, end[2] + fz * 1.5, o.yEnd], [end[0], end[2], o.yEnd], [top[0] + fx * 0.5, top[2] + fz * 0.5, o.y], [top[0] - fx * 1.5, top[2] - fz * 1.5, o.y]] });

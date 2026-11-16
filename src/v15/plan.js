@@ -184,7 +184,7 @@ export const OUTLINES = Object.fromEntries(RISERS.map((R) => [R.key, R.D !== und
 function jogged(D, jogs) {
   const out = [at(1, 4, D)];
   for (const run of [1, 2]) {
-    for (const [r, sj, Dj, h] of jogs) if (r === run) out.push(at(run, sj - h - 1.4, D), at(run, sj - h, Dj), at(run, sj + h, Dj), at(run, sj + h + 1.4, D));
+    for (const [r, sj, Dj, h] of jogs) if (r === run) out.push(at(run, sj - h - 0.9, D), at(run, sj - h, Dj), at(run, sj + h, Dj), at(run, sj + h + 0.9, D));
     out.push(run === 1 ? at(1, cornerS(1, D), D) : at(2, 28, D));
   }
   return out;
@@ -194,11 +194,11 @@ function jogged(D, jogs) {
 const lane = (name, level, width, pts, note) => ({ name, level, y: LEVEL[level].y, width, pts, note });
 export const LANES = [
   lane('high-lane', 'high', ROAD_HALF * 2, lineAt(0), 'the causeway on the High Rung: the Elder tread is the road'),
-  lane('mid-lane', 'mid', 1.6, jogged(9.1, [[2, 9, 5.9, 3.4]]), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it; it ducks in under the tube'),
-  lane('low-lane', 'low', 1.6, jogged(14.5, [[1, 31, 11.4, 2.2], [2, 9, 11.5, 3.4], [2, 20.1, 12, 2.2]]), 'the Low Rung\'s outer strip; it ducks in under the timber flight, the tube and the bridge\'s pier'),
-  lane('lees-street', 'bench', 3, [at(1, -6, 22.6), at(1, 12, 22.4), at(1, 29, 22.6), at(1, cornerS(1, 18.6), 18.6), at(2, 14, 18.4), at(2, 30, 18)], 'the bench\'s street: along the Strake\'s fronts, past the stair\'s foot, round the corner'),
+  lane('mid-lane', 'mid', 1.4, jogged(9.1, [[2, 9, 5.9, 2.3]]), 'the Mid Rung\'s outer strip, in front of its houses; the Low Rung\'s roofs widen it; it ducks in under the tube'),
+  lane('low-lane', 'low', 1.4, jogged(14.5, [[1, 31, 11.4, 2.2], [2, 9, 11.5, 2.3], [2, 20.1, 12, 1.3]]), 'the Low Rung\'s outer strip; it ducks in under the timber flight, the tube and the bridge\'s pier'),
+  lane('lees-street', 'bench', 2.2, [at(1, -6, 22), at(1, 29, 22), at(1, cornerS(1, 19.4), 19.4), at(2, 2, 19.6), at(2, 14, 19.6), at(2, 23.4, 19.8)], 'the bench\'s street: along the Strake\'s fronts (a hand clear of them), past the stair\'s foot, round the corner, along the shops\' forecourts to the house at the east end'),
   lane('wall-lane', 'foot', 2.4, [[92, -30.2], [100, -29.6], [108, -28.6], [112.5, -31]], 'under the house\'s south wall, from the ramp\'s foot to its east side'),
-  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [112, -45], [110.5, -59], [100, -62.5], [95, -61]], 'round the house\'s east side to its gate'),
+  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [112, -45], [110.9, -59], [100, -62.5], [95, -61]], 'round the house\'s east side to its gate'),
 ];
 
 // ---------------------------------------------------------------- the two squares
@@ -240,33 +240,37 @@ export const way = (name) => WAYS.find((w) => w.name === name) || null;
 // ---------------------------------------------------------------- the plots
 // { name, kind, quarter, level, y, x, z, face: [fx, fz], yaw, w (across the front), d (front to back), hand,
 //   against (the riser at its back, or null), roof (the level its flat roof should meet, or null), stair ('front': a Late house
-//   wide enough, 6.3 m, for the front outside stair to a roof yard; false: no outside stair), note }
+//   wide enough, 6.3 m, for the front outside stair to a roof yard; false: no outside stair), stairStrip (on the Rungs:
+//   the plot's front 0.9 m is that stair's), slope (a plot on the old ground past the levelled foot: its fall, m), stands ('tread': on a built tread at y, never on heightAt, which lies
+//   lower under the slab and lower still over an undercroft; 'ground': on the terrain, which is at y), opening
+//   ({ riser, width, height }: the riser's face at its back is left open that wide, centred on the plot: declare it
+//   here and the bones leave it), fronts ([route ids] it may stand beside), note }
 // A house "against" a riser stands with its back wall on the face, on the lower tread; `roof` is the tread above, so
 // its roof is that tread's yard. Corners: plotCorners(p).
 const PLOTS_ = [];
 function put(name, kind, quarter, level, run, s, D, w, d, hand, extra = {}) {
   const R = RUNS[run], [x, z] = at(run, s, D), f = extra.faceIn ? [-R.n[0], -R.n[1]] : extra.face || R.n;
-  const p = { name, kind, quarter, level, y: LEVEL[level].y, x, z, face: [f[0], f[1]], yaw: yawOf(f[0], f[1]), w, d, hand, against: null, roof: null, run, s, D, ...extra };
+  const p = { name, kind, quarter, level, y: LEVEL[level].y, x, z, face: [f[0], f[1]], yaw: yawOf(f[0], f[1]), w, d, hand, against: null, roof: null, stands: level === 'bench' || level === 'foot' ? 'ground' : 'tread', run, s, D, ...extra };
   delete p.faceIn;
   PLOTS_.push(p); return p;
 }
 const free = (name, kind, quarter, level, x, z, face, w, d, hand, extra = {}) => {
   const l = Math.hypot(face[0], face[1]), f = [face[0] / l, face[1] / l], fr = frameOf(x, z);
-  const p = { name, kind, quarter, level, y: LEVEL[level].y, x, z, face: f, yaw: yawOf(f[0], f[1]), w, d, hand, against: null, roof: null, run: fr.run, s: fr.s, D: fr.D, ...extra };
+  const p = { name, kind, quarter, level, y: LEVEL[level].y, x, z, face: f, yaw: yawOf(f[0], f[1]), w, d, hand, against: null, roof: null, stands: 'ground', run: fr.run, s: fr.s, D: fr.D, ...extra };
   PLOTS_.push(p); return p;
 };
 const HD = 3.7, backD = (riser) => RISERS.find((r) => r.key === riser).D + HD / 2 + 0.05; // a stacked house's depth; its centre's D against a riser
 
 // --- the Rungs: stacked houses. Mid Rung (y 10) against the High Rung's riser, roofs at 14; Low Rung (y 6), roofs at 10.
 // Kept clear: the stair (run 1, s 28..34), the tube (run 2, s 6.6..11.4), the ladder (run 2, s 19), the corner.
-for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [5, 2, 2.4, 5], [6, 2, 15, 5.6], [7, 2, 24.3, 6.4]])
+for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 6.4], [4, 1, 36.6, 5.2], [5, 2, 2.2, 5], [6, 2, 15.7, 5.6], [7, 2, 24.3, 6.4]])
   put(`rungs-mid-${i}`, 'house', 'rungs', 'mid', run, s, backD('high'), w, HD, 'late', { against: 'high', roof: 'high' });
-for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 14.5, 5], [7, 2, 24.5, 6.4]])
+for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [6, 2, 15.1, 4.2], [7, 2, 25.35, 5.1]])
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });
 // --- the Lees: shops in the Low Rung's riser (Heliarch undercrofts: round arches let 3.2 m into the step, a Late front
 // out on the bench), and two houses that stand free on the square's west side
 for (const [i, run, s, w] of [[4, 1, 39.5, 5], [5, 2, 3, 4.6], [6, 2, 15, 4.6]])
-  put(`lees-shop-${i}`, 'shop', 'lees', 'bench', run, s, RISERS[3].D - 0.6, w, 5.2, 'heliarch', { against: 'low', roof: 'low', note: 'an undercroft: 3.2 m in under the Low Rung, 2 m of Late front on the bench' });
+  put(`lees-shop-${i}`, 'shop', 'lees', 'bench', run, s, RISERS[3].D - 0.6, w, 5.2, 'heliarch', { against: 'low', roof: 'low', opening: { riser: 'low', width: w - 1, height: 2.6 }, note: 'an undercroft: 3.2 m in under the Low Rung (a bare vault now: its maker fits it out), 2 m of Late front on the bench' });
 put('lees-house-3', 'house', 'lees', 'bench', 2, 27.5, 17.5, 5.6, 4.2, 'late', { against: 'low', roof: 'low' });
 // --- the Strake: five ages shoulder to shoulder along the foot of the Low Rung's riser on the north run, their fronts
 // in one line facing out over the Lees (the old way from the north arrives opposite them; the Heliarch stair's foot
@@ -277,19 +281,19 @@ export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.
   slots: ['strake-elder', 'strake-late', 'strake-shop', 'strake-carrier', 'strake-new'] };
 [['strake-elder', 'house', 'elder', 'an Elder slab-house: three blocks and a lintel nobody alive could lift, lived in'], ['strake-late', 'house', 'late', null], ['strake-shop', 'shop', 'heliarch', 'the undercroft behind it is cut 3.2 m into the Low Rung'],
   ['strake-carrier', 'carrier', 'noon', 'a length of carrier stood in the row as a house'], ['strake-new', 'new-house', 'new', 'the newest front in the row: the keep\'s fallen ashlar, half built']]
-  .forEach(([name, kind, hand, note], i) => put(name, kind, 'lees', 'bench', 1, STRAKE.s0 + STRAKE.slot * (i + 0.5), STRAKE.D0 + STRAKE.depth / 2, STRAKE.slot, STRAKE.depth, hand, { against: 'low', roof: 'low', strake: i, ...(note ? { note } : {}) }));
-put('fountain', 'fountain', 'lees', 'bench', 1, 25, 25, 3.8, 3.8, 'noon', { note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
+  .forEach(([name, kind, hand, note], i) => put(name, kind, 'lees', 'bench', 1, STRAKE.s0 + STRAKE.slot * (i + 0.5), STRAKE.D0 + STRAKE.depth / 2, STRAKE.slot, STRAKE.depth, hand, { against: 'low', roof: 'low', strake: i, ...(kind === 'shop' ? { opening: { riser: 'low', width: STRAKE.slot - 1, height: 2.6 } } : {}), ...(note ? { note } : {}) }));
+put('fountain', 'fountain', 'lees', 'bench', 1, 22.5, 24.75, 2.6, 2.6, 'noon', { fronts: ['P9', 'P41'], note: 'the fountain of noon: a carrier\'s broken punt that wells stored daylight' });
 // --- the Quarrels: the crown
 put('new-house', 'new-house', 'quarrels', 'crown', 2, 15, -9.4, 7, 5.6, 'new', { note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold' });
 put('masons-yard', 'yard', 'quarrels', 'crown', 2, 4, -11.5, 9, 7, 'new', { note: 'the lime pit, the sledge on rollers, the banker; the Demesne\'s fallen blocks stacked as stock' });
 put('quarrels-house-1', 'house', 'quarrels', 'crown', 1, 18, -8, 5.6, 4.4, 'late', { note: 'the masons\' lodging, on the rim west of the keep\'s fallen slab' });
 // --- the Pennyworth: the foot
-free('carrier-house', 'carrier', 'pennyworth', 'foot', 109.5, -17.5, [-0.82, -0.57], 14, 5, 'noon', { note: 'a stalled carrier on its side along the lowest riser: a door cut in its belly, a chimney through its shoulder' });
-free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 114.5, -37, [-1, 0], 6, 4.4, 'late', { note: 'east of the house, facing its wall across the gate lane' });
-free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 114.5, -50, [-1, 0], 5.6, 4.4, 'late');
+free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.4), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5, 'noon', { note: 'a stalled carrier on its side along the lowest riser: a door cut in its belly, a chimney through its shoulder' });
+free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 116.4, -37, [-1, 0], 6, 4.4, 'late', { y: -0.3, slope: 1.2, note: 'east of the house, facing its wall across the gate lane' });
+free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 116, -50, [-1, 0], 5.6, 4.4, 'late', { y: 0.1, slope: 1.1, note: 'on the old ground past the levelled foot, which falls about a metre across the plot (`slope`): its maker steps the footings' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
 free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.4, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
-free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107, -24.6, [0, -1], 5, 3.6, 'late', { note: 'pot herbs and a bean row between the stalls and the wall lane' });
+free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107, -24.6, [0, -1], 5, 3.6, 'late', { fronts: ['K1'], note: 'pot herbs and a bean row between the stalls and the wall lane' });
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
@@ -297,6 +301,9 @@ free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107, -24.6, [0, -1], 5
 
 // a Late house with an outside stair up its front to a roof yard needs 6.3 m of front (V1's makers): `stair` says which plots have it
 for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.hand === 'late' && p.w >= 6.3 ? 'front' : false;
+// On the Rungs a tread is 5.4 m deep: a plot is 3.7 and the lane 1.4. So a front stair stands inside its plot: the
+// plot's front 0.9 m is the stair's strip, and that house's wall stands 0.9 m back from the plot's front (`stairStrip`).
+for (const p of PLOTS_) if (p.stair === 'front' && p.quarter === 'rungs') p.stairStrip = 0.9;
 export const PLOTS = PLOTS_;
 export const plot = (name) => PLOTS.find((p) => p.name === name) || null;
 // a plot's four corners, world [x, z]: front-left, front-right, back-right, back-left (as seen from in front, looking at it)
