@@ -37,16 +37,16 @@ export function shops(Q) {
       wallPoly(B, ch(M, 0, 0, zb), pts, null, 0.1, { color: wash, moss: 0.05, ground: g0 - 2, emit: lit(0.34) }); }
     for (const y of [0.9, 1.45]) { const sw = 2 * hw - 0.5; B.add(B.box(sw, 0.035, 0.26, { seg: 9 }), ch(M, 0, y, zb + 0.18), { color: L.wood, moss: 0, ground: g0 - 2, emit: lit(0.05) }); R.shelf(0, y + 0.02, zb + 0.18, sw, 0.26); }
     B.add(new THREE.IcosahedronGeometry(0.075, 0), ch(M, 0, top - 0.5, zf - 1.0, 0, 0, 0, 1, 1.3, 1), { color: new THREE.Color('#201008'), moss: 0, ground: g0 - 3, emit: lit(0.9) });
-    beam(B, M, [0, top - 0.42, zf - 1.0], [0, top - 0.06, zf - 1.0], 0.012, { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
+    beam(B, M, [0, top - 0.42, zf - 1.0], [0, top + 0.03, zf - 1.0], 0.012, { color: L.iron, iron: 1, moss: 0, ground: g0 - 3 });
     R.window(0, sp + 0.4, zf + 0.25, true);
     // flags before the mouth
     const fl = new Soup(), z0 = zf + 0.55, z1 = p.d / 2;
     for (let z = z0; z < z1 - 0.2;) { const dz = Math.min(z1 - z, 0.5 + rng() * 0.25); for (let x = -p.w / 2 + rng() * 0.3; x < p.w / 2 - 0.3;) { const w = Math.min(p.w / 2 - x, 0.55 + rng() * 0.5); if (rng() > 0.1) { const col = worn(rng() < 0.2 ? H.stone : V.flag, rng, 0.16, 0.2), y = 0.04 + rng() * 0.012; fl.slab([[x + 0.015, y, z + 0.015], [x + w - 0.015, y, z + 0.015], [x + w - 0.015, y, z + dz - 0.015], [x + 0.015, y, z + dz - 0.015]], 0.07, col, col.clone().multiplyScalar(0.55)); } x += w; } z += dz; }
     fl.flush(B, { color: V.flag, moss: 0.45, wet: 0.1, ground: g0 - 0.2 }, M);
-    const zw = zf + 0.25, sx = signSide * (rad + 0.62), from = B.count;
-    hangSign(B, ch(M, Math.max(-p.w / 2 + 0.35, Math.min(p.w / 2 - 0.35, sx)), Math.min(Rz.top - p.y - 0.55, sp + rad + 0.1), zw - 0.04), rng, { size: low ? 0.42 : 0.5 });
+    const zw = zf, sx = signSide * (rad + 0.62), from = B.count;
+    hangSign(B, ch(M, Math.max(-p.w / 2 + 0.7, Math.min(p.w / 2 - 0.7, sx)), Math.min(Rz.top - p.y - 0.55, sp + rad + 0.1), zw - 0.04), rng, { size: low ? 0.42 : 0.5 });
     dirty(B, from, 0.25, rng);
-    const lx = -signSide * Math.min(p.w / 2 - 0.5, rad + 0.5), ly = sp + rad - 0.35;
+    const lx = -signSide * Math.min(p.w / 2 - 0.7, rad + 0.5), ly = sp + rad - 0.35;
     PARTS.late.bracket(B, ch(M, lx, ly, zw), { reach: 0.5 }); R.lamp(lx, ly + 0.02, zw + 0.5);
     return { p, M, R, rng, g0, zf, rad, sp, yArch, wash, zw, zm: zf + 0.03 };
   };
@@ -84,11 +84,11 @@ export function shops(Q) {
       B.add(B.box(0.014, 0.1, 0.014, { seg: 9 }), ch(M, x, yb - 0.085, zm), iron);
       B.add(new THREE.TorusGeometry(0.026, 0.007, 3, low ? 4 : 6, Math.PI), ch(M, x, yb - 0.135, zm + 0.026, 0, Math.PI / 2, Math.PI), iron); }
     // the shutter: a leaf of planks hinged under the nosing, propped out on two sticks
-    { const y0 = Math.min(Rz.top - v.p.y - 0.3, sp + rad + 0.3), bw = 2 * rad + 0.3, bl = 1.35, t = 0.3, bm = ch(M, 0, y0, zw + 0.2, -t, 0, 0), w = wd(rng, 0.3);
+    { const y0 = Math.min(Rz.top - v.p.y - 0.3, sp + rad + 0.3), bw = 2 * rad + 0.3, bl = 1.35, t = 0.3, bm = ch(M, 0, y0, zf + 0.45, -t, 0, 0), w = wd(rng, 0.3);
       B.add(B.box(bw, 0.045, bl, { seg: 9 }), ch(bm, 0, 0, bl / 2), { ...w, ground: g0 });
       for (const q of [0.2, 0.8]) B.add(B.box(bw - 0.1, 0.035, 0.09, { seg: 9 }), ch(bm, 0, -0.04, bl * q), { ...wd(rng, 0.1), ground: g0 });
       for (let i = 1; i < 6; i++) B.add(B.box(0.012, 0.006, bl - 0.04, { seg: 9 }), ch(bm, -bw / 2 + (i / 6) * bw, 0.026, bl / 2), { color: V.soot, moss: 0, ground: g0 });
-      for (const s of [-1, 1]) { const px = s * (bw / 2 - 0.1), pz = zw + 0.2 + Math.cos(t) * (bl - 0.08), py = y0 + Math.sin(t) * (bl - 0.08) - 0.03; beam(B, M, [px, -0.3, pz + 0.14], [px, py, pz], 0.05, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); R.post(px, pz + 0.1, 0.07, 0, 2.0, { stand: false }); } }
+      for (const s of [-1, 1]) { const px = s * (bw / 2 - 0.1), pz = zf + 0.45 + Math.cos(t) * (bl - 0.08), py = y0 + Math.sin(t) * (bl - 0.08) - 0.03; beam(B, M, [px, 0.03, pz + 0.14], [px, py, pz], 0.05, { color: V.rawWood, moss: 0.05, ground: g0, round: 5 }); R.post(px, pz + 0.1, 0.07, 0, 2.0, { stand: false }); } }
     R.wall(-rad, zm, rad, zm, 0, 2.7, 0.3);
     Q.places.push({ what: 'the Ullage: twelve hooks on the beam (eleven bottles), a counter', ...R.W(0, yb - 0.14, zm), shop: 'lees-shop-5' });
     Q.records.push(R);
@@ -111,7 +111,7 @@ export function shops(Q) {
     { const wx0 = win[0], wx1 = win[1], wx = (wx0 + wx1) / 2, ww = wx1 - wx0, wh = win[3] - win[2], iron = { color: L.iron, iron: 0.9, moss: 0, ground: g0 - 3 };
       B.add(B.box(ww + 0.3, wh + 0.3, 0.03, { seg: 9 }), ch(M, wx, win[2] + wh / 2, zm - 0.3), { color: new THREE.Color('#3a2410'), moss: 0, ground: g0 - 3, emit: lit(0.6) });
       for (const s of [-1, 1]) { beam(B, M, [wx + s * (ww / 2 + 0.035), win[2] - 0.04, zm + 0.045], [wx + s * (ww / 2 + 0.035), win[3] + 0.04, zm + 0.045], 0.06, { color: paint, moss: 0, ground: g0 }); }
-      B.add(B.box(ww + 0.14, 0.06, 0.06, { seg: 9 }), ch(M, wx, win[3] + 0.05, zm + 0.045), { color: paint, moss: 0, ground: g0 });
+      B.add(B.box(ww + 0.16, 0.06, 0.08, { seg: 9 }), ch(M, wx, win[3] + 0.07, zm + 0.05), { color: paint, moss: 0, ground: g0 });
       B.add(B.box(ww + 0.24, 0.045, 0.42, { seg: 9 }), ch(M, wx, win[2] - 0.02, zm + 0.12), { ...wd(rng, 0.1), ground: g0 });
       B.add(B.cyl(0.05, 0.07, 0.025, 6, 1), ch(M, wx + 0.1, win[2] + 0.015, zm + 0.16), iron); B.add(B.cyl(0.012, 0.012, 0.2, 5, 1), ch(M, wx + 0.1, win[2] + 0.11, zm + 0.16), iron);
       B.add(B.box(0.08, 0.035, 0.03, { seg: 9 }), ch(M, wx + 0.1, win[2] + 0.22, zm + 0.16, 0, 0.5, 0), iron); // the stand's foot-plate: the last goes on it
@@ -165,7 +165,7 @@ export function shops(Q) {
     Q.records.push(R);
     const inv = M.clone().invert(), d0 = R.doors[0] ? new THREE.Vector3(R.doors[0].x, 0, R.doors[0].z).applyMatrix4(inv) : new THREE.Vector3(0, 0, 0), side = d0.x > 0 ? -1 : 1, zf = R.front ? R.front.zf : p.d / 2 - 0.4;
     const bar = (m, w, h, t, col) => { const o = { color: col, moss: 0.05, ground: g0 - 1 };
-      for (const s of [-1, 1]) { B.add(B.box(t, h, t * 0.7, { seg: 9 }), ch(m, s * (w / 2 - t / 2), h / 2, 0), o); B.add(B.box(w - 2 * t - 0.004, t, t * 0.62, { seg: 9 }), ch(m, 0, s > 0 ? h - t / 2 : t / 2, 0), o); } };
+      for (const s of [-1, 1]) { B.add(B.box(t, h, t * 0.7, { seg: 9 }), ch(m, s * (w / 2 - t / 2), h / 2, 0), o); B.add(B.box(w - 2 * t + 0.02, t, t * 0.62, { seg: 9 }), ch(m, 0, s > 0 ? h - t / 2 : t / 2, 0), o); } };
     const gilt = () => worn(L.gilt, rng, 0.5, 0.2);
     // three leaned against the wall, the largest behind
     [[1.5, 1.15, 0.09, gilt(), 0], [0.95, 1.3, 0.07, worn(L.paint[1], rng, 0.4), 0.12], [0.72, 0.8, 0.06, gilt(), -0.3]].forEach(([w, h, t, col, dx], k) => {
@@ -177,7 +177,7 @@ export function shops(Q) {
     { const z = 4.25, fw = 2.7, fh = 1.75, y0 = 0.85, t = 0.13, raw = { color: worn(V.rawWood, rng, 0.3), moss: 0.12, ground: g0, round: 6 }, T = ctx.terrain;
       const wpt = (x, zz) => new THREE.Vector3(x, 0, zz).applyMatrix4(M);
       if (T.heightAt(wpt(0, z).x, wpt(0, z).z) > g0 - 0.2) {
-        for (const s of [-1, 1]) { beam(B, M, [s * (fw / 2 - t / 2), -0.3, z], [s * (fw / 2 - t / 2), y0 + 0.02, z], 0.12, raw); beam(B, M, [s * (fw / 2 - t / 2), -0.25, z - 0.75], [s * (fw / 2 - t / 2), y0 - 0.1, z - 0.02], 0.07, raw); const q = wpt(s * (fw / 2 - t / 2), z); ctx.addCollider({ x: q.x, z: q.z, r: 0.14, y: g0 - 0.3, h: 3, stand: false }); }
+        for (const s of [-1, 1]) { beam(B, M, [s * (fw / 2 - t / 2), -0.3, z], [s * (fw / 2 - t / 2), y0 + 0.02, z], 0.12, raw); beam(B, M, [s * (fw / 2 - t / 2), 0, z - 0.75], [s * (fw / 2 - t / 2), y0 - 0.1, z - 0.02], 0.07, raw); const q = wpt(s * (fw / 2 - t / 2), z); ctx.addCollider({ x: q.x, z: q.z, r: 0.14, y: g0 - 0.3, h: 3, stand: false }); }
         bar(ch(M, 0, y0, z), fw, fh, t, gilt());
         for (const sx of [-1, 1]) for (const sy of [0, 1]) B.add(B.cyl(0.11, 0.11, 0.12, 6, 1), ch(M, sx * (fw / 2 - t / 2), y0 + (sy ? fh - t / 2 : t / 2), z, Math.PI / 2, 0, 0), { color: gilt(), moss: 0.05, ground: g0 - 1 });
         Q.places.push({ what: 'the Rebate\'s great frame, sized for the Prospect: look through it from the street', ...R.W(0, y0 + fh / 2, z), shop: 'lees-house-3' });

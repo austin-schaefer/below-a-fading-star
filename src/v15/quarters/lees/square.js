@@ -121,7 +121,7 @@ export function ground(Q, F) {
     st.flush(B, { color: H.dark, moss: 0.3, wet: 0.3, ground: Y0 - 0.2 });
     // the spout: a trough stone a forearm out over the drop
     const a = P3(...gut[brink], 0), bq = flat(brink + 1, 0, 0), yaw = Math.atan2(bq[0] - a[0], bq[2] - a[2]), mx = (a[0] + bq[0]) / 2, mz = (a[2] + bq[2]) / 2;
-    B.add(B.box(0.44, 0.2, 1.1, { seg: 9, chip: 0.03, seed: 5 }), mat(mx - Math.sin(yaw) * 0.2, yEnd - 0.065, mz - Math.cos(yaw) * 0.2, 0, yaw, 0), { color: worn(H.stone, rng, 0.12), moss: 0.5, wet: 0.3, ground: Y0 - 0.3 });
+    B.add(B.box(0.44, 0.27, 1.1, { seg: 9, chip: 0.03, seed: 5 }), mat(mx - Math.sin(yaw) * 0.2, yEnd - 0.1, mz - Math.cos(yaw) * 0.2, 0, yaw, 0), { color: worn(H.stone, rng, 0.12), moss: 0.5, wet: 0.3, ground: Y0 - 0.3 });
     // the light, over the lip and down the bowl's side into the gutter; and off the spout's end, going out as it falls
     const lip = [F.notch.x, F.notch.y, F.notch.z], foot = P3(...gut[0], 0.05), mid = [(lip[0] * 0.35 + foot[0] * 0.65), Q.Y + 0.3, (lip[2] * 0.35 + foot[2] * 0.65)], top = [lip[0] + (F.x - lip[0]) * 0.12, Q.Y + YS + 0.005, lip[2] + (F.z - lip[2]) * 0.12];
     const tx = -(foot[2] - lip[2]), tz = foot[0] - lip[0], tl = Math.hypot(tx, tz) || 1, side = (p, k) => [p[0] + (tx / tl) * k, p[1], p[2] + (tz / tl) * k];
@@ -148,14 +148,14 @@ export function ground(Q, F) {
 
   // ---------------------------------------------------------------- the worn line of flags along the shops (the lees-street, east of the square)
   { const line = new Soup(), lane = plan.LANES.find((l) => l.name === 'lees-street').pts, endS = plan.at(1, 36.6, 22);
-    let started = false, carry = 0;
+    let started = false, carry = 0, k = 0;
     for (let i = 0; i < lane.length - 1; i++) {
       const [ax, az] = lane[i], [bx, bz] = lane[i + 1], l = Math.hypot(bx - ax, bz - az), dx = (bx - ax) / l, dz = (bz - az) / l;
       for (let t = carry; t < l; t += 0.8) {
         const x = ax + dx * t + (rng() - 0.5) * 0.25 * -dz, z = az + dz * t + (rng() - 0.5) * 0.25 * dx;
         if (!started) { if ((x - endS[0]) * dx + (z - endS[1]) * dz < 0.4) continue; started = true; }
         if (rng() < 0.1 || T.heightAt(x, z) < Y0 - 0.05 || T.heightAt(x, z) > Y0 + 0.3) continue;
-        const hw = 0.3 + rng() * 0.08, hl = 0.34 + rng() * 0.22, tw = (rng() - 0.5) * 0.3, cx = Math.cos(tw), sx = Math.sin(tw), lift = 0.05 + rng() * 0.012, col = worn(rng() < 0.2 ? H.stone : V.flag, rng, 0.18, 0.2);
+        const hw = 0.3 + rng() * 0.08, hl = 0.27 + rng() * 0.1, tw = (rng() - 0.5) * 0.3, cx = Math.cos(tw), sx = Math.sin(tw), lift = 0.05 + (k++ % 2) * 0.014 + rng() * 0.006, col = worn(rng() < 0.2 ? H.stone : V.flag, rng, 0.18, 0.2);
         const pt = (u, v) => { const ux = u * cx - v * sx, vz = u * sx + v * cx, px = x + dx * ux - dz * vz, pz = z + dz * ux + dx * vz; return [px, gy(px, pz) + lift, pz]; };
         line.slab([pt(-hl, -hw), pt(hl, -hw), pt(hl, hw), pt(-hl, hw)], 0.06, col, col.clone().multiplyScalar(0.55));
       }
