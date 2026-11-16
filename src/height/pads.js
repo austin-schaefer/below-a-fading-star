@@ -9,17 +9,17 @@
 // ground goes to their weighted level and inside a pad it is that pad's own y. Pure and deterministic: the height path's workers run it too.
 import { plot, HOUSE } from '../v15/plan.js';
 
-const ALLEY = { x0: HOUSE.x1, x1: HOUSE.stable.x0, z0: HOUSE.stable.z0, z1: HOUSE.stable.z1 }; // between the house's east wall and its stable
-
 const PADS = [
   // the Collation: the table 11 by 1.1 m with its chairs pulled out and the fallen one, 13 by 4 m on its axis. x, z and
   // angle are COLLATION's (src/v5/dressing/collation.js, which imports three, so not imported here); dressing-test
   // checks the two agree
   { name: 'collation', x: 141, z: -66, angle: -0.4, hu: 6.6, hv: 2.1, ease: 6, y: null },
-  // the Pennyworth's two houses north of the stable, built on old treads (fall 0.23 and 0.25 m); their floors at the
-  // plan's y, the pad 0.3 m out past the walls, the lane between them a smooth bank. Their skirts stop at the
-  // Pomegranate House's walls and its stable's (`off`): the ground under a wall built on it is not a pad's to move
-  ...['pennyworth-house-1', 'pennyworth-house-2'].map((n) => ({ ...fromPlot(plot(n), 0.3), ease: 6, off: [HOUSE, HOUSE.stable, ALLEY] })),
+  // the Pennyworth's upper house, on the field bank across the lane from the stable, built on an old tread (fall 0.25 m
+  // there, 0.93 on the wave): its floor at the plan's y out to its walls, the bank down to the lane a 6 m skirt. Its
+  // skirt fades out before the stable's walls (`off`): the ground under a wall built on it is not a pad's to move.
+  // (The lower house, pennyworth-house-1, stands 2 m from the house's wall and 1.4 m from the stable: no pad levels it
+  // without folding the ground sharper than the mesh draws, so it stands on the ground on a footing, src/v15/quarters/pennyworth.js)
+  { ...fromPlot(plot('pennyworth-house-2'), 0), ease: 6, off: [HOUSE.stable] },
 ];
 const OFF_EASE = 3; // metres outside an `off` rectangle over which a pad comes back in
 function fromPlot(p, m) { return { name: p.name, x: p.x, z: p.z, angle: Math.atan2(p.face[1], p.face[0]), hu: p.d / 2 + m, hv: p.w / 2 + m, y: p.y }; }

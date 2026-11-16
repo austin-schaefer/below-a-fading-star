@@ -32,7 +32,8 @@ import { L, H, V, N, PARTS, rngOf, ch, worn, quad, hangLamp, beam, pot, washing,
 // what each plot is given beyond what the plan says (the seed is the building)
 const OPTS = {
   'pennyworth-stall-1': { seed: 3 }, 'pennyworth-stall-2': { seed: 8 },
-  'pennyworth-house-1': { seed: 5, form: 'step', stair: false }, 'pennyworth-house-2': { seed: 17, form: 'tower', stair: false },
+  // (v15-W6: on the wave house-1's ground falls 0.8 m, too close to the house's wall and the stable for a pad: it stands at the ground before its door, on a footing)
+  'pennyworth-house-1': { seed: 5, form: 'step', stair: false, stand: true }, 'pennyworth-house-2': { seed: 17, form: 'tower', stair: false },
   'carrier-house': { seed: 3, form: 'wreck', glaze: 3 },
   // (round 2: stood at the ground before their doors; `to` is what the weather has taken each one's wash toward)
   'pennyworth-kerb-1': { seed: 11, form: 'step', stair: false, stand: true, to: '#8a6a4e', k: 0.34 }, 'pennyworth-kerb-2': { seed: 7, form: 'tower', stair: false, stand: true, to: '#6f6a78', k: 0.3 },
