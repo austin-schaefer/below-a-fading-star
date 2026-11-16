@@ -102,8 +102,14 @@ await page.clock.install();
 await page.goto(`${base}/?q=low`, { waitUntil: 'load', timeout: 120000 });
 for (let i = 0; i < 6000 && !(await page.evaluate(() => document.body.classList.contains('ready'))); i++) { await page.clock.runFor(100); await new Promise((r) => setTimeout(r, 30)); }
 await page.evaluate(() => { const fp = window.__fp; fp.events.dispatchEvent(new CustomEvent('begin')); document.getElementById('card')?.classList.add('hidden'); fp.sky.flicker.next = 1e9; });
-await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
-await page.clock.runFor(500);
+// (v15-G1) the same scene on every run: the page's loop starts at "ready", which falls at a point of the clock's steps
+// that depends on how long the load took in real time, so the frames run before the pause differed run to run and so
+// did everything that moves on its own (a bird turning on its perch drew its train into a wall on one run in three).
+// Paused at once, then run on to the same time since the loop began (ctx.time.t), whatever came before
+await page.clock.pauseAt(await page.evaluate(() => Date.now() + 200));
+const tLoop = await page.evaluate(() => window.__fp.time.t);
+await page.clock.runFor(Math.max(0, Math.round((1.5 - tLoop) * 1000)));
+for (let i = 0; i < 40 && (await page.evaluate(() => window.__fp.time.t)) < 1.5 - 1e-6; i++) await page.clock.runFor(1);
 
 const dec = (s, T) => { const b = Buffer.from(s, 'base64'); return new T(b.buffer, b.byteOffset, b.byteLength / T.BYTES_PER_ELEMENT); };
 const f2 = (v) => v.toFixed(2), f1 = (v) => v.toFixed(1);
@@ -138,7 +144,7 @@ function where(soup, at, from) {
   return `${base}/?q=medium&pos=${f1(s[0])},${f1(s[2])},${f2(feet + 0.05)}&yaw=${f2(yaw)}&pitch=${f2(pitch)}`;
 }
 const nm = (soup, i) => (i < 0 ? '(sky)' : soup.parts[i].name + (soup.parts[i].inst >= 0 ? `[${soup.parts[i].inst}]` : ''));
-const groupOf = (f) => `${f.kind}${/one end/.test(f.info) ? '-end' : ''}|${f.place}|${f.names[0].replace(/\[\d+\]/g, '').replace(/#\d+$/, '')}`;
+const groupOf = (f) => `${f.kind}${/one end/.test(f.info) ? '-end' : /: hidden/.test(f.info) ? '-hidden' : /: sunk/.test(f.info) ? '-sunk' : ''}|${f.place}|${f.names[0].replace(/\[\d+\]/g, '').replace(/#\d+$/, '')}`;
 const key = (kind, place, names, at) => `${kind}|${place}|${names.join('+')}|${Math.round(at[0])},${Math.round(at[1])},${Math.round(at[2])}`;
 
 function judge(place, soup) {
@@ -171,7 +177,7 @@ function judge(place, soup) {
   const te = Date.now();
   for (const f of buried(soup)) {
     const names = [nm(soup, f.part), f.with < 0 ? '(?)' : nm(soup, f.with)]; // the buried thing first: its group is its own mesh
-    out.push({ kind: 'buried', place: place.name, names, at: f.at, score: f.size * f.frac, info: `${Math.round(f.frac * 100)}% of its skin ${f.under ? 'under the drawn ground' : 'inside the other'}; ${f2(f.size)} m across, ${f.pieces} piece(s), ${f.tris} faces`, url: where(soup, f.at), stand: standOf(soup, f.at), key: key('buried', place.name, names, f.at) });
+    out.push({ kind: 'buried', place: place.name, names, at: f.at, score: f.size * f.frac, soft: f.soft, info: `${Math.round(f.frac * 100)}% of its skin ${f.under ? (f.hidden ? 'under the drawn ground: hidden' : 'under the drawn ground: sunk') : 'inside the other'}; ${f2(f.size)} m across, ${f.pieces} piece(s), ${f.tris} faces`, url: where(soup, f.at), stand: standOf(soup, f.at), key: key('buried', place.name, names, f.at) });
   }
   const tu = Date.now();
   return { out, ms: { coplanar: tf - tc, floating: tb - tf, backs: te - tb, buried: tu - te } };
@@ -281,18 +287,21 @@ for (const place of run) {
   const whole = body >= 100 && usable >= Math.min(2, soup.stands.length) && usable > 0 && !soup.truncated;
   check(whole, `${place.name}: the place is there to judge (faces, stands, taken whole)`, `${body} faces beyond ground and exempt, ${usable} of ${soup.stands.length} stands usable${soup.truncated ? ', TRUNCATED' : ''}`);
   const groups = new Map();
-  for (const f of out) { all.push(f); const g = groupOf(f); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(f); }
-  for (const [g, list] of groups) recorded[g] = list.map(posOf).sort();
-  const fresh = [], fixed = [];
+  for (const f of out) { const g = groupOf(f); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(f); }
+  const fresh = [], fixed = [], seen = new Set(groups.keys());
   for (const [g, list] of groups) {
-    const left = (baseline.known[g]?.at || []).slice();
-    // exact positions first (the scene repeats, so they nearly always meet), then the nearest within a metre
+    const left = (baseline.known[g]?.at || []).slice(), kept = [];
+    // exact positions first (the scene repeats, so they nearly always meet), then the nearest within a metre. A soft
+    // finding (buried between its lower and its upper line) only holds a baseline finding: unheld, it is not a finding
     const rest = [];
-    for (const f of list) { const i = left.indexOf(posOf(f)); if (i >= 0) left.splice(i, 1); else rest.push(f); }
-    for (const f of rest) { const i = left.findIndex((b) => near(b, posOf(f))); if (i >= 0) left.splice(i, 1); else fresh.push({ ...f, group: g }); }
+    for (const f of list) { const i = left.indexOf(posOf(f)); if (i >= 0) { left.splice(i, 1); kept.push(f); } else rest.push(f); }
+    for (const f of rest) { const i = left.findIndex((b) => near(b, posOf(f))); if (i >= 0) { left.splice(i, 1); kept.push(f); } else if (!f.soft) { fresh.push({ ...f, group: g }); kept.push(f); } }
     for (const b of left) fixed.push(`${g} at ${b}`);
+    groups.set(g, kept);
   }
-  for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !groups.has(g)) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
+  for (const [g, list] of groups) { if (!list.length) groups.delete(g); else { recorded[g] = list.map(posOf).sort(); for (const f of list) all.push(f); } }
+  out.length = 0; for (const list of groups.values()) out.push(...list);
+  for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !seen.has(g)) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
   const by = (k) => out.filter((f) => f.kind === k).length;
   console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}, buried ${by('buried')}; ${groups.size} groups; ${fresh.length} new, ${fixed.length} fixed; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)}, buried ${(ms.buried / 1000).toFixed(1)})`);
   const show = process.env.GEOM_ALL ? out : fresh;
@@ -312,7 +321,7 @@ for (const [k, list] of Object.entries(worst)) {
 }
 if (process.env.GEOMETRY_RECORD) {
   const ran = new Set(run.map((p) => p.name)), known = {};
-  for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || (g.startsWith('buried|') ? 'found by v15-G1 (2026-11-16), not yet judged' : 'on next when the check was written; not yet judged'), at };
+  for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || (g.startsWith('buried-hidden|') ? 'found by v15-G1 (2026-11-16), not yet judged: hidden whole under the drawn ground (wasted faces, likely misplaced)' : g.startsWith('buried-sunk|') ? 'found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)' : g.startsWith('buried|') ? 'found by v15-G1 (2026-11-16), not yet judged' : 'on next when the check was written; not yet judged'), at };
   for (const [g, k] of Object.entries(baseline.known)) if (!ran.has(g.split('|')[1])) known[g] = k;
   const rows = Object.entries(known).sort().map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
   writeFileSync(baseFile, `{\n "about": ${JSON.stringify(baseline.about || '')},\n "known": {\n${rows.join(',\n')}\n }\n}\n`);

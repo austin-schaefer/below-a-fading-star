@@ -33,7 +33,9 @@ export const TOL = {
   // tenth of its height is not
   // `flush`: what shows of a piece whose shown samples' faces all lie within this of their mean is laid (a flag, a
   // tread, a panel), unless `whole` of it is inside. `deep`: rays look this far for a way out
-  samples: 24, nudge: 0.01, inside: 11, frac: 0.42, flush: 0.9, whole: 0.9, deep: 8,
+  // `keep`: a finding the baseline holds is matched down to this share, a new one needs `frac` (nothing sits on one line).
+  // `bedRow`, `bedShare`: a sunk group is bedded when its mesh has at least that many sunk alike, and that share of its groups
+  samples: 24, nudge: 0.01, inside: 11, frac: 0.42, keep: 0.34, flush: 0.9, whole: 0.9, deep: 8, bedRow: 4, bedShare: 0.5,
 };
 
 const hypot3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
@@ -677,33 +679,47 @@ export function buried(soup, T = TOL) {
       const x = P[q] * w0 + P[q + 3] * w1 + P[q + 6] * w2 - N[t * 3] * nudge;
       const y = P[q + 1] * w0 + P[q + 4] * w1 + P[q + 7] * w2 - N[t * 3 + 1] * nudge;
       const z = P[q + 2] * w0 + P[q + 5] * w1 + P[q + 8] * w2 - N[t * 3 + 2] * nudge;
-      const full = solidOK && inside + (S - s) >= T.frac * S; // inside a solid is still within reach
+      const full = solidOK && inside + (S - s) >= T.keep * S; // inside a solid is still within reach (of the lower line: a known one is held down to it)
       const pi = probe(x, y, z, own, full);
       if (pi <= -2) { under++; g.sx += x; g.sy += y; g.sz += z; g.n++; g.with.set(-2 - pi, (g.with.get(-2 - pi) || 0) + 1); continue; }
       if (g.shown.length < 64) g.shown.push(t);
       if (pi >= 0) { inside++; sx += x; sy += y; sz += z; tally.set(pi, (tally.get(pi) || 0) + 1); } else shown.push(t);
     }
     g.under += (under / S) * area[c];
-    if (!solidOK || inside < T.frac * S) continue;
+    if (!solidOK || inside < T.keep * S) continue;
     if (inside < T.whole * S && shownAligned(shown)) continue; // laid flush
     let w = -1, wn = 0; for (const [pi, k] of tally) if (k > wn) { wn = k; w = pi; }
-    out.push({ part: pOf[c], with: w, at: [sx / inside, sy / inside, sz / inside], frac: inside / S, size, under: false, pieces: 1, tris: l.length });
+    out.push({ part: pOf[c], with: w, at: [sx / inside, sy / inside, sz / inside], frac: inside / S, soft: inside < T.frac * S, size, under: false, pieces: 1, tris: l.length });
   }
+  // under the ground: hidden (all but a sliver under: nothing of it is seen, its faces are wasted and its placing likely
+  // wrong) or sunk (partly). A sunk group is bedded, by design, when it is one of a row of its mesh's like groups sunk
+  // alike: at least `bedRow` of them under the ground (hidden or sunk), and `bedShare` of all its mesh's groups judged here (a kerb's run, a scatter of
+  // pebbles set into the turf, a stair's slabs). A swallowed one is the odd one out: the few of a mesh's things the
+  // new ground was raised over while their fellows stand clear
+  const meshG = new Map(), meshSunk = new Map(), cand = [];
   for (const [gk, g] of grp) {
-    if (!g.n || g.under < T.frac * g.area || leaves.has(gk)) continue;
     const size = Math.max(g.box[3] - g.box[0], g.box[4] - g.box[1], g.box[5] - g.box[2]);
-    if (size < T.minSize || size > T.big) continue;
+    if (size < T.minSize || size > T.big || leaves.has(gk)) continue;
+    const m = mk[g.part];
+    meshG.set(m, (meshG.get(m) || 0) + 1);
+    if (!g.n || g.under < T.keep * g.area) continue;
     if (g.under < T.whole * g.area && shownAligned(g.shown)) continue; // laid flush
+    const hidden = g.under >= T.whole * g.area;
+    meshSunk.set(m, (meshSunk.get(m) || 0) + 1); // hidden ones count to the row: a stair's slabs, some whole under, some showing a top
+    cand.push({ g, size, hidden, m });
+  }
+  for (const { g, size, hidden, m } of cand) {
+    if (!hidden && meshSunk.get(m) >= T.bedRow && meshSunk.get(m) >= T.bedShare * meshG.get(m)) continue; // bedded
     let w = -1, wn = 0; for (const [pi, k] of g.with) if (k > wn) { wn = k; w = pi; }
-    out.push({ part: g.part, with: w, at: [g.sx / g.n, g.sy / g.n, g.sz / g.n], frac: g.under / g.area, size, under: true, pieces: g.pieces, tris: g.tris });
+    out.push({ part: g.part, with: w, at: [g.sx / g.n, g.sy / g.n, g.sz / g.n], frac: g.under / g.area, soft: g.under < T.frac * g.area, size, under: true, hidden, pieces: g.pieces, tris: g.tris });
   }
   // gathered: by the part, what it is in, and a 2 m cell (a merged mesh's many pieces in one wall are one finding)
   const groups = new Map();
   for (const f of out) {
-    const k = `${f.part}|${f.with}|${f.under ? 1 : 0}|${Math.floor(f.at[0] / 2)},${Math.floor(f.at[1] / 2)},${Math.floor(f.at[2] / 2)}`;
+    const k = `${f.part}|${f.with}|${f.under ? (f.hidden ? 2 : 1) : 0}|${Math.floor(f.at[0] / 2)},${Math.floor(f.at[1] / 2)},${Math.floor(f.at[2] / 2)}`;
     const g = groups.get(k);
     if (!g) groups.set(k, { ...f });
-    else { g.pieces += f.pieces; g.tris += f.tris; if (f.size * f.frac > g.size * g.frac) Object.assign(g, { at: f.at, frac: f.frac, size: f.size }); }
+    else { g.pieces += f.pieces; g.tris += f.tris; g.soft = g.soft && f.soft; if (f.size * f.frac > g.size * g.frac) Object.assign(g, { at: f.at, frac: f.frac, size: f.size }); }
   }
   return [...groups.values()].sort((p, q) => q.size * q.frac - p.size * p.frac);
 }
