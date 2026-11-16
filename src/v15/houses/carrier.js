@@ -45,15 +45,15 @@ export function carrier(B, M, o = {}) {
   const tb = 0.5 + rng() * 0.08, set = (out, C, k = 1) => { out.r = C.r * k; out.g = C.g * k; out.b = C.b * k; };
   const paint = (x, y, z, out) => {
     const s = y + sink, t = s / body, [ox, oz] = off(s), a = Math.atan2(x - ox, z - oz), tone = 0.9 + 0.2 * hash(Math.round(s * 7) + 0.5);
-    const gone = B.n3(x * 0.33 + seed, y * 0.27, z * 0.33) + 0.5 * B.n3(x * 1.1, y * 0.9 + seed, z * 1.1) + (t < 0.42 && Math.abs(a) < 1.1 ? 0.3 : 0) + (t > 0.62 ? -0.15 : 0);
-    let glow = 0.28;
+    const gone = 0.8 * B.n3(x * 0.42 + seed, y * 0.34, z * 0.42) + 0.6 * B.n3(x * 1.3, y * 1.1 + seed, z * 1.3) + (t < 0.42 && Math.abs(a) < 1.1 ? 0.3 : 0) + (t > 0.62 ? -0.15 : 0);
+    let glow = 0.2;
     if (s > body + 0.2) set(out, G[2], tone * 0.8);
-    else if (t < 0.085 + 0.04 * drip(a, 1) || gone > 0.34) { set(out, N.milk, tone); glow = 1; }
+    else if (t < 0.085 + 0.04 * drip(a, 1) || gone > 0.4) { set(out, N.milk, tone * 0.92); glow = 0.62; }
     else if (t > tb - 0.07 - 0.09 * drip(a, 2) && t < tb + 0.06) { set(out, G[1], tone); glow = 0.1; }
     else if (t > 0.86 - 0.05 * drip(a, 4)) { set(out, G[2], tone); glow = 0.45; }
     else set(out, G[0], tone * (0.94 + 0.08 * Math.sin(a * 3 + seed)));
     const low2 = Math.max(0, 1 - t * 1.25);
-    out.e = lit * glow * (0.05 + 0.34 * low2 * low2);
+    out.e = lit * glow * (0.05 + 0.3 * low2 * low2);
   };
   addPainted(B, hull(false, 0, S.length - 1), M, { color: N.milk, moss: 0.1, wet: 0.45, ground: g0 }, paint);
   addPainted(B, hull(true, jF, jC), M, { color: N.milk, moss: 0, wet: 0.2, ground: g0 - 3 }, (x, y, z, out) => { set(out, N.cloud, 0.9); out.e = lit * 0.16; });

@@ -6,7 +6,7 @@
 // building is gone, three column stumps on its top and somebody's washing between them.
 // o: seed, w (8), d (6), shop (false: a byre, the arch closed with a plank gate), low.
 import * as THREE from 'three';
-import { L, H, V, PARTS, rngOf, pick, ch, worn, site, facade, plate, beam, pot, leaf, stop, washing, hangSign } from './kit.js';
+import { L, H, V, PARTS, rngOf, pick, ch, worn, site, facade, plate, beam, pot, leaf, stop, washing, hangSign, dirty } from './kit.js';
 import { shopfront } from './late.js';
 
 export function undercroft(B, M, o = {}) {
@@ -76,9 +76,11 @@ export function undercroft(B, M, o = {}) {
     R.door(dx0, zf + 0.5, { w: 0.72 });
     // the awning under the arch's head, on two poles out in the street; the sign on its arm from the wall
     const ah = sp + 0.5, awn = Math.min(aw - 0.3, 2 * Math.sqrt(Math.max(0.1, (aw / 2) ** 2 - 0.55 ** 2)) - 0.25);
+    const af = B.count;
     PARTS.late.awning(B, ch(M, 0, 0, zf - 0.25), { w: awn, d: 1.75, h: ah, rng });
     for (const s of [-1, 1]) R.post(s * (awn / 2 - 0.05), zf + 1.5, 0.07, 0, 2.2, { stand: false });
     hangSign(B, ch(M, -side * (aw / 2 + 0.62), sp + 1.25, zf), rng, { size: low ? 0.42 : 0.5 });
+    dirty(B, af, 0.32, rng);
   } else {
     // a byre: the arch closed with a plank gate, a wicket in it, a pane lit over it
     facade(B, ch(M, 0, 0, zi - 0.18), { w: aw + 0.5, d: 0.36, top: [[aw / 2 + 0.25, sp + 0.6], [0.3, sp + aw / 2 + 0.25], [-0.3, sp + aw / 2 + 0.25], [-aw / 2 - 0.25, sp + 0.6]], openings: [{ kind: 'rect', x: 0, y: 0, w: aw - 0.7, sp: sp + 0.25 }], color: wash, moss: 0.2, ground: g0 });

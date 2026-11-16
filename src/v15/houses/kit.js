@@ -176,7 +176,7 @@ export function leaf(B, M, w, h, col, rng, o = {}) {
 export function stop(B, M, w, h, kind, rng, o = {}) {
   const g0 = M.elements[13] - 2, lit = kind === 'lit';
   if (kind === 'shut') { B.add(B.box(w + 0.2, h + 0.2, 0.05, { seg: 9 }), ch(M, 0, h / 2, -0.06), { color: o.paint || L.paint[0], moss: 0.05, ground: g0 }); for (let i = 1; i < 4; i++) B.add(B.box(w + 0.2, 0.02, 0.02, { seg: 9 }), ch(M, 0, h * i / 4, -0.03), { color: V.soot, moss: 0, ground: g0 }); return; }
-  const k = lit ? 0.6 + rng() * 0.5 : 0;
+  const k = lit ? 0.4 + rng() * 0.35 : 0;
   B.add(B.box(w + 0.24, h + 0.24, 0.04, { seg: 9 }), ch(M, 0, h / 2, -0.14), { color: lit ? c('#3a2410') : V.pane, moss: 0, ground: g0, emit: lit ? [V.lit[0] * k, V.lit[1] * k, V.lit[2] * k, 1] : undefined });
   // the shape behind the glass: a grille of two bars, a jar on the sill, or a hanging thing
   const what = Math.floor(rng() * 3);
@@ -191,12 +191,13 @@ export function shutter(B, M, w, h, side, col, ang = 0.12) {
   B.add(B.box(w * 0.5, 0.03, 0.012, { seg: 9 }), ch(m, side * w * 0.27, h * 0.5, 0.042), { color: V.soot, moss: 0, ground: g0 });
 }
 // a solid flight of plastered steps from (x, z) along (dx, dz), w wide, rising h; returns its run. It records its
-// treads as a floor and the mass under them as a wall
+// treads as a floor and the mass under them as a wall. into: how far its mass runs on into the wall beside it, toward
+// (ox, oz), so a battered wall leaves no gap
 export function flight(B, M, R, o) {
-  const { x, z, dx, dz, w, h } = o, n = Math.max(2, Math.ceil(h / (o.rise || 0.22))), rise = h / n, tread = o.tread || 0.3, run = n * tread, ry = Math.atan2(dx, dz), g0 = M.elements[13];
+  const { x, z, dx, dz, w, h } = o, into = o.into || 0, n = Math.max(2, Math.ceil(h / (o.rise || 0.22))), rise = h / n, tread = o.tread || 0.3, run = n * tread, ry = Math.atan2(dx, dz), g0 = M.elements[13];
   for (let i = 0; i < n; i++) {
     const s = (i + 0.5) * tread, hh = (i + 1) * rise + 0.4;
-    B.add(B.box(w, hh, tread + 0.012, { seg: 9, chip: 0.025, chipTop: true, seed: i * 3 + (o.seed || 0) }), ch(M, x + dx * s, hh / 2 - 0.4, z + dz * s, 0, ry, 0), { color: i % 3 === 1 ? o.color2 || o.color : o.color, moss: 0.3, ground: g0 });
+    B.add(B.box(w + into, hh, tread + 0.012, { seg: 9, chip: 0.025, chipTop: true, seed: i * 3 + (o.seed || 0) }), ch(M, x + dx * s + (o.ox || 0) * into / 2, hh / 2 - 0.4, z + dz * s + (o.oz || 0) * into / 2, 0, ry, 0), { color: i % 3 === 1 ? o.color2 || o.color : o.color, moss: 0.3, ground: g0 });
   }
   R.floor(x + dx * run / 2, z + dz * run / 2, w, run, (o.y || 0) + rise, { ry, y1: (o.y || 0) + h, steps: n, layer: o.layer ?? 1 });
   R.wall(x + dx * w * 0.4, z + dz * w * 0.4, x + dx * (run - 0.1), z + dz * (run - 0.1), -0.4, 0.4 + rise - 0.16, w / 2 - 0.08, { dh: h - rise });
@@ -261,4 +262,21 @@ export function hangLamp(B, lamp, glass = 'amber', k = 1) {
   B.add(B.cyl(0.03, 0.11, 0.1, 8, 1), ch(m, 0, -0.14, 0), { color: L.gilt, moss: 0, ground: g0 });
   B.add(new THREE.IcosahedronGeometry(0.11, 1), ch(m, 0, -0.28, 0, 0, 0, 0, 1, 1.3, 1), { color: c('#201008'), moss: 0, ground: g0, emit: [g[0] * k, g[1] * k, g[2] * k, 1] });
   B.add(B.cyl(0.07, 0.02, 0.08, 8, 1), ch(m, 0, -0.44, 0), { color: L.gilt, moss: 0, ground: g0 });
+}
+// what was added since `from` (a Builder's count), battered: every point drawn in toward the vertical through local
+// (cx, cz) by k of its distance for each metre it stands above the plot's level, as a mud wall is built
+export function batter(B, from, M, cx, cz, k) {
+  const inv = M.clone().invert(), P = B.P;
+  for (let i = from; i < B.count; i++) {
+    _v.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).applyMatrix4(inv);
+    if (_v.y <= 0) continue;
+    const f = 1 - k * _v.y;
+    _v.x = cx + (_v.x - cx) * f; _v.z = cz + (_v.z - cz) * f;
+    _v.applyMatrix4(M); P[i * 3] = _v.x; P[i * 3 + 1] = _v.y; P[i * 3 + 2] = _v.z;
+  }
+}
+// what was added since `from`, dirtied: its colours taken k of the way to dirt, unevenly (a part's clean colours worn)
+export function dirty(B, from, k, rng, col = V.dirt) {
+  const C = B.C;
+  for (let i = from; i < B.count; i++) { const f = k * (0.6 + 0.8 * rng()); C[i * 3] += (col.r - C[i * 3]) * f; C[i * 3 + 1] += (col.g - C[i * 3 + 1]) * f; C[i * 3 + 2] += (col.b - C[i * 3 + 2]) * f; }
 }

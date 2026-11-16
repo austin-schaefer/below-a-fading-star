@@ -23,7 +23,7 @@ function oldFace(B, m, bw, bh, rng, g0, low) {
   else { // the sign, any way up: the notch's two flanks and the disc in it
     const r = ch(m, 0, 0, 0.022, 0, 0, q * Math.PI / 2);
     for (const sx of [-1, 1]) B.add(B.box(0.035, s * 0.62, 0.02, { seg: 9 }), ch(r, sx * s * 0.17, -s * 0.08, 0, 0, 0, -sx * 0.61), cut);
-    if (!low) B.add(B.cyl(s * 0.17, s * 0.17, 0.02, 8, 1), ch(r, 0, s * 0.2, 0.002, Math.PI / 2, 0, 0), { color: H.bronzeDull, moss: 0.1, ground: g0 - 1 });
+    B.add(B.cyl(s * 0.19, s * 0.19, 0.02, low ? 6 : 8, 1), ch(r, 0, s * 0.2, 0.002, Math.PI / 2, 0, 0), { color: H.bronzeDull, moss: 0.1, ground: g0 - 1 });
   }
 }
 

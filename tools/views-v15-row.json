@@ -129,19 +129,19 @@
  },
  {
   "name": "sun-side",
-  "x": 14.4,
-  "z": -57.12,
-  "yaw": -1.996,
-  "pitch": 0.06,
+  "x": 26.89,
+  "z": -49.64,
+  "yaw": -1.948,
+  "pitch": 0.1,
   "js": "(()=>{window.__hold&&window.__hold();window.__hold=null;})()"
  },
  {
   "name": "into-sun",
-  "x": 107.39,
-  "z": -30.14,
-  "yaw": 1.432,
-  "pitch": 0.1,
-  "js": "(()=>{window.__hold&&window.__hold();window.__hold=null;})()"
+  "x": 86.95,
+  "z": -34.99,
+  "yaw": 1.486,
+  "pitch": 0.14,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(86.95,Y,-34.99);}});})()"
  },
  {
   "name": "front-60",

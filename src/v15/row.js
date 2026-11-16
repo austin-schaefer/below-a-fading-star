@@ -20,7 +20,7 @@ export const ROW = { x: 59.6, z: -38.8, bearing: 15 };
 // along the street from its east end (the left of someone facing the fronts): kind, the plot's width and depth, how
 // far the plot comes out over the fronts' line (the masons' scaffold stands in the street), the maker's options
 export const ROW_PLOTS = [
-  { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard' } },
+  { kind: 'late', w: 6.6, d: 4.8, o: { seed: 4, form: 'yard', stair: 'front' } },
   { kind: 'undercroft', w: 7.4, d: 4.8, o: { seed: 3 } },
   { kind: 'carrier', w: 6.6, d: 5.6, over: 0.5, o: { seed: 6, form: 'long', glaze: 0 } },
   { kind: 'elder', w: 8.6, d: 7.2, over: 0.3, o: { seed: 2, back: -1.3 } },

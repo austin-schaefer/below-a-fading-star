@@ -1,0 +1,202 @@
+[
+ {
+  "name": "elder-a",
+  "x": 32,
+  "z": 168,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(32,14.2,168);}});})()"
+ },
+ {
+  "name": "elder-b",
+  "x": 70,
+  "z": 168,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(70,14.2,168);}});})()"
+ },
+ {
+  "name": "elder-c",
+  "x": 108,
+  "z": 168,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(108,14.2,168);}});})()"
+ },
+ {
+  "name": "elder-near-1",
+  "x": 24,
+  "z": 155.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(24,2.9,155.2);}});})()"
+ },
+ {
+  "name": "elder-near-2",
+  "x": 93,
+  "z": 155.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(93,2.9,155.2);}});})()"
+ },
+ {
+  "name": "undercroft-a",
+  "x": 32,
+  "z": 183,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(32,14.2,183);}});})()"
+ },
+ {
+  "name": "undercroft-b",
+  "x": 70,
+  "z": 183,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(70,14.2,183);}});})()"
+ },
+ {
+  "name": "undercroft-c",
+  "x": 108,
+  "z": 183,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(108,14.2,183);}});})()"
+ },
+ {
+  "name": "undercroft-near-1",
+  "x": 24,
+  "z": 170.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(24,2.9,170.2);}});})()"
+ },
+ {
+  "name": "undercroft-near-2",
+  "x": 93,
+  "z": 170.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(93,2.9,170.2);}});})()"
+ },
+ {
+  "name": "late-a",
+  "x": 32,
+  "z": 198,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(32,14.2,198);}});})()"
+ },
+ {
+  "name": "late-b",
+  "x": 70,
+  "z": 198,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(70,14.2,198);}});})()"
+ },
+ {
+  "name": "late-c",
+  "x": 108,
+  "z": 198,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(108,14.2,198);}});})()"
+ },
+ {
+  "name": "late-near-1",
+  "x": 24,
+  "z": 185.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(24,2.9,185.2);}});})()"
+ },
+ {
+  "name": "late-near-2",
+  "x": 93,
+  "z": 185.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(93,2.9,185.2);}});})()"
+ },
+ {
+  "name": "new-a",
+  "x": 32,
+  "z": 213,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(32,14.2,213);}});})()"
+ },
+ {
+  "name": "new-b",
+  "x": 70,
+  "z": 213,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(70,14.2,213);}});})()"
+ },
+ {
+  "name": "new-c",
+  "x": 108,
+  "z": 213,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(108,14.2,213);}});})()"
+ },
+ {
+  "name": "new-near-1",
+  "x": 24,
+  "z": 200.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(24,2.9,200.2);}});})()"
+ },
+ {
+  "name": "new-near-2",
+  "x": 93,
+  "z": 200.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(93,2.9,200.2);}});})()"
+ },
+ {
+  "name": "carrier-a",
+  "x": 32,
+  "z": 228,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(32,14.2,228);}});})()"
+ },
+ {
+  "name": "carrier-b",
+  "x": 70,
+  "z": 228,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(70,14.2,228);}});})()"
+ },
+ {
+  "name": "carrier-c",
+  "x": 108,
+  "z": 228,
+  "yaw": 0,
+  "pitch": -0.42,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(108,14.2,228);}});})()"
+ },
+ {
+  "name": "carrier-near-1",
+  "x": 24,
+  "z": 215.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(24,2.9,215.2);}});})()"
+ },
+ {
+  "name": "carrier-near-2",
+  "x": 93,
+  "z": 215.2,
+  "yaw": 0,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();window.__hold=fp.controls.carry({step(pos){pos.set(93,2.9,215.2);}});})()"
+ }
+]

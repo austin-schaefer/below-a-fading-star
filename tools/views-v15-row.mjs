@@ -18,10 +18,10 @@ const free = '(()=>{window.__hold&&window.__hold();window.__hold=null;})()';
 const G = ';window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3';
 const held = (v, g) => ({ ...v, js: hold(v) + (g ? G : '') }), loose = (v) => ({ ...v, js: free });
 // local x runs west along the street (the right of someone facing the fronts), local z out from the fronts' line
-views.push(held(view('from-east', -len / 2 - 5, 1.2, 0, 0.3, 0.1)), held(view('from-west', len / 2 + 5, 1.2, 0, 0.3, 0.1)));
+views.push(held(view('from-east', -len / 2 - 2.2, 1.5, 0, 0.2, 0.12)), held(view('from-west', len / 2 + 5, 1.2, 0, 0.3, 0.1)));
 views.push(held(view('front-14', 0, 14, 0, -2, 0.12)), held(view('front-22', -1, 22, 0, -2, 0.1)));
 for (const [kind, w] of widths) { views.push(held(view(`six-${kind}`, x + w / 2 + 0.6, 6.2, x + w / 2, -2, 0.2))); views.push(held(view(`close-${kind}`, x + w / 2 - 1.3, 2.3, x + w / 2 + 0.3, -2, 0.16))); x += w; }
-views.push(held(view('gutter-front', 0, 14, 0, -2, 0.12), true), held(view('gutter-street', -len / 2 - 5, 1.2, 0, 0.3, 0.1), true));
-views.push(loose(view('sun-side', len / 2 + 30, 6, 0, -2, 0.06)), loose(view('into-sun', -len / 2 - 30, 4, 0, -2, 0.1)), loose(view('front-60', -6, 60, 0, -2, 0.1)), loose(view('back-above', 0, -30, 0, 0, -0.25)));
+views.push(held(view('gutter-front', 0, 14, 0, -2, 0.12), true), held(view('gutter-street', -len / 2 - 2.2, 1.5, 0, 0.2, 0.12), true), held(view('gutter-from-west', len / 2 + 5, 1.2, 0, 0.3, 0.1), true));
+views.push(held(view('west-end', len / 2 + 11, -1, len / 2 - 6, -2, 0.1)), loose(view('front-60', -6, 60, 0, -2, 0.1)), loose(view('back-above', 0, -30, 0, 0, -0.25)));
 writeFileSync(new URL('./views-v15-row.json', import.meta.url), JSON.stringify(views, null, 1));
 console.log(views.length, 'views');
