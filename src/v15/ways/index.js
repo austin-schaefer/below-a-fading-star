@@ -70,6 +70,9 @@ export function buildWays(ctx, lappet) {
     ['high', 1, sx - hw - 0.5, sx + hw + 0.5], ['mid', 1, sx - hw - 1.2, sx + hw + 1.2], ['low', 1, sx - hw - 1.2, sx + hw + 1.2],
     ...['high', 'mid', 'low'].map((k) => [k, tb.run, tb.s - 2.3, tb.s + 2.3]),
     ['mid', tb.run, tb.s, tb.s + 3.4], // the gangway
+    // (v15-W4) the quarters' own ways over a nosing: the Tenter's head deck (the Mid Rung's wall stood between it and
+    // the tread, the owner's "yet another one": a block and its coping between the planks and a doorstep)
+    ['mid', P.RUNGS.tenter.run, Math.min(P.RUNGS.tenter.s - 1.5 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.6 * P.RUNGS.tenter.sign), Math.max(P.RUNGS.tenter.s - 1.5 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.6 * P.RUNGS.tenter.sign)],
     [RISERS.find((r) => r.top === LEVEL[ld.to].y).key, ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
   ];
 
@@ -104,8 +107,7 @@ export function buildWays(ctx, lappet) {
         const [lx, lz] = at(1, sx, up.D1);
         hexLanding(K, { name: 'heliarch-landing', x: lx, y: LEVEL.mid.y + 0.03, z: lz, f: n1, depth: RISERS[2].D - up.D1 - 0.05, width: STAIR.width, wing: 1, base: LEVEL.mid.y - 0.06, solid: false, floor: false });
       }
-      // the middle flight is gone (its stumps stand at the nosing and on the bastion; three of its blocks lie on the
-      // Low Rung): the Late folk's plank flight spans the gap, and the Low Rung's lane passes under its upper half
+      // the middle flight is gone (three of its blocks lie on the Low Rung): the Late folk's plank flight spans the gap, and the Low Rung's lane passes under its upper half
       {
         const tp = way('timber-patch'), D0 = RISERS[2].D + 0.55, D1 = RISERS[3].D - 0.15, [x, z] = at(1, sx, D0), drop = 4, n = Math.round(drop / 0.235);
         const f = timberFlight(K, { name: 'timber-patch', x, y: LEVEL.mid.y, z, f: n1, drop, width: 1.6, run: (D1 - D0) / (n - 1), props: [0.3, 0.62], propBase: LEVEL.low.y });
@@ -118,11 +120,9 @@ export function buildWays(ctx, lappet) {
         // boards nailed across under it there, on two posts (why nobody walks under its foot)
         for (const sg of [-1, 1]) B.add(B.box(0.1, 1.9, 0.1), frame(...at3(1, sx + sg * 0.7, Dlow + 0.1, LEVEL.low.y + 0.9), n1[0], n1[1]), { color: jit(C.late.wood, 0.9), moss: 0.3, ground: LEVEL.low.y });
         for (let q = 0; q < 4; q++) B.add(B.box(1.7, 0.16, 0.03), frame(...at3(1, sx, Dlow + 0.05, LEVEL.low.y + 0.3 + q * 0.42), n1[0], n1[1]).multiply(mat(0, 0, 0, 0, 0, (q % 2 ? 1 : -1) * 0.05)), { color: jit(C.late.wood, 0.8 + q * 0.15), moss: 0.2, ground: LEVEL.low.y });
-        // the stumps: the Heliarch cheeks broken off short
-        for (const sg of [-1, 1]) {
-          B.add(B.box(0.36, 1.0, 1.3, { chip: 0.09, seed: sg }), frame(...at3(1, sx + sg * (hw + 0.15), RISERS[2].D - 0.75, LEVEL.mid.y + 0.4), n1[0], n1[1]).multiply(mat(0, 0, 0, 0.12, 0, 0)), { color: jit(stone, 0.9), course: 0.5, moss: 0.5, ground: LEVEL.mid.y - 1 });
-          B.add(B.box(0.36, 0.7, 0.9, { chip: 0.09, seed: sg + 4 }), frame(...at3(1, sx + sg * (hw + 0.15), D1 - 0.5, LEVEL.low.y + 0.35), n1[0], n1[1]), { color: jit(stone, 0.85), course: 0.5, moss: 0.5, ground: LEVEL.low.y });
-        }
+        // (v15-W4: the Heliarch cheeks' stumps stood here, one each side of the flight's head on the Mid Rung and of its
+        // foot on the Low: four blocks in the lanes' line, the owner's "walls blocking people from getting from stairs to
+        // their own door" twice. The broken flight is told by its blocks fallen on the Low Rung and its newels above.)
         const rngB = K.rng;
         // (v15-W1: they lay in the Low Rung's lane where it ducks under the flight, the owner's "a tread strewn with loose
         // blocks": now two are rolled to the riser's foot against the houses' end walls, and one lies under the flight's

@@ -375,6 +375,13 @@ free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1]
 for (const p of PLOTS_) if (p.kind === 'house') p.stair = p.hand === 'late' && p.w >= 6.3 ? 'front' : false;
 // On the Rungs a tread is 5.4 m deep: a plot is 3.7 and the lane 1.4. So a front stair stands inside its plot: the
 // plot's front 0.9 m is the stair's strip, and that house's wall stands 0.9 m back from the plot's front (`stairStrip`).
+// (v15-W4, the owner's "the stair logic is just wild across the board") Three of the five front stairs the rule gave the
+// Rungs did a job another way already did a few metres off: rungs-mid-2's foot was 4.4 m from rungs-mid-1's and both went
+// from the Mid Rung to the High; rungs-mid-3's was 7 m from the Heliarch upper flight's, Mid to High; rungs-low-3's was 6 m
+// from the timber flight's, Low to Mid. Their houses stand as they were, without an outside stair: each roof is still
+// walked onto from the tread at its back. The two kept (rungs-mid-1 at the west end, rungs-mid-7 on the east run) are
+// the only ways between their two treads within 15 m.
+for (const p of PLOTS_) if (['rungs-mid-2', 'rungs-mid-3', 'rungs-low-3'].includes(p.name)) p.stair = false;
 for (const p of PLOTS_) if (p.stair === 'front' && p.quarter === 'rungs') p.stairStrip = 0.9;
 export const PLOTS = PLOTS_;
 // The Pennyworth's small standing things that are not plots (v15-Q4): the market's stalls, the lean-tos against the
@@ -487,16 +494,14 @@ export const RUNGS = {
   tenter: { name: 'the Tenter', id: 'rungs-tenter', run: 2, s: 17.05, sign: -1, out: 0.9, width: 1.3, run1: 0.25 },
   // the slot stair at the corner, straight down the bisector between rungs-low-4 and rungs-low-5: the meanest way, and whole
   gullet: { name: 'the Gullet', id: 'rungs-gullet', clear: 0.6, width: 1.05 },
-  // the Heliarch service flight east of the aqueduct's pier, down along the riser from its head at s: seven treads of it, and then the end wall of rungs-low-7, which was built over the rest
-  stub: { name: 'the Stump', run: 2, s: 21.25, sign: 1, width: 1.1 },
   // the lane under the main on the Low Rung: a door in the step, a niche, a lamp
   slype: { name: 'the Slype', run: 2, s0: 7.2, s1: 10.9, D: 11.5 },
-  // where three stairs of three ages are seen side by side in one look (the Stump at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
+  // where three stairs of three ages are seen side by side in one look (the Pier Stair at the feet, the Tenter, the main beyond): the west end of rungs-low-7's roof, a bench against its parapet
   squint: { name: 'the Squint', plot: 'rungs-low-7' },
   // the roof walk on the Low Rung's roofs (the Mid Rung's level), west to east; a crossing between each pair that has no stair between
-  leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3'], ['rungs-low-4', 'rungs-low-5']] },
+  leads: { name: 'the Leads', roofs: ['rungs-low-1', 'rungs-low-2', 'rungs-low-3', 'rungs-low-4', 'rungs-low-5'], crossings: [['rungs-low-1', 'rungs-low-2'], ['rungs-low-2', 'rungs-low-3']] }, // (v15-W4: the third, rungs-low-4 to rungs-low-5, crossed the Gullet's head at a walker's brow, the owner's "a staircase blocked by a little footbridge": the Gullet's head joins those two roofs already)
   // the house stairs the plan gives (stair: 'front'), each a way between two treads: their ascents' ids
-  stairs: ['rungs-mid-1', 'rungs-mid-2', 'rungs-mid-3', 'rungs-mid-7', 'rungs-low-3'].map((n) => `${n}-stair`),
+  stairs: ['rungs-mid-1', 'rungs-mid-7'].map((n) => `${n}-stair`),
 };
 
 // (v15-L1) The walking lamps: where readers found "nothing lit to walk toward", a lamp to walk to, built by
