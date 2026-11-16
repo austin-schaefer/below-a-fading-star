@@ -29,7 +29,7 @@ import * as THREE from 'three';
 import { makePlot, registerAll, plotMatrix, site } from '../houses/index.js';
 import { L, H, V, PARTS, ch, worn, beam, hangLamp, pot, washing, patch } from '../houses/kit.js';
 import { KEEP as KEEP_BUILT } from '../../structures/keep.js';
-import { saint, lesserHead, almoner, bench } from './quarrels/saint.js';
+import { saint, saintHead, lesserHead, almoner, bench } from './quarrels/saint.js';
 import { lastArch, templates, shears, splitBlock, drag } from './quarrels/works.js';
 import { air } from './quarrels/air.js';
 
@@ -148,8 +148,14 @@ export async function build(ctx) {
 
   // ---------------------------------------------------------------- the Smoking Saint, his bench, the heads that wait
   const kiln = saint(B, F(Q.kiln.x, Q.kiln.z, Q.kiln.face), { S: Q.kiln.S, // (F takes any length of face)
-    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], N2, low, rng });
+    stoke: [Q.kiln.stoke[0] * Q.kiln.face[1] - Q.kiln.stoke[1] * Q.kiln.face[0], Q.kiln.stoke[0] * Q.kiln.face[0] + Q.kiln.stoke[1] * Q.kiln.face[1]], roll: Q.kiln.roll, pitch: Q.kiln.pitch, sink: Q.kiln.sink, N2, low, rng });
   add(kiln.colliders);
+  // ?saint=sheet: his head alone, posed as he lies, on bare ground at ?saintAt=x,z (the turntable his maker judges him on)
+  if (url.searchParams.get('saint') === 'sheet') {
+    const [sx, sz] = (url.searchParams.get('saintAt') || '-60,40').split(',').map(Number), SB = ctx.strata.builder(), sy = ctx.terrain.heightAt(sx, sz);
+    saintHead(SB, plotMatrix({ x: sx, z: sz, y: sy, face: [0, 1] }), { S: Q.kiln.S, roll: Q.kiln.roll, pitch: Q.kiln.pitch, sink: Q.kiln.sink, stoke: [0, -1], N2, low, rng });
+    ctx.scene.add(ctx.strata.mesh(SB, 'late', 'saint-sheet'));
+  }
   // the bench: at his right cheek (the east side, away from the fire's mouth), its sitters looking where he looks
   const kf = Q.kiln.face, kl = Math.hypot(kf[0], kf[1]), face = [kf[0] / kl, kf[1] / kl], right = [-face[1], face[0]];
   const seat = bench(B, F(Q.kiln.x + right[0] * 2.1 + face[0] * 0.25, Q.kiln.z + right[1] * 2.1 + face[1] * 0.25, face), { rng, w: 1.45 });
