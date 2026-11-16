@@ -32,13 +32,13 @@ import { L, H, V, N, PARTS, rngOf, ch, worn, quad, hangLamp, beam, pot, washing,
 // what each plot is given beyond what the plan says (the seed is the building)
 const OPTS = {
   'pennyworth-stall-1': { seed: 3 }, 'pennyworth-stall-2': { seed: 8 },
-  'pennyworth-house-1': { seed: 5, form: 'step', stair: false }, 'pennyworth-house-2': { seed: 2, form: 'tower', stair: false },
+  'pennyworth-house-1': { seed: 5, form: 'step', stair: false }, 'pennyworth-house-2': { seed: 17, form: 'tower', stair: false },
   'carrier-house': { seed: 3, form: 'wreck', glaze: 3 },
   // (round 2: stood at the ground before their doors; `to` is what the weather has taken each one's wash toward)
   'pennyworth-kerb-1': { seed: 11, form: 'step', stair: false, stand: true, to: '#8a6a4e', k: 0.34 }, 'pennyworth-kerb-2': { seed: 7, form: 'tower', stair: false, stand: true, to: '#6f6a78', k: 0.3 },
   'pennyworth-east-1': { seed: 4, form: 'tower', stair: false, stand: true, to: '#93704a', k: 0.38 },
-  'pennyworth-hitch-3': { seed: 9, form: 'long', stair: false, stand: true, to: '#7b5f52', k: 0.36 }, 'pennyworth-hitch-4': { seed: 14, form: 'step', stair: false, stand: true, to: '#6b6f66', k: 0.3 },
-  'pennyworth-gate-1': { seed: 6, form: 'tower', stair: false, stand: true, to: '#8c6b55', k: 0.33 }, 'pennyworth-gate-2': { seed: 12, form: 'step', stair: false, stand: true, to: '#75697a', k: 0.3 }, // (seed 3: its neck lies at the end toward the main)
+  'pennyworth-hitch-3': { seed: 9, form: 'long', stair: false, stand: true, to: '#7b5f52', k: 0.36 }, 'pennyworth-hitch-4': { seed: 14, form: 'tower', stair: false, stand: true, to: '#6b6f66', k: 0.3 },
+  'pennyworth-gate-1': { seed: 21, form: 'tower', stair: false, stand: true, to: '#8c6b55', k: 0.33 }, 'pennyworth-gate-2': { seed: 12, form: 'step', stair: false, stand: true, to: '#75697a', k: 0.3 }, // (seed 3: its neck lies at the end toward the main)
 };
 const LEAF = new THREE.Color('#5c7a40'), LEAF_D = new THREE.Color('#46633a'), SOIL = new THREE.Color('#3a2e22');
 const TESS = [new THREE.Color('#8a2a1c'), new THREE.Color('#b8902a'), new THREE.Color('#26407a')]; // the moles' red, gold and lapis (src/v7/glyphs/moles.js)
@@ -62,10 +62,11 @@ export async function build(ctx) {
   const cloth = (M, pts, sag, col, laid = false) => { // (laid: flat on something, one leaf)
     const o = { color: col, moss: 0.02, ground: -5 }, n = pts.length === 4 ? 4 : 0;
     const up = (pts[1][2] - pts[0][2]) * (pts[2][0] - pts[0][0]) - (pts[1][0] - pts[0][0]) * (pts[2][2] - pts[0][2]) > 0; // the corners as given wind to face up
-    const at = n ? (u, v, d) => { const a = pts[0], b = pts[1], c = pts[2], e = pts[3], w = [(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v], k = 16 * u * (1 - u) * v * (1 - v); return [0, 1, 2].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3] - (i === 1 ? sag * k + d * Math.min(1, k * 4) : 0)); } : null;
+    const at = n ? (u, v, d) => { const a = pts[0], b = pts[1], c = pts[2], e = pts[3], w = [(1 - u) * (1 - v), u * (1 - v), u * v, (1 - u) * v], k = 16 * u * (1 - u) * v * (1 - v); return [0, 1, 2].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3] - (i === 1 ? sag * k + d : 0)); } : null;
     for (const d of laid ? [0] : [0, 0.014]) {
       const under = d > 0, nat = under !== up, oo = under ? { ...o, color: col.clone().multiplyScalar(0.78) } : o;
-      if (n) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const p = [at(i / n, j / n, d), at((i + 1) / n, j / n, d), at((i + 1) / n, (j + 1) / n, d), at(i / n, (j + 1) / n, d)]; if (nat) quad(B, M, p[0], p[1], p[2], p[3], oo); else quad(B, M, p[3], p[2], p[1], p[0], oo); }
+      if (n && under) for (let i = 0; i < n; i++) for (const [e0, e1] of [[[i / n, 0], [(i + 1) / n, 0]], [[i / n, 1], [(i + 1) / n, 1]], [[0, i / n], [0, (i + 1) / n]], [[1, i / n], [1, (i + 1) / n]]]) { const t0 = at(e0[0], e0[1], 0), t1 = at(e1[0], e1[1], 0), u0 = at(e0[0], e0[1], d), u1 = at(e1[0], e1[1], d); const c = at(0.5, 0.5, 0), out = ((t1[1] - t0[1]) * (u1[2] - t0[2]) - (t1[2] - t0[2]) * (u1[1] - t0[1])) * (t0[0] - c[0]) + ((t1[0] - t0[0]) * (u1[1] - t0[1]) - (t1[1] - t0[1]) * (u1[0] - t0[0])) * (t0[2] - c[2]) > 0; if (out) quad(B, M, t0, t1, u1, u0, oo); else quad(B, M, u0, u1, t1, t0, oo); } // (the hem: the two leaves sewn shut all round)
+      if (n) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const p = [at(i / n, j / n, d), at((i + 1) / n, j / n, d), at((i + 1) / n, (j + 1) / n, d), at(i / n, (j + 1) / n, d)]; if (nat) quad(B, M, p[0], p[1], p[2], p[3], oo); else quad(B, M, p[2], p[1], p[0], p[3], oo); } // (turned over on the same diagonal: two leaves split on different diagonals cross where the cloth sags)
       else {
         const [a, b, c] = pts, mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2 - sag - d, (p[2] + q[2]) / 2], ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
         for (const t of [[a, ab, ca], [ab, b, bc], [ca, bc, c], [ab, bc, ca]]) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(nat ? [...t[0], ...t[1], ...t[2]] : [...t[0], ...t[2], ...t[1]], 3)); B.add(g, M, oo); }
@@ -103,14 +104,19 @@ export async function build(ctx) {
         for (const [x1, z1, x2, z2] of [[-1, -1, 1, -1], [1, -1, 1, 1], [1, 1, -1, 1], [-1, 1, -1, -1]]) collide(Mq, x1 * p.w / 2, z1 * p.d / 2, x2 * p.w / 2, z2 * p.d / 2, 0.18, -hh, hh - 0.25, { stand: false });
       }
     }
+    if (p.kind === 'house' && !O.stand) { // no corner of its walls' feet (0.5 m under its floor) out of the ground
+      const Mq = plotMatrix(p); let lo = Infinity; for (const a of [-1, 1]) for (const b of [-1, 1]) { const wq = world(Mq, a * p.w / 2, 0, b * p.d / 2); lo = Math.min(lo, G(wq.x, wq.z)); }
+      if (p.y > lo + 0.05) q = { ...p, y: lo + 0.05 };
+    }
     const from = B.count, R = makePlot(B, q, { plan: P, built: ctx.lappet.built, E, low, seed: O.seed, form: O.form, stair: O.stair, glaze: O.glaze });
     if (p.kind === 'carrier') dull(from, 0.3, N.milk); // (fired ware, not iron: its glaze toward the milk body it was thrown in; a blind reader took the dark glaze for rusted plate)
     if (p.kind === 'house') dull(from, O.k ?? 0.2, O.to ? new THREE.Color(O.to) : V.dirt);
     if (p.kind === 'shop') {
       // a booth's back is dark and its goods are lit by a lamp hung before them (the blind reader: the backs were "glowing panels ... like a game UI"); each a trade told by what hangs at its front
       for (let i = from; i < B.count; i++) if (B.E[i * 4 + 3] === 1) { B.E[i * 4] *= 0.12; B.E[i * 4 + 1] *= 0.12; B.E[i * 4 + 2] *= 0.12; }
-      const Ms = plotMatrix(q), zf = p.d / 2 - 0.55, first = p.name.endsWith('1');
-      const lp = world(Ms, first ? 0.5 : -0.4, 1.86, zf + 0.12); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, first ? 'amber' : 'ruby', 0.55); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
+      const Ms = plotMatrix(q), c0 = R.counters[0], zf = (c0 ? world(Ms.clone().invert(), c0.x, c0.y, c0.z).z - 0.2 : p.d / 2 - 0.55) - 0.13, first = p.name.endsWith('1');
+      const lp = world(Ms, first ? 0.5 : -0.4, 1.945, zf + 0.1); hangLamp(B, { x: lp.x, y: lp.y, z: lp.z }, first ? 'amber' : 'ruby', 0.55); lamps.push({ x: lp.x, y: lp.y, z: lp.z });
+      beam(B, Ms, [-p.w / 2 + 0.2, 1.955, zf + 0.1], [p.w / 2 - 0.2, 1.955, zf + 0.1], 0.03, wood(0.2)); // the rail they hang from, its ends in the booth's cheeks
       for (let k = 0; k < (low ? 4 : 7); k++) {
         const x = -1.05 + k * (2.1 / (low ? 3 : 6)), len = 0.25 + rng() * 0.3; if (Math.abs(x - (first ? 0.5 : -0.4)) < 0.2) continue;
         beam(B, Ms, [x, 1.95, zf + 0.1], [x, 1.95 - len, zf + 0.1], 0.008, { color: V.rope, moss: 0, ground: p.y - 3 });
@@ -398,7 +404,7 @@ export async function build(ctx) {
     { const a = P.fixture('leave-west'), kx = 0.5, kz = 0.86, wx = a.x - 2.6, wz = a.z + 2.4, gw = G(wx, wz), Mw = mat(wx, gw, wz, 0, Math.atan2(kx, kz), 0);
       [0.95, 0.7, 0.42, 0.2].forEach((h, k) => B.add(B.box(0.3 + (k % 2) * 0.02, h + 0.4, 1.0, { seg: 0.8, chip: 0.06, chipTop: true, seed: k + 3 }), ch(Mw, 0, h / 2 - 0.2, k * 0.98), { color: worn(V.mud, rng, 0.2, 0.16), moss: 0.5, ground: gw, disp: 0.02, dispScale: 2 }));
       collide(Mw, 0, -0.4, 0, 2.5, 0.2, -0.3, 0.9);
-      for (let k = 0; k < (low ? 5 : 10); k++) B.add(B.rock(0.12 + rng() * 0.16, 0, 1, 0.45, 1), ch(Mw, 0.45 + rng() * 0.9, 0.04 + rng() * 0.12, 0.2 + rng() * 1.6, rng(), rng() * 3, rng()), { color: worn(pick([V.mud, L.tile[0], N.milk, V.dirt], rng), rng, 0.3), moss: 0.3, ground: gw });
+      for (let k = 0; k < (low ? 5 : 10); k++) B.add(B.rock(0.12 + rng() * 0.16, 0, 1, 0.45, 1), ch(Mw, 0.45 + rng() * 0.9, -0.06 + rng() * 0.06, 0.2 + rng() * 1.6, rng(), rng() * 3, rng()), { color: worn(pick([V.mud, L.tile[0], N.milk, V.dirt], rng), rng, 0.3), moss: 0.3, ground: gw });
       for (let k = 0; k < 6; k++) { const t = 3 + k * (1.3 + k * 0.5); flag(a.x + 1.4 + kx * t + (rng() - 0.5) * 0.8, a.z - 0.8 + kz * t + (rng() - 0.5) * 0.8, 0.6 + rng() * 0.3, 0.7, rng()); } }
     // the market's ground flagged where feet go: before the weigher's and the news-seller's, close-set, a flag gone here and there
     for (let z = -29.5; z < -27.25; z += 0.74) for (let x = 103.2 + ((z * 10) & 1) * 0.3; x < 110.6;) { const w = 0.62 + rng() * 0.4; if (rng() < 0.84 && !P.FIXTURES.some((f) => Math.hypot(f.x - x - w / 2, f.z - z) < f.r + 0.25)) flag(x + w / 2, z, w - 0.04, 0.7, (rng() - 0.5) * 0.06); x += w; }
