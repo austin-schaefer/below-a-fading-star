@@ -13,7 +13,7 @@ import { Soup } from './light.js';
 import { ro, YS } from './fountain.js';
 
 export const WAY = { a: [14.6, 28.7], b: [30.3, 22.15], half: 1.62 }; // the processional way, (s, D) on the north run
-export const ARCH = { s: WAY.a[0], D: WAY.a[1] };                      // the Wanting Arch [Proposed], at its head
+export const ARCH = { s: WAY.a[0], D: WAY.a[1] };                      // the Wanting Arch, at its head
 
 export function ground(Q, F) {
   const { B, G, ctx, plan, low } = Q, T = ctx.terrain, rng = rngOf(1512, 11), N2 = ctx.noise.noise2, Y0 = plan.LEVEL.bench.y;
@@ -179,7 +179,7 @@ export function ground(Q, F) {
   return { gut: gut.map(([s, D]) => W(s, D)) };
 }
 
-// The Wanting Arch [Proposed]: the way's gate, standing at the head of the old way's bank. Two piers, a ring of eleven
+// The Wanting Arch: the way's gate, standing at the head of the old way's bank. Two piers, a ring of eleven
 // voussoirs with one gone from its shoulder and lying in the turf, the spandrel left on one side only with the sign
 // still in it, and the Late folk's prop under the stone that should have fallen with it. It is turned so that a
 // walker coming up the bank sees the fountain through it.

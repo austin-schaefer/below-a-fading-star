@@ -220,9 +220,9 @@ export const LANES = [
   // (v15-Q4: the wall lane begins at the house's south door, in the pocket under the ramp's head; the gate lane goes
   // round the back of the house's stable, between it and the field bank, where the house's own lamp poles already
   // stand: V0 drew it through the stable and both its houses on the stable's walls)
-  lane('wall-lane', 'foot', 2.4, [[93.6, -30.3], [100, -29.6], [108, -28.6], [112.5, -31]], 'the Thumbway [Proposed]: under the house\'s south wall, from its south door (the Afterdoor [Proposed]) to its east side'),
-  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [116.4, -36.2], [116.6, -48], [116.0, -57.5], [115.2, -63.6], [108.5, -63.4], [100, -61.5], [95, -61]], 'the Hitch [Proposed]: round the back of the house\'s stable to its gate'),
-  lane('ramp-cut', 'foot', 1.4, [[104.3, -17.3], [104.15, -19.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip [Proposed]: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
+  lane('wall-lane', 'foot', 2.4, [[93.6, -30.3], [100, -29.6], [108, -28.6], [112.5, -31]], 'the Thumbway: under the house\'s south wall, from its south door (the Afterdoor) to its east side'),
+  lane('gate-lane', 'foot', 2.4, [[112.5, -31], [116.4, -36.2], [116.6, -48], [116.0, -57.5], [115.2, -63.6], [108.5, -63.4], [100, -61.5], [95, -61]], 'the Hitch: round the back of the house\'s stable to its gate'),
+  lane('ramp-cut', 'foot', 1.4, [[104.3, -17.3], [104.15, -19.6], [103.95, -21.5], [103.95, -25.2], [103.5, -28.9]], 'the Slip: from the ramp\'s foot between the booths\' end and the garden\'s wall to the Thumbway (the straight way from the hill to the house\'s south door)'),
 ];
 
 // ---------------------------------------------------------------- the two squares
@@ -313,10 +313,10 @@ for (const [i, run, s, w] of [[1, 1, 7.5, 6.3], [2, 1, 14.2, 6.4], [3, 1, 22.6, 
   put(`rungs-mid-${i}`, 'house', 'rungs', 'mid', run, s, backD('high'), w, HD, 'late', { against: 'high', roof: 'high' });
 for (const [i, run, s, w] of [[1, 1, 6, 6], [2, 1, 17, 5.4], [3, 1, 23.9, 6.4], [4, 1, 38, 5.2], [5, 2, 0.5, 5.8], [7, 2, 25.35, 5.1]])
   put(`rungs-low-${i}`, 'house', 'rungs', 'low', run, s, backD('mid'), w, HD, 'late', { against: 'mid', roof: 'mid' });
-// the Cantle [Proposed]: a carrier's sherd needs 4.4 m of depth and the Mid Rung gives 3.8 before its lane, so the
+// the Cantle: a carrier's sherd needs 4.4 m of depth and the Mid Rung gives 3.8 before its lane, so the
 // plot's back lies 0.6 m in the High Rung's riser: the sherd's back is bedded in the step (its maker packs nothing)
 put('rungs-cantle', 'carrier', 'rungs', 'mid', 2, 2.25, RISERS[1].D + 1.6, 5.8, 4.4, 'noon', { against: 'high', called: 'the Cantle', note: 'a third of a carrier\'s wall standing as an apse over the High Rung, a plaster house in its lap: where the main\'s line was first laid, beside its head' });
-// the dyers' yard [Proposed]: open ground under the Tenter (RUNGS.tenter), vats and tenter-poles; `against` keeps the Mid Rung's nosing clear of the bones' wall above it
+// the dyers' yard: open ground under the Tenter (RUNGS.tenter), vats and tenter-poles; `against` keeps the Mid Rung's nosing clear of the bones' wall above it
 put('rungs-dyers', 'yard', 'rungs', 'low', 2, 15.1, backD('mid'), 4.2, HD, 'late', { against: 'mid', called: 'the dyers\' yard', note: 'the dyers\' vats at the Tenter\'s foot; nothing roofed' });
 // --- the Lees: shops in the Low Rung's riser (Heliarch undercrofts: round arches let 3.2 m into the step, a Late front
 // out on the bench), and two houses that stand free on the square's west side
@@ -336,23 +336,23 @@ export const STRAKE = { run: 1, s0: -6, s1: 28, D0: RISERS[3].D + 0.2, depth: 5.
 // (v15-Q3: the fountain stands 3 m west of where V0 drew it, before the Strake's sherd (the vessel's wall there, its foot here),
 // on the line of sight from the old way's bank through the arch at its head, and is 3.4 m, a vessel's foot, not 2.6.)
 put('fountain', 'fountain', 'lees', 'bench', 1, 19.6, 25.0, 3.4, 3.4, 'noon', { fronts: ['P9', 'P41'], title: 'the Fountain of Noon', note: 'the fountain of noon: a vessel\'s broken foot that wells stored daylight (src/v15/quarters/lees/fountain.js)' });
-// (v15-Q3: a stall on the square, its back to the brink and its counter to the street. Titles are [Proposed].)
+// (v15-Q3: a stall on the square, its back to the brink and its counter to the street. The titles are the valley's.)
 put('lees-stall-salt', 'stall', 'lees', 'bench', 1, 10.2, 25.1, 2.8, 2.2, 'late', { faceIn: true, fronts: ['P41'], title: 'the Tare', note: 'the salt-weigher\'s stall: a slab counter under one cloth, a balance' });
-for (const [n, t] of [['lees-shop-4', 'the Lagan'], ['lees-shop-5', 'the Ullage'], ['lees-shop-6', 'the Welt'], ['lees-house-3', 'the Rebate']]) PLOTS_.find((q) => q.name === n).title = t; // [Proposed]: the dead-letter counter, the vintner, the slipper-maker, the picture-framer
+for (const [n, t] of [['lees-shop-4', 'the Lagan'], ['lees-shop-5', 'the Ullage'], ['lees-shop-6', 'the Welt'], ['lees-house-3', 'the Rebate']]) PLOTS_.find((q) => q.name === n).title = t; // the dead-letter counter, the vintner, the slipper-maker, the picture-framer
 // --- the Quarrels: the crown. The keep's fallen face (SLAB) lies across its west half and the corner's blocks are
 // strung from the wound to the rim at the east run's s 11..14, so: the new house stands east of them (it stood on
 // them at s 15), hard by the aqueduct's line; the masons' lodging leans on the slab's west flank, its roof level with
 // the slab where the two meet (the slab is the way up to it); a narrow house stands on the rim at the west end.
-put('new-house', 'new-house', 'quarrels', 'crown', 2, 24, -9.4, 7, 5.6, 'new', { title: 'the Unroofed House', note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold. [Proposed] name' });
+put('new-house', 'new-house', 'quarrels', 'crown', 2, 24, -9.4, 7, 5.6, 'new', { title: 'the Unroofed House', note: 'half built, of the keep\'s own fallen ashlar: pale stone, raw scaffold.' });
 put('masons-yard', 'yard', 'quarrels', 'crown', 2, 5.0, -6.7, 5.4, 3.2, 'new', { title: 'the Banker', stock: 'quarrels', note: 'the stock squared up on the brink east of the saint; `stock`: the quarter builds the blocks (src/v15/quarters/quarrels.js), the Demesne only gives up its fallen ones' });
 { const a = 7.6, d = 4.4, [x, z] = slabAt(a, -SLAB.W / 2 - d / 2 + 0.04); // (its back wall's outer face a finger inside the slab's flank: no two faces in one plane)
-  free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Propped House', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. [Proposed] name' }); }
-put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. [Proposed] name' });
+  free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Propped House', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. name' }); }
+put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. name' });
 // --- the Pennyworth: the foot
 // (v15-Q4: the carrier's plot is 5.8 deep, the widest a wreck is made; the two houses stand north of the house's stable,
 // one on the flat between the stable and the gate, one up on the field bank across the lane from it; the garden is
 // the ground between the stalls, the wall lane, the kerb and the ramp's foot)
-free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.6), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5.8, 'noon', { fronts: ['K1'], note: 'the Spilt Measure [Proposed]: a carrier fallen off the end of the daylight main and lying along the lowest riser, half sunk: someone lives in the sound half, the broken half is a garden' });
+free('carrier-house', 'carrier', 'pennyworth', 'foot', ...polar(60.5, HAHA + 3.6), [Math.sin(60.5 * Math.PI / 180), -Math.cos(60.5 * Math.PI / 180)], 12, 5.8, 'noon', { fronts: ['K1'], note: 'the Spilt Measure: a carrier fallen off the end of the daylight main and lying along the lowest riser, half sunk: someone lives in the sound half, the broken half is a garden' });
 free('pennyworth-house-1', 'house', 'pennyworth', 'foot', 112.2, -53.3, [1, 0], 6, 4.4, 'late', { y: -0.2, note: 'north of the house\'s stable, its back to the house\'s east wall, facing the gate lane' });
 free('pennyworth-house-2', 'house', 'pennyworth', 'foot', 121.7, -54.3, [-1, 0], 6.2, 4.4, 'late', { y: 0.95, note: 'up on the field bank across the lane from the first, a metre over it: steps down the bank from its door' });
 // (v15-Q4 round 2) the foot built up to the house: a street down the old kerb, the Hitch's far side, and a pair facing the house's gate. Their `y` is nominal: the quarter's module stands each at the ground before its door, on a footing of older stone where the ground falls away under it.
@@ -365,7 +365,7 @@ free('pennyworth-gate-1', 'house', 'pennyworth', 'foot', 104, -68.6, [0, 1], 6, 
 free('pennyworth-gate-2', 'house', 'pennyworth', 'foot', 110.8, -69.4, [0.1, 1], 5.6, 4.4, 'late', { y: 0.95, slope: 1.7, note: 'beside it, toward the Hitch' });
 free('pennyworth-stall-1', 'shop', 'pennyworth', 'foot', 97.5, -26.4, [0, -1], 3.4, 2.4, 'late', { note: 'a stall under the ramp\'s revetment, facing the house\'s south wall across the lane' });
 free('pennyworth-stall-2', 'shop', 'pennyworth', 'foot', 101.2, -24.4, [0.2, -0.98], 3.4, 2.4, 'late');
-free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1], 4.7, 6.2, 'late', { fronts: ['K1'], note: 'the Grudge [Proposed]: beans on poles, a well under a Heliarch drum, and the Tesserine Moles\' heaps in the beds' });
+free('pennyworth-garden', 'garden', 'pennyworth', 'foot', 107.45, -21.5, [0, -1], 4.7, 6.2, 'late', { fronts: ['K1'], note: 'the Grudge: beans on poles, a well under a Heliarch drum, and the Tesserine Moles\' heaps in the beds' });
 // --- the tube's line, as a plot: nothing else is built on it
 { const w = WAYS.find((v) => v.name === 'noon-main'); put('tube-line', 'tube', 'rungs', 'high', w.run, w.s, (w.D0 + w.D1) / 2, 4.4, w.D1 - w.D0, 'noon', { note: 'the daylight main\'s bed, 4.4 m wide: lanes pass under it, nothing stands on it' }); }
 
@@ -393,7 +393,7 @@ export const FIXTURES = [
   onRiser('riser-repair', 67.1, 1.7, 'the Heliarchy\'s repair: a panel of exact ashlar let into the giants\' face, a blind arch in it'),
   onRiser('leanto-oil', 69.1, 1.5, 'a lean-to against the riser under a plank roof: lamp oil'),
   onRiser('leanto-slippers', 70.9, 1.4, 'a second, lower: its board is bare'),
-  fix('leave-east', 122.5, -6.8, 0.6, [0.504, 0.863], 'the Leave [Proposed]: two posts either side of the old kerb where the village ends, and the last lamp'),
+  fix('leave-east', 122.5, -6.8, 0.6, [0.504, 0.863], 'the Leave: two posts either side of the old kerb where the village ends, and the last lamp'),
   fix('leave-west', 119.7, -5.2, 0.6, [0.504, 0.863], 'its fellow, broken short'),
 ];
 export const fixture = (name) => FIXTURES.find((f) => f.name === name) || null;
@@ -429,7 +429,7 @@ export function inPlot(p, x, z, pad = 0) {
 
 // ---------------------------------------------------------------- the Quarrels' own places (src/v15/quarters/quarrels.js builds them)
 // Everything the crown's quarter stands where no plot is, in the run frame: [run, s, D]. The keep's fallen blocks lie
-// where they fell (src/structures/keep.js); these are set between them. Names are [Proposed].
+// where they fell (src/structures/keep.js); these are set between them. Names are in the valley's voice.
 const xz = (run, s, D) => { const [x, z] = at(run, s, D); return { run, s, D, x, z }; };
 export const QUARRELS = {
   // the Smoking Saint: the lime kiln, in the head of the keep's fallen colossus. He lies in the Saint's Rest behind the
@@ -481,7 +481,7 @@ export function cutAt(x, z, pad = 0) {
 }
 
 // ---------------------------------------------------------------- the Rungs' own (v15-Q2)
-// What src/v15/quarters/rungs.js builds between its plots, in the run frame; names [Proposed], in the valley's voice.
+// What src/v15/quarters/rungs.js builds between its plots, in the run frame; the names are in the valley's voice.
 export const RUNGS = {
   // the dyers' stair: a plank flight down the Mid Rung's riser on the east run, its head at s (a plank landing east of it), going down toward the corner
   tenter: { name: 'the Tenter', id: 'rungs-tenter', run: 2, s: 17.05, sign: -1, out: 0.9, width: 1.3, run1: 0.25 },
