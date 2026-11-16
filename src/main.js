@@ -103,6 +103,7 @@ const MODULES = [
   ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
   ['villagerow', () => import('./v15/row.js')], // v15-V1: the Strake, one row of five buildings of five ages on the Lees' bench, from the makers in src/v15/houses/ (?v15=0; ?v15=kit adds the makers' contact sheet)
   ['lappetfar', () => import('./v15/far.js')], // v15-P3: the Lappet from far off, one draw: a block a house, a speck a light, from the quarters' records (?lappetfar=0)
+  ['lappetlamps', () => import('./v15/lamps.js')], // v15-L1: lamps to walk by where the village's ways were dark, from the plan's LAMPS, one draw, no point light (?lappetlamps=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
