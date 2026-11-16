@@ -56,7 +56,7 @@ const route = await page.evaluate(async (quarter) => {
   if (quarter) {
     const lane = (n) => P.LANES.find((l) => l.name === n).pts, D = P.HOUSE.door, G = P.HOUSE.gate, cx = (P.HOUSE.x0 + P.HOUSE.x1) / 2, cz = (P.HOUSE.z0 + P.HOUSE.z1) / 2, wl = lane('wall-lane'), gl = lane('gate-lane');
     // the ramp's foot; between the garden and the wreck's neck to the old kerb; up the kerb to the market; the Thumbway west to the south door
-    push([103.6, -16.8], 'ramp-foot'); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
+    push([103.6, -16.8], 'ramp-foot'); for (const q of lane('ramp-cut')) push(q, q === lane('ramp-cut')[2] ? 'slip' : undefined); for (const q of [...lane('ramp-cut')].reverse()) push(q); push([106.6, -17.5]); push([110.9, -17.5], 'neck'); push([113.4, -19.2]); push([112.6, -21], 'garden'); push([110.8, -26.4]); push(wl[2], 'market'); push(wl[1], 'thumbway'); push(wl[0]);
     // through the door, across the court, out of the north gate
     push([D.x, D.z + 1.3], 'south-door'); push([D.x, D.z - 0.2], 'in-the-door'); push([D.x, D.z - 2.6], 'gallery'); push([cx - 2.8, cz + 6]); push([cx - 2.8, cz - 6], 'court'); push([G[0], G[1] + 2.2], 'gate-inside'); push([G[0], G[1] - 2.6], 'gate-outside');
     // round the house by the Hitch: the far side, the two houses, the stable's back, the Thumbway's east end
@@ -73,7 +73,10 @@ const route = await page.evaluate(async (quarter) => {
   a(S, up.D0 + 0.4); a(S, (up.D0 + up.D1) / 2, 'upper-flight'); a(S, up.D1 + 0.9, 'landing'); a(S, 10.4); a(S, 12.8, 'timber'); a(S, 15.9, 'bastion'); a(S, hf.D0 + 0.3); a(S, (hf.D0 + hf.D1) / 2, 'foot-flight'); a(S - 0.8, hf.D1 + 0.4, 'square');
   // to the house's wall by the ramp, and back
   pol(pr.b0 - 3.2, P.HAHA - 2.2); pol(pr.b0 - 1.2, P.HAHA + 1.1, 'ramp-head'); for (const bg of [pr.b0 + 2, pr.b0 + 6, pr.b0 + 10]) pol(bg, P.HAHA + 1.1, bg === pr.b0 + 6 ? 'ramp' : undefined); pol(pr.b1 + 0.6, P.HAHA + 1.1, 'ramp-foot');
+  const cut = (P.LANES.find((l) => l.name === 'ramp-cut') || { pts: [] }).pts; // (v15-Q4: the Slip, between the booths' end and the garden's wall)
+  for (const q of cut) push(q);
   push([P.HOUSE.x1 - 7, P.HOUSE.z1 + 1.3], 'house-wall');
+  for (const q of [...cut].reverse()) push(q);
   pol(pr.b1 + 0.6, P.HAHA + 1.1); for (const bg of [pr.b0 + 10, pr.b0 + 6, pr.b0 + 2]) pol(bg, P.HAHA + 1.1); pol(pr.b0 - 1.2, P.HAHA + 1.1); pol(pr.b0 - 3.2, P.HAHA - 2.2, 'bench');
   // the main from its foot to the breach, the gangway, the Mid Rung
   const k = 4 / 5.4, door = (P.LEVEL.high.y + 0.81 - P.LEVEL.mid.y) / k + P.RISERS[1].D;
@@ -137,6 +140,7 @@ const LOOKS = {
   'mid-rung': [['ladder', 0, 0]], 'ladder-foot': [['back', Math.PI, 0.6]], 'ladder-top': [['back', Math.PI, -0.5]], 'tube-high': [['up', 0, 0.5]], 'tube-top': [['back', Math.PI, -0.5], ['ahead', 0, 0]],
   'head-flight-up': [['ahead', 0, 0.3]], crown: [['house', Math.PI, -0.3]], corner: [['back', Math.PI, -0.1]],
   // route=pennyworth
+  slip: [['ahead', 0, 0.05], ['back', Math.PI, 0.2]],
   thumbway: [['west', 0, 0.05], ['stalls', 1.5, 0.05]], 'south-door': [['door', 0, 0.1]], 'in-the-door': [['court', 0, 0]], gallery: [['back', Math.PI, 0]], court: [['gate', 0, 0.05]], 'gate-inside': [['back', Math.PI, 0.05]],
   'gate-outside': [['back', Math.PI, 0.2]], 'hitch-far': [['ahead', 0, 0.05]], 'hitch-houses': [['ahead', 0, 0.2], ['up-the-bank', 1.45, 0.25]], 'hitch-stable': [['ahead', 0, 0.1]], 'thumbway-east': [['keep', -0.66, 0.3]],
   market: [['stalls', 0.9, 0], ['back', Math.PI, 0.1]], garden: [['garden', 1.2, -0.1]], wreck: [['wreck', -1.1, 0.05]], leave: [['out', 0, 0], ['back', Math.PI, 0.15]], skirts: [['riser', -1.5, 0.2]], 'lean-tos': [['lean-tos', -1.3, 0.1], ['back', Math.PI, 0.1]],

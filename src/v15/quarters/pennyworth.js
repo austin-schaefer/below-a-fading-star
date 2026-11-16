@@ -70,8 +70,8 @@ export async function build(ctx) {
   // a flag of the lane's paving at a world point, on the ground as it lies
   const flag = (x, z, w, d, ry = 0) => { const g = G(x, z); B.add(B.box(w, 0.16, d, { seg: 9, chip: 0.03, chipTop: true, seed: x * 7 + z }), mat(x, g - 0.045 + rng() * 0.012, z, (rng() - 0.5) * 0.02, ry, (rng() - 0.5) * 0.02), { color: worn(V.flag, rng, 0.2, 0.2), moss: 0.45, wet: 0.08, ground: g - 0.3 }); };
   const leafy = (M, x, y, z, s, col = LEAF) => B.add(B.rock(s, low ? 0 : 1, 1, 0.55, 1), ch(M, x, y, z, (rng() - 0.5) * 0.5, rng() * 3, (rng() - 0.5) * 0.5), { color: worn(col, rng, 0.1, 0.3), moss: 0, ground: -5, flat: true });
-  // a bine up a pole from a to b (local points): one ragged column of leaf, thick at the foot, thin at the top
-  const bine = (M, a, b, r, col = LEAF) => { const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], len = Math.hypot(dx, dy, dz), t0 = 0.12, t1 = 0.86; B.add(B.rock(1, low ? 0 : 1, r, len * (t1 - t0) / 2, r), ch(M, a[0] + dx * (t0 + t1) / 2, a[1] + dy * (t0 + t1) / 2, a[2] + dz * (t0 + t1) / 2, Math.atan2(Math.hypot(dx, dz), dy) * Math.sign(dz || 1) * (Math.abs(dz) >= Math.abs(dx) ? 1 : 0), 0, -Math.atan2(dx, dy) * (Math.abs(dx) > Math.abs(dz) ? 1 : 0)), { color: worn(col, rng, 0.1, 0.25), moss: 0, ground: -5, flat: true, disp: r * 0.5, dispScale: 5 }); };
+  // a bine up a pole from a to b (local points): one ragged column of leaf from the earth at its foot to short of the top
+  const bine = (M, a, b, r, col = LEAF) => { const d = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), len = d.length(), t0 = -0.02, t1 = 0.86, mid = new THREE.Vector3(a[0], a[1], a[2]).addScaledVector(d, (t0 + t1) / 2), q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); B.add(B.rock(1, low ? 0 : 1, r, len * (t1 - t0) / 2, r), M.clone().multiply(new THREE.Matrix4().compose(mid, q, new THREE.Vector3(1, 1, 1))), { color: worn(col, rng, 0.1, 0.25), moss: 0, ground: -5, flat: true, disp: r * 0.5, dispScale: 5 }); };
   // a plot's building weathered after its maker: its colours taken toward dirt and its limewash's held light halved (out of the keep's shadow a clean wash is a white box)
   const dull = (from, k) => { const C = B.C, Em = B.E; for (let i = from; i < B.count; i++) { const f = k * (0.55 + 0.9 * rng()); C[i * 3] += (V.dirt.r - C[i * 3]) * f; C[i * 3 + 1] += (V.dirt.g - C[i * 3 + 1]) * f; C[i * 3 + 2] += (V.dirt.b - C[i * 3 + 2]) * f; if (Em[i * 4 + 3] === 2) { Em[i * 4] *= 0.4; Em[i * 4 + 1] *= 0.4; Em[i * 4 + 2] *= 0.4; } } };
 
@@ -82,6 +82,7 @@ export async function build(ctx) {
     const from = B.count, R = makePlot(B, p.kind === 'carrier' ? { ...p, y: p.y + 0.015 } : p, { // (the wreck a finger proud of its pad: a board of its yard lies at its foot's own height, in the pad's plane)
       plan: P, built: ctx.lappet.built, E, low, ...OPTS[p.name] });
     if (p.kind === 'house') dull(from, 0.2);
+    if (p.kind === 'shop') for (let i = from; i < B.count; i++) if (B.E[i * 4 + 3] === 1) { B.E[i * 4] *= 0.5; B.E[i * 4 + 1] *= 0.5; B.E[i * 4 + 2] *= 0.5; } // (a booth's back wall by one lamp, not a furnace: beside the house's lanterns it was the brightest thing on the lane)
     R.lamps.forEach((lamp, i) => { hangLamp(B, lamp, ['amber', 'ruby', 'amber', 'amber'][(R.seed + i) % 4], 0.5); lamps.push(lamp); });
     for (const c of R.counters) places.push({ name: `${p.name}: counter`, x: +c.x.toFixed(2), y: +c.y.toFixed(2), z: +c.z.toFixed(2), what: 'a bare counter; whoever keeps it stands behind' });
     for (const s of R.shelves) places.push({ name: `${p.name}: shelf`, x: +s.x.toFixed(2), y: +s.y.toFixed(2), z: +s.z.toFixed(2), what: 'a bare shelf' });
@@ -204,7 +205,7 @@ export async function build(ctx) {
       for (let i = 0; i < n; i++) {
         const t = (i + 0.5) / n, x = x1 + (x2 - x1) * t, z = z1 + (z2 - z1) * t, h = 0.5 + rng() * 0.16, wp = world(M, x, 0, z), g = G(wp.x, wp.z) - g0;
         B.add(B.box(0.26, h + 0.5, len / n + 0.02, { seg: 0.8, chip: 0.05, chipTop: true, seed: x * 3 + z }), ch(M, x, g + h / 2 - 0.25, z, 0, ry, 0), { color: worn(V.mud, rng, 0.2, 0.16).lerp(L.plaster[0], 0.25 * rng()), moss: 0.4, ground: g0 + g, disp: 0.02, dispScale: 2 });
-        if (rng() < 0.7) { B.add(B.box(0.36, 0.06, len / n * (0.6 + rng() * 0.3), { seg: 9, chip: 0.02 }), ch(M, x, g + h + 0.02, z, 0, ry, 0), { color: worn(H.dark, rng, 0.15), moss: 0.5, ground: g0 + g }); cop.push([x, g + h + 0.05, z, ry]); }
+        if (rng() < 0.7) { B.add(B.box(0.36, 0.06, len / n * (0.6 + rng() * 0.3), { seg: 9, chip: 0.02 }), ch(M, x, g + h - 0.005, z, 0, ry, 0), { color: worn(H.dark, rng, 0.15), moss: 0.5, ground: g0 + g }); cop.push([x, g + h + 0.025, z, ry]); }
       }
       collide(M, x1, z1, x2, z2, 0.15, -0.4, 1.05);
     };
@@ -213,7 +214,7 @@ export async function build(ctx) {
     run(hw - 0.4, -hd, -hw + 0.3, -hd);                                 // the south, toward the wreck
     run(-hw, -hd + 0.3, -hw, -0.5); run(-hw, 0.9, -hw, hd - 1.7);       // the kerb's side, a gap onto the kerb
     // three beds of turned earth
-    const beds = [[-0.55, 1.9, 3.6], [-0.5, 0.1, 4.2], [-0.45, -1.75, 4.2]]; // [the bed's middle x, z, its length]
+    const beds = [[-0.5, 1.9, 3.2], [-0.45, 0.1, 3.7], [-0.4, -1.75, 3.7]]; // [the bed's middle x, z, its length]
     for (const [bx, bz, len] of beds) B.add(B.box(len, 0.3, 0.95, { seg: 0.6, chip: 0.06, chipTop: true, seed: bz }), ch(M, bx, -0.03, bz, 0.045 * (bz > 0 ? 1 : -1), 0, 0.02), { color: worn(SOIL, rng, 0.1, 0.2), moss: 0.15, ground: g0 - 1, disp: 0.03, dispScale: 3 });
     // beans on crossed poles down the two southern beds: pairs lashed where they cross, a ridge pole through the crotches; where a heap has come up under a pair it leans
     for (const [bx, bz, len] of beds.slice(1)) {
@@ -339,10 +340,9 @@ export async function build(ctx) {
   {
     const D = P.HOUSE.door;
     for (let j = 0; j < 3; j++) for (let x = D.x - 1.5 + (j % 2) * 0.3; x < D.x + 1.6;) { const w = 0.6 + rng() * 0.5; if (rng() < 0.85 && P.radiusOf(x + w / 2, D.z + 0.95 + j * 0.62) > P.HAHA + 2.75) flag(x + w / 2, D.z + 0.95 + j * 0.62, w - 0.03, 0.59); x += w; }
-    const lane = P.LANES.find((l) => l.name === 'wall-lane');
-    for (let i = 0; i < lane.pts.length - 1; i++) {
+    for (const lane of ['wall-lane', 'ramp-cut'].map((n) => P.LANES.find((l) => l.name === n))) for (let i = 0; i < lane.pts.length - 1; i++) {
       const a = lane.pts[i], b = lane.pts[i + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]), ry = Math.atan2(b[0] - a[0], b[1] - a[1]);
-      for (let s = i ? 0.4 : 2.2; s < len; s += 0.86) { if (rng() < (i === 2 ? 0.6 : 0.3)) continue; const off = (rng() - 0.5) * 0.9; flag(a[0] + (b[0] - a[0]) * s / len + Math.cos(ry) * off, a[1] + (b[1] - a[1]) * s / len - Math.sin(ry) * off, 0.55 + rng() * 0.3, 0.7 + rng() * 0.2, ry + (rng() - 0.5) * 0.2); }
+      for (let s = i || lane.name !== 'wall-lane' ? 0.4 : 2.2; s < len; s += 0.86) { if (rng() < (i === 2 ? 0.6 : 0.3)) continue; const off = (rng() - 0.5) * (lane.width - 1.1); flag(a[0] + (b[0] - a[0]) * s / len + Math.cos(ry) * off, a[1] + (b[1] - a[1]) * s / len - Math.sin(ry) * off, 0.55 + rng() * 0.3, 0.7 + rng() * 0.2, ry + (rng() - 0.5) * 0.2); }
     }
   }
 
