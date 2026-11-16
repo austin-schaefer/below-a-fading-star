@@ -179,3 +179,17 @@ Next: each hand-back gets its frames looked at with the report shut, a blind rea
 - Next: its fixes merged; the whole suite on `next`; a walk of the whole village by the orchestrator in a real browser; then batch 3, written from what the quarters left (the saint's face; the far view and the budget on low; people and stories; light and sound; names, cards and the map; Noonwright ware reading as metal; the open lists above).
 
 **The owner, 2026-11-16 about 07:20, walking `next`:** "village looks quite good! there's some bugginess/goofiness in the stair areas; walls right next to stairs, stairs and ladders right by each other, dead-ends, etc. here are some examples" (five screenshots, kept in the deploy worktree's `shots/wip/owner-v15/`). Earlier the same morning: "it did really good! I'm looking at the village and it looks great." Brief `briefs/v15/brief-v15-W1-ways.md` is the pass on every way in the village, with a check that guards the kind.
+
+**2026-11-16, 07:42 PST. The Pennyworth's two fixes are in; the whole suite is running on `next`; batch 3 has begun with three agents on opus.**
+
+- **The Pennyworth's fixes merged** (8c7de91 the news-seller's pole off the kerb K1; 5abfa9b in the kit: a step house's roof door leans with its battered wall). Its agent's counts on its branch: 13 of 13 (village 683, geometry 144, heights 198, edges 214); whole-village walks on keys and touch both walked, ladder 2. The fixed door is in no render; the passing geometry test is the only proof.
+- **The whole suite on `next`** started 07:41 (`/tmp/suite-v15-batch2.log`): the first with all four quarters.
+- **In flight** (all opus, per the owner's word on models):
+
+| Brief | Branch / worktree | Port | Agent |
+|---|---|---|---|
+| W1 the ways put right (the owner's stairs, walls, dead ends) | `issue-1520-ways` | 8165 | `ac7d97cab79f56e09` |
+| S1 the saint's face | `issue-1521-saint` | 8166 | `ac446fa07cfa2276c` |
+| P3 the village from far off, and its cost on low | `issue-1522-far` | 8167 | `aef08902ffc3c795c` |
+
+- **Batch 3 still to brief, after W1 lands** (they stand on the ways W1 may move): people and stories (who lives here, seen; the Leerie's round; the masons, the dyers, the shopkeepers); light and sound (the village's own sound by quarter, the fountain, the kiln, the market; lamps and the gutter); names, title cards, the settings map's places; Noonwright ware reading as metal on the bones' tube; the open lists in the entries above. Then the critic, the curator, the gate, the release (the note says music is on by default; closes #20 #59 #60 #61 #63 #64).
