@@ -58,7 +58,7 @@ run walk tools/walk-test.mjs "$B/?q=low"
 run hop tools/hop-test.mjs $B
 run edges tools/edges-test.mjs $B
 run heights tools/heights-test.mjs $B
-run geometry tools/geometry-test.mjs $B # v15-H1 (#64): what flickers, floats or shows its back in every walkable place (about 40 s)
+run geometry tools/geometry-test.mjs $B # v15-H1 (#64): what flickers, floats or shows its back in every walkable place (about 30 s)
 run lift tools/lift-test.mjs $B
 run mountains tools/mountains-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"

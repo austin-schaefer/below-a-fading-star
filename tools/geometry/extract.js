@@ -2,6 +2,7 @@
 // tools/route-frames.mjs as /tools/geometry/extract.js.
 //
 //   route(fp, place) → { pts: [[x, y, z], ...] feet along the route every metre, L }   (place: tools/geometry/places.mjs)
+//   stand(fp, place) → { ok, stands } stands the walker in the place and holds them (run the page's clock after it)
 //   extract(fp, place, opts) → { P (base64 Float32 world triangles), part (base64 Uint32), parts, spheres, stands }
 //
 // The walker is stood in the place first (so what hides itself above or below ground, far away or near, is as a visitor
@@ -73,11 +74,13 @@ function discStands(fp, place) {
   return out;
 }
 
-export async function extract(fp, place, opts = {}) {
-  const THREE = fp.THREE, p = fp.player;
-  const eye = p.eye ?? 1.6;
+// the place's stands and region, and the walker stood in its middle and held there (a carry). The caller then lets the
+// page run (on Playwright's clock, so every run sees the same frames) before extract() takes the faces
+export function stand(fp, place) {
+  const p = fp.player;
+  window.__geomHold?.(); window.__geomHold = null;
   let feet, L = 0;
-  if (place.stands) feet = place.stands.map((s) => [s[0], s[1], s[2], 0]);
+  if (place.stands) feet = place.stands.map((s) => [s[0], s[1], s[2], 0, !!s[3]]);
   else if (place.c) feet = discStands(fp, place);
   else { const r = route(fp, place); if (!r) return { missing: true }; feet = r.pts; L = r.L; }
   if (!feet.length) return { missing: true };
@@ -86,18 +89,26 @@ export async function extract(fp, place, opts = {}) {
   if (place.region) spheres.push(...place.region);
   else if (place.c) { const y = feet.reduce((a, f) => a + f[1], 0) / feet.length; spheres.push([place.c[0], y, place.c[1], place.r + 4]); }
   else { for (let i = 0; i < feet.length; i += 4) spheres.push([feet[i][0], feet[i][1] + 1, feet[i][2], place.half]); const f = feet[feet.length - 1]; spheres.push([f[0], f[1] + 1, f[2], place.half]); }
-  // stand the walker there and let the place settle (what hides below, what drops far)
   if (!place.stands) {
     const mid = feet[Math.floor(feet.length / 2)];
     fp.controls.placeAt(mid[0], mid[2], mid[1] + 0.1);
     const at = p.pos.clone();
-    const rel = fp.controls.carry({ step(pos) { pos.copy(at); } });
-    await new Promise((r) => setTimeout(r, opts.settle ?? 900));
-    rel();
+    window.__geomHold = fp.controls.carry({ step(pos) { pos.copy(at); } });
   }
+  window.__geomPrep = { name: place.name, feet, L, spheres };
+  return { ok: true, stands: feet.length };
+}
+
+export async function extract(fp, place, opts = {}) {
+  const THREE = fp.THREE, p = fp.player;
+  const eye = p.eye ?? 1.6;
+  if (window.__geomPrep?.name !== place.name) { const r = stand(fp, place); if (r.missing) return r; }
+  const { feet, L, spheres } = window.__geomPrep;
+  window.__geomHold?.(); window.__geomHold = null;
   fp.scene.updateMatrixWorld(true);
   const sealed = place.sealed ? [place.sealed[0], place.sealed[1] < 0 ? L + place.sealed[1] : place.sealed[1]] : null;
-  const stands = feet.map((f) => ({ x: f[0], y: f[1] + eye, z: f[2], s: f[3], sealed: !!(sealed && f[3] >= sealed[0] && f[3] <= sealed[1]) }));
+  const stands = feet.map((f) => ({ x: f[0], y: f[1] + eye, z: f[2], s: f[3], sealed: !!(f[4] || (sealed && f[3] >= sealed[0] && f[3] <= sealed[1])) }));
+  window.__geomPrep = null;
 
   const shown = (o) => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
   const nameOf = (o) => { const bits = []; for (let q = o; q && q !== fp.scene && bits.length < 3; q = q.parent) if (q.name) bits.unshift(q.name); return bits.join('/') || `(unnamed ${o.type} ${o.id})`; };

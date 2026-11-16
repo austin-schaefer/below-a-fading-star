@@ -8,12 +8,15 @@
 //             a strut or chain end attached to nothing (what is meant to hang in air is exempt by name, below)
 //   backs     from standing eyes every metre along the route, rays round the head whose first face is the back of a
 //             single-sided face (a hole you see through), or that meet nothing from a place marked sealed
-// Each finding prints its kind, mesh names, world position and a ?pos= URL (with the console line that stands you on
-// a floor off the ground). Before the world, a fixture is planted in the air over the spawn (never in the world's
+// Each finding prints its kind, mesh names, world position and a ?pos=x,z,y URL that stands you on its floor. Before
+// the world, a fixture is planted in the air over the spawn (never in the world's
 // files) with one fault of each kind beside sound parts of each kind: each fault must be found and the sound parts not.
-// Known findings are in tools/geometry-baseline.json, counted by group (kind, place, mesh) with the issue or the
-// reason beside each: a place fails when a group grows or a new one appears, and the run says which groups shrank
-// (fixed: lower them, or GEOM_BASELINE=write rewrites the counts from the run and keeps every reason).
+// Known findings are in tools/geometry-baseline.json, by group (kind, place, mesh) with each finding's position rounded
+// to 0.5 m and the issue or the reason beside the group. A place fails on a finding the baseline does not hold (within
+// a metre, in its group) and on a baseline finding no longer found (a fix: lower the baseline). GEOMETRY_RECORD=1
+// rewrites it from the run, keeping every reason. The page runs on Playwright's clock so runs repeat exactly.
+// A place with no faces to judge, no usable stands or a truncated take fails; so does a src/v15/plan.js that exists
+// but will not import or exports no GEOMETRY_PLACES.
 //   node tools/geometry-test.mjs [base=http://localhost:8123] [place,place]   (env ONLY_PLACES= too)
 //   GEOM_LIST=1 prints each place's parts and triangle counts; GEOM_JSON=path writes every finding as JSON;
 //   GEOM_ALL=1 prints every finding, not only the new ones and the worst ten; GEOM_DUMP=dir writes each place's faces
@@ -32,25 +35,51 @@ const base = (process.argv[2] || process.env.FP_BASE || 'http://localhost:8123')
 const only = (process.argv[3] || process.env.ONLY_PLACES || '').split(',').filter(Boolean);
 const t0 = Date.now();
 
-// what is meant to hang in air, or is not solid: never floating, never a face that hides or fights. Each with its reason.
-// Matched against whole words of the part's name (split at - _ / . #), so 'terrain' is not 'rain'.
-const words = (...w) => new RegExp(`(^|[-_/ .#])(${w.join('|')})s?($|[-_/ .#\\[0-9])`, 'i');
+// What is meant to hang in air, or is not solid: never floating, never a face that hides or fights. Exact mesh names
+// (the last part of the path, or the whole path), or a prefix ending in '*', each with its reason. A place adds its own
+// with `exempt: { name: reason }`; keep this list to what is true everywhere.
 export const EXEMPT = [
-  [words('halo', 'glow', 'aura', 'bloom', 'shaft', 'godray', 'cone', 'beam', 'pool-light'), 'light made visible: a lamp\'s halo, a shaft, a cone of dust in a beam'],
-  [words('flame', 'fire', 'ember', 'spark', 'wick'), 'flames and sparks stand on their wick, in air'],
-  [words('dust', 'mote', 'haze', 'mist', 'fog', 'smoke', 'steam', 'spray', 'splash', 'drip', 'rain', 'gnat'), 'particles and vapour'],
-  [words('lure', 'moth', 'wing', 'bird', 'bat', 'crow', 'flock', 'insect', 'beetle', 'wasp', 'gnat', 'meteor'), 'things that fly'],
-  [words('sky', 'skylife', 'stars', 'cloud', 'moon', 'remnant', 'parhelion', 'vigilant'), 'the sky\'s furniture'],
-  [words('carried', 'held'), 'carried things move with whoever holds them'],
+  ['sky', "the sky's dome"],
+  ['skylife/*', "the sky's furniture (lattices, webbing, trains, threads, meteors, the parhelion): it hangs in the sky"],
+  ['vigilant*', 'the Vigilant hangs in the sky'],
+  ['pit-stars', "the Nadir's stars hang in the dark under the world on purpose"],
+  ['act-lures', "an act's tally-moths: they fly"],
+  ['lamp-moths', 'moths round the lamps: they fly'],
+  ['twk-insects', "the Twk's insects: they fly"],
+  ['twk-wings', "the Twk riders' dragonfly wings: they fly"],
+  ['bletting-wasps', 'wasps over the windfalls: they fly'],
+  ['adust-beetles', 'beetles: they crawl on their own clock'],
+  ['house-glows', "the house lamps' halos: light made visible, not a solid"],
+  ['local-lights-glows', "the local lamps' halos: light made visible, not a solid"],
 ];
-// what everything else may stand on: the ground, its skins and water (by mesh name)
-const ANCHOR = words('terrain', 'skin', 'ground', 'crust', 'water', 'river', 'pool', 'tarn', 'surface', 'floor', 'bowl', 'leads', 'pavers');
+// What everything else may rest on: the ground, what is laid flat on it, and water. Same matching, each with its reason.
+export const ANCHOR = [
+  ['terrain', 'the ground'],
+  ['skin-*', "a region's ground skin, laid on the ground"],
+  ['saltings-crust', 'the salt crust laid on the ground'],
+  ['house-bare-ground', "the house's swept court, laid on the ground"],
+  ['paths-leads-*', 'the leads: tracks drawn on the ground'],
+  ['structures-pavers', 'paving laid on the ground'],
+  ['nave-water', "the Nave's water: the carriers float in it"],
+  ['pit-floor', "the Pit's floor: the ground down there"],
+];
+const nameHit = (pat, name) => {
+  const full = name.replace(/#\d+$/, ''), last = full.split('/').pop();
+  if (pat.endsWith('*')) { const q = pat.slice(0, -1); return full.startsWith(q) || last.startsWith(q); }
+  return full === pat || last === pat;
+};
 
 const places = PLACES.slice();
 const v15 = join(here, '..', 'src', 'v15', 'plan.js');
+// the village's places: src/v15/plan.js exports GEOMETRY_PLACES (the shape of PLACES). Absent file: no village yet.
+// A file that will not import, or that has no GEOMETRY_PLACES, fails: the village must never go unchecked quietly.
+let hook = null;
 if (existsSync(v15)) {
-  try { const m = await import(pathToFileURL(v15).href); for (const p of m.GEOMETRY_PLACES || []) places.push(p); }
-  catch (e) { console.log(`(src/v15/plan.js did not load: ${e.message})`); }
+  try {
+    const m = await import(pathToFileURL(v15).href);
+    if (!Array.isArray(m.GEOMETRY_PLACES) || !m.GEOMETRY_PLACES.length) hook = 'src/v15/plan.js exports no GEOMETRY_PLACES (a list of places, the shape of tools/geometry/places.mjs)';
+    else for (const p of m.GEOMETRY_PLACES) places.push(p);
+  } catch (e) { hook = `src/v15/plan.js will not import in node (it must import nothing): ${e.message}`; }
 }
 const run = places.filter((p) => !only.length || only.includes(p.name));
 
@@ -62,21 +91,29 @@ const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
+// the page runs on Playwright's clock, paused once the scene is up and moved only by runFor: the lift, the wings and
+// everything else that moves on its own are where the same steps put them on every run, so the counts repeat
+await page.clock.install();
 await page.goto(`${base}/?q=low`, { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
+for (let i = 0; i < 6000 && !(await page.evaluate(() => document.body.classList.contains('ready'))); i++) { await page.clock.runFor(100); await new Promise((r) => setTimeout(r, 30)); }
 await page.evaluate(() => { const fp = window.__fp; fp.events.dispatchEvent(new CustomEvent('begin')); document.getElementById('card')?.classList.add('hidden'); fp.sky.flicker.next = 1e9; });
+await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+await page.clock.runFor(500);
 
 const dec = (s, T) => { const b = Buffer.from(s, 'base64'); return new T(b.buffer, b.byteOffset, b.byteLength / T.BYTES_PER_ELEMENT); };
 const f2 = (v) => v.toFixed(2), f1 = (v) => v.toFixed(1);
 async function take(place) {
+  const st = await page.evaluate(async (place) => (await import('/tools/geometry/extract.js')).stand(window.__fp, place), place);
+  if (st.missing) return null;
+  if (!place.stands) await page.clock.runFor(900); // what hides below the moor, what drops far, settles round the walker
   const r = await page.evaluate(async (place) => (await import('/tools/geometry/extract.js')).extract(window.__fp, place), place);
   if (r.missing) return null;
   const soup = { P: dec(r.P, Float32Array), S: dec(r.S, Float32Array), part: dec(r.part, Uint32Array), parts: r.parts, spheres: r.spheres, stands: r.stands, L: r.L, tris: r.tris, truncated: r.truncated, skipped: r.skipped };
-  const extra = Object.entries(place.exempt || {}).map(([k, v]) => [new RegExp(k, 'i'), v]);
+  const ex = [...Object.entries(place.exempt || {}), ...EXEMPT], an = [...Object.entries(place.anchor || {}), ...ANCHOR];
   for (const p of soup.parts) {
-    const hit = [...extra, ...EXEMPT].find(([re]) => re.test(p.name));
+    const hit = ex.find(([pat]) => nameHit(pat, p.name));
     p.exempt = hit ? hit[1] : null;
-    p.anchor = ANCHOR.test(p.name);
+    p.anchor = an.some(([pat]) => nameHit(pat, p.name));
   }
   return soup;
 }
@@ -93,7 +130,7 @@ const standOf = (soup, at, from) => { const { s, yaw, pitch } = lookFrom(soup, a
 function where(soup, at, from) {
   const { s, yaw, pitch } = lookFrom(soup, at, from);
   const feet = s[1] - 1.6;
-  return `${base}/?q=medium&pos=${f1(s[0])},${f1(s[2])}&yaw=${f2(yaw)}&pitch=${f2(pitch)}  (feet y ${f1(feet)}: __fp.controls.placeAt(${f1(s[0])}, ${f1(s[2])}, ${f1(feet + 0.1)}))`;
+  return `${base}/?q=medium&pos=${f1(s[0])},${f1(s[2])},${f2(feet + 0.05)}&yaw=${f2(yaw)}&pitch=${f2(pitch)}`;
 }
 const nm = (soup, i) => (i < 0 ? '(sky)' : soup.parts[i].name + (soup.parts[i].inst >= 0 ? `[${soup.parts[i].inst}]` : ''));
 const groupOf = (f) => `${f.kind}${/one end/.test(f.info) ? '-end' : ''}|${f.place}|${f.names[0].replace(/\[\d+\]/g, '').replace(/#\d+$/, '')}`;
@@ -155,26 +192,44 @@ const fixture = await page.evaluate(() => {
   plane('fixture-wall-fault', 2, 2, 0, 1, -2.5, 0, Math.PI); // faces -z, away from the stand at z 0
   plane('fixture-wall-sound2', 2, 2, 2.5, 1, 0, 0, Math.PI / 2, both);
   plane('fixture-wall-sound1', 2, 2, -2.5, 1, 0, 0, Math.PI / 2); // faces +x, toward the stand
+  // sky: two rooms 2 m square, walls facing in, each with a sealed stand at its middle; one roofed (sound), one open (fault)
+  const room = (name, x, z, roof) => {
+    const k = (n, w, h, px, py, pz, rx, ry) => plane(`${name}-${n}`, w, h, x + px, py, z + pz, rx, ry, both); // two-sided: the outside is seen from the other stands
+    k('floor', 2, 2, 0, 0.02, 0, -Math.PI / 2, 0); k('n', 2, 2, 0, 1.02, -1, 0, 0); k('s', 2, 2, 0, 1.02, 1, 0, Math.PI);
+    k('w', 2, 2, -1, 1.02, 0, 0, Math.PI / 2); k('e', 2, 2, 1, 1.02, 0, 0, -Math.PI / 2);
+    if (roof) k('roof', 2, 2, 0, 2.02, 0, Math.PI / 2, 0);
+  };
+  room('fixture-room-sound', -5.5, 0, true);
+  room('fixture-room-fault', 5.5, 0, false);
   fp.scene.add(g); g.updateMatrixWorld(true);
   return { X, Y, Z };
 });
 {
   const F = fixture;
-  const soup = await take({ name: 'fixture', stands: [[F.X, F.Y, F.Z]], region: [[F.X, F.Y, F.Z, 9]] });
+  const soup = await take({ name: 'fixture', stands: [[F.X, F.Y, F.Z], [F.X - 5.5, F.Y + 0.02, F.Z, true], [F.X + 5.5, F.Y + 0.02, F.Z, true]], region: [[F.X, F.Y, F.Z, 14]] });
   const { out } = judge({ name: 'fixture' }, soup);
   await page.evaluate(() => { const fp = window.__fp, g = fp.scene.getObjectByName('geometry-fixture'); fp.scene.remove(g); });
   const has = (kind, re) => out.some((f) => f.kind === kind && f.names.some((n) => re.test(n)));
   check(has('coplanar', /plate-fault/), 'fixture: a plate laid in a plinth\'s top face is found coplanar', out.filter((f) => f.kind === 'coplanar').map((f) => f.names.join('+')).join('; '));
   check(has('floating', /strut-fault/), 'fixture: a strut touching nothing is found floating', out.filter((f) => f.kind === 'floating').map((f) => f.names.join('+')).join('; '));
   check(out.some((f) => f.kind === 'floating' && /one end held/.test(f.info) && f.names.some((n) => /stay-fault/.test(n))), 'fixture: a stay held at its top and ending in air is found (a loose end)', out.filter((f) => f.kind === 'floating').map((f) => f.names.join('+')).join('; '));
+  check(out.some((f) => f.kind === 'sky' && Math.abs(f.at[0] - (F.X + 5.5)) < 3), 'fixture: a sealed room with no roof is found open to the sky', out.filter((f) => f.kind === 'sky').map((f) => f.at.map(f1).join(',')).join('; '));
   check(has('backs', /wall-fault/), 'fixture: a one-sided wall seen from behind is found', out.filter((f) => f.kind === 'backs').map((f) => f.names.join('+')).join('; '));
-  const loud = out.filter((f) => f.names.some((n) => /sound|slab/.test(n)) && !f.names.some((n) => /fault/.test(n)));
-  check(!loud.length, 'fixture: the sound parts (a mat 1 cm up, a post, its bracket and a brace to the slab, a two-sided wall, a wall faced) are quiet', loud.map((f) => `${f.kind} ${f.names.join('+')}`).join('; '));
+  const loud = out.filter((f) => (f.names.some((n) => /sound|slab/.test(n)) && !f.names.some((n) => /fault/.test(n))) || (f.kind === 'sky' && Math.abs(f.at[0] - (F.X - 5.5)) < 3));
+  check(!loud.length, 'fixture: the sound parts (a mat 1 cm up, a post, its bracket and a brace to the slab, a two-sided wall, a wall faced, a roofed room) are quiet', loud.map((f) => `${f.kind} ${f.names.join('+')}`).join('; '));
 }
 
 // ---------------------------------------------------------------- the places
+if (existsSync(v15) || hook) check(!hook, "the village's places come in from src/v15/plan.js", hook || `${places.length - PLACES.length} places`);
+// the baseline: per group (kind, place, the first mesh's name without its instance) the findings' positions, rounded to
+// 0.5 m. A finding with no baseline position within a metre in its group is new; a baseline position no finding meets
+// is fixed, and fails too until the baseline is lowered (GEOMETRY_RECORD=1 rewrites it from the run, keeping every
+// reason), so a fix never leaves room for a new fault
+const r5 = (v) => Math.round(v * 2) / 2;
+const posOf = (f) => f.at.map(r5).join(',');
+const near = (a, b) => a.split(',').every((v, i) => Math.abs(+v - +b.split(',')[i]) <= 1.01);
 const all = [];
-const seenKeys = new Set();
+const recorded = {};
 for (const place of run) {
   const tp = Date.now();
   const soup = await take(place);
@@ -187,18 +242,33 @@ for (const place of run) {
   if (process.env.GEOM_DUMP) writeFileSync(join(process.env.GEOM_DUMP, `${place.name}.json`), JSON.stringify({ ...soup, P: Array.from(soup.P), S: Array.from(soup.S), part: Array.from(soup.part) }));
   const ex = Date.now() - tp;
   const { out, ms } = judge(place, soup);
-  // the baseline counts findings by group (kind, place, the first mesh's name without its instance): a place fails when
-  // a group has more findings than the baseline allows, or a group appears that it does not name
+  // an empty place passes nothing: it must have faces to judge (beyond the ground and the exempt), stands a visitor
+  // could use, and be taken whole
+  let body = 0;
+  for (let t = 0; t < soup.part.length; t++) { const p = soup.parts[soup.part[t]]; if (!p.anchor && !p.exempt) body++; }
+  const usable = soup.stands.length - soup.insideStands;
+  const whole = body >= 100 && usable >= Math.min(2, soup.stands.length) && usable > 0 && !soup.truncated;
+  check(whole, `${place.name}: the place is there to judge (faces, stands, taken whole)`, `${body} faces beyond ground and exempt, ${usable} of ${soup.stands.length} stands usable${soup.truncated ? ', TRUNCATED' : ''}`);
   const groups = new Map();
-  for (const f of out) { all.push(f); const g = groupOf(f); seenKeys.add(g); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(f); }
-  const fresh = [];
-  for (const [g, list] of groups) { const k = baseline.known[g]; if (!k || list.length > k.n) fresh.push(...list.map((f) => ({ ...f, over: `${g}: ${list.length} found, baseline ${k ? k.n : 0}` }))); }
+  for (const f of out) { all.push(f); const g = groupOf(f); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(f); }
+  for (const [g, list] of groups) recorded[g] = list.map(posOf).sort();
+  const fresh = [], fixed = [];
+  for (const [g, list] of groups) {
+    const left = (baseline.known[g]?.at || []).slice();
+    // exact positions first (the scene repeats, so they nearly always meet), then the nearest within a metre
+    const rest = [];
+    for (const f of list) { const i = left.indexOf(posOf(f)); if (i >= 0) left.splice(i, 1); else rest.push(f); }
+    for (const f of rest) { const i = left.findIndex((b) => near(b, posOf(f))); if (i >= 0) left.splice(i, 1); else fresh.push({ ...f, group: g }); }
+    for (const b of left) fixed.push(`${g} at ${b}`);
+  }
+  for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !groups.has(g)) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
   const by = (k) => out.filter((f) => f.kind === k).length;
-  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}; ${groups.size} groups, ${new Set(fresh.map((f) => f.over)).size} over the baseline; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)})`);
-  for (const o of new Set(fresh.map((f) => f.over))) console.log(`   OVER  ${o}`);
+  console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}; ${groups.size} groups; ${fresh.length} new, ${fixed.length} fixed; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)})`);
   const show = process.env.GEOM_ALL ? out : fresh;
-  for (const f of show) console.log(`   ${f.kind.padEnd(8)} ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n         ${f.url}`);
-  check(!fresh.length, `${place.name}: no geometry fault beyond the baseline`, `${out.length} found in ${groups.size} groups`);
+  for (const f of show) console.log(`   ${fresh.includes(f) ? 'NEW  ' : 'known'} ${f.kind.padEnd(8)} ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n         ${f.url}`);
+  for (const x of fixed) console.log(`   FIXED ${x} (lower the baseline: GEOMETRY_RECORD=1)`);
+  check(!fresh.length, `${place.name}: no geometry fault beyond the baseline`, `${out.length} found in ${groups.size} groups, ${fresh.length} new`);
+  check(!fixed.length || !!process.env.GEOMETRY_RECORD, `${place.name}: the baseline is no looser than the place`, fixed.length ? `${fixed.length} baseline findings no longer found: lower it (GEOMETRY_RECORD=1)` : '');
 }
 await browser.close();
 
@@ -209,16 +279,11 @@ for (const [k, list] of Object.entries(worst)) {
   console.log(`${k}: ${list.length}`);
   for (const f of list.sort((a, b) => b.score - a.score).slice(0, 10)) console.log(`   ${f.place}  ${f.names.join(' + ')}  at ${f.at.map(f1).join(', ')}  ${f.info}\n      ${f.url}`);
 }
-const counts = {};
-for (const f of all) { const g = groupOf(f); counts[g] = (counts[g] || 0) + 1; }
-const ran = new Set(run.map((p) => p.name));
-const fewer = Object.entries(baseline.known).filter(([g, k]) => ran.has(g.split('|')[1]) && (counts[g] || 0) < k.n);
-if (fewer.length) console.log(`baseline groups now smaller (fixed? lower n in tools/geometry-baseline.json, or GEOM_BASELINE=write):\n   ${fewer.map(([g, k]) => `${g}: ${counts[g] || 0} of ${k.n}`).join('\n   ')}`);
-if (process.env.GEOM_BASELINE === 'write') {
-  const known = {};
-  for (const [g, n] of Object.entries(counts).sort()) known[g] = { n, why: baseline.known[g]?.why || 'on next when the check was written; not yet judged' };
+if (process.env.GEOMETRY_RECORD) {
+  const ran = new Set(run.map((p) => p.name)), known = {};
+  for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || 'on next when the check was written; not yet judged', at };
   for (const [g, k] of Object.entries(baseline.known)) if (!ran.has(g.split('|')[1])) known[g] = k;
-  const rows = Object.entries(known).map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
+  const rows = Object.entries(known).sort().map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
   writeFileSync(baseFile, `{\n "about": ${JSON.stringify(baseline.about || '')},\n "known": {\n${rows.join(',\n')}\n }\n}\n`);
   console.log(`wrote ${Object.keys(known).length} groups to ${baseFile}`);
 }

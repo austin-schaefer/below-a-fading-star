@@ -81,3 +81,19 @@ None in the world. No finding outside F1's files was plainly a one-line fault wi
 - **Disc places** (the house) put stands in rooms a visitor cannot reach. Routes are better.
 - **Only low is checked.** Medium and high may build other faces.
 - **Most of the baseline is unjudged.** Its 75 groups are a list for the orchestrator, not a verdict.
+
+## Round 2 (after the cold review)
+
+- **Empty places fail.** A place fails when it has fewer than 100 faces beyond the ground and the exempt, no usable stand, or a TRUNCATED take (one check line a place).
+- **The village hook fails closed.**
+  - If `src/v15/plan.js` exists but will not import in node, or exports no `GEOMETRY_PLACES`, `geometry` fails and `route-frames` exits 1.
+  - V0's first cut (`origin/issue-1500-bones:src/v15/plan.js`) imports cleanly in node: 42 exports, no imports. It has no `GEOMETRY_PLACES` yet, so **merging it as it stands fails `geometry` until the export is added.**
+  - The shape needed: `export const GEOMETRY_PLACES = [ { name: 'v15-…', pts: [[x, z, y?], …], half: 8, sealed?: [s0, s1] } | { name, c: [x, z], r } | { name, ascent: '<ctx.ascents id>', half } ]`, optional `exempt` and `anchor` (`{ meshName: reason }`) a place. `runtime.md` says plan.js must import nothing.
+- **The baseline ratchets.** It holds each finding's position, rounded to 0.5 m, by group. A finding it does not hold fails; a held finding no longer found fails too, until `GEOMETRY_RECORD=1` rewrites the baseline (keeping the reasons). Matching is exact first, then within a metre.
+- **The scene is frozen.** The page runs on Playwright's clock, paused after load and moved only by `runFor`. The lift and everything else that moves on its own repeat run to run.
+- **The name lists are narrowed.** `EXEMPT` and `ANCHOR` are now exact mesh names or `prefix*`, each with its reason. `lift-cage-floor` and `icefall-leads` (a bridge) are no longer anchors.
+- **The sky check is proved.** The fixture has an open room and a roofed room, each with a sealed stand.
+- **Small fixes.** `route-frames` names frames by metres to 0.1, so `STEP<1` overwrites nothing. The suite line and `runtime.md` both say about 30 s.
+- **`pos=x,z,y`.** One line in `src/controls.js`: the feet at y, on the floor there. Findings print it. Example, #61 from a URL: `?q=medium&pos=246.7,62,-17.4&yaw=0` (frame `shots/wip/geometry-pos-y-check.png`).
+- **Tests.** `ONLY=geometry tools/suite.sh 8163`, three times: 41 PASS each (95 s, 48 s, 42 s, with other agents rendering), and identical per-place output (75 groups; 0 new, 0 fixed).
+- **The hook, proved.** With V0's plan copied in, it fails ("exports no GEOMETRY_PLACES"). With a plan that imports a missing file, it fails ("will not import"). The file was removed after each try.

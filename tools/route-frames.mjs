@@ -3,7 +3,7 @@
 // the place. One page load; at each metre the walker is stood on the floor there (found as a walker finds it, through
 // placeAt: tools/geometry/extract.js's route()) and held, and the view is taken ahead (along the route), right, back,
 // left (YAWS=n turns the head through n yaws instead of four), then down and up. Frames 960 x 540 go to
-// shots/wip/<prefix>-<route>-<q>-m<metre>-<k><view>.png in order, and one contact sheet a route (a row a metre, at most
+// shots/wip/<prefix>-<route>-<q>-m<metres, 012.0>-<k><view>.png in order, and one contact sheet a route (a row a metre, at most
 // 50 rows a sheet: longer routes get -sheet2 and on) to shots/wip/<prefix>-<route>-<q>-sheet.png. Read the sheet first,
 // then open the frames it sends you to: a face that flickers shows as stripes that change between neighbouring metres,
 // a missing face as a hole onto something that should be behind a wall, a floating part as a strut whose end you can
@@ -34,7 +34,10 @@ mkdirSync('shots/wip', { recursive: true });
 
 const places = PLACES.slice();
 const v15 = join(here, '..', 'src', 'v15', 'plan.js');
-if (existsSync(v15)) { try { const m = await import(pathToFileURL(v15).href); places.push(...(m.GEOMETRY_PLACES || [])); } catch { /* no village yet */ } }
+if (existsSync(v15)) { // absent: no village yet; present but broken: say so and stop (the village must not go unwalked quietly)
+  try { const m = await import(pathToFileURL(v15).href); places.push(...(m.GEOMETRY_PLACES || [])); }
+  catch (e) { console.log(`src/v15/plan.js will not import in node (it must import nothing): ${e.message}`); process.exit(1); }
+}
 
 let views = [];
 let place = null;
@@ -73,7 +76,7 @@ if (mode === 'route') {
     const row = [];
     for (let k = 0; k < yaws; k++) row.push({ name: k === 0 ? 'ahead' : k * 4 === yaws ? 'right' : k * 2 === yaws ? 'back' : k * 4 === yaws * 3 ? 'left' : `y${Math.round((k * 360) / yaws)}`, yaw: ahead - (k * 2 * Math.PI) / yaws, pitch: 0 });
     row.push({ name: 'down', yaw: ahead, pitch: -1.15 }, { name: 'up', yaw: ahead, pitch: 1.2 });
-    views.push({ m: Math.round(s), x, y, z, row });
+    views.push({ m: s, x, y, z, row });
   }
   console.log(`${routeName}: ${R.L.toFixed(0)} m, ${views.length} stands, ${views.length * (yaws + 2)} frames`);
 } else {
@@ -145,14 +148,14 @@ for (const v of views) {
     }, [v, w, k === 0, TW, TH]);
     frame++;
     const out = mode === 'route'
-      ? `shots/wip/${tag}-m${String(v.m).padStart(3, '0')}-${k + 1}${w.name}.png`
+      ? `shots/wip/${tag}-m${v.m.toFixed(1).padStart(5, '0')}-${k + 1}${w.name}.png`
       : `shots/wip/${tag}-${String(v.m + 1).padStart(2, '0')}-${w.name}.png`;
     writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
     thumbs.push(r.thumb);
     if (k === 0) console.log(`[saved] ${out}${v.row.length > 1 ? ` (+${v.row.length - 1})` : ''} feet ${r.feet.toFixed(2)} at ${r.x.toFixed(1)},${r.z.toFixed(1)}${w.note ? '  ' + w.note : ''}`);
     if (mode === 'findings') sheetRows.push([{ thumb: r.thumb }]);
   }
-  if (mode === 'route') sheetRows.push({ label: `${v.m} m`, thumbs });
+  if (mode === 'route') sheetRows.push({ label: `${+v.m.toFixed(1)} m`, thumbs });
   if ((mode === 'route' && sheetRows.length >= 50) || (mode === 'findings' && sheetRows.length >= 60)) await flush();
 }
 await flush();
