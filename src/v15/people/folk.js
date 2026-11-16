@@ -102,7 +102,7 @@ export const FOLK = [
       if (!Q.quarrels?.places) return null;
       const p = plan.plot('new-house'), [fx, fz] = p.face, rx = -fz, rz = fx;
       // before the Unroofed House's west end, on the brink, facing along its front toward its door (v15-W2: at the east
-      // end he sat in the mouth of the scaffold's ladder, which is climbed now; this end is 1.4 m clear all round)
+      // end he sat in the mouth of the scaffold's way up, which is climbed now; this end is 1.4 m clear all round)
       const x = p.x + fx * (p.d / 2 + 0.75) - rx * 3, z = p.z + fz * (p.d / 2 + 0.75) - rz * 3;
       return { x, y: floorY(ctx, x, z, plan.LEVEL.crown.y), z, yaw: yawOf(rx, rz) };
     },
