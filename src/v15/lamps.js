@@ -37,7 +37,8 @@ export async function build(ctx) {
       hang(lp, Lp.glass || 'amber', Lp.k ?? 1, Lp.name);
       ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a lamp post (${Lp.name})`, x: Lp.x, y: y - 0.25, z: Lp.z, mount: 'ground', r: 0.32 });
     } else if (Lp.kind === 'bracket') {
-      // an iron arm out of a wall (M at the wall's face, z out of it, at the bracket's height), the lamp at its hook
+      // an iron arm out of a wall (M a few centimetres proud of the wall's face, z out of it; its plate is let into the
+      // wall, never laid in the wall's plane), the lamp at its hook
       const h = Lp.h ?? 2.5, reach = Lp.reach ?? 0.6;
       beam(B, M, [0, h, -0.06], [0, h + 0.04, reach], 0.03, { color: L.iron, iron: 0.8, moss: 0, ground: y - 3 });
       beam(B, M, [0, h - 0.32, -0.06], [0, h + 0.01, reach * 0.7], 0.02, { color: L.iron, iron: 0.8, moss: 0, ground: y - 3 });
