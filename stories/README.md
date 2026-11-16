@@ -21,8 +21,11 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The tender of the lattices](the-tender-of-the-lattices.md) | plain | built | the one who tends the lattices in the sky, never seen: a home on the foot of a lattice come low, a chair to the sun, an oil can too big for anyone; their lamp comes down the ladder | Lonely Staircase on the east moor, its top 100 m up | the Leerie (the ground's lamps, the sky's); the lattices; the sign of the sun |
 
 | [The Noon Road](the-noon-road.md) | plain (a deep end) | built | the Noonwrights, long gone, who tried to keep the sun; and whoever comes down now for what they left, never seen: their shears, their stair, their flasks | the Foundered Nave: its rim, its stair, its nave (the carriers, the hoops, the torn elbow), its east wall and south door | the tender of the lattices and the Leerie (the same lamp oil; the lattices were this people's); the Reckoner (the tesserae); the twelfth chair (the Sexton's forty graves, open again) |
+| [The Wellward Way](the-wellward-way.md) | plain (a deep end) | built | the Reckoner, never seen: in a round room under the moor he is laying a new sun into the floor out of the gold picked from the others, by his own lamp; the fourth people's tube from the Nave stalls short of it, the sounder's lamps stop at its door | the passage under the moor from the Nave's south door to the Pit's floor | the Reckoner (his glyphs, lamp, beads); the Coffin Road (the door); the sounding down (the lamps, the wind); the gold from the court |
+| [The Wellward Way](the-wellward-way.md) | plain (a deep end) | built | the Reckoner, never seen: in a round room under the moor he is laying a new sun into the floor out of the gold picked from the others, by his own lamp; the fourth people's tube from the Nave stalls short of it, the sounder's lamps stop at its door | the passage under the moor from the Nave's south door to the Pit's floor | the Reckoner (his glyphs, lamp, beads); the Coffin Road (the door); the sounding down (the lamps, the wind); the gold from the court |
+| [The sounding down](the-sounding-down.md) | plain (a deep end) | built | whoever cut the stair to the leadsmen's broken eye, never seen: a windlass and sheers over a hole in the Pit's floor full of stars, a crystal lead on a line; the road's slabs pinned up the wall | the Pit: its lip, its wall, its floor and the Nadir | the soundings (the lead, the line); the Coffin Road (the way under the moor ends here); the Pit's card |
 
-Thirteen plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Fourteen plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -32,7 +35,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - Whoever commissioned the painter. Unseen.
 - The pedlar whose sack split: the sleeper in the Lantern Halt (v10-A4).
 - The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
-- The Reckoner, behind the Hypogeum's door: heard knocking, never seen.
+- The Reckoner, behind the Hypogeum's door: heard knocking, never seen. His room on the Wellward Way, where the valley's gold is going into a new sun, is his (v14-D1).
 - The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: the sounder who went down the Pit (`the-sounding-down.md`), never seen.
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton: whose are his other forty graves? Open (the Nave's road was first drawn as his; it is the Noonwrights' now: `the-noon-road.md`); never seen at the Nave.
@@ -42,6 +45,6 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 ## Things that travel
 
 - Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited).
-- Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown.
+- Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown. The Nave's sun's gold too; both go into the Laid Sun's floor on the Wellward Way (with a few of the Nave's red pieces by mistake).
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.
