@@ -195,7 +195,7 @@ export const SITES = {
   repetend:   { x: -170, z: -97, r: 0, name: 'The Repetend' }, // the Lynchets' east wall-tops
   scriveners: { x: -100, z: 58, r: 8, name: 'The Scriveners' },
   simulacrum: { x: 20, z: -205, r: 5, name: 'The Simulacrum' },
-  moles:      { x: 75, z: 0, r: 12, name: 'The Moles' },
+  moles:      { x: 104, z: -23, r: 9, name: 'The Moles' }, // v15: in the Pennyworth's garden and the bare earth beside it (the Lappet's steps stand where their lawn was)
   toadstone:  { x: 180, z: 230, r: 2, name: 'The Toadstone' },
   linkBoy:    { x: -165, z: -105, r: 2, leads: 'P1-P17', name: 'The Link-Boy' },
   reach:      { x: 171, z: 235, r: 0, from: [208, 258], to: [134, 211], name: 'The Luminous Reach' },

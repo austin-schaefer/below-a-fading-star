@@ -33,7 +33,8 @@ export function ramp(K, o) {
     const a = P[i], b = P[i + 1], dx = b[0] - a[0], dz = b[2] - a[2], len = Math.hypot(dx, dz), fx = dx / len, fz = dz / len;
     segs.push({ a, b, len, fx, fz });
     const F = frame(a[0], a[1], a[2], fx, fz), dy = b[1] - a[1], pitch = -Math.atan2(dy, len), sl = Math.hypot(len, dy);
-    const g0 = Math.min(o.base(a[0], a[2]), o.base(b[0], b[2])) - 0.3, th = (a[1] + b[1]) / 2 - g0;
+    const eu = (o.revet || 0) * (w / 2 + 0.1); // (the revetment's posts stand at the edge: the ground there counts)
+    const g0 = Math.min(o.base(a[0], a[2]), o.base(b[0], b[2]), o.base(a[0] + fz * eu, a[2] - fx * eu), o.base(b[0] + fz * eu, b[2] - fx * eu)) - 0.3, th = (a[1] + b[1]) / 2 - g0;
     // the earth: a slab as deep as it stands over the ground, its top following the fall
     B.add(B.box(w - 0.1, 0.5, sl + 0.25, { seg: 1.2 }), F.clone().multiply(mat(0, dy / 2 - 0.25 - (i % 2) * 0.012, len / 2, pitch, 0, 0)), { color: jit(earth, 0.85 + rng() * 0.3), moss: 0.7, ground: g0, disp: 0.03, dispScale: 2 });
     if (th > 0.6) B.add(B.box(w - 0.3 - (i % 2) * 0.03, th, len + 0.1), F.clone().multiply(mat(0, dy / 2 - 0.4 - th / 2, len / 2)), { color: jit(earth, 0.6), moss: 0.8, ground: g0 });

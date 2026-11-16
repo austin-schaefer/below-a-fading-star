@@ -102,10 +102,32 @@ export function villageAmt(x, z) {
 }
 // the bench is brought to 3.1 a little wider than the steps (the Lees runs on west to the parterre), by bearing
 export const benchAmt = (b) => { const u = b >= 300 ? b - 360 : b; return sstep(-8, 2, u) * (1 - sstep(84, 94, u)); };
-// the foot is levelled to -0.8 in the wedge under the house's south wall (bearings 34 to 70, 14 m out from the ha-ha)
+// the foot is levelled to -0.8 in the wedge outside the house's south wall (bearings 34 to 70, 14 m out from the ha-ha)
 export function footAmt(x, z, r = radiusOf(x, z), b = bearingOf(x, z)) {
   const u = b >= 300 ? b - 360 : b;
   return sstep(30, 36, u) * (1 - sstep(64, 76, u)) * (1 - sstep(HAHA + 10, HAHA + 20, r));
+}
+// metres outside the Pomegranate House's walls (82..108, -58..-32; negative inside): its ground is not the village's
+export const houseOut = (x, z) => Math.max(82 - x, x - 108, -58 - z, z + 32);
+// The village's ground where the Demesne's hook has no say (a region's hook runs only where its weight is above 0:
+// r 39 to 88 from the keep): the crown, levelled to 18 behind the rim, and the Pennyworth, level from the lowest
+// riser's face out to its fade. src/height/field.js calls it after the regions' hooks.
+export function lappetGround(h, x, z) {
+  if (x < 40 || x > 128 || z < -64 || z > 36) return h;
+  const r = radiusOf(x, z);
+  if (r > HAHA + 0.25) {
+    const fa = footAmt(x, z, r) * sstep(HAHA + 0.25, HAHA + 0.35, r) * sstep(0, 0.6, houseOut(x, z));
+    return fa > 0 ? h + (LEVELS[5].y - h) * fa : h;
+  }
+  if (r < 60) {
+    const D = Dof(x, z), RIM = RISERS[0].D;
+    if (D >= RIM - 0.3 || D < RIM - APRON - 6) return h;
+    const A = villageAmt(x, z);
+    if (A <= 0) return h;
+    const v = D < RIM - APRON ? h + (LEVELS[0].y - h) * sstep(RIM - APRON - 6, RIM - APRON, D) : LEVELS[0].y - SINK * sstep(0.9, 1, A);
+    return h + (v - h) * A;
+  }
+  return h;
 }
 
 // ---------------------------------------------------------------- the ground's section (read by the Demesne's height hook)
@@ -316,8 +338,6 @@ const laneRoute = (name) => { const l = LANES.find((q) => q.name === name); retu
 // (and what stood here before v15 and is seen from the village's places as it was: not the village's to mend)
 const OLD = {
   'structures-keep': 'Carcanet Keep\'s fallen corner, as it stood before v15, seen from the crown',
-  'structures-taverna': 'the Pomegranate House\'s own walls, as they stood before v15 (its findings are the place `house`\'s)',
-  'house-lamps': 'the Pomegranate House\'s lamps, as they hung before v15 (the place `house`\'s)',
 };
 const BURIED = {
   ...OLD,

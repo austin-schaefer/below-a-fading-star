@@ -10,6 +10,7 @@ import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START } from '../v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight } from './regions.js'; // v4 systems: the regions' hooks
+import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and foot
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 
@@ -399,6 +400,7 @@ export function heightAt(x, z) {
 
   // --- v4 systems: the regions' heightfield hooks (one line; each region's block is its own module's height())
   h = regionsHeight(h, x, z);
+  h = lappetGround(h, x, z); // v15: the Lappet's crown and foot, where they lie outside the Demesne's reach (src/v15/plan.js)
   // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: the massifs, their couloirs,
   // ribs and fans, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
   // notch cuts through them as before.
