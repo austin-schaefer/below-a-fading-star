@@ -174,7 +174,7 @@ export function startGraph(ctx, audio, AC) {
     }
     const wl0 = terrain.waterLevelAt(x, z);
     if (wl0 !== null && wl0 > g - 0.5) wet += 2;
-    stone = Math.max(stone, smoothstep(4.5, 7, walls), 0.35 * (w?.demesne || 0), 0.2 * (w?.lattice || 0), y !== null ? ctx.below?.inside(x, y, z) || 0 : 0); // v14-D0: under the ground is stone
+    stone = Math.max(stone, smoothstep(4.5, 7, walls), 0.35 * (w?.demesne || 0), 0.2 * (w?.lattice || 0), y !== null ? ctx.below?.inside(x, y, z) || 0 : 0, y !== null ? ctx.lappetSound?.stone(x, y, z) || 0 : 0); // v14-D0: under the ground is stone; v15-L1: the main walked inside, the Gullet, the Slype
     const wood = clamp(Math.max(w?.wood || 0, b.wood), 0, 1) * (1 - stone);
     out.stone = stone; out.wood = wood; out.open = Math.max(0, 1 - stone - wood);
     out.water = clamp(Math.max(wet / 6, (w?.fen || 0) * 0.6, (w?.saltings || 0) * 0.7, (w?.strandline || 0) * 0.7, b.shore * 0.7), 0, 1);

@@ -499,6 +499,21 @@ export const RUNGS = {
   stairs: ['rungs-mid-1', 'rungs-mid-2', 'rungs-mid-3', 'rungs-mid-7', 'rungs-low-3'].map((n) => `${n}-stair`),
 };
 
+// (v15-L1) The walking lamps: where readers found "nothing lit to walk toward", a lamp to walk to, built by
+// src/v15/lamps.js. { name, kind: 'post' (stacked drums and an arm out along `face`) | 'bracket' (iron on a wall, out
+// along `face`) | 'hang' (a lantern on a cord from `top` down to `yLamp`), x, z, y (the floor), face, k (the glass's
+// brightness), note }
+const lampAt = (name, kind, [x, z], y, face, o = {}) => ({ name, kind, x, z, y, face, ...o });
+const n2 = RUNS[2].n;
+export const LAMPS = [
+  lampAt('drag-post', 'post', at(2, 15, -8.6), LEVEL.crown.y, n2, { k: 1.5, note: 'on the Drag between the quarry and the new house: the crown\'s route from the Saint\'s Rest to the new house\'s door had nothing lit for 25 m' }),
+  lampAt('stage-lantern', 'hang', at(2, 20.1 + 1.65, -12.9), LEVEL.crown.y, null, { top: LEVEL.crown.y + 2.45, yLamp: LEVEL.crown.y + 1.95, k: 0.9, note: 'a mason\'s lantern hung from the Stage\'s scaffold, seen down the Drag' }),
+  lampAt('lees-east-post', 'post', at(2, 21.2, 21.4), LEVEL.bench.y, [-n2[0], -n2[1]], { k: 1.4, note: 'the Lees\' street past the last shop, to the house at its east end' }),
+  lampAt('slype-bracket', 'bracket', at(2, (RUNGS.slype.s0 + RUNGS.slype.s1) / 2 - 1.4, RISERS[2].D + 0.555), LEVEL.low.y, n2, { h: 2.0, reach: 0.55, k: 1.1, note: 'over the Slype\'s door on its plastered front (the niche\'s clay lamp beside it): the lane under the main' }),
+  lampAt('skirts-bracket', 'bracket', polar(65.6, HAHA + 1.22), LEVELS[5].y, [Math.sin(65.6 * Math.PI / 180), -Math.cos(65.6 * Math.PI / 180)], { h: 2.3, reach: 0.65, k: 1.3, note: 'on the face of the Late buttress raked against the giants\' face (FIXTURES riser-buttress): the Skirts' }),
+  lampAt('foot-post', 'post', [108.6, -15.7], LEVELS[5].y, [0, -1], { note: 'the Pennyworth\'s foot, between the ramp\'s foot and the kerb, by the wreck\'s neck' }),
+];
+
 // ---------------------------------------------------------------- the places the geometry check walks (#64)
 // tools/geometry-test.mjs and tools/route-frames.mjs read this list (the format: tools/geometry/places.mjs). Each way
 // is its registered ascent; each level is its lane walked end to end; the crown is the court behind the stair's head.

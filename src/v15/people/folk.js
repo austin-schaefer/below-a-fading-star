@@ -331,7 +331,7 @@ export const FOLK = [
     id: 'leaver', name: 'the one who is leaving', story: 'the-door-on-her-back.md',
     place(ctx, plan, Q) {
       const L = Q.pennyworth?.places?.find((p) => p.name === 'the Leave'), fx0 = plan.fixture('leave-east'); if (!L || !fx0) return null;
-      const [fx, fz] = fx0.face, sx = fz, sz = -fx, x = L.x + fx * 3.6 - sx * 0.4, z = L.z + fz * 3.6 - sz * 0.4; // (past the posts, on the kerb, a step west of its middle)
+      const [fx, fz] = fx0.face, sx = fz, sz = -fx, x = L.x + fx * 3.6 - sx * 1.1, z = L.z + fz * 3.6 - sz * 1.1; // (past the posts, at the kerb's west edge: off the track's middle, which roads-test keeps clear)
       return { x, y: floorY(ctx, x, z, L.y), z, yaw: yawOf(fx, fz) - 0.15 }; // (her back, and the door on it, to the village)
     },
     body: { pose: 'stand', robe: { cloth: C.rose, dark: rgb('#4a2028'), seed: 7.4, patch: 0.12 }, hat: 'straw', sash: C.turq, girth: 0.95, sign: true },
