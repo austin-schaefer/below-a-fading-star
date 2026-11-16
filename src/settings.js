@@ -155,11 +155,11 @@ export function buildSettings(ctx) {
   }
   ctx.events.addEventListener('audiochange', syncSound);
 
-  // --- music: off, or how often it comes (v9-M2); off by default (v9-M6: experimental). Read by audio/music/index.js
+  // --- music: off, or how often it comes (v9-M2); on ('default') unless the visitor chose otherwise (v15). Read by audio/music/index.js
   // on start and applied at once if it runs. While off, the music's level and the three frequencies are dimmed.
   const musicEl = $('set-music'), musicLevel = $('set-level-music');
   const MUSIC = ['off', 'rare', 'default', 'frequent'];
-  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'off'; };
+  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'default'; };
   function setMusic(s) {
     if (ctx.audio?.music) ctx.audio.music.setSetting(s);
     else { try { localStorage.setItem('fp-music', s); } catch (e) { /* private mode */ } }
