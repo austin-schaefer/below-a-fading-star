@@ -13,7 +13,7 @@
 //   timber-patch     where the Heliarch flight is broken: a Late plank flight, Mid Rung to the bastion on the Low Rung
 //   heliarch-foot    from the bastion down into the Lees' square
 //   noon-main        the daylight main down the three nosings, walked inside; a gangway from its side to the Mid Rung
-//   rungs-ladder     Low Rung to Mid Rung, climbed
+//   rungs-ladder     High Rung to the crown, up the rim at the Brow House, climbed
 //   lees-stair       a plank stair up the Low Rung's riser from the Lees
 //   pennyworth-ramp  rammed earth down the outside of the lowest riser to the house's wall
 //   lane-bridge      planks from the Mid Rung's edge to the aqueduct's last pier
@@ -70,7 +70,7 @@ export function buildWays(ctx, lappet) {
     ['high', 1, sx - hw - 0.5, sx + hw + 0.5], ['mid', 1, sx - hw - 1.2, sx + hw + 1.2], ['low', 1, sx - hw - 1.2, sx + hw + 1.2],
     ...['high', 'mid', 'low'].map((k) => [k, tb.run, tb.s - 2.3, tb.s + 2.3]),
     ['mid', tb.run, tb.s, tb.s + 3.4], // the gangway
-    ['mid', ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
+    [RISERS.find((r) => r.top === LEVEL[ld.to].y).key, ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
   ];
 
   return {
@@ -124,7 +124,11 @@ export function buildWays(ctx, lappet) {
           B.add(B.box(0.36, 0.7, 0.9, { chip: 0.09, seed: sg + 4 }), frame(...at3(1, sx + sg * (hw + 0.15), D1 - 0.5, LEVEL.low.y + 0.35), n1[0], n1[1]), { color: jit(stone, 0.85), course: 0.5, moss: 0.5, ground: LEVEL.low.y });
         }
         const rngB = K.rng;
-        for (const [ds, D, yaw] of [[2.7, 11.6, 0.4], [-2.9, 12.6, 1.3], [3.3, 13.4, 2.2]]) {
+        // (v15-W1: they lay in the Low Rung's lane where it ducks under the flight, the owner's "a tread strewn with loose
+        // blocks": now two are rolled to the riser's foot against the houses' end walls, and one lies under the flight's
+        // low end, where the boards keep feet out anyway)
+        const ya = Math.atan2(-d1[1], d1[0]); // a block's long side along the riser
+        for (const [ds, D, yaw] of [[-3.5, 10.78, ya + Math.PI / 2 + 0.06], [3.6, 10.62, ya - 0.05], [-0.1, 13.75, ya + 0.12]]) {
           const [bx, bz] = at(1, sx + ds, D);
           B.add(B.box(1.1, 0.5, 0.62, { chip: 0.08, seed: ds }), mat(bx, LEVEL.low.y + 0.2, bz, (rngB() - 0.5) * 0.3, yaw, 0.1), { color: jit(stone, 0.8 + rngB() * 0.2), course: 0.5, moss: 0.6, ground: LEVEL.low.y });
           ctx.addCollider({ x: bx, z: bz, r: 0.5, y: LEVEL.low.y - 0.5, h: 0.95 }); lappet.colliders++;
@@ -134,8 +138,10 @@ export function buildWays(ctx, lappet) {
       {
         const hf = way('heliarch-foot'), D0 = RISERS[3].D - 0.215, [x, z] = at(1, sx, D0);
         hexLanding(K, { name: 'heliarch-bastion', x, y: LEVEL.low.y, z, f: n1, depth: hf.D0 - D0, width: STAIR.width, wing: 1, base: LEVEL.bench.y - 0.4, parapet: ['left', 'right'] });
-        const [fx, fz] = at(1, sx, hf.D0);
-        built['heliarch-foot'] = stoneFlight(K, { name: 'heliarch-foot', x: fx, y: LEVEL.low.y, z: fz, f: n1, drop: LEVEL.low.y - LEVEL.bench.y, width: STAIR.width, run: (hf.D1 - hf.D0) / 12, base: LEVEL.bench.y - 0.4 });
+        // turned `turn` degrees west about the bastion's east far corner (plan.js: straight out it met the house's tower)
+        const th = ((hf.turn || 0) * Math.PI) / 180, w = hf.width || STAIR.width, c = Math.cos(th), sn = Math.sin(th);
+        const f = [n1[0] * c - d1[0] * sn, n1[1] * c - d1[1] * sn], e = [d1[0] * c + n1[0] * sn, d1[1] * c + n1[1] * sn], [px, pz] = at(1, sx + hw, hf.D0);
+        built['heliarch-foot'] = stoneFlight(K, { name: 'heliarch-foot', x: px - e[0] * w / 2, y: LEVEL.low.y, z: pz - e[1] * w / 2, f, drop: LEVEL.low.y - LEVEL.bench.y, width: w, run: hf.going || (hf.D1 - hf.D0) / 12, base: LEVEL.bench.y - 0.4, cheeks: hf.turn ? [false, true] : [true, true] }); // (its east cheek gone: the street steps past its lowest treads)
       }
 
       // ---------------------------------------------------------------- the daylight main
@@ -149,8 +155,8 @@ export function buildWays(ctx, lappet) {
 
       // ---------------------------------------------------------------- the ladder
       {
-        const R = RUN[ld.run], [x, z] = at(ld.run, ld.s, RISERS[2].D + 0.2);
-        built['rungs-ladder'] = ladder(K, { name: 'rungs-ladder', x, z, y0: LEVEL.low.y, y1: LEVEL.mid.y, n: [-R.n[0], -R.n[1]] });
+        const R = RUN[ld.run], Rz = RISERS.find((r) => r.top === LEVEL[ld.to].y), [x, z] = at(ld.run, ld.s, Rz.D + 0.2); // (up the riser under the level it climbs to)
+        built['rungs-ladder'] = ladder(K, { name: 'rungs-ladder', x, z, y0: LEVEL[ld.from].y, y1: LEVEL[ld.to].y, n: [-R.n[0], -R.n[1]] });
       }
 
       // ---------------------------------------------------------------- the bridge to the pier

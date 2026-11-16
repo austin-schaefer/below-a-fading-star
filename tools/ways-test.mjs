@@ -5,10 +5,11 @@
 // run, and the first of its last) is checked:
 //   mouth     no collider that is not the way's own stands within 0.8 m of the mouth's middle (0.4 m out from the
 //             last tread, along the way) at the walker's height (its bottom under the head, its top more than a step
-//             over the feet): a mouth is 1.6 m clear. The way's own: a capsule that lies along the way (within 25
-//             degrees of it) and whose nearest point is not out in front of the mouth (its cheek, its rail, its ladder's
-//             pole).
-//   landing   from the mouth outward along the way, 1.2 m of floor within 0.3 m of the end's level, nothing standing
+//             over the feet): a mouth is 1.6 m clear. The way's own, or its flank: a capsule that lies along the way
+//             (within 25 degrees of it) and is either not out in front of the mouth (its cheek, its rail, its ladder's
+//             pole) or beside the mouth's line with a walker's half-width between (a house stair's own front wall).
+//   landing   from the mouth outward toward where the path leaves the way (its first or last point), 1.2 m of floor within 0.3 m of the end's level
+//             (on open ground, a slope of 1 in 3 more), nothing standing
 //             in a walker's half-width (0.45 m) of that line: room to step off and turn.
 //   doubled   no two ways join the same two levels (each end's level within 0.4 m) with both their ends within 6 m of
 //             each other's: one of the two is the better, and the other has another job or goes.
@@ -45,8 +46,10 @@ const r = await page.evaluate(async () => {
     let i = 0; while (i < n - 1 && Math.abs(path[i + 1][2] - y0) < 0.05) i++;
     let j = n - 1; while (j > 0 && Math.abs(path[j - 1][2] - y1) < 0.05) j--;
     if (i >= j) { i = Math.min(1, n - 2); j = Math.max(n - 2, 1); } // level all the way (a bridge, a crossing)
-    const dA = i > 0 ? nrm(v(path[i], path[i - 1])) : nrm(v(path[1], path[0]));
-    const dB = j < n - 1 ? nrm(v(path[j], path[j + 1])) : nrm(v(path[n - 2], path[n - 1]));
+    // outward: toward where the path leaves the way (its first or last point), along the line it was going if that is the point itself
+    const far = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]) > 0.3;
+    const dA = i > 0 && far(path[i], path[0]) ? nrm(v(path[i], path[0])) : nrm(v(path[1], path[0]));
+    const dB = j < n - 1 && far(path[j], path[n - 1]) ? nrm(v(path[j], path[n - 1])) : nrm(v(path[n - 2], path[n - 1]));
     return [{ at: path[i], dir: dA, y: path[i][2], k: i }, { at: path[j], dir: dB, y: path[j][2], k: j }];
   };
   // a collider's nearest point to (x, z), its distance to the surface, and whether it stands at feet y
@@ -56,7 +59,14 @@ const r = await page.evaluate(async () => {
     const px = c.x1 + c.ux * t, pz = c.z1 + c.uz * t; return { px, pz, d: Math.hypot(x - px, z - pz) - c.r, t };
   };
   const stands = (c, feet, t = 0) => { if (c.h === undefined) return true; const top = c.y + c.h + (c.len ? (c.dh || 0) * t / c.len : 0); return c.y < feet + 1.7 && top > feet + 0.35; };
-  const own = (c, e, pt) => { if (c.len === undefined) return false; const cos = Math.abs(c.ux * e.dir[0] + c.uz * e.dir[1]); return cos > 0.906 && (pt.px - e.at[0]) * e.dir[0] + (pt.pz - e.at[1]) * e.dir[1] < 0.15; };
+  // the way's own, or a flank: a wall along the way (within 25 degrees of it) that is either behind the mouth (a cheek, a
+  // rail, a ladder's pole) or beside its line with a walker's half-width (0.4 m) between them (a house stair's own front)
+  const own = (c, e, pt) => {
+    if (c.len === undefined) return false;
+    if (Math.abs(c.ux * e.dir[0] + c.uz * e.dir[1]) < 0.906) return false;
+    const ax = pt.px - e.at[0], az = pt.pz - e.at[1];
+    return ax * e.dir[0] + az * e.dir[1] < 0.15 || Math.abs(ax * e.dir[1] - az * e.dir[0]) - c.r >= 0.4;
+  };
   const desc = (c) => `${c.mod || '?'}${c.len !== undefined ? ' wall' : ' post'} at (${c.x.toFixed(1)}, ${c.z.toFixed(1)})${c.h !== undefined ? ` y ${c.y.toFixed(1)}..${(c.y + c.h).toFixed(1)}` : ''}`;
   const table = [], find = [];
   const all = ways.map((w) => ({ w, ends: endsOf(w.path) }));
@@ -65,7 +75,7 @@ const r = await page.evaluate(async () => {
   for (const p of P.PLOTS) { const [fx, fz] = p.face; places.push([p.x + fx * p.d / 2, p.z + fz * p.d / 2, p.y, p.name]); }
   for (const f of P.FIXTURES) places.push([f.x, f.z, f.y, f.name]);
   for (const s of P.SQUARES) for (const q of s.pts) places.push([q[0], q[1], P.LEVEL[s.level].y, s.name]);
-  for (const k of ['kiln', 'hand', 'shears', 'split']) { const q = P.QUARRELS[k]; places.push([q.x, q.z, P.LEVEL.crown.y, `quarrels ${k}`]); }
+  for (const k of ['kiln', 'hand', 'shears', 'split', 'stage']) { const q = P.QUARRELS[k]; if (q) places.push([q.x, q.z, q.y ?? P.LEVEL.crown.y, `quarrels ${k}`]); }
   for (const h of fp.acts?.list || []) { const a = h.def || h; if (a.at) places.push([a.at.x, a.at.z, a.at.y - 1, `act ${a.id}`]); }
   // the dead-end flood
   const G = 0.4, CAP = 1600;
@@ -106,7 +116,7 @@ const r = await page.evaluate(async () => {
       let ok = true, why = '';
       for (let s = 0.1; s <= 1.2001 && ok; s += 0.1) {
         const x = e.at[0] + e.dir[0] * s, z = e.at[1] + e.dir[1] * s, f = C.floorAt(x, z, e.y);
-        if (Math.abs(f.y - e.y) > 0.3) { ok = false; why = `the floor is ${f.y.toFixed(2)} at ${s.toFixed(1)} m`; break; }
+        if (Math.abs(f.y - e.y) > 0.3 + (f.stack ? 0 : 0.35 * s)) { ok = false; why = `the floor is ${f.y.toFixed(2)} at ${s.toFixed(1)} m`; break; }
         for (const c of cols) { if (Math.abs(c.x - x) > 10 || Math.abs(c.z - z) > 10) continue; const pt = near(c, x, z); if (pt.d < 0.45 && stands(c, e.y, pt.t) && !own(c, e, pt)) { ok = false; why = `${desc(c)} at ${s.toFixed(1)} m`; break; } }
       }
       find.push({ row: 'landing', tag, ok, detail: why });

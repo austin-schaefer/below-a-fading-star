@@ -190,6 +190,7 @@ export function regionsHeight(h, x, z) {
 // ground skin the region draws over it (regions/skin.js); heightAt() itself stays exact for walking and placing.
 let COARSE = 0;
 export function setRegionsCoarse(cell) { COARSE = cell || 0; }
+export const regionsCoarse = () => COARSE; // (v15-W1: the Lappet's crown, outside the regions' hooks, takes the same lower envelope at its rim)
 // The boxes of the regions whose height hook takes the coarse pass (a fifth parameter): only there can the mesh sit
 // below heightAt() under a skin, so placement (vegetation/ground.js) asks only there.
 export const COARSE_BOXES = HEIGHT_KEYS.filter((k) => HEIGHT_HOOKS[k].length >= 5).map((k) => BOX[k]);
