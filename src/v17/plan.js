@@ -61,19 +61,52 @@ export const LEAT = {
   bridge: [9, 252],   // the slab bridge where P14 and P38 meet
 };
 
-// ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (the table's)
+// ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (U1's, live)
+// The portal is a round arch in a dressed face standing across the cut's end, its face in the plane z = 311, facing
+// north. The water goes through its west part over the sill and falls into the head (a drowned hall behind the face);
+// its east bay holds the quay (the ledge) and the tube's end. Asked of W1's cut (W1 owns the ground): at the face the
+// cut is 12.6 m between its banks' feet (x -101 .. -88.4, `cutAtFace`), its bed under -7.5 there, so the quay stands
+// in the cut against the east bank and the arch's piers stand on the banks' feet. If the cut does not meet these, U1's
+// report says so; the portal is drawn to these numbers either way.
 export const SWALLOW = {
-  portal: [-95, 311], // the face (ground +7.5)
-  sill: MERE.level,   // the sill at the mere's level
-  width: 8,           // at least 8 m wide
-  clear: 9,           // at least 9 m clear
-  ledge: [-91, 309],  // beside the fall, where the tube's end comes out of the water
+  portal: [-95, 311],     // the index's point on the face (ground +7.5)
+  face: 311,              // the face's plane, z (the arch's front)
+  open: [-100.5, -88.5],  // the arch's opening, x (12 m: the fall's 8 m to the west, the quay's bay to the east)
+  sill: MERE.level,       // the sill at the mere's level, -6.8 (the fall's lip, x -100.5 .. -92.6)
+  spring: -2.3,           // the arch springs here: its crown at spring + 6 = +3.7, 10.5 m clear over the sill
+  width: 12,              // index: at least 8
+  clear: 10.5,            // index: at least 9
+  ledge: [-91, 309],      // index: beside the fall, where the tube's end comes out of the water
+  quay: { x: [-92.6, -88.4], z: [297, 313], y: -5.9 }, // the ledge as built: a stone quay in the cut's east side, its top 0.9 over the mere, steps up to the shore at its north end
+  cutAtFace: [-101, -88.4], // asked of W1 (above): the cut's banks' feet at the face
+  head: { x: [-101.5, -84], z: [311, 324.5], floor: -17, crown: 4.5 }, // the drowned hall behind the face
+  pool: -9.2,             // the water in the head and the conduit: the fall is 2.4 m, sill to pool
 };
+// The aqueduct: the Heliarchs' vaulted conduit from the head's east wall to the Garth's west wall, drowned (its crown
+// goes under the pool's level 10 m in), and the Noonwrights' tube laid down it on stone saddles. One centreline for
+// both (`tube`): plan points [x, z], resampled by src/v17/swallow/line.js (straight, a quarter turn of radius `turn`
+// about the corner, straight). `profile` is the planks' line inside the tube, [s, y] (s metres along from the lip),
+// eased between; the tube's axis is `axisUp` over the planks, its bore `bore`, its outside `outer`.
 export const AQUEDUCT = {
   from: SWALLOW.portal,
-  to: [-30, 318],     // the Garth's west door
-  z: [311, 318],      // under the apron, 10 to 30 m under the ground
-  floorEnd: -24,      // its floor falls from the sill to -24
+  to: [-30, 318],         // the Garth's west door
+  z: [311, 318.5],        // under the apron, 10 to 30 m under the ground
+  floorEnd: -24,          // the planks reach the door's sill at -24
+  tube: [[-90.5, 306.5], [-90.5, 318.5], [-29.6, 318]], // the lip on the quay; the corner; the end in the Garth's wall
+  turn: 5,                // the corner's radius
+  profile: [[0, -5.9], [5, -5.9], [20, -12.65], [68.5, -23.9], [70.6, -24]], // level on the quay and through the face, a steep stair down the head, the long fall down the conduit, level into the door
+  axisUp: 1.1, bore: 1.65, outer: 1.75,
+  conduit: { half: 3.6, spring: 2.6, below: 1.15 }, // its walls from the tube's line (half-width), the vault's springing over its floor, its floor under the planks
+};
+// The door between them (U1 brings the tube to it; U2 builds the wall and the hall's floor round it): the tube's end
+// is a round hole in the Garth's west wall, its axis level and running east (+x), its plank floor at the sill.
+export const GARTH_DOOR = {
+  x: -29.6, z: 318,       // where the tube's glass ends: the hall's inner wall face (r 20 from (-10, 322) at z 318 is x -29.6)
+  sill: -24,              // the planks' level at the door, the hall's floor
+  axis: -22.9,            // the tube's axis (sill + axisUp)
+  rOut: 1.75,             // the glass's outside: the hole in the wall is at least this (U2 frames it)
+  dir: [1, 0],            // the way into the hall
+  bulkhead: -31.6,        // the conduit's east end (a Heliarch wall the tube passes through); between it and x the tube is in U2's wall
 };
 
 // ---------------------------------------------------------------- U2: the Meridian Garth (the table's)
