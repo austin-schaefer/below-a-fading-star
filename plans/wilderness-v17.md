@@ -49,6 +49,13 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 06:20 PST. Batch 1 still building; the Garth is on its second round.**
+
+- **The before set** (23 views, `shots/wip/v17-before-*`) shows the south trough near black on low: W1 and U1 told to make the water and the portal read from 30 m and from the Span's deck.
+- **U1 asked, through the orchestrator, that W1's cut end square at the portal's face** (z 311.5; it ran on into a bowl); relayed to W1.
+- **U2 handed back** (opus, 60 min; `briefs/v17/reports/issue-1703-garth.md`): the hall, the lens' beam (in every material, no point light; it ignores the gutter), five rings of garden, rills, the can; `edges`, `heights`, `walk`, `seams`, `gutter`, `geometry` green on its branch; draw calls on low 125 to 161 (the Laid Sun 172 to 190); `under.js` gained `below.grade(fn)`. Its own blind reader: "pale dusty-gold ... a hazy dying-sun afternoon", not noon. **Sent back for one round** (45 min): the lit core neutral-white, each ring's stage readable from the door with tide lines where the light once reached, the dome taking bounce. `height-speed` read 1.13 to 1.15 beside a running suite with no height change: to be rerun quiet.
+- In flight: W1 (`issue-1701-brook`, 8161), U1 (`issue-1702-swallow`, 8162), U2 round two (`issue-1703-garth`, 8163), all opus.
+
 **2026-11-17, 05:18 PST. The plan is on `next`; batch 1 dispatched.** The planner's branch merged and its worktree removed. The before set (`tools/views-v17-water.json`, low) is rendering in the deploy worktree to `shots/wip/v17-before-*`. v16 is live (`0eba44a`); #74 is `in-progress`, `v17`.
 
 | Brief | Branch / worktree | Port | Model |
