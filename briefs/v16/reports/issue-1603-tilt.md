@@ -78,3 +78,15 @@ Blind helpers (sonnet, unlabelled, shuffled): round r2, 2 of 6 right (it picked 
 ### Defaults taken
 
 Pools carved in `floorGround` with absolute levels, not by raising the kettles' rims; drains as protected lines along v15's drainage, not new channels; no new baked attribute (`aWet` and the colour carry the paint); the bolder north-east rise dropped; the Lynchets, the court and the heights rig protected rather than reshaped.
+
+## Round three (L6, the cold review's leftovers)
+
+1. hop: the gnomon filter is gone. The failing pick (roads gnomon at (61.2, -257), top 0.34 m) was not half-buried: the capsule's top is 0.41 m over its own ground and the check measured the walker's feet against the ground 3 m out, where the lifted floor's approach climbs 0.33 m. `tools/hop-test.mjs` now measures feet over the ground under the walker. A collider fix in `src/v8/roads.js` was tried and reverted (it was not the cause).
+2. P4 (`routes.js`): waypoint (-128, -113) replaced by (-122, -127), (-136, -119): the path passes the west kettle's pool 5.5 m clear (probed with `waterLevelAt` rings along it).
+3. The dip at (138, -202): a meltwater channel (`CHAN`, `chanCut` in `floor.js`) takes the lift out along the dip's north exit and west to ground that is lower (a fill was tried: it only moved the deepest cell to (124, -216)). The outline row passes; the flood finds no hollow there. One v16-over-v15 hollow remains at (36..64, -84..-80), 0.3 m deeper, not at a skirt, not new.
+4. `collation.js`: each comment on its own function.
+5. `floor.js` header and kettle comment: the lift never goes under the old ground; the pools' bowls (up to 4.6 m) do.
+6. Reeds: the pools were already in `WATER_BODIES`; the reeds' stand gate in `plants.js` did not open for them (`b.marsh`/`b.shore`). It now also asks `nearPool(x, z, 4)` (`floor.js`). Mist and ripples are still the tarn's alone (not done).
+
+Tests (port 8163): `ONLY=outline,hop,walk,paths,roads,dressing,strata,heights,village-plan tools/suite.sh 8163`: outline 26, hop 30 PASS lines 0 FAIL, walk ok, paths 86, roads 62 passed 2 failed (P17, P23, the known ones), dressing 22, strata 8, heights 200/200, village-plan 7.
+Frames: `shots/wip/v16-L6-g-kettle-reeds.png`, `v16-L6-g-dip-channel.png` (views: `tools/views-v16-L6.json`); the channel is not readable from the ground in the second.
