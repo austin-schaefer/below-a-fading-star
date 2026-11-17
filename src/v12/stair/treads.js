@@ -146,14 +146,19 @@ function finish(parts) {
 
 // The slabs' material: vertex colours, the stone mottled in world space, and the ember glass lit by aEm x iGlow
 // (iGlow an instanced attribute; a mesh without it reads 0). `glow` is the ember's colour at full.
+// SLAB_U.uGut (0..1, set by stair.js from the sun's gutter, v16-S1): while the sun fails the signs of the sun answer it.
+// The fixed ones (the stub's posts and steps, the tender's home at the top) burn up to two and a half times as hard;
+// every slab's, those lying canted in the turf too, burns at least at a third of full.
+export const SLAB_U = { uGut: { value: 0 } };
 export function slabMaterial(instanced = true) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0.06 });
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.uGut = SLAB_U.uGut;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
 attribute float aEm;
-${instanced ? 'attribute float iGlow;' : ''}
+${instanced ? 'attribute float iGlow;' : ''} uniform float uGut;
 varying float vEm; varying vec3 vSP;`).replace('#include <begin_vertex>', `#include <begin_vertex>
-  vEm = aEm * ${instanced ? 'iGlow' : '1.0'};
+  vEm = aEm * ${instanced ? 'max(iGlow, uGut * 0.34)' : '(1.0 + 1.6 * uGut)'};
   vSP = position * 3.1 + vec3(${instanced ? 'instanceMatrix[3].x, instanceMatrix[3].z, instanceMatrix[3].x * 0.37' : '0.0, 0.0, 0.0'});`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
 varying float vEm; varying vec3 vSP;

@@ -475,7 +475,8 @@ export async function build(ctx) {
     const m = new THREE.Mesh(Bd.geometry(), mat); m.name = 'passage-' + name; m.castShadow = false; m.receiveShadow = true;
     scene.add(m); meshes.push(m);
   }
-  const gmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.85 }), 'passage-gold', WARM, { far: [14, 34] });
+  // (emissive: the Laid Sun knows the gutter, v16-S1; see the update)
+  const gmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.85, emissive: new THREE.Color('#d9821c'), emissiveIntensity: 0 }), 'passage-gold', WARM, { far: [14, 34] });
   const gold = new THREE.Mesh(G.geometry(), gmat); gold.name = 'passage-gold'; gold.receiveShadow = true; scene.add(gold); meshes.push(gold);
   const pmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02 }), 'passage-portal', WARM);
   const portalMesh = new THREE.Mesh(PO.geometry(), pmat); portalMesh.name = 'passage-portal'; portalMesh.castShadow = true; portalMesh.receiveShadow = true; scene.add(portalMesh); meshes.push(portalMesh);
@@ -695,13 +696,21 @@ export async function build(ctx) {
   path.push([P.M[0] + P.IN[0] * 1.6, P.M[1] + P.IN[1] * 1.6]); // out onto the Pit's floor
   ctx.ascents?.add({ id: 'wellward-way', held: true, offs: [0.08, 0.3, 0.5, 0.62, 0.72, 0.9], path: path.map((q) => q.filter((v) => v !== undefined)) });
 
-  // ---- per frame, near: the points' clock and scale, the lights' flicker, the catch
+  // ---- per frame, near: the points' clock and scale, the lights' flicker, the catch, the Laid Sun in a gutter
+  // Nothing under the moor has any way to know the sun is failing: the Line's stored daylight ebbs on its own slow
+  // course, the Flute's cold points are the wind's, the sounder's lamps are steady. One thing does (v16-S1, #78): the
+  // Reckoner's gold. While the sun above gutters, the half-laid sun in the room's floor wakes, a warm light coming up
+  // out of the laid gold over three seconds, as if practising for the day it must stand in for the other; it fades
+  // back over six once the sky's has caught. (ctx.passage.sunWake: 0..1.)
   const ds = new THREE.Vector2(), pl = ctx.player;
+  let wake = 0;
   let wet = 0, rescues = 0;
   const S = { get rescues() { return rescues; } };
   const cam = ctx.camera.position;
   function update(dt, t) {
     pmatF.uniforms.uTime.value = t;
+    { const fl = ctx.sky?.flicker, to = fl?.dark ?? 0; wake = fl?.hold != null ? to : Math.min(1, Math.max(0, wake + Math.max(-dt / 6, Math.min(dt / 3, to - wake))));
+      gmat.emissiveIntensity = wake * wake * (0.2 + 0.04 * Math.sin(t * 1.3)); }
     { // (held a little past where it comes on, so it does not flicker on and off at the line)
       const inBox = cam.x > bbox.x0 && cam.x < bbox.x1 && cam.z > bbox.z0 && cam.z < bbox.z1 && cam.y < P.YM + 9, s = inBox ? P.near(cam.x, cam.z, _q).s : -1;
       if (s > SP.GULF1 - 3 && !unOpen) unOpen = below.opening(pitOpening);
@@ -724,7 +733,7 @@ export async function build(ctx) {
 
   const tris = meshes.reduce((a, m) => a + m.geometry.attributes.position.count / 3, 0);
   ctx.passage = {
-    off: false, plan: P, floor: P.floor, meshes, points, lights: lights.map((l) => l.L), portal, cuts, state: S, vols,
+    off: false, get sunWake() { return wake; }, plan: P, floor: P.floor, meshes, points, lights: lights.map((l) => l.L), portal, cuts, state: S, vols,
     stats: () => ({ calls: meshes.length + 1, tris: Math.round(tris), treads, lights: lights.length, points: PT.length, cuts }),
   };
   ctx.log?.(`wellward way: ${P.L.toFixed(0)} m from ${START.y.toFixed(1)} to ${P.YM.toFixed(1)}, ${Math.round(tris)} tris, ${treads} treads, ${lights.length} lights, ${PT.length} points, cut ${cuts.fall}/${cuts.throat}/${cuts.terrain}, ${(performance.now() - t0).toFixed(0)} ms`);

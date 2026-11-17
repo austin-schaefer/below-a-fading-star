@@ -175,7 +175,12 @@ export function buildSky(ctx) {
   const grng = ctx.makeRng(1736); // the gutter's own stream (v7.2-05; salt 1736 since v16-S1, so the first lands at 87.5 s, a long one of 15.2 s): the same course every visit
   // FIRST_GUTTER: the first one's [min, max] seconds after 'begin'. Until the visitor goes out the countdown is held
   // (flicker.out false), so the title card's minute does not spend it; a pinned ?gutter= runs from ready, as renders want.
-  const flicker = { value: 1.0, next: FIRST_GUTTER[0] + grng() * (FIRST_GUTTER[1] - FIRST_GUTTER[0]), phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned };
+  const flicker = { value: 1.0, next: FIRST_GUTTER[0] + grng() * (FIRST_GUTTER[1] - FIRST_GUTTER[0]), phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned, dark: 0, lamps: 0 };
+  // Two readings for the things that answer (v16-S1): `dark` (0..1) is how far down the sun is (0 above 0.9, 1 at the floor
+  // of 0.3), with no lag; `lamps` (0..1) is the hand that answers it: the Lappet's lamps and panes are turned up about a
+  // second and a half after the dark has come (a person noticing), reach full in about two, and are turned down slowly,
+  // over some eight seconds once the sun is back (nobody hurries to trim a wick). Under flicker.hold both settle at once.
+  let lampWait = 0;
   if (GUTTER.pinned) flicker.next = Math.min(flicker.next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
   ctx.events?.addEventListener('begin', () => { flicker.out = true; });
   function update(dt, t) {
@@ -197,6 +202,11 @@ export function buildSky(ctx) {
     }
     flicker.value += (target - flicker.value) * Math.min(1, dt * 6);
     if (flicker.hold != null) flicker.value = flicker.hold;
+    flicker.dark = Math.min(1, Math.max(0, (0.9 - flicker.value) / 0.6));
+    lampWait = flicker.dark > 0.4 ? lampWait + dt : 0;
+    const lampTo = lampWait > 1.4 ? 1 : flicker.dark > 0.15 ? Math.min(flicker.lamps, 1) : 0;
+    if (flicker.hold != null) flicker.lamps = flicker.dark > 0.4 ? 1 : 0;
+    else flicker.lamps += (lampTo - flicker.lamps) * Math.min(1, dt / (lampTo > flicker.lamps ? 0.8 : 3.5));
     uniforms.uFlicker.value = flicker.value;
     dome.position.copy(ctx.camera.position);
   }

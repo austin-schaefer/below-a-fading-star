@@ -13,7 +13,12 @@
 //               s). Its level by where the listener is: nothing in the Line's first half and above the ground, a
 //               little where the Line breaks into the bore, most in the Flute, less in the room, all of it over the Gulf, and fading
 //               out down the Gate as the Pit's own breath comes up. Bed, under the steps
-const A2 = 110.0, D3 = 146.83, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;
+//   the Laid Sun (v16-S1, #78) while the sun gutters and the gold in the room's floor wakes (ctx.passage.sunWake): a low
+//               warm hum out of the floor, D3 with its fifth and octave (A3, D4) a few cents apart so it beats slowly,
+//               each a sine through a lowpass at 900 Hz, swelling in over three seconds and gone over six with the
+//               light. The one thing under the moor that answers the gutter, heard in the room and the way either
+//               side of it (16 m). Bed
+const A2 = 110.0, D3 = 146.83, A3 = 220.0, D4 = 293.66, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;
 
 export function startPassageSound(a, ctx) {
   const { ac, voice, filt, chain, pink, brown, loopSrc, panner, setPos, cueBus, verbIn, gainOf } = a;
@@ -64,6 +69,28 @@ export function startPassageSound(a, ctx) {
     B.parts = null; B.on = false;
   }
 
+  // ---- the Laid Sun's hum
+  const H = { parts: null, quiet: -1 };
+  function hum(on, P, now, wake, cam) {
+    if (on && !H.parts) {
+      const out = ac.createGain(); out.gain.value = 0.0001;
+      const p = panner('equalpower', 3, 1.2, 60), lp = filt('lowpass', 900, 0.5);
+      const osc = [[D3, 1, 0], [A3 * 1.0023, 0.45, 0], [D4 * 0.9985, 0.3, 0]].map(([f, gn]) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = gainOf(gn); chain(o, g, lp); o.start(); return o; });
+      chain(lp, out, p, cueBus);
+      const vs = gainOf(0.6); p.connect(vs); vs.connect(verbIn);
+      setPos(p, P.sun.x, P.sun.y + 0.3, P.sun.z);
+      H.parts = { out, p, vs, osc }; H.quiet = -1;
+    }
+    if (!H.parts) return;
+    H.parts.out.gain.setTargetAtTime(0.0001 + 0.05 * wake * wake, now, 0.6);
+    if (on && wake > 0.01) H.quiet = -1; else if (H.quiet < 0) H.quiet = now;
+    if (H.quiet >= 0 && now - H.quiet > 8) {
+      const Q = H.parts; H.parts = null;
+      for (const o of Q.osc) { try { o.stop(now + 0.1); } catch (e) { /* stopped */ } }
+      setTimeout(() => { try { Q.p.disconnect(); Q.out.disconnect(); Q.vs.disconnect(); } catch (e) { /* gone */ } }, 300);
+    }
+  }
+
   let acc = 0;
   ctx.registerUpdate((dt, t) => {
     acc += dt; if (acc < 0.1) return; acc = 0;
@@ -92,6 +119,8 @@ export function startPassageSound(a, ctx) {
         else { DRIP.left = Math.floor(rng() * 3); DRIP.next = now + 7 + rng() * 10; }
       }
     } else DRIP.next = Math.max(DRIP.next, now + 1 + rng() * 3);
+    // the Laid Sun: while it is awake and the listener is in the room or the way within 16 m of it
+    { const wake = PS.sunWake || 0, near = s >= 0 && Math.abs(s - SP.SUN) < 16; hum(near && wake > 0.01, P, now, wake, cam); }
     // the draught
     if (lvl > 0.001 && !B.on) start();
     if (!B.on) return;

@@ -1,0 +1,148 @@
+[
+ {
+  "name": "lees-lit",
+  "x": 80,
+  "z": -33,
+  "yaw": 0.992,
+  "pitch": 0.05,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "lees-gut",
+  "x": 80,
+  "z": -33,
+  "yaw": 0.992,
+  "pitch": 0.05,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ },
+ {
+  "name": "copyist-lit",
+  "x": 89.3,
+  "z": 10.8,
+  "yaw": 2.07,
+  "pitch": -0.05,
+  "js": "window.__fp.sky.flicker.hold=1;window.__fp.controls.placeAt(89.3,10.8,18); window.__fp.player.yaw=2.07; window.__fp.player.pitch=-0.05;"
+ },
+ {
+  "name": "copyist-gut",
+  "x": 89.3,
+  "z": 10.8,
+  "yaw": 2.07,
+  "pitch": -0.05,
+  "js": "window.__fp.sky.flicker.hold=0.3;window.__fp.controls.placeAt(89.3,10.8,18); window.__fp.player.yaw=2.07; window.__fp.player.pitch=-0.05;"
+ },
+ {
+  "name": "dyer-lit",
+  "x": 102.3,
+  "z": -0.5,
+  "yaw": 1.134,
+  "pitch": 0.0,
+  "js": "window.__fp.sky.flicker.hold=1;window.__fp.controls.placeAt(102.3,-0.5,6); window.__fp.player.yaw=1.134; window.__fp.player.pitch=0.0;"
+ },
+ {
+  "name": "dyer-gut",
+  "x": 102.3,
+  "z": -0.5,
+  "yaw": 1.134,
+  "pitch": 0.0,
+  "js": "window.__fp.sky.flicker.hold=0.3;window.__fp.controls.placeAt(102.3,-0.5,6); window.__fp.player.yaw=1.134; window.__fp.player.pitch=0.0;"
+ },
+ {
+  "name": "moths-lit",
+  "x": -61.0,
+  "z": 3.1,
+  "yaw": 1.186,
+  "pitch": 0.0,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "moths-gut",
+  "x": -61.0,
+  "z": 3.1,
+  "yaw": 1.186,
+  "pitch": 0.0,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ },
+ {
+  "name": "lappet-lit",
+  "x": 128,
+  "z": 5,
+  "yaw": 1.243,
+  "pitch": 0.05,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "lappet-gut",
+  "x": 128,
+  "z": 5,
+  "yaw": 1.243,
+  "pitch": 0.05,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ },
+ {
+  "name": "lappet-croft-lit",
+  "x": 228.6,
+  "z": -55,
+  "yaw": 1.45,
+  "pitch": -0.18,
+  "dy": 96,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "lappet-croft-gut",
+  "x": 228.6,
+  "z": -55,
+  "yaw": 1.45,
+  "pitch": -0.18,
+  "dy": 96,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ },
+ {
+  "name": "lappet-far-lit",
+  "x": 248,
+  "z": -30,
+  "yaw": 1.66,
+  "pitch": 0.02,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "lappet-far-gut",
+  "x": 248,
+  "z": -30,
+  "yaw": 1.66,
+  "pitch": 0.02,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ },
+ {
+  "name": "laidsun-lit",
+  "x": 225.9,
+  "z": 118.56,
+  "yaw": 2.66,
+  "pitch": -0.36,
+  "js": "window.__fp.sky.flicker.hold=1;window.__fp.controls.placeAt(225.9,118.56,-28); window.__fp.player.yaw=2.66; window.__fp.player.pitch=-0.36;"
+ },
+ {
+  "name": "laidsun-gut",
+  "x": 225.9,
+  "z": 118.56,
+  "yaw": 2.66,
+  "pitch": -0.36,
+  "js": "window.__fp.sky.flicker.hold=0.3;window.__fp.controls.placeAt(225.9,118.56,-28); window.__fp.player.yaw=2.66; window.__fp.player.pitch=-0.36;"
+ },
+ {
+  "name": "stair-lit",
+  "x": 275,
+  "z": 0,
+  "yaw": -0.965,
+  "pitch": 0.18,
+  "js": "window.__fp.sky.flicker.hold=1;"
+ },
+ {
+  "name": "stair-gut",
+  "x": 275,
+  "z": 0,
+  "yaw": -0.965,
+  "pitch": 0.18,
+  "js": "window.__fp.sky.flicker.hold=0.3;"
+ }
+]

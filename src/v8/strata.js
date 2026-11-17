@@ -25,7 +25,7 @@
 //                          face: [fx, fz] (the way it looks; for a wall mount), mount: 'ground' | 'wall' | 'top',
 //                          foot (y it stands at, for 'ground'), from (the hand reused, for spolia) }
 //   placements             every placement recorded so far
-//   tick(t, flicker)       the shared stone material's glow (called by the strata module each frame)
+//   tick(t, flicker, lamps) the shared stone material's glow (called by the strata module each frame)
 // }
 import * as THREE from 'three';
 import { Builder } from '../structures/geo.js';
@@ -63,11 +63,13 @@ export function installStrata(ctx, url = new URL(location.href)) {
     },
     place(rec) { placements.push(rec); return rec; },
     placements,
-    tick(t, f) {
+    // `lamps` (sky.js's flicker.lamps, v16-S1): the village's lamps and lit panes are turned up by hand when the dark
+    // comes early, half as bright again, and down slowly after; the limewash goes down with the sky.
+    tick(t, f, lamps = 0) {
       if (!stone) return;
       stone.uniforms.uSTime.value = t;
       stone.uniforms.uGlyph.value = 0.03 + (0.9 + 0.1 * Math.sin(t * 0.21)) * 2.2 * Math.pow(1 - f, 1.2); // the ember glass: dull by day, it glows as the sun gutters (v8-09)
-      stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f);
+      stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f) * (1 + 1.1 * lamps);
       stone.uniforms.uLime.value = 0.85 * (0.3 + 0.7 * f);
     },
   };
