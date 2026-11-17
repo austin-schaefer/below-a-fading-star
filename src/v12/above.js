@@ -22,13 +22,13 @@
 const STEPS = [[25, 95], [70, 140], [140, 200], [Infinity, 280]];
 const HS = 90, FREE = 20, EASE = 0.5;
 
-export function shadowFrame(ctx, url, light, sunDir, sb0) {
+export function shadowFrame(ctx, url, light, sunDir, sb0, light0 = 260) {
   if (url.searchParams.get('above') === '0') return null;
   const cam = ctx.camera, T = ctx.terrain, fog = ctx.scene.fog, density0 = fog.density;
   const sc = light.shadow.camera, far0 = sc.far;
   let sb = sb0, lx = NaN, lz = NaN, lt = 0;
   const out = {
-    alt: 0, over: 0, lightDist: 260, stepped: false,
+    alt: 0, over: 0, lightDist: light0, stepped: false,
     // main.js: true once after a step in size (move the light to the new centre now)
     take() { const s = out.stepped; out.stepped = false; return s; },
     frame(target, fwd) {
@@ -55,7 +55,7 @@ export function shadowFrame(ctx, url, light, sunDir, sb0) {
       if (want !== sb) {
         sb = want;
         sc.left = -sb; sc.right = sb; sc.top = sb; sc.bottom = -sb;
-        out.lightDist = 260 + (sb - sb0) * 1.4;
+        out.lightDist = light0 + (sb - sb0) * 1.4;
         sc.far = far0 + (sb - sb0) * 2.8;
         sc.updateProjectionMatrix();
         ctx.renderer.shadowMap.needsUpdate = true;

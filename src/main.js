@@ -14,7 +14,7 @@ import { WORLD, SUN, LANDMARKS, CAUSEWAY_V4, WATER, PALETTE, SPAWN } from './wor
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
-import { makeShadowCadence } from './shadows.js';
+import { makeShadowCadence, shadowDepth } from './shadows.js';
 import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
@@ -255,10 +255,11 @@ async function start() {
   sunLight.castShadow = true;
   let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
-  sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 420;
-  let sb = 95; // the shadow box's half-size (v12: grows with the eye's height, src/v12/above.js)
+  const sdepth = shadowDepth(url); // v17 #1712: the box's depth is fixed to the world along the sun (shadows.js)
+  sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = sdepth.far;
+  const SB0 = 95; let sb = SB0; // the shadow box's half-size (v12: grows with the eye's height, src/v12/above.js)
   sunLight.shadow.camera.left = -sb; sunLight.shadow.camera.right = sb; sunLight.shadow.camera.top = sb; sunLight.shadow.camera.bottom = -sb;
-  sunLight.shadow.bias = -0.0006; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
+  sunLight.shadow.bias = sdepth.bias; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
   sunLight.shadow.camera.updateProjectionMatrix();
   scene.add(sunLight); scene.add(sunLight.target);
   const hemi = new THREE.HemisphereLight(new THREE.Color(rig.hemiSky), new THREE.Color(rig.hemiGround), rig.hemi);
@@ -486,6 +487,8 @@ async function start() {
     shadowTarget.applyMatrix4(lightView);
     shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
+    const fixedDepth = sdepth.fixed && sb === SB0; // at walking height (a grown box from a top keeps v12's window: its cost)
+    if (fixedDepth) shadowTarget.z = -1; // on the plane through the origin square to the sun (lightView looks from sunDir)
     shadowTarget.applyMatrix4(lightViewInv);
     const f = ctx.sky.flicker.value;
     sunLight.intensity = rig.sun * f;
@@ -500,7 +503,7 @@ async function start() {
     // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
     if (ctx.shadowCadence.update(dt, shadowTarget) || (above && above.take())) { // (a step in the box's size moves the light at once)
       sunLight.target.position.copy(shadowTarget);
-      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, above ? above.lightDist : 260);
+      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, fixedDepth || !above ? sdepth.light : above.lightDist);
     }
     ctx.lightSlots?.update();
     ctx.perf.cpu('frame');
