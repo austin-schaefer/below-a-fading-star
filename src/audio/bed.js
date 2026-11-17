@@ -118,12 +118,14 @@ export function startBed(a) {
     hurrySm += (smoothstep(4, 6.5, a.player?.speed || 0) - hurrySm) * 0.1; // air past the ears: +1 dB, a little brighter
     // v16-S2: the air holds its breath in the four seconds before the sun fails (flicker.soon): the wind falls away to
     // nothing over them, so the first thing a visitor anywhere notices is a hush; and as the sun catches (flicker.after)
-    // a gust comes, the relief, rising over 1.8 s to full and falling as gusts do
+    // a gust comes, the relief, rising over 3 s to 0.8 and falling as gusts do. The hush lets go over about 1.7 s
+    // (0.06 a tick), under the gust's rise. Let go faster, under a sharper gust, the bed's gain climbs 25 dB in half a
+    // second in 10 Hz steps, which reads as roughness (lines at 22 Hz in 125-250 Hz; moor-gutter's gated rough)
     const soon = ctx.sky?.flicker?.soon ?? 0, after = ctx.sky?.flicker?.after ?? 0;
     // (latched on the rising edge between two ticks, so a hitch that lets `after` decay a little before the tick still gusts)
-    if (after > 0.5 && after > afterPrev + 0.3) { gust.phase = 'rise'; gust.t = 0; gust.dur = 1.8; gust.from = gust.g; gust.peak = 1; }
+    if (after > 0.5 && after > afterPrev + 0.3) { gust.phase = 'rise'; gust.t = 0; gust.dur = 3; gust.from = gust.g; gust.peak = 0.8; }
     afterPrev = after;
-    hushSm += (soon * (1 - 0.5 * swellSm) - hushSm) * (soon > hushSm ? 0.08 : 0.3);
+    hushSm += (soon * (1 - 0.5 * swellSm) - hushSm) * (soon > hushSm ? 0.08 : 0.06);
     const g = stepGust(step || 0.1) * (1 - 0.85 * hushSm);
     const turb = smoothstep(0.6, 1, g) * 0.35 * ctx.noise.noise2(t * 1.6 + turbPh, 0.5);
     const duck = 1 - 0.5 * swellSm, dark = 1 - 0.3 * swellSm;
