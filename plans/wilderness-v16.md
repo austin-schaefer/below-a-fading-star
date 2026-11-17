@@ -1,6 +1,6 @@
 # v16: The valley floor gets a shape
 
-Opened 2026-11-16, 23:20 PST, by the orchestrator on an autonomous run. The owner's words at the start of the run: "Pick a new milestone (or two?) off the backlog, plus maybe some performance/bugfixes. You are the orchestrator, and this is your repo. Exercise your own best judgment!"
+Opened 2026-11-16, 23:05 PST, by the orchestrator on an autonomous run. The owner's words at the start of the run: "Pick a new milestone (or two?) off the backlog, plus maybe some performance/bugfixes. You are the orchestrator, and this is your repo. Exercise your own best judgment!"
 
 ## What was chosen, and why
 
@@ -33,7 +33,7 @@ Opened 2026-11-16, 23:20 PST, by the orchestrator on an autonomous run. The owne
 
 ## Status
 
-**2026-11-16, 23:25 PST. Opened.** v15 is live (`290a9d0`); `next` is one doc commit ahead. Issues #73 and #78 are `in-progress`, `v16`. Two finished worktrees removed (`issue-1534-regressions`, merged; a stray detached one in an old session's scratchpad); `issue-1527-edges` (W3) kept, paused. The repository's interaction limit is `collaborators_only` until 2027-05-12.
+**2026-11-16, 23:05 PST. Opened.** v15 is live (`290a9d0`); `next` is one doc commit ahead. Issues #73 and #78 are `in-progress`, `v16`. Two finished worktrees removed (`issue-1534-regressions`, merged; a stray detached one in an old session's scratchpad); `issue-1527-edges` (W3) kept, paused. The repository's interaction limit is `collaborators_only` until 2027-05-12.
 
 | Brief | Branch / worktree | Port | Model |
 |---|---|---|---|
@@ -43,7 +43,7 @@ Opened 2026-11-16, 23:20 PST, by the orchestrator on an autonomous run. The owne
 
 Next: the survey's report becomes `tools/views-v16-floor.json` (rendered on `next` as the before set), then the floor's briefs (the tilt; the edge and the tarn's shore; the fen and the look from above), two or three agents beside S1 and P1, never more than four with a browser.
 
-**2026-11-16, 23:45 PST. The survey is in; the floor's first two briefs are out. Four agents in flight (the limit).**
+**2026-11-16, 23:12 PST. The survey is in; the floor's first two briefs are out. Four agents in flight (the limit).**
 
 - **The survey** (opus, read-only, 7 minutes): the field's order of terms, what reads a fixed height, every ruled outline, a design for the shared edge. Its findings are in the briefs L1 and L2. Worth keeping: the floor already tilts (`-0.012z + 0.006x`, `field.js:353`); a lift that is never negative and zero at the waters cannot make anything float; places to hold still by mask are the keep, Demesne and Lappet, the east box (High Ling to the Hypogeum), the Pit, the fall and river, both Span blocks; the only shader that tests a radius on these outlines is `water/river.js` `uFen`; `heightAt` is 1.6 µs a call with cheap wins in `riverSection` and `project()` (not yet briefed: they change bits, so they go with the re-record).
 - **The fixed views:** `tools/views-v16-floor.json`, sixteen; the before set rendering on `next` at medium into `shots/wip/v16-before-*.png`.
