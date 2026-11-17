@@ -105,6 +105,12 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 90 | v14 the Pit and its hole of stars: the flat violet before, the round-3 after |
 | 91 | v14 the Lonely Staircase's approach: the trods to its foot and the slabs in the turf, before and after |
 | 92 | v14 fixes to earlier places: the Pomegranate House's court |
+| 93 | v15 the Lappet from afar and from the road: the hillside village between the keep and the domed house, the fountain's beam, Pennyworth's yard before and after |
+| 94 | v15 the quarry quarter: the kiln in a colossus's head, the saint's face, the half-built house with its arch on timber |
+| 95 | v15 the lanes and Lees: the Leads, the Gullet, the mid and low lanes, the fountain of stored daylight, the square before and after |
+| 96 | v15 the eight villagers at three metres |
+| 97 | v15 the stairs: the plan before and after, the pair sheets, the dip's height trace, the glass tube stair |
+| 98 | v15 sound and light, houses, the peafowl before and after, two failures |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp` and `gallery-v12-to-v14.webp` (`83-stair-orch-home`, the box v12 starts) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -775,5 +781,54 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `91-stair-sign-before.webp` | Before: the same long figure on the slope, the approach below it bare. |
 | `91-stair-slabs-fallen-after.webp` | After: the stair's slabs lying in the turf as clusters of fallen treads, no longer a line to its back. |
 | `92-house-court-fountain.webp` | The Pomegranate House's court at dusk: the fountain, the pole and the lit arcade. |
+| `93-lappet-far-lees-east.webp` | The Lappet from the road at dusk: a hillside of lit windows and stairs climbing between the keep and the domed house. |
+| `93-lappet-far-lees-fountain.webp` | The village from below, the fountain of stored daylight a white shaft of light in the square above the lanes. |
+| `93-lappet-from-the-causeway.webp` | From the causeway through the grass: the sun setting behind the Lappet's glowing hillside. |
+| `93-lappet-from-the-road.webp` | Arriving: the worn road under the long wall, its tiled frieze lit, the fountain's beam standing over the roofs. |
+| `93-lappet-keep-and-tube.webp` | The glass tube stair on its bank under the keep, a lamp-post in the foreground and the village's lights below. |
+| `93-lappet-pennyworth-aerial-after.webp` | After: the same yard, padded and set onto its terraces. |
+| `93-lappet-pennyworth-aerial-before.webp` | Before: Pennyworth's walled yard from above. |
+| `93-lappet-pennyworth-row.webp` | Pennyworth's row along the bank, windows lit under the dome. |
+| `93-lappet-roofs-at-sunset.webp` | The domed house and its neighbours from the lane, the sun an ember between the cliffs. |
+| `94-quarry-arch-close.webp` | The arch's centring close up: timber spokes holding the stones over the door. |
+| `94-quarry-arch-on-timber.webp` | The half-built house with its arch on timber centring, ladders and cut stone stacked at its foot. |
+| `94-quarry-arch-quarrels.webp` | The Quarrels at the arch: the dome-kiln smoking beneath the unfinished ribs. |
+| `94-quarry-colossus-head-kiln.webp` | The kiln in a colossus's head, three metres off: the great face lying on its side with a hearth in its skull. |
+| `94-quarry-kiln-causeway-end.webp` | The quarry quarter from the causeway's end: the kiln smoking, the saint's head beyond, the chalked setting-out on the slab. |
+| `94-quarry-kiln-square-west.webp` | The kiln-dome in the square, its fire-pit, tripod and the arch on timber behind. |
+| `94-quarry-saint-face-3m.webp` | The Stylite's fallen face at three metres, the lamp-post and hoist beside it. |
+| `95-lanes-gullet-foot.webp` | The Gullet's foot: a white stair rising to a hung bridge between two walls. |
+| `95-lanes-leads-1.webp` | The Leads: a plank walk between roofs, the village below and a jar on the sill. |
+| `95-lanes-low-lane.webp` | The low lane looking west over the roofs to the fountain's beam. |
+| `95-lanes-mid-lane.webp` | A middle lane, stepped, roped and lit, the glacial blue behind. |
+| `95-lees-fountain-north.webp` | The fountain's lip and its bottles, from the north. |
+| `95-lees-fountain-west.webp` | The fountain of stored daylight: a bowl of white light and green glaze in the square. |
+| `95-lees-rebate-frame.webp` | A frame set up to show the view, the long figure on the hill inside it. |
+| `95-lees-square-after.webp` | After: the same view with the fountain, the stalls and the lit shops. |
+| `95-lees-square-before.webp` | Before: the Lees' street past the half-built house, early; the Indistinct (the pale lens on the green, since removed) still stands beyond. |
+| `96-people-burner.webp` | The Burner at a fire among tripods and benches. |
+| `96-people-child.webp` | The child by a lit round window, high on a wall. |
+| `96-people-clerk.webp` | The Clerk in the lit grille of his window. |
+| `96-people-copyist.webp` | The Copyist at her desk on the hill. |
+| `96-people-dyer.webp` | The Dyer at the vat under the tube. |
+| `96-people-leaver.webp` | The Leaver by the lamp-post at the village's edge. |
+| `96-people-noon-drawer.webp` | The Noon-drawer tending the fountain. |
+| `96-people-sounder.webp` | The Sounder, standing by a great stone. |
+| `97-stairs-dip-traces.webp` | The dip's height traces, before and after (the walker's ground height along the route): sharp steps, then a smoother run. |
+| `97-stairs-head-down.webp` | From the stair head looking down the notch to the village. |
+| `97-stairs-pair-7.webp` | The owner's first blocked stair head, three views: before on the top row, after below. The newel and the broken stump that stood in the lane are gone. |
+| `97-stairs-pair-8.webp` | The second stair head: before on the top row, after below. The landing's parapet stands only over the drop now, and the door beyond is reached. |
+| `97-stairs-pair-9.webp` | The Gullet: before on the top row, after below. The footbridge that crossed the stair at head height is gone. |
+| `97-stairs-pair-foot.webp` | The main flight's foot, before on the top row and a trial below that was reverted: the Lees' turret stands on the stair's axis either way. Left for the owner to decide. |
+| `97-stairs-pier-top.webp` | On the tube's pier top, a blue rail and the roofs below. |
+| `97-stairs-plan-after.webp` | The stairs plan after: the same map with the climb drawn as one gold route through the lanes. |
+| `97-stairs-plan-before.webp` | The stairs plan before: the village's ways drawn on the map, the route a loose tangle of marks. |
+| `97-stairs-tube-gangway.webp` | The glass tube stair: the gangway into the tube. |
+| `98-failure-stairhead-blank.webp` | Failure: a stair-head view that rendered as a blank wall; the camera was inside the stone. |
+| `98-houses-undercroft.webp` | The row's undercroft house with its awning and the domed house beside it. |
+| `98-peafowl-after.webp` | After: the peafowl on the stair wall, its train trailing. |
+| `98-peafowl-before.webp` | Before: the peafowl on the roof, boxy. |
+| `98-sound-lamps-after.webp` | After: the lamps of the hitch lit, grass and window-glow in the lane. |
+| `98-sound-lamps-before.webp` | Before: the hitch at the lane's end with one pole light. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

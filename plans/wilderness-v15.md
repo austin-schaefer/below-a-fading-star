@@ -282,3 +282,12 @@ The orchestrator merged W3 into `next` locally (unpushed) at about 14:40 so the 
 
 Agreed: the local merge is dropped (`git reset --keep origin/next`: only the unpushed merge commit; W3's work is whole on `origin/issue-1527-edges`), so 8123 is `next` without W3 again. **Not yet known which of these four are W3's** and which came with W4, W5, W6 or were always there: the owner's next look at 8123 (the stair jitter, the Pit's rim) tells. W3 goes on in its own worktree against these notes and ships after v15 as a point release when the owner says it is ready. v15's note says the invisible walls round pits are still there.
 
+**2026-11-16, 15:09 PST. W6 merged; the gate, the critic and the curator started; two regressions block the release.**
+
+- **W6 merged** (opus): `src/height/pads.js`, a level pad under the Collation (fall 0.56 m to 0), one under a Pennyworth house, the other house on a stone footing; dressing 22, seams 3 (ratchet lowered), geometry 135, the dip-walk 0 jumps.
+- **The owner, 15:05, on `next` without W3:** "rims peeled: yes" (`shots/wip/owner-v15/21.png`) and "stair jitter: also yes". So neither is W3's. **Both block v15.** Brief `briefs/v15/brief-v15-R1-regressions.md` (opus, `issue-1534-regressions`, 8177, `ac8c1779b17085fba`): reproduce, compare with `origin/main`, bisect, fix, guard. The orchestrator's own renders of the rim were useless (`?pos` inside the hole stands on the Pit's floor).
+- **Started 15:05:** the whole suite on `next` (`/tmp/suite-v15-gate1.log`, a batch run: R1's fix and the critic's will follow it); the cold critic (opus, `issue-1540-critic`, 8176, `a63be58d25cbb6a66`); the curator (sonnet, no browser, `a513c9742c23b0dd1`, told never to keep the owner's own screenshots).
+- **W3** goes on outside v15 (`issue-1527-edges`, 8172, `afffb9a425c739624`).
+
+**The owner, 16:15:** "forty things in #76 is crazy. i don't want to wade thru all that, and the village should have, like, 3–5 named things TOPS". Decided: three (the Lappet, the Smoking Saint, the Fountain of Noon); the four quarters' cards and the Tender's Round card go; #76 rewritten to three rows; brief `briefs/v15/brief-v15-N2-three-names.md` (sonnet, `issue-1535-three-names`, 8179); the rule is in `orchestrator`.
+
