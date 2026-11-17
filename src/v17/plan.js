@@ -157,6 +157,22 @@ export const GARTH = {
   crown: -4,          // the dome to about y -4 at the crown
   door: [-30, 318],   // the west door, where U1's tube meets U2's hall at y -24
 };
+// U2's: the west door's numbers, where U1's tube meets the hall (U2 builds the arch in the wall and the floor inside
+// it; U1 everything west of `face`). The door lies on the bearing from the centre through GARTH.door; its reveal runs
+// through the wall from the inner face (r 20) to the outer face (r 21.6), and the plan's door point (r 20.4) is the
+// sill line inside it. U2's floor runs at y -24 through the reveal to `face`; U1's tube ends at `face`, its floor at
+// y -24 and its bore inside the opening: `half` either side of the axis, `h` over the sill at the crown of the arch
+// (a round head: it springs at h - half). An overlap of the two floors inside the reveal is fine (both held, level).
+const _gd = [GARTH.door[0] - GARTH.c[0], GARTH.door[1] - GARTH.c[1]], _gl = Math.hypot(_gd[0], _gd[1]);
+export const GARTH_DOOR = {
+  dir: [_gd[0] / _gl, _gd[1] / _gl], // out of the hall, toward the aqueduct (about west, a little north)
+  y: GARTH.floor,     // the sill
+  half: 1.9,          // half the opening's width
+  h: 5.2,             // the arch's crown over the sill
+  inner: 20,          // the wall's inner face (r from GARTH.c)
+  outer: 21.6,        // the wall's outer face: where U1's tube ends
+  face: [GARTH.c[0] + (_gd[0] / _gl) * 21.6, GARTH.c[1] + (_gd[1] / _gl) * 21.6], // about (-31.18, 317.76)
+};
 
 // ---------------------------------------------------------------- S1: the sphere (the table's)
 export const SPHERE = {
