@@ -49,6 +49,35 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 06:35 PST. The Garth is on `next`; its light is not right yet; the sphere and a light fix dispatched.**
+
+- **U2 merged** after its second round (opus, 77 min in all). From the door the rings now read as stages (green, yellowing, straw, grey sticks, swept soil) with tide lines, and the dome is lit over the garden: the structure is right. **The light is not:** round one read "a hazy dying-sun afternoon", round two (the orchestrator asked for blue-white, wrongly) reads "moonlight or starlight ... it suggests night", with glowing white fruit. Its `height-speed` rerun: valley 1.055, fen 1.019 against v16 with no change in the height path on that branch (so W1's plan.js merge or noise; to be measured on `next` when W1 is in).
+- In flight (four, the limit):
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| W1 the brook and the mere | `issue-1701-brook` | 8161 | opus |
+| U1 the Swallow, the aqueduct and the tube | `issue-1702-swallow` | 8162 | opus |
+| S1 the sphere (90 minutes at most; left out if it does not read) | `issue-1705-sphere` | 8165 | opus |
+| U3 the Garth's light reads as noon (bright warm-neutral ground, short blue shadows, no glowing fruit; a blind reader says daylight twice running) | `issue-1708-garth-light` | 8168 | opus |
+
+**2026-11-17, 06:20 PST. Batch 1 still building; the Garth is on its second round.**
+
+- **The before set** (23 views, `shots/wip/v17-before-*`) shows the south trough near black on low: W1 and U1 told to make the water and the portal read from 30 m and from the Span's deck.
+- **U1 asked, through the orchestrator, that W1's cut end square at the portal's face** (z 311.5; it ran on into a bowl); relayed to W1.
+- **U2 handed back** (opus, 60 min; `briefs/v17/reports/issue-1703-garth.md`): the hall, the lens' beam (in every material, no point light; it ignores the gutter), five rings of garden, rills, the can; `edges`, `heights`, `walk`, `seams`, `gutter`, `geometry` green on its branch; draw calls on low 125 to 161 (the Laid Sun 172 to 190); `under.js` gained `below.grade(fn)`. Its own blind reader: "pale dusty-gold ... a hazy dying-sun afternoon", not noon. **Sent back for one round** (45 min): the lit core neutral-white, each ring's stage readable from the door with tide lines where the light once reached, the dome taking bounce. `height-speed` read 1.13 to 1.15 beside a running suite with no height change: to be rerun quiet.
+- In flight: W1 (`issue-1701-brook`, 8161), U1 (`issue-1702-swallow`, 8162), U2 round two (`issue-1703-garth`, 8163), all opus.
+
+**2026-11-17, 05:18 PST. The plan is on `next`; batch 1 dispatched.** The planner's branch merged and its worktree removed. The before set (`tools/views-v17-water.json`, low) is rendering in the deploy worktree to `shots/wip/v17-before-*`. v16 is live (`0eba44a`); #74 is `in-progress`, `v17`.
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| W1 the brook and the mere (pushes `src/v17/plan.js` first) | `issue-1701-brook` | 8161 | opus |
+| U1 the Swallow, the aqueduct and the tube | `issue-1702-swallow` | 8162 | opus |
+| U2 the Meridian Garth | `issue-1703-garth` | 8163 | opus |
+
+Next: look at the before set; W1's brook judged moving by a blind reader before it merges and before W2 (the leat) starts; U1 and U2 reviewed cold as they hand back.
+
 **2026-11-17, 05:10 PST. Opened.** v16 is live; `next` is at `f8f62b6`. The plan, the survey, the fixed views (`tools/views-v17-water.json`), two story files and seven briefs are on `issue-1700-plan`, written by a planning agent. Its survey render (ten frames at low, `shots/wip/v17-survey-*.png`) was taken against the working branch's server on 8123 by mistake (the tools' default `FP_BASE`), not its own on 8173; the tree was the same commit, nothing was written there. Nothing dispatched yet.
 
 Next: merge the plan into `next`; render the before set from `tools/views-v17-water.json` on `next` at medium (`shots/wip/v17-before-*.png`); dispatch batch 1 (W1 the brook and the mere, U1 the Swallow and the tube, U2 the Garth; all opus) from `briefs/v17/index.md`. Then W2 the leat once the brook is judged moving and merged, S1 the sphere when a slot is free, N1 and A1 (sonnet) after the builders.

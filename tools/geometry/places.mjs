@@ -25,6 +25,7 @@ export const PLACES = [
   { name: 'span-west-stairs', span: 'west', half: 7 }, // the Cyclopean Stairs, the Span's west end
   { name: 'span-east-stairs', span: 'east', half: 7 }, // and its east end, over the Pit's side
   { name: 'house', c: [95, -45], r: 17 }, // the Pomegranate House: court, galleries, gate
+  { name: 'v17-garth', pts: [[-30.79, 317.84, -24], [-27.65, 318.47, -24], [-19.81, 320.04, -24], [-14.12, 321.18, -24], [-13.22, 319.30, -24], [-11.53, 318.09, -24], [-9.47, 317.83, -24], [-7.54, 318.60, -24], [-6.21, 320.20, -24], [-5.81, 322.23, -24], [-5.88, 322.82, -24], [-0.19, 323.96, -24], [8.04, 325.61, -24], [5.21, 332.35, -24], [-0.02, 337.46, -24], [-6.83, 340.12, -24], [-14.13, 339.93, -24], [-20.79, 336.90, -24], [-25.74, 331.53, -24], [-28.21, 324.64, -24]], half: 25, sealed: [1.5, -0.5] }, // v17-U2 the Meridian Garth: in by the west door, round the light, out the far side and along the walk (clear of the trees' frames)
   { name: 'strake', route: 'village.row.route', half: 9 }, // v15-V1 the Strake: its flags walked end to end, the five fronts (src/v15/row.js gives the route, wherever the plan puts the row)
   { name: 'v17-swallow', ascent: 'swallow', half: 14, sealed: [42, -26] }, // v17-U1 the Swallow: the quay, the tube's lip, down the head under the pool and the drowned conduit to the Garth's door (sealed from the head's turn to 26 m short of the end: the door opens into U2's hall, which closes it)
 ];

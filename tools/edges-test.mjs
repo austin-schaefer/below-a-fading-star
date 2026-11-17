@@ -306,7 +306,7 @@ const R = await page.evaluate(async () => {
   return res;
 });
 // v15-F1: the underground's geometry (tools/under-geometry.mjs) and the door's treads seen from below
-const UNDER = '^(pit-floor|passage-|coffin-road|swallow-(stone|wood))';
+const UNDER = '^(pit-floor|passage-|coffin-road|garth-|swallow-(stone|wood))';
 const UG = { bear: await page.evaluate(membersBear, UNDER), apart: await page.evaluate(facesApart, UNDER) };
 UG.stats = await page.evaluate(async () => {
   const fp = window.__fp, THREE = await import('three'), out = {};

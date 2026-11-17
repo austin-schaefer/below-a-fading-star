@@ -1,0 +1,47 @@
+[
+ {
+  "name": "door",
+  "x": -28.24,
+  "z": 318.35,
+  "yaw": -1.7682,
+  "pitch": 0.1,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-28.24, 318.35, -23.98); p.yaw = -1.7682; p.pitch = 0.1; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-28.24, 318.35, -23.98); p.yaw = -1.7682; p.pitch = 0.1; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "edge",
+  "x": -13.89,
+  "z": 318.4,
+  "yaw": -2.4734,
+  "pitch": -0.02,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-13.89, 318.40, -23.98); p.yaw = -2.4734; p.pitch = -0.02; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-13.89, 318.40, -23.98); p.yaw = -2.4734; p.pitch = -0.02; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "under-out",
+  "x": -9.41,
+  "z": 322.12,
+  "yaw": 1.3734,
+  "pitch": 0.03,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-9.41, 322.12, -23.98); p.yaw = 1.3734; p.pitch = 0.03; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-9.41, 322.12, -23.98); p.yaw = 1.3734; p.pitch = 0.03; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "under-up",
+  "x": -8.82,
+  "z": 322.24,
+  "yaw": 1.3734,
+  "pitch": 1.15,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-8.82, 322.24, -23.98); p.yaw = 1.3734; p.pitch = 1.15; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-8.82, 322.24, -23.98); p.yaw = 1.3734; p.pitch = 1.15; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ },
+ {
+  "name": "ring-side",
+  "x": -2.56,
+  "z": 309.21,
+  "yaw": -3.741,
+  "pitch": 0.02,
+  "js": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-2.56, 309.21, -23.98); p.yaw = -3.741; p.pitch = 0.02; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()",
+  "pre": "(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(-2.56, 309.21, -23.98); p.yaw = -3.741; p.pitch = 0.02; p.vel?.set(0, 0, 0); fp.camera.position.copy(p.pos); })()"
+ }
+]
