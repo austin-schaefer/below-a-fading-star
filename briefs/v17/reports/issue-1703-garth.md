@@ -23,8 +23,7 @@ Branch `issue-1703-garth`, 2026-11-17.
 ## Tests (port 8163)
 
 - `ONLY=edges,heights`: 414 PASS, 0 failed. Under-geometry runs inside `edges`: 3886 members, 0 in the air; 170527 faces, 0 coplanar pairs.
-- `ONLY=geometry`: v17-garth has 0 faults, 0 failed.
-- An earlier run of `walk,seams,gutter` was green.
+- `ONLY=walk,seams,gutter,geometry` on the final tree: 182 PASS, 0 failed (v17-garth: 0 faults).
 - **heights** first failed at the top of the gallery (366 calls against a limit of 364). The hall's meshes were being drawn through the ground from up there. They are now drawn only while the eye is below y -8 and within 95 m.
 - **Draw calls on low:** the Garth takes 125–161, the Laid Sun 172–190.
 - **height-speed:** the ratio came out at 1.13–1.15. That is load noise: the height path is unchanged against `origin/next`, and the suite was running beside the measurement.
