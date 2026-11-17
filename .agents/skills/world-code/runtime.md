@@ -22,7 +22,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `debug=1`
 - `tinct=0` (no regional tint on the haze and the light)
 - `placegrade=0` (no per-place exposure, saturation, contrast and warmth in the finish, v8-02); `shafts=0` (no ember shafts in the wood)
-- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, timings exported from `src/sky.js`)
+- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, the first 60-120 s after "Go out" (87.5 s; its countdown is held behind the title card, `flicker.out`), timings exported from `src/sky.js`; `tools/gutter-test.mjs` asserts both)
 
 ### v3 stage 2 switches (each defaults to the new behaviour; see `plans/wilderness-v3.md`)
 

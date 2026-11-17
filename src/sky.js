@@ -7,9 +7,11 @@ import { cinctureGLSL } from './v5/cincture.js'; // v5: AQ the Cincture, a chunk
 import { injectOccultSky } from './v5/occultation.js'; // v5 wonders: AR the Occultation's bite on the disc
 
 // Gutter timings, seconds: total length [min, max] and gap between gutters [min, max]. v4: 12-16 s in all
-// (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter is at 25-55 s.
+// (1.4 s down, about 8 s at the floor, 2.5 s back), every 60-110 s. The first gutter comes 60-120 s after "Go out"
+// (v16-S1, the owner's #78: let the visitor explore a minute or two, then startle them); its countdown waits on 'begin'.
 // ?gutter=<len>,<every> pins both (a single length and interval); ?gutter=v3 is the old 6.5-9 s every 70-150 s.
 export const GUTTER_V4 = { len: [12, 16], every: [60, 110] };
+export const FIRST_GUTTER = [60, 120];
 export const GUTTER_V3 = { len: [6.5, 9], every: [70, 150] };
 export const GUTTER = (() => {
   let q = '';
@@ -170,12 +172,15 @@ export function buildSky(ctx) {
   // shuddering floor of ~0.3 for about 8 s, and comes back over ~2.5 s with a slight overshoot.
   // Austin found the first version (a third of a second to the floor) too abrupt.
   // Timings come from GUTTER (below) so everything that wants them reads one place; ?gutter=<len>,<every> overrides, ?gutter=v3 restores the old ones.
-  const grng = ctx.makeRng(1733); // the gutter's own stream (v7.2-05): the same distribution, the same course every visit
-  const flicker = { value: 1.0, next: 25 + grng() * 30, phase: 0, len: 0, hold: null, timing: GUTTER };
+  const grng = ctx.makeRng(1736); // the gutter's own stream (v7.2-05; salt 1736 since v16-S1, so the first lands at 87.5 s, a long one of 15.2 s): the same course every visit
+  // FIRST_GUTTER: the first one's [min, max] seconds after 'begin'. Until the visitor goes out the countdown is held
+  // (flicker.out false), so the title card's minute does not spend it; a pinned ?gutter= runs from ready, as renders want.
+  const flicker = { value: 1.0, next: FIRST_GUTTER[0] + grng() * (FIRST_GUTTER[1] - FIRST_GUTTER[0]), phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned };
   if (GUTTER.pinned) flicker.next = Math.min(flicker.next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
+  ctx.events?.addEventListener('begin', () => { flicker.out = true; });
   function update(dt, t) {
     uniforms.uTime.value = t;
-    flicker.next -= dt;
+    if (flicker.out) flicker.next -= dt;
     if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + grng() * (GUTTER.len[1] - GUTTER.len[0]); flicker.next = GUTTER.every[0] + grng() * (GUTTER.every[1] - GUTTER.every[0]); }
     let target = 1.0;
     if (flicker.phase > 0) {
