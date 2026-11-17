@@ -182,7 +182,7 @@ export function makeStream(def) {
     out.wet = Math.max(out.wet, (1 - smoothstep(0.5, 2.5 + 1.5 * n2, e)) * 0.45); // (more, and the sheen on the bank reads as water)
     return true;
   }
-  return { name, kind: 'stream', X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
+  return { name, kind: 'stream', shade: def.shade ?? 0, X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
     project, ground, wet, level, sd, paint, levelOfS, sOf };
 }
 
