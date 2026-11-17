@@ -17,25 +17,124 @@
 <link rel="modulepreload" href="./src/main.js">
 <link rel="modulepreload" href="./vendor/three/three.module.js">
 <link rel="modulepreload" href="./src/terrain.js">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Alegreya+SC&display=swap" rel="stylesheet">
+<!-- v17 type (issue-1711): the faces are vendored under vendor/fonts/ (SIL OFL, licences beside them); the page asks
+     nothing of a third party for type. ?type=a|b|c picks one of three typographic directions; TYPE_DEFAULT below is
+     the one a visitor gets. The two preloads are the default's display and text faces, which the title card needs. -->
+<link rel="preload" href="./vendor/fonts/im-fell-english-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./vendor/fonts/im-fell-english-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./vendor/fonts/sorts-mill-goudy-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script id="type-pick">
+  // The typographic direction: ?type=a|b|c, else TYPE_DEFAULT. html.fonts-wait hides the title card's words (not its
+  // bar) until the card's faces have arrived or 1.6 s have passed, so nothing reflows under the visitor's eye.
+  (function () {
+    var TYPE_DEFAULT = 'c', t = TYPE_DEFAULT, d = document.documentElement;
+    try { var q = new URLSearchParams(location.search).get('type'); if (q === 'a' || q === 'b' || q === 'c') t = q; } catch (e) { /* */ }
+    d.dataset.type = t;
+    if (!document.fonts || !document.fonts.load) return;
+    d.classList.add('fonts-wait');
+    var done = function () { d.classList.remove('fonts-wait'); };
+    setTimeout(done, 1600);
+    addEventListener('DOMContentLoaded', function () {
+      var s = getComputedStyle(d), f = [s.getPropertyValue('--f-display'), s.getPropertyValue('--f-text'), s.getPropertyValue('--f-sc')];
+      Promise.all(f.map(function (x) { return document.fonts.load('1em ' + x.trim()); }).concat(document.fonts.load('italic 1em ' + f[0].trim()))).then(done, done);
+    });
+  })();
+</script>
 <style>
-  :root { color-scheme: dark; --ink: #ffe9db; --muted: #dbaa86; --ember: #e8591a; --wordmark: #ff9a5c; --bg: #0b0609; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: 'Alegreya', Georgia, 'Times New Roman', serif; }
+  /* ---- the faces (vendor/fonts/, Latin subsets, SIL OFL 1.1) ---- */
+  @font-face { font-family: 'Fell English'; src: url(./vendor/fonts/im-fell-english-400-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Fell English'; font-style: italic; src: url(./vendor/fonts/im-fell-english-400-italic.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Fell English SC'; src: url(./vendor/fonts/im-fell-english-sc-400-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Fell Pica'; src: url(./vendor/fonts/im-fell-dw-pica-400-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Fell Pica'; font-style: italic; src: url(./vendor/fonts/im-fell-dw-pica-400-italic.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Cormorant'; font-weight: 500; src: url(./vendor/fonts/cormorant-500-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Cormorant'; font-weight: 500; font-style: italic; src: url(./vendor/fonts/cormorant-500-italic.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Cormorant SC'; font-weight: 500; src: url(./vendor/fonts/cormorant-sc-500-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'EB Garamond'; src: url(./vendor/fonts/eb-garamond-400-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'EB Garamond'; font-style: italic; src: url(./vendor/fonts/eb-garamond-400-italic.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Sorts Mill Goudy'; src: url(./vendor/fonts/sorts-mill-goudy-400-normal.woff2) format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Sorts Mill Goudy'; font-style: italic; src: url(./vendor/fonts/sorts-mill-goudy-400-italic.woff2) format('woff2'); font-display: swap; }
+  /* ---- the three directions' families; every rule below names a role, never a face ----
+     --f-display  the wordmark and anything set large      --f-sc  true small caps: names, heads, the offer
+     --f-text     reading text, the quotations, the panel
+     c (the default): Fell English for the wordmark and Fell's small caps, Sorts Mill Goudy to read. a: all Fell, Fell's
+     pica to read. b: Cormorant and Cormorant SC, EB Garamond to read. */
+  :root { --f-display: 'Fell English', Georgia, serif; --f-sc: 'Fell English SC', Georgia, serif; --f-text: 'Sorts Mill Goudy', Georgia, serif; }
+  :root[data-type="a"] { --f-text: 'Fell Pica', Georgia, serif; }
+  :root[data-type="b"] { --f-display: 'Cormorant', Georgia, serif; --f-sc: 'Cormorant SC', Georgia, serif; --f-text: 'EB Garamond', Georgia, serif; }
+    :root { color-scheme: dark; --ink: #ffe9db; --muted: #dbaa86; --ember: #e8591a; --wordmark: #ff9a5c; --bg: #0b0609; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--f-text); }
   canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
   #card { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
     background: radial-gradient(ellipse at 50% 60%, rgba(60, 14, 10, 0.72), rgba(8, 4, 8, 0.92) 70%); transition: opacity 1.2s ease; cursor: pointer; z-index: 10; }
   #card.hidden { opacity: 0; pointer-events: none; }
-  #card .kicker { font-family: 'Alegreya SC', 'Alegreya', serif; letter-spacing: 0.32em; font-size: 0.8rem; color: var(--muted); text-transform: lowercase; }
-  #card h1 { font-weight: 500; font-size: clamp(2rem, 6vw, 4.2rem); margin: 0.25em 0 0.15em; letter-spacing: 0.02em; color: var(--wordmark); text-shadow: 0 0 40px rgba(232, 89, 26, 0.35); }
-  #card h1 em { font-style: italic; font-weight: 400; color: var(--ink); }
-  #card p { max-width: 42ch; font-size: 1.15rem; line-height: 1.55; color: var(--muted); margin: 0.6em 0; }
+  /* ---- the title card (v17 type). Shared bones first, then each direction's composition ---- */
+  html.fonts-wait #card > :not(#load) { visibility: hidden; }
+  #card { font-family: var(--f-text); font-variant-numeric: oldstyle-nums; }
+  #card .kicker { font-family: var(--f-sc); text-transform: lowercase; font-size: 0.8rem; letter-spacing: 0.3em; color: var(--muted); }
+  #card h1 { margin: 0; font-family: var(--f-display); font-weight: 400; color: var(--wordmark); font-kerning: normal; font-feature-settings: 'kern', 'liga', 'dlig'; }
+  #card h1 > span, #card h1 > em { display: block; }
+  #card h1 em { font-style: italic; color: var(--ink); }
+  #card .orn { color: var(--wordmark); line-height: 0; }
+  #card .orn svg { display: block; overflow: visible; }
+  #card p { margin: 0.55em 0; max-width: 36ch; font-size: 1.12rem; line-height: 1.5; color: #e2b892; hanging-punctuation: first; }
+  #begin { margin-top: 1.5em; font: inherit; font-family: var(--f-sc); text-transform: lowercase; font-size: 1.1rem; letter-spacing: 0.26em; padding: 0.55em 1.9em 0.6em 2.16em; color: var(--ink); background: transparent; cursor: pointer;
+    border: 3px double rgba(255, 154, 92, 0.62); border-radius: 0; transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s; }
+  #begin:not(:disabled):hover { background: rgba(232, 89, 26, 0.2); border-color: var(--wordmark); box-shadow: 0 0 22px rgba(232, 89, 26, 0.25); }
+  #begin:focus-visible, #draglook:focus-visible { outline: 1px solid var(--ink); outline-offset: 5px; }
+  #card .keys { margin-top: 2.2em; font-style: italic; font-size: 0.95rem; color: rgba(226, 184, 146, 0.78); letter-spacing: 0.02em; line-height: 1.7; }
+  kbd { font-family: var(--f-sc); font-style: normal; text-transform: lowercase; letter-spacing: 0.1em; color: var(--wordmark); border: 0; padding: 0 0.06em; margin: 0 0.06em; }
+
+  /* A: the worn title page. Fell's types (17th-c. Oxford, cut rough and printed rougher): imprint line between a
+     thick-and-thin rule, the title in three lines (small caps, a big italic, the roman), a hedera leaf, the text in
+     Fell's pica. */
+  :root[data-type="a"] #card .orn-rule { width: min(15rem, 62vw); margin: 0.55em 0 1.1em; }
+  :root[data-type="a"] #card h1 { line-height: 0.86; text-shadow: 0 0 40px rgba(232, 89, 26, 0.3); }
+  :root[data-type="a"] #card h1 .w-below { font-family: var(--f-sc); text-transform: lowercase; font-size: clamp(1rem, 2.1vw, 1.45rem); letter-spacing: 0.42em; margin-right: -0.42em; color: var(--muted); text-shadow: none; }
+  :root[data-type="a"] #card h1 em { font-size: min(22vw, 7.2rem, 13vh); margin: 0.02em 0 -0.06em -0.1em; letter-spacing: -0.01em; }
+  :root[data-type="a"] #card h1 .w-star { font-size: min(12vw, 4rem, 7.4vh); letter-spacing: 0.06em; }
+  :root[data-type="a"] #card .orn-leaf { margin: 0.8em 0 0.6em; }
+  :root[data-type="a"] #card .orn-leaf svg { width: 2.6rem; height: auto; }
+
+  /* B: the engraved plate. Cormorant (a Garamond drawn for display) inside a double hairline frame, everything
+     spaced and light; EB Garamond for reading. */
+  :root[data-type="b"] #card::before { content: ''; position: absolute; inset: clamp(10px, 3vw, 28px); border: 1px solid rgba(219, 170, 134, 0.3); outline: 1px solid rgba(219, 170, 134, 0.14); outline-offset: -6px; pointer-events: none; }
+  :root[data-type="b"] #card .kicker { display: flex; align-items: center; gap: 1em; font-size: 0.74rem; letter-spacing: 0.55em; margin-right: -0.55em; }
+  :root[data-type="b"] #card .kicker::before, :root[data-type="b"] #card .kicker::after { content: ''; width: 2.6em; border-top: 1px solid rgba(219, 170, 134, 0.45); }
+  :root[data-type="b"] #card h1 { font-weight: 500; color: var(--ink); line-height: 0.92; margin: 0.5em 0 0.45em; }
+  :root[data-type="b"] #card h1 .w-below { font-family: var(--f-sc); text-transform: lowercase; font-size: clamp(0.95rem, 1.8vw, 1.25rem); letter-spacing: 0.6em; margin-right: -0.6em; color: var(--muted); margin-bottom: 0.3em; }
+  :root[data-type="b"] #card h1 em, :root[data-type="b"] #card h1 .w-star { display: inline; font-size: min(15vw, 6.2rem, 12vh); }
+  :root[data-type="b"] #card h1 em { color: var(--wordmark); font-weight: 500; text-shadow: 0 0 36px rgba(232, 89, 26, 0.35); }
+  :root[data-type="b"] #card .orn-rule { width: min(9rem, 40vw); margin: 1.1em 0 0.9em; opacity: 0.75; }
+  :root[data-type="b"] #card .orn-leaf { display: none; }
+  :root[data-type="b"] #card p { font-size: 1.08rem; line-height: 1.6; max-width: 40ch; }
+  :root[data-type="b"] #begin { border: 0; border-top: 1px solid rgba(255, 154, 92, 0.6); border-bottom: 1px solid rgba(255, 154, 92, 0.6); letter-spacing: 0.5em; padding: 0.6em 2.2em 0.62em 2.7em; }
+
+  /* C, the default: the private press. Set ragged on the left of the page like a private-press opening: the title in
+     Fell (its worn italic for "Fading") with a rubricated versal, Goudy to read with pilcrows in red, the imprint as a
+     colophon at the foot, the button a red-ink stamp (a rule and a hairline inside it). */
+  :root[data-type="c"] #card { align-items: flex-start; text-align: left; padding-left: max(24px, 11vw, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); background: radial-gradient(ellipse at 30% 60%, rgba(60, 14, 10, 0.72), rgba(8, 4, 8, 0.93) 70%); }
+  :root[data-type="c"] #card .kicker { order: 9; margin-top: 2.6em; font-family: var(--f-text); font-style: italic; text-transform: none; font-size: 0.9rem; letter-spacing: 0.04em; }
+  :root[data-type="c"] #card h1 { color: var(--ink); line-height: 0.95; font-size: clamp(3rem, 8.4vw, 6rem); letter-spacing: 0; text-shadow: 0 0 40px rgba(232, 89, 26, 0.25); }
+  :root[data-type="c"] #card h1 > span, :root[data-type="c"] #card h1 > em { display: inline; }
+  :root[data-type="c"] #card h1::first-letter { color: var(--ember); font-size: 1.36em; line-height: 0.8; }
+  :root[data-type="c"] #card h1 em { color: var(--wordmark); }
+  :root[data-type="c"] #card .orn-rule { display: none; }
+  :root[data-type="c"] #card .orn-leaf { display: none; }
+  :root[data-type="c"] #card p { max-width: 34ch; margin: 0.45em 0; }
+  :root[data-type="c"] #card h1 + .orn + p { margin-top: 1em; }
+  :root[data-type="c"] #card p.intro::before { content: '\00B6\2009'; color: var(--ember); }
+  :root[data-type="c"] #begin { font-size: 1.12rem; letter-spacing: 0.24em; padding: 0.5em 1.5em 0.55em 1.74em; border: 2px solid #c8471f; outline: 1px solid rgba(200, 71, 31, 0.55); outline-offset: -6px; color: #ffb27e; }
+  :root[data-type="c"] #begin:not(:disabled):hover { background: rgba(200, 71, 31, 0.22); color: var(--ink); box-shadow: none; }
+  :root[data-type="c"] #begin:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+  :root[data-type="c"] #begin:disabled { border-color: #c8471f; }
+  :root[data-type="c"] #load, :root[data-type="c"] #draglook { align-self: flex-start; }
+    @media (max-width: 700px) { :root[data-type="a"] #card p, :root[data-type="b"] #card p { font-size: 1.04rem; }
+    :root[data-type="b"] #card .kicker { white-space: nowrap; letter-spacing: 0.3em; margin-right: -0.3em; gap: 0.7em; } :root[data-type="b"] #card .kicker::before, :root[data-type="b"] #card .kicker::after { width: 1.4em; } }
+  @media (max-height: 800px) { #card p { margin: 0.4em 0; line-height: 1.45; } #begin { margin-top: 1.1em; } #card .keys { margin-top: 1.3em; } :root[data-type="a"] #card .orn-rule { margin: 0.4em 0 0.8em; } :root[data-type="a"] #card .orn-leaf { margin: 0.5em 0 0.35em; } }
   #card .paused-note { display: none; }
   #card.paused .paused-note { display: block; }
   #card.paused .intro { display: none; }
-  #begin { margin-top: 1.4em; font: inherit; font-size: 1.05rem; letter-spacing: 0.12em; padding: 0.7em 2.2em; color: var(--ink); background: transparent;
-    border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; transition: background 0.3s, border-color 0.3s; }
-  #begin:hover { background: rgba(232, 89, 26, 0.18); border-color: var(--wordmark); }
   #load { margin-top: 1.1em; width: min(20rem, 70vw); transition: opacity 0.8s; }
   #load .track { height: 1px; background: rgba(219, 170, 134, 0.28); }
   #load .fill { display: block; height: 100%; width: 0; background: var(--wordmark); box-shadow: 0 0 8px rgba(232, 89, 26, 0.5); transition: width 0.35s ease-out; }
@@ -45,20 +144,19 @@
   #draglook { margin-top: 0.9em; font: inherit; font-size: 0.85rem; font-style: italic; color: rgba(219, 170, 134, 0.7); background: none; border: 0; border-bottom: 1px dotted rgba(219, 170, 134, 0.4); padding: 0 0 1px; cursor: pointer; }
   #draglook:hover { color: var(--ink); }
   @media (hover: none) and (pointer: coarse) { #draglook { display: none; } }
-  #card .keys { margin-top: 2.2em; font-size: 0.9rem; color: rgba(219, 170, 134, 0.7); letter-spacing: 0.04em; }
-  kbd { font-family: inherit; border: 1px solid rgba(219,170,134,0.4); border-radius: 2px; padding: 0 0.4em; margin: 0 0.1em; }
   #place { position: fixed; left: 0; right: 0; bottom: calc(9vh + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transform: translateY(8px); transition: opacity 1.6s ease, transform 1.6s ease; pointer-events: none; z-index: 5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #place.shown { opacity: 1; transform: none; }
   body.touch #place { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 232px); } /* v12-C1: on touch, over the stick, the hop ring and the act's button (its top at 240 px), not under them */
   #card:not(.hidden) ~ #place { opacity: 0; } /* no place card behind the title or paused card */
-  #place-name { font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.18em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); }
-  #place-line { white-space: pre-line; max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(0.95rem, 1.6vw, 1.2rem); color: var(--muted); margin-top: 0.3em; line-height: 1.35; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
+  #place-name { font-family: var(--f-sc); font-size: clamp(1.3rem, 3vw, 2rem); letter-spacing: 0.2em; margin-right: -0.2em; color: var(--ink); text-shadow: 0 1px 12px rgba(0,0,0,0.8); font-kerning: normal; }
+  #place-name::after { content: ''; display: block; width: 4.5rem; height: 1px; margin: 0.4em auto 0.15em; background: linear-gradient(90deg, transparent, rgba(255, 154, 92, 0.75), transparent); } /* v17 type: a printer's rule between the name and its line */
+  #place-line { white-space: pre-line; max-width: 56ch; margin-inline: auto; text-wrap: balance; font-style: italic; font-size: clamp(1rem, 1.7vw, 1.25rem); color: #e8c09c; margin-top: 0.3em; line-height: 1.38; font-variant-numeric: oldstyle-nums; text-shadow: 0 1px 10px rgba(0,0,0,0.9); }
   /* v10 acts: the offer (src/v10/acts.js). Small and late: rises below the place card; on touch it is the button, above the stick */
-  #act { position: fixed; left: 50%; bottom: calc(3.2vh + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 6px); display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.9em; font: inherit; font-family: 'Alegreya SC', 'Alegreya', serif; font-size: clamp(0.95rem, 1.5vw, 1.15rem); letter-spacing: 0.16em; color: var(--ink); background: none; border: 0; text-shadow: 0 1px 10px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.9s ease, transform 0.9s ease; pointer-events: none; z-index: 6; white-space: nowrap; -webkit-tap-highlight-color: transparent; touch-action: none; }
+  #act { position: fixed; left: 50%; bottom: calc(3.2vh + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 6px); display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.9em; font: inherit; font-family: var(--f-sc); font-size: clamp(1rem, 1.6vw, 1.2rem); letter-spacing: 0.16em; color: var(--ink); background: none; border: 0; text-shadow: 0 1px 10px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.9s ease, transform 0.9s ease; pointer-events: none; z-index: 6; white-space: nowrap; -webkit-tap-highlight-color: transparent; touch-action: none; }
   #act.shown { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   #card:not(.hidden) ~ #act, body:has(#settings.shown) #act { opacity: 0; visibility: hidden; transition: none; pointer-events: none; } /* gone at once behind a card or the panel */
   #act svg { width: 0.9em; height: 0.9em; stroke: var(--wordmark); flex: none; }
-  #act kbd { font-family: 'Alegreya', serif; font-size: 0.75em; letter-spacing: 0; color: var(--muted); border-color: rgba(219,170,134,0.35); }
+  #act kbd { font-size: 0.82em; letter-spacing: 0; color: var(--wordmark); padding: 0 0.35em; border: 1px solid rgba(255, 154, 92, 0.4); border-radius: 0; }
   body.touch #act { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 172px); min-height: 48px; padding: 0.3em 1.2em; border: 1px solid rgba(217, 205, 180, 0.32); border-radius: 24px; background: rgba(11, 6, 9, 0.28); }
   body.touch #act kbd { display: none; }
   body.touch #act.held { background: rgba(217, 205, 180, 0.16); }
@@ -104,20 +202,22 @@
   #settings { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 4, 8, 0.55); z-index: 14; padding: 16px; box-sizing: border-box; }
   #settings.shown { display: flex; }
   #settings-panel { width: min(26rem, 100%); max-height: min(40rem, 100%); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box; padding: 14px 18px 18px; outline: none;
-    background: rgba(11, 6, 9, 0.9); border: 1px solid rgba(255, 154, 92, 0.4); border-radius: 2px; color: var(--ink); }
+    background: rgba(11, 6, 9, 0.92); border: 3px double rgba(255, 154, 92, 0.38); border-radius: 0; color: var(--ink); font-variant-numeric: oldstyle-nums; }
   #settings-panel header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2em; }
   #settings-panel .set-keys { margin: 0.5em 0 0; font-size: 0.82rem; line-height: 1.7; color: rgba(219, 170, 134, 0.7); letter-spacing: 0.03em; }
-  #settings-panel .set-keys kbd { font: inherit; padding: 0 0.3em; border: 1px solid rgba(219, 170, 134, 0.35); border-radius: 2px; }
+  #settings-panel .set-keys kbd { font-family: var(--f-sc); color: var(--wordmark); letter-spacing: 0.08em; padding: 0 0.06em; border: 0; }
   @media (hover: none) and (pointer: coarse) { #settings-panel .set-keys { display: none; } } /* a phone has no keys: the stick, the hop ring and the offer are on the screen */
-  #settings-panel h2 { margin: 0; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 1.15rem; letter-spacing: 0.18em; color: var(--wordmark); }
-  #settings-panel h3 { margin: 1.1em 0 0.35em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 0.8rem; letter-spacing: 0.2em; color: rgba(217, 205, 180, 0.55); }
+  #settings-panel h2 { margin: 0; font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: 1.7rem; letter-spacing: 0; color: var(--wordmark); }
+  #settings-panel h3 { display: flex; align-items: center; gap: 0.8em; margin: 1.1em 0 0.35em; font-family: var(--f-sc); font-weight: 400; font-size: 0.86rem; letter-spacing: 0.24em; color: rgba(226, 200, 170, 0.72); }
+  #settings-panel h3::after { content: ''; flex: 1; border-top: 1px solid rgba(255, 154, 92, 0.2); } /* v17 type: a head runs into a hairline, as in a book's contents */
+  #settings-panel kbd { font-family: var(--f-sc); }
   #settings-panel button { font: inherit; font-size: 0.95rem; min-height: 44px; padding: 0.3em 1em; color: var(--ink); background: transparent; border: 1px solid rgba(255, 154, 92, 0.4); border-radius: 2px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   #settings-panel button:hover { background: rgba(232, 89, 26, 0.14); }
   #settings-panel button[aria-pressed="true"], #settings-panel button[aria-checked="true"] { background: rgba(232, 89, 26, 0.28); border-color: var(--wordmark); }
   .set-row { display: flex; align-items: center; gap: 12px; }
   .set-row input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--wordmark); touch-action: manipulation; }
   .set-row .set-label { flex: 1; font-size: 0.95rem; }
-  .set-row output { min-width: 2.4em; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .set-row output { min-width: 2.4em; text-align: right; font-variant-numeric: lining-nums tabular-nums; color: var(--muted); }
   .set-choice { display: flex; gap: 8px; }
   .set-choice button { flex: 1; }
   .set-note { margin: 0.4em 0 0; font-style: italic; font-size: 0.85rem; color: rgba(219, 170, 134, 0.6); }
@@ -127,7 +227,7 @@
   .set-part label { flex: 0 0 7.4em; font-size: 0.85rem; line-height: 1.1; color: rgba(217, 205, 180, 0.72); }
   .set-part label small { display: block; font-size: 0.72rem; font-style: italic; color: rgba(219, 170, 134, 0.55); }
   .set-part input[type="range"] { flex: 1; min-width: 0; height: 44px; margin: 0; accent-color: var(--wordmark); opacity: 0.72; touch-action: manipulation; }
-  .set-part output { min-width: 2.4em; text-align: right; font-size: 0.8rem; font-variant-numeric: tabular-nums; color: rgba(219, 170, 134, 0.6); }
+  .set-part output { min-width: 2.4em; text-align: right; font-size: 0.8rem; font-variant-numeric: lining-nums tabular-nums; color: rgba(219, 170, 134, 0.6); }
   .set-part-sub { padding-left: calc(6.3rem + 10px); }
   .set-part-sub .set-choice { gap: 6px; }
   #settings-panel .set-part-sub button { flex: 1; font-size: 0.82rem; padding: 0.2em 0.3em; color: rgba(255, 233, 219, 0.8); border-color: rgba(255, 154, 92, 0.28); }
@@ -135,8 +235,8 @@
   .set-dim { opacity: 0.38; transition: opacity 0.3s; }
   @media (max-width: 420px) { .set-part-sub { padding-left: 0; } }
   #set-pos { font-family: ui-monospace, monospace; font-size: 0.8rem; color: rgba(217, 205, 180, 0.75); margin: 0 0 0.2em; min-height: 1.2em; }
-  #set-places h4 { grid-column: 1 / -1; margin: 0.7em 0 0.1em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 0.72rem; letter-spacing: 0.2em; color: rgba(217, 205, 180, 0.5); }
-  #posline { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); display: none; font-family: 'Alegreya', serif; font-size: 0.8rem; letter-spacing: 0.06em; color: rgba(219,170,134,0.45); text-shadow: 0 1px 6px rgba(0,0,0,0.8); pointer-events: none; z-index: 5; }
+  #set-places h4 { grid-column: 1 / -1; margin: 0.7em 0 0.1em; font-family: var(--f-sc); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.22em; color: rgba(226, 200, 170, 0.62); }
+  #posline { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); display: none; font-family: var(--f-text); font-size: 0.8rem; letter-spacing: 0.06em; color: rgba(219,170,134,0.45); text-shadow: 0 1px 6px rgba(0,0,0,0.8); pointer-events: none; z-index: 5; }
   #posline.shown { display: block; }
   #set-places { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #set-places button { text-align: left; font-size: 0.9rem; line-height: 1.15; }
@@ -152,15 +252,15 @@
   #dbg-list button { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 5px 10px; font: inherit; color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }
   #dbg-list button:hover, #dbg-list button:active { background: rgba(217, 205, 180, 0.12); }
   #dbg-list kbd { flex: none; min-width: 1.1em; text-align: center; font-family: ui-monospace, monospace; font-size: 0.72rem; color: rgba(217, 205, 180, 0.6); border: 1px solid rgba(217, 205, 180, 0.3); border-radius: 2px; padding: 0 0.3em; margin: 0; }
-  #dbg-list .dbg-head { padding: 6px 10px 2px; font-family: 'Alegreya SC', 'Alegreya', serif; font-size: 0.75rem; letter-spacing: 0.18em; color: rgba(217, 205, 180, 0.5); border-top: 1px solid rgba(217, 205, 180, 0.15); }
+  #dbg-list .dbg-head { padding: 6px 10px 2px; font-family: var(--f-sc); font-size: 0.75rem; letter-spacing: 0.18em; color: rgba(217, 205, 180, 0.5); border-top: 1px solid rgba(217, 205, 180, 0.15); }
   #dbg-list button.off span { opacity: 0.45; }
   /* profiler overlay (perf.js): top-left, under the hint line */
-  #perf { position: fixed; top: calc(44px + env(safe-area-inset-top, 0px)); left: calc(10px + env(safe-area-inset-left, 0px)); max-width: calc(100vw - 20px); display: none; margin: 0; padding: 6px 9px; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.74rem; line-height: 1.35; color: rgba(255, 233, 219, 0.82); background: rgba(11, 6, 9, 0.5); border: 1px solid rgba(217, 205, 180, 0.18); border-radius: 2px; z-index: 11; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+  #perf { position: fixed; top: calc(44px + env(safe-area-inset-top, 0px)); left: calc(10px + env(safe-area-inset-left, 0px)); max-width: calc(100vw - 20px); display: none; margin: 0; padding: 6px 9px; white-space: pre-wrap; font-family: var(--f-text); font-variant-numeric: tabular-nums; font-size: 0.74rem; line-height: 1.35; color: rgba(255, 233, 219, 0.82); background: rgba(11, 6, 9, 0.5); border: 1px solid rgba(217, 205, 180, 0.18); border-radius: 2px; z-index: 11; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
   #perf.shown { display: block; }
   body:has(#perf-bench) #perf.shown { display: none; } /* the overlay steps aside for a finished bench's panel */
   #perf-bench { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box; padding: 14px 18px 0; background: #0b0609; border: 1px solid rgba(255, 154, 92, 0.45); border-radius: 2px; color: var(--ink); z-index: 15; }
-  #perf-bench h2 { margin: 0 0 0.4em; font-family: 'Alegreya SC', 'Alegreya', serif; font-weight: 400; font-size: 1.1rem; letter-spacing: 0.18em; color: var(--wordmark); }
-  #perf-bench pre { margin: 0; white-space: pre-wrap; font-family: 'Alegreya', Georgia, serif; font-variant-numeric: tabular-nums; font-size: 0.85rem; line-height: 1.45; color: var(--muted); }
+  #perf-bench h2 { margin: 0 0 0.4em; font-family: var(--f-sc); font-weight: 400; font-size: 1.1rem; letter-spacing: 0.18em; color: var(--wordmark); }
+  #perf-bench pre { margin: 0; white-space: pre-wrap; font-family: var(--f-text); font-variant-numeric: tabular-nums; font-size: 0.85rem; line-height: 1.45; color: var(--muted); }
   #perf-bench .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; position: sticky; bottom: 0; z-index: 1; padding: 10px 0 14px; background: #0b0609; } /* the buttons stay in reach while the summary scrolls */
   #perf-bench button { font: inherit; font-size: 0.9rem; min-height: 44px; padding: 0.35em 1.1em; touch-action: manipulation; color: var(--ink); background: transparent; border: 1px solid rgba(255, 154, 92, 0.6); border-radius: 2px; cursor: pointer; }
   #perf-bench button:hover { background: rgba(232, 89, 26, 0.18); }
@@ -171,7 +271,9 @@
 <canvas id="scene"></canvas>
 <div id="card">
   <div class="kicker">fading planet · a wilderness</div>
-  <h1>Below a <em>Fading</em> Star</h1>
+  <div class="orn orn-rule" aria-hidden="true"><svg viewBox="0 0 240 12" width="100%" fill="none" stroke="currentColor"><path d="M0 4.2h107M133 4.2h107" stroke-width="1.8"/><path d="M0 8.4h107M133 8.4h107" stroke-width="0.7"/><path d="M120 0.6l8 5.7-8 5.7-8-5.7z" fill="currentColor" stroke="none"/></svg></div>
+  <h1><span class="w-below">Below a</span> <em>Fading</em> <span class="w-star">Star</span></h1>
+  <div class="orn orn-leaf" aria-hidden="true"><svg viewBox="0 0 62 30" fill="currentColor"><path d="M23 15C19 6 31 1.5 39 6c7 4 13 7.5 21 9-8 1.5-14 5-21 9-8 4.5-20 0-16-9z"/><path d="M23 15c-7 0-15-2-18-8-1.6-3.3 1-6 3.6-4.6 2 1 1.6 3.6-.2 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M27 15h22" fill="none" stroke="#0b0609" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/></svg></div>
   <p class="intro">You wake at the gate of a keep that has outlived its name, at the center of a valley strewn with past ages of a dying earth.</p>
   <p class="intro">The swollen sun lies heavy in the western sky; too tired to rise, too prideful to set. When its ancient flame gutters, the valley floor and things above it shudder in response.</p>
   <p class="paused-note">The moor has gone dark. Reload the page to go back out.</p><!-- shown only on a GPU reset (hud.js); the pause is the settings panel -->

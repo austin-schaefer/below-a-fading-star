@@ -24,8 +24,8 @@
 //   second turns the worker off. A page the worker cannot place (no binding) gets the same; a request with no
 //   client at all passes through, unkept.
 // - Kept: only full 200 same-origin answers (no 206, no redirect, no error) for the page, src/, vendor/ and the two
-//   icons, whose stamp matches; never commit.json, sw.js, a query string, anything cross-origin (the fonts keep
-//   to the HTTP cache). A fetch that fails or is cut off mid-body is not kept (cache.put rejects). The page is kept
+//   icons, whose stamp matches; never commit.json, sw.js, a query string, anything cross-origin (there is none: the
+//   type is vendor/fonts/). A fetch that fails or is cut off mid-body is not kept (cache.put rejects). The page is kept
 //   once, under the scope's URL, whatever its query.
 // - A first visit is not controlled (no clients.claim), so it is exactly as before. After it is ready, the page
 //   sends the list of what it fetched ('fp-fill', from resource timing); the worker reads each from the HTTP cache

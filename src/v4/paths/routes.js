@@ -77,7 +77,7 @@ export const LEADS = [
   { id: 'P35', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the spit to the bay', pts: [[-42, 150], [-50, 166]] },
   { id: 'P36', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out along the spit', pts: [[-42, 150], [-55, 148], [-66, 143]] },
   { id: 'P37', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the Sward to the tarn', pts: [[-36, 44], [-40, 62]] },
-  { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [2, 237], [-18, 231], [-36, 246]] },
+  { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [3.2, 251.2], [2, 237], [-18, 231], [-36, 246]] }, // v17 W2: over the leat's slab bridge (its west foot at (3.2, 251.2))
   { id: 'P39', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the reed gap north round the Span\'s pier to the rim way', slabs: true, pts: [[125, 205], [133, 186], [150, 166], [176, 146]] },
   { id: 'P40', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the foot of the Span\'s fallen bay, looking over the canyon (the rim beyond is reached by P13, from the worn crust)', pts: [[176, 146], [170, 162], [166, 176]] },
   { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [42, -38.2], [44.1, -41.2], [46.3, -45.8], [50, -44], [60, -40.6], [70.5, -36.4]] }, // v15: round the Strake's west end (a stride clear of its first plot) and along its fronts to P9

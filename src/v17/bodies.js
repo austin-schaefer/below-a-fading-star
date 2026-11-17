@@ -1,15 +1,16 @@
 // v17's water on the ground (W1): the bodies the kit (stream.js) makes from the plan (plan.js), and the three calls the
 // height path makes behind the one box test (field.js: heightRaw, biomeWith, waterLevelAt). Pure, three-free.
 // Order matters in the ground: the mere first, then what runs out of it and into it (the cut, the brook), so a stream's
-// bank cut down to its level wins over the mere's lip where the two meet. W2's leat goes in STREAMS after the brook.
-import { BOX, MERE, BROOK, SWALLOW_CUT } from './plan.js';
+// bank cut down to its level wins over the mere's lip where the two meet. W2's leat is in STREAMS after the brook.
+import { BOX, MERE, BROOK, SWALLOW_CUT, LEAT } from './plan.js';
 import { makeStream, makeStill } from './stream.js';
 
 export const MERE_BODY = makeStill({ name: 'mere', y: MERE.level, D: MERE.D, bank: MERE.bank, end: MERE.end, bankSouth: MERE.bankSouth, shoals: MERE.shoals, outline: MERE.outline });
 export const BROOK_BODY = makeStream({ name: 'brook', ...BROOK });
 export const CUT_BODY = makeStream({ name: 'swallow-cut', ...SWALLOW_CUT });
+export const LEAT_BODY = makeStream({ name: 'leat', ...LEAT }); // W2: the Heliarchs' leat out of the fen (its kerbs, weirs and bridge: src/v17/leat.js)
 export const STILLS = [MERE_BODY];
-export const STREAMS = [BROOK_BODY, CUT_BODY];
+export const STREAMS = [BROOK_BODY, CUT_BODY, LEAT_BODY];
 const ALL = [...STILLS, ...STREAMS];
 
 export const inV17Box = (x, z) => x >= BOX.x0 && x <= BOX.x1 && z >= BOX.z0 && z <= BOX.z1;

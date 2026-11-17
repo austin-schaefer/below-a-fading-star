@@ -15,7 +15,7 @@ Below a Fading Star is a static site: one `index.html`, ES modules under `src/`,
 ## What ships
 
 - Only what the page loads: `index.html`, `sw.js`, `src/`, `vendor/`, the two icons, a generated `commit.json` (`{"commit":"<short hash>"}`) and a generated `_headers` that stamps every response with the same hash (`X-Fp-Commit`). The build command in `netlify.toml` copies them into `_site/` (gitignored) and publishes that. Docs, briefs, tools, skills and `shots/` never reach the CDN.
-- The page loads Three.js from `./vendor/three/` through an import map in `index.html`; nothing is fetched from a CDN. The only external request is Google Fonts (Alegreya), which degrades to a serif fallback if blocked.
+- The page loads Three.js from `./vendor/three/` through an import map in `index.html`; nothing is fetched from a CDN. The type is vendored too (`vendor/fonts/`, SIL OFL faces with their licences), so the page makes no third-party request.
 - No environment variables, no secrets, no functions, no forms. Keep it that way: the repository is public and so is every build log.
 - Headers on every path (`netlify.toml`): `X-Robots-Tag: noindex, nofollow`, `X-Content-Type-Options: nosniff`, a `Referrer-Policy` and a `Permissions-Policy` that turns off camera, microphone, geolocation, payment and USB; `X-Fp-Commit` from the build's `_headers`; `Cache-Control: no-cache` on `/sw.js` and `/commit.json`, so both are asked again on every visit.
 

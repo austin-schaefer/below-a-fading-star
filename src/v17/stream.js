@@ -29,6 +29,10 @@ const _p = { i: 0, f: 0, s: 0, d: 0, dist: 0, hw: 0, ok: false };
 
 export function makeStream(def) {
   const { name, pts, levels, bank = 0.45, wob = 0.14, reach = 8 } = def;
+  // a built channel (W2's leat) gives its own edge and lip: `rag` the edge's slow wander (m; 0 for a kerbed line),
+  // `lipW` / `lipFall` its lip's top and the fall of its bank beyond (an embankment), `minSpeed` the slowest it runs
+  const RAG = def.rag ?? 0.25, LW = def.lipW ?? LIP_W, LF = def.lipFall ?? LIP_FALL, VMIN = def.minSpeed ?? 0.12;
+  const SW = def.speedWin ?? 8; // the speed reads the fall over ±SW samples (a weir's ponds are slow right up to the sill: 2)
   // `banks`: [x, z, k] stations for a bank that steepens along the stream (a cut into a rising slope); `end`: a plane
   // { z, dir } past which the stream's ground does nothing (a face it stops square at: the Swallow's portal)
   // ---- the line: a centripetal-free (uniform) Catmull-Rom through the control points, resampled every STEP metres
@@ -83,14 +87,17 @@ export function makeStream(def) {
   for (let k = 0; k < n; k++) DROP[k] = (Y[Math.max(0, k - 2)] - Y[Math.min(n - 1, k + 2)]) / (Math.min(n - 1, k + 2) - Math.max(0, k - 2) || 1) / STEP;
   for (let k = 0; k < n; k++) {
     let r = 0;
-    for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 0) break; r = Math.max(r, Math.min(1, (DROP[i] - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
+    // (the white reads the fall into each sample from the one above it, not DROP's centred difference: that put foam a
+    // metre upstream of every lip, on the level water before the fall, a ruled bright band across the stream from 10 to
+    // 20 m upstream, the "render artifact" W1's readers saw)
+    for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 1) break; r = Math.max(r, Math.min(1, ((Y[i - 1] - Y[i]) / STEP - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
     ROUGH[k] = Math.max(0, r);
-    let g = 0; for (let j = -8; j <= 8; j++) g += DROP[Math.min(n - 1, Math.max(0, k + j))] / 17;
-    SPEED[k] = Math.min(1.9, Math.max(0.12, (0.1 + g * 32) * Math.min(1.6, 1.6 / HW[k])));
+    let g = 0; for (let j = -SW; j <= SW; j++) g += DROP[Math.min(n - 1, Math.max(0, k + j))] / (2 * SW + 1);
+    SPEED[k] = Math.min(1.9, Math.max(VMIN, (0.1 + g * 32) * Math.min(1.6, 1.6 / HW[k])));
     D[k] = Math.min(1.2, 0.45 + 0.08 * HW[k] + (g < 0.004 ? 0.25 : 0));
     // the edge wobbled on each side, slow along the stream
-    HWL[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, 3.7)) + 0.25 * SN.noise2(S[k] * 0.45, 11.1);
-    HWR[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, -5.3)) + 0.25 * SN.noise2(S[k] * 0.45, -8.9);
+    HWL[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, 3.7)) + RAG * SN.noise2(S[k] * 0.45, 11.1);
+    HWR[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, -5.3)) + RAG * SN.noise2(S[k] * 0.45, -8.9);
   }
   // where the lip is held: between the two `hold` points, eased in and out over 4 m
   const h0 = def.hold ? sOf(...def.hold[0]) : 0, h1 = def.hold ? sOf(...def.hold[1]) : L;
@@ -145,7 +152,7 @@ export function makeStream(def) {
     const W = at(Y, p), e = p.dist - p.hw, hold = at(HOLD, p);
     // the lip, where the stream holds its own water
     if (hold > 0 && e >= 0) {
-      const lo = W + LIP - LIP_FALL * (e > LIP_W ? e - LIP_W : 0);
+      const lo = W + LIP - LF * (e > LW ? e - LW : 0);
       if (h < lo) h += (lo - h) * hold;
     }
     // the bed under the water (a dish, its edge at the level) and the bank cut down to it
@@ -175,7 +182,7 @@ export function makeStream(def) {
     out.wet = Math.max(out.wet, (1 - smoothstep(0.5, 2.5 + 1.5 * n2, e)) * 0.45); // (more, and the sheen on the bank reads as water)
     return true;
   }
-  return { name, kind: 'stream', X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
+  return { name, kind: 'stream', shade: def.shade ?? 0, X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
     project, ground, wet, level, sd, paint, levelOfS, sOf };
 }
 

@@ -109,7 +109,9 @@ const res = await page.evaluate(async () => {
         const wet2 = t.slabs && (dep > -0.3 || T.waterDepthAt(x2, z2) > -0.3); // on the slabs, level whatever the bank does
         if (g > MAXG && !wet2) steep.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)}) ${g.toFixed(2)}`);
       }
-      if (dep > 0.3 && !t.slabs) wet.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)}) ${dep.toFixed(2)} m`);
+      // (v17 W2: a deck over the water holds the walker there, the leat's bridge: the walker's own floor over the water's level)
+      const decked = dep > 0.3 && fp.controls?.floorAt && fp.controls.floorAt(x, z, T.heightAt(x, z) + 1.2).y > T.heightAt(x, z) + dep;
+      if (dep > 0.3 && !t.slabs && !decked) wet.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)}) ${dep.toFixed(2)} m`);
       if (Math.hypot(x, z) > fp.mountains.walkLimit(x, z) + 0.01) outside.push(`${t.id}@(${x.toFixed(0)},${z.toFixed(0)})`);
     }
   }

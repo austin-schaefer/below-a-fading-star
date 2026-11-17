@@ -6,11 +6,13 @@
 //   down:   from the stream's start to its end, `step` m a frame (default 1.4), the eye on the bank `off` m out from the
 //           water's edge (default 2.2; `side` left|right of downstream, default left), looking down the stream and
 //           `turn` rad toward the water (default 0.45), pitch `pitch` (default -0.28)
+//   up:     as down, from its end to its start, looking up the stream (a weir's white water faces this way)
 //   across: at each station `at` (x,z;x,z: the nearest points of the stream), from `span` m one side to `span` m the other
 //           (default 9), `step` m a frame, looking the way it walks
 //   hold:   one stand `at` (x,z) with `yaw` and `pitch`, `n` frames (default 12) `ms` apart (the water moving, the eye still)
 //   opts as key=value after the mode: step, off, side, turn, pitch, at, span, ms (real ms between frames, default 1000:
 //   1.4 m a second is a walk), from, to (s range, metres along the stream)
+// The eye stands on the walker's floor there (the ground, or a deck over it: the leat's bridge), as controls.floorAt finds it.
 // Writes shots/wip/<prefix>-NNN.png (1280x720) and shots/wip/<prefix>-sheet-N.png. Holds the sun's guttering off.
 import { launch } from './launch.mjs';
 import { writeFileSync, readFileSync } from 'node:fs';
@@ -32,14 +34,15 @@ const stands = await page.evaluate(async ({ name, mode, O, step }) => {
   if (!st) throw new Error('no stream ' + name);
   const out = [], yawOf = (dx, dz) => Math.atan2(-dx, -dz);
   const atS = (s) => { const k = Math.max(0, Math.min(st.n - 1, Math.round(s / 0.5))); return k; };
-  if (mode === 'down') {
+  if (mode === 'down' || mode === 'up') {
     const side = O.side === 'right' ? -1 : 1, off = +(O.off ?? 2.2), turn = +(O.turn ?? 0.45), pitch = +(O.pitch ?? -0.28);
     const s0 = +(O.from ?? 0), s1 = +(O.to ?? st.length);
     for (let s = s0; s <= s1; s += step) {
       const k = atS(s), tx = st.TX[k], tz = st.TZ[k], hw = side > 0 ? st.HWL[k] : st.HWR[k];
       const d = side * (hw + off), x = st.X[k] + tz * d, z = st.Z[k] - tx * d;
-      out.push({ x, z, yaw: yawOf(tx, tz) + side * turn, pitch, s });
+      out.push({ x, z, yaw: mode === 'up' ? yawOf(-tx, -tz) - side * turn : yawOf(tx, tz) + side * turn, pitch, s });
     }
+    if (mode === 'up') out.reverse();
   } else if (mode === 'hold') {
     // one stand, `n` frames (default 12) `ms` apart: the water moving while the eye does not
     const [x, z] = (O.at || '').split(',').map(Number);
@@ -57,7 +60,7 @@ const stands = await page.evaluate(async ({ name, mode, O, step }) => {
 const files = [];
 for (let i = 0; i < stands.length; i++) {
   const v = stands[i];
-  await page.evaluate((v) => { const fp = window.__fp, p = fp.player; p.pos.set(v.x, fp.terrain.heightAt(v.x, v.z) + p.eye, v.z); p.yaw = v.yaw; p.pitch = v.pitch; if (p.vel) p.vel.set(0, 0, 0); }, v);
+  await page.evaluate((v) => { const fp = window.__fp, p = fp.player; const h = fp.terrain.heightAt(v.x, v.z), fl = fp.controls?.floorAt ? fp.controls.floorAt(v.x, v.z, h + 1.2).y : h; p.pos.set(v.x, Math.max(h, fl) + p.eye, v.z); p.yaw = v.yaw; p.pitch = v.pitch; if (p.vel) p.vel.set(0, 0, 0); }, v);
   await page.waitForTimeout(ms);
   const url = await page.evaluate(() => { const fp = window.__fp; fp.renderer.shadowMap.needsUpdate = true; fp.post.composer.render(); return document.getElementById('scene').toDataURL('image/png'); });
   const f = `shots/wip/${prefix}-${String(i).padStart(3, '0')}.png`;
