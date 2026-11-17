@@ -49,6 +49,12 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 10:46 PST. The owner on the moved sphere: the triangles are still there; and a payoff under the edge. S2's author resumed (round two).**
+
+- **The owner:** "still got weird triangles on its edge" (frame: `shots/wip/owner-v17-sphere-edge-triangles.png` in the deploy worktree: at 60 fps in Chrome, so not the low tier as S2 reported: a sawtooth of dark blue flat triangles 0.5 to 2 m across between the bank and the earth skin inside the glass, all along the rim) and "i think it needs some additional visual "payoff" for going to edge. something at bottom that hints at its purpose or otherwise gives you a lore reveal for finding the edges wher eyou can see the bottom of the sphere".
+- **Round two** (S2's agent resumed, opus, `issue-1724-sphere-under`, 8177, 60 min): the triangles at their cause with no sawtooth at any tier; and under the earth line, seen only from the rim looking down, the works: the wheel's spindle down to a shut valve in the mouth of the conduit that leaves toward the Garth, a blade of noon light leaking round it, and one human thing that tells how long. Emissive only, calls within 4.
+- In flight: F3 (`issue-1721-critic-fixes`, 8176), S2 round two (above).
+
 **2026-11-17, 10:41 PST. G1 and S2 merged: the Garth's spout; the sphere on the east moor. F3 still out.**
 
 - **G1 merged** (opus, 33 min; `briefs/v17/reports/issue-1723-garth-rill.md`; `src/v17/garth/water.js`, `plan.js`): the owner's white card was the inlet's fall, a 0.22 by 1.1 m strip in an opaque shader mixed to near white; the two dark quads a "bronze lip" of an underside and a back plate with no top and no thickness. Now `spout()`: a coursed block with a cap, a slot and a trough on a corbel, and the fall two crossed see-through ribbons on an arc with a boil and rings. One inlet in the hall; the drain has thickness and is unchanged. Calls at the stand 196 before and after. Reader: "a wall-mounted stone fountain spout ... Not a flat card". Plain still (no moss, no carving). Its `audio` run did not finish (unconfirmed until the gate).
