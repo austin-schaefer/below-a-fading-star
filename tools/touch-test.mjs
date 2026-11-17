@@ -123,6 +123,24 @@ if (offerUp) {
   check('offer: a drag starting just above it looks', s.lookId === 9 && s.yaw !== y0 && s.moveId === null, s);
   await touch('touchEnd', []);
   await page.evaluate(() => window.__fp.acts.forget());
+  // v16-V1: the Lappet's act, "Take his letter" at the Lagan's hatch (src/v15/people/letter.js), offered and tapped
+  const lagan = await page.evaluate(async () => {
+    const fp = window.__fp;
+    for (let i = 0; i < 400 && !fp.storyActs?.lagan; i++) await new Promise((r) => setTimeout(r, 150));
+    const L = fp.storyActs?.lagan; if (!L) return null;
+    const s = L.stand(2.0); fp.controls.placeAt(s.x, s.z); fp.player.yaw = s.yaw; fp.player.pitch = s.pitch; fp.player.vel.set(0, 0, 0);
+    for (let i = 0; i < 40 && fp.acts.offered?.def.id !== 'lagan-letter'; i++) await new Promise((r) => setTimeout(r, 150));
+    return fp.acts.offered?.def.id || 'none';
+  });
+  check('offer: "Take his letter" up at the Lagan\'s hatch on touch', lagan === 'lagan-letter', lagan);
+  if (lagan === 'lagan-letter') {
+    const lb = await box('#act'), lc = [(lb.l + lb.r) / 2, (lb.t + lb.b) / 2];
+    await touch('touchStart', [[10, lc[0], lc[1]]]); await touch('touchEnd', []);
+    await page.waitForTimeout(600);
+    const r = await page.evaluate(() => ({ n: window.__fp.acts.count('lagan-letter'), ...window.__fp.storyActs.lagan.state() }));
+    check('offer: a tap takes his letter (counted, the clerk giving it)', r.n === 1 && r.g >= 0, r);
+    await page.evaluate(() => window.__fp.acts.forget());
+  }
 }
 
 // 4. the stale identifier (mobile Safari): synthetic TouchEvents with full control of the lists

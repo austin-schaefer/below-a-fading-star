@@ -237,6 +237,7 @@ export const SQUARES = [
 // Each: { name, kind, hand, from, to (level keys), run, s, D0, D1 (its line in the run frame), note }. The kits in
 // src/v15/ways/ build them from these records; a quarter adds its own with the same kit and a record of its own.
 export const STAIR = { run: 1, s: 31, width: 3 }; // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
+export const HEAD_POST = 2.1; // (v16-V1) the head's two lamp posts stand this far either side of the axis on the crown's brink; the kerb leaves them half a metre more (src/v15/ways/index.js)
 // (v15-W7) the crown's kerb: Elder blocks along the rim (its centre `D`), waist-high and walled, wherever the drop over
 // the rim is more than 1.2 m and no way goes down (the cold critic walked off the crown from the keep's end without
 // meeting the stair's head). It stops for what already stands on the brink: `clear` is [run, s0, s1, why].
@@ -539,8 +540,8 @@ export const LAMPS = [
   // (v15-W7, the cold critic: "no light marks the stairs") the spine's heads and feet each lit: two posts framing the
   // gap in the crown's kerb where the head is (seen from the keep's end, 20 m off), two at the head's foot, and brackets
   // on the Rungs' end walls by the upper flight's foot and the timber patch's
-  lampAt('head-post-west', 'post', at(1, STAIR.s - 2.1, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
-  lampAt('head-post-east', 'post', at(1, STAIR.s + 2.1, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
+  lampAt('head-post-west', 'post', at(1, STAIR.s - HEAD_POST, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
+  lampAt('head-post-east', 'post', at(1, STAIR.s + HEAD_POST, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
   // (v16-V1) the head's foot, framed on the causeway by two posts either side of its splayed treads, arms in over them
   lampAt('head-foot-west', 'post', at(1, STAIR.s - 2.5, -1.0), LEVEL.high.y, RUNS[1].dir, { k: 1.3, reach: 0.8, note: 'west of the head flight\'s foot on the causeway, its arm over the bottom treads: from the upper flight\'s head the way on up is lit either side' }),
   lampAt('head-foot-east', 'post', at(1, STAIR.s + 2.5, -1.0), LEVEL.high.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, reach: 0.8, note: 'its fellow east of the foot' }),
@@ -552,8 +553,8 @@ export const LAMPS = [
 
 // ---------------------------------------------------------------- the spine (v15-W4)
 // The one obvious way through the village, from the keep's end to the Pomegranate House: the masons' court on the
-// crown, the Heliarch stair straight down its axis (the head's west flight, the upper flight, the Late timber patch,
-// the foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
+// crown, the Heliarch stair straight down its axis (the head flight, the upper flight, the Late timber patch, the
+// foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
 // south door. Every other way is a branch off it. `ways` are registered ascents walked in order (each from the end
 // nearer the last point); `pts` are [x, z, level] between them. tools/ways-plan.mjs draws it; tools/ways-test.mjs
 // checks it is joined, lit (a lamp within 9 m of every 3 m of it) and never narrower than 1.5 m.
