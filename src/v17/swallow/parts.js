@@ -89,9 +89,11 @@ export function buildParts(ctx, L) {
   // ---- the saddles: dressed blocks the tube was laid in, every 5.5 m; and the collars where its lengths join
   const tubeR = A.outer;
   for (let s = S0 + 2; s < S1 - 1; s += 5.5) {
-    const f = frameAt(s), yb = f.y - CH.below, top = f.ax - tubeR * 0.55;
+    // a bed block under the belly (its top a hand under the glass) and a cheek either side, clear of the glass's curve
+    const f = frameAt(s), yb = f.y - CH.below, top = f.ax - tubeR - 0.03, cheek = f.ax - 1.02;
     const yaw = Math.atan2(f.tx, f.tz);
-    S.box(f.x, (yb + top) / 2, f.z, 1.7, (top - yb) / 2, 0.45, yaw, STONE_D, STONE, 0.1);
+    S.box(f.x, (yb + top) / 2, f.z, 1.0, (top - yb) / 2, 0.45, yaw, STONE_D, STONE, 0.1);
+    for (const sd of [-1, 1]) { const u = sd * 1.85; S.box(f.x + f.r.x * u, (yb + cheek) / 2, f.z + f.r.z * u, 0.3, (cheek - yb) / 2, 0.42, yaw, STONE_D, STONE, 0.1); }
   }
   const putCollar = (s, glaze) => {
     if (!strata) return;
@@ -284,6 +286,52 @@ export function buildParts(ctx, L) {
   const ds = new THREE.Vector2();
   const update = () => { ctx.renderer.getDrawingBufferSize(ds); mmat.uniforms.uPx.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5)); };
 
+  // ---- the bubbles: strings of them rising off the floor beside the tube and off the tube's crown at its collars (air
+  // still working out of the old joints), wobbling as they go, gone at the vault or the surface
+  const NB = low ? 26 : 44, PER = 7;
+  const bpos = [], bA = [];
+  for (let i = 0; i < NB; i++) {
+    const crown = rng() < 0.4, s = crown ? 4.6 + 4.2 * Math.floor(rng() * ((L.LEN - 6) / 4.2)) : 17 + rng() * (S1 - 19);
+    if (s < 15) continue;
+    const f = frameAt(s), u = crown ? (rng() - 0.5) * 0.5 : (rng() < 0.5 ? -1 : 1) * (2.15 + rng() * 1.1);
+    const y0 = crown ? f.ax + tubeR + 0.08 : f.y - CH.below + 0.05, top = Math.min(W - 0.08, f.y - CH.below + CH.spring + CH.half * Math.sqrt(Math.max(0, 1 - (u / CH.half) ** 2)) - 0.1);
+    if (top - y0 < 0.6) continue;
+    const speed = 0.45 + rng() * 0.4, ph = rng();
+    for (let k = 0; k < PER; k++) { bpos.push(f.x + f.r.x * u, y0, f.z + f.r.z * u); bA.push(top - y0, speed, (ph + k / PER + rng() * 0.05) % 1, 0.6 + rng() * 0.8); }
+  }
+  const bg = new THREE.BufferGeometry();
+  bg.setAttribute('position', new THREE.Float32BufferAttribute(bpos, 3));
+  bg.setAttribute('aB', new THREE.Float32BufferAttribute(bA, 4));
+  const bmat = new THREE.ShaderMaterial({
+    uniforms: { ...SW, uPx: mmat.uniforms.uPx },
+    vertexShader: /* glsl */`
+      uniform float uSwT, uPx; uniform vec2 uSwFlow;
+      attribute vec4 aB; // the rise, speed, phase, size
+      varying vec3 vW; varying float vA;
+      void main() {
+        float f = fract(uSwT * aB.y / aB.x + aB.z), h = f * aB.x;
+        vec3 w = position + vec3(sin(uSwT * 7.0 + aB.z * 40.0) * 0.03 + uSwFlow.x * h * 0.12, h, cos(uSwT * 6.0 + aB.z * 31.0) * 0.03 + uSwFlow.y * h * 0.12);
+        vW = w; vA = smoothstep(0.0, 0.04, f) * (1.0 - smoothstep(0.9, 1.0, f));
+        vec4 mv = viewMatrix * vec4(w, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = clamp(uPx * 0.07 * aB.w * (0.8 + 0.4 * f) / -mv.z, 2.0, 16.0);
+      }`,
+    fragmentShader: /* glsl */`
+      ${SW_GLSL}
+      varying vec3 vW; varying float vA;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5; float d = length(c); if (d > 0.5) discard;
+        // a bubble: a bright rim, a clear middle, a glint up and to one side
+        float rim = smoothstep(0.32, 0.45, d) * (1.0 - smoothstep(0.45, 0.5, d)), glint = 1.0 - smoothstep(0.0, 0.12, length(c - vec2(-0.14, -0.14)));
+        vec3 col = vec3(0.75, 0.9, 0.82) * (0.5 + swLight(vW) * 30.0) * (rim + glint * 1.4);
+        vec3 mid; float p = swPath(vW, mid);
+        gl_FragColor = vec4(swWater(col, vW), vA * max(rim, glint) * exp(-p * 0.18));
+      }`,
+    transparent: true, depthWrite: false,
+  });
+  const bubbles = new THREE.Points(bg, bmat);
+  bubbles.name = 'swallow-bubbles'; bubbles.frustumCulled = false; bubbles.renderOrder = 1;
+
   // ---- the lights: the nearest three of these are live (lights.js); the lenses' noon, the door's
   const lights = [];
   const addLight = (p, hex, i, d) => { const Lt = new THREE.PointLight(new THREE.Color(hex), i, d, 2); Lt.position.set(p.x, p.y, p.z); Lt.name = 'swallow-light'; lights.push({ L: Lt, i, ph: p.x * 0.37 }); };
@@ -296,5 +344,5 @@ export function buildParts(ctx, L) {
   lamp(noon, nl, 0.05, 7);
   lamp(dawn, new THREE.Color('#d9805a'), 0.05, 7);
 
-  return { meshes: [stone, wood, glass, weed, motes], lights, update, lenses, frameAt };
+  return { meshes: [stone, wood, glass, weed, motes, bubbles], lights, update, lenses, frameAt };
 }

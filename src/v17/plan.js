@@ -124,29 +124,21 @@ export const SWALLOW = {
 };
 // The aqueduct: the Heliarchs' vaulted conduit from the head's east wall to the Garth's west wall, drowned (its crown
 // goes under the pool's level 10 m in), and the Noonwrights' tube laid down it on stone saddles. One centreline for
-// both (`tube`): plan points [x, z], resampled by src/v17/swallow/line.js (straight, a quarter turn of radius `turn`
-// about the corner, straight). `profile` is the planks' line inside the tube, [s, y] (s metres along from the lip),
+// both (`tube`): plan points [x, z], resampled by src/v17/swallow/line.js (straights, each corner rounded to its
+// radius in `turn`). `profile` is the planks' line inside the tube, [s, y] (s metres along from the lip),
 // eased between; the tube's axis is `axisUp` over the planks, its bore `bore`, its outside `outer`.
 export const AQUEDUCT = {
   from: SWALLOW.portal,
   to: [-30, 318],         // the Garth's west door
   z: [311, 318.5],        // under the apron, 10 to 30 m under the ground
   floorEnd: -24,          // the planks reach the door's sill at -24
-  tube: [[-90.5, 306.5], [-90.5, 318.5], [-29.6, 318]], // the lip on the quay; the corner; the end in the Garth's wall
-  turn: 5,                // the corner's radius
-  profile: [[0, -5.9], [5, -5.9], [20, -12.65], [68.5, -23.9], [70.6, -24]], // level on the quay and through the face, a steep stair down the head, the long fall down the conduit, level into the door
+  // the lip on the quay; the corner in the head; a bend 9 m short of the door, so the last length runs in on the door's
+  // own line (U2's GARTH_DOOR.dir, radial to the hall); the end at the wall's outer face (GARTH_DOOR.face)
+  tube: [[-90.5, 306.5], [-90.5, 318.5], [-40.0, 316.0], [-31.18, 317.76]],
+  turn: [5, 8],           // each corner's radius
+  profile: [[0, -5.9], [5, -5.9], [20, -12.65], [66, -23.9], [67.5, -24]], // level on the quay and through the face, a steep stair down the head, the long fall down the conduit, level into the door
   axisUp: 1.1, bore: 1.65, outer: 1.75,
   conduit: { half: 3.6, spring: 2.6, below: 1.15 }, // its walls from the tube's line (half-width), the vault's springing over its floor, its floor under the planks
-};
-// The door between them (U1 brings the tube to it; U2 builds the wall and the hall's floor round it): the tube's end
-// is a round hole in the Garth's west wall, its axis level and running east (+x), its plank floor at the sill.
-export const GARTH_DOOR = {
-  x: -29.6, z: 318,       // where the tube's glass ends: the hall's inner wall face (r 20 from (-10, 322) at z 318 is x -29.6)
-  sill: -24,              // the planks' level at the door, the hall's floor
-  axis: -22.9,            // the tube's axis (sill + axisUp)
-  rOut: 1.75,             // the glass's outside: the hole in the wall is at least this (U2 frames it)
-  dir: [1, 0],            // the way into the hall
-  bulkhead: -31.6,        // the conduit's east end (a Heliarch wall the tube passes through); between it and x the tube is in U2's wall
 };
 
 // ---------------------------------------------------------------- U2: the Meridian Garth (the table's)

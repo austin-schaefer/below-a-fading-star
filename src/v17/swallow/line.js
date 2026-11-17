@@ -2,6 +2,7 @@
 // Plan points from src/v17/plan.js (AQUEDUCT.tube: straight, a quarter turn of radius AQUEDUCT.turn about the corner,
 // straight), resampled every DS metres; the planks' level along it from AQUEDUCT.profile, eased between its stations.
 // Three-free, so the tests can import it in node.
+// (plan points: straights, each corner rounded to its radius in AQUEDUCT.turn)
 //   at(s) -> { x, z, tx, tz }   the line's point and its unit heading at s (m from the lip)
 //   floorY(s)                    the planks' level (where the feet are inside the tube)
 //   slope(s)                     d floorY / ds (negative going down)
@@ -10,29 +11,42 @@ import { AQUEDUCT } from '../plan.js';
 
 export const DS = 0.4;
 const A = AQUEDUCT;
-const [p0, pc, p1] = A.tube, R = A.turn;
-
-// the corner: the turn's two tangent points and its centre
-const u0 = norm(pc[0] - p0[0], pc[1] - p0[1]), u1 = norm(p1[0] - pc[0], p1[1] - pc[1]);
-const half = Math.acos(Math.max(-1, Math.min(1, u0[0] * u1[0] + u0[1] * u1[1]))) / 2, cut = R * Math.tan(half);
-const tA = [pc[0] - u0[0] * cut, pc[1] - u0[1] * cut], tB = [pc[0] + u1[0] * cut, pc[1] + u1[1] * cut];
-const turnSign = Math.sign(u0[0] * u1[1] - u0[1] * u1[0]) || 1; // +1: the turn is to the... (x east, z south: south then east is a left turn seen from above)
-const side = [-u0[1] * turnSign, u0[0] * turnSign]; // from tA toward the turn's centre
-const C = [tA[0] + side[0] * R, tA[1] + side[1] * R];
-const L0 = Math.hypot(tA[0] - p0[0], tA[1] - p0[1]), LT = R * half * 2, L1 = Math.hypot(p1[0] - tB[0], p1[1] - tB[1]);
-export const LEN = L0 + LT + L1;
-export const S_TURN = [L0, L0 + LT];
+const PTS = A.tube, RADII = Array.isArray(A.turn) ? A.turn : [A.turn];
 
 function norm(x, z) { const l = Math.hypot(x, z) || 1; return [x / l, z / l]; }
+// pieces: straights { kind: 0, s0, len, p, u } and arcs { kind: 1, s0, len, c, R, a0, da }, end to end
+const PIECES = [];
+{
+  let cur = PTS[0], s = 0;
+  for (let i = 1; i < PTS.length; i++) {
+    const p = PTS[i], u = norm(p[0] - cur[0], p[1] - cur[1]);
+    if (i === PTS.length - 1) { const len = Math.hypot(p[0] - cur[0], p[1] - cur[1]); PIECES.push({ kind: 0, s0: s, len, p: cur, u }); s += len; break; }
+    const n = PTS[i + 1], u1 = norm(n[0] - p[0], n[1] - p[1]), R = RADII[Math.min(i - 1, RADII.length - 1)];
+    const half = Math.acos(Math.max(-1, Math.min(1, u[0] * u1[0] + u[1] * u1[1]))) / 2, cut = R * Math.tan(half);
+    const tA = [p[0] - u[0] * cut, p[1] - u[1] * cut], tB = [p[0] + u1[0] * cut, p[1] + u1[1] * cut];
+    const len0 = Math.hypot(tA[0] - cur[0], tA[1] - cur[1]);
+    PIECES.push({ kind: 0, s0: s, len: len0, p: cur, u }); s += len0;
+    const sg = Math.sign(u[0] * u1[1] - u[1] * u1[0]) || 1, side = [-u[1] * sg, u[0] * sg], c = [tA[0] + side[0] * R, tA[1] + side[1] * R];
+    const a0 = Math.atan2(tA[1] - c[1], tA[0] - c[0]), a1 = Math.atan2(tB[1] - c[1], tB[0] - c[0]);
+    let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+    PIECES.push({ kind: 1, s0: s, len: R * half * 2, c, R, a0, da }); s += R * half * 2;
+    cur = tB;
+  }
+}
+export const LEN = PIECES.reduce((m, P) => m + P.len, 0);
+export const S_TURN = [PIECES[1].s0, PIECES[1].s0 + PIECES[1].len]; // the head's turn
 
 export function at(s, out = {}) {
-  if (s <= L0) { out.x = p0[0] + u0[0] * s; out.z = p0[1] + u0[1] * s; out.tx = u0[0]; out.tz = u0[1]; return out; }
-  if (s >= L0 + LT) { const q = s - L0 - LT; out.x = tB[0] + u1[0] * q; out.z = tB[1] + u1[1] * q; out.tx = u1[0]; out.tz = u1[1]; return out; }
-  const f = (s - L0) / LT, a0 = Math.atan2(tA[1] - C[1], tA[0] - C[0]), a1 = Math.atan2(tB[1] - C[1], tB[0] - C[0]);
-  let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
-  const a = a0 + da * f;
-  out.x = C[0] + Math.cos(a) * R; out.z = C[1] + Math.sin(a) * R;
-  const sg = Math.sign(da); out.tx = -Math.sin(a) * sg; out.tz = Math.cos(a) * sg;
+  let P = PIECES[0];
+  for (const Q of PIECES) if (s >= Q.s0) P = Q;
+  if (P.kind === 0) {
+    const q = s - P.s0; // (before the lip and past the end: on along the straight)
+    out.x = P.p[0] + P.u[0] * q; out.z = P.p[1] + P.u[1] * q; out.tx = P.u[0]; out.tz = P.u[1]; return out;
+  }
+  const f = Math.min(1, (s - P.s0) / P.len), a = P.a0 + P.da * f, sg = Math.sign(P.da);
+  out.x = P.c[0] + Math.cos(a) * P.R; out.z = P.c[1] + Math.sin(a) * P.R;
+  out.tx = -Math.sin(a) * sg; out.tz = Math.cos(a) * sg;
+  if (s > P.s0 + P.len) { const q = s - P.s0 - P.len; out.x += out.tx * q; out.z += out.tz * q; }
   return out;
 }
 

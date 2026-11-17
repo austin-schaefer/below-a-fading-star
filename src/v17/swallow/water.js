@@ -74,22 +74,19 @@ export const SW_GLSL = /* glsl */`
     vec3 T = exp(-p * vec3(0.5, 0.21, 0.3));
     return col * T + swLight(mid) * (1.0 - exp(-p * 0.3));
   }
-  // light wavering through moving water: a net of small bright cells, two nets drifting against each other with the
-  // current (the classic iterated-warp caustic, three steps), projected on a slant so walls and floors both take it
-  float swNet(vec2 p, float t) {
-    vec2 i = p; float c = 1.0;
-    for (int n = 0; n < 3; n++) {
-      float tt = t * (1.0 - 3.5 / float(n + 1));
-      i = p + vec2(cos(tt - i.x) + sin(tt + i.y), sin(tt - i.y) + cos(tt + i.x));
-      c += 1.0 / length(vec2(p.x / (sin(i.x + tt) / 0.005), p.y / (cos(i.y + tt) / 0.005)));
-    }
-    c /= 3.0; c = 1.17 - pow(c, 1.4);
-    return pow(abs(c), 8.0);
-  }
+  // light wavering through moving water: where two moving noise fields cross, a thin bright line, so a net of small
+  // cells (about 0.4 m) that drifts with the current and slowly re-forms
+  float swH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+  float swN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(swH(i), swH(i + vec3(1,0,0)), f.x), mix(swH(i + vec3(0,1,0)), swH(i + vec3(1,1,0)), f.x), f.y),
+               mix(mix(swH(i + vec3(0,0,1)), swH(i + vec3(1,0,1)), f.x), mix(swH(i + vec3(0,1,1)), swH(i + vec3(1,1,1)), f.x), f.y), f.z); }
   float swCaustic(vec3 P) {
-    vec2 q = vec2(P.x + P.y * 0.55, P.z - P.y * 0.45) - uSwFlow * uSwT * 0.18;
-    vec2 p = mod(q * 1.9, 6.2832) - 250.0;
-    return min(1.5, swNet(p, uSwT * 0.55 + 23.0));
+    vec3 q = P * 2.4 - vec3(uSwFlow.x, 0.0, uSwFlow.y) * uSwT * 0.5;
+    float a = swN(q + vec3(0.0, uSwT * 0.35, 0.0)), b = swN(q * 1.13 + vec3(5.2, -uSwT * 0.3, 1.7));
+    float l = 1.0 - smoothstep(0.0, 0.09, abs(a - b));
+    float a2 = swN(q * 1.9 + vec3(2.0, uSwT * 0.5, 7.0)), b2 = swN(q * 2.1 + vec3(9.0, -uSwT * 0.45, 3.0));
+    float l2 = 1.0 - smoothstep(0.0, 0.12, abs(a2 - b2));
+    return l * 0.9 + l2 * 0.45;
   }
 `;
 
@@ -112,7 +109,7 @@ export function swPatch(mat, key, o = {}) {
         { float swC = floor(vUnderW.y / 0.6); vec2 swJ = vec2(fract(vUnderW.y / 0.6), fract((vUnderW.x + vUnderW.z * 0.15 + swC * 0.6) / 1.2));
           float swM = (1.0 - smoothstep(0.0, 0.025, min(swJ.x, 1.0 - swJ.x)) ) + (1.0 - smoothstep(0.0, 0.0125, min(swJ.y, 1.0 - swJ.y)));
           outgoingLight *= 1.0 - 0.55 * clamp(swM, 0.0, 1.0); }` : ''}
-        outgoingLight += diffuseColor.rgb * vec3(0.8, 1.0, 0.82) * swL * swCaustic(vUnderW) * swK * ${caus} * 80.0;
+        outgoingLight += diffuseColor.rgb * vec3(0.95, 1.0, 0.9) * swL * swCaustic(vUnderW) * swK * ${caus} * 18.0;
         outgoingLight += diffuseColor.rgb * swL * 0.8 * step(0.0, swD);
         if (swP > 0.0) { vec3 T = exp(-swP * vec3(0.5, 0.21, 0.3)); outgoingLight = outgoingLight * T + swLight(swMid) * (1.0 - exp(-swP * 0.3)); }
       }
