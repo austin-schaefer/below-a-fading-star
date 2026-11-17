@@ -44,7 +44,7 @@ const res = await page.evaluate(async () => {
         if (open) groundOver = Math.max(groundOver, T.heightAt(x, z) - wy);
       }
     }
-    out.leads.push({ id: L.id, kind: L.kind, length: +L.length.toFixed(1), ends, materials: L.materials, ended: L.ended, rise: +rise.toFixed(2), waterUp: +waterUp.toFixed(3), groundOver: +groundOver.toFixed(3) });
+    out.leads.push({ id: L.id, kind: L.kind, length: +L.length.toFixed(1), ends, materials: L.materials, ended: L.ended, dropped: (L.dropped || []).length, rise: +rise.toFixed(2), waterUp: +waterUp.toFixed(3), groundOver: +groundOver.toFixed(3) });
   }
   // the strips: no open (drawn) sample of any lead on the Discontinued Track or the Surveyor's Pegs
   const strips = [{ name: 'the Discontinued Track', a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { name: "the Surveyor's Pegs", a: [-80, -285], b: [-80, 285], half: 0.5 }];
@@ -123,6 +123,7 @@ for (const L of res.leads) {
     `${L.length} m, ${L.materials.join(' / ')}; ` + L.ends.map((e) => `(${e.x}, ${e.z}) ${e.id || 'none'} ${e.material || '-'}${e.material !== e.region ? ` vs ${e.region}` : ''}`).join(', '));
 }
 for (const L of res.leads.filter((l) => l.kind === 'rivulet')) {
+  check(!L.dropped && !/stops short/.test(L.ended), `${L.id}: every part runs from its start to its end or to water`, `${L.dropped} part(s) the ground would not let start; ${L.ended}`); // v16: the floor's fall left R2's second part in a dip, one point long
   check(L.waterUp <= 0.001 && L.groundOver <= 0.02, `${L.id}: runs downhill only`, `water never rises (worst ${L.waterUp} m); ground over its water ${L.groundOver} m (cut through rises up to ${L.rise} m); ${L.ended}`);
 }
 for (const S of res.strips) check(S.n === 0, `no lead drawn on ${S.name}`, `${S.n} samples`);

@@ -49,7 +49,7 @@ export const LEADS = [
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe, on to the foot of the Great Span\'s west stair (v15-F1: every way up has a track to its foot)', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196], [-199.5, 200], [-202.4, 200.3]] },
   { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
-  { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[214, 76], [198, 136]]] },
+  { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[210, 78], [198, 136]]] }, // (v16: from 4 m west of the old start: the High Ling's box keeps its ground as it was, so (214, 76) lies in a dip the floor's fall closes)
   { id: 'R3', kind: 'rivulet', w: 0.14, brief: 'runnel, Bletting grass to the Demesne\'s ditch', pts: [[130, -92], [100, -20], [108, -16]], parts: [[[104, 62], [80, 92]]] },
   { id: 'R4', kind: 'rivulet', w: 0.14, brief: 'runnel, field-stone then moor', pts: [[-182, -78], [-165, -28], [-140, 55], [-130, 75]] },
   { id: 'R5', kind: 'rivulet', w: 0.13, brief: 'runnel, moor', pts: [[-65, 17], [-55, 40], [-50, 70]] },
@@ -288,6 +288,7 @@ export function leads() {
         const mat = D.near && regionDistance(D.near.region, x, z) < D.near.within ? D.near.region : materialAt(x, z);
         return { x, z, s, y, wy, mat, open };
       });
+      if (S.length < 2) { (L.dropped || (L.dropped = [])).push(line[0]); continue; } // a rivulet the ground will not let start: no line (v16: one point broke every reader of the lines)
       L.lines.push(S);
     }
     L.length = L.lines.reduce((a, S) => a + S[S.length - 1].s, 0);

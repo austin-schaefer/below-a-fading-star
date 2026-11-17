@@ -57,7 +57,8 @@ const KETTLES = [
 // circle shows on the floor from above (a pull only ever widens the protection: inside the shape it is always 0).
 const BOXES = [
   [40, 128, -64, 36, 40, 15], // the Lappet (src/v15/plan.js lappetGround's box)
-  [215, 300, -115, 70, 50, 20], // High Ling, the Nave, the Noon Road, the Lonely Staircase, the Croft, the Hypogeum
+  [215, 300, -125, 15, 40, 15], // High Ling, the Lonely Staircase, the Croft, the Hypogeum (226, -112, r 12)
+  [228, 300, 13, 70, 30, 10], // the Foundered Nave's block and the Noon Road (x 246-296 at z 42)
   [182, 218, 167, 203, 20, 8], // the Pit's block (SITES.pit)
   [195, 235, 248, 290, 20, 8], // the fall's block (SITES.fallLip)
   [-270, -195, 180, 245, 20, 8], // the Span's west block (src/v4/span/plan.js)
