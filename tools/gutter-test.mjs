@@ -59,7 +59,12 @@ const first = await page.evaluate(() => {
   const nextBegin = f.next;
   const early = run(59.5);
   const late = run(61);
-  return { next0, out0, nextCard, nextBegin, cardMin: card.min, earlyMin: early.min, lateDip: late.dipAt, lateMin: late.min };
+  // the readings the answers use (v16-S1): dark at once, lamps a hand's lag behind it and slow to go back
+  while (f.phase > 0) run(1 / 60);
+  f.next = 0; run(1 / 60);
+  const len = f.len, at = (s) => { run(s); return { dark: f.dark, lamps: f.lamps }; };
+  const r1 = at(1.0), r2 = at(0.5), r45 = at(3.0), rCatch = (run(Math.max(0, len - 4.5 + 0.2)), { dark: f.dark, lamps: f.lamps }), rAfter = at(2), rLate = at(20);
+  return { next0, out0, nextCard, nextBegin, cardMin: card.min, earlyMin: early.min, lateDip: late.dipAt, lateMin: late.min, lamps: { r1, r2, r45, rCatch, rAfter, rLate } };
 });
 await browser.close();
 // carve out gutters: from first dip under 0.9 to the first recovery above 0.9 afterwards
@@ -100,6 +105,14 @@ gutters.forEach((g, i) => {
   check(first.earlyMin >= 0.9, `no gutter in the first 59.5 s after begin (min ${first.earlyMin.toFixed(2)})`);
   check(first.lateDip != null && first.lateMin < 0.35, `the first gutter comes by 120 s after begin and reaches the floor (min ${first.lateMin.toFixed(2)})`);
   check(Math.abs(first.next0 - 87.47) < 0.01, `the first gutter's second is the same every visit (the gutter's own stream: ${first.next0.toFixed(2)})`);
+}
+{
+  const L = first.lamps, n = (r) => `dark ${r.dark.toFixed(2)} lamps ${r.lamps.toFixed(2)}`;
+  console.log(`      readings: 1 s ${n(L.r1)}; 4.5 s ${n(L.r45)}; caught ${n(L.rCatch)}; 2 s after ${n(L.rAfter)}; 22 s after ${n(L.rLate)}`);
+  check(L.r1.dark > 0.2 && L.r1.lamps < 0.05, `the lamps are not yet turned up 1 s into a gutter, while the dark has come (${n(L.r1)})`);
+  check(L.r45.dark > 0.9 && L.r45.lamps > 0.85, `4.5 s in, the dark is full and the lamps are turned up (${n(L.r45)})`);
+  check(L.rAfter.dark === 0 && L.rAfter.lamps > 0.3, `2 s after the sun has caught the lamps are still up, going down slowly (${n(L.rAfter)})`);
+  check(L.rLate.lamps < 0.02, `and are down by 22 s after (${n(L.rLate)})`);
 }
 check(errors.length === 0, `no page errors${errors.length ? ': ' + errors[0] : ''}`);
 console.log(fails ? `FAIL: ${fails} check(s) failed` : 'PASS: all checks');

@@ -17,35 +17,93 @@
  },
  {
   "name": "copyist-lit",
-  "x": 89.3,
-  "z": 10.8,
-  "yaw": 2.07,
-  "pitch": -0.05,
-  "js": "window.__fp.sky.flicker.hold=1;window.__fp.controls.placeAt(89.3,10.8,18); window.__fp.player.yaw=2.07; window.__fp.player.pitch=-0.05;"
+  "x": 98.9,
+  "z": 27.2,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=1;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='copyist').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
  },
  {
   "name": "copyist-gut",
-  "x": 89.3,
-  "z": 10.8,
-  "yaw": 2.07,
-  "pitch": -0.05,
-  "js": "window.__fp.sky.flicker.hold=0.3;window.__fp.controls.placeAt(89.3,10.8,18); window.__fp.player.yaw=2.07; window.__fp.player.pitch=-0.05;"
+  "x": 98.9,
+  "z": 27.2,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=0.3;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='copyist').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
  },
  {
   "name": "dyer-lit",
-  "x": 102.3,
-  "z": -0.5,
-  "yaw": 1.134,
-  "pitch": 0.0,
-  "js": "window.__fp.sky.flicker.hold=1;window.__fp.controls.placeAt(102.3,-0.5,6); window.__fp.player.yaw=1.134; window.__fp.player.pitch=0.0;"
+  "x": 111.8,
+  "z": 11.4,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=1;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='dyer').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
  },
  {
   "name": "dyer-gut",
-  "x": 102.3,
-  "z": -0.5,
-  "yaw": 1.134,
-  "pitch": 0.0,
-  "js": "window.__fp.sky.flicker.hold=0.3;window.__fp.controls.placeAt(102.3,-0.5,6); window.__fp.player.yaw=1.134; window.__fp.player.pitch=0.0;"
+  "x": 111.8,
+  "z": 11.4,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=0.3;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='dyer').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "sounder-lit",
+  "x": 126.1,
+  "z": 1.5,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=1;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='sounder').fig, a=f.yaw+-0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "sounder-gut",
+  "x": 126.1,
+  "z": 1.5,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=0.3;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='sounder').fig, a=f.yaw+-0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "leaver-lit",
+  "x": 136.2,
+  "z": 11.9,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=1;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='leaver').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "leaver-gut",
+  "x": 136.2,
+  "z": 11.9,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=0.3;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='leaver').fig, a=f.yaw+0.9, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "clerk-lit",
+  "x": 101.2,
+  "z": -7.300000000000001,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=1;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='clerk').fig, a=f.yaw+0.3, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
+ },
+ {
+  "name": "clerk-gut",
+  "x": 101.2,
+  "z": -7.300000000000001,
+  "yaw": 0,
+  "pitch": 0,
+  "js": "window.__fp.sky.flicker.hold=0.3;",
+  "pre": "{const fp=window.__fp, f=fp.people.figs.find((q)=>q.id==='clerk').fig, a=f.yaw+0.3, h=f.y+1.45*f.k, c=fp.camera; c.position.set(f.x+Math.sin(a)*2.6, h+0.15, f.z+Math.cos(a)*2.6); c.lookAt(f.x, h-0.15, f.z); c.updateMatrixWorld();}"
  },
  {
   "name": "moths-lit",
