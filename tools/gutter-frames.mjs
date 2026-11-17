@@ -33,9 +33,9 @@ await page.evaluate(([yaw, pitch, lead]) => { const fp = window.__fp; fp.player.
 const prefix = process.env.PREFIX || 'v16-S1';
 for (const [i, s] of at.entries()) {
   await page.waitForFunction((s) => window.__fp.time.t - window.__g0 >= s, s, { timeout: 120000 });
-  const r = await page.evaluate(() => { const fp = window.__fp, f = fp.sky.flicker; fp.post.composer.render(); return { url: document.getElementById('scene').toDataURL('image/png'), t: fp.time.t - window.__g0, v: f.value, d: f.dark, l: f.lamps }; });
+  const r = await page.evaluate(() => { const fp = window.__fp, f = fp.sky.flicker; fp.post.composer.render(); return { url: document.getElementById('scene').toDataURL('image/png'), t: fp.time.t - window.__g0, v: f.value, d: f.dark, l: f.lamps, fl: f.flush, len: f.len }; });
   const out = `shots/wip/${prefix}-seq-${name}-${String(i).padStart(2, '0')}-${s < 0 ? 'm' : ''}${String(Math.abs(s).toFixed(1)).padStart(4, '0')}s.png`;
   writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
-  console.log(`${out}  t ${r.t.toFixed(2)}  flicker ${r.v.toFixed(2)}  dark ${r.d.toFixed(2)}  lamps ${r.l.toFixed(2)}`);
+  console.log(`${out}  t ${r.t.toFixed(2)}  flicker ${r.v.toFixed(2)}  dark ${r.d.toFixed(2)}  lamps ${r.l.toFixed(2)}  flush ${r.fl.toFixed(2)}  len ${r.len.toFixed(1)}`);
 }
 await browser.close();
