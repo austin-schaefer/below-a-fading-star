@@ -63,6 +63,7 @@ export function buildGarden(B, rng, { low, rings }) {
     for (let j = 0; j < NA; j++) {
       const a0 = (j / NA) * Math.PI * 2 - Math.PI, a1 = ((j + 1) / NA) * Math.PI * 2 - Math.PI;
       if (Math.abs(Math.sin(a0) * r1) < PATH.half + 0.1 && Math.cos(a0) > 0) continue; // (the stones cross it)
+      if (RADIALS.some((rb) => Math.abs(Math.sin(a0 - rb) * r1) < RILL.w / 2 + RILL.kerb + 0.15 && Math.cos(a0 - rb) > 0)) continue; // (and the feeders)
       const w0 = wob(a0, k), w1 = wob(a1, k);
       B.quad(W(rr0 + w0, a0).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr0 + w1, a1).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr1 + w1, a1).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr1 + w0, a0).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), pale, [0, 1, 0], 0.06);
     }

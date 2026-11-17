@@ -11,7 +11,7 @@ import * as THREE from 'three';
 import { NOON } from '../../v8/strata/noon.js';
 import { CX, CZ, FLOOR, LENS, LIGHT_R } from './plan.js';
 
-export const NOON_I = 2.6; // the beam's strength on a surface square to it (times the surface's colour)
+export const NOON_I = 3.1; // the beam's strength on a surface square to it (times the surface's colour)
 export const U = {
   uNoon: { value: new THREE.Vector4(NOON_I, LIGHT_R - 0.15, 0.38, 0) }, // strength (breathing), r at the floor, the penumbra's half-width (it ends short of the yellowing ring)
   uNoonA: { value: new THREE.Vector4(CX, FLOOR, CZ, LENS.y) },

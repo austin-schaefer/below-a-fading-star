@@ -24,10 +24,10 @@ import { buildCan, rosePoint } from './garth/can.js';
 export const GARTH_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('garth') === '0';
 // the eye's grade in the light: near daylight (the post's own grade takes a fifth of the colour and warms the
 // highlights; this gives the colour back), eased in from the hall's dark-adapted one as the eye comes into the light
-export const NOON_GRADE = [1.0, 1.05, 1.06, -0.09]; // cold-neutral: the walk's ember grade taken out (5600 K against the world's 2500 K)
+export const NOON_GRADE = [1.12, 1.08, 1.04, -0.04]; // cold-neutral: the walk's ember grade taken out (5600 K against the world's 2500 K)
 // the bounce off the lit garden: white with a little of the grass's green in it
 export const BOUNCE = '#e2eee2';
-export const HALL_GRADE = [1.28, 0.92, 1.08, -0.02];
+export const HALL_GRADE = [1.32, 0.9, 1.06, 0.03];
 
 export async function build(ctx) {
   if (GARTH_OFF) { ctx.garth = { off: true }; return; }
