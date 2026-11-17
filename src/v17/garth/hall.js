@@ -26,7 +26,7 @@ export function buildHall(B, low) {
     const y0 = FLOOR + c * (DRUM - FLOOR) / nc, y1 = FLOOR + (c + 1) * (DRUM - FLOOR) / nc, off = (c % 2) * 0.5;
     for (let i = 0; i < N; i++) {
       const a0 = ((i + off) / N) * Math.PI * 2, a1 = ((i + 1 + off) / N) * Math.PI * 2;
-      const k = 0.82 + 0.3 * hsh(i * 13 + c * 7.1) - (c === 0 ? 0.12 : 0), col = rgb(H.stone, k);
+      const k = 0.88 + 0.16 * hsh(i * 13 + c * 7.1) - (c === 0 ? 0.12 : 0), col = rgb(H.stone, k);
       // by the door the block is drawn in slices, each cut to the opening's arch
       const ns = near(a0) || near(a1) ? 10 : 1;
       for (let q = 0; q < ns; q++) {
@@ -62,7 +62,7 @@ export function buildHall(B, low) {
     const y0 = c === 0 ? DRUM : domeY(r0), y1 = domeY(r1), off = (c % 2) * 0.5;
     for (let i = 0; i < ND; i++) {
       const a0 = ((i + off) / ND) * Math.PI * 2, a1 = ((i + 1 + off) / ND) * Math.PI * 2;
-      const k = 0.8 + 0.28 * hsh(i * 3.3 + c * 17.7), col = rgb(H.stone, k * (0.92 + 0.08 * (c / nd)));
+      const k = 0.9 + 0.12 * hsh(i * 3.3 + c * 17.7), col = rgb(H.stone, k * (0.92 + 0.08 * (c / nd)));
       const [x0, z0] = W(a0, r0), [x1, z1] = W(a1, r0), [x2, z2] = W(a1, r1), [x3, z3] = W(a0, r1);
       const hint = [CX - (x0 + x2) / 2, -((y0 + y1) / 2 - FLOOR) * 0.4 - 1, CZ - (z0 + z2) / 2];
       B.quad([x0, y0, z0], [x1, y0, z1], [x2, y1, z2], [x3, y1, z3], col, hint, 0.03);

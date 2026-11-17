@@ -11,12 +11,12 @@ import * as THREE from 'three';
 import { NOON } from '../../v8/strata/noon.js';
 import { CX, CZ, FLOOR, LENS, LIGHT_R } from './plan.js';
 
-export const NOON_I = 2.1; // the beam's strength on a surface square to it (times the surface's colour)
+export const NOON_I = 2.6; // the beam's strength on a surface square to it (times the surface's colour)
 export const U = {
   uNoon: { value: new THREE.Vector4(NOON_I, LIGHT_R, 0.16, 0) }, // strength (breathing), r at the floor, edge half-width
   uNoonA: { value: new THREE.Vector4(CX, FLOOR, CZ, LENS.y) },
   uNoonB: { value: new THREE.Vector2(LENS.r, 0) },
-  uNoonCol: { value: new THREE.Color(NOON.lightHex) },
+  uNoonCol: { value: new THREE.Color(NOON.lightHex).lerp(new THREE.Color('#ffd27a'), 0.35) }, // a little warmer than the stored glass's: noon in the open, remembered
   uNoonT: { value: 0 },
 };
 const GLSL = `
@@ -62,7 +62,7 @@ export function shaft() {
         // slow streaks down it, as dust in a beam is never even
         float a = atan(vW.z - uNoonA.z, vW.x - uNoonA.x);
         k *= 0.7 + 0.3 * sin(a * 9.0 + uNoonT * 0.07) * sin(a * 4.0 - vW.y * 0.3 + uNoonT * 0.05);
-        gl_FragColor = vec4(uNoonCol * k * 0.085 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0);
+        gl_FragColor = vec4(uNoonCol * k * 0.13 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0);
       }`,
     // (no fog chunks: under the ground the haze is nil, under.js's own materials mix it out too)
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,

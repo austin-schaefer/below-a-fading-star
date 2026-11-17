@@ -14,16 +14,18 @@ import { UnderBuilder, underMaterial, installBelow } from '../v14/under.js';
 import { noonGlass } from '../v14/noon-road.js';
 import { NOON, NOON_PARTS as NP, GLAZES, strand } from '../v8/strata/noon.js';
 import { SPHERE, GARTH_DOOR } from './plan.js';
-import { CX, CZ, FLOOR, R, LENS, LIGHT_R, OCULUS, domeY, CAN, TREES, TREE, at, floorAt, DOOR_A } from './garth/plan.js';
+import { CX, CZ, FLOOR, R, LENS, LIGHT_R, OCULUS, domeY, CAN, TREES, TREE, RILL, at, floorAt, DOOR_A } from './garth/plan.js';
 import { U, noonLit, shaft, motes, NOON_I } from './garth/noon.js';
 import { buildHall } from './garth/hall.js';
 import { buildGarden } from './garth/garden.js';
+import { channels, buildKerbs, waterMesh } from './garth/water.js';
+import { buildCan, rosePoint } from './garth/can.js';
 
 export const GARTH_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('garth') === '0';
 // the eye's grade in the light: near daylight (the post's own grade takes a fifth of the colour and warms the
 // highlights; this gives the colour back), eased in from the hall's dark-adapted one as the eye comes into the light
-export const NOON_GRADE = [1.02, 1.2, 1.02, -0.05];
-export const HALL_GRADE = [1.22, 1.0, 1.08, -0.02];
+export const NOON_GRADE = [1.04, 1.1, 1.04, 0.0];
+export const HALL_GRADE = [1.3, 0.95, 1.06, 0.03];
 
 export async function build(ctx) {
   if (GARTH_OFF) { ctx.garth = { off: true }; return; }
@@ -36,8 +38,8 @@ export async function build(ctx) {
   // onto the dome and out over the dead rings, less the further out; the sky's light nil, no haze
   const bounce = (x, y, z) => {
     const r = Math.hypot(x - CX, z - CZ), h = y - FLOOR;
-    const ground = 0.05 + 0.3 * Math.exp(-Math.max(0, r - LIGHT_R) / 3.6);
-    const up = 0.075 + 0.13 * Math.min(1, h / 20) + 0.05 * Math.max(0, 1 - r / R);
+    const ground = 0.08 + 0.42 * Math.exp(-Math.max(0, r - LIGHT_R) / 4.5);
+    const up = 0.1 + 0.2 * Math.min(1, h / 20) + 0.08 * Math.max(0, 1 - r / R);
     return h < 2.5 ? ground + (up - ground) * (h / 2.5) * 0.3 : up;
   };
   const lit = (x, y, z, out) => { out[0] = 0.012; out[1] = 0; out[2] = bounce(x, y, z); return out; };
@@ -49,11 +51,13 @@ export async function build(ctx) {
   await ctx.progress?.('the meridian garth', 0);
   const HB = new UnderBuilder(lit);
   buildHall(HB, low);
+  const chans = channels(low);
+  buildKerbs(HB, chans);
   mk(HB, stoneMat('garth-hall'), 'garth-hall');
 
-  // ---- the garden (U2's first round: the light's own ring; the dead rings follow once its view reads)
+  // ---- the garden: the light's own ring and the dead ones round it
   const GB = new UnderBuilder(lit);
-  buildGarden(GB, rng, { low, rings: ['live'] });
+  buildGarden(GB, rng, { low, rings: ['live', 'wilt', 'brown', 'grey', 'ash'] });
   mk(GB, stoneMat('garth-garden', { side: THREE.DoubleSide, roughness: 0.82 }), 'garth-garden');
   await ctx.progress?.('the meridian garth', 0.5);
 
@@ -100,6 +104,17 @@ export async function build(ctx) {
   const beam = shaft(); ctx.scene.add(beam); meshes.push(beam);
   const dust = motes(rng, low ? 90 : 220); ctx.scene.add(dust); meshes.push(dust);
 
+  // ---- the can, and the water: the rills and the drop from the can's rose (its rings spread on the rill below)
+  const CB = new UnderBuilder(lit);
+  const can = buildCan(CB);
+  mk(CB, underMaterial(noonLit(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.45 })), 'garth-can', NOON.lightHex), 'garth-can');
+  const uDrip = { value: new THREE.Vector4(0, 0, 9, 1) };
+  const water = waterMesh(chans, uDrip); ctx.scene.add(water); meshes.push(water);
+  const rose = rosePoint();
+  const drop = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 4).scale(1, 1.5, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color(NOON.lightHex).multiplyScalar(0.55), fog: false }));
+  drop.name = 'garth-drop'; ctx.scene.add(drop); meshes.push(drop);
+  uDrip.value.set(rose[0], rose[2], 9, 1);
+
   // ---- the floor: one held stacked floor inside the wall and through the door's reveal (U1's tube beyond its face)
   ctx.addWalkable(floorAt, { stack: true, keep: true, name: 'garth' });
   if (ctx.addCollider) {
@@ -107,6 +122,7 @@ export async function build(ctx) {
       const [x, z] = at(t.r, t.b), a = DOOR_A + t.b, tx = -Math.sin(a) * TREE.half, tz = Math.cos(a) * TREE.half;
       ctx.addCollider({ x1: x - tx, z1: z - tz, x2: x + tx, z2: z + tz, r: 0.18, y: FLOOR, h: TREE.h, stand: false });
     }
+    ctx.addCollider({ x: can.x, z: can.z, r: 0.66, y: FLOOR, h: CAN.h, stand: false });
   }
 
   // ---- under the ground: the hall's volume (a hall: it sounds big), sealed; its grade
@@ -136,11 +152,17 @@ export async function build(ctx) {
     const b = 1 + 0.055 * Math.sin(t * 0.698) + 0.02 * Math.sin(t * 1.61 + 1.2);
     U.uNoon.value.x = NOON_I * b;
     U.uNoonT.value = t;
+    // the drop: gathers at the rose (1.1 s), falls (0.47 s), and its rings spread on the rill; again every 2.3 s
+    const ph = t % 2.3;
+    if (ph < 1.1) { const k = ph / 1.1; drop.position.set(rose[0], rose[1] - 0.05 - 0.02 * k, rose[2]); drop.scale.setScalar(0.4 + 0.6 * k); }
+    else if (ph < 1.57) { const f = (ph - 1.1) / 0.47; drop.position.set(rose[0], rose[1] - 0.07 - (rose[1] - RILL.y - 0.07) * f * f, rose[2]); drop.scale.setScalar(1); }
+    else drop.scale.setScalar(0.001);
+    uDrip.value.z = ph >= 1.57 ? ph - 1.57 : ph + 0.73;
     for (const m of meshes) { const g = m.material?.userData?.uGlow; if (g) g.value.set(NOON.lightHex).multiplyScalar(b); }
     ctx.renderer?.getDrawingBufferSize?.(px);
     dust.material.uniforms.uPx.value = (px.y || 720) / (2 * Math.tan(((ctx.camera.fov || 60) * Math.PI) / 360));
   }, { pos: { x: CX, z: CZ }, near: 60, hz: 0, r: R });
 
   ctx.garth = { off: false, meshes, floor: floorAt, vol: hvol, grade: unGrade, uniforms: U };
-  ctx.log?.(`garth built in ${(performance.now() - t0).toFixed(0)} ms: ${meshes.length} draws, ${HB.tris + GB.tris + NB.tris} tris`);
+  ctx.log?.(`garth built in ${(performance.now() - t0).toFixed(0)} ms: ${meshes.length} meshes, ${HB.tris + GB.tris + NB.tris + CB.tris} tris`);
 }

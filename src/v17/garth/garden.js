@@ -13,14 +13,14 @@ const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[
 const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 // the soil of each ring, and what grows on it (grass blades: base colours; the trees' leaves; their bark)
 export const PAL = {
-  live: { soil: C('#2e2416'), soil2: C('#3a3a1e'), grass: [C('#4a8e2c'), C('#5aa034'), C('#2f7a2c'), C('#6aa83a'), C('#3a7a3a'), C('#4c8a22')], leaf: [C('#3f8a2c'), C('#58a034'), C('#2f7426')], bark: C('#4a3626') },
+  live: { soil: C('#2e2416'), soil2: C('#3a3a1e'), grass: [C('#4a7e2c'), C('#5a8a34'), C('#2f6a2c'), C('#6a9040'), C('#3a6a3a'), C('#7a8a40'), C('#8a8a50')], leaf: [C('#3f742c'), C('#4e8034'), C('#2f6026'), C('#5a7a30')], bark: C('#4a3626') },
   wilt: { soil: C('#3c3020'), soil2: C('#4a4026'), grass: [C('#9aa23a'), C('#b2a846'), C('#8a9a34'), C('#c0ae58')], leaf: [C('#a8a034'), C('#c2a23e'), C('#8c8c30')], bark: C('#4c3a2a') },
   brown: { soil: C('#4a3e30'), soil2: C('#544636'), grass: [C('#7a5a32'), C('#8a6638'), C('#6a4c2c'), C('#94744a')], leaf: [C('#6e4826'), C('#83552c'), C('#5a3c22')], bark: C('#4a3e34') },
-  grey: { soil: C('#5a5650'), soil2: C('#625c54'), grass: [C('#8a867e'), C('#9a958a'), C('#7a766e'), C('#a8a296')], leaf: null, bark: C('#88847c') },
-  ash: { soil: C('#67625b'), soil2: C('#5e5a54'), grass: [C('#8e8a82'), C('#9a968c'), C('#7e7a72')], leaf: null, bark: C('#8e8a82') },
+  grey: { soil: C('#4e4a46'), soil2: C('#56514a'), grass: [C('#6e6a64'), C('#7a756c'), C('#605c56'), C('#837d72')], leaf: null, bark: C('#76726c') },
+  ash: { soil: C('#5e5a54'), soil2: C('#56524c'), grass: [C('#6a665e'), C('#726e66'), C('#5e5a54')], leaf: null, bark: C('#76726a') },
 };
 const FLOWERS = [C('#3a62d8'), C('#4a7ae8'), C('#f4f2ea'), C('#f2ca22'), C('#e86ca2'), C('#f09a2a'), C('#8a4ad0')];
-const FRUIT = C('#e8b830'), BLUSH = C('#c8502a');
+const FRUIT = C('#c89a30'), BLUSH = C('#a8482a');
 const STRAND = [NOON.strand.r, NOON.strand.g, NOON.strand.b];
 
 // which ring a point is in, by radius; the edges between rings drawn a little irregular (each death was not exact)
@@ -138,7 +138,7 @@ export function buildGarden(B, rng, { low, rings }) {
   if (grow.has('ash')) {
     const P = PAL.ash;
     // fallen stalks lying in the dust, and stubs
-    scatter(4, 1.4, (x, z) => {
+    scatter(4, 0.8, (x, z) => {
       const col = mul(pick(P.grass), 0.8 + rng() * 0.25);
       if (rng() < 0.3) { B.beam([x, FLOOR, z], [x, FLOOR + 0.06 + rng() * 0.1, z], 0.01, col, 0.1); return; }
       const a = rng() * 6.28, l = 0.4 + rng() * 0.8; B.beam([x, FLOOR + 0.012, z], [x + Math.cos(a) * l, FLOOR + 0.012, z + Math.sin(a) * l], 0.008, col, 0.1);

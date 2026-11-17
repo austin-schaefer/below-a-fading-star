@@ -36,15 +36,15 @@ export const PATH = { half: 0.5 };           // the stepping stones from the doo
 // the trained trees: a ring of them in each ring of the garden, each a stage further dead outward. b: bearing, r: radius
 export const TREES = [
   { ring: 'live', r: 2.55, b: 0.95 }, { ring: 'live', r: 2.55, b: -1.05 }, { ring: 'live', r: 2.45, b: Math.PI - 0.1 },
-  { ring: 'wilt', r: 6.0, b: 0.62 }, { ring: 'wilt', r: 6.0, b: 2.15 }, { ring: 'wilt', r: 6.0, b: -2.0 }, { ring: 'wilt', r: 6.0, b: -0.75 },
+  { ring: 'wilt', r: 6.0, b: 0.98 }, { ring: 'wilt', r: 6.0, b: 2.15 }, { ring: 'wilt', r: 6.0, b: -2.0 }, { ring: 'wilt', r: 6.0, b: -0.75 },
   { ring: 'brown', r: 8.65, b: 0.42 }, { ring: 'brown', r: 8.65, b: 1.5 }, { ring: 'brown', r: 8.65, b: 2.65 }, { ring: 'brown', r: 8.65, b: -2.55 }, { ring: 'brown', r: 8.65, b: -1.45 }, { ring: 'brown', r: 8.65, b: -0.48 },
   { ring: 'grey', r: 11.45, b: 0.36 }, { ring: 'grey', r: 11.45, b: 1.25 }, { ring: 'grey', r: 11.45, b: 2.2 }, { ring: 'grey', r: 11.45, b: 2.85 }, { ring: 'grey', r: 11.45, b: -2.6 }, { ring: 'grey', r: 11.45, b: -1.7 }, { ring: 'grey', r: 11.45, b: -0.85 },
   { ring: 'ash', r: 14.3, b: 0.55 }, { ring: 'ash', r: 14.3, b: 1.45 }, { ring: 'ash', r: 14.3, b: 2.45 }, { ring: 'ash', r: 14.3, b: -2.75 }, { ring: 'ash', r: 14.3, b: -1.85 }, { ring: 'ash', r: 14.3, b: -0.6 },
 ];
 export const TREE = { half: 1.3, h: 2.3 };   // an espalier's half-width along its frame and its height
 
-// the can, set down at the light's edge with its spout reaching into the light, beside the path
-export const CAN = { r: 5.75, b: 0.2, h: 1.86 };
+// the can, set down at the light's edge beside the path, its spout reaching over the rill there
+export const CAN = { r: 6.3, b: 0.5, h: 1.86 };
 
 // the floor: inside the wall (held at its foot) and through the door's reveal to its outer face (U1's tube beyond)
 export const WALK_R = R - 0.45;
