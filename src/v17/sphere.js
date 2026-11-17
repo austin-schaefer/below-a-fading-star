@@ -114,7 +114,15 @@ export async function build(ctx) {
     const a = arr[(iy * row + ix) * stride + k], b = arr[(iy * row + ix + 1) * stride + k], c = arr[((iy + 1) * row + ix) * stride + k], d = arr[((iy + 1) * row + ix + 1) * stride + k];
     return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fy;
   };
-  const gy = grid(P, 3, 1), gc = [grid(COL, 3, 0), grid(COL, 3, 1), grid(COL, 3, 2)];
+  // the height on the drawn triangles themselves (PlaneGeometry's split: a cell's diagonal runs from (ix, iy + 1) to
+  // (ix + 1, iy)), not bilinear across the cell: the bank's foot lies 4 cm over it and must not be crossed by a
+  // triangle's flank (on low, 3.1 m cells, the two differ by more than that and the terrain showed through in teeth)
+  const gy = (x, z) => {
+    const gx = (x + half) / cell, gz = (z + half) / cell, ix = Math.floor(gx), iy = Math.floor(gz), fx = gx - ix, fz = gz - iy;
+    const H = (i, j) => P[(j * row + i) * 3 + 1], a = H(ix, iy), b = H(ix, iy + 1), c = H(ix + 1, iy + 1), d = H(ix + 1, iy);
+    return fx + fz <= 1 ? a + (d - a) * fx + (b - a) * fz : c + (b - c) * (1 - fx) + (d - c) * (1 - fz);
+  };
+  const gc = [grid(COL, 3, 0), grid(COL, 3, 1), grid(COL, 3, 2)];
   // is the ground at (x, y, z) inside the glass (between its lower and upper skins)?
   const inside = (x, y, z) => { const d2 = (x - CX) ** 2 + (z - CZ) ** 2; if (d2 >= R * R) return false; const s = Math.sqrt(R * R - d2); return y > CY - s - 0.05 && y < CY + s + 0.3; };
 
@@ -372,7 +380,7 @@ export async function build(ctx) {
   // edge (the cut takes whole cells), so there is one clean line where glass meets ground on every side
   const meet = []; // on each bearing: the ground's distance from the centre where it meets the glass, and its height
   {
-    const nA = low ? 120 : 200, out = cell * 1.8 + 0.6;
+    const nA = low ? 180 : 240, out = Math.max(cell * 1.8 + 0.6, 3.8);
     for (let i = 0; i <= nA; i++) {
       const a = i / nA * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
       let m = null;
@@ -384,7 +392,7 @@ export async function build(ctx) {
     const glassAt = (a, y) => { const rr = Math.sqrt(Math.max(0, R * R - (y - CY) ** 2)) + 0.03; return [CX + Math.cos(a) * rr, y, CZ + Math.sin(a) * rr]; };
     const tone = (p, k) => { const c = [gc[0](p[0], p[2]), gc[1](p[0], p[2]), gc[2](p[0], p[2])], n = n3(p[0] * 0.7, 0, p[2] * 0.7), h = n > 0.55 ? HEATH : EARTH, w = k * (0.5 + 0.5 * n); return [c[0] * (1 - w) + h[0] * w, c[1] * (1 - w) + h[1] * w, c[2] * (1 - w) + h[2] * w]; };
     // the profile across, from the glass out: [distance past the meet, lift over the drawn ground, how much bank-colour]
-    const prof = [[0.25, 0.26, 0.9], [0.7, 0.2, 0.7], [1.3, 0.1, 0.4], [out, 0.04, 0]];
+    const prof = [[0.25, 0.26, 0.9], [0.7, 0.2, 0.7], [1.3, 0.1, 0.4], [1.9, 0.07, 0.2], [2.6, 0.06, 0.1], [3.4, 0.05, 0.03], [out, 0.04, 0]]; // (close enough across that the terrain's own triangles stay under it)
     const row = (i) => {
       const a = i / nA * Math.PI * 2, m = meet[i], gm = at(a, m, 0)[1];
       const pts = [glassAt(a, gm - 0.45), glassAt(a, gm + 0.12)]; // down against the glass under the ground, then up its face
