@@ -6,6 +6,7 @@
 // heightAt at 5,000 wall samples (r 284 to 500, a golden-angle spiral) and a checksum of each baked attribute.
 // With out.json it writes the samples and the attributes' sums, so two trees can be compared:
 //   node tools/terrain-probe.mjs --diff a.json b.json   (max |dh| over the samples, each attribute's max |d|)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 const args = process.argv.slice(2);
@@ -24,7 +25,7 @@ let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base, q = 'low', runs = '3', out] = args;
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`] });
 const page = await browser.newPage();
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console.error]', m.text().slice(0, 300)); });

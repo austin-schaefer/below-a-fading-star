@@ -11,6 +11,7 @@
 //   node tools/alloc-audit.mjs "<url without ?bench, with &idle=0>" ...: the walker standing at the spawn, the profiler
 //   off unless the url turns it on (what the profiler costs when it is not in use: its hooks are not installed)
 // e.g. node tools/alloc-audit.mjs "http://localhost:8131/?bench=30&q=medium" shots/perf/stage3-tier-alloc-after.json
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -39,7 +40,7 @@ function hit(name) {
 }
 ${CLASSES.map((c) => `export class ${c} extends R.${c} { constructor(...a) { super(...a); hit('${c}'); } }`).join('\n')}
 `;
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 await page.route('**/vendor/three/three.module.js', (r) => r.fulfill({ contentType: 'text/javascript', body: wrapper }));
 await page.route('**/vendor/three/three.real.js', (r) => r.fulfill({ contentType: 'text/javascript', body: real }));

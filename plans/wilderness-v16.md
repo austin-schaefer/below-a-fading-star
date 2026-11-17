@@ -74,4 +74,20 @@ Next: look at the before frames; as each agent reports, its frames with the repo
 
 Next: L1 and P1 as they report (frames, a blind reader for L1, a cold review, tests here, merge); then the re-record and the whole suite on `next`.
 
+**2026-11-17, 00:48 PST. L1 and P1 handed back; neither is merged yet. Four agents in flight.**
+
+- **L1 the tilt** (opus, 80 min; `issue-1603-tilt` at `d398c46`): `src/height/floor.js`, `?floor=v15`, protected places bit-identical, its tests green but `seams` and `geometry` (the ground moved). **With the report shut, the before and after frames from the stair's top, the crown and the air are the same picture**: 4 m in a moor of ±11 m under one colour. Cold review (opus): **one blocker**, the Wellward Way runs under unprotected ground that rose 1 to 2.9 m (a new `geometry` row at `v14-passage` the report explained away); also the Sunken Court's surround risen up to 9 m, three closed hollows at skirts' feet. Not merged. **L4** (`brief-v16-L4-floor-reads.md`, a fresh opus agent in the same worktree, 8163) has the review's findings first, then makes the fall plain: paint and cover that follow the forms, pools in the kettles on the edge, a bolder rise where free. L1 merges with L4.
+- **P1 performance** (opus, 96 min; `issue-1602-perf`): colliders in a 4 m grid (the walker's update at the Lappet 0.35-0.44 to 0.16-0.17 ms; `?collgrid=0`), the biomesh's ground test cached (fauna at the Lattice 1.76 to 0.34 ms), the stair's slabs culled (10 draws and about 200k triangles fewer in most views), Metal the tools' default in `tools/launch.mjs` (#79; touch 222 to 14 s, settings 365+ to 49 s), `tools/perf-views.mjs`. Its ms figures were taken on a loaded machine. It changes the pace rule's wording in `AGENTS.md` (Metal by default, not a flag on every call): for the owner to see. With a cold reviewer (opus) now.
+- Three http servers left on 8162, 8173, 8182 by v15's agents (their worktrees long gone) stopped.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| S2 the gutter, round two | `issue-1601-gutter` | 8161 | opus |
+| L3 the fen and the other outlines | `issue-1605-fen` | 8165 | opus |
+| L4 the floor reads (on L1) | `issue-1603-tilt` | 8163 | opus |
+| V1 the Lappet's loose ends: the spine's head, the critic's list, one act (`brief-v16-V1-spine-head.md`) | `issue-1606-spine` | 8166 | opus |
+
+Next: P1 after its review (tests here, merge); S2, L3, L4, V1 as they report. Then the height path's cheap wins (the survey's and P1's notes: `riverSection`, `project()`), the one re-record of `seams` and `geometry`, the whole suite on `next`, W3 against the new floor, the critic.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.

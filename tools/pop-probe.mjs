@@ -11,6 +11,7 @@
 // whose `visible` flipped (by name), shadow-map redraws, light-slot handovers (a lit slot whose position
 // jumps more than 1 m, or that goes dark/lit in one frame), the pixel ratio, and new geometries/textures.
 // Headless timings are not hardware timings: read the ratios and the counts, not the milliseconds.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let chromium;
@@ -29,7 +30,7 @@ const SC = {
 }[scen];
 if (!SC) { console.error('unknown scenario', scen); process.exit(2); }
 const r0 = SC.route?.[0] || [SC.spin?.x ?? 2, SC.spin?.z ?? 35];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'metal'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(300000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

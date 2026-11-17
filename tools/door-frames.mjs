@@ -7,6 +7,7 @@
 // part: first (a fresh page: the approach, the offer, then 0, 0.5, 1, 2, 3, 4, 6, 8, 12, 20, 30 s after E), second (the
 // plate's act after a first knock: offered, then the same seconds), return (a reload after both: what lies there).
 // Usage: node tools/door-frames.mjs [base] [prefix=acts-door3] [part=all|first|second|return]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -17,7 +18,7 @@ const part = process.argv[4] || 'all';
 const phone = process.env.PHONE === '1';
 const [W, H] = phone ? [390, 844] : [1280, 720];
 const SECS = [0, 0.5, 1, 2, 3, 4, 6, 8, 12, 20, 30];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctxB = await browser.newContext({ viewport: { width: W, height: H }, hasTouch: phone });
 const page = await ctxB.newPage();
 page.setDefaultTimeout(600000);

@@ -15,6 +15,7 @@
 //   `down`: from the tender's deck back down to the turf on the keys (frames down the flights, at the switchback, and a
 //   sequence of the slabs below rising to meet the feet).
 //   node tools/stair-walk.mjs [base=http://localhost:8162] [keys|touch|falls|down] [prefix=h3-walk] [extra query, e.g. &fall=1]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -22,7 +23,7 @@ catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base0 = 'http://localhost:8162', mode = 'keys', prefix = 'h3-walk', extra = ''] = process.argv.slice(2);
 const base = base0.replace(/\/?(\?.*)?$/, '');
 const touch = mode === 'touch', falls = mode === 'falls', down = mode === 'down';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);

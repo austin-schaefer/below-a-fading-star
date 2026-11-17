@@ -2,12 +2,13 @@
 // Records the master output of a full gutter to a WAV (7.1): 5 s of bed, the sun held at 0.2 for 9 s, back to 1 for 6 s.
 // Real-time through a script processor on the master bus; prints peak and RMS of the whole take, of the gutter window,
 // and of the gutter window above 2 kHz (one-pole high-pass pair). Usage: node tools/gutter-wav.mjs <url> <out.wav>
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 let chromium;
 try { ({ chromium } = await import('playwright')); } catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const [url, out] = [process.argv[2] || 'http://localhost:8123/?q=low&only=audio', process.argv[3] || 'shots/wip/gutter.wav'];
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage();
 await page.goto(url, { waitUntil: 'load', timeout: 60000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });

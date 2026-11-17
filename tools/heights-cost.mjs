@@ -10,6 +10,7 @@
 // worst heading. With BOUND=1 it also checks each top against 1.3 x the floor's worst (calls and triangles) and
 // prints PASS / FAIL lines, and against fixed numbers (364 calls, 1.3 x 2.1M triangles); heights-test calls it that way on low.
 // A top with no floor at its height yet (the shelf and the gallery before H2 and H4 merge) is held in the air there.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let chromium;
@@ -32,7 +33,7 @@ const STATIONS = [
 ].filter((s) => !flags.only || flags.only.split(',').includes(s.name));
 if (flags.village) STATIONS.splice(0, STATIONS.length, // the village's three near stands on low (v15-N1): the Lees' square, the Mid Rung, the Pennyworth
   { name: 'square', top: false, x: 73.7, z: -36.3, pitch: 0 }, { name: 'rungs', top: false, x: 64.3, z: -21.8, pitch: 0 }, { name: 'pennyworth', top: false, x: 100, z: -25, pitch: 0 });
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
 const errors = [];

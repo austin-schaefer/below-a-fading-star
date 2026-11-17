@@ -23,7 +23,7 @@ The repository is a static Three.js r170 site with no build step and no package.
 
 ## Renders
 
-- One view: `node tools/shot.mjs "$B/?q=low&pos=-60,20&yaw=1.9" shots/wip/<name>.png 1280 720` (headless software WebGL, slow but faithful; `SHOT_DPR=2` renders at a retina pixel ratio).
+- One view: `node tools/shot.mjs "$B/?q=low&pos=-60,20&yaw=1.9" shots/wip/<name>.png 1280 720` (headless WebGL on the GPU through ANGLE's Metal, the default every tool takes from `tools/launch.mjs`; `SHOT_ANGLE=swiftshader` draws in software, slow and the same on any machine; `SHOT_DPR=2` renders at a retina pixel ratio).
 - Several views from one load (the scene build is the slow part): `node tools/views.mjs views.json shots/wip <prefix> low`, where `views.json` lists `{ name, x, z, yaw, pitch, dy, js, pre }`. It holds the sun's guttering off so before/after pairs match.
 - `FP_BROWSER=chromium|firefox|webkit` picks the engine for both (default chromium; the ANGLE flags are Chromium's). Headless Firefox and WebKit on this Mac draw on the real GPU (Firefox through Apple's OpenGL, points clamped at 64 px), so they are the Firefox and Safari GPU paths, not software.
 - **Where they go:** 1280×720 into `shots/wip/`, named `<module>-<stage>-<view>.png`. `shots/wip/` is gitignored and never committed; only the curator commits, as WebP keepers into `shots/`, and the pre-commit hook rejects any staged PNG under `shots/` (so `git add -f` fails) and any image over 1.25 MB. Ignored files die with their worktree, so `tools/worktree.sh rm` first moves a worktree's `shots/wip/` into the deploy worktree's (`.claude/worktrees/deploy`), where the curator reads them; it refuses if the deploy worktree is missing.

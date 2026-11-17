@@ -10,6 +10,7 @@
 //   node tools/noon-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [prefix=noonroad-walk]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NN-<what>.png in order. Prints each frame with where the feet are and
 // on what floor, the lowest the feet went, and a last line `walked: yes|no`.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -17,7 +18,7 @@ catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', mode = 'keys', q = 'low', prefix0 = 'noonroad-walk'] = process.argv.slice(2);
 const prefix = `${prefix0}-${mode}-${q}`;
 const touch = mode === 'touch';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);

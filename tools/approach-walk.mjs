@@ -8,6 +8,7 @@
 // the walked trail (orange). Out: shots/wip/<prefix>-NN-<m>m.png, <prefix>-end.png, <prefix>-plan.png.
 // Usage: node tools/approach-walk.mjs [base] <prefix> "x,z;x,z;..." [plan half-size m = 45]
 //   Q=low · EVERY=10 (m between frames)
+import { ANGLE } from './launch.mjs';
 import { chromium } from 'playwright'; // npm install --no-save playwright@1.63.0 in the worktree (the wilderness skill)
 import { writeFileSync } from 'node:fs';
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
@@ -16,7 +17,7 @@ const pts = (process.argv[4] || '').split(';').filter(Boolean).map((s) => s.spli
 const half = +(process.argv[5] || 45);
 const EVERY = +(process.env.EVERY || 10), Q = process.env.Q || 'low';
 if (pts.length < 2) { console.error('usage: node tools/approach-walk.mjs base prefix "x,z;x,z;..." [half]'); process.exit(2); }
-const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

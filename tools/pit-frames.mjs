@@ -9,6 +9,7 @@
 //          then 0.3, 1, 2, 5, 8, 9, 11, 15 and 22 s
 //   fall:  placed over the Nadir: 0.3, 1, 2, 3.5 s (the night under the world, the veil) and 5.5 s (the Bitter End)
 // Usage: node tools/pit-frames.mjs [base] [prefix=pit-act] [part=all|floor|lip|fall] [q=low]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -19,7 +20,7 @@ const part = process.argv[4] || 'all';
 const q = process.argv[5] || 'low';
 const phone = process.env.PHONE === '1';
 const [W, H] = phone ? [390, 844] : [1280, 720];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctxB = await browser.newContext({ viewport: { width: W, height: H }, hasTouch: phone });
 const page = await ctxB.newPage();
 page.setDefaultTimeout(600000);

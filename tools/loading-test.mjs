@@ -9,6 +9,7 @@
 // (?bakehold=3000). And on this tree served as Netlify serves it (tools/sw-site.mjs: an X-Fp-Commit stamp on every
 // response, with ?kept=commit): a record made under one commit is not read under another (and is pruned), and a load
 // whose commit.json disagrees with its code's stamp neither reads, writes nor prunes. Usage: node tools/loading-test.mjs [url]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, normalize, dirname } from 'node:path';
@@ -18,7 +19,7 @@ let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 await page.addInitScript(() => {
   window.__samples = [];

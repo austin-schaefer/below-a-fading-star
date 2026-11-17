@@ -35,13 +35,14 @@
 // Ladders (v15-W2): every ladder drawn anywhere is in ctx.ladders, climbable with its ascent or scenery with a reason;
 // every file under src/ that speaks of a ladder registers one or is listed (NO_LADDER) as drawing none.
 //   node tools/ways-test.mjs [base=http://localhost:8123]
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];

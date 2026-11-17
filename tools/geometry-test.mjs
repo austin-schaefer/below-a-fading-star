@@ -24,6 +24,7 @@
 //   GEOM_LIST=1 prints each place's parts and triangle counts; GEOM_JSON=path writes every finding as JSON;
 //   GEOM_ALL=1 prints every finding, not only the new ones and the worst ten; GEOM_DUMP=dir writes each place's faces
 //   as JSON there (for a closer look in node with tools/geometry/analyze.mjs).
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -91,7 +92,7 @@ const run = places.filter((p) => !only.length || only.includes(p.name));
 const baseFile = join(here, 'geometry-baseline.json');
 const baseline = existsSync(baseFile) ? JSON.parse(readFileSync(baseFile, 'utf8')) : { known: {} };
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];

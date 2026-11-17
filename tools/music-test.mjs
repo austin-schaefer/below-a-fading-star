@@ -11,12 +11,13 @@
 // 2. ?music=moor and ?music=keep play that track 3 s after the walk begins and the director stays out of it;
 //    ?music=0 plays nothing and loads nothing.
 // 3. the three level sliders: each moves its own gains (ramped), persisted as fp-level-<kind>; at 100 all are 1.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/$/, '');
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 let fails = 0;
 const check = (ok, msg) => { console.log((ok ? 'PASS ' : 'FAIL ') + msg); if (!ok) fails++; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
