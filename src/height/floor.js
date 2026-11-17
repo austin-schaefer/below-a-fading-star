@@ -50,7 +50,6 @@ const STRAND_REACH = BANK_W + STRAND_WOB * 1.1; // (|noise2| < 1.1: tools/height
 const NOTCH = { x: 40, z: -320 };
 const BACKS = [
   { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },
-  { x: -180, z: -128, stoss: 45, lee: 80, w: 30, h: 4.8 }, // under the Lynchets: its terraces climb its flank
   { x: -128, z: -176, stoss: 36, lee: 64, w: 22, h: 4.0 },
   { x: 128, z: -186, stoss: 32, lee: 58, w: 22, h: 3.8 }, // (none under Medlar Close: its terraces' wave is read off the height, and a swell packs its steps closer than medium's cells draw)
   { x: 70, z: -128, stoss: 34, lee: 56, w: 21, h: 3.6 },
@@ -93,6 +92,7 @@ const BOXES = [
   [215, 300, -125, 15, 40, 15], // High Ling, the Lonely Staircase, the Croft, the Hypogeum (226, -112, r 12)
   [215, 300, 13, 70, 30, 10], // the Foundered Nave's block and the Noon Road (x 246-296 at z 42), from High Ling's x 215 (no lifted strip between)
   [182, 218, 167, 203, 20, 8], // the Pit's block (SITES.pit)
+  [-232, -156, -154, -74, 25, 8], // the Lynchets (REGIONS.lynchets' polygon): its terraces' wave and walls are read off the height, so they stand on the old ground
   [195, 235, 248, 290, 20, 8], // the fall's block (SITES.fallLip)
   [-270, -195, 180, 245, 20, 8], // the Span's west block (src/v4/span/plan.js)
   [220, 270, 160, 245, 20, 8], // the Span's east block

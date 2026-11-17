@@ -6,7 +6,6 @@
 // ground gives it nowhere lower to go. The kerb is straight. Each sample knows the region it crosses, and so its
 // material (MATERIALS). Shared by v4/paths.js (draws them), vegetation (wears the cover off them) and __fp.paths.
 import { heightAt, slopeAt, waterLevelAt, causewayDistance } from '../../height/field.js'; // (v13 L2: the three-free heightfield)
-import { HEIGHT_PARAMS } from '../../height/params.js'; // v16: ?floor=v15 keeps R2 where it ran
 import { regionAt, regionDistance } from '../../height/regions.js';
 import { LANDMARKS, SITES } from '../../world.js';
 import { makeSimplex, smoothstep, clamp } from '../../noise.js';
@@ -50,7 +49,7 @@ export const LEADS = [
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe, on to the foot of the Great Span\'s west stair (v15-F1: every way up has a track to its foot)', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196], [-199.5, 200], [-202.4, 200.3]] },
   { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
-  { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[HEIGHT_PARAMS.floor === 'v15' ? [214, 76] : [210, 78], [198, 136]]] }, // (v16: from 4 m west of the old start: the High Ling's box keeps its ground as it was, so (214, 76) lies in a dip the floor's fall closes; ?floor=v15 keeps the old)
+  { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[214, 76], [198, 136]]] },
   { id: 'R3', kind: 'rivulet', w: 0.14, brief: 'runnel, Bletting grass to the Demesne\'s ditch', pts: [[130, -92], [100, -20], [108, -16]], parts: [[[104, 62], [80, 92]]] },
   { id: 'R4', kind: 'rivulet', w: 0.14, brief: 'runnel, field-stone then moor', pts: [[-182, -78], [-165, -28], [-140, 55], [-130, 75]] },
   { id: 'R5', kind: 'rivulet', w: 0.13, brief: 'runnel, moor', pts: [[-65, 17], [-55, 40], [-50, 70]] },
