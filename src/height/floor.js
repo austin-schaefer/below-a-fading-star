@@ -37,9 +37,9 @@ const SN = makeSimplex(WORLD.seed + 1603);
 // the fall: u runs from the waters (south-west) to the high ground (north-east)
 const UX = 0.45, UZ = -0.89, U0 = -100, U1 = 230;
 const RISE = 4.2; // metres at the top of the fall, give or take the swell's 1.2
-// the fall's top bolder where nothing protected is within FAR metres: EXTRA more from u X0 to X1 (the north-east wall's
-// foot), and the strand's bank BANK_X higher
-const EXTRA = 3.6, X0 = 120, X1 = 255, FAR = 60, BANK_X = 1.0;
+// the strand's bank BANK_X higher where nothing protected is within FAR metres (v16 L4: a bolder top to the fall by the
+// north-east wall was tried and dropped: that ground is the Bletting's, whose things and tracks rode 8 m up and broke roads-test)
+const FAR = 60, BANK_X = 1.0;
 
 // the old strand: a bank of BANK metres across BANK_W metres of u, at u STRAND, wandering STRAND_WOB either way
 const STRAND = -22, STRAND_WOB = 13, BANK = 2.0, BANK_W = 4;
@@ -61,20 +61,20 @@ const BACKS = [
 });
 // the kettles: a fraction of the lift taken out (so a kettle is never under the old ground), a dish round each pool
 const KETTLES = [
-  { x: -64, z: -88, r: 30, k: 0.6 },
-  { x: -124, z: -94, r: 24, k: 0.5 },
+  { x: -68, z: -82, r: 30, k: 0.6 },
+  { x: -118, z: -104, r: 24, k: 0.5 },
 ].map((k) => ({ ...k, r2: k.r * k.r }));
 
 // The pools (v16 L4): still water the fall leaves standing on the high ground, seen from the stair's top as glints that
 // say which way the ground falls. Each: its edge (radialOutline), its level y (measured on the ground round it with the
 // pools left out: tools/outline-test.mjs holds the shore dry and the water in), the bowl's depth D under it.
 const POOL_DEFS = [
-  { name: 'kettle', x: -64, z: -90, r: 16, seed: 16041, amp: 0.16, K: 6, y: 1.2, D: 1.4,
+  { name: 'kettle', x: -68, z: -82, r: 16, seed: 16041, amp: 0.16, K: 6, y: 1.6, D: 1.4,
     lobes: [{ bearing: 200, d: 14, r: 7 }] },
-  { name: 'kettle-west', x: -124, z: -96, r: 12, seed: 16042, amp: 0.18, K: 6, y: 6.0, D: 1.1,
+  { name: 'kettle-west', x: -118, z: -104, r: 12, seed: 16042, amp: 0.18, K: 6, y: 5.6, D: 1.1,
     lobes: [{ bearing: 40, d: 10, r: 5 }] },
-  { name: 'strand-pond', x: -103, z: -46, r: 7, seed: 16043, amp: 0.12, K: 5, y: 6.3, D: 0.8,
-    lobes: [{ x: -120, z: -54.5, r: 4.5, to: { x: -86, z: -37.5, r: 4 } }] }, // drawn out along the strand behind its ridge
+  { name: 'strand-pond', x: -94, z: -42.5, r: 7, seed: 16043, amp: 0.12, K: 5, y: 5.6, D: 0.8,
+    lobes: [{ x: -106, z: -48.5, r: 4.5, to: { x: -82, z: -36.5, r: 4 } }] }, // drawn out along the strand behind its ridge
 ];
 // the bank cut down to the water on the high side (rise a metre out), the lip raised to hold it on the low side
 const BANK_SLOPE = 0.45, LIP = 0.3, LIP_W = 2.2, LIP_FALL = 0.32, POOL_REACH = 26;
@@ -101,7 +101,7 @@ const CIRCLES = [
   [40, 30, 95, 45, 15], // the keep's hill, the Demesne and its ha-ha, the village (src/v15)
   [-90, 110, 92, 25, 10], // Lees Tarn (L2 redraws its edge; the lift is 0 over all of it)
   [70, 160, 85, 25, 10], // the fen
-  [-40, -165, 60, 35, 12], // the Sunken Court (LANDMARKS.court): its flatten to an absolute -1 reaches r 60
+  [-40, -165, 58, 35, 6], // the Sunken Court (LANDMARKS.court): its flatten to an absolute -1 reaches r 60 (0.01 of it past 58)
 ];
 // Lines held at the old ground: [[x, z], ...], radius R, skirt S, wander W. The Wellward Way (src/v14/passage/plan.js,
 // the Nave's door to the Pit, the Laid Sun at (223.6, 123)) under the moor; and the old ground's drains where the lift
@@ -115,6 +115,10 @@ const LINES = [
   { pts: [[128, -10], [128, 2], [128, 14], [136, 18], [148, 18], [156, 18], [164, 14], [174, 16], [180, 22], [188, 26], [196, 30], [206, 32], [214, 36]], R: 4, S: 25, W: 8 }, // the Lappet's east foot, east
   { pts: [[140, -46], [150, -44], [162, -44], [174, -44], [184, -42], [184, -30], [194, -28], [192, -18], [188, -10], [184, -2], [184, 6], [188, 14], [194, 20], [196, 30]], R: 4, S: 25, W: 8 }, // the Lappet's north-east foot
   { pts: [[230, -130], [230, -144], [242, -144], [250, -148]], R: 4, S: 22, W: 6 }, // High Ling's south foot, to the wall
+  { pts: [[-148, -134], [-138, -136], [-132, -142], [-130, -152], [-128, -162], [-128, -174], [-132, -182], [-140, -186], [-144, -194], [-154, -196], [-154, -208], [-166, -208], [-180, -208], [-192, -212], [-204, -222]], R: 4, S: 25, W: 8 }, // the Lynchets' north-east foot, round to the wall
+  { pts: [[-118, -156], [-128, -160]], R: 4, S: 20, W: 6 }, // a hollow between two whalebacks, into it
+  { pts: [[-170, -166], [-166, -174], [-166, -198], [-168, -208]], R: 4, S: 22, W: 6 }, // the Lynchets' north foot
+  { pts: [[-56, -24], [-64, -19], [-76, -20], [-86, -18], [-88, -8], [-86, 2], [-84, 12], [-84, 26]], R: 4, S: 22, W: 6 }, // the keep's west skirt, down to the tarn
 ].map((L) => {
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   for (const [x, z] of L.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
@@ -222,8 +226,7 @@ function forms(x, z, u) {
   // (two long crossed waves, not a noise: heightAt is the hottest call in the walk, and a wave of 500 m reads the same)
   let f = ramp > 0 ? ramp * (RISE + 1.2 * Math.sin(x * 0.0113 + 1.3) * Math.sin(z * 0.0091 - 0.7)) : 0;
   // (v16 L4) bolder by the north-east wall's foot and at the strand, where nothing protected is near
-  const su = u - STRAND, far = u > X0 || su > -STRAND_REACH ? farFactor(x, z) : 0;
-  if (u > X0) f += EXTRA * smoothstep(X0, X1, u) * far;
+  const su = u - STRAND, far = su > -STRAND_REACH ? farFactor(x, z) : 0;
   // the old strand's bank
   const bank = BANK + BANK_X * far;
   if (su > STRAND_REACH) f += bank;

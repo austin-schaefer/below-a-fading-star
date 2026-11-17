@@ -223,8 +223,7 @@ export async function build(ctx) {
       if (!allowed(x, z)) continue;
       const b = terrain.biomeAt(x, z);
       // density: scree and rock slopes, heath, the moor; less in marsh and wood
-      let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6
-        + (b.stone ?? 0) * 0.7 + (b.bleak ?? 0) * 0.45 + (b.strand ?? 0) * 0.5 - (b.wet ?? 0) * 0.2; // v16 L4: the floor's character: stony high ground, bare crests, the strand's shingle
+      let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6;
       if (ctx.regions) density *= ctx.regions.stoneAt(x, z).density; // v4 regions: a region's own stone replaces these
       density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
       if (rng() > density) continue;
@@ -240,9 +239,14 @@ export async function build(ctx) {
       else { size = 1.3 + rng() * rng() * 3.2; cls = 'boulder'; }
       if (b.slope > 0.6 && cls !== 'pebble') continue;
       if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
+      // v16 L4: the floor's character (src/height/floor.js), after the draws so every other rock keeps its place: the wet
+      // low ground and the pools' margins lose most of theirs, the stony high ground and the strand's shingle grow theirs
+      const fw = b.wet ?? 0, fs = Math.max(b.stone ?? 0, b.strand ?? 0);
+      if (fs > 0 && cls !== 'pebble') size *= 1 + 0.35 * fs;
       const y = terrain.heightAt(x, z);
       terrain.normalAt(x, z, n);
       const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
+      if (fw > 0 && (Math.sin(x * 91.7 + z * 47.3) * 43758.5453 % 1 + 1) % 1 < 0.6 * fw) continue; // (v16 L4, above)
       // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
       // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
