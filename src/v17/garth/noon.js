@@ -9,18 +9,32 @@
 //   shaft(): the beam seen in the air, a faint cone; motes(): dust turning in it.
 import * as THREE from 'three';
 import { NOON } from '../../v8/strata/noon.js';
-import { CX, CZ, FLOOR, LENS, LIGHT_R } from './plan.js';
+import { CX, CZ, FLOOR, LENS, LIGHT_R, TREES, TREE, at, DOOR_A } from './plan.js';
 
-export const NOON_I = 3.1; // the beam's strength on a surface square to it (times the surface's colour)
+export const NOON_I = 4.2; // the beam's strength on a surface square to it (times the surface's colour)
 export const U = {
   uNoon: { value: new THREE.Vector4(NOON_I, LIGHT_R - 0.15, 0.38, 0) }, // strength (breathing), r at the floor, the penumbra's half-width (it ends short of the yellowing ring)
   uNoonA: { value: new THREE.Vector4(CX, FLOOR, CZ, LENS.y) },
   uNoonB: { value: new THREE.Vector2(LENS.r, 0) },
-  uNoonCol: { value: new THREE.Color('#f4f7ff') }, // white, a breath of blue: the walk's one cold-neutral light (the stored glass's NOON.lightHex is cream; this is the noon it was)
+  uNoonCol: { value: new THREE.Color('#fff8ec') }, // white with a faint warmth (some 5500 K): the walk's one daylight; blue lives only in its shadows
+  // the living trees' frames (centre x, z; the tangent's angle; half-length): the noon is overhead, so each casts a
+  // short hard shadow straight down onto the grass and the soil under it, dappled where the leaves part
+  uNoonSh: { value: TREES.filter((t) => t.ring === 'live').map((t) => { const [x, z] = at(t.r, t.b); return new THREE.Vector4(x, z, DOOR_A + t.b, TREE.half); }) },
   uNoonT: { value: 0 },
 };
 const GLSL = `
-  uniform vec4 uNoon, uNoonA; uniform vec2 uNoonB; uniform vec3 uNoonCol;
+  uniform vec4 uNoon, uNoonA; uniform vec2 uNoonB; uniform vec3 uNoonCol; uniform vec4 uNoonSh[3];
+  // the shadow under the trees: 1 in the open, down to 0.2 in the strip under a frame (only near the floor)
+  float fpNoonShade(vec3 w) {
+    float k = 1.0; if (w.y > uNoonA.y + 0.45) return k;
+    for (int i = 0; i < 3; i++) {
+      vec4 s = uNoonSh[i]; vec2 d = w.xz - s.xy; float u = dot(d, vec2(-sin(s.z), cos(s.z))), v = dot(d, vec2(cos(s.z), sin(s.z)));
+      float m = (1.0 - smoothstep(s.w - 0.05, s.w + 0.1, abs(u))) * (1.0 - smoothstep(0.16, 0.24, abs(v)));
+      m *= 0.75 + 0.25 * step(0.0, sin(u * 23.0 + v * 9.0) * sin(u * 11.0 - 2.0));
+      k = min(k, 1.0 - 0.8 * m);
+    }
+    return k;
+  }
   float fpNoonBeam(vec3 w) {
     float t = (w.y - uNoonA.y) / (uNoonA.w - uNoonA.y);
     if (t > 1.0) return 0.0;
@@ -37,8 +51,11 @@ export function noonLit(mat, foliage = false) {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>' + GLSL)
       .replace('#include <opaque_fragment>', `{ vec3 fpWN = inverseTransformDirection(normal, viewMatrix);
         vec3 fpL = normalize(vec3(uNoonA.x, uNoonA.w, uNoonA.z) - vUnderW); float fpD = dot(fpWN, fpL);
-        float fpLam = ${foliage ? '0.5 + 0.5 * abs(fpD)' : 'max(fpD, 0.0)'};
-        outgoingLight += uNoonCol * uNoon.x * diffuseColor.rgb * fpNoonBeam(vUnderW) * fpLam; }
+        float fpLam = ${foliage ? '0.2 + 0.9 * max(fpD, 0.0) + 0.15 * max(-fpD, 0.0)' : 'max(fpD, 0.0)'};
+        float fpB = fpNoonBeam(vUnderW), fpS = fpNoonShade(vUnderW);
+        outgoingLight += uNoonCol * uNoon.x * diffuseColor.rgb * fpB * fpLam * fpS;
+        // the shadow's fill: the sky's blue, a little, in the shade under the frames
+        outgoingLight += vec3(0.30, 0.42, 0.62) * uNoon.x * 0.12 * diffuseColor.rgb * fpB * (1.0 - fpS); }
 #include <opaque_fragment>`);
   };
   return mat;
@@ -62,7 +79,7 @@ export function shaft() {
         // slow streaks down it, as dust in a beam is never even
         float a = atan(vW.z - uNoonA.z, vW.x - uNoonA.x);
         k *= 0.7 + 0.3 * sin(a * 9.0 + uNoonT * 0.07) * sin(a * 4.0 - vW.y * 0.3 + uNoonT * 0.05);
-        gl_FragColor = vec4(uNoonCol * k * 0.13 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0);
+        gl_FragColor = vec4(uNoonCol * k * 0.018 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0);
       }`,
     // (no fog chunks: under the ground the haze is nil, under.js's own materials mix it out too)
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
@@ -93,7 +110,7 @@ export function motes(rng, n) {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `uniform vec3 uNoonCol; uniform vec4 uNoon; varying float vA;
-      void main() { vec2 c = gl_PointCoord - 0.5; float d = 1.0 - smoothstep(0.15, 0.5, length(c)); gl_FragColor = vec4(uNoonCol * d * vA * 0.55 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0); }`,
+      void main() { vec2 c = gl_PointCoord - 0.5; float d = 1.0 - smoothstep(0.15, 0.5, length(c)); gl_FragColor = vec4(uNoonCol * d * vA * 0.1 * uNoon.x / ${NOON_I.toFixed(2)}, 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
   const pts = new THREE.Points(g, m); pts.name = 'garth-motes'; pts.frustumCulled = false; pts.renderOrder = 19;
