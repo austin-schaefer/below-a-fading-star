@@ -4,11 +4,11 @@
 // biomeAt, the water and the river. Pure: no three, no page globals, so a worker can import it (src/height/params.js
 // carries the URL's switches). terrain.js re-exports all of it; import from there unless you are in a worker.
 // Everything here is checked bit for bit by tools/height-check.mjs.
-import { makeSimplex, clamp, lerp, smoothstep } from '../noise.js';
+import { makeSimplex, clamp, lerp, smoothstep, hyp } from '../noise.js';
 import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
-import { applyMountains, M_START } from '../v4/mountains.js'; // v4 systems: the walls
+import { applyMountains, M_START, WALL_SAMPLE } from '../v4/mountains.js'; // v4 systems: the walls
 import { regionsHeight, regionsCoarse, woodRag } from './regions.js'; // v4 systems: the regions' hooks
 import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and foot
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
@@ -25,7 +25,7 @@ function distToSegment(px, pz, ax, az, bx, bz) {
   let t = l2 > 0 ? ((px - ax) * dx + (pz - az) * dz) / l2 : 0;
   t = clamp(t, 0, 1);
   const x = ax + dx * t, z = az + dz * t;
-  return Math.hypot(px - x, pz - z);
+  return hyp(px - x, pz - z);
 }
 // v4 map: the road is CAUSEWAY_V4 (the saddle to the pit); each segment's box skips the far ones
 const ROAD = CAUSEWAY_V4.slice(1).map((b, i) => { const a = CAUSEWAY_V4[i]; return [a.x, a.z, b.x, b.z, Math.min(a.x, b.x), Math.max(a.x, b.x), Math.min(a.z, b.z), Math.max(a.z, b.z)]; });
@@ -53,7 +53,7 @@ function causewayNear(x, z, lim) {
 
 // Flatten toward a target height inside r, blending out over `fall` metres.
 function flatten(h, x, z, cx, cz, r, fall, target) {
-  const d = Math.hypot(x - cx, z - cz);
+  const d = hyp(x - cx, z - cz);
   const m = 1 - smoothstep(r, r + fall, d);
   return lerp(h, target, m);
 }
@@ -142,7 +142,36 @@ function makePolyline(pts) {
   for (let i = 0; i < n; i++) { X[i] = pts[i][0]; Z[i] = pts[i][1]; if (i) S[i] = S[i - 1] + Math.hypot(X[i] - X[i - 1], Z[i] - Z[i - 1]); }
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   for (let i = 0; i < n; i++) { x0 = Math.min(x0, X[i]); x1 = Math.max(x1, X[i]); z0 = Math.min(z0, Z[i]); z1 = Math.max(z1, Z[i]); }
-  return { X, Z, S, n, length: S[n - 1], box: [x0, x1, z0, z1] };
+  // v16 L5: chunks of CH segments (points CH·c .. CH·c + CH), each with its box, so a search skips the far ones
+  const nc = Math.ceil((n - 1) / CH), CB = new Float64Array(nc * 4);
+  for (let c = 0; c < nc; c++) {
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (let i = c * CH; i <= Math.min(c * CH + CH, n - 1); i++) { a0 = Math.min(a0, X[i]); a1 = Math.max(a1, X[i]); b0 = Math.min(b0, Z[i]); b1 = Math.max(b1, Z[i]); }
+    CB[4 * c] = a0; CB[4 * c + 1] = a1; CB[4 * c + 2] = b0; CB[4 * c + 3] = b1;
+  }
+  // and a 4 m grid over the box and 72 m round it: the segment nearest each cell's middle, which seeds the search
+  const G = 4, gx0 = x0 - 72, gz0 = z0 - 72, gnx = Math.ceil((x1 - x0 + 144) / G), gnz = Math.ceil((z1 - z0 + 144) / G), GI = new Int16Array(gnx * gnz);
+  for (let j = 0; j < gnz; j++) for (let i = 0; i < gnx; i++) {
+    const px = gx0 + (i + 0.5) * G, pz = gz0 + (j + 0.5) * G;
+    let b = Infinity, bi = 0;
+    for (let k = 0; k < n - 1; k++) { const e = segD2(X, Z, k, px, pz); if (e < b) { b = e; bi = k; } }
+    GI[j * gnx + i] = bi;
+  }
+  return { X, Z, S, n, length: S[n - 1], box: [x0, x1, z0, z1], nc, CB, grid: { gx0, gz0, gnx, gnz, iG: 1 / G, GI }, mx: NaN, mz: NaN, mi: 0, mt: 0, me: 0 };
+}
+// the squared distance from (x, z) to segment i
+function segD2(X, Z, i, x, z) {
+  const ax = X[i], az = Z[i], dx = X[i + 1] - ax, dz = Z[i + 1] - az;
+  let t = ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz);
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  const ex = ax + dx * t - x, ez = az + dz * t - z;
+  return ex * ex + ez * ez;
+}
+const CH = 8;
+// the squared distance from (x, z) to chunk c's box
+function chunkD2(CB, c, x, z) {
+  const ex = x < CB[4 * c] ? CB[4 * c] - x : x > CB[4 * c + 1] ? x - CB[4 * c + 1] : 0, ez = z < CB[4 * c + 2] ? CB[4 * c + 2] - z : z > CB[4 * c + 3] ? z - CB[4 * c + 3] : 0;
+  return ex * ex + ez * ez;
 }
 const RIVER_LINE = catmull(RIVER_CTRL, 1.5);
 const GULLY_LINE = catmull(GULLY_CTRL, 1.0);
@@ -151,18 +180,32 @@ const GULLY_LINE = catmull(GULLY_CTRL, 1.0);
 function project(line, x, z, pad, out) {
   const [x0, x1, z0, z1] = line.box;
   if (x < x0 - pad || x > x1 + pad || z < z0 - pad || z > z1 + pad) { out.hit = false; return out; }
-  const { X, Z, S, n } = line;
+  const { X, Z, S, n, CB } = line;
   let best = Infinity, bi = 0, bt = 0;
-  for (let i = 0; i < n - 1; i++) {
-    const ax = X[i], az = Z[i], dx = X[i + 1] - ax, dz = Z[i + 1] - az;
-    const l2 = dx * dx + dz * dz;
-    let t = ((x - ax) * dx + (z - az) * dz) / l2;
-    t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const ex = ax + dx * t - x, ez = az + dz * t - z;
-    const e = ex * ex + ez * ez;
-    if (e < best) { best = e; bi = i; bt = t; }
+  // (v16 L5: the last point's search is kept, the river being asked at one point by heightAt and waterLevelAt; and a
+  // chunk whose box is no nearer than the best so far is skipped: the same segment wins, to the bit)
+  if (x === line.mx && z === line.mz) { best = line.me; bi = line.mi; bt = line.mt; }
+  else {
+    // the grid's segment for this cell seeds the best, a hair over its distance, so that a segment before it at the
+    // same distance still wins, as in a plain scan from the start
+    const g = line.grid, gi = ((x - g.gx0) * g.iG) | 0, gj = ((z - g.gz0) * g.iG) | 0;
+    if (gi >= 0 && gj >= 0 && gi < g.gnx && gj < g.gnz) best = segD2(X, Z, g.GI[gj * g.gnx + gi], x, z) * (1 + 1e-9) + 1e-12;
+    for (let c = 0; c < line.nc; c++) {
+      if (chunkD2(CB, c, x, z) >= best) continue;
+      for (let i = c * CH, i1 = Math.min(c * CH + CH, n - 1); i < i1; i++) {
+        const ax = X[i], az = Z[i], dx = X[i + 1] - ax, dz = Z[i + 1] - az;
+        const l2 = dx * dx + dz * dz;
+        let t = ((x - ax) * dx + (z - az) * dz) / l2;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = ax + dx * t - x, ez = az + dz * t - z;
+        const e = ex * ex + ez * ez;
+        if (e < best) { best = e; bi = i; bt = t; }
+      }
+    }
+    line.mx = x; line.mz = z; line.me = best; line.mi = bi; line.mt = bt;
   }
-  const dx = X[bi + 1] - X[bi], dz = Z[bi + 1] - Z[bi], l = Math.hypot(dx, dz);
+  out.e2 = best;
+  const dx = X[bi + 1] - X[bi], dz = Z[bi + 1] - Z[bi], l = hyp(dx, dz);
   const tx = dx / l, tz = dz / l;
   const px = x - X[bi], pz = z - Z[bi];
   const along = (px * tx + pz * tz);
@@ -233,20 +276,27 @@ function riverSection(x, z, out = _cs) {
   {
     const [bx0, bx1, bz0, bz1] = RIVER_LINE.box;
     if (x > bx0 - 70 && x < bx1 + 70 && z > bz0 - 70 && z < bz1 + 70) {
-      const { X, Z, n } = RIVER_LINE;
+      // (v16 L5: the weights are taken relative to the line's nearest distance, q.e2, which the projection above found
+      // (inside this box it always runs); a point or a chunk of them more than 5000 m² further off weighs under 1e-10
+      // of the nearest and is skipped)
+      const { X, Z, n, CB } = RIVER_LINE, e0 = q.e2, far = e0 + 5000;
       let wsum = 0, tsum = 0, dsum = 0, dmin2 = Infinity;
-      for (let i = 0; i < n; i++) {
-        const e = (x - X[i]) ** 2 + (z - Z[i]) ** 2;
-        if (e < dmin2) dmin2 = e;
-        const w = Math.exp(-e / 200) + 1e-30;
-        wsum += w; tsum += w * RIM_TOP[i]; dsum += w * RIM_DW[i];
+      for (let c = 0; c < RIVER_LINE.nc; c++) {
+        if (chunkD2(CB, c, x, z) > far) continue;
+        for (let i = c * CH, i1 = c === RIVER_LINE.nc - 1 ? n : c * CH + CH; i < i1; i++) {
+          const e = (x - X[i]) ** 2 + (z - Z[i]) ** 2;
+          if (e > far) continue;
+          if (e < dmin2) dmin2 = e;
+          const w = Math.exp((e0 - e) / 200);
+          wsum += w; tsum += w * RIM_TOP[i]; dsum += w * RIM_DW[i];
+        }
       }
       const top = tsum / wsum, dw = dsum / wsum, dmin = Math.sqrt(dmin2);
       out.raise = top + SX.fbm2(x * 0.03 + 9, z * 0.03, 3) * 1.6 - Math.max(0, dmin - dw) * 0.34;
     }
   }
   // the pool's bowl, its beach, and the cirque wall behind it
-  const px = x - POOL.x, pz = z - POOL.z, rp = Math.hypot(px, pz);
+  const px = x - POOL.x, pz = z - POOL.z, rp = hyp(px, pz);
   if (rp < 60) {
     const back = rp > 1e-3 ? Math.max(0, (px * BACK.x + pz * BACK.z) / rp) : 0;
     const kp = lerp(2.4, 6.0, back);
@@ -256,7 +306,7 @@ function riverSection(x, z, out = _cs) {
     else c = POOL.y + 0.26 + (rp - 6.8) * kp * (1 + SX.noise2(x * 0.12, z * 0.12) * 0.2);
     out.cut = Math.min(out.cut, c);
     // the canyon's mouth faces downstream (toward the first bend), so the cirque stands lower there
-    const fx = RIVER_CTRL[1][0] - POOL.x, fz = RIVER_CTRL[1][1] - POOL.z, fl = Math.hypot(fx, fz);
+    const fx = RIVER_CTRL[1][0] - POOL.x, fz = RIVER_CTRL[1][1] - POOL.z, fl = hyp(fx, fz);
     const front = rp > 1e-3 ? Math.max(0, (px * fx + pz * fz) / (rp * fl)) : 0;
     const top = CIRQUE_Y + 3.5 + SX.fbm2(x * 0.05, z * 0.05 + 4, 3) * 2.5 - front * 9;
     out.raise = Math.max(out.raise, top - Math.max(0, rp - 14) * 0.8);
@@ -295,12 +345,12 @@ const EDDY = (() => {
   // (ox, oz): from the basin's centre toward the channel; the bowl is drawn out that way into a mouth
   return { x: E.x + q.tz * (d - q.d), z: E.z - q.tx * (d - q.d), y: R_W(q.s), r: 2.0, depth: 1.3, s: q.s, ox: -q.tz * side, oz: q.tx * side };
 })();
-function eddyR(x, z) { return Math.hypot(x - EDDY.x, z - EDDY.z); }
+function eddyR(x, z) { return hyp(x - EDDY.x, z - EDDY.z); }
 function carveEddy(h, x, z) {
   const dx = x - EDDY.x, dz = z - EDDY.z;
   if (dx * dx + dz * dz > 81) return h;
   const along = dx * EDDY.ox + dz * EDDY.oz, across = dx * EDDY.oz - dz * EDDY.ox;
-  const R = EDDY.r, r = Math.hypot(along > 0 ? along * 0.6 : along, across) + SX.noise2(x * 0.7, z * 0.7) * 0.18;
+  const R = EDDY.r, r = hyp(along > 0 ? along * 0.6 : along, across) + SX.noise2(x * 0.7, z * 0.7) * 0.18;
   // the bowl, then a narrow wet shelf, then the cut face of the bank climbing back into the wall
   const bowl = EDDY.y - 0.1 - EDDY.depth * Math.pow(Math.max(0, 1 - (r / R) ** 2), 0.7);
   const rim = EDDY.y - 0.1 + smoothstep(R, R + 0.8, r) * 0.3 + Math.max(0, r - R - 0.8) * 2.4;
@@ -309,15 +359,25 @@ function carveEddy(h, x, z) {
 function inEddy(x, z) { return eddyR(x, z) < EDDY.r; }
 // --- v2 riverlife: the eddy basin (end)
 
-// Water level of the river or the ravine at a point (null when off it).
+// Water level of the river or the ravine at a point (null when off it). (v16 L5: only what riverSection says of the
+// water, not the cut: the channel's width at the nearest point, then the ravine, the same numbers to the bit.) Where the
+// fen takes the river over (fenRiverKeep < 1) and its ground stands above the river's level, the fen's own test holds:
+// no water there.
 function riverLevelAt(x, z) {
   if (inEddy(x, z)) return EDDY.y; // v2 riverlife: the eddy basin (hook)
-  const r = riverSection(x, z, _cs2);
-  if (r.gully) return GULLY_BED(r.gs) + 0.25;
-  if (r.inRiver && !(Math.hypot(x - POOL.x, z - POOL.z) < 6.8)) return r.W;
-  return null;
+  const g = project(GULLY_LINE, x, z, 30, _gq);
+  if (g.hit && !g.before && !g.after && Math.abs(g.d) < 2.2) return GULLY_BED(g.s) + 0.25;
+  const q = project(RIVER_LINE, x, z, 70, _rq);
+  if (!q.hit || q.before || q.after) return null;
+  const s = q.s, d = q.d;
+  bankWidths(s, _bw);
+  const B = (d > 0 ? _bw.bl : _bw.br) + SX.noise2(s * 0.12, d > 0 ? 3.1 : 7.7) * 0.6 * (1 - smoothstep(70, 90, s));
+  if (!(Math.abs(d) < R_HW(s) + Math.max(0, B) + 0.6) || hyp(x - POOL.x, z - POOL.z) < 6.8) return null;
+  const W = R_W(s);
+  if (fenRiverKeep(x, z) < 1 && heightAt(x, z) > W) return null;
+  return W;
 }
-const _cs2 = { ..._cs }, _csb = { ..._cs };
+const _csb = { ..._cs };
 
 // Downstream info at a point: arc length, cross distance, level, half-width, flow speed and direction.
 const _ri = { s: 0, d: 0, y: 0, hw: 0, speed: 0, tx: 0, tz: 0, inWater: false };
@@ -344,7 +404,19 @@ export const RIVER = {
   fenEnter: 95,
 };
 
+// v16 L5: the last point's height is kept (biomeAt, the walker and waterLevelAt ask one point again and again); the
+// coarse pass changes the answer, so it is part of the key, and what the walls leave in WALL_SAMPLE is kept with it
+let _hx = NaN, _hz = NaN, _hc = -1, _hh = 0;
+const _hw = { water: 0, mouth: 0, hard: 0, step: 0 };
 export function heightAt(x, z) {
+  const W = WALL_SAMPLE;
+  if (x === _hx && z === _hz && regionsCoarse() === _hc) { W.water = _hw.water; W.mouth = _hw.mouth; W.hard = _hw.hard; W.step = _hw.step; return _hh; }
+  const h = heightRaw(x, z);
+  _hx = x; _hz = z; _hc = regionsCoarse(); _hh = h;
+  _hw.water = W.water; _hw.mouth = W.mouth; _hw.hard = W.hard; _hw.step = W.step;
+  return h;
+}
+function heightRaw(x, z) {
   // Rolling moorland
   let h = SX.fbm2(x * 0.0035, z * 0.0035, 5) * 11;
   h += SX.fbm2(x * 0.012 + 5, z * 0.012 - 3, 4) * 3.2;
@@ -377,7 +449,7 @@ export function heightAt(x, z) {
   // ground's own relief already misses by 0.2 on low's 3.1 m). The 0.42 m keeps the old mean lowering, so what stands
   // on it by a fixed y stays put.
   if (!beyond(h, x, z, L.orchard.x, L.orchard.z, 65)) {
-    const d = Math.hypot(x - L.orchard.x, z - L.orchard.z);
+    const d = hyp(x - L.orchard.x, z - L.orchard.z);
     const m = 1 - smoothstep(40, 65, d);
     const u = (h + 100) / 1.2;
     h -= m * (0.42 + 0.3 * 1.2 * Math.sin(2 * Math.PI * u) / (2 * Math.PI));
@@ -399,7 +471,7 @@ export function heightAt(x, z) {
   // --- v4 systems: the mountains (BI) (begin). The walls are src/v4/mountains.js: the massifs, their couloirs,
   // ribs and fans, named peaks, the sun's saddle with its walkable wedge and AM's seats. The glacier's
   // notch cuts through them as before.
-  const r = Math.hypot(x, z);
+  const r = hyp(x, z);
   const ramp = smoothstep(WORLD.regionRadius - 10, WORLD.mountainRadius, r);
   if (r > M_START) {
     const g = glacierMask(x, z);
@@ -436,20 +508,23 @@ export function biomeAt(x, z) {
 }
 // biomeAt with its height, slope and river section given: the build has the height already, shares the river's
 // section with its own shading, and skips the slope (four heightAt) where nothing it bakes reads one (buildTerrain)
+const marshN = (x, z) => SX.noise2(x * 0.07 + 3, z * 0.07 - 9);
 function biomeWith(x, z, h, slope, rv) {
   const L = LANDMARKS;
-  const r = Math.hypot(x, z);
+  const r = hyp(x, z);
   const rock = smoothstep(0.55, 0.95, slope) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, r) * 0.6;
   const ice = glacierIce(x, z); // v4 regions: the tongue's width, cut sharp at the snout
-  const dWood = Math.hypot(x - L.wood.x, z - L.wood.z) + woodRag(x, z); // v16 L3: the wood's circle broken, as its place's (height/regions.js)
+  // v16 L3: the wood's circle broken, as its place's (height/regions.js); v16 L5: its noise only where the paint can reach
+  // (the rag is 12 m at most), the moraine's and the marsh's likewise (fen.js's fenMarsh asks for its noise)
+  const dW0 = Math.sqrt((x - L.wood.x) ** 2 + (z - L.wood.z) ** 2), dWood = dW0 < L.wood.r + 15 + 14 ? dW0 + woodRag(x, z) : dW0;
   // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
   const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
-  const marsh = fenMarsh(x, z, SX.noise2(x * 0.07 + 3, z * 0.07 - 9)); // v16 L3: the fen's edge, out in tongues
+  const marsh = fenMarsh(x, z, marshN); // v16 L3: the fen's edge, out in tongues
   const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
   const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
-  const dOrch = Math.hypot(x - L.orchard.x, z - L.orchard.z);
+  const dOrch = hyp(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
-  const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z) + SX.noise2(x * 0.04 - 2.1, z * 0.04 + 5.3) * 9; // v16 L3: no ruled ring
+  const dM0 = Math.sqrt((x - L.moraine.x) ** 2 + (z - L.moraine.z) ** 2), dMor = dM0 < 64 + 10 ? dM0 + SX.noise2(x * 0.04 - 2.1, z * 0.04 + 5.3) * 9 : dM0; // v16 L3: no ruled ring
   // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11)
   const cIn = 1 - smoothstep(42, 64, dMor), crystal = cIn === 0 ? 0 : cIn * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
@@ -463,7 +538,7 @@ function biomeWith(x, z, h, slope, rv) {
 // The still waters, each with its own wet test and its shore's signed distance (metres, < 0 in the water), in the
 // order waterLevelAt asks them. A body drawn on an edge (src/height/outline.js) gives its own; a plain disc is a disc.
 // v16 L2: the tarn is on its edge; v16 L3: the fen on its own (src/height/fen.js), wet only where its pools hold water.
-const disc = (w) => ({ wet: (x, z) => Math.hypot(x - w.x, z - w.z) < w.r, sd: (x, z) => Math.hypot(x - w.x, z - w.z) - w.r });
+const disc = (w) => ({ wet: (x, z) => hyp(x - w.x, z - w.z) < w.r, sd: (x, z) => hyp(x - w.x, z - w.z) - w.r });
 export const WATER_BODIES = [
   { name: 'tarn', w: WATER.tarn, wet: tarnWet, sd: tarnShoreDistance },
   { name: 'fen', w: WATER.fen, wet: fenWet, sd: fenShoreDistance },

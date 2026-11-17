@@ -51,15 +51,29 @@ function sdPoly(pts, x, z) {
   d = Math.sqrt(d);
   return inside ? -d : d;
 }
-// a spine of [x, z, halfWidth]: distance to the nearest segment minus the half-width there
-function sdStrip(sp, x, z) {
-  let best = Infinity;
-  for (let i = 0; i < sp.length - 1; i++) {
+// a spine of [x, z, halfWidth]: distance to the nearest segment minus the half-width there. (v16 L5: compiled to
+// flat arrays, and a segment whose box, less its wider half-width, is no nearer than the best so far is skipped: the
+// same number, to the bit.)
+function compileStrip(sp) {
+  const n = sp.length - 1, S = new Float64Array(n * 10);
+  for (let i = 0; i < n; i++) {
     const [ax, az, aw] = sp[i], [bx, bz, bw] = sp[i + 1];
-    const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez;
+    S.set([ax, az, bx - ax, bz - az, aw, bw - aw, Math.min(ax, bx), Math.max(ax, bx), Math.min(az, bz), Math.max(az, bz) ], i * 10);
+  }
+  return { n, S, W: new Float64Array(sp.slice(0, n).map((p, i) => Math.max(p[2], sp[i + 1][2]))) };
+}
+function sdStrip(c, x, z) {
+  const { n, S, W } = c;
+  let best = Infinity;
+  for (let i = 0; i < n; i++) {
+    const o = i * 10;
+    const gx = x < S[o + 6] ? S[o + 6] - x : x > S[o + 7] ? x - S[o + 7] : 0, gz = z < S[o + 8] ? S[o + 8] - z : z > S[o + 9] ? z - S[o + 9] : 0;
+    const lim = best + W[i];
+    if (lim < Infinity && (lim <= 0 || gx * gx + gz * gz >= lim * lim)) continue;
+    const ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], l2 = ex * ex + ez * ez;
     let t = ((x - ax) * ex + (z - az) * ez) / l2; t = t < 0 ? 0 : t > 1 ? 1 : t;
     const dx = x - ax - ex * t, dz = z - az - ez * t;
-    best = Math.min(best, Math.sqrt(dx * dx + dz * dz) - (aw + (bw - aw) * t));
+    best = Math.min(best, Math.sqrt(dx * dx + dz * dz) - (S[o + 4] + S[o + 5] * t));
   }
   return best;
 }
@@ -80,13 +94,14 @@ function sdAnnulus(a, x, z) {
   return d;
 }
 export const SHAPES = {};
+const SHAPE_W = {};
 for (const k of REGION_KEYS) {
   const R = REGIONS[k], s = R.shape;
   let f;
   if (s.circle) f = (x, z) => Math.sqrt((x - s.circle.x) ** 2 + (z - s.circle.z) ** 2) - s.circle.r;
   else if (s.ellipse) f = (x, z) => sdEllipse(s.ellipse, x, z);
   else if (s.poly) f = (x, z) => sdPoly(s.poly, x, z);
-  else if (s.strip) f = (x, z) => sdStrip(s.strip, x, z);
+  else if (s.strip) { const c = compileStrip(s.strip); f = (x, z) => sdStrip(c, x, z); }
   else if (s.annulus) f = (x, z) => sdAnnulus(s.annulus, x, z);
   const clip = R.clip || {};
   const yields = R.yields || [];
@@ -94,13 +109,18 @@ for (const k of REGION_KEYS) {
   // (still: [x, z, r] where the edge keeps its old line, easing out over 15 m: a built place laid against it)
   const rag = rag0 && (still.length ? (x, z) => { let m = 1; for (const [sx, sz, sr] of still) m = Math.min(m, smoothstep(sr, sr + 15, Math.sqrt((x - sx) ** 2 + (z - sz) ** 2))); return m && rag0(x, z) * m; } : rag0);
   // the full signed distance, with clips and the places it yields to cut out
-  SHAPES[k] = (x, z) => {
+  const plain = (x, z) => {
     let d = f(x, z);
     if (clip.zMin !== undefined) d = Math.max(d, clip.zMin - z);
     if (clip.zMax !== undefined) d = Math.max(d, z - clip.zMax);
     for (const y of yields) d = Math.max(d, y.edge ? y.off - EDGE_SD[y.edge](x, z) : y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
-    return rag ? d + rag(x, z) : d; // the ragged edge moves the yields' line too
+    return d;
   };
+  SHAPES[k] = rag ? (x, z) => plain(x, z) + rag(x, z) : plain; // the ragged edge moves the yields' line too
+  // the weights' form (v16 L5): past lim + the rag's reach (|noise| < 1.1) from the line the weight is 0 or 1 whatever
+  // the rag says, so its noise is not asked there
+  const reach = 1.1 * (R.ragged?.amp ?? 0);
+  SHAPE_W[k] = rag ? (x, z, lim) => { const d = plain(x, z); return d > lim + reach || d < -lim - reach ? d : d + rag(x, z); } : plain;
 }
 // bounding boxes, padded by the widest blend, so far points skip the distance maths
 export const BOX = {};
@@ -141,13 +161,14 @@ export const _w = Object.fromEntries([...REGION_KEYS, ...PLACE_KEYS, 'moor', 'pr
 // object once: the same arithmetic in the same order as the keyed loops it replaces, so the same bits
 const NR = REGION_KEYS.length, NP = PLACE_KEYS.length, MOOR = NR + NP;
 const W_KEYS = [...REGION_KEYS, ...PLACE_KEYS, 'moor'];
-const R_SHAPE = REGION_KEYS.map((k) => SHAPES[k]), R_BLEND = new Float64Array(REGION_KEYS.map((k) => REGIONS[k].blend));
+const R_SHAPE = REGION_KEYS.map((k) => SHAPE_W[k]), R_BLEND = new Float64Array(REGION_KEYS.map((k) => REGIONS[k].blend));
 const R_TIGHT = new Float64Array(REGION_KEYS.flatMap((k) => TIGHT[k])), R_BOX = new Float64Array(REGION_KEYS.flatMap((k) => BOX[k]));
 const P_DEF = new Float64Array(PLACE_KEYS.flatMap((k) => [PLACES[k].x, PLACES[k].z, PLACES[k].r, PLACES[k].blend]));
 const P_SD = PLACE_KEYS.map((k) => PLACES[k].sd ?? null);
 // the squared radius past which a place with an edge has no weight at any blend up to the air's: the wood's circle,
 // its rag and its half-blend; the fen's edge (its rMax and its 10 m) and its half-blend
-const P_FAR = new Float64Array([95 + 12 + 10 * REGION_AIR_BLEND + 2, FEN_EDGE.rMax + 10 + 6 * REGION_AIR_BLEND + 2, 0].map((r) => r * r));
+// (v16 L5: by the blend asked, so regionAt's tight blend reads the wood's rag over 119 m, not the air's 140)
+const P_FAR = new Float64Array([95 + 12 + 2, FEN_EDGE.rMax + 10 + 2, 0]);
 // fills W (NR + NP + 1) with the weights at (x, z); returns the primary's index in W_KEYS
 function weights(x, z, blend, W) {
   // the places first: they win inside their limits
@@ -157,8 +178,8 @@ function weights(x, z, blend, W) {
     const hb = (P_DEF[4 * i + 3] * blend) / 2, sd = P_SD[i];
     let d;
     if (sd) { // the far side of a place with an edge: a cheap bound first (P_FAR: past it the weight is 0)
-      const e2 = (x - px) ** 2 + (z - pz) ** 2;
-      if (e2 > P_FAR[i]) { W[NR + i] = 0; continue; }
+      const e2 = (x - px) ** 2 + (z - pz) ** 2, far = P_FAR[i] + hb;
+      if (e2 > far * far) { W[NR + i] = 0; continue; }
       d = sd(x, z);
     } else d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2];
     const w = 1 - smoothstep(-hb, hb, d);
@@ -169,7 +190,7 @@ function weights(x, z, blend, W) {
   const B = blend === 1 ? R_TIGHT : R_BOX;
   for (let i = 0; i < NR; i++) {
     if (x < B[4 * i] || x > B[4 * i + 1] || z < B[4 * i + 2] || z > B[4 * i + 3]) { W[i] = 0; continue; }
-    const hb = (R_BLEND[i] * blend) / 2, w = 1 - smoothstep(-hb, hb, R_SHAPE[i](x, z));
+    const hb = (R_BLEND[i] * blend) / 2, w = 1 - smoothstep(-hb, hb, R_SHAPE[i](x, z, hb));
     W[i] = w; sum += w;
   }
   // regions share what the places leave; where two overlap they split it; the remainder is plain moor

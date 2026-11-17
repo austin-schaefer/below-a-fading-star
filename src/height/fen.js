@@ -9,14 +9,15 @@
 // Pure and worker-safe. Readers: heightAt (fenHeight), the river's cut (fenRiverKeep), biomeWith's marsh (fenMarsh),
 // waterLevelAt (fenWet), the regions' fen place and the Saltings' yield (fenShoreDistance), the river's and the
 // reach's shaders (FEN_EDGE.glsl), and whatever is placed on it (fenAt, fenIn).
-import { makeSimplex, smoothstep, lerp } from '../noise.js';
+import { makeSimplex, smoothstep, lerp, clamp } from '../noise.js';
 import { WORLD, LANDMARKS, WATER } from '../world.js';
-import { radialOutline, sectorWeight } from './outline.js';
+import { radialOutline, bearingDir } from './outline.js';
 
 const L = LANDMARKS.fen;
 export const FEN_Y = L.y;          // the fen's flat (-2): above the water, so only the pools are wet
 export const FEN_WATER = WATER.fen.y; // -2.45
 const SX = makeSimplex(WORLD.seed); // field.js's SX: the pools are the same noise as before
+const DEG = Math.PI / 180;
 
 // the islets: land lobes in the edge, and fenHeight lifts them a little so they stand dry
 const ISLES = [
@@ -50,26 +51,37 @@ export const FEN_EDGE = radialOutline({
     ...ISLES.map((i) => ({ ...i, land: true })),
   ],
 });
-// the tight side (the keep's slope) and the open side (the river's mouth), 0..1 by bearing
-const TIGHT = sectorWeight(L.x, L.z, { bearing: 352, half: 50, ramp: 30 });
-const OPEN = sectorWeight(L.x, L.z, { bearing: 128, half: 45, ramp: 30 });
+// the tight side (the keep's slope) and the open side (the river's mouth), 0..1 by bearing (outline.js's sectorWeight,
+// written out so fringe() takes them from the one ρ)
+const sector = (bearing, half, ramp) => { const [sx, sz] = bearingDir(bearing), c0 = Math.cos(Math.min(180, half + ramp) * DEG), c1 = Math.cos(half * DEG); return [sx, sz, c0, 1 / (c1 - c0)]; };
+const TIGHT = sector(352, 50, 30), OPEN = sector(128, 45, 30);
 const ISLE_XZ = FEN_EDGE.lobes.filter((l) => l.land).map((l) => [l.x, l.z, l.r]);
+// the islets' box: isleLift is 0 outside it
+const ISLE_BOX = ISLE_XZ.reduce((b, [x, z, r]) => [Math.min(b[0], x - 1.3 * r), Math.max(b[1], x + 1.3 * r), Math.min(b[2], z - 1.3 * r), Math.max(b[3], z + 1.3 * r)], [Infinity, -Infinity, Infinity, -Infinity]);
 
 // the last pools: how far past the shore the fringe runs (metres of sd)
 const FRINGE_MAX = 26;
 // the flatten's reach past the shore, and so how far heightAt reads the edge at all
 export const FEN_REACH = Math.max(115, FEN_EDGE.rMax + 34);
 
-// sd, the last point's kept (heightAt, the river's cut, the regions' place and the Saltings' yield all ask at one point)
+// sd, the last point's kept (heightAt, the regions' place, the Saltings' yield and its hook, the river's cut and
+// waterLevelAt all ask at one point). (v16 L5: a 1 m table of sd was tried and dropped: the 12 harmonics bend sd so
+// fast that a quarter of the cells miss it by 2 cm, and a random read of the table costs about what sd does.)
 let _lx = NaN, _lz = NaN, _ls = 0;
 export function fenShoreDistance(x, z) {
   if (x === _lx && z === _lz) return _ls;
   _lx = x; _lz = z; _ls = FEN_EDGE.sd(x, z);
   return _ls;
 }
+const pools = (x, z) => SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
 const _f = { tight: 0, open: 0, fall: 0, fringe: 0 };
 function fringe(x, z) {
-  const tg = TIGHT(x, z), op = OPEN(x, z);
+  const dx = x - L.x, dz = z - L.z, rho = Math.sqrt(dx * dx + dz * dz);
+  let tg = 0, op = 0;
+  if (rho >= 1e-6) {
+    let t = clamp(((dx * TIGHT[0] + dz * TIGHT[1]) / rho - TIGHT[2]) * TIGHT[3], 0, 1); tg = t * t * (3 - 2 * t);
+    t = clamp(((dx * OPEN[0] + dz * OPEN[1]) / rho - OPEN[2]) * OPEN[3], 0, 1); op = t * t * (3 - 2 * t);
+  }
   _f.tight = tg; _f.open = op;
   _f.fall = lerp(lerp(24, 10, tg), 34, op); // metres past the shore where the moor has come back
   _f.fringe = lerp(lerp(16, 4, tg), FRINGE_MAX, op); // metres past the shore the last pools lie
@@ -79,11 +91,11 @@ function fringe(x, z) {
 function dig(x, z, sd, fr) {
   const t = smoothstep(-14, fr.fringe, sd);
   if (t >= 1) return 0;
-  const pools = SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
   const thr = 0.05 + 0.4 * t;
-  return smoothstep(thr, thr + 0.3, pools) * (2.2 - 0.6 * t) + 0.3 * (1 - smoothstep(-6, 4, sd));
+  return smoothstep(thr, thr + 0.3, pools(x, z)) * (2.2 - 0.6 * t) + 0.3 * (1 - smoothstep(-6, 4, sd));
 }
 function isleLift(x, z) {
+  if (x < ISLE_BOX[0] || x > ISLE_BOX[1] || z < ISLE_BOX[2] || z > ISLE_BOX[3]) return 0;
   let m = 0;
   for (let i = 0; i < ISLE_XZ.length; i++) {
     const I = ISLE_XZ[i], dx = x - I[0], dz = z - I[1], d2 = dx * dx + dz * dz, r = 1.3 * I[2];
@@ -121,12 +133,13 @@ export function fenWet(x, z) {
   if (sd > fr.fringe) return false;
   return dig(x, z, sd, fr) * (1 - isleLift(x, z)) > 0.42;
 }
-// the marsh's paint: whole inside, out through the fringe in tongues (a slow noise moves where it gives out)
+// the marsh's paint: whole inside, out through the fringe in tongues (a slow noise moves where it gives out). n is the
+// noise's thunk (field.js's biomeWith): it is asked only where the tongues can reach (|noise| < 1.1, so 11 m of sd)
 export function fenMarsh(x, z, n) {
   const sd = fenShoreDistance(x, z);
-  if (sd > 60) return 0;
+  if (sd > FRINGE_MAX * 0.6 + 3 + 12) return 0;
   const fr = fringe(x, z);
-  return 1 - smoothstep(-10, fr.fringe * 0.6 + 3, sd + n * 10);
+  return 1 - smoothstep(-10, fr.fringe * 0.6 + 3, sd + n(x, z) * 10);
 }
 // the river's cut (field.js riverSection): kept to the fen's edge, given up where the fen is deep (0..1, 1 kept)
 export function fenRiverKeep(x, z) {
