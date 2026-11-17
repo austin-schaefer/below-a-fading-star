@@ -27,8 +27,9 @@ Who wrote them. The wait on the Span says someone was waiting for him; the hand 
 
 ## Open threads
 
-- An act: take his letter (to carry to the slope below the Span, where the bell's act lays the others on his chest).
+- The letter the visitor takes is put away at once; carrying it to the slope below the Span, where the bell's act lays the others on his chest, is not built.
 
 ## Log
 
+- 2026-11-17, v16: the act "Take his letter" is built (`src/v15/people/letter.js`). At the hatch the clerk holds a letter out; the visitor takes it, it comes up into view and is put away, and he strikes one entry through in red in his ledger. The strokes stay, one a letter taken, until "Forget my marks".
 - 2026-11-16, v15-P1 (people and stories): written and built (`src/v15/people/folk.js`: the dead-letter clerk), on the Lagan the Lees built.

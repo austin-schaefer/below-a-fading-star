@@ -245,7 +245,7 @@ export function buildWays(ctx, lappet) {
         for (const run of [1, 2]) {
           const a = run === 1 ? P.FADE.s1[0] : P.cornerS(2, RD) + 0.15, b = run === 1 ? P.cornerS(1, RD) - 0.15 : P.FADE.s2[1];
           const taken = [...P.RIM.clear.filter((c) => c[0] === run).map((c) => [c[1], c[2]]), ...gaps.filter((g) => g[0] === 'rim' && g[1] === run).map((g) => [g[2], g[3]]),
-            ...(run === STAIR.run ? [[sx - 2.1 - 0.5, sx + 2.1 + 0.5]] : [])].sort((p, q) => p[0] - q[0]);
+            ...(run === STAIR.run ? [[sx - P.HEAD_POST - 0.5, sx + P.HEAD_POST + 0.5]] : [])].sort((p, q) => p[0] - q[0]);
           const d = RUN[run].dir, yaw = Math.atan2(d[0], d[1]);
           const deep = (s) => { const [x, z] = at(run, s, edgeD + 0.7); return yC - T.heightAt(x, z) > 1.2; }; // a drop worth a kerb, here
           const span = (s0, s1) => {
