@@ -30,7 +30,7 @@ export function buildControls(ctx) {
   const url = new URL(location.href);
   if (url.searchParams.get('pos')) {
     const [x, z] = url.searchParams.get('pos').split(',').map(Number);
-    state.pos.set(x, terrain.heightAt(x, z) + state.eye, z);
+    const fy = url.searchParams.get('pos').split(',')[2]; state.pos.set(x, (fy !== undefined && fy !== '' && Number.isFinite(+fy) ? +fy : terrain.heightAt(x, z)) + state.eye, z); // pos=x,z,y: the feet at y, on the floor there (v15-H1)
   }
   if (url.searchParams.get('yaw')) state.yaw = Number(url.searchParams.get('yaw'));
   const speedMul = Number(url.searchParams.get('speed')) > 0 ? Number(url.searchParams.get('speed')) : 1;
@@ -463,8 +463,9 @@ export function buildControls(ctx) {
   }
   const cand = new Array(32); // the capped colliders touched this frame whose tops may be stood on
 
-  const EYE_TAU = 0.08, EYE_LAG = 0.4; // s, m
-  let eyeOff = 0, lastY = null, eyeLim = EYE_LAG; // the eye's height less the feet's; how far it may lag
+  // the eye's lag: EYE_RUN m of the way walked and EYE_REST s of the clock together, about EYE_TAU at a walk (3.6 m/s)
+  const EYE_TAU = 0.08, EYE_LAG = 0.4, EYE_RUN = 0.36, EYE_REST = 0.4; // s, m, m, s
+  let eyeOff = 0, lastY = null, lastX = 0, lastZ = 0, eyeLim = EYE_LAG; // the eye's height less the feet's; how far it may lag
   const UP = new THREE.Vector3(0, 1, 0);
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
@@ -480,6 +481,7 @@ export function buildControls(ctx) {
       if (k.has('KeyD') || k.has('ArrowRight')) mx += 1;
       mx += moveVec.x; mz -= moveVec.y;
     }
+    state.moveX = mx; state.moveZ = mz; // (v15) what the keys or the stick ask for, strafe and forward (-1..1): a carrier reads them (the ladder)
     // touch look inertia
     if (!lookTouch && (lookVel.x || lookVel.y)) {
       state.yaw += lookVel.x * dt; state.pitch = clamp(state.pitch + lookVel.y * dt, -1.45, 1.45);
@@ -700,12 +702,31 @@ export function buildControls(ctx) {
     const wading = wl !== null && groundY < wl ? smoothstep(0, 1.1, wl - groundY) : 0;
     state.pos.y = feet + state.eye;
     // the feet follow the floor; the eye follows the feet, damped, for steps under 0.7 m
+    // (v15-R1) The eye's lag runs out by the way walked more than by the clock: a riser crossed in a long frame and one
+    // crossed in a short frame leave the eye at the same height at the same place on the stair, so the eye rides one
+    // smooth line up a flight whatever the frame times (by the clock alone, frames of 8 to 40 ms stood it 20 to 30 mm
+    // rms off its own mean, a judder the owner saw at 46 to 60 fps). A new step is taken as crossed mid-frame.
     const step = state.pos.y - (lastY ?? state.pos.y);
-    if (wasOnGround && state.onGround && Math.abs(step) < 0.7) eyeOff -= step;
-    else if (!wasOnGround && state.onTop && step > 0) { eyeOff -= step; eyeLim = MANTLE; } // a scramble: the eye follows up
+    const moved = lastY === null ? 0 : hyp(state.pos.x - lastX, state.pos.z - lastZ);
+    const decay = Math.exp(-dt / EYE_REST - Math.min(moved, 1) / EYE_RUN);
+    let fresh = 0;
+    if (wasOnGround && state.onGround && Math.abs(step) < 0.7) fresh = step;
+    else if (!wasOnGround && state.onTop && step > 0) { fresh = step; eyeLim = MANTLE; } // a scramble: the eye follows up
+    // where along this frame's way the step was: halved four times on the floor between the last place and this one
+    // (a riser met at the frame's start has run out as far as the frame went, one met at its end not at all)
+    let past = 1; // the share of the frame after the step
+    if (fresh && moved > 0.02 && moved < 1) {
+      const fy = lastY - state.eye + fresh / 2; let a = 0, b = 1;
+      for (let i = 0; i < 4; i++) {
+        const m = (a + b) / 2;
+        floorAt(lastX + (state.pos.x - lastX) * m, lastZ + (state.pos.z - lastZ) * m, lastY - state.eye, false, probe, state.onStack);
+        if ((fresh > 0) === (probe.y > fy)) b = m; else a = m;
+      }
+      past = 1 - (a + b) / 2;
+    } else if (fresh) past = 0.5;
     eyeLim = Math.max(EYE_LAG, eyeLim * Math.exp(-dt / EYE_TAU));
-    eyeOff = clamp(eyeOff * Math.exp(-dt / EYE_TAU), -eyeLim, eyeLim); // first-order; never more than a riser and a bit behind
-    lastY = state.pos.y;
+    eyeOff = clamp(eyeOff * decay - fresh * Math.pow(decay, past), -eyeLim, eyeLim); // first-order; never more than a riser and a bit behind
+    lastY = state.pos.y; lastX = state.pos.x; lastZ = state.pos.z;
     state.eyeY = state.pos.y + eyeOff;
 
     // at a lip, pressing on: the eye leans out over it (v12 edge-guard)
@@ -716,5 +737,7 @@ export function buildControls(ctx) {
     state.wading = wading;
   }
 
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry };
+  // floorAt(x, z, feet): the floor that would hold feet at `feet` there, collider tops included ({ y, ground, stack, top }), read-only: tools/ways-test.mjs floods a level with it (v15-W1)
+  const floorProbe = (x, z, feet) => { const o = { y: 0, ground: 0, stack: null, top: false, wl: null }; floorAt(x, z, feet, true, o); return o; };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry, floorAt: floorProbe };
 }

@@ -47,8 +47,9 @@ function notchedShape(w, h, S, cup = 0) {
 }
 // the lining of a notch of depth S cut in the top of a block h high: a band t thick (across the flank) down each side
 function notchCutShape(h, S, t) {
-  const a = S * TAN, k = t / Math.cos((35 * Math.PI) / 180), sh = new THREE.Shape();
-  sh.moveTo(-a, h); sh.lineTo(0, h - S); sh.lineTo(a, h); sh.lineTo(a + k, h); sh.lineTo(0, h - S - k * 1.22); sh.lineTo(-a - k, h); sh.lineTo(-a, h);
+  // (its faces stand 7 mm proud of the block's own, in the notch and on the head: two faces in one plane flicker)
+  const a = S * TAN, k = t / Math.cos((35 * Math.PI) / 180), sh = new THREE.Shape(), e = 0.012, ht = h + 0.007, ai = a + (0.007 - e) * TAN;
+  sh.moveTo(-ai, ht); sh.lineTo(0, h - S + e); sh.lineTo(ai, ht); sh.lineTo(a + k, ht); sh.lineTo(0, h - S - k * 1.22); sh.lineTo(-a - k, ht); sh.lineTo(-ai, ht);
   return sh;
 }
 // a crescent, horns up, outer radius R: the inner circle (radius k R) raised by u R

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the 50 paths (v8-01 joined the plan's 17 into
+// Map structure check (v4 map, src/v4/paths.js): __fp.paths is registered; the 54 paths (v8-01 joined the plan's 17 into
 // one network: tools/roads-test.mjs), the kerb and five rivulets are all laid; each lead's two ends lie on it or on the
 // lead it joins (leadAt finds one there) and resolve to the material of the
 // region they are in; every rivulet runs downhill (its water never rises, and the ground along it is no higher than
 // its water); no lead is drawn on the set-dressing strips; the causeway is CAUSEWAY_V4 (its samples are on the
-// walked road, inside the walkable floor, from the colossi's feet to the pit) while the bench keeps v3's; the pit
-// is a fall (deep, its rim fenced by colliders, a walker pushed at it from the road's end stops at the lip); the
+// walked road, inside the walkable floor, from the colossi's feet past the pit) while the bench keeps v3's; it ends
+// at something at both ends (v15-F1, the owner's #59): it starts in the saddle between the colossi's hands and ends at
+// the foot of the Great Span's east stair, short of its first step, and the trod P54 ends at the Pit's landing; the pit
+// is a fall (deep, its rim fenced by colliders, a walker pushed at it from the causeway's last bend stops at the lip); the
 // fall's lip is at y 53.5 ± 1 with its wall 65 m or more within 15 m behind it; the rumble's radius is doubled; and
 // the leads' cost at high is about 10 draw calls and under 150k triangles.
 // Usage: node tools/paths-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
@@ -45,7 +47,7 @@ const res = await page.evaluate(async () => {
     out.leads.push({ id: L.id, kind: L.kind, length: +L.length.toFixed(1), ends, materials: L.materials, ended: L.ended, rise: +rise.toFixed(2), waterUp: +waterUp.toFixed(3), groundOver: +groundOver.toFixed(3) });
   }
   // the strips: no open (drawn) sample of any lead on the Discontinued Track or the Surveyor's Pegs
-  const strips = [{ name: 'the Discontinued Track', a: [170, 150], b: [215, 160], half: 1.0 }, { name: "the Surveyor's Pegs", a: [-80, -285], b: [-80, 285], half: 0.5 }];
+  const strips = [{ name: 'the Discontinued Track', a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { name: "the Surveyor's Pegs", a: [-80, -285], b: [-80, 285], half: 0.5 }];
   for (const S of strips) {
     let n = 0;
     for (const L of P.leads) for (const line of L.lines) for (const [x, z, , , open] of line) {
@@ -71,6 +73,13 @@ const res = await page.evaluate(async () => {
   }
   out.road.samples = samples; out.road.off = +off.toFixed(3); out.road.outside = outside;
   out.road.start = [V4[0].x, V4[0].z]; out.road.end = [V4[V4.length - 1].x, V4[V4.length - 1].z];
+  // (v15-F1, #59) what each end of the road is at: the saddle, the Span's east stair; and the trod to the Pit's landing
+  { const foot = fp.span?.stairs?.east?.foot, fl = fp.span?.stairs?.east?.flights?.[0], e = out.road.end;
+    out.road.startR = +Math.hypot(V4[0].x, V4[0].z).toFixed(1);
+    out.road.toFoot = foot ? +Math.hypot(e[0] - foot.x, e[1] - foot.z).toFixed(2) : null;
+    out.road.ahead = foot && fl ? +((e[0] - foot.x) * fl.dir[0] + (e[1] - foot.z) * fl.dir[1]).toFixed(2) : null;
+    const L = fp.pit?.stair?.land, trod = (await import('/src/v4/paths/routes.js')).LEADS.find((l) => l.id === 'P54');
+    if (L && trod) { const q = trod.pts[trod.pts.length - 1], ox = W.SITES.pit.x + L.dx * L.r1, oz = W.SITES.pit.z + L.dz * L.r1; out.road.trodToLanding = +Math.hypot(q[0] - ox, q[1] - oz).toFixed(2); } }
   // the v3 road's far end (the tower hill) is now mid-road, and the old end of v3 no longer the end
   out.road.v3TowerOn = +T.causewayDistance(-222, -110).toFixed(3);
   // the pit: deep, fenced, a walker stops at the lip
@@ -106,7 +115,7 @@ const check = (ok, label, detail = '') => { if (ok) pass++; else fail++; console
 const modErr = errors.filter((e) => /paths/.test(e));
 check(!modErr.length, 'paths module loaded without errors', modErr[0] || '');
 const kinds = (k) => res.leads.filter((l) => l.kind === k).length;
-check(kinds('path') === 53 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 53 paths (v8-01: 17 + 32; v12-H4: the trod to the lift; v14-B6: the trods to the feet of Lonely Staircase and the icefall, and round the stub), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
+check(kinds('path') === 54 && kinds('kerb') === 1 && kinds('rivulet') === 5, 'the leads: 54 paths (v8-01: 17 + 32; v12-H4: the trod to the lift; v14-B6: the trods to the feet of Lonely Staircase and the icefall, and round the stub; v15-F1: the trod to the Pit\'s landing), 1 kerb, 5 rivulets', `${kinds('path')} / ${kinds('kerb')} / ${kinds('rivulet')}`);
 for (const L of res.leads) {
   // v8-01: an end that is a junction finds the lead it joins (leadAt gives the nearest), and that is right too
   const bad = L.ends.filter((e) => !e.id || e.material !== e.region);
@@ -119,10 +128,11 @@ for (const L of res.leads.filter((l) => l.kind === 'rivulet')) {
 for (const S of res.strips) check(S.n === 0, `no lead drawn on ${S.name}`, `${S.n} samples`);
 check(res.road.isV4, 'ctx.causeway is CAUSEWAY_V4', `from (${res.road.start}) to (${res.road.end})`);
 check(res.road.off < 0.01 && res.road.outside === 0, 'the road\'s samples are on CAUSEWAY_V4 and walkable', `${res.road.samples} samples, worst off ${res.road.off} m, ${res.road.outside} beyond the walk limit`);
+check(res.road.startR >= 345 && res.road.toFoot !== null && res.road.toFoot <= 4 && res.road.ahead <= 0.3 && res.road.trodToLanding !== undefined && res.road.trodToLanding <= 2, 'the causeway ends at something at both ends: the saddle, and the foot of the Great Span\'s east stair (short of its first step); the trod P54 ends at the Pit\'s landing (#59)', `starts at r ${res.road.startR}; ends ${res.road.toFoot} m from the stair's foot (${res.road.ahead} m up its line); P54 ends ${res.road.trodToLanding} m from the landing's outer end`);
 check(res.road.v3TowerOn < 0.01, 'the v3 road is part of it (the tower hill is on the road)', `${res.road.v3TowerOn} m`);
 check(res.pit.depth >= 15, 'the pit is a fall (deep)', `${res.pit.depth} m below its rim`);
 check(res.pit.colliders >= 60, 'the pit\'s rim is fenced', `${res.pit.colliders} colliders`);
-check(res.pit.walk.edge > 0 && res.pit.walk.minY > res.pit.walk.rimY - 2.5 && res.pit.walk.moved > 2, 'a walker from the road\'s end stops at the lip', JSON.stringify(res.pit.walk));
+check(res.pit.walk.edge > 0 && res.pit.walk.minY > res.pit.walk.rimY - 2.5 && res.pit.walk.moved > 2, 'a walker from the causeway\'s last bend, walking at the pit, stops at the lip', JSON.stringify(res.pit.walk));
 check(Math.abs(res.fall.lipY - 53.5) <= 1, 'the fall\'s lip is at y 53.5 ± 1', `lip ${res.fall.lipY}, ground there ${res.fall.groundAtLip}, pool ${res.fall.poolY}`);
 check(Math.abs(res.fall.groundAtLip - 53.5) <= 1.5, 'the ground at the lip stands at it', `${res.fall.groundAtLip}`);
 check(res.fall.wall15 >= 65, 'the wall stands 65 m or more within 15 m behind the lip', `${res.fall.wall15} m`);

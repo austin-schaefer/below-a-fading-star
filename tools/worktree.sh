@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One worktree per issue.
 #
-#   tools/worktree.sh new <issue> <slug>   .claude/worktrees/issue-<n>-<slug>, branch issue-<n>-<slug> from origin/main
+#   tools/worktree.sh new <issue> <slug>   .claude/worktrees/issue-<n>-<slug>, branch issue-<n>-<slug> from origin/next (the working branch; origin/main if next is gone)
 #   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged
 #   tools/worktree.sh list
 #
@@ -23,7 +23,9 @@ case "${1:-}" in
     [ -e "$dir" ] && { echo "exists: $dir" >&2; exit 1; }
     mkdir -p "$wt_root"
     git -C "$main_root" fetch -q origin main
-    git -C "$main_root" worktree add -q -b "$name" "$dir" origin/main
+    git -C "$main_root" fetch -q origin
+    base=origin/next; git -C "$main_root" rev-parse -q --verify "$base" >/dev/null || base=origin/main
+    git -C "$main_root" worktree add -q -b "$name" "$dir" "$base"
     echo "$dir"
     ;;
   rm)

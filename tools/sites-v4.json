@@ -568,17 +568,17 @@
 },
 {
 "key": "track-0",
-"x": 170,
-"z": 150,
+"x": 193.5,
+"z": 133,
 "r": 2,
-"label": "Discontinued Track start [v4]"
+"label": "Discontinued Track start [v4; v15-F2]"
 },
 {
 "key": "track-1",
-"x": 215,
-"z": 160,
+"x": 168.5,
+"z": 112,
 "r": 2,
-"label": "Discontinued Track end [v4]"
+"label": "Discontinued Track end [v4; v15-F2]"
 },
 {
 "key": "pegs-north",
@@ -908,20 +908,6 @@
 "z": -180,
 "r": 3,
 "label": "Accrescent [v7]"
-},
-{
-"key": "indistinct-0",
-"x": 40,
-"z": -55,
-"r": 3,
-"label": "Indistinct ditch start [v7]"
-},
-{
-"key": "indistinct-1",
-"x": 125,
-"z": 30,
-"r": 3,
-"label": "Indistinct ditch end [v7]"
 },
 {
 "key": "repetend",

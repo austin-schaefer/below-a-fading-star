@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, hexCellsIn } from './common.js';
 import { pitEdge, PIT_PAVE } from '../v4/paths/ground.js'; // v4 map: the road's end is laid by v4/paths.js
+import { underSlabs } from '../v15/ground.js';
+import { LEVEL } from '../v15/plan.js';
 
 // Walk the polyline: point and direction at arc length s.
 export function causewayAt(cw, s) {
@@ -43,7 +45,7 @@ export function buildCauseway(ctx, B, env) {
     }
     const edge = 1.75 + N2(x * 0.15, z * 0.15) * 0.3;
     if (d > edge && !apron) return;
-    if (pitEdge(x, z) < PIT_PAVE) return; // v4 map: the slabs tilting into the pit and hanging over it are v4/paths.js's
+    if (pitEdge(x, z) < PIT_PAVE) return; // no paving on the Pit's lip (the road runs past it now, v15-F1)
     // ~15% missing, in clusters, more at the ragged edges
     const miss = N2(x * 0.21 + 9, z * 0.21 - 4) * 0.5 + 0.5;
     const gone = miss > 0.86 || rng() < 0.06 + Math.max(0, d - 1.1) * 0.12;
@@ -53,14 +55,15 @@ export function buildCauseway(ctx, B, env) {
     const salt = ctx.regions ? ctx.regions.regionAt(x, z).saltings : 0, sk = Math.min(1, Math.max(0, (salt - 0.2) / 0.4));
     if (gone && sk < 0.5) return;
     const r = rng();
-    env.addPaver(x, z, i, j, { sink: (0.02 + r * 0.05) * (1 - sk) + (-0.1 + r * 0.05) * sk, tilt: 0.07 + sk * 0.05 });
+    // v15: on the Lappet's High Rung the Elder tread is the road's bed: the same slabs, laid on the built floor (y)
+    env.addPaver(x, z, i, j, { sink: (0.02 + r * 0.05) * (1 - sk) + (-0.1 + r * 0.05) * sk, tilt: 0.07 + sk * 0.05, y: underSlabs(x, z) ? LEVEL.high.y : undefined });
   });
 
   // waymarkers every ~40 m: a short hexagonal pillar with a worn carving
   const len = causewayLength(cw);
   let n = 0;
   const v8Roads = new URL(location.href).searchParams.get('roads') !== '0'; // v8-01: the waymarkers are the roads' grand gnomons now (src/v8/roads.js)
-  for (let s = 38; s < (v8Roads ? 0 : len - 26); s += 40) { // v4 map: none in the pit at the road's end
+  for (let s = 38; s < (v8Roads ? 0 : len - 26); s += 40) { // v4 map: none in the last 26 m, at the Span's stair
     const p = causewayAt(cw, s);
     const side = n % 2 ? 1 : -1;
     const nx = -p.dz * side, nz = p.dx * side;

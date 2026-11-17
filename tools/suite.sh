@@ -47,10 +47,13 @@ run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
 run roads tools/roads-test.mjs $B
+run village-plan tools/village-plan-test.mjs
 run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B
 run strata tools/strata-test.mjs $B
+run village tools/village-test.mjs $B # v15-V1: the houses' makers at five seeds (closed, in their footprints, colliders and floors that agree) and the row's cost
+run ways tools/ways-test.mjs $B # v15-W1: every village way's mouth clear, its landings 1.2 m, no two doubling each other, no dead end
 run livery tools/livery-test.mjs $B
 run house tools/house-test.mjs $B
 run rocks tools/rocks-test.mjs $B
@@ -58,6 +61,8 @@ run walk tools/walk-test.mjs "$B/?q=low"
 run hop tools/hop-test.mjs $B
 run edges tools/edges-test.mjs $B
 run heights tools/heights-test.mjs $B
+run seams tools/seams-test.mjs $B # v15-W5: the floor under the walker against the ground drawn, the village and a 30 m skirt on a 0.25 m grid (seams, floors off the drawing, colliders nothing draws), a ratchet (about 2 min)
+run geometry tools/geometry-test.mjs $B # v15-H1 (#64): what flickers, floats or shows its back in every walkable place (about 30 s)
 run lift tools/lift-test.mjs $B
 run mountains tools/mountains-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"

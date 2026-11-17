@@ -6,10 +6,18 @@
 // gate's alfiz under a finial; built on what was here before (an Elder block under the north-west turret, placed by
 // v8/strata/place.js; Heliarch drums under the gallery's columns; a hex paver for the table under the awning, a drum
 // to mount from, a capital for a planter). Iron brackets wait where brief 05's lamps will hang (TAVERNA_BRACKETS).
+// v15-Q4: a second door, in the south wall (the plan's HOUSE.door: the tenth bay from the east, under the bracket
+// lamp there), where the village comes down to the house: the old wall cut through from the ground to a hand under
+// the bracket and the cut filled with a panel of new limewashed work a finger back from the old face, a horseshoe
+// opening in it under a raised band, the plaster knocked off the old ashlar all round the cut, a threshold stone
+// already dished, a plank leaf folded back against the wall inside. It opens under the south gallery's cloth-patched
+// roof, west of the hearth, and nothing of the host's stands in its way.
 // ?strata=0: the v7 house in grey stone.
 import * as THREE from 'three';
 import { mat } from './geo.js';
 import { vary, rubblePile, hexCellsIn } from './common.js';
+import { HOUSE } from '../v15/plan.js';
+import { leaf, openingPts, rngOf } from '../v15/houses/kit.js';
 
 export const TAVERNA = { x: 95, z: -45, half: 13 };
 // v8-03: the empty lamp brackets, world space: { x, y, z (the hook), face: [fx, fz] (out from the wall) }
@@ -49,13 +57,16 @@ export function buildTaverna(ctx, B, env) {
       const x = cx + lx, z = cz + lz;
       const gm = ground.groundAt(x, z), gb = ground.minGround(x, z, 1.0) - 0.3;
       // kept up: the Late folk patch their walls; v7's are broken down in stretches
-      let h = wallH + 0.15 * N2(tm * 0.3, lx + lz) - (!S && N2(tm * 0.11 + lx, 3.3) > 0.45 ? 1.4 + rng() : 0);
+      const doorBay = si === 2 && Math.abs(x - HOUSE.door.x) < 0.5, brk = !S && N2(tm * 0.11 + lx, 3.3) > 0.45 ? 1.4 + rng() : 0; // (?strata=0 breaks walls down in stretches; never the door's bay, whose cut is taller than a broken wall)
+      let h = wallH + 0.15 * N2(tm * 0.3, lx + lz) - (doorBay ? 0 : brk);
       const H = h + gm - gb;
       // where the plaster has fallen the wall shows what it was built of: Heliarch ashlar, coursed
       const bare = N2(x * 0.2, z * 0.2) > (S ? 0.62 : 0.1);
-      B.add(B.box(w + 0.02, H, th, { seg: 0.7, chip: 0.08, chipTop: true, seed: t * 7, uvOffset: [t, 0] }), mat(x, gb + H / 2, z, 0, yaw, 0), {
-        color: bare ? vary(S ? Hc.stone : tints.stone, rng, 0.05) : vary(wash[si], rng, 0.05), course: bare ? 0.32 : 0, moss: bare ? 0.5 : pmoss, ground: gm, disp: 0.02, dispScale: 2,
+      const cut = doorBay ? CUT_H : 0; // the south door's bay: only the wall over the cut is the old wall
+      B.add(B.box(w + 0.02, H - (cut ? cut + gm - gb : 0), th, { seg: 0.7, chip: 0.08, chipTop: true, seed: t * 7, uvOffset: [t, 0] }), mat(x, gb + H / 2 + (cut ? (cut + gm - gb) / 2 : 0), z, 0, yaw, 0), {
+        color: bare ? vary(S ? Hc.stone : tints.stone, rng, 0.05) : vary(wash[si], rng, 0.05), course: bare ? 0.32 : 0, moss: bare ? 0.5 : pmoss, ground: gm, disp: cut ? 0 : 0.02, dispScale: 2,
       });
+      if (cut) { southDoor(ctx, B, env, x, gm, z, w, th, S); for (const sx of [-1, 1]) ctx.addCollider({ x1: x + sx * 0.78, z1: z - 0.3, x2: x + sx * 0.78, z2: z + 0.3, r: 0.18 }); }
       // crenellated cresting: stepped merlons, the Moorish kind
       if (h > wallH - 0.4 && Math.round(tm / 1.6) % 2 === 0) {
         const mc = S ? (Math.round(tm / 3.2) % 2 ? L.paint[1] : L.plaster[2]) : plasterD;
@@ -71,7 +82,7 @@ export function buildTaverna(ctx, B, env) {
           TAVERNA_BRACKETS.push({ x: x + nx * (th / 2 + hook.z), y: by + hook.y, z: z + nz * (th / 2 + hook.z), face: [nx, nz] });
         }
       }
-      if (h > 1) ctx.addCollider({ x, z, r: 0.55 });
+      if (h > 1 && !cut) ctx.addCollider({ x, z, r: 0.55 });
     }
     // corner turrets
     const x = cx + s.ax, z = cz + s.az, gm = ground.groundAt(x, z);
@@ -202,7 +213,9 @@ export function buildTaverna(ctx, B, env) {
         const pg = ground.groundAt(px, pz);
         // v8-09: on the low tier each tile is its face alone (2 triangles, not 12): the dado was 12k of the house's triangles there
         const tileG = LOW_TIER(ctx) ? new THREE.PlaneGeometry(0.3, 0.3) : B.box(0.3, 0.3, 0.025), tileOff = LOW_TIER(ctx) ? 0.0225 : 0.01;
-        B.add(tileG, mat(px + nx * tileOff, pg + 0.35 + row * 0.33, pz + nz * tileOff, 0, yaw, 0), { color: vary(tiles[(((row + Math.floor(t / 0.34)) % 4) + 4) % 4], rng, 0.1), moss: 0.15, ground: pg, wet: 0.5 });
+        const tileC = vary(tiles[(((row + Math.floor(t / 0.34)) % 4) + 4) % 4], rng, 0.1);
+        if (si === 2 && Math.abs(px - HOUSE.door.x) < 1.0) continue; // (the south door was cut through the dado)
+        B.add(tileG, mat(px + nx * tileOff, pg + 0.35 + row * 0.33, pz + nz * tileOff, 0, yaw, 0), { color: tileC, moss: 0.15, ground: pg, wet: 0.5 });
       }
     }
   }
@@ -358,6 +371,45 @@ export function buildTaverna(ctx, B, env) {
   env.notes.taverna = { brackets: TAVERNA_BRACKETS.length, x: cx, z: cz, gate: { x: cx, z: cz - half, width: gate.w }, courtyard: { x0: cx - (inner - depth), x1: cx + inner - depth, z0: cz - (inner - depth), z1: cz + inner - depth } };
   void gC;
 }
+
+// The south door (v15-Q4): what fills the cut in the wall's bay at (x, z), w wide, the wall th thick; gm the ground
+// under the wall. Its own frame: +x east, +z out of the house (south). It draws nothing from the house's rng.
+const CUT_H = 2.5; // the cut's height: a hand under the bracket that hangs over it
+function southDoor(ctx, B, env, x, gm, z, w, th, S) {
+  const D = HOUSE.door, rng = rngOf(1513, 3), low = LOW_TIER(ctx), M = mat(x, gm, z);
+  const L = S?.colors.late, Hc = S?.colors.heliarch, G = env.ground.groundAt;
+  const lime = L ? L.plaster[3] : new THREE.Color('#8f7c62'), stone = Hc ? Hc.stone : env.tints.stone, wood = L ? L.wood : env.tints.wood;
+  const at = (lx, ly, lz, rx = 0, ry = 0, rz = 0) => mat(x + lx, gm + ly, z + lz, rx, ry, rz);
+  // the panel: new work a finger back from the old face on both sides, the horseshoe through it
+  const hole = openingPts('horseshoe', 0, 0, D.w, D.sp, low ? 7 : 12), sh = new THREE.Shape();
+  sh.moveTo(-w / 2 - 0.01, -0.6); sh.lineTo(w / 2 + 0.01, -0.6); sh.lineTo(w / 2 + 0.01, CUT_H + 0.02); sh.lineTo(-w / 2 - 0.01, CUT_H + 0.02); sh.lineTo(-w / 2 - 0.01, -0.6);
+  const hp = new THREE.Path(); hole.forEach(([hx, hy], i) => (i === 0 ? hp.moveTo(hx, -0.45) : i === hole.length - 1 ? hp.lineTo(hx, -0.45) : hp.lineTo(hx, hy))); hp.closePath(); /* (the opening runs on down under the threshold) */ sh.holes.push(hp);
+  B.add(B.extrude(sh, th - 0.07, 1), M, { color: vary2(lime, rng, 0.03), moss: 0.03, ground: gm, disp: 0.006, dispScale: 3 });
+  // the band round the opening, outside: raised, limewashed over, a line of ox-blood paint on it gone thin
+  const ring = (r0, r1, dz, depth, col) => {
+    const a = openingPts('horseshoe', 0, 0, D.w + 2 * r1, D.sp, low ? 7 : 12), b = openingPts('horseshoe', 0, 0, D.w + 2 * r0, D.sp, low ? 7 : 12), q = new THREE.Shape();
+    a.forEach(([px, py], i) => (i ? q.lineTo(px, py) : q.moveTo(px, py))); [...b].reverse().forEach(([px, py]) => q.lineTo(px, py)); q.closePath();
+    B.add(B.extrude(q, depth, 1), at(0, 0, dz), { color: col, moss: 0.02, ground: gm });
+  };
+  ring(0.0, 0.2, th / 2 - 0.035 + 0.03, 0.06, vary2(lime, rng, 0.02).multiplyScalar(1.04));
+  ring(0.09, 0.115, th / 2 - 0.035 + 0.063, 0.012, (L ? L.paint[1] : env.tints.carve).clone().lerp(lime, 0.35));
+  // the plaster knocked off the old wall round the cut, outside: its ashlar, coursed, in a ragged margin
+  if (!low) for (const sx of [-1, 1]) {
+    const q = new THREE.Shape(), n = 9; q.moveTo(0, -0.3);
+    for (let i = 0; i <= n; i++) q.lineTo(0.16 + 0.3 * rng() * (i % 2 ? 1 : 0.45), -0.3 + (CUT_H + 0.55) * i / n);
+    q.lineTo(-w / 2, CUT_H + 0.3 + 0.12 * rng()); q.lineTo(-w / 2, CUT_H + 0.02); q.lineTo(0, CUT_H + 0.02); q.closePath(); // (each side's margin runs on over its half of the cut's head)
+    B.add(B.extrude(q, 0.024, 1), mat(x + sx * (w / 2 + 0.005), gm, z + th / 2 + 0.03, 0, sx > 0 ? 0 : Math.PI, 0), { color: vary2(stone, rng, 0.06), course: 0.32, moss: 0.35, ground: gm });
+  }
+  // the threshold: one long stone through the wall's thickness, dished where feet go; a second, lower, inside where the gallery's floor lies under the lane's
+  const gi = G(x, z - th / 2 - 0.9), go = G(x, z + th / 2 + 0.7);
+  B.add(B.box(D.w + 0.5, 0.5, th + 0.5, { seg: 0.5, chip: 0.05, chipTop: true, seed: 15 }), at(0, Math.max(gi, go) - gm - 0.2 + 0.04, 0.05), { color: vary2(stone, rng, 0.05).multiplyScalar(0.9), moss: 0.2, ground: gm, disp: 0.012, dispScale: 2 });
+  if (Math.max(gi, go) - gi > 0.14) B.add(B.box(D.w + 0.2, 0.4, 0.5, { seg: 0.5, chip: 0.04, chipTop: true, seed: 16 }), at(0.04, gi - gm - 0.2 + (Math.max(gi, go) - gi) / 2, -th / 2 - 0.5), { color: vary2(stone, rng, 0.05).multiplyScalar(0.82), moss: 0.25, ground: gm });
+  // the leaf: planks, folded back flat against the wall inside, east of the opening
+  leaf(B, at(D.w / 2 + 0.66, Math.max(gi, go) - gm + 0.05, -th / 2 - 0.075, 0, Math.PI, 0), 1.12, 1.98, (L ? L.paint[0] : wood).clone().lerp(new THREE.Color('#5a5346'), 0.45), rng, { plain: low });
+  for (const hy of [0.5, 1.6]) B.add(B.box(0.2, 0.05, 0.03), at(D.w / 2 + 0.06, Math.max(gi, go) - gm + hy, -th / 2 - 0.03), { color: env.tints.iron, iron: 0.8, moss: 0, ground: gm - 2 });
+  env.notes.southDoor = { x, z, w: D.w, sill: Math.max(gi, go) + 0.09, inside: gi, outside: go };
+}
+const vary2 = (c, rng, k) => c.clone().multiplyScalar(1 - k + 2 * k * rng());
 
 function lantern(ctx, B, env, x, y, z, phase) {
   const { tints } = env;

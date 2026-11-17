@@ -35,7 +35,7 @@ export const LEADS = [
   { id: 'P6', kind: 'path', cls: 'way', w: 1.0, brief: 'gravel trod across the Outwash\'s channels', pts: [[-8, -181], [10, -188], [22, -214]] },
   { id: 'P7', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in the blackthorn, Bletting grass', pts: [[100, -195], [102, -184], [110, -174], [118, -170], [130, -150], [128.6, -144], [131, -120], [130, -100]] }, // v8-09: round the ruin and the boulder below the blackthorn, past the field wall's end, not over it
   { id: 'P8', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard track, honey-stone wall gaps', pts: [[148, -100], [178.7, -115.1], [184, -118], [212, -102], [216, -114], [222, -119], [230, -119.5], [238, -118], [270, -160]] }, // v8-09: through Medlar Close's wicket, and south round the Hypogeum's cut
-  { id: 'P9', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, Demesne turf then Bletting grass', pts: [[73, -26], [69, -42], [67, -52], [76, -62], [92, -66], [112, -82]] },
+  { id: 'P9', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path from the Heliarch stair\'s foot in the Lees (v15), Demesne turf then Bletting grass', pts: [[79.9, -32.6], [70.5, -36.4], [69, -42], [67, -52], [76, -62], [92, -66], [112, -82]] },
   { id: 'K1', kind: 'kerb', w: 0.22, brief: 'old kerb (the Leerie\'s row)', pts: [[110, -25], [145, 35]] },
   { id: 'P10', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather track with clitter', pts: [[230, -100], [233, -60], [236, -36]], parts: [[[234, -62], [261, -77]]] },
   { id: 'P11', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track, heather to moor', pts: [[250, 5], [240, 12], [226, 28], [204, 46], [182, 57]] },
@@ -46,7 +46,7 @@ export const LEADS = [
   { id: 'P13', kind: 'path', cls: 'trod', w: 0.5, brief: 'rim path, shingle', pts: [[219.5, 168], [220, 178], [220, 190], [217, 198], [210, 204], [204, 210], [197, 217], [190, 224], [184, 229], [180, 231.5]], parts: [[[197, 217], [210, 224], [216, 232], [215, 238], [214, 242], [213.6, 244.2]], [[190, 224], [190, 232.5]]] },
   { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [92, 236], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
   { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 238], [-52, 235], [-47, 226], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: by the traveller's approach (it looks along it to him), then under the Span between piers -70 and -22, not through the fallen bay
-  { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196]] },
+  { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe, on to the foot of the Great Span\'s west stair (v15-F1: every way up has a track to its foot)', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196], [-199.5, 200], [-202.4, 200.3]] },
   { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
   { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[214, 76], [198, 136]]] },
@@ -80,10 +80,10 @@ export const LEADS = [
   { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [2, 237], [-18, 231], [-36, 246]] },
   { id: 'P39', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the reed gap north round the Span\'s pier to the rim way', slabs: true, pts: [[125, 205], [133, 186], [150, 166], [176, 146]] },
   { id: 'P40', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the foot of the Span\'s fallen bay, looking over the canyon (the rim beyond is reached by P13, from the worn crust)', pts: [[176, 146], [170, 162], [166, 176]] },
-  { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [56, -38], [66, -32], [73, -26]] },
+  { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [42, -38.2], [44.1, -41.2], [46.3, -45.8], [50, -44], [60, -40.6], [70.5, -36.4]] }, // v15: round the Strake's west end (a stride clear of its first plot) and along its fronts to P9
   { id: 'P42', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'the fen way on stepping slabs, the Demesne to the Saltings', pts: [[110, 40], [95, 80], [80, 120], [70, 160], [56, 184], [48, 193], [42, 200], [41, 207], [44, 214], [46, 221], [48, 228], [52, 242], [56, 259]] },
   { id: 'P43', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod across the Sunken Court\'s floor, between the piers, south of the shaft and round the fallen pier\'s end', pts: [[-72, -149], [-64, -153], [-56, -153], [-48, -153], [-40, -153], [-32, -153], [-27, -151.5], [-23.5, -144], [-23.5, -141], [-17.5, -141], [-10, -141], [0, -143], [12, -146]] },
-  { id: 'P44', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the worn crust round the Discontinued Track to the rim way', pts: [[219.5, 168], [226, 150], [205, 140], [178, 141]] },
+  { id: 'P44', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the worn crust round to the rim way', pts: [[219.5, 168], [226, 150], [205, 140], [178, 141]] },
   { id: 'P45', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard trod to the Collation\'s table', pts: [[148, -100], [150, -84]] },
   { id: 'P46', kind: 'path', cls: 'trod', w: 0.5, brief: 'field trod below the ha-ha, the north way to the Pomegranate House', pts: [[18, -54], [45, -63], [67, -53]] },
   { id: 'P47', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Collation\'s table to the orchard (v8-04\'s twelfth chair)', pts: [[112, -82], [126, -72], [136, -69], [150, -84]] },
@@ -93,6 +93,7 @@ export const LEADS = [
   { id: 'P51', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod from the Nave way\'s fork, south round the tor and up to the Lonely Staircase\'s foot (v14-B6, the owner\'s #54: a walker comes to the first step, not the back)', pts: [[251, 4], [257, 6.2], [263, 6.6], [269, 6.4], [275, 4.6], [281, 3.2], [285.4, 1.8], [287.6, 0.2], [288, -2.6]] },
   { id: 'P52', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod off the moraine way across the Lattice\'s floor to the foot of the icefall (v14-B6: every way up has a track to its foot)', pts: [[58, -231.1], [59, -245], [60, -258], [58.5, -268], [57, -274.5], [57.6, -277.6]] },
   { id: 'P53', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod off the Nave way east across the stair\'s sunk slabs, behind the Lonely Staircase\'s stub and down its west side to its foot (v14-B6, #54: whoever comes on its back is shown the way round)', pts: [[247.1, -15], [255, -16.5], [264, -17.2], [272, -17.5], [280, -17.2], [285.2, -16.4], [284.8, -12], [284.8, -6], [286, -1.6], [287.6, 0.2]] },
+  { id: 'P54', kind: 'path', cls: 'trod', w: 0.5, brief: 'a dirt trod off the causeway\'s last bend to the Pit\'s landing, worn by the sounders since the road\'s last slabs were taken up for the stair (v15-F1, the owner\'s #59)', pts: [[189.6, 159.6], [188.2, 164], [186.4, 169], [184.6, 174], [183.4, 177.2], [182.8, 178.7]] },
 ];
 
 // ---------------------------------------------------------------- what the leads keep off
@@ -108,8 +109,8 @@ const AVOID = [
   { x: 60, z: -180, r: 3 }, { x: 75, z: 0, r: 12 }, { x: -100, z: 58, r: 8 }, { x: 20, z: -205, r: 5 }, { x: 180, z: 230, r: 2 },
 ];
 const BLOCKS = ['spanWest', 'spanEast', 'fallLip', 'nave'].map((k) => SITES[k].block);
-// the set-dressing strips (section 4's table): the Discontinued Track, 2 m, and the Surveyor's Pegs, 1 m
-export const STRIPS = [{ a: [170, 150], b: [215, 160], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
+// the set-dressing strips (section 4's table): the Discontinued Track, 2 m (dressing/track.js's TRACK), and the Surveyor's Pegs, 1 m
+export const STRIPS = [{ a: [193.5, 133], b: [168.5, 112], half: 1.0 }, { a: [-80, -285], b: [-80, 285], half: 0.5 }];
 function stripDist(x, z, S) {
   const [ax, az] = S.a, [bx, bz] = S.b, ex = bx - ax, ez = bz - az;
   const t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez), 0, 1);

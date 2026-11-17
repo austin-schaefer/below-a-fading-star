@@ -25,6 +25,7 @@ import { makeTinctures } from './v4/tinctures.js';
 import * as places from './v8/places.js'; // v8-02: places that differ
 import { installStrata } from './v8/strata.js';
 import { installActs } from './v10/acts.js'; // v10: acts, registered by the places' modules
+import { makeClaims } from './claims.js'; // v15-G1: claimed ground, the one question every placer asks
 import { installHeights } from './v12/heights.js'; // v12: ctx.ascents, and the test floors behind ?heights=test
 import { shadowFrame } from './v12/above.js'; // v12: the shadow box and the haze for an eye high over the ground
 import { installFar } from './v12/far.js'; // v12-H5: small things far off drawn smaller, then not at all (by their size on the screen)
@@ -82,7 +83,7 @@ const MODULES = [
   ['living-still', () => import('./v7/still.js'), M], // v7: CB the Long Sleeper, CI the Stylite, CL the Accrescent (?still=0, ?sleeper=0, ?stylite=0, ?accrescent=0)
   ['living-walkers', () => import('./v7/walkers.js'), M], // v7-01: CD the Little Thurifer, CG the Leerie, DM the Link-Boy (?walkers=0)
   ['living-workers', () => import('./v7/workers.js')], // v7: BY the Taker of Altitudes, BZ the Coheirs, CF the Sexton of No One (?workers=0)
-  ['living-small', () => import('./v7/small.js')], // v7: CM the Indistinct, CO the Repetend, CQ the Simulacrum (?small=0)
+  ['living-small', () => import('./v7/small.js')], // v7: CO the Repetend, CQ the Simulacrum (?small=0)
   ['shafts', () => import('./v8/shafts.js')], // v8-02: shafts of ember light in the Deodand Wood (?shafts=0)
   ['threads', () => import('./v8/threads.js'), M], // v8-04: stories with two ends (the traveller, the twelfth chair, the gold from the court; ?threads=0)
   ['twk', () => import('./v8/twk.js')], // v8-07: the Twk-men on their dragonflies, at the gnomons, the house and the spilt salt (?twk=0)
@@ -90,12 +91,21 @@ const MODULES = [
   ['strata', () => import('./v8/strata/place.js')], // v8-03: the three hands' signs and spolia across the map (?strata=0)
   ['house', () => import('./v8/house.js')], // v8-05: the Pomegranate House lit and lived in (?house=0)
   ['waystation', () => import('./v9/waystation.js')], // v9 (#934): the Lantern Halt, the causeway's waystation (?waystation=0)
+  ['lappet', () => import('./v15/bones.js')], // v15-V0: the Lappet's bones: the Elder stair under the keep, its floors and the ways up it (?lappet=0)
+  ['quarrels', () => import('./v15/quarters/quarrels.js')], // v15 batch 2: the Lappet's quarter, the crown: the masons, the new house, the upper square (?quarrels=0)
+  ['rungs', () => import('./v15/quarters/rungs.js')], // v15 batch 2: the Lappet's quarter, the three steps: the stacked houses (?rungs=0)
+  ['lees', () => import('./v15/quarters/lees.js')], // v15 batch 2: the Lappet's quarter, the bench: the square, the fountain of noon, the shops (?lees=0)
+  ['pennyworth', () => import('./v15/quarters/pennyworth.js')], // v15 batch 2: the Lappet's quarter, the foot: the market, the gardens, the way to the house (?pennyworth=0)
   ['bell', () => import('./v10/bell.js')], // v10-A3: the bell under the Span, its ram, and the candles it calls (?bell=0)
   ['acts', () => import('./v10/acts.js')], // v10 (#24): the offer, its input and the marks' memory for every act (?acts=0)
   ['icefall', () => import('./v12/icefall.js')], // v12-H2: the glacier as an icefall, the climb to its shelf, the Plummet (?icefall=0)
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
+  ['villagerow', () => import('./v15/row.js')], // v15-V1: the Strake, one row of five buildings of five ages on the Lees' bench, from the makers in src/v15/houses/ (?v15=0; ?v15=kit adds the makers' contact sheet)
+  ['people', () => import('./v15/people/index.js')], // v15-P1: the Lappet's people, eight villagers each doing one thing, one draw (?people=0)
+  ['lappetfar', () => import('./v15/far.js')], // v15-P3: the Lappet from far off, one draw: a block a house, a speck a light, from the quarters' records (?lappetfar=0)
+  ['lappetlamps', () => import('./v15/lamps.js')], // v15-L1: lamps to walk by where the village's ways were dark, from the plan's LAMPS, one draw, no point light (?lappetlamps=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -188,7 +198,7 @@ async function start() {
   // - noise: { noise2, fbm2, ridged2, warped2 } seeded simplex; rng() shared; makeRng(salt) for a private stream;
   //   time: { t, dt }; log(); progress(label, fraction) for the loading bar; throttle
   // - also set below or by the module named: tinctures, places (v8-02), strata (v8-03), hud, post, lightSlots,
-  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), below (v14/under.js:
+  //   shadowCadence, setShadowMapSize, pacing, settings (settings.js), gpumem, acts (v10/acts.js), claims (claims.js), below (v14/under.js:
   //   add(fn), inside(x, y, z), here: how far under the ground a point is, read by post and the audio)
   const ctx = {
     THREE, scene, renderer, camera, quality, events,
@@ -231,6 +241,7 @@ async function start() {
   installKit(ctx); // ctx.kit: masonry, stairs, measure figures, rook wheels, fog tiers (v4 systems)
   installStrata(ctx, url); // ctx.strata: the three hands' parts, signs and placements (v8-03)
   installActs(ctx, url); // ctx.acts: add(def), count(id), forget() (v10; the contract: the `world-code` skill, "Acts")
+  ctx.claims = makeClaims(ctx); // v15-G1: at(x, z, r, who), add(claim), list: the ground places build on (src/claims.js)
   settled = 1; await progress('lighting the sun', 0);
 
   // Lights: the dying sun, a cold sky, warm ground bounce

@@ -1,7 +1,12 @@
 // DC The Discontinued Track [Proposed] (plans/wilderness-v5.md): "a line of bare footprints crossing the Saltings' crust from
-// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (170, 150)
-// east to (215, 160), a 2 m strip. Left and right, one stride apart, each a slight hollow with a darker floor; where the
-// line crosses the causeway the slabs have no prints on them, and the line goes on in the same step on the far side.
+// the reed margin toward the middle, firm and evenly spaced, that stops. No turn, no stumble, nothing beyond." From (193.5,
+// 133), where the crust meets the moor's step, south-west over the open flat toward the causeway, to (168.5, 112): it stops
+// 9 m short of the road, so a visitor on the causeway sees a line of prints coming to meet it that never arrives, and one on
+// the salt trod P44 passes 7 m from where it begins. It crosses no road or trod, and no rubble or paving lies on it (v15-F2:
+// the causeway's reroute past the Pit, #59, took its old line from (170, 150) to (215, 160); the corridors south of the road
+// end in the Span's fallen bay and its rubble).
+// Left and right, one stride apart, each a slight hollow with a darker floor. A print the causeway or the water would
+// take is dropped (none now).
 //
 // Two instanced quads (left feet, right feet) laid on the rendered terrain's triangles, the crust's own surface, each
 // carrying a baked normal map of the hollow so the low sun lights its bank and shades its floor. No shadows.
@@ -9,7 +14,7 @@ import * as THREE from 'three';
 import { CAUSEWAY_V4 } from '../../world.js';
 import { groundOf } from '../regions/common.js';
 
-export const TRACK = { from: [170, 150], to: [215, 160], stride: 0.78, half: 0.17, clear: 4.6 };
+export const TRACK = { from: [193.5, 133], to: [168.5, 112], stride: 0.78, half: 0.17, clear: 4.6 };
 
 // a foot's silhouette on a 64 x 128 grid (toes up): heel, arch, ball and five toes; left foot (the right is its mirror)
 function footMask(W, H) {

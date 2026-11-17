@@ -1,0 +1,194 @@
+[
+ {
+  "name": "from-east",
+  "x": 81.32,
+  "z": -31.49,
+  "yaw": 1.258,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(81.32,Y,-31.49);}});})()"
+ },
+ {
+  "name": "from-west",
+  "x": 42.96,
+  "z": -46.51,
+  "yaw": -1.992,
+  "pitch": 0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(42.96,Y,-46.51);}});})()"
+ },
+ {
+  "name": "front-14",
+  "x": 68.14,
+  "z": -50.23,
+  "yaw": 2.761,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(68.14,Y,-50.23);}});})()"
+ },
+ {
+  "name": "front-22",
+  "x": 72.04,
+  "z": -57.28,
+  "yaw": 2.719,
+  "pitch": 0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(72.04,Y,-57.28);}});})()"
+ },
+ {
+  "name": "six-new",
+  "x": 77.31,
+  "z": -38.16,
+  "yaw": 2.834,
+  "pitch": 0.2,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(77.31,Y,-38.16);}});})()"
+ },
+ {
+  "name": "close-new",
+  "x": 77.63,
+  "z": -33.83,
+  "yaw": 2.404,
+  "pitch": 0.16,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(77.63,Y,-33.83);}});})()"
+ },
+ {
+  "name": "six-carrier",
+  "x": 71,
+  "z": -40.68,
+  "yaw": 2.834,
+  "pitch": 0.2,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(71,Y,-40.68);}});})()"
+ },
+ {
+  "name": "close-carrier",
+  "x": 71.31,
+  "z": -36.35,
+  "yaw": 2.404,
+  "pitch": 0.16,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(71.31,Y,-36.35);}});})()"
+ },
+ {
+  "name": "six-undercroft",
+  "x": 64.68,
+  "z": -43.21,
+  "yaw": 2.835,
+  "pitch": 0.2,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(64.68,Y,-43.21);}});})()"
+ },
+ {
+  "name": "close-undercroft",
+  "x": 65,
+  "z": -38.88,
+  "yaw": 2.406,
+  "pitch": 0.16,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(65,Y,-38.88);}});})()"
+ },
+ {
+  "name": "six-late",
+  "x": 58.37,
+  "z": -45.73,
+  "yaw": 2.834,
+  "pitch": 0.2,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(58.37,Y,-45.73);}});})()"
+ },
+ {
+  "name": "close-late",
+  "x": 58.69,
+  "z": -41.41,
+  "yaw": 2.404,
+  "pitch": 0.16,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(58.69,Y,-41.41);}});})()"
+ },
+ {
+  "name": "six-elder",
+  "x": 52.06,
+  "z": -48.26,
+  "yaw": 2.834,
+  "pitch": 0.2,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(52.06,Y,-48.26);}});})()"
+ },
+ {
+  "name": "close-elder",
+  "x": 52.37,
+  "z": -43.93,
+  "yaw": 2.406,
+  "pitch": 0.16,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(52.37,Y,-43.93);}});})()"
+ },
+ {
+  "name": "gutter-front",
+  "x": 68.14,
+  "z": -50.23,
+  "yaw": 2.761,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(68.14,Y,-50.23);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
+ },
+ {
+  "name": "gutter-street",
+  "x": 81.32,
+  "z": -31.49,
+  "yaw": 1.258,
+  "pitch": 0.12,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(81.32,Y,-31.49);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
+ },
+ {
+  "name": "gutter-from-west",
+  "x": 42.96,
+  "z": -46.51,
+  "yaw": -1.992,
+  "pitch": 0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(42.96,Y,-46.51);}});})();window.__fp.sky.flicker.hold=0.3;window.__fp.sky.flicker.value=0.3"
+ },
+ {
+  "name": "west-end",
+  "x": 36.57,
+  "z": -46.7,
+  "yaw": -2.01,
+  "pitch": 0.1,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(36.57,Y,-46.7);}});})()"
+ },
+ {
+  "name": "front-60",
+  "x": 90.79,
+  "z": -90.71,
+  "yaw": 2.665,
+  "pitch": 0.1,
+  "js": "(()=>{window.__hold&&window.__hold();window.__hold=null;})()"
+ },
+ {
+  "name": "back-above",
+  "x": 51.8,
+  "z": -9.37,
+  "yaw": -0.38,
+  "pitch": -0.25,
+  "js": "(()=>{window.__hold&&window.__hold();window.__hold=null;})()"
+ },
+ {
+  "name": "tread-along-east",
+  "x": 44.05,
+  "z": -39.83,
+  "yaw": -1.906,
+  "pitch": -0.3,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+2.9+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(44.05,Y,-39.83);}});})()"
+ },
+ {
+  "name": "tread-along-west",
+  "x": 78.41,
+  "z": -26.09,
+  "yaw": 1.145,
+  "pitch": -0.3,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+2.9+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(78.41,Y,-26.09);}});})()"
+ },
+ {
+  "name": "tread-down",
+  "x": 60.34,
+  "z": -30.73,
+  "yaw": -0.381,
+  "pitch": -0.5,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+2.9+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(60.34,Y,-30.73);}});})()"
+ },
+ {
+  "name": "tread-high",
+  "x": 57.74,
+  "z": -29.61,
+  "yaw": -0.599,
+  "pitch": -0.45,
+  "js": "(()=>{const fp=window.__fp;window.__hold&&window.__hold();const Y=fp.village.row.frame.y+6.5+fp.player.eye;window.__hold=fp.controls.carry({step(pos){pos.set(57.74,Y,-29.61);}});})()"
+ }
+]

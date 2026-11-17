@@ -27,6 +27,7 @@ const HAND = { // stand points kept from the first list; look: a point, a landma
   wood: { x: SITES.lightMoss.x + 6, z: SITES.lightMoss.z, look: SITES.lightMoss },
   bridge: { x: -60, z: 150, look: { x: 60, z: 215 }, pitch: 0.25 }, // v11-F2: on the open ground south of the arches, the Span's arcade in view (the old stand was in the woods)
   tarn: { x: -90, z: 50, look: LANDMARKS.tarn },
+  taverna: { x: 66, z: -52, look: { x: 95, z: -45 }, pitch: 0.05 }, // v15-W1: on the west way, the house's west wall and its towers across the grass (r + 6 toward spawn now lands inside the Strake's new house)
 };
 // v11-F2: the card places (no `at`, no hand stand) were r + 6 m from their centre toward spawn: grass at the foot of a wall
 const CARD_POSES = {
@@ -71,6 +72,11 @@ const NAMED_POSES = {
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
 };
+// v15-N1: two things in the Lappet, named on the map though they have no card of their own (the village is the one entry already, The Lappet, and its quarters' cards are the walk's own, `map: false`): `thing` is what the stand faces (settings-test checks it is in view and nothing shuts the view within 3 m)
+const VILLAGE_PLACES = [
+  { name: 'The Fountain of Noon', x: 80, z: -33, look: { x: 72.5, z: -37.9 }, pitch: 0.05, thing: { x: 72.5, z: -37.9 } }, // the square's foot of a vessel, welling stored daylight; the Wanting Arch behind it
+  { name: 'The Smoking Saint', x: 64.5, y: 18, z: -3.5, look: { x: 72.9, z: -1.3 }, pitch: 0.3, thing: { x: 72.9, z: -1.3 } }, // the fallen colossus's head, the masons' lime kiln, from the Saint's Rest
+];
 // The living: [SITES key, x, z, yaw, pitch] from the view named in the comment.
 const LIVING = [
   ['taker', -275.35, 13.29, -1.222, -0.04], // workers-taker-road
@@ -83,9 +89,8 @@ const LIVING = [
   ['leerie', 149, 42, 0.516, 0.05], // walkers-leerie-gutter: the row's south end
   ['linkBoy', -150, -95, 0.983, -0.04], // walkers-linkboy-post
   ['scriveners', -101, 50, 3.266, -0.3], // glyphs-scriveners-wander: the tarn's bank
-  ['moles', 80, -8, 2.583, -0.1], // glyphs-moles-causeway
+  ['moles', 99.5, -27.5, -1.75, -0.2], // glyphs-moles-causeway
   ['glyphs', 69.5, -198, -1.223, 0.03], // glyphs-erratic-sun: the erratic
-  ['indistinct', 68.69, -41.02, -1.755, -0.498], // small-indistinct-lawn
   ['repetend', -167.2, -96.3, 1.513, -0.14], // small-repetend-p3
   ['simulacrum', 10.8, -201.5, -1.291, 0.016], // small-simulacrum-columns
   ['bather', 166.5, 218.5, 2.43, -0.45], // canyon-bather-rim
@@ -99,13 +104,14 @@ const offToward = (c, d) => { // d metres from (c.x, c.z) toward spawn
 function buildPlaces() {
   const out = [{ name: 'Spawn', group: null, x: SPAWN.x, z: SPAWN.z, yaw: SPAWN.yaw }];
   for (const [key, L] of Object.entries(LANDMARKS)) {
-    if (!L.name || key === 'graves') continue; // the Sexton's entry among the living lands there
+    if (!L.name || key === 'graves' || L.map === false) continue; // the Sexton's entry among the living lands there
     const h = HAND[key] || NAMED_POSES[key];
     if (h) out.push({ name: key === 'wood' ? 'The moss light, ' + L.name : L.name, group: 'Places', ...h });
     else if (L.at) out.push({ name: L.name, group: 'Places', x: L.at.x, z: L.at.z, look: L });
     else { const p = offToward(L, L.r + 6); out.push({ name: L.name, group: 'Places', x: p.x, z: p.z, look: L }); }
   }
   for (const a of FAR_PLACES) out.push({ ...a, group: 'Places' });
+  for (const a of VILLAGE_PLACES) out.push({ ...a, group: 'Places' }); // v15-N1
   for (const [key, h] of Object.entries(CARD_POSES)) { const i = out.findIndex((o) => o.name === LANDMARKS[key].name); if (i >= 0) Object.assign(out[i], h); } // v11-F2
   for (const R of Object.values(REGION_CARDS)) if (R.region !== 'adust') out.push({ name: R.name, group: 'Places', x: R.x, z: R.z, yaw: SPAWN.yaw, ...REGION_STANDS[R.region] });
   for (const [key, x, z, yaw, pitch] of LIVING) {
@@ -155,11 +161,11 @@ export function buildSettings(ctx) {
   }
   ctx.events.addEventListener('audiochange', syncSound);
 
-  // --- music: off, or how often it comes (v9-M2); off by default (v9-M6: experimental). Read by audio/music/index.js
+  // --- music: off, or how often it comes (v9-M2); on ('default') unless the visitor chose otherwise (v15). Read by audio/music/index.js
   // on start and applied at once if it runs. While off, the music's level and the three frequencies are dimmed.
   const musicEl = $('set-music'), musicLevel = $('set-level-music');
   const MUSIC = ['off', 'rare', 'default', 'frequent'];
-  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'off'; };
+  const musicNow = () => { try { const s = localStorage.getItem('fp-music'); if (MUSIC.includes(s)) return s; } catch (e) { /* private mode */ } return 'default'; };
   function setMusic(s) {
     if (ctx.audio?.music) ctx.audio.music.setSetting(s);
     else { try { localStorage.setItem('fp-music', s); } catch (e) { /* private mode */ } }

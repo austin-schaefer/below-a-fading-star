@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import { PIT, pitRim } from '../v4/paths/ground.js';
 import { makeGround } from '../fauna/uncanny/kit.js';
-import { UnderBuilder, underMaterial, installBelow } from './under.js';
+import { UnderBuilder, underMaterial, installBelow, drawnSurface } from './under.js';
 import { C, dirOf, bearingOf, NADIR, nadirR, REEL, SHEERS, LEAD, STAIR, FLOOR, makeFloor, makeStair, wallR, LAMPS, STARLIGHT, LAMP_WARM, mouthClear } from './pit/plan.js';
 import { PIT_HAZE, hazed, hazeAt } from './pit/haze.js';
 import { hyp } from '../noise.js';
@@ -60,10 +60,15 @@ export async function build(ctx) {
     if (!geo?.index) return;
     const idx = geo.index.array, P = geo.attributes.position.array;
     const inside = (i) => { const x = P[i * 3], z = P[i * 3 + 2], r = Math.hypot(x - C.x, z - C.z); return r < 20 && r < pitRim(bearingOf(x, z)) - FLOOR.out - 0.2; };
+    const under = (i) => { const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], r = Math.hypot(x - C.x, z - C.z); return r < 24 && r < drawR(bearingOf(x, z)) && y < lipY - 3; };
     for (let t = 0; t < idx.length; t += 3) {
       const a = idx[t], b = idx[t + 1], c = idx[t + 2], xa = P[a * 3], za = P[a * 3 + 2];
       if (Math.abs(xa - C.x) > 22 || Math.abs(za - C.z) > 22) continue;
-      if (inside(a) || inside(b) || inside(c)) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
+      // (v15-F1) and a triangle wholly over the drawn floor's rim up the wall's foot (corners within drawR, under the lip
+      // by 3 m: drawn where the floor is, it fought it, a violet sliver left of the passage's mouth), or one whose
+      // corners stand outside but whose face folds back in over the bowl (its middle or an edge's middle inside)
+      const mid = (i, j, k) => { const x = (P[i * 3] + P[j * 3] + P[k * 3]) / 3, z = (P[i * 3 + 2] + P[j * 3 + 2] + P[k * 3 + 2]) / 3, r = Math.hypot(x - C.x, z - C.z); return r < 20 && r < pitRim(bearingOf(x, z)) - FLOOR.out - 0.2; };
+      if (inside(a) || inside(b) || inside(c) || (under(a) && under(b) && under(c)) || mid(a, b, c) || mid(a, b, b) || mid(b, c, c) || mid(c, a, a)) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
     }
     geo.index.needsUpdate = true;
   };
@@ -103,6 +108,10 @@ export async function build(ctx) {
     out[2] = lampPool(x, y, z) + reelPool(x, y, z);
     return out;
   };
+  // (v15-F1, #60's frame) the road's slabs fallen to this floor (v4 paths.js, lit by the sky as the moor is) take the
+  // floor's dark too: their colour scaled by the sky's share at their height, as this floor's own is (lit()[0])
+  { const im = scene.getObjectByName('paths-pit-slabs'), m4 = new THREE.Matrix4(), v = new THREE.Vector3(), c = new THREE.Color();
+    if (im?.instanceColor) { for (let i = 0; i < im.count; i++) { im.getMatrixAt(i, m4); v.setFromMatrixPosition(m4); if (v.y > lipY - 2) continue; im.getColorAt(i, c); c.multiplyScalar(0.26 + 0.74 * ss(yC + 4, lipY + 1, v.y)); im.setColorAt(i, c); } im.instanceColor.needsUpdate = true; } }
   const B = new UnderBuilder(lit);
 
   // ---- the floor: rubble and grit from the Nadir's edge to the wall's foot, a hair over the ground, curling down
@@ -161,6 +170,19 @@ export async function build(ctx) {
   // ---- the stair: the road's hex slabs, one a tread, each a riser over the last, on an iron knee into the wall; iron
   // stanchions on the hole's side with a rope between; a warm lamp at the head, nine on the way, one at the foot
   const treads = Math.ceil((stair.yHead - stair.yFoot) / 0.2);
+  // (v15-F1, #63) the wall and the lip as drawn (the terrain's faces and the throat's veneer), to end the knees and the
+  // landing's feet on: by heightAt the knees stopped up to 1.7 m short of the drawn rock on low
+  // (and this floor as built so far: at the wall's foot it runs up under the slabs' lowest knees)
+  const floorSoFar = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(B.p.slice(), 3)));
+  // The throat's veneer and the floor are asked first: they stand in front of the terrain's faces, and the passage cuts
+  // some of those at its mouth after this is built
+  const box = { x0: C.x - 26, x1: C.x + 26, z0: C.z - 26, z1: C.z + 26, around: { x: C.x, z: C.z, n: 36 } };
+  const tKnees = performance.now();
+  const near = drawnSurface([scene.getObjectByName('paths-pit-throat'), floorSoFar], box), rock = drawnSurface([T.mesh], box);
+  const drawn = { cast: (o, d, far) => near.cast(o, d, far) || rock.cast(o, d, far), dispose: () => { near.dispose(); rock.dispose(); } };
+  floorSoFar.geometry.dispose();
+  const loose = { knees: 0, feet: 0, at: [] };
+  const groundAt = (x, z, y0) => { const h = drawn.cast([x, y0 + 4, z], [0, -1, 0], 12); return h ? h[1] : g(x, z); };
   {
     const HEX = 0.7;
     for (let i = 0; i <= treads; i++) {
@@ -171,15 +193,23 @@ export async function build(ctx) {
       // the worn middle: paler, where two hundred years of feet went
       const inner = ring.map(([px, pz]) => [x + (px - x) * 0.55, z + (pz - z) * 0.55]);
       B.prism(inner, q.y - 0.02, q.y + 0.006, WORN, WORN, 0.1);
-      // a knee of iron under the slab: from the rock below, up to the slab's wall side
+      // a knee of iron under the slab: from the rock below, up to the slab's wall side; ended 5 cm into the drawn rock
+      // (aimed down and out at the wall; else level out at it; a slab lying on the floor wants none)
+      if (stair.under(s) > q.y - 0.5) continue;
+      const k0 = [x + dx * 0.4, q.y - 0.16, z + dz * 0.4];
       const wr = Math.min(q.r + 3, Math.max(q.r + 0.9, wallR(T, q.b, q.y - 1.1) - 0.05));
-      B.beam([x + dx * 0.4, q.y - 0.16, z + dz * 0.4], [C.x + dx * wr, q.y - 1.1, C.z + dz * wr], 0.022, IRON, 0.05);
+      let kd = [C.x + dx * wr - k0[0], q.y - 1.1 - k0[1], C.z + dz * wr - k0[2]], hit = drawn.cast(k0, kd, 3.6);
+      if (!hit) { kd = [dx, -0.25, dz]; hit = drawn.cast(k0, kd, 6); }
+      if (!hit) { kd = [dx, 0, dz]; hit = drawn.cast(k0, kd, 6); }
+      if (!hit) { loose.knees++; loose.at.push([+k0[0].toFixed(2), +k0[1].toFixed(2), +k0[2].toFixed(2), +s.toFixed(3)]); continue; }
+      const kl = Math.hypot(kd[0], kd[1], kd[2]);
+      B.beam(k0, [hit[0] + kd[0] / kl * 0.05, hit[1] + kd[1] / kl * 0.05, hit[2] + kd[2] / kl * 0.05], 0.022, IRON, 0.05);
     }
     // the stanchions and the rope on the hole's side
     const posts = Math.round(stair.len / 2.8);
     let prev = null;
     for (let i = 0; i <= posts; i++) {
-      const s = i / posts, p = stair.point(s, -STAIR.half + 0.08);
+      const s = Math.round((i / posts) * treads) / treads, p = stair.point(s, -STAIR.half + 0.08); // (v15-F1) on a slab, not between two
       B.beam([p[0], p[1] - 0.2, p[2]], [p[0], p[1] + 1.02, p[2]], 0.025, IRON, 0.05);
       const top = [p[0], p[1] + 0.98, p[2]];
       if (prev) { const mid = [(prev[0] + top[0]) / 2, (prev[1] + top[1]) / 2 - 0.14, (prev[2] + top[2]) / 2]; B.beam(prev, mid, 0.016, ROPE, 0.05); B.beam(mid, top, 0.016, ROPE, 0.05); }
@@ -197,10 +227,10 @@ export async function build(ctx) {
       const x1 = C.x + ax * L.r1 + tx * w * (STAIR.half - 0.05), z1 = C.z + az * L.r1 + tz * w * (STAIR.half - 0.05);
       B.beam([x0, L.y - 0.12, z0], [x1, L.y - 0.12, z1], 0.08, TIMBER, 0.12);
       const px = C.x + ax * (L.r1 - 0.2) + tx * w * (STAIR.half + 0.12), pz = C.z + az * (L.r1 - 0.2) + tz * w * (STAIR.half + 0.12);
-      B.beam([px, g(px, pz) - 0.3, pz], [px, L.y + (w > 0 ? 3.6 : 1.25), pz], 0.05, IRON, 0.05); // one post a tall lamp-post, seen from the road
-      // a bearer's foot on the rim
+      B.beam([px, groundAt(px, pz, L.y) - 0.3, pz], [px, L.y + (w > 0 ? 3.6 : 1.25), pz], 0.05, IRON, 0.05); // one post a tall lamp-post, seen from the road
+      // a bearer's foot on the rim (into the drawn lip, which on low lies under heightAt there)
       const fx = C.x + ax * (stair.R0 + 0.6) + tx * w * (STAIR.half - 0.05), fz = C.z + az * (stair.R0 + 0.6) + tz * w * (STAIR.half - 0.05);
-      B.beam([fx, g(fx, fz) - 0.4, fz], [fx, L.y - 0.1, fz], 0.07, TIMBER, 0.12);
+      B.beam([fx, Math.min(g(fx, fz), groundAt(fx, fz, L.y)) - 0.4, fz], [fx, L.y - 0.1, fz], 0.07, TIMBER, 0.12);
     }
     // the lamps: an iron crook on a stanchion and a cage; the head's on the landing's post
     for (const [x, y, z] of lampAt) {
@@ -210,6 +240,8 @@ export async function build(ctx) {
       B.prism([[x, z - 0.11], [x + 0.11, z], [x, z + 0.11], [x - 0.11, z]], y + 0.18, y + 0.3, IRON);
     }
   }
+  drawn.dispose();
+  const msKnees = performance.now() - tKnees; // (the drawn surface and the casts: in the log line below)
   await ctx.progress?.('the bottom of the pit', 0.45);
 
   // ---- the sheers: three timbers from the floor round the Nadir lashed at a head over it, a sheave in the head
@@ -633,12 +665,16 @@ export async function build(ctx) {
   const _up = new THREE.Vector3(0, 1, 0), _q = new THREE.Quaternion();
   ctx.registerUpdate(update, { pos: { x: C.x, y: (yC + lipY) / 2, z: C.z }, near: 70, hz: 2, r: 20 });
 
-  // the way up, for heights-test: from the floor at the stair's foot, up the slabs, over the landing to the turf
+  // the way up, for heights-test: from the floor at the stair's foot, up the slabs, over the landing to the turf (v15-F1:
+  // it starts 2 m in from the foot, on the floor a walker comes from; 2 m out it stood in the drawn wall's foot, and
+  // geometry-test's stand there saw the rock from behind)
   const foot = stair.point(1), [hx, hz] = dirOf(STAIR.head);
   const outX = C.x + hx * (stair.land.r1 + 2.2), outZ = C.z + hz * (stair.land.r1 + 2.2);
   const path = [];
-  { const [fx, fz] = dirOf(stair.footB), rr = stair.at(1).r + 2.0; path.push([C.x + fx * rr, C.z + fz * rr, g(C.x + fx * rr, C.z + fz * rr)]); }
-  for (let i = 10; i >= 0; i--) { const p = stair.point(i / 10); path.push([p[0], p[2], p[1]]); }
+  { const [fx, fz] = dirOf(stair.footB), rr = stair.at(1).r - 2.0; path.push([C.x + fx * rr, C.z + fz * rr, g(C.x + fx * rr, C.z + fz * rr)]); }
+  // (v15-F1) every 2.5% of the way: on tenths, the chords between points cut off the slabs round the wall and stood a
+  // walker (and geometry-test's stands) on the floor's band inside the drawn wall's foot
+  for (let i = 40; i >= 0; i--) { const p = stair.point(i / 40); path.push([p[0], p[2], p[1]]); }
   path.push([C.x + hx * (stair.land.r1 - 0.4), C.z + hz * (stair.land.r1 - 0.4), stair.yHead], [outX, outZ, g(outX, outZ)]);
   ctx.ascents?.add({ id: 'pit-stair', held: true, offs: [0.25, 0.5, 0.8], path });
 
@@ -646,7 +682,7 @@ export async function build(ctx) {
   ctx.pit = {
     off: false, stair, yC, yHole, lipY, apex, reel: { x: reelX, z: reelZ, y: drumY }, act: actAt, state: S, treads, cut,
     floor: stair.floor, bowl: FL.y, haze: PIT_HAZE, sky: fall,
-    stats: () => ({ calls: 14, tris: Math.round(tris + dgeo.attributes.position.count / 3), treads, colliders, cut, lights: 2 + lamps.length, motes: NM }),
+    loose, stats: () => ({ calls: 14, loose: loose.knees + loose.feet, tris: Math.round(tris + dgeo.attributes.position.count / 3), treads, colliders, cut, lights: 2 + lamps.length, motes: NM }),
   };
-  ctx.log?.(`pit: floor at ${yC.toFixed(1)} (lip ~${lipY.toFixed(1)}), ${treads} slabs up ${(stair.yHead - stair.yFoot).toFixed(1)} m over ${stair.len.toFixed(0)} m, ${Math.round(tris)} tris, ${cut} terrain tris cut, ${(performance.now() - t0).toFixed(0)} ms`);
+  ctx.log?.(`pit: floor at ${yC.toFixed(1)} (lip ~${lipY.toFixed(1)}), ${treads} slabs up ${(stair.yHead - stair.yFoot).toFixed(1)} m over ${stair.len.toFixed(0)} m, ${Math.round(tris)} tris, ${cut} terrain tris cut, knees on the drawn rock ${msKnees.toFixed(0)} ms (${near.tris + rock.tris} faces), ${(performance.now() - t0).toFixed(0)} ms`);
 }

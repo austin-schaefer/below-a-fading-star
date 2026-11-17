@@ -47,7 +47,7 @@ export const LANDMARKS = {
   gradine:  { x: 282,  z: -172, r: 14,  y: null, name: "The Gradine",          line: "“The marble treads were cracked: A condition which the murk of twilight invested with a mournful grandeur.”" },
   cutting:  { x: 190,  z: 246,  r: 8,   y: null, name: "The Cutting",          line: "“The stone walls were incised with those inevitable, mysterious symbols which have become nothing more than queer designs now.”" },
   eddy:     { x: 171,  z: 242,  r: 5,   y: null, name: "The Wrong Colour",     line: "“Their souls enter a gray misty realm of clouds and icy winds, to wander cheerlessly throughout eternity.”" },
-  // v7.1: the pit where the old road from the east gate ends (SITES.pit); inside the Span's broad card, so a card wins there
+  // v7.1: the pit beside the old road from the east gate (SITES.pit); inside the Span's broad card, so a card wins there
   pit:      { x: 200,  z: 185,  r: 14,  y: null, name: "The Pit", line: "“He tried to tell himself that this well connected somehow with the outer world, but his instincts told him it was a thing unnatural... How then could an outer wind find its way into the pits and blow up from below?”", card: true, feet: [-27, 60] }, // v14-D2: the lip's and the stair's down the wall (the floor has its own, the Nadir; v14-F1: down to it, so no region card rises on the stair)
   // v7.1: the Sexton's grave field (SITES.sexton's block): a card wins over the Saltings' region card and the Span's broad one
   graves:   { x: 55,   z: 274,  r: 18,  y: null, name: "Rest in Starlight", line: "“Dig me no grave; I shall not need one.”", card: true },
@@ -59,6 +59,10 @@ export const LANDMARKS = {
   keptfire: { x: 10, z: -190, r: 14, y: null, name: "The Kept Fire", line: "“He walked apart, beyond the glow of the campfires to gaze out among the mystic vistas of crag and valley. The slopes were softened by verdure and foliage, the vales deepening into shadowy realms of magic.”", card: true },
   hawser: { x: -80, z: -272, r: 25, y: null, name: "The Hawser", line: "“To chain them wholly to modern rules would be barbarous.”", card: true },
   plinths: { x: 148, z: -220, r: 25, y: null, name: "The Plinth Road", line: "“It had not been built for human feet to travel. It had not been built for feet at all.”", card: true },
+  lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true, aside: false, at: { x: 128, z: 5 } }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
+  // v15-N2 (the owner: three names in the village, not forty): the Smoking Saint and the Fountain of Noon each have a card, up only on their own level (`feet`); the Lappet is the third. `map: false`: the teleport list has them from settings.js VILLAGE_PLACES. No line until the owner gives one.
+  smokingSaint: { x: 72.9, z: -1.3, r: 3, y: null, name: "The Smoking Saint", card: true, over: true, map: false, feet: [16, 21.5], aside: false },
+  fountainNoon: { x: 72.5, z: -37.9, r: 3, y: null, name: "The Fountain of Noon", card: true, over: true, map: false, feet: [2, 4.6], aside: false },
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
@@ -82,7 +86,7 @@ export const LANDMARKS = {
   bitter: { x: 44, z: -390, r: 10, y: null, name: "The Bitter End", line: "“Our eyes swept that limitless, tempest-scarred plateau and grasped the almost endless labyrinth.”", card: true, feet: [80, 130], reached: 'the icefall', aside: false },
   diffident: { x: 286, z: -14, r: 9, y: null, name: "Lonely Staircase", line: "“Form is shadow, substance is illusion, materiality is dream.”", card: true, feet: [-30, 30], aside: false },
   coffinroad: { x: 271, z: 42, r: 0, y: null, name: "The Noon Road", card: true, feet: [-22, -8], axis: { x0: 246, x1: 296, half: 6 }, at: { x: 250.4, z: 42 }, reached: 'the hung stair', aside: false }, // v14-D3: the Noonwrights' stalled carriers on the Foundered Nave's water, 15 m under the moor (src/v14/coffin-road.js, noon-road.js; the key keeps its first name); no line yet: the owner sources the quotations
-  croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", line: "“We discovered, however, at an early date, that we ourselves and our buildings were invisible to men.”", card: true, feet: [95, 130], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'Lonely Staircase', aside: false },
+  croft: { x: 224.5, z: -68, r: 0, y: null, name: "The Hanging Croft", line: "“We discovered, however, at an early date, that we ourselves and our buildings were invisible to men.”", card: true, feet: [95, 160], axis: { z0: -88, z1: -48, half: 6 }, at: { x: 228.6, z: -55 }, reached: 'Lonely Staircase', aside: false }, // v15-N2: up to 160 m: the top of the tender's ladder at the lattice's lowest course is named by the Croft it leaves (its own card, The Tender's Round, is gone)
   // the top of the lift: the gangway off the carriage and the walked gallery on the cliff, 135 m up
   remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
   laidsun: { x: 223.6, z: 123.0, r: 6, y: null, name: "The Laid Sun", card: true, feet: [-34, -22], reached: 'the Wellward Way', aside: false }, // v14-D1: the room on the way under the moor from the Nave to the Pit, the Reckoner's new sun going into its floor
@@ -170,7 +174,6 @@ export const SITES = {
   spanWest:   { x: -257, z: 215, r: 12, name: 'the Great Span, west gate', block: [-270, -195, 180, 245] },
   spanEast:   { x: 257, z: 215, r: 12, name: 'the Great Span, east gate', block: [220, 270, 160, 245] },
   fallLip:    { x: 214, z: 266, r: 15, name: 'the Tumbling Water, the taller lip', block: [195, 235, 248, 290] },
-  longFigure: { x: 292, z: 70, r: 45, name: 'The Long Figure' },
   lightMoss:  { x: -205, z: 140, r: 8, name: 'moss light' },
   lightEmbers:{ x: 160, z: 60, r: 6, name: 'embers' },
   lightPost:  { x: -140, z: -30, r: 3, name: 'a lamp on a post' },
@@ -190,11 +193,10 @@ export const SITES = {
   sexton:     { x: 55, z: 272, r: 18, block: [40, 70, 264, 284], name: 'The Sexton' },
   stylite:    { x: 268, z: -80, r: 8, on: 'tallestTor', name: 'The Stylite' },
   accrescent: { x: 60, z: -180, r: 3, trailFrom: [40, -265], corridor: 3, name: 'The Accrescent' },
-  indistinct: { x: 40, z: 30, r: 0, ditch: { from: [40, -55], to: [125, 30] }, name: 'The Indistinct' }, // the ha-ha's ditch, bearings 0-90 from the keep
   repetend:   { x: -170, z: -97, r: 0, name: 'The Repetend' }, // the Lynchets' east wall-tops
   scriveners: { x: -100, z: 58, r: 8, name: 'The Scriveners' },
   simulacrum: { x: 20, z: -205, r: 5, name: 'The Simulacrum' },
-  moles:      { x: 75, z: 0, r: 12, name: 'The Moles' },
+  moles:      { x: 104, z: -23, r: 9, name: 'The Moles' }, // v15: in the Pennyworth's garden and the bare earth beside it (the Lappet's steps stand where their lawn was)
   toadstone:  { x: 180, z: 230, r: 2, name: 'The Toadstone' },
   linkBoy:    { x: -165, z: -105, r: 2, leads: 'P1-P17', name: 'The Link-Boy' },
   reach:      { x: 171, z: 235, r: 0, from: [208, 258], to: [134, 211], name: 'The Luminous Reach' },
@@ -202,13 +204,14 @@ export const SITES = {
 };
 
 // The causeway's v4 route (placement plan section 4): from between the colossi's feet in the saddle, north
-// through the Adust past the Armiger's Tower, the old road to the keep's gate, round the keep and east to the
-// pit. The map-structure agent swaps CAUSEWAY for it, with its paving and wear; until then CAUSEWAY is v3's.
+// through the Adust past the Armiger's Tower, the old road to the keep's gate, round the keep and east past the
+// Pit to the foot of the Great Span's east stair (v15-F1, the owner's #59: it had ended at the Pit's lip, beside the
+// stair's landing, and read as an error; the trod P54 from its last bend is what goes to the landing now).
 export const CAUSEWAY_V4 = [
   { x: -344, z: 126 }, { x: -302, z: 106 }, { x: -286, z: 60 }, { x: -272, z: 0 }, { x: -262, z: -60 }, { x: -254, z: -108 },
   { x: -222, z: -110 }, { x: -185, z: -72 }, { x: -140, z: -30 }, { x: -90, z: 2 }, { x: -40, z: 22 }, { x: 8, z: 30 },
   { x: 0, z: 5 }, { x: 12, z: -18 }, { x: 45, z: -22 }, { x: 80, z: -8 }, { x: 98, z: 25 }, { x: 122, z: 55 },
-  { x: 148, z: 95 }, { x: 172, z: 135 }, { x: 192, z: 168 }, { x: 200, z: 185 },
+  { x: 148, z: 95 }, { x: 172, z: 135 }, { x: 190, z: 160 }, { x: 205, z: 160.5 }, { x: 217, z: 160 }, { x: 225, z: 161.8 },
 ];
 
 // Water bodies: flat planes at a fixed height, clipped by the terrain naturally.

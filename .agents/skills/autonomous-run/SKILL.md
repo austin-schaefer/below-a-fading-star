@@ -71,6 +71,7 @@ Skills, tools, hooks, tests and `AGENTS.md` are part of the codebase, and improv
 
 ## Keeping going
 
+- **A subagent hands back unfinished twice** ("tests not run", the same list of what remains): it is out of room, not out of ideas. Stop it (`TaskStop`: a stopped agent that still has the worktree wakes again and collides) and give a fresh agent the same worktree with a brief that says verify, render, fix, hand back. v14's road was finished this way in half an hour after its author had stalled twice.
 - **A subagent fails:** re-brief once with what went wrong, on a stronger model if it was a capability problem. If it fails again, change the approach or shelve the piece with a note in Status. Never run the same failing brief a third time.
 - **The gate is red:** find out whether your batch did it (`git bisect` on `next` is cheap). Fix it or revert the merge that caused it. Don't release around a red gate, and don't weaken a test to pass it unless the test is wrong and you say so.
 - **The live site broke:** roll forward with a fix, first thing.

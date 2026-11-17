@@ -271,7 +271,7 @@ function carrier(B, M, o = {}) {
     const a = o.crackAt ?? 0.12, t = 0.42;
     const bite = new THREE.Shape(); bite.moveTo(-0.5, -0.2); bite.bezierCurveTo(-0.2, 0.5, 0.5, 0.45, 0.75, 0.05); bite.bezierCurveTo(0.4, -0.1, 0.1, -0.5, -0.5, -0.2);
     const mk = (sc, col, lift) => put(B, new THREE.ShapeGeometry(bite, 5).scale(R * 0.62 * sc, R * 0.62 * sc, 1), T(MR, 0, 0, zt(t), 0, 0, -a).multiply(new THREE.Matrix4().makeTranslation(0, rt(t) + lift, 0)).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), { color: col, jit: 0 });
-    mk(1.1, NOON.cloud, R * 0.012); mk(1, NOON.dark, R * 0.018);
+    mk(1.1, NOON.cloud, R * 0.012); mk(1, NOON.dark, R * 0.012 + Math.max(R * 0.006, 0.012)); // (v15-F1: at least 12 mm over the pale edge, or a small carrier's two fight)
   }
 }
 // node: the swelling where lines met, a gall: an oblate bulb with a collared port for each line. o: r (1.4),

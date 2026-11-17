@@ -23,8 +23,14 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The Noon Road](the-noon-road.md) | plain (a deep end) | built | the Noonwrights, long gone, who tried to keep the sun; and whoever comes down now for what they left, never seen: their shears, their stair, their flasks | the Foundered Nave: its rim, its stair, its nave (the carriers, the hoops, the torn elbow), its east wall and south door | the tender of the lattices and the Leerie (the same lamp oil; the lattices were this people's); the Reckoner (the tesserae); the twelfth chair (the Sexton's forty graves, open again) |
 | [The Wellward Way](the-wellward-way.md) | plain (a deep end) | built | the Reckoner, never seen: in a round room under the moor he is laying a new sun into the floor out of the gold picked from the others, by his own lamp; the fourth people's tube from the Nave stalls short of it, the sounder's lamps stop at its door | the passage under the moor from the Nave's south door to the Pit's floor | the Reckoner (his glyphs, lamp, beads); the Noon Road (the door); the sounding down (the lamps, the wind); the gold from the court |
 | [The sounding down](the-sounding-down.md) | plain (a deep end) | built | whoever cut the stair to the leadsmen's broken eye, never seen: a windlass and sheers over a hole in the Pit's floor full of stars, a crystal lead on a line; the road's slabs pinned up the wall | the Pit: its lip, its wall, its floor and the Nadir | the soundings (the lead, the line); the Noon Road (the way under the moor ends here); the Pit's card |
+| [The saint in the kiln](the-saint-in-the-kiln.md) | plain | built (the burner at his fire; no sitters on the bench yet) | the keep's fallen colossus, whose head is the masons' lime kiln and whose hand is their trough; the burner who rakes his fire and has put her cap on the next head | the Quarrels (the Lappet's crown) | the Heliarchs' broken statuary; the sign of the sun; the Pomegranate House |
+| [Noon by the jug](noon-by-the-jug.md) | plain | built | the noon-drawer, dipping jugs of light at the fountain; a child on a roof with a basket let down for one | the Lees' fountain; the Low Rung's roof over its lane | the Noon Road (the same stored noon); the Leerie |
+| [The dead letters](the-dead-letters.md) | plain (a deep end) | built | the Lagan's clerk, who holds a letter out to every stranger and takes it back | the Lees, the Lagan | the traveller on the Span (his letters, sealed in red); the wait on the Span |
+| [The copyist](the-copyist.md) | plain | built | a mason who cannot copy the Heliarchs' moulding | the Quarrels, before the Unroofed House | the saint in the kiln (the same masons) |
+| [The sounder of the wreck](the-spilt-measure.md) | plain | built | the man in the Spilt Measure, his ear to its hull, listening for noon | the Pennyworth, the wreck's door | the Noon Road; noon by the jug; the soundings |
+| [The door on her back](the-door-on-her-back.md) | plain | built (the empty doorway is not) | a woman leaving with her house's door on her back | the Pennyworth, the Leave | the wait on the Span (another who went east) |
 
-Fourteen plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Twenty plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -39,11 +45,14 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
 - The Sexton: whose are his other forty graves? Open (the Nave's road was first drawn as his; it is the Noonwrights' now: `the-noon-road.md`); never seen at the Nave.
 - The Noonwrights: the fourth people, between the Heliarchy and the folk here now; nobody living has seen one. Their carriers lie in the Nave (`the-noon-road.md`); the sky's lattices were their collectors; the tender and the Leerie burn what they left.
+- The Lappet's people (v15-P1, `src/v15/people/folk.js`), each seen at work: the burner at the saint's fire, the copyist, the noon-drawer, the child on the Leads, the Lagan's clerk, the dyer, the sounder of the wreck, the one leaving with her door. Offices, never names. The noon-drawer could be the one who chalks the Leerie's slate on the Swape's post; the one leaving could be going to the second inn by the setting sun.
 - The Leerie (the lamplighter), the Little Thurifer, the Link-Boy, the host of the Pomegranate House and its patrons, the Bather, the astronomer: all walk or stand in the world and none has a story yet. The host lives in his house (v14): his hearth and bread oven, his curtained pallet, a chest, his own plain slippers set side by side, washing on a line, a ladder and limewash for the walls.
 
 ## Things that travel
 
-- Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited).
+- Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited); dyed in the Lappet, at the Tenter's vats, by a dyer saffron to the elbows.
+- Letters sealed in red: the traveller's, blown down the slope under the Span; the ones for him nobody collected, in the Lagan.
+- Noon: the Noonwrights' stored daylight, in the Nave's flasks, the Leerie's and the tender's lamps, the fountain on the Lees, a jug in a window on the Rungs, and (the sounder believes) the hull of the Spilt Measure.
 - Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown. The Nave's sun's gold too; both go into the Laid Sun's floor on the Wellward Way (with a few of the Nave's red pieces by mistake).
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.

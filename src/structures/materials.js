@@ -25,7 +25,7 @@ export function makeStoneMaterial(ctx) {
   const uniforms = {
     uSTime: { value: 0 },
     uGlyph: { value: 1 },
-    uWindow: { value: 1 },
+    uWindow: { value: 1 }, uLime: { value: 0.85 }, // (uLime: channel 2, limewash's own paleness: steady, and down with the sky as the sun gutters)
     uRust: { value: Array.from({ length: RUST_SLOTS }, () => new THREE.Vector4(0, 0, 0, 0)) },
     uPave: CRUST_PAVE.uPave, uPaveBox: CRUST_PAVE.uPaveBox,
   };
@@ -50,7 +50,7 @@ export function makeStoneMaterial(ctx) {
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uSTime, uGlyph, uWindow; uniform vec4 uRust[${RUST_SLOTS}]; uniform sampler2D uPave; uniform vec4 uPaveBox;
+        uniform float uSTime, uGlyph, uWindow, uLime; uniform vec4 uRust[${RUST_SLOTS}]; uniform sampler2D uPave; uniform vec4 uPaveBox;
         varying vec3 vSW; varying vec3 vSN; varying vec2 vSU; varying vec4 vSA; varying vec4 vSE; varying float vSL;
         ${NOISE_GLSL}`)
       .replace('#include <color_fragment>', `#include <color_fragment>
@@ -157,7 +157,7 @@ export function makeStoneMaterial(ctx) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         if (vSE.r + vSE.g + vSE.b > 0.0) {
           float ch = vSE.w;
-          float pulse = ch < 0.5 ? uGlyph * (0.85 + 0.25 * sin(uSTime * 0.31 + sP.x * 0.21 + sP.z * 0.17)) : uWindow;
+          float pulse = ch < 0.5 ? uGlyph * (0.85 + 0.25 * sin(uSTime * 0.31 + sP.x * 0.21 + sP.z * 0.17)) : ch > 1.5 ? uLime : uWindow;
           totalEmissiveRadiance += vSE.rgb * pulse * (0.8 + 0.4 * g2);
         }`);
   };

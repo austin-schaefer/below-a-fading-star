@@ -80,7 +80,7 @@ export function buildHud(ctx) {
       const d = landmarkDistance(L, p.x, p.z);
       // a name card lying inside a broad landmark wins there; a broad card (v14-B5: Titan's Causeway, the whole deck)
       // wins over landmarks but gives way to every other card inside it
-      const k = L.card && d < 6 ? d - (L.broad ? 500 : 1000) : d;
+      const k = L.card && d < 6 ? d - (L.broad ? 500 : L.over ? 2000 : 1000) : d; // v15-N2: `over`: a small card (the Smoking Saint, the Fountain of Noon) wins over the broad one it lies inside (the Lappet)
       if (k < bestD) { bestD = k; best = key; }
     }
     let near = bestD < 6 ? best : null;

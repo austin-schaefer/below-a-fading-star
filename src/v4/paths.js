@@ -5,16 +5,18 @@
 //     cover (vegetation wears the plants off them through routes.js's wornAt), a slight groove in its normal; a
 //     rivulet is a thin wet line in a damp margin, glinting with the sky. Drawn in tiles of 200 m, so only the
 //     tiles in view cost a draw call.
-//   - the pit at the causeway's end (SITES.pit, name [Proposed]): its cut is paths/ground.js; here the road's last
-//     slabs tilting into it and hanging over nothing, the broken crust and earth of its lip, and the colliders
+//   - the pit beside the causeway (SITES.pit, name [Proposed]): its cut is paths/ground.js; here the road's slabs that
+//     fell in with its last stretch (on ledges and the floor), the broken crust and earth of its lip, and the colliders
 //     along its rim, so the walker stands at the edge rather than falls into a hole with no way out.
 //   - the taller Tumbling Water: its face and lip are paths/ground.js (terrain.js's FALL_DROP); here the mist
 //     column, widened 2.5 times and carried up the fall, with a drift of it across the gap toward the pit (the
 //     spray and the doubled rumble are v2/riverlife.js's).
 // Registers __fp.paths: { stats(), leadAt(x, z), leads, pit, fall }.
+import { claimedBy } from '../claims.js'; // v15-G1: no trod is worn across claimed ground
 import * as THREE from 'three';
 import { leads, nearestLead, MATERIAL_KEYS, MATERIALS, wornAt } from './paths/routes.js';
 import { PIT, pitEdge, pitRim, PIT_PAVE, FALL, PIT_LOOKOUTS, PIT_LOOKOUT_ARC } from './paths/ground.js';
+import { drawnSurface } from '../v14/under.js';
 import { STAIR, FLOOR, makeFloor } from '../v14/pit/plan.js'; // v14-D2: the way down the Pit's wall: its head's gap in the rim
 import { hazed } from '../v14/pit/haze.js'; // v14-D2: the throat's haze by the eye's depth
 import { underMaterial } from '../v14/under.js'; // v14-D2: the well's light falling off with depth, the lip's last sun, the lamps' pools
@@ -25,7 +27,7 @@ const SUN_XZ = (() => { const l = Math.hypot(SUN.dir.x, SUN.dir.z) || 1; return 
 const PIT_D2 = typeof location === 'undefined' || new URLSearchParams(location.search).get('pit') !== '0';
 const inStairHead = (b, R, pad) => PIT_D2 && Math.abs(((b - STAIR.head + 540) % 360) - 180) < (Math.asin(Math.min(1, (STAIR.half + pad) / R)) * 180) / Math.PI;
 import { groundOf, stoneGeo } from './regions/common.js';
-import { hexCellsIn, HEX_R } from '../structures/common.js';
+import { HEX_R } from '../structures/common.js';
 import { smoothstep, clamp } from '../noise.js';
 
 const TILE = 250;
@@ -189,7 +191,7 @@ function buildLeads(ctx) {
         const x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
         let tx = b.x - a.x, tz = b.z - a.z; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
         const m = t < 0.5 ? a : b;
-        const open = Math.min(a.open, b.open) * smoothstep(0, 2.5, s) * smoothstep(0, 2.5, len - s);
+        const open = claimedBy(x, z, 0, 'trods') ? 0 : Math.min(a.open, b.open) * smoothstep(0, 2.5, s) * smoothstep(0, 2.5, len - s); // v15: no trod is worn across the Lappet's stone (its lanes are its own)
         const k = tileOf(x, z);
         if (!cur || cur.k !== k) {
           // a new strip in this tile (overlapping the last sample of the previous one)
@@ -449,7 +451,7 @@ function buildThroat(ctx) {
   return mesh;
 }
 
-// ---------------------------------------------------------------- the pit's lip and the road's end
+// ---------------------------------------------------------------- the pit's lip and the road's slabs on its floor
 function buildPit(ctx) {
   const { terrain, scene } = ctx;
   const low = ctx.quality === 'low';
@@ -457,29 +459,9 @@ function buildPit(ctx) {
   const meshes = [];
   const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _ax = new THREE.Vector3();
   const UP = new THREE.Vector3(0, 1, 0);
-  // the road's last slabs: the causeway's own hex cells within PIT_PAVE of the rim (structures/causeway.js leaves
-  // them), tilting into the hole as the ground slumps, the last ones hanging over it from the lip
+  // the road's slabs that went in when its last stretch to the lip fell (v15-F1, #59: the causeway goes on past the Pit
+  // to the Span now, and no slab of it lies on the lip): on ledges down the throat and on the floor
   const slabs = [];
-  const road = (x, z) => terrain.causewayDistance(x, z);
-  hexCellsIn(PIT.x - 26, PIT.z - 26, PIT.x + 26, PIT.z + 26, (x, z) => {
-    const d = road(x, z), e = pitEdge(x, z);
-    if (e >= PIT_PAVE || e < -2.2 || d > 1.75 + ctx.noise.noise2(x * 0.15, z * 0.15) * 0.3) return;
-    if (rng() < 0.12) return;
-    const bx = x - PIT.x, bz = z - PIT.z, bl = Math.hypot(bx, bz) || 1, inx = -bx / bl, inz = -bz / bl; // toward the hole
-    let y, tilt;
-    if (e >= 0) {
-      y = terrain.heightAt(x, z) - 0.02 - (1 - e / PIT_PAVE) * 0.06;
-      tilt = Math.pow(1 - e / PIT_PAVE, 1.6) * (0.35 + rng() * 0.3);
-    } else {
-      // over nothing: held by its outer edge at the lip, dipping in; the furthest have gone already
-      if (e < -1.4 && rng() < 0.6) return;
-      const lx = x - inx * (-e + 0.05), lz = z - inz * (-e + 0.05);
-      y = terrain.heightAt(lx, lz) - 0.05 + e * 0.35;
-      tilt = 0.45 + (-e) * 0.25 + rng() * 0.25;
-    }
-    slabs.push({ x, y, z, inx, inz, tilt, yaw: (rng() - 0.5) * 0.3, sc: 0.82 + rng() * 0.16, c: 0.32 + rng() * 0.14 });
-  });
-  // a few that went in: on ledges down the throat and on the floor
   const pitFloor = PIT_D2 ? makeFloor(terrain, ctx.noise).y : null; // v14-D2: the floor walked down there
   for (let i = 0; i < (low ? 5 : 9); i++) {
     const b = 330 + rng() * 40, r = pitRim(b) - 1.5 - rng() * 6, a = (b * Math.PI) / 180;
@@ -510,21 +492,26 @@ function buildPit(ctx) {
   // the lip: plates of crust and clods of earth broken along the rim, tilted in, some hanging; the fractal edge
   // at the scale the terrain's grid cannot draw
   const bits = [];
+  // (v15-F1, the kind of #63) a clod sits on the lip as drawn: on low the terrain's triangle there lies under heightAt,
+  // and one placed by heightAt hung in the air over it
+  const lipDrawn = drawnSurface([terrain.mesh], { x0: PIT.x - 30, x1: PIT.x + 30, z0: PIT.z - 30, z1: PIT.z + 30 });
+  const lipGround = (x, z) => { const h = terrain.heightAt(x, z), d = lipDrawn.cast([x, h + 4, z], [0, -1, 0], 10); return d ? Math.min(h, d[1]) : h; };
   for (let b = 0; b < 360; b += low ? 2.6 : 1.5) {
     const bb = b + (rng() - 0.5) * 1.2, a = (bb * Math.PI) / 180;
     // at a lookout the clods sit behind the walker's heels (0.9 m out or more) and small, so the throat is open
     const lo = PIT_LOOKOUTS.some((l) => Math.abs(((bb - l + 540) % 360) - 180) < PIT_LOOKOUT_ARC);
     const R = pitRim(bb) + (lo ? 0.9 : 0.2) + rng() * 1.4;
     const x = PIT.x + Math.sin(a) * R, z = PIT.z - Math.cos(a) * R;
-    if (road(x, z) < 2.2) continue; // the slabs are there
     if (inStairHead(bb, R, 1.2)) continue; // v14-D2: the stair's landing is there
     const e = pitEdge(x, z);
     const inx = -Math.sin(a), inz = Math.cos(a);
     const lx = x - inx * Math.max(0, -e), lz = z - inz * Math.max(0, -e);
     const s = lo ? 0.2 + rng() * 0.15 : 0.25 + Math.pow(rng(), 2) * 0.9;
-    bits.push({ x, z, y: terrain.heightAt(lx, lz) - 0.08 - Math.max(0, -e) * 0.4, inx, inz, s, tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
+    // (one over the throat hangs by its edge at the lip's height, not under it)
+    bits.push({ x, z, y: lipGround(lx, lz) - 0.08, inx, inz, s, tilt: 0.15 + Math.max(0, -e) * 0.5 + rng() * 0.4, yaw: rng() * 6.28,
       salt: (ctx.regions?.regionAt(lx, lz).saltings || 0) > 0.3 && rng() < 0.6 });
   }
+  lipDrawn.dispose();
   {
     const g = stoneGeo(rng, ctx.noise, 1, { sx: 1.2, sy: 0.4, sz: 0.9, round: 0.15, seed: 7 });
     const m = hazed(new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95 })); // v14-D2: seen from the floor

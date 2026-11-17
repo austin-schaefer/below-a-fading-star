@@ -4,12 +4,14 @@
 // shears and stair), the floor and the door. The plan: v14/noon-road/plan.js. The story: stories/the-noon-road.md.
 import * as THREE from 'three';
 import { UnderBuilder, underMaterial } from './under.js';
-import { NOON, NOON_PARTS as P, GLAZES, put, strand } from '../v8/strata/noon.js';
+import { NOON, NOON_PARTS as P, GLAZES, put, strand, formAt } from '../v8/strata/noon.js';
 import { DOOR } from './coffin-road/plan.js';
 import { VESSELS, NODE, HOOPS, SHARDS, LINE, ELBOW, elbowAt, yOf, lamps, WY } from './noon-road/plan.js';
 
 // glazed and blown: smooth, wet-bright under a lamp, clouded and crazed with age, a lime crust at the water's line
-export function noonGlass(key = 'noon-glass', waterY = -1e5) {
+// o: { worn (0.65: how far the glaze is worn through to the body in patches), cloud ([0.62, 0.5]: the glaze's clouding, floor and swing) }
+export function noonGlass(key = 'noon-glass', waterY = -1e5, o = {}) {
+  const worn = (o.worn ?? 0.65).toFixed(3), cl = o.cloud ?? [0.62, 0.5];
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
@@ -22,11 +24,11 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5) {
         float ngY = ngW.y - ${waterY.toFixed(2)}, ngIn = step(ngY, 9.0) * step(-0.6, ngY);
         // old: the glaze clouded and stained, worn through in patches to the dull body under it, chipped darker
         float ngA = ngN(ngW * 0.55) * 0.6 + ngN(ngW * 1.7 + 4.0) * 0.3 + ngN(ngW * 6.0) * 0.1;
-        diffuseColor.rgb *= 0.62 + 0.5 * ngN(ngW * 0.9 + 2.0);
+        diffuseColor.rgb *= ${cl[0].toFixed(3)} + ${cl[1].toFixed(3)} * ngN(ngW * 0.9 + 2.0);
         float ngWorn = smoothstep(0.56, 0.66, ngA);
         // worn through, the glaze shows the milk body under it (a milk field wears to a duller biscuit)
         vec3 ngBody = vec3(0.58, 0.55, 0.47) * (0.8 + 0.3 * ngN(ngW * 8.0));
-        diffuseColor.rgb = mix(diffuseColor.rgb, ngBody, ngWorn * 0.65);
+        diffuseColor.rgb = mix(diffuseColor.rgb, ngBody, ngWorn * ${worn});
         // chipped: ragged flakes off the glaze to the duller body, never round dark spots (they read as rivets)
         float ngChip = smoothstep(0.8, 0.83, ngN(ngW * 3.1 + 9.0) + 0.12 * ngN(ngW * 14.0)) * smoothstep(0.45, 0.65, ngN(ngW * 0.8 + 5.0));
         diffuseColor.rgb = mix(diffuseColor.rgb, ngBody * 0.55, ngChip * 0.8);
@@ -51,7 +53,7 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5) {
       .replace('#include <opaque_fragment>', `outgoingLight += diffuseColor.rgb * vec3(0.03, 0.028, 0.05);
 #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2);
+  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2) + (o.worn != null || o.cloud ? `-${worn}-${cl.join('-')}` : '');
   return underMaterial(m, key, NOON.lightHex);
 }
 
@@ -60,6 +62,47 @@ export function vesselMatrix(v) {
   return new THREE.Matrix4().makeTranslation(v.x, yOf(v), v.z)
     .multiply(new THREE.Matrix4().makeRotationY(Math.PI / 2 - v.a))
     .multiply(new THREE.Matrix4().makeRotationX(-(v.pitch || 0)));
+}
+
+// (v15-F1, #63) is (x, y, z) inside the glass a rope can be tied to, or under the water: every carrier's body (its
+// lathe, slumped as noon.js's carrier slumps it), the coupling ring at its nose, the junction node. The Late folk's
+// ties are ended where they first meet it (coffin-road.js `tie`): a rope ended in the air beside a nose that narrows
+// read as a strut holding nothing.
+export function makeGlassTest() {
+  const parts = VESSELS.map((v) => {
+    const M = vesselMatrix(v); if (v.roll) M.multiply(new THREE.Matrix4().makeRotationZ(v.roll));
+    return { v, M, inv: M.clone().invert(), h: v.len / 2, body: v.len - v.r * 0.14 };
+  });
+  const q = new THREE.Vector3(), r = new THREE.Vector3();
+  // the nearest point on a walked carrier's coupling ring (the centre of its section) within `far` of (x, y, z), or null
+  const ring = (x, y, z, far = 2.5) => {
+    let best = null, bd = far;
+    for (const P of parts) {
+      if (!P.v.walked) continue;
+      const R = P.v.r, rc = R * 0.72, zc = P.h + R * 0.03;
+      q.set(x, y, z).applyMatrix4(P.inv);
+      const l = Math.hypot(q.x, q.y) || 1e-6;
+      r.set(q.x / l * rc, q.y / l * rc, zc);
+      const d = r.distanceTo(q);
+      if (d < bd) { bd = d; best = r.clone().applyMatrix4(P.M); }
+    }
+    return best && [best.x, best.y, best.z];
+  };
+  const test = (x, y, z) => {
+    if (y <= WY) return true;
+    { const dx = x - NODE.x, dy = (y - NODE.y) / 0.86, dz = z - NODE.z; if (dx * dx + dy * dy + dz * dz <= NODE.r * NODE.r) return true; }
+    for (const P of parts) {
+      const R = P.v.r;
+      q.set(x, y, z).applyMatrix4(P.inv);
+      if (q.z < -P.h - 0.1 || q.z > P.h + R * 0.2 || Math.abs(q.x) > R * 1.3 || Math.abs(q.y) > R * 1.3) continue;
+      const t = (q.z + P.h) / P.body;
+      if (t >= 0 && t <= 1 && Math.hypot(q.x / 0.91, q.y) <= R * formAt(P.v.form, t)) return true;
+      if (Math.hypot(Math.hypot(q.x, q.y) - R * 0.72, q.z - (P.h + R * 0.03)) <= R * 0.07) return true; // the coupling ring
+    }
+    return false;
+  };
+  test.ring = ring;
+  return test;
 }
 
 // the frame of a ring or a length of the line at (x, y, z): +z along `dir` (unit), +y toward `up` (the crown)

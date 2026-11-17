@@ -4,6 +4,142 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v15: The Lappet
+
+Released 2026-11-16.
+
+A village now covers the hill between Carcanet Keep and the Pomegranate House. It is called the Lappet: lime-plaster houses stacked up three giant steps cut by a far older people, so that one house's roof is the next one's yard, with stairs, ladders, shops, a square and people at work.
+
+### New
+
+- **The Lappet, a village on the hill**: It runs from the keep's fallen corner at the top down to the Pomegranate House at the foot, in four parts: a masons' yard on the crown where a new house is going up out of the keep's own rubble, lanes of stacked houses on the steps below, a square on the bench, and a row of stalls at the bottom. Five ages of building stand in it at once, the oldest holding up the newest.
+- **Stairs, ladders and a way through glass**: A straight processional stair runs down the middle, lit at each head and foot. Around it are side stairs, outside steps, a footbridge and ladders you can climb. One way down runs inside a great cracked tube of glazed glass left by the Noonwrights, a people who tried to store daylight.
+- **The Smoking Saint**: The head of a fallen colossus lies on the crown. The masons have hollowed it and burn lime in it, and smoke comes out of the top.
+- **The Fountain of Noon**: In the square, the foot of a broken glass vessel serves as a bowl, and what wells up in it is stored daylight. Someone comes to draw it off in a jug.
+- **Eight villagers**: A lime burner at her kiln, a copyist cutting a block, a child on a roof lowering a basket on a cord, a clerk at a wall of unclaimed letters, a dyer at a vat, a woman leaving the village with her house's door on her back, the drawer at the fountain, and a man who lives in a wrecked glass vessel at the bottom of the hill.
+- **The village has a sound and its own light**: It lies in the keep's shadow and is never sunlit, so it is lit by its lamps and windows, and it has its own bed of sound.
+- **Music is on by default.** The speaker button turns it off.
+
+### Fixed
+
+- **The causeway ended beside the Pit's stair and looked like a mistake**: It now goes on past the Pit to the stair at the east end of the great bridge.
+- **Glitches at the passage's door in the Pit and on the stairs underground**: A blade of ground stood in the doorway, steps showed their backs, and supports hung in the air tied to nothing. All mended.
+- **The view shook when climbing stairs**: Your eye now rises evenly whatever the frame rate.
+- **Walking through a dip near the Pomegranate House caught and jumped**: The ground there is smooth to walk.
+- **The pale figure by the chalk cliff is gone.**
+
+### Behind the scenes
+
+- A check now looks at shapes as well as behaviour: faces lying in one plane, parts floating or buried, backs of walls, and anything placed nowhere at all.
+- Things that claim a piece of ground (a house, a stair, a stall) now clear trees, rocks and birds out of it automatically.
+- Each new stretch of the walk is photographed every metre and looked at before release.
+- The village is planned in one file that the stairs, houses and tests all read, so a stair cannot be drawn where a house stands.
+
+Known issues: finding your way through the village is still harder than it should be: at the top of the main stair you meet a blank wall and must look left or right for the last flights. Unseen walls still stop you at the edges of the great pits. Some villagers are hard to spot from a distance, and there is nothing yet to do in the village but walk it.
+
+<p><img src="shots/93-lappet-far-lees-east.webp" width="24%" alt="The Lappet from below: pale houses stacked up a dark hill under an orange sky, a great glazed tube running down through them"> <img src="shots/94-quarry-colossus-head-kiln.webp" width="24%" alt="The Smoking Saint from close by: a great stone face lying on its side under a lamp, with the masons' timber frame behind"> <img src="shots/95-lees-fountain-west.webp" width="24%" alt="The Fountain of Noon: the green-glazed foot of a broken glass vessel in the square, a bowl of white light in it"> <img src="shots/97-stairs-tube-gangway.webp" width="24%" alt="A plank gangway leading into the broken mouth of the Noonwrights' glass tube, the valley beyond"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 23 hours 45 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 34 | 940.0M | $330 |
+| Fable 5.2 | 15 | 595.2M | $433 |
+| Sonnet 5.5 | 11 | 75.2M | $14 |
+| Haiku 5.5 | 6 | 1.0M | $0 |
+| **Total** | **66** | **1.61B** | **$777** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 169.1M | $74 |
+| F1 faults after v14 | Opus 5.5 | 108.5M | $35 |
+| W3 edges, no invisible walls | Opus 5.5 | 106.4M | $36 |
+| V1 the houses | Fable 5.2 | 106.2M | $85 |
+| W4 landings and headroom | Opus 5.5 | 96.7M | $31 |
+| W1 the ways put right | Opus 5.5 | 87.7M | $26 |
+| W7 the crown's ways found | Opus 5.5 | 83.4M | $28 |
+| V0 the bones | Fable 5.2 | 78.7M | $70 |
+| W2 ladders climbable or scenery | Opus 5.5 | 67.8M | $21 |
+| Q4 the Pennyworth | Fable 5.2 | 65.2M | $53 |
+| Q3 the Lees | Fable 5.2 | 61.3M | $44 |
+| Q2 the Rungs | Fable 5.2 | 57.5M | $48 |
+| v15 cold critic | Opus 5.5 | 55.1M | $17 |
+| Q1 the Quarrels | Fable 5.2 | 51.1M | $45 |
+| W5 floor seams | Opus 5.5 | 38.9M | $13 |
+| P1 people and stories | Opus 5.5 | 37.5M | $14 |
+| N1 names, map, low cost | Sonnet 5.5 | 34.8M | $5 |
+| L1 sound and light | Opus 5.5 | 33.3M | $12 |
+| S1 the saint's face | Opus 5.5 | 33.1M | $15 |
+| H1 geometry check | Opus 5.5 | 32.7M | $11 |
+| G1 buried check and claims | Opus 5.5 | 30.6M | $10 |
+| W6 level the Collation | Opus 5.5 | 24.5M | $9 |
+| P3 the far view | Opus 5.5 | 23.7M | $9 |
+| R1 pit rim and stair jitter | Opus 5.5 | 21.9M | $9 |
+| X2 arch stones and peafowl | Sonnet 5.5 | 20.8M | $3 |
+| Fix footprints under the causeway | Opus 5.5 | 9.9M | $6 |
+| X1 remove the Indistinct | Sonnet 5.5 | 9.0M | $2 |
+| Cold review of V0 bones | Opus 5.5 | 7.2M | $3 |
+| N2 the village's three names | Sonnet 5.5 | 6.0M | $1 |
+| Cold review of the Lees | Opus 5.5 | 5.8M | $3 |
+| Finish the Pennyworth after merge | Opus 5.5 | 5.3M | $2 |
+| Cold review of the Quarrels | Opus 5.5 | 4.1M | $2 |
+| Cold review of the Rungs | Opus 5.5 | 3.6M | $2 |
+| Cold re-review of V1 round 2 | Opus 5.5 | 3.4M | $2 |
+| Cold review of the Pennyworth | Opus 5.5 | 2.9M | $2 |
+| Blind read of the Lees | Opus 5.5 | 2.5M | $1 |
+| Blind read of the Rungs | Opus 5.5 | 2.3M | $1 |
+| Blind read of the Pennyworth | Opus 5.5 | 2.2M | $1 |
+| Cold review of V1 houses | Opus 5.5 | 2.1M | $2 |
+| Cold review of F1 faults | Opus 5.5 | 2.1M | $1 |
+| v15 screenshot curator | Sonnet 5.5 | 1.8M | $1 |
+| Survey held edges and invisible walls | Sonnet 5.5 | 1.5M | $1 |
+| Blind read of the row, round 2 | Opus 5.5 | 1.4M | $1 |
+| Blind read of the Quarrels | Opus 5.5 | 1.4M | $1 |
+| Read route frames m031-m045 | Fable 5.2 | 1.2M | $2 |
+| Cold review of H1 geometry | Opus 5.5 | 1.1M | $1 |
+| Read route frames 1-116 | Fable 5.2 | 1.1M | $2 |
+| Read route frames 117-232 | Fable 5.2 | 984k | $2 |
+| Read route frames m000-m015 | Fable 5.2 | 785k | $2 |
+| Blind read of V0 frames | Opus 5.5 | 780k | $1 |
+| T1 tally offer on touch | Sonnet 5.5 | 754k | $0 |
+| Read route frames m015-m030 | Fable 5.2 | 692k | $2 |
+| Read route frames 233-348 | Fable 5.2 | 606k | $2 |
+| Scan 48 survey views | Haiku 5.5 | 555k | $0 |
+| Read route frames A | Fable 5.2 | 409k | $1 |
+| Read route frames B | Fable 5.2 | 335k | $1 |
+| Blind read of the row | Opus 5.5 | 311k | $0 |
+| Cold read of figure frames | Sonnet 5.5 | 269k | $0 |
+| Scan route sheets batch 5 | Haiku 5.5 | 130k | $0 |
+| Scan route sheets batch 4 | Haiku 5.5 | 93k | $0 |
+| Scan route sheets batch 1 | Haiku 5.5 | 87k | $0 |
+| Cold read of turntable sheet | Sonnet 5.5 | 82k | $0 |
+| Cold read of placed frames | Sonnet 5.5 | 81k | $0 |
+| Scan route sheets batch 2 | Haiku 5.5 | 80k | $0 |
+| Scan route sheets batch 3 | Haiku 5.5 | 79k | $0 |
+| Cold read round 2 | Sonnet 5.5 | 76k | $0 |
+| **Total** | | **1.61B** | **$777** |
+
+</details>
+
+**Since the project started** (v1 to v15)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 201 | 4.92B | $1,891 |
+| Fable 5.2 | 36 | 1.23B | $745 |
+| Sonnet 5.5 | 149 | 460.6M | $109 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 7 | 1.4M | $0 |
+| **Total** | **391** | **6.86B** | **$2,926** |
+
 ## v14: The Depths
 
 Released 2026-11-15.
@@ -39,7 +175,7 @@ The walk goes underground. Until now everything stood on the surface and the hol
 - Each milestone's release note now ends with what it took: how long, how many agents, how many tokens and what those would cost at public prices.
 - A check now fails if any path ends at the back of a way up.
 
-Known issues: under the ground has been walked on a laptop, not yet on a phone. A column beside the last lit vessel on the Noonwrights' road is lit so pale it can look like daylight; it is the vessel's light. Seen from above, a lit vessel on the Noonwrights' road still looks more like a pale back with a lamp on it than like glass lit from inside. The sky seen from the bottom of the Pit is violet where it should take the sun's colour. The things in the sky that the Noonwrights also built (the lattices and the floating remnants) do not yet look like theirs.
+Known issues: under the ground has been walked on a laptop, not yet on a phone. A column beside the last lit vessel on the Noonwrights' road is lit so pale it can look like daylight; it is the vessel's light. Seen from above, a lit vessel on the Noonwrights' road still looks more like a pale back with a lamp on it than like glass lit from inside. The sky seen from the bottom of the Pit is violet where it should take the sun's colour. The old paved causeway used to stop at the Pit's edge for no reason anyone knew; it now stops right beside the new stair, where it looks like a mistake. The things in the sky that the Noonwrights also built (the lattices and the floating remnants) do not yet look like theirs.
 
 <p><img src="shots/88-noonroad-vessels-glazed-after.webp" width="24%" alt="The Noonwrights' road: glazed vessels afloat nose to tail through great green hoops with amber bands, in a flooded hall of columns"> <img src="shots/89-passage-laid-sun-in.webp" width="24%" alt="The Laid Sun: a round floor with a gold sun half laid in tiles, and one lamp"> <img src="shots/90-pit-floor-up-after.webp" width="24%" alt="Looking up from the bottom of the Pit: the stair winding up the wall, a bridge overhead, and stars rising"> <img src="shots/90-pit-stair-along.webp" width="24%" alt="The stair down the Pit's wall: stone slabs and a rope rail between lamps"></p>
 

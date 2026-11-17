@@ -1,5 +1,6 @@
-// v8-11: the one table of ground kept clear of anything bigger than a pebble (rocks.js reads it after its draws, so no
-// placement stream moves; tools/rocks-test.mjs checks every stone and boulder against it). Built places, the walked
+// v8-11: the ground kept clear of anything bigger than a pebble. Since v15-G1 its entries are claims in src/claims.js,
+// the one table every placer asks (rocks.js asks it after its draws, so no placement stream moves; tools/rocks-test.mjs
+// checks every stone and boulder against it). Built places, the walked
 // lines of the walkers, the grazers' homes; every road (the leads, with the kerb K1) and the causeway by the stone's
 // whole footprint, at every tier. A rock's footprint is a disc of radius r round its centre; it is cleared when that
 // disc reaches into an entry.
@@ -7,7 +8,6 @@
 //   box    { x0, x1, z0, z1 }            an axis-aligned block (the Sexton's field)
 //   strip  { a: [x, z], b: [x, z], half } a straight band, `half` metres either side of a-b
 //   region { key, w }                     wherever ctx.regions gives that region more than w at the rock's centre
-//   figure { pad }                        the Long Figure's cut chalk, pad metres round it (v9, #16; needs ctx.terrain)
 // The leads: every non-rivulet lead's tread plus LEAD_PAD (the Thurifer's P3 more: his train drags behind him).
 // The causeway: CAUSEWAY_CLEAR metres from its centre line, plus the footprint.
 // ?rockcut=0 (read by rocks.js) leaves rocks where v8-10 put them.
@@ -17,7 +17,6 @@ import { BARE } from './house/clear.js';
 import { COLLATION } from '../v5/dressing/collation.js';
 import { LEERIE } from '../v5/lights.js';
 import { leads } from '../v4/paths/routes.js';
-import { onFigure } from '../v4/dressing/figure.js';
 import { WAYSTATION } from '../v9/waystation/site.js';
 
 // the Leerie's row: the kerb K1 from SITES.leerie.from to .to; the standards stand LEERIE.side east of it and he walks
@@ -46,7 +45,7 @@ export const CLEARINGS = [
   { name: 'the Lantern Halt', kind: 'disc', x: WAYSTATION.x, z: WAYSTATION.z, r: WAYSTATION.r }, // v9 (#934): the slab, its foot and the winch
   { name: "the icefall's approach", kind: 'strip', a: [48, -258], b: [74, -292], half: 9 }, // v12-H2: the way from the mother crystal to the cleft, seen clear
   { name: 'the icefall', kind: 'box', x0: -12, x1: 112, z0: -520, z1: -289 }, // v12-H2: the ice's full width; its seracs are its stones (src/v12/icefall.js); the notch's walls keep theirs
-  { name: 'the Long Figure', kind: 'figure', pad: 1 }, // v9 (#16): nothing lies on him; rocks.js also keeps pebbles off, with or without the cut
+  // (the Lappet's ground, v15, is a claim of its own in src/claims.js: it keeps every placer off, not only the stones)
 ];
 export const LEAD_PAD = 0.6, LEAD_PADS = { P3: 2.0 };
 export const CAUSEWAY_CLEAR = 3.0; // the paving's ragged edge is 1.75-2.05 m from the line, its kerbs a little more
@@ -56,8 +55,8 @@ function segD(x, z, ax, az, bx, bz) {
   const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / l2));
   return Math.hypot(x - ax - ex * t, z - az - ez * t);
 }
-function inEntry(C, x, z, r, ctx) {
-  if (C.kind === 'figure') return !!ctx?.terrain && onFigure(x, z, r + C.pad, ctx.terrain);
+export function inEntry(C, x, z, r, ctx) {
+  if (C.kind === 'fn') return C.test(x, z, r);
   if (C.kind === 'region') return !!ctx?.regions && ctx.regions.regionAt(x, z)[C.key] > C.w;
   if (C.kind === 'disc') return Math.hypot(x - C.x, z - C.z) < C.r + r;
   if (C.kind === 'box') return x > C.x0 - r && x < C.x1 + r && z > C.z0 - r && z < C.z1 + r;
@@ -92,16 +91,3 @@ export function leadUnder(x, z, r = 0) {
   return null;
 }
 
-// v9 (#16): whether a footprint of radius r at (x, z) lies on the Long Figure (its entry above), for every rock class
-export const offFigure = (x, z, r, ctx) => inEntry(CLEARINGS.find((C) => C.kind === 'figure'), x, z, r, ctx);
-
-// What keeps a footprint of radius r at (x, z) off the ground, or null. ctx: for its terrain (the causeway's distance)
-// and regions (the Demesne); without it those two entries are skipped.
-export function clearedBy(x, z, r, ctx) {
-  for (const C of CLEARINGS) if (inEntry(C, x, z, r, ctx)) return C.name;
-  const terrain = ctx?.terrain;
-  const id = leadUnder(x, z, r);
-  if (id) return `the lead ${id}`;
-  if (terrain && terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r) return 'the causeway';
-  return null;
-}

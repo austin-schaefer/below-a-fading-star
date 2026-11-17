@@ -68,6 +68,7 @@ export function installStrata(ctx, url = new URL(location.href)) {
       stone.uniforms.uSTime.value = t;
       stone.uniforms.uGlyph.value = 0.03 + (0.9 + 0.1 * Math.sin(t * 0.21)) * 2.2 * Math.pow(1 - f, 1.2); // the ember glass: dull by day, it glows as the sun gutters (v8-09)
       stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f);
+      stone.uniforms.uLime.value = 0.85 * (0.3 + 0.7 * f);
     },
   };
   ctx.strata = S;
