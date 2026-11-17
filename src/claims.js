@@ -56,6 +56,10 @@ export const CLAIMS = [
   // there is opened, so a stone or a stem placed on it would stand in the hall's air)
   { name: 'the Swallow\'s quay', keeps: ['rocks', 'trees', 'cover', 'trods'], kind: 'box', x0: -93.2, x1: -86, z0: 295.5, z1: 311 },
   { name: 'the Swallow\'s head', keeps: ['rocks', 'trees', 'cover', 'trods'], kind: 'box', x0: -107.5, x1: -81.5, z0: 310.5, z1: 325.5 },
+  // v17 (issue-1710): the Swallow's cut, its banks dug steep (1.3 in 1, 4 at the face) out to its reach: the drawn ground
+  // (2.1 m cells on medium, 3.1 on low) cannot follow them, so a stone or a pebble set on heightAt there is drawn half
+  // in the bank (geometry found five in v17-swallow). rocks.js reads this row for pebbles too (CUT_ROCKS).
+  { name: 'the Swallow\'s cut', keeps: ['rocks'], kind: 'box', x0: -109, x1: -80.5, z0: 288, z1: 311.5 },
   { name: 'the causeway', keeps: ['rocks'], kind: 'fn', test: (x, z, r, ctx) => !!ctx?.terrain && ctx.terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r },
 ];
 

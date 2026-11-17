@@ -97,8 +97,9 @@ export function buildHead(env) {
       const z0 = Z0 - 0.18 - (i % 2) * 0.004;
       S.quad(P(a0, r0, z0), P(a1, r0, z0), P(a1, r1, z0), P(a0, r1, z0), col, [0, 0, -1], 0.04);
       S.quad(P(a0, r1, z0), P(a1, r1, z0), P(a1, r1, Z0 - 0.002), P(a0, r1, Z0 - 0.002), col, [Math.cos((a0 + a1) / 2), Math.sin((a0 + a1) / 2), 0], 0.04);
-      S.quad(P(a0, r0, z0), P(a0, r1, z0), P(a0, r1, Z0 - 0.002), P(a0, r0, Z0 - 0.002), col, [-Math.sin(a0), Math.cos(a0), 0], 0.04);
-      S.quad(P(a1, r0, z0), P(a1, r1, z0), P(a1, r1, Z0 - 0.002), P(a1, r0, Z0 - 0.002), col, [Math.sin(a1), -Math.cos(a1), 0], 0.04);
+      S.quad(P(a0, r0, z0), P(a0, r1, z0), P(a0, r1, Z0 - 0.002), P(a0, r0, Z0 - 0.002), col, [Math.sin(a0), -Math.cos(a0), 0], 0.04); // (each side faces out of its wedge, into the joint: seen up the joint from the quay)
+      S.quad(P(a1, r0, z0), P(a1, r1, z0), P(a1, r1, Z0 - 0.002), P(a1, r0, Z0 - 0.002), col, [-Math.sin(a1), Math.cos(a1), 0], 0.04);
+      S.quad(P(a0, r0, z0), P(a1, r0, z0), P(a1, r0, Z0 - 0.002), P(a0, r0, Z0 - 0.002), col, [-Math.cos((a0 + a1) / 2), -Math.sin((a0 + a1) / 2), 0], 0.04); // its soffit, seen from the quay under the arch
     }
     // the imposts and pilasters: a pier either side of the arch, to the water
     for (const sd of [-1, 1]) {

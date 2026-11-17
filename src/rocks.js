@@ -253,6 +253,9 @@ export async function build(ctx) {
       // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
       if (terrain.isUnderwater(x, z)) continue; // v17 W1: the brook, the mere, the Swallow's cut (the rest was refused above)
       if (LEAT_BODY.sd(x, z) < size * 0.6 + 0.9) continue; // v17 W2: nor on the leat's kerbs (its stones stand to 0.5 m out of the water)
+      // v17: pebbles keep off the cut's dug banks and the sphere's ground (its opened inside, the hill behind) too: the
+      // claims (claims.js) hold only stones and boulders elsewhere, so only these two are read for pebbles
+      if (cls === 'pebble' && ((x > -109 && x < -80.5 && z > 288 && z < 311.5) || (x < -255 && x > -390 && z > -45 && z < 90)) && clear(x, z, 0)) continue;
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
       if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
       if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
