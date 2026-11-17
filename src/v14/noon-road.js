@@ -9,12 +9,14 @@ import { DOOR } from './coffin-road/plan.js';
 import { VESSELS, NODE, HOOPS, SHARDS, LINE, ELBOW, elbowAt, yOf, lamps, WY } from './noon-road/plan.js';
 
 // glazed and blown: smooth, wet-bright under a lamp, clouded and crazed with age, a lime crust at the water's line
-// o: { worn (0.65: how far the glaze is worn through to the body in patches), cloud ([0.62, 0.5]: the glaze's clouding, floor and swing) }
+// o: { worn (0.65: how far the glaze is worn through to the body in patches), cloud ([0.62, 0.5]: the glaze's clouding, floor and swing),
+//      gut ({ value }: v16-S2, 0..1, the glass gives back the noon it stored while the sun above gutters; the Lappet's, not the Nave's) }
 export function noonGlass(key = 'noon-glass', waterY = -1e5, o = {}) {
   const worn = (o.worn ?? 0.65).toFixed(3), cl = o.cloud ?? [0.62, 0.5];
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+    if (o.gut) sh.uniforms.uNoonGut = o.gut;
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>${o.gut ? '\n      uniform float uNoonGut;' : ''}
       float ngH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
       float ngN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         return mix(mix(mix(ngH(i), ngH(i + vec3(1,0,0)), f.x), mix(ngH(i + vec3(0,1,0)), ngH(i + vec3(1,1,0)), f.x), f.y),
@@ -50,10 +52,11 @@ export function noonGlass(key = 'noon-glass', waterY = -1e5, o = {}) {
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.53, 0.45), ngOldT * 0.75 * smoothstep(0.25, 0.55, ngN(ngW * 6.5)));
         diffuseColor.rgb *= 1.0 - 0.25 * (1.0 - smoothstep(-0.9, 0.0, ngOld)) * smoothstep(0.07, 0.4, ngY) * ngIn;`)
       // the nave's violet in its shadow (the dark-adapted eye: an old glaze is never black)
-      .replace('#include <opaque_fragment>', `outgoingLight += diffuseColor.rgb * vec3(0.03, 0.028, 0.05);
+      .replace('#include <opaque_fragment>', `outgoingLight += diffuseColor.rgb * vec3(0.03, 0.028, 0.05);${o.gut ? `
+outgoingLight += vec3(1.0, 0.86, 0.58) * uNoonGut * (0.18 + 0.55 * smoothstep(0.35, 0.75, ngN(ngW * 0.45 + 1.0))) * (1.0 - 0.7 * ngWorn);` : ''}
 #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2) + (o.worn != null || o.cloud ? `-${worn}-${cl.join('-')}` : '');
+  m.customProgramCacheKey = () => 'fp-noon-glass' + waterY.toFixed(2) + (o.worn != null || o.cloud ? `-${worn}-${cl.join('-')}` : '') + (o.gut ? '-gut' : '');
   return underMaterial(m, key, NOON.lightHex);
 }
 

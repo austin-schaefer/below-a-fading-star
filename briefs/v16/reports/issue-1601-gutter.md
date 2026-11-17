@@ -65,3 +65,94 @@ The first voicing beat against the draught's A2 and D3 noise bands in the same o
 - The first gutter at 87.5 s (salt 1736), not 60.4 s (salt 1733's first draw); its countdown waits on "Go out".
 - The village's lamps go *up* in a gutter (a hand turns them up), where they used to go down to 0.7 with the sky. The Pomegranate House's own lamps keep their v8 behaviour (dim, sputter, relit), so the two answers differ.
 - The noon specks in the far mesh flare with the lamps: the far mesh does not tell them apart.
+
+## Round two (S2)
+
+Brief: `briefs/v16/brief-v16-S2-gutter-bolder.md`.
+
+### What changed
+
+**One beat for the whole valley** (the part a visitor anywhere gets):
+- **The night shows through.** In a gutter the ember goes out of the horizon and the whole vault sinks to violet. The fainter stars come out, every star burns three times as hard, and the galactic band brightens (`sky.js` `uDark`; the same is done in skylife's `sl_sky` (`uNight`) and in the standing water's reflected sky). A cold grade in post (`uGut`) turns the shadows and mid-tones grey-blue, while what burns stays warm, so the lamps that answer stand out. As the sun catches there is a warm flush over some five seconds (`flicker.after`).
+- **The air holds its breath.** The wind falls away over the four seconds before the onset (`flicker.soon`) and stays half-hushed under the drone. As the sun catches, a gust comes, rising over 1.8 s (`audio/bed.js`). The Span's cloth hangs dead in the hush and whips in the relief gust (`v4/span/cloth.js`, `vestige.js`).
+- **The lights answer in a wave outward from the eye.** One analytic model (`flicker.lampsAt`/`lampDelay`/`wave`) gives a delay of 0.3 s, plus 1 s per 45 m, plus up to 1.2 s that is a 6 m cell's own. It is used in the stone shader (`uWaveK`: the village's and the Lees' panes, house by house), the Lappet from far, the Halt's lamp and globe, and the Leerie's standards. The house lamps and the Escarpment Lamps keep their own answers.
+- Every reading settles at once under `flicker.hold`. Nothing flashes: the fastest thing is the floor's shudder at 2.7 Hz (unchanged). No full-screen white.
+
+**The answers a visitor walks past:**
+- **The moths:** 48 more on each act come out of the stone in a gutter and climb a turning column to about 5 m. Their dust takes the starlight (emissive 0.9 x dusk, none by day). This uses the same instanced mesh.
+- **The Laid Sun:** bands of light run out from its middle along the laid rays (1.5 m/s, one every 2.6 s). It is driven every frame from `flicker.slow`; this fixes the review's 2 Hz steps.
+- **The Diffident Stair:** ember veins burn through the stub and every slab, the ones in the turf too.
+- **Standing water** (tarn, fen): the sun's glints go out; a pale cold comes up out of the body.
+- **The Noonwrights' glass:** the main's glass (`noonGlass` `gut`) and every carrier house's glaze (the stone's channel 3, `uNoon`) give back stored noon while the sun is out.
+- **The creatures:** the rooks and the gibbet crows go up calling. The wings tighten and climb over the tower, and one cries. The grazers stop and turn their heads up to the sun.
+- **The living (v7):** the Coheirs stop together and look up at the sun until it catches. Their hum stops while they look.
+- **The Halt:** its lamp and globe skin flare when the wave reaches it.
+
+**Review fixes:** the Laid Sun's wake runs every frame. Setting `flicker.next` lower now sets `out` (`crystal.js` also sets it). `?gutter=v3` runs from ready, its first gutter 70-150 s on. On the folk from afar (point 2), the decision: the Lappet's folk answer only within 45 m. From the Croft and the heights the answer is the lamps and the far specks; the table says so.
+**Found on the way:** the new skylife uniform first collided with the parhelion's `uDark`, which broke that program. It is renamed `uNight`.
+
+### What answers, by region (round two's column)
+
+| Region | After S1 | New in S2 |
+|---|---|---|
+| Everywhere | the sun, the light, the fog dim; the first gutter at 87.5 s | the night through the sky (stars, violet, the ember out); cold grade; the hush before, the gust after; the lights in a wave outward |
+| Old valley | as S1 | the Leerie's standards in the wave; the rooks and crows up calling; the wings kettle; the grazers look up; the tarn's glints out and its cold showing |
+| The living (v7) | as S1 | the Coheirs stop and look up at the sun |
+| v9, the Halt | lamp turned up | lamp and globe flare in the wave |
+| v10, the acts | five moths wheel | a cloud of 48 a spot goes up |
+| v11/v12, the Span and the heights | strut; icefall; stair signs | the Span's cloth dead in the hush, whipped in the relief; the Diffident Stair burns in ember veins |
+| v14, underground | the Laid Sun warms | its gold runs in bands, every frame |
+| v15, the Lappet | lamps, folk (within 45 m), sound | panes house by house in the wave; the Noonwrights' glass on the main and the carrier houses gives back noon; far specks in the wave. From the Croft and the heights the folk do not answer (their update runs only within 45 m) |
+| The fen | the corpse-candles, the Reach | glints out, cold up (faint) |
+
+### Tests
+
+- `SHOT_ANGLE=metal ONLY=gutter,acts,stair,village,house,audio,walk,perf,settings tools/suite.sh 8161`: 9 tests, 0 failed (gutter 28 PASS, acts 163, stair 5, village 687, house 20, audio 106, walk 13, perf 29, settings 86). This is the subset, not the whole suite, although shared code changed (`post.js`, `sky.js`, `structures/materials.js`, the bed, `water.js`): the orchestrator's batch run is the whole one.
+- gutter-test's new rows: soon, slow, the wave (10 m up 2 s before 250 m), after, a gutter brought forward before 'begin', and `?gutter=v3` from ready.
+- Perf: on the branch only, `calls [169, 311]` on the bench, frame 16.7 ms. A "before" run on a second server was refused on this machine, so there is no before/after pair. Nothing adds a draw call or a light: the cloud of moths is in the lures' one instanced mesh, and everything else is a uniform.
+- Audio (`tools/audio-survey.mjs --poses=moor-gutter,leerie-gutter,moor-stand`, before against after, `shots/wip/audio/s2-{before,after}`): gates ok on all three. leerie-gutter's roughness was 0.309 before (a gated failure already on the base) and is 0.139 after. moor-gutter goes from -32.7 to -31.3 LUFS: the gutter's 5-15 s are about 6 dB quieter in 125 Hz to 2 kHz (the hush), and the 15-20 s window is 5 dB louder (the relief gust). moor-stand is unchanged. To listen: `shots/wip/audio/s2-after/moor-gutter.wav` from 0 s (the wind falling away), then 15 s (the gust).
+
+### Frames (`shots/wip/`), in order
+
+1. Through one real gutter (`tools/gutter-frames.mjs`, AT=-3,0,1.5,3,5,8,13,17): `v16-S2-seq-moor-*`, `v16-S2-seq-lees-*`, `v16-S2-seq-span-*` (the Span's deck, feet at 56), and `v16-S2-seq-stair-*` (0, 3, 8, 17 s: the stair burning).
+   - A blind sonnet helper, told only "consecutive frames of a walk; what happens?", described all three sequences as dusk going to a starry violet night and back.
+   - Moor: "the warm glow drains... cold blue-grey... the scaffold's lamps look brighter against the dark... at 17 s back to the warm orange dusk".
+   - Lees: "the crystal hill glows more bluely... the sail and street stay lit by a soft glow".
+   - Span: "the lamps and the scaffold's lights standing out".
+   - It did not name the lights answering one after another.
+2. Pairs, held lit and guttered (`node tools/views-v16-gutter2.mjs && node tools/views.mjs tools/views-v16-gutter2.json shots/wip v16-S2-pair low`): `v16-S2-pair-{moths15,coheirs,rooks,grazers,tube,halt,tarn,fen,laidsun,stair}-{lit,gut}`. The stair under a held flicker: see Still weak; judge it from `v16-S2-seq-stair-*`. The moths' cloud seen close: `v16-S2-dbg-moths.png`.
+
+### Still weak
+
+- **The moths at 15 m** are a column of 2-3 px pale specks: seen if looked for, not a cloud at a glance.
+- **The Halt's globe, the tarn's cold and the fen** hardly differ in their pairs. The glints are cut 90 % but something else in the tarn's reflection keeps a glitter. The fen's stand is in the reeds.
+- **The Coheirs and the grazers** turn their heads, which is too small to read at 7-30 m in a still. The rooks and the wings' kettle have no usable pair (bad stands).
+- **The Span's cloth answer** (dead in the hush) shows only in motion.
+- **views.mjs and the stair:** under its held flicker the stair's veins do not show, while a real gutter and a held flicker in a plain page both show them. The cause was not found. Moving the stair's gutter reading before its sim did not change it.
+- **The wave of lights** is real in the shaders, but nothing in the three sequences shows it plainly: a view that holds many lamps at different distances would.
+- **The Lappet's folk** answer only within 45 m (the review's point 2: said, not changed).
+
+### Defaults taken
+
+- The beat: the night through the sky, a cold grade, the hush and the relief, and the wave. Not the lattices' or remnants' own light.
+- The stored noon gives back pale gold (1.0, 0.86, 0.58).
+- The Span gets the hush and the relief rather than a light.
+- `?gutter=v3` waits one of its own intervals.
+
+## Round three (S3)
+
+Fixes to the cold review of round two:
+
+1. **The warm flush no longer steps.** `sky.js` has a separate reading, `flicker.flush`: it rises over about a second from the catch (frame-rate independent, 0 under `flicker.hold`) and then falls over about five seconds. `post.js` feeds it to `uGut.y`. `flicker.after` is unchanged, so the audio latch and `vestige.js` still read the edge. The `gutter` test has a row for the flush: the largest change per frame is 0.017 at 60 fps and 0.050 at 20 fps, with a peak of 1 and gone after.
+2. **The relief gust latches on the rising edge of `after`** (`audio/bed.js`), so a hitch between two 10 Hz ticks cannot skip it.
+3. **The lure's at-rest cost is what it was.** The five moths of every slot sit first in the instance buffer and the 48-moth clouds after them, and every instance starts hidden. Only the written ranges are uploaded (`addUpdateRange`), and the draw `count` covers the clouds only while one is up and shrinks again.
+4. **The water's texture fetch is guarded** by `uDark > 0.0`.
+5. **`lampsAt` and `lampDelay` allocate nothing per call:** the smoothstep is hoisted and `Math.hypot` is replaced by `Math.sqrt`.
+6. **The wave's centre is held** from the onset until the lights are done (`wcx, wcz` in `sky.js`); it follows the eye only while no gutter or wave is on, so a teleport or fall mid-gutter does not relight a house.
+7. **The Diffident Stair's veins: not reproduced.** On this branch `SLAB_U.uGut` reads 0 when held lit and 1 when held at 0.3, and the veins are plainly visible in the guttered frame. This was tried both ways: `tools/views.mjs` with the stair view alone, and with a first view at (-61, 3.1) (the moths15 stand) before it, logging `SLAB_U.uGut` in `pre`; and a plain page at (275, 0). The stand-in for the walker (`pos.set` after an underground `placeAt`) was not needed to get the veins. Ruled out: the load stand, the hold's value (it must be 0.3, since `hold` 1 means lit and gives dark 0), and the update order. The likely cause is that the frames judged earlier predated the stair's gut reading or used `hold` 1 as "dark", but that is a guess.
+
+### Tests
+`SHOT_ANGLE=metal nice -n 10 env ONLY=gutter,acts,stair,village,house,audio,walk,perf,settings tools/suite.sh 8161`: 9 tests, 0 failed (settings 86, village 687, house 20, walk 13, audio 106, perf 29, acts 163, gutter 29, stair 5 PASS lines). The subset, not the whole suite, although `sky.js`, `post.js`, `water.js` and the bed changed.
+
+### Frames
+`shots/wip/v16-S3-seq-moor-00..07-*s.png` (`PREFIX=v16-S3 AT=7,10,12,13,14,15,16,17 tools/gutter-frames.mjs <base> moor -60 20 1.9 0.05`): the dark holds to 13 s; at 14 s the sun is back, with the flush at 0.45; at 15 s it is at its peak (0.91), and it fades through 16 and 17 s. The warmth comes up across two frames a second apart and is never a one-frame step.

@@ -477,6 +477,17 @@ export async function build(ctx) {
   }
   // (emissive: the Laid Sun knows the gutter, v16-S1; see the update)
   const gmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.85, emissive: new THREE.Color('#d9821c'), emissiveIntensity: 0 }), 'passage-gold', WARM, { far: [14, 34] });
+  // v16-S2: the waking runs: bands of light go out from the sun's middle along the laid rays (about 1.5 m/s, one every
+  // 2.6 s), so in the dark room the gold is seen to move, not merely to warm. uWake: (wake, phase); uSunC: the middle.
+  const uWake = { value: new THREE.Vector2() }, uSunC = { value: new THREE.Vector2(P.sun.x, P.sun.z) };
+  { const prev = gmat.onBeforeCompile, pk = gmat.customProgramCacheKey.bind(gmat);
+    gmat.onBeforeCompile = (sh, r) => {
+      prev.call(gmat, sh, r);
+      sh.uniforms.uWake = uWake; sh.uniforms.uSunC = uSunC;
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 uWake, uSunC;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float fpR = distance(vUnderW.xz, uSunC); float fpW = 0.5 + 0.5 * sin(fpR * 1.6 - uWake.y); totalEmissiveRadiance *= uWake.x * (0.12 + 3.4 * pow(fpW, 6.0)) * (1.0 - 0.5 * smoothstep(1.5, 9.0, fpR)); }');
+    };
+    gmat.customProgramCacheKey = () => pk() + '|wake'; }
   const gold = new THREE.Mesh(G.geometry(), gmat); gold.name = 'passage-gold'; gold.receiveShadow = true; scene.add(gold); meshes.push(gold);
   const pmat = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02 }), 'passage-portal', WARM);
   const portalMesh = new THREE.Mesh(PO.geometry(), pmat); portalMesh.name = 'passage-portal'; portalMesh.castShadow = true; portalMesh.receiveShadow = true; scene.add(portalMesh); meshes.push(portalMesh);
@@ -709,8 +720,6 @@ export async function build(ctx) {
   const cam = ctx.camera.position;
   function update(dt, t) {
     pmatF.uniforms.uTime.value = t;
-    { const fl = ctx.sky?.flicker, to = fl?.dark ?? 0; wake = fl?.hold != null ? to : Math.min(1, Math.max(0, wake + Math.max(-dt / 6, Math.min(dt / 3, to - wake))));
-      gmat.emissiveIntensity = wake * wake * (0.2 + 0.04 * Math.sin(t * 1.3)); }
     { // (held a little past where it comes on, so it does not flicker on and off at the line)
       const inBox = cam.x > bbox.x0 && cam.x < bbox.x1 && cam.z > bbox.z0 && cam.z < bbox.z1 && cam.y < P.YM + 9, s = inBox ? P.near(cam.x, cam.z, _q).s : -1;
       if (s > SP.GULF1 - 3 && !unOpen) unOpen = below.opening(pitOpening);
@@ -730,6 +739,13 @@ export async function build(ctx) {
   }
   const mid = P.at(P.L / 2);
   ctx.registerUpdate(update, { pos: { x: mid.x, z: mid.z }, near: 95, hz: 2, r: 70 });
+  // the Laid Sun's waking, every frame (the update above is throttled far from the passage's middle, and the room is
+  // far from it: at 2 Hz the gold rose in steps): flicker.slow is sky.js's, kept every frame
+  ctx.registerUpdate((dt, t) => {
+    wake = ctx.sky?.flicker?.slow ?? 0;
+    gmat.emissiveIntensity = wake > 0.001 ? 0.42 : 0;
+    uWake.value.set(wake * wake, (t * 2.4) % (Math.PI * 200));
+  }, { pos: { x: P.sun.x, z: P.sun.z }, near: 60, hz: 0, r: 20 });
 
   const tris = meshes.reduce((a, m) => a + m.geometry.attributes.position.count / 3, 0);
   ctx.passage = {

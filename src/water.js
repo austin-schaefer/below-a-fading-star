@@ -63,7 +63,7 @@ const VERT = /* glsl */`
 const FRAG = /* glsl */`
   precision highp float;
   uniform sampler2D uTex;
-  uniform float uTime, uFlicker, uFen; uniform vec2 uFar; uniform vec4 uTexMean;
+  uniform float uTime, uFlicker, uFen, uDark; uniform vec2 uFar; uniform vec4 uTexMean;
   uniform vec3 uSunDir, uSunCore, uSunLight, uHorizonSun, uHorizonAway, uZenith, uWater, uWisp;
   uniform vec4 uRipples[${MAX_RIPPLES}];
   varying float vDepth;
@@ -74,8 +74,8 @@ const FRAG = /* glsl */`
     float up = clamp(d.y, 0.0, 1.0);
     float toSun = max(dot(d, uSunDir), 0.0);
     float band = pow(1.0 - up, 3.5);
-    vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6));
-    vec3 sky = mix(uZenith, horizon, band);
+    vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6) * (1.0 - 0.8 * uDark));
+    vec3 sky = mix(uZenith, horizon, band) * mix(vec3(1.0), vec3(0.62, 0.58, 1.12), uDark); // (v16-S2: as sky.js in a gutter)
     float glow = pow(toSun, 6.0) * 0.55 + pow(toSun, 24.0) * 0.7 + pow(toSun, 90.0) * 1.2;
     sky += uSunLight * glow * uFlicker * (0.6 + 0.4 * (1.0 - smoothstep(0.0, 0.35, up)));
     return sky;
@@ -160,12 +160,15 @@ const FRAG = /* glsl */`
     float twA = uTexMean.a;
     if (nearW > 0.0) twA = mix(twA, texture2D(uTex, p * 0.9 + vec2(uTime * 0.05, -uTime * 0.03)).a, nearW);
     float tw = 0.55 + 0.45 * twA * 2.0;
-    refl += uSunCore * disc * 3.2 * uFlicker * tw;
-    refl += uSunLight * pow(max(sd, 0.0), 220.0) * 0.8 * uFlicker;
+    refl += uSunCore * disc * 3.2 * uFlicker * tw * (1.0 - 0.9 * uDark); // (v16-S2: the glints go out with the sun)
+    refl += uSunLight * pow(max(sd, 0.0), 220.0) * 0.8 * uFlicker * (1.0 - 0.9 * uDark);
 
     // body: near black, slightly lifted toward the sky tint in deep water
     vec3 body = uWater * (0.7 + 0.3 * NV) + vec3(0.002, 0.0015, 0.004);
     vec3 col = mix(body, refl, fres);
+    // v16-S2: in a gutter the glints go with the sun, and the cold the standing water keeps shows: a pale blue-grey
+    // coming up out of the body in slow skeins (uDark: sky.js's flicker.dark)
+    if (uDark > 0.0) col += vec3(0.09, 0.19, 0.34) * uDark * (1.0 - 0.6 * fres) * (0.35 + 0.65 * smoothstep(0.3, 0.8, texture2D(uTex, p * 0.05 + vec2(uTime * 0.006, uTime * 0.004)).a)); // (no fetch at rest)
     // v12-H5: from a top, looking down into it, black water reads as a hole: the shelf under the shallows shows (peat
     // over silt, by the depth) and the deep goes to black-green, the swell catching the sky. Only for an eye 15 m and
     // more over the water and looking down at it; at walking height the water is exactly as it was.
@@ -252,7 +255,7 @@ export async function build(ctx) {
     const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k)));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-        uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },
+        uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uDark: { value: 0 }, uFen: { value: fen ? 1 : 0 },
         uFar: { value: new THREE.Vector2(FAR ? 100 : 1e9, FAR ? 120 : 2e9) }, uTexMean: { value: uTexMean },
         uSunDir: { value: new THREE.Vector3(ctx.sun.dir.x, ctx.sun.dir.y, ctx.sun.dir.z) },
         uSunCore: { value: C(palette.sunCore) }, uSunLight: { value: C(palette.sunLight) },
@@ -277,7 +280,7 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, t) => {
     for (const b of bodies) {
       const u = b.mat.uniforms;
-      u.uTime.value = t; u.uFlicker.value = flick.value;
+      u.uTime.value = t; u.uFlicker.value = flick.value; u.uDark.value = flick.dark || 0;
       if (b.tarn) b.mesh.position.y = b.body.y + tideAt(t); // v4: the tarn's moonless tide (src/v4/tarn.js)
       b.next -= dt;
       if (b.next <= 0) {
