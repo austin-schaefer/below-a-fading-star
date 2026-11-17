@@ -78,7 +78,7 @@ const FRAG = /* glsl */`
     vec2 c = mix(slope2(vec2(d * 1.1 + 0.19, (s - sp * 0.9 * fT1) * 0.62 + 0.67)), slope2(vec2(d * 1.1 + 0.7, (s - sp * 0.9 * fT0) * 0.62)), fW0);
     // a slow drift of its own in the pools (they turn, they do not run)
     vec2 sw = slope2(vec2(P.x * 0.07 + t * 0.008, P.z * 0.07 - t * 0.006));
-    float amp = (0.04 + 0.05 * sp + rough * 0.18) * (1.0 - 0.6 * still);
+    float amp = (0.06 + 0.07 * sp + rough * 0.18) * (1.0 - 0.6 * still);
     vec2 sl = (a * 0.5 + b * 0.45 + c * 0.35 * far) * amp * fNorm + sw * (0.02 + 0.02 * still);
     // the bed's stones under the quick water stand the surface up in waves that stay put
     sl.y += sin(s * 2.4 + d * 0.9 + mask(vec2(d * 0.3, s * 0.05)) * 6.0) * 0.035 * smoothstep(0.5, 1.6, sp);
@@ -118,9 +118,13 @@ const FRAG = /* glsl */`
     // (drawn out about 3 to 1 along the stream: longer reads as ruled lines from a vanishing point)
     float rif = mix(mask(vec2(d * 0.9 + 0.13, (s - sp * fT1) * 0.3 + 0.61)), mask(vec2(d * 0.9 + 0.77, (s - sp * fT0) * 0.3)), fW0);
     rif = 0.5 + (rif - 0.5) * fNorm;
-    float riffle = smoothstep(0.69, 0.75, rif) * smoothstep(0.3, 1.2, sp) * (1.0 - still) * 0.3;
-    float edgeLine = (1.0 - smoothstep(0.0, 0.18, dep)) * smoothstep(0.6, 1.8, sp) * smoothstep(0.62, 0.8, streak) * 0.4;
-    foam = max(foam, max(riffle, edgeLine)) * edge;
+    // riffles are not foam: the quick water's surface stood up into ridges that catch the sky, drawn out along the flow,
+    // lighter than the water round them but the sky's colour, not white, and half seen through
+    float riffle = smoothstep(0.6, 0.76, rif) * smoothstep(0.3, 1.2, sp) * (1.0 - still);
+    col = mix(col, skyCol(normalize(vec3(R.x, max(R.y, 0.25), R.z))) * 1.5 + uFoam * 0.06, riffle * 0.55);
+    alpha = max(alpha, riffle * 0.6 * edge);
+    float edgeLine = (1.0 - smoothstep(0.0, 0.18, dep)) * smoothstep(0.8, 1.8, sp) * smoothstep(0.66, 0.82, streak) * 0.25;
+    foam = max(foam, edgeLine) * edge;
     vec3 foamCol = uFoam * (0.35 + 0.65 * uFlicker) * (0.75 + 0.25 * N.y);
     col = mix(col, foamCol, foam * 0.9);
     alpha = max(alpha, foam * 0.95);

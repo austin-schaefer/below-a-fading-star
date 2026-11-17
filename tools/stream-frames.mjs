@@ -8,6 +8,7 @@
 //           `turn` rad toward the water (default 0.45), pitch `pitch` (default -0.28)
 //   across: at each station `at` (x,z;x,z: the nearest points of the stream), from `span` m one side to `span` m the other
 //           (default 9), `step` m a frame, looking the way it walks
+//   hold:   one stand `at` (x,z) with `yaw` and `pitch`, `n` frames (default 12) `ms` apart (the water moving, the eye still)
 //   opts as key=value after the mode: step, off, side, turn, pitch, at, span, ms (real ms between frames, default 1000:
 //   1.4 m a second is a walk), from, to (s range, metres along the stream)
 // Writes shots/wip/<prefix>-NNN.png (1280x720) and shots/wip/<prefix>-sheet-N.png. Holds the sun's guttering off.
@@ -39,6 +40,10 @@ const stands = await page.evaluate(async ({ name, mode, O, step }) => {
       const d = side * (hw + off), x = st.X[k] + tz * d, z = st.Z[k] - tx * d;
       out.push({ x, z, yaw: yawOf(tx, tz) + side * turn, pitch, s });
     }
+  } else if (mode === 'hold') {
+    // one stand, `n` frames (default 12) `ms` apart: the water moving while the eye does not
+    const [x, z] = (O.at || '').split(',').map(Number);
+    for (let i = 0; i < +(O.n ?? 12); i++) out.push({ x, z, yaw: +(O.yaw ?? 0), pitch: +(O.pitch ?? -0.3), s: 0 });
   } else {
     const span = +(O.span ?? 9), pitch = +(O.pitch ?? -0.3);
     for (const p of (O.at || '').split(';').filter(Boolean)) {
