@@ -210,6 +210,22 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   });
   const badView = view.filter((r) => r.deg > 40 || r.hit); // (v14-B5: more than 35 checked: the owner cut nine cards on #52, about 41 stands remain)
   check('teleport: every named place\'s centre is in view (within 40 degrees of the look) and no collider shuts the view within 3 m of the eye', view.length > 35 && badView.length === 0, { checked: view.length, badView });
+  // v16 critic: every stand on the map, the living and the stories too: the view's centre (the stand's yaw and pitch, from the
+  // eye) meets no drawn mesh within 2 m (the Bather's old stand on the Span's rubble looked into a slab 1.98 m off; the
+  // collider check above sees only colliders, and skips the living)
+  const blind = await page.evaluate(() => {
+    const fp = window.__fp, T = fp.THREE, rc = new T.Raycaster(), out = [];
+    const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    for (const pl of fp.settings.places) {
+      fp.settings.teleport(pl);
+      const P = fp.player, cp = Math.cos(P.pitch), dir = new T.Vector3(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp);
+      rc.set(P.pos, dir); rc.near = 0.05; rc.far = 2;
+      const h = rc.intersectObjects(fp.scene.children, true).find((h) => h.object.isMesh && shown(h.object) && !/^sky/.test(h.object.name + (h.object.parent?.name || '')));
+      if (h) out.push({ name: pl.name, hit: h.object.name || h.object.parent?.name, d: +h.distance.toFixed(2) });
+    }
+    return { n: fp.settings.places.length, out };
+  });
+  check('teleport: from every stand on the map the view\'s centre meets nothing drawn within 2 m of the eye', blind.n > 70 && blind.out.length === 0, blind);
   // v10-F1: the five places with an act land 8 to 11 m from it, facing it (the act's spot within 25 degrees of the look)
   const actLand = await page.evaluate(() => {
     const fp = window.__fp, out = {};

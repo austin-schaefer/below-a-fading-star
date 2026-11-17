@@ -93,8 +93,8 @@ const LIVING = [
   ['glyphs', 69.5, -198, -1.223, 0.03], // glyphs-erratic-sun: the erratic
   ['repetend', -167.2, -96.3, 1.513, -0.14], // small-repetend-p3
   ['simulacrum', 10.8, -201.5, -1.291, 0.016], // small-simulacrum-columns
-  ['bather', 166.5, 218.5, 2.43, -0.45], // canyon-bather-rim
-  ['toadstone', 186, 232, 0.95, -0.3], // canyon-toad-p13-day
+  ['bather', 163.8, 218.9, 2.70, -0.65], // v16 critic: on the rim 12 m off, down onto her whole length (166.5, 218.5 stood on the Span's rubble, a slab filling the view)
+  ['toadstone', 180.9, 234, 0.698, -0.73], // v16 critic: 4.3 m from the toad on its ledge, looking down at it, the Bather's pool beyond (186, 232 faced the pier's footing)
   ['reach', null], // the Span's line by the river (its deck is not walkable there)
 ];
 const offToward = (c, d) => { // d metres from (c.x, c.z) toward spawn
