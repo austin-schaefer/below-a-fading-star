@@ -828,6 +828,13 @@ if (process.env.LAGAN !== '0') {
   const inView = await p.evaluate(() => { const fp = window.__fp, v = fp.storyActs.lagan.fly.position.clone().project(fp.camera); return fp.storyActs.lagan.fly.visible && Math.abs(v.x) < 0.8 && Math.abs(v.y) < 0.8 && v.z < 1; });
   check('lagan: E takes it: counted, the letter gone from his hand and in the visitor\'s view', r.n === 1 && !r.held && inView, { r, inView });
   check('lagan: a second E while he gives it does nothing', await p.keyboard.press('KeyE').then(() => sleep(200)).then(() => p.evaluate(() => window.__fp.acts.count('lagan-letter'))) === 1);
+  // a gutter mid-act: he freezes mid-reach and the letter and the pen freeze with him, then the act goes on and finishes
+  const fl = () => p.evaluate(() => { const L = window.__fp.storyActs.lagan; return { g: L.state().g, vis: L.fly.visible, pos: L.fly.position.toArray() }; });
+  await p.evaluate(() => { window.__fp.sky.flicker.hold = 0.25; }); await sleep(400);
+  const f0 = await fl(); await sleep(2500); const f1 = await fl();
+  check('lagan: a gutter mid-flight: his clock and the letter hold still (not flown, not put away)', f0.g >= 0 && f1.g >= 0 && Math.abs(f1.g - f0.g) < 0.02 && f1.vis === f0.vis && f1.pos.every((v, i) => Math.abs(v - f0.pos[i]) < 1e-4), { f0, f1 });
+  await p.evaluate(() => { window.__fp.sky.flicker.hold = null; });
+  await p.waitForFunction((g0) => window.__fp.storyActs.lagan.state().g > g0 + 0.2, f0.g, { timeout: 20000 }).catch(() => {});
   await p.waitForFunction(() => window.__fp.storyActs.lagan.state().g < 0, null, { timeout: 20000 }).catch(() => {});
   r = await st();
   check('lagan: done: the entry struck through in red in his book, a letter in his hand again, not offered again this visit', r.inked0 && !r.inked1 && r.held && r.phase === 'sort' && (await offAt(2.0)) !== 'lagan-letter', r);
