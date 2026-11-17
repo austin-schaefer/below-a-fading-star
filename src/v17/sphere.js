@@ -420,7 +420,7 @@ export async function build(ctx) {
     }
     // the leak: a crescent round one edge of the iris, white, and the conduit's throat behind it lit by it
     glowK = 0;
-    put(B, new THREE.TorusGeometry(MR - 0.1, 0.09, 6, 32, 2.3).rotateZ(0.4), ML.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.03)), { color: new THREE.Color('#fff4dc'), glow: 3.6, jit: 0 });
+    put(B, new THREE.TorusGeometry(MR - 0.1, 0.09, 6, 32, 2.3).rotateZ(0.4), ML.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.03)), { color: new THREE.Color('#fff4dc'), glow: 2.6, jit: 0 });
     put(B, new THREE.CircleGeometry(MR, 32), Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.3)), { color: new THREE.Color('#3a3226'), glow: 0.25, jit: 0 }); // the throat, dark past the leaves
     glowK = 0.3;
     // the spindle: from under the node, down to the iris's gear at its hub; the wheel's axle turns it
