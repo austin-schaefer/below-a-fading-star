@@ -150,12 +150,15 @@ export function buildHead(env) {
   }
   // the bank's revetment on the quay's east side, up to the ground behind it (the ground under the quay is opened)
   const REV = 2.2;
-  for (let z = QZ0 - 2.5; z < Z0 - 0.06; z += 1.5) {
-    const z1 = Math.min(Z0 - 0.05, z + 1.5), g = Math.max(T.heightAt(QX[1] + REV + 0.3, z), T.heightAt(QX[1] + REV + 0.3, z1), T.heightAt(QX[1] + 0.5, (z + z1) / 2)) + 0.25;
-    if (g <= QY + 0.3) continue;
-    const top = QY + Math.ceil((g - QY) / 0.6) * 0.6; // stepped up in whole courses, as the bank rises
-    S.box(QX[1] + REV / 2, (QY + top) / 2, (z + z1) / 2, REV / 2, (top - QY) / 2, (z1 - z) / 2 + 0.003 * (Math.round(z) % 2), 0, FACE_D.map((v) => v * (0.9 + 0.15 * hash(z))), FACE_D, 0.06);
+  // (a battered wall with a coping that runs up with the bank, in 1.5 m lengths: whole courses read as a stair)
+  const revTop = (z) => Math.max(QY + 0.3, Math.max(T.heightAt(QX[1] + REV + 0.3, z), T.heightAt(QX[1] + 0.5, z), T.heightAt(QX[1] + REV * 0.5, z)) + 0.25);
+  const RZ0 = QZ0 - 2.5, RZ1 = Z0 - 0.05, RX0 = QX[1], RX1 = QX[1] + REV;
+  for (let z = RZ0; z < RZ1 - 0.01; z += 1.5) {
+    const z1 = Math.min(RZ1, z + 1.5), ta = revTop(z), tb = revTop(z1), col = FACE_D.map((v) => v * (0.9 + 0.15 * hash(z))), bot = QY - 0.6;
+    S.quad([RX0, bot, z], [RX0, bot, z1], [RX0, tb, z1], [RX0, ta, z], col, [-1, 0, 0], 0.06); // its face to the quay
+    S.quad([RX0, ta, z], [RX0, tb, z1], [RX1, tb + 0.15, z1], [RX1, ta + 0.15, z], FACE, [0, 1, 0], 0.05); // the coping
   }
+  { const t0 = revTop(RZ0); S.quad([RX0, QY - 0.6, RZ0], [RX1, QY - 0.6, RZ0], [RX1, t0 + 0.15, RZ0], [RX0, t0, RZ0], FACE_D, [0, 0, -1], 0.06); }
   // steps up from the quay's north end to the shore
   const shoreY = T.heightAt((QX[0] + QX[1]) / 2, QZ0 - 1.2);
   // (up or down: the shore is wherever W1's mere left it)
@@ -250,7 +253,7 @@ export function buildHead(env) {
       const f = frameAt(s), v = W - (f.y - CH.below);
       const hw = v < CH.spring ? CH.half : CH.half * Math.sqrt(Math.max(0, 1 - ((v - CH.spring) / CH.half) ** 2));
       if (hw < 0.05) break;
-      spos.push(f.x - f.r.x * hw, W, f.z - f.r.z * hw, f.x + f.r.x * hw, W, f.z + f.r.z * hw); rows++;
+      spos.push(f.x - f.r.x * (hw - 0.12), W, f.z - f.r.z * (hw - 0.12), f.x + f.r.x * (hw - 0.12), W, f.z + f.r.z * (hw - 0.12)); rows++; // (in from the vault's facets)
     }
     for (let r = 0; r < rows - 1; r++) { const a = base + r * 2; sidx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
   }
@@ -288,7 +291,7 @@ export function buildHead(env) {
         } else {
           // from under it: a bright window straight up, a dark mirror of the water at a slant
           float up = -V.y; float win = smoothstep(0.55, 0.75, dot(-V, n) * up / max(up, 1e-3) * up + 0.0);
-          vec3 sky = uDay * (0.8 + 2.5 * day) + swLight(vW) * 6.0;
+          vec3 sky = uDay * (0.35 + 1.2 * day) + swLight(vW) * 4.0; // (dim: a bright underside read as a slab)
           col = mix(swLight(vW) * 1.5 + uSwDeep, sky, win) * (0.85 + 0.3 * sin(q.x * 6.0 + q.y * 5.0 - t * 2.5) * (1.0 - win));
           col = swWater(col, vW);
           a = 0.96;

@@ -37,7 +37,7 @@ export function buildParts(ctx, L) {
   };
   // the sky's share: the head's daylight through the portal, nothing past the turn
   // (outside the face: the moor's light and haze; in the arch and the head, the daylight that comes in at the portal)
-  const skyAt = (x, y, z) => { const dz = z - SP.face, dx = x + 94.5; return dz <= 0.02 ? 1 : Math.max(0.012, 0.22 * Math.exp(-dz / 2.5) * Math.exp(-Math.abs(dx) / 14)); };
+  const skyAt = (x, y, z) => { const dz = z - SP.face, dx = x + 94.5; return dz <= 0.02 ? 1 : Math.max(0.012, 0.3 * Math.exp(-dz / 3) * Math.exp(-Math.abs(dx) / 14)); };
   const lit = (x, y, z, out) => { out[0] = skyAt(x, y, z); out[1] = z <= SP.face + 0.02 ? 1 : 0; out[2] = glowAt(x, y, z); return out; };
   const S = new UnderBuilder(lit), K = new UnderBuilder(lit); // the stone; the wood and the glaze (no courses)
 
@@ -110,7 +110,7 @@ export function buildParts(ctx, L) {
   for (const l of lenses) {
     if (!strata) break;
     const f = frameAt(l.s), M = new THREE.Matrix4().makeBasis(f.r, f.t.clone().negate(), f.u.clone().negate()).setPosition(l.x, l.y, l.z);
-    strata.lens(K, M, { r: 0.36, lit: 0.6, cheap: low });
+    strata.lens(K, M, { r: 0.36, lit: l.s < 4 ? 0.4 : 0.6, cheap: low });
   }
 
   // ---- the planks: the Late folk's treads down the bore (a riser every 0.2 m of fall where it is steep, boards laid
@@ -351,7 +351,7 @@ export function buildParts(ctx, L) {
   const lamp = (p, col, k, reach) => { if (li >= MAX_LAMPS) return; LP[li].set(p.x, p.y, p.z, reach); LC[li].set(col.r * k, col.g * k, col.b * k); li++; };
   for (const l of lenses) lamp(l, nl, 0.018, 3.2);
   lamp(noon, nl, 0.05, 7);
-  lamp(dawn, new THREE.Color('#d9805a'), 0.05, 7);
+  lamp(dawn, new THREE.Color('#d9805a'), 0.08, 8);
 
   return { meshes: [stone, wood, glass, weed, motes, bubbles, ...head.meshes], lights, update, lenses, frameAt, quayGround: head.quayGround, quayFloor: head.quayFloor, quayKeep: head.quayKeep, quayPath: head.quayPath, headVolume: head.headVolume, cut: head.cut };
 }
