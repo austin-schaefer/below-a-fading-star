@@ -40,20 +40,20 @@ Known issues: The brook is hard to see where it runs in shadow, and the still pa
 
 **This release**
 
-- **Time:** 7 hours 14 minutes, from the first plan to live.
+- **Time:** 7 hours 38 minutes, from the first plan to live.
 
 | Model | Agents | Tokens | Public API cost |
 |---|---|---|---|
 | Opus 5.5 | 16 | 438.2M | $147 |
-| Fable 5.2 | 1 | 62.1M | $26 |
+| Fable 5.2 | 1 | 67.8M | $28 |
 | Sonnet 5.5 | 37 | 23.1M | $8 |
-| **Total** | **54** | **523.3M** | **$182** |
+| **Total** | **54** | **529.0M** | **$183** |
 
 <details><summary>Each agent</summary>
 
 | Agent | Model | Tokens | Public API cost |
 |---|---|---|---|
-| The orchestrator | Fable 5.2 | 62.1M | $26 |
+| The orchestrator | Fable 5.2 | 67.8M | $28 |
 | v17 W1 brook and mere | Opus 5.5 | 60.7M | $17 |
 | v17 S2 sphere to the east moor | Opus 5.5 | 60.5M | $21 |
 | v17 U1 swallow, aqueduct, tube | Opus 5.5 | 60.1M | $19 |
@@ -107,7 +107,7 @@ Known issues: The brook is hard to see where it runs in shadow, and the still pa
 | Blind read of two frames | Sonnet 5.5 | 80k | $0 |
 | Blind read of two frames | Sonnet 5.5 | 80k | $0 |
 | Blind read of two frames | Sonnet 5.5 | 80k | $0 |
-| **Total** | | **523.3M** | **$182** |
+| **Total** | | **529.0M** | **$183** |
 
 </details>
 
@@ -118,11 +118,11 @@ Not counting v1, whose sessions were not kept.
 | Model | Agents | Tokens | Public API cost |
 |---|---|---|---|
 | Opus 5.5 | 237 | 5.82B | $2,199 |
-| Fable 5.2 | 36 | 1.34B | $798 |
+| Fable 5.2 | 36 | 1.35B | $799 |
 | Sonnet 5.5 | 201 | 501.1M | $123 |
 | Fable 5.1 | 1 | 254.8M | $180 |
 | Haiku 5.5 | 7 | 1.4M | $0 |
-| **Total** | **479** | **7.92B** | **$3,300** |
+| **Total** | **479** | **7.92B** | **$3,301** |
 
 ## v16: The valley floor and the failing sun
 
