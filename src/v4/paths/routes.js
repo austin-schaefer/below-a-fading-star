@@ -30,7 +30,7 @@ export const LEADS = [
   { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-101, 50], [-122, 60], [-135, 62]] },
   { id: 'P3', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track along the Lynchets\' east wall (the Thurifer\'s track), drystone footings', near: { region: 'lynchets', within: 6 },
     pts: [[-110.5, -124], [-135, -120], [-157, -113], [-178, -79], [-166, -66], [-156, -60], [-152, -44]] }, // v8-09: off the shrine's apse at its head, and east of the Stones' fallen uprights
-  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-128, -113], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall
+  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-122, -127], [-136, -119], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall; v16: round the south of the west kettle's pool, 5 m clear of it
   { id: 'P5', kind: 'path', cls: 'trod', w: 0.5, brief: 'worn path, moor', pts: [[-106, -131], [-90, -141], [-72, -149]] },
   { id: 'P6', kind: 'path', cls: 'way', w: 1.0, brief: 'gravel trod across the Outwash\'s channels', pts: [[-8, -181], [10, -188], [22, -214]] },
   { id: 'P7', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in the blackthorn, Bletting grass', pts: [[100, -195], [102, -184], [110, -174], [118, -170], [130, -150], [128.6, -144], [131, -120], [130, -100]] }, // v8-09: round the ruin and the boulder below the blackthorn, past the field wall's end, not over it
