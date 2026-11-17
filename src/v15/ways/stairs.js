@@ -8,8 +8,15 @@
 //   rail(K, pts, o)                 a Late pole rail on posts along [[x, y, z], ...]
 // o for a flight: { name, x, y, z (the head: the upper floor's edge, on the axis), f: [fx, fz] (the way down),
 //   drop (m), width, rise (about 0.22), run (0.29), base (y its mass goes down to; stone), cheeks: [left, right]
-//   (stone: which sides carry a wall, default both), register (true: an ascent), lamp }
+//   (stone: which sides carry a wall, default both), open (stone: the cheek stops where the treads are this high over
+//   the lower floor, 1.0), flare (stone: the open treads under it stand out this far past the cheek's line, 0.5; 0
+//   keeps them the flight's width), register (true: an ascent), lamp }
 // Each returns { foot: [x, y, z], length, floor, steps }.
+// A stone flight's foot is seen and walked into from the floor it lands on, from either side (v15-W7, the cold critic:
+// "every flight's foot is hidden behind its own side wall"): its cheek and newel stop where the treads are a metre up
+// (under that the fall off a tread's side is a step or two, which the edge-guard and the eye manage), and the open
+// treads under it splay out past the cheek's line, so the foot is wider than the flight and its lowest steps are seen
+// past the cheek's end from along the lane. tools/ways-test.mjs `seen` and `walked` guard it.
 import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
 
@@ -24,14 +31,17 @@ function stepsOf(o) {
   const n = Math.max(2, Math.round(o.drop / (o.rise ?? 0.222))), rise = o.drop / n, run = o.run ?? 0.29;
   return { n, rise, run, length: (n - 1) * run };
 }
-// the walked floor of a flight: null off it; the tread under (x, z)
-function flightFloor(o, S, half) {
-  const [fx, fz] = o.f, x0 = o.x, z0 = o.z, y0 = o.y, L = S.length;
-  const bx0 = Math.min(x0, x0 + fx * L) - half - 0.5, bx1 = Math.max(x0, x0 + fx * L) + half + 0.5, bz0 = Math.min(z0, z0 + fz * L) - half - 0.5, bz1 = Math.max(z0, z0 + fz * L) + half + 0.5;
+// the walked floor of a flight: null off it; the tread under (x, z). `spl`: { w0 (along: where the splayed treads
+// begin), l, r (how far past `half` they reach on the left and right) }
+function flightFloor(o, S, half, spl = null) {
+  const [fx, fz] = o.f, x0 = o.x, z0 = o.z, y0 = o.y, L = S.length, ex = half + 0.5 + (spl ? Math.max(spl.l, spl.r) : 0);
+  const bx0 = Math.min(x0, x0 + fx * L) - ex, bx1 = Math.max(x0, x0 + fx * L) + ex, bz0 = Math.min(z0, z0 + fz * L) - ex, bz1 = Math.max(z0, z0 + fz * L) + ex;
   return (x, z) => {
     if (x < bx0 || x > bx1 || z < bz0 || z > bz1) return null;
     const dx = x - x0, dz = z - z0, w = dx * fx + dz * fz, u = dx * fz - dz * fx;
-    if (w < 0 || w >= L || u > half || u < -half) return null;
+    if (w < 0 || w >= L) return null;
+    const wide = spl && w >= spl.w0;
+    if (u > half + (wide ? spl.r : 0) || u < -half - (wide ? spl.l : 0)) return null;
     return y0 - (Math.floor(w / S.run) + 1) * S.rise;
   };
 }
@@ -57,35 +67,50 @@ export function stoneFlight(K, o) {
   const back = o.back ?? 0.3; // its mass runs on behind the head, into the floor it leaves (a back face in the first riser's plane would show)
   sh.lineTo(S.length, base); sh.lineTo(-back, base); sh.lineTo(-back, -0.05); sh.lineTo(0, 0); // (its top falls away behind: never in the floor's own plane)
   B.add(B.extrude(sh, w), F.clone().multiply(ROT_PROFILE), { color: stone, course: 0.5, moss: 0.35, ground });
-  // worn nosings: every third tread's edge a paler strip (feet polish ashlar), and one tread cracked
   const cheeks = o.cheeks ?? [true, true];
+  // where the cheek stops: the first tread this high over the lower floor or lower (i: the tread's index, 1..n-1)
+  const openH = o.open ?? 1.0, iOpen = Math.min(S.n - 1, Math.max(1, Math.ceil(S.n - openH / S.rise))), wOpen = (iOpen - 1) * S.run, fl = o.flare ?? 0.5;
+  const splay = fl > 0 && iOpen < S.n - 1 ? { w0: wOpen, l: cheeks[0] ? fl : 0, r: cheeks[1] ? fl : 0 } : null;
+  if (splay && !splay.l && !splay.r) splay.w0 = Infinity;
+  // the splay: the open treads' own blocks either side, a finger under the flight's treads (no two tops in one plane)
+  if (splay) [-1, 1].forEach((sd, k) => {
+    const ext = k ? splay.r : splay.l; if (!ext) return;
+    const sp = new THREE.Shape(), d = 0.015;
+    sp.moveTo(wOpen, base); sp.lineTo(wOpen, -iOpen * S.rise - d);
+    for (let i = iOpen; i < S.n; i++) { sp.lineTo(i * S.run, -i * S.rise - d); if (i < S.n - 1) sp.lineTo(i * S.run, -(i + 1) * S.rise - d); }
+    sp.lineTo(S.length, base); sp.lineTo(wOpen, base);
+    B.add(B.extrude(sp, ext + 0.04), F.clone().multiply(mat(sd * (w / 2 + ext / 2 - 0.02), 0, 0)).multiply(ROT_PROFILE), { color: jit(stone, 0.95), course: 0.5, moss: 0.45, ground });
+  });
   [-1, 1].forEach((sd, k) => {
     if (!cheeks[k]) return;
-    // a cheek wall: from the base up to 0.95 over the pitch line, 0.3 thick, a moulded coping on it
-    // (v15-W4: the cheek and its newel end at the last tread. They stood 0.35 m out onto the floor below, and with the
-    // newel's cap that put a waist-high block in the lane the flight lands on, the owner's "walls blocking people from
-    // getting from stairs to their own door". Behind the head the cheek still runs on a hand: it guards the slot.)
-    const c = new THREE.Shape(), top = o.cheekTop ?? 0.95, e = 0.25, L = S.length - 0.05;
-    c.moveTo(-e, top); c.lineTo(L, -o.drop + top + 0.05); c.lineTo(L, base); c.lineTo(-e, base); c.lineTo(-e, top);
+    // a cheek wall: from the base up to 0.95 over the pitch line, 0.3 thick, a moulded coping on it; it stops at the
+    // tread `iOpen` (a metre up), where a newel stands, and the treads under it are open at the side (v15-W7; v15-W4
+    // had ended it at the last tread, and a walker coming along the floor beside the foot met its flank)
+    // (Behind the head the cheek still runs on a hand: it guards the slot.)
+    const c = new THREE.Shape(), top = o.cheekTop ?? 0.95, e = 0.25, L = wOpen + 0.05, yL = -o.drop * Math.min(1, L / S.length);
+    c.moveTo(-e, top); c.lineTo(L, yL + top + 0.05); c.lineTo(L, base); c.lineTo(-e, base); c.lineTo(-e, top);
     B.add(B.extrude(c, 0.3), F.clone().multiply(mat(sd * (w / 2 + 0.15), 0, 0)).multiply(ROT_PROFILE), { color: jit(stone, 0.92), course: 0.5, moss: 0.4, ground });
-    const len = Math.hypot(L + e, o.drop), pitch = Math.atan2(o.drop, L + e);
-    B.add(B.box(0.42, 0.13, len - 0.3, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 + 0.15), top + 0.06 - o.drop / 2 + 0.03, (L - e) / 2 - 0.12, pitch, 0, 0)), { color: C.heliarch.dark, moss: 0.45, ground });
-    // a hexagonal newel at the foot, on the cheek's line beside the last tread
-    B.add(B.cyl(0.24, 0.27, 1.25, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 0.6, L - 0.25)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
-    B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(sd * (w / 2 + 0.15), -o.drop + 1.27, L - 0.25)), { color: C.heliarch.dark, moss: 0.3, ground });
+    const len = Math.hypot(L + e, yL), pitch = Math.atan2(-yL, L + e);
+    B.add(B.box(0.42, 0.13, len - 0.3, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 + 0.15), top + 0.06 + yL / 2 + 0.03, (L - e) / 2 - 0.12, pitch, 0, 0)), { color: C.heliarch.dark, moss: 0.45, ground });
+    // a hexagonal newel where it stops, from the ground (the splay's or the floor's) to over the tread beside it
+    // (its foot short of the splay's first tread, so a walker on the splay does not brush it)
+    const yT = -iOpen * S.rise, hN = yT + 1.25 - base, uN = sd * (w / 2 + 0.15), wN = L - 0.32;
+    B.add(B.cyl(0.24, 0.27, hN, 6, 1), F.clone().multiply(mat(uN, base + hN / 2, wN)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
+    B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(uN, base + hN + 0.02, wN)), { color: C.heliarch.dark, moss: 0.3, ground });
   });
-  // nobody walks into its mass from beside it: a wall along each cheek's line in pieces, each one's top under the
-  // treads beside it (the lowest treads, within a step of the floor, are stepped onto from any side)
+  // nobody walks into its mass from beside it: a wall along each side's line in pieces (the splay's edge where it
+  // has one), each one's top under the treads beside it (the lowest treads, within a step of the floor, are stepped
+  // onto from any side)
   const yb = o.y + base, n = Math.ceil(S.length / 0.9);
-  [-1, 1].forEach((sd) => {
+  [-1, 1].forEach((sd, k) => {
     for (let i = 0; i < n; i++) {
       const a = S.length * i / n, b = S.length * (i + 1) / n, top = o.y - o.drop * Math.min(1, (b + 0.7) / S.length) - 0.4;
       if (top < o.y - o.drop + 0.3) continue;
-      const u = sd * (w / 2 + 0.05), px = o.f[1] * u, pz = -o.f[0] * u;
+      const out = splay && b > splay.w0 ? (k ? splay.r : splay.l) : 0, u = sd * (w / 2 + 0.05 + out), px = o.f[1] * u, pz = -o.f[0] * u;
       K.wall(o.x + o.f[0] * a + px, o.z + o.f[1] * a + pz, o.x + o.f[0] * b + px, o.z + o.f[1] * b + pz, 0.15, yb, top - yb);
     }
   });
-  return finish(K, o, S, flightFloor(o, S, w / 2));
+  return finish(K, o, S, flightFloor(o, S, w / 2, splay));
 }
 
 export function timberFlight(K, o) {

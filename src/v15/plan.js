@@ -237,6 +237,10 @@ export const SQUARES = [
 // Each: { name, kind, hand, from, to (level keys), run, s, D0, D1 (its line in the run frame), note }. The kits in
 // src/v15/ways/ build them from these records; a quarter adds its own with the same kit and a record of its own.
 export const STAIR = { run: 1, s: 31, width: 3 }; // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
+// (v15-W7) the crown's kerb: Elder blocks along the rim (its centre `D`), waist-high and walled, wherever the drop over
+// the rim is more than 1.2 m and no way goes down (the cold critic walked off the crown from the keep's end without
+// meeting the stair's head). It stops for what already stands on the brink: `clear` is [run, s0, s1, why].
+export const RIM = { D: RISERS[0].D - 0.3, clear: [] };
 export const WAYS = [
   { name: 'heliarch-head', kind: 'stair', hand: 'heliarch', from: 'crown', to: 'high', run: 1, s: 31, D0: -4.6, D1: -2.8,
     note: 'a hexagon landing on the crown\'s rim and twin flights down along the riser, east and west, 3.9 m each (steep: the east one ends at the corner)' },
@@ -347,7 +351,9 @@ put('new-house', 'new-house', 'quarrels', 'crown', 2, 24, -9.4, 7, 5.6, 'new', {
 put('masons-yard', 'yard', 'quarrels', 'crown', 2, 5.0, -6.7, 5.4, 3.2, 'new', { title: 'the Banker', stock: 'quarrels', note: 'the stock squared up on the brink east of the saint; `stock`: the quarter builds the blocks (src/v15/quarters/quarrels.js), the Demesne only gives up its fallen ones' });
 { const a = 7.6, d = 4.4, [x, z] = slabAt(a, -SLAB.W / 2 - d / 2 + 0.04); // (its back wall's outer face a finger inside the slab's flank: no two faces in one plane)
   free('quarrels-house-1', 'house', 'quarrels', 'crown', x, z, [-SLAB.side[0], -SLAB.side[1]], 6, d, 'late', { leans: 'slab', roofY: slabTop(a), title: 'the Propped House', note: 'the masons\' lodging, its back on the west flank of the keep\'s fallen face, its roof level with the face where they meet: the slab is its stair. name' }); }
-put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -7.5, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. name' });
+// (v15-W7: 1.4 m further in from the rim than V0 had it: its doorstep was 0.5 m from a 4 m drop, and the crown's kerb
+// (RIM) now stands along the brink before it with a walker's way between)
+put('quarrels-house-2', 'house', 'quarrels', 'crown', 1, 6.5, -8.9, 4.4, 4.2, 'late', { title: 'the Brow House', note: 'narrow, on the rim where the steps come out of the turf: the first lit window a traveller from the west sees. name' });
 // --- the Pennyworth: the foot
 // (v15-Q4: the carrier's plot is 5.8 deep, the widest a wreck is made; the two houses stand north of the house's stable,
 // one on the flat between the stable and the gate, one up on the field bank across the lane from it; the garden is
@@ -462,8 +468,15 @@ export const QUARRELS = {
   sledge: 0.3, // how far along the Drag's first length the loaded sledge stands
   // the square's paving (Heliarch hexagons relaid in a patch round the stair's head court): north run, s and D
   paving: { run: 1, s0: 23.4, s1: 35.7, D0: -12.4, D1: -4.98 },
+  // (v15-W7) its tongue west along the brink, inside the kerb, to where the crown is come onto from the keep's end (SPINE.arrive)
+  brink: { run: 1, s0: 15.5, D0: -9.6 },
   square: 'the Saint\'s Rest',
 };
+// what stands on the crown's brink, where its kerb stops (RIM): a house whose front is on the rim (none now), the three heads, and
+// the copyist at the Unroofed House's west end with his two blocks (src/v15/people/folk.js puts him there)
+for (const p of PLOTS_) if (p.level === 'crown' && p.kind !== 'yard' && p.run && !p.leans && p.D + p.d / 2 > RISERS[0].D - 1.4) RIM.clear.push([p.run, p.s - p.w / 2 - 0.2, p.s + p.w / 2 + 0.2, p.name]);
+for (const [run, s, , r] of QUARRELS.heads) RIM.clear.push([run, s - r - 0.25, s + r + 0.25, 'a head waiting on the brink']);
+{ const p = PLOTS_.find((q) => q.name === 'new-house'); RIM.clear.push([p.run, p.s - 4.2, p.s - 1.8, 'the copyist and his blocks']); }
 // the Quarrels walked: from the west end between the two houses, along the brink past the slab's toe, across the
 // square to the split block and the shears, down the Drag, past the hand, to the new house's door
 export const QUARRELS_ROUTE = [[1, 5.5, -11.4], [1, 10.5, -10.5], [1, 13.5, -7.2], [1, 22, -6.6], [1, 27.2, -8.6], [1, 29.92, -9.36], [1, 32.27, -11.75], [2, 5.74, -12.25], [2, 7.4, -12.6], [2, 10.6, -7.4], [2, 13.0, -5.8], [2, 17.5, -6.4], [2, 19.2, -8.2], [2, 21.4, -6.2], [2, 24.8, -6.2], [2, 24.8, -7.4]]
@@ -520,7 +533,14 @@ export const LAMPS = [
   // (v15-W4) the spine's two dark stretches (tools/ways-test.mjs spine rows): where the head's flights come down onto the
   // causeway and turn back to the upper flight, and the foot flight down from the bastion
   lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: where the head\'s twin flights come down, the way on down is the lit one' }),
-  lampAt('stair-foot-post', 'post', at(1, STAIR.s + 2.3, 19.0), LEVEL.bench.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, note: 'on the bench beside the foot flight\'s east cheek, its arm over the flight: the stair up from the Lees is lit from the square, and the bastion over it' }),
+  // (v15-W7, the cold critic: "no light marks the stairs") the spine's heads and feet each lit: two posts framing the
+  // gap in the crown's kerb where the head is (seen from the keep's end, 20 m off), a bracket on the rim's face over the
+  // head's west flight's foot (and the Rungs' end walls by the upper flight's foot and the timber patch's: the quarter's own)
+  lampAt('head-post-west', 'post', at(1, STAIR.s - 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
+  lampAt('head-post-east', 'post', at(1, STAIR.s + 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
+  lampAt('head-west-foot', 'bracket', at(1, STAIR.s - 1.5 - 5.0, RISERS[0].D + 0.03), LEVEL.high.y, RUNS[1].n, { h: 2.5, reach: 0.6, k: 1.3, note: 'on the rim\'s face a stride west of the head\'s west flight\'s foot: the way up from the causeway is lit' }),
+  lampAt('ladder-head-post', 'post', at(1, WAYS.find((w) => w.name === 'rungs-ladder').s + 1.45, RIM.D - 0.65), LEVEL.crown.y, RUNS[1].n, { k: 1.3, reach: 0.7, note: 'at the head of the ladder up the rim, its lamp out over the edge: the ladder lit from above, seen from the causeway, and its head from the crown' }),
+  lampAt('stair-foot-post', 'post', at(1, STAIR.s + 2.6, 19.0), LEVEL.bench.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, note: 'on the bench beside the foot flight\'s east cheek, its arm over the flight: the stair up from the Lees is lit from the square, and the bastion over it' }),
 ];
 
 // ---------------------------------------------------------------- the spine (v15-W4)

@@ -16,14 +16,17 @@
 //                how far past `top` along n they are set on the upper floor; or head: [x, z], the point itself),
 //                from, away ([x, z]: the ascent's first and last points, default 2.7 m out from the foot and 3.2 m
 //                in past the top), perch ('what it is': its head is a place to stand and the way's end, a scaffold's
-//                stage, a ledge: tools/ways-test.mjs asks no landing or way on of it) })
+//                stage, a ledge: tools/ways-test.mjs asks no landing or way on of it), gap (how far either side of its
+//                head a walker going off the edge is taken onto it, 0.6: the gap in a kerb it stands in) })
 // registers the climb (a tick, an ascent `name` with held: true so tools/heights-test.mjs climbs it on its own
 // clock, and an entry in the ladders' register) and returns { state(), foot, head, height }.
-//   ladder(K, { name, x, z (the wall's face at its foot), y0, y1 (the floors it joins), n, width (0.5), over (1.1) })
+//   ladder(K, { name, x, z (the wall's face at its foot), y0, y1 (the floors it joins), n, width (0.5), over (1.1),
+//               lime (true: the wall behind it limewashed, so it is seen against something paler than itself) })
 // is the ways' own: draws two poles and lashed rungs on a wall's face, then climb()s it.
 //   ladders(ctx).add({ id, mod, foot, top, scenery: 'why it does not read as a way up' }): a ladder drawn as scenery.
 // Every ladder drawn anywhere is in ctx.ladders.list, climbable or scenery; tools/ways-test.mjs fails one that is
 // neither, and a file under src/ that draws one without saying which.
+import * as THREE from 'three';
 import { mat } from '../../structures/geo.js';
 import { frame } from './stairs.js';
 
@@ -81,11 +84,14 @@ export function climb(ctx, o) {
     const mz = P.moveZ || 0;
     if (Math.abs(mz) < 0.3) return;
     const feet = P.pos.y - P.eye, push = facing() * mz; // > 0: pressing toward the wall
-    const dxf = P.pos.x - foot[0], dzf = P.pos.z - foot[1];
-    if (push > 0.3 && Math.abs(feet - y0) < 0.35 && dxf * dxf + dzf * dzf < REACH * REACH && P.onGround) return take(0);
-    const dxh = P.pos.x - head[0], dzh = P.pos.z - head[1];
-    // (from the top they must be at its head and walking squarely off the edge: a lane may pass a stride behind it)
-    if (push < -0.6 && Math.abs(feet - y1) < 0.35 && dxh * dxh + dzh * dzh < 0.6 * 0.6 && P.onGround) return take(H);
+    // at its foot: in front of the rungs out to REACH, or beside them, or in behind them against the wall (v15-W7: the
+    // cold critic came along the riser, stood a hand behind and beside the poles facing the wall, and nothing took)
+    const dxf = P.pos.x - foot[0], dzf = P.pos.z - foot[1], ain = dxf * nx + dzf * nz, across = Math.abs(dzf * nx - dxf * nz);
+    if (push > (across > 0.6 ? 0.5 : 0.3) && Math.abs(feet - y0) < 0.35 && ain > -REACH && ain < 0.7 && across < 0.95 && P.onGround) return take(0);
+    const dxh = P.pos.x - head[0], dzh = P.pos.z - head[1], aih = dxh * nx + dzh * nz, acrossH = Math.abs(dzh * nx - dxh * nz);
+    // (from the top they must be at its head and walking squarely off the edge: a lane may pass a stride behind it;
+    // v15-W7: anywhere in the gap its kerb leaves, a metre either side of it, so nobody walks off beside it)
+    if (push < -0.6 && Math.abs(feet - y1) < 0.35 && aih > -0.75 && aih < 0.6 && acrossH < (o.gap ?? 0.6) && P.onGround) return take(H);
   }
   ctx.registerUpdate(tick, { pos: { x: (fx + tx) / 2, y: (y0 + y1) / 2 + P.eye, z: (fz + tz) / 2 }, near: 30 + H / 2, hz: 0 }); // (its own y: high up, the throttle measures from the eye)
   const from = o.from || [fx - nx * 2.7, fz - nz * 2.7], away = o.away || [tx + nx * 3.2, tz + nz * 3.2];
@@ -105,8 +111,17 @@ export function ladder(K, o) {
     const pale = rng() < 0.16;
     B.add(B.cyl(0.022, 0.022, w + 0.14, 5, 1), F.clone().multiply(mat(0, y, 0.5 - Math.tan(lean) * y, (rng() - 0.5) * 0.06, 0, Math.PI / 2 + (rng() - 0.5) * 0.05)), { color: C.late.wood.clone().multiplyScalar(pale ? 2.1 : 1.1 + rng() * 0.4), moss: pale ? 0 : 0.12, ground: o.y0 });
   }
+  // (v15-W7) where it stands against bare stone that is darker than its poles at dusk, the Late folk have limewashed
+  // the wall behind it a little wider than itself, so it is found from along the wall: the frame at its foot was flat violet
+  if (o.lime) {
+    // (the houses' limewash, src/v15/houses/kit.js V.lime, holding a little of the sky's light as theirs does: limeGlow)
+    const lime = new THREE.Color('#e6dfcf'), glow = (c) => [c.r * 0.085, c.g * 0.085, c.b * 0.085, 2];
+    B.add(B.box(w + 0.9, H - 0.1, 0.22, { chip: 0.03, chipTop: true }), F.clone().multiply(mat(0, (H - 0.1) / 2 + 0.05, -0.1)), { color: lime, moss: 0.08, ground: o.y0, emit: glow(lime) });
+    const grub = lime.clone().multiplyScalar(0.78); // the lower part, grubbier, splashed
+    B.add(B.box(w + 0.5, 0.9, 0.24, { chip: 0.04 }), F.clone().multiply(mat(0.08, 0.5, -0.1, 0, 0, 0.04)), { color: grub, moss: 0.3, ground: o.y0, emit: glow(grub) });
+  }
   // lashed to an iron staple in the nosing; a flat stone under its feet
   B.add(B.box(w + 0.3, 0.05, 0.08), F.clone().multiply(mat(0, H - 0.05, 0.1)), { color: C.late.iron, iron: 1, moss: 0, ground: o.y0 });
   B.add(B.box(w + 0.5, 0.1, 0.5, { chip: 0.04 }), F.clone().multiply(mat(0, 0.03, 0.5)), { color: C.heliarch.dark, moss: 0.5, ground: o.y0 });
-  return climb(ctx, { name: o.name, mod: o.mod || K.name, foot: [o.x - nx * 0.5, o.z - nz * 0.5, o.y0], top: [o.x, o.z, o.y1], n: [nx, nz] });
+  return climb(ctx, { name: o.name, mod: o.mod || K.name, foot: [o.x - nx * 0.5, o.z - nz * 0.5, o.y0], top: [o.x, o.z, o.y1], n: [nx, nz], gap: o.gap });
 }

@@ -129,11 +129,14 @@ export async function build(ctx) {
     const court = (s, D) => { const u = Math.abs(s - P.STAIR.s), half = P.STAIR.width / 2 + 1.1 * Math.max(0, 1 - Math.abs(D + 5.95) / 1.15); return D > -7.4 && u < half + 0.3; }; // the Heliarch landing V0 laid behind the stair's head
     const kc = Q.kiln;
     let n = 0;
-    for (let i = 0; (i * 1.5 * R) < pv.s1 - pv.s0; i++) for (let j = 0; j * Math.sqrt(3) * R < pv.D1 - pv.D0; j++) {
+    // (v15-W7) and a tongue of them west along the brink to where a visitor from the keep's end comes onto the crown
+    // (Q.brink, on the square's own lattice): the paving leads to the stair's head
+    const bk = Q.brink, i0 = bk ? -Math.floor((pv.s0 - bk.s0) / (1.5 * R)) : 0;
+    for (let i = i0; (i * 1.5 * R) < pv.s1 - pv.s0; i++) for (let j = i < 0 ? Math.floor((bk.D0 - pv.D0) / (Math.sqrt(3) * R)) : 0; j * Math.sqrt(3) * R < pv.D1 - pv.D0; j++) {
       const s = pv.s0 + i * 1.5 * R, D = pv.D0 + (j + (i & 1) * 0.5) * Math.sqrt(3) * R;
-      if (D > pv.D1 - R * 0.9 || s > P.cornerS(1, D) - 0.4) continue;
+      if (D > pv.D1 - R * 0.9 || s > P.cornerS(1, D) - 0.4 || (i < 0 && D < bk.D0)) continue;
       const [x, z] = P.at(1, s, D);
-      const edge = Math.min(s - pv.s0, pv.s1 - s, D - pv.D0) / 1.6, r = rng(), r2 = rng(), r3 = rng();
+      const edge = (i < 0 ? Math.min(s - bk.s0, D - bk.D0, pv.D1 - D) : Math.min(bk && D >= bk.D0 ? 9 : s - pv.s0, pv.s1 - s, D - pv.D0)) / 1.6, r = rng(), r2 = rng(), r3 = rng();
       if (court(s, D) || inSlab(x, z, 0.5) || P.inPlot(stockP, x, z, -0.2) && ((x - stockP.x) * stockP.face[0] + (z - stockP.z) * stockP.face[1]) > -0.3) continue;
       const dk = Math.hypot(x - kc.x, z - kc.z); if (dk < 0.86 * (kc.S || 1.7) + 0.55) continue;
       const warm = Math.max(0, 1 - Math.hypot(x - (kc.x + kc.stoke[0] * 3.2), z - (kc.z + kc.stoke[1] * 3.2)) / 4.5); // the fire's light, baked: the stones by the stoke hole are warm

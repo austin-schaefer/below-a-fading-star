@@ -74,7 +74,7 @@ export function buildWays(ctx, lappet) {
     // the tread, the owner's "yet another one": a block and its coping between the planks and a doorstep)
     // (the deck's span and no more: the wall either side still keeps a walker off the nosing's lip)
     ['mid', P.RUNGS.tenter.run, Math.min(P.RUNGS.tenter.s - 1.45 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.25 * P.RUNGS.tenter.sign), Math.max(P.RUNGS.tenter.s - 1.45 * P.RUNGS.tenter.sign, P.RUNGS.tenter.s + 0.25 * P.RUNGS.tenter.sign)],
-    [RISERS.find((r) => r.top === LEVEL[ld.to].y).key, ld.run, ld.s - 0.6, ld.s + 0.6], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
+    [RISERS.find((r) => r.top === LEVEL[ld.to].y).key, ld.run, ld.s - 1.0, ld.s + 1.0], ['mid', br.run, br.s - 0.8, br.s + 0.8], ['low', ls.run, Math.min(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1)), Math.max(ls.s - 1.9 * (ls.sign || 1), ls.s + 3.2 * (ls.sign || 1))],
   ];
 
   return {
@@ -92,7 +92,7 @@ export function buildWays(ctx, lappet) {
       // each way along the riser
       {
         const D0 = RISERS[0].D - 0.215, depth = 2.015, [x, z] = at(1, sx, D0); // (it begins where the tread's stone ends, at the nosing's bevel)
-        hexLanding(K, { name: 'heliarch-head', x, y: LEVEL.crown.y, z, f: n1, depth, width: STAIR.width, wing: 0, base: LEVEL.high.y - 0.3, parapet: ['far'], parapetH: 0.3 }); // a kerb, not a wall: from the crown the stair's line runs on over it to the house
+        hexLanding(K, { name: 'heliarch-head', x, y: LEVEL.crown.y, z, f: n1, depth, width: STAIR.width, wing: 0, base: LEVEL.high.y - 0.3, parapet: ['far'], parapetH: 0.75 }); // a kerb a walker's waist high, walled (v15-W7: at 0.3 m a walker kept on over it and dropped 4 m to the causeway); from the crown the stair's line still runs on over it to the house
         // the hexagon on the crown behind it, where the masons' ground meets the stair
         hexLanding(K, { name: 'heliarch-head-court', x: x - n1[0] * 2.3, y: LEVEL.crown.y + 0.03, z: z - n1[1] * 2.3, f: n1, depth: 2.3, width: STAIR.width, wing: 1.1, base: LEVEL.crown.y - 0.05, solid: false, floor: false });
         const Dm = D0 + depth / 2 + 0.1, wd = depth - 0.25;
@@ -155,7 +155,7 @@ export function buildWays(ctx, lappet) {
       // ---------------------------------------------------------------- the ladder
       {
         const R = RUN[ld.run], Rz = RISERS.find((r) => r.top === LEVEL[ld.to].y), [x, z] = at(ld.run, ld.s, Rz.D + 0.2); // (up the riser under the level it climbs to)
-        built['rungs-ladder'] = ladder(K, { name: 'rungs-ladder', x, z, y0: LEVEL[ld.from].y, y1: LEVEL[ld.to].y, n: [-R.n[0], -R.n[1]] });
+        built['rungs-ladder'] = ladder(K, { name: 'rungs-ladder', x, z, y0: LEVEL[ld.from].y, y1: LEVEL[ld.to].y, n: [-R.n[0], -R.n[1]], lime: true, gap: 1.05 }); // (a metre's gap in the crown's kerb either side of it, every step of it onto the ladder; a lamp post at its head: P.LAMPS ladder-head-post)
       }
 
       // ---------------------------------------------------------------- the bridge to the pier
@@ -234,6 +234,35 @@ export function buildWays(ctx, lappet) {
             if (s < b) span(s, b);
           }
         });
+        // (v15-W7) the crown's kerb (P.RIM): Elder blocks along the rim, unbroken, waist-high, a wall to the walker in a
+        // few long runs, wherever the drop is more than 1.2 m and no way goes down: gaps for the ladder's head and the
+        // stair's head (framed by its two lamp posts, P.LAMPS head-post-*), stopped for what stands on the brink. The cold
+        // critic walked off the crown from the keep's end and never met the stair's head; now the kerb leads to it.
+        const yC = LEVEL.crown.y, RD = P.RIM.D, edgeD = RISERS[0].D;
+        for (const run of [1, 2]) {
+          const a = run === 1 ? P.FADE.s1[0] : P.cornerS(2, RD) + 0.15, b = run === 1 ? P.cornerS(1, RD) - 0.15 : P.FADE.s2[1];
+          const taken = [...P.RIM.clear.filter((c) => c[0] === run).map((c) => [c[1], c[2]]), ...gaps.filter((g) => g[0] === 'rim' && g[1] === run).map((g) => [g[2], g[3]]),
+            ...(run === STAIR.run ? [[sx - 1.92 - 0.42, sx + 1.92 + 0.42]] : [])].sort((p, q) => p[0] - q[0]);
+          const d = RUN[run].dir, yaw = Math.atan2(d[0], d[1]);
+          const deep = (s) => { const [x, z] = at(run, s, edgeD + 0.7); return yC - T.heightAt(x, z) > 1.2; }; // a drop worth a kerb, here
+          const span = (s0, s1) => {
+            let s = s0, runA = null;
+            const close = (e) => { if (runA !== null && e - runA > 0.3) { const [x1, z1] = at(run, runA + 0.15, RD), [x2, z2] = at(run, e - 0.15, RD); K.wall(x1, z1, x2, z2, 0.3, yC - 0.3, 1.1); } runA = null; };
+            while (s < s1 - 0.5) {
+              const L = Math.min(s1 - s, 1.6 + rr() * 1.4);
+              if (deep(s + L / 2) || deep(s) || deep(s + L)) {
+                const [x, z] = at(run, s + L / 2, RD);
+                lappet.kerbs.push({ x, y: yC + 0.36, z, hx: L / 2 - 0.02, hy: 0.38 + rr() * 0.04, hz: 0.28, yaw: yaw - Math.PI / 2 + (rr() - 0.5) * 0.02, seed: 900 + s });
+                if (runA === null) runA = s;
+              } else close(s);
+              s += L + 0.02;
+            }
+            close(Math.min(s, s1));
+          };
+          let s = a;
+          for (const [t0, t1] of taken) { if (t0 > s) span(s, Math.min(t0, b)); s = Math.max(s, t1); }
+          if (s < b) span(s, b);
+        }
       }
 
       const done = K.finish();

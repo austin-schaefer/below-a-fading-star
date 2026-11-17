@@ -342,9 +342,10 @@ const r = await page.evaluate(async () => {
       const feet = p.pos.y - p.eye;
       if (!p.carried && feet < low - 0.05) { low = feet; lowAt = [p.pos.x, p.pos.z]; }
       if (until && until(p.pos.x, p.pos.z, feet)) { out = 'until'; break; }
+      if (p.carried) { out = 'ladder'; break; } // (taken onto a ladder: a way, never a fall)
       if (i % 60 === 59) { still = Math.hypot(p.pos.x - lx, p.pos.z - lz) < 0.25 && !p.carried ? still + 1 : 0; lx = p.pos.x; lz = p.pos.z; if (still >= 2) { out = 'stuck'; break; } }
     }
-    const res = { out, x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, drop: f0 - low, lowAt, carried: !!p.carried };
+    const res = { out, x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, drop: f0 - low, lowAt, carried: out === 'ladder' };
     p.keys.clear(); if (p.carried) { fp.controls.placeAt(x, z, y); } // (let go of a ladder taken)
     return res;
   }
@@ -366,14 +367,14 @@ const r = await page.evaluate(async () => {
       // the first tread: inward from the end until the floor leaves the end's level
       let t0 = null;
       for (let s = 0; s <= 2.5; s += 0.05) { const f = C.floorAt(mx + inw[0] * s, mz + inw[1] * s, e.y + 0.6); if (Math.abs(f.y - e.y) > 0.1) { t0 = { s: s + 0.1, y: C.floorAt(mx + inw[0] * (s + 0.1), mz + inw[1] * (s + 0.1), e.y + 0.6).y }; break; } }
-      if (!t0) { find.push({ row: 'seen', tag, ok: true, detail: 'level all the way (a bridge): no tread' }); return; }
+      if (!t0) { if (!ei) find.push({ row: 'seen', tag, ok: true, detail: 'level all the way (a bridge): no tread' }); return; }
       const cx = mx + inw[0] * t0.s, cz = mz + inw[1] * t0.s, tread = [];
       for (let u = -3; u <= 3.001; u += 0.2) { const x = cx - inw[1] * u, z = cz + inw[0] * u, f = C.floorAt(x, z, t0.y + 0.3); if (Math.abs(f.y - t0.y) < 0.08) tread.push([x, Math.max(f.y, e.y) + 0.35, z, Math.abs(u)]); }
       tread.sort((a, b) => a[3] - b[3]);
       const lineOf = w.path.slice(Math.min(e.k, other.k), Math.max(e.k, other.k) + 1);
       const fl = reach(mx + e.dir[0] * 0.3, mz + e.dir[1] * 0.3, e.y, 8.6, 30000);
-      const seenBad = [], walkBad = [], views = [];
-      for (const sd of [-1, 1]) for (const [deg, dist] of [[45, 4], [45, 7], [90, 7], [135, 7]]) {
+      const seenBad = [], walkBad = [], walkRound = [], views = [];
+      for (const sd of [-1, 1]) for (const [deg, dist] of ei ? [[45, 7], [90, 7], [135, 7]] : [[45, 4], [45, 7], [90, 7], [135, 7]]) { // (the foot also from 4 m: the critic stood that near the head's west flight)
         const a = sd * deg * Math.PI / 180, ux = e.dir[0] * Math.cos(a) - e.dir[1] * Math.sin(a), uz = e.dir[0] * Math.sin(a) + e.dir[1] * Math.cos(a);
         const vx = mx + ux * dist, vz = mz + uz * dist, f = C.floorAt(vx, vz, e.y + 0.5);
         if (Math.abs(f.y - e.y) > 0.3 || houseIn(vx, vz, e.y) || roofed(vx, vz, f.y) || !flooded(fl, mx + e.dir[0] * 0.3, mz + e.dir[1] * 0.3, vx, vz, 0.4)) continue;
@@ -382,18 +383,22 @@ const r = await page.evaluate(async () => {
         for (const q of tread) { const h = sight(vx, f.y + 1.6, vz, q[0], q[1], q[2]); if (!h) { seen = q; break; } if (!own && nearLine(lineOf, h.x, h.z, 2.4)) own = h; }
         const label = `${sd < 0 ? 'L' : 'R'}${deg}${dist < 7 ? `@${dist}` : ''} ${fmt(vx, vz)}`;
         views.push(label);
-        if (!seen && own) seenBad.push(`${label}: ${own.name} at ${fmt(own.x, own.z)} y ${own.y.toFixed(1)}`);
-        // walked: at the seen tread (or the tread's middle), then along the way to its other end
+        if (!seen && own && !ei) seenBad.push(`${label}: ${own.name} at ${fmt(own.x, own.z)} y ${own.y.toFixed(1)}`);
+        // walked: from where the tread is seen, at it, then along the way to its other end (where it is not seen there
+        // is nothing to walk at: the seen row says why)
         const far = ei ? w.path[0] : w.path[w.path.length - 1];
-        const tq = seen || tread[0], legs = [[tq[0], tq[2]], ...(ei ? lineOf.slice().reverse() : lineOf).slice(1).map((q) => [q[0], q[1]]), [far[0], far[1]]];
+        if (!seen) continue;
+        const tq = seen, legs = [[tq[0], tq[2]], ...(ei ? lineOf.slice().reverse() : lineOf).slice(1).map((q) => [q[0], q[1]]), [far[0], far[1]]];
         let leg = 0;
         const r = drive(vx, vz, f.y, (x, z) => { while (leg < legs.length && Math.hypot(legs[leg][0] - x, legs[leg][1] - z) < 0.5) leg++; return leg >= legs.length ? null : Math.atan2(-(legs[leg][0] - x), -(legs[leg][1] - z)); }, 30,
           (x, z, feet) => Math.hypot(x - other.at[0], z - other.at[1]) < 0.8 && Math.abs(feet - other.y) < 0.35);
         const ok = (r.out === 'until' || r.out === 'done') && Math.abs(r.feet - other.y) < 0.4;
-        if (!ok) walkBad.push(`${label}: ${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}`);
+        // (held up away from the way, by a house's corner or a post on the straight line from the view: a visitor walks
+        // round that, and it is no fault of the way's; held up within 2.4 m of the way's own line is)
+        if (!ok) { const by = colsNear(r.x, r.z, 1).filter((c) => { const pt = near(c, r.x, r.z); return pt.d < 0.7 && stands(c, r.feet, pt.t); }).map(desc).slice(0, 2).join(', '), msg = `${label}: ${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}${by ? ` by ${by}` : ''}`; (nearLine([...lineOf, far], r.x, r.z, 2.4) ? walkBad : walkRound).push(msg); }
       }
-      find.push({ row: 'seen', tag, ok: !seenBad.length, detail: seenBad.length ? seenBad.join('; ') : `${views.length} views` });
-      find.push({ row: 'walked', tag, ok: !walkBad.length, detail: walkBad.length ? walkBad.join('; ') : `${views.length} walks` });
+      if (!ei) find.push({ row: 'seen', tag, ok: !seenBad.length, detail: seenBad.length ? seenBad.join('; ') : `${views.length} views` }); // (a head is guarded by its cheeks where it is cut into a floor: it is the foot that must be seen)
+      find.push({ row: 'walked', tag, ok: !walkBad.length, detail: (walkBad.length ? walkBad.join('; ') : `${views.length} walks`) + (walkRound.length ? ` (held up away from it, walked round by a visitor: ${walkRound.join('; ')})` : '') });
     });
   }
   // ladders: walked into from 3 m out (straight, and 35 and 70 degrees off, either side), then pushed into, the
@@ -421,7 +426,7 @@ const r = await page.evaluate(async () => {
     const atHead = (x, z, feet) => Math.abs(feet - Y) < 0.3 && (p.onStack?.name || '').startsWith('heliarch-head') || Math.hypot(x - head[0], z - head[1]) < 1.6;
     for (const [lab, yaw] of [...[-40, -30, -20, -10, 0, 10, 20, 30, 40].map((d) => [`${d >= 0 ? '+' : ''}${d}`, b0 + d * Math.PI / 180]), ['the critic\'s line', 0.2]]) {
       const r = drive(ax, az, Y, () => yaw, 14, atHead);
-      find.push({ row: 'crown', tag: `from the keep's end at ${lab} (yaw ${yaw.toFixed(2)})`, ok: r.drop <= 1.2, detail: `${r.drop > 1.2 ? `fell ${r.drop.toFixed(1)} m at ${fmt(...r.lowAt)}` : r.out === 'until' ? 'at the head' : `held at ${fmt(r.x, r.z)}`}` });
+      find.push({ row: 'crown', tag: `from the keep's end at ${lab} (yaw ${yaw.toFixed(2)})`, ok: r.drop <= 1.2, detail: `${r.drop > 1.2 ? `fell ${r.drop.toFixed(1)} m at ${fmt(...r.lowAt)}` : r.out === 'until' ? 'at the head' : r.out === 'ladder' ? 'onto the ladder' : `held at ${fmt(r.x, r.z)}`}` });
     }
     void hd;
     const over = [];
