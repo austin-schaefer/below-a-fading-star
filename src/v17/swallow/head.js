@@ -148,12 +148,14 @@ export function buildHead(env) {
   for (let z = QZ0; z < Z0 - 0.01; z += 1.5) {
     const z1 = Math.min(Z0, z + 1.5), g = Math.max(T.heightAt(QX[1] + REV + 0.3, z), T.heightAt(QX[1] + REV + 0.3, z1), T.heightAt(QX[1] + 0.5, (z + z1) / 2)) + 0.25;
     if (g <= QY + 0.3) continue;
-    const top = g;
+    const top = QY + Math.ceil((g - QY) / 0.6) * 0.6; // stepped up in whole courses, as the bank rises
     S.box(QX[1] + REV / 2, (QY + top) / 2, (z + z1) / 2, REV / 2, (top - QY) / 2, (z1 - z) / 2 + 0.003 * (Math.round(z) % 2), 0, FACE_D.map((v) => v * (0.9 + 0.15 * hash(z))), FACE_D, 0.06);
   }
   // steps up from the quay's north end to the shore
   const shoreY = T.heightAt((QX[0] + QX[1]) / 2, QZ0 - 1.2);
-  { const n = Math.max(0, Math.ceil((shoreY - QY) / 0.18)); for (let i = 0; i < n; i++) { const y = QY + (i + 1) * Math.min(0.18, (shoreY - QY) / n); S.box((QX[0] + QX[1]) / 2, (y + QY - 0.5) / 2, QZ0 - 0.15 - i * 0.32, (QX[1] - QX[0]) / 2, (y - QY + 0.5) / 2, 0.16, 0, FACE, FACE_D, 0.05); } }
+  // (up or down: the shore is wherever W1's mere left it)
+  const nSteps = Math.max(1, Math.ceil(Math.abs(shoreY - QY) / 0.18)), rise = (shoreY - QY) / nSteps;
+  for (let i = 0; i < nSteps; i++) { const y = QY + (i + 1) * rise, yb = Math.min(y, shoreY) - 0.6; S.box((QX[0] + QX[1]) / 2, (y + yb) / 2, QZ0 - 0.16 - i * 0.32, (QX[1] - QX[0]) / 2, (y - yb) / 2, 0.16, 0, FACE, FACE_D, 0.05); }
 
   // ---- the head: a drowned hall behind the face, its floor far under the pool, a barrel vault over it
   const [hx0, hx1] = H.x, hz1 = H.z[1], hfl = H.floor, hcx = (hx0 + hx1) / 2, hR = (hx1 - hx0) / 2, hsp = H.crown - hR;
@@ -258,7 +260,7 @@ export function buildHead(env) {
         // the ripples: running away from the fall and down the conduit
         float t = uSwT;
         vec2 q = vW.xz;
-        float fall = 1.0 - smoothstep(0.0, 4.0, max(0.0, vW.z - uFoam.z)) * step(vW.x, uFoam.y + 0.5);
+        float fall = (1.0 - smoothstep(0.0, 4.0, max(0.0, vW.z - uFoam.z))) * (1.0 - smoothstep(uFoam.y - 0.5, uFoam.y + 1.5, vW.x));
         // (small and many, out of step: a regular wave here reads as cloth)
         vec2 g = vec2(swN(vec3(q * 1.7, t * 0.9)) - swN(vec3(q * 1.7 + 3.1, t * 0.9)), swN(vec3(q * 1.9 + 7.0, t * 1.1)) - swN(vec3(q * 1.9 + 1.3, t * 1.1))) * 0.35
                 + vec2(swN(vec3(q * 4.3 - vec2(t * 0.8, 0.0), t)) - 0.5, swN(vec3(q * 4.1 + 9.0, t * 1.3)) - 0.5) * 0.25;
@@ -272,7 +274,7 @@ export function buildHead(env) {
           float fr = 0.03 + 0.6 * pow(1.0 - abs(dot(V, n)), 5.0);
           col = mix(uSwDeep * 3.0, uDay * (0.3 + 0.8 * day), fr) + swLight(vW) * 2.0;
           // foam where the fall comes down, drifting off
-          float fo = fall * smoothstep(0.55, 0.85, sin(q.x * 3.1 + sin(q.y * 4.0 - t * 2.0) * 1.5) * 0.5 + 0.5 + 0.3 * sin(q.y * 7.0 - t * 3.0));
+          float fo = fall * smoothstep(0.5, 0.8, swN(vec3(q.x * 2.3, q.y * 2.3 - t * 1.1, t * 0.7)) * 0.7 + swN(vec3(q * 6.0 - vec2(0.0, t * 1.6), t)) * 0.4);
           col += vec3(0.5, 0.52, 0.5) * fo * (0.25 + day);
           a = clamp(0.72 + 0.25 * fr + fo, 0.0, 1.0);
         } else {
@@ -333,8 +335,8 @@ export function buildHead(env) {
   const spray = new THREE.Points(pg, sprayMat); spray.name = 'swallow-spray'; spray.frustumCulled = false; spray.renderOrder = 4;
 
   // ---- the floors: the quay (its north end open onto the shore, its sides held); the tube's own is swallow.js's
-  const stepRun = Math.max(0.32, Math.ceil(Math.max(0, shoreY - QY) / 0.18) * 0.32);
-  const quayFloor = (x, z) => (x >= QX[0] + 0.15 && x <= QX[1] - 0.1 && z >= QZ0 - stepRun && z <= LIPZ + 0.02 ? (z < QZ0 ? Math.min(shoreY, QY + ((QZ0 - z) / stepRun) * (shoreY - QY)) : QY) : null);
+  const stepRun = nSteps * 0.32;
+  const quayFloor = (x, z) => (x >= QX[0] + 0.15 && x <= QX[1] - 0.1 && z >= QZ0 - stepRun && z <= LIPZ + 0.02 ? (z < QZ0 ? QY + Math.min(1, (QZ0 - z) / stepRun) * (shoreY - QY) : QY) : null);
   const quayKeep = (x, z) => z > QZ0 - stepRun + 0.3; // held on its sides and at the ledge; open at the steps
   const quayPath = [[(QX[0] + QX[1]) / 2, QZ0 - 3], [(QX[0] + QX[1]) / 2, QZ0 + 0.5, QY], [(QX[0] + QX[1]) / 2, LIPZ - 1.5, QY]];
   // ---- the volume: the head and the arch, stone-sounding, sheltered, never sealed (the portal is seen from all of it)

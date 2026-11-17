@@ -109,7 +109,7 @@ export function buildParts(ctx, L) {
   for (const l of lenses) {
     if (!strata) break;
     const f = frameAt(l.s), M = new THREE.Matrix4().makeBasis(f.r, f.t.clone().negate(), f.u.clone().negate()).setPosition(l.x, l.y, l.z);
-    strata.lens(K, M, { r: 0.36, lit: 1, cheap: low });
+    strata.lens(K, M, { r: 0.36, lit: 0.6, cheap: low });
   }
 
   // ---- the planks: the Late folk's treads down the bore (a riser every 0.2 m of fall where it is steep, boards laid
@@ -339,7 +339,7 @@ export function buildParts(ctx, L) {
   // ---- the lights: the nearest three of these are live (lights.js); the lenses' noon, the door's
   const lights = [];
   const addLight = (p, hex, i, d) => { const Lt = new THREE.PointLight(new THREE.Color(hex), i, d, 2); Lt.position.set(p.x, p.y, p.z); Lt.name = 'swallow-light'; lights.push({ L: Lt, i, ph: p.x * 0.37 }); };
-  for (const l of lenses) addLight({ x: l.x, y: l.y - 0.35, z: l.z }, NOON.lightHex, 2.4, 9);
+  for (const l of lenses) addLight({ x: l.x, y: l.y - 0.35, z: l.z }, NOON.lightHex, 1.5, 8);
   // the water's own light (water.js): the lenses, the door, the head's daylight
   const LP = SW.uSwLampP.value, LC = SW.uSwLampC.value, nl = new THREE.Color(NOON.lightHex);
   let li = 0;
