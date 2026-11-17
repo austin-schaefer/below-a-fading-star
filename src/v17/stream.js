@@ -87,7 +87,10 @@ export function makeStream(def) {
   for (let k = 0; k < n; k++) DROP[k] = (Y[Math.max(0, k - 2)] - Y[Math.min(n - 1, k + 2)]) / (Math.min(n - 1, k + 2) - Math.max(0, k - 2) || 1) / STEP;
   for (let k = 0; k < n; k++) {
     let r = 0;
-    for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 0) break; r = Math.max(r, Math.min(1, (DROP[i] - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
+    // (the white reads the fall into each sample from the one above it, not DROP's centred difference: that put foam a
+    // metre upstream of every lip, on the level water before the fall, a ruled bright band across the stream from 10 to
+    // 20 m upstream, the "render artifact" W1's readers saw)
+    for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 1) break; r = Math.max(r, Math.min(1, ((Y[i - 1] - Y[i]) / STEP - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
     ROUGH[k] = Math.max(0, r);
     let g = 0; for (let j = -SW; j <= SW; j++) g += DROP[Math.min(n - 1, Math.max(0, k + j))] / (2 * SW + 1);
     SPEED[k] = Math.min(1.9, Math.max(VMIN, (0.1 + g * 32) * Math.min(1.6, 1.6 / HW[k])));
