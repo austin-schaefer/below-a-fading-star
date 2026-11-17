@@ -22,8 +22,12 @@
 // plan (a stub of src/v15/plan.js's STRAKE through ctx.lappet): its five plots in the plan's order at the plan's
 // level, the Late house's roof at the tread behind it. And the far mesh (v15-P3, src/v15/far.js), on a second page with
 // every quarter: a block for every built plot, a speck within a metre of every lamp record, one draw, the swap on low.
+// (#1712) And from the Lonely Staircase's top on the whole world at medium: the far lights' brightest (tools/far-glow.mjs)
+// at most 0.9 of the sun's disc's, lit and in a held gutter, and at least 1.2 times further over the frame's median in
+// the gutter than lit (they hold; the linear scene's median falls only some 15%: the gutter's dark is mostly post's).
 // Usage: node tools/village-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { ANGLE } from './launch.mjs';
+import { farGlow } from './far-glow.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -178,6 +182,14 @@ const far = await page.evaluate(async () => {
   const swap = { d100: await at(100), d145: await at(145), d160: await at(160), back: await at(60) };
   return { on, built: built.length, noBlock, unbuilt, lamps: F.lamps.length, lone, specks: F.specks.length, draws, stats: F.stats(), hidden: fp.lappet.farHidden.length, swap };
 });
+// (#1712) the village from the Lonely Staircase's top, 300 m off, on the whole world at medium (the owner's default):
+// its far lights are pinpricks under the sun, lit and in a held gutter (the lamps fully answering), and they hold
+// (brighter) in the gutter. The fountain's noon (lees-noon, an additive sheet, not a lamp) is hidden while measuring.
+await page.goto(`${base}/?q=medium&pos=269,-20&yaw=1.571`, { waitUntil: 'load', timeout: 120000 });
+await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 600000 });
+await page.evaluate(() => { document.getElementById('card')?.classList.add('hidden'); const n = window.__fp.scene.getObjectByName('lees-noon'); if (n) n.visible = false; });
+const glowLit = await page.evaluate(farGlow, { x: 269, z: -20, yaw: 1.571, hold: 1, settle: 3000 });
+const glowGut = await page.evaluate(farGlow, { x: 269, z: -20, yaw: 1.571, hold: 0.3, settle: 2000 });
 await browser.close();
 let pass = 0, fail = 0;
 const check = (ok, what) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${what}`); ok ? pass++ : fail++; };
@@ -217,6 +229,9 @@ else {
   check(far.draws === 1 && far.stats.triangles <= 6000, `the far mesh: one draw, at most 6,000 triangles (${far.draws}, ${far.stats.triangles}: ${far.stats.blocks} blocks in ${far.stats.blockTris}, ${far.stats.specks} specks)`);
   const w = far.swap; check(w.d100.boxes === 0 && w.d100.near === far.hidden && w.d145.boxes === 1 && w.d145.near === far.hidden && w.d160.boxes === 1 && w.d160.near === 0 && w.back.boxes === 0 && w.back.near === far.hidden, `on low the blocks stand up at 140 m inside the near meshes, which go at 150 (100 m: blocks ${w.d100.boxes}, near ${w.d100.near}/${far.hidden}; 145: ${w.d145.boxes}, ${w.d145.near}; 160: ${w.d160.boxes}, ${w.d160.near}; back at 60: ${w.back.boxes}, ${w.back.near})`);
 }
+for (const [name, g] of [['lit', glowLit], ['in a held gutter', glowGut]]) check(g.sunOnScreen && g.px > 50 && g.own !== null && g.own <= 0.9 * g.sun, `(#1712) the village's far lights from (269, -20), ${name}: the brightest light a speck adds, ${g.own?.toFixed(3)}, is at most 0.9 of the sun's disc's brightest, ${g.sun.toFixed(3)} (${g.px} specks in view; the brightest speck pixel with what is behind it ${g.village.toFixed(3)}; lamps answering ${(+g.lamps).toFixed(2)}; the quarters' own lamps there without the specks ${g.bare?.toFixed(2)})`);
+{ const rl = glowLit.own / glowLit.world, rg = glowGut.own / glowGut.world;
+  check(rg > rl * 1.2, `(#1712) the far lights hold in a gutter: the brightest a speck adds over the frame's median, ${rg.toFixed(1)} times (${glowGut.own?.toFixed(3)} over ${glowGut.world.toFixed(3)}), against ${rl.toFixed(1)} lit (${glowLit.own?.toFixed(3)} over ${glowLit.world.toFixed(3)})`); }
 check(errors.length === 0, `no page errors (${errors.length}${errors.length ? ': ' + errors[0] : ''})`);
 console.log(`village-test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
