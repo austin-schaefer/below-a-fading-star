@@ -49,6 +49,14 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 11:13 PST. The sphere's round two merged. Nothing in flight. The gate is running, alone.**
+
+- **Round two merged** (S2's agent resumed, opus, 26 min; "Round two" in `briefs/v17/reports/issue-1722-sphere-east.md`; `src/v17/sphere.js` only). **The triangles** were round one's own fix: it pulled the earth skin's corners straight down to the ground, which on the uphill side put them inside the glass as flat dark faces; the skin is now clipped along the ground line. No sawtooth in its rim views at low, medium or high (the orchestrator looked at the south-east one). **Under the edge**, seen only from the rim looking down: a bronze iris shutting the conduit's mouth on the Garth's side, a crescent of noon leaking round it, a spindle from under the man's wheel down to the iris, a ladder down the glass and his tally of kept noons scratched beside it. No new light, calls unchanged, nothing shows from 15 or 60 m. Its cold reader saw the rod, the disc, the "glowing white arc", the ladder and a man "working a wheel or crank", and did not say "holding it shut". The owner's rim stand: `?pos=284,134&yaw=-0.30&pitch=-0.5`, then walk to the glass.
+- **Red in its tree after merging `next`, on rows it did not touch** (so from G1's spout, F3's revetment or their sum): `edges`, `geometry` on Garth and Swallow rows, and the west wall's gallery top at **381 calls against 380**. The gate will say.
+- **The gate:** `tools/suite.sh 8123` on `next`, alone (`/tmp/v17-gate2.log`, pid 45575), started at this entry's time.
+
+Next: the gate's reds fixed (test-touching reruns only if the fix is confined); the note (drafted outside the repository), the README line and gallery, Stats; the PR; the GitHub release; close #74; the names table as an agent's issue; look back; stop.
+
 **2026-11-17, 10:48 PST. F3 merged: the critic's blocking, the shore row, the readout.**
 
 (opus, 67 min; `briefs/v17/reports/issue-1721-critic-fixes.md`; no shared code: `src/settings.js`, `index.html`, `src/v17/swallow/head.js`, three tests.)
