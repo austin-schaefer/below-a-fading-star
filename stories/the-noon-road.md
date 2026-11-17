@@ -42,8 +42,10 @@ What stopped the line. How much noon is left. Who comes for it.
 - The lit carriers are fewer than the dark. Was it drawn off, or did it leak away? Does the tender know how many are left?
 - The Sexton's forty other graves: once answered here, open again (`the-twelfth-chair.md`).
 - The row of empty rings on each band is a count. Of what?
+- What stopped the line: one account is at the west wall's foot, where a junction's keeper sits at a shut wheel (`the-man-at-the-wheel.md`, v17); the garden it fed is under the south slope (`the-meridian-garth.md`).
 
 ## Log
 
+- 2026-11-17, v17 planner: an open thread pointed at the Meridian Garth and the man at the wheel (what the noon was for; what stopped the line).
 - 2026-11-15, v14-D3: rewritten from "The Coffin Road" on the owner's word ("too on-the-nose, and too generic fantasy... introduce a fourth culture"). The coffins, the candles, the waiting coffin and the Sexton's part are gone; the descent, the hall, the water, the sun and the door stay. The Noonwrights and their hand: `visual-art/architecture.md`.
 - 2026-11-15, v14-D0: first written, as the Sexton's road of forty coffins.
