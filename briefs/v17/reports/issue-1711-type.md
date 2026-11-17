@@ -77,4 +77,9 @@ origin in the card renders). `sw.js` keeps `vendor/` already; its comment and `D
 
 ## Tests
 
-See the commit that adds this report's Tests line.
+`nice -n 10 env ONLY=loading,settings,touch,sw,contrast,acts,record tools/suite.sh 8175`: 7 tests, 1 failed, 16 min 34 s.
+settings 86/87, touch 45/45, acts 176 passed 0 failed, record 16/16, sw 50 passed 0 failed, loading 28 PASS and no FAIL,
+contrast PASS (12 regions apart, 1 alike pair, no page errors). The one failure is `settings`' "names" check. It is
+not this branch's: the `swallow` ascent (v17-U1) ends at (-31.5, 317.7, y -24) with no place card. The type changes no
+text or class the check reads (checked by running the check's own evaluation and printing the tops that fail). No
+test pinned the old face, so none was changed.
