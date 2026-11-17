@@ -49,6 +49,17 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 10:48 PST. F3 merged: the critic's blocking, the shore row, the readout.**
+
+(opus, 67 min; `briefs/v17/reports/issue-1721-critic-fixes.md`; no shared code: `src/settings.js`, `index.html`, `src/v17/swallow/head.js`, three tests.)
+- **The error overlay: gone** (the tube walked on the keys, medium and low, sound running: 0 page or console errors); `swallow-walk.mjs` fails on a console error now, beside `heights`' "no page errors (ascents)". The overlay is `<pre id="error">` in `index.html` and **every visitor sees it**, not only `?debug=1` (unchanged; idea bank: should an uncaught error cover a visitor's screen?).
+- **Stands:** the Lamplighter's was inside a Lappet house (now (149, 42); its card there reads "The Arcature", whose region it stands in); Tumbling Water's now (210, 226); all 85 entries looked at, no other inside anything; a new `settings` row: nothing within 1.5 m over any stand's eye.
+- **The quay:** the grey sheets were the cut's bare west bank; a stepped, coursed revetment with a broken top stands there now. **Still plain:** its reader said "plain, flat, featureless ... placeholder" of the wall and "orange-peach, off-palette" of U1's east wall. The tube's ruled line (the pool's mesh edge-on) is unchanged.
+- **`shore`:** the galley ran unheld near the pool's north shore, its shadow switching off at 40 m (the cull F2 ruled out for the east shore); the test holds it far off. Passed alone, failed twice beside another agent's suite: **not proven** until the gate. (The galley's shadow cull at 40 m is a real small pop: idea bank.)
+- **The readout:** x, z, y, yaw, pitch and "Copy link" in the settings panel (the owner's ask); its fit at 390 px not checked by eye.
+- `settings` 90, `geometry` 146, `audio` 108, `shore` 6, `rocks` 38; walkers 19/20.
+- In flight: the sphere's round two (`issue-1724-sphere-under`, 8177). Then the whole suite alone.
+
 **2026-11-17, 10:46 PST. The owner on the moved sphere: the triangles are still there; and a payoff under the edge. S2's author resumed (round two).**
 
 - **The owner:** "still got weird triangles on its edge" (frame: `shots/wip/owner-v17-sphere-edge-triangles.png` in the deploy worktree: at 60 fps in Chrome, so not the low tier as S2 reported: a sawtooth of dark blue flat triangles 0.5 to 2 m across between the bank and the earth skin inside the glass, all along the rim) and "i think it needs some additional visual "payoff" for going to edge. something at bottom that hints at its purpose or otherwise gives you a lore reveal for finding the edges wher eyou can see the bottom of the sphere".
