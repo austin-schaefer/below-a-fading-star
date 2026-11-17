@@ -187,25 +187,37 @@ export async function build(ctx) {
       const rootish = d < 3 && n3(x * 1.6, y * 0.25, z * 1.6) > 0.72 ? 0.55 : 1; // roots hanging down through the top courses
       return [c[0] * k * rootish, c[1] * k * rootish, c[2] * k * rootish];
     };
+    // each quad's two triangles clipped on the sphere to just under the drawn ground (f < 0), never squashed: the
+    // skin keeps to the glass's own curve and ends on one clean line 6 cm under the ground, where the bank's foot
+    // (outside the glass, down to 45 cm under) closes it. (issue-1722 pulled corners down instead: the folded faces
+    // turned flat and dark and showed through the glass as a sawtooth of big blue triangles along the rim, the
+    // owner's second report)
+    const f = (p) => p[1] - (gy(p[0], p[2]) - 0.06);
+    const onS = (p, rr) => { const dx = p[0] - CX, dy = p[1] - CY, dz = p[2] - CZ, l = Math.hypot(dx, dy, dz) || 1; return [CX + dx / l * rr, CY + dy / l * rr, CZ + dz / l * rr]; };
+    const cross = (p, q) => { // where f = 0 along p..q on the sphere (a few bisections: gy is not linear)
+      let lo = p, hi = q, fl = f(p);
+      for (let k = 0; k < 10; k++) { const m = onS([(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], Re), fm = f(m); if ((fm < 0) === (fl < 0)) { lo = m; fl = fm; } else hi = m; }
+      return onS([(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], Re);
+    };
+    const clip = (tri) => { // Sutherland-Hodgman against f < 0: 0, 3 or 4 points
+      const out = [];
+      for (let k = 0; k < 3; k++) { const P = tri[k], Q = tri[(k + 1) % 3], fp = f(P), fq = f(Q); if (fp < 0) out.push(P); if ((fp < 0) !== (fq < 0)) out.push(cross(P, Q)); }
+      return out;
+    };
+    const outK = (Re + 0.015) / Re, outP = (p) => [CX + (p[0] - CX) * outK, CY + (p[1] - CY) * outK, CZ + (p[2] - CZ) * outK];
     for (let j = 0; j < nV; j++) for (let i = 0; i < nU; i++) {
       const a = pt(i, j), b = pt(i + 1, j), c = pt(i + 1, j + 1), d = pt(i, j + 1);
-      const under = (p) => p[1] < gy(p[0], p[2]) + 0.25;
-      if (!(under(a) || under(b) || under(c) || under(d))) continue;
-      // no tooth of it above the ground: a quad across the ground line has its upper corners pulled down to just under
-      // the drawn ground (the issue-1722 triangles: its coarse top edge stood up to a quad above the ground, its outer
-      // face outside the glass, as brown teeth along the join); the bank (below) closes the line over it
-      for (const p of [a, b, c, d]) p[1] = Math.min(p[1], gy(p[0], p[2]) - 0.08);
-      const hint = [CX - (a[0] + c[0]) / 2, CY - (a[1] + c[1]) / 2, CZ - (a[2] + c[2]) / 2]; // faces in
-      for (const [p, q, r] of [[a, b, c], [a, c, d]]) {
-        const col = paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3);
-        E.tri(p, q, r, col, hint, 0.06);
-      }
-      // faced outward too, 1.5 cm further out: where the opened ground falls short of the bulging glass a visitor outside
-      // sees down into the skin (geometry's v17-sphere found its backs from 1 m off the glass, at the ground line and
-      // through the gaps under it), and should meet earth there, not the sphere's inside through the skin's back
-      {
-        const out = [-hint[0], -hint[1], -hint[2]], o = (p) => { const k = (Re + 0.015) / Re, x = CX + (p[0] - CX) * k, z = CZ + (p[2] - CZ) * k; return [x, Math.min(CY + (p[1] - CY) * k, gy(x, z) - 0.08), z]; }; // (1.5 cm out, so a ray from outside meets this face first)
-        for (const [p, q, r] of [[a, b, c], [a, c, d]]) E.tri(o(p), o(q), o(r), paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3), out, 0.06);
+      if (f(a) >= 0 && f(b) >= 0 && f(c) >= 0 && f(d) >= 0) continue;
+      const hint = [CX - (a[0] + c[0]) / 2, CY - (a[1] + c[1]) / 2, CZ - (a[2] + c[2]) / 2], outH = [-hint[0], -hint[1], -hint[2]]; // in; out
+      for (const t of [[a, b, c], [a, c, d]]) {
+        const poly = clip(t); if (poly.length < 3) continue;
+        const col = paint((t[0][0] + t[1][0] + t[2][0]) / 3, (t[0][1] + t[1][1] + t[2][1]) / 3, (t[0][2] + t[1][2] + t[2][2]) / 3);
+        for (let k = 1; k < poly.length - 1; k++) {
+          E.tri(poly[0], poly[k], poly[k + 1], col, hint, 0.06);
+          // faced outward too, 1.5 cm further out: from outside, where the opened ground falls short of the bulging
+          // glass, a visitor sees down into the skin and should meet earth, not the sphere's inside through its back
+          E.tri(outP(poly[0]), outP(poly[k]), outP(poly[k + 1]), col, outH, 0.06);
+        }
       }
     }
     add(new THREE.Mesh(E.geometry(), umat('sphere-earth', { roughness: 0.95 })), 'sphere-earth');
