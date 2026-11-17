@@ -123,8 +123,7 @@ const FEN_KEEP = 36, FEN_C = FEN_EDGE.centre, FEN_FAR = Math.max(85, FEN_EDGE.rM
 function fenProt(x, z) {
   const dx = x - FEN_C.x, dz = z - FEN_C.z, d2 = dx * dx + dz * dz;
   if (d2 >= FEN_FAR * FEN_FAR) return Infinity;
-  const r = Math.sqrt(d2) - 85;
-  return FEN_EDGE.sdFloor(x, z) - FEN_KEEP >= r ? r : Math.min(r, fenShoreDistance(x, z) - FEN_KEEP); // (the edge not asked where its floor puts it past the circle)
+  return Math.min(Math.sqrt(d2) - 85, fenShoreDistance(x, z) - FEN_KEEP);
 }
 const CIRCLES = [
   [40, 30, 95, 45, 15], // the keep's hill, the Demesne and its ha-ha, the village (src/v15)
@@ -194,8 +193,8 @@ export function floorMask(x, z) {
 }
 function maskAt(x, z) {
   const c = cellOf(x, z);
-  if (c >= 0 && (c & FREE)) return 1;
-  const mf = c < 0 ? -1 : MF[c >> 2]; // the places whose reach touches this cell (all of them off the grid)
+  if (c >= 0 && (c & (FREE | ZERO))) return c & FREE ? 1 : 0;
+  const mf = c < 0 ? -1 : MF[c >> 3]; // the places whose reach touches this cell (all of them off the grid)
   const r2 = x * x + z * z;
   if (r2 >= R_OUT * R_OUT) return 0;
   let m = r2 > R_IN * R_IN ? 1 - smoothstep(R_IN, R_OUT, Math.sqrt(r2)) : 1;
@@ -238,8 +237,8 @@ function maskAt(x, z) {
 // how far (x, z) lies outside every protected place, up to FAR: where the forms may be bolder
 function protDist(x, z) {
   const c = cellOf(x, z);
-  if (c >= 0 && (c & CLEAR)) return FAR;
-  const mp = c < 0 ? -1 : MP[c >> 2]; // the places within FAR of this cell
+  if (c >= 0 && (c & (CLEAR | ZERO))) return c & ZERO ? 0 : FAR;
+  const mp = c < 0 ? -1 : MP[c >> 3]; // the places within FAR of this cell
   let d = R_IN - Math.sqrt(x * x + z * z);
   if (d <= 0) return 0;
   for (let i = 0; i < BOXES.length; i++) {
@@ -268,7 +267,7 @@ function protDist(x, z) {
 // place's reach touches it and it lies inside R_IN (floorMask is 1); CLEAR, every protected place lies FAR or more off
 // and R_IN is FAR or more away (protDist is FAR). Each bound is the one the loops above skip by, so the answers are
 // theirs to the bit. Built on the first ask.
-const FREE = 1, CLEAR = 2, CELL = 8, G0 = -304, GN = 76;
+const FREE = 1, CLEAR = 2, ZERO = 4, CELL = 8, G0 = -304, GN = 76;
 // and per cell, which places the two loops need ask at all: a bit each (the boxes, the circles, the fen, the lines,
 // the river), MF those whose reach touches the cell, MP those within FAR of it; a place left out is one whose test
 // would skip it at every point of the cell, so the loops do the same arithmetic in the same order
@@ -279,7 +278,6 @@ function rectD(x0, x1, z0, z1, b0, b1, b2, b3) { // the least distance between t
   const ex = b0 > x1 ? b0 - x1 : x0 > b1 ? x0 - b1 : 0, ez = b2 > z1 ? b2 - z1 : z0 > b3 ? z0 - b3 : 0;
   return Math.sqrt(ex * ex + ez * ez);
 }
-const outside = (x0, x1, z0, z1, b) => x1 < b[0] || x0 > b[1] || z1 < b[2] || z0 > b[3];
 function buildCells() {
   CELLS = new Uint8Array(GN * GN); MF = new Int32Array(GN * GN); MP = new Int32Array(GN * GN);
   for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
@@ -289,21 +287,28 @@ function buildCells() {
     BOXES.forEach((b, k) => { const d = rectD(x0, x1, z0, z1, b[0], b[1], b[2], b[3]); if (d < b[4] + b[5] + 0.01) mf |= 1 << (B_BIT + k); if (d < FAR + 0.01) mp |= 1 << (B_BIT + k); });
     CIRCLES.forEach((c, k) => { const d = rectD(x0, x1, z0, z1, c[0], c[0], c[1], c[1]); if (d < c[2] + c[3] + c[4] + 0.01) mf |= 1 << (C_BIT + k); if (d < c[2] + FAR + 0.01) mp |= 1 << (C_BIT + k); });
     if (rectD(x0, x1, z0, z1, FEN_C.x, FEN_C.x, FEN_C.z, FEN_C.z) < FEN_FAR + 0.01) { mf |= 1 << F_BIT; mp |= 1 << F_BIT; }
-    LINES.forEach((L, k) => { if (!outside(x0, x1, z0, z1, L.box)) mf |= 1 << (L_BIT + k); if (!outside(x0, x1, z0, z1, [L.box[0] - FAR, L.box[1] + FAR, L.box[2] - FAR, L.box[3] + FAR])) mp |= 1 << (L_BIT + k); });
-    if (!outside(x0, x1, z0, z1, RIVER_BOX)) mf |= 1 << R_BIT;
-    if (!outside(x0, x1, z0, z1, [RIVER_BOX[0] - FAR, RIVER_BOX[1] + FAR, RIVER_BOX[2] - FAR, RIVER_BOX[3] + FAR])) mp |= 1 << R_BIT;
+    // a line or the river: by its distance from the cell's middle less the half-diagonal (and a hair)
+    const mx = x0 + CELL / 2, mz = z0 + CELL / 2, hd = CELL * Math.SQRT1_2 + 0.01;
+    LINES.forEach((L, k) => { const d = lineDist(L, mx, mz) - hd; if (d < L.R + L.S + L.W) mf |= 1 << (L_BIT + k); if (d < L.R + FAR) mp |= 1 << (L_BIT + k); });
+    { const d = riverDist(mx, mz) - hd; if (d < RIVER_R + RIVER_S) mf |= 1 << R_BIT; if (d < RIVER_R + FAR) mp |= 1 << R_BIT; }
+    // ZERO: the whole cell inside one protected place's core (or past R_OUT), where both loops come to 0 whatever else
+    const rNear = Math.sqrt((x0 > 0 ? x0 : x1 < 0 ? -x1 : 0) ** 2 + (z0 > 0 ? z0 : z1 < 0 ? -z1 : 0) ** 2);
+    const inRect = (b) => x0 >= b[0] && x1 <= b[1] && z0 >= b[2] && z1 <= b[3];
+    const corners = [[x0, z0], [x1, z0], [x0, z1], [x1, z1]], within = (cx, cz, r) => corners.every(([px, pz]) => (px - cx) ** 2 + (pz - cz) ** 2 <= r * r);
+    const zero = rNear >= R_OUT || BOXES.some(inRect) || CIRCLES.some((c) => within(c[0], c[1], c[2])) || within(FEN_C.x, FEN_C.z, 85) ||
+      LINES.some((L) => lineDist(L, mx, mz) + hd <= L.R) || riverDist(mx, mz) + hd <= RIVER_R;
     const k = j * GN + i;
     MF[k] = mf; MP[k] = mp;
-    CELLS[k] = (rFar < R_IN && !mf ? FREE : 0) | (R_IN - rFar >= FAR && !mp ? CLEAR : 0);
+    CELLS[k] = (rFar < R_IN && !mf ? FREE : 0) | (R_IN - rFar >= FAR && !mp ? CLEAR : 0) | (zero ? ZERO : 0);
   }
 }
-// the cell's flags, with its index above them (k << 2), or -1 off the grid
+// the cell's flags, with its index above them (k << 3), or -1 off the grid
 function cellOf(x, z) {
   if (!CELLS) buildCells();
   const i = Math.floor((x - G0) / CELL), j = Math.floor((z - G0) / CELL);
   if (!(i >= 0 && j >= 0 && i < GN && j < GN)) return -1;
   const k = j * GN + i;
-  return (k << 2) | CELLS[k];
+  return (k << 3) | CELLS[k];
 }
 // 0 within 20 m of a protected place, 1 past FAR
 const farFactor = (x, z) => smoothstep(20, FAR, protDist(x, z));

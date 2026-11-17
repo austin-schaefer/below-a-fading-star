@@ -127,15 +127,6 @@ export function fenHeight(h, x, z) {
   const dx = x - L.x, dz = z - L.z, d2 = dx * dx + dz * dz;
   if (d2 > FEN_REACH * FEN_REACH && h !== 0) return h;
   _gx = x; _gz = z; _gh = h;
-  // (v16 L5) where sd is certainly 34 or more (the fringe's widest fall; its pools stop at 26) only the bowl acts: the
-  // same arithmetic as below with mE and the dig at 0, and sd not asked
-  if (FEN_EDGE.sdFloor(x, z) >= 34) {
-    const mB = 1 - smoothstep(70, 115, Math.sqrt(d2));
-    h = lerp(h, FEN_Y, mB);
-    if (mB === 0) return h;
-    const lift = isleLift(x, z);
-    return h - 0 * mB * (1 - lift) + lift * 0.55;
-  }
   const fr = fringe(x, z), u = undug(h, x, z, d2, fr), m = u.m;
   h = u.h;
   if (m === 0) return h;
@@ -159,7 +150,7 @@ export function fenDig(x, z) {
 }
 export function fenWet(x, z) {
   const dx = x - L.x, dz = z - L.z, d2 = dx * dx + dz * dz;
-  if (d2 > WATER.fen.r * WATER.fen.r || FEN_EDGE.sdFloor(x, z) > FRINGE_MAX) return false;
+  if (d2 > WATER.fen.r * WATER.fen.r) return false;
   // within 70 m the ground before the pools is FEN_Y (the bowl's whole), so with no pool there (the noise under its
   // least threshold) only the rim's 0.3 m is dug and the ground stays 0.15 m over the water, an islet's lift only
   // higher: dry, and no sd asked (the noise is dig's own, the same number)
@@ -177,7 +168,6 @@ export function fenWet(x, z) {
 // the marsh's paint: whole inside, out through the fringe in tongues (a slow noise moves where it gives out). n is the
 // noise's thunk (field.js's biomeWith): it is asked only where the tongues can reach (|noise| < 1.1, so 11 m of sd)
 export function fenMarsh(x, z, n) {
-  if (FEN_EDGE.sdFloor(x, z) > FRINGE_MAX * 0.6 + 3 + 12) return 0;
   const sd = fenShoreDistance(x, z);
   if (sd > FRINGE_MAX * 0.6 + 3 + 12) return 0;
   const fr = fringe(x, z);
@@ -185,7 +175,6 @@ export function fenMarsh(x, z, n) {
 }
 // the river's cut (field.js riverSection): kept to the fen's edge, given up where the fen is deep (0..1, 1 kept)
 export function fenRiverKeep(x, z) {
-  if (FEN_EDGE.sdFloor(x, z) >= -11) return 1;
   return smoothstep(-22, -11, fenShoreDistance(x, z));
 }
 

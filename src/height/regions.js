@@ -30,13 +30,13 @@ const ragged = (amp, freq, ox = 0) => (x, z) => amp * RAG.noise2(x * freq + ox, 
 export const woodRag = ragged(12, 0.022, 7.3); // field.js's wood paint gives out on the same line
 const PLACES = {
   wood: { x: LANDMARKS.wood.x, z: LANDMARKS.wood.z, r: 95, blend: 20, rag: 12,
-    sd: (x, z) => Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95 + woodRag(x, z) },
-  // (v16 L5: where the edge's floor of sd says the weight is 0 at any blend (hb under 20), sd is not asked)
-  fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => { const lb = FEN_EDGE.sdFloor(x, z); return lb > 30 ? lb - 10 : fenShoreDistance(x, z) - 10; } },
+    // (v16 L5: lim, the weights' half-blend: past lim and the rag's reach (13.2) the weight is 0 or 1 whatever the rag says)
+    sd: (x, z, lim = Infinity) => { const d = Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95; return d > lim + 13.3 || d < -lim - 13.3 ? d : d + woodRag(x, z); } },
+  fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => fenShoreDistance(x, z) - 10 },
   lattice: { x: LANDMARKS.moraine.x, z: LANDMARKS.moraine.z, r: 50, blend: 12 },
 };
 // a region's ragged edge (REGIONS[k].ragged: { amp, freq }): its distance moved by up to amp metres of slow noise
-const EDGE_SD = { fen: fenShoreDistance }, EDGE_LB = { fen: FEN_EDGE.sdFloor }; // the edges a region may yield to ({ edge, off } in its yields), and their floors of sd
+const EDGE_SD = { fen: fenShoreDistance }; // the edges a region may yield to ({ edge, off } in its yields)
 
 // ---------------------------------------------------------------- signed distances (metres, < 0 inside)
 function sdPoly(pts, x, z) {
@@ -114,8 +114,7 @@ for (const k of REGION_KEYS) {
     let d = f(x, z);
     if (clip.zMin !== undefined) d = Math.max(d, clip.zMin - z);
     if (clip.zMax !== undefined) d = Math.max(d, z - clip.zMax);
-    // (v16 L5: an edge's yield is not measured where its floor of sd already puts it under d)
-    for (const y of yields) d = y.edge ? (y.off - EDGE_LB[y.edge](x, z) <= d ? d : Math.max(d, y.off - EDGE_SD[y.edge](x, z))) : Math.max(d, y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
+    for (const y of yields) d = Math.max(d, y.edge ? y.off - EDGE_SD[y.edge](x, z) : y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
     return d;
   };
   SHAPES[k] = rag ? (x, z) => plain(x, z) + rag(x, z) : plain; // the ragged edge moves the yields' line too
@@ -182,7 +181,7 @@ function weights(x, z, blend, W) {
     if (sd) { // the far side of a place with an edge: a cheap bound first (P_FAR: past it the weight is 0)
       const e2 = (x - px) ** 2 + (z - pz) ** 2, far = P_FAR[i] + hb;
       if (e2 > far * far) { W[NR + i] = 0; continue; }
-      d = sd(x, z);
+      d = sd(x, z, hb);
     } else d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2];
     const w = 1 - smoothstep(-hb, hb, d);
     W[NR + i] = w; placeSum += w;

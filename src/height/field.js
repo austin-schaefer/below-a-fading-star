@@ -5,7 +5,7 @@
 // carries the URL's switches). terrain.js re-exports all of it; import from there unless you are in a worker.
 // Everything here is checked bit for bit by tools/height-check.mjs.
 import { makeSimplex, clamp, lerp, smoothstep, hyp } from '../noise.js';
-import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShoreAbove, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
+import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START, WALL_SAMPLE } from '../v4/mountains.js'; // v4 systems: the walls
@@ -14,7 +14,7 @@ import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and fo
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
-import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom, FEN_EDGE } from './fen.js'; // v16 L3: the fen on the edge
+import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom } from './fen.js'; // v16 L3: the fen on the edge
 import { HEIGHT_PARAMS } from './params.js';
 import { floorGround, floorCharacter, POOLS } from './floor.js'; // v16: the floor's fall, its forms, its pools and its character
 
@@ -410,7 +410,7 @@ function riverLevelAt(x, z) {
   const B = (d > 0 ? _bw.bl : _bw.br) + SX.noise2(s * 0.12, d > 0 ? 3.1 : 7.7) * 0.6 * (1 - smoothstep(70, 90, s));
   if (!(Math.abs(d) < R_HW(s) + Math.max(0, B) + 0.6) || hyp(x - POOL.x, z - POOL.z) < 6.8) return null;
   const W = R_W(s);
-  if (FEN_EDGE.sdFloor(x, z) < 0 && fenShoreDistance(x, z) < 0 && heightAt(x, z) > W) return null;
+  if (fenShoreDistance(x, z) < 0 && heightAt(x, z) > W) return null;
   return W;
 }
 const _csb = { ..._cs };
@@ -569,7 +569,7 @@ function biomeWith(x, z, h, slope, rv) {
   // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
   const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
   const marsh = fenMarsh(x, z, marshN); // v16 L3: the fen's edge, out in tongues
-  const sTarn = tarnShoreAbove(x, z, 14) ? 15 : tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge (v16 L5: not asked where it is certainly over 14, where the paint is 0)
+  const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
   const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
   const dOrch = hyp(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
