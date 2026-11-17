@@ -414,7 +414,9 @@ export async function build(ctx) {
     { const nr = bg.attributes.normal.array, tn = new THREE.Vector3(); for (let i = 0; i <= nA; i++) { const o = (i * K + K - 1) * 3; T.normalAt(pos[o], pos[o + 2], tn); nr[o] = tn.x; nr[o + 1] = tn.y; nr[o + 2] = tn.z; } }
     // (the seam at bearing 0: the first and last rows are the same points; give them the same normals)
     { const nr = bg.attributes.normal.array; for (let k = 0; k < K; k++) { const o0 = k * 3, o1 = (nA * K + k) * 3; for (let j = 0; j < 3; j++) { const v = (nr[o0 + j] + nr[o1 + j]) / 2; nr[o0 + j] = nr[o1 + j] = v; } } }
-    const lm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0 });
+    // (two-sided: from inside the glass the far side's bank is seen from under, where its back was culled and the cut's
+    // ragged edge showed through: a blind reader's "jagged, with holes, where the floor meets the glass")
+    const lm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0, side: THREE.DoubleSide });
     const m = add(new THREE.Mesh(bg, lm), 'sphere-lip'); m.receiveShadow = true;
   }
 
