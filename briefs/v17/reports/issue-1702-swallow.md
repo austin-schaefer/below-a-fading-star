@@ -32,6 +32,10 @@ The seams failure is in the village box, x 10..160. The span-east-stairs failure
 
 Draw calls on low (views.mjs): the tube has 135–174 against the Wellward Way's Line at 184–187.
 
+## The door
+
+After `origin/next` was merged (U2's hall is on it), the tube opens into the Garth. The bulkhead has a face toward the hall, stone round the tube's mouth, and the water's reach ends at the door's plane (`uSwEnd`). Frames: `v17-U1-r8-in7-door.png` (from the tube) and `v17-U1-r8-in8-from-hall.png`. After that change, edges was 214 PASS; geometry kept the same three open backs.
+
 ## Frames (`shots/wip/`)
 
 - `v17-U1-r4-*` and `v17-U1-r4-sheet.png`: the fixed views and six inside views.
@@ -48,7 +52,6 @@ Draw calls on low (views.mjs): the tube has 135–174 against the Wellward Way's
 
 - The pool's underside edges near the head.
 - The head is dark at low.
-- The tube end is open until U2's hall is merged.
 - The roar is A1's.
 
 `?pos=-95,297&yaw=3.14` on 8123, then walk south.
