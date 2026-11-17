@@ -6,9 +6,11 @@
 // The ribbon follows the river's (water/river.js): flow coordinates per vertex (s downstream, d across), the two-phase
 // flow map so a change of speed never shears the pattern, the sky and the mountain ring in the reflection; its edge is
 // the depth over the drawn terrain (meshHeightSampler), not heightAt, with a soft backstop at the stream's own edge.
-// What is its own: white water below every step (the kit's ROUGH, carried a few metres down), riffle lines that run
-// down the quick water, pale so a stream reads in the south trough's shadow from the deck and from 30 m, a still look in
-// the pools, and a fade at each end where the stream gives itself to the tarn and the mere.
+// What is its own: one dark slate-green glass, near opaque, carrying the cold sky (the sun's ember only in its glitter
+// path); flow as a few long soft streaks drawn out along the stream, a little lighter than the body; white only where
+// the water breaks (a wavering line at a step's lip, a short fan below it dying within a metre or two, a thin line where
+// swift water meets a block); a still look in the pools; and a fade at each end where the stream gives itself to the
+// tarn and the mere. All of it reads the kit's own SPEED and ROUGH, so any stream put on the kit looks the same.
 import * as THREE from 'three';
 import { STREAMS, STILLS } from './bodies.js';
 import { meshHeightSampler } from '../water/river.js';
@@ -73,62 +75,67 @@ const FRAG = /* glsl */`
     float fF0 = fract(t / FLOW_T + fJit), fF1 = fract(fF0 + 0.5);
     float fT0 = fF0 * FLOW_T, fT1 = fF1 * FLOW_T, fW0 = 1.0 - abs(2.0 * fF0 - 1.0);
     float fNorm = inversesqrt(fW0 * fW0 + (1.0 - fW0) * (1.0 - fW0));
-    vec2 a = mix(slope2(vec2(d * 0.21 + 0.43, (s - sp * fT1) * 0.11 + 0.29)), slope2(vec2(d * 0.21, (s - sp * fT0) * 0.11)), fW0);
-    vec2 b = mix(slope2(vec2(d * 0.5 + 0.74, (s - sp * 1.2 * fT1) * 0.27 + 0.53)), slope2(vec2(d * 0.5 + 0.31, (s - sp * 1.2 * fT0) * 0.27)), fW0);
-    vec2 c = mix(slope2(vec2(d * 1.1 + 0.19, (s - sp * 0.9 * fT1) * 0.62 + 0.67)), slope2(vec2(d * 1.1 + 0.7, (s - sp * 0.9 * fT0) * 0.62)), fW0);
+    // the slopes drawn out along the flow (about 8 to 1): the surface's ridges run down the stream, so what it carries of
+    // the sky slides as long soft streaks, never as flecks
+    vec2 a = mix(slope2(vec2(d * 0.34 + 0.43, (s - sp * fT1) * 0.08 + 0.29)), slope2(vec2(d * 0.34, (s - sp * fT0) * 0.08)), fW0);
+    vec2 b = mix(slope2(vec2(d * 0.8 + 0.74, (s - sp * 1.2 * fT1) * 0.2 + 0.53)), slope2(vec2(d * 0.8 + 0.31, (s - sp * 1.2 * fT0) * 0.2)), fW0);
+    vec2 c = mix(slope2(vec2(d * 1.7 + 0.19, (s - sp * 0.9 * fT1) * 0.21 + 0.67)), slope2(vec2(d * 1.7 + 0.7, (s - sp * 0.9 * fT0) * 0.21)), fW0);
     // a slow drift of its own in the pools (they turn, they do not run)
     vec2 sw = slope2(vec2(P.x * 0.07 + t * 0.008, P.z * 0.07 - t * 0.006));
-    float amp = (0.06 + 0.07 * sp + rough * 0.18) * (1.0 - 0.6 * still);
-    vec2 sl = (a * 0.5 + b * 0.45 + c * 0.35 * far) * amp * fNorm + sw * (0.02 + 0.02 * still);
-    // the bed's stones under the quick water stand the surface up in waves that stay put
-    sl.y += sin(s * 2.4 + d * 0.9 + mask(vec2(d * 0.3, s * 0.05)) * 6.0) * 0.035 * smoothstep(0.5, 1.6, sp);
+    float amp = (0.035 + 0.035 * sp + rough * 0.12) * (1.0 - 0.6 * still);
+    vec2 sl = (a * 0.6 + b * 0.3 + c * 0.12 * far) * amp * fNorm + sw * (0.02 + 0.02 * still);
     vec3 T = vec3(vTan.x, 0.0, vTan.y), B = vec3(vTan.y, 0.0, -vTan.x);
     vec3 N = normalize(vec3(0.0, 1.0, 0.0) - B * sl.x - T * sl.y);
 
     float NV = max(dot(N, V), 0.0);
     float fres = clamp((0.04 + 0.96 * pow(1.0 - NV, 4.0)) * 1.1, 0.0, 1.0);
     vec3 R = reflect(-V, N); R.y = abs(R.y);
-    vec3 refl = skyCol(R) * 0.85;
+    // glass at walking height shows the pale band low over the horizon more than the zenith: the sky is read a little
+    // lower than the ray, so the water stands lighter than its banks
+    vec3 refl = skyCol(normalize(vec3(R.x, R.y * 0.55, R.z))) * 1.05;
     {
       float az = atan(R.z, R.x);
       float crest = 0.13 + 0.07 * sin(az * 7.0 + 1.3) + 0.04 * sin(az * 19.0 + 0.4);
       float mtn = 1.0 - smoothstep(crest - 0.02, crest + 0.02, R.y);
       refl = mix(refl, vec3(0.010, 0.008, 0.014) + uHorizonAway * 0.05, mtn * 0.85);
     }
+    // the sky it carries is the cold sky: the sun's ember belongs only to the glitter path where its reflection lies
+    float lum = dot(refl, vec3(0.3, 0.5, 0.2));
+    refl = mix(refl, lum * vec3(0.78, 0.9, 1.08), 0.7);
     float sd = dot(R, uSunDir);
     refl += uSunCore * smoothstep(0.9948, 0.9972, sd) * 2.4 * uFlicker;
     refl += uSunLight * pow(max(sd, 0.0), 160.0) * 0.9 * uFlicker;
 
-    // body: peat-brown and clear where shallow, so the bed's gravel shows through at the edges
-    vec3 body = uWater * (0.7 + 0.3 * NV) + vec3(0.006, 0.004, 0.002);
+    // body: the lake's and the river's dark slate-green, one unbroken glass over the bed
+    vec3 body = uWater * (0.7 + 0.3 * NV);
     // from above (the Span's deck, 60 m up) the sky's own colour off the moving surface, so it reads as water at all
     float fpUp = smoothstep(12.0, 50.0, cameraPosition.y - P.y);
     // (a floor under the reflection: in the south trough's shade the ground and a near-black body are one dark, and moving
     // water there is seen by the sky it carries, lighter than the bank)
-    vec3 col = mix(body, refl, clamp(max(fres, 0.38) + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
-    float alpha = edge * mix(0.5, 0.95, smoothstep(0.08, 0.9, dep));
+    // (held under 0.8 at grazing, so a pool seen edge-on past a step is a band of sky, not a ruled white line)
+    vec3 col = mix(body, refl, clamp(max(min(fres, 0.8), 0.5) + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
+    // opaque in the body (the bed must not show through), thinning only in the last few centimetres of depth at the margins
+    float alpha = edge * mix(0.72, 0.96, smoothstep(0.02, 0.2, dep));
     alpha = mix(alpha, 1.0, fres * 0.6 * edge);
 
-    // white water: churn below a step, riffle lines down the quick water, a line along the swift edges
-    float streak = mix(mask(vec2(d * 1.1 + 0.37, (s - sp * fT1) * 0.3 + 0.41)) * 0.55 + mask(vec2(d * 2.6 + 0.83, (s - sp * 1.15 * fT1) * 0.8 + 0.17)) * 0.45,
-                       mask(vec2(d * 1.1, (s - sp * fT0) * 0.3)) * 0.55 + mask(vec2(d * 2.6 + 0.4, (s - sp * 1.15 * fT0) * 0.8)) * 0.45, fW0);
-    float churn = mix(mask(vec2(d * 0.9 + t * 0.07 + 0.59, (s - sp * 1.3 * fT1) * 0.7 + 0.23)) * 0.5 + mask(vec2(d * 2.2 + 0.31, (s - sp * 1.6 * fT1) * 1.7 + 0.71)) * 0.5,
-                      mask(vec2(d * 0.9 + t * 0.07, (s - sp * 1.3 * fT0) * 0.7)) * 0.5 + mask(vec2(d * 2.2, (s - sp * 1.6 * fT0) * 1.7)) * 0.5, fW0);
-    streak = 0.5 + (streak - 0.5) * fNorm; churn = 0.5 + (churn - 0.5) * fNorm;
-    float foam = smoothstep(0.7 - rough * 0.55, 0.9 - rough * 0.45, churn) * smoothstep(0.02, 0.2, rough);
-    // riffles: thin pale lines drawn out down the stream where it runs (the texture stretched along s)
-    // (drawn out about 3 to 1 along the stream: longer reads as ruled lines from a vanishing point)
-    float rif = mix(mask(vec2(d * 0.9 + 0.13, (s - sp * fT1) * 0.3 + 0.61)), mask(vec2(d * 0.9 + 0.77, (s - sp * fT0) * 0.3)), fW0);
+    // flow: a few long soft streaks, a little lighter than the body, many widths long, sliding down the stream
+    float rif = mix(mask(vec2(d * 0.75 + 0.13, (s - sp * fT1) * 0.022 + 0.61)), mask(vec2(d * 0.75 + 0.77, (s - sp * fT0) * 0.022)), fW0);
     rif = 0.5 + (rif - 0.5) * fNorm;
-    // riffles are not foam: the quick water's surface stood up into ridges that catch the sky, drawn out along the flow,
-    // lighter than the water round them but the sky's colour, not white, and half seen through
-    float riffle = smoothstep(0.6, 0.76, rif) * smoothstep(0.3, 1.2, sp) * (1.0 - still);
-    col = mix(col, skyCol(normalize(vec3(R.x, max(R.y, 0.25), R.z))) * 1.5 + uFoam * 0.06, riffle * 0.55);
-    alpha = max(alpha, riffle * 0.6 * edge);
-    float edgeLine = (1.0 - smoothstep(0.0, 0.18, dep)) * smoothstep(0.8, 1.8, sp) * smoothstep(0.66, 0.82, streak) * 0.25;
+    float riffle = smoothstep(0.55, 0.85, rif) * smoothstep(0.3, 1.2, sp) * (1.0 - still);
+    col = mix(col, refl * 1.3 + vec3(0.01, 0.012, 0.014), riffle * 0.22);
+
+    // white only where the water breaks: a wavering line at a step's lip, a short fan of foam below it, gone in a metre or
+    // two (ROUGH is 1 at the step and halves every 1.5 m), and a thin pale line where swift water meets a block or bank
+    float churn = mix(mask(vec2(d * 0.6 + 0.59, (s - sp * 1.3 * fT1) * 0.16 + 0.23)), mask(vec2(d * 0.6, (s - sp * 1.3 * fT0) * 0.16)), fW0);
+    churn = 0.5 + (churn - 0.5) * fNorm;
+    float lip = smoothstep(0.84, 1.0, rough + (mask(vec2(d * 0.12 + 0.2, s * 0.03 + t * 0.03)) - 0.5) * 0.16) * (0.3 + 0.3 * churn);
+    float fan = smoothstep(0.35, 0.9, rough);
+    float foam = max(lip, fan * fan * (0.25 + 0.6 * smoothstep(0.25, 0.85, churn)));
+    float streak = mix(mask(vec2(d * 1.1 + 0.37, (s - sp * fT1) * 0.12 + 0.41)), mask(vec2(d * 1.1, (s - sp * fT0) * 0.12)), fW0);
+    float edgeLine = (1.0 - smoothstep(0.0, 0.14, dep)) * smoothstep(0.8, 1.8, sp) * smoothstep(0.55, 0.75, streak) * 0.3;
     foam = max(foam, edgeLine) * edge;
     vec3 foamCol = uFoam * (0.35 + 0.65 * uFlicker) * (0.75 + 0.25 * N.y);
-    col = mix(col, foamCol, foam * 0.9);
+    col = mix(col, foamCol, foam * 0.85);
     alpha = max(alpha, foam * 0.95);
 
     gl_FragColor = vec4(col, alpha);
@@ -201,7 +208,7 @@ export function buildV17Water(ctx, tex, stillMat) {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 },
         uSunDir: { value: sunDir.clone() }, uSunCore: { value: C(palette.sunCore) }, uSunLight: { value: C(palette.sunLight) },
         uHorizonSun: { value: C(palette.skyHorizonSun) }, uHorizonAway: { value: C(palette.skyHorizonAway) }, uZenith: { value: C(palette.skyZenith) },
-        uWater: { value: C('#0b0908') }, uFoam: { value: C('#b8aea4') },
+        uWater: { value: C('#0d1311') }, uFoam: { value: C('#b8aea4') },
       }]),
       vertexShader: VERT, fragmentShader: FRAG, fog: true, transparent: true, depthWrite: false,
     });
