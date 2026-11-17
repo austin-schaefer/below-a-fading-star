@@ -17,6 +17,7 @@ import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate Hou
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
+import { PLACES as STANDS } from '../settings.js'; // v16 L5: the settings map's stands, where a visitor is put down
 import { claimedBy } from '../claims.js'; // v15-G1: the claimed ground (the Lappet's, so far: the rest below are still each place's own)
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -158,6 +159,10 @@ export function makeGround(ctx) {
   // Trees placed here are neither drawn nor collided, but keep their place in the placement rng so that every other tree
   // stays where it is: under the court's piers (39 m), inside the lens mount's fins (17 m; 12 when ?tower=v2) the armillary (LANDMARKS.arcature.r) and the mother crystal's foot (MOTHER_FOOT).
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
-  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || !!claimedBy(x, z, r, 'trees'); // (v16 L5: r, the collider's footprint)
+  // (v16 L5) a tree or a bush within a body's width (0.6 m) of a stand on the settings map: the visitor put down there
+  // would stand in it (L3's reshuffle put two by the Laid Sun and the Collation's gap; tools/rocks-test.mjs)
+  const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => [p.x, p.z]);
+  const standNear = (x, z, r) => STAND_XZ.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < (r + 0.6) ** 2);
+  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r); // (v16 L5: r, the collider's footprint)
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

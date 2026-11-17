@@ -11,6 +11,7 @@
 import * as THREE from 'three';
 import { REGIONS, LANDMARKS, CAUSEWAY_V4 } from '../../world.js';
 import { makeSimplex, smoothstep, lerp, hyp } from '../../noise.js';
+import { leadUnder } from '../../v8/clearings.js'; // v16 L5: the walls break where a lead crosses them (after the draws)
 import { groundOf, instanced, stoneMaterial, airMotes, meshStats, compose, vegetationTrees } from './common.js';
 
 const KEY = 'bletting';
@@ -194,7 +195,7 @@ export async function build(ctx) {
         if (!okWall(x, z)) continue;
         const hN = SN.fbm2(x * 0.05 + 3, z * 0.05, 3) * 0.5 + 0.5;
         const courses = Math.round(smoothstep(0.28, 0.6, hN) * 5 + (rng() < 0.1 ? -1 : 0));
-        const y0 = G.heightAt(x, z) - 0.06;
+        const y0 = G.heightAt(x, z) - 0.06, b0 = blocks.length;
         for (let c = 0; c < courses; c++) {
           const sh = 0.2 + rng() * 0.1, sw = 0.45 + rng() * 0.25;
           blocks.push({ x: x + (rng() - 0.5) * 0.06, y: y0 + c * 0.25 + sh * 0.5, z: z + (rng() - 0.5) * 0.06, sx: sw, sy: sh, sz: 0.5 - c * 0.05 + rng() * 0.08, ry: yaw + (rng() - 0.5) * 0.12, rx: (rng() - 0.5) * 0.08, rz: (rng() - 0.5) * 0.1, c: new THREE.Color().setHSL(0.09 + rng() * 0.03, 0.4 + rng() * 0.15, 0.16 + rng() * 0.06) });
@@ -205,6 +206,9 @@ export async function build(ctx) {
           const ox = (rng() - 0.5) * 2.2, oz = (rng() - 0.5) * 2.2;
           blocks.push({ x: x + ox, y: G.heightAt(x + ox, z + oz) + 0.06, z: z + oz, sx: 0.4 + rng() * 0.2, sy: 0.18 + rng() * 0.08, sz: 0.3 + rng() * 0.2, ry: rng() * 6.28, rx: (rng() - 0.5) * 0.5, rz: (rng() - 0.5) * 0.5, c: new THREE.Color().setHSL(0.09, 0.35, 0.14 + rng() * 0.05) });
         }
+        // a lead's tread through the wall (v16 L5: the walls stood across P7 and P8): the stones drawn are dropped, the
+        // draws kept, so the rest of the wall and the region's stream stay where they were
+        if (leadUnder(x, z, 1.2)) { blocks.length = b0; continue; }
         if (courses >= 2 && Math.round(along / 0.55) % 2 === 0) ctx.addCollider({ x, z, r: 0.5, y: y0 - 0.5, h: courses * 0.25 + 0.6 });
         wallLen += 0.55;
       }
