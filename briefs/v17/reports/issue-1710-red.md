@@ -62,19 +62,24 @@ the same fault (the deck and the horizon) and now leans out at (3, 222.8) down t
 end. A trod there is N1's (`brief-v17-N1-dress.md`, item 1). The ascent goes into `FEET_OPEN` with that reason; the
 test's next row fails once a track reaches it, which tells N1 to drop it.
 
-## Found red after merging `origin/next` (A1's sound): not fixed here
+## Found red after merging `origin/next` (A1's sound, W2's leat, T1's type)
 
-- **`src/v17/sound.js` throws on every tick in the tube** ("Failed to execute 'setTargetAtTime' on 'AudioParam': The
-  provided float value is non-finite", `put` at line 122 from line 275). The tube's hiss is made with `placed(...)`
-  directly (line 165), not `mkPlaced`, so `hp.airM` is unset and `put()`'s air lowpass is `exp(-d / undefined)`, NaN.
-  The fix is one assignment, `hp.airM = 60;` after that `placed(...)` (or `p.airM ?? 60` in `put`). Not made: this brief
-  keeps `sound.js` to its owner. It fails `heights` (no page errors, ascents) and **crashes `geometry` at `v17-swallow`**
-  (the page's clock run throws as the walker is stood in the tube), so neither can be green on `next` until it is in.
-- **`heights` cost: the Lonely Staircase's top on low, 369 calls against 364** (main 356 at the same station and heading,
-  yaw 1.57, west). v17's draws there, by `tools/heights-cost.mjs --only=stair`: the sphere 8 calls (556 m off), the Swallow
-  3, the water. Not changed: what to drop from 500 m (the sphere's parts, earth and lip are sub-pixel there, its glass, eye
-  and shaft are what read from the spawn) changes what a visitor sees, so it is the orchestrator's call; the triangles
-  (2.67M) are inside the bound.
+- **`src/v17/sound.js` threw on every tick in the tube** ("Failed to execute 'setTargetAtTime' on 'AudioParam': The
+  provided float value is non-finite", `put` from the tube's hiss). The cause: the hiss's emitter is made with
+  `placed(...)` directly, not `mkPlaced`, so its `airM` was unset and `put()`'s air lowpass was `exp(-d / undefined)`,
+  NaN (`_l` and `_h` from the line were finite). Fixed (the orchestrator's word, once A1 was merged): `hp.airM = 60`,
+  `put()` returns on a non-finite position, and every `setTargetAtTime` in the file goes through `tgt()`, which drops a
+  non-finite value instead of throwing in the frame loop. It had crashed `geometry` at `v17-swallow` (the page's clock
+  run threw with the walker in the tube) and reddened `heights`' page-errors row.
+- **`settings` 86/87, the names row:** of 34 ends of ways up, one has no name: `{"id":"swallow","end":"last","at":[-31.5,
+  317.7,-24],"name":null}`, the tube's end at the Garth's door. Nothing else in the row. Left for N1 (the names).
+- **`heights` cost, the Lonely Staircase's top on low: 369 to 371 calls against 364** (main 356). By
+  `tools/heights-cost.mjs --only=stair --modules=80` on this branch and main: new at the worst heading are the sphere 8
+  calls (556 m off), the Swallow 3, the leat 1 (it is one mesh already: nothing to merge), and `water` 10 against main's
+  3 (the v17 ribbon and still water among them); the other modules move a few calls either way with the heading. The
+  triangles (2.5 to 2.67M) are inside the bound. Not changed: dropping the sphere's inside (its parts, earth and lip, 3
+  calls) or the Swallow from past 400 m changes what a visitor sees from the high stands, and moving the ceiling to
+  about 372 is a budget call; both are the orchestrator's.
 
 ## Commands and counts
 
