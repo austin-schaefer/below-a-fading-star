@@ -532,6 +532,9 @@ export const LAMPS = [
 // checks it is joined, lit (a lamp within 9 m of every 3 m of it) and never narrower than 1.5 m.
 export const SPINE = {
   from: [...at(1, STAIR.s, -9), 'crown'], to: [HOUSE.door.x + 0.3, HOUSE.door.z + 1.9, 'foot'],
+  // (v15-W7) where a visitor coming along the crown from the keep's end stands with the village before them (the cold
+  // critic's start): from here the stair's head must be met before any drop (tools/ways-test.mjs crown rows)
+  arrive: at(1, 18, -10),
   legs: [
     { way: 'heliarch-head-west' }, { pts: [[...at(1, STAIR.s - 5.4, -1.2), 'high']] }, // (off the flight's foot and out onto the causeway, clear of its flank)
     { way: 'heliarch-upper' }, { way: 'timber-patch' }, { way: 'heliarch-foot' },

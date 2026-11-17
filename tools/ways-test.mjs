@@ -327,6 +327,115 @@ const r = await page.evaluate(async () => {
     find.push({ row: 'spine', tag: `lit: a lamp within 9 m of every 3 m (${along.toFixed(0)} m of it)`, ok: !dark.length, detail: dark.slice(0, 30).join('; ') + (dark.length > 30 ? ` and ${dark.length - 30} more` : '') });
     find.push({ row: 'spine', tag: '1.5 m wide where it is walked on a level', ok: !narrow.length, detail: narrow.slice(0, 30).join('; ') + (narrow.length > 30 ? ` and ${narrow.length - 30} more` : '') });
   }
+  // ---- (v15-W7: the cold critic, "every flight's foot is hidden behind its own side wall", and the crown walked off)
+  // A walker driven on the controls' own update, the keys held and the look steered, nothing teleported once placed.
+  const p = fp.player, DT = 1 / 60;
+  fp.events.dispatchEvent(new CustomEvent('begin'));
+  const ticks = all.filter((o) => o.w.tick).map((o) => o.w.tick);
+  const ladderOn = () => fp.ladders?.list?.some((d) => d.state && d.state().on);
+  function drive(x, z, y, steer, secs, until) {
+    const r0 = fp.controls.placeAt(x, z, y); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW');
+    const f0 = r0.y; let low = f0, lowAt = null, still = 0, lx = p.pos.x, lz = p.pos.z, out = null;
+    for (let i = 0; i < secs * 60; i++) {
+      const yaw = steer(p.pos.x, p.pos.z, i); if (yaw === null) { out = 'done'; break; } p.yaw = yaw;
+      fp.controls.update(DT); for (const t of ticks) t();
+      const feet = p.pos.y - p.eye;
+      if (!p.carried && feet < low - 0.05) { low = feet; lowAt = [p.pos.x, p.pos.z]; }
+      if (until && until(p.pos.x, p.pos.z, feet)) { out = 'until'; break; }
+      if (i % 60 === 59) { still = Math.hypot(p.pos.x - lx, p.pos.z - lz) < 0.25 && !p.carried ? still + 1 : 0; lx = p.pos.x; lz = p.pos.z; if (still >= 2) { out = 'stuck'; break; } }
+    }
+    const res = { out, x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, drop: f0 - low, lowAt, carried: !!p.carried };
+    p.keys.clear(); if (p.carried) { fp.controls.placeAt(x, z, y); } // (let go of a ladder taken)
+    return res;
+  }
+  const toward = (tx, tz) => () => Math.atan2(-(tx - p.pos.x), -(tz - p.pos.z));
+  const fmt = (x, z) => `(${x.toFixed(1)}, ${z.toFixed(1)})`;
+  // seen and walked: from each end of each way (not the ladders: their own row), points on the level 7 m out at 45, 90
+  // and 135 degrees either side of the way out, reached on foot from the end; from each, (seen) a ray from the eye to
+  // the way's first tread (the floor's first change from the end's level, inward, anywhere across the way) is not
+  // stopped by anything drawn within 2.4 m of the way's own line; (walked) a walker steered straight at that tread, then
+  // along the way, comes out at its other end
+  const rc = new THREE.Raycaster(), o3 = new THREE.Vector3(), d3 = new THREE.Vector3();
+  const nearLine = (path, x, z, R) => { for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1], dx = b[0] - a[0], dz = b[1] - a[1], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) < R) return true; } return false; };
+  const sight = (ex, ey, ez, tx, ty, tz) => { o3.set(ex, ey, ez); d3.set(tx - ex, ty - ey, tz - ez); const L = d3.length(); d3.normalize(); rc.set(o3, d3); rc.far = L - 0.3; const h = rc.intersectObjects(meshes, false)[0]; return h ? { x: h.point.x, y: h.point.y, z: h.point.z, name: h.object.name || h.object.type } : null; };
+  for (const { w, ends } of all) {
+    if (w.tick) continue;
+    ends.forEach((e, ei) => {
+      const tag = `${w.id} ${ei ? 'top' : 'foot'}`, other = ends[1 - ei], [mx, mz] = e.at;
+      const inw = ei ? nrm(v(w.path[e.k], w.path[e.k - 1])) : nrm(v(w.path[e.k], w.path[e.k + 1]));
+      // the first tread: inward from the end until the floor leaves the end's level
+      let t0 = null;
+      for (let s = 0; s <= 2.5; s += 0.05) { const f = C.floorAt(mx + inw[0] * s, mz + inw[1] * s, e.y + 0.6); if (Math.abs(f.y - e.y) > 0.1) { t0 = { s: s + 0.1, y: C.floorAt(mx + inw[0] * (s + 0.1), mz + inw[1] * (s + 0.1), e.y + 0.6).y }; break; } }
+      if (!t0) { find.push({ row: 'seen', tag, ok: true, detail: 'level all the way (a bridge): no tread' }); return; }
+      const cx = mx + inw[0] * t0.s, cz = mz + inw[1] * t0.s, tread = [];
+      for (let u = -3; u <= 3.001; u += 0.2) { const x = cx - inw[1] * u, z = cz + inw[0] * u, f = C.floorAt(x, z, t0.y + 0.3); if (Math.abs(f.y - t0.y) < 0.08) tread.push([x, Math.max(f.y, e.y) + 0.35, z, Math.abs(u)]); }
+      tread.sort((a, b) => a[3] - b[3]);
+      const lineOf = w.path.slice(Math.min(e.k, other.k), Math.max(e.k, other.k) + 1);
+      const fl = reach(mx + e.dir[0] * 0.3, mz + e.dir[1] * 0.3, e.y, 8.6, 30000);
+      const seenBad = [], walkBad = [], views = [];
+      for (const sd of [-1, 1]) for (const [deg, dist] of [[45, 4], [45, 7], [90, 7], [135, 7]]) {
+        const a = sd * deg * Math.PI / 180, ux = e.dir[0] * Math.cos(a) - e.dir[1] * Math.sin(a), uz = e.dir[0] * Math.sin(a) + e.dir[1] * Math.cos(a);
+        const vx = mx + ux * dist, vz = mz + uz * dist, f = C.floorAt(vx, vz, e.y + 0.5);
+        if (Math.abs(f.y - e.y) > 0.3 || houseIn(vx, vz, e.y) || roofed(vx, vz, f.y) || !flooded(fl, mx + e.dir[0] * 0.3, mz + e.dir[1] * 0.3, vx, vz, 0.4)) continue;
+        // the eye at 1.6 m; the tread seen where nothing of the way's own stands between
+        let seen = null, own = null;
+        for (const q of tread) { const h = sight(vx, f.y + 1.6, vz, q[0], q[1], q[2]); if (!h) { seen = q; break; } if (!own && nearLine(lineOf, h.x, h.z, 2.4)) own = h; }
+        const label = `${sd < 0 ? 'L' : 'R'}${deg}${dist < 7 ? `@${dist}` : ''} ${fmt(vx, vz)}`;
+        views.push(label);
+        if (!seen && own) seenBad.push(`${label}: ${own.name} at ${fmt(own.x, own.z)} y ${own.y.toFixed(1)}`);
+        // walked: at the seen tread (or the tread's middle), then along the way to its other end
+        const far = ei ? w.path[0] : w.path[w.path.length - 1];
+        const tq = seen || tread[0], legs = [[tq[0], tq[2]], ...(ei ? lineOf.slice().reverse() : lineOf).slice(1).map((q) => [q[0], q[1]]), [far[0], far[1]]];
+        let leg = 0;
+        const r = drive(vx, vz, f.y, (x, z) => { while (leg < legs.length && Math.hypot(legs[leg][0] - x, legs[leg][1] - z) < 0.5) leg++; return leg >= legs.length ? null : Math.atan2(-(legs[leg][0] - x), -(legs[leg][1] - z)); }, 30,
+          (x, z, feet) => Math.hypot(x - other.at[0], z - other.at[1]) < 0.8 && Math.abs(feet - other.y) < 0.35);
+        const ok = (r.out === 'until' || r.out === 'done') && Math.abs(r.feet - other.y) < 0.4;
+        if (!ok) walkBad.push(`${label}: ${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}`);
+      }
+      find.push({ row: 'seen', tag, ok: !seenBad.length, detail: seenBad.length ? seenBad.join('; ') : `${views.length} views` });
+      find.push({ row: 'walked', tag, ok: !walkBad.length, detail: walkBad.length ? walkBad.join('; ') : `${views.length} walks` });
+    });
+  }
+  // ladders: walked into from 3 m out (straight, and 35 and 70 degrees off, either side), then pushed into, the
+  // walker takes hold; and stood beside its foot or in behind it against the wall (the critic, at the rim's ladder:
+  // "the frame fills with flat violet and E offers nothing"), facing the wall and walking, the walker takes hold
+  for (const d of fp.ladders?.list || []) {
+    if (!d.climb || !d.take || !d.n) continue;
+    const [nx, nz] = d.n, y0 = d.foot[2], [kx, kz] = d.take, bad = [];
+    const tries = [0, 35, -35, 70, -70].map((deg) => { const a = deg * Math.PI / 180; return [`${deg}`, kx + (-nx * Math.cos(a) + nz * Math.sin(a)) * 3, kz + (-nz * Math.cos(a) - nx * Math.sin(a)) * 3, false]; });
+    for (const u of [-0.8, -0.5, 0.5, 0.8]) for (const a of [0, 0.3]) tries.push([`beside ${u > 0 ? '+' : ''}${u}${a ? ' in' : ''}`, kx - nz * u + nx * a, kz + nx * u + nz * a, true]);
+    for (const [lab, vx, vz, stand] of tries) {
+      const f = C.floorAt(vx, vz, y0 + 0.5); if (Math.abs(f.y - y0) > 0.3 || !free(colsNear(vx, vz, 1), vx, vz, f.y)) continue;
+      let took = false;
+      const r = drive(vx, vz, y0, (x, z) => (stand || Math.hypot(x - kx, z - kz) < 1.0 ? Math.atan2(-nx, -nz) : Math.atan2(-(kx - x), -(kz - z))), stand ? 1.5 : 6, () => (took = took || !!(d.state().on)));
+      if (!took) bad.push(`${lab}: ${r.out || 'time'} at ${fmt(r.x, r.z)}`);
+    }
+    find.push({ row: 'ladder', tag: `${d.id} taken when walked into`, ok: !bad.length, detail: bad.join('; ') });
+  }
+  // the crown: from the keep's end (SPINE.arrive), W held at every yaw within 40 degrees of the stair head's bearing
+  // (and the critic's own line), no drop over 1.2 m before the walker is at the head; and along the whole rim, walked
+  // straight out at it from 3 m in, nobody goes over where there is no way down
+  if (P.SPINE?.arrive) {
+    const [ax, az] = P.SPINE.arrive, hd = all.find((o) => o.w.id === 'heliarch-head-west'), Y = P.LEVEL.crown.y;
+    const head = P.at(P.STAIR.run, P.STAIR.s, P.RISERS[0].D + 1), b0 = Math.atan2(-(head[0] - ax), -(head[1] - az));
+    const atHead = (x, z, feet) => Math.abs(feet - Y) < 0.3 && (p.onStack?.name || '').startsWith('heliarch-head') || Math.hypot(x - head[0], z - head[1]) < 1.6;
+    for (const [lab, yaw] of [...[-40, -30, -20, -10, 0, 10, 20, 30, 40].map((d) => [`${d >= 0 ? '+' : ''}${d}`, b0 + d * Math.PI / 180]), ['the critic\'s line', 0.2]]) {
+      const r = drive(ax, az, Y, () => yaw, 14, atHead);
+      find.push({ row: 'crown', tag: `from the keep's end at ${lab} (yaw ${yaw.toFixed(2)})`, ok: r.drop <= 1.2, detail: `${r.drop > 1.2 ? `fell ${r.drop.toFixed(1)} m at ${fmt(...r.lowAt)}` : r.out === 'until' ? 'at the head' : `held at ${fmt(r.x, r.z)}`}` });
+    }
+    void hd;
+    const over = [];
+    for (const run of [1, 2]) {
+      const R = P.RUN[run], s0 = run === 1 ? P.FADE.s1[0] + 3 : P.cornerS(2, P.RISERS[0].D), s1 = run === 1 ? P.cornerS(1, P.RISERS[0].D) : P.FADE.s2[0] + 4;
+      for (let s = s0; s <= s1; s += 1.5) {
+        const [x, z] = P.at(run, s, P.RISERS[0].D - 3), [ox, oz] = P.at(run, s, P.RISERS[0].D + 2);
+        if (Math.abs(C.floorAt(x, z, Y + 0.5).y - Y) > 0.3 || C.floorAt(ox, oz, Y + 0.5).y > Y - 1.2 || !free(colsNear(x, z, 1), x, z, Y)) continue;
+        const r = drive(x, z, Y, () => Math.atan2(-R.n[0], -R.n[1]), 5);
+        if (r.drop > 1.2 && !r.carried) over.push(`s ${s.toFixed(1)} ${fmt(x, z)} fell ${r.drop.toFixed(1)}`);
+      }
+      find.push({ row: 'crown', tag: `the rim of run ${run}: walked straight at it, nobody goes over but by a way`, ok: !over.length, detail: over.splice(0).join('; ') });
+    }
+  }
   return { table, find, n: ways.length, paths: ways.map((w) => ({ id: w.id, path: w.path })) };
 });
 if (r.missing) { console.log(`FAIL ways: ${r.missing} is missing`); process.exit(1); }
@@ -334,7 +443,7 @@ console.log(`${r.n} ways in the village:`);
 for (const t of r.table) console.log(`  ${t.id.padEnd(22)} ${t.levels[0].padEnd(6)} (${t.ends[0].join(', ')})  ->  ${t.levels[1].padEnd(6)} (${t.ends[1].join(', ')})`);
 let pass = 0, fail = 0;
 const check = (ok, name, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? '  ' + detail : ''}`); ok ? pass++ : fail++; };
-for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom', 'spine']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
+for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom', 'spine', 'seen', 'walked', 'ladder', 'crown']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
 const dbl = r.find.filter((q) => q.row === 'doubled');
 check(!dbl.length, 'doubled: no two ways join the same levels within 6 m at both ends', dbl.map((q) => `${q.tag} (${q.detail})`).join('; '));
 check(r.n >= 15, `the village registers its ways (${r.n})`); // (v15-W4 took four out)
