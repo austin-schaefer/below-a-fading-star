@@ -291,13 +291,13 @@ export function floorCharacter(x, z, out = _fc) {
   // a slow patchiness, so no band is ruled
   const n = 0.5 + 0.5 * SN.noise2(x * 0.023 + 11.3, z * 0.023 - 4.1);
   // the low west and south: wetter, greener
-  let wet = (1 - smoothstep(-170, -15, u)) * (0.45 + 0.45 * n);
+  let wet = (1 - smoothstep(-140, 0, u)) * (0.5 + 0.5 * n);
   // the old strand: its face and lip pale shingle, its foot wet
   let strand = 0;
   const su = u - STRAND;
   if (su > -STRAND_REACH - 14 && su < STRAND_REACH + 6) {
     const e = su + STRAND_WOB * SN.noise2(x * 0.011 + 3.7, z * 0.011 - 1.3);
-    strand = 1 - smoothstep(1.5, 6.5, Math.abs(e - 1.5));
+    strand = 1 - smoothstep(3, 9, Math.abs(e - 1));
     wet = Math.max(wet, smoothstep(-16, -7, e) * (1 - smoothstep(-6, -2.5, e)) * (0.55 + 0.35 * n));
   }
   // the whalebacks: crests bleak, the down-ice tails dark with ling
