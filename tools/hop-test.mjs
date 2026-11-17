@@ -105,10 +105,14 @@ const R = await page.evaluate(() => {
     // a run: the neighbours that continue it, so three steps stay on the wall
     const after = (q) => q && C.find((o) => o !== q && o.mod === q.mod && o.len !== undefined && Math.hypot(o.x1 - q.x2, o.z1 - q.z2) < 0.01 && level(o));
     if (!after(after(after(c)))) return null;
+    // and straight: the walk goes along the first stone's line, so a run that bends on a swell's flank (v16: the floor's
+    // whaleback under the Lynchets curves its terraces) walks off the top for want of steering, not of a top
+    for (let q = after(c); q !== after(after(after(c))); q = after(q)) if (q.ux * c.ux + q.uz * c.uz < 0.995) return null;
     // the approach from either side whose ground is level with the wall's foot (a lynchet's wall holds up a terrace)
     for (const s of [1, -1]) {
       const [nx, nz] = perp(c).map((v) => v * s), g = T.heightAt(c.x, c.z);
       if (Math.abs(T.heightAt(c.x + nx * 1.5, c.z + nz * 1.5) - g) > 0.2 || Math.abs(T.heightAt(c.x + nx * 3.5, c.z + nz * 3.5) - g) > 0.3) continue;
+      if (T.heightAt(c.x - nx * 1.5, c.z - nz * 1.5) > topOf(c, c.x, c.z) - 0.5) continue; // the far side is lower than the top (where the tread behind stands level with it, a step along the top is no step off it)
       if (clearLine(c, c.x, c.z, nx, nz, c.r + 0.9, c.r + 3.5, g) && clearLine(c, c.x, c.z, -nx, -nz, c.r + 0.9, c.r + 2, T.heightAt(c.x - nx, c.z - nz))) return [c.x, c.z, nx, nz, { along: [c.ux, c.uz] }];
     }
     return null;
@@ -142,8 +146,9 @@ const R = await page.evaluate(() => {
     }
     return null;
   });
-  // a fallen gnomon, from its side
-  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2).sort((a, b) => b.len - a.len), (c) => {
+  // a fallen gnomon, from its side (whose top stands 0.38 m over the ground: a lower one is a step, no stop; v16's floor
+  // laid a longer one at 0.34 on a slope)
+  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2 && c.y + c.h - T.heightAt(c.x, c.z) > 0.38).sort((a, b) => b.len - a.len), (c) => {
     const ex = c.x1 + c.ux * c.len * 0.1, ez = c.z1 + c.uz * c.len * 0.1;
     for (const s of [1, -1]) {
       const [nx, nz] = perp(c).map((v) => v * s), g = T.heightAt(c.x, c.z);

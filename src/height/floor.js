@@ -37,7 +37,7 @@ const BACKS = [
   { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },
   { x: -180, z: -128, stoss: 45, lee: 80, w: 30, h: 4.8 }, // under the Lynchets: its terraces climb its flank
   { x: -128, z: -176, stoss: 36, lee: 64, w: 22, h: 4.0 },
-  { x: 168, z: -40, stoss: 55, lee: 100, w: 30, h: 4.6 }, // under the Bletting's hedges
+  { x: 150, z: -72, stoss: 42, lee: 72, w: 22, h: 3.6 }, // under the Bletting's hedges (clear of High Ling's skirt: the heights test's beam stands at (186-210, -12))
   { x: 136, z: -168, stoss: 32, lee: 58, w: 22, h: 3.8 },
   { x: 70, z: -128, stoss: 34, lee: 56, w: 21, h: 3.6 },
   { x: -10, z: -60, stoss: 28, lee: 50, w: 16, h: 2.6 },
@@ -124,7 +124,8 @@ export function floorMask(x, z) {
 function forms(x, z, u) {
   // the fall itself, its height wandering slowly
   const ramp = smoothstep(U0, U1, u);
-  let f = ramp > 0 ? ramp * (RISE + 1.2 * SN.fbm2(x * 0.006, z * 0.006, 2)) : 0;
+  // (two long crossed waves, not a noise: heightAt is the hottest call in the walk, and a wave of 500 m reads the same)
+  let f = ramp > 0 ? ramp * (RISE + 1.2 * Math.sin(x * 0.0113 + 1.3) * Math.sin(z * 0.0091 - 0.7)) : 0;
   // the old strand's bank
   const su = u - STRAND;
   if (su > STRAND_REACH) f += BANK;
