@@ -131,4 +131,19 @@ Next: V3 and L5 as they report (tests here, merge). Then one re-record of `seams
 
 Next: L5's hand-back (tests here, merge), the re-record of `seams` and `geometry`, the whole suite on `next` as the gate, the note, the PR.
 
+**2026-11-17, 03:05 PST. Everything is on `next`. The batch's whole suite is running; four tests are known red and have an agent.**
+
+- **L5 merged** (opus, 95 min): the fen's review, both blockers and items 3 to 9. Water: no dry cell under a body's level beside a wet one (an `outline` row holds every body to it), no wet cell more than 0.5 m over the water. Trees and bushes ask the leads' claim by footprint (`rocks` 38/0, not re-baselined); clearings wander outward only; P14 and P21 mended; P17 and P23 rerouted (`roads` 64/0 on its branch). **Cost, the promise not fully kept** (`tools/height-speed.mjs`, 1e6 calls, five interleaved runs, medians, against `origin/main`): `heightAt` over the valley 1.08, in the fen's box 0.95; `biomeAt` 1.07 / 0.91; `regionAt` 0.89 / 0.78; `waterLevelAt` 0.71 / 1.02. The valley's 8% is the floor's block (0.10 µs a call). Against that, P1 halved the walker's update and took 10 draws from most views; the frame is what `perf` and the bench in the gate measure. L5's own round was not given a second cold review (the suite and the critic stand in).
+- **The curator** (sonnet): thirty keepers committed, stage 99 (`shots/99-*`), three of v15's leftovers as stage 98. The fen's after frame replaced with L5's.
+- **The batch's suite** on `next`: started 03:04, `/tmp/suite-v16-batch1.log`, with the critic's and one agent's browsers beside it (a failure is rerun alone before it is believed).
+- **Known red on `next`:** `geometry` (about 18 places: scatter reshuffled, to be judged row by row, not recorded wholesale), `seams` (ceiling 79/425/224 against 64/344/228), `walkers` 18/20, `canyon` 12/13 (`?reach=0`): since which merge is not known.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| B1 the baselines and the red tests: judge every new `geometry` row, find the new seams, bisect `walkers` and `canyon` | `issue-1611-baselines` | 8169 | opus |
+| the critic | `issue-1610-critic` | 8170 | opus |
+
+Next: read the batch's summary; B1 and the critic's blocking findings in; then the gate on a quiet machine, the note, the PR.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
