@@ -397,8 +397,7 @@ export async function build(ctx) {
   // the glass into the opened bowl: the line's mouth low in the glass on the Garth's side, its iris shutter turned
   // shut, a long spindle from the node down to the shutter's gear (the wheel in his hands works it: he is holding
   // it shut), and round its edge a crescent of noon still leaking out down the line toward the Garth, the little the
-  // garden lives on. A ladder down the glass from the ground line to the shutter, which he no longer climbs; and
-  // beside it, scratched into the glass's lime in rows going down, his tally of the noons he has kept. All in the
+  // garden lives on. A ladder down the glass from the ground line to the shutter, which he no longer climbs. All in the
   // parts' one draw; the leak glows by the baked noon (no light of its own), the rest dim (the noon falls on him,
   // not down here)
   {
@@ -446,22 +445,6 @@ export async function build(ctx) {
     for (const s of [-1, 1]) for (let k = 0; k < nSeg; k++) { const e0 = ladTop + (ladBot - ladTop) * k / nSeg, e1 = ladTop + (ladBot - ladTop) * (k + 1) / nSeg; rod(onGl(ldir(e0, s), 0.22), onGl(ldir(e1, s), 0.22), 0.045, BR); }
     for (let el = ladTop - 0.03; el > ladBot; el -= 0.4 / R) rod(onGl(ldir(el, -1), 0.22), onGl(ldir(el, 1), 0.22), 0.035, BR);
     for (const el of [ladTop - 0.02, (ladTop + ladBot) / 2, ladBot + 0.02]) for (const s of [-1, 1]) rod(onGl(ldir(el, s), 0.22), onGl(ldir(el, s), 0.02), 0.02, BR); // its brackets to the glass
-    // the tally: rows of fives scratched in the lime on the glass beside the ladder, going down, the lower rows newer
-    {
-      const tb = lb + 0.2, rows = 18, groups = 6;
-      for (let r = 0; r < rows; r++) {
-        const el = ladTop - 0.06 - r * 0.7 / R; if (el < ladBot + 0.05) break;
-        for (let g = 0; g < groups; g++) {
-          if (r === rows - 1 && g > 3) break;
-          for (let k = 0; k < 5; k++) {
-            const az = tb + (g * (0.62 + 0.12 * h1(r * 13 + g)) + k * (0.09 + 0.03 * h1(r * 5 + g * 3 + k))) / (R * Math.cos(el)), d0 = new THREE.Vector3(Math.cos(el + 0.27 / R) * Math.cos(az), Math.sin(el + 0.27 / R), Math.cos(el + 0.27 / R) * Math.sin(az)), d1 = new THREE.Vector3(Math.cos(el - 0.27 / R) * Math.cos(az), Math.sin(el - 0.27 / R), Math.cos(el - 0.27 / R) * Math.sin(az));
-            const slash = k === 4, a0 = slash ? new THREE.Vector3(Math.cos(el + 0.24 / R) * Math.cos(az - 0.42 / (R * Math.cos(el))), Math.sin(el + 0.24 / R), Math.cos(el + 0.24 / R) * Math.sin(az - 0.42 / (R * Math.cos(el)))) : d0;
-            if (h1(r * 31 + g * 7 + k) < 0.12) continue; // (worn off in places)
-            rod(onGl(a0, 0.03), onGl(d1, 0.03), 0.018, LIME, 0.12);
-          }
-        }
-      }
-    }
     glowK = 1;
   }
   add(new THREE.Mesh(B.geometry(), umat('sphere-parts', { roughness: 0.55, side: THREE.DoubleSide })), 'sphere-parts');

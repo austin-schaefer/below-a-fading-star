@@ -32,7 +32,7 @@ Whether he is dead; whether he shut it for himself or to save the last of it; wh
 
 - Two accounts of what stopped the line would be very like this world: the Noon Road's broken tubes and black water say the line broke; this says it was shut. Both can be true.
 - The hoops point west-south-west, at the Garth across the valley. The garden's lens is fed from the west. Is there a length of tube under the moor between, still holding a little noon?
-- The iris leaks. A crescent of noon gets past its edge and down the line: is that his hand tiring, the leaves worn, or something he lets through on purpose for the garden? And the tally beside the ladder stops a row short of the iris: when did he stop climbing down to count?
+- The iris leaks. A crescent of noon gets past its edge and down the line: is that his hand tiring, the leaves worn, or something he lets through on purpose for the garden?
 
 ## Log
 
@@ -40,4 +40,4 @@ Whether he is dead; whether he shut it for himself or to save the last of it; wh
 - 2026-11-17, v17 S1: built at the table's site (the spawn's frame held: the ball is small and far dimmer than the sun). Changed from the story as written: he sits under an eye in the top of the glass and the noon falls on him in a shaft (the eye of the visitor goes where the light is); he faces south-east, down the line, and is 6 m east of the centre; the node's lines are gone with the tube, and he and his wheel are the only thing at the middle. Not built: getting in.
 - 2026-11-17, v17 N1: named for the visitor the Shuttered Noon (the man at the wheel stays the story's title, not a name a visitor meets); a card and a map entry, `line` empty; the trod P56 off the Taker's road to the glass.
 - 2026-11-17, issue-1722: moved to the east wall's foot (292, 108) on the owner's word; the walls round it fitted to the glass (a walker comes to 0.5 m of it on every side), every stay ends on a fitting (the ring over his head, the seat's rim, the node, an eye on the glass), and a heaped bank of earth and heather closes the join where the glass meets the ground.
-- 2026-11-17, issue-1724: the works under the ground line built for the owner's "payoff for going to the edge" (the mouth, the iris, the leak, the spindle, the ladder, the tally); a first blade of light lying down the glass from the leak read as a cursor and went.
+- 2026-11-17, issue-1724: the works under the ground line built for the owner's "payoff for going to the edge" (the mouth, the iris, the leak, the spindle, the ladder; a tally scratched beside the ladder was cut on the owner's word: no more tally marks); a first blade of light lying down the glass from the leak read as a cursor and went.
