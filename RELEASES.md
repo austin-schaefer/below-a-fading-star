@@ -38,6 +38,75 @@ Known issues: the tilt of the valley is gentle, and from the heights it is easie
 
 <p><img src="shots/99-tarn-above-after.webp" width="24%" alt="Lees Tarn from above, with bays and points where there was a circle"> <img src="shots/99-gutter-moor-dark.webp" width="24%" alt="The moor while the sun gutters: a dark red disc, a pale shore"> <img src="shots/99-stair-head-after.webp" width="24%" alt="The head of the village's main stair between two lamps"> <img src="shots/99-act-letter-sheet.webp" width="24%" alt="The clerk handing over a letter, frame by frame"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 5 hours 51 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 20 | 452.1M | $155 |
+| Fable 5.2 | 1 | 46.1M | $21 |
+| Sonnet 5.5 | 14 | 17.2M | $6 |
+| **Total** | **35** | **515.4M** | **$182** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 46.1M | $21 |
+| v16 L5 fen fixes and height cost | Opus 5.5 | 64.2M | $23 |
+| v16 L4 floor reads | Opus 5.5 | 47.2M | $14 |
+| v16 B1 baselines and red tests | Opus 5.5 | 43.3M | $12 |
+| v16 S2 gutter round two | Opus 5.5 | 42.9M | $14 |
+| v16 P1 performance | Opus 5.5 | 37.8M | $11 |
+| v16 L3 the fen | Opus 5.5 | 33.5M | $12 |
+| v16 F1 critic blocking fixes | Opus 5.5 | 30.6M | $9 |
+| v16 L1 the tilt | Opus 5.5 | 30.1M | $10 |
+| v16 S1 sun gutter | Opus 5.5 | 24.8M | $9 |
+| v16 L2 edge and tarn | Opus 5.5 | 22.7M | $10 |
+| v16 cold critic | Opus 5.5 | 17.6M | $7 |
+| v16 V2 village folk and act | Opus 5.5 | 17.6M | $6 |
+| v16 V1 spine head and act | Opus 5.5 | 16.5M | $5 |
+| v16 L6 floor review leftovers | Sonnet 5.5 | 5.9M | $1 |
+| Cold review L3 fen | Opus 5.5 | 5.3M | $2 |
+| Cold review L1 tilt | Opus 5.5 | 4.8M | $2 |
+| Cold review L4 floor | Opus 5.5 | 4.4M | $2 |
+| v16 S3 gutter review fixes | Sonnet 5.5 | 4.1M | $1 |
+| Survey height field for v16 | Opus 5.5 | 2.7M | $1 |
+| v16 V3 letter act leftovers | Sonnet 5.5 | 2.4M | $1 |
+| Cold review S2 gutter | Opus 5.5 | 2.3M | $2 |
+| Cold review P1 perf | Opus 5.5 | 2.0M | $1 |
+| Cold review L2 edge/tarn | Opus 5.5 | 1.9M | $1 |
+| v16 screenshot curator | Sonnet 5.5 | 1.4M | $1 |
+| Cold review V1 spine head | Sonnet 5.5 | 921k | $0 |
+| Cold review V2 act and folk | Sonnet 5.5 | 891k | $0 |
+| Cold review S1 gutter | Sonnet 5.5 | 774k | $0 |
+| Blind read of frame sequences | Sonnet 5.5 | 203k | $0 |
+| Blind read of stair walk frames | Sonnet 5.5 | 159k | $0 |
+| Blind pair comparison two | Sonnet 5.5 | 92k | $0 |
+| Blind before/after frame reading | Sonnet 5.5 | 92k | $0 |
+| Blind pair comparison | Sonnet 5.5 | 91k | $0 |
+| Blind read of air frames | Sonnet 5.5 | 82k | $0 |
+| Blind read of tarn frames | Sonnet 5.5 | 82k | $0 |
+| **Total** | | **515.6M** | **$182** |
+
+</details>
+
+**Since the project started** (v1 to v16)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 221 | 5.37B | $2,047 |
+| Fable 5.2 | 36 | 1.28B | $770 |
+| Sonnet 5.5 | 164 | 478.0M | $115 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 7 | 1.4M | $0 |
+| **Total** | **426** | **7.38B** | **$3,112** |
+
 ## v15: The Lappet
 
 Released 2026-11-16.
