@@ -115,13 +115,14 @@ export const SWALLOW_CUT = {
 // reads the steps here). `weirs`: the sills, each [x, z, top, below, state] (`top` the pond above, `below` the pond
 // under it); one is breached (its middle stones gone, the water through the gap).
 const LEAT_CORNERS = [[12, 227], [10.6, 245], [6.6, 252.6], [4, 266], [-8, 282], [-35, 290], [-62, 288], [-69, 288.4]];
-const LEAT_HW = 1.2; // half the 2.4 m between the kerbs' inner faces
+const LEAT_HW = 1.6; // half the 3.2 m between the kerbs' inner faces (the table's 2.4 m drew no water: the drawn ground's
+// 2.1 m cells (3.1 on low) found no vertex in the bed between the kerbs' lips and stood over the water, as W1 found for the brook)
 const _straight = (C, hw, inset = 3) => {
   const out = [];
   for (let i = 0; i < C.length; i++) {
     const [x, z] = C[i];
     if (i > 0) { const [px, pz] = C[i - 1], l = Math.hypot(x - px, z - pz); if (l > inset * 2.5) out.push([x + (px - x) * inset / l, z + (pz - z) * inset / l, hw]); }
-    out.push([x, z, i === 0 ? 1.6 : hw]);
+    out.push([x, z, i === 0 ? hw + 0.5 : hw]);
     if (i < C.length - 1) { const [nx, nz] = C[i + 1], l = Math.hypot(nx - x, nz - z); if (l > inset * 2.5) out.push([x + (nx - x) * inset / l, z + (nz - z) * inset / l, hw]); }
   }
   return out;
@@ -150,13 +151,13 @@ export const LEAT = {
   levels: _lv,
   weirs: _weirs,
   head: FEN_LEVEL,    // the fen's level at its head
-  kerbs: 2.4,         // between kerbs, m
+  kerbs: 2 * LEAT_HW, // between kerbs, m
   hw: LEAT_HW,
   hold: [[12, 228.5], [-63.5, 288]],  // its lip held from the head to the mere's lobe
   bank: 1.0, reach: 8, rag: 0, wob: 0, lipW: 1.0, lipFall: 0.55, minSpeed: 0.7, speedWin: 2, shade: 0.5, // a built channel: a kerbed line, a steep bank, a narrow embankment, slow when level
   fade: { in: [[12, 227], [12, 227.8]], out: [[-63.5, 288], [-67.5, 288.3]] },
   // the slab bridge where P14 and P38 meet (src/v4/paths/routes.js), across pond 2
-  bridge: { at: [6.6, 252.6], len: 5.6, w: 2.1 }, // its east step at the meeting (9, 252)
+  bridge: { at: [6.6, 252.6], len: 6.4, w: 2.1 }, // its east step at the meeting (9, 252)
   fallen: [6.9, 258.6],  // a kerb stone fallen into pond 3 off the east kerb
 };
 

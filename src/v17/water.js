@@ -32,7 +32,7 @@ const VERT = /* glsl */`
   attribute vec4 aFlow;   // s (downstream m), d (across, + left), the edge's half-width on this side, depth over the drawn ground
   attribute vec4 aMisc;   // speed m/s, rough (white water below a step), still (a pool: 1), fade (the ends)
   attribute vec2 aTan;    // downstream (x, z)
-  attribute float aShade; // how much darker the stream's glass is (a built channel's deep water: plan's `shade`, 0 the brook)
+  attribute float aShade; // how much darker the stream's glass is (a built channel's deep water: the plan's shade, 0 the brook)
   varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld; varying float vShade;
   #include <fog_pars_vertex>
   void main() {

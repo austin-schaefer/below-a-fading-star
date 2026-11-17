@@ -387,9 +387,10 @@ else {
   let llow = Infinity, lat2 = null; const hs0 = LT.sOf(...P.LEAT.hold[0]) + 1, hs1 = LT.sOf(...P.LEAT.hold[1]) - 1;
   for (let k = 0; k < LT.n; k++) {
     if (LT.S[k] < hs0 || LT.S[k] > hs1) continue;
+    if (P.LEAT.weirs.some(([wx, wz]) => Math.abs(LT.S[k] - LT.sOf(wx, wz)) < 0.8)) continue; // (at a weir the kerb's cheek stones hold the falling water: leat.js)
     for (const sd of [1, -1]) { const d = sd * (LT.HW[k] + 0.4), x = LT.X[k] + LT.TZ[k] * d, z = LT.Z[k] - LT.TX[k] * d, o = F.heightAt(x, z) - LT.Y[k]; if (o < llow) { llow = o; lat2 = [x, z]; } }
   }
-  check(llow > 0, 'leat: its banks hold it (0.4 m out of its edge over its level, head to mouth)', `least ${f2(llow)} m over at ${lat2 ? lat2.map(f2) : '-'}`);
+  check(llow > 0, 'leat: its banks hold it (0.4 m out of its edge over its level, head to mouth, the weirs\' cheeks aside)', `least ${f2(llow)} m over at ${lat2 ? lat2.map(f2) : '-'}`);
   // the meeting of P14 and P38 at (9, 252) is dry ground at the bridge's foot
   check(F.waterLevelAt(9, 252) === null, 'leat: the meeting of P14 and P38 (9, 252) is on dry ground by the bridge', `water ${F.waterLevelAt(9, 252)}, ground ${f2(F.heightAt(9, 252))}`);
 }
