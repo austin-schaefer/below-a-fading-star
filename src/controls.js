@@ -344,7 +344,9 @@ export function buildControls(ctx) {
   // the highest standable collider top over (x, z) within a step of the feet (the rule at addCollider), or -Infinity
   function standAt(x, z, feet) {
     let best = -Infinity;
-    for (const c of state.colliders) {
+    const C = state.colliders, list = nearColliders(x, z), n = list ? list.length : C.length;
+    for (let i = 0; i < n; i++) {
+      const c = list ? C[list[i]] : C[i];
       if (c.h === undefined || c.stand === false) continue;
       const lim = c.r + FOOT;
       if (c.len === undefined) { if (x - c.x > lim || c.x - x > lim || z - c.z > lim || c.z - z > lim) continue; }
@@ -382,7 +384,7 @@ export function buildControls(ctx) {
       if (!moved) break;
     }
     let floor, on = null;
-    if (atY) { floorAt(x, z, y, true); floor = fl.y; on = fl.stack; }
+    if (atY) { if (state.collGrid) syncGrid(); floorAt(x, z, y, true); floor = fl.y; on = fl.stack; }
     else {
       const g = baseFloor(x, z), wl = g !== terrain.heightAt(x, z) ? null : terrain.waterLevelAt(x, z);
       floor = g;
@@ -428,6 +430,74 @@ export function buildControls(ctx) {
     }
     state.colliders.push(c);
   }
+  // The broad phase (v16-P1): a 4 m grid over the colliders. Each cell lists, by their place in state.colliders and
+  // in that order, every collider whose box (with GRID_PAD for the body, the foot and placeAt's 0.6 m) touches it, so
+  // a cell's list is the linear scan with the far ones left out. Colliders are plain objects their modules move by
+  // writing x and z (a figure, a sexton's grave, a thurifer sent to 1e6): syncGrid() compares each one's x, z and r
+  // with what was indexed (typed arrays, nothing written on the colliders) once a frame and moves a moved one between
+  // cells. A list grown is indexed on; one replaced, shortened or spliced mid-list is indexed again. A collider whose
+  // box covers more than GRID_BIG cells (or is not finite) is checked from every cell (wide). ?collgrid=0, or
+  // state.collGrid = false: the linear scan.
+  const GRID = 4, GRID_PAD = 0.75, GRID_BIG = 4096;
+  state.collGrid = !/[?&]collgrid=0\b/.test(location.search); // tools/hop-test.mjs turns it off to compare
+  const cells = new Map(), wide = [], EMPTY = [];
+  let gridOf = null, gridN = 0, gcap = 0;
+  let GX = new Float64Array(0), GZ = GX, GR = GX, GB = new Int32Array(0), GW = new Uint8Array(0);
+  const indexed = []; // the collider indexed at each place in the list
+  const grid = { cells, indexed, wide, rebuilds: 0 };
+  const cellKey = (ix, iz) => ((ix + 32768) & 0xffff) * 65536 + ((iz + 32768) & 0xffff);
+  function grow(n) {
+    if (n <= gcap) return;
+    const cap = Math.max(n, gcap * 2, 1024), g = (A, k = 1) => { const B = new A.constructor(cap * k); B.set(A); return B; };
+    GX = g(GX); GZ = g(GZ); GR = g(GR); GB = g(GB, 4); GW = g(GW); gcap = cap;
+  }
+  function insertSorted(list, i) { let j = list.length; while (j > 0 && list[j - 1] > i) j--; list.splice(j, 0, i); }
+  function gridAdd(i) {
+    const c = state.colliders[i];
+    const ex = (c.len === undefined ? c.r : c.ex) + GRID_PAD, ez = (c.len === undefined ? c.r : c.ez) + GRID_PAD;
+    const x0 = Math.floor((c.x - ex) / GRID), z0 = Math.floor((c.z - ez) / GRID), x1 = Math.floor((c.x + ex) / GRID), z1 = Math.floor((c.z + ez) / GRID);
+    GX[i] = c.x; GZ[i] = c.z; GR[i] = c.r; GB[i * 4] = x0; GB[i * 4 + 1] = z0; GB[i * 4 + 2] = x1; GB[i * 4 + 3] = z1;
+    if (!isFinite(x0 + z0 + x1 + z1) || (x1 - x0 + 1) * (z1 - z0 + 1) > GRID_BIG) { GW[i] = 1; insertSorted(wide, i); return; }
+    GW[i] = 0;
+    for (let ix = x0; ix <= x1; ix++) for (let iz = z0; iz <= z1; iz++) {
+      const k = cellKey(ix, iz);
+      let list = cells.get(k);
+      if (!list) cells.set(k, (list = []));
+      if (list.indexOf(i) < 0) insertSorted(list, i); // a key wraps far out (1e6): never list one twice
+    }
+  }
+  function gridRemove(i) {
+    if (GW[i]) { const j = wide.indexOf(i); if (j >= 0) wide.splice(j, 1); return; }
+    for (let ix = GB[i * 4]; ix <= GB[i * 4 + 2]; ix++) for (let iz = GB[i * 4 + 1]; iz <= GB[i * 4 + 3]; iz++) {
+      const list = cells.get(cellKey(ix, iz));
+      const j = list ? list.indexOf(i) : -1;
+      if (j >= 0) list.splice(j, 1);
+    }
+  }
+  function syncGrid() {
+    const C = state.colliders;
+    let rebuild = gridOf !== C || C.length < gridN;
+    for (let i = 0; i < gridN && !rebuild; i++) {
+      const c = C[i];
+      if (c !== indexed[i]) { rebuild = true; break; }
+      if (c.x !== GX[i] || c.z !== GZ[i] || c.r !== GR[i]) { gridRemove(i); gridAdd(i); }
+    }
+    if (rebuild) { grid.rebuilds++; cells.clear(); wide.length = 0; gridOf = C; gridN = 0; indexed.length = 0; }
+    if (gridN < C.length) grow(C.length);
+    for (; gridN < C.length; gridN++) { indexed[gridN] = C[gridN]; gridAdd(gridN); }
+  }
+  // the places in state.colliders of those that may touch (x, z): the cell's and the wide ones, in order; null with
+  // the grid off (the caller scans the whole list)
+  const near2 = [];
+  function nearColliders(x, z) {
+    if (!state.collGrid) return null;
+    const list = cells.get(cellKey(Math.floor(x / GRID), Math.floor(z / GRID))) || EMPTY;
+    if (!wide.length) return list;
+    near2.length = 0;
+    let i = 0, j = 0;
+    while (i < list.length || j < wide.length) near2.push(j >= wide.length || (i < list.length && list[i] < wide[j]) ? list[i++] : wide[j++]);
+    return near2;
+  }
   // how far along a capsule the point nearest (x, z) lies (0 for a round collider)
   function along(c, x, z) {
     if (c.len === undefined) return 0;
@@ -470,6 +540,7 @@ export function buildControls(ctx) {
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), wish = new THREE.Vector3(), target = new THREE.Vector3();
   function update(dt) {
     syncLock();
+    if (state.collGrid) syncGrid();
     dt = Math.min(dt, 0.05);
     state.lookQuiet += dt;
     const k = state.keys;
@@ -610,10 +681,16 @@ export function buildControls(ctx) {
   // The move to (nx, nz) with feet at `feet`: the walk limit (and its corridors), the colliders (the rule for standing
   // on them is at addCollider) and the floor there. Writes { x, z, y (the floor), onTop, stack, ground, wl } into out.
   const mvA = { x: 0, z: 0, y: 0, onTop: false, stack: null, ground: 0, wl: null }, mvB = { ...mvA };
-  function resolve(nx, nz, feetNow, out) {
-    if (clampWalk(nx, nz, _cw)) { nx = _cw.x; nz = _cw.z; }
+  function resolve(nx, nz, feetNow, out) { return resolveIn(nx, nz, feetNow, out, false); }
+  function resolveAll(nx, nz, feetNow, out) { return resolveIn(nx, nz, feetNow, out, true); }
+  function resolveIn(nx, nz, feetNow, out, all) {
+    if (!all && clampWalk(nx, nz, _cw)) { nx = _cw.x; nz = _cw.z; }
     let nCand = 0;
-    for (const c of state.colliders) {
+    // the cell's list holds every collider within GRID_PAD of the box round (nx, nz); a push that carries the point
+    // further than SLIDE from where it started could meet one the list left out: then the whole list, from the start
+    const C = state.colliders, x0 = nx, z0 = nz, list = all ? null : nearColliders(nx, nz), n = list ? list.length : C.length;
+    for (let li = 0; li < n; li++) {
+      const c = list ? C[list[li]] : C[li];
       const rad = c.r + BODY;
       let dx = nx - c.x, dz = nz - c.z, px = c.x, pz = c.z, t = 0;
       if (c.len === undefined) {
@@ -631,7 +708,10 @@ export function buildControls(ctx) {
         const reach = !over && state.hopping && c.stand !== false && top - feetNow <= MANTLE && state.vel.x * dx + state.vel.z * dz < 0;
         if (over || reach) { if (c.stand !== false && nCand < cand.length) cand[nCand++] = c; continue; }
       }
-      if (d > 1e-4) { nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad; }
+      if (d > 1e-4) {
+        nx = px + (dx / d) * rad; nz = pz + (dz / d) * rad;
+        if (list && hyp(nx - x0, nz - z0) > GRID_PAD - BODY) return resolveAll(x0, z0, feetNow, out);
+      }
     }
     // the highest top under the feet, within a step (or, rising in a hop, a scramble) of them
     let standY = -Infinity;
@@ -738,6 +818,8 @@ export function buildControls(ctx) {
   }
 
   // floorAt(x, z, feet): the floor that would hold feet at `feet` there, collider tops included ({ y, ground, stack, top }), read-only: tools/ways-test.mjs floods a level with it (v15-W1)
-  const floorProbe = (x, z, feet) => { const o = { y: 0, ground: 0, stack: null, top: false, wl: null }; floorAt(x, z, feet, true, o); return o; };
-  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry, floorAt: floorProbe };
+  const floorProbe = (x, z, feet) => { if (state.collGrid) syncGrid(); const o = { y: 0, ground: 0, stack: null, top: false, wl: null }; floorAt(x, z, feet, true, o); return o; };
+  // grid: the broad phase's cells and how often it was built again; near(x, z): its list at (x, z), after a sync (tools/hop-test.mjs holds it to the linear scan)
+  const near = (x, z) => { syncGrid(); const l = nearColliders(x, z); return l ? l.map((i) => state.colliders[i]) : state.colliders.slice(); };
+  return { state, update, lock, addCollider, addWalkable, placeAt, setDragLook, release, hop, touch, carry, floorAt: floorProbe, near, grid };
 }
