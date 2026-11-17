@@ -15,41 +15,81 @@ export const inBox = (x, z) => x >= BOX.x0 && x <= BOX.x1 && z >= BOX.z0 && z <=
 export const TARN_LEVEL = WATER.tarn.y;  // -4.6, Lees Tarn / Circumbambulate Pool (src/v4/tarn.js)
 export const FEN_LEVEL = WATER.fen.y;    // -2.45, Corpse-Candle Fen
 
-// ---------------------------------------------------------------- W1: the brook and the mere
+// ---------------------------------------------------------------- W1: the brook and the mere (live: W1's)
 // The Slake [Proposed]: still water in the trough's west hollow (floor -10 at (-87, 283); survey "Where the low
-// ground is"). A radial outline about a centre, drawn out by lobes toward the brook's mouth, the leat's mouth and
-// the Swallow's cut. `level` is the Swallow's sill: W1 measures it on the ground round it and may move it 0.4 m.
+// ground is"). On its own edge (height/outline.js radialOutline), fitted to the natural -6.8 contour (x -121..-70,
+// z 261..295, heightAt in node on next with the mere off): a centre at (-88, 279), lobes into the west and east
+// hollows, to the brook's mouth (-87, 263), the leat's mouth (-68, 288) and the Swallow's cut (-95, 296). Fitted so
+// the lip raises the ground 0.3 m or more over only ~80 m2, never more than 1 m.
+// `level` is the Swallow's sill (U1) and the leat's last level (W2): W1 measured it (see `measured`).
 export const MERE = {
-  c: [-87, 280],
-  r: 22,
-  lobes: [
-    { at: [-85, 262], w: 0.5 },  // the brook's mouth (index, BROOK's last point)
-    { at: [-68, 288], w: 0.5 },  // the leat's mouth (index, LEAT's last point is (-62, 288))
-    { at: [-95, 295], w: 0.5 },  // the Swallow's cut (index, SWALLOW)
-  ],
-  level: -6.8,                   // index, MERE: y -6.8 (W1 measures it; the Swallow's sill)
+  level: -6.8,        // index, MERE: y -6.8; kept (measured: the lowest ground 3 m outside the edge, with the mere off,
+                      // is under it only where the lip is raised, at most 0.4 m: tools/outline-test.mjs prints it)
+  outline: {
+    x: -88, z: 279, r: 15, seed: 17031, K: 6, amp: 0.08,
+    lobes: [
+      { x: -105, z: 270, r: 9, to: { x: -110, z: 263, r: 6 } },   // the west hollow (ground -7.8 at (-105, 264))
+      { x: -74, z: 281, r: 8 },                                    // the east hollow (ground -7.8 at (-77, 274))
+      { x: -89, z: 271, r: 5, to: { x: -87, z: 263.5, r: 3.5 } },  // the brook's mouth
+      { x: -76, z: 289, r: 6, to: { x: -68, z: 288, r: 4 } },      // the leat's mouth (index, LEAT's last point (-62, 288))
+      { x: -94, z: 288, r: 4, to: { x: -95, z: 296, r: 3.5 } },    // the Swallow's cut leaves it here
+    ],
+  },
+  bank: 0.8,          // its bank cut down to the level: steeper than the floor's pools' (the apron rises 1 in 1.4 south of it)
+  D: 1.6,             // the bowl's depth under the shelf (the hollow's own floor is -10)
 };
 
-// The tarn's outflow (index, BROOK): a line out of the south bay (the lip at (-83, 200) stands at -3.1; the
-// shallows end at z 200), south through the Span's fallen bay among the crown's pieces (src/v4/span/plan.js
-// SLABS, bay 0), down past the dead traveller (his body at (-63.5, 242.5): leave him be) to the mere.
-// `levels` are [z, y] stations along the line, falling only downstream; `width` [min, max] in metres.
+// The tarn's outflow (index, BROOK, routed round what lies there): out of the south bay (the lip at (-83, 200) stands
+// at -3.1), through the 3 m gap between the crown's piece 1 (x -98.7..-90.5) and piece 4 (leaning on pier -70, x
+// -87.7..-78) (the pieces' colliders, src/v4/span/fallen.js), west of piece 3 (x -90..-76, z 222..237), into the
+// hollow at (-92, 241) (ground -5.5..-6.2 over x -101..-81) where it stands in a broad pool, out over its south lip
+// (ground -4.6 at z 250) in a cut, and down a step into the mere. 20 m and more west of the dead traveller.
+// pts: [x, z, hw] (hw the water's half-width there, m); levels: [x, z, y] stations, a step two close together.
 export const BROOK = {
-  line: [[-90, 197], [-92, 210], [-97, 222], [-90, 238], [-84, 252], [-85, 264]],
-  levels: [[197, -4.6], [205, -4.6], [216, -5.3], [240, -6.0], [264, -6.8]], // the last is MERE.level
-  width: [1.5, 3],
+  pts: [
+    [-89, 191, 2.2],     // in the tarn's south bay (its shallows -8)
+    [-89.5, 199, 1.8],   // the bay's neck
+    [-89.4, 205, 1.1],   // the lip: the water quickens
+    [-89.1, 211, 0.85],  // between the two crown pieces, narrow and quick
+    [-89.3, 217, 0.9],
+    [-91.5, 222, 1.1],   // below the first step
+    [-94, 228, 1.3],
+    [-95, 234, 2.6],
+    [-92, 241, 7.5],     // the pool in the hollow, broad and slow
+    [-90, 246.5, 2.0],   // its tail, over the lip
+    [-88, 251, 1.0],     // quick in the cut
+    [-86.5, 256, 1.1],
+    [-86, 260, 1.5],     // the second step, into the mere
+    [-87, 266, 2.2],
+    [-88, 271, 2.5],     // in the mere
+  ],
+  levels: [
+    [-89, 191, TARN_LEVEL], [-89.4, 204, TARN_LEVEL],   // the tarn's own level to the lip
+    [-89.2, 209, -4.75], [-89.2, 216, -4.95],          // the run between the blocks
+    [-89.6, 218.5, -5.0], [-90.4, 220.5, -5.45],       // a step (white water below it)
+    [-94.5, 231, -5.8], [-95, 235, -5.95],
+    [-94, 237, -6.05], [-90.3, 246, -6.05],            // the pool (the hollow's floor is -5.9..-6.2: under it only in its core)
+    [-89.6, 247.8, -6.1], [-89, 249.5, -6.35],         // a step off the pool's lip
+    [-86.6, 256, -6.45], [-86.2, 258.5, -6.48],
+    [-86.1, 260.5, -6.8], [-88, 271, -6.8],            // the step into the mere (MERE.level)
+  ],
+  hold: [[-89.4, 203], [-86.5, 262]],  // where it holds its own water (its lip): out of the tarn, into the mere
+  bank: 0.45, reach: 8,
 };
-// The fallen crown's pieces the brook runs round, not through (src/v4/span/plan.js SLABS, bay 0).
-export const CROWN = [[-108, 224], [-94, 211], [-100, 197], [-83, 230], [-84, 213]];
-// The dead traveller (stories/the-traveller-on-the-span.md): his body and his hat. Nothing of W1 touches them.
+// The fallen crown's pieces the brook runs round (the colliders' centres and radii, src/v4/span/fallen.js), and the
+// dead traveller (stories/the-traveller-on-the-span.md): nothing of W1 touches them; outline-test checks it.
+export const CROWN = [[-108.2, 224.6, 6], [-94.6, 206, 4.1], [-94.6, 215.8, 4.1], [-100.1, 197.1, 5.5], [-82.9, 229.6, 7], [-82.9, 213, 4.8]];
 export const TRAVELLER = { body: [-63.5, 242.5], hat: [-49.5, 247.5] };
 
-// The Swallow's cut (index, SWALLOW): the mere's water carried south in a cut in the slope to the portal's face,
-// its water at the mere's level; W1 cuts the ground, U1 builds the portal and the fall at the face.
+// The Swallow's cut (index, SWALLOW): the mere's water carried south in a cut in the slope to the portal's face at
+// z 311 (ground there +7.5), level with the mere; its banks rise at 1.3 (a cut, not a shore) as the slope rises. It
+// runs on 1.5 m past the face so the face stands in water; U1 builds the portal and the fall there.
 export const SWALLOW_CUT = {
-  from: [-95, 294],
-  to: [-95, 311],     // the portal's face (ground there +7.5)
-  width: 8,           // the portal's opening is at least 8 m wide (index, SWALLOW)
+  pts: [[-95, 290, 4.2], [-95, 302, 4.0], [-95, 312.5, 4.0]],
+  levels: [[-95, 290, -6.8], [-95, 312.5, -6.8]],  // MERE.level
+  hold: [[-95, 296], [-95, 312.5]],
+  face: [-95, 311],
+  bank: 1.3, reach: 14,
 };
 
 // ---------------------------------------------------------------- W2: the leat (the table's until W2 changes it)
@@ -64,7 +104,7 @@ export const LEAT = {
 // ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (the table's)
 export const SWALLOW = {
   portal: [-95, 311], // the face (ground +7.5)
-  sill: MERE.level,   // the sill at the mere's level
+  sill: MERE.level,   // the sill at the mere's level (W1's measured level)
   width: 8,           // at least 8 m wide
   clear: 9,           // at least 9 m clear
   ledge: [-91, 309],  // beside the fall, where the tube's end comes out of the water

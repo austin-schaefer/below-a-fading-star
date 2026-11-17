@@ -172,13 +172,13 @@ else {
     for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
       if (!b.wet(x, z)) continue;
       cells++;
-      const over = F.heightAt(x, z) - w.y;
+      const over = F.heightAt(x, z) - (b.levelAt ? b.levelAt(x, z) : w.y); // (v17: a stream's level falls along it)
       if (over > worst) { worst = over; at = [x, z]; }
       if (over > 1) n++;
     }
     let dry = 0, dat = null;
     for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
-      if (b.sd(x, z) >= 0 || F.heightAt(x, z) > w.y - 0.05 || F.waterLevelAt(x, z) !== null) continue;
+      if (b.sd(x, z) >= 0 || F.heightAt(x, z) > (b.levelAt ? b.levelAt(x, z) : w.y) - 0.05 || F.waterLevelAt(x, z) !== null) continue;
       dry++; dat = dat || [x, z];
     }
     check(dry === 0, `${b.name}: every cell inside its shore with its ground under the water is wet`, `${dry} dry${dat ? ', first at ' + dat.map(f2) : ''}`);
@@ -191,7 +191,7 @@ else {
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
         const x = x0 + i * g, z = z0 + j * g, k = i * n + j;
         if (b.wet(x, z)) WET[k] = 1;
-        else if (F.heightAt(x, z) < w.y - LEAK && F.waterLevelAt(x, z) === null) LOW[k] = 1;
+        else if (F.heightAt(x, z) < (b.levelAt ? b.levelAt(x, z) : w.y) - LEAK && F.waterLevelAt(x, z) === null) LOW[k] = 1;
       }
       let leak = 0, lat = null;
       for (let i = 1; i < n - 1; i++) for (let j = 1; j < n - 1; j++) {
