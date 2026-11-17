@@ -16,12 +16,13 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ![Four screenshots: versions 8, 9, 10 and 11](shots/gallery-v8-to-v11.webp)
 
-![Three screenshots: versions 12, 13 and 14](shots/gallery-v12-to-v14.webp)
+![Four screenshots: versions 12, 13, 14 and 15](shots/gallery-v12-to-v15.webp)
 
 ## Milestones
 
 Each major release in bold, newest first, with its point releases beneath it. Every title links to its release notes; the full notes are in [`RELEASES.md`](RELEASES.md).
 
+- **[v15: The Lappet](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v15)**. A whole village now climbs the hill from the keep to the Pomegranate House, with stairs, ladders, shops, a fountain and people.
 - **[v14: The Depths](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v14)**. You can now go underground: a flooded hall, a road left by a fourth people, a passage and a great pit with stars at the bottom.
 - **[v13: A quicker start](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v13)**. Loads in about half the time, and faster again on every visit after the first.
 - **[v12: The Heights](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v12)**. Four ways to climb up out of the valley floor, and the whole valley to look down on.

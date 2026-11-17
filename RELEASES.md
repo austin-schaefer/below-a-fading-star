@@ -4,6 +4,41 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v15: The Lappet
+
+Released 2026-11-16.
+
+A village now covers the hill between Carcanet Keep and the Pomegranate House. It is called the Lappet: lime-plaster houses stacked up three giant steps cut by a far older people, so that one house's roof is the next one's yard, with stairs, ladders, shops, a square and people at work.
+
+### New
+
+- **The Lappet, a village on the hill**: It runs from the keep's fallen corner at the top down to the Pomegranate House at the foot, in four parts: a masons' yard on the crown where a new house is going up out of the keep's own rubble, lanes of stacked houses on the steps below, a square on the bench, and a row of stalls at the bottom. Five ages of building stand in it at once, the oldest holding up the newest.
+- **Stairs, ladders and a way through glass**: A straight processional stair runs down the middle, lit at each head and foot. Around it are side stairs, outside steps, a footbridge and ladders you can climb. One way down runs inside a great cracked tube of glazed glass left by the Noonwrights, a people who tried to store daylight.
+- **The Smoking Saint**: The head of a fallen colossus lies on the crown. The masons have hollowed it and burn lime in it, and smoke comes out of the top.
+- **The Fountain of Noon**: In the square, the foot of a broken glass vessel serves as a bowl, and what wells up in it is stored daylight. Someone comes to draw it off in a jug.
+- **Eight villagers**: A lime burner at her kiln, a copyist cutting a block, a child on a roof lowering a basket on a cord, a clerk at a wall of unclaimed letters, a dyer at a vat, a woman leaving the village with her house's door on her back, the drawer at the fountain, and a man who lives in a wrecked glass vessel at the bottom of the hill.
+- **The village has a sound and its own light**: It lies in the keep's shadow and is never sunlit, so it is lit by its lamps and windows, and it has its own bed of sound.
+- **Music is on by default.** The speaker button turns it off.
+
+### Fixed
+
+- **The causeway ended beside the Pit's stair and looked like a mistake**: It now goes on past the Pit to the stair at the east end of the great bridge.
+- **Glitches at the passage's door in the Pit and on the stairs underground**: A blade of ground stood in the doorway, steps showed their backs, and supports hung in the air tied to nothing. All mended.
+- **The view shook when climbing stairs**: Your eye now rises evenly whatever the frame rate.
+- **Walking through a dip near the Pomegranate House caught and jumped**: The ground there is smooth to walk.
+- **The pale figure by the chalk cliff is gone.**
+
+### Behind the scenes
+
+- A check now looks at shapes as well as behaviour: faces lying in one plane, parts floating or buried, backs of walls, and anything placed nowhere at all.
+- Things that claim a piece of ground (a house, a stair, a stall) now clear trees, rocks and birds out of it automatically.
+- Each new stretch of the walk is photographed every metre and looked at before release.
+- The village is planned in one file that the stairs, houses and tests all read, so a stair cannot be drawn where a house stands.
+
+Known issues: finding your way through the village is still harder than it should be: at the top of the main stair you meet a blank wall and must look left or right for the last flights. Unseen walls still stop you at the edges of the great pits. Some villagers are hard to spot from a distance, and there is nothing yet to do in the village but walk it.
+
+<p><img src="shots/93-lappet-far-lees-east.webp" width="24%" alt="The Lappet from below: pale houses stacked up a dark hill under an orange sky, a great glazed tube running down through them"> <img src="shots/94-quarry-colossus-head-kiln.webp" width="24%" alt="The Smoking Saint from close by: a great stone face lying on its side under a lamp, with the masons' timber frame behind"> <img src="shots/95-lees-fountain-west.webp" width="24%" alt="The Fountain of Noon: the green-glazed foot of a broken glass vessel in the square, a bowl of white light in it"> <img src="shots/97-stairs-tube-gangway.webp" width="24%" alt="A plank gangway leading into the broken mouth of the Noonwrights' glass tube, the valley beyond"></p>
+
 ## v14: The Depths
 
 Released 2026-11-15.
