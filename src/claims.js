@@ -33,6 +33,7 @@
 // survey of them all is briefs/v15/reports/issue-1532-buried.md.
 import { CLEARINGS, inEntry, leadUnder, CAUSEWAY_CLEAR } from './v8/clearings.js';
 import { villageClear } from './v15/plan.js';
+import { LANDMARKS as L } from './world.js';
 
 export const CLAIMS = [
   // v8-11's table, kept clear of stones and boulders (see src/v8/clearings.js for each place's reasons)
@@ -43,6 +44,9 @@ export const CLAIMS = [
   // (v16 L5: and of trees and shrubs, by the collider's footprint: L3's reshuffle stood bushes on P3 and P8, whose
   // centres were off the tread)
   { name: 'the leads', keeps: ['rocks', 'trees'], kind: 'fn', test: (x, z, r) => { const id = leadUnder(x, z, r); return id ? `the lead ${id}` : false; } },
+  // the Hypogeum's cut, its stair and its kerb (v16 critic): trees as rocks.js keeps its stones (r 12). Nothing kept the
+  // moor's copses out of it, so a reshuffle of the floor could stand one in the cut where the knock eases the visitor back
+  { name: 'the Hypogeum', keeps: ['trees'], kind: 'disc', x: L.hypogeum.x, z: L.hypogeum.z, r: L.hypogeum.r },
   { name: 'the causeway', keeps: ['rocks'], kind: 'fn', test: (x, z, r, ctx) => !!ctx?.terrain && ctx.terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r },
 ];
 
