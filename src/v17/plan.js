@@ -150,6 +150,8 @@ export const LEAT = {
   pts: _straight(LEAT_CORNERS, LEAT_HW),
   levels: _lv,
   weirs: _weirs,
+  // each weir's fall for the sound (src/v17/sound.js): [x, z, drop, y], y halfway down it (as the brook's steps)
+  steps: _weirs.map(([x, z, top, below]) => [x, z, +(top - below).toFixed(2), +((top + below) / 2).toFixed(2)]),
   head: FEN_LEVEL,    // the fen's level at its head
   kerbs: 2 * LEAT_HW, // between kerbs, m
   hw: LEAT_HW,
