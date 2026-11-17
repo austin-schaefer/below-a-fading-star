@@ -181,6 +181,13 @@ export async function build(ctx) {
         const col = paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3);
         E.tri(p, q, r, col, hint, 0.06);
       }
+      // faced outward too, 1.5 cm further out: where the opened ground falls short of the bulging glass a visitor outside
+      // sees down into the skin (geometry's v17-sphere found its backs from 1 m off the glass, at the ground line and
+      // through the gaps under it), and should meet earth there, not the sphere's inside through the skin's back
+      {
+        const out = [-hint[0], -hint[1], -hint[2]], o = (p) => { const k = (Re + 0.015) / Re; return [CX + (p[0] - CX) * k, CY + (p[1] - CY) * k, CZ + (p[2] - CZ) * k]; }; // (1.5 cm out, so a ray from outside meets this face first)
+        for (const [p, q, r] of [[a, b, c], [a, c, d]]) E.tri(o(p), o(q), o(r), paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3), out, 0.06);
+      }
     }
     add(new THREE.Mesh(E.geometry(), umat('sphere-earth', { roughness: 0.95 })), 'sphere-earth');
   }

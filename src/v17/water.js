@@ -220,8 +220,18 @@ export function buildV17Water(ctx, tex, stillMat) {
 
   // ---------------------------------------------------------------- the still water: a grid over each body, its level,
   // the depth over the drawn ground (−0.5 where the body is dry), only the cells near its water kept
-  const stills = [...STILLS.map((b) => ({ b, y: b.y, wet: b.wet, box: b.wbox })),
-    ...STREAMS.filter((st) => st.Y.every((y) => y === st.Y[0])).map((st) => ({ b: st, y: st.Y[0], wet: st.wet, box: st.box }))];
+  // Bodies at one level share one grid (the mere and the Swallow's cut, both -6.8): two grids over one water would lie in
+  // one plane where they overlap and fight (geometry's coplanar), so their wet tests are joined and their boxes merged.
+  const stills = [];
+  for (const S of [...STILLS.map((b) => ({ b, y: b.y, wet: b.wet, box: b.wbox })),
+    ...STREAMS.filter((st) => st.Y.every((y) => y === st.Y[0])).map((st) => ({ b: st, y: st.Y[0], wet: st.wet, box: st.box }))]) {
+    const o = stills.find((q) => Math.abs(q.y - S.y) < 0.01);
+    if (!o) { stills.push({ ...S, box: S.box.slice() }); continue; }
+    const w0 = o.wet, w1 = S.wet, b = o.box;
+    o.wet = (x, z) => w0(x, z) || w1(x, z);
+    o.box = [Math.min(b[0], S.box[0]), Math.max(b[1], S.box[1]), Math.min(b[2], S.box[2]), Math.max(b[3], S.box[3])];
+    o.b = { name: `${o.b.name}+${S.b.name}` };
+  }
   if (stillMat && stills.length) {
     const sp = high ? 1.2 : 1.8, P = [], Dp = [], I = [];
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;

@@ -126,7 +126,11 @@ export function buildParts(ctx, L) {
       const P = (f, u, yy) => [f.x + f.r.x * u, yy, f.z + f.r.z * u];
       const w = pw - 0.04 - rng() * 0.06;
       K.quad(P(fa, w, y), P(fa, -w, y), P(fb, -w, y), P(fb, w, y), col, [0, 1, 0], 0.08);
-      if (k > 0.08) { const yl = y - 0.2; K.quad(P(fb, w, y), P(fb, -w, y), P(fb, -w, yl), P(fb, w, yl), WOOD_D, [fb.t.x, 0, fb.t.z], 0.05); }
+      if (k > 0.08) {
+        const yl = y - 0.2; K.quad(P(fb, w, y), P(fb, -w, y), P(fb, -w, yl), P(fb, w, yl), WOOD_D, [fb.t.x, 0, fb.t.z], 0.05);
+        // the board's underside: up the stair from the conduit a ray finds the joint under a riser, and met the top's back
+        const yu = y - 0.05; K.quad(P(fa, w, yu), P(fa, -w, yu), P(fb, -w, yu), P(fb, w, yu), WOOD_D, [0, -1, 0], 0.05);
+      }
       s = s2 + 0.012;
     }
     for (const sd of [-1, 1]) for (let s = 0.3; s < L.LEN - 0.05; s += 1.0) {
