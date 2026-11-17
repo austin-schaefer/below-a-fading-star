@@ -14,11 +14,11 @@
 //               little where the Line breaks into the bore, most in the Flute, less in the room, all of it over the Gulf, and fading
 //               out down the Gate as the Pit's own breath comes up. Bed, under the steps
 //   the Laid Sun (v16-S1, #78) while the sun gutters and the gold in the room's floor wakes (ctx.passage.sunWake): a low
-//               warm hum out of the floor, D3 with its fifth and octave (A3, D4) a few cents apart so it beats slowly,
-//               each a sine through a lowpass at 900 Hz, swelling in over three seconds and gone over six with the
+//               warm hum out of the floor, D2 and D4 2.6 cents flat, sines through a lowpass at 900 Hz (kept out of
+//               the octave of the draught's A2 and D3: a D3 or an A3 there beat against them, rough 0.5-0.64 in the harness), swelling in over three seconds and gone over six with the
 //               light. The one thing under the moor that answers the gutter, heard in the room and the way either
 //               side of it (16 m). Bed
-const A2 = 110.0, D3 = 146.83, A3 = 220.0, D4 = 293.66, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;
+const D2 = 73.42, A2 = 110.0, D3 = 146.83, D4 = 293.66, A5 = 880.0, D6 = 1174.66, F6 = 1396.91;
 
 export function startPassageSound(a, ctx) {
   const { ac, voice, filt, chain, pink, brown, loopSrc, panner, setPos, cueBus, verbIn, gainOf } = a;
@@ -75,7 +75,7 @@ export function startPassageSound(a, ctx) {
     if (on && !H.parts) {
       const out = ac.createGain(); out.gain.value = 0.0001;
       const p = panner('equalpower', 3, 1.2, 60), lp = filt('lowpass', 900, 0.5);
-      const osc = [[D3, 1, 0], [A3 * 1.0023, 0.45, 0], [D4 * 0.9985, 0.3, 0]].map(([f, gn]) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = gainOf(gn); chain(o, g, lp); o.start(); return o; });
+      const osc = [[D2, 1], [D4 * 0.9985, 0.35]].map(([f, gn]) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = gainOf(gn); chain(o, g, lp); o.start(); return o; });
       chain(lp, out, p, cueBus);
       const vs = gainOf(0.6); p.connect(vs); vs.connect(verbIn);
       setPos(p, P.sun.x, P.sun.y + 0.3, P.sun.z);
