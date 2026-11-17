@@ -289,3 +289,5 @@ Agreed: the local merge is dropped (`git reset --keep origin/next`: only the unp
 - **Started 15:05:** the whole suite on `next` (`/tmp/suite-v15-gate1.log`, a batch run: R1's fix and the critic's will follow it); the cold critic (opus, `issue-1540-critic`, 8176, `a63be58d25cbb6a66`); the curator (sonnet, no browser, `a513c9742c23b0dd1`, told never to keep the owner's own screenshots).
 - **W3** goes on outside v15 (`issue-1527-edges`, 8172, `afffb9a425c739624`).
 
+**The owner, 16:15:** "forty things in #76 is crazy. i don't want to wade thru all that, and the village should have, like, 3–5 named things TOPS". Decided: three (the Lappet, the Smoking Saint, the Fountain of Noon); the four quarters' cards and the Tender's Round card go; #76 rewritten to three rows; brief `briefs/v15/brief-v15-N2-three-names.md` (sonnet, `issue-1535-three-names`, 8179); the rule is in `orchestrator`.
+
