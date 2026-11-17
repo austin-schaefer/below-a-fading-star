@@ -4,7 +4,7 @@
 // hexagons. Into one UnderBuilder (one draw), faces in.
 import { COLORS } from '../../v8/strata/parts.js';
 import { GARTH_DOOR } from '../plan.js';
-import { CX, CZ, FLOOR, R, DRUM, OCULUS, domeY, DOOR_A, WALK } from './plan.js';
+import { CX, CZ, FLOOR, R, DRUM, OCULUS, domeY, DOOR_A, WALK, INLET, RILL } from './plan.js';
 
 const H = COLORS.heliarch;
 const rgb = (c, k = 1) => [c.r * k, c.g * k, c.b * k];
@@ -28,12 +28,15 @@ export function buildHall(B, low) {
       const a0 = ((i + off) / N) * Math.PI * 2, a1 = ((i + 1 + off) / N) * Math.PI * 2;
       const k = 0.88 + 0.16 * hsh(i * 13 + c * 7.1) - (c === 0 ? 0.12 : 0), col = rgb(H.stone, k);
       // by the door the block is drawn in slices, each cut to the opening's arch
-      const ns = near(a0) || near(a1) ? 10 : 1;
+      const ns = near(a0) || near(a1) ? 40 : 2; // (at least two: a course's edge then has a vertex wherever the next course's has one, so no sliver opens between staggered courses)
       for (let q = 0; q < ns; q++) {
-        const b0 = a0 + (a1 - a0) * q / ns, b1 = a0 + (a1 - a0) * (q + 1) / ns, bm = (b0 + b1) / 2;
-        const v = R * Math.sin(bm - DOOR_A), inFront = Math.cos(bm - DOOR_A) > 0, top = inFront ? archTop(v) : null;
+        const b0 = a0 + (a1 - a0) * q / ns, b1 = a0 + (a1 - a0) * (q + 1) / ns;
+        // the slice is cut to the lower of the arch's heights at its two edges, so no sliver opens between the drum and
+        // the arch's soffit behind it (the soffit stands a little proud and takes the overlap)
+        const tAt = (b) => (Math.cos(b - DOOR_A) > 0 ? archTop(R * Math.sin(b - DOOR_A)) : null) ?? -Infinity;
+        const top = Math.min(tAt(b0), tAt(b1));
         let ya = y0;
-        if (top !== null) { if (y1 <= top) continue; ya = Math.max(y0, top); }
+        if (top > y0) { if (y1 <= top) continue; ya = top; }
         const [x0, z0] = W(b0, R), [x1, z1] = W(b1, R);
         // the joint: a block's face stands a few millimetres proud of the next course, a darker line at its foot
         B.quad([x0, ya + (ya === y0 ? 0.025 : 0), z0], [x1, ya + (ya === y0 ? 0.025 : 0), z1], [x1, y1, z1], [x0, y1, z0], col, toC((x0 + x1) / 2, (z0 + z1) / 2), 0.03);
@@ -63,9 +66,12 @@ export function buildHall(B, low) {
     for (let i = 0; i < ND; i++) {
       const a0 = ((i + off) / ND) * Math.PI * 2, a1 = ((i + 1 + off) / ND) * Math.PI * 2;
       const k = 0.9 + 0.12 * hsh(i * 3.3 + c * 17.7), col = rgb(H.stone, k * (0.92 + 0.08 * (c / nd)));
-      const [x0, z0] = W(a0, r0), [x1, z1] = W(a1, r0), [x2, z2] = W(a1, r1), [x3, z3] = W(a0, r1);
-      const hint = [CX - (x0 + x2) / 2, -((y0 + y1) / 2 - FLOOR) * 0.4 - 1, CZ - (z0 + z2) / 2];
-      B.quad([x0, y0, z0], [x1, y0, z1], [x2, y1, z2], [x3, y1, z3], col, hint, 0.03);
+      // (in two halves: a course's edge then has a vertex wherever the staggered next course's has one, no sliver between)
+      for (const [b0, b1] of [[a0, (a0 + a1) / 2], [(a0 + a1) / 2, a1]]) {
+        const [x0, z0] = W(b0, r0), [x1, z1] = W(b1, r0), [x2, z2] = W(b1, r1), [x3, z3] = W(b0, r1);
+        const hint = [CX - (x0 + x2) / 2, -((y0 + y1) / 2 - FLOOR) * 0.4 - 1, CZ - (z0 + z2) / 2];
+        B.quad([x0, y0, z0], [x1, y0, z1], [x2, y1, z2], [x3, y1, z3], col, hint, 0.03);
+      }
     }
   }
   for (let k = 0; k < 16; k++) {
@@ -115,6 +121,7 @@ export function buildHall(B, low) {
   for (let j = -Math.ceil(R / dzh); j <= Math.ceil(R / dzh); j++) for (let i = -Math.ceil(R / dxh) - 1; i <= Math.ceil(R / dxh) + 1; i++) {
     const x = CX + i * dxh + (j % 2 ? dxh / 2 : 0), z = CZ + j * dzh, r = Math.hypot(x - CX, z - CZ);
     if (r < WALK.r0 + hr * 0.4 || r > R - 0.3 - hr * 0.6) continue;
+    if (Math.abs(Math.sin(Math.atan2(z - CZ, x - CX) - DOOR_A - INLET) * r) < RILL.w / 2 + RILL.kerb + hr && Math.cos(Math.atan2(z - CZ, x - CX) - DOOR_A - INLET) > 0) continue; // (the spout's channel crosses the walk)
     const k = 0.78 + 0.3 * hsh(i * 31 + j * 7), col = hsh(i * 5 + j * 11) > 0.86 ? rgb(H.dark, k) : rgb(H.stone, k * 0.95);
     for (let e = 0; e < 6; e++) {
       const a0 = (e / 6) * Math.PI * 2 + Math.PI / 6, a1 = ((e + 1) / 6) * Math.PI * 2 + Math.PI / 6, s = hr * 0.9;
@@ -124,6 +131,6 @@ export function buildHall(B, low) {
   // the bed the hexes lie in (their joints): a dark ring of floor from the walk's inner edge to the plinth
   for (let i = 0; i < N; i++) {
     const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2, [x0, z0] = W(a0, WALK.r0), [x1, z1] = W(a1, WALK.r0), [X0, Z0] = W(a0, R), [X1, Z1] = W(a1, R);
-    B.quad([x0, FLOOR + 0.004, z0], [x1, FLOOR + 0.004, z1], [X1, FLOOR + 0.004, Z1], [X0, FLOOR + 0.004, Z0], rgb(H.cut, 1.6), [0, 1, 0], 0);
+    B.quad([x0, FLOOR + 0.002, z0], [x1, FLOOR + 0.002, z1], [X1, FLOOR + 0.002, Z1], [X0, FLOOR + 0.002, Z0], rgb(H.cut, 1.6), [0, 1, 0], 0);
   }
 }

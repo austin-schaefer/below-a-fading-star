@@ -72,13 +72,13 @@ export async function build(ctx) {
     strand(NB, new THREE.Matrix4(), p, q, { t: 0.03 });
   }
   const toS = [SPHERE.c[0] - CX, SPHERE.c[1] - CZ], ls = Math.hypot(toS[0], toS[1]), sx = toS[0] / ls, sz = toS[1] / ls;
-  const tubeA = [CX + sx * 15, domeY(15) + 1.4, CZ + sz * 15], tubeB = [CX + sx * (LENS.r + 0.9), LENS.y + 0.55, CZ + sz * (LENS.r + 0.9)];
+  const tubeA = [CX + sx * 15, domeY(15) + 1.4, CZ + sz * 15], tubeB = [CX + sx * (LENS.r + 0.9), LENS.y + 0.05, CZ + sz * (LENS.r + 0.9)]; // (its node clear of the dome)
   {
     const d = new THREE.Vector3(tubeB[0] - tubeA[0], tubeB[1] - tubeA[1], tubeB[2] - tubeA[2]), len = d.length(); d.normalize();
     const M = new THREE.Matrix4().lookAt(new THREE.Vector3(...tubeA), new THREE.Vector3(...tubeA).sub(d), new THREE.Vector3(0, 1, 0)).setPosition(...tubeA);
-    NP.tube(NB, M, { r: 0.62, len, rib: 1.2, collar: true, glaze: GLAZES[0], seed: 7, lit: 0.35 });
+    NP.tube(NB, M, { r: 0.5, len, rib: 1.2, collar: true, glaze: GLAZES[0], seed: 7, lit: 0.35 });
     // where it meets the lens: a node on the rim, the line's end
-    NP.node(NB, new THREE.Matrix4().makeTranslation(...tubeB), { r: 0.75, lit: 0.6, ports: [] });
+    NP.node(NB, new THREE.Matrix4().makeTranslation(...tubeB), { r: 0.55, lit: 0.6, ports: [] });
   }
   mk(NB, noonGlass('garth-glass'), 'garth-glass');
   // the lens itself: a shallow bull's-eye of clear glass, the light in it (not lit by anything: it is the source), its
@@ -92,13 +92,15 @@ export async function build(ctx) {
     const lm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
     const lens = new THREE.Mesh(g, lm); lens.name = 'garth-lens'; ctx.scene.add(lens); meshes.push(lens);
   }
+  let capMesh = null, capGone = false;
   // past the door's outer face, until U1's tube is there: a black end (taken away once the tube has built)
   {
     const d = GARTH_DOOR, P = (u, v, y) => new THREE.Vector3(CX + d.dir[0] * u - d.dir[1] * v, y, CZ + d.dir[1] * u + d.dir[0] * v);
-    const g = new THREE.BufferGeometry().setFromPoints([P(d.outer + 0.3, -d.half - 1, FLOOR - 0.5), P(d.outer + 0.3, d.half + 1, FLOOR - 0.5), P(d.outer + 0.3, d.half + 1, FLOOR + d.h + 1), P(d.outer + 0.3, -d.half - 1, FLOOR - 0.5), P(d.outer + 0.3, d.half + 1, FLOOR + d.h + 1), P(d.outer + 0.3, -d.half - 1, FLOOR + d.h + 1)]);
+    const g = new THREE.BufferGeometry().setFromPoints([P(d.outer, -d.half - 1, FLOOR - 0.5), P(d.outer, d.half + 1, FLOOR - 0.5), P(d.outer, d.half + 1, FLOOR + d.h + 1), P(d.outer, -d.half - 1, FLOOR - 0.5), P(d.outer, d.half + 1, FLOOR + d.h + 1), P(d.outer, -d.half - 1, FLOOR + d.h + 1)]);
     const cap = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false })); cap.name = 'garth-door-end';
     ctx.scene.add(cap); meshes.push(cap);
-    ctx.built?.().then(() => { if (ctx.swallow && !ctx.swallow.off) cap.visible = false; });
+    capMesh = cap;
+    ctx.built?.().then(() => { if (ctx.swallow && !ctx.swallow.off) { capGone = true; cap.visible = false; } });
   }
   // the beam in the air and the dust in it
   const beam = shaft(); ctx.scene.add(beam); meshes.push(beam);
@@ -143,6 +145,17 @@ export async function build(ctx) {
     const f = 1 - ss(LIGHT_R - 1.2, LIGHT_R + 2.5, r); // in the light: daylight; out of it: the hall's
     for (let k = 0; k < 4; k++) out[k] = HALL_GRADE[k] + (NOON_GRADE[k] - HALL_GRADE[k]) * f;
     return 1 - ss(R + 0.5, R + 3, r);
+  });
+
+  // ---- what draws it: the hall is seen only from inside, from its door and from U1's tube down the aqueduct, so its
+  // meshes are drawn only while the eye is under the moor's level and within the tube's reach (from the surface they
+  // would cost their draws behind the ground: heights-test's top of the gallery saw them)
+  // (.visible, not layers: the seal's layer is given only to what is on layer 0 when it first collects)
+  const show = (on) => { for (const m of meshes) m.visible = on && !(m === capMesh && capGone); };
+  let shown = true;
+  ctx.registerUpdate(() => {
+    const c = ctx.camera.position, dx = c.x - CX, dz = c.z - CZ, on = c.y < -8 && dx * dx + dz * dz < 95 * 95;
+    if (on !== shown) { shown = on; show(on); }
   });
 
   // ---- per frame, near: the breath (a slow swell over nine seconds and a smaller one over four, never a flicker:

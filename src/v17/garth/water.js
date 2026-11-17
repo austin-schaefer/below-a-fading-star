@@ -15,14 +15,14 @@ export function channels(low) {
   const out = [];
   const arc = (r, b0, b1) => { const n = Math.max(4, Math.ceil(Math.abs(b1 - b0) * r / (low ? 0.9 : 0.6))), pts = []; let s = 0, prev = null; for (let i = 0; i <= n; i++) { const [x, z] = at(r, b0 + (b1 - b0) * i / n); if (prev) s += Math.hypot(x - prev[0], z - prev[1]); pts.push([x, z, s]); prev = [x, z]; } return pts; };
   // the outer ring: from the inlet both ways round to the drain
-  out.push({ pts: arc(RILL.outer, INLET, DRAIN), w: RILL.w, v: 0.55 });
-  out.push({ pts: arc(RILL.outer, INLET, INLET - (Math.PI * 2 - (DRAIN - INLET))), w: RILL.w, v: 0.55 });
+  out.push({ pts: arc(RILL.outer, INLET, DRAIN), w: RILL.w, v: 0.55, dy: 0 });
+  out.push({ pts: arc(RILL.outer, INLET, INLET - (Math.PI * 2 - (DRAIN - INLET))), w: RILL.w, v: 0.55, dy: 0.009 });
   // the feeders, in from the outer ring to the inner
-  for (const b of RADIALS) { const pts = []; for (let r = RILL.outer, s = 0; r >= RILL.inner - 0.01; r -= 0.8, s += 0.8) { const [x, z] = at(Math.max(r, RILL.inner), b); pts.push([x, z, s]); } out.push({ pts, w: RILL.w * 0.8, v: 0.4 }); }
+  for (const b of RADIALS) { const pts = []; for (let r = RILL.outer, s = 0; r >= RILL.inner - 0.01; r -= 0.8, s += 0.8) { const [x, z] = at(Math.max(r, RILL.inner), b); pts.push([x, z, s]); } out.push({ pts, w: RILL.w * 0.8, v: 0.4, dy: -0.009 }); }
   // the inner ring, at the light's edge, slow
-  out.push({ pts: arc(RILL.inner, -Math.PI, Math.PI), w: RILL.w * 0.8, v: 0.18 });
+  out.push({ pts: arc(RILL.inner, -Math.PI, Math.PI), w: RILL.w * 0.8, v: 0.18, dy: 0.009 });
   // from the spout at the wall to the ring
-  { const pts = []; for (let r = R - 0.35, s = 0; r >= RILL.outer - 0.01; r -= 0.5, s += 0.5) { const [x, z] = at(Math.max(r, RILL.outer), INLET); pts.push([x, z, s]); } out.push({ pts, w: RILL.w, v: 0.7 }); }
+  { const pts = []; for (let r = R - 0.35, s = 0; r >= RILL.outer - 0.01; r -= 0.5, s += 0.5) { const [x, z] = at(Math.max(r, RILL.outer), INLET); pts.push([x, z, s]); } out.push({ pts, w: RILL.w, v: 0.7, dy: -0.009 }); }
   return out;
 }
 
@@ -41,7 +41,7 @@ export function buildKerbs(B, chans) {
         B.quad([A1[0], FLOOR - 0.02, A1[1]], [B1[0], FLOOR - 0.02, B1[1]], [B1[0], ky, B1[1]], [A1[0], ky, A1[1]], col, [nx * s, 0, nz * s], 0.04);
       }
       // the bed, dark, under the water
-      B.quad([ax + nx * hw, FLOOR + 0.004, az + nz * hw], [bx + nx * hw, FLOOR + 0.004, bz + nz * hw], [bx - nx * hw, FLOOR + 0.004, bz - nz * hw], [ax - nx * hw, FLOOR + 0.004, az - nz * hw], rgb(H.cut, 1.4), [0, 1, 0], 0);
+      B.quad([ax + nx * hw, FLOOR + 0.01, az + nz * hw], [bx + nx * hw, FLOOR + 0.01, bz + nz * hw], [bx - nx * hw, FLOOR + 0.01, bz - nz * hw], [ax - nx * hw, FLOOR + 0.01, az - nz * hw], rgb(H.cut, 1.4), [0, 1, 0], 0);
     }
   }
   // the spout: a bronze lip out of the wall at the inlet, over a basin; the grate opposite
@@ -52,7 +52,7 @@ export function buildKerbs(B, chans) {
   for (const s of [-1, 1]) B.quad(Q(0, s * 0.22, FLOOR + 1.25), Q(0.55, s * 0.16, FLOOR + 1.12), Q(0.55, s * 0.16, FLOOR + 1.24), Q(0, s * 0.22, FLOOR + 1.4), g, [vx * s, 0, vz * s], 0.05);
   B.quad(Q(0, -0.3, FLOOR + 1.4), Q(0, 0.3, FLOOR + 1.4), Q(0, 0.3, FLOOR + 1.62), Q(0, -0.3, FLOOR + 1.62), g, [-ux, 0, -uz], 0.05);
   const [gx, gz] = at(RILL.outer, DRAIN);
-  for (let k = -3; k <= 3; k++) { const ox = Math.cos(DOOR_A + DRAIN) * k * 0.08, oz = Math.sin(DOOR_A + DRAIN) * k * 0.08; B.beam([gx + ox - Math.sin(DOOR_A + DRAIN) * 0.3, FLOOR + 0.035, gz + oz + Math.cos(DOOR_A + DRAIN) * 0.3], [gx + ox + Math.sin(DOOR_A + DRAIN) * 0.3, FLOOR + 0.035, gz + oz - Math.cos(DOOR_A + DRAIN) * 0.3], 0.018, rgb(H.bronzeDull, 0.7), 0); }
+  for (let k = -3; k <= 3; k++) { const ox = Math.cos(DOOR_A + DRAIN) * k * 0.08, oz = Math.sin(DOOR_A + DRAIN) * k * 0.08; B.beam([gx + ox - Math.sin(DOOR_A + DRAIN) * 0.3, FLOOR + 0.065, gz + oz + Math.cos(DOOR_A + DRAIN) * 0.3], [gx + ox + Math.sin(DOOR_A + DRAIN) * 0.3, FLOOR + 0.065, gz + oz - Math.cos(DOOR_A + DRAIN) * 0.3], 0.018, rgb(H.bronzeDull, 0.7), 0); }
 }
 
 // the water: strips over the channels and a falling ribbon from the spout, one mesh, its own shader
@@ -63,7 +63,7 @@ export function waterMesh(chans, drip) {
     const P = c.pts, hw = c.w / 2;
     for (let i = 0; i < P.length; i++) {
       const [x, z, s] = P[i], j = Math.min(i, P.length - 2), dx = P[j + 1][0] - P[j][0], dz = P[j + 1][1] - P[j][1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l;
-      for (const v of [-1, 1]) { pos.push(x + nx * hw * v, RILL.y, z + nz * hw * v); fl.push(s, v, c.v, 0); }
+      for (const v of [-1, 1]) { pos.push(x + nx * hw * v, RILL.y + c.dy, z + nz * hw * v); fl.push(s, v, c.v, 0); }
     }
     for (let i = 0; i < P.length - 1; i++) { const a = base + i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
     base += P.length * 2;

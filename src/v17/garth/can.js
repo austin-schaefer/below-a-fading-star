@@ -14,7 +14,7 @@ export function buildCan(B) {
   // the body: a lathe, broad at the foot, a shoulder, a collar at the mouth; brass, verdigris where water ran
   const prof = [[0.0, 0.0], [0.58, 0.0], [0.62, 0.06], [0.6, 0.9], [0.56, 1.3], [0.42, 1.52], [0.3, 1.6], [0.31, 1.68], [0.28, 1.7]];
   const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 28);
-  const mat = new THREE.Matrix4().makeTranslation(x, FLOOR, z);
+  const mat = new THREE.Matrix4().makeTranslation(x, FLOOR + 0.015, z); // (its foot over the soil, not in its plane)
   B.geo(g, mat, (nx, ny) => (ny > 0.6 ? BRASS_W : BRASS), 0.06);
   // verdigris runs down from the mouth on the spout's side
   for (let k = 0; k < 5; k++) { const q = a + Math.PI + (k - 2) * 0.12, r = 0.605; B.quad([x + Math.cos(q) * r, FLOOR + 1.3, z + Math.sin(q) * r], [x + Math.cos(q + 0.05) * r, FLOOR + 1.3, z + Math.sin(q + 0.05) * r], [x + Math.cos(q + 0.05) * r, FLOOR + 0.5 + k * 0.08, z + Math.sin(q + 0.05) * r], [x + Math.cos(q) * r, FLOOR + 0.45 + k * 0.1, z + Math.sin(q) * r], VERD, [Math.cos(q), 0, Math.sin(q)], 0.05); }
@@ -24,8 +24,8 @@ export function buildCan(B) {
   { const d = new THREE.CircleGeometry(0.28, 20).rotateX(-Math.PI / 2); B.geo(d, new THREE.Matrix4().makeTranslation(x, FLOOR + 1.665, z), WATER, 0); }
   // the bow handle over the mouth, and the grip behind
   for (let i = 0; i < 12; i++) {
-    const t0 = Math.PI * i / 12, t1 = Math.PI * (i + 1) / 12, r = 0.5;
-    B.beam(M(0, 1.6 + Math.sin(t0) * r * 0.55, Math.cos(t0) * r), M(0, 1.6 + Math.sin(t1) * r * 0.55, Math.cos(t1) * r), 0.03, IRON, 0.04);
+    const t0 = Math.PI * i / 12, t1 = Math.PI * (i + 1) / 12, r = 0.42; // (its feet on the shoulder)
+    B.beam(M(0, 1.52 + Math.sin(t0) * 0.6, Math.cos(t0) * r), M(0, 1.52 + Math.sin(t1) * 0.6, Math.cos(t1) * r), 0.03, IRON, 0.04);
   }
   B.beam(M(-0.6, 1.2, 0), M(-0.9, 1.0, 0), 0.035, BRASS, 0.04); B.beam(M(-0.9, 1.0, 0), M(-0.88, 0.5, 0), 0.035, BRASS, 0.04); B.beam(M(-0.88, 0.5, 0), M(-0.6, 0.35, 0), 0.035, BRASS, 0.04);
   // the spout: from low on the body up and in over the rill, the rose at its end

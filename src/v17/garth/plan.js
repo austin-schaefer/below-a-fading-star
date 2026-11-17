@@ -28,7 +28,7 @@ export const RINGS = [
   { key: 'ash', r0: 12.9, r1: 15.7 },
 ];
 export const WALK = { r0: 16.55, r1: R };   // the paved walk round the wall (Heliarch hexes)
-export const RILL = { outer: 16.1, inner: 5.15, w: 0.44, kerb: 0.12, y: FLOOR + 0.016 }; // the water's face sits a little proud of the soil, between kerbs
+export const RILL = { outer: 16.1, inner: 5.15, w: 0.44, kerb: 0.12, y: FLOOR + 0.026 }; // the water's face sits a little proud of the soil, between kerbs
 export const RADIALS = [Math.PI / 3, Math.PI, -Math.PI / 3]; // the feeders from the outer rill in to the inner, by bearing
 export const INLET = 0.34, DRAIN = Math.PI;  // the water comes out of the wall north of the door and leaves by a grate opposite
 export const PATH = { half: 0.5 };           // the stepping stones from the door to the light, along bearing 0

@@ -6,7 +6,7 @@
 // with a stump in them). Every number here is from garth/plan.js.
 import * as THREE from 'three';
 import { NOON } from '../../v8/strata/noon.js';
-import { CX, CZ, FLOOR, RINGS, WALK, TREES, TREE, RILL, RADIALS, polar, at, DOOR_A, PATH } from './plan.js';
+import { CX, CZ, FLOOR, RINGS, WALK, TREES, TREE, RILL, RADIALS, CAN, at, DOOR_A, PATH } from './plan.js';
 
 const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
@@ -35,9 +35,9 @@ export function buildGarden(B, rng, { low, rings }) {
   const lowK = low ? 0.45 : 1;
   // ---- the floor: soil from the middle out to the walk, its colour ring by ring with a sharp step at each edge
   const radii = [];
-  for (let r = 0.35; r < WALK.r0; r += 0.32) radii.push(r);
+  for (let r = 0.35; r < WALK.r0 - 0.03; r += 0.32) radii.push(r);
   for (const g of RINGS) for (const d of [-0.07, 0.07]) radii.push(g.r1 + d);
-  radii.push(WALK.r0 + 0.02); radii.sort((a, b) => a - b);
+  radii.push(WALK.r0 - 0.01); radii.sort((a, b) => a - b);
   const NA = low ? 120 : 180;
   const soilAt = (r, b) => {
     const k = ringAt(r, b), P = PAL[RINGS[Math.min(k, RINGS.length - 1)].key];
@@ -58,6 +58,7 @@ export function buildGarden(B, rng, { low, rings }) {
   }
   // ---- the stepping stones from the door to the light: Heliarch hexagons sunk in the soil, worn
   for (let r = WALK.r0 - 0.3; r > RINGS[0].r1 + 0.1; r -= 0.82) {
+    if (Math.abs(r - RILL.outer) < RILL.w / 2 + RILL.kerb + 0.4 || Math.abs(r - RILL.inner) < RILL.w / 2 + RILL.kerb + 0.4) continue; // (the rill passes there)
     const [x, z] = at(r, 0.04 * Math.sin(r * 1.7)), s = 0.36, k = 0.7 + 0.25 * rng();
     for (let e = 0; e < 6; e++) {
       const q0 = (e / 6) * Math.PI * 2 + r, q1 = ((e + 1) / 6) * Math.PI * 2 + r;
@@ -83,7 +84,7 @@ export function buildGarden(B, rng, { low, rings }) {
     const g = RINGS[k], area = Math.PI * (g.r1 * g.r1 - g.r0 * g.r0), n = Math.round(area * per * lowK);
     for (let i = 0; i < n; i++) {
       const r = Math.sqrt(g.r0 * g.r0 + rng() * (g.r1 * g.r1 - g.r0 * g.r0)), b = rng() * Math.PI * 2 - Math.PI;
-      if (ringAt(r, b) !== k || onPath(r, b) || onRill(r, b)) continue;
+      if (ringAt(r, b) !== k || onPath(r, b) || onRill(r, b) || ((r - CAN.r) ** 2 + (r * (b - CAN.b)) ** 2 < 0.72 * 0.72)) continue;
       const x = CX + Math.cos(DOOR_A + b) * r, z = CZ + Math.sin(DOOR_A + b) * r;
       fn(x, z, r, b);
     }
@@ -130,7 +131,7 @@ export function buildGarden(B, rng, { low, rings }) {
     scatter(3, 1.6, (x, z) => {
       const h = 0.7 + rng() * 0.75, la = rng() * 6.28, lean = rng() * 0.12, col = mul(pick(P.grass), 0.85 + rng() * 0.25);
       const top = [x + Math.cos(la) * lean, FLOOR + h, z + Math.sin(la) * lean];
-      if (rng() < 0.25) { const kn = [x + Math.cos(la) * lean * 0.6, FLOOR + h * 0.62, z + Math.sin(la) * lean * 0.6]; B.beam([x, FLOOR, z], kn, 0.008, col, 0.1); B.beam(kn, [kn[0] + Math.cos(la) * 0.3, kn[1] - 0.25, kn[2] + Math.sin(la) * 0.3], 0.007, col, 0.1); return; }
+      if (rng() < 0.25) { const kn = [x + Math.cos(la) * lean * 0.6, FLOOR + h * 0.62, z + Math.sin(la) * lean * 0.6]; B.beam([x, FLOOR, z], kn, 0.008, col, 0.1); B.beam(kn, [kn[0] + Math.cos(la) * 0.45, FLOOR + 0.006, kn[2] + Math.sin(la) * 0.45], 0.007, col, 0.1); return; } // (snapped: its top lies on the ground)
       B.beam([x, FLOOR, z], top, 0.009, col, 0.1);
       B.beam([top[0], top[1] - 0.06, top[2]], [top[0], top[1] + 0.05, top[2]], 0.024, mul(col, 0.6), 0.1);
     });
@@ -165,9 +166,11 @@ function espalier(B, rng, t, low) {
       B.beam(P(cu + Math.cos(q0) * hr, cy + Math.sin(q0) * hr), P(cu + Math.cos(q1) * hr, cy + Math.sin(q1) * hr), 0.0075, ST, 0.03);
     }
   };
-  for (const s of [-1, 1]) { const ph = stage === 4 && rng() < 0.4 ? 0.35 + rng() * 0.6 : 1; B.beam(P(s * half, 0), P(s * half, top * ph), 0.014, ST, 0.03); if (ph === 1) ring(s * half, top + 0.2, 0.2); }
-  for (const ty of tiers) if (!broke()) B.beam(P(-half, ty), P(half, ty), 0.006, ST, 0.02);
-  if (!broke()) { B.beam(P(-half, top), P(half, top), 0.01, ST, 0.02); for (let u = -half + 0.2; u < half - 0.1; u += 0.2) if (!broke()) ring(u, top + 0.09, 0.09); }
+  let low_ = top;
+  for (const s of [-1, 1]) { const ph = stage === 4 && rng() < 0.4 ? 0.35 + rng() * 0.6 : 1; B.beam(P(s * half, 0), P(s * half, top * ph), 0.014, ST, 0.03); if (ph === 1) ring(s * half, top + 0.2, 0.2); low_ = Math.min(low_, top * ph); }
+  // (a wire or the rail only where both posts still reach it: nothing of the frame hangs in the air)
+  for (const ty of tiers) if (ty <= low_ && !broke()) B.beam(P(-half, ty), P(half, ty), 0.006, ST, 0.02);
+  if (low_ >= top && !broke()) { B.beam(P(-half, top), P(half, top), 0.01, ST, 0.02); for (let u = -half + 0.2; u < half - 0.1; u += 0.2) if (!broke()) ring(u, top + 0.09, 0.09); }
   // the trunk and its arms: the oldest a stump
   const bark = pal.bark;
   if (stage === 4) { B.beam(P(0, 0), P(0.03, 0.4 + rng() * 0.5), 0.07, bark, 0.12); return; }
@@ -193,7 +196,7 @@ function espalier(B, rng, t, low) {
   const nx = Math.cos(a), nz = Math.sin(a); // out of the frame's plane
   for (let i = 0; i < n; i++) {
     const [u, y] = leaves[Math.floor(rng() * leaves.length)];
-    const base = P(u + (rng() - 0.5) * 0.1, y + (rng() - 0.4) * 0.22), out = (rng() - 0.5) * 0.3;
+    const base = P(u, y + 0.01), out = (rng() - 0.5) * 0.3; // (on the arm: a leaf that does not touch its twig floats)
     const la = rng() * 6.28, L = 0.13 + rng() * 0.07, droop = stage === 0 ? 0.02 : stage === 1 ? -0.05 : -0.09;
     const tip = [base[0] + Math.cos(la) * L * tx * 0.8 + nx * out, base[1] + Math.sin(la) * L * 0.6 + droop, base[2] + Math.cos(la) * L * tz * 0.8 + nz * out];
     const w = 0.05 + rng() * 0.02, side = [-Math.sin(la) * w * tx + nx * 0.015, Math.cos(la) * w, -Math.sin(la) * w * tz + nz * 0.015];
