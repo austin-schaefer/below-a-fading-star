@@ -153,7 +153,7 @@ export const LEAT = {
   kerbs: 2.4,         // between kerbs, m
   hw: LEAT_HW,
   hold: [[12, 228.5], [-63.5, 288]],  // its lip held from the head to the mere's lobe
-  bank: 1.0, reach: 8, rag: 0, wob: 0, lipW: 1.0, lipFall: 0.55, minSpeed: 0.7, speedWin: 2, shade: 1, // a built channel: a kerbed line, a steep bank, a narrow embankment, slow when level
+  bank: 1.0, reach: 8, rag: 0, wob: 0, lipW: 1.0, lipFall: 0.55, minSpeed: 0.7, speedWin: 2, shade: 0.5, // a built channel: a kerbed line, a steep bank, a narrow embankment, slow when level
   fade: { in: [[12, 227], [12, 227.8]], out: [[-63.5, 288], [-67.5, 288.3]] },
   // the slab bridge where P14 and P38 meet (src/v4/paths/routes.js), across pond 2
   bridge: { at: [6.6, 252.6], len: 5.6, w: 2.1 }, // its east step at the meeting (9, 252)
