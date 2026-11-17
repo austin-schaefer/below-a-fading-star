@@ -6,7 +6,7 @@
 
 **Cause.** The sun's shadow camera sat 260 m up-sun of a point 40 m ahead of the eye, 420 m deep. The Great Span's west stair is about 330 m up-sun of the east shore, and its shadow at 13.5 degrees is about 230 m long. It sat on the near plane, so as the walker stepped and turned (the box moves 40 m with the look) it was cut in and out, and its shadow came and went over most of the ground in view. Ruled out: the galley's 40 m cull (it flips at 40 m but its shadow falls north, out of this view), the tree LOD (`xfade=0` changes nothing), and the `above` box steps (alt 1.7 throughout).
 
-**Fix** (`src/shadows.js` `shadowDepth`, a few lines in `src/main.js`, `src/v12/above.js` takes the light distance as a parameter). Across the light the box is texel-snapped as before. Along the light it is now fixed to the world: its centre lies on the plane through the origin square to the sun, the light is 500 m up-sun, and the window is 1000 m deep (every point within 420 m of the bowl's centre, up to 300 m high). The bias is scaled to keep its 0.25 m. `?shadowdepth=v16` restores the old window. The east shore is now always in the stair's shadow, as it already was when facing S. The other five views compared (fen, spawn, stones, orchard, east shore facing S) are unchanged. Cost: the shadow pass draws about 10 to 26 more calls in the views (calls 291 to 306 at the east shore; 333 to 351 at the spawn).
+**Fix** (`src/shadows.js` `shadowDepth`, a few lines in `src/main.js`, `src/v12/above.js` takes the light distance as a parameter). Across the light the box is texel-snapped as before. Along the light it is now fixed to the world: its centre lies on the plane through the origin square to the sun, the light is 500 m up-sun, and the window is 1000 m deep (every point within 420 m of the bowl's centre, up to 300 m high). The bias is scaled to keep its 0.25 m. `?shadowdepth=v16` restores the old window. Only at walking height (box 95 m): a box grown from a top (`above.js`) keeps v12's window, because the full window cost the stair's and the gallery's tops 375 and 373 calls, over heights' 364 (first suite run). The east shore is now always in the stair's shadow, as it already was when facing S. The other five views compared (fen, spawn, stones, orchard, east shore facing S) are unchanged. Cost: the shadow pass draws about 10 to 26 more calls in the views (calls 291 to 306 at the east shore; 333 to 351 at the spawn).
 
 **Guard.** `tools/shore-walk-test.mjs` (gate: `shore`). At three stands (the east shore, the pool's north shore, the fen's west shore), a box row holds the view while the look turns, and the lower half may change by at most 1.0 of 255. Then a 12-step walk out and back, where no step may exceed 3 times the median step, nor 3 of 255. On v16 the box row fails by 11.9.
 
@@ -37,6 +37,14 @@ Frames, before and after (`after3` is final): `shots/wip/v17-1712-glow-{before,a
 
 ## Tests
 
-`ONLY=village,gutter,perf,heights,shore,treelod,rocks,walk,loading tools/suite.sh 8172`: see the hand-back for the counts.
+- `ONLY=village,gutter,perf,heights,shore,treelod,rocks,walk,loading tools/suite.sh 8172`:
+  - Passed: village 690 PASS, rocks 38, walk 13, loading 28, perf 29, gutter 29, treelod 71.
+  - Failed: heights and shore.
+- Rerun after the walking-height-only change and the shore walk's two-frame read: shore 6/6.
+- heights is still at 2 failures in 208. Both fail at the same rate with `shadowdepth` forced to v16, so on origin/next as merged here:
+  - `no page errors (ascents)`: an AudioParam `setTargetAtTime` non-finite error. Not shadows; likely v17 A1's water sound, just merged.
+  - `cost: top stair on low`: 371 calls against 364, the same 371 at v16.
+- `cost: top gallery on low` failed with my change (373 against 364) and passed at v16. That is mine, about 9 calls: the gallery's top is at walking height, so it takes the deeper window. Open: either shorten the window's up-sun reach or accept the cost.
+- The `from above` row (box centre against the eye on the Span's deck) failed under the first version and passes now.
 
 Owner's link: http://localhost:8123/?pos=-21,104&yaw=-2.356

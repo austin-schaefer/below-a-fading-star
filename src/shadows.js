@@ -26,6 +26,8 @@ import * as THREE from 'three';
 // of the near plane as the walker stepped or turned, and its shadow came and went over half the ground in view.
 // The window holds every point within 420 m of the bowl's centre up to 300 m high (the sun-axis distance of such
 // a point is at most 0.97 * 420 + 0.23 * 300 = 477). The bias keeps the 0.25 m of depth it had over 420 m.
+// At walking height only (the box at its 95 m): a box grown from a top (src/v12/above.js) keeps v12's window, since the
+// whole bowl up-sun of a top cost the stair's and the gallery's tops 10 draw calls over their 364 (heights-test).
 // ?shadowdepth=v16 restores the walker-following window (for comparisons).
 export function shadowDepth(url) {
   if (url.searchParams.get('shadowdepth') === 'v16') return { fixed: false, light: 260, far: 420, bias: -0.0006 };

@@ -91,7 +91,7 @@ for (const row of ROWS) {
       await page.evaluate(({ x, z, yaw, js }) => { const fp = window.__fp, p = fp.player; p.pos.x = x; p.pos.z = z; p.yaw = yaw; p.pitch = 0; p.vel?.set(0, 0, 0); if (js) (0, eval)(js); }, { x, z, yaw: row.yaw, js: row.js });
       await page.waitForTimeout(700);
     }
-    const r = await page.evaluate((save) => {
+    const take = (save) => page.evaluate((save) => {
       const fp = window.__fp, c = document.getElementById('scene'), gm = fp.inhabitants2?.galley?.mesh;
       fp.post.composer.render(); // the frame as it stands: the shadow map at its own cadence
       const w = 192, h = 108, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
@@ -105,6 +105,9 @@ for (const row of ROWS) {
         sb: sl.shadow.camera.right, galley: gm ? [+gm.position.x.toFixed(1), +gm.position.z.toFixed(1), +gm.position.distanceTo(fp.camera.position).toFixed(1), gm.castShadow] : null, redraws: cad.stats.redraws, light: [sl.position.x, sl.position.y, sl.position.z].map((v) => +v.toFixed(1)),
       };
     }, save);
+    // two frames half a second apart, the darker kept: a moth, a wisp or a bird crossing the view is not the ground
+    const r = await take(save); await page.waitForTimeout(500); const r2 = await take(false);
+    if (r2.L < r.L) r.L = r2.L;
     lum.push(r.L); info.push(r);
     if (save) writeFileSync(`${outDir}/shore-${row.name}-${q}-${String(k).padStart(2, '0')}.png`, Buffer.from(r.url.split(',')[1], 'base64'));
   }
