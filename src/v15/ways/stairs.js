@@ -8,7 +8,7 @@
 //   rail(K, pts, o)                 a Late pole rail on posts along [[x, y, z], ...]
 // o for a flight: { name, x, y, z (the head: the upper floor's edge, on the axis), f: [fx, fz] (the way down),
 //   drop (m), width, rise (about 0.22), run (0.29), base (y its mass goes down to; stone), cheeks: [left, right]
-//   (stone: which sides carry a wall, default both), open (stone: the cheek stops where the treads are this high over
+//   (stone: which sides carry a wall, default both), nosing (stone: a pale lip on each tread's edge), open (stone: the cheek stops where the treads are this high over
 //   the lower floor, 1.0), flare (stone: the open treads under it stand out this far past the cheek's line, 0.5; 0
 //   keeps them the flight's width), register (true: an ascent), lamp }
 // Each returns { foot: [x, y, z], length, floor, steps }.
@@ -67,6 +67,9 @@ export function stoneFlight(K, o) {
   const back = o.back ?? 0.3; // its mass runs on behind the head, into the floor it leaves (a back face in the first riser's plane would show)
   sh.lineTo(S.length, base); sh.lineTo(-back, base); sh.lineTo(-back, -0.05); sh.lineTo(0, 0); // (its top falls away behind: never in the floor's own plane)
   B.add(B.extrude(sh, w), F.clone().multiply(ROT_PROFILE), { color: stone, course: 0.5, moss: 0.35, ground });
+  // (v16-V1) `nosing`: a worn pale lip on every tread's edge, a finger proud, so a steep flight reads as steps and not
+  // as a coursed wall from under it (its upper treads are over the eye, and only the risers are seen)
+  if (o.nosing) for (let i = 1; i < S.n; i++) B.add(B.box(w - 0.04, 0.07, 0.12, { chip: 0.01 }), F.clone().multiply(mat(0, -i * S.rise - 0.023, i * S.run - 0.05)), { color: jit(stone, 1.22), moss: 0.08, ground });
   const cheeks = o.cheeks ?? [true, true];
   // where the cheek stops: the first tread this high over the lower floor or lower (i: the tread's index, 1..n-1)
   const openH = o.open ?? 1.0, iOpen = Math.min(S.n - 1, Math.max(1, Math.ceil(S.n - openH / S.rise))), wOpen = (iOpen - 1) * S.run, fl = o.flare ?? 0.5;
