@@ -188,7 +188,7 @@ export function buildSky(ctx) {
     value: 1.0, phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned || v3,
     get next() { return next; },
     set next(v) { if (v < next) this.out = true; next = v; },
-    dark: 0, lamps: 0, slow: 0, soon: 0, after: 0, lampsAt: null, lampDelay: null, wave: null,
+    dark: 0, lamps: 0, slow: 0, soon: 0, after: 0, flush: 0, lampsAt: null, lampDelay: null, wave: null,
   };
   // The readings for the things that answer (v16-S1, S2), all 0..1, all settled at once under flicker.hold:
   //   `dark`: how far down the sun is (0 above 0.9, 1 at the floor of 0.3), with no lag.
@@ -201,7 +201,9 @@ export function buildSky(ctx) {
   //   `slow`: a stored warmth: up over three seconds while the dark is down, back over six (the Laid Sun, the glass).
   //   `soon`: the air holding its breath: 0 to 1 over the four seconds before a gutter's onset, 1 through it, gone as the
   //     sun catches (the wind drops before the dark comes).
-  //   `after`: the relief: 1 as the sun catches, gone over some five seconds (a warm flush, a gust).
+  //   `after`: the relief: 1 as the sun catches, gone over some five seconds (a gust, the lamps' sigh); an edge, not a ramp.
+  //   `flush`: the warm flush on the screen: the same relief as a smooth reading, rising over about a second from the catch,
+  //     then gone over some five seconds (never a step at any frame rate; 0 under flicker.hold).
   let lampWait = 0;
   if (GUTTER.pinned) next = Math.min(next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
   ctx.events?.addEventListener('begin', () => { flicker.out = true; });
@@ -210,16 +212,20 @@ export function buildSky(ctx) {
   // (src/structures/materials.js: the stone's lit panes): (eye x, eye z, rise, fall).
   let rise = -1, fall = -1;
   const cam = ctx.camera.position;
+  // The wave's centre: the eye while no gutter is on, held from its onset until the lights are done, so a teleport or a
+  // fall mid-gutter does not relight a house.
+  let wcx = cam.x, wcz = cam.z, flushUp = false;
   flicker.wave = { value: new THREE.Vector4(0, 0, -1, -1) };
   const lampDelay = (x, z) => {
     const cx = Math.floor(x / 6) + 0.5, cz = Math.floor(z / 6) + 0.5; // (6 m cells, as the stone's shader: a house answers whole)
     let h = Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453; h -= Math.floor(h);
-    return Math.min(7, 0.3 + Math.hypot(x - cam.x, z - cam.z) / 45 + 1.2 * h);
+    return Math.min(7, 0.3 + Math.sqrt((x - wcx) * (x - wcx) + (z - wcz) * (z - wcz)) / 45 + 1.2 * h);
   };
   flicker.lampDelay = lampDelay;
+  const ss = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
   flicker.lampsAt = (x, z) => {
     if (flicker.hold != null || rise < 0) return flicker.lamps;
-    const d = lampDelay(x, z), ss = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+    const d = lampDelay(x, z);
     return ss(0, 1.8, rise - d) * (fall < 0 ? 1 : 1 - ss(0, 8, fall - d));
   };
   let wasDown = false;
@@ -253,9 +259,12 @@ export function buildSky(ctx) {
     const soonTo = flicker.phase > 0.6 ? 1 : flicker.out && flicker.phase <= 0 ? Math.min(1, Math.max(0, 1 - next / 4)) : 0;
     flicker.soon = held ? (flicker.dark > 0.4 ? 1 : 0) : soonTo;
     const down = flicker.dark > 0.5;
-    if (wasDown && !down) flicker.after = 1;
+    if (wasDown && !down) { flicker.after = 1; flushUp = true; }
     wasDown = down;
     flicker.after = held ? 0 : Math.max(0, flicker.after - dt / 5);
+    if (held) { flicker.flush = 0; flushUp = false; }
+    else if (flushUp) { flicker.flush = Math.min(1, flicker.flush + dt); if (flicker.flush >= 1) flushUp = false; }
+    else flicker.flush = Math.max(0, flicker.flush - dt / 5);
     if (held) { rise = flicker.lamps > 0.5 ? 1e4 : -1; fall = -1; }
     else {
       if (lampTo >= 1 && (rise < 0 || fall >= 0)) { rise = fall >= 0 ? 1.8 * Math.max(0, 1 - fall / 8) : 0; fall = -1; }
@@ -263,7 +272,8 @@ export function buildSky(ctx) {
       if (lampTo <= 0 && rise >= 0 && fall < 0) fall = 0; else if (fall >= 0) fall += dt;
       if (fall > 18) rise = fall = -1;
     }
-    flicker.wave.value.set(cam.x, cam.z, rise, fall);
+    if (flicker.phase <= 0 && rise < 0 && fall < 0) { wcx = cam.x; wcz = cam.z; }
+    flicker.wave.value.set(wcx, wcz, rise, fall);
     uniforms.uFlicker.value = flicker.value;
     uniforms.uDark.value = flicker.dark;
     dome.position.copy(ctx.camera.position);

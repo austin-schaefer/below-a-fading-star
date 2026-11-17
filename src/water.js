@@ -168,7 +168,7 @@ const FRAG = /* glsl */`
     vec3 col = mix(body, refl, fres);
     // v16-S2: in a gutter the glints go with the sun, and the cold the standing water keeps shows: a pale blue-grey
     // coming up out of the body in slow skeins (uDark: sky.js's flicker.dark)
-    col += vec3(0.09, 0.19, 0.34) * uDark * (1.0 - 0.6 * fres) * (0.35 + 0.65 * smoothstep(0.3, 0.8, texture2D(uTex, p * 0.05 + vec2(uTime * 0.006, uTime * 0.004)).a));
+    if (uDark > 0.0) col += vec3(0.09, 0.19, 0.34) * uDark * (1.0 - 0.6 * fres) * (0.35 + 0.65 * smoothstep(0.3, 0.8, texture2D(uTex, p * 0.05 + vec2(uTime * 0.006, uTime * 0.004)).a)); // (no fetch at rest)
     // v12-H5: from a top, looking down into it, black water reads as a hole: the shelf under the shallows shows (peat
     // over silt, by the depth) and the deep goes to black-green, the swell catching the sky. Only for an eye 15 m and
     // more over the water and looking down at it; at walking height the water is exactly as it was.

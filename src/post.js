@@ -152,7 +152,7 @@ const GRADE_MAIN = `
     col = max(mix(vec3(lum(col)), col, 1.0 + 0.16 * uHigh), 0.0);
     col = 0.18 * pow(col / 0.18, vec3(1.0 + 0.07 * uHigh));
 
-    // v16-S2, the gutter (uGut.x: flicker.dark, not under the ground; .y: flicker.after): starlight takes the shadows and
+    // v16-S2, the gutter (uGut.x: flicker.dark, not under the ground; .y: flicker.flush): starlight takes the shadows and
     // the mid-tones cold and grey while what burns stays warm, so the lamps that answer stand out; as the sun catches, a
     // warm flush in the mid-tones over some five seconds (the relief)
     { float gl = lum(col), sh = (1.0 - smoothstep(0.12, 0.55, gl)) * uGut.x;
@@ -410,7 +410,7 @@ export function buildPost(ctx) {
     if (ctx.places) ctx.places.gradeAt(camera.position.x, camera.position.z, ctx.terrain.causewayDistance(camera.position.x, camera.position.z), u.uPlace.value); // v8-02
     const under = ctx.below ? ctx.below.tick(camera.position, ctx.places ? u.uPlace.value : null) : 0; // v14-D0: under the ground, the dark-adapted eye's grade and no sun through the roof
     { const o = ctx.above?.over ?? 0, k = Math.min(1, Math.max(0, (o - 30) / 60)); u.uHigh.value = k * k * (3 - 2 * k); } // v12-H5
-    u.uGut.value.set((ctx.sky.flicker.dark || 0) * (1 - under), (ctx.sky.flicker.after || 0) * (1 - under)); // v16-S2
+    u.uGut.value.set((ctx.sky.flicker.dark || 0) * (1 - under), (ctx.sky.flicker.flush || 0) * (1 - under)); // v16-S2: the smooth flush, not the edge `after`
     u.uResolution.value.set(size.x, size.y);
     renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
     u.uTexel.value.set(1 / u.uTexel.value.x, 1 / u.uTexel.value.y);

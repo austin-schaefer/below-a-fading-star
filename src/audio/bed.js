@@ -97,7 +97,7 @@ export function startBed(a) {
     o.connect(gn); gn.connect(droneBus); o.start(); droneOsc.push({ o, cents });
   });
 
-  let swellSm = 0, wood = 0, hurrySm = 0, hushSm = 0, reliefGust = false;
+  let swellSm = 0, wood = 0, hurrySm = 0, hushSm = 0, afterPrev = 0;
   function update(f) {
     const { now, t, px, pz, b, step } = f, cam = a.camera.position;
     // --- the gutter: the drone comes up under a wind that thins and darkens
@@ -120,8 +120,9 @@ export function startBed(a) {
     // nothing over them, so the first thing a visitor anywhere notices is a hush; and as the sun catches (flicker.after)
     // a gust comes, the relief, rising over 1.8 s to full and falling as gusts do
     const soon = ctx.sky?.flicker?.soon ?? 0, after = ctx.sky?.flicker?.after ?? 0;
-    if (after > 0.97 && !reliefGust) { reliefGust = true; gust.phase = 'rise'; gust.t = 0; gust.dur = 1.8; gust.from = gust.g; gust.peak = 1; }
-    else if (after < 0.5) reliefGust = false;
+    // (latched on the rising edge between two ticks, so a hitch that lets `after` decay a little before the tick still gusts)
+    if (after > 0.5 && after > afterPrev + 0.3) { gust.phase = 'rise'; gust.t = 0; gust.dur = 1.8; gust.from = gust.g; gust.peak = 1; }
+    afterPrev = after;
     hushSm += (soon * (1 - 0.5 * swellSm) - hushSm) * (soon > hushSm ? 0.08 : 0.3);
     const g = stepGust(step || 0.1) * (1 - 0.85 * hushSm);
     const turb = smoothstep(0.6, 1, g) * 0.35 * ctx.noise.noise2(t * 1.6 + turbPh, 0.5);

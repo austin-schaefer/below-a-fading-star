@@ -76,7 +76,16 @@ const first = await page.evaluate(() => {
   const nearUp = wave.findIndex((w) => w[0] > 0.5), farUp = wave.findIndex((w) => w[1] > 0.5);
   while (f.phase > 0) run(1 / 60);
   run(0.3); const after0 = f.after, soonGone = f.soon; run(6); const after6 = f.after;
-  return { next0, out0, nextCard, nextBegin, cardMin: card.min, earlyMin: early.min, lateDip: late.dipAt, lateMin: late.min, lamps: { r1, r2, r45, rCatch, rAfter, rLate },
+  // v16-S3: the warm flush on the screen never steps: its change per frame stays small at 60 and at 20 fps, it peaks
+  // near 1 and is gone after
+  const flushRun = (fps) => {
+    const d = 1 / fps; let prev = f.flush, maxStep = 0, peak = 0; f.next = 0;
+    for (let i = 0; i < 40 * fps; i++) { t += d; sky.update(d, t); maxStep = Math.max(maxStep, Math.abs(f.flush - prev)); prev = f.flush; peak = Math.max(peak, f.flush); }
+    return { maxStep, peak, end: f.flush };
+  };
+  while (f.phase > 0) run(1 / 60);
+  const fl60 = flushRun(60), fl20 = flushRun(20);
+  return { fl60, fl20, next0, out0, nextCard, nextBegin, cardMin: card.min, earlyMin: early.min, lateDip: late.dipAt, lateMin: late.min, lamps: { r1, r2, r45, rCatch, rAfter, rLate },
     s2: { soon0, soon3, soonOn, slow0, slow3, nearUp, farUp, after0, soonGone, after6 } };
 });
 // v16-S2: a gutter brought forward without 'begin' (an act, a test) comes: setting next lower sets out
@@ -147,6 +156,8 @@ gutters.forEach((g, i) => {
   check(S.slow0 < 0.1 && S.slow3 > 0.6, `the stored warmth comes up over about three seconds (slow ${S.slow0.toFixed(2)} to ${S.slow3.toFixed(2)})`);
   check(S.nearUp >= 0 && S.farUp > S.nearUp + 20, `the lights answer outward from the eye: 10 m off up ${S.nearUp / 10} s before 250 m off (${S.farUp / 10} s)`);
   check(S.after0 > 0.4 && S.after6 === 0 && S.soonGone === 0, `the relief: after is up as the sun catches (from dark under 0.5; 0.3 s after the gutter ends), gone 6 s on, and soon gone with the gutter (${S.after0.toFixed(2)}, ${S.after6.toFixed(2)}, soon ${S.soonGone})`);
+  console.log(`      flush: max step ${first.fl60.maxStep.toFixed(4)} at 60 fps, ${first.fl20.maxStep.toFixed(4)} at 20 fps; peak ${first.fl60.peak.toFixed(2)}, ${first.fl20.peak.toFixed(2)}`);
+  check(first.fl60.maxStep <= 0.02 && first.fl20.maxStep <= 0.06 && first.fl60.peak > 0.95 && first.fl20.peak > 0.95 && first.fl60.end === 0 && first.fl20.end === 0, `the warm flush rises over about a second and never steps: max change per frame ${first.fl60.maxStep.toFixed(3)} at 60 fps, ${first.fl20.maxStep.toFixed(3)} at 20 fps, peak ${first.fl60.peak.toFixed(2)}, gone after`);
   check(fwd.out0 === false && fwd.out1 === true && fwd.min < 0.4, `a gutter brought forward before 'begin' (an act) comes: out ${fwd.out0} to ${fwd.out1}, min ${fwd.min.toFixed(2)}`);
   check(v3.out === true && v3.next >= 70 && v3.next <= 150 && v3.len[0] === 6.5, `?gutter=v3 runs from ready, its first ${v3.next.toFixed(1)} s on (70-150), 6.5-9 s long`);
 }
