@@ -92,6 +92,7 @@ const BOXES = [
   [215, 300, -125, 15, 40, 15], // High Ling, the Lonely Staircase, the Croft, the Hypogeum (226, -112, r 12)
   [215, 300, 13, 70, 30, 10], // the Foundered Nave's block and the Noon Road (x 246-296 at z 42), from High Ling's x 215 (no lifted strip between)
   [182, 218, 167, 203, 20, 8], // the Pit's block (SITES.pit)
+  [176, 215, -22, 13, 20, 8], // the heights rig's site (src/v12/heights.js, (210, 0)): its floors' tests want the ground they were made on
   [-232, -156, -154, -74, 25, 8], // the Lynchets (REGIONS.lynchets' polygon): its terraces' wave and walls are read off the height, so they stand on the old ground
   [195, 235, 248, 290, 20, 8], // the fall's block (SITES.fallLip)
   [-270, -195, 180, 245, 20, 8], // the Span's west block (src/v4/span/plan.js)
@@ -113,7 +114,7 @@ const LINES = [
   { pts: [[-46, -150], [-56, -158], [-56, -170], [-52, -178], [-58, -184], [-64, -190], [-72, -194], [-84, -194], [-92, -198], [-104, -198], [-108, -206], [-108, -218], [-118, -220], [-128, -222], [-138, -224], [-142, -232], [-148, -238], [-156, -246]], R: 5, S: 28, W: 10 }, // the court's drain along the north wall's foot, west
   { pts: [[218, 36], [220, 46], [220, 58], [220, 70], [220, 82], [222, 92], [224, 102], [228, 110], [228, 122], [224, 130], [220, 138], [216, 146], [216, 158], [206, 166]], R: 5, S: 25, W: 8 }, // below High Ling and the Nave, south to the Pit
   { pts: [[128, -10], [128, 2], [128, 14], [136, 18], [148, 18], [156, 18], [164, 14], [174, 16], [180, 22], [188, 26], [196, 30], [206, 32], [214, 36]], R: 4, S: 25, W: 8 }, // the Lappet's east foot, east
-  { pts: [[140, -46], [150, -44], [162, -44], [174, -44], [184, -42], [184, -30], [194, -28], [192, -18], [188, -10], [184, -2], [184, 6], [188, 14], [194, 20], [196, 30]], R: 4, S: 25, W: 8 }, // the Lappet's north-east foot
+  { pts: [[140, -46], [150, -44], [162, -44], [174, -44], [184, -42], [184, -30], [194, -28], [192, -18], [188, -10], [184, -2], [184, 6], [188, 14], [194, 20], [196, 30]], R: 4, S: 12, W: 4 }, // the Lappet's north-east foot (a narrow skirt: Medlar Close's terraces and the Collation lie 20 m south)
   { pts: [[230, -130], [230, -144], [242, -144], [250, -148]], R: 4, S: 22, W: 6 }, // High Ling's south foot, to the wall
   { pts: [[-148, -134], [-138, -136], [-132, -142], [-130, -152], [-128, -162], [-128, -174], [-132, -182], [-140, -186], [-144, -194], [-154, -196], [-154, -208], [-166, -208], [-180, -208], [-192, -212], [-204, -222]], R: 4, S: 25, W: 8 }, // the Lynchets' north-east foot, round to the wall
   { pts: [[-118, -156], [-128, -160]], R: 4, S: 20, W: 6 }, // a hollow between two whalebacks, into it

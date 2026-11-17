@@ -1,0 +1,7 @@
+[
+ {"name":"g-kettle","x":-68,"z":-56,"yaw":0.0,"pitch":-0.08},
+ {"name":"g-strand-pond","x":-80,"z":-20,"yaw":0.57,"pitch":-0.06},
+ {"name":"g-whaleback-crest","x":-120,"z":-125,"yaw":-1.45,"pitch":0.0},
+ {"name":"g-drain","x":-90,"z":-197,"yaw":1.4,"pitch":-0.02},
+ {"name":"air-pools","x":-30,"z":-10,"yaw":0.75,"pitch":-0.45,"dy":70}
+]
