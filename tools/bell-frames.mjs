@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Frames through the bell's stroke (v11-F2), no look input after the press: 0.3, 1, 2, 4, 6 s after E, from a stand
 // point and yaw. Time is Playwright's clock. Usage: node tools/bell-frames.mjs [base] [prefix=v11-F2-bell] [x z yaw]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -8,7 +9,7 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const prefix = process.argv[3] || 'v11-F2-bell';
 const [sx, sz, syaw] = [process.argv[4] ?? -60.6, process.argv[5] ?? 199.3, process.argv[6] ?? -3.14].map(Number);
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

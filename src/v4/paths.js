@@ -643,7 +643,7 @@ export async function build(ctx) {
   const B = leads();
   const tris = (ms) => ms.reduce((a, m) => a + (m.isInstancedMesh ? (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3 * m.count : m.geometry.index ? m.geometry.index.count / 3 : 0), 0);
   const api = {
-    leads: B.list.map((l) => ({ id: l.id, kind: l.kind, cls: l.cls || null, w: l.w, slabs: !!l.slabs, brief: l.brief, length: l.length, ends: l.ends, ended: l.ended || null, skipped: l.skipped || null,
+    leads: B.list.map((l) => ({ id: l.id, kind: l.kind, cls: l.cls || null, w: l.w, slabs: !!l.slabs, brief: l.brief, length: l.length, ends: l.ends, ended: l.ended || null, skipped: l.skipped || null, dropped: l.dropped || null,
       materials: [...new Set(l.lines.flat().map((s) => s.mat))], lines: l.lines.map((S) => S.map((s) => [s.x, s.z, s.y, s.wy, s.open])) })),
     pit: { x: PIT.x, z: PIT.z, r: PIT.r, depth: PIT.depth, rim: pitRim, edge: pitEdge, slabs: P.slabs, colliders: P.colliders },
     fall: { lipY: ctx.terrain.river.lip.y, poolY: ctx.terrain.river.pool.y, lip: { ...ctx.terrain.river.lip } },

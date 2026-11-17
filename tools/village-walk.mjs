@@ -2,10 +2,10 @@
 // The Lappet walked by hand (v15-V0): a judge's tool, not a gate (the model: tools/noon-walk.mjs). One page: press
 // "Go out", click the view so the mouse is captured (if headless Chromium refuses the capture, the page's own
 // fallback, drag to look, which this uses and says so), then hold W and steer with the mouse alone, from the keep's
-// fallen corner down the Heliarch stair (the head's west flight, the slot, the landing, the Late timber flight, the
-// bastion, the foot flight) into the Lees' square, down the ramp to the Pomegranate House's wall and back up it; then
+// fallen corner down the Heliarch stair on its axis (the head flight, the causeway, the upper flight, the landing, the Late
+// timber flight, the bastion, the foot flight) into the Lees' square, down the ramp to the Pomegranate House's wall and back up it; then
 // up the daylight main from its foot to the breach, out along the gangway to the Mid Rung, down the Tenter and up it
-// again, back through the breach and up the main to the High Rung, up the head's east flight to the crown, west along
+// again, back through the breach and up the main to the High Rung, up the head flight on the axis to the crown, west along
 // the fallen corner, west along the brink, and down the ladder at the rim and up it. With `touch` the same on a phone-sized touch page with the stick only: one finger holds the stick
 // up, a second drags to steer. With every=1 it stops each metre it walks on a way (not on a tread or the ground),
 // turns the head left or right and writes a frame; at checkpoints it always does.
@@ -21,6 +21,7 @@
 //   node tools/village-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-V0-walk] [route=village|pennyworth]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NNN-<what>.png in order. Prints each frame with where the feet are and
 // on what floor, each time the ladder is taken hold of, and a last line `walked: yes|no`.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -30,7 +31,7 @@ const quarter = routeName === 'pennyworth';
 const every = +every0;
 const prefix = `${prefix0}-${mode}-${q}`;
 const touch = mode === 'touch';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);
@@ -58,7 +59,7 @@ const locked = s0.locked;
 console.log(touch ? 'touch page' : `pointer captured: ${s0.locked}${s0.locked ? '' : ' (refused: steering by the page\'s drag-to-look fallback)'}`);
 // the route, from the village's own plan (read only)
 const route = await page.evaluate(async ([RUNGS, quarter]) => {
-  const P = await import('/src/v15/plan.js'), R = [], S = P.STAIR.s, tb = P.way('noon-main'), ld = P.way('rungs-ladder'), pr = P.way('pennyworth-ramp'), up = P.way('heliarch-upper'), hf = P.way('heliarch-foot');
+  const P = await import('/src/v15/plan.js'), R = [], S = P.STAIR.s, tb = P.way('noon-main'), ld = P.way('rungs-ladder'), pr = P.way('pennyworth-ramp'), up = P.way('heliarch-upper'), hd = P.way('heliarch-head'), hf = P.way('heliarch-foot');
   const push = (xz, tag) => R.push({ x: xz[0], z: xz[1], tag });
   if (quarter) {
     const lane = (n) => P.LANES.find((l) => l.name === n).pts, D = P.HOUSE.door, G = P.HOUSE.gate, cx = (P.HOUSE.x0 + P.HOUSE.x1) / 2, cz = (P.HOUSE.z0 + P.HOUSE.z1) / 2, wl = lane('wall-lane'), gl = lane('gate-lane');
@@ -90,8 +91,8 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
     up2('rungs-mid-1-stair'); a(7.5, 3.4); a(ld.s, -2.9); a(ld.s, -4.1); a(ld.s, -5.7, 'way:rungs-ladder'); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85); a(ld.s, -2.9); a(14.2, 3.4); a(22.6, 3.4); a(26, 0.3); a(35, 0.3); b(2, 3.0); b(6, 1.5); b(12, 1.5); b(22, 3.2); dn('rungs-mid-7-stair'); // (off the head onto the crown and back to it, as the main route comes: turned about on the head, the walker hung on the top rung) (v15-W4: the rest of this line sat inside that comment, so the tour never reached rungs-mid-7's stair; it passes the Heliarch upper flight's slot on the causeway, not at its lip)
     return R;
   }
-  // down: the keep's fallen corner, the court, the head, its west flight, the slot, the landing, the timber, the bastion, the foot
-  a(S, -9, 'court'); a(S, -5.5, 'head'); a(S - 0.6, -3.7); a(S - 3.4, -3.7, 'head-flight'); a(S - 6.6, -3.7); a(S - 6.6, 0.2); a(S, 0.8, 'slot');
+  // down: the keep's fallen corner, the court, the head, its flight on the axis, the causeway, the upper flight, the landing, the timber, the bastion, the foot
+  a(S, -9, 'court'); a(S, -5.5, 'head'); a(S, hd.D0 + 0.3); a(S, (hd.D0 + hd.D1) / 2, 'head-flight'); a(S, hd.D1 + 0.5); a(S, (hd.D1 + up.D0) / 2, 'slot');
   a(S, up.D0 + 0.4); a(S, (up.D0 + up.D1) / 2, 'upper-flight'); a(S, up.D1 + 0.9, 'landing'); a(S, 10.4); a(S, 12.8, 'timber'); a(S, 15.9, 'bastion'); { const fp = window.__fp.ascents.list.find((w) => w.id === 'heliarch-foot').path; push(fp[2]); push([(fp[1][0] + fp[2][0]) / 2, (fp[1][1] + fp[2][1]) / 2], 'foot-flight'); push(fp[0], 'square'); void hf; } // (v15-W1: the foot flight is turned toward the square: its own registered line)
   // to the house's wall by the ramp, and back
   pol(pr.b0 - 3.2, P.HAHA - 2.2); pol(pr.b0 - 1.2, P.HAHA + 1.1, 'ramp-head'); for (const bg of [pr.b0 + 2, pr.b0 + 6, pr.b0 + 10]) pol(bg, P.HAHA + 1.1, bg === pr.b0 + 6 ? 'ramp' : undefined); pol(pr.b1 + 0.6, P.HAHA + 1.1, 'ramp-foot');
@@ -105,10 +106,10 @@ const route = await page.evaluate(async ([RUNGS, quarter]) => {
   b(tb.s + 0.4, 22.6, 'tube-foot'); b(tb.s, 20.2); b(tb.s, 17, 'tube-low'); b(tb.s, 14, 'tube-mid'); b(tb.s, door + 0.15, 'breach'); b(tb.s + 2.6, door, 'gangway'); b(tb.s + 2.6, 9.2); b(16.5, 9.2, 'mid-rung');
   // the Tenter: down it and up again (v15-W1: the ladder that stood beside it is taken at the end, up the rim)
   { const tp = window.__fp.ascents.list.find((w) => w.id === 'rungs-tenter').path; [...tp].reverse().forEach((q, k) => push(q, k === 3 ? 'tenter-foot' : undefined)); tp.forEach((q, k) => push(q, k === 3 ? 'tenter-top' : undefined)); b(16.4, 9.0); } // (v15-W4: off the deck inside the nosing's wall, as a walker does, not along its lip)
-  // back through the breach and up the main to the High Rung; the head's east flight; the court; the fallen corner
+  // back through the breach and up the main to the High Rung; along the causeway to the axis, up the head flight; the court; the fallen corner
   b(tb.s + 2.6, 9.2); b(tb.s + 2.6, door); b(tb.s, door - 0.15); b(tb.s, 8, 'tube-high'); b(tb.s, 5.2); b(tb.s, 2.6, 'tube-top'); b(4, -0.5);
   const cs = P.cornerS(1, -3.7);
-  a(cs + 1.4, -3.7); a(S + 1.5 + 2, -3.7, 'head-flight-up'); a(S + 0.4, -3.7); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
+  a(cs + 1.4, -3.7); a(S, (hd.D1 + up.D0) / 2); a(S, hd.D1 + 0.5); a(S, (hd.D0 + hd.D1) / 2, 'head-flight-up'); a(S, hd.D0 - 0.5); a(S, -6.5, 'crown'); a(S - 4, -11, 'corner');
   // the ladder (v15-W1: up the rim at the crown's west end): west along the brink, off its head and down, into its foot and up
   a(27.2, -8.6); a(22, -6.6); a(13.5, -7.2); a(ld.s, -5.5); a(ld.s, -3.85, 'ladder-down'); a(ld.s, -2.9, 'ladder-foot'); a(ld.s, -4.1, 'ladder-up'); a(ld.s, -5.7, 'ladder-top');
   return R;

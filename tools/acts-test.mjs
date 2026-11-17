@@ -14,13 +14,14 @@
 // mid-ride; the second pillow on a return visit after a ride. Each check prints PASS or
 // FAIL. Renders (1280 x 720, the phone 390 x 844) into shots/wip/acts-halt2-*.png; SHOTS=0 skips them.
 // Usage: node tools/acts-test.mjs [base]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const shots = process.env.SHOTS !== '0';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const errors = [];
 let fails = 0, passes = 0;
 const check = (name, ok, info) => { if (ok) passes++; else fails++; console.log(ok ? 'PASS' : 'FAIL', name, ok || info === undefined ? '' : JSON.stringify(info)); };
@@ -798,6 +799,50 @@ if (process.env.FIND !== '0') {
   await begin(p); await sleep(300);
   r = await p.evaluate(() => ({ n: window.__fp.acts.count('pit-lead') }));
   check('pit: after a reload the sounding is remembered and the lead offered again', r.n === 1 && (await offAt(side.x, side.z, undefined, yawTo(side.x, side.z, 200, 185) - 0.3)) === 'pit-lead', r);
+  await c.close();
+}
+
+// v16-V1, the Lappet's act (src/v15/people/letter.js): "Take his letter" at the Lagan's hatch. Offered in front of the
+// counter, not from 20 m down the bench, not with the back to it, not from behind (in the vault); done: the letter leaves
+// his hand and is in the visitor's view, he strikes the entry through in red in the book, and has a letter again; the
+// entry is still struck after a reload and the act offered again; forgetting clears the book
+if (process.env.LAGAN !== '0') {
+  const c = await browser.newContext({ viewport: { width: 640, height: 360 } }); const p = await c.newPage(); watch(p, 'lagan');
+  const load = async () => { await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.storyActs?.lagan, null, { timeout: 300000 }); await begin(p); await sleep(300); };
+  await p.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 }); await load();
+  const offAt = (d, turn = 0, side = 0) => p.evaluate(async ([d, turn, side]) => {
+    const fp = window.__fp, L = fp.storyActs.lagan, s = L.stand(d), pl = fp.player;
+    for (let i = 0; i < 9; i++) { fp.controls.placeAt(s.x + side * L.face[1], s.z - side * L.face[0]); pl.yaw = s.yaw + turn; pl.pitch = s.pitch; pl.vel.set(0, 0, 0); await new Promise((r) => setTimeout(r, 100)); }
+    return fp.acts.offered?.def.id || null;
+  }, [d, turn, side]);
+  const st = () => p.evaluate(() => ({ n: window.__fp.acts.count('lagan-letter'), ...window.__fp.storyActs.lagan.state(), inked0: window.__fp.storyActs.lagan.inked(0), inked1: window.__fp.storyActs.lagan.inked(1) }));
+  let r = await st();
+  check('lagan: registered, nothing remembered, the book unmarked, a letter in his hand', r.n === 0 && !r.inked0 && r.held, r);
+  check('lagan: offered at the counter, in front of the hatch, 2 m out: "Take his letter"', (await offAt(2.0)) === 'lagan-letter' && await p.evaluate(() => document.getElementById('act-words').textContent) === 'Take his letter');
+  check('lagan: not from 20 m down the bench', (await offAt(20)) !== 'lagan-letter');
+  check('lagan: not with the back to the hatch', (await offAt(2.0, Math.PI)) !== 'lagan-letter');
+  check('lagan: not from 1.2 m behind it, in the vault', (await offAt(-1.2, Math.PI)) !== 'lagan-letter');
+  await offAt(2.0);
+  await p.keyboard.press('KeyE'); await sleep(550);
+  r = await st();
+  const inView = await p.evaluate(() => { const fp = window.__fp, v = fp.storyActs.lagan.fly.position.clone().project(fp.camera); return fp.storyActs.lagan.fly.visible && Math.abs(v.x) < 0.8 && Math.abs(v.y) < 0.8 && v.z < 1; });
+  check('lagan: E takes it: counted, the letter gone from his hand and in the visitor\'s view', r.n === 1 && !r.held && inView, { r, inView });
+  check('lagan: a second E while he gives it does nothing', await p.keyboard.press('KeyE').then(() => sleep(200)).then(() => p.evaluate(() => window.__fp.acts.count('lagan-letter'))) === 1);
+  // a gutter mid-act: he freezes mid-reach and the letter and the pen freeze with him, then the act goes on and finishes
+  const fl = () => p.evaluate(() => { const L = window.__fp.storyActs.lagan; return { g: L.state().g, vis: L.fly.visible, pos: L.fly.position.toArray() }; });
+  await p.evaluate(() => { window.__fp.sky.flicker.hold = 0.25; }); await sleep(400);
+  const f0 = await fl(); await sleep(2500); const f1 = await fl();
+  check('lagan: a gutter mid-flight: his clock and the letter hold still (not flown, not put away)', f0.g >= 0 && f1.g >= 0 && Math.abs(f1.g - f0.g) < 0.02 && f1.vis === f0.vis && f1.pos.every((v, i) => Math.abs(v - f0.pos[i]) < 1e-4), { f0, f1 });
+  await p.evaluate(() => { window.__fp.sky.flicker.hold = null; });
+  await p.waitForFunction((g0) => window.__fp.storyActs.lagan.state().g > g0 + 0.2, f0.g, { timeout: 20000 }).catch(() => {});
+  await p.waitForFunction(() => window.__fp.storyActs.lagan.state().g < 0, null, { timeout: 20000 }).catch(() => {});
+  r = await st();
+  check('lagan: done: the entry struck through in red in his book, a letter in his hand again, not offered again this visit', r.inked0 && !r.inked1 && r.held && r.phase === 'sort' && (await offAt(2.0)) !== 'lagan-letter', r);
+  await p.reload({ waitUntil: 'load' }); await load();
+  r = await st();
+  check('lagan: after a reload the entry is still struck and the act offered again', r.n === 1 && r.inked0 && !r.inked1 && (await offAt(2.0)) === 'lagan-letter', r);
+  await p.evaluate(() => window.__fp.acts.forget()); r = await st();
+  check('lagan: forgetting clears the book', r.n === 0 && !r.inked0, r);
   await c.close();
 }
 

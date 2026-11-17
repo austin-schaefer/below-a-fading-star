@@ -73,7 +73,7 @@ export function buildWings(ctx) {
   const up = new THREE.Vector3(0, 1, 0), bx = new THREE.Vector3(), by = new THREE.Vector3(), bz = new THREE.Vector3();
   const m4 = new THREE.Matrix4(), mr = new THREE.Matrix4(), des = new THREE.Vector3();
   const cam = ctx.camera.position;
-  let nextCross = 22 + rng() * 20, nextCry = 12 + rng() * 15;
+  let nextCross = 22 + rng() * 20, nextCry = 12 + rng() * 15, gk = 0, gutCried = false;
   const crossCtl = { active: false };
 
   function startCross() {
@@ -93,6 +93,11 @@ export function buildWings(ctx) {
   function update(dt, t) {
     nextCross -= dt;
     if (nextCross <= 0) { startCross(); nextCross = 70 + rng() * 50; }
+    // v16-S2: in a gutter they tighten their circles and climb, a kettle going up into the dark over the tower, and
+    // one cries as it begins
+    const dk = ctx.sky?.flicker?.dark ?? 0;
+    gk += ((dk > 0.5 ? 1 : 0) - gk) * Math.min(1, dt / (dk > 0.5 ? 2.5 : 5));
+    if (dk > 0.5 && !gutCried) { gutCried = true; nextCry = Math.min(nextCry, 0.8); } else if (dk < 0.2) gutCried = false;
     nextCry -= dt;
     if (nextCry <= 0) {
       nextCry = 18 + rng() * 30;
@@ -104,8 +109,8 @@ export function buildWings(ctx) {
       // target
       if (w.mode === 0) {
         const a = Math.atan2(w.pos.z - c.z, w.pos.x - c.x) + w.dir * 0.42;
-        const R = c.R + 7 * Math.sin(t * 0.071 + w.phase) + 3 * Math.sin(t * 0.19 + w.ph2);
-        const y = c.y0 + 5 * Math.sin(t * 0.093 + w.ph3) + 2 * Math.sin(t * 0.21 + w.phase);
+        const R = (c.R + 7 * Math.sin(t * 0.071 + w.phase) + 3 * Math.sin(t * 0.19 + w.ph2)) * (1 - 0.4 * gk);
+        const y = c.y0 + 5 * Math.sin(t * 0.093 + w.ph3) + 2 * Math.sin(t * 0.21 + w.phase) + 38 * gk;
         w.tgt.set(c.x + Math.cos(a) * R, y, c.z + Math.sin(a) * R);
       } else if (w.mode === 1) {
         w.tgt.copy(w.way[w.step]);

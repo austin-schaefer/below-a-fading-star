@@ -44,7 +44,7 @@ export const CHAIR = {
   rests: [
     { kind: 'dents', x: 87.4, z: -24.6, yaw: 0.3, medlar: true }, // beside P9, on the turf
     { kind: 'rung', x: 166.6, z: 122.3, yaw: 1.1 }, // on the causeway's verge by the fen, on the pale crust
-    { kind: 'dents', x: 90.1, z: 238.9, yaw: -0.6 }, // beside P14, in the salt crust
+    { kind: 'dents', x: 91.2, z: 233.6, yaw: -0.6 }, // beside P14, in the salt crust (v16: by P14's new bend; the old spot is under the fen's fringe water now)
   ],
   grave: 40, // graves.js SLOTS index: the forty-first, the one he is digging at load
 };

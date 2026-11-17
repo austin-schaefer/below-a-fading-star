@@ -74,7 +74,7 @@ export function shops(Q) {
     // the dead letters: a few in most holes, one hole stuffed; a tied bundle and a hand bell on the counter
     { const paper = () => ({ color: worn(V.linen, rng, 0.3, 0.2), moss: 0, ground: g0 - 3 }); let stuffed = false;
       for (let k = 0; k < rows.length; k++) for (let i = 0; i < n; i++) { const xc = x0 + (i + 0.5) * cw, y = rows[k] + 0.016;
-        if ((k === 1 && (i === n / 2 - 1 || i === n / 2)) || y + 0.2 > yArch(Math.abs(xc) + cw / 2) || rng() < 0.42) continue;
+        if ((k <= 1 && (i === n / 2 - 1 || i === n / 2)) || y + 0.2 > yArch(Math.abs(xc) + cw / 2) || rng() < 0.42) continue;
         if (!stuffed && k === 1 && i > 4) { stuffed = true; B.add(B.box(cw - 0.07, 0.25, 0.3, { seg: 0.12, chip: 0.03, seed: 9 }), ch(M, xc, y + 0.125, zr + 0.07), paper()); continue; }
         if (rng() < 0.45) { // a letter stood on edge, its sealed side out: the flap's two lines and the wax
           const lw2 = cw * 0.7, lh = 0.2, lm = ch(M, xc + (rng() - 0.5) * 0.03, y, zr + dep / 2 - 0.02, -0.12, (rng() - 0.5) * 0.3, (rng() - 0.5) * 0.12);
@@ -84,7 +84,8 @@ export function shops(Q) {
         const nl = 1 + Math.floor(rng() * 3); for (let q = 0; q < nl; q++) B.add(B.box(cw * (0.5 + rng() * 0.22), 0.014, 0.26, { seg: 9 }), ch(M, xc + (rng() - 0.5) * 0.04, y + 0.007 + q * 0.016, zr + 0.06 + rng() * 0.06, 0, (rng() - 0.5) * 0.5, 0), paper()); }
       B.add(B.box(0.3, 0.13, 0.2, { seg: 0.1, chip: 0.02, seed: 4 }), ch(M, -0.85, top + 0.065, zm + 0.12, 0, 0.3, 0), paper()); B.add(B.box(0.31, 0.02, 0.03, { seg: 9 }), ch(M, -0.85, top + 0.135, zm + 0.12, 0, 0.3, 0), { color: V.madder, moss: 0, ground: g0 - 3 });
       B.add(B.cyl(0.02, 0.07, 0.09, 7, 1), ch(M, 0.9, top + 0.045, zm + 0.14), { color: H.bronzeDull, moss: 0, ground: g0 - 3 }); B.add(B.cyl(0.012, 0.012, 0.08, 4, 1), ch(M, 0.9, top + 0.13, zm + 0.14), { color: L.wood, moss: 0, ground: g0 - 3 }); }
-    Q.places.push({ what: 'the Lagan: 30 pigeonholes over the counter (one to be stuffed full), the hatch a clerk looks out of', ...R.W(0, 1.3, zr), shop: 'lees-shop-4' });
+    Q.places.push({ what: 'the Lagan: 30 pigeonholes over the counter (one to be stuffed full), the hatch a clerk looks out of', ...R.W(0, 1.3, zr), shop: 'lees-shop-4',
+      hatch: R.W(0, top + 0.36, zm + 0.06), ledger: R.W(0.02, top + 0.032, zm + 0.17) }); // the hatch's mouth; where his book lies open, half through it (v16-V1, src/v15/people/letter.js)
     Q.records.push(R);
   }
   // ---------------------------------------------------------------- the Ullage

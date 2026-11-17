@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Mesher, flapMaterial, flapInstanced, clamp, lerp, smoothstep } from './geo.js';
 import { crowGeometry } from './small.js';
 import { hyp } from '../noise.js';
+import { fenIn, fenShoreDistance } from '../height/fen.js'; // v16 L3: the fen's edge
 
 const up = new THREE.Vector3(0, 1, 0);
 
@@ -133,11 +134,11 @@ export function buildBats(ctx) {
 export function buildWader(ctx) {
   const { scene, terrain, landmarks, water } = ctx;
   const rng = ctx.makeRng(909);
-  const F = landmarks.fen, wy = water.fen.y;
+  const wy = water.fen.y;
   const shallow = (x, z) => { const h = terrain.heightAt(x, z); return h < wy - 0.05 && h > wy - 1.2; };
   let x0 = 0, z0 = 0, found = false, bestN = -1;
   for (let k = 0; k < 800; k++) {
-    const a = rng() * 6.28, r = 8 + rng() * 55, x = F.x + Math.cos(a) * r, z = F.z + Math.sin(a) * r;
+    const a = rng() * 6.28, p = fenIn(a, 0.15 + rng() * 0.85), x = p.x, z = p.z; // within the fen's edge (v16 L3)
     if (!shallow(x, z)) continue;
     let n = 0; for (let j = 0; j < 8; j++) if (shallow(x + Math.cos(j * 0.785) * 1.6, z + Math.sin(j * 0.785) * 1.6)) n++;
     if (n > bestN) { bestN = n; x0 = x; z0 = z; }
@@ -168,7 +169,7 @@ export function buildWader(ctx) {
       if (st.wait <= 0) {
         const ny = st.yaw + (rng() - 0.5) * 1.0, d = 0.5 + rng() * 0.4;
         const tx = st.x + Math.sin(ny) * d, tz = st.z + Math.cos(ny) * d;
-        if (shallow(tx, tz) && hyp(tx - F.x, tz - F.z) < 66) { st.u = 0; st.yaw = ny; st.sx = st.x; st.sz = st.z; st.tx = tx; st.tz = tz; st.leg ^= 1; }
+        if (shallow(tx, tz) && fenShoreDistance(tx, tz) < 4) { st.u = 0; st.yaw = ny; st.sx = st.x; st.sz = st.z; st.tx = tx; st.tz = tz; st.leg ^= 1; }
         else { st.yaw += 0.8; st.wait = 2; }
       }
     } else {

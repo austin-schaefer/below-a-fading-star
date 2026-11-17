@@ -1,0 +1,16 @@
+Brief: v16 S1, the sun's gutter (#78)
+Worktree: `.claude/worktrees/issue-1601-gutter`, branch `issue-1601-gutter`, port 8161. Work only there. `briefs/v16/_common.md` first; load `sound-design` before touching any sound.
+
+Goal. The owner, on the live site (#78): "Sun gutters too early. Let player explore for 1–2 minutes, then be startled by gutter." and "Not enough things react to the gutter. It's mostly early build stuff; the rest of the world largely ignores it." The gutter is the piece's one event: every minute or so the dying sun fails for some seconds and comes back (`src/sky.js`, `GUTTER`, `flicker`; `main.js` passes `sky.flicker.value` on). Make it something a visitor is startled by wherever they stand.
+
+1. **The first gutter** comes 60 to 120 s after the visitor goes out (today 25 to 55 s), on the gutter's own seeded stream so every visit is the same. Renders and tests that pin or hold the flicker keep working (`?gutter=`, `flicker.hold`, `tools/views.mjs`).
+2. **What answers it.** List every module that reads the flicker today and every region and kind of thing that does not (about fifty files mention it; the regions since v7 are thin: the Lappet beyond its lamps, the underground of v14, the Span and heights of v11 and v12, the acts of v10, the waystation, the creatures and folk). Then give each region built since v7 at least one answer that belongs to it, and the strong ones more. Not the first idea, and not everything dimming alike: a thing answers in its own way (lamps that flare because the dark has come early; folk who stop work and look up; birds that go up or go still; the Fountain of Noon and the Noonwrights' glass, which hold stored daylight, standing out bright while all else fails; water losing its glints; windows; the Lattice's cold blue indifferent or keener; things underground that have no way to know, and one that does). Cheap: a uniform, a tint, an instance attribute, a pose; no new draw calls on low, no new point lights (`world-code`, budgets).
+3. **Sound.** A gutter is heard as well as seen where that is already the design (`src/audio.js`); where a new region is silent to it, one answer in its bed is enough. Use the harness's gates.
+
+Read: `src/sky.js` (the flicker), `src/main.js` near "flicker", `world-code/runtime.md` (`?gutter=`), `src/v15/lamps.js` and `src/v8/house/lamps.js` as two answers that exist, `stories/README.md` for whose things these are.
+
+Files likely involved: `src/sky.js`; a line or a few in many region modules (yours to touch for this purpose; keep each edit small); not `src/height/*`; `src/controls.js` and the walker are P1's.
+
+Done when: the first gutter's time is asserted in a test (add rows to the test that covers the sky or the gutter today); a table in your report of what answers, by region, old and new; for each new answer a frame pair, lit and guttered, same view (`tools/views.mjs` with the flicker held; say how), looked at; one sequence of frames through a gutter at the Lappet's square and one underground, in order; the audio gates green if you touched sound; `ONLY=` the tests near what you touched (say which), all green; low tier draw calls unchanged at the perf views.
+
+Finish and report as `_common.md` says.

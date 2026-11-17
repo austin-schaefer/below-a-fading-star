@@ -16,6 +16,7 @@
 // network; a first visit whose fill reads an older page files it under that page's commit; a cut-off or error answer
 // is not kept; a Worker's imports are its page's release; bindings lost mean a reload, never a pass-through; a host
 // that stops stamping, and a replacement sw.js that removes itself, leave no worker and no cache; ?sw=0 likewise.
+import { ANGLE } from './launch.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -143,7 +144,7 @@ async function firstVisit(page, url, v) {
   return { s, sw: await page.evaluate(() => window.__fp_sw) };
 }
 
-const browser = await pw[ENGINE].launch(ENGINE === 'chromium' ? { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`] } : {});
+const browser = await pw[ENGINE].launch(ENGINE === 'chromium' ? { args: ['--use-gl=angle', `--use-angle=${ANGLE}`] } : {});
 console.log(`sw-test in ${ENGINE}`);
 try {
   // 1. a first visit: not controlled, registers, passes the probe, fills from what it fetched

@@ -322,3 +322,21 @@ Agreed: the local merge is dropped (`git reset --keep origin/next`: only the unp
 - **Released as v15** with these known and said in the note: the bastion's blank face at the top of the spine; unseen walls at the pits' edges (W3, `issue-1527-edges`, paused, for a point release); villagers hard to find from afar; nothing to do in the village. The stair jitter's fix is measured (3 to 5 mm on the village's flights on an uneven clock) and not judged by eye on a GPU.
 - **Waiting on the owner:** three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin (`git push origin --delete v15-briefs-tmp`).
 
+**2026-11-16, 19:14 PST. RELEASED: v15, the Lappet.** PR #80 merged to `main` at `290a9d0` (the day's first merge), the GitHub release published, #20 #59 #60 #61 #63 #64 #69 closed, `main` merged back into `next`. The live site serves the village (a render of it from the Lees' east end: `shots/wip/v15-live-lappet.png`).
+
+**Open after the release (for a point release, v15.1):**
+
+- **W3, the open edges** (`issue-1527-edges`, worktree kept, port 8172, agent `afffb9a425c739624`, paused at `db3012f` on the orchestrator's word): owes the Pit's seam, frames of the walker held and then going over, and `ONLY=edges,heights,walk,hop,touch,acts,settings`. The owner on its first build: "this might not be prime-time ready". Walk it before merging.
+- **The spine's head:** coming up the axis the upper flight lets out before the bastion's blank face (W7's report, "Still awkward"). One flight on the axis, or feet turned to face the walker.
+- The critic's non-blocking list (white panels at `lappet-mid` 52 m and `lappet-lees` 72.2 m; the sounder not found; the leaver's door; the quarters sound alike; no act in the village: the clerk's letter) and #77, #79.
+- **Waiting on the owner:** three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
+
+**Looking back.**
+
+- **What took longest, and did it need to?** The ways. W1 was merged on its report and redone as W4; W4 took two rounds; the critic then found the spine could not be found at all (W7). A village is a route before it is a set of houses: the plan had the ways as one brief among the bones, and nobody walked top to bottom with no map until the critic at the very end. Next time a cold walk with no map after the first batch, not at release.
+- **What was found late?** The Pit's clods (a comment swallowed two arguments: every instance NaN) sat on `next` for eighteen hours until the owner saw it: `geometry` now fails on a NaN placement. Three lamp posts and a tilted table were merged on a brief's test list that left out `strata` and `dressing`: the orchestrator skill now names them. The stair jitter was older than v15 and only showed on an uneven clock: `heights` now walks stairs on one.
+- **What did the owner say more than once?** That stairs were blocked ("i thought we fixed all these?"): merged on reports, not on a walk. That forty names was absurd: the skill now says three to five. That the top model is for novel problems only: in the skill.
+- **The machine.** Fifty waiter shells polling `pgrep` for hours, and up to four browsers beside a suite, cost the owner their computer for parts of the day. The waiter rule is in `wilderness`; a suite as the gate runs alone.
+- **What worked:** one plan file every quarter and test reads; claims that clear what stands in a new thing's ground; the every-metre route frames read by cheap helpers; the owner walking 8123 and saying what they saw, which found more than any test.
+- **Harness changes made (three):** the waiter rule (`wilderness`); `comes: true` in the geometry baseline; `strata`, `dressing`, `geometry` before any merge that places a thing (`orchestrator`).
+

@@ -11,7 +11,7 @@
 // who, the placers that ask:
 //   'rocks'   the stones and boulders (src/rocks.js), by the stone's whole footprint, after their draws
 //   'blocks'  the Demesne's fallen blocks round the keep (src/v4/regions/demesne.js)
-//   'trees'   trees and shrubs: placed but neither drawn nor collided (src/vegetation/ground.js hiddenAt)
+//   'trees'   trees and shrubs: placed but neither drawn nor collided (src/vegetation/ground.js hiddenAt), by the collider's r
 //   'cover'   ground cover: grass, flowers, reeds (src/vegetation/ground.js excluded, margin < 0)
 //   'trods'   the walked trods worn across the grass between the leads (src/v4/paths.js)
 //
@@ -33,6 +33,7 @@
 // survey of them all is briefs/v15/reports/issue-1532-buried.md.
 import { CLEARINGS, inEntry, leadUnder, CAUSEWAY_CLEAR } from './v8/clearings.js';
 import { villageClear } from './v15/plan.js';
+import { LANDMARKS as L } from './world.js';
 
 export const CLAIMS = [
   // v8-11's table, kept clear of stones and boulders (see src/v8/clearings.js for each place's reasons)
@@ -40,7 +41,12 @@ export const CLAIMS = [
   // v15: the Lappet's ground, every placer (src/v15/plan.js villageClear: the levelled steps, the bench, the foot's plots and lanes)
   { name: 'the Lappet', keeps: ['rocks', 'blocks', 'trees', 'cover', 'trods'], kind: 'fn', test: (x, z, r) => villageClear(x, z) || (r > 0.6 && (villageClear(x + r, z) || villageClear(x - r, z) || villageClear(x, z + r) || villageClear(x, z - r))) },
   // the roads: every lead's tread and the causeway, by the footprint (v8-11)
-  { name: 'the leads', keeps: ['rocks'], kind: 'fn', test: (x, z, r) => { const id = leadUnder(x, z, r); return id ? `the lead ${id}` : false; } },
+  // (v16 L5: and of trees and shrubs, by the collider's footprint: L3's reshuffle stood bushes on P3 and P8, whose
+  // centres were off the tread)
+  { name: 'the leads', keeps: ['rocks', 'trees'], kind: 'fn', test: (x, z, r) => { const id = leadUnder(x, z, r); return id ? `the lead ${id}` : false; } },
+  // the Hypogeum's cut, its stair and its kerb (v16 critic): trees as rocks.js keeps its stones (r 12). Nothing kept the
+  // moor's copses out of it, so a reshuffle of the floor could stand one in the cut where the knock eases the visitor back
+  { name: 'the Hypogeum', keeps: ['trees'], kind: 'disc', x: L.hypogeum.x, z: L.hypogeum.z, r: L.hypogeum.r },
   { name: 'the causeway', keeps: ['rocks'], kind: 'fn', test: (x, z, r, ctx) => !!ctx?.terrain && ctx.terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r },
 ];
 

@@ -6,15 +6,16 @@
 // cue log (every audio.cue call, every new one-shot voice, every footstep, the gutter) in seconds from the render's
 // first sample. Used by tools/audio-survey.mjs and audio-quality-test.mjs through render().
 // Usage: node tools/audio-render.mjs <url> <out.wav> [--seconds=20] [--cue=name[,name]] [--at=dx,dy,dz] [--opts=<json>]
-//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>] [--y=<feet y>]
+//        [--every=<s>] [--walk=<m/s>] [--steps=<n>] [--gutter [--gutter-at=<s>] | --gutter-hold=<v>] [--pre] [--tap=cue] [--mono] [--draw] [--settle=<s>] [--seed=<n>] [--y=<feet y>]
 // --cue fires 1 s in at the camera plus --at (world axes, as tools/audio-test.mjs's offsets), --every repeats it.
 // --walk holds W at that speed (over 3.6 m/s it hurries: Shift, the speed scaled from 6.6); --steps fires n of the
 // walker's steps standing, 0.59 s apart. --gutter starts a real gutter 1 s in (the sun's own course, its length pinned at 14 s by ?gutter=14,600); without
-// it the gutter is held off for the render so two renders compare; --gutter-hold=0.3 pins the flicker at a value.
+// it the gutter is held off for the render so two renders compare; --gutter-at=6 starts it 6 s in, its countdown's last 4 s heard; --gutter-hold=0.3 pins the flicker at a value.
 // --settle=<s> (default 6) waits after body.ready before `begin` (see pageRender). The page loads with ?render=0 (every frame's updates, no draw: software GL otherwise starves the page's timers and
 // the walk); --draw draws as usual. --pre taps the master (pre-limiter) instead, as 32-bit float, and writes the post-limiter tap of the same render to
 // <out>.post.wav, sample-aligned. --tap=cue taps the cue bus alone (one-shots against silence, at the master's gain). The page has no seed parameter (WORLD.seed is fixed), so --seed is recorded and
 // ignored: a render is reproducible by url, options and length.
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,7 +26,7 @@ export async function launch() {
   let chromium;
   try { ({ chromium } = await import('playwright')); }
   catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
-  return chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+  return chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 }
 
 export function parseArgs(argv) {
@@ -43,7 +44,7 @@ export function plan(o = {}) {
     cue: o.cue ? (Array.isArray(o.cue) ? o.cue : String(o.cue).split(',')).filter(Boolean) : [],
     at: { dx: at[0] || 0, dy: at[1] || 0, dz: at[2] || 0 }, opts: opts || null, every: o.every ? Number(o.every) : 0,
     walk: o.walk ? Number(o.walk) : 0, steps: o.steps ? Number(o.steps) : 0,
-    gutter: !!o.gutter && o.gutter !== 'false', gutterHold: o['gutter-hold'] != null ? Number(o['gutter-hold']) : null,
+    gutter: !!o.gutter && o.gutter !== 'false', gutterAt: o['gutter-at'] != null ? Number(o['gutter-at']) : 1, gutterHold: o['gutter-hold'] != null ? Number(o['gutter-hold']) : null,
     pre: !!o.pre, cueTap: o.tap === 'cue', mono: !!o.mono, draw: !!o.draw, settle: num(o.settle, 6), seed: o.seed != null ? Number(o.seed) : null,
     y: o.y != null ? Number(o.y) : null, // v14-D0: the feet's height at the url's pos (a floor under the ground: placeAt(x, z, y))
   };
@@ -182,7 +183,7 @@ async function pageCapture(P) {
       nextCue = P.every > 0 ? nextCue + P.every : Infinity;
     }
     if (stepsLeft > 0 && rt >= nextStep) { fp.player.onStep(false); stepsLeft--; nextStep += 0.59; }
-    if (fl && P.gutter && !gutterAsked && rt >= 1) { gutterAsked = true; fl.phase = 0; fl.next = 0; }
+    if (fl && P.gutter && !gutterAsked && rt >= Math.max(0, P.gutterAt - 4)) { gutterAsked = true; fl.phase = 0; fl.next = Math.max(0, P.gutterAt - rt); } // (--gutter-at: the countdown's last seconds heard, the hush before it)
     if (fl) {
       if (!gut && fl.phase > 0) gut = { kind: 'gutter', at: ac.currentTime, len: fl.len, floorAt: null, endAt: null, minValue: fl.value };
       if (gut) { gut.minValue = Math.min(gut.minValue, fl.value); if (gut.floorAt == null && fl.value < 0.5) gut.floorAt = ac.currentTime; if (gut.endAt == null && fl.phase <= 0) gut.endAt = ac.currentTime; }

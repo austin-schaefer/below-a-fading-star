@@ -27,10 +27,10 @@ const _rw = {};
 // block's edge). w: half-width of the worn line in metres. parts: extra branches of the same lead.
 export const LEADS = [
   { id: 'P1', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, Demesne turf to moor', pts: [[6, 36], [-14, 41], [-36, 44]] },
-  { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-101, 50], [-122, 60], [-135, 62]] },
+  { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-100, 46], [-107, 50], [-117, 53.5], [-125, 59], [-135, 62]] }, // v16: round the tarn's new north-east shallows (L2's edge put 0.6 m of water on the old line; drawn dry, it kinked back at the shore and the Link-Boy fell to 7 m ahead)
   { id: 'P3', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track along the Lynchets\' east wall (the Thurifer\'s track), drystone footings', near: { region: 'lynchets', within: 6 },
     pts: [[-110.5, -124], [-135, -120], [-157, -113], [-178, -79], [-166, -66], [-156, -60], [-152, -44]] }, // v8-09: off the shrine's apse at its head, and east of the Stones' fallen uprights
-  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-128, -113], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall
+  { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-122, -127], [-136, -119], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall; v16: round the south of the west kettle's pool, 5 m clear of it
   { id: 'P5', kind: 'path', cls: 'trod', w: 0.5, brief: 'worn path, moor', pts: [[-106, -131], [-90, -141], [-72, -149]] },
   { id: 'P6', kind: 'path', cls: 'way', w: 1.0, brief: 'gravel trod across the Outwash\'s channels', pts: [[-8, -181], [10, -188], [22, -214]] },
   { id: 'P7', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in the blackthorn, Bletting grass', pts: [[100, -195], [102, -184], [110, -174], [118, -170], [130, -150], [128.6, -144], [131, -120], [130, -100]] }, // v8-09: round the ruin and the boulder below the blackthorn, past the field wall's end, not over it
@@ -44,10 +44,10 @@ export const LEADS = [
   // between its last two piers, and along the rim to the lip over the Wrong Colour and the Cutting; a branch to the
   // brink over the Speculum
   { id: 'P13', kind: 'path', cls: 'trod', w: 0.5, brief: 'rim path, shingle', pts: [[219.5, 168], [220, 178], [220, 190], [217, 198], [210, 204], [204, 210], [197, 217], [190, 224], [184, 229], [180, 231.5]], parts: [[[197, 217], [210, 224], [216, 232], [215, 238], [214, 242], [213.6, 244.2]], [[190, 224], [190, 232.5]]] },
-  { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [92, 236], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
+  { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [90, 233], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
   { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 238], [-52, 235], [-47, 226], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: by the traveller's approach (it looks along it to him), then under the Span between piers -70 and -22, not through the fallen bay
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe, on to the foot of the Great Span\'s west stair (v15-F1: every way up has a track to its foot)', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196], [-199.5, 200], [-202.4, 200.3]] },
-  { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
+  { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-22, 70], [-9, 82], [-16, 98], [-27, 112], [-33, 134], [-42, 150]] }, // v16: round the head of the tarn's north-east inlet
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
   { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[214, 76], [198, 136]]] },
   { id: 'R3', kind: 'rivulet', w: 0.14, brief: 'runnel, Bletting grass to the Demesne\'s ditch', pts: [[130, -92], [100, -20], [108, -16]], parts: [[[104, 62], [80, 92]]] },
@@ -62,7 +62,7 @@ export const LEADS = [
   { id: 'P20', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Plinth Road', pts: [[100, -195], [116, -203], [127, -207]] },
   { id: 'P21', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to where the Hawser comes down', pts: [[22, -214], [10, -212], [0, -216], [-6, -226], [-20, -238], [-40, -254], [-68, -264]] },
   { id: 'P22', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod, the Prospect to the Nave\'s rim', pts: [[236, -36], [243, -28], [248, -12], [251, 4], [254, 11]] },
-  { id: 'P23', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down the tarn\'s west shore, the wood way to the bay', pts: [[-162, 88], [-160, 120], [-142, 150], [-122, 172]] },
+  { id: 'P23', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down the tarn\'s west shore, the wood way to the bay', pts: [[-162, 88], [-176, 110], [-174, 132], [-156, 154], [-122, 172]] }, // v16: behind the tarn's west bay
   { id: 'P24', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the old kerb to the causeway', pts: [[145, 35], [134, 47], [127, 58]] },
   { id: 'P25', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod round the Arcature to the old kerb', pts: [[182, 57], [180, 40], [160, 33], [145, 35]] },
   { id: 'P26', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard trod joining the gaps', pts: [[112, -82], [130, -100], [148, -100]] },
@@ -288,6 +288,7 @@ export function leads() {
         const mat = D.near && regionDistance(D.near.region, x, z) < D.near.within ? D.near.region : materialAt(x, z);
         return { x, z, s, y, wy, mat, open };
       });
+      if (S.length < 2) { (L.dropped || (L.dropped = [])).push(line[0]); continue; } // a rivulet the ground will not let start: no line (v16: one point broke every reader of the lines)
       L.lines.push(S);
     }
     L.length = L.lines.reduce((a, S) => a + S[S.length - 1].s, 0);

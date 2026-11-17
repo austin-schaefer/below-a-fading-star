@@ -2,6 +2,7 @@
 // and can be loaded in a worker). The region's module imports these back and re-exports height as its hook.
 import { REGIONS } from '../../../world.js';
 import { makeSimplex, smoothstep, lerp, clamp, hyp } from '../../../noise.js';
+import { floorLift } from '../../../height/floor.js'; // v16: the plane rides on the floor's fall
 
 export const E = REGIONS.outwash.shape.ellipse;
 export const SN = makeSimplex(4411);
@@ -56,9 +57,10 @@ export function moraineAt(x, z) {
 
 // ---------------------------------------------------------------- hooks
 // the plain: smoothed toward a gentle apron that falls from the snout's foot to the moraine, a quarter of the moor's
-// relief kept; the channels cut half a metre into it; the moraine stands up to three metres
+// relief kept; the channels cut half a metre into it; the moraine stands up to three metres. The apron lies on the
+// floor's fall (src/height/floor.js), so the plain is the old one lifted with the ground round it.
 export function height(h, x, z, w) {
-  const plane = -0.5 + clamp((-176 - z) / 40, 0, 1) * 1.9 + 0.006 * (x - 25);
+  const plane = -0.5 + clamp((-176 - z) / 40, 0, 1) * 1.9 + 0.006 * (x - 25) + floorLift(x, z);
   h = lerp(h, plane + (h - plane) * 0.25 + SN.fbm2(x * 0.09, z * 0.09, 2) * 0.25, w * 0.9);
   h -= channelAt(x, z) * 0.7 * w;
   h += moraineAt(x, z) * 2.9 * w;

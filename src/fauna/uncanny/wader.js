@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clamp, smoothstep } from '../geo.js';
 import { Painter, paintedMaterial, DITHER_GLSL, approach } from './kit.js';
 import { hyp } from '../../noise.js';
+import { fenAt } from '../../height/fen.js'; // v16 L3: the fen's edge
 
 const GREY = '#8c8a90', GREY_D = '#5e5c64', BONE = '#a49d92';
 
@@ -63,8 +64,7 @@ export function buildStiltWader(ctx, U) {
   }
   const M = { x: 134, z: 211 }; // the river's mouth into the fen, at the foot of its slow reach
   for (let k = 0; k < 900; k++) consider(M.x - 25 + rng() * 60, M.z - 26 + rng() * 52, 'reach');
-  const F = landmarks.fen;
-  for (let k = 0; k < 1400; k++) { const a = rng() * Math.PI * 2, r = 25 + rng() * 60; consider(F.x + Math.cos(a) * r, F.z + Math.sin(a) * r, 'fen'); }
+  for (let k = 0; k < 1400; k++) { const a = rng() * Math.PI * 2, p = fenAt(a, -30 + rng() * 40); consider(p.x, p.z, 'fen'); } // v16 L3: the edge's margin
   if (spots.length < 4) { ctx.log('uncanny: no shallows for the wader'); return { drawCalls: 0, tris: 0 }; }
 
   // ---- the thing

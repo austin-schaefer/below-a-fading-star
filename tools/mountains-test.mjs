@@ -20,6 +20,7 @@
 // today's heightfield; the picture on v11-00-before-high-y0/-y4.png (v10 at medium, the deploy worktree's
 // shots/wip, or $MT_BEFORE) and on today's frames with ruled lines drawn in. Each must fail; the output says so.
 // Exits 1 on any FAIL.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { writeFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -38,7 +39,7 @@ const MAGICK = process.env.MAGICK || (spawnSync('magick', ['-version']).error ? 
 let fails = 0;
 const say = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${msg}`); if (!ok) fails++; };
 
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

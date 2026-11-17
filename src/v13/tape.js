@@ -7,7 +7,7 @@
 // tape.run(() => ...): for that stretch ctx.terrain's own four are the tape's (no other module's code runs inside a
 // synchronous stretch; never put an await inside one), and put back after it, also on a throw.
 // On a first visit each query answers from the terrain and writes the call down (x, z and the answer as float64;
-// biomeAt's eleven fields); done() keeps each query's tape (ctx.kept.open: the same store, keying and checks as any
+// biomeAt's sixteen fields); done() keeps each query's tape (ctx.kept.open: the same store, keying and checks as any
 // record), in parts of at most PART bytes, so no one write holds the main thread long (slots '<name>.<query>' and
 // '<name>.<query>.<k>'), and from then on each is the terrain's own. On a repeat, a call is answered from the tape only
 // when its (x, z) are bit for bit those of the next entry or one of the AHEAD after it (the tape resyncs past entries the
@@ -16,7 +16,7 @@
 // keeps nothing (a miss next time). tape.stats: { calls, fromTape, missed, skipped, bytes }; done() lets the arrays go.
 const CHUNK = 1 << 12, AHEAD = 8, PART = 1.5e6;
 const NUM = ['heightAt', 'slopeAt', 'causewayDistance'];
-const BIOME = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'slope', 'h']; // biomeWith's fields, in its order
+const BIOME = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'slope', 'h', 'wet', 'bleak', 'lee', 'stone', 'strand']; // biomeWith's fields, in its order (v16 L4: the floor's character last)
 const W = { heightAt: 1, slopeAt: 1, causewayDistance: 1, biomeAt: BIOME.length };
 const pack = { biomeAt: (o, v, j) => { for (let k = 0; k < BIOME.length; k++) v[j + k] = o[BIOME[k]]; } };
 const unpack = { biomeAt: (v, j) => { const o = {}; for (let k = 0; k < BIOME.length; k++) o[BIOME[k]] = v[j + k]; return o; } };

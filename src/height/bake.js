@@ -63,6 +63,7 @@ export function bakeTerrain(P, segs, size) {
   const cRock = C('#3c3838'), cRockD = C('#1f1c20'), cScree = C('#4a4644'), cIce = C(PALETTE.ice);
   const cWood = C('#2a3220'), cShore = C('#3a3832'), cOrch = C('#544a2c'), cCrys = C('#56727e'), cRoad = C('#5e5650'), cPeat = C('#1c1a16'), cMoss = C('#38542c');
   const tmp = new Col();
+  const cFlWet = C('#20361a'), cFlBleak = C('#b0a474'), cFlLing = C('#26141c'), cFlStone = C('#8c8572'), cFlStrand = C('#c8bb9a'); // v16 L4
   const MASSIF_BANDS = MTN_PROFILE !== 'v4', cScreeL = C('#5c5752'), tmp2 = new Col(); // the massifs' bands
   // the wall's rock masses (v11): slate, a rust-brown, a dark basalt, a cold lichen-grey; and the damp of the couloirs
   const cRust = C('#5a4232'), cBasalt = C('#242226'), cLichen = C('#3d453a'), cDamp = C('#141618'), cHard = C('#8a7f70'), cSlate = C('#3e3d44'), cFan = C('#7a736a');
@@ -116,6 +117,12 @@ export function bakeTerrain(P, segs, size) {
     col.lerp(cPeat, peat * 0.7 * b.moor);
     const mossLow = smoothstep(2, -2, y); // (0 at y 2 and above: the lerp by +0 leaves the colour, so no noise)
     if (mossLow !== 0) col.lerp(cMoss, smoothstep(0.3, 0.55, SX.warped2(x * 0.05 - 40, z * 0.05 + 12, 3)) * mossLow * 0.5);
+    // v16 L4: the floor's character (src/height/floor.js floorCharacter): the strand's shingle, the crests bleached,
+    // the lees dark with ling, the high north-east stony, the low ground and the hollows wet and green
+    if (b.wet > 0 || b.bleak > 0 || b.lee > 0 || b.stone > 0 || b.strand > 0) {
+      col.lerp(cFlStone, b.stone * 0.75).lerp(cFlBleak, b.bleak * 0.85).lerp(cFlLing, b.lee * 0.85);
+      col.lerp(cFlWet, b.wet * 0.85).lerp(cFlStrand, b.strand);
+    }
     col.lerp(cWood, b.wood * 0.8);
     col.lerp(cOrch, b.orchard * 0.5);
     col.lerp(cMud, b.marsh * 0.85);
@@ -171,7 +178,7 @@ export function bakeTerrain(P, segs, size) {
       }
       // spray from the fall soaks the cirque walls
       const spray = 1 - smoothstep(5, 19, Math.hypot(x - IMPACT.x, z - IMPACT.z, (y - POOL.y) * 0.5));
-      wetArr[i] = Math.max(wet, spray);
+      wetArr[i] = b.wet > 0 ? Math.max(wet, spray, b.wet * 0.5) : Math.max(wet, spray); // v16 L4: the floor's wet ground darkens and takes a sheen
     }
     // causeway paving colour
     const cd = causewayDistance(x, z);

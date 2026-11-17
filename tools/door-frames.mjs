@@ -6,7 +6,10 @@
 // shots/wip/<prefix>-NN-<name>.png; the sun's guttering is held off.
 // part: first (a fresh page: the approach, the offer, then 0, 0.5, 1, 2, 3, 4, 6, 8, 12, 20, 30 s after E), second (the
 // plate's act after a first knock: offered, then the same seconds), return (a reload after both: what lies there).
+// AT=d knocks from d metres off the door's face (the critic's 2.19) instead of where the offer first rises; Q=low|medium|
+// high the tier (default low); SECS=0,4,8,15,30 the seconds after E.
 // Usage: node tools/door-frames.mjs [base] [prefix=acts-door3] [part=all|first|second|return]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -16,8 +19,9 @@ const prefix = process.argv[3] || 'acts-door3';
 const part = process.argv[4] || 'all';
 const phone = process.env.PHONE === '1';
 const [W, H] = phone ? [390, 844] : [1280, 720];
-const SECS = [0, 0.5, 1, 2, 3, 4, 6, 8, 12, 20, 30];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const SECS = process.env.SECS ? process.env.SECS.split(',').map(Number) : [0, 0.5, 1, 2, 3, 4, 6, 8, 12, 20, 30];
+const Q = process.env.Q || 'low';
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctxB = await browser.newContext({ viewport: { width: W, height: H }, hasTouch: phone });
 const page = await ctxB.newPage();
 page.setDefaultTimeout(600000);
@@ -35,7 +39,7 @@ const load = async () => {
     fp.sky.flicker.next = 1e9; fp.sky.flicker.phase = 0; fp.sky.flicker.value = 1;
   });
 };
-await page.goto(`${base}/?q=low&pos=215,-112`, { waitUntil: 'load', timeout: 120000 });
+await page.goto(`${base}/?q=${Q}&pos=215,-112${process.env.EXTRA || ''}`, { waitUntil: 'load', timeout: 120000 });
 await load();
 await page.evaluate(() => { try { localStorage.removeItem('fp-acts'); } catch (e) { /* */ } window.__fp.acts.forget?.(); });
 await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
@@ -63,7 +67,7 @@ const through = async (tag) => {
 };
 if (part === 'all' || part === 'first' || part === 'second') {
   await stand(7); await run(1500); await shot('approach');
-  const d = await approach('hypogeum-door'); await run(800);
+  const d = process.env.AT ? (await stand(+process.env.AT), await run(1500), +process.env.AT) : await approach('hypogeum-door'); await run(800);
   console.log('[offered at]', d);
   await shot('offer');
   await page.keyboard.press('KeyE');

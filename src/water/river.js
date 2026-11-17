@@ -3,6 +3,7 @@
 // for the fall, one instanced billboard set for the mist, one instanced mesh for the boulders in the
 // stream. The channel itself is carved in terrain.js; RIVER there is the single source of the layout.
 import * as THREE from 'three';
+import { FEN_EDGE } from '../height/fen.js'; // v16 L3: the fen's edge, where the ribbon gives itself to the fen's water
 import { injectReachRiver } from '../v7/reach.js'; // v7: DP the Luminous Reach, a chunk in the ribbon's fragment shader
 
 const MAX_ROCKS = 16;
@@ -58,7 +59,6 @@ const RIBBON_FRAG = /* glsl */`
   uniform float uTime, uFlicker;
   uniform vec3 uSunDir, uSunCore, uSunLight, uHorizonSun, uHorizonAway, uZenith, uWater, uFoam;
   uniform vec3 uPool;      // x, z, r: the pool's own surface takes over inside
-  uniform vec3 uFen;       // x, z, r: the fen's surface takes over inside
   uniform vec4 uRocks[${MAX_ROCKS}]; // s, d, radius, on
   varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld;
   #include <fog_pars_fragment>
@@ -66,10 +66,14 @@ const RIBBON_FRAG = /* glsl */`
   ${SKY_GLSL}
   vec2 slope2(vec2 uv) { return (texture2D(uTex, uv).rg - 0.5) * 2.0; }
   float mask(vec2 uv) { return texture2D(uTex, uv).a; }
+  ${FEN_EDGE.glsl('fenSd')}
   void main() {
     vec3 P = vWorld;
     if (distance(P.xz, uPool.xy) < uPool.z) discard;
-    float fenFade = smoothstep(uFen.z - 1.0, uFen.z + 3.0, distance(P.xz, uFen.xy));
+    // the fen's surface takes over inside its edge (v16 L5: past rMax + 3 its sd is over 5.5 everywhere, so the fade is 1
+    // there and the edge's 19 lobes are not run on the river's fragments far from the fen)
+    vec2 fenD = P.xz - vec2(${FEN_EDGE.centre.x.toFixed(3)}, ${FEN_EDGE.centre.z.toFixed(3)});
+    float fenFade = dot(fenD, fenD) > ${((FEN_EDGE.rMax + 3) ** 2).toFixed(3)} ? 1.0 : smoothstep(-1.0, 3.0, fenSd(P.xz));
     if (fenFade <= 0.002) discard;
     float s = vFlow.x, d = vFlow.y, hw = vFlow.z;
     float sp = vMisc.x, rough = vMisc.y, wall = vMisc.z, ravine = vMisc.w;
@@ -367,7 +371,6 @@ export function buildRiver(ctx, tex) {
       uHorizonSun: { value: C(palette.skyHorizonSun) }, uHorizonAway: { value: C(palette.skyHorizonAway) }, uZenith: { value: C(palette.skyZenith) },
       uWater: { value: C('#0b0807') }, uFoam: { value: C('#a89a90') },
       uPool: { value: new THREE.Vector3(RV.pool.x, RV.pool.z, RV.poolR) },
-      uFen: { value: new THREE.Vector3(ctx.water.fen.x, ctx.water.fen.z, ctx.water.fen.r) },
       uRocks: { value: rockUniform },
     }]),
     vertexShader: RIBBON_VERT, fragmentShader: RIBBON_FRAG, fog: true, transparent: true, depthWrite: false,

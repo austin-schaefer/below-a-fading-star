@@ -239,9 +239,14 @@ export async function build(ctx) {
       else { size = 1.3 + rng() * rng() * 3.2; cls = 'boulder'; }
       if (b.slope > 0.6 && cls !== 'pebble') continue;
       if (b.rock > 0.5 && rng() < 0.4) { size *= 1.6; if (size > 1.3) cls = 'boulder'; }
+      // v16 L4: the floor's character (src/height/floor.js), after the draws so every other rock keeps its place: the wet
+      // low ground and the pools' margins lose most of theirs, the stony high ground and the strand's shingle grow theirs
+      const fw = b.wet ?? 0, fs = Math.max(b.stone ?? 0, b.strand ?? 0);
+      if (fs > 0 && cls !== 'pebble') size *= 1 + 0.35 * fs;
       const y = terrain.heightAt(x, z);
       terrain.normalAt(x, z, n);
       const it = { x, y: y - size * 0.18, z, size, variant: variantFor[cls][Math.floor(rng() * variantFor[cls].length)], rot: rng() * Math.PI * 2, tilt: (rng() - 0.5) * 0.35, nx: n.x, nz: n.z };
+      if (fw > 0 && (Math.sin(x * 91.7 + z * 47.3) * 43758.5453 % 1 + 1) % 1 < 0.6 * fw) continue; // (v16 L4, above)
       // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
       // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
@@ -261,9 +266,12 @@ export async function build(ctx) {
       classes[cls].push(it);
     }
     // Tors: a few stacked outcrops as landmarks of the open moor
+    // (v16: each tor draws from its own stream, so a change to the ground anywhere upstream of it no longer reshapes it:
+    // the floor's merges took the keep's tor at (90, 60) from four boulders to one and to seven)
     const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
     for (const [tx, tz] of tors) {
       if (!allowed(tx, tz) || (ctx.regions && !ctx.regions.stoneAt(tx, tz).tors)) continue;
+      const rng = ctx.makeRng(4100 + tors.findIndex((t) => t[0] === tx && t[1] === tz));
       const count = 6 + Math.floor(rng() * 5);
       for (let k = 0; k < count; k++) {
         const ang = rng() * Math.PI * 2, d = rng() * 5;

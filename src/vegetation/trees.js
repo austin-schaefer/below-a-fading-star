@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { GeoBuilder, tube, clamp, lerp, smoothstep, unflipNormals, fogBatchFix } from './util.js';
 import { makeBatch, setFadeAt, cloneInstance, BATCH_FADE_HEAD } from './batch.js';
 import { withFade, fadeDepthMaterial } from '../fade.js';
+import { fenAt } from '../height/fen.js'; // v16 L3: the fen's edge
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 // v6: the far mesh keeps the near outline (its limbs, the moss hung from them, its crown's top), so a cross-fade
@@ -516,7 +517,7 @@ export function buildTrees(ctx, ground, mats) {
   };
   const place = (x, z, v, s, gap, rot, tint, kind, collide = true) => {
     const y = ground.heightAt(x, z);
-    const t = { x, y, z, v, s, gap, rot, tint, kind, h: variants[v].height * s, hidden: ground.hiddenAt(x, z) }; // h: the tree's height (v9: the wood's shafts fall from its crowns)
+    const t = { x, y, z, v, s, gap, rot, tint, kind, h: variants[v].height * s, hidden: ground.hiddenAt(x, z, variants[v].trunkR * s * 1.25) }; // h: the tree's height (v9: the wood's shafts fall from its crowns)
     trees.push(t);
     const k = key(Math.floor(x / 8), Math.floor(z / 8));
     if (!occ.has(k)) occ.set(k, []);
@@ -657,8 +658,7 @@ export function buildTrees(ctx, ground, mats) {
     deadSpots.push(place(x, z, deadV[deadSpots.length % deadV.length], 0.9 + rng() * 0.4, 10, rng() * 6.28, 0.9 + rng() * 0.2, 'dead'));
   }
   for (let k = 0, n = 0; k < 600 && n < 7; k++) {
-    const a = rng() * Math.PI * 2, rr = L.fen.r - 14 + rng() * 26;
-    const x = L.fen.x + Math.cos(a) * rr, z = L.fen.z + Math.sin(a) * rr;
+    const a = rng() * Math.PI * 2, p = fenAt(a, -4 + rng() * 26), x = p.x, z = p.z; // about the fen's edge (v16 L3)
     if (ground.excluded(x, z, 1) || near(x, z, 12) || ground.waterDepth(x, z) > -0.3) continue;
     deadSpots.push(place(x, z, deadV[n % deadV.length], 0.8 + rng() * 0.5, 12, rng() * 6.28, 0.9 + rng() * 0.2, 'dead')); n++;
   }
@@ -879,7 +879,7 @@ export function buildToadstools(ctx, ground, mats, trees) {
       const t = trees.deadSpots[Math.floor(rng() * trees.deadSpots.length)];
       const a = rng() * Math.PI * 2, d = 0.9 + rng() * 1.5; cx = t.x + Math.cos(a) * d; cz = t.z + Math.sin(a) * d;
     } else {
-      const a = rng() * Math.PI * 2, d = L.fen.r - 20 + rng() * 30; cx = L.fen.x + Math.cos(a) * d; cz = L.fen.z + Math.sin(a) * d;
+      const a = rng() * Math.PI * 2, p = fenAt(a, -10 + rng() * 30); cx = p.x; cz = p.z; // v16 L3: about the fen's edge
     }
     const n = 3 + Math.floor(rng() * 9);
     for (let i = 0; i < n; i++) {
@@ -907,7 +907,7 @@ export function buildToadstools(ctx, ground, mats, trees) {
     let cx, cz; const r = rng();
     if (r < 0.4) { const a = rng() * 6.28, d = Math.sqrt(rng()) * L.wood.r; cx = L.wood.x + Math.cos(a) * d; cz = L.wood.z + Math.sin(a) * d; }
     else if (r < 0.55 && trees.fallenSpots.length) { const t = trees.fallenSpots[Math.floor(rng() * trees.fallenSpots.length)]; cx = t.x + (rng() - 0.5) * 6; cz = t.z + (rng() - 0.5) * 6; }
-    else if (r < 0.8) { const a = rng() * 6.28, d = L.fen.r - 25 + rng() * 35; cx = L.fen.x + Math.cos(a) * d; cz = L.fen.z + Math.sin(a) * d; }
+    else if (r < 0.8) { const a = rng() * 6.28, p = fenAt(a, -15 + rng() * 35); cx = p.x; cz = p.z; } // v16 L3: the fen's edge
     else if (mounds.length) { const t = mounds[Math.floor(rng() * mounds.length)]; const a = rng() * 6.28, d = t.s + 0.4; cx = t.x + Math.cos(a) * d; cz = t.z + Math.sin(a) * d; }
     else continue;
     const n = 2 + Math.floor(rng() * 6);

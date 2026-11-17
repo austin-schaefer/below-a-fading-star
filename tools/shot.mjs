@@ -2,6 +2,7 @@
 // Screenshot the scene headlessly with software WebGL and report console errors.
 //   node tools/shot.mjs <url> <out.png> [width] [height] [settleMs]
 // e.g. node tools/shot.mjs "http://localhost:8123/?pos=-90,60&yaw=1.2" /tmp/a.png 1280 720
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -12,7 +13,7 @@ const chromium = pw[engine];
 
 const [url, out, w = '1280', h = '720', settle = '2500'] = process.argv.slice(2);
 if (!url || !out) { console.error('usage: node tools/shot.mjs <url> <out.png> [w] [h] [settleMs]'); process.exit(2); }
-const browser = await chromium.launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: +(process.env.SHOT_DPR || 1) }); // SHOT_DPR=2 renders as a retina Mac does
 let failed = false;
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning' || /\[fp\]/.test(m.text())) console.log(`[console.${m.type()}]`, m.text().slice(0, 600)); });

@@ -146,17 +146,22 @@ function finish(parts) {
 
 // The slabs' material: vertex colours, the stone mottled in world space, and the ember glass lit by aEm x iGlow
 // (iGlow an instanced attribute; a mesh without it reads 0). `glow` is the ember's colour at full.
+// SLAB_U.uGut (0..1, set by stair.js from the sun's gutter, v16-S1): while the sun fails the signs of the sun answer it.
+// The fixed ones (the stub's posts and steps, the tender's home at the top) burn up to four and a half times as hard;
+// every slab's, those lying canted in the turf too, burns at least at half of full.
+export const SLAB_U = { uGut: { value: 0 } };
 export function slabMaterial(instanced = true) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0.06 });
   m.onBeforeCompile = (sh) => {
+    sh.uniforms.uGut = SLAB_U.uGut;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
 attribute float aEm;
-${instanced ? 'attribute float iGlow;' : ''}
+${instanced ? 'attribute float iGlow;' : ''} uniform float uGut;
 varying float vEm; varying vec3 vSP;`).replace('#include <begin_vertex>', `#include <begin_vertex>
-  vEm = aEm * ${instanced ? 'iGlow' : '1.0'};
+  vEm = aEm * ${instanced ? 'max(iGlow, uGut * 0.5)' : '(1.0 + 3.5 * uGut)'};
   vSP = position * 3.1 + vec3(${instanced ? 'instanceMatrix[3].x, instanceMatrix[3].z, instanceMatrix[3].x * 0.37' : '0.0, 0.0, 0.0'});`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying float vEm; varying vec3 vSP;
+varying float vEm; varying vec3 vSP; uniform float uGut;
 float tHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float tNoise(vec3 x) {
   vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -168,7 +173,10 @@ float tNoise(vec3 x) {
   diffuseColor.rgb *= 0.62 + 0.55 * tm;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.27, 0.16), lich * 0.35 * (1.0 - vEm));`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-  totalEmissiveRadiance += vec3(3.2, 0.9, 0.22) * vEm;`);
+  totalEmissiveRadiance += vec3(3.2, 0.9, 0.22) * vEm;
+  // v16-S2: and the stone itself answers: veins of the ember run through every slab and step while the sun fails, so the
+  // stair's whole course, the slabs asleep in the turf with it, is pricked out in embers from across the moor
+  totalEmissiveRadiance += vec3(1.5, 0.4, 0.1) * uGut * uGut * smoothstep(0.5, 0.64, tm) * (0.5 + 0.5 * smoothstep(0.3, 0.7, tNoise(vSP * 0.5 + 3.0)));`);
   };
   return m;
 }

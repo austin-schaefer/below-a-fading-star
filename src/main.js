@@ -177,7 +177,8 @@ async function start() {
   //   DirectionalLight)
   // - lights: { sun, hemi, ambient, sunDir, rig } (rig: the light rig's exposure and base intensities; ?light=v3
   //   restores v3's); sky: { flicker: { value } } (1 normally; dips toward 0.2 while the sun gutters, every minute or
-  //   so: tie emissives and point lights to it where that reads well)
+  //   so: tie emissives and point lights to it where that reads well; dark 0..1 how far down, lamps 0..1 a hand's lagged
+  //   answer, both in sky.js; what answers, region by region: briefs/v16/reports/issue-1601-gutter.md)
   // - player: { pos: Vector3 (eye position), yaw, pitch, speed, moving, onGround, enabled }; controls.state.onStep is a
   //   hook (hurrying) => void for footsteps; addCollider (controls.js, the rule is above it)
   // - perf: the profiler (report(), toggles, setModule(name, on), count(key, n = 1): a per-frame counter, free when the

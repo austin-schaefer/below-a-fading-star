@@ -6,13 +6,14 @@
 // walk starts on the west stair's last flight, below the card's height, and climbs to the top.
 // Frames: shots/wip/<prefix>-<desk|phone>-NN-<place>.png.
 //   node tools/cards-walk.mjs [base=http://localhost:8123] [prefix=cards] [desk|phone] [q=low] [only=name,name]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', prefix = 'cards', mode = 'desk', q = 'low', onlyArg = ''] = process.argv.slice(2);
 const phone = mode === 'phone';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage(phone ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

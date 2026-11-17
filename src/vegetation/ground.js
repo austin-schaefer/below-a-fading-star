@@ -2,11 +2,12 @@
 // interpolated over the same triangles the GPU draws, so nothing floats or sinks. Biome weights
 // come from a coarse grid of terrain.biomeAt() (it is too slow to call per blade of grass).
 import { clamp } from './util.js';
+import { makeSimplex } from '../noise.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
 import { stillWorn, stillNear } from '../v7/still/clear.js'; // v7: the bare ground round the Sleeper and the Stylite's basket
-import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
+import { collationClear, collationTreeClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { pitEdge } from '../v4/paths/ground.js'; // v14-D2: the Pit's floor is walked under the old ground
@@ -16,6 +17,7 @@ import { houseClear } from '../v8/house/clear.js'; // v8-05: the Pomegranate Hou
 import { threadsClear } from '../v8/threads/plan.js'; // v8-04: the story threads' props
 import { twkClear } from '../v8/twk/plan.js'; // v8-07: the Twk-men's salt
 import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground skin lies over a lowered mesh
+import { PLACES as STANDS } from '../settings.js'; // v16 L5: the settings map's stands, where a visitor is put down
 import { claimedBy } from '../claims.js'; // v15-G1: the claimed ground (the Lappet's, so far: the rest below are still each place's own)
 import { coarseLowering } from '../v4/regions/skin.js';
 import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
@@ -24,8 +26,9 @@ import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no t
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
 // Where trees and shrubs keep out (ground cover still grows): the cloak man's old stand, the Wayside Shrine, the Menology's spiral.
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
+const CLEAR_N = makeSimplex(1605);
 
-const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
+const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee']; // (v16 L4: the floor's character, src/height/floor.js)
 
 export function makeGround(ctx) {
   const { terrain, landmarks: L, water } = ctx;
@@ -85,6 +88,7 @@ export function makeGround(ctx) {
     grid.moor[k] = b.moor; grid.heath[k] = b.heath; grid.wood[k] = b.wood; grid.marsh[k] = b.marsh;
     grid.shore[k] = b.shore; grid.rock[k] = b.rock; grid.ice[k] = b.ice; grid.orchard[k] = b.orchard;
     grid.crystal[k] = b.crystal; grid.glacier[k] = terrain.glacierMask(x, z);
+    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0;
   }
   // Bilinear biome lookup into a reusable object.
   const biome = {}; for (const k of BIOME_KEYS) biome[k] = 0;
@@ -101,17 +105,15 @@ export function makeGround(ctx) {
   // The river and the ravine above the fall are paths with a width, not discs: terrain.waterLevelAt knows them.
   const riverLevel = (x, z) => terrain.waterLevelAt(x, z);
   function waterDepth(x, z, y = heightAt(x, z)) {
-    for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.shore || terrain.waterLevelAt(x, z) !== null)) return w.y - y; // v4: a disc with a shore (the tarn) asks where its water is
+    for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.edge || terrain.waterLevelAt(x, z) !== null)) return w.y - y; // v4, v16: a disc on an edge (the tarn, the fen) asks where its water is
     const rl = riverLevel(x, z);
     return rl === null ? -Infinity : rl - y;
   }
   // Nearest water body within `extra` metres of its rim: depth (water level - ground) and how far inside the rim.
   const _wn = { dep: 0, rim: 0 };
   function waterNear(x, z, y, extra = 10) {
-    for (const w of waters) {
-      const d = Math.hypot(x - w.x, z - w.z), wr = w.shore ?? w.r; // v4: the tarn's reeds keep to its old round shore
-      if (d < wr + extra) { _wn.dep = w.y - y; _wn.rim = wr - d; return _wn; }
-    }
+    const ws = terrain.waterShore(x, z, extra); // v16 L2: each still water's own shore (the tarn's is its edge), not a circle
+    if (ws) { _wn.dep = ws.y - y; _wn.rim = -ws.sd; return _wn; }
     const r = terrain.riverAt ? terrain.riverAt(x, z) : null;
     if (r && Math.abs(r.d) < r.hw + extra) { _wn.dep = r.y - y; _wn.rim = r.hw - Math.abs(r.d); return _wn; }
     return null;
@@ -122,7 +124,12 @@ export function makeGround(ctx) {
   function excluded(x, z, margin = 0, opts = null) {
     if (x * x + z * z > 318 * 318) return true;
     // trees and shrubs (margin >= 0) keep out of the clearings; ground cover still grows there
-    if (margin >= 0) for (const c of CLEARINGS) if ((x - c[0]) ** 2 + (z - c[1]) ** 2 < (c[2] + margin) ** 2) return true;
+    // v16 L3: each clearing's rim wanders, no ruled circle; v16 L5: outward only, up to a quarter of its radius, so what
+    // stands in a clearing (laid out to its radius) is never under a tree
+    if (margin >= 0) for (const c of CLEARINGS) {
+      const d2 = (x - c[0]) ** 2 + (z - c[1]) ** 2, rr = c[2] * 1.3 + margin;
+      if (d2 < rr * rr) { const r = c[2] * (1 + 0.125 * Math.max(0, 1 + CLEAR_N.noise2(x * 0.12, z * 0.12))) + margin; if (d2 < r * r) return true; }
+    }
     if (d2(x, z, L.castle) < (31 + margin * 1.6) ** 2) return true; // the keep's hexagon has apothem ~29; trees (margin) stay further out
     if (d2(x, z, L.tower) < (12 + margin) ** 2) return true;
     if (d2(x, z, L.stones) < (10 + margin) ** 2) return true;
@@ -153,6 +160,10 @@ export function makeGround(ctx) {
   // Trees placed here are neither drawn nor collided, but keep their place in the placement rng so that every other tree
   // stays where it is: under the court's piers (39 m), inside the lens mount's fins (17 m; 12 when ?tower=v2) the armillary (LANDMARKS.arcature.r) and the mother crystal's foot (MOTHER_FOOT).
   const TOWER_HIDE = new URL(location.href).searchParams.get('tower') === 'v2' ? 12 : 17;
-  const hiddenAt = (x, z) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || !!claimedBy(x, z, 0, 'trees');
+  // (v16 L5) a tree or a bush within a body's width (0.6 m) of a stand on the settings map: the visitor put down there
+  // would stand in it (L3's reshuffle put two by the Laid Sun and the Collation's gap; tools/rocks-test.mjs)
+  const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => [p.x, p.z]);
+  const standNear = (x, z, r) => STAND_XZ.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < (r + 0.6) ** 2);
+  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || collationTreeClear(x, z) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r); // (v16 L5: r, the collider's footprint)
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

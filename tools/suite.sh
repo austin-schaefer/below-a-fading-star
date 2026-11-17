@@ -10,7 +10,7 @@
 cd "$(dirname "$0")/.."
 PORT="${1:-8123}"
 B="http://localhost:$PORT"
-export SHOT_ANGLE=metal
+# the browser draws on Metal unless SHOT_ANGLE says otherwise (tools/launch.mjs): SHOT_ANGLE=swiftshader tools/suite.sh is the software run
 
 started=""
 if [ -z "$(lsof -ti:"$PORT")" ]; then
@@ -48,6 +48,7 @@ run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
 run roads tools/roads-test.mjs $B
 run village-plan tools/village-plan-test.mjs
+run outline tools/outline-test.mjs # v16-L2: the edge (src/height/outline.js) and Lees Tarn on it, in node
 run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B

@@ -7,12 +7,13 @@
 // does, and a caster with it must build its fade depth program in a real shadow pass. A clone of the depth
 // material covers the same pixels, and an alpha-tested caster shades a share f of a receiver at f = 0, 0.5, 1.
 // pop-test's `fade` group calls this. Usage: node tools/fade-test.mjs [base]   (or FP_BASE=http://localhost:8174)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 400, height: 300 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

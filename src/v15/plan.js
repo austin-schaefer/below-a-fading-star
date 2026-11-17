@@ -237,13 +237,17 @@ export const SQUARES = [
 // Each: { name, kind, hand, from, to (level keys), run, s, D0, D1 (its line in the run frame), note }. The kits in
 // src/v15/ways/ build them from these records; a quarter adds its own with the same kit and a record of its own.
 export const STAIR = { run: 1, s: 31, width: 3 }; // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
+export const HEAD_POST = 2.1; // (v16-V1) the head's two lamp posts stand this far either side of the axis on the crown's brink; the kerb leaves them half a metre more (src/v15/ways/index.js)
 // (v15-W7) the crown's kerb: Elder blocks along the rim (its centre `D`), waist-high and walled, wherever the drop over
 // the rim is more than 1.2 m and no way goes down (the cold critic walked off the crown from the keep's end without
 // meeting the stair's head). It stops for what already stands on the brink: `clear` is [run, s0, s1, why].
 export const RIM = { D: RISERS[0].D - 0.3, clear: [] };
 export const WAYS = [
-  { name: 'heliarch-head', kind: 'stair', hand: 'heliarch', from: 'crown', to: 'high', run: 1, s: 31, D0: -4.6, D1: -2.8,
-    note: 'a hexagon landing on the crown\'s rim and twin flights down along the riser, east and west, 3.9 m each (steep: the east one ends at the corner)' },
+  // (v16-V1) the head is one flight on the axis (it was a bastion with twin flights along the riser, and a walker coming
+  // up the axis met its blank face): from the nosing's bevel straight down onto the causeway, its foot 3.1 m short of
+  // the upper flight's head, the High Lane passing between
+  { name: 'heliarch-head', kind: 'stair', hand: 'heliarch', from: 'crown', to: 'high', run: 1, s: 31, D0: RISERS[0].D - 0.215, D1: -0.4,
+    note: 'straight down the crown\'s rim on the axis, 4.4 m, onto the causeway: from its head the upper flight is straight ahead, and from the upper flight\'s head it is' },
   { name: 'heliarch-upper', kind: 'stair', hand: 'heliarch', from: 'high', to: 'mid', run: 1, s: 31, D0: 2.7, D1: 7.9,
     note: 'cut 1.9 m into the High Rung, then out over the Mid Rung; lands on a hexagon at D 7.9..10.1' },
   { name: 'timber-patch', kind: 'stair', hand: 'late', from: 'mid', to: 'low', run: 1, s: 31, D0: 10.1, D1: 15.3,
@@ -530,18 +534,17 @@ export const LAMPS = [
   lampAt('slype-bracket', 'bracket', at(2, (RUNGS.slype.s0 + RUNGS.slype.s1) / 2 - 1.4, RISERS[2].D + 0.555), LEVEL.low.y, n2, { h: 2.0, reach: 0.55, k: 1.1, note: 'over the Slype\'s door on its plastered front (the niche\'s clay lamp beside it): the lane under the main' }),
   lampAt('skirts-bracket', 'bracket', polar(65.6, HAHA + 1.22), LEVELS[5].y, [Math.sin(65.6 * Math.PI / 180), -Math.cos(65.6 * Math.PI / 180)], { h: 2.3, reach: 0.65, k: 1.3, note: 'on the face of the Late buttress raked against the giants\' face (FIXTURES riser-buttress): the Skirts' }),
   lampAt('foot-post', 'post', [108.6, -15.7], LEVELS[5].y, [0, -1], { note: 'the Pennyworth\'s foot, between the ramp\'s foot and the kerb, by the wreck\'s neck' }),
-  // (v15-W4) the spine's two dark stretches (tools/ways-test.mjs spine rows): where the head's flights come down onto the
-  // causeway and turn back to the upper flight, and the foot flight down from the bastion
-  lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: where the head\'s twin flights come down, the way on down is the lit one' }),
+  // (v15-W4) the spine's two dark stretches (tools/ways-test.mjs spine rows): the causeway between the head and the
+  // upper flight, and the foot flight down from the bastion
+  lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: the High Lane crossing the stair\'s axis between the head\'s foot and the upper flight' }),
   // (v15-W7, the cold critic: "no light marks the stairs") the spine's heads and feet each lit: two posts framing the
-  // gap in the crown's kerb where the head is (seen from the keep's end, 20 m off), a bracket on the rim's face over the
-  // head's west flight's foot, and on the Rungs' end walls by the upper flight's foot and the timber patch's
-  lampAt('head-post-west', 'post', at(1, STAIR.s - 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
-  lampAt('head-post-east', 'post', at(1, STAIR.s + 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
-  lampAt('head-west-foot', 'bracket', at(1, STAIR.s - 1.5 - 5.0, RISERS[0].D + 0.03), LEVEL.high.y, RUNS[1].n, { h: 2.5, reach: 0.6, k: 1.3, note: 'on the rim\'s face a stride west of the head\'s west flight\'s foot: the way up from the causeway is lit' }),
-  lampAt('head-bastion', 'bracket', at(1, STAIR.s, RISERS[0].D - 0.215 + 2.015 + 0.02), LEVEL.high.y, RUNS[1].n, { h: 2.6, reach: 0.55, k: 1.1, note: 'on the head\'s bastion, over the causeway where the upper flight comes up: its face is lit, not blank, and the two flights either side of it with it' }),
-  lampAt('head-east-foot', 'post', at(1, STAIR.s + 1.5 + 4.6, RISERS[0].D + 3.0), LEVEL.high.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.2, reach: 0.9, note: 'on the causeway past the head\'s east flight\'s foot, its arm back over it: from before the bastion the two feet are the two lights low either side' }),
-  // (the Rungs' houses' end walls stand 0.26 m in from their plots' edges: a bracket 0.02 m proud of that)
+  // gap in the crown's kerb where the head is (seen from the keep's end, 20 m off), two at the head's foot, and brackets
+  // on the Rungs' end walls by the upper flight's foot and the timber patch's
+  lampAt('head-post-west', 'post', at(1, STAIR.s - HEAD_POST, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
+  lampAt('head-post-east', 'post', at(1, STAIR.s + HEAD_POST, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
+  // (v16-V1) the head's foot, framed on the causeway by two posts either side of its splayed treads, arms in over them
+  lampAt('head-foot-west', 'post', at(1, STAIR.s - 2.5, -1.0), LEVEL.high.y, RUNS[1].dir, { k: 1.3, reach: 0.8, note: 'west of the head flight\'s foot on the causeway, its arm over the bottom treads: from the upper flight\'s head the way on up is lit either side' }),
+  lampAt('head-foot-east', 'post', at(1, STAIR.s + 2.5, -1.0), LEVEL.high.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, reach: 0.8, note: 'its fellow east of the foot' }),
   ...[['upper-foot-bracket', 'rungs-mid-4', 'mid', 7.3, 'on the Mid Rung\'s end house, over the upper flight\'s foot and its landing'], ['patch-foot-bracket', 'rungs-low-4', 'low', 13.0, 'on the Low Rung\'s end house, over the timber patch\'s foot and the bastion']]
     .map(([name, pl, lv, D, note]) => { const q = PLOTS_.find((r) => r.name === pl); return lampAt(name, 'bracket', at(1, q.s - q.w / 2 + 0.24, D), LEVEL[lv].y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { h: 2.45, reach: 0.6, k: 1.3, note }); }),
   lampAt('ladder-head-post', 'post', at(1, WAYS.find((w) => w.name === 'rungs-ladder').s + 1.45, RIM.D - 0.65), LEVEL.crown.y, RUNS[1].n, { k: 1.3, reach: 0.7, note: 'at the head of the ladder up the rim, its lamp out over the edge: the ladder lit from above, seen from the causeway, and its head from the crown' }),
@@ -550,8 +553,8 @@ export const LAMPS = [
 
 // ---------------------------------------------------------------- the spine (v15-W4)
 // The one obvious way through the village, from the keep's end to the Pomegranate House: the masons' court on the
-// crown, the Heliarch stair straight down its axis (the head's west flight, the upper flight, the Late timber patch,
-// the foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
+// crown, the Heliarch stair straight down its axis (the head flight, the upper flight, the Late timber patch, the
+// foot flight), the Lees' street east, the ramp down the lowest riser, the Slip and the Thumbway to the house's
 // south door. Every other way is a branch off it. `ways` are registered ascents walked in order (each from the end
 // nearer the last point); `pts` are [x, z, level] between them. tools/ways-plan.mjs draws it; tools/ways-test.mjs
 // checks it is joined, lit (a lamp within 9 m of every 3 m of it) and never narrower than 1.5 m.
@@ -561,7 +564,7 @@ export const SPINE = {
   // critic's start): from here the stair's head must be met before any drop (tools/ways-test.mjs crown rows)
   arrive: at(1, 18, -10),
   legs: [
-    { way: 'heliarch-head-west' }, { pts: [[...at(1, STAIR.s - 5.4, -1.2), 'high']] }, // (off the flight's foot and out onto the causeway, clear of its flank)
+    { way: 'heliarch-head' }, // (v16-V1: on the axis; it was the west of two flights along the riser, and a turn back on the causeway)
     { way: 'heliarch-upper' }, { way: 'timber-patch' }, { way: 'heliarch-foot' },
     { pts: [[...at(1, cornerS(1, 19.4), 19.4), 'bench']] }, // the Lees' street, east
     { way: 'pennyworth-ramp' },
@@ -591,7 +594,7 @@ const BURIED = {
   'threads-chair-marks': 'a mark drawn on the ground, level here since the bench was levelled',
 };
 export const GEOMETRY_PLACES = [
-  ...['heliarch-head-east', 'heliarch-head-west', 'heliarch-upper', 'timber-patch', 'heliarch-foot', 'rungs-ladder', 'lane-bridge', 'lees-stair', 'pennyworth-ramp']
+  ...['heliarch-head', 'heliarch-upper', 'timber-patch', 'heliarch-foot', 'rungs-ladder', 'lane-bridge', 'lees-stair', 'pennyworth-ramp']
     .map((id) => ({ name: `lappet-${id}`, ascent: id, half: 5, exempt: BURIED })),
   { name: 'lappet-noon-main', ascent: 'noon-main', half: 6, exempt: BURIED }, // the daylight main: cracked and breached, so never `sealed`
   { name: 'quarrels', pts: QUARRELS_ROUTE, half: 8, exempt: BURIED }, // the crown's quarter: the lodgings, the square, the quarry, the Drag, the new house

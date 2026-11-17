@@ -8,6 +8,8 @@ import { Builder, mat } from './geo.js';
 import { vary, rubblePile, findSpot, pinSpot, hexCellsIn } from './common.js';
 import { causewayAt } from './causeway.js';
 import { naveClear } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
+import { DOOR } from '../v14/coffin-road/plan.js'; // v16 L4: nothing fallen lies at the Nave's south door (the Wellward Way's start)
+const naveDoorClear = (x, z) => Math.abs(x - DOOR.x) < 3.5 && Math.abs(z - DOOR.z) < 5;
 import { CAUSEWAY } from '../world.js'; // v4 map: placed by the v3 stretch of the road (gate to tower hill), which CAUSEWAY_V4 keeps
 
 export function buildScatter(ctx, B, env) {
@@ -43,9 +45,13 @@ export function buildScatter(ctx, B, env) {
     _q.setFromUnitVectors(UP, _n);
     _e.set(o.rx || 0, o.ry ?? rng() * 6.28, o.rz || 0, 'YXZ');
     _q.multiply(_q2.setFromEuler(_e));
-    const s = o.s || 1;
+    const s = o.s || 1, shade = 0.85 + rng() * 0.3;
+    // groundAt is the ground on a 3 m grid: at a riser's foot (a terrace's retaining wall in the Lappet) it lies a metre or
+    // two over the ground there, and a piece put on it hangs in the air against the wall (v16, the Strake). Dropped after
+    // its draws, so every other piece keeps its place.
+    if (Math.abs(gy - T.heightAt(x, z)) > 0.35) return;
     set.mats.push(new THREE.Matrix4().compose(new THREE.Vector3(x, gy + (o.y || 0) * s, z), _q.clone(), new THREE.Vector3(s, s, s)));
-    set.cols.push(new THREE.Color(1, 1, 1).multiplyScalar(0.85 + rng() * 0.3));
+    set.cols.push(new THREE.Color(1, 1, 1).multiplyScalar(shade));
     if (o.r) ctx.addCollider({ x, z, r: o.r * s });
   };
   // hands: palm up or palm down, sunk to the wrist; a few colossal
@@ -254,7 +260,9 @@ export function buildScatter(ctx, B, env) {
   {
     // Pinned to its LANDMARKS entry: findSpot rejects every landmark's own footprint, so once the
     // shrine became a landmark the search near (-100,-100) could never succeed and nothing was built.
-    const p = pinSpot(env, ctx.landmarks.shrine, 6, { slope: 0.3, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 }, allow: ['shrine'] });
+    // (v16: on its own spot up to a slope of 0.4: the floor's first whaleback tips it to 0.31, and at 0.3 the shrine was not
+    // built at all, nor the jackdaw's hoard on its saint)
+    const p = pinSpot(env, ctx.landmarks.shrine, 6, { slope: 0.3, pinSlope: 0.4, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 }, allow: ['shrine'] });
     if (p) {
       const gm = ground.groundAt(p.x, p.z);
       // beehive cell: rings of stone stepping inward, the top fallen in
@@ -393,7 +401,7 @@ export function buildScatter(ctx, B, env) {
       env.addPaver(x, z, ci, cj, { sink: 0.06 + d * 0.06, tilt: 0.12, dark: true });
     });
   }
-  for (const st of Object.values(sets)) for (let i = st.mats.length - 1; i >= 0; i--) if (naveClear(st.mats[i].elements[12], st.mats[i].elements[14])) { st.mats.splice(i, 1); st.cols.splice(i, 1); } // v5: off the Foundered Nave's rim, after every draw
+  for (const st of Object.values(sets)) for (let i = st.mats.length - 1; i >= 0; i--) if (naveClear(st.mats[i].elements[12], st.mats[i].elements[14]) || naveDoorClear(st.mats[i].elements[12], st.mats[i].elements[14])) { st.mats.splice(i, 1); st.cols.splice(i, 1); } // v5: off the Foundered Nave's rim, after every draw
 }
 
 // ---------- fragment templates (origin at the ground contact, +y up) ----------

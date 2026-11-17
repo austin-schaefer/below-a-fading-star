@@ -16,6 +16,8 @@
 //   a.far: the far calls' shared clock ({ last }): no far call starts within FAR_GAP s of another
 // Pitched things sit in D (palette.md): the hum on A (the fifth), the hoot D4 to A3, the frogs on D pentatonic notes.
 import { hyp } from '../noise.js';
+import { tarnShoreDistance } from '../v4/tarn.js'; // v16 L3: the lap at the tarn's edge
+import { fenShoreDistance, fenAt } from '../height/fen.js'; // v16 L3: the bubbles and frogs on the fen's
 import { smoothstep, clamp } from './graph.js';
 
 export function lognormal(rng, median, spread) {
@@ -87,17 +89,17 @@ export function startPlaces(a) {
 
   // fen bubbles: gas rising from the mud near you, in runs with rests between
   a.far = { last: -1e9 }; // the far calls' shared clock (startCalls, the regions' hooks)
-  const prng = a.ctx.makeRng(9093), F = landmarks.fen;
+  const prng = a.ctx.makeRng(9093);
   const spot = { x: 0, y: -2.5, z: 0 };
   function findSpot(px, pz) {
     for (let k = 0; k < 8; k++) {
       const ang = prng() * 6.283, r = 5 + prng() * 25, x = px + Math.cos(ang) * r, z = pz + Math.sin(ang) * r;
-      if (hyp(x - F.x, z - F.z) < F.r) { spot.x = x; spot.z = z; return spot; }
+      if (fenShoreDistance(x, z) < 4) { spot.x = x; spot.z = z; return spot; } // v16 L3: within the fen's edge
     }
     return null;
   }
   let fpx = 0, fpz = 0;
-  const bubbles = caller(prng, { bout: [2, 6], gap: [0.15, 0.6], rest: [7, 0.7, 2, 45], first: [1, 6], when: () => hyp(fpx - F.x, fpz - F.z) < F.r + 25 }, () => {
+  const bubbles = caller(prng, { bout: [2, 6], gap: [0.15, 0.6], rest: [7, 0.7, 2, 45], first: [1, 6], when: () => fenShoreDistance(fpx, fpz) < 25 }, () => {
     const s = findSpot(fpx, fpz); if (!s) return;
     const cp = a.camera.position, d = Math.hypot(s.x - cp.x, s.y - cp.y, s.z - cp.z);
     const v = a.voice(s, { ref: 6, roll: 1.3, range: 60, air: 60, verb: 0.5 * wetBy(d), dur: 0.2 });
@@ -110,11 +112,14 @@ export function startPlaces(a) {
 
   function update(f) {
     const { now, t, step, px, pz } = f;
-    // --- tarn lapping
-    const T = landmarks.tarn, td = hyp(px - T.x, pz - T.z), edge = 52;
-    const toEdge = Math.abs(td - edge);
-    const lapGain = (1 - smoothstep(3, 75, toEdge)) * (td > 20 ? 1 : 0.6);
-    if (td > 1) { const k = td > edge ? edge / td : 1; const ex = T.x + (px - T.x) * (td > edge ? k : 1), ez = T.z + (pz - T.z) * (td > edge ? k : 1); setPos(lapPan, ex, T.h ?? -4.6, ez); }
+    // --- tarn lapping: at the nearest point of the shore (v16 L3: the edge, src/v4/tarn.js), by how far it is; out
+    // on the water it stays where it was and falls to 0.6 more than 32 m in
+    const sd = tarnShoreDistance(px, pz), toEdge = Math.abs(sd);
+    const lapGain = (1 - smoothstep(3, 75, toEdge)) * (sd > -32 ? 1 : 0.6);
+    if (sd > 0) {
+      const gx = tarnShoreDistance(px + 0.5, pz) - sd, gz = tarnShoreDistance(px, pz + 0.5) - sd, gl = Math.sqrt(gx * gx + gz * gz) || 1;
+      setPos(lapPan, px - (gx / gl) * sd, -4.6, pz - (gz / gl) * sd);
+    } else setPos(lapPan, px, -4.6, pz);
     const lap = 0.5 + 0.5 * Math.sin(t * 1.1) * (0.6 + 0.4 * Math.sin(t * 0.37 + 1));
     lapBus.gain.setTargetAtTime(lapGain * (0.1 + 0.22 * lap), now, 0.15);
     lapLP.frequency.setTargetAtTime(300 + 250 * lap, now, 0.2);
@@ -134,9 +139,9 @@ export function startCalls(a) {
   let px = 0, pz = 0;
   // ================================================================ frogs: five at their places in the fen, each
   // croaking in bouts with long rests, and the nearest other answering now and then
-  const F = a.landmarks.fen, NOTES = [146.8, 195.8, 220, 176.2, 1760]; // D3 G3 A3 F3 and one peeper on A6
+  const NOTES = [146.8, 195.8, 220, 176.2, 1760]; // D3 G3 A3 F3 and one peeper on A6
   const frogs = NOTES.map((f, i) => {
-    const ang = rng() * 6.283, r = F.r * (0.65 + 0.3 * rng()), fr = { x: F.x + Math.cos(ang) * r, y: -2.3, z: F.z + Math.sin(ang) * r, f: f * (1 + (rng() - 0.5) * 0.01), c: null };
+    const ang = rng() * 6.283, p = fenAt(ang, -12 + 18 * rng()), fr = { x: p.x, y: -2.3, z: p.z, f: f * (1 + (rng() - 0.5) * 0.01), c: null }; // v16 L3: about the fen's edge
     return fr;
   });
   function croak(fr, gain) {

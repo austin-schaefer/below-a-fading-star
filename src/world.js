@@ -141,8 +141,9 @@ export const REGIONS = {
                 yields: [{ x: 40, z: 30, r: 85 }] }, // clipped on the west by the Demesne's ha-ha (placement plan, BO)
   saltings:   { id: 'BP', name: 'The Saltings', blend: 6,
                 shape: { strip: [[168, 130, 20], [192, 158, 25], [178, 192, 18], [140, 200, 12], [118, 222, 12], [85, 246, 10], [45, 246, 10], [12, 228, 12], [-18, 200, 12], [-30, 180, 10]] },
-                yields: [{ x: 70, z: 160, r: 75 }] },
-  outwash:    { id: 'BQ', name: 'The Outwash', shape: { ellipse: { x: 25, z: -195, rx: 85, rz: 24 } }, blend: 8,
+                ragged: { amp: 5, freq: 0.045, still: [[200, 185, 26]] }, // v16 L3: no ruled hem (but where the Pit's lip is laid against it)
+                yields: [{ x: 70, z: 160, r: 75, edge: 'fen', off: 7 }] }, // v16 L3: it yields to the fen's edge (src/height/fen.js), 7 m out; x, z, r the old circle, for height-check's rings
+  outwash:    { id: 'BQ', name: 'The Outwash', shape: { ellipse: { x: 25, z: -195, rx: 85, rz: 24 } }, blend: 8, ragged: { amp: 4, freq: 0.05, still: [[-3, -219, 8]] }, // v16 L5: held where P21 climbs its south hem (the rag put a 1.22 grade on it)
                 yields: [{ x: -40, z: -165, r: 40 }, { x: 40, z: -265, r: 50 }] },
   highLing:   { id: 'BR', name: 'The High Ling', shape: { poly: [[228, 10], [236, -105], [276, -105], [293, -40], [293, 10]] }, blend: 6,
                 yields: [] },
@@ -216,10 +217,12 @@ export const CAUSEWAY_V4 = [
 
 // Water bodies: flat planes at a fixed height, clipped by the terrain naturally.
 export const WATER = {
-  // r takes in the south bay (v4 regions, src/v4/tarn.js); shore is the old round shore's radius, for what is laid
-  // round it (the bench's arc, mists, reeds). terrain.waterLevelAt knows where the water really is.
-  tarn: { x: -90, z: 110, r: 92, y: -4.6, shore: 60 },
-  fen:  { x: 70, z: 160, r: 80, y: -2.45 },
+  // edge: the body's shore is drawn on an edge (v16, src/height/outline.js) and r is only a disc that takes it all in:
+  // terrain.waterLevelAt knows where the water really is, and the disc's mesh and the plants ask it. The tarn's r takes
+  // in the south bay (src/v4/tarn.js), shore (its old round radius) only sizes its disc's mesh; the fen's r takes in the
+  // fringe's last pools (src/height/fen.js).
+  tarn: { x: -90, z: 110, r: 92, y: -4.6, shore: 60, edge: true },
+  fen:  { x: 70, z: 160, r: 90, y: -2.45, edge: true },
   // the pool at the fall's foot (The Speculum): the disc takes in its pale-stone beach; the river itself
   // is not a disc, see terrain.js (RIVER, riverAt, waterDepthAt)
   pool: { x: 208, z: 258, r: 6.8, y: 3.5 },

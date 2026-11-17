@@ -111,8 +111,9 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 96 | v15 the eight villagers at three metres |
 | 97 | v15 the stairs: the plan before and after, the pair sheets, the dip's height trace, the glass tube stair |
 | 98 | v15 sound and light, houses, the peafowl before and after, two failures |
+| 99 | v16 the valley floor and the sun's gutter: Lees Tarn off its circle, the floor lifted, the gutter in frames, the Lappet's stair head, the letter act |
 
-`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp` and `gallery-v12-to-v15.webp` (`83-stair-orch-home`, the box v12 starts; v15's tile is `93-lappet-far-lees-east`) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
+`plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp`, `gallery-v12-to-v15.webp` and `gallery-v16.webp` (`99-gutter-moor-dark`) (`83-stair-orch-home`, the box v12 starts; v15's tile is `93-lappet-far-lees-east`) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
 ## Index
 
@@ -830,5 +831,35 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `98-peafowl-before.webp` | Before: the peafowl on the roof, boxy. |
 | `98-sound-lamps-after.webp` | After: the lamps of the hitch lit, grass and window-glow in the lane. |
 | `98-sound-lamps-before.webp` | Before: the hitch at the lane's end with one pole light. |
+| `98-acts-bell-struck.webp` | The Tocsin's bell at the moment it is struck. |
+| `98-acts-halt-stroke.webp` | The Lantern Halt's tally wall with the next stroke being drawn. |
+| `98-ladders-quarrels-arch.webp` | The quarrel arch seen up into its soffit. |
+| `99-act-letter-clerk.webp` | The Clerk in his lit grille, the offer to take his letter not yet made. |
+| `99-act-letter-held.webp` | The letter held out at arm's length, one second after taking it. |
+| `99-act-letter-offer.webp` | The offer on the clerk's window: Take his letter. |
+| `99-act-letter-sheet.webp` | The act Take his letter in seven frames, from the offer to the clerk back at his book. |
+| `99-floor-fen-after.webp` | After: the fen from above, off its circle, the pond an irregular shape in the lifted floor. |
+| `99-floor-fen-before.webp` | Before: the fen from above, the pond a round disc. |
+| `99-floor-kettle-after.webp` | The kettle on the valley floor, ground skin and pools after the lift. |
+| `99-floor-pools-after.webp` | After: the valley floor from above with its pools and paint. |
+| `99-floor-pools-before.webp` | Before: the same view with the v15 pools. |
+| `99-floor-reeds-pool-after.webp` | Reeds at the edge of a floor pool. |
+| `99-floor-tarn-oblique-before.webp` | Before: the tarn from a high oblique, a round lens. |
+| `99-floor-valley-after.webp` | The whole valley floor from straight above after the lift. |
+| `99-folk-before-after.webp` | The Lappet's folk, zoomed: before on the left of each row, after on the right. |
+| `99-gutter-lappet-far-dark.webp` | The Lappet from the road with the sun guttered: the lit windows carry the village. |
+| `99-gutter-lappet-far-lit.webp` | The same view with the sun lit. |
+| `99-gutter-moor-dark.webp` | The moor mid-gutter: the sun a dark ring, the tarn cold and blue. |
+| `99-gutter-moor-lit.webp` | The moor before the gutter, sun low and the tarn blazing. |
+| `99-gutter-moor-strip.webp` | A sequence of the moor through one gutter, left to right: lit, falling, dark, relit. |
+| `99-gutter-tarn-dark.webp` | The tarn at the dark of the gutter, the sun's glitter gone. |
+| `99-gutter-tarn-lit.webp` | The tarn with the sun lit and its path of light on the water. |
+| `99-perf-walk-tube.webp` | A frame of the stair-and-tube walk used to measure frame time at the low tier. |
+| `99-stair-head-after.webp` | After: the main stair's head rebuilt, a lit flight with lamps and the village's name on the screen. |
+| `99-stair-head-before.webp` | Before: the same step of the walk, a blank wall in the way. |
+| `99-stair-lamps-after.webp` | The new stair, a lamp on each newel. |
+| `99-stair-village-after.webp` | The Lappet from the stair head looking down the notch. |
+| `99-tarn-above-after.webp` | After: Lees Tarn from above, the shore irregular and off its circle. |
+| `99-tarn-above-before.webp` | Before: Lees Tarn from above, a round pond. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |

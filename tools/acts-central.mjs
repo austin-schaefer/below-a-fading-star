@@ -19,6 +19,17 @@ export async function centralRows({ browser, base, check, watch }) {
   };
   const waitFor = async (p, fn, arg, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await p.evaluate(fn, arg)) return true; await sleep(150); } return false; };
   const offered = (p) => p.evaluate(() => window.__fp.acts.offered?.def.id ?? null);
+  // what drawn mesh stands within `within` m of the eye on the line to each of the world points `pts`
+  const nearCover = (p, pts, within) => p.evaluate(([pts, within]) => {
+    const fp = window.__fp, T = fp.THREE, rc = new T.Raycaster(), eye = fp.camera.getWorldPosition(new T.Vector3()), near = [];
+    const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    for (const q of pts) {
+      const d = new T.Vector3(q[0], q[1], q[2]).sub(eye), len = d.length();
+      rc.set(eye, d.normalize()); rc.near = 0.05; rc.far = Math.min(within, len - 0.1);
+      for (const h of rc.intersectObjects(fp.scene.children, true)) if (h.object.isMesh && shown(h.object) && !/^sky/.test(h.object.name + (h.object.parent?.name || ''))) { near.push([h.object.name || h.object.parent?.name, +h.distance.toFixed(2)]); break; }
+    }
+    return { near };
+  }, [pts, within]);
   const settle = async (p, want, ms = 4000) => { const t0 = Date.now(); let o; do { o = await offered(p); if ((o === want) === !!want || (!want && o === null)) return o; await sleep(150); } while (Date.now() - t0 < ms); return o; };
 
   // ---------------------------------------------------------------- the mother crystal
@@ -125,6 +136,20 @@ export async function centralRows({ browser, base, check, watch }) {
   await waitFor(p, () => window.__fp.hypogeumAct.state().t < 0 && window.__fp.hypogeumAct.strikes === 3, null, 240000);
   s = await p.evaluate(() => window.__fp.hypogeumAct.state());
   check('door: the third knock: the row turns a whole turn (eleven places) and the plate comes out again', s.count === 3 && s.spun === 11 && s.plate === true, { count: s.count, spun: s.spun, plate: s.plate });
+  await c.close();
+  // the knock in the whole world (v16 critic): every module at medium (low draws fewer copses: it missed the tree), knocked from where the critic stood (2.2 m off, so the
+  // ease back moves them 1.2 m), no look input: at 8 s and at 15 s the seam is in the middle third of the view and
+  // nothing nearer than 1 m stands between the eye and the seam, the lintel or the sill (a copse tree grew in the cut
+  // where the visitor is eased back to, and the view went into its crown)
+  ({ c, p } = await open('door-world', `${base}/?q=medium&pos=228.5,-112.4,1.3&yaw=-1.571&pitch=-0.04`));
+  await settle(p, 'hypogeum-door', 8000);
+  await p.keyboard.press('KeyE');
+  for (const at of [8, 15]) {
+    await waitFor(p, (at) => window.__fp.hypogeumAct.state().t >= at, at, 240000);
+    s = await nearCover(p, await p.evaluate(() => Object.values(window.__fp.hypogeumAct.points)), 1);
+    const seam = await p.evaluate(() => { const fp = window.__fp, v = new fp.THREE.Vector3(...fp.hypogeumAct.points.seam).project(fp.camera); return [+v.x.toFixed(2), +v.y.toFixed(2)]; });
+    check(`door: in the whole world, ${at} s after a knock from 2.2 m with no input, the seam is in the middle third of the view and nothing within 1 m hides the lintel, seam or sill`, Math.abs(seam[0]) < 1 / 3 && Math.abs(seam[1]) < 1 / 3 && s.near.length === 0, { seam, near: s.near });
+  }
   await c.close();
   // ?acts=0: the door as it was
   ({ c, p } = await open('door0', `${base}/?q=low&acts=0&only=vegetation,ruins2,acts&pos=215,-112`));

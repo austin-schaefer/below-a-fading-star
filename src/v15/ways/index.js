@@ -8,7 +8,7 @@
 // its file's header: stairs.js, ladder.js, tube.js, misc.js.
 //
 // What V0 places (ctx.lappet.built[name]):
-//   heliarch-head    a bastion on the crown's rim at the stair's axis, twin flights down along the riser to the High Rung
+//   heliarch-head    one flight straight down the crown's rim on the stair's axis, onto the High Rung
 //   heliarch-upper   cut into the High Rung and out over the Mid Rung, to a hexagon landing
 //   timber-patch     where the Heliarch flight is broken: a Late plank flight, Mid Rung to the bastion on the Low Rung
 //   heliarch-foot    from the bastion down into the Lees' square
@@ -31,6 +31,10 @@ import { ramp, bridge, roofWalk, pier, undercroft } from './misc.js';
 const SKY = (x, y, z, out) => { out[0] = 1; out[1] = 1; out[2] = 0; return out; };
 
 export function buildWays(ctx, lappet) {
+  // v16-S2: the main's glass gives back the noon it carried while the sun gutters (sky.js's flicker.slow): the
+  // Noonwrights' whole story, the stored daylight brightest when the day goes out
+  const noonGut = { value: 0 };
+  ctx.registerUpdate(() => { noonGut.value = ctx.sky?.flicker?.slow ?? 0; });
   const P = lappet.plan, { RISERS, LEVEL, RUN, STAIR, at, way } = P;
   const kit = (name, salt = 1) => {
     const K = {
@@ -50,7 +54,7 @@ export function buildWays(ctx, lappet) {
         const low = ctx.quality === 'low'; // on low only the Elder steps throw shadows (the valley's cost from above: tools/heights-cost.mjs)
         if (K.B.count > 0) { const m = ctx.strata.mesh(K.B, 'late', `${name}-stone`); if (low) m.castShadow = false; ctx.scene.add(m); tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; }
         if (K.U.tris > 0) {
-          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`, -1e5, { worn: 0.12, cloud: [0.82, 0.22] }) /* quiet fields: in daylight the Nave's worn-through patches read as a toadstool's spots */); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
+          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`, -1e5, { worn: 0.12, cloud: [0.82, 0.22], gut: noonGut }) /* quiet fields: in daylight the Nave's worn-through patches read as a toadstool's spots */); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
           ctx.scene.add(m); tris += K.U.tris;
         }
         return { tris };
@@ -81,6 +85,7 @@ export function buildWays(ctx, lappet) {
     // openings in a riser's face and holes in a tread, before the stone is laid
     claim() {
       lappet.openings.push({ riser: 'high', run: STAIR.run, s0: sx - hw - 0.3, s1: sx + hw + 0.3, why: 'heliarch-upper' });
+      lappet.openings.push({ riser: 'rim', run: STAIR.run, s0: sx - hw - 0.1, s1: sx + hw + 0.1, why: 'heliarch-head' }); // (v16-V1: the rim's face is a wall to anyone under the nosing: the head flight's upper treads are, until it is open there; its cheeks stand in front of the opening's)
       lappet.holes.push({ level: 'high', run: STAIR.run, s0: sx - hw - 0.15, s1: sx + hw + 0.15, D0: up.D0, D1: RISERS[1].D + 0.3, why: 'heliarch-upper' });
     },
     build() {
@@ -88,18 +93,16 @@ export function buildWays(ctx, lappet) {
       const stone = C.heliarch.stone, jit = (c, k) => c.clone().multiplyScalar(k);
 
       // ---------------------------------------------------------------- the Heliarch stair, on its axis
-      // its head: a bastion standing on the High Rung against the crown's rim, level with the crown, a flight down
-      // each way along the riser
+      // its head (v16-V1): one flight straight down the rim's face on the axis, from the crown onto the causeway, the
+      // upper flight's head 3.4 m on across the High Lane. (v15 had a bastion here with twin flights along the riser:
+      // a walker coming up the axis met its 4 m blank face 5 m on, the flights' feet 6 m to either side, and one going
+      // down from the crown met its parapet. Now neither turns: the head is the axis.) The masons cut it: its cheeks are
+      // of the crown's own ashlar, and the treads Heliarch, as the rest of the stair.
       {
-        const D0 = RISERS[0].D - 0.215, depth = 2.015, [x, z] = at(1, sx, D0); // (it begins where the tread's stone ends, at the nosing's bevel)
-        hexLanding(K, { name: 'heliarch-head', x, y: LEVEL.crown.y, z, f: n1, depth, width: STAIR.width, wing: 0, base: LEVEL.high.y - 0.3, parapet: ['far'], parapetH: 0.75 }); // a kerb a walker's waist high, walled (v15-W7: at 0.3 m a walker kept on over it and dropped 4 m to the causeway); from the crown the stair's line still runs on over it to the house
+        const hd = way('heliarch-head'), [x, z] = at(1, sx, hd.D0);
+        built['heliarch-head'] = stoneFlight(K, { name: 'heliarch-head', x, y: LEVEL.crown.y, z, f: n1, drop: 4, width: STAIR.width, rise: 0.25, run: (hd.D1 - hd.D0) / 15, base: LEVEL.high.y - 0.3, back: 0.6, nosing: true, land: at3(1, sx, hd.D0 - 2.2, LEVEL.crown.y) });
         // the hexagon on the crown behind it, where the masons' ground meets the stair
         hexLanding(K, { name: 'heliarch-head-court', x: x - n1[0] * 2.3, y: LEVEL.crown.y + 0.03, z: z - n1[1] * 2.3, f: n1, depth: 2.3, width: STAIR.width, wing: 1.1, base: LEVEL.crown.y - 0.05, solid: false, floor: false });
-        const Dm = D0 + depth / 2 + 0.1, wd = depth - 0.25;
-        for (const sg of [1, -1]) {
-          const [hx, hz] = at(1, sx + sg * hw, Dm);
-          built[`heliarch-head-${sg > 0 ? 'east' : 'west'}`] = stoneFlight(K, { land: at3(1, sx, D0 - 1.6, LEVEL.crown.y), name: `heliarch-head-${sg > 0 ? 'east' : 'west'}`, x: hx, y: LEVEL.crown.y, z: hz, f: [d1[0] * sg, d1[1] * sg], drop: 4, width: wd, rise: 0.25, run: 0.26, base: LEVEL.high.y - 0.3, cheeks: sg > 0 ? [false, true] : [true, false] });
-        }
       }
       // the upper flight: cut into the High Rung, out over the Mid Rung, onto a hexagon
       {
@@ -242,7 +245,7 @@ export function buildWays(ctx, lappet) {
         for (const run of [1, 2]) {
           const a = run === 1 ? P.FADE.s1[0] : P.cornerS(2, RD) + 0.15, b = run === 1 ? P.cornerS(1, RD) - 0.15 : P.FADE.s2[1];
           const taken = [...P.RIM.clear.filter((c) => c[0] === run).map((c) => [c[1], c[2]]), ...gaps.filter((g) => g[0] === 'rim' && g[1] === run).map((g) => [g[2], g[3]]),
-            ...(run === STAIR.run ? [[sx - 1.92 - 0.42, sx + 1.92 + 0.42]] : [])].sort((p, q) => p[0] - q[0]);
+            ...(run === STAIR.run ? [[sx - P.HEAD_POST - 0.5, sx + P.HEAD_POST + 0.5]] : [])].sort((p, q) => p[0] - q[0]);
           const d = RUN[run].dir, yaw = Math.atan2(d[0], d[1]);
           const deep = (s) => { const [x, z] = at(run, s, edgeD + 0.7); return yC - T.heightAt(x, z) > 1.2; }; // a drop worth a kerb, here
           const span = (s0, s1) => {

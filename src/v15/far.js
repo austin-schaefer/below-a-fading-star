@@ -203,7 +203,7 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, t) => {
     // the angle PX pixels subtend on a 720-line frame: a speck is the same share of the view at any resolution
     U.uPx.value = (PX * 2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) / 2)) / 720;
-    U.uGlow.value = 0.92 + 0.05 * Math.sin(t * 1.7) + 0.03 * Math.sin(t * 5.3);
+    U.uGlow.value = (0.92 + 0.05 * Math.sin(t * 1.7) + 0.03 * Math.sin(t * 5.3)) * (1 + 1.4 * (ctx.sky?.flicker?.lampsAt?.(C.x, C.z) ?? 0)); // turned up in a gutter, as near (v16-S1), when the wave reaches the village (v16-S2): from the heights it pricks out
     if (low) {
       const p = ctx.camera.position, d = Math.hypot(p.x - C.x, p.z - C.z), on = d > lap.FAR - BOX_IN, gone = d > CARRY;
       if (on !== boxOn) { boxOn = on; U.uBox.value = on ? 1 : 0; }

@@ -43,7 +43,7 @@ export async function build(ctx) {
   const glow = G.mesh('lees-noon');
   ctx.scene.add(mesh, glow);
   ctx.lappet.farHidden?.push(mesh, glow);
-  ctx.registerUpdate((dt, t) => { stone.tick(t, ctx.sky?.flicker?.value ?? 1); glow.tick(t); });
+  ctx.registerUpdate((dt, t) => { stone.tick(t, ctx.sky?.flicker?.value ?? 1, ctx.sky?.flicker?.lamps ?? 0); glow.tick(t); });
   for (const s of f.seats) Q.places.push({ what: 'the bench against the fountain\'s warm side (a seat)', ...s });
   Q.places.push({ what: 'the fountain\'s kerb: where someone kneels to dip', x: f.notch.x, y: Q.Y + 0.2, z: f.notch.z }, { what: 'the Leerie\'s slate, on the Swape\'s post', x: f.post.x, y: Q.Y + 1.3, z: f.post.z });
   ctx.lees = { fountain: { x: f.x, z: f.z, y: Q.Y, tip: f.tipY, swape: { x: f.post.x, z: f.post.z } }, arch: gate, gutter: floor.gut, records: Q.records, places: Q.places, meshes: [mesh, glow], stats: () => ({ draws: 2, triangles: tris, stone: B.triangles, glow: G.triangles, lights: 0 }) };

@@ -18,15 +18,15 @@ const lining = (fs) => fs.replace('#include <map_fragment>', '#include <map_frag
 let sway = null;
 export function swayingCloth() {
   if (sway) return sway;
-  const uT = { value: 0 };
+  const uT = { value: 0 }, uAir = { value: 1 };
   sway = new THREE.MeshStandardMaterial({ map: clothTexture(), emissiveMap: clothTexture(), emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.42, roughness: 0.95, metalness: 0, side: THREE.DoubleSide, alphaTest: 0.5 });
-  sway.userData.uT = uT;
+  sway.userData.uT = uT; sway.userData.uAir = uAir; // uAir (v16-S2): how much the wind moves it, 1 by day (vestige.js sets it from the gutter's hush)
   sway.customProgramCacheKey = () => 'cloth-sway';
   sway.onBeforeCompile = (sh) => {
-    sh.uniforms.uT = uT;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;')
+    sh.uniforms.uT = uT; sh.uniforms.uAir = uAir;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT, uAir;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-  { float d = 1.0 - uv.y, ph = position.x * 0.37 + position.z * 0.91;
+  { float d = (1.0 - uv.y) * uAir, ph = position.x * 0.37 + position.z * 0.91;
     float w = sin(uT * 1.1 + ph) * 0.6 + sin(uT * 2.7 + ph * 1.7) * 0.25;
     transformed.x += w * 0.32 * d * d; transformed.z += sin(uT * 0.8 + ph * 1.3) * 0.18 * d * d; transformed.y += abs(w) * 0.06 * d; }`);
     sh.fragmentShader = lining(sh.fragmentShader);
