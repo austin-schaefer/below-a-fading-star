@@ -77,7 +77,7 @@ export const LEADS = [
   { id: 'P35', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the spit to the bay', pts: [[-42, 150], [-50, 166]] },
   { id: 'P36', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod out along the spit', pts: [[-42, 150], [-55, 148], [-66, 143]] },
   { id: 'P37', kind: 'path', cls: 'way', w: 1.0, brief: 'the shore way, the Sward to the tarn', pts: [[-36, 44], [-40, 62]] },
-  { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [2, 237], [-18, 231], [-36, 246]] },
+  { id: 'P38', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod past the Menology', pts: [[9, 252], [3.2, 251.2], [2, 237], [-18, 231], [-36, 246]] }, // v17 W2: over the leat's slab bridge (its west foot at (3.2, 251.2))
   { id: 'P39', kind: 'path', cls: 'trod', w: 0.5, brief: 'salt trod, the reed gap north round the Span\'s pier to the rim way', slabs: true, pts: [[125, 205], [133, 186], [150, 166], [176, 146]] },
   { id: 'P40', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the foot of the Span\'s fallen bay, looking over the canyon (the rim beyond is reached by P13, from the worn crust)', pts: [[176, 146], [170, 162], [166, 176]] },
   { id: 'P41', kind: 'path', cls: 'trod', w: 0.5, brief: 'the lawn walk, through the parterre from the north way to the Pomegranate House\'s bank', pts: [[20, -38], [24, -38], [42, -38.2], [44.1, -41.2], [46.3, -45.8], [50, -44], [60, -40.6], [70.5, -36.4]] }, // v15: round the Strake's west end (a stride clear of its first plot) and along its fronts to P9
@@ -94,6 +94,9 @@ export const LEADS = [
   { id: 'P52', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod off the moraine way across the Lattice\'s floor to the foot of the icefall (v14-B6: every way up has a track to its foot)', pts: [[58, -231.1], [59, -245], [60, -258], [58.5, -268], [57, -274.5], [57.6, -277.6]] },
   { id: 'P53', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod off the Nave way east across the stair\'s sunk slabs, behind the Lonely Staircase\'s stub and down its west side to its foot (v14-B6, #54: whoever comes on its back is shown the way round)', pts: [[247.1, -15], [255, -16.5], [264, -17.2], [272, -17.5], [280, -17.2], [285.2, -16.4], [284.8, -12], [284.8, -6], [286, -1.6], [287.6, 0.2]] },
   { id: 'P54', kind: 'path', cls: 'trod', w: 0.5, brief: 'a dirt trod off the causeway\'s last bend to the Pit\'s landing, worn by the sounders since the road\'s last slabs were taken up for the stair (v15-F1, the owner\'s #59)', pts: [[189.6, 159.6], [188.2, 164], [186.4, 169], [184.6, 174], [183.4, 177.2], [182.8, 178.7]] },
+  // v17-N1: the water's new places each get their way (the owner's #54 and roads-test). P55: from the leat's slab bridge (P14 and P38 meet at its east foot (9, 252)) down the leat's east bank, then west along the slope south of it and the mere to the Swallow's quay: the south shore is not reached from the north without crossing water, and this line keeps 1.5 m or more from it all the way (a dry-ground search over heightAt and the water, 1 m cells). P56: off the Taker's road to the sphere's glass.
+  { id: 'P55', kind: 'path', cls: 'trod', w: 0.5, brief: 'a trod from the leat\'s bridge down its east bank and along the slope south of the Slake to the Swallow\'s quay', pts: [[9, 252], [9, 259], [8.5, 265], [6, 271], [1, 277], [-5, 285], [-12, 291], [-23, 295.5], [-35, 297], [-47, 297], [-59, 297], [-70, 297.5], [-78, 298], [-84, 297.5], [-89, 296], [-90.5, 294.2]] },
+  { id: 'P56', kind: 'path', cls: 'trod', w: 0.5, brief: 'a trod off the Taker\'s road to the glass sphere\'s east face', pts: [[-279, 26], [-290, 24.5], [-302, 23]] },
 ];
 
 // ---------------------------------------------------------------- what the leads keep off

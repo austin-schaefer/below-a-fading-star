@@ -13,6 +13,7 @@
 // tarn and the mere. All of it reads the kit's own SPEED and ROUGH, so any stream put on the kit looks the same.
 import * as THREE from 'three';
 import { STREAMS, STILLS } from './bodies.js';
+import { LEAT } from './plan.js';
 import { meshHeightSampler } from '../water/river.js';
 
 const SKY_GLSL = /* glsl */`
@@ -31,12 +32,13 @@ const VERT = /* glsl */`
   attribute vec4 aFlow;   // s (downstream m), d (across, + left), the edge's half-width on this side, depth over the drawn ground
   attribute vec4 aMisc;   // speed m/s, rough (white water below a step), still (a pool: 1), fade (the ends)
   attribute vec2 aTan;    // downstream (x, z)
-  varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld;
+  attribute float aShade; // how much darker the stream's glass is (a built channel's deep water: the plan's shade, 0 the brook)
+  varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld; varying float vShade;
   #include <fog_pars_vertex>
   void main() {
     vec3 transformed = position;
     vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-    vFlow = aFlow; vMisc = aMisc; vTan = aTan;
+    vFlow = aFlow; vMisc = aMisc; vTan = aTan; vShade = aShade;
     vWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
@@ -47,7 +49,7 @@ const FRAG = /* glsl */`
   uniform sampler2D uTex;
   uniform float uTime, uFlicker;
   uniform vec3 uSunDir, uSunCore, uSunLight, uHorizonSun, uHorizonAway, uZenith, uWater, uFoam;
-  varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld;
+  varying vec4 vFlow; varying vec4 vMisc; varying vec2 vTan; varying vec3 vWorld; varying float vShade;
   #include <fog_pars_fragment>
   #define FLOW_T 2.0
   ${SKY_GLSL}
@@ -113,7 +115,8 @@ const FRAG = /* glsl */`
     // (a floor under the reflection: in the south trough's shade the ground and a near-black body are one dark, and moving
     // water there is seen by the sky it carries, lighter than the bank)
     // (held under 0.8 at grazing, so a pool seen edge-on past a step is a band of sky, not a ruled white line)
-    vec3 col = mix(body, refl, clamp(max(min(fres, 0.8), 0.5) + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
+    // (a built channel's water, deep between its kerbs, carries less of the sky: the floor and the cap come down by vShade)
+    vec3 col = mix(body, refl, clamp(max(min(fres, 0.8 - 0.3 * vShade), 0.5 - 0.28 * vShade) + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
     // opaque in the body (the bed must not show through), thinning only in the last few centimetres of depth at the margins
     float alpha = edge * mix(0.72, 0.96, smoothstep(0.02, 0.2, dep));
     alpha = mix(alpha, 1.0, fres * 0.6 * edge);
@@ -145,7 +148,7 @@ const FRAG = /* glsl */`
   }`;
 
 // the ribbon's fade at the ends: in from the tarn, out into the mere (stations on the plan's line)
-const FADES = { brook: { in: [[-89.5, 197], [-89.5, 201.5]], out: [[-86.8, 263.5], [-87.6, 268.5]] } };
+const FADES = { brook: { in: [[-89.5, 197], [-89.5, 201.5]], out: [[-86.8, 263.5], [-87.6, 268.5]] }, leat: LEAT.fade };
 
 export function buildV17Water(ctx, tex, stillMat) {
   const { scene, terrain, palette } = ctx;
@@ -157,7 +160,7 @@ export function buildV17Water(ctx, tex, stillMat) {
   const out = { streams: [], stills: [], update: () => {} };
 
   // ---------------------------------------------------------------- the streams' ribbon
-  const pos = [], flow = [], misc = [], tan = [], idx = [];
+  const pos = [], flow = [], misc = [], tan = [], shade = [], idx = [];
   const rowStep = high ? 1 : 2; // samples are 0.5 m apart: a row every 0.5 m (1 m on low)
   for (const st of STREAMS) {
     if (st.Y.every((y) => y === st.Y[0])) continue; // a level stream is still water: the stills' mesh draws it (the cut)
@@ -185,6 +188,7 @@ export function buildV17Water(ctx, tex, stillMat) {
         flow.push(s, dd, hs, Math.max(yy - m, core * 0.3));
         misc.push(st.SPEED[k], st.ROUGH[k], still, fade);
         tan.push(tx, tz);
+        shade.push(st.shade ?? 0);
       }
       rows++;
     }
@@ -201,6 +205,7 @@ export function buildV17Water(ctx, tex, stillMat) {
     g.setAttribute('aFlow', new THREE.Float32BufferAttribute(flow, 4));
     g.setAttribute('aMisc', new THREE.Float32BufferAttribute(misc, 4));
     g.setAttribute('aTan', new THREE.Float32BufferAttribute(tan, 2));
+    g.setAttribute('aShade', new THREE.Float32BufferAttribute(shade, 1));
     g.setIndex(idx);
     g.computeBoundingSphere();
     const mat = new THREE.ShaderMaterial({

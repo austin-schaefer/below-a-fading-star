@@ -3,7 +3,8 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
-import { isUnderwaterBeforeV17 } from './height/field.js'; // v17 W1: the new water is cleared after the draws
+import { isUnderwaterBeforeV17 } from './height/field.js';
+import { LEAT_BODY } from './v17/bodies.js'; // v17 W2: no rock on the leat's kerbs // v17 W1: the new water is cleared after the draws
 import { plinthsClear } from './v5/plinths.js';
 import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' ground and the Accrescent's line
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
@@ -251,6 +252,7 @@ export async function build(ctx) {
       // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
       // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
       if (terrain.isUnderwater(x, z)) continue; // v17 W1: the brook, the mere, the Swallow's cut (the rest was refused above)
+      if (LEAT_BODY.sd(x, z) < size * 0.6 + 0.9) continue; // v17 W2: nor on the leat's kerbs (its stones stand to 0.5 m out of the water)
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
       if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
       if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
