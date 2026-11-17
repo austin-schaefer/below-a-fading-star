@@ -41,3 +41,8 @@ Branch `issue-1703-garth`, 2026-11-17.
 - Worst: walk-medium-11, a blank wall at the walk's end; colour fringing on grass (the post's aberration).
 
 Stand: `?pos=-28.2,318.4,-24&yaw=-1.77` (feet on the floor inside the door, facing the light).
+
+## Round 2 (the orchestrator's three points)
+The noon and its bounce are now white (`BOUNCE #e2eee2`) with a cold grade in the light (`NOON_GRADE` warmth -0.04) and pale fruit. The rings are counted from the door: green, yellowing, straw standing dead, grey sticks, swept soil. The beam has a penumbra that ends short of the yellowing ring, and a pale tide line sits just inside each older ring. The dome's bounce is brightest over the garden and dark at the springing.
+- **Tests:** `ONLY=edges,heights,geometry,gutter` gave 579 PASS. Its geometry failure (tide lines coplanar under the feeders) is fixed, and a rerun of `ONLY=geometry` gives 0 failed. `height-speed`: valley 1.055, fen 1.019, with no height-path change.
+- **Blind reader on r14 (door, edge):** "Cold, blue-violet and grey-white moonlight or starlight from above ... It suggests night." It is not yet daylight: overshot from gold to night.
