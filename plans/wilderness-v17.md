@@ -49,6 +49,8 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 07:55 PST. T1 merged: the typography.** (opus, 32 min; `briefs/v17/reports/issue-1711-type.md`.) Three directions, each over the card, place cards, offers and the settings panel, by `?type=`: **a** a worn title page (all IM Fell, centred, a huge italic "Fading", a rule and a leaf, a double-ruled button); **b** an engraved plate (Cormorant, Cormorant SC, EB Garamond in a double hairline frame); **c, the default,** a private press page (Fell English wordmark and Fell small caps, Sorts Mill Goudy to read; set to the left with a red versal B and red pilcrows, the imprint a colophon at the foot, the button a red stamp), which leaves the scene visible on the right. Its reader: "Most distinctive: C". Fonts vendored under `vendor/fonts/` (OFL, 469 KB in all, 222 KB for the default), the Google Fonts links removed. The choice among a, b, c is the owner's to change. Tests on its branch: touch 45, acts 176, record 16, sw 50, loading 28, contrast pass; **`settings` 86/87: the Swallow's ascent ends with no place name** (U1's, for N1 or B1). A stray server from yesterday's removed `issue-1530-indistinct` worktree held port 8171 since 11:47 on the 16th; killed. In flight: W2 (8164), B1 (8170), F2 (8172).
+
 **2026-11-17, 07:53 PST. A1 merged; the diagnosis is in; F2 has the owner's two faults.**
 
 - **The owner on the 21 fps: "i think the low fps are just b/c i'm fighting with the agents for resources, you can ignore that".** Dropped.
