@@ -23,13 +23,14 @@
 // Nave's south door from the passage, the eye meets the treads, not the hall beyond them (risers that faced away let it
 // show through every step).
 // Usage: node tools/edges-test.mjs [base=http://localhost:8123]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { membersBear, facesApart } from './under-geometry.mjs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));

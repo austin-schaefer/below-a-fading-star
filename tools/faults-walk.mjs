@@ -5,13 +5,14 @@
 // the mouse, frames in order at the distances given; a last frame or two side-stepping on A at the nearest (the view
 // moving, where a flicker shows). Frames: shots/wip/<prefix>-<place>-NN-<what>.png.
 //   node tools/faults-walk.mjs [base=http://localhost:8123] [prefix=faults] [q=low] [only=gnomon,bridge,lamp,chain,slabs]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', prefix = 'faults', q = 'low', onlyArg = ''] = process.argv.slice(2);
 const only = onlyArg ? onlyArg.split(',') : null;
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 const errors = [];

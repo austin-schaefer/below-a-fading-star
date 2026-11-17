@@ -11,6 +11,7 @@
 //           0.3 s for 8 s.
 // Each frame 1280 x 720 (touch: 390 x 844) into shots/wip/<prefix>-<part>-NN-<t>.png. The sun's guttering held off.
 // Usage: node tools/footing-frames.mjs [base] [prefix=h0-footing] [part=lip,tap,hurry,drift,touch,fall]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -18,7 +19,7 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const prefix = process.argv[3] || 'h0-footing';
 const parts = (process.argv[4] || 'lip,tap,hurry,drift,touch,fall').split(',');
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 
 const PAR = { x: -200, z: 215 + 7.4, y: 57.05 }; // the south parapet's top
 async function open(q, phone) {

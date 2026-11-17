@@ -10,7 +10,7 @@
 cd "$(dirname "$0")/.."
 PORT="${1:-8123}"
 B="http://localhost:$PORT"
-export SHOT_ANGLE=metal
+# the browser draws on Metal unless SHOT_ANGLE says otherwise (tools/launch.mjs): SHOT_ANGLE=swiftshader tools/suite.sh is the software run
 
 started=""
 if [ -z "$(lsof -ti:"$PORT")" ]; then

@@ -7,13 +7,14 @@
 // grave has its colliders; the terrain triangles cut over his block are counted and the Nave's cut still holds; no
 // boulder lies on an open slot; the cues fire; stats() within budget (9 calls, 30k triangles; low two thirds).
 // Usage: node tools/workers-test.mjs [base=http://localhost:8123] [q=high]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 const q = process.argv[3] || 'high';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
 const errors = [];

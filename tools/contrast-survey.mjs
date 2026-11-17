@@ -15,6 +15,7 @@
 //   node tools/contrast-survey.mjs [base=http://localhost:8123] [--q=medium] [--out=after] [--shots=after]
 //   --out=<label>: writes briefs/v8/contrast/<label>.md. --shots=<stage>: saves every frame (plants shown) to
 //   shots/wip/v8-02-<stage>-<place>-<eye|down>.png. Exits 1 if the gate fails.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync } from 'node:fs';
 let chromium;
@@ -51,7 +52,7 @@ export const POSES = [
 export const MARGIN = { L: 0.035, S: 0.05, hue: 20, blades: 0.15 };
 const GATE_N = 4, MAX_ALIKE = 1; // MAX_ALIKE: the most pairs of places no number tells apart
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.setDefaultTimeout(600000);
 const errors = [];
