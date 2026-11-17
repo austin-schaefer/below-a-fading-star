@@ -17,6 +17,7 @@ import { padGround } from './pads.js';
 import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom } from './fen.js'; // v16 L3: the fen on the edge
 import { HEIGHT_PARAMS } from './params.js';
 import { floorGround, floorCharacter, POOLS } from './floor.js'; // v16: the floor's fall, its forms, its pools and its character
+import { inV17Box, v17Ground, v17Level, v17Paint, V17_ROWS } from '../v17/bodies.js'; // v17 W1: the brook, the mere and the Swallow's cut, behind one box
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -459,7 +460,8 @@ function heightRaw(x, z) {
   let h = beforeFen(x, z);
   // Fen: broad, flat, pocked with pools; v16 L3: on its edge, ragged, fingered, islanded (src/height/fen.js)
   h = fenHeight(h, x, z);
-  return afterFen(h, x, z);
+  h = afterFen(h, x, z);
+  return inV17Box(x, z) ? v17Ground(h, x, z) : h; // v17 W1: the water's bed, banks and lips (src/v17/stream.js), last
 }
 // the moor and the landmarks' shaping before the fen (v16 L5: the fen's wet test reads the ground its pools dig into)
 function beforeFen(x, z) {
@@ -557,6 +559,7 @@ export function biomeAt(x, z) {
 }
 // biomeAt with its height, slope and river section given: the build has the height already, shares the river's
 // section with its own shading, and skips the slope (four heightAt) where nothing it bakes reads one (buildTerrain)
+const _vp = { wet: 0, strand: 0, shore: 0 };
 const marshN = (x, z) => SX.noise2(x * 0.07 + 3, z * 0.07 - 9);
 function biomeWith(x, z, h, slope, rv) {
   const L = LANDMARKS;
@@ -583,8 +586,11 @@ function biomeWith(x, z, h, slope, rv) {
   const moor = clamp(1 - rockR - ice - marsh - wood * 0.5, 0, 1);
   // v16 L4: what the floor's forms make of the ground (src/height/floor.js floorCharacter; all 0 under ?floor=v15)
   const fc = floorCharacter(x, z);
-  return { moor, heath, wood, marsh, shore: fc.shore > 0 ? Math.max(shoreR, fc.shore) : shoreR, rock: rockR, ice, orchard, crystal, slope, h,
-    wet: fc.wet, bleak: fc.bleak, lee: fc.lee, stone: fc.stone, strand: fc.strand };
+  // v17 W1: the brook's and the mere's gravel, pale margin and wet ground (src/v17/stream.js paint), behind the box
+  if (inV17Box(x, z)) { _vp.wet = fc.wet; _vp.strand = fc.strand; _vp.shore = fc.shore; v17Paint(x, z, _vp); }
+  else { _vp.wet = fc.wet; _vp.strand = fc.strand; _vp.shore = fc.shore; }
+  return { moor, heath, wood, marsh, shore: _vp.shore > 0 ? Math.max(shoreR, _vp.shore) : shoreR, rock: rockR, ice, orchard, crystal, slope, h,
+    wet: _vp.wet, bleak: fc.bleak, lee: fc.lee, stone: fc.stone, strand: _vp.strand };
 }
 
 // The still waters, each with its own wet test and its shore's signed distance (metres, < 0 in the water), in the
@@ -605,13 +611,17 @@ export const WATER_BODIES = [
     const [x0, x1, z0, z1] = p.wetBox;
     return { name: p.name, w: { x: p.x, z: p.z, r: p.rMax + 1, y: p.y }, wet: (x, z) => x > x0 && x < x1 && z > z0 && z < z1 && p.sd(x, z) < 0, sd: p.sd };
   }),
+  // v17 W1: the mere, the brook and the Swallow's cut (src/v17/bodies.js), each behind the box; waterLevelAt asks them
+  // by v17Level (below), not in the pools' loop. A stream's `w.y` is its head's level: its level falls along it.
+  ...V17_ROWS,
 ];
 // Water height at a point, or null when there is no water body here.
 // (v16 L5: the floor's pools, after the first three, are asked only inside the box round all of them)
-const N_BIG = 3, SMALL_BOX = WATER_BODIES.slice(N_BIG).reduce((b, B) => [Math.min(b[0], B.w.x - B.w.r), Math.max(b[1], B.w.x + B.w.r), Math.min(b[2], B.w.z - B.w.r), Math.max(b[3], B.w.z + B.w.r)], [Infinity, -Infinity, Infinity, -Infinity]);
+const N_BIG = 3, N_POOLS = WATER_BODIES.length - V17_ROWS.length, SMALL_BOX = WATER_BODIES.slice(N_BIG, N_POOLS).reduce((b, B) => [Math.min(b[0], B.w.x - B.w.r), Math.max(b[1], B.w.x + B.w.r), Math.min(b[2], B.w.z - B.w.r), Math.max(b[3], B.w.z + B.w.r)], [Infinity, -Infinity, Infinity, -Infinity]);
 export function waterLevelAt(x, z) {
   for (let i = 0; i < N_BIG; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
-  if (x > SMALL_BOX[0] && x < SMALL_BOX[1] && z > SMALL_BOX[2] && z < SMALL_BOX[3]) for (let i = N_BIG; i < WATER_BODIES.length; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  if (x > SMALL_BOX[0] && x < SMALL_BOX[1] && z > SMALL_BOX[2] && z < SMALL_BOX[3]) for (let i = N_BIG; i < N_POOLS; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  if (inV17Box(x, z)) { const y = v17Level(x, z); if (y !== null) return y; } // v17 W1
   return riverLevelAt(x, z);
 }
 // The first still water whose shore lies within `extra` metres: { name, y, sd } (sd < 0 inside), or null.
