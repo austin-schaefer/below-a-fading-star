@@ -223,7 +223,14 @@ else {
     check(miss === 0, 'the fen: every cell under its water inside its edge is wet', `${miss} dry`);
     check(out === 0, 'the fen: no water inside its edge lies outside the disc', `${out} outside`);
   }
-  // the Span's bed is not the fen's water
+  // the river's shader takes the fen's fade as 1 past rMax + 3 (src/water/river.js): sd is 3 or more everywhere there
+  {
+    let least = Infinity;
+    for (let r = E.rMax + 3; r < E.rMax + E.far; r += 0.5) for (let a = 0; a < 2 * Math.PI; a += 0.004) least = Math.min(least, E.sd(W.x + Math.cos(a) * r, W.z + Math.sin(a) * r));
+    check(least >= 3, 'the fen: its sd is 3 or more everywhere past rMax + 3 (the river\'s shader skips the edge there)', `least ${f2(least)} m`);
+  }
+  // the Span's bed is not the fen's water, nor the river's (v16 L5: the river inside the fen's edge holds to its ground)
+  check(F.waterLevelAt(98, 209.5) === null, 'the fen: no water at the Span\'s bed (98, 209.5), the river\'s nor the fen\'s');
   check(!N.fenWet(98, 209.5), 'the fen: the Span\'s bed at (98, 209.5) is not its water');
   // the islets stand dry
   {
