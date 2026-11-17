@@ -331,7 +331,7 @@ const r = await page.evaluate(async () => {
   // A walker driven on the controls' own update, the keys held and the look steered, nothing teleported once placed.
   const p = fp.player, DT = 1 / 60;
   fp.events.dispatchEvent(new CustomEvent('begin'));
-  const ticks = all.filter((o) => o.w.tick).map((o) => o.w.tick);
+  const ticks = fp.ascents.list.filter((a) => a.tick).map((a) => a.tick); // (every climbable ladder's, the village's or not)
   const ladderOn = () => fp.ladders?.list?.some((d) => d.state && d.state().on);
   function drive(x, z, y, steer, secs, until) {
     const r0 = fp.controls.placeAt(x, z, y); p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW');
@@ -380,7 +380,7 @@ const r = await page.evaluate(async () => {
         if (Math.abs(f.y - e.y) > 0.3 || houseIn(vx, vz, e.y) || roofed(vx, vz, f.y) || !flooded(fl, mx + e.dir[0] * 0.3, mz + e.dir[1] * 0.3, vx, vz, 0.4)) continue;
         // the eye at 1.6 m; the tread seen where nothing of the way's own stands between
         let seen = null, own = null;
-        for (const q of tread) { const h = sight(vx, f.y + 1.6, vz, q[0], q[1], q[2]); if (!h) { seen = q; break; } if (!own && nearLine(lineOf, h.x, h.z, 2.4)) own = h; }
+        for (const q of tread) { const h = sight(vx, f.y + 1.6, vz, q[0], q[1], q[2]); if (!h) { seen = q; break; } if (!own && nearLine(lineOf, h.x, h.z, 2.4) && !houseIn(h.x, h.z, e.y)) own = h; } // (a house the view is behind is not the way's wall)
         const label = `${sd < 0 ? 'L' : 'R'}${deg}${dist < 7 ? `@${dist}` : ''} ${fmt(vx, vz)}`;
         views.push(label);
         if (!seen && own && !ei) seenBad.push(`${label}: ${own.name} at ${fmt(own.x, own.z)} y ${own.y.toFixed(1)}`);
@@ -395,7 +395,10 @@ const r = await page.evaluate(async () => {
         const ok = (r.out === 'until' || r.out === 'done') && Math.abs(r.feet - other.y) < 0.4;
         // (held up away from the way, by a house's corner or a post on the straight line from the view: a visitor walks
         // round that, and it is no fault of the way's; held up within 2.4 m of the way's own line is)
-        if (!ok) { const by = colsNear(r.x, r.z, 1).filter((c) => { const pt = near(c, r.x, r.z); return pt.d < 0.7 && stands(c, r.feet, pt.t); }).map(desc).slice(0, 2).join(', '), msg = `${label}: ${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}${by ? ` by ${by}` : ''}`; (nearLine([...lineOf, far], r.x, r.z, 2.4) ? walkBad : walkRound).push(msg); }
+        // (and held up by what another module built beside it, a house's wall or a chimney on its roof yard, a pier the
+        // way leans on: a visitor goes round, and the way's kit is not at fault; held up by the ways' own kit, or by nothing
+        // standing (a floor's edge), is)
+        if (!ok) { const bc = colsNear(r.x, r.z, 1).filter((c) => { const pt = near(c, r.x, r.z); return pt.d < 0.7 && stands(c, r.feet, pt.t); }), by = bc.map(desc).slice(0, 2).join(', '), msg = `${label}: ${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}${by ? ` by ${by}` : ''}`; (nearLine([...lineOf, far], r.x, r.z, 2.4) && (!bc.length || bc.some((c) => c.mod === 'lappet')) ? walkBad : walkRound).push(msg); }
       }
       if (!ei) find.push({ row: 'seen', tag, ok: !seenBad.length, detail: seenBad.length ? seenBad.join('; ') : `${views.length} views` }); // (a head is guarded by its cheeks where it is cut into a floor: it is the foot that must be seen)
       find.push({ row: 'walked', tag, ok: !walkBad.length, detail: (walkBad.length ? walkBad.join('; ') : `${views.length} walks`) + (walkRound.length ? ` (held up away from it, walked round by a visitor: ${walkRound.join('; ')})` : '') });

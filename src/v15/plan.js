@@ -535,10 +535,14 @@ export const LAMPS = [
   lampAt('causeway-post', 'post', at(1, STAIR.s - 3.5, 2.4), LEVEL.high.y, [-RUNS[1].n[0], -RUNS[1].n[1]], { k: 1.4, note: 'on the causeway\'s edge by the upper flight\'s head: where the head\'s twin flights come down, the way on down is the lit one' }),
   // (v15-W7, the cold critic: "no light marks the stairs") the spine's heads and feet each lit: two posts framing the
   // gap in the crown's kerb where the head is (seen from the keep's end, 20 m off), a bracket on the rim's face over the
-  // head's west flight's foot (and the Rungs' end walls by the upper flight's foot and the timber patch's: the quarter's own)
+  // head's west flight's foot, and on the Rungs' end walls by the upper flight's foot and the timber patch's
   lampAt('head-post-west', 'post', at(1, STAIR.s - 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'west of the stair head\'s gap in the crown\'s kerb: the head framed, seen from the keep\'s end' }),
   lampAt('head-post-east', 'post', at(1, STAIR.s + 1.92, RISERS[0].D - 0.42), LEVEL.crown.y, RUNS[1].n, { k: 1.5, reach: 0.75, note: 'its fellow, before the three heads that wait on the brink' }),
   lampAt('head-west-foot', 'bracket', at(1, STAIR.s - 1.5 - 5.0, RISERS[0].D + 0.03), LEVEL.high.y, RUNS[1].n, { h: 2.5, reach: 0.6, k: 1.3, note: 'on the rim\'s face a stride west of the head\'s west flight\'s foot: the way up from the causeway is lit' }),
+  lampAt('head-east-foot', 'post', at(1, STAIR.s + 1.5 + 4.6, RISERS[0].D + 3.0), LEVEL.high.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.2, reach: 0.9, note: 'on the causeway past the head\'s east flight\'s foot, its arm back over it: from before the bastion the two feet are the two lights low either side' }),
+  // (the Rungs' houses' end walls stand 0.26 m in from their plots' edges: a bracket 0.02 m proud of that)
+  ...[['upper-foot-bracket', 'rungs-mid-4', 'mid', 7.3, 'on the Mid Rung\'s end house, over the upper flight\'s foot and its landing'], ['patch-foot-bracket', 'rungs-low-4', 'low', 13.0, 'on the Low Rung\'s end house, over the timber patch\'s foot and the bastion']]
+    .map(([name, pl, lv, D, note]) => { const q = PLOTS_.find((r) => r.name === pl); return lampAt(name, 'bracket', at(1, q.s - q.w / 2 + 0.24, D), LEVEL[lv].y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { h: 2.45, reach: 0.6, k: 1.3, note }); }),
   lampAt('ladder-head-post', 'post', at(1, WAYS.find((w) => w.name === 'rungs-ladder').s + 1.45, RIM.D - 0.65), LEVEL.crown.y, RUNS[1].n, { k: 1.3, reach: 0.7, note: 'at the head of the ladder up the rim, its lamp out over the edge: the ladder lit from above, seen from the causeway, and its head from the crown' }),
   lampAt('stair-foot-post', 'post', at(1, STAIR.s + 2.6, 19.0), LEVEL.bench.y, [-RUNS[1].dir[0], -RUNS[1].dir[1]], { k: 1.3, note: 'on the bench beside the foot flight\'s east cheek, its arm over the flight: the stair up from the Lees is lit from the square, and the bastion over it' }),
 ];

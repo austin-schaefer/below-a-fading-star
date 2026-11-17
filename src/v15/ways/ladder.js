@@ -116,9 +116,11 @@ export function ladder(K, o) {
   if (o.lime) {
     // (the houses' limewash, src/v15/houses/kit.js V.lime, holding a little of the sky's light as theirs does: limeGlow)
     const lime = new THREE.Color('#e6dfcf'), glow = (c) => [c.r * 0.085, c.g * 0.085, c.b * 0.085, 2];
-    B.add(B.box(w + 0.9, H - 0.1, 0.22, { chip: 0.03, chipTop: true }), F.clone().multiply(mat(0, (H - 0.1) / 2 + 0.05, -0.1)), { color: lime, moss: 0.08, ground: o.y0, emit: glow(lime) });
+    // (laid on the face as it batters back, a hand proud of it at the foot (`o` is the face at its head), under the nosing's bevel)
+    const hp = H - 0.4;
+    B.add(B.box(w + 0.9, hp, 0.14, { chip: 0.03, chipTop: true }), F.clone().multiply(mat(0, hp / 2 + 0.05, 0.13 - 0.06 * (hp / 2 + 0.05), -0.06, 0, 0)), { color: lime, moss: 0.08, ground: o.y0, emit: glow(lime) });
     const grub = lime.clone().multiplyScalar(0.78); // the lower part, grubbier, splashed
-    B.add(B.box(w + 0.5, 0.9, 0.24, { chip: 0.04 }), F.clone().multiply(mat(0.08, 0.5, -0.1, 0, 0, 0.04)), { color: grub, moss: 0.3, ground: o.y0, emit: glow(grub) });
+    B.add(B.box(w + 0.5, 0.9, 0.16, { chip: 0.04 }), F.clone().multiply(mat(0.08, 0.5, 0.15, -0.06, 0, 0.04)), { color: grub, moss: 0.3, ground: o.y0, emit: glow(grub) });
   }
   // lashed to an iron staple in the nosing; a flat stone under its feet
   B.add(B.box(w + 0.3, 0.05, 0.08), F.clone().multiply(mat(0, H - 0.05, 0.1)), { color: C.late.iron, iron: 1, moss: 0, ground: o.y0 });
