@@ -135,9 +135,9 @@ export async function build(ctx) {
       return null;
     });
     ctx.leat = { bridge: { x: cx, z: cz, top, across: [tz, -tx], half, w } };
-    // walked by tools/heights-test.mjs: from the meeting at its east foot over the deck to the trod on its west side
+    // walked by tools/heights-test.mjs: from the meeting of P14 and P38 at its east foot over the deck to the trod on its west side
     const foot = (b) => P(b, 0);
-    ctx.ascents?.add({ id: 'leat-bridge', path: [foot(half + 3.2), foot(half - 0.3).concat([top]), foot(0).concat([top]), foot(-half + 0.3).concat([top]), foot(-half - 2.6)], offs: [0.5] });
+    ctx.ascents?.add({ id: 'leat-bridge', path: [LEAT.meet, foot(half - 0.3).concat([top]), foot(0).concat([top]), foot(-half + 0.3).concat([top]), foot(-half - 2.6)], offs: [0.5] });
   }
 
   const mesh = new THREE.Mesh(B.build(), makeStoneMaterial(ctx).mat);

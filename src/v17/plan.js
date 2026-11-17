@@ -160,6 +160,7 @@ export const LEAT = {
   fade: { in: [[12, 227], [12, 227.8]], out: [[-63.5, 288], [-67.5, 288.3]] },
   // the slab bridge where P14 and P38 meet (src/v4/paths/routes.js), across pond 2
   bridge: { at: [6.6, 252.6], len: 6.4, w: 2.1 }, // its east step at the meeting (9, 252)
+  meet: [9, 252],        // where P14 and P38 meet, at the bridge's east foot
   fallen: [6.9, 258.6],  // a kerb stone fallen into pond 3 off the east kerb
 };
 
