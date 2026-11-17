@@ -27,7 +27,7 @@ export function buildParts(ctx, L) {
   // ---- the lamps: the tube's lenses that still hold a little noon, and the two lights from the ends (the portal's
   // daylight down in the head, the Garth's noon at the door). They light the water (water.js) and bake the glow
   const LENS_S = [2.6, 11, 27, 44, 61]; // (the first in the arch: the noon that draws a visitor in, seen from the shore)
-  const lenses = LENS_S.map((s) => { const f = frameAt(s); return { s, x: f.x, y: f.ax + A.bore - 0.1, z: f.z }; });
+  const lenses = LENS_S.map((s) => { const f = frameAt(s); return { s, x: f.x, y: f.ax + A.outer - 0.07, z: f.z }; }); // (set in the glass's crown, its rim on the glass)
   const dawn = { x: -94.5, y: -6.6, z: 312.5 }, noon = { x: -31.2, y: A.profile.at(-1)[1] + 1.4, z: 318 };
   const glowAt = (x, y, z) => {
     let g = 0;
@@ -44,10 +44,10 @@ export function buildParts(ctx, L) {
   // ---- the conduit: a loft of one ring shape along the line (floor, walls, a round vault), facing in, coursed
   // (each block its own shade, a course every 0.6 m up, a block 1.2 m along), the water's stain to the crown
   // the head first (it finds where the line leaves it: the conduit's first ring)
-  const uPx = { value: 1 }, env = { ctx, L, S, K, frameAt, rng, low, uPx };
+  const KV = low ? 10 : 14;
+  const uPx = { value: 1 }, env = { ctx, L, S, K, frameAt, rng, low, uPx, KV };
   const head = buildHead(env);
   const S0 = env.conduitStart, S1 = L.LEN - 0.03; // from the head's east wall to the Garth's wall
-  const KV = low ? 10 : 14;
   const ring = [];
   { // (u across, v up from the conduit's floor), in order round from the right foot
     const h = CH.half, sp = CH.spring;
@@ -56,7 +56,8 @@ export function buildParts(ctx, L) {
     for (let i = 1; i < KV; i++) { const a = Math.PI - (Math.PI * i) / KV; ring.push([h * Math.cos(a), sp + h * Math.sin(a)]); }
     for (let i = 0; i <= 3; i++) ring.push([h, sp - (sp * i) / 3]);
   }
-  const conduitPt = (s, u, v) => { const f = frameAt(s), fy = f.y - CH.below; return [f.x + f.r.x * u, fy + v, f.z + f.r.z * u]; };
+  // (the first ring is laid in the head's east wall's plane, so the loft meets the wall's hole edge to edge)
+  const conduitPt = (s, u, v) => { const f = frameAt(s), fy = f.y - CH.below; return [s <= S0 + 1e-6 ? env.headWallX : f.x + f.r.x * u, fy + v, s <= S0 + 1e-6 ? f.z + (f.r.z / Math.hypot(f.r.x, f.r.z)) * u : f.z + f.r.z * u]; };
   const DSc = 1.2;
   const nS = Math.ceil((S1 - S0) / DSc);
   for (let j = 0; j < nS; j++) {
@@ -127,8 +128,8 @@ export function buildParts(ctx, L) {
       if (k > 0.08) { const yl = y - 0.2; K.quad(P(fb, w, y), P(fb, -w, y), P(fb, -w, yl), P(fb, w, yl), WOOD_D, [fb.t.x, 0, fb.t.z], 0.05); }
       s = s2 + 0.012;
     }
-    for (const sd of [-1, 1]) for (let s = 0.3; s < L.LEN - 0.5; s += 1.0) {
-      const fa = frameAt(s), fb = frameAt(s + 1.0), u = sd * (pw - 0.3);
+    for (const sd of [-1, 1]) for (let s = 0.3; s < L.LEN - 0.05; s += 1.0) {
+      const fa = frameAt(s), fb = frameAt(Math.min(L.LEN - 0.05, s + 1.0)), u = sd * (pw - 0.3);
       K.beam([fa.x + fa.r.x * u, fa.y - 0.22, fa.z + fa.r.z * u], [fb.x + fb.r.x * u, fb.y - 0.22, fb.z + fb.r.z * u], 0.07, WOOD_D, 0.05);
     }
   }
@@ -238,7 +239,8 @@ export function buildParts(ctx, L) {
     }
     weed.count = n;
     rib.setAttribute('aW', new THREE.InstancedBufferAttribute(aW, 4)); }
-  weed.name = 'swallow-weed'; weed.frustumCulled = false;
+  weed.computeBoundingSphere(); weed.boundingSphere.radius += 1.6; // (it sways: bounded with room for it)
+  weed.name = 'swallow-weed';
 
   // ---- the silt: motes carried down the conduit with the current, a few tumbling; only in the water, never in the bore
   const NM = low ? 420 : 900, SA = 22, SB = Math.min(S1 - 0.5, 57), RANGE = SB - SA;
@@ -286,7 +288,9 @@ export function buildParts(ctx, L) {
     transparent: true, depthWrite: false,
   });
   const motes = new THREE.Points(mg, mmat);
-  motes.name = 'swallow-silt'; motes.frustumCulled = false; motes.renderOrder = 1;
+  const conduitSphere = () => { const a = frameAt(S0), b = frameAt(S1); const c = new THREE.Vector3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2); return new THREE.Sphere(c, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) / 2 + 6); };
+  mg.boundingSphere = conduitSphere(); // (moved in its shader: bounded by the conduit)
+  motes.name = 'swallow-silt'; motes.renderOrder = 1;
   const ds = new THREE.Vector2();
   const update = () => { ctx.renderer.getDrawingBufferSize(ds); mmat.uniforms.uPx.value = ds.y / (2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) * 0.5)); };
 
@@ -334,7 +338,8 @@ export function buildParts(ctx, L) {
     transparent: true, depthWrite: false,
   });
   const bubbles = new THREE.Points(bg, bmat);
-  bubbles.name = 'swallow-bubbles'; bubbles.frustumCulled = false; bubbles.renderOrder = 1;
+  bg.boundingSphere = conduitSphere();
+  bubbles.name = 'swallow-bubbles'; bubbles.renderOrder = 1;
 
   // ---- the lights: the nearest three of these are live (lights.js); the lenses' noon, the door's
   const lights = [];
@@ -348,5 +353,5 @@ export function buildParts(ctx, L) {
   lamp(noon, nl, 0.05, 7);
   lamp(dawn, new THREE.Color('#d9805a'), 0.05, 7);
 
-  return { meshes: [stone, wood, glass, weed, motes, bubbles, ...head.meshes], lights, update, lenses, frameAt, quayFloor: head.quayFloor, quayKeep: head.quayKeep, quayPath: head.quayPath, headVolume: head.headVolume, cut: head.cut };
+  return { meshes: [stone, wood, glass, weed, motes, bubbles, ...head.meshes], lights, update, lenses, frameAt, quayGround: head.quayGround, quayFloor: head.quayFloor, quayKeep: head.quayKeep, quayPath: head.quayPath, headVolume: head.headVolume, cut: head.cut };
 }

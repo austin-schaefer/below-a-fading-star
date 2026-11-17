@@ -76,7 +76,6 @@ export function buildHead(env) {
     }
     // the top and the ends (where the slope does not cover them)
     S.quad([FX0, FTOP, Z0], [FX1, FTOP, Z0], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 1, 0], 0.08);
-    for (const [x, sd] of [[FX0, -1], [FX1, 1]]) S.quad([x, FBOT, Z0], [x, FTOP, Z0], [x, FTOP, ZI + 1], [x, FBOT, ZI + 1], FACE_D, [sd, 0, 0], 0.08);
     // the cornice: a projecting band under the top, and a plinth course at the water
     S.box((FX0 + FX1) / 2, FTOP - 0.35, Z0 - 0.25, (FX1 - FX0) / 2 + 0.3, 0.35, 0.25, 0, VOUSS, FACE, 0.05);
     // the arch's reveal through the face's depth (facing into the opening)
@@ -101,7 +100,7 @@ export function buildHead(env) {
     // the imposts and pilasters: a pier either side of the arch, to the water
     for (const sd of [-1, 1]) {
       const x = sd < 0 ? ox0 - 0.75 : ox1 + 0.75;
-      S.box(x, (FBOT + spring) / 2, Z0 - 0.15, 0.75, (spring - FBOT) / 2, 0.15, 0, VOUSS, VOUSS, 0.05);
+      S.box(x, (FBOT + spring) / 2, Z0 - 0.155, 0.73, (spring - FBOT) / 2, 0.145, 0, VOUSS, VOUSS, 0.05); // (its back 1 cm off the face, its side off the reveal)
       S.box(x, spring + 0.2, Z0 - 0.3, 0.95, 0.2, 0.3, 0, VOUSS, VOUSS, 0.04); // the impost's moulding
     }
     // the hexagon: flat-topped, its foot under the water, in raised warm stone; a roundel at each upper corner
@@ -112,7 +111,7 @@ export function buildHead(env) {
       if (a[1] < FBOT + 0.5 && b[1] < FBOT + 0.5) continue;
       const clip = (p) => [p[0], Math.max(FBOT + 0.3, Math.min(FTOP - 1.4, p[1]))];
       const pa = clip(a), pb = clip(b);
-      S.beam([pa[0], pa[1], Z0 - 0.14], [pb[0], pb[1], Z0 - 0.14], 0.16, HELIO, 0.04);
+      S.beam([pa[0], pa[1], Z0 - 0.19], [pb[0], pb[1], Z0 - 0.19], 0.16, HELIO, 0.04);
     }
     const face = new THREE.Matrix4().makeBasis(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0));
     for (const p of HX) {
@@ -133,10 +132,10 @@ export function buildHead(env) {
   }
 
   // ---- the sill and the channel through the arch (under the cut's water), the lip at the head's wall
-  S.box((ox0 + FALLX1) / 2, SP.sill - 0.4, (Z0 + ZI) / 2, (FALLX1 - ox0) / 2, 0.22, (ZI - Z0) / 2, 0, FACE_D, SILT, 0.05);
+  S.box((ox0 + FALLX1) / 2, SP.sill - 0.4, (Z0 - 0.06 + ZI + 0.3) / 2, (FALLX1 - ox0) / 2, 0.22, (ZI + 0.36 - Z0) / 2, 0, FACE_D, SILT, 0.05);
   // ---- the ledge (the tube's end lies on it, its top a hand over the water) and the quay north of it
   const QZ0 = SP.quay.z[0], LIPZ = L.at(0).z;
-  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9) / 2, (LIPZ + ZI) / 2, (QX[1] - QX[0]) / 2, (LEDGE + 9) / 2, (ZI - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06);
+  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9) / 2, (LIPZ + ZI + 0.5) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9) / 2, (ZI + 0.5 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (on through the arch and half a metre into the head, broken off over the pool)
   S.box((QX[0] + QX[1]) / 2, (QY - 9) / 2, (QZ0 + LIPZ) / 2, (QX[1] - QX[0]) / 2, (QY + 9) / 2, (LIPZ - QZ0) / 2, 0, FACE_D, FACE, 0.06);
   // the quay's paving: slabs (a shade each), and its kerb on the water side
   for (let z = QZ0; z < LIPZ - 0.01; z += 1.05) for (let x = QX[0]; x < QX[1] - 0.01; x += 1.4) {
@@ -145,8 +144,8 @@ export function buildHead(env) {
   }
   // the bank's revetment on the quay's east side, up to the ground behind it (the ground under the quay is opened)
   const REV = 2.2;
-  for (let z = QZ0; z < Z0 - 0.01; z += 1.5) {
-    const z1 = Math.min(Z0, z + 1.5), g = Math.max(T.heightAt(QX[1] + REV + 0.3, z), T.heightAt(QX[1] + REV + 0.3, z1), T.heightAt(QX[1] + 0.5, (z + z1) / 2)) + 0.25;
+  for (let z = QZ0 - 2.5; z < Z0 - 0.06; z += 1.5) {
+    const z1 = Math.min(Z0 - 0.05, z + 1.5), g = Math.max(T.heightAt(QX[1] + REV + 0.3, z), T.heightAt(QX[1] + REV + 0.3, z1), T.heightAt(QX[1] + 0.5, (z + z1) / 2)) + 0.25;
     if (g <= QY + 0.3) continue;
     const top = QY + Math.ceil((g - QY) / 0.6) * 0.6; // stepped up in whole courses, as the bank rises
     S.box(QX[1] + REV / 2, (QY + top) / 2, (z + z1) / 2, REV / 2, (top - QY) / 2, (z1 - z) / 2 + 0.003 * (Math.round(z) % 2), 0, FACE_D.map((v) => v * (0.9 + 0.15 * hash(z))), FACE_D, 0.06);
@@ -193,13 +192,13 @@ export function buildHead(env) {
     const ring = [];
     for (let i = 0; i <= 3; i++) ring.push([CH.half - (2 * CH.half * i) / 3, 0]);
     for (let i = 1; i <= 3; i++) ring.push([-CH.half, (CH.spring * i) / 3]);
-    for (let i = 1; i < 12; i++) { const a = Math.PI - (Math.PI * i) / 12; ring.push([CH.half * Math.cos(a), CH.spring + CH.half * Math.sin(a)]); }
+    for (let i = 1; i < env.KV; i++) { const a = Math.PI - (Math.PI * i) / env.KV; ring.push([CH.half * Math.cos(a), CH.spring + CH.half * Math.sin(a)]); }
     for (let i = 0; i < 3; i++) ring.push([CH.half, CH.spring - (CH.spring * i) / 3]);
     // in the wall's plane (u: z, v: y); the line's right (f.r) points south here, so u = cz + r.z * across
     const inner = ring.map(([u, v]) => [cz + f.r.z * u, fy + v]).reverse();
     const outer = [[ZI, hfl], [hz1, hfl], [hz1, hsp], [ZI, hsp]];
     wallWithHole(S, inner, outer, [cz, fy + CH.spring], (z, y) => [hx1, y, z], HEAD_WALL, [-1, 0, 0], 0.07);
-    env.conduitStart = sE;
+    env.conduitStart = sE; env.headWallX = hx1;
   }
   // stone piers under the tube's steep run down the head, standing from the floor (all under the pool)
   for (const s of [8.5, 12.0]) {
@@ -332,11 +331,15 @@ export function buildHead(env) {
     fragmentShader: /* glsl */`varying float vA; void main() { vec2 c = gl_PointCoord - 0.5; float d = dot(c, c); if (d > 0.25) discard; gl_FragColor = vec4(vec3(0.62, 0.64, 0.64), vA * (1.0 - d * 4.0)); }`,
     transparent: true, depthWrite: false,
   });
-  const spray = new THREE.Points(pg, sprayMat); spray.name = 'swallow-spray'; spray.frustumCulled = false; spray.renderOrder = 4;
+  pg.boundingSphere = new THREE.Sphere(new THREE.Vector3((ox0 + FALLX1) / 2, W + 1, ZI + 2.5), 7); // (moved in its shader: bounded by where it can go)
+  const spray = new THREE.Points(pg, sprayMat); spray.name = 'swallow-spray'; spray.renderOrder = 4;
 
   // ---- the floors: the quay (its north end open onto the shore, its sides held); the tube's own is swallow.js's
   const stepRun = nSteps * 0.32;
   const quayFloor = (x, z) => (x >= QX[0] + 0.15 && x <= QX[1] - 0.1 && z >= QZ0 - stepRun && z <= LIPZ + 0.02 ? (z < QZ0 ? QY + Math.min(1, (QZ0 - z) / stepRun) * (shoreY - QY) : QY) : null);
+  // (the ground under the quay and the ledge is opened; heightAt there is the bank's, higher than the paving in places:
+  // this replaces it, so the walker is never lifted onto ground that is not drawn)
+  const quayGround = (x, z) => (x >= QX[0] && x <= QX[1] && z >= QZ0 - stepRun && z <= ZI ? (z < QZ0 ? QY + Math.min(1, (QZ0 - z) / stepRun) * (shoreY - QY) : z <= LIPZ ? QY : LEDGE) : null);
   const quayKeep = (x, z) => z > QZ0 - stepRun + 0.3; // held on its sides and at the ledge; open at the steps
   const quayPath = [[(QX[0] + QX[1]) / 2, QZ0 - 3], [(QX[0] + QX[1]) / 2, QZ0 + 0.5, QY], [(QX[0] + QX[1]) / 2, LIPZ - 1.5, QY]];
   // ---- the volume: the head and the arch, stone-sounding, sheltered, never sealed (the portal is seen from all of it)
@@ -346,5 +349,5 @@ export function buildHead(env) {
     const h = Math.min(ss(hx0 - 1, hx0, x), 1 - ss(hx1, hx1 + 1, x), ss(Z0, ZI + 1, z), 1 - ss(hz1, hz1 + 1, z));
     return 0.95 * h * (1 - ss(H.crown - 1, H.crown, y));
   };
-  return { meshes: [surface, fall, spray], quayFloor, quayKeep, quayPath, headVolume, cut, shoreY };
+  return { meshes: [surface, fall, spray], quayGround, quayFloor, quayKeep, quayPath, headVolume, cut, shoreY };
 }

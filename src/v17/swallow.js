@@ -39,6 +39,7 @@ export async function build(ctx) {
     return L.floorY(Math.max(0, Math.min(L.LEN, _n.s)));
   };
   ctx.addWalkable(floor, { stack: true, keep: true, name: 'swallow' });
+  if (parts.quayGround) ctx.addWalkable(parts.quayGround, { replace: true });
   if (parts.quayFloor) ctx.addWalkable(parts.quayFloor, { stack: true, keep: parts.quayKeep, name: 'swallow-quay' });
   // the way, for heights-test and edges-test: from the quay into the lip, down the tube to the door's sill
   const path = [];
