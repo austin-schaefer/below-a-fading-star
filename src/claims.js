@@ -11,7 +11,7 @@
 // who, the placers that ask:
 //   'rocks'   the stones and boulders (src/rocks.js), by the stone's whole footprint, after their draws
 //   'blocks'  the Demesne's fallen blocks round the keep (src/v4/regions/demesne.js)
-//   'trees'   trees and shrubs: placed but neither drawn nor collided (src/vegetation/ground.js hiddenAt)
+//   'trees'   trees and shrubs: placed but neither drawn nor collided (src/vegetation/ground.js hiddenAt), by the collider's r
 //   'cover'   ground cover: grass, flowers, reeds (src/vegetation/ground.js excluded, margin < 0)
 //   'trods'   the walked trods worn across the grass between the leads (src/v4/paths.js)
 //
@@ -40,7 +40,9 @@ export const CLAIMS = [
   // v15: the Lappet's ground, every placer (src/v15/plan.js villageClear: the levelled steps, the bench, the foot's plots and lanes)
   { name: 'the Lappet', keeps: ['rocks', 'blocks', 'trees', 'cover', 'trods'], kind: 'fn', test: (x, z, r) => villageClear(x, z) || (r > 0.6 && (villageClear(x + r, z) || villageClear(x - r, z) || villageClear(x, z + r) || villageClear(x, z - r))) },
   // the roads: every lead's tread and the causeway, by the footprint (v8-11)
-  { name: 'the leads', keeps: ['rocks'], kind: 'fn', test: (x, z, r) => { const id = leadUnder(x, z, r); return id ? `the lead ${id}` : false; } },
+  // (v16 L5: and of trees and shrubs, by the collider's footprint: L3's reshuffle stood bushes on P3 and P8, whose
+  // centres were off the tread)
+  { name: 'the leads', keeps: ['rocks', 'trees'], kind: 'fn', test: (x, z, r) => { const id = leadUnder(x, z, r); return id ? `the lead ${id}` : false; } },
   { name: 'the causeway', keeps: ['rocks'], kind: 'fn', test: (x, z, r, ctx) => !!ctx?.terrain && ctx.terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r },
 ];
 

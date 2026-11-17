@@ -239,6 +239,8 @@ for (let i = 0; i < RIVER_LINE.n; i++) {
   RIM_DW[i] = R_HW(s) + R_BANK(s) + rim / R_K(s);
 }
 const _rq = { hit: false }, _gq = { hit: false }, _bw = { bl: 0, br: 0 };
+const sAtFen = (rad) => { const F = LANDMARKS.fen; for (let i = 0; i < RIVER_LINE.n; i++) if (Math.hypot(RIVER_LINE.X[i] - F.x, RIVER_LINE.Z[i] - F.z) < rad) return RIVER_LINE.S[i]; return RIVER_LINE.length; };
+const S_FEN66 = sAtFen(66), S_FEN52 = sAtFen(52);
 // The river's cross-section at a point: carved height of the channel (Infinity where nothing is cut)
 // and the raised spur the canyon runs through (-Infinity where nothing is raised).
 const _cs = { cut: Infinity, raise: -Infinity, s: 0, d: 0, W: 0, hw: 0, bank: 0, inRiver: false, gully: false, shingle: 0, slow: 0 };
@@ -268,7 +270,9 @@ function riverSection(x, z, out = _cs) {
     out.shingle = (1 - smoothstep(hw + Bc - 0.2, hw + Bc + 0.8, dd)) * (1 - smoothstep(85, 100, s));
     out.slow = smoothstep(70, 92, s) * (1 - smoothstep(hw + Bc, hw + Bc + 4, dd));
     // deep in the fen the fen's own shaping holds (v16 L3: by the fen's edge, src/height/fen.js)
-    const mf = fenRiverKeep(x, z);
+    // (v16 L5: and given up along the channel where it was before L3, between the arc lengths at which the line comes
+    // within 66 and 52 m of the fen's centre: kept to sd -11 alone, the channel ran 20 m on under P14's reed gap)
+    const mf = Math.min(fenRiverKeep(x, z), 1 - smoothstep(S_FEN66, S_FEN52, s));
     if (mf < 1) out.cut += (1 - mf) * 40;
   }
   // the raised spur the canyon cuts through: its top is a distance-weighted blend of the rim heights

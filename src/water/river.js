@@ -70,7 +70,10 @@ const RIBBON_FRAG = /* glsl */`
   void main() {
     vec3 P = vWorld;
     if (distance(P.xz, uPool.xy) < uPool.z) discard;
-    float fenFade = smoothstep(-1.0, 3.0, fenSd(P.xz)); // the fen's surface takes over inside its edge
+    // the fen's surface takes over inside its edge (v16 L5: past rMax + 3 its sd is over 5.5 everywhere, so the fade is 1
+    // there and the edge's 19 lobes are not run on the river's fragments far from the fen)
+    vec2 fenD = P.xz - vec2(${FEN_EDGE.centre.x.toFixed(3)}, ${FEN_EDGE.centre.z.toFixed(3)});
+    float fenFade = dot(fenD, fenD) > ${((FEN_EDGE.rMax + 3) ** 2).toFixed(3)} ? 1.0 : smoothstep(-1.0, 3.0, fenSd(P.xz));
     if (fenFade <= 0.002) discard;
     float s = vFlow.x, d = vFlow.y, hw = vFlow.z;
     float sp = vMisc.x, rough = vMisc.y, wall = vMisc.z, ravine = vMisc.w;
