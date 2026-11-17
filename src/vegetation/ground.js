@@ -108,10 +108,8 @@ export function makeGround(ctx) {
   // Nearest water body within `extra` metres of its rim: depth (water level - ground) and how far inside the rim.
   const _wn = { dep: 0, rim: 0 };
   function waterNear(x, z, y, extra = 10) {
-    for (const w of waters) {
-      const d = Math.hypot(x - w.x, z - w.z), wr = w.shore ?? w.r; // v4: the tarn's reeds keep to its old round shore
-      if (d < wr + extra) { _wn.dep = w.y - y; _wn.rim = wr - d; return _wn; }
-    }
+    const ws = terrain.waterShore(x, z, extra); // v16 L2: each still water's own shore (the tarn's is its edge), not a circle
+    if (ws) { _wn.dep = ws.y - y; _wn.rim = -ws.sd; return _wn; }
     const r = terrain.riverAt ? terrain.riverAt(x, z) : null;
     if (r && Math.abs(r.d) < r.hw + extra) { _wn.dep = r.y - y; _wn.rim = r.hw - Math.abs(r.d); return _wn; }
     return null;
