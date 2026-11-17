@@ -8,8 +8,9 @@
 // floorLift(x, z) is what heightAt adds after the moor's own noise and the old tilt (src/height/field.js), before any
 // landmark's flatten: every absolute level after it (the keep's crown, the tower's hill, the stones' shelf, the court,
 // the tarn and the fen) holds where it was, and everything relative (the regions' hooks, the pit, the glacier's
-// tongue, the walls) rides on the new ground. The lift is never negative and is exactly 0 at the waters, so nothing
-// placed at a fixed height can float on its account (the worst case is burial).
+// tongue, the walls) rides on the new ground. The lift is never negative (the pools' bowls below it are the one place the ground goes under
+// the old) and is exactly 0 at the waters, so nothing placed at a fixed height can float on its account (the worst case
+// is burial).
 //
 // Protected places: floorMask below. A place built at fixed heights (or whose hook lerps to an absolute plane without
 // adding floorLift, as the Outwash's does) goes in it: inside, floorLift returns 0 before any noise is read, so the
@@ -59,7 +60,7 @@ const BACKS = [
   const R = Math.max(b.stoss, b.lee, b.w);
   return { ...b, ax: dx / l, az: dz / l, x0: b.x - R, x1: b.x + R, z0: b.z - R, z1: b.z + R };
 });
-// the kettles: a fraction of the lift taken out (so a kettle is never under the old ground), a dish round each pool
+// the kettles: a fraction of the lift taken out (so the lift never leaves a kettle under the old ground; the pools' bowls, up to 4.6 m, do dig below it), a dish round each pool
 const KETTLES = [
   { x: -68, z: -82, r: 30, k: 0.6 },
   { x: -118, z: -104, r: 24, k: 0.5 },
