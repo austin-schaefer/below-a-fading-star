@@ -39,6 +39,107 @@ Known issues: finding your way through the village is still harder than it shoul
 
 <p><img src="shots/93-lappet-far-lees-east.webp" width="24%" alt="The Lappet from below: pale houses stacked up a dark hill under an orange sky, a great glazed tube running down through them"> <img src="shots/94-quarry-colossus-head-kiln.webp" width="24%" alt="The Smoking Saint from close by: a great stone face lying on its side under a lamp, with the masons' timber frame behind"> <img src="shots/95-lees-fountain-west.webp" width="24%" alt="The Fountain of Noon: the green-glazed foot of a broken glass vessel in the square, a bowl of white light in it"> <img src="shots/97-stairs-tube-gangway.webp" width="24%" alt="A plank gangway leading into the broken mouth of the Noonwrights' glass tube, the valley beyond"></p>
 
+### Stats
+
+**This release**
+
+- **Time:** 23 hours 45 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 34 | 940.0M | $330 |
+| Fable 5.2 | 15 | 595.2M | $433 |
+| Sonnet 5.5 | 11 | 75.2M | $14 |
+| Haiku 5.5 | 6 | 1.0M | $0 |
+| **Total** | **66** | **1.61B** | **$777** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 169.1M | $74 |
+| F1 faults after v14 | Opus 5.5 | 108.5M | $35 |
+| W3 edges, no invisible walls | Opus 5.5 | 106.4M | $36 |
+| V1 the houses | Fable 5.2 | 106.2M | $85 |
+| W4 landings and headroom | Opus 5.5 | 96.7M | $31 |
+| W1 the ways put right | Opus 5.5 | 87.7M | $26 |
+| W7 the crown's ways found | Opus 5.5 | 83.4M | $28 |
+| V0 the bones | Fable 5.2 | 78.7M | $70 |
+| W2 ladders climbable or scenery | Opus 5.5 | 67.8M | $21 |
+| Q4 the Pennyworth | Fable 5.2 | 65.2M | $53 |
+| Q3 the Lees | Fable 5.2 | 61.3M | $44 |
+| Q2 the Rungs | Fable 5.2 | 57.5M | $48 |
+| v15 cold critic | Opus 5.5 | 55.1M | $17 |
+| Q1 the Quarrels | Fable 5.2 | 51.1M | $45 |
+| W5 floor seams | Opus 5.5 | 38.9M | $13 |
+| P1 people and stories | Opus 5.5 | 37.5M | $14 |
+| N1 names, map, low cost | Sonnet 5.5 | 34.8M | $5 |
+| L1 sound and light | Opus 5.5 | 33.3M | $12 |
+| S1 the saint's face | Opus 5.5 | 33.1M | $15 |
+| H1 geometry check | Opus 5.5 | 32.7M | $11 |
+| G1 buried check and claims | Opus 5.5 | 30.6M | $10 |
+| W6 level the Collation | Opus 5.5 | 24.5M | $9 |
+| P3 the far view | Opus 5.5 | 23.7M | $9 |
+| R1 pit rim and stair jitter | Opus 5.5 | 21.9M | $9 |
+| X2 arch stones and peafowl | Sonnet 5.5 | 20.8M | $3 |
+| Fix footprints under the causeway | Opus 5.5 | 9.9M | $6 |
+| X1 remove the Indistinct | Sonnet 5.5 | 9.0M | $2 |
+| Cold review of V0 bones | Opus 5.5 | 7.2M | $3 |
+| N2 the village's three names | Sonnet 5.5 | 6.0M | $1 |
+| Cold review of the Lees | Opus 5.5 | 5.8M | $3 |
+| Finish the Pennyworth after merge | Opus 5.5 | 5.3M | $2 |
+| Cold review of the Quarrels | Opus 5.5 | 4.1M | $2 |
+| Cold review of the Rungs | Opus 5.5 | 3.6M | $2 |
+| Cold re-review of V1 round 2 | Opus 5.5 | 3.4M | $2 |
+| Cold review of the Pennyworth | Opus 5.5 | 2.9M | $2 |
+| Blind read of the Lees | Opus 5.5 | 2.5M | $1 |
+| Blind read of the Rungs | Opus 5.5 | 2.3M | $1 |
+| Blind read of the Pennyworth | Opus 5.5 | 2.2M | $1 |
+| Cold review of V1 houses | Opus 5.5 | 2.1M | $2 |
+| Cold review of F1 faults | Opus 5.5 | 2.1M | $1 |
+| v15 screenshot curator | Sonnet 5.5 | 1.8M | $1 |
+| Survey held edges and invisible walls | Sonnet 5.5 | 1.5M | $1 |
+| Blind read of the row, round 2 | Opus 5.5 | 1.4M | $1 |
+| Blind read of the Quarrels | Opus 5.5 | 1.4M | $1 |
+| Read route frames m031-m045 | Fable 5.2 | 1.2M | $2 |
+| Cold review of H1 geometry | Opus 5.5 | 1.1M | $1 |
+| Read route frames 1-116 | Fable 5.2 | 1.1M | $2 |
+| Read route frames 117-232 | Fable 5.2 | 984k | $2 |
+| Read route frames m000-m015 | Fable 5.2 | 785k | $2 |
+| Blind read of V0 frames | Opus 5.5 | 780k | $1 |
+| T1 tally offer on touch | Sonnet 5.5 | 754k | $0 |
+| Read route frames m015-m030 | Fable 5.2 | 692k | $2 |
+| Read route frames 233-348 | Fable 5.2 | 606k | $2 |
+| Scan 48 survey views | Haiku 5.5 | 555k | $0 |
+| Read route frames A | Fable 5.2 | 409k | $1 |
+| Read route frames B | Fable 5.2 | 335k | $1 |
+| Blind read of the row | Opus 5.5 | 311k | $0 |
+| Cold read of figure frames | Sonnet 5.5 | 269k | $0 |
+| Scan route sheets batch 5 | Haiku 5.5 | 130k | $0 |
+| Scan route sheets batch 4 | Haiku 5.5 | 93k | $0 |
+| Scan route sheets batch 1 | Haiku 5.5 | 87k | $0 |
+| Cold read of turntable sheet | Sonnet 5.5 | 82k | $0 |
+| Cold read of placed frames | Sonnet 5.5 | 81k | $0 |
+| Scan route sheets batch 2 | Haiku 5.5 | 80k | $0 |
+| Scan route sheets batch 3 | Haiku 5.5 | 79k | $0 |
+| Cold read round 2 | Sonnet 5.5 | 76k | $0 |
+| **Total** | | **1.61B** | **$777** |
+
+</details>
+
+**Since the project started** (v1 to v15)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 201 | 4.92B | $1,891 |
+| Fable 5.2 | 36 | 1.23B | $745 |
+| Sonnet 5.5 | 149 | 460.6M | $109 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 7 | 1.4M | $0 |
+| **Total** | **391** | **6.86B** | **$2,926** |
+
 ## v14: The Depths
 
 Released 2026-11-15.
