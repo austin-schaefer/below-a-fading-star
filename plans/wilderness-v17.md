@@ -49,6 +49,18 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 06:35 PST. The Garth is on `next`; its light is not right yet; the sphere and a light fix dispatched.**
+
+- **U2 merged** after its second round (opus, 77 min in all). From the door the rings now read as stages (green, yellowing, straw, grey sticks, swept soil) with tide lines, and the dome is lit over the garden: the structure is right. **The light is not:** round one read "a hazy dying-sun afternoon", round two (the orchestrator asked for blue-white, wrongly) reads "moonlight or starlight ... it suggests night", with glowing white fruit. Its `height-speed` rerun: valley 1.055, fen 1.019 against v16 with no change in the height path on that branch (so W1's plan.js merge or noise; to be measured on `next` when W1 is in).
+- In flight (four, the limit):
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| W1 the brook and the mere | `issue-1701-brook` | 8161 | opus |
+| U1 the Swallow, the aqueduct and the tube | `issue-1702-swallow` | 8162 | opus |
+| S1 the sphere (90 minutes at most; left out if it does not read) | `issue-1705-sphere` | 8165 | opus |
+| U3 the Garth's light reads as noon (bright warm-neutral ground, short blue shadows, no glowing fruit; a blind reader says daylight twice running) | `issue-1708-garth-light` | 8168 | opus |
+
 **2026-11-17, 06:20 PST. Batch 1 still building; the Garth is on its second round.**
 
 - **The before set** (23 views, `shots/wip/v17-before-*`) shows the south trough near black on low: W1 and U1 told to make the water and the portal read from 30 m and from the Span's deck.
