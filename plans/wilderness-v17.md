@@ -49,6 +49,19 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 06:40 PST. W1's ground and kit are on `next`; the brook's quick water does not read yet.**
+
+- **W1 merged** (opus, 82 min; `briefs/v17/reports/issue-1701-brook.md`): `src/v17/plan.js`, `stream.js` (a stream on a line, a still body on an edge), `bodies.js` (behind one box test in `field.js`), `water.js` (every stream one ribbon). The brook rerouted through the 3 m gap between crown pieces 1 and 4, a pool at (-92, 241), two steps into the mere; the mere at -6.8 with a bar at x -80 for the pegs' survey line; the Swallow's cut ends square at z 311.5 (U1's ask). `rocks.js` and vegetation decide on the water as it was before v17, so nothing else moved. On its branch: `outline` 70/0 and twelve more green, `walkers` 19/20 (P12, as `main`), `canyon` 13/13, `height-speed` valley 1.00 to 1.02 (one 1.13 beside a suite).
+- **One before nine, the verdict:** the pools, the mere and the crossing read as water; **the runs between read as "orange flakes, not water"** (its reader; the orchestrator agrees from the sheets), with a ruled bright line at one step's lip. Merged for the ground the others stand on; **W2 (the leat) does not start** until the ribbon reads.
+- In flight (four):
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| U1 the Swallow, the aqueduct and the tube | `issue-1702-swallow` | 8162 | opus |
+| S1 the sphere (90 minutes at most) | `issue-1705-sphere` | 8165 | opus |
+| U3 the Garth's light reads as noon | `issue-1708-garth-light` | 8168 | opus |
+| W1b the brook's ribbon reads as running water (a dark glassy body, long streaks, white only where it breaks; a blind reader says stream twice running) | `issue-1709-brook-look` | 8169 | opus |
+
 **2026-11-17, 06:35 PST. The Garth is on `next`; its light is not right yet; the sphere and a light fix dispatched.**
 
 - **U2 merged** after its second round (opus, 77 min in all). From the door the rings now read as stages (green, yellowing, straw, grey sticks, swept soil) with tide lines, and the dome is lit over the garden: the structure is right. **The light is not:** round one read "a hazy dying-sun afternoon", round two (the orchestrator asked for blue-white, wrongly) reads "moonlight or starlight ... it suggests night", with glowing white fruit. Its `height-speed` rerun: valley 1.055, fen 1.019 against v16 with no change in the height path on that branch (so W1's plan.js merge or noise; to be measured on `next` when W1 is in).
