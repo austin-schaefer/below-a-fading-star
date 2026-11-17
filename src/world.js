@@ -61,8 +61,8 @@ export const LANDMARKS = {
   plinths: { x: 148, z: -220, r: 25, y: null, name: "The Plinth Road", line: "“It had not been built for human feet to travel. It had not been built for feet at all.”", card: true },
   lappet: { x: 78, z: -12, r: 30, y: null, name: "The Lappet", card: true, aside: false, at: { x: 128, z: 5 } }, // v15: the village on the Elder stair under the keep (its ways' heads and feet are named by it)
   // v15-N2 (the owner: three names in the village, not forty): the Smoking Saint and the Fountain of Noon each have a card, up only on their own level (`feet`); the Lappet is the third. `map: false`: the teleport list has them from settings.js VILLAGE_PLACES. No line until the owner gives one.
-  smokingSaint: { x: 72.9, z: -1.3, r: 3, y: null, name: "The Smoking Saint", card: true, map: false, feet: [16, 21.5], aside: false },
-  fountainNoon: { x: 72.5, z: -37.9, r: 3, y: null, name: "The Fountain of Noon", card: true, map: false, feet: [2, 4.6], aside: false },
+  smokingSaint: { x: 72.9, z: -1.3, r: 3, y: null, name: "The Smoking Saint", card: true, over: true, map: false, feet: [16, 21.5], aside: false },
+  fountainNoon: { x: 72.5, z: -37.9, r: 3, y: null, name: "The Fountain of Noon", card: true, over: true, map: false, feet: [2, 4.6], aside: false },
   nave: { x: 255, z: 40, r: 30, y: null, name: "The Foundered Nave", line: "“Hard as the sea in the sun’s slanting beams, in the darkness of the stars, where no eye can pierce her deeps.”", card: true },
   galleries: { x: -338, z: -69, r: 40, y: null, name: "The Galleries of Durance", line: "“What is peace? Balance three iron skewers tip to tip, one upon the other.”", card: true },
   thrones: { x: -324, z: 118, r: 40, y: null, name: "The Acephalous Thrones", line: "“She turned her face up to the strange stars and wondered in what direction her course lay. The sky looked blankly down upon her with its myriad meaningless eyes.”", card: true },
