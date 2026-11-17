@@ -49,6 +49,22 @@ const STRAND_REACH = BANK_W + STRAND_WOB * 1.1; // (|noise2| < 1.1: tools/height
 // the whalebacks: centre, the bearing toward the notch they point at, half-lengths up-ice (stoss) and down-ice (lee),
 // half-width, height
 const NOTCH = { x: 40, z: -320 };
+// a meltwater channel cut through the third whaleback's lee: without it the fall and the whaleback close a dip by the Plinth Road
+// (138, -202) 1.9 m deep with no way out (found by tools/outline-test.mjs's flood). [x, z, metres of the lift taken out there],
+// from the dip's floor north then west to where the ground is lower than it, over a width of 9 m
+const CHAN = [[138, -203, 0], [138, -198, 0.6], [137, -190, 1.8], [136, -181, 2.6], [133, -175, 2.6], [127, -173, 1.5], [121, -173, 0.7], [116, -173, 0]];
+const CHAN_W = 9, CHAN_BOX = [100, 154, -214, -158];
+function chanCut(x, z) {
+  if (x < CHAN_BOX[0] || x > CHAN_BOX[1] || z < CHAN_BOX[2] || z > CHAN_BOX[3]) return 0;
+  let best = Infinity, cut = 0;
+  for (let i = 0; i < CHAN.length - 1; i++) {
+    const a = CHAN[i], b = CHAN[i + 1], ex = b[0] - a[0], ez = b[1] - a[1];
+    let t = ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez); t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const dx = x - a[0] - ex * t, dz = z - a[1] - ez * t, d = dx * dx + dz * dz;
+    if (d < best) { best = d; cut = a[2] + (b[2] - a[2]) * t; }
+  }
+  return best >= CHAN_W * CHAN_W ? 0 : cut * (1 - smoothstep(3, CHAN_W, Math.sqrt(best)));
+}
 const BACKS = [
   { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },
   { x: -128, z: -176, stoss: 36, lee: 64, w: 22, h: 4.0 },
@@ -246,7 +262,8 @@ function forms(x, z, u) {
     const k = KETTLES[i], dx = x - k.x, dz = z - k.z, d2 = dx * dx + dz * dz;
     if (d2 < k.r2) { const s = 1 - d2 / k.r2; f *= 1 - k.k * s * s * (3 - 2 * s); }
   }
-  return f;
+  const c = chanCut(x, z);
+  return c > 0 ? (f > c ? f - c : 0) : f;
 }
 
 // what heightAt adds: never negative, 0 at the waters and in every protected place
