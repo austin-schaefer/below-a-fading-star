@@ -298,3 +298,10 @@ Agreed: the local merge is dropped (`git reset --keep origin/next`: only the unp
 - **The batch suite on `next`** (15:05, 82 min, three to four browsers beside it): 42 tests, 5 failed: hop (the walker's update 0.670 ms with 6551 colliders), geometry (one new buried at `v12-stair`), audio (`act-bell-letters` +0.5 dB), touch (the tally's offer), settings (died at 141 s). Rerun alone with R1 in, running.
 - **In flight:** N2 three names (sonnet, `issue-1535-three-names`, 8179, `a77905a3e81f7cbd7`); the crown's ways, from the critic (W4's agent again, `issue-1536-crown-ways`, 8180). W3 paused, outside v15.
 
+**2026-11-16, 16:54 PST. The rerun of the batch's five failures, alone, with R1 in: 7 tests, 2 failed.**
+
+- **Passed alone:** settings 86, walk 13, hop 25 (the walker's cost was load), heights 203 (R1's five eye rows among them), audio 106 (the bell's letters was load).
+- **geometry, `v12-stair`:** `rocks-stone-4[17]` at (238.1, 2.5, -52.4), 50% of its skin under the drawn ground, new again. It was taken out of the baseline this afternoon when it stopped being found and is back in now (recorded, pushed). **The buried kind flickers at its threshold on this rock:** a finding that sits at exactly 50% comes and goes between builds. Not fixed: the check wants a margin either side of its threshold, or the rock moved. For after v15.
+- **touch, `offer: up at the tally on touch`:** fails twice, the second time alone; passed on `next` at 09:41 (`/tmp/suite-v15-batch3a.log`). Real until shown otherwise. Brief `briefs/v15/brief-v15-T1-tally-touch.md` (sonnet, `issue-1537-tally-touch`, 8181, `a3be98576579dbdf6`): reproduce, bisect, fix at the cause.
+- **In flight:** N2 three names (8179), W7 the crown's ways (8180), T1 (8181). W3 paused, outside v15. **Next:** merge each after checking it myself (W7: redo the critic's walk); then the whole suite once more as the gate, on a quiet machine (R1 and W7 touch shared walking code and the stair kit); the note, the README line and box, Stats, the PR.
+
