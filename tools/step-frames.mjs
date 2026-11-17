@@ -28,7 +28,7 @@ await sleep(800);
 await page.evaluate(([x, z, y, yaw, pitch]) => {
   const fp = window.__fp, p = fp.player;
   // no y: the highest of the underground ways' floors there (the Noon Road, the passage, the Pit's stair and bowl), else the ground
-  if (!Number.isFinite(y)) { const fl = [fp.coffinRoad?.floor, fp.passage?.floor, fp.pit?.floor, fp.pit?.bowl].map((f) => f?.(x, z)).filter((v) => Number.isFinite(v)); if (fl.length) y = Math.max(...fl) + 0.02; }
+  if (!Number.isFinite(y)) { const fl = [fp.coffinRoad?.floor, fp.passage?.floor, fp.pit?.floor, fp.pit?.bowl, fp.swallow?.floor].map((f) => f?.(x, z)).filter((v) => Number.isFinite(v)); if (fl.length) y = Math.max(...fl) + 0.02; }
   if (Number.isFinite(y)) fp.controls.placeAt(x, z, y); else fp.controls.placeAt(x, z);
   p.yaw = yaw; p.pitch = pitch; p.vel?.set(0, 0, 0);
   for (const id of ['place', 'hint']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; }

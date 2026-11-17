@@ -102,6 +102,7 @@ const MODULES = [
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
+  ['swallow', () => import('./v17/swallow.js'), M], // v17-U1: the Swallow, where the mere's water goes under the south slope, the drowned aqueduct and the clear tube down it to the Garth (?swallow=0)
   ['villagerow', () => import('./v15/row.js')], // v15-V1: the Strake, one row of five buildings of five ages on the Lees' bench, from the makers in src/v15/houses/ (?v15=0; ?v15=kit adds the makers' contact sheet)
   ['people', () => import('./v15/people/index.js')], // v15-P1: the Lappet's people, eight villagers each doing one thing, one draw (?people=0)
   ['lappetfar', () => import('./v15/far.js')], // v15-P3: the Lappet from far off, one draw: a block a house, a speck a light, from the quarters' records (?lappetfar=0)
