@@ -62,7 +62,7 @@ const SHARED = `
     float falloff = 1.0 - smoothstep(0.0, 1.1, distToSun);
     return illum * (0.4 + 0.6 * falloff);
   }`;
-const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel; uniform vec4 uPlace; uniform float uHigh;`;
+const UNIFORMS = `uniform sampler2D tDiffuse, tBloom, tRays; uniform vec2 uSunScreen, uResolution; uniform float uSunVisible, uTime, uFlicker, uWade, uBloomOn, uGrain; uniform vec2 uTexel; uniform vec4 uPlace; uniform float uHigh; uniform vec2 uGut;`;
 
 // FXAA (three's FXAAShader, r170, after Catlike Coding's; written for GLSL ES 1.00, which the finish's raw
 // material compiles as): the edge search runs on the scene's luminance (the exposure applied, square-rooted
@@ -152,6 +152,13 @@ const GRADE_MAIN = `
     col = max(mix(vec3(lum(col)), col, 1.0 + 0.16 * uHigh), 0.0);
     col = 0.18 * pow(col / 0.18, vec3(1.0 + 0.07 * uHigh));
 
+    // v16-S2, the gutter (uGut.x: flicker.dark, not under the ground; .y: flicker.flush): starlight takes the shadows and
+    // the mid-tones cold and grey while what burns stays warm, so the lamps that answer stand out; as the sun catches, a
+    // warm flush in the mid-tones over some five seconds (the relief)
+    { float gl = lum(col), sh = (1.0 - smoothstep(0.12, 0.55, gl)) * uGut.x;
+      col = mix(col, vec3(gl) * vec3(0.78, 0.86, 1.22), sh * 0.55);
+      col *= 1.0 + vec3(0.10, 0.03, -0.06) * uGut.y * smoothstep(0.03, 0.2, gl); }
+
     // wading tint
     col = mix(col, col * vec3(0.5, 0.65, 0.6), uWade * 0.5);
 
@@ -195,7 +202,7 @@ function makeUniforms() {
   return {
     tDiffuse: { value: null }, tBloom: { value: null }, tRays: { value: null },
     uSunScreen: { value: new THREE.Vector2(0.5, 0.5) }, uSunVisible: { value: 0 },
-    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uPlace: { value: new THREE.Vector4(1, 1, 1, 0) }, uHigh: { value: 0 }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
+    uTime: { value: 0 }, uFlicker: { value: 1 }, uWade: { value: 0 }, uPlace: { value: new THREE.Vector4(1, 1, 1, 0) }, uHigh: { value: 0 }, uGut: { value: new THREE.Vector2() }, uBloomOn: { value: 1 }, uGrain: { value: GRAIN },
     uResolution: { value: new THREE.Vector2(1, 1) }, uTexel: { value: new THREE.Vector2(1, 1) }, toneMappingExposure: { value: 1 },
   };
 }
@@ -403,6 +410,7 @@ export function buildPost(ctx) {
     if (ctx.places) ctx.places.gradeAt(camera.position.x, camera.position.z, ctx.terrain.causewayDistance(camera.position.x, camera.position.z), u.uPlace.value); // v8-02
     const under = ctx.below ? ctx.below.tick(camera.position, ctx.places ? u.uPlace.value : null) : 0; // v14-D0: under the ground, the dark-adapted eye's grade and no sun through the roof
     { const o = ctx.above?.over ?? 0, k = Math.min(1, Math.max(0, (o - 30) / 60)); u.uHigh.value = k * k * (3 - 2 * k); } // v12-H5
+    u.uGut.value.set((ctx.sky.flicker.dark || 0) * (1 - under), (ctx.sky.flicker.flush || 0) * (1 - under)); // v16-S2: the smooth flush, not the edge `after`
     u.uResolution.value.set(size.x, size.y);
     renderer.getDrawingBufferSize(u.uTexel.value); // the finish draws at the buffer's size: FXAA steps whole pixels of it
     u.uTexel.value.set(1 / u.uTexel.value.x, 1 / u.uTexel.value.y);

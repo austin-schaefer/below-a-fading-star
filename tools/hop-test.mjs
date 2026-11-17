@@ -48,7 +48,7 @@ const R = await page.evaluate(() => {
     // 1. walk into it: stopped at its face, on the ground
     place(sx, sz, opts.floor); face(px, pz); p.keys.clear(); p.keys.add('KeyW');
     run(240); p.keys.clear();
-    out.walk = { gap: +(dist(c, p.pos.x, p.pos.z) - c.r).toFixed(2), feet: +(feet() - g0).toFixed(2) };
+    out.walk = { gap: +(dist(c, p.pos.x, p.pos.z) - c.r).toFixed(2), feet: +(feet() - (opts.floor ?? T.heightAt(p.pos.x, p.pos.z))).toFixed(2) }; // over the ground under the walker: the approach may climb
     out.stopped = out.walk.gap > 0.4 && Math.abs(out.walk.feet) < 0.2;
     // 2. a running hop: hurry at it, hop `lead` m short of its face (the nearest take-off that lands, as a
     // visitor would find it: a narrow low thing is overshot from too far), stop the keys once on top

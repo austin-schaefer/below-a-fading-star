@@ -63,13 +63,16 @@ export function installStrata(ctx, url = new URL(location.href)) {
     },
     place(rec) { placements.push(rec); return rec; },
     placements,
-    // `lamps` (sky.js's flicker.lamps, v16-S1): the village's lamps and lit panes are turned up by hand when the dark
-    // comes early, half as bright again, and down slowly after; the limewash goes down with the sky.
+    // The village's lamps and lit panes are turned up by hand when the dark comes early (v16-S1), two and a half times as
+    // bright, house by house outward from whoever watches (v16-S2: the stone's uWaveK and sky.js's flicker.wave), and
+    // down slowly after; the limewash goes down with the sky. (`lamps` is no longer read here.)
     tick(t, f, lamps = 0) {
       if (!stone) return;
       stone.uniforms.uSTime.value = t;
       stone.uniforms.uGlyph.value = 0.03 + (0.9 + 0.1 * Math.sin(t * 0.21)) * 2.2 * Math.pow(1 - f, 1.2); // the ember glass: dull by day, it glows as the sun gutters (v8-09)
-      stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f) * (1 + 1.1 * lamps);
+      stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f);
+      stone.uniforms.uWaveK.value = 1.6;
+      stone.uniforms.uNoon.value = (ctx.sky?.flicker?.slow ?? 0) * (0.9 + 0.1 * Math.sin(t * 0.9)); // (v16-S2: the carriers' stored noon, channel 3) // (v16-S2: house by house, in sky.js's wave outward from the eye: materials.js fpLampWave)
       stone.uniforms.uLime.value = 0.85 * (0.3 + 0.7 * f);
     },
   };

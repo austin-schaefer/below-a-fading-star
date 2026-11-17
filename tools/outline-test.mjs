@@ -6,6 +6,11 @@
 //   - the cost of a call;
 //   - Lees Tarn on its outline (src/v4/tarn.js): the water disc covers it, the galley's course and the tarn woman's
 //     water are deep, the Scriveners' shallows and the Strandline's strip still meet the shore, and no circle is left.
+//   - the floor's pools (v16 L4, src/height/floor.js POOLS): wet inside their edge and dry past it, the ground under
+//     the level inside and a lip over it all round the shore (nothing spills), the ground near them never a protected
+//     place's; and the floor's hollows: a priority flood of v16 against ?floor=v15 (a child process) finds no closed hollow
+//     the lift made deeper by 0.3 m or more where a protected place's skirt lies (each is given an old drain, floor.js
+//     LINES), and none on open floor deeper than the listed kettle holes.
 //   node tools/outline-test.mjs
 globalThis.FP_HEIGHT_PARAMS = '?';
 const O = await import('../src/height/outline.js');
@@ -266,6 +271,47 @@ else {
     for (let i = 0; i < rs.length; i++) { let lo = Infinity, hi = -Infinity; for (let j = 0; j < 60; j++) { const v = rs[(i + j) % rs.length]; lo = Math.min(lo, v); hi = Math.max(hi, v); } flat = Math.min(flat, hi - lo); }
     check(flat >= 6, 'the fen: no 60 degrees of its shore is a circle (the radius varies 6 m or more)', `least ${f2(flat)} m`);
   }
+}
+
+// ---- the floor's pools and hollows (v16 L4)
+{
+  const F = await import('../src/height/field.js'), FL = await import('../src/height/floor.js');
+  for (const p of FL.POOLS) {
+    let wetIn = 0, n = 0, dryOut = 0, m = 0, under = 0, u = 0, lipLow = Infinity, maskMin = 1;
+    for (let i = 0; i < 360; i++) {
+      const a = (i / 360) * 2 * Math.PI, ux = Math.cos(a), uz = Math.sin(a);
+      for (let r = 0; r < p.rMax + 6; r += 0.5) {
+        const x = p.x + ux * r, z = p.z + uz * r, sd = p.sd(x, z), wl = F.waterLevelAt(x, z);
+        if (sd < -0.3) { n++; if (wl === p.y) wetIn++; }
+        if (sd > 0.3) { m++; if (wl === null) dryOut++; }
+        if (sd < -1) { u++; if (F.heightAt(x, z) < p.y - 0.05) under++; }
+        if (sd > 0.2 && sd < 2) lipLow = Math.min(lipLow, F.heightAt(x, z) - p.y);
+        if (sd < 2) maskMin = Math.min(maskMin, FL.floorMask(x, z));
+      }
+    }
+    check(wetIn === n && dryOut === m && under === u, `the ${p.name}: wet inside its edge at its level (${p.y} m), dry past it, the ground under the level inside`, `wet ${wetIn}/${n}, dry ${dryOut}/${m}, under ${under}/${u}`);
+    check(lipLow > 0.05, `the ${p.name}: the ground holds the water all round (0.2 to 2 m out of the shore over the level)`, `least ${f2(lipLow)} m over`);
+    check(maskMin > 0, `the ${p.name}: no protected place's ground within 2 m of its shore`, `least mask ${f2(maskMin)}`);
+  }
+  // the hollows: fill depth over a 2 m grid, the seeds every water and the ring past r 285
+  const { execFileSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const self = fileURLToPath(import.meta.url);
+  const fill = (params) => new Float32Array(new Uint8Array(execFileSync(process.execPath, [self.replace(/outline-test\.mjs$/, 'floor-flood.mjs'), params], { maxBuffer: 1 << 26 })).buffer);
+  const A = fill('?floor=v15'), B = fill('?');
+  const N = 291, st = 2, x0 = -290, seen = new Uint8Array(N * N), found = [];
+  for (let k = 0; k < N * N; k++) {
+    if (seen[k] || B[k] - A[k] <= 0.3) continue;
+    const q = [k]; seen[k] = 1; let mx = -1, mk = k;
+    while (q.length) { const c = q.pop(); if (B[c] > mx) { mx = B[c]; mk = c; } const i = c % N, j = (c - i) / N;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= N || jj >= N) continue; const kk = jj * N + ii; if (!seen[kk] && B[kk] - A[kk] > 0.05) { seen[kk] = 1; q.push(kk); } } }
+    const i = mk % N, j = (mk - i) / N, x = x0 + i * st, z = x0 + j * st;
+    let mn = 1; for (let dz = -10; dz <= 10; dz += 2) for (let dx = -10; dx <= 10; dx += 2) mn = Math.min(mn, FL.floorMask(x + dx, z + dz));
+    found.push({ x, z, depth: +mx.toFixed(2), was: +A[mk].toFixed(2), skirt: mn < 1 });
+  }
+  const skirt = found.filter((h) => h.skirt && h.depth - h.was > 0.3), open = found.filter((h) => !h.skirt && h.depth > 2.5);
+  check(skirt.length === 0, 'no closed hollow the lift made 0.3 m deeper at a protected place\'s skirt (each has its old drain)', skirt.length ? JSON.stringify(skirt) : `${found.length} hollows deeper than v15's, none at a skirt`);
+  check(open.length === 0, 'on open floor no closed hollow deeper than 2.5 m that is not a pool (a dry kettle hole is allowed)', JSON.stringify(found.filter((h) => !h.skirt)));
 }
 
 console.log(`outline: ${pass} passed, ${fail} failed`);

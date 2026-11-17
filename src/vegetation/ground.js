@@ -7,7 +7,7 @@ import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, s
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
 import { stillWorn, stillNear } from '../v7/still/clear.js'; // v7: the bare ground round the Sleeper and the Stylite's basket
-import { collationClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
+import { collationClear, collationTreeClear } from '../v5/dressing/collation.js'; // v5: the Collation's table
 import { prospectClear } from '../v5/dressing/prospect.js'; // v5: the Unfinished Prospect's easel
 import { naveClear, naveHole } from '../v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
 import { pitEdge } from '../v4/paths/ground.js'; // v14-D2: the Pit's floor is walked under the old ground
@@ -28,7 +28,7 @@ import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no t
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
 const CLEAR_N = makeSimplex(1605);
 
-const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
+const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee']; // (v16 L4: the floor's character, src/height/floor.js)
 
 export function makeGround(ctx) {
   const { terrain, landmarks: L, water } = ctx;
@@ -88,6 +88,7 @@ export function makeGround(ctx) {
     grid.moor[k] = b.moor; grid.heath[k] = b.heath; grid.wood[k] = b.wood; grid.marsh[k] = b.marsh;
     grid.shore[k] = b.shore; grid.rock[k] = b.rock; grid.ice[k] = b.ice; grid.orchard[k] = b.orchard;
     grid.crystal[k] = b.crystal; grid.glacier[k] = terrain.glacierMask(x, z);
+    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0;
   }
   // Bilinear biome lookup into a reusable object.
   const biome = {}; for (const k of BIOME_KEYS) biome[k] = 0;
@@ -163,6 +164,6 @@ export function makeGround(ctx) {
   // would stand in it (L3's reshuffle put two by the Laid Sun and the Collation's gap; tools/rocks-test.mjs)
   const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => [p.x, p.z]);
   const standNear = (x, z, r) => STAND_XZ.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < (r + 0.6) ** 2);
-  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r); // (v16 L5: r, the collider's footprint)
+  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || collationTreeClear(x, z) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r); // (v16 L5: r, the collider's footprint)
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

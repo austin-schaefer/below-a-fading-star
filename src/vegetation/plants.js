@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
 import { withFade } from '../fade.js';
 import { stripAt, stripEdge } from '../v8/strips.js';
+import { nearPool } from '../height/floor.js'; // v16 L6: the floor's pools get reedy margins
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
 const PARAMS = new URL(location.href).searchParams;
@@ -665,7 +666,7 @@ export function buildPlants(ctx, ground, shared) {
     const path = 1 - smoothstep(4, 28, cd);
     const dCastle = Math.hypot(mx - L.castle.x, mz - L.castle.z), dStones = Math.hypot(mx - L.stones.x, mz - L.stones.z);
     const land = Math.max(1 - smoothstep(31, 80, dCastle), 1 - smoothstep(10, 40, dStones), 1 - smoothstep(16, 40, Math.hypot(mx - L.byre.x, mz - L.byre.z)));
-    const heathW = smoothstep(0.35, 0.8, b.heath) * b.moor * (1 - b.wood);
+    const heathW = Math.max(smoothstep(0.35, 0.8, b.heath) * b.moor, b.lee * 0.9) * (1 - b.wood); // v16 L4: the whalebacks' lees dark with ling
     const marshW = smoothstep(0.25, 0.7, b.marsh);
     const crysW = smoothstep(0.15, 0.7, b.crystal);
     const nearCd = cd < 7;
@@ -683,7 +684,7 @@ export function buildPlants(ctx, ground, shared) {
     let dg = D_GRASS * (0.6 + 0.6 * path + 0.4 * land) * (0.35 + 1.0 * smoothstep(0.2, 0.75, patch));
     dg *= (1 - 0.55 * swardW);
     dg *= (1 - 0.6 * heathW) * (1 - 0.6 * b.wood) * (1 - 0.92 * crysW) * (1 - b.rock) * (1 - 0.6 * b.ice) * (1 - 0.7 * marshW);
-    dg *= cv.d.grass;
+    dg *= cv.d.grass * (1 - 0.45 * b.bleak) * (1 - 0.5 * b.wet); // v16 L4: thin on the bleak crests; rushes take the wet ground
     // v8-02: the common grazed thin and trodden bare in patches; the far moor in drifts with bare gaps between; the
     // wood's floor almost bare; each Lynchets strip its own crop
     dg *= (1 + 0.2 * pc) * (1 - 0.95 * pc * trod) * (1 - 0.88 * pm * (1 - mdrift)) * (1 - 0.88 * woodBare) * (1 + cropW * (STRIP_D[crop] - 1));
@@ -697,7 +698,7 @@ export function buildPlants(ctx, ground, shared) {
       const v = rng() < 0.4 ? 0 : rng() < 0.6 ? 1 : 2;
       setT(cTawny); mixInto(null, cDry, dry * 0.8); mixInto(null, cOchre, rng() * 0.4);
       mixInto(null, cHeathG, heathW * 0.6); mixInto(null, cOrch, b.orchard * 0.5);
-      mixInto(null, cBone, bleach * 0.75 * (1 - b.wood));
+      mixInto(null, cBone, Math.max(bleach * 0.75, b.bleak * 0.85) * (1 - b.wood)); mixInto(null, cMarsh, b.wet * 0.6); // v16 L4
       mixInto(null, cWoodG, smoothstep(0.2, 0.8, b.wood)); mixInto(null, cMarsh, marshW * 0.9); mixInto(null, cBleach, crysW * 0.9);
       mixInto(null, cv.tint.grass, cv.tw.grass);
       mixInto(null, cCommon, pc * 0.6); mixInto(null, cStrip[crop], cropW * 0.8); // v8-02
@@ -705,11 +706,11 @@ export function buildPlants(ctx, ground, shared) {
       const tus = rng() < tussock * 0.5 * (1 - 0.75 * pc);
       // v8-02: the common's ankle turf, the far moor's drifts a little taller, the Bletting's rank patches over the head
       const sy8 = (1 - 0.62 * pc * (tus ? 0.5 : 1)) * (1 + 0.15 * pm * mdrift) * (1 + pr * (rank * 0.6 - 0.3)) * (1 + cropW * (STRIP_S[crop] - 1));
-      const sy = sy8 * cv.s.grass * (0.75 + rng() * 0.5) * (1 - 0.35 * swardW) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (tus ? 1.35 + rng() * 0.45 : 1);
+      const sy = sy8 * cv.s.grass * (0.75 + rng() * 0.5) * (1 - 0.35 * swardW) * (1 - 0.3 * path) * (1 - 0.35 * b.wood) * (1 + 0.25 * marshW) * (1 - 0.35 * b.bleak) * (tus ? 1.35 + rng() * 0.45 : 1);
       grass.add(x, y - 0.03, z, rng() * 6.283, (0.8 + rng() * 0.5) * (tus ? 1.3 : 1), sy, tus ? 2 : v, rng(), tint[0], tint[1], tint[2], (0.1 + 0.55 * rng() * rng()) * (1 - b.wood * 0.7) * (1 - crysW) * (1 - bleach * 0.6));
     }
     // sedge: taller, olive, in the fen and on the tarn shore
-    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8, nearEddy ? 0.7 : 0) * (0.4 + 0.8 * patch) * cv.d.sedge * (1 - 0.7 * pf) * (1 - 0.8 * pc);
+    const ds = D_SEDGE * Math.max(marshW, b.shore * 0.8, nearEddy ? 0.7 : 0, smoothstep(0.2, 0.7, b.wet) * 0.8) * (0.4 + 0.8 * patch) * cv.d.sedge * (1 - 0.7 * pf) * (1 - 0.8 * pc);
     const ns = Math.floor(ds * CELL * CELL + rng());
     for (let i = 0; i < ns; i++) {
       const x = cx + rng() * CELL, z = cz + rng() * CELL;
@@ -786,7 +787,7 @@ export function buildPlants(ctx, ground, shared) {
       heather.add(x, y - 0.04, z, rng() * 6.283, s * (0.9 + rng() * 0.3), s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // reeds: in stands along the water's edge, standing in the shallows
-    if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy) {
+    if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy || nearPool(mx, mz, 4)) {
       const sn = noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5;
       // v8-02: in the fen the stands are tighter and taller with open water between
       const stand = Math.max(smoothstep(0.35 + 0.17 * pf, 0.65 - 0.05 * pf, sn), nearEddy ? 0.9 : 0);

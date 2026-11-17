@@ -213,7 +213,7 @@ export function crystalAct(ctx, mother, M, ground) {
     const v = uAct.value;
     // the sun is to gutter as the light reaches the top: brought forward in the sky's own clock (unless it is guttering
     // already, or held for a render), so everything that listens to the gutter (the music, the lintel) hears it coming
-    if (flick && flick.phase <= 0 && flick.hold == null && flick.next > T.gutter) { flick.next = T.gutter; st.gutters++; }
+    if (flick && flick.phase <= 0 && flick.hold == null && flick.next > T.gutter) { flick.next = T.gutter; flick.out = true; st.gutters++; } // (out: the countdown runs even if 'begin' never came)
     v.z = n; v.w = n > 1 ? 1 : 0; v.x = 0; v.y = Math.min(n - 1, EMBERS);
     // the hand: where the look meets the glass (a ray against the mother's pieces), else the trunk toward the visitor
     const dx = player.pos.x - M.x, dz = player.pos.z - M.z, r = hyp(dx, dz) || 1;

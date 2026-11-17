@@ -97,7 +97,7 @@ export function startBed(a) {
     o.connect(gn); gn.connect(droneBus); o.start(); droneOsc.push({ o, cents });
   });
 
-  let swellSm = 0, wood = 0, hurrySm = 0;
+  let swellSm = 0, wood = 0, hurrySm = 0, hushSm = 0, afterPrev = 0;
   function update(f) {
     const { now, t, px, pz, b, step } = f, cam = a.camera.position;
     // --- the gutter: the drone comes up under a wind that thins and darkens
@@ -116,7 +116,15 @@ export function startBed(a) {
     const openness = (0.55 + 0.45 * clamp(b.moor + b.heath * 0.5, 0, 1)) * (1 + 0.4 * high);
     const shelter = clamp(wood + 0.6 * inKeep + 0.6 * (ctx.house?.sheltered(px, pz) || 0) + (ctx.below?.inside(px, cam.y, pz) || 0) + (ctx.lappetSound?.sheltered(px, cam.y, pz) || 0), 0, 1); // v15-L1: under the main, the Gullet, the Slype; v8-05: the Pomegranate House's walled court; v14-D0: no wind under the ground
     hurrySm += (smoothstep(4, 6.5, a.player?.speed || 0) - hurrySm) * 0.1; // air past the ears: +1 dB, a little brighter
-    const g = stepGust(step || 0.1);
+    // v16-S2: the air holds its breath in the four seconds before the sun fails (flicker.soon): the wind falls away to
+    // nothing over them, so the first thing a visitor anywhere notices is a hush; and as the sun catches (flicker.after)
+    // a gust comes, the relief, rising over 1.8 s to full and falling as gusts do
+    const soon = ctx.sky?.flicker?.soon ?? 0, after = ctx.sky?.flicker?.after ?? 0;
+    // (latched on the rising edge between two ticks, so a hitch that lets `after` decay a little before the tick still gusts)
+    if (after > 0.5 && after > afterPrev + 0.3) { gust.phase = 'rise'; gust.t = 0; gust.dur = 1.8; gust.from = gust.g; gust.peak = 1; }
+    afterPrev = after;
+    hushSm += (soon * (1 - 0.5 * swellSm) - hushSm) * (soon > hushSm ? 0.08 : 0.3);
+    const g = stepGust(step || 0.1) * (1 - 0.85 * hushSm);
     const turb = smoothstep(0.6, 1, g) * 0.35 * ctx.noise.noise2(t * 1.6 + turbPh, 0.5);
     const duck = 1 - 0.5 * swellSm, dark = 1 - 0.3 * swellSm;
     bedG.gain.setTargetAtTime(BED_LVL * openness * g * (1 + turb) * (1 - 0.8 * shelter) * (1 + 0.12 * hurrySm) * duck, now, 0.3);

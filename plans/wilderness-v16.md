@@ -105,4 +105,21 @@ Next: P1 after its review (tests here, merge); S2, L3, L4, V1 as they report. Th
 
 Next: L3 after its review; S3, L4, V1 as they report. Then the height path's cheap wins and `floorProbe`'s sync, the one re-record of `seams` and `geometry`, the whole suite on `next`, W3 against the new floor, the critic.
 
+**2026-11-17, 02:11 PST. The gutter (all three rounds), the stair's head and the floor are on `next`. Two agents in flight.**
+
+- **The gutter, S2 + S3, merged.** S3 (sonnet, 27 min) fixed the review's blocker (`flicker.flush` rises over about 1 s; a gutter-test row holds its step per frame) and five of six others; the stair's veins under a held render were not reproduced (`hold` 1 is lit; a dark frame wants 0.3). On `next`: settings 86, village 687, house 20, audio 106, perf 29, acts 163, gutter 29, stair 5. Known weak, not fixed: the moths at 15 m are specks; the Halt's globe, the tarn's cold, the grazers' and Coheirs' heads barely read; the Lappet's folk answer only within 45 m.
+- **V1 part 1 merged** (opus; `b6b6863`): the bastion and its two side flights gone, one flight on the axis down the crown's rim, two lamps at its foot; `ways-test` has `axis` rows (walk up and down holding W). Cold review (sonnet): no blockers. On `next`: ways 271, village 687, village-plan 7, strata 8, dressing 22, walk 13. Frames: `shots/wip/v16-V1-r4-walk-*`, `-r5-walk-*`.
+- **The floor, L1 + L4 + L6, merged** (`9c776f6`, then `1240316`). L4 (opus, 68 min): three pools on the edge (`src/water/pools.js`, +1 draw in view), `floorCharacter` in the paint, cover and rocks, the strand's bank to 3 m, the passage, the court, the Lynchets and the heights rig protected, drains from the skirts' hollows (`tools/floor-flood.mjs`, an `outline-test` row). **The brief's done-condition is not met: blind readers picked the after frame 2 of 6 times.** With the report shut: plain from the air (`shots/wip/v16-L4-r3-air-floor-west.png` beside `v16-before-air-floor-west.png`: the pools, the banding, the tarn), near nothing from the stair's top. Merged as an increment, said so here and to be said in the note; no third round on the paint. Cold review (opus): the code sound, protected places bit-identical; `heightAt` about +10% (to L5). L6 (sonnet, 13 min): the gnomon filter out of `hop-test` (the test measured against ground 3 m off), P4 clear of the kettle, a channel draining (138, -202), reeds at the pools. On `next`: outline 26, dressing 22, paths 86, strata 8, hop 30, heights 200, village 687, village-plan 7, regions 56, walk 13, perf 29.
+- **`roads` is red on `next`** since the tarn's merge: P17 and P23 run through its new water (16 wet samples, one grade). L5's branch reroutes both.
+- The orchestrator's slip: the floor's merge stopped on a doc conflict (`runtime.md`, two notes on one line) and the command hid the exit code, so its tests ran on the unconcluded merge; code had merged clean; resolved keeping both.
+- **V2** (opus, 37 min; `issue-1606-spine`): the act "Take his letter" at the Lagan's hatch (the clerk's open thread in `stories/the-dead-letters.md`), the leaver's door, lanterns for the copyist and sounder. Frames `shots/wip/v16-V1-act-d-sheet.png`: the offer, the letter held out, into the view, the ledger struck. Folk from 20 m only partly better. Cold review (sonnet): no blockers; a gutter mid-act lets the letter fly while the clerk is frozen. **V3** (sonnet) fixing that and seven smaller. Not merged.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| L5 the fen's review: cost (no slower than v15, merged tree), water above its rim, bushes on paths, P14 (`brief-v16-L5-fen-fixes.md`) | `issue-1605-fen` | 8165 | opus |
+| V3 the act's leftovers | `issue-1606-spine` | 8167 | sonnet |
+
+Next: V3 and L5 as they report (tests here, merge). Then one re-record of `seams` and `geometry`, the whole suite on `next` on a quiet machine, the critic and the curator beside it, the note. W3 (the open edges, `issue-1527-edges`) stays out of v16: it wants a walk by the owner and the floor has only just settled.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.

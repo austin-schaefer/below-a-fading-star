@@ -188,7 +188,11 @@ export function buildVestige(K) {
     const g = mergeGeometries(strips); for (const q of strips) q.dispose(); g.computeBoundingSphere();
     const m = new THREE.Mesh(g, swayingCloth()); m.name = 'span-way-strips'; m.castShadow = false; m.receiveShadow = hi;
     ctx.scene.add(m); strutMeshes.push(m);
-    const uT = swayingCloth().userData.uT; ctx.registerUpdate((dt, t) => { uT.value = t; });
+    const { uT, uAir } = swayingCloth().userData;
+    // v16-S2: the cloth hangs dead in the hush before a gutter and through it (the wind holds its breath: audio/bed.js),
+    // and the relief's gust whips it as the sun catches; the gust's time runs faster with it
+    let air = 1, tw = 0;
+    ctx.registerUpdate((dt, t) => { const f = ctx.sky?.flicker, to = f ? (1 - 0.92 * (f.soon || 0)) * (1 + 0.9 * (f.after || 0)) : 1; air += (to - air) * Math.min(1, dt * 1.2); tw += dt * (0.4 + 0.6 * Math.min(1.6, air)); uT.value = tw; uAir.value = air; });
   }
   {
     const g = mergeGeometries(worn); for (const q of worn) q.dispose(); g.computeBoundingSphere();

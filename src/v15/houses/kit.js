@@ -338,15 +338,17 @@ export function wallPoly(B, M, pts, holes, d, o) {
   B.add(B.extrude(sh, d, 1), M, o);
 }
 // add a geometry and then colour it vertex by vertex in its own frame: fn(x, y, z, out) writes out.r, out.g, out.b
-// and out.e (0..: how much of `light` it gives off on the lit-window channel)
+// and out.e (0..: how much of `light` it gives off on the lit-window channel; with out.ch = 3, how much stored noon it
+// gives back while the sun gutters, on the stone shader's channel 3: v16-S2)
+const NOON_GIVE = [1.0, 0.86, 0.58];
 export function addPainted(B, g, M, o, fn, light = N.light) {
-  const lp = g.attributes.position.array.slice(), base = B.count, out = { r: 1, g: 1, b: 1, e: 0 };
+  const lp = g.attributes.position.array.slice(), base = B.count, out = { r: 1, g: 1, b: 1, e: 0, ch: 1 };
   B.add(g, M, o);
   for (let i = 0, n = lp.length / 3; i < n; i++) {
-    out.e = 0; fn(lp[i * 3], lp[i * 3 + 1], lp[i * 3 + 2], out);
+    out.e = 0; out.ch = 1; fn(lp[i * 3], lp[i * 3 + 1], lp[i * 3 + 2], out);
     const k = (base + i) * 3, e = (base + i) * 4;
     B.C[k] = out.r; B.C[k + 1] = out.g; B.C[k + 2] = out.b;
-    if (out.e > 0) { B.E[e] = light[0] * out.e; B.E[e + 1] = light[1] * out.e; B.E[e + 2] = light[2] * out.e; B.E[e + 3] = 1; }
+    if (out.e > 0) { const L = out.ch === 3 ? NOON_GIVE : light; B.E[e] = L[0] * out.e; B.E[e + 1] = L[1] * out.e; B.E[e + 2] = L[2] * out.e; B.E[e + 3] = out.ch; }
   }
 }
 // a lamp of coloured glass hung at a bracket's hook (a record's lamp: world space; M the identity or a parent)

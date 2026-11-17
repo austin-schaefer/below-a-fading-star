@@ -10,7 +10,8 @@
 // clock drives both. While they work within 25 m, `coheirs-hum` is started ({ start: true }), and stopped
 // ({ stop: true }) when they stop or the walker goes.
 import * as THREE from 'three';
-import { SITES } from '../../world.js';
+import { SITES, SUN } from '../../world.js';
+const SUN_ANG = Math.atan2(SUN.dir.x, SUN.dir.z); // (v16-S2: where they look in a gutter, as wantHead's atan2(dx, dz))
 import { hyp, smoothstep, clamp, mulberry32 } from '../../noise.js';
 import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rigPainter, rigMesh, makeBones, pivot, arm2, placeMatrix, ramp, ease, tris } from './rig.js';
@@ -126,7 +127,7 @@ export function buildCoheirs(ctx, groundAt) {
   // the knots' intervals, 4-6 s, the same sequence every visit
   const krng = ctx.makeRng(70213), KN = 64, kint = Array.from({ length: KN }, () => 4 + krng() * 2);
   const cam = ctx.player.pos, cue = ctx.audio, cuePos = { x: site.x, y: pairPlace.elements[13] + 0.6, z: site.z };
-  const S = { phase: 'work', t: 0, turn: 0, armed: true, knot: 0, kt: 0, knots: 0, humming: false, turns: 0, turnedAt: -1, frames: 0, head: [0, 0], shoulders: [0, 0] };
+  const S = { sky: false, phase: 'work', t: 0, turn: 0, armed: true, knot: 0, kt: 0, knots: 0, humming: false, turns: 0, turnedAt: -1, frames: 0, head: [0, 0], shoulders: [0, 0] };
   const torsoL = new THREE.Matrix4(), I4 = new THREE.Matrix4(), sh = new THREE.Vector3(), hr = new THREE.Vector3(), hl = new THREE.Vector3();
   const POLE_R = new THREE.Vector3(-0.5, -1, -0.3), POLE_L = new THREE.Vector3(0.5, -1, -0.3);
   // the hands' offsets from the work point at time u in a knot of length L (0 .. L): working, then the pull
@@ -137,7 +138,7 @@ export function buildCoheirs(ctx, groundAt) {
     return out;
   };
   const wantHead = (k) => { // her head's yaw toward the walker, from the net (her forward), clamped
-    const s = seats[k], rel = angDiff(Math.atan2(cam.x - s.x, cam.z - s.z), s.yaw);
+    const s = seats[k], rel = angDiff(S.sky ? SUN_ANG : Math.atan2(cam.x - s.x, cam.z - s.z), s.yaw);
     return clamp(rel, -MAXHEAD, MAXHEAD);
   };
   function pose() {
@@ -149,7 +150,7 @@ export function buildCoheirs(ctx, groundAt) {
       bones[o].copy(place);
       pivot(torsoL, I4, WAIST[0], WAIST[1], WAIST[2], LEAN, shy, 0);
       bones[o + 1].multiplyMatrices(place, torsoL);
-      pivot(bones[o + 2], bones[o + 1], NECK[0], NECK[1], NECK[2], 0.32 * (1 - tau) - 0.05, h - shy, 0);
+      pivot(bones[o + 2], bones[o + 1], NECK[0], NECK[1], NECK[2], 0.32 * (1 - tau) - 0.05 - (S.sky ? 0.42 * tau : 0), h - shy, 0);
       // the unpicker's hands a beat behind the mender's
       let u = S.kt - (k ? 0.5 : 0), L = kint[S.knot % KN];
       if (u < 0) { L = kint[(S.knot + KN - 1) % KN]; u += L; }
@@ -175,6 +176,12 @@ export function buildCoheirs(ctx, groundAt) {
       if (S.kt >= L) { S.kt -= L; S.knot++; S.pulled = false; }
       if (S.armed && d < NEAR) { S.phase = 'turn'; S.t = 0; S.armed = false; S.turns++; S.turnedAt = S.frames; }
     }
+    // v16-S2: a gutter stops them as the walker does, on the same frame, but both look up, to the failing sun, and hold
+    // there until it has caught; then back to the net together
+    const dk = ctx.sky?.flicker?.dark ?? 0;
+    if (dk > 0.5 && (S.phase === 'work' || (S.phase === 'back' && S.sky))) { S.phase = 'turn'; S.t = 0; S.sky = true; }
+    if (S.sky && S.phase === 'hold' && dk > 0.3) S.t = 0;
+    if (S.sky && S.phase === 'work') S.sky = false;
     if (S.phase === 'turn') { S.turn = ramp(S.turn, 1, 1 / TURN, dt); if (S.turn >= 1) { S.phase = 'hold'; S.t = 0; } }
     else if (S.phase === 'hold') { if (S.t >= HOLD) { S.phase = 'back'; S.t = 0; } }
     else if (S.phase === 'back') { S.turn = ramp(S.turn, 0, 1 / TURN, dt); if (S.turn <= 0) { S.phase = 'work'; S.t = 0; } }
