@@ -71,7 +71,8 @@ export function installStrata(ctx, url = new URL(location.href)) {
       stone.uniforms.uSTime.value = t;
       stone.uniforms.uGlyph.value = 0.03 + (0.9 + 0.1 * Math.sin(t * 0.21)) * 2.2 * Math.pow(1 - f, 1.2); // the ember glass: dull by day, it glows as the sun gutters (v8-09)
       stone.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f);
-      stone.uniforms.uWaveK.value = 1.6; // (v16-S2: house by house, in sky.js's wave outward from the eye: materials.js fpLampWave)
+      stone.uniforms.uWaveK.value = 1.6;
+      stone.uniforms.uNoon.value = (ctx.sky?.flicker?.slow ?? 0) * (0.9 + 0.1 * Math.sin(t * 0.9)); // (v16-S2: the carriers' stored noon, channel 3) // (v16-S2: house by house, in sky.js's wave outward from the eye: materials.js fpLampWave)
       stone.uniforms.uLime.value = 0.85 * (0.3 + 0.7 * f);
     },
   };

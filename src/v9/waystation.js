@@ -495,7 +495,7 @@ export async function build(ctx) {
     // the lamp: a steady flame with a slow breath, turned up while the sun gutters
     const fl = 0.9 + 0.06 * Math.sin(t * 2.3) + 0.04 * Math.sin(t * 7.1 + 0.4);
     const k = fl * (1 + 1.8 * hand);
-    glowMat.uniforms.uWindow.value = 0.32 * k;
+    glowMat.uniforms.uWindow.value = 0.32 * k * (1 + 1.5 * hand); // (v16-S2: the skin itself burns up, so the globe is seen to flare from across the moor)
     glowMat.uniforms.uSTime.value = t;
     lamp.intensity = 30 * k * (1 - 0.6 * dimmer.value); // turned low while a guest hangs at the hatch (v10-A4)
   }, { pos: SP, near: 160, hz: 4 });

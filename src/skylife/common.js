@@ -13,7 +13,7 @@ export function makeSkyUniforms() {
     uHorizonAway: { value: new THREE.Color(PALETTE.skyHorizonAway) },
     uZenith: { value: new THREE.Color(PALETTE.skyZenith) },
     uFlicker: { value: 1 },
-    uDark: { value: 0 },    // v16-S2: flicker.dark (sky.js): the night that shows through a gutter
+    uNight: { value: 0 },   // v16-S2: flicker.dark (sky.js): the night that shows through a gutter
     uSkyTime: { value: 0 }, // the dome's clock, for cloud drift
     uT: { value: 0 },       // skylife's own clock (can be paused by the test hooks)
   };
@@ -24,7 +24,7 @@ export function withSky(sky, own) { return Object.assign({}, sky, own); }
 
 export const SKY_GLSL = /* glsl */`
   uniform vec3 uSunDir, uSunLight, uHorizonSun, uHorizonAway, uZenith;
-  uniform float uFlicker, uDark, uSkyTime, uT;
+  uniform float uFlicker, uNight, uSkyTime, uT;
   float sl_hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 443.897); p3 += dot(p3, p3.yzx + 19.19); return fract((p3.x + p3.y) * p3.z); }
   float sl_vnoise(vec2 p) {
     vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -36,10 +36,10 @@ export const SKY_GLSL = /* glsl */`
     float up = clamp(d.y, -1.0, 1.0);
     float toSun = max(dot(d, uSunDir), 0.0);
     float horizonBand = pow(1.0 - clamp(up, 0.0, 1.0), 3.5);
-    vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6) * (1.0 - 0.8 * uDark));
+    vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6) * (1.0 - 0.8 * uNight));
     vec3 sky = mix(uZenith, horizon, horizonBand);
     sky = mix(sky, uHorizonAway * 0.55, smoothstep(0.0, -0.12, up));
-    sky *= mix(vec3(1.0), vec3(0.62, 0.58, 1.12), uDark); // as sky.js: the violet deepens while the ember dies
+    sky *= mix(vec3(1.0), vec3(0.62, 0.58, 1.12), uNight); // as sky.js: the violet deepens while the ember dies
     float glow = pow(toSun, 6.0) * 0.55 + pow(toSun, 24.0) * 0.7 + pow(toSun, 90.0) * 1.2;
     sky += uSunLight * glow * uFlicker * (0.6 + 0.4 * (1.0 - smoothstep(0.0, 0.35, up)));
     return sky;

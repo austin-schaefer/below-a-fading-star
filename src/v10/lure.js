@@ -17,10 +17,14 @@
 // by movement, not light: each moth flies one short loop every CYCLE s, staggered so one of the five is nearly always up. Hidden under ?acts=0 (acts.js never builds it).
 // In the sun's gutter (v16-S1, #78) they take the dark for dusk: one after another they go up off the spot and wheel
 // round it a hand or two above, all five in the air at once, and settle again one by one when the light comes back.
+// v16-S2: and the rest of them come out of the cracks: X more a spot, unseen by day, go up off it in a loose column
+// that turns as it climbs (to about five metres), a cloud of pale wings read from 15 m, and drop back into the stone
+// as the light returns. In the gutter the dust on their wings takes the starlight (a faint emissive, uDusk), so the
+// cloud is pale against the cold; by day nothing of theirs glows.
 // ctx.acts.lure: { mesh, state() → [{ id, want, on, at, near }] } for the tests.
 import * as THREE from 'three';
 
-const MAXL = 16, M = 5; // act slots, moths a slot
+const MAXL = 16, M = 5, X = 48; // act slots, moths a slot, and the gutter's cloud a slot (v16-S2)
 const FADE = 1.6; // s for the moths to come to a thing or leave it
 const SEE = 42, GONE = 34; // m: beyond SEE nothing is moved or drawn; from GONE to SEE they shrink to nothing
 const SZ = 0.07; // m, half a wingspan: a big moth, 14 cm across
@@ -29,7 +33,7 @@ const CYCLE = 12, FLY = 2.2; // s: each moth flies one short loop in every CYCLE
 const SPREAD = 0.22; // m: how far from the spot they sit
 
 export function buildLure(ctx, acts) {
-  const rng = ctx.makeRng(1438);
+  const rng = ctx.makeRng(1438), crng = ctx.makeRng(1439); // (the cloud's own stream: the five keep their draws)
   // a moth from above (local x across, z to the head, y its back): a broad forewing and a smaller hindwing each side
   // and a dark body between; the flap squeezes x. Vertex colours: the wings 1, darker at the root; the body dark
   const W = [
@@ -47,8 +51,8 @@ export function buildLure(ctx, acts) {
   g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
   g.computeVertexNormals();
   // lit by the scene like everything round them (in the arch's shadow they are in shadow): a moth, never a glow
-  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, fog: true });
-  const mesh = new THREE.InstancedMesh(g, mat, MAXL * M);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide, fog: true, emissive: new THREE.Color('#c9c4d8'), emissiveIntensity: 0 });
+  const mesh = new THREE.InstancedMesh(g, mat, MAXL * (M + X));
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
   mesh.frustumCulled = false; mesh.receiveShadow = true; mesh.count = 0; mesh.name = 'act-lures'; mesh.visible = false;
@@ -81,6 +85,8 @@ export function buildLure(ctx, acts) {
         out: new THREE.Vector3((rng() - 0.5) * 2, 2.2 + rng() * 1.6, (rng() - 0.5) * 2), // where it goes when the act is done
       });
     }
+    s.cloud = []; s.cloudOn = true; // (on, so the first frame hides them: an instance never set is drawn at the origin)
+    for (let i = 0; i < X; i++) s.cloud.push({ tint: crng(), ph: crng() * 6.28, ph2: crng() * 6.28, w: (crng() < 0.5 ? -1 : 1) * (0.7 + 0.8 * crng()), flap: 22 + crng() * 12, top: 0.6 + 4.2 * crng() * crng() + 0.6 * crng(), r: 0.3 + 1.3 * crng() * crng(), p: new THREE.Vector3(), yaw: 0 });
     list.push(s); slots.set(h, s);
     return s;
   }
@@ -92,6 +98,7 @@ export function buildLure(ctx, acts) {
   function step(dt, t, want) {
     let any = false, n = 0;
     { const fl = ctx.sky?.flicker, to = (fl?.dark ?? 0) > 0.35 ? 1 : 0; dusk = fl?.hold != null ? to : Math.min(1, Math.max(0, dusk + (to ? dt / 1.6 : -dt / 3.2))); }
+    mat.emissiveIntensity = 0.9 * dusk;
     for (const h of acts.list) {
       if (h.def.lure === false) continue;
       let s = slots.get(h);
@@ -101,12 +108,14 @@ export function buildLure(ctx, acts) {
       if (s.on !== to) s.on = to > s.on ? Math.min(1, s.on + dt / FADE) : Math.max(0, s.on - dt / FADE);
       const dx = s.x - cam.x, dz = s.z - cam.z, d = Math.sqrt(dx * dx + dz * dz);
       s.near = d < SEE;
-      const base = s.k * M;
-      if (s.on <= 0 || !s.near) { for (let i = 0; i < M; i++) mesh.setMatrixAt(base + i, hide); continue; }
-      any = true;
+      const base = s.k * (M + X);
+      if (s.on <= 0 || !s.near) { if (s.shown !== false) { for (let i = 0; i < M + X; i++) mesh.setMatrixAt(base + i, hide); s.shown = false; } continue; }
+      any = true; s.shown = true;
       const far = 1 - Math.min(1, Math.max(0, (d - GONE) / (SEE - GONE)));
       for (let i = 0; i < M; i++) moth(s, s.moths[i], dt, t, far, base + i, to);
-      n = Math.max(n, base + M);
+      const up = to === 0 ? 0 : dusk;
+      if (up > 0 || s.cloudOn) { s.cloudOn = up > 0; for (let i = 0; i < X; i++) cloudMoth(s, s.cloud[i], t, far * s.on, base + M + i, up); }
+      n = Math.max(n, base + M + X);
     }
     mesh.count = Math.max(mesh.count, n);
     mesh.visible = any;
@@ -165,6 +174,26 @@ export function buildLure(ctx, acts) {
     M4.compose(m.draw, q, sc);
     mesh.setMatrixAt(idx, M4);
     col.copy(bone).lerp(dusted, 0.5 + 0.5 * m.tint).multiplyScalar(flying ? 0.85 : 1);
+    mesh.setColorAt(idx, col);
+  }
+  // one of the cloud: out of the stone at its own moment, up a turning column to its own height, back down as it ends
+  function cloudMoth(s, m, t, far, idx, up) {
+    const k = Math.min(1, Math.max(0, up * 1.5 - m.tint * 0.5)), e3 = k * k * (3 - 2 * k);
+    if (k <= 0) { mesh.setMatrixAt(idx, hide); return; }
+    const a = t * (1.1 + 0.6 * m.tint) * Math.sign(m.w) + m.ph, r = m.r * (0.4 + 0.6 * e3), h = m.top * e3 + 0.18 * Math.sin(t * 2.2 + m.ph2);
+    const ox = Math.cos(a) * r, oz = Math.sin(a) * r;
+    const px = m.p.x, py = m.p.y, pz = m.p.z;
+    if (s.wall) m.p.set(s.x - s.nz * ox + s.nx * (0.3 + 0.5 * e3 + 0.4 * (oz + r)), s.y + h, s.z + s.nx * ox + s.nz * (0.3 + 0.5 * e3 + 0.4 * (oz + r)));
+    else m.p.set(s.x + ox, s.y + 0.1 + h, s.z + oz);
+    const vx = m.p.x - px, vz = m.p.z - pz;
+    if (vx * vx + vz * vz > 1e-10) m.yaw = Math.atan2(vx, vz);
+    e.set(-0.35 + 0.3 * Math.sin(t * 3.1 + m.ph) - (m.p.y - py > 0 ? 0.2 : 0), m.yaw, 0.7 * Math.sign(m.w) + 0.3 * Math.sin(t * 2.3 + m.ph2), 'YXZ');
+    q.setFromEuler(e);
+    const open = 0.2 + 0.8 * Math.abs(Math.sin(t * m.flap + m.ph)), sz = SZ * (1.5 + 0.7 * m.tint) * far * Math.min(1, k * 3);
+    sc.set(sz * open, sz, sz);
+    M4.compose(m.p, q, sc);
+    mesh.setMatrixAt(idx, M4);
+    col.copy(bone).lerp(dusted, m.tint);
     mesh.setColorAt(idx, col);
   }
   const state = () => acts.list.map((h) => { const s = slots.get(h); return { id: h.def.id, want: s ? s.want : 0, on: s ? +s.on.toFixed(3) : 0, at: s ? { x: s.x, y: s.y, z: s.z } : null, near: s ? !!s.near : false }; });

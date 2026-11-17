@@ -7,7 +7,9 @@
 import * as THREE from 'three';
 import { Mesher, clamp, lerp } from './geo.js';
 import { hyp } from '../noise.js';
+import { SUN } from '../world.js';
 
+const SUN_ANG = Math.atan2(SUN.dir.x, SUN.dir.z); // (a heading, as the herd's: atan2(dx, dz))
 const HIP_Y = 1.18, SHOULDER = [0, 1.42, 0.8], LEG_X = 0.13, FRONT_Z = 0.55, BACK_Z = -0.58, UP_LEN = 0.6, LO_LEN = 0.58;
 
 function bodyGeometry() {
@@ -186,6 +188,7 @@ export function buildGrazers(ctx, opts = {}) {
       if (!moving) { herd.mode = 'graze'; for (const a of A) { a.state = 'graze'; a.timer = 3 + rng() * 6; } }
     }
 
+    const gutNow = (ctx.sky?.flicker?.dark ?? 0) > 0.5 && herd.mode !== 'flee';
     for (let i = 0; i < n; i++) {
       const a = A[i];
       let goalSpeed = 0, gaitStride = 1.3;
@@ -210,6 +213,10 @@ export function buildGrazers(ctx, opts = {}) {
           if (goalSpeed > 0) a.flee -= a.speed * dt;
           if (a.flee <= 0) { a.state = 'settle'; a.timer = 3 + rng() * 3; }
         }
+      } else if (gutNow && a.state !== 'settle') {
+        // v16-S2: in a gutter the herd stops, every head comes up and round toward the failing sun, and holds there
+        a.liftGoal = 1;
+        turnTo(a, SUN_ANG + a.off * 0.5, 1.6, dt);
       } else if (herd.mode === 'alert') {
         // all watch the player, heads up
         a.liftGoal = 1;

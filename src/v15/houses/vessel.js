@@ -45,7 +45,9 @@ export function vessel(B, M, o = {}) {
     mix(out, { r: 0.16, g: 0.19, b: 0.12 }, sat(1 - y / 0.9) * 0.6);
     let k = 0; for (const s of soots) { const dy = y - s.y, dh = Math.hypot(x - s.x, z - s.z); if (dy > -0.3 && dy < s.len && dh < s.r) k = Math.max(k, (1 - dy / s.len) * (1 - dh / s.r)); }
     mix(out, V.soot, sat(k * 1.5) * 0.85);
-    out.e = 0;
+    // v16-S2: the glaze still holds a little of the noon it carried: by day nothing of it shows; while the sun gutters
+    // it gives it back (the stone shader's channel 3, uNoon), where the glaze is whole and most toward the shoulder
+    out.e = sh > 0.3 ? 0 : 0.5 * (1 - sat(k * 2)) * (0.35 + 0.65 * sat(y01 * 1.3)) * (0.6 + 0.4 * n3(u * 0.4, y * 0.4, 6.1)); out.ch = 3;
   };
   const bodyAt = (x, y, z, out, glow = 0) => { set(out, N.milk, 0.5 + 0.1 * n3(x * 0.8, y * 0.8, z * 0.8)); mix(out, V.dirt, 0.2); out.e = glow; };
   const skinOpts = { color: N.milk, moss: 0.55, wet: 0, course: 0.17, ground: g0 }; // (the crazing: a fine net all over)

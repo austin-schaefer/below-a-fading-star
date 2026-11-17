@@ -56,7 +56,7 @@ export async function build(ctx) {
     U.uT.value = T;
     U.uSkyTime.value = t; // the dome's clock is main's t
     U.uFlicker.value = forceFlicker ?? ctx.sky?.flicker?.value ?? 1;
-    U.uDark.value = forceFlicker != null ? Math.min(1, Math.max(0, (0.9 - forceFlicker) / 0.6)) : ctx.sky?.flicker?.dark ?? 0; // v16-S2: the night through a gutter
+    U.uNight.value = forceFlicker != null ? Math.min(1, Math.max(0, (0.9 - forceFlicker) / 0.6)) : ctx.sky?.flicker?.dark ?? 0; // v16-S2: the night through a gutter
     group.position.copy(camera.position);
     lat.update(dt, T);
     met.update(paused ? 0 : dt);

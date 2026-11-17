@@ -485,7 +485,7 @@ export async function build(ctx) {
       prev.call(gmat, sh, r);
       sh.uniforms.uWake = uWake; sh.uniforms.uSunC = uSunC;
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec2 uWake, uSunC;')
-        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float fpR = distance(vUnderW.xz, uSunC); float fpW = 0.5 + 0.5 * sin(fpR * 1.6 - uWake.y); totalEmissiveRadiance *= uWake.x * (0.25 + 2.6 * pow(fpW, 5.0)) * (1.0 - 0.5 * smoothstep(1.5, 9.0, fpR)); }');
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n{ float fpR = distance(vUnderW.xz, uSunC); float fpW = 0.5 + 0.5 * sin(fpR * 1.6 - uWake.y); totalEmissiveRadiance *= uWake.x * (0.12 + 3.4 * pow(fpW, 6.0)) * (1.0 - 0.5 * smoothstep(1.5, 9.0, fpR)); }');
     };
     gmat.customProgramCacheKey = () => pk() + '|wake'; }
   const gold = new THREE.Mesh(G.geometry(), gmat); gold.name = 'passage-gold'; gold.receiveShadow = true; scene.add(gold); meshes.push(gold);
@@ -743,7 +743,7 @@ export async function build(ctx) {
   // far from it: at 2 Hz the gold rose in steps): flicker.slow is sky.js's, kept every frame
   ctx.registerUpdate((dt, t) => {
     wake = ctx.sky?.flicker?.slow ?? 0;
-    gmat.emissiveIntensity = wake > 0.001 ? 0.22 : 0;
+    gmat.emissiveIntensity = wake > 0.001 ? 0.42 : 0;
     uWake.value.set(wake * wake, (t * 2.4) % (Math.PI * 200));
   }, { pos: { x: P.sun.x, z: P.sun.z }, near: 60, hz: 0, r: 20 });
 

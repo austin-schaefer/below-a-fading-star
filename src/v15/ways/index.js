@@ -31,6 +31,10 @@ import { ramp, bridge, roofWalk, pier, undercroft } from './misc.js';
 const SKY = (x, y, z, out) => { out[0] = 1; out[1] = 1; out[2] = 0; return out; };
 
 export function buildWays(ctx, lappet) {
+  // v16-S2: the main's glass gives back the noon it carried while the sun gutters (sky.js's flicker.slow): the
+  // Noonwrights' whole story, the stored daylight brightest when the day goes out
+  const noonGut = { value: 0 };
+  ctx.registerUpdate(() => { noonGut.value = ctx.sky?.flicker?.slow ?? 0; });
   const P = lappet.plan, { RISERS, LEVEL, RUN, STAIR, at, way } = P;
   const kit = (name, salt = 1) => {
     const K = {
@@ -50,7 +54,7 @@ export function buildWays(ctx, lappet) {
         const low = ctx.quality === 'low'; // on low only the Elder steps throw shadows (the valley's cost from above: tools/heights-cost.mjs)
         if (K.B.count > 0) { const m = ctx.strata.mesh(K.B, 'late', `${name}-stone`); if (low) m.castShadow = false; ctx.scene.add(m); tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; }
         if (K.U.tris > 0) {
-          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`, -1e5, { worn: 0.12, cloud: [0.82, 0.22] }) /* quiet fields: in daylight the Nave's worn-through patches read as a toadstool's spots */); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
+          const m = new THREE.Mesh(K.U.geometry(), noonGlass(`${name}-glass`, -1e5, { worn: 0.12, cloud: [0.82, 0.22], gut: noonGut }) /* quiet fields: in daylight the Nave's worn-through patches read as a toadstool's spots */); m.name = `${name}-glass`; m.castShadow = !low; m.receiveShadow = true;
           ctx.scene.add(m); tris += K.U.tris;
         }
         return { tris };

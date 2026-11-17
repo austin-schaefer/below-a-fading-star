@@ -117,7 +117,7 @@ function buildFlock(ctx, opts) {
     b.perch = k; perches[k].taken = i;
     b.pos.set(perches[k].x, perches[k].y, perches[k].z); b.vel.set(0, 0, 0); b.mode = 0; b.foldV = 1;
   }
-  let flightT = 0, cool = 0, lifts = 0;
+  let flightT = 0, cool = 0, lifts = 0, gutUp = false;
   const centre = new THREE.Vector3();
   function lift() {
     lifts++; flightT = 9 + rng() * 6; cool = 6;
@@ -147,6 +147,11 @@ function buildFlock(ctx, opts) {
     mesh.visible = !far;
     if (far) return;
     cool -= dt;
+    // v16-S2: the dark coming early puts the whole flock up at once, calling, and they wheel through the gutter and come
+    // down when it ends (a gutter's onset: flicker.dark past 0.5)
+    { const dk = ctx.sky?.flicker?.dark ?? 0;
+      if (dk > 0.5 && !gutUp) { gutUp = true; if (flightT <= 0) lift(); flightT = Math.max(flightT, ctx.sky.flicker.phase > 0 ? ctx.sky.flicker.phase : 10); }
+      else if (dk < 0.2) gutUp = false; }
     if (flightT <= 0 && cool <= 0) {
       for (const b of B) if (b.mode === 0 && hyp(b.pos.x - cam.x, b.pos.z - cam.z) < opts.liftR && Math.abs(b.pos.y - cam.y) < 10) { lift(); break; }
     }
