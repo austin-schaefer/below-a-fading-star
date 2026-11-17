@@ -24,8 +24,10 @@ import { buildCan, rosePoint } from './garth/can.js';
 export const GARTH_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('garth') === '0';
 // the eye's grade in the light: near daylight (the post's own grade takes a fifth of the colour and warms the
 // highlights; this gives the colour back), eased in from the hall's dark-adapted one as the eye comes into the light
-export const NOON_GRADE = [1.04, 1.1, 1.04, 0.0];
-export const HALL_GRADE = [1.3, 0.95, 1.06, 0.03];
+export const NOON_GRADE = [1.0, 1.05, 1.06, -0.09]; // cold-neutral: the walk's ember grade taken out (5600 K against the world's 2500 K)
+// the bounce off the lit garden: white with a little of the grass's green in it
+export const BOUNCE = '#e2eee2';
+export const HALL_GRADE = [1.28, 0.92, 1.08, -0.02];
 
 export async function build(ctx) {
   if (GARTH_OFF) { ctx.garth = { off: true }; return; }
@@ -38,14 +40,15 @@ export async function build(ctx) {
   // onto the dome and out over the dead rings, less the further out; the sky's light nil, no haze
   const bounce = (x, y, z) => {
     const r = Math.hypot(x - CX, z - CZ), h = y - FLOOR;
-    const ground = 0.08 + 0.42 * Math.exp(-Math.max(0, r - LIGHT_R) / 4.5);
-    const up = 0.1 + 0.2 * Math.min(1, h / 20) + 0.08 * Math.max(0, 1 - r / R);
+    const ground = 0.1 + 0.4 * Math.exp(-Math.max(0, r - LIGHT_R) / 5.5);
+    // the dome takes the light thrown up off the garden: brightest over it, falling off to the dark springing
+    const q = Math.max(0, 1 - r / (R * 0.95)), up = 0.05 + 0.5 * Math.pow(Math.min(1, Math.max(0, h) / 19), 1.4) * q * q + 0.06 * q;
     return h < 2.5 ? ground + (up - ground) * (h / 2.5) * 0.3 : up;
   };
   const lit = (x, y, z, out) => { out[0] = 0.012; out[1] = 0; out[2] = bounce(x, y, z); return out; };
   const meshes = [];
   const mk = (B, mat, name) => { const m = new THREE.Mesh(B.geometry(), mat); m.name = name; m.castShadow = false; m.receiveShadow = false; ctx.scene.add(m); meshes.push(m); return m; };
-  const stoneMat = (key, o = {}) => underMaterial(noonLit(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02, ...o }), !!o.side), key, NOON.lightHex);
+  const stoneMat = (key, o = {}) => underMaterial(noonLit(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.02, ...o }), !!o.side), key, BOUNCE);
 
   // ---- the hall
   await ctx.progress?.('the meridian garth', 0);
@@ -87,7 +90,7 @@ export async function build(ctx) {
     const prof = []; for (let i = 0; i <= 40; i++) { const t = i / 40; prof.push(new THREE.Vector2(LENS.r * t, -0.32 * (1 - t * t))); }
     const g = new THREE.LatheGeometry(prof, 48); g.translate(CX, LENS.y, CZ);
     const cols = [], P = g.attributes.position.array;
-    for (let i = 0; i < P.length; i += 3) { const r = Math.hypot(P[i] - CX, P[i + 2] - CZ) / LENS.r, k = (0.95 - 0.3 * r * r) * (Math.sin(r * 40) > 0.75 ? 0.62 : 1) * (r > 0.97 ? 0.5 : 1); cols.push(NOON.light[0] * k, NOON.light[1] * k, NOON.light[2] * k); }
+    for (let i = 0; i < P.length; i += 3) { const r = Math.hypot(P[i] - CX, P[i + 2] - CZ) / LENS.r, k = (0.95 - 0.3 * r * r) * (Math.sin(r * 40) > 0.75 ? 0.62 : 1) * (r > 0.97 ? 0.5 : 1); cols.push(0.96 * k, 0.975 * k, 1.0 * k); }
     g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
     const lm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
     const lens = new THREE.Mesh(g, lm); lens.name = 'garth-lens'; ctx.scene.add(lens); meshes.push(lens);
@@ -109,11 +112,11 @@ export async function build(ctx) {
   // ---- the can, and the water: the rills and the drop from the can's rose (its rings spread on the rill below)
   const CB = new UnderBuilder(lit);
   const can = buildCan(CB);
-  mk(CB, underMaterial(noonLit(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.45 })), 'garth-can', NOON.lightHex), 'garth-can');
+  mk(CB, underMaterial(noonLit(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.45 })), 'garth-can', BOUNCE), 'garth-can');
   const uDrip = { value: new THREE.Vector4(0, 0, 9, 1) };
   const water = waterMesh(chans, uDrip); ctx.scene.add(water); meshes.push(water);
   const rose = rosePoint();
-  const drop = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 4).scale(1, 1.5, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color(NOON.lightHex).multiplyScalar(0.55), fog: false }));
+  const drop = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 4).scale(1, 1.5, 1), new THREE.MeshBasicMaterial({ color: new THREE.Color('#dfe8ff').multiplyScalar(0.6), fog: false }));
   drop.name = 'garth-drop'; ctx.scene.add(drop); meshes.push(drop);
   uDrip.value.set(rose[0], rose[2], 9, 1);
 
@@ -171,7 +174,7 @@ export async function build(ctx) {
     else if (ph < 1.57) { const f = (ph - 1.1) / 0.47; drop.position.set(rose[0], rose[1] - 0.07 - (rose[1] - RILL.y - 0.07) * f * f, rose[2]); drop.scale.setScalar(1); }
     else drop.scale.setScalar(0.001);
     uDrip.value.z = ph >= 1.57 ? ph - 1.57 : ph + 0.73;
-    for (const m of meshes) { const g = m.material?.userData?.uGlow; if (g) g.value.set(NOON.lightHex).multiplyScalar(b); }
+    for (const m of meshes) { const g = m.material?.userData?.uGlow; if (g) g.value.set(BOUNCE).multiplyScalar(b); }
     ctx.renderer?.getDrawingBufferSize?.(px);
     dust.material.uniforms.uPx.value = (px.y || 720) / (2 * Math.tan(((ctx.camera.fov || 60) * Math.PI) / 360));
   }, { pos: { x: CX, z: CZ }, near: 60, hz: 0, r: R });

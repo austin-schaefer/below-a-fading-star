@@ -14,13 +14,13 @@ const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 // the soil of each ring, and what grows on it (grass blades: base colours; the trees' leaves; their bark)
 export const PAL = {
   live: { soil: C('#2e2416'), soil2: C('#3a3a1e'), grass: [C('#4a7e2c'), C('#5a8a34'), C('#2f6a2c'), C('#6a9040'), C('#3a6a3a'), C('#7a8a40'), C('#8a8a50')], leaf: [C('#3f742c'), C('#4e8034'), C('#2f6026'), C('#5a7a30')], bark: C('#4a3626') },
-  wilt: { soil: C('#3c3020'), soil2: C('#4a4026'), grass: [C('#9aa23a'), C('#b2a846'), C('#8a9a34'), C('#c0ae58')], leaf: [C('#a8a034'), C('#c2a23e'), C('#8c8c30')], bark: C('#4c3a2a') },
-  brown: { soil: C('#4a3e30'), soil2: C('#544636'), grass: [C('#7a5a32'), C('#8a6638'), C('#6a4c2c'), C('#94744a')], leaf: [C('#6e4826'), C('#83552c'), C('#5a3c22')], bark: C('#4a3e34') },
-  grey: { soil: C('#4e4a46'), soil2: C('#56514a'), grass: [C('#6e6a64'), C('#7a756c'), C('#605c56'), C('#837d72')], leaf: null, bark: C('#76726c') },
-  ash: { soil: C('#5e5a54'), soil2: C('#56524c'), grass: [C('#6a665e'), C('#726e66'), C('#5e5a54')], leaf: null, bark: C('#76726a') },
+  wilt: { soil: C('#3c3420'), soil2: C('#4a4226'), grass: [C('#a8b03a'), C('#c2b846'), C('#98a834'), C('#ccbe58')], leaf: [C('#a8a034'), C('#c2a23e'), C('#8c8c30')], bark: C('#4c3a2a') },
+  brown: { soil: C('#4e4434'), soil2: C('#56493a'), grass: [C('#c8b888'), C('#d4c49a'), C('#b8a878'), C('#dccca4')], leaf: [C('#b09a6a'), C('#c2ac7c'), C('#9a8458')], bark: C('#4a3e34') },
+  grey: { soil: C('#4a4846'), soil2: C('#52504c'), grass: [C('#86888a'), C('#909294'), C('#7a7c7e'), C('#9a9c9c')], leaf: null, bark: C('#8a8c8c') },
+  ash: { soil: C('#6a6862'), soil2: C('#64625c'), grass: [C('#6a6862'), C('#72706a'), C('#5e5c58')], leaf: null, bark: C('#76746e') }, // swept: little left on it
 };
 const FLOWERS = [C('#3a62d8'), C('#4a7ae8'), C('#f4f2ea'), C('#f2ca22'), C('#e86ca2'), C('#f09a2a'), C('#8a4ad0')];
-const FRUIT = C('#c89a30'), BLUSH = C('#a8482a');
+const FRUIT = C('#a8b070'), BLUSH = C('#b09a7a'); // pale: amber is the dying sun's colour
 const STRAND = [NOON.strand.r, NOON.strand.g, NOON.strand.b];
 
 // which ring a point is in, by radius; the edges between rings drawn a little irregular (each death was not exact)
@@ -54,6 +54,17 @@ export function buildGarden(B, rng, { low, rings }) {
     for (let i = 0; i < radii.length - 1; i++) {
       const r0 = radii[i], r1 = radii[i + 1], rm = (r0 + r1) / 2;
       B.quad(W(r0, a0), W(r0, a1), W(r1, a1), W(r1, a0), soilAt(rm, (a0 + a1) / 2), [0, 1, 0], 0.05);
+    }
+  }
+  // ---- where the light once reached: a band of paler, sun-bleached stone just inside each older ring's edge, like a
+  // tide line, so "it used to be wider" is drawn on the ground
+  for (let k = 0; k < RINGS.length - 1; k++) {
+    const r1 = RINGS[k].r1, rr0 = r1 - 0.24, rr1 = r1 - 0.06, pale = mul(C('#a8a49a'), 1.05 - k * 0.08);
+    for (let j = 0; j < NA; j++) {
+      const a0 = (j / NA) * Math.PI * 2 - Math.PI, a1 = ((j + 1) / NA) * Math.PI * 2 - Math.PI;
+      if (Math.abs(Math.sin(a0) * r1) < PATH.half + 0.1 && Math.cos(a0) > 0) continue; // (the stones cross it)
+      const w0 = wob(a0, k), w1 = wob(a1, k);
+      B.quad(W(rr0 + w0, a0).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr0 + w1, a1).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr1 + w1, a1).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), W(rr1 + w0, a0).map((v, i) => (i === 1 ? FLOOR + 0.006 : v)), pale, [0, 1, 0], 0.06);
     }
   }
   // ---- the stepping stones from the door to the light: Heliarch hexagons sunk in the soil, worn
@@ -122,7 +133,7 @@ export function buildGarden(B, rng, { low, rings }) {
   }
   if (grow.has('brown')) {
     const P = PAL.brown;
-    scatter(2, 24, (x, z) => { const h = 0.12 + rng() * 0.2; blade(x, z, h, 0.14 + rng() * 0.16, rng() * 6.28, 0.022, mul(pick(P.grass), 0.8 + rng() * 0.3), 0.65 + rng() * 0.3); });
+    scatter(2, 30, (x, z) => { const h = 0.2 + rng() * 0.3; blade(x, z, h, 0.06 + rng() * 0.1, rng() * 6.28, 0.02, mul(pick(P.grass), 0.85 + rng() * 0.25), rng() * 0.25); }); // straw: standing dead, pale
   }
   if (grow.has('grey')) {
     const P = PAL.grey;

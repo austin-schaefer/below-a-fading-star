@@ -13,10 +13,10 @@ import { CX, CZ, FLOOR, LENS, LIGHT_R } from './plan.js';
 
 export const NOON_I = 2.6; // the beam's strength on a surface square to it (times the surface's colour)
 export const U = {
-  uNoon: { value: new THREE.Vector4(NOON_I, LIGHT_R, 0.16, 0) }, // strength (breathing), r at the floor, edge half-width
+  uNoon: { value: new THREE.Vector4(NOON_I, LIGHT_R - 0.15, 0.38, 0) }, // strength (breathing), r at the floor, the penumbra's half-width (it ends short of the yellowing ring)
   uNoonA: { value: new THREE.Vector4(CX, FLOOR, CZ, LENS.y) },
   uNoonB: { value: new THREE.Vector2(LENS.r, 0) },
-  uNoonCol: { value: new THREE.Color(NOON.lightHex).lerp(new THREE.Color('#ffd27a'), 0.35) }, // a little warmer than the stored glass's: noon in the open, remembered
+  uNoonCol: { value: new THREE.Color('#f4f7ff') }, // white, a breath of blue: the walk's one cold-neutral light (the stored glass's NOON.lightHex is cream; this is the noon it was)
   uNoonT: { value: 0 },
 };
 const GLSL = `
