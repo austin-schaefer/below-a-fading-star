@@ -112,19 +112,44 @@ export const LEAT = {
   bridge: [9, 252],   // the slab bridge where P14 and P38 meet
 };
 
-// ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (the table's)
+// ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (U1's, live)
+// The portal is a round arch in a dressed face standing across the cut's end, its face in the plane z = 311, facing
+// north. The water goes through its west part over the sill and falls into the head (a drowned hall behind the face);
+// its east bay holds the quay (the ledge) and the tube's end. Asked of W1's cut (W1 owns the ground): at the face the
+// cut is 12.6 m between its banks' feet (x -101 .. -88.4, `cutAtFace`). W1's cut as built (SWALLOW_CUT) is 8 m of water
+// (x -99 .. -91) with banks rising 1.3 in 1: the quay stands on its east bank (U1 opens the ground under it), and the
+// arch's piers stand on the banks either side.
 export const SWALLOW = {
-  portal: [-95, 311], // the face (ground +7.5)
-  sill: MERE.level,   // the sill at the mere's level (W1's measured level)
-  width: 8,           // at least 8 m wide
-  clear: 9,           // at least 9 m clear
-  ledge: [-91, 309],  // beside the fall, where the tube's end comes out of the water
+  portal: [-95, 311],     // the index's point on the face (ground +7.5)
+  face: 311,              // the face's plane, z (the arch's front)
+  open: [-100.5, -88.5],  // the arch's opening, x (12 m: the fall's 8 m to the west, the quay's bay to the east)
+  sill: MERE.level,       // the sill at the mere's level, -6.8 (the fall's lip, x -100.5 .. -92.6)
+  spring: -2.3,           // the arch springs here: its crown at spring + 6 = +3.7, 10.5 m clear over the sill
+  width: 12,              // index: at least 8
+  clear: 10.5,            // index: at least 9
+  ledge: [-91, 309],      // index: beside the fall, where the tube's end comes out of the water
+  quay: { x: [-92.6, -88.4], z: [297, 313], y: -5.9 }, // the ledge as built: a stone quay in the cut's east side, its top 0.9 over the mere, steps up to the shore at its north end
+  cutAtFace: [-101, -88.4], // asked of W1 (above): the cut's banks' feet at the face
+  head: { x: [-101.5, -84], z: [311, 324.5], floor: -17, crown: 4.5 }, // the drowned hall behind the face
+  pool: -9.2,             // the water in the head and the conduit: the fall is 2.4 m, sill to pool
 };
+// The aqueduct: the Heliarchs' vaulted conduit from the head's east wall to the Garth's west wall, drowned (its crown
+// goes under the pool's level 10 m in), and the Noonwrights' tube laid down it on stone saddles. One centreline for
+// both (`tube`): plan points [x, z], resampled by src/v17/swallow/line.js (straights, each corner rounded to its
+// radius in `turn`). `profile` is the planks' line inside the tube, [s, y] (s metres along from the lip),
+// eased between; the tube's axis is `axisUp` over the planks, its bore `bore`, its outside `outer`.
 export const AQUEDUCT = {
   from: SWALLOW.portal,
-  to: [-30, 318],     // the Garth's west door
-  z: [311, 318],      // under the apron, 10 to 30 m under the ground
-  floorEnd: -24,      // its floor falls from the sill to -24
+  to: [-30, 318],         // the Garth's west door
+  z: [311, 318.5],        // under the apron, 10 to 30 m under the ground
+  floorEnd: -24,          // the planks reach the door's sill at -24
+  // the lip on the quay; the corner in the head; a bend 9 m short of the door, so the last length runs in on the door's
+  // own line (U2's GARTH_DOOR.dir, radial to the hall); the end at the wall's outer face (GARTH_DOOR.face)
+  tube: [[-90.5, 306.5], [-90.5, 318.5], [-40.0, 316.0], [-31.18, 317.76]],
+  turn: [5, 8],           // each corner's radius
+  profile: [[0, -5.9], [5, -5.9], [20, -12.65], [66, -23.9], [67.5, -24]], // level on the quay and through the face, a steep stair down the head, the long fall down the conduit, level into the door
+  axisUp: 1.1, bore: 1.65, outer: 1.75,
+  conduit: { half: 3.6, spring: 2.6, below: 1.15 }, // its walls from the tube's line (half-width), the vault's springing over its floor, its floor under the planks
 };
 
 // ---------------------------------------------------------------- U2: the Meridian Garth (the table's)
