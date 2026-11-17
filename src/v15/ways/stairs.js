@@ -76,9 +76,11 @@ export function stoneFlight(K, o) {
   if (splay) [-1, 1].forEach((sd, k) => {
     const ext = k ? splay.r : splay.l; if (!ext) return;
     const sp = new THREE.Shape(), d = 0.015;
-    sp.moveTo(wOpen, base); sp.lineTo(wOpen, -iOpen * S.rise - d);
-    for (let i = iOpen; i < S.n; i++) { sp.lineTo(i * S.run, -i * S.rise - d); if (i < S.n - 1) sp.lineTo(i * S.run, -(i + 1) * S.rise - d); }
-    sp.lineTo(S.length, base); sp.lineTo(wOpen, base);
+    // (its underside a little under the flight's, its risers a finger proud of the flight's: no two faces in one plane)
+    const bs = base - 0.03, q = 0.015;
+    sp.moveTo(wOpen + q, bs); sp.lineTo(wOpen + q, -iOpen * S.rise - d);
+    for (let i = iOpen; i < S.n; i++) { sp.lineTo(i * S.run + q, -i * S.rise - d); if (i < S.n - 1) sp.lineTo(i * S.run + q, -(i + 1) * S.rise - d); }
+    sp.lineTo(S.length + q, bs); sp.lineTo(wOpen + q, bs);
     B.add(B.extrude(sp, ext + 0.04), F.clone().multiply(mat(sd * (w / 2 + ext / 2 - 0.02), 0, 0)).multiply(ROT_PROFILE), { color: jit(stone, 0.95), course: 0.5, moss: 0.45, ground });
   });
   [-1, 1].forEach((sd, k) => {
@@ -94,9 +96,9 @@ export function stoneFlight(K, o) {
     B.add(B.box(0.42, 0.13, len - 0.3, { chip: 0.02 }), F.clone().multiply(mat(sd * (w / 2 + 0.15), top + 0.06 + yL / 2 + 0.03, (L - e) / 2 - 0.12, pitch, 0, 0)), { color: C.heliarch.dark, moss: 0.45, ground });
     // a hexagonal newel where it stops, from the ground (the splay's or the floor's) to over the tread beside it
     // (its foot short of the splay's first tread, so a walker on the splay does not brush it)
-    const yT = -iOpen * S.rise, hN = yT + 1.25 - base, uN = sd * (w / 2 + 0.15), wN = L - 0.32;
-    B.add(B.cyl(0.24, 0.27, hN, 6, 1), F.clone().multiply(mat(uN, base + hN / 2, wN)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
-    B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(uN, base + hN + 0.02, wN)), { color: C.heliarch.dark, moss: 0.3, ground });
+    const yT = -iOpen * S.rise, b0 = base + 0.07, hN = yT + 1.25 - b0, uN = sd * (w / 2 + 0.15), wN = L - 0.32; // (its foot a hand over the flight's underside: no two faces in one plane)
+    B.add(B.cyl(0.24, 0.27, hN, 6, 1), F.clone().multiply(mat(uN, b0 + hN / 2, wN)), { color: jit(stone, 0.86), course: 0.4, moss: 0.4, ground });
+    B.add(B.cyl(0.3, 0.3, 0.1, 6, 1), F.clone().multiply(mat(uN, b0 + hN + 0.02, wN)), { color: C.heliarch.dark, moss: 0.3, ground });
   });
   // nobody walks into its mass from beside it: a wall along each side's line in pieces (the splay's edge where it
   // has one), each one's top under the treads beside it (the lowest treads, within a step of the floor, are stepped

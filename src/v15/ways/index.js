@@ -238,7 +238,7 @@ export function buildWays(ctx, lappet) {
         // few long runs, wherever the drop is more than 1.2 m and no way goes down: gaps for the ladder's head and the
         // stair's head (framed by its two lamp posts, P.LAMPS head-post-*), stopped for what stands on the brink. The cold
         // critic walked off the crown from the keep's end and never met the stair's head; now the kerb leads to it.
-        const yC = LEVEL.crown.y, RD = P.RIM.D, edgeD = RISERS[0].D;
+        const yC = LEVEL.crown.y, RD = P.RIM.D, edgeD = RISERS[0].D, SINKK = P.SINK;
         for (const run of [1, 2]) {
           const a = run === 1 ? P.FADE.s1[0] : P.cornerS(2, RD) + 0.15, b = run === 1 ? P.cornerS(1, RD) - 0.15 : P.FADE.s2[1];
           const taken = [...P.RIM.clear.filter((c) => c[0] === run).map((c) => [c[1], c[2]]), ...gaps.filter((g) => g[0] === 'rim' && g[1] === run).map((g) => [g[2], g[3]]),
@@ -251,8 +251,8 @@ export function buildWays(ctx, lappet) {
             while (s < s1 - 0.5) {
               const L = Math.min(s1 - s, 1.6 + rr() * 1.4);
               if (deep(s + L / 2) || deep(s) || deep(s + L)) {
-                const [x, z] = at(run, s + L / 2, RD);
-                lappet.kerbs.push({ x, y: yC + 0.36, z, hx: L / 2 - 0.02, hy: 0.38 + rr() * 0.04, hz: 0.28, yaw: yaw - Math.PI / 2 + (rr() - 0.5) * 0.02, seed: 900 + s });
+                const [x, z] = at(run, s + L / 2, RD), hg = Math.min(T.heightAt(x, z), T.heightAt(...at(run, s, RD)), T.heightAt(...at(run, s + L, RD))), yg = hg > yC - SINKK - 0.03 ? yC : hg; // (where the crown falls away into the turf at a run's end, on the ground)
+                lappet.kerbs.push({ x, y: yg + 0.33, z, hx: L / 2 - 0.02, hy: 0.38 + rr() * 0.04, hz: 0.28, yaw: yaw - Math.PI / 2 + (rr() - 0.5) * 0.02, seed: 900 + s });
                 if (runA === null) runA = s;
               } else close(s);
               s += L + 0.02;
