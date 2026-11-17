@@ -484,7 +484,6 @@ const LD = await page.evaluate(() => {
     orphans: asc.filter((a) => a.ladder && !list.find((d) => d.id === a.id)).map((a) => a.id) };
 });
 const NO_LADDER = { // files that speak of ladders and draw none
-  'src/v17/sphere.js': 'a ladder drawn inside the glass under the ground line, where no walker can come',
   'src/controls.js': 'a comment: the carrier reads the keys for the ladder', 'src/v8/house.js': 'the house\'s header: kept.js draws it',
   'src/v15/plan.js': 'the ways\' plan: rungs-ladder is drawn by src/v15/ways', 'src/v15/bones.js': 'its header lists the ways', 'src/v15/ways/index.js': 'calls ladder(K) (registered there)',
   'src/v15/quarters/rungs.js': 'the hand-rope and the poles\' colliders beside rungs-ladder', 'src/v15/houses/kit.js': 'ladder() and climbLadder(); registerAll climbs', 'src/v15/houses/index.js': 'the makers\' index', 'src/world.js': 'the Tender\'s Round card says how it is reached',
