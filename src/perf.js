@@ -29,6 +29,7 @@
 // registerUpdate callbacks, the objects it adds to the scene and its colliders (c.mod). Objects a module parents elsewhere
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, WATER } from './world.js';
+import { tarnShoreDistance } from './v4/tarn.js'; // v16 L2: the bench walks the tarn's edge
 import { createModuleRegistry } from './module-registry.js';
 
 // The bench walks the causeway as it was in v3, pinned here (v4 systems) so that v4's reroute of CAUSEWAY
@@ -485,13 +486,18 @@ export function createPerf(ctx) {
     BENCH_CAUSEWAY.forEach((p, i) => { if (Math.hypot(p.x - tarn.x, p.z - tarn.z) < Math.hypot(BENCH_CAUSEWAY[near].x - tarn.x, BENCH_CAUSEWAY[near].z - tarn.z)) near = i; });
     for (let i = 0; i <= near; i++) pts.push({ x: BENCH_CAUSEWAY[i].x, z: BENCH_CAUSEWAY[i].z });
     const bearing = (c, p) => Math.atan2(p.z - c.z, p.x - c.x);
-    const arc = (c, rad, a0, a1) => {
+    const arc = (c, rad, a0, a1, radAt = null) => {
       let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
       const n = Math.max(2, Math.ceil(Math.abs(d) / 0.07));
-      for (let i = 0; i <= n; i++) { const a = a0 + (d * i) / n; pts.push({ x: c.x + Math.cos(a) * rad, z: c.z + Math.sin(a) * rad }); }
+      for (let i = 0; i <= n; i++) { const a = a0 + (d * i) / n, rr = radAt ? radAt(a) : rad; pts.push({ x: c.x + Math.cos(a) * rr, z: c.z + Math.sin(a) * rr }); }
     };
     const cw = pts[pts.length - 1];
-    arc(tarn, (tarn.shore ?? tarn.r) + 4, bearing(tarn, cw), bearing(tarn, fen)); // the old round shore (v4: r takes in the bay)
+    // 4 m off the tarn's shore as seen from its centre (v16 L2: the edge; outward round the inlet and the bays)
+    arc(tarn, (tarn.shore ?? tarn.r) + 4, bearing(tarn, cw), bearing(tarn, fen), (a) => {
+      const ux = Math.cos(a), uz = Math.sin(a);
+      for (let d = tarn.r + 4; d > 20; d -= 1) if (tarnShoreDistance(tarn.x + ux * d, tarn.z + uz * d) < 4) return d + 1;
+      return (tarn.shore ?? tarn.r) + 4;
+    });
     arc(fen, fen.r + 4, bearing(fen, tarn), bearing(fen, SPAWN));
     pts.push({ x: SPAWN.x, z: SPAWN.z });
     const cum = [0];

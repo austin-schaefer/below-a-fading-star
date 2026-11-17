@@ -5,7 +5,7 @@
 // carries the URL's switches). terrain.js re-exports all of it; import from there unless you are in a worker.
 // Everything here is checked bit for bit by tools/height-check.mjs.
 import { makeSimplex, clamp, lerp, smoothstep } from '../noise.js';
-import { tarnHeight, tarnWet } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit
+import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START } from '../v4/mountains.js'; // v4 systems: the walls
@@ -366,13 +366,8 @@ export function heightAt(x, z) {
   // Sunken court
   if (!beyond(h, x, z, L.court.x, L.court.z, 60)) h = flatten(h, x, z, L.court.x, L.court.z, 34, 26, L.court.y + SX.noise2(x * 0.1, z * 0.1) * 0.2);
   // Tarn basin: flatten then dish
-  if (!beyond(h, x, z, L.tarn.x, L.tarn.z, 96)) {
-    // A shelving shore: the floor crosses the water level (-4.6) at about r 58, then deepens to -12.5
-    const d = Math.hypot(x - L.tarn.x, z - L.tarn.z);
-    h = flatten(h, x, z, L.tarn.x, L.tarn.z, 62, 34, -4.0 + SX.noise2(x * 0.05, z * 0.05) * 0.25);
-    const bowl = 1 - smoothstep(36, 60, d);
-    h -= bowl * 8.5 + SX.noise2(x * 0.03, z * 0.03) * 0.5 * (1 - smoothstep(40, 70, d));
-  }
+  // (v16 L2: a shelving shore keyed on the edge's sd, src/v4/tarn.js: bays, a point, an inlet, a shallows, a steep bank)
+  if (!beyond(h, x, z, L.tarn.x, L.tarn.z, TARN_REACH)) h = tarnBasin(h, x, z, SX.noise2(x * 0.05, z * 0.05), SX.noise2(x * 0.03, z * 0.03));
   h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
   // Fen: broad, flat, pocked with pools
   if (!beyond(h, x, z, L.fen.x, L.fen.z, 115)) {
@@ -461,8 +456,8 @@ function biomeWith(x, z, h, slope, rv) {
   const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
   const dFen = Math.hypot(x - L.fen.x, z - L.fen.z);
   const marsh = 1 - smoothstep(L.fen.r - 15, L.fen.r + 25, dFen);
-  const dTarn = Math.hypot(x - L.tarn.x, z - L.tarn.z);
-  const shore = (1 - smoothstep(58, 72, dTarn)) * smoothstep(50, 58, dTarn) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
+  const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
+  const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
   const dOrch = Math.hypot(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
   const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z);
@@ -476,13 +471,28 @@ function biomeWith(x, z, h, slope, rv) {
   return { moor, heath, wood, marsh, shore: shoreR, rock: rockR, ice, orchard, crystal, slope, h };
 }
 
+// The still waters, each with its own wet test and its shore's signed distance (metres, < 0 in the water), in the
+// order waterLevelAt asks them. A body drawn on an edge (src/height/outline.js) gives its own; a plain disc is a disc.
+// v16 L2: the tarn is on its edge; the fen's line is the next brief's (L3), beside it.
+const disc = (w) => ({ wet: (x, z) => Math.hypot(x - w.x, z - w.z) < w.r, sd: (x, z) => Math.hypot(x - w.x, z - w.z) - w.r });
+export const WATER_BODIES = [
+  { name: 'tarn', w: WATER.tarn, wet: tarnWet, sd: tarnShoreDistance },
+  { name: 'fen', w: WATER.fen, ...disc(WATER.fen) },
+  { name: 'pool', w: WATER.pool, ...disc(WATER.pool) },
+];
 // Water height at a point, or null when there is no water body here.
-const WATER_DISCS = Object.values(WATER);
 export function waterLevelAt(x, z) {
-  for (const w of WATER_DISCS) {
-    if (Math.hypot(x - w.x, z - w.z) < w.r && (w !== WATER.tarn || tarnWet(x, z))) return w.y; // v4: the tarn's own shore
-  }
+  for (let i = 0; i < WATER_BODIES.length; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
   return riverLevelAt(x, z);
+}
+// The first still water whose shore lies within `extra` metres: { name, y, sd } (sd < 0 inside), or null.
+const _ws = { name: '', y: 0, sd: 0 };
+export function waterShore(x, z, extra = 0, out = _ws) {
+  for (const b of WATER_BODIES) {
+    const d = b.sd(x, z);
+    if (d < extra) { out.name = b.name; out.y = b.w.y; out.sd = d; return out; }
+  }
+  return null;
 }
 // Water level minus ground: > 0 under water, -Infinity off every water body (discs, river, ravine).
 export function waterDepthAt(x, z, ground = null) {

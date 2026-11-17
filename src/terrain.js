@@ -18,9 +18,9 @@ import { bakeTerrain, BAKED } from './height/bake.js'; // v13 L3: the bake, thre
 // the heightfield and its queries (v13 L2: src/height/field.js, three-free, so a worker can import it), re-exported
 import {
   heightAt, normalAt as normalField, slopeAt, biomeAt, waterLevelAt, waterDepthAt, isUnderwater, causewayDistance, glacierMask,
-  riverAt, riverSpeed, RIVER,
+  riverAt, riverSpeed, RIVER, waterShore,
 } from './height/field.js';
-export { heightAt, slopeAt, biomeAt, waterLevelAt, waterDepthAt, isUnderwater, causewayDistance, glacierMask, riverAt, riverSpeed, RIVER };
+export { heightAt, slopeAt, biomeAt, waterLevelAt, waterDepthAt, isUnderwater, causewayDistance, glacierMask, riverAt, riverSpeed, RIVER, waterShore };
 // normalAt into a THREE.Vector3 unless given out (any { x, y, z })
 const _n = new THREE.Vector3();
 export function normalAt(x, z, out = _n, eps = 0.6) { return normalField(x, z, out, eps); }
@@ -496,7 +496,7 @@ export function makeTerrain(ctx) {
   Object.defineProperty(geo, 'attributes', { configurable: true, get() { throw new Error('the terrain mesh is not baked yet: give this module { mesh: true } in main.js'); } });
   let readyFn;
   const terrain = {
-    mesh, heightAt, normalAt, slopeAt, biomeAt, waterLevelAt, waterDepthAt, isUnderwater, causewayDistance, glacierMask,
+    mesh, heightAt, normalAt, slopeAt, biomeAt, waterLevelAt, waterDepthAt, isUnderwater, causewayDistance, glacierMask, waterShore,
     riverAt, river: RIVER,
     size, regionRadius: WORLD.regionRadius,
     segs, ready: new Promise((r) => { readyFn = r; }), baked: false,

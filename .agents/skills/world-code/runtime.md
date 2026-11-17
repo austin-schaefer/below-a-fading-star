@@ -22,7 +22,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `debug=1`
 - `tinct=0` (no regional tint on the haze and the light)
 - `placegrade=0` (no per-place exposure, saturation, contrast and warmth in the finish, v8-02); `shafts=0` (no ember shafts in the wood)
-- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, timings exported from `src/sky.js`)
+- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, the first 60-120 s after "Go out" (87.5 s; its countdown is held behind the title card, `flicker.out`), timings exported from `src/sky.js`; `tools/gutter-test.mjs` asserts both)
 
 ### v3 stage 2 switches (each defaults to the new behaviour; see `plans/wilderness-v3.md`)
 
@@ -242,6 +242,7 @@ for (const p of lampsAlong(line, 9)) ctx.scene.add(lampLight(p));           // a
 
 ### v16
 
+- **The gutter and what answers it** (v16-S1, #78): the first gutter comes 87.5 s after "Go out" (`FIRST_GUTTER` 60-120 s in `src/sky.js`; the countdown waits on `begin`, `flicker.out`). Besides `flicker.value`, read `flicker.dark` (0..1, how far down, no lag) and `flicker.lamps` (0..1, a hand's answer: up about 1.4 s after the dark, down over some 8 s after the catch); under `flicker.hold` both settle at once, so a held render poses everything. An answer belongs to its thing: a uniform, a tint, an instance's pose, never a new draw or light. What answers, region by region: `briefs/v16/reports/issue-1601-gutter.md`. Pairs: `node tools/views.mjs tools/views-v16-gutter.json shots/wip <prefix> low` (each view lit with `hold=1`, then guttered with `hold=0.3`); frames through a real gutter, in order: `node tools/gutter-frames.mjs <base> <name> <x> <z> <yaw> <pitch> [y]`.
 - `floor=v15` (v16-L1): the valley floor as v15 had it, one plate with a faint tilt (`src/height/floor.js` returns 0). A height switch (`src/height/params.js`): it is in `HEIGHT_PARAMS_KEY`, so the bake's key, and a node tool sets it with `globalThis.FP_HEIGHT_PARAMS = '?floor=v15'`. Before/after pairs from one tree: `tools/views.mjs <views> shots/wip <prefix> medium 1280 720 '&floor=v15'`; the floor's own ground views are `tools/views-v16-L1.json`. The audit that only the floor moved: `node tools/height-check.mjs record --params=floor=v15` at the base, `node tools/height-check.mjs check --params=floor=v15` at the tip.
 
 ## Quality tiers
