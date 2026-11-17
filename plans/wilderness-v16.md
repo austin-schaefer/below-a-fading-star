@@ -43,4 +43,18 @@ Opened 2026-11-16, 23:20 PST, by the orchestrator on an autonomous run. The owne
 
 Next: the survey's report becomes `tools/views-v16-floor.json` (rendered on `next` as the before set), then the floor's briefs (the tilt; the edge and the tarn's shore; the fen and the look from above), two or three agents beside S1 and P1, never more than four with a browser.
 
+**2026-11-16, 23:45 PST. The survey is in; the floor's first two briefs are out. Four agents in flight (the limit).**
+
+- **The survey** (opus, read-only, 7 minutes): the field's order of terms, what reads a fixed height, every ruled outline, a design for the shared edge. Its findings are in the briefs L1 and L2. Worth keeping: the floor already tilts (`-0.012z + 0.006x`, `field.js:353`); a lift that is never negative and zero at the waters cannot make anything float; places to hold still by mask are the keep, Demesne and Lappet, the east box (High Ling to the Hypogeum), the Pit, the fall and river, both Span blocks; the only shader that tests a radius on these outlines is `water/river.js` `uFen`; `heightAt` is 1.6 µs a call with cheap wins in `riverSection` and `project()` (not yet briefed: they change bits, so they go with the re-record).
+- **The fixed views:** `tools/views-v16-floor.json`, sixteen; the before set rendering on `next` at medium into `shots/wip/v16-before-*.png`.
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| S1 the gutter (#78) | `issue-1601-gutter` | 8161 | opus |
+| P1 performance | `issue-1602-perf` | 8162 | opus |
+| L1 the tilt (`brief-v16-L1-tilt.md`) | `issue-1603-tilt` | 8163 | opus |
+| L2 the edge and the tarn's shore (`brief-v16-L2-edge-tarn.md`) | `issue-1604-edge` | 8164 | opus |
+
+Next: look at the before frames; as each agent reports, its frames with the report shut, its tests run here, a cold review, a blind reader for L1 and L2, then merge. L3 (the fen and the other ruled outlines) is written and dispatched when L2 has pushed the edge and a slot is free. After the floor's merges: one re-record of `seams` and `geometry`, the whole suite on `next`, then W3 and the spine's head against the new floor.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
