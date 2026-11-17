@@ -6,13 +6,14 @@
 //   frames: shots/wip/v16-S1-seq-<name>-<i>-<tt>s.png at 0, 1, 2, 3, 4.5, 6, 9, 12, 14, 16, 19, 24 s; one line each with the
 //   flicker's value, dark and lamps. PREFIX=v16-S2 names them <PREFIX>-seq-<name>-…; AT=0,2,4 sets the seconds (a
 //   negative second is before the onset: the gutter is set to come that long after the first frame's wait begins).
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const [base, name, x, z, yaw, pitch, y = '', q = 'low'] = process.argv.slice(2);
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

@@ -10,6 +10,7 @@
 //   AFTER=0.3,1,2,5 (default) · Q=low · HOLD=1 keeps holding W through the frames · STOP=m stops walking that far out
 //   even if no offer rose · NOE=1 never presses E (the lure on its own) · STILL_MARKS=1 stops for each distance frame
 //   THEN=id AFTER2=... a second act the first brings (the Halt's seat), pressed where they stand once offered
+import { ANGLE } from './launch.mjs';
 import { chromium } from 'playwright'; // npm install --no-save playwright@1.63.0 in the worktree (the wilderness skill)
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const id = process.argv[3];
@@ -19,7 +20,7 @@ const via = process.argv[6] ? process.argv[6].split(';').map((s) => s.split(',')
 const AFTER = (process.env.AFTER || '0.3,1,2,5').split(',').map(Number);
 const Q = process.env.Q || 'low';
 if (!id) { console.error('usage: node tools/act-walk.mjs base act-id [prefix] [x,z] [via]'); process.exit(2); }
-const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

@@ -10,12 +10,13 @@
 // rest (bounding boxes overlapping and vertices within 2 cm), so a body cannot fall apart into floating pieces again.
 // The Demesne's peafowl are checked so, and each bird's train must start inside its rump in every instance.
 // Usage: node tools/regions-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
 const errors = [];

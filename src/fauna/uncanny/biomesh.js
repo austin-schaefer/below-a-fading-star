@@ -94,6 +94,17 @@ export function buildBiomesh(ctx, U) {
   const FILL = 0.82;
   const geo = new THREE.BoxGeometry(1, 1, 1);
   const okG = (x, z) => U.rules.dry(x, z, 0.1) && terrain.slopeAt(x, z) < 0.85;
+  // the creep asks okG of every stepping tile every frame (the field's height, water and slope: 1.4 ms a frame at the
+  // Lattice on low, v16-P1); it is asked of a 0.2 m cell's middle, once, and kept. A tile may stand 0.14 m nearer a
+  // wet or steep edge than the exact test allows. ?throttle=0 asks the exact test each time.
+  const OKC = 0.2, okCache = new Map();
+  const okCreep = (x, z) => {
+    if (ctx.throttle === false) return okG(x, z);
+    const ix = Math.round(x / OKC), iz = Math.round(z / OKC), k = (ix + 60000) * 120000 + iz + 60000;
+    let ok = okCache.get(k);
+    if (ok === undefined) { if (okCache.size > 200000) okCache.clear(); ok = okG(ix * OKC, iz * OKC); okCache.set(k, ok); }
+    return ok;
+  };
   const colonies = [];
   const nrm = new THREE.Vector3();
   const cam = camera.position;
@@ -616,7 +627,7 @@ export function buildBiomesh(ctx, U) {
         } else if ((C.hopT[i] -= dS) <= 0) C.hopP[i] = 0;
         let nu = u + du * dS, nv = v + dv * dS;
         if (C.mode[i] === 1) nv = clamp(nv, 0, C.vmax[i]);
-        else if (!okG(nu, nv)) { nu = u; nv = v; C.yaw[i] += 0.5; }
+        else if (!okCreep(nu, nv)) { nu = u; nv = v; C.yaw[i] += 0.5; }
         C.u[i] = nu; C.v[i] = nv;
         // body turns slowly into the way it is going
         const ty = Math.atan2(-dv, du);

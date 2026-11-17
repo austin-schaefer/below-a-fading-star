@@ -15,6 +15,7 @@
 //   node tools/route-frames.mjs [base] findings <geometry.json> [q=medium] [prefix=geom] [n=10]
 //     one frame of each of the n worst findings of each kind in a GEOM_JSON file from tools/geometry-test.mjs, from
 //     the stand it names, looking at the fault, and a sheet of them.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -47,7 +48,7 @@ if (mode === 'route') {
 }
 
 const W = 960, H = 540, TW = 192, TH = 108;
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

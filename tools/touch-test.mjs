@@ -5,13 +5,14 @@
 // SHOTS=1 also writes shots/wip/mobile-15-phone-begun.png and mobile-15-phone-muted-pressed.png.
 // Real touches go through CDP; the stale-id cases dispatch synthetic TouchEvents, because CDP
 // keeps its own touch book-keeping and will not send a touchstart for an id that is still down.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low&shadows=0&bloom=0';
 const shots = process.env.SHOTS === '1';
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });
 const page = await context.newPage();
 const errors = [];

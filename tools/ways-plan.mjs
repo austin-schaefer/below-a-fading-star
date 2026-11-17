@@ -13,6 +13,7 @@
 // Writes the PNG and a JSON of what it drew (ways, house steps, doors).
 //   node tools/ways-plan.mjs [base=http://localhost:8123] [out=shots/wip/ways-plan.png]
 // PLAN_BOX=x0,x1,z0,z1 and PLAN_SCALE=px a metre draw a part closer (the Rungs and the stairs: PLAN_BOX=44,112,-36,18 PLAN_SCALE=20).
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 let chromium;
@@ -21,7 +22,7 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 const out = process.argv[3] || 'shots/wip/ways-plan.png';
 const [X0, X1, Z0, Z1] = (process.env.PLAN_BOX || '40,130,-75,40').split(',').map(Number), S = +(process.env.PLAN_SCALE || 12), G = S >= 18 ? 0.25 : 0.5;
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 await page.goto(`${base}/?q=low&music=0`, { waitUntil: 'load', timeout: 120000 });

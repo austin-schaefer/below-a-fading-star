@@ -8,6 +8,7 @@
 // under LICHEN_MAX times the stone's luminance (rocks.js and the regions' shared stone), where v8-10's was about 11x.
 // The geometry is taken from the places' own modules, not from clearings.js, so the table is checked, not echoed.
 // Usage: node tools/rocks-test.mjs [base=http://localhost:8123] [tiers=low,high]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -15,7 +16,7 @@ catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwrig
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 const tiers = (process.argv[3] || 'low,high').split(',');
 const COMMON_MAX = 10, BIG_SHARE = 0.45, LICHEN_MAX = 1.3;
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('PASS', m); } else { fail++; console.log('FAIL', m); } };
 

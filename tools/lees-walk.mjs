@@ -6,6 +6,7 @@
 // lifted while one finger drags the view to steer. A frame every 1.5 s of walking and at each waypoint, in order; prints where the feet
 // are, and a last line `walked: yes|no` (no: it stood still for about 10 s short of a waypoint, and where).
 //   node tools/lees-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [prefix=lees-walk]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw; try { pw = await import('playwright'); } catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', mode = 'keys', q = 'low', prefix0 = 'lees-walk'] = process.argv.slice(2);
@@ -15,7 +16,7 @@ const A = (run, s, D, name) => { const [x, z] = P.at(run, s, D); return { x, z, 
 const WAY = [A(1, 12, 22.2, 'street'), A(1, 16.6, 22.4, 'to-fountain'), A(1, 17.2, 25.2, 'kerb-west'), A(1, 18.4, 27.6, 'north-side'), A(1, 21.6, 27.4, 'north-east'), 'SWAPE', A(1, 21.6, 22.6, 'south-side'), A(1, 17.2, 22.6, 'round-again'),
   A(1, 15.4, 27.6, 'to-arch'), A(1, 13.6, 30.4, 'under-arch'), A(1, 14.8, 27.8, 'back-in'), A(1, 12.2, 23.4, 'the-tare'), A(1, 17.4, 22.4, 'street-east'), A(1, 24.6, 23.6, 'the-way'), A(1, 28.6, 23.1, 'way-turn'), A(1, 32.8, 22.5, 'past-the-stair-foot'), A(1, 35.8, 19.8, 'shops'), A(1, 39.5, 18.6, 'lagan'), A(2, 3, 18.6, 'ullage'), A(2, 6.5, 20.4, 'to-the-main'), A(2, 9.2, 20.9, 'round-the-noon-main'), A(2, 12, 20.2, 'past-the-main'), A(2, 15, 18.6, 'welt'), A(2, 24.2, 20.4, 'rebate')];
 const start = A(1, 6.5, 22.2);
-const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage(); page.setDefaultTimeout(600000);
 let errors = 0; page.on('pageerror', (e) => { errors++; console.log('[pageerror]', e.message); });

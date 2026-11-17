@@ -14,6 +14,7 @@
 // the bus's bed, against the same +0.5 dB as before. The fall's two checks read the loop's own output the same way.
 // The Occultation's hush is held off for the table; with the world loaded, riverlife's rumble is driven by moving the fall.
 // Usage: node tools/audio-test.mjs [url]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -82,7 +83,7 @@ const CUES = [
   ['fall-rumble-enter', { dx: 8, dy: 2, dz: -10 }, null, 1500, 500],
   ['act-bell', { dx: 6, dy: 2, dz: -8 }, { n: 1 }, 1500, 1500], // v10-A3: last, its minute of tail would be the bed of any row after it
 ];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

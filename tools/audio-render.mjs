@@ -15,6 +15,7 @@
 // the walk); --draw draws as usual. --pre taps the master (pre-limiter) instead, as 32-bit float, and writes the post-limiter tap of the same render to
 // <out>.post.wav, sample-aligned. --tap=cue taps the cue bus alone (one-shots against silence, at the master's gain). The page has no seed parameter (WORLD.seed is fixed), so --seed is recorded and
 // ignored: a render is reproducible by url, options and length.
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,7 +26,7 @@ export async function launch() {
   let chromium;
   try { ({ chromium } = await import('playwright')); }
   catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
-  return chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+  return chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 }
 
 export function parseArgs(argv) {

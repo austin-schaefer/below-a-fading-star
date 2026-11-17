@@ -7,6 +7,7 @@
 // with the worker's script and imports served by the service worker), and one more controlled repeat.
 //   node tools/bake-sw-check.mjs [port=8198]      FP_BROWSER=firefox|webkit for those engines
 // Not in the suite (four loads, ~40 s); run it when the bake's worker, the store's keying or sw.js changes.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, normalize, dirname } from 'node:path';
@@ -19,7 +20,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const C = 'bakesw1';
 const site = await serveSite({ port, commit: () => C, files: (p) => { if (p === '/commit.json') return JSON.stringify({ commit: C }); const f = join(ROOT, normalize(p)); return f.startsWith(ROOT) && existsSync(f) && statSync(f).isFile() ? readFileSync(f) : null; } });
 const engine = process.env.FP_BROWSER || 'chromium';
-const browser = await pw[engine].launch(engine === 'chromium' ? { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {});
+const browser = await pw[engine].launch(engine === 'chromium' ? { args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {});
 const page = await browser.newPage();
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 const ready = () => page.waitForFunction(() => window.__fp_startup?.report().ready != null, null, { timeout: 300000 });

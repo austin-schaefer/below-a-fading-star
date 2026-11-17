@@ -3,13 +3,14 @@
 // desktop viewport; then the gear and a finger-sized panel on a phone, and (v13) its Measure row's reload. Usage: node tools/settings-test.mjs [url]
 // SHOTS=1 also writes shots/wip/settings-01-desktop.png (1280x720, panel open) and settings-01-touch.png (390x844);
 // SHOTS_TAG=v9-M6 names them v9-M6-desktop.png and v9-M6-touch.png.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low&shadows=0&bloom=0';
 const shots = process.env.SHOTS === '1', shotTag = process.env.SHOTS_TAG || 'settings-01';
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const errors = [];
 const checks = [];
 const check = (name, ok, info) => { checks.push([name, !!ok]); if (!ok && info !== undefined) console.log('  ', name, JSON.stringify(info)); };
