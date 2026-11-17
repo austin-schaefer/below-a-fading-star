@@ -321,12 +321,12 @@ for (const place of run) {
     const rest = [];
     for (const f of list) { const i = left.indexOf(posOf(f)); if (i >= 0) { left.splice(i, 1); kept.push(f); } else rest.push(f); }
     for (const f of rest) { const i = left.findIndex((b) => near(b, posOf(f))); if (i >= 0) { left.splice(i, 1); kept.push(f); } else if (!f.soft) { fresh.push({ ...f, group: g }); kept.push(f); } }
-    for (const b of left) fixed.push(`${g} at ${b}`);
+    if (!baseline.known[g]?.comes) for (const b of left) fixed.push(`${g} at ${b}`); // `comes: true`: a finding that comes and goes between runs (it sits on a threshold): held when found, not "fixed" when not
     groups.set(g, kept);
   }
   for (const [g, list] of groups) { if (!list.length) groups.delete(g); else { recorded[g] = list.map(posOf).sort(); for (const f of list) all.push(f); } }
   out.length = 0; for (const list of groups.values()) out.push(...list);
-  for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !seen.has(g)) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
+  for (const [g, k] of Object.entries(baseline.known)) if (g.split('|')[1] === place.name && !seen.has(g) && !k.comes) for (const b of k.at || []) fixed.push(`${g} at ${b}`);
   const by = (k) => out.filter((f) => f.kind === k).length;
   console.log(`--- ${place.name}: ${soup.tris} faces, ${soup.parts.length} parts, ${soup.stands.length} stands (${soup.insideStands} inside something, left out)${soup.truncated ? ' (TRUNCATED)' : ''}; coplanar ${by('coplanar')}, floating ${by('floating')}, backs ${by('backs')}, sky ${by('sky')}, buried ${by('buried')}; ${groups.size} groups; ${fresh.length} new, ${fixed.length} fixed; ${((Date.now() - tp) / 1000).toFixed(1)} s (take ${(ex / 1000).toFixed(1)}, coplanar ${(ms.coplanar / 1000).toFixed(1)}, floating ${(ms.floating / 1000).toFixed(1)}, backs ${(ms.backs / 1000).toFixed(1)}, buried ${(ms.buried / 1000).toFixed(1)})`);
   const show = process.env.GEOM_ALL ? out : fresh;
@@ -348,6 +348,7 @@ if (process.env.GEOMETRY_RECORD) {
   const ran = new Set(run.map((p) => p.name)), known = {};
   for (const [g, at] of Object.entries(recorded).sort()) known[g] = { n: at.length, why: baseline.known[g]?.why || (g.startsWith('buried-hidden|') ? 'found by v15-G1 (2026-11-16), not yet judged: hidden whole under the drawn ground (wasted faces, likely misplaced)' : g.startsWith('buried-sunk|') ? 'found by v15-G1 (2026-11-16), not yet judged: sunk in the ground, the odd one of its mesh (not a row bedded alike)' : g.startsWith('buried|') ? 'found by v15-G1 (2026-11-16), not yet judged' : 'on next when the check was written; not yet judged'), at };
   for (const [g, k] of Object.entries(baseline.known)) if (!ran.has(g.split('|')[1])) known[g] = k;
+  for (const [g, k] of Object.entries(baseline.known)) if (k.comes) known[g] = k; // kept as written, found this run or not
   const rows = Object.entries(known).sort().map(([g, k]) => `  ${JSON.stringify(g)}: ${JSON.stringify(k)}`); // one line a group
   writeFileSync(baseFile, `{\n "about": ${JSON.stringify(baseline.about || '')},\n "known": {\n${rows.join(',\n')}\n }\n}\n`);
   console.log(`wrote ${Object.keys(known).length} groups to ${baseFile}`);
