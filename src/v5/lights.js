@@ -313,7 +313,7 @@ export async function build(ctx) {
     function set(on, t) {
       if (on === rowLit) return;
       rowLit = on;
-      if (on) for (let i = 0; i < LEERIE.n; i++) onT[i] = t + i * WAVE + 0.75 + 0.75 * N2(i * 2.3, 9.4); // v7.2-08: each catches on its own beat, 0-1.5 s late (a 22 Hz train of ticks was a rattle)
+      if (on) for (let i = 0; i < LEERIE.n; i++) onT[i] = t + i * WAVE + 0.75 + 0.75 * N2(i * 2.3, 9.4) + (override == null ? 0.7 * (ctx.sky?.flicker?.lampDelay?.(heads[i].x, heads[i].z) ?? 0) : 0); // v7.2-08: each catches on its own beat, 0-1.5 s late (a 22 Hz train of ticks was a rattle); v16-S2: and later the farther from the eye, in the valley's wave
       else offT = t;
     }
     updates.push([(dt, t, f) => {

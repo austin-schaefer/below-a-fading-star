@@ -33,6 +33,7 @@ export function buildSky(ctx) {
     uSunDir: { value: sunDir },
     uMoonDir: { value: moonDir },
     uFlicker: { value: 1.0 },
+    uDark: { value: 0 }, // v16-S2: flicker.dark, for the night that shows through a gutter
     uSunCore: { value: new THREE.Color(PALETTE.sunCore) },
     uSunLight: { value: new THREE.Color(PALETTE.sunLight) },
     uHorizonSun: { value: new THREE.Color(PALETTE.skyHorizonSun) },
@@ -55,7 +56,7 @@ export function buildSky(ctx) {
     fragmentShader: `
       precision highp float;
       varying vec3 vDir;
-      uniform float uTime, uFlicker;
+      uniform float uTime, uFlicker, uDark;
       uniform vec3 uSunDir, uMoonDir, uSunCore, uSunLight, uHorizonSun, uHorizonAway, uZenith;
 
       float hash13(vec3 p) { p = fract(p * vec3(443.897, 441.423, 437.195)); p += dot(p, p.yzx + 19.19); return fract((p.x + p.y) * p.z); }
@@ -84,7 +85,7 @@ export function buildSky(ctx) {
         float r1 = hash12(id + face * 97.0), r2 = hash12(id + face * 97.0 + 31.7), r3 = hash12(id + face * 97.0 + 63.1);
         vec2 c = vec2(r1, r2) * 0.8 + 0.1;
         float dist = length(f - c);
-        float bright = pow(r3, 14.0);
+        float bright = pow(r3, 14.0 - 7.0 * uDark); // v16-S2: in a gutter the fainter stars come out too
         float tw = 0.75 + 0.25 * sin(uTime * (1.5 + r2 * 3.0) + r1 * 40.0);
         return smoothstep(size * (0.6 + bright), 0.0, dist) * bright * tw;
       }
@@ -97,10 +98,13 @@ export function buildSky(ctx) {
 
         // Gradient: horizon → zenith, warmer toward the sun's side of the sky
         float horizonBand = pow(1.0 - clamp(up, 0.0, 1.0), 3.5);
-        vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6));
+        // v16-S2: in a gutter the ember goes out of the horizon (uDark, flicker.dark) and the whole vault sinks to violet,
+        // the dark blue that is always behind the red showing through (skylife/common.js's sl_sky does the same)
+        vec3 horizon = mix(uHorizonAway, uHorizonSun, pow(toSun, 1.6) * (1.0 - 0.8 * uDark));
         vec3 sky = mix(uZenith, horizon, horizonBand);
         // below the horizon fades into haze-dark
         sky = mix(sky, uHorizonAway * 0.55, smoothstep(0.0, -0.12, up));
+        sky *= mix(vec3(1.0), vec3(0.62, 0.58, 1.12), uDark);
 
         // Glow around the sun, broad and low
         float glow = pow(toSun, 6.0) * 0.55 + pow(toSun, 24.0) * 0.7 + pow(toSun, 90.0) * 1.2;
@@ -110,12 +114,12 @@ export function buildSky(ctx) {
         vec3 bandN = normalize(vec3(0.55, 0.35, -0.75));
         float band = exp(-pow(dot(d, bandN) * 6.0, 2.0));
         float bandTex = fbm(d.xz * 6.0 + d.y * 4.0) * 0.6 + 0.4;
-        sky += vec3(0.16, 0.12, 0.2) * band * bandTex * smoothstep(-0.05, 0.25, up) * 0.75;
+        sky += vec3(0.16, 0.12, 0.2) * band * bandTex * smoothstep(-0.05, 0.25, up) * (0.75 + 1.1 * uDark);
 
         // Stars (fade near horizon and inside the sun's glare)
         float s = stars(d, 110.0, 0.06) + stars(d + 0.01, 220.0, 0.04) * 0.6;
-        float starFade = smoothstep(-0.02, 0.2, up) * (1.0 - smoothstep(0.75, 0.995, toSun));
-        sky += vec3(0.85, 0.88, 1.0) * s * starFade * 1.4;
+        float starFade = smoothstep(-0.02 - 0.06 * uDark, 0.2 - 0.12 * uDark, up) * (1.0 - smoothstep(0.75 + 0.2 * uDark, 0.995, toSun));
+        sky += vec3(0.8, 0.86, 1.0) * s * starFade * (1.4 + 3.2 * uDark); // and every star comes out hard and cold
 
         ${cinctureGLSL()}
         // High cloud: slow, thin, lit from the sun side
@@ -174,19 +178,55 @@ export function buildSky(ctx) {
   // Timings come from GUTTER (below) so everything that wants them reads one place; ?gutter=<len>,<every> overrides, ?gutter=v3 restores the old ones.
   const grng = ctx.makeRng(1736); // the gutter's own stream (v7.2-05; salt 1736 since v16-S1, so the first lands at 87.5 s, a long one of 15.2 s): the same course every visit
   // FIRST_GUTTER: the first one's [min, max] seconds after 'begin'. Until the visitor goes out the countdown is held
-  // (flicker.out false), so the title card's minute does not spend it; a pinned ?gutter= runs from ready, as renders want.
-  const flicker = { value: 1.0, next: FIRST_GUTTER[0] + grng() * (FIRST_GUTTER[1] - FIRST_GUTTER[0]), phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned, dark: 0, lamps: 0 };
-  // Two readings for the things that answer (v16-S1): `dark` (0..1) is how far down the sun is (0 above 0.9, 1 at the floor
-  // of 0.3), with no lag; `lamps` (0..1) is the hand that answers it: the Lappet's lamps and panes are turned up about a
-  // second and a half after the dark has come (a person noticing), reach full in about two, and are turned down slowly,
-  // over some eight seconds once the sun is back (nobody hurries to trim a wick). Under flicker.hold both settle at once.
+  // (flicker.out false), so the title card's minute does not spend it; a pinned ?gutter= and ?gutter=v3 run from ready
+  // (v3's first comes one of its own intervals on, as it did). Anything that brings `next` forward from outside (an act,
+  // a test, a render) means the gutter to come: setting it lower than it stands sets `out` too (v16-S2).
+  let next = FIRST_GUTTER[0] + grng() * (FIRST_GUTTER[1] - FIRST_GUTTER[0]);
+  const v3 = GUTTER === GUTTER_V3;
+  if (v3) next = GUTTER.every[0] + grng() * (GUTTER.every[1] - GUTTER.every[0]);
+  const flicker = {
+    value: 1.0, phase: 0, len: 0, hold: null, timing: GUTTER, out: !!GUTTER.pinned || v3,
+    get next() { return next; },
+    set next(v) { if (v < next) this.out = true; next = v; },
+    dark: 0, lamps: 0, slow: 0, soon: 0, after: 0, lampsAt: null, lampDelay: null, wave: null,
+  };
+  // The readings for the things that answer (v16-S1, S2), all 0..1, all settled at once under flicker.hold:
+  //   `dark`: how far down the sun is (0 above 0.9, 1 at the floor of 0.3), with no lag.
+  //   `lamps`: the hand that answers it: lamps and panes turned up about a second and a half after the dark has come (a
+  //     person noticing), full in about two, turned down slowly over some eight seconds once the sun is back.
+  //   `lampsAt(x, z)`: `lamps` as it reaches a place: the valley's lights answer in a ragged wave outward from the one who
+  //     watches, the nearest first (0.3 s plus a second per 45 m, plus up to 1.2 s that is the place's own 6 m cell's; at
+  //     most 7 s), each up over 1.8 s and down over 8 s; `wave` is the same for shaders, `lampDelay(x, z)` the delay alone
+  //     (for a thing that lights on its own beat: the Leerie's standards).
+  //   `slow`: a stored warmth: up over three seconds while the dark is down, back over six (the Laid Sun, the glass).
+  //   `soon`: the air holding its breath: 0 to 1 over the four seconds before a gutter's onset, 1 through it, gone as the
+  //     sun catches (the wind drops before the dark comes).
+  //   `after`: the relief: 1 as the sun catches, gone over some five seconds (a warm flush, a gust).
   let lampWait = 0;
-  if (GUTTER.pinned) flicker.next = Math.min(flicker.next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
+  if (GUTTER.pinned) next = Math.min(next, GUTTER.every[0]); // a pinned ?gutter= starts after one interval at most
   ctx.events?.addEventListener('begin', () => { flicker.out = true; });
+  // the wave: seconds since the hand began turning the lamps up (rise) and since it began turning them down (fall), -1
+  // when not; a place's own answer is its delay (lampDelay) behind those. flicker.wave is a uniform holder for shaders
+  // (src/structures/materials.js: the stone's lit panes): (eye x, eye z, rise, fall).
+  let rise = -1, fall = -1;
+  const cam = ctx.camera.position;
+  flicker.wave = { value: new THREE.Vector4(0, 0, -1, -1) };
+  const lampDelay = (x, z) => {
+    const cx = Math.floor(x / 6) + 0.5, cz = Math.floor(z / 6) + 0.5; // (6 m cells, as the stone's shader: a house answers whole)
+    let h = Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453; h -= Math.floor(h);
+    return Math.min(7, 0.3 + Math.hypot(x - cam.x, z - cam.z) / 45 + 1.2 * h);
+  };
+  flicker.lampDelay = lampDelay;
+  flicker.lampsAt = (x, z) => {
+    if (flicker.hold != null || rise < 0) return flicker.lamps;
+    const d = lampDelay(x, z), ss = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+    return ss(0, 1.8, rise - d) * (fall < 0 ? 1 : 1 - ss(0, 8, fall - d));
+  };
+  let wasDown = false;
   function update(dt, t) {
     uniforms.uTime.value = t;
-    if (flicker.out) flicker.next -= dt;
-    if (flicker.next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + grng() * (GUTTER.len[1] - GUTTER.len[0]); flicker.next = GUTTER.every[0] + grng() * (GUTTER.every[1] - GUTTER.every[0]); }
+    if (flicker.out) next -= dt;
+    if (next <= 0 && flicker.phase <= 0) { flicker.len = flicker.phase = GUTTER.len[0] + grng() * (GUTTER.len[1] - GUTTER.len[0]); next = GUTTER.every[0] + grng() * (GUTTER.every[1] - GUTTER.every[0]); }
     let target = 1.0;
     if (flicker.phase > 0) {
       flicker.phase -= dt;
@@ -201,13 +241,31 @@ export function buildSky(ctx) {
       target = Math.min(1.06, Math.max(0.22, target));
     }
     flicker.value += (target - flicker.value) * Math.min(1, dt * 6);
-    if (flicker.hold != null) flicker.value = flicker.hold;
+    const held = flicker.hold != null;
+    if (held) flicker.value = flicker.hold;
     flicker.dark = Math.min(1, Math.max(0, (0.9 - flicker.value) / 0.6));
     lampWait = flicker.dark > 0.4 ? lampWait + dt : 0;
     const lampTo = lampWait > 1.4 ? 1 : flicker.dark > 0.15 ? Math.min(flicker.lamps, 1) : 0;
-    if (flicker.hold != null) flicker.lamps = flicker.dark > 0.4 ? 1 : 0;
+    if (held) flicker.lamps = flicker.dark > 0.4 ? 1 : 0;
     else flicker.lamps += (lampTo - flicker.lamps) * Math.min(1, dt / (lampTo > flicker.lamps ? 0.8 : 3.5));
+    if (held) flicker.slow = flicker.dark;
+    else flicker.slow = Math.min(1, Math.max(0, flicker.slow + Math.max(-dt / 6, Math.min(dt / 3, flicker.dark - flicker.slow))));
+    const soonTo = flicker.phase > 0.6 ? 1 : flicker.out && flicker.phase <= 0 ? Math.min(1, Math.max(0, 1 - next / 4)) : 0;
+    flicker.soon = held ? (flicker.dark > 0.4 ? 1 : 0) : soonTo;
+    const down = flicker.dark > 0.5;
+    if (wasDown && !down) flicker.after = 1;
+    wasDown = down;
+    flicker.after = held ? 0 : Math.max(0, flicker.after - dt / 5);
+    if (held) { rise = flicker.lamps > 0.5 ? 1e4 : -1; fall = -1; }
+    else {
+      if (lampTo >= 1 && (rise < 0 || fall >= 0)) { rise = fall >= 0 ? 1.8 * Math.max(0, 1 - fall / 8) : 0; fall = -1; }
+      else if (rise >= 0) rise += dt;
+      if (lampTo <= 0 && rise >= 0 && fall < 0) fall = 0; else if (fall >= 0) fall += dt;
+      if (fall > 18) rise = fall = -1;
+    }
+    flicker.wave.value.set(cam.x, cam.z, rise, fall);
     uniforms.uFlicker.value = flicker.value;
+    uniforms.uDark.value = flicker.dark;
     dome.position.copy(ctx.camera.position);
   }
   return { dome, flicker, update, sunDir, moonDir };

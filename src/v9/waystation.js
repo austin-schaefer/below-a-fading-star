@@ -486,14 +486,15 @@ export async function build(ctx) {
   const lampAt = new THREE.Vector3();
   ctx.registerUpdate((dt, t) => {
     const f = flick.value; // 1 in full sun, toward 0.2 in a gutter
-    gut += ((f < 0.7 ? 1 : 0) - gut) * Math.min(1, dt * 1.5);
+    gut += ((f < 0.7 ? 1 : 0) - gut) * Math.min(1, dt * 1.5); // (the wind: at once)
+    const hand = flick.lampsAt ? flick.lampsAt(SP.x, SP.z) : gut; // v16-S2: the lamp turned up when the valley's wave reaches the Halt
     // the sway: two slow periods, a little wider in a gutter's wind
     const amp = 0.022 + 0.02 * gut;
     pivot.rotation.z = amp * Math.sin(t * 0.83) + 0.4 * amp * Math.sin(t * 1.91 + 1.3);
     pivot.rotation.x = 0.6 * amp * Math.sin(t * 0.61 + 0.7);
     // the lamp: a steady flame with a slow breath, turned up while the sun gutters
     const fl = 0.9 + 0.06 * Math.sin(t * 2.3) + 0.04 * Math.sin(t * 7.1 + 0.4);
-    const k = fl * (1 + 0.9 * gut);
+    const k = fl * (1 + 1.8 * hand);
     glowMat.uniforms.uWindow.value = 0.32 * k;
     glowMat.uniforms.uSTime.value = t;
     lamp.intensity = 30 * k * (1 - 0.6 * dimmer.value); // turned low while a guest hangs at the hatch (v10-A4)

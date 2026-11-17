@@ -26,6 +26,9 @@ export function makeStoneMaterial(ctx) {
     uSTime: { value: 0 },
     uGlyph: { value: 1 },
     uWindow: { value: 1 }, uLime: { value: 0.85 }, // (uLime: channel 2, limewash's own paleness: steady, and down with the sky as the sun gutters)
+    // v16-S2: the lit panes (channel 1) turned up in a gutter house by house, in the wave outward from the eye that
+    // sky.js keeps (flicker.wave: eye x, z, rise, fall); uWaveK is how far up (0: this material's panes do not answer)
+    uWave: ctx?.sky?.flicker?.wave || { value: new THREE.Vector4(0, 0, -1, -1) }, uWaveK: { value: 0 },
     uRust: { value: Array.from({ length: RUST_SLOTS }, () => new THREE.Vector4(0, 0, 0, 0)) },
     uPave: CRUST_PAVE.uPave, uPaveBox: CRUST_PAVE.uPaveBox,
   };
@@ -50,9 +53,16 @@ export function makeStoneMaterial(ctx) {
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float uSTime, uGlyph, uWindow, uLime; uniform vec4 uRust[${RUST_SLOTS}]; uniform sampler2D uPave; uniform vec4 uPaveBox;
+        uniform float uSTime, uGlyph, uWindow, uLime, uWaveK; uniform vec4 uRust[${RUST_SLOTS}]; uniform sampler2D uPave; uniform vec4 uPaveBox; uniform vec4 uWave;
         varying vec3 vSW; varying vec3 vSN; varying vec2 vSU; varying vec4 vSA; varying vec4 vSE; varying float vSL;
-        ${NOISE_GLSL}`)
+        ${NOISE_GLSL}
+        float fpLampWave(vec3 p) { // sky.js's lampsAt, in the shader
+          if (uWave.z < 0.0) return 0.0;
+          vec2 c = floor(p.xz / 6.0) + 0.5;
+          float h = fract(sin(c.x * 12.9898 + c.y * 78.233) * 43758.5453);
+          float d = min(7.0, 0.3 + distance(p.xz, uWave.xy) / 45.0 + 1.2 * h);
+          return smoothstep(0.0, 1.8, uWave.z - d) * (uWave.w < 0.0 ? 1.0 : 1.0 - smoothstep(0.0, 8.0, uWave.w - d));
+        }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         vec3 sP = vSW; vec3 sN = normalize(vSN);
         float sDist = length(vViewPosition);
@@ -157,7 +167,7 @@ export function makeStoneMaterial(ctx) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         if (vSE.r + vSE.g + vSE.b > 0.0) {
           float ch = vSE.w;
-          float pulse = ch < 0.5 ? uGlyph * (0.85 + 0.25 * sin(uSTime * 0.31 + sP.x * 0.21 + sP.z * 0.17)) : ch > 1.5 ? uLime : uWindow;
+          float pulse = ch < 0.5 ? uGlyph * (0.85 + 0.25 * sin(uSTime * 0.31 + sP.x * 0.21 + sP.z * 0.17)) : ch > 1.5 ? uLime : uWindow * (uWaveK > 0.0 ? 1.0 + uWaveK * fpLampWave(sP) : 1.0);
           totalEmissiveRadiance += vSE.rgb * pulse * (0.8 + 0.4 * g2);
         }`);
   };
