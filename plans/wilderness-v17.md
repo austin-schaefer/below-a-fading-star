@@ -49,6 +49,22 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 07:53 PST. A1 merged; the diagnosis is in; F2 has the owner's two faults.**
+
+- **The owner on the 21 fps: "i think the low fps are just b/c i'm fighting with the agents for resources, you can ignore that".** Dropped.
+- **A1 merged** (sonnet, 54 min; `briefs/v17/reports/issue-1707-sound.md`): `src/v17/sound.js`: the brook's babble and a rush at each step (weirs too, when `plan.js` lists `LEAT.steps`), the mere's lap, the Swallow's roar from 240 m and under a lowpass in the tube, the tube's press and hiss, the Garth's rills and the can's drop. Measured, not heard. Controls unchanged; `moor-gutter` rough 0.153 to 0.159; `audio-test` 108/108 (one earlier suite run failed a row whose log was lost; unconfirmed until the batch's suite).
+- **The diagnosis** (opus, read-only). **The glow, found:** `src/v15/far.js` draws each far village light as a speck never under 3 px, times 3.2 from 150 m, times up to 2.4 in a gutter: luminance about 4.1 (9.8 guttered) against the sun's disc at 0.30 and bloom's threshold at 0.88. **The shadow, not found:** the box (±95 m, 40 m ahead, light 260 m back), the snap and the redraw rule (3 m, 2 Hz, a creature within 40 m) look right and P1 did not touch them; the sun is west-south-west so the keep, village and Span cannot shade that shore; suspects are casters that come and go between redraws (creatures past 40 m, boulders past 140 m, trees' cross-fade), or whatever shades that ground not being the map at all.
+- In flight (four): W2 the leat (`issue-1704-leat`, 8164), B1 the red tests (`issue-1710-red`, 8170), T1 the typography (`issue-1711-type`, 8171), **F2 the shadow's jump and the village's glow** (`issue-1712-shadow-glow`, 8172, opus, 75 min: reproduce on the keys, toggle `?shadowcull=0`, `?xfade=0`, `?shadowhz=0`, diff the map either side of the flip; the speck's falloff and a cap under the sun; a row for each).
+
+**The owner, 2026-11-17, 07:27 PST, in session, walking the live site (v16) with two screenshots:**
+
+- "shadow maps heare are jumping between states, footstep to footstep ... one step, it's all in shadow; another it jumps into light. this is on eastern shore" (x -21, z 104, facing SE: a hard band of sunlit grass across shadowed ground).
+- "glow of village lights is as bright as the sun" (from x 269, z -20 facing W, the Lonely Staircase's top: the Lappet's lamps as white-hot blobs with bloom halos beside the sun's disc). The same screenshot's counter reads **21 fps** (57 at the first position); the owner did not remark on it.
+
+Both join v17 as fixes (shared code: shadows, post; so the gate is the whole suite, as it is anyway). A read-only diagnosis (opus, no browser) is out for the three; the fix agent starts when one of the four slots frees.
+
+**The owner, 2026-11-17, 07:23 PST, in session, with a screenshot of the loading card: "in this release, can we sneak in an upgrade to our somewhat basic bitch agent typography?"** Joined to v17 as T1 (`issue-1711-type`, 8171, opus, 75 min): one typographic system for everything a visitor reads (the card, place cards, offers, the settings panel); fonts vendored under `vendor/fonts/` (open licences), the Google Fonts links removed; three directions for the card behind `?type=a|b|c`, the strongest the default, the other two kept for the owner to choose from. Four in flight: W2, A1, B1, T1.
+
 **2026-11-17, 07:22 PST. The red-tests agent started early, beside the leat and the sound.** In flight: W2 the leat (`issue-1704-leat`, 8164, opus; pushing), A1 the sound (`issue-1707-sound`, 8167, sonnet; nothing pushed yet), B1 every red test on `next` but theirs (`issue-1710-red`, 8170, opus, 75 min: `geometry` at `v17-swallow` and the tube's last 26 m, places for the sphere and the Garth, the buried stone at `span-east-stairs`, `seams`' four ghosts in the village, the deck views in `tools/views-v17-water.json`, `height-speed` three times). Next: N1 (crossings, dressing, the names list) when W2 is in; then the batch's suite, the critic, the curator.
 
 **The owner, 2026-11-17, 07:19 PST, in session: "after this milestone is shipped fully to prod, pause before going ton ext milestone."** So: when v17 is live on `main` (release published, look-back written), the run stops. No v18 is chosen or opened, and no further wake is scheduled, until the owner says so.
