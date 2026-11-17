@@ -176,7 +176,7 @@ float tNoise(vec3 x) {
   totalEmissiveRadiance += vec3(3.2, 0.9, 0.22) * vEm;
   // v16-S2: and the stone itself answers: veins of the ember run through every slab and step while the sun fails, so the
   // stair's whole course, the slabs asleep in the turf with it, is pricked out in embers from across the moor
-  totalEmissiveRadiance += vec3(1.5, 0.4, 0.1) * uGut * uGut * smoothstep(0.55, 0.68, tm) * (0.5 + 0.5 * smoothstep(0.3, 0.7, tNoise(vSP * 0.5 + 3.0)));`);
+  totalEmissiveRadiance += vec3(1.5, 0.4, 0.1) * uGut * uGut * smoothstep(0.5, 0.64, tm) * (0.5 + 0.5 * smoothstep(0.3, 0.7, tNoise(vSP * 0.5 + 3.0)));`);
   };
   return m;
 }

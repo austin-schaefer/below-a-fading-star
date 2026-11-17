@@ -339,9 +339,9 @@ export async function build(ctx) {
   }
   let gut = 0; // the signs in a gutter (SLAB_U): up over two seconds, down over four
   ctx.registerUpdate((dt, t) => {
-    columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t);
     const fl = ctx.sky?.flicker, to = fl?.dark ?? 0; gut = fl?.hold != null ? to : Math.min(1, Math.max(0, gut + Math.max(-dt / 4, Math.min(dt / 2, to - gut))));
     SLAB_U.uGut.value = gut;
+    columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t);
   });
 
   // ------------------------------------------------------------------ the ascent, and the API
