@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep } from './noise.js';
 import { MOTHER_FOOT } from './vegetation/mother.js';
+import { isUnderwaterBeforeV17 } from './height/field.js'; // v17 W1: the new water is cleared after the draws
 import { plinthsClear } from './v5/plinths.js';
 import { stillRockClear } from './v7/still/clear.js'; // v7: the still figures' ground and the Accrescent's line
 import { naveClear } from './v5/nave/ground.js'; // v5: BD the Foundered Nave's rim and hole
@@ -196,7 +197,7 @@ export async function build(ctx) {
   ];
   const pool = ctx.water.pool || { x: 208, z: 258 };
   function allowed(x, z) {
-    if (terrain.isUnderwater(x, z)) return false;
+    if (isUnderwaterBeforeV17(x, z)) return false; // (v17's water is cleared after the draws, below, so no other rock moves)
     if (terrain.causewayDistance(x, z) < 4.5) return false;
     if (wornAt(x, z) > 0.2) return false; // v8-01: the roads and their verges are clear of stones
     for (const [ax, az, ar] of avoid) if (Math.hypot(x - ax, z - az) < ar) return false;
@@ -249,6 +250,7 @@ export async function build(ctx) {
       if (fw > 0 && (Math.sin(x * 91.7 + z * 47.3) * 43758.5453 % 1 + 1) % 1 < 0.6 * fw) continue; // (v16 L4, above)
       // Cleared after every draw so that rocks elsewhere keep their places (a radius changed in `avoid` above would shift the
       // rng stream and move every later rock): the court's piers reach 39 m, the lens mount's fins 15 m, the armillary's trunnions 22.5 m.
+      if (terrain.isUnderwater(x, z)) continue; // v17 W1: the brook, the mere, the Swallow's cut (the rest was refused above)
       if (Math.hypot(x - L.court.x, z - L.court.z) < L.court.r) continue;
       if (Math.hypot(x - L.tower.x, z - L.tower.z) < 17) continue;
       if (Math.hypot(x - L.arcature.x, z - L.arcature.z) < L.arcature.r) continue;
