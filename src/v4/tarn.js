@@ -33,8 +33,8 @@ export const TARN_EDGE = radialOutline({
 const STEEP = sectorWeight(T.x, T.z, { bearing: 278, half: 10, ramp: 14 });
 const SHELF = sectorWeight(T.x, T.z, { bearing: 8, half: 12, ramp: 18 });
 export const tarnShelf = SHELF; // the shore's paint (and so the reeds) reaches out over the shallows
-// how far past the edge the basin reaches (the flatten's 38 m): field.js skips the block beyond it
-export const TARN_REACH = TARN_EDGE.rMax + 38;
+// how far past the edge the basin reaches (the flatten's 38 m, and 4 for sd's first-order error there): field.js skips the block beyond it
+export const TARN_REACH = TARN_EDGE.rMax + 42;
 
 // The basin, keyed on the edge's sd (it was a radial flatten and dish round one centre): the ground flattens toward
 // -4 within 38 m of the shore (14 on the steep bank, where the moor comes back and stands in a lip), then the floor
