@@ -18,8 +18,11 @@ const [base = 'http://localhost:8123', q = 'medium', outDir = 'shots/wip', extra
 const save = process.env.SAVE === '1', KEYS = process.env.KEYS === '1'; // KEYS=1 walks on the keys
 const ROWS = [
   { name: 'east-shore', x: -21, z: 104, yaw: -2.356, js: 'window.__fp.inhabitants2?.galley?.setU(0)' }, // the owner's stand, facing SE toward the great bridge; the galley held at the east end of its loop, 34 m off
-  { name: 'tarn-north', x: -100, z: 55, yaw: -1.571 }, // the pool's north shore, walking E along it
-  { name: 'fen-west', x: -20, z: 150, yaw: -2.356 }, // the fen's west shore, walking SE toward the Span
+  // (the galley held at the far, south side of its loop, 70 m off: let run, it came within 25 m of this walk and
+  // crossed the 40 m line where a dynamic caster stops casting (src/shadows.js), and its shadow, falling south-east toward this shore
+  // into this view, came or went on whichever step the crossing fell: 3.58 at 22->23 in the gate after #1712's merge)
+  { name: 'tarn-north', x: -100, z: 55, yaw: -1.571, js: 'window.__fp.inhabitants2?.galley?.setU(0.75)' }, // the pool's north shore, walking E along it
+  { name: 'fen-west', x: -20, z: 150, yaw: -2.356, js: 'window.__fp.inhabitants2?.galley?.setU(0.75)' }, // the fen's west shore, walking SE toward the Span
 ].filter((r) => !process.env.ROWS || process.env.ROWS.split(',').includes(r.name));
 const STEPS = +(process.env.STEPS || 12), STRIDE = +(process.env.STRIDE || 0.75);
 

@@ -177,6 +177,25 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   check('teleport: none stands in a hole (the mean ground in a 30 m ring is not more than 6 m above the stand point: the old Pit entry was 29 m), eye never under the terrain', detail.every((r) => (r.basin <= 6 || r.under || ['The Speculum', 'The Cutting'].includes(r.name)) && r.above > 0.5), detail.filter((r) => (r.basin > 6 && !r.under && !['The Speculum', 'The Cutting'].includes(r.name)) || r.above <= 0.5)); // (the Cutting stands in its gorge, the one place the slot is seen from; the Speculum stands on the canyon's floor, 17 m under its rim, which is walkable ground; the fen, the lynchets and the rest sit in shallow bowls)
   check('teleport: each faces its thing (or the sun)', facing, bad);
   check('teleport: closes the panel', allClosed, bad);
+  // (v17 critic) no stand inside a building: nothing drawn within 1.5 m over the eye, either face (the Lamplighter's old
+  // stand, (110, -12), was inside a Lappet house since v15, its ceiling 0.8 m over the eye: the ground, the ring and
+  // the colliders above all passed it, and the frame was flat fog)
+  const roofed = await page.evaluate(async () => {
+    const T = await import('three'), fp = window.__fp, rc = new T.Raycaster(), out = [];
+    rc.layers.enableAll(); rc.far = 1.5;
+    const sides = new Map(); fp.scene.traverse((o) => { if (o.isMesh && o.material && !Array.isArray(o.material)) { sides.set(o.material, o.material.side); o.material.side = T.DoubleSide; } });
+    try {
+      for (const pl of fp.settings.places) {
+        fp.settings.teleport(pl); fp.scene.updateMatrixWorld(true);
+        rc.set(fp.player.pos.clone(), new T.Vector3(0, 1, 0));
+        const h = rc.intersectObjects(fp.scene.children, true).find((h) => h.object.visible && h.object.isMesh && !h.object.isPoints && !/sky|meteor/.test(h.object.name));
+        if (h) out.push({ name: pl.name, over: h.object.name, d: +h.distance.toFixed(2) });
+      }
+    } finally { for (const [m, sd] of sides) m.side = sd; }
+    if (fp.settings.shown) fp.settings.close();
+    return out;
+  });
+  check('teleport: no stand inside a building (nothing drawn within 1.5 m over the eye)', roofed.length === 0, roofed);
   check('teleport: fires no cue', noCue, bad);
   // v14-B4 (#52): the stand shows the place. Each named landmark's own centre (its `at`, for the places that stand on a line) lies within 40
   // degrees of the view's centre line (the horizontal field is about 100 degrees across) and no collider shuts the view within 3 m of the eye
@@ -272,11 +291,22 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   console.log(`   (the names checks: ${((Date.now() - tB) / 1000).toFixed(1)} s)`);
 
   // coordinates: the panel's line (4 Hz, only while open) and the optional always-on readout
-  await page.evaluate(() => { const p = window.__fp.player; p.pos.x = 12.4; p.pos.z = -33.6; p.yaw = -Math.PI / 2; });
+  await page.evaluate(() => { const fp = window.__fp, p = fp.player; fp.controls.placeAt(12.4, -33.6); p.vel?.set(0, 0, 0); p.yaw = -Math.PI / 2; p.pitch = -0.12; }); // (placed on the floor: a walker left in the air falls, and the 4 Hz line runs behind)
+  await page.waitForTimeout(800);
   await page.evaluate(() => window.__fp.settings.open()); await page.waitForTimeout(600);
-  check('coords: the panel shows x, z and facing', (await page.textContent('#set-pos')) === 'x 12  z \u221234  facing E', await page.textContent('#set-pos'));
-  await page.evaluate(() => { window.__fp.player.pos.x = 40; window.__fp.player.yaw = 0; }); await page.waitForTimeout(600);
-  check('coords: it follows at 4 Hz', (await page.textContent('#set-pos')).startsWith('x 40') && (await page.textContent('#set-pos')).endsWith('facing N'));
+  { // (the feet's height is wherever the floor put them: read with the line)
+    const r = await page.evaluate(() => { const p = window.__fp.player; return { t: document.getElementById('set-pos').textContent, y: (p.pos.y - p.eye).toFixed(1).replace(/-(\d)/, '\u2212$1') }; });
+    check('coords: the panel shows x, z, the feet\'s height, facing with the yaw in radians, and the pitch', r.t === `x 12  z \u221234  y ${r.y}  facing E \u22121.57  pitch \u22120.12`, r);
+  }
+  { // (v17, the owner: a bug 24 m under the ground could not be given as a link) one click copies it as a ?pos= link that lands there
+    await page.click('#set-copypos'); await page.waitForTimeout(100);
+    const { link, fy } = await page.evaluate(() => ({ link: document.getElementById('set-copypos').dataset.link || '', fy: window.__fp.player.pos.y - window.__fp.player.eye }));
+    const u = new URL(link), pos = (u.searchParams.get('pos') || '').split(',').map(Number);
+    check('coords: Copy link gives ?pos=x,z,y&yaw&pitch for here', pos.length === 3 && Math.abs(pos[0] - 12.4) < 0.06 && Math.abs(pos[1] + 33.6) < 0.06 && Math.abs(pos[2] - fy) < 0.1 && Math.abs(+u.searchParams.get('yaw') + Math.PI / 2) < 0.006 && Math.abs(+u.searchParams.get('pitch') + 0.12) < 0.006, link);
+    check('coords: the line and its button fit a 390 px panel', await page.evaluate(() => { const r = document.getElementById('set-copypos').getBoundingClientRect(); return r.width > 0 && r.right <= innerWidth; }));
+  }
+  await page.evaluate(() => { window.__fp.player.pos.x = 40; window.__fp.player.yaw = 0; window.__fp.player.pitch = 0; }); await page.waitForTimeout(600);
+  check('coords: it follows at 4 Hz', (await page.textContent('#set-pos')).startsWith('x 40') && (await page.textContent('#set-pos')).includes('facing N 0.00'));
   const dirs = await page.evaluate(async () => { const m = await import('./src/settings.js'); return [0, -Math.PI / 4, -Math.PI / 2, Math.PI, Math.PI / 2, 3 * Math.PI / 4].map((y) => m.facing(y)).join(); });
   check('coords: yaw 0 is N, -pi/2 E, pi S... (NE, E, S, W, SW)', dirs === 'N,NE,E,S,W,SW', dirs);
   await page.evaluate(() => window.__fp.settings.close()); await page.waitForTimeout(100);

@@ -7,7 +7,8 @@
 //   node tools/swallow-walk.mjs [base=http://localhost:8123] [q=low] [prefix=swallow-walk] [there|both] [step=1.4]
 // Frames: shots/wip/<prefix>-<q>-NNN.png in order. Prints each frame with where the feet are and on what floor. Fails
 // (exit 1) if the walker stalls, leaves the tube between its lip and the door (feet on anything but the tube's floor
-// while the plan has them inside it), goes more than 0.3 m under the planks, or the page throws.
+// while the plan has them inside it), goes more than 0.3 m under the planks, or the page throws or logs an error (the
+// sound is started by "Go out", so the tube's audio runs the whole walk).
 import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
@@ -20,6 +21,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
+page.on('console', (m) => { if (m.type() === 'error' && !/favicon|404/.test(m.text())) errors.push('console: ' + m.text()); }); // (v17 critic: 450 setTargetAtTime throws a walk drew over the view)
 await page.goto(`${base}/?q=${q}&pos=-90.5,292&yaw=3.14`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -39,7 +41,7 @@ const st = () => page.evaluate(() => {
   return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, s: n.s, d: n.d, inTube, plan: inTube ? L.floorY(n.s) : null };
 });
 const s0 = await st();
-console.log(`pointer captured: ${s0.locked}`);
+console.log(`pointer captured: ${s0.locked}; sound: ${await page.evaluate(() => { const a = window.__fp.audio; return a.started ? a.ctx?.state : 'not started'; })}`);
 const locked = s0.locked;
 // the route: the shore, the quay's foot and length, the lip, along the tube every 4 m, the door
 const route = await page.evaluate(() => {
