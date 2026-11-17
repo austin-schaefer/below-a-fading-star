@@ -27,7 +27,7 @@ const _rw = {};
 // block's edge). w: half-width of the worn line in metres. parts: extra branches of the same lead.
 export const LEADS = [
   { id: 'P1', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, Demesne turf to moor', pts: [[6, 36], [-14, 41], [-36, 44]] },
-  { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-101, 50], [-122, 60], [-135, 62]] },
+  { id: 'P2', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor; ends at the Scriveners\' shallows', pts: [[-90, 4], [-95, 30], [-100, 46], [-107, 50], [-117, 53.5], [-125, 59], [-135, 62]] }, // v16: round the tarn's new north-east shallows (L2's edge put 0.6 m of water on the old line; drawn dry, it kinked back at the shore and the Link-Boy fell to 7 m ahead)
   { id: 'P3', kind: 'path', cls: 'trod', w: 0.5, brief: 'sheep-track along the Lynchets\' east wall (the Thurifer\'s track), drystone footings', near: { region: 'lynchets', within: 6 },
     pts: [[-110.5, -124], [-135, -120], [-157, -113], [-178, -79], [-166, -66], [-156, -60], [-152, -44]] }, // v8-09: off the shrine's apse at its head, and east of the Stones' fallen uprights
   { id: 'P4', kind: 'path', cls: 'trod', w: 0.5, brief: 'gap in a wall, Lynchets field-stone (the Link-Boy\'s post)', pts: [[-110, -124], [-122, -127], [-136, -119], [-148, -107], [-168.2, -101.3]] }, // v8-09: through the wall's gap, not into the wall; v16: round the south of the west kettle's pool, 5 m clear of it
