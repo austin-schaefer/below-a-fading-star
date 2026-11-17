@@ -77,7 +77,7 @@ export function buildHead(env) {
     // the top and the ends (where the slope does not cover them)
     S.quad([FX0, FTOP, Z0], [FX1, FTOP, Z0], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 1, 0], 0.08);
     // its back, where the slope behind it stands lower than its top (seen from the hillside over it)
-    S.quad([FX0, 3.5, ZI + 1], [FX1, 3.5, ZI + 1], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 0, 1], 0.08);
+    S.quad([FX0, H.crown + 0.4, ZI + 1], [FX1, H.crown + 0.4, ZI + 1], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 0, 1], 0.08); // (over the head's vault)
     // the cornice: a projecting band under the top, and a plinth course at the water
     S.box((FX0 + FX1) / 2, FTOP - 0.35, Z0 - 0.25, (FX1 - FX0) / 2 + 0.3, 0.35, 0.25, 0, VOUSS, FACE, 0.05);
     // the arch's reveal through the face's depth (facing into the opening)
@@ -123,14 +123,15 @@ export function buildHead(env) {
       S.geo(new THREE.CylinderGeometry(0.34, 0.36, 0.36, low ? 10 : 16), m, BRONZE, 0.04);
     }
     // the sun over the keystone, carved: a boss, rays, every socket of its gold empty
-    const sx = ocx, sy = crownA + 2.4, sz = Z0 - 0.2, R = 0.85;
+    const sx = ocx, sy = crownA + 2.4, sz = Z0 - 0.004, R = 0.85; // (the boss's rim on the face, its middle 0.18 proud)
     const P3 = (r, a, dz = 0) => [sx + Math.cos(a) * r, sy + Math.sin(a) * r, sz - dz];
     for (let i = 0; i < 24; i++) {
       const a0 = (i / 24) * Math.PI * 2, a1 = ((i + 1) / 24) * Math.PI * 2;
       S.tri([sx, sy, sz - 0.18], P3(R, a0), P3(R, a1), HELIO, [0, 0, -1], 0.1);
-      if (i % 2 === 0) S.tri(P3(R + 0.05, a0, 0.01), P3(R + 0.05, a1, 0.01), P3(R * 2.1, (a0 + a1) / 2, 0.01), HELIO, [0, 0, -1], 0.1);
+      if (i % 2 === 0) S.tri(P3(R + 0.05, a0, 0.004), P3(R + 0.05, a1, 0.004), P3(R * 2.1, (a0 + a1) / 2, 0.004), HELIO, [0, 0, -1], 0.1); // (rays cut 8 mm proud of the face)
     }
-    for (let i = 0; i < 16; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.85, p = P3(r, a, 0.1 + i * 0.002); S.box(p[0], p[1], p[2], 0.06, 0.06, 0.03, 0, SOCKET, SOCKET, 0.02); }
+    // (each socket sunk into the boss's cone where it stands: the cone is 0.18 proud at its middle, flush at its rim)
+    for (let i = 0; i < 16; i++) { const a = rng() * Math.PI * 2, r = Math.sqrt(rng()) * R * 0.85, p = P3(r, a, 0.18 * (1 - r / R) - 0.012 - i * 0.0017); S.box(p[0], p[1], p[2], 0.06, 0.06, 0.03, 0, SOCKET, SOCKET, 0.02); }
   }
 
   // ---- the sill and the channel through the arch (under the cut's water), the lip at the head's wall
@@ -138,7 +139,7 @@ export function buildHead(env) {
   S.box((ox0 + FALLX1) / 2, (SP.sill - 0.18 + FBOT) / 2, (Z0 - 2.4 + ZI + 0.3) / 2, (FALLX1 - ox0) / 2, (SP.sill - 0.18 - FBOT) / 2 - 0.01, (ZI + 2.7 - Z0) / 2, 0, FACE_D, SILT, 0.05);
   // ---- the ledge (the tube's end lies on it, its top a hand over the water) and the quay north of it
   const QZ0 = SP.quay.z[0], LIPZ = L.at(0).z;
-  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9.4) / 2, (LIPZ + ZI + 0.5) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9.4) / 2, (ZI + 0.5 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (on through the arch and half a metre into the head, broken off over the pool)
+  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9.4) / 2, (LIPZ + Z0 + 0.4) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9.4) / 2, (Z0 + 0.4 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (to just inside the arch: past it the tube goes down off its end over the water)
   S.box((QX[0] + QX[1]) / 2, (QY - 9.3) / 2, (QZ0 + LIPZ) / 2, (QX[1] - QX[0]) / 2, (QY + 9.3) / 2, (LIPZ - QZ0) / 2, 0, FACE_D, FACE, 0.06);
   // the quay's paving: slabs (a shade each), and its kerb on the water side
   for (let z = QZ0; z < LIPZ - 0.01; z += 1.05) for (let x = QX[0]; x < QX[1] - 0.01; x += 1.4) {

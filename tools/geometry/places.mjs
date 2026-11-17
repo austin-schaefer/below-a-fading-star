@@ -26,5 +26,5 @@ export const PLACES = [
   { name: 'span-east-stairs', span: 'east', half: 7 }, // and its east end, over the Pit's side
   { name: 'house', c: [95, -45], r: 17 }, // the Pomegranate House: court, galleries, gate
   { name: 'strake', route: 'village.row.route', half: 9 }, // v15-V1 the Strake: its flags walked end to end, the five fronts (src/v15/row.js gives the route, wherever the plan puts the row)
-  { name: 'v17-swallow', ascent: 'swallow', half: 14, sealed: [42, -12] }, // v17-U1 the Swallow: the quay, the tube's lip, down the head under the pool and the drowned conduit to the Garth's door
+  { name: 'v17-swallow', ascent: 'swallow', half: 14, sealed: [42, -26] }, // v17-U1 the Swallow: the quay, the tube's lip, down the head under the pool and the drowned conduit to the Garth's door (sealed from the head's turn to 26 m short of the end: the door opens into U2's hall, which closes it)
 ];
