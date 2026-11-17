@@ -260,7 +260,9 @@ export function buildScatter(ctx, B, env) {
   {
     // Pinned to its LANDMARKS entry: findSpot rejects every landmark's own footprint, so once the
     // shrine became a landmark the search near (-100,-100) could never succeed and nothing was built.
-    const p = pinSpot(env, ctx.landmarks.shrine, 6, { slope: 0.3, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 }, allow: ['shrine'] });
+    // (v16: on its own spot up to a slope of 0.4: the floor's first whaleback tips it to 0.31, and at 0.3 the shrine was not
+    // built at all, nor the jackdaw's hoard on its saint)
+    const p = pinSpot(env, ctx.landmarks.shrine, 6, { slope: 0.3, pinSlope: 0.4, sep: 30, size: 6, near: { x: -100, z: -100, r: 60 }, allow: ['shrine'] });
     if (p) {
       const gm = ground.groundAt(p.x, p.z);
       // beehive cell: rings of stone stepping inward, the top fallen in
