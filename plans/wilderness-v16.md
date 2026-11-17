@@ -122,4 +122,13 @@ Next: L3 after its review; S3, L4, V1 as they report. Then the height path's che
 
 Next: V3 and L5 as they report (tests here, merge). Then one re-record of `seams` and `geometry`, the whole suite on `next` on a quiet machine, the critic and the curator beside it, the note. W3 (the open edges, `issue-1527-edges`) stays out of v16: it wants a walk by the owner and the floor has only just settled.
 
+**2026-11-17, 02:52 PST. The act is on `next`; the critic and the curator are out; only the fen is still to land.**
+
+- **V2 + V3 merged** (02:17): the act "Take his letter" with V3's eight fixes (the flight and the pen run on the clerk's clock, so a gutter holds the whole act; one mesh each for letter and ledger; the story file updated). On `next`: touch 45, village 687, ways 271, strata 8, dressing 22; `acts` 174 on the branch, not rerun here (the whole suite will).
+- **The critic** (opus, `issue-1610-critic`, 8170) started at 02:25 on `next` without the fen's last round, to shorten the tail; asked besides its brief to stand two minutes in four places (does it notice the gutter unprompted) and to look down from every high stand for what is still ruled. The fen's final frames get a blind reader of their own.
+- **The curator** (sonnet, no browser) started at 02:53 in the deploy worktree's `shots/`; told to leave `v16-L5*`, `critic-*` and the owner's own screenshots.
+- **L5** (opus, `issue-1605-fen`, 8165) is 72 minutes in and still pushing (the merged tree's height path; `rocks` green); running its tests.
+
+Next: L5's hand-back (tests here, merge), the re-record of `seams` and `geometry`, the whole suite on `next` as the gate, the note, the PR.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
