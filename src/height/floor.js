@@ -70,12 +70,12 @@ const KETTLES = [
 // say which way the ground falls. Each: its edge (radialOutline), its level y (measured on the ground round it with the
 // pools left out: tools/outline-test.mjs holds the shore dry and the water in), the bowl's depth D under it.
 const POOL_DEFS = [
-  { name: 'kettle', x: -64, z: -88, r: 11, seed: 16041, amp: 0.16, K: 6, y: 2.9, D: 1.4,
-    lobes: [{ bearing: 200, d: 9, r: 5 }] },
-  { name: 'kettle-west', x: -124, z: -94, r: 9, seed: 16042, amp: 0.18, K: 6, y: 6.5, D: 1.1,
-    lobes: [{ bearing: 40, d: 7, r: 4 }] },
-  { name: 'strand-pond', x: -103, z: -45, r: 5, seed: 16043, amp: 0.12, K: 5, y: 6.7, D: 0.8,
-    lobes: [{ x: -112, z: -49.5, r: 3.6, to: { x: -93, z: -40.5, r: 3 } }] }, // drawn out along the strand behind its ridge
+  { name: 'kettle', x: -64, z: -90, r: 16, seed: 16041, amp: 0.16, K: 6, y: 1.2, D: 1.4,
+    lobes: [{ bearing: 200, d: 14, r: 7 }] },
+  { name: 'kettle-west', x: -124, z: -96, r: 12, seed: 16042, amp: 0.18, K: 6, y: 6.0, D: 1.1,
+    lobes: [{ bearing: 40, d: 10, r: 5 }] },
+  { name: 'strand-pond', x: -103, z: -46, r: 7, seed: 16043, amp: 0.12, K: 5, y: 6.3, D: 0.8,
+    lobes: [{ x: -120, z: -54.5, r: 4.5, to: { x: -86, z: -37.5, r: 4 } }] }, // drawn out along the strand behind its ridge
 ];
 // the bank cut down to the water on the high side (rise a metre out), the lip raised to hold it on the low side
 const BANK_SLOPE = 0.45, LIP = 0.3, LIP_W = 2.2, LIP_FALL = 0.32, POOL_REACH = 26;
@@ -291,7 +291,7 @@ export function floorCharacter(x, z, out = _fc) {
   // a slow patchiness, so no band is ruled
   const n = 0.5 + 0.5 * SN.noise2(x * 0.023 + 11.3, z * 0.023 - 4.1);
   // the low west and south: wetter, greener
-  let wet = (1 - smoothstep(-140, 0, u)) * (0.5 + 0.5 * n);
+  let wet = (1 - smoothstep(-130, 10, u)) * (0.6 + 0.4 * n);
   // the old strand: its face and lip pale shingle, its foot wet
   let strand = 0;
   const su = u - STRAND;
@@ -301,7 +301,7 @@ export function floorCharacter(x, z, out = _fc) {
     wet = Math.max(wet, smoothstep(-16, -7, e) * (1 - smoothstep(-6, -2.5, e)) * (0.55 + 0.35 * n));
   }
   // the whalebacks: crests bleak, the down-ice tails dark with ling
-  let bleak = smoothstep(130, 260, u) * 0.45 * (0.6 + 0.4 * n), lee = 0;
+  let bleak = smoothstep(-40, 240, u) * 0.6 * (0.65 + 0.35 * n), lee = 0; // (the whole fall pales toward the top: the plainest cue from the heights which way it goes)
   for (let i = 0; i < BACKS.length; i++) {
     const b = BACKS[i];
     if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1) continue;

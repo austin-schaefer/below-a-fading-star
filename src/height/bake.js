@@ -121,7 +121,7 @@ export function bakeTerrain(P, segs, size) {
     // the lees dark with ling, the high north-east stony, the low ground and the hollows wet and green
     if (b.wet > 0 || b.bleak > 0 || b.lee > 0 || b.stone > 0 || b.strand > 0) {
       col.lerp(cFlStone, b.stone * 0.75).lerp(cFlBleak, b.bleak * 0.85).lerp(cFlLing, b.lee * 0.85);
-      col.lerp(cFlWet, b.wet * 0.85).lerp(cFlStrand, b.strand * 0.95);
+      col.lerp(cFlWet, b.wet * 0.85).lerp(cFlStrand, b.strand);
     }
     col.lerp(cWood, b.wood * 0.8);
     col.lerp(cOrch, b.orchard * 0.5);
