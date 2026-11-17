@@ -90,4 +90,19 @@ Next: L1 and P1 as they report (frames, a blind reader for L1, a cold review, te
 
 Next: P1 after its review (tests here, merge); S2, L3, L4, V1 as they report. Then the height path's cheap wins (the survey's and P1's notes: `riverSection`, `project()`), the one re-record of `seams` and `geometry`, the whole suite on `next`, W3 against the new floor, the critic.
 
+**2026-11-17, 01:19 PST. P1 is on `next`. S2 and L3 handed back and are held on their reviews. Three agents in flight.**
+
+- **P1 merged** (cold review, opus: no blockers; a property test of the collider grid against the linear scan, 600k checks, 0 mismatches). On `next`: settings 86, walk 13, hop 30, loading 28, perf 29, touch 43, stair 5. Left: `floorProbe` syncs the grid on every call (`controls.js:821`), so floods (`seams`, `ways`) gain nothing; 86 tools repeat the flag list instead of calling `launch()`. #79 is `in-progress`, `v16`.
+- **S2 the gutter's second round** (opus, 69 min; `issue-1601-gutter` at `6e6c995`): the stars come out hard, the sky sinks to violet, a cold grade, a hush before and a gust after, the valley's lights in a wave, and answers at the acts, the Laid Sun, the stair, the water, the Noonwrights' glass, the rooks, the grazers. **With the report shut: the sequences from the moor and the Lees read as an event** (`shots/wip/v16-S2-seq-moor-*`, `-lees-*`). Cold review (opus): **one blocker**, the warm flush as the sun catches is a one-frame full-screen step (`sky.js:256`, `post.js:413`); six smaller. **S3** (sonnet, same worktree, 8161) is fixing the seven. Not merged.
+- **L3 the fen** (opus, 72 min; `issue-1605-fen`): `src/height/fen.js`, the fen ragged from the air, wandering edges for the Saltings, the Outwash, the wood, the crystal, the clearings; L2's leftovers done. `rocks` 36/2 and `geometry` 127/8 fail on its branch (scatter reshuffled by the changed weights, it says). With a cold reviewer (opus), asked for cost and for whether any reshuffled bush is a real fault. Not merged. The salt still reads from the air as large pale sheets.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| S3 the gutter's review fixes | `issue-1601-gutter` | 8161 | sonnet |
+| L4 the floor reads (on L1, with L1's review) | `issue-1603-tilt` | 8163 | opus |
+| V1 the Lappet's loose ends | `issue-1606-spine` | 8166 | opus |
+
+Next: L3 after its review; S3, L4, V1 as they report. Then the height path's cheap wins and `floorProbe`'s sync, the one re-record of `seams` and `geometry`, the whole suite on `next`, W3 against the new floor, the critic.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
