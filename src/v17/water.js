@@ -59,7 +59,7 @@ const FRAG = /* glsl */`
     float dep = vFlow.w - rag * 0.08;
     // the edge: the depth over the drawn ground (the rag only ever takes from it, so no sheen lies on dry ground at the
     // level), and a backstop just past the stream's own edge
-    float edge = smoothstep(0.01, 0.12, dep) * (1.0 - smoothstep(hw + 0.2, hw + 1.3, abs(d) + (rag - 0.5) * 0.6)) * fade;
+    float edge = smoothstep(0.01, 0.12, dep) * (1.0 - smoothstep(hw - 0.15, hw + 0.45, abs(d) + (rag - 0.5) * 0.5)) * fade;
     if (edge <= 0.002) discard;
 
     vec3 toCam = cameraPosition - P;
@@ -108,17 +108,18 @@ const FRAG = /* glsl */`
     alpha = mix(alpha, 1.0, fres * 0.6 * edge);
 
     // white water: churn below a step, riffle lines down the quick water, a line along the swift edges
-    float streak = mix(mask(vec2(d * 1.1 + 0.37, (s - sp * fT1) * 0.16 + 0.41)) * 0.55 + mask(vec2(d * 2.6 + 0.83, (s - sp * 1.15 * fT1) * 0.42 + 0.17)) * 0.45,
-                       mask(vec2(d * 1.1, (s - sp * fT0) * 0.16)) * 0.55 + mask(vec2(d * 2.6 + 0.4, (s - sp * 1.15 * fT0) * 0.42)) * 0.45, fW0);
-    float churn = mix(mask(vec2(d * 0.8 + t * 0.05 + 0.59, (s - sp * 1.3 * fT1) * 0.5 + 0.23)) * 0.5 + mask(vec2(d * 2.1 + 0.31, (s - sp * 1.6 * fT1) * 1.2 + 0.71)) * 0.5,
-                      mask(vec2(d * 0.8 + t * 0.05, (s - sp * 1.3 * fT0) * 0.5)) * 0.5 + mask(vec2(d * 2.1, (s - sp * 1.6 * fT0) * 1.2)) * 0.5, fW0);
+    float streak = mix(mask(vec2(d * 1.1 + 0.37, (s - sp * fT1) * 0.3 + 0.41)) * 0.55 + mask(vec2(d * 2.6 + 0.83, (s - sp * 1.15 * fT1) * 0.8 + 0.17)) * 0.45,
+                       mask(vec2(d * 1.1, (s - sp * fT0) * 0.3)) * 0.55 + mask(vec2(d * 2.6 + 0.4, (s - sp * 1.15 * fT0) * 0.8)) * 0.45, fW0);
+    float churn = mix(mask(vec2(d * 0.9 + t * 0.07 + 0.59, (s - sp * 1.3 * fT1) * 0.7 + 0.23)) * 0.5 + mask(vec2(d * 2.2 + 0.31, (s - sp * 1.6 * fT1) * 1.7 + 0.71)) * 0.5,
+                      mask(vec2(d * 0.9 + t * 0.07, (s - sp * 1.3 * fT0) * 0.7)) * 0.5 + mask(vec2(d * 2.2, (s - sp * 1.6 * fT0) * 1.7)) * 0.5, fW0);
     streak = 0.5 + (streak - 0.5) * fNorm; churn = 0.5 + (churn - 0.5) * fNorm;
     float foam = smoothstep(0.7 - rough * 0.55, 0.9 - rough * 0.45, churn) * smoothstep(0.02, 0.2, rough);
     // riffles: thin pale lines drawn out down the stream where it runs (the texture stretched along s)
-    float rif = mix(mask(vec2(d * 3.2 + 0.13, (s - sp * fT1) * 0.09 + 0.61)), mask(vec2(d * 3.2 + 0.77, (s - sp * fT0) * 0.09)), fW0);
+    // (drawn out about 3 to 1 along the stream: longer reads as ruled lines from a vanishing point)
+    float rif = mix(mask(vec2(d * 0.9 + 0.13, (s - sp * fT1) * 0.3 + 0.61)), mask(vec2(d * 0.9 + 0.77, (s - sp * fT0) * 0.3)), fW0);
     rif = 0.5 + (rif - 0.5) * fNorm;
-    float riffle = smoothstep(0.66, 0.76, rif) * smoothstep(0.35, 1.2, sp) * (1.0 - still) * 0.45;
-    float edgeLine = (1.0 - smoothstep(0.0, 0.18, dep)) * smoothstep(0.6, 1.8, sp) * smoothstep(0.6, 0.8, streak) * 0.55;
+    float riffle = smoothstep(0.69, 0.75, rif) * smoothstep(0.3, 1.2, sp) * (1.0 - still) * 0.3;
+    float edgeLine = (1.0 - smoothstep(0.0, 0.18, dep)) * smoothstep(0.6, 1.8, sp) * smoothstep(0.62, 0.8, streak) * 0.4;
     foam = max(foam, max(riffle, edgeLine)) * edge;
     vec3 foamCol = uFoam * (0.35 + 0.65 * uFlicker) * (0.75 + 0.25 * N.y);
     col = mix(col, foamCol, foam * 0.9);

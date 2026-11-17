@@ -86,7 +86,7 @@ export function makeStream(def) {
     for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 0) break; r = Math.max(r, Math.min(1, (DROP[i] - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
     ROUGH[k] = Math.max(0, r);
     let g = 0; for (let j = -8; j <= 8; j++) g += DROP[Math.min(n - 1, Math.max(0, k + j))] / 17;
-    SPEED[k] = Math.min(3.2, Math.max(0.12, (0.1 + g * 32) * Math.min(2, 1.3 / HW[k])));
+    SPEED[k] = Math.min(1.9, Math.max(0.12, (0.1 + g * 32) * Math.min(1.6, 1.6 / HW[k])));
     D[k] = Math.min(1.2, 0.45 + 0.08 * HW[k] + (g < 0.004 ? 0.25 : 0));
     // the edge wobbled on each side, slow along the stream
     HWL[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, 3.7)) + 0.25 * SN.noise2(S[k] * 0.45, 11.1);
@@ -172,7 +172,7 @@ export function makeStream(def) {
     const hold = Math.max(at(HOLD, p), 0.35);
     // (no `shore`: it brings the reeds' stands, and a stream 3 m wide is lost in them; the sedge takes the wet margin)
     out.strand = Math.max(out.strand, (1 - smoothstep(0.3, 1.4 + 0.9 * n2, e)) * (0.5 + 0.3 * n2) * hold);
-    out.wet = Math.max(out.wet, (1 - smoothstep(1.0, 4 + 2 * n2, e)) * 0.8);
+    out.wet = Math.max(out.wet, (1 - smoothstep(0.5, 2.5 + 1.5 * n2, e)) * 0.45); // (more, and the sheen on the bank reads as water)
     return true;
   }
   return { name, kind: 'stream', X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
