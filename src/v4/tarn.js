@@ -40,7 +40,11 @@ export const TARN_REACH = TARN_EDGE.rMax + 42;
 // -4 within 38 m of the shore (14 on the steep bank, where the moor comes back and stands in a lip), then the floor
 // falls to -12.5: over 24 m in the open, 8 on the steep bank, and on the shallows a shelf a hand deep for 15 m first.
 // n05, n03: field.js's noises at 0.05 and 0.03 (its SX).
-export function tarnBasin(h, x, z, n05, n03) {
+// (v16 L5: SX is field.js's noise, asked here only where the basin does something; where the edge's floor of sd is
+// 38 or more and the bay is out of reach, nothing below touches h)
+export function tarnBasin(h, x, z, SX) {
+  if (!nearBay(x, z) && TARN_EDGE.sdFloor(x, z) >= 38) return h;
+  const n05 = SX.noise2(x * 0.05, z * 0.05), n03 = SX.noise2(x * 0.03, z * 0.03);
   const sd = TARN_EDGE.sd(x, z), st = STEEP(x, z), sh = SHELF(x, z);
   const m = 1 - smoothstep(lerp(4, 0.5, st), lerp(38, 14, st), sd);
   h = lerp(h, -4.0 + n05 * 0.25, m);
@@ -82,6 +86,10 @@ export function spitAt(x, z, out = _sp) {
 
 // Signed distance to the tarn's waterline (metres, < 0 in the water), ignoring the spit: the edge, and the bay.
 export function tarnShoreDistance(x, z) { return withBay(TARN_EDGE.sd(x, z), x, z); }
+// whether the bay's smooth min can reach (x, z); past it tarnShoreDistance is the edge's sd
+const nearBay = (x, z) => (x - BAY.x) ** 2 + (z - BAY.z) ** 2 <= (BAY.r + BAY.k + 8) ** 2;
+// true where tarnShoreDistance is certainly over D (v16 L5: its readers skip it there)
+export const tarnShoreAbove = (x, z, D) => !nearBay(x, z) && TARN_EDGE.sdFloor(x, z) > D;
 function withBay(dc, x, z) {
   const db = Math.sqrt((x - BAY.x) ** 2 + (z - BAY.z) ** 2) - BAY.r;
   if (db > BAY.k + 8) return dc;
@@ -98,11 +106,14 @@ const WET_HIGH = 0.45;
 export function tarnWet(x, z, groundAt) {
   const dx = x - T.x, dz = z - T.z;
   if (dx * dx + dz * dz >= T.r * T.r) return false;
+  if (tarnShoreAbove(x, z, 1.5)) return false;
   const sd = tarnShoreDistance(x, z);
   const m = (x - BAY.x) ** 2 + (z - BAY.z) ** 2 < (BAY.r + 34) ** 2 ? 0.5 : 1.5;
   if (!(sd < m)) return false;
   const s = spitAt(x, z, _spw);
   if (s.t > -0.1 && s.t < 0.8 && s.d < s.w) return false; // the spit's back stands out of the water
+  // (the ground is asked only near the line and round the spit: deeper in, the basin lies far under the water)
+  if (sd < -3 && !(s.t > -0.4 && s.t < 1.5 && s.d < s.w + 6)) return true;
   return !groundAt || groundAt(x, z) < T.y + WET_HIGH;
 }
 const _spw = { t: 0, d: 0, w: 0 };

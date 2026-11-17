@@ -180,8 +180,37 @@ export function radialOutline(o) {
     return L.join('\n');
   }
 
+  // sdFloor(x, z): a cheap lower bound of sd (v16 L5: so a reader that needs sd only under some D skips it where it is
+  // certainly over). Per sector of bearing (128, by the diamond angle, no atan2), the most ρ − sd reaches from rMin out
+  // to FAR, sampled on 9 bearings a sector every metre, plus the most a step between samples can hide (|∇(ρ − sd)| <= 2.5);
+  // sd >= ρ − that. Under rMin, -Infinity. A sector is sampled the first time a query lands in it. tools/outline-test.mjs
+  // holds it under sd at random points.
+  const NS = 128, G = new Float64Array(NS).fill(NaN), FARR = rMax + far;
+  const sector = (dx, dz) => {
+    const ax = Math.abs(dx), az = Math.abs(dz), q = ax + az === 0 ? 0 : dz / (ax + az); // the diamond angle, 0..4
+    const p = dx >= 0 ? (dz >= 0 ? q : 4 + q) : 2 - q;
+    return Math.min(NS - 1, Math.floor((p % 4) * NS / 4));
+  };
+  const diamondDir = (p) => { p = ((p % 4) + 4) % 4; const t = p % 1; const [x, z] = p < 1 ? [1 - t, t] : p < 2 ? [-t, 1 - t] : p < 3 ? [-(1 - t), -t] : [t, -(1 - t)]; const l = Math.hypot(x, z); return [x / l, z / l]; };
+  function fillSector(k) {
+    let g = -Infinity, gap = 0;
+    const dirs = [];
+    for (let j = 0; j <= 8; j++) dirs.push(diamondDir((k + j / 8) * 4 / NS));
+    for (let j = 0; j < 8; j++) gap = Math.max(gap, Math.acos(Math.min(1, dirs[j][0] * dirs[j + 1][0] + dirs[j][1] * dirs[j + 1][1])));
+    for (let rho = Math.max(1, rMin); rho <= FARR + 1; rho += 1) for (const [ux, uz] of dirs) g = Math.max(g, rho - sd(cx + ux * rho, cz + uz * rho));
+    G[k] = g + 2.5 * Math.max(0.5, (gap / 2) * (FARR + 1)) + 0.25;
+  }
+  function sdFloor(x, z) {
+    const dx = x - cx, dz = z - cz, r2 = dx * dx + dz * dz;
+    if (r2 > FAR2) return Math.sqrt(r2) - rMax;
+    if (r2 < rMin * rMin) return -Infinity;
+    const k = sector(dx, dz);
+    if (G[k] !== G[k]) fillSector(k);
+    return Math.sqrt(r2) - G[k];
+  }
+
   return {
-    R, dR, sd, glsl, uniforms: () => ({}),
+    R, dR, sd, sdFloor, glsl, uniforms: () => ({}),
     rMax, rMin, centre: { x: cx, z: cz }, box: [cx - rMax, cx + rMax, cz - rMax, cz + rMax], far,
     coeffs: { A, B }, lobes: LOBES,
   };

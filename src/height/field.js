@@ -5,7 +5,7 @@
 // carries the URL's switches). terrain.js re-exports all of it; import from there unless you are in a worker.
 // Everything here is checked bit for bit by tools/height-check.mjs.
 import { makeSimplex, clamp, lerp, smoothstep, hyp } from '../noise.js';
-import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
+import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShoreAbove, tarnShelf, TARN_REACH } from '../v4/tarn.js'; // v4 regions: Lees Tarn's south bay and spit; v16 L2: its basin on the edge
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START, WALL_SAMPLE } from '../v4/mountains.js'; // v4 systems: the walls
@@ -14,7 +14,7 @@ import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and fo
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
-import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom } from './fen.js'; // v16 L3: the fen on the edge
+import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom, FEN_EDGE } from './fen.js'; // v16 L3: the fen on the edge
 import { HEIGHT_PARAMS } from './params.js';
 import { floorGround, floorCharacter, POOLS } from './floor.js'; // v16: the floor's fall, its forms, its pools and its character
 
@@ -42,7 +42,17 @@ export function causewayDistance(x, z) {
 }
 // causewayDistance where that is under lim: the same number; elsewhere lim. A segment whose box is lim or
 // more away is never measured, so far from the road this is a few box tests (heightAt's road bed reads under 7.5).
+// (v16 L5: an 8 m grid marks the cells no segment comes within 8 m of: there the answer is lim, for lim <= 8)
+const CW = (() => {
+  const C = 8, g0 = -320, n = 80, F = new Uint8Array(n * n);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const x0 = g0 + i * C, x1 = x0 + C, z0 = g0 + j * C, z1 = z0 + C;
+    F[j * n + i] = ROAD.every((S) => distToSegment(x0 + C / 2, z0 + C / 2, S[0], S[1], S[2], S[3]) - C * Math.SQRT1_2 > 8.01) ? 1 : 0;
+  }
+  return { C, g0, n, F };
+})();
 function causewayNear(x, z, lim) {
+  if (lim <= 8) { const i = Math.floor((x - CW.g0) / CW.C), j = Math.floor((z - CW.g0) / CW.C); if (i >= 0 && j >= 0 && i < CW.n && j < CW.n && CW.F[j * CW.n + i]) return lim; }
   let d = lim;
   for (let i = 0; i < ROAD.length; i++) {
     const S = ROAD[i], x0 = S[4], x1 = S[5], z0 = S[6], z1 = S[7];
@@ -152,14 +162,25 @@ function makePolyline(pts) {
     CB[4 * c] = a0; CB[4 * c + 1] = a1; CB[4 * c + 2] = b0; CB[4 * c + 3] = b1;
   }
   // and a 4 m grid over the box and 72 m round it: the segment nearest each cell's middle, which seeds the search
-  const G = 4, gx0 = x0 - 72, gz0 = z0 - 72, gnx = Math.ceil((x1 - x0 + 144) / G), gnz = Math.ceil((z1 - z0 + 144) / G), GI = new Int16Array(gnx * gnz);
+  const G = 4, gx0 = x0 - 72, gz0 = z0 - 72, gnx = Math.ceil((x1 - x0 + 144) / G), gnz = Math.ceil((z1 - z0 + 144) / G), GI = new Int16Array(gnx * gnz), GM = new Int32Array(gnx * gnz), GD = new Float32Array(gnx * gnz);
+  if (nc > 31) throw new Error('makePolyline: more than 31 chunks for the cells\' masks');
   for (let j = 0; j < gnz; j++) for (let i = 0; i < gnx; i++) {
     const px = gx0 + (i + 0.5) * G, pz = gz0 + (j + 0.5) * G;
     let b = Infinity, bi = 0;
     for (let k = 0; k < n - 1; k++) { const e = segD2(X, Z, k, px, pz); if (e < b) { b = e; bi = k; } }
     GI[j * gnx + i] = bi;
+    // the chunks that can hold the nearest segment of any point in the cell: those whose box comes within the
+    // centre's nearest distance plus the cell's half-diagonal (and a hair) of the cell
+    const U = Math.sqrt(b) + G * Math.SQRT1_2 + 1e-6, cx0 = px - G / 2, cx1 = px + G / 2, cz0 = pz - G / 2, cz1 = pz + G / 2;
+    let mask = 0;
+    for (let c = 0; c < nc; c++) {
+      const ex = CB[4 * c] > cx1 ? CB[4 * c] - cx1 : cx0 > CB[4 * c + 1] ? cx0 - CB[4 * c + 1] : 0, ez = CB[4 * c + 2] > cz1 ? CB[4 * c + 2] - cz1 : cz0 > CB[4 * c + 3] ? cz0 - CB[4 * c + 3] : 0;
+      if (ex * ex + ez * ez <= U * U) mask |= 1 << c;
+    }
+    GM[j * gnx + i] = mask;
+    GD[j * gnx + i] = Math.max(0, Math.sqrt(b) - G * Math.SQRT1_2 - 1e-3); // no point in the cell is nearer the line
   }
-  return { X, Z, S, n, length: S[n - 1], box: [x0, x1, z0, z1], nc, CB, grid: { gx0, gz0, gnx, gnz, iG: 1 / G, GI }, mx: NaN, mz: NaN, mi: 0, mt: 0, me: 0 };
+  return { X, Z, S, n, length: S[n - 1], box: [x0, x1, z0, z1], nc, CB, grid: { gx0, gz0, gnx, gnz, iG: 1 / G, GI, GM, GD }, mx: NaN, mz: NaN, mi: 0, mt: 0, me: 0 };
 }
 // the squared distance from (x, z) to segment i
 function segD2(X, Z, i, x, z) {
@@ -178,10 +199,16 @@ function chunkD2(CB, c, x, z) {
 const RIVER_LINE = catmull(RIVER_CTRL, 1.5);
 const GULLY_LINE = catmull(GULLY_CTRL, 1.0);
 
+// A lower bound of the distance from (x, z) to the line: 0 off the grid (v16 L5: waterLevelAt skips the search where
+// the channel cannot reach)
+function lineFloor(line, x, z) {
+  const g = line.grid, u = (x - g.gx0) * g.iG, v = (z - g.gz0) * g.iG;
+  return u >= 0 && v >= 0 && u < g.gnx && v < g.gnz ? g.GD[(v | 0) * g.gnx + (u | 0)] : 0;
+}
 // Nearest point on a polyline: writes s, d (signed), tangent, and whether it falls off either end.
 function project(line, x, z, pad, out) {
   const [x0, x1, z0, z1] = line.box;
-  if (x < x0 - pad || x > x1 + pad || z < z0 - pad || z > z1 + pad) { out.hit = false; return out; }
+  if (x < x0 - pad || x > x1 + pad || z < z0 - pad || z > z1 + pad) { out.hit = false; out.e2 = Infinity; return out; }
   const { X, Z, S, n, CB } = line;
   let best = Infinity, bi = 0, bt = 0;
   // (v16 L5: the last point's search is kept, the river being asked at one point by heightAt and waterLevelAt; and a
@@ -190,10 +217,12 @@ function project(line, x, z, pad, out) {
   else {
     // the grid's segment for this cell seeds the best, a hair over its distance, so that a segment before it at the
     // same distance still wins, as in a plain scan from the start
-    const g = line.grid, gi = ((x - g.gx0) * g.iG) | 0, gj = ((z - g.gz0) * g.iG) | 0;
-    if (gi >= 0 && gj >= 0 && gi < g.gnx && gj < g.gnz) best = segD2(X, Z, g.GI[gj * g.gnx + gi], x, z) * (1 + 1e-9) + 1e-12;
+    // and the cell's mask names the only chunks that can hold the nearest segment
+    const g = line.grid, u = (x - g.gx0) * g.iG, v = (z - g.gz0) * g.iG;
+    let mask = -1;
+    if (u >= 0 && v >= 0 && u < g.gnx && v < g.gnz) { const k = (v | 0) * g.gnx + (u | 0); best = segD2(X, Z, g.GI[k], x, z) * (1 + 1e-9) + 1e-12; mask = g.GM[k]; }
     for (let c = 0; c < line.nc; c++) {
-      if (chunkD2(CB, c, x, z) >= best) continue;
+      if (!(mask & (1 << c)) || chunkD2(CB, c, x, z) >= best) continue;
       for (let i = c * CH, i1 = Math.min(c * CH + CH, n - 1); i < i1; i++) {
         const ax = X[i], az = Z[i], dx = X[i + 1] - ax, dz = Z[i + 1] - az;
         const l2 = dx * dx + dz * dz;
@@ -373,6 +402,7 @@ function riverLevelAt(x, z) {
   if (inEddy(x, z)) return EDDY.y; // v2 riverlife: the eddy basin (hook)
   const g = project(GULLY_LINE, x, z, 30, _gq);
   if (g.hit && !g.before && !g.after && Math.abs(g.d) < 2.2) return GULLY_BED(g.s) + 0.25;
+  if (lineFloor(RIVER_LINE, x, z) > RIVER_WET_MAX) return null; // further from the line than the channel ever reaches
   const q = project(RIVER_LINE, x, z, 70, _rq);
   if (!q.hit || q.before || q.after) return null;
   const s = q.s, d = q.d;
@@ -380,11 +410,14 @@ function riverLevelAt(x, z) {
   const B = (d > 0 ? _bw.bl : _bw.br) + SX.noise2(s * 0.12, d > 0 ? 3.1 : 7.7) * 0.6 * (1 - smoothstep(70, 90, s));
   if (!(Math.abs(d) < R_HW(s) + Math.max(0, B) + 0.6) || hyp(x - POOL.x, z - POOL.z) < 6.8) return null;
   const W = R_W(s);
-  if (fenShoreDistance(x, z) < 0 && heightAt(x, z) > W) return null;
+  if (FEN_EDGE.sdFloor(x, z) < 0 && fenShoreDistance(x, z) < 0 && heightAt(x, z) > W) return null;
   return W;
 }
 const _csb = { ..._cs };
 
+// the widest the channel's water reaches from its line: the half-width, the bank at its widest (x 1.25 of R_BANK), the
+// bank's noise (0.6 x 1.1) and riverLevelAt's 0.6, sampled every 0.25 m of s, with a metre to spare
+const RIVER_WET_MAX = (() => { let m = 0; for (let s = 0; s <= RIVER_LINE.length + 1; s += 0.25) m = Math.max(m, R_HW(s) + 1.25 * R_BANK(s)); return m + 0.66 + 0.6 + 1; })();
 // Downstream info at a point: arc length, cross distance, level, half-width, flow speed and direction.
 const _ri = { s: 0, d: 0, y: 0, hw: 0, speed: 0, tx: 0, tz: 0, inWater: false };
 export function riverAt(x, z, out = _ri) {
@@ -451,7 +484,7 @@ function beforeFen(x, z) {
   if (!beyond(h, x, z, L.court.x, L.court.z, 60)) h = flatten(h, x, z, L.court.x, L.court.z, 34, 26, L.court.y + SX.noise2(x * 0.1, z * 0.1) * 0.2);
   // Tarn basin: flatten then dish
   // (v16 L2: a shelving shore keyed on the edge's sd, src/v4/tarn.js: bays, a point, an inlet, a shallows, a steep bank)
-  if (!beyond(h, x, z, L.tarn.x, L.tarn.z, TARN_REACH)) h = tarnBasin(h, x, z, SX.noise2(x * 0.05, z * 0.05), SX.noise2(x * 0.03, z * 0.03));
+  if (!beyond(h, x, z, L.tarn.x, L.tarn.z, TARN_REACH)) h = tarnBasin(h, x, z, SX);
   return tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
 }
 fenGroundFrom(beforeFen);
@@ -536,7 +569,7 @@ function biomeWith(x, z, h, slope, rv) {
   // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
   const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
   const marsh = fenMarsh(x, z, marshN); // v16 L3: the fen's edge, out in tongues
-  const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
+  const sTarn = tarnShoreAbove(x, z, 14) ? 15 : tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge (v16 L5: not asked where it is certainly over 14, where the paint is 0)
   const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
   const dOrch = hyp(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
@@ -563,7 +596,9 @@ export const WATER_BODIES = [
   { name: 'tarn', w: WATER.tarn, wet: (x, z) => tarnWet(x, z, heightAt), sd: tarnShoreDistance },
   // (v16 L5: what the fen calls wet is held to the whole ground: the river's spur, its soft max, lifts the fen's ground
   // near the river's mouth, and the Span's blocks stand in it)
-  { name: 'fen', w: WATER.fen, wet: (x, z) => fenWet(x, z) && heightAt(x, z) < WATER.fen.y + FEN_HIGH, sd: fenShoreDistance },
+  // (only within 35 m of the river's line: the spur lifts nothing further out, 20 m at most measured, and nothing else
+  // after the fen's block reaches its water)
+  { name: 'fen', w: WATER.fen, wet: (x, z) => fenWet(x, z) && (lineFloor(RIVER_LINE, x, z) > 35 || project(RIVER_LINE, x, z, 70, _rq).e2 > 35 * 35 || heightAt(x, z) < WATER.fen.y + FEN_HIGH), sd: fenShoreDistance },
   { name: 'pool', w: WATER.pool, ...disc(WATER.pool) },
   // v16 L4: the floor's pools (src/height/floor.js POOLS), each on its edge, a box test first (none under ?floor=v15)
   ...POOLS.filter((p) => p.y !== null && HEIGHT_PARAMS.floor !== 'v15').map((p) => {
@@ -572,8 +607,11 @@ export const WATER_BODIES = [
   }),
 ];
 // Water height at a point, or null when there is no water body here.
+// (v16 L5: the floor's pools, after the first three, are asked only inside the box round all of them)
+const N_BIG = 3, SMALL_BOX = WATER_BODIES.slice(N_BIG).reduce((b, B) => [Math.min(b[0], B.w.x - B.w.r), Math.max(b[1], B.w.x + B.w.r), Math.min(b[2], B.w.z - B.w.r), Math.max(b[3], B.w.z + B.w.r)], [Infinity, -Infinity, Infinity, -Infinity]);
 export function waterLevelAt(x, z) {
-  for (let i = 0; i < WATER_BODIES.length; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  for (let i = 0; i < N_BIG; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  if (x > SMALL_BOX[0] && x < SMALL_BOX[1] && z > SMALL_BOX[2] && z < SMALL_BOX[3]) for (let i = N_BIG; i < WATER_BODIES.length; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
   return riverLevelAt(x, z);
 }
 // The first still water whose shore lies within `extra` metres: { name, y, sd } (sd < 0 inside), or null.

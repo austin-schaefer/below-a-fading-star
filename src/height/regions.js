@@ -31,11 +31,12 @@ export const woodRag = ragged(12, 0.022, 7.3); // field.js's wood paint gives ou
 const PLACES = {
   wood: { x: LANDMARKS.wood.x, z: LANDMARKS.wood.z, r: 95, blend: 20, rag: 12,
     sd: (x, z) => Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95 + woodRag(x, z) },
-  fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => fenShoreDistance(x, z) - 10 },
+  // (v16 L5: where the edge's floor of sd says the weight is 0 at any blend (hb under 20), sd is not asked)
+  fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => { const lb = FEN_EDGE.sdFloor(x, z); return lb > 30 ? lb - 10 : fenShoreDistance(x, z) - 10; } },
   lattice: { x: LANDMARKS.moraine.x, z: LANDMARKS.moraine.z, r: 50, blend: 12 },
 };
 // a region's ragged edge (REGIONS[k].ragged: { amp, freq }): its distance moved by up to amp metres of slow noise
-const EDGE_SD = { fen: fenShoreDistance }; // the edges a region may yield to ({ edge, off } in its yields)
+const EDGE_SD = { fen: fenShoreDistance }, EDGE_LB = { fen: FEN_EDGE.sdFloor }; // the edges a region may yield to ({ edge, off } in its yields), and their floors of sd
 
 // ---------------------------------------------------------------- signed distances (metres, < 0 inside)
 function sdPoly(pts, x, z) {
@@ -113,7 +114,8 @@ for (const k of REGION_KEYS) {
     let d = f(x, z);
     if (clip.zMin !== undefined) d = Math.max(d, clip.zMin - z);
     if (clip.zMax !== undefined) d = Math.max(d, z - clip.zMax);
-    for (const y of yields) d = Math.max(d, y.edge ? y.off - EDGE_SD[y.edge](x, z) : y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
+    // (v16 L5: an edge's yield is not measured where its floor of sd already puts it under d)
+    for (const y of yields) d = y.edge ? (y.off - EDGE_LB[y.edge](x, z) <= d ? d : Math.max(d, y.off - EDGE_SD[y.edge](x, z))) : Math.max(d, y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
     return d;
   };
   SHAPES[k] = rag ? (x, z) => plain(x, z) + rag(x, z) : plain; // the ragged edge moves the yields' line too
