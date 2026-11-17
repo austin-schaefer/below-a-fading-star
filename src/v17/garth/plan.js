@@ -31,6 +31,10 @@ export const WALK = { r0: 16.55, r1: R };   // the paved walk round the wall (He
 export const RILL = { outer: 16.1, inner: 5.15, w: 0.44, kerb: 0.12, y: FLOOR + 0.026 }; // the water's face sits a little proud of the soil, between kerbs
 export const RADIALS = [Math.PI / 3, Math.PI, -Math.PI / 3]; // the feeders from the outer rill in to the inner, by bearing
 export const INLET = 0.34, DRAIN = Math.PI;  // the water comes out of the wall north of the door and leaves by a grate opposite
+// the spout-stones: a coursed block standing proud of the wall over the rill's head, a lipped trough out of a slot in
+// it, the water leaving the lip in a thin fall (face: the block's face, r; lip: the trough's end, r; y: the trough's floor)
+export const SPOUT = { face: R - 0.37, lip: R - 0.6, y: FLOOR + 0.98, half: 0.38, top: FLOOR + 1.6 };
+export const SPOUTS = [INLET]; // the bearings of the walls' spouts (one: the aqueduct's water comes in north of the door)
 export const PATH = { half: 0.5 };           // the stepping stones from the door to the light, along bearing 0
 
 // the trained trees: a ring of them in each ring of the garden, each a stage further dead outward. b: bearing, r: radius
