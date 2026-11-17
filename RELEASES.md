@@ -90,7 +90,7 @@ Known issues: the tilt of the valley is gentle, and from the heights it is easie
 | Blind pair comparison | Sonnet 5.5 | 91k | $0 |
 | Blind read of air frames | Sonnet 5.5 | 82k | $0 |
 | Blind read of tarn frames | Sonnet 5.5 | 82k | $0 |
-| **Total** | | **515.6M** | **$182** |
+| **Total** | | **515.4M** | **$182** |
 
 </details>
 
