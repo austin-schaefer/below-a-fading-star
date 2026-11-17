@@ -6,7 +6,7 @@
 // v4/regions.js re-exports all of it, so callers import from there as before.
 import { REGIONS, LANDMARKS } from '../world.js';
 import { smoothstep, makeSimplex } from '../noise.js';
-import { fenShoreDistance } from './fen.js'; // v16 L3: the fen's edge, for its place and the Saltings' yield
+import { fenShoreDistance, FEN_EDGE } from './fen.js'; // v16 L3: the fen's edge, for its place and the Saltings' yield
 import { height as bletting } from '../v4/regions/height/bletting.js';
 import { height as saltings } from '../v4/regions/height/saltings.js';
 import { height as outwash } from '../v4/regions/height/outwash.js';
@@ -90,7 +90,9 @@ for (const k of REGION_KEYS) {
   else if (s.annulus) f = (x, z) => sdAnnulus(s.annulus, x, z);
   const clip = R.clip || {};
   const yields = R.yields || [];
-  const rag = R.ragged ? ragged(R.ragged.amp, R.ragged.freq, R.ragged.amp) : null;
+  const rag0 = R.ragged ? ragged(R.ragged.amp, R.ragged.freq, R.ragged.amp) : null, still = R.ragged?.still || [];
+  // (still: [x, z, r] where the edge keeps its old line, easing out over 15 m: a built place laid against it)
+  const rag = rag0 && (still.length ? (x, z) => { let m = 1; for (const [sx, sz, sr] of still) m = Math.min(m, smoothstep(sr, sr + 15, Math.sqrt((x - sx) ** 2 + (z - sz) ** 2))); return m && rag0(x, z) * m; } : rag0);
   // the full signed distance, with clips and the places it yields to cut out
   SHAPES[k] = (x, z) => {
     let d = f(x, z);
@@ -143,6 +145,9 @@ const R_SHAPE = REGION_KEYS.map((k) => SHAPES[k]), R_BLEND = new Float64Array(RE
 const R_TIGHT = new Float64Array(REGION_KEYS.flatMap((k) => TIGHT[k])), R_BOX = new Float64Array(REGION_KEYS.flatMap((k) => BOX[k]));
 const P_DEF = new Float64Array(PLACE_KEYS.flatMap((k) => [PLACES[k].x, PLACES[k].z, PLACES[k].r, PLACES[k].blend]));
 const P_SD = PLACE_KEYS.map((k) => PLACES[k].sd ?? null);
+// the squared radius past which a place with an edge has no weight at any blend up to the air's: the wood's circle,
+// its rag and its half-blend; the fen's edge (its rMax and its 10 m) and its half-blend
+const P_FAR = new Float64Array([95 + 12 + 10 * REGION_AIR_BLEND + 2, FEN_EDGE.rMax + 10 + 6 * REGION_AIR_BLEND + 2, 0].map((r) => r * r));
 // fills W (NR + NP + 1) with the weights at (x, z); returns the primary's index in W_KEYS
 function weights(x, z, blend, W) {
   // the places first: they win inside their limits
@@ -151,9 +156,9 @@ function weights(x, z, blend, W) {
     const px = P_DEF[4 * i], pz = P_DEF[4 * i + 1];
     const hb = (P_DEF[4 * i + 3] * blend) / 2, sd = P_SD[i];
     let d;
-    if (sd) { // the far side of a place with an edge: a cheap bound first (its 130 m round the centre covers every edge here)
+    if (sd) { // the far side of a place with an edge: a cheap bound first (P_FAR: past it the weight is 0)
       const e2 = (x - px) ** 2 + (z - pz) ** 2;
-      if (e2 > 160 * 160) { W[NR + i] = 0; continue; }
+      if (e2 > P_FAR[i]) { W[NR + i] = 0; continue; }
       d = sd(x, z);
     } else d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2];
     const w = 1 - smoothstep(-hb, hb, d);

@@ -77,6 +77,10 @@ export function radialOutline(o) {
       const [x2, z2] = place(l.to, cx, cz);
       L.cap = true; L.x2 = x2; L.z2 = z2; L.r2 = l.to.r ?? l.r; L.ex = x2 - x; L.ez = z2 - z; L.l2 = L.ex * L.ex + L.ez * L.ez;
     }
+    // its box (the disc's, or the capsule's segment's), and the widest radius: sd skips a lobe whose box lies so far off
+    // that the smooth min would hand back d unchanged (e >= d + k, or for land e >= -d + k)
+    L.bx0 = Math.min(L.x, L.cap ? L.x2 : L.x); L.bx1 = Math.max(L.x, L.cap ? L.x2 : L.x);
+    L.bz0 = Math.min(L.z, L.cap ? L.z2 : L.z); L.bz1 = Math.max(L.z, L.cap ? L.z2 : L.z); L.rw = Math.max(L.r, L.r2);
     return L;
   });
 
@@ -122,6 +126,10 @@ export function radialOutline(o) {
     if (wq !== 0) d += wq * (Math.sin(WARP[0].kx * dx + WARP[0].kz * dz + WARP[0].p) + Math.sin(WARP[1].kx * dx + WARP[1].kz * dz + WARP[1].p) + Math.sin(WARP[2].kx * dx + WARP[2].kz * dz + WARP[2].p));
     for (let i = 0; i < LOBES.length; i++) {
       const L = LOBES[i];
+      const lim = (L.land ? -d : d) + L.k + L.rw;
+      if (lim <= 0) continue;
+      const ex = x < L.bx0 ? L.bx0 - x : x > L.bx1 ? x - L.bx1 : 0, ez = z < L.bz0 ? L.bz0 - z : z > L.bz1 ? z - L.bz1 : 0;
+      if (ex * ex + ez * ez >= lim * lim) continue;
       let px = x - L.x, pz = z - L.z, rr = L.r;
       if (L.cap) {
         const t = clamp((px * L.ex + pz * L.ez) / L.l2, 0, 1);

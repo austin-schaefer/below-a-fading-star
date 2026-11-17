@@ -47,7 +47,7 @@ export const LEADS = [
   { id: 'P14', kind: 'path', cls: 'way', w: 1.0, slabs: true, brief: 'gap in the grey reeds, then salt crust along the fen\'s south rim', pts: [[125, 205], [118, 196], [104, 197], [95, 212], [94, 226], [92, 236], [86, 240], [70, 258], [40, 261], [9, 252]] }, // v8-09: under the Span between its piers, not through one
   { id: 'P15', kind: 'path', cls: 'way', w: 1.0, brief: 'worn path, moor to shingle', pts: [[-36, 246], [-44, 238], [-52, 235], [-47, 226], [-46, 215], [-48, 200], [-50, 166]] }, // v8-09: by the traveller's approach (it looks along it to him), then under the Span between piers -70 and -22, not through the fallen bay
   { id: 'P16', kind: 'path', cls: 'way', w: 1.0, brief: 'track through the wood\'s southern fringe, on to the foot of the Great Span\'s west stair (v15-F1: every way up has a track to its foot)', pts: [[-122, 172], [-150, 182], [-175, 192], [-194, 196], [-199.5, 200], [-202.4, 200.3]] },
-  { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-30, 82], [-28, 110], [-33, 134], [-42, 150]] },
+  { id: 'P17', kind: 'path', cls: 'way', w: 1.0, brief: 'sheep-track, to the spit', pts: [[-40, 62], [-22, 70], [-9, 82], [-16, 98], [-27, 112], [-33, 134], [-42, 150]] }, // v16: round the head of the tarn's north-east inlet
   { id: 'R1', kind: 'rivulet', w: 0.16, brief: 'meltwater rivulet, Outwash gravel', pts: [[40, -219], [0, -195], [-7, -188]] },
   { id: 'R2', kind: 'rivulet', w: 0.15, brief: 'runnel, heather to moor to red glasswort', pts: [[232, -20], [212, 34]], parts: [[[214, 76], [198, 136]]] },
   { id: 'R3', kind: 'rivulet', w: 0.14, brief: 'runnel, Bletting grass to the Demesne\'s ditch', pts: [[130, -92], [100, -20], [108, -16]], parts: [[[104, 62], [80, 92]]] },
@@ -62,7 +62,7 @@ export const LEADS = [
   { id: 'P20', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to the Plinth Road', pts: [[100, -195], [116, -203], [127, -207]] },
   { id: 'P21', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod to where the Hawser comes down', pts: [[22, -214], [10, -212], [0, -216], [-6, -226], [-20, -238], [-40, -254], [-68, -264]] },
   { id: 'P22', kind: 'path', cls: 'trod', w: 0.5, brief: 'heather trod, the Prospect to the Nave\'s rim', pts: [[236, -36], [243, -28], [248, -12], [251, 4], [254, 11]] },
-  { id: 'P23', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down the tarn\'s west shore, the wood way to the bay', pts: [[-162, 88], [-160, 120], [-142, 150], [-122, 172]] },
+  { id: 'P23', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod down the tarn\'s west shore, the wood way to the bay', pts: [[-162, 88], [-176, 110], [-174, 132], [-156, 154], [-122, 172]] }, // v16: behind the tarn's west bay
   { id: 'P24', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod, the old kerb to the causeway', pts: [[145, 35], [134, 47], [127, 58]] },
   { id: 'P25', kind: 'path', cls: 'trod', w: 0.5, brief: 'trod round the Arcature to the old kerb', pts: [[182, 57], [180, 40], [160, 33], [145, 35]] },
   { id: 'P26', kind: 'path', cls: 'trod', w: 0.5, brief: 'orchard trod joining the gaps', pts: [[112, -82], [130, -100], [148, -100]] },

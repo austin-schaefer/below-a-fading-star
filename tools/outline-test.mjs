@@ -226,6 +226,13 @@ else {
     const north = far(320, 30), river = far(100, 160);
     check(river > north + 6, 'the fen: open toward the river, tight toward the keep\'s slope (furthest water past the shore)', `north ${f2(north)} m, river side ${f2(river)} m`);
   }
+  // the waders (fauna/life.js, fauna/uncanny/wader.js) find shallows on the edge: 0.05-1.2 m deep, ringed by more
+  {
+    const sh = (x, z) => { const h = F.heightAt(x, z); return h < W.y - 0.05 && h > W.y - 1.2; };
+    let n = 0;
+    for (let k = 0; k < 400; k++) { const p = N.fenIn(k * 2.399, 0.15 + (k % 17) / 20); if (!sh(p.x, p.z)) continue; let m = 0; for (let j = 0; j < 8; j++) if (sh(p.x + Math.cos(j * 0.785) * 1.6, p.z + Math.sin(j * 0.785) * 1.6)) m++; if (m >= 3) n++; }
+    check(n >= 10, 'the fen: shallows for the waders within its edge', `${n} of 400 draws`);
+  }
   // no circle: over every 60 degrees of shore, the radius varies 6 m or more
   {
     const pts = shorePoints(E, 360);

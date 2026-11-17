@@ -27,7 +27,7 @@ const ISLES = [
   { bearing: 160, d: 44, r: 3.5, k: 2 },
 ];
 export const FEN_EDGE = radialOutline({
-  x: L.x, z: L.z, r: 54, seed: 1605, K: 9, amp: 0.15, falloff: 1.05, warp: 3, warpFreq: 0.06,
+  x: L.x, z: L.z, r: 54, seed: 1605, K: 12, amp: 0.15, falloff: 1.0,
   lobes: [
     // the fingers, along the low lines (tapered capsules); everything stays inside the water's disc (WATER.fen.r 80)
     { bearing: 284, d: 46, r: 9, k: 9, to: { bearing: 281, d: 76, r: 2.2 } },   // west, toward the tarn
@@ -86,9 +86,8 @@ function dig(x, z, sd, fr) {
 function isleLift(x, z) {
   let m = 0;
   for (let i = 0; i < ISLE_XZ.length; i++) {
-    const I = ISLE_XZ[i], dx = x - I[0], dz = z - I[1];
-    const e = Math.sqrt(dx * dx + dz * dz) / I[2];
-    if (e < 1.3) m = Math.max(m, 1 - smoothstep(0.35, 1.3, e));
+    const I = ISLE_XZ[i], dx = x - I[0], dz = z - I[1], d2 = dx * dx + dz * dz, r = 1.3 * I[2];
+    if (d2 < r * r) m = Math.max(m, 1 - smoothstep(0.35, 1.3, Math.sqrt(d2) / I[2]));
   }
   return m;
 }

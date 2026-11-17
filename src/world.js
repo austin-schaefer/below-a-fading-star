@@ -141,7 +141,7 @@ export const REGIONS = {
                 yields: [{ x: 40, z: 30, r: 85 }] }, // clipped on the west by the Demesne's ha-ha (placement plan, BO)
   saltings:   { id: 'BP', name: 'The Saltings', blend: 6,
                 shape: { strip: [[168, 130, 20], [192, 158, 25], [178, 192, 18], [140, 200, 12], [118, 222, 12], [85, 246, 10], [45, 246, 10], [12, 228, 12], [-18, 200, 12], [-30, 180, 10]] },
-                ragged: { amp: 5, freq: 0.045 }, // v16 L3: no ruled hem
+                ragged: { amp: 5, freq: 0.045, still: [[200, 185, 26]] }, // v16 L3: no ruled hem (but where the Pit's lip is laid against it)
                 yields: [{ x: 70, z: 160, r: 75, edge: 'fen', off: 7 }] }, // v16 L3: it yields to the fen's edge (src/height/fen.js), 7 m out; x, z, r the old circle, for height-check's rings
   outwash:    { id: 'BQ', name: 'The Outwash', shape: { ellipse: { x: 25, z: -195, rx: 85, rz: 24 } }, blend: 8, ragged: { amp: 4, freq: 0.05 },
                 yields: [{ x: -40, z: -165, r: 40 }, { x: 40, z: -265, r: 50 }] },
