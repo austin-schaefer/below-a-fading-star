@@ -48,10 +48,10 @@ export const CLAIMS = [
   // the Hypogeum's cut, its stair and its kerb (v16 critic): trees as rocks.js keeps its stones (r 12). Nothing kept the
   // moor's copses out of it, so a reshuffle of the floor could stand one in the cut where the knock eases the visitor back
   { name: 'the Hypogeum', keeps: ['trees'], kind: 'disc', x: L.hypogeum.x, z: L.hypogeum.z, r: L.hypogeum.r },
-  // v17-S1: the sphere's glass and its lip, and the line of hoops out of its south-east side (src/v17/sphere.js)
+  // v17-S1: the sphere's glass and its lip, the hill behind it (away from `arrive`), and the line of hoops toward the Garth (src/v17/sphere.js)
   { name: 'the sphere', keeps: ['rocks', 'blocks', 'trees', 'cover', 'trods'], kind: 'fn', test: (x, z, r) => {
     const dx = x - SPHERE.c[0], dz = z - SPHERE.c[1], d = Math.hypot(dx, dz); if (d < SPHERE.r + 4 + r) return true; // (and the hill behind it, seen through the glass)
-    if (dx < 4 && d < SPHERE.r + 26 + r) return true; const s = dx * SPHERE.face[0] + dz * SPHERE.face[1]; return s > 0 && s < SPHERE.r + 50 && Math.abs(dx * SPHERE.face[1] - dz * SPHERE.face[0]) < 3 + r; } },
+    if (dx * SPHERE.arrive[0] + dz * SPHERE.arrive[1] < 4 && d < SPHERE.r + 26 + r) return true; const s = dx * SPHERE.face[0] + dz * SPHERE.face[1]; return s > 0 && s < SPHERE.r + 50 && Math.abs(dx * SPHERE.face[1] - dz * SPHERE.face[0]) < 3 + r; } },
   // v17-U1: the Swallow's quay and the ground over its head (the portal's face, the arch, the drowned hall: the ground
   // there is opened, so a stone or a stem placed on it would stand in the hall's air)
   { name: 'the Swallow\'s quay', keeps: ['rocks', 'trees', 'cover', 'trods'], kind: 'box', x0: -93.2, x1: -86, z0: 295.5, z1: 311 },

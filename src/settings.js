@@ -72,7 +72,7 @@ const NAMED_POSES = {
   slake: { x: -85, z: 262, look: { x: -88, z: 285 }, pitch: 0.02 }, // v17-N1: the mere's north shore, the brook behind, the water going off south to the cut
   swallow: { x: -70, z: 296, look: { x: -95, z: 311 }, pitch: 0.1 }, // the mere's south shore on P55, 29 m off: the portal's pale face and the fall across the cut's end (the quay's head, in the trough, is a hole to the settings test: ground 8.8 m over its ring)
   garth: { x: -28.2, y: -24, z: 318.4, yaw: -1.77, pitch: 0 }, // inside the door on the hall's floor, facing the light (the tube's other end)
-  noonsphere: { x: -296, z: 20, look: { x: -322, z: 22 }, pitch: 0.2 }, // 11 m off its east glass: the shaft, the keeper at his wheel
+  noonsphere: { x: 268, z: 98, look: { x: 292, z: 108 }, pitch: 0.2 }, // 11 m off its valley glass, where P56 comes up: the shaft, the keeper at his wheel
   croft: { x: 228.6, y: 108, z: -55, look: { x: 226, z: -47 }, pitch: -0.2 }, // on the deck at the top, 100 m up: the lean-to, the stove, the chair
   remand: { x: -377, y: 135.2, z: -50, look: { x: -372, z: -100 }, pitch: 0 }, // on the gallery at 135 m, the cells going off south to the ragged end
 };

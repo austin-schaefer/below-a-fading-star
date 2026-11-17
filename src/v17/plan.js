@@ -230,22 +230,31 @@ export const GARTH_DOOR = {
 };
 
 // ---------------------------------------------------------------- S1: the sphere (S1's)
-// The man at the wheel (stories/the-man-at-the-wheel.md): the Noonwrights' junction at the west wall's foot, a ball of
-// their glass sunk in the ground and the wall's foot. Ground at its centre 14, at x -307 about 4.5, at x -337 about 21:
-// at y 8 its east bulge meets the ground just under the equator and its west quarter is in the hill (S1 measured).
-// The site is the table's (west, under the Galleries), judged against the spawn's frame (S1's report).
+// The man at the wheel (stories/the-man-at-the-wheel.md): the Noonwrights' junction at the east wall's foot, a ball of
+// their glass sunk in the ground and the wall's foot, north of the Noon Road (their road; the Foundered Nave is theirs
+// too). Moved from the west wall's foot (-322, 22) on the owner's word (2026-11-17: "feels odd for it to be on western
+// moors which already have two stargazers. move to eastern moor"). Ground at its centre 12.6, 15 m out toward the
+// valley (west) about 5, toward the wall (east) about 17: at y 7 its valley side stands clear of the ground to about
+// 2 m under the equator and its east third is in the wall's rising foot. Seen across the valley lit by the sun.
+// Everything inside is placed from `c`, `y`, `arrive` and `face`, so the site is one row.
+const _sc = [292, 108], _sy = 7;
+const _n = (x, z) => { const l = Math.hypot(x, z); return [x / l, z / l]; };
+const _arrive = _n(-0.92, -0.38);                                          // toward the valley and the trod P56: the side a visitor comes from
+const _face = _n(GARTH.c[0] - _sc[0], GARTH.c[1] - _sc[1]);               // toward the Meridian Garth (west-south-west), unit
+const _seat = [_sc[0] + _arrive[0] * 6, _sy + 1.8, _sc[1] + _arrive[1] * 6];
 export const SPHERE = {
-  c: [-322, 22],
+  c: _sc,
   r: 15,
-  y: 8,               // centre y (the table's 8 to 10; 8 so the east bulge sits on the ground, not over it)
-  // the keeper: seated in his sling under the eye in the glass where the noon comes in (6 m east of the centre, on
-  // the side a visitor comes from), facing south-east to the wheel on the junction's node, so a visitor coming from the
-  // east (the Taker's pavements) sees him three-quarter on, a body bent over a wheel, in a fall of white light
-  node: [-313.95, 10.6, 22.05], // the junction's node, 2.9 m before him along keeperFace
-  seat: [-316, 9.8, 20.0],  // the sling's seat (his pelvis); he faces `keeperFace`
-  keeperFace: [0.707, 0.707], // south-east, down the line he shut: from the east his wheel is seen open, not edge on
-  face: [0.72, 0.69],      // the hoops' line: toward the Meridian Garth (south-east), unit
-  // the hoops leaving the south-east side, toward the Garth: distances from the glass along `face`, metres
+  y: _sy,             // centre y
+  arrive: _arrive,    // unit, from the centre toward the side a visitor arrives from (the hill is behind, opposite)
+  // the keeper: seated in his sling under the eye in the glass where the noon comes in (6 m from the centre, on the
+  // side a visitor comes from), facing down the line he shut (toward the Garth), 58 degrees off the visitor's line,
+  // so a visitor coming up P56 sees him three-quarter on, a body bent over a wheel, in a fall of white light
+  seat: _seat,                                                                     // the sling's seat (his pelvis)
+  node: [_seat[0] + _face[0] * 2.9, _seat[1] + 0.8, _seat[2] + _face[1] * 2.9],    // the junction's node, 2.9 m before him
+  keeperFace: _face,
+  face: _face,        // the hoops' line: toward the Meridian Garth, unit
+  // the hoops leaving the glass toward the Garth: distances from the glass along `face`, metres
   hoops: [2.5, 8.5, 15, 22, 29.5, 38, 47],
   hoopR: 1.7,
 };

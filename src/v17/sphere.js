@@ -1,16 +1,16 @@
 // The man at the wheel (v17-S1, the owner's #74: "a large (30 meter?) plastisteel sphere, partly above ground, partly
-// in mountain wall, partly in ground"). The Noonwrights' junction at the west wall's foot: a ball of their glass 30 m
+// in mountain wall, partly in ground"). The Noonwrights' junction at the east wall's foot: a ball of their glass 30 m
 // across, blown whole, sunk in the ground and in the wall's rising foot, banded with lime where it was joined and
 // clouded in fields, clear between. Inside it the ground is cut away: earth, roots and stones pressed against the lower
 // glass. Stays of spun filament run from all round to the middle, where a Noonwright sits in a sling at the junction's
 // node, both hands on the valve wheel he turned shut, head bowed to it, in the last full noon in the valley, which he
-// kept. A broken line of hoops leaves the south-east side toward the Meridian Garth (src/v17/garth.js), the tube
+// kept. A broken line of hoops leaves the side toward the Meridian Garth (src/v17/garth.js), the tube
 // between them gone. stories/the-man-at-the-wheel.md. The numbers: src/v17/plan.js SPHERE.
 // Draws: the glass (one, transparent, a fresnel glaze, no transmission pass), the earth (one), the parts (one: the
-// keeper, his wheel, the node, the stays, the hoops), the lip (one: turf over the terrain's cut edge). One PointLight
+// keeper, his wheel, the node, the stays, the hoops), the bank (one: earth and heather over the terrain's cut edge). One PointLight
 // of NOON.lightHex at the crown inside, breathing with the baked glow (one uniform).
 // The terrain's triangles inside the glass are made degenerate after the bake (v5/nave.js's way; never heightAt):
-// heightAt there is the old hill, kept out of by one collider round the glass.
+// heightAt there is the old hill, kept out of by a ring of short walls fitted to where the glass meets the ground.
 // ?sphere=0 leaves it out.
 import * as THREE from 'three';
 import { UnderBuilder, underMaterial } from '../v14/under.js';
@@ -176,6 +176,10 @@ export async function build(ctx) {
       const a = pt(i, j), b = pt(i + 1, j), c = pt(i + 1, j + 1), d = pt(i, j + 1);
       const under = (p) => p[1] < gy(p[0], p[2]) + 0.25;
       if (!(under(a) || under(b) || under(c) || under(d))) continue;
+      // no tooth of it above the ground: a quad across the ground line has its upper corners pulled down to just under
+      // the drawn ground (the issue-1722 triangles: its coarse top edge stood up to a quad above the ground, its outer
+      // face outside the glass, as brown teeth along the join); the bank (below) closes the line over it
+      for (const p of [a, b, c, d]) p[1] = Math.min(p[1], gy(p[0], p[2]) - 0.08);
       const hint = [CX - (a[0] + c[0]) / 2, CY - (a[1] + c[1]) / 2, CZ - (a[2] + c[2]) / 2]; // faces in
       for (const [p, q, r] of [[a, b, c], [a, c, d]]) {
         const col = paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3);
@@ -185,7 +189,7 @@ export async function build(ctx) {
       // sees down into the skin (geometry's v17-sphere found its backs from 1 m off the glass, at the ground line and
       // through the gaps under it), and should meet earth there, not the sphere's inside through the skin's back
       {
-        const out = [-hint[0], -hint[1], -hint[2]], o = (p) => { const k = (Re + 0.015) / Re; return [CX + (p[0] - CX) * k, CY + (p[1] - CY) * k, CZ + (p[2] - CZ) * k]; }; // (1.5 cm out, so a ray from outside meets this face first)
+        const out = [-hint[0], -hint[1], -hint[2]], o = (p) => { const k = (Re + 0.015) / Re, x = CX + (p[0] - CX) * k, z = CZ + (p[2] - CZ) * k; return [x, Math.min(CY + (p[1] - CY) * k, gy(x, z) - 0.08), z]; }; // (1.5 cm out, so a ray from outside meets this face first)
         for (const [p, q, r] of [[a, b, c], [a, c, d]]) E.tri(o(p), o(q), o(r), paint((p[0] + q[0] + r[0]) / 3, (p[1] + q[1] + r[1]) / 3, (p[2] + q[2] + r[2]) / 3), out, 0.06);
       }
     }
@@ -198,7 +202,7 @@ export async function build(ctx) {
   const V3 = (a) => new THREE.Vector3(...a);
   const along = (a, b) => { const A = V3(a), d = V3(b).sub(A), len = d.length(); d.normalize(); return { M: new THREE.Matrix4().lookAt(A, A.clone().sub(d), Math.abs(d.y) > 0.95 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)).setPosition(A), len }; };
   const [NX, NY, NZ] = SPHERE.node, [fx, fz] = SPHERE.face, yaw = Math.atan2(fx, fz), kyaw = Math.atan2(SPHERE.keeperFace[0], SPHERE.keeperFace[1]);
-  // the node, and its lines: up to the crown (the sky's line came down here), south-east to the hoops, and two into
+  // the node, and its lines: up to the crown (the sky's line came down here), out to the hoops, and two into
   // the ground (north-east, south), each a length of tube to the glass with a collar where it meets it
   NP.node(B, new THREE.Matrix4().makeTranslation(NX, NY, NZ), { r: 0.6, color: NOON.biscuit, ports: [] });
   const lines = []; // the lines that met here are gone with the tube: the node hangs on its stays, its ports empty
@@ -236,7 +240,7 @@ export async function build(ctx) {
 
   // the keeper: a Noonwright, long in the limb, hooded, in a robe of ox-blood gone brown with lime in its folds,
   // sat in a sling with both hands on the wheel's rim and his head bowed to it. His own frame: origin at the seat,
-  // +z forward (south-east, down the line), +y up
+  // +z forward (toward the Garth, down the line), +y up
   const F = new THREE.Matrix4().makeRotationY(kyaw).scale(new THREE.Vector3(1.8, 1.8, 1.8)).setPosition(...SPHERE.seat); // a Noonwright: tall
   glowK = 0.3;
   const fp = (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(F);
@@ -287,29 +291,59 @@ export async function build(ctx) {
     limb([0, 0.62, 0.18], [0, 0.76, 0.22], 0.15, ROBE_D); // the hood's fall over the neck
   }
   glowK = 1;
-  // the sling: a cradle of spun filament under him, from a ring over his head, the ring hung on the stays
+  // the sling: a cradle of spun filament under him, laced between a rim round his seat and a ring over his head, the
+  // ring hung on the stays. Every line here ends on a fitting: the ring, the rim, the node or an eye fused to the glass,
+  // its end points computed from the same frame (F) and constants the keeper is built from, so they cannot drift
   const RING = fp(0, 2.25, 0.05), RR = 0.55;
   NP.collar(B, new THREE.Matrix4().makeRotationX(Math.PI / 2).setPosition(RING), { r: RR, t: 0.05, seg: 28 });
-  const seatPts = [];
-  for (let i = 0; i < 8; i++) {
-    const a = i / 8 * Math.PI * 2, p = fp(Math.cos(a) * 0.32, -0.1 - 0.05 * Math.abs(Math.sin(a)), Math.sin(a) * 0.3 - 0.02);
-    seatPts.push(p);
-    strand(B, new THREE.Matrix4(), [RING.x + Math.cos(a) * RR, RING.y, RING.z + Math.sin(a) * RR], [p.x, p.y, p.z], { t: 0.012 });
-  }
-  for (let i = 0; i < 8; i++) for (let j = i + 2; j < 8; j += 3) strand(B, new THREE.Matrix4(), seatPts[i].toArray(), seatPts[j].toArray(), { t: 0.018 }); // the cradle laced across
-  // the stays: from all round the glass to the ring and to the node, each at a tangent where it meets the ring
+  const RIM_R = 0.36, RIM_Y = -0.14, RIM_Z = 0.02; // the seat's rim, in his frame (outside the robe's skirt)
+  NP.collar(B, F.clone().multiply(new THREE.Matrix4().makeTranslation(0, RIM_Y, RIM_Z)).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), { r: RIM_R, t: 0.03, seg: 24 });
+  const rimPt = (a) => fp(Math.cos(a) * RIM_R, RIM_Y, RIM_Z + Math.sin(a) * RIM_R);
+  const ringPt = (a) => new THREE.Vector3(RING.x + Math.cos(a) * RR, RING.y, RING.z + Math.sin(a) * RR);
+  const eye = (p, d, r = 0.045) => NP.collar(B, along(p.toArray(), [p.x + d.x, p.y + d.y, p.z + d.z]).M, { r, t: 0.018, seg: 8 }); // a small eye on a line's end
   {
-    const n = low ? 7 : 9, ga = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < n; i++) {
-      const y = 1 - (i + 0.5) / n * 2, rr = Math.sqrt(1 - y * y), a = i * ga;
-      const d = [Math.cos(a) * rr, y, Math.sin(a) * rr], e = [CX + d[0] * (R - 0.05), CY + d[1] * (R - 0.05), CZ + d[2] * (R - 0.05)];
-      const toRing = i % 3 !== 2, tgt = toRing ? [RING.x + Math.cos(a + 1.1) * RR, RING.y, RING.z + Math.sin(a + 1.1) * RR] : [NX + d[0] * 0.75, NY + d[1] * 0.75, NZ + d[2] * 0.75];
-      strand(B, new THREE.Matrix4(), e, tgt, { t: 0.016 });
-      NP.collar(B, along(e, [CX, CY, CZ]).M, { r: 0.12, t: 0.04, seg: 10 }); // where it is fused to the glass
+    // four hangers, ring to rim, at his sides and back (not across his front, where his arms go to the wheel); each
+    // takes the ring at the point over its rim point, so it hangs straight
+    for (const a of [0, Math.PI, Math.PI * 1.35, Math.PI * 1.65]) {
+      const p = rimPt(a), qq = ringPt(Math.atan2(p.z - RING.z, p.x - RING.x));
+      strand(B, new THREE.Matrix4(), qq.toArray(), p.toArray(), { t: 0.012 });
+      eye(p, new THREE.Vector3(0, 1, 0)); eye(qq, new THREE.Vector3(0, -1, 0));
+    }
+    // the cradle under him: laced across the rim, sagging below the seat
+    const n = 8;
+    for (let i = 0; i < n; i++) { const j = (i + 3) % n; strand(B, new THREE.Matrix4(), rimPt(i / n * Math.PI * 2).toArray(), rimPt(j / n * Math.PI * 2).toArray(), { t: 0.016, sag: 0.32 }); }
+  }
+  // the stays: from the upper glass, all round, down to the ring over his head (so none crosses him), and from the
+  // glass beside and before the node to the node (so none crosses him either). Each starts on the glass's inner face
+  // in an eye fused to it and ends on the ring or on the node's skin (the node: an ellipsoid r 0.6, 0.86 high)
+  {
+    const C = new THREE.Vector3(CX, CY, CZ), NODE = new THREE.Vector3(NX, NY, NZ);
+    const dir = (az, el) => new THREE.Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az));
+    const fit = (e) => NP.collar(B, along(e.toArray(), [CX, CY, CZ]).M, { r: 0.12, t: 0.04, seg: 10 }); // where it is fused to the glass
+    const toRing = low ? 5 : 6;
+    for (let i = 0; i < toRing; i++) {
+      const az = i / toRing * Math.PI * 2 + 0.4, el = 0.85 + 0.25 * ((i * 0.618) % 1);
+      // from the ring outward and up: a ray from the ring's point on that bearing, to where it meets the glass
+      const q = ringPt(az), u = dir(az, el), oc = q.clone().sub(C), bq = oc.dot(u), cq = oc.lengthSq() - (R - 0.02) ** 2, t = -bq + Math.sqrt(bq * bq - cq);
+      const e = q.clone().addScaledVector(u, t);
+      strand(B, new THREE.Matrix4(), e.toArray(), q.toArray(), { t: 0.016 });
+      fit(e); eye(q, u.clone().negate());
+    }
+    // the node's stays: out of its sides and front (away from him), each leaving the node's skin straight out
+    const fwd = new THREE.Vector3(fx, 0, fz), side = new THREE.Vector3(fz, 0, -fx);
+    const nd = [[1, 0.25, 0], [0.55, 0.55, 0.75], [0.55, 0.55, -0.75], [0.2, -0.15, 1], [0.2, -0.15, -1], [0.35, 1, 0.1]];
+    for (const [f, up, sd] of nd.slice(0, low ? 5 : 6)) {
+      const u = fwd.clone().multiplyScalar(f).addScaledVector(side, sd).add(new THREE.Vector3(0, up, 0)).normalize();
+      const k = 1 / Math.sqrt((u.x * u.x + u.z * u.z) / 0.36 + (u.y * u.y) / (0.6 * 0.86) ** 2); // the ellipsoid's skin along u
+      const q = NODE.clone().addScaledVector(u, k), oc = q.clone().sub(C), bq = oc.dot(u), cq = oc.lengthSq() - (R - 0.02) ** 2, t = -bq + Math.sqrt(bq * bq - cq);
+      const e = q.clone().addScaledVector(u, t);
+      if (e.y < gy(e.x, e.z) + 0.4) continue; // a stay to the glass under the ground would end in the earth
+      strand(B, new THREE.Matrix4(), e.toArray(), q.toArray(), { t: 0.018 });
+      fit(e); eye(q, u, 0.06);
     }
   }
 
-  // ---- the hoops: the line out of the south-east side toward the Garth, the tube between them gone. Each hoop half
+  // ---- the hoops: the line out of the glass toward the Garth, the tube between them gone. Each hoop half
   // sunk in the ground; the far ones leaning, broken, one fallen flat
   const hoopAt = [];
   // old glass out in the weather: the milk gone to a grey-green bone, lichen and silt low, lime crust in streaks
@@ -333,33 +367,47 @@ export async function build(ctx) {
   }
   add(new THREE.Mesh(B.geometry(), umat('sphere-parts', { roughness: 0.55, side: THREE.DoubleSide })), 'sphere-parts');
 
-  // ---- the lip: the turf's edge where the terrain was cut, laid on the drawn ground round the glass and out a cell
-  // and more, in the terrain's own colours, so the glass sits in the ground with no gap round it
+  // ---- the bank: where the glass meets the ground, a low heaped bank of earth and heather laid round it on the drawn
+  // ground, its inner foot down against the glass under the ground line and its outer foot out past the terrain's cut
+  // edge (the cut takes whole cells), so there is one clean line where glass meets ground on every side
+  const meet = []; // on each bearing: the ground's distance from the centre where it meets the glass, and its height
   {
-    const L = new UnderBuilder((x, y, z, o) => { o[0] = 1; o[1] = 1; o[2] = 0; return o; });
-    const nA = low ? 96 : 160, out = cell * 1.8 + 0.6, steps = 4;
-    // where the ground meets the glass on each bearing: the first ring in from r where the ground is inside it
-    const meet = [];
+    const nA = low ? 120 : 200, out = cell * 1.8 + 0.6;
     for (let i = 0; i <= nA; i++) {
       const a = i / nA * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
       let m = null;
-      for (let d = R; d > R - 6; d -= 0.05) { const x = CX + ca * d, z = CZ + sa * d; if (inside(x, gy(x, z), z)) { m = d; break; } }
+      for (let d = R + 0.5; d > 1; d -= 0.04) { const x = CX + ca * d, z = CZ + sa * d; if (inside(x, gy(x, z), z)) { m = d; break; } }
       meet.push(m);
     }
-    const col = [0, 0, 0], at = (a, d) => { const x = CX + Math.cos(a) * d, z = CZ + Math.sin(a) * d; return [x, gy(x, z) + 0.06, z]; };
-    const cAt = (p) => { for (let k = 0; k < 3; k++) col[k] = gc[k](p[0], p[2]); return [col[0], col[1], col[2]]; };
-    for (let i = 0; i < nA; i++) {
-      const m0 = meet[i], m1 = meet[i + 1];
-      if (m0 == null || m1 == null) continue;
-      const a0 = i / nA * Math.PI * 2, a1 = (i + 1) / nA * Math.PI * 2;
-      for (let s = 0; s < steps; s++) {
-        const d00 = m0 + out * s / steps, d01 = m0 + out * (s + 1) / steps, d10 = m1 + out * s / steps, d11 = m1 + out * (s + 1) / steps;
-        const p = [at(a0, d00), at(a1, d10), at(a1, d11), at(a0, d01)];
-        L.tri(p[0], p[1], p[2], cAt(p[0]), [0, 1, 0], 0.04); L.tri(p[0], p[2], p[3], cAt(p[3]), [0, 1, 0], 0.04);
-      }
-    }
+    const HEATH = C3('#3a2a30'), EARTH = C3('#3b2c1e');
+    const at = (a, d, lift) => { const x = CX + Math.cos(a) * d, z = CZ + Math.sin(a) * d; return [x, gy(x, z) + lift, z]; };
+    const glassAt = (a, y) => { const rr = Math.sqrt(Math.max(0, R * R - (y - CY) ** 2)) + 0.03; return [CX + Math.cos(a) * rr, y, CZ + Math.sin(a) * rr]; };
+    const tone = (p, k) => { const c = [gc[0](p[0], p[2]), gc[1](p[0], p[2]), gc[2](p[0], p[2])], n = n3(p[0] * 0.7, 0, p[2] * 0.7), h = n > 0.55 ? HEATH : EARTH, w = k * (0.5 + 0.5 * n); return [c[0] * (1 - w) + h[0] * w, c[1] * (1 - w) + h[1] * w, c[2] * (1 - w) + h[2] * w]; };
+    // the profile across, from the glass out: [distance past the meet, lift over the drawn ground, how much bank-colour]
+    const prof = [[0.25, 0.26, 0.9], [0.7, 0.2, 0.7], [1.3, 0.1, 0.4], [out, 0.04, 0]];
+    const row = (i) => {
+      const a = i / nA * Math.PI * 2, m = meet[i], gm = at(a, m, 0)[1];
+      const pts = [glassAt(a, gm - 0.45), glassAt(a, gm + 0.12)]; // down against the glass under the ground, then up its face
+      for (const [dd, lift] of prof) { const q = at(a, m + dd + 0.06 * n3(Math.cos(a) * 9, 1, Math.sin(a) * 9), lift * (0.75 + 0.5 * n3(Math.cos(a) * 7, 2, Math.sin(a) * 7))); if (Math.hypot(q[0] - CX, q[2] - CZ) < Math.hypot(pts[pts.length - 1][0] - CX, pts[pts.length - 1][2] - CZ) + 0.05) { const r0 = Math.hypot(pts[pts.length - 1][0] - CX, pts[pts.length - 1][2] - CZ) + 0.05; q[0] = CX + Math.cos(a) * r0; q[2] = CZ + Math.sin(a) * r0; q[1] = gy(q[0], q[2]) + lift; } pts.push(q); }
+      return pts.map((p, k) => [p, tone(p, k < 2 ? 1 : prof[k - 2][2])]);
+    };
+    // one indexed sheet, its normals smoothed across (faceted, its quads read as a fan of triangles round the glass),
+    // its outer foot taking the terrain's own normal so it goes into the ground with no seam of light
+    for (let i = 0; i <= nA; i++) if (meet[i] == null) meet[i] = meet[(i + nA - 1) % nA] ?? R;
+    const rows = []; for (let i = 0; i <= nA; i++) rows.push(row(i % nA));
+    const K = rows[0].length, pos = new Float32Array((nA + 1) * K * 3), colr = new Float32Array((nA + 1) * K * 3), ix = [];
+    for (let i = 0; i <= nA; i++) for (let k = 0; k < K; k++) { const [q, c] = rows[i][k], o = (i * K + k) * 3; pos[o] = q[0]; pos[o + 1] = q[1]; pos[o + 2] = q[2]; colr[o] = c[0]; colr[o + 1] = c[1]; colr[o + 2] = c[2]; }
+    for (let i = 0; i < nA; i++) for (let k = 0; k < K - 1; k++) { const a0 = i * K + k, a1 = (i + 1) * K + k; ix.push(a0, a0 + 1, a1, a1, a0 + 1, a1 + 1); }
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); bg.setAttribute('color', new THREE.BufferAttribute(colr, 3)); bg.setIndex(ix);
+    bg.computeVertexNormals();
+    // facing out and up: wound so, else flipped
+    { const nr = bg.attributes.normal.array; let up = 0; for (let i = 0; i < nr.length; i += 3) up += nr[i + 1]; if (up < 0) { for (let t = 0; t < ix.length; t += 3) { const q = ix[t + 1]; ix[t + 1] = ix[t + 2]; ix[t + 2] = q; } bg.setIndex(ix); bg.computeVertexNormals(); } }
+    { const nr = bg.attributes.normal.array, tn = new THREE.Vector3(); for (let i = 0; i <= nA; i++) { const o = (i * K + K - 1) * 3; T.normalAt(pos[o], pos[o + 2], tn); nr[o] = tn.x; nr[o + 1] = tn.y; nr[o + 2] = tn.z; } }
+    // (the seam at bearing 0: the first and last rows are the same points; give them the same normals)
+    { const nr = bg.attributes.normal.array; for (let k = 0; k < K; k++) { const o0 = k * 3, o1 = (nA * K + k) * 3; for (let j = 0; j < 3; j++) { const v = (nr[o0 + j] + nr[o1 + j]) / 2; nr[o0 + j] = nr[o1 + j] = v; } } }
     const lm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, metalness: 0 });
-    const m = add(new THREE.Mesh(L.geometry(), lm), 'sphere-lip'); m.receiveShadow = true;
+    const m = add(new THREE.Mesh(bg, lm), 'sphere-lip'); m.receiveShadow = true;
   }
 
   // ---- the noon in the air: the inside of the glass seen through it, a white haze over what lies behind the keeper
@@ -392,8 +440,22 @@ export async function build(ctx) {
   }, { pos: new THREE.Vector3(CX, CY, CZ), near: 400, hz: 4 });
 
   // ---- the walker goes round it, not into it: the glass, and each standing hoop's feet
+  let sphereRing = null;
   if (ctx.addCollider) {
-    ctx.addCollider({ x: CX, z: CZ, r: R + 0.25, y: CY - R, h: 2 * R + 2, stand: false });
+    // the glass and nothing more: a ring of short walls round it, each corner where a walker's eye column (feet on the
+    // ground there, up to the eye) comes to 0.55 m from the glass on that bearing, less the body's 0.45 and the wall's
+    // own r. Not one disc of the equator's radius: half sunk on a slope, the glass meets the ground on a circle smaller
+    // than its equator on the uphill side, and a disc kept the walker metres off it there (the owner, 2026-11-17)
+    const nW = 48, WR = 0.25, BODY = 0.45, CLEAR = 0.55, ring = [];
+    const clearAt = (x, z) => { const f = T.heightAt(x, z); let m = Infinity; for (let h = 0.1; h <= 1.75; h += 0.15) { const y = f + h; m = Math.min(m, Math.hypot(x - CX, y - CY, z - CZ) - R); } return m; };
+    for (let i = 0; i < nW; i++) {
+      const a = i / nW * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+      let d = R + 3;
+      while (d > 1 && clearAt(CX + ca * d, CZ + sa * d) > CLEAR) d -= 0.02;
+      ring.push([CX + ca * (d - BODY - WR), CZ + sa * (d - BODY - WR)]);
+    }
+    for (let i = 0; i < nW; i++) { const [x1, z1] = ring[i], [x2, z2] = ring[(i + 1) % nW]; ctx.addCollider({ x1, z1, x2, z2, r: WR, y: CY - R, h: 2 * R + 2, stand: false }); }
+    sphereRing = ring;
     for (const h of hoopAt) if (!h.fallen) ctx.addCollider({ x: h.x, z: h.z, r: 0.35, y: h.gnd - 1, h: h.r * 2 + 1, stand: false });
   }
 
@@ -407,12 +469,12 @@ export async function build(ctx) {
       let n = 0;
       for (let i = 0; i < o.count; i++) {
         o.getMatrixAt(i, m4); const e = m4.elements, dx = e[12] - CX, dz = e[14] - CZ, d = Math.hypot(dx, dz);
-        if (d < R + 1.5 || (dx < 4 && d < R + 26)) { o.setMatrixAt(i, zero); n++; }
+        if (d < R + 1.5 || (dx * SPHERE.arrive[0] + dz * SPHERE.arrive[1] < 4 && d < R + 26)) { o.setMatrixAt(i, zero); n++; }
       }
       if (n) { o.instanceMatrix.needsUpdate = true; pebbles += n; }
     });
   }
 
-  ctx.sphere = { meshes, light, cut, pebbles, hoops: hoopAt, uBreath, ms: Math.round(performance.now() - t0) };
+  ctx.sphere = { meshes, light, cut, pebbles, hoops: hoopAt, uBreath, ring: sphereRing, ms: Math.round(performance.now() - t0) };
   await ctx.progress?.('the sphere', 1);
 }

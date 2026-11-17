@@ -90,11 +90,11 @@ export const LANDMARKS = {
   // the top of the lift: the gangway off the carriage and the walked gallery on the cliff, 135 m up
   remand: { x: -375, z: -70, r: 0, y: null, name: "Final Refuge", line: "“In relating the circumstances which have led to my confinement within this refuge, I am aware that my present position will create a natural doubt.”", card: true, feet: [120, 150], axis: { z0: -117, z1: -24, half: 8 }, at: { x: -377, z: -50 }, reached: 'the lift', aside: false },
   laidsun: { x: 223.6, z: 123.0, r: 6, y: null, name: "The Laid Sun", card: true, feet: [-34, -22], reached: 'the Wellward Way', aside: false }, // v14-D1: the room on the way under the moor from the Nave to the Pit, the Reckoner's new sun going into its floor
-  // v17-N1: the four names of the water going under (the owner reviews them and gives each its `line`; an agent never writes one). The Slake is the mere; the Swallow the portal where it goes under and the glass tube down the conduit (the quay, the cut's end and the head; feet from the lower shore to the floor of the tube); the Meridian Garth the hall; the Shuttered Noon the glass sphere on the west wall's foot.
+  // v17-N1: the four names of the water going under (the owner reviews them and gives each its `line`; an agent never writes one). The Slake is the mere; the Swallow the portal where it goes under and the glass tube down the conduit (the quay, the cut's end and the head; feet from the lower shore to the floor of the tube); the Meridian Garth the hall; the Shuttered Noon the glass sphere on the east wall's foot.
   slake: { x: -88, z: 279, r: 20, y: null, name: "The Slake", line: "", card: true, feet: [-10, 14], aside: false },
   swallow: { x: -86, z: 303, r: 16, y: null, name: "The Swallow", line: "", card: true, feet: [-30, 6], aside: false },
   garth: { x: -10, z: 322, r: 20, y: null, name: "The Meridian Garth", line: "", card: true, feet: [-30, -18], reached: 'the tube from the Swallow', aside: false },
-  noonsphere: { x: -322, z: 22, r: 22, y: null, name: "The Shuttered Noon", line: "", card: true, aside: false },
+  noonsphere: { x: 292, z: 108, r: 22, y: null, name: "The Shuttered Noon", line: "", card: true, aside: false },
   nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -27], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
 };
 
