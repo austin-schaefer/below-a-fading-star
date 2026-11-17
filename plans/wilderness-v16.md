@@ -146,4 +146,17 @@ Next: L5's hand-back (tests here, merge), the re-record of `seams` and `geometry
 
 Next: read the batch's summary; B1 and the critic's blocking findings in; then the gate on a quiet machine, the note, the PR.
 
+**2026-11-17, 03:25 PST. The critic is in: three blocking. The batch's suite is still running; two more red rows found.**
+
+- **The critic** (opus, 59 min; `briefs/v16/reports/v16-critic.md`, merged; its frames in the deploy worktree's `shots/wip/critic-v16-*`). **Blocking:** the Hypogeum's knock (from 8 s a dark mass covers two thirds of the view, the walker drifts 1.6 m west, the door's answer is never seen; at (228.5, -112.4), the edge of the floor's protected east box); the audio gate at `moor-gutter` (`rough` 0.253 against 0.25, the 4 kHz band swinging 29 dB); two map stands facing stone (the Bather, the Toadstone). **Strong:** the gutter, noticed unprompted at all three stands above ground ("nobody would miss it"); the floor from the gallery "reads as made by water". **Still ruled:** the barrow's dome, the hex paving, the kettle pools' near-round rims. **Weak, not fixed in v16:** "Take his letter" leads nowhere (nothing carried); a place card rose 13 times in 20 stops round the tarn; the Span's parapet hides the view; a sheer pier in the fen's east edge at (120, 207.5). The critic did not walk all the fen's shore, and its Lonely Staircase frame was black (its own placement).
+- **The batch's suite** on `next` (since 03:04) has also failed two rows in `threads`: the twelfth chair's dents 0.33 m under the ground, and the jackdaw's hoard 1.9 m over the saint's head. Both are things at a fixed height on ground v16 moved; sent to B1.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| B1 the baselines and the red tests (`geometry`, `seams`, `walkers`, `canyon`, `threads`) | `issue-1611-baselines` | 8169 | opus |
+| F1 the critic's three blocking findings | `issue-1612-critic-fixes` | 8172 | opus |
+
+Next: the suite's summary; B1 and F1 reviewed and merged; the gate on a quiet machine (both touch shared code, so it is the whole suite again); the note, the PR.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
