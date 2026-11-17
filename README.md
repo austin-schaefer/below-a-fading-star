@@ -18,12 +18,13 @@ You can try out the live version (works on mobile or desktop!) at [below-a-fadin
 
 ![Four screenshots: versions 12, 13, 14 and 15](shots/gallery-v12-to-v15.webp)
 
-![One screenshot: version 16](shots/gallery-v16.webp)
+![One screenshot each: versions 16 to 17](shots/gallery-v16-to-v17.webp)
 
 ## Milestones
 
 Each major release in bold, newest first, with its point releases beneath it. Every title links to its release notes; the full notes are in [`RELEASES.md`](RELEASES.md).
 
+- **[v17: The water goes under](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v17)**. Streams now run through the valley and into the ground, and you can follow them down a glass tube under the water to a buried garden.
 - **[v16: The valley floor and the failing sun](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v16)**. The valley floor, the lake and the marsh got natural shapes, and the whole world now reacts when the sun flickers out.
 - **[v15: The Lappet](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v15)**. A whole village now climbs the hill from the keep to the Pomegranate House, with stairs, ladders, shops, a fountain and people.
 - **[v14: The Depths](https://github.com/austin-schaefer/below-a-fading-star/releases/tag/v14)**. You can now go underground: a flooded hall, a road left by a fourth people, a passage and a great pit with stars at the bottom.

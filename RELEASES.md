@@ -4,6 +4,126 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v17: The water goes under
+
+Released 2026-11-17.
+
+The valley's water now runs somewhere. It leaves the lake and the fen, gathers in a new pool under the south slope, and goes into the ground, and you can follow it down.
+
+### New
+
+- **A brook and a stone channel**: A brook runs out of the south bay of Circumbambulate Pool, the lake, and down among the fallen blocks of the Span, the great bridge. From Corpse-Candle Fen, the reed marsh, an old stone channel steps down over five weirs, one of them broken, with a slab bridge where two paths cross it.
+- **The Slake**: Both end in a long dark pool at the foot of the south slope.
+- **The Swallow**: At the Slake's south end the water runs through a stone portal into the hillside. You hear it before you see it. Beside the fall a glass tube comes up out of the water. Walk into it and down, and the water closes over the glass: about fifty metres under water, through a drowned stone conduit.
+- **The Meridian Garth**: The tube comes up into a round hall under the mountain, where a shaft of stored daylight falls on a garden. The garden is green only at the centre and dead in rings round it, oldest outermost. Someone still waters it.
+- **The Shuttered Noon**: On the eastern moor, at the foot of the mountain wall, a great glass ball lies half in the ground, lit from inside. A man sits at a wheel in the middle of it, and there is no way in. Go up to the glass and look down: a ring round the device at the bottom fills slowly, and is full when the sun next fails. Watch what happens then.
+- **The water has a sound**: the brook, each weir, the Slake's lap, the fall at the Swallow from far off, the press of the water in the tube, the drip in the garden.
+- **New lettering**: the first screen, the place names, and the settings are set in new type, like a page from an old press.
+- **Where you are**: the settings panel shows your position, height and facing, with a link to copy.
+
+### Fixed
+
+- **Shadows jumped as you turned on the lake's east shore**: The shadow of the Span's far stair was being cut in and out as you looked about. It holds still now.
+- **The village's lights were as bright as the sun from far off**: From across the valley they are warm pinpricks now, dimmer than the sun.
+
+### Behind the scenes
+
+- Streams are built from one kit: a line, its levels and its steps give the ground, the water and the sound.
+- The fonts are part of the site; the page no longer asks another server for them.
+- New checks: water never runs uphill, the walk through the tube is walked both ways on every release, no far light outshines the sun, the ground's light holds still as you turn, and no entry on the map lands inside anything.
+
+Known issues: The brook is hard to see where it runs in shadow, and the still parts of the stone channel look flat. The glass tube looks newer than everything round it. The wall beside the Swallow's quay is plain. The four new places have names on their cards and no words under them yet. From far off, the village's lights turn pale while the sun is failing.
+
+<p><img src="shots/100-tube-walk-under-water.webp" width="24%" alt="Inside the glass tube under the water, green light and a plank floor"> <img src="shots/100-garth-door-shipped.webp" width="24%" alt="The Meridian Garth from its door: a domed hall with a lit garden at its centre"> <img src="shots/100-sphere-east-moor.webp" width="24%" alt="The Shuttered Noon: a glass dome on the moor with a figure seated at a wheel in a shaft of light"> <img src="shots/100-leat-crossing-after.webp" width="24%" alt="The stone channel and its weirs from the slab bridge"></p>
+
+### Stats
+
+**This release**
+
+- **Time:** 7 hours 14 minutes, from the first plan to live.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 16 | 438.2M | $147 |
+| Fable 5.2 | 1 | 62.1M | $26 |
+| Sonnet 5.5 | 37 | 23.1M | $8 |
+| **Total** | **54** | **523.3M** | **$182** |
+
+<details><summary>Each agent</summary>
+
+| Agent | Model | Tokens | Public API cost |
+|---|---|---|---|
+| The orchestrator | Fable 5.2 | 62.1M | $26 |
+| v17 W1 brook and mere | Opus 5.5 | 60.7M | $17 |
+| v17 S2 sphere to the east moor | Opus 5.5 | 60.5M | $21 |
+| v17 U1 swallow, aqueduct, tube | Opus 5.5 | 60.1M | $19 |
+| v17 U2 the Meridian Garth | Opus 5.5 | 43.6M | $14 |
+| v17 B1 red tests on next | Opus 5.5 | 41.0M | $11 |
+| v17 W2 the leat | Opus 5.5 | 35.7M | $10 |
+| v17 cold critic | Opus 5.5 | 28.1M | $12 |
+| v17 F3 critic's blocking fixes | Opus 5.5 | 27.7M | $8 |
+| v17 S1 the sphere | Opus 5.5 | 23.7M | $8 |
+| v17 F2 shadow jumps and village glow | Opus 5.5 | 20.9M | $9 |
+| v17 T1 typography upgrade | Opus 5.5 | 9.0M | $4 |
+| v17 A1 the water heard | Sonnet 5.5 | 8.6M | $2 |
+| v17 N1 crossings, dressing, names | Sonnet 5.5 | 8.5M | $2 |
+| v17 U3 the Garth's noon light | Opus 5.5 | 7.7M | $3 |
+| v17 W1b the brook reads as water | Opus 5.5 | 7.3M | $3 |
+| v17 G1 Garth rill visual bug | Opus 5.5 | 6.5M | $3 |
+| Diagnose shadow jumps and village glow | Opus 5.5 | 5.4M | $3 |
+| v17 screenshot curator | Sonnet 5.5 | 1.8M | $1 |
+| Read route frames for glitches | Sonnet 5.5 | 1.0M | $0 |
+| v17 plan: the water goes under | Opus 5.5 | 270k | $0 |
+| Blind read round 5 frames | Sonnet 5.5 | 221k | $0 |
+| Final blind read | Sonnet 5.5 | 172k | $0 |
+| Blind read of low-tier walk | Sonnet 5.5 | 130k | $0 |
+| Blind read of sphere frames | Sonnet 5.5 | 125k | $0 |
+| Blind read of full walk | Sonnet 5.5 | 117k | $0 |
+| Blind read brook r9 medium | Sonnet 5.5 | 106k | $0 |
+| Blind read of final frames | Sonnet 5.5 | 100k | $0 |
+| Blind read brook frames r7 | Sonnet 5.5 | 95k | $0 |
+| Blind read of quay/tube frames | Sonnet 5.5 | 94k | $0 |
+| Blind read of tube frames | Sonnet 5.5 | 91k | $0 |
+| Blind read leat frames | Sonnet 5.5 | 89k | $0 |
+| Blind read of three title screens | Sonnet 5.5 | 88k | $0 |
+| Blind read of six frames | Sonnet 5.5 | 85k | $0 |
+| Blind look at after frames | Sonnet 5.5 | 84k | $0 |
+| Blind read of brook frames r4 | Sonnet 5.5 | 84k | $0 |
+| Blind read of brook frames | Sonnet 5.5 | 84k | $0 |
+| Blind read of brook frames r3 | Sonnet 5.5 | 84k | $0 |
+| Cold read of flicker sheets | Sonnet 5.5 | 84k | $0 |
+| Blind read of brook frames r2 | Sonnet 5.5 | 84k | $0 |
+| Cold read of rim frames | Sonnet 5.5 | 84k | $0 |
+| Blind read round two | Sonnet 5.5 | 84k | $0 |
+| Blind read of three frames | Sonnet 5.5 | 82k | $0 |
+| Blind read: door and edge | Sonnet 5.5 | 80k | $0 |
+| Blind read r14 door/edge | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| Blind read of two frames | Sonnet 5.5 | 80k | $0 |
+| **Total** | | **523.3M** | **$182** |
+
+</details>
+
+**Since the project started** (v1 to v17)
+
+Not counting v1, whose sessions were not kept.
+
+| Model | Agents | Tokens | Public API cost |
+|---|---|---|---|
+| Opus 5.5 | 237 | 5.82B | $2,199 |
+| Fable 5.2 | 36 | 1.34B | $798 |
+| Sonnet 5.5 | 201 | 501.1M | $123 |
+| Fable 5.1 | 1 | 254.8M | $180 |
+| Haiku 5.5 | 7 | 1.4M | $0 |
+| **Total** | **479** | **7.92B** | **$3,300** |
+
 ## v16: The valley floor and the failing sun
 
 Released 2026-11-17.

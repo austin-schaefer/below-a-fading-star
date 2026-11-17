@@ -205,7 +205,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `100-names-card-slake.webp` | The place card for the Slake. |
 | `100-names-card-swallow.webp` | The place card for the Swallow. |
 | `100-names-map-south.webp` | The teleport list with the new names, over the south of the map. |
-| `100-sphere-near-after.webp` | After: the sphere near, a glass dome with a beam of light. |
+| `100-sphere-east-moor.webp` | The Shuttered Noon where it shipped: on the east moor, the glass whole, the man at his wheel in the shaft of noon. |
+| `100-sphere-near-after.webp` | The sphere near, at its first site on the west moor (the owner had it moved east before release). |
 | `100-sphere-near-before.webp` | Before: the same ground with no sphere. |
 | `100-sphere-own-20a.webp` | The sphere in a 20 m view of its own. |
 | `100-sphere-taker-after.webp` | After: the sphere from the Taker's ground. |
