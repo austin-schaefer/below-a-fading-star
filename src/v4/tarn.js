@@ -48,7 +48,13 @@ export function tarnBasin(h, x, z, n05, n03) {
   let bowl = 1 - smoothstep(-22, 2, sd);
   if (st > 0) bowl = lerp(bowl, 1 - smoothstep(-7, 1.5, sd), st);
   if (sh > 0) bowl = lerp(bowl, 0.1 * (1 - smoothstep(-5, 1, sd)) + 0.9 * (1 - smoothstep(-24, -13, sd)), sh);
-  return h - bowl * 8.5 - n03 * 0.5 * (1 - smoothstep(-18, 12, sd));
+  h -= bowl * 8.5 + n03 * 0.5 * (1 - smoothstep(-18, 12, sd));
+  // (v16 L5) past the waterline the ground keeps above the water: the noise had dug hollows under the level behind the
+  // bay and under the wood, a hand to 0.8 m deep, beside the water and held by nothing. The floor (on the shore's
+  // distance, the bay's with it, which is never more than 16 m under the edge's sd here) rises from just
+  // under the water at the line to 10 cm over it 0.6 m out, and gives way between 24 and 34 m out.
+  if (sd > -16) { const u = withBay(sd, x, z); if (u > -0.5 && u < 34) { const f = T.y + 0.1 - 0.5 * (1 - smoothstep(-0.5, 0.6, u)) - 30 * smoothstep(24, 34, u); if (f > h) h = f; } }
+  return h;
 }
 // the bay: a round lobe joined to the edge with a wide fillet, so its mouth opens like a real bay's
 export const BAY = { x: -97, z: 182, r: 19, k: 30 };
@@ -75,25 +81,29 @@ export function spitAt(x, z, out = _sp) {
 }
 
 // Signed distance to the tarn's waterline (metres, < 0 in the water), ignoring the spit: the edge, and the bay.
-export function tarnShoreDistance(x, z) {
-  const dc = TARN_EDGE.sd(x, z);
+export function tarnShoreDistance(x, z) { return withBay(TARN_EDGE.sd(x, z), x, z); }
+function withBay(dc, x, z) {
   const db = Math.sqrt((x - BAY.x) ** 2 + (z - BAY.z) ** 2) - BAY.r;
   if (db > BAY.k + 8) return dc;
   // a little irregularity round the bay so it reads as a drawn shore, not two circles
   return smin(dc, db, BAY.k) + N.noise2(x * 0.06, z * 0.06) * 1.6 * smoothstep(40, 10, db);
 }
 
-// Where the water stands: inside the shore and 1.5 m past it (the shingle the water laps), none on the steep bank's lip
-// and none on the spit's back (outline-test holds every wet cell's ground within a metre of the water).
-export function tarnWet(x, z) {
+// Where the water stands: inside the shore and up to 1.5 m past it (the shingle the water laps; half a metre in the
+// bay), none on the spit's back. (v16 L5) And the ground says: wet where it stands under the water or within WET_HIGH
+// of it (groundAt is field.js's heightAt, so tarn.js keeps no import of it): the steep bank's lip and the spit's tip
+// stand out, the low cell at the lip's foot is wet. outline-test holds every wet cell's ground within half a metre of
+// the water, and no dry cell under the water beside a wet one.
+const WET_HIGH = 0.45;
+export function tarnWet(x, z, groundAt) {
   const dx = x - T.x, dz = z - T.z;
   if (dx * dx + dz * dz >= T.r * T.r) return false;
   const sd = tarnShoreDistance(x, z);
-  // the margin: 1.5 m, none on the steep bank (its lip stands at the line), half a metre in the bay (its beach shelves up from 1.4 m inside)
   const m = (x - BAY.x) ** 2 + (z - BAY.z) ** 2 < (BAY.r + 34) ** 2 ? 0.5 : 1.5;
-  if (!(sd < m && (sd < -0.5 || sd < m - 2 * STEEP(x, z)))) return false;
+  if (!(sd < m)) return false;
   const s = spitAt(x, z, _spw);
-  return !(s.t > -0.1 && s.t < 0.8 && s.d < s.w); // the spit's back stands out of the water
+  if (s.t > -0.1 && s.t < 0.8 && s.d < s.w) return false; // the spit's back stands out of the water
+  return !groundAt || groundAt(x, z) < T.y + WET_HIGH;
 }
 const _spw = { t: 0, d: 0, w: 0 };
 

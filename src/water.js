@@ -24,7 +24,7 @@ function discGeometry(ctx, body, rings, segs, dry) {
     pos[i * 3] = x - body.x; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = z - body.z;
     depth[i] = body.y - ctx.terrain.heightAt(x, z);
     if (dry && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // dry hollows inside the disc: the tarn's (v4) and the fen's (v16 L3)
-    else if (body === ctx.water.fen && fenShoreDistance(x, z) > -1 && !fenWet(x, z)) depth[i] = Math.min(depth[i], -0.5); // past the fen's edge only its pools: the river's channel is the ribbon's
+    else if (body === ctx.water.fen && fenShoreDistance(x, z) > -1 && !(fenWet(x, z) && depth[i] > -0.3)) depth[i] = Math.min(depth[i], -0.5); // past the fen's edge only its pools (field.js's fen test: its ground within 0.3 m of the water): the river's channel is the ribbon's
   };
   put(0, body.x, body.z);
   for (let r = 1; r <= rings; r++) {

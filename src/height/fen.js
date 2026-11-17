@@ -107,31 +107,55 @@ function isleLift(x, z) {
 // heightAt's fen block. The broad bowl is the old one (the ground eased toward FEN_Y within 70 m of the centre and out
 // over 45 more: a slope no eye reads as a line, and what stands round the fen stands where it stood); on it the edge
 // does the rest: the flat drawn further down along the fingers (only ever down), the pools pocked in by sd, the
-// islets standing dry.
+// islets standing dry. (v16 L5) The pools dig only where the ground they dig into stands above the water: where the
+// moor itself lies under the level (south, where the land falls to the Saltings) a pool would be water held by nothing,
+// so none is dug there (g, over the 0.3 m above the level).
+const _u = { h: 0, m: 0, sd: 0 };
+function undug(h, x, z, d2, fr) {
+  const mB = 1 - smoothstep(70, 115, Math.sqrt(d2));
+  h = lerp(h, FEN_Y, mB);
+  const sd = fenShoreDistance(x, z);
+  const mE = 1 - smoothstep(lerp(4, 1, fr.tight), fr.fall, sd);
+  if (mE > 0) { const h2 = lerp(h, FEN_Y, mE); if (h2 < h) h = h2; }
+  _u.h = h; _u.m = mB > mE ? mB : mE; _u.sd = sd;
+  return _u;
+}
+const held = (hU) => smoothstep(FEN_WATER, FEN_WATER + 0.3, hU);
+// the last point's ground before the pools (what waterLevelAt's test reads, if heightAt has just been there)
+let _gx = NaN, _gz = NaN, _gh = 0;
 export function fenHeight(h, x, z) {
   const dx = x - L.x, dz = z - L.z, d2 = dx * dx + dz * dz;
   if (d2 > FEN_REACH * FEN_REACH && h !== 0) return h;
-  const mB = 1 - smoothstep(70, 115, Math.sqrt(d2));
-  h = lerp(h, FEN_Y, mB);
-  const sd = fenShoreDistance(x, z), fr = fringe(x, z);
-  const mE = 1 - smoothstep(lerp(4, 1, fr.tight), fr.fall, sd);
-  if (mE > 0) { const h2 = lerp(h, FEN_Y, mE); if (h2 < h) h = h2; }
-  const m = mB > mE ? mB : mE;
+  _gx = x; _gz = z; _gh = h;
+  const fr = fringe(x, z), u = undug(h, x, z, d2, fr), m = u.m;
+  h = u.h;
   if (m === 0) return h;
-  const lift = isleLift(x, z);
-  return h - dig(x, z, sd, fr) * m * (1 - lift) + lift * 0.55;
+  const lift = isleLift(x, z), dg = dig(x, z, u.sd, fr);
+  return h - (dg === 0 ? 0 : dg * held(h)) * m * (1 - lift) + lift * 0.55;
 }
-// where the fen's water stands: within the fringe, where the pools dig below it (a little generous: the water's disc
-// keeps its shore fade where the ground is just above the line). Off it, waterLevelAt goes on to the river.
-export function fenDig(x, z) { const sd = fenShoreDistance(x, z); return dig(x, z, sd, fringe(x, z)) * (1 - isleLift(x, z)); }
+// where the fen's water stands: within the fringe, where the pools have dug the ground (the fen's part of it) under
+// the level, give or take WET_TOL (the water's disc keeps its shore fade where the ground is just above the line).
+// Off it, waterLevelAt goes on to the river. The ground before the fen comes from field.js (fenGroundFrom), read only
+// where a pool digs at all.
+const WET_TOL = 0.05;
+let PRE = null;
+export function fenGroundFrom(f) { PRE = f; }
+export function fenDig(x, z) {
+  const dx = x - L.x, dz = z - L.z, fr = fringe(x, z), sd = fenShoreDistance(x, z), dg = dig(x, z, sd, fr);
+  if (dg === 0) return 0;
+  return dg * held(undug(x === _gx && z === _gz ? _gh : PRE(x, z), x, z, dx * dx + dz * dz, fr).h) * (1 - isleLift(x, z));
+}
 export function fenWet(x, z) {
-  const dx = x - L.x, dz = z - L.z;
-  if (dx * dx + dz * dz > WATER.fen.r * WATER.fen.r) return false;
+  const dx = x - L.x, dz = z - L.z, d2 = dx * dx + dz * dz;
+  if (d2 > WATER.fen.r * WATER.fen.r) return false;
   const sd = fenShoreDistance(x, z);
   if (sd > FRINGE_MAX) return false;
   const fr = fringe(x, z);
   if (sd > fr.fringe) return false;
-  return dig(x, z, sd, fr) * (1 - isleLift(x, z)) > 0.42;
+  const lift = isleLift(x, z), dg = dig(x, z, sd, fr) * (1 - lift);
+  if (dg < 0.05) return false;
+  const u = undug(x === _gx && z === _gz ? _gh : PRE(x, z), x, z, d2, fr), dh = dg * held(u.h);
+  return dh >= 0.05 && u.h - dh * u.m + lift * 0.55 < FEN_WATER + WET_TOL;
 }
 // the marsh's paint: whole inside, out through the fringe in tongues (a slow noise moves where it gives out). n is the
 // noise's thunk (field.js's biomeWith): it is asked only where the tongues can reach (|noise| < 1.1, so 11 m of sd)

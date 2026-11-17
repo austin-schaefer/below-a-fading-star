@@ -14,7 +14,7 @@ import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and fo
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
-import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance } from './fen.js'; // v16 L3: the fen on the edge
+import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom } from './fen.js'; // v16 L3: the fen on the edge
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -360,9 +360,9 @@ function inEddy(x, z) { return eddyR(x, z) < EDDY.r; }
 // --- v2 riverlife: the eddy basin (end)
 
 // Water level of the river or the ravine at a point (null when off it). (v16 L5: only what riverSection says of the
-// water, not the cut: the channel's width at the nearest point, then the ravine, the same numbers to the bit.) Where the
-// fen takes the river over (fenRiverKeep < 1) and its ground stands above the river's level, the fen's own test holds:
-// no water there.
+// water, not the cut: the channel's width at the nearest point, then the ravine, the same numbers to the bit.) Inside
+// the fen's edge the fen's own test holds: the river's channel there is water only where its ground is under the
+// level (its banks there, the Span's bed among them, are the fen's dry ground, not the river's).
 function riverLevelAt(x, z) {
   if (inEddy(x, z)) return EDDY.y; // v2 riverlife: the eddy basin (hook)
   const g = project(GULLY_LINE, x, z, 30, _gq);
@@ -374,7 +374,7 @@ function riverLevelAt(x, z) {
   const B = (d > 0 ? _bw.bl : _bw.br) + SX.noise2(s * 0.12, d > 0 ? 3.1 : 7.7) * 0.6 * (1 - smoothstep(70, 90, s));
   if (!(Math.abs(d) < R_HW(s) + Math.max(0, B) + 0.6) || hyp(x - POOL.x, z - POOL.z) < 6.8) return null;
   const W = R_W(s);
-  if (fenRiverKeep(x, z) < 1 && heightAt(x, z) > W) return null;
+  if (fenShoreDistance(x, z) < 0 && heightAt(x, z) > W) return null;
   return W;
 }
 const _csb = { ..._cs };
@@ -417,6 +417,13 @@ export function heightAt(x, z) {
   return h;
 }
 function heightRaw(x, z) {
+  let h = beforeFen(x, z);
+  // Fen: broad, flat, pocked with pools; v16 L3: on its edge, ragged, fingered, islanded (src/height/fen.js)
+  h = fenHeight(h, x, z);
+  return afterFen(h, x, z);
+}
+// the moor and the landmarks' shaping before the fen (v16 L5: the fen's wet test reads the ground its pools dig into)
+function beforeFen(x, z) {
   // Rolling moorland
   let h = SX.fbm2(x * 0.0035, z * 0.0035, 5) * 11;
   h += SX.fbm2(x * 0.012 + 5, z * 0.012 - 3, 4) * 3.2;
@@ -438,9 +445,11 @@ function heightRaw(x, z) {
   // Tarn basin: flatten then dish
   // (v16 L2: a shelving shore keyed on the edge's sd, src/v4/tarn.js: bays, a point, an inlet, a shallows, a steep bank)
   if (!beyond(h, x, z, L.tarn.x, L.tarn.z, TARN_REACH)) h = tarnBasin(h, x, z, SX.noise2(x * 0.05, z * 0.05), SX.noise2(x * 0.03, z * 0.03));
-  h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
-  // Fen: broad, flat, pocked with pools; v16 L3: on its edge, ragged, fingered, islanded (src/height/fen.js)
-  h = fenHeight(h, x, z);
+  return tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
+}
+fenGroundFrom(beforeFen);
+function afterFen(h, x, z) {
+  const L = LANDMARKS;
   // Orchard terraces: faint steps, soft ones. Every 1.2 m of the moor's rise lies flatter (a tread) then steeper (a
   // bank): a wave of 0.3 of the rise, continuous, so the walker's feet follow the drawn ground (v15-W5: a floor() here
   // stood a 0.84 m cliff in heightAt every 1.2 m of rise that the 2-3 m mesh drew as a slope, and the walker jumped it
@@ -539,9 +548,12 @@ function biomeWith(x, z, h, slope, rv) {
 // order waterLevelAt asks them. A body drawn on an edge (src/height/outline.js) gives its own; a plain disc is a disc.
 // v16 L2: the tarn is on its edge; v16 L3: the fen on its own (src/height/fen.js), wet only where its pools hold water.
 const disc = (w) => ({ wet: (x, z) => hyp(x - w.x, z - w.z) < w.r, sd: (x, z) => hyp(x - w.x, z - w.z) - w.r });
+const FEN_HIGH = 0.3; // how far above the fen's water a wet cell's ground may stand (the shore's fade)
 export const WATER_BODIES = [
-  { name: 'tarn', w: WATER.tarn, wet: tarnWet, sd: tarnShoreDistance },
-  { name: 'fen', w: WATER.fen, wet: fenWet, sd: fenShoreDistance },
+  { name: 'tarn', w: WATER.tarn, wet: (x, z) => tarnWet(x, z, heightAt), sd: tarnShoreDistance },
+  // (v16 L5: what the fen calls wet is held to the whole ground: the river's spur, its soft max, lifts the fen's ground
+  // near the river's mouth, and the Span's blocks stand in it)
+  { name: 'fen', w: WATER.fen, wet: (x, z) => fenWet(x, z) && heightAt(x, z) < WATER.fen.y + FEN_HIGH, sd: fenShoreDistance },
   { name: 'pool', w: WATER.pool, ...disc(WATER.pool) },
 ];
 // Water height at a point, or null when there is no water body here.

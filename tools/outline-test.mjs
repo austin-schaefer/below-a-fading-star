@@ -177,6 +177,24 @@ else {
       dry++; dat = dat || [x, z];
     }
     check(dry === 0, `${b.name}: every cell inside its shore with its ground under the water is wet`, `${dry} dry${dat ? ', first at ' + dat.map(f2) : ''}`);
+    // (v16 L5) water held by nothing: a dry cell (no water at all) more than LEAK m under the body's level beside one
+    // of its wet cells, on a 1 m grid over its disc and a few metres round it (L3's fen pool at (61, 246), dug into
+    // the Saltings' ground that lay under the level already)
+    {
+      const LEAK = 0.1, g = w.r > 20 ? 1 : 0.5, pad = 4, x0 = w.x - w.r - pad, z0 = w.z - w.r - pad, n = Math.ceil((2 * (w.r + pad)) / g) + 1;
+      const WET = new Uint8Array(n * n), LOW = new Uint8Array(n * n);
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        const x = x0 + i * g, z = z0 + j * g, k = i * n + j;
+        if (b.wet(x, z)) WET[k] = 1;
+        else if (F.heightAt(x, z) < w.y - LEAK && F.waterLevelAt(x, z) === null) LOW[k] = 1;
+      }
+      let leak = 0, lat = null;
+      for (let i = 1; i < n - 1; i++) for (let j = 1; j < n - 1; j++) {
+        const k = i * n + j;
+        if (LOW[k] && (WET[k - n] || WET[k + n] || WET[k - 1] || WET[k + 1])) { leak++; lat = lat || [x0 + i * g, z0 + j * g]; }
+      }
+      check(leak === 0, `${b.name}: no dry cell more than ${LEAK} m under its water beside a wet one (water held by nothing)`, `${leak} cells${lat ? ', first at ' + lat.map(f2) : ''}`);
+    }
     check(n === 0, `${b.name}: no wet cell with its ground over 1 m above the water`, `${n} of ${cells} cells; the highest ${f2(worst)} m at ${at ? at.map(f2) : '-'}`);
   }
 }
