@@ -3,6 +3,7 @@
 // the walked road, with v3's CAUSEWAY dashed under it), the leads (paths P, kerb K, rivulets R, from
 // src/v4/paths/routes.js), the river, and any extra sites passed as JSON (for placement planning).
 //   node tools/map.mjs <out.png> [sites.json]   (sites: [{key, x, z, r, label}])
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 let chromium;
@@ -10,7 +11,7 @@ try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const [out, sitesPath] = process.argv.slice(2);
 const sites = sitesPath ? JSON.parse(readFileSync(sitesPath, 'utf8')) : [];
-const b = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] }); const p = await b.newPage({ viewport: { width: 900, height: 900 } });
+const b = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] }); const p = await b.newPage({ viewport: { width: 900, height: 900 } });
 await p.goto(`${process.env.FP_BASE || 'http://localhost:8123'}/?q=low&skip=rocks,vegetation,structures,water,particles,fauna,audio,skylife`, { waitUntil: 'load' });
 await p.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 180000 });
 const res = await p.evaluate(async (sites) => {

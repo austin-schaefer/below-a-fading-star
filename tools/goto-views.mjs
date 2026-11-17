@@ -2,12 +2,13 @@
 // Writes a views.mjs file for every Go-to entry in the settings map, at the pose teleport() gives it (v11-F2); reads
 // the entries from a loaded page. Usage: FP_BASE=http://localhost:PORT node tools/goto-views.mjs > shots/wip/goto-views.json
 // then: node tools/views.mjs shots/wip/goto-views.json shots/wip v11-F2-goto low. An entry with a y (the Span's deck) carries dy.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage();
 await page.goto(`${base}/?q=low`, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => document.body.classList.contains('ready') && window.__fp.settings, null, { timeout: 300000 });

@@ -6,6 +6,7 @@
 // (a tighter crop on the sun, rounded like an app tile).
 //   node tools/icon.mjs [base=http://localhost:8123] [master.png]
 // Pass a path as the second argument to keep the 1024² master as well.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +20,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VIEW = { x: 6, z: 36, yaw: 1.902, pitch: 0.26, fov: 30, flicker: 0.55 };
 const SIZE = 1024;
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: SIZE, height: SIZE }, deviceScaleFactor: 1 });
 page.setDefaultTimeout(600000);
 let failed = false;

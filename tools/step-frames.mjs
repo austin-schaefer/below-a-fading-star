@@ -6,6 +6,7 @@
 //   node tools/step-frames.mjs <base> <q> <x,z[,y]> <yaw> <pitch> [n=8] [ms=180] [prefix=step] [key=KeyW]
 // y, when given, is the feet's height (placeAt onto the floor there); else the highest underground way's floor there. Frames: shots/wip/<prefix>-<q>-NN.png; prints
 // where the feet are at each.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -13,7 +14,7 @@ catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base, q = 'medium', at, yaw = '0', pitch = '0', n = '8', ms = '180', prefix = 'step', key = 'KeyW'] = process.argv.slice(2);
 if (!base || !at) { console.log('usage: step-frames.mjs <base> <q> <x,z[,y]> <yaw> <pitch> [n] [ms] [prefix] [key]'); process.exit(2); }
 const [x, z, y] = at.split(',').map(Number);
-const browser = await pw.chromium.launch({ channel: 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ channel: 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

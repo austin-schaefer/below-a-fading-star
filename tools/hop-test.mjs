@@ -4,16 +4,13 @@
 // the thing is stopped by it, a running hop lands them on top of it, they can take three steps along it where it is
 // long, and stepping off puts them back on the ground (off the parapet's outer side: 56 m down, as through the
 // crack). Simulated at 60 Hz through controls.update, in one page. Usage: node tools/hop-test.mjs [base] [--json]
-import { createRequire } from 'node:module';
-let chromium;
-try { ({ chromium } = await import('playwright')); }
-catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
+import { launch } from './launch.mjs';
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await launch();
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-await page.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+await page.goto(`${base}/?q=low&shadows=0&bloom=0${process.env.HOP_EXTRA || ""}`, { waitUntil: 'load', timeout: 60000 });
 await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 180000 });
 const R = await page.evaluate(() => {
   const fp = window.__fp, p = fp.player, T = fp.terrain, C = fp.controls.state.colliders, DT = 1 / 60;
@@ -154,7 +151,20 @@ const R = await page.evaluate(() => {
   // the broad phase's cost: the collider loop at a spot among many (the Lynchets) against an empty one
   const time = (x, z) => { place(x, z); p.keys.clear(); p.keys.add('KeyW'); const t0 = performance.now(); for (let i = 0; i < 600; i++) { p.yaw += 0.01; fp.controls.update(DT); } p.keys.clear(); return (performance.now() - t0) / 600; };
   const perFrame = time(-190, -110);
-  return { res, colliders: C.length, perFrame };
+  // v16-P1: the broad phase (controls.js's grid) leaves every walk as the linear scan made it: the same keys at five
+  // places (the Lynchets, the Lappet's crown, its Rungs, the Lees' square, the causeway), grid on and off, end where
+  // the other ended; and what the scan costs without it
+  const walkFrom = ([x, z, y], on) => {
+    fp.controls.state.collGrid = on; place(x, z, y); p.yaw = 0.4; p.keys.clear(); p.keys.add('KeyW');
+    for (let i = 0; i < 420; i++) { if (i % 60 === 0) p.yaw += 1.3; if (i === 200) p.keys.add('ShiftLeft'); if (i % 90 === 45) fp.controls.hop(); fp.controls.update(DT); }
+    p.keys.clear(); return [p.pos.x, p.pos.y, p.pos.z];
+  };
+  const same = [[-190, -110], [54.656, -8.444, 18.0], [59.336, -25.528, 10.0], [57.813, -43.262], [-75, 12]].map((s) => {
+    const a = walkFrom(s, true), b = walkFrom(s, false);
+    return { at: s.slice(0, 2), d: Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]), end: a.map((v) => +v.toFixed(2)) };
+  });
+  fp.controls.state.collGrid = false; const scanFrame = time(-190, -110); fp.controls.state.collGrid = true;
+  return { res, colliders: C.length, perFrame, same, scanFrame };
 });
 await browser.close();
 const json = process.argv.includes('--json');
@@ -168,7 +178,8 @@ for (const r of R.res) {
   if (r.along) check(r.walkedAlong, `${r.name}: three steps along the top`, `${r.along.walked} m, ${r.along.framesOff} frames off it, never under ${r.along.lift} m over the ground`);
   if (r.off) check(r.steppedOff, `${r.name}: stepping off returns to the ground`, `feet ${r.off.feet} m over the terrain (y ${r.off.y}), onGround ${r.off.onGround}`);
 }
-check(R.perFrame < 0.5, 'the walker\'s update stays cheap', `${R.perFrame.toFixed(3)} ms a frame with ${R.colliders} colliders`);
+check(R.perFrame < 0.5, 'the walker\'s update stays cheap', `${R.perFrame.toFixed(3)} ms a frame with ${R.colliders} colliders (${R.scanFrame.toFixed(3)} ms without the broad phase)`);
+for (const w of R.same) check(w.d < 1e-6, `the broad phase walks as the scan does at (${w.at})`, `ends ${w.d.toExponential(1)} m apart, at (${w.end})`);
 check(errors.length === 0, 'no page errors', errors.slice(0, 3).join(' | '));
 if (json) console.log(JSON.stringify(R, null, 1));
 process.exit(fail ? 1 : 0);

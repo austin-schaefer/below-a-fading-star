@@ -4,6 +4,7 @@
 // views.json: [{ "name": "causeway", "x": -40, "z": 22, "yaw": 1.9, "pitch": 0, "dy": 0, "js": "page code after placing", "pre": "page code just before the frame", "settle": 1500 }]
 // The sun's guttering is held off so before/after pairs are comparable. Frames are read from the canvas
 // right after a synchronous composer.render(), so no preserveDrawingBuffer is needed.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 let pw;
@@ -14,7 +15,7 @@ const engine = process.env.FP_BROWSER || 'chromium';
 const chromium = pw[engine];
 const [vf, outDir, prefix, q = 'low', w = '1280', h = '720', extra = ''] = process.argv.slice(2);
 const views = JSON.parse(readFileSync(vf, 'utf8'));
-const browser = await chromium.launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 // FP_BASE picks the server (default the main tree's port); FP_DSF sets devicePixelRatio (pixel-ratio pairs);
 // FP_SUFFIX goes after the view's name (perf-02-bloom-sun-before.png)
 const base = process.env.FP_BASE || 'http://localhost:8123';

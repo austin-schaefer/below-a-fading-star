@@ -13,6 +13,7 @@
 //   flat:   a 64×64 pixel square at 4, to check the bloom's overall energy against the old path (reported).
 // Every load runs the default; the old path (?bloomkernel=box&bloomprefilter=0) is measured too and reported,
 // and must fail both gates (otherwise the test is not measuring anything). Exit 1 on any gated failure.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -22,7 +23,7 @@ const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 const q = process.argv[3] || 'medium';
 const ANISO_MAX = 0.06, RIPPLE_MAX = 1.25;
 
-const browser = await pw[engine].launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw[engine].launch(engine !== 'chromium' ? {} : { args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 
 async function measure(extra) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });

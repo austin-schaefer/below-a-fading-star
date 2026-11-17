@@ -10,13 +10,14 @@
 //   node tools/lift-walk.mjs [base=http://localhost:8123] [keys|touch] [prefix=h4-10] [q=low]
 // Frames go to shots/wip/<prefix>-NN-<what>.png in order. Prints each frame with the page time, the carriage's s and
 // state, and a last line `rode: yes|no`.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', mode = 'keys', prefix = 'h4-10', q = 'low'] = process.argv.slice(2);
 const touch = mode === 'touch';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);

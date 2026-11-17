@@ -8,6 +8,7 @@
 // of them (walked one after another, each from its own start: a reload between). tools/landing-walk-owner.json is the
 // owner's five stair heads of 2026-11-16 (7.png to 11.png), each from below or above to the door
 // or level beyond. Prints each frame with where the feet are, each stop, and `reached: n of m`.
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 let pw;
@@ -17,7 +18,7 @@ const [file, base = 'http://localhost:8123', prefix = 'v15-W4-walk', q = 'low'] 
 const routes = [].concat(JSON.parse(fs.readFileSync(file, 'utf8')));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = 1280, H = 720, SENS = 0.0021, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
-const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium' /* (the new headless: it grants the pointer capture) */, args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium' /* (the new headless: it grants the pointer capture) */, args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let reached = 0, total = 0, frame = 0;
 for (const [ri, R] of routes.entries()) {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
