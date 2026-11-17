@@ -72,14 +72,14 @@ function glassMaterial(uBreath, low) {
         float sgLich = smoothstep(0.75, 0.9, sgD.y + 0.3 * sgN(vSW * 0.5)) * smoothstep(0.55, 0.7, sgN(vSW * 0.9 + 2.0));
         // streaks down from every band
         float sgS = smoothstep(0.55, 0.8, sgN(vec3(vSW.x * 2.5, vSW.y * 0.3, vSW.z * 2.5)));
-        vec3 sgMilk = mix(mix(vec3(0.62, 0.6, 0.53), vec3(0.47, 0.55, 0.48), smoothstep(0.45, 0.6, sgTint)), vec3(0.55, 0.42, 0.26), smoothstep(0.7, 0.8, sgTint));
+        vec3 sgMilk = mix(vec3(0.62, 0.6, 0.53), vec3(0.6, 0.52, 0.4), smoothstep(0.6, 0.8, sgTint));
         sgMilk *= 0.8 + 0.3 * sgN(vSW * 3.0);
         vec3 sgLime = vec3(0.56, 0.54, 0.46) * (0.65 + 0.4 * sgN(vSW * 6.0));
         vec3 sgClear = vec3(0.28, 0.31, 0.29);
         vec3 sgCol = mix(sgClear, sgMilk, sgField);
         sgCol = mix(sgCol, sgLime, max(sgBand, sgG));
         sgCol = mix(sgCol, vec3(0.2, 0.16, 0.11), sgDirt * (1.0 - sgG) * 0.8);
-        sgCol = mix(sgCol, vec3(0.36, 0.42, 0.3) * (0.7 + 0.5 * sgN(vSW * 9.0)), sgLich * 0.85);
+        sgCol = mix(sgCol, vec3(0.4, 0.4, 0.34) * (0.7 + 0.5 * sgN(vSW * 9.0)), sgLich * 0.5);
         sgCol *= 1.0 - 0.3 * sgS * (1.0 - sgBand);
         // crazed: a fine net of dark lines in the thick glass
         float sgC = abs(sgN(vSW * 9.0) - sgN(vSW * 9.0 + 7.3));
@@ -88,7 +88,7 @@ function glassMaterial(uBreath, low) {
         float sgClearA = 0.04 + 0.4 * pow(sgF, 4.0) + 0.07 * sgS + 0.08 * smoothstep(0.45, 0.6, sgA);
         float sgAl = mix(sgClearA, 0.42 + 0.15 * sgN(vSW * 2.0), sgField);
         sgAl = mix(sgAl, 0.75, sgDirt * 0.7);
-        sgAl = mix(sgAl, 0.9, max(sgLich * 0.85, max(sgBand, sgG)));
+        sgAl = mix(sgAl, 0.9, max(sgLich * 0.4, max(sgBand, sgG)));
         diffuseColor.a = clamp(sgAl, 0.0, 1.0);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // lit from inside: the clouded glass carries the noon, the clear glass barely; back faces (the far wall's inside) most
@@ -182,21 +182,6 @@ export async function build(ctx) {
         E.tri(p, q, r, col, hint, 0.06);
       }
     }
-    // roots: dark runs down the top courses
-    for (let k = 0, n = 0; k < 400 && n < (low ? 14 : 30); k++) {
-      const u = rng() * Math.PI * 2, x0 = CX + Math.cos(u) * (R - 1), z0 = CZ + Math.sin(u) * (R - 1);
-      // a root from just under the turf, down the inside of the earth skin a few metres, wandering
-      let v = Math.acos(Math.min(1, Math.max(-1, (CY - gy(x0, z0) + 0.4) / (R + 0.2))));
-      if (!(v > 0.05 && v < 3.0)) continue;
-      n++;
-      const pts = [], len = 2 + rng() * 4;
-      for (let s = 0; s <= 6; s++) {
-        const vv = v - (s / 6) * len / R, uu = u + (rng() - 0.5) * 0.06 * s, rr = R + 0.18;
-        pts.push(new THREE.Vector3(CX + rr * Math.sin(vv) * Math.cos(uu), CY - rr * Math.cos(vv), CZ + rr * Math.sin(vv) * Math.sin(uu)));
-      }
-      if (pts[6].y > gy(pts[6].x, pts[6].z)) continue;
-      put(E, new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.05 + rng() * 0.05, 4, false), new THREE.Matrix4(), { color: new THREE.Color(...ROOT), jit: 0.1 });
-    }
     add(new THREE.Mesh(E.geometry(), umat('sphere-earth', { roughness: 0.95 })), 'sphere-earth');
   }
   await ctx.progress?.('the sphere', 0.4);
@@ -208,12 +193,12 @@ export async function build(ctx) {
   const [NX, NY, NZ] = SPHERE.node, [fx, fz] = SPHERE.face, yaw = Math.atan2(fx, fz), kyaw = Math.atan2(SPHERE.keeperFace[0], SPHERE.keeperFace[1]);
   // the node, and its lines: up to the crown (the sky's line came down here), south-east to the hoops, and two into
   // the ground (north-east, south), each a length of tube to the glass with a collar where it meets it
-  NP.node(B, new THREE.Matrix4().makeTranslation(NX, NY, NZ), { r: 0.8, color: NOON.cloud, ports: [] });
-  const lines = [[fx, -0.12, fz], [0.3, -0.75, 0.55], [-0.6, -0.5, 0.3]];
+  NP.node(B, new THREE.Matrix4().makeTranslation(NX, NY, NZ), { r: 0.6, color: NOON.biscuit, ports: [] });
+  const lines = []; // the lines that met here are gone with the tube: the node hangs on its stays, its ports empty
   for (const [k, l] of lines.entries()) {
     const d = V3(l).normalize(), a = [NX + d.x * 0.7, NY + d.y * 0.7, NZ + d.z * 0.7], b = [NX + d.x * (R - 0.15), NY + d.y * (R - 0.15), NZ + d.z * (R - 0.15)];
     const { M, len } = along(a, b);
-    NP.tube(B, M, { r: k === 0 ? 0.36 : 0.3, len, rib: 1.4, collar: true, color: NOON.cloud, seed: 30 + k });
+    NP.tube(B, M, { r: k === 0 ? 0.36 : 0.3, len, rib: 1.4, collar: true, color: NOON.biscuit, seed: 30 + k });
     NP.collar(B, M.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, len - 0.05)), { r: (k === 0 ? 0.36 : 0.3) + 0.1, t: 0.08, color: NOON.bone, band: false, seg: 24 });
   }
   // the eye: where the noon comes in, a disc of clear glass in the top of the ball over the keeper, ringed in
@@ -245,7 +230,7 @@ export async function build(ctx) {
   // the keeper: a Noonwright, long in the limb, hooded, in a robe of ox-blood gone brown with lime in its folds,
   // sat in a sling with both hands on the wheel's rim and his head bowed to it. His own frame: origin at the seat,
   // +z forward (south-east, down the line), +y up
-  const F = new THREE.Matrix4().makeRotationY(kyaw).scale(new THREE.Vector3(1.5, 1.5, 1.5)).setPosition(...SPHERE.seat); // a Noonwright: tall
+  const F = new THREE.Matrix4().makeRotationY(kyaw).scale(new THREE.Vector3(1.8, 1.8, 1.8)).setPosition(...SPHERE.seat); // a Noonwright: tall
   glowK = 0.3;
   const fp = (x, y, z) => new THREE.Vector3(x, y, z).applyMatrix4(F);
   const ROBE = new THREE.Color('#4a2219'), ROBE_D = new THREE.Color('#32170f'), SKIN = new THREE.Color('#b9ad97'), WHEEL = new THREE.Color('#4f7a63'), BRONZE = new THREE.Color('#6b5a3a');
@@ -260,7 +245,7 @@ export async function build(ctx) {
     for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; limb([W[0] + Math.cos(a) * 0.09, W[1] + Math.sin(a) * 0.09, W[2]], [W[0] + Math.cos(a) * (WR - 0.02), W[1] + Math.sin(a) * (WR - 0.02), W[2]], 0.022, WHEEL); }
     // knobs round the rim (a valve wheel's grips), and the axle to the valve's body on the node
     for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; blob([W[0] + Math.cos(a) * (WR + 0.035), W[1] + Math.sin(a) * (WR + 0.035), W[2]], [0.03, 0.03, 0.03], WHEEL); }
-    limb([W[0], W[1], W[2]], [0, W[1], 1.15], 0.07, BRONZE);
+    limb([W[0], W[1], W[2]], [0, W[1], 1.35], 0.07, BRONZE);
   }
   // seated: thighs forward a little up, shins hanging, feet loose (no floor under him)
   for (const s of [-1, 1]) {
@@ -307,12 +292,12 @@ export async function build(ctx) {
   for (let i = 0; i < 8; i++) for (let j = i + 2; j < 8; j += 3) strand(B, new THREE.Matrix4(), seatPts[i].toArray(), seatPts[j].toArray(), { t: 0.018 }); // the cradle laced across
   // the stays: from all round the glass to the ring and to the node, each at a tangent where it meets the ring
   {
-    const n = low ? 10 : 14, ga = Math.PI * (3 - Math.sqrt(5));
+    const n = low ? 7 : 9, ga = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < n; i++) {
       const y = 1 - (i + 0.5) / n * 2, rr = Math.sqrt(1 - y * y), a = i * ga;
       const d = [Math.cos(a) * rr, y, Math.sin(a) * rr], e = [CX + d[0] * (R - 0.05), CY + d[1] * (R - 0.05), CZ + d[2] * (R - 0.05)];
       const toRing = i % 3 !== 2, tgt = toRing ? [RING.x + Math.cos(a + 1.1) * RR, RING.y, RING.z + Math.sin(a + 1.1) * RR] : [NX + d[0] * 0.75, NY + d[1] * 0.75, NZ + d[2] * 0.75];
-      strand(B, new THREE.Matrix4(), e, tgt, { t: 0.022 });
+      strand(B, new THREE.Matrix4(), e, tgt, { t: 0.016 });
       NP.collar(B, along(e, [CX, CY, CZ]).M, { r: 0.12, t: 0.04, seg: 10 }); // where it is fused to the glass
     }
   }
@@ -325,13 +310,8 @@ export async function build(ctx) {
   const wear = (x, y, z, ny, c, out) => { const n = n3(x * 1.3, y * 1.3, z * 1.3), low2 = 1 - ss(0, 1.6, y - gy(x, z)); out[0] = c.r !== undefined ? c.r : c[0]; out[1] = c.g !== undefined ? c.g : c[1]; out[2] = c.b !== undefined ? c.b : c[2]; const k = 0.62 + 0.3 * n; out[0] *= k; out[1] *= k; out[2] *= k; out[0] = out[0] * (1 - 0.6 * low2) + 0.16 * 0.6 * low2; out[1] = out[1] * (1 - 0.6 * low2) + 0.18 * 0.6 * low2; out[2] = out[2] * (1 - 0.6 * low2) + 0.11 * 0.6 * low2; return out; };
   {
     const sx = CX + fx * R, sz = CZ + fz * R;
-    // the tube's stub out of the glass, its end torn
-    {
-      const a = [CX + fx * (R - 0.4), CY + 0.2, CZ + fz * (R - 0.4)], b = [sx + fx * 2.2, CY - 0.2, sz + fz * 2.2];
-      const { M, len } = along(a, b);
-      NP.tube(B, M, { r: 1.25, len, rib: 0, ragged: 0.8, seed: 3, color: OLD, wear });
-      NP.collar(B, M, { r: 1.4, t: 0.18, seg: 36, color: OLD, wear, band: false });
-    }
+    // (the tube between the hoops is gone, to its socket in the glass: a collar fused on where it left)
+    NP.collar(B, along([CX + fx * (R - 0.1), CY + 0.3, CZ + fz * (R - 0.1)], [CX + fx * (R + 2), CY + 0.3, CZ + fz * (R + 2)]).M, { r: 1.4, t: 0.2, seg: 36, color: OLD, wear, band: false });
     for (const [k, s] of SPHERE.hoops.entries()) {
       const jog = (rng() - 0.5) * 1.6, x = sx + fx * s - fz * jog, z = sz + fz * s + fx * jog, gnd = gy(x, z);
       const r = SPHERE.hoopR * (0.9 + rng() * 0.2), fallen = k === 4, lean = k > 2 ? (rng() - 0.5) * 0.5 : (rng() - 0.5) * 0.12;
@@ -340,7 +320,7 @@ export async function build(ctx) {
       if (fallen) M.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2 - 0.08));
       M.setPosition(x, y, z);
       const broken = k >= 5, a0 = broken ? -Math.PI + 0.9 + rng() * 0.6 : -Math.PI, a1 = broken ? Math.PI - 1.6 - rng() * 0.8 : Math.PI;
-      NP.collar(B, M, { r, t: 0.22, a0, a1, seg: 40, color: OLD, wear, band: k % 3 === 1 });
+      NP.collar(B, M, { r, t: 0.22, a0, a1, seg: 40, color: OLD, wear, band: false });
       hoopAt.push({ x, z, y, r, fallen, gnd });
     }
   }

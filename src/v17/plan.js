@@ -110,12 +110,12 @@ export const SPHERE = {
   c: [-322, 22],
   r: 15,
   y: 8,               // centre y (the table's 8 to 10; 8 so the east bulge sits on the ground, not over it)
-  // the keeper: seated in his sling under the eye in the glass where the noon comes in (3.5 m east of the centre, on
-  // the side a visitor comes from), facing south to the wheel on the junction's node, so a visitor coming from the
-  // east (the Taker's pavements) sees him side on, a body bent over a wheel, in a fall of white light
-  node: [-318.5, 10.1, 22.3], // the junction's node
-  seat: [-318.5, 9.55, 20.0], // the sling's seat (his pelvis); he faces `keeperFace`
-  keeperFace: [0, 1],
+  // the keeper: seated in his sling under the eye in the glass where the noon comes in (6 m east of the centre, on
+  // the side a visitor comes from), facing south-east to the wheel on the junction's node, so a visitor coming from the
+  // east (the Taker's pavements) sees him three-quarter on, a body bent over a wheel, in a fall of white light
+  node: [-313.95, 10.6, 22.05], // the junction's node, 2.9 m before him along keeperFace
+  seat: [-316, 9.8, 20.0],  // the sling's seat (his pelvis); he faces `keeperFace`
+  keeperFace: [0.707, 0.707], // south-east, down the line he shut: from the east his wheel is seen open, not edge on
   face: [0.72, 0.69],      // the hoops' line: toward the Meridian Garth (south-east), unit
   // the hoops leaving the south-east side, toward the Garth: distances from the glass along `face`, metres
   hoops: [2.5, 8.5, 15, 22, 29.5, 38, 47],
