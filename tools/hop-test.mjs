@@ -139,8 +139,9 @@ const R = await page.evaluate(() => {
     }
     return null;
   });
-  // a fallen gnomon, from its side
-  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2).sort((a, b) => b.len - a.len), (c) => {
+  // a fallen gnomon, from its side (whose top stands 0.38 m over the ground: a lower one is a step, no stop; v16's floor
+  // laid a longer one at 0.34 on a slope)
+  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2 && c.y + c.h - T.heightAt(c.x, c.z) > 0.38).sort((a, b) => b.len - a.len), (c) => {
     const ex = c.x1 + c.ux * c.len * 0.1, ez = c.z1 + c.uz * c.len * 0.1;
     for (const s of [1, -1]) {
       const [nx, nz] = perp(c).map((v) => v * s), g = T.heightAt(c.x, c.z);

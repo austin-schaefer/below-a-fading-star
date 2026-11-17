@@ -288,6 +288,7 @@ export function leads() {
         const mat = D.near && regionDistance(D.near.region, x, z) < D.near.within ? D.near.region : materialAt(x, z);
         return { x, z, s, y, wy, mat, open };
       });
+      if (S.length < 2) { (L.dropped || (L.dropped = [])).push(line[0]); continue; } // a rivulet the ground will not let start: no line (v16: one point broke every reader of the lines)
       L.lines.push(S);
     }
     L.length = L.lines.reduce((a, S) => a + S[S.length - 1].s, 0);
