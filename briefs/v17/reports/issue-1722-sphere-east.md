@@ -177,3 +177,90 @@ In order:
 
 The best rim stand: `http://localhost:8123/?pos=284,134&yaw=-0.30&pitch=-0.5`. Walk forward to the glass first: the
 link lands 12 m out.
+
+## Round three (issue-1725, branch `issue-1725-sphere-ring`)
+
+The owner: lose the ladder, the apparent entry aperture and the tally marks. The hook is "did this guy seal himself
+in, like, for ever?". Give the fan thing a ring that charges between the sun's flickers and does something great
+and sinister at each.
+
+### Cut
+
+- The ladder and its brackets. `sphere.js` is out of `NO_LADDER` in `tools/ways-test.mjs`, and no comment in it says
+  ladder.
+- The things that read as a way in or out:
+  - the pale hoops at the upper left of the owner's frame: the collar fused on the glass where the tube left, and the
+    first two hoops of the line toward the Garth, 2.5 and 8.5 m off the glass, both read through the glass as a hatch.
+    The line now starts at 15 m;
+  - the eye's ox-blood rim (a ringed disc in the crown is a hatch). The eye is a plain white disc;
+  - the iris's mouth ring, its bell standing in, and its dark throat. The iris is now a device on a solid bronze boss
+    sealed to the bottom of the glass.
+- The stay fittings (small eyes at the stays' ends) stay.
+- I have not rendered the 12-stand and over-the-hill check for anything else that reads as an opening.
+
+### The ring
+
+It reads the sun's own schedule from `ctx.sky.flicker` (`next`, the seconds to the next onset, counting once the
+visitor is out; `phase` and `len` while a gutter is on). No shared file is touched.
+- **How it fills:** the span is what `next` stood at as the last gutter ended. The charge is `1 - next / span`, so it
+  is empty as one ends and full at the instant the next begins, whatever the interval.
+- **How it looks:** in a groove round the iris, a seam of the noon's white grows clockwise from a bronze mark at the
+  top. Its edge is ragged and alive, and the remainder is a dull ember.
+- **Renders and tests:** `ctx.sphere.pose = { charge }` or `{ e }` poses it.
+
+### The failing, e seconds after the sun's onset
+
+- 0 to 0.5: the seam flares and a head of light races round the groove.
+- 0.5 to 1.6: the ring drains into the leaves, which light from their inner edges. The iris gasps a hand's breadth open
+  (0.8 to 1.15) and snaps shut (1.35 to 1.5).
+- 1.0 to 2.6: a red-white tide climbs the glass's lime from the device to the crown, in rings, and holds.
+- 1.5 to 2.4: the shaft and the haze go to blood, stuttering from 1.6 to 2.6.
+- 2.6 to 4.4: the shaft, the haze and the light inside go out. The ball is dark in the dark valley.
+- 4.4 to 6.0: the noon comes back white and the tide drains. The ring stays empty until the sun catches.
+
+Under `prefers-reduced-motion`: no stutter, no racing head, and a slower iris. Nothing in the gutter itself checks
+for it, so there was nothing to follow. No new light (the point light dims and reddens) and no sound.
+
+### Draw calls (the gate's `heights` row)
+
+The earth skin now goes into the parts' builder. The eye, the beam and the haze are one additive draw (`aKind`;
+the haze keeps to its back faces, under the glass). The device is one draw, drawn only within 120 m.
+
+Counted from the scene's visible `sphere-*` meshes:
+- **From 300 m:** 7 draws before, 4 after (glass, beam, parts, bank).
+- **At the rim:** 7 before, 5 after (the same and the device).
+
+### Frames (`shots/wip/`)
+
+Sheets:
+- `v17-1725-r1-charge-sheet.png` (0, 25, 50, 75, 99% from one rim stand)
+- `v17-1725-fl3-medium-rim-sheet.png`, `-d60-sheet`, `-d140-sheet`
+- `v17-1725-fl3-low-rim-sheet.png`, `-d60-sheet`, `-d140-sheet`
+
+The flicker sheets are posed with `pose.e` at 0.15 s steps and the sun held to the gutter's curve.
+
+The rim stand for the flicker frames frames the glass and the tide, but cuts the device at the bottom edge.
+
+The best link is `http://localhost:8123/?pos=287.5,122.6&yaw=-0.30&pitch=-0.7`.
+
+### The reader (sonnet, cold: the charge sheet and the rim flicker sheet)
+
+> "Sheet 1 (minutes apart): … the disc … From frame 3 on it gains a bright white rim that grows stronger … reads as
+> the disc charging up over time. Sheet 2: … bright concentric arcs fade in on the inner surface … hold steady … then
+> fade out again … like a ring or pulse effect being triggered. How the man got in: The images don't show it. There
+> is no hatch, door or break in the glass. … He may have been placed there rather than having entered."
+
+It flagged:
+- the man is washed out and tiny;
+- a thin dark vertical seam (the spindle);
+- the rings sit on the glass, not round the disc. The rim flicker frames cut the device out, so the reader could not
+  tie the discharge to it.
+
+### Tests (port 8177, after merging `origin/next`)
+
+`ONLY=geometry,ways,settings,heights,gutter,rocks,walk,edges,audio,perf`:
+- ok: settings 90, ways 271, rocks 38, walk 13, edges 214, heights 208, audio 108, perf 29, gutter 29. In `heights`,
+  the gallery's cost row passes: 377 calls against 380.
+- geometry fails on v17-garth and v17-swallow only (2 new each, as in round two: `next`'s, not this branch's).
+  v17-sphere passes: 6 found in 3 groups, 0 new.
+- `node tools/walkers-test.mjs http://localhost:8177`: 19/20 (P12).
