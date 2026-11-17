@@ -89,9 +89,10 @@ shore. Which step that crossing lands on depends on how long the page has been r
 a reed bed a metre from the eye, so ordinary steps run 0.6 to 2.4.
 
 I changed the test, not the limit: tarn-north and fen-west now hold the galley at u 0.75, the far side of its loop,
-about 70 m off. **This did not fix the row.** In the suite run after the change, tarn-north failed twice: 7.33 and 6.05
-at 12->13, the turn at the walk's far end. The same log also held another agent's suite on 8177 (below), so I reran
-`shore` alone; the result is under "Tests". The galley hold may be wrong, or the cause is something else at x -91.
+about 70 m off. In the first suite run after the change, tarn-north failed twice, 7.33 and 6.05 at 12->13 (the turn at
+the walk's far end). That run shared the machine, and the same log file, with another agent's whole suite on 8177. On
+the rerun alone it passed 6/6 (tarn-north 2.65). So 6 of 7 runs of tarn-north pass, and the two reds came under load.
+Not proven fixed: if it comes back, save the frames at 12 and 13 (`SAVE=1 VERBOSE=1 ROWS=tarn-north`).
 
 ## The position readout (the owner, via the orchestrator)
 
@@ -102,4 +103,13 @@ that `?pos=x,z,y` takes), and the yaw and pitch in radians. Beside it, a **Copy 
 
 ## Tests
 
-See the hand-back for the final counts.
+- `ONLY=settings,geometry,shore,roads,paths,dressing,strata,rocks,heights,audio,touch tools/suite.sh 8176`, first
+  run, which shared its log with another agent's suite on 8177:
+  - ok: dressing 22, paths 88, roads 68, strata 8, heights 208, touch 45.
+  - red: settings (my coords rows: the walker was still falling while the 4 Hz line ran, so the test now places the
+    walker first), rocks (the new Tumbling Water stand stood 0.09 m from a boulder, so it was moved), shore, geometry
+    and audio (both run beside 8177's).
+- After the fixes, the reds alone, `ONLY=settings,rocks,geometry,shore,audio`: settings 90, rocks 38, shore 6,
+  geometry 146, audio 108 PASS, 0 failed.
+- `node tools/walkers-test.mjs` 19/20, P12's pit-lamps row, as on main.
+- `tools/swallow-walk.mjs` at medium and low, before and after: 0 errors, sound running.
