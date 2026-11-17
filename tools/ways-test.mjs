@@ -29,6 +29,7 @@
 //   headroom  up each way's line every 0.25 m, a ray from 0.6 m over the floor to 2.1 m meets no drawn mesh (W1's
 //             row read the colliders, and a footbridge across the Gullet's head passed it)
 //   spine     the plan's SPINE (the one main way, keep's end to the house): joined, lit, 1.5 m wide on its levels
+//   axis      (v16-V1) the Heliarch stair's axis walked up and down with W held and the look never turned
 // Prints the table of ways (id, its two ends, the levels it joins, the module that built it) and one PASS/FAIL line per
 // way per row. WAYS_JSON=path writes the table and the findings as JSON.
 // Ladders (v15-W2): every ladder drawn anywhere is in ctx.ladders, climbable with its ascent or scenery with a reason;
@@ -425,7 +426,7 @@ const r = await page.evaluate(async () => {
   // (and the critic's own line), no drop over 1.2 m before the walker is at the head; and along the whole rim, walked
   // straight out at it from 3 m in, nobody goes over where there is no way down
   if (P.SPINE?.arrive) {
-    const [ax, az] = P.SPINE.arrive, hd = all.find((o) => o.w.id === 'heliarch-head-west'), Y = P.LEVEL.crown.y;
+    const [ax, az] = P.SPINE.arrive, hd = all.find((o) => o.w.id === 'heliarch-head'), Y = P.LEVEL.crown.y;
     const head = P.at(P.STAIR.run, P.STAIR.s, P.RISERS[0].D + 1), b0 = Math.atan2(-(head[0] - ax), -(head[1] - az));
     const atHead = (x, z, feet) => Math.abs(feet - Y) < 0.3 && (p.onStack?.name || '').startsWith('heliarch-head') || Math.hypot(x - head[0], z - head[1]) < 1.6;
     for (const [lab, yaw] of [...[-40, -30, -20, -10, 0, 10, 20, 30, 40].map((d) => [`${d >= 0 ? '+' : ''}${d}`, b0 + d * Math.PI / 180]), ['the critic\'s line', 0.2]]) {
@@ -433,12 +434,27 @@ const r = await page.evaluate(async () => {
       find.push({ row: 'crown', tag: `from the keep's end at ${lab} (yaw ${yaw.toFixed(2)})`, ok: r.drop <= 1.2, detail: `${r.drop > 1.2 ? `fell ${r.drop.toFixed(1)} m at ${fmt(...r.lowAt)}` : r.out === 'until' ? 'at the head' : r.out === 'ladder' ? 'onto the ladder' : `held at ${fmt(r.x, r.z)}`}` });
     }
     void hd;
+    // (v16-V1) the stair's axis walked with W held and the look never turned: up from the upper flight's foot onto the
+    // crown, and down from the crown's court onto the Mid Rung's landing (v15's head met a walker coming up with a 4 m
+    // blank face and its feet 6 m to either side). A turn needed is a fail.
+    {
+      const n = P.RUN[P.STAIR.run].n, yUp = Math.atan2(n[0], n[1]), yDn = Math.atan2(-n[0], -n[1]), M = P.LEVEL.mid.y;
+      const Dof = (x, z) => P.frameOf(x, z).D;
+      for (const [lab, [sx, sz], y0, yaw, done] of [
+        ['up from the upper flight\'s foot onto the crown', P.at(P.STAIR.run, P.STAIR.s, 8.6), M, yUp, (x, z, feet) => Math.abs(feet - Y) < 0.1 && Dof(x, z) < P.RISERS[0].D - 2],
+        ['down from the crown\'s court to the Mid Rung\'s landing', P.at(P.STAIR.run, P.STAIR.s, P.RISERS[0].D - 4), Y, yDn, (x, z, feet) => Math.abs(feet - M) < 0.15 && Dof(x, z) > 8],
+      ]) {
+        const r = drive(sx, sz, y0, () => yaw, 20, done);
+        find.push({ row: 'axis', tag: `the stair's axis ${lab}, never turning`, ok: r.out === 'until', detail: r.out === 'until' ? `there at ${fmt(r.x, r.z)}` : `${r.out || 'time'} at ${fmt(r.x, r.z)} feet ${r.feet.toFixed(1)}` });
+      }
+    }
     const over = [];
     for (const run of [1, 2]) {
       const R = P.RUN[run], s0 = run === 1 ? P.FADE.s1[0] + 3 : P.cornerS(2, P.RISERS[0].D), s1 = run === 1 ? P.cornerS(1, P.RISERS[0].D) : P.FADE.s2[0] + 4;
       for (let s = s0; s <= s1; s += 1.5) {
         const [x, z] = P.at(run, s, P.RISERS[0].D - 3), [ox, oz] = P.at(run, s, P.RISERS[0].D + 2);
         if (Math.abs(C.floorAt(x, z, Y + 0.5).y - Y) > 0.3 || C.floorAt(ox, oz, Y + 0.5).y > Y - 1.2 || !free(colsNear(x, z, 1), x, z, Y)) continue;
+        { const [wx, wz] = P.at(run, s, P.RISERS[0].D + 0.6); if (C.floorAt(wx, wz, Y + 0.5).y > Y - 1.2) continue; } // (a way goes down here: the head's flight leaves the rim on the axis, v16-V1)
         const r = drive(x, z, Y, () => Math.atan2(-R.n[0], -R.n[1]), 5);
         if (r.drop > 1.2 && !r.carried) over.push(`s ${s.toFixed(1)} ${fmt(x, z)} fell ${r.drop.toFixed(1)}`);
       }
@@ -452,7 +468,7 @@ console.log(`${r.n} ways in the village:`);
 for (const t of r.table) console.log(`  ${t.id.padEnd(22)} ${t.levels[0].padEnd(6)} (${t.ends[0].join(', ')})  ->  ${t.levels[1].padEnd(6)} (${t.ends[1].join(', ')})`);
 let pass = 0, fail = 0;
 const check = (ok, name, detail = '') => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? '  ' + detail : ''}`); ok ? pass++ : fail++; };
-for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom', 'spine', 'seen', 'walked', 'ladder', 'crown']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
+for (const row of ['mouth', 'landing', 'dead end', 'turn', 'door', 'headroom', 'spine', 'seen', 'walked', 'ladder', 'crown', 'axis']) for (const f of r.find.filter((q) => q.row === row)) check(f.ok, `${row}: ${f.tag}`, f.detail);
 const dbl = r.find.filter((q) => q.row === 'doubled');
 check(!dbl.length, 'doubled: no two ways join the same levels within 6 m at both ends', dbl.map((q) => `${q.tag} (${q.detail})`).join('; '));
 check(r.n >= 15, `the village registers its ways (${r.n})`); // (v15-W4 took four out)
