@@ -26,7 +26,15 @@ const QUARTERS = ['lappet', 'quarrels', 'rungs', 'lees', 'pennyworth', 'villager
 const BOX_IN = 10; // m inside lappet.FAR (150) that the blocks stand up on low, hidden in the near houses until those go
 const SPECK_NEAR = 60; // a speck is nothing nearer than this, full from 1.6 x it
 const PX = 3; // a speck's least radius on the screen, in pixels at 720 lines
-const FAR_GLOW = 3.2; // a speck's light, times its own, from 150 m (from 1x at 60 m): what is a window at arm's length is a town's lights from the road
+const FAR_GLOW = 2.0; // a speck's light, times its own, from 150 m (from 1x at 60 m): what is a window at arm's length is a town's lights from the road
+// #1712 (the owner: "glow of village lights is as bright as the sun"): a speck held at PX pixels is drawn larger than
+// its light, so its light is divided by the square root of how much it was enlarged (by the whole of it, the village
+// from 300 m was a few grey dots); and no speck is brighter than CAP (linear luminance, the scene before bloom): far
+// under bloom's threshold (0.88), so a speck never haloes, and a quarter of the lit sun's disc (about 1.2 at its
+// brightest). In a gutter the sun's disc falls to about 0.42 (held at 0.3); the specks' light is turned up (uGlow)
+// and their cap rises to CAP_GUTTER as the lamps answer, just under 0.9 of the dimmed sun: the village holds, brighter
+// than it was, while the world dims round it (village-test's #1712 rows).
+const CAP = 0.3, CAP_GUTTER = 0.37;
 const CELL = 0.9; // the grid lights are gathered on, m
 const INSET = 0.25;
 const CARRY = 330; // m: on low the far mesh, the fountain's glow and the kiln's smoke are drawn out to here (bones.js drops the ways' timber at the same)
@@ -178,22 +186,25 @@ export async function build(ctx) {
   g.setAttribute('aCen', new THREE.Float32BufferAttribute(cen, 4));
   g.setAttribute('aGlow', new THREE.Float32BufferAttribute(glow, 3));
   g.computeBoundingSphere(); g.boundingSphere.radius += 2;
-  const U = { uBox: { value: 0 }, uPx: { value: 0.002 }, uNear: { value: SPECK_NEAR }, uGlow: { value: 1 } };
+  const U = { uBox: { value: 0 }, uPx: { value: 0.002 }, uNear: { value: SPECK_NEAR }, uGlow: { value: 1 }, uCap: { value: CAP } };
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec4 aCen; attribute vec3 aGlow; uniform float uBox, uPx, uNear, uGlow; varying vec3 vFarGlow;')
+      .replace('#include <common>', '#include <common>\nattribute vec4 aCen; attribute vec3 aGlow; uniform float uBox, uPx, uNear, uGlow, uCap; varying vec3 vFarGlow;')
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-        { float k; float dist = distance(aCen.xyz, cameraPosition);
+        { float k, grow = 1.0; float dist = distance(aCen.xyz, cameraPosition);
           if (aCen.w < 0.0) k = uBox;
-          else k = max(1.0, dist * uPx / aCen.w) * smoothstep(uNear, uNear * 1.6, dist);
-          transformed = aCen.xyz + (transformed - aCen.xyz) * k; vFarGlow = aGlow * uGlow * mix(1.0, ${FAR_GLOW.toFixed(2)}, smoothstep(uNear, 150.0, dist)); }`);
+          else { grow = max(1.0, dist * uPx / aCen.w); k = grow * smoothstep(uNear, uNear * 1.6, dist); }
+          transformed = aCen.xyz + (transformed - aCen.xyz) * k;
+          vec3 gl = aGlow * uGlow * mix(1.0, ${FAR_GLOW.toFixed(2)}, smoothstep(uNear, 150.0, dist)) / sqrt(grow);
+          float L = dot(gl, vec3(0.2126, 0.7152, 0.0722));
+          vFarGlow = L > uCap ? gl * (uCap / L) : gl; }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vFarGlow;')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vFarGlow;');
   };
-  mat.customProgramCacheKey = () => 'lappet-far-v1';
+  mat.customProgramCacheKey = () => 'lappet-far-v4';
   const mesh = new THREE.Mesh(g, mat);
   mesh.name = 'lappet-far'; mesh.castShadow = false; mesh.receiveShadow = true; mesh.userData.noFar = true;
   ctx.scene.add(mesh);
@@ -203,7 +214,9 @@ export async function build(ctx) {
   ctx.registerUpdate((dt, t) => {
     // the angle PX pixels subtend on a 720-line frame: a speck is the same share of the view at any resolution
     U.uPx.value = (PX * 2 * Math.tan(THREE.MathUtils.degToRad(ctx.camera.fov) / 2)) / 720;
-    U.uGlow.value = (0.92 + 0.05 * Math.sin(t * 1.7) + 0.03 * Math.sin(t * 5.3)) * (1 + 1.4 * (ctx.sky?.flicker?.lampsAt?.(C.x, C.z) ?? 0)); // turned up in a gutter, as near (v16-S1), when the wave reaches the village (v16-S2): from the heights it pricks out
+    const answer = ctx.sky?.flicker?.lampsAt?.(C.x, C.z) ?? 0;
+    U.uCap.value = CAP + (CAP_GUTTER - CAP) * answer;
+    U.uGlow.value = (0.92 + 0.05 * Math.sin(t * 1.7) + 0.03 * Math.sin(t * 5.3)) * (1 + 1.4 * answer); // turned up in a gutter, as near (v16-S1), when the wave reaches the village (v16-S2): from the heights it pricks out
     if (low) {
       const p = ctx.camera.position, d = Math.hypot(p.x - C.x, p.z - C.z), on = d > lap.FAR - BOX_IN, gone = d > CARRY;
       if (on !== boxOn) { boxOn = on; U.uBox.value = on ? 1 : 0; }
@@ -213,7 +226,7 @@ export async function build(ctx) {
 
   const lamps = lampRecords(ctx, records);
   ctx.lappetFar = {
-    mesh, boxes, specks: lit, lamps, records: rec.map((e) => e.name),
+    mesh, boxes, specks: lit, lamps, records: rec.map((e) => e.name), uniforms: U,
     state: () => ({ boxes: U.uBox.value, px: U.uPx.value }),
     stats: () => ({ draws: 1, triangles: pos.length / 9, blocks: boxes.length, blockTris: boxTris, specks: lit.length, meshes: meshes.length }),
   };

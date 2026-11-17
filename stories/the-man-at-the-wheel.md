@@ -1,0 +1,44 @@
+# The man at the wheel
+
+- **Kind:** plain (the surface: a great glass ball half sunk in the ground at the foot of the east wall, lit white from inside, and in the middle of it someone sat at a wheel), with a deep end (he shut the line, and the garden under the south slope is dying of it: `the-meridian-garth.md`)
+- **State:** built (v17 S1, `src/v17/sphere.js`; N1's card and way), beats 1 to 3, all short of the telling (below); walking inside not to be had. A visitor's name for it: the Shuttered Noon (a card within 22 m of its glass and a map entry; its `line` is the owner's). A trod, P56, leaves the Lonely Staircase's trod for its valley face, round the Noon Road's east end. He is sealed in: the glass is whole all round and over, no door, hatch or seam, nothing to say how he got in (issue-1725, the owner: "the real hook here is: did this guy seal himself in, like, for ever?"). Under the ground line, seen only from the rim looking down through the glass: a bronze iris set in the bottom of the ball on the Garth's side, sealed to the glass, a spindle from under the node to its gear (the wheel in his hands works it), and round it a groove in which a seam of the noon's white grows from a fixed mark between one failing of the sun and the next, full at the instant the next begins. At each failing it discharges: the seam races round and drains into the leaves, the iris gasps open a hand's breadth and snaps shut, a red-white tide climbs the glass's lime from the device to the crown, the shaft goes to blood and stutters, then the light inside goes out while the valley is dark, and comes back white. What it is doing is not told. Moved from the west wall's foot to the east wall's foot (issue-1722, the owner: the western moor already had two stargazers)
+- **Someone:** a Noonwright, the first a visitor ever sees: the keeper of a junction, sat in a sling near the middle of the sphere (6 m toward its valley side, where a visitor comes, under the eye in the glass where the noon comes in) with both hands on a valve wheel, long dead or something like it, in the last full noon left in the valley. Avarice: he kept it
+- **Places:** the east wall's foot north of the Noon Road (the Noonwrights' road) and the Foundered Nave, about (292, 108); the sphere 30 m across, a third in the ground and its east side in the wall's rising foot; a broken line of hoops leaving its side toward the Garth
+- **Touches:** [The Meridian Garth](the-meridian-garth.md) (the garden his line fed); [The Noon Road](the-noon-road.md) ("What stopped the line? Nobody knows": here, one answer); the Cardinal Stones (Avarice, verdigris), as a mood, not a beat
+
+## The story
+
+The Noonwrights' lines came down out of the sky and met at junctions before they went on to the stores, the lamps and the garden. The great junctions were spheres of their glass, blown whole, each with a keeper sat at its centre on spun stays, who turned the wheels that sent the noon one way or another.
+
+When the sun went red and the collectors in the sky gathered less and less, the keeper at the east wall's junction turned his wheels shut, one by one, until all the noon that came down stayed with him. He sits there still, at the centre of the last full noon in the valley, both hands on the last wheel, which he turned to shut. The sphere is full of white daylight. Everything the line used to feed is going dark: the garden under the south slope dies a ring at a time on what was left in the tube.
+
+## Beats
+
+| # | Where (place, position, the view it reads from) | What the visitor finds | What it tells them alone | What points on to the next | State |
+|---|---|---|---|---|---|
+| 1 | From across the valley (the moor west of it, about 150 m off; the Lonely Staircase's top) | A pale glass ball the size of a house at the foot of the east wall, half sunk, a white glow inside it, lit by the sun | Something is lit inside the ground over there | Walk to it | built: from the valley at 140 m a pale ball behind the moor's trees; from the Lonely Staircase's top a pale lens with its shaft at the wall's foot. Not seen from the spawn (the keep's walls and the Arcature stand between). Its brightest pixel at 300 m is a tenth of the sun's disc's or less, lit or guttering |
+| 2 | Its valley face, where P56 comes up, 15 to 25 m off | Through the glass (clouded with lime in bands, clear between): the ground cut through inside it, earth and roots and stones pressed against the lower glass; stays of spun filament from all round to the middle; at the middle, a seated figure in a sling, both hands on a wheel | Someone is sealed in there, at a wheel, in daylight | The wheel; the hoops | built, short: a blind reader at 20 m names a small dark figure in a beam of light inside a glass dome; the wheel reads only when he is seen three-quarter on. He is small in a 30 m ball (made about 2.6 m tall standing: the Noonwrights are a tall people here). The ground's courses read as a grey floor more than cut earth |
+| 3 | Its side toward the Garth | A line of great glass hoops leaving the sphere, the tube between them gone, going off west-south-west across the moor and stopping | The line went somewhere from here, and does not go now | (the Meridian Garth, 370 m west-south-west) | built: seven worn hoops half sunk along the line toward the Garth, the far ones broken and one fallen, a collar fused on the glass where the tube left it; the tube itself is gone. From the trod the hoops read as pale arcs in the grass |
+
+## What it ties together
+
+The Noonwrights' lines (the Nave, the Wellward Way, the Lappet's main, the garden's tube) get a centre and a cause for their stopping; the eastern moor, by the Noonwrights' own road, gets its find. A next agent can let a visitor into the sphere (it is a story of one man keeping a thing to himself, so getting in should cost something), bring the sky's tube (#56) down into its top, or make the hoops a walkable line to the garden.
+
+## What the visitor never learns
+
+Whether he is dead; whether he shut it for himself or to save the last of it; whether he could open it again.
+
+## Open threads
+
+- Two accounts of what stopped the line would be very like this world: the Noon Road's broken tubes and black water say the line broke; this says it was shut. Both can be true.
+- The hoops point west-south-west, at the Garth across the valley. The garden's lens is fed from the west. Is there a length of tube under the moor between, still holding a little noon?
+- The device fills between the sun's failings and empties into them. Does it take its charge from the sun as it fails, or give the sun the push that brings it back, and is he holding it, or is it holding him?
+
+## Log
+
+- 2026-11-17, v17 planner: written for the owner's "<x>" (#74: "In its center is <x>"). The first idea (a glowing crystal or a small sun) set aside as generic and as a second sun beside the real one; the Noonwright at the wheel chosen because a visitor has never seen one of the people whose glass is everywhere, and because it answers "what stopped the line" from the other end of the garden's story. The owner may overturn it.
+- 2026-11-17, v17 S1: built at the table's site (the spawn's frame held: the ball is small and far dimmer than the sun). Changed from the story as written: he sits under an eye in the top of the glass and the noon falls on him in a shaft (the eye of the visitor goes where the light is); he faces south-east, down the line, and is 6 m east of the centre; the node's lines are gone with the tube, and he and his wheel are the only thing at the middle. Not built: getting in.
+- 2026-11-17, v17 N1: named for the visitor the Shuttered Noon (the man at the wheel stays the story's title, not a name a visitor meets); a card and a map entry, `line` empty; the trod P56 off the Taker's road to the glass.
+- 2026-11-17, issue-1722: moved to the east wall's foot (292, 108) on the owner's word; the walls round it fitted to the glass (a walker comes to 0.5 m of it on every side), every stay ends on a fitting (the ring over his head, the seat's rim, the node, an eye on the glass), and a heaped bank of earth and heather closes the join where the glass meets the ground.
+- 2026-11-17, issue-1724: the works under the ground line built for the owner's "payoff for going to the edge" (the mouth, the iris, the leak, the spindle, the ladder; a tally scratched beside the ladder was cut on the owner's word: no more tally marks); a first blade of light lying down the glass from the leak read as a cursor and went.
+- 2026-11-17, issue-1725: on the owner's word the ladder, the tally and every ring that read as a way in went (the collar where the tube left, the two nearest hoops, the eye's rim, the iris's mouth and bell); the iris is sealed in the bottom of the ball, and its ring charges between the sun's failings and discharges at each.

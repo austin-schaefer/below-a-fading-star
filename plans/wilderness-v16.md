@@ -169,4 +169,22 @@ Next: the suite's summary; B1 and F1 reviewed and merged; the gate on a quiet ma
 
 Next: the gate's summary; Stats; the release PR; `tools/gh-release.sh v16`; close #73, #78, #79; look back.
 
+**2026-11-17, 04:57 PST. RELEASED. v16 is on `main` (PR #81, `0eba44a`), the GitHub release published, #73 #78 #79 closed.**
+
+- **The gate:** the whole suite on `next` with nothing beside it, 43 tests, 0 failed, 40 min 22 s (acts 176, audio 106, geometry 134, seams 3, threads 25, perf 29).
+- **Done when, line by line.** 1: met for the shores (the critic, from the gallery: "reads as made by water"); the tilt is subtle from the heights (blind readers 2 of 6), and the kettle pools' rims still read near-round. 2: met (`src/height/outline.js`, read by height, water, paint and placement for the tarn, the fen and the regions). 3: met by the tests; left: the fen fringe's pool edges (1 to 1.8 m in 0.25 m), outside the seams box. 4: met (the critic saw the first gutter at about 74 s at three stands unprompted). 5: `perf` green; **`heightAt` over the valley is 8% slower than v15** (the floor's block, 0.10 µs a call), `biomeAt` 7%; the walker's update is about half v15's. 6: met.
+- **Shipped weaker than meant:** the tilt's legibility; "Take his letter" leads nowhere; villagers at 20 m only partly fixed; the Toadstone's stand; the `canyon` `?reach=0` row loosened (not in the suite); `walkers` 19/20 (P12's pit-lamps, red on v15 too; not in the suite); L5's second round had no cold review of its own.
+- **Not built:** W3 (`issue-1527-edges`, worktree kept, paused): the ground has now moved, so it can be taken up.
+- No agent in flight, no background command. Worktrees: the main checkout, deploy, `issue-1527-edges`.
+
+**2026-11-17, 04:58 PST. Looking back.**
+
+- **What took longest, and did it need to?** The tail: from the last feature merge (03:04) to live (04:57) was 1 h 53 min, against the hour the skill asks for. Two whole-suite runs (43 and 40 min) with two fix agents (67 and 71 min) between them. The first run was needed to find `threads`; the fix agents could not have been shorter. What could: the fen's review round (L5, 95 min) held everything behind it while the gutter and the village were already in.
+- **What was found late?** (1) The Wayside Shrine silently not built on tilted ground, the chair's mark under water, a path's end drowned, an ashlar in the air, a 1 m cliff: all from moving the ground under placed things, all found only by the batch's suite and B1 after every merge. The floor's briefs named `geometry`, `strata`, `dressing`, `heights`, `roads`; none named `threads`, `seams`, `walkers`. (2) A tree in the Hypogeum's cut: scatter reshuffles whenever biome weights move, and only rocks were kept out of acts' sites. (3) The release note called the lake by its code name (Lees Tarn); a visitor meets Circumbambulate Pool. Corrected after publishing.
+- **What did the owner have to say more than once?** Nothing this run.
+- **What worked?** Starting the critic and the curator before the last merge. A fixed view file with air views. Blind readers each round (they called the tilt subtle before the critic could). Asking the critic to stand still for two minutes: the only way the gutter's timing was judged as a visitor meets it. One agent for "every red test, judged row by row" (B1) rather than a re-record.
+- **Changed in the harness:** `orchestrator`: a brief that moves the ground or reshuffles scatter names `threads`, `seams`, `geometry` and `walkers` among its tests; `release-notes.md`: places are named from `LANDMARKS`, not from the code's comments.
+
+**2026-11-17, 04:59 PST. After v16: v17 is being planned in this same session.** The skill says a hand-started session stops after a release; the owner's words at the start of this run ("or two, if time allows") outrank it. Chosen: #74, the water runs downhill and goes under (labelled `in-progress`, `v17`). A planner (opus, `issue-1700-plan`, port 8173 if it renders) is writing `plans/wilderness-v17.md` and `briefs/v17/`; until that doc exists on `next`, this entry is the state. Nothing else is in flight.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.

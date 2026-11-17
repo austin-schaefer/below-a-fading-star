@@ -56,6 +56,7 @@ Adds far more life to the world, with 18 new creatures and motifs to discover. H
 
 ## Rules
 
+- A place's name is the one a visitor meets (`LANDMARKS` in `src/world.js`, the map), not the code's (the lake is Circumbambulate Pool; "Lees Tarn" is only in comments).
 - Name places and characters, and explain each in passing the first time in an entry: "the Leerie, a lamplighter", "the Adust, a red clay desert", "when the sun gutters (dims for a few seconds)". Assume the reader knows nothing of the world.
 - Cut: who decided what, the agents' process, brief numbers, test names and pass counts, file paths, measurements, internal codes (AM, BQ, CE...), path codes (P3, K1), shot stage numbers, flags (except where a flag is the feature, as with `?perf=1`).
 - Say only what shipped. Write from the milestone doc's Status and the merged work; if you cannot tell what something is, read the code or the doc; leave out what you cannot verify.

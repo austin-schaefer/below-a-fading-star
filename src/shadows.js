@@ -18,6 +18,22 @@
 // steps at the slow clock. What a module writes to castShadow is kept and still obeyed within 40 m.
 import * as THREE from 'three';
 
+// The shadow box's depth (v17, the owner's #1712). The box follows the walker across the light (texel-snapped), but
+// along the sun it is fixed to the world: its centre always lies on the plane through the origin square to the sun,
+// the light `light` m sunward of it, `far` m deep. So which casters are in it never depends on where the walker
+// stands or looks. Before, the light sat 260 m sunward of a point 40 m ahead of the eye with a 420 m depth: a big
+// caster far up-sun (the Span's west stair, 330 m up-sun of the east shore, its shadow 230 m long) slid in and out
+// of the near plane as the walker stepped or turned, and its shadow came and went over half the ground in view.
+// The window holds every point within 420 m of the bowl's centre up to 300 m high (the sun-axis distance of such
+// a point is at most 0.97 * 420 + 0.23 * 300 = 477). The bias keeps the 0.25 m of depth it had over 420 m.
+// At walking height only (the box at its 95 m): a box grown from a top (src/v12/above.js) keeps v12's window, since the
+// whole bowl up-sun of a top cost the stair's and the gallery's tops 10 draw calls over their 364 (heights-test).
+// ?shadowdepth=v16 restores the walker-following window (for comparisons).
+export function shadowDepth(url) {
+  if (url.searchParams.get('shadowdepth') === 'v16') return { fixed: false, light: 260, far: 420, bias: -0.0006 };
+  return { fixed: true, light: 500, far: 1000, bias: -0.0006 * 420 / 1000 };
+}
+
 const NEAR = 40, MOVE = 3, MIN_HZ = 8, SHARED_HZ = 10, TURN = 0.35;
 
 export function makeShadowCadence(ctx, url, texel = 0.05) {

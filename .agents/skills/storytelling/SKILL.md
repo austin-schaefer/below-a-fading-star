@@ -51,6 +51,7 @@ None of these is a rule. They are what has worked; use the ones that serve the s
 - **Findable when you mean it to be.** If a beat is meant to be found, check in a render that it can be (the traveller's body is a few pixels from the deck, and it was meant to be seen). A beat hidden on purpose is fine; say so in the file. What makes a figure or prop readable at distance is in the `visual-art` skill (`figures.md`).
 - **Comedy.** A jackdaw wearing stolen gold on a saint's head is a story. Next to something grim put something vain, greedy or absurd.
 - **Time.** A figure who walks to the grave when the sun gutters, a light that goes out, a sound heard once. One beat that moves or sounds can be worth three that do not.
+- **No more tally marks.** The valley has enough; the owner calls them a lazy way to show time passing. Show time by what it did: wear where a hand or a foot goes, lime and scale, a thing outgrown or mended twice, the newer and the older of the same thing side by side, a habit's leavings.
 
 ## The library: `stories/`
 

@@ -112,6 +112,7 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 97 | v15 the stairs: the plan before and after, the pair sheets, the dip's height trace, the glass tube stair |
 | 98 | v15 sound and light, houses, the peafowl before and after, two failures |
 | 99 | v16 the valley floor and the sun's gutter: Lees Tarn off its circle, the floor lifted, the gutter in frames, the Lappet's stair head, the letter act |
+| 100 | v17 the water goes under: the brook and the mere, the leat, the Swallow and the glass tube under water, the Meridian Garth and its light, the sphere, the new typography, the names' cards |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp`, `gallery-v12-to-v15.webp` and `gallery-v16.webp` (`99-gutter-moor-dark`) (`83-stair-orch-home`, the box v12 starts; v15's tile is `93-lappet-far-lees-east`) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -182,6 +183,48 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `10-refine-tarn-shore-after.webp` | After: the reeds thinned to open water and a small island. |
 | `10-refine-tarn-shore-before.webp` | Before: a wall of bulrushes blocks the tarn shore. |
 | `10-refine-tarn-shore-ne.webp` | The tarn's north-east shore at sunset after the pass. |
+| `100-brook-dark-stream-sheet.webp` | The brook's second round, a dark stream running down its channel, in twelve frames. |
+| `100-brook-flakes-failure-sheet.webp` | Failure: the brook's first round, where the quick water read as orange flakes, in twelve frames. |
+| `100-brook-traveller-after.webp` | After: the brook by the traveller, now a dark stream. |
+| `100-brook-traveller-before.webp` | Before: the same view with no brook. |
+| `100-garth-door-gold.webp` | The Meridian Garth from its door, first light: gold. |
+| `100-garth-door-light-strip.webp` | The Garth's three stages of light from the door: gold, moonlight, as shipped. |
+| `100-garth-door-moonlight.webp` | The Garth from its door, second stage: moonlight. |
+| `100-garth-door-shipped.webp` | The Garth from its door as shipped. |
+| `100-garth-edge-moonlight.webp` | The Garth's garden from its edge in moonlight. |
+| `100-garth-edge-shipped.webp` | The Garth's garden from its edge as shipped. |
+| `100-leat-air-after.webp` | After: the leat from the air, a stone channel with its weirs. |
+| `100-leat-air-before.webp` | Before: the same view from the air, no leat. |
+| `100-leat-crossing-after.webp` | After: the leat's crossing, the channel, a weir and the slab bridge. |
+| `100-leat-crossing-before.webp` | Before: the same crossing with no leat. |
+| `100-leat-weir-from-bridge.webp` | A weir of the leat seen from the bridge. |
+| `100-mere-north-after.webp` | After: the Slake from its north shore, the water now in view. |
+| `100-mere-north-before.webp` | Before: the same shore with no mere. |
+| `100-names-card-garth.webp` | The place card for the Meridian Garth. |
+| `100-names-card-shuttered-noon.webp` | The place card for the Shuttered Noon, the sphere. |
+| `100-names-card-slake.webp` | The place card for the Slake. |
+| `100-names-card-swallow.webp` | The place card for the Swallow. |
+| `100-names-map-south.webp` | The teleport list with the new names, over the south of the map. |
+| `100-sphere-east-moor.webp` | The Shuttered Noon where it shipped: on the east moor, the glass whole, the man at his wheel in the shaft of noon. |
+| `100-sphere-near-after.webp` | The sphere near, at its first site on the west moor (the owner had it moved east before release). |
+| `100-sphere-near-before.webp` | Before: the same ground with no sphere. |
+| `100-sphere-own-20a.webp` | The sphere in a 20 m view of its own. |
+| `100-sphere-taker-after.webp` | After: the sphere from the Taker's ground. |
+| `100-sphere-taker-before.webp` | Before: the same view with no sphere. |
+| `100-swallow-front-after.webp` | After: the Swallow's front, the portal at the mere's shore. |
+| `100-swallow-front-before.webp` | Before: the same shore, no portal. |
+| `100-tube-hall-door.webp` | The tube's far end, a green door opening on the hall. |
+| `100-tube-quay.webp` | The quay at the tube's mouth. |
+| `100-tube-sheet.webp` | Contact sheet: from the shore, down the quay, under the water and along the tube. |
+| `100-tube-under-surface.webp` | Stepping into the tube: the mere's surface seen from below. |
+| `100-tube-walk-under-water.webp` | The walk along the glass tube under water. |
+| `100-type-card-a-desktop.webp` | Typography direction A: the title card at desktop. |
+| `100-type-card-b-desktop.webp` | Typography direction B: the title card at desktop. |
+| `100-type-card-c-desktop.webp` | Typography direction C, the one kept: the new title card at desktop. |
+| `100-type-card-c-phone.webp` | The new title card on a phone. |
+| `100-type-offer.webp` | The offer card in the new type. |
+| `100-type-place-card.webp` | A place card (the Circumambulate Pool) in the new type. |
+| `100-type-settings-panel.webp` | The settings panel in the new type (compare `49-settings-title-card.webp` for the old card). |
 | `11-controls-debug-panel.webp` | The debug panel listing the teleport destinations. |
 | `11-controls-phone-thumbstick-first.webp` | First phone thumbstick overlay on the title view. |
 | `11-controls-phone-thumbstick.webp` | The phone thumbstick in use, held mid-drag. |

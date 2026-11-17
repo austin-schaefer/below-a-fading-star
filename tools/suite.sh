@@ -62,6 +62,7 @@ run walk tools/walk-test.mjs "$B/?q=low"
 run hop tools/hop-test.mjs $B
 run edges tools/edges-test.mjs $B
 run heights tools/heights-test.mjs $B
+run shore tools/shore-walk-test.mjs $B medium # v17 #1712: what is in shadow does not depend on where the shadow box sits, and 12 steps at three shores do not jump (about 3 min)
 run seams tools/seams-test.mjs $B # v15-W5: the floor under the walker against the ground drawn, the village and a 30 m skirt on a 0.25 m grid (seams, floors off the drawing, colliders nothing draws), a ratchet (about 2 min)
 run geometry tools/geometry-test.mjs $B # v15-H1 (#64): what flickers, floats or shows its back in every walkable place (about 30 s)
 run lift tools/lift-test.mjs $B

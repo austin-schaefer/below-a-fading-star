@@ -178,3 +178,16 @@ World loading is now a small share of the gate's 39 minutes; two tests hold abou
 - **Nobody alive below ground**, and no sign of anyone but the Reckoner's tools.
 - **The open moor is a bed with no events** (no onsets in 20 s at moor-stand); the underground walk's roughness is out of band (0.435).
 - Straight down into the Nadir shows nothing (the stars read only at a shallow pitch); the south-west world clamp facing out is one flat colour; touch controls below ground were not seen by the critic (its page was not a touch device; the agents' touch walks passed).
+
+## From v16's critic (2026-11-17), not fixed
+
+- The clerk's letter is taken and then nothing: let it be carried somewhere (the critic: to the camp on the Span).
+- Place cards rise too often (13 times in 20 stops round Lees Tarn): once a visit each.
+- The Span's parapet stands at eye height; the deck sees nothing of the valley.
+- A sheer pier of the Span stands in the fen's east edge at (120, 207.5) and stops a walker dead.
+- Still ruled from above: the barrow's dome, the hex paving, the kettle pools' near-round rims.
+- The west shore of Lees Tarn and the Deodand Wood are near black.
+- Acts where the thing acted on is out of frame: the bell from 2.5 m, the Pit's lead.
+- No offer where one is expected: the noon-drawer's jug, the Croft's chair and stove, the Laid Sun's lamp.
+- Stories not found unprompted: gold-from-the-court (no jackdaw seen), slippers-mate, salt-for-news, the painter.
+- `walkers` and `canyon` are not in `tools/suite.sh`; `walkers` has one row red since v15 (P12's pit-lamps).

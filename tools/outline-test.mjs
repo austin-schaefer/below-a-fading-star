@@ -11,6 +11,10 @@
 //     place's; and the floor's hollows: a priority flood of v16 against ?floor=v15 (a child process) finds no closed hollow
 //     the lift made deeper by 0.3 m or more where a protected place's skirt lies (each is given an old drain, floor.js
 //     LINES), and none on open floor deeper than the listed kettle holes.
+//   - v17 W1's water (src/v17/): the brook's level falls only downstream, the mere's lip holds all round, the brook's head
+//     holds the tarn, (W2) the leat's level falls over its weirs, the fen's pools by its head keep their water, its banks hold it, the tarn's south shore away from the brook is untouched, the traveller and the crown's pieces are
+//     left alone, the Swallow's cut stops square at the portal's face; and every still water's checks above, a stream's
+//     at its own level where it is (WATER_BODIES' levelAt).
 //   node tools/outline-test.mjs
 globalThis.FP_HEIGHT_PARAMS = '?';
 const O = await import('../src/height/outline.js');
@@ -172,13 +176,13 @@ else {
     for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
       if (!b.wet(x, z)) continue;
       cells++;
-      const over = F.heightAt(x, z) - w.y;
+      const over = F.heightAt(x, z) - (b.levelAt ? b.levelAt(x, z) : w.y); // (v17: a stream's level falls along it)
       if (over > worst) { worst = over; at = [x, z]; }
       if (over > 1) n++;
     }
     let dry = 0, dat = null;
     for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
-      if (b.sd(x, z) >= 0 || F.heightAt(x, z) > w.y - 0.05 || F.waterLevelAt(x, z) !== null) continue;
+      if (b.sd(x, z) >= 0 || F.heightAt(x, z) > (b.levelAt ? b.levelAt(x, z) : w.y) - 0.05 || F.waterLevelAt(x, z) !== null) continue;
       dry++; dat = dat || [x, z];
     }
     check(dry === 0, `${b.name}: every cell inside its shore with its ground under the water is wet`, `${dry} dry${dat ? ', first at ' + dat.map(f2) : ''}`);
@@ -191,7 +195,7 @@ else {
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
         const x = x0 + i * g, z = z0 + j * g, k = i * n + j;
         if (b.wet(x, z)) WET[k] = 1;
-        else if (F.heightAt(x, z) < w.y - LEAK && F.waterLevelAt(x, z) === null) LOW[k] = 1;
+        else if (F.heightAt(x, z) < (b.levelAt ? b.levelAt(x, z) : w.y) - LEAK && F.waterLevelAt(x, z) === null) LOW[k] = 1;
       }
       let leak = 0, lat = null;
       for (let i = 1; i < n - 1; i++) for (let j = 1; j < n - 1; j++) {
@@ -312,6 +316,83 @@ else {
   const skirt = found.filter((h) => h.skirt && h.depth - h.was > 0.3), open = found.filter((h) => !h.skirt && h.depth > 2.5);
   check(skirt.length === 0, 'no closed hollow the lift made 0.3 m deeper at a protected place\'s skirt (each has its old drain)', skirt.length ? JSON.stringify(skirt) : `${found.length} hollows deeper than v15's, none at a skirt`);
   check(open.length === 0, 'on open floor no closed hollow deeper than 2.5 m that is not a pool (a dry kettle hole is allowed)', JSON.stringify(found.filter((h) => !h.skirt)));
+}
+
+// ---- v17 W1: the brook out of the tarn, the mere, the Swallow's cut (src/v17/stream.js, bodies.js, plan.js)
+{
+  const F = await import('../src/height/field.js');
+  const V = await import('../src/v17/bodies.js');
+  const P = await import('../src/v17/plan.js');
+  const T = await import('../src/v4/tarn.js');
+  const { BROOK_BODY: BK, MERE_BODY: M, CUT_BODY: C } = V;
+  // the brook's level only falls downstream, from the tarn's level to the mere's
+  let rise = 0; for (let k = 1; k < BK.n; k++) if (BK.Y[k] > BK.Y[k - 1] + 1e-9) rise++;
+  check(rise === 0 && BK.Y[0] === P.TARN_LEVEL && BK.Y[BK.n - 1] === M.y, 'brook: its level falls only downstream, from the tarn\'s (-4.6) to the mere\'s', `${rise} rises; ${f2(BK.Y[0])} to ${f2(BK.Y[BK.n - 1])} over ${f2(BK.length)} m`);
+  // the mere holds at its lip all round: 0.3 to 3 m out of its shore the ground stands over its level, but where the
+  // brook and the cut leave it (their own water and banks)
+  let lipLow = Infinity, at = null, n = 0;
+  for (let i = 0; i < 720; i++) {
+    const a = (i / 720) * 2 * Math.PI, ux = Math.cos(a), uz = Math.sin(a), c = M.centre;
+    for (let d = 2; d < M.rMax + 6; d += 0.25) {
+      const x = c.x + ux * d, z = c.z + uz * d, sd = M.sd(x, z);
+      if (sd < 0.3 || sd > 3) continue;
+      if (BK.sd(x, z) < 3 || C.sd(x, z) < 3 || V.LEAT_BODY.sd(x, z) < 3) continue;
+      n++; const h = F.heightAt(x, z); if (h - M.y < lipLow) { lipLow = h - M.y; at = [x, z]; }
+    }
+  }
+  check(lipLow > 0, 'mere: the ground holds its water all round (0.3 to 3 m out of its shore over its level)', `least ${f2(lipLow)} m over at ${at ? at.map(f2) : '-'} (${n} points)`);
+  // the brook's head holds the tarn: no dry cell under the tarn's level beside the tarn's water or the brook's, there
+  let leak = 0, lat = null;
+  for (let z = 190; z <= 204; z += 0.5) for (let x = -100; x <= -78; x += 0.5) { // (the tarn's level runs to z 204; below it the brook's own falls)
+    if (F.waterLevelAt(x, z) !== null || F.heightAt(x, z) > P.TARN_LEVEL - 0.1) continue;
+    if ([[0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].some(([dx, dz]) => F.waterLevelAt(x + dx, z + dz) !== null)) { leak++; lat = lat || [x, z]; }
+  }
+  check(leak === 0, 'brook: its head holds the tarn (no dry cell under -4.6 beside water, x -100..-78, z 190..204)', `${leak} cells${lat ? ', first at ' + lat.map(f2) : ''}`);
+  // the tarn's south shore is the tarn's where the brook is not: v17's ground term leaves it bit for bit
+  let moved = 0, seen = 0, mat = null;
+  for (let z = 185; z <= 215; z += 0.7) for (let x = -125; x <= -55; x += 0.7) {
+    const sd = T.tarnShoreDistance(x, z);
+    if (sd < -4 || sd > 8 || !V.inV17Box(x, z) || BK.sd(x, z) < 10) continue;
+    seen++; const h = F.heightAt(x, z); // (heightAt is the ground with the term; the term itself must give it back unchanged)
+    if (V.v17Ground(h, x, z) !== h) { moved++; mat = mat || [x, z]; }
+  }
+  check(seen > 50 && moved === 0, 'the tarn\'s south shore away from the brook (10 m and more) is untouched by v17\'s ground', `${moved} of ${seen} points moved${mat ? ', first at ' + mat.map(f2) : ''}`);
+  // what lies there is left alone: the dead traveller and his hat, and the crown's pieces' middles
+  let worst = 0, wat = '';
+  const stand = [['traveller', ...P.TRAVELLER.body, 4], ['hat', ...P.TRAVELLER.hat, 3], ...P.CROWN.map(([x, z, r], i) => [`crown ${i}`, x, z, Math.min(2, r * 0.4)])];
+  for (const [name, cx, cz, r] of stand) for (let dz = -r; dz <= r; dz += 0.5) for (let dx = -r; dx <= r; dx += 0.5) {
+    const x = cx + dx, z = cz + dz, h = F.heightAt(x, z), g = V.v17Ground(h, x, z);
+    if (Math.abs(g - h) > worst) { worst = Math.abs(g - h); wat = name; }
+  }
+  check(worst === 0, 'the dead traveller, his hat and the crown\'s pieces\' middles: the water\'s ground leaves them as they were', worst ? `moved ${f2(worst)} m at ${wat}` : 'none moved');
+  // the Swallow's cut stops square at the portal's face (U1): nothing of it past z 311.5
+  let past = 0; for (let x = -110; x <= -80; x += 0.5) for (let z = 311.6; z <= 330; z += 0.5) { const h = F.heightAt(x, z); if (V.v17Ground(h, x, z) !== h) past++; }
+  check(past === 0, 'the Swallow\'s cut: nothing of v17\'s ground past the portal\'s face (z 311.5)', `${past} points`);
+
+  // ---- v17 W2: the leat out of the fen (src/v17/leat.js; plan.js LEAT)
+  const LT = V.LEAT_BODY, FEN = await import('../src/height/fen.js');
+  // its level only falls, from the fen's level at its head to the mere's, over the plan's weirs
+  let lrise = 0, steps = 0; for (let k = 1; k < LT.n; k++) { if (LT.Y[k] > LT.Y[k - 1] + 1e-9) lrise++; if (LT.Y[k - 1] - LT.Y[k] > 0.2) steps++; }
+  check(lrise === 0 && LT.Y[0] === P.FEN_LEVEL && LT.Y[LT.n - 1] === M.y && P.LEAT.weirs.length >= 4 && P.LEAT.weirs.length <= 5,
+    'leat: its level falls only downstream, from the fen\'s (-2.45) to the mere\'s, over four or five weirs', `${lrise} rises; ${f2(LT.Y[0])} to ${f2(LT.Y[LT.n - 1])} over ${f2(LT.length)} m; ${P.LEAT.weirs.length} weirs (${steps} steep samples)`);
+  // the fen's pools by its head hold their water: v17's ground leaves every wet cell of the fen as it was
+  let fdry = 0, fseen = 0, fat = null;
+  for (let z = 195; z <= 245; z += 0.5) for (let x = -10; x <= 40; x += 0.5) {
+    if (!FEN.fenWet(x, z)) continue;
+    fseen++; const h = F.heightAt(x, z);
+    if (V.v17Ground(h, x, z) !== h || F.waterLevelAt(x, z) !== F.waterLevelBeforeV17(x, z)) { fdry++; fat = fat || [x, z]; }
+  }
+  check(fseen > 20 && fdry === 0, 'leat: the fen\'s pools by its head hold their water (x -10..40, z 195..245)', `${fdry} of ${fseen} wet cells changed${fat ? ', first at ' + fat.map(f2) : ''}`);
+  // its banks hold it: 0.4 m out of its edge on both sides the ground stands over its level, head to the mere's lobe
+  let llow = Infinity, lat2 = null; const hs0 = LT.sOf(...P.LEAT.hold[0]) + 1, hs1 = LT.sOf(...P.LEAT.hold[1]) - 1;
+  for (let k = 0; k < LT.n; k++) {
+    if (LT.S[k] < hs0 || LT.S[k] > hs1) continue;
+    if (P.LEAT.weirs.some(([wx, wz]) => Math.abs(LT.S[k] - LT.sOf(wx, wz)) < 0.8)) continue; // (at a weir the kerb's cheek stones hold the falling water: leat.js)
+    for (const sd of [1, -1]) { const d = sd * (LT.HW[k] + 0.4), x = LT.X[k] + LT.TZ[k] * d, z = LT.Z[k] - LT.TX[k] * d, o = F.heightAt(x, z) - LT.Y[k]; if (o < llow) { llow = o; lat2 = [x, z]; } }
+  }
+  check(llow > 0, 'leat: its banks hold it (0.4 m out of its edge over its level, head to mouth, the weirs\' cheeks aside)', `least ${f2(llow)} m over at ${lat2 ? lat2.map(f2) : '-'}`);
+  // the meeting of P14 and P38 at (9, 252) is dry ground at the bridge's foot
+  check(F.waterLevelAt(9, 252) === null, 'leat: the meeting of P14 and P38 (9, 252) is on dry ground by the bridge', `water ${F.waterLevelAt(9, 252)}, ground ${f2(F.heightAt(9, 252))}`);
 }
 
 console.log(`outline: ${pass} passed, ${fail} failed`);

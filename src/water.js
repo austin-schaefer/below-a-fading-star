@@ -10,6 +10,7 @@ import { makeWaterTexture } from './water/textures.js';
 import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
 import { buildPools } from './water/pools.js'; // v16 L4: the floor's pools, in the tarn's material
+import { buildV17Water } from './v17/water.js'; // v17 W1: the streams' ribbon, the mere in the tarn's material
 import { tideAt } from './v4/tarn.js';
 import { keptHeights } from './v13/tape.js'; // v13 L4: the ground's answers kept between visits
 import { fenShoreDistance, fenWet } from './height/fen.js'; // v16 L3: the fen's edge
@@ -280,6 +281,8 @@ export async function build(ctx) {
   }
 
   const floorPools = tape.run(() => buildPools(ctx, bodies.find((b) => b.tarn)?.mat, !high)); // v16 L4 (src/water/pools.js)
+  const v17 = tape.run(() => buildV17Water(ctx, tex, bodies.find((b) => b.tarn)?.mat)); // v17 W1 (src/v17/water.js)
+  ctx.registerUpdate(v17.update);
   const flick = sky && sky.flicker ? sky.flicker : { value: 1 };
   ctx.registerUpdate((dt, t) => {
     for (const b of bodies) {

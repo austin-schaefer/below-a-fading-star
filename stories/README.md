@@ -29,8 +29,10 @@ Anyone may add a story, add a beat to another's, or repair one, and says so in t
 | [The copyist](the-copyist.md) | plain | built | a mason who cannot copy the Heliarchs' moulding | the Quarrels, before the Unroofed House | the saint in the kiln (the same masons) |
 | [The sounder of the wreck](the-spilt-measure.md) | plain | built | the man in the Spilt Measure, his ear to its hull, listening for noon | the Pennyworth, the wreck's door | the Noon Road; noon by the jug; the soundings |
 | [The door on her back](the-door-on-her-back.md) | plain | built (the empty doorway is not) | a woman leaving with her house's door on her back | the Pennyworth, the Leave | the wait on the Span (another who went east) |
+| [The Meridian Garth](the-meridian-garth.md) | plain (a deep end) | built (v17; the Slake, the Swallow and the Meridian Garth are its names) | the Noonwrights, who grew a garden under the mountain in stored noon; whoever still waters it, never seen (a can too big for anyone) | the brook out of the tarn, the leat out of the fen, the mere under the south slope, the Swallow, the tube under the water, the garden 24 m down | the Noon Road; the tender of the lattices (the can); the Wellward Way; the man at the wheel |
+| [The man at the wheel](the-man-at-the-wheel.md) | plain (a deep end) | built (v17 S1; the Shuttered Noon is its name) | a Noonwright, the first seen: a junction's keeper sat at a shut wheel in the middle of a glass sphere full of the last noon | the east wall's foot north of the Noon Road | the Meridian Garth (the line he shut fed it); the Noon Road (what stopped the line) |
 
-Twenty plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
+Twenty-two plain, two deep. The library is for visitors and for the agents who design the world: a story belongs here if it makes things hang together, read or not.
 
 ## People who could be the same person
 
@@ -42,7 +44,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 - The sleeper in the Lantern Halt: seen asleep, half out of the lantern's hatch in a red nightcap; from the seat, his face at an arm's length, never his eyes. He is the pedlar whose sack split.
 - The Reckoner, behind the Hypogeum's door: heard knocking, never seen. His room on the Wellward Way, where the valley's gold is going into a new sun, is his (v14-D1).
 - The leadsmen at the top of the thread (the soundings): never seen; whoever cut the stair to the icefall's shelf: the sounder who went down the Pit (`the-sounding-down.md`), never seen.
-- The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old.
+- The tender of the lattices: never seen; their lamp is (`the-tender-of-the-lattices.md`). Could be the Leerie's master, or the Leerie grown old. Could be whoever waters the Meridian Garth (the can is the same make as the oil can: `the-meridian-garth.md`).
 - The Sexton: whose are his other forty graves? Open (the Nave's road was first drawn as his; it is the Noonwrights' now: `the-noon-road.md`); never seen at the Nave.
 - The Noonwrights: the fourth people, between the Heliarchy and the folk here now; nobody living has seen one. Their carriers lie in the Nave (`the-noon-road.md`); the sky's lattices were their collectors; the tender and the Leerie burn what they left.
 - The Lappet's people (v15-P1, `src/v15/people/folk.js`), each seen at work: the burner at the saint's fire, the copyist, the noon-drawer, the child on the Leads, the Lagan's clerk, the dyer, the sounder of the wreck, the one leaving with her door. Offices, never names. The noon-drawer could be the one who chalks the Leerie's slate on the Swape's post; the one leaving could be going to the second inn by the setting sun.
@@ -52,7 +54,7 @@ Keep this list: it is how stories come to touch. Before inventing someone, look 
 
 - Saffron cloth with a cream lining and a madder border (the traveller); the same cloth on the Span's thin ways and a camp (the one who waited); dyed in the Lappet, at the Tenter's vats, by a dyer saffron to the elbows.
 - Letters sealed in red: the traveller's, blown down the slope under the Span; the ones for him nobody collected, in the Lagan.
-- Noon: the Noonwrights' stored daylight, in the Nave's flasks, the Leerie's and the tender's lamps, the fountain on the Lees, a jug in a window on the Rungs, and (the sounder believes) the hull of the Spilt Measure.
+- Noon: the Noonwrights' stored daylight, the light the Meridian Garth grows in and the man at the wheel keeps, in the Nave's flasks, the Leerie's and the tender's lamps, the fountain on the Lees, a jug in a window on the Rungs, and (the sounder believes) the hull of the Spilt Measure.
 - Gold tesserae from the court's sun (the jackdaw); a pewter spoon and a bronze ring in its nest, owners unknown. The Nave's sun's gold too; both go into the Laid Sun's floor on the Wellward Way (with a few of the Nave's red pieces by mistake).
 - A medlar: painted by the painter, a core on the chair's trail, an orchard of them at the Bletting.
 - Salt.

@@ -14,7 +14,7 @@ import { WORLD, SUN, LANDMARKS, CAUSEWAY_V4, WATER, PALETTE, SPAWN } from './wor
 import { buildHud, buildLoadBar } from './hud.js';
 import { createPerf } from './perf.js';
 import { makeLightSlots } from './lights.js';
-import { makeShadowCadence } from './shadows.js';
+import { makeShadowCadence, shadowDepth } from './shadows.js';
 import { warmUp } from './warmup.js';
 import { chooseTier, makeTier } from './tier.js';
 import { installGpuMem } from './gpumem.js';
@@ -102,10 +102,14 @@ const MODULES = [
   ['fall', () => import('./v12/fall.js')], // v12-H0: a long fall blacks out and wakes the walker at the keep's gate (?fall=1 while on trial)
   ['stair', () => import('./v12/stair.js')], // v12-H3: the Diffident Stair, from the east moor to the foot of a lattice come low (?stair=0)
   ['passage', () => import('./v14/passage.js'), M], // v14-D1: the Wellward Way, the passage under the moor from the Foundered Nave's south door to the Pit's floor (?passage=0)
+  ['swallow', () => import('./v17/swallow.js'), M], // v17-U1: the Swallow, where the mere's water goes under the south slope, the drowned aqueduct and the clear tube down it to the Garth (?swallow=0)
   ['villagerow', () => import('./v15/row.js')], // v15-V1: the Strake, one row of five buildings of five ages on the Lees' bench, from the makers in src/v15/houses/ (?v15=0; ?v15=kit adds the makers' contact sheet)
   ['people', () => import('./v15/people/index.js')], // v15-P1: the Lappet's people, eight villagers each doing one thing, one draw (?people=0)
   ['lappetfar', () => import('./v15/far.js')], // v15-P3: the Lappet from far off, one draw: a block a house, a speck a light, from the quarters' records (?lappetfar=0)
   ['lappetlamps', () => import('./v15/lamps.js')], // v15-L1: lamps to walk by where the village's ways were dark, from the plan's LAMPS, one draw, no point light (?lappetlamps=0)
+  ['leat', () => import('./v17/leat.js')], // v17-W2: the Heliarchs' leat's stonework (kerbs, weirs, the slab bridge at (9, 252)); its water is the kit's (?leat=0)
+  ['garth', () => import('./v17/garth.js')], // v17-U2: the Meridian Garth, the garden under the mountain where it is still noon (?garth=0)
+  ['sphere', () => import('./v17/sphere.js'), M], // v17-S1: the man at the wheel, the Noonwrights' glass junction at the east wall's foot; cuts the terrain mesh (?sphere=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 
@@ -251,10 +255,11 @@ async function start() {
   sunLight.castShadow = true;
   let sm = ctx.tier.shadowMapSize(); // by tier (high 4096, medium and low 2048); ?smap= overrides
   sunLight.shadow.mapSize.set(sm, sm);
-  sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 420;
-  let sb = 95; // the shadow box's half-size (v12: grows with the eye's height, src/v12/above.js)
+  const sdepth = shadowDepth(url); // v17 #1712: the box's depth is fixed to the world along the sun (shadows.js)
+  sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = sdepth.far;
+  const SB0 = 95; let sb = SB0; // the shadow box's half-size (v12: grows with the eye's height, src/v12/above.js)
   sunLight.shadow.camera.left = -sb; sunLight.shadow.camera.right = sb; sunLight.shadow.camera.top = sb; sunLight.shadow.camera.bottom = -sb;
-  sunLight.shadow.bias = -0.0006; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
+  sunLight.shadow.bias = sdepth.bias; sunLight.shadow.normalBias = 0.6; sunLight.shadow.radius = 2;
   sunLight.shadow.camera.updateProjectionMatrix();
   scene.add(sunLight); scene.add(sunLight.target);
   const hemi = new THREE.HemisphereLight(new THREE.Color(rig.hemiSky), new THREE.Color(rig.hemiGround), rig.hemi);
@@ -482,6 +487,8 @@ async function start() {
     shadowTarget.applyMatrix4(lightView);
     shadowTarget.x = Math.round(shadowTarget.x / shadowTexel) * shadowTexel;
     shadowTarget.y = Math.round(shadowTarget.y / shadowTexel) * shadowTexel;
+    const fixedDepth = sdepth.fixed && sb === SB0; // at walking height (a grown box from a top keeps v12's window: its cost)
+    if (fixedDepth) shadowTarget.z = -1; // on the plane through the origin square to the sun (lightView looks from sunDir)
     shadowTarget.applyMatrix4(lightViewInv);
     const f = ctx.sky.flicker.value;
     sunLight.intensity = rig.sun * f;
@@ -496,7 +503,7 @@ async function start() {
     // the shadow camera moves only when the map is redrawn: a map drawn from the old place stays right
     if (ctx.shadowCadence.update(dt, shadowTarget) || (above && above.take())) { // (a step in the box's size moves the light at once)
       sunLight.target.position.copy(shadowTarget);
-      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, above ? above.lightDist : 260);
+      sunLight.position.copy(shadowTarget).addScaledVector(sunDir, fixedDepth || !above ? sdepth.light : above.lightDist);
     }
     ctx.lightSlots?.update();
     ctx.perf.cpu('frame');
