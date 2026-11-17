@@ -36,7 +36,7 @@ export async function build(ctx) {
   const atS = (s) => Math.min(L.n - 1, Math.max(0, Math.round(s / 0.5)));
 
   // ---- the kerbs: a block every 1.15 m either side, its inner face on the water's edge
-  const KW = 0.5, KL = 1.05, KH = 0.9;
+  const KW = 0.5, KL = 1.05, KH = 0.72;
   const sb = L.S[bridgeK], bHalf = LEAT.bridge.w / 2 + 0.2;
   for (let s = 0.9; s < sMouth - 0.6; s += KL + 0.1) {
     const k = atS(s), tx = L.TX[k], tz = L.TZ[k];
@@ -62,7 +62,7 @@ export async function build(ctx) {
   const breached = [];
   LEAT.weirs.forEach(([, , top, below, state], i) => {
     const s0 = weirS[i] - 0.3, k = atS(s0), tx = L.TX[k], tz = L.TZ[k], hw = L.HW[k];
-    const W = hw * 2 + 0.6, n = 3, bw = W / n, D = 0.8, bot = below - 0.55, yt = top - 0.05;
+    const W = hw * 2 + 0.6, n = 3, bw = W / n, D = 0.8, bot = below - 0.3, yt = top - 0.05;
     for (let j = 0; j < n; j++) {
       const d = -W / 2 + bw * (j + 0.5);
       const cx = L.X[k] - tx * D / 2 + tz * d, cz = L.Z[k] - tz * D / 2 - tx * d;
