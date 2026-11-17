@@ -10,7 +10,7 @@
 //    `size` (0 a narrow passage .. 1 a hall, default 1) is how big it sounds (graph.js scales the stone room's tail).
 //    inside(x, y, z): the largest; size(x, y, z): the size of the volume that holds the point most; here: the
 //    camera's, set by post.js each frame (no sun glow through the roof; the grade eases to UNDER_GRADE, the
-//    dark-adapted eye). The audio reads inside() at the listener (graph.js: the stone room; bed.js: the wind
+//    dark-adapted eye, or toward a place's own where grade(fn) says so). The audio reads inside() at the listener (graph.js: the stone room; bed.js: the wind
 //    sheltered; steps.js: the hard step).
 //    The seal (A1): while the camera is wholly under (here 1) the surface is not drawn except what can be seen through
 //    an opening: opening({ x, y, z, r }) registers one (a hole's disc, a passage's mouth to the sky); keep(obj) marks
@@ -53,7 +53,7 @@ function addSegs(segs) {
 
 export function installBelow(ctx) {
   if (ctx.below) return ctx.below;
-  const vols = [], openings = [], kept = new Set();
+  const vols = [], openings = [], kept = new Set(), grades = [], _gt = [0, 0, 0, 0], _gm = [0, 0, 0, 0];
   let sealOn = false, roots = null, rr = 0;
   const _s = new THREE.Sphere();
   const below = {
@@ -70,11 +70,15 @@ export function installBelow(ctx) {
     size(x, y, z) { let v = 0, s = 1; for (let i = 0; i < vols.length; i++) { const w = vols[i].fn(x, y, z); if (w > v) { v = w; s = vols[i].size; } } return s; },
     opening(o) { openings.push(o); return () => { const i = openings.indexOf(o); if (i >= 0) openings.splice(i, 1); }; },
     keep(obj) { kept.add(obj); roots = null; },
+    // grade(fn) (v17-U2): a place's own grade under the ground instead of UNDER_GRADE: fn(p, out) writes (exposure,
+    // saturation, contrast, warmth) into out and returns its weight 0..1 at the camera p (the Garth's noon). Returns a remover.
+    grade(fn) { grades.push(fn); return () => { const i = grades.indexOf(fn); if (i >= 0) grades.splice(i, 1); }; },
     // post.js, once a frame, before the draw: the camera's share, the grade, and the seal
     tick(p, grade) {
       const h = below.here = vols.length ? below.inside(p.x, p.y, p.z) : 0;
       if (grade && h > 0) {
-        const G = UNDER_GRADE;
+        let G = UNDER_GRADE;
+        for (const f of grades) { const w = f(p, _gt); if (w > 0) { for (let k = 0; k < 4; k++) _gm[k] = G[k] + (_gt[k] - G[k]) * Math.min(1, w); G = _gm; } }
         grade.set(grade.x * Math.pow(G[0] / grade.x, h), grade.y + (G[1] - grade.y) * h, grade.z * Math.pow(G[2] / grade.z, h), grade.w + (G[3] - grade.w) * h);
       }
       seal(h >= 0.999);
