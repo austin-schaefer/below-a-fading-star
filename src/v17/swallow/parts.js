@@ -6,6 +6,7 @@ import { UnderBuilder, underMaterial } from '../../v14/under.js';
 import { NOON, GLAZES } from '../../v8/strata/noon.js';
 import { AQUEDUCT as A, SWALLOW as SP } from '../plan.js';
 import { SW, SW_GLSL, swPatch, MAX_LAMPS } from './water.js';
+import { buildHead } from './head.js';
 
 const C = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
 // the Heliarchs' stone, dressed and pale where it was out of the water's reach, darker and green-stained in it
@@ -25,7 +26,7 @@ export function buildParts(ctx, L) {
 
   // ---- the lamps: the tube's lenses that still hold a little noon, and the two lights from the ends (the portal's
   // daylight down in the head, the Garth's noon at the door). They light the water (water.js) and bake the glow
-  const LENS_S = [9.5, 27, 44, 61];
+  const LENS_S = [2.6, 11, 27, 44, 61]; // (the first in the arch: the noon that draws a visitor in, seen from the shore)
   const lenses = LENS_S.map((s) => { const f = frameAt(s); return { s, x: f.x, y: f.ax + A.bore - 0.1, z: f.z }; });
   const dawn = { x: -94.5, y: -6.6, z: 312.5 }, noon = { x: -31.2, y: A.profile.at(-1)[1] + 1.4, z: 318 };
   const glowAt = (x, y, z) => {
@@ -35,13 +36,17 @@ export function buildParts(ctx, L) {
     return Math.min(1.4, g);
   };
   // the sky's share: the head's daylight through the portal, nothing past the turn
-  const skyAt = (x, y, z) => { const dz = z - SP.face, dx = x + 94.5; return Math.max(0.012, 0.5 * Math.exp(-Math.max(0, dz) / 4) * Math.exp(-Math.abs(dx) / 14)); };
-  const lit = (x, y, z, out) => { out[0] = skyAt(x, y, z); out[1] = 0; out[2] = glowAt(x, y, z); return out; };
+  // (outside the face: the moor's light and haze; in the arch and the head, the daylight that comes in at the portal)
+  const skyAt = (x, y, z) => { const dz = z - SP.face, dx = x + 94.5; return dz <= 0.02 ? 1 : Math.max(0.012, 0.22 * Math.exp(-dz / 2.5) * Math.exp(-Math.abs(dx) / 14)); };
+  const lit = (x, y, z, out) => { out[0] = skyAt(x, y, z); out[1] = z <= SP.face + 0.02 ? 1 : 0; out[2] = glowAt(x, y, z); return out; };
   const S = new UnderBuilder(lit), K = new UnderBuilder(lit); // the stone; the wood and the glaze (no courses)
 
   // ---- the conduit: a loft of one ring shape along the line (floor, walls, a round vault), facing in, coursed
   // (each block its own shade, a course every 0.6 m up, a block 1.2 m along), the water's stain to the crown
-  const S0 = 15.2, S1 = A.profile.at(-1)[0] - 1.9; // from the head's east wall to the bulkhead
+  // the head first (it finds where the line leaves it: the conduit's first ring)
+  const uPx = { value: 1 }, env = { ctx, L, S, K, frameAt, rng, low, uPx };
+  const head = buildHead(env);
+  const S0 = env.conduitStart, S1 = L.LEN - 0.03; // from the head's east wall to the Garth's wall
   const KV = low ? 10 : 14;
   const ring = [];
   { // (u across, v up from the conduit's floor), in order round from the right foot
@@ -84,7 +89,6 @@ export function buildParts(ctx, L) {
     }
   };
   capAt(S1, -1);
-  capAt(S0, 1);
 
   // ---- the saddles: dressed blocks the tube was laid in, every 5.5 m; and the collars where its lengths join
   const tubeR = A.outer;
@@ -174,7 +178,7 @@ export function buildParts(ctx, L) {
         // clear: little of it seen face on, more at a slant, the lime line where it rides the pool, the old crust at its lip
         float gFr = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 2.5);
         float gLine = (1.0 - smoothstep(0.0, 0.35, abs(vUnderW.y - uSwPool - 0.05))) * step(vUnderW.x, -78.0);
-        float gLip = 1.0 - smoothstep(0.0, 2.2, length(vUnderW.xz - vec2(${L.at(0).x.toFixed(2)}, ${L.at(0).z.toFixed(2)})));
+        float gLip = 0.6 - 0.6 * smoothstep(0.0, 0.9, length(vUnderW.xz - vec2(${L.at(0).x.toFixed(2)}, ${L.at(0).z.toFixed(2)})));
         diffuseColor.a = clamp(0.07 + 0.5 * gFr + 0.6 * gLine + 0.55 * gLip, 0.0, 0.92);
         outgoingLight = mix(outgoingLight, vec3(0.42, 0.41, 0.36) * (0.4 + 0.6 * vUnder.x), max(gLine, gLip) * 0.6);
       }
@@ -237,7 +241,7 @@ export function buildParts(ctx, L) {
   weed.name = 'swallow-weed'; weed.frustumCulled = false;
 
   // ---- the silt: motes carried down the conduit with the current, a few tumbling; only in the water, never in the bore
-  const NM = low ? 420 : 900, SA = 22, SB = S1 - 0.5, RANGE = SB - SA;
+  const NM = low ? 420 : 900, SA = 22, SB = Math.min(S1 - 0.5, 57), RANGE = SB - SA;
   const mpos = new Float32Array(NM * 3), mA = new Float32Array(NM * 4);
   for (let i = 0; i < NM; i++) {
     let u, v, tries = 0;
@@ -252,7 +256,7 @@ export function buildParts(ctx, L) {
   // the straight's line in the shader: x, z at SA, its heading, and the conduit floor's level as a line in s
   const fA = frameAt(30), fB = frameAt(60), kY = (fB.y - fA.y) / 30;
   const mmat = new THREE.ShaderMaterial({
-    uniforms: { ...SW, uLine: { value: new THREE.Vector4(L.at(SA).x, L.at(SA).z, fA.tx, fA.tz) }, uY: { value: new THREE.Vector3(fA.y - CH.below - kY * (30 - SA), kY, RANGE) }, uPx: { value: 1 } },
+    uniforms: { ...SW, uLine: { value: new THREE.Vector4(L.at(SA).x, L.at(SA).z, fA.tx, fA.tz) }, uY: { value: new THREE.Vector3(fA.y - CH.below - kY * (30 - SA), kY, RANGE) }, uPx },
     vertexShader: /* glsl */`
       uniform float uSwT, uSwPool, uPx; uniform vec4 uLine; uniform vec3 uY;
       attribute vec4 aM; // where along (0..1), speed, phase, size
@@ -344,5 +348,5 @@ export function buildParts(ctx, L) {
   lamp(noon, nl, 0.05, 7);
   lamp(dawn, new THREE.Color('#d9805a'), 0.05, 7);
 
-  return { meshes: [stone, wood, glass, weed, motes, bubbles], lights, update, lenses, frameAt };
+  return { meshes: [stone, wood, glass, weed, motes, bubbles, ...head.meshes], lights, update, lenses, frameAt, quayFloor: head.quayFloor, quayKeep: head.quayKeep, quayPath: head.quayPath, headVolume: head.headVolume, cut: head.cut };
 }
