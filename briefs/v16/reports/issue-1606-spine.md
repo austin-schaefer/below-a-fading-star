@@ -63,3 +63,15 @@ Scope from the orchestrator: part 3, then from part 2 only the folk from 20 m an
 
 ### Leftovers from the part 1 review
 `tools/village-walk.mjs` walks the head flight on the axis, and `plan.js` exports `HEAD_POST`, used by both the posts and the kerb (commit 3fa1625). The walk itself was not rerun.
+
+## Round three (third agent, 2026-11-17)
+Merged origin/next first (the gutter work).
+1. The flight and the ink strokes run on the clerk's clock (`S.g`), so a gutter freezes the letter and the pen with him. New acts row: "lagan: a gutter mid-flight: his clock and the letter hold still".
+2. The flight's update has no `near`/`hz`; it hides the letter when the visitor is over 40 m from the hatch or the settings panel is open.
+3. The letter is placed from `cam.position` and `cam.quaternion` (controls run before the updates, so they are this frame's); the camera is not in the scene, so it cannot be a parent. Hidden while settings is open.
+4. The letter is one mesh with vertex colours; the ledger's boards and pages are one mesh (the boards read a 4 px dark strip under the page in the same canvas).
+5. The static page is drawn once into an offscreen canvas; `draw()` blits it and draws the red strokes only, and only when the stroke has advanced.
+6. `plan.js`: the STAIR comment is back on its line.
+7. `stories/the-dead-letters.md`: the act is logged as built; the open thread is now carrying the letter to the slope.
+8. The folk's new lanterns are painted into the people mesh at a fixed glow and deliberately do not join the gutter's lamp wave.
+Tests: `ONLY=acts,touch,village,strata,dressing,perf tools/suite.sh 8167`: acts 174/0, touch 45/45, village 687/0, strata 8/0, dressing 22/0, perf 29/29. Frames: `shots/wip/v16-V3-act-02-after-0p3s.png`, `-03-after-1s`, `-04-after-2s`, `-05-after-5s` (plus `-00`, `-01`).
