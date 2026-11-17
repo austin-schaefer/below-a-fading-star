@@ -34,14 +34,14 @@ const CARD_POSES = {
   galleries: { x: -120, z: -70, look: { x: -338, z: -69 }, pitch: 0.38 }, // the whole ragged prow over the tarn's west shore
   hawser: { x: -102, z: -134, look: { x: -80, z: -272 }, pitch: 0.28 }, // the chain running off to the crystals and the arch
   // v11.1-W4: the canyon's three were a rock at arm's length or a wall; each now on dry ground with the thing across open air
-  river: { x: 208, z: 240, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the slope 26 m off
+  river: { x: 210, z: 226, look: { x: 214, z: 266 }, pitch: 0.2 }, // the taller fall, whole, from the grass 40 m off (v17 critic: (208, 240) stood behind a slab of the slope; the boulder at (206.1, 228) is off the left of the frame)
   cutting: { x: 200, z: 240, look: { x: 188, z: 246 }, pitch: -0.05 }, // the gorge from its north bank, on dry ground a few metres over the river: the slot between the walls (a stand on the rim sees only turf; the hole check exempts it as it does the Speculum)
   orchard: { x: 80, z: -100, look: { x: 130, z: -90 }, pitch: 0.05 }, // v14-B4: from the grove's west side, the medlars and the path through (the old stand put a trunk across the frame)
   byre: { x: -160, z: 48, look: { x: -148, z: 64 }, pitch: 0.05 }, // v14-B4: 21 m off, the roof clear of the wood's trunks
   plinths: { x: 175, z: -160, look: { x: 148, z: -220 }, pitch: 0.1 }, // v14-B4: beside the road's foot, the plinths running off in file (the old stand was at a wall's foot)
   nave: { x: 262.4, z: 28.2, look: { x: 252, z: 44 }, pitch: -0.55 }, // v14-F1: at the north-east lip, looking down past the capitals onto the Noon Road's lit carriers and hoops (B4's, 4 m back at (251, 24), framed the rim's grass)
   thrones: { x: -290, z: 85, look: { x: -324, z: 118 }, pitch: 0.3 }, // v14-B4: out of the wood's edge, the thrones against the sunset (the old stand looked into black trunks)
-  leerie: { x: 110, z: -12, look: { x: 128, z: 5 }, pitch: 0.05 }, // v14-B4: the standards and their lamplighter, the arch behind
+  leerie: { x: 149, z: 42, look: { x: 128, z: 5 }, pitch: 0.05 }, // v17 critic: from the row's south end (the walkers test's stand), the standards going off up the slope and their lamplighter; v14-B4's (110, -12) is inside the Lappet's mound (v15) and showed flat fog
   prospect: { x: 248, z: -30, look: { x: 238, z: -30 }, pitch: 0.05 }, // from the east, the sun behind it: the easel, the cairns, the set, the saucer
 };
 // v14-B4: a region card's stand (default: its card point, facing the spawn's way)
@@ -134,14 +134,30 @@ const yawToward = (fx, fz, tx, tz) => Math.atan2(-(tx - fx), -(tz - fz));
 // The eight points from a yaw: yaw 0 looks down -z (north), +x is east, +z south, so the compass bearing is -yaw
 const POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 export const facing = (yaw) => POINTS[(Math.round((((-yaw * 180) / Math.PI) % 360 + 360) % 360 / 45)) % 8];
-export const positionLine = (p) => `x ${Math.round(p.pos.x)}  z ${Math.round(p.pos.z)}  facing ${facing(p.yaw)}`.replace(/-(\d)/g, '\u2212$1');
+// (v17, the owner: "settings menu doesn't have height or yaw"): the feet's height (what ?pos=x,z,y takes), the yaw in
+// radians beside its compass word, and the pitch, so a line read off the screen is a link
+const feetY = (p) => p.pos.y - (p.eye ?? 1.7);
+export const positionLine = (p) => `x ${Math.round(p.pos.x)}  z ${Math.round(p.pos.z)}  y ${feetY(p).toFixed(1)}  facing ${facing(p.yaw)} ${p.yaw.toFixed(2)}  pitch ${(p.pitch ?? 0).toFixed(2)}`.replace(/-(\d)/g, '\u2212$1');
+// the same place as a link the URL parser takes (src/controls.js: pos=x,z,y puts the feet at y)
+export const positionLink = (p, loc = location) => `${loc.origin}${loc.pathname}?pos=${p.pos.x.toFixed(1)},${p.pos.z.toFixed(1)},${feetY(p).toFixed(1)}&yaw=${p.yaw.toFixed(2)}&pitch=${(p.pitch ?? 0).toFixed(2)}`;
 
 export function buildSettings(ctx) {
   const $ = (id) => document.getElementById(id);
   const gear = $('gear'), root = $('settings'), panel = $('settings-panel');
   if (!gear || !root || !panel) return null;
   const slider = $('set-volume'), sliderOut = $('set-volume-out'), muteBtn = $('set-mute');
-  const posEl = $('set-pos'), posToggle = $('set-showpos'), posHud = $('posline');
+  const posEl = $('set-pos'), posToggle = $('set-showpos'), posHud = $('posline'), posCopy = $('set-copypos');
+  // one click copies the line as a link (the clipboard, or a selected field where the clipboard is refused)
+  posCopy?.addEventListener('click', async () => {
+    const link = positionLink(ctx.player);
+    let ok = false;
+    try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {
+      try { const t = document.createElement('textarea'); t.value = link; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); } catch (e2) { /* ignore */ }
+    }
+    posCopy.dataset.link = link;
+    posCopy.textContent = ok ? 'Copied' : 'Copy failed';
+    setTimeout(() => { posCopy.textContent = 'Copy link'; }, 1600);
+  });
   const qualityEl = $('set-quality'), captureEl = $('set-capture-choice'), placesEl = $('set-places');
   let touched = -1e9; // the last change made in the panel: the frame stays full for a moment after it (a slider's preview)
   const api = { get idle() { return open_ && performance.now() - touched > 1500; }, open, close, toggle, teleport, qualityUrl, setQuality, navigate: (u) => location.assign(u), get shown() { return open_; }, places: PLACES };

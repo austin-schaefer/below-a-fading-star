@@ -160,6 +160,25 @@ export function buildHead(env) {
     S.quad([RX0, ta, z], [RX0, tb, z1], [RX1, tb + 0.15, z1], [RX1, ta + 0.15, z], FACE, [0, 1, 0], 0.05); // the coping
   }
   { const t0 = revTop(RZ0); S.quad([RX0, QY - 0.6, RZ0], [RX1, QY - 0.6, RZ0], [RX1, t0 + 0.15, RZ0], [RX0, t0, RZ0], FACE_D, [0, 0, -1], 0.06); }
+  // the cut's west bank (v17 critic: from the quay and the stair it was one bare dug slope, a flat sheet with a ruled
+  // crest): revetted from the water's edge, in 1.5 m lengths each level and its own height, one in four fallen lower.
+  // The stone's shader puts the courses on it. (No rubble up the bank: on low the drawn ground falls short of heightAt
+  // there, and blocks set on heightAt floated.)
+  {
+    const WX0 = -99.05, WX1 = WX0 - REV, WZ0 = 291.5, WZ1 = Z0 - 0.05, bot = -6.8 - 0.7;
+    const wTop = (z) => Math.max(-6.8 + 1.2, Math.max(T.heightAt(WX1 - 0.3, z), T.heightAt(WX0 - 0.5, z), T.heightAt(WX0 - REV * 0.5, z)) + 0.25);
+    let n = 0;
+    for (let z = WZ0; z < WZ1 - 0.01; z += 1.5, n++) {
+      const z1 = Math.min(WZ1, z + 1.5), h = hash(z * 1.37 + 5.1), drop = n % 4 === 2 ? 0.55 + 0.4 * h : 0.12 * h; // (a broken length)
+      // (each length level, stepping up with the bank: a coping that slopes with a steep bank read as one pale sheet)
+      const t = Math.max(wTop(z), wTop(z1)) - drop, col = FACE_D.map((v) => v * (0.86 + 0.18 * hash(z + 9.3)));
+      S.quad([WX0, bot, z1], [WX0, bot, z], [WX0, t, z], [WX0, t, z1], col, [1, 0, 0], 0.06); // its face to the water
+      S.quad([WX0, t, z1], [WX0, t, z], [WX1, t + 0.15, z], [WX1, t + 0.15, z1], FACE.map((v) => v * (0.85 + 0.15 * h)), [0, 1, 0], 0.05); // the coping
+      // its ends, a hand in from the joint: the riser where its neighbour stands lower, hidden where it stands higher
+      S.quad([WX0, bot, z + 0.01], [WX0, t, z + 0.01], [WX1, t + 0.15, z + 0.01], [WX1, bot, z + 0.01], FACE_D, [0, 0, -1], 0.06);
+      S.quad([WX0, bot, z1 - 0.01], [WX1, bot, z1 - 0.01], [WX1, t + 0.15, z1 - 0.01], [WX0, t, z1 - 0.01], FACE_D, [0, 0, 1], 0.06);
+    }
+  }
   // steps up from the quay's north end to the shore
   const shoreY = T.heightAt((QX[0] + QX[1]) / 2, QZ0 - 1.2);
   // (up or down: the shore is wherever W1's mere left it)

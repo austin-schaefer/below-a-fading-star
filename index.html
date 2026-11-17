@@ -234,7 +234,8 @@
   .set-part-sub .set-note { margin-top: 0.3em; font-size: 0.78rem; }
   .set-dim { opacity: 0.38; transition: opacity 0.3s; }
   @media (max-width: 420px) { .set-part-sub { padding-left: 0; } }
-  #set-pos { font-family: ui-monospace, monospace; font-size: 0.8rem; color: rgba(217, 205, 180, 0.75); margin: 0 0 0.2em; min-height: 1.2em; }
+  #set-pos { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 0.8rem; color: rgba(217, 205, 180, 0.75); margin: 0 0 0.2em; min-height: 1.2em; }
+  #set-copypos { flex: none; }
   #set-places h4 { grid-column: 1 / -1; margin: 0.7em 0 0.1em; font-family: var(--f-sc); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.22em; color: rgba(226, 200, 170, 0.62); }
   #posline { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); display: none; font-family: var(--f-text); font-size: 0.8rem; letter-spacing: 0.06em; color: rgba(219,170,134,0.45); text-shadow: 0 1px 6px rgba(0,0,0,0.8); pointer-events: none; z-index: 5; }
   #posline.shown { display: block; }
@@ -296,7 +297,7 @@
 <div id="settings" role="dialog" aria-modal="true" aria-label="settings"><div id="settings-panel" tabindex="-1">
   <header><h2>Settings</h2><button id="set-close" type="button">Back to the moor</button></header>
   <p class="set-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>E</kbd> where something is offered · <kbd>Esc</kbd> this panel</p>
-  <div id="set-pos" aria-live="off"></div>
+  <div class="set-row set-posrow"><div id="set-pos" aria-live="off"></div><button id="set-copypos" type="button" aria-label="copy a link to this place">Copy link</button></div>
   <h3>Sound</h3>
   <div class="set-row"><input id="set-volume" type="range" min="0" max="100" step="1" value="100" aria-label="volume"><output id="set-volume-out" for="set-volume">100</output><button id="set-mute" type="button" aria-pressed="false">Mute</button></div>
   <div class="set-parts" role="group" aria-label="parts of the sound">
