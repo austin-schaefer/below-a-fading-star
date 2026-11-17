@@ -62,10 +62,10 @@ function spout(B, b) {
   const stone = (k) => rgb(H.stone, k), F = SPOUT.face, L = SPOUT.lip, y = SPOUT.y;
   // the block, in two courses (the lower to the slot's foot, the upper over it), a hair's step between them
   box(F, R + 0.25, SPOUT.half, FLOOR, y - 0.08, rgb(H.dark, 0.78), rgb(H.dark, 0.9));
-  box(F + 0.015, R + 0.25, SPOUT.half - 0.02, y - 0.08, SPOUT.top, rgb(H.dark, 0.9), rgb(H.dark, 1.0)); // (the darker stone of the plinth: it stands out of the wall's paler courses)
+  box(F + 0.015, R + 0.25, SPOUT.half - 0.02, y - 0.08, SPOUT.top - 0.006, rgb(H.dark, 0.9), rgb(H.dark, 1.0)); // (the darker stone of the plinth: it stands out of the wall's paler courses)
   // the cap: a moulded stone a hand wider and prouder, its underside in shadow
   box(F - 0.06, R + 0.25, SPOUT.half + 0.06, SPOUT.top, SPOUT.top + 0.14, stone(1.08), stone(1.15));
-  box(F - 0.03, R + 0.25, SPOUT.half + 0.03, SPOUT.top - 0.05, SPOUT.top, rgb(H.dark, 0.9));
+  box(F - 0.03, R + 0.25, SPOUT.half + 0.03, SPOUT.top - 0.05, SPOUT.top - 0.003, rgb(H.dark, 0.9)); // (its top and the course's stop short of the cap's underside: no two paints in one plane)
   // the slot: a dark mouth laid on the upper course's face (its jambs the course's stone)
   const fz = F + 0.015 - 0.004;
   B.quad(P(fz, -0.12, y - 0.075), P(fz, 0.12, y - 0.075), P(fz, 0.12, y + 0.12), P(fz, -0.12, y + 0.12), rgb(H.cut, 1.0), [-ux, 0, -uz], 0);
