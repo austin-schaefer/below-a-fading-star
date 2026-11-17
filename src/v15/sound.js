@@ -170,14 +170,18 @@ export function startLappetSound(a, ctx) {
 
   // ---- the schedulers: phrased callers, each keeping its own time whether it is heard or not
   const near = (p, r) => p && dist(p) < r;
+  // a hand's work stops while the sun gutters (v16-S1): the village looks up (src/v15/people/index.js), so the chisel,
+  // the pan, the plank and the sweep are still until a breath after it has caught; the kiln and the drips go on
+  let handsOff = 0;
+  const hands = () => { const d = ctx.sky?.flicker?.dark ?? 0, now = ac.currentTime; if (d > 0.35) handsOff = now + 2.5; return now >= handsOff; };
   const callers = [
     caller(rng, { bout: [1, 4], gap: [0.15, 0.7], rest: [7, 0.5, 3, 16], first: [1, 5], when: () => near(stoke, 20) }, () => kilnTick()),
-    caller(rng, { bout: [3, 7], gap: [0.5, 1.2], rest: [26, 0.5, 14, 70], first: [2, 8], when: () => near(chisel, 75) }, (i) => blow(i)),
+    caller(rng, { bout: [3, 7], gap: [0.5, 1.2], rest: [26, 0.5, 14, 70], first: [2, 8], when: () => near(chisel, 75) && hands() }, (i) => blow(i)),
     caller(rng, { bout: [1, 3], gap: [0.4, 1.4], rest: [13, 0.45, 6, 28], first: [1, 6], when: () => near(vats, 24) }, () => vatDrop()),
   ];
-  if (E.salt) callers.push(caller(rng, { bout: [1, 2], gap: [0.8, 2], rest: [40, 0.5, 18, 90], first: [3, 10], when: () => near(E.salt, 36) }, () => pan()));
-  if (E.stall) callers.push(caller(rng, { bout: [1, 2], gap: [0.6, 1.8], rest: [50, 0.5, 20, 110], first: [6, 14], when: () => near(E.stall, 32) }, () => setDown(E.stall)));
-  if (E.well) callers.push(caller(rng, { bout: [1, 1], gap: [1, 1], rest: [45, 0.4, 25, 90], first: [8, 20], when: () => near(E.well, 36) }, () => sweep()));
+  if (E.salt) callers.push(caller(rng, { bout: [1, 2], gap: [0.8, 2], rest: [40, 0.5, 18, 90], first: [3, 10], when: () => near(E.salt, 36) && hands() }, () => pan()));
+  if (E.stall) callers.push(caller(rng, { bout: [1, 2], gap: [0.6, 1.8], rest: [50, 0.5, 20, 110], first: [6, 14], when: () => near(E.stall, 32) && hands() }, () => setDown(E.stall)));
+  if (E.well) callers.push(caller(rng, { bout: [1, 1], gap: [1, 1], rest: [45, 0.4, 25, 90], first: [8, 20], when: () => near(E.well, 36) && hands() }, () => sweep()));
 
   // ---- the beds: started when the walker comes within reach of the village, let go when they leave
   const B = { on: false, parts: null, quiet: -1 };
