@@ -13,7 +13,7 @@ The ground of the valley has been reshaped so that it looks made by water and we
 ### New
 
 - **The valley floor has a shape**: It stands higher in the north and east and falls to the west and south, where the water lies, with swells and hollows between. Three small pools sit in hollows on the moor.
-- **Lees Tarn and the fen have shores**: Lees Tarn, the lake below the village, was a circle. It now has bays, points and a shallows. The fen, the reed marsh under the great bridge, has an edge that wanders, with fingers of water running into the reeds.
+- **The lake and the fen have shores**: Circumbambulate Pool, the lake below the village, was a circle. It now has bays, points and a shallows. Corpse-Candle Fen, the reed marsh under the great bridge, has an edge that wanders, with fingers of water running into the reeds.
 - **The sun fails, and everything notices**: You are let alone for a minute or so after setting out, then the sun gutters. The village's lamps and windows hold while the hill goes dark, the villagers stop mid-stroke and look up, the stars come out over the water, rooks go up calling, and far underground the gold floor of the Laid Sun brightens. The wind hushes just before and gusts as the light catches again.
 - **Take his letter**: In the Lappet, the village on the hill, the clerk at the wall of unclaimed letters will hand you one if you stand by him.
 - **The village's main stair has a proper top**: Where it met the crown there was a blank wall. It now arrives between two lit lamps.
@@ -34,9 +34,9 @@ The ground of the valley has been reshaped so that it looks made by water and we
 - The tarn, the fen and the regions share one way of drawing an edge, which the ice and the rivers can use later.
 - New checks: no dry ground below a pool's surface beside wet ground, no map stand facing a wall, nothing in the way of the Hypogeum's door.
 
-Known issues: the tilt of the valley is gentle, and from the heights it is easier to see in the shores and pools than in the slope itself. The letter the clerk gives you cannot yet be carried anywhere. Place names rise at the bottom of the view too often when walking round the tarn. From the deck of the Span, the great bridge, the parapet still hides the valley.
+Known issues: the tilt of the valley is gentle, and from the heights it is easier to see in the shores and pools than in the slope itself. The letter the clerk gives you cannot yet be carried anywhere. Place names rise at the bottom of the view too often when walking round the lake. From the deck of the Span, the great bridge, the parapet still hides the valley.
 
-<p><img src="shots/99-tarn-above-after.webp" width="24%" alt="Lees Tarn from above, with bays and points where there was a circle"> <img src="shots/99-gutter-moor-dark.webp" width="24%" alt="The moor while the sun gutters: a dark red disc, a pale shore"> <img src="shots/99-stair-head-after.webp" width="24%" alt="The head of the village's main stair between two lamps"> <img src="shots/99-act-letter-sheet.webp" width="24%" alt="The clerk handing over a letter, frame by frame"></p>
+<p><img src="shots/99-tarn-above-after.webp" width="24%" alt="Circumbambulate Pool from above, with bays and points where there was a circle"> <img src="shots/99-gutter-moor-dark.webp" width="24%" alt="The moor while the sun gutters: a dark red disc, a pale shore"> <img src="shots/99-stair-head-after.webp" width="24%" alt="The head of the village's main stair between two lamps"> <img src="shots/99-act-letter-sheet.webp" width="24%" alt="The clerk handing over a letter, frame by frame"></p>
 
 ### Stats
 
