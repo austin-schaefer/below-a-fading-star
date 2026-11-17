@@ -90,6 +90,7 @@ export function buildParts(ctx, L) {
     }
   };
   capAt(S1, -1);
+  capAt(Math.min(L.LEN, S1 + 0.015), 1); // its face to the Garth: the stone that seals the door round the glass (seen from the hall)
 
   // ---- the saddles: dressed blocks the tube was laid in, every 5.5 m; and the collars where its lengths join
   const tubeR = A.outer;
@@ -341,6 +342,7 @@ export function buildParts(ctx, L) {
   bg.boundingSphere = conduitSphere();
   bubbles.name = 'swallow-bubbles'; bubbles.renderOrder = 1;
 
+  { const e = L.at(L.LEN); SW.uSwEnd.value.set(e.x, e.z, e.tx, e.tz); } // the water stops at the Garth's door
   // ---- the lights: the nearest three of these are live (lights.js); the lenses' noon, the door's
   const lights = [];
   const addLight = (p, hex, i, d) => { const Lt = new THREE.PointLight(new THREE.Color(hex), i, d, 2); Lt.position.set(p.x, p.y, p.z); Lt.name = 'swallow-light'; lights.push({ L: Lt, i, ph: p.x * 0.37 }); };

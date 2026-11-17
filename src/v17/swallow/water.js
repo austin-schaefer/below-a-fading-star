@@ -25,13 +25,16 @@ export const SW = {
   uSwLampC: { value: Array.from({ length: MAX_LAMPS }, () => new THREE.Vector3(0, 0, 0)) },        // colour times strength
   uSwDeep: { value: new THREE.Color(0.002, 0.009, 0.007) }, // the water's own colour where no light reaches
   uSwBox: { value: new THREE.Vector4(-102, -28, 310.5, 326) }, // the water's extent (x0, x1, z0, z1): nothing outside is in it
+  uSwEnd: { value: new THREE.Vector4(1e5, 0, 1, 0) },     // the Garth's door: a plane (x, z, its normal into the hall); past it is the hall's air
 };
 
 export const SW_GLSL = /* glsl */`
   uniform float uSwT, uSwPool, uSwR;
   uniform vec4 uSwAx; uniform vec3 uSwAd; uniform vec2 uSwFlow;
   uniform vec4 uSwLampP[${MAX_LAMPS}]; uniform vec3 uSwLampC[${MAX_LAMPS}];
-  uniform vec3 uSwDeep; uniform vec4 uSwBox;
+  uniform vec3 uSwDeep; uniform vec4 uSwBox, uSwEnd;
+  // is P in the water's reach at all (the box, short of the Garth's door)
+  float swIn(vec3 P) { return (P.x < uSwBox.x || P.x > uSwBox.y || P.z < uSwBox.z || P.z > uSwBox.w || dot(P.xz - uSwEnd.xy, uSwEnd.zw) > -0.03) ? 0.0 : 1.0; }
   // how far along the ray from the eye (unit v, length len) it stays in the tube's bore
   float swAir(vec3 E, vec3 v, float len) {
     if (uSwAx.w < 0.5) return 0.0;
@@ -47,7 +50,7 @@ export const SW_GLSL = /* glsl */`
   float swPath(vec3 P, out vec3 mid) {
     vec3 E = cameraPosition, D = P - E; float len = length(D); vec3 v = D / max(len, 1e-4);
     mid = P;
-    if (P.x < uSwBox.x || P.x > uSwBox.y || P.z < uSwBox.z || P.z > uSwBox.w) return 0.0;
+    if (swIn(P) < 0.5) return 0.0;
     float t0 = swAir(E, v, len);
     vec3 S = E + v * t0; float l = len - t0;
     float W = uSwPool, ys = S.y, yp = P.y;
@@ -104,7 +107,7 @@ export function swPatch(mat, key, o = {}) {
         float swD = uSwPool - vUnderW.y;
         // under: the surface's light comes down in a net, strongest near the surface; over: thrown up onto the vault
         float swK = swD > 0.0 ? exp(-swD * 0.12) : exp(swD * 0.5) * 0.6;
-        vec3 swL = swLight(vUnderW);
+        vec3 swL = swLight(vUnderW) * swIn(vUnderW);
         ${o.mortar ? `// the Heliarchs' courses: 0.6 m high, blocks 1.2 m long, broken joint; the joints dark with silt
         { float swC = floor(vUnderW.y / 0.6); vec2 swJ = vec2(fract(vUnderW.y / 0.6), fract((vUnderW.x + vUnderW.z * 0.15 + swC * 0.6) / 1.2));
           float swM = (1.0 - smoothstep(0.0, 0.025, min(swJ.x, 1.0 - swJ.x)) ) + (1.0 - smoothstep(0.0, 0.0125, min(swJ.y, 1.0 - swJ.y)));
