@@ -19,6 +19,8 @@ The repository is a static Three.js r170 site with no build step and no package.
 - **Controls:** WASD walk, mouse look, Shift hurry, Space hop; on touch, the stick bottom right, the hop ring left of it, drag to look; holding the speaker 1.2 s opens the debug panel. Where an act is offered (v10), `E`, a click with the mouse captured, or a tap on the offer does it. The gear opens the settings panel, whose map teleports to every named place.
 - **URL params:** `?pos=x,z&yaw=&pitch=` to stand somewhere, `?q=low|medium|high`, `?debug=1`, `?perf=1`, and every module's switch: `world-code/runtime.md`.
 
+- **Waiting on a run:** never `until ! pgrep -f "tools/suite.sh"` (or any `pgrep -f` loop): the waiting shell's own command line holds the pattern, two such waiters match each other and neither ever ends. Fifty of them were found polling on the owner's machine on 2026-11-16, hours after their runs had finished. Wait on the process id (`while kill -0 $PID 2>/dev/null; do sleep 20; done`) or on a line in the log (`until grep -q '^=== [0-9]' "$LOG"; do sleep 20; done`).
+
 ## Renders
 
 - One view: `node tools/shot.mjs "$B/?q=low&pos=-60,20&yaw=1.9" shots/wip/<name>.png 1280 720` (headless software WebGL, slow but faithful; `SHOT_DPR=2` renders at a retina pixel ratio).
