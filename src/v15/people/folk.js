@@ -53,6 +53,14 @@ function jug(P, x, y, z, s, full, low) {
   if (full) { tone(P, NOON, 1, 0, 0.3); glow(P, 1.6); P.blob(x, y + 0.305 * s, z, 0.058 * s, 0.012 * s, 0.058 * s, low ? 6 : 8, 2); }
 }
 
+// (v16-V1, the critic: "from 20 m most folk are lost in walls") a lantern: an iron cap and ring, its horn glowing
+// ember; painted like the noon (emit), no light of its own. What carries at dusk from 20 m where a figure does not
+function lantern(P, x, y, z, low) {
+  tone(P, IRON, 1, 0.6, 0.6); P.box(x, y + 0.16, z, 0.17, 0.025, 0.17); P.loft([[x, y + 0.17, z], [x, y + 0.27, z]], [0.009, 0.009], 3, 0, true);
+  P.box(x, y - 0.14, z, 0.15, 0.025, 0.15);
+  tone(P, rgb('#ffa448'), 1, 0, 0.4); glow(P, 3.2); P.blob(x, y, z, 0.075, 0.135, 0.075, low ? 6 : 8, 4);
+}
+
 export const FOLK = [
   // ---------------------------------------------------------------- the burner
   {
@@ -98,7 +106,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the copyist
   {
-    id: 'copyist', name: 'the copyist', story: 'the-copyist.md',
+    id: 'copyist', name: 'the copyist', story: 'the-copyist.md', tell: [0.58, 0.81, 0.74], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       if (!Q.quarrels?.places) return null;
       const p = plan.plot('new-house'), [fx, fz] = p.face, rx = -fz, rz = fx;
@@ -126,6 +134,7 @@ export const FOLK = [
         P.box(cx, 0.31, 0.93, 0.62, 0.025, 0.02);                    // a bead under
       };
       mould(0.36, true, 0); mould(-0.38, false, 1);
+      lantern(P, 0.58, 0.81, 0.74, low); // (v16-V1) his lantern on the old moulding's fillet, to see the egg and the tongue by
       // the two that went wrong before, on the ground at his left, one on its side
       for (const [x, z, a, s] of [[0.95, 0.15, 0.5, 2], [1.05, -0.45, 1.3, 3]]) {
         tone(P, STONE_NEW, 0.9, 0, 0.9); P.box(x, 0.17, z, 0.55, 0.34, 0.36, a);
@@ -158,7 +167,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the noon-drawer
   {
-    id: 'noon-drawer', name: 'the noon-drawer', story: 'noon-by-the-jug.md',
+    id: 'noon-drawer', name: 'the noon-drawer', story: 'noon-by-the-jug.md', tell: [0, 0.95, 0.3], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       const L = Q.lees; if (!L?.fountain) return null;
       const k = L.places.find((p) => /fountain's kerb/.test(p.what)); if (!k) return null;
@@ -231,7 +240,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the dead-letter clerk
   {
-    id: 'clerk', name: 'the dead-letter clerk', story: 'the-dead-letters.md',
+    id: 'clerk', name: 'the dead-letter clerk', story: 'the-dead-letters.md', tell: [0, 1.36, 0.45], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       const h = Q.lees?.places?.find((p) => p.shop === 'lees-shop-4'), p = plan.plot('lees-shop-4'); if (!h || !p) return null;
       const x = h.x - p.face[0] * 0.38, z = h.z - p.face[1] * 0.38; // (in the vault behind the pigeonholes: seen through them, and through the hatch among them)
@@ -272,7 +281,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the dyer
   {
-    id: 'dyer', name: 'the dyer', story: 'the-wait-on-the-span.md',
+    id: 'dyer', name: 'the dyer', story: 'the-wait-on-the-span.md', tell: [-0.05, 2.6, -0.1], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       if (!Q.rungs?.records) return null;
       const y = plan.plot('rungs-dyers'), run = 2, R = plan.RUN[run], [vx, vz] = plan.at(run, y.s - 1.25, plan.RISERS[2].D + 2.3);
@@ -284,6 +293,11 @@ export const FOLK = [
       P.bone(base + BONE.prop);
       tone(P, C.woodP, 0.75, 0, 0.85); P.loft([[0, 0, 0.1], [0, 0, 1.95]], [0.024, 0.022], 5, 0, true);
       tone(P, rgb('#b07a18'), 1, 0, 0.6); P.box(0, 0, 0.12, 0.13, 0.02, 0.26);       // its paddle, the dye on it
+      // (v16-V1) over her, the drying pole: three hanks of saffron wool, wet, hung high where they carry over the walls
+      P.bone(base + BONE.place);
+      tone(P, C.woodP, 0.7, 0, 0.9); P.loft([[-0.55, 0, -0.45], [-0.55, 3.15, -0.45]], [0.035, 0.03], 5, 0, true); P.loft([[-0.55, 3.0, -0.45], [0.45, 3.02, 0.25]], [0.025, 0.022], 5, 0, true);
+      tone(P, C.saffron, 1, 0, 0.75); glow(P, 0.12);
+      for (const [k, l] of [[0.22, 0.8], [0.5, 0.95], [0.78, 0.72]]) { const x = -0.55 + k, z = -0.45 + k * 0.7; P.box(x, 2.97 - l / 2, z, 0.13, l, 0.06); }
     },
     init: () => ({ t: 0, stir: 1 }),
     update(f, dt, t, cam, S) {
@@ -302,7 +316,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the sounder of the wreck
   {
-    id: 'sounder', name: 'the sounder of the wreck', story: 'the-spilt-measure.md',
+    id: 'sounder', name: 'the sounder of the wreck', story: 'the-spilt-measure.md', tell: [0.45, 1.78, 0.36], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       const dpl = Q.pennyworth?.places?.find((p) => /Spilt Measure/.test(p.name)), p = plan.plot('carrier-house'); if (!dpl || !p) return null;
       const [fx, fz] = p.face, tx = -fz, tz = fx, x = dpl.x - fx * 0.62 - tx * 1.5, z = dpl.z - fz * 0.62 - tz * 1.5; // (the door's record stands a metre out from the hull: he stands at the hull, beside it)
@@ -313,6 +327,8 @@ export const FOLK = [
       P.bone(base + BONE.rF); // a tapping hammer, small, its head brass
       tone(P, C.wood, 1, 0, 0.8); P.loft([[0, -ARM.fore + 0.03, 0.01], [0, -ARM.fore - 0.02, 0.15]], [0.011, 0.011], 4, 0, true);
       tone(P, rgb('#b08a3e'), 1, 0.7, 0.4); P.loft([[-0.04, -ARM.fore - 0.02, 0.16], [0.04, -ARM.fore - 0.02, 0.16]], [0.022, 0.022], 6, 0, true);
+      // (v16-V1, the critic: "light at the wreck's door would have made me look") his lantern, on a nail in the hull by his ear
+      P.bone(base + BONE.place); lantern(P, 0.45, 1.78, 0.36, false);
     },
     init: () => ({ t: 0, phase: 'listen', pt: 0, armed: true, hush: 0, tap: 0, hushes: 0 }),
     update(f, dt, t, cam, S) {
@@ -334,7 +350,7 @@ export const FOLK = [
 
   // ---------------------------------------------------------------- the one who is leaving
   {
-    id: 'leaver', name: 'the one who is leaving', story: 'the-door-on-her-back.md',
+    id: 'leaver', name: 'the one who is leaving', story: 'the-door-on-her-back.md', tell: [0.66, 2.4, -0.3], // (v16-V1) what of them carries from 20 m, in their own frame (tools/folk-frames.mjs)
     place(ctx, plan, Q) {
       const L = Q.pennyworth?.places?.find((p) => p.name === 'the Leave'), fx0 = plan.fixture('leave-east'); if (!L || !fx0) return null;
       const [fx, fz] = fx0.face, sx = fz, sz = -fx, x = L.x + fx * 3.6 - sx * 1.1, z = L.z + fz * 3.6 - sz * 1.1; // (past the posts, at the kerb's west edge: off the track's middle, which roads-test keeps clear)
@@ -358,6 +374,9 @@ export const FOLK = [
       // the cords over her shoulders and round her
       tone(P, C.rope, 1, 0, 0.9);
       for (const s of [-1, 1]) P.loft([[s * 0.13, 1.42, -0.27], [s * 0.15, 1.45, 0.02], [s * 0.12, 1.3, 0.17], [s * 0.1, 1.04, 0.2], [s * 0.18, 1.0, -0.25]], [0.013, 0.013, 0.013, 0.013, 0.013], 3, 0, false);
+      // (v16-V1) a lantern on a stick off the door's top corner, out over her shoulder: she goes at dusk, and it shows the door
+      tone(P, C.wood, 1, 0, 0.85); P.loft([[0.3, 2.18, -0.36], [0.66, 2.62, -0.3]], [0.014, 0.012], 4, 0, true);
+      lantern(P, 0.66, 2.4, -0.3, low);
       // a bundle tied to the door's top
       tone(P, C.undyed, 0.8, 0, 0.9); P.blob(0.05, 2.42, -0.42, 0.2, 0.14, 0.13, low ? 6 : 8, 4);
     },

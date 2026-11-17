@@ -29,3 +29,37 @@ The critic's "blank white panels" are not cloths. They are plain limewashed end 
 - the plaster house in `rungs-cantle`'s lap at (87.2, -7.2).
 
 Frames: `v16-V1-before-mid52-back-b.png` and `v16-V1-before-lees72-ahead-b.png`. Weathering the sides of `room()` (`late.js`) by vertex colour was tried. It was too faint to see, and it is reverted.
+
+## Parts 2 and 3 (second agent, 2026-11-17)
+
+Scope from the orchestrator: part 3, then from part 2 only the folk from 20 m and the leaver's door. The white panels and the sounder at the wreck as a separate item were not done.
+
+### Part 3, the act: "Take his letter" (`lagan-letter`, `src/v15/people/letter.js`)
+- **Choice:** the critic's suggestion, taken as the clerk's own open thread in `stories/the-dead-letters.md` ("an act: take his letter").
+- **What happens:** E, a captured click or a tap at the Lagan's counter, in front of the hatch. His arm goes out. The letter leaves his hand and comes up into the view, cream with a red seal. It is put away below the view by 2.1 s. He bends to the ledger lying open in the hatch, strikes one entry through in red and adds a tick (1.6 to 3.6 s). He looks up and nods, then reaches into the pigeonholes and has a letter again (5.5 s).
+- **The mark that stays:** the red strokes in the ledger, one per letter taken. They are drawn from the count at every load and cleared by "Forget my marks".
+- **Defaults taken:**
+  - `every: 'visit'`.
+  - Once you have taken his letter, he holds no more out for the rest of the visit.
+  - No sound of its own, because the audio graph is shared. The `act-offer` cue still plays.
+- **Code:**
+  - The act is registered from the clerk's `init`, so `index.js` is untouched.
+  - His letter moves to the prop bone, which follows his forearm; when he gives it, the bone is scaled to nothing.
+  - `shops.js` hands over the hatch and ledger spots. The two hatch holes on the counter are kept clear of loose letters, which reshuffles the Lagan's random letters.
+- **Tests:** `ONLY=touch,acts tools/suite.sh 8167` gave touch 45/45 and acts 173/0. That includes 10 new `lagan:` rows and a touch row for the offer and the tap.
+- **Frames:** taken in a real browser with the pointer captured (`tools/act-walk.mjs ... lagan-letter v16-V1-act-e 88.7,-25.0`), at the offer and 0.3, 1, 2 and 5 s after: `shots/wip/v16-V1-act-e-01..05`, sheet `v16-V1-act-e-sheet.png`; close-up `v16-V1-act-d-*`.
+- **Weak:**
+  - The 0.3 s frame still shows the letter in his raised hand. It leaves at 0.1 s by the act's clock, so the frame lags.
+  - From 3.5 m the red strike is small.
+
+### Part 2
+- **The leaver's door** is now a whole door, 0.84 by 2.02 m, standing half a metre over her hat. It has strap hinges and a top rail on the side toward her, and a lantern on a stick off its top corner. From the front it reads as a door in silhouette.
+- **Folk from 20 m:** `tools/folk-frames.mjs` (new) raycasts from every 20 m standpoint on every floor and frames the best one. With an honest occluder list, 7 of 8 have a clear line from some standpoint both before and after; the clerk has none, being behind the rack. Nobody was moved.
+  - The trouble is size at dusk, not walls, so added "tells": an ember lantern (emissive, no light) for the copyist, the sounder and the leaver, and three saffron hanks on a drying pole over the dyer.
+  - Tell seen from: copyist 8, sounder 0 at the chosen standpoint, leaver 31.
+  - Before and after, centre crops: `shots/wip/v16-V1-folk-zoom2-before-after.png` (full frames `v16-V1-folk-before2-*`, `-after2-*`). The sounder and the leaver carry now.
+- **Weak:** the dyer, the child and the copyist are still hard to make out at 20 m, and the dyer's hanks were not confirmed in a frame. The burner, the noon-drawer and the clerk rely on what already glows: the kiln, the jug and the lit vault.
+- **Test:** village 687/0.
+
+### Leftovers from the part 1 review
+`tools/village-walk.mjs` walks the head flight on the axis, and `plan.js` exports `HEAD_POST`, used by both the posts and the kerb (commit 3fa1625). The walk itself was not rerun.
