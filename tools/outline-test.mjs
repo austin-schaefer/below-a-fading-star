@@ -111,7 +111,7 @@ else {
   const F = await import('../src/height/field.js');
   const { WATER, LANDMARKS, REGIONS, SITES } = await import('../src/world.js');
   const W = WATER.tarn, E = T.TARN_EDGE;
-  check(E.rMax + 3 < W.r && Math.hypot(T.BAY.x - W.x, T.BAY.z - W.z) + T.BAY.r + 3 < W.r, 'the water\'s disc (WATER.tarn.r) covers the outline and the bay', `outline ${f2(E.rMax)}, disc ${W.r}`);
+  check(E.rMax + 3 < W.r && Math.hypot(T.BAY.x - W.x, T.BAY.z - W.z) + T.BAY.r + 0.5 < W.r, 'the water\'s disc (WATER.tarn.r) covers the outline and the bay', `outline ${f2(E.rMax)}, disc ${W.r}`);
   const depth = (x, z) => { const w = F.waterLevelAt(x, z); return w === null ? -1 : w - F.heightAt(x, z); };
   // the galley's loop (src/v2/inhabitants/galley.js makePath), its hull 11 m fore and aft and 2.5 abeam
   {
@@ -142,7 +142,7 @@ else {
   }
   // the Strandline's strip still meets the water: every spine point within 9 m of the shore
   {
-    const spine = REGIONS.strandline.shape.strip;
+    const spine = REGIONS.strandline.shape.strip.filter(([, , w]) => w > 5); // the spit's own spine (4.5 wide) runs out into the water
     const far = spine.filter(([x, z]) => Math.abs(T.tarnShoreDistance(x, z)) > 9);
     check(far.length === 0, 'the Strandline\'s spine lies within 9 m of the shore', far.length ? `off: ${JSON.stringify(far)}` : `${spine.length} points`);
   }

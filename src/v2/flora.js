@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { clamp, smoothstep, GLSL_WIND, unflipNormals } from '../vegetation/util.js';
 import { hyp } from '../noise.js';
+import { tarnShoreDistance } from '../v4/tarn.js'; // v16 L2: the tarn's shore
 
 const CLOSE_D = 0.6;   // seconds for one flower to shut
 const WAVE = 0.9;      // seconds for the closing wave to cross the sward
@@ -202,7 +203,7 @@ export async function build(ctx) {
     terrain.normalAt(x, z, nrm);
     if (nrm.x * sunH.x + nrm.z * sunH.y < 0.02) continue; // must face the sun
     if (drifts.some((d) => Math.hypot(d.x - x, d.z - z) < d.a + 5)) continue;
-    if (L.tarn && Math.hypot(x - L.tarn.x, z - L.tarn.z) < L.tarn.r + 10) continue; // up the slope, not in the shore reeds
+    if (L.tarn && tarnShoreDistance(x, z) < 10) continue; // up the slope, not in the shore reeds (v16 L2: the tarn's edge)
     const ar = 2.2 + rng() * 3.0;
     drifts.push({ x, z, a: ar, b: ar * (0.5 + rng() * 0.4), th: rng() * Math.PI, w: ar * ar });
   }

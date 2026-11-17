@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { fogPars, fogAtten, softDot } from './particles/shaderParts.js';
 import { makeMistTexture } from './particles/mistTexture.js';
 import { hyp } from './noise.js';
+import { tarnShoreDistance } from './v4/tarn.js'; // v16 L2: the tarn's shore is its edge, not a circle
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
@@ -337,8 +338,14 @@ export async function build(ctx) {
       add(x, Math.max(terrain.heightAt(x, z), fen.y) + 0.2, z, 24 + rng() * 22, 3 + rng() * 2.5);
     }
     for (let i = 0; i < nTarn; i++) {
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * ((tarn.shore ?? tarn.r) - 8); // v4: inside the old round shore, not over the bay's dry hollows
-      add(tarn.x + Math.cos(a) * r, tarn.y + 0.3, tarn.z + Math.sin(a) * r, 26 + rng() * 22, 3 + rng() * 2);
+      // over the water, 8 m or more in from its shore (v16 L2: the edge; the bay's dry hollows are outside it)
+      let x = tarn.x, z = tarn.z;
+      for (let k = 0; k < 24; k++) {
+        const a = rng() * 6.283, r = Math.sqrt(rng()) * (tarn.r - 8);
+        x = tarn.x + Math.cos(a) * r; z = tarn.z + Math.sin(a) * r;
+        if (tarnShoreDistance(x, z) < -8) break;
+      }
+      add(x, tarn.y + 0.3, z, 26 + rng() * 22, 3 + rng() * 2);
     }
     for (let tries = 0, got = 0; tries < 8000 && got < nHollow; tries++) {
       const a = rng() * 6.283, r = Math.sqrt(rng()) * 270;
@@ -346,7 +353,7 @@ export async function build(ctx) {
       if (h < -9) continue;
       const nb = (terrain.heightAt(x + 14, z) + terrain.heightAt(x - 14, z) + terrain.heightAt(x, z + 14) + terrain.heightAt(x, z - 14)) * 0.25;
       if (h >= -1 && h > nb - 0.7) continue;     // a hollow: low, or lower than its surroundings
-      if (Math.hypot(x - fen.x, z - fen.z) < fen.r + 10 || Math.hypot(x - tarn.x, z - tarn.z) < (tarn.shore ?? tarn.r) + 10) continue;
+      if (Math.hypot(x - fen.x, z - fen.z) < fen.r + 10 || tarnShoreDistance(x, z) < 10) continue;
       add(x, h + 0.2, z, 18 + rng() * 16, 2.5 + rng() * 2); got++;
     }
     const n = homes.length / 4;
@@ -507,7 +514,7 @@ export async function build(ctx) {
       const open = 1 - Math.max(
         1 - smooth(wood.r - 30, wood.r + 10, hyp(px - wood.x, pz - wood.z)),
         1 - smooth(fen.r - 20, fen.r + 20, hyp(px - fen.x, pz - fen.z)),
-        1 - smooth(tarn.r - 20, tarn.r + 20, hyp(px - tarn.x, pz - tarn.z)));
+        1 - smooth(-20, 20, tarnShoreDistance(px, pz)));
       mat.uniforms.uWindD.value = windD;
       mat.uniforms.uGust.value = gust * open;
     });
@@ -521,8 +528,12 @@ export async function build(ctx) {
     const fen = ctx.water.fen, tarn = ctx.water.tarn;
     for (let i = 0; i < n; i++) {
       const onFen = rng() < 0.7, b = onFen ? fen : tarn;
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * (onFen ? 84 : (tarn.shore ?? tarn.r) + 10); // v4: the tarn's old round shore
-      const x = b.x + Math.cos(a) * r, z = b.z + Math.sin(a) * r;
+      let x = b.x, z = b.z;
+      for (let k = 0; k < 24; k++) { // the tarn's: within 10 m of its shore, either side (v16 L2: the edge)
+        const a = rng() * 6.283, r = Math.sqrt(rng()) * (onFen ? 84 : tarn.r);
+        x = b.x + Math.cos(a) * r; z = b.z + Math.sin(a) * r;
+        if (onFen || tarnShoreDistance(x, z) < 10) break;
+      }
       pos.push(x, Math.max(terrain.heightAt(x, z), b.y) + 0.4 + rng() * 2.4, z);
       seed.push(rng(), rng(), rng(), rng());
     }
@@ -657,8 +668,13 @@ export async function build(ctx) {
     const tarn = ctx.water.tarn, rng = ctx.makeRng(9101), n = Math.round(120 * q);
     const pos = [], seed = [];
     for (let i = 0; i < n; i++) {
-      const a = rng() * 6.283, r = Math.sqrt(rng()) * ((tarn.shore ?? tarn.r) - 12); // v4: on the old round water
-      pos.push(tarn.x + Math.cos(a) * r, tarn.y + 0.02, tarn.z + Math.sin(a) * r);
+      let x = tarn.x, z = tarn.z;
+      for (let k = 0; k < 24; k++) { // on the water, 12 m or more in from the shore (v16 L2: the edge)
+        const a = rng() * 6.283, r = Math.sqrt(rng()) * (tarn.r - 12);
+        x = tarn.x + Math.cos(a) * r; z = tarn.z + Math.sin(a) * r;
+        if (tarnShoreDistance(x, z) < -12) break;
+      }
+      pos.push(x, tarn.y + 0.02, z);
       seed.push(rng(), rng(), rng(), rng());
     }
     const geo = new THREE.BufferGeometry();

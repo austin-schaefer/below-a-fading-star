@@ -33,6 +33,18 @@ export function smin(a, b, k) {
   return b + (a - b) * h - k * h * (1 - h);
 }
 
+// A sector's weight at (x, z) seen from (cx, cz): 1 within half degrees of the bearing, easing to 0 over ramp more.
+// For what a shore does on one side only (a steep bank, a shallows); the windows above are the same curve.
+export function sectorWeight(cx, cz, { bearing, half, ramp = 20 }) {
+  const [sx, sz] = bearingDir(bearing), c0 = Math.cos(Math.min(180, half + ramp) * DEG), c1 = Math.cos(half * DEG), iw = 1 / (c1 - c0);
+  return (x, z) => {
+    const dx = x - cx, dz = z - cz, rho = Math.sqrt(dx * dx + dz * dz);
+    if (rho < 1e-6) return 0;
+    const t = clamp(((dx * sx + dz * sz) / rho - c0) * iw, 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+}
+
 function place(o, cx, cz) {
   if (o.bearing === undefined) return [o.x, o.z];
   const [ux, uz] = bearingDir(o.bearing);
