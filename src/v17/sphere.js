@@ -133,7 +133,14 @@ export async function build(ctx) {
     for (let t = 0; t < idx.length; t += 3) {
       const a = idx[t], b = idx[t + 1], c = idx[t + 2], xa = P[a * 3], za = P[a * 3 + 2];
       if (Math.abs(xa - CX) > R + 5 || Math.abs(za - CZ) > R + 5) continue;
-      if (inside(P[a * 3], P[a * 3 + 1], P[a * 3 + 2]) || inside(P[b * 3], P[b * 3 + 1], P[b * 3 + 2]) || inside(P[c * 3], P[c * 3 + 1], P[c * 3 + 2])) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
+      // a vertex inside, or the face itself dipping in (on the hill behind, a face whose corners all lie over the
+      // dome or past its rim can still cross into the glass: seen through it as pale teeth along the far join)
+      let hit = inside(P[a * 3], P[a * 3 + 1], P[a * 3 + 2]) || inside(P[b * 3], P[b * 3 + 1], P[b * 3 + 2]) || inside(P[c * 3], P[c * 3 + 1], P[c * 3 + 2]);
+      for (let k = 0; !hit && k < 7; k++) {
+        const [wa, wb] = [[1 / 3, 1 / 3], [0.5, 0.5], [0, 0.5], [0.5, 0], [0.7, 0.15], [0.15, 0.7], [0.15, 0.15]][k], wc = 1 - wa - wb;
+        hit = inside(P[a * 3] * wa + P[b * 3] * wb + P[c * 3] * wc, P[a * 3 + 1] * wa + P[b * 3 + 1] * wb + P[c * 3 + 1] * wc, P[a * 3 + 2] * wa + P[b * 3 + 2] * wb + P[c * 3 + 2] * wc);
+      }
+      if (hit) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
     }
     g.index.needsUpdate = true;
   }
