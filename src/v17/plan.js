@@ -36,6 +36,9 @@ export const MERE = {
     ],
   },
   end: { z: 311.5 },  // its bank's reach stops at the Swallow's face too (U1: the face stands in the hillside)
+  // the pegs' line (src/v4/dressing/pegs.js, x -80 from wall to wall) crosses the mere's east lobe: a bar under it, the
+  // water half a metre deep over it, so the pegs wade across as they do in the tarn's shallows and the line ends at z 285
+  shoals: [{ x: -80, half: 1.5, depth: 0.5 }],
   bankSouth: { z0: 292, z1: 304, k: 2.2 }, // its bank steepens toward the apron, so it leaves the hillside round the face whole
   bank: 0.8,          // its bank cut down to the level: steeper than the floor's pools' (the apron rises 1 in 1.4 south of it)
   D: 1.6,             // the bowl's depth under the shelf (the hollow's own floor is -10)

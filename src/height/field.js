@@ -624,6 +624,20 @@ export function waterLevelAt(x, z) {
   if (inV17Box(x, z)) { const y = v17Level(x, z); if (y !== null) return y; } // v17 W1
   return riverLevelAt(x, z);
 }
+// v17 W1: the water as it was before v17's (the tarn, the fen, the Speculum, the floor's pools, the river): what a
+// scatter that rejects water before its random draws asks, so v17's water moves no draw (src/rocks.js), then drops what
+// lands in v17's water after them
+export function waterLevelBeforeV17(x, z) {
+  for (let i = 0; i < N_BIG; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  if (x > SMALL_BOX[0] && x < SMALL_BOX[1] && z > SMALL_BOX[2] && z < SMALL_BOX[3]) for (let i = N_BIG; i < N_POOLS; i++) if (WATER_BODIES[i].wet(x, z)) return WATER_BODIES[i].w.y;
+  return riverLevelAt(x, z);
+}
+export function isUnderwaterBeforeV17(x, z) {
+  const w = waterLevelBeforeV17(x, z);
+  return w !== null && heightAt(x, z) < w;
+}
+// in v17's water and in no water before it (a scatter hides what its draws put there)
+export function inV17Water(x, z) { return inV17Box(x, z) && isUnderwater(x, z) && !isUnderwaterBeforeV17(x, z); }
 // The first still water whose shore lies within `extra` metres: { name, y, sd } (sd < 0 inside), or null.
 const _ws = { name: '', y: 0, sd: 0 };
 export function waterShore(x, z, extra = 0, out = _ws) {

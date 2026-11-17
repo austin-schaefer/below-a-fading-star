@@ -183,6 +183,7 @@ export function makeStream(def) {
 export function makeStill(def) {
   const { name, y, D = 1.6, bank = 0.45, reach = 20 } = def;
   const END = def.end ? { z: def.end.z, dir: def.end.dir ?? 1 } : null; // as a stream's: nothing past the plane
+  const SHOALS = def.shoals ?? []; // [{ x, half, depth }]: a bar along x = const, the water held at most `depth` deep over it
   const SB = def.bankSouth ?? null; // { z0, z1, k }: the bank steepens to k between z0 and z1 (a slope rising south of it)
   const o = radialOutline({ far: 40, ...def.outline });
   const R = o.rMax + reach, c = o.centre;
@@ -196,7 +197,12 @@ export function makeStill(def) {
     const k = SB === null ? bank : bank + (SB.k - bank) * smoothstep(SB.z0, SB.z1, z);
     const hi = s < 0 ? y - 0.5 * smoothstep(0, -3, s) - D * smoothstep(-1.5, -10, s) : y + k * s;
     if (h < lo) h = lo;
-    return h > hi ? hi : h;
+    if (h > hi) h = hi;
+    for (let i = 0; i < SHOALS.length; i++) { // (eased over 2 m either side; inside the water only, after the bowl)
+      const b = SHOALS[i], w = s < 0 ? 1 - smoothstep(b.half, b.half + 2, Math.abs(x - b.x)) : 0;
+      if (w > 0) { const bar = y - b.depth; if (h < bar) h += (bar - h) * w; }
+    }
+    return h;
   }
   const wet = (x, z) => x > wbox[0] && x < wbox[1] && z > wbox[2] && z < wbox[3] && o.sd(x, z) < 0;
   const level = (x, z) => (wet(x, z) ? y : null);

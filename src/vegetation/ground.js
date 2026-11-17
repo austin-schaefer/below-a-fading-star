@@ -20,7 +20,8 @@ import { COARSE_BOXES } from '../v4/regions.js'; // v4 regions: where a ground s
 import { PLACES as STANDS } from '../settings.js'; // v16 L5: the settings map's stands, where a visitor is put down
 import { claimedBy } from '../claims.js'; // v15-G1: the claimed ground (the Lappet's, so far: the rest below are still each place's own)
 import { coarseLowering } from '../v4/regions/skin.js';
-import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no tree inside its foot
+import { MOTHER_FOOT } from './mother.js';
+import { waterLevelBeforeV17, inV17Water } from '../height/field.js'; // v17 W1: what is refused before the draws sees the water as it was // the Lattice's mother crystal: no tree inside its foot
 
 // Open ground other modules need: the man in the cloak of eyes (fauna/uncanny/cloak.js, first candidate spot)
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
@@ -104,6 +105,14 @@ export function makeGround(ctx) {
   const waters = Object.values(water);
   // The river and the ravine above the fall are paths with a width, not discs: terrain.waterLevelAt knows them.
   const riverLevel = (x, z) => terrain.waterLevelAt(x, z);
+  // v17 W1: the water as it was before v17's, for the refusals made before a scatter's draws (excluded, below): the trees'
+  // stream of draws is the whole valley's, so a tree refused on the new water would move every tree after it; one that
+  // lands in it is hidden instead (hiddenAt)
+  function waterDepthBefore(x, z, y = heightAt(x, z)) {
+    for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.edge || waterLevelBeforeV17(x, z) !== null)) return w.y - y;
+    const rl = waterLevelBeforeV17(x, z);
+    return rl === null ? -Infinity : rl - y;
+  }
   function waterDepth(x, z, y = heightAt(x, z)) {
     for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.edge || terrain.waterLevelAt(x, z) !== null)) return w.y - y; // v4, v16: a disc on an edge (the tarn, the fen) asks where its water is
     const rl = riverLevel(x, z);
@@ -138,7 +147,7 @@ export function makeGround(ctx) {
     if (spanClear(x, z, margin)) return true; // v4: the Great Span
     if (slopeAt(x, z) > 0.85) return true;
     const y = heightAt(x, z);
-    const depth = waterDepth(x, z, y);
+    const depth = waterDepthBefore(x, z, y);
     if (depth > (opts && opts.wet ? opts.wet : 0)) return true;
     if (terrain.causewayDistance(x, z) < 4 + margin) return true;
     if (margin >= 0 && wornAt(x, z) > 0.05) return true; // v4 map: nothing woody grows on a lead
@@ -164,6 +173,6 @@ export function makeGround(ctx) {
   // would stand in it (L3's reshuffle put two by the Laid Sun and the Collation's gap; tools/rocks-test.mjs)
   const STAND_XZ = STANDS.filter((p) => p.x !== undefined).map((p) => [p.x, p.z]);
   const standNear = (x, z, r) => STAND_XZ.some(([px, pz]) => (x - px) ** 2 + (z - pz) ** 2 < (r + 0.6) ** 2);
-  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || collationTreeClear(x, z) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r); // (v16 L5: r, the collider's footprint)
+  const hiddenAt = (x, z, r = 0) => d2(x, z, L.court) < 39 * 39 || d2(x, z, L.tower) < TOWER_HIDE * TOWER_HIDE || d2(x, z, L.arcature) < L.arcature.r * L.arcature.r || d2(x, z, L.moraine) < MOTHER_FOOT * MOTHER_FOOT || plinthsClear(x, z) || naveClear(x, z) || stairClear(x, z, 1.5) || collationTreeClear(x, z) || !!claimedBy(x, z, r, 'trees') || standNear(x, z, r) || inV17Water(x, z); // (v16 L5: r, the collider's footprint)
   return { heightAt, normalAt, slopeAt, wetAt, biomeAt, waterDepth, waterNear, excluded, hiddenAt, causewayDistance: terrain.causewayDistance, wornAt: (x, z) => Math.max(wornAt(x, z), stillWorn(x, z)), leadNear: (x, z) => leadNear(x, z) || stillNear(x, z) }; // v7: the cover (not the trees: excluded() reads the routes' own) is worn off round the Sleeper
 }

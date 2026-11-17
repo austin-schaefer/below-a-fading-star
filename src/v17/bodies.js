@@ -5,7 +5,7 @@
 import { BOX, MERE, BROOK, SWALLOW_CUT } from './plan.js';
 import { makeStream, makeStill } from './stream.js';
 
-export const MERE_BODY = makeStill({ name: 'mere', y: MERE.level, D: MERE.D, bank: MERE.bank, end: MERE.end, bankSouth: MERE.bankSouth, outline: MERE.outline });
+export const MERE_BODY = makeStill({ name: 'mere', y: MERE.level, D: MERE.D, bank: MERE.bank, end: MERE.end, bankSouth: MERE.bankSouth, shoals: MERE.shoals, outline: MERE.outline });
 export const BROOK_BODY = makeStream({ name: 'brook', ...BROOK });
 export const CUT_BODY = makeStream({ name: 'swallow-cut', ...SWALLOW_CUT });
 export const STILLS = [MERE_BODY];

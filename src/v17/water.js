@@ -103,7 +103,9 @@ const FRAG = /* glsl */`
     vec3 body = uWater * (0.7 + 0.3 * NV) + vec3(0.006, 0.004, 0.002);
     // from above (the Span's deck, 60 m up) the sky's own colour off the moving surface, so it reads as water at all
     float fpUp = smoothstep(12.0, 50.0, cameraPosition.y - P.y);
-    vec3 col = mix(body, refl, clamp(fres + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
+    // (a floor under the reflection: in the south trough's shade the ground and a near-black body are one dark, and moving
+    // water there is seen by the sky it carries, lighter than the bank)
+    vec3 col = mix(body, refl, clamp(max(fres, 0.38) + fpUp * 0.22 * (0.6 + 4.0 * length(sl)), 0.0, 1.0));
     float alpha = edge * mix(0.5, 0.95, smoothstep(0.08, 0.9, dep));
     alpha = mix(alpha, 1.0, fres * 0.6 * edge);
 
