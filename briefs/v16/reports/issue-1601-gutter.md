@@ -138,3 +138,21 @@ Brief: `briefs/v16/brief-v16-S2-gutter-bolder.md`.
 - The stored noon gives back pale gold (1.0, 0.86, 0.58).
 - The Span gets the hush and the relief rather than a light.
 - `?gutter=v3` waits one of its own intervals.
+
+## Round three (S3)
+
+Fixes to the cold review of round two:
+
+1. **The warm flush no longer steps.** `sky.js` has a separate reading, `flicker.flush`: it rises over about a second from the catch (frame-rate independent, 0 under `flicker.hold`) and then falls over about five seconds. `post.js` feeds it to `uGut.y`. `flicker.after` is unchanged, so the audio latch and `vestige.js` still read the edge. The `gutter` test has a row for the flush: the largest change per frame is 0.017 at 60 fps and 0.050 at 20 fps, with a peak of 1 and gone after.
+2. **The relief gust latches on the rising edge of `after`** (`audio/bed.js`), so a hitch between two 10 Hz ticks cannot skip it.
+3. **The lure's at-rest cost is what it was.** The five moths of every slot sit first in the instance buffer and the 48-moth clouds after them, and every instance starts hidden. Only the written ranges are uploaded (`addUpdateRange`), and the draw `count` covers the clouds only while one is up and shrinks again.
+4. **The water's texture fetch is guarded** by `uDark > 0.0`.
+5. **`lampsAt` and `lampDelay` allocate nothing per call:** the smoothstep is hoisted and `Math.hypot` is replaced by `Math.sqrt`.
+6. **The wave's centre is held** from the onset until the lights are done (`wcx, wcz` in `sky.js`); it follows the eye only while no gutter or wave is on, so a teleport or fall mid-gutter does not relight a house.
+7. **The Diffident Stair's veins: not reproduced.** On this branch `SLAB_U.uGut` reads 0 when held lit and 1 when held at 0.3, and the veins are plainly visible in the guttered frame. This was tried both ways: `tools/views.mjs` with the stair view alone, and with a first view at (-61, 3.1) (the moths15 stand) before it, logging `SLAB_U.uGut` in `pre`; and a plain page at (275, 0). The stand-in for the walker (`pos.set` after an underground `placeAt`) was not needed to get the veins. Ruled out: the load stand, the hold's value (it must be 0.3, since `hold` 1 means lit and gives dark 0), and the update order. The likely cause is that the frames judged earlier predated the stair's gut reading or used `hold` 1 as "dark", but that is a guess.
+
+### Tests
+`SHOT_ANGLE=metal nice -n 10 env ONLY=gutter,acts,stair,village,house,audio,walk,perf,settings tools/suite.sh 8161`: 9 tests, 0 failed (settings 86, village 687, house 20, walk 13, audio 106, perf 29, acts 163, gutter 29, stair 5 PASS lines). The subset, not the whole suite, although `sky.js`, `post.js`, `water.js` and the bed changed.
+
+### Frames
+`shots/wip/v16-S3-seq-moor-00..07-*s.png` (`PREFIX=v16-S3 AT=7,10,12,13,14,15,16,17 tools/gutter-frames.mjs <base> moor -60 20 1.9 0.05`): the dark holds to 13 s; at 14 s the sun is back, with the flush at 0.45; at 15 s it is at its peak (0.91), and it fades through 16 and 17 s. The warmth comes up across two frames a second apart and is never a one-frame step.
