@@ -14,6 +14,7 @@ import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and fo
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
+import { floorLift } from './floor.js'; // v16: the floor's fall and its forms
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -351,6 +352,7 @@ export function heightAt(x, z) {
   h += SX.noise2(x * 0.06, z * 0.06) * 0.35;
   // Gentle rise toward the north-east so the castle sees the region laid out below
   h += (z * -0.012) + (x * 0.006);
+  h += floorLift(x, z); // v16: the floor falls to the west and south, with the ice's leavings on the high side (src/height/floor.js)
 
   // Landmark shaping
   const L = LANDMARKS;
