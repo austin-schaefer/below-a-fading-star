@@ -4,6 +4,40 @@ Engineering notes for each version (what was built and how, measurements, tests,
 
 One entry per release of [below-a-fading-star.netlify.app](https://below-a-fading-star.netlify.app/), newest first, written for someone who has never taken the walk: what it adds, what a visitor can find or will notice, and, when it matters to them, what is known not to work yet. Each entry is also published as a GitHub release (`tools/gh-release.sh <version>`). How to write one: `.agents/skills/orchestrator/release-notes.md`.
 
+## v16: The valley floor and the failing sun
+
+Released 2026-11-17.
+
+The ground of the valley has been reshaped so that it looks made by water and weather, and when the sun gutters (goes dark for a few seconds) the whole valley now answers it.
+
+### New
+
+- **The valley floor has a shape**: It stands higher in the north and east and falls to the west and south, where the water lies, with swells and hollows between. Three small pools sit in hollows on the moor.
+- **Lees Tarn and the fen have shores**: Lees Tarn, the lake below the village, was a circle. It now has bays, points and a shallows. The fen, the reed marsh under the great bridge, has an edge that wanders, with fingers of water running into the reeds.
+- **The sun fails, and everything notices**: You are let alone for a minute or so after setting out, then the sun gutters. The village's lamps and windows hold while the hill goes dark, the villagers stop mid-stroke and look up, the stars come out over the water, rooks go up calling, and far underground the gold floor of the Laid Sun brightens. The wind hushes just before and gusts as the light catches again.
+- **Take his letter**: In the Lappet, the village on the hill, the clerk at the wall of unclaimed letters will hand you one if you stand by him.
+- **The village's main stair has a proper top**: Where it met the crown there was a blank wall. It now arrives between two lit lamps.
+
+### Fixed
+
+- **The first gutter came too early**: It used to come within seconds of arriving. It now waits 60 to 120 seconds.
+- **Most of the world ignored the gutter**: Only the oldest places dimmed. Every region now takes part.
+- **Bushes and trees stood on paths and in the water round the fen**: They keep to the banks.
+- **Two places on the map dropped you facing a wall**: The Bather and the Toadstone now arrive looking at the thing itself.
+- **A tree could block the view at the Hypogeum's door after knocking**: Trees keep out of the cutting.
+- **Villagers were hard to tell from the walls at a distance**: Their clothes read a little better against the plaster. This is only partly mended.
+
+### Behind the scenes
+
+- The walk does less work each frame: the walker's own update takes about half the time, and most views draw fewer things.
+- The test and render tools draw on the graphics card by default, which makes them several times faster.
+- The tarn, the fen and the regions share one way of drawing an edge, which the ice and the rivers can use later.
+- New checks: no dry ground below a pool's surface beside wet ground, no map stand facing a wall, nothing in the way of the Hypogeum's door.
+
+Known issues: the tilt of the valley is gentle, and from the heights it is easier to see in the shores and pools than in the slope itself. The letter the clerk gives you cannot yet be carried anywhere. Place names rise at the bottom of the view too often when walking round the tarn. From the deck of the Span, the great bridge, the parapet still hides the valley.
+
+<p><img src="shots/99-tarn-above-after.webp" width="24%" alt="Lees Tarn from above, with bays and points where there was a circle"> <img src="shots/99-gutter-moor-dark.webp" width="24%" alt="The moor while the sun gutters: a dark red disc, a pale shore"> <img src="shots/99-stair-head-after.webp" width="24%" alt="The head of the village's main stair between two lamps"> <img src="shots/99-act-letter-sheet.webp" width="24%" alt="The clerk handing over a letter, frame by frame"></p>
+
 ## v15: The Lappet
 
 Released 2026-11-16.
