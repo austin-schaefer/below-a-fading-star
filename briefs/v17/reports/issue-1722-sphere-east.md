@@ -98,3 +98,82 @@ summary table.
 `v17-1722-r8-low-join2-10.png`, `v17-1722-r3-medium-teleport-gut.png`.
 
 The owner's link: `http://localhost:8123/?pos=268,98&yaw=-1.97&pitch=0.2`.
+
+## Round two (issue-1724, branch `issue-1724-sphere-under`)
+
+The owner: "still got weird triangles on its edge" (screenshot `owner-v17-sphere-edge-triangles.png`, real
+Chrome at 60 fps), and "it needs some additional visual 'payoff' for going to edge".
+
+### The triangles
+
+They were the earth skin's own faces, folded. issue-1722 clamped each straddling quad's upper corners straight
+down to the ground. On the uphill side the ground lies over the equator, so a point moved straight down there goes
+*inside* the glass. The folded faces were flat and dark, and through the glass they showed as a sawtooth of big blue
+triangles along the rim. My round-one stands were all on the valley side, where a clamped corner goes outward under
+the ground, so they never showed it. Reproduced at high from the south-east and east stands, walking at the glass
+on the keys and looking down (`v17-1724-before2-high-se*`, `-eR`). The view stands are listed in `own2.json`.
+
+Fix: the skin is no longer clamped. Each triangle is clipped on the sphere, with bisection on the drawn ground, at
+6 cm under the ground. The skin keeps the glass's curve and ends on one line, which the bank's foot (outside the
+glass, down to 45 cm under) closes. After: `v17-1724-after1-high-*`, the same eight stands, with no sawtooth. The
+final round shows none at medium, high or low (`v17-1724-final-*`). geometry's 3 baseline "backs" at the skin's
+top edge are gone with it, so the baseline is lowered.
+
+### Under the edge
+
+The works now stand in the opened bowl under the ground line, seen only from the rim looking down through the glass.
+The story says he shut the line and holds the last noon in. So:
+- **The mouth:** the line's mouth sits low on the Garth's side, 55 degrees under the horizon, toward the Garth, ringed
+  in old glass, with a bronze bell standing in.
+- **The iris:** eight bronze and verdigris leaves turned shut across the mouth.
+- **The leak:** a crescent of noon leaks round one edge, the little the Garth still lives on. It is baked glow, glow 2.6
+  against the beam's white; no light, no new draw.
+- **The spindle:** it runs from a bevel box under the node down to a gear on the iris's ring. The wheel's axle runs to
+  the node, so the wheel in his hands is what holds it shut. Its three bearings are each stayed to the glass, with an
+  eye at each end.
+- **The ladder:** it runs down the glass from the ground line to the mouth.
+- **The tally:** beside the ladder, his tally of kept noons is scratched in the lime in rows of fives. Some strokes are
+  worn off, and the rows stop short of the mouth.
+
+All of it goes into the parts' one draw: draw calls unchanged. It does not read from 15 or 60 m
+(`v17-1724-final-medium-far15/far60`), and nothing pokes out. The story's State, a loose end (why the iris leaks;
+when he stopped counting) and its log are updated.
+
+The first idea, a blade of light lying down the glass from the leak, read as an arrow cursor and is gone.
+
+### The reader (sonnet, four rim frames, cold)
+
+> "a hollow, rough, mottled lilac-grey inner surface (a big concave bowl) with a suspended mechanism… A central
+> brass-coloured hub sits near the top with many thin taut cords… A long dark rod runs from the hub down to a flat,
+> round, fan- or turbine-like disc at the bottom. The disc has a glowing white arc or ring on its rim… Hanging panels
+> of tiny glyphs or writing… a ladder or rail pattern on the wall… The man: a small, translucent, grey figure… next to
+> a green wheel or hoop. It looks like he is working a wheel or crank."
+
+It flagged: the man is faint and hard to read from the rim; the leak's ring is "hard-edged and overbright" (so I
+softened it, glow 3.6 to 2.6); a large shadow band across the wall in one frame (the terrain's shadow through the
+glass); the wall speckle looks flat; the glyphs and rails are low-resolution. It read the mechanism and the man at
+a crank. It did not say "holding it shut".
+
+### Tests (port 8177)
+
+`ONLY=geometry,settings,heights,rocks,dressing,strata,walk,edges`, before merging `next`: settings 87, dressing 22,
+strata 8, rocks 38 and walk 13 ok. Three failed:
+- **edges:** the Garth hall's coplanar pairs.
+- **geometry:** v17-garth and v17-swallow, 2 new each, plus the sphere's baseline now looser than the place.
+- **heights:** the top gallery's cost 381 calls against 380. That gallery is on the west wall, far from the sphere,
+  and this branch adds no draw.
+
+So I lowered the sphere's baseline, merged `next` (F3) and reran geometry, edges and heights. v17-sphere now passes 17/0. The same three still fail on the Garth's and the Swallow's rows and the gallery's 381 calls: they come from `next`, not this branch. This branch touches no file of theirs and adds no draw. The sphere's only cross-link, the Garth's stub aimed at `SPHERE.c`, is unchanged since round one.
+`node tools/walkers-test.mjs http://localhost:8177`: 19/20 (P12's pit-lamps row).
+
+### Frames (`shots/wip/`)
+
+In order:
+- `v17-1724-before2-high-seL.png` (the sawtooth reproduced), then `v17-1724-after1-high-seL.png`
+- `v17-1724-final-medium-s-down.png`, `-e-down`, `-se-down`, `-tp-down`
+- `v17-1724-final-high-s-down.png`, `-e-down`, `-se-down`, `-tp-down`
+- `v17-1724-final-low-s-down.png`
+- `v17-1724-final-medium-far15.png`, `-far60.png`
+
+The best rim stand: `http://localhost:8123/?pos=284,134&yaw=-0.30&pitch=-0.5`. Walk forward to the glass first: the
+link lands 12 m out.
