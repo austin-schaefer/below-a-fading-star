@@ -49,6 +49,14 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 08:25 PST. N1 merged (the names); the critic and the curator started.**
+
+- **N1 merged** (sonnet, 17 min; `briefs/v17/reports/issue-1706-dress.md`). **Four names**, each a `LANDMARKS` row with a card and a map entry, every `line` empty for the owner: **the Slake** (the mere), **the Swallow** (the portal), **the Meridian Garth** (the hall), **the Shuttered Noon** (the sphere). The table: `briefs/v17/reports/v17-names-for-the-owner.md` (to be posted as an agent's issue at release). Two trods: P55 from the leat's bridge round the Slake's south side to the Swallow's quay (the south shore could not be reached dry from the north), P56 from the Taker's road to the sphere. No lead stands in water. No reeds added. `settings` 87, roads 68, paths 88 (count 54 to 56), outline 77 and seven more green on its branch.
+- **The critic** (opus, `issue-1720-critic`, 8174) on `next` as of this merge, asked besides its brief to judge water moving at six places, walk whatever is underground there and back on the keys, judge the lettering and the three `?type=` cards, and look at the owner's two faults from the owner's two stands. **The curator** (sonnet, no browser) in the deploy worktree's `shots/`.
+- Still out: B1 the red tests (`issue-1710-red`, 8170), F2 the shadow and the glow (`issue-1712-shadow-glow`, 8172; it has pushed "the shadow box's depth is fixed to the world along the sun").
+
+Next: B1 and F2 merged; the after set; the gate alone; the note.
+
 **2026-11-17, 08:07 PST. W2 merged: the leat. Every builder is in. N1 dispatched.**
 
 - **W2 merged** (opus, 59 min; `briefs/v17/reports/issue-1704-leat.md`; `src/v17/leat.js`): a kerbed channel from the fen's flat (-2.45) down five weirs to the mere (-6.8), the fourth breached, one kerb stone fallen in; level on a raised bank, then in a cut; a walkable slab bridge with P14 and P38 meeting at its east foot. Departures: 3.2 m wide, not 2.4 (no water drew at 2.4); the bridge at (6.6, 252.6), not (9, 252); a point added to P38 in `routes.js`. **The lip strip traced:** the white-water fan began a metre upstream of every lip; fixed in `stream.js` (the brook's too). Blind reader: "a stone-lined leat with stepped weirs" whose water "looks like it is running". Weak: the level reach looks dead and near black from upstream. `height-speed` valley 0.990 and 0.977. `walkers` 19/20.
