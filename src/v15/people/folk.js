@@ -31,6 +31,7 @@ import { angDiff } from '../../fauna/uncanny/kit.js';
 import { rgb, tone, mix3 } from '../../v7/workers/body.js';
 import { ease, ramp } from '../../v7/workers/rig.js';
 import { C, BONE, ARM } from './body.js';
+import { letterAct, givePose } from './letter.js';
 
 const yawOf = (fx, fz) => Math.atan2(fx, fz);
 const norm = (x, z) => { const l = Math.hypot(x, z) || 1; return [x / l, z / l]; };
@@ -234,18 +235,19 @@ export const FOLK = [
     place(ctx, plan, Q) {
       const h = Q.lees?.places?.find((p) => p.shop === 'lees-shop-4'), p = plan.plot('lees-shop-4'); if (!h || !p) return null;
       const x = h.x - p.face[0] * 0.38, z = h.z - p.face[1] * 0.38; // (in the vault behind the pigeonholes: seen through them, and through the hatch among them)
-      return { x, y: floorY(ctx, x, z, plan.LEVEL.bench.y), z, yaw: yawOf(p.face[0], p.face[1]) };
+      return { x, y: floorY(ctx, x, z, plan.LEVEL.bench.y), z, yaw: yawOf(p.face[0], p.face[1]), hatch: h.hatch, ledger: h.ledger, face: p.face };
     },
     body: { pose: 'stand', robe: { cloth: rgb('#4a5468'), dark: rgb('#1e2230'), seed: 9.1, patch: 0.08 }, sleeve: rgb('#1a1612'), hat: 'skull', beard: true, hairC: C.grey, girth: 0.88, sign: true },
     props(P, base) {
-      // a letter in his right hand: cream, sealed in red
-      P.bone(base + BONE.rF);
+      // a letter in his right hand: cream, sealed in red (on the prop bone, which follows his forearm: given, it goes)
+      P.bone(base + BONE.prop);
       tone(P, rgb('#e2d6b8'), 1, 0, 0.8); glow(P, 0.06); P.box(0, -ARM.fore - 0.1, 0.03, 0.2, 0.15, 0.008);
       tone(P, C.pom, 1, 0, 0.5); P.blob(0, -ARM.fore - 0.1, 0.036, 0.022, 0.022, 0.007, 5, 2);
     },
-    init: () => ({ t: 0, phase: 'sort', pt: 0, armed: true, offers: 0, offer: 0, read: 0, reach: 0 }),
+    init: (f, at, ctx) => { const S = { t: 0, phase: 'sort', pt: 0, armed: true, offers: 0, offer: 0, read: 0, reach: 0, g: -1 }; letterAct(ctx, f, at, S); return S; },
     update(f, dt, t, cam, S) {
       S.t += dt; S.pt += dt;
+      if (S.handle?.done) S.armed = false; // his letter taken this visit: he holds no more out
       const dx = cam.x - f.x, dz = cam.z - f.z, d = Math.hypot(dx, dz), front = Math.abs(angDiff(Math.atan2(dx, dz), f.yaw)) < 1.2;
       if (d > 8) S.armed = true;
       if (S.phase !== 'offer' && S.armed && d < 4.5 && front) { S.phase = 'offer'; S.pt = 0; S.armed = false; S.offers++; }
@@ -260,6 +262,10 @@ export const FOLK = [
       f.lean = 0.04 + 0.32 * S.offer; f.twist = -0.35 * S.reach;
       f.hR.set(-0.14, 1.0, 0.16).lerp(_v.set(-0.06, 1.24, 0.24), S.read).lerp(_v.set(-0.24, 1.72, -0.3), S.reach).lerp(_v.set(-0.02, 1.36, 0.7), S.offer);
       f.hL.set(0.13, 1.0, 0.18).lerp(_v.set(0.06, 1.2, 0.26), S.read);
+      if (S.g >= 0) givePose(f, S, dt, cam); // "Take his letter" (src/v15/people/letter.js)
+      const rF = f.b[BONE.rF]; f.propWorld = true; // the letter follows his forearm (a frame behind); not yet posed, or given: hidden
+      if (rF.elements[12] === 0 && rF.elements[14] === 0) f.propL.makeScale(1e-4, 1e-4, 1e-4).setPosition(f.x, f.y, f.z);
+      else { f.propL.copy(rF); if (S.g >= 0.1 && S.g < 5.5) f.propL.scale(_u.setScalar(1e-4)); }
     },
     colliders: (f) => [{ x: f.x, z: f.z, r: 0.28, y: f.y, h: 1.8, stand: false }],
   },
@@ -338,17 +344,22 @@ export const FOLK = [
     props(P, base, f, at, low) {
       // her house's door, on her back on two cords: turquoise gone grey, iron studs, a brass ring for a knocker
       P.bone(base + BONE.torso);
-      const M = new THREE.Matrix4().makeRotationX(-0.1).setPosition(0, 1.12, -0.31);
+      // (v16-V1: a whole door, 0.84 by 2.02, standing half a metre over her hat and wider than her shoulders, so that from
+      // in front of her it reads as a door: its top rail, strap hinges and studs on the side toward her are the ones seen)
+      const M = new THREE.Matrix4().makeRotationX(-0.1).setPosition(0, 1.32, -0.31);
       P.xf(M);
-      tone(P, mix3(C.turq, C.undyed, 0.25), 0.85, 0, 0.85); P.box(0, 0, 0, 0.7, 1.72, 0.05);
-      tone(P, mix3(C.turq, C.dark, 0.5), 1, 0, 0.85); for (const y of [-0.55, 0.05, 0.6]) P.box(0, y, -0.035, 0.66, 0.1, 0.03); // its ledges, behind
-      tone(P, IRON, 1, 0.6, 0.6); for (const y of [-0.7, 0.7]) for (const x of [-0.27, 0, 0.27]) P.blob(x, y, -0.035, 0.018, 0.018, 0.012, 4, 2);
+      tone(P, mix3(C.turq, C.undyed, 0.25), 0.85, 0, 0.85); P.box(0, 0, 0, 0.84, 2.02, 0.05);
+      tone(P, mix3(C.turq, C.dark, 0.5), 1, 0, 0.85); for (const y of [-0.7, 0.05, 0.75]) P.box(0, y, -0.035, 0.8, 0.1, 0.03); // its ledges, behind
+      P.box(0, 0.86, 0.035, 0.8, 0.12, 0.03); P.box(0, 0.98, 0.012, 0.86, 0.06, 0.07);           // its top rail toward her, a worn head
+      tone(P, IRON, 1, 0.6, 0.6); for (const y of [-0.85, 0.85]) for (const x of [-0.32, 0, 0.32]) P.blob(x, y, -0.035, 0.018, 0.018, 0.012, 4, 2);
+      for (const y of [0.7, -0.75]) { P.box(-0.12, y, 0.032, 0.62, 0.045, 0.012); P.blob(-0.42, y, 0.02, 0.03, 0.04, 0.03, 4, 2); } // strap hinges and their pins
+      for (const x of [-0.3, -0.1, 0.1, 0.3]) P.blob(x, 0.86, 0.052, 0.016, 0.016, 0.01, 4, 2);
       tone(P, rgb('#c8a050'), 1, 0.8, 0.35); P.ring(0, 0.05, -0.06, 0.06, 0.009, low ? 8 : 12, 3); P.xf(null);
       // the cords over her shoulders and round her
       tone(P, C.rope, 1, 0, 0.9);
       for (const s of [-1, 1]) P.loft([[s * 0.13, 1.42, -0.27], [s * 0.15, 1.45, 0.02], [s * 0.12, 1.3, 0.17], [s * 0.1, 1.04, 0.2], [s * 0.18, 1.0, -0.25]], [0.013, 0.013, 0.013, 0.013, 0.013], 3, 0, false);
       // a bundle tied to the door's top
-      tone(P, C.undyed, 0.8, 0, 0.9); P.blob(0.05, 2.0, -0.4, 0.2, 0.14, 0.13, low ? 6 : 8, 4);
+      tone(P, C.undyed, 0.8, 0, 0.9); P.blob(0.05, 2.42, -0.42, 0.2, 0.14, 0.13, low ? 6 : 8, 4);
     },
     init: () => ({ t: 0, shrug: 0 }),
     update(f, dt, t, cam, S) {

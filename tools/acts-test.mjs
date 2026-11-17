@@ -802,6 +802,43 @@ if (process.env.FIND !== '0') {
   await c.close();
 }
 
+// v16-V1, the Lappet's act (src/v15/people/letter.js): "Take his letter" at the Lagan's hatch. Offered in front of the
+// counter, not from 20 m down the bench, not with the back to it, not from behind (in the vault); done: the letter leaves
+// his hand and is in the visitor's view, he strikes the entry through in red in the book, and has a letter again; the
+// entry is still struck after a reload and the act offered again; forgetting clears the book
+if (process.env.LAGAN !== '0') {
+  const c = await browser.newContext({ viewport: { width: 640, height: 360 } }); const p = await c.newPage(); watch(p, 'lagan');
+  const load = async () => { await p.waitForFunction(() => document.body.classList.contains('ready') && window.__fp?.storyActs?.lagan, null, { timeout: 300000 }); await begin(p); await sleep(300); };
+  await p.goto(`${base}/?q=low&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 }); await load();
+  const offAt = (d, turn = 0, side = 0) => p.evaluate(async ([d, turn, side]) => {
+    const fp = window.__fp, L = fp.storyActs.lagan, s = L.stand(d), pl = fp.player;
+    for (let i = 0; i < 9; i++) { fp.controls.placeAt(s.x + side * L.face[1], s.z - side * L.face[0]); pl.yaw = s.yaw + turn; pl.pitch = s.pitch; pl.vel.set(0, 0, 0); await new Promise((r) => setTimeout(r, 100)); }
+    return fp.acts.offered?.def.id || null;
+  }, [d, turn, side]);
+  const st = () => p.evaluate(() => ({ n: window.__fp.acts.count('lagan-letter'), ...window.__fp.storyActs.lagan.state(), inked0: window.__fp.storyActs.lagan.inked(0), inked1: window.__fp.storyActs.lagan.inked(1) }));
+  let r = await st();
+  check('lagan: registered, nothing remembered, the book unmarked, a letter in his hand', r.n === 0 && !r.inked0 && r.held, r);
+  check('lagan: offered at the counter, in front of the hatch, 2 m out: "Take his letter"', (await offAt(2.0)) === 'lagan-letter' && await p.evaluate(() => document.getElementById('act-words').textContent) === 'Take his letter');
+  check('lagan: not from 20 m down the bench', (await offAt(20)) !== 'lagan-letter');
+  check('lagan: not with the back to the hatch', (await offAt(2.0, Math.PI)) !== 'lagan-letter');
+  check('lagan: not from 1.2 m behind it, in the vault', (await offAt(-1.2, Math.PI)) !== 'lagan-letter');
+  await offAt(2.0);
+  await p.keyboard.press('KeyE'); await sleep(550);
+  r = await st();
+  const inView = await p.evaluate(() => { const fp = window.__fp, v = fp.storyActs.lagan.fly.position.clone().project(fp.camera); return fp.storyActs.lagan.fly.visible && Math.abs(v.x) < 0.8 && Math.abs(v.y) < 0.8 && v.z < 1; });
+  check('lagan: E takes it: counted, the letter gone from his hand and in the visitor\'s view', r.n === 1 && !r.held && inView, { r, inView });
+  check('lagan: a second E while he gives it does nothing', await p.keyboard.press('KeyE').then(() => sleep(200)).then(() => p.evaluate(() => window.__fp.acts.count('lagan-letter'))) === 1);
+  await p.waitForFunction(() => window.__fp.storyActs.lagan.state().g < 0, null, { timeout: 20000 }).catch(() => {});
+  r = await st();
+  check('lagan: done: the entry struck through in red in his book, a letter in his hand again, not offered again this visit', r.inked0 && !r.inked1 && r.held && r.phase === 'sort' && (await offAt(2.0)) !== 'lagan-letter', r);
+  await p.reload({ waitUntil: 'load' }); await load();
+  r = await st();
+  check('lagan: after a reload the entry is still struck and the act offered again', r.n === 1 && r.inked0 && !r.inked1 && (await offAt(2.0)) === 'lagan-letter', r);
+  await p.evaluate(() => window.__fp.acts.forget()); r = await st();
+  check('lagan: forgetting clears the book', r.n === 0 && !r.inked0, r);
+  await c.close();
+}
+
 check('no page errors', errors.length === 0, errors.slice(0, 5));
 await browser.close();
 console.log(`${passes} passed, ${fails} failed`);
