@@ -13,6 +13,7 @@
 // tarn and the mere. All of it reads the kit's own SPEED and ROUGH, so any stream put on the kit looks the same.
 import * as THREE from 'three';
 import { STREAMS, STILLS } from './bodies.js';
+import { LEAT } from './plan.js';
 import { meshHeightSampler } from '../water/river.js';
 
 const SKY_GLSL = /* glsl */`
@@ -145,7 +146,7 @@ const FRAG = /* glsl */`
   }`;
 
 // the ribbon's fade at the ends: in from the tarn, out into the mere (stations on the plan's line)
-const FADES = { brook: { in: [[-89.5, 197], [-89.5, 201.5]], out: [[-86.8, 263.5], [-87.6, 268.5]] } };
+const FADES = { brook: { in: [[-89.5, 197], [-89.5, 201.5]], out: [[-86.8, 263.5], [-87.6, 268.5]] }, leat: LEAT.fade };
 
 export function buildV17Water(ctx, tex, stillMat) {
   const { scene, terrain, palette } = ctx;

@@ -103,13 +103,61 @@ export const SWALLOW_CUT = {
   banks: [[-95, 296, 1.3], [-95, 305, 1.3], [-95, 309, 4]],  // U1: steep near the face, +2..+7 within 3 m of x -99..-91
 };
 
-// ---------------------------------------------------------------- W2: the leat (the table's until W2 changes it)
+// ---------------------------------------------------------------- W2: the leat (live: W2's)
+// The Heliarchs' leat: the fen's outflow, made. A straight stone-kerbed channel off the fen's flat at (12, 228) (the
+// fen's level; the flat stands at -2.25 there, its nearest pools 14 m east, which the leat neither drains nor raises),
+// south down the trough's east side in five ponds stepping down over five weirs (each a dressed sill across the
+// channel, the water falling 0.87 m into the pond below), under the slab bridge at (9, 252) where P14 and P38 meet,
+// then level at the mere's level on a raised bank across the dry hollow at (-5, 279) (ground -8.7: 1.9 m under the
+// water) and in a cut through the rise west of it (ground -5.4), into the mere's east lobe at (-64, 288).
+// `corners`: the table's line, each straight run held straight (a point 3 m in from each corner, so the kit's spline
+// rounds only the corners). `levels`: as the brook's, [x, z, y] stations, a weir two stations 0.6 m apart (the sound
+// reads the steps here). `weirs`: the sills, each [x, z, top, below, state] (`top` the pond above, `below` the pond
+// under it); one is breached (its middle stones gone, the water through the gap).
+const LEAT_CORNERS = [[12, 227], [10.6, 245], [6.6, 252.6], [4, 266], [-8, 282], [-35, 290], [-62, 288], [-69, 288.4]];
+const LEAT_HW = 1.2; // half the 2.4 m between the kerbs' inner faces
+const _straight = (C, hw, inset = 3) => {
+  const out = [];
+  for (let i = 0; i < C.length; i++) {
+    const [x, z] = C[i];
+    if (i > 0) { const [px, pz] = C[i - 1], l = Math.hypot(x - px, z - pz); if (l > inset * 2.5) out.push([x + (px - x) * inset / l, z + (pz - z) * inset / l, hw]); }
+    out.push([x, z, i === 0 ? 1.6 : hw]);
+    if (i < C.length - 1) { const [nx, nz] = C[i + 1], l = Math.hypot(nx - x, nz - z); if (l > inset * 2.5) out.push([x + (nx - x) * inset / l, z + (nz - z) * inset / l, hw]); }
+  }
+  return out;
+};
+// a point on the line at z (on the run that holds that z), for the weirs' stations
+const _onLine = (C, z, k = 0) => { for (let i = k; i < C.length - 1; i++) { const [x0, z0] = C[i], [x1, z1] = C[i + 1]; if ((z - z0) * (z - z1) <= 0 && z0 !== z1) return [x0 + (x1 - x0) * (z - z0) / (z1 - z0), z]; } return null; };
+const _W = [[241, -3.32], [247.5, -4.19], [255.6, -5.06], [259.5, -5.93, 'breached'], [264.5, MERE.level]];
+const _lv = [[12, 227, FEN_LEVEL]];
+const _weirs = [];
+{
+  let y = FEN_LEVEL;
+  for (const [z, below, state] of _W) {
+    const a = _onLine(LEAT_CORNERS, z - 0.3), b = _onLine(LEAT_CORNERS, z + 0.3), c = _onLine(LEAT_CORNERS, z);
+    _lv.push([a[0], a[1], y], [b[0], b[1], below]);
+    _weirs.push([+c[0].toFixed(2), z, y, below, state ?? 'whole']);
+    y = below;
+  }
+  _lv.push([-69, 288.4, MERE.level]);
+}
 export const LEAT = {
-  line: [[12, 228], [11, 245], [9, 252], [4, 266], [-8, 282], [-35, 290], [-62, 288]],
+  // the table's line, but for its third corner: 2.4 m west of (9, 252), so the meeting of P14 and P38 is on the bank at
+  // the bridge's east foot, not in the water (the owner's stand, ?pos=9,252, is on dry stone); the last corner carries
+  // it on into the mere's lobe
+  line: LEAT_CORNERS.slice(0, 7),
+  pts: _straight(LEAT_CORNERS, LEAT_HW),
+  levels: _lv,
+  weirs: _weirs,
   head: FEN_LEVEL,    // the fen's level at its head
-  weirs: [[11, 245], [-8, 282]], // four or five weirs between these, down to the mere's level, then level
   kerbs: 2.4,         // between kerbs, m
-  bridge: [9, 252],   // the slab bridge where P14 and P38 meet
+  hw: LEAT_HW,
+  hold: [[12, 228.5], [-63.5, 288]],  // its lip held from the head to the mere's lobe
+  bank: 1.0, reach: 8, rag: 0, wob: 0, lipW: 1.0, lipFall: 0.55, minSpeed: 0.32, speedWin: 2, // a built channel: a kerbed line, a steep bank, a narrow embankment, slow when level
+  fade: { in: [[12, 227], [12, 227.8]], out: [[-63.5, 288], [-67.5, 288.3]] },
+  // the slab bridge where P14 and P38 meet (src/v4/paths/routes.js), across pond 2
+  bridge: { at: [6.6, 252.6], len: 5.6, w: 2.1 }, // its east step at the meeting (9, 252)
+  fallen: [6.9, 258.6],  // a kerb stone fallen into pond 3 off the east kerb
 };
 
 // ---------------------------------------------------------------- U1: the Swallow, the aqueduct, the tube (U1's, live)
