@@ -45,9 +45,13 @@ export function buildScatter(ctx, B, env) {
     _q.setFromUnitVectors(UP, _n);
     _e.set(o.rx || 0, o.ry ?? rng() * 6.28, o.rz || 0, 'YXZ');
     _q.multiply(_q2.setFromEuler(_e));
-    const s = o.s || 1;
+    const s = o.s || 1, shade = 0.85 + rng() * 0.3;
+    // groundAt is the ground on a 3 m grid: at a riser's foot (a terrace's retaining wall in the Lappet) it lies a metre or
+    // two over the ground there, and a piece put on it hangs in the air against the wall (v16, the Strake). Dropped after
+    // its draws, so every other piece keeps its place.
+    if (Math.abs(gy - T.heightAt(x, z)) > 0.35) return;
     set.mats.push(new THREE.Matrix4().compose(new THREE.Vector3(x, gy + (o.y || 0) * s, z), _q.clone(), new THREE.Vector3(s, s, s)));
-    set.cols.push(new THREE.Color(1, 1, 1).multiplyScalar(0.85 + rng() * 0.3));
+    set.cols.push(new THREE.Color(1, 1, 1).multiplyScalar(shade));
     if (o.r) ctx.addCollider({ x, z, r: o.r * s });
   };
   // hands: palm up or palm down, sunk to the wrist; a few colossal
