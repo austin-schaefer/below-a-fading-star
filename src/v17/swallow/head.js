@@ -59,7 +59,8 @@ export function buildHead(env) {
   const [ox0, ox1] = SP.open, ocx = (ox0 + ox1) / 2, oR = (ox1 - ox0) / 2, spring = SP.spring, crownA = spring + oR;
   const QX = SP.quay.x, QY = SP.quay.y, LEDGE = -6.6, FALLX1 = QX[0]; // the fall's water from ox0 to the ledge
   const FX0 = -107, FX1 = -82, FTOP = 9.5, FBOT = -9.0;
-  const arch = archOutline(ox0, ox1, SP.sill - 0.6, LEDGE, spring, low ? 14 : 22);
+  const BAY = -7.5; // the arch's east bay's floor, a step under the water the tube goes down over
+  const arch = archOutline(ox0, ox1, SP.sill - 0.6, BAY, spring, low ? 14 : 22);
 
   // ---- the face: dressed courses round the arch, a cornice, the voussoirs and the keystone, the hexagon in raised
   // stone with a roundel at each upper corner, the sun over the keystone, its gold long prised out of its sockets
@@ -137,6 +138,7 @@ export function buildHead(env) {
   // ---- the sill and the channel through the arch (under the cut's water), the lip at the head's wall
   // (with an apron under the water in front, down to the cut's bed: the ground's wall across the arch is opened)
   S.box((ox0 + FALLX1) / 2, (SP.sill - 0.18 + FBOT) / 2, (Z0 - 2.4 + ZI + 0.3) / 2, (FALLX1 - ox0) / 2, (SP.sill - 0.18 - FBOT) / 2 - 0.01, (ZI + 2.7 - Z0) / 2, 0, FACE_D, SILT, 0.05);
+  S.box((FALLX1 + ox1) / 2, (BAY + FBOT) / 2, (Z0 + 0.4 + ZI) / 2, (ox1 - FALLX1) / 2 - 0.006, (BAY - FBOT) / 2 - 0.003, (ZI - Z0 - 0.4) / 2 - 0.003, 0, FACE_D, SILT, 0.05);
   // ---- the ledge (the tube's end lies on it, its top a hand over the water) and the quay north of it
   const QZ0 = SP.quay.z[0], LIPZ = L.at(0).z;
   S.box((QX[0] + QX[1]) / 2, (LEDGE - 9.4) / 2, (LIPZ + Z0 + 0.4) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9.4) / 2, (Z0 + 0.4 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (to just inside the arch: past it the tube goes down off its end over the water)
