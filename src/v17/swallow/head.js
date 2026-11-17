@@ -58,7 +58,7 @@ export function buildHead(env) {
   const T = ctx.terrain, H = SP.head, W = SP.pool, Z0 = SP.face, ZI = Z0 + 2; // the face's front; the head's north wall (inside)
   const [ox0, ox1] = SP.open, ocx = (ox0 + ox1) / 2, oR = (ox1 - ox0) / 2, spring = SP.spring, crownA = spring + oR;
   const QX = SP.quay.x, QY = SP.quay.y, LEDGE = -6.6, FALLX1 = QX[0]; // the fall's water from ox0 to the ledge
-  const FX0 = -107, FX1 = -82, FTOP = 10.5, FBOT = -9.0;
+  const FX0 = -107, FX1 = -82, FTOP = 9.5, FBOT = -9.0;
   const arch = archOutline(ox0, ox1, SP.sill - 0.6, LEDGE, spring, low ? 14 : 22);
 
   // ---- the face: dressed courses round the arch, a cornice, the voussoirs and the keystone, the hexagon in raised
@@ -76,6 +76,8 @@ export function buildHead(env) {
     }
     // the top and the ends (where the slope does not cover them)
     S.quad([FX0, FTOP, Z0], [FX1, FTOP, Z0], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 1, 0], 0.08);
+    // its back, where the slope behind it stands lower than its top (seen from the hillside over it)
+    S.quad([FX0, 3.5, ZI + 1], [FX1, 3.5, ZI + 1], [FX1, FTOP, ZI + 1], [FX0, FTOP, ZI + 1], FACE_D, [0, 0, 1], 0.08);
     // the cornice: a projecting band under the top, and a plinth course at the water
     S.box((FX0 + FX1) / 2, FTOP - 0.35, Z0 - 0.25, (FX1 - FX0) / 2 + 0.3, 0.35, 0.25, 0, VOUSS, FACE, 0.05);
     // the arch's reveal through the face's depth (facing into the opening)
@@ -213,7 +215,7 @@ export function buildHead(env) {
     const g = T.mesh?.geometry, idx = g?.index?.array, Pp = g?.attributes.position.array;
     if (idx) {
       const inQuay = (x, z) => x > QX[0] - 0.2 && x < QX[1] + 0.4 && z > QZ0 + 0.3 && z < ZI;
-      const inHead = (x, y, z) => x > hx0 - 0.5 && x < hx1 + 0.5 && z > Z0 + 0.2 && z < hz1 + 0.5 && y < H.crown + 1.2;
+      const inHead = (x, y, z) => x > hx0 - 0.5 && x < hx1 + 0.5 && z > Z0 + 0.2 && z < hz1 + 0.5 && y < H.crown + 0.4;
       const inArch = (x, y, z) => x > ox0 - 0.3 && x < ox1 + 0.3 && z > Z0 - 0.4 && z < ZI + 0.5 && y < crownA + 0.5;
       for (let t = 0; t < idx.length; t += 3) {
         const a = idx[t], b = idx[t + 1], c = idx[t + 2]; if (a === b && b === c) continue;
