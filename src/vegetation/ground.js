@@ -25,7 +25,7 @@ import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no t
 // Where trees and shrubs keep out (ground cover still grows): the cloak man's old stand, the Wayside Shrine, the Menology's spiral.
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
 
-const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
+const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee']; // (v16 L4: the floor's character, src/height/floor.js)
 
 export function makeGround(ctx) {
   const { terrain, landmarks: L, water } = ctx;
@@ -85,6 +85,7 @@ export function makeGround(ctx) {
     grid.moor[k] = b.moor; grid.heath[k] = b.heath; grid.wood[k] = b.wood; grid.marsh[k] = b.marsh;
     grid.shore[k] = b.shore; grid.rock[k] = b.rock; grid.ice[k] = b.ice; grid.orchard[k] = b.orchard;
     grid.crystal[k] = b.crystal; grid.glacier[k] = terrain.glacierMask(x, z);
+    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0;
   }
   // Bilinear biome lookup into a reusable object.
   const biome = {}; for (const k of BIOME_KEYS) biome[k] = 0;

@@ -223,7 +223,8 @@ export async function build(ctx) {
       if (!allowed(x, z)) continue;
       const b = terrain.biomeAt(x, z);
       // density: scree and rock slopes, heath, the moor; less in marsh and wood
-      let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6;
+      let density = 0.3 + b.rock * 0.9 + b.heath * 0.25 - b.marsh * 0.18 - b.wood * 0.12 + smoothstep(240, 320, r) * 0.6
+        + (b.stone ?? 0) * 0.7 + (b.bleak ?? 0) * 0.45 + (b.strand ?? 0) * 0.5 - (b.wet ?? 0) * 0.2; // v16 L4: the floor's character: stony high ground, bare crests, the strand's shingle
       if (ctx.regions) density *= ctx.regions.stoneAt(x, z).density; // v4 regions: a region's own stone replaces these
       density *= 0.55 + 0.45 * (noise.warped2(x * 0.012 + 50, z * 0.012 - 20, 3) * 0.5 + 0.5); // clumping
       if (rng() > density) continue;

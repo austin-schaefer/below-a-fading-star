@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { makeWaterTexture } from './water/textures.js';
 import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
+import { buildPools } from './water/pools.js'; // v16 L4: the floor's pools, in the tarn's material
 import { tideAt } from './v4/tarn.js';
 import { keptHeights } from './v13/tape.js'; // v13 L4: the ground's answers kept between visits
 import { injectReachFen } from './v7/reach.js'; // v7: DP the Luminous Reach, its plume in the fen's disc shader
@@ -273,6 +274,7 @@ export async function build(ctx) {
     bodies.push({ body, mat, mesh, tarn: name === 'tarn', next: 1 + rng() * 3, slot: 0, rng: ctx.makeRng(7100 + (fen ? 1 : 0)) });
   }
 
+  const floorPools = tape.run(() => buildPools(ctx, bodies.find((b) => b.tarn)?.mat, !high)); // v16 L4 (src/water/pools.js)
   const flick = sky && sky.flicker ? sky.flicker : { value: 1 };
   ctx.registerUpdate((dt, t) => {
     for (const b of bodies) {
@@ -348,6 +350,7 @@ export async function build(ctx) {
       return y === null ? null : y + Math.sin(x * 0.11 + t * 0.31) * 0.01;
     },
     bodies: ctx.water,
+    pools: floorPools?.pools ?? [], // v16 L4
   };
   ctx.log(`water: tarn, fen, river (${pathPoints.length} path points, ${river.rocks.length} rocks in the stream), the Speculum`);
 }

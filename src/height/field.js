@@ -14,7 +14,8 @@ import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and fo
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
-import { floorLift } from './floor.js'; // v16: the floor's fall and its forms
+import { HEIGHT_PARAMS } from './params.js';
+import { floorGround, floorCharacter, POOLS } from './floor.js'; // v16: the floor's fall, its forms, its pools and its character
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -352,7 +353,7 @@ export function heightAt(x, z) {
   h += SX.noise2(x * 0.06, z * 0.06) * 0.35;
   // Gentle rise toward the north-east so the castle sees the region laid out below
   h += (z * -0.012) + (x * 0.006);
-  h += floorLift(x, z); // v16: the floor falls to the west and south, with the ice's leavings on the high side (src/height/floor.js)
+  h = floorGround(h, x, z); // v16: the floor falls to the west and south, with the ice's leavings and their pools on the high side (src/height/floor.js)
 
   // Landmark shaping
   const L = LANDMARKS;
@@ -468,7 +469,10 @@ function biomeWith(x, z, h, slope, rv) {
   const rockR = clamp(rock + rv.shingle * 0.75, 0, 1.6);
   const shoreR = shore + rv.slow * (1 - smoothstep(0.2, 1.5, h - rv.W)) * 0.8;
   const moor = clamp(1 - rockR - ice - marsh - wood * 0.5, 0, 1);
-  return { moor, heath, wood, marsh, shore: shoreR, rock: rockR, ice, orchard, crystal, slope, h };
+  // v16 L4: what the floor's forms make of the ground (src/height/floor.js floorCharacter; all 0 under ?floor=v15)
+  const fc = floorCharacter(x, z);
+  return { moor, heath, wood, marsh, shore: fc.shore > 0 ? Math.max(shoreR, fc.shore) : shoreR, rock: rockR, ice, orchard, crystal, slope, h,
+    wet: fc.wet, bleak: fc.bleak, lee: fc.lee, stone: fc.stone, strand: fc.strand };
 }
 
 // The still waters, each with its own wet test and its shore's signed distance (metres, < 0 in the water), in the
@@ -479,6 +483,11 @@ export const WATER_BODIES = [
   { name: 'tarn', w: WATER.tarn, wet: tarnWet, sd: tarnShoreDistance },
   { name: 'fen', w: WATER.fen, ...disc(WATER.fen) },
   { name: 'pool', w: WATER.pool, ...disc(WATER.pool) },
+  // v16 L4: the floor's pools (src/height/floor.js POOLS), each on its edge, a box test first (none under ?floor=v15)
+  ...POOLS.filter((p) => p.y !== null && HEIGHT_PARAMS.floor !== 'v15').map((p) => {
+    const [x0, x1, z0, z1] = p.wetBox;
+    return { name: p.name, w: { x: p.x, z: p.z, r: p.rMax + 1, y: p.y }, wet: (x, z) => x > x0 && x < x1 && z > z0 && z < z1 && p.sd(x, z) < 0, sd: p.sd };
+  }),
 ];
 // Water height at a point, or null when there is no water body here.
 export function waterLevelAt(x, z) {
