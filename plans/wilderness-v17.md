@@ -49,6 +49,18 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 10:41 PST. G1 and S2 merged: the Garth's spout; the sphere on the east moor. F3 still out.**
+
+- **G1 merged** (opus, 33 min; `briefs/v17/reports/issue-1723-garth-rill.md`; `src/v17/garth/water.js`, `plan.js`): the owner's white card was the inlet's fall, a 0.22 by 1.1 m strip in an opaque shader mixed to near white; the two dark quads a "bronze lip" of an underside and a back plate with no top and no thickness. Now `spout()`: a coursed block with a cap, a slot and a trough on a corbel, and the fall two crossed see-through ribbons on an arc with a boil and rings. One inlet in the hall; the drain has thickness and is unchanged. Calls at the stand 196 before and after. Reader: "a wall-mounted stone fountain spout ... Not a flat card". Plain still (no moss, no carving). Its `audio` run did not finish (unconfirmed until the gate).
+- **S2 merged** (opus, 50 min; `briefs/v17/reports/issue-1722-sphere-east.md`): the owner's four.
+  - **The site: (292, 108)**, open moor north of the Noon Road at the east wall's foot, 69 to 77 m from the Noon Road, the Laid Sun and the Foundered Nave (the Noonwrights' own), 112 m from the Lonely Staircase. Seen lit from the valley at 140 m and from the Staircase's top; **not from the spawn** (the keep's walls and the Arcature stand between). The owner's link: `?pos=268,98&yaw=-1.97&pitch=0.2`. P56 now leaves the Staircase's trod P51. The story, the names table, the place, the map stand and the sound's position follow.
+  - **The collider** was one disc of the equator's radius (a walker stopped 3 m off on the uphill side): now 48 short walls where the glass meets the ground; stops from 12 directions 0.51 to 0.54 m body to glass.
+  - **The lines:** the lower stays crossed the man and the node's ended 0.15 m short; every line now ends on a fitting, computed from the keeper's and the node's constants.
+  - **The join:** a faceted lip (now a smooth heaped bank), the earth skin a quad above ground (held under), terrain through the bank on low (the bank lies on the drawn triangles), the bank's back culled from inside (two-sided), hill faces dipping into the glass (cut). **Left: a ragged pale edge seen through the glass from 2 m uphill on low**, cause unconfirmed; its reader: "jagged ... holes where the floor meets the glass".
+  - Its light at 300 m: 0.08 to 0.17 against the sun's disc at 1.2 to 3.1. Tests on its list green but `shore` tarn-north and **`audio`'s `act-bell-letters`**, both also red in F3's tree without its changes; walkers 19/20.
+- Five stray servers from removed worktrees killed today in all (8168, 8171, 8174, 8179, 8180).
+- In flight: F3 (`issue-1721-critic-fixes`, 8176): the critic's three, the shore row, the readout. Then the whole suite alone.
+
 **2026-11-17, 09:58 PST. The owner's unplaced fault is placed (the Garth's rill inlet): G1 dispatched. The readout gets height and yaw (F3).**
 
 - **The owner:** "visual bug screenshot again. x −26 z 316 facing N" (the Garth, by its door; the frame is `shots/wip/owner-v17-garth-rill-bug.png` in the deploy worktree): at the near end of a rill along the wall's foot, a white streaked flat card standing like a propped plank and two dark flat quads in the air above it; probably the water's inlet (a fall's sheet drawn as an opaque card, a mouth of bare planes). **G1 dispatched** (opus, `issue-1723-garth-rill`, 8179, 45 min; `src/v17/garth*` only).
