@@ -24,23 +24,23 @@ const SN = makeSimplex(WORLD.seed + 1603);
 
 // the fall: u runs from the waters (south-west) to the high ground (north-east)
 const UX = 0.45, UZ = -0.89, U0 = -100, U1 = 230;
-const RISE = 3.6; // metres at the top of the fall, give or take the swell's 1.2
+const RISE = 4.2; // metres at the top of the fall, give or take the swell's 1.2
 
 // the old strand: a bank of BANK metres across BANK_W metres of u, at u STRAND, wandering STRAND_WOB either way
-const STRAND = -22, STRAND_WOB = 13, BANK = 1.7, BANK_W = 4.5;
+const STRAND = -22, STRAND_WOB = 13, BANK = 2.0, BANK_W = 4;
 const STRAND_REACH = BANK_W + STRAND_WOB * 1.1; // (|noise2| < 1.1: tools/height-check.mjs asserts it)
 
 // the whalebacks: centre, the bearing toward the notch they point at, half-lengths up-ice (stoss) and down-ice (lee),
 // half-width, height
 const NOTCH = { x: 40, z: -320 };
 const BACKS = [
-  { x: -80, z: -112, stoss: 48, lee: 85, w: 24, h: 3.8 },
-  { x: -180, z: -128, stoss: 40, lee: 72, w: 28, h: 3.6 }, // under the Lynchets: its terraces climb its flank
-  { x: -128, z: -172, stoss: 34, lee: 60, w: 20, h: 3.0 },
-  { x: 168, z: -40, stoss: 50, lee: 88, w: 28, h: 3.4 }, // under the Bletting's hedges
-  { x: 136, z: -166, stoss: 30, lee: 55, w: 20, h: 2.8 },
-  { x: 70, z: -128, stoss: 30, lee: 52, w: 19, h: 2.6 },
-  { x: -10, z: -60, stoss: 26, lee: 48, w: 15, h: 2.0 },
+  { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },
+  { x: -180, z: -128, stoss: 45, lee: 80, w: 30, h: 4.8 }, // under the Lynchets: its terraces climb its flank
+  { x: -128, z: -176, stoss: 36, lee: 64, w: 22, h: 4.0 },
+  { x: 168, z: -40, stoss: 55, lee: 100, w: 30, h: 4.6 }, // under the Bletting's hedges
+  { x: 136, z: -168, stoss: 32, lee: 58, w: 22, h: 3.8 },
+  { x: 70, z: -128, stoss: 34, lee: 56, w: 21, h: 3.6 },
+  { x: -10, z: -60, stoss: 28, lee: 50, w: 16, h: 2.6 },
 ].map((b) => {
   const dx = NOTCH.x - b.x, dz = NOTCH.z - b.z, l = Math.hypot(dx, dz);
   const R = Math.max(b.stoss, b.lee, b.w);
