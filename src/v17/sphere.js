@@ -392,6 +392,78 @@ export async function build(ctx) {
       hoopAt.push({ x, z, y, r, fallen, gnd });
     }
   }
+  // ---- the works under the ground line (issue-1724, the owner: "something at bottom that hints at its purpose…
+  // for finding the edges where you can see the bottom of the sphere"). Seen only from the rim, looking down through
+  // the glass into the opened bowl: the line's mouth low in the glass on the Garth's side, its iris shutter turned
+  // shut, a long spindle from the node down to the shutter's gear (the wheel in his hands works it: he is holding
+  // it shut), and round its edge a crescent of noon still leaking out down the line toward the Garth, the little the
+  // garden lives on. A ladder down the glass from the ground line to the shutter, which he no longer climbs; and
+  // beside it, scratched into the glass's lime in rows going down, his tally of the noons he has kept. All in the
+  // parts' one draw; the leak glows by the baked noon (no light of its own), the rest dim (the noon falls on him,
+  // not down here)
+  {
+    const BR = new THREE.Color('#5c4a2c'), VERD = new THREE.Color('#4b6a55'), LIME = new THREE.Color('#9d9a86');
+    const rod = (a, b, r, color, glow) => { const A = new THREE.Vector3(...a), Bv = new THREE.Vector3(...b), d = Bv.clone().sub(A), len = d.length(); const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); put(B, new THREE.CylinderGeometry(r, r, len, 8, 1), new THREE.Matrix4().compose(A.clone().lerp(Bv, 0.5), q, new THREE.Vector3(1, 1, 1)), { color, jit: 0.05, glow }); };
+    const onGl = (d, inset) => [CX + d.x * (R - inset), CY + d.y * (R - inset), CZ + d.z * (R - inset)];
+    glowK = 0.3;
+    // the mouth: low on the Garth's side, 55 degrees under the horizon
+    const dS = new THREE.Vector3(fx * 0.57, -0.82, fz * 0.57).normalize();
+    const S0 = new THREE.Vector3(...onGl(dS, 0.05)), Mm = along(S0.toArray(), S0.clone().addScaledVector(dS, -1).toArray()).M; // its +z into the bowl
+    const MR = 2.0;
+    NP.collar(B, Mm, { r: MR + 0.12, t: 0.3, seg: 40, color: OLD, wear, band: false });                       // the mouth's ring, fused in the glass
+    put(B, new THREE.CylinderGeometry(MR + 0.05, MR + 0.25, 1.1, 32, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.55), Mm, { color: BR, jit: 0.05 }); // its bell, standing in
+    // the iris: eight bronze leaves turned shut, each overlapping the next, a crescent left open at the top of the mouth
+    const ML = Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 1.08));
+    for (let k = 0; k < 8; k++) {
+      const a = k / 8 * Math.PI * 2, lf = new THREE.BoxGeometry(2.1, 0.95, 0.04).translate(0.62, 0.42, k * 0.005);
+      put(B, lf, ML.clone().multiply(new THREE.Matrix4().makeRotationZ(a)).multiply(new THREE.Matrix4().makeRotationZ(-0.35)).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0)).multiply(new THREE.Matrix4().makeScale(k === 0 ? 0.86 : 1, 1, 1)), { color: k % 2 ? BR : VERD, jit: 0.08 });
+    }
+    // the leak: a crescent round one edge of the iris, white, and the conduit's throat behind it lit by it
+    glowK = 0;
+    put(B, new THREE.TorusGeometry(MR - 0.1, 0.09, 6, 32, 2.3).rotateZ(0.4), ML.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.03)), { color: new THREE.Color('#fff4dc'), glow: 3.6, jit: 0 });
+    put(B, new THREE.CircleGeometry(MR, 32), Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.3)), { color: new THREE.Color('#3a3226'), glow: 0.25, jit: 0 }); // the throat, dark past the leaves
+    glowK = 0.3;
+    // the spindle: from under the node, down to the iris's gear at its hub; the wheel's axle turns it
+    const hub = S0.clone().addScaledVector(dS, -1.2), top = new THREE.Vector3(NX, NY - 0.5, NZ);
+    rod([NX, NY - 0.45, NZ], top.toArray(), 0.12, BR); // the bevel box under the node
+    NP.collar(B, along([NX, NY - 0.3, NZ], [NX, NY - 1, NZ]).M, { r: 0.2, t: 0.08, seg: 14, color: BR, band: false });
+    rod(top.toArray(), hub.toArray(), 0.075, BR);
+    NP.collar(B, along(hub.toArray(), S0.toArray()).M, { r: 0.38, t: 0.12, seg: 20, color: VERD, band: false }); // the gear on the iris's ring
+    rod(hub.toArray(), S0.clone().addScaledVector(dS, -0.15).toArray(), 0.09, VERD);
+    // its bearings: three collars down the spindle, each held to the glass by a stay (an eye at both ends)
+    for (const t of [0.3, 0.55, 0.8]) {
+      const q = top.clone().lerp(hub, t), out = q.clone().sub(new THREE.Vector3(CX, CY, CZ)).setY(0).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), t * 2.1 - 1).setY(-0.15).normalize();
+      NP.collar(B, along(q.toArray(), hub.toArray()).M, { r: 0.14, t: 0.05, seg: 12, color: BR, band: false });
+      const oc = q.clone().sub(new THREE.Vector3(CX, CY, CZ)), bq = oc.dot(out), cq = oc.lengthSq() - (R - 0.02) ** 2, e = q.clone().addScaledVector(out, -bq + Math.sqrt(bq * bq - cq));
+      strand(B, new THREE.Matrix4(), q.clone().addScaledVector(out, 0.14).toArray(), e.toArray(), { t: 0.016 });
+      NP.collar(B, along(e.toArray(), [CX, CY, CZ]).M, { r: 0.1, t: 0.035, seg: 10, color: OLD, band: false });
+    }
+    // the ladder: down the glass beside the mouth, from the ground line to the iris's ring
+    const lb = Math.atan2(fz, fx) + 0.32, ladTop = (() => { for (let el = 0.4; el > -1.2; el -= 0.01) { const d = new THREE.Vector3(Math.cos(el) * Math.cos(lb), Math.sin(el), Math.cos(el) * Math.sin(lb)), p = onGl(d, 0); if (p[1] < gy(p[0], p[2]) - 0.15) return el; } return 0; })();
+    const ladBot = Math.asin(dS.y) + 0.02, LW = 0.24;
+    const ldir = (el, s) => { const az = lb + s * LW / (R * Math.cos(el)); return new THREE.Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)); };
+    const nSeg = 18;
+    for (const s of [-1, 1]) for (let k = 0; k < nSeg; k++) { const e0 = ladTop + (ladBot - ladTop) * k / nSeg, e1 = ladTop + (ladBot - ladTop) * (k + 1) / nSeg; rod(onGl(ldir(e0, s), 0.22), onGl(ldir(e1, s), 0.22), 0.045, BR); }
+    for (let el = ladTop - 0.03; el > ladBot; el -= 0.4 / R) rod(onGl(ldir(el, -1), 0.22), onGl(ldir(el, 1), 0.22), 0.035, BR);
+    for (const el of [ladTop - 0.02, (ladTop + ladBot) / 2, ladBot + 0.02]) for (const s of [-1, 1]) rod(onGl(ldir(el, s), 0.22), onGl(ldir(el, s), 0.02), 0.02, BR); // its brackets to the glass
+    // the tally: rows of fives scratched in the lime on the glass beside the ladder, going down, the lower rows newer
+    {
+      const tb = lb + 0.2, rows = 18, groups = 6;
+      for (let r = 0; r < rows; r++) {
+        const el = ladTop - 0.06 - r * 0.7 / R; if (el < ladBot + 0.05) break;
+        for (let g = 0; g < groups; g++) {
+          if (r === rows - 1 && g > 3) break;
+          for (let k = 0; k < 5; k++) {
+            const az = tb + (g * (0.62 + 0.12 * h1(r * 13 + g)) + k * (0.09 + 0.03 * h1(r * 5 + g * 3 + k))) / (R * Math.cos(el)), d0 = new THREE.Vector3(Math.cos(el + 0.27 / R) * Math.cos(az), Math.sin(el + 0.27 / R), Math.cos(el + 0.27 / R) * Math.sin(az)), d1 = new THREE.Vector3(Math.cos(el - 0.27 / R) * Math.cos(az), Math.sin(el - 0.27 / R), Math.cos(el - 0.27 / R) * Math.sin(az));
+            const slash = k === 4, a0 = slash ? new THREE.Vector3(Math.cos(el + 0.24 / R) * Math.cos(az - 0.42 / (R * Math.cos(el))), Math.sin(el + 0.24 / R), Math.cos(el + 0.24 / R) * Math.sin(az - 0.42 / (R * Math.cos(el)))) : d0;
+            if (h1(r * 31 + g * 7 + k) < 0.12) continue; // (worn off in places)
+            rod(onGl(a0, 0.03), onGl(d1, 0.03), 0.018, LIME, 0.12);
+          }
+        }
+      }
+    }
+    glowK = 1;
+  }
   add(new THREE.Mesh(B.geometry(), umat('sphere-parts', { roughness: 0.55, side: THREE.DoubleSide })), 'sphere-parts');
 
   // ---- the bank: where the glass meets the ground, a low heaped bank of earth and heather laid round it on the drawn
