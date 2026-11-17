@@ -224,6 +224,20 @@ export async function build(ctx) {
   }
   scene.add(BM);
   writeAll();
+  // each slab mesh bounded by every place its slabs can be, laid in the stair or lying on the turf (a slab moves only
+  // up and down between the two, turned edge-on in flight: its half-diagonal and a metre round it), so three culls it
+  // out of view and out of the shadow box like anything else (v16-P1: drawn unculled, its seven calls went everywhere)
+  const _b = new THREE.Box3(), _p = new THREE.Vector3();
+  function bound(m, list) {
+    _b.makeEmpty();
+    for (const e of list) {
+      const s = Math.hypot(e.hw, e.hd) + 1, y0 = Math.min(e.y, e.rest ? e.rest.y : e.y), y1 = Math.max(e.y, e.rest ? e.rest.y : e.y);
+      _b.expandByPoint(_p.set(e.cx - s, y0 - s, e.cz - s)); _b.expandByPoint(_p.set(e.cx + s, y1 + s, e.cz + s));
+    }
+    if (_b.isEmpty()) return;
+    m.boundingSphere = _b.getBoundingSphere(new THREE.Sphere()); m.frustumCulled = true;
+  }
+  bound(TR.m, TR.list); for (const LA of LAS) bound(LA.m, LA.list); bound(KM, kerbs.map((k) => k.e));
 
   const GL = new Float32Array(N); // the ember's glow per element
   // ------------------------------------------------------------------ the stub, the dust, the top

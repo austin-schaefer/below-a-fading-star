@@ -14,13 +14,14 @@
 // mid-ride; the second pillow on a return visit after a ride. Each check prints PASS or
 // FAIL. Renders (1280 x 720, the phone 390 x 844) into shots/wip/acts-halt2-*.png; SHOTS=0 skips them.
 // Usage: node tools/acts-test.mjs [base]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const shots = process.env.SHOTS !== '0';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const errors = [];
 let fails = 0, passes = 0;
 const check = (name, ok, info) => { if (ok) passes++; else fails++; console.log(ok ? 'PASS' : 'FAIL', name, ok || info === undefined ? '' : JSON.stringify(info)); };

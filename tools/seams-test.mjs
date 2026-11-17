@@ -25,6 +25,7 @@
 // SEAMS_JSON=path writes every cluster; SEAMS_PROBE=x,y,z[;x,y,z] prints the floor there and what is drawn within a metre (by
 // mesh name), to read a finding by; SEAMS_TOP=n lists n of each kind. About two minutes.
 //   node tools/seams-test.mjs [base=http://localhost:8123]
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 let chromium;
@@ -32,7 +33,7 @@ try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 const BASELINE = new URL('./seams-baseline.json', import.meta.url), Q = process.env.SEAMS_Q || 'medium';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];

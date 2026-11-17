@@ -8,12 +8,13 @@
 // slabs); nothing stands across any track; P13 walked on foot to the canyon rim's ends; no gnomon stands on a tread;
 // the gnomons' cost (draw calls, triangles).
 // Usage: node tools/roads-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];
@@ -179,7 +180,7 @@ const res = await page.evaluate(async () => {
   // second distinct point is on the other side), so a walker who follows the track arrives facing up the way
   // ways down not yet given a track to their foot, each with why (listed for the agent who owns the place)
   const LAPPET = 'a way inside the Lappet (v15): come to by the village\'s own paved lanes (src/v15/plan.js LANES), not by a track; P9 and P41 end at the Heliarch stair\'s foot';
-  const FEET_OPEN = { 'heliarch-head-east': LAPPET, 'heliarch-head-west': LAPPET, 'heliarch-upper': LAPPET, 'timber-patch': LAPPET, 'noon-main': LAPPET, 'rungs-ladder': LAPPET, 'rungs-mid-1-stair': LAPPET, 'rungs-mid-2-stair': LAPPET, 'rungs-mid-3-stair': LAPPET, 'rungs-mid-7-stair': LAPPET, 'rungs-low-3-stair': LAPPET, 'rungs-gullet': LAPPET, 'rungs-tenter': LAPPET, 'quarrels-stage': LAPPET, 'new-house-ladder': LAPPET, 'lane-bridge': LAPPET, 'lees-stair': LAPPET, 'pennyworth-ramp': LAPPET, 'pit-stair': 'the Pit\'s stair is come to from its head (the trod P54 ends at its landing on the lip, v15-F1); its foot stands on the Pit\'s floor, where no track runs', 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
+  const FEET_OPEN = { 'heliarch-head': LAPPET, 'heliarch-upper': LAPPET, 'timber-patch': LAPPET, 'noon-main': LAPPET, 'rungs-ladder': LAPPET, 'rungs-mid-1-stair': LAPPET, 'rungs-mid-2-stair': LAPPET, 'rungs-mid-3-stair': LAPPET, 'rungs-mid-7-stair': LAPPET, 'rungs-low-3-stair': LAPPET, 'rungs-gullet': LAPPET, 'rungs-tenter': LAPPET, 'quarrels-stage': LAPPET, 'new-house-ladder': LAPPET, 'lane-bridge': LAPPET, 'lees-stair': LAPPET, 'pennyworth-ramp': LAPPET, 'pit-stair': 'the Pit\'s stair is come to from its head (the trod P54 ends at its landing on the lip, v15-F1); its foot stands on the Pit\'s floor, where no track runs', 'coffin-road': 'the Sexton\'s stair down into the Nave (v14-D0), its head on the rim 42 m from P22\'s end: the Nave\'s own brief' };
   const feet = [];
   for (const a of fp.ascents?.list || []) {
     if (a.test) continue;

@@ -10,13 +10,14 @@
 //   node tools/ladder-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [prefix=v15-W2-ladders] [ids=all|a,b]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-<ladder>-NN-<what>.png in order. Prints each ladder's climb as it goes and
 // a last line `climbed: n of m`; exits 1 unless every ladder went up and came down.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', mode = 'keys', q = 'low', prefix0 = 'v15-W2-ladders', ids0 = 'all'] = process.argv.slice(2);
 const prefix = `${prefix0}-${mode}-${q}`, touch = mode === 'touch';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);

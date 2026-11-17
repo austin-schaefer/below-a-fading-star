@@ -16,6 +16,7 @@
 // Usage: node tools/pan-test.mjs "<url>" [max ratio, default 3] [json out]
 // With pos= in the url it runs that one spot as station A; without, both stations at the url's other params
 // (default ?q=medium&perf=1&adapt=0).
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let chromium;
@@ -30,7 +31,7 @@ const STATIONS = new URL(arg).searchParams.has('pos')
     { name: 'A', url: at('-190,165', 0), turns: [{ by: 2 * Math.PI, ms: 6000 }, { by: 2 * Math.PI, ms: 6000 }] },
     { name: 'B', url: at('-195,128', 0), turns: [{ by: 3.9, ms: 3250 }], window: [3.5, 3.9] },
   ];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)] || 0; };
 const dump = [];
 let allOk = true;

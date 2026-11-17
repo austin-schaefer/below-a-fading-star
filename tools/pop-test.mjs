@@ -12,6 +12,7 @@
 // Rows { id, owner, target, value, pass, gate }: the process exits 1 only when a gated row fails; every row prints.
 // Groups (--only): uploads (gated), pacing, trees, fungi, plants, rocks, shadow, aliasing. routes adds the other
 // walks to the full run's numbers. --save-baseline keeps the first baseline pair as shots/wip/v6-01-baseline-{a,b,diff}.png. Writes shots/perf/v6-pop-<label>.json.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { mkdirSync, mkdtempSync, writeFileSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -35,7 +36,7 @@ const t00 = Date.now();
 const rows = [], extra = { routes: {}, seqs: {} };
 const row = (id, owner, target, value, pass, gate = false, detail) => { rows.push({ id, owner, target, value, pass: !!pass, gate, ...(detail ? { detail } : {}) }); };
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'metal'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const common = `q=${Q}&perf=1&adapt=0&wind=0`;
 
 // ---- the page-side kit, installed once per page (a string: it runs in the browser)

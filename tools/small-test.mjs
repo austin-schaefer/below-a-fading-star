@@ -6,12 +6,13 @@
 // past 0.85; 240 gnats a column at high and 120 at low (v7.1; 180 and 90 before). Cost: stats() within 5 draws and 5k triangles, no lights, and the
 // module's CPU.
 // Usage: node tools/small-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 page.setDefaultTimeout(600000);
 const errors = [];
@@ -134,7 +135,7 @@ r.cpu = await page.evaluate(() => window.__fp.perf.report().cpu.modules['living-
 await browser.close();
 
 // ---- low: the gnat count (a second load of the module alone)
-const b2 = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const b2 = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p2 = await b2.newPage({ viewport: { width: 640, height: 360 } });
 p2.setDefaultTimeout(600000);
 p2.on('pageerror', (e) => errors.push(e.message));

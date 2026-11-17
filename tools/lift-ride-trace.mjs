@@ -15,13 +15,14 @@
 // Frames: shots/wip/<prefix>-NN-<what>.png at the press and every `every` seconds of the page's clock.
 //   node tools/lift-ride-trace.mjs [base=http://localhost:8123] [q=low] [prefix=lift-trace] [throttle=1] [every=8]
 // Writes the trace to shots/wip/<prefix>-trace.json.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let pw;
 try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', q = 'low', prefix = 'lift-trace', throttle = '1', every = '8'] = process.argv.slice(2);
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);
