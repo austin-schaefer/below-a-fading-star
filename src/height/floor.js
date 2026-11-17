@@ -277,6 +277,12 @@ export function floorLift(x, z) {
   return f > 0 ? m * f : 0;
 }
 
+// true within `m` metres of a pool's widest reach (the reeds' stands: src/vegetation/plants.js); false under ?floor=v15
+export function nearPool(x, z, m) {
+  if (OFF) return false;
+  for (let i = 0; i < POOLS.length; i++) { const p = POOLS[i]; if (p.y !== null && x > p.wetBox[0] - m && x < p.wetBox[1] + m && z > p.wetBox[2] - m && z < p.wetBox[3] + m) return true; }
+  return false;
+}
 // the pools' ground: the bowl under the level, the bank cut down to it, the lip raised to hold it (h is the ground
 // with the lift; pools lie only where the mask is 1, so a protected place never sees this)
 function poolGround(h, x, z) {
