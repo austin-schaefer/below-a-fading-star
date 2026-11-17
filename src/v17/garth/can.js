@@ -29,11 +29,11 @@ export function buildCan(B) {
   }
   B.beam(M(-0.6, 1.2, 0), M(-0.9, 1.0, 0), 0.035, BRASS, 0.04); B.beam(M(-0.9, 1.0, 0), M(-0.88, 0.5, 0), 0.035, BRASS, 0.04); B.beam(M(-0.88, 0.5, 0), M(-0.6, 0.35, 0), 0.035, BRASS, 0.04);
   // the spout: from low on the body up and in over the rill, the rose at its end
-  const root = M(0.5, 0.3, 0), rose = rosePoint();
+  const root = M(0.55, 0.35, 0), rose = rosePoint();
   const mid = [(root[0] + rose[0]) / 2, (root[1] + rose[1]) / 2, (root[2] + rose[2]) / 2];
-  const sp = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(...root), new THREE.Vector3(mid[0], mid[1] + 0.1, mid[2]), new THREE.Vector3(...rose)), 10, 0.07, 8, false);
+  const sp = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(new THREE.Vector3(...root), new THREE.Vector3(mid[0], mid[1] - 0.12, mid[2]), new THREE.Vector3(...rose)), 12, 0.085, 8, false);
   B.geo(sp, new THREE.Matrix4(), BRASS, 0.04);
-  const head = new THREE.CylinderGeometry(0.16, 0.08, 0.14, 14);
+  const head = new THREE.CylinderGeometry(0.21, 0.09, 0.18, 14);
   const dir = new THREE.Vector3(rose[0] - mid[0], rose[1] - mid[1] - 0.05, rose[2] - mid[2]).normalize();
   B.geo(head, new THREE.Matrix4().compose(new THREE.Vector3(...rose), new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir), new THREE.Vector3(1, 1, 1)), BRASS_W, 0.04);
   return { x, z, rose };
@@ -41,5 +41,5 @@ export function buildCan(B) {
 // the rose's face, over the inner rill
 export function rosePoint() {
   const [x, z] = at(RILL.inner + 0.02, CAN.b);
-  return [x, FLOOR + 1.12, z];
+  return [x, FLOOR + 1.4, z];
 }

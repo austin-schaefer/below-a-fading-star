@@ -92,10 +92,10 @@ export function waterMesh(chans, drip) {
         float r = length(vW.xz - uNoonA.xz);
         float inBeam = 1.0 - smoothstep(uNoon.y - 0.15, uNoon.y + 0.15, r);
         // the water's own: dark, a little of the dome's dim gold on it, more near the light; the noon glinting in the beam
-        vec3 col = vec3(0.025, 0.035, 0.04) + uNoonCol * (0.05 + 0.12 * exp(-max(0.0, r - uNoon.y) / 4.0)) * (0.6 + 0.6 * st);
+        vec3 col = vec3(0.02, 0.03, 0.035) + uNoonCol * (0.02 + 0.05 * exp(-max(0.0, r - uNoon.y) / 4.0)) * (0.5 + 0.9 * st);
         col += uNoonCol * inBeam * (0.25 + 1.6 * pow(st, 4.0)) * uNoon.x / 2.6;
         // the edges, where it meets the kerb, a thin bright line moving
-        col += uNoonCol * 0.08 * smoothstep(0.75, 1.0, abs(v)) * (0.5 + st);
+        col += uNoonCol * 0.035 * smoothstep(0.8, 1.0, abs(v)) * (0.5 + st);
         // the fall: paler, broken
         if (vF.w > 0.5) col = mix(col, uNoonCol * (0.18 + 0.3 * st), 0.6);
         // where the can drips: rings spreading from the drop (uDrip: x, z, its age, on)
