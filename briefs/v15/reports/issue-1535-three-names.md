@@ -1,0 +1,6 @@
+# issue-1535-three-names (v15-N2): the village has three names
+
+Removed: `lappetCrown`, `lappetRungs`, `lappetLees`, `lappetFoot` (the Quarrels, Rungs, Lees, Pennyworth) and `tenders` (the Tender's Round) from LANDMARKS in `src/world.js`. Added `smokingSaint` (feet 16 to 21.5) and `fountainNoon` (feet 2 to 4.6) cards, no `line`, `map: false` (the settings map keeps its two entries from `VILLAGE_PLACES`). `over: true` (new; `src/hud.js`, one line) makes a small card win over the Lappet's broad one. The Hanging Croft's card now holds to 160 m so the tender's ladder top (the class check in settings-test: every way up ends named) is named by the Croft.
+Other places a name reached a visitor: none found. Signs carry no lettering, no act offers a name, story files are not shown; module toggles in the debug panel keep module ids (debug only). Plan, code and comments keep the names as identifiers.
+Tests: `ONLY=village-plan,regions,village,walk,loading,settings`: village-plan 7, regions 56, village 687, walk 13, loading 28, settings 86 (first settings run failed one check, the ladder's top; fixed and rerun alone: 86/86; regions rerun 56).
+Frames (shots/wip, untracked): `n2-keep-1.png` The Lappet (walked in from the crown's west end), `n2-keep-2.png` The Smoking Saint, `n2-houseB-4.png` The Fountain of Noon; each card rises once.
