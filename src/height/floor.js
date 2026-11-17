@@ -57,14 +57,18 @@ const CHAN = [[138, -203, 0], [138, -198, 0.6], [137, -190, 1.8], [136, -181, 2.
 const CHAN_W = 9, CHAN_BOX = [100, 154, -214, -158];
 function chanCut(x, z) {
   if (x < CHAN_BOX[0] || x > CHAN_BOX[1] || z < CHAN_BOX[2] || z > CHAN_BOX[3]) return 0;
-  let best = Infinity, cut = 0;
+  // the deepest of the segments' cuts, each fading out over CHAN_W (the nearest segment's alone stepped up to 0.3 m
+  // where two of a bend's segments are equally near with different depths)
+  let cut = 0;
   for (let i = 0; i < CHAN.length - 1; i++) {
     const a = CHAN[i], b = CHAN[i + 1], ex = b[0] - a[0], ez = b[1] - a[1];
     let t = ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez); t = t < 0 ? 0 : t > 1 ? 1 : t;
     const dx = x - a[0] - ex * t, dz = z - a[1] - ez * t, d = dx * dx + dz * dz;
-    if (d < best) { best = d; cut = a[2] + (b[2] - a[2]) * t; }
+    if (d >= CHAN_W * CHAN_W) continue;
+    const c = (a[2] + (b[2] - a[2]) * t) * (1 - smoothstep(3, CHAN_W, Math.sqrt(d)));
+    if (c > cut) cut = c;
   }
-  return best >= CHAN_W * CHAN_W ? 0 : cut * (1 - smoothstep(3, CHAN_W, Math.sqrt(best)));
+  return cut;
 }
 const BACKS = [
   { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },

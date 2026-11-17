@@ -123,7 +123,7 @@ export function hexCellsIn(x0, z0, x1, z1, fn) {
 export function pinSpot(env, L, size, o = {}) {
   const T = env.ctx.terrain;
   const taken = env.taken || (env.taken = []);
-  if (L && T.slopeAt(L.x, L.z) <= (o.slope ?? 0.8) && T.heightAt(L.x, L.z) >= -2.2) {
+  if (L && T.slopeAt(L.x, L.z) <= (o.pinSlope ?? o.slope ?? 0.8) && T.heightAt(L.x, L.z) >= -2.2) { // (pinSlope: the pinned spot's own limit, else the search's)
     taken.push([L.x, L.z, size]);
     return { x: L.x, z: L.z };
   }

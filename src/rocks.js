@@ -266,9 +266,12 @@ export async function build(ctx) {
       classes[cls].push(it);
     }
     // Tors: a few stacked outcrops as landmarks of the open moor
+    // (v16: each tor draws from its own stream, so a change to the ground anywhere upstream of it no longer reshapes it:
+    // the floor's merges took the keep's tor at (90, 60) from four boulders to one and to seven)
     const tors = [[-110, -110], [90, 60], [-40, 80], [160, 10], [-230, 30], [20, -120], [-120, 200], [120, -180]];
     for (const [tx, tz] of tors) {
       if (!allowed(tx, tz) || (ctx.regions && !ctx.regions.stoneAt(tx, tz).tors)) continue;
+      const rng = ctx.makeRng(4100 + tors.findIndex((t) => t[0] === tx && t[1] === tz));
       const count = 6 + Math.floor(rng() * 5);
       for (let k = 0; k < count; k++) {
         const ang = rng() * Math.PI * 2, d = rng() * 5;
