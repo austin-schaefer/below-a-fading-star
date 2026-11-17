@@ -29,6 +29,9 @@ const ISLES = [
 ];
 export const FEN_EDGE = radialOutline({
   x: L.x, z: L.z, r: 54, seed: 1605, K: 12, amp: 0.15, falloff: 1.0,
+  // sd exact out to 72 m past the widest shore: the floor's protection of the fen (src/height/floor.js fenProt) reads it to
+  // FEN_KEEP + 36 = 72; past `far` sd is only the lower bound rho - rMax, and the lift stepped 0.4 m where the two met
+  far: 72,
   lobes: [
     // the fingers, along the low lines (tapered capsules); everything stays inside the water's disc (WATER.fen.r 80)
     { bearing: 284, d: 46, r: 9, k: 9, to: { bearing: 281, d: 76, r: 2.2 } },   // west, toward the tarn
