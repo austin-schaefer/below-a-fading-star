@@ -35,3 +35,46 @@ The survey's plan, with these changes: the High Ling box split in two; skirts wa
 ## Baseline rows I would re-record (after L2 and the fen)
 
 `seams` ceiling; `geometry` rows for v14-passage, v12-stair, v12-icefall, house, strake, lappet-lees, lappet-pennyworth, lappet-pennyworth-market.
+
+## Round two (L4, the floor reads; and the cold review's findings), 2026-11-17
+
+### What changed
+
+- `src/height/floor.js`: heightAt calls `floorGround(h, x, z)` (the lift, then the pools; one line in `field.js`).
+  - **Pools** (`POOLS`, on `radialOutline`): the kettle (-68, -82, r 16, level 1.6), the west kettle (-118, -104, r 12, 5.6), and a pond 40 m long ponded behind the old strand's ridge (-94, -42.5, 5.6). Each has a bowl, a bank cut down to it and a lip raised to hold it; levels measured on the ground with the pool off. Rows in `WATER_BODIES` (waterLevelAt, the reeds, wading); drawn by `src/water/pools.js` as one mesh in the tarn's own material (no new program; +1 draw call only while a pool is in view; 3 x 561 vertices on low).
+  - **`floorCharacter(x, z)`**: wet (the low west and south, the strand's foot, the kettles, the pools' margins), bleak (the whole fall pales toward its top; the whalebacks' crests), lee (their down-ice tails: ling), stone (the high north-east), strand (a pale shingle band 15 m wide on the bank), shore (the pools). `biomeWith` returns it; the bake paints it and puts the wet into `aWet` (darker, a sheen); the cover reads it (rushes on wet, ling on lees, thin bleached grass on crests); the rocks read it after their draws (no other rock moves: wet ground loses its stones, stony ground's grow); the height tape keeps the five new fields. No new attribute, texture or draw call for the paint.
+  - **Bolder:** the strand's bank 3 m where nothing protected is within 60 m. A bolder rise by the north-east wall (to 8 m) was tried and dropped: that ground is the Bletting's, which rode 8 m up and broke roads-test (P7, a Bletting collider on its tread).
+- **The review's findings:**
+  1. (blocking) The Wellward Way is a protected line (`LINES`, R 14, the Nave's door to the Pit, the Laid Sun on it); `v14-passage` is now clean. Its one new row in round one was an ashlar the scatter laid half into the hall at the Nave's south door (ground there bit-identical); `structures/scatter.js` now clears the door after its draws.
+  2. The Sunken Court is a protected circle (r 58).
+  3. The skirts' closed hollows: each now has its old drain, a protected line laid along the v15 drainage from the hollow (court, below High Ling and the Nave, the Lappet's east and north-east feet, High Ling's south foot, the Lynchets' feet, the keep's west skirt). From above they are dry channels between the lifted ground. Guarded: `outline-test` runs a priority flood (`tools/floor-flood.mjs`) of v16 against `floor=v15` and fails on any hollow 0.3 m deeper at a skirt. R2's start is back at (214, 76) (the dip is gone at its cause); the `dropped` guard in `routes.js`/`paths.js` and its paths-test row stay (two lines each).
+  4. The Nave's box starts at x 215: no lifted strip between it and High Ling's.
+  5. and part 4, the Lynchets: the floor's bank and the whaleback under them bent their terraces' wave (read off the height) and so the walls; hop's first pick walked off a wall that bent. The Lynchets are protected now and their whaleback is gone; L1's two hop-test filters are reverted, and hop passes on its original picks.
+  6. `routes.js`: the dropped-rivulet guard only; `paths.js`: one field.
+- Also: the heights rig's site (210, 0) is protected (its beam's edge-guard row failed on the new ground); a tree no longer grows through the Collation's table end (`collationTreeClear` in `hiddenAt`, after the draws).
+- Docs: `modules.md` (floorGround, LINES, POOLS, floorCharacter, how to protect a place and fix the hollow it leaves; `water/pools.js`), `runtime.md` (what `floor=v15` takes back). Views: `tools/views-v16-L4.json`.
+
+### Tests (port 8163, `SHOT_ANGLE=metal nice -n 10`, at the tip)
+
+- `ONLY=outline,village-plan,village,paths,roads,dressing,strata,hop,walk,heights,regions,rocks,perf,geometry,seams tools/suite.sh 8163`: outline 26, village-plan 7, village 687, paths 86, dressing 22, strata 8, hop 25, walk 13, heights 203, regions 56, rocks 38, perf 29 PASS lines, all ok. roads 62 PASS / 2 FAIL: P17 at (-30, 84) and P23 at (-160, 118..123) wet and steep at the tarn's new shore; `waterLevelAt` and `heightAt` there are identical under `floor=v15`, so it is L2's shore (on `next`), not the floor. seams FAIL ceiling {seam 64, off 415, ghost 227} vs {64, 344, 228}. geometry 120 PASS, rows below.
+- `node tools/height-check.mjs check shots/wip/hc-L4-floor_v15.bin --params=floor=v15` (recorded at 0a45810, this branch before round two): 28 PASS 0 FAIL; `pure` 11, `purebake` 16 PASS (at 553b6a1).
+- Bench (`height-check bench`, while a suite ran: noise): heightAt 11.1 µs v16 vs 8.6-65 µs v15 in the same minutes; no claim either way. Perf (low): 173-315 calls over the route, as the gate's own limits pass.
+- Geometry's new rows, one by one: every one is at ground bit-identical to v15 (mask 0) except the Pit stair's, 0.006 m off. None is a thing floating or buried because the floor moved: they are scatter, rock and pebble draws that the whole-map rng moved (the ground changed slopes elsewhere): `v14-pit-stair` a `structures-wide` piece sunk at (174.3, 179.9); `v12-stair` a `structures-wide` piece's back and a tread under it at (259.8, -38.8 / -30.4) (High Ling, mask 0); `v12-lift-lower` a pebble at (-305.5, -15.3); `v12-icefall` a pebble and five terrain backs at (58-66, -305) (past r 300); `house` two taverna backs (89, -35 / 92, -54); `lappet-lees`, `lappet-pennyworth-skirts` an ashlar and a drum by (111, 3). `v14-passage` is clean.
+- **Rows to re-record** (the orchestrator, once): `seams` ceiling; `geometry` for v14-pit-stair, v12-stair, v12-lift-lower, v12-icefall, span-east-stairs, house, strake, lappet-lees, lappet-pennyworth, lappet-pennyworth-market, lappet-pennyworth-skirts.
+
+### Frames (`shots/wip/`)
+
+Before: the deploy worktree's `v16-before-*`. After: `v16-L4-r3-{stair-top-ne-floor,stair-top-tarn,crown-north-glacier,air-floor-west,air-floor-northeast,air-valley-down}.png` (r3 is the paint and pools as they stand; later rounds changed only protection and drains). Ground and low air at a low sun: `v16-L4-r4-{g-kettle,g-strand-pond,g-whaleback-crest,g-drain,air-pools}.png`, and the same stands under `floor=v15`: `v16-L4-v15-*`. Look first at `v16-L4-r3-air-floor-west`, then `v16-L4-r4-air-pools`.
+
+Blind helpers (sonnet, unlabelled, shuffled): round r2, 2 of 6 right (it picked "B" every time); round r3, 2 of 6 right. Only `air-floor-west` was picked with confidence, for "an irregular pond plus several smaller pools, ridged relief with banding". **The brief's done-condition is not met.**
+
+### What is still weak
+
+- From the high stands the paint barely reads: haze and dusk light flatten mid-tones, and most of the high north-east is the Bletting, High Ling and the Outwash, whose own paint wins. The pools read from the low air (`air-pools`, `air-floor-west`); from the stair's top they are out of frame or too small.
+- The strand's pond sits behind its ridge: from the ground below the strand it cannot be seen (`g-strand-pond`).
+- One dry kettle hole on open floor, 1.9 m deep at (138, -202), by the Plinth Road: allowed by the new outline-test row (under 2.5 m), not given water.
+- The kettle's lip on its north side stands about 1 m over the ground beyond it (a perched pond).
+
+### Defaults taken
+
+Pools carved in `floorGround` with absolute levels, not by raising the kettles' rims; drains as protected lines along v15's drainage, not new channels; no new baked attribute (`aWet` and the colour carry the paint); the bolder north-east rise dropped; the Lynchets, the court and the heights rig protected rather than reshaped.
