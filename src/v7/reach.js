@@ -21,6 +21,7 @@
 // ?reach=0 compiles both chunks out (the shaders are exactly as before); ?reach=mask paints the glow red, to check
 // where it lies (also __fp.reach.mask(true)). ctx.reach = { uniforms, profile, plumeAt(u), gainAt(flicker), mouth, ... }.
 import * as THREE from 'three';
+import { fenShoreDistance } from '../height/fen.js'; // v16 L3: the fen's edge, where the mouth is
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 const MODE = Q.get('reach');
@@ -74,16 +75,16 @@ export const gainAt = (flicker) => 1 + REACH.gain * (1 - Math.max(0, Math.min(1,
 let state = null;
 function ensure(ctx) {
   if (state) return state;
-  const RV = ctx.terrain.river, fen = ctx.water.fen, prof = reachProfile(RV);
+  const RV = ctx.terrain.river, prof = reachProfile(RV);
   const data = new Uint8Array(REACH.n * 4);
   for (let i = 0; i < REACH.n; i++) { const v = Math.round(prof.G[i] * 255); data[i * 4] = v; data[i * 4 + 1] = Math.round(prof.src[i] * 255); data[i * 4 + 3] = 255; }
   const tex = new THREE.DataTexture(data, REACH.n, 1, THREE.RGBAFormat);
   tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
   tex.needsUpdate = true; tex.name = 'reach-profile';
-  // the mouth: where the ribbon gives itself to the fen (its fade's middle, r + 1 from the fen's centre)
+  // the mouth: where the ribbon gives itself to the fen (its fade's middle, 1 m outside the fen's edge)
   const L = RV.line;
   let mi = L.n - 1;
-  for (let i = 0; i < L.n; i++) if (Math.hypot(L.X[i] - fen.x, L.Z[i] - fen.z) < fen.r + 1) { mi = i; break; }
+  for (let i = 0; i < L.n; i++) if (fenShoreDistance(L.X[i], L.Z[i]) < 1) { mi = i; break; } // v16 L3: the fen's edge
   const a = Math.max(0, mi - 2), b = Math.min(L.n - 1, mi + 2), tl = Math.hypot(L.X[b] - L.X[a], L.Z[b] - L.Z[a]) || 1;
   const mouth = { x: L.X[mi], z: L.Z[mi], s: L.S[mi], tx: (L.X[b] - L.X[a]) / tl, tz: (L.Z[b] - L.Z[a]) / tl, g: prof.at(L.S[mi]), hw: RV.halfWidthAt(L.S[mi]) };
   const P = REACH.plume;

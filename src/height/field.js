@@ -9,11 +9,12 @@ import { tarnHeight, tarnWet, tarnBasin, tarnShoreDistance, tarnShelf, TARN_REAC
 import { WORLD, LANDMARKS, WATER, CAUSEWAY_V4 } from '../world.js';
 import { mapHeight } from '../v4/paths/ground.js'; // v4 map: the pit, the taller fall's face, the runnels' cuts
 import { applyMountains, M_START } from '../v4/mountains.js'; // v4 systems: the walls
-import { regionsHeight, regionsCoarse } from './regions.js'; // v4 systems: the regions' hooks
+import { regionsHeight, regionsCoarse, woodRag } from './regions.js'; // v4 systems: the regions' hooks
 import { lappetGround } from '../v15/plan.js'; // v15: the Lappet's crown and foot
 import { spanGround } from '../v4/span/plan.js'; // v4: the Great Span's marked blocks
 import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glacier.js'; // v4 regions: the glacier rebuilt
 import { padGround } from './pads.js';
+import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance } from './fen.js'; // v16 L3: the fen on the edge
 
 const SX = makeSimplex(WORLD.seed);
 const SY = makeSimplex(WORLD.seed + 77);
@@ -195,7 +196,6 @@ for (let i = 0; i < RIVER_LINE.n; i++) {
   RIM_DW[i] = R_HW(s) + R_BANK(s) + rim / R_K(s);
 }
 const _rq = { hit: false }, _gq = { hit: false }, _bw = { bl: 0, br: 0 };
-const FEN = LANDMARKS.fen;
 // The river's cross-section at a point: carved height of the channel (Infinity where nothing is cut)
 // and the raised spur the canyon runs through (-Infinity where nothing is raised).
 const _cs = { cut: Infinity, raise: -Infinity, s: 0, d: 0, W: 0, hw: 0, bank: 0, inRiver: false, gully: false, shingle: 0, slow: 0 };
@@ -224,8 +224,8 @@ function riverSection(x, z, out = _cs) {
     out.inRiver = dd < hw + Bc + 0.6;
     out.shingle = (1 - smoothstep(hw + Bc - 0.2, hw + Bc + 0.8, dd)) * (1 - smoothstep(85, 100, s));
     out.slow = smoothstep(70, 92, s) * (1 - smoothstep(hw + Bc, hw + Bc + 4, dd));
-    // deep in the fen the fen's own shaping holds
-    const mf = smoothstep(52, 66, Math.hypot(x - FEN.x, z - FEN.z));
+    // deep in the fen the fen's own shaping holds (v16 L3: by the fen's edge, src/height/fen.js)
+    const mf = fenRiverKeep(x, z);
     if (mf < 1) out.cut += (1 - mf) * 40;
   }
   // the raised spur the canyon cuts through: its top is a distance-weighted blend of the rim heights
@@ -367,16 +367,8 @@ export function heightAt(x, z) {
   // (v16 L2: a shelving shore keyed on the edge's sd, src/v4/tarn.js: bays, a point, an inlet, a shallows, a steep bank)
   if (!beyond(h, x, z, L.tarn.x, L.tarn.z, TARN_REACH)) h = tarnBasin(h, x, z, SX.noise2(x * 0.05, z * 0.05), SX.noise2(x * 0.03, z * 0.03));
   h = tarnHeight(h, x, z); // v4 regions: the south bay and the shingle spit (src/v4/tarn.js)
-  // Fen: broad, flat, pocked with pools
-  if (!beyond(h, x, z, L.fen.x, L.fen.z, 115)) {
-    const d = Math.hypot(x - L.fen.x, z - L.fen.z);
-    h = flatten(h, x, z, L.fen.x, L.fen.z, 70, 45, L.fen.y);
-    const inFen = 1 - smoothstep(60, 85, d);
-    if (inFen !== 0 || h === 0) {
-      const pools = SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
-      h -= inFen * (smoothstep(0.05, 0.45, pools) * 2.2 + 0.3);
-    }
-  }
+  // Fen: broad, flat, pocked with pools; v16 L3: on its edge, ragged, fingered, islanded (src/height/fen.js)
+  h = fenHeight(h, x, z);
   // Orchard terraces: faint steps, soft ones. Every 1.2 m of the moor's rise lies flatter (a tread) then steeper (a
   // bank): a wave of 0.3 of the rise, continuous, so the walker's feet follow the drawn ground (v15-W5: a floor() here
   // stood a 0.84 m cliff in heightAt every 1.2 m of rise that the 2-3 m mesh drew as a slope, and the walker jumped it
@@ -449,16 +441,15 @@ function biomeWith(x, z, h, slope, rv) {
   const r = Math.hypot(x, z);
   const rock = smoothstep(0.55, 0.95, slope) + smoothstep(WORLD.regionRadius, WORLD.regionRadius + 60, r) * 0.6;
   const ice = glacierIce(x, z); // v4 regions: the tongue's width, cut sharp at the snout
-  const dWood = Math.hypot(x - L.wood.x, z - L.wood.z);
+  const dWood = Math.hypot(x - L.wood.x, z - L.wood.z) + woodRag(x, z); // v16 L3: the wood's circle broken, as its place's (height/regions.js)
   // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
   const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
-  const dFen = Math.hypot(x - L.fen.x, z - L.fen.z);
-  const marsh = 1 - smoothstep(L.fen.r - 15, L.fen.r + 25, dFen);
+  const marsh = fenMarsh(x, z, SX.noise2(x * 0.07 + 3, z * 0.07 - 9)); // v16 L3: the fen's edge, out in tongues
   const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
   const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
   const dOrch = Math.hypot(x - L.orchard.x, z - L.orchard.z);
   const orchard = 1 - smoothstep(L.orchard.r - 10, L.orchard.r + 10, dOrch);
-  const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z);
+  const dMor = Math.hypot(x - L.moraine.x, z - L.moraine.z) + SX.noise2(x * 0.04 - 2.1, z * 0.04 + 5.3) * 9; // v16 L3: no ruled ring
   // v4 regions: the Outwash takes the crystal ground past 50 m (placement plan, 11)
   const cIn = 1 - smoothstep(42, 64, dMor), crystal = cIn === 0 ? 0 : cIn * (0.5 + 0.5 * SX.warped2(x * 0.03 + 4, z * 0.03, 3));
   const heath = smoothstep(-0.2, 0.5, SX.warped2(x * 0.008 + 20, z * 0.008 + 9, 4));
@@ -471,11 +462,11 @@ function biomeWith(x, z, h, slope, rv) {
 
 // The still waters, each with its own wet test and its shore's signed distance (metres, < 0 in the water), in the
 // order waterLevelAt asks them. A body drawn on an edge (src/height/outline.js) gives its own; a plain disc is a disc.
-// v16 L2: the tarn is on its edge; the fen's line is the next brief's (L3), beside it.
+// v16 L2: the tarn is on its edge; v16 L3: the fen on its own (src/height/fen.js), wet only where its pools hold water.
 const disc = (w) => ({ wet: (x, z) => Math.hypot(x - w.x, z - w.z) < w.r, sd: (x, z) => Math.hypot(x - w.x, z - w.z) - w.r });
 export const WATER_BODIES = [
   { name: 'tarn', w: WATER.tarn, wet: tarnWet, sd: tarnShoreDistance },
-  { name: 'fen', w: WATER.fen, ...disc(WATER.fen) },
+  { name: 'fen', w: WATER.fen, wet: fenWet, sd: fenShoreDistance },
   { name: 'pool', w: WATER.pool, ...disc(WATER.pool) },
 ];
 // Water height at a point, or null when there is no water body here.

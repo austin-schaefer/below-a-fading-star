@@ -5,7 +5,8 @@
 // hooks are the regions' own, in v4/regions/height/<key>.js, which their modules re-export) and the coarse pass.
 // v4/regions.js re-exports all of it, so callers import from there as before.
 import { REGIONS, LANDMARKS } from '../world.js';
-import { smoothstep } from '../noise.js';
+import { smoothstep, makeSimplex } from '../noise.js';
+import { fenShoreDistance } from './fen.js'; // v16 L3: the fen's edge, for its place and the Saltings' yield
 import { height as bletting } from '../v4/regions/height/bletting.js';
 import { height as saltings } from '../v4/regions/height/saltings.js';
 import { height as outwash } from '../v4/regions/height/outwash.js';
@@ -22,11 +23,19 @@ export const REGION_AIR_BLEND = 25 / 8; // the Tinctures cross a boundary over 2
 export const HEIGHT_HOOKS = { bletting, saltings, outwash, highLing, demesne, lynchets, strandline, adust };
 
 // the places that keep their own character, and where they win (placement plan, section 2)
+// (v16 L3: no natural place keeps a ruled outline. The fen's is its edge, 10 m out (src/height/fen.js); the wood's
+// circle is broken by a slow noise, 12 m either way. sd(x, z) is the place's signed distance where it has one.)
+const RAG = makeSimplex(1605);
+const ragged = (amp, freq, ox = 0) => (x, z) => amp * RAG.noise2(x * freq + ox, z * freq - ox);
+export const woodRag = ragged(12, 0.022, 7.3); // field.js's wood paint gives out on the same line
 const PLACES = {
-  wood: { x: LANDMARKS.wood.x, z: LANDMARKS.wood.z, r: 95, blend: 20 },
-  fen: { x: 70, z: 160, r: 75, blend: 12 },
+  wood: { x: LANDMARKS.wood.x, z: LANDMARKS.wood.z, r: 95, blend: 20, rag: 12,
+    sd: (x, z) => Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95 + woodRag(x, z) },
+  fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => fenShoreDistance(x, z) - 10 },
   lattice: { x: LANDMARKS.moraine.x, z: LANDMARKS.moraine.z, r: 50, blend: 12 },
 };
+// a region's ragged edge (REGIONS[k].ragged: { amp, freq }): its distance moved by up to amp metres of slow noise
+const EDGE_SD = { fen: fenShoreDistance }; // the edges a region may yield to ({ edge, off } in its yields)
 
 // ---------------------------------------------------------------- signed distances (metres, < 0 inside)
 function sdPoly(pts, x, z) {
@@ -81,19 +90,20 @@ for (const k of REGION_KEYS) {
   else if (s.annulus) f = (x, z) => sdAnnulus(s.annulus, x, z);
   const clip = R.clip || {};
   const yields = R.yields || [];
+  const rag = R.ragged ? ragged(R.ragged.amp, R.ragged.freq, R.ragged.amp) : null;
   // the full signed distance, with clips and the places it yields to cut out
   SHAPES[k] = (x, z) => {
     let d = f(x, z);
     if (clip.zMin !== undefined) d = Math.max(d, clip.zMin - z);
     if (clip.zMax !== undefined) d = Math.max(d, z - clip.zMax);
-    for (const y of yields) d = Math.max(d, y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
-    return d;
+    for (const y of yields) d = Math.max(d, y.edge ? y.off - EDGE_SD[y.edge](x, z) : y.r - Math.sqrt((x - y.x) ** 2 + (z - y.z) ** 2));
+    return rag ? d + rag(x, z) : d; // the ragged edge moves the yields' line too
   };
 }
 // bounding boxes, padded by the widest blend, so far points skip the distance maths
 export const BOX = {};
 for (const k of REGION_KEYS) {
-  const s = REGIONS[k].shape, pad = 30 * REGION_AIR_BLEND / 2 + 10;
+  const s = REGIONS[k].shape, pad = 30 * REGION_AIR_BLEND / 2 + 10 + (REGIONS[k].ragged?.amp ?? 0);
   let pts;
   if (s.circle) pts = [[s.circle.x - s.circle.r, s.circle.z - s.circle.r], [s.circle.x + s.circle.r, s.circle.z + s.circle.r]];
   else if (s.ellipse) pts = [[s.ellipse.x - s.ellipse.rx, s.ellipse.z - s.ellipse.rz], [s.ellipse.x + s.ellipse.rx, s.ellipse.z + s.ellipse.rz]];
@@ -110,7 +120,7 @@ for (const k of REGION_KEYS) {
 // metre of pad for the rounding.
 const TIGHT = {};
 for (const k of REGION_KEYS) {
-  const s = REGIONS[k].shape, hb = REGIONS[k].blend / 2, pad = hb + 1;
+  const s = REGIONS[k].shape, hb = REGIONS[k].blend / 2 + (REGIONS[k].ragged?.amp ?? 0), pad = hb + 1;
   let b;
   if (s.circle) b = [s.circle.x - s.circle.r - pad, s.circle.x + s.circle.r + pad, s.circle.z - s.circle.r - pad, s.circle.z + s.circle.r + pad];
   else if (s.ellipse) { const e = s.ellipse, g = 1 + hb / Math.min(e.rx, e.rz); b = [e.x - e.rx * g - 1, e.x + e.rx * g + 1, e.z - e.rz * g - 1, e.z + e.rz * g + 1]; }
@@ -132,13 +142,20 @@ const W_KEYS = [...REGION_KEYS, ...PLACE_KEYS, 'moor'];
 const R_SHAPE = REGION_KEYS.map((k) => SHAPES[k]), R_BLEND = new Float64Array(REGION_KEYS.map((k) => REGIONS[k].blend));
 const R_TIGHT = new Float64Array(REGION_KEYS.flatMap((k) => TIGHT[k])), R_BOX = new Float64Array(REGION_KEYS.flatMap((k) => BOX[k]));
 const P_DEF = new Float64Array(PLACE_KEYS.flatMap((k) => [PLACES[k].x, PLACES[k].z, PLACES[k].r, PLACES[k].blend]));
+const P_SD = PLACE_KEYS.map((k) => PLACES[k].sd ?? null);
 // fills W (NR + NP + 1) with the weights at (x, z); returns the primary's index in W_KEYS
 function weights(x, z, blend, W) {
   // the places first: they win inside their limits
   let placeSum = 0;
   for (let i = 0; i < NP; i++) {
     const px = P_DEF[4 * i], pz = P_DEF[4 * i + 1];
-    const d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2], hb = (P_DEF[4 * i + 3] * blend) / 2;
+    const hb = (P_DEF[4 * i + 3] * blend) / 2, sd = P_SD[i];
+    let d;
+    if (sd) { // the far side of a place with an edge: a cheap bound first (its 130 m round the centre covers every edge here)
+      const e2 = (x - px) ** 2 + (z - pz) ** 2;
+      if (e2 > 160 * 160) { W[NR + i] = 0; continue; }
+      d = sd(x, z);
+    } else d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2];
     const w = 1 - smoothstep(-hb, hb, d);
     W[NR + i] = w; placeSum += w;
   }

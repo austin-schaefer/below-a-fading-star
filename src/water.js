@@ -15,14 +15,14 @@ import { injectReachFen } from './v7/reach.js'; // v7: DP the Luminous Reach, it
 
 const MAX_RIPPLES = 6;
 
-function discGeometry(ctx, body, rings, segs) {
+function discGeometry(ctx, body, rings, segs, dry) {
   const n = 1 + rings * segs;
   const pos = new Float32Array(n * 3), depth = new Float32Array(n);
   const idx = [];
   const put = (i, x, z) => {
     pos[i * 3] = x - body.x; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = z - body.z;
     depth[i] = body.y - ctx.terrain.heightAt(x, z);
-    if (body.shore && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // v4: dry hollows inside the tarn's disc
+    if (dry && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // dry hollows inside the disc: the tarn's (v4) and the fen's past its edge (v16 L3)
   };
   put(0, body.x, body.z);
   for (let r = 1; r <= rings; r++) {
@@ -249,7 +249,7 @@ export async function build(ctx) {
     // v4: the tarn's disc reaches r 92 for the south bay, so it takes 1.4 times the rings and segments to keep its
     // shore as fine as at the old r 60 (still one mesh, one call)
     const k = body.shore ? 1.4 : 1;
-    const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k)));
+    const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k), !!body.shore || fen));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },
@@ -282,8 +282,14 @@ export async function build(ctx) {
       b.next -= dt;
       if (b.next <= 0) {
         b.next = 2.5 + b.rng() * 6;
-        const a = b.rng() * Math.PI * 2, r = Math.sqrt(b.rng()) * (b.body.shore ?? b.body.r) * 0.8;
-        u.uRipples.value[b.slot].set(b.body.x + Math.cos(a) * r, b.body.z + Math.sin(a) * r, t, 0.5 + b.rng() * 0.5);
+        // a ring where there is water: up to six draws a ripple, never on the dry ground inside the disc (v16)
+        let rx = b.body.x, rz = b.body.z, wet = false;
+        for (let k = 0; k < 6 && !wet; k++) {
+          const a = b.rng() * Math.PI * 2, r = Math.sqrt(b.rng()) * b.body.r;
+          rx = b.body.x + Math.cos(a) * r; rz = b.body.z + Math.sin(a) * r;
+          wet = terrain.waterDepthAt(rx, rz) > 0.05;
+        }
+        if (wet) u.uRipples.value[b.slot].set(rx, rz, t, 0.5 + b.rng() * 0.5);
         b.slot = (b.slot + 1) % MAX_RIPPLES;
       }
     }
