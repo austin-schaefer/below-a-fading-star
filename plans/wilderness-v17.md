@@ -49,6 +49,12 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 09:58 PST. The owner's unplaced fault is placed (the Garth's rill inlet): G1 dispatched. The readout gets height and yaw (F3).**
+
+- **The owner:** "visual bug screenshot again. x −26 z 316 facing N" (the Garth, by its door; the frame is `shots/wip/owner-v17-garth-rill-bug.png` in the deploy worktree): at the near end of a rill along the wall's foot, a white streaked flat card standing like a propped plank and two dark flat quads in the air above it; probably the water's inlet (a fall's sheet drawn as an opaque card, a mouth of bare planes). **G1 dispatched** (opus, `issue-1723-garth-rill`, 8179, 45 min; `src/v17/garth*` only).
+- **The owner:** "settings menu doesn't have height or yaw fwiw, might wanna tweak that" (the panel's position readout gives x, z and a compass word; underground they could not give a link). Added to F3, which is in `src/settings.js`.
+- In flight: F3 (`issue-1721-critic-fixes`, 8176), S2 (`issue-1722-sphere-east`, 8177), G1 (`issue-1723-garth-rill`, 8179). Then the whole suite, alone, as the gate.
+
 **2026-11-17, 09:50 PST. The owner walked `next` and spoke on the sphere: S2 dispatched. The gate: 44 tests, 2 failed.**
 
 - **The owner's words, on the working branch** (they are awake and looking): "bro this looks SICK". On the sphere: "i love the new sphere! but feels odd for it to be on western moors which already have two stargazers. move to eastern mooor perhaps?"; "the hitbox around it si weird and forces me to stay far away from it in many cases."; "the internal lines that i think are meant to suspend the guy don't actually connect to his body/the stuff around him"; "there are some weird trinagle artifacts at where sphere meets ground". **S2 dispatched** for all four (opus, `issue-1722-sphere-east`, 8177, 75 min): the site on the east moor is its choice; everything that names the position moves with it.
