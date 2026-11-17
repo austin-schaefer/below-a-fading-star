@@ -1,75 +1,72 @@
 # v16 critic
 
-> 🤖 Written by an automated critic agent (`issue-1610-critic`, 2026-11-17, 02:21 to 03:20). What I covered: 81 map stands, 19 views along the road and at odd places, 7 looks down from high places, and 29 summit stands at 4 bearings each. I walked one route frame by frame (`lappet-heliarch-head`) and walked on the keys round the tarn, the fen and the three moor pools (118 frames). I took 6 phone views and stood for 2 minutes in four places (240 frames, real time). I did six acts and ran a 4-pose audio survey. Renders: `shots/wip/critic-v16-*` and `critic-lappet-heliarch-head-*`.
+> 🤖 Written by an automated critic agent (`issue-1610-critic`, 2026-11-17, 02:21 to 03:20).
+
+**Coverage:** 81 map stands and 19 road and odd views. I looked down from 29 summits and 7 high places. I walked `lappet-heliarch-head` frame by frame. On the keys I walked round the tarn, the fen and the three moor pools (118 frames). I took 6 phone views and stood 2 minutes in each of four places. I did six acts and ran an audio survey of 4 poses. Renders: `shots/wip/critic-v16-*`.
 
 ## Blocking
-- **After knocking, the Hypogeum swallows the view.** I stood at (228.5, 2.9, -112.4), yaw -1.571, pressed `E` and made no other input. The ring swings from 0 to 4 s. From 8 s a dark mass covers two-thirds of the frame, and the walker drifts 1.6 m west with no key held (`act-hypogeum-door-0008s` to `0060s`). The door's answer cannot be seen.
-- **The audio survey fails its gate on `moor-gutter`.** `rough` is 0.253 against a limit of 0.25. The gutter's 4 kHz band swings 29 dB. It does not hurt, but it is red.
-- **Some map stands face a wall at arm's length.** The Bather (166.5, 218.5) shows a paving slab, and the Toadstone (186, 232) shows pier blocks (`goto-70`, `goto-71`). The Hanging Croft's ladder top (224.5, 152, -49.6) is in shadow on two of four bearings (`high-stair-lattice-ladder-*`).
+- **Hypogeum, after the knock.**
+  - Where: (228.5, 2.9, -112.4), yaw -1.571, `E`, then no input.
+  - The ring swings for 0 to 4 s.
+  - From 8 s a dark mass covers two-thirds of the view, and the walker drifts 1.6 m west on its own (`act-hypogeum-door-0008s` to `0060s`).
+- **The audio gate fails.** `moor-gutter` has `rough` 0.253 against a limit of 0.25, and its 4 kHz band swings 29 dB.
+- **Map stands face walls.**
+  - The Bather (166.5, 218.5) shows a slab, and the Toadstone (186, 232) shows pier blocks (`goto-70/71`).
+  - At the Croft's ladder top (224.5, 152, -49.6), two of the four bearings are shadow.
 
 ## Familiar
-- Seen anywhere: bulrushes round every pool, striped market awnings, a yellow drum tower with a teal dome on the Lappet's wall, ice-blue crystal prisms, wooden ladders and scaffolds, and boats on the tarn.
+- **Could be anywhere:** bulrushes at every pool, striped awnings, a yellow tower with a teal dome, ice-blue crystal prisms, ladders and scaffolds, boats.
 - **Only here:**
-  - The Fountain of Noon: a tilted sail pouring a column of white light.
-  - The Laid Sun: gold tesserae being set into an underground floor by one lamp.
-  - The Smoking Saint: a colossus's stone face used as a kiln.
+  - The Fountain of Noon's sail, pouring a column of light.
+  - The Laid Sun: gold tesserae being set into an underground floor.
+  - The Smoking Saint's face used as a kiln.
 
 ## Weak
-- **The Span's deck hides the valley.** The parapet is at eye height, so from the deck you see paving and wall (`high-span-deck-*`, `down-span-n`). The highest walk in the world shows nothing.
-- **Captions never stop.** In 20 stops round the tarn, a place card rose 13 times (Circumbambulate Pool nine times, plus the Fen, the Span, the Wood and the Sward). The screen is rarely clear.
-- **The west tarn and the Deodand Wood shore are near black** (`shore-tarn-08` to `12`).
-- **On the fen's east shore a sheer pier stands in the water's edge.** The walker stops dead at (120, 207.5).
-- **Ruled from above.** From the gallery (-372, -50) the valley floor reads as made by water: soft lobes, pools in kettles, the strand pond along its bank. What still looks drawn: the moor's barrow, a perfect dome (`goto-64`); the Lappet's hex paving; the Lattice's light-lines; and the kettle pools' near-round rims seen close.
+- **The Span's deck sees nothing.** The parapet is at eye height (`high-span-deck-*`).
+- **Captions never stop.** In 20 stops round the tarn, a card rose 13 times.
+- **The west tarn shore and the Deodand Wood are near black** (`shore-tarn-08` to `12`).
+- **A sheer pier sits in the fen's east edge.** The walker stops dead at (120, 207.5).
+- **The ground from above.** From the gallery (-372, -50) the floor reads as made by water: lobes, kettle pools, the strand pond. It still looks drawn in places: the barrow is a perfect dome (`goto-64`), and so are the hex paving, the Lattice's light-lines and the kettles' near-round rims.
 
 ## Strong
-1. **The gutter.** About 74 s after "Go out", the sun goes to a dark disc and the world dims for 12 to 15 s. I saw it on the moor, in the square and at the Croft (`stand-moor-044`, `stand-square-044`). On the moor, water and a boat show at the left during it. You cannot miss it while walking.
-2. **Lay your hand.** A handprint, then white veins climb the crystal and run out along the floor's lines between 1 and 4 s. An echo comes at 60 s (`act-mother-hand-*`).
-3. **Lit interiors.** The Croft's stove, cups and chair, with a window that glows at the ladder's top for 40 s. The Laid Sun's gold brightens at about 94 s. Both read as someone's room.
+1. **The gutter.** About 74 s in, the sun goes dark and the world dims for 12 to 15 s. I saw it on the moor, in the square and at the Croft (`stand-*-044`). Nobody would miss it.
+2. **Lay your hand.** White veins climb the crystal and run along the floor's lines at 1 to 4 s, with an echo at 60 s.
+3. **Lit rooms.** The Croft has its stove, cups and chair, and a window glowing at the ladder's top. The Laid Sun's gold brightens at about 94 s. Someone lives here.
 
 ## Acts
-- **Take his letter** (new). The envelope rises to your face at 0.5 to 1 s and is gone by 2 s. Nothing is carried and nothing points anywhere. At 30 s the clerk raises his arm again. This is the weakest moment.
-- **Ring the bell.** The coil swings. From 15 to 60 s candles cross the fen toward you, which gives you somewhere to go. From 2.5 m the bell itself is out of frame. I would show a friend.
-- **Pour for him.** Glasses redden at 2 to 4 s, lights rise at 8 s and are gone by 15 s. Quiet and good.
-- **Let go the lead.** Only a crank handle moves. The hole and the lead are below the frame. I did not see it done.
+- **Take his letter** (new). The envelope rises at 0.5 to 1 s and is gone by 2 s. You carry nothing and nothing points anywhere. This is the weakest act.
+- **Ring the bell.** From 15 to 60 s candles cross the fen toward you, which gives you somewhere to go. From 2.5 m the bell is out of frame. I would show a friend.
+- **Pour for him.** Glasses redden at 2 to 4 s and lights rise at 8 s. Quiet and good.
+- **Let go the lead.** Only a crank handle moves, and the lead is below the frame. Not seen done.
 - **Knock.** See Blocking. "Read the plate" is offered at 30 s.
 - **Lay your hand.** The best. I would show a friend.
-- **Expected and got none:** the noon-drawer's jug at the fountain, the Croft's chair and stove, and the Laid Sun's lamp.
+- **No offer where I expected one:** the noon-drawer's jug, the Croft's chair and stove, the Laid Sun's lamp.
 
 ## Stories
-- **Found unprompted:**
-  - `the-twelfth-chair`
-  - `the-dead-letters`
-  - `the-bell-under-the-span`
-  - `noon-by-the-jug`
-  - `the-wellward-way` (the Laid Sun)
-  - `the-tender-of-the-lattices` (the Croft reads as lived in)
-  - `until-the-sun-goes-out` (the gallery's cells)
-  - `the-saint-in-the-kiln`
+- **Found unprompted:** twelfth-chair, dead-letters, bell-under-the-span, noon-by-the-jug, wellward-way, tender-of-the-lattices, until-the-sun-goes-out, saint-in-the-kiln.
 - **Missed:**
-  - `the-gold-from-the-court`: the gold sun mosaic reads, but I saw no jackdaw and no gap leading anywhere.
-  - `the-slippers-mate` and `salt-for-news`: I saw nothing of either.
-  - `the-painter`: an easel shows against the sun, but no story.
-  - I did not go back to two of these; that is not done.
-- **Deep stories:** the soundings' surface (a crystal hung from the sky) reads; the twelfth chair's surface reads.
+  - gold-from-the-court: the mosaic reads, but I saw no jackdaw and no gap.
+  - slippers-mate and salt-for-news: I saw nothing of either.
+  - painter: the easel is there, but no story.
+  - I did not go back to two of them.
+- **Deep stories:** the surfaces of both (soundings, twelfth chair) read.
 
 ## Compared with v15
 - **Better:**
-  - The crown's stair head has lamps at both cheeks and reads from the top (`heliarch-head-sheet`, 0 m).
+  - The crown's stair head has lamps at both cheeks.
   - The clerk's letter is now an act.
-  - The Lees is no longer the quietest place: -28.1 LUFS with a 7 to 17 dB swing, against the moor's -30.2.
-- **Still there:** way-finding by light only at that one head. Folk are still small at a distance.
-- **New:** the gate failure on `rough`, and the Hypogeum after the knock.
+  - The Lees sits at -28.1 LUFS, louder than the moor at -30.2.
+- **Still there:** small folk, and only one lit stair head.
+- **New:** the `rough` failure and the Hypogeum after the knock.
 
-## Arrival
-- The card is ready in 7 s. Its text is fine.
-- The first view is the keep's gate with the sun between two colossi. I would stay.
-- **Phone:** all six portrait views at `?q=low` read, and the captions fit.
+## Arrival and phone
+- The card is ready in 7 s.
+- The first view is the keep's gate with the sun between the colossi. I would stay.
+- All six portrait views at `?q=low` read.
 
 ## Missing
-- Something to carry from one place to another.
-- A view from the Span.
-- People moving on the roads between places.
+Something to carry between places, a view from the Span, and people moving on the roads.
 
 ## One suggestion
-- **Build:** let the clerk's letter be carried (shown in hand) to the camp on the Span (`the-wait-on-the-span`), and lower the parapet there, so the act ends at a view.
-- **Cut:** half the place cards. Show each once per visit, not on every re-entry.
+- **Build:** let the clerk's letter be carried to the camp on the Span, and lower the parapet there.
+- **Cut:** half the place cards. Show each once per visit.
