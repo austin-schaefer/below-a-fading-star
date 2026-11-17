@@ -13,14 +13,14 @@ const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[
 const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 // the soil of each ring, and what grows on it (grass blades: base colours; the trees' leaves; their bark)
 export const PAL = {
-  live: { soil: C('#2e2416'), soil2: C('#3a3a1e'), grass: [C('#4a7e2c'), C('#5a8a34'), C('#2f6a2c'), C('#6a9040'), C('#3a6a3a'), C('#7a8a40'), C('#8a8a50')], leaf: [C('#3f742c'), C('#4e8034'), C('#2f6026'), C('#5a7a30')], bark: C('#4a3626') },
+  live: { soil: C('#504234'), soil2: C('#484632'), grass: [C('#4a7e2c'), C('#5a8a34'), C('#2f6a2c'), C('#6a9040'), C('#3a6a3a'), C('#7a8a40'), C('#8a8a50')], leaf: [C('#3f742c'), C('#4e8034'), C('#2f6026'), C('#5a7a30')], bark: C('#4a3626') },
   wilt: { soil: C('#3c3420'), soil2: C('#4a4226'), grass: [C('#a8b03a'), C('#c2b846'), C('#98a834'), C('#ccbe58')], leaf: [C('#a8a034'), C('#c2a23e'), C('#8c8c30')], bark: C('#4c3a2a') },
   brown: { soil: C('#4e4434'), soil2: C('#56493a'), grass: [C('#c8b888'), C('#d4c49a'), C('#b8a878'), C('#dccca4')], leaf: [C('#b09a6a'), C('#c2ac7c'), C('#9a8458')], bark: C('#4a3e34') },
   grey: { soil: C('#4a4846'), soil2: C('#52504c'), grass: [C('#86888a'), C('#909294'), C('#7a7c7e'), C('#9a9c9c')], leaf: null, bark: C('#8a8c8c') },
   ash: { soil: C('#6a6862'), soil2: C('#64625c'), grass: [C('#6a6862'), C('#72706a'), C('#5e5c58')], leaf: null, bark: C('#76746e') }, // swept: little left on it
 };
-const FLOWERS = [C('#3a62d8'), C('#4a7ae8'), C('#f4f2ea'), C('#f2ca22'), C('#e86ca2'), C('#f09a2a'), C('#8a4ad0')];
-const FRUIT = C('#a8b070'), BLUSH = C('#b09a7a'); // pale: amber is the dying sun's colour
+const FLOWERS = [C('#3a62d8'), C('#4a7ae8'), C('#6e6c84'), C('#c8a41c'), C('#e86ca2'), C('#f09a2a'), C('#8a4ad0')];
+const FRUIT = C('#966210'), BLUSH = C('#8a3a16'), UNDER = C('#2a1a0c'); // yellow-orange fruit, a blush on the side the light takes, dark beneath (it is lit, it does not glow)
 const STRAND = [NOON.strand.r, NOON.strand.g, NOON.strand.b];
 
 // which ring a point is in, by radius; the edges between rings drawn a little irregular (each death was not exact)
@@ -169,7 +169,7 @@ function espalier(B, rng, t, low) {
   const P = (u, y) => [x0 + tx * u, FLOOR + y, z0 + tz * u];
   const stage = ['live', 'wilt', 'brown', 'grey', 'ash'].indexOf(t.ring), pal = PAL[t.ring];
   const half = TREE.half, tiers = [0.62, 1.12, 1.62, 2.12], top = tiers[3] + 0.28;
-  const ST = mul(STRAND, stage >= 3 ? 0.5 : 0.58), broke = () => stage === 4 && rng() < 0.3;
+  const ST = mul(STRAND, stage >= 3 ? 0.5 : stage === 0 ? 0.36 : 0.58), broke = () => stage === 4 && rng() < 0.3;
   // the frame, spun: a post of drawn filament at each end, a wire along each tier and a rail over the top, and on the
   // rail a row of small empty rings standing at a tangent (their mark); a larger ring crowns each post
   const seg = low ? 8 : 12, ring = (cu, cy, hr) => {
@@ -223,7 +223,7 @@ function espalier(B, rng, t, low) {
     const c = [x0 + tx * u + Math.cos(a) * (rng() - 0.5) * 0.12, FLOOR + tier - 0.09, z0 + tz * u + Math.sin(a) * (rng() - 0.5) * 0.12];
     const m = new THREE.Matrix4().compose(new THREE.Vector3(...c), new THREE.Quaternion(), new THREE.Vector3(s, s * 1.08, s));
     const fc = stage === 0 ? FRUIT : C('#7a5a2a');
-    B.geo(ball.clone(), m, (nx_, ny_) => (stage === 0 ? mix(FRUIT, BLUSH, Math.max(0, ny_ * 0.6 + (nx_ * 0.4))) : fc), 0.06);
+    B.geo(ball.clone(), m, (nx_, ny_) => mix(stage === 0 ? mix(FRUIT, BLUSH, Math.max(0, ny_ * 0.6 + (nx_ * 0.4))) : fc, UNDER, Math.min(1, Math.max(0, -ny_ * 1.2 + 0.1))), 0.06);
     B.beam([c[0], c[1] + s * 0.9, c[2]], [c[0], c[1] + s * 1.8, c[2]], 0.004, bark, 0);
   }
   if (stage <= 1) for (let i = 0; i < (stage === 0 ? 3 : 5); i++) {

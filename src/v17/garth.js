@@ -24,10 +24,10 @@ import { buildCan, rosePoint } from './garth/can.js';
 export const GARTH_OFF = typeof location !== 'undefined' && new URLSearchParams(location.search).get('garth') === '0';
 // the eye's grade in the light: near daylight (the post's own grade takes a fifth of the colour and warms the
 // highlights; this gives the colour back), eased in from the hall's dark-adapted one as the eye comes into the light
-export const NOON_GRADE = [1.12, 1.08, 1.04, -0.04]; // cold-neutral: the walk's ember grade taken out (5600 K against the world's 2500 K)
-// the bounce off the lit garden: white with a little of the grass's green in it
-export const BOUNCE = '#e2eee2';
-export const HALL_GRADE = [1.32, 0.9, 1.06, 0.03];
+export const NOON_GRADE = [1.4, 1.05, 1.3, 0.0]; // daylight: bright and contrasty, neutral (the light itself carries the faint warmth, 5500 K against the world's 2500 K)
+// the bounce off the lit garden: warm-neutral white
+export const BOUNCE = '#ece6d6';
+export const HALL_GRADE = [1.32, 0.5, 1.12, 0.12]; // dim, and the post's violet lift taken back toward stone grey: the only colour here is the noon's
 
 export async function build(ctx) {
   if (GARTH_OFF) { ctx.garth = { off: true }; return; }
@@ -40,9 +40,9 @@ export async function build(ctx) {
   // onto the dome and out over the dead rings, less the further out; the sky's light nil, no haze
   const bounce = (x, y, z) => {
     const r = Math.hypot(x - CX, z - CZ), h = y - FLOOR;
-    const ground = 0.1 + 0.4 * Math.exp(-Math.max(0, r - LIGHT_R) / 5.5);
+    const ground = 0.12 + 0.75 * Math.exp(-Math.max(0, r - LIGHT_R) / 5.0);
     // the dome takes the light thrown up off the garden: brightest over it, falling off to the dark springing
-    const q = Math.max(0, 1 - r / (R * 0.95)), up = 0.05 + 0.5 * Math.pow(Math.min(1, Math.max(0, h) / 19), 1.4) * q * q + 0.06 * q;
+    const q = Math.max(0, 1 - r / (R * 0.95)), up = 0.06 + 0.95 * Math.pow(Math.min(1, Math.max(0, h) / 19), 1.4) * q * q + 0.06 * q + 0.36 * (1 - 0.5 * Math.min(1, r / R)); // (and the whole hall a little: a sunlit floor lights a room)
     return h < 2.5 ? ground + (up - ground) * (h / 2.5) * 0.3 : up;
   };
   const lit = (x, y, z, out) => { out[0] = 0.012; out[1] = 0; out[2] = bounce(x, y, z); return out; };
@@ -90,7 +90,7 @@ export async function build(ctx) {
     const prof = []; for (let i = 0; i <= 40; i++) { const t = i / 40; prof.push(new THREE.Vector2(LENS.r * t, -0.32 * (1 - t * t))); }
     const g = new THREE.LatheGeometry(prof, 48); g.translate(CX, LENS.y, CZ);
     const cols = [], P = g.attributes.position.array;
-    for (let i = 0; i < P.length; i += 3) { const r = Math.hypot(P[i] - CX, P[i + 2] - CZ) / LENS.r, k = (0.95 - 0.3 * r * r) * (Math.sin(r * 40) > 0.75 ? 0.62 : 1) * (r > 0.97 ? 0.5 : 1); cols.push(0.96 * k, 0.975 * k, 1.0 * k); }
+    for (let i = 0; i < P.length; i += 3) { const r = Math.hypot(P[i] - CX, P[i + 2] - CZ) / LENS.r, k = (0.95 - 0.3 * r * r) * (Math.sin(r * 40) > 0.75 ? 0.62 : 1) * (r > 0.97 ? 0.5 : 1); const w = 3.2 * k * k; cols.push(w, w * 0.97, w * 0.9); } // too bright to look at: blown white, its rim warm
     g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
     const lm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
     const lens = new THREE.Mesh(g, lm); lens.name = 'garth-lens'; ctx.scene.add(lens); meshes.push(lens);
@@ -145,7 +145,7 @@ export async function build(ctx) {
   const unGrade = below.grade?.((p, out) => {
     const dx = p.x - CX, dz = p.z - CZ, r = Math.sqrt(dx * dx + dz * dz);
     if (r > R + 3 || p.y > -2 || p.y < FLOOR - 3) return 0;
-    const f = 1 - ss(LIGHT_R - 1.2, LIGHT_R + 2.5, r); // in the light: daylight; out of it: the hall's
+    const f = 1 - 0.7 * ss(LIGHT_R - 1.2, LIGHT_R + 2.5, r); // in the light: daylight; out of it mostly the hall's (the noon is in view from anywhere in it)
     for (let k = 0; k < 4; k++) out[k] = HALL_GRADE[k] + (NOON_GRADE[k] - HALL_GRADE[k]) * f;
     return 1 - ss(R + 0.5, R + 3, r);
   });
