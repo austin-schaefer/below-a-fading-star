@@ -236,8 +236,8 @@ export const SQUARES = [
 // ---------------------------------------------------------------- the ways between levels
 // Each: { name, kind, hand, from, to (level keys), run, s, D0, D1 (its line in the run frame), note }. The kits in
 // src/v15/ways/ build them from these records; a quarter adds its own with the same kit and a record of its own.
-export const STAIR = { run: 1, s: 31, width: 3 };
-export const HEAD_POST = 2.1; // (v16-V1) the head's two lamp posts stand this far either side of the axis on the crown's brink; the kerb leaves them half a metre more (src/v15/ways/index.js) // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
+export const STAIR = { run: 1, s: 31, width: 3 }; // the Heliarch stair's axis: straight out from the road at s 31, at the house's south-west corner
+export const HEAD_POST = 2.1; // (v16-V1) the head's two lamp posts stand this far either side of the axis on the crown's brink; the kerb leaves them half a metre more (src/v15/ways/index.js)
 // (v15-W7) the crown's kerb: Elder blocks along the rim (its centre `D`), waist-high and walled, wherever the drop over
 // the rim is more than 1.2 m and no way goes down (the cold critic walked off the crown from the keep's end without
 // meeting the stair's head). It stops for what already stands on the brink: `clear` is [run, s0, s1, why].

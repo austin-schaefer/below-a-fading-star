@@ -7,14 +7,16 @@
 //
 // letterAct(ctx, fig, at, S) is called from the clerk's init (src/v15/people/folk.js); givePose(f, S, dt, cam) from his
 // update, last, while S.g >= 0 (the seconds since the press, on his own clock). The book is two small meshes (its
-// boards and its pages, a 256 x 180 CanvasTexture redrawn only while he writes) and the letter in flight one more,
-// hidden but for two seconds. No light. ctx.storyActs.lagan = { stand(d), inked(k), state(), book, pen(k, u) } for the tests.
+// boards and its pages in one mesh, its 256 x 180 CanvasTexture (and a dark strip for the boards) redrawn only while he
+// writes) and the letter in flight one more, hidden but for two seconds. The flight and the strokes run on his clock (S.g),
+// so a gutter, which stops him mid-reach, stops them with him. No light. ctx.storyActs.lagan = { stand(d), inked(k), state(), book, pen(k, u) } for the tests.
 import * as THREE from 'three';
 import { smoothstep } from '../../noise.js';
 import { ease } from '../../v7/workers/rig.js';
 import { BONE, ARM } from './body.js';
+import { mergeGeometries } from '../../v4/kit/merge.js';
 
-const W = 256, H = 180, BW = 0.5, BD = 0.34, LINES = 9, PER = LINES * 2;
+const W = 256, H = 180, STRIP = 4, CH = H + STRIP, BW = 0.5, BD = 0.34, LINES = 9, PER = LINES * 2;
 const lineY = (i) => 26 + i * 17;
 const pageX = (pg) => (pg ? [W / 2 + 12, W - 12] : [12, W / 2 - 12]);
 const SEPIA = 'rgba(58,40,24,0.86)', RED = '#a3201a';
@@ -42,31 +44,37 @@ export function letterAct(ctx, f, at, S) {
   // the book: boards and pages, lying open in the hatch, written for the clerk (its head away from him)
   const book = new THREE.Group(); book.name = 'lagan-book';
   book.position.set(at.ledger.x, at.ledger.y, at.ledger.z); book.rotation.y = f.yaw + Math.PI;
-  const boards = new THREE.Mesh(new THREE.BoxGeometry(BW + 0.024, 0.014, BD + 0.016), new THREE.MeshLambertMaterial({ color: '#3a2216' }));
-  boards.position.y = 0.007; boards.receiveShadow = true;
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = CH;
   const g = cv.getContext('2d'), tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = low ? 1 : 4;
+  const base = document.createElement('canvas'); base.width = W; base.height = CH; // the page as written, drawn once
+  const bg = base.getContext('2d');
+  const bd = new THREE.BoxGeometry(BW + 0.024, 0.014, BD + 0.016); bd.translate(0, 0.007, 0);
+  { const t = bd.attributes.uv; for (let i = 0; i < t.count; i++) t.setXY(i, 0.5, (STRIP / 2) / CH); } // the boards read the dark strip under the page
   const pg = new THREE.PlaneGeometry(BW, BD, 8, 1); pg.rotateX(-Math.PI / 2);
-  { const p = pg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setY(i, 0.006 * Math.abs(Math.sin((x / BW) * Math.PI * 2)) + (Math.abs(x) < 0.01 ? -0.004 : 0)); } pg.computeVertexNormals(); }
-  const pages = new THREE.Mesh(pg, new THREE.MeshLambertMaterial({ map: tex, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.22 })); // the lit room behind him, on its pages
-  pages.position.y = 0.016; pages.receiveShadow = true;
-  book.add(boards, pages); ctx.scene.add(book); book.updateMatrixWorld(true);
+  { const p = pg.attributes.position, t = pg.attributes.uv; for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setY(i, 0.006 * Math.abs(Math.sin((x / BW) * Math.PI * 2)) + (Math.abs(x) < 0.01 ? -0.004 : 0)); t.setY(i, (STRIP + t.getY(i) * H) / CH); } pg.computeVertexNormals(); pg.translate(0, 0.016, 0); }
+  const pages = new THREE.Mesh(mergeGeometries([bd, pg]), new THREE.MeshLambertMaterial({ map: tex, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.22 })); // the lit room behind him, on its pages
+  pages.receiveShadow = true;
+  book.add(pages); ctx.scene.add(book); book.updateMatrixWorld(true);
   ctx.lappet?.farHidden?.push(book);
 
   const red = (k, frac) => { // entry k struck through in red, `frac` of the way (the tick last)
     const pgN = Math.floor(k / LINES) % 2, [x0, x1] = pageX(pgN), y = lineY(k % LINES) - 2;
     const a = Math.min(1, frac / 0.8), b = Math.max(0, (frac - 0.8) / 0.2);
-    g.strokeStyle = RED; g.lineCap = 'round'; g.lineWidth = 7;
+    g.strokeStyle = RED; g.lineCap = 'round'; g.lineWidth = 7; g.lineJoin = 'round';
     if (a > 0) { g.beginPath(); g.moveTo(x0 + 4, y + 0.5); g.lineTo(x0 + 4 + (x1 - x0 - 6) * a, y - 1.2 * a); g.stroke(); }
     if (b > 0) { g.beginPath(); g.moveTo(x0 - 6, y - 3); g.lineTo(x0 - 6 + 3 * Math.min(1, b * 2), y + 1 - (b > 0.5 ? 0 : 4 * (0.5 - b))); if (b > 0.5) g.lineTo(x0 - 3 + 7 * (b - 0.5) * 2, y - 8 * (b - 0.5) * 2); g.stroke(); }
   };
-  const draw = (n, part = -1) => { // n entries struck, and the n-th (0-based) `part` of the way
-    g.fillStyle = '#d8c9a4'; g.fillRect(0, 0, W, H);
-    const sh = g.createLinearGradient(W / 2 - 18, 0, W / 2 + 18, 0); sh.addColorStop(0, 'rgba(70,50,30,0)'); sh.addColorStop(0.5, 'rgba(70,50,30,0.45)'); sh.addColorStop(1, 'rgba(70,50,30,0)');
-    g.fillStyle = sh; g.fillRect(W / 2 - 18, 0, 36, H);
-    g.strokeStyle = 'rgba(120,96,70,0.35)'; g.lineWidth = 1;
-    for (let p = 0; p < 2; p++) { const [x0, x1] = pageX(p); for (let i = 0; i < LINES; i++) { g.beginPath(); g.moveTo(x0, lineY(i) + 1.5); g.lineTo(x1, lineY(i) + 1.5); g.stroke(); } }
-    for (let p = 0; p < 2; p++) { const [x0, x1] = pageX(p); for (let i = 0; i < LINES; i++) scribble(g, x0, x1, lineY(i), 1 + p * 31 + i * 7); }
+  { // the static page, once: parchment, the gutter's shade, the rules, the entries already in it, the boards' strip
+    bg.fillStyle = '#3a2216'; bg.fillRect(0, H, W, STRIP);
+    bg.fillStyle = '#d8c9a4'; bg.fillRect(0, 0, W, H);
+    const sh = bg.createLinearGradient(W / 2 - 18, 0, W / 2 + 18, 0); sh.addColorStop(0, 'rgba(70,50,30,0)'); sh.addColorStop(0.5, 'rgba(70,50,30,0.45)'); sh.addColorStop(1, 'rgba(70,50,30,0)');
+    bg.fillStyle = sh; bg.fillRect(W / 2 - 18, 0, 36, H);
+    bg.strokeStyle = 'rgba(120,96,70,0.35)'; bg.lineWidth = 1;
+    for (let p = 0; p < 2; p++) { const [x0, x1] = pageX(p); for (let i = 0; i < LINES; i++) { bg.beginPath(); bg.moveTo(x0, lineY(i) + 1.5); bg.lineTo(x1, lineY(i) + 1.5); bg.stroke(); } }
+    for (let p = 0; p < 2; p++) { const [x0, x1] = pageX(p); for (let i = 0; i < LINES; i++) scribble(bg, x0, x1, lineY(i), 1 + p * 31 + i * 7); }
+  }
+  const draw = (n, part = -1) => { // n entries struck, and the n-th (0-based) `part` of the way: the page, and the red over it
+    g.drawImage(base, 0, 0);
     for (let k = 0; k < Math.min(n, PER); k++) red(k, 1);
     if (part >= 0 && n < PER) red(n, part);
     tex.needsUpdate = true;
@@ -80,12 +88,19 @@ export function letterAct(ctx, f, at, S) {
 
   // the letter that comes to the visitor
   const fly = new THREE.Group(); fly.name = 'lagan-letter'; fly.visible = false;
-  { const paper = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.006), new THREE.MeshLambertMaterial({ color: '#e2d6b8' }));
-    const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.021, 0.007, 10), new THREE.MeshLambertMaterial({ color: '#8e2318' }));
-    seal.rotation.x = Math.PI / 2; seal.position.z = 0.005;
-    const flap = new THREE.Mesh(new THREE.BoxGeometry(0.115, 0.004, 0.001), new THREE.MeshLambertMaterial({ color: '#6a5a44' }));
-    const flap2 = flap.clone(); flap.position.set(-0.048, 0.022, 0.0035); flap.rotation.z = -0.55; flap2.position.set(0.048, 0.022, 0.0035); flap2.rotation.z = 0.55;
-    fly.add(paper, seal, flap, flap2); }
+  { // paper, seal and the two flaps of the fold, one mesh with vertex colours
+    const part = (geo, hex, pos, rx = 0, rz = 0) => {
+      geo.rotateX(rx); geo.rotateZ(rz); geo.translate(...pos);
+      const c = new THREE.Color(hex), n = geo.attributes.position.count, col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.deleteAttribute('uv'); return geo;
+    };
+    fly.add(new THREE.Mesh(mergeGeometries([
+      part(new THREE.BoxGeometry(0.2, 0.14, 0.006), '#e2d6b8', [0, 0, 0]),
+      part(new THREE.CylinderGeometry(0.019, 0.021, 0.007, 10), '#8e2318', [0, 0, 0.005], Math.PI / 2),
+      part(new THREE.BoxGeometry(0.115, 0.004, 0.001), '#6a5a44', [-0.048, 0.022, 0.0035], 0, -0.55),
+      part(new THREE.BoxGeometry(0.115, 0.004, 0.001), '#6a5a44', [0.048, 0.022, 0.0035], 0, 0.55),
+    ]), new THREE.MeshLambertMaterial({ vertexColors: true }))); }
   ctx.scene.add(fly);
 
   const cam = ctx.camera, F = { t: -1, from: new THREE.Vector3(), q0: new THREE.Quaternion() };
@@ -102,31 +117,36 @@ export function letterAct(ctx, f, at, S) {
       return 6.6;
     },
   });
-  // the flight and the writing, on the walk's own clock; nothing while the act is not being done
-  ctx.registerUpdate((dt) => {
-    if (S.g < 0 && F.t < 0) return;
-    dt = Math.min(dt, 0.1);
-    if (F.t >= 0) {
-      F.t += dt;
-      if (F.t < 0.1) { fly.visible = false; }
-      else if (F.t < 2.1) {
+  // The flight and the writing run on his clock (S.g: the seconds since the press, which a gutter slows to a halt with
+  // him), so the act holds its breath with him. Always registered, nothing while idle; hidden while the visitor is away
+  // (his own update stops beyond 45 m, and the letter would hang in the world) or the settings panel is open.
+  let drawn = -1;
+  ctx.registerUpdate(() => {
+    const t = S.g, live = F.t >= 0 && t >= 0;
+    if (F.t >= 0 && t < 0) { fly.visible = false; F.t = -1; } // his act ended (or was cut)
+    if (live) {
+      const away = Math.hypot(cam.position.x - at.hatch.x, cam.position.z - at.hatch.z) > 40 || ctx.settings?.shown;
+      if (t < 0.1 || t >= 2.1 || away) fly.visible = false;
+      else {
         if (!fly.visible) { // take it from his hand: where it hangs from his wrist (his forearm bone)
           _m.copy(f.b[BONE.rF]); F.from.set(0, -ARM.fore - 0.1, 0.03).applyMatrix4(_m);
           _m.decompose(_w, F.q0, _v); fly.visible = true;
         }
-        const k = ease((F.t - 0.1) / 0.6), drop = smoothstep(1.55, 2.1, F.t);
-        _v.set(0.03, -0.07 - 0.32 * drop, -0.36 + 0.1 * drop); cam.localToWorld(_v);
+        const k = ease((t - 0.1) / 0.6), drop = smoothstep(1.55, 2.1, t);
+        _v.set(0.03, -0.07 - 0.32 * drop, -0.36 + 0.1 * drop).applyQuaternion(cam.quaternion).add(cam.position); // the camera's own pose, this frame's
         fly.position.lerpVectors(F.from, _v, k);
         _q.copy(cam.quaternion).multiply(TILT);
         fly.quaternion.slerpQuaternions(F.q0, _q, k);
         fly.rotateX(-0.35 * drop);
-      } else { fly.visible = false; F.t = -1; }
+      }
+      if (t >= 2.1) F.t = -1;
     }
     if (writing >= 0) {
-      const u = (S.g - 1.6) / 2.0;
-      if (u > 0) { draw(writing, Math.min(1, u)); if (u >= 1) { writing = -1; draw(S.n); } }
+      const u = t < 0 ? 1 : (t - 1.6) / 2.0;
+      if (u >= 1) { writing = -1; draw(S.n); drawn = -1; }
+      else if (u > 0 && u !== drawn) { draw(writing, u); drawn = u; }
     }
-  }, { pos: { x: at.hatch.x, z: at.hatch.z }, near: 60, hz: 0 });
+  });
   S.pen = pen; S.handle = h;
   ctx.storyActs = ctx.storyActs || {};
   const stand = (d) => ({ x: at.hatch.x + at.face[0] * d, z: at.hatch.z + at.face[1] * d, yaw: Math.atan2(at.face[0], at.face[1]), pitch: -0.12 });
