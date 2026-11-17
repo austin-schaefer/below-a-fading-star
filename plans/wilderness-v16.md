@@ -169,4 +169,12 @@ Next: the suite's summary; B1 and F1 reviewed and merged; the gate on a quiet ma
 
 Next: the gate's summary; Stats; the release PR; `tools/gh-release.sh v16`; close #73, #78, #79; look back.
 
+**2026-11-17, 04:57 PST. RELEASED. v16 is on `main` (PR #81, `0eba44a`), the GitHub release published, #73 #78 #79 closed.**
+
+- **The gate:** the whole suite on `next` with nothing beside it, 43 tests, 0 failed, 40 min 22 s (acts 176, audio 106, geometry 134, seams 3, threads 25, perf 29).
+- **Done when, line by line.** 1: met for the shores (the critic, from the gallery: "reads as made by water"); the tilt is subtle from the heights (blind readers 2 of 6), and the kettle pools' rims still read near-round. 2: met (`src/height/outline.js`, read by height, water, paint and placement for the tarn, the fen and the regions). 3: met by the tests; left: the fen fringe's pool edges (1 to 1.8 m in 0.25 m), outside the seams box. 4: met (the critic saw the first gutter at about 74 s at three stands unprompted). 5: `perf` green; **`heightAt` over the valley is 8% slower than v15** (the floor's block, 0.10 µs a call), `biomeAt` 7%; the walker's update is about half v15's. 6: met.
+- **Shipped weaker than meant:** the tilt's legibility; "Take his letter" leads nowhere; villagers at 20 m only partly fixed; the Toadstone's stand; the `canyon` `?reach=0` row loosened (not in the suite); `walkers` 19/20 (P12's pit-lamps, red on v15 too; not in the suite); L5's second round had no cold review of its own.
+- **Not built:** W3 (`issue-1527-edges`, worktree kept, paused): the ground has now moved, so it can be taken up.
+- No agent in flight, no background command. Worktrees: the main checkout, deploy, `issue-1527-edges`.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
