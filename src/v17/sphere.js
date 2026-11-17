@@ -400,7 +400,7 @@ export async function build(ctx) {
       let n = 0;
       for (let i = 0; i < o.count; i++) {
         o.getMatrixAt(i, m4); const e = m4.elements, dx = e[12] - CX, dz = e[14] - CZ, d = Math.hypot(dx, dz);
-        if (d < R + 1.5 || (dx < 0 && d < R + 14)) { o.setMatrixAt(i, zero); n++; }
+        if (d < R + 1.5 || (dx < 4 && d < R + 26)) { o.setMatrixAt(i, zero); n++; }
       }
       if (n) { o.instanceMatrix.needsUpdate = true; pebbles += n; }
     });
