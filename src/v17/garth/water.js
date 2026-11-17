@@ -67,16 +67,16 @@ function spout(B, b) {
   box(F - 0.06, R + 0.25, SPOUT.half + 0.06, SPOUT.top, SPOUT.top + 0.14, stone(1.08), stone(1.15));
   box(F - 0.03, R + 0.25, SPOUT.half + 0.03, SPOUT.top - 0.05, SPOUT.top - 0.003, rgb(H.dark, 0.9)); // (its top and the course's stop short of the cap's underside: no two paints in one plane)
   // the slot: a dark mouth laid on the upper course's face (its jambs the course's stone)
-  const fz = F + 0.015 - 0.006;
+  const fz = F + 0.015 - 0.014;
   B.quad(P(fz, -0.12, y - 0.075), P(fz, 0.12, y - 0.075), P(fz, 0.12, y + 0.12), P(fz, -0.12, y + 0.12), rgb(H.cut, 1.0), [-ux, 0, -uz], 0);
   // the trough: a stone floor out of the slot with a cheek each side, on a corbel
   box(L, F + 0.06, 0.12, y - 0.06, y, stone(1.05), stone(1.1));
   for (const s of [-1, 1]) { const [x, , z] = P((L + F + 0.06) / 2, s * 0.1, 0); B.box(x, y + 0.03, z, (F + 0.06 - L) / 2, 0.03, 0.02, yaw, stone(0.92), stone(1.0), 0.05); }
   box(F - 0.13, F + 0.02, 0.08, y - 0.24, y - 0.06, stone(0.75));
   // the trough's floor, wet: dark, a little green of old slime where the water runs
-  B.quad(P(L + 0.002, -0.08, y + 0.006), P(L + 0.002, 0.08, y + 0.006), P(F + 0.01, 0.08, y + 0.006), P(F + 0.01, -0.08, y + 0.006), [0.05, 0.07, 0.06], [0, 1, 0], 0.1);
+  B.quad(P(L + 0.002, -0.08, y + 0.014), P(L + 0.002, 0.08, y + 0.014), P(F + 0.01, 0.08, y + 0.014), P(F + 0.01, -0.08, y + 0.014), [0.05, 0.07, 0.06], [0, 1, 0], 0.1);
   // the stain: the face below the corbel darkened by centuries of splash, wider toward the floor
-  const fs = F - 0.006; // (clear of the face by more than the 4 mm two planes may share)
+  const fs = F - 0.014; // (the builder's boxes stand 6 mm proud of their nominal faces: 8 mm clear of that)
   B.quad(P(fs, -0.09, y - 0.24), P(fs, 0.09, y - 0.24), P(fs, 0.2, FLOOR + 0.06), P(fs, -0.2, FLOOR + 0.06), rgb(H.dark, 0.55), [-ux, 0, -uz], 0.15);
 }
 
