@@ -177,4 +177,12 @@ Next: the gate's summary; Stats; the release PR; `tools/gh-release.sh v16`; clos
 - **Not built:** W3 (`issue-1527-edges`, worktree kept, paused): the ground has now moved, so it can be taken up.
 - No agent in flight, no background command. Worktrees: the main checkout, deploy, `issue-1527-edges`.
 
+**2026-11-17, 04:58 PST. Looking back.**
+
+- **What took longest, and did it need to?** The tail: from the last feature merge (03:04) to live (04:57) was 1 h 53 min, against the hour the skill asks for. Two whole-suite runs (43 and 40 min) with two fix agents (67 and 71 min) between them. The first run was needed to find `threads`; the fix agents could not have been shorter. What could: the fen's review round (L5, 95 min) held everything behind it while the gutter and the village were already in.
+- **What was found late?** (1) The Wayside Shrine silently not built on tilted ground, the chair's mark under water, a path's end drowned, an ashlar in the air, a 1 m cliff: all from moving the ground under placed things, all found only by the batch's suite and B1 after every merge. The floor's briefs named `geometry`, `strata`, `dressing`, `heights`, `roads`; none named `threads`, `seams`, `walkers`. (2) A tree in the Hypogeum's cut: scatter reshuffles whenever biome weights move, and only rocks were kept out of acts' sites. (3) The release note called the lake by its code name (Lees Tarn); a visitor meets Circumbambulate Pool. Corrected after publishing.
+- **What did the owner have to say more than once?** Nothing this run.
+- **What worked?** Starting the critic and the curator before the last merge. A fixed view file with air views. Blind readers each round (they called the tilt subtle before the critic could). Asking the critic to stand still for two minutes: the only way the gutter's timing was judged as a visitor meets it. One agent for "every red test, judged row by row" (B1) rather than a re-record.
+- **Changed in the harness:** `orchestrator`: a brief that moves the ground or reshuffles scatter names `threads`, `seams`, `geometry` and `walkers` among its tests; `release-notes.md`: places are named from `LANDMARKS`, not from the code's comments.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
