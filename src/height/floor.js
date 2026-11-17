@@ -11,9 +11,9 @@
 // tongue, the walls) rides on the new ground. The lift is never negative and is exactly 0 at the waters, so nothing
 // placed at a fixed height can float on its account (the worst case is burial).
 //
-// Protected places: MASK below. A place built at fixed heights (or whose hook lerps to an absolute plane without
+// Protected places: floorMask below. A place built at fixed heights (or whose hook lerps to an absolute plane without
 // adding floorLift, as the Outwash's does) goes in it: inside, floorLift returns 0 before any noise is read, so the
-// ground there is bit for bit what it was; a 20 m skirt fades the lift in round it. ?floor=v15 (src/height/params.js)
+// ground there is bit for bit what it was; a skirt of 20 to 50 m fades the lift in round it. ?floor=v15 (src/height/params.js)
 // turns it all off.
 import { makeSimplex, smoothstep } from '../noise.js';
 import { WORLD } from '../world.js';
@@ -21,25 +21,26 @@ import { HEIGHT_PARAMS } from './params.js';
 
 const OFF = HEIGHT_PARAMS.floor === 'v15';
 const SN = makeSimplex(WORLD.seed + 1603);
-const SKIRT = 20;
 
 // the fall: u runs from the waters (south-west) to the high ground (north-east)
 const UX = 0.45, UZ = -0.89, U0 = -100, U1 = 230;
-const RISE = 3.4; // metres at the top of the fall, give or take the swell's 1.2
+const RISE = 3.6; // metres at the top of the fall, give or take the swell's 1.2
 
 // the old strand: a bank of BANK metres across BANK_W metres of u, at u STRAND, wandering STRAND_WOB either way
-const STRAND = -22, STRAND_WOB = 13, BANK = 1.3, BANK_W = 6;
+const STRAND = -22, STRAND_WOB = 13, BANK = 1.7, BANK_W = 4.5;
 const STRAND_REACH = BANK_W + STRAND_WOB * 1.1; // (|noise2| < 1.1: tools/height-check.mjs asserts it)
 
 // the whalebacks: centre, the bearing toward the notch they point at, half-lengths up-ice (stoss) and down-ice (lee),
 // half-width, height
 const NOTCH = { x: 40, z: -320 };
 const BACKS = [
-  { x: -80, z: -112, stoss: 48, lee: 82, w: 26, h: 2.6 },
-  { x: -180, z: -128, stoss: 40, lee: 70, w: 30, h: 2.8 }, // under the Lynchets: its terraces climb its flank
-  { x: 168, z: -40, stoss: 50, lee: 85, w: 30, h: 2.4 }, // under the Bletting's hedges
-  { x: 70, z: -128, stoss: 30, lee: 50, w: 20, h: 1.8 },
-  { x: -10, z: -60, stoss: 26, lee: 46, w: 16, h: 1.4 },
+  { x: -80, z: -112, stoss: 48, lee: 85, w: 24, h: 3.8 },
+  { x: -180, z: -128, stoss: 40, lee: 72, w: 28, h: 3.6 }, // under the Lynchets: its terraces climb its flank
+  { x: -128, z: -172, stoss: 34, lee: 60, w: 20, h: 3.0 },
+  { x: 168, z: -40, stoss: 50, lee: 88, w: 28, h: 3.4 }, // under the Bletting's hedges
+  { x: 136, z: -166, stoss: 30, lee: 55, w: 20, h: 2.8 },
+  { x: 70, z: -128, stoss: 30, lee: 52, w: 19, h: 2.6 },
+  { x: -10, z: -60, stoss: 26, lee: 48, w: 15, h: 2.0 },
 ].map((b) => {
   const dx = NOTCH.x - b.x, dz = NOTCH.z - b.z, l = Math.hypot(dx, dz);
   const R = Math.max(b.stoss, b.lee, b.w);
@@ -51,23 +52,25 @@ const KETTLES = [
   { x: -128, z: -88, r: 15, k: 0.7 },
 ].map((k) => ({ ...k, r2: k.r * k.r }));
 
-// the protected places: boxes [x0, x1, z0, z1] and circles [x, z, r] (each fades the lift in over SKIRT outside it)
+// The protected places: boxes [x0, x1, z0, z1] and circles [x, z, r], each with the skirt S over which the lift fades
+// in outside it and a wander W: the skirt's inner edge is pulled out by up to W metres, by a noise, so no ruled line or
+// circle shows on the floor from above (a pull only ever widens the protection: inside the shape it is always 0).
 const BOXES = [
-  [40, 128, -64, 36], // the Lappet (src/v15/plan.js lappetGround's box)
-  [215, 300, -115, 70], // High Ling, the Nave, the Noon Road, the Lonely Staircase, the Croft, the Hypogeum
-  [182, 218, 167, 203], // the Pit's block (SITES.pit)
-  [195, 235, 248, 290], // the fall's block (SITES.fallLip)
-  [-270, -195, 180, 245], // the Span's west block (src/v4/span/plan.js)
-  [220, 270, 160, 245], // the Span's east block
+  [40, 128, -64, 36, 40, 15], // the Lappet (src/v15/plan.js lappetGround's box)
+  [215, 300, -115, 70, 50, 20], // High Ling, the Nave, the Noon Road, the Lonely Staircase, the Croft, the Hypogeum
+  [182, 218, 167, 203, 20, 8], // the Pit's block (SITES.pit)
+  [195, 235, 248, 290, 20, 8], // the fall's block (SITES.fallLip)
+  [-270, -195, 180, 245, 20, 8], // the Span's west block (src/v4/span/plan.js)
+  [220, 270, 160, 245, 20, 8], // the Span's east block
 ];
 const CIRCLES = [
-  [40, 30, 95], // the keep, the Demesne and its ha-ha, the village (src/v15)
-  [-90, 110, 92], // Lees Tarn (L2 redraws its edge; the lift is 0 over all of it)
-  [70, 160, 85], // the fen
+  [40, 30, 95, 45, 15], // the keep's hill, the Demesne and its ha-ha, the village (src/v15)
+  [-90, 110, 92, 25, 10], // Lees Tarn (L2 redraws its edge; the lift is 0 over all of it)
+  [70, 160, 85, 25, 10], // the fen
 ];
 // the river's line, 25 m either side (src/height/field.js RIVER_CTRL, the lip to the fen)
 const RIVER = [[214, 266], [208, 258], [203, 247], [193, 242], [181, 243], [169, 237], [161, 226], [151, 217], [139, 214], [128, 207], [116, 199], [104, 192], [90, 182]];
-const RIVER_R = 25, RIVER_BOX = [90 - RIVER_R - SKIRT, 214 + RIVER_R + SKIRT, 182 - RIVER_R - SKIRT, 266 + RIVER_R + SKIRT];
+const RIVER_R = 25, RIVER_S = 20, RIVER_BOX = [90 - RIVER_R - RIVER_S, 214 + RIVER_R + RIVER_S, 182 - RIVER_R - RIVER_S, 266 + RIVER_R + RIVER_S];
 const R_IN = 260, R_OUT = 300; // the walls' foot: the lift is gone by r 300
 
 function riverDist(x, z) {
@@ -81,30 +84,37 @@ function riverDist(x, z) {
   return Math.sqrt(d2);
 }
 
+// the skirt's factor at d metres outside a shape (d > 0): 0 at the pulled-in edge, 1 by S past it
+function skirt(x, z, d, S, W) {
+  const n = 0.5 + 0.5 * SN.noise2(x * 0.021 - 5.1, z * 0.021 + 2.3), e = d - W * (n < 0 ? 0 : n > 1 ? 1 : n);
+  return e <= 0 ? 0 : smoothstep(0, S, e);
+}
 // 0 inside a protected place, 1 on open floor
 export function floorMask(x, z) {
   const r2 = x * x + z * z;
   if (r2 >= R_OUT * R_OUT) return 0;
   let m = r2 > R_IN * R_IN ? 1 - smoothstep(R_IN, R_OUT, Math.sqrt(r2)) : 1;
   for (let i = 0; i < BOXES.length; i++) {
-    const b = BOXES[i];
+    const b = BOXES[i], reach = b[4] + b[5];
     const ex = x < b[0] ? b[0] - x : x > b[1] ? x - b[1] : 0, ez = z < b[2] ? b[2] - z : z > b[3] ? z - b[3] : 0;
-    if (ex >= SKIRT || ez >= SKIRT) continue;
+    if (ex >= reach || ez >= reach) continue;
     const d2 = ex * ex + ez * ez;
-    if (d2 >= SKIRT * SKIRT) continue;
+    if (d2 >= reach * reach) continue;
     if (d2 === 0) return 0;
-    m *= smoothstep(0, SKIRT, Math.sqrt(d2));
+    m *= skirt(x, z, Math.sqrt(d2), b[4], b[5]);
+    if (m === 0) return 0;
   }
   for (let i = 0; i < CIRCLES.length; i++) {
-    const c = CIRCLES[i], dx = x - c[0], dz = z - c[1], R = c[2] + SKIRT, d2 = dx * dx + dz * dz;
+    const c = CIRCLES[i], dx = x - c[0], dz = z - c[1], R = c[2] + c[3] + c[4], d2 = dx * dx + dz * dz;
     if (d2 >= R * R) continue;
     if (d2 <= c[2] * c[2]) return 0;
-    m *= smoothstep(c[2], R, Math.sqrt(d2));
+    m *= skirt(x, z, Math.sqrt(d2) - c[2], c[3], c[4]);
+    if (m === 0) return 0;
   }
   if (x > RIVER_BOX[0] && x < RIVER_BOX[1] && z > RIVER_BOX[2] && z < RIVER_BOX[3]) {
     const d = riverDist(x, z);
     if (d <= RIVER_R) return 0;
-    if (d < RIVER_R + SKIRT) m *= smoothstep(RIVER_R, RIVER_R + SKIRT, d);
+    if (d < RIVER_R + RIVER_S) m *= smoothstep(RIVER_R, RIVER_R + RIVER_S, d);
   }
   return m;
 }
