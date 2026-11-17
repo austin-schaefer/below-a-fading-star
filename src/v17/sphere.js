@@ -34,16 +34,16 @@ const C3 = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 
 // the glass: milk glass, clear where it was blown thin, clouded in fields, lime crusted along its joins and at the
 // ground, crazed and streaked; the noon inside lights its clouded fields from within (uBreath)
-function glassMaterial(uBreath, low) {
+function glassMaterial(uBreath, low, U) {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.22, metalness: 0, transparent: true, depthWrite: false, side: THREE.DoubleSide });
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.uBreath = uBreath;
+    sh.uniforms.uBreath = uBreath; sh.uniforms.uSurge = U.uSurge; sh.uniforms.uWave = U.uWave;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute float aGround; varying float vGround; varying vec3 vSW;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGround = aGround; vSW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-      varying float vGround; varying vec3 vSW; uniform float uBreath;
+      varying float vGround; varying vec3 vSW; uniform float uBreath; uniform float uSurge; uniform float uWave;
       float sgH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
       float sgN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
         return mix(mix(mix(sgH(i), sgH(i + vec3(1,0,0)), f.x), mix(sgH(i + vec3(0,1,0)), sgH(i + vec3(1,1,0)), f.x), f.y),
@@ -93,7 +93,11 @@ function glassMaterial(uBreath, low) {
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         // lit from inside: the clouded glass carries the noon, the clear glass barely; back faces (the far wall's inside) most
         float sgBack = gl_FrontFacing ? 0.55 : 1.0;
-        totalEmissiveRadiance += vec3(1.0, 0.95, 0.82) * uBreath * sgBack * (0.012 + 0.13 * sgField * (1.0 - sgBand) + 0.02 * sgBand) * (1.0 - sgG) * (1.0 - 0.8 * sgDirt) * (1.0 - sgLich);`);
+        totalEmissiveRadiance += vec3(1.0, 0.95, 0.82) * uBreath * sgBack * (0.012 + 0.13 * sgField * (1.0 - sgBand) + 0.02 * sgBand) * (1.0 - sgG) * (1.0 - 0.8 * sgDirt) * (1.0 - sgLich);
+        // the surge (issue-1725): as the sun fails, the lime and the clouded fields light from inside, red-white, in a
+        // tide rising from the device at the bottom of the ball to its crown, and go out again
+        float sgH = sgD.y * 0.5 + 0.5, sgTide = 1.0 - smoothstep(uWave - 0.12, uWave, sgH), sgFront = exp(-pow((sgH - uWave) * 14.0, 2.0));
+        totalEmissiveRadiance += vec3(1.0, 0.3, 0.16) * uSurge * (sgTide * (1.3 * max(sgBand, sgG * 0.3) + 0.55 * sgField + 0.12 * sgS + 0.06) + sgFront * (0.5 + 1.2 * sgBand)) * (1.0 - 0.7 * sgDirt);`);
   };
   m.customProgramCacheKey = () => 'fp-sphere-glass' + (low ? '-low' : '');
   return m;
@@ -147,6 +151,8 @@ export async function build(ctx) {
 
   // ---- the breath: one uniform for the glass's glow, the baked noon on everything inside, and the light
   const uBreath = { value: 1 };
+  // the flicker's uniforms (issue-1725): the glass's surge, the beam's red and dark, the device's ring and leaves
+  const FX = { uSurge: { value: 0 }, uWave: { value: 0 }, uRed: { value: 0 }, uDim: { value: 1 }, uCharge: { value: 0 }, uHead: { value: 0 }, uDis: { value: 0 }, uOpen: { value: 0 }, uLeaf: { value: 0 }, uTime: { value: 0 } };
   const meshes = [];
   const add = (m, name) => { m.name = name; m.castShadow = false; m.receiveShadow = false; ctx.scene.add(m); meshes.push(m); return m; };
 
@@ -157,7 +163,7 @@ export async function build(ctx) {
     const p = sg.attributes.position.array, ag = new Float32Array(p.length / 3);
     for (let i = 0; i < ag.length; i++) ag[i] = p[i * 3 + 1] - gy(p[i * 3], p[i * 3 + 2]);
     sg.setAttribute('aGround', new THREE.BufferAttribute(ag, 1));
-    const m = add(new THREE.Mesh(sg, glassMaterial(uBreath, low)), 'sphere-glass');
+    const m = add(new THREE.Mesh(sg, glassMaterial(uBreath, low, FX)), 'sphere-glass');
     m.renderOrder = 2;
   }
 
@@ -170,11 +176,12 @@ export async function build(ctx) {
   const mats = [];
   const umat = (key, o = {}) => { const m = underMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, ...o }), key, noonHex); mats.push(m); return m; };
 
+  const EB = new UnderBuilder(lit); // the earth and the parts: one builder, one draw
   // ---- the earth: the cut ground pressed against the glass from outside, seen through it from within. A skin just
   // outside the glass wherever it lies under the drawn ground, painted in courses by depth (turf and roots, brown
   // earth, ochre clay, the wall's grey scree), with stones pressed flat against it
   {
-    const E = new UnderBuilder(lit), rng = ctx.makeRng(17501);
+    const E = EB, rng = ctx.makeRng(17501);
     const nU = low ? 64 : 112, nV = low ? 40 : 64, Re = R + 0.12;
     const pt = (i, j) => { const u = (i / nU) * Math.PI * 2, v = (j / nV) * Math.PI, s = Math.sin(v); return [CX + Re * s * Math.cos(u), CY - Re * Math.cos(v), CZ + Re * s * Math.sin(u)]; };
     const TURF = C3('#2e2416'), LOAM = C3('#5a3a22'), CLAY = C3('#82562c'), SCREE = C3('#6a5c56'), ROOT = C3('#1d1610'), STONE = C3('#8a8478');
@@ -220,12 +227,11 @@ export async function build(ctx) {
         }
       }
     }
-    add(new THREE.Mesh(E.geometry(), umat('sphere-earth', { roughness: 0.95 })), 'sphere-earth');
   }
   await ctx.progress?.('the sphere', 0.4);
 
   // ---- the parts: the node, the lines, the keeper, his wheel, the sling and the stays; the hoops outside
-  const B = new UnderBuilder(lit), rng = ctx.makeRng(17502);
+  const B = EB, rng = ctx.makeRng(17502); // (the earth's builder: one draw for the earth and the parts, issue-1725)
   const V3 = (a) => new THREE.Vector3(...a);
   const along = (a, b) => { const A = V3(a), d = V3(b).sub(A), len = d.length(); d.normalize(); return { M: new THREE.Matrix4().lookAt(A, A.clone().sub(d), Math.abs(d.y) > 0.95 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)).setPosition(A), len }; };
   const [NX, NY, NZ] = SPHERE.node, [fx, fz] = SPHERE.face, yaw = Math.atan2(fx, fz), kyaw = Math.atan2(SPHERE.keeperFace[0], SPHERE.keeperFace[1]);
@@ -239,30 +245,39 @@ export async function build(ctx) {
     NP.tube(B, M, { r: k === 0 ? 0.36 : 0.3, len, rib: 1.4, collar: true, color: NOON.biscuit, seed: 30 + k });
     NP.collar(B, M.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, len - 0.05)), { r: (k === 0 ? 0.36 : 0.3) + 0.1, t: 0.08, color: NOON.bone, band: false, seg: 24 });
   }
-  // the eye: where the noon comes in, a disc of clear glass in the top of the ball over the keeper, ringed in
-  // ox-blood, white with the light (not lit by anything: it is the source); and the fall of light from it onto him
+  // the eye: where the noon comes in, a white disc in the top of the ball over the keeper (no rim, no seam: nothing in
+  // the glass reads as a way in), and the fall of light from it onto him. The eye, the beam and the haze of noon over
+  // the bowl (below) are one additive draw: `aKind` 0 the beam, 1 the eye, 2 the haze (its back faces only)
   const [SX, SY, SZ] = SPHERE.seat;
   const EYE = [SX, CY + Math.sqrt(R * R - (SX - CX) ** 2 - (SZ - CZ) ** 2) - 0.35, SZ];
+  const beamParts = [];
   {
     const n = new THREE.Vector3(SX - CX, EYE[1] - CY, SZ - CZ).normalize(), q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
-    const lg = new THREE.CircleGeometry(1.0, 28).applyQuaternion(q).translate(...EYE);
-    const lm = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.0, 0.97, 0.88), side: THREE.DoubleSide, fog: true });
-    add(new THREE.Mesh(lg, lm), 'sphere-eye');
-    NP.collar(B, new THREE.Matrix4().compose(new THREE.Vector3(...EYE), q, new THREE.Vector3(1, 1, 1)), { r: 1.08, t: 0.12, color: NOON.oxbloodD, band: false, seg: 32 });
-  }
-  {
     const top = EYE[1] - 0.1, bot = SY - 1.6, h = top - bot;
-    const bg = new THREE.CylinderGeometry(0.95, 1.7, h, 32, 1, true).translate(SX, bot + h / 2, SZ);
+    beamParts.push([new THREE.CylinderGeometry(0.95, 1.7, h, 32, 1, true).translate(SX, bot + h / 2, SZ), 0]);
+    beamParts.push([new THREE.CircleGeometry(1.0, 28).applyQuaternion(q).translate(...EYE), 1]);
+    beamParts.push([new THREE.SphereGeometry(R - 0.35, low ? 32 : 48, low ? 20 : 32).translate(CX, CY, CZ), 2]);
+    const pos = [], nor = [], kind = [];
+    for (const [g0, k] of beamParts) { const g = g0.index ? g0.toNonIndexed() : g0; pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); for (let i = 0; i < g.attributes.position.count; i++) kind.push(k); g0.dispose(); }
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); bg.setAttribute('aKind', new THREE.Float32BufferAttribute(kind, 1));
     const bm = new THREE.ShaderMaterial({
-      uniforms: { uBreath, uTop: { value: top }, uH: { value: h } },
-      vertexShader: 'varying vec3 vW; varying vec3 vN; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: `uniform float uBreath; uniform float uTop; uniform float uH; varying vec3 vW; varying vec3 vN;
-        void main() { vec3 v = normalize(cameraPosition - vW); float e = pow(abs(dot(normalize(vN), v)), 1.6);
-          float t = clamp((uTop - vW.y) / uH, 0.0, 1.0); float a = e * (0.5 - 0.35 * t) * (1.0 - smoothstep(0.85, 1.0, t)) * smoothstep(0.0, 0.06, t);
-          gl_FragColor = vec4(vec3(1.0, 0.96, 0.86) * a * 0.9 * uBreath, 1.0); }`,
+      uniforms: { uBreath, uTop: { value: top }, uH: { value: h }, uC: { value: new THREE.Vector3(CX, CY, CZ) }, uRed: FX.uRed, uDim: FX.uDim },
+      vertexShader: 'attribute float aKind; varying float vK; varying vec3 vW; varying vec3 vN; void main() { vK = aKind; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: `uniform float uBreath; uniform float uTop; uniform float uH; uniform vec3 uC; uniform float uRed; uniform float uDim; varying float vK; varying vec3 vW; varying vec3 vN;
+        void main() {
+          vec3 noon = mix(vec3(1.0, 0.96, 0.86), vec3(1.5, 0.16, 0.06), uRed); // the stored noon, gone to blood for a beat in the failing
+          vec3 c;
+          if (vK < 0.5) { vec3 v = normalize(cameraPosition - vW); float e = pow(abs(dot(normalize(vN), v)), 1.6);
+            float t = clamp((uTop - vW.y) / uH, 0.0, 1.0); float a = e * (0.5 - 0.35 * t) * (1.0 - smoothstep(0.85, 1.0, t)) * smoothstep(0.0, 0.06, t);
+            c = noon * a * 0.9 * uBreath; }
+          else if (vK < 1.5) c = noon * 0.95 * uBreath;
+          else { if (gl_FrontFacing) discard; float hh = clamp((vW.y - uC.y) / ${R.toFixed(1)} * 0.5 + 0.5, 0.0, 1.0);
+            c = mix(vec3(1.0, 0.95, 0.84), vec3(0.6, 0.08, 0.04), uRed) * (0.08 + 0.26 * hh * hh) * uBreath; }
+          gl_FragColor = vec4(c * uDim, 1.0); }`,
       side: THREE.DoubleSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
     });
-    const beam = add(new THREE.Mesh(bg, bm), 'sphere-beam'); beam.renderOrder = 3;
+    const beam = add(new THREE.Mesh(bg, bm), 'sphere-beam'); beam.renderOrder = 1; // (under the glass, as the haze was: the glass's milk lies over the noon inside)
   }
 
   // the keeper: a Noonwright, long in the limb, hooded, in a robe of ox-blood gone brown with lime in its folds,
@@ -378,8 +393,8 @@ export async function build(ctx) {
   const wear = (x, y, z, ny, c, out) => { const n = n3(x * 1.3, y * 1.3, z * 1.3), low2 = 1 - ss(0, 1.6, y - gy(x, z)); out[0] = c.r !== undefined ? c.r : c[0]; out[1] = c.g !== undefined ? c.g : c[1]; out[2] = c.b !== undefined ? c.b : c[2]; const k = 0.62 + 0.3 * n; out[0] *= k; out[1] *= k; out[2] *= k; out[0] = out[0] * (1 - 0.6 * low2) + 0.16 * 0.6 * low2; out[1] = out[1] * (1 - 0.6 * low2) + 0.18 * 0.6 * low2; out[2] = out[2] * (1 - 0.6 * low2) + 0.11 * 0.6 * low2; return out; };
   {
     const sx = CX + fx * R, sz = CZ + fz * R;
-    // (the tube between the hoops is gone, to its socket in the glass: a collar fused on where it left)
-    NP.collar(B, along([CX + fx * (R - 0.1), CY + 0.3, CZ + fz * (R - 0.1)], [CX + fx * (R + 2), CY + 0.3, CZ + fz * (R + 2)]).M, { r: 1.4, t: 0.2, seg: 36, color: OLD, wear, band: false });
+    // (nothing of the line touches the glass: the nearest hoop stands 15 m off it, so none of them, seen through the
+    // glass, reads as a door in it (issue-1725, the owner: 'lose apparent entry aperture'))
     for (const [k, s] of SPHERE.hoops.entries()) {
       const jog = (rng() - 0.5) * 1.6, x = sx + fx * s - fz * jog, z = sz + fz * s + fx * jog, gnd = gy(x, z);
       const r = SPHERE.hoopR * (0.9 + rng() * 0.2), fallen = k === 4, lean = k > 2 ? (rng() - 0.5) * 0.5 : (rng() - 0.5) * 0.12;
@@ -387,48 +402,36 @@ export async function build(ctx) {
       const M = new THREE.Matrix4().makeRotationY(yaw).multiply(new THREE.Matrix4().makeRotationZ(lean)).multiply(new THREE.Matrix4().makeRotationY((rng() - 0.5) * 0.3));
       if (fallen) M.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2 - 0.08));
       M.setPosition(x, y, z);
+      if (k < 2) continue; // (the two nearest: read through the glass as a hatch)
       const broken = k >= 5, a0 = broken ? -Math.PI + 0.9 + rng() * 0.6 : -Math.PI, a1 = broken ? Math.PI - 1.6 - rng() * 0.8 : Math.PI;
       NP.collar(B, M, { r, t: 0.22, a0, a1, seg: 40, color: OLD, wear, band: false });
       hoopAt.push({ x, z, y, r, fallen, gnd });
     }
   }
-  // ---- the works under the ground line (issue-1724, the owner: "something at bottom that hints at its purpose…
-  // for finding the edges where you can see the bottom of the sphere"). Seen only from the rim, looking down through
-  // the glass into the opened bowl: the line's mouth low in the glass on the Garth's side, its iris shutter turned
-  // shut, a long spindle from the node down to the shutter's gear (the wheel in his hands works it: he is holding
-  // it shut), and round its edge a crescent of noon still leaking out down the line toward the Garth, the little the
-  // garden lives on. A ladder down the glass from the ground line to the shutter, which he no longer climbs. All in the
-  // parts' one draw; the leak glows by the baked noon (no light of its own), the rest dim (the noon falls on him,
-  // not down here)
+  // ---- the device under the ground line (issue-1724, reworked issue-1725 on the owner's word: no way in or out of
+  // the ball, the hook is "did this guy seal himself in, like, for ever?"). Seen only from the rim, looking down
+  // through the glass into the opened bowl: set in the bottom of the ball on the Garth's side, sealed to the glass, a
+  // bronze iris of eight leaves on a solid boss, a long spindle from the node down to its gear (the wheel in his hands
+  // works it), and round the iris a groove in which a seam of the noon's white grows from a fixed mark between one
+  // failing of the sun and the next, full at the instant the next begins. At the failing it discharges (below,
+  // `pose`). The spindle and its stays are in the parts' draw; the iris and its ring are one draw of their own, drawn
+  // only within 120 m (beyond that it is under a pixel and under the ground line)
+  const DEV = {};
   {
-    const BR = new THREE.Color('#5c4a2c'), VERD = new THREE.Color('#4b6a55'), LIME = new THREE.Color('#9d9a86');
+    const BR = new THREE.Color('#5c4a2c'), VERD = new THREE.Color('#4b6a55');
     const rod = (a, b, r, color, glow) => { const A = new THREE.Vector3(...a), Bv = new THREE.Vector3(...b), d = Bv.clone().sub(A), len = d.length(); const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); put(B, new THREE.CylinderGeometry(r, r, len, 8, 1), new THREE.Matrix4().compose(A.clone().lerp(Bv, 0.5), q, new THREE.Vector3(1, 1, 1)), { color, jit: 0.05, glow }); };
+    glowK = 0.3;
     const onGl = (d, inset) => [CX + d.x * (R - inset), CY + d.y * (R - inset), CZ + d.z * (R - inset)];
-    glowK = 0.3;
-    // the mouth: low on the Garth's side, 55 degrees under the horizon
-    const dS = new THREE.Vector3(fx * 0.57, -0.82, fz * 0.57).normalize();
+    const dS = new THREE.Vector3(fx * 0.57, -0.82, fz * 0.57).normalize(); // 55 degrees under the horizon, toward the Garth
     const S0 = new THREE.Vector3(...onGl(dS, 0.05)), Mm = along(S0.toArray(), S0.clone().addScaledVector(dS, -1).toArray()).M; // its +z into the bowl
-    const MR = 2.0;
-    NP.collar(B, Mm, { r: MR + 0.12, t: 0.3, seg: 40, color: OLD, wear, band: false });                       // the mouth's ring, fused in the glass
-    put(B, new THREE.CylinderGeometry(MR + 0.05, MR + 0.25, 1.1, 32, 1, true).rotateX(Math.PI / 2).translate(0, 0, 0.55), Mm, { color: BR, jit: 0.05 }); // its bell, standing in
-    // the iris: eight bronze leaves turned shut, each overlapping the next, a crescent left open at the top of the mouth
-    const ML = Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 1.08));
-    for (let k = 0; k < 8; k++) {
-      const a = k / 8 * Math.PI * 2, lf = new THREE.BoxGeometry(2.1, 0.95, 0.04).translate(0.62, 0.42, k * 0.005);
-      put(B, lf, ML.clone().multiply(new THREE.Matrix4().makeRotationZ(a)).multiply(new THREE.Matrix4().makeRotationZ(-0.35)).multiply(new THREE.Matrix4().makeTranslation(0, 0, 0)).multiply(new THREE.Matrix4().makeScale(k === 0 ? 0.86 : 1, 1, 1)), { color: k % 2 ? BR : VERD, jit: 0.08 });
-    }
-    // the leak: a crescent round one edge of the iris, white, and the conduit's throat behind it lit by it
-    glowK = 0;
-    put(B, new THREE.TorusGeometry(MR - 0.1, 0.09, 6, 32, 2.3).rotateZ(0.4), ML.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, -0.03)), { color: new THREE.Color('#fff4dc'), glow: 2.6, jit: 0 });
-    put(B, new THREE.CircleGeometry(MR, 32), Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.3)), { color: new THREE.Color('#3a3226'), glow: 0.25, jit: 0 }); // the throat, dark past the leaves
-    glowK = 0.3;
+    const MR = 2.0, ML = Mm.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, 0.55));
     // the spindle: from under the node, down to the iris's gear at its hub; the wheel's axle turns it
     const hub = S0.clone().addScaledVector(dS, -1.2), top = new THREE.Vector3(NX, NY - 0.5, NZ);
     rod([NX, NY - 0.45, NZ], top.toArray(), 0.12, BR); // the bevel box under the node
     NP.collar(B, along([NX, NY - 0.3, NZ], [NX, NY - 1, NZ]).M, { r: 0.2, t: 0.08, seg: 14, color: BR, band: false });
     rod(top.toArray(), hub.toArray(), 0.075, BR);
-    NP.collar(B, along(hub.toArray(), S0.toArray()).M, { r: 0.38, t: 0.12, seg: 20, color: VERD, band: false }); // the gear on the iris's ring
-    rod(hub.toArray(), S0.clone().addScaledVector(dS, -0.15).toArray(), 0.09, VERD);
+    NP.collar(B, along(hub.toArray(), S0.toArray()).M, { r: 0.38, t: 0.12, seg: 20, color: VERD, band: false }); // the gear on the iris's hub
+    rod(hub.toArray(), S0.clone().addScaledVector(dS, -0.6).toArray(), 0.09, VERD);
     // its bearings: three collars down the spindle, each held to the glass by a stay (an eye at both ends)
     for (const t of [0.3, 0.55, 0.8]) {
       const q = top.clone().lerp(hub, t), out = q.clone().sub(new THREE.Vector3(CX, CY, CZ)).setY(0).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), t * 2.1 - 1).setY(-0.15).normalize();
@@ -437,15 +440,59 @@ export async function build(ctx) {
       strand(B, new THREE.Matrix4(), q.clone().addScaledVector(out, 0.14).toArray(), e.toArray(), { t: 0.016 });
       NP.collar(B, along(e.toArray(), [CX, CY, CZ]).M, { r: 0.1, t: 0.035, seg: 10, color: OLD, band: false });
     }
-    // the ladder: down the glass beside the mouth, from the ground line to the iris's ring
-    const lb = Math.atan2(fz, fx) + 0.32, ladTop = (() => { for (let el = 0.4; el > -1.2; el -= 0.01) { const d = new THREE.Vector3(Math.cos(el) * Math.cos(lb), Math.sin(el), Math.cos(el) * Math.sin(lb)), p = onGl(d, 0); if (p[1] < gy(p[0], p[2]) - 0.15) return el; } return 0; })();
-    const ladBot = Math.asin(dS.y) + 0.02, LW = 0.24;
-    const ldir = (el, s) => { const az = lb + s * LW / (R * Math.cos(el)); return new THREE.Vector3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)); };
-    const nSeg = 18;
-    for (const s of [-1, 1]) for (let k = 0; k < nSeg; k++) { const e0 = ladTop + (ladBot - ladTop) * k / nSeg, e1 = ladTop + (ladBot - ladTop) * (k + 1) / nSeg; rod(onGl(ldir(e0, s), 0.22), onGl(ldir(e1, s), 0.22), 0.045, BR); }
-    for (let el = ladTop - 0.03; el > ladBot; el -= 0.4 / R) rod(onGl(ldir(el, -1), 0.22), onGl(ldir(el, 1), 0.22), 0.035, BR);
-    for (const el of [ladTop - 0.02, (ladTop + ladBot) / 2, ladBot + 0.02]) for (const s of [-1, 1]) rod(onGl(ldir(el, s), 0.22), onGl(ldir(el, s), 0.02), 0.02, BR); // its brackets to the glass
     glowK = 1;
+    // the iris and its ring, in the device's own frame (ML: +z into the bowl, +y toward the ball's crown, so the mark
+    // is at the top): `aRole` 0 bronze, 1 a leaf (turns about `aPiv` by uOpen), 2 the groove (`aAng` 0..1 from the mark,
+    // clockwise as seen from the bowl)
+    const pos = [], nor = [], col = [], role = [], ang = [], piv = [];
+    const addG = (g, M, c, r, pv) => { const ng = g.index ? g.toNonIndexed() : g; ng.applyMatrix4(M); ng.computeVertexNormals(); const P = ng.attributes.position.array, N = ng.attributes.normal.array;
+      for (let i = 0; i < P.length; i += 3) { pos.push(P[i], P[i + 1], P[i + 2]); nor.push(N[i], N[i + 1], N[i + 2]); const j = 0.85 + 0.3 * h1(P[i] * 7.1 + P[i + 1] * 3.3); col.push(c.r * j, c.g * j, c.b * j); role.push(r); ang.push(((Math.atan2(P[i], P[i + 1]) / (Math.PI * 2)) + 1) % 1); piv.push(pv ? pv[0] : 0, pv ? pv[1] : 0); } };
+    const I = new THREE.Matrix4();
+    addG(new THREE.CylinderGeometry(MR + 0.42, MR + 0.5, 0.5, 48, 1).rotateX(Math.PI / 2), new THREE.Matrix4().makeTranslation(0, 0, -0.3), BR.clone().multiplyScalar(0.7), 0); // the boss: solid, sealed to the glass
+    addG(new THREE.TorusGeometry(MR + 0.42, 0.08, 6, 64), new THREE.Matrix4().makeTranslation(0, 0, -0.04), BR, 0);             // its rim
+    addG(new THREE.TorusGeometry(MR + 0.16, 0.075, 8, 120), new THREE.Matrix4().makeTranslation(0, 0, -0.02), new THREE.Color('#2a241a'), 2); // the groove
+    addG(new THREE.BoxGeometry(0.12, 0.34, 0.14), new THREE.Matrix4().makeTranslation(0, MR + 0.16, 0.06), new THREE.Color('#8a6a3a'), 0); // the mark the seam grows from
+    for (let k = 0; k < 8; k++) {
+      const a = k / 8 * Math.PI * 2 - 0.35, M = new THREE.Matrix4().makeRotationZ(a).multiply(new THREE.Matrix4().makeTranslation(0, 0, k * 0.006));
+      const pv = new THREE.Vector3(1.55, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), a);
+      addG(new THREE.BoxGeometry(2.1, 0.95, 0.045).translate(0.62, 0.42, 0), M, k % 2 ? BR : VERD, 1, [pv.x, pv.y]);
+    }
+    addG(new THREE.SphereGeometry(0.28, 12, 8).scale(1, 1, 0.6), new THREE.Matrix4().makeTranslation(0, 0, 0.1), VERD, 0); // the hub's cap
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.setAttribute('aRole', new THREE.Float32BufferAttribute(role, 1)); g.setAttribute('aAng', new THREE.Float32BufferAttribute(ang, 1)); g.setAttribute('aPiv', new THREE.Float32BufferAttribute(piv, 2));
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.35 });
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, { uCharge: FX.uCharge, uHead: FX.uHead, uDis: FX.uDis, uOpen: FX.uOpen, uLeaf: FX.uLeaf, uTime: FX.uTime, uBreath });
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nattribute float aRole; attribute float aAng; attribute vec2 aPiv; varying float vRole; varying float vAng; varying vec2 vLoc; uniform float uOpen;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          vRole = aRole; vAng = aAng; vLoc = position.xy;
+          if (aRole > 0.5 && aRole < 1.5) { float c = cos(-uOpen), s = sin(-uOpen); vec2 q = transformed.xy - aPiv; transformed.xy = aPiv + vec2(c * q.x - s * q.y, s * q.x + c * q.y); }`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vRole; varying float vAng; varying vec2 vLoc; uniform float uCharge; uniform float uHead; uniform float uDis; uniform float uLeaf; uniform float uTime; uniform float uBreath;')
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          vec3 dvN = vec3(1.0, 0.95, 0.82);
+          if (vRole > 1.5) {
+            // the seam: the noon's white grown round the groove from the mark, its edge ragged and alive; the rest a dull
+            // ember so the eye sees how much is left
+            float wob = 0.012 * sin(vAng * 157.0 + uTime * 1.7) + 0.008 * sin(vAng * 61.0 - uTime * 0.9);
+            float fill = 1.0 - smoothstep(uCharge - 0.004 + wob, uCharge + 0.004 + wob, vAng);
+            float grain = 0.75 + 0.25 * sin(vAng * 311.0 + uTime * 2.3) * sin(vAng * 97.0 - uTime * 1.1);
+            float edge = exp(-pow((vAng - uCharge) * 90.0, 2.0)) * step(0.01, uCharge);
+            float head = uDis * (exp(-pow(fract(vAng - uHead + 0.5) - 0.5, 2.0) * 900.0) * 3.0);
+            totalEmissiveRadiance += dvN * (fill * 1.1 * grain * uBreath + edge * 1.6 + head) + vec3(0.22, 0.07, 0.03) * 0.12 * (1.0 - fill);
+          } else if (vRole > 0.5) {
+            // the leaves: the discharge running into them, brightest at their inner edges
+            float rr = length(vLoc);
+            totalEmissiveRadiance += dvN * uLeaf * (0.25 + 1.4 * (1.0 - smoothstep(0.0, 1.6, rr)));
+          }`);
+    };
+    m.customProgramCacheKey = () => 'fp-sphere-device';
+    const dev = add(new THREE.Mesh(g, m), 'sphere-device');
+    dev.matrixAutoUpdate = false; dev.matrix.copy(ML); dev.matrixWorldNeedsUpdate = true;
+    dev.geometry.computeBoundingSphere();
+    DEV.mesh = dev; DEV.at = new THREE.Vector3().setFromMatrixPosition(ML);
   }
   add(new THREE.Mesh(B.geometry(), umat('sphere-parts', { roughness: 0.55, side: THREE.DoubleSide })), 'sphere-parts');
 
@@ -494,33 +541,64 @@ export async function build(ctx) {
     const m = add(new THREE.Mesh(bg, lm), 'sphere-lip'); m.receiveShadow = true;
   }
 
-  // ---- the noon in the air: the inside of the glass seen through it, a white haze over what lies behind the keeper
-  // (additive, its far half only: depth keeps him dark against it), brightest high where the light comes in
-  let haze = null;
-  {
-    const hg = new THREE.SphereGeometry(R - 0.35, low ? 32 : 48, low ? 20 : 32); hg.translate(CX, CY, CZ);
-    const hm = new THREE.ShaderMaterial({
-      uniforms: { uBreath, uC: { value: new THREE.Vector3(CX, CY, CZ) } },
-      vertexShader: 'varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: `uniform float uBreath; uniform vec3 uC; varying vec3 vW;
-        void main() { float h = clamp((vW.y - uC.y) / ${R.toFixed(1)} * 0.5 + 0.5, 0.0, 1.0);
-          gl_FragColor = vec4(vec3(1.0, 0.95, 0.84) * (0.08 + 0.26 * h * h) * uBreath, 1.0); }`,
-      side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
-    });
-    haze = add(new THREE.Mesh(hg, hm), 'sphere-haze'); haze.renderOrder = 1;
-  }
-
   // ---- the light: one PointLight at the crown inside, the noon coming down the line, breathing slowly
   const light = new THREE.PointLight(NOON.lightHex, 0, 34, 1.4);
   light.position.set(SX, EYE[1] - 2.2, SZ); light.name = 'sphere-noon';
   ctx.scene.add(light);
-  const baseI = low ? 55 : 70;
+  const baseI = low ? 55 : 70, _red = new THREE.Color(0.9, 0.12, 0.05);
+  // ---- the charge and the failing (issue-1725). The ring reads the sun's own schedule (sky.js's flicker: `next`, the
+  // seconds to the next onset, counting only once the visitor is out; `phase`, the seconds left of a gutter that is on;
+  // `len`, its length): it is empty as a gutter ends and full at the instant the next begins, the span between being
+  // what `next` stood at as the last one ended, so an irregular interval still fills to the second. At the onset the
+  // ring discharges, e seconds in:
+  //   0.0-0.5  the seam flares and a head of light races round the groove;
+  //   0.5-1.6  the ring drains into the leaves, which light from their inner edges; the iris gasps open a hand's
+  //            breadth (0.8-1.15) and snaps shut (1.35-1.5);
+  //   1.0-2.6  a red-white tide climbs the glass's lime from the device to the crown, and holds;
+  //   1.5-2.4  the stored noon in the shaft goes to blood, stuttering (1.6-2.6);
+  //   2.6-4.4  the shaft and the light inside go out: in the valley's dark the ball is dark too;
+  //   4.4-6.0  the noon comes back white, the tide drains away; the ring stays empty until the sun has caught.
+  // `ctx.sphere.pose = { charge, e }` (null normally) poses it for renders: charge 0..1, or e seconds into a failing.
+  // prefers-reduced-motion: no stutter and no racing head; the same beats as slow ramps.
+  const reduce = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FL = ctx.sky?.flicker;
+  let span = null, wasOn = false;
+  const sm = (a, b, v) => { const k = Math.min(1, Math.max(0, (v - a) / (b - a))); return k * k * (3 - 2 * k); };
+  const camP = ctx.camera?.position;
+  const api = { pose: null, charge: 0 };
   ctx.registerUpdate((dt, t) => {
     // a breath of about nine seconds, never a flicker: slow and shallow, with a slower swell under it
     const b = 1 + 0.12 * Math.sin(t * 0.7) + 0.05 * Math.sin(t * 0.23 + 1.3);
+    let charge = 0, e = -1;
+    if (api.pose) { if (api.pose.e != null) e = api.pose.e; else charge = api.pose.charge ?? 0; }
+    else if (FL) {
+      const on = FL.phase > 0;
+      if ((wasOn && !on) || span == null || FL.next > span) span = Math.max(1, FL.next);
+      wasOn = on;
+      if (on) e = FL.len - FL.phase; else charge = Math.min(1, Math.max(0, 1 - FL.next / span));
+    }
+    let head = 0, dis = 0, open = 0, leaf = 0, surge = 0, wave = 0, red = 0, dim = 1;
+    if (e >= 0) {
+      charge = 1 - sm(0.5, 1.6, e);
+      dis = sm(0, 0.15, e) * (1 - sm(1.4, 1.9, e));
+      head = reduce ? e * 0.35 : e * 2.4;
+      leaf = sm(0.4, 1.1, e) * (1 - sm(1.4, 2.6, e));
+      open = 0.32 * sm(0.8, reduce ? 1.4 : 1.15, e) * (1 - sm(reduce ? 1.8 : 1.35, reduce ? 2.4 : 1.5, e));
+      surge = sm(1.0, 1.5, e) * (1 - sm(4.4, 6.0, e));
+      wave = sm(1.0, 2.6, e);
+      red = sm(1.5, 2.4, e) * (1 - sm(4.4, 5.6, e));
+      const stut = reduce ? 0 : (e > 1.6 && e < 2.6 ? 0.6 * (Math.sin(e * 41.0) > 0.2 ? 1 : 0) * (Math.sin(e * 13.0) > -0.4 ? 1 : 0) : 0);
+      dim = (1 - stut) * (1 - sm(2.4, 2.8, e) * (1 - sm(4.2, 5.2, e)));
+    }
+    api.charge = charge;
     uBreath.value = b;
-    light.intensity = baseI * b;
-    for (const m of mats) m.userData.uGlow.value.set(noonHex).multiplyScalar(0.9 * b);
+    FX.uCharge.value = charge; FX.uHead.value = head % 1; FX.uDis.value = dis; FX.uOpen.value = open; FX.uLeaf.value = leaf;
+    FX.uSurge.value = surge; FX.uWave.value = wave; FX.uRed.value = red; FX.uDim.value = dim; FX.uTime.value = t;
+    light.intensity = baseI * b * dim * (1 - 0.4 * red);
+    light.color.setHex(NOON.lightHex).lerp(_red, red * 0.8);
+    for (const m of mats) m.userData.uGlow.value.set(noonHex).multiplyScalar(0.9 * b * (0.25 + 0.75 * dim));
+    // the device only within 120 m: beyond, it is under a pixel and under the ground line
+    if (DEV.mesh && camP) DEV.mesh.visible = camP.distanceToSquared(DEV.at) < 120 * 120;
   }, { pos: new THREE.Vector3(CX, CY, CZ), near: 400, hz: 4 });
 
   // ---- the walker goes round it, not into it: the glass, and each standing hoop's feet
@@ -559,6 +637,6 @@ export async function build(ctx) {
     });
   }
 
-  ctx.sphere = { meshes, light, cut, pebbles, hoops: hoopAt, uBreath, ring: sphereRing, ms: Math.round(performance.now() - t0) };
+  ctx.sphere = { meshes, light, cut, pebbles, hoops: hoopAt, uBreath, ring: sphereRing, fx: FX, get pose() { return api.pose; }, set pose(v) { api.pose = v; }, get charge() { return api.charge; }, ms: Math.round(performance.now() - t0) };
   await ctx.progress?.('the sphere', 1);
 }
