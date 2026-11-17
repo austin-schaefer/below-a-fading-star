@@ -35,7 +35,11 @@ export async function build(ctx) {
       for (const yr of [ya - 0.02, ya + 0.1]) B.add(new THREE.TorusGeometry(0.34, 0.02, 4, 10), ch(M, lx, yr, lz, Math.PI / 2, 0, 0), { color: V.rope, moss: 0, ground: y - 3 });
       const lp = world(M, tip[0], tip[1] - 0.025, tip[2] + 0.04);
       hang(lp, Lp.glass || 'amber', Lp.k ?? 1, Lp.name);
-      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a lamp post (${Lp.name})`, x: Lp.x, y: y - 0.25, z: Lp.z, mount: 'ground', r: 0.32 });
+      // on a built tread (the crown, the Rungs: their stone slab is the floor, a hand over the ground mesh, which near a
+      // rim is pulled down to the tread below) it stands on top of the slab; on the bench or the foot, on the ground
+      // (v15-W8: the head's two posts and the ladder's, a metre in from the crown's rim, read as standing 2 m over nothing)
+      const tread = P.LEVELS.some((l) => ['crown', 'high', 'mid', 'low'].includes(l.key) && Math.abs(l.y - y) < 0.05);
+      ctx.strata.place?.({ hand: 'late', from: 'heliarch', kind: 'spolia', name: `Heliarch drums stacked for a lamp post (${Lp.name})`, x: Lp.x, y: y - 0.25, z: Lp.z, ...(tread ? { mount: 'top', foot: y } : { mount: 'ground' }), r: 0.32 });
     } else if (Lp.kind === 'bracket') {
       // an iron arm out of a wall (M a few centimetres proud of the wall's face, z out of it; its plate is let into the
       // wall, never laid in the wall's plane), the lamp at its hook
