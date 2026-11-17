@@ -48,7 +48,7 @@ const R = await page.evaluate(() => {
     // 1. walk into it: stopped at its face, on the ground
     place(sx, sz, opts.floor); face(px, pz); p.keys.clear(); p.keys.add('KeyW');
     run(240); p.keys.clear();
-    out.walk = { gap: +(dist(c, p.pos.x, p.pos.z) - c.r).toFixed(2), feet: +(feet() - g0).toFixed(2) };
+    out.walk = { gap: +(dist(c, p.pos.x, p.pos.z) - c.r).toFixed(2), feet: +(feet() - (opts.floor ?? T.heightAt(p.pos.x, p.pos.z))).toFixed(2) }; // over the ground under the walker: the approach may climb
     out.stopped = out.walk.gap > 0.4 && Math.abs(out.walk.feet) < 0.2;
     // 2. a running hop: hurry at it, hop `lead` m short of its face (the nearest take-off that lands, as a
     // visitor would find it: a narrow low thing is overshot from too far), stop the keys once on top
@@ -139,9 +139,8 @@ const R = await page.evaluate(() => {
     }
     return null;
   });
-  // a fallen gnomon, from its side (whose top stands 0.38 m over the ground: a lower one is a step, no stop; v16's floor
-  // laid a longer one at 0.34 on a slope)
-  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2 && c.y + c.h - T.heightAt(c.x, c.z) > 0.38).sort((a, b) => b.len - a.len), (c) => {
+  // a fallen gnomon, from its side
+  site('fallen gnomon', pick('roads', (c) => c.len !== undefined && !T.isUnderwater(c.x, c.z) && T.waterLevelAt(c.x, c.z) === null && T.slopeAt(c.x, c.z) < 0.2).sort((a, b) => b.len - a.len), (c) => {
     const ex = c.x1 + c.ux * c.len * 0.1, ez = c.z1 + c.uz * c.len * 0.1;
     for (const s of [1, -1]) {
       const [nx, nz] = perp(c).map((v) => v * s), g = T.heightAt(c.x, c.z);

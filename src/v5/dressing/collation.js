@@ -16,8 +16,6 @@ export const COLLATION = { x: 141, z: -66, angle: -0.4, length: 11, width: 1.1, 
 const CA = Math.cos(COLLATION.angle), SA = Math.sin(COLLATION.angle);
 // the table's frame: u along its axis, v across (to the south-south-east)
 export const toWorld = (u, v) => [COLLATION.x + u * CA - v * SA, COLLATION.z + u * SA + v * CA];
-// true where ground cover keeps off (ground.js, margin < 0, after the draws): the clearing round the table, an oval 11 m
-// along it and 8 m across, its outer quarter frayed by a hash of the spot so the edge is grass and gaps, not a line
 // true within 1.2 m of the table's top (vegetation/ground.js hiddenAt: a tree there is kept in the draws but not grown;
 // v16 L4: the orchard's draws move with the floor, and one came up through the table's end)
 export function collationTreeClear(x, z) {
@@ -25,6 +23,8 @@ export function collationTreeClear(x, z) {
   const dx = x - COLLATION.x, dz = z - COLLATION.z, u = dx * CA + dz * SA, v = -dx * SA + dz * CA;
   return Math.hypot(Math.max(Math.abs(u) - COLLATION.length / 2, 0), Math.max(Math.abs(v) - COLLATION.width / 2, 0)) < 1.2;
 }
+// true where ground cover keeps off (ground.js, margin < 0, after the draws): the clearing round the table, an oval 11 m
+// along it and 8 m across, its outer quarter frayed by a hash of the spot so the edge is grass and gaps, not a line
 export function collationClear(x, z) {
   if (OFF) return false;
   const dx = x - COLLATION.x, dz = z - COLLATION.z, u = dx * CA + dz * SA, v = -dx * SA + dz * CA;

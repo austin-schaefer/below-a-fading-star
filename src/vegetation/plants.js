@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clamp, lerp, smoothstep, GLSL_WIND, unflipNormals } from './util.js';
 import { withFade } from '../fade.js';
 import { stripAt, stripEdge } from '../v8/strips.js';
+import { nearPool } from '../height/floor.js'; // v16 L6: the floor's pools get reedy margins
 
 const CHUNK = 24, CMIN = -324, CN = 27; // 27 * 24 = 648 m square
 const PARAMS = new URL(location.href).searchParams;
@@ -786,7 +787,7 @@ export function buildPlants(ctx, ground, shared) {
       heather.add(x, y - 0.04, z, rng() * 6.283, s * (0.9 + rng() * 0.3), s * (0.8 + rng() * 0.4), 2, rng(), tint[0], tint[1], tint[2], 0);
     }
     // reeds: in stands along the water's edge, standing in the shallows
-    if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy) {
+    if (b.marsh > 0.15 || b.shore > 0.05 || nearEddy || nearPool(mx, mz, 4)) {
       const sn = noise.fbm2(mx * 0.08 + 40, mz * 0.08, 2) * 0.5 + 0.5;
       // v8-02: in the fen the stands are tighter and taller with open water between
       const stand = Math.max(smoothstep(0.35 + 0.17 * pf, 0.65 - 0.05 * pf, sn), nearEddy ? 0.9 : 0);
