@@ -49,6 +49,13 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 12:05 PST. The gate's second run: 44 tests, 4 failed; three of the four fixed and rerun green; the fourth is with round three.**
+
+- Second run (45 min 39 s, alone but for the owner's own browser, then round three's): red `ways`, `edges`, `heights`, `geometry`; `shore` and `pan` green.
+  - `ways` (the sphere's ladder: listed; round three removes ladder and listing), `edges` (the same spout planes) and `geometry` (six coplanar pairs under the spout's cap, then two groups where its stain lay 3 mm off the course's face, under the 4 mm tolerance): fixed by the orchestrator in `src/v17/garth/water.js` and `tools/ways-test.mjs`; **rerun `ONLY=ways,edges,geometry`: ways 272, edges 214, geometry 146, green.**
+  - `heights`: **the west wall's gallery top on low draws 381 calls against 380** (it now looks across at the sphere on the east moor). The ceiling does not move again: round three is to win back at least three calls from the sphere as seen from far.
+- In flight: round three (`issue-1725-sphere-ring`, 8177). After it: `heights` and the tests its files touch if it stays in `src/v17/sphere.js`; the whole suite if it exposes the gutter's schedule in shared code.
+
 **2026-11-17, 11:46 PST. The owner redirects the sphere's underside: no ladder, no aperture, no tally; a ring that charges between the sun's flickers. Round three out. Two gate reds fixed.**
 
 - **The owner:** "please do not add yet moer tally marks. we keep adding tally marks as a sort of lazy way to indicate time passing." (the tally cut by the orchestrator at once; the rule is in the `storytelling` skill, "Tools for telling one"). Then, with a frame (`shots/wip/owner-v17-sphere-ladder-aperture.png`): "if we're gonna add a ladder... why is the latter not next to the apparent aperture? also, i'm not sure we even want apertures. that decreases the mystery of the thing. the real hook here is "diid this guy seal himself in, like, foreever?" let's do this instead: Lose ladder. lose apparent etnry aperture. lose tally marks. instead, have the fan thing have a ring around it that slowly charges between sun flickers. you can also use it as a way to judge when sun will next flicker—neat. when the flicker happens, animate it in a lively interesting way suggestive of some great and sinsister moment of magic."
