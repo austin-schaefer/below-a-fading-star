@@ -35,6 +35,8 @@ export const MERE = {
       { x: -94, z: 288, r: 4, to: { x: -95, z: 296, r: 3.5 } },    // the Swallow's cut leaves it here
     ],
   },
+  end: { z: 311.5 },  // its bank's reach stops at the Swallow's face too (U1: the face stands in the hillside)
+  bankSouth: { z0: 292, z1: 304, k: 2.2 }, // its bank steepens toward the apron, so it leaves the hillside round the face whole
   bank: 0.8,          // its bank cut down to the level: steeper than the floor's pools' (the apron rises 1 in 1.4 south of it)
   D: 1.6,             // the bowl's depth under the shelf (the hollow's own floor is -10)
 };
@@ -45,21 +47,24 @@ export const MERE = {
 // hollow at (-92, 241) (ground -5.5..-6.2 over x -101..-81) where it stands in a broad pool, out over its south lip
 // (ground -4.6 at z 250) in a cut, and down a step into the mere. 20 m and more west of the dead traveller.
 // pts: [x, z, hw] (hw the water's half-width there, m); levels: [x, z, y] stations, a step two close together.
+// The narrowest water is 3.2 m across: the drawn terrain is 2.1 m a cell on medium and 3.1 on low, and water narrower than
+// a cell has no vertex under it along a straight run and is drawn under the ground (the ribbon's edge is the depth over
+// the drawn ground): on low the 2.6 m the brook had first vanished between the crown's pieces.
 export const BROOK = {
   pts: [
     [-89, 191, 2.2],     // in the tarn's south bay (its shallows -8)
     [-89.5, 199, 1.8],   // the bay's neck
-    [-89.4, 205, 1.1],   // the lip: the water quickens
-    [-89.1, 211, 0.85],  // between the two crown pieces, narrow and quick
-    [-89.3, 217, 0.9],
-    [-91.5, 222, 1.1],   // below the first step
-    [-94, 228, 1.3],
-    [-95, 234, 2.6],
+    [-89.4, 205, 1.65],   // the lip: the water quickens
+    [-89.1, 211, 1.6],   // between the two crown pieces, narrow and quick
+    [-89.3, 217, 1.6],
+    [-91.5, 222, 1.7],   // below the first step
+    [-94, 228, 1.8],
+    [-95, 234, 2.9],
     [-92, 241, 7.5],     // the pool in the hollow, broad and slow
-    [-90, 246.5, 2.0],   // its tail, over the lip
-    [-88, 251, 1.0],     // quick in the cut
-    [-86.5, 256, 1.1],
-    [-86, 260, 1.5],     // the second step, into the mere
+    [-90, 246.5, 2.3],   // its tail, over the lip
+    [-88, 251, 1.6],     // quick in the cut
+    [-86.5, 256, 1.7],
+    [-86, 260, 1.9],     // the second step, into the mere
     [-87, 266, 2.2],
     [-88, 271, 2.5],     // in the mere
   ],
@@ -83,13 +88,16 @@ export const TRAVELLER = { body: [-63.5, 242.5], hat: [-49.5, 247.5] };
 
 // The Swallow's cut (index, SWALLOW): the mere's water carried south in a cut in the slope to the portal's face at
 // z 311 (ground there +7.5), level with the mere; its banks rise at 1.3 (a cut, not a shore) as the slope rises. It
-// runs on 1.5 m past the face so the face stands in water; U1 builds the portal and the fall there.
+// ends square at the face's plane (z 311.5, U1's word): past it the ground is the hillside's own. U1 builds the portal and
+// the fall there.
 export const SWALLOW_CUT = {
   pts: [[-95, 290, 4.2], [-95, 302, 4.0], [-95, 312.5, 4.0]],
   levels: [[-95, 290, -6.8], [-95, 312.5, -6.8]],  // MERE.level
   hold: [[-95, 296], [-95, 312.5]],
   face: [-95, 311],
+  end: { z: 311.5 },  // U1: nothing of the cut past the face's plane (the face stands square in the hillside)
   bank: 1.3, reach: 14,
+  banks: [[-95, 296, 1.3], [-95, 305, 1.3], [-95, 309, 4]],  // U1: steep near the face, +2..+7 within 3 m of x -99..-91
 };
 
 // ---------------------------------------------------------------- W2: the leat (the table's until W2 changes it)

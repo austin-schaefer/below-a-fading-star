@@ -29,6 +29,8 @@ const _p = { i: 0, f: 0, s: 0, d: 0, dist: 0, hw: 0, ok: false };
 
 export function makeStream(def) {
   const { name, pts, levels, bank = 0.45, wob = 0.14, reach = 8 } = def;
+  // `banks`: [x, z, k] stations for a bank that steepens along the stream (a cut into a rising slope); `end`: a plane
+  // { z, dir } past which the stream's ground does nothing (a face it stops square at: the Swallow's portal)
   // ---- the line: a centripetal-free (uniform) Catmull-Rom through the control points, resampled every STEP metres
   const dense = [];
   for (let i = 0; i < pts.length - 1; i++) {
@@ -69,6 +71,10 @@ export function makeStream(def) {
     for (let i = 1; i < st.length; i++) if (s <= st[i][0]) { const [s0, y0] = st[i - 1], [s1, y1] = st[i]; return y0 + (y1 - y0) * ((s - s0) / ((s1 - s0) || 1)); }
     return st[st.length - 1][1];
   };
+  const K = new Float64Array(n).fill(bank);
+  if (def.banks) { const bs = def.banks.map(([x, z, k]) => [sOf(x, z), k]).sort((a, b) => a[0] - b[0]); for (let k = 0; k < n; k++) { const s = S[k]; let v = bs[0][1]; for (let i = 1; i < bs.length; i++) if (s >= bs[i - 1][0]) v = s >= bs[i][0] ? bs[i][1] : bs[i - 1][1] + (bs[i][1] - bs[i - 1][1]) * (s - bs[i - 1][0]) / (bs[i][0] - bs[i - 1][0]); K[k] = v; } }
+  const END = def.end ? { z: def.end.z, dir: def.end.dir ?? 1 } : null;
+  const past = (x, z) => END !== null && (z - END.z) * END.dir > 0;
   const Y = new Float64Array(n), D = new Float64Array(n), DROP = new Float64Array(n), ROUGH = new Float64Array(n), SPEED = new Float64Array(n);
   const HWL = new Float64Array(n), HWR = new Float64Array(n), HOLD = new Float64Array(n);
   for (let k = 0; k < n; k++) Y[k] = levelOfS(S[k]);
@@ -80,8 +86,8 @@ export function makeStream(def) {
     for (let j = 0; j <= 12; j++) { const i = k - j; if (i < 0) break; r = Math.max(r, Math.min(1, (DROP[i] - 0.06) * 5) * Math.exp(-j * STEP / 2.2)); }
     ROUGH[k] = Math.max(0, r);
     let g = 0; for (let j = -8; j <= 8; j++) g += DROP[Math.min(n - 1, Math.max(0, k + j))] / 17;
-    SPEED[k] = Math.min(3.2, Math.max(0.12, (0.1 + g * 32) * Math.min(2, 1.3 / HW[k])));
-    D[k] = Math.min(1.1, 0.3 + 0.09 * HW[k] + (g < 0.004 ? 0.25 : 0));
+    SPEED[k] = Math.min(1.9, Math.max(0.12, (0.1 + g * 32) * Math.min(1.6, 1.6 / HW[k])));
+    D[k] = Math.min(1.2, 0.45 + 0.08 * HW[k] + (g < 0.004 ? 0.25 : 0));
     // the edge wobbled on each side, slow along the stream
     HWL[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, 3.7)) + 0.25 * SN.noise2(S[k] * 0.45, 11.1);
     HWR[k] = HW[k] * (1 + wob * SN.noise2(S[k] * 0.11, -5.3)) + 0.25 * SN.noise2(S[k] * 0.45, -8.9);
@@ -133,6 +139,7 @@ export function makeStream(def) {
   const at = (A, p) => A[p.i] + (A[p.i + 1] - A[p.i]) * p.f;
 
   function ground(h, x, z) {
+    if (past(x, z)) return h;
     const p = project(x, z);
     if (!p.ok) return h;
     const W = at(Y, p), e = p.dist - p.hw, hold = at(HOLD, p);
@@ -143,12 +150,12 @@ export function makeStream(def) {
     }
     // the bed under the water (a dish, its edge at the level) and the bank cut down to it
     let hi;
-    if (e < 0) { const q = p.dist / p.hw; hi = W - at(D, p) * (1 - q * q); }
-    else hi = W + bank * e;
+    if (e < 0) { const q = p.dist / p.hw, q2 = q * q; hi = W - at(D, p) * (1 - q2 * q2); } // (flat across, so a vertex of the drawn ground lands under the water)
+    else hi = W + at(K, p) * e;
     return h > hi ? hi : h;
   }
-  function wet(x, z) { const p = project(x, z); return p.ok && p.dist < p.hw; }
-  function level(x, z) { const p = project(x, z); return p.ok && p.dist < p.hw ? at(Y, p) : null; }
+  function wet(x, z) { if (past(x, z)) return false; const p = project(x, z); return p.ok && p.dist < p.hw; }
+  function level(x, z) { if (past(x, z)) return null; const p = project(x, z); return p.ok && p.dist < p.hw ? at(Y, p) : null; }
   // a signed distance to the water's edge (< 0 in the water) within reach, a bound past it
   function sd(x, z) {
     const p = project(x, z);
@@ -158,13 +165,14 @@ export function makeStream(def) {
   }
   // the paint: the bed's gravel under the water, a pale margin of stones along the edge, wet ground beyond
   function paint(x, z, out) {
+    if (past(x, z)) return false;
     const p = project(x, z);
     if (!p.ok) return false;
     const e = p.dist - p.hw, n2 = SN.noise2(x * 0.21 + 1.7, z * 0.21 - 4.4);
     const hold = Math.max(at(HOLD, p), 0.35);
-    out.shore = Math.max(out.shore, (1 - smoothstep(-0.6, 0.4, e)) * 0.9);
-    out.strand = Math.max(out.strand, smoothstep(-1.0, -0.3, e) * (1 - smoothstep(0.3, 1.3 + 0.9 * n2, e)) * (0.55 + 0.25 * n2) * hold);
-    out.wet = Math.max(out.wet, (1 - smoothstep(0.5, 5 + 2 * n2, e)));
+    // (no `shore`: it brings the reeds' stands, and a stream 3 m wide is lost in them; the sedge takes the wet margin)
+    out.strand = Math.max(out.strand, (1 - smoothstep(0.3, 1.4 + 0.9 * n2, e)) * (0.5 + 0.3 * n2) * hold);
+    out.wet = Math.max(out.wet, (1 - smoothstep(0.5, 2.5 + 1.5 * n2, e)) * 0.45); // (more, and the sheen on the bank reads as water)
     return true;
   }
   return { name, kind: 'stream', X, Z, S, TX, TZ, Y, HW, HWL, HWR, D, SPEED, ROUGH, HOLD, n, length: L, box: [bx0, bx1, bz0, bz1], reach: R,
@@ -174,15 +182,19 @@ export function makeStream(def) {
 // Still water on an edge: the floor's pools' arithmetic (height/floor.js poolGround) on an outline of its own.
 export function makeStill(def) {
   const { name, y, D = 1.6, bank = 0.45, reach = 20 } = def;
+  const END = def.end ? { z: def.end.z, dir: def.end.dir ?? 1 } : null; // as a stream's: nothing past the plane
+  const SB = def.bankSouth ?? null; // { z0, z1, k }: the bank steepens to k between z0 and z1 (a slope rising south of it)
   const o = radialOutline({ far: 40, ...def.outline });
   const R = o.rMax + reach, c = o.centre;
   const box = [c.x - R, c.x + R, c.z - R, c.z + R], wbox = [c.x - o.rMax, c.x + o.rMax, c.z - o.rMax, c.z + o.rMax];
   function ground(h, x, z) {
     if (x < box[0] || x > box[1] || z < box[2] || z > box[3]) return h;
+    if (END !== null && (z - END.z) * END.dir > 0) return h;
     const s = o.sd(x, z);
     if (s > reach) return h;
     const lo = s < 0 ? y + LIP + 0.6 * s : y + LIP - LIP_FALL * (s > LIP_W ? s - LIP_W : 0);
-    const hi = s < 0 ? y - 0.5 * smoothstep(0, -3, s) - D * smoothstep(-1.5, -10, s) : y + bank * s;
+    const k = SB === null ? bank : bank + (SB.k - bank) * smoothstep(SB.z0, SB.z1, z);
+    const hi = s < 0 ? y - 0.5 * smoothstep(0, -3, s) - D * smoothstep(-1.5, -10, s) : y + k * s;
     if (h < lo) h = lo;
     return h > hi ? hi : h;
   }
@@ -194,7 +206,7 @@ export function makeStill(def) {
     const s = o.sd(x, z);
     if (s > 14) return false;
     const n2 = SN.noise2(x * 0.17 - 2.3, z * 0.17 + 6.1);
-    out.shore = Math.max(out.shore, (1 - smoothstep(-1, 0.6, s)) * 0.9);
+    out.shore = Math.max(out.shore, (1 - smoothstep(-1.5, 0.2, s)) * 0.9 * smoothstep(0.35, 0.6, n2 + 0.5));
     out.strand = Math.max(out.strand, smoothstep(-1.6, -0.4, s) * (1 - smoothstep(0.4, 1.6 + 1.2 * n2, s)) * (0.5 + 0.3 * n2));
     out.wet = Math.max(out.wet, 1 - smoothstep(1, 9 + 3 * n2, s));
     return true;
