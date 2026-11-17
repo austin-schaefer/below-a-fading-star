@@ -59,4 +59,19 @@ Next: look at the before frames; as each agent reports, its frames with the repo
 
 **2026-11-16, 23:49 PST. Forty minutes in: all four building, none handed back.** Each branch has pushed: S1 the first gutter at 87.5 s and answers at the Lappet, the acts, the Laid Sun and the stair; P1 the tools' Metal default (`tools/launch.mjs`, #79); L1 `src/height/floor.js` and `?floor=v15`; L2 `src/height/outline.js` and the tarn on it. The before set was retaken with six views from the air (the first set's Span and crown views looked at parapets and roofs): `shots/wip/v16-before-*.png`, 22 views. Brief L3 (the fen and the other ruled outlines, `brief-v16-L3-fen.md`, to be `issue-1605-fen`, 8165) is written and goes out when a slot is free. Same four agents, branches and ports as the table above.
 
+**2026-11-17, 00:17 PST. The gutter's first round and the tarn's shore are on `next`. Four agents in flight.**
+
+- **S1 merged** (opus, 53 min): the first gutter 87.5 s after "Go out" (held until the visitor begins); `flicker.dark` and `flicker.lamps` in `sky.js`; the Lappet's panes and lamps turned up by hand, its folk stop and look up, moths at the acts, the Laid Sun's gold and hum, the stair's signs. Cold review (sonnet): no blockers, four small findings sent on. On `next`: gutter 22, acts 163, stair 5. **Looked at with the report shut: only the Lappet's lamps are plain to see**; the moths, the Laid Sun and the stair's signs cannot be seen without being told. So **S2** (`brief-v16-S2-gutter-bolder.md`, a fresh opus agent in the same worktree, 8161): one beat for the whole valley from open moor, the quiet answers made plain, the regions with none.
+- **L2 merged** (opus, 45 min): `src/height/outline.js` (`radialOutline`, `polyOutline`, `tools/outline-test.mjs` in the suite); Lees Tarn on it (a west bay, the Byre's point, a north-east inlet, a reedy shallows, a steep west bank; the Strandline held by a window); `waterLevelAt` walks `WATER_BODIES`. From the air the disc is gone (`shots/wip/v16-L2-r1-tarn-above.png` beside `v16-L2-before-tarn-above.png`). Cold review (opus): no blockers; the edge's `sd` sound, GLSL equal to JS, `heightAt` no slower, no conflict with L1. Leftovers sent to L3: water reported up to 2.8 m under dry ground by the steep bank near (-146, 98); the lap sound still a circle; stale circle readers in `water.js:285`, `perf.js:496`. On `next`: outline 15, dressing 22, regions 56, strata 8, walk 13, heights 203. `geometry` not run: pebbles reshuffle with the shore's paint; re-recorded once after L1 and L3.
+- **In flight:**
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| S2 the gutter, round two | `issue-1601-gutter` | 8161 | opus |
+| P1 performance | `issue-1602-perf` | 8162 | opus |
+| L1 the tilt | `issue-1603-tilt` | 8163 | opus |
+| L3 the fen and the other outlines (`brief-v16-L3-fen.md`), on top of L2 | `issue-1605-fen` | 8165 | opus |
+
+Next: L1 and P1 as they report (frames, a blind reader for L1, a cold review, tests here, merge); then the re-record and the whole suite on `next`.
+
 **Waiting on the owner** (carried from v15, none of it blocks): three quotations (#76); the Lees' turret on the main stair's axis; the stray branch `v15-briefs-tmp` on origin.
