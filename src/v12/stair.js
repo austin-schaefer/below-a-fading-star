@@ -21,7 +21,7 @@
 import * as THREE from 'three';
 import { hyp } from '../noise.js';
 import { buildPlan, makeIndex, inside, KIND, RISE, GOING, WIDTH, STUB } from './stair/plan.js';
-import { treadGeometry, landingGeometry, kerbGeometry, bedGeometry, slabMaterial } from './stair/treads.js';
+import { treadGeometry, landingGeometry, kerbGeometry, bedGeometry, slabMaterial, SLAB_U } from './stair/treads.js';
 import { buildStub } from './stair/stub.js';
 import { buildDust } from './stair/dust.js';
 import { buildTop } from './stair/top.js';
@@ -337,7 +337,12 @@ export async function build(ctx) {
     if (looks === 1 || looks === 30) capColumns(); // note where each is; then cap the ones that have not moved
     else if (looks > 30 && (lookT += dt) > 5) { lookT = 0; capColumns(); } // and those registered later, the same way
   }
-  ctx.registerUpdate((dt, t) => { columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t); });
+  let gut = 0; // the signs in a gutter (SLAB_U): up over two seconds, down over four
+  ctx.registerUpdate((dt, t) => {
+    columns(dt); if (!simTicked) tick(dt); simTicked = false; dust.update(dt, t); top.update(dt, t);
+    const fl = ctx.sky?.flicker, to = fl?.dark ?? 0; gut = fl?.hold != null ? to : Math.min(1, Math.max(0, gut + Math.max(-dt / 4, Math.min(dt / 2, to - gut))));
+    SLAB_U.uGut.value = gut;
+  });
 
   // ------------------------------------------------------------------ the ascent, and the API
   // the path heights-test walks: the turf at the stub's foot (a step before its first riser, where P51 ends), each
