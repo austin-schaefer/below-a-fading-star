@@ -12,7 +12,7 @@
 //     the lift made deeper by 0.3 m or more where a protected place's skirt lies (each is given an old drain, floor.js
 //     LINES), and none on open floor deeper than the listed kettle holes.
 //   - v17 W1's water (src/v17/): the brook's level falls only downstream, the mere's lip holds all round, the brook's head
-//     holds the tarn, the tarn's south shore away from the brook is untouched, the traveller and the crown's pieces are
+//     holds the tarn, (W2) the leat's level falls over its weirs, the fen's pools by its head keep their water, its banks hold it, the tarn's south shore away from the brook is untouched, the traveller and the crown's pieces are
 //     left alone, the Swallow's cut stops square at the portal's face; and every still water's checks above, a stream's
 //     at its own level where it is (WATER_BODIES' levelAt).
 //   node tools/outline-test.mjs
@@ -336,7 +336,7 @@ else {
     for (let d = 2; d < M.rMax + 6; d += 0.25) {
       const x = c.x + ux * d, z = c.z + uz * d, sd = M.sd(x, z);
       if (sd < 0.3 || sd > 3) continue;
-      if (BK.sd(x, z) < 3 || C.sd(x, z) < 3) continue;
+      if (BK.sd(x, z) < 3 || C.sd(x, z) < 3 || V.LEAT_BODY.sd(x, z) < 3) continue;
       n++; const h = F.heightAt(x, z); if (h - M.y < lipLow) { lipLow = h - M.y; at = [x, z]; }
     }
   }
@@ -368,6 +368,30 @@ else {
   // the Swallow's cut stops square at the portal's face (U1): nothing of it past z 311.5
   let past = 0; for (let x = -110; x <= -80; x += 0.5) for (let z = 311.6; z <= 330; z += 0.5) { const h = F.heightAt(x, z); if (V.v17Ground(h, x, z) !== h) past++; }
   check(past === 0, 'the Swallow\'s cut: nothing of v17\'s ground past the portal\'s face (z 311.5)', `${past} points`);
+
+  // ---- v17 W2: the leat out of the fen (src/v17/leat.js; plan.js LEAT)
+  const LT = V.LEAT_BODY, FEN = await import('../src/height/fen.js');
+  // its level only falls, from the fen's level at its head to the mere's, over the plan's weirs
+  let lrise = 0, steps = 0; for (let k = 1; k < LT.n; k++) { if (LT.Y[k] > LT.Y[k - 1] + 1e-9) lrise++; if (LT.Y[k - 1] - LT.Y[k] > 0.2) steps++; }
+  check(lrise === 0 && LT.Y[0] === P.FEN_LEVEL && LT.Y[LT.n - 1] === M.y && P.LEAT.weirs.length >= 4 && P.LEAT.weirs.length <= 5,
+    'leat: its level falls only downstream, from the fen\'s (-2.45) to the mere\'s, over four or five weirs', `${lrise} rises; ${f2(LT.Y[0])} to ${f2(LT.Y[LT.n - 1])} over ${f2(LT.length)} m; ${P.LEAT.weirs.length} weirs (${steps} steep samples)`);
+  // the fen's pools by its head hold their water: v17's ground leaves every wet cell of the fen as it was
+  let fdry = 0, fseen = 0, fat = null;
+  for (let z = 195; z <= 245; z += 0.5) for (let x = -10; x <= 40; x += 0.5) {
+    if (!FEN.fenWet(x, z)) continue;
+    fseen++; const h = F.heightAt(x, z);
+    if (V.v17Ground(h, x, z) !== h || F.waterLevelAt(x, z) !== F.waterLevelBeforeV17(x, z)) { fdry++; fat = fat || [x, z]; }
+  }
+  check(fseen > 20 && fdry === 0, 'leat: the fen\'s pools by its head hold their water (x -10..40, z 195..245)', `${fdry} of ${fseen} wet cells changed${fat ? ', first at ' + fat.map(f2) : ''}`);
+  // its banks hold it: 0.4 m out of its edge on both sides the ground stands over its level, head to the mere's lobe
+  let llow = Infinity, lat2 = null; const hs0 = LT.sOf(...P.LEAT.hold[0]) + 1, hs1 = LT.sOf(...P.LEAT.hold[1]) - 1;
+  for (let k = 0; k < LT.n; k++) {
+    if (LT.S[k] < hs0 || LT.S[k] > hs1) continue;
+    for (const sd of [1, -1]) { const d = sd * (LT.HW[k] + 0.4), x = LT.X[k] + LT.TZ[k] * d, z = LT.Z[k] - LT.TX[k] * d, o = F.heightAt(x, z) - LT.Y[k]; if (o < llow) { llow = o; lat2 = [x, z]; } }
+  }
+  check(llow > 0, 'leat: its banks hold it (0.4 m out of its edge over its level, head to mouth)', `least ${f2(llow)} m over at ${lat2 ? lat2.map(f2) : '-'}`);
+  // the meeting of P14 and P38 at (9, 252) is dry ground at the bridge's foot
+  check(F.waterLevelAt(9, 252) === null, 'leat: the meeting of P14 and P38 (9, 252) is on dry ground by the bridge', `water ${F.waterLevelAt(9, 252)}, ground ${f2(F.heightAt(9, 252))}`);
 }
 
 console.log(`outline: ${pass} passed, ${fail} failed`);
