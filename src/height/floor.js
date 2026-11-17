@@ -37,8 +37,7 @@ const BACKS = [
   { x: -80, z: -112, stoss: 55, lee: 100, w: 28, h: 5.2 },
   { x: -180, z: -128, stoss: 45, lee: 80, w: 30, h: 4.8 }, // under the Lynchets: its terraces climb its flank
   { x: -128, z: -176, stoss: 36, lee: 64, w: 22, h: 4.0 },
-  { x: 150, z: -72, stoss: 42, lee: 72, w: 22, h: 3.6 }, // under the Bletting's hedges (clear of High Ling's skirt: the heights test's beam stands at (186-210, -12))
-  { x: 136, z: -168, stoss: 32, lee: 58, w: 22, h: 3.8 },
+  { x: 128, z: -186, stoss: 32, lee: 58, w: 22, h: 3.8 }, // (none under Medlar Close: its terraces' wave is read off the height, and a swell packs its steps closer than medium's cells draw)
   { x: 70, z: -128, stoss: 34, lee: 56, w: 21, h: 3.6 },
   { x: -10, z: -60, stoss: 28, lee: 50, w: 16, h: 2.6 },
 ].map((b) => {

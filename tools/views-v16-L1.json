@@ -2,6 +2,6 @@
  {"name":"g-strand","x":-120,"z":15,"yaw":-0.35,"pitch":0.02},
  {"name":"g-whaleback-tail","x":-92,"z":-28,"yaw":0.12,"pitch":0.04},
  {"name":"g-kettle","x":-46,"z":-104,"yaw":-1.4,"pitch":-0.1},
- {"name":"g-bletting-back","x":150,"z":42,"yaw":-0.2,"pitch":0.03},
+ {"name":"g-whaleback-flank","x":-140,"z":-50,"yaw":-0.8,"pitch":0.04},
  {"name":"g-court-fall","x":-40,"z":-120,"yaw":0.6,"pitch":0.05}
 ]
