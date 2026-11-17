@@ -37,6 +37,9 @@ const D2 = 73.42, A4 = 440.0, D5 = 587.33, F5 = 698.46;
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const ss = (e0, e1, v) => { const t = clamp((v - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 const lerp = (a, b, t) => a + (b - a) * t;
+// every scheduled value goes through this: a non-finite one is dropped, never thrown in the frame loop (issue-1710: the
+// tube's hiss threw on every tick, which crashed geometry-test's clock and reddened heights)
+const tgt = (param, v, t, k) => { if (Number.isFinite(v) && Number.isFinite(t) && Number.isFinite(k)) param.setTargetAtTime(v, t, k); };
 
 // ---- the plan's numbers, read once
 // a line's steps: two consecutive level stations under 4 m apart that fall 0.12 m or more
@@ -110,16 +113,17 @@ export function startWaterSound(a, ctx) {
     };
   }
   // sources on a loop, each its own offset; their rates wander a little apart (tick) so no buffer's length comes round as a beat
-  const wander = (P, t, now, k = 0.035) => { for (let i = 0; i < P.srcs.length; i++) P.srcs[i].playbackRate.setTargetAtTime(1 + k * ctx.noise.noise2(t * 0.11 + i * 7.3, 3.7 + i), now, 1.5); };
+  const wander = (P, t, now, k = 0.035) => { for (let i = 0; i < P.srcs.length; i++) tgt(P.srcs[i].playbackRate, 1 + k * ctx.noise.noise2(t * 0.11 + i * 7.3, 3.7 + i), now, 1.5); };
   const mkSrc = (buf, P) => { const s = loopSrc(buf, rng()); P.srcs.push(s); return s; };
   const mkPlaced = (P, o) => { const p = placed(a, o); p.airM = o.air ?? 60; P.nodes.push(p.in, p.pan); return p; };
   // a placed source moved to (x, y, z): glided over 0.12 s (a position set outright is a zipper in the panner) and its
   // air lowpass kept to the distance (placed.at sets both, once, outright)
   function put(p, x, y, z, now) {
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
     const pan = p.pan;
     if (pan.positionX) for (const [k, v] of [['positionX', x], ['positionY', y], ['positionZ', z]]) { const q = pan[k]; q.cancelScheduledValues(now); q.setValueAtTime(q.value, now); q.linearRampToValueAtTime(v, now + 0.12); }
     else a.setPos(pan, x, y, z);
-    p.in.frequency.setTargetAtTime(clamp(20000 * Math.exp(-Math.hypot(x - cam.x, y - cam.y, z - cam.z) / p.airM), 900, 20000), now, 0.1);
+    tgt(p.in.frequency, clamp(20000 * Math.exp(-Math.hypot(x - cam.x, y - cam.y, z - cam.z) / p.airM), 900, 20000), now, 0.1);
   }
 
   // ---- the brook's babble: three bands at the nearest point of the line
@@ -162,7 +166,7 @@ export function startWaterSound(a, ctx) {
     for (const [f, g] of [[D2, 3.2], [D2 * 2, 1.2]]) { const b = filt('bandpass', f, 9), bg = gainOf(g); chain(mkSrc(brown, P), b, bg, out); P.nodes.push(b, bg); }
     const pl = filt('lowpass', 110, 0.6), pg = gainOf(0.5); chain(mkSrc(brown, P), pl, pg, out); P.nodes.push(pl, pg);
     // the current's hiss along the glass, at the right hand
-    const hp = placed(a, { ref: 1.2, roll: 1, range: 20, air: 60 }); P.nodes.push(hp.in, hp.pan);
+    const hp = placed(a, { ref: 1.2, roll: 1, range: 20, air: 60 }); hp.airM = 60; P.nodes.push(hp.in, hp.pan); // (put() reads airM: unset, the air lowpass was exp(-d / undefined), NaN, and threw every tick in the tube)
     const hb = filt('bandpass', 1700, 0.7), hl = filt('lowpass', 2800, 0.6), hg2 = gainOf(0.0001); chain(mkSrc(pink, P), hb, hl, hg2, hp.in); P.nodes.push(hb, hl, hg2);
     P.out = out; P.hg2 = hg2; P.hp = hp; P.hb = hb; return P;
   });
@@ -231,11 +235,11 @@ export function startWaterSound(a, ctx) {
       const [, pace, fc] = charAt(bn.z);
       put(bP.p, bn.x, brookY(bn.z) + 0.2, bn.z, now);
       const wob = noise(t * 0.8, 11.3), lvl = 0.9 * (1 - ss(40, 80, dB));
-      bP.out.gain.setTargetAtTime(0.0001 + 0.6 * lvl * (0.35 + 0.65 * pace) * (0.85 + 0.3 * wob), now, 0.25);
+      tgt(bP.out.gain, 0.0001 + 0.6 * lvl * (0.35 + 0.65 * pace) * (0.85 + 0.3 * wob), now, 0.25);
       bP.bands.forEach((B, i) => {
         const w = noise(t * (0.9 + 0.5 * i), 5.1 + i * 3.7);
-        B.bp.frequency.setTargetAtTime(fc * B.f * (0.94 + 0.12 * w), now, 0.3);
-        B.gg.gain.setTargetAtTime(B.g0 * (0.5 + 0.5 * w) * (i === 2 ? 0.3 + 0.7 * pace : 1), now, 0.3);
+        tgt(B.bp.frequency, fc * B.f * (0.94 + 0.12 * w), now, 0.3);
+        tgt(B.gg.gain, B.g0 * (0.5 + 0.5 * w) * (i === 2 ? 0.3 + 0.7 * pace : 1), now, 0.3);
       });
       wander(bP, t, now);
     }
@@ -246,8 +250,8 @@ export function startWaterSound(a, ctx) {
       if (R) {
         const w = noise(t * 0.7, 21 + i * 4.1);
         put(R.p, s.x, s.y + 0.15, s.z, now);
-        R.out.gain.setTargetAtTime(0.0001 + 0.3 * Math.sqrt(s.drop / 0.4) * (0.85 + 0.3 * w) * (1 - ss(35, 60, d)), now, 0.3);
-        R.bp.frequency.setTargetAtTime(clamp(1500 - 2000 * s.drop, 420, 1250) * (0.95 + 0.1 * w), now, 0.4);
+        tgt(R.out.gain, 0.0001 + 0.3 * Math.sqrt(s.drop / 0.4) * (0.85 + 0.3 * w) * (1 - ss(35, 60, d)), now, 0.3);
+        tgt(R.bp.frequency, clamp(1500 - 2000 * s.drop, 420, 1250) * (0.95 + 0.1 * w), now, 0.4);
         wander(R, t, now);
       }
     }
@@ -257,19 +261,19 @@ export function startWaterSound(a, ctx) {
     if (rP) {
       const w1 = noise(t * 0.19, 31.7), w2 = noise(t * 0.43, 8.9);
       put(rP.p, HEAD.x, HEAD.y, HEAD.z, now);
-      rP.out.gain.setTargetAtTime(0.0001 + 0.8 * lerp(1, 0.3, muffle) * (0.88 + 0.12 * w1) * (1 - ss(0.4, 1, hall)), now, 0.4);
-      rP.mf.frequency.setTargetAtTime(lerp(1700, 190, muffle), now, 0.5);
-      rP.bg.gain.setTargetAtTime((0.4 + 0.2 * w2) * lerp(1, 0.6, muffle), now, 0.5);
-      rP.ag.gain.setTargetAtTime((0.06 + 0.03 * w1) * (1 - muffle), now, 0.5);
+      tgt(rP.out.gain, 0.0001 + 0.8 * lerp(1, 0.3, muffle) * (0.88 + 0.12 * w1) * (1 - ss(0.4, 1, hall)), now, 0.4);
+      tgt(rP.mf.frequency, lerp(1700, 190, muffle), now, 0.5);
+      tgt(rP.bg.gain, (0.4 + 0.2 * w2) * lerp(1, 0.6, muffle), now, 0.5);
+      tgt(rP.ag.gain, (0.06 + 0.03 * w1) * (1 - muffle), now, 0.5);
       wander(rP, t, now);
     }
     // the tube
     const tP = tube.tick(tubeK > 0.02, now);
     if (tP) {
       const w = noise(t * 0.13, 17.9);
-      tP.out.gain.setTargetAtTime(0.0001 + 0.12 * tubeK * tubeK * (0.9 + 0.1 * w), now, 0.6);
-      tP.hg2.gain.setTargetAtTime(0.0001 + 0.03 * tubeK * (0.7 + 0.5 * noise(t * 0.5, 2.2)), now, 0.4);
-      tP.hb.frequency.setTargetAtTime(1700 * (0.92 + 0.16 * noise(t * 0.21, 12.4)), now, 0.5);
+      tgt(tP.out.gain, 0.0001 + 0.12 * tubeK * tubeK * (0.9 + 0.1 * w), now, 0.6);
+      tgt(tP.hg2.gain, 0.0001 + 0.03 * tubeK * (0.7 + 0.5 * noise(t * 0.5, 2.2)), now, 0.4);
+      tgt(tP.hb.frequency, 1700 * (0.92 + 0.16 * noise(t * 0.21, 12.4)), now, 0.5);
       // at the right hand of the line's heading (x east, z south: right of south is west)
       lineAt(clamp(_l.s, 0, TUBE_LEN), _h);
       put(tP.hp, cam.x - _h.tz * 1.3, cam.y, cam.z + _h.tx * 1.3, now);
@@ -283,8 +287,8 @@ export function startWaterSound(a, ctx) {
         const px = GX + (dx / dl) * r.R, pz = GZ + (dz / dl) * r.R;
         put(r.p, px, RILL.y + 0.3, pz, now);
         const w = noise(t * 0.6, 40 + i * 9.7);
-        r.out.gain.setTargetAtTime(0.0001 + 0.07 * hall * (0.8 + 0.4 * w), now, 0.4);
-        r.bp.frequency.setTargetAtTime(r.f * (0.93 + 0.14 * noise(t * 0.4, 61 + i)), now, 0.5);
+        tgt(r.out.gain, 0.0001 + 0.07 * hall * (0.8 + 0.4 * w), now, 0.4);
+        tgt(r.bp.frequency, r.f * (0.93 + 0.14 * noise(t * 0.4, 61 + i)), now, 0.5);
       });
       wander(rP2, t, now);
     }
