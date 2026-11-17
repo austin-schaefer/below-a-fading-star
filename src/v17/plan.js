@@ -47,22 +47,23 @@ export const MERE = {
 // hollow at (-92, 241) (ground -5.5..-6.2 over x -101..-81) where it stands in a broad pool, out over its south lip
 // (ground -4.6 at z 250) in a cut, and down a step into the mere. 20 m and more west of the dead traveller.
 // pts: [x, z, hw] (hw the water's half-width there, m); levels: [x, z, y] stations, a step two close together.
-// The narrowest water is 2.6 m across: the drawn terrain is 2.1 m a cell on medium and 3.1 on low, and water narrower than
-// a cell or so has no vertex under it and is drawn under the ground (the ribbon's edge is the depth over the drawn ground).
+// The narrowest water is 3.2 m across: the drawn terrain is 2.1 m a cell on medium and 3.1 on low, and water narrower than
+// a cell has no vertex under it along a straight run and is drawn under the ground (the ribbon's edge is the depth over
+// the drawn ground): on low the 2.6 m the brook had first vanished between the crown's pieces.
 export const BROOK = {
   pts: [
     [-89, 191, 2.2],     // in the tarn's south bay (its shallows -8)
     [-89.5, 199, 1.8],   // the bay's neck
-    [-89.4, 205, 1.45],   // the lip: the water quickens
-    [-89.1, 211, 1.3],   // between the two crown pieces, narrow and quick
-    [-89.3, 217, 1.3],
-    [-91.5, 222, 1.5],   // below the first step
-    [-94, 228, 1.7],
+    [-89.4, 205, 1.65],   // the lip: the water quickens
+    [-89.1, 211, 1.6],   // between the two crown pieces, narrow and quick
+    [-89.3, 217, 1.6],
+    [-91.5, 222, 1.7],   // below the first step
+    [-94, 228, 1.8],
     [-95, 234, 2.9],
     [-92, 241, 7.5],     // the pool in the hollow, broad and slow
     [-90, 246.5, 2.3],   // its tail, over the lip
-    [-88, 251, 1.4],     // quick in the cut
-    [-86.5, 256, 1.5],
+    [-88, 251, 1.6],     // quick in the cut
+    [-86.5, 256, 1.7],
     [-86, 260, 1.9],     // the second step, into the mere
     [-87, 266, 2.2],
     [-88, 271, 2.5],     // in the mere

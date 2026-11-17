@@ -161,9 +161,15 @@ export function buildV17Water(ctx, tex, stillMat) {
       const eL = st.HWL[k] + 2.6, eR = st.HWR[k] + 2.6;
       for (let j = 0; j < cols; j++) {
         const u = j / (cols - 1), dd = -eR + (eL + eR) * u;  // right (−) to left (+)
-        const x = st.X[k] + tz * dd, z = st.Z[k] - tx * dd;
-        pos.push(x, y, z);
-        flow.push(s, dd, dd >= 0 ? st.HWL[k] : st.HWR[k], y - meshH(x, z));
+        const x = st.X[k] + tz * dd, z = st.Z[k] - tx * dd, hs = dd >= 0 ? st.HWL[k] : st.HWR[k], m = meshH(x, z);
+        // the drawn ground is 2.1 m a cell on medium and 3.1 on low: where the water is narrower than that, no vertex of
+        // it may fall in the bed and the drawn ground stands over the water across the whole stream. In the stream's
+        // core the surface rides just over the drawn ground there, so the water is drawn on the ground the visitor sees
+        // (the walker's feet still go by heightAt, under it)
+        const core = 1 - Math.min(1, Math.max(0, (Math.abs(dd) - 0.6 * hs) / (0.4 * hs)));
+        const yy = core > 0 && m + 0.06 > y ? y + (m + 0.06 - y) * core : y;
+        pos.push(x, yy, z);
+        flow.push(s, dd, hs, Math.max(yy - m, core * 0.3));
         misc.push(st.SPEED[k], st.ROUGH[k], still, fade);
         tan.push(tx, tz);
       }
