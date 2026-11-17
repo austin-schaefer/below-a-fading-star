@@ -134,11 +134,12 @@ export function buildHead(env) {
   }
 
   // ---- the sill and the channel through the arch (under the cut's water), the lip at the head's wall
-  S.box((ox0 + FALLX1) / 2, SP.sill - 0.4, (Z0 - 0.06 + ZI + 0.3) / 2, (FALLX1 - ox0) / 2, 0.22, (ZI + 0.36 - Z0) / 2, 0, FACE_D, SILT, 0.05);
+  // (with an apron under the water in front, down to the cut's bed: the ground's wall across the arch is opened)
+  S.box((ox0 + FALLX1) / 2, (SP.sill - 0.18 + FBOT) / 2, (Z0 - 2.4 + ZI + 0.3) / 2, (FALLX1 - ox0) / 2, (SP.sill - 0.18 - FBOT) / 2 - 0.01, (ZI + 2.7 - Z0) / 2, 0, FACE_D, SILT, 0.05);
   // ---- the ledge (the tube's end lies on it, its top a hand over the water) and the quay north of it
   const QZ0 = SP.quay.z[0], LIPZ = L.at(0).z;
-  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9) / 2, (LIPZ + ZI + 0.5) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9) / 2, (ZI + 0.5 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (on through the arch and half a metre into the head, broken off over the pool)
-  S.box((QX[0] + QX[1]) / 2, (QY - 9) / 2, (QZ0 + LIPZ) / 2, (QX[1] - QX[0]) / 2, (QY + 9) / 2, (LIPZ - QZ0) / 2, 0, FACE_D, FACE, 0.06);
+  S.box((QX[0] + QX[1]) / 2, (LEDGE - 9.4) / 2, (LIPZ + ZI + 0.5) / 2, (QX[1] - QX[0]) / 2 - 0.004, (LEDGE + 9.4) / 2, (ZI + 0.5 - LIPZ) / 2, 0, FACE_D, FACE_D, 0.06); // (on through the arch and half a metre into the head, broken off over the pool)
+  S.box((QX[0] + QX[1]) / 2, (QY - 9.3) / 2, (QZ0 + LIPZ) / 2, (QX[1] - QX[0]) / 2, (QY + 9.3) / 2, (LIPZ - QZ0) / 2, 0, FACE_D, FACE, 0.06);
   // the quay's paving: slabs (a shade each), and its kerb on the water side
   for (let z = QZ0; z < LIPZ - 0.01; z += 1.05) for (let x = QX[0]; x < QX[1] - 0.01; x += 1.4) {
     const z1 = Math.min(LIPZ, z + 1.05), x1 = Math.min(QX[1], x + 1.4), k = 0.85 + 0.25 * hash(x * 3.1 + z * 1.7);
@@ -217,11 +218,14 @@ export function buildHead(env) {
       const inQuay = (x, z) => x > QX[0] - 0.2 && x < QX[1] + 0.4 && z > QZ0 + 0.3 && z < ZI;
       const inHead = (x, y, z) => x > hx0 - 0.5 && x < hx1 + 0.5 && z > Z0 + 0.2 && z < hz1 + 0.5 && y < H.crown + 0.4;
       const inArch = (x, y, z) => x > ox0 - 0.3 && x < ox1 + 0.3 && z > Z0 - 0.4 && z < ZI + 0.5 && y < crownA + 0.5;
+      // the ground's wall where the cut ends square at the face: any triangle in the arch's width reaching from the bed
+      // up past the sill into the opening (its upper corner past the face may stand higher than the arch's crown)
+      const across = (P3, a, b, c) => { let zx = -1e9, yx = -1e9, xm = 0; for (const i of [a, b, c]) { zx = Math.max(zx, P3[i * 3 + 2]); yx = Math.max(yx, P3[i * 3 + 1]); xm += P3[i * 3] / 3; } return xm > ox0 - 0.5 && xm < ox1 + 0.5 && zx > Z0 - 0.4 && zx < ZI + 2 && yx > SP.sill - 0.3; };
       for (let t = 0; t < idx.length; t += 3) {
         const a = idx[t], b = idx[t + 1], c = idx[t + 2]; if (a === b && b === c) continue;
         const xa = Pp[a * 3], za = Pp[a * 3 + 2]; if (xa < -112 || xa > -78 || za < 292 || za > 330) continue;
         const cx = (Pp[a * 3] + Pp[b * 3] + Pp[c * 3]) / 3, cy = (Pp[a * 3 + 1] + Pp[b * 3 + 1] + Pp[c * 3 + 1]) / 3, cz = (Pp[a * 3 + 2] + Pp[b * 3 + 2] + Pp[c * 3 + 2]) / 3;
-        let k = inQuay(cx, cz) || inHead(cx, cy, cz) || inArch(cx, cy, cz);
+        let k = inQuay(cx, cz) || inHead(cx, cy, cz) || inArch(cx, cy, cz) || across(Pp, a, b, c);
         if (!k) for (const i of [a, b, c]) if (inHead(Pp[i * 3], Pp[i * 3 + 1], Pp[i * 3 + 2]) || inArch(Pp[i * 3], Pp[i * 3 + 1], Pp[i * 3 + 2])) { k = true; break; }
         if (k) { idx[t + 1] = a; idx[t + 2] = a; cut++; }
       }

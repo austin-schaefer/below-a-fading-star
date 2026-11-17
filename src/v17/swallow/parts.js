@@ -26,7 +26,7 @@ export function buildParts(ctx, L) {
 
   // ---- the lamps: the tube's lenses that still hold a little noon, and the two lights from the ends (the portal's
   // daylight down in the head, the Garth's noon at the door). They light the water (water.js) and bake the glow
-  const LENS_S = [2.6, 11, 27, 44, 61]; // (the first in the arch: the noon that draws a visitor in, seen from the shore)
+  const LENS_S = [2.6, 5.6, 27, 44, 61]; // (the first in the arch: the noon that draws a visitor in, seen from the shore)
   const lenses = LENS_S.map((s) => { const f = frameAt(s); return { s, x: f.x, y: f.ax + A.outer - 0.07, z: f.z }; }); // (set in the glass's crown, its rim on the glass)
   const dawn = { x: -94.5, y: -6.6, z: 312.5 }, noon = { x: -31.2, y: A.profile.at(-1)[1] + 1.4, z: 318 };
   const glowAt = (x, y, z) => {
@@ -130,7 +130,7 @@ export function buildParts(ctx, L) {
     }
     for (const sd of [-1, 1]) for (let s = 0.3; s < L.LEN - 0.05; s += 1.0) {
       const fa = frameAt(s), fb = frameAt(Math.min(L.LEN - 0.05, s + 1.0)), u = sd * (pw - 0.3);
-      K.beam([fa.x + fa.r.x * u, fa.y - 0.22, fa.z + fa.r.z * u], [fb.x + fb.r.x * u, fb.y - 0.22, fb.z + fb.r.z * u], 0.07, WOOD_D, 0.05);
+      K.beam([fa.x + fa.r.x * u, fa.y - 0.08, fa.z + fa.r.z * u], [fb.x + fb.r.x * u, fb.y - 0.08, fb.z + fb.r.z * u], 0.07, WOOD_D, 0.05); // (under the boards, touching them)
     }
   }
 

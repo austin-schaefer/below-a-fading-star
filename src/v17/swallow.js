@@ -72,6 +72,11 @@ export async function build(ctx) {
     parts.update?.(dt, t);
   }, { pos: { x: mid.x, z: mid.z }, near: 90, hz: 0 });
 
+  // from far off (the high stands look over the slope), only the face and its water are drawn: what is under the ground
+  // is shut, at the cost of a distance a frame
+  const far = parts.meshes.filter((m) => !/^swallow-(stone|fall|spray)$/.test(m.name)), P0 = L.at(8);
+  ctx.registerUpdate(() => { const dx = cam.x - P0.x, dz = cam.z - P0.z, on = dx * dx + dz * dz < 130 * 130 || cam.y < -2; for (const m of far) m.visible = on; });
+
   // the Garth's door, as built: where the tube's glass ends (U2 builds the wall round it)
   ctx.swallow = { floor, line: L, plan: { A, SWALLOW: SW_PLAN, GARTH_DOOR }, parts };
   await ctx.progress?.('the swallow', 1);
