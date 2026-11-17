@@ -191,3 +191,19 @@ World loading is now a small share of the gate's 39 minutes; two tests hold abou
 - No offer where one is expected: the noon-drawer's jug, the Croft's chair and stove, the Laid Sun's lamp.
 - Stories not found unprompted: gold-from-the-court (no jackdaw seen), slippers-mate, salt-for-news, the painter.
 - `walkers` and `canyon` are not in `tools/suite.sh`; `walkers` has one row red since v15 (P12's pit-lamps).
+
+## From v17's critic and gate (2026-11-17), not fixed
+
+- The glass tube reads new ("a modern aquarium tunnel": clean pastel tile, saucer lamps); the pool's surface is a hard ruled line across it.
+- The brook is a still sheet in shadow, its sound a 5.7 s loop with clicks; the leat's level reach is dead and near black; the weirs are zigzag teeth up close and the loudest place measured (-23.8 LUFS).
+- The Swallow's quay wall is plain coursed stone; U1's east wall is off-palette (orange-peach).
+- The Garth reads "a grey, overcast noon", not noon; its spout is plain (no moss, no carving).
+- The Shuttered Noon: the man is faint; a reader does not tie the ring to the disc; the flicker has no sound; nobody has checked from twelve stands that nothing else reads as a way in.
+- Far village specks go pale, not warm, in a gutter. The galley's shadow switches off at 40 m (a small pop).
+- `<pre id="error">` shows an uncaught error's text to every visitor, over the view.
+- A place card under a map stand names the region stood in, not the place looked at (the Lamplighter's stand reads "The Arcature").
+- No offer at the Garth's cans or the Swallow; "Chalk your stroke" lowers the seat and offers nothing after.
+- `audio`'s `act-bell-letters` is bimodal (bed 0.003 or 0.0072): find what doubles the bed and hold it.
+- The builder's boxes stand 6 mm proud of their nominal faces: decals need 8 mm or more; worth a helper (`B.decal`) that knows it.
+- The sphere's meshes and v17's four waters cost 18 calls from the heights (ceiling 380, now 377): merge further.
+

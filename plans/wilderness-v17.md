@@ -49,6 +49,20 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 12:56 PST. v17 is RELEASED and live. The run pauses here on the owner's word.**
+
+- PR #82 merged to `main` (802b280); the GitHub release `v17` is published; the live site serves it (checked: `src/v17/sphere.js` on the live host has the ring). #74 closed with the release's link. The four names are posted for the owner as issue #83 (an agent's issue; each `line` is empty until they give it). `main` is merged back into `next`.
+- **The owner said: pause after v17 ships before the next milestone.** No v18 is opened, no wake is scheduled, no agent is in flight, no background command is running. The next session waits for the owner.
+- **Open, for whoever comes next:** the idea bank's "From v17's critic and gate" list (`plans/IDEAS.md`); the owner's choice among the three title cards (`?type=a|b|c`, c is the default; the critic preferred b); quotations for the four names (#83).
+
+**Looking back**
+
+- **What took longest:** the tail. Every builder was in by 08:10; the release was at 13:1x. The owner woke, walked `next` and gave eleven notes in three hours (the sphere four times): that is the run working as meant, but each note went out as its own agent and the whole suite ran twice between them. The second whole run was started while a redirect was still likely; it should have waited for the owner to stop.
+- **Found late:** (1) the sound's throw in the tube, by the leat's author and the critic, not by the sound's own tests (the survey's page never errors: `swallow-walk` now fails on console errors); (2) a map stand inside a house since v15 (a `settings` row now); (3) bare planes in the Garth and triangles at the sphere's rim, by the owner at 60 fps: two agents reported "low tier only" from frames that did not show the owner's view. **Reproduce the owner's frame first** is already in the briefs; it was skipped once.
+- **Said more than once by the owner:** the triangles at the sphere's edge (twice). And one correction of taste: no more tally marks (now in the `storytelling` skill).
+- **Worked:** resuming the same agent for rounds two and three of the sphere (26 and 28 minutes each, against 50 for the first); printing both faces of a coplanar pair instead of guessing offsets; a fixed-view "before" set.
+- **Harness changes (three):** `tools/worktree.sh rm` stops a server running in the worktree it removes and drops its `node_modules` link (five orphan servers were found holding agents' ports today); the tally rule in `storytelling`; `swallow-walk` and `settings` rows from F3. No milestone idea filed: the bank's list is small things.
+
 **2026-11-17, 12:54 PST. Round three merged; every test green on what ships; releasing.**
 
 - **Round three merged** (S2's agent resumed, opus, 28 min; "Round three" in `briefs/v17/reports/issue-1722-sphere-east.md`; `src/v17/sphere.js`, `tools/ways-test.mjs`, the story). Cut: the ladder; the two pale hoops (the collar where the tube left the glass and the line's two nearest hoops: the line now starts 15 m out); the eye's rim; the iris's mouth ring, bell and throat (it sits on a solid boss sealed to the glass). **The ring** reads `ctx.sky.flicker` (`next`, `phase`, `len`; no shared file): empty as a gutter ends, full at the next onset. **The flicker** (seconds from onset): 0 to 0.5 a head of light races the ring; 0.5 to 1.6 it drains into the leaves, the iris gasps open and snaps shut; 1.0 to 2.6 a red-white tide climbs the glass; 1.5 to 2.4 the shaft goes to blood, stuttering; 2.6 to 4.4 all light inside goes out; 4.4 to 6.0 the noon returns. Reduced motion keeps the beats as slow ramps. No sound. The sphere's calls 7 to 4 from 300 m (the gallery top 377 of 380). Its reader: "There is no hatch, door or break in the glass ... He may have been placed there rather than having entered." **Not done:** the flicker from the rim with the device in frame; the 12-stand check for other openings.

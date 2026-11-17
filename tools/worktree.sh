@@ -47,6 +47,13 @@ case "${1:-}" in
       done < <(find "$dir/$wip" -type f -print0)
       echo "moved $moved wip file(s) into $deploy/$wip"
     fi
+    # A server left running in a removed worktree keeps its port and serves nothing (five were found in a day): stop
+    # any http-server whose working directory is this worktree; the node_modules link goes too (git refuses it).
+    for pid in $(pgrep -f "http-server" 2>/dev/null); do
+      cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')"
+      [ "$cwd" = "$dir" ] && kill "$pid" 2>/dev/null && echo "stopped the server in $name (pid $pid)"
+    done
+    [ -L "$dir/node_modules" ] && rm "$dir/node_modules"
     git -C "$main_root" worktree remove "$dir"
     git -C "$main_root" branch -d "$name" 2>/dev/null || echo "branch $name kept (not merged)"
     echo "removed $name"
