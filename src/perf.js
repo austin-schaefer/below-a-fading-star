@@ -30,6 +30,7 @@
 // (under another object, the camera) are not tagged, so its toggle misses them.
 import { SPAWN, WATER } from './world.js';
 import { tarnShoreDistance } from './v4/tarn.js'; // v16 L2: the bench walks the tarn's edge
+import { fenAt } from './height/fen.js'; // v16 L3: and the fen's
 import { createModuleRegistry } from './module-registry.js';
 
 // The bench walks the causeway as it was in v3, pinned here (v4 systems) so that v4's reroute of CAUSEWAY
@@ -493,12 +494,13 @@ export function createPerf(ctx) {
     };
     const cw = pts[pts.length - 1];
     // 4 m off the tarn's shore as seen from its centre (v16 L2: the edge; outward round the inlet and the bays)
-    arc(tarn, (tarn.shore ?? tarn.r) + 4, bearing(tarn, cw), bearing(tarn, fen), (a) => {
+    arc(tarn, tarn.r + 4, bearing(tarn, cw), bearing(tarn, fen), (a) => {
       const ux = Math.cos(a), uz = Math.sin(a);
       for (let d = tarn.r + 4; d > 20; d -= 1) if (tarnShoreDistance(tarn.x + ux * d, tarn.z + uz * d) < 4) return d + 1;
-      return (tarn.shore ?? tarn.r) + 4;
+      return tarn.r + 4;
     });
-    arc(fen, fen.r + 4, bearing(fen, tarn), bearing(fen, SPAWN));
+    // and 6 m off the fen's edge (v16 L3)
+    arc(fen, fen.r, bearing(fen, tarn), bearing(fen, SPAWN), (a) => { const p = fenAt(a, 6); return Math.hypot(p.x - fen.x, p.z - fen.z); });
     pts.push({ x: SPAWN.x, z: SPAWN.z });
     const cum = [0];
     for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));

@@ -2,6 +2,7 @@
 // interpolated over the same triangles the GPU draws, so nothing floats or sinks. Biome weights
 // come from a coarse grid of terrain.biomeAt() (it is too slow to call per blade of grass).
 import { clamp } from './util.js';
+import { makeSimplex } from '../noise.js';
 import { spanClear } from '../v4/span/plan.js'; // v4: the Great Span's piers, stairs and fallen pieces
 import { wornAt, leadNear } from '../v4/paths/routes.js'; // v4 map: the leads wear the cover off
 import { plinthsClear, plinthsPaved } from '../v5/plinths.js'; // v5: the Plinth Road's corridor and paving
@@ -24,6 +25,7 @@ import { MOTHER_FOOT } from './mother.js'; // the Lattice's mother crystal: no t
 // stands alone on the moor, so no tree may grow on him. [x, z, radius]
 // Where trees and shrubs keep out (ground cover still grows): the cloak man's old stand, the Wayside Shrine, the Menology's spiral.
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
+const CLEAR_N = makeSimplex(1605);
 
 const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier'];
 
@@ -101,7 +103,7 @@ export function makeGround(ctx) {
   // The river and the ravine above the fall are paths with a width, not discs: terrain.waterLevelAt knows them.
   const riverLevel = (x, z) => terrain.waterLevelAt(x, z);
   function waterDepth(x, z, y = heightAt(x, z)) {
-    for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.shore || terrain.waterLevelAt(x, z) !== null)) return w.y - y; // v4: a disc with a shore (the tarn) asks where its water is
+    for (const w of waters) if ((x - w.x) ** 2 + (z - w.z) ** 2 < w.r * w.r && (!w.edge || terrain.waterLevelAt(x, z) !== null)) return w.y - y; // v4, v16: a disc on an edge (the tarn, the fen) asks where its water is
     const rl = riverLevel(x, z);
     return rl === null ? -Infinity : rl - y;
   }
@@ -120,7 +122,10 @@ export function makeGround(ctx) {
   function excluded(x, z, margin = 0, opts = null) {
     if (x * x + z * z > 318 * 318) return true;
     // trees and shrubs (margin >= 0) keep out of the clearings; ground cover still grows there
-    if (margin >= 0) for (const c of CLEARINGS) if ((x - c[0]) ** 2 + (z - c[1]) ** 2 < (c[2] + margin) ** 2) return true;
+    if (margin >= 0) for (const c of CLEARINGS) { // v16 L3: each clearing's rim wanders a quarter of its radius, no ruled circle
+      const d2 = (x - c[0]) ** 2 + (z - c[1]) ** 2, rr = c[2] * 1.25 + margin;
+      if (d2 < rr * rr) { const r = c[2] * (1 + 0.25 * CLEAR_N.noise2(x * 0.12, z * 0.12)) + margin; if (d2 < r * r) return true; }
+    }
     if (d2(x, z, L.castle) < (31 + margin * 1.6) ** 2) return true; // the keep's hexagon has apothem ~29; trees (margin) stay further out
     if (d2(x, z, L.tower) < (12 + margin) ** 2) return true;
     if (d2(x, z, L.stones) < (10 + margin) ** 2) return true;

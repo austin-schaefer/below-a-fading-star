@@ -11,6 +11,7 @@ import { buildRiver } from './water/river.js';
 import { buildPool } from './water/pool.js';
 import { tideAt } from './v4/tarn.js';
 import { keptHeights } from './v13/tape.js'; // v13 L4: the ground's answers kept between visits
+import { fenShoreDistance, fenWet } from './height/fen.js'; // v16 L3: the fen's edge
 import { injectReachFen } from './v7/reach.js'; // v7: DP the Luminous Reach, its plume in the fen's disc shader
 
 const MAX_RIPPLES = 6;
@@ -22,7 +23,8 @@ function discGeometry(ctx, body, rings, segs, dry) {
   const put = (i, x, z) => {
     pos[i * 3] = x - body.x; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = z - body.z;
     depth[i] = body.y - ctx.terrain.heightAt(x, z);
-    if (dry && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // dry hollows inside the disc: the tarn's (v4) and the fen's past its edge (v16 L3)
+    if (dry && ctx.terrain.waterLevelAt(x, z) === null) depth[i] = Math.min(depth[i], -0.5); // dry hollows inside the disc: the tarn's (v4) and the fen's (v16 L3)
+    else if (body === ctx.water.fen && fenShoreDistance(x, z) > -1 && !fenWet(x, z)) depth[i] = Math.min(depth[i], -0.5); // past the fen's edge only its pools: the river's channel is the ribbon's
   };
   put(0, body.x, body.z);
   for (let r = 1; r <= rings; r++) {
@@ -248,8 +250,8 @@ export async function build(ctx) {
     const fen = name === 'fen';
     // v4: the tarn's disc reaches r 92 for the south bay, so it takes 1.4 times the rings and segments to keep its
     // shore as fine as at the old r 60 (still one mesh, one call)
-    const k = body.shore ? 1.4 : 1;
-    const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k), !!body.shore || fen));
+    const k = body.shore ? 1.4 : 1; // (the tarn's)
+    const geo = tape.run(() => discGeometry(ctx, body, Math.round((high ? (fen ? 150 : 130) : 90) * k), Math.round((high ? 260 : 180) * k), !!body.edge));
     const mat = new THREE.ShaderMaterial({
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
         uTex: { value: tex }, uTime: { value: 0 }, uFlicker: { value: 1 }, uFen: { value: fen ? 1 : 0 },

@@ -156,5 +156,85 @@ else {
   }
 }
 
+
+// ---- every still water: no wet cell stands more than a metre above its water (waterLevelAt says water where the ground
+// is over it: the waders, the canyon's spray and the audio's water read it as water)
+{
+  const F = await import('../src/height/field.js');
+  for (const b of F.WATER_BODIES) {
+    const w = b.w, st = w.r > 20 ? 2 : 0.5;
+    let n = 0, worst = -Infinity, at = null, cells = 0;
+    for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
+      if (!b.wet(x, z)) continue;
+      cells++;
+      const over = F.heightAt(x, z) - w.y;
+      if (over > worst) { worst = over; at = [x, z]; }
+      if (over > 1) n++;
+    }
+    let dry = 0, dat = null;
+    for (let x = w.x - w.r; x <= w.x + w.r; x += st) for (let z = w.z - w.r; z <= w.z + w.r; z += st) {
+      if (b.sd(x, z) >= 0 || F.heightAt(x, z) > w.y - 0.05 || F.waterLevelAt(x, z) !== null) continue;
+      dry++; dat = dat || [x, z];
+    }
+    check(dry === 0, `${b.name}: every cell inside its shore with its ground under the water is wet`, `${dry} dry${dat ? ', first at ' + dat.map(f2) : ''}`);
+    check(n === 0, `${b.name}: no wet cell with its ground over 1 m above the water`, `${n} of ${cells} cells; the highest ${f2(worst)} m at ${at ? at.map(f2) : '-'}`);
+  }
+}
+
+// ---- Corpse-Candle Fen on its edge (src/height/fen.js)
+{
+  const F = await import('../src/height/field.js');
+  const N = await import('../src/height/fen.js');
+  const { WATER } = await import('../src/world.js');
+  const E = N.FEN_EDGE, W = WATER.fen;
+  // the shader's edge is the height's
+  {
+    const fn = glslAsJs(E.glsl('fenSd'));
+    let worst = 0;
+    for (let i = 0; i < 4000; i++) { const x = W.x + (rnd() - 0.5) * 260, z = W.z + (rnd() - 0.5) * 260; worst = Math.max(worst, Math.abs(fn([x, z].reduce((p, v, k) => (k ? (p.y = v) : (p.x = v), p), {})) - E.sd(x, z))); }
+    check(worst < 1e-6, 'the fen: the ribbon\'s GLSL edge is sd', `worst ${worst.toExponential(2)} m`);
+  }
+  // the disc takes in every wet cell, and every cell under the water inside the disc is wet (nothing drawn dry)
+  {
+    let miss = 0, out = 0;
+    for (let x = W.x - W.r - 20; x <= W.x + W.r + 20; x += 1.5) for (let z = W.z - W.r - 20; z <= W.z + W.r + 20; z += 1.5) {
+      const r = Math.hypot(x - W.x, z - W.z), h = F.heightAt(x, z);
+      if (r < W.r && E.sd(x, z) < 0 && h < W.y - 0.05 && F.waterLevelAt(x, z) === null) miss++;
+      if (r >= W.r && E.sd(x, z) < -1 && h < W.y - 0.05 && F.RIVER.section(x, z).inRiver === false) out++;
+    }
+    check(miss === 0, 'the fen: every cell under its water inside its edge is wet', `${miss} dry`);
+    check(out === 0, 'the fen: no water inside its edge lies outside the disc', `${out} outside`);
+  }
+  // the Span's bed is not the fen's water
+  check(!N.fenWet(98, 209.5), 'the fen: the Span\'s bed at (98, 209.5) is not its water');
+  // the islets stand dry
+  {
+    const isles = E.lobes.filter((l) => l.land), wet = isles.filter((l) => F.heightAt(l.x, l.z) < W.y + 0.2);
+    check(isles.length >= 3 && wet.length === 0, 'the fen: its islets stand dry', `${isles.length} islets, ${wet.length} awash`);
+  }
+  // pools apart: wet cells out past the shore, in the fringe, not joined to the main water
+  {
+    let past = 0;
+    for (let x = W.x - W.r; x <= W.x + W.r; x += 1.5) for (let z = W.z - W.r; z <= W.z + W.r; z += 1.5) if (N.fenWet(x, z) && E.sd(x, z) > 3 && F.heightAt(x, z) < W.y) past++;
+    check(past > 40, 'the fen: pools lie out past its shore, in the fringe', `${past} cells of 1.5 m`);
+  }
+  // tight toward the keep's slope, open toward the river: the furthest water past the shore in each sector
+  {
+    const far = (b0, b1) => { let m = -Infinity; for (let x = W.x - W.r; x <= W.x + W.r; x += 1.5) for (let z = W.z - W.r; z <= W.z + W.r; z += 1.5) {
+      const b = ((Math.atan2(x - W.x, -(z - W.z)) * 180 / Math.PI) + 360) % 360; if (!(b0 < b1 ? b >= b0 && b < b1 : b >= b0 || b < b1)) continue;
+      if (N.fenWet(x, z) && F.heightAt(x, z) < W.y) m = Math.max(m, E.sd(x, z)); } return m; };
+    const north = far(320, 30), river = far(100, 160);
+    check(river > north + 6, 'the fen: open toward the river, tight toward the keep\'s slope (furthest water past the shore)', `north ${f2(north)} m, river side ${f2(river)} m`);
+  }
+  // no circle: over every 60 degrees of shore, the radius varies 6 m or more
+  {
+    const pts = shorePoints(E, 360);
+    const rs = pts.map(([x, z]) => Math.hypot(x - W.x, z - W.z));
+    let flat = 99;
+    for (let i = 0; i < rs.length; i++) { let lo = Infinity, hi = -Infinity; for (let j = 0; j < 60; j++) { const v = rs[(i + j) % rs.length]; lo = Math.min(lo, v); hi = Math.max(hi, v); } flat = Math.min(flat, hi - lo); }
+    check(flat >= 6, 'the fen: no 60 degrees of its shore is a circle (the radius varies 6 m or more)', `least ${f2(flat)} m`);
+  }
+}
+
 console.log(`outline: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

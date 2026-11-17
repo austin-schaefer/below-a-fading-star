@@ -29,23 +29,23 @@ const ISLES = [
 export const FEN_EDGE = radialOutline({
   x: L.x, z: L.z, r: 54, seed: 1605, K: 9, amp: 0.15, falloff: 1.05, warp: 3, warpFreq: 0.06,
   lobes: [
-    // the fingers, along the low lines (tapered capsules)
-    { bearing: 284, d: 46, r: 9, k: 9, to: { bearing: 281, d: 92, r: 2.2 } },   // west, toward the tarn
-    { bearing: 318, d: 48, r: 6, k: 7, to: { bearing: 312, d: 78, r: 1.6 } },   // north-west
-    { bearing: 74, d: 50, r: 8, k: 8, to: { bearing: 70, d: 96, r: 2.5 } },     // east, along the Saltings' hem
-    { bearing: 40, d: 48, r: 5, k: 6, to: { bearing: 34, d: 74, r: 1.5 } },     // north-east, short
-    { bearing: 178, d: 52, r: 9, k: 9, to: { bearing: 188, d: 80, r: 3 } },     // south, under the Span
-    { bearing: 232, d: 50, r: 6, k: 6, to: { bearing: 238, d: 72, r: 2 } },     // south-west
+    // the fingers, along the low lines (tapered capsules); everything stays inside the water's disc (WATER.fen.r 80)
+    { bearing: 284, d: 46, r: 9, k: 9, to: { bearing: 281, d: 76, r: 2.2 } },   // west, toward the tarn
+    { bearing: 318, d: 48, r: 6, k: 7, to: { bearing: 312, d: 72, r: 1.6 } },   // north-west
+    { bearing: 74, d: 50, r: 8, k: 8, to: { bearing: 70, d: 77, r: 2.2 } },     // east, along the Saltings' hem
+    { bearing: 40, d: 48, r: 5, k: 6, to: { bearing: 34, d: 70, r: 1.5 } },     // north-east, short
+    { bearing: 178, d: 52, r: 9, k: 9, to: { bearing: 188, d: 75, r: 3 } },     // south, under the Span
+    { bearing: 232, d: 50, r: 6, k: 6, to: { bearing: 238, d: 73, r: 2 } },     // south-west
     // the open side: broad toward the river's mouth (bearing 128, 82 m)
-    { bearing: 128, d: 50, r: 16, k: 14, to: { bearing: 128, d: 76, r: 9 } },
-    { bearing: 100, d: 62, r: 8, k: 8 },
+    { bearing: 128, d: 50, r: 16, k: 14, to: { bearing: 128, d: 66, r: 10 } },
+    { bearing: 100, d: 60, r: 8, k: 8 },
     // pools apart from the main water (discs, joined by nothing)
-    { bearing: 262, d: 80, r: 4, k: 1.2 },
-    { bearing: 100, d: 92, r: 4.5, k: 1.2 },
-    { bearing: 222, d: 84, r: 3.2, k: 1 },
-    { bearing: 56, d: 84, r: 3, k: 1 },
+    { bearing: 262, d: 73, r: 3.5, k: 1.2 },
+    { bearing: 88, d: 74, r: 3, k: 1 },
+    { bearing: 214, d: 72, r: 3, k: 1 },
+    { bearing: 56, d: 74, r: 3, k: 1 },
     { bearing: 338, d: 70, r: 2.6, k: 1 },
-    { bearing: 146, d: 96, r: 3.5, k: 1 },
+    { bearing: 150, d: 74, r: 3.5, k: 1 },
     // the islets
     ...ISLES.map((i) => ({ ...i, land: true })),
   ],
@@ -80,8 +80,8 @@ function dig(x, z, sd, fr) {
   const t = smoothstep(-14, fr.fringe, sd);
   if (t >= 1) return 0;
   const pools = SX.warped2(x * 0.03 + 11, z * 0.03 - 7, 4, 0.9);
-  const thr = 0.05 + 0.55 * t;
-  return smoothstep(thr, thr + 0.35, pools) * (2.2 - 0.9 * t) + 0.3 * (1 - smoothstep(-6, 4, sd));
+  const thr = 0.05 + 0.4 * t;
+  return smoothstep(thr, thr + 0.3, pools) * (2.2 - 0.6 * t) + 0.3 * (1 - smoothstep(-6, 4, sd));
 }
 function isleLift(x, z) {
   let m = 0;

@@ -217,10 +217,12 @@ export const CAUSEWAY_V4 = [
 
 // Water bodies: flat planes at a fixed height, clipped by the terrain naturally.
 export const WATER = {
-  // r takes in the south bay (v4 regions, src/v4/tarn.js); shore is the old round shore's radius, for what is laid
-  // round it (the bench's arc, mists, reeds). terrain.waterLevelAt knows where the water really is.
-  tarn: { x: -90, z: 110, r: 92, y: -4.6, shore: 60 },
-  fen:  { x: 70, z: 160, r: 80, y: -2.45 },
+  // edge: the body's shore is drawn on an edge (v16, src/height/outline.js) and r is only a disc that takes it all in:
+  // terrain.waterLevelAt knows where the water really is, and the disc's mesh and the plants ask it. The tarn's r takes
+  // in the south bay (src/v4/tarn.js), shore (its old round radius) only sizes its disc's mesh; the fen's r takes in the
+  // fringe's last pools (src/height/fen.js).
+  tarn: { x: -90, z: 110, r: 92, y: -4.6, shore: 60, edge: true },
+  fen:  { x: 70, z: 160, r: 90, y: -2.45, edge: true },
   // the pool at the fall's foot (The Speculum): the disc takes in its pale-stone beach; the river itself
   // is not a disc, see terrain.js (RIVER, riverAt, waterDepthAt)
   pool: { x: 208, z: 258, r: 6.8, y: 3.5 },
