@@ -21,9 +21,9 @@ const BREATH = (t) => 0.94 + 0.06 * Math.sin(t * 0.7); // as the Noon Road's lam
 export function leesStone(ctx, fx, fz) {
   const s = makeStoneMaterial(ctx);
   s.uniforms.uSTime.value = (Math.PI / 2 - (fx * 0.21 + fz * 0.17)) / 0.31;
-  s.tick = (t, f) => {
+  s.tick = (t, f, lamps = 0) => { // (lamps: the panes turned up in a gutter, as the village's: src/v8/strata.js tick)
     s.uniforms.uGlyph.value = BREATH(t) * 0.9;
-    s.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f); // (src/v8/strata.js tick)
+    s.uniforms.uWindow.value = (0.85 + 0.1 * Math.sin(t * 1.7) + 0.05 * Math.sin(t * 5.3)) * (0.7 + 0.3 * f) * (1 + 1.1 * lamps);
     s.uniforms.uLime.value = 0.85 * (0.3 + 0.7 * f);
   };
   return s;

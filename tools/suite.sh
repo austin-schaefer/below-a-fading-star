@@ -48,6 +48,7 @@ run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
 run roads tools/roads-test.mjs $B
 run village-plan tools/village-plan-test.mjs
+run outline tools/outline-test.mjs # v16-L2: the edge (src/height/outline.js) and Lees Tarn on it, in node
 run twk tools/twk-test.mjs $B
 run regions tools/regions-test.mjs $B
 run contrast tools/contrast-survey.mjs $B

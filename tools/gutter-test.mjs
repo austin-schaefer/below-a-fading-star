@@ -3,6 +3,8 @@
 // from the state at ready, samples __fp.sky.flicker.value every 0.1 s, and checks that gutters recur, last 12-16 s (first dip under 0.9 to recovery above 0.9), hold the
 // floor (under 0.35) for 6.5-9 s (a pinned 12 s gutter holds about 7), and keep the unchanged ramps (floor within ~1.4 s of the dip, ~2.5 s back);
 // then 4 s on the real frame loop: a gutter started there falls on the page's clock (the countdown at real time, the dip and the floor).
+// v16-S1 (#78): then an unpinned load (?q=low&only=sky): the first gutter's countdown is held behind the title card, and after
+// 'begin' the first gutter comes 60-120 s on (none in the first 60 s, one by 120 s), the same second on every visit.
 // Usage: node tools/gutter-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
 import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
@@ -44,6 +46,27 @@ const live = await page.evaluate(() => new Promise((resolve) => {
     if (t >= 4) { clearInterval(id); resolve({ out, next0, next1: [t, f.next], phase: f.phase }); }
   }, 100);
 }));
+// v16-S1: the unpinned first gutter
+await page.goto(`${base}/?q=low&only=sky`, { waitUntil: 'load', timeout: 120000 });
+await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
+const first = await page.evaluate(() => {
+  const fp = window.__fp, sky = fp.sky, f = sky.flicker, DT = 1 / 60;
+  let t = fp.time.t;
+  const run = (secs) => { let min = 1, dipAt = null; for (let i = 0; i < secs * 60; i++) { t += DT; sky.update(DT, t); if (f.value < min) min = f.value; if (dipAt == null && f.value < 0.9) dipAt = i * DT; } return { min, dipAt }; };
+  const next0 = f.next, out0 = f.out;
+  const card = run(30); // 30 s on the title card
+  const nextCard = f.next;
+  fp.events.dispatchEvent(new CustomEvent('begin'));
+  const nextBegin = f.next;
+  const early = run(59.5);
+  const late = run(61);
+  // the readings the answers use (v16-S1): dark at once, lamps a hand's lag behind it and slow to go back
+  while (f.phase > 0) run(1 / 60);
+  f.next = 0; run(1 / 60);
+  const len = f.len, at = (s) => { run(s); return { dark: f.dark, lamps: f.lamps }; };
+  const r1 = at(1.0), r2 = at(0.5), r45 = at(3.0), rCatch = (run(Math.max(0, len - 4.5 + 0.2)), { dark: f.dark, lamps: f.lamps }), rAfter = at(2), rLate = at(20);
+  return { next0, out0, nextCard, nextBegin, cardMin: card.min, earlyMin: early.min, lateDip: late.dipAt, lateMin: late.min, lamps: { r1, r2, r45, rCatch, rAfter, rLate } };
+});
 await browser.close();
 // carve out gutters: from first dip under 0.9 to the first recovery above 0.9 afterwards
 const gutters = [];
@@ -75,6 +98,22 @@ gutters.forEach((g, i) => {
   console.log(`      live: dip at ${firstDip?.[0].toFixed(2)} s, floor at ${firstFloor?.[0].toFixed(2)} s; the countdown fell ${fed.toFixed(2)} s in ${real.toFixed(2)} s of the page's clock`);
   check(!!live.next0 && Math.abs(fed - real) <= 0.2 * real, `under the frame loop the sky runs on real time (its countdown fell ${fed.toFixed(2)} s in ${real.toFixed(2)} s)`);
   check(!!firstDip && !!firstFloor && firstFloor[0] - firstDip[0] <= 1.6 && live.out.filter(([t]) => t >= firstFloor[0]).every(([, v]) => v < 0.5), `under the frame loop a gutter dips, reaches the floor within about 1.4 s and stays down (under 0.5: the floor shudders to about 0.41) (${firstDip?.[0].toFixed(2)} s to ${firstFloor?.[0].toFixed(2)} s)`);
+}
+{
+  console.log(`      first gutter (unpinned): countdown ${first.next0.toFixed(2)} s at ready; ${first.nextCard.toFixed(2)} after 30 s on the card; dip ${first.lateDip == null ? 'none' : (59.5 + first.lateDip).toFixed(1) + ' s'} after begin`);
+  check(first.out0 === false && first.nextCard === first.next0 && first.cardMin >= 0.99, `the first gutter's countdown waits behind the title card (${first.next0.toFixed(2)} s before and after 30 s there)`);
+  check(first.nextBegin >= 60 && first.nextBegin <= 120, `the first gutter is set 60-120 s after begin (${first.nextBegin.toFixed(2)})`);
+  check(first.earlyMin >= 0.9, `no gutter in the first 59.5 s after begin (min ${first.earlyMin.toFixed(2)})`);
+  check(first.lateDip != null && first.lateMin < 0.35, `the first gutter comes by 120 s after begin and reaches the floor (min ${first.lateMin.toFixed(2)})`);
+  check(Math.abs(first.next0 - 87.47) < 0.01, `the first gutter's second is the same every visit (the gutter's own stream: ${first.next0.toFixed(2)})`);
+}
+{
+  const L = first.lamps, n = (r) => `dark ${r.dark.toFixed(2)} lamps ${r.lamps.toFixed(2)}`;
+  console.log(`      readings: 1 s ${n(L.r1)}; 4.5 s ${n(L.r45)}; caught ${n(L.rCatch)}; 2 s after ${n(L.rAfter)}; 22 s after ${n(L.rLate)}`);
+  check(L.r1.dark > 0.2 && L.r1.lamps < 0.05, `the lamps are not yet turned up 1 s into a gutter, while the dark has come (${n(L.r1)})`);
+  check(L.r45.dark > 0.9 && L.r45.lamps > 0.85, `4.5 s in, the dark is full and the lamps are turned up (${n(L.r45)})`);
+  check(L.rAfter.dark === 0 && L.rAfter.lamps > 0.3, `2 s after the sun has caught the lamps are still up, going down slowly (${n(L.rAfter)})`);
+  check(L.rLate.lamps < 0.02, `and are down by 22 s after (${n(L.rLate)})`);
 }
 check(errors.length === 0, `no page errors${errors.length ? ': ' + errors[0] : ''}`);
 console.log(fails ? `FAIL: ${fails} check(s) failed` : 'PASS: all checks');

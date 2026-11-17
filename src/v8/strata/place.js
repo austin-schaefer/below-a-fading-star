@@ -237,7 +237,7 @@ export async function build(ctx) {
   if (H.count) meshes.push(S.mesh(H, 'stone', 'strata-heliarch-late'));
   for (const m of meshes) ctx.scene.add(m);
   const flick = ctx.sky?.flicker || { value: 1 };
-  ctx.registerUpdate((dt, t) => S.tick(t, flick.value));
+  ctx.registerUpdate((dt, t) => S.tick(t, flick.value, flick.lamps || 0));
   const tris = meshes.reduce((a, m) => a + m.geometry.index.count / 3, 0);
   S.stats = () => ({ calls: meshes.length, tris, placements: S.placements.length });
   ctx.log(`strata: ${S.placements.length} placements so far, ${meshes.length} draw calls, ${(tris / 1000).toFixed(1)}k tris, ${(performance.now() - t0).toFixed(0)} ms`);

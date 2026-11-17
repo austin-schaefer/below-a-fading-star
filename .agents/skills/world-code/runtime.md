@@ -22,7 +22,7 @@ The URL params, the quality tiers, the shadow cadence, the profiler and what eac
 - `debug=1`
 - `tinct=0` (no regional tint on the haze and the light)
 - `placegrade=0` (no per-place exposure, saturation, contrast and warmth in the finish, v8-02); `shafts=0` (no ember shafts in the wood)
-- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, timings exported from `src/sky.js`)
+- `gutter=<len>,<every>` (seconds; pins the sun-gutter's length and interval and starts the first one within one interval; `gutter=v3` restores the old 6.5-9 s every 70-150 s; the default is 12-16 s every 60-110 s, the first 60-120 s after "Go out" (87.5 s; its countdown is held behind the title card, `flicker.out`), timings exported from `src/sky.js`; `tools/gutter-test.mjs` asserts both)
 
 ### v3 stage 2 switches (each defaults to the new behaviour; see `plans/wilderness-v3.md`)
 
@@ -247,6 +247,7 @@ for (const p of lampsAlong(line, 9)) ctx.scene.add(lampLight(p));           // a
 - The Lonely Staircase's slab meshes are bounded by every place a slab can be (laid or lying on the turf) and culled as anything else; an InstancedMesh with `frustumCulled = false` is drawn every frame from anywhere, in the shadow pass too: bound it (`mesh.boundingSphere`) where its instances keep to a known volume.
 - **The tools' browser** (`tools/launch.mjs`, agent issue #79): every tool launches Chromium with ANGLE on Metal, the Mac's GPU; `SHOT_ANGLE=swiftshader` asks for the CPU's software WebGL (slow, the same picture on any machine). A new tool takes `ANGLE` (the flag's value) or `ARGS` or `launch()` from there.
 - `node tools/perf-views.mjs <base> [q=low] [runs=3] [views.json] [--json=out.json]` (v16-P1): what each view costs, in fresh browsers a run, medians over the runs: draw calls, triangles, JS ms a frame and by module (the profiler's 2 s window), GPU ms where the timer is, the walker's update walking 300 ticks, the load's ready time and the collider count. Its views, `tools/views-perf-v16.json`: the ten standing perf views, four at the Lappet (crown, the Rungs, the Lees' square, from the house looking up) and one under the moor (the Noon Road). Other agents' browsers share the machine: run before and after back to back, three runs at least.
+- **The gutter and what answers it** (v16-S1, #78): the first gutter comes 87.5 s after "Go out" (`FIRST_GUTTER` 60-120 s in `src/sky.js`; the countdown waits on `begin`, `flicker.out`). Besides `flicker.value`, read `flicker.dark` (0..1, how far down, no lag) and `flicker.lamps` (0..1, a hand's answer: up about 1.4 s after the dark, down over some 8 s after the catch); under `flicker.hold` both settle at once, so a held render poses everything. An answer belongs to its thing: a uniform, a tint, an instance's pose, never a new draw or light. What answers, region by region: `briefs/v16/reports/issue-1601-gutter.md`. Pairs: `node tools/views.mjs tools/views-v16-gutter.json shots/wip <prefix> low` (each view lit with `hold=1`, then guttered with `hold=0.3`); frames through a real gutter, in order: `node tools/gutter-frames.mjs <base> <name> <x> <z> <yaw> <pitch> [y]`.
 
 ## Quality tiers
 

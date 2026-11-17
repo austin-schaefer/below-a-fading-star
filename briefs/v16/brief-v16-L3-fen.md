@@ -1,0 +1,17 @@
+Brief: v16 L3, the fen on the edge, and the other ruled outlines
+Worktree: `.claude/worktrees/issue-1605-fen`, branch `issue-1605-fen`, port 8165. Work only there. `briefs/v16/_common.md` first; `visual-art/land.md`.
+
+Goal. From above (`shots/wip/v16-before-air-fen-down.png`, `-air-valley-down.png`, `-air-tarn-down.png` in the deploy worktree; read them there, never write there) the fen at (70, 160) is a round dark patch, and beside the tarn lie pale flat shapes with ruled, rounded outlines. The owner (#73): nothing natural keeps a ruled outline. Put the fen on the shared edge L2 built (`src/height/outline.js`, on `origin/issue-1604-edge`: merge that branch into yours first and read its `modules.md` lines and how `src/v4/tarn.js` uses it), then go after the other outlines.
+
+1. **The fen.** A fen is not a lake: it has no clean shore at all. Its edge is a ragged fringe: fingers of wet running out into the moor along the low lines, hummocks and islets of dry ground standing in it, pools that are separate from the main water, the side toward the river open and the side toward higher ground tight. New `src/height/fen.js`: `fenHeight`, `fenWet`, `fenShoreDistance` on a `radialOutline` (lobes for the fingers and outlying pools). Move every reader of the fen's circle onto it: the flatten and pools (`src/height/field.js:375-384`), the river's `mf` (:227-229), the marsh's biome weight (:460-461), `waterLevelAt`'s fen test (L2 split it per body; today the fen's is a bare disc that reports water on the Span's bed at (98, 209.5): give it a wet test), `PLACES.fen` (`src/height/regions.js:27`), the Saltings' yields (`saltings.js:22`), the shader's `uFen` in `src/water/river.js:61,72,370` (the outline's `glsl()` and `uniforms()`), `src/v7/reach.js:86`, the trees' ring (`trees.js:660,882,910`), the wader (`life.js:140`), the corpse-candles (`particles.js:275,509`), the water's disc in `src/water.js`.
+2. **The other ruled outlines**, as far as time allows, worst from the air first: the pale flat shapes south and east of the tarn in the air frames (find what they are); the wood's r 90 circle (biome and `PLACES`); the crystal's r 42..64; the Bletting's circle with its straight cut at z −150; the Outwash's ellipse; the clearings. Each onto an outline, or its boundary broken by `sd` with noise where a full move is not worth it. The glacier is not yours (#75, later). Say what you left and why.
+
+Shores are judged moving ("a lot of water looks very janky"): at three places on the fen's new edge, frames in order as the eye walks from dry moor into the wet (medium and low): no ruled waterline, no z-fighting, reeds and candles where the wet is.
+
+In `field.js` you own the fen's lines above. L1 (one line at :353, a lift that is zero at the fen) and L2 (the tarn, :366-374, :462-463, `waterLevelAt`) are in flight or merged: merge `origin/next` before you hand back and resolve.
+
+Render `tools/views-v16-floor.json`'s fen, air and Span views after each round as `v16-L3-r<N>-<view>.png`.
+
+Done when: a helper (sonnet, blind, the after air frames only) names no circle or ruled line on natural ground, or you say which remain; the shore frames are clean; `ONLY=outline,dressing,strata,geometry,heights,walk,regions,paths,roads,audio` plus what covers the river, the reach and the wader (real names; counts), failures fixed or accounted for (list what you would re-record in `seams` and `geometry`; do not re-record wholesale); `heightAt` no slower; low tier draw calls unchanged.
+
+Finish and report as `_common.md` says.

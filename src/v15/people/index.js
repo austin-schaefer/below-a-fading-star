@@ -99,11 +99,32 @@ export async function build(ctx) {
   let flip = 0;
   const posed = () => { flip ^= 1; mesh.scale.x = 1 + flip * 1e-6; };
   const cam = ctx.camera.position;
-  for (const { F, fig } of figs) {
+  // The gutter (v16-S1, #78): each of them notices the dark on their own count (0.5 to 2.3 s in), stops where they are
+  // (their own clock, which every gesture runs on, slows to a halt mid-stroke) and looks up at the failing sun, the head
+  // as far round toward it as a neck goes and well up; they go back to work a second or two after it has caught.
+  const sky = ctx.sky, sunYaw = Math.atan2(sky?.sunDir?.x ?? -1, sky?.sunDir?.z ?? 0);
+  figs.forEach(({ F, fig }, i) => {
     F.update(fig, 0, 0, cam, fig.state); fig.apply();
     for (const c of F.colliders?.(fig) || []) ctx.addCollider(c);
-    ctx.registerUpdate((dt, t) => { F.update(fig, Math.min(dt, 0.25), t, cam, fig.state); fig.apply(); posed(); }, { pos: { x: fig.x, z: fig.z }, near: 45, hz: 0 });
-  }
+    const notice = 0.5 + ((i * 0.618) % 1) * 1.8;
+    let own = 0, up = 0, wait = 0;
+    fig.gutter = () => up;
+    ctx.registerUpdate((dt, t) => {
+      dt = Math.min(dt, 0.25);
+      const dark = sky?.flicker?.dark ?? 0;
+      wait = dark > 0.35 ? wait + dt : Math.max(0, wait - dt * 2);
+      const held = sky?.flicker?.hold != null, want = (held ? dark > 0.35 : wait > notice) ? 1 : 0;
+      up = held ? want : clamp(up + (want ? dt / 1.1 : -dt / 1.6), 0, 1);
+      own += dt * (1 - up);
+      F.update(fig, dt * (1 - up), own, cam, fig.state);
+      if (up > 0) {
+        const e = up * up * (3 - 2 * up);
+        const rel = clamp(angDiff(sunYaw, fig.yaw + fig.twist), -1.2, 1.2);
+        fig.hy += (rel - fig.hy) * e; fig.hp += (-0.48 - fig.hp) * e;
+      }
+      fig.apply(); posed();
+    }, { pos: { x: fig.x, z: fig.z }, near: 45, hz: 0 });
+  });
   const tris = (geo.index ? geo.index.count : n) / 3;
   ctx.people = { figs: figs.map(({ F, fig }) => ({ id: F.id, name: F.name, story: F.story, at: { x: fig.x, y: fig.y, z: fig.z, yaw: fig.yaw }, state: fig.state, fig })), mesh, stats: () => ({ draws: 1, triangles: tris, figures: figs.length, bones: nb, lights: 0 }) };
   ctx.log?.(`people: ${figs.length} figures, ${tris} triangles, ${nb} bones, one draw`);
