@@ -5,6 +5,7 @@
 // the walk's time however slowly the headless browser draws. Each frame is 1280 x 720 (PHONE=1: 390 x 844, a few
 // frames) into shots/wip/<prefix>-NN-<name>.png. The sun's guttering is held off.
 // Usage: node tools/tally-frames.mjs [base] [prefix=acts-tally3] [part=all|chalk|ride|return|still]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -14,7 +15,7 @@ const prefix = process.argv[3] || 'acts-tally3';
 const part = process.argv[4] || 'all';
 const phone = process.env.PHONE === '1';
 const [W, H] = phone ? [390, 844] : [1280, 720];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctxB = await browser.newContext({ viewport: { width: W, height: H }, hasTouch: phone });
 const page = await ctxB.newPage();
 page.setDefaultTimeout(600000);

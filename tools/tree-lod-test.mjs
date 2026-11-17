@@ -9,6 +9,7 @@
 // an upright crown depend on which instance happens to be first of its variant, and any change to placement moves that. It also prints a placement digest (x, z, rot of every tree) so placement can be compared across changes.
 // With the cross-fade on (not ?xfade=0) it checks one switch's fade (the spare, 0.4 s, gone after) and a wood walk's spares.
 // Usage: node tools/tree-lod-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
@@ -19,7 +20,7 @@ const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
 // lean's direction (a far mesh without twigs shifts a sparse crown's centroid a little). A far level grown from another
 // skeleton or drawn turned is off by tens of degrees.
 const TOL = 3, TOL_FAR = 6, LEAN_TOL = 15;
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let pass = 0, fail = 0;
 const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${info ? '  ' + info : ''}`); ok ? pass++ : fail++; };
 const digests = [];

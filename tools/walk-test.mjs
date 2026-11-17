@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // Functional smoke test: load the scene headlessly, simulate walking, check movement, boundaries,
 // colliders, landmark HUD and that no errors fire. Usage: node tools/walk-test.mjs [url]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=low';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));

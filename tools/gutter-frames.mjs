@@ -5,13 +5,14 @@
 // Usage: node tools/gutter-frames.mjs <base> <name> <x> <z> <yaw> <pitch> [y] [q=low]
 //   frames: shots/wip/v16-S1-seq-<name>-<tt>s.png at 0, 1, 2, 3, 4.5, 6, 9, 12, 14, 16, 19, 24 s; one line each with the
 //   flicker's value, dark and lamps.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const [base, name, x, z, yaw, pitch, y = '', q = 'low'] = process.argv.slice(2);
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

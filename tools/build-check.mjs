@@ -23,6 +23,7 @@
 // that moved (an attribute's weighted sum, before and after, says by how much), and exits 1 if any moved or nothing
 // was compared. The warm-up draw (src/warmup.js) runs before "ready", so onBeforeRender packing is in the
 // fingerprint. A module's fingerprint does not depend on the order its roots or children were added in.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync } from 'node:fs';
 let chromium;
@@ -204,7 +205,7 @@ function install() {
   };
 }
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function once() {
   const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
   page.on('pageerror', (e) => console.log('[pageerror]', e.message));

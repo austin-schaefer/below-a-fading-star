@@ -72,7 +72,7 @@ What a way up stands on. The rules are in comments in `src/controls.js` (above `
 
 Every tool under `tools/` says what it checks and how to call it in its header comment; the `run` lines in `tools/suite.sh` are the exact calls the gate makes, and `runtime.md` ("The profiler", "What each tool checks") has the longer accounts. Each test prints a `PASS` or `FAIL` line per check: report the counts it printed, never a remembered number. Zero checks reported is a failure. To wait for a test, wait on its own exit (run it in the foreground or as a background command): a loop on `pgrep -f tools/suite.sh` matches its own command line and never ends.
 
-Before you push, run, in sequence, with `B=http://localhost:PORT` and `SHOT_ANGLE=metal nice -n 10` in front of each `node`:
+Before you push, run, in sequence, with `B=http://localhost:PORT` and `nice -n 10` in front of each `node` (the tools draw on Metal: `tools/launch.mjs`):
 
 - the test for what you touched (and its render, if it is something a visitor sees);
 - for anything a visitor stands on or inside (a stair, a floor, a passage, a house), `node tools/geometry-test.mjs $B` with its place added to `tools/geometry/places.mjs` (one line), and `node tools/route-frames.mjs $B <place>`, every frame looked at; a visual fix ships with the frame that shows it fixed, from the stand of the frame that showed it broken (#64);

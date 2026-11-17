@@ -5,6 +5,7 @@
 // stick and a second dragging to look. A judge's tool, not a gate.
 //   node tools/quarrels-walk.mjs [base=http://localhost:8123] [keys|touch] [q=low] [every=0] [prefix=v15-Q1-walk]
 // Frames go to shots/wip/<prefix>-<mode>-<q>-NNN-<what>.png. Prints a last line `walked: yes|no`.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let pw;
 try { pw = await import('playwright'); }
@@ -13,7 +14,7 @@ const [base = 'http://localhost:8123', mode = 'keys', q = 'low', every0 = '0', p
 const every = +every0;
 const prefix = `${prefix0}-${mode}-${q}`;
 const touch = mode === 'touch';
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const context = await browser.newContext(touch ? { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } : { viewport: { width: 1280, height: 720 } });
 const page = await context.newPage();
 page.setDefaultTimeout(600000);

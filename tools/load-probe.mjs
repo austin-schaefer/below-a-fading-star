@@ -30,6 +30,7 @@
 // 300 ms, 0.4, 0.4): on localhost it adds latency and bandwidth but still not compression or HTTP/2.
 // --throttle=N slows the page's CPU N times over CDP: 4 is the stand-in for a phone, and only a stand-in.
 // Headless WebGL is ANGLE (SHOT_ANGLE=metal) or software: compile and warm-up times are this machine's, not a GPU's.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
@@ -52,7 +53,7 @@ const query = `q=${opts.q}${opts.params ? '&' + opts.params : ''}`;
 const url = `${base}/?${query}`;
 
 // a browser per run, so a cold load is cold in the GPU process's shader cache as well as the HTTP cache
-const launch = () => chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const launch = () => chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let browser = null, failed = null;
 const errors = [];
 if (opts.profile) {

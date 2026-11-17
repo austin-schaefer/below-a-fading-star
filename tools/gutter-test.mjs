@@ -6,12 +6,13 @@
 // v16-S1 (#78): then an unpinned load (?q=low&only=sky): the first gutter's countdown is held behind the title card, and after
 // 'begin' the first gutter comes 60-120 s on (none in the first 60 s, one by 120 s), the same second on every visit.
 // Usage: node tools/gutter-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 640, height: 360 } });
 page.setDefaultTimeout(600000);
 const errors = [];

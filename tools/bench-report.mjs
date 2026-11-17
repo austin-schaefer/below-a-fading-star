@@ -9,6 +9,7 @@
 // --throttle=4: Chromium's CPU throttle from the moment the page is ready (the bench's warm-up), a stand-in for a phone
 // A saved file may be a report (tools output), a bench result, or the panel's Copy (the brief).
 // e.g. node tools/bench-report.mjs "http://localhost:8123/?bench=45&perf=1&q=low" shots/wip/bench-low.json --against=shots/wip/v13-P1-baseline-low-1.json
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { benchLines, overBudget, MODULE_BUDGET } from '../src/perf-frames.js';
@@ -26,7 +27,7 @@ else {
   catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
   const [url = 'http://localhost:8123/?bench=45&perf=1&q=low', out, w = '960', h = '540'] = args;
   // --enable-precise-memory-info: performance.memory unrounded (a visitor's Chrome rounds it)
-  const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-precise-memory-info'] });
+  const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-precise-memory-info'] });
   const page = await browser.newPage({ viewport: { width: +w, height: +h } });
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 300)); });

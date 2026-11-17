@@ -11,6 +11,7 @@
 //   hangs   spans of 0.25 s or more with W held where the walker moved under a third of its median pace (a turn on
 //           the spot to the next point counts: read them against the frames)
 //   the worst |dy| in one frame, and a last line `walked: yes|no` (every point reached).
+import { ANGLE } from './launch.mjs';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 let pw;
@@ -20,7 +21,7 @@ const [base = 'http://localhost:8123', prefix = 'dip-walk', start = '0,0', pts0 
 const STEP_S = +(process.env.STEP_S || 1.5);
 const [sx, sz, syaw = 0] = start.split(',').map(Number);
 const pts = pts0.split(';').filter(Boolean).map((p) => p.split(',').map(Number));
-const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
 page.setDefaultTimeout(600000);
 const errors = [];

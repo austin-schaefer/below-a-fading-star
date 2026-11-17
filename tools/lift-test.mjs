@@ -19,12 +19,13 @@
 //     drops the carry and the carriage goes on to its landing; a reload mid-ride starts the visitor on the ground;
 //   - ?lift=0: no lift, and the Galleries draw their carriage in the shader as before.
 // Usage: node tools/lift-test.mjs [base=http://localhost:8123]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 let fail = 0, pass = 0;
 const check = (ok, name, info) => { console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${info !== undefined ? ' — ' + (typeof info === 'string' ? info : JSON.stringify(info)) : ''}`); if (ok) pass++; else fail++; };
 const errors = [];

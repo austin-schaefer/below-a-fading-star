@@ -8,12 +8,13 @@
 // STUCK where three seconds of walking moved them less than 0.2 m (a finding, not a crash). Frames on the page's own
 // clock. Exits 1 when a route did not reach its end.
 // Usage: node tools/strake-walk.mjs [base] [routes=roof,carrier,elder,new,street] [prefix=v15-walk]   Q=medium
+import { ANGLE } from './launch.mjs';
 import { chromium } from 'playwright'; // npm install --no-save playwright@1.63.0 in the worktree (the wilderness skill)
 const base = (process.argv[2] || 'http://localhost:8123').replace(/\/?(\?.*)?$/, '');
 const routes = (process.argv[3] || 'roof,carrier,elder,new,street').split(',');
 const prefix = process.argv[4] || 'v15-walk';
 const Q = process.env.Q || 'medium';
-const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ channel: process.env.CHANNEL || 'chromium', args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await (await browser.newContext({ viewport: { width: 960, height: 540 } })).newPage();
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

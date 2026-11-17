@@ -7,6 +7,7 @@
 // (ahead, right, back, left, up, down). chamber: the room from its two ways in and over the work. mouth: the portal
 // from the Pit's floor and from the Gate. Frames go to shots/wip/<prefix>-<set>-<q>-NN-<what>.png, in order; prints
 // each with the draw calls, the share of the frame under 8/255 and the median luma.
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 import { writeFileSync, mkdirSync } from 'node:fs';
 let pw;
@@ -14,7 +15,7 @@ try { pw = await import('playwright'); }
 catch { pw = createRequire('/opt/node22/lib/node_modules/')('playwright'); }
 const [base = 'http://localhost:8123', set = 'route', q = 'low', prefix = 'passage', extra = ''] = process.argv.slice(2);
 mkdirSync('shots/wip', { recursive: true });
-const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await pw.chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.setDefaultTimeout(600000);
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));

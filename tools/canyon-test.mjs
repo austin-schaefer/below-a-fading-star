@@ -9,12 +9,13 @@
 // gutters; it sits within 2 m of its site on ground under 20 degrees; stats() within budget, no lights; and, as
 // information, the GPU per frame at the rim with and without the canyon (?perf=1, where the browser has a timer).
 // Usage: node tools/canyon-test.mjs [base=http://localhost:8123]   (or FP_BASE=...)
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const base = process.argv[2] || process.env.FP_BASE || 'http://localhost:8123';
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const W = 640, H = 360;
 let pass = 0, fail = 0;
 const check = (ok, name, info = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${info ? '  ' + info : ''}`); ok ? pass++ : fail++; };

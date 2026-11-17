@@ -5,13 +5,14 @@
 // the timer query), the worst ten sorted and carrying yaws, the idle time before "Go out" not counted, the
 // download's file name. Optionally saves the panel: node tools/record-test.mjs [url] [shot.png]
 // Usage: node tools/record-test.mjs ["http://localhost:8123/?q=medium&record=6&pos=-190,165"] [out.png]
+import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
 let chromium;
 try { ({ chromium } = await import('playwright')); }
 catch { ({ chromium } = createRequire('/opt/node22/lib/node_modules/')('playwright')); }
 const url = process.argv[2] || 'http://localhost:8123/?q=medium&record=6&pos=-190,165';
 const shot = process.argv[3];
-const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${process.env.SHOT_ANGLE || 'swiftshader'}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({ args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, acceptDownloads: true });
 page.setDefaultTimeout(600000);
 const errors = [];
