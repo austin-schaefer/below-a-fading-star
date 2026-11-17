@@ -49,6 +49,21 @@ It is next because v16 made the low west and south it needs (the floor falls tha
 
 ## Status
 
+**2026-11-17, 06:41 PST. The Swallow, the aqueduct and the tube are on `next`.**
+
+- **U1 merged** (opus, 83 min; `briefs/v17/reports/issue-1702-swallow.md`): a pale portal face in the hillside at z 311 that reads from the mere's north shore; the fall over the sill into a drowned hall; from a quay into the tube's broken lip, a plank stair down as the pool closes over the glass, about 50 m of drowned conduit (caustics, bubbles, silt, weed) to the Garth's door. `tools/swallow-walk.mjs` passes there and back on the keys (medium and low); `walk` 13, `edges` 214, `heights` 205; draw calls on low 135 to 174. Blind readers: "a long underwater tube", "a flooded, green-lit tunnel". The orchestrator's look at its sheet: the portal and the tube both read.
+- **Red on `next` now, for a baselines agent once the builders are in:** `geometry` in `v17-swallow` (44 coplanar faces in `water-v17-still` and 5 buried pebbles from W1's side, 3 backs of U1's) and one buried stone at `span-east-stairs` (229, 166); `seams` ghost 230 against 226 in the village box. The `geometry` place is sealed only to 26 m short of the door. **Still weak:** the pool's underside near the head; the head is dark at low; U1's last fixes were not re-read by a blind reader.
+- In flight (four):
+
+| Brief | Branch / worktree | Port | Model |
+|---|---|---|---|
+| S1 the sphere (90 minutes at most) | `issue-1705-sphere` | 8165 | opus |
+| A1 the water heard (`src/v17/sound.js`) | `issue-1707-sound` | 8167 | sonnet |
+| U3 the Garth's light reads as noon | `issue-1708-garth-light` | 8168 | opus |
+| W1b the brook's ribbon reads as running water | `issue-1709-brook-look` | 8169 | opus |
+
+Next: W2 (the leat) when W1b's ribbon reads; then N1 (crossings, dressing, names) and a baselines agent; the batch's suite; the critic.
+
 **2026-11-17, 06:40 PST. W1's ground and kit are on `next`; the brook's quick water does not read yet.**
 
 - **W1 merged** (opus, 82 min; `briefs/v17/reports/issue-1701-brook.md`): `src/v17/plan.js`, `stream.js` (a stream on a line, a still body on an edge), `bodies.js` (behind one box test in `field.js`), `water.js` (every stream one ribbon). The brook rerouted through the 3 m gap between crown pieces 1 and 4, a pool at (-92, 241), two steps into the mere; the mere at -6.8 with a bar at x -80 for the pegs' survey line; the Swallow's cut ends square at z 311.5 (U1's ask). `rocks.js` and vegetation decide on the water as it was before v17, so nothing else moved. On its branch: `outline` 70/0 and twelve more green, `walkers` 19/20 (P12, as `main`), `canyon` 13/13, `height-speed` valley 1.00 to 1.02 (one 1.13 beside a suite).
