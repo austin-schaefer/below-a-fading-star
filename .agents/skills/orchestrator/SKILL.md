@@ -91,7 +91,7 @@ Each merge to `main` is a release and a Netlify build. Before opening the PR, ad
 
 ## Screenshots are the record
 
-The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/` and updates `shots/README.md`. The `wilderness` skill's Renders has the naming and the rules.
+The owner tells the story of the build from its renders, so renders are part of the deliverable and are curated, not dumped. Every agent writes every render into `shots/wip/` (gitignored); before each merge to `main` you dispatch `tools/curate-shots.md` to a mid-tier subagent, which keeps roughly one in five as WebP under `shots/`, updates `shots/README.md` and deletes the rest of what it looked at. `shots/wip/` is an inbox with a budget, not an archive: on 2026-11-18 it held 26 GB of raw PNGs, curated from and never cleared, and the owner's disk was full. `tools/wip-check.sh` is a line of the gate and fails when the inboxes of all worktrees together pass 1000 MB or hold a file older than four days (`tools/worktree.sh rm` prints where the budget stands), so a point release that skips the curator cannot skip it for long: when the line fails, dispatch the curator then, and check its hand-back with `tools/wip-check.sh` before committing its keepers. Never raise the budget to get past the gate. The `wilderness` skill's Renders has the naming and the rules.
 
 ## Growing the craft skills
 

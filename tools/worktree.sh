@@ -2,7 +2,7 @@
 # One worktree per issue.
 #
 #   tools/worktree.sh new <issue> <slug>   .claude/worktrees/issue-<n>-<slug>, branch issue-<n>-<slug> from origin/next (the working branch; origin/main if next is gone)
-#   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged
+#   tools/worktree.sh rm <issue>           move its shots/wip files into the deploy worktree's, remove it; delete the branch if it's merged; print the wip budget
 #   tools/worktree.sh list
 #
 # Works from the main checkout or from inside another worktree.
@@ -57,6 +57,7 @@ case "${1:-}" in
     git -C "$main_root" worktree remove "$dir"
     git -C "$main_root" branch -d "$name" 2>/dev/null || echo "branch $name kept (not merged)"
     echo "removed $name"
+    "$(dirname "$0")/wip-check.sh" --warn 2>/dev/null || true
     ;;
   list)
     git -C "$main_root" worktree list

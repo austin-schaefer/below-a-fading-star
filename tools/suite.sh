@@ -37,6 +37,7 @@ run() {
 }
 
 if [ -z "$ONLY" ] || [[ ",$ONLY," == *",releases,"* ]]; then echo "=== releases"; tools/release-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("releases"); passes+=("$(grep -c '^PASS' "$log")"); secs+=(0); fi
+if [ -z "$ONLY" ] || [[ ",$ONLY," == *",wip,"* ]]; then echo "=== wip"; tools/wip-check.sh | tee "$log"; codes+=("${pipestatus[1]}"); names+=("wip"); passes+=("$(grep -c '^PASS' "$log")"); secs+=(0); fi # the render inbox within its budget: over it, dispatch the curator (tools/curate-shots.md)
 run music tools/music-score.mjs all
 run music-selftest tools/music-score-selftest.mjs
 run music-render tools/music-render.mjs all
