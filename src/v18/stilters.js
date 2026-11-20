@@ -198,7 +198,7 @@ function boundSpheres(sk) {
 
 export function meshStilter(sk, colors, rng, detail = 'hi') {
   const gb = new GeoBuilder(['glow']);
-  const ex0 = { glow: 0 }, exScar = { glow: 0.3 }, H = sk.height; // the scar catches what light there is (0.3^2 of the glow)
+  const ex0 = { glow: 0 }, exScar = { glow: 0.18 }, H = sk.height; // the scar catches what light there is (0.18^2 of the glow: brighter read as a floating line)
   const sidesFor = detail === 'hi' ? [9, 6, 4, 3] : [6, 4, 3, 0];
   const barkAt = (y) => mixc(mixc(colors.bark, colors.barkTop, clamp(y / H, 0, 1)), colors.mossCol, (1 - smoothstep(0, H * 0.35, y)) * colors.moss);
   for (const limb of sk.limbs) {

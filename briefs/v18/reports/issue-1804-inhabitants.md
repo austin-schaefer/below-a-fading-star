@@ -60,3 +60,23 @@
   - Grove: `shots/wip/v18-F4-t7-{low,medium}-desktop-00..12-*` and `v18-F4-t7-low-phone-*`.
   - Moths: `v18-F4-moths3-{medium,low,phone}-m-{10m,3m,plinth}`. `m-side` stood in the wrong place; ignore it.
 - **Fresh reader on the t7 medium frames:** "the same view, almost identical … the trunks at right look a bit denser". The "it followed" read **fails**. Among the real trees the follower's step is only 0.4 to 1.6 m, because the dense lobe, the 7 m keep and the 5.5 m spacing leave few spots, and the frames are near black, so the change cannot be seen. The next fix is to let the follower step 3 to 5 m and stand in a gap of the wood on the look line, and to frame the look-back so the boles and the pale scar are lit (lower pitch, nearer). This is still to do.
+
+## Round four (2026-11-20)
+
+- **Follow:** one follower, the scarred one. Out of view it strides 3 m or more to stand 8 to 12 m off, within 30° of the visitor's back-trail, with its feet off the tread (`treadNear`). No other stilter steps. A foxfire clump sits on its knot (the material's glow, F1's `#d9f6cf`, no light) and its scar is faintly lit.
+- **Review blockers fixed:**
+  - The ring is a plan. Each stilter goes to the slot on its own side of the visitor, and only while neither it nor its place is in view. The seen test is now a run of spheres along each limb; one sphere round a whole bole was "seen" from behind the visitor's shoulder.
+  - No stilter casts a shadow.
+- **Smaller fixes:**
+  - Held under a held sky, the title card, the settings panel and `?stilters=still` (in runtime.md).
+  - Distance culls that survive a teleport for the stilters, marks, eyes and moths; the marks and the eyes have real bounds.
+  - The test checks in-view moves by the module's spheres at every `dark`.
+- **New test rows:** every step is a stride of 3 m or more and ends 8 to 12 m off within 30°; the follower stands 8 to 12 m behind at the looks back; the ring goes to its places unseen.
+- **Tests:**
+  - `stilters` at low, medium and phone: 72/0. The follower was 8.6 to 11.9 m behind, in view, at every look back on all three.
+  - `ONLY=stilters,study,perf,walk,geometry,settings,foxfire` (the run before the sphere fix): foxfire 24, walk 13, geometry 149, perf 29, study 15, all green. `stilters` was red there on a ring row, which the sphere fix cured (72/0 after it).
+  - `settings` fails one row, `pause: W held through Escape`, 102/103. It fails the same with `?inhabitants=0`, so it is not this branch.
+- **Frames:**
+  - Walk: `shots/wip/v18-F4-w2-{medium,low,phone}-*-0{0..4}-walk-*`.
+  - Ring: `-0{6..9}-ring*` (the foxfire knots are the pale points). `ring-above` now shows only the lobe's canopy; ignore it.
+- **Fresh reader on the walk:** they saw "a pale-green squiggle on a trunk in frames 3-5" and "the walker is moving". That is not yet "something is following": the same trunk each time reads as scenery passing. The scar read as a floating line, so I halved its glow after the run; that change has no frames yet. Medium is too dark to read.
