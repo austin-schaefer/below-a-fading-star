@@ -1,5 +1,5 @@
 // The settings panel's map (v17.1-Q1, #70: "Teleport menu is overwhelming, and also inscrutable if you don't know place
-// names"): the valley drawn from above as an old chart, ember and slate, with a mark for each of sixteen stands and
+// names"): the valley drawn from above as an old chart, ember and slate, with a mark for each of seventeen stands and
 // "you are here". Pointing at a mark (hover, focus, a first tap) says what it is in one plain line, its name second;
 // a click, Enter, a second tap or "Go there" goes. Loaded by settings.js on the panel's first open, never before: the
 // chart is drawn then from the terrain's own height, water and cover (about half a second, sliced so the page keeps
@@ -7,10 +7,10 @@
 //
 // The stands are settings.js PLACES entries, found by name: their stand points, looks and checks are the ones the
 // whole list had (tools/settings-test.mjs). Every other place keeps its card and its entry in PLACES (the debug panel,
-// the tools); only the map's marks are few. Which sixteen, and why the rest are not on it, is in MARKS' comment.
+// the tools); only the map's marks are few. Which seventeen, and why the rest are not on it, is in MARKS' comment.
 import { CAUSEWAY_V4, SUN } from '../world.js';
 
-// Sixteen, spread over the valley, each something a visitor would walk to see (the owner's favourites among them: the
+// Seventeen, spread over the valley, each something a visitor would walk to see (the owner's favourites among them: the
 // Span, seen from its bell, the Pomegranate House, the Arcature). Not on the map: the tops of the ways up
 // (the Bitter End, the Hanging Croft, Final Refuge, the Span's deck and its camp and splice, the Cyclopean Stairs,
 // Lonely Staircase): the climb is the thing; the rooms under the moor (the Noon Road, the Laid Sun, the Nadir, the
@@ -36,6 +36,7 @@ export const MARKS = [
   { name: 'The Tocsin', line: 'a bell on a post at the great bridge’s foot', glyph: 'bell' },
   { name: 'The Tumbling Water', line: 'waterfalls in the canyon to the south-east', glyph: 'falls' },
   { name: 'The Swallow', line: 'where a lake pours into a pale doorway in the hill', glyph: 'portal' },
+  { name: 'The Florilegium', line: 'a glasshouse of many colours, deep in the western wood', glyph: 'glasshouse' },
   { name: 'Corpse-Candle Fen', line: 'a marsh of pale lights south of the keep', glyph: 'candles' },
 ];
 
@@ -62,6 +63,7 @@ const G = {
   bell: '<path d="M7.5 16c0-6 1.5-9 4.5-9s4.5 3 4.5 9z" class="f"/><path d="M6 16h12M12 7V4.5M12 18v1.5M4 4.5h16"/>',
   falls: '<path d="M4 6.5h9v14" class="f"/><path d="M14.5 6.5v12M17 7.5v11M19.5 9v10" stroke="#8fa6c8"/>',
   portal: '<path d="M7 17V10a5 5 0 0 1 10 0v7" class="f" stroke="#d9cdb4"/><path d="M3.5 19c2.5-1.6 4.5 1.6 7 0s4.5 1.6 7 0 2.5 1 3 .5" stroke="#8fa6c8"/>',
+  glasshouse: '<path d="M4.5 20.5v-7h15v7z" class="f"/><path d="M4.5 13.5L8 8.5h8l3.5 5M12 8.5v12M4.5 17h15"/><path d="M5.2 14.2h6.2v2.3H5.2z" fill="#c9506a" stroke="none"/><path d="M12.6 17.7h6.2v2.2h-6.2z" fill="#4fb8c4" stroke="none"/>',
   candles: '<path d="M7 14c-1.6-2 0-4 0-6 1.5 2 2.5 4 0 6zM13 11c-1.6-2 0-4 0-6 1.5 2 2.5 4 0 6zM17.5 17c-1.6-2 0-4 0-6 1.5 2 2.5 4 0 6z" fill="#9fe8c2" stroke="none"/><path d="M3.5 19.5c2.5-1.4 4.5 1.4 7 0s4.5 1.4 7 0 2.5 1 3 .5" stroke="#6f8a7a"/>',
 };
 
