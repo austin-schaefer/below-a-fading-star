@@ -7,19 +7,24 @@ export const NORTH_LOBE = { x: -198, z: 22, r: 38, box: { x0: -232, x1: -165, z0
 
 // F1: the spurs. Each leaves the wood way (P32) and twists to its end; `from` is on P32, `to` is the find's doorstep.
 export const SPURS = {
-  glass: { from: { x: -200, z: 125 }, to: { x: -257, z: 127 } },  // west, to the Florilegium's door
-  beds: { from: { x: -214, z: 172 }, to: { x: -249, z: 172 } },   // south-west, to the Lower Beds' door in the bank
-  north: { from: { x: -160, z: 86 }, to: { x: -198, z: 24 } },    // north, out of the old wood and into the lobe, to the stilters' grove
+  glass: { from: { x: -199.4, z: 126.8 }, to: { x: -257, z: 127 } },  // west, to the Florilegium's door
+  beds: { from: { x: -213.8, z: 162 }, to: { x: -249, z: 172 } },   // south-west, to the Lower Beds' door in the bank
+  north: { from: { x: -169.7, z: 93.6 }, to: { x: -198, z: 24 } },    // north, out of the old wood and into the lobe, to the stilters' grove
 };
-// F1: each spur's mouth, kept clear of trunks (a gap seen from the road): from its head on P32 along its first leg
+// F1: each spur's mouth, kept clear of trunks (a gap seen from the road): from its head on P32 along its first leg, which
+// leaves the road square to it for 7 m (round three: the heads moved along P32 to where it is straight and level)
 export const SPUR_MOUTHS = [
-  { a: [-200, 125], b: [-208.5, 123.2], half: 2.4 },
-  { a: [-214, 172], b: [-219.5, 178.8], half: 2.4 },
-  { a: [-160, 86], b: [-166.5, 80.6], half: 2.4 },
+  { a: [-199.4, 126.8], b: [-204.8, 122.3], half: 1.8 },
+  { a: [-213.8, 162], b: [-220.7, 160.5], half: 1.8 },
+  { a: [-169.7, 93.6], b: [-174.1, 88.2], half: 1.8 },
 ];
 
 // F2: the Florilegium, the glasshouse. A claim of r 13 on the patch at mean slope 0.24; nobody walks inside it.
 export const GLASSHOUSE = { x: -265, z: 126, r: 13, door: { x: -257, z: 127 } };
+// F2: its ground is a level pad (src/height/pads.js) at `floor`; the grate's opening in the paving outside the door (a
+// square of `half`, axis-aligned, the bars' top at y); the six tubs on a ring of r `ring` at 30, 90, ... 330 degrees
+// from +x toward +z in LIKENESSES' order, the sprout's inside the door
+export const FLORILEGIUM = { floor: -3.2, pad: { half: 8.5, angle: 0.62, ease: 7 }, grate: { x: -258.0, z: 126.0, half: 0.6, y: -3.15 }, ring: 3.4, sprout: { x: -260.9, z: 126.0 } };
 
 // F3: the Lower Beds, the crypt, and its way under the wood to beneath the glasshouse.
 export const BEDS = {
