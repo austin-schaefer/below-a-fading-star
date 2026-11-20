@@ -55,7 +55,7 @@ export async function build(ctx) {
       // (off every other lead's tread, off claimed ground and out of the water)
       if (nearestLead(px, pz, 0.6) && (nearestLead(px, pz, 0.6).id !== id || nearestLead(px, pz, 0.6).d < 1.05)) return null; // (its own line too, where it bends back on itself)
       if (ctx.claims?.at(px, pz, 0.4, 'trees') && !/the lead/.test(ctx.claims.at(px, pz, 0.4, 'trees')) || T.isUnderwater(px, pz) || T.slopeAt(px, pz) > 0.6) return null;
-      const r = 0.26 + rng() * 0.14, h = (n >= 4 ? 0.65 : 0.4) + rng() * 0.4, y = T.heightAt(px, pz);
+      const r = 0.26 + rng() * 0.14, h = n >= 4 ? 0.45 + rng() * 0.12 : 0.4 + rng() * 0.4, y = T.heightAt(px, pz); // (the mouth's stay under the knee: they never hide the next clump)
       stumps.push({ x: px, y, z: pz, r, h, rot: rng() * 6.28, tilt: (rng() - 0.5) * 0.2 });
       if (h > 0.55) blockers.push({ x: px, z: pz, r }); // (a tall one stands in a later sight, as its collider will)
       clumps.push({ spur: id, x: px + nx * r * 0.95, y: y + Math.min(h - 0.08, 0.15 + rng() * 0.3), z: pz + nz * r * 0.95, nx, nz, n, host: 'stump', at: s, top: y + h, r });
@@ -66,7 +66,7 @@ export async function build(ctx) {
     const h0 = at(0);
     heads.push({ spur: id, x: h0.x, z: h0.z });
     const c0 = clumps.length;
-    for (const sd of [-1, 1]) for (const sm of [3, 4.5, 6]) { const m = at(sm); if (onStump(m.x - m.tz * sd * 1.3, m.z + m.tx * sd * 1.3, m.tz * sd, -m.tx * sd, 5 + Math.floor(rng() * 3), sm)) break; }
+    for (const sd of [-1, 1]) for (const sm of [2.2, 3.2, 4.5, 6]) { const m = at(sm); if (onStump(m.x - m.tz * sd * 1.3, m.z + m.tx * sd * 1.3, m.tz * sd, -m.tx * sd, 5 + Math.floor(rng() * 3), sm)) break; }
     let headN = 0;
     for (const t of trunksNear(h0.x, h0.z, 9)) { if (headN >= 4) break; if (t.kind === 'giant' || t.kind === 'rimgiant') continue; onTrunk(t, h0.x, h0.z, 5 + Math.floor(rng() * 3), 0); headN++; }
     // along: the farthest host within reach that the last clump can see; failing that, a stump at the nearest step
@@ -149,7 +149,7 @@ export async function build(ctx) {
       m4.compose(v3, q, sc); shelves.setMatrixAt(k, m4);
       col.copy(COL).lerp(COL2, rng()).multiplyScalar(0.8 + rng() * 0.35); shelves.setColorAt(k, col); k++;
     }
-    halo.push(c.x + c.nx * 0.12, c.y + 0.12 * c.n * 0.5, c.z + c.nz * 0.12); haloI.push(c.n >= 4 ? 2.2 : 1.1, rng());
+    halo.push(c.x + c.nx * 0.12, c.y + 0.12 * c.n * 0.5, c.z + c.nz * 0.12); haloI.push(c.n >= 4 ? 3.2 : 1.1, rng()); // (a head's knot reads from 20 m down the road)
   }
   shelves.instanceMatrix.needsUpdate = true; shelves.instanceColor.needsUpdate = true;
   shelves.computeBoundingSphere();
@@ -210,7 +210,7 @@ export async function build(ctx) {
   ctx.scene.add(halos);
 
   // a dim light at each head, low on the mouth's trunks: the ground and the bark there take a little of the green
-  const lamps = heads.map((h) => { const l = new THREE.PointLight(COL, 1.6, 9, 2); l.position.set(h.x, T.heightAt(h.x, h.z) + 0.7, h.z); ctx.scene.add(l); return l; });
+  const lamps = heads.map((h) => { const l = new THREE.PointLight(COL, 2.6, 11, 2); l.position.set(h.x, T.heightAt(h.x, h.z) + 0.7, h.z); ctx.scene.add(l); return l; });
 
   const W = ctx.landmarks.wood;
   ctx.registerUpdate((dt, t) => {
@@ -218,7 +218,7 @@ export async function build(ctx) {
     const breath = 0.92 + 0.08 * Math.sin(t * 0.29);
     uGlow.value = g * breath; hMat.uniforms.uGlow.value = g * breath; hMat.uniforms.uTime.value = t;
     hMat.uniforms.uScale.value = ctx.renderer.domElement.height * 0.5 / Math.tan((ctx.camera.fov * Math.PI) / 360);
-    for (const l of lamps) l.intensity = 1.6 * g * breath;
+    for (const l of lamps) l.intensity = 2.6 * g * breath;
   }, { pos: new THREE.Vector3(W.x, 0, W.z - 40), near: 180, hz: 0 });
   ctx.log?.(`foxfire: ${clumps.length} clumps (${nShelf} shelves, ${stumps.length} stumps) on ${heads.length} spurs`);
 }
