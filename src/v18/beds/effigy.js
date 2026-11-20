@@ -56,7 +56,7 @@ export function tomb(B, kind, cx, y, cz, side) {
   B.box(cx, y + 0.05 + 0.003, cz, hx + 0.08, 0.05, hz + 0.08, 0, PLINTH, PLINTH, 0.08);
   B.box(cx, y + 0.1 + 0.345 + 0.006, cz, hx, 0.345, hz, 0, CHEST, DARK, 0.08);
   for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
-    const z0 = cz - hz + 0.15 + i * (len - 0.3) / 3, z1 = z0 + (len - 0.3) / 3 - 0.12, x = cx + s * (hx + 0.004);
+    const z0 = cz - hz + 0.15 + i * (len - 0.3) / 3, z1 = z0 + (len - 0.3) / 3 - 0.12, x = cx + s * (hx + 0.012);
     B.quad([x, y + 0.24, z0], [x, y + 0.24, z1], [x, y + 0.66, z1], [x, y + 0.66, z0], PANEL, [s, 0, 0], 0.05);
   }
   const top = y + 0.8 + 0.01, lid = 0.12, vc = kind === 'hoop' ? 0.05 : 0.16, drop = 0.045, gap = 0.035;

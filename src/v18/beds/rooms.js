@@ -115,6 +115,7 @@ export function door(B, T) {
     const P = (u, y, t) => [hinge[0] + ux * u + nx * t, ys + 0.02 + y, hinge[1] + uz * u + nz * t];
     for (const t of [-th, th]) B.quad(P(0, 0, t), P(LW, 0, t), P(LW, LH, t), P(0, LH, t), t > 0 ? COL.bronze : K(COL.bronze, 0.8), [nx * t, 0, nz * t], 0.1);
     B.quad(P(LW, 0, -th), P(LW, 0, th), P(LW, LH, th), P(LW, LH, -th), COL.bronze, [ux, 0, uz]); B.quad(P(0, LH, -th), P(LW, LH, -th), P(LW, LH, th), P(0, LH, th), COL.bronze, [0, 1, 0]);
+    B.quad(P(0, 0, -th), P(0, 0, th), P(0, LH, th), P(0, LH, -th), COL.bronze, [-ux, 0, -uz]); B.quad(P(0, 0, -th), P(LW, 0, -th), P(LW, 0, th), P(0, 0, th), COL.bronze, [0, -1, 0]);
     for (const t of [-1, 1]) for (let i = 0; i < 2; i++) for (let j = 0; j < 3; j++) {
       const u0 = 0.15 + i * (LW - 0.3) / 2 + 0.05, u1 = u0 + (LW - 0.3) / 2 - 0.1, y0 = 0.2 + j * (LH - 0.4) / 3 + 0.05, y1 = y0 + (LH - 0.4) / 3 - 0.1, tt = t * (th + 0.012);
       B.quad(P(u0, y0, tt), P(u1, y0, tt), P(u1, y1, tt), P(u0, y1, tt), j === 0 ? COL.verd : K(COL.bronze, 1.15), [nx * t, 0, nz * t], 0.12);
@@ -134,20 +135,22 @@ export function door(B, T) {
     const c = new THREE.CatmullRomCurve3([new THREE.Vector3(TR.x + 0.4, gt + 0.6, TR.z), new THREE.Vector3((TR.x + ax) / 2, Math.max(gt + 0.5, ay + 0.6), (TR.z + az) / 2), new THREE.Vector3(ax, ay, az), new THREE.Vector3((ax + ex) / 2 + 0.1, (ay + ey) / 2, (az + ez) / 2), new THREE.Vector3(ex, ey, ez)]);
     B.geo(taper(c, 0.26, 0.05, 24, 6), new THREE.Matrix4(), COL.bark, 0.12);
   }
+  // two rotten root-stubs at the door's foot, either side (the foxfire grows on them: beds.js)
+  for (const z of [170.78, 173.22]) B.geo(new THREE.CylinderGeometry(0.1, 0.13, 0.75, 7).rotateZ(Math.PI / 2), new THREE.Matrix4().makeTranslation(fx + 0.4, ys + 0.12, z), COL.barkW, 0.15);
   // wet leaves: drifted against the walls, in a tongue through the doorway and down the first treads
   const leaves = [];
   for (let i = 0; i < 70; i++) {
     const r = hash(i, 1), q = hash(i, 2);
     let x, z;
     if (i < 40) { x = x0 + 0.1 + r * (x1 - x0 - 0.2); z = q < 0.5 ? CT.z0 + 0.05 + q * 0.7 : CT.z1 - 0.05 - (1 - q) * 0.7; }
-    else { x = fx - r * 2.0; z = 171.15 + q * 1.7; }
+    else { x = fx - 0.1 - r * (fx - BEDS.stair.x0 - 0.25); z = 171.15 + q * 1.7; } // (the tongue through the doorway, to the stair's head)
     leaves.push([x, z, hash(i, 3) * Math.PI * 2, 0.07 + hash(i, 4) * 0.05]);
   }
   for (const [x, z, a, s] of leaves) {
     const y = (x > BEDS.stair.x0 ? Y.sill : stairY(x)) + 0.006 + hash(x, z) * 0.006, ca = Math.cos(a) * s, sa = Math.sin(a) * s;
     B.quad([x - ca, y, z - sa], [x - sa * 0.5, y + 0.004, z + ca * 0.5], [x + ca, y, z + sa], [x + sa * 0.5, y + 0.004, z - ca * 0.5], hash(x, 7) > 0.5 ? COL.leaf : COL.leafB, [0, 1, 0], 0.15);
   }
-  return { leaf, foxfire: [[fx + 0.18, ys, zl - 0.45], [fx + 0.2, ys, zr + 0.5]] };
+  return { leaf };
 }
 // a tube along a curve whose radius eases from r0 to r1 (TubeGeometry's radius is one number)
 function taper(curve, r0, r1, seg, rad) {
@@ -175,12 +178,12 @@ export function stair(B) {
     if (xa <= BK.x0 + 1e-3) {
       coursedZ(B, zl, 1, xb, xa, y, yc, COL.vault, COL.vaultW, 0.5); coursedZ(B, zr, -1, xb, xa, y, yc, COL.vault, COL.vaultW, 0.5);
       B.quad([xa, yc, zl], [xb, yc, zl], [xb, yc, zr], [xa, yc, zr], hash(i, 9) > 0.5 ? COL.vault : COL.vaultW, [0, -1, 0], 0.08);
-      B.quad([xb, yc, zl], [xb, yc + rise, zl], [xb, yc + rise, zr], [xb, yc, zr], COL.vaultW, [1, 0, 0], 0.08); // the step in the ceiling
+      if (i < n - 1) B.quad([xb, yc - rise, zl], [xb, yc, zl], [xb, yc, zr], [xb, yc - rise, zr], COL.vaultW, [1, 0, 0], 0.08); // the step down in the ceiling to the next tread's (the last meets the landing's wall)
     } else if (xb < BK.x0) {
       // the tread under the block's back: its walls up to the lintel's level
       coursedZ(B, zl, 1, xb, BK.x0, y, Y.sill + DOOR_H, COL.vault, COL.vaultW, 0.5); coursedZ(B, zr, -1, xb, BK.x0, y, Y.sill + DOOR_H, COL.vault, COL.vaultW, 0.5);
       B.quad([BK.x0, yc, zl], [xb, yc, zl], [xb, yc, zr], [BK.x0, yc, zr], COL.vaultW, [0, -1, 0], 0.08);
-      B.quad([xb, yc, zl], [xb, yc + rise, zl], [xb, yc + rise, zr], [xb, yc, zr], COL.vaultW, [1, 0, 0], 0.08);
+      B.quad([xb, yc - rise, zl], [xb, yc, zl], [xb, yc, zr], [xb, yc - rise, zr], COL.vaultW, [1, 0, 0], 0.08);
     } else {
       // inside the block: its piers are the walls down to their foot; under that, the stair's own
       coursedZ(B, zl, 1, xb, xa, y, Y.sill - 0.5, COL.vault, COL.vaultW, 0.5); coursedZ(B, zr, -1, xb, xa, y, Y.sill - 0.5, COL.vault, COL.vaultW, 0.5);
@@ -207,7 +210,8 @@ export function stair(B) {
     B.quad([sw[0], y, za], [sw[1], y, za], [sw[1], y + rz, za], [sw[0], y + rz, za], COL.faceW, [0, 0, -1], 0.08);
     coursedX(B, sw[0], 1, zb, za, y, yc, COL.vault, COL.vaultW, 0.5); coursedX(B, sw[1], -1, zb, za, y, yc, COL.vault, COL.vaultW, 0.5);
     B.quad([sw[0], yc, za], [sw[1], yc, za], [sw[1], yc, zb], [sw[0], yc, zb], COL.vaultW, [0, -1, 0], 0.08);
-    B.quad([sw[0], yc, zb], [sw[1], yc, zb], [sw[1], yc + rz, zb], [sw[0], yc + rz, zb], COL.vaultW, [0, 0, 1], 0.08);
+    if (i < m - 1) B.quad([sw[0], yc - rz, zb], [sw[1], yc - rz, zb], [sw[1], yc, zb], [sw[0], yc, zb], COL.vaultW, [0, 0, 1], 0.08);
+    if (i === 0) B.quad([sw[0], yc, za], [sw[1], yc, za], [sw[1], yl + H_STAIR, za], [sw[0], yl + H_STAIR, za], COL.vaultW, [0, 0, 1], 0.08); // up to the landing's
   }
   void stepsY;
 }
@@ -231,7 +235,7 @@ export function vault(B) {
     const [xa, ya] = arc(k), [xb, yb] = arc(k + 1), sh = 0.94;
     const pa = [cx + (xa - cx) * sh, oy + (ya - oy) * sh], pb = [cx + (xb - cx) * sh, oy + (yb - oy) * sh];
     const nIn = [cx - (xa + xb) / 2, oy - (ya + yb) / 2, 0];
-    for (const dz of [-0.15, 0.15]) B.quad([xa, ya, z + dz], [xb, yb, z + dz], [pb[0], oy + (yb - oy) * sh, z + dz], [pa[0], oy + (ya - oy) * sh, z + dz], COL.rib, [0, 0, -dz], 0.06);
+    for (const dz of [-0.15, 0.15]) B.quad([xa, ya, z + dz], [xb, yb, z + dz], [pb[0], oy + (yb - oy) * sh, z + dz], [pa[0], oy + (ya - oy) * sh, z + dz], COL.rib, [0, 0, dz], 0.06);
     B.quad([pa[0], pa[1], z - 0.15], [pb[0], pb[1], z - 0.15], [pb[0], pb[1], z + 0.15], [pa[0], pa[1], z + 0.15], COL.rib, nIn, 0.06);
   }
   // the end walls, their lunettes under the arc, each with its opening: the steps' at the south, the way's at the north
@@ -266,8 +270,8 @@ export function wayTube(B, s0, s1) {
   const step = 0.45;
   for (let s = s0, i = 0; s < s1 - 1e-3; s += step, i++) {
     const sb = Math.min(s1, s + step); frameAt(s, a); frameAt(sb, b);
-    const inCh = (o, d) => Math.hypot(o.x + o.rx * d - CH.x, o.z + o.rz * d - CH.z) < CH.r + 0.02;
-    if (s >= 0 && !inCh(a, -half) && !inCh(a, half) && !inCh(b, -half) && !inCh(b, half)) B.quad(P(a, -half, 0), P(a, half, 0), P(b, half, 0), P(b, -half, 0), hash(i, 1) > 0.5 ? COL.earth : COL.earthW, [0, 1, 0], 0.15);
+    // (the floor stops under the portal's sill, 0.38 m short of the end)
+    if (s < W.END - 0.38) { const f = frameAt(Math.min(sb, W.END - 0.38), {}); B.quad(P(a, -half, 0), P(a, half, 0), P(f, half, 0), P(f, -half, 0), hash(i, 1) > 0.5 ? COL.earth : COL.earthW, [0, 1, 0], 0.15); }
     // the walls: planks to 1.7 m, earth over them to the ceiling (the lagging stops short)
     for (const sd of [-1, 1]) {
       const d = sd * half, n = [-a.rx * sd, 0, -a.rz * sd];
@@ -296,7 +300,7 @@ export function wayTube(B, s0, s1) {
 export function chamber(B, out) {
   const { x: cx, z: cz, r, y, wall, ceil } = CH, yc = y + ceil, N = 36;
   // the way comes in at the bearing of its end; the wall is left open there (the way's own tube lines the hole)
-  const e = W.at(W.LEN), ma = Math.atan2(e.z - cz, e.x - cx), mw = (W.half + 0.05) / r;
+  const e = W.at(W.END), ma = Math.atan2(e.z - cz, e.x - cx), mw = (W.half + 0.45) / r;
   const inMouth = (a) => Math.abs(Math.atan2(Math.sin(a - ma), Math.cos(a - ma))) < mw;
   // the floor: rings of flags round a round stone in the middle
   for (let i = 0; i < N; i++) {
@@ -378,7 +382,7 @@ export function chamber(B, out) {
     const x = tx + hx - th / 2 + 0.02, z = tz + 0.42, y0 = out.tomb.top + 0.003, k = 0.24;
     const prof = [[0.0, 0.0], [0.58, 0.0], [0.62, 0.06], [0.6, 0.9], [0.56, 1.3], [0.42, 1.52], [0.3, 1.6], [0.31, 1.68], [0.28, 1.7]];
     B.geo(new THREE.LatheGeometry(prof.map(([rr, yy]) => new THREE.Vector2(rr * k, yy * k)), 16), new THREE.Matrix4().makeTranslation(x, y0, z), (nx, ny) => (ny > 0.6 ? COL.brassW : COL.brass), 0.06);
-    for (const yy of [0.2, 0.75, 1.22]) B.geo(new THREE.CylinderGeometry(0.615 * k, 0.615 * k, 0.07 * k, 16, 1, true), new THREE.Matrix4().makeTranslation(x, y0 + yy * k, z), COL.iron, 0.04);
+    for (const yy of [0.2, 0.75, 1.22]) B.geo(new THREE.CylinderGeometry(0.645 * k, 0.645 * k, 0.07 * k, 16, 1, true), new THREE.Matrix4().makeTranslation(x, y0 + yy * k, z), COL.iron, 0.04);
     for (let i = 0; i < 8; i++) { const t0 = Math.PI * i / 8, t1 = Math.PI * (i + 1) / 8, rr = 0.42 * k; B.box(x, y0 + (1.52 + Math.sin((t0 + t1) / 2) * 0.6) * k, z + Math.cos((t0 + t1) / 2) * rr, 0.012, 0.02, 0.03, 0, COL.iron, COL.iron, 0.04); }
     const root = new THREE.Vector3(x - 0.55 * k, y0 + 0.35 * k, z), rose = new THREE.Vector3(x - 0.62, y0 + 0.28, z - 0.05);
     B.geo(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(root, new THREE.Vector3((root.x + rose.x) / 2, (root.y + rose.y) / 2 - 0.04, z), rose), 8, 0.02, 6, false), new THREE.Matrix4(), COL.brass, 0.04);
@@ -386,10 +390,12 @@ export function chamber(B, out) {
     out.can = { x, z, y: y0, r: 0.16 };
   }
   out.mouth = { a: ma, w: mw };
-  // the jambs where the way comes through the wall: two dressed stones and a lintel
+  // the portal where the way comes through the wall: two broad jambs, a lintel and a sill, square to the way's end, so
+  // whatever the round wall and the way's square end leave between them is behind stone
   {
-    const p = (a, rr, h) => [cx + Math.cos(a) * rr, y + h, cz + Math.sin(a) * rr], yaw = -ma;
-    for (const s of [-1, 1]) { const q = p(ma + s * (mw + 0.05), r - 0.12, 0); B.box(q[0], y + W.height / 2 + 0.003, q[2], 0.16, W.height / 2, 0.16, yaw, COL.face, COL.faceW, 0.07); }
-    const q = p(ma, r - 0.12, 0); B.box(q[0], y + W.height + 0.14, q[2], 0.2, 0.12, W.half + 0.25, yaw, COL.face, COL.faceW, 0.07);
+    const a = W.at(W.END), rx = -a.tz, rz = a.tx, yaw = Math.atan2(a.tx, a.tz), Hh = W.height;
+    for (const sd of [-1, 1]) { const d = sd * (W.half + 0.46); B.box(a.x + rx * d, y + wall / 2 + 0.003, a.z + rz * d, 0.45, wall / 2, 0.3, yaw, COL.face, COL.faceW, 0.07); }
+    B.box(a.x, y + (Hh + wall) / 2 + 0.006, a.z, W.half + 0.002, (wall - Hh) / 2, 0.3, yaw, COL.face, COL.faceW, 0.07);
+    B.box(a.x, y - 0.1 + 0.012, a.z, W.half + 0.02, 0.1, 0.42, yaw, COL.faceW, COL.face, 0.07);
   }
 }

@@ -59,7 +59,9 @@ function wayNear(x, z, out = {}) {
   if (out.s < 0 || out.s > LEN) { const e = wayAt(Math.max(0, Math.min(LEN, out.s))); out.d = Math.hypot(x - e.x, z - e.z) * Math.sign(out.d || 1); }
   return out;
 }
-export const way = { at: wayAt, near: wayNear, LEN, floorY: wayFloor, BOX: WB, DS, half: W.half, height: W.height };
+// where the way's tube ends: its line 0.05 m inside the chamber's wall
+const END = (() => { const o = {}; for (let s = LEN; s > 0; s -= 0.02) { wayAt(s, o); if (Math.hypot(o.x - CH.x, o.z - CH.z) >= CH.r - 0.05) return s; } return LEN; })();
+export const way = { at: wayAt, near: wayNear, LEN, END, floorY: wayFloor, BOX: WB, DS, half: W.half, height: W.height };
 
 // ---- the floor
 const _n = {};

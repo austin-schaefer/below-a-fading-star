@@ -33,7 +33,7 @@ export async function build(ctx) {
   else console.warn('[fp] beds: the ground\'s cut at the door removed nothing: the terrain\'s mesh has moved');
 
   // ---- what lights each part (aUnder: the sky's share, the haze's, the baked glow of its own light)
-  const fox = [[BEDS.face + 0.18, L.Y.sill + 0.15, 172 - L.DOOR_HALF - 0.45], [BEDS.face + 0.2, L.Y.sill + 0.15, 172 + L.DOOR_HALF + 0.5]];
+  const fox = [[BEDS.face + 0.4, L.Y.sill + 0.15, 170.78], [BEDS.face + 0.4, L.Y.sill + 0.15, 173.22]]; // on two rotten root-stubs at the door's foot (rooms.js door())
   const near = (pts, x, y, z, k, r) => { let g = 0; for (const p of pts) { const d2 = (x - p[0]) ** 2 + (y - p[1]) ** 2 + (z - p[2]) ** 2; g += k / (1 + d2 / (r * r)); } return g; };
   const skyAt = (x) => Math.max(0.012, 1 - ss(BEDS.face + 0.3, BK.x0 - 1.2, x));
   const litDoor = (x, y, z, out) => { const s = skyAt(x); out[0] = s; out[1] = s; out[2] = Math.min(1.2, near(fox, x, y, z, 0.8, 0.8)); return out; };
@@ -54,20 +54,22 @@ export async function build(ctx) {
   const BD = new UnderBuilder(litDoor), dr = door(BD, T);
   const BS = new UnderBuilder(litStone); stair(BS); const VT = vault(BS);
   // the way's tube from inside the vault's north wall to the chamber's wall (where the line crosses r - 0.05)
-  let sEnd = L.way.LEN; { const a = {}; for (let s = L.way.LEN; s > 0; s -= 0.05) { L.way.at(s, a); if (Math.hypot(a.x - CH.x, a.z - CH.z) >= CH.r - 0.05) { sEnd = s; break; } } }
-  const BW = new UnderBuilder(litWay); wayTube(BW, 0, sEnd);
-  const BC = new UnderBuilder(litChamber), ch = {}; chamber(BC, ch);
+  const sEnd = L.way.END;
+  // the way and the chamber one mesh (one draw; and one thing to the geometry check, which it is: the way opens into it)
+  const litUnder = (x, y, z, out) => (Math.hypot(x - CH.x, z - CH.z) < CH.r + 0.5 ? litChamber(x, y, z, out) : litWay(x, y, z, out));
+  const BW = new UnderBuilder(litUnder), ch = {}; wayTube(BW, 0, sEnd); chamber(BW, ch);
   const BR = new UnderBuilder(litRoot);
   const we = L.way.at(sEnd); const RT = roots(BR, { tubs: ch.tubs, ends: VT.roots, vault: VT, wayEnd: { x: we.x, z: we.z, s: sEnd }, tomb: ch.tomb });
   // the glows: the foxfire on the door's foot, and the panes over the grate seen up through it
   const glowP = [], glowC = [];
   const gq = (a, b, c, d, col) => { for (const p of [a, b, c, a, c, d]) { glowP.push(...p); glowC.push(...col); } };
   const cOf = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
-  for (const [fx, fy, fz] of fox) for (let i = 0; i < 9; i++) {
-    const a = i * 2.4, r = 0.05 + (i % 3) * 0.035, x = fx + Math.abs(Math.cos(a)) * 0.12 + 0.02, z = fz + Math.sin(a) * 0.18, y = fy - 0.12 + (i % 4) * 0.09, s = 0.03 + (i % 3) * 0.015;
+  for (const [fx, fy, fz] of fox) for (let i = 0; i < 10; i++) {
+    // little caps in tiers along the stub's top and its side toward the door, each a shelf tilted out
+    const x = fx - 0.3 + (i / 9) * 0.55, sd = i % 2 ? 1 : -1, z = fz + sd * (0.06 + (i % 3) * 0.03), y = fy + 0.06 + (i % 3) * 0.03, s = 0.028 + (i % 3) * 0.012, r = 0.045 + (i % 4) * 0.02;
     const col = cOf(i % 2 ? '#8fdcb4' : '#b4f0d0').map((v) => v * 0.85);
-    gq([x, y, z - s], [x, y, z + s], [x + r * 0.3, y + s * 0.7, z + s], [x + r * 0.3, y + s * 0.7, z - s], col);
-    gq([x + r * 0.3, y + s * 0.7, z - s], [x + r * 0.3, y + s * 0.7, z + s], [x + r, y + s * 0.2, z + s * 0.8], [x + r, y + s * 0.2, z - s * 0.8], col.map((v) => v * 0.8));
+    gq([x - s, y, z], [x + s, y, z], [x + s, y + s * 0.5, z + sd * r], [x - s, y + s * 0.5, z + sd * r], col);
+    gq([x - s * 0.7, y + s * 0.5, z + sd * r], [x + s * 0.7, y + s * 0.5, z + sd * r], [x + s * 0.4, y + s * 0.2, z + sd * r * 1.3], [x - s * 0.4, y + s * 0.2, z + sd * r * 1.3], col.map((v) => v * 0.8));
   }
   { const t = (ch.grateTop ?? -3.3) + 0.25, h = GR.half;
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const x0 = GR.x - h + i * (2 * h / 3), z0 = GR.z - h + j * (2 * h / 3), w = 2 * h / 3, col = cOf(HUES[(i * 3 + j * 2) % 6]).map((v) => v * 0.55);
@@ -79,13 +81,12 @@ export async function build(ctx) {
   const mk = (B, mat, name) => { const m = new THREE.Mesh(B.geometry(), mat); m.name = name; m.receiveShadow = true; m.castShadow = false; ctx.scene.add(m); return m; };
   const mDoor = mk(BD, underMaterial(std(0.9), 'beds-door', '#9fe8c2'), 'beds-door'); mDoor.castShadow = !low;
   const mStone = mk(BS, underMaterial(std(), 'beds-stone', '#e0aa84'), 'beds-stone');
-  const mWay = mk(BW, underMaterial(std(), 'beds-way', '#c9a676', { far: [8, 19] }), 'beds-way');
-  const mCh = mk(BC, underMaterial(std(), 'beds-chamber', '#e4ad72'), 'beds-chamber');
+  const mWay = mk(BW, underMaterial(std(), 'beds-way', '#d6aa74', { far: [10, 21] }), 'beds-way');
   const mRoots = mk(BR, underMaterial(std(0.6), 'beds-roots', '#ffffff'), 'beds-roots');
   const mGlow = new THREE.Mesh(glowG, glowMat); mGlow.name = 'beds-glow'; ctx.scene.add(mGlow);
   const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half, top: ch.grateTop ?? -3.3, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
   GL.mesh.name = 'beds-light'; ctx.scene.add(GL.mesh);
-  const under = [mStone, mWay, mCh, mRoots, mGlow, GL.mesh];
+  const under = [mStone, mWay, mRoots, mGlow, GL.mesh];
   for (const m of under) below.keep(m);
 
   // ---- the lights: the foxfire at the door; in the vault two pools of the roots' colours; one in the way's middle; the
@@ -169,7 +170,7 @@ export async function build(ctx) {
     GL.uniforms.uTime.value = t;
     for (const l of lights) l.L.intensity = l.i * (0.92 + 0.08 * Math.sin(t * 0.55 + l.ph));
   }, { pos: mid, near: 70, hz: 0 });
-  const far = [mStone, mWay, mCh, mRoots, GL.mesh];
+  const far = [mStone, mWay, mRoots, GL.mesh];
   let wasOn = null;
   ctx.registerUpdate(() => {
     const dx = cam.x - mid.x, dz = cam.z - mid.z, on = dx * dx + dz * dz < 75 * 75 || below.here > 0;
@@ -177,7 +178,7 @@ export async function build(ctx) {
     const ddx = cam.x - BEDS.door.x, ddz = cam.z - BEDS.door.z; mDoor.visible = ddx * ddx + ddz * ddz < 160 * 160;
   });
 
-  const meshes = [mDoor, mStone, mWay, mCh, mRoots, mGlow, GL.mesh];
+  const meshes = [mDoor, mStone, mWay, mRoots, mGlow, GL.mesh];
   ctx.beds = {
     floor, line: L, meshes, lights, cut: G.cut, get capped() { return capped; }, roots: RT, overRooms, ground: G.mesh,
     stats() { let tris = 0; for (const m of meshes) tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; return { draws: meshes.length + (G.mesh ? 1 : 0), tris: Math.round(tris), ground: G.tris, cut: G.cut }; },

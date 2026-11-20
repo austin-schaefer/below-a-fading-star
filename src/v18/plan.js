@@ -25,7 +25,7 @@ export const BEDS = {
   sill: -3.3,                                                   // the forecourt's flags and the door's sill (heightAt at the mouth)
   face: -251,                                                   // the facade's front (x); the doorway 2 m wide, centred on z 172
   court: { x0: -251, x1: -248.4, z0: 170.5, z1: 173.5 },        // the forecourt between its wing walls, open to the east
-  cut: { x0: -252.8, x1: -248.4, z0: 170.5, z1: 173.5 },        // the ground's drawn triangles taken out (court and the door's block)
+  cut: { x0: -253.2, x1: -248.4, z0: 170.5, z1: 173.5 },        // the ground's drawn triangles taken out (the court and the doorway through the block)
   block: { x0: -253.2, x1: -251, z0: 169.6, z1: 174.4, top: 1.5 }, // the door's block, its back in the bank
   tree: { x: -255.2, z: 172.4, r: 1.0 },                        // the great tree over the door, its roots over the block
   stair: { x0: -252.2, x1: -258.3, z: 172, half: 1.0, slope: 0.6 }, // the stair down west from inside the door to the landing
