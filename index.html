@@ -236,12 +236,41 @@
   @media (max-width: 420px) { .set-part-sub { padding-left: 0; } }
   #set-pos { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 0.8rem; color: rgba(217, 205, 180, 0.75); margin: 0 0 0.2em; min-height: 1.2em; }
   #set-copypos { flex: none; }
-  #set-places h4 { grid-column: 1 / -1; margin: 0.7em 0 0.1em; font-family: var(--f-sc); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.22em; color: rgba(226, 200, 170, 0.62); }
   #posline { position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); display: none; font-family: var(--f-text); font-size: 0.8rem; letter-spacing: 0.06em; color: rgba(219,170,134,0.45); text-shadow: 0 1px 6px rgba(0,0,0,0.8); pointer-events: none; z-index: 5; }
   #posline.shown { display: block; }
-  #set-places { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  #set-places button { text-align: left; font-size: 0.9rem; line-height: 1.15; }
-  @media (max-width: 420px) { #set-places { grid-template-columns: 1fr; } }
+  /* the map (v17.1-Q1, src/v17_1/map.js): beside the settings on a wide screen, above them on a narrow one */
+  @media (min-width: 860px) and (min-height: 520px) {
+    #settings-panel { width: min(62rem, 100%); max-height: min(48rem, 100%); }
+    .set-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 0 30px; }
+    .set-map-col { order: 2; position: sticky; top: 0; align-self: start; }
+  }
+  .map-frame { position: relative; width: min(100%, calc(100dvh - 270px)); min-width: min(100%, 280px); aspect-ratio: 1; margin: 0 auto; background: #140c0d; box-shadow: 0 0 0 1px rgba(255, 154, 92, 0.18); }
+  .map-chart { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s; }
+  .map-drawn .map-chart { opacity: 1; }
+  .map-busy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; font-style: italic; font-size: 0.9rem; color: rgba(219, 170, 134, 0.6); }
+  .map-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .map-leaders line { stroke: rgba(255, 211, 176, 0.55); stroke-width: 1; }
+  .map-leaders circle { fill: rgba(255, 211, 176, 0.85); }
+  #settings-panel .map-mark { position: absolute; width: 44px; height: 44px; min-height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 50%; }
+  #settings-panel .map-mark:hover { background: transparent; }
+  .map-mark svg { width: 26px; height: 26px; fill: none; stroke: #ffd3b0; stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; overflow: visible; filter: drop-shadow(0 0 1.5px #000) drop-shadow(0 0 3px rgba(0, 0, 0, 0.9)); transition: transform 0.15s; }
+  .map-mark svg .f { fill: rgba(22, 13, 13, 0.88); }
+  .map-mark svg .d { fill: #ffd3b0; stroke: none; }
+  .map-mark:hover svg, .map-mark.map-on svg { transform: scale(1.32); }
+  .map-mark.map-on::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 1px solid rgba(255, 154, 92, 0.9); box-shadow: 0 0 10px rgba(232, 89, 26, 0.55); }
+  .map-mark:focus { outline: none; }
+  .map-mark:focus-visible::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 1px solid var(--ink); }
+  .map-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .map-you { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 1; }
+  .map-you svg { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; overflow: visible; }
+  .map-you circle { fill: #ff9a5c; stroke: #1a0d0a; stroke-width: 1.6; }
+  .map-you .map-you-dir { fill: #ffe9db; stroke: #1a0d0a; stroke-width: 1; }
+  .map-say { display: flex; align-items: center; gap: 12px; min-height: 3.6em; margin: 8px 0 0; }
+  .map-text { flex: 1; min-width: 0; }
+  .map-line { display: block; font-size: 1rem; line-height: 1.25; color: rgba(255, 233, 219, 0.62); font-style: italic; }
+  .map-say-on .map-line { color: var(--ink); font-style: normal; }
+  .map-name { display: block; margin-top: 0.15em; font-family: var(--f-sc); font-size: 0.85rem; letter-spacing: 0.12em; color: var(--wordmark); }
+  #settings-panel .map-go { flex: none; }
   @media (hover: none) and (pointer: coarse) { #set-capture { display: none; } }
   /* debug */
   #dbg-btn { position: fixed; top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); width: 32px; height: 32px; padding: 0; display: none; align-items: center; justify-content: center; font: inherit; font-size: 16px; line-height: 1; color: #d9cdb4; background: rgba(11, 6, 9, 0.35); border: 1px solid rgba(217, 205, 180, 0.3); border-radius: 50%; z-index: 12; cursor: pointer; }
@@ -298,6 +327,10 @@
   <header><h2>Settings</h2><button id="set-close" type="button">Back to the moor</button></header>
   <p class="set-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · mouse look · <kbd>Shift</kbd> hurry · <kbd>Space</kbd> hop · <kbd>E</kbd> where something is offered · <kbd>Esc</kbd> this panel</p>
   <div class="set-row set-posrow"><div id="set-pos" aria-live="off"></div><button id="set-copypos" type="button" aria-label="copy a link to this place">Copy link</button></div>
+  <div class="set-cols">
+  <section class="set-map-col"><h3>Go to</h3>
+  <div id="set-places"></div></section>
+  <div class="set-rest">
   <h3>Sound</h3>
   <div class="set-row"><input id="set-volume" type="range" min="0" max="100" step="1" value="100" aria-label="volume"><output id="set-volume-out" for="set-volume">100</output><button id="set-mute" type="button" aria-pressed="false">Mute</button></div>
   <div class="set-parts" role="group" aria-label="parts of the sound">
@@ -321,8 +354,7 @@
   <h3>Measure</h3>
   <div class="set-row"><span class="set-label">Walk a set round on its own, timing how smoothly it draws</span><button id="set-measure" type="button">Measure</button></div>
   <p class="set-note">Reloads the page and takes about a minute. At the end, Copy takes the numbers for pasting.</p>
-  <h3>Go to</h3>
-  <div id="set-places"></div>
+  </div></div>
 </div></div>
 <button id="dbg-btn" type="button" aria-label="debug">&#10022;</button>
 <div id="dbg"><div id="dbg-live"></div><div id="dbg-list"></div></div>
