@@ -176,7 +176,7 @@ function buildLeads(ctx) {
   for (const L of B.list) {
     if (L.kind === 'kerb') continue; // the kerb is stones (buildKerb), not a wear
     const kind = KIND[L.kind];
-    const lift = L.cls === 'way' ? 1 : 0.55; // v8-01: a way reads paler than a trod
+    const lift = L.cls === 'way' ? 1 : L.cls === 'spur' ? 0.3 : 0.55; // v8-01: a way reads paler than a trod; v18-F1: a spur darker still
     // the decal is wider than the worn line: the shoulders are where it fades
     const half = L.kind === 'rivulet' ? Math.max(0.55, L.w * 3.2) : L.kind === 'kerb' ? L.w * 1.4 : L.w * 2.0;
     for (const S of L.lines) {

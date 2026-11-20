@@ -16,6 +16,7 @@ import { glacierTongue, glacierIce, glacierBedH, glacierCarve } from '../v4/glac
 import { padGround } from './pads.js';
 import { fenHeight, fenWet, fenMarsh, fenRiverKeep, fenShoreDistance, fenGroundFrom } from './fen.js'; // v16 L3: the fen on the edge
 import { HEIGHT_PARAMS } from './params.js';
+import { inLobeBox, lobeWood } from '../v18/reach.js'; // v18-F1: the wood's north lobe
 import { floorGround, floorCharacter, POOLS } from './floor.js'; // v16: the floor's fall, its forms, its pools and its character
 import { inV17Box, v17Ground, v17Level, v17Paint, V17_ROWS } from '../v17/bodies.js'; // v17 W1: the brook, the mere and the Swallow's cut, behind one box
 
@@ -570,7 +571,10 @@ function biomeWith(x, z, h, slope, rv) {
   // (the rag is 12 m at most), the moraine's and the marsh's likewise (fen.js's fenMarsh asks for its noise)
   const dW0 = Math.sqrt((x - L.wood.x) ** 2 + (z - L.wood.z) ** 2), dWood = dW0 < L.wood.r + 15 + 14 ? dW0 + woodRag(x, z) : dW0;
   // (v13 L2: a weight of +0 times the positive blotch is +0, so the blotch's noise is skipped there; |warped2| < 1)
-  const wIn = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wood = wIn === 0 ? 0 : wIn * (0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3));
+  // (v18-F1: and the north lobe's line, behind its box (src/v18/reach.js); wood0 is the old wood's alone, for the scatters
+  // whose draws must not move; the lobe's blotch is shallower, so the neck and the spread never fall to a clearing)
+  const wIn0 = 1 - smoothstep(L.wood.r - 25, L.wood.r + 15, dWood), wL = inLobeBox(x, z) ? lobeWood(x, z) : 0;
+  const blot = wIn0 === 0 && wL === 0 ? 0 : 0.6 + 0.4 * SX.warped2(x * 0.02, z * 0.02, 3), wood0 = wIn0 * blot, wood = wL > wIn0 ? Math.max(wood0, wL * (0.5 + 0.45 * blot)) : wood0;
   const marsh = fenMarsh(x, z, marshN); // v16 L3: the fen's edge, out in tongues
   const sTarn = tarnShoreDistance(x, z); // v16 L2: the shore's paint follows the edge
   const shore = (sTarn > 14 || sTarn < -30 ? 0 : (1 - smoothstep(0, 14, sTarn)) * smoothstep(-8 - 16 * tarnShelf(x, z), 0, sTarn)) + (marsh * smoothstep(-2.6, -2.2, h) * (1 - smoothstep(-1.8, -1.2, h)));
@@ -589,7 +593,7 @@ function biomeWith(x, z, h, slope, rv) {
   // v17 W1: the brook's and the mere's gravel, pale margin and wet ground (src/v17/stream.js paint), behind the box
   if (inV17Box(x, z)) { _vp.wet = fc.wet; _vp.strand = fc.strand; _vp.shore = fc.shore; v17Paint(x, z, _vp); }
   else { _vp.wet = fc.wet; _vp.strand = fc.strand; _vp.shore = fc.shore; }
-  return { moor, heath, wood, marsh, shore: _vp.shore > 0 ? Math.max(shoreR, _vp.shore) : shoreR, rock: rockR, ice, orchard, crystal, slope, h,
+  return { moor, heath, wood, wood0, marsh, shore: _vp.shore > 0 ? Math.max(shoreR, _vp.shore) : shoreR, rock: rockR, ice, orchard, crystal, slope, h,
     wet: _vp.wet, bleak: fc.bleak, lee: fc.lee, stone: fc.stone, strand: _vp.strand };
 }
 

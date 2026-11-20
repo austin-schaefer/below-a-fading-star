@@ -6,6 +6,7 @@
 // v4/regions.js re-exports all of it, so callers import from there as before.
 import { REGIONS, LANDMARKS } from '../world.js';
 import { smoothstep, makeSimplex } from '../noise.js';
+import { inLobeBox, lobeSd } from '../v18/reach.js'; // v18-F1: the wood's north lobe
 import { fenShoreDistance, FEN_EDGE } from './fen.js'; // v16 L3: the fen's edge, for its place and the Saltings' yield
 import { height as bletting } from '../v4/regions/height/bletting.js';
 import { height as saltings } from '../v4/regions/height/saltings.js';
@@ -31,7 +32,8 @@ export const woodRag = ragged(12, 0.022, 7.3); // field.js's wood paint gives ou
 const PLACES = {
   wood: { x: LANDMARKS.wood.x, z: LANDMARKS.wood.z, r: 95, blend: 20, rag: 12,
     // (v16 L5: lim, the weights' half-blend: past lim and the rag's reach (13.2) the weight is 0 or 1 whatever the rag says)
-    sd: (x, z, lim = Infinity) => { const d = Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95; return d > lim + 13.3 || d < -lim - 13.3 ? d : d + woodRag(x, z); } },
+    // (v18-F1: and the north lobe's line, the lower of the two, behind its box: src/v18/reach.js)
+    sd: (x, z, lim = Infinity) => { const d0 = Math.sqrt((x - LANDMARKS.wood.x) ** 2 + (z - LANDMARKS.wood.z) ** 2) - 95, d = d0 > lim + 13.3 || d0 < -lim - 13.3 ? d0 : d0 + woodRag(x, z); return inLobeBox(x, z) ? Math.min(d, lobeSd(x, z)) : d; } },
   fen: { x: 70, z: 160, r: 75, blend: 12, sd: (x, z) => fenShoreDistance(x, z) - 10 },
   lattice: { x: LANDMARKS.moraine.x, z: LANDMARKS.moraine.z, r: 50, blend: 12 },
 };
@@ -180,7 +182,7 @@ function weights(x, z, blend, W) {
     let d;
     if (sd) { // the far side of a place with an edge: a cheap bound first (P_FAR: past it the weight is 0)
       const e2 = (x - px) ** 2 + (z - pz) ** 2, far = P_FAR[i] + hb;
-      if (e2 > far * far) { W[NR + i] = 0; continue; }
+      if (e2 > far * far && !(i === 0 && inLobeBox(x, z))) { W[NR + i] = 0; continue; } // (v18-F1: the wood's lobe lies past its circle's bound)
       d = sd(x, z, hb);
     } else d = Math.sqrt((x - px) ** 2 + (z - pz) ** 2) - P_DEF[4 * i + 2];
     const w = 1 - smoothstep(-hb, hb, d);

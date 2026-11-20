@@ -29,7 +29,7 @@ import { waterLevelBeforeV17, inV17Water } from '../height/field.js'; // v17 W1:
 const CLEARINGS = [[-86, -48, 7], [-108, -128, 9], [-15, 255, 24]];
 const CLEAR_N = makeSimplex(1605);
 
-const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee']; // (v16 L4: the floor's character, src/height/floor.js)
+const BIOME_KEYS = ['moor', 'heath', 'wood', 'marsh', 'shore', 'rock', 'ice', 'orchard', 'crystal', 'glacier', 'wet', 'bleak', 'lee', 'wood0']; // (v16 L4: the floor's character, src/height/floor.js; v18-F1: wood0, the old wood alone)
 
 export function makeGround(ctx) {
   const { terrain, landmarks: L, water } = ctx;
@@ -89,7 +89,7 @@ export function makeGround(ctx) {
     grid.moor[k] = b.moor; grid.heath[k] = b.heath; grid.wood[k] = b.wood; grid.marsh[k] = b.marsh;
     grid.shore[k] = b.shore; grid.rock[k] = b.rock; grid.ice[k] = b.ice; grid.orchard[k] = b.orchard;
     grid.crystal[k] = b.crystal; grid.glacier[k] = terrain.glacierMask(x, z);
-    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0;
+    grid.wet[k] = b.wet ?? 0; grid.bleak[k] = b.bleak ?? 0; grid.lee[k] = b.lee ?? 0; grid.wood0[k] = b.wood0 ?? b.wood;
   }
   // Bilinear biome lookup into a reusable object.
   const biome = {}; for (const k of BIOME_KEYS) biome[k] = 0;
