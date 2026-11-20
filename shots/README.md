@@ -1,6 +1,6 @@
 # Screenshots
 
-The curated record of how the wilderness was built, one flat folder. About 550 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
+The curated record of how the wilderness was built, one flat folder. About 570 images, chosen so the story reads in order: the first barren renders, the Mars colour era and the olive grade that replaced it, the derpy humans before their rework, the deodand that set the standard, before and after pairs from the refinement pass, each landmark and creature at its best.
 
 Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge the orchestrator curates `wip/` into this folder and deletes the rest; git history keeps every original.
 
@@ -113,6 +113,8 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | 98 | v15 sound and light, houses, the peafowl before and after, two failures |
 | 99 | v16 the valley floor and the sun's gutter: Lees Tarn off its circle, the floor lifted, the gutter in frames, the Lappet's stair head, the letter act |
 | 100 | v17 the water goes under: the brook and the mere, the leat, the Swallow and the glass tube under water, the Meridian Garth and its light, the sphere, the new typography, the names' cards |
+| 101 | v17.1 the map, the controller's hints, the study sheets and the listening page |
+| 102 | v18 the Deodand Wood deepened: foxfire spurs, the Florilegium and its likenesses, the vault and the chamber under the glass, the stilters and the eyes, the wood before and after |
 
 `plan-v2-placement-map.webp` is the v2 placement plan, unnumbered. `gallery-first-render-to-v3.webp`, `gallery-v4-to-v7.webp` , `gallery-v8-to-v11.webp`, `gallery-v12-to-v15.webp` and `gallery-v16.webp` (`99-gutter-moor-dark`) (`83-stair-orch-home`, the box v12 starts; v15's tile is `93-lappet-far-lees-east`) are the labelled 2×2 grids the top-level `README.md` shows, one picture a major release (`tools/gallery.sh` builds one); the third is `65-house-court-after`, `75-lantern-halt-from-the-road`, `76-bell-b-candles` and `77-mountains-foreland-y2-after`; the first two are built from `00-core-first-light`, `07-full-causeway`, `13-life-rooks-lift-yard`, `14-perf-overlay-spawn`, `22-saltings-rim-after`, `30-galleries-tower-foot-after`, `47-yews-far-after` and `55-canyon-bather-after`.
 
@@ -908,5 +910,27 @@ Agents write raw work-in-progress renders into `wip/` (the inbox). At each merge
 | `101-map-panel-phone.webp` | v17.1: the map on a phone, the Lattice chosen. |
 | `101-title-controller-hints.webp` | v17.1: the first screen with a controller in use, its hints naming the pad's buttons. |
 | `101-listen-page.webp` | v17.1: the listening page, four sketches and the two-ways comparison. |
+| `101-study-sheet-figures.webp` | v17.1: the figures' study sheet, every figure in a grid. |
+| `102-chamber-lamp-and-tomb.webp` | v18: the chamber beneath the glasshouse, a lamp and a tomb under the shaft of coloured light. |
+| `102-chamber-roots-hanging.webp` | v18: roots hanging through the chamber's ceiling. |
+| `102-glasshouse-door-night.webp` | v18: the Florilegium at night from its door, every pane a different colour, the six likenesses lit inside. |
+| `102-glasshouse-grate-above.webp` | v18: the grate in the glasshouse's paving that lets the light down to the chamber. |
+| `102-glasshouse-stand-after.webp` | v18: after: the glasshouse from the stand, lit at night. |
+| `102-glasshouse-stand-before.webp` | v18: before: the same stand, a bare road with nothing at its end. |
+| `102-glasshouse-stand-fire.webp` | v18: the Florilegium from the stand, a fire on the cobbles and the beams of the sun behind. |
+| `102-glasshouse-stand-moths.webp` | v18: the glasshouse from the stand under a violet sky, moths at its panes. |
+| `102-likenesses-hawk.webp` | v18: the Hawk, one of the six likenesses seen through the glass. |
+| `102-likenesses-pair.webp` | v18: the Pair through the glass of the hothouse. |
+| `102-likenesses-six-through-glass.webp` | v18: the six flower-people among their pots, seen through the stained glass. |
+| `102-passage-under-the-wood.webp` | v18: the passage under the wood, cold blue, lit by a lantern. |
+| `102-stilter-scarred-in-the-wood.webp` | v18: a stilter standing among the trees, told only by its scar of light and the white flecks at its crown. |
+| `102-vault-effigies-from-door.webp` | v18: the vault from its door, six effigy tombs under a vault of roots. |
+| `102-vault-effigies-roots.webp` | v18: the vault nearer: the scallop and the chalice on the effigies, roots hanging from the arches. |
+| `102-vault-tomb-lid-ray.webp` | v18: a tomb lid in the chamber under a ray of coloured light. |
+| `102-wood-edge-east-after.webp` | v18: after: the east edge of the wood from the field, the lobe behind. |
+| `102-wood-edge-east-before.webp` | v18: before: the same edge from the survey of the wood. |
+| `102-wood-eyes-in-the-dark.webp` | v18: a pair of eyes at the edge of the foxfire in the dark of the wood. |
+| `102-wood-foxfire-spur-lamp.webp` | v18: a spur trail marked by foxfire with a lantern at its bend. |
+| `102-wood-foxfire-spur-west.webp` | v18: the west spur, a glow of foxfire between the boles under the sun's beams. |
 | `plan-v2-placement-map.webp` | Placement map for the v2 plan. |
 | `plan-v4-placement-map.webp` | Placement map for the v4 to v7 plan: every site in `tools/sites-v4.json`, redrawn by `tools/map.mjs`. |
