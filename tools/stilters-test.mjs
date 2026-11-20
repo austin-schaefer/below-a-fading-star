@@ -116,18 +116,23 @@ async function run(view, q, frames) {
   if (frames) {
     const pick = await page.evaluate(() => {
       const fp = window.__fp, p = fp.player, S = fp.stilters;
-      const awake = S.list.filter((s) => !s.asleep).sort((a, b) => Math.hypot(a.x - p.pos.x, a.z - p.pos.z) - Math.hypot(b.x - p.pos.x, b.z - p.pos.z));
+      const dist = (s) => Math.hypot(s.x - p.pos.x, s.z - p.pos.z);
+      const awake = S.list.filter((s) => !s.asleep).sort((a, b) => Math.abs(dist(a) - 14) - Math.abs(dist(b) - 14));
       const s = awake[0];
       const yaw = Math.atan2(-(s.x - p.pos.x), -(s.z - p.pos.z));
-      p.yaw = yaw; p.pitch = 0.32;
+      p.yaw = yaw; p.pitch = Math.min(0.45, Math.atan2(s.h * 0.45, dist(s)));
       return { yaw, i: s.i };
     });
     await page.waitForTimeout(1500);
     const before = await page.evaluate(() => window.__fp.stilters.list.map((s) => [s.x, s.z, s.yaw]));
     await shot('look');
-    const s0 = await page.evaluate(() => window.__fp.stilters.steps);
     await page.evaluate((yaw) => { const p = window.__fp.player; p.yaw = yaw + Math.PI; }, pick.yaw);
-    await page.waitForFunction((s0) => window.__fp.stilters.steps >= s0 + 1, s0, { timeout: 60000, polling: 300 }).catch(() => {});
+    // away until one that stands, or comes to stand, within the look-back's frame has stepped (a minute at most)
+    await page.waitForFunction(([before, yaw]) => {
+      const fp = window.__fp, p = fp.player.pos;
+      const inLook = (x, z) => { const b = Math.atan2(-(x - p.x), -(z - p.z)); return Math.abs(Math.atan2(Math.sin(b - yaw), Math.cos(b - yaw))) < 0.55; };
+      return fp.stilters.list.some((s, i) => Math.hypot(s.x - before[i][0], s.z - before[i][1]) > 1 && (inLook(s.x, s.z) || inLook(before[i][0], before[i][1])));
+    }, [before, pick.yaw], { timeout: 60000, polling: 300 }).catch(() => console.log('[frames] nothing stepped into the look-back in a minute'));
     await page.waitForTimeout(800);
     await shot('away');
     await page.evaluate((yaw) => { const p = window.__fp.player; p.yaw = yaw; }, pick.yaw);

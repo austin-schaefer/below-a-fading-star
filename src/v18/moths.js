@@ -42,7 +42,7 @@ export function buildMoths(ctx, { glass = MOTHS, standin = false } = {}) {
   const { scene, terrain, camera } = ctx;
   const rng = ctx.makeRng(18049);
   const low = ctx.quality === 'low';
-  const nGlass = low ? 60 : 130, nLie = low ? 6 : 9, n = nGlass + nLie;
+  const nGlass = low ? 90 : 180, nLie = low ? 6 : 9, n = nGlass + nLie;
   const T = mothTemplate();
   const geo = new THREE.InstancedBufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(T.P, 3));
