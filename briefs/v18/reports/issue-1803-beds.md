@@ -100,3 +100,18 @@ These are in `shots/wip/`, in order:
 - What it found weak: the carved figure is "an unreadable blob", the room is very dark with the floor going black, and from directly below the tub feet read as "pods".
 - After the fix, `ONLY=edges,geometry`: edges 247, geometry 149, 0 failed.
 - `beds-walk` both ways, with the stricter checks: low PASS (46 frames), medium PASS (47).
+
+## Round three
+
+- **The merge of `origin/next`** (F1 and F2). Conflicts resolved in main.js, claims.js, rocks.js, the story and runtime.md (one v18 group):
+  - **claims.js:** one `BEDS` import. F1's disc row is "the Lower Beds' door"; mine is renamed "the Lower Beds' forecourt" and keeps pebbles too.
+  - **rocks.js:** F1's pebbles-by-claim line.
+- **The grate on F2's court (-3.2).** The shaft rises to the foot of F2's kerb (y -3.36), so the kerb's inner faces line it from there up. The light's shaft sits 3 cm inside the walls.
+  - From above (`v18-F3-r8-grate-above`, `-grate-above-far`): F2's kerb and bars over the dark, with no gap and nothing proud. Walkers stand on the court's ground over it.
+  - From below (`-grateup`): the panes through the irons.
+- **The tubs** are F2's ring and sprout exactly (`BEDS.tubs`), each foot under its own.
+- **The lid's figure** is in higher relief (the head, hood, back and can stand off the stone 0.17–0.42 m). The grate's bars are 40 % brighter (`r8-chamber-lid`, `r8-chamberin`).
+- **The geometry baseline** for v18-beds now also holds F1's foxfire and stumps at P58's end, which fall within this place's reach. Those are F1's to judge.
+- **Tests:**
+  - `ONLY=edges,geometry,heights,walk,seams,gutter,dressing,strata,threads,perf,settings,florilegium,foxfire,paths`: 14 tests, 0 failed. Settings 103, dressing 22, threads 25, paths 91, foxfire 24, florilegium 12, strata 8, walk 13, edges 247, heights 213, seams 3, geometry 152, perf 29, gutter 29.
+  - `beds-walk`: low PASS (47 frames), medium PASS (48).
