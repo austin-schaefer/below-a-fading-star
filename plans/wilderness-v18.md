@@ -42,6 +42,16 @@ The owner's word: issue #18 ("Enliven and enrich the forest biome"), pinned `nex
 
 ## Status
 
+**2026-11-20, 07:38 PST. F1, F2 and F3 are merged. F4 in round four, F5 (sound) building, one bug agent on a flaky row.**
+
+- **F1 round three merged:** the spurs leave square to the road through made thresholds. A reader from 12 m both ways: the north junction found from both sides, the Beds' from the Span side only, the Florilegium's from neither (the moss light's teal pool takes the eye). F2 then laid four fallen coloured panes down that spur: seen from the byre side, faint from the Span side. **Done when 2 is not fully met.**
+- **F2 merged** (four rounds; `3a40dbb7`): the cold review's blockers fixed (every house mesh hidden past 200 m; the magnate's tub back on the plan's ring); three lights, the flask alone on low; `florilegium` 12 rows, one through the page's own update. The orchestrator's run: settings 103, geometry 149, perf 29. **Weak:** the magnate and the falconer are not read through the glass; the lantern roof is hidden from the wood way by the canopy; the phone frame at the stand was not re-taken.
+- **F3 merged** (three rounds; `5cd34c1a`): the grate closes on F2's court; `beds-walk` both ways (the orchestrator's run at low: reached the chamber, 0 ticks off the floor); edges 247, heights 213, geometry 152. Its geometry baseline for `v18-beds` records F1's foxfire stumps at the end of P58: recorded, not judged.
+- **F4** (`issue-1804-inhabitants`, 8184): round three green, stilters among the lobe's trees, moths on the real glass. Round four: the follower takes 3 to 5 m strides and keeps its distance behind, a foxfire knot on its bough; and the cold review's blockers: `ring()` moved stilters in view at a gutter, shadows jumped into frame, steps ran on wall-clock timers (other tests' frames in the lobe differed run to run).
+- **F5** (`issue-1805-sound`, 8185, sonnet): building.
+- **A flaky row that may be a real bug:** `settings`' "pause: W held through Escape and let go in the panel" has failed about one run in three on four branches since v17.1. `issue-1806-pause-row` (8186, opus) is finding the cause.
+- The names: `briefs/v18/reports/v18-names-for-the-owner.md` (two). Next: F4, the pause fix and F5 merge; the Florilegium's mark on the map; the whole suite on `next`; critic, curator, note, gate.
+
 **2026-11-20, 06:05 PST. F1 merged (de61256): the ground is in. F2, F3, F4 built and reviewed, merging on top in that order.**
 
 - **F1 merged** after round two: `settings` 103 (stands' view lines are cleared of trees for 4.5 m), the reach casts no shadow on low and triangles on low are under v17.1's at every stand (heart 1557k to 1502k), small scatter and fallen trunks keep the claims; the orchestrator's own run: settings 103, geometry 146, threads 25, foxfire 21. The once-red `geometry` did not reproduce in six runs. **Not met: the spur junctions are not found from the road** (two readers). F1 is in round three on the same branch for it: spurs leave square to the road, a made threshold at each, foxfire inside the mouth and off the moss light's teal.

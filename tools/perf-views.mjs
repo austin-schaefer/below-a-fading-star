@@ -4,6 +4,7 @@
 // walker's own update is timed walking forward for 300 ticks at 60 Hz (synchronous, in the page: the number that
 // holds headless). Runs repeat in fresh browsers and every number is reported as the median over the runs.
 //   node tools/perf-views.mjs <base> [q=low] [runs=3] [views.json=tools/views-perf-v16.json] [--json=out.json]
+// FP_EXTRA='&x=0' goes on the page's URL (a module off, for a before and after from one tree).
 // The views: { name, x, z, yaw, pitch, y? (the feet: placeAt on the floor there), floor? (page code giving the
 // feet's y) }. The sun's guttering is held, the pixel ratio held (adapt=0), the frame not idled (idle=0).
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -21,7 +22,7 @@ for (let run = 0; run < runs; run++) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const v0 = views[0];
-  await page.goto(`${base}/?q=${q}&perf=1&adapt=0&idle=0&pos=${v0.x},${v0.z}&yaw=${v0.yaw}`, { waitUntil: 'load', timeout: 120000 });
+  await page.goto(`${base}/?q=${q}&perf=1&adapt=0&idle=0&pos=${v0.x},${v0.z}&yaw=${v0.yaw}${process.env.FP_EXTRA || ''}`, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => document.body.classList.contains('ready'), null, { timeout: 300000 });
   const build = await page.evaluate(() => {
     const fp = window.__fp;
