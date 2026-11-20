@@ -10,6 +10,8 @@ import { GeoBuilder, tube, clamp, lerp, smoothstep, unflipNormals, fogBatchFix }
 import { makeBatch, setFadeAt, cloneInstance, BATCH_FADE_HEAD } from './batch.js';
 import { withFade, fadeDepthMaterial } from '../fade.js';
 import { fenAt } from '../height/fen.js'; // v16 L3: the fen's edge
+import { growReach, reachGap } from '../v18/wood-reach.js';
+import { claimedBy } from '../claims.js'; // v18-F1: the fungi keep off claimed ground, after their draws // v18-F1: the north lobe, the rim, the spurs' dressing
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 // v6: the far mesh keeps the near outline (its limbs, the moss hung from them, its crown's top), so a cross-fade
@@ -467,7 +469,7 @@ function treeColours(P) {
 }
 
 export function buildTrees(ctx, ground, mats) {
-  const rng = ctx.makeRng(4101);
+  let rng = ctx.makeRng(4101); // (v18-F1: the wood's own; each pass after it draws from its own, below)
   const { landmarks: L, quality } = ctx;
   const low = quality === 'low';
   const P = ctx.palette;
@@ -513,17 +515,23 @@ export function buildTrees(ctx, ground, mats) {
   const trees = []; // {x,y,z, rot, s, v, tint, kind}
   const occ = new Map(); // spatial hash for spacing
   const key = (i, j) => i * 4096 + j;
-  const near = (x, z, r) => {
+  // (v18-F1: live, only the trees that stand: the lobe grows over the moor's hidden ones; bare, within r / 2 of the
+  // trunk's centre whatever its spacing: a log laid between trunks)
+  const near = (x, z, r, live = false, bare = false) => {
     const i0 = Math.floor((x - r) / 8), i1 = Math.floor((x + r) / 8), j0 = Math.floor((z - r) / 8), j1 = Math.floor((z + r) / 8);
     for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
       const list = occ.get(key(i, j)); if (!list) continue;
-      for (const t of list) if ((t.x - x) ** 2 + (t.z - z) ** 2 < (r + t.gap) ** 2 * 0.25) return true;
+      for (const t of list) if ((t.x - x) ** 2 + (t.z - z) ** 2 < (bare ? r * r : (r + t.gap) ** 2) * 0.25 && !(live && t.hidden)) return true;
     }
     return false;
   };
-  const place = (x, z, v, s, gap, rot, tint, kind, collide = true) => {
+  // (v18-F1: hide, a tree placed (its draws made, its spacing held) but neither drawn nor collided: the rim's gaps, and the
+  // moor's trees where the north lobe now grows, so every stream after them stays where it was)
+  const lobeB = {}, MOOR_TREES = new Set(['lone', 'giant', 'copse']);
+  const place = (x, z, v, s, gap, rot, tint, kind, collide = true, hide = false) => {
     const y = ground.heightAt(x, z);
-    const t = { x, y, z, v, s, gap, rot, tint, kind, h: variants[v].height * s, hidden: ground.hiddenAt(x, z, variants[v].trunkR * s * 1.25) }; // h: the tree's height (v9: the wood's shafts fall from its crowns)
+    if (!hide && MOOR_TREES.has(kind)) { ground.biomeAt(x, z, lobeB); hide = lobeB.wood - lobeB.wood0 > 0.12; }
+    const t = { x, y, z, v, s, gap, rot, tint, kind, h: variants[v].height * s, hidden: hide || ground.hiddenAt(x, z, variants[v].trunkR * s * 1.25) }; // h: the tree's height (v9: the wood's shafts fall from its crowns)
     trees.push(t);
     const k = key(Math.floor(x / 8), Math.floor(z / 8));
     if (!occ.has(k)) occ.set(k, []);
@@ -535,7 +543,7 @@ export function buildTrees(ctx, ground, mats) {
   const b = {};
   const openMoor = (x, z, margin) => {
     ground.biomeAt(x, z, b);
-    if (b.wood > 0.1 || b.orchard > 0.1 || b.crystal > 0.2 || b.ice > 0.1 || b.marsh > 0.3 || b.rock > 0.4) return false;
+    if (b.wood0 > 0.1 || b.orchard > 0.1 || b.crystal > 0.2 || b.ice > 0.1 || b.marsh > 0.3 || b.rock > 0.4) return false; // (v18-F1: the old wood's weight, so the moor's draws hold; place() hides what the lobe covers)
     if (ctx.regions && ctx.regions.coverAt(x, z).d.trees < 0.5) return false; // v4 regions: a region's cover keeps the moor's trees out
     return !ground.excluded(x, z, margin);
   };
@@ -547,12 +555,13 @@ export function buildTrees(ctx, ground, mats) {
     const a = rng() * Math.PI * 2, rr = Math.sqrt(rng()) * (W.r + 20);
     const x = W.x + Math.cos(a) * rr, z = W.z + Math.sin(a) * rr;
     ground.biomeAt(x, z, b);
-    if (b.wood < 0.2 || rng() > Math.pow(b.wood, 1.1) * 1.2) continue;
+    const w0 = b.wood0; // (v18-F1: the old wood's own weight: the lobe grows from its own stream, growReach)
+    if (w0 < 0.2 || rng() > Math.pow(w0, 1.1) * 1.2) continue;
     if (ground.excluded(x, z, 2)) continue;
-    const gap = (low ? 7.5 : 6.6) - b.wood * 2.6; // tighter in the heart
+    const gap = (low ? 7.5 : 6.6) - w0 * 2.6; // tighter in the heart
     if (near(x, z, gap)) continue;
-    const s = 0.75 + rng() * 0.45 * (0.5 + b.wood);
-    place(x, z, woodV[Math.floor(rng() * woodV.length)], s, gap, rng() * Math.PI * 2, 0.8 + rng() * 0.3, 'wood');
+    const s = 0.75 + rng() * 0.45 * (0.5 + w0);
+    place(x, z, woodV[Math.floor(rng() * woodV.length)], s, gap, rng() * Math.PI * 2, 0.8 + rng() * 0.3, 'wood', true, reachGap(x, z, w0));
     const db = Math.hypot(x - L.byre.x, z - L.byre.z);
     if (db < nearestByre.d) nearestByre = { d: db, x, z };
   }
@@ -561,7 +570,7 @@ export function buildTrees(ctx, ground, mats) {
     const a = rng() * Math.PI * 2, rr = Math.sqrt(rng()) * (W.r + 10);
     const x = W.x + Math.cos(a) * rr, z = W.z + Math.sin(a) * rr;
     ground.biomeAt(x, z, b);
-    if (b.wood < 0.3 || ground.excluded(x, z, 1) || near(x, z, 3)) continue;
+    if (b.wood0 < 0.3 || ground.excluded(x, z, 1) || near(x, z, 3)) continue;
     place(x, z, thornV[n % 3], 0.8 + rng() * 0.6, 3, rng() * 6.28, 0.7 + rng() * 0.2, 'thorn', false); n++;
   }
   const fallenSpots = [];
@@ -571,7 +580,7 @@ export function buildTrees(ctx, ground, mats) {
     ground.biomeAt(x, z, b);
     const v = fallenV[fallenSpots.length % 3], len = variants[v].len;
     const rot = rng() * 6.28, dx = Math.cos(rot), dz = -Math.sin(rot); // object +x after rotation about y
-    let ok = b.wood > 0.4;
+    let ok = b.wood0 > 0.4;
     for (let t = 0; ok && t <= 1; t += 0.25) { const px = x + dx * len * t, pz = z + dz * len * t; if (ground.excluded(px, pz, 1) || ground.slopeAt(px, pz) > 0.35 || near(px, pz, 0.6)) ok = false; }
     if (!ok) continue;
     const t = place(x, z, v, 1, 0, rot, 0.85 + rng() * 0.2, 'fallen', false);
@@ -579,7 +588,10 @@ export function buildTrees(ctx, ground, mats) {
     if (!t.hidden) for (let s = 0; s <= len; s += 1.6) ctx.addCollider({ x: x + dx * s, z: z + dz * s, r: variants[v].trunkR * 1.1, y: t.y - 1, h: variants[v].trunkR * 2 + 1 });
     fallenSpots.push(t);
   }
+  // (v18-F1: from here each pass has its own stream, so a change to the wood (a new lead, its rim) no longer reshuffles
+  // the moor, the orchard and the dead trunks: the spurs and P33's new line moved the wood's draws once, and these with it)
   // (b) lone wind-bent trees on the open moor, all leaning east
+  rng = ctx.makeRng(4111);
   let lone = 0;
   for (let k = 0; k < 1500 && lone < 24; k++) {
     const a = rng() * Math.PI * 2, rr = 60 + Math.sqrt(rng()) * 220;
@@ -590,6 +602,7 @@ export function buildTrees(ctx, ground, mats) {
     lone++;
   }
   // (b2) huge solitary trees with buttress roots: landmarks of their own
+  rng = ctx.makeRng(4112);
   const giants = [];
   for (let k = 0; k < 3000 && giants.length < 4; k++) {
     const a = rng() * Math.PI * 2, rr = 70 + Math.sqrt(rng()) * 200;
@@ -598,6 +611,7 @@ export function buildTrees(ctx, ground, mats) {
     if (giants.some((g) => Math.hypot(g.x - x, g.z - z) < 140) || near(x, z, 30) || Math.hypot(x - W.x, z - W.z) < W.r + 40) continue;
     giants.push(place(x, z, giantV[giants.length % 2], 0.95 + rng() * 0.2, 30, rng() * 6.28, 0.9 + rng() * 0.15, 'giant'));
   }
+  rng = ctx.makeRng(4113);
   // (b3) copses of two to five crooked trees every 40-60 m across the moor, with thorn and mounds
   let copses = 0, thickets = 0, mounds = 0;
   const CS = 50;
@@ -639,6 +653,7 @@ export function buildTrees(ctx, ground, mats) {
     }
   }
   // (c) Medlar Close: old rows on a skewed grid, gaps where trees have died
+  rng = ctx.makeRng(4114);
   const O = L.orchard, sp = 8.5, rotO = 0.32;
   for (let i = -7; i <= 7; i++) for (let j = -7; j <= 7; j++) {
     const lx = i * sp + (rng() - 0.5) * 1.6, lz = j * sp * 0.9 + (rng() - 0.5) * 1.6;
@@ -656,6 +671,7 @@ export function buildTrees(ctx, ground, mats) {
     place(t.x, t.z, V[Math.floor(rr() * V.length)], t.s ?? 1, t.gap ?? 3, t.rot ?? rr() * 6.28, t.tint ?? 0.85 + rr() * 0.25, t.kind === 'thorn' ? 'thorn' : 'region', t.kind !== 'thorn');
   }
   // (d) dead hollow trunks near the sunken court and the fen edge
+  rng = ctx.makeRng(4115);
   const deadSpots = [];
   for (let k = 0; k < 400 && deadSpots.length < 5; k++) {
     const a = rng() * Math.PI * 2, rr = 23 + rng() * 22;
@@ -668,6 +684,11 @@ export function buildTrees(ctx, ground, mats) {
     if (ground.excluded(x, z, 1) || near(x, z, 12) || ground.waterDepth(x, z) > -0.3) continue;
     deadSpots.push(place(x, z, deadV[n % deadV.length], 0.8 + rng() * 0.5, 12, rng() * 6.28, 0.9 + rng() * 0.2, 'dead')); n++;
   }
+
+  // (e) v18-F1: the north lobe, the rim's outliers and giants, and the spurs' fallen trunks, each from its own stream,
+  // after every pass above (src/v18/wood-reach.js)
+  const reach0 = trees.length; // (every tree from here on is the reach's: on low none of them casts a shadow, below)
+  const reach = growReach(ctx, ground, { place, near, variants, woodV, crookV, thornV, deadV, fallenV, giantV, low });
 
   // BatchedMesh -------------------------------------------------------------
   let vtx = 0, idx = 0;
@@ -704,7 +725,9 @@ export function buildTrees(ctx, ground, mats) {
     col.setRGB(t.tint, t.tint * (0.95 + 0.05 * t.tint), t.tint * 0.95);
     batch.setColorAt(t.id, col);
     // LOD distance scale: big things keep detail further out, small things drop it sooner
-    t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : 1;
+    // (v18-F1: the wood's trees, the lobe's and the rim's drop detail 12% sooner on low: what pays for the lobe, whose
+    // trees are mostly seen through the old wood's own trunks)
+    t.lodK = t.kind === 'giant' ? 2.2 : t.kind === 'rimgiant' ? (low ? 1.25 : 1.6) : t.kind === 'lone' || t.kind === 'dead' ? 1.5 : t.kind === 'thorn' || t.kind === 'mound' ? 0.6 : low && (t.kind === 'wood' || t.kind === 'rim') ? 0.88 : 1;
     t.fade = -1;
   }
   // spare instances, hidden until a switch shows one: { tree, spare id, geo, dir } (dir +1 fades toward the main
@@ -720,6 +743,22 @@ export function buildTrees(ctx, ground, mats) {
   const fade = { spares: SPARES, spareIds: slots.map((s) => s.spare), inFlight: 0, peak: 0, starts: 0, overflow: 0, snaps: 0, ms: 400 };
   batch.castShadow = true; batch.receiveShadow = true;
   batch.name = 'veg-trees';
+  // v18-F1: on low the reach's trees (the lobe, the rim's outliers and giants, the spurs' trunks) cast no shadow: the
+  // low tier's shadow pass draws what it drew before v18. They are taken out of the batch's draw list for the shadow
+  // camera only (three r170 builds that list in onBeforeShadow from _instanceInfo's visible flags) and put back at
+  // once. The multi-draw path only; the instanced stand-in (no WEBGL_multi_draw) still casts them.
+  let reachNoShadow = 0;
+  if (low && !batch.isInstancedBatch && batch._instanceInfo) {
+    const ids = trees.slice(reach0).filter((t) => !t.hidden && t.id !== undefined).map((t) => t.id), was = new Uint8Array(ids.length);
+    const info = batch._instanceInfo, before = batch.onBeforeShadow;
+    batch.onBeforeShadow = function (...a) {
+      for (let k = 0; k < ids.length; k++) { const i = info[ids[k]]; was[k] = i.visible ? 1 : 0; i.visible = false; }
+      before.apply(this, a);
+      for (let k = 0; k < ids.length; k++) info[ids[k]].visible = was[k] === 1;
+      this._visibilityChanged = true;
+    };
+    reachNoShadow = ids.length;
+  }
   batch.build?.();
   ctx.scene.add(batch);
 
@@ -791,8 +830,10 @@ export function buildTrees(ctx, ground, mats) {
     trisHiLoFar: variants.map((v) => `${tris(v.hi)}/${tris(v.lo)}/${tris(v.far)}`).join(' '),
     woodNearestByre: { d: +nearestByre.d.toFixed(1), x: +nearestByre.x.toFixed(1), z: +nearestByre.z.toFixed(1) },
     giantsAt: giants.map((g) => `${g.x.toFixed(0)},${g.z.toFixed(0)}`).join(' '),
+    reach: { ...reach.stats, noShadow: reachNoShadow }, // v18-F1
   };
-  return { trees, batch, update, stats, fade, deadSpots, fallenSpots, giants, variantNames };
+  const trunkOf = (t) => variants[t.v].trunkR * (t.s || 1); // v18-F1: a trunk's radius at its foot
+  return { trees, batch, update, stats, fade, deadSpots, fallenSpots, giants, variantNames, trunkOf, thresholds: reach.thresholds };
 }
 
 // ---------- Toadstools ----------
@@ -867,11 +908,11 @@ function instGroups(ctx, geo, mat, items, fill, name) {
 export function buildToadstools(ctx, ground, mats, trees) {
   const rng = ctx.makeRng(4207);
   const { landmarks: L, quality } = ctx;
-  const spots = [];
+  let spots = [];
   const b = {};
   const clusters = quality === 'low' ? 110 : 220;
   // wood floor: mostly near trunks; fen edges: on the drier hummocks; dead trunks always get some
-  const woodTrees = trees.trees.filter((t) => t.kind === 'wood');
+  const woodTrees = trees.trees.filter((t) => t.kind === 'wood' && !t.hidden); // (v18-F1: no ring round a tree that is not there)
   for (let k = 0; k < clusters; k++) {
     let cx, cz;
     const r = rng();
@@ -894,6 +935,7 @@ export function buildToadstools(ctx, ground, mats, trees) {
       spots.push({ x, z, s: (0.06 + Math.pow(rng(), 2.2) * 0.26) * (i === 0 ? 1.4 : 1), tilt: (rng() - 0.5) * 0.4, rot: rng() * 6.28, hue: rng() });
     }
   }
+  spots = spots.filter((s) => !claimedBy(s.x, s.z, 0, 'cover')); // (v18-F1: after the draws)
   const geo = toadstoolGeo();
   const q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), sc = new THREE.Vector3();
   const tints = [lin('#e0d0b0'), lin('#c8a860'), lin('#9a5a3a'), lin('#d8d8c0')];
@@ -906,7 +948,7 @@ export function buildToadstools(ctx, ground, mats, trees) {
   }, 'veg-toadstools');
 
   // seed-pods: stands of glowing pods in the wood, by fallen trunks, on the fen edge and around mounds
-  const pods = [];
+  let pods = [];
   const mounds = trees.trees.filter((t) => t.kind === 'mound');
   const nPod = quality === 'low' ? 50 : 95;
   for (let k = 0; k < nPod; k++) {
@@ -923,6 +965,7 @@ export function buildToadstools(ctx, ground, mats, trees) {
       pods.push({ x, z, s: 0.5 + rng() * 0.8, rot: rng() * 6.28, tilt: (rng() - 0.5) * 0.3, hue: rng() });
     }
   }
+  pods = pods.filter((s) => !claimedBy(s.x, s.z, 0, 'cover')); // (v18-F1: after the draws)
   const pg = podGeo();
   const podT = [lin('#d0e0a0'), lin('#a0d0c0'), lin('#e0c890')];
   groups.push(...instGroups(ctx, pg, mats.fungus, pods, (s, m4, col) => {

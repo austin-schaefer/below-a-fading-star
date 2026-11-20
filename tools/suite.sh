@@ -57,6 +57,8 @@ run dressing tools/dressing-test.mjs $B
 run threads tools/threads-test.mjs $B
 run paths tools/paths-test.mjs $B
 run roads tools/roads-test.mjs $B
+run foxfire tools/foxfire-test.mjs $B # v18-F1: the wood's three spurs, each found by its foxfire alone, a clump always in sight of the last
+run florilegium tools/florilegium-test.mjs $B # v18-F2: the glasshouse's likenesses: every head within its lag of a visitor walking round, none wound up
 run village-plan tools/village-plan-test.mjs
 run outline tools/outline-test.mjs # v16-L2: the edge (src/height/outline.js) and Lees Tarn on it, in node
 run twk tools/twk-test.mjs $B

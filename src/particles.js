@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { fogPars, fogAtten, softDot } from './particles/shaderParts.js';
 import { makeMistTexture } from './particles/mistTexture.js';
 import { hyp } from './noise.js';
+import { lobeSd, LOBE_WEST } from './v18/reach.js'; // v18-F1: the wood's north lobe
 import { tarnShoreDistance } from './v4/tarn.js'; // v16 L2: the tarn's shore is its edge, not a circle
 import { fenShoreDistance, fenAt, fenIn } from './height/fen.js'; // v16 L3: the fen's too
 
@@ -34,6 +35,14 @@ export async function build(ctx) {
   });
   // share the common uniform objects by reference
   const bind = (m) => { Object.assign(m.uniforms, U); return m; };
+  // v18-F1: n more of a wood's things in the north lobe, 4 m or more inside its line (y: the ground plus y0 to y0 + dy)
+  const inLobe = (rng, n, y0, dy, pos, seed, low) => {
+    for (let tries = 0, got = 0; tries < n * 20 && got < n; tries++) {
+      const x = LOBE_WEST + rng() * 52, z = -1 + rng() * 60;
+      if (lobeSd(x, z) > -4) continue;
+      pos.push(x, terrain.heightAt(x, z) + y0 + (low ? rng() * rng() : rng()) * dy, z); seed.push(rng(), rng(), rng(), rng()); got++;
+    }
+  };
   const pointsOf = (geo, mat, order = 20) => {
     const p = new THREE.Points(geo, mat); p.frustumCulled = false; p.renderOrder = order; scene.add(p); return p;
   };
@@ -290,6 +299,7 @@ export async function build(ctx) {
       pos.push(x, h + 0.4 + rng() * rng() * 3.4, z);
       seed.push(rng(), rng(), rng(), rng());
     }
+    inLobe(ctx.makeRng(8402), Math.round(want * 0.16), 0.4, 3.4, pos, seed, true); // v18-F1: and in the north lobe
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
     geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
     const vs = /* glsl */`
@@ -510,7 +520,7 @@ export async function build(ctx) {
       windD += dt * (1.2 + gust * 10);
       const px = camera.position.x, pz = camera.position.z;
       const open = 1 - Math.max(
-        1 - smooth(wood.r - 30, wood.r + 10, hyp(px - wood.x, pz - wood.z)),
+        1 - smooth(wood.r - 30, wood.r + 10, hyp(px - wood.x, pz - wood.z)), 1 - smooth(-20, 10, lobeSd(px, pz)), // (v18-F1: and its north lobe)
         1 - smooth(-12, 28, fenShoreDistance(px, pz)), // v16 L3: the fen's edge
         1 - smooth(-20, 20, tarnShoreDistance(px, pz)));
       mat.uniforms.uWindD.value = windD;
@@ -581,6 +591,7 @@ export async function build(ctx) {
       if (wl !== null && h < wl + 0.6) continue;
       pos.push(x, h + 1.2 + rng() * 3.5, z); seed.push(rng(), rng(), rng(), rng());
     }
+    inLobe(ctx.makeRng(8902), Math.round(want * 0.16), 1.2, 3.5, pos, seed, false); // v18-F1: and in the north lobe
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
     geo.setAttribute('aSeed', new THREE.BufferAttribute(new Float32Array(seed), 4));
