@@ -233,3 +233,9 @@ export function buildGuest(ctx) {
     drawCalls: 2, tris: tri + 2,
   };
 }
+
+// The study page (src/study/registry.js): the Wimpled Guest at her dry fountain.
+export const study = [{
+  id: 'guest', name: 'the Wimpled Guest', kind: 'figure', h: 2.0, at: [0, 0],
+  build(ctx) { const r = buildGuest(ctx), p = r.api.position; return { at: (o) => o.set(p.x, 0, p.z), face: () => r.api.yaw }; },
+}];

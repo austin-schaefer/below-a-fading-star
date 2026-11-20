@@ -173,3 +173,15 @@ export function buildTarnWoman(ctx, U) {
   const tri = (gg) => gg.index.count / 3;
   return { drawCalls: 3, tris: tri(body.geometry) + tri(hair.geometry) + tri(ringGeo) * 3 };
 }
+
+// The study page (src/study/registry.js): the woman in the tarn, chest deep (the ground drawn at the water's face).
+export const study = [{
+  id: 'tarn-woman', name: 'the woman in the tarn', kind: 'figure', h: 1.6, at: [-90, 110],
+  async build(ctx) {
+    const { makeRules } = await import('./kit.js'); const U = { rules: makeRules(ctx) };
+    const W = ctx.water.tarn;
+    ctx.terrain = { ...ctx.terrain, heightAt: () => W.y - 1.8, waterLevelAt: () => W.y, isUnderwater: () => true };
+    buildTarnWoman(ctx, U); const p = ctx.tarnWoman.position;
+    return { at: (o) => o.set(p.x, W.y - 0.6, p.z), floor: W.y };
+  },
+}];

@@ -312,3 +312,9 @@ export function buildGrazers(ctx, opts = {}) {
   bodies.count = heads.count = n; uppers.count = lowers.count = n * 4;
   ctx.registerUpdate(update, { at: () => herd, near: 120, hz: 5 }); // v3: beyond 120 m the herd steps at 5 Hz
 }
+
+// The study page (src/study/registry.js): one beast of the moor's herd, alone and unwatched.
+export const study = [{
+  id: 'grazer', name: 'grazer', kind: 'creature', h: 2.6, looker: 'far', at: [22, 78],
+  build(ctx) { buildGrazers(ctx, { n: 1, home: [22, 78] }); const a = ctx.grazers.animals[0]; return { at: (o) => o.set(a.x, 0, a.z), face: () => a.yaw }; },
+}];

@@ -300,3 +300,13 @@ export function buildSexton(ctx, order) {
     },
   };
 }
+
+// The study page (src/study/registry.js): the Sexton of No One at his graves (his own turf and pits for ground).
+export const study = [{
+  id: 'sexton', name: 'the Sexton of No One', kind: 'figure', h: 2.2, at: [0, 0],
+  async build(ctx) {
+    const { digOrder } = await import('./graves.js');
+    const X = buildSexton(ctx, digOrder()), S = X.state;
+    return { at: (o) => o.set(S.x, 0, S.z), face: () => S.yaw, ground: false };
+  },
+}];

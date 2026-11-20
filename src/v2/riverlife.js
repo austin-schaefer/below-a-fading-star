@@ -767,3 +767,17 @@ export async function build(ctx) {
   });
   ctx.log(`riverlife: ${N} salt-pedlars, the Wrong Colour at (${EB.x.toFixed(1)}, ${EB.z.toFixed(1)}), the fall's rumble and spray`);
 }
+
+// The study page (src/study/registry.js): one Salt-Pedlar hovering on its dragonfly, at life size (drawn 2.2x, as the
+// river draws them), turning slowly so its wings and its rider show from every side.
+export const study = [{
+  id: 'salt-pedlar', name: 'Salt-Pedlar', kind: 'creature', h: 0.45, fly: true, at: [140, 160],
+  build(ctx) {
+    const uTime = { value: 0 }, g = pedlarGeometry(), aPh = new THREE.InstancedBufferAttribute(new Float32Array([1.3, 30, 1, 0]), 4);
+    g.setAttribute('aPh', aPh);
+    const m = new THREE.InstancedMesh(g, pedlarMaterial(uTime), 1); m.frustumCulled = false; ctx.scene.add(m);
+    const P = new THREE.Vector3(140, 1.4, 160), Q = new THREE.Quaternion(), S = new THREE.Vector3(2.2, 2.2, 2.2), M = new THREE.Matrix4(), Y = new THREE.Vector3(0, 1, 0);
+    ctx.registerUpdate((dt, t) => { uTime.value = t; Q.setFromAxisAngle(Y, t * 0.3); M.compose(P, Q, S); m.setMatrixAt(0, M); m.instanceMatrix.needsUpdate = true; });
+    return { at: (o) => o.copy(P) };
+  },
+}];

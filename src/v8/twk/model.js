@@ -246,3 +246,25 @@ export function riderMaterial(uTime) {
   };
   return m;
 }
+
+// The study page (src/study/registry.js): a Twk-man on his dragonfly, hovering and turning, and one at rest beside him.
+export const study = [{
+  id: 'twk', name: 'Twk-man', kind: 'creature', h: 0.5, fly: true, at: [0, 0],
+  build(ctx) {
+    const low = ctx.quality === 'low', uTime = { value: 0 };
+    const bodyG = bodyGeometry(low), wingG = wingGeometry(), riderG = riderGeometry(low);
+    const aFly = new THREE.InstancedBufferAttribute(new Float32Array([1, 0.3, 0, 0.2, 0, 0.7, 1, 0]), 4);
+    for (const g of [bodyG, wingG, riderG]) g.setAttribute('aFly', aFly);
+    const body = new THREE.InstancedMesh(bodyG, bodyMaterial(uTime), 2), wings = new THREE.InstancedMesh(wingG, wingMaterial(uTime), 2), men = new THREE.InstancedMesh(riderG, riderMaterial(uTime), 2);
+    wings.instanceMatrix = body.instanceMatrix; men.instanceMatrix = body.instanceMatrix; wings.renderOrder = 14;
+    for (const m of [body, wings, men]) { m.frustumCulled = false; m.receiveShadow = true; ctx.scene.add(m); }
+    const P = new THREE.Vector3(0, 1.4, 0), R = new THREE.Vector3(0.28, 1.25, 0.1), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), ONE = new THREE.Vector3(1, 1, 1), M = new THREE.Matrix4();
+    ctx.registerUpdate((dt, t) => {
+      uTime.value = t;
+      Q.setFromAxisAngle(Y, t * 0.3); M.compose(P.set(0, 1.4 + 0.02 * Math.sin(t * 2.1), 0), Q, ONE); body.setMatrixAt(0, M);
+      Q.setFromAxisAngle(Y, 2.2); M.compose(R, Q, ONE); body.setMatrixAt(1, M);
+      body.instanceMatrix.needsUpdate = true;
+    });
+    return { at: (o) => o.set(0.12, 1.35, 0) };
+  },
+}];

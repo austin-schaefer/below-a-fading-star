@@ -69,6 +69,18 @@ export async function build(ctx) {
   for (const k of ['quarrels', 'rungs', 'lees', 'pennyworth']) Q[k] = await waitFor(() => ctx[k], 60000);
   const low = ctx.quality === 'low', plan = ctx.lappet.plan;
   const folk = FOLK.map((F) => ({ F, at: F.place(ctx, plan, Q) })).filter((f) => f.at);
+  const { mesh, figs, nb, n, geo } = makeFolk(ctx, folk, low, plan, true);
+  ctx.scene.add(mesh);
+  ctx.lappet.farHidden.push(mesh);
+  animate(ctx, figs, mesh);
+  const tris = (geo.index ? geo.index.count : n) / 3;
+  ctx.people = { figs: figs.map(({ F, fig }) => ({ id: F.id, name: F.name, story: F.story, at: { x: fig.x, y: fig.y, z: fig.z, yaw: fig.yaw }, state: fig.state, fig })), mesh, stats: () => ({ draws: 1, triangles: tris, figures: figs.length, bones: nb, lights: 0 }) };
+  ctx.log?.(`people: ${figs.length} figures, ${tris} triangles, ${nb} bones, one draw`);
+}
+
+// The folk's one mesh (a bone for what lies still, eight a figure) and their figures, posed nowhere yet; `still` false
+// leaves out what they left lying in the world (the study page draws each figure alone: src/study/registry.js).
+function makeFolk(ctx, folk, low, plan, still) {
   const nb = 1 + folk.length * BONE.n;
   const bones = Array.from({ length: nb }, () => { const b = new THREE.Bone(); b.matrixAutoUpdate = false; b.matrixWorldAutoUpdate = false; return b; });
   const P = rigPainter();
@@ -79,7 +91,7 @@ export async function build(ctx) {
     const fig = new Fig(bones, base, spec);
     fig.id = F.id; fig.name = F.name;
     F.props?.(P, base, fig, at, low);  // what they hold and what lies by them, painted on their bones
-    P.bone(0); F.still?.(P, at, low, plan);   // what they left lying in the world
+    P.bone(0); if (still) F.still?.(P, at, low, plan);   // what they left lying in the world
     fig.state = F.init ? F.init(fig, at, ctx) : {};
     figs.push({ F, fig, at });
   });
@@ -94,8 +106,11 @@ export async function build(ctx) {
   mesh.name = 'lappet-people'; mesh.frustumCulled = false; mesh.castShadow = true; mesh.receiveShadow = true;
   const skeleton = new THREE.Skeleton(bones, bones.map(() => new THREE.Matrix4()));
   mesh.bind(skeleton, new THREE.Matrix4());
-  ctx.scene.add(mesh);
-  ctx.lappet.farHidden.push(mesh);
+  return { mesh, figs, nb, n, geo };
+}
+
+// Each figure's clock, its gutter and its pose, every frame within 45 m of it.
+function animate(ctx, figs, mesh) {
   let flip = 0;
   const posed = () => { flip ^= 1; mesh.scale.x = 1 + flip * 1e-6; };
   const cam = ctx.camera.position;
@@ -125,7 +140,17 @@ export async function build(ctx) {
       fig.apply(); posed();
     }, { pos: { x: fig.x, z: fig.z }, near: 45, hz: 0 });
   });
-  const tris = (geo.index ? geo.index.count : n) / 3;
-  ctx.people = { figs: figs.map(({ F, fig }) => ({ id: F.id, name: F.name, story: F.story, at: { x: fig.x, y: fig.y, z: fig.z, yaw: fig.yaw }, state: fig.state, fig })), mesh, stats: () => ({ draws: 1, triangles: tris, figures: figs.length, bones: nb, lights: 0 }) };
-  ctx.log?.(`people: ${figs.length} figures, ${tris} triangles, ${nb} bones, one draw`);
 }
+
+// The study page (src/study/registry.js): each villager alone, at their task, in a mesh of their own (what they left
+// lying in the world stays out; their props and seats come with them).
+export const study = FOLK.map((F, i) => ({
+  id: `folk-${F.id}`, name: F.name, kind: 'figure', h: 2.0, at: [600 + i * 20, 600],
+  build(ctx) {
+    const at = { x: 600 + i * 20, y: 0, z: 600, yaw: 0 };
+    const { mesh, figs } = makeFolk(ctx, [{ F, at }], ctx.quality === 'low', null, false);
+    ctx.scene.add(mesh); animate(ctx, figs, mesh);
+    const f = figs[0].fig;
+    return { at: (o) => o.set(f.x, f.y, f.z), face: () => f.yaw };
+  },
+}));

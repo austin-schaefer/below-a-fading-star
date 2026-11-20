@@ -382,3 +382,25 @@ export function buildSleeper(ctx, at) {
   pose(0);
   return { ...R, state: S, update, place, footWorld };
 }
+
+// The study page (src/study/registry.js): the Pomegranate House's four, each with a stand-in for what they lean on (a
+// table for the two at play, a bench for the sleeper's table and the musician's rim).
+const studyBox = (ctx, x, y, z, w, h, d) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: '#5a4636', roughness: 0.9 })); m.position.set(x, y - h / 2, z); m.castShadow = m.receiveShadow = true; m.userData.studyProp = true; ctx.scene.add(m); };
+const studyRun = (ctx, R, cam) => ctx.registerUpdate((dt, t) => R.update(dt, t, cam, () => true));
+export const study = [
+  { id: 'house-host', name: 'the host', kind: 'figure', h: 2.0, at: [97, -60],
+    build(ctx) { const at = { x: 97, z: -60, y: 0, yaw: 0 }, R = buildHost(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => R.state.yaw }; } },
+  { id: 'house-patrons', name: 'the two at play', kind: 'figure', h: 2.2, at: [90, -60],
+    build(ctx) {
+      const table = { x: 90, z: -60, top: 0.865 }; studyBox(ctx, 90, 0.865, -60, 0.8, 0.865, 0.8);
+      const seats = [[90 - 0.95, -59.9, Math.PI / 2], [90.9, -60.3, -Math.PI / 2]].map(([x, z, yaw]) => ({ x, z, yaw, y: 0, hs: 0.43 }));
+      for (const s of seats) studyBox(ctx, s.x, 0.43, s.z, 0.36, 0.43, 0.36);
+      const R = buildPatrons(ctx, seats, table), f = new THREE.Vector3(0, 0, -1);
+      ctx.registerUpdate((dt, t) => R.update(dt, t, ctx.camera.position, f, () => {}));
+      return { at: (o) => o.set(90, 0, -60), face: () => 0 };
+    } },
+  { id: 'house-musician', name: 'the musician', kind: 'figure', h: 1.8, at: [84, -60],
+    build(ctx) { const at = { x: 84, z: -60, y: 0, yaw: 0, hs: 0.575 }; studyBox(ctx, 84, 0.575, -60.1, 1.2, 0.575, 0.5); const R = buildMusician(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => 0 }; } },
+  { id: 'house-sleeper', name: 'the sleeper at the table', kind: 'figure', h: 1.8, at: [78, -60],
+    build(ctx) { const at = { x: 78.6, z: -60, y: 0, yaw: Math.PI / 2 }; studyBox(ctx, 78, 0.72, -60, 0.7, 0.72, 1.1); const R = buildSleeper(ctx, at); studyRun(ctx, R, ctx.camera.position); return { at: (o) => o.set(at.x, 0, at.z), face: () => at.yaw }; } },
+];

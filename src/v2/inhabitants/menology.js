@@ -422,3 +422,9 @@ export function buildMenology(ctx) {
     drawCalls: 2, tris: tri(mesh.geometry) + tri(lgeo) * N, lizardTris: tri(lgeo),
   };
 }
+
+// The study page (src/study/registry.js): the Menology's stones and the lizards that keep its days.
+export const study = [{
+  id: 'menology', name: 'the Menology and its lizards', kind: 'creature', h: 6, el: 0.6, mid: 0, at: [0, 0],
+  build(ctx) { const r = buildMenology(ctx), C = r.api.centre; return { at: (o) => o.set(C.x, 0, C.z) }; },
+}];

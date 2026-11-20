@@ -452,3 +452,12 @@ export function buildPainter(ctx, gy, prospect = true) {
   ends.prospect = { x: PROSPECT.x, z: PROSPECT.z };
   return { meshes, ends, state: st, tex, place };
 }
+
+// The study page (src/study/registry.js): the painter at his easel, his attempts about him.
+export const study = [{
+  id: 'painter', name: 'the painter', kind: 'figure', h: 2.0, at: [PAINTER.man.x, PAINTER.man.z],
+  build(ctx) {
+    const R = buildPainter(ctx, () => 0, false); for (const m of R.meshes) if (!m.parent) ctx.scene.add(m);
+    const M = PAINTER.man; return { at: (o) => o.set(M.x, 0, M.z), face: () => M.yaw };
+  },
+}];
