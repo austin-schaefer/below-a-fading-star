@@ -15,7 +15,7 @@ export function grateLight({ x, z, half, top, floor, slant, hues }) {
   geo.setAttribute('aKind', new THREE.Float32BufferAttribute(kind, 1));
   geo.computeBoundingSphere();
   const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-    uTime: { value: 0 }, uI: { value: 1 }, uGI: { value: 2.4 }, uG: { value: new THREE.Vector4(x, z, half, top) }, uS: { value: new THREE.Vector3(sx, -H, sz) },
+    uTime: { value: 0 }, uI: { value: 1 }, uGI: { value: 3.4 }, uG: { value: new THREE.Vector4(x, z, half, top) }, uS: { value: new THREE.Vector3(sx, -H, sz) },
     uH0: { value: new THREE.Color(hues[0]) }, uH1: { value: new THREE.Color(hues[1]) }, uH2: { value: new THREE.Color(hues[2]) }, uH3: { value: new THREE.Color(hues[3]) },
   }]);
   const mat = new THREE.ShaderMaterial({

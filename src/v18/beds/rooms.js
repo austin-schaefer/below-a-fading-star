@@ -350,7 +350,7 @@ export function chamber(B, out) {
     B.geo(geo, new THREE.Matrix4().makeTranslation(cx, yc, cz).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), (nx, ny) => (ny < 0 ? COL.vaultW : COL.vault), 0.1);
     // the grate's shaft up to the paving outside the glasshouse's door; its irons both ways at the top (F2's own over
     // them, from y -3.25 up: under the ground of this branch until F2's level court is in, the top is under the ground)
-    const top = Math.min(g.top ?? -3.25, out.groundAtGrate - 0.08), gx0 = g.x - g.half, gx1 = g.x + g.half, gz0 = g.z - g.half, gz1 = g.z + g.half;
+    const top = Math.min(g.top ?? -3.25, out.groundAtGrate - 0.05), gx0 = g.x - g.half, gx1 = g.x + g.half, gz0 = g.z - g.half, gz1 = g.z + g.half;
     coursedX(B, gx0, 1, gz0, gz1, yc, top, COL.vault, COL.vaultW, 0.4); coursedX(B, gx1, -1, gz0, gz1, yc, top, COL.vault, COL.vaultW, 0.4);
     coursedZ(B, gz0, 1, gx0, gx1, yc, top, COL.vault, COL.vaultW, 0.4); coursedZ(B, gz1, -1, gx0, gx1, yc, top, COL.vault, COL.vaultW, 0.4);
     for (let k = 0; k < 6; k++) { const t = (k + 0.5) / 6; B.box(gx0 + (gx1 - gx0) * t, top - 0.06, g.z, 0.02, 0.03, g.half - 0.002, 0, COL.iron, COL.iron, 0.05); B.box(g.x, top - 0.12, gz0 + (gz1 - gz0) * t, g.half - 0.002, 0.02, 0.02, 0, COL.iron, COL.iron, 0.05); }
@@ -388,15 +388,15 @@ export function chamber(B, out) {
     // the chisel is fresh; below the waist roughed out, then slab. His chisel and mallet left lying on the stone
     const PALE = C('#c9bea6'), ROUGH = C('#a39884');
     const fig = (g, u, w, z, sx, sy, sz, col = PALE, rx = 0, ry = 0) => B.geo(g, new THREE.Matrix4().compose(new THREE.Vector3(...M(u, w, z)), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, ang, 'ZYX')), new THREE.Vector3(sx, sy, sz)), col, 0.05); // (its own turn first, then the lid's lean)
-    fig(new THREE.SphereGeometry(0.13, 12, 9), 0.0, 0.11, -0.74, 1, 0.75, 1.05);                    // the head, bowed onto the breast
-    fig(new THREE.ConeGeometry(0.16, 0.26, 10), 0.0, 0.1, -0.85, 1, 1, 0.7, PALE, -Math.PI / 2);   // the hood over it
-    fig(new THREE.SphereGeometry(0.3, 12, 8), 0.0, 0.06, -0.48, 1.05, 0.42, 0.75);                  // the rounded back, hunched up
+    fig(new THREE.SphereGeometry(0.15, 12, 9), 0.0, 0.17, -0.76, 1, 0.9, 1.05);                    // the head, bowed onto the breast
+    fig(new THREE.ConeGeometry(0.19, 0.3, 10), 0.0, 0.16, -0.88, 1, 1, 0.75, PALE, -Math.PI / 2);   // the hood over it
+    fig(new THREE.SphereGeometry(0.32, 12, 8), 0.0, 0.08, -0.5, 1.05, 0.75, 0.8);                  // the rounded back, hunched up
     fig(new THREE.BoxGeometry(0.5, 0.12, 0.36), 0.0, 0.05, -0.36, 1, 1, 1);                        // the shoulders
-    for (const sd of [-1, 1]) fig(new THREE.CylinderGeometry(0.045, 0.05, 0.42, 7), sd * 0.2, 0.11, -0.25, 1, 1, 1, PALE, Math.PI / 2 - sd * 0.5); // the arms, in to the can
+    for (const sd of [-1, 1]) fig(new THREE.CylinderGeometry(0.05, 0.055, 0.42, 7), sd * 0.2, 0.18, -0.25, 1, 1, 1, PALE, Math.PI / 2 - sd * 0.5); // the arms, in to the can
     // the can held to his breast, in high relief: body, spout out to the side, the bow handle
-    fig(new THREE.CylinderGeometry(0.1, 0.12, 0.2, 12), 0.02, 0.2, -0.12, 1, 1, 1, PALE, Math.PI / 2);
-    fig(new THREE.CylinderGeometry(0.018, 0.026, 0.34, 6), 0.2, 0.22, -0.02, 1, 1, 1, PALE, Math.PI / 2, 0.9);
-    fig(new THREE.TorusGeometry(0.08, 0.016, 5, 10, Math.PI), 0.02, 0.29, -0.12, 1, 1, 1, PALE, 0, Math.PI / 2);
+    fig(new THREE.CylinderGeometry(0.12, 0.14, 0.24, 12), 0.02, 0.3, -0.12, 1, 1, 1, PALE, Math.PI / 2);
+    fig(new THREE.CylinderGeometry(0.022, 0.03, 0.4, 6), 0.24, 0.32, -0.02, 1, 1, 1, PALE, Math.PI / 2, 0.9);
+    fig(new THREE.TorusGeometry(0.1, 0.02, 5, 10, Math.PI), 0.02, 0.42, -0.12, 1, 1, 1, PALE, 0, Math.PI / 2);
     fig(new THREE.BoxGeometry(0.42, 0.09, 0.42), 0.0, 0.04, 0.12, 1, 1, 1, ROUGH);                 // the waist, roughed
     for (let i = 0; i < 6; i++) fig(new THREE.BoxGeometry(0.1 + hash(i, 3) * 0.12, 0.04 + hash(i, 4) * 0.03, 0.1), -0.25 + hash(i, 1) * 0.5, 0.03 + i * 0.005, 0.38 + i * 0.1, 1, 1, 1, ROUGH); // the legs only blocked out (each its own planes)
     for (let i = 0; i < 34; i++) { // the chisel's fresh marks: pale scars round the carving
