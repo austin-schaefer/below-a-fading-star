@@ -240,12 +240,12 @@ export function buildGlass({ low = false } = {}) {
           float h = flH(c + seed);
           tint = mix(vec3(0.9, 0.86, 0.62), PANES[1], step(0.86, h)) * (0.72 + 0.28 * flH(c * 1.7 + seed));
           lead = smoothstep(0.42, 0.455, max(f.x, f.y));
-          if (vY < 5.0) { glow = 0.07; tint = mix(tint, vec3(0.86, 0.9, 0.84), 0.5); }   // the door's: nearly clear, to see the key by
+          if (vY > 5.0) { glow = 0.5; tint *= vec3(1.0, 0.86, 0.6); } else { glow = 0.07; tint = mix(tint, vec3(0.86, 0.9, 0.84), 0.5); }   // the door's: nearly clear, to see the key by
         } else {
           // fish-scale quarries: each pane a disc lapped by the row above, so what shows is a petal hanging down
           // (the lower wall is a vitrine: inside a border of the side's colours its panes are large and nearly clear, so
           // what stands in the tubs is seen)
-          bool clear = kind < 0.5 && abs(vUv.x) < ${(RC * Math.sin(Math.PI / N) - 0.36).toFixed(3)} && vUv.y < ${(MID - SILL - 0.3).toFixed(3)};
+          bool clear = kind < 1.5 && abs(vUv.x) < ${(RC * Math.sin(Math.PI / N) - 0.36).toFixed(3)} && vUv.y < ${(MID - SILL + 0.62).toFixed(3)};   // (to a little over the transom: the tallest heads and what they hold up)
           vec2 q = vUv / (clear ? vec2(0.62, 0.56) : vec2(0.37, 0.33)); float jb = floor(q.y * 2.0), R = 0.72, od = 9.0; vec2 oc = vec2(0.0);
           for (int i = 2; i >= -2; i--) {
             float j = jb + float(i), off = 0.5 * mod(j, 2.0), cx = floor(q.x - off + 0.5) + off; vec2 c = vec2(cx, j * 0.5); float d = distance(q, c);
