@@ -83,8 +83,9 @@ export function floorAt(x, z) {
     wayNear(x, z, _n);
     if (_n.s >= -0.6 && _n.s <= LEN + 0.6 && Math.abs(_n.d) <= W.half - WALK_IN) return wayFloor(Math.max(0, Math.min(LEN, _n.s)));
   }
-  // the chamber
+  // the chamber, and its bay east to under the grate
   { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz <= (CH.r - WALK_IN) ** 2) return YC; }
+  if (x > CH.x && x <= BEDS.bay.x1 - WALK_IN && Math.abs(z - CH.z) <= BEDS.bay.half - WALK_IN) return YC;
   return null;
 }
 // the roof over the floor at (x, z) (the eye stays under it; edges-test asks), or Infinity in the open
@@ -96,6 +97,7 @@ export function ceilAt(x, z) {
   if (x >= V.x0 && x <= V.x1 && z >= V.z0 && z <= V.z1) { const hw = (V.x1 - V.x0) / 2, sag = V.crown - V.spring, R = (hw * hw + sag * sag) / (2 * sag), d = x - (V.x0 + hw); return YV + V.crown - R + Math.sqrt(Math.max(0, R * R - d * d)); }
   { const n = wayNear(x, z, {}); if (n.s >= -0.2 && n.s <= LEN && Math.abs(n.d) <= W.half) { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz > CH.r * CH.r) return wayFloor(Math.max(0, Math.min(LEN, n.s))) + W.height; } }
   { const dx = x - CH.x, dz = z - CH.z; if (dx * dx + dz * dz <= CH.r * CH.r) return YC + CH.wall; }
+  if (x > CH.x && x <= BEDS.bay.x1 && Math.abs(z - CH.z) <= BEDS.bay.half) return YC + CH.ceil;
   return Infinity;
 }
 // everything the floor covers, for a quick reject

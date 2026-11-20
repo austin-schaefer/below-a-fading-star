@@ -30,6 +30,9 @@ export async function build(ctx) {
   // ---- the ground at the door: its drawn triangles taken out over the forecourt and the door's block, cut clean
   const G = openBox(T, BEDS.cut);
   if (G.mesh) { G.mesh.name = 'beds-ground'; ctx.scene.add(G.mesh); }
+  // and over the grate's shaft outside the glasshouse's door (F2 draws the grate in it; under it is ours)
+  const GG = openBox(T, { x0: GR.x - GR.half, x1: GR.x + GR.half, z0: GR.z - GR.half, z1: GR.z + GR.half });
+  if (GG.mesh) { GG.mesh.name = 'beds-ground-grate'; ctx.scene.add(GG.mesh); }
   else console.warn('[fp] beds: the ground\'s cut at the door removed nothing: the terrain\'s mesh has moved');
 
   // ---- what lights each part (aUnder: the sky's share, the haze's, the baked glow of its own light)
@@ -46,7 +49,7 @@ export async function build(ctx) {
   };
   const _n = {};
   const litWay = (x, y, z, out) => { L.way.near(x, z, _n); const h = (y - L.way.floorY(Math.max(0, Math.min(L.way.LEN, _n.s)))) / L.way.height; out[0] = 0.01; out[1] = 0; out[2] = 0.16 + 0.4 * Math.max(0, h) ** 2; return out; };
-  const slant = [-1.1, 0.15], spot = [GR.x + slant[0], YC + 0.3, GR.z + slant[1]];
+  const slant = [0.3, 0.05], spot = [GR.x + slant[0], YC + 0.3, GR.z + slant[1]];
   const litChamber = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = Math.min(1.2, 0.06 + near([spot, [GR.x, YC + CH.ceil, GR.z]], x, y, z, 0.6, 1.6) + near(BEDS.tubs.slice(0, 6).map(([a, b]) => [a, YC + CH.ceil - 0.8, b]), x, y, z, 0.12, 1.0)); return out; };
   const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.24; return out; };
 
@@ -56,8 +59,8 @@ export async function build(ctx) {
   // the way's tube from inside the vault's north wall to the chamber's wall (where the line crosses r - 0.05)
   const sEnd = L.way.END;
   // the way and the chamber one mesh (one draw; and one thing to the geometry check, which it is: the way opens into it)
-  const litUnder = (x, y, z, out) => (Math.hypot(x - CH.x, z - CH.z) < CH.r + 0.5 ? litChamber(x, y, z, out) : litWay(x, y, z, out));
-  const BW = new UnderBuilder(litUnder), ch = {}; wayTube(BW, 0, sEnd); chamber(BW, ch);
+  const litUnder = (x, y, z, out) => (Math.hypot(x - CH.x, z - CH.z) < CH.r + 0.5 || (x > CH.x && x < BEDS.bay.x1 + 0.5 && Math.abs(z - CH.z) < BEDS.bay.half + 0.5) ? litChamber(x, y, z, out) : litWay(x, y, z, out));
+  const BW = new UnderBuilder(litUnder), ch = { groundAtGrate: T.heightAt(GR.x, GR.z) }; wayTube(BW, 0, sEnd); chamber(BW, ch);
   const BR = new UnderBuilder(litRoot);
   const we = L.way.at(sEnd); const RT = roots(BR, { tubs: ch.tubs, ends: VT.roots, vault: VT, wayEnd: { x: we.x, z: we.z, s: sEnd }, tomb: ch.tomb });
   // the glows: the foxfire on the door's foot, and the panes over the grate seen up through it
@@ -71,7 +74,7 @@ export async function build(ctx) {
     gq([x - s, y, z], [x + s, y, z], [x + s, y + s * 0.5, z + sd * r], [x - s, y + s * 0.5, z + sd * r], col);
     gq([x - s * 0.7, y + s * 0.5, z + sd * r], [x + s * 0.7, y + s * 0.5, z + sd * r], [x + s * 0.4, y + s * 0.2, z + sd * r * 1.3], [x - s * 0.4, y + s * 0.2, z + sd * r * 1.3], col.map((v) => v * 0.8));
   }
-  { const t = (ch.grateTop ?? -3.3) + 0.25, h = GR.half;
+  { const t = ch.grateTop - 0.015, h = GR.half;
     for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const x0 = GR.x - h + i * (2 * h / 3), z0 = GR.z - h + j * (2 * h / 3), w = 2 * h / 3, col = cOf(HUES[(i * 3 + j * 2) % 6]).map((v) => v * 0.55);
       gq([x0, t, z0], [x0 + w, t, z0], [x0 + w, t, z0 + w], [x0, t, z0 + w], col); } }
   const glowG = new THREE.BufferGeometry(); glowG.setAttribute('position', new THREE.Float32BufferAttribute(glowP, 3)); glowG.setAttribute('color', new THREE.Float32BufferAttribute(glowC, 3)); glowG.computeBoundingSphere();
@@ -84,7 +87,7 @@ export async function build(ctx) {
   const mWay = mk(BW, underMaterial(std(), 'beds-way', '#d6aa74', { far: [10, 21] }), 'beds-way');
   const mRoots = mk(BR, underMaterial(std(0.6), 'beds-roots', '#ffffff'), 'beds-roots');
   const mGlow = new THREE.Mesh(glowG, glowMat); mGlow.name = 'beds-glow'; ctx.scene.add(mGlow);
-  const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half, top: ch.grateTop ?? -3.3, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
+  const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half, top: ch.grateTop, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
   GL.mesh.name = 'beds-light'; ctx.scene.add(GL.mesh);
   const under = [mStone, mWay, mRoots, mGlow, GL.mesh];
   for (const m of under) below.keep(m);
@@ -132,6 +135,7 @@ export async function build(ctx) {
     if (x >= LA.x0 - r && x <= LA.x1 + r && z >= SP.z1 - r && z <= LA.z1 + r) return true;
     if (x >= V.x0 - r && x <= V.x1 + r && z >= V.z0 - r && z <= V.z1 + r) return true;
     L.way.near(x, z, _n); if (_n.s > -1 && _n.s < L.way.LEN + 1 && Math.abs(_n.d) < L.way.half + r + 0.3) return true;
+    if (x > CH.x && x < BEDS.bay.x1 + r + 0.3 && Math.abs(z - CH.z) < BEDS.bay.half + r + 0.3) return true;
     return Math.hypot(x - CH.x, z - CH.z) < CH.r + r + 0.3;
   };
   let capped = 0;
@@ -157,8 +161,9 @@ export async function build(ctx) {
     return (1 - ss(L.way.half + 0.2, L.way.half + 0.8, Math.abs(_n.d))) * (1 - ss(f + L.way.height + 0.5, f + L.way.height + 1.5, y)) * ss(f - 3, f - 2, y);
   };
   { const a = {}, b = {}; wayVol.segs = []; for (let s = 0; s < L.way.LEN; s += 17) { L.way.at(s, a); L.way.at(Math.min(L.way.LEN, s + 17), b); wayVol.segs.push([a.x, a.z, b.x, b.z, L.way.half, YV + L.way.height + 0.5, YC + L.way.height + 0.5, 1]); } }
-  const chamberVol = (x, y, z) => { const d = Math.hypot(x - CH.x, z - CH.z); return (1 - ss(CH.r - 0.2, CH.r + 0.6, d)) * (1 - ss(YC + CH.ceil + 0.3, YC + CH.ceil + 1.2, y)) * ss(YC - 3, YC - 2, y); };
-  chamberVol.segs = [[CH.x, CH.z - 0.01, CH.x, CH.z + 0.01, CH.r, YC + CH.ceil + 0.3, YC + CH.ceil + 0.3, 1]];
+  const BY = BEDS.bay;
+  const chamberVol = (x, y, z) => { const d = Math.hypot(x - CH.x, z - CH.z), h = Math.max(1 - ss(CH.r - 0.2, CH.r + 0.6, d), x > CH.x ? inRect(x, z, CH.x, BY.x1, CH.z - BY.half, CH.z + BY.half, 0.6) : 0); return h * (1 - ss(YC + CH.ceil + 0.3, YC + CH.ceil + 1.2, y)) * ss(YC - 3, YC - 2, y); };
+  chamberVol.segs = [[CH.x, CH.z, BY.x1 - BY.half, CH.z, CH.r, YC + CH.ceil + 0.3, YC + CH.ceil + 0.3, 1]];
   below.add(stairVol, { size: 0.3 });
   below.add(vaultVol, { size: 0.75 });
   below.add(wayVol, { size: 0.25 });

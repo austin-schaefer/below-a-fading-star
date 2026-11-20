@@ -298,38 +298,55 @@ export function wayTube(B, s0, s1) {
 
 // ------------------------------------------------------------------------------------------------ the chamber
 export function chamber(B, out) {
-  const { x: cx, z: cz, r, y, wall, ceil } = CH, yc = y + ceil, N = 36;
-  // the way comes in at the bearing of its end; the wall is left open there (the way's own tube lines the hole)
+  const { x: cx, z: cz, r, y, wall, ceil } = CH, yc = y + ceil, N = 36, rc = r - 0.35, BY = BEDS.bay, bh = BY.half, be = BY.x1 - cx;
+  // the way comes in at the bearing of its end; the wall is left open there (the way's own tube lines the hole). To the
+  // east the bay opens out to under the grate: its walls meet the round wall at 20 degrees, a segment's edge
   const e = W.at(W.END), ma = Math.atan2(e.z - cz, e.x - cx), mw = (W.half + 0.45) / r;
   const inMouth = (a) => Math.abs(Math.atan2(Math.sin(a - ma), Math.cos(a - ma))) < mw;
-  // the floor: rings of flags round a round stone in the middle
+  const ab = Math.asin(bh / r), inBay = (a) => Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < ab - 1e-3;
+  // the floor: rings of flags round a round stone in the middle, and the bay's
   for (let i = 0; i < N; i++) {
-    const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2;
+    const a0 = (i / N) * Math.PI * 2, a1 = ((i + 1) / N) * Math.PI * 2, am = (a0 + a1) / 2;
     for (const [r0, r1, c] of [[0, 1.6, COL.floor], [1.6, 3.1, K(COL.floor, 0.9)], [3.1, r, i % 2 ? COL.floor : K(COL.floor, 0.82)]]) {
       const p = (a, rr) => [cx + Math.cos(a) * rr, y, cz + Math.sin(a) * rr];
       if (r0 === 0) B.tri([cx, y, cz], p(a0, r1), p(a1, r1), c, [0, 1, 0], 0.1); else B.quad(p(a0, r0), p(a0, r1), p(a1, r1), p(a1, r0), c, [0, 1, 0], 0.1);
     }
-    // the wall: coursed, with the cove to the ceiling
-    const p = (a, rr, h) => [cx + Math.cos(a) * rr, y + h, cz + Math.sin(a) * rr], n = [-Math.cos((a0 + a1) / 2), 0, -Math.sin((a0 + a1) / 2)];
+    // the wall: coursed, with the cove to the ceiling; open at the bay, and at the way's mouth to the way's height
+    if (inBay(am)) continue;
+    const p = (a, rr, h) => [cx + Math.cos(a) * rr, y + h, cz + Math.sin(a) * rr], n = [-Math.cos(am), 0, -Math.sin(am)];
     for (let h = 0, k = 0; h < wall - 1e-3; h += 0.45, k++) {
       const h1 = Math.min(wall, h + 0.45);
-      if (inMouth((a0 + a1) / 2) && h < W.height - 0.01) continue;
+      if (inMouth(am) && h < W.height - 0.01) continue;
       B.quad(p(a0, r, h), p(a1, r, h), p(a1, r, h1), p(a0, r, h1), hash(i + (k % 2) * 0.5, k) > 0.5 ? COL.vault : COL.vaultW, n, 0.08);
     }
-    B.quad(p(a0, r, wall), p(a1, r, wall), p(a1, r - 0.6, ceil), p(a0, r - 0.6, ceil), COL.vaultW, [n[0], -1.2, n[2]], 0.08);
+    B.quad(p(a0, r, wall), p(a1, r, wall), p(a1, rc, ceil), p(a0, rc, ceil), COL.vaultW, [n[0], -0.6, n[2]], 0.08);
   }
-  // the ceiling: a flat stone disc with the grate's square hole
+  // the bay's floor: from the round wall's chords out to its end
   {
-    const sh = new THREE.Shape(); sh.absarc(0, 0, r - 0.6 + 0.002, 0, Math.PI * 2, false);
+    const sh = new THREE.Shape(), u0 = r * Math.cos(ab);
+    sh.moveTo(u0, -bh); sh.lineTo(be, -bh); sh.lineTo(be, bh); sh.lineTo(u0, bh);
+    for (let k = 1; k < 4; k++) { const a = ab - (2 * ab * k) / 4; sh.lineTo(r * Math.cos(a), r * Math.sin(a)); }
+    sh.lineTo(u0, -bh);
+    B.geo(new THREE.ShapeGeometry(sh), new THREE.Matrix4().makeTranslation(cx, y, cz).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)), COL.floor, 0.1); // (u, v) -> (cx + u, y, cz - v), facing up: the shape is even in v
+    // its walls and its end, coursed to the ceiling; broad pilasters where they meet the round wall
+    coursedZ(B, cz - bh, 1, cx + u0, BY.x1, y, yc, COL.vault, COL.vaultW, 0.45); coursedZ(B, cz + bh, -1, cx + u0, BY.x1, y, yc, COL.vault, COL.vaultW, 0.45);
+    coursedX(B, BY.x1, -1, cz - bh, cz + bh, y, yc, COL.vault, COL.vaultW, 0.45);
+    for (const s of [-1, 1]) B.box(cx + u0 - 0.05, (y + yc) / 2 + 0.003, cz + s * (bh - 0.18), 0.32, (yc - y) / 2, 0.24, 0, COL.face, COL.faceW, 0.07);
+  }
+  // the ceiling: a flat stone disc and the bay's, the grate's square hole in the bay
+  {
+    const sh = new THREE.Shape(), rr = rc + 0.002, ac = Math.asin(bh / rr);
+    sh.absarc(0, 0, rr, ac, Math.PI * 2 - ac, false); sh.lineTo(be, -bh); sh.lineTo(be, bh); sh.lineTo(rr * Math.cos(ac), bh);
     const g = GR, hole = new THREE.Path(), u0 = g.x - cx - g.half, u1 = g.x - cx + g.half, v0 = g.z - cz - g.half, v1 = g.z - cz + g.half;
     hole.moveTo(u0, v0); hole.lineTo(u0, v1); hole.lineTo(u1, v1); hole.lineTo(u1, v0); hole.lineTo(u0, v0); sh.holes.push(hole);
-    const geo = new THREE.ShapeGeometry(sh, 24); // (u, v) -> world (cx + u, yc, cz + v), facing down
+    const geo = new THREE.ShapeGeometry(sh, 32); // (u, v) -> world (cx + u, yc, cz + v), facing down
     B.geo(geo, new THREE.Matrix4().makeTranslation(cx, yc, cz).multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)), (nx, ny) => (ny < 0 ? COL.vaultW : COL.vault), 0.1);
-    // the grate's shaft up to the glasshouse's floor, the grate across its top: iron bars both ways
-    const top = BEDS.grate.top ?? -3.3, gx0 = g.x - g.half, gx1 = g.x + g.half, gz0 = g.z - g.half, gz1 = g.z + g.half;
-    coursedX(B, gx0, 1, gz0, gz1, yc, top + 0.15, COL.vault, COL.vaultW, 0.4); coursedX(B, gx1, -1, gz0, gz1, yc, top + 0.15, COL.vault, COL.vaultW, 0.4);
-    coursedZ(B, gz0, 1, gx0, gx1, yc, top + 0.15, COL.vault, COL.vaultW, 0.4); coursedZ(B, gz1, -1, gx0, gx1, yc, top + 0.15, COL.vault, COL.vaultW, 0.4);
-    for (let k = 0; k < 6; k++) { const t = (k + 0.5) / 6; B.box(gx0 + (gx1 - gx0) * t, top, g.z, 0.02, 0.035, g.half, 0, COL.iron, COL.iron, 0.05); B.box(g.x, top - 0.07, gz0 + (gz1 - gz0) * t, g.half, 0.02, 0.02, 0, COL.iron, COL.iron, 0.05); }
+    // the grate's shaft up to the paving outside the glasshouse's door; its irons both ways at the top (F2's own over
+    // them, from y -3.25 up: under the ground of this branch until F2's level court is in, the top is under the ground)
+    const top = Math.min(g.top ?? -3.25, out.groundAtGrate - 0.08), gx0 = g.x - g.half, gx1 = g.x + g.half, gz0 = g.z - g.half, gz1 = g.z + g.half;
+    coursedX(B, gx0, 1, gz0, gz1, yc, top, COL.vault, COL.vaultW, 0.4); coursedX(B, gx1, -1, gz0, gz1, yc, top, COL.vault, COL.vaultW, 0.4);
+    coursedZ(B, gz0, 1, gx0, gx1, yc, top, COL.vault, COL.vaultW, 0.4); coursedZ(B, gz1, -1, gx0, gx1, yc, top, COL.vault, COL.vaultW, 0.4);
+    for (let k = 0; k < 6; k++) { const t = (k + 0.5) / 6; B.box(gx0 + (gx1 - gx0) * t, top - 0.06, g.z, 0.02, 0.03, g.half - 0.002, 0, COL.iron, COL.iron, 0.05); B.box(g.x, top - 0.12, gz0 + (gz1 - gz0) * t, g.half - 0.002, 0.02, 0.02, 0, COL.iron, COL.iron, 0.05); }
     out.grateTop = top;
   }
   // the seven tubs' undersides, set in the floor above: stone bowls standing down out of the ceiling, a drain in each
