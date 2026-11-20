@@ -67,7 +67,7 @@ const CUES = [
   ['act-water-lap', { dx: 2, dy: -1.2, dz: -3 }, null, 1500, 1000], ['act-water-drop', { dx: 1.5, dy: -0.8, dz: -2 }, null, 1200, 1000], // v17-A1 the mere's lap and the can's drop (src/v17/sound.js)
   // v18-F5 the wood heard (src/v18/sound.js)
   ['act-wood-glass', { dx: 4, dy: 1, dz: -6 }, null, 800, 800], ['act-wood-glass', { dx: 4, dy: 1, dz: -6 }, { ring: true }, 1500, 1200], ['act-wood-glass', { dx: 3, dy: 1, dz: -4 }, { moth: true }, 800, 600], ['act-wood-glass', { dx: 3, dy: 1, dz: -4 }, { ring: true, dull: true }, 1500, 1200],
-  ['act-wood-petals', { dx: 4, dy: 0, dz: -6 }, null, 3000, 2500], ['act-wood-step', { dx: 3, dy: -1.7, dz: -5 }, null, 2500, 2000], ['act-wood-drip', { dx: 1.5, dy: -1, dz: -2 }, null, 1200, 1000], ['act-wood-root', { dx: 2, dy: 1, dz: -4 }, null, 3000, 2000],
+  ['act-wood-petals', { dx: 4, dy: 0, dz: -6 }, null, 3000, 2500], ['act-wood-step', { dx: 3, dy: -1.7, dz: -5 }, null, 2500, 2000], ['act-wood-ring', { dx: 0, dy: 0, dz: 0 }, null, 5000, 3000], ['act-wood-drip', { dx: 1.5, dy: -1, dz: -2 }, null, 1200, 1000], ['act-wood-root', { dx: 2, dy: 1, dz: -4 }, null, 3000, 2000],
   ['act-wood-owl', { dx: 30, dy: 8, dz: -30 }, null, 2500, 1500], ['act-wood-litter', { dx: 1.5, dy: -1.7, dz: -2 }, null, 800, 600],
   // v10-A1 the crystal and the door (src/v10/sound-central.js)
   ['act-crystal', { dx: 1.5, dy: -0.3, dz: -1.5 }, { n: 1 }, 2500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 1 }, 1500, 7000], ['act-crystal-ring', { dx: 3, dy: 18, dz: -6 }, { n: 2, back: true }, 3000, 5000],

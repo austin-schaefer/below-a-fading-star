@@ -28,7 +28,7 @@
 //                                  when they stop: a dry grain scuttle, now and then, in the wood
 //
 // Cues, for the tests and any caller that wants one by hand: act-wood-glass (opts.ring, opts.moth, opts.dull),
-// act-wood-petals, act-wood-step, act-wood-drip, act-wood-root, act-wood-owl, act-wood-litter. ?woodsound=0 leaves it silent.
+// act-wood-petals, act-wood-step, act-wood-ring (the gutter's five), act-wood-drip, act-wood-root, act-wood-owl, act-wood-litter. ?woodsound=0 leaves it silent.
 // ctx.woodSound = { grove, state }.
 import { caller } from '../audio/calls.js';
 import { GLASSHOUSE, FLORILEGIUM, GROVE, BEDS } from './plan.js';
@@ -171,7 +171,7 @@ export function startWoodSound(a, ctx) {
     for (let t = t0; t < t0 + len; ) {
       const u = (t - t0) / len;
       grain(v, out, t, f0 * (1 + 0.25 * u) * jit(1, 0.04), 7, 0.026 * Math.sin(Math.PI * Math.min(1, u * 1.08)) + 0.003, 0.006, 0.035);
-      t += 0.045 + 0.05 * u + rng() * 0.02;
+      t += 0.07 + 0.08 * u + rng() * 0.04;
     }
     const wt = t0 + len + span(0.5, 1.1);
     const g = ac.createGain(); g.gain.setValueAtTime(0.0001, wt); g.gain.linearRampToValueAtTime(0.03, wt + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, wt + 0.14); g.gain.linearRampToValueAtTime(0, wt + 0.15);
@@ -189,11 +189,11 @@ export function startWoodSound(a, ctx) {
     // the creak: a long green bough taking weight, stick-slip grains slowing, 130-200 Hz
     for (let t = t0 + 0.05; t < t0 + len; ) {
       const u = (t - t0) / len;
-      grain(v, out, t, f0 * (1 + 0.3 * u) * jit(1, 0.05), 6, (0.03 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.004) * k, 0.008, 0.05);
-      t += 0.04 + 0.06 * u + rng() * 0.02;
+      grain(v, out, t, f0 * (1 + 0.3 * u) * jit(1, 0.05), 1.8, (0.09 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.01) * k * jit(1, 0.4), 0.02, 0.11);
+      t += 0.09 + 0.1 * u + rng() * 0.08;
     }
     // the set-down: a soft heavy thud, the root-feet taking the ground, a little earth under it
-    const dt = t0 + len + span(0.15, 0.4), pk = 0.075 * k * jit(1, 0.15);
+    const dt = t0 + len + span(0.15, 0.4), pk = 0.2 * k * jit(1, 0.15);
     grain(v, out, dt, jit(95 / hi, 0.08), 1.4, pk, 0.012, 0.22, brown);
     grain(v, out, dt + 0.01, jit(260, 0.1), 1.6, pk * 0.35, 0.01, 0.1);
     grain(v, out, dt + 0.12, jit(900, 0.2), 1.0, 0.007 * k, 0.04, 0.5); // a little shed bark and leaf after it, from the arms
@@ -202,7 +202,7 @@ export function startWoodSound(a, ctx) {
     const v = say({ x: p.x, y: p.y + 4, z: p.z }, { ref: 4, range: 40, dur: 1.4, verb: 0.45, air: 45, gain: 9 }); if (!v) return;
     const out = filt('lowpass', 700, 0.6); out.connect(v.in);
     const t0 = v.t0, len = span(0.5, 0.8), f0 = jit(170, 0.1);
-    for (let t = t0 + 0.04; t < t0 + len; ) { const u = (t - t0) / len; grain(v, out, t, f0 * (1 - 0.15 * u), 6, 0.016 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.003, 0.008, 0.04); t += 0.05 + 0.04 * u + rng() * 0.02; }
+    for (let t = t0 + 0.04; t < t0 + len; ) { const u = (t - t0) / len; grain(v, out, t, f0 * (1 - 0.15 * u), 1.8, 0.034 * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 0.006, 0.008, 0.04); t += 0.08 + 0.07 * u + rng() * 0.04; }
   }
   const onStilter = (e) => {
     const d = e.detail; if (!d || !Number.isFinite(d.x) || under()) return;
@@ -211,7 +211,7 @@ export function startWoodSound(a, ctx) {
     if (d.kind === 'ring') {
       // at the gutter they all move: each its own set-downs spread over some seconds (3.4 at most), then nothing
       const n = low ? 1 : 2;
-      for (let i = 0; i < n; i++) S.queue.push({ at: now + span(0.1, 3.4), p: d, k: 0.85 * jit(1, 0.2) });
+      for (let i = 0; i < n; i++) S.queue.push({ at: now + span(0.1, 3.4), p: d, k: 0.6 * jit(1, 0.2) });
       S.ring = now + 8;
     } else if (d.kind === 'step') {
       if (now - S.last < 5 || now < S.ring || rng() > 0.62) return;
@@ -348,6 +348,10 @@ export function startWoodSound(a, ctx) {
     if (name === 'act-wood-glass') { glass(opts?.ring ? 'ring' : opts?.moth ? 'moth' : 'tick', !!opts?.dull, pos); return true; }
     if (name === 'act-wood-petals') { concerted(pos); return true; }
     if (name === 'act-wood-step') { stilterStep(pos || { x: cam.x + 3, y: cam.y - 1.7, z: cam.z - 4 }, 1, 11); return true; }
+    if (name === 'act-wood-ring') { // the gutter's ring, as the stilters send it: five round the walker, 7-13 m off
+      for (let i = 0; i < 5; i++) { const ang = i * 1.257 + 0.4, r = 7 + 1.5 * i; onStilter({ detail: { kind: 'ring', i, x: cam.x + Math.cos(ang) * r, y: cam.y - 1.7, z: cam.z + Math.sin(ang) * r, h: 11 } }); }
+      return true;
+    }
     if (name === 'act-wood-drip') { drip(pos); return true; }
     if (name === 'act-wood-root') { root(pos || { x: cam.x + 4, y: cam.y + 0.7, z: cam.z - 6 }); return true; }
     if (name === 'act-wood-owl') { hoot(pos || { x: cam.x + 60, y: cam.y + 8, z: cam.z - 60 }, 1); return true; }
