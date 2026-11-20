@@ -50,3 +50,50 @@
 ## Still weak
 - The junctions read from the road only faintly. Next step: a worn mouth wider than the tread, or a knot on the far side of the road.
 - The lobe's rim has few dead trunks (1).
+
+## Round two
+
+### 1. `settings` (fixed)
+- `vegetation/ground.js` `standNear` now hides a tree along the first 4.5 m each stand looks down: a body's width plus a metre either side. Before, it cleared only the stand's footprint (r + 0.6 m), and the reshuffle stood a tree before the Collation's stand.
+- settings: 103/103. One earlier run had 102/103: the "pause: W held through Escape" row failed. It is a timing row, unrelated, and passed on both reruns.
+
+### 2. geometry stability (not re-recorded)
+- Six full geometry runs on this branch: 0 FAIL each.
+- Three house-only runs: identical, 45 backs.
+- The only run-to-run difference: lappet-crown and lappet-high face counts move by 1 (22493 vs 22492, 19257 vs 19256), with 0 findings either way. Something that moves crosses the edge of the place.
+- The house row at (88.5, -35.5) did not vary here. I could not reproduce the orchestrator's single failure.
+- A plausible cause I could not confirm: geometry's stands are found through `placeAt`, which steps out of colliders, so anything that moves near the house could shift a stand between runs.
+
+### 3. Shadows on low (fixed)
+- On low the reach's 63 drawn trees (lobe, outliers, rim giants, spur logs) are taken out of the batch's draw list for the shadow camera only. This is done in `onBeforeShadow`, using the `_instanceInfo` visible flags, and restored at once.
+- Multi-draw path only: the instanced stand-in still casts them.
+- perf-views on low, 3 runs, triangles k, v17.1 → now: heart 1557→1502, road middle 1524→1477, road entering 1812→1775, lobe edge 1952→1934, lobe inside 2162→2115.
+- Every stand, shadow pass included, now draws fewer triangles than before.
+
+### 4. Claims (fixed)
+- Toadstools and pods are filtered by `claimedBy(.., 'cover')` after their draws.
+- Toadstool rings centre only on trees that stand.
+- A new `'pebbles'` keep, given to the Florilegium and the Beds' door; rocks.js asks it after the draws.
+- The Beds' door now keeps `cover` as well.
+- A fallen trunk may not lie across any claimed site at any point along it.
+- `near()`'s negative radius is replaced by a bare trunk-distance test (`nearTrunk`).
+
+### 5. Junctions (still not met)
+- Added: `SPUR_MOUTHS` (a claimed gap in the trunks at each head), the spur's first 10 m worn wider and paler, gatepost knots on the nearest trunk either side (or a tall snag), brighter head lights.
+- A fresh blind reader (sonnet), 12 frames, both directions, low and medium: still no junction read as a side path.
+- At the Beds, the foxfire reads as "green lanterns along the road". The west mouth is read as teal water. The north junction lies behind a rise.
+- What would fix it is shape, not light: the spur leaving square to the road at a point a walker sees, and a log or root step framing the mouth.
+
+### Smaller
+- Foxfire draws nothing past 120 m from every clump.
+- Each head light is on only within 45 m. It is a light rather than more emissive because only a light picks the gateposts' bark out green.
+- The lobe has a tongue toward the tor (still held at x -218) and a bay on the east. heightAt is unchanged to the bit.
+
+### Tests
+- `ONLY=threads,seams,geometry,roads,paths,outline,regions,rocks,dressing,strata,settings,edges,heights,treelod,foxfire,perf,walk,village,house,twk`: 20 tests, 0 failed.
+  - Run twice, on the fixes and on the junction commit.
+  - PASS counts: settings 103, dressing 22, threads 25, paths 91, roads 68, foxfire 21, outline 77, twk 35, regions 56, strata 8, village 690, house 20, rocks 38, walk 13, edges 214, heights 208, seams 3, geometry 146, perf 29, treelod 71.
+- walkers: 19/20 (P12's pit-lamps, as on main).
+
+### Frames
+`shots/wip/v18-F1-r6-{low,med}-j-*`
