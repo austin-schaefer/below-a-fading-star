@@ -35,6 +35,7 @@ import { CLEARINGS, inEntry, leadUnder, CAUSEWAY_CLEAR } from './v8/clearings.js
 import { villageClear } from './v15/plan.js';
 import { LANDMARKS as L } from './world.js';
 import { SPHERE } from './v17/plan.js';
+import { BEDS } from './v18/plan.js';
 
 export const CLAIMS = [
   // v8-11's table, kept clear of stones and boulders (see src/v8/clearings.js for each place's reasons)
@@ -60,6 +61,10 @@ export const CLAIMS = [
   // (2.1 m cells on medium, 3.1 on low) cannot follow them, so a stone or a pebble set on heightAt there is drawn half
   // in the bank (geometry found five in v17-swallow). rocks.js reads this row for pebbles too (CUT_ROCKS).
   { name: 'the Swallow\'s cut', keeps: ['rocks'], kind: 'box', x0: -109, x1: -80.5, z0: 288, z1: 311.5 },
+  // v18-F3: the Lower Beds' forecourt and the door's block (the ground there is opened and cut clean, src/v18/beds/ground.js),
+  // and the great tree over the door (its own trunk)
+  { name: 'the Lower Beds\' door', keeps: ['rocks', 'trees', 'cover', 'trods'], kind: 'box', x0: BEDS.cut.x0 - 0.8, x1: BEDS.cut.x1 + 0.3, z0: BEDS.block.z0 - 0.4, z1: BEDS.block.z1 + 0.4 },
+  { name: 'the Lower Beds\' tree', keeps: ['rocks', 'trees'], kind: 'disc', x: BEDS.tree.x, z: BEDS.tree.z, r: BEDS.tree.r + 1.5 },
   { name: 'the causeway', keeps: ['rocks'], kind: 'fn', test: (x, z, r, ctx) => !!ctx?.terrain && ctx.terrain.causewayDistance(x, z) < CAUSEWAY_CLEAR + r },
 ];
 

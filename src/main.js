@@ -110,6 +110,7 @@ const MODULES = [
   ['leat', () => import('./v17/leat.js')], // v17-W2: the Heliarchs' leat's stonework (kerbs, weirs, the slab bridge at (9, 252)); its water is the kit's (?leat=0)
   ['garth', () => import('./v17/garth.js')], // v17-U2: the Meridian Garth, the garden under the mountain where it is still noon (?garth=0)
   ['sphere', () => import('./v17/sphere.js'), M], // v17-S1: the man at the wheel, the Noonwrights' glass junction at the east wall's foot; cuts the terrain mesh (?sphere=0)
+  ['beds', () => import('./v18/beds.js'), M], // v18-F3: the Lower Beds, the crypt in the wood's south-west rise and the way under to beneath the glasshouse; cuts the terrain mesh (?beds=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
 

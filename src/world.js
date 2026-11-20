@@ -95,6 +95,7 @@ export const LANDMARKS = {
   swallow: { x: -86, z: 303, r: 16, y: null, name: "The Swallow", line: "", card: true, feet: [-30, 6], aside: false },
   garth: { x: -10, z: 322, r: 20, y: null, name: "The Meridian Garth", line: "", card: true, feet: [-30, -18], reached: 'the tube from the Swallow', aside: false },
   noonsphere: { x: 292, z: 108, r: 22, y: null, name: "The Shuttered Noon", line: "", card: true, aside: false },
+  beds: { x: -259.5, z: 163.5, r: 4.5, y: null, name: "The Lower Beds", line: "", card: true, feet: [-10, -7], reached: 'the stair in the bank', aside: false }, // v18-F3: the vault of the six tombs, its card where the room opens out (the owner gives its line)
   nadir: { x: 200, z: 185, r: 14, y: null, name: "The Nadir", card: true, feet: [-40, -27], reached: 'the road’s slabs down the Pit’s wall', aside: false }, // v14-D2: the bottom of the Pit, the hole through the floor of the world and the down-reel over it (src/v14/pit.js)
 };
 
