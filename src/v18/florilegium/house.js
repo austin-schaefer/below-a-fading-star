@@ -112,10 +112,10 @@ export function buildFrame({ low = false, tubs = [] } = {}) {
     // the key: brass, a hand long, on a nail in the middle rail's inner face, hanging behind the clear pane
     const kx = x - 0.07, kz = 0.12, ky = 1.82;
     P.paint(IRON, 0.5, 0.6, 0); P.loft([[x - 0.01, 1.9, kz], [kx - 0.03, 1.91, kz]], [0.008, 0.008], 4, 0, true);
-    P.paint(GILT, 0.7, 0.35, 0.9);
-    { const pts = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([kx, ky + Math.cos(a) * 0.055, kz + Math.sin(a) * 0.045]); } P.loft(pts, pts.map(() => 0.011), 5, 0, false); }
-    P.loft([[kx, ky - 0.055, kz], [kx, ky - 0.3, kz]], [0.012, 0.012], 5, 0, true);
-    P.box(kx, ky - 0.25, kz + 0.035, 0.012, 0.05, 0.06); P.box(kx, ky - 0.29, kz + 0.025, 0.012, 0.03, 0.04); P.box(kx, ky - 0.1, kz, 0.03, 0.02, 0.03);
+    P.paint(GILT, 0.7, 0.35, 1.6);
+    { const pts = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([kx, ky + Math.cos(a) * 0.075, kz + Math.sin(a) * 0.06]); } P.loft(pts, pts.map(() => 0.016), 5, 0, false); }
+    P.loft([[kx, ky - 0.075, kz], [kx, ky - 0.42, kz]], [0.018, 0.018], 5, 0, true);
+    P.box(kx, ky - 0.34, kz + 0.05, 0.016, 0.06, 0.09); P.box(kx, ky - 0.4, kz + 0.04, 0.016, 0.04, 0.07); P.box(kx, ky - 0.1, kz, 0.03, 0.02, 0.03);
   }
   // ---- outside the door: a step, the paving, and in it the grate over the dark
   {
@@ -175,7 +175,7 @@ const GLSL_PANES = `
 
 export function buildGlass({ low = false } = {}) {
   const pos = [], uv = [], bay = [], lit = [], idx = [];
-  const litAt = (p) => 1 / (1 + (p[0] * p[0] + (p[1] - FLASK_Y) * (p[1] - FLASK_Y) + p[2] * p[2]) / 22);
+  const litAt = (p) => 1 / (1 + (p[0] * p[0] + (p[1] - FLASK_Y) * (p[1] - FLASK_Y) + p[2] * p[2]) / 10);
   // a quad a, b (bottom), c, d (top, d over a), its uv in metres, its side's schemes, a seed and a kind
   const quad = (a, b, c, d, u0, u1, u2, u3, v0, v1, side, kind, glow = 1) => {
     const n = pos.length / 3;
@@ -215,7 +215,7 @@ export function buildGlass({ low = false } = {}) {
   geometry.setAttribute('aLit', new THREE.Float32BufferAttribute(lit, 1));
   geometry.setIndex(idx);
   geometry.computeBoundingSphere();
-  const uniforms = { uGlow: { value: 1.25 }, uBreath: { value: 1 } };
+  const uniforms = { uGlow: { value: 2.3 }, uBreath: { value: 1 } };
   // A pane is a filter and a lamp: what is behind it is multiplied by its colour, and its own colour is added by how
   // much of the flask's light reaches it (blend: src * alpha + dst * src). Leads and iron are near black both ways.
   const material = new THREE.ShaderMaterial({
@@ -240,6 +240,7 @@ export function buildGlass({ low = false } = {}) {
           float h = flH(c + seed);
           tint = mix(vec3(0.9, 0.86, 0.62), PANES[1], step(0.86, h)) * (0.72 + 0.28 * flH(c * 1.7 + seed));
           lead = smoothstep(0.42, 0.455, max(f.x, f.y));
+          if (vY < 5.0) { glow = 0.07; tint = mix(tint, vec3(0.86, 0.9, 0.84), 0.5); }   // the door's: nearly clear, to see the key by
         } else {
           // fish-scale quarries: each pane a disc lapped by the row above, so what shows is a petal hanging down
           // (the lower wall is a vitrine: inside a border of the side's colours its panes are large and nearly clear, so
@@ -257,10 +258,10 @@ export function buildGlass({ low = false } = {}) {
           float up = smoothstep(0.6, 6.6, vY + (h2 - 0.5) * 3.2);
           int ci = h < 0.11 ? int(h * 72.0) : (h2 < up ? int(vBay.y + 0.5) : int(vBay.x + 0.5));
           tint = PANES[ci] * (0.62 + 0.38 * h2);
-          glow = 0.4 + 0.6 * flH(oc * 7.3 + seed + 1.0);
+          glow = 0.3 + 0.7 * flH(oc * 7.3 + seed + 1.0); if (flH(oc * 2.9 + seed + 4.0) > 0.84) { glow *= 0.22; tint *= 0.5; }   // some gone dull with soot
           if (clear && h > 0.07) { tint = mix(vec3(0.8, 0.86, 0.76), PANES[ci], 0.16) * (0.78 + 0.22 * h2); glow = 0.1; }
           // hand-made glass: thicker and darker toward the lead, streaked
-          tint *= (1.0 - 0.3 * smoothstep(0.25, 0.72, od)) * (0.86 + 0.14 * sin(dot(q - oc, cd0(h)) * 23.0));
+          tint *= (1.0 - 0.3 * smoothstep(0.25, 0.72, od)) * (0.93 + 0.07 * sin(dot(q - oc, cd0(h)) * 11.0));
           // a crack across some: a dark line where it was leaded up again
           vec2 cd = vec2(cos(h * 40.0), sin(h * 40.0));
           if (h3 < 0.1) lead = max(lead, 1.0 - smoothstep(0.02, 0.05, abs(dot(q - oc, cd) - 0.12)));

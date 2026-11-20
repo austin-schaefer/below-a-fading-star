@@ -69,6 +69,20 @@ export function makeTurner(heads, flask, uTurn, { stillAfter = STILL_AFTER } = {
   return state;
 }
 
+// old stone and old iron: grain, stains and blotches on every painted surface of the house, from where it is
+const weather = (sh) => {
+  sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vFlP;').replace('vMRE = aMRE;', 'vMRE = aMRE; vFlP = position;');
+  sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+    varying vec3 vFlP;
+    float flH3(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+    float flN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(mix(flH3(i), flH3(i + vec3(1, 0, 0)), f.x), mix(flH3(i + vec3(0, 1, 0)), flH3(i + vec3(1, 1, 0)), f.x), f.y), mix(mix(flH3(i + vec3(0, 0, 1)), flH3(i + vec3(1, 0, 1)), f.x), mix(flH3(i + vec3(0, 1, 1)), flH3(i + vec3(1, 1, 1)), f.x), f.y), f.z); }`)
+    .replace('#include <color_fragment>', `#include <color_fragment>
+    { float big = flN(vFlP * 1.7), fine = flN(vFlP * 13.0), mid = flN(vFlP * 5.1 + 7.0);
+      diffuseColor.rgb *= (0.5 + 0.75 * big) * (0.78 + 0.44 * fine);
+      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.07, 0.11, 0.05), smoothstep(0.55, 0.8, mid) * 0.55 * (1.0 - vMRE.x)); }`);
+};
+
 export async function build(ctx) {
   if (FLORILEGIUM_OFF) return;
   const { scene } = ctx, low = ctx.quality === 'low';
@@ -76,7 +90,7 @@ export async function build(ctx) {
   const tubs = tubsOf();
 
   // ---- the house: stone, iron, the floor, the door, the paving and the grate, the flask
-  const frame = new THREE.Mesh(buildFrame({ low, tubs: tubs.map((t) => [t.x, t.z]) }), paintedMaterial({ side: THREE.DoubleSide }));
+  const frame = new THREE.Mesh(buildFrame({ low, tubs: tubs.map((t) => [t.x, t.z]) }), paintedMaterial({ side: THREE.DoubleSide }, weather));
   frame.name = 'florilegium-frame'; frame.position.set(cx, fy, cz); frame.castShadow = !low; frame.receiveShadow = true;
   scene.add(frame);
   // the dark under the grate: drawn from above only, so the room F3 builds below looks up through the bars
@@ -126,6 +140,25 @@ export async function build(ctx) {
     fragmentShader: `uniform float uBreath; varying vec3 vCol; varying float vHeart; void main() { vec2 c = (gl_PointCoord - 0.5) * 2.0; float r2 = dot(c, c); gl_FragColor = vec4(vCol * (exp(-r2 * 4.0) * 0.5 + exp(-r2 * 40.0) * 1.4 * vHeart + exp(-r2 * 9.0) * 0.5 * (1.0 - vHeart)) * (1.0 - smoothstep(0.7, 1.0, r2)) * uBreath, 1.0); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   }));
+  // the glow in the wood's air: five soft discs that face the eye, drawn at the house's depth so every trunk between
+  // stands black against them; from 20 m in they are gone and the house is its own light
+  const hz = { p: [], o: [], c: [], i: [] };
+  [[NOON.light, 0, 5.5, 0, 10, 0.4], [PANES[0], 3.6, 4, 2.4, 9, 0.6], [PANES[3], -2.6, 4.4, 3.6, 9, 0.7], [PANES[4], -3.4, 5.2, -2.6, 9, 0.6], [PANES[1], 2.8, 6, -3.4, 9, 0.5], [PANES[2], 0, 8, 0, 7, 0.4]].forEach(([c, x, y, z, r, k], q) => {
+    for (const [ox, oy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { hz.p.push(cx + x, fy + y, cz + z); hz.o.push(ox, oy, r); hz.c.push(c[0] * k, c[1] * k, c[2] * k); }
+    hz.i.push(q * 4, q * 4 + 1, q * 4 + 2, q * 4, q * 4 + 2, q * 4 + 3);
+  });
+  const hzg = new THREE.BufferGeometry();
+  hzg.setAttribute('position', new THREE.Float32BufferAttribute(hz.p, 3)); hzg.setAttribute('aOff', new THREE.Float32BufferAttribute(hz.o, 3)); hzg.setAttribute('aCol', new THREE.Float32BufferAttribute(hz.c, 3)); hzg.setIndex(hz.i);
+  const haze = new THREE.Mesh(hzg, new THREE.ShaderMaterial({
+    uniforms: { uBreath: glass.uniforms.uBreath },
+    vertexShader: `attribute vec3 aOff, aCol; varying vec3 vCol; varying vec2 vC;
+      void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); float d = max(-mv.z, 0.1); mv.xy += aOff.xy * aOff.z; gl_Position = projectionMatrix * mv;
+        vC = aOff.xy; vCol = aCol * smoothstep(20.0, 42.0, d) * (1.0 - smoothstep(120.0, 190.0, d)); }`,
+    fragmentShader: `uniform float uBreath; varying vec3 vCol; varying vec2 vC; void main() { float r2 = dot(vC, vC); gl_FragColor = vec4(vCol * exp(-r2 * 3.2) * (1.0 - smoothstep(0.75, 1.0, r2)) * uBreath, 1.0); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  haze.name = 'florilegium-haze'; haze.frustumCulled = false; haze.renderOrder = 1;
+  scene.add(haze);
   halo.name = 'florilegium-halo'; halo.frustumCulled = false; halo.renderOrder = 1;
   scene.add(halo);
 
@@ -161,7 +194,7 @@ export async function build(ctx) {
     centre: { x: cx, z: cz }, floor: fy, flask, heads, turn, uTurn, panes: walls,
     grate: { x: cx + GRATE.x, z: cz + GRATE.z, half: GRATE.half, y: fy + GRATE.top, dark },
     tubs: tubs.map((t) => ({ id: t.id, x: cx + t.x, z: cz + t.z, yaw: t.yaw })),
-    meshes: { frame, people, panes, cast: cast.mesh, halo, dark }, lights: lights.map((l) => l.L), glass: glass.uniforms, castU: cast.uniforms,
+    meshes: { frame, people, panes, cast: cast.mesh, halo, haze, dark }, lights: lights.map((l) => l.L), glass: glass.uniforms, castU: cast.uniforms,
   };
 }
 
