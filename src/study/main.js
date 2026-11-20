@@ -106,6 +106,7 @@ const subjects = [], errors = [];
 // __study.total is how many the whole sheet has
 const PER = +(Q.get('per') || 0), PART = +(Q.get('part') || 1);
 let seen = 0;
+const COUNT = Q.get('count') === '1'; // ?count=1: build nothing, only count the sheet (__study.total)
 const inPart = () => { const i = seen++; return !PER || (i >= (PART - 1) * PER && i < PART * PER); };
 const want = (kind, id) => (ONLY ? ONLY.has(id) : SHEET === 'all' ? kind !== 'recipe' : SHEET === `${kind}s`);
 const V = new THREE.Vector3();
@@ -129,7 +130,7 @@ async function buildSubjects() {
     if (!Array.isArray(list)) { errors.push(`${path}: no study export`); continue; }
     for (const def of list) {
       if (!want(def.kind, def.id)) continue;
-      if (!inPart()) continue;
+      if (!inPart() || COUNT) continue;
       const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 2000);
       const sub = { id: def.id, name: def.name, kind: def.kind, looker: def.looker, module: path, h: def.h || 1.8, camera: cam, ok: false, error: null, tris: 0, updates: [], missing: [] };
       const S = studyCtx(shared, sub);
@@ -156,7 +157,7 @@ async function buildSubjects() {
   }
   // the recipes: each at SEEDS seeds in a row, apart from each other and from the map's subjects
   const RECIPES = [];
-  if (SHEET === 'recipes' || ONLY) for (const path of RECIPE_MODULES) {
+  if (SHEET === 'recipes' || (ONLY && !COUNT)) for (const path of RECIPE_MODULES) {
     try { const mod = await import(`../${path.replace(/^src\//, '')}`); for (const R of mod.studyRecipes || []) RECIPES.push({ ...R, module: path }); }
     catch (e) { errors.push(`${path}: import: ${e.message}`); }
   }
@@ -164,7 +165,7 @@ async function buildSubjects() {
   let row = 0;
   for (const R of RECIPES) {
     if (!(ONLY ? ONLY.has(R.id) : SHEET === 'recipes')) continue;
-    if (!inPart()) continue;
+    if (!inPart() || COUNT) continue;
     for (let s = 0; s < SEEDS; s++) {
       const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 4000);
       const x = 2000 + s * 400, z = 2000 + row * 400;

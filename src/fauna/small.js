@@ -281,6 +281,6 @@ export const study = [
     build(ctx) { buildMoths(ctx); const mesh = ctx.scene.getObjectByName('moths'); const T = ctx.landmarks.tower, c = new THREE.Vector3(T.x, 22, T.z); return { at: (o) => o.copy(c), _mesh: mesh }; } },
   { id: 'crow', name: 'crow on the keep', kind: 'creature', h: 1.2, fly: true, at: [40, 30],
     build(ctx) { buildCrows(ctx); const mesh = ctx.scene.getObjectByName('crows'); return { at: (o) => instanceAt(mesh, 0, o) }; } },
-  { id: 'fishrings', name: 'fish rings', kind: 'creature', h: 3, at: [0, 0],
+  { id: 'fishrings', name: 'fish rings', kind: 'creature', h: 9, at: [0, 0],
     build(ctx) { buildFishRings(ctx); const T = ctx.landmarks.tarn; let k = 0; ctx.registerUpdate((dt) => { if ((k -= dt) <= 0) { k = 4; ctx.fauna.fishRing(T.x, T.z); } }); return { at: (o) => o.set(T.x, ctx.water.tarn.y, T.z), floor: ctx.water.tarn.y - 0.02 }; } },
 ];

@@ -71,6 +71,7 @@ run mountains tools/mountains-test.mjs $B
 run audio tools/audio-test.mjs "$B/?q=low&only=audio"
 run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
+run study tools/study-test.mjs "$B" # v17.1-Q3 (#77): every figure and creature on study.html, the recipes at their seeds
 run grass tools/grass-flicker-test.mjs low $B
 run touch tools/touch-test.mjs "$B/?q=low"
 run acts tools/acts-test.mjs $B
