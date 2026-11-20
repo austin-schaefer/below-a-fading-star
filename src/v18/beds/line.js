@@ -90,7 +90,7 @@ export function floorAt(x, z) {
 }
 // the roof over the floor at (x, z) (the eye stays under it; edges-test asks), or Infinity in the open
 export function ceilAt(x, z) {
-  if (x >= ST.x0) return x >= C.x0 ? Infinity : YS + DOOR_H;
+  if (x >= ST.x0) return x >= C.x0 || Math.abs(z - ST.z) > DOOR_HALF ? Infinity : YS + DOOR_H;
   if (x >= ST.x1 - 0.01 && Math.abs(z - ST.z) <= ST.half) return stairY(x) + 2.85 - 0.17;
   if (x >= LA.x0 && x <= LA.x1 && z >= LA.z0 && z <= LA.z1) return YL + 2.85;
   if (Math.abs(x - SP.x) <= SP.half && z <= LA.z0 && z >= SP.z1) return stepsY(z) + 2.85 - 0.18;

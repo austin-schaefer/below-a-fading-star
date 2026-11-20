@@ -58,3 +58,45 @@ These are in `shots/wip/`, in order:
 - F2's roots go 2.4 m below its floor. They will meet my chamber's air below -4.8; the seal hides them, but geometry may flag them after the merge.
 - `rocks.js` gets one condition, for pebbles off the door's claim.
 - `claims.js` gets two rows.
+
+## Round two
+
+**1. `beds-walk` is stricter.**
+- Every leg between two route points below the stair's head must be on the `beds` floor, within 0.3 m of its level.
+- "Reached" means standing on that floor at the chamber's level (feet within 0.2 m of -9).
+- Commit 2b91251's loosening is undone: a walker steering wide on the bank now fails, as it should, instead of being let off.
+
+**3. The chamber.**
+- The grate's light slants west (-3.6 m over the drop) through the open tomb under the sprout, and onto the upper third of the lid leaning on it.
+- It is a per-fragment light in the way and chamber's material and in the roots' (`grateLit`, `light.js`). It shows the six panes' colours in bars between the irons, swaying ±0.08 of the grate and breathing. Faces turned from it take none.
+- The shaft's additive sides stay; the floor patch is gone. The rose PointLight is down to 3.5.
+- The lid is re-carved in high relief and pale where it is fresh: a hooded old man bowed over a can held to his breast, with the legs only blocked out. The chisel and the mallet lie on the lid below the waist.
+- The tubs are now stone tub feet standing 0.45 m out of the ceiling, with a moulded band and a drain each, lit by their own glow.
+- Each of the six masses is a dozen rootlets matted back against the tub and the ceiling. The thick root runs flat along the ceiling to the wall over the way's mouth, down it over the lintel, and into the way's roof.
+- The seventh tub's thin root reaches the open tomb's floor.
+- Nothing ends in the air except the lid rootlets going into the cracks.
+
+**4. Roots.**
+- They kink along their length and taper from 0.06 at the tub to 0.08 at the lid.
+- Their colour varies along them (jitter 0.3).
+- Hair-roots go up to the way's planks at about 40 % of the stations.
+
+**5. Small fixes.**
+- The forecourt's threshold is a kerb of 0.55 m stones, each standing from 0.5 m under the lowest ground to over the highest ground where it meets the cut.
+- `ceilAt`'s doorway case is limited to the doorway's width.
+- The warning names the grate's cut.
+- `chamberVol` rejects by a box first and uses `hyp`.
+- `beds-glow` hides with the door's distance.
+
+**6. The two weaker lids.** The lovers' clasped hands are raised between them, and the hawk has a fanned tail and a turned, crested head.
+
+**2. Not done.** The merge with `next`, after F1 and F2, waits for the coordinator's word.
+
+**Tests (8183):**
+- `ONLY=edges,geometry,heights,walk,seams`: walk 13, heights 213, seams 3, geometry 149. edges failed on faces on the new lid, now fixed (`facesApart` on `^beds-`: none); its rerun is below.
+
+**Blind reader (sonnet) on `v18-F3-r7b-chamber*`:**
+- What it saw: "a stone sarcophagus, half open, a mallet and a dark chisel on the lid, chips scattered; someone was chiselled out of, or into, a tomb and the work abandoned; roots or pods took over the ceiling, converging at a dark doorway".
+- What it found weak: the carved figure is "an unreadable blob", the room is very dark with the floor going black, and from directly below the tub feet read as "pods".
+- After the fix, `ONLY=edges,geometry`: edges 247, geometry 149, 0 failed.
+- `beds-walk` both ways, with the stricter checks: low PASS (46 frames), medium PASS (47).

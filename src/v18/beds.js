@@ -9,12 +9,13 @@
 //   ?beds=0 off. ctx.beds: { floor, line, meshes, lights, cut, capped, stats() }
 import * as THREE from 'three';
 import { installBelow, underMaterial, UnderBuilder } from '../v14/under.js';
+import { hyp } from '../noise.js';
 import { BEDS } from './plan.js';
 import * as L from './beds/line.js';
 import { openBox } from './beds/ground.js';
 import { door, stair, vault, wayTube, chamber, COL } from './beds/rooms.js';
 import { roots, HUES } from './beds/roots.js';
-import { grateLight } from './beds/light.js';
+import { grateLight, grateLit } from './beds/light.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
 export const BEDS_OFF = !!Q && Q.get('beds') === '0';
@@ -33,7 +34,7 @@ export async function build(ctx) {
   // and over the grate's shaft outside the glasshouse's door (F2 draws the grate in it; under it is ours)
   const GG = openBox(T, { x0: GR.x - GR.half, x1: GR.x + GR.half, z0: GR.z - GR.half, z1: GR.z + GR.half });
   if (GG.mesh) { GG.mesh.name = 'beds-ground-grate'; ctx.scene.add(GG.mesh); }
-  else console.warn('[fp] beds: the ground\'s cut at the door removed nothing: the terrain\'s mesh has moved');
+  else console.warn('[fp] beds: the ground\'s cut over the grate removed nothing: the terrain\'s mesh has moved');
 
   // ---- what lights each part (aUnder: the sky's share, the haze's, the baked glow of its own light)
   const fox = [[BEDS.face + 0.4, L.Y.sill + 0.15, 170.78], [BEDS.face + 0.4, L.Y.sill + 0.15, 173.22]]; // on two rotten root-stubs at the door's foot (rooms.js door())
@@ -49,8 +50,9 @@ export async function build(ctx) {
   };
   const _n = {};
   const litWay = (x, y, z, out) => { L.way.near(x, z, _n); const h = (y - L.way.floorY(Math.max(0, Math.min(L.way.LEN, _n.s)))) / L.way.height; out[0] = 0.01; out[1] = 0; out[2] = 0.16 + 0.4 * Math.max(0, h) ** 2; return out; };
-  const slant = [0.3, 0.05], spot = [GR.x + slant[0], YC + 0.3, GR.z + slant[1]];
-  const litChamber = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = Math.min(1.2, 0.06 + near([spot, [GR.x, YC + CH.ceil, GR.z]], x, y, z, 0.6, 1.6) + near(BEDS.tubs.slice(0, 6).map(([a, b]) => [a, YC + CH.ceil - 0.8, b]), x, y, z, 0.12, 1.0)); return out; };
+  // the grate's light slants west, down across the open tomb under the sprout and onto the lid leaning on it
+  const slant = [-3.6, 0], spot = [GR.x + slant[0] * 0.8, YC + 0.9, GR.z + slant[1]];
+  const litChamber = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = Math.min(1.2, 0.06 + near([spot, [GR.x, YC + CH.ceil, GR.z]], x, y, z, 0.6, 1.6) + near(BEDS.tubs.map(([a, b]) => [a, YC + CH.ceil - 0.7, b]), x, y, z, 0.42, 0.75)); return out; };
   const litRoot = (x, y, z, out) => { out[0] = 0.01; out[1] = 0; out[2] = 0.15; return out; };
 
   // ---- the parts
@@ -84,10 +86,10 @@ export async function build(ctx) {
   const mk = (B, mat, name) => { const m = new THREE.Mesh(B.geometry(), mat); m.name = name; m.receiveShadow = true; m.castShadow = false; ctx.scene.add(m); return m; };
   const mDoor = mk(BD, underMaterial(std(0.9), 'beds-door', '#9fe8c2'), 'beds-door'); mDoor.castShadow = !low;
   const mStone = mk(BS, underMaterial(std(), 'beds-stone', '#e0aa84'), 'beds-stone');
-  const mWay = mk(BW, underMaterial(std(), 'beds-way', '#d6aa74', { far: [10, 21] }), 'beds-way');
-  const mRoots = mk(BR, underMaterial(std(0.6), 'beds-roots', '#ffffff'), 'beds-roots');
-  const mGlow = new THREE.Mesh(glowG, glowMat); mGlow.name = 'beds-glow'; ctx.scene.add(mGlow);
   const GL = grateLight({ x: GR.x, z: GR.z, half: GR.half, top: ch.grateTop, floor: YC, slant, hues: [HUES[0], HUES[1], HUES[2], HUES[3]] });
+  const mWay = mk(BW, underMaterial(grateLit(std(), 'way', GL.uniforms), 'beds-way', '#d6aa74', { far: [10, 21] }), 'beds-way');
+  const mRoots = mk(BR, underMaterial(grateLit(std(0.6), 'roots', GL.uniforms), 'beds-roots', '#ffffff'), 'beds-roots');
+  const mGlow = new THREE.Mesh(glowG, glowMat); mGlow.name = 'beds-glow'; ctx.scene.add(mGlow);
   GL.mesh.name = 'beds-light'; ctx.scene.add(GL.mesh);
   const under = [mStone, mWay, mRoots, mGlow, GL.mesh];
   for (const m of under) below.keep(m);
@@ -100,7 +102,7 @@ export async function build(ctx) {
   pl(HUES[0], 2.6, 6, vcx, YV + 2.5, 165.6);
   pl(HUES[3], 2.6, 6, vcx, YV + 2.5, 161.0);
   for (const f of [0.3, 0.7]) { const a = L.way.at(L.way.LEN * f); pl(f < 0.5 ? HUES[2] : HUES[4], 2.2, 7, a.x, L.way.floorY(L.way.LEN * f) + 1.3, a.z); }
-  pl(HUES[1], 7, 8, spot[0], YC + 2.6, spot[2]);
+  pl(HUES[1], 3.5, 7, spot[0], YC + 2.6, spot[2]);
 
   // ---- the floors: the forecourt and the doorway are the ground there (replacing heightAt, so the bank's walkers
   // never stand over the cut); from the doorway down, one held stacked floor to the chamber
@@ -162,7 +164,7 @@ export async function build(ctx) {
   };
   { const a = {}, b = {}; wayVol.segs = []; for (let s = 0; s < L.way.LEN; s += 17) { L.way.at(s, a); L.way.at(Math.min(L.way.LEN, s + 17), b); wayVol.segs.push([a.x, a.z, b.x, b.z, L.way.half, YV + L.way.height + 0.5, YC + L.way.height + 0.5, 1]); } }
   const BY = BEDS.bay;
-  const chamberVol = (x, y, z) => { const d = Math.hypot(x - CH.x, z - CH.z), h = Math.max(1 - ss(CH.r - 0.2, CH.r + 0.6, d), x > CH.x ? inRect(x, z, CH.x, BY.x1, CH.z - BY.half, CH.z + BY.half, 0.6) : 0); return h * (1 - ss(YC + CH.ceil + 0.3, YC + CH.ceil + 1.2, y)) * ss(YC - 3, YC - 2, y); };
+  const chamberVol = (x, y, z) => { if (x < CH.x - CH.r - 1 || x > BY.x1 + 1 || z < CH.z - CH.r - 1 || z > CH.z + CH.r + 1) return 0; const d = hyp(x - CH.x, z - CH.z), h = Math.max(1 - ss(CH.r - 0.2, CH.r + 0.6, d), x > CH.x ? inRect(x, z, CH.x, BY.x1, CH.z - BY.half, CH.z + BY.half, 0.6) : 0); return h * (1 - ss(YC + CH.ceil + 0.3, YC + CH.ceil + 1.2, y)) * ss(YC - 3, YC - 2, y); };
   chamberVol.segs = [[CH.x, CH.z, BY.x1 - BY.half, CH.z, CH.r, YC + CH.ceil + 0.3, YC + CH.ceil + 0.3, 1]];
   below.add(stairVol, { size: 0.3 });
   below.add(vaultVol, { size: 0.75 });
@@ -180,7 +182,7 @@ export async function build(ctx) {
   ctx.registerUpdate(() => {
     const dx = cam.x - mid.x, dz = cam.z - mid.z, on = dx * dx + dz * dz < 75 * 75 || below.here > 0;
     if (on !== wasOn) { for (const m of far) m.visible = on; for (const l of lights.slice(1)) l.L.visible = on; wasOn = on; }
-    const ddx = cam.x - BEDS.door.x, ddz = cam.z - BEDS.door.z; mDoor.visible = ddx * ddx + ddz * ddz < 160 * 160;
+    const ddx = cam.x - BEDS.door.x, ddz = cam.z - BEDS.door.z; mDoor.visible = mGlow.visible = ddx * ddx + ddz * ddz < 160 * 160; // (the glow: the door's foxfire and the grate's panes, both within this of the door)
   });
 
   const meshes = [mDoor, mStone, mWay, mRoots, mGlow, GL.mesh];

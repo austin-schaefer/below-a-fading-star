@@ -114,10 +114,10 @@ export function tomb(B, kind, cx, y, cz, side) {
     // two on one lid, heads together, the inner hands clasped between them
     for (const s of [-1, 1]) {
       figure(F, s * 0.33, 0.95, { gown: s === far, tilt: -s * 0.9 });
-      arm(F, s * 0.33, 0.95, -s, [s * 0.06, 0.26, -0.12], [s * 0.18, 0.2, -0.24]);
+      arm(F, s * 0.33, 0.95, -s, [s * 0.04, 0.5, -0.22], [s * 0.2, 0.32, -0.3]);
       arm(F, s * 0.33, 0.95, s, [s * 0.3, 0.24, -0.2], [s * 0.5, 0.16, -0.32]);
     }
-    F.put(sphere(0.075, 8, 6), 0, 0.27, -0.12, 0, 0, 0, 1.3, 0.9, 1, PROP);                 // the clasped hands
+    F.put(sphere(0.085, 8, 6), 0, 0.53, -0.22, 0, 0, 0, 1.2, 1.1, 1, PROP);                 // the clasped hands, raised between them
   } else if (kind === 'hawk') {
     figure(F, 0, 1, { tilt: side * 0.3 });
     // the falconer's far arm raised, the gauntleted fist high over the breast, the bird on it, upright
@@ -126,9 +126,12 @@ export function tomb(B, kind, cx, y, cz, side) {
     arm(F, 0, 1, -far, [far * 0.0, 0.29, -0.2], [-far * 0.24, 0.22, -0.28]);
     F.put(cyl(0.07, 0.06, 0.14, 7), fist[0], fist[1] - 0.04, fist[2], 0, 0, 0, 1, 1, 1, PROP);          // the gauntlet
     F.put(sphere(0.1, 10, 8), fist[0], fist[1] + 0.17, fist[2] + 0.01, 0.25, 0, 0, 0.85, 1.45, 0.95, PROP); // the bird's body
-    F.put(sphere(0.062, 8, 6), fist[0], fist[1] + 0.33, fist[2] - 0.03, 0, 0, 0, 1, 1, 1, PROP);           // its head
-    F.put(new THREE.ConeGeometry(0.022, 0.07, 5), fist[0], fist[1] + 0.32, fist[2] - 0.095, -1.9, 0, 0, 1, 1, 1, STONE_W); // the hooked beak
-    F.put(box(0.07, 0.2, 0.025), fist[0], fist[1] + 0.03, fist[2] + 0.1, 0.45, 0, 0, 1, 1, 1, STONE_W);    // the tail
+    // its head turned over its shoulder toward the aisle, the hooked beak in profile; a long fanned tail down past the fist
+    const hx = fist[0] - far * 0.05, hb = fist[1] + 0.34, hz = fist[2] + 0.0;
+    F.put(sphere(0.066, 8, 6), hx, hb, hz, 0, 0, 0, 1, 1, 1.15, PROP);                                   // its head
+    F.put(new THREE.ConeGeometry(0.026, 0.09, 5), hx - far * 0.075, hb - 0.015, hz, 0, 0, far * 1.9, 1, 1, 1, STONE_W); // the hooked beak, turned
+    F.put(box(0.03, 0.04, 0.05), hx - far * 0.02, hb + 0.05, hz, 0, 0, 0, 1, 1, 1, PROP);                // the crest
+    for (const t of [-0.25, 0, 0.25]) F.put(box(0.04, 0.3, 0.022), fist[0] + t * 0.12, fist[1] - 0.08, fist[2] + 0.12, 0.5, 0, t, 1, 1, 1, STONE_W); // the tail, fanned
     for (const s of [-1, 1]) F.put(box(0.025, 0.2, 0.13), fist[0] + s * 0.085, fist[1] + 0.17, fist[2] + 0.03, 0.2, 0, s * 0.12, 1, 1, 1, STONE_W); // the folded wings
   }
   // the crack across the lid where the root went in: on the far side, between the figure and the lid's edge

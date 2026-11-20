@@ -7,8 +7,8 @@
 // (default 2), looking where the walker goes.
 //   node tools/beds-walk.mjs [base=http://localhost:8123] [q=low] [prefix=beds-walk] [there|both] [step=2]
 // Frames: shots/wip/<prefix>-<q>-NNN.png in order. Prints each frame with where the feet are and on what floor. Fails
-// (exit 1) if the walker stalls, is off the Beds' floor while the plan has them on it below the door (feet on anything
-// but the stacked floor 'beds'), goes more than 0.3 m under it, never reaches the chamber or the spur again, or the page
+// (exit 1) if the walker stalls, is off the Beds' floor on any leg between two route points below the stair's head (feet
+// on anything but the stacked floor 'beds', or 0.3 m off its level), never stands in the chamber at its level, or the page
 // throws or logs an error (the sound is started by "Go out", so the rooms' audio runs the whole walk).
 import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
@@ -39,12 +39,12 @@ await page.evaluate(([x, z]) => {
 await sleep(1500);
 const st = () => page.evaluate(() => {
   const fp = window.__fp, p = fp.player, B = fp.beds, f = B.floor(p.pos.x, p.pos.z), plan = f;
-  return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, ground: fp.terrain.heightAt(p.pos.x, p.pos.z), yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan, draws: fp.renderer?.info?.render?.calls ?? null };
+  return { x: p.pos.x, z: p.pos.z, feet: p.pos.y - p.eye, yaw: p.yaw, pitch: p.pitch, floor: p.onStack?.name || 'ground', below: fp.below?.here ?? 0, locked: !!document.pointerLockElement, plan, draws: fp.renderer?.info?.render?.calls ?? null };
 });
 const s0 = await st();
 console.log(`pointer captured: ${s0.locked}; sound: ${await page.evaluate(() => { const a = window.__fp.audio; return a.started ? a.ctx?.state : 'not started'; })}`);
 const locked = s0.locked;
-const route = await page.evaluate(([x, z]) => [{ x, z, y: null, tag: 'spur' }, ...window.__fp.beds.line.ROUTE.map((p, i, A) => ({ x: p[0], z: p[1], y: p[2], tag: i === A.length - 1 ? 'chamber' : `r${String(i).padStart(2, '0')}` }))], START);
+const route = await page.evaluate(([x, z]) => [{ x, z, y: null, tag: 'spur' }, ...window.__fp.beds.line.ROUTE.map((p, i, A) => ({ x: p[0], z: p[1], y: p[2], inside: i >= 3, tag: i === A.length - 1 ? 'chamber' : `r${String(i).padStart(2, '0')}` }))], START);
 const full = legs === 'there' ? route : [...route, ...route.slice(0, -1).reverse().map((r) => ({ ...r, tag: r.tag + '-back' }))];
 const SENS = 0.0021;
 let mx = 640, my = 360;
@@ -69,10 +69,12 @@ const t0 = Date.now();
 while (i < full.length && Date.now() - t0 < 30 * 60 * 1000) {
   const s = await st();
   if (lastP) walkedSince += Math.hypot(s.x - lastP.x, s.z - lastP.z);
-  // past the stair's head (x < -252.3), the stacked floor holds the walker
-  // (only while the feet are down in the rooms: a walker steering wide on the bank over the way is not in it)
-  if (s.plan !== null && s.plan !== undefined && s.x < -252.4 && s.feet < s.ground - 1) {
-    if (s.floor !== 'beds') { left++; if (left < 6) console.log(`OFF the Beds' floor at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) (on ${s.floor}, feet ${s.feet.toFixed(2)}, plan ${s.plan.toFixed(2)})`); }
+  // on every leg between two of the route's points below the stair's head, the walker is on the Beds' floor (the
+  // stacked floor 'beds') at its level, whatever the ground over them does: a walker who left it (pushed up onto the
+  // bank, or never down) fails
+  if (i > 0 && full[i].inside && full[i - 1].inside) {
+    const off = s.floor !== 'beds' || s.plan === null || s.plan === undefined || Math.abs(s.feet - s.plan) > 0.3;
+    if (off) { left++; if (left < 6) console.log(`OFF the Beds' floor at (${s.x.toFixed(1)}, ${s.z.toFixed(1)}) (on ${s.floor}, feet ${s.feet.toFixed(2)}, plan ${s.plan === null || s.plan === undefined ? 'none' : s.plan.toFixed(2)})`); }
     else lowest = Math.min(lowest, s.feet - s.plan);
   }
   const w = full[i], dx = w.x - s.x, dz = w.z - s.z, d = Math.hypot(dx, dz);
@@ -83,7 +85,11 @@ while (i < full.length && Date.now() - t0 < 30 * 60 * 1000) {
     await shot(await st(), w.tag);
     await page.keyboard.down('KeyW');
   }
-  if (d < 0.45) { if (w.tag === 'chamber') reached = true; i++; continue; }
+  if (d < 0.45) {
+    // the chamber is reached standing on its floor at its level, not over it on the bank
+    if (w.tag === 'chamber') { if (s.floor !== 'beds' || Math.abs(s.feet - w.y) > 0.2) { console.log(`at the chamber's x and z but not in it (on ${s.floor}, feet ${s.feet.toFixed(2)})`); break; } reached = true; }
+    i++; continue;
+  }
   const want = Math.atan2(-dx, -dz), dy = wrap(want - s.yaw);
   if (Math.abs(dy) > 0.02) await turn(dy, -s.pitch * 0.5);
   await sleep(d < 2 ? 50 : 90);
