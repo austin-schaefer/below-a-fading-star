@@ -29,6 +29,8 @@ export async function build(ctx) {
     for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; if (nearestLead(x + Math.cos(a) * 2, z + Math.sin(a) * 2, 1.5, _h)) return true; }
     return false;
   };
+  // a track's tread within `pad` of (x, z) (its edge, not its middle; the stilters' feet keep off it)
+  const treadNear = (x, z, pad) => !!nearestLead(x, z, Math.min(pad, 3), _h) || (spurLead < 0 && segDist(x, z, N.from, N.to) < pad + 0.5);
   // the way out of the grove: where the spur leaves it, GROVE.r + 4 from its middle
   let exit = { x: GROVE.x + (N.from.x - N.to.x) / hyp(N.from.x - N.to.x, N.from.z - N.to.z) * (GROVE.r + 4), z: GROVE.z + (N.from.z - N.to.z) / hyp(N.from.x - N.to.x, N.from.z - N.to.z) * (GROVE.r + 4) };
   if (spurLead >= 0) {
@@ -44,8 +46,8 @@ export async function build(ctx) {
   await ctx.built?.('vegetation');
   const trees = (ctx.trunks?.list || ctx.woodTrees || []).filter((t) => !t.hidden && hyp(t.x - GROVE.x, t.z - GROVE.z) < 70);
   const woodTrees = ctx.woodTrees || [];
-  const out = ctx.inhabitants = { exit, spurLead };
-  if (P.get('stilters') !== '0') out.stilters = ctx.stilters = buildStilters(ctx, { leadAt, exitAt: () => exit, trees });
+  const out = ctx.inhabitants = { exit, spurLead, spur: spurLead >= 0 ? LEADS[spurLead].pts : [[N.to.x, N.to.z], [N.from.x, N.from.z]] };
+  if (P.get('stilters') !== '0') out.stilters = ctx.stilters = buildStilters(ctx, { leadAt, treadNear, exitAt: () => exit, trees });
   // the tracks the eyes keep beside: the wood way, and each spur (its lead when F1's is in, else its straight line)
   const tracks = [LEADS.find((L) => L.id === 'P32')?.pts].filter(Boolean);
   for (const sp of Object.values(SPURS)) {
@@ -54,5 +56,5 @@ export async function build(ctx) {
   }
   if (P.get('eyes') !== '0') out.eyes = buildEyes(ctx, { leadAt, woodTrees, tracks });
   if (P.get('moths') !== '0' && P.get('florilegium') !== '0') out.moths = buildMoths(ctx);
-  out.leadAt = leadAt;
+  out.leadAt = leadAt; out.treadNear = treadNear;
 }

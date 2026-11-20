@@ -171,10 +171,9 @@ export function buildMoths(ctx, { glass = GLASS, standin = false } = {}) {
   }
 
   let t = 0;
-  ctx.registerUpdate((dt) => {
-    t += dt; uTime.value = t;
-    mesh.visible = hyp(camera.position.x - glass.x, camera.position.z - glass.z) < 200; // the house's own cull (florilegium.js)
-  }, { at: () => glass, near: 210, hz: 0 });
+  ctx.registerUpdate((dt) => { t += dt; uTime.value = t; }, { at: () => glass, near: 210, hz: 0 });
+  // the house's own cull (florilegium.js: nothing of it past 200 m), every frame and unthrottled
+  ctx.registerUpdate(() => { mesh.visible = hyp(camera.position.x - glass.x, camera.position.z - glass.z) < 200; });
   return { mesh, pane, n, uTime };
 }
 

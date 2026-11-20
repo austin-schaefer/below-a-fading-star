@@ -96,7 +96,8 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [], tracks = [] } = 
   });
   mat.uniforms.uOpen = uOpen; mat.uniforms.uSink = uSink; mat.uniforms.uScale = uScale;
   const pts = new THREE.Points(geo, mat);
-  pts.name = 'v18-eyes'; pts.frustumCulled = false; pts.renderOrder = 21; pts.visible = false;
+  pts.name = 'v18-eyes'; pts.renderOrder = 21; pts.visible = false;
+  geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(wood.x, terrain.heightAt(wood.x, wood.z), wood.z), wood.r + 40); // where any can open
   scene.add(pts);
 
   const ndc = new THREE.Vector3(), fwd = new THREE.Vector3(), cam = camera.position, size = new THREE.Vector2();
@@ -175,6 +176,8 @@ export function buildEyes(ctx, { leadAt = null, woodTrees = [], tracks = [] } = 
     if (any) { ctx.renderer.getSize(size); uScale.value = size.y * ctx.renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) * 0.5)); }
   }
   ctx.registerUpdate(update, { at: () => wood, near: wood.r + 60, hz: 0 });
+  // drawn only in reach of the wood, every frame and unthrottled (a teleport out leaves nothing drawn)
+  ctx.registerUpdate(() => { if (hyp(cam.x - wood.x, cam.z - wood.z) > wood.r + 60) pts.visible = false; });
   state.mesh = pts;
   // test hook: open watcher w at (x, z) with kind k, now
   state.force = (w, x, z, k = 1) => {
