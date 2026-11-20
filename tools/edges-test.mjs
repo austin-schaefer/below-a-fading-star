@@ -21,7 +21,9 @@
 // something and no two faces of different paint overlap in one plane (tools/under-geometry.mjs); every cord on the Noon
 // Road meets glass or water and every knee of the Pit's stair meets the drawn rock; walking up the treads inside the
 // Nave's south door from the passage, the eye meets the treads, not the hall beyond them (risers that faced away let it
-// show through every step).
+// show through every step). v18-F3, the Lower Beds: off its stair, landing, steps, the vault's aisle, the way and the
+// chamber sideways, hurrying and hopping, held with the eye under the roof; no uncapped collider through its rooms; its
+// meshes in the underground's geometry checks.
 // Usage: node tools/edges-test.mjs [base=http://localhost:8123]
 import { ANGLE } from './launch.mjs';
 import { createRequire } from 'node:module';
@@ -251,6 +253,31 @@ const R = await page.evaluate(async () => {
       res.push({ cols: true, n, left: left.slice(0, 4), capped: PS.cuts.colliders });
     }
   }
+  // v18-F3: the Lower Beds: off each part sideways, hurrying and hopping, held on its floor with the eye under its roof;
+  // nothing standing on the wood over the rooms reaches down through them
+  if (fp.beds) {
+    const BL = fp.beds.line, ST = [];
+    const at = (s) => { const a = BL.way.at(s); return [a.x, a.z, Math.atan2(-a.tx, -a.tz)]; };
+    for (const [name, x, z, yaw, n] of [['the stair', -255.2, 172, Math.PI / 2], ['the landing', -259.5, 172.2, 0, 60], ['the steps', -259.5, 169.6, 0], ['the vault\'s aisle', -259.5, 163.4, 0],
+      ['the way, 6 m in', ...at(6)], ['the way at its bend', ...at(17)], ['the way, 4 m short of the chamber', ...at(BL.way.LEN - 4)], ['the chamber', -265.2, 128.6, 0]]) ST.push([name, x, z, yaw, n]);
+    // (the landing a second: east is the stair, which a hurry climbs and leaves by the door)
+    for (const [name, x, z, yaw, n = 150] of ST) for (const side of [1, -1]) for (const hop of [false, true]) {
+      const f0 = fp.beds.floor(x, z); fp.controls.placeAt(x, z, f0 + 0.02);
+      p.vel.set(0, 0, 0); p.vy = 0; p.keys.clear(); p.keys.add('KeyW'); p.keys.add('ShiftLeft'); p.yaw = yaw + side * Math.PI / 2;
+      let off = 0, low = 0, head = Infinity;
+      for (let i = 0; i < n; i++) {
+        fp.controls.update(DT); if (hop && i % 30 === 5) fp.controls.hop();
+        const f = fp.beds.floor(p.pos.x, p.pos.z);
+        if (f === null || f === undefined || p.onStack?.name !== 'beds') off++; else low = Math.min(low, p.pos.y - p.eye - f);
+        head = Math.min(head, BL.ceilAt(p.pos.x, p.pos.z) - p.pos.y);
+      }
+      p.keys.clear();
+      res.push({ beds: `${name}, ${side > 0 ? 'left' : 'right'}, ${hop ? 'hopping' : 'hurrying'}`, off, low, head });
+    }
+    let n = 0; const left = [];
+    for (const c of fp.controls.state.colliders) { if (c.y !== undefined || c.x1 !== undefined) continue; if (fp.beds.overRooms(c.x, c.z, c.r || 0)) { n++; left.push([+c.x.toFixed(1), +c.z.toFixed(1)]); } }
+    res.push({ bedsCols: true, n, left: left.slice(0, 4), capped: fp.beds.capped });
+  }
   // v14-D2: the Pit's way up, the road's slabs pinned round its wall: sideways off them (a hurry, then a hurrying hop)
   // toward the hole and toward the wall at three heights: the held edges keep the walker on; and a walker coming at
   // the rim on the landing's line from 30 m walks out onto the landing, held on its floor
@@ -306,7 +333,7 @@ const R = await page.evaluate(async () => {
   return res;
 });
 // v15-F1: the underground's geometry (tools/under-geometry.mjs) and the door's treads seen from below
-const UNDER = '^(pit-floor|passage-|coffin-road|garth-|swallow-(stone|wood))';
+const UNDER = '^(pit-floor|passage-|coffin-road|garth-|swallow-(stone|wood)|beds-(door|stone|way|chamber|roots))';
 const UG = { bear: await page.evaluate(membersBear, UNDER), apart: await page.evaluate(facesApart, UNDER) };
 UG.stats = await page.evaluate(async () => {
   const fp = window.__fp, THREE = await import('three'), out = {};
@@ -337,6 +364,8 @@ for (const r of R) {
   if (r.bwPier) { check(r.inside === 0 && r.drop < 1, `the Wellward Way: ${r.bwPier}: never inside or behind a pier, never dropped`, `${r.inside} ticks inside, dropped ${f(r.drop)} m, got to ${f(r.far)} m along`); continue; }
   if (r.bw) { check(r.off === 0 && r.low > -0.15 && r.head > 0.15, `the Wellward Way: ${r.bw}: held on its floor, the eye under the vault`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the vault ${f(r.head)} m over the eye at the closest`); continue; }
   if (r.gulf) { check(r.caught && r.back !== null && r.back <= 3 && r.low > -0.15, 'the Wellward Way: dropped into the Gulf off the bridge, caught and put back on the bridge within 3 s', `${r.caught ? 'caught' : 'not caught'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.low)} m under the catch`); continue; }
+  if (r.beds) { check(r.off === 0 && r.low > -0.15 && r.head > 0.12, `the Lower Beds: ${r.beds}: held on its floor, the eye under its roof`, `${r.off} ticks off it, lowest ${f(r.low)} m under it, the roof ${f(r.head)} m over the eye at the closest`); continue; }
+  if (r.bedsCols) { check(r.n === 0, 'the Lower Beds: nothing standing on the wood over its rooms reaches down through them', `${r.capped} given a bottom; ${r.n} left${r.left.length ? ' at ' + r.left.map((a) => a.join(', ')).join('; ') : ''}`); continue; }
   if (r.cols) { check(r.n === 0, 'the Wellward Way: no uncapped collider of the moor\'s stands down through the way', `${r.capped} given a bottom; ${r.n} left${r.left.length ? ' at ' + r.left.map((a) => a.join(', ')).join('; ') : ''}`); continue; }
   if (r.water) { check(r.inWater && r.back !== null && r.back <= 3 && r.lowW > -0.15, 'the Noon Road: dropped in the water off the road, put back on the road within 3 s, never under the water\'s floor', `${r.inWater ? 'in the water' : 'not in the water'}, back ${r.back === null ? 'never' : 'after ' + f(r.back) + ' s'}, ${r.rescues} rescues, lowest ${f(r.lowW)} m under the water's floor`); continue; }
   if (r.ps) { check(r.off === 0 && r.low > -0.15, `the Pit's slabs: ${r.ps}: held on them`, `${r.off} ticks off them, lowest ${f(r.low)} m under them`); continue; }

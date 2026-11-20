@@ -112,6 +112,7 @@ const MODULES = [
   ['florilegium', () => import('./v18/florilegium.js'), M], // v18-F2: the Florilegium, the glasshouse in the Deodand Wood and the flowers in it that are people (?florilegium=0)
   ['sphere', () => import('./v17/sphere.js'), M], // v17-S1: the man at the wheel, the Noonwrights' glass junction at the east wall's foot; cuts the terrain mesh (?sphere=0)
   ['inhabitants', () => import('./v18/inhabitants.js')], // v18-F4: the stilters in the north grove, eyes between the trees, moths at the glass; 'stilter' on ctx.events (?inhabitants=0)
+  ['beds', () => import('./v18/beds.js'), M], // v18-F3: the Lower Beds, the crypt in the wood's south-west rise and the way under to beneath the glasshouse; cuts the terrain mesh (?beds=0)
   ['foxfire', () => import('./v18/foxfire.js')], // v18-F1: the foxfire that marks the wood's three spurs, on old trunks and stumps (?foxfire=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];
