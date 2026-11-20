@@ -246,12 +246,12 @@ export function buildGlass({ low = false } = {}) {
           // (the lower wall is a vitrine: inside a border of the side's colours its panes are large and nearly clear, so
           // what stands in the tubs is seen)
           bool clear = kind < 1.5 && abs(vUv.x) < ${(RC * Math.sin(Math.PI / N) - 0.36).toFixed(3)} && vUv.y < ${(MID - SILL + 0.62).toFixed(3)};   // (to a little over the transom: the tallest heads and what they hold up)
-          vec2 q = vUv / (clear ? vec2(0.62, 0.56) : vec2(0.37, 0.33)); float jb = floor(q.y * 2.0), R = 0.72, od = 9.0; vec2 oc = vec2(0.0);
+          vec2 q = vUv / (clear ? vec2(0.98, 0.9) : vec2(0.37, 0.33)); float jb = floor(q.y * 2.0), R = 0.72, od = 9.0; vec2 oc = vec2(0.0);
           for (int i = 2; i >= -2; i--) {
             float j = jb + float(i), off = 0.5 * mod(j, 2.0), cx = floor(q.x - off + 0.5) + off; vec2 c = vec2(cx, j * 0.5); float d = distance(q, c);
             if (d < R) { oc = c; od = d; break; }
           }
-          float lw = clamp(fwidth(q.y) * 1.3, 0.055, 0.2);
+          float lw = clear ? clamp(fwidth(q.y) * 1.2, 0.016, 0.1) : clamp(fwidth(q.y) * 1.3, 0.055, 0.2);   // (the clear band's leads thin: a blind reader found the scallops cut every figure)
           lead = smoothstep(R - lw - 0.02, R - lw, od);
           float h = flH(oc * 3.1 + seed), h2 = flH(oc * 5.7 + seed + 3.0), h3 = flH(oc * 1.3 + seed + 9.0);
           if (h3 > 0.953 && kind < 1.5) discard;                                   // a pane gone: the hole looks in
