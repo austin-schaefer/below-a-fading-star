@@ -75,6 +75,7 @@ run loading tools/loading-test.mjs "$B/?q=low"
 run perf tools/perf-test.mjs "$B/?q=low&perf=1&bench=6"
 run grass tools/grass-flicker-test.mjs low $B
 run touch tools/touch-test.mjs "$B/?q=low"
+run gamepad tools/gamepad-test.mjs $B # v17.1 (#72): a faked pad goes out, walks, looks, hops, hurries, acts and works the panel; no pad, no polling
 run acts tools/acts-test.mjs $B
 run gutter tools/gutter-test.mjs $B
 run treelod tools/tree-lod-test.mjs $B

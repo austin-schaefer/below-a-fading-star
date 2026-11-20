@@ -376,7 +376,7 @@ async function start() {
   addEventListener('resize', resize);
 
   // Begin: click the title card
-  events.addEventListener('begin', () => { ctx.controls.state.enabled = true; ctx.controls.lock(); });
+  events.addEventListener('begin', (e) => { ctx.controls.state.enabled = true; if (!e.detail?.pad) ctx.controls.lock(); }); // a gamepad's press (v17.1) asks for no capture: nothing the mouse needs
 
   // Frame loop
   renderer.info.autoReset = false;
