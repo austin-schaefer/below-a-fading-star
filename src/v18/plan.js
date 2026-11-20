@@ -14,6 +14,10 @@ export const SPURS = {
 
 // F2: the Florilegium, the glasshouse. A claim of r 13 on the patch at mean slope 0.24; nobody walks inside it.
 export const GLASSHOUSE = { x: -265, z: 126, r: 13, door: { x: -257, z: 127 } };
+// F2: its ground is a level pad (src/height/pads.js) at `floor`; the grate's opening in the paving outside the door (a
+// square of `half`, axis-aligned, the bars' top at y); the six tubs on a ring of r `ring` at 30, 90, ... 330 degrees
+// from +x toward +z in LIKENESSES' order, the sprout's inside the door
+export const FLORILEGIUM = { floor: -3.2, pad: { half: 8.5, angle: 0.62, ease: 7 }, grate: { x: -258.0, z: 126.0, half: 0.6, y: -3.15 }, ring: 3.4, sprout: { x: -260.9, z: 126.0 } };
 
 // F3: the Lower Beds, the crypt, and its way under the wood to beneath the glasshouse.
 export const BEDS = {

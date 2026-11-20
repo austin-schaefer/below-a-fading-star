@@ -109,6 +109,7 @@ const MODULES = [
   ['lappetlamps', () => import('./v15/lamps.js')], // v15-L1: lamps to walk by where the village's ways were dark, from the plan's LAMPS, one draw, no point light (?lappetlamps=0)
   ['leat', () => import('./v17/leat.js')], // v17-W2: the Heliarchs' leat's stonework (kerbs, weirs, the slab bridge at (9, 252)); its water is the kit's (?leat=0)
   ['garth', () => import('./v17/garth.js')], // v17-U2: the Meridian Garth, the garden under the mountain where it is still noon (?garth=0)
+  ['florilegium', () => import('./v18/florilegium.js'), M], // v18-F2: the Florilegium, the glasshouse in the Deodand Wood and the flowers in it that are people (?florilegium=0)
   ['sphere', () => import('./v17/sphere.js'), M], // v17-S1: the man at the wheel, the Noonwrights' glass junction at the east wall's foot; cuts the terrain mesh (?sphere=0)
   ['locallights', () => import('./v5/lights.js'), M], // v5: the local lights (the moss, the embers, the post lamp, the lit doorway, the Leerie's standards)
 ];

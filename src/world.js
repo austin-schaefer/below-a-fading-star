@@ -54,6 +54,7 @@ export const LANDMARKS = {
   // v6.5: name cards for the v5 sites (SITES): card places have no footprint of their own, so the scatter ignores them and
   // the HUD prefers one to the broad landmark it lies inside. The Galleries and the Thrones hang on the wall: their trigger
   // sits on the nearest walkable ground below them.
+  florilegium: { x: -265, z: 126, r: 13, y: null, name: "The Florilegium", line: "", card: true }, // v18-F2: the glasshouse in the wood (src/v18/plan.js GLASSHOUSE)
   collation: { x: 150, z: -70, r: 14, y: null, name: "The Collation", line: "“We need no chieftain; such folk eat more than their share.”", card: true },
   prospect: { x: 238, z: -30, r: 10, y: null, name: "The Unfinished Prospect", line: "“It was from the artists and poets that the pertinent answers came, and I know that panic would have broken loose had they been able to compare notes.”", card: true },
   keptfire: { x: 10, z: -190, r: 14, y: null, name: "The Kept Fire", line: "“He walked apart, beyond the glow of the campfires to gaze out among the mystic vistas of crag and valley. The slopes were softened by verdure and foliage, the vales deepening into shadowy realms of magic.”", card: true },

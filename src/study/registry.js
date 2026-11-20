@@ -22,6 +22,7 @@ export const STUDY_MODULES = [
   'src/v2/riverlife.js', 'src/v8/twk/model.js', 'src/v8/house/folk.js',
   'src/v4/regions/high-ling.js', 'src/v4/regions/outwash.js', 'src/v4/regions/lynchets.js', 'src/v4/regions/strandline.js', 'src/v4/regions/adust.js', 'src/v4/regions/peafowl.js',
   'src/v8/threads/painter.js', 'src/v8/threads/traveller.js',
+  'src/v18/florilegium.js',
   'src/v7/walkers/thurifer.js', 'src/v7/walkers/leerie.js', 'src/v7/walkers/linkboy.js',
 ];
 
@@ -73,6 +74,8 @@ export const NOT_FIGURES = {
   'src/v5/plinths.js': 'stone feet on plinths: statuary, not a figure',
   'src/v14/noon-road.js': 'the Noonwrights\' carriers: glass vessels, not figures',
   'src/v8/livery/props.js': 'the liveries\' props (a slate, a peg)',
+  'src/v18/florilegium/likeness.js': 'the likenesses\' builder (registered through florilegium.js)',
+  'src/v18/florilegium/house.js': 'the glasshouse: stone, iron and glass',
 };
 // real figures not on the page yet, each part of a place's build: lifting the figure out into a function of its own puts
 // it on the page. tools/study-test.mjs fails if this list grows past DEFERRED_MAX: it may only shrink.
