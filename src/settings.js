@@ -359,7 +359,9 @@ export function buildSettings(ctx) {
   // --- open and close
   function open(o) {
     if (open_) return;
-    ctx.player?.keys?.clear(); // a key held as the panel opens is let go in it, where the walk never hears it: the walker stops
+    const pl = ctx.player;
+    pl?.keys?.clear(); // a key held as the panel opens is let go in it, where the walk never hears it: the walker stops,
+    if (pl?.onGround && pl.vel) pl.vel.x = pl.vel.z = 0; // at once (the pause does not drift on its ease); a hop in the air keeps its way, so a pause never drops it short of a far side
     open_ = true; openedAt = o?.paused ? performance.now() : -1e9; // opened by Escape (hud.js): that Escape is not also the one that shuts it
     document.getElementById('card')?.classList.add('hidden'); // the one panel: never the old paused card behind it
     ctx.controls.release(); // the mouse is free for the panel; the view is clicked to take it back
@@ -375,6 +377,7 @@ export function buildSettings(ctx) {
     root.classList.remove('shown');
     gear.setAttribute('aria-expanded', 'false');
     gear.blur();
+    if (root.contains(document.activeElement)) document.activeElement.blur(); // the hidden panel keeps the focus until the browser's fixup, and its swallow ate the walk's next key (#1806)
     syncPos();
   }
   function toggle() { if (open_) close(); else open(); }

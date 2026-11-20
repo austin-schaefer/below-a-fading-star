@@ -72,10 +72,13 @@ const shown = (page) => page.evaluate(() => document.getElementById('settings').
   await page.click('#set-close');
   check('pause: "Back to the moor" shuts it', !(await shown(page)));
   // a key held as Escape is pressed is let go inside the panel: the walker stops, and nothing is still held after it shuts
-  await page.evaluate(() => { const fp = window.__fp, s = fp.settings.places[0]; fp.controls.placeAt(s.x, s.z); });
+  // (#1806) the W must reach the walk: the row passed for nothing while the hidden panel's focus ate it after "Back to the moor"
+  const start = await page.evaluate(() => { const fp = window.__fp, s = fp.settings.places[0]; fp.controls.placeAt(s.x, s.z); const q = fp.player.pos; return [q.x, q.z]; });
   await page.keyboard.down('KeyW'); await page.waitForTimeout(400);
+  const walked = await page.evaluate(() => ({ keys: [...window.__fp.player.keys], speed: Math.hypot(window.__fp.player.vel.x, window.__fp.player.vel.z) }));
   await page.evaluate(() => window.__fp.events.dispatchEvent(new CustomEvent('lock', { detail: false })));
   const held0 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
+  check('pause: W pressed just after "Back to the moor" reaches the walk (the hidden panel keeps no focus)', walked.keys.includes('KeyW') && walked.speed > 1 && Math.hypot(held0[0] - start[0], held0[1] - start[1]) > 0.3, { walked, start, held0 });
   await page.keyboard.up('KeyW'); await page.waitForTimeout(600);
   const held1 = await page.evaluate(() => { const q = window.__fp.player.pos; return [q.x, q.z]; });
   await page.click('#set-close'); await page.waitForTimeout(800);
